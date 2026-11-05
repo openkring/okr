@@ -1,11 +1,13 @@
-// All-apps release (`pnpm release all`): ONE version bump, the eight prod builds in parallel, one
-// go/no-go, then the ship phase (Sentry, deploy, verify, app-version, git, native lanes).
+// A new version: ONE bump, the prod builds in parallel, one go/no-go, then the ship phase (Sentry,
+// deploy, verify, app-version, git, native lanes). `pnpm release all` runs it for the eight apps,
+// `pnpm release <app> patch` for one: the same pipeline over a shorter list, gates included. The
+// apps left out stay live on their old version, which `deployed.<appId>` shows.
 //
 // Everything that mutates the checkout (version bump, ngsw stamps) is undone by
-// revertBuildPhase() on any failure, on Ctrl-C, and on a "No" at the go/no-go — a failed all-apps
-// run must leave `git status` as it found it. After the go answer nothing is ever reverted: the
-// version is built and gated for every app, so a failed site is repaired (`pnpm release <app>
-// none`), not rolled back.
+// revertBuildPhase() on any failure, on Ctrl-C, and on a "No" at the go/no-go — a failed run
+// must leave `git status` as it found it. After the go answer nothing is ever reverted: the
+// version is built and gated for every app in the run, so a failed site is repaired (`pnpm release
+// <app> none`), not rolled back.
 import { spawn } from 'node:child_process';
 import { closeSync, existsSync, mkdirSync, openSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync, writeSync } from 'node:fs';
 import { join } from 'node:path';
@@ -22,8 +24,9 @@ import {
 
 const KINDS = ['patch', 'minor', 'major'];
 const mmss = (ms) => { const s = Math.round(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
-// Run state, set once by releaseAll. Module-level (not threaded through) so that `step` and `sh`
+// Run state, set once by releaseApps. Module-level (not threaded through) so that `step` and `sh`
 // stay plain two/three-argument helpers the ship phase can call the same way.
 let ctx = null;
 
@@ -140,12 +143,12 @@ function newestMain(app) {
   return files.sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs)[0] ?? null;
 }
 
-// config (writes each app's environment.ts from its own .env) then build, for all apps in two nx
-// runs. --exclude-task-dependencies: the build target would otherwise re-run `config` per app.
+// config (writes each app's environment.ts from its own .env) then build, for the run's apps in two
+// nx runs. --exclude-task-dependencies: the build target would otherwise re-run `config` per app.
 async function buildApps() {
-  const { opts } = ctx;
-  const projects = APPS.join(',');
-  for (const app of APPS) {
+  const { opts, apps } = ctx;
+  const projects = apps.join(',');
+  for (const app of apps) {
     if (opts.dryRun) console.log(`    $ rm -rf dist/apps/${app}`);
     else rmSync(join(repoRoot, `dist/apps/${app}`), { recursive: true, force: true });
   }
@@ -154,10 +157,10 @@ async function buildApps() {
     await sh(null, `pnpm nx run-many -t build -c production --projects=${projects} --exclude-task-dependencies --skip-nx-cache --parallel=${opts.concurrency}`, 'build:apps');
     // A dry run has no real build to fail: `--fail-at=build:<app>` stands in for one app's failure.
     const simulated = opts.dryRun && /^build:(.+)$/.exec(opts.failAt ?? '')?.[1];
-    if (simulated && APPS.includes(simulated)) throw new Error(`build of ${simulated} failed (simulated by --fail-at)`);
+    if (simulated && apps.includes(simulated)) throw new Error(`build of ${simulated} failed (simulated by --fail-at)`);
   } catch (e) {
     // nx reports one aggregate failure; the apps without a main-*.js are the ones that broke.
-    const broken = opts.dryRun ? [] : APPS.filter((app) => !newestMain(app));
+    const broken = opts.dryRun ? [] : apps.filter((app) => !newestMain(app));
     throw new Error(`app build failed${broken.length ? ` for ${broken.join(', ')}` : ''}: ${e.message}`);
   }
 }
@@ -185,10 +188,13 @@ async function postBuild(app) {
   await sh(app, `node scripts/stamp-ngsw-worker.mjs ${app}`, log);
 }
 
+// Every app's .env that exists, not only the run's: the bundle check and the env scrub need all of
+// them to catch another app's values. Only the run's own apps must have one.
 function readEnvs() {
-  const missing = APPS.filter((a) => !existsSync(join(repoRoot, `apps/${a}/.env`)));
+  const missing = ctx.apps.filter((a) => !existsSync(join(repoRoot, `apps/${a}/.env`)));
   if (missing.length) abort(`Missing .env for ${missing.join(', ')} — required to source FIREBASE_WEBAPP_CONFIG for the prod builds.`);
-  return Object.fromEntries(APPS.map((a) => [a, readFileSync(join(repoRoot, `apps/${a}/.env`), 'utf8')]));
+  const present = APPS.filter((a) => existsSync(join(repoRoot, `apps/${a}/.env`)));
+  return Object.fromEntries(present.map((a) => [a, readFileSync(join(repoRoot, `apps/${a}/.env`), 'utf8')]));
 }
 
 // ---- app-version doc -----------------------------------------------------
@@ -285,15 +291,15 @@ function gitPhase(version) {
   done('release commit');
   g('tag', ['tag', '-a', tag, '-m', `release v${version}`]);
   done(`tag ${tag}`);
-  for (const app of APPS) {
+  for (const app of ctx.apps) {
     ctx.gitCurrent = `${app} submodule`;
     if (dryRun) console.log(`    (dry run) would: commitSubmoduleStamp(${app}, ${tag}, push) — ngsw commit, tag, push HEAD:main + tag in apps/${app}`);
     else commitSubmoduleStamp(app, version, true);
     done(`${app} submodule pushed`);
   }
   ctx.gitCurrent = 'pointer commit';
-  if (dryRun) console.log(`    (dry run) would: commitPointers(${APPS.length} apps, ${tag}, no push) — one pointer commit`);
-  else commitPointers(APPS, version, false, { callerPushes: true });
+  if (dryRun) console.log(`    (dry run) would: commitPointers(${plural(ctx.apps.length, 'app')}, ${tag}, no push) — one pointer commit`);
+  else commitPointers(ctx.apps, version, false, { callerPushes: true });
   done('pointer commit');
   g('push', ['push', '--atomic', 'origin', 'HEAD:main', tag]);
   done(`push HEAD:main + ${tag}`);
@@ -307,18 +313,19 @@ const fastlaneCommand = ({ app, platform }) =>
 
 // ---- entry ---------------------------------------------------------------
 /**
- * @param opts the object parseReleaseArgs returns. Under opts.dryRun nothing is written or run:
- *   commands are logged, writeVersion / stampNgswVersion / runGates only log. opts.failAt names a
- *   step log (`build:<app>`, `postbuild:<app>`, `build:libs`, …) to fail on.
+ * @param opts the object parseReleaseArgs returns, plus `apps`: the apps of this run, every app when
+ *   left out. Under opts.dryRun nothing is written or run: commands are logged, writeVersion /
+ *   stampNgswVersion / runGates only log. opts.failAt names a step log (`build:<app>`,
+ *   `postbuild:<app>`, `build:libs`, …) to fail on.
  * @returns { version, rows, stamped } after a "go"; the ship phase continues from there.
  */
-export async function releaseAll(opts) {
-  const o = { concurrency: 3, ...opts };
-  if (o.target !== 'all') abort(`releaseAll only releases target 'all' (got '${o.target}').`);
+export async function releaseApps(opts) {
+  const o = { concurrency: 3, apps: APPS, ...opts };
+  const { apps } = o;
   if (o.kind === 'none') abort("'none' is for single-app repair — it cannot release all apps.");
   if (o.kind && !KINDS.includes(o.kind)) abort(`Unknown bump '${o.kind}' — expected patch, minor or major.`);
 
-  ctx = { opts: o, rows: [], children: new Set(), stamped: [], bumped: false, reverted: false,
+  ctx = { opts: o, apps, rows: [], children: new Set(), stamped: [], bumped: false, reverted: false,
           env: process.env, logDir: '', version: '', appIds: {}, armed: false, gitDone: [], gitCurrent: '' };
 
   // 1. preflight, and the bump kind
@@ -335,13 +342,14 @@ export async function releaseAll(opts) {
   // Nothing past this point prompts under --yes; leave no readline open so the process can exit.
   if (o.yes) closePrompts();
 
-  // 2. Sentry pre-check: the ship phase uploads source maps for every app, so an app that cannot
-  //    would otherwise fail only after eight builds. Also where the env is scrubbed (see sh()).
+  // 2. Sentry pre-check: the ship phase uploads source maps for every app of the run, so an app
+  //    that cannot would otherwise fail only after all the builds. Also where the env is scrubbed
+  //    (see sh()).
   await step('sentry-precheck', '', async () => {
     const envs = readEnvs();
-    const bad = APPS.map((a) => [a, missingSentryVars(envs[a])]).filter(([, m]) => m.length);
+    const bad = apps.map((a) => [a, missingSentryVars(envs[a])]).filter(([, m]) => m.length);
     if (bad.length) abort(`Missing Sentry variables — ${bad.map(([a, m]) => `${a}: ${m.join(', ')}`).join('; ')}. Add them to apps/<app>/.env.`);
-    ctx.appIds = Object.fromEntries(APPS.map((a) => [a, firebaseAppId(envs[a])]));
+    ctx.appIds = Object.fromEntries(Object.entries(envs).map(([a, env]) => [a, firebaseAppId(env)]));
     const scrub = appEnvKeys(Object.values(envs));
     ctx.env = Object.fromEntries(Object.entries(process.env).filter(([k]) => !scrub.has(k)));
   });
@@ -352,14 +360,14 @@ export async function releaseAll(opts) {
     else await runGates({ nonInteractive: o.yes, acceptDrift: o.acceptDrift, acceptMenuLabels: o.acceptMenuLabels });
   });
 
-  // 4. ONE bump for all apps, then the ngsw stamps. From here until the go/no-go, a failure or
+  // 4. ONE bump for the run, then the ngsw stamps. From here until the go/no-go, a failure or
   //    Ctrl-C must undo both: package.json plus every stamped ngsw-config.json (app submodules).
   const current = readVersion();
   const next = bump(current, o.kind);
   ctx.version = next;
   ctx.logDir = join(repoRoot, 'dist/release-logs', `v${next}`);
   if (!o.dryRun) mkdirSync(ctx.logDir, { recursive: true });
-  console.log(`\nVersion ${current} -> ${next} (${o.kind}) for ${APPS.length} apps${o.dryRun ? '  [dry run]' : ''}`);
+  console.log(`\nVersion ${current} -> ${next} (${o.kind}) for ${plural(apps.length, 'app')}${o.dryRun ? '  [dry run]' : ''}`);
   for (const sig of SIGNALS) process.once(sig, onSignal);
   process.once('exit', onExit);
   try {
@@ -367,7 +375,7 @@ export async function releaseAll(opts) {
       ctx.bumped = ctx.armed = true; // before the write: a half-done bump is reverted too
       if (o.dryRun) console.log(`    (dry run) would write package.json ${current} -> ${next}`);
       else writeVersion(current, next);
-      for (const app of APPS) {
+      for (const app of apps) {
         if (o.dryRun) { console.log(`    (dry run) would stamp apps/${app}/ngsw-config.json`); ctx.stamped.push(app); }
         else if (stampNgswVersion(app, next)) ctx.stamped.push(app);
       }
@@ -375,7 +383,7 @@ export async function releaseAll(opts) {
 
     // 5. logo assets — before the build, so the rewritten manifest/icons are bundled. Non-fatal,
     //    as in the single-app release: the committed icons are still valid.
-    await step('logo', '', () => runPool(APPS, o.concurrency, (app) => step('logo', app, async () => {
+    await step('logo', '', () => runPool(apps, o.concurrency, (app) => step('logo', app, async () => {
       try { await sh(app, `node scripts/gen-logo-assets.mjs ${app}`, `logo:${app}`); }
       catch (e) { console.log(`    ⚠ Logo generation failed for ${app} — continuing with the committed icons. ${e.message}`); }
     })));
@@ -395,7 +403,7 @@ export async function releaseAll(opts) {
     });
 
     // 7. per-app checks and stamps on the fresh bundles
-    const post = await step('postbuild', '', () => runPool(APPS, o.concurrency, (app) => step('postbuild', app, () => postBuild(app))));
+    const post = await step('postbuild', '', () => runPool(apps, o.concurrency, (app) => step('postbuild', app, () => postBuild(app))));
     const bad = post.filter((r) => !r.ok);
     if (bad.length) throw new Error(bad.map((r) => `${r.item}: ${r.error.message}`).join('\n'));
   } catch (e) {
@@ -404,15 +412,15 @@ export async function releaseAll(opts) {
   }
 
   // 8. the single go/no-go: everything is built and checked; the next step goes outward.
-  const native = o.native ? nativeTargets(APPS, (p) => existsSync(join(repoRoot, p))) : [];
-  console.log(`\n=== v${next} is built (${APPS.length} apps) ===`);
-  for (const app of APPS) console.log(`  ${app.padEnd(12)} -> ${SITES[app]}`);
+  const native = o.native ? nativeTargets(apps, (p) => existsSync(join(repoRoot, p))) : [];
+  console.log(`\n=== v${next} is built (${plural(apps.length, 'app')}) ===`);
+  for (const app of apps) console.log(`  ${app.padEnd(12)} -> ${SITES[app]}`);
   if (o.native) console.log(`  native: ${native.length ? native.map((t) => `${t.app}/${t.platform}`).join(', ') : 'no android/ios platforms found'}`);
   console.log(`\n${formatSummary(ctx.rows)}\n`);
   // Ctrl-C at this prompt is a "No" (see ask()); the exit guard covers whatever else ends the run.
   let go = o.yes;
   if (!go) {
-    const ans = (await ask(`Ship v${next} to ${APPS.length} apps (Sentry upload, hosting deploy, live check, commit/tag/push)? [y/N] `, { onInterrupt: 'n' })).toLowerCase();
+    const ans = (await ask(`Ship v${next} to ${plural(apps.length, 'app')} (Sentry upload, hosting deploy, live check, commit/tag/push)? [y/N] `, { onInterrupt: 'n' })).toLowerCase();
     go = ans === 'y' || ans === 'yes';
   }
   for (const sig of SIGNALS) process.removeListener(sig, onSignal);
@@ -431,7 +439,7 @@ export async function releaseAll(opts) {
 
   // 1. Sentry + deploy + verify per app. A failed app is recorded, never aborts the others.
   //    The app-less `ship` row times the whole pool; sentry / deploy / verify rows are per-app detail.
-  const shipped = await step('ship', '', () => runPool(APPS, o.concurrency, shipApp));
+  const shipped = await step('ship', '', () => runPool(apps, o.concurrency, shipApp));
   const verifiedApps = shipped.filter((r) => r.ok).map((r) => r.item);
   const failedApps = shipped.filter((r) => !r.ok).map((r) => ({ app: r.item, reason: r.error?.message ?? String(r.error) }));
 
@@ -464,7 +472,7 @@ export async function releaseAll(opts) {
     });
   } catch { appVersionWritten = false; } // writeAppVersion itself never throws; step() has logged it
 
-  // 3. git, even when sites failed: the version was built and gated for every app and the repair
+  // 3. git, even when sites failed: the version was built and gated for the run's apps and the repair
   //    path redeploys exactly it.
   console.log('\ngit');
   let gitError = null;
@@ -477,7 +485,7 @@ export async function releaseAll(opts) {
   const failedNative = [];
   if (o.native) {
     const failedSet = new Set(failedApps.map((f) => f.app));
-    const targets = nativeTargets(APPS.filter((a) => !failedSet.has(a)), (p) => existsSync(join(repoRoot, p)));
+    const targets = nativeTargets(apps.filter((a) => !failedSet.has(a)), (p) => existsSync(join(repoRoot, p)));
     console.log(`\nnative lanes: ${targets.length ? targets.map((t) => `${t.app}/${t.platform}`).join(', ') : 'none (no android/ios platforms)'}`);
     for (const t of targets) {
       const name = `native:${t.app}-${t.platform}`;
@@ -495,7 +503,7 @@ export async function releaseAll(opts) {
 
   const problems = failedApps.length + failedNative.length + (gitError ? 1 : 0) + (appVersionWritten ? 0 : 1);
   if (failedApps.length) {
-    console.log(`\n✖ ${failedApps.length} of ${APPS.length} sites are NOT on v${next}:`);
+    console.log(`\n✖ ${failedApps.length} of ${plural(apps.length, 'site')} NOT on v${next}:`);
     for (const f of failedApps) console.log(`    ${f.app}: ${f.reason}\n      repair:  pnpm release ${f.app} none`);
   }
   if (gitError) {
@@ -508,7 +516,8 @@ export async function releaseAll(opts) {
   if (!appVersionWritten) console.log('\n✖ app-version was not written — see the instructions above.');
   for (const f of failedNative) console.log(`\n✖ ${f.name}: ${f.reason}`);
   if (problems) process.exitCode = 1;
-  else console.log(`\n✔ v${next} released to ${APPS.length} sites${o.native ? ' and the native targets' : ''}.`);
+  else console.log(`\n✔ v${next} released to ${plural(apps.length, 'site')}${o.native ? ' and the native targets' : ''}.`);
+  if (apps.length < APPS.length) console.log(`  The other ${plural(APPS.length - apps.length, 'app')} stay on their current version.`);
 
   return { version: next, rows: ctx.rows, stamped: ctx.stamped, verifiedApps, failedApps, failedNative, ok: problems === 0 };
 }

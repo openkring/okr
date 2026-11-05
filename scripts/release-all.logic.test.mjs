@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { bump, APPS } from './release-shared.mjs';
 import { parseReleaseArgs, runPool, missingSentryVars, appEnvKeys, firebaseAppId, envValue, fillMissingEnv,
-  bundleConfigProblem, appVersionPatch, nativeTargets, formatSummary, repairKindProblem } from './release-all.logic.mjs';
+  bundleConfigProblem, appVersionPatch, nativeTargets, formatSummary, singleAppProblem } from './release-all.logic.mjs';
 
 test('bump keeps today\'s semantics', () => {
   assert.equal(bump('7.56.2', 'patch'), '7.56.3');
@@ -145,20 +145,31 @@ test('formatSummary: total sums the app-less phase rows; per-app rows are shown 
 });
 
 test('repair: apps may only redeploy the tagged current version', () => {
-  assert.equal(repairKindProblem({ app: 'kwa-app', kind: 'none', tagExists: true }), null);
-  assert.match(repairKindProblem({ app: 'kwa-app', kind: 'patch', tagExists: true }), /all/);
-  assert.match(repairKindProblem({ app: 'kwa-app', kind: 'none', tagExists: false }), /tag/);
-  assert.equal(repairKindProblem({ app: 'okr-website', kind: 'patch', tagExists: false }), null);
+  assert.equal(singleAppProblem({ app: 'kwa-app', kind: 'none', tagExists: true }), null);
+  assert.match(singleAppProblem({ app: 'kwa-app', kind: 'none', tagExists: false }), /tag/);
+  assert.equal(singleAppProblem({ app: 'okr-website', kind: 'patch', tagExists: false }), null);
+});
+
+test('single app: a patch is allowed, minor and major go through all', () => {
+  assert.equal(singleAppProblem({ app: 'kwa-app', kind: 'patch', tagExists: true }), null);
+  assert.equal(singleAppProblem({ app: 'kwa-app', kind: 'patch', tagExists: false, matchesTag: false }), null);
+  assert.match(singleAppProblem({ app: 'kwa-app', kind: 'minor', tagExists: true }), /all minor/);
+  assert.match(singleAppProblem({ app: 'kwa-app', kind: 'major', tagExists: true }), /all major/);
+});
+
+test('single app: minVersion and forceUpdate are global, so a patch refuses them', () => {
+  assert.match(singleAppProblem({ app: 'kwa-app', kind: 'patch', tagExists: true, minVersion: '7.57.1' }), /--min-version/);
+  assert.match(singleAppProblem({ app: 'kwa-app', kind: 'patch', tagExists: true, forceUpdate: true }), /--force-update/);
 });
 
 test('repair: refuses when the code does not match the release tag', () => {
-  assert.equal(repairKindProblem({ app: 'kwa-app', kind: 'none', tagExists: true, matchesTag: true }), null);
-  const refusal = repairKindProblem({ app: 'kwa-app', kind: 'none', tagExists: true, matchesTag: false, tag: 'v7.57.0' });
+  assert.equal(singleAppProblem({ app: 'kwa-app', kind: 'none', tagExists: true, matchesTag: true }), null);
+  const refusal = singleAppProblem({ app: 'kwa-app', kind: 'none', tagExists: true, matchesTag: false, tag: 'v7.57.0' });
   assert.match(refusal, /v7\.57\.0/);
   assert.match(refusal, /release through `all`/);
   assert.match(refusal, /Not on main/);
   assert.doesNotMatch(refusal, /git worktree add/);
-  assert.equal(repairKindProblem({ app: 'okr-website', kind: 'patch', tagExists: false, matchesTag: false }), null);
+  assert.equal(singleAppProblem({ app: 'okr-website', kind: 'patch', tagExists: false, matchesTag: false }), null);
 });
 
 test('envValue: plain, export, quoted, commented, multi-line, empty and absent', () => {

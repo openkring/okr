@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Non-interactive release wrapper (for a Claude session or CI):
 #   scripts/release-app.sh all <patch|minor|major> [--native]   release all eight apps at one new version
-#   scripts/release-app.sh <app> none                          repair: re-deploy ONE app at the current,
-#                                                              already tagged version (no bump/commit/tag)
-# `all` passes --yes (the single go/no-go) and, only when the feature catalogue drifts, --accept-drift.
+#   scripts/release-app.sh <app> patch [--native]               release ONE app at a new patch version
+#   scripts/release-app.sh <app> none                           repair: re-deploy ONE app at the current,
+#                                                               already tagged version (no bump/commit/tag)
+# A new version passes --yes (the single go/no-go) and, only when the feature catalogue drifts, --accept-drift.
 # Nothing is piped in: stdin is /dev/null, so every remaining prompt takes its default.
 # This wrapper never sources an app .env. The orchestrator reads each app's own .env and hands
 # every child its own scrubbed environment, so a sourced .env would be scrubbed anyway (defense in
@@ -15,6 +16,7 @@ set -euo pipefail
 usage() {
   cat >&2 <<'USAGE'
 usage: scripts/release-app.sh all <patch|minor|major> [--native]
+       scripts/release-app.sh <app> patch [--native]
        scripts/release-app.sh <app> none
 USAGE
   exit 2
@@ -24,16 +26,18 @@ USAGE
 target="$1"; kind="$2"; native=''
 if [ "$target" = all ]; then
   case "$kind" in patch|minor|major) ;; *) usage ;; esac
-  if [ "$#" -eq 3 ]; then
-    [ "$3" = --native ] || usage
-    native='--native'
-  elif [ "$#" -gt 3 ]; then
-    usage
-  fi
 else
-  # a single app is only ever repaired: `<app> none`, nothing else
-  [ "$kind" = none ] && [ "$#" -eq 2 ] || usage
+  # a single app takes a patch or a repair, never a minor or major version
+  case "$kind" in patch|none) ;; *) usage ;; esac
   case "$target" in *-app) ;; *) usage ;; esac
+fi
+if [ "$kind" = none ]; then
+  [ "$#" -eq 2 ] || usage
+elif [ "$#" -eq 3 ]; then
+  [ "$3" = --native ] || usage
+  native='--native'
+elif [ "$#" -gt 3 ]; then
+  usage
 fi
 
 cd "$(dirname "$0")/.."
@@ -50,10 +54,10 @@ if [ -n "$(git status --porcelain -- . ':(exclude)planning')" ]; then
   exit 3
 fi
 
-if [ "$target" = all ]; then
+if [ "$kind" != none ]; then
   # the drift gate asks only when drift exists; pass --accept-drift only then
   set +e; node scripts/check-feature-catalogue.mjs >/dev/null 2>&1; rc=$?; set -e
-  args=(all "$kind" --yes)
+  args=("$target" "$kind" --yes)
   [ "$rc" -eq 1 ] && args+=(--accept-drift)
   [ -n "$native" ] && args+=("$native")
   exec node scripts/release.mjs "${args[@]}" </dev/null

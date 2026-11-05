@@ -3,30 +3,32 @@
 // Usage:
 //   node scripts/release.mjs                          # interactive target picker
 //   node scripts/release.mjs all <patch|minor|major> [flags]   # release all eight apps (release-all.mjs)
+//   node scripts/release.mjs <app> patch [flags]      # new patch version for ONE app (same pipeline)
 //   node scripts/release.mjs <app> none               # repair: re-deploy ONE app at the current,
 //                                                     #   already tagged version (no bump/commit/tag)
 //   node scripts/release.mjs <website> [kind]         # release one website (gates, bump, deploy)
 //   node scripts/release.mjs functions               # deploy Cloud Functions (all, or prompted subset)
 //   node scripts/release.mjs rules                   # deploy firestore + storage rules
 // `all` flags: --native --yes --accept-drift --accept-menu-labels --dry-run --concurrency=N
-//   --min-version=x.y.z --force-update. A new version of an app always goes through `all`.
-// Deterministic spine; confirmations are interactive. `all` and a repair write the app-version
+//   --min-version=x.y.z --force-update. `<app> patch` takes the same flags except the last two, which
+//   apply to every app. Minor and major versions always go through `all`.
+// Deterministic spine; confirmations are interactive. `all`, a patch and a repair write the app-version
 // Firestore doc themselves (firebase-admin, ADC); a website release still prints the value to apply.
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { stampNgswVersion } from './stamp-ngsw-version.mjs';
-import { parseReleaseArgs, repairKindProblem, appVersionPatch, fillMissingEnv } from './release-all.logic.mjs';
-import { releaseAll, writeAppVersion } from './release-all.mjs';
+import { parseReleaseArgs, singleAppProblem, appVersionPatch, fillMissingEnv } from './release-all.logic.mjs';
+import { releaseApps, writeAppVersion } from './release-all.mjs';
 import {
   repoRoot, SITES, PROD_APP, run, capture, ask, confirm, closePrompts, abort, bump, readVersion, writeVersion,
   preflight, runGates, verifyLive, commitSubmoduleStamp, commitPointers,
 } from './release-shared.mjs';
 
 // ---- app release ---------------------------------------------------------
-// A `*-app` is only ever released here as a repair (kind 'none', checked by main()): same version,
-// no gates, no bump/commit/tag. A website runs the full flow (gates, bump prompt, deploy).
+// A `*-app` only comes here as a repair (kind 'none', checked by main()): same version, no gates,
+// no bump/commit/tag. A website runs the full flow (gates, bump prompt, deploy).
 // `kindArg` pre-answers the bump prompt for a website.
 async function releaseApp(app, kindArg = null) {
   const site = SITES[app];
@@ -273,6 +275,8 @@ function repairMatchesTag(app, version) {
 const USAGE = `Usage:
   node scripts/release.mjs all <patch|minor|major> [--native] [--yes] [--accept-drift] [--accept-menu-labels]
                            [--dry-run] [--concurrency=N] [--min-version=x.y.z] [--force-update]
+  node scripts/release.mjs <app> patch [--native] [--yes] [--accept-drift] [--accept-menu-labels]
+                           [--dry-run] [--concurrency=N]   # new patch version, this app only
   node scripts/release.mjs <app> none        # repair: re-deploy one app at the current tagged version
   node scripts/release.mjs <website> [kind]
   node scripts/release.mjs functions | rules`;
@@ -289,20 +293,23 @@ async function main() {
     Object.keys(SITES).forEach((a) => console.log(`  ${a}`));
     console.log('  functions  (Cloud Functions)\n  rules      (firestore + storage rules)');
     target = await ask('\nChoose target: ');
+    if (SITES[target] && target.endsWith('-app'))
+      opts.kind = (await ask(`\n${target} — patch (new version, this app only) or none (repair at the current version)? [patch] `)).toLowerCase() || 'patch';
   }
 
   // The kind/tag check runs before anything else — before preflight's questions, any write or build.
   if (SITES[target] && target.endsWith('-app')) {
-    if (!opts.kind) console.log(`No bump given — treating it as 'none': a single app is only repaired (re-deployed at the current tagged version).`);
+    if (!opts.kind) console.log(`No bump given — treating it as 'none': a repair at the current tagged version. A new version needs an explicit 'patch'.`);
     const kind = opts.kind ?? 'none';
     const tagExists = !!capture('git', ['tag', '-l', `v${readVersion()}`]);
     const version = readVersion();
-    const matchesTag = !tagExists || repairMatchesTag(target, version);
-    const problem = repairKindProblem({ app: target, kind, tagExists, matchesTag, tag: `v${version}` });
+    const matchesTag = kind !== 'none' || !tagExists || repairMatchesTag(target, version);
+    const problem = singleAppProblem({ app: target, kind, tagExists, matchesTag, tag: `v${version}`, minVersion: opts.minVersion, forceUpdate: opts.forceUpdate });
     if (problem) abort(problem);
   }
 
-  if (target === 'all') { await releaseAll({ ...opts, target }); return; }
+  if (target === 'all') { await releaseApps(opts); return; }
+  if (SITES[target] && target.endsWith('-app') && opts.kind === 'patch') { await releaseApps({ ...opts, apps: [target] }); return; }
 
   await preflight();
   if (target === 'functions') await releaseFunctions();

@@ -36,17 +36,25 @@ export function parseReleaseArgs(argv) {
   return out;
 }
 
-// ---- single-app repair -----------------------------------------------------
-// A single app is only ever re-deployed at the version `all` already cut and tagged ("repair");
-// a new version always goes through `all`. Websites keep their own bump flow. null = fine.
-export function repairKindProblem({ app, kind, tagExists, matchesTag = true, tag = 'v<version>' }) {
+// ---- single app ------------------------------------------------------------
+// A single app either gets a new patch version, or is re-deployed at the version already cut and
+// tagged ("repair"). Minor and major versions always go through `all`. minVersion and forceUpdate
+// are global, so a run that leaves apps out must not touch them: it would lock the other apps'
+// users out of a build that was never deployed for them. Websites keep their own bump flow.
+// null = fine.
+export function singleAppProblem({ app, kind, tagExists, matchesTag = true, tag = 'v<version>', minVersion = null, forceUpdate = false }) {
   if (!app.endsWith('-app')) return null;
+  if (kind === 'patch') {
+    return minVersion || forceUpdate
+      ? '--min-version and --force-update apply to every app: they are only allowed with `all`.'
+      : null;
+  }
   if (kind !== 'none')
-    return `A new version goes through \`all\`: node scripts/release.mjs all <patch|minor|major>. A single app is only re-deployed at the current version: node scripts/release.mjs ${app} none.`;
+    return `A minor or major version goes through \`all\`: node scripts/release.mjs all ${kind}. A single app takes a patch (node scripts/release.mjs ${app} patch) or a repair at the current version (node scripts/release.mjs ${app} none).`;
   if (!tagExists)
-    return 'Repair re-deploys the version `all` already cut, but the current version has no tag. Release through `all` first.';
+    return `Repair re-deploys a version that was already cut, but the current version has no tag. Cut one first: node scripts/release.mjs ${app} patch, or release through \`all\`.`;
   if (!matchesTag)
-    return `The working tree does not match the release tag ${tag}: a repair must build exactly what the tag shipped. Either release through \`all\`, or check out the tag state in a full checkout (git checkout ${tag} --recurse-submodules, with the app submodules initialised and the app .env files present) and run  pnpm release ${app} none  there, answering y at "Not on main".`;
+    return `The working tree does not match the release tag ${tag}: a repair must build exactly what the tag shipped. Either cut a new version (pnpm release ${app} patch, or release through \`all\`), or check out the tag state in a full checkout (git checkout ${tag} --recurse-submodules, with the app submodules initialised and the app .env files present) and run  pnpm release ${app} none  there, answering y at "Not on main".`;
   return null;
 }
 
