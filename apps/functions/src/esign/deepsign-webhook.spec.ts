@@ -1,0 +1,129 @@
+import { Timestamp } from 'firebase-admin/firestore';
+import { describe, expect, it, vi } from 'vitest';
+import type { StoredWebhookEvent, WebhookRequest } from '../_webhooks/types';
+import { deepSignDedupeKey, deepSignUpdate, makeDeepSignHandler, splitDeepSignEvent, type DeepSignPayload } from './deepsign-webhook';
+
+const now = Timestamp.fromDate(new Date('2026-01-01T00:00:00Z'));
+const pending = (id: string) => ({ signeeId: id, signStatus: 'pending' });
+const payload = (p: Partial<DeepSignPayload>): DeepSignPayload => ({ esignId: 'e1', ...p });
+
+describe('deepSignUpdate', () => {
+  it('marks the matching signee signed on signee-completed', () => {
+    const record = { documentStatus: 'pending', signees: [pending('a'), pending('b')] };
+    const u = deepSignUpdate(record, payload({ eventType: 'signee-completed', signeeId: 'a', timestamp: '2026-02-03T04:05:06Z' }), now)!;
+    const t = Timestamp.fromDate(new Date('2026-02-03T04:05:06Z'));
+    expect(u['signees']).toEqual([{ signeeId: 'a', signStatus: 'signed', signedTime: t, completionTime: t }, pending('b')]);
+    expect(u['events']).toBeDefined();
+    expect(u['updatedAt']).toBeDefined();
+    expect(u['documentStatus']).toBeUndefined();
+  });
+
+  it('sets documentStatus, signStatus and completionTime on document-completed', () => {
+    const u = deepSignUpdate({ documentStatus: 'pending' }, payload({ eventType: 'document-completed' }), now)!;
+    expect(u['documentStatus']).toBe('signed');
+    expect(u['signStatus']).toBe('signed');
+    expect(u['completionTime']).toEqual(now);
+    expect(u['events']).toBeDefined();
+  });
+
+  it('marks a late signee on a signed record without touching documentStatus', () => {
+    const record = { documentStatus: 'signed', signees: [pending('a')] };
+    const u = deepSignUpdate(record, payload({ eventType: 'signee-completed', signeeId: 'a' }), now)!;
+    expect((u['signees'] as Array<Record<string, unknown>>)[0]['signStatus']).toBe('signed');
+    expect(u['events']).toBeDefined();
+    expect(u).not.toHaveProperty('documentStatus');
+    expect(u).not.toHaveProperty('signStatus');
+    expect(u).not.toHaveProperty('completionTime');
+  });
+
+  it('returns null for a signee event on a rejected record', () => {
+    const record = { documentStatus: 'rejected', signees: [pending('a')] };
+    expect(deepSignUpdate(record, payload({ eventType: 'signee-completed', signeeId: 'a' }), now)).toBeNull();
+  });
+
+  it('returns null for document-completed on a terminal record', () => {
+    for (const documentStatus of ['signed', 'rejected', 'withdrawn']) {
+      expect(deepSignUpdate({ documentStatus }, payload({ eventType: 'document-completed' }), now)).toBeNull();
+    }
+  });
+
+  it('returns null for an unknown eventType', () => {
+    expect(deepSignUpdate({ documentStatus: 'pending' }, payload({ eventType: 'something-else' }), now)).toBeNull();
+  });
+
+  it('returns null for a signee already signed', () => {
+    const record = { documentStatus: 'pending', signees: [{ signeeId: 'a', signStatus: 'signed' }] };
+    expect(deepSignUpdate(record, payload({ eventType: 'signee-completed', signeeId: 'a' }), now)).toBeNull();
+  });
+
+  it('returns null for an unknown signee', () => {
+    const record = { documentStatus: 'pending', signees: [pending('a')] };
+    expect(deepSignUpdate(record, payload({ eventType: 'signee-completed', signeeId: 'zz' }), now)).toBeNull();
+  });
+
+  it('uses now for an unparseable timestamp', () => {
+    const u = deepSignUpdate({ documentStatus: 'pending' }, payload({ eventType: 'document-completed', timestamp: 'not a date' }), now)!;
+    expect(u['completionTime']).toEqual(now);
+  });
+});
+
+describe('splitDeepSignEvent / deepSignDedupeKey', () => {
+  const req = { method: 'POST', rawBody: undefined, query: { esignId: 'e1' }, header: () => undefined } as WebhookRequest;
+
+  it('reads the JSON body and takes esignId from the query', () => {
+    const out = splitDeepSignEvent(Buffer.from('{"eventType":"document-completed","esignId":"spoofed"}'), req);
+    expect(out).toEqual([{ eventType: 'document-completed', esignId: 'e1' }]);
+  });
+
+  it('throws on a body that is not a JSON object', () => {
+    expect(() => splitDeepSignEvent(Buffer.from('[1]'), req)).toThrow();
+    expect(() => splitDeepSignEvent(Buffer.from('nope'), req)).toThrow();
+  });
+
+  it('builds the dedupe key from esignId, eventType, signeeId and timestamp', () => {
+    expect(deepSignDedupeKey({ esignId: 'e1', eventType: 'signee-completed', signeeId: 'a', timestamp: 't' })).toBe('e1|signee-completed|a|t');
+    expect(deepSignDedupeKey({ esignId: 'e1', eventType: 'document-completed' })).toBe('e1|document-completed||');
+  });
+});
+
+describe('makeDeepSignHandler', () => {
+  const row = (p: unknown): StoredWebhookEvent => ({ clientId: 'deepsign', type: 'deepsign', tenants: [], payload: p }) as unknown as StoredWebhookEvent;
+
+  it('handles an update and reports the record tenant', async () => {
+    const run = vi.fn(async (_id: string, decide: (r: Record<string, unknown>) => unknown) => {
+      decide({ documentStatus: 'pending' });
+      return { found: true as const, tenantId: 'scs', updated: true };
+    });
+    const out = await makeDeepSignHandler(run)(row(payload({ eventType: 'document-completed' })), 'ev1');
+    expect(out).toEqual({ state: 'handled', tenantId: 'scs' });
+    expect(run).toHaveBeenCalledWith('e1', expect.any(Function));
+  });
+
+  it('ignores a record with nothing to change, keeping the tenant', async () => {
+    const run = async () => ({ found: true as const, tenantId: 'scs', updated: false });
+    expect(await makeDeepSignHandler(run)(row(payload({})), 'ev1')).toEqual({ state: 'ignored', tenantId: 'scs' });
+  });
+
+  it('ignores a missing record', async () => {
+    const run = async () => ({ found: false as const });
+    expect(await makeDeepSignHandler(run)(row(payload({})), 'ev1')).toEqual({ state: 'ignored' });
+  });
+
+  it('ignores a missing or empty esignId without running', async () => {
+    const run = vi.fn();
+    expect(await makeDeepSignHandler(run)(row({ eventType: 'document-completed' }), 'ev1')).toEqual({ state: 'ignored' });
+    expect(await makeDeepSignHandler(run)(row({ esignId: '' }), 'ev1')).toEqual({ state: 'ignored' });
+    expect(run).not.toHaveBeenCalled();
+  });
+
+  it('fails without quoting the payload', async () => {
+    await expect(makeDeepSignHandler(vi.fn())(row('secret-text'), 'ev1')).rejects.toThrow(/^(?!.*secret-text)/);
+  });
+
+  it('logs client id, event type and state only', async () => {
+    const log = vi.fn();
+    const run = async () => ({ found: true as const, updated: true });
+    await makeDeepSignHandler(run, log)(row(payload({ eventType: 'document-completed', signeeId: 'a' })), 'ev1');
+    expect(log).toHaveBeenCalledWith('deepsign', 'document-completed', 'handled');
+  });
+});
