@@ -599,10 +599,11 @@ export function callerMaySendFor(userData: Record<string, unknown> | undefined, 
  * Also handles password reset emails when template === 'password_reset':
  * generates a Firebase password reset link and injects { url, email, app_name }
  * into templateVariables automatically. No authentication required for this case.
- * For all other templates/html sends, the caller must be authenticated.
- * @param to                list of recipient email addresses
- * @param cc                optional CC addresses
- * @param bcc               optional BCC addresses
+ * For all other templates/html sends, the caller must be authenticated AND belong to `appId`
+ * (`appId` in `users/{uid}.tenants`, or the operator); otherwise permission-denied.
+ * @param to                list of recipient email addresses; on a password reset only the first is used
+ * @param cc                optional CC addresses; ignored on a password reset
+ * @param bcc               optional BCC addresses; ignored on a password reset
  * @param appId             human-readable app identifier (e.g. 'scs', 'test')
  * @param html              HTML body (may be empty when using a template)
  * @param from              sender address (derived from app config for password reset)

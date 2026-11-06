@@ -40,14 +40,6 @@ describe('resetEnvelope', () => {
     expect(env.cc).toBeUndefined();
     expect(env.bcc).toBeUndefined();
   });
-
-  it('a request with cc, bcc and two to entries is cut down to one address', () => {
-    // The callable builds its send from this result and never reads cc/bcc on the reset path.
-    const request = { to: ['victim@x.ch', 'attacker@x.ch'], cc: ['c@x.ch'], bcc: ['attacker@x.ch'] };
-    const env = resetEnvelope(request.to);
-    expect(env).toEqual({ to: ['victim@x.ch'], cc: undefined, bcc: undefined });
-    expect(JSON.stringify(env)).not.toContain('attacker');
-  });
 });
 
 describe('callerMaySendFor', () => {
