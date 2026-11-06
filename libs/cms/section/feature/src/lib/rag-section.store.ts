@@ -1,6 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { ToastController } from '@ionic/angular';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { of } from 'rxjs';
@@ -9,7 +10,8 @@ import { map } from 'rxjs/operators';
 import { AppStore } from '@okr/shared-feature';
 import { DocumentModel } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';
-import { sanitizeFileName } from '@okr/shared-util-core';
+import { showToast } from '@okr/shared-util-angular';
+import { isPdf, sanitizeFileName } from '@okr/shared-util-core';
 
 import { ActivityService } from '@okr/activity-data-access';
 import { UploadService } from '@okr/avatar-data-access';
@@ -19,6 +21,8 @@ import { FolderService } from '@okr/content-folder-data-access';
 import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
 const RAG_FOLDER_KEY = 'rag';
+/** The PDF hint is long: the default toast is gone before it can be read. */
+const PDF_WARNING_DURATION = 8000;
 
 export interface RagMessage {
     role: 'user' | 'model';
@@ -67,6 +71,7 @@ export const RagStore = signalStore(
         uploadService: inject(UploadService),
         documentService: inject(DocumentService),
         folderService: inject(FolderService),
+        toastController: inject(ToastController),
         i18n: inject(I18nService).translateAll(SECTION_I18N_KEYS)
     })),
     withProps((store) => ({
@@ -104,6 +109,8 @@ export const RagStore = signalStore(
          * DocumentModel per file in the 'rag' folder, and persists them.
          * File picking is done in the component via a native <label>+<input>
          * so that Safari's isTrusted user-gesture check is satisfied.
+         * An uploaded PDF stays welcome, the toast only points to the better format. It comes
+         * after the upload because the upload modal would cover it.
          */
         async addDocument(files: File[]): Promise<void> {
             if (files.length === 0) return;
@@ -124,6 +131,10 @@ export const RagStore = signalStore(
                 document.folderKeys = [RAG_FOLDER_KEY];
                 await store.documentService.create(document, currentUser ?? undefined);
             }));
+
+            if (files.some((file, i) => downloadUrls[i] && isPdf(file.name))) {
+                await showToast(store.toastController, store.i18n.rag_pdfWarning(), PDF_WARNING_DURATION);
+            }
         },
 
         /**
