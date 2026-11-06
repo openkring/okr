@@ -11,7 +11,7 @@ import { isBarActive } from '@okr/cms-menu-util';
 import { MenuItemsStore } from './menu-items.store';
 
 /** Ionic's `lg` breakpoint: where the split pane shows the menu and where a `top` bar has room. */
-const WIDE_QUERY = '(min-width: 992px)';
+export const MENU_WIDE_QUERY = '(min-width: 992px)';
 
 /** The outlet's `top` while the bar is shown: the bar's height plus the notch it owns. */
 const BAR_TOP = 'calc(56px + var(--ion-safe-area-top, 0px))';
@@ -22,8 +22,8 @@ const BAR_TOP = 'calc(56px + var(--ion-safe-area-top, 0px))';
  * `MenuLayout` must NOT inject `MenuItemsStore` in a field or constructor, directly or through
  * anything that does: that store opens the tenant-wide `menuItems` query, which on a phone is
  * deliberately kept off the boot path (perf-baselines.md). The shell injects this class at boot
- * and calls {@link start} once the menu tree is mounted; `Injector.get` there is the only place
- * the store is reached.
+ * and calls {@link start} once the menu tree is mounted and the session is ready; `Injector.get`
+ * there is the only place the store is reached.
  *
  * Until the root document has arrived, the last type seen on this device stands in for it, so a
  * tenant with a bar does not flash a sidebar first.
@@ -50,7 +50,7 @@ export class MenuLayout {
     return this.menuItemsStore()?.menuItems()?.find(item => item.name === name);
   });
 
-  private readonly isWide = signal(this.isBrowser && typeof window.matchMedia === 'function' ? window.matchMedia(WIDE_QUERY).matches : false);
+  private readonly isWide = signal(this.isBrowser && typeof window.matchMedia === 'function' ? window.matchMedia(MENU_WIDE_QUERY).matches : false);
 
   /** The layout type: the live root document once it is there, else the per-device hint. */
   public readonly menuType = computed<MenuType>(() => {
@@ -69,7 +69,7 @@ export class MenuLayout {
   constructor() {
     if (this.isBrowser && typeof window.matchMedia === 'function') {
       // The service lives as long as the app, so the listener is never removed.
-      window.matchMedia(WIDE_QUERY).addEventListener('change', event => this.isWide.set(event.matches));
+      window.matchMedia(MENU_WIDE_QUERY).addEventListener('change', event => this.isWide.set(event.matches));
     }
     // Only a real document value updates the hint: while the list loads, root() is undefined and
     // the hint must keep what the last visit stored, not be overwritten with the `left` default.

@@ -305,9 +305,10 @@ export class Menu {
     // header), so it is closed here.
     const popover = this.host.nativeElement.closest('ion-popover');
     const dropdown = popover?.classList.contains('okr-menu-dropdown') ? popover : null;
+    // Closed before navigating, not after: a slow lazy route would keep it open over the old page.
+    // Not awaited, for the same reason. A `call` row dismisses it a second time through the
+    // controller (SCS-5G in menu.store.ts), and dismissOverlay takes 'overlay does not exist' there.
+    void dismissOverlay(dropdown);
     await this.menuStore.select(menuItem, !!popover && !dropdown);
-    // a `call` row has already closed the popover through dismissOverlay (SCS-5G in menu.store.ts):
-    // dismissing it again rejects with 'overlay does not exist', and nothing is left to close
-    await dismissOverlay(dropdown);
   }
 }
