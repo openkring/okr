@@ -23,14 +23,14 @@ import type { StoredTemplate } from './render-email.logic';
 
 interface Entry {
   doc?: StoredTemplate;
-  version?: { html?: string; text?: string; subject?: string };
+  version?: { html?: string; text?: string; subject?: string; status?: string };
 }
 
-/** Fake reader: `okey` is the published entry, `okey@N` an explicit version (preview). */
+/** Fake reader: `okey` is the published entry, `okey@N` an explicit version (preview). A version is published unless it says otherwise. */
 function readerOf(entries: Record<string, Entry>): TemplateReader {
   return async (okey, version) => {
     const entry = (version !== undefined ? entries[`${okey}@${version}`] : undefined) ?? entries[okey];
-    return { doc: entry?.doc, version: entry?.version as never };
+    return { doc: entry?.doc, version: entry?.version && ({ status: 'published', ...entry.version } as never) };
   };
 }
 
@@ -64,6 +64,23 @@ describe('renderEmail', () => {
     const read = readerOf({ ...base, 'email-text-password-reset_scs': { doc: textDoc('scs', 0), version: RESET } });
     const mail = await renderEmail({ tenantId: 'scs', layout: 'standard', textKey: 'email-text-password-reset', variables: { url } }, read);
     expect(mail.subject).toBe('Shared Seeclub');
+  });
+
+  it('skips a tenant copy whose current version is not published', async () => {
+    const draftText = { doc: textDoc('scs', 2), version: { ...RESET, status: 'draft' } };
+    const read = readerOf({ ...base, 'email-text-password-reset_scs': draftText });
+    const mail = await renderEmail({ tenantId: 'scs', layout: 'standard', textKey: 'email-text-password-reset', variables: { url } }, read);
+    expect(mail.subject).toBe('Shared Seeclub');
+  });
+
+  it('never wraps a mail in a layout whose current version is not published', async () => {
+    const read = readerOf({ ...base, 'email-layout_scs': { doc: layoutDoc('scs'), version: { ...STANDARD, status: 'draft' } } });
+    expect((await renderEmail({ tenantId: 'scs', layout: 'standard', body: '<p>x</p>' }, read)).html).toContain('class="plain"');
+  });
+
+  it('reads a version without a status as not published', async () => {
+    const read: TemplateReader = async (okey) => ({ doc: layoutDoc('system'), version: okey === 'email-layout-plain' ? ({ ...PLAIN, status: undefined } as never) : undefined });
+    await expect(renderEmail({ tenantId: 'scs', layout: 'plain', body: '<p>x</p>' }, read)).rejects.toMatchObject({ code: 'no-layout' });
   });
 
   it('compiles text and subject raw and html escaped', async () => {
@@ -144,7 +161,7 @@ describe('renderEmail', () => {
     const entries = {
       ...base,
       'email-text-password-reset_scs': { doc: textDoc('scs', 0), version: undefined },
-      'email-text-password-reset_scs@3': { doc: textDoc('scs', 0), version: { subject: 'Draft {{app_name}}', html: '<p>draft</p>', text: 'draft' } },
+      'email-text-password-reset_scs@3': { doc: textDoc('scs', 0), version: { subject: 'Draft {{app_name}}', html: '<p>draft</p>', text: 'draft', status: 'draft' } },
     };
     const read = readerOf(entries);
     const live = await renderEmail({ tenantId: 'scs', layout: 'standard', textKey: 'email-text-password-reset' }, read);
@@ -160,7 +177,7 @@ describe('renderEmail', () => {
   it('replaces the layout when the previewed version is a layout, even a draft one', async () => {
     const read = readerOf({
       ...base,
-      'email-layout_scs@2': { doc: { ...layoutDoc('scs'), currentVersion: 0 }, version: { html: '<b>new</b>{{{content}}}', text: 'NEW {{{content}}}' } },
+      'email-layout_scs@2': { doc: { ...layoutDoc('scs'), currentVersion: 0 }, version: { html: '<b>new</b>{{{content}}}', text: 'NEW {{{content}}}', status: 'draft' } },
     });
     const mail = await renderEmail({ tenantId: 'scs', layout: 'standard', body: '<p>x</p>', previewVersion: { okey: 'email-layout_scs', version: 2 } }, read);
     expect(mail.html).toBe('<b>new</b><p>x</p>');

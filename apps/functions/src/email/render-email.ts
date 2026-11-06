@@ -22,7 +22,7 @@ import { reportToSentry } from '../srv/sentry';
 import { htmlToText } from './html-to-text';
 import { isUsableEmailTemplate, layoutHasContent, placeResetLink, SHARED_TEMPLATE_OWNER, StoredTemplate } from './render-email.logic';
 
-type StoredVersion = Pick<TemplateVersionModel, 'html' | 'text' | 'subject'>;
+type StoredVersion = Pick<TemplateVersionModel, 'html' | 'text' | 'subject' | 'status'>;
 
 /** Reads `templates/<okey>` and its `versions/<version ?? currentVersion>`. No doc gives `{}`. */
 export type TemplateReader = (okey: string, version?: number) => Promise<{ doc?: StoredTemplate; version?: StoredVersion }>;
@@ -87,10 +87,14 @@ function resolvedFrom(okey: string, version: number, v: Partial<StoredVersion>):
   return { okey, version, html: v.html ?? '', text: v.text ?? '', subject: v.subject ?? '' };
 }
 
-/** The doc under a fixed key, if its owner is exactly the expected one and it is usable. */
+/**
+ * The doc under a fixed key, if its owner is exactly the expected one and it is usable. `currentVersion`
+ * alone does not prove a publish, because a client writes that pointer: the version must say so itself.
+ */
 async function readOwned(read: TemplateReader, okey: string, owner: string, kind: TemplateKind): Promise<Resolved | undefined> {
   const { doc, version } = await read(okey);
-  return version && isUsableEmailTemplate(doc, owner, kind) ? resolvedFrom(okey, doc?.currentVersion ?? 0, version) : undefined;
+  const usable = version?.status === 'published' && isUsableEmailTemplate(doc, owner, kind);
+  return usable ? resolvedFrom(okey, doc?.currentVersion ?? 0, version) : undefined;
 }
 
 /** The tenant's own doc first, then the shared one; the first usable, published one wins. */

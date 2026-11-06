@@ -52,6 +52,21 @@ export function copyTemplateVersion(source: TemplateVersionModel, version = 1): 
 }
 
 /**
+ * The version a rollback goes to: the nearest published one below `currentVersion`, or undefined when
+ * there is none. Version numbers have gaps (a discarded draft) and a lower version can be an old draft
+ * that was never published, which must not become current by a rollback.
+ */
+export function rollbackTarget(
+  versions: Pick<TemplateVersionModel, 'version' | 'status'>[],
+  currentVersion: number
+): number | undefined {
+  const published = versions
+    .filter((v) => v.status === 'published' && v.version < currentVersion)
+    .map((v) => v.version);
+  return published.length > 0 ? Math.max(...published) : undefined;
+}
+
+/**
  * Pretty-print a JSON string with 2-space indentation so it can be shown
  * structured in an editor. Returns the input unchanged if it is not valid JSON.
  */

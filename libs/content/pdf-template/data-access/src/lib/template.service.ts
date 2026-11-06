@@ -11,7 +11,7 @@ import {
   TemplateCollection, TemplateVersionSubcollection,
   TemplateModel, TemplateVersionModel, UserModel,
 } from '@okr/shared-models';
-import { copyTemplate, copyTemplateVersion, emailCopyKey, emailCopyPlan, getTemplateIndex, isEmailTemplate, templateKindOf } from '@okr/content-pdf-template-util';
+import { copyTemplate, copyTemplateVersion, emailCopyKey, emailCopyPlan, getTemplateIndex, isEmailTemplate, rollbackTarget, templateKindOf } from '@okr/content-pdf-template-util';
 import { getTodayStr, DateFormat, getSystemQuery } from '@okr/shared-util-core';
 import { PFX } from './scope';
 
@@ -256,21 +256,21 @@ export class TemplateService {
   }
 
   /**
-   * Roll the published pointer back to the previous version (N → N-1).
+   * Roll the published pointer back to the nearest published version below the current one.
    * Non-destructive: the newer version document is kept intact, so the next
    * new draft must use max(existing version) + 1 to avoid overwriting it.
+   *
+   * @return false when no published version lies below the current one; nothing is written then
    */
-  public async rollbackVersion(template: TemplateModel, currentUser?: UserModel): Promise<void> {
-    if (template.currentVersion <= 1) return;
-    await this.update(
-      {
-        ...template,
-        currentVersion: template.currentVersion - 1,
-        status: 'published',
-      },
-      currentUser
+  public async rollbackVersion(template: TemplateModel, currentUser?: UserModel): Promise<boolean> {
+    const versions = await getDocs(
+      collection(this.firestoreService.firestore, TemplateCollection, template.okey, TemplateVersionSubcollection)
     );
+    const target = rollbackTarget(versions.docs.map((d) => d.data() as TemplateVersionModel), template.currentVersion);
+    if (target === undefined) return false;
+    await this.update({ ...template, currentVersion: target, status: 'published' }, currentUser);
     await this.clearDraftPointer(template.okey);
+    return true;
   }
 
   /**

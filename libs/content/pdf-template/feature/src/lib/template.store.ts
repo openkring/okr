@@ -168,15 +168,13 @@ export const TemplateStore = signalStore(
     /**
      * Revert to the last version:
      * - if a draft exists, discard the draft (back to the current published version);
-     * - otherwise roll the published pointer back one version (N → N-1).
+     * - otherwise roll the published pointer back to the nearest published version; without one nothing changes.
      */
     async revertToLastVersion(template: TemplateModel): Promise<void> {
       try {
         if (template.draftVersion) {
           await store.templateService.discardDraft(template, store.currentUser());
-        } else if (template.currentVersion > 1) {
-          await store.templateService.rollbackVersion(template, store.currentUser());
-        } else {
+        } else if (!await store.templateService.rollbackVersion(template, store.currentUser())) {
           return;
         }
         const toast = await store.toastController.create({

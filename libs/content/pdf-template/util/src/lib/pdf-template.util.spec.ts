@@ -1,7 +1,8 @@
 import '@angular/compiler';
 import { describe, it, expect } from 'vitest';
+import type { TemplateStatus } from '@okr/shared-models';
 import {
-  copyTemplate, copyTemplateVersion, newTemplate, newTemplateVersion, getTemplateIndex, prettifyJson,
+  copyTemplate, copyTemplateVersion, newTemplate, newTemplateVersion, getTemplateIndex, prettifyJson, rollbackTarget,
 } from './pdf-template.util';
 
 describe('newTemplate', () => {
@@ -196,5 +197,31 @@ describe('copyTemplateVersion subject and text', () => {
     delete legacy.text;
     const copy = copyTemplateVersion(legacy as ReturnType<typeof newTemplateVersion>);
     expect([copy.subject, copy.text]).toEqual(['', '']);
+  });
+});
+
+describe('rollbackTarget', () => {
+  const v = (version: number, status: TemplateStatus) => ({ version, status });
+
+  it('goes to the previous version when it is published', () => {
+    expect(rollbackTarget([v(1, 'published'), v(2, 'published'), v(3, 'published')], 3)).toBe(2);
+  });
+
+  it('skips a never-published draft below the current version', () => {
+    expect(rollbackTarget([v(1, 'published'), v(2, 'draft'), v(3, 'published')], 3)).toBe(1);
+  });
+
+  it('skips a gap left by a discarded draft, whatever the order of the list', () => {
+    expect(rollbackTarget([v(5, 'published'), v(2, 'published'), v(3, 'published')], 5)).toBe(3);
+  });
+
+  it('ignores versions at or above the current one', () => {
+    expect(rollbackTarget([v(1, 'published'), v(2, 'published'), v(3, 'published')], 2)).toBe(1);
+  });
+
+  it('gives undefined when no published version lies below', () => {
+    expect(rollbackTarget([v(1, 'draft'), v(2, 'published')], 2)).toBeUndefined();
+    expect(rollbackTarget([v(1, 'published')], 1)).toBeUndefined();
+    expect(rollbackTarget([], 3)).toBeUndefined();
   });
 });
