@@ -10,9 +10,22 @@ export type TemplateStatus = 'draft' | 'published' | 'archived';
 export type TemplateOutputFormat = 'pdf' | 'docx' | 'html';
 export type TemplateCategory = 'invoice' | 'expense' | 'report' | 'dunning' | 'contract' | 'confirmation' | 'other';
 export type TemplateLanguage = 'de' | 'fr' | 'it' | 'en';
+/**
+ * What a template document is for. 'pdf' is the original kind (invoices, reports, ...);
+ * 'emailLayout' wraps a mail body (header/footer); 'emailText' is the text of one mail.
+ * Legacy docs have no `kind`: every reader coalesces with `kind ?? 'pdf'`.
+ */
+export type TemplateKind = 'pdf' | 'emailLayout' | 'emailText';
+/** Which email layout a send uses. */
+export type EmailLayoutChoice = 'standard' | 'plain';
 export type DocGenerationStatus = 'success' | 'failed';
 /** Which side of the window envelope shows the recipient address; 'none' = no envelope. */
 export type TemplateAddressWindow = 'none' | 'left' | 'right';
+
+/** Template document ids of the email templates the renderer looks up. */
+export const EmailLayoutKey = 'email-layout';
+export const EmailPlainLayoutKey = 'email-layout-plain';
+export const EmailTextPasswordResetKey = 'email-text-password-reset';
 
 export interface TemplateAssetRef {
   key: string;
@@ -28,6 +41,7 @@ export class TemplateModel implements OkrModel {
 
   public name = DEFAULT_NAME;
   public description = DEFAULT_NOTES;
+  public kind: TemplateKind = 'pdf';  // legacy docs lack it: read as `kind ?? 'pdf'`
   public category: TemplateCategory = 'other';
   public language: TemplateLanguage = 'de';
   public currentVersion = 0;
@@ -60,6 +74,8 @@ export class TemplateVersionModel {
   public version = 1;
   public html = '';
   public css = '';
+  public subject = '';  // email kinds only; legacy versions lack it
+  public text = '';     // email kinds only: plain-text half; legacy versions lack it
   public partials: Record<string, string> = {};
   public assets: TemplateAssetRef[] = [];
   public status: TemplateStatus = 'draft';

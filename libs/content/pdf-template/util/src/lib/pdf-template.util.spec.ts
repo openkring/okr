@@ -182,3 +182,19 @@ describe('copyTemplateVersion', () => {
     expect(copyTemplateVersion(sourceVersion(), 5).version).toBe(5);
   });
 });
+
+describe('copyTemplateVersion subject and text', () => {
+  it('carries subject and text', () => {
+    const source = { ...newTemplateVersion(3), subject: 'S', text: 'T' };
+    const copy = copyTemplateVersion(source);
+    expect([copy.subject, copy.text]).toEqual(['S', 'T']);
+  });
+
+  it('defaults subject and text to empty for a legacy version', () => {
+    const legacy = { ...newTemplateVersion(3) } as Partial<ReturnType<typeof newTemplateVersion>>;
+    delete legacy.subject;
+    delete legacy.text;
+    const copy = copyTemplateVersion(legacy as ReturnType<typeof newTemplateVersion>);
+    expect([copy.subject, copy.text]).toEqual(['', '']);
+  });
+});

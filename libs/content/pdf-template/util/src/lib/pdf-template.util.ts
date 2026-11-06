@@ -44,6 +44,8 @@ export function copyTemplateVersion(source: TemplateVersionModel, version = 1): 
   const copy = newTemplateVersion(version);
   copy.html     = source.html ?? '';
   copy.css      = source.css ?? '';
+  copy.subject  = source.subject ?? '';
+  copy.text     = source.text ?? '';
   copy.partials = { ...(source.partials ?? {}) };
   copy.assets   = [...(source.assets ?? [])];
   return copy;

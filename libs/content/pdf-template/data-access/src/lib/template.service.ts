@@ -1,6 +1,6 @@
 // libs/content/pdf-template/data-access/src/lib/template.service.ts
 import { inject, Injectable } from '@angular/core';
-import { firstValueFrom, Observable } from 'rxjs';
+import { firstValueFrom, map, Observable } from 'rxjs';
 import { collectionData, docData } from 'rxfire/firestore';
 import { collection, doc, query, orderBy, updateDoc } from 'firebase/firestore';
 
@@ -11,7 +11,7 @@ import {
   TemplateCollection, TemplateVersionSubcollection,
   TemplateModel, TemplateVersionModel, UserModel,
 } from '@okr/shared-models';
-import { copyTemplate, copyTemplateVersion, getTemplateIndex } from '@okr/content-pdf-template-util';
+import { copyTemplate, copyTemplateVersion, getTemplateIndex, isEmailTemplate, templateKindOf } from '@okr/content-pdf-template-util';
 import { getTodayStr, DateFormat, getSystemQuery } from '@okr/shared-util-core';
 import { PFX } from './scope';
 
@@ -31,7 +31,17 @@ export class TemplateService {
 
   // ── Template CRUD ──────────────────────────────────────────────────────
 
+  /** The PDF templates. Email templates share the collection and are kept out of every PDF picker. */
   public list(): Observable<TemplateModel[]> {
+    return this.listAll().pipe(map(list => list.filter(t => templateKindOf(t) === 'pdf')));
+  }
+
+  /** The email templates (layouts and texts), the counterpart of {@link list}. */
+  public listEmailTemplates(): Observable<TemplateModel[]> {
+    return this.listAll().pipe(map(list => list.filter(t => isEmailTemplate(t))));
+  }
+
+  private listAll(): Observable<TemplateModel[]> {
     return this.firestoreService.searchData<TemplateModel>(
       TemplateCollection, getSystemQuery(this.env.tenantId), 'name'
     );
