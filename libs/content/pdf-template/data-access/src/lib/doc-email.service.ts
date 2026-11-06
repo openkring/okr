@@ -38,8 +38,10 @@ export interface SendDocumentByEmailRequest {
   layout: EmailLayoutChoice;
   /** Storage path of the generated document to attach (resolved server-side). */
   storagePath: string;
-  /** Filename to use for the attachment; also named in the mail as «Beilage». */
+  /** Filename to use for the attachment. */
   filename: string;
+  /** What the mail names as «Beilage»; without it, `filename`. */
+  attachmentName?: string;
   /** Additional user-picked files attached inline. */
   extraAttachments?: InlineAttachment[];
   /** Tenant the job belongs to — required for a queued bulk send. */
@@ -150,10 +152,11 @@ export class DocEmailService {
 
   /** The three content fields every send path hands to the server, which composes the final mail. */
   private contentFields(req: SendDocumentByEmailRequest) {
+    const attachmentName = req.attachmentName || req.filename;
     return {
       body: req.body,
       layout: req.layout,
-      ...(req.filename ? { attachmentName: req.filename } : {}),
+      ...(attachmentName ? { attachmentName } : {}),
     };
   }
 

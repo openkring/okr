@@ -442,6 +442,18 @@ describe('composeBody', () => {
     await expect(composeBody('scs', { body }, readerOf(base))).rejects.toMatchObject({ code: 'no-content' });
   });
 
+  it('accepts an empty body when an attachment gives the mail content', async () => {
+    const mail = await composeBody('scs', { body: '<p></p>', attachmentName: 'R1.pdf' }, readerOf(base));
+    expect(mail.html).toContain('<strong>R1.pdf</strong>');
+    expect(mail.text).toBe('STD\n📎 Beilage: R1.pdf\ninfo@example.org');
+  });
+
+  it('refuses an empty body when the attachment name is blank or not text', async () => {
+    for (const attachmentName of ['   ', 5, null]) {
+      await expect(composeBody('scs', { body: '<p></p>', attachmentName }, readerOf(base))).rejects.toMatchObject({ code: 'no-content' });
+    }
+  });
+
   it('accepts a body that is only an image', async () => {
     const mail = await composeBody('scs', { body: '<p><img src="https://a.ch/a.png"></p>' }, readerOf(base));
     expect(mail.html).toContain('<img src="https://a.ch/a.png"');

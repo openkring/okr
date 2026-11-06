@@ -170,7 +170,7 @@ export async function renderEmail(req: RenderEmailRequest, read: TemplateReader 
   if (req.attachmentName) {
     const note = attachmentNote(req.attachmentName, Handlebars.escapeExpression);
     contentHtml += note.html;
-    contentText += `\n\n${note.text}`;
+    contentText = [contentText, note.text].filter(Boolean).join('\n\n');
   }
 
   if (!layoutHasContent(layout.html) || !layoutHasContent(layout.text)) {
@@ -192,10 +192,11 @@ export async function composeBody(
   read: TemplateReader = firestoreTemplateReader
 ): Promise<RenderedEmail> {
   const body = await sanitizeEmailBody(input.body);
-  // Checked after sanitising: a body of nothing but dropped tags would go out as an empty framed mail.
-  if (!htmlToText(body) && !/<img\s[^>]*\bsrc=/i.test(body)) throw new EmailTemplateError('The mail body is empty', 'no-content');
   // The name arrives from a client on every path: anything but real text means no note.
   const attachmentName = typeof input.attachmentName === 'string' ? input.attachmentName.trim() : '';
+  // Checked after sanitising: a body of nothing but dropped tags would go out as an empty framed mail,
+  // unless the attachment note gives it content.
+  if (!attachmentName && !htmlToText(body) && !/<img\s[^>]*\bsrc=/i.test(body)) throw new EmailTemplateError('The mail body is empty', 'no-content');
   return renderEmail(
     { tenantId, layout: input.layout ?? 'standard', body, attachmentName: attachmentName || undefined, includeContact: true },
     read

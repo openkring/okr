@@ -21,7 +21,8 @@ function looksLikeEmail(email: string): boolean {
   return email.includes('@') && email.includes('.');
 }
 
-export const emailComposerValidations = staticSuite((model: EmailComposerFormModel) => {
+/** `hasAttachment`: the mail carries a document or file, whose note gives it content without a body. */
+export const emailComposerValidations = staticSuite((model: EmailComposerFormModel, hasAttachment = false) => {
   test('to', '@content/pdf-template/feature.validation.to_required', () => {
     enforce(parseEmails(model.to).length).greaterThan(0);
   });
@@ -41,7 +42,7 @@ export const emailComposerValidations = staticSuite((model: EmailComposerFormMod
   });
 
   test('body', '@content/pdf-template/feature.validation.body_required', () => {
-    enforce(emailBodyHasContent(model.body)).isTruthy();
+    enforce(hasAttachment || emailBodyHasContent(model.body)).isTruthy();
   });
 
   test('cc', '@content/pdf-template/feature.validation.cc_invalid', () => {

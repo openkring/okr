@@ -42,6 +42,11 @@ describe('emailComposerValidations', () => {
     expect(emailComposerValidations(model({ body: '<p><img src="https://a.ch/a.png"></p>' })).isValid()).toBe(true);
   });
 
+  it('lets an attachment stand in for the body', () => {
+    expect(emailComposerValidations(model({ body: '<p></p>' }), true).isValid()).toBe(true);
+    expect(emailComposerValidations(model({ body: '<p></p>' }), false).isValid()).toBe(false);
+  });
+
   it('allows empty cc/bcc but rejects malformed ones', () => {
     expect(emailComposerValidations(model({ cc: '', bcc: '' })).isValid()).toBe(true);
     expect(emailComposerValidations(model({ cc: 'bad' })).isValid()).toBe(false);

@@ -45,7 +45,7 @@ export interface ComposedEmail {
   subject: string;
   body: string;
   layout: EmailLayoutChoice;
-  /** Filename of the attached document, empty when there is none. */
+  /** What the mail names as attached: the document, else the added files. Empty when there is none. */
   attachmentName: string;
   extraAttachments: InlineAttachment[];
 }
@@ -169,7 +169,7 @@ type ComposerSegment = 'editor' | 'preview' | 'list';
           @if (activeSegment() === 'preview') {
             <ion-card>
               <ion-card-content class="ion-no-padding">
-                @if (!hasBody()) {
+                @if (!hasContent()) {
                   <ion-note class="attachment">{{ i18n.preview_empty() }}</ion-note>
                 } @else if (previewLoading()) {
                   <okr-spinner />
@@ -270,8 +270,15 @@ export class EmailComposerModal {
 
   // form model + signal-forms validation
   protected readonly formData = linkedSignal<EmailComposerFormModel>(() => this.buildInitial());
+  protected readonly extraAttachments = signal<InlineAttachment[]>([]);
+  /** What the mail names as «Beilage»: the document, else the added files. Empty without an attachment. */
+  protected readonly attachmentName = computed(() =>
+    this.filename() || this.extraAttachments().map((a) => a.filename).join(', '));
+  // an attachment gives the mail content without a body, which validateVestTree cannot pass to the suite
+  private readonly suiteWithContext = (model: EmailComposerFormModel) =>
+    emailComposerValidations(model, this.attachmentName().length > 0);
   protected readonly composerForm = form(this.formData, (path) =>
-    validateVestTree(path, emailComposerValidations as any));
+    validateVestTree(path, this.suiteWithContext as any));
   private readonly validationResult = vestErrors(this.composerForm);
   protected readonly bodyErrors = computed(() => this.validationResult().getErrors('body'));
 
@@ -284,7 +291,6 @@ export class EmailComposerModal {
   /** "<block>/<blocks>" while a chunked bulk send is running, empty for a single message. */
   protected readonly progress = signal('');
   protected readonly showForm = signal(true);
-  protected readonly extraAttachments = signal<InlineAttachment[]>([]);
   protected readonly showConfirmation = computed(() =>
     this.composerForm().valid() && this.isDirty() && !this.isSending());
 
@@ -329,7 +335,8 @@ export class EmailComposerModal {
       : `${this.i18n.from_warning()} ${expected || this.i18n.from_unknown()}`;
   });
 
-  protected readonly hasBody = computed(() => emailBodyHasContent(this.formData().body ?? ''));
+  protected readonly hasContent = computed(() =>
+    this.attachmentName().length > 0 || emailBodyHasContent(this.formData().body ?? ''));
 
   /**
    * The outgoing message as the server renders it (`renderEmailPreview`, the renderer that sends).
@@ -385,9 +392,9 @@ export class EmailComposerModal {
       const open = this.activeSegment() === 'preview';
       const body = this.body();
       const layout = this.layout();
-      const attachmentName = this.filename();
+      const attachmentName = this.attachmentName();
       untracked(() => {
-        if (open && this.hasBody()) {
+        if (open && this.hasContent()) {
           void this.loadPreview(body, layout, attachmentName);
         } else {
           this.previewRequest++;       // leaving the preview (or nothing to show): a late response is stale
@@ -576,6 +583,7 @@ export class EmailComposerModal {
         layout: fd.layout,
         storagePath: this.storagePath(),
         filename: this.filename(),
+        attachmentName: this.attachmentName(),
         extraAttachments: this.extraAttachments(),
       };
       const handler = this.sendHandler();
@@ -583,7 +591,7 @@ export class EmailComposerModal {
       // mail goes straight through the callable so the provider error surfaces immediately.
       if (handler) {
         const { to, cc, bcc, from, subject, body, layout, extraAttachments } = request;
-        await handler({ to, cc, bcc, from, subject, body, layout, attachmentName: request.filename, extraAttachments });
+        await handler({ to, cc, bcc, from, subject, body, layout, attachmentName: request.attachmentName, extraAttachments });
       } else if (request.bcc.length > 0) {
         await this.awaitJob(await this.docEmailService.queueBulkEmail(request));
       } else {
