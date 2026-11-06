@@ -155,6 +155,46 @@ describe('renderEmail', () => {
   });
 });
 
+describe('template ownership', () => {
+  const text = (subject: string, tenants: string[]) => ({ doc: { kind: 'emailText', tenants, currentVersion: 1 } as StoredTemplate, version: { subject, html: '<p>x</p>', text: 'x' } });
+  const layout = (tenants: string[]) => ({ doc: { kind: 'emailLayout', tenants, currentVersion: 1 } as StoredTemplate, version: { html: '<i>planted</i>{{{content}}}', text: 'PLANTED {{{content}}}' } });
+  const reset = { tenantId: 'scs', layout: 'standard', textKey: 'email-text-password-reset' } as const;
+
+  it('ignores a fork key another tenant planted with a mixed tenants array', async () => {
+    const read = readerOf({ ...base, 'email-text-password-reset_scs': text('Planted', ['p13', 'scs']) });
+    expect((await renderEmail(reset, read)).subject).toBe('Shared Seeclub');
+  });
+
+  it('ignores a base key that names a tenant next to system', async () => {
+    const read = readerOf({ 'email-layout_scs': base['email-layout_scs'], 'email-text-password-reset': text('Planted', ['p13', 'system']) });
+    await expect(renderEmail(reset, read)).rejects.toMatchObject({ code: 'no-text' });
+  });
+
+  it('ignores a planted plain layout on the base key', async () => {
+    const read = readerOf({ 'email-layout-plain': layout(['p13', 'system']) });
+    await expect(renderEmail({ tenantId: 'scs', layout: 'plain', body: '<p>x</p>' }, read)).rejects.toMatchObject({ code: 'no-layout' });
+  });
+
+  it('never reads the base key of the standard layout', async () => {
+    const reads: string[] = [];
+    const entries = { ...base, 'email-layout_scs': { doc: undefined }, 'email-layout': layout(['system']) };
+    const read: TemplateReader = (okey, version) => {
+      reads.push(okey);
+      return readerOf(entries)(okey, version);
+    };
+    const mail = await renderEmail({ tenantId: 'scs', layout: 'standard', body: '<p>x</p>' }, read);
+    expect(mail.html).toContain('class="plain"');
+    expect(reads).not.toContain('email-layout');
+  });
+
+  it('refuses a reset through a planted email-layout doc, whatever its tenants say', async () => {
+    const planted = readerOf({ 'email-layout': layout(['scs', 'system']), 'email-text-password-reset': base['email-text-password-reset'] });
+    await expect(
+      renderEmail({ ...reset, tenantId: 'scs', noPlainFallback: true }, planted)
+    ).rejects.toMatchObject({ code: 'no-standard-layout' });
+  });
+});
+
 describe('renderPasswordResetEmail', () => {
   const vars = { url, email: 'x@example.org', app_name: 'Seeclub', login_id: '' };
 

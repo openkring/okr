@@ -19,7 +19,7 @@ import { sanitizeEmailBody } from '../pdf/sanitize';
 import { compileTemplate } from '../pdf/template-cache';
 import { reportToSentry } from '../srv/sentry';
 import { htmlToText } from './html-to-text';
-import { isUsableEmailTemplate, layoutHasContent, resetLinkPresent, StoredTemplate } from './render-email.logic';
+import { isUsableEmailTemplate, layoutHasContent, resetLinkPresent, SHARED_TEMPLATE_OWNER, StoredTemplate } from './render-email.logic';
 
 type StoredVersion = Pick<TemplateVersionModel, 'html' | 'text' | 'subject'>;
 
@@ -85,13 +85,15 @@ function resolvedFrom(okey: string, version: number, v: Partial<StoredVersion>):
   return { okey, version, html: v.html ?? '', text: v.text ?? '', subject: v.subject ?? '' };
 }
 
+/** The doc under a fixed key, if its owner is exactly the expected one and it is usable. */
+async function readOwned(read: TemplateReader, okey: string, owner: string, kind: TemplateKind): Promise<Resolved | undefined> {
+  const { doc, version } = await read(okey);
+  return version && isUsableEmailTemplate(doc, owner, kind) ? resolvedFrom(okey, doc?.currentVersion ?? 0, version) : undefined;
+}
+
 /** The tenant's own doc first, then the shared one; the first usable, published one wins. */
 async function resolveTemplate(read: TemplateReader, tenantId: string, kind: TemplateKind, baseKey: string): Promise<Resolved | undefined> {
-  for (const okey of [forkKeyFor(baseKey, tenantId), baseKey]) {
-    const { doc, version } = await read(okey);
-    if (version && isUsableEmailTemplate(doc, tenantId, kind)) return resolvedFrom(okey, doc?.currentVersion ?? 0, version);
-  }
-  return undefined;
+  return (await readOwned(read, forkKeyFor(baseKey, tenantId), tenantId, kind)) ?? readOwned(read, baseKey, SHARED_TEMPLATE_OWNER, kind);
 }
 
 async function resolvePreview(read: TemplateReader, preview: { okey: string; version: number }): Promise<{ kind: TemplateKind; template: Resolved }> {
@@ -106,7 +108,8 @@ async function resolvePreview(read: TemplateReader, preview: { okey: string; ver
 async function resolveLayout(read: TemplateReader, req: RenderEmailRequest, override?: Resolved): Promise<Resolved> {
   if (override) return override;
   if (req.layout === 'standard') {
-    const standard = await resolveTemplate(read, req.tenantId, 'emailLayout', EmailLayoutKey);
+    // Only the tenant's own doc: the standard layout has no shared doc (design 7.2).
+    const standard = await readOwned(read, forkKeyFor(EmailLayoutKey, req.tenantId), req.tenantId, 'emailLayout');
     if (standard) return standard;
     if (req.noPlainFallback) throw new EmailTemplateError('The tenant has no standard email layout', 'no-standard-layout');
   }

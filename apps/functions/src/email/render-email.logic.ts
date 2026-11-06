@@ -11,14 +11,21 @@ export interface StoredTemplate {
   sampleData?: string;
 }
 
-/** A template is usable when it is of the wanted kind, published, not archived and visible to the tenant. */
-export function isUsableEmailTemplate(doc: StoredTemplate | undefined, tenantId: string, kind: TemplateKind): boolean {
+/** The `tenants` entry of a shared email template: the operator's, used by every tenant. */
+export const SHARED_TEMPLATE_OWNER = 'system';
+
+/**
+ * A template is usable when it is of the wanted kind, published, not archived and owned exactly by
+ * `owner`: the tenant for a fork key, `system` for a base key. Containing the owner is not enough. The
+ * rules let a tenant create a doc under any key with a mixed `tenants`, and that tenant's edit must
+ * not reach another tenant's mail (design 7.2).
+ */
+export function isUsableEmailTemplate(doc: StoredTemplate | undefined, owner: string, kind: TemplateKind): boolean {
   if (!doc) return false;
   if ((doc.kind ?? 'pdf') !== kind) return false;
   if (doc.isArchived === true) return false;
   if ((doc.currentVersion ?? 0) < 1) return false;
-  const tenants = doc.tenants ?? [];
-  return tenants.includes(tenantId) || tenants.includes('system');
+  return doc.tenants?.length === 1 && doc.tenants[0] === owner;
 }
 
 /** An emailLayout must carry the unescaped content slot, otherwise the body would vanish from the mail. */

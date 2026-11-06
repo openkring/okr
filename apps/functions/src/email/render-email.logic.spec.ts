@@ -6,15 +6,23 @@ describe('isUsableEmailTemplate', () => {
   const ok = { kind: 'emailText', tenants: ['system'], currentVersion: 1 } as const;
 
   it('rejects archived, draft-only and foreign templates', () => {
-    expect(isUsableEmailTemplate(ok, 'scs', 'emailText')).toBe(true);
-    expect(isUsableEmailTemplate({ ...ok, currentVersion: 0 }, 'scs', 'emailText')).toBe(false);
-    expect(isUsableEmailTemplate({ ...ok, isArchived: true }, 'scs', 'emailText')).toBe(false);
-    expect(isUsableEmailTemplate({ ...ok, tenants: ['p13'] }, 'scs', 'emailText')).toBe(false);
-    expect(isUsableEmailTemplate({ ...ok, kind: 'emailLayout' }, 'scs', 'emailText')).toBe(false);
+    expect(isUsableEmailTemplate(ok, 'system', 'emailText')).toBe(true);
+    expect(isUsableEmailTemplate({ ...ok, currentVersion: 0 }, 'system', 'emailText')).toBe(false);
+    expect(isUsableEmailTemplate({ ...ok, isArchived: true }, 'system', 'emailText')).toBe(false);
+    expect(isUsableEmailTemplate({ ...ok, tenants: ['p13'] }, 'system', 'emailText')).toBe(false);
+    expect(isUsableEmailTemplate({ ...ok, kind: 'emailLayout' }, 'system', 'emailText')).toBe(false);
   });
 
-  it('accepts the tenant itself and reads a legacy doc without kind as pdf', () => {
+  it('wants the expected owner as the only entry of tenants', () => {
     expect(isUsableEmailTemplate({ ...ok, tenants: ['scs'] }, 'scs', 'emailText')).toBe(true);
+    expect(isUsableEmailTemplate({ ...ok, tenants: ['p13', 'scs'] }, 'scs', 'emailText')).toBe(false);
+    expect(isUsableEmailTemplate({ ...ok, tenants: ['scs', 'scs'] }, 'scs', 'emailText')).toBe(false);
+    expect(isUsableEmailTemplate({ ...ok, tenants: ['p13', 'system'] }, 'system', 'emailText')).toBe(false);
+    expect(isUsableEmailTemplate({ ...ok, tenants: ['system'] }, 'scs', 'emailText')).toBe(false);
+    expect(isUsableEmailTemplate({ ...ok, tenants: undefined }, 'scs', 'emailText')).toBe(false);
+  });
+
+  it('reads a legacy doc without kind as pdf', () => {
     expect(isUsableEmailTemplate({ tenants: ['scs'], currentVersion: 1 }, 'scs', 'pdf')).toBe(true);
     expect(isUsableEmailTemplate({ tenants: ['scs'], currentVersion: 1 }, 'scs', 'emailText')).toBe(false);
     expect(isUsableEmailTemplate(undefined, 'scs', 'emailText')).toBe(false);
