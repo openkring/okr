@@ -2000,6 +2000,29 @@ for label, expect, run in template_cases:
     passed += ok; failed += not ok
     print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
 
+# ---------------------------------------------------------------- mailJobs ----
+# spec 1.141: onMailJob checks the sender against the job's tenant, so a job names exactly one.
+# P is privileged of t1, A a plain member of t1, B admin of t2.
+def mail_job(tenants):
+    return {"tenants": tenants, "to": ["a@t1.ch"], "subject": "s", "body": "<p>x</p>", "state": "pending"}
+mail_job_cases = [
+    ("mailJobs: userP(privileged t1) CREATE tenants=[t1] -> ALLOW", True,
+     lambda: req("POST", "mailJobs?documentId=mj1", token=P, data=body(mail_job(["t1"])))),
+    ("mailJobs: userP(privileged t1) CREATE tenants=[t1,t2] -> DENY (picks the sender limit)", False,
+     lambda: req("POST", "mailJobs?documentId=mj2", token=P, data=body(mail_job(["t1", "t2"])))),
+    ("mailJobs: userB(admin t2) CREATE tenants=[t2,t1] -> DENY", False,
+     lambda: req("POST", "mailJobs?documentId=mj3", token=B, data=body(mail_job(["t2", "t1"])))),
+    ("mailJobs: userB(admin t2) CREATE tenants=[t1] -> DENY (foreign tenant)", False,
+     lambda: req("POST", "mailJobs?documentId=mj4", token=B, data=body(mail_job(["t1"])))),
+    ("mailJobs: userA(member t1) CREATE tenants=[t1] -> DENY (no role)", False,
+     lambda: req("POST", "mailJobs?documentId=mj5", token=A, data=body(mail_job(["t1"])))),
+]
+for label, expect, run in mail_job_cases:
+    code = run()
+    ok = (code in (200, 201)) == expect
+    passed += ok; failed += not ok
+    print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
+
 # ---------------------------------------------------------------- formStats ----
 # 1.125 B (spec §11/§19): the response counter. Read: content managers of the tenant (the builder's
 # «7 von 8 Antworten»); write: nobody but submitForm (Admin SDK, bypasses rules).

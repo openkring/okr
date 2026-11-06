@@ -1426,7 +1426,9 @@ service cloud.firestore {
     // (memberAdmin); the payload holds recipient addresses, so reading is gated the same way.
     match /mailJobs/{id}           {
       allow read:   if (isPrivileged() || hasRole('memberAdmin')) && tenantRead();
-      allow create: if (isPrivileged() || hasRole('memberAdmin')) && tenantCreate();
+      // Exactly one tenant: `onMailJob` checks the sender against it and sends under it.
+      allow create: if (isPrivileged() || hasRole('memberAdmin')) && tenantCreate()
+                       && request.resource.data.tenants.size() == 1;
       allow update, delete: if false;
     }
     // external-reports (spec 1.133 §8): marks that a case was reported to an external organisation

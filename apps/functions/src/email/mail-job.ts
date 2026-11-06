@@ -64,6 +64,16 @@ async function providerFor(tenantId: string): Promise<string> {
 }
 
 /**
+ * The one tenant a job belongs to, or undefined unless it names exactly one. The sender check and the
+ * layout both read this tenant, and with a second one in `tenants` a client would pick which.
+ */
+export function mailJobTenant(job: Pick<MailJobDoc, 'tenants'>): string | undefined {
+  const tenants = job.tenants;
+  if (!Array.isArray(tenants) || tenants.length !== 1) return undefined;
+  return typeof tenants[0] === 'string' && tenants[0] ? tenants[0] : undefined;
+}
+
+/**
  * The html and text halves of a job. A body is wrapped once for the whole job (every block carries the
  * same content); an old job's html goes out unchanged. A render failure is thrown, so the job ends as
  * `failed` and nothing is sent. `compose` is injectable for the test.
@@ -117,7 +127,12 @@ export const onMailJob = onDocumentCreated(
     const snap = event.data;
     if (!snap) return;
     const job = snap.data() as MailJobDoc;
-    const tenantId = job.tenants?.[0] ?? '';
+    const tenantId = mailJobTenant(job);
+    if (!tenantId) {
+      logger.error(`${CF_NAME}: refused job ${snap.id}: it must name exactly one tenant`);
+      await snap.ref.update({ state: 'failed', error: 'The mail job must name exactly one tenant.' });
+      return;
+    }
 
     let blocksTotal = 1;
     let sent = 0;

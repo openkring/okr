@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { mailJobBlocks, MailJobDoc, resolveJobContent } from './mail-job';
+import { mailJobBlocks, MailJobDoc, mailJobTenant, resolveJobContent } from './mail-job';
 
 const job = (bcc: string[]): MailJobDoc => ({
   tenants: ['scs'],
@@ -31,6 +31,24 @@ describe('mailJobBlocks', () => {
     expect(first.cc).toEqual(['revision@scs.ch']);
     expect(second.to).toEqual(['app@seeclub.org']);   // NOT the org address — no copy per block
     expect(second.cc).toEqual([]);
+  });
+});
+
+describe('mailJobTenant', () => {
+  it('gives the one tenant of a job', () => {
+    expect(mailJobTenant({ tenants: ['scs'] })).toBe('scs');
+  });
+
+  it('refuses a job naming more than one tenant: tenants[0] would pick the sender limit', () => {
+    expect(mailJobTenant({ tenants: ['scs', 'p13'] })).toBeUndefined();
+  });
+
+  it('refuses a job with no usable tenant', () => {
+    expect(mailJobTenant({ tenants: [] })).toBeUndefined();
+    expect(mailJobTenant({ tenants: [''] })).toBeUndefined();
+    expect(mailJobTenant({ tenants: [5 as never] })).toBeUndefined();
+    expect(mailJobTenant({ tenants: undefined as never })).toBeUndefined();
+    expect(mailJobTenant({ tenants: 'scs' as never })).toBeUndefined();
   });
 });
 
