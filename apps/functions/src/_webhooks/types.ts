@@ -50,6 +50,9 @@ export interface StoredWebhookEvent {
   state: WebhookEventState;
   error?: string;
   expiresAt: Timestamp;
+  /** Set by scripts/webhook-replay.mjs on a copy: the root row's id (idempotent handlers key on it). */
+  replayOf?: string;
+  replayedAt?: Timestamp;
 }
 
 export interface IngestDeps {

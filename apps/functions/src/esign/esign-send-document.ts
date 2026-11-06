@@ -6,8 +6,8 @@ import axios from 'axios';
 import { randomBytes } from 'crypto';
 import {
   ALL_ESIGN_SECRETS, REGION,
-  getDeepSignAccessToken, getEsignApiBase, downloadFromStorage, computeWebhookToken, getCallerTenants,
-  mapDeepSignSignees, webhookTokenSecret,
+  getDeepSignAccessToken, getEsignApiBase, downloadFromStorage, newDocumentWebhookToken, getCallerTenants,
+  mapDeepSignSignees,
 } from './shared';
 import { EsignCollection } from '@okr/shared-models';
 
@@ -100,7 +100,7 @@ export async function startSignatureRun(
     ]);
     const apiBase = getEsignApiBase();
 
-    const webhookToken = computeWebhookToken(esignId, webhookTokenSecret.value());
+    const webhookToken = newDocumentWebhookToken(esignId);
     const projectId = process.env['GCLOUD_PROJECT'] ?? '';
     const webhookBase = `https://${REGION}-${projectId}.cloudfunctions.net/webhooks/deepsign`;
     const webhookUrl = `${webhookBase}?esignId=${esignId}&token=${webhookToken}`;

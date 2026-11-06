@@ -36,6 +36,19 @@ describe('mailtrapDedupeKey', () => {
     expect(mailtrapDedupeKey({ event_id: '', event: 'open', message_id: 'm', timestamp: 1 })).toBe('m|open|1');
     expect(mailtrapDedupeKey({ event: 'open', message_id: 'm', timestamp: 1 })).toBe('m|open|1');
   });
+  it('hashes the whole event when it has no usable ids, and tells different events apart', () => {
+    const a = { event: 'open', email: 'a@b.c' };
+    const b = { event: 'open', email: 'x@y.z' };
+    expect(mailtrapDedupeKey(a)).not.toBe(mailtrapDedupeKey(b));
+    expect(mailtrapDedupeKey(a)).toBe(mailtrapDedupeKey({ ...a }));
+    expect(mailtrapDedupeKey(a)).not.toContain('undefined');
+    expect(mailtrapDedupeKey({ message_id: 'm', event: 'open' })).not.toContain('undefined');
+  });
+  it('does not throw for a non-object element', () => {
+    expect(() => mailtrapDedupeKey(null)).not.toThrow();
+    expect(() => mailtrapDedupeKey('text')).not.toThrow();
+    expect(mailtrapDedupeKey(null)).not.toBe(mailtrapDedupeKey('text'));
+  });
 });
 
 describe('mailtrapHandler', () => {
@@ -47,6 +60,12 @@ describe('mailtrapHandler', () => {
     const outcome = await makeMailtrapHandler(write)(row, 'row1');
     expect(outcome).toEqual({ state: 'handled' });
     expect(write).toHaveBeenCalledWith('row1', { event: 'delivery', email: 'a@b.c', subject: 'S', message_id: 'm', receivedAt, expiresAt });
+  });
+  it('keys the row on the root id of a replayed row, so a replay overwrites', async () => {
+    const write = vi.fn(async (_id: string, _data: Record<string, unknown>) => undefined);
+    const row = { payload: { event: 'delivery' }, replayOf: 'root1', replayedAt: Timestamp.fromMillis(5) } as unknown as StoredWebhookEvent;
+    await makeMailtrapHandler(write)(row, 'root1-r1');
+    expect(write.mock.calls[0][0]).toBe('root1');
   });
   it('fails without quoting the payload when it is not an object', async () => {
     const write = vi.fn(async () => undefined);

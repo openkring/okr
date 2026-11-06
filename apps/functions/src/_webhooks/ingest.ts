@@ -62,7 +62,7 @@ export async function ingest(
   );
 
   if (results.some(r => r.status === 'rejected')) {
-    logger.error('webhook write failed', { clientId: client.id, state: 'received' });
+    logger.error('webhooks: write failed', { clientId: client.id, state: 'received' });
     return { status: 500, body: 'Internal Server Error' };
   }
   return { status: 200, body: 'OK' };

@@ -1,8 +1,9 @@
 // apps/functions/src/_webhooks/process.ts
 //
 // What onWebhookEvent does with one stored row (design §7). Pure of Firestore: the
-// caller injects the row update and the failure report. Never rethrows, so a failing
-// handler does not make the trigger retry and mail the same event again.
+// caller injects the row update and the failure report. A failing handler is caught and
+// recorded (no rethrow, so the trigger does not retry and mail the same event again); only
+// a failing success update rejects, see the comment at the end.
 import type { StoredWebhookEvent, WebhookEventState } from './types';
 
 export type WebhookOutcome = { state: 'handled' | 'ignored'; tenantId?: string };

@@ -2,7 +2,8 @@
 //
 // DeepSign's signature callbacks on the shared webhook receiver (_webhooks). The record
 // update is a pure function (deepSignUpdate); the handler only wraps it in a transaction.
-// These are legally relevant signature records: the rules below mirror esign-webhook.ts.
+// These are legally relevant signature records, so the rules below are strict: terminal
+// states are never reopened, replays change nothing, and unknown events are acknowledged only.
 import { logger } from 'firebase-functions/v2';
 import { FieldValue, Timestamp, getFirestore } from 'firebase-admin/firestore';
 import { EsignCollection } from '@okr/shared-models';
@@ -77,7 +78,13 @@ export function deepSignUpdate(record: Record<string, unknown>, payload: DeepSig
 export function splitDeepSignEvent(raw: Buffer, req: WebhookRequest): DeepSignPayload[] {
   const body: unknown = JSON.parse(raw.toString('utf8'));
   if (!isObject(body)) throw new Error('DeepSign body is not an object');
-  return [{ ...body, esignId: req.query['esignId'] ?? '' } as DeepSignPayload];
+  // Only the known fields, and only strings: the row is stored as is, and Firestore rejects nested arrays.
+  const out: DeepSignPayload = { esignId: req.query['esignId'] ?? '' };
+  for (const k of ['eventType', 'documentId', 'signeeId', 'signeeType', 'timestamp'] as const) {
+    const v = body[k];
+    if (typeof v === 'string') out[k] = v;
+  }
+  return [out];
 }
 
 /** Stable across provider retries. */
@@ -168,10 +175,18 @@ export const deepSignLegacyClient: WebhookClient = {
 /** Documents created at or after this instant are refused on the legacy URL. Empty = no cutoff. */
 export const ESIGN_LEGACY_CUTOFF_ISO = '';
 
+/** The cutoff in ms. A non-empty cutoff that does not parse throws: it must never silently refuse nothing. */
+function cutoffMillis(cutoffIso: string): number {
+  const ms = new Date(cutoffIso).getTime();
+  if (Number.isNaN(ms)) throw new Error('ESIGN_LEGACY_CUTOFF_ISO is not a valid date');
+  return ms;
+}
+
 export function refusedByCutoff(createdAt: Timestamp | undefined, cutoffIso: string): boolean {
   if (cutoffIso === '') return false;
+  const cutoff = cutoffMillis(cutoffIso);
   if (!createdAt) return true;
-  return createdAt.toMillis() >= new Date(cutoffIso).getTime();
+  return createdAt.toMillis() >= cutoff;
 }
 
 export interface LegacyGateDeps {
@@ -186,6 +201,7 @@ export interface LegacyGateDeps {
  */
 export async function legacyGate(req: WebhookRequest, cutoffIso: string, deps: LegacyGateDeps): Promise<'pass' | 'refuse'> {
   if (cutoffIso === '') return 'pass';
+  cutoffMillis(cutoffIso); // a malformed cutoff fails for every call, valid token or not
   if (!deps.verify(req)) return 'pass';
   const { exists, createdAt } = await deps.readCreatedAt(req.query['esignId']);
   return exists && refusedByCutoff(createdAt, cutoffIso) ? 'refuse' : 'pass';

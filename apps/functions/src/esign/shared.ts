@@ -36,7 +36,6 @@ export const ALL_ESIGN_SECRETS = [
   deepsignClientSecretProd, deepsignClientSecretInt,
   deepsignServiceUsernameProd, deepsignServiceUsernameInt,
   deepsignServicePasswordProd, deepsignServicePasswordInt,
-  webhookSecret,
   webhookTokenSecret,
 ] as const;
 
@@ -128,6 +127,11 @@ export async function getDeepSignAccessToken(): Promise<string> {
 // ─── HMAC helpers ─────────────────────────────────────────────────────────────
 export function computeWebhookToken(esignId: string, secret: string): string {
   return createHmac('sha256', secret).update(esignId).digest('hex');
+}
+
+/** The URL token for a new document: always webhookTokenSecret, never the legacy key. */
+export function newDocumentWebhookToken(esignId: string): string {
+  return computeWebhookToken(esignId, webhookTokenSecret.value());
 }
 
 export function verifyWebhookToken(esignId: string, token: string, secret: string): boolean {

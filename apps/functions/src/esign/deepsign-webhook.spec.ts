@@ -2,8 +2,8 @@ import { Timestamp } from 'firebase-admin/firestore';
 import { describe, expect, it, vi } from 'vitest';
 import type { StoredWebhookEvent, WebhookRequest } from '../_webhooks/types';
 import { findClient } from '../_webhooks/clients';
-import { computeWebhookToken, verifyWebhookToken } from './shared';
-import { deepSignClient, deepSignLegacyClient, refusedByCutoff, legacyGate, deepSignDedupeKey, deepSignUpdate, makeDeepSignHandler, splitDeepSignEvent, type DeepSignPayload } from './deepsign-webhook';
+import { computeWebhookToken, verifyWebhookToken, newDocumentWebhookToken, webhookSecret, webhookTokenSecret } from './shared';
+import { deepSignClient, deepSignLegacyClient, refusedByCutoff, legacyGate, ESIGN_LEGACY_CUTOFF_ISO, deepSignDedupeKey, deepSignUpdate, makeDeepSignHandler, splitDeepSignEvent, type DeepSignPayload } from './deepsign-webhook';
 
 const now = Timestamp.fromDate(new Date('2026-01-01T00:00:00Z'));
 const pending = (id: string) => ({ signeeId: id, signStatus: 'pending' });
@@ -92,6 +92,11 @@ describe('splitDeepSignEvent / deepSignDedupeKey', () => {
     expect(out).toEqual([{ eventType: 'document-completed', esignId: 'e1' }]);
   });
 
+  it('keeps only the known fields, as strings, so the stored row is always writable', () => {
+    const body = '{"eventType":"signee-completed","signeeId":"a","timestamp":5,"documentId":["x"],"nested":{"a":[[1]]},"extra":"x"}';
+    expect(splitDeepSignEvent(Buffer.from(body), req)).toEqual([{ esignId: 'e1', eventType: 'signee-completed', signeeId: 'a' }]);
+  });
+
   it('throws on a body that is not a JSON object', () => {
     expect(() => splitDeepSignEvent(Buffer.from('[1]'), req)).toThrow();
     expect(() => splitDeepSignEvent(Buffer.from('nope'), req)).toThrow();
@@ -174,7 +179,33 @@ describe('DeepSign clients', () => {
   });
 });
 
+describe('which key signs and verifies what', () => {
+  it('binds the new client to webhookTokenSecret and the legacy client to webhookSecret', () => {
+    expect(deepSignClient.auth.secret).toBe(webhookTokenSecret);
+    expect(deepSignLegacyClient.auth.secret).toBe(webhookSecret);
+  });
+  it('signs the URL token of a new document with webhookTokenSecret', () => {
+    const tokenValue = vi.spyOn(webhookTokenSecret, 'value').mockReturnValue('new-key');
+    const legacyValue = vi.spyOn(webhookSecret, 'value').mockReturnValue('legacy-key');
+    expect(newDocumentWebhookToken('e1')).toBe(computeWebhookToken('e1', 'new-key'));
+    expect(legacyValue).not.toHaveBeenCalled();
+    tokenValue.mockRestore();
+    legacyValue.mockRestore();
+  });
+});
+
+describe('ESIGN_LEGACY_CUTOFF_ISO', () => {
+  it('is empty or a parseable date', () => {
+    expect(ESIGN_LEGACY_CUTOFF_ISO === '' || !Number.isNaN(new Date(ESIGN_LEGACY_CUTOFF_ISO).getTime())).toBe(true);
+  });
+});
+
 describe('refusedByCutoff', () => {
+  it('throws for a cutoff that does not parse (fail closed)', async () => {
+    expect(() => refusedByCutoff(Timestamp.fromMillis(1), 'not-a-date')).toThrow();
+    const deps = { verify: () => false, readCreatedAt: async () => ({ exists: false }) };
+    await expect(legacyGate({ method: 'POST', rawBody: Buffer.from(''), query: {}, header: () => undefined }, 'not-a-date', deps)).rejects.toThrow();
+  });
   const cutoff = '2026-06-01T00:00:00Z';
   const at = (iso: string) => Timestamp.fromDate(new Date(iso));
 

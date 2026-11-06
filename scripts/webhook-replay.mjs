@@ -2,8 +2,10 @@
  * Replay failed or stuck webhook rows of ONE client.
  *
  * For every `failed` row, and every `received` row older than one hour (an in-flight row is
- * never touched), this writes a copy as `<originalId>-r<n>` (smallest unused n) with state
- * `received` and no `error`, and marks the original `replayed`. Both writes share one batch,
+ * never touched) that is not itself an in-flight replay copy (`replayedAt` under one hour old),
+ * this writes a copy as `<originalId>-r<n>` (smallest unused n) with state `received`, no
+ * `error`, and `replayOf` (the root id) and `replayedAt`, and marks the original `replayed`.
+ * Handlers that must stay idempotent across a replay (Mailtrap) key on `replayOf`. Both writes share one batch,
  * so a crash cannot leave both live. The deployed onWebhookEvent trigger then runs the same
  * handler on the copy. Prints counts only, never payloads.
  *
@@ -36,7 +38,11 @@ const col = db.collection(COLLECTION);
 const failed = await col.where('state', '==', 'failed').where('clientId', '==', CLIENT).get();
 const cutoff = Timestamp.fromMillis(Date.now() - ONE_HOUR_MS);
 const received = await col.where('state', '==', 'received').where('receivedAt', '<', cutoff).get();
-const stuck = received.docs.filter(d => d.get('clientId') === CLIENT);
+const inFlightCopy = d => {
+  const at = d.get('replayedAt');
+  return at !== undefined && at.toMillis() >= cutoff.toMillis();
+};
+const stuck = received.docs.filter(d => d.get('clientId') === CLIENT && !inFlightCopy(d));
 const rows = [...failed.docs, ...stuck];
 
 console.log(`client ${CLIENT}: ${failed.size} failed, ${stuck.length} stuck`);
@@ -66,6 +72,8 @@ for (let i = 0; i < rows.length; i += ROWS_PER_BATCH) {
       payload: d.payload,
       expiresAt: d.expiresAt,
       state: 'received',
+      replayOf: d.replayOf ?? row.id,
+      replayedAt: Timestamp.now(),
     });
     batch.update(row.ref, { state: 'replayed' });
     replayed++;

@@ -31,12 +31,12 @@ export const esignWebhook = onRequest({ region: REGION, secrets: [webhookSecret]
     try {
       // An unset secret verifies nothing (verifyWebhookToken rejects ''), so the call goes on to the receiver (401).
       if ((await legacyGate(probe, ESIGN_LEGACY_CUTOFF_ISO, gateDeps)) === 'refuse') {
-        logger.warn('esignWebhook: refused by cutoff', { clientId, status: 403 });
+        logger.warn('webhooks: legacy call refused by cutoff', { clientId, status: 403 });
         res.status(403).send('Forbidden');
         return;
       }
     } catch {
-      logger.error('esignWebhook: cutoff check failed', { clientId });
+      logger.error('webhooks: legacy cutoff check failed', { clientId });
       res.status(500).send('Internal Server Error');
       return;
     }
