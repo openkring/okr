@@ -70,8 +70,9 @@ export function findActiveMenu(input: ActiveMenuInput): ActiveMenu | undefined {
       if (isMenuBlocked(nextVisited, childName, depth + 1)) continue;
       const child = byName.get(childName);
       if (!child || !canSee(child)) continue;
-      if (child.action === 'navigate') {
-        const length = prefixLength(normaliseMenuPath(resolveMenuUrl(child.url ?? '', tokenContext)), current);
+      // a navigate row without a url goes nowhere; normalised it would be '' and match the root path
+      if (child.action === 'navigate' && child.url) {
+        const length = prefixLength(normaliseMenuPath(resolveMenuUrl(child.url, tokenContext)), current);
         if (length > bestLength) {
           bestLength = length;
           best = { key: childName, ancestors };

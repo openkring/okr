@@ -1,4 +1,4 @@
-import { Component, ElementRef, computed, effect, forwardRef, inject, input, signal } from '@angular/core';
+import { Component, ElementRef, computed, effect, forwardRef, inject, input, signal, untracked } from '@angular/core';
 import { IonAccordion, IonAccordionGroup, IonItem, IonItemDivider, IonLabel, IonList, IonProgressBar, IonSegment, IonSegmentButton } from '@ionic/angular';
 
 import { SelectedBooks } from '@okr/shared-feature';
@@ -11,6 +11,7 @@ import { DEFAULT_MENU_ACTION } from '@okr/shared-constants';
 import { MenuInfo, MultiAvatar } from '@okr/cms-menu-ui';
 import { isMenuBlocked, nextVisitedKeys } from '@okr/cms-menu-util';
 
+import { MenuItemsStore } from './menu-items.store';
 import { MenuStore } from './menu.store';
 
 @Component({
@@ -27,6 +28,10 @@ import { MenuStore } from './menu.store';
     @media (prefers-color-scheme: dark) {
       ion-icon { color: var(--ion-color-white); }
     }
+    /* Ionic's hover overlay on a coloured item always uses the contrast colour: only its strength is ours */
+    ion-item[slot='header'] { --background-hover-opacity: 0.16; }
+    /* the sub-menu on the path to the current page: an inset bar in the contrast colour */
+    ion-item.on-path::part(native) { box-shadow: inset 3px 0 0 var(--ion-color-primary-contrast); }
     ::ng-deep ion-accordion ion-icon[slot="start"] { margin-inline-end: 8px; }
     ion-item-divider.separator { min-height: 2px; --padding-start: 0; --inner-padding-end: 0;
       --background: var(--ion-color-step-150, #d7d8da); }
@@ -41,7 +46,7 @@ import { MenuStore } from './menu.store';
         @if(menuItem(); as menuItem) {
           @switch(action()) {
             @case('navigate') {
-              <okr-multi-avatar [icon]="icon()" [label]="menuStore.translatedMenuLabel()" [info]="menuStore.translatedMenuInfo()" [badge]="notificationCount()" (click)="select(menuItem)" />
+              <okr-multi-avatar [icon]="icon()" [label]="menuStore.translatedMenuLabel()" [info]="menuStore.translatedMenuInfo()" [badge]="notificationCount()" [active]="isActive()" (click)="select(menuItem)" />
             }
             @case('browse') {
               @if (isReleaseRow()) {
@@ -64,9 +69,9 @@ import { MenuStore } from './menu.store';
                    with ~170 entries in total — instantiating them all up front was the largest
                    remaining main-thread task of the dashboard (perf-baselines.md, 2026-09-09).
                    Once expanded, the entries stay in the DOM so collapsing costs nothing. -->
-              <ion-accordion-group (ionChange)="onAccordionChange($event)">
+              <ion-accordion-group [value]="accordionValue()" (ionChange)="onAccordionChange($event)">
                 <ion-accordion [value]="menuItem.name" toggle-icon-slot="start" >
-                  <ion-item slot="header" color="primary">
+                  <ion-item slot="header" color="primary" [class.on-path]="onPath()">
                     <ion-label>{{ menuStore.translatedMenuLabel() }}</ion-label>
                     @if(menuStore.translatedMenuInfo(); as info) {
                       <okr-menu-info slot="end" class="on-primary" [text]="info" [title]="menuStore.translatedMenuLabel()" />
@@ -80,7 +85,7 @@ import { MenuStore } from './menu.store';
                             <ion-item color="warning"><ion-label>↻ circular reference to {{ menuItemName }}</ion-label></ion-item>
                           }
                         } @else {
-                          <okr-menu [menuName]="menuItemName" [forceVisible]="forceVisible()" [excludeNames]="excludeNames()" [toggleStates]="toggleStates()" [inputDepth]="childDepth()" [inputVisitedKeys]="childVisitedKeys()" />
+                          <okr-menu [menuName]="menuItemName" [forceVisible]="forceVisible()" [excludeNames]="excludeNames()" [toggleStates]="toggleStates()" [inputDepth]="childDepth()" [inputVisitedKeys]="childVisitedKeys()" [inMainTree]="inMainTree()" />
                         }
                       }
                     }
@@ -106,7 +111,7 @@ import { MenuStore } from './menu.store';
                       <ion-item color="warning"><ion-label>↻ circular reference to {{ menuItemName }}</ion-label></ion-item>
                     }
                   } @else {
-                    <okr-menu [menuName]="menuItemName" [excludeNames]="excludeNames()" [toggleStates]="toggleStates()" [inputDepth]="childDepth()" [inputVisitedKeys]="childVisitedKeys()" />
+                    <okr-menu [menuName]="menuItemName" [excludeNames]="excludeNames()" [toggleStates]="toggleStates()" [inputDepth]="childDepth()" [inputVisitedKeys]="childVisitedKeys()" [inMainTree]="true" />
                   }
                 }
               </ion-list>
@@ -166,6 +171,7 @@ import { MenuStore } from './menu.store';
 export class Menu {
   protected readonly menuStore = inject(MenuStore);
   protected readonly selectedBooks = inject(SelectedBooks);
+  private readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly appUpdate = inject(VersionCheckService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
@@ -182,6 +188,8 @@ export class Menu {
   public inputVisitedKeys = input<ReadonlySet<string>>(new Set<string>());
   /** Current state of any 'toggle' action items, keyed by their url (e.g. { toggleFilter: true }). */
   public toggleStates = input<Record<string, boolean>>({});
+  /** Set by the 'main' and 'sub' cases for their entries: only the main tree marks the current page (context menus never do). */
+  public inMainTree = input(false);
 
   // derived signals
   protected safariWorkaround = computed(() => this.menuName() === 'files-add');
@@ -210,6 +218,16 @@ export class Menu {
   protected readonly notificationCount = computed(() => this.menuStore.notificationCount());
   /** 'sub' only: whether the accordion has been opened at least once — its entries render from then on. */
   protected readonly expanded = signal(false);
+  /** 'sub' only: the open accordion's value, bound to the group so the active path can open it. */
+  protected readonly accordionValue = signal<string | undefined>(undefined);
+  /** The active row's key as a plain string, so that an effect re-runs on a new row, not on a new object. */
+  private readonly activeKey = computed(() => this.menuItemsStore.activeMenu()?.key);
+  /** 'navigate' only: this row is the current page. */
+  protected readonly isActive = computed(() => this.inMainTree() && this.activeKey() === this.menuName());
+  /** 'sub' only: this sub-menu lies on the path to the current page. */
+  protected readonly onPath = computed(
+    () => this.inMainTree() && !!this.menuItemsStore.activeMenu()?.ancestors.includes(this.menuName()),
+  );
 
   constructor() {
     effect(() => {
@@ -219,6 +237,16 @@ export class Menu {
     // keep the store's toggle state in sync so translatedMenuLabel can pick label vs labelAlt
     effect(() => {
       this.menuStore.setToggleActive(this.toggleActive());
+    });
+    // Open the branch that leads to the current page, once per navigation: it keys on the active
+    // row only, so a branch the person closed by hand stays closed until the next navigation.
+    effect(() => {
+      if (!this.activeKey() || !this.inMainTree()) return;
+      untracked(() => {
+        if (!this.onPath()) return;
+        this.accordionValue.set(this.menuName());
+        this.expanded.set(true);
+      });
     });
     // Warn (admins/debug) when a child would create a cycle, naming the offending key.
     effect(() => {
@@ -239,10 +267,14 @@ export class Menu {
   /**
    * ion-accordion-group reports the open accordion's value (or undefined when all are
    * collapsed). This group has exactly one accordion, so any defined value means "opened".
+   * ionChange bubbles: ignore the events of the groups nested in this one.
    */
   protected onAccordionChange(event: Event): void {
+    if (event.target !== event.currentTarget) return;
     const value = (event as CustomEvent<{ value?: string | string[] | null }>).detail?.value;
-    if (value != null && value !== '') this.expanded.set(true);
+    const open = typeof value === 'string' && value !== '';
+    this.accordionValue.set(open ? value : undefined);
+    if (open) this.expanded.set(true);
   }
 
   /** The books switcher row. ionChange bubbles — keep it away from the enclosing accordion group. */

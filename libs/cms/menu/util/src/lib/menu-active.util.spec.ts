@@ -112,6 +112,12 @@ describe('findActiveMenu', () => {
     expect(run(items, '/person')).toBeUndefined();
   });
 
+  it('a navigate row without a url is not active on /', () => {
+    const noUrl = { name: 'broken', action: 'navigate', menuItems: [] } as unknown as MenuItemModel;
+    const items = [sub('root', ['broken']), noUrl];
+    expect(run(items, '/')).toBeUndefined();
+  });
+
   it('only navigate rows are candidates', () => {
     const items = [sub('root', ['s']), sub('s', [])];
     expect(run(items, '/anything')).toBeUndefined();
