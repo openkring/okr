@@ -10,11 +10,16 @@ const NAMED_ENTITIES: Record<string, string> = {
   apos: "'",
 };
 
+/** `String.fromCodePoint` throws above U+10FFFF; such an entity is not a character, so it stays as written. */
+function codePointOrEntity(code: number, entity: string): string {
+  return code <= 0x10ffff ? String.fromCodePoint(code) : entity;
+}
+
 /** Decodes the entities the editor and Handlebars emit. `&amp;` goes last so `&amp;lt;` stays `&lt;`. */
 function decodeEntities(text: string): string {
   return text
-    .replace(/&#x([0-9a-f]+);/gi, (_, hex: string) => String.fromCodePoint(parseInt(hex, 16)))
-    .replace(/&#(\d+);/g, (_, dec: string) => String.fromCodePoint(parseInt(dec, 10)))
+    .replace(/&#x([0-9a-f]+);/gi, (entity, hex: string) => codePointOrEntity(parseInt(hex, 16), entity))
+    .replace(/&#(\d+);/g, (entity, dec: string) => codePointOrEntity(parseInt(dec, 10), entity))
     .replace(/&(nbsp|lt|gt|quot|apos);/gi, (_, name: string) => NAMED_ENTITIES[name.toLowerCase()])
     .replace(/&amp;/gi, '&');
 }

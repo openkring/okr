@@ -23,4 +23,10 @@ describe('htmlToText', () => {
   it('decodes &amp; last so an escaped entity stays literal', () => {
     expect(htmlToText('<p>&amp;lt; &lt; &#x3D; &nbsp;x</p>')).toBe('&lt; < =  x');
   });
+
+  it('leaves an entity above U+10FFFF as written instead of throwing', () => {
+    expect(htmlToText('<p>a &#x110000; b &#1114112; c &#99999999999999999999; d &#x1F600;</p>')).toBe(
+      'a &#x110000; b &#1114112; c &#99999999999999999999; d \u{1F600}'
+    );
+  });
 });

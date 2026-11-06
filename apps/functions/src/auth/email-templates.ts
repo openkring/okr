@@ -6,6 +6,8 @@ interface AppEmailConfig {
   from: string;
   replyTo: string;
   continueUrl: string;
+  /** Address shown in a composer mail's footer: the tenant's `mailFrom`, else the sender address. */
+  contactEmail: string;
   /** Mailtrap template UUID for the password-reset mail ('' when the tenant has none). */
   passwordResetTemplate: string;
 }
@@ -28,6 +30,7 @@ export async function getAppEmailConfig(appId: string): Promise<AppEmailConfig> 
   let loginPath = FALLBACK_LOGIN_PATH;
   let emailDomain = '';
   let passwordResetTemplate = '';
+  let mailFrom = '';
 
   try {
     const snap = await getFirestore().collection('app-config').doc(appId).get();
@@ -38,6 +41,7 @@ export async function getAppEmailConfig(appId: string): Promise<AppEmailConfig> 
       loginPath = String(cfg['loginUrl'] ?? loginPath) || FALLBACK_LOGIN_PATH;
       emailDomain = String(cfg['emailDomain'] ?? '');
       passwordResetTemplate = String(cfg['mailtrapPasswordResetTemplate'] ?? '');
+      mailFrom = String(cfg['mailFrom'] ?? '').trim();
     }
   } catch {
     // fall through to fallback values
@@ -47,12 +51,15 @@ export async function getAppEmailConfig(appId: string): Promise<AppEmailConfig> 
   // ONE sending domain, so `emailDomain` decouples the sender from the hosting hostname.
   const senderDomain = emailDomain || appDomain;
 
+  const replyTo = `app@${senderDomain}`;
+
   return {
     appName,
     appDomain,
     from: `"${appName}" <app@${senderDomain}>`,
-    replyTo: `app@${senderDomain}`,
+    replyTo,
     continueUrl: `https://${appDomain}${loginPath}`,
+    contactEmail: mailFrom || replyTo,
     passwordResetTemplate,
   };
 }
