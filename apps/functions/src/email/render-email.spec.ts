@@ -418,4 +418,23 @@ describe('composeBody', () => {
   it('throws when no layout is usable', async () => {
     await expect(composeBody('scs', { body: '<p>x</p>' }, readerOf({}))).rejects.toBeInstanceOf(EmailTemplateError);
   });
+
+  it.each([
+    ['an empty paragraph', '<p></p>'],
+    ['a blank paragraph', '<p>&nbsp;</p><p> </p>'],
+    ['only breaks', '<p><br></p>'],
+    ['only what the sanitiser drops', '<script>x()</script><style>p{}</style>'],
+    ['nothing', ''],
+  ])('refuses a body without content: %s', async (_, body) => {
+    await expect(composeBody('scs', { body }, readerOf(base))).rejects.toMatchObject({ code: 'no-content' });
+  });
+
+  it('accepts a body that is only an image', async () => {
+    const mail = await composeBody('scs', { body: '<p><img src="https://a.ch/a.png"></p>' }, readerOf(base));
+    expect(mail.html).toContain('<img src="https://a.ch/a.png"');
+  });
+
+  it('refuses an image the sanitiser left without a source', async () => {
+    await expect(composeBody('scs', { body: '<img src="http://a.ch/a.png">' }, readerOf(base))).rejects.toMatchObject({ code: 'no-content' });
+  });
 });

@@ -1,6 +1,6 @@
 import '@angular/compiler';
 import { describe, it, expect } from 'vitest';
-import { emailDomainOf, isSenderDomainAllowed, parseEmails } from './email-html.util';
+import { emailBodyHasContent, emailDomainOf, isSenderDomainAllowed, parseEmails } from './email-html.util';
 
 describe('parseEmails', () => {
   it('splits on comma and trims', () => {
@@ -48,5 +48,21 @@ describe('emailDomainOf', () => {
   });
   it('returns empty without an @', () => {
     expect(emailDomainOf('nobody')).toBe('');
+  });
+});
+
+describe('emailBodyHasContent', () => {
+  it('is true for text and for an image', () => {
+    expect(emailBodyHasContent('<p>Hallo</p>')).toBe(true);
+    expect(emailBodyHasContent('<p><img src="https://a.ch/a.png"></p>')).toBe(true);
+  });
+
+  it('is false for tags and blanks alone', () => {
+    expect(emailBodyHasContent('')).toBe(false);
+    expect(emailBodyHasContent('<p></p>')).toBe(false);
+    expect(emailBodyHasContent('<p> </p>')).toBe(false);
+    expect(emailBodyHasContent('<p>&nbsp;</p><p>&#160;</p>')).toBe(false);
+    expect(emailBodyHasContent('<p><br></p>')).toBe(false);
+    expect(emailBodyHasContent('<p><img></p>')).toBe(false);
   });
 });

@@ -202,6 +202,7 @@
     "from_required": "È richiesto un indirizzo mittente.",
     "from_invalid": "Indirizzo mittente non valido.",
     "subject_required": "È richiesto un oggetto.",
+    "body_required": "Scrivi un messaggio prima di inviarlo.",
     "cc_invalid": "Indirizzo Cc non valido.",
     "bcc_invalid": "Indirizzo Ccn non valido.",
     "changelog_required": "Descrivi brevemente cosa è cambiato in questa versione."

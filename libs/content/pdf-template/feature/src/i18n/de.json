@@ -202,6 +202,7 @@
     "from_required": "Absenderadresse ist erforderlich.",
     "from_invalid": "Ungültige Absenderadresse.",
     "subject_required": "Betreff ist erforderlich.",
+    "body_required": "Schreib bitte eine Nachricht, bevor du sie sendest.",
     "cc_invalid": "Ungültige CC-Adresse.",
     "bcc_invalid": "Ungültige BCC-Adresse.",
     "changelog_required": "Beschreibe kurz, was sich in dieser Version geändert hat."

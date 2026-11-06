@@ -15,15 +15,15 @@ import { AppStore } from '@okr/shared-feature';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import {
   ButtonCopy, ButtonCopyI18n, ChangeConfirmation, ChangeConfirmationI18n,
-  EmailInput, EmailInputI18n, Spinner, StringSelect, StringSelectI18n, TextInput, TextInputI18n,
+  EmailInput, EmailInputI18n, ErrorNote, Spinner, StringSelect, StringSelectI18n, TextInput, TextInputI18n,
 } from '@okr/shared-ui';
 import type { OkrEditor } from '@okr/shared-ui-editor';
 import type { EmailLayoutChoice } from '@okr/shared-models';
 import { needsEmailNormalization } from '@okr/shared-util-core';
-import { dismissOverlay, isBrowser, validateVestTree } from '@okr/shared-util-angular';
+import { dismissOverlay, isBrowser, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 import {
-  isSenderDomainAllowed, parseEmails,
+  emailBodyHasContent, isSenderDomainAllowed, parseEmails,
   EmailComposerFormModel, emailComposerValidations,
   EMAIL_COMPOSER_I18N_KEYS, EMAIL_COMPOSER_MSG_KEYS, EmailComposerI18n,
 } from '@okr/content-pdf-template-util';
@@ -63,7 +63,7 @@ type ComposerSegment = 'editor' | 'preview' | 'list';
   imports: [
     FormsModule,
     SvgIconPipe,
-    Spinner, ButtonCopy, ChangeConfirmation, EmailInput, StringSelect, TextInput,
+    Spinner, ButtonCopy, ChangeConfirmation, EmailInput, ErrorNote, StringSelect, TextInput,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonIcon, IonChip, IonLabel, IonNote,
     IonSegment, IonSegmentButton, IonList, IonItem,
@@ -160,6 +160,7 @@ type ComposerSegment = 'editor' | 'preview' | 'list';
                         <okr-button-copy [i18n]="buttonCopyI18n()" [value]="body()" />
                         <ion-icon src="{{ 'cancel' | svgIcon }}" (click)="clearBody()" tabindex="-1" />
                       </div>
+                      <okr-error-note [errors]="bodyErrors()" />
                     </ion-col>
                   </ion-row>
                 </ion-grid>
@@ -274,6 +275,8 @@ export class EmailComposerModal {
   protected readonly formData = linkedSignal<EmailComposerFormModel>(() => this.buildInitial());
   protected readonly composerForm = form(this.formData, (path) =>
     validateVestTree(path, emailComposerValidations as any));
+  private readonly validationResult = vestErrors(this.composerForm);
+  protected readonly bodyErrors = computed(() => this.validationResult().getErrors('body'));
 
   protected readonly isDirty = signal(false);
   protected readonly isSending = signal(false);
@@ -329,10 +332,7 @@ export class EmailComposerModal {
       : `${this.i18n.from_warning()} ${expected || this.i18n.from_unknown()}`;
   });
 
-  protected readonly hasBody = computed(() => {
-    const body = this.formData().body ?? '';
-    return body.replace(/<[^>]*>/g, '').trim().length > 0;
-  });
+  protected readonly hasBody = computed(() => emailBodyHasContent(this.formData().body ?? ''));
 
   /**
    * The outgoing message as the server renders it (`renderEmailPreview`, the renderer that sends).

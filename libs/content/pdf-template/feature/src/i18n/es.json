@@ -202,6 +202,7 @@
     "from_required": "Se requiere una dirección de remitente.",
     "from_invalid": "Dirección de remitente no válida.",
     "subject_required": "Se requiere un asunto.",
+    "body_required": "Escribe un mensaje antes de enviarlo.",
     "cc_invalid": "Dirección CC no válida.",
     "bcc_invalid": "Dirección CCO no válida.",
     "changelog_required": "Describe brevemente qué ha cambiado en esta versión."

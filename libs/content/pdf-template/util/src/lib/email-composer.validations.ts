@@ -1,7 +1,7 @@
 // libs/content/pdf-template/util/src/lib/email-composer.validations.ts
 import { enforce, staticSuite, test } from 'vest';
 import type { EmailLayoutChoice } from '@okr/shared-models';
-import { parseEmails } from './email-html.util';
+import { emailBodyHasContent, parseEmails } from './email-html.util';
 
 // Vest messages are i18n keys: okr-error-note resolves any message starting with '@'.
 
@@ -38,6 +38,10 @@ export const emailComposerValidations = staticSuite((model: EmailComposerFormMod
 
   test('subject', '@content/pdf-template/feature.validation.subject_required', () => {
     enforce(model.subject).isNotBlank();
+  });
+
+  test('body', '@content/pdf-template/feature.validation.body_required', () => {
+    enforce(emailBodyHasContent(model.body)).isTruthy();
   });
 
   test('cc', '@content/pdf-template/feature.validation.cc_invalid', () => {

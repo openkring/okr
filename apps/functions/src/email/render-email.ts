@@ -193,6 +193,8 @@ export async function composeBody(
   read: TemplateReader = firestoreTemplateReader
 ): Promise<RenderedEmail> {
   const body = await sanitizeEmailBody(input.body);
+  // Checked after sanitising: a body of nothing but dropped tags would go out as an empty framed mail.
+  if (!htmlToText(body) && !/<img\s[^>]*\bsrc=/i.test(body)) throw new EmailTemplateError('The mail body is empty', 'no-content');
   return renderEmail(
     { tenantId, layout: input.layout ?? 'standard', body, attachmentName: input.attachmentName, includeContact: true },
     read

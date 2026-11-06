@@ -33,6 +33,15 @@ describe('emailComposerValidations', () => {
     expect(emailComposerValidations(model({ subject: '' })).isValid()).toBe(false);
   });
 
+  it('requires a body with text or an image', () => {
+    for (const body of ['', '<p></p>', '<p> </p>', '<p>&nbsp;</p>', '<p><br></p>']) {
+      const r = emailComposerValidations(model({ body }));
+      expect(r.isValid()).toBe(false);
+      expect(r.getErrors('body').length).toBeGreaterThan(0);
+    }
+    expect(emailComposerValidations(model({ body: '<p><img src="https://a.ch/a.png"></p>' })).isValid()).toBe(true);
+  });
+
   it('allows empty cc/bcc but rejects malformed ones', () => {
     expect(emailComposerValidations(model({ cc: '', bcc: '' })).isValid()).toBe(true);
     expect(emailComposerValidations(model({ cc: 'bad' })).isValid()).toBe(false);

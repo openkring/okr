@@ -11,6 +11,12 @@ export function parseEmails(raw: string): string[] {
   return parseEmailList(raw);
 }
 
+/** Does the html body hold anything to read: text, or an image? The server refuses a mail without. */
+export function emailBodyHasContent(html: string): boolean {
+  if (/<img\s[^>]*\bsrc=/i.test(html)) return true;
+  return html.replace(/<[^>]*>/g, '').replace(/&nbsp;|&#160;|&#xa0;/gi, ' ').trim().length > 0;
+}
+
 /** Domain part of an email address, lower-cased. Empty when there is none. */
 export function emailDomainOf(email: string): string {
   return email.trim().toLowerCase().split('@')[1] ?? '';
