@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isStuck } from './wake-watchdog.util';
+import { isStuck, sleptDuringCheck } from './wake-watchdog.util';
 
 const error = (code: unknown) => ({ kind: 'error' as const, error: { code } });
 
@@ -30,5 +30,20 @@ describe('isStuck', () => {
     expect(isStuck({ kind: 'error', error: new Error('boom') })).toBe(true);
     expect(isStuck({ kind: 'error', error: null })).toBe(true);
     expect(isStuck(error(42))).toBe(true);
+  });
+});
+
+describe('sleptDuringCheck', () => {
+  const BUDGET_MS = 60_000;
+
+  it('a check within its budget ran awake', () => {
+    expect(sleptDuringCheck(1_000, 41_000, BUDGET_MS)).toBe(false);
+    expect(sleptDuringCheck(1_000, 61_000, BUDGET_MS)).toBe(false);
+  });
+
+  // SCS-CS: the probe answered at 17:08:37, the check ended at 17:22:29.
+  it('a check far over its budget was interrupted by sleep', () => {
+    expect(sleptDuringCheck(1_000, 1_000 + 14 * 60_000, BUDGET_MS)).toBe(true);
+    expect(sleptDuringCheck(1_000, 61_001, BUDGET_MS)).toBe(true);
   });
 });

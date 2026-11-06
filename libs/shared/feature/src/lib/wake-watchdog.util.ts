@@ -27,3 +27,13 @@ export function isStuck(outcome: HealthProbeOutcome): boolean {
   const code = (outcome.error as { code?: unknown } | null)?.code;
   return typeof code !== 'string' || NO_ANSWER_CODES.has(code);
 }
+
+/**
+ * True when a health check ran longer on the wall clock than its own timeouts allow. Timers stand
+ * still while the device sleeps, so the device dropped back to sleep during the check and its
+ * timeouts say nothing about the app. SCS-CS: a Mac in Power Nap woke for seconds at a time; a
+ * check of at most 40 s took 14 minutes and ended in a reload that nothing had justified.
+ */
+export function sleptDuringCheck(startedAt: number, now: number, budgetMs: number): boolean {
+  return now - startedAt > budgetMs;
+}
