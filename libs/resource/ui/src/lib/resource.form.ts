@@ -344,7 +344,7 @@ import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLocker
           <okr-error-note [errors]="tagErrors()" />
         }
 
-        @if(hasRole('admin')) {
+        @if(hasRole('resourceAdmin')) {
           <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="descriptionErrors()" />
         }
     </form>

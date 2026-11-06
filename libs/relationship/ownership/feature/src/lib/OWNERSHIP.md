@@ -130,7 +130,8 @@ without the resource group.
 
 ### `OwnershipEditModal`
 
-An Ionic modal for editing an existing `OwnershipModel`.
+An Ionic modal for editing an existing `OwnershipModel`. `resourceAdmin` (and `admin`) see and edit `notes` and the
+comments; `privileged` sees the comments read-only, and in view mode everything is read-only for every role.
 
 ### `OwnershipNewModal`
 

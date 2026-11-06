@@ -57,7 +57,7 @@ import { OwnershipStore } from './ownership.store';
         }
       }
 
-      @if(hasRole('privileged') || !isReadOnly()) {
+      @if(hasRole('privileged') || hasRole('resourceAdmin') || !isReadOnly()) {
         <ion-card>
           <ion-card-content class="ion-no-padding">
             <ion-accordion-group value="comments">
