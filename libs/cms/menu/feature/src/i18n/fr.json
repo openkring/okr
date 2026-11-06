@@ -305,7 +305,9 @@
     "helper": "Retrait des entrées de sous-menu en pixels (0 à 40). Pour un menu en haut, l'espace sous le menu déroulant."
   },
   "bar": {
-    "segment_sub": "Un menu à segments ne peut pas afficher de sous-menus"
+    "segment_sub": "Un menu à segments ne peut pas afficher de sous-menus",
+    "account_menu": "Compte et paramètres",
+    "cookie_settings": "Paramètres des cookies"
   },
   "item": {
     "task-my": "Mes tâches",

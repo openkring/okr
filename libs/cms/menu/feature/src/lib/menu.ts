@@ -300,7 +300,17 @@ export class Menu {
   protected async select(menuItem: MenuItemModel) {
     // A context menu lives in a popover: a page opened from there is a step away from the
     // current page, so its close button must lead back here (not to the start page).
-    const fromContextMenu = !!this.host.nativeElement.closest('ion-popover');
-    this.menuStore.select(menuItem, fromContextMenu);
+    // The dropdown of the menu bar is also a popover, but it is main navigation: its pages start
+    // a fresh history, and it has no dismissOnSelect (that would also close it on an accordion
+    // header), so it is closed here.
+    const popover = this.host.nativeElement.closest('ion-popover');
+    const dropdown = popover?.classList.contains('okr-menu-dropdown') ? popover : null;
+    await this.menuStore.select(menuItem, !!popover && !dropdown);
+    try {
+      await dropdown?.dismiss();
+    } catch {
+      // a `call` row has already closed the popover through dismissOverlay (SCS-5G in menu.store.ts):
+      // dismissing it again rejects with 'overlay does not exist', and nothing is left to close
+    }
   }
 }

@@ -63,6 +63,10 @@ export const MENU_I18N_KEYS = {
   // shown to admins in place of a `sub` row that reached a segmented bar
   bar_segment_sub:                PFX + 'bar.segment_sub',
 
+  // account area at the end of the bar
+  bar_account_menu:               PFX + 'bar.account_menu',
+  bar_cookie_settings:            PFX + 'bar.cookie_settings',
+
   error_save:                     PFX + 'error.save',
   error_load:                     PFX + 'error.load',
   error_delete:                   PFX + 'error.delete',

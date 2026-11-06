@@ -116,6 +116,9 @@ import { ConsentService } from '@okr/consent-data-access';
     <ion-app>
       <okr-cookie-banner />
       <ion-split-pane contentId="main" [disabled]="!showMenu() || menuLayout.barActive()" (ionSplitPaneVisible)="onSplitPaneVisible($event)">
+        <!-- Known drift from the apps: they keep <ion-menu> mounted and gate it only through
+             MenuController.enable() (unmounting it leaves dead hamburgers, see okr-root.ts there).
+             This template still unmounts it; align it when the generator is next touched. -->
         @if(showMenu()) {
         <ion-menu [side]="menuLayout.side()" menuId="main" contentId="main" type="overlay" (ionWillOpen)="menuOpened.set(true)">
           <ion-header>
@@ -131,7 +134,9 @@ import { ConsentService } from '@okr/consent-data-access';
                    already lazy) and the switcher created into it — keeps the library and its
                    per-tenant app-config listeners out of every single-tenant boot (spec 1.49, T1.7). -->
               <ion-buttons slot="end">
-                <ng-container #tenantSwitcherHost />
+                @if (!menuLayout.barActive()) {
+                  <ng-container #tenantSwitcherHost />
+                }
               </ion-buttons>
               @if(appStore.currentUser(); as currentUser) {
                 <ion-buttons slot="end">
@@ -189,7 +194,17 @@ import { ConsentService } from '@okr/consent-data-access';
             --ion-safe-area-top for its pages, which would zero the bar's own share as well.
           -->
           @if (barShown()) {
-            <okr-menu-bar />
+            <okr-menu-bar (profileClicked)="openProfile()" (cookieSettingsClicked)="openCookieSettings()">
+              <ng-container ngProjectAs="[okrMenuBarEnd]">
+                <!-- the one tenant switcher host while the bar is shown; the sidebar has none then -->
+                @if (menuLayout.barActive()) {
+                  <ng-container #tenantSwitcherHost />
+                }
+                @if (showDebugInfo()) {
+                  <okr-auth-info [currentUser]="appStore.currentUser()" [fbUser]="appStore.fbUser()" [isAuthenticated]="appStore.isAuthenticated()" [isAdmin]="hasRole('admin')" />
+                }
+              </ng-container>
+            </okr-menu-bar>
           }
           <ion-router-outlet [style.top]="barShown() ? 'var(--okr-menu-bar-top)' : null" [style.--ion-safe-area-top]="barShown() ? '0px' : null" />
           @if (isDegradedSession()) {
@@ -281,7 +296,11 @@ export class OkrRoot {
     this.splitPaneVisible.set((event as CustomEvent<{ visible: boolean }>).detail.visible);
   }
 
-  /** Host of the lazily created tenant switcher; empty while nobody with several tenants is signed in. */
+  /**
+   * Host of the lazily created tenant switcher; empty while nobody with several tenants is signed in.
+   * The template has two (sidebar, menu bar) but only one exists at a time; the effect below loads into
+   * whichever is there, again after a switch of layout.
+   */
   private readonly tenantSwitcherHost = viewChild('tenantSwitcherHost', { read: ViewContainerRef });
   private tenantSwitcherLoadedInto: ViewContainerRef | undefined;
 

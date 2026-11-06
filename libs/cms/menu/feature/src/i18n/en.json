@@ -305,7 +305,9 @@
     "helper": "Indent of the submenu entries in pixels (0 to 40). For a menu at the top, the gap below the dropdown."
   },
   "bar": {
-    "segment_sub": "A segmented menu cannot show submenus"
+    "segment_sub": "A segmented menu cannot show submenus",
+    "account_menu": "Account and settings",
+    "cookie_settings": "Cookie settings"
   },
   "item": {
     "task-my": "My tasks",

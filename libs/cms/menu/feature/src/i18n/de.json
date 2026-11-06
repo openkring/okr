@@ -305,7 +305,9 @@
     "helper": "Einzug der Untermenü-Einträge in Pixel (0 bis 40). Bei einem Menü oben der Abstand unter dem Aufklappmenü."
   },
   "bar": {
-    "segment_sub": "Ein Segment-Menü kann keine Untermenüs zeigen"
+    "segment_sub": "Ein Segment-Menü kann keine Untermenüs zeigen",
+    "account_menu": "Konto und Einstellungen",
+    "cookie_settings": "Cookie-Einstellungen"
   },
   "item": {
     "task-my": "Meine Aufgaben",

@@ -305,7 +305,9 @@
     "helper": "Sangría de las entradas del submenú en píxeles (0 a 40). En un menú superior, el espacio bajo el desplegable."
   },
   "bar": {
-    "segment_sub": "Un menú por segmentos no puede mostrar submenús"
+    "segment_sub": "Un menú por segmentos no puede mostrar submenús",
+    "account_menu": "Cuenta y ajustes",
+    "cookie_settings": "Ajustes de cookies"
   },
   "item": {
     "task-my": "Mis tareas",
