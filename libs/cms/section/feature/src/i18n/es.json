@@ -794,6 +794,7 @@
     "label": "Retrieval Augmented Generation (RAG)",
     "placeholder": "Pregunte cualquier cosa sobre el Seeclub Stäfa",
     "upload": "Subir documentos al store de RAG",
+    "pdfWarning": "Subida completada. El asistente lee los archivos de texto como .md con más fiabilidad que los archivos PDF; si puedes, sube mejor un archivo de texto.",
     "config": {
       "title": "Configuración de RAG",
       "subtitle": "Modelo, vector store y comportamiento del asistente.",

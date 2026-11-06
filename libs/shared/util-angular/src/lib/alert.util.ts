@@ -35,10 +35,10 @@ export function error(toastController: ToastController | undefined, message: str
   return undefined;
 }
 
-export async function showToast(toastController: ToastController, message: string): Promise<void> {
+export async function showToast(toastController: ToastController, message: string, duration = TOAST_LENGTH): Promise<void> {
   const _toast = await toastController.create({
     message: await t(message),
-    duration: TOAST_LENGTH
+    duration
   });
   _toast.present();
 }

@@ -794,6 +794,7 @@
     "label": "Retrieval Augmented Generation (RAG)",
     "placeholder": "Frage irgendetwas über den Seeclub Stäfa",
     "upload": "Dokumente in den RAG-Store hochladen",
+    "pdfWarning": "Hochgeladen. Der Assistent liest Textdateien wie .md zuverlässiger als PDF-Dateien. Lade darum wenn möglich lieber eine Textdatei hoch.",
     "config": {
       "title": "RAG-Konfiguration",
       "subtitle": "Modell, Vektor-Store und Verhalten des Assistenten.",
