@@ -263,6 +263,9 @@ seed("app-status/chat", {"blocked": False, "message": ""})
 # emailEvents (1.101 phase 5): webhook-written telemetry, operator-only read
 seed("emailEvents/ev1", {"event": "delivery", "email": "x@example.org", "expiresAt": "20261101"})
 
+# webhook-events (spec 1.142): Admin-SDK only, no client may read or write
+seed("webhook-events/we1", {"clientId": "fake", "type": "fake", "tenants": ["t1"], "state": "received"})
+
 # alias (spec 2026-08-22): `aliases` ist CF-write-only, und der Grund ist NICHT die Rolle.
 # Die Document-ID ist deterministisch (<tenant>__<space>__<alias>), also wuerde ein
 # Client-setDoc einen bestehenden — womoeglich GEDRUCKTEN — Alias still ueberschreiben
@@ -489,6 +492,7 @@ single_cases = [
     ("userO(admin bka) POST emailEvents -> DENY (write:false)", False, POST, "emailEvents?documentId=evNew", O,
      body({"event": "x"}), None),
     ("userO(admin bka) DELETE emailEvents/ev1 -> DENY (write:false)", False, DELETE, "emailEvents/ev1", O, None, None),
+    ("userD(admin t1) GET webhook-events/we1 -> DENY (Admin SDK only)", False, GET, "webhook-events/we1", D, None, None),
     # 1.32 §8.5: enabledFeatures is a billing boundary. Everything else in app-config
     # stays tenant-admin territory; only the paid-add-on subset is server-side.
     ("userD(admin t1) PATCH app-config/t1 gitOrg -> ALLOW", True, PATCH, "app-config/t1", D,

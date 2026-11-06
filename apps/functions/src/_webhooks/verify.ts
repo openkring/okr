@@ -6,9 +6,10 @@ import type { WebhookClient, WebhookRequest } from './types';
 export function verifyHmacHex(rawBody: Buffer | undefined, signature: string | undefined, secret: string): boolean {
   if (!rawBody || !signature || !secret) return false;
   const expected = createHmac('sha256', secret).update(rawBody).digest();
+  // Buffer.from(.., 'hex') stops at the first non-hex character, so check the shape first.
+  if (signature.length !== expected.length * 2 || !/^[0-9a-fA-F]+$/.test(signature)) return false;
   try {
-    const given = Buffer.from(signature, 'hex');
-    return given.length === expected.length && timingSafeEqual(expected, given);
+    return timingSafeEqual(expected, Buffer.from(signature, 'hex'));
   } catch {
     return false;
   }

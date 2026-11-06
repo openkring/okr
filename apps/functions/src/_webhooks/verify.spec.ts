@@ -20,4 +20,8 @@ describe('verifyHmacHex', () => {
     expect(verifyHmacHex(body, 'not hex at all', secret)).toBe(false);
     expect(verifyHmacHex(body, 'abcd', secret)).toBe(false);
   });
+  it('rejects a valid digest followed by junk', () => {
+    expect(verifyHmacHex(body, good + 'zz', secret)).toBe(false);
+    expect(verifyHmacHex(body, good + 'ab', secret)).toBe(false);
+  });
 });

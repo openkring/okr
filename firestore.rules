@@ -1514,6 +1514,11 @@ service cloud.firestore {
     match /_rateLimits/{docId} {
       allow read, write: if false;
     }
+    // Inbound webhook events (spec 1.142). Admin-SDK only.
+    // Configure a Firestore TTL policy on `webhook-events.expiresAt`.
+    match /webhook-events/{docId} {
+      allow read, write: if false;
+    }
     // External Data Gateway — provider response cache. Admin-SDK only.
     // Configure a Firestore TTL policy on `apiCache.expiresAt`.
     match /apiCache/{docId} {
