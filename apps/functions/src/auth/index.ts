@@ -570,6 +570,31 @@ export function resetMailFields(found: { uid: string; data: DocumentData } | und
 }
 
 /**
+ * The envelope of a password-reset mail: exactly ONE address, the one the reset link was generated
+ * for (`recipients[0]`, or the favourite email on a Benutzername reset), and never the caller's
+ * `cc`/`bcc`. The reset path needs no login, so honouring caller recipients would hand the victim's
+ * link to whoever put themselves in `bcc` or a second `to` entry. Extras are dropped silently, not
+ * rejected: the reset path answers the same way for every input (anti-enumeration, M-3).
+ * @param recipients the non-empty recipient list the link was generated for
+ */
+export function resetEnvelope(recipients: string[]): { to: string[]; cc: undefined; bcc: undefined } {
+  return { to: recipients.slice(0, 1), cc: undefined, bcc: undefined };
+}
+
+/**
+ * May the signed-in caller send mail under `appId`'s sender and provider? Only a member of that
+ * tenant (anywhere in `users/{uid}.tenants`, not just `tenants[0]`) or the operator. Without this
+ * a member of one tenant could send as any other tenant, since `appId` is caller-chosen.
+ * @param userData the caller's `users/{uid}` data, undefined when there is no doc
+ * @param appId    the app/tenant the mail is sent for
+ */
+export function callerMaySendFor(userData: Record<string, unknown> | undefined, appId: string): boolean {
+  if (isOperatorUserData(userData)) return true;
+  const tenants = userData?.['tenants'];
+  return typeof appId === 'string' && appId !== '' && Array.isArray(tenants) && tenants.includes(appId);
+}
+
+/**
  * Send an email via a configurable provider.
  * Also handles password reset emails when template === 'password_reset':
  * generates a Firebase password reset link and injects { url, email, app_name }
@@ -612,6 +637,11 @@ export const sendEmail = functions.onCall(
     const isPasswordReset = template === PASSWORD_RESET_TEMPLATE || template === LEGACY_PASSWORD_RESET_TEMPLATE;
     if (!isPasswordReset) {
       checkAuthentication(request as any, CF_NAME);
+      const callerSnap = await getFirestore().collection('users').doc(request.auth!.uid).get();
+      if (!callerMaySendFor(callerSnap.data(), appId)) {
+        logger.warn(`${CF_NAME}: refused, caller ${request.auth!.uid} is not a member of the requested app`);
+        throw new functions.HttpsError('permission-denied', 'Du kannst für diese App keine E-Mails senden.');
+      }
     }
 
     // Reset by Benutzername (spec 1.71 §5.2): the link is for the account's Auth email (real or
@@ -718,15 +748,18 @@ export const sendEmail = functions.onCall(
     if (!from) throw new functions.HttpsError('invalid-argument', 'from is required.');
     if (!subject) throw new functions.HttpsError('invalid-argument', 'subject is required.');
 
+    // The reset path ignores the request's recipients beyond the one the link is for.
+    const envelope = isPasswordReset ? resetEnvelope(recipients) : { to: recipients, cc, bcc };
+
     // Log recipient COUNT, not addresses — PII (privacy inventory §7.2).
-    logger.info(`${CF_NAME}: sending via ${provider} to ${recipients.length} recipient(s) (appId=${appId}, template=${templateRef ?? 'none'})`);
+    logger.info(`${CF_NAME}: sending via ${provider} to ${envelope.to.length} recipient(s) (appId=${appId}, template=${templateRef ?? 'none'})`);
 
     // Attachments are resolved server-side from Storage (never on the password-reset path).
     const resolvedAttachments = isPasswordReset ? [] : await resolveAttachments(attachments, CF_NAME);
 
     try {
-      await sendEmailViaProvider(provider, { from, to: recipients, cc, bcc, subject, html: html ?? '', text, template: templateRef, templateVariables, attachments: resolvedAttachments });
-      logger.info(`${CF_NAME}: email sent to ${recipients.length} recipient(s)${resolvedAttachments.length ? ` with ${resolvedAttachments.length} attachment(s)` : ''}`);
+      await sendEmailViaProvider(provider, { from, to: envelope.to, cc: envelope.cc, bcc: envelope.bcc, subject, html: html ?? '', text, template: templateRef, templateVariables, attachments: resolvedAttachments });
+      logger.info(`${CF_NAME}: email sent to ${envelope.to.length} recipient(s)${resolvedAttachments.length ? ` with ${resolvedAttachments.length} attachment(s)` : ''}`);
       return { success: true };
     } catch (error: any) {
       logger.error(`${CF_NAME}: failed to send email`, { error: error.message });

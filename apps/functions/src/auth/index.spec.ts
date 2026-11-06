@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isBlockedSyntheticEmailChange, isLoginEmailChange, resetMailFields } from './index';
+import { callerMaySendFor, isBlockedSyntheticEmailChange, isLoginEmailChange, resetEnvelope, resetMailFields } from './index';
 
 function found(over: Record<string, unknown> = {}): { uid: string; data: Record<string, unknown> } {
   return { uid: 'uid1', data: { personKey: 'p1', loginId: 'max_mueller', ...over } };
@@ -27,6 +27,57 @@ describe('resetMailFields', () => {
       resetLoginId: '',
       recipients: ['anna@example.ch'],
     });
+  });
+});
+
+describe('resetEnvelope', () => {
+  it('keeps only the first recipient, the one the link was generated for', () => {
+    expect(resetEnvelope(['a@x.ch', 'b@x.ch'])).toEqual({ to: ['a@x.ch'], cc: undefined, bcc: undefined });
+  });
+
+  it('never carries cc or bcc', () => {
+    const env = resetEnvelope(['a@x.ch']);
+    expect(env.cc).toBeUndefined();
+    expect(env.bcc).toBeUndefined();
+  });
+
+  it('a request with cc, bcc and two to entries is cut down to one address', () => {
+    // The callable builds its send from this result and never reads cc/bcc on the reset path.
+    const request = { to: ['victim@x.ch', 'attacker@x.ch'], cc: ['c@x.ch'], bcc: ['attacker@x.ch'] };
+    const env = resetEnvelope(request.to);
+    expect(env).toEqual({ to: ['victim@x.ch'], cc: undefined, bcc: undefined });
+    expect(JSON.stringify(env)).not.toContain('attacker');
+  });
+});
+
+describe('callerMaySendFor', () => {
+  it('allows the caller\'s own tenant', () => {
+    expect(callerMaySendFor({ tenants: ['scs'] }, 'scs')).toBe(true);
+  });
+
+  it('allows a second tenant in the list, not only tenants[0]', () => {
+    expect(callerMaySendFor({ tenants: ['scs', 'gss'] }, 'gss')).toBe(true);
+  });
+
+  it('refuses a foreign tenant', () => {
+    expect(callerMaySendFor({ tenants: ['scs'] }, 'other')).toBe(false);
+  });
+
+  it('refuses a caller with no users doc', () => {
+    expect(callerMaySendFor(undefined, 'scs')).toBe(false);
+  });
+
+  it('refuses a users doc without a tenants array', () => {
+    expect(callerMaySendFor({ tenants: 'scs' }, 'scs')).toBe(false);
+    expect(callerMaySendFor({}, 'scs')).toBe(false);
+  });
+
+  it('allows the operator for any tenant', () => {
+    expect(callerMaySendFor({ tenants: ['bka'], roles: { admin: true } }, 'scs')).toBe(true);
+  });
+
+  it('does not let a non-admin bka member through', () => {
+    expect(callerMaySendFor({ tenants: ['bka'], roles: {} }, 'scs')).toBe(false);
   });
 });
 
