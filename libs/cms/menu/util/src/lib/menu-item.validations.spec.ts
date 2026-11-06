@@ -106,6 +106,12 @@ describe('menuItemValidations: main menu layout', () => {
     expect(itemErrors(main({ menuType: 'segmented', menuItems: rows(7) }))).toEqual(['menuSegmentedTooManyItems']);
   });
 
+  it('a divider row takes no slot, in top and in segmented', () => {
+    const childActions = { line: 'divider' };
+    expect(itemErrors(main({ menuType: 'top', menuItems: [...rows(6), 'line'] }), childActions)).toEqual([]);
+    expect(itemErrors(main({ menuType: 'segmented', menuItems: [...rows(6), 'line'] }), childActions)).toEqual([]);
+  });
+
   it('segmented with 6 flat rows is valid', () => {
     const childActions = Object.fromEntries(rows(6).map(name => [name, 'navigate']));
     expect(itemErrors(main({ menuType: 'segmented', menuItems: rows(6) }), childActions)).toEqual([]);

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { MenuItemModel } from '@okr/shared-models';
 
-import { barAccountKeys, countBarItems, exceedsBarLimit, isBarActive, isBarMenuType, splitBarRows, visibleBarRows } from './menu-bar.util';
+import { barAccountKeys, barRenderableRows, countBarItems, exceedsBarLimit, isBarActive, isBarMenuType, splitBarRows, visibleBarRows } from './menu-bar.util';
 
 describe('isBarMenuType', () => {
   it('is true for top and segmented, false for the vertical types and for absent', () => {
@@ -26,6 +26,51 @@ describe('countBarItems', () => {
   it('is 0 for an absent or empty list', () => {
     expect(countBarItems(undefined)).toBe(0);
     expect(countBarItems([])).toBe(0);
+  });
+
+  it('leaves out divider rows, which are no entries', () => {
+    expect(countBarItems(['a', 'line', 'b'], { a: 'navigate', line: 'divider', b: 'sub' })).toBe(2);
+  });
+
+  it('counts a row whose action is unknown, and other actions the bar does not render', () => {
+    expect(countBarItems(['a', 'ghost'], { a: 'call' })).toBe(2);
+  });
+
+  it('counts dividers when no actions are passed: the names alone say nothing', () => {
+    expect(countBarItems(['a', 'line'])).toBe(2);
+  });
+});
+
+describe('barRenderableRows', () => {
+  const row = (name: string, action: string): MenuItemModel => {
+    const item = new MenuItemModel('scs');
+    item.name = name;
+    item.action = action;
+    return item;
+  };
+  const allActions = ['navigate', 'browse', 'sub', 'divider', 'call', 'toggle', 'workflow'].map(action => row(action, action));
+  const names = (rows: MenuItemModel[]) => rows.map(item => item.name);
+
+  it('keeps navigate, browse and sub in a top bar, in order', () => {
+    expect(names(barRenderableRows(allActions, 'top'))).toEqual(['navigate', 'browse', 'sub']);
+  });
+
+  it('keeps navigate and browse in a segmented bar: a segment cannot hold a submenu', () => {
+    expect(names(barRenderableRows(allActions, 'segmented'))).toEqual(['navigate', 'browse']);
+  });
+
+  it('keeps nothing for a type that has no bar', () => {
+    expect(barRenderableRows(allActions, 'left')).toEqual([]);
+    expect(barRenderableRows(allActions, 'right')).toEqual([]);
+    expect(barRenderableRows(allActions, undefined)).toEqual([]);
+  });
+
+  it('frees the slot of a row the bar would not draw', () => {
+    const rows = ['a', 'b', 'c', 'd', 'e', 'f'].map(name => row(name, 'navigate'));
+    const stored = [rows[0], row('line', 'divider'), ...rows.slice(1)];
+    const { shown, more } = splitBarRows(barRenderableRows(stored, 'top'));
+    expect(names(shown)).toEqual(['a', 'b', 'c', 'd', 'e', 'f']);
+    expect(more).toEqual([]);
   });
 });
 
@@ -133,5 +178,11 @@ describe('exceedsBarLimit', () => {
   it('treats an absent root document as empty', () => {
     expect(exceedsBarLimit('top', undefined, 6)).toBe(false);
     expect(exceedsBarLimit('top', undefined, 7)).toBe(true);
+  });
+
+  it('does not count a divider row when the actions are passed', () => {
+    const withDivider = [...six, 'line'];
+    expect(exceedsBarLimit('top', withDivider, 1)).toBe(true);
+    expect(exceedsBarLimit('top', [...five, 'line'], 1, { line: 'divider' })).toBe(false);
   });
 });

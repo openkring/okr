@@ -734,8 +734,10 @@ export class FeaturePicker {
    */
   private async warnIfBarOverflows(preview: ApplyPlanPreview): Promise<void> {
     const added = entriesOfKind(preview, 'menu-attached').length;
-    const root = this.menuByName().get(`main_${this.tenantId()}`);
-    if (added === 0 || !exceedsBarLimit(root?.menuType, root?.menuItems, added)) return;
+    const docs = this.menuByName();
+    const root = docs.get(`main_${this.tenantId()}`);
+    const childActions = Object.fromEntries([...docs.values()].map(doc => [doc.name, doc.action]));
+    if (added === 0 || !exceedsBarLimit(root?.menuType, root?.menuItems, added, childActions)) return;
     await this.alertService.confirm(this.i18n.bar_overflow_warning());
   }
 

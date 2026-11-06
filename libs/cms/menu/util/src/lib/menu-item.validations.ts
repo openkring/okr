@@ -14,7 +14,8 @@ import { countBarItems } from './menu-bar.util';
 
 /**
  * `childActions` maps the `name` of each child row of a root menu to its `action`. The suite cannot
- * look the documents up, so the form passes them in; a child that is missing from it is not checked.
+ * look the documents up, so the form passes them in; a child that is missing from it is not checked
+ * for a submenu and counts as a row.
  */
 export const menuItemValidations = staticSuite((model: MenuItemModel, tenants: string, tags: string, childActions: Record<string, string> = {}) => {
   stringValidations('okey', model.okey);
@@ -70,13 +71,13 @@ export const menuItemValidations = staticSuite((model: MenuItemModel, tenants: s
   // The limit applies to the bar layouts only; a vertical or absent menuType never reaches these.
   omitWhen(model.action !== 'main' || model.menuType !== 'top', () => {
     test('menuItems', 'menuTopTooManyItems', () => {
-      enforce(countBarItems(children)).lessThanOrEquals(MAX_MENU_BAR_ITEMS);
+      enforce(countBarItems(children, childActions)).lessThanOrEquals(MAX_MENU_BAR_ITEMS);
     });
   });
 
   omitWhen(model.action !== 'main' || model.menuType !== 'segmented', () => {
     test('menuItems', 'menuSegmentedTooManyItems', () => {
-      enforce(countBarItems(children)).lessThanOrEquals(MAX_MENU_BAR_ITEMS);
+      enforce(countBarItems(children, childActions)).lessThanOrEquals(MAX_MENU_BAR_ITEMS);
     });
     // a segment says «one of these peers is selected»; it has no dropdown for a `sub` row
     test('menuItems', 'menuSegmentedNoSubmenus', () => {

@@ -11,9 +11,13 @@ export function barAccountKeys(menuItems: string[] | undefined): string[] {
   return (menuItems ?? []).filter(key => MENU_BAR_ACCOUNT_KEYS.includes(key));
 }
 
-/** The stored rows that count against `MAX_MENU_BAR_ITEMS`: everything but the account rows. */
-export function countBarItems(menuItems: string[] | undefined): number {
-  return (menuItems ?? []).length - barAccountKeys(menuItems).length;
+/**
+ * The stored rows that count against `MAX_MENU_BAR_ITEMS`: everything but the account rows and the
+ * `divider` rows, which take no slot. `menuItems` holds names only, so the caller passes
+ * `childActions` (`name` -> `action`) to recognise a divider; a name missing from it counts.
+ */
+export function countBarItems(menuItems: string[] | undefined, childActions: Record<string, string> = {}): number {
+  return (menuItems ?? []).filter(name => !MENU_BAR_ACCOUNT_KEYS.includes(name) && childActions[name] !== 'divider').length;
 }
 
 /**
@@ -43,6 +47,17 @@ export function visibleBarRows(
 }
 
 /**
+ * The rows the bar can draw for this layout: `navigate`, `browse` and `sub` in `top`, `navigate` and
+ * `browse` in `segmented`. The others have no hosting feature at root level (`call`, `toggle`,
+ * `workflow`), are no entry (`divider`) or do not fit a segment (`sub`), and must not take a slot. Goes
+ * before {@link splitBarRows}. A type without a bar keeps nothing.
+ */
+export function barRenderableRows(rows: MenuItemModel[], type: MenuType | undefined): MenuItemModel[] {
+  if (!isBarMenuType(type)) return [];
+  return rows.filter(row => row.action === 'navigate' || row.action === 'browse' || (type === 'top' && row.action === 'sub'));
+}
+
+/**
  * Splits the visible rows of the bar. Up to `MAX_MENU_BAR_ITEMS` rows show unchanged; above that the
  * bar shows one fewer than the limit and a «Mehr» entry whose dropdown holds the rest (spec §6.5).
  * The picker can append rows past the limit without running the validator, so the renderer copes.
@@ -54,8 +69,14 @@ export function splitBarRows<T>(rows: T[]): { shown: T[]; more: T[] } {
 
 /**
  * Whether adding `added` rows to a root menu of this type takes its bar past the limit, which makes
- * the extra rows land under «Mehr». Only a bar type can exceed it; the reserved account rows do not count.
+ * the extra rows land under «Mehr». Only a bar type can exceed it; the reserved account rows and, with
+ * `childActions`, the divider rows do not count.
  */
-export function exceedsBarLimit(type: MenuType | undefined, menuItems: string[] | undefined, added: number): boolean {
-  return isBarMenuType(type) && countBarItems(menuItems) + added > MAX_MENU_BAR_ITEMS;
+export function exceedsBarLimit(
+  type: MenuType | undefined,
+  menuItems: string[] | undefined,
+  added: number,
+  childActions: Record<string, string> = {},
+): boolean {
+  return isBarMenuType(type) && countBarItems(menuItems, childActions) + added > MAX_MENU_BAR_ITEMS;
 }

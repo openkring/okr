@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, output } from '@angular/core';
+import { Component, computed, effect, inject, output, signal } from '@angular/core';
 import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonPopover, IonSegment, IonSegmentButton, IonToolbar } from '@ionic/angular';
 
 import { MenuItemModel } from '@okr/shared-models';
@@ -7,7 +7,7 @@ import { AvatarUser, ConnectionStatusButton } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { contextMenuId, hasRole } from '@okr/shared-util-core';
 
-import { splitBarRows, visibleBarRows } from '@okr/cms-menu-util';
+import { barRenderableRows, splitBarRows, visibleBarRows } from '@okr/cms-menu-util';
 
 import { MenuBarAccount } from './menu-bar-account';
 import { MenuBarItem } from './menu-bar-item';
@@ -37,6 +37,8 @@ import { MenuStore } from './menu.store';
  * already hold the tapped value, and the tap would then do nothing. And the segment is re-created
  * whenever the active row changes instead of being given a new value, because Ionic animates the
  * marker from the old button by measuring buttons that are hidden, and the marker stayed behind.
+ * A `browse` row leaves the page alone, yet Ionic moves the marker to the tapped button all the same,
+ * so such a tap re-creates the segment too, which puts the marker back on the current page.
  *
  * Absolutely positioned at the top of `#main`, with the safe area inside its own height: the outlet
  * is offset by the same amount and zeroes `--ion-safe-area-top` for its pages (`MenuLayout.barTop`).
@@ -78,10 +80,10 @@ import { MenuStore } from './menu.store';
       <ion-toolbar color="secondary">
         <div class="bar">
           @if (layout.menuType() === 'segmented') {
-            @if (segmentRows().length > 0) {
-              @for (activeKey of [activeKey()]; track activeKey) {
-                <ion-segment [scrollable]="true" [value]="activeKey">
-                  @for (row of segmentRows(); track row.name) {
+            @if (shownRows().length > 0) {
+              @for (segmentKey of [segmentKey()]; track segmentKey) {
+                <ion-segment [scrollable]="true" [value]="activeKey()">
+                  @for (row of shownRows(); track row.name) {
                     <ion-segment-button [value]="row.name" (click)="select(row)">
                       <ion-label><okr-menu-bar-label [name]="row.name" /></ion-label>
                     </ion-segment-button>
@@ -176,10 +178,11 @@ export class MenuBar {
   });
 
   /**
-   * Above `MAX_MENU_BAR_ITEMS` visible rows the bar shows five and the rest sit under «Mehr» (spec §6.5).
-   * The form refuses such a menu, but the picker appends rows without validation.
+   * Above `MAX_MENU_BAR_ITEMS` rows the bar shows five and the rest sit under «Mehr» (spec §6.5). Only
+   * the rows this layout can draw go in, so a row it would skip leaves no empty slot. The form refuses
+   * such a menu, but the picker appends rows without validation.
    */
-  private readonly split = computed(() => splitBarRows(this.rows()));
+  private readonly split = computed(() => splitBarRows(barRenderableRows(this.rows(), this.layout.menuType())));
   protected readonly shownRows = computed(() => this.split().shown);
   protected readonly moreRows = computed(() => this.split().more);
   /** The current page lies under «Mehr», in a row or below one. */
@@ -188,14 +191,19 @@ export class MenuBar {
     return !!active && this.moreRows().some(row => row.name === active.key || active.ancestors.includes(row.name));
   });
 
-  /** `call`, `toggle` and `workflow` rows have no hosting feature at root level, so only these two show. */
-  protected readonly segmentRows = computed(() => this.shownRows().filter(row => row.action === 'navigate' || row.action === 'browse'));
-  /** A segment cannot hold a submenu (spec §8.2); the form refuses one, but the picker can still add it. */
-  protected readonly subRows = computed(() => this.shownRows().filter(row => row.action === 'sub'));
+  /**
+   * A segment cannot hold a submenu (spec §8.2); the form refuses one, but the picker can still add it.
+   * Read from all rows: `barRenderableRows` drops these, and this warning is the admin's only sign of them.
+   */
+  protected readonly subRows = computed(() => this.rows().filter(row => row.action === 'sub'));
   protected readonly subNames = computed(() => this.subRows().map(row => row.name).join(', '));
 
-  /** The active row's key as a plain string, so the segment is re-created on a new row only. */
+  /** The active row's key as a plain string. */
   protected readonly activeKey = computed(() => this.menuItemsStore.activeMenu()?.key);
+  /** Taps on a `browse` segment so far, see the class comment. */
+  private readonly browseTaps = signal(0);
+  /** Re-creates the segment on a new active row and after a `browse` tap, and on nothing else. */
+  protected readonly segmentKey = computed(() => `${this.activeKey() ?? ''}#${this.browseTaps()}`);
 
   constructor() {
     // Idempotent. Without it, an app whose burger is never opened (the bar replaces it) would never
@@ -206,6 +214,7 @@ export class MenuBar {
 
   protected select(row: MenuItemModel): void {
     void this.store.select(row, false);
+    if (row.action === 'browse') this.browseTaps.update(taps => taps + 1);
   }
 
   /** The popover has no dismissOnSelect, so this entry closes it itself. */
