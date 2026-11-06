@@ -35,16 +35,31 @@ function injectCss(html: string, css: string): string {
  * A draft keeps its version number while it is edited, so `${templateId}@${version}` alone would serve
  * the first compile of a draft for the lifetime of a warm instance (generateDocument has minInstances: 1).
  * The content hash makes every edit a new key.
+ *
+ * `noEscape` (email text and subject) compiles the same source differently, so the flag is part of the hash.
  */
-export async function compileTemplate(key: string, html: string, css?: string): Promise<CompiledTemplate> {
-  const hash = createHash('sha256').update(html).update('\0').update(css ?? '').digest('hex').slice(0, 16);
+export async function compileTemplate(
+  key: string,
+  html: string,
+  css?: string,
+  options?: { noEscape?: boolean }
+): Promise<CompiledTemplate> {
+  const noEscape = options?.noEscape === true;
+  const hash = createHash('sha256')
+    .update(html)
+    .update('\0')
+    .update(css ?? '')
+    .update('\0')
+    .update(noEscape ? 'raw' : 'html')
+    .digest('hex')
+    .slice(0, 16);
   const contentKey = `${key}#${hash}`;
   const cached = getCachedTemplate(contentKey);
   if (cached) return cached;
   const { default: Handlebars } = await import('handlebars');
   // Inject CSS into HTML before compiling so the template renders with styles
   const fullHtml = css ? injectCss(html, css) : html;
-  const compiled = Handlebars.compile(fullHtml);
+  const compiled = Handlebars.compile(fullHtml, { noEscape });
   setCachedTemplate(contentKey, compiled);
   return compiled;
 }

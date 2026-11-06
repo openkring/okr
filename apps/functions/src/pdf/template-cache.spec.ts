@@ -22,4 +22,16 @@ describe('compileTemplate', () => {
     expect(b({})).toContain('color:blue');
     expect(a).not.toBe(b);
   });
+
+  it('keeps noEscape apart in the cache', async () => {
+    const escaped = await compileTemplate('k', '{{v}}');
+    const raw = await compileTemplate('k', '{{v}}', undefined, { noEscape: true });
+    expect(escaped({ v: 'a=b&c' })).not.toBe('a=b&c');
+    expect(raw({ v: 'a=b&c' })).toBe('a=b&c');
+  });
+
+  it('renders a tenant name with & literally when noEscape is set', async () => {
+    const t = await compileTemplate('s', 'Hallo {{app_name}}', undefined, { noEscape: true });
+    expect(t({ app_name: 'Verein & Co' })).toBe('Hallo Verein & Co');
+  });
 });
