@@ -350,7 +350,11 @@ export class DashboardPage {
   protected editMode = signal(false);
   protected page = computed(() => this.store.page());
   // Accordion sections are not supported in Dashboard pages. Makes the implementation easier.
-  protected sections = computed(() => this.store.pageSections());
+  // Like the content page: readers get published sections only, a contentAdmin sees all of them.
+  protected sections = computed(() => {
+    const sections = this.store.pageSections();
+    return this.hasRole('contentAdmin') ? sections : sections.filter(s => s.state === 'published');
+  });
   protected isEmptyPage = computed(() => this.sections().length === 0);
   private items = computed((): DashboardItem[] => this.sections().map((section, order) => ({ section, order })));
   protected mainSections = computed(() => this.items().filter(item => !SIDE_SECTION_TYPES.includes(item.section.type)));
