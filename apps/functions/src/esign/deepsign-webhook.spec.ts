@@ -56,9 +56,24 @@ describe('deepSignUpdate', () => {
     expect(deepSignUpdate(record, payload({ eventType: 'signee-completed', signeeId: 'a' }), now)).toBeNull();
   });
 
-  it('returns null for an unknown signee', () => {
+  it('records an audit event for an unknown signee on a live record, leaving signees alone', () => {
     const record = { documentStatus: 'pending', signees: [pending('a')] };
-    expect(deepSignUpdate(record, payload({ eventType: 'signee-completed', signeeId: 'zz' }), now)).toBeNull();
+    const u = deepSignUpdate(record, payload({ eventType: 'signee-completed', signeeId: 'zz' }), now)!;
+    expect(u['events']).toBeDefined();
+    expect(u['updatedAt']).toBeDefined();
+    expect(u).not.toHaveProperty('signees');
+  });
+
+  it('returns null for an unknown signee on a terminal record', () => {
+    for (const documentStatus of ['signed', 'rejected', 'withdrawn']) {
+      const record = { documentStatus, signees: [pending('a')] };
+      expect(deepSignUpdate(record, payload({ eventType: 'signee-completed', signeeId: 'zz' }), now)).toBeNull();
+    }
+  });
+
+  it('uses now for a timestamp outside the Firestore range', () => {
+    const u = deepSignUpdate({ documentStatus: 'pending' }, payload({ eventType: 'document-completed', timestamp: '+010000-01-01T00:00:00Z' }), now)!;
+    expect(u['completionTime']).toEqual(now);
   });
 
   it('uses now for an unparseable timestamp', () => {

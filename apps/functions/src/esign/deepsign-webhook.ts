@@ -26,7 +26,11 @@ const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'obj
 function eventTimeOf(payload: DeepSignPayload, now: Timestamp): Timestamp {
   if (typeof payload.timestamp !== 'string' || payload.timestamp === '') return now;
   const date = new Date(payload.timestamp);
-  return Number.isNaN(date.getTime()) ? now : Timestamp.fromDate(date);
+  try {
+    return Timestamp.fromDate(date); // throws for an invalid date or one outside Firestore's range
+  } catch {
+    return now;
+  }
 }
 
 /** The record update for one event, or null when there is nothing to change. Pure. */
@@ -40,12 +44,15 @@ export function deepSignUpdate(record: Record<string, unknown>, payload: DeepSig
     if (terminal && status !== 'signed') return null;
     const signees = Array.isArray(record['signees']) ? (record['signees'] as Array<Record<string, unknown>>) : [];
     const target = signees.find(s => s['signeeId'] === payload.signeeId);
-    if (!target || target['signStatus'] === 'signed') return null; // unknown signee, or a replay
+    if (target?.['signStatus'] === 'signed') return null; // replay
     const eventTime = eventTimeOf(payload, now);
+    const audit = FieldValue.arrayUnion({ type: 'signee-signed', at: eventTime, signeeId: payload.signeeId });
+    // Unknown signee on a live record: keep the audit entry, leave signees alone (as esign-webhook does).
+    if (!target) return terminal ? null : { updatedAt: FieldValue.serverTimestamp(), events: audit };
     return {
       updatedAt: FieldValue.serverTimestamp(),
       signees: signees.map(s => (s === target ? { ...s, signStatus: 'signed', signedTime: eventTime, completionTime: eventTime } : s)),
-      events: FieldValue.arrayUnion({ type: 'signee-signed', at: eventTime, signeeId: payload.signeeId }),
+      events: audit,
     };
   }
 
