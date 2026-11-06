@@ -130,6 +130,13 @@ const NON_TENANT_MARKERS = {
             'tenantId." It is a starter row, not a tenant, and no app-config document is ' +
             'expected. Removing it would destroy the template every new tenant copies from.',
   },
+  system: {
+    reason: 'Fleet-shared reference data, documented in firestore.rules (belongsToTenant) and ' +
+            'SYSTEM_TENANT (libs/shared/util-core/src/lib/query.util.ts): every tenant reads such a ' +
+            'document, only the operator writes it. The shared email templates carry it (spec 1.141). ' +
+            'It is no tenant and has no app-config document. Removing it would take the shared ' +
+            'templates and icons away from the whole fleet.',
+  },
 };
 
 /**
