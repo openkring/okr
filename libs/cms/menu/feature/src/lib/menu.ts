@@ -5,7 +5,7 @@ import { SelectedBooks } from '@okr/shared-feature';
 import { MenuItemModel } from '@okr/shared-models';
 import { Spinner } from '@okr/shared-ui';
 import { debugData, hasRole } from '@okr/shared-util-core';
-import { VersionCheckService } from '@okr/shared-util-angular';
+import { dismissOverlay, VersionCheckService } from '@okr/shared-util-angular';
 import { DEFAULT_MENU_ACTION } from '@okr/shared-constants';
 
 import { MenuInfo, MultiAvatar } from '@okr/cms-menu-ui';
@@ -306,11 +306,8 @@ export class Menu {
     const popover = this.host.nativeElement.closest('ion-popover');
     const dropdown = popover?.classList.contains('okr-menu-dropdown') ? popover : null;
     await this.menuStore.select(menuItem, !!popover && !dropdown);
-    try {
-      await dropdown?.dismiss();
-    } catch {
-      // a `call` row has already closed the popover through dismissOverlay (SCS-5G in menu.store.ts):
-      // dismissing it again rejects with 'overlay does not exist', and nothing is left to close
-    }
+    // a `call` row has already closed the popover through dismissOverlay (SCS-5G in menu.store.ts):
+    // dismissing it again rejects with 'overlay does not exist', and nothing is left to close
+    await dismissOverlay(dropdown);
   }
 }

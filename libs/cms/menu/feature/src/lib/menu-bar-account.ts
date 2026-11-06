@@ -12,6 +12,8 @@ import { MenuItemsStore } from './menu-items.store';
  * the person does not meet leaves no gap. The «…» button itself is not gated, because the
  * Cookie-Einstellungen entry below these rows has to stay reachable. It is a component of its own
  * so that `MenuBar`, which holds the popover, never renders an `okr-menu` without that guard.
+ * The selector is `okr-bar-account`, not `okr-menu-bar-account`, because the `check-context-menus`
+ * regex `<okr-menu\b` would match the latter and demand a `canOpen` guard around the popover.
  */
 @Component({
   selector: 'okr-bar-account',

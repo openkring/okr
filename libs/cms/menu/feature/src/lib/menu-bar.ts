@@ -4,11 +4,13 @@ import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabe
 import { MenuItemModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { AvatarUser, ConnectionStatusButton } from '@okr/shared-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 import { contextMenuId, hasRole } from '@okr/shared-util-core';
 
 import { visibleBarRows } from '@okr/cms-menu-util';
 
 import { MenuBarAccount } from './menu-bar-account';
+import { MenuBarItem } from './menu-bar-item';
 import { MenuBarLabel } from './menu-bar-label';
 import { MenuItemsStore } from './menu-items.store';
 import { MenuLayout } from './menu-layout.service';
@@ -18,7 +20,7 @@ import { MenuStore } from './menu.store';
  * The main menu as a bar across the top of the shell (menu-layouts spec §6, §8). The shell renders
  * one instance, inside `#main` above the router outlet, while `MenuLayout.barActive()` is true.
  *
- * `segmented` is drawn here; `top` leaves the toolbar empty until its dropdowns exist. The end of the
+ * `segmented` and `top` are both drawn here (`top` through `MenuBarItem`). The end of the
  * toolbar is the account area (spec §6.4): the connection status, the projection slot
  * `[okrMenuBarEnd]` (the shell puts the tenant switcher and the debug info there), the avatar, and a
  * «…» button whose popover holds login, logout and profile plus Cookie-Einstellungen. That popover is
@@ -37,7 +39,7 @@ import { MenuStore } from './menu.store';
 @Component({
   selector: 'okr-menu-bar',
   imports: [
-    MenuBarAccount, MenuBarLabel, SvgIconPipe, AvatarUser, ConnectionStatusButton,
+    MenuBarAccount, MenuBarItem, MenuBarLabel, SvgIconPipe, AvatarUser, ConnectionStatusButton,
     IonHeader, IonToolbar, IonButtons, IonButton, IonIcon, IonPopover, IonContent, IonList, IonSegment, IonSegmentButton, IonLabel, IonItem,
   ],
   providers: [MenuStore],
@@ -75,6 +77,13 @@ import { MenuStore } from './menu.store';
               <ion-item color="warning" lines="none" class="warn">
                 <ion-label>{{ store.i18n.bar_segment_sub() }}: {{ subNames() }}</ion-label>
               </ion-item>
+            }
+          </div>
+        }
+        @if (layout.menuType() === 'top') {
+          <div class="bar">
+            @for (row of rows(); track row.name) {
+              <okr-menu-bar-item [name]="row.name" />
             }
           </div>
         }
@@ -154,7 +163,7 @@ export class MenuBar {
 
   /** The popover has no dismissOnSelect, so this entry closes it itself. */
   protected openCookieSettings(popover: IonPopover): void {
-    void popover.dismiss();
+    void dismissOverlay(popover);
     this.cookieSettingsClicked.emit();
   }
 }
