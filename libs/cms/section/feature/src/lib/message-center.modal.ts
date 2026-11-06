@@ -6,7 +6,7 @@ import { of } from 'rxjs';
 import { DeliveryChannels } from '@okr/shared-categories';
 import { AppStore } from '@okr/shared-feature';
 import { isSyntheticLoginEmail } from '@okr/user-util';
-import { DeliveryChannel, UserModel } from '@okr/shared-models';
+import { DeliveryChannel, EmailLayoutChoice, UserModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { I18nService } from '@okr/shared-i18n';
 import { SECTION_I18N_KEYS, SectionI18n } from '@okr/cms-section-util';
@@ -17,7 +17,7 @@ import { MembershipService } from '@okr/relationship-membership-data-access';
 import { UserService } from '@okr/user-data-access';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
-const EMAIL_PROVIDERS = ['mailgun_smtp', 'mailtrap_api', 'netzone_smtp', 'mailtrap_test'] as const;
+const LAYOUT_CHOICES: readonly EmailLayoutChoice[] = ['standard', 'plain'];
 
 @Component({
   selector: 'okr-message-center-modal',
@@ -91,21 +91,13 @@ const EMAIL_PROVIDERS = ['mailgun_smtp', 'mailtrap_api', 'netzone_smtp', 'mailtr
         @if (isPrivileged()) {
           <ion-toolbar color="secondary">
             <ion-item lines="none" color="secondary">
-              <ion-label>{{ i18n.mc_provider_label() }}</ion-label>
-              <ion-select [value]="provider()"
-                (ionChange)="provider.set($any($event).detail.value)">
-                @for (p of emailProviders; track p) {
-                  <ion-select-option [value]="p">{{ p }}</ion-select-option>
+              <ion-label>{{ i18n.mc_layout_label() }}</ion-label>
+              <ion-select [value]="layout()"
+                (ionChange)="onLayoutChange($any($event).detail.value)">
+                @for (choice of layoutChoices; track choice) {
+                  <ion-select-option [value]="choice">{{ layoutLabel(choice) }}</ion-select-option>
                 }
               </ion-select>
-            </ion-item>
-          </ion-toolbar>
-
-          <ion-toolbar color="secondary">
-            <ion-item lines="none" color="secondary">
-              <ion-input [label]="i18n.mc_template_label()" [value]="template()"
-                (ionInput)="template.set($any($event).detail.value ?? '')"
-                [placeholder]="i18n.mc_template_placeholder()" [clearInput]="true" />
             </ion-item>
           </ion-toolbar>
         }
@@ -170,9 +162,8 @@ export class MessageCenterModal {
   // state
   protected subject = linkedSignal(() => this.initialSubject());
   protected from = linkedSignal(() => this.initialFrom());
-  protected provider = signal('mailtrap_api');
-  protected template = signal('');
-  protected readonly emailProviders = EMAIL_PROVIDERS;
+  protected layout = signal<EmailLayoutChoice>('standard');
+  protected readonly layoutChoices = LAYOUT_CHOICES;
   protected cc = signal('');
   protected bcc = signal('');
   protected showInputFields = signal(true);
@@ -284,6 +275,16 @@ export class MessageCenterModal {
     return DeliveryChannels.find(d => d.value === channel)?.icon ?? 'email';
   }
 
+  protected layoutLabel(choice: EmailLayoutChoice): string {
+    return choice === 'plain' ? this.i18n.mc_layout_plain() : this.i18n.mc_layout_standard();
+  }
+
+  /** Only the offered layouts are accepted; anything else keeps the current choice. */
+  protected onLayoutChange(value: unknown): void {
+    const choice = LAYOUT_CHOICES.find((c) => c === value);
+    if (choice) this.layout.set(choice);
+  }
+
   private parseEmails(raw: string): string[] {
     return raw.split(',').map(e => e.trim()).filter(Boolean);
   }
@@ -317,10 +318,11 @@ export class MessageCenterModal {
       finalBcc = bcc;
     }
 
-    const template = this.template().trim() || undefined;
+    // a non-privileged user never sees the select and always sends with the standard layout
+    const layout: EmailLayoutChoice = this.isPrivileged() ? this.layout() : 'standard';
     await dismissOverlay(
       this.modalController,
-      { to, cc, bcc: finalBcc, subject: this.subject(), from, provider: this.provider(), template },
+      { to, cc, bcc: finalBcc, subject: this.subject(), from, layout },
       'confirm',
     );
   }

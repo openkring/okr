@@ -1251,9 +1251,9 @@
     "bcc": "BCC: ",
     "address_list_placeholder": "email1@domain.com, email2@domain.com",
     "hide_receivers": "Nascondere gli indirizzi dei destinatari",
-    "provider": "Provider",
-    "template": "Modello: ",
-    "template_placeholder": "p. es. 4ac2ce05-59d6-451a-8a4f-2d9b12406315",
+    "layout": "Modello",
+    "layout_standard": "Standard",
+    "layout_plain": "Semplice",
     "all_groups": "Tutti i gruppi",
     "search_placeholder": "Cerca …"
   },

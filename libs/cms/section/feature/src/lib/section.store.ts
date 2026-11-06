@@ -10,7 +10,7 @@ import { Geolocation, Position } from '@capacitor/geolocation';
 import { catchError, of } from 'rxjs';
 
 import { AppStore, withErrorState } from '@okr/shared-feature';
-import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageActionType, ImageConfig, SectionModel, SectionType } from '@okr/shared-models';
+import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, EmailLayoutChoice, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageActionType, ImageConfig, SectionModel, SectionType } from '@okr/shared-models';
 import { chipMatches, debugData, debugItemLoaded, debugMessage, fill, nameMatches, sanitizeFileName, chatBlockedAlertMessage, isChatBlockedError } from '@okr/shared-util-core';
 import { DEFAULT_MIMETYPES, IMAGE_MIMETYPES } from '@okr/shared-constants';
 import { confirm, downloadTextFile, exportCsv, getExportFileName, lazyService, showToast, resourceParams, notify } from '@okr/shared-util-angular';
@@ -395,7 +395,7 @@ export const _SectionStore = signalStore(
           const result = await confirm(store.alertController, message(), store.i18n.ok(), store.i18n.cancel(), true);
           if (result === true) {
             console.log('SectionStore: sending ' + data.to.length + ' emails from ' + data.from);
-            await this.sendEmail(data.to, data.subject, this.buildEmailHtml(section), data.from, data.cc, data.bcc, data.provider, data.template);
+            await this.sendEmail(data.to, data.subject, this.buildEmailHtml(section), data.from, data.cc, data.bcc, data.layout);
           }
         }
       },
@@ -412,10 +412,10 @@ export const _SectionStore = signalStore(
         return imgHtml + content;
       },
 
-      async sendEmail(to: string[], subject: string, html: string, from: string, cc: string[] = [], bcc: string[] = [], provider = 'mailtrap_api', template?: string): Promise<void> {
+      async sendEmail(to: string[], subject: string, body: string, from: string, cc: string[] = [], bcc: string[] = [], layout: EmailLayoutChoice = 'standard'): Promise<void> {
         try {
           const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'sendEmail');
-          await fn({ to, cc, bcc, appId: store.appStore.env.appId, html, from, subject, provider, template });
+          await fn({ to, cc, bcc, appId: store.appStore.env.appId, body, layout, from, subject });
           await showToast(store.toastController, store.i18n.email_conf());
         } catch (ex) {
           console.error('SectionStore.sendEmail: error: ', ex);
