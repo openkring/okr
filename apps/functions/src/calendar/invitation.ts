@@ -46,6 +46,7 @@ export interface InvitationDoc {
 }
 
 export interface AnswerableEvent {
+  tenants?: string[];
   name?: string;
   startDate?: string;
   endDate?: string;
@@ -56,6 +57,17 @@ export interface AnswerableEvent {
   state?: string;
   responsiblePersons?: AvatarInfo[];
   notifyOnAnswer?: boolean;
+}
+
+/**
+ * The event behind an invitation, only when it belongs to the invitation's tenant. `caleventKey` is
+ * written by the client, and these functions read with the Admin SDK: without this check an
+ * invitation pointing at another tenant's event would mail out that event's name, date and place,
+ * and the answer link would write an attendee onto it.
+ */
+export function eventInTenant(data: unknown, tenantId: string): AnswerableEvent | undefined {
+  const event = data as AnswerableEvent | undefined;
+  return event?.tenants?.includes(tenantId) ? event : undefined;
 }
 
 /**
@@ -127,7 +139,7 @@ async function notifyAnswer(inv: InvitationDoc, invitationKey: string, answer: I
   const caleventKey = inv.caleventKey ?? '';
   if (!tenantId || !caleventKey) return;
   const eventSnap = await getFirestore().collection('calevents').doc(caleventKey).get();
-  const event = eventSnap.exists ? (eventSnap.data() as AnswerableEvent) : undefined;
+  const event = eventInTenant(eventSnap.data(), tenantId);
   if (!event?.notifyOnAnswer || event.isArchived) return;
   const personKeys = answerRecipients(inv, event);
   if (personKeys.length === 0) return;
@@ -169,7 +181,7 @@ export const onInvitationCreated = onDocumentCreated(
     // Before the push below: it reads the ledger sum for the native badge.
     await recomputeInvitationBadge(inv.inviteeKey ?? '', inv.tenants?.[0] ?? '', CF_NAME);
     const eventSnap = inv.caleventKey ? await getFirestore().collection('calevents').doc(inv.caleventKey).get() : undefined;
-    const event = eventSnap?.exists ? (eventSnap.data() as AnswerableEvent) : undefined;
+    const event = eventInTenant(eventSnap?.data(), inv.tenants?.[0] ?? '');
     if (!shouldNotifyInvitation(inv, event, todayStoreDate()) || !event) return;
 
     const tenantId = inv.tenants?.[0] ?? '';

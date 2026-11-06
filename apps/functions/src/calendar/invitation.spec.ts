@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { answerOfWrite, answerRecipients, invitationAnswerPushBody, invitationPushBody, inviteesToRecompute, shouldNotifyInvitation, shouldRecomputeInvitations } from './invitation';
+import { answerOfWrite, answerRecipients, eventInTenant, invitationAnswerPushBody, invitationPushBody, inviteesToRecompute, shouldNotifyInvitation, shouldRecomputeInvitations } from './invitation';
 
 const inv = { tenants: ['scs'], inviteeKey: 'p', caleventKey: 'e', state: 'pending' };
 const event = { name: 'test2', startDate: '20261001', startTime: '11:00' };
@@ -67,6 +67,16 @@ describe('shouldRecomputeInvitations (1.127 B1)', () => {
     expect(inviteesToRecompute(pending, { ...pending, state: 'declined' })).toEqual(['p']);
     expect(inviteesToRecompute(pending, undefined)).toEqual(['p']);
   });
+});
+
+describe('eventInTenant', () => {
+  it('returns an event of the tenant', () => expect(eventInTenant({ name: 'a', tenants: ['scs'] }, 'scs')?.name).toBe('a'));
+  it('hides an event of another tenant', () => expect(eventInTenant({ name: 'a', tenants: ['p13'] }, 'scs')).toBeUndefined());
+  it('hides a missing event and an event without tenants', () => {
+    expect(eventInTenant(undefined, 'scs')).toBeUndefined();
+    expect(eventInTenant({ name: 'a' }, 'scs')).toBeUndefined();
+  });
+  it('hides everything from an invitation without a tenant', () => expect(eventInTenant({ tenants: ['scs'] }, '')).toBeUndefined());
 });
 
 describe('answerOfWrite', () => {

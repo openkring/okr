@@ -1,10 +1,15 @@
 // apps/functions/src/email/group-mail.ts
 //
 // A group admin mails the members of their group. The `mailJobs` queue stays closed to them on
-// purpose: its rule cannot tell a member from any other address, and opening it would turn every
-// group admin into a sender to the whole internet in the tenant's name. This callable is the narrow
-// door: it proves the caller is an admin of the group, reads the group's members itself, and writes
-// the job with the Admin SDK only when every recipient is a member or the tenant's own address.
+// purpose: its rule cannot tell a member from any other address, so opening it would let a group
+// admin type any address and send in the tenant's name. This callable proves the caller is an admin
+// of the group, reads the group's members itself, and writes the job with the Admin SDK only when
+// every recipient is a member or the tenant's own address.
+//
+// That list is only as strong as `memberships` and `addresses`, which any tenant member may still
+// write (idea 2.120): a group admin who enters an outsider as a member can mail them. The check stops
+// typed addresses and a tampered client, and leaves the outsider on record in the group; it is no
+// hard limit against an admin who sets out to get around it.
 //
 // Recipients come from `address-directory`, the projection every member may read: a person who
 // keeps their email from the other members is not mailed here either (privacy-model skill). The
