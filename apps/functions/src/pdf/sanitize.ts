@@ -73,6 +73,8 @@ const EMAIL_SANITIZE_OPTIONS = {
   allowedSchemes: ['https', 'http', 'mailto', 'tel'],
   allowedSchemesByTag: { img: ['https', 'data'] },
   allowProtocolRelative: false,
+  // The standard layout sets `p { margin:0; }` for the reset text, which would run typed paragraphs together.
+  transformTags: { p: withMargin('0 0 16px') },
 };
 
 /** Sanitize the body of a composed mail (composer, mail jobs, invoice mails). */

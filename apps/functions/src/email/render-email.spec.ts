@@ -397,7 +397,7 @@ describe('composeBody', () => {
   it('sanitises the body, wraps it in the standard layout and passes the contact address', async () => {
     const mail = await composeBody('scs', { body: '<p>Hallo</p><script>x()</script><a href="http://a.ch">l</a>' }, readerOf(base));
     expect(mail.html).toContain('class="std"');
-    expect(mail.html).toContain('<p>Hallo</p>');
+    expect(mail.html).toContain('<p style="margin:0 0 16px">Hallo</p>');
     expect(mail.html).toContain('href="http://a.ch"');
     expect(mail.html).not.toContain('<script');
     expect(mail.html).toContain('info@example.org');

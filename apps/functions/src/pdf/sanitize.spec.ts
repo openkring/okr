@@ -19,7 +19,7 @@ describe('sanitizeEmailBody', () => {
   });
 
   it('keeps inline styles', async () => {
-    expect(await sanitizeEmailBody('<p style="color:red">x</p>')).toContain('style="color:red"');
+    expect(await sanitizeEmailBody('<div style="color:red">x</div>')).toContain('style="color:red"');
   });
 });
 
@@ -29,7 +29,7 @@ describe('sanitizeEmailBody policy', () => {
     expect(out).not.toContain('<style');
     expect(out).not.toContain('display:none');
     expect(out).not.toMatch(/<(html|head|body)/);
-    expect(out).toContain('<p>x</p>');
+    expect(out).toContain('>x</p>');
   });
 
   it('removes a data: link but keeps a data: image', async () => {
@@ -39,11 +39,25 @@ describe('sanitizeEmailBody policy', () => {
   });
 
   it('keeps an inline-styled paragraph', async () => {
-    expect(await sanitizeEmailBody('<p style="color:red;font-size:14px">x</p>')).toBe('<p style="color:red;font-size:14px">x</p>');
+    expect(await sanitizeEmailBody('<p style="color:red;font-size:14px">x</p>')).toBe('<p style="margin:0 0 16px;color:red;font-size:14px">x</p>');
   });
 
   it('drops an http image', async () => {
     expect(await sanitizeEmailBody('<img src="http://a.ch/a.png">')).not.toContain('src=');
+  });
+});
+
+describe('sanitizeEmailBody spacing', () => {
+  it('gives a paragraph its own bottom margin, the layout resets it to 0', async () => {
+    expect(await sanitizeEmailBody('<p>a</p><p></p><p>b</p>')).toBe('<p style="margin:0 0 16px">a</p><p style="margin:0 0 16px"></p><p style="margin:0 0 16px">b</p>');
+  });
+
+  it('lets a margin the author set win', async () => {
+    expect(await sanitizeEmailBody('<p style="margin:0">a</p>')).toBe('<p style="margin:0 0 16px;margin:0">a</p>');
+  });
+
+  it('leaves other elements alone', async () => {
+    expect(await sanitizeEmailBody('<div>a</div>')).toBe('<div>a</div>');
   });
 });
 
