@@ -36,6 +36,7 @@ export const MEMBERSHIP_I18N_KEYS = {
   delete_confirm:                 PFX + 'delete.confirm',
   download_vcard:                 PFX + 'download.vcard',
   send_email:                     PFX + 'send.email',
+  send_group_email_error:         PFX + 'send.groupEmailError',
   call_phone:                     PFX + 'call.phone',
 
   category_label:                 PFX + 'category.label.label',
