@@ -113,8 +113,9 @@ const NAMED_SENDER = new RegExp(`^(?:"(${NAME_CHAR}*)"|(${NAME_CHAR}*))\\s*<(${A
  * The sender a caller-supplied `from` may become, or the tenant's own sender.
  *
  * The whole string is parsed once and must be exactly a bare address or `[name] <address>`; the name
- * may hold none of `< > , ; : " @ \` or a control character, the local part no `=?` (an encoded word in
- * a header), and nothing may follow the `>`. Above 320 characters it is replaced unread. Every transport reads a sender in
+ * may hold none of `< > , ; : " @ \` or a control character, no part may hold `=?` (an encoded word
+ * in a header decodes to another name), and nothing may follow the `>`. Above 320 characters it is
+ * replaced unread. Every transport reads a sender in
  * its own way (Mailtrap's `parseFrom`, nodemailer's address parser), so a string that is valid in one
  * reading and different in another must never get through. Anything else, a non-string included, is
  * replaced. A permitted sender is returned REBUILT from the parsed parts (`"name" <address>` or the bare
@@ -127,7 +128,7 @@ export function effectiveSender(from: unknown, config: { from: string; senderDom
   if (typeof from !== 'string' || from.length > MAX_SENDER_LENGTH) return config.from;
   const text = from.trim();
   const expected = (config.senderDomain ?? '').trim().toLowerCase();
-  if (!text || !expected) return config.from;
+  if (!text || !expected || text.includes('=?')) return config.from;
 
   let address: string;
   let domain: string;
@@ -144,8 +145,6 @@ export function effectiveSender(from: unknown, config: { from: string; senderDom
   } else {
     return config.from;
   }
-
-  if (address.split('@')[0].includes('=?')) return config.from;
 
   const d = domain.toLowerCase();
   const allowed = d === expected || d.endsWith(`.${expected}`) || expected.endsWith(`.${d}`);

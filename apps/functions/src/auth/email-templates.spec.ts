@@ -94,6 +94,18 @@ describe('effectiveSender', () => {
     expect(effectiveSender(from, config)).toBe(config.from);
   });
 
+  it.each([
+    ['a whole encoded name', '=?utf-8?q?x=40evil.ch?= <info@club.ch>'],
+    ['a quoted encoded name', '"=?utf-8?q?x=40evil.ch?=" <info@club.ch>'],
+    ['an encoded word inside a name', 'Vorstand =?utf-8?b?eA==?= <info@club.ch>'],
+  ])('refuses %s', (_, from) => {
+    expect(effectiveSender(from, config)).toBe(config.from);
+  });
+
+  it('keeps an equals sign or a question mark on their own in the name', () => {
+    expect(effectiveSender('Wer? 1=1 <info@club.ch>', config)).toBe('"Wer? 1=1" <info@club.ch>');
+  });
+
   it('keeps an equals sign or a question mark on their own in the local part', () => {
     expect(effectiveSender('a=b?c@club.ch', config)).toBe('a=b?c@club.ch');
   });
