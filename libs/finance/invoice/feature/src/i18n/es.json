@@ -372,6 +372,7 @@
     "reminder-inconsistent-state": "Algo salió mal al crear el recordatorio. Inténtalo de nuevo.",
     "email-not-payable": "Un recordatorio solo se envía mientras la factura está pendiente. Esta factura ya está pagada o anulada.",
     "email-not-sendable": "Una factura anulada ya no se envía.",
+    "render-failed": "No se pudo preparar el correo electrónico. Vuelve a intentarlo más tarde.",
     "no-reminder": "Esta factura no tiene ese recordatorio.",
     "no-fee": "Este recordatorio no tiene ninguna tarifa que condonar.",
     "already-waived": "La tarifa de este recordatorio ya está condonada.",

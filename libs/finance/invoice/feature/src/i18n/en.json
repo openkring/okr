@@ -372,6 +372,7 @@
     "reminder-inconsistent-state": "Something went wrong while creating the reminder. Please try again.",
     "email-not-payable": "A reminder is only sent while the invoice is open. This invoice has already been paid or cancelled.",
     "email-not-sendable": "A cancelled invoice is no longer sent.",
+    "render-failed": "The email could not be prepared. Please try again later.",
     "no-reminder": "This invoice has no such reminder.",
     "no-fee": "This reminder has no fee that could be waived.",
     "already-waived": "The fee of this reminder is already waived.",

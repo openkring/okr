@@ -7,7 +7,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import {
-  BookingCollection, BookingLineCollection, BookingLineModel, BookingModel, DbQuery, InvoiceCollection, InvoiceModel, InvoicePayment,
+  BookingCollection, BookingLineCollection, BookingLineModel, BookingModel, DbQuery, EmailLayoutChoice, InvoiceCollection, InvoiceModel, InvoicePayment,
   InvoicePositionCollection, InvoicePositionModel, InvoiceReminder, UserModel,
 } from '@okr/shared-models';
 import { addDuration, getQuery, getSystemQuery, getTodayStr } from '@okr/shared-util-core';
@@ -124,7 +124,10 @@ export interface ComposedInvoiceMail {
   bcc: string[];
   from: string;
   subject: string;
-  html: string;
+  /** The message body; the server wraps it in `layout`. */
+  body: string;
+  layout: EmailLayoutChoice;
+  attachmentName: string;
   extraAttachments: { filename: string; contentBase64: string; contentType?: string }[];
 }
 

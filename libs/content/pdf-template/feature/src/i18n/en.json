@@ -102,6 +102,11 @@
       "label": "Subject",
       "prefix": "Document:"
     },
+    "layout": {
+      "label": "Layout",
+      "standard": "Standard",
+      "plain": "Plain"
+    },
     "attachment": {
       "add": "Add",
       "toolarge": "File too large (max. {{ maxMb }} MB): {{ name }}"
@@ -122,7 +127,8 @@
     },
     "preview": {
       "empty": "Nothing to preview yet.",
-      "frame": "Email preview"
+      "frame": "Email preview",
+      "error": "The preview could not be loaded."
     },
     "list": {
       "empty": "No recipients entered."

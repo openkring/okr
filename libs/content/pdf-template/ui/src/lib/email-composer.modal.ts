@@ -15,14 +15,15 @@ import { AppStore } from '@okr/shared-feature';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import {
   ButtonCopy, ButtonCopyI18n, ChangeConfirmation, ChangeConfirmationI18n,
-  EmailInput, EmailInputI18n, Spinner, TextInput, TextInputI18n,
+  EmailInput, EmailInputI18n, Spinner, StringSelect, StringSelectI18n, TextInput, TextInputI18n,
 } from '@okr/shared-ui';
 import type { OkrEditor } from '@okr/shared-ui-editor';
-import { getImgixUrl, needsEmailNormalization } from '@okr/shared-util-core';
+import type { EmailLayoutChoice } from '@okr/shared-models';
+import { needsEmailNormalization } from '@okr/shared-util-core';
 import { dismissOverlay, isBrowser, validateVestTree } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 import {
-  buildBrandedEmailHtml, isSenderDomainAllowed, parseEmails,
+  isSenderDomainAllowed, parseEmails,
   EmailComposerFormModel, emailComposerValidations,
   EMAIL_COMPOSER_I18N_KEYS, EMAIL_COMPOSER_MSG_KEYS, EmailComposerI18n,
 } from '@okr/content-pdf-template-util';
@@ -32,8 +33,9 @@ import { DocEmailService, InlineAttachment } from '@okr/content-pdf-template-dat
 const MAX_ATTACHMENT_BYTES = 7 * 1024 * 1024;
 
 /**
- * A composed mail as handed to a caller-supplied send handler: recipients, sender, subject, the branded
- * HTML exactly as previewed, and the files added in the composer. The caller attaches its own document.
+ * A composed mail as handed to a caller-supplied send handler: recipients, sender, subject, the message
+ * body with the layout it is wrapped in (the server does the wrapping), the name of the document the
+ * mail announces as attached, and the files added in the composer. The caller attaches its own document.
  */
 export interface ComposedEmail {
   to: string[];
@@ -41,9 +43,15 @@ export interface ComposedEmail {
   bcc: string[];
   from: string;
   subject: string;
-  html: string;
+  body: string;
+  layout: EmailLayoutChoice;
+  /** Filename of the attached document, empty when there is none. */
+  attachmentName: string;
   extraAttachments: InlineAttachment[];
 }
+
+/** The layouts the composer offers; the server treats anything but `plain` as `standard`. */
+const LAYOUT_CHOICES: EmailLayoutChoice[] = ['standard', 'plain'];
 
 /** The three views of the composer: write the mail, see it rendered, check the recipients. */
 type ComposerSegment = 'editor' | 'preview' | 'list';
@@ -55,7 +63,7 @@ type ComposerSegment = 'editor' | 'preview' | 'list';
   imports: [
     FormsModule,
     SvgIconPipe,
-    Spinner, ButtonCopy, ChangeConfirmation, EmailInput, TextInput,
+    Spinner, ButtonCopy, ChangeConfirmation, EmailInput, StringSelect, TextInput,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonIcon, IonChip, IonLabel, IonNote,
     IonSegment, IonSegmentButton, IonList, IonItem,
@@ -101,17 +109,21 @@ type ComposerSegment = 'editor' | 'preview' | 'list';
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
                   <ion-row>
-                    <ion-col size="12" size-md="6">
+                    <ion-col size="12" size-md="4">
                       <okr-email [i18n]="fromI18n()" [value]="from()"
                         (valueChange)="onFieldChange('from', $event)" [readOnly]="fromLocked()" />
                       @if (fromWarning(); as warning) {
                         <ion-note color="warning" class="attachment">{{ warning }}</ion-note>
                       }
                     </ion-col>
-                    <ion-col size="12" size-md="6">
+                    <ion-col size="12" size-md="5">
                       <okr-text-input [i18n]="subjectI18n()" [value]="subject()"
                         (valueChange)="onFieldChange('subject', $event)"
                         [autofocus]="true" [maxLength]="100" [readOnly]="false" />
+                    </ion-col>
+                    <ion-col size="12" size-md="3">
+                      <okr-string-select [i18n]="layoutI18n()" [stringList]="layoutChoices" [labels]="layoutLabels()"
+                        [selectedString]="layout()" (selectedStringChange)="onLayoutChange($event)" [readOnly]="false" />
                     </ion-col>
                   </ion-row>
                   <ion-row class="ion-align-items-center">
@@ -155,14 +167,18 @@ type ComposerSegment = 'editor' | 'preview' | 'list';
             </ion-card>
           }
 
-          <!-- Preview: the branded HTML exactly as the recipient receives it. -->
+          <!-- Preview: the mail as the server renders it, i.e. exactly what the recipient receives. -->
           @if (activeSegment() === 'preview') {
             <ion-card>
               <ion-card-content class="ion-no-padding">
-                @if (hasBody()) {
-                  <iframe class="preview-frame" [title]="i18n.preview_frame()" sandbox="" [srcdoc]="previewHtml()"></iframe>
-                } @else {
+                @if (!hasBody()) {
                   <ion-note class="attachment">{{ i18n.preview_empty() }}</ion-note>
+                } @else if (previewLoading()) {
+                  <okr-spinner />
+                } @else if (previewFailed()) {
+                  <ion-note color="danger" class="attachment">{{ i18n.preview_error() }}</ion-note>
+                } @else {
+                  <iframe class="preview-frame" [title]="i18n.preview_frame()" sandbox="" [srcdoc]="previewHtml()"></iframe>
                 }
               </ion-card-content>
             </ion-card>
@@ -279,6 +295,10 @@ export class EmailComposerModal {
   protected readonly bccField = computed(() => this.formData().bcc);
   protected readonly subject  = computed(() => this.formData().subject);
   protected readonly body     = computed(() => this.formData().body);
+  protected readonly layout   = computed(() => this.formData().layout);
+
+  protected readonly layoutChoices = LAYOUT_CHOICES;
+  protected readonly layoutLabels = computed(() => [this.i18n.layout_standard(), this.i18n.layout_plain()]);
 
   /** Every recipient of this mail, flattened for the Verteiler overview. */
   protected readonly recipients = computed(() => {
@@ -314,9 +334,16 @@ export class EmailComposerModal {
     return body.replace(/<[^>]*>/g, '').trim().length > 0;
   });
 
-  /** The outgoing message rendered exactly as `send()` builds it — one source of truth. */
-  protected readonly previewHtml = computed((): SafeHtml =>
-    this.sanitizer.bypassSecurityTrustHtml(this.buildHtml(this.formData().body)));
+  /**
+   * The outgoing message as the server renders it (`renderEmailPreview`, the renderer that sends).
+   * The HTML comes back sanitised from the server; the iframe is sandboxed on top of that.
+   */
+  protected readonly previewHtml = signal<SafeHtml | string>('');
+  protected readonly previewLoading = signal(false);
+  /** The preview could not be fetched; sending stays possible. */
+  protected readonly previewFailed = signal(false);
+  /** Number of the latest preview request: a response with an older number is dropped. */
+  private previewRequest = 0;
 
   // adapters at the shared/ui boundary (these components define their own minimal i18n interfaces)
   protected readonly toI18n = computed(() => ({
@@ -331,6 +358,9 @@ export class EmailComposerModal {
   protected readonly bccI18n = computed(() => ({
     name: 'bcc', label: this.i18n.bcc_label(), placeholder: this.i18n.bcc_placeholder(), helper: '',
   } as TextInputI18n));
+  protected readonly layoutI18n = computed(() => ({
+    name: 'layout', label: this.i18n.layout_label(),
+  } as StringSelectI18n));
   protected readonly subjectI18n = computed(() => ({
     name: 'subject', label: this.i18n.subject_label(), placeholder: '', helper: '',
   } as TextInputI18n));
@@ -350,6 +380,23 @@ export class EmailComposerModal {
       untracked(() => {
         if (this.isDirty()) return;
         this.formData.update((vm) => ({ ...vm, subject: `${prefix} ${this.filename()}` }));
+      });
+    });
+    // The preview is fetched every time its segment opens and again if what it shows changes while it is
+    // open (layout, body, attachment name). Reads happen here, the request itself runs untracked.
+    effect(() => {
+      const open = this.activeSegment() === 'preview';
+      const body = this.body();
+      const layout = this.layout();
+      const attachmentName = this.filename();
+      untracked(() => {
+        if (open && this.hasBody()) {
+          void this.loadPreview(body, layout, attachmentName);
+        } else {
+          this.previewRequest++;       // leaving the preview (or nothing to show): a late response is stale
+          this.previewLoading.set(false);
+          this.previewFailed.set(false);
+        }
       });
     });
     // Pattern A (lazy-loading skill): the effect body stays synchronous and starts the async work
@@ -419,6 +466,7 @@ export class EmailComposerModal {
       bcc: this.bcc(),
       subject: this.subjectDefault() || this.initialSubject(prefix),
       body: this.bodyDefault() || '<p></p>',
+      layout: 'standard',
     };
   }
 
@@ -429,19 +477,26 @@ export class EmailComposerModal {
     return prefix ? `${prefix} ${filename}` : filename;
   }
 
-  /** Wrap a message body in the tenant's branded email shell (used by preview and send alike). */
-  private buildHtml(body: string): string {
-    const cfg = this.appStore.appConfig();
-    const imgixBaseUrl = this.appStore.env.services.imgixBaseUrl;
-    const rel = getImgixUrl(cfg.logoUrl, 'fm=png&w=240&auto=compress');
-    const logoUrl = rel.startsWith('tenant') ? `${imgixBaseUrl}/${rel}` : rel;
-    return buildBrandedEmailHtml(body, {
-      orgName: cfg.appName,
-      logoUrl,
-      // the tenant's own address, never `opEmail` (that is the platform operator, not the club)
-      contactEmail: this.defaultAddress(),
-      attachmentFilename: this.filename(),
-    });
+  /**
+   * Ask the server for the rendered mail. The user may switch layout or segment while a request runs, so
+   * only the latest request may write its result: an older response is dropped.
+   */
+  private async loadPreview(body: string, layout: EmailLayoutChoice, attachmentName: string): Promise<void> {
+    const request = ++this.previewRequest;
+    this.previewLoading.set(true);
+    this.previewFailed.set(false);
+    try {
+      const rendered = await this.docEmailService.renderPreview({ body, layout, attachmentName });
+      if (request !== this.previewRequest) return;
+      this.previewHtml.set(this.sanitizer.bypassSecurityTrustHtml(rendered.html));
+    } catch (err) {
+      if (request !== this.previewRequest) return;
+      console.error('EmailComposerModal.loadPreview: renderEmailPreview failed', err);
+      this.previewHtml.set('');
+      this.previewFailed.set(true);
+    } finally {
+      if (request === this.previewRequest) this.previewLoading.set(false);
+    }
   }
 
   protected onFieldChange(field: keyof EmailComposerFormModel, value: string): void {
@@ -451,6 +506,14 @@ export class EmailComposerModal {
     }
     this.isDirty.set(true);
     this.formData.update((vm) => ({ ...vm, [field]: value }));
+  }
+
+  /** Only the offered layouts are accepted; the select can hand back nothing else, but the form is typed. */
+  protected onLayoutChange(value: string): void {
+    const layout = LAYOUT_CHOICES.find((choice) => choice === value);
+    if (!layout || layout === this.layout()) return;
+    this.isDirty.set(true);
+    this.formData.update((vm) => ({ ...vm, layout }));
   }
 
   protected clearBody(): void {
@@ -505,8 +568,6 @@ export class EmailComposerModal {
     this.isSending.set(true);
     try {
       const fd = this.formData();
-      const html = this.buildHtml(fd.body);
-
       const recipients = parseEmails(fd.to);
       const request = {
         to: recipients,
@@ -514,7 +575,8 @@ export class EmailComposerModal {
         bcc: parseEmails(fd.bcc),
         from: fd.from,
         subject: fd.subject,
-        html,
+        body: fd.body,
+        layout: fd.layout,
         storagePath: this.storagePath(),
         filename: this.filename(),
         extraAttachments: this.extraAttachments(),
@@ -523,8 +585,8 @@ export class EmailComposerModal {
       // A bulk send (bcc list) runs server-side: the job survives closing this modal. A single
       // mail goes straight through the callable so the provider error surfaces immediately.
       if (handler) {
-        const { to, cc, bcc, from, subject, extraAttachments } = request;
-        await handler({ to, cc, bcc, from, subject, html, extraAttachments });
+        const { to, cc, bcc, from, subject, body, layout, extraAttachments } = request;
+        await handler({ to, cc, bcc, from, subject, body, layout, attachmentName: request.filename, extraAttachments });
       } else if (request.bcc.length > 0) {
         await this.awaitJob(await this.docEmailService.queueBulkEmail(request));
       } else {

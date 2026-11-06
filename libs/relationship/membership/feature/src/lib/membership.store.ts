@@ -1076,9 +1076,9 @@ export const _MembershipStore = signalStore(
 
       /** Throws to report a failure: the composer shows the text and stays open. */
       async sendGroupEmail(mail: ComposedEmail): Promise<void> {
-        const { to, cc, bcc, subject, html, extraAttachments } = mail;
+        const { to, cc, bcc, subject, body, layout, attachmentName, extraAttachments } = mail;
         try {
-          await store.sendGroupEmailFn({ tenantId: store.tenantId(), groupKey: store.orgId(), to, cc, bcc, subject, html, attachments: extraAttachments });
+          await store.sendGroupEmailFn({ tenantId: store.tenantId(), groupKey: store.orgId(), to, cc, bcc, subject, body, layout, attachmentName, attachments: extraAttachments });
         } catch (e) {
           warn(`MembershipStore.sendGroupEmail: ${(e as Error).message}`);
           throw new Error(store.i18n.send_group_email_error());

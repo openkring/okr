@@ -372,6 +372,7 @@
     "reminder-inconsistent-state": "Qualcosa è andato storto durante la creazione del sollecito. Riprova.",
     "email-not-payable": "Un sollecito viene inviato solo finché la fattura è aperta. Questa fattura è già pagata o annullata.",
     "email-not-sendable": "Una fattura stornata non viene più inviata.",
+    "render-failed": "Impossibile preparare l’e-mail. Riprova più tardi.",
     "no-reminder": "Questa fattura non ha questo sollecito.",
     "no-fee": "Questo sollecito non ha spese da condonare.",
     "already-waived": "Le spese di questo sollecito sono già condonate.",

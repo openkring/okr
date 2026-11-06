@@ -90,6 +90,10 @@ describe('reminder actions (client)', () => {
     expect(invoiceRefusalKeys(['not-payable'], 'reminder')).toEqual(['refusal_reminder_not_payable']);
   });
 
+  it('names a mail the server could not render', () => {
+    expect(invoiceRefusalKeys(['render-failed'], 'email')).toEqual(['refusal_render_failed']);
+  });
+
   it('expands the blockers of a reminder-blocked refusal', () => {
     expect(invoiceRefusalReasons({ details: { reason: 'reminder-blocked', reasons: ['max-level', 'invalid-fee'] } })).toEqual(['max-level', 'invalid-fee']);
   });

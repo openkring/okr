@@ -135,6 +135,9 @@ export const EMAIL_COMPOSER_I18N_KEYS = {
   bcc_placeholder:  PFX + 'composer.bcc.placeholder',
   subject_label:    PFX + 'composer.subject.label',
   subject_prefix:   PFX + 'composer.subject.prefix',
+  layout_label:     PFX + 'composer.layout.label',
+  layout_standard:  PFX + 'composer.layout.standard',
+  layout_plain:     PFX + 'composer.layout.plain',
 
   attachment_add:   PFX + 'composer.attachment.add',
 
@@ -143,6 +146,8 @@ export const EMAIL_COMPOSER_I18N_KEYS = {
   segment_list:     PFX + 'composer.segment.list',
   preview_empty:    PFX + 'composer.preview.empty',
   preview_frame:    PFX + 'composer.preview.frame',
+  /** The server preview could not be fetched — sending stays possible. */
+  preview_error:    PFX + 'composer.preview.error',
   list_empty:       PFX + 'composer.list.empty',
 
   send:             PFX + 'doc.send.label',

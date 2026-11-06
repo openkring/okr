@@ -372,6 +372,7 @@
     "reminder-inconsistent-state": "Beim Erstellen der Mahnung ist etwas schiefgelaufen. Versuche es bitte noch einmal.",
     "email-not-payable": "Eine Mahnung wird nur gesendet, solange die Rechnung offen ist. Diese Rechnung ist schon bezahlt oder storniert.",
     "email-not-sendable": "Eine stornierte Rechnung wird nicht mehr versendet.",
+    "render-failed": "Die E-Mail konnte nicht vorbereitet werden. Bitte versuche es später noch einmal.",
     "no-reminder": "Für diese Rechnung gibt es diese Mahnung nicht.",
     "no-fee": "Zu dieser Mahnung gibt es keine Gebühr, die erlassen werden kann.",
     "already-waived": "Die Gebühr dieser Mahnung ist schon erlassen.",

@@ -372,6 +372,7 @@
     "reminder-inconsistent-state": "Un problème est survenu lors de la création du rappel. Réessaie.",
     "email-not-payable": "Un rappel n’est envoyé que tant que la facture est ouverte. Cette facture est déjà payée ou annulée.",
     "email-not-sendable": "Une facture annulée n’est plus envoyée.",
+    "render-failed": "L’e-mail n’a pas pu être préparé. Réessaie plus tard.",
     "no-reminder": "Cette facture n’a pas ce rappel.",
     "no-fee": "Ce rappel n’a aucun frais à annuler.",
     "already-waived": "Les frais de ce rappel sont déjà annulés.",

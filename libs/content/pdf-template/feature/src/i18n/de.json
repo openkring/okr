@@ -102,6 +102,11 @@
       "label": "Betreff",
       "prefix": "Dokument:"
     },
+    "layout": {
+      "label": "Vorlage",
+      "standard": "Standard",
+      "plain": "Einfach"
+    },
     "attachment": {
       "add": "Hinzufügen",
       "toolarge": "Datei zu gross (max. {{ maxMb }} MB): {{ name }}"
@@ -122,7 +127,8 @@
     },
     "preview": {
       "empty": "Noch kein Inhalt zum Anzeigen.",
-      "frame": "Email-Vorschau"
+      "frame": "Email-Vorschau",
+      "error": "Die Vorschau konnte nicht geladen werden."
     },
     "list": {
       "empty": "Keine Empfänger erfasst."

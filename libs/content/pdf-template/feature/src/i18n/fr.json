@@ -102,6 +102,11 @@
       "label": "Objet",
       "prefix": "Document :"
     },
+    "layout": {
+      "label": "Modèle",
+      "standard": "Standard",
+      "plain": "Simple"
+    },
     "attachment": {
       "add": "Ajouter",
       "toolarge": "Fichier trop volumineux (max. {{ maxMb }} Mo) : {{ name }}"
@@ -122,7 +127,8 @@
     },
     "preview": {
       "empty": "Rien à afficher pour le moment.",
-      "frame": "Aperçu de l’email"
+      "frame": "Aperçu de l’email",
+      "error": "L’aperçu n’a pas pu être chargé."
     },
     "list": {
       "empty": "Aucun destinataire saisi."

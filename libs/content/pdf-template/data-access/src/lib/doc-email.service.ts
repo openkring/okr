@@ -6,6 +6,7 @@ import { Observable } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
+import type { EmailLayoutChoice } from '@okr/shared-models';
 
 /** A user-picked file attached inline (base64) to the email. */
 export interface InlineAttachment {
@@ -32,15 +33,30 @@ export interface SendDocumentByEmailRequest {
   /** Optional sender; when omitted the CF uses the app's verified sender address. */
   from?: string;
   subject: string;
-  html: string;
+  /** The message body (HTML from the editor); the server wraps it in `layout`. */
+  body: string;
+  layout: EmailLayoutChoice;
   /** Storage path of the generated document to attach (resolved server-side). */
   storagePath: string;
-  /** Filename to use for the attachment. */
+  /** Filename to use for the attachment; also named in the mail as «Beilage». */
   filename: string;
   /** Additional user-picked files attached inline. */
   extraAttachments?: InlineAttachment[];
   /** Tenant the job belongs to — required for a queued bulk send. */
   tenantId?: string;
+}
+
+/** What the `renderEmailPreview` callable gets for a composer body. */
+export interface RenderPreviewRequest {
+  body: string;
+  layout: EmailLayoutChoice;
+  attachmentName?: string;
+}
+
+/** What the composer shows: the mail as the server renders it. */
+export interface RenderedPreview {
+  html: string;
+  text: string;
 }
 
 /**
@@ -72,8 +88,7 @@ export class DocEmailService {
       bcc: req.bcc ?? [],
       ...(req.from ? { from: req.from } : {}),
       subject: req.subject,
-      html: req.html,
-      provider: 'mailtrap_api',
+      ...this.contentFields(req),
       appId: this.env.appId,
       attachments: this.attachmentRefs(req),
     });
@@ -93,7 +108,7 @@ export class DocEmailService {
       bcc: req.bcc ?? [],
       ...(req.from ? { from: req.from } : {}),
       subject: req.subject,
-      html: req.html,
+      ...this.contentFields(req),
       attachments: this.attachmentRefs(req),
       state: 'pending',
     });
@@ -102,6 +117,30 @@ export class DocEmailService {
   /** Live state of a queued bulk send. */
   public mailJob(key: string | undefined): Observable<MailJobStatus | undefined> {
     return this.firestoreService.readObject<MailJobStatus>(MailJobCollection, key);
+  }
+
+  /**
+   * The mail as the server will render it (same renderer as the send), for the composer's preview.
+   * Rejects when the server cannot render it; the caller decides what to tell the user.
+   */
+  public async renderPreview(req: RenderPreviewRequest): Promise<RenderedPreview> {
+    const callable = httpsCallable<RenderPreviewRequest, { subject: string; html: string; text: string }>(
+      this.functions, 'renderEmailPreview');
+    const { data } = await callable({
+      body: req.body,
+      layout: req.layout,
+      ...(req.attachmentName ? { attachmentName: req.attachmentName } : {}),
+    });
+    return { html: data.html, text: data.text };
+  }
+
+  /** The three content fields every send path hands to the server, which composes the final mail. */
+  private contentFields(req: SendDocumentByEmailRequest) {
+    return {
+      body: req.body,
+      layout: req.layout,
+      ...(req.filename ? { attachmentName: req.filename } : {}),
+    };
   }
 
   /** The generated document (if any) plus the user-picked files, in the CF's reference format. */

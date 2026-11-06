@@ -1,5 +1,6 @@
 // libs/content/pdf-template/util/src/lib/email-composer.validations.ts
 import { enforce, staticSuite, test } from 'vest';
+import type { EmailLayoutChoice } from '@okr/shared-models';
 import { parseEmails } from './email-html.util';
 
 // Vest messages are i18n keys: okr-error-note resolves any message starting with '@'.
@@ -12,6 +13,7 @@ export interface EmailComposerFormModel {
   bcc: string;      // comma-separated
   subject: string;
   body: string;     // html body
+  layout: EmailLayoutChoice;  // which frame the server wraps the body in
 }
 
 /** Lightweight email shape check (matches the auth credential suite style). */

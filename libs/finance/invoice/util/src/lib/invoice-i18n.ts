@@ -327,6 +327,7 @@ export const INVOICE_I18N_KEYS = {
   refusal_reminder_inconsistent_state: PFX + 'refusal.reminder-inconsistent-state',
   refusal_email_not_payable:        PFX + 'refusal.email-not-payable',
   refusal_email_not_sendable:       PFX + 'refusal.email-not-sendable',
+  refusal_render_failed:            PFX + 'refusal.render-failed',
 
   // reminder fee waiver (1.76 D18)
   waive_fee:                  PFX + 'waiveFee.label',
@@ -428,6 +429,7 @@ export const INVOICE_REFUSAL_I18N: Record<string, keyof typeof INVOICE_I18N_KEYS
   'foreign-document': 'refusal_foreign_document',
   'no-email': 'refusal_no_email',
   'not-sendable': 'refusal_email_not_sendable',
+  'render-failed': 'refusal_render_failed',
   // reminder fee waiver (1.76 D18)
   'no-reminder': 'refusal_no_reminder',
   'no-fee': 'refusal_no_fee',

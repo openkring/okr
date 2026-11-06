@@ -40,7 +40,7 @@ import { copyToClipboard, showToast } from '@okr/shared-util-angular';
     }
     .content {
       -webkit-user-select: text; -moz-user-select: text; -ms-user-select: text; user-select: text;
-      /* Brand navy — same value as BRAND_COLOR in email-html.util.ts. Kept as a custom
+      /* Brand navy. Kept as a custom
          property so the dark override below (and any theme) has a single place to change. */
       --okr-editor-heading-color: #25265e;
       h1 { line-height: 80px; color: var(--okr-editor-heading-color); }
