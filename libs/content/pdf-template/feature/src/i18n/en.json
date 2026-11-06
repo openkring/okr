@@ -2,7 +2,13 @@
   "template": "PDF template",
   "templates": "PDF templates",
   "list": {
-    "title": "Document templates"
+    "title": "Document templates",
+    "kind_pdf": "PDF",
+    "kind_email": "Email"
+  },
+  "kind": {
+    "email_layout": "Layout",
+    "email_text": "Text"
   },
   "empty": "No templates found.",
   "archive": {

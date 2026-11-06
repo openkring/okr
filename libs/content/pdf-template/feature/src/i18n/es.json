@@ -2,7 +2,13 @@
   "template": "Plantilla PDF",
   "templates": "Plantillas PDF",
   "list": {
-    "title": "Plantillas de documento"
+    "title": "Plantillas de documento",
+    "kind_pdf": "PDF",
+    "kind_email": "Correo electrónico"
+  },
+  "kind": {
+    "email_layout": "Diseño",
+    "email_text": "Texto"
   },
   "empty": "No se han encontrado plantillas.",
   "archive": {

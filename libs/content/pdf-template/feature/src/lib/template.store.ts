@@ -9,13 +9,19 @@ import { I18nService } from '@okr/shared-i18n';
 import { TemplateAddressWindow, TemplateModel, TemplateVersionModel } from '@okr/shared-models';
 import { DocGenerationService, GenerateDocumentResponse, TemplateService } from '@okr/content-pdf-template-data-access';
 import { EmailComposerModal } from '@okr/content-pdf-template-ui';
-import { newTemplate, newTemplateVersion, TEMPLATE_I18N_KEYS, TemplateI18n } from '@okr/content-pdf-template-util';
+import {
+  emailCopyKey, newTemplate, newTemplateVersion, TEMPLATE_I18N_KEYS, TemplateI18n,
+} from '@okr/content-pdf-template-util';
 export type { TemplateI18n };
 
-import { nameMatches } from '@okr/shared-util-core';
+import { nameMatches, SYSTEM_TENANT } from '@okr/shared-util-core';
+
+/** Which kind of template the list shows: PDF documents or email layouts and texts. */
+export type TemplateListKind = 'pdf' | 'email';
 
 interface TemplateState {
   searchTerm: string;
+  listKind: TemplateListKind;
   previewUrl: string;
   previewStoragePath: string;
   previewFilename: string;
@@ -24,6 +30,7 @@ interface TemplateState {
 
 const initialState: TemplateState = {
   searchTerm: '',
+  listKind: 'pdf',
   previewUrl: '',
   previewStoragePath: '',
   previewFilename: '',
@@ -47,14 +54,36 @@ export const TemplateStore = signalStore(
       }),
       stream: () => store.templateService.list(),
     }),
+    // loaded only while the email segment is showing; an undefined param keeps the resource idle
+    emailTemplatesResource: rxResource({
+      params: () => store.listKind() === 'email' ? { tenantId: store.appStore.tenantId() } : undefined,
+      stream: () => store.templateService.listEmailTemplates(),
+    }),
   })),
   withComputed(store => ({
-    isLoading: computed(() => store.allTemplatesResource.isLoading()),
+    isLoading: computed(() =>
+      store.listKind() === 'email' ? store.emailTemplatesResource.isLoading() : store.allTemplatesResource.isLoading()
+    ),
     templates:  computed(() => (store.allTemplatesResource.value() ?? []) as TemplateModel[]),
     currentUser: computed(() => store.appStore.currentUser()),
+    /**
+     * The email templates of this tenant. A shared doc is left out when the tenant's copy of it
+     * is in the list, so a tenant sees its own copy only. An archived copy is not in the list,
+     * so the shared doc shows again.
+     */
+    emailTemplates: computed(() => {
+      const all = (store.emailTemplatesResource.value() ?? []) as TemplateModel[];
+      const tenantId = store.appStore.tenantId();
+      const keys = new Set(all.map(t => t.okey));
+      return all.filter(t => !(t.tenants ?? []).includes(SYSTEM_TENANT) || !keys.has(emailCopyKey(t.okey, tenantId)));
+    }),
+  })),
+  withComputed(store => ({
     filteredTemplates: computed(() => {
       const searchTerm = store.searchTerm();
-      let templates  = (store.allTemplatesResource.value() ?? []) as TemplateModel[];
+      let templates = (
+        store.listKind() === 'email' ? store.emailTemplates() : store.allTemplatesResource.value() ?? []
+      ) as TemplateModel[];
       // filter by search term
       if (searchTerm) {
         templates = templates.filter(i => nameMatches(i.index, searchTerm));
@@ -65,6 +94,10 @@ export const TemplateStore = signalStore(
   withMethods(store => ({
     setSearchTerm(term: string): void {
       patchState(store, { searchTerm: term });
+    },
+
+    setListKind(kind: TemplateListKind): void {
+      patchState(store, { listKind: kind });
     },
 
     /**
@@ -91,6 +124,21 @@ export const TemplateStore = signalStore(
       const key = await store.templateService.copy(
         template, store.i18n.copy_suffix(), store.currentUser()
       );
+      const toast = await store.toastController.create({
+        message:  key ? store.i18n.copy_conf() : store.i18n.copy_error(),
+        duration: key ? 2000 : 3000,
+        color:    key ? 'success' : 'danger',
+      });
+      await toast.present();
+      return key;
+    },
+
+    /**
+     * Copy a shared email template into the tenant's own copy, or open the copy it already has.
+     * @return the key of the tenant's copy, or undefined if the copy failed
+     */
+    async copyEmailTemplate(template: TemplateModel): Promise<string | undefined> {
+      const key = await store.templateService.copyEmailTemplate(template, store.currentUser());
       const toast = await store.toastController.create({
         message:  key ? store.i18n.copy_conf() : store.i18n.copy_error(),
         duration: key ? 2000 : 3000,

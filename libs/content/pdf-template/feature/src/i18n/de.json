@@ -2,7 +2,13 @@
   "template": "PDF Vorlage",
   "templates": "PDF Vorlagen",
   "list": {
-    "title": "Dokumentvorlagen"
+    "title": "Dokumentvorlagen",
+    "kind_pdf": "PDF",
+    "kind_email": "E-Mail"
+  },
+  "kind": {
+    "email_layout": "Layout",
+    "email_text": "Text"
   },
   "empty": "Keine Vorlagen gefunden.",
   "archive": {

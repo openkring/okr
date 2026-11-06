@@ -2,7 +2,13 @@
   "template": "Modèle PDF",
   "templates": "Modèles PDF",
   "list": {
-    "title": "Modèles de document"
+    "title": "Modèles de document",
+    "kind_pdf": "PDF",
+    "kind_email": "E-mail"
+  },
+  "kind": {
+    "email_layout": "Mise en page",
+    "email_text": "Texte"
   },
   "empty": "Aucun modèle trouvé.",
   "archive": {

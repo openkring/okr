@@ -7,6 +7,10 @@ export const TEMPLATE_I18N_KEYS = {
   templates:        PFX + 'templates',
   list_title:       PFX + 'list.title',
   empty:            PFX + 'empty',
+  list_kind_pdf:    PFX + 'list.kind_pdf',
+  list_kind_email:  PFX + 'list.kind_email',
+  kind_email_layout: PFX + 'kind.email_layout',
+  kind_email_text:  PFX + 'kind.email_text',
 
   archive:          PFX + 'archive.label',
 
