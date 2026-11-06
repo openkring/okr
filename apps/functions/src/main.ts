@@ -416,7 +416,6 @@ export { getIcebergs } from './iceberg';
 export { translator } from './translator';
 // Swiss timetable (OJP 2.0): tracker lines (1.129 §4.2), connections (1.131), stops + departure board (1.130)
 export { getTransitRoute, planTrip, searchStops, getDepartures } from './transit';
-export { listMyDiaryTenants } from './diary/list-my-diary-tenants';
 // spec 1.77 §12.4: the diary app chooses, the source app confirms
 export { listMyDiaryPullOptions } from './diary/list-my-diary-pull-options';
 export { listMyDiaryRequests } from './diary/list-my-diary-requests';

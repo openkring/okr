@@ -22,7 +22,7 @@ export type EnergySourcesI18n = {
   imports: [],
   styles: [`
     .sources { color: var(--ion-text-color); font-size: 0.875rem; }
-    h3 { margin: 0 0 0.5rem; font-size: 1rem; }
+    .sources h3 { margin: 0 0 0.5rem; font-size: 1.375rem; font-weight: 600; }
     p { margin: 0 0 0.5rem; }
     a { color: var(--ion-color-primary); }
   `],

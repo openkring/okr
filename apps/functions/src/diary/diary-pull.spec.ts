@@ -27,10 +27,9 @@ describe('selectDiaryPulls', () => {
     expect(select({ users: [src(consented), diary('uBka', 'bka')], docs: { uBka: pullDoc('scs', ['taskDone']) } }))
       .toEqual([{ tenantId: 'bka', uid: 'uBka', status: 'ok' }]);
   });
-  it('reads the pull first and the old targets only without a pull doc', () => {
-    const users = [src({ diaryTargets: [target('bka', ['taskDone'])] }), diary('uBka', 'bka')];
-    expect(select({ users })).toEqual([{ tenantId: 'bka', uid: 'uBka', status: 'ok' }]);
-    expect(select({ users, docs: { uBka: pullDoc('scs', []) } })).toEqual([]);
+  it('ignores old targets: without a pull doc nothing flows', () => {
+    const users = [src({ diaryTargets: [target('bka', ['taskDone'])] } as Partial<PullUser>), diary('uBka', 'bka')];
+    expect(select({ users })).toEqual([]);
   });
   it('reports a pull without consent', () => {
     expect(select({ users: [src(), diary('uBka', 'bka')], docs: { uBka: pullDoc('scs', ['taskDone']) } }))

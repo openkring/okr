@@ -4,7 +4,7 @@ import type { Firestore } from 'firebase-admin/firestore';
 /**
  * The tenants the caller's person can actually log in to: every non-archived `users/{uid}` doc of
  * the same personKey whose Firebase Auth account exists and is not disabled. Shared by
- * `listMyLoginTenants` (tenant switcher) and `listMyDiaryTenants` (spec 1.77).
+ * `listMyLoginTenants` (tenant switcher) and `listMyDiaryPullOptions` (spec 1.77).
  * Returns `{ personKey: '', tenants: [] }` when the caller has no personKey; `tenants` is sorted.
  */
 export async function loginTenantsOf(

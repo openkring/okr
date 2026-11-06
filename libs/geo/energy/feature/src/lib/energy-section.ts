@@ -23,8 +23,9 @@ import { EnergySectionStore } from './energy-section.store';
   styles: [`
     ion-card { margin: 0; padding: 0; border: 0; box-shadow: none !important; }
     ion-card-content { color: var(--ion-text-color); }
-    h2 { margin: 0; font-size: 1.25rem; font-weight: 600; color: var(--ion-text-color); }
-    h3 { margin: 1.5rem 0 0.5rem; font-size: 1rem; font-weight: 600; color: var(--ion-text-color); }
+    /* ion-card-content forces 14px on h3 and 16px on h2 at equal specificity, hence the qualified selectors. */
+    ion-card-content h2 { margin: 0; font-size: 1.5rem; font-weight: 600; color: var(--ion-text-color); }
+    ion-card-content h3 { margin: 2rem 0 0.75rem; font-size: 1.375rem; font-weight: 600; color: var(--ion-text-color); }
     p { margin: 0 0 0.5rem; }
     ul { margin: 0 0 0.5rem; padding-inline-start: 1.25rem; }
     .muted { color: var(--ion-color-step-600); font-size: 0.875rem; }

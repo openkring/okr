@@ -9,7 +9,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { AppConfigCollection } from '@okr/shared-models';
 
 import { OfflineNoticeService } from './offline-notice.service';
-import { type HealthProbeOutcome, isStuck } from './wake-watchdog.util';
+import { type HealthProbeOutcome, isStuck, sleptDuringCheck } from './wake-watchdog.util';
 
 const PFX = '@shared/feature.';
 
@@ -21,6 +21,8 @@ const NETWORK_WAIT_MS = 3 * 60_000;
 const PROBE_INTERVAL_MS = 5_000;
 const PROBE_TIMEOUT_MS = 5_000;
 const HEALTH_TIMEOUT_MS = 10_000;
+/** A health check's timeouts add up to 40 s; one that takes longer than this was interrupted by sleep. */
+const CHECK_BUDGET_MS = 60_000;
 /** Never auto-reload twice within this window — a reload that does not heal must not loop. */
 const RELOAD_GUARD_MS = 5 * 60_000;
 const RELOAD_GUARD_KEY = 'okr.wakeWatchdog.lastReload';
@@ -87,6 +89,7 @@ export class WakeWatchdogService {
       if (!await this.waitForNetwork()) return;   // still really offline: the next trigger retries
       this.offlineNotice.sync();
 
+      const checkStartedAt = Date.now();
       if (await this.firestoreHealthy()) {
         this.wakePending = false;
         return;
@@ -97,6 +100,8 @@ export class WakeWatchdogService {
         this.wakePending = false;
         return;
       }
+      // Slept during the check: its verdict is void, and wakePending makes the next heartbeat redo it.
+      if (sleptDuringCheck(checkStartedAt, Date.now(), CHECK_BUDGET_MS)) return;
       await this.reload(source, gapMs);
     } finally {
       this.running = false;

@@ -7,8 +7,8 @@ export const DIARY_SOURCES = ['taskDone', 'jasstafel', 'tripDone', 'albumImage',
 export type DiarySource = typeof DIARY_SOURCES[number];
 
 /**
- * One diary app as configured by one user in one source app: which sources it receives and in
- * which period. `from`/`to` are StoreDates, inclusive; '' is an open bound.
+ * One diary as `resolveDiaryTargets` sees it: which sources it receives and in which period, built from a pull and
+ * its consent (`pullToTarget`). Never stored. `from`/`to` are StoreDates, inclusive; '' is an open bound.
  */
 export interface DiaryTarget {
   tenantId: string;
