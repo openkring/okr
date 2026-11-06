@@ -7,8 +7,8 @@ import { DocumentData, getFirestore } from 'firebase-admin/firestore';
 import { checkAdminRole, checkAppCheckToken, checkAuthentication, checkStringField, chunk, getCallerContext, getCallerTenantId, isOperatorUserData, isSoleTenantUserData, mayDeleteAuthUser } from '@okr/shared-util-functions';
 import { PasskeyCollection } from '@okr/shared-models';
 import { isSyntheticLoginEmail } from '@okr/user-util';
-import { getAppEmailConfig } from './email-templates';
-import { EmailAttachment, isValidProvider, sendEmailViaProvider } from './email-transport';
+import { getAppEmailConfig, getEmailProvider } from './email-templates';
+import { EmailAttachment, sendEmailViaProvider } from './email-transport';
 import { findUserByLoginId } from './login-id';
 import { loginTenantsOf } from './login-tenants';
 import { loadTenantUser, restoreAuthEmail, withIndex } from './tenant-user';
@@ -581,7 +581,7 @@ export function resetMailFields(found: { uid: string; data: DocumentData } | und
  * @param html              HTML body (may be empty when using a template)
  * @param from              sender address (derived from app config for password reset)
  * @param subject           email subject line (derived from app config for password reset)
- * @param provider          email provider: 'mailgun_smtp' | 'mailtrap_api' | 'netzone_smtp' | 'mailtrap_test'
+ * (the email provider is decided by the server from app-config/{appId}.emailProvider; a `provider` sent by the client is ignored)
  * @param template          optional Mailtrap template UUID, or 'password_reset' for the reset flow
  * @param templateVariables optional variables passed to the template
  * @param loginId           reset by Benutzername instead of email (spec 1.71 §5.2) — `to` is then `[]`
@@ -593,11 +593,11 @@ export const sendEmail = functions.onCall(
     enforceAppCheck: true,
     secrets: ['MAILGUN_SMTP_PASSWORD', 'MAILTRAP_APIKEY', 'NETZONE_SMTP_PASSWORD', 'MAILTRAP_TEST_USER', 'MAILTRAP_TEST_PASS', 'SENTRY_FUNCTIONS_DSN'],
   },
-  async (request: functions.CallableRequest<{ to: string[]; cc?: string[]; bcc?: string[]; appId: string; html?: string; from?: string; subject?: string; provider: string; template?: string; templateVariables?: Record<string, string>; attachments?: AttachmentRef[]; loginId?: string; tenantId?: string }>) => {
+  async (request: functions.CallableRequest<{ to: string[]; cc?: string[]; bcc?: string[]; appId: string; html?: string; from?: string; subject?: string; provider?: string; template?: string; templateVariables?: Record<string, string>; attachments?: AttachmentRef[]; loginId?: string; tenantId?: string }>) => {
     const CF_NAME = 'sendEmail';
     checkAppCheckToken(request as any, CF_NAME);
 
-    const { to, cc, bcc, appId, provider, template, attachments } = request.data;
+    const { to, cc, bcc, appId, template, attachments } = request.data;
     let { html, from, subject, templateVariables } = request.data;
     // What is actually handed to the provider — the password-reset path replaces the caller's
     // marker with the tenant's own Mailtrap template UUID from `app-config`.
@@ -636,9 +636,9 @@ export const sendEmail = functions.onCall(
       throw new functions.HttpsError('invalid-argument', 'to must be a non-empty array.');
     }
     checkStringField(request as any, CF_NAME, 'appId');
-    if (!isValidProvider(provider)) {
-      throw new functions.HttpsError('invalid-argument', `Unknown provider: ${provider}`);
-    }
+    // The server decides the provider from the tenant's app-config; `request.data.provider` is
+    // ignored (old clients still send it).
+    const provider = await getEmailProvider(appId);
 
     if (isPasswordReset) {
       const config = await getAppEmailConfig(appId);

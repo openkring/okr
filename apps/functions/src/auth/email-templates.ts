@@ -1,4 +1,7 @@
 import { getFirestore } from 'firebase-admin/firestore';
+import { logger } from 'firebase-functions/v2';
+
+import { DEFAULT_EMAIL_PROVIDER, effectiveProvider, type EmailProvider } from './email-transport';
 
 interface AppEmailConfig {
   appName: string;
@@ -62,4 +65,27 @@ export async function getAppEmailConfig(appId: string): Promise<AppEmailConfig> 
     contactEmail: mailFrom || replyTo,
     passwordResetTemplate,
   };
+}
+
+/**
+ * The email provider the server uses for a tenant: `app-config/{tenantId}.emailProvider`, else
+ * `DEFAULT_EMAIL_PROVIDER`. The client never chooses it.
+ *
+ * Never throws: a failed read must not take the password-reset path down with it, so it logs and
+ * falls back to the default, as `getAppEmailConfig` does for its own values.
+ */
+export async function getEmailProvider(tenantId: string): Promise<EmailProvider> {
+  let stored: unknown;
+  try {
+    const snap = await getFirestore().collection('app-config').doc(tenantId).get();
+    stored = snap.data()?.['emailProvider'];
+  } catch (e) {
+    logger.error(`getEmailProvider: could not read app-config/${tenantId} — using ${DEFAULT_EMAIL_PROVIDER}`, { error: String((e as Error)?.message ?? e) });
+    return DEFAULT_EMAIL_PROVIDER;
+  }
+  const provider = effectiveProvider(stored);
+  if (stored !== undefined && stored !== null && stored !== '' && stored !== provider) {
+    logger.warn(`getEmailProvider: unknown emailProvider in app-config/${tenantId} — using ${provider}`);
+  }
+  return provider;
 }

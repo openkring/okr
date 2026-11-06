@@ -18,6 +18,11 @@ export function isValidProvider(p: string): p is EmailProvider {
   return VALID_PROVIDERS.includes(p as EmailProvider);
 }
 
+/** The provider to use for a stored `app-config.emailProvider` value: itself when valid, else the default. */
+export function effectiveProvider(stored: unknown): EmailProvider {
+  return typeof stored === 'string' && isValidProvider(stored) ? stored : DEFAULT_EMAIL_PROVIDER;
+}
+
 export interface EmailAttachment {
   filename: string;
   content: Buffer;
@@ -31,6 +36,7 @@ export interface EmailOptions {
   bcc?: string[];
   subject: string;
   html: string;
+  text?: string;                                // plain-text alternative; left out when empty, never sent with a template
   attachments?: EmailAttachment[];
   template?: string;                            // Mailtrap template UUID (mailtrap_api only)
   templateVariables?: Record<string, string>;   // Variables passed to the Mailtrap template
@@ -93,6 +99,7 @@ async function sendViaSMTP(config: object, options: EmailOptions): Promise<void>
     ...(options.bcc?.length ? { bcc: options.bcc.join(', ') } : {}),
     subject: options.subject,
     html: options.html,
+    ...(options.text ? { text: options.text } : {}),
     ...(options.attachments?.length ? {
       attachments: options.attachments.map(a => ({
         filename: a.filename,
@@ -103,9 +110,8 @@ async function sendViaSMTP(config: object, options: EmailOptions): Promise<void>
   });
 }
 
-async function sendViaMailtrapApi(options: EmailOptions): Promise<void> {
-  const apiKey = process.env['MAILTRAP_APIKEY'];
-
+/** The JSON body of a Mailtrap send. Exported so the shape can be tested without a network. */
+export function mailtrapBody(options: EmailOptions): Record<string, unknown> {
   const body: Record<string, unknown> = {
     from: parseFrom(options.from),
     to:   options.to.map(e => ({ email: e })),
@@ -122,6 +128,7 @@ async function sendViaMailtrapApi(options: EmailOptions): Promise<void> {
   } else {
     body['subject'] = options.subject;
     body['html']    = options.html;
+    if (options.text) body['text'] = options.text;
   }
 
   if (options.attachments?.length) {
@@ -132,6 +139,13 @@ async function sendViaMailtrapApi(options: EmailOptions): Promise<void> {
       disposition: 'attachment',
     }));
   }
+
+  return body;
+}
+
+async function sendViaMailtrapApi(options: EmailOptions): Promise<void> {
+  const apiKey = process.env['MAILTRAP_APIKEY'];
+  const body = mailtrapBody(options);
 
   const response = await fetch('https://send.api.mailtrap.io/api/send', {
     method: 'POST',
