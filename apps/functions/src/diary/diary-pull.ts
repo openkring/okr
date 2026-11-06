@@ -1,7 +1,7 @@
 //
 // Spec 1.77 §12.5 — THE answer to «which diaries receive this item», for task lines, Jass lines, recordings and crew
 // copies alike. A `diarySources/{uid}` doc decides for its diary tenant (pull ∩ the source user's `diaryConsents`);
-// only a diary tenant without such a doc still follows the source user's `diaryTargets` (§12.6, removed in step 4).
+// a diary tenant without such a doc receives nothing.
 
 import { logger } from 'firebase-functions/v2';
 import { getAuth } from 'firebase-admin/auth';
@@ -29,7 +29,6 @@ export interface PullUser {
   tenants?: string[];
   isArchived?: boolean;
   diaryConsents?: DiaryConsent[];
-  diaryTargets?: DiaryTarget[];
 }
 
 /** The user doc an item's routing is read from: the first active one in the source tenant. Pure. */
@@ -76,11 +75,7 @@ export function selectDiaryPulls(input: {
     const uid = diaryUsers[0].id;
     const reaches = (target: DiaryTarget | undefined) => resolveDiaryTargets(target ? [target] : [], source, date).length > 0;
     const doc = docs[uid];
-    if (!doc) {
-      const legacy = (sourceUser.diaryTargets ?? []).filter(t => t.tenantId === tenantId);
-      if (resolveDiaryTargets(legacy, source, date).length > 0) out.push({ tenantId, uid, status: 'ok' });
-      continue;
-    }
+    if (!doc) continue;
     if (!reaches(pullToTarget(doc, tenantId, sourceTenant, [{ tenantId, uid: doc.authorKey, sources: [...DIARY_SOURCES] }]))) continue;
     out.push({ tenantId, uid, status: reaches(pullToTarget(doc, tenantId, sourceTenant, sourceUser.diaryConsents)) ? 'ok' : 'skipped-no-consent' });
   }
@@ -147,7 +142,6 @@ export async function readPullUsers(db: Firestore, personKey: string): Promise<P
     tenants: d.get('tenants') as string[] | undefined,
     isArchived: d.get('isArchived') as boolean | undefined,
     diaryConsents: d.get('diaryConsents') as DiaryConsent[] | undefined,
-    diaryTargets: d.get('diaryTargets') as DiaryTarget[] | undefined,
   }));
 }
 
@@ -161,8 +155,7 @@ export async function resolveDiaryPulls(db: Firestore, args: {
   if (!sourceUser) return [];
 
   const docs = await readDiarySourceDocs(db, users);
-  const named = new Set((sourceUser.diaryTargets ?? []).map(t => t.tenantId));
-  const candidates = users.filter(u => docs[u.id] || (u.tenants ?? []).some(t => named.has(t)));
+  const candidates = users.filter(u => docs[u.id]);
   if (candidates.length === 0) return [];
 
   const tenantIds = [...new Set(candidates.flatMap(u => u.tenants ?? []))];

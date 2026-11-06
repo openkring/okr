@@ -69,7 +69,7 @@ lists directly. Meeting keys and keys that name no group keep the behaviour abov
 
 - `onTaskDocWritten` (handler `notify`) — pushes the assignee on create, reassignment or reopen (never to oneself), and
   syncs the assignee's diary: a completed task's name goes into `done` of the day entry in
-  every diary tenant of the assignee's `UserModel.diaryTargets` (shared with the Jasstafel, spec 1.77), a reopen removes it (`appendToDiary`).
+  every diary that collects `taskDone` from the task's tenant (`resolveDiaryPulls`, shared with the Jasstafel, spec 1.77 §12.5), a reopen removes it (`appendToDiary`).
 - `listGroupTasks` — callable (spec 1.75): a closed group's tasks for staff and active members;
   refuses an open group (`failed-precondition`), another tenant (`permission-denied`) and a
   non-member (`permission-denied`).
