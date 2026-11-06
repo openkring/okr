@@ -279,6 +279,31 @@
       "description": "Déclenche un événement lors du clic. Ce qui suit se configure comme une règle."
     }
   },
+  "menu_type": {
+    "label": "Disposition du menu",
+    "helper": "Où apparaît le menu principal : en barre latérale à gauche ou à droite, en barre en haut ou en segments.",
+    "left": {
+      "label": "Gauche",
+      "description": "Barre latérale au bord gauche."
+    },
+    "right": {
+      "label": "Droite",
+      "description": "Barre latérale au bord droit."
+    },
+    "top": {
+      "label": "Haut",
+      "description": "Barre au bord supérieur. Les sous-menus s'ouvrent vers le bas."
+    },
+    "segmented": {
+      "label": "Segments",
+      "description": "Barre de segments de même rang, sans sous-menus."
+    }
+  },
+  "submenu_offset": {
+    "label": "Retrait des sous-menus",
+    "placeholder": "5",
+    "helper": "Retrait des entrées de sous-menu en pixels (0 à 40). Pour un menu en haut, l'espace sous le menu déroulant."
+  },
   "item": {
     "task-my": "Mes tâches",
     "icon-sync": "Synchroniser le stockage",

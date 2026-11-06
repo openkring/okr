@@ -2,9 +2,9 @@ import { Component, ComponentRef, computed, DestroyRef, effect, inject, input, m
 import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular';
 
-import { DEFAULT_MENU_ACTION, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ROLE, DEFAULT_TAGS, DEFAULT_URL, DESCRIPTION_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
+import { DEFAULT_MENU_ACTION, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ROLE, DEFAULT_SUBMENU_OFFSET, DEFAULT_TAGS, DEFAULT_URL, DESCRIPTION_LENGTH, LONG_NAME_LENGTH, MAX_SUBMENU_OFFSET, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { BaseProperty, CategoryListModel, MenuItemModel, RoleName, UserModel } from '@okr/shared-models';
-import { CategorySelect, Chips, ErrorNote, NotesInput, NotesInputI18n, StringList, TextInput, TextInputI18n, UrlInput, UrlInputI18n, IconInput } from '@okr/shared-ui';
+import { CategorySelect, Chips, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringList, TextInput, TextInputI18n, UrlInput, UrlInputI18n, IconInput } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
@@ -15,7 +15,7 @@ import type { OkrEditor } from '@okr/shared-ui-editor';
   selector: 'okr-menu-item-form',
   standalone: true,
   imports: [
-    TextInput, UrlInput, CategorySelect, Chips, NotesInput, StringList, ErrorNote,
+    TextInput, UrlInput, CategorySelect, Chips, NotesInput, NumberInput, StringList, ErrorNote,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonLabel,
     IconInput
 ],
@@ -100,6 +100,21 @@ import type { OkrEditor } from '@okr/shared-ui-editor';
               </ion-row>
             }
 
+            <!-- main menu only: layout, and the indent of its submenu rows -->
+            @if(menuAction() === 'main') {
+              <ion-row>
+                <ion-col size="12" size-md="6">
+                  <okr-cat-select [category]="menuTypes()" [selectedItemName]="menuType()" (selectedItemNameChange)="onFieldChange('menuType', $event)" [withAll]="false" [fieldStyle]="true" [label]="i18n().menu_type_label()" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="menuTypeErrors()" />
+                </ion-col>
+
+                <ion-col size="12" size-md="6">
+                  <okr-number-input [i18n]="submenuOffsetI18n()" [value]="submenuOffset()" (valueChange)="onFieldChange('submenuOffset', $event)" [integer]="true" [min]="0" [max]="submenuOffsetMax" [showHelper]="true" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="submenuOffsetErrors()" />
+                </ion-col>
+              </ion-row>
+            }
+
             @if(menuAction() !== 'main') {
               <ion-row>
                 <ion-col size="12">
@@ -126,6 +141,7 @@ import type { OkrEditor } from '@okr/shared-ui-editor';
           [add]="i18n().add_submenu()"
           [readOnly]="isReadOnly()"
         />
+        <okr-error-note [errors]="menuItemsErrors()" />
       }
 
       @if(hasRole('contentAdmin')) {
@@ -150,6 +166,13 @@ export class MenuForm {
   public readonly formData = model.required<MenuItemModel>();
   public readonly types = input.required<CategoryListModel>();
   public readonly roles = input.required<CategoryListModel>();
+  /** the layouts a main menu can have (category `menu_type`) */
+  public readonly menuTypes = input.required<CategoryListModel>();
+  /**
+   * `name` -> `action` of the menu documents the children can be. The suite cannot look the
+   * documents up, so it reads this to refuse a `sub` child in a segmented menu.
+   */
+  public readonly childActions = input<Record<string, string>>({});
   public readonly currentUser = input.required<UserModel | undefined>();
   public readonly tenantId = input.required<string>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
@@ -171,6 +194,10 @@ export class MenuForm {
   protected iconI18n = computed(() => ({
     name: 'icon', label: this.i18n().icon_label(), placeholder: this.i18n().icon_placeholder(), helper: this.i18n().icon_helper()
   } as TextInputI18n));
+
+  protected submenuOffsetI18n = computed(() => ({
+    name: 'submenuOffset', label: this.i18n().submenu_offset_label(), placeholder: this.i18n().submenu_offset_placeholder(), helper: this.i18n().submenu_offset_helper()
+  } as NumberInputI18n));
 
   protected iconAltI18n = computed(() => ({
     name: 'iconAlt', label: this.i18n().icon_alt_label(), placeholder: this.i18n().icon_alt_placeholder(), helper: this.i18n().icon_alt_helper()
@@ -199,7 +226,7 @@ export class MenuForm {
   // The suite needs tenants and tags, which validateVestTree does not pass — so the bridge
   // calls it through a closure that adds them.
   private readonly suiteWithContext = (model: MenuItemModel) =>
-    menuItemValidations(model, this.tenantId(), this.allTags());
+    menuItemValidations(model, this.tenantId(), this.allTags(), this.childActions());
   protected readonly menuForm = form(this.formData, (path) =>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validateVestTree(path, this.suiteWithContext as any));
@@ -214,6 +241,9 @@ export class MenuForm {
   protected labelErrors = computed(() => this.validationResult().getErrors('label'));
   protected urlErrors = computed(() => this.validationResult().getErrors('url'));
   protected infoErrors = computed(() => this.validationResult().getErrors('info'));
+  protected menuTypeErrors = computed(() => this.validationResult().getErrors('menuType'));
+  protected submenuOffsetErrors = computed(() => this.validationResult().getErrors('submenuOffset'));
+  protected menuItemsErrors = computed(() => this.validationResult().getErrors('menuItems'));
 
   // Lazy: a static import of @okr/shared-ui-editor drags ngx-editor/ProseMirror into the dashboard's
   // eager bundle (this form is reachable from the menu) — same pattern as editor-configuration.ts.
@@ -279,8 +309,13 @@ export class MenuForm {
   protected roleNeeded = computed(() => this.formData().roleNeeded ?? DEFAULT_ROLE);
   protected menuAction = computed(() => this.formData().action ?? DEFAULT_MENU_ACTION);
   protected menuItems = computed(() => this.formData().menuItems ?? []);
+  // Firestore reads skip model defaults, so both are absent on every existing main menu
+  protected menuType = computed(() => this.formData().menuType ?? 'left');
+  protected submenuOffset = computed(() => this.formData().submenuOffset ?? DEFAULT_SUBMENU_OFFSET);
 
   // passing constants to template
+  /** kept in step with the upper bound the Vest suite enforces on submenuOffset */
+  protected readonly submenuOffsetMax = MAX_SUBMENU_OFFSET;
   protected nameLength = NAME_LENGTH;
 
   /******************************* actions *************************************** */
