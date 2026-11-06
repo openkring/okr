@@ -355,6 +355,10 @@
     "placeholder": "nn",
     "helper": "Nombre maximal de participants. 0 signifie illimité. Qui s'inscrit ensuite passe sur la liste d'attente."
   },
+  "notifyOnAnswer": {
+    "label": "Signaler les réponses aux invitations",
+    "helper": "L'organisation reçoit un message dès qu'une personne accepte ou refuse une invitation."
+  },
   "locationKey": {
     "label": "Clé du lieu",
     "placeholder": "sssssss",

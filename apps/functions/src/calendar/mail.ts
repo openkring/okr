@@ -123,6 +123,17 @@ export function invitationEmail(p: EventSummary & { inviterName: string; note: s
   return { subject, html };
 }
 
+/** To the organisers, when somebody answers an invitation (`calevent.notifyOnAnswer`). */
+export function invitationAnswerEmail(p: EventSummary & { inviteeName: string; answer: 'accepted' | 'declined'; eventUrl: string }): { subject: string; html: string } {
+  const verb = p.answer === 'accepted' ? 'zugesagt' : 'abgesagt';
+  const subject = `${p.inviteeName} hat für ${p.eventName} ${verb}`;
+  const html = layout(p,
+    `<p>${escapeHtml(p.inviteeName)} hat ${verb}.</p>`
+    + eventBlock(p)
+    + `<p>${button(p.eventUrl, 'Anlass öffnen', primaryStyle(p))}</p>`);
+  return { subject, html };
+}
+
 export function commentEmail(p: EventSummary & { authorName: string; comment: string; eventUrl: string }): { subject: string; html: string } {
   const subject = `${p.authorName} hat ${p.eventName} kommentiert`;
   const html = layout(p,

@@ -8,6 +8,10 @@
 // §3.7 B1): `onInvitationCreated` recomputes it before its push (which reads the sum for
 // `aps.badge`), `onInvitationWritten` on every later change that can move the count — answered,
 // archived, locked, deleted, re-addressed. Recomputed, never +1: the server can read the truth.
+//
+// `onInvitationWritten` also tells the organisers about an answer, when the event asks for it
+// (`calevent.notifyOnAnswer`). It sits on the invitation write because every answer ends there:
+// InvitationService.respond in the app and the signed email link (answer.ts) alike.
 
 import { onDocumentCreated, onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { projectID } from 'firebase-functions/params';
@@ -17,8 +21,8 @@ import { getEventLocationName } from '@okr/shared-util-core';
 
 import { setBadgePartForPerson } from '../badge/person-part';
 import { answerFunctionUrl, invitationLinkSecret, respondUrl } from './answer-link';
-import { brandOf, notifyPersons, tenantLinks } from './deliver';
-import { eventWhen, invitationEmail } from './mail';
+import { brandOf, eventUrl, notifyPersons, tenantLinks } from './deliver';
+import { eventWhen, invitationAnswerEmail, invitationEmail } from './mail';
 import { countOpenInvitations } from './invitation-count';
 import { caleventDeepLink, todayStoreDate } from './recipients';
 
@@ -29,6 +33,9 @@ export interface InvitationDoc {
   tenants?: string[];
   date?: string;
   inviteeKey?: string;
+  inviteeFirstName?: string;
+  inviteeLastName?: string;
+  inviterKey?: string;
   inviterFirstName?: string;
   inviterLastName?: string;
   caleventKey?: string;
@@ -47,6 +54,8 @@ export interface AnswerableEvent {
   isArchived?: boolean;
   isLocked?: boolean;
   state?: string;
+  responsiblePersons?: AvatarInfo[];
+  notifyOnAnswer?: boolean;
 }
 
 /**
@@ -92,6 +101,63 @@ function recomputeInvitationBadge(personKey: string, tenantId: string, context: 
 
 export function invitationPushBody(inviterName: string, when: string): string {
   return when ? `${inviterName} lädt dich ein: ${when}` : `${inviterName} lädt dich ein`;
+}
+
+export type InvitationAnswer = 'accepted' | 'declined';
+
+/** The answer a write records, if any: the state changed and now says yes or no. */
+export function answerOfWrite(before: InvitationDoc | undefined, after: InvitationDoc | undefined): InvitationAnswer | undefined {
+  if (!before || !after || after.isArchived || before.state === after.state) return undefined;
+  return after.state === 'accepted' || after.state === 'declined' ? after.state : undefined;
+}
+
+/** The organisers of the event and the inviter, each once, without the person who answered. */
+export function answerRecipients(inv: InvitationDoc, event: AnswerableEvent): string[] {
+  const keys = [...(event.responsiblePersons ?? []).map((person) => person.key), inv.inviterKey ?? ''];
+  return [...new Set(keys)].filter((key) => key.length > 0 && key !== inv.inviteeKey);
+}
+
+export function invitationAnswerPushBody(inviteeName: string, answer: InvitationAnswer): string {
+  return answer === 'accepted' ? `${inviteeName} hat zugesagt` : `${inviteeName} hat abgesagt`;
+}
+
+/** Tells the organisers about an answer, when the event asks for it. Same channels as any calendar notification. */
+async function notifyAnswer(inv: InvitationDoc, invitationKey: string, answer: InvitationAnswer): Promise<void> {
+  const tenantId = inv.tenants?.[0] ?? '';
+  const caleventKey = inv.caleventKey ?? '';
+  if (!tenantId || !caleventKey) return;
+  const eventSnap = await getFirestore().collection('calevents').doc(caleventKey).get();
+  const event = eventSnap.exists ? (eventSnap.data() as AnswerableEvent) : undefined;
+  if (!event?.notifyOnAnswer || event.isArchived) return;
+  const personKeys = answerRecipients(inv, event);
+  if (personKeys.length === 0) return;
+
+  const inviteeName = `${inv.inviteeFirstName ?? ''} ${inv.inviteeLastName ?? ''}`.trim();
+  const links = await tenantLinks(tenantId);
+  await notifyPersons({
+    personKeys,
+    tenantId,
+    ruleKey: `calevent:${caleventKey}`,
+    context: 'onInvitationWritten',
+    push: {
+      type: 'calevent',
+      tenantId,
+      title: event.name ?? '',
+      body: invitationAnswerPushBody(inviteeName, answer),
+      url: caleventDeepLink(caleventKey),
+      // per invitation: a changed answer replaces the banner, two people answering do not
+      channelId: `invitation.${invitationKey}.answer`,
+    },
+    email: () => invitationAnswerEmail({
+      ...brandOf(links),
+      eventName: event.name ?? '',
+      when: eventWhen(event.startDate, event.startTime),
+      location: getEventLocationName(event),
+      inviteeName,
+      answer,
+      eventUrl: eventUrl(links, caleventKey),
+    }),
+  });
 }
 
 export const onInvitationCreated = onDocumentCreated(
@@ -163,5 +229,7 @@ export const onInvitationWritten = onDocumentWritten(
     for (const personKey of inviteesToRecompute(before, after)) {
       await recomputeInvitationBadge(personKey, tenantId, 'onInvitationWritten');
     }
+    const answer = answerOfWrite(before, after);
+    if (answer && after) await notifyAnswer(after, trigger.params.invitationId, answer);
   },
 );

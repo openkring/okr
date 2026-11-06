@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { answerPage, answerResultPage, brandColorOf, chatDigestEmail, commentEmail, DEFAULT_BRAND_COLOR, escapeHtml, eventWhen, invitationEmail, textColorOn } from './mail';
+import { answerPage, answerResultPage, brandColorOf, chatDigestEmail, commentEmail, DEFAULT_BRAND_COLOR, escapeHtml, eventWhen, invitationAnswerEmail, invitationEmail, textColorOn } from './mail';
 
 const EVIL = '<script>alert("x")</script> & co';
 const base = { appName: 'Seeclub', brandColor: '#009D53', logoUrl: 'https://img.x/logo.png?w=96&fm=png', eventName: EVIL, when: '01.10.2026, 11:00', location: EVIL };
@@ -61,6 +61,20 @@ describe('invitationEmail', () => {
   });
   it('keeps line breaks of the note', () => expect(mail.html).toContain('<br>zweite Zeile'));
   it('puts the event into the subject, unescaped (subject is plain text)', () => expect(mail.subject).toBe(`Einladung: ${EVIL}, 01.10.2026, 11:00`));
+});
+
+describe('invitationAnswerEmail', () => {
+  const answer = { ...base, inviteeName: 'Anna Muster', answer: 'accepted' as const, eventUrl: 'https://app.example/e' };
+  it('says who answered what', () => {
+    expect(invitationAnswerEmail(answer).subject).toContain('Anna Muster hat für');
+    expect(invitationAnswerEmail(answer).subject).toContain('zugesagt');
+    expect(invitationAnswerEmail({ ...answer, answer: 'declined' }).html).toContain('hat abgesagt');
+  });
+  it('escapes the name and links to the event', () => {
+    const { html } = invitationAnswerEmail({ ...answer, inviteeName: EVIL });
+    expect(html).not.toContain('<script>');
+    expect(html).toContain('https://app.example/e');
+  });
 });
 
 describe('chatDigestEmail', () => {

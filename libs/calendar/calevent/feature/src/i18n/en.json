@@ -355,6 +355,10 @@
     "placeholder": "nn",
     "helper": "Maximum number of participants. 0 means unlimited. Anyone signing up after that goes on the waiting list."
   },
+  "notifyOnAnswer": {
+    "label": "Report answers to invitations",
+    "helper": "The organisers get a message as soon as someone accepts or declines an invitation."
+  },
   "locationKey": {
     "label": "Location key",
     "placeholder": "sssssss",

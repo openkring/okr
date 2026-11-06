@@ -79,6 +79,12 @@ export class CalEventModel implements OkrModel, NamedModel, SearchableModel, Tag
    * Optional on read: every event written before this field existed lacks it — always `?? 0`.
    */
   public maxAttendees = 0;
+  /**
+   * Tell the organisers (`responsiblePersons` and the inviter) when somebody answers an invitation
+   * to this event, see `onInvitationWritten`. Answers only: a member signing up without an
+   * invitation does not count. Optional on read: legacy documents lack it, which reads as false.
+   */
+  public notifyOnAnswer = false;
   public state: 'proposed' | 'provisional' | 'definitive' | 'cancelled' = 'definitive'; // scheduling state; 'cancelled' = the event was called off
   public cancelMessage = DEFAULT_NOTES; // why the event was cancelled; shown as a red banner, only set when state === 'cancelled'
   public isLocked = false; // frozen by an organiser/eventAdmin: no invitation response or attendance change is possible while true
