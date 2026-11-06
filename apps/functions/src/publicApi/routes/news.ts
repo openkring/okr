@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { getFirestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
-import { setCacheHeaders, parseTags, storeDateToIso, titleToI18n } from '../utils';
+import { isPublishedSection, setCacheHeaders, parseTags, storeDateToIso, titleToI18n } from '../utils';
 import { getHtmlSanitizer, sanitizeI18n } from '../sanitize';
 import type { I18nString } from '@okr/shared-models';
 
@@ -30,6 +30,7 @@ interface ArticleSectionDoc {
   tenants: string[];
   isArchived: boolean;
   type: string;
+  state?: string;
   content: { htmlContent: string };
   properties?: {
     images?: StoredImage[];
@@ -139,7 +140,7 @@ export async function newsRouter(req: Request, res: Response): Promise<void> {
         }
       }
 
-      if (!doc) {
+      if (!doc || !isPublishedSection(doc)) {
         res.status(404).json({ error: { code: 'not_found', message: 'Article not found', details: { slug } } });
         return;
       }
@@ -186,7 +187,8 @@ export async function newsRouter(req: Request, res: Response): Promise<void> {
       .map(d => ({ okey: d.id, ...d.data() } as ArticleSectionDoc))
       // `tenants` is checked here too: these are reads BY KEY, so the array-contains
       // filter that guards every query does not apply.
-      .filter(d => d.type === 'article' && !d.isArchived && (d.tenants ?? []).includes(tenantId));
+      .filter(d => d.type === 'article' && !d.isArchived && (d.tenants ?? []).includes(tenantId)
+        && isPublishedSection(d));
 
     if (tag) {
       docs = docs.filter(d => parseTags(d.tags).includes(tag));

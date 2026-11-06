@@ -167,7 +167,7 @@ describe('learning section wiring', () => {
   type Call = string;
   function makeDb(o: { page?: Record<string, unknown>; folder?: Record<string, unknown>; docs?: { id: string; data: Record<string, unknown> }[] }) {
     const calls: Call[] = [];
-    const learning = { type: 'learning', title: 'Raum', tenants: ['scs'], properties: { folder: 'f1', topics: 'T' } };
+    const learning = { type: 'learning', state: 'published', title: 'Raum', tenants: ['scs'], properties: { folder: 'f1', topics: 'T' } };
     const snap = (id: string, data: Record<string, unknown> | undefined) => ({ id, exists: data !== undefined, data: () => data });
     const db = {
       collection: (name: string) => ({
@@ -255,6 +255,49 @@ describe('learning section wiring', () => {
       expect(out).toMatchObject({ locked: true, items: [], topics: [] });
       expect(m.calls.some(c => c.startsWith('query'))).toBe(false);
     }
+  });
+});
+
+describe('unpublished sections', () => {
+  const page = { tenants: ['scs'], type: 'content', sections: ['live', 'draft', 'legacy', 'box'] };
+  const sections: Record<string, Record<string, unknown>> = {
+    live: { type: 'article', state: 'published', tenants: ['scs'], title: 'Live' },
+    draft: { type: 'article', state: 'draft', tenants: ['scs'], title: 'Entwurf' },
+    legacy: { type: 'article', tenants: ['scs'], title: 'Ohne Status' },
+    box: {
+      type: 'accordion', state: 'published', tenants: ['scs'], title: 'Box',
+      properties: { items: [{ key: 'nestedLive', label: 'A' }, { key: 'nestedDraft', label: 'B' }] },
+    },
+    nestedLive: { type: 'article', state: 'published', tenants: ['scs'], content: { htmlContent: '<p>offen</p>' } },
+    nestedDraft: { type: 'article', state: 'draft', tenants: ['scs'], content: { htmlContent: '<p>Entwurfstext</p>' } },
+  };
+  const snap = (id: string, data: Record<string, unknown> | undefined) => ({ id, exists: data !== undefined, data: () => data });
+
+  async function getSections(pageOverride: Record<string, unknown> = {}) {
+    fakeDb.current = {
+      collection: (name: string) => ({
+        doc: (id: string) => ({ __id: id, get: async () => snap(id, name === 'pages' ? { ...page, ...pageOverride } : undefined) }),
+      }),
+      getAll: async (...refs: { __id: string }[]) => refs.map(r => snap(r.__id, sections[r.__id])),
+    };
+    let body: { sections: { title?: string; items?: { label: string; content: string }[] }[] } | undefined;
+    const res = { set: () => res, status: () => res, json: (b: typeof body) => { body = b; return res; } };
+    await pageRouter({ query: { tenantId: 'scs' }, params: { pageKey: 'p1' } } as never, res as never);
+    return body!.sections;
+  }
+
+  it('serves published sections only, like the app', async () => {
+    expect((await getSections()).map(s => s.title)).toEqual(['Live', 'Box']);
+  });
+
+  it('never serves the text of an unpublished section inside an accordion', async () => {
+    const box = (await getSections()).find(s => s.title === 'Box');
+    expect(box?.items).toEqual([{ label: 'A', content: '<p>offen</p>' }, { label: 'B', content: '' }]);
+  });
+
+  it('does not gate on the page: the website pages are isPrivate and in state draft', async () => {
+    const titles = (await getSections({ isPrivate: true, state: 'draft' })).map(s => s.title);
+    expect(titles).toContain('Live');
   });
 });
 

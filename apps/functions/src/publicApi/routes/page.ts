@@ -8,7 +8,7 @@ import type { DocumentLink } from '@okr/shared-models';
 import { DocumentCollection, FolderCollection } from '@okr/shared-models';
 import { learningTabOf, parseTopics, type LearningTab, type PublicLearningItem, type PublicLearningSection } from '@okr/content-learning-util';
 
-import { setCacheHeaders } from '../utils';
+import { isPublishedSection, setCacheHeaders } from '../utils';
 import { getHtmlSanitizer } from '../sanitize';
 import { IMGIX_PRIVATE_HOST, signImgixUrl } from '../../_storage/imgix-sign';
 import { albumFolderKeyOfPath, isSafeDocId, MP4_PARAMS, POSTER_PARAMS, windowExpiry } from '../../video/video-sign.util';
@@ -62,6 +62,7 @@ function mapImage(img: StoredImage | undefined): { url: string; alt: string } | 
 
 interface SectionDoc {
   type?: string;
+  state?: string;
   title?: string;
   subTitle?: string;
   content?: { htmlContent?: string; position?: number; colSize?: number };
@@ -409,7 +410,8 @@ export async function pageRouter(req: Request, res: Response): Promise<void> {
       // across tenants can list section keys that resolve to another tenant's documents,
       // and a read by key never passes through the array-contains filter.
       .filter(d => d.exists && d.data()?.['isArchived'] !== true
-        && ((d.data()?.['tenants'] as string[] | undefined) ?? []).includes(tenantId))
+        && ((d.data()?.['tenants'] as string[] | undefined) ?? []).includes(tenantId)
+        && isPublishedSection(d.data() as SectionDoc))
       .map(d => ({ id: d.id, doc: d.data() as SectionDoc }));
 
     const nestedKeys = new Set<string>();
@@ -427,7 +429,8 @@ export async function pageRouter(req: Request, res: Response): Promise<void> {
       const nestedRefs = Array.from(nestedKeys).map(k => db.collection('sections').doc(k));
       const nestedDocs = await db.getAll(...nestedRefs);
       for (const d of nestedDocs) {
-        if (d.exists && ((d.data()?.['tenants'] as string[] | undefined) ?? []).includes(tenantId)) {
+        if (d.exists && ((d.data()?.['tenants'] as string[] | undefined) ?? []).includes(tenantId)
+          && isPublishedSection(d.data() as SectionDoc)) {
           nestedSections.set(d.id, d.data() as SectionDoc);
         }
       }
