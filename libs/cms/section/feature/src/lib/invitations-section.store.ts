@@ -13,7 +13,6 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { CalEventService } from '@okr/calendar-calevent-data-access';
 import { CalEventViewModal } from '@okr/calendar-calevent-feature';
-import { isAttendanceClosed } from '@okr/calendar-calevent-util';
 import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 import { InvitationService } from '@okr/relationship-invitation-data-access';
 
@@ -199,20 +198,9 @@ export const InvitationSectionStore = signalStore(
       },
 
       /******************************** actions ******************************************* */
-      /**
-       * Whether the invitation can still be answered: not locked, and its event exists and is
-       * neither archived, past, locked nor cancelled — the event half of `isCountableInvitation`
-       * (badge, card and push gate share it), so an invitation the card leaves out cannot be
-       * answered either. A deleted event blocks the answer (spec 1.127 2.4); an invitation without
-       * caleventKey is answerable. Unlike `isCountableInvitation` it does not require `pending`:
-       * an answer may be changed (accepted -> declined) while the event is still open.
-       * calEventService.read is tenant-scoped and reads an archived event as undefined.
-       */
+      /** Whether the invitation can still be answered: the one rule in `InvitationService`. */
       async isAnswerable(invitation: InvitationModel): Promise<boolean> {
-        if (invitation.isLocked) return false;
-        if (!invitation.caleventKey) return true;
-        const calevent = await firstValueFrom(store.calEventService.read(invitation.caleventKey));
-        return !!calevent && !calevent.isArchived && !isAttendanceClosed(calevent);
+        return store.invitationService.isAnswerable(invitation);
       },
 
       /** Opens the read-only view of the calevent the invitation belongs to. */

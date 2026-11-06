@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, resource, signal } from '@angular/core';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular';
 
 import { InvitationModel, InvitationModelName, RoleName, UserModel } from '@okr/shared-models';
@@ -8,8 +8,8 @@ import { ModelSelectService, AppStore } from '@okr/shared-feature';
 
 import { CommentsAccordion } from '@okr/comment-feature';
 
-import { InvitationForm } from '@okr/relationship-invitation-ui';
-import { normaliseInvitation } from '@okr/relationship-invitation-util';
+import { InvitationAnswer, InvitationAnswerState, InvitationForm } from '@okr/relationship-invitation-ui';
+import { isOwnInvitation, normaliseInvitation } from '@okr/relationship-invitation-util';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { InvitationStore } from './invitation.store';
 
@@ -19,7 +19,7 @@ import { InvitationStore } from './invitation.store';
   standalone: true,
   styles: [` @media (width <= 600px) { ion-card { margin: 5px;} }`],
   imports: [
-    Header, ChangeConfirmation, InvitationForm, CommentsAccordion, 
+    Header, ChangeConfirmation, InvitationForm, InvitationAnswer, CommentsAccordion,
     IonContent, IonAccordionGroup, IonCard, IonCardContent
   ],
   providers: [InvitationStore],
@@ -29,6 +29,9 @@ import { InvitationStore } from './invitation.store';
       <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
+      @if(canAnswer()) {
+        <okr-invitation-answer [i18n]="store.i18n" [state]="invitation().state" (answered)="answer($event)" />
+      }
       @if(currentUser(); as currentUser) {
         @if(formData(); as formData) {
           <okr-invitation-form
@@ -88,11 +91,30 @@ export class InvitationEditModal {
   protected readonly parentKey = computed(() => `${InvitationModelName}.${this.invitationKey()}`);
   protected readonly invitationKey = computed(() => this.invitation().okey ?? '');
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+
+  // only the invitee answers, in the view as in the edit mode; undefined params leave the resource idle
+  private readonly answerable = resource({
+    params: () => isOwnInvitation(this.invitation(), this.currentUser().personKey) ? this.invitation() : undefined,
+    loader: ({ params }) => this.store.isAnswerable(params),
+  });
+  protected readonly canAnswer = computed(() => this.answerable.hasValue() && this.answerable.value());
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
     await dismissOverlay(this.modalController, this.formData(), 'confirm')
+  }
+
+  /**
+   * The answer goes straight through `InvitationStore.changeState`, it is no edit to save. It is made
+   * on a copy of the stored invitation, so unsaved form changes do not ride along, and closes the
+   * modal: the form would otherwise compare against an invitation that has since changed.
+   */
+  protected async answer(state: InvitationAnswerState): Promise<void> {
+    const invitation = normaliseInvitation(safeStructuredClone(this.invitation()));
+    if (invitation && await this.store.changeState(invitation, state)) {
+      await dismissOverlay(this.modalController, undefined, 'answered');
+    }
   }
 
   public async cancel(): Promise<void> {

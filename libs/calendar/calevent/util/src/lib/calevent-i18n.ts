@@ -375,6 +375,8 @@ export const CALEVENT_I18N_KEYS = {
   maxAttendees:                   PFX + 'maxAttendees.label',
   maxAttendees_placeholder:       PFX + 'maxAttendees.placeholder',
   maxAttendees_helper:            PFX + 'maxAttendees.helper',
+  notifyOnAnswer_label:           PFX + 'notifyOnAnswer.label',
+  notifyOnAnswer_helper:          PFX + 'notifyOnAnswer.helper',
 
   locationKey_label:              PFX + 'locationKey.label',
   locationKey_placeholder:        PFX + 'locationKey.placeholder',

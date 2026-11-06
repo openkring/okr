@@ -68,7 +68,8 @@
     "vcard": "Télécharger l'adresse (vCard)"
   },
   "send": {
-    "email": "Envoyer un e-mail"
+    "email": "Envoyer un e-mail",
+    "groupEmailError": "L'e-mail n'a pas pu être envoyé. Tu peux seulement écrire aux membres de ce groupe."
   },
   "call": {
     "phone": "Appeler"

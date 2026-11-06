@@ -16,7 +16,7 @@ import { confirm, copyToClipboardWithConfirmation, exportCsv, getCcEmailAddresse
 import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
 import { EmailAddressesModal, openReport, selectDate } from '@okr/shared-ui';
-import { openBulkEmailFlow } from '@okr/content-pdf-template-feature';
+import { type ComposedEmail, openBulkEmailFlow } from '@okr/content-pdf-template-feature';
 
 import { OwnershipService } from '@okr/relationship-ownership-data-access';
 import { MembershipService } from '@okr/relationship-membership-data-access';
@@ -104,6 +104,11 @@ export const _MembershipStore = signalStore(
     getAddressViewFn: httpsCallable<{ parentKeys: string[] }, { views: Record<string, AddressModel[]> }>(
       getFunctions(getApp(), 'europe-west6'),
       'getAddressView'
+    ),
+    // a group admin's mail to the members: `mailJobs` stays closed to them, see group-mail.ts
+    sendGroupEmailFn: httpsCallable<object, { recipients: number }>(
+      getFunctions(getApp(), 'europe-west6'),
+      'sendGroupEmail'
     )
   })),
 
@@ -1053,17 +1058,31 @@ export const _MembershipStore = signalStore(
       /**
        * Bulk mail to the currently filtered members: first the distribution-list modal
        * (to/cc/bcc), then the email composer, which sends the mail in throttled blocks.
+       * A group admin without `memberAdmin` or `privileged` may not write the mail queue: their
+       * mail goes through `sendGroupEmail`, which checks the recipients against the group.
        */
       async sendEmailToList(listId: string): Promise<void> {
         const memberKeySet = new Set(this.getFilteredMemberships(listId).map(m => m.memberKey));
         const filteredPersons = store.appStore.allPersons().filter(p => p.okey && memberKeySet.has(p.okey));
         const recipients = getMainEmailAddresses(filteredPersons, (p) => store.appStore.getDirectoryEntry(`person.${p.okey}`)?.favEmail);
+        const mayQueue = hasRole('privileged', store.currentUser()) || hasRole('memberAdmin', store.currentUser());
         await openBulkEmailFlow({
           modalController: store.modalController,
           firestoreService: store.firestoreService,
           appStore: store.appStore,
           tenantId: store.tenantId(),
-        }, recipients);
+        }, recipients, undefined, mayQueue ? undefined : (mail) => this.sendGroupEmail(mail));
+      },
+
+      /** Throws to report a failure: the composer shows the text and stays open. */
+      async sendGroupEmail(mail: ComposedEmail): Promise<void> {
+        const { to, cc, bcc, subject, html, extraAttachments } = mail;
+        try {
+          await store.sendGroupEmailFn({ tenantId: store.tenantId(), groupKey: store.orgId(), to, cc, bcc, subject, html, attachments: extraAttachments });
+        } catch (e) {
+          warn(`MembershipStore.sendGroupEmail: ${(e as Error).message}`);
+          throw new Error(store.i18n.send_group_email_error());
+        }
       },
 
       async editPerson(membership?: MembershipModel, readOnly = true): Promise<void> {

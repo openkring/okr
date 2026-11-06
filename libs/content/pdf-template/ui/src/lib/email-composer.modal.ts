@@ -103,7 +103,7 @@ type ComposerSegment = 'editor' | 'preview' | 'list';
                   <ion-row>
                     <ion-col size="12" size-md="6">
                       <okr-email [i18n]="fromI18n()" [value]="from()"
-                        (valueChange)="onFieldChange('from', $event)" [readOnly]="false" />
+                        (valueChange)="onFieldChange('from', $event)" [readOnly]="fromLocked()" />
                       @if (fromWarning(); as warning) {
                         <ion-note color="warning" class="attachment">{{ warning }}</ion-note>
                       }
@@ -244,6 +244,8 @@ export class EmailComposerModal {
   public readonly fromDefault    = input<string>('');
   public readonly subjectDefault = input<string>('');
   public readonly bodyDefault    = input<string>('');
+  /** The server decides the sender (a group admin's mail): show it, but don't let it be changed. */
+  public readonly fromLocked     = input<boolean>(false);
   /**
    * Sends the mail instead of the generic document mailer (e.g. an invoice, whose PDF and sent mark the
    * server handles). It throws to report a failure; the composer then stays open with the error.
