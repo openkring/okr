@@ -20,6 +20,7 @@
     "@okr/cms-page-data-access": "*",
     "@okr/cms-section-util": "*",
     "@okr/cms-section-ui": "*",
+    "@okr/content-pdf-template-util": "*",
     "@okr/calendar-calevent-data-access": "*",
     "@okr/calendar-course-data-access": "*",
     "@okr/calendar-calevent-util": "*",

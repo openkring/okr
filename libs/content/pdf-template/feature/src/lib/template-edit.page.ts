@@ -160,18 +160,20 @@ type EditorTab = 'metadata' | 'html' | 'css' | 'text' | 'preview';
               </ion-select>
             </ion-item>
           }
-          <ion-item>
-            <ion-label position="stacked">{{ store.i18n.sample_data() }}</ion-label>
-            <ion-textarea
-              [ngModel]="tmpl.sampleData"
-              (ngModelChange)="onTemplateFieldChange('sampleData', $event)"
-              class="editor-area"
-              [rows]="14"
-              autoGrow="false"
-              [disabled]="readOnly()"
-              placeholder='{}'
-            />
-          </ion-item>
+          @if(hasSampleData()) {
+            <ion-item>
+              <ion-label position="stacked">{{ store.i18n.sample_data() }}</ion-label>
+              <ion-textarea
+                [ngModel]="tmpl.sampleData"
+                (ngModelChange)="onTemplateFieldChange('sampleData', $event)"
+                class="editor-area"
+                [rows]="14"
+                autoGrow="false"
+                [disabled]="readOnly()"
+                placeholder='{}'
+              />
+            </ion-item>
+          }
           @if(!isEmail()) {
             <ion-item>
               <ion-checkbox
@@ -370,6 +372,8 @@ export class TemplateEditPage implements OnDestroy {
   });
   // only the mail texts have a subject; a layout wraps whatever mail it is given
   protected readonly isEmailText = computed(() => this.template()?.kind === 'emailText');
+  // a layout renders the shared variables and the content only, so sample data would reach nothing
+  protected readonly hasSampleData = computed(() => this.template()?.kind !== 'emailLayout');
 
   // the server-rendered mail goes into a sandboxed iframe (no scripts, no same-origin)
   protected readonly emailPreviewHtml = computed((): SafeHtml | string => {

@@ -60,6 +60,8 @@ describe('canDeleteEmailTemplate', () => {
   it('never allows deleting a standard layout', () => {
     expect(canDeleteEmailTemplate('email-layout')).toBe(false);
     expect(canDeleteEmailTemplate('email-layout_scs')).toBe(false);
+    expect(canDeleteEmailTemplate('email-layout-plain')).toBe(false);
+    expect(canDeleteEmailTemplate('email-text-password-reset')).toBe(false);
     expect(canDeleteEmailTemplate('email-layout-plain_scs')).toBe(true);
     expect(canDeleteEmailTemplate('email-text-password-reset_scs')).toBe(true);
   });

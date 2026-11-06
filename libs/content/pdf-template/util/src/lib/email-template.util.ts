@@ -1,7 +1,10 @@
 import { forkKeyFor } from '@okr/shared-util-core';
 import {
-  EmailLayoutKey, EmailTextPasswordResetKey, TemplateKind, TemplateModel, TemplateVersionModel,
+  EmailLayoutChoice, EmailLayoutKey, EmailPlainLayoutKey, EmailTextPasswordResetKey, TemplateKind, TemplateModel, TemplateVersionModel,
 } from '@okr/shared-models';
+
+/** The layouts a sender can choose; the server treats anything but `plain` as `standard`. */
+export const LAYOUT_CHOICES: readonly EmailLayoutChoice[] = ['standard', 'plain'];
 
 /** The kind of a template. Legacy docs have no `kind` and are PDF templates. */
 export function templateKindOf(t: Pick<TemplateModel, 'kind'>): TemplateKind {
@@ -44,9 +47,13 @@ export function emailPublishProblem(
   return undefined;
 }
 
-/** The standard layout is never deleted: without it a composer mail has no frame. */
+/**
+ * The standard layout is never deleted: without it a composer mail has no frame. Neither are the
+ * shared templates: deleting a `system` doc changes nothing (`getDeletePatch`), and only a tenant's
+ * own copy goes back to the shared text.
+ */
 export function canDeleteEmailTemplate(okey: string): boolean {
-  return !isKeyOrTenantCopy(okey, EmailLayoutKey);
+  return !isKeyOrTenantCopy(okey, EmailLayoutKey) && okey !== EmailPlainLayoutKey && okey !== EmailTextPasswordResetKey;
 }
 
 /**

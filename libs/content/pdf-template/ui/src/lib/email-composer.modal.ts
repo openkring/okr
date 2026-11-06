@@ -23,7 +23,7 @@ import { needsEmailNormalization } from '@okr/shared-util-core';
 import { dismissOverlay, isBrowser, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 import {
-  emailBodyHasContent, isSenderDomainAllowed, parseEmails,
+  emailBodyHasContent, isSenderDomainAllowed, LAYOUT_CHOICES, parseEmails,
   EmailComposerFormModel, emailComposerValidations,
   EMAIL_COMPOSER_I18N_KEYS, EMAIL_COMPOSER_MSG_KEYS, EmailComposerI18n,
 } from '@okr/content-pdf-template-util';
@@ -49,9 +49,6 @@ export interface ComposedEmail {
   attachmentName: string;
   extraAttachments: InlineAttachment[];
 }
-
-/** The layouts the composer offers; the server treats anything but `plain` as `standard`. */
-const LAYOUT_CHOICES: EmailLayoutChoice[] = ['standard', 'plain'];
 
 /** The three views of the composer: write the mail, see it rendered, check the recipients. */
 type ComposerSegment = 'editor' | 'preview' | 'list';
@@ -300,7 +297,7 @@ export class EmailComposerModal {
   protected readonly body     = computed(() => this.formData().body);
   protected readonly layout   = computed(() => this.formData().layout);
 
-  protected readonly layoutChoices = LAYOUT_CHOICES;
+  protected readonly layoutChoices = [...LAYOUT_CHOICES];
   protected readonly layoutLabels = computed(() => [this.i18n.layout_standard(), this.i18n.layout_plain()]);
 
   /** Every recipient of this mail, flattened for the Verteiler overview. */

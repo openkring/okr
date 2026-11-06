@@ -9,6 +9,7 @@ import { isSyntheticLoginEmail } from '@okr/user-util';
 import { DeliveryChannel, EmailLayoutChoice, UserModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { I18nService } from '@okr/shared-i18n';
+import { LAYOUT_CHOICES } from '@okr/content-pdf-template-util';
 import { SECTION_I18N_KEYS, SectionI18n } from '@okr/cms-section-util';
 import { toDeliveryChannels } from '@okr/shared-util-core';
 
@@ -17,7 +18,6 @@ import { MembershipService } from '@okr/relationship-membership-data-access';
 import { UserService } from '@okr/user-data-access';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
-const LAYOUT_CHOICES: readonly EmailLayoutChoice[] = ['standard', 'plain'];
 
 @Component({
   selector: 'okr-message-center-modal',
