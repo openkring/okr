@@ -103,9 +103,10 @@ async function recordAnswer(invRef: DocumentReference, eventRef: DocumentReferen
 
   return db.runTransaction(async (tx) => {
     const [freshInv, freshEvent] = await Promise.all([tx.get(invRef), tx.get(eventRef)]);
+    const current = freshInv.exists ? (freshInv.data() as InvitationDoc) : undefined;
     const refusal = decideAnswer(
-      freshInv.exists ? (freshInv.data() as InvitationDoc) : undefined,
-      eventInTenant(freshEvent.data(), tenantId),
+      current,
+      eventInTenant(freshEvent.data(), current?.tenants),
       todayStoreDate(),
     );
     if (refusal) return { refusal };
@@ -171,7 +172,7 @@ export const invitationAnswer = onRequest(
       const caleventKey = inv.caleventKey ?? '';
       const eventRef = caleventKey ? db.collection('calevents').doc(caleventKey) : undefined;
       const eventSnap = eventRef ? await eventRef.get() : undefined;
-      const event = eventInTenant(eventSnap?.data(), tenantId);
+      const event = eventInTenant(eventSnap?.data(), inv.tenants);
       const refusal = decideAnswer(inv, event, todayStoreDate());
       if (refusal || !eventRef) { refuse(refusal ?? 'eventGone'); return; }
 

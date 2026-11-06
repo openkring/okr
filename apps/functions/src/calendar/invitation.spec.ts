@@ -70,13 +70,21 @@ describe('shouldRecomputeInvitations (1.127 B1)', () => {
 });
 
 describe('eventInTenant', () => {
-  it('returns an event of the tenant', () => expect(eventInTenant({ name: 'a', tenants: ['scs'] }, 'scs')?.name).toBe('a'));
-  it('hides an event of another tenant', () => expect(eventInTenant({ name: 'a', tenants: ['p13'] }, 'scs')).toBeUndefined());
+  it('returns an event of the tenant', () => expect(eventInTenant({ name: 'a', tenants: ['scs'] }, ['scs'])?.name).toBe('a'));
+  it('returns a shared event of the tenant', () => expect(eventInTenant({ name: 'a', tenants: ['p13', 'scs'] }, ['scs'])?.name).toBe('a'));
+  it('hides an event of another tenant', () => expect(eventInTenant({ name: 'a', tenants: ['p13'] }, ['scs'])).toBeUndefined());
   it('hides a missing event and an event without tenants', () => {
-    expect(eventInTenant(undefined, 'scs')).toBeUndefined();
-    expect(eventInTenant({ name: 'a' }, 'scs')).toBeUndefined();
+    expect(eventInTenant(undefined, ['scs'])).toBeUndefined();
+    expect(eventInTenant({ name: 'a' }, ['scs'])).toBeUndefined();
   });
-  it('hides everything from an invitation without a tenant', () => expect(eventInTenant({ tenants: ['scs'] }, '')).toBeUndefined());
+  it('refuses an invitation with a second tenant, in either order', () => {
+    expect(eventInTenant({ tenants: ['p13'] }, ['p13', 'scs'])).toBeUndefined();
+    expect(eventInTenant({ tenants: ['p13'] }, ['scs', 'p13'])).toBeUndefined();
+  });
+  it('refuses an invitation without a tenant', () => {
+    expect(eventInTenant({ tenants: ['scs'] }, [])).toBeUndefined();
+    expect(eventInTenant({ tenants: ['scs'] }, undefined)).toBeUndefined();
+  });
 });
 
 describe('answerOfWrite', () => {
