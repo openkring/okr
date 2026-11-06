@@ -8,7 +8,7 @@ import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { TemplateAddressWindow, TemplateModel, TemplateVersionModel } from '@okr/shared-models';
 import {
-  DocEmailService, DocGenerationService, GenerateDocumentResponse, RenderedTemplatePreview, TemplateService,
+  DocEmailService, DocGenerationService, GenerateDocumentResponse, RenderedPreview, TemplateService,
 } from '@okr/content-pdf-template-data-access';
 import { EmailComposerModal } from '@okr/content-pdf-template-ui';
 import {
@@ -29,7 +29,7 @@ interface TemplateState {
   previewFilename: string;
   previewLoading: boolean;
   /** The email template as the server renders it; undefined until a preview ran. */
-  emailPreview: RenderedTemplatePreview | undefined;
+  emailPreview: RenderedPreview | undefined;
 }
 
 const initialState: TemplateState = {
@@ -271,7 +271,7 @@ export const TemplateStore = signalStore(
      * The server error is technical English, so the user gets the plain preview label and the
      * detail goes to the console.
      */
-    async generateEmailPreview(templateKey: string, version: number): Promise<RenderedTemplatePreview | undefined> {
+    async generateEmailPreview(templateKey: string, version: number): Promise<RenderedPreview | undefined> {
       const id = ++emailPreviewSeq;
       patchState(store, { previewLoading: true, emailPreview: undefined });
       try {

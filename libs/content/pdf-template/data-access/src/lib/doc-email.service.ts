@@ -53,14 +53,8 @@ export interface RenderPreviewRequest {
   attachmentName?: string;
 }
 
-/** What the composer shows: the mail as the server renders it. */
+/** A mail as the server renders it: the composer's message, or a template version with sample data. */
 export interface RenderedPreview {
-  html: string;
-  text: string;
-}
-
-/** An email template version as the server renders it, with sample data (the builder's preview). */
-export interface RenderedTemplatePreview {
   subject: string;
   html: string;
   text: string;
@@ -131,14 +125,15 @@ export class DocEmailService {
    * Rejects when the server cannot render it; the caller decides what to tell the user.
    */
   public async renderPreview(req: RenderPreviewRequest): Promise<RenderedPreview> {
-    const callable = httpsCallable<RenderPreviewRequest, { subject: string; html: string; text: string }>(
+    const callable = httpsCallable<RenderPreviewRequest & { appId: string }, RenderedPreview>(
       this.functions, 'renderEmailPreview');
     const { data } = await callable({
+      appId: this.env.appId,
       body: req.body,
       layout: req.layout,
       ...(req.attachmentName ? { attachmentName: req.attachmentName } : {}),
     });
-    return { html: data.html, text: data.text };
+    return data;
   }
 
   /**
@@ -146,11 +141,11 @@ export class DocEmailService {
    * The renderer reads the version from Firestore, so it must be saved before this is called.
    * Rejects when the server cannot render it; the caller decides what to tell the user.
    */
-  public async renderTemplatePreview(templateKey: string, version: number): Promise<RenderedTemplatePreview> {
-    const callable = httpsCallable<{ templateKey: string; version: number }, RenderedTemplatePreview>(
+  public async renderTemplatePreview(templateKey: string, version: number): Promise<RenderedPreview> {
+    const callable = httpsCallable<{ appId: string; templateKey: string; version: number }, RenderedPreview>(
       this.functions, 'renderEmailPreview');
-    const { data } = await callable({ templateKey, version });
-    return { subject: data.subject, html: data.html, text: data.text };
+    const { data } = await callable({ appId: this.env.appId, templateKey, version });
+    return data;
   }
 
   /** The three content fields every send path hands to the server, which composes the final mail. */

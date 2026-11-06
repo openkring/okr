@@ -3,11 +3,13 @@
 // What a mail will look like, rendered by the same renderer that sends it (design 7.8). Two callers:
 // the composer, which has a body and a layout choice, and the template builder, which has a template
 // document and the version it is editing (a draft included).
+import { getFirestore } from 'firebase-admin/firestore';
 import { CallableRequest, HttpsError, onCall } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import type { EmailLayoutChoice } from '@okr/shared-models';
-import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId } from '@okr/shared-util-functions';
+import { checkAppCheckToken, checkAuthentication, checkRoles } from '@okr/shared-util-functions';
 
+import { callerMaySendFor } from '../auth';
 import { composeBody, EmailTemplateError, firestoreTemplateReader, RenderedEmail, renderEmail } from './render-email';
 import { asLayoutChoice, StoredTemplate } from './render-email.logic';
 
@@ -16,6 +18,8 @@ const CF_NAME = 'renderEmailPreview';
 
 /** A body of the composer, or a template of the builder; `body` wins when both are given. */
 export interface RenderPreviewRequest {
+  /** The app the mail would be sent for, as `sendEmail` gets it. */
+  appId: string;
   layout?: EmailLayoutChoice;
   body?: string;
   attachmentName?: string;
@@ -59,6 +63,18 @@ function previewError(error: unknown): HttpsError {
   return new HttpsError('failed-precondition', 'Die Vorschau konnte nicht aufgebaut werden.');
 }
 
+/** The tenant the send would use, so the preview shows that tenant's layout, under the same check as `sendEmail`. */
+async function previewTenant(request: CallableRequest<RenderPreviewRequest>): Promise<string> {
+  const appId = request.data?.appId;
+  if (typeof appId !== 'string' || !appId) throw new HttpsError('invalid-argument', 'appId is required.');
+  const caller = await getFirestore().collection('users').doc(request.auth?.uid ?? '').get();
+  if (!callerMaySendFor(caller.data(), appId)) {
+    logger.warn(`${CF_NAME}: refused, caller ${request.auth?.uid} is not a member of the requested app`);
+    throw new HttpsError('permission-denied', 'Du kannst für diese App keine Vorschau ansehen.');
+  }
+  return appId;
+}
+
 async function previewTemplate(request: CallableRequest<RenderPreviewRequest>, tenantId: string): Promise<RenderedEmail> {
   await checkRoles(request as never, CF_NAME, ['privileged', 'contentAdmin']);
   const { templateKey, version } = request.data;
@@ -87,13 +103,12 @@ export const renderEmailPreview = onCall(
   async (request: CallableRequest<RenderPreviewRequest>): Promise<RenderedEmail> => {
     checkAppCheckToken(request as never, CF_NAME);
     checkAuthentication(request as never, CF_NAME);
-    const tenantId = await getCallerTenantId(request as never, CF_NAME);
-    const data = request.data ?? {};
+    const tenantId = await previewTenant(request);
+    const data = request.data;
     try {
       if (data.body !== undefined) {
         if (typeof data.body !== 'string') throw new HttpsError('invalid-argument', 'body must be a string.');
-        const attachmentName = typeof data.attachmentName === 'string' && data.attachmentName.trim() ? data.attachmentName.trim() : undefined;
-        return await composeBody(tenantId, { body: data.body, layout: asLayoutChoice(data.layout), attachmentName });
+        return await composeBody(tenantId, { body: data.body, layout: asLayoutChoice(data.layout), attachmentName: data.attachmentName });
       }
       if (data.templateKey !== undefined) return await previewTemplate(request, tenantId);
     } catch (error) {
