@@ -3,7 +3,6 @@
   "plural": "Orte",
   "description": "Ein Ort, der mittels Koordinaten genau lokalisiert werden kann.",
   "empty": "Es sind noch keine Orte erfasst. Erstelle einen neuen Ort mit Klicken des + Buttons.",
-
   "list": {
     "header": {
       "name": "Name",
@@ -12,7 +11,6 @@
       "longitude": "Längengrad"
     }
   },
-
   "copy": {
     "label": "Ort kopieren",
     "conf": "Der Ort wurde kopiert.",
@@ -46,7 +44,6 @@
   "view": {
     "label": "Orts-Details anzeigen"
   },
-
   "okey": {
     "label": "okey",
     "placeholder": "ssssss",
@@ -71,7 +68,7 @@
     "label": "PlaceID",
     "placeholder": "ssssss",
     "helper": "Die Place ID von Google Places."
-  }, 
+  },
   "what3words": {
     "label": "What3Words",
     "placeholder": "ssss.ssss.ssss",
@@ -101,7 +98,6 @@
     "label": "Notizen",
     "placeholder": "Text"
   },
-
   "properties": {
     "title": "Weitere Angaben",
     "empty": "Keine weiteren Angaben erfasst.",
@@ -111,7 +107,6 @@
     "bfsNr": "BFS-Nummer",
     "bfsStatus": "Status der Gemeindedaten"
   },
-
   "location_type": {
     "label": "Ortstyp",
     "helper": "Typ einer Ortsangabe, normalerweise als Filter in Ortslisten verwendet.",
@@ -141,6 +136,22 @@
     "other": {
       "label": "Anderer Ort",
       "description": "Ort repräsentatiert eine andere Orts-Information."
+    },
+    "water": {
+      "label": "Gewässer",
+      "description": "Ort ist ein See, ein Fluss oder ein anderes Gewässer."
+    },
+    "mountain": {
+      "label": "Berg",
+      "description": "Ort ist ein Berg oder ein Gipfel."
+    },
+    "station": {
+      "label": "Bahnhof",
+      "description": "Ort ist ein Bahnhof oder eine Haltestelle."
+    },
+    "business": {
+      "label": "Geschäft",
+      "description": "Ort ist ein Geschäft oder ein Betrieb."
     }
   }
 }

@@ -212,7 +212,7 @@ function printManualAppVersion(patch, why) {
 /**
  * Writes `patch` (dotted field paths, see appVersionPatch) into app-version/app-version with
  * firebase-admin and application-default credentials (`gcloud auth application-default login`),
- * the way scripts/check-menu-labels.mjs does. Resolves true when written; resolves false — never
+ * the way scripts/check-live-labels.mjs does. Resolves true when written; resolves false — never
  * throws — after printing the manual instructions when there are no credentials or the write
  * fails. With `dryRun` it only prints the patch and resolves true.
  */

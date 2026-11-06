@@ -1201,6 +1201,45 @@
       "label": "Vídeo",
       "edit": "Modificar la configuración del vídeo",
       "description": "La sección muestra un vídeo de YouTube. Adecuado p. ej. para tutoriales, marketing, etc."
+    },
+    "advent": {
+      "label": "Calendario de Adviento",
+      "description": "25 ventanas sobre una imagen de fondo, cada día de diciembre se abre una."
+    },
+    "connections": {
+      "label": "Conexiones",
+      "description": "Conexiones en transporte público a un lugar, y a pie, en bici o en coche con la app de mapas"
+    },
+    "departures": {
+      "label": "Salidas",
+      "description": "Las próximas salidas en la parada cerca de un lugar, con avisos de incidencias"
+    },
+    "energy": {
+      "label": "Energía",
+      "description": "Las cifras de energía de un municipio: consumo, producción, solar, calefacción, coches eléctricos y tarifas, con comparación"
+    },
+    "rag": {
+      "label": "Retrieval Augmented Generation (RAG)"
+    },
+    "sankey": {
+      "label": "Sankey",
+      "description": "Flujos entre nodos; los nodos se derivan de los flujos."
+    },
+    "spider": {
+      "label": "Gráfico radial",
+      "description": "Ejes con un valor máximo y una o varias series representadas sobre ellos."
+    },
+    "testimonial": {
+      "label": "Testimonios",
+      "description": "Citas de miembros, clientas o socios: en cuadrícula o en carrusel."
+    },
+    "timeline": {
+      "label": "Línea de tiempo",
+      "description": "Todas las citas del calendario elegido como cronología."
+    },
+    "weather": {
+      "label": "Tiempo",
+      "description": "Widgets del tiempo: resumen del día, pronóstico, mapa o radar de lluvia"
     }
   },
   "message_center": {

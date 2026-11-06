@@ -1201,6 +1201,45 @@
       "label": "Video",
       "edit": "Change video configuration",
       "description": "Section shows a YouTube video. Suitable e.g. for instructions, marketing etc."
+    },
+    "advent": {
+      "label": "Advent calendar",
+      "description": "25 doors on a background image, one opens every day in December."
+    },
+    "connections": {
+      "label": "Connections",
+      "description": "Public transport connections to a place, plus walking, cycling or driving via the maps app"
+    },
+    "departures": {
+      "label": "Departures",
+      "description": "The next departures at the stop near a place, with disruption notices"
+    },
+    "energy": {
+      "label": "Energy",
+      "description": "Energy figures of a municipality: consumption, production, solar, heating, electric cars and tariffs, with a comparison"
+    },
+    "rag": {
+      "label": "Retrieval Augmented Generation (RAG)"
+    },
+    "sankey": {
+      "label": "Sankey",
+      "description": "Flows between nodes; the nodes follow from the flows."
+    },
+    "spider": {
+      "label": "Radar chart",
+      "description": "Axes with a maximum value, and one or more series plotted across them."
+    },
+    "testimonial": {
+      "label": "Testimonials",
+      "description": "Quotes from members, customers or partners — as a grid or a carousel."
+    },
+    "timeline": {
+      "label": "Timeline",
+      "description": "All events of the selected calendar as a chronology."
+    },
+    "weather": {
+      "label": "Weather",
+      "description": "Weather widgets: day summary, forecast, map or rain radar"
     }
   },
   "message_center": {

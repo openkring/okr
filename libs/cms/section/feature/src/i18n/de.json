@@ -1201,6 +1201,45 @@
       "label": "Video",
       "edit": "Video Konfiguration ändern",
       "description": "Sektion zeigt ein Youtube Video. Geeignet z.B. für Anleitungen, Marketing etc."
+    },
+    "advent": {
+      "label": "Adventskalender",
+      "description": "25 Türchen auf einem Hintergrundbild, jeden Tag im Dezember geht eines auf."
+    },
+    "connections": {
+      "label": "Verbindungen",
+      "description": "ÖV-Verbindungen zu einem Ort, mit Weg zu Fuss, mit dem Velo oder dem Auto über die Karten-App"
+    },
+    "departures": {
+      "label": "Abfahrten",
+      "description": "Die nächsten Abfahrten an der Haltestelle bei einem Ort, mit Störungsmeldungen"
+    },
+    "energy": {
+      "label": "Energie",
+      "description": "Energiekennzahlen einer Gemeinde: Verbrauch, Produktion, Solar, Heizung, Elektroautos und Tarife, mit Vergleich"
+    },
+    "rag": {
+      "label": "Retrieval Augmented Generation (RAG)"
+    },
+    "sankey": {
+      "label": "Sankey",
+      "description": "Flüsse zwischen Knoten; die Knoten ergeben sich aus den Flüssen."
+    },
+    "spider": {
+      "label": "Spinnennetz",
+      "description": "Achsen mit Maximalwert und eine oder mehrere Wertereihen darüber."
+    },
+    "testimonial": {
+      "label": "Stimmen",
+      "description": "Zitate von Mitgliedern, Kundinnen oder Partnern — als Raster oder Karussell."
+    },
+    "timeline": {
+      "label": "Zeitstrahl",
+      "description": "Alle Termine des gewählten Kalenders als Chronologie."
+    },
+    "weather": {
+      "label": "Wetter",
+      "description": "Wetter-Widgets: Tagesübersicht, Prognose, Karte oder Regenradar"
     }
   },
   "message_center": {

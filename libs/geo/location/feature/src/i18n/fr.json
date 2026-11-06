@@ -3,7 +3,6 @@
   "plural": "Lieux",
   "description": "Un lieu qui peut être localisé précisément au moyen de coordonnées.",
   "empty": "Aucun lieu n'a encore été enregistré. Créez un nouveau lieu en cliquant sur le bouton +.",
-
   "list": {
     "header": {
       "name": "Nom",
@@ -12,7 +11,6 @@
       "longitude": "Longitude"
     }
   },
-
   "copy": {
     "label": "Copier le lieu",
     "conf": "Le lieu a été copié.",
@@ -46,7 +44,6 @@
   "view": {
     "label": "Afficher les détails du lieu"
   },
-
   "okey": {
     "label": "okey",
     "placeholder": "ssssss",
@@ -101,7 +98,6 @@
     "label": "Notes",
     "placeholder": "Texte"
   },
-
   "properties": {
     "title": "Informations complémentaires",
     "empty": "Aucune information complémentaire enregistrée.",
@@ -111,7 +107,6 @@
     "bfsNr": "Numéro OFS",
     "bfsStatus": "Statut des données communales"
   },
-
   "location_type": {
     "label": "Type de lieu",
     "helper": "Type d'une indication de lieu, normalement utilisé comme filtre dans les listes de lieux.",
@@ -141,6 +136,22 @@
     "other": {
       "label": "Autre lieu",
       "description": "Le lieu représente une autre information de localisation."
+    },
+    "water": {
+      "label": "Plan d'eau",
+      "description": "Le lieu est un lac, une rivière ou un autre plan d'eau."
+    },
+    "mountain": {
+      "label": "Montagne",
+      "description": "Le lieu est une montagne ou un sommet."
+    },
+    "station": {
+      "label": "Gare",
+      "description": "Le lieu est une gare ou un arrêt."
+    },
+    "business": {
+      "label": "Commerce",
+      "description": "Le lieu est un commerce ou une entreprise."
     }
   }
 }

@@ -3,7 +3,6 @@
   "plural": "Locations",
   "description": "A location that can be precisely located by means of coordinates.",
   "empty": "No locations have been recorded yet. Create a new location by clicking the + button.",
-
   "list": {
     "header": {
       "name": "Name",
@@ -12,7 +11,6 @@
       "longitude": "Longitude"
     }
   },
-
   "copy": {
     "label": "Copy location",
     "conf": "The location was copied.",
@@ -46,7 +44,6 @@
   "view": {
     "label": "Show location details"
   },
-
   "okey": {
     "label": "okey",
     "placeholder": "ssssss",
@@ -101,7 +98,6 @@
     "label": "Notes",
     "placeholder": "Text"
   },
-
   "properties": {
     "title": "Additional details",
     "empty": "No additional details recorded.",
@@ -111,7 +107,6 @@
     "bfsNr": "BFS number",
     "bfsStatus": "Municipal data status"
   },
-
   "location_type": {
     "label": "Location type",
     "helper": "Type of a location indication, normally used as a filter in location lists.",
@@ -141,6 +136,22 @@
     "other": {
       "label": "Other location",
       "description": "Location represents other location information."
+    },
+    "water": {
+      "label": "Body of water",
+      "description": "The location is a lake, a river or another body of water."
+    },
+    "mountain": {
+      "label": "Mountain",
+      "description": "The location is a mountain or a summit."
+    },
+    "station": {
+      "label": "Station",
+      "description": "The location is a station or a stop."
+    },
+    "business": {
+      "label": "Business",
+      "description": "The location is a shop or a business."
     }
   }
 }

@@ -21,12 +21,14 @@
  *                   Prefer scoped messages ('@<scope>.validation.msg') for lib-specific text.
  *
  * Keys built from runtime data (`${var}` keys, labels typed into live menuItems docs) are out of
- * reach here — scripts/check-menu-labels.mjs covers the live menu docs.
+ * reach here — scripts/check-live-labels.mjs covers the live menuItems and categories docs.
  *
  * Usage: node scripts/check-i18n.mjs   (exit 1 on any finding — CI friendly)
  */
 import { existsSync, readFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
+
+import { lookup } from './lib/i18n-labels.mjs';
 
 const LANGS = ['de', 'en', 'fr', 'es', 'it'];
 
@@ -43,21 +45,6 @@ const leafKeys = (obj, prefix = '', out = new Set()) => {
     else out.add(key);
   }
   return out;
-};
-
-/** Resolves a dotted path; like Transloco's flattening, a JSON key may itself contain dots. */
-const lookup = (obj, dotKey) => {
-  if (obj == null || typeof obj !== 'object') return undefined;
-  if (dotKey in obj) return obj[dotKey];
-  const parts = dotKey.split('.');
-  for (let i = 1; i < parts.length; i++) {
-    const head = parts.slice(0, i).join('.');
-    if (head in obj) {
-      const hit = lookup(obj[head], parts.slice(i).join('.'));
-      if (hit !== undefined) return hit;
-    }
-  }
-  return undefined;
 };
 
 /**

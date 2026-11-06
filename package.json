@@ -25,7 +25,7 @@
     "check-i18n": "node scripts/check-i18n.mjs",
     "check-i18n-assets": "node scripts/sync-i18n-assets.mjs --check",
     "sync-i18n-assets": "node scripts/sync-i18n-assets.mjs",
-    "check-menu-labels": "node scripts/check-menu-labels.mjs",
+    "check-live-labels": "node scripts/check-live-labels.mjs",
     "check-skill-contents": "node scripts/check-skill-contents.mjs",
     "lib-refs": "node scripts/gen-lib-references.mjs",
     "lib-refs:write": "node scripts/gen-lib-references.mjs --write",

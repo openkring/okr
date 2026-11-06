@@ -3,7 +3,6 @@
   "plural": "Lugares",
   "description": "Un lugar que se puede localizar con precisión mediante coordenadas.",
   "empty": "Aún no se ha registrado ningún lugar. Cree un nuevo lugar haciendo clic en el botón +.",
-
   "list": {
     "header": {
       "name": "Nombre",
@@ -12,7 +11,6 @@
       "longitude": "Longitud"
     }
   },
-
   "copy": {
     "label": "Copiar lugar",
     "conf": "El lugar se ha copiado.",
@@ -46,7 +44,6 @@
   "view": {
     "label": "Mostrar detalles del lugar"
   },
-
   "okey": {
     "label": "okey",
     "placeholder": "ssssss",
@@ -101,7 +98,6 @@
     "label": "Notas",
     "placeholder": "Texto"
   },
-
   "properties": {
     "title": "Datos adicionales",
     "empty": "No hay datos adicionales registrados.",
@@ -111,7 +107,6 @@
     "bfsNr": "Número OFS",
     "bfsStatus": "Estado de los datos municipales"
   },
-
   "location_type": {
     "label": "Tipo de lugar",
     "helper": "Tipo de una indicación de lugar, normalmente utilizado como filtro en listas de lugares.",
@@ -141,6 +136,22 @@
     "other": {
       "label": "Otro lugar",
       "description": "El lugar representa otra información de ubicación."
+    },
+    "water": {
+      "label": "Masa de agua",
+      "description": "El lugar es un lago, un río u otra masa de agua."
+    },
+    "mountain": {
+      "label": "Montaña",
+      "description": "El lugar es una montaña o una cumbre."
+    },
+    "station": {
+      "label": "Estación",
+      "description": "El lugar es una estación o una parada."
+    },
+    "business": {
+      "label": "Comercio",
+      "description": "El lugar es un comercio o una empresa."
     }
   }
 }

@@ -174,19 +174,20 @@ export async function runGates({ nonInteractive = false, acceptDrift = false, ac
   try { run('node', ['scripts/sync-i18n-assets.mjs', '--check']); }
   catch { abort('check-i18n-assets failed — release aborted (no version bump made). Run `pnpm sync-i18n-assets` and commit the app project.json files.'); }
 
-  // 1a''. live menu labels: a menuItems doc created in the CMS or by the feature picker can name a
-  //       label no source file knows. Data, not code — so ask, and never block on missing creds.
-  console.log('\n[1/6] Checking live menu labels (pnpm check-menu-labels)…');
+  // 1a''. live labels: a menuItems or categories doc can name a key no source file knows, or a
+  //       scope since moved in code (SCS-EA, BKA-3). Data, not code — so ask, and never block on
+  //       missing creds.
+  console.log('\n[1/6] Checking live labels (pnpm check-live-labels)…');
   try {
-    run('node', ['scripts/check-menu-labels.mjs']);
+    run('node', ['scripts/check-live-labels.mjs']);
   } catch (err) {
     if (err.status === 1) {
       await accept(
-        'Live menu rows use labels this release does not ship (see above). Continue anyway?',
+        'Live documents use labels this release does not ship (see above). Continue anyway?',
         acceptMenuLabels,
-        'Aborted: add the missing labels to libs/cms/menu/feature/src/i18n/*.json first.');
+        'Aborted: add the missing labels to their lib, or fix the documents, first.');
     } else {
-      console.log('  (menu label check could not run — skipped; needs `gcloud auth application-default login`)');
+      console.log('  (live label check could not run — skipped; needs `gcloud auth application-default login`)');
     }
   }
 
