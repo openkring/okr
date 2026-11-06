@@ -131,6 +131,8 @@ export function computeWebhookToken(esignId: string, secret: string): string {
 }
 
 export function verifyWebhookToken(esignId: string, token: string, secret: string): boolean {
+  // An unset secret reads as '' and an HMAC with an empty key is computable by anyone: fail closed.
+  if (secret === '') return false;
   const expected = computeWebhookToken(esignId, secret);
   try {
     const a = Buffer.from(expected, 'hex');

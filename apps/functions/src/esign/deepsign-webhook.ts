@@ -135,7 +135,7 @@ export const deepSignHandler: WebhookHandler = makeDeepSignHandler(runInTransact
 const verifyEsignToken = (req: WebhookRequest, secret: string): boolean => {
   const esignId = req.query['esignId'];
   const token = req.query['token'];
-  if (!esignId || !token) return false;
+  if (!esignId || !token || secret === '') return false;
   return verifyWebhookToken(esignId, token, secret);
 };
 
@@ -172,4 +172,21 @@ export function refusedByCutoff(createdAt: Timestamp | undefined, cutoffIso: str
   if (cutoffIso === '') return false;
   if (!createdAt) return true;
   return createdAt.toMillis() >= new Date(cutoffIso).getTime();
+}
+
+export interface LegacyGateDeps {
+  verify(req: WebhookRequest): boolean;
+  readCreatedAt(esignId: string): Promise<{ exists: boolean; createdAt?: Timestamp }>;
+}
+
+/**
+ * The gate in front of the legacy URL. 'refuse' = the record is newer than the cutoff, so it
+ * must not depend on the legacy key. Reads only for a valid token (a forged call costs no read);
+ * an invalid token passes through so the receiver answers 401. A failing read rejects.
+ */
+export async function legacyGate(req: WebhookRequest, cutoffIso: string, deps: LegacyGateDeps): Promise<'pass' | 'refuse'> {
+  if (cutoffIso === '') return 'pass';
+  if (!deps.verify(req)) return 'pass';
+  const { exists, createdAt } = await deps.readCreatedAt(req.query['esignId']);
+  return exists && refusedByCutoff(createdAt, cutoffIso) ? 'refuse' : 'pass';
 }

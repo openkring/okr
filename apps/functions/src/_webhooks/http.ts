@@ -45,7 +45,7 @@ export function handleWebhook(resolve: (req: Request) => WebhookClient | undefin
       const result = await ingest(client, toWebhookRequest(req), realDeps);
       res.status(result.status).send(result.body);
     } catch {
-      // e.g. the client's secret is unset. Say nothing about why.
+      // e.g. Firestore is unavailable. (An unset secret reads as '' and is rejected as 401.) Say nothing about why.
       logger.error('webhooks: receiver failed', { clientId: client?.id });
       res.status(500).send('Internal Server Error');
     }

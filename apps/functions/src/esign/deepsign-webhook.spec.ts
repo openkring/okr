@@ -2,8 +2,8 @@ import { Timestamp } from 'firebase-admin/firestore';
 import { describe, expect, it, vi } from 'vitest';
 import type { StoredWebhookEvent, WebhookRequest } from '../_webhooks/types';
 import { findClient } from '../_webhooks/clients';
-import { computeWebhookToken } from './shared';
-import { deepSignClient, deepSignLegacyClient, refusedByCutoff, deepSignDedupeKey, deepSignUpdate, makeDeepSignHandler, splitDeepSignEvent, type DeepSignPayload } from './deepsign-webhook';
+import { computeWebhookToken, verifyWebhookToken } from './shared';
+import { deepSignClient, deepSignLegacyClient, refusedByCutoff, legacyGate, deepSignDedupeKey, deepSignUpdate, makeDeepSignHandler, splitDeepSignEvent, type DeepSignPayload } from './deepsign-webhook';
 
 const now = Timestamp.fromDate(new Date('2026-01-01T00:00:00Z'));
 const pending = (id: string) => ({ signeeId: id, signStatus: 'pending' });
@@ -190,5 +190,55 @@ describe('refusedByCutoff', () => {
   });
   it('refuses a record with no createdAt once a cutoff is set', () => {
     expect(refusedByCutoff(undefined, cutoff)).toBe(true);
+  });
+});
+
+describe('empty secret', () => {
+  it('rejects a token computed with an empty key', () => {
+    const forged = computeWebhookToken('e1', '');
+    expect(verifyWebhookToken('e1', forged, '')).toBe(false);
+    const c = deepSignClient;
+    if (c.auth.kind !== 'record-token') throw new Error('not record-token');
+    const r: WebhookRequest = { method: 'POST', rawBody: Buffer.from('{}'), query: { esignId: 'e1', token: forged }, header: () => undefined };
+    expect(c.auth.verify(r, '')).toBe(false);
+  });
+});
+
+describe('legacyGate', () => {
+  const cutoff = '2026-06-01T00:00:00Z';
+  const req: WebhookRequest = { method: 'POST', rawBody: undefined, query: { esignId: 'e1', token: 't' }, header: () => undefined };
+  const at = (iso: string) => Timestamp.fromDate(new Date(iso));
+  const mk = (valid: boolean, read: () => Promise<{ exists: boolean; createdAt?: Timestamp }>) => ({
+    verify: vi.fn(() => valid),
+    readCreatedAt: vi.fn(read),
+  });
+
+  it('passes with an empty cutoff, without verify or read', async () => {
+    const d = mk(true, async () => ({ exists: true }));
+    expect(await legacyGate(req, '', d)).toBe('pass');
+    expect(d.verify).not.toHaveBeenCalled();
+    expect(d.readCreatedAt).not.toHaveBeenCalled();
+  });
+  it('passes an invalid token through without any read', async () => {
+    const d = mk(false, async () => ({ exists: true }));
+    expect(await legacyGate(req, cutoff, d)).toBe('pass');
+    expect(d.readCreatedAt).not.toHaveBeenCalled();
+  });
+  it('refuses a record after the cutoff', async () => {
+    const d = mk(true, async () => ({ exists: true, createdAt: at('2026-07-01T00:00:00Z') }));
+    expect(await legacyGate(req, cutoff, d)).toBe('refuse');
+    expect(d.readCreatedAt).toHaveBeenCalledWith('e1');
+  });
+  it('passes a record before the cutoff', async () => {
+    const d = mk(true, async () => ({ exists: true, createdAt: at('2026-05-01T00:00:00Z') }));
+    expect(await legacyGate(req, cutoff, d)).toBe('pass');
+  });
+  it('rejects when the read throws', async () => {
+    const d = mk(true, async () => { throw new Error('boom'); });
+    await expect(legacyGate(req, cutoff, d)).rejects.toThrow('boom');
+  });
+  it('passes a missing record', async () => {
+    const d = mk(true, async () => ({ exists: false }));
+    expect(await legacyGate(req, cutoff, d)).toBe('pass');
   });
 });
