@@ -307,7 +307,8 @@
   "bar": {
     "segment_sub": "Ein Segment-Menü kann keine Untermenüs zeigen",
     "account_menu": "Konto und Einstellungen",
-    "cookie_settings": "Cookie-Einstellungen"
+    "cookie_settings": "Cookie-Einstellungen",
+    "more": "Mehr"
   },
   "item": {
     "task-my": "Meine Aufgaben",

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { MenuItemModel } from '@okr/shared-models';
 
-import { barAccountKeys, countBarItems, isBarActive, isBarMenuType, visibleBarRows } from './menu-bar.util';
+import { barAccountKeys, countBarItems, exceedsBarLimit, isBarActive, isBarMenuType, splitBarRows, visibleBarRows } from './menu-bar.util';
 
 describe('isBarMenuType', () => {
   it('is true for top and segmented, false for the vertical types and for absent', () => {
@@ -88,5 +88,50 @@ describe('visibleBarRows', () => {
   it('is empty for an absent root list or an empty list of rows', () => {
     expect(visibleBarRows([], items, all)).toEqual([]);
     expect(visibleBarRows(['a'], [], all)).toEqual([]);
+  });
+});
+
+describe('splitBarRows', () => {
+  const rows = (n: number) => Array.from({ length: n }, (_, i) => `row${i + 1}`);
+
+  it('shows 6 rows unchanged and has no overflow', () => {
+    expect(splitBarRows(rows(6))).toEqual({ shown: rows(6), more: [] });
+  });
+
+  it('shows 5 and moves the other 2 under «Mehr» when there are 7', () => {
+    expect(splitBarRows(rows(7))).toEqual({ shown: rows(5), more: ['row6', 'row7'] });
+  });
+
+  it('is empty for no rows', () => {
+    expect(splitBarRows([])).toEqual({ shown: [], more: [] });
+  });
+});
+
+describe('exceedsBarLimit', () => {
+  const six = ['a', 'b', 'c', 'd', 'e', 'f'];
+  const five = ['a', 'b', 'c', 'd', 'e'];
+
+  it('never warns for a sidebar menu', () => {
+    expect(exceedsBarLimit('left', six, 5)).toBe(false);
+    expect(exceedsBarLimit('right', six, 5)).toBe(false);
+    expect(exceedsBarLimit(undefined, six, 5)).toBe(false);
+  });
+
+  it('warns when a top menu with 6 rows gets 1 more', () => {
+    expect(exceedsBarLimit('top', six, 1)).toBe(true);
+  });
+
+  it('does not warn when a top menu with 5 rows gets 1 more', () => {
+    expect(exceedsBarLimit('top', five, 1)).toBe(false);
+  });
+
+  it('does not count the reserved account rows of a segmented menu', () => {
+    expect(exceedsBarLimit('segmented', [...five, 'login', 'logout', 'profile'], 1)).toBe(false);
+    expect(exceedsBarLimit('segmented', [...six, 'login'], 1)).toBe(true);
+  });
+
+  it('treats an absent root document as empty', () => {
+    expect(exceedsBarLimit('top', undefined, 6)).toBe(false);
+    expect(exceedsBarLimit('top', undefined, 7)).toBe(true);
   });
 });

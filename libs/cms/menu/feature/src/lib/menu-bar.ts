@@ -7,11 +7,12 @@ import { AvatarUser, ConnectionStatusButton } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { contextMenuId, hasRole } from '@okr/shared-util-core';
 
-import { visibleBarRows } from '@okr/cms-menu-util';
+import { splitBarRows, visibleBarRows } from '@okr/cms-menu-util';
 
 import { MenuBarAccount } from './menu-bar-account';
 import { MenuBarItem } from './menu-bar-item';
 import { MenuBarLabel } from './menu-bar-label';
+import { MenuBarMore } from './menu-bar-more';
 import { MenuItemsStore } from './menu-items.store';
 import { MenuLayout } from './menu-layout.service';
 import { MenuStore } from './menu.store';
@@ -27,6 +28,10 @@ import { MenuStore } from './menu.store';
  * a dropdown (`okr-menu-dropdown`, see `Menu.select`) and has no `dismissOnSelect`, which Ionic
  * puts on the whole wrapper: it would close on every click inside, an accordion header included.
  *
+ * With more than `MAX_MENU_BAR_ITEMS` visible rows the bar shows five and a «Mehr» button after them, in
+ * both layouts. It is a plain button, not a segment button, and opens a dropdown of the same kind as
+ * the account one, with one `okr-menu` per remaining row (`MenuBarMore`).
+ *
  * The segment follows the accounting segments (`okr-accounting-segments`), including both of its
  * lessons. Each button navigates on its own click, not on `ionChange`: a cached page's segment can
  * already hold the tapped value, and the tap would then do nothing. And the segment is re-created
@@ -39,7 +44,7 @@ import { MenuStore } from './menu.store';
 @Component({
   selector: 'okr-menu-bar',
   imports: [
-    MenuBarAccount, MenuBarItem, MenuBarLabel, SvgIconPipe, AvatarUser, ConnectionStatusButton,
+    MenuBarAccount, MenuBarItem, MenuBarLabel, MenuBarMore, SvgIconPipe, AvatarUser, ConnectionStatusButton,
     IonHeader, IonToolbar, IonButtons, IonButton, IonIcon, IonPopover, IonContent, IonList, IonSegment, IonSegmentButton, IonLabel, IonItem,
   ],
   providers: [MenuStore],
@@ -56,12 +61,23 @@ import { MenuStore } from './menu.store';
     .bar { display: flex; align-items: center; min-width: 0; }
     ion-segment { flex: 1 1 auto; min-width: 0; }
     ion-item.warn { flex: 0 1 auto; font-size: 13px; }
+    /* «Mehr» sits in the toolbar but not in its ion-buttons, so it takes the colour itself, like MenuBarItem */
+    ion-button.more {
+      --color: var(--ion-color-secondary-contrast);
+      --background-hover: var(--ion-color-secondary-contrast);
+      --background-hover-opacity: 0.16;
+      flex: 0 0 auto;
+      height: auto;
+      min-height: 40px;
+      text-transform: none;
+    }
+    ion-button.more.current::part(native) { box-shadow: inset 0 -2px 0 var(--ion-color-secondary-contrast); }
   `],
   template: `
     <ion-header>
       <ion-toolbar color="secondary">
-        @if (layout.menuType() === 'segmented') {
-          <div class="bar">
+        <div class="bar">
+          @if (layout.menuType() === 'segmented') {
             @if (segmentRows().length > 0) {
               @for (activeKey of [activeKey()]; track activeKey) {
                 <ion-segment [scrollable]="true" [value]="activeKey">
@@ -78,15 +94,29 @@ import { MenuStore } from './menu.store';
                 <ion-label>{{ store.i18n.bar_segment_sub() }}: {{ subNames() }}</ion-label>
               </ion-item>
             }
-          </div>
-        }
-        @if (layout.menuType() === 'top') {
-          <div class="bar">
-            @for (row of rows(); track row.name) {
+          }
+          @if (layout.menuType() === 'top') {
+            @for (row of shownRows(); track row.name) {
               <okr-menu-bar-item [name]="row.name" />
             }
-          </div>
-        }
+          }
+          @if (moreRows().length > 0) {
+            <ion-button id="{{ moreId }}" class="more" fill="clear" [class.current]="moreOnPath()" aria-haspopup="true">
+              {{ store.i18n.bar_more() }}
+              <ion-icon slot="end" src="{{ 'chevron-down' | svgIcon }}" />
+            </ion-button>
+            <ion-popover class="okr-menu-dropdown" trigger="{{ moreId }}" triggerAction="click" side="bottom" alignment="start"
+              [dismissOnSelect]="false" [style.--offset-y.px]="layout.submenuOffset()" [style.--okr-submenu-offset.px]="layout.submenuOffset()">
+              <ng-template>
+                <ion-content>
+                  <ion-list>
+                    <okr-bar-more [rows]="moreRows()" [rootName]="rootName()" />
+                  </ion-list>
+                </ion-content>
+              </ng-template>
+            </ion-popover>
+          }
+        </div>
         <ion-buttons slot="end">
           <okr-connection-status-button />
           <ng-content select="[okrMenuBarEnd]" />
@@ -124,6 +154,10 @@ export class MenuBar {
   public readonly cookieSettingsClicked = output<void>();
 
   protected readonly popupId = contextMenuId('c_menubar');
+  protected readonly moreId = contextMenuId('c_menubar_more');
+
+  /** `name` of the root menu document, whose children the bar renders. */
+  protected readonly rootName = computed(() => `main_${this.store.tenantId()}`);
 
   private readonly currentUser = computed(() => this.store.currentUser());
   protected readonly isAdmin = computed(() => hasRole('admin', this.currentUser()));
@@ -141,10 +175,23 @@ export class MenuBar {
     );
   });
 
+  /**
+   * Above `MAX_MENU_BAR_ITEMS` visible rows the bar shows five and the rest sit under «Mehr» (spec §6.5).
+   * The form refuses such a menu, but the picker appends rows without validation.
+   */
+  private readonly split = computed(() => splitBarRows(this.rows()));
+  protected readonly shownRows = computed(() => this.split().shown);
+  protected readonly moreRows = computed(() => this.split().more);
+  /** The current page lies under «Mehr», in a row or below one. */
+  protected readonly moreOnPath = computed(() => {
+    const active = this.menuItemsStore.activeMenu();
+    return !!active && this.moreRows().some(row => row.name === active.key || active.ancestors.includes(row.name));
+  });
+
   /** `call`, `toggle` and `workflow` rows have no hosting feature at root level, so only these two show. */
-  protected readonly segmentRows = computed(() => this.rows().filter(row => row.action === 'navigate' || row.action === 'browse'));
+  protected readonly segmentRows = computed(() => this.shownRows().filter(row => row.action === 'navigate' || row.action === 'browse'));
   /** A segment cannot hold a submenu (spec §8.2); the form refuses one, but the picker can still add it. */
-  protected readonly subRows = computed(() => this.rows().filter(row => row.action === 'sub'));
+  protected readonly subRows = computed(() => this.shownRows().filter(row => row.action === 'sub'));
   protected readonly subNames = computed(() => this.subRows().map(row => row.name).join(', '));
 
   /** The active row's key as a plain string, so the segment is re-created on a new row only. */
@@ -154,7 +201,7 @@ export class MenuBar {
     // Idempotent. Without it, an app whose burger is never opened (the bar replaces it) would never
     // learn the real document value, and a stale per-device hint would stick.
     this.layout.start();
-    effect(() => this.store.setMenuName(`main_${this.store.tenantId()}`));
+    effect(() => this.store.setMenuName(this.rootName()));
   }
 
   protected select(row: MenuItemModel): void {

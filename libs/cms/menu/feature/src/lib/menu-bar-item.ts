@@ -70,7 +70,7 @@ import { MenuStore } from './menu.store';
         }
         @case ('sub') {
           @if (menuItemsStore.canOpen(name())) {
-            <ion-button id="{{ popupId }}" fill="clear" [class.current]="onPath()" aria-haspopup="menu">
+            <ion-button id="{{ popupId }}" fill="clear" [class.current]="onPath()" aria-haspopup="true">
               <span class="label">{{ menuStore.translatedMenuLabel() }}</span>
               <ion-icon slot="end" src="{{ 'chevron-down' | svgIcon }}" />
             </ion-button>
@@ -80,6 +80,7 @@ import { MenuStore } from './menu.store';
                 <ion-content>
                   <ion-list>
                     @for (childName of item.menuItems; track childName) {
+                      <!-- depth 2: the root is 0, this row 1, so its children start at 2 -->
                       <okr-menu [menuName]="childName" [inMainTree]="true" [inputDepth]="2" [inputVisitedKeys]="visitedKeys()" />
                     }
                   </ion-list>
@@ -107,8 +108,11 @@ export class MenuBarItem {
   protected readonly isActive = computed(() => this.menuItemsStore.activeMenu()?.key === this.name());
   /** Dropdown only: the current page lies below this row. */
   protected readonly onPath = computed(() => !!this.menuItemsStore.activeMenu()?.ancestors.includes(this.name()));
-  /** The path for the children's cycle guard: the root `main_<tenantId>` is one level up, this row is the next. */
-  protected readonly visitedKeys = computed(() => nextVisitedKeys(new Set<string>(), this.name()));
+  /**
+   * The path for the children's cycle guard: the root `main_<tenantId>` and this row, as `Menu` would
+   * have built it, so a child pointing back at the root is caught as early as there.
+   */
+  protected readonly visitedKeys = computed(() => nextVisitedKeys(new Set([`main_${this.menuStore.tenantId()}`]), this.name()));
 
   constructor() {
     effect(() => this.menuStore.setMenuName(this.name()));

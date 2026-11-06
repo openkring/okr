@@ -263,6 +263,7 @@
     "rows_add_toast": "Menu row added",
     "rows_adjust_catalogue_toast": "Note copied — pass it on to the development team so the catalogue gets adjusted",
     "rows_nothing_planned": "There is nothing to apply — the value is already up to date or pinned",
+    "bar_overflow_warning": "Your menu will then show more than 6 entries, the rest appears under «More».",
     "compare_title": "Field comparison",
     "compare_col_field": "Field",
     "compare_col_database": "Database",

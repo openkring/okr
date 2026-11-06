@@ -66,6 +66,8 @@ export const MENU_I18N_KEYS = {
   // account area at the end of the bar
   bar_account_menu:               PFX + 'bar.account_menu',
   bar_cookie_settings:            PFX + 'bar.cookie_settings',
+  // the entry holding the rows that do not fit the bar
+  bar_more:                       PFX + 'bar.more',
 
   error_save:                     PFX + 'error.save',
   error_load:                     PFX + 'error.load',

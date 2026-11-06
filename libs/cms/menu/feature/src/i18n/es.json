@@ -307,7 +307,8 @@
   "bar": {
     "segment_sub": "Un menú por segmentos no puede mostrar submenús",
     "account_menu": "Cuenta y ajustes",
-    "cookie_settings": "Ajustes de cookies"
+    "cookie_settings": "Ajustes de cookies",
+    "more": "Más"
   },
   "item": {
     "task-my": "Mis tareas",
