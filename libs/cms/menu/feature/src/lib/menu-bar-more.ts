@@ -17,8 +17,9 @@ import { MenuItemsStore } from './menu-items.store';
  * component, so `MenuBar` never renders an `okr-menu` itself. The selector is `okr-bar-more` and not
  * `okr-menu-bar-more` because the rule's regex `<okr-menu\b` would match the latter.
  *
- * Every row is a level-1 menu under the root, so it starts at depth 1 with the root on its visited
- * path, the same start `MenuBarItem` gives its children. `sub` rows then open as the accordion.
+ * Every row is a level-1 menu under the root, so it starts at depth 1 with only the root on its visited
+ * path. `MenuBarItem` starts one level deeper (depth 2, root and row on the path), because it renders the
+ * children of a row it has already drawn itself. `sub` rows then open as the accordion.
  */
 @Component({
   selector: 'okr-bar-more',
