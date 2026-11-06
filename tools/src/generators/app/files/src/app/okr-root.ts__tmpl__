@@ -12,7 +12,7 @@ import { BootError, Spinner, ConnectionStatusButton, AvatarUser } from '@okr/sha
 import { coerceBoolean, getImgixUrlWithAutoParams, hasRole } from '@okr/shared-util-core';
 
 import { AuthInfo } from '@okr/auth-ui';
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MenuLayout } from '@okr/cms-menu-feature';
 import { ProfileEditModal } from '@okr/profile-feature';
 import { CookieBanner } from '@okr/consent-ui';
 import { ConsentService } from '@okr/consent-data-access';
@@ -117,7 +117,7 @@ import { ConsentService } from '@okr/consent-data-access';
       <okr-cookie-banner />
       <ion-split-pane contentId="main" [disabled]="!showMenu()" (ionSplitPaneVisible)="onSplitPaneVisible($event)">
         @if(showMenu()) {
-        <ion-menu side="start" menuId="main" contentId="main" type="overlay" (ionWillOpen)="menuOpened.set(true)">
+        <ion-menu [side]="menuLayout.side()" menuId="main" contentId="main" type="overlay" (ionWillOpen)="menuOpened.set(true)">
           <ion-header>
             <ion-toolbar color="secondary">
               <ion-buttons slot="start">
@@ -251,6 +251,11 @@ export class OkrRoot {
   /** Set once the overlay menu opens for the first time; the tree stays mounted afterwards. */
   protected readonly menuOpened = signal(false);
   protected readonly menuMounted = computed(() => this.splitPaneVisible() || this.menuOpened());
+
+  /** Where the menu sits (left or right) and, later, whether a bar replaces it; see the menu-layouts spec. */
+  protected readonly menuLayout = inject(MenuLayout);
+  /** Connects the layout to the menu list once the tree is mounted, so it never joins the boot path. */
+  private readonly startMenuLayout = effect(() => { if (this.menuMounted()) this.menuLayout.start(); });
 
   protected onSplitPaneVisible(event: Event): void {
     this.splitPaneVisible.set((event as CustomEvent<{ visible: boolean }>).detail.visible);

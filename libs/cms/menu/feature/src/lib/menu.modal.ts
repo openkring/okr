@@ -89,7 +89,12 @@ export class MenuModal {
   protected showForm = signal(true);
 
   // derived signals
-  protected readonly menuTypes = computed(() => this.store.getMenuTypes());
+  /**
+   * Only a main menu has a layout. Reading the category for any other row would send a Sentry warning
+   * on every edit for as long as `menu_type` is not seeded.
+   */
+  protected readonly menuTypes = computed(() =>
+    this.formData()?.action === 'main' ? this.store.getMenuTypes() : new CategoryListModel(this.tenantId));
   /**
    * `name` -> `action` of every menu document the tenant has. Whether a segmented menu holds a
    * submenu cannot be seen from the root's own `menuItems` (those are only names), and the form

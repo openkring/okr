@@ -3,3 +3,4 @@ export * from './lib/menu';
 export * from './lib/menu.modal';
 export * from './lib/menu-items.store';
 export * from './lib/menu.store';
+export * from './lib/menu-layout.service';

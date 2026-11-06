@@ -109,7 +109,7 @@ import type { OkrEditor } from '@okr/shared-ui-editor';
                 </ion-col>
 
                 <ion-col size="12" size-md="6">
-                  <okr-number-input [i18n]="submenuOffsetI18n()" [value]="submenuOffset()" (valueChange)="onFieldChange('submenuOffset', $event)" [integer]="true" [min]="0" [max]="submenuOffsetMax" [showHelper]="true" [readOnly]="isReadOnly()" />
+                  <okr-number-input [i18n]="submenuOffsetI18n()" [value]="submenuOffset()" (valueChange)="onFieldChange('submenuOffset', $event)" [integer]="true" [min]="0" [max]="submenuOffsetMax" [clearInput]="false" [showHelper]="true" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="submenuOffsetErrors()" />
                 </ion-col>
               </ion-row>

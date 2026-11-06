@@ -12,6 +12,7 @@ import { MenuInfo, MultiAvatar } from '@okr/cms-menu-ui';
 import { isMenuBlocked, nextVisitedKeys } from '@okr/cms-menu-util';
 
 import { MenuItemsStore } from './menu-items.store';
+import { MenuLayout } from './menu-layout.service';
 import { MenuStore } from './menu.store';
 
 @Component({
@@ -36,6 +37,8 @@ import { MenuStore } from './menu.store';
     ion-item-divider.separator { min-height: 2px; --padding-start: 0; --inner-padding-end: 0;
       --background: var(--ion-color-step-150, #d7d8da); }
     ion-progress-bar.update { height: 2px; }
+    /* the rows of a sub-menu are indented by the root's submenuOffset; nested levels add up */
+    .children { padding-inline-start: var(--okr-submenu-offset, 5px); }
     `],
   providers: [MenuStore],
   template: `
@@ -77,7 +80,7 @@ import { MenuStore } from './menu.store';
                       <okr-menu-info slot="end" class="on-primary" [text]="info" [title]="menuStore.translatedMenuLabel()" />
                     }
                   </ion-item>
-                  <div slot="content">
+                  <div slot="content" class="children">
                     @if (expanded()) {
                       @for(menuItemName of menuItem.menuItems; track menuItemName) {
                         @if(isBlocked(menuItemName)) {
@@ -104,7 +107,7 @@ import { MenuStore } from './menu.store';
               }
             }
             @case('main') {
-              <ion-list>
+              <ion-list [style.--okr-submenu-offset.px]="layout.submenuOffset()">
                 @for(menuItemName of menuItem.menuItems; track menuItemName) {
                   @if(isBlocked(menuItemName)) {
                     @if(isAdmin()) {
@@ -172,6 +175,8 @@ export class Menu {
   protected readonly menuStore = inject(MenuStore);
   protected readonly selectedBooks = inject(SelectedBooks);
   private readonly menuItemsStore = inject(MenuItemsStore);
+  /** `submenuOffset` of the root document, bound on the `main` list. */
+  protected readonly layout = inject(MenuLayout);
   protected readonly appUpdate = inject(VersionCheckService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
