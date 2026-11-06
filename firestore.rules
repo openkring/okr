@@ -1461,10 +1461,36 @@ service cloud.firestore {
       function canEditParentTemplate() {
         return isTemplateEditor() && parentTemplateExists() && canWriteTenant(parentTemplate());
       }
+      // Spec 1.141: the mail renderer finds email templates by fixed id and trusts a doc that names
+      // exactly the expected owner. So a doc must not be able to come to look like another tenant's:
+      // a template is created for one tenant, an email template (or any id of that family) only
+      // under its creator's own `_<tenant>` key; the operator's ['system'] docs take the base keys.
+      function templateCreateAllowed() {
+        let data = request.resource.data;
+        let tenants = data.tenants;
+        return tenantCreate()
+               && tenants.size() == 1
+               && (tenants == ['system']
+                   || (data.get('kind', 'pdf') == 'pdf'
+                       ? !templateId.matches('email-.*')
+                       : templateId.matches('.*_' + tenants[0])));
+      }
+      // `kind` never changes. `tenants` does not either, except that a tenant may detach itself from
+      // a legacy multi-tenant PDF doc on delete. An email doc is never detached: create it with two
+      // tenants (impossible now, not for an old doc), detach, and it would pass as the other's own.
+      // No tenantUpdate() here: it would admit a new `tenants` holding the caller plus a foreign tenant.
+      function templateUpdateAllowed() {
+        let ts = callerTenants();
+        let kind = resource.data.get('kind', 'pdf');
+        return canWriteTenantFor(resource.data, ts)
+               && request.resource.data.get('kind', 'pdf') == kind
+               && (request.resource.data.tenants == resource.data.tenants
+                   || (kind == 'pdf' && selfDetach()));
+      }
 
       allow read:   if userExists() && (resource == null || belongsToTenant(resource.data));
-      allow create: if isTemplateEditor() && tenantCreate();
-      allow update: if isTemplateEditor() && tenantUpdate();
+      allow create: if isTemplateEditor() && templateCreateAllowed();
+      allow update: if isTemplateEditor() && templateUpdateAllowed();
       allow delete: if isAdmin() && tenantDelete();
 
       match /versions/{versionId} {

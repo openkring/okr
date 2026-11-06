@@ -1836,6 +1836,18 @@ seed("templates/tplB",            tpl("t2", "Rechnung t2"))
 seed("templates/tplB/versions/1", tpl_version(1))
 seed("templates/tplArch",         tpl("t1", "Stub"))
 seed("templates/tplDel",          tpl("t1", "Weg"))
+# spec 1.141: the renderer finds email templates by fixed id, so an id and its tenants must be
+# beyond another tenant's reach. B (admin t2) is the attacker, t1 the victim.
+def email_tpl(tenants, kind="emailText", **extra):
+    return {"tenants": tenants, "kind": kind, "isArchived": False, "name": "Mail", "status": "draft",
+            "currentVersion": 0, **extra}
+seed("templates/tplShared",                      {**tpl("t1"), "tenants": ["t2", "t1"]})
+seed("templates/tplSharedPdf",                   {**tpl("t1"), "tenants": ["t2", "t1"], "kind": "pdf"})
+seed("templates/emailMixed",                     email_tpl(["t2", "t1"]))
+seed("templates/email-text-password-reset_t1",   email_tpl(["t1"], currentVersion=1, status="published"))
+seed("templates/email-text-password-reset",      email_tpl(["system"], currentVersion=1, status="published"))
+seed("templates/email-layout-plain_t1",          email_tpl(["t1"], "emailLayout", isArchived=True))
+seed("templates/email-layout-plain_t1/versions/1", tpl_version(1, "published"))
 
 def versions_query(template_key, token):
     """listVersions(): the versions subcollection of one template, ordered by version."""
@@ -1914,6 +1926,73 @@ template_cases = [
     ("userC(contentAdmin t1) DELETE templates/tplDel -> DENY (admin only)", False,
      lambda: req(DELETE, "templates/tplDel", token=C)),
     ("userD(admin t1) DELETE templates/tplDel -> ALLOW", True, lambda: req(DELETE, "templates/tplDel", token=D)),
+
+    # a template is created for exactly one tenant
+    ("userC(contentAdmin t1) CREATE tenants=[t1,t2] -> DENY (mixed)", False,
+     lambda: req(POST, "templates?documentId=tplMixed1", token=C, data=body({**tpl("t1"), "tenants": ["t1", "t2"]}))),
+    ("userC(contentAdmin t1) CREATE tenants=[t1,system] -> DENY (mixed)", False,
+     lambda: req(POST, "templates?documentId=tplMixed2", token=C, data=body({**tpl("t1"), "tenants": ["t1", "system"]}))),
+    # the attack: create with both tenants, publish, detach, and the doc looks like the victim's own
+    ("userB(admin t2) CREATE email-text-password-reset_t3 tenants=[t2,t3] -> DENY (plant)", False,
+     lambda: req(POST, "templates?documentId=email-text-password-reset_t3", token=B, data=body(email_tpl(["t2", "t3"])))),
+    ("userB(admin t2) detach from a mixed email doc -> DENY (leaves it to the victim)", False,
+     lambda: req(PATCH, "templates/emailMixed", token=B, data=body({"tenants": ["t1"]}), mask=["tenants"])),
+    ("userB(admin t2) detach from a legacy multi-tenant PDF doc -> ALLOW", True,
+     lambda: req(PATCH, "templates/tplShared", token=B, data=body({"tenants": ["t1"]}), mask=["tenants"])),
+    ("userB(admin t2) detach from a multi-tenant doc of kind pdf -> ALLOW", True,
+     lambda: req(PATCH, "templates/tplSharedPdf", token=B, data=body({"tenants": ["t1"]}), mask=["tenants"])),
+    ("userC(contentAdmin t1) PATCH tplA tenants=[t1,t2] -> DENY (adds a foreign tenant)", False,
+     lambda: req(PATCH, "templates/tplA", token=C, data=body({"tenants": ["t1", "t2"]}), mask=["tenants"])),
+    ("userC(contentAdmin t1) PATCH own email doc tenants=[t1,t2] -> DENY (adds a foreign tenant)", False,
+     lambda: req(PATCH, "templates/email-text-password-reset_t1", token=C, data=body({"tenants": ["t1", "t2"]}), mask=["tenants"])),
+    # squatting another tenant's fixed id
+    ("userB(admin t2) CREATE email-layout_t3 kind emailLayout tenants=[t2] -> DENY (squat)", False,
+     lambda: req(POST, "templates?documentId=email-layout_t3", token=B, data=body(email_tpl(["t2"], "emailLayout")))),
+    ("userB(admin t2) CREATE email-layout_t3 kind pdf tenants=[t2] -> DENY (squat)", False,
+     lambda: req(POST, "templates?documentId=email-layout_t3", token=B, data=body(email_tpl(["t2"], "pdf")))),
+    ("userB(admin t2) CREATE email-layout_t3 without kind tenants=[t2] -> DENY (squat)", False,
+     lambda: req(POST, "templates?documentId=email-layout_t3", token=B, data=body(tpl("t2")))),
+    ("userB(admin t2) CREATE the base id email-text-x tenants=[t2] -> DENY (squat)", False,
+     lambda: req(POST, "templates?documentId=email-text-x", token=B, data=body(email_tpl(["t2"])))),
+    ("userB(admin t2) CREATE its own email-layout_t2 -> ALLOW", True,
+     lambda: req(POST, "templates?documentId=email-layout_t2", token=B, data=body(email_tpl(["t2"], "emailLayout")))),
+    ("userC(contentAdmin t1) CREATE a [system] doc -> DENY (operator only)", False,
+     lambda: req(POST, "templates?documentId=email-text-y", token=C, data=body(email_tpl(["system"])))),
+    ("userO(operator) CREATE a [system] doc on a base id -> ALLOW (no suffix)", True,
+     lambda: req(POST, "templates?documentId=email-text-y", token=O, data=body(email_tpl(["system"])))),
+    # kind is fixed for the life of a doc
+    ("userC(contentAdmin t1) PATCH tplA kind=emailText -> DENY (kind is immutable)", False,
+     lambda: req(PATCH, "templates/tplA", token=C, data=body({"kind": "emailText"}), mask=["kind"])),
+    ("userC(contentAdmin t1) PATCH own email doc kind=pdf -> DENY (kind is immutable)", False,
+     lambda: req(PATCH, "templates/email-text-password-reset_t1", token=C, data=body({"kind": "pdf"}), mask=["kind"])),
+    ("userC(contentAdmin t1) PATCH legacy tplA kind=pdf -> ALLOW (still pdf)", True,
+     lambda: req(PATCH, "templates/tplA", token=C, data=body({"kind": "pdf"}), mask=["kind"])),
+    # the shared docs stay the operator's
+    ("userC(contentAdmin t1) PATCH a [system] doc -> DENY", False,
+     lambda: req(PATCH, "templates/email-text-password-reset", token=C, data=body({"name": "x"}), mask=["name"])),
+    ("userO(operator) PATCH a [system] doc -> ALLOW", True,
+     lambda: req(PATCH, "templates/email-text-password-reset", token=O, data=body({"name": "Reset"}), mask=["name"])),
+    # copyEmailTemplate: create under the fixed id, draft, pointer, publish; then delete and reset
+    ("userC(contentAdmin t1) copy: CREATE email-text-password-x_t1 -> ALLOW", True,
+     lambda: req(POST, "templates?documentId=email-text-password-x_t1", token=C, data=body(email_tpl(["t1"])))),
+    ("userC(contentAdmin t1) copy: CREATE draft version -> ALLOW", True,
+     lambda: req(POST, "templates/email-text-password-x_t1/versions?documentId=1", token=C, data=body(tpl_version(1)))),
+    ("userC(contentAdmin t1) copy: PATCH draft pointer -> ALLOW", True,
+     lambda: req(PATCH, "templates/email-text-password-x_t1", token=C, data=body({"draftVersion": 1}), mask=["draftVersion"])),
+    ("userC(contentAdmin t1) publish: PATCH the version -> ALLOW", True,
+     lambda: req(PATCH, "templates/email-text-password-x_t1/versions/1", token=C, data=body({"status": "published"}), mask=["status"])),
+    ("userC(contentAdmin t1) publish: PATCH the pointer -> ALLOW", True,
+     lambda: req(PATCH, "templates/email-text-password-x_t1", token=C,
+                 data=body({"status": "published", "currentVersion": 1, "draftVersion": None}),
+                 mask=["status", "currentVersion", "draftVersion"])),
+    ("userC(contentAdmin t1) delete: archive own email doc -> ALLOW", True,
+     lambda: req(PATCH, "templates/email-text-password-x_t1", token=C, data=body({"isArchived": True}), mask=["isArchived"])),
+    ("userC(contentAdmin t1) copy: reset an archived own doc -> ALLOW", True,
+     lambda: req(PATCH, "templates/email-layout-plain_t1", token=C,
+                 data=body({"isArchived": False, "currentVersion": 0, "status": "draft", "draftVersion": 2}),
+                 mask=["isArchived", "currentVersion", "status", "draftVersion"])),
+    ("userC(contentAdmin t1) copy: CREATE the next draft on the reset doc -> ALLOW", True,
+     lambda: req(POST, "templates/email-layout-plain_t1/versions?documentId=2", token=C, data=body(tpl_version(2)))),
 ]
 for label, expect, run in template_cases:
     code = run()
