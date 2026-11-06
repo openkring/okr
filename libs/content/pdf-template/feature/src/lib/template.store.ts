@@ -196,7 +196,9 @@ export const TemplateStore = signalStore(
     /** @return true when the draft version was written; false after the error toast. */
     async saveDraft(templateKey: string, version: TemplateVersionModel): Promise<boolean> {
       try {
-        await store.templateService.saveDraftVersion(templateKey, version, store.currentUser());
+        // On a failed write the service has shown its own error toast and returns no key.
+        const saved = await store.templateService.saveDraftVersion(templateKey, version, store.currentUser());
+        if (!saved) return false;
         const toast = await store.toastController.create({
           message:  store.i18n.save_draft_conf(),
           duration: 2000,
