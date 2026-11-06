@@ -1,7 +1,9 @@
 import { Timestamp } from 'firebase-admin/firestore';
 import { describe, expect, it, vi } from 'vitest';
 import type { StoredWebhookEvent, WebhookRequest } from '../_webhooks/types';
-import { deepSignDedupeKey, deepSignUpdate, makeDeepSignHandler, splitDeepSignEvent, type DeepSignPayload } from './deepsign-webhook';
+import { findClient } from '../_webhooks/clients';
+import { computeWebhookToken } from './shared';
+import { deepSignClient, deepSignLegacyClient, refusedByCutoff, deepSignDedupeKey, deepSignUpdate, makeDeepSignHandler, splitDeepSignEvent, type DeepSignPayload } from './deepsign-webhook';
 
 const now = Timestamp.fromDate(new Date('2026-01-01T00:00:00Z'));
 const pending = (id: string) => ({ signeeId: id, signStatus: 'pending' });
@@ -140,5 +142,53 @@ describe('makeDeepSignHandler', () => {
     const run = async () => ({ found: true as const, updated: true });
     await makeDeepSignHandler(run, log)(row(payload({ eventType: 'document-completed', signeeId: 'a' })), 'ev1');
     expect(log).toHaveBeenCalledWith('deepsign', 'document-completed', 'handled');
+  });
+});
+
+describe('DeepSign clients', () => {
+  const req = (query: Record<string, string>): WebhookRequest => ({ method: 'POST', rawBody: Buffer.from('{}'), query, header: () => undefined });
+  const verify = (c: typeof deepSignClient, query: Record<string, string>, secret: string) => {
+    if (c.auth.kind !== 'record-token') throw new Error('not a record-token client');
+    return c.auth.verify(req(query), secret);
+  };
+
+  it('accepts a token made with the client key and rejects one made with the other key', () => {
+    const token = computeWebhookToken('e1', 'key-a');
+    expect(verify(deepSignClient, { esignId: 'e1', token }, 'key-a')).toBe(true);
+    expect(verify(deepSignClient, { esignId: 'e1', token }, 'key-b')).toBe(false);
+    expect(verify(deepSignLegacyClient, { esignId: 'e1', token }, 'key-a')).toBe(true);
+  });
+
+  it('rejects a call without esignId or token', () => {
+    const token = computeWebhookToken('e1', 'key-a');
+    expect(verify(deepSignClient, { token }, 'key-a')).toBe(false);
+    expect(verify(deepSignClient, { esignId: 'e1' }, 'key-a')).toBe(false);
+    expect(verify(deepSignClient, {}, 'key-a')).toBe(false);
+  });
+
+  it('has the declared identity, and no route for the legacy client', () => {
+    expect(deepSignClient.id).toBe('deepsign');
+    expect(deepSignLegacyClient.id).toBe('deepsign-legacy');
+    expect(findClient('deepsign')).toBe(deepSignClient);
+    expect(findClient('deepsign-legacy')).toBeUndefined();
+  });
+});
+
+describe('refusedByCutoff', () => {
+  const cutoff = '2026-06-01T00:00:00Z';
+  const at = (iso: string) => Timestamp.fromDate(new Date(iso));
+
+  it('does not refuse anything while the cutoff is empty', () => {
+    expect(refusedByCutoff(at('2030-01-01T00:00:00Z'), '')).toBe(false);
+    expect(refusedByCutoff(undefined, '')).toBe(false);
+  });
+  it('refuses a record created after the cutoff', () => {
+    expect(refusedByCutoff(at('2026-07-01T00:00:00Z'), cutoff)).toBe(true);
+  });
+  it('does not refuse a record created before the cutoff', () => {
+    expect(refusedByCutoff(at('2026-05-01T00:00:00Z'), cutoff)).toBe(false);
+  });
+  it('refuses a record with no createdAt once a cutoff is set', () => {
+    expect(refusedByCutoff(undefined, cutoff)).toBe(true);
   });
 });

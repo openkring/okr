@@ -7,7 +7,8 @@ import { logger } from 'firebase-functions/v2';
 import { FieldValue, Timestamp, getFirestore } from 'firebase-admin/firestore';
 import { EsignCollection } from '@okr/shared-models';
 import type { WebhookHandler } from '../_webhooks/process';
-import type { WebhookRequest } from '../_webhooks/types';
+import type { WebhookClient, WebhookRequest } from '../_webhooks/types';
+import { verifyWebhookToken, webhookSecret, webhookTokenSecret } from './shared';
 
 const TERMINAL_STATUSES = ['signed', 'rejected', 'withdrawn'];
 
@@ -129,3 +130,46 @@ export function makeDeepSignHandler(run: DeepSignRunner, log: DeepSignLog = () =
 export const deepSignHandler: WebhookHandler = makeDeepSignHandler(runInTransaction, (clientId, eventType, state) =>
   logger.info('deepSignHandler', { clientId, eventType, state }),
 );
+
+/** Both DeepSign URLs carry `?esignId=…&token=…`; the token is an HMAC of the esignId. */
+const verifyEsignToken = (req: WebhookRequest, secret: string): boolean => {
+  const esignId = req.query['esignId'];
+  const token = req.query['token'];
+  if (!esignId || !token) return false;
+  return verifyWebhookToken(esignId, token, secret);
+};
+
+const deepSignBase = {
+  type: 'deepsign',
+  tenant: { resolve: 'record' as const },
+  split: splitDeepSignEvent,
+  dedupeKey: (event: unknown) => deepSignDedupeKey(event),
+  maxBodyBytes: 64_000,
+  retentionDays: 30,
+};
+
+/** New documents: the URL token is made with a key DeepSign never held (callbackSecret is random). */
+export const deepSignClient: WebhookClient = {
+  ...deepSignBase,
+  id: 'deepsign',
+  auth: { kind: 'record-token', verify: verifyEsignToken, secret: webhookTokenSecret },
+};
+
+/**
+ * Documents sent before the cutover: their URL token was made with WEBHOOK_SECRET.
+ * Deliberately NOT in WEBHOOK_CLIENTS (no /webhooks/ route); only esignWebhook serves it.
+ */
+export const deepSignLegacyClient: WebhookClient = {
+  ...deepSignBase,
+  id: 'deepsign-legacy',
+  auth: { kind: 'record-token', verify: verifyEsignToken, secret: webhookSecret },
+};
+
+/** Documents created at or after this instant are refused on the legacy URL. Empty = no cutoff. */
+export const ESIGN_LEGACY_CUTOFF_ISO = '';
+
+export function refusedByCutoff(createdAt: Timestamp | undefined, cutoffIso: string): boolean {
+  if (cutoffIso === '') return false;
+  if (!createdAt) return true;
+  return createdAt.toMillis() >= new Date(cutoffIso).getTime();
+}
