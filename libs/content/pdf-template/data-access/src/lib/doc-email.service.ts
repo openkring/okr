@@ -59,6 +59,13 @@ export interface RenderedPreview {
   text: string;
 }
 
+/** An email template version as the server renders it, with sample data (the builder's preview). */
+export interface RenderedTemplatePreview {
+  subject: string;
+  html: string;
+  text: string;
+}
+
 /**
  * Sends a generated document by email via the existing `sendEmail` Cloud Function.
  * The PDF is referenced by its Storage path; the function downloads and attaches it.
@@ -132,6 +139,18 @@ export class DocEmailService {
       ...(req.attachmentName ? { attachmentName: req.attachmentName } : {}),
     });
     return { html: data.html, text: data.text };
+  }
+
+  /**
+   * A saved version of an email template, rendered by the server with the template's sample data.
+   * The renderer reads the version from Firestore, so it must be saved before this is called.
+   * Rejects when the server cannot render it; the caller decides what to tell the user.
+   */
+  public async renderTemplatePreview(templateKey: string, version: number): Promise<RenderedTemplatePreview> {
+    const callable = httpsCallable<{ templateKey: string; version: number }, RenderedTemplatePreview>(
+      this.functions, 'renderEmailPreview');
+    const { data } = await callable({ templateKey, version });
+    return { subject: data.subject, html: data.html, text: data.text };
   }
 
   /** The three content fields every send path hands to the server, which composes the final mail. */

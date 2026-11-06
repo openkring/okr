@@ -166,6 +166,7 @@
     "tab": {
       "metadata": "Metadata",
       "html": "HTML",
+      "text": "Text",
       "preview": "Preview"
     },
     "category": {
@@ -189,7 +190,11 @@
     "html_placeholder": "HTML / Handlebars …",
     "preview_send": "Send",
     "preview_download": "Download",
-    "preview_none": "No preview available."
+    "preview_none": "No preview available.",
+    "subject_label": "Subject",
+    "publish_no_content": "The layout is missing the placeholder for the content, in the HTML or in the text.",
+    "publish_no_link": "The text is missing the link to reset the password, in the HTML or in the text.",
+    "publish_no_subject": "Please enter a subject."
   },
   "validation": {
     "to_required": "At least one recipient address is required.",

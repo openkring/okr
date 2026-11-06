@@ -166,6 +166,7 @@
     "tab": {
       "metadata": "Métadonnées",
       "html": "HTML",
+      "text": "Texte",
       "preview": "Aperçu"
     },
     "category": {
@@ -189,7 +190,11 @@
     "html_placeholder": "HTML / Handlebars …",
     "preview_send": "Envoyer",
     "preview_download": "Télécharger",
-    "preview_none": "Aucun aperçu disponible."
+    "preview_none": "Aucun aperçu disponible.",
+    "subject_label": "Objet",
+    "publish_no_content": "Il manque au modèle l'espace réservé au contenu, dans le HTML ou dans le texte.",
+    "publish_no_link": "Il manque au texte le lien de réinitialisation, dans le HTML ou dans le texte.",
+    "publish_no_subject": "Indique un objet, s'il te plaît."
   },
   "validation": {
     "to_required": "Au moins une adresse de destinataire est requise.",

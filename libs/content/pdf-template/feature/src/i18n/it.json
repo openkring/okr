@@ -166,6 +166,7 @@
     "tab": {
       "metadata": "Metadati",
       "html": "HTML",
+      "text": "Testo",
       "preview": "Anteprima"
     },
     "category": {
@@ -189,7 +190,11 @@
     "html_placeholder": "HTML / Handlebars …",
     "preview_send": "Inviare",
     "preview_download": "Scaricare",
-    "preview_none": "Nessuna anteprima disponibile."
+    "preview_none": "Nessuna anteprima disponibile.",
+    "subject_label": "Oggetto",
+    "publish_no_content": "Al layout manca il segnaposto per il contenuto, nell'HTML o nel testo.",
+    "publish_no_link": "Al testo manca il link per reimpostare la password, nell'HTML o nel testo.",
+    "publish_no_subject": "Inserisci un oggetto, per favore."
   },
   "validation": {
     "to_required": "È richiesto almeno un indirizzo destinatario.",

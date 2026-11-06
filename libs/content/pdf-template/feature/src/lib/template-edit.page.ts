@@ -6,7 +6,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { DomSanitizer, SafeHtml, SafeResourceUrl } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import {
   IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon,
@@ -19,12 +19,12 @@ import { TemplateAddressWindow, TemplateModel, TemplateVersionModel } from '@okr
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ChangeConfirmation, ChangeConfirmationI18n } from '@okr/shared-ui';
 import { safeStructuredClone } from '@okr/shared-util-core';
-import { newTemplateVersion, prettifyJson } from '@okr/content-pdf-template-util';
+import { emailPublishProblem, isEmailTemplate, newTemplateVersion, prettifyJson } from '@okr/content-pdf-template-util';
 import { TemplateService } from '@okr/content-pdf-template-data-access';
 
 import { TemplateStore } from './template.store';
 
-type EditorTab = 'metadata' | 'html' | 'css' | 'preview';
+type EditorTab = 'metadata' | 'html' | 'css' | 'text' | 'preview';
 
 @Component({
   selector: 'okr-template-edit-page',
@@ -66,6 +66,13 @@ type EditorTab = 'metadata' | 'html' | 'css' | 'preview';
     }
     .code-editor:focus { outline: none; border-color: var(--ion-color-primary); }
     .preview-frame { width: 100%; height: calc(100dvh - 180px); border: none; }
+    .email-preview-subject { margin: 0 0 8px; font-weight: 600; }
+    .email-preview-frame { width: 100%; height: 60dvh; border: 1px solid var(--ion-color-step-250, #c8c8c8); border-radius: 6px; background: #fff; }
+    .email-preview-text {
+      margin: 12px 0 0; padding: 12px; white-space: pre-wrap; word-break: break-word;
+      font-family: monospace; font-size: 0.9rem;
+      border: 1px solid var(--ion-color-step-250, #c8c8c8); border-radius: 6px;
+    }
     .preview-placeholder { display: flex; align-items: center; justify-content: center; height: 300px; }
     ion-segment { margin: 8px; }
   `],
@@ -96,11 +103,14 @@ type EditorTab = 'metadata' | 'html' | 'css' | 'preview';
       <ion-segment [ngModel]="activeTab()" (ngModelChange)="onTabChange($any($event))">
         <ion-segment-button value="metadata"><ion-label>{{ store.i18n.tab_metadata() }}</ion-label></ion-segment-button>
         <ion-segment-button value="html"><ion-label>{{ store.i18n.tab_html() }}</ion-label></ion-segment-button>
+        @if(isEmail()) {
+          <ion-segment-button value="text"><ion-label>{{ store.i18n.tab_text() }}</ion-label></ion-segment-button>
+        }
         <ion-segment-button value="preview"><ion-label>{{ store.i18n.tab_preview() }}</ion-label></ion-segment-button>
       </ion-segment>
     </ion-header>
 
-    <ion-content class="ion-padding" [class.fill-content]="activeTab() === 'html'">
+    <ion-content class="ion-padding" [class.fill-content]="activeTab() === 'html' || activeTab() === 'text'">
       @if(activeTab() === 'metadata') {
         @if(template(); as tmpl) {
           <ion-item>
@@ -111,18 +121,26 @@ type EditorTab = 'metadata' | 'html' | 'css' | 'preview';
             <ion-label position="stacked">{{ store.i18n.description() }}</ion-label>
             <ion-input [ngModel]="tmpl.description" (ngModelChange)="onTemplateFieldChange('description', $event)" [disabled]="readOnly()" />
           </ion-item>
-          <ion-item>
-            <ion-label position="stacked">{{ store.i18n.category() }}</ion-label>
-            <ion-select [ngModel]="tmpl.category" (ngModelChange)="onTemplateFieldChange('category', $event)" [disabled]="readOnly()">
-              <ion-select-option value="invoice">{{ store.i18n.cat_invoice() }}</ion-select-option>
-              <ion-select-option value="expense">{{ store.i18n.cat_expense() }}</ion-select-option>
-              <ion-select-option value="report">{{ store.i18n.cat_report() }}</ion-select-option>
-              <ion-select-option value="dunning">{{ store.i18n.cat_dunning() }}</ion-select-option>
-              <ion-select-option value="contract">{{ store.i18n.cat_contract() }}</ion-select-option>
-              <ion-select-option value="confirmation">{{ store.i18n.cat_confirmation() }}</ion-select-option>
-              <ion-select-option value="other">{{ store.i18n.cat_other() }}</ion-select-option>
-            </ion-select>
-          </ion-item>
+          @if(!isEmail()) {
+            <ion-item>
+              <ion-label position="stacked">{{ store.i18n.category() }}</ion-label>
+              <ion-select [ngModel]="tmpl.category" (ngModelChange)="onTemplateFieldChange('category', $event)" [disabled]="readOnly()">
+                <ion-select-option value="invoice">{{ store.i18n.cat_invoice() }}</ion-select-option>
+                <ion-select-option value="expense">{{ store.i18n.cat_expense() }}</ion-select-option>
+                <ion-select-option value="report">{{ store.i18n.cat_report() }}</ion-select-option>
+                <ion-select-option value="dunning">{{ store.i18n.cat_dunning() }}</ion-select-option>
+                <ion-select-option value="contract">{{ store.i18n.cat_contract() }}</ion-select-option>
+                <ion-select-option value="confirmation">{{ store.i18n.cat_confirmation() }}</ion-select-option>
+                <ion-select-option value="other">{{ store.i18n.cat_other() }}</ion-select-option>
+              </ion-select>
+            </ion-item>
+          }
+          @if(isEmailText()) {
+            <ion-item>
+              <ion-label position="stacked">{{ store.i18n.subject_label() }}</ion-label>
+              <ion-input [ngModel]="editorVersion().subject" (ngModelChange)="onVersionChange('subject', $event ?? '')" [disabled]="readOnly()" />
+            </ion-item>
+          }
           <ion-item>
             <ion-label position="stacked">{{ store.i18n.language() }}</ion-label>
             <ion-select [ngModel]="tmpl.language" (ngModelChange)="onTemplateFieldChange('language', $event)" [disabled]="readOnly()">
@@ -132,14 +150,16 @@ type EditorTab = 'metadata' | 'html' | 'css' | 'preview';
               <ion-select-option value="en">English</ion-select-option>
             </ion-select>
           </ion-item>
-          <ion-item>
-            <ion-label position="stacked">{{ store.i18n.output_format() }}</ion-label>
-            <ion-select [ngModel]="tmpl.defaultOutputFormat" (ngModelChange)="onTemplateFieldChange('defaultOutputFormat', $event)" [disabled]="readOnly()">
-              <ion-select-option value="pdf">PDF</ion-select-option>
-              <ion-select-option value="docx">DOCX</ion-select-option>
-              <ion-select-option value="html">HTML</ion-select-option>
-            </ion-select>
-          </ion-item>
+          @if(!isEmail()) {
+            <ion-item>
+              <ion-label position="stacked">{{ store.i18n.output_format() }}</ion-label>
+              <ion-select [ngModel]="tmpl.defaultOutputFormat" (ngModelChange)="onTemplateFieldChange('defaultOutputFormat', $event)" [disabled]="readOnly()">
+                <ion-select-option value="pdf">PDF</ion-select-option>
+                <ion-select-option value="docx">DOCX</ion-select-option>
+                <ion-select-option value="html">HTML</ion-select-option>
+              </ion-select>
+            </ion-item>
+          }
           <ion-item>
             <ion-label position="stacked">{{ store.i18n.sample_data() }}</ion-label>
             <ion-textarea
@@ -152,34 +172,36 @@ type EditorTab = 'metadata' | 'html' | 'css' | 'preview';
               placeholder='{}'
             />
           </ion-item>
-          <ion-item>
-            <ion-checkbox
-              [checked]="tmpl.attachQrSlip"
-              (ionChange)="onTemplateFieldChange('attachQrSlip', $any($event).detail.checked)"
-              [disabled]="readOnly()">
-              {{ store.i18n.qr_slip() }}
-            </ion-checkbox>
-          </ion-item>
-          <ion-item>
-            <ion-checkbox
-              [checked]="tmpl.qrSlipWithAmount"
-              (ionChange)="onTemplateFieldChange('qrSlipWithAmount', $any($event).detail.checked)"
-              [disabled]="readOnly() || !tmpl.attachQrSlip">
-              {{ store.i18n.qr_slip_amount() }}
-            </ion-checkbox>
-          </ion-item>
-          <ion-item>
-            <ion-label position="stacked">{{ store.i18n.payee_org() }}</ion-label>
-            <ion-input [ngModel]="tmpl.payeeOrgId" (ngModelChange)="onTemplateFieldChange('payeeOrgId', $event)" [disabled]="readOnly()" />
-          </ion-item>
-          <ion-item>
-            <ion-label position="stacked">{{ store.i18n.address_window() }}</ion-label>
-            <ion-select [ngModel]="addressWindow()" (ngModelChange)="onTemplateFieldChange('addressWindow', $event)" [disabled]="readOnly()">
-              <ion-select-option value="none">{{ store.i18n.address_window_none() }}</ion-select-option>
-              <ion-select-option value="left">{{ store.i18n.address_window_left() }}</ion-select-option>
-              <ion-select-option value="right">{{ store.i18n.address_window_right() }}</ion-select-option>
-            </ion-select>
-          </ion-item>
+          @if(!isEmail()) {
+            <ion-item>
+              <ion-checkbox
+                [checked]="tmpl.attachQrSlip"
+                (ionChange)="onTemplateFieldChange('attachQrSlip', $any($event).detail.checked)"
+                [disabled]="readOnly()">
+                {{ store.i18n.qr_slip() }}
+              </ion-checkbox>
+            </ion-item>
+            <ion-item>
+              <ion-checkbox
+                [checked]="tmpl.qrSlipWithAmount"
+                (ionChange)="onTemplateFieldChange('qrSlipWithAmount', $any($event).detail.checked)"
+                [disabled]="readOnly() || !tmpl.attachQrSlip">
+                {{ store.i18n.qr_slip_amount() }}
+              </ion-checkbox>
+            </ion-item>
+            <ion-item>
+              <ion-label position="stacked">{{ store.i18n.payee_org() }}</ion-label>
+              <ion-input [ngModel]="tmpl.payeeOrgId" (ngModelChange)="onTemplateFieldChange('payeeOrgId', $event)" [disabled]="readOnly()" />
+            </ion-item>
+            <ion-item>
+              <ion-label position="stacked">{{ store.i18n.address_window() }}</ion-label>
+              <ion-select [ngModel]="addressWindow()" (ngModelChange)="onTemplateFieldChange('addressWindow', $event)" [disabled]="readOnly()">
+                <ion-select-option value="none">{{ store.i18n.address_window_none() }}</ion-select-option>
+                <ion-select-option value="left">{{ store.i18n.address_window_left() }}</ion-select-option>
+                <ion-select-option value="right">{{ store.i18n.address_window_right() }}</ion-select-option>
+              </ion-select>
+            </ion-item>
+          }
         }
       }
 
@@ -194,11 +216,33 @@ type EditorTab = 'metadata' | 'html' | 'css' | 'preview';
         ></textarea>
       }
 
+      @if(activeTab() === 'text') {
+        <textarea
+          class="code-editor"
+          [value]="editorVersion().text"
+          (input)="onVersionChange('text', $any($event.target).value)"
+          [readOnly]="readOnly()"
+          spellcheck="false"
+        ></textarea>
+      }
+
       @if(activeTab() === 'preview') {
         @if(store.previewLoading()) {
           <div class="preview-placeholder">
             <ion-spinner name="crescent" />
           </div>
+        } @else if(isEmail()) {
+          @if(store.emailPreview(); as mail) {
+            @if(mail.subject) {
+              <p class="email-preview-subject">{{ store.i18n.subject_label() }}: {{ mail.subject }}</p>
+            }
+            <iframe class="email-preview-frame" [title]="store.i18n.tab_preview()" sandbox="" [srcdoc]="emailPreviewHtml()"></iframe>
+            <pre class="email-preview-text">{{ mail.text }}</pre>
+          } @else {
+            <div class="preview-placeholder">
+              <p>{{ store.i18n.preview_none() }}</p>
+            </div>
+          }
         } @else if(safePreviewUrl(); as url) {
           <div style="display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 8px;">
             <ion-button fill="outline" size="small" (click)="store.sendPreview()">
@@ -288,6 +332,8 @@ export class TemplateEditPage implements OnDestroy {
     if (current) {
       next.html = current.html;
       next.css = current.css;
+      next.text = current.text;
+      next.subject = current.subject;
       next.partials = current.partials;
       next.assets = current.assets;
     }
@@ -316,6 +362,20 @@ export class TemplateEditPage implements OnDestroy {
 
   // legacy templates (read raw from Firestore) lack the field
   protected readonly addressWindow = computed<TemplateAddressWindow>(() => this.template()?.addressWindow ?? 'none');
+
+  /** True for the email kinds (layout, text); false for a PDF template and while nothing is loaded. */
+  protected readonly isEmail = computed(() => {
+    const tmpl = this.template();
+    return tmpl !== undefined && isEmailTemplate(tmpl);
+  });
+  // only the mail texts have a subject; a layout wraps whatever mail it is given
+  protected readonly isEmailText = computed(() => this.template()?.kind === 'emailText');
+
+  // the server-rendered mail goes into a sandboxed iframe (no scripts, no same-origin)
+  protected readonly emailPreviewHtml = computed((): SafeHtml | string => {
+    const mail = this.store.emailPreview();
+    return mail ? this.sanitizer.bypassSecurityTrustHtml(mail.html) : '';
+  });
 
   protected readonly safePreviewUrl = computed((): SafeResourceUrl | null => {
     const url = this.store.previewUrl();
@@ -354,7 +414,7 @@ export class TemplateEditPage implements OnDestroy {
     this.dirty.set(true);
   }
 
-  protected onVersionChange(field: 'html' | 'css', value: string): void {
+  protected onVersionChange(field: 'html' | 'css' | 'text' | 'subject', value: string): void {
     const v = safeStructuredClone(this.draftVersion());
     if (!v) return;
     v[field] = value;
@@ -419,7 +479,16 @@ export class TemplateEditPage implements OnDestroy {
 
   protected async publish(): Promise<void> {
     await this.save();
-    const versionNum = this.draftVersion().version;
+    const draft = this.draftVersion();
+    const current = this.template();
+    if (current && this.isEmail()) {
+      const problem = emailPublishProblem(current, draft);
+      if (problem) {
+        await this.store.showPublishProblem(problem);
+        return;
+      }
+    }
+    const versionNum = draft.version;
     const published = await this.store.openPublishDialog(this.templateKey(), versionNum);
     if (!published) return;
     // Mirror publishVersion's pointer write into the local copy, so what the editor shows
@@ -443,6 +512,10 @@ export class TemplateEditPage implements OnDestroy {
     // version, which already exists — no save needed.
     if (!this.readOnly() && (this.dirty() || !this.hasSavedDraft())) {
       await this.save();
+    }
+    if (this.isEmail()) {
+      await this.store.generateEmailPreview(this.templateKey(), this.editorVersion().version);
+      return;
     }
     await this.store.generatePreview(
       this.templateKey(),

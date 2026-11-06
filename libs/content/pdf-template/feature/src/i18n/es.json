@@ -166,6 +166,7 @@
     "tab": {
       "metadata": "Metadatos",
       "html": "HTML",
+      "text": "Texto",
       "preview": "Vista previa"
     },
     "category": {
@@ -189,7 +190,11 @@
     "html_placeholder": "HTML / Handlebars …",
     "preview_send": "Enviar",
     "preview_download": "Descargar",
-    "preview_none": "No hay vista previa disponible."
+    "preview_none": "No hay vista previa disponible.",
+    "subject_label": "Asunto",
+    "publish_no_content": "A la plantilla le falta el marcador del contenido, en el HTML o en el texto.",
+    "publish_no_link": "Al texto le falta el enlace para restablecer la contraseña, en el HTML o en el texto.",
+    "publish_no_subject": "Por favor, indica un asunto."
   },
   "validation": {
     "to_required": "Se requiere al menos una dirección de destinatario.",

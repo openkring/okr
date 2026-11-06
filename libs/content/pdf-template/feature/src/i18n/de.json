@@ -166,6 +166,7 @@
     "tab": {
       "metadata": "Metadaten",
       "html": "HTML",
+      "text": "Text",
       "preview": "Vorschau"
     },
     "category": {
@@ -189,7 +190,11 @@
     "html_placeholder": "HTML / Handlebars …",
     "preview_send": "Senden",
     "preview_download": "Herunterladen",
-    "preview_none": "Keine Vorschau verfügbar."
+    "preview_none": "Keine Vorschau verfügbar.",
+    "subject_label": "Betreff",
+    "publish_no_content": "Dem Layout fehlt der Platzhalter für den Inhalt, im HTML oder im Text.",
+    "publish_no_link": "Dem Text fehlt der Link zum Zurücksetzen, im HTML oder im Text.",
+    "publish_no_subject": "Bitte gib einen Betreff ein."
   },
   "validation": {
     "to_required": "Mindestens eine Empfängeradresse ist erforderlich.",

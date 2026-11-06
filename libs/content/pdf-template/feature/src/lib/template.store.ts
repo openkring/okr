@@ -7,10 +7,12 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { TemplateAddressWindow, TemplateModel, TemplateVersionModel } from '@okr/shared-models';
-import { DocGenerationService, GenerateDocumentResponse, TemplateService } from '@okr/content-pdf-template-data-access';
+import {
+  DocEmailService, DocGenerationService, GenerateDocumentResponse, RenderedTemplatePreview, TemplateService,
+} from '@okr/content-pdf-template-data-access';
 import { EmailComposerModal } from '@okr/content-pdf-template-ui';
 import {
-  emailCopyKey, newTemplate, newTemplateVersion, TEMPLATE_I18N_KEYS, TemplateI18n,
+  emailCopyKey, emailPublishProblem, EmailPublishProblem, newTemplate, newTemplateVersion, TEMPLATE_I18N_KEYS, TemplateI18n,
 } from '@okr/content-pdf-template-util';
 export type { TemplateI18n };
 
@@ -26,6 +28,8 @@ interface TemplateState {
   previewStoragePath: string;
   previewFilename: string;
   previewLoading: boolean;
+  /** The email template as the server renders it; undefined until a preview ran. */
+  emailPreview: RenderedTemplatePreview | undefined;
 }
 
 const initialState: TemplateState = {
@@ -34,7 +38,8 @@ const initialState: TemplateState = {
   previewUrl: '',
   previewStoragePath: '',
   previewFilename: '',
-  previewLoading: false
+  previewLoading: false,
+  emailPreview: undefined,
 };
 
 export const TemplateStore = signalStore(
@@ -43,6 +48,7 @@ export const TemplateStore = signalStore(
     i18n:     inject(I18nService).translateAll(TEMPLATE_I18N_KEYS) as TemplateI18n,
     templateService: inject(TemplateService),
     docGenService:   inject(DocGenerationService),
+    docEmailService: inject(DocEmailService),
     appStore:        inject(AppStore),
     modalController: inject(ModalController),
     toastController: inject(ToastController),
@@ -252,6 +258,42 @@ export const TemplateStore = signalStore(
         cssClass: 'wide-modal',
       });
       await modal.present();
+    },
+
+    /**
+     * Render a saved version of an email template on the server (same renderer as the real mail).
+     * The server error is technical English, so the user gets the plain preview label and the
+     * detail goes to the console.
+     */
+    async generateEmailPreview(templateKey: string, version: number): Promise<RenderedTemplatePreview | undefined> {
+      patchState(store, { previewLoading: true, emailPreview: undefined });
+      try {
+        const rendered = await store.docEmailService.renderTemplatePreview(templateKey, version);
+        patchState(store, { emailPreview: rendered });
+        return rendered;
+      } catch (err) {
+        console.error('TemplateStore.generateEmailPreview: renderEmailPreview failed', err);
+        const toast = await store.toastController.create({
+          message:  store.i18n.preview_error(),
+          duration: 4000,
+          color:    'danger',
+        });
+        await toast.present();
+        return undefined;
+      } finally {
+        patchState(store, { previewLoading: false });
+      }
+    },
+
+    /** Tell the user why an email template cannot be published (nothing is published). */
+    async showPublishProblem(problem: EmailPublishProblem): Promise<void> {
+      const message = {
+        no_content: store.i18n.publish_no_content,
+        no_link:    store.i18n.publish_no_link,
+        no_subject: store.i18n.publish_no_subject,
+      }[problem]();
+      const toast = await store.toastController.create({ message, duration: 4000, color: 'danger' });
+      await toast.present();
     },
 
     async generatePreview(
