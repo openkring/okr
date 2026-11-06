@@ -173,12 +173,30 @@ export const InvitationStore = signalStore(
         const { data, role } = await modal.onDidDismiss();
         if (role === 'confirm' && data && !readOnly) {
           if (isInvitation(data, store.tenantId())) {
-            await (!data.okey ? 
-              store.invitationService.create(data, store.currentUser()) : 
-              store.invitationService.update(data, store.currentUser()));
+            if (!data.okey) {
+              await store.invitationService.create(data, store.currentUser());
+            } else if (invitation && data.state !== invitation.state) {
+              await this.saveChangedAnswer(data, invitation.state);
+            } else {
+              await store.invitationService.update(data, store.currentUser());
+            }
           }
         }
         this.reload();
+      },
+
+      /**
+       * An admin changed the state in the edit form: that is an answer, so it takes the same way as
+       * every other one. A plain update would leave `calevent.attendees`, the only place an answer is
+       * read from, on the old value. Locked: the state stays and the other changes are saved.
+       */
+      async saveChangedAnswer(invitation: InvitationModel, previousState: InvitationModel['state']): Promise<void> {
+        if (invitation.isLocked) {
+          await notify(store.alertController, store.i18n.locked_title(), store.i18n.locked_hint(), store.i18n.ok());
+          await store.invitationService.update({ ...invitation, state: previousState }, store.currentUser());
+          return;
+        }
+        await store.invitationService.respond(invitation, invitation.state, store.currentUser());
       },
 
       async delete(invitation: InvitationModel, readOnly = true): Promise<void> {
@@ -193,14 +211,21 @@ export const InvitationStore = signalStore(
       /**
        * Answer an invitation. `respond` stamps respondedAt and appends the answer as a comment;
        * a locked invitation is refused and the user is told why instead of silently doing nothing.
+       * @returns true when the answer was written
        */
-      async changeState(invitation: InvitationModel, newState: 'pending' | 'accepted' | 'declined'): Promise<void> {
+      async changeState(invitation: InvitationModel, newState: 'pending' | 'accepted' | 'declined'): Promise<boolean> {
         if (invitation.isLocked) {
           await notify(store.alertController, store.i18n.locked_title(), store.i18n.locked_hint(), store.i18n.ok());
-          return;
+          return false;
         }
-        await store.invitationService.respond(invitation, newState, store.currentUser());
+        if (!await this.isAnswerable(invitation)) return false;   // the event was cancelled, locked or is over
+        const answered = await store.invitationService.respond(invitation, newState, store.currentUser());
         this.reload();
+        return answered;
+      },
+
+      async isAnswerable(invitation: InvitationModel): Promise<boolean> {
+        return store.invitationService.isAnswerable(invitation);
       },
 
       async export(type: string): Promise<void> {

@@ -1,6 +1,6 @@
-import { AvatarInfo, InvitationModel, InvitationState } from '@okr/shared-models';
+import { AvatarInfo, CalEventModel, InvitationModel, InvitationState } from '@okr/shared-models';
 import { STORE_DATE_LENGTH } from '@okr/shared-constants';
-import { addIndexElement, isType } from '@okr/shared-util-core';
+import { addIndexElement, isCaleventAttendanceClosed, isType } from '@okr/shared-util-core';
 
 export function isInvitation(invitation: unknown, tenantId: string): invitation is InvitationModel {
   if (isType<InvitationModel>(invitation, new InvitationModel(tenantId))) {
@@ -9,6 +9,25 @@ export function isInvitation(invitation: unknown, tenantId: string): invitation 
     }
   }
   return false;
+}
+
+/** Only the invitee answers an invitation; everybody else only looks at it. */
+export function isOwnInvitation(invitation: InvitationModel, personKey: string | undefined): boolean {
+  return !!personKey && invitation.inviteeKey === personKey;
+}
+
+/**
+ * Whether the invitation can still be answered: not locked, and its event exists and is neither
+ * archived, past, locked nor cancelled — the event half of `isCountableInvitation` (badge, card and
+ * push gate share it), so an invitation the card leaves out cannot be answered either. A deleted
+ * event blocks the answer (spec 1.127 2.4); an invitation without caleventKey is answerable. Unlike
+ * `isCountableInvitation` it does not require `pending`: an answer may be changed
+ * (accepted -> declined) while the event is still open.
+ */
+export function isInvitationAnswerable(invitation: InvitationModel, calevent: CalEventModel | undefined): boolean {
+  if (invitation.isLocked) return false;
+  if (!invitation.caleventKey) return true;
+  return !!calevent && !calevent.isArchived && !isCaleventAttendanceClosed(calevent);
 }
 
 export function createPersonAvatar(key: string, name1: string, name2: string): AvatarInfo {

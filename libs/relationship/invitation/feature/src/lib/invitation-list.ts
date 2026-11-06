@@ -4,7 +4,7 @@ import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCo
 import { RoleName, InvitationModel } from '@okr/shared-models';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter } from '@okr/shared-ui';
-import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@okr/shared-util-angular';
 import { getItemLabel, getYearList, hasRole, contextMenuId } from '@okr/shared-util-core';
 import { I18nService, TranslatePipe } from '@okr/shared-i18n';
 
@@ -14,7 +14,7 @@ import { AvatarDisplay } from '@okr/avatar-ui';
 import { CALEVENT_I18N_KEYS } from '@okr/calendar-calevent-util';
 import { showCalEventInfo } from '@okr/calendar-calevent-ui';
 
-import { createPersonAvatar } from '@okr/relationship-invitation-util';
+import { createPersonAvatar, isOwnInvitation } from '@okr/relationship-invitation-util';
 import { InvitationStore } from './invitation.store';
 
 type InvitationSortField = 'date' | 'name' | 'invitee' | 'inviter' | 'state';
@@ -208,7 +208,8 @@ export class InvitationList {
    */
   protected async showActions(invitation: InvitationModel): Promise<void> {
     const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
-    this.addActionSheetButtons(actionSheetOptions);
+    const answerable = isOwnInvitation(invitation, this.currentUser()?.personKey) && await this.store.isAnswerable(invitation);
+    this.addActionSheetButtons(actionSheetOptions, invitation, answerable);
     await this.executeActions(actionSheetOptions, invitation);
   }
 
@@ -222,9 +223,20 @@ export class InvitationList {
 
   /**
    * Fills the ActionSheet with all possible actions, considering the user permissions.
-   * @param invitation 
+   * @param actionSheetOptions
+   * @param invitation
+   * @param answerable the user's own invitation, and it can still be answered
    */
-  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions): void {
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, invitation: InvitationModel, answerable: boolean): void {
+    if (answerable) {
+      if (invitation.state !== 'accepted') {
+        actionSheetOptions.buttons.push(createActionSheetButton('invitation.subscribe', this.store.i18n.subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
+      }
+      if (invitation.state !== 'declined') {
+        actionSheetOptions.buttons.push(createActionSheetButton('invitation.unsubscribe', this.store.i18n.unsubscribe(), this.imgixBaseUrl, 'cancel'));
+      }
+      actionSheetOptions.buttons.push(createActionSheetDivider());
+    }
     // edit and view open the same modal — offer the one the user's permissions allow, never both
     if (this.readOnly()) {
       actionSheetOptions.buttons.push(createActionSheetButton('invitation.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
@@ -249,6 +261,12 @@ export class InvitationList {
       const { data } = await actionSheet.onDidDismiss();
       if (!data) return;
       switch (data.action) {
+        case 'invitation.subscribe':
+          await this.store.changeState(invitation, 'accepted');
+          break;
+        case 'invitation.unsubscribe':
+          await this.store.changeState(invitation, 'declined');
+          break;
         case 'invitation.delete':
           await this.store.delete(invitation, !this.hasRole('admin'));
           break;
