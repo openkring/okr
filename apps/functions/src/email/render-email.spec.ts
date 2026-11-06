@@ -40,7 +40,7 @@ const textDoc = (tenant: string, currentVersion = 1): StoredTemplate => ({ kind:
 const STANDARD = { html: '<div class="std">{{app_name}} {{{content}}}{{#if contact_email}} {{contact_email}}{{/if}} (c) {{year}}</div>', text: 'STD\n{{{content}}}\n{{#if contact_email}}{{contact_email}}{{/if}}' };
 const PLAIN = { html: '<div class="plain">{{{content}}}</div>', text: 'PLAIN\n{{{content}}}' };
 const RESET = { subject: 'Passwort fuer {{app_name}}', html: '<p><a href="{{url}}">Link</a></p>', text: 'Link: {{{url}}}' };
-const SHARED_RESET = { subject: 'Shared {{app_name}}', html: '<p><a href="{{url}}">shared</a></p>', text: 'shared {{{url}}}' };
+const SHARED_RESET = { subject: 'Shared {{app_name}}', html: '<p><a href="{{url}}">shared</a></p>', text: 'shared\n{{{url}}}' };
 
 const base: Record<string, Entry> = {
   'email-layout_scs': { doc: layoutDoc('scs'), version: STANDARD },
@@ -86,7 +86,7 @@ describe('renderEmail', () => {
   it('compiles text and subject raw and html escaped', async () => {
     const read = readerOf(base);
     const mail = await renderEmail({ tenantId: 'scs', layout: 'standard', textKey: 'email-text-password-reset', variables: { url } }, read);
-    expect(mail.text).toContain(`shared ${url}`);
+    expect(mail.text).toContain(`shared\n${url}`);
     expect(mail.html).toContain('oobCode&#x3D;abc');
     expect(mail.html).not.toContain(url);
   });
@@ -266,7 +266,7 @@ describe('renderPasswordResetEmail', () => {
   });
 
   it('never hands the link to a template: a character lookup reads the token', async () => {
-    const read = resetText({ subject: 's', html: '<a href="{{{url}}}">x</a><i>{{lookup url 0}}{{lookup url 1}}{{lookup url 2}}{{lookup url 3}}</i>', text: '{{{url}}} <{{url.[0]}}{{url.[1]}}{{url.[2]}}{{url.[3]}}>' });
+    const read = resetText({ subject: 's', html: '<a href="{{{url}}}">x</a><i>{{lookup url 0}}{{lookup url 1}}{{lookup url 2}}{{lookup url 3}}</i>', text: '{{{url}}}\n<{{url.[0]}}{{url.[1]}}{{url.[2]}}{{url.[3]}}>' });
     const mail = await renderPasswordResetEmail('scs', vars, read);
     expect(mail?.html).toContain('<i>okr-</i>');
     expect(mail?.text).toContain('<okr->');
@@ -307,6 +307,7 @@ describe('renderPasswordResetEmail', () => {
     ['the subject', '<a href="{{{url}}}">x</a>', '{{{url}}}', 'Link {{{url}}}'],
     ['a text half without it', '<a href="{{{url}}}">x</a>', 'no link', 's'],
     ['a longer url in the text half', '<a href="{{{url}}}">x</a>', 'https://evil/?l={{{url}}}', 's'],
+    ['a url and a byte order mark in the text half', '<a href="{{{url}}}">x</a>', 'https://evil.example/?l=\ufeff{{{url}}}', 's'],
   ])('refuses %s', async (_, html, text, subject) => {
     await expect(renderPasswordResetEmail('scs', vars, resetText({ subject, html, text }))).resolves.toBeUndefined();
   });
@@ -387,6 +388,23 @@ describe('renderPasswordResetEmail', () => {
   it('collapses line breaks and doubled spaces inside the subject', async () => {
     const read = resetText({ subject: '  Passwort  neu\n  setzen\n', html: '<a href="{{{url}}}">x</a>', text: '{{{url}}}' });
     expect((await renderPasswordResetEmail('scs', vars, read))?.subject).toBe('Passwort neu setzen');
+  });
+
+  it('keeps the log helper from printing the recipient, in the text template and in the layout', async () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const layout = { html: '{{log this}}{{{content}}}', text: '{{log this}}{{{content}}}' };
+    const read = readerOf({
+      ...base,
+      'email-layout_scs': { doc: layoutDoc('scs'), version: layout },
+      'email-text-password-reset': { doc: textDoc('system'), version: { subject: '{{log this}}s', html: '{{log email}}<a href="{{{url}}}">x</a>', text: '{{log this}}\n{{{url}}}' } },
+    });
+    const mail = await renderPasswordResetEmail('scs', vars, read);
+    expect(mail?.subject).toBe('s');
+    expect(info).not.toHaveBeenCalled();
+    expect(log).not.toHaveBeenCalled();
+    info.mockRestore();
+    log.mockRestore();
   });
 
   it('never logs the link or the address', async () => {

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { compileTemplate } from './template-cache';
 
@@ -28,6 +28,21 @@ describe('compileTemplate', () => {
     const raw = await compileTemplate('k', '{{v}}', undefined, { noEscape: true });
     expect(escaped({ v: 'a=b&c' })).not.toBe('a=b&c');
     expect(raw({ v: 'a=b&c' })).toBe('a=b&c');
+  });
+
+  it('disables the log helper only when asked, and keeps that apart in the cache', async () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const quiet = await compileTemplate('l', '{{log v}}x', undefined, { noLog: true });
+    expect(quiet({ v: 'secret' })).toBe('x');
+    expect(info).not.toHaveBeenCalled();
+    expect(log).not.toHaveBeenCalled();
+
+    const pdf = await compileTemplate('l', '{{log v}}x');
+    expect(pdf({ v: 'secret' })).toBe('x');
+    expect([...info.mock.calls, ...log.mock.calls].flat()).toContain('secret');
+    info.mockRestore();
+    log.mockRestore();
   });
 
   it('renders a tenant name with & literally when noEscape is set', async () => {

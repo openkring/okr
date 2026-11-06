@@ -125,7 +125,7 @@ async function resolveLayout(read: TemplateReader, req: RenderEmailRequest, over
 }
 
 function compiled(t: Resolved, part: 'html' | 'text' | 'subject'): Promise<(vars: Record<string, string>) => string> {
-  return compileTemplate(`email:${t.okey}@${t.version}:${part}`, t[part], undefined, { noEscape: part !== 'html' });
+  return compileTemplate(`email:${t.okey}@${t.version}:${part}`, t[part], undefined, { noEscape: part !== 'html', noLog: true });
 }
 
 function attachmentNote(name: string, escape: (s: string) => string): { html: string; text: string } {
