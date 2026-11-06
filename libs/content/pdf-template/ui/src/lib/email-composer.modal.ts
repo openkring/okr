@@ -160,7 +160,7 @@ type ComposerSegment = 'editor' | 'preview' | 'list';
             <ion-card>
               <ion-card-content class="ion-no-padding">
                 @if (hasBody()) {
-                  <iframe class="preview-frame" [title]="i18n.preview_frame()" [srcdoc]="previewHtml()"></iframe>
+                  <iframe class="preview-frame" [title]="i18n.preview_frame()" sandbox="" [srcdoc]="previewHtml()"></iframe>
                 } @else {
                   <ion-note class="attachment">{{ i18n.preview_empty() }}</ion-note>
                 }

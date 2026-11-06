@@ -59,7 +59,7 @@ export function buildBrandedEmailHtml(bodyHtml: string, opts: BrandedEmailOption
     : '';
 
   const footerContact = opts.contactEmail
-    ? ` · <a href="mailto:${opts.contactEmail}" style="color:#888888;">${escapeHtml(opts.contactEmail)}</a>`
+    ? ` · <a href="mailto:${escapeHtml(opts.contactEmail)}" style="color:#888888;">${escapeHtml(opts.contactEmail)}</a>`
     : '';
 
   return `<!DOCTYPE html>

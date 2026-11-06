@@ -54,6 +54,12 @@ describe('buildBrandedEmailHtml', () => {
     expect(html).toContain('mailto:info@seeclub.org');
   });
 
+  it('escapes the contact email inside the mailto attribute', () => {
+    const html = buildBrandedEmailHtml('<p>x</p>', { ...base, contactEmail: 'a@b.ch"><script>alert(1)</script>' });
+    expect(html).toContain('href="mailto:a@b.ch&quot;&gt;&lt;script&gt;alert(1)&lt;/script&gt;"');
+    expect(html).not.toContain('<script>');
+  });
+
   it('omits the footer contact when no contactEmail is given', () => {
     const html = buildBrandedEmailHtml('<p>x</p>', { orgName: 'Org' });
     expect(html).not.toContain('mailto:');
