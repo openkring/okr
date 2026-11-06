@@ -3,8 +3,9 @@
 // The registry of inbound webhook senders. One entry per sender, added by the task
 // that owns the provider. The URL segment is the client's `id`.
 import type { WebhookClient } from './types';
+import { mailtrapClient } from '../email/mailtrap-webhook';
 
-export const WEBHOOK_CLIENTS: WebhookClient[] = [];
+export const WEBHOOK_CLIENTS: WebhookClient[] = [mailtrapClient];
 
 export function findClient(id: string): WebhookClient | undefined {
   return WEBHOOK_CLIENTS.find(c => c.id === id);
