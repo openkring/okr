@@ -2,9 +2,11 @@ import { describe, it, expect, vi } from 'vitest';
 import type { Request, Response } from 'firebase-functions/v2/https';
 
 vi.mock('./ingest', () => ({ ingest: vi.fn() }));
+vi.mock('firebase-functions/v2', () => ({ logger: { error: vi.fn(), warn: vi.fn() } }));
 
 import { clientFromPath, handleWebhook } from './http';
 import { ingest } from './ingest';
+import { logger } from 'firebase-functions/v2';
 import type { WebhookClient } from './types';
 
 describe('clientFromPath', () => {
@@ -36,5 +38,6 @@ describe('handleWebhook', () => {
     const res = makeRes();
     await handleWebhook(() => ({ id: 'x' }) as WebhookClient)(req, res as unknown as Response);
     expect(res.status).toHaveBeenCalledWith(500);
+    expect(logger.error).toHaveBeenCalledWith('webhooks: receiver failed', { clientId: 'x' });
   });
 });

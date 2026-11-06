@@ -17,6 +17,7 @@ export const onWebhookEvent = onDocumentCreated(
     const row = snap.data() as StoredWebhookEvent;
 
     await processWebhookEvent(row, snap.id, WEBHOOK_HANDLERS, {
+      readState: async () => ((await snap.ref.get()).data() as StoredWebhookEvent | undefined)?.state,
       update: patch => snap.ref.update(patch).then(() => undefined),
       reportFailure: async (failed, message) => {
         logger.error('webhooks: event failed', { clientId: failed.clientId, type: failed.type, error: message });

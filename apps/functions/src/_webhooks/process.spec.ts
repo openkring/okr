@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import type { WebhookEventState } from './types';
 import { Timestamp } from 'firebase-admin/firestore';
 import { processWebhookEvent, type ProcessDeps, type WebhookHandler } from './process';
 import type { StoredWebhookEvent } from './types';
@@ -16,8 +17,13 @@ function makeEvent(over: Partial<StoredWebhookEvent> = {}): StoredWebhookEvent {
   };
 }
 
-function makeDeps(): ProcessDeps & { update: ReturnType<typeof vi.fn>; reportFailure: ReturnType<typeof vi.fn> } {
-  return { update: vi.fn(async () => undefined), reportFailure: vi.fn(async () => undefined) };
+function makeDeps(...args: [] | [WebhookEventState | undefined]) {
+  const live = args.length ? args[0] : 'received';
+  return {
+    readState: vi.fn(async () => live),
+    update: vi.fn(async (_patch: unknown) => undefined),
+    reportFailure: vi.fn(async () => undefined),
+  } satisfies ProcessDeps;
 }
 
 describe('processWebhookEvent', () => {
@@ -47,11 +53,26 @@ describe('processWebhookEvent', () => {
     expect(deps.update).toHaveBeenCalledWith({ state: 'failed', error: 'kaputt' });
     expect(deps.reportFailure).toHaveBeenCalledWith(event, 'kaputt');
   });
-  it('does nothing when the row is no longer received', async () => {
-    const deps = makeDeps();
+  it('does nothing when the live row is settled, whatever the stale snapshot says', async () => {
+    const deps = makeDeps('handled');
     const handler = vi.fn(async () => ({ state: 'handled' as const }));
-    await processWebhookEvent(makeEvent({ state: 'handled' }), 'e1', { fake: handler }, deps);
+    await processWebhookEvent(makeEvent({ state: 'received' }), 'e1', { fake: handler }, deps);
     expect(handler).not.toHaveBeenCalled();
     expect(deps.update).not.toHaveBeenCalled();
+  });
+  it('does nothing when the row is gone', async () => {
+    const deps = makeDeps(undefined);
+    const handler = vi.fn(async () => ({ state: 'handled' as const }));
+    await processWebhookEvent(makeEvent(), 'e1', { fake: handler }, deps);
+    expect(handler).not.toHaveBeenCalled();
+    expect(deps.update).not.toHaveBeenCalled();
+  });
+  it('does not mark the row failed when only the success update throws', async () => {
+    const deps = makeDeps();
+    deps.update.mockRejectedValueOnce(new Error('write down'));
+    const handler: WebhookHandler = async () => ({ state: 'handled' });
+    await expect(processWebhookEvent(makeEvent(), 'e1', { fake: handler }, deps)).rejects.toThrow('write down');
+    expect(deps.reportFailure).not.toHaveBeenCalled();
+    expect(deps.update).toHaveBeenCalledTimes(1);
   });
 });
