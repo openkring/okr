@@ -436,7 +436,8 @@ export class EmailComposerModal {
     return buildBrandedEmailHtml(body, {
       orgName: cfg.appName,
       logoUrl,
-      contactEmail: cfg.opEmail,
+      // the tenant's own address, never `opEmail` (that is the platform operator, not the club)
+      contactEmail: this.defaultAddress(),
       attachmentFilename: this.filename(),
     });
   }
