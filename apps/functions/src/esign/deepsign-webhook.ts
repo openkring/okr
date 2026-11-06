@@ -49,7 +49,7 @@ export function deepSignUpdate(record: Record<string, unknown>, payload: DeepSig
     if (target?.['signStatus'] === 'signed') return null; // replay
     const eventTime = eventTimeOf(payload, now);
     const audit = FieldValue.arrayUnion({ type: 'signee-signed', at: eventTime, signeeId: payload.signeeId });
-    // Unknown signee on a live record: keep the audit entry, leave signees alone (as esign-webhook does).
+    // Unknown signee on a live record: keep the audit entry, leave signees alone.
     if (!target) return terminal ? null : { updatedAt: FieldValue.serverTimestamp(), events: audit };
     return {
       updatedAt: FieldValue.serverTimestamp(),
