@@ -66,6 +66,38 @@ describe('effectiveSender', () => {
     expect(effectiveSender('a@club.ch, b@evil.ch', config)).toBe(config.from);
   });
 
+  it('refuses more than 320 characters before any pattern runs', () => {
+    expect(effectiveSender(`${'a'.repeat(309)}@club.ch`, config)).toBe(`${'a'.repeat(309)}@club.ch`);
+    expect(effectiveSender(`${'a'.repeat(314)}@club.ch`, config)).toBe(config.from);
+    expect(effectiveSender(`"${'n'.repeat(100000)}" <info@club.ch>`, config)).toBe(config.from);
+    expect(effectiveSender(`${' '.repeat(321)}info@club.ch`, config)).toBe(config.from);
+  });
+
+  it.each([
+    ['a control character', 'in\u0001fo@club.ch'],
+    ['delete', 'in\u007ffo@club.ch'],
+    ['a line separator', 'in\u2028fo@club.ch'],
+    ['a paragraph separator', 'in\u2029fo@club.ch'],
+    ['an encoded word', 'x=?utf-8?q?y@club.ch'],
+    ['an encoded word in a named sender', 'Name <=?utf-8?q?y@club.ch>'],
+  ])('refuses %s in the local part', (_, from) => {
+    expect(effectiveSender(from, config)).toBe(config.from);
+  });
+
+  it.each([
+    ['a control character', '"Vor\u0001stand" <info@club.ch>'],
+    ['a tab', '"Vor\tstand" <info@club.ch>'],
+    ['delete', 'Vor\u007fstand <info@club.ch>'],
+    ['a line separator', '"Vor\u2028stand" <info@club.ch>'],
+    ['a paragraph separator', 'Vor\u2029stand <info@club.ch>'],
+  ])('refuses %s in the name', (_, from) => {
+    expect(effectiveSender(from, config)).toBe(config.from);
+  });
+
+  it('keeps an equals sign or a question mark on their own in the local part', () => {
+    expect(effectiveSender('a=b?c@club.ch', config)).toBe('a=b?c@club.ch');
+  });
+
   it('replaces every crafted string where two parsers would read two addresses', () => {
     const crafted = [
       '"<info@club.ch>" <x@evil.ch>',
