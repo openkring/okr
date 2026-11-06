@@ -12,6 +12,7 @@ import { EmailAttachment, sendEmailViaProvider } from './email-transport';
 import { findUserByLoginId } from './login-id';
 import { loginTenantsOf } from './login-tenants';
 import { loadTenantUser, restoreAuthEmail, withIndex } from './tenant-user';
+import { renderPasswordResetEmail } from '../email/render-email';
 import { reportToSentry } from '../srv/sentry';
 
 /** Storage prefixes that `generateDocument` writes generated documents to. */
@@ -602,6 +603,8 @@ export const sendEmail = functions.onCall(
     // What is actually handed to the provider — the password-reset path replaces the caller's
     // marker with the tenant's own Mailtrap template UUID from `app-config`.
     let templateRef = template;
+    // Plain-text alternative; only set when our own rendered template supplies it.
+    let text: string | undefined;
 
     // `template` doubles as the discriminator for the reset branch (unauthenticated, link
     // generated server-side). 'scs_password_reset' is the legacy spelling every tenant used to
@@ -697,9 +700,14 @@ export const sendEmail = functions.onCall(
       // into the password-reset email. `login_id` is '' for an email reset so a template that
       // references the variable still renders cleanly.
       templateVariables = { url: link, email: recipients[0], app_name: config.appName, login_id: resetLoginId };
-      // Per-tenant Mailtrap template (app-config.mailtrapPasswordResetTemplate). Without it the
-      // provider falls back to the inline plain-HTML body above.
-      if (config.passwordResetTemplate) templateRef = config.passwordResetTemplate;
+      // Our own rendered template wins; it never throws and returns undefined to fall through.
+      // Next source: per-tenant Mailtrap template (app-config.mailtrapPasswordResetTemplate).
+      // Without either the provider falls back to the inline plain-HTML body above.
+      const own = await renderPasswordResetEmail(appId, templateVariables);
+      if (own) {
+        ({ subject, html, text } = own);
+        templateRef = undefined;
+      } else if (config.passwordResetTemplate) templateRef = config.passwordResetTemplate;
       else logger.warn(`${CF_NAME}: no mailtrapPasswordResetTemplate in app-config/${appId} — sending the plain fallback body`);
       logger.info(`${CF_NAME}: generated reset link (appId=${appId}, provider=${provider})`);
     }
@@ -717,7 +725,7 @@ export const sendEmail = functions.onCall(
     const resolvedAttachments = isPasswordReset ? [] : await resolveAttachments(attachments, CF_NAME);
 
     try {
-      await sendEmailViaProvider(provider, { from, to: recipients, cc, bcc, subject, html: html ?? '', template: templateRef, templateVariables, attachments: resolvedAttachments });
+      await sendEmailViaProvider(provider, { from, to: recipients, cc, bcc, subject, html: html ?? '', text, template: templateRef, templateVariables, attachments: resolvedAttachments });
       logger.info(`${CF_NAME}: email sent to ${recipients.length} recipient(s)${resolvedAttachments.length ? ` with ${resolvedAttachments.length} attachment(s)` : ''}`);
       return { success: true };
     } catch (error: any) {
