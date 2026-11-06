@@ -3,7 +3,7 @@ import {
   ActionSheetController, ActionSheetOptions,
   IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
   IonIcon, IonItem, IonLabel, IonList, IonReorder, IonReorderGroup, IonThumbnail,
-  ItemReorderEventDetail, ModalController
+  ItemReorderEventDetail, ModalController, ToastController
 } from '@ionic/angular';
 
 import { getDownloadURL, ref } from 'firebase/storage';
@@ -88,6 +88,7 @@ export class ImagesConfiguration {
   private readonly storage = inject(STORAGE);
   private readonly uploadService = inject(UploadService);
   private readonly modalController = inject(ModalController);
+  private readonly toastController = inject(ToastController);
   private readonly actionSheetController = inject(ActionSheetController);
 
   // inputs
@@ -233,7 +234,7 @@ export class ImagesConfiguration {
   private async downloadImage(img: ImageConfig): Promise<void> {
     // img.url is normally a relative storage path; resolve it to a download URL.
     const url = img.url.startsWith('http') ? img.url : await getDownloadURL(ref(this.storage, img.url));
-    await downloadToBrowser(url);
+    await downloadToBrowser(this.toastController, url);
   }
 
   private async editImage(img: ImageConfig, index: number): Promise<void> {

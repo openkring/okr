@@ -1,6 +1,6 @@
 import { IMAGE_LOADER, ImageLoaderConfig, NgOptimizedImage, NgStyle } from '@angular/common';
 import { Component, computed, ElementRef, inject, input, viewChild } from '@angular/core';
-import { IonThumbnail, ModalController } from '@ionic/angular';
+import { IonThumbnail, ModalController, ToastController } from '@ionic/angular';
 import { Browser } from '@capacitor/browser';
 
 import { ENV } from '@okr/shared-config';
@@ -154,6 +154,7 @@ See <a href="https://sandbox.imgix.com/view?url=https://assets.imgix.net/~text?f
 })
 export class Img {
   private readonly modalController = inject(ModalController);
+  private readonly toastController = inject(ToastController);
   protected readonly env = inject(ENV);
 
   // inputs
@@ -250,9 +251,13 @@ export class Img {
   // now we eplicitely add imgixBaseUrl
   protected imgixUrl = computed(() => {
     const params = getSizedImgixParamsByExtension(this.url(), this.width(), this.height());
-    const url = getImgixUrl(this.url(), params);
-    return url.startsWith('tenant') ? this.env.services.imgixBaseUrl + '/' + url : url;
+    return this.toAbsoluteUrl(getImgixUrl(this.url(), params));
   });
+
+  /** Prepend the imgix base URL to a storage path ('tenant/...'); other urls are already absolute. */
+  private toAbsoluteUrl(url: string): string {
+    return url.startsWith('tenant') ? this.env.services.imgixBaseUrl + '/' + url : url;
+  }
 
   protected thumbnailUrl = computed(() => {
     return getThumbnailUrl(this.url(), this.width(), this.height());
@@ -278,7 +283,7 @@ export class Img {
         await Browser.open({ url: this.actionUrl() });
         break;
       case ImageActionType.Download:
-        await downloadToBrowser(this.url());
+        await downloadToBrowser(this.toastController, this.toAbsoluteUrl(this.url()));
         break;
       case ImageActionType.OpenDirectory:
       case ImageActionType.None:

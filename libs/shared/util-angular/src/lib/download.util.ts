@@ -5,6 +5,7 @@ import { Capacitor } from '@capacitor/core';
 import { Directory, Filesystem } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import { ToastController } from '@ionic/angular/lazy';
+import { captureException } from '@sentry/angular';
 import { saveAs } from 'file-saver';
 import { deleteObject, getDownloadURL, ref } from "firebase/storage";
 
@@ -233,12 +234,23 @@ export function downloadFileAndStore(file: File) {
 
 /**
  * Downloads a file to the browser by opening the download URL in a new window or tab.
+ * The native in-app browser only shows `http(s)` urls: pass a `blob:` url to `downloadFile`
+ * instead and resolve a bare storage path first. A failed open tells the user and is reported
+ * to Sentry, it never rejects. Do not await anything before Browser.open: on iOS Safari it has
+ * to stay inside the tap's user gesture.
+ * @param toastController shows the error if the file cannot be opened.
  * @param downloadUrl The URL to download the file from.
  * @returns A promise that resolves when the download starts.
  */
-  export async function downloadToBrowser(downloadUrl?: string): Promise<void> {
-    if (downloadUrl) {
-      Browser.open({ url: downloadUrl });
+  export async function downloadToBrowser(toastController: ToastController, downloadUrl?: string): Promise<void> {
+    if (!downloadUrl) return;
+    try {
+      await Browser.open({ url: downloadUrl });
+    } catch (ex) {
+      // only the scheme: a download url can carry an access token
+      const scheme = /^[a-z][a-z0-9+.-]*:/i.exec(downloadUrl)?.[0] ?? 'none';
+      captureException(ex, { tags: { download: 'browser-open-failed' }, extra: { scheme } });
+      await showToast(toastController, '@shared/ui.download.openFailed');
     }
   }
 

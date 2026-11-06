@@ -169,7 +169,7 @@ export const DocumentOrphansStore = signalStore(
     },
 
     async downloadDocument(file: StorageFileInfo): Promise<void> {
-      await downloadToBrowser(file.downloadUrl);
+      await downloadToBrowser(store.toastController, file.downloadUrl);
     },
 
     async deleteDocument(file: StorageFileInfo): Promise<void> {

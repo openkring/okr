@@ -1,6 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { AlertController, ModalController } from '@ionic/angular';
+import { AlertController, ModalController, ToastController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Observable, firstValueFrom, forkJoin, from, of } from 'rxjs';
 import { Router } from '@angular/router';
@@ -97,6 +97,7 @@ export const PageIntegrityStore = signalStore(
     pageService: inject(PageService),
     modalController: inject(ModalController),
     alertController: inject(AlertController),
+    toastController: inject(ToastController),
     i18nService: inject(I18nService)
   })),
   withProps(store => ({
@@ -430,7 +431,7 @@ export const PageIntegrityStore = signalStore(
       },
 
       async downloadImage(image: SectionImageRef): Promise<void> {
-        await downloadToBrowser(image.downloadUrl);
+        await downloadToBrowser(store.toastController, image.downloadUrl);
       },
 
       async deleteImage(image: SectionImageRef): Promise<void> {

@@ -474,7 +474,7 @@ export const AddressStore = signalStore(
           case 'facebook': return browseUrl(address.url, 'https://www.facebook.com/');
           case 'linkedin': return browseUrl(address.url, 'https://www.linkedin.com/in/');
           case 'instagram': return browseUrl(address.url, 'https://www.instagram.com/');
-          case 'bankaccount': return await downloadToBrowser(address.url);
+          case 'bankaccount': return await downloadToBrowser(store.toastController, address.url);
           default: warn('AddressesAccordionStore.use: unsupported address channel ' + address.addressChannel + ' for address ' + address.parentKey + '/' + address.okey);
         }
       },

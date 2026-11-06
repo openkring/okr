@@ -2,7 +2,7 @@ import { NgStyle } from '@angular/common';
 import { Component, computed, inject, input, output, Signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Browser } from '@capacitor/browser';
-import { IonButton, IonIcon, ModalController } from '@ionic/angular';
+import { IonButton, IonIcon, ModalController, ToastController } from '@ionic/angular';
 
 import { ColorsIonic, getCategoryStringField } from '@okr/shared-categories';
 import { ENV } from '@okr/shared-config';
@@ -49,6 +49,7 @@ interface ButtonWidgetI18n {
 })
 export class ButtonWidget {
   private readonly modalController = inject(ModalController);
+  private readonly toastController = inject(ToastController);
   private readonly router = inject(Router);
   protected readonly env = inject(ENV);
 
@@ -140,8 +141,8 @@ export class ButtonWidget {
     if (url) {
       switch (this.actionType()) {
         case ButtonAction.Download:
-          if (url.startsWith('http'))  await downloadToBrowser(url);
-          else                         await downloadToBrowser(this.imgixBaseUrl + '/' + url);
+          if (url.startsWith('http'))  await downloadToBrowser(this.toastController, url);
+          else                         await downloadToBrowser(this.toastController, this.imgixBaseUrl + '/' + url);
           break;
         case ButtonAction.Navigate:
           await navigateByUrl(this.router, this.url());

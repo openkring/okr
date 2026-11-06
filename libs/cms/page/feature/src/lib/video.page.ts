@@ -149,6 +149,6 @@ export class VideoPage {
   }
 
   protected async download(url: string): Promise<void> {
-    await downloadToBrowser(url);
+    await downloadToBrowser(this.toastController, url);
   }
 }

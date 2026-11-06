@@ -1,6 +1,6 @@
 import { provideImgixLoader } from '@angular/common';
 import { Component, HostListener, computed, inject, input, linkedSignal } from '@angular/core';
-import { IonButton, IonContent, IonIcon, ModalController } from '@ionic/angular';
+import { IonButton, IonContent, IonIcon, ModalController, ToastController } from '@ionic/angular';
 
 import { IMAGE_CONFIG_SHAPE, ImageConfig, ImageStyle } from '@okr/shared-models';
 import { ENV } from '@okr/shared-config';
@@ -142,6 +142,7 @@ import { ImageDetailModal } from './image-detail.modal';
 export class ImageViewModal {
   private readonly env = inject(ENV);
   private readonly modalController = inject(ModalController);
+  private readonly toastController = inject(ToastController);
 
   // inputs
   // Single-image entry point (kept for callers that zoom one image).
@@ -185,7 +186,7 @@ export class ImageViewModal {
   });
 
   protected async download(): Promise<void> {
-    await downloadToBrowser(this.imgixUrl());
+    await downloadToBrowser(this.toastController, this.imgixUrl());
   }
 
   /** The read-only info modal reads storage metadata + EXIF, so it only works for storage paths. */

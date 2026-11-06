@@ -261,7 +261,7 @@ export class AlbumSectionComponent {
       return;
     }
     if (image.type !== ImageType.Image) {
-      if (image.actionUrl) await downloadToBrowser(image.actionUrl);
+      if (image.actionUrl) await downloadToBrowser(this.store.toastController, image.actionUrl);
       else browse(image.url);
       return;
     }

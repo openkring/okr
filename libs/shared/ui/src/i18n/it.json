@@ -1,4 +1,7 @@
 {
+  "download": {
+    "openFailed": "Impossibile aprire il file. Riprova."
+  },
   "map": "Mappa",
   "allYears": "Tutti gli anni",
   "upcomingMonths": "Prossimamente",

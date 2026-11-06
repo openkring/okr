@@ -119,7 +119,7 @@ export class VideoViewModal implements OnInit {
   }
 
   protected async download(): Promise<void> {
-    if (this.actionUrl()) await downloadToBrowser(this.actionUrl());
+    if (this.actionUrl()) await downloadToBrowser(this.toastController, this.actionUrl());
   }
 
   /**

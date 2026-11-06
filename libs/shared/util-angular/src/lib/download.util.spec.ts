@@ -1,5 +1,8 @@
 import { DomSanitizer } from '@angular/platform-browser';
+import type { ToastController } from '@ionic/angular/lazy';
+import { captureException } from '@sentry/angular';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { showToast } from './alert.util';
 import {
     downloadFilesAsZip,
     downloadTextFile,
@@ -19,6 +22,10 @@ vi.mock('@capacitor/browser', () => ({
   Browser: {
     open: vi.fn()
   }
+}));
+
+vi.mock('@sentry/angular', () => ({
+  captureException: vi.fn()
 }));
 
 vi.mock('firebase/storage', () => ({
@@ -130,16 +137,47 @@ describe('download.util', () => {
   });
 
   describe('downloadToBrowser', () => {
+    const toastController = {} as ToastController;
+
     it('should open browser with downloadUrl', async () => {
       const { Browser } = await import('@capacitor/browser');
-      await downloadToBrowser('https://example.com/file');
+      await downloadToBrowser(toastController, 'https://example.com/file');
       expect(Browser.open).toHaveBeenCalledWith({ url: 'https://example.com/file' });
+      expect(showToast).not.toHaveBeenCalled();
     });
 
     it('should not open browser if url is undefined', async () => {
       const { Browser } = await import('@capacitor/browser');
-      await downloadToBrowser(undefined);
+      await downloadToBrowser(toastController, undefined);
       expect(Browser.open).not.toHaveBeenCalled();
+    });
+
+    it('calls Browser.open before its first await, so it stays inside the tap on iOS Safari', async () => {
+      const { Browser } = await import('@capacitor/browser');
+      void downloadToBrowser(toastController, 'https://example.com/file');
+      expect(Browser.open).toHaveBeenCalledTimes(1);
+    });
+
+    it('tells the user and reports to Sentry when the open is rejected (SCS-E9)', async () => {
+      const { Browser } = await import('@capacitor/browser');
+      const rejection = new Error('Unable to display URL');
+      vi.mocked(Browser.open).mockRejectedValueOnce(rejection);
+
+      await expect(downloadToBrowser(toastController, 'blob:capacitor://localhost/1')).resolves.toBeUndefined();
+
+      expect(showToast).toHaveBeenCalledWith(toastController, '@shared/ui.download.openFailed');
+      expect(captureException).toHaveBeenCalledWith(rejection, expect.objectContaining({
+        extra: { scheme: 'blob:' },
+      }));
+    });
+
+    it('never reports the url itself, a download url can carry an access token', async () => {
+      const { Browser } = await import('@capacitor/browser');
+      vi.mocked(Browser.open).mockRejectedValueOnce(new Error('Unable to display URL'));
+
+      await downloadToBrowser(toastController, 'tenant/scs/secret.jpg');
+
+      expect(JSON.stringify(vi.mocked(captureException).mock.calls[0][1])).not.toContain('secret');
     });
   });
 
