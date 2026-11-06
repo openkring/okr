@@ -44,7 +44,7 @@ const SANITIZE_OPTIONS = {
   allowVulnerableTags: true,
 };
 
-async function sanitizeWith(html: string, options: typeof SANITIZE_OPTIONS): Promise<string> {
+async function sanitizeWith(html: string, options: Record<string, unknown>): Promise<string> {
   const sanitize = (await import('sanitize-html')).default;
   return sanitize(html, options);
 }
@@ -54,12 +54,17 @@ export function sanitizeHtml(html: string): Promise<string> {
   return sanitizeWith(html, SANITIZE_OPTIONS);
 }
 
-// A composed mail is read in a mail client, not rendered by Puppeteer: plain http links are common in
-// hand-typed text, and a tel: link is the point of a phone number in a signature. Images stay TLS or
-// data only, so a mail cannot make the reader's client fetch over cleartext.
+// A composed mail is read in a mail client and has its own policy: no document structure or <style>
+// (the layout supplies them, and a <style> block in the body could restyle the whole mail), only inline
+// style attributes. Links take https, http, mailto and tel (plain http and tel are normal in typed text);
+// `data:` is for images only, never for a link. Images stay https or data, so the reader's client does
+// not fetch over cleartext.
 const EMAIL_SANITIZE_OPTIONS = {
-  ...SANITIZE_OPTIONS,
-  allowedSchemes: ['https', 'http', 'data', 'mailto', 'tel'],
+  allowedTags: SANITIZE_OPTIONS.allowedTags.filter((tag) => !['html', 'head', 'body', 'style'].includes(tag)),
+  allowedAttributes: SANITIZE_OPTIONS.allowedAttributes,
+  allowedSchemes: ['https', 'http', 'mailto', 'tel'],
+  allowedSchemesByTag: { img: ['https', 'data'] },
+  allowProtocolRelative: false,
 };
 
 /** Sanitize the body of a composed mail (composer, mail jobs, invoice mails). */

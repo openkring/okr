@@ -50,6 +50,19 @@ describe('resolveJobContent', () => {
     expect(compose).not.toHaveBeenCalled();
   });
 
+  it('passes layout standard for a missing or unknown layout and drops a non-text attachment name', async () => {
+    const compose = vi.fn(async () => rendered);
+    await resolveJobContent({ ...job([]), body: '<p>x</p>', layout: 'fancy' as never, attachmentName: 5 as never }, 'scs', compose);
+    expect(compose).toHaveBeenCalledWith('scs', { body: '<p>x</p>', layout: 'standard', attachmentName: undefined });
+  });
+
+  it('fails a job with a blank or non-text body', async () => {
+    const compose = vi.fn(async () => rendered);
+    await expect(resolveJobContent({ ...job([]), body: '  ' }, 'scs', compose)).rejects.toThrow();
+    await expect(resolveJobContent({ ...job([]), body: 7 as never }, 'scs', compose)).rejects.toThrow();
+    expect(compose).not.toHaveBeenCalled();
+  });
+
   it('prefers the body when a job carries both', async () => {
     const compose = vi.fn(async () => rendered);
     expect((await resolveJobContent({ ...job([]), body: '<p>b</p>' }, 'scs', compose)).html).toBe(rendered.html);

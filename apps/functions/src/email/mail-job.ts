@@ -22,6 +22,7 @@ import { bareAddress, effectiveSender, getAppEmailConfig } from '../auth/email-t
 import { DEFAULT_EMAIL_PROVIDER, sendEmailViaProvider } from '../auth/email-transport';
 import { AttachmentRef, resolveAttachments } from '../auth';
 import { composeBody } from './render-email';
+import { asLayoutChoice } from './render-email.logic';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'onMailJob';
@@ -72,8 +73,11 @@ export async function resolveJobContent(
   tenantId: string,
   compose: typeof composeBody = composeBody
 ): Promise<{ html: string; text: string | undefined }> {
-  if (typeof job.body === 'string') {
-    const { html, text } = await compose(tenantId, { body: job.body, layout: job.layout, attachmentName: job.attachmentName });
+  if (job.body !== undefined) {
+    // A body that is not text or holds no text would go out as an empty framed mail: fail the job instead.
+    if (typeof job.body !== 'string' || !job.body.trim()) throw new Error('The mail job has an empty body.');
+    const attachmentName = typeof job.attachmentName === 'string' && job.attachmentName.trim() ? job.attachmentName.trim() : undefined;
+    const { html, text } = await compose(tenantId, { body: job.body, layout: asLayoutChoice(job.layout), attachmentName });
     return { html, text };
   }
   if (typeof job.html !== 'string') throw new Error('The mail job has neither a body nor html.');

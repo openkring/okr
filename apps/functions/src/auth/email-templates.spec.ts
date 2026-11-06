@@ -66,6 +66,40 @@ describe('effectiveSender', () => {
     expect(effectiveSender('a@club.ch, b@evil.ch', config)).toBe(config.from);
   });
 
+  it('replaces every crafted string where two parsers would read two addresses', () => {
+    const crafted = [
+      '"<info@club.ch>" <x@evil.ch>',
+      '<info@club.ch> <x@evil.ch>',
+      '<info@club.ch>, <x@evil.ch>',
+      '<info@club.ch>, x@evil.ch',
+      '<info@club.ch>x@evil.ch',
+      'Group: x@evil.ch; <info@club.ch>',
+      'x@evil.ch <info@club.ch>',
+      '"a" <info@club.ch> x@evil.ch',
+      '"a" <info@club.ch>, "b" <x@evil.ch>',
+      'a, b <info@club.ch>',
+    ];
+    for (const value of crafted) expect(effectiveSender(value, config), value).toBe(config.from);
+  });
+
+  it('replaces a non-string, also an array that holds a permitted address', () => {
+    for (const value of [123, ['a@club.ch'], ['<a@club.ch>', 'x@evil.ch'], {}, null]) {
+      expect(effectiveSender(value, config)).toBe(config.from);
+    }
+  });
+
+  it('refuses a domain without a dot', () => {
+    expect(effectiveSender('x@ch', { from: config.from, senderDomain: 'ch' })).toBe(config.from);
+    expect(effectiveSender('x@club', { from: config.from, senderDomain: 'club' })).toBe(config.from);
+  });
+
+  it('returns a permitted sender rebuilt from its parts', () => {
+    expect(effectiveSender('  Vorstand   <info@club.ch>  ', config)).toBe('"Vorstand" <info@club.ch>');
+    expect(effectiveSender('"Vorstand Club" <info@club.ch>', config)).toBe('"Vorstand Club" <info@club.ch>');
+    expect(effectiveSender('<info@club.ch>', config)).toBe('info@club.ch');
+    expect(effectiveSender(' info@club.ch ', config)).toBe('info@club.ch');
+  });
+
   it('falls back to the tenant sender when the tenant has no sender domain', () => {
     expect(effectiveSender('info@club.ch', { from: config.from, senderDomain: '' })).toBe(config.from);
   });

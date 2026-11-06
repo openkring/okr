@@ -66,11 +66,12 @@ async function previewTemplate(request: CallableRequest<RenderPreviewRequest>, t
     throw new HttpsError('invalid-argument', 'templateKey and a version of 1 or more are required.');
   }
   const { doc, version: stored } = await firestoreTemplateReader(templateKey, version);
-  if (!doc || !stored) throw new HttpsError('not-found', 'The template or its version does not exist.');
+  // The tenant first: a template that is foreign or missing answers the same, whatever its versions are.
   if (!mayPreviewTemplate(doc, tenantId)) {
     logger.warn(`${CF_NAME}: tenant ${tenantId} may not preview ${templateKey}`);
     throw new HttpsError('permission-denied', 'Diese Vorlage gehört zu einer anderen App.');
   }
+  if (!doc || !stored) throw new HttpsError('not-found', 'The version does not exist.');
   const previewVersion = { okey: templateKey, version };
   if (doc.kind === 'emailLayout') {
     return renderEmail({ tenantId, layout: 'standard', body: SAMPLE_BODY, includeContact: true, previewVersion });

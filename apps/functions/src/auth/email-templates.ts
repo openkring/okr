@@ -98,20 +98,50 @@ export function bareAddress(from: string): string {
   return /<([^>]+)>/.exec(from)?.[1] ?? from.trim();
 }
 
-const SENDER_ADDRESS = /^[^\s@<>,;"]+@([^\s@<>,;"]+)$/;
+const ADDRESS_PART = '[^\\s@<>,;:"\\\\()\\[\\]]+';
+const ADDRESS = `${ADDRESS_PART}@([A-Za-z0-9-]+(?:\\.[A-Za-z0-9-]+)+)`;
+const BARE_SENDER = new RegExp(`^(${ADDRESS})$`);
+/** `[name] <addr>`: the name is plain text, quoted or not; nothing may follow the closing `>`. */
+const NAME_CHAR = '[^<>,;:"\\\\@\\r\\n]';
+const NAMED_SENDER = new RegExp(`^(?:"(${NAME_CHAR}*)"|(${NAME_CHAR}*))\\s*<(${ADDRESS})>$`);
 
 /**
- * The sender a caller-supplied `from` may become: itself when its address is on the tenant's sending
- * domain (equal, or either side a subdomain of the other, as `isSenderDomainAllowed` for the composer),
- * else the tenant's own sender. The decision is on the parsed address, never on the display name, so a
- * name like `"info@club.ch" <x@evil.ch>` does not pass. A line break or a second address fails the
- * address pattern and falls back too. Never used on the password-reset path, which has `config.from`.
+ * The sender a caller-supplied `from` may become, or the tenant's own sender.
+ *
+ * The whole string is parsed once and must be exactly a bare address or `[name] <address>`; the name
+ * may hold none of `< > , ; : " @ \`, and nothing may follow the `>`. Every transport reads a sender in
+ * its own way (Mailtrap's `parseFrom`, nodemailer's address parser), so a string that is valid in one
+ * reading and different in another must never get through. Anything else, a non-string included, is
+ * replaced. A permitted sender is returned REBUILT from the parsed parts (`"name" <address>` or the bare
+ * address), so a crafted string never reaches the transport.
+ *
+ * Permitted: the address domain equals the tenant's sending domain or either is a subdomain of the
+ * other (as `isSenderDomainAllowed` for the composer). Never used on the password-reset path.
  */
-export function effectiveSender(from: string | undefined, config: { from: string; senderDomain: string }): string {
-  if (!from) return config.from;
-  const domain = SENDER_ADDRESS.exec(bareAddress(from))?.[1]?.toLowerCase();
+export function effectiveSender(from: unknown, config: { from: string; senderDomain: string }): string {
+  if (typeof from !== 'string') return config.from;
+  const text = from.trim();
   const expected = (config.senderDomain ?? '').trim().toLowerCase();
-  if (!domain || !expected || /[\r\n]/.test(from)) return config.from;
-  const allowed = domain === expected || domain.endsWith(`.${expected}`) || expected.endsWith(`.${domain}`);
-  return allowed ? from : config.from;
+  if (!text || !expected) return config.from;
+
+  let address: string;
+  let domain: string;
+  let name = '';
+  const bare = BARE_SENDER.exec(text);
+  const named = bare ? null : NAMED_SENDER.exec(text);
+  if (bare) {
+    address = bare[1];
+    domain = bare[2];
+  } else if (named) {
+    name = (named[1] ?? named[2] ?? '').trim();
+    address = named[3];
+    domain = named[4];
+  } else {
+    return config.from;
+  }
+
+  const d = domain.toLowerCase();
+  const allowed = d === expected || d.endsWith(`.${expected}`) || expected.endsWith(`.${d}`);
+  if (!allowed) return config.from;
+  return name ? `"${name}" <${address}>` : address;
 }
