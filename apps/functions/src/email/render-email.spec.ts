@@ -189,6 +189,22 @@ describe('renderPasswordResetEmail', () => {
     expect(reportToSentry).toHaveBeenCalledTimes(1);
   });
 
+  it('returns undefined when the subject is missing or renders empty', async () => {
+    const withSubject = (subject: string | undefined) =>
+      readerOf({ ...base, 'email-text-password-reset': { doc: textDoc('system'), version: { subject, html: '<a href="{{url}}">x</a>', text: '{{{url}}}' } } });
+    await expect(renderPasswordResetEmail('scs', vars, withSubject(undefined))).resolves.toBeUndefined();
+    await expect(renderPasswordResetEmail('scs', vars, withSubject('{{#if login_id}}Konto {{login_id}}{{/if}}'))).resolves.toBeUndefined();
+    await expect(renderPasswordResetEmail('scs', vars, withSubject('  \n'))).resolves.toBeUndefined();
+    expect(logger.error).toHaveBeenCalledTimes(3);
+    expect(reportToSentry).toHaveBeenCalledTimes(3);
+  });
+
+  it('trims a subject with a trailing newline', async () => {
+    const read = readerOf({ ...base, 'email-text-password-reset': { doc: textDoc('system'), version: { subject: 'Passwort zuruecksetzen\n', html: '<a href="{{url}}">x</a>', text: '{{{url}}}' } } });
+    const mail = await renderPasswordResetEmail('scs', vars, read);
+    expect(mail?.subject).toBe('Passwort zuruecksetzen');
+  });
+
   it('never logs the link or the address', async () => {
     const noLink = readerOf({ ...base, 'email-text-password-reset': { doc: textDoc('system'), version: { subject: 's', html: 'x', text: 'x' } } });
     await renderPasswordResetEmail('scs', vars, noLink);

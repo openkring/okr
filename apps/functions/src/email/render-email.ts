@@ -200,7 +200,10 @@ export async function renderPasswordResetEmail(
     const link = variables['url'] ?? '';
     const { default: Handlebars } = await import('handlebars');
     if (!link || !resetLinkPresent(mail, link, Handlebars.escapeExpression(link))) return await fail('The rendered mail lacks the link', 'link-missing');
-    return mail;
+    // The caller needs a subject: an empty one would make the send throw with no fallback.
+    const subject = mail.subject.trim();
+    if (!subject) return await fail('The rendered mail has no subject', 'subject-missing');
+    return { ...mail, subject };
   } catch (error) {
     if (error instanceof EmailTemplateError && error.code === 'no-standard-layout') {
       logger.info('Password reset: tenant has no standard email layout yet', { tenantId });
