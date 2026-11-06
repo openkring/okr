@@ -1,3 +1,4 @@
+import { forkKeyFor } from '@okr/shared-util-core';
 import {
   EmailLayoutKey, EmailTextPasswordResetKey, TemplateKind, TemplateModel, TemplateVersionModel,
 } from '@okr/shared-models';
@@ -51,11 +52,22 @@ export function canDeleteEmailTemplate(okey: string): boolean {
 /**
  * What copying a shared email template does, given the tenant's document under the fixed id:
  * none yet creates it, a live one is opened, an archived one (a tenant's delete only archives)
- * is reset to the shared content.
+ * is reset to the shared content. A live doc with neither a published nor a draft version is
+ * what a copy interrupted midway leaves behind, so it is reset too instead of staying empty.
  */
 export function emailCopyPlan(
-  existing: Pick<TemplateModel, 'isArchived'> | undefined
+  existing: Pick<TemplateModel, 'isArchived' | 'currentVersion' | 'draftVersion'> | undefined
 ): 'create' | 'open' | 'reset' {
   if (!existing) return 'create';
-  return existing.isArchived ? 'reset' : 'open';
+  if (existing.isArchived) return 'reset';
+  return !existing.currentVersion && !existing.draftVersion ? 'reset' : 'open';
+}
+
+/**
+ * The document id of a tenant's copy of an email template. A key that already names this
+ * tenant's copy is returned unchanged, so copying a copy never gives `<okey>_scs_scs`.
+ */
+export function emailCopyKey(okey: string, tenantId: string): string {
+  const suffix = '_' + tenantId;
+  return okey.endsWith(suffix) ? okey : forkKeyFor(okey, tenantId);
 }

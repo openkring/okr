@@ -2,7 +2,7 @@ import '@angular/compiler';
 import { describe, it, expect } from 'vitest';
 import { TemplateModel } from '@okr/shared-models';
 import {
-  canDeleteEmailTemplate, emailCopyPlan, emailPublishProblem, isEmailTemplate, templateKindOf,
+  canDeleteEmailTemplate, emailCopyKey, emailCopyPlan, emailPublishProblem, isEmailTemplate, templateKindOf,
 } from './email-template.util';
 
 describe('templateKindOf', () => {
@@ -66,9 +66,34 @@ describe('canDeleteEmailTemplate', () => {
 });
 
 describe('emailCopyPlan', () => {
+  const live = { isArchived: false, currentVersion: 1, draftVersion: undefined };
+
   it('plans the copy from what exists', () => {
     expect(emailCopyPlan(undefined)).toBe('create');
-    expect(emailCopyPlan({ isArchived: false })).toBe('open');
-    expect(emailCopyPlan({ isArchived: true })).toBe('reset');
+    expect(emailCopyPlan(live)).toBe('open');
+    expect(emailCopyPlan({ ...live, isArchived: true })).toBe('reset');
+  });
+
+  it('opens a copy that is not yet active but has a draft', () => {
+    expect(emailCopyPlan({ isArchived: false, currentVersion: 0, draftVersion: 1 })).toBe('open');
+  });
+
+  it('resets a live doc with neither pointer, left by an interrupted copy', () => {
+    expect(emailCopyPlan({ isArchived: false, currentVersion: 0, draftVersion: undefined })).toBe('reset');
+    expect(emailCopyPlan({ isArchived: false, currentVersion: 0, draftVersion: null as unknown as undefined })).toBe('reset');
+  });
+});
+
+describe('emailCopyKey', () => {
+  it('appends the tenant to a shared key', () => {
+    expect(emailCopyKey('email-layout', 'scs')).toBe('email-layout_scs');
+  });
+
+  it('keeps a key that already names the tenant copy', () => {
+    expect(emailCopyKey('email-layout_scs', 'scs')).toBe('email-layout_scs');
+  });
+
+  it('still appends for another tenant', () => {
+    expect(emailCopyKey('email-layout_scs', 'abc')).toBe('email-layout_scs_abc');
   });
 });

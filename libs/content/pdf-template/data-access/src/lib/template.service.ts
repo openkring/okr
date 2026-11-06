@@ -11,8 +11,8 @@ import {
   TemplateCollection, TemplateVersionSubcollection,
   TemplateModel, TemplateVersionModel, UserModel,
 } from '@okr/shared-models';
-import { copyTemplate, copyTemplateVersion, emailCopyPlan, getTemplateIndex, isEmailTemplate, templateKindOf } from '@okr/content-pdf-template-util';
-import { getTodayStr, DateFormat, forkKeyFor, getSystemQuery } from '@okr/shared-util-core';
+import { copyTemplate, copyTemplateVersion, emailCopyKey, emailCopyPlan, getTemplateIndex, isEmailTemplate, templateKindOf } from '@okr/content-pdf-template-util';
+import { getTodayStr, DateFormat, getSystemQuery } from '@okr/shared-util-core';
 import { PFX } from './scope';
 
 @Injectable({ providedIn: 'root' })
@@ -132,58 +132,68 @@ export class TemplateService {
 
   /**
    * Give the tenant its own copy of a shared email template, under the fixed id
-   * `<okey>_<tenantId>` (design 7.3). The name stays unchanged. The copy starts as an
+   * `<okey>_<tenantId>` (design 7.3; a key that already ends in `_<tenantId>` is used as is). The name stays unchanged. The copy starts as an
    * unpublished draft (`currentVersion` 0), which the server does not use, so the shared
    * text stays in effect until the tenant publishes.
    *
    * The document under the fixed id is read with `getDoc`, because a tenant's delete only
    * archives it and a cached read could hide that:
    * - none: create it with the source content as draft 1
-   * - live: nothing is written, the key is returned
+   * - live: nothing is written, the key is returned (unless an interrupted copy left it with no
+   *   version at all, then it is reset like an archived one)
    * - archived: reset it and save the source content as the next free draft number
    *
    * @return the key of the tenant's copy, or undefined if the source could not be read or a write failed
    */
   public async copyEmailTemplate(template: TemplateModel, currentUser?: UserModel): Promise<string | undefined> {
     const fs = this.firestoreService.firestore;
-    const key = forkKeyFor(template.okey, this.env.tenantId);
-    const existing = await getDoc(doc(fs, TemplateCollection, key));
-    const plan = emailCopyPlan(existing.exists() ? (existing.data() as TemplateModel) : undefined);
-    if (plan === 'open') return key;
+    const key = emailCopyKey(template.okey, this.env.tenantId);
+    try {
+      const existing = await getDoc(doc(fs, TemplateCollection, key));
+      const plan = emailCopyPlan(existing.exists() ? (existing.data() as TemplateModel) : undefined);
+      if (plan === 'open') return key;
 
-    // the source content: the version its template points at, read fresh
-    const sourceTemplate = await getDoc(doc(fs, TemplateCollection, template.okey));
-    if (!sourceTemplate.exists()) return undefined;
-    const sourceVersionNo = (sourceTemplate.data() as TemplateModel).currentVersion;
-    if (!sourceVersionNo) return undefined;
-    const sourceVersion = await getDoc(
-      doc(fs, TemplateCollection, template.okey, TemplateVersionSubcollection, String(sourceVersionNo))
-    );
-    if (!sourceVersion.exists()) return undefined;
-    const source = sourceVersion.data() as TemplateVersionModel;
+      // the source content: the version its template points at, read fresh
+      const sourceTemplate = await getDoc(doc(fs, TemplateCollection, template.okey));
+      if (!sourceTemplate.exists()) return undefined;
+      const sourceVersionNo = (sourceTemplate.data() as TemplateModel).currentVersion;
+      if (!sourceVersionNo) return undefined;
+      const sourceVersion = await getDoc(
+        doc(fs, TemplateCollection, template.okey, TemplateVersionSubcollection, String(sourceVersionNo))
+      );
+      if (!sourceVersion.exists()) return undefined;
+      const source = sourceVersion.data() as TemplateVersionModel;
 
-    let draftNo = 1;
-    if (plan === 'create') {
-      const created = await this.firestoreService.createModel<TemplateModel>(
-        TemplateCollection, { ...copyTemplate(template, ''), okey: key },
-        undefined, undefined, currentUser
-      );
-      if (!created) return undefined;
-    } else {
-      const versions = await getDocs(collection(fs, TemplateCollection, key, TemplateVersionSubcollection));
-      draftNo = 1 + versions.docs.reduce(
-        (max, d) => Math.max(max, Number((d.data() as TemplateVersionModel).version) || Number(d.id) || 0), 0
-      );
+      let draftNo = 1;
+      if (plan === 'create') {
+        const created = await this.firestoreService.createModel<TemplateModel>(
+          TemplateCollection, { ...copyTemplate(template, ''), okey: key },
+          undefined, undefined, currentUser
+        );
+        if (!created) return undefined;
+      } else {
+        const versions = await getDocs(collection(fs, TemplateCollection, key, TemplateVersionSubcollection));
+        draftNo = 1 + versions.docs.reduce(
+          (max, d) => Math.max(max, Number((d.data() as TemplateVersionModel).version) || Number(d.id) || 0), 0
+        );
+      }
+
+      // the draft is saved before the template points at it, so a failed write leaves an archived doc unchanged
+      const saved = await this.saveDraftVersion(key, copyTemplateVersion(source, draftNo), currentUser);
+      if (!saved) return undefined;
+      const pointer = plan === 'create'
+        ? { draftVersion: draftNo }
+        : {
+            isArchived: false, currentVersion: 0, status: 'draft', draftVersion: draftNo,
+            updatedAt: getTodayStr(DateFormat.StoreDate), updatedBy: currentUser?.okey ?? '',
+          };
+      await updateDoc(doc(fs, TemplateCollection, key), pointer);
+      return key;
+    } catch (ex) {
+      // an interrupted copy leaves a live doc with no version pointer; the next call resets it
+      console.error(`TemplateService.copyEmailTemplate(${template.okey}) -> ERROR:`, ex);
+      return undefined;
     }
-
-    // the draft is saved before the template points at it, so a failed write leaves an archived doc unchanged
-    const saved = await this.saveDraftVersion(key, copyTemplateVersion(source, draftNo), currentUser);
-    if (!saved) return undefined;
-    const pointer = plan === 'create'
-      ? { draftVersion: draftNo }
-      : { isArchived: false, currentVersion: 0, status: 'draft', draftVersion: draftNo };
-    await updateDoc(doc(fs, TemplateCollection, key), pointer);
-    return key;
   }
 
   public async delete(template: TemplateModel, currentUser?: UserModel): Promise<void> {
