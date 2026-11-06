@@ -68,10 +68,10 @@ describe('resolveJobContent', () => {
     expect(compose).not.toHaveBeenCalled();
   });
 
-  it('passes layout standard for a missing or unknown layout and drops a non-text attachment name', async () => {
+  it('passes layout standard for a missing or unknown layout, and the attachment name as it came', async () => {
     const compose = vi.fn(async () => rendered);
     await resolveJobContent({ ...job([]), body: '<p>x</p>', layout: 'fancy' as never, attachmentName: 5 as never }, 'scs', compose);
-    expect(compose).toHaveBeenCalledWith('scs', { body: '<p>x</p>', layout: 'standard', attachmentName: undefined });
+    expect(compose).toHaveBeenCalledWith('scs', { body: '<p>x</p>', layout: 'standard', attachmentName: 5 });
   });
 
   it('fails a job with a blank or non-text body', async () => {

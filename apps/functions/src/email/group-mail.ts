@@ -99,7 +99,7 @@ export function groupMailContent(data: Pick<GroupEmailRequest, 'body' | 'layout'
     return {
       body,
       layout: asLayoutChoice(data.layout),
-      ...(typeof attachmentName === 'string' && attachmentName.trim() ? { attachmentName: attachmentName.trim() } : {}),
+      ...(typeof attachmentName === 'string' ? { attachmentName } : {}),
     };
   }
   if (typeof html !== 'string') throw new HttpsError('invalid-argument', 'body is required.');

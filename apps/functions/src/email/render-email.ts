@@ -128,7 +128,6 @@ function compiled(t: Resolved, part: 'html' | 'text' | 'subject'): Promise<(vars
   return compileTemplate(`email:${t.okey}@${t.version}:${part}`, t[part], undefined, { noEscape: part !== 'html' });
 }
 
-/** Same wording as `buildBrandedEmailHtml`. */
 function attachmentNote(name: string, escape: (s: string) => string): { html: string; text: string } {
   return {
     html: `<p style="border-top:1px solid #eeeeee;padding-top:16px;color:#555555;font-size:14px;">📎 Beilage: <strong>${escape(name)}</strong></p>`,
@@ -189,14 +188,16 @@ export async function renderEmail(req: RenderEmailRequest, read: TemplateReader 
  */
 export async function composeBody(
   tenantId: string,
-  input: { body: string; layout?: EmailLayoutChoice; attachmentName?: string },
+  input: { body: string; layout?: EmailLayoutChoice; attachmentName?: unknown },
   read: TemplateReader = firestoreTemplateReader
 ): Promise<RenderedEmail> {
   const body = await sanitizeEmailBody(input.body);
   // Checked after sanitising: a body of nothing but dropped tags would go out as an empty framed mail.
   if (!htmlToText(body) && !/<img\s[^>]*\bsrc=/i.test(body)) throw new EmailTemplateError('The mail body is empty', 'no-content');
+  // The name arrives from a client on every path: anything but real text means no note.
+  const attachmentName = typeof input.attachmentName === 'string' ? input.attachmentName.trim() : '';
   return renderEmail(
-    { tenantId, layout: input.layout ?? 'standard', body, attachmentName: input.attachmentName, includeContact: true },
+    { tenantId, layout: input.layout ?? 'standard', body, attachmentName: attachmentName || undefined, includeContact: true },
     read
   );
 }
@@ -236,7 +237,8 @@ export async function renderPasswordResetEmail(
     const placed = link ? placeResetLink({ ...mail, html: await sanitizeResetMail(mail.html) }, token, link) : undefined;
     if (!placed) return await fail('The rendered mail has no valid place for the link', 'link-refused');
     // The caller needs a subject: an empty one would make the send throw with no fallback.
-    const subject = mail.subject.trim();
+    // A template's line breaks or doubled spaces have no place in a header.
+    const subject = mail.subject.replace(/\s+/g, ' ').trim();
     if (!subject) return await fail('The rendered mail has no subject', 'subject-missing');
     return { ...placed, subject };
   } catch (error) {

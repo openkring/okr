@@ -135,7 +135,8 @@ export interface NormalizedInvoiceMail {
   /** Set when the mail came as a body: the server wraps it. */
   body?: string;
   layout?: EmailLayoutChoice;
-  attachmentName?: string;
+  /** As the client sent it; `composeBody` reads it. */
+  attachmentName?: unknown;
   extraAttachments: InlineMailAttachment[];
 }
 
@@ -171,7 +172,6 @@ export function normalizeComposedMail(mail: ComposedInvoiceMail, defaultFrom: st
   const text = hasBody ? mail.body : mail.html;
   const content = typeof text === 'string' ? text : '';
   if (content.replace(/<[^>]*>/g, '').trim().length === 0) return { ok: false, reason: 'no-body' };
-  const attachmentName = typeof mail.attachmentName === 'string' ? mail.attachmentName.trim() : '';
   const rawAttachments = mail.extraAttachments ?? [];
   if (!Array.isArray(rawAttachments)) return { ok: false, reason: 'bad-attachment' };
   const extraAttachments: InlineMailAttachment[] = [];
@@ -183,5 +183,5 @@ export function normalizeComposedMail(mail: ComposedInvoiceMail, defaultFrom: st
   }
   const common = { to, cc, bcc, from: fromRaw || defaultFrom, subject, extraAttachments };
   if (!hasBody) return { ok: true, mail: { ...common, html: content } };
-  return { ok: true, mail: { ...common, html: '', body: content, layout: asLayoutChoice(mail.layout), ...(attachmentName ? { attachmentName } : {}) } };
+  return { ok: true, mail: { ...common, html: '', body: content, layout: asLayoutChoice(mail.layout), attachmentName: mail.attachmentName } };
 }

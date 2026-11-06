@@ -14,12 +14,11 @@
 
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { logger } from 'firebase-functions/v2';
-import { getFirestore } from 'firebase-admin/firestore';
 
 import type { EmailLayoutChoice } from '@okr/shared-models';
 
-import { bareAddress, effectiveSender, getAppEmailConfig } from '../auth/email-templates';
-import { DEFAULT_EMAIL_PROVIDER, sendEmailViaProvider } from '../auth/email-transport';
+import { bareAddress, effectiveSender, getAppEmailConfig, getEmailProvider } from '../auth/email-templates';
+import { sendEmailViaProvider } from '../auth/email-transport';
 import { AttachmentRef, resolveAttachments } from '../auth';
 import { composeBody } from './render-email';
 import { asLayoutChoice } from './render-email.logic';
@@ -57,12 +56,6 @@ export interface MailJobDoc {
   error?: string;
 }
 
-/** The tenant's configured provider, same lookup the workflow outbox uses. */
-async function providerFor(tenantId: string): Promise<string> {
-  const snap = await getFirestore().collection('app-config').doc(tenantId).get();
-  return String(snap.data()?.['emailProvider'] ?? DEFAULT_EMAIL_PROVIDER);
-}
-
 /**
  * The one tenant a job belongs to, or undefined unless it names exactly one. The sender check and the
  * layout both read this tenant, and with a second one in `tenants` a client would pick which.
@@ -86,8 +79,7 @@ export async function resolveJobContent(
   if (job.body !== undefined) {
     // A body that is not text or holds no text would go out as an empty framed mail: fail the job instead.
     if (typeof job.body !== 'string' || !job.body.trim()) throw new Error('The mail job has an empty body.');
-    const attachmentName = typeof job.attachmentName === 'string' && job.attachmentName.trim() ? job.attachmentName.trim() : undefined;
-    const { html, text } = await compose(tenantId, { body: job.body, layout: asLayoutChoice(job.layout), attachmentName });
+    const { html, text } = await compose(tenantId, { body: job.body, layout: asLayoutChoice(job.layout), attachmentName: job.attachmentName });
     return { html, text };
   }
   if (typeof job.html !== 'string') throw new Error('The mail job has neither a body nor html.');
@@ -140,7 +132,7 @@ export const onMailJob = onDocumentCreated(
       // The sender must be on the tenant's domain; a job from a tampered client falls back to the tenant sender.
       const from = effectiveSender(job.from, await getAppEmailConfig(tenantId));
       const { html, text } = await resolveJobContent(job, tenantId);
-      const provider = await providerFor(tenantId);
+      const provider = await getEmailProvider(tenantId);
       const attachments = await resolveAttachments(job.attachments, CF_NAME);
       const blocks = mailJobBlocks(job, from);
       blocksTotal = blocks.length;

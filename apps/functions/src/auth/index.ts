@@ -687,7 +687,7 @@ export const sendEmail = functions.onCall(
         ({ html, text } = await composeBody(appId, {
           body: request.data.body,
           layout: asLayoutChoice(request.data.layout),
-          attachmentName: typeof request.data.attachmentName === 'string' && request.data.attachmentName.trim() ? request.data.attachmentName.trim() : undefined,
+          attachmentName: request.data.attachmentName,
         }));
       } catch (error) {
         // No address, no body in the log or the report: only what identifies the cause.

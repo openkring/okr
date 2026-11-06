@@ -94,6 +94,8 @@ export async function reportToSentry(report: SentryReport): Promise<void> {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-sentry-envelope' },
       body: envelope,
+      // A report runs on the password-reset path, which must not hang on Sentry.
+      signal: AbortSignal.timeout(3000),
     });
     if (!response.ok) {
       logger.debug(`reportToSentry: Sentry rejected the envelope (${response.status})`);

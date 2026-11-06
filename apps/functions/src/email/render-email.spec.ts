@@ -384,6 +384,11 @@ describe('renderPasswordResetEmail', () => {
     expect(mail?.subject).toBe('Passwort zuruecksetzen');
   });
 
+  it('collapses line breaks and doubled spaces inside the subject', async () => {
+    const read = resetText({ subject: '  Passwort  neu\n  setzen\n', html: '<a href="{{{url}}}">x</a>', text: '{{{url}}}' });
+    expect((await renderPasswordResetEmail('scs', vars, read))?.subject).toBe('Passwort neu setzen');
+  });
+
   it('never logs the link or the address', async () => {
     const noLink = readerOf({ ...base, 'email-text-password-reset': { doc: textDoc('system'), version: { subject: 's', html: 'x', text: 'x' } } });
     await renderPasswordResetEmail('scs', vars, noLink);
@@ -413,6 +418,14 @@ describe('composeBody', () => {
   it('appends the attachment note', async () => {
     const mail = await composeBody('scs', { body: '<p>x</p>', attachmentName: 'R1.pdf' }, readerOf(base));
     expect(mail.html).toContain('<strong>R1.pdf</strong>');
+  });
+
+  it('trims the attachment name and drops a blank or non-text one', async () => {
+    const mail = await composeBody('scs', { body: '<p>x</p>', attachmentName: '  R1.pdf ' }, readerOf(base));
+    expect(mail.html).toContain('<strong>R1.pdf</strong>');
+    for (const attachmentName of ['   ', 5, null, undefined]) {
+      expect((await composeBody('scs', { body: '<p>x</p>', attachmentName }, readerOf(base))).html).not.toContain('Beilage');
+    }
   });
 
   it('throws when no layout is usable', async () => {

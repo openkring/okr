@@ -2,12 +2,12 @@ import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https
 import { logger } from 'firebase-functions/v2';
 import { DocumentReference, Firestore, getFirestore } from 'firebase-admin/firestore';
 
-import { DEFAULT_REMINDER_DUE_DAYS, EmailLayoutChoice, FinanceDocumentCollection, InvoiceCollection } from '@okr/shared-models';
+import { DEFAULT_REMINDER_DUE_DAYS, FinanceDocumentCollection, InvoiceCollection } from '@okr/shared-models';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId } from '@okr/shared-util-functions';
 
-import { DEFAULT_EMAIL_PROVIDER, EmailAttachment, sendEmailViaProvider } from '../auth/email-transport';
-import { effectiveSender, getAppEmailConfig } from '../auth/email-templates';
+import { EmailAttachment, sendEmailViaProvider } from '../auth/email-transport';
+import { effectiveSender, getAppEmailConfig, getEmailProvider } from '../auth/email-templates';
 import { composeBody, EmailTemplateError, RenderedEmail } from '../email/render-email';
 import { privateBucket } from '../_storage/private-bucket';
 import { reportToSentry } from '../srv/sentry';
@@ -160,7 +160,7 @@ async function prepareInvoiceMail(db: Firestore, tenantId: string, data: Invoice
  * The body in the tenant's layout. A failure refuses the send with nothing sent (design 8); the
  * log and the report carry the cause code only, never the body or an address.
  */
-async function wrapBody(tenantId: string, documentKey: string, input: { body: string; layout?: EmailLayoutChoice; attachmentName?: string }): Promise<RenderedEmail> {
+async function wrapBody(tenantId: string, documentKey: string, input: Parameters<typeof composeBody>[1]): Promise<RenderedEmail> {
   try {
     return await composeBody(tenantId, input);
   } catch (e) {
@@ -258,8 +258,7 @@ export const sendInvoiceEmail = onCall(
     attachments.push(...extra);
     const attachedLabel = prepared.invoicePdfPath ? `${prepared.filename} + ${prepared.invoiceFilename}` : prepared.filename;
 
-    const providerSnap = await db.collection('app-config').doc(tenantId).get();
-    const provider = String(providerSnap.data()?.['emailProvider'] ?? DEFAULT_EMAIL_PROVIDER);
+    const provider = await getEmailProvider(tenantId);
     const recipients = to.length + cc.length + bcc.length;
 
     try {
