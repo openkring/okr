@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../auth/email-templates', () => ({
@@ -38,7 +40,7 @@ const textDoc = (tenant: string, currentVersion = 1): StoredTemplate => ({ kind:
 const STANDARD = { html: '<div class="std">{{app_name}} {{{content}}}{{#if contact_email}} {{contact_email}}{{/if}} (c) {{year}}</div>', text: 'STD\n{{{content}}}\n{{#if contact_email}}{{contact_email}}{{/if}}' };
 const PLAIN = { html: '<div class="plain">{{{content}}}</div>', text: 'PLAIN\n{{{content}}}' };
 const RESET = { subject: 'Passwort fuer {{app_name}}', html: '<p><a href="{{url}}">Link</a></p>', text: 'Link: {{{url}}}' };
-const SHARED_RESET = { subject: 'Shared {{app_name}}', html: '<p>shared {{url}}</p>', text: 'shared {{{url}}}' };
+const SHARED_RESET = { subject: 'Shared {{app_name}}', html: '<p><a href="{{url}}">shared</a></p>', text: 'shared {{{url}}}' };
 
 const base: Record<string, Entry> = {
   'email-layout_scs': { doc: layoutDoc('scs'), version: STANDARD },
@@ -78,6 +80,17 @@ describe('renderEmail', () => {
     expect(mail.html).toContain('Seeclub');
     expect(mail.html).not.toContain('Spoof');
     expect(mail.html).toContain(`(c) ${new Date().getFullYear()}`);
+  });
+
+  it('gives the layout the shared variables and the content, never a caller variable', async () => {
+    const nosy = { html: '[{{url}}|{{email}}|{{login_id}}]{{app_name}}{{{content}}}', text: '[{{url}}|{{email}}|{{login_id}}]{{{content}}}' };
+    const read = readerOf({ ...base, 'email-layout_scs': { doc: layoutDoc('scs'), version: nosy } });
+    const variables = { url: 'https://a.ch/secret', email: 'x@example.org', login_id: 'anna' };
+    for (const req of [{ textKey: 'email-text-password-reset' }, { body: '<p>x</p>' }]) {
+      const mail = await renderEmail({ tenantId: 'scs', layout: 'standard', variables, ...req }, read);
+      expect(mail.html).toContain('[||]Seeclub');
+      expect(mail.text).toContain('[||]');
+    }
   });
 
   it('wraps a body in the standard layout and derives the text half', async () => {
@@ -198,10 +211,59 @@ describe('template ownership', () => {
 describe('renderPasswordResetEmail', () => {
   const vars = { url, email: 'x@example.org', app_name: 'Seeclub', login_id: '' };
 
+  const resetText = (version: Entry['version']) => readerOf({ ...base, 'email-text-password-reset': { doc: textDoc('system'), version } });
+
   it('renders the reset mail through the standard layout', async () => {
     const mail = await renderPasswordResetEmail('scs', vars, readerOf(base));
     expect(mail?.subject).toBe('Shared Seeclub');
     expect(mail?.text).toContain(url);
+    expect(mail?.html).toContain('<a href="https://app.example.org/auth/confirm?mode=resetPassword&amp;oobCode=abc">shared</a>');
+  });
+
+  it('places the link into the seeded templates', async () => {
+    const dir = resolve(__dirname, '../../../../scripts/email-templates');
+    const source = (name: string) => readFileSync(resolve(dir, name), 'utf8');
+    const read = readerOf({
+      'email-layout_scs': { doc: layoutDoc('scs'), version: { html: source('layout-standard.html'), text: source('layout-standard.txt') } },
+      'email-text-password-reset': { doc: textDoc('system'), version: { html: source('text-password-reset.html'), text: source('text-password-reset.txt'), subject: source('text-password-reset.subject.txt') } },
+    });
+    const mail = await renderPasswordResetEmail('scs', { ...vars, login_id: 'anna' }, read);
+    expect(mail?.html).toContain('<a href="https://app.example.org/auth/confirm?mode=resetPassword&amp;oobCode=abc" target="_blank"');
+    expect(mail?.text).toContain(url);
+    expect(mail?.html).toContain('<strong>anna</strong>');
+  });
+
+  it('never hands the link to a template: a character lookup reads the token', async () => {
+    const read = resetText({ subject: 's', html: '<a href="{{{url}}}">x</a><i>{{lookup url 0}}{{lookup url 1}}{{lookup url 2}}{{lookup url 3}}</i>', text: '{{{url}}} <{{url.[0]}}{{url.[1]}}{{url.[2]}}{{url.[3]}}>' });
+    const mail = await renderPasswordResetEmail('scs', vars, read);
+    expect(mail?.html).toMatch(/<i>[0-9a-f-]{4}<\/i>/);
+    expect(mail?.text).toMatch(/<[0-9a-f-]{4}>/);
+    expect(mail?.html).not.toContain('<i>http');
+    expect(mail?.text).not.toContain('<http');
+  });
+
+  it('leaves no token in the mail the recipient gets', async () => {
+    const mail = await renderPasswordResetEmail('scs', vars, resetText({ subject: 's', html: '<a href="{{{url}}}">x</a>', text: '{{{url}}}' }));
+    expect(mail).toBeDefined();
+    expect(`${mail?.html}${mail?.text}`).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-/);
+  });
+
+  it.each([
+    ['an image', '<img src="{{{url}}}"><a href="{{{url}}}">x</a>', '{{{url}}}', 's'],
+    ['a longer url', '<a href="https://evil/?l={{{url}}}">x</a>', '{{{url}}}', 's'],
+    ['the subject', '<a href="{{{url}}}">x</a>', '{{{url}}}', 'Link {{{url}}}'],
+    ['the text half missing it', '<a href="{{{url}}}">x</a>', 'no link', 's'],
+    ['visible text', '<a href="{{{url}}}">x</a> {{url}}', '{{{url}}}', 's'],
+  ])('falls to the next source with the token in %s', async (_, html, text, subject) => {
+    await expect(renderPasswordResetEmail('scs', vars, resetText({ subject, html, text }))).resolves.toBeUndefined();
+    expect(logger.error).toHaveBeenCalledTimes(1);
+    expect(reportToSentry).toHaveBeenCalledTimes(1);
+  });
+
+  it('falls to the next source when a layout copies the content into an attribute', async () => {
+    const layout = { html: '<div title="{{content}}">{{{content}}}</div>', text: '{{{content}}}' };
+    const read = readerOf({ ...base, 'email-layout_scs': { doc: layoutDoc('scs'), version: layout } });
+    await expect(renderPasswordResetEmail('scs', vars, read)).resolves.toBeUndefined();
   });
 
   it('returns undefined from renderPasswordResetEmail on a broken template and never throws', async () => {

@@ -1,6 +1,7 @@
 // apps/functions/src/email/render-email.ts
 // The only place that composes a mail: a layout (standard or plain) around either a text template
 // or a composer body. Templates are found by fixed document id (design 7.2), never chosen per send.
+import { randomUUID } from 'node:crypto';
 import { getFirestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 import {
@@ -19,7 +20,7 @@ import { sanitizeEmailBody } from '../pdf/sanitize';
 import { compileTemplate } from '../pdf/template-cache';
 import { reportToSentry } from '../srv/sentry';
 import { htmlToText } from './html-to-text';
-import { isUsableEmailTemplate, layoutHasContent, resetLinkPresent, SHARED_TEMPLATE_OWNER, StoredTemplate } from './render-email.logic';
+import { isUsableEmailTemplate, layoutHasContent, placeResetLink, SHARED_TEMPLATE_OWNER, StoredTemplate } from './render-email.logic';
 
 type StoredVersion = Pick<TemplateVersionModel, 'html' | 'text' | 'subject'>;
 
@@ -57,6 +58,7 @@ export interface RenderEmailRequest {
   textKey?: string;
   /** Composer body, already sanitised by the caller. */
   body?: string;
+  /** For the text template only: the layout, also tenant-editable, sees the shared variables and the content. */
   variables?: Record<string, string>;
   attachmentName?: string;
   /** Passes `contact_email` to the layout (composer mail only). */
@@ -134,14 +136,14 @@ export async function renderEmail(req: RenderEmailRequest, read: TemplateReader 
   const { default: Handlebars } = await import('handlebars');
   const cfg = await getAppEmailConfig(req.tenantId);
 
-  // Shared variables come last: a caller must not spoof the footer or the app link.
-  const vars: Record<string, string> = {
-    ...req.variables,
+  const shared: Record<string, string> = {
     app_name: cfg.appName,
     app_url: `https://${cfg.appDomain}`,
     year: String(new Date().getFullYear()),
     ...(req.includeContact ? { contact_email: cfg.contactEmail } : {}),
   };
+  // Shared variables come last: a caller must not spoof the footer or the app link.
+  const textVars = { ...req.variables, ...shared };
 
   const preview = req.previewVersion ? await resolvePreview(read, req.previewVersion) : undefined;
   const layout = await resolveLayout(read, req, preview?.kind === 'emailLayout' ? preview.template : undefined);
@@ -152,9 +154,9 @@ export async function renderEmail(req: RenderEmailRequest, read: TemplateReader 
   if (req.textKey) {
     const text = preview?.kind === 'emailText' ? preview.template : await resolveTemplate(read, req.tenantId, 'emailText', req.textKey);
     if (!text) throw new EmailTemplateError('No usable email text', 'no-text');
-    contentHtml = (await compiled(text, 'html'))(vars);
-    contentText = (await compiled(text, 'text'))(vars);
-    subject = (await compiled(text, 'subject'))(vars);
+    contentHtml = (await compiled(text, 'html'))(textVars);
+    contentText = (await compiled(text, 'text'))(textVars);
+    subject = (await compiled(text, 'subject'))(textVars);
   } else if (req.body !== undefined) {
     contentHtml = req.body;
     contentText = htmlToText(req.body);
@@ -171,8 +173,8 @@ export async function renderEmail(req: RenderEmailRequest, read: TemplateReader 
   if (!layoutHasContent(layout.html) || !layoutHasContent(layout.text)) {
     throw new EmailTemplateError('The email layout has no content slot', 'layout-without-content');
   }
-  const html = (await compiled(layout, 'html'))({ ...vars, content: contentHtml });
-  const text = (await compiled(layout, 'text'))({ ...vars, content: contentText });
+  const html = (await compiled(layout, 'html'))({ ...shared, content: contentHtml });
+  const text = (await compiled(layout, 'text'))({ ...shared, content: contentText });
   return { subject, html, text };
 }
 
@@ -196,6 +198,9 @@ export async function composeBody(
 /**
  * The reset mail from our own templates, or `undefined` when the caller should fall to the next
  * source. A password reset must never fail because of a template, so this never throws.
+ *
+ * Templates are tenant-editable and the link opens any account, so they render a random token as `url`.
+ * The link replaces the token only afterwards, and only where `placeResetLink` allows (design 7.5).
  */
 export async function renderPasswordResetEmail(
   tenantId: string,
@@ -214,17 +219,18 @@ export async function renderPasswordResetEmail(
   };
 
   try {
+    const link = variables['url'] ?? '';
+    const token = randomUUID();
     const mail = await renderEmail(
-      { tenantId, layout: 'standard', textKey: EmailTextPasswordResetKey, noPlainFallback: true, variables },
+      { tenantId, layout: 'standard', textKey: EmailTextPasswordResetKey, noPlainFallback: true, variables: { ...variables, url: token } },
       read
     );
-    const link = variables['url'] ?? '';
-    const { default: Handlebars } = await import('handlebars');
-    if (!link || !resetLinkPresent(mail, link, Handlebars.escapeExpression(link))) return await fail('The rendered mail lacks the link', 'link-missing');
+    const placed = link ? placeResetLink(mail, token, link) : undefined;
+    if (!placed) return await fail('The rendered mail has no valid place for the link', 'link-refused');
     // The caller needs a subject: an empty one would make the send throw with no fallback.
     const subject = mail.subject.trim();
     if (!subject) return await fail('The rendered mail has no subject', 'subject-missing');
-    return { ...mail, subject };
+    return { ...placed, subject };
   } catch (error) {
     if (error instanceof EmailTemplateError && error.code === 'no-standard-layout') {
       logger.info('Password reset: tenant has no standard email layout yet', { tenantId });
