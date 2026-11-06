@@ -60,6 +60,9 @@ export const MENU_I18N_KEYS = {
   submenu_offset_placeholder:     PFX + 'submenu_offset.placeholder',
   submenu_offset_helper:          PFX + 'submenu_offset.helper',
 
+  // shown to admins in place of a `sub` row that reached a segmented bar
+  bar_segment_sub:                PFX + 'bar.segment_sub',
+
   error_save:                     PFX + 'error.save',
   error_load:                     PFX + 'error.load',
   error_delete:                   PFX + 'error.delete',

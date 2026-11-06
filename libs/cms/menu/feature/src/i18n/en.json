@@ -304,6 +304,9 @@
     "placeholder": "5",
     "helper": "Indent of the submenu entries in pixels (0 to 40). For a menu at the top, the gap below the dropdown."
   },
+  "bar": {
+    "segment_sub": "A segmented menu cannot show submenus"
+  },
   "item": {
     "task-my": "My tasks",
     "icon-sync": "Synchronise storage",

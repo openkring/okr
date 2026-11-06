@@ -304,6 +304,9 @@
     "placeholder": "5",
     "helper": "Rientro delle voci dei sotto-menu in pixel (0 a 40). In un menu in alto, lo spazio sotto il menu a tendina."
   },
+  "bar": {
+    "segment_sub": "Un menu a segmenti non può mostrare sottomenu"
+  },
   "item": {
     "task-my": "Le mie attività",
     "icon-sync": "Sincronizza archiviazione",

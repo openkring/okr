@@ -304,6 +304,9 @@
     "placeholder": "5",
     "helper": "Einzug der Untermenü-Einträge in Pixel (0 bis 40). Bei einem Menü oben der Abstand unter dem Aufklappmenü."
   },
+  "bar": {
+    "segment_sub": "Ein Segment-Menü kann keine Untermenüs zeigen"
+  },
   "item": {
     "task-my": "Meine Aufgaben",
     "icon-sync": "Storage synchronisieren",

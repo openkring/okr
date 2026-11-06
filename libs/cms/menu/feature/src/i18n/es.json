@@ -304,6 +304,9 @@
     "placeholder": "5",
     "helper": "Sangría de las entradas del submenú en píxeles (0 a 40). En un menú superior, el espacio bajo el desplegable."
   },
+  "bar": {
+    "segment_sub": "Un menú por segmentos no puede mostrar submenús"
+  },
   "item": {
     "task-my": "Mis tareas",
     "icon-sync": "Sincronizar almacenamiento",

@@ -3,7 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import { filter, map, startWith } from 'rxjs/operators';
-import { IonApp, IonButton, IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonMenu, IonRouterOutlet, IonSplitPane, IonToolbar, ModalController } from '@ionic/angular';
+import { IonApp, IonButton, IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonMenu, IonRouterOutlet, IonSplitPane, IonToolbar, MenuController, ModalController } from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
 import { AppStore } from '@okr/shared-feature';
@@ -12,14 +12,14 @@ import { BootError, Spinner, ConnectionStatusButton, AvatarUser } from '@okr/sha
 import { coerceBoolean, getImgixUrlWithAutoParams, hasRole } from '@okr/shared-util-core';
 
 import { AuthInfo } from '@okr/auth-ui';
-import { Menu, MenuLayout } from '@okr/cms-menu-feature';
+import { Menu, MenuBar, MenuLayout } from '@okr/cms-menu-feature';
 import { ProfileEditModal } from '@okr/profile-feature';
 import { CookieBanner } from '@okr/consent-ui';
 import { ConsentService } from '@okr/consent-data-access';
 
 @Component({
   imports: [
-    Menu, AuthInfo, BootError, Spinner, ConnectionStatusButton, AvatarUser, CookieBanner,
+    Menu, MenuBar, AuthInfo, BootError, Spinner, ConnectionStatusButton, AvatarUser, CookieBanner,
     IonApp, IonSplitPane, IonMenu, IonHeader, IonContent, IonToolbar, IonRouterOutlet, IonButton, IonButtons,
     IonLabel, IonItem
 ],
@@ -115,7 +115,7 @@ import { ConsentService } from '@okr/consent-data-access';
       -->
     <ion-app>
       <okr-cookie-banner />
-      <ion-split-pane contentId="main" [disabled]="!showMenu()" (ionSplitPaneVisible)="onSplitPaneVisible($event)">
+      <ion-split-pane contentId="main" [disabled]="!showMenu() || menuLayout.barActive()" (ionSplitPaneVisible)="onSplitPaneVisible($event)">
         @if(showMenu()) {
         <ion-menu [side]="menuLayout.side()" menuId="main" contentId="main" type="overlay" (ionWillOpen)="menuOpened.set(true)">
           <ion-header>
@@ -171,7 +171,7 @@ import { ConsentService } from '@okr/consent-data-access';
           content inside it. The .ion-page class fills the pane when the split-pane is
           disabled/not-visible (matching ion-router-outlet's own absolute fill).
         -->
-        <div id="main" class="ion-page">
+        <div id="main" class="ion-page" [style.--okr-menu-bar-top]="barShown() ? menuLayout.barTop() : null">
           <!--
             The <ion-router-outlet> must ALWAYS stay in the DOM. Removing it (e.g. via
             @if) while an Ionic navigation transition is in flight destroys the
@@ -181,7 +181,17 @@ import { ConsentService } from '@okr/consent-data-access';
             app.routes.ts); here we only overlay a spinner on top of the still-mounted
             outlet during the not-ready window.
           -->
-          <ion-router-outlet />
+          <!--
+            The menu bar (menu-layouts spec §6): one instance, absolutely positioned at the top of
+            #main while a bar layout is active and the menu is wanted at all. The outlet moves down
+            by the bar's height and gives the safe area to the bar (bindings on the outlet below).
+            --okr-menu-bar-top sits on #main, not on the outlet: the outlet zeroes
+            --ion-safe-area-top for its pages, which would zero the bar's own share as well.
+          -->
+          @if (barShown()) {
+            <okr-menu-bar />
+          }
+          <ion-router-outlet [style.top]="barShown() ? 'var(--okr-menu-bar-top)' : null" [style.--ion-safe-area-top]="barShown() ? '0px' : null" />
           @if (isDegradedSession()) {
             <div class="app-ready-overlay">
               <div class="degraded-message">
@@ -252,8 +262,18 @@ export class OkrRoot {
   protected readonly menuOpened = signal(false);
   protected readonly menuMounted = computed(() => this.splitPaneVisible() || this.menuOpened());
 
+  private readonly menuController = inject(MenuController);
+  /**
+   * The one switch for the main menu and every <ion-menu-button> in the app: enable() flips
+   * `disabled`, which emits ionMenuChange, the only event autoHide listens to. A bar layout
+   * replaces the menu, so the menu is off then.
+   */
+  private readonly syncMenuEnabled = effect(() => void this.menuController.enable(this.showMenu() && !this.menuLayout.barActive(), 'main'));
+
   /** Where the menu sits (left or right) and, later, whether a bar replaces it; see the menu-layouts spec. */
   protected readonly menuLayout = inject(MenuLayout);
+  /** Whether the menu bar is on screen: a bar layout, on a route that wants a menu. */
+  protected readonly barShown = computed(() => this.showMenu() && this.menuLayout.barActive());
   /** Connects the layout to the menu list once the tree is mounted, so it never joins the boot path. */
   private readonly startMenuLayout = effect(() => { if (this.menuMounted()) this.menuLayout.start(); });
 

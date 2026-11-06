@@ -304,6 +304,9 @@
     "placeholder": "5",
     "helper": "Retrait des entrées de sous-menu en pixels (0 à 40). Pour un menu en haut, l'espace sous le menu déroulant."
   },
+  "bar": {
+    "segment_sub": "Un menu à segments ne peut pas afficher de sous-menus"
+  },
   "item": {
     "task-my": "Mes tâches",
     "icon-sync": "Synchroniser le stockage",
