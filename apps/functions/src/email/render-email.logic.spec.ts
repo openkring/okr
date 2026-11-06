@@ -32,7 +32,7 @@ describe('isUsableEmailTemplate', () => {
 describe('placeResetLink', () => {
   const token = 'okr-reset-0f8fad5b-d9cb-469f-a165-70867728950e';
   const link = 'https://a.ch/auth?mode=resetPassword&oobCode=x$&y"z';
-  const mail = (html: string, text = `Link: ${token}`, subject = 'Passwort') => ({ html, text, subject });
+  const mail = (html: string, text = `Link:\n${token}`, subject = 'Passwort') => ({ html, text, subject });
   const button = `<a href="${token}" target="_blank" style="color:#fff">Passwort setzen</a>`;
 
   it('puts the link into the href, attribute-escaped, and raw into the text, inside the fixed shell', () => {
@@ -41,7 +41,7 @@ describe('placeResetLink', () => {
         + '<body style="margin:0;padding:0;background-color:#fff;">'
         + '<p><a href="https://a.ch/auth?mode=resetPassword&amp;oobCode=x$&amp;y&quot;z" target="_blank" style="color:#fff">Passwort setzen</a></p>'
         + '</body></html>',
-      text: `Link: ${link}`,
+      text: `Link:\n${link}`,
     });
   });
 
@@ -74,7 +74,8 @@ describe('placeResetLink', () => {
   it.each([
     ['alone', token],
     ['on its own line', `Klicke hier:\n\n${token}\n\nGruss`],
-    ['after a label and a space', `Link: ${token}`],
+    ['with ascii spaces and tabs around it', `Link:\n \t${token}\t \nGruss`],
+    ['between Windows line ends', `Link:\r\n${token}\r\nGruss`],
     ['several times', `${token}\n${token}`],
   ])('accepts a token that stands alone in the text: %s', (_, text) => {
     expect(placeResetLink(mail(button, text), token, link)).toBeDefined();
@@ -84,6 +85,15 @@ describe('placeResetLink', () => {
     ['missing', 'no link'],
     ['inside a longer url', `https://evil/?l=${token}`],
     ['with text behind it', `${token}&x=1`],
+    ['after a label and a space', `Link: ${token}`],
+    ['after a url and a byte order mark', `https://evil.example/?l=\ufeff${token}`],
+    ['after a url and a no-break space', `https://evil.example/?l=\u00a0${token}`],
+    ['after a url and a thin space', `https://evil.example/?l=\u2009${token}`],
+    ['after a url and a line separator', `https://evil.example/?l=\u2028${token}`],
+    ['after a url and a paragraph separator', `https://evil.example/?l=\u2029${token}`],
+    ['after a lone carriage return', `https://evil.example/?l=\r${token}`],
+    ['after a url and a space, in angle brackets', `<https://evil/?l= ${token} >`],
+    ['twice on one line', `${token} ${token}`],
     ['one good, one inside a url', `${token}\nhttps://evil/?l=${token}`],
     ['twice in a row', `${token}${token}`],
   ])('refuses a token in the text: %s', (_, text) => {

@@ -51,15 +51,15 @@ function isOnlyALink(html: string, token: string): boolean {
   return occurrences > 0 && links === occurrences;
 }
 
-/** The token is there, and each time with whitespace or the end of the text on both sides. */
+/**
+ * The token is there, and each time alone on its line, with only ascii spaces or tabs around it. Other
+ * whitespace does not count: a client that linkifies the text half can read a url across a U+FEFF or
+ * U+00A0 and would send the link to whoever the url names.
+ */
 function standsAlone(text: string, token: string): boolean {
-  const parts = text.split(token);
-  return parts.length > 1 && parts.slice(0, -1).every((before, i) => {
-    const after = parts[i + 1];
-    const cleanStart = /\s$/.test(before) || (i === 0 && before === '');
-    const cleanEnd = /^\s/.test(after) || (i === parts.length - 2 && after === '');
-    return cleanStart && cleanEnd;
-  });
+  const occurrences = text.split(token).length - 1;
+  const alone = text.replace(/\r\n/g, '\n').split('\n').filter((line) => line.replace(/^[ \t]+|[ \t]+$/g, '') === token).length;
+  return occurrences > 0 && alone === occurrences;
 }
 
 /**
@@ -67,7 +67,7 @@ function standsAlone(text: string, token: string): boolean {
  * can read a variable character by character, so only the token may be readable to it). `mail.html` must
  * be the output of `sanitizeResetMail`; the result is that html in a fixed shell, so the bytes checked are
  * the bytes sent. `undefined` unless the token is only ever the `href` of an `<a>` in the html, stands
- * alone in the text, and is not in the subject. So a template cannot lead the link anywhere but into a link.
+ * alone on its line in the text, and is not in the subject. So a template cannot lead the link anywhere but into a link.
  */
 export function placeResetLink(mail: { html: string; text: string; subject: string }, token: string, link: string): { html: string; text: string } | undefined {
   if (mail.subject.includes(token) || !standsAlone(mail.text, token) || !isOnlyALink(mail.html, token)) return undefined;
