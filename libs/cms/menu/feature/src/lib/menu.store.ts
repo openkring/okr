@@ -338,6 +338,7 @@ export const _MenuStore = signalStore(
               store.appNavigationService.resetLinkHistory(store.router.url);
               store.appNavigationService.pushLink(menuItem.url);
             } else {
+              store.menuItemsStore.noteSelected(menuItem.name);
               store.appNavigationService.resetLinkHistory(menuItem.url);
             }
           }

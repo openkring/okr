@@ -3,7 +3,7 @@ import { ApplicationRef, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { MenuController, ModalController, PopoverController } from '@ionic/angular';
 import { Router } from '@angular/router';
-import { of } from 'rxjs';
+import { EMPTY, of } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
 import { MenuItemModel } from '@okr/shared-models';
@@ -88,7 +88,7 @@ function makeStore(
       { provide: ModalController, useValue: {} },
       { provide: MenuController, useValue: {} },
       { provide: PopoverController, useValue: {} },
-      { provide: Router, useValue: { url: '/' } },
+      { provide: Router, useValue: { url: '/', events: EMPTY } },
       { provide: AppNavigationService, useValue: {} },
       { provide: AuthService, useValue: {} },
       { provide: ActivityService, useValue: {} },

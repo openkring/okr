@@ -28,12 +28,13 @@ export interface ActiveMenuInput {
 /**
  * Reduces a url to the part that identifies a main-menu row: no query, no hash, no trailing slash,
  * and without the `contextMenuName` segment of `/private/{id}/{menu}` and `/public/{id}/{menu}`
- * (the context menu is a view of the page, not another place). The root path becomes ''.
+ * (the context menu is a view of the page, not another place; only exactly three segments carry it,
+ * deeper paths are left alone). The root path becomes ''.
  */
 export function normaliseMenuPath(url: string): string {
   const bare = (url ?? '').split('#')[0].split('?')[0];
   const segments = bare.split('/').filter(s => s.length > 0);
-  if ((segments[0] === 'private' || segments[0] === 'public') && segments.length >= 3) {
+  if ((segments[0] === 'private' || segments[0] === 'public') && segments.length === 3) {
     segments.splice(2, 1);
   }
   return segments.length ? '/' + segments.join('/') : '';
@@ -70,7 +71,7 @@ export function findActiveMenu(input: ActiveMenuInput): ActiveMenu | undefined {
       const child = byName.get(childName);
       if (!child || !canSee(child)) continue;
       if (child.action === 'navigate') {
-        const length = prefixLength(normaliseMenuPath(resolveMenuUrl(child.url, tokenContext)), current);
+        const length = prefixLength(normaliseMenuPath(resolveMenuUrl(child.url ?? '', tokenContext)), current);
         if (length > bestLength) {
           bestLength = length;
           best = { key: childName, ancestors };

@@ -28,6 +28,9 @@ describe('normaliseMenuPath', () => {
   it('maps the root path to the empty string', () => {
     expect(normaliseMenuPath('/')).toBe('');
   });
+  it('removes the contextMenuName only for exactly three segments', () => {
+    expect(normaliseMenuPath('/private/x/y/z')).toBe('/private/x/y/z');
+  });
 });
 
 describe('findActiveMenu', () => {
@@ -95,6 +98,18 @@ describe('findActiveMenu', () => {
   it('returns undefined when nothing matches and there is no fallback', () => {
     const items = [sub('root', ['a']), nav('a', '/x')];
     expect(run(items, '/y')).toBeUndefined();
+  });
+
+  it('a row with url / is not active on /person', () => {
+    const items = [sub('root', ['home']), nav('home', '/')];
+    expect(run(items, '/person')).toBeUndefined();
+  });
+
+  it('a navigate row without a url neither throws nor matches', () => {
+    const noUrl = { name: 'broken', action: 'navigate', menuItems: [] } as unknown as MenuItemModel;
+    const items = [sub('root', ['broken']), noUrl];
+    expect(() => run(items, '/person')).not.toThrow();
+    expect(run(items, '/person')).toBeUndefined();
   });
 
   it('only navigate rows are candidates', () => {
