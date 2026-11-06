@@ -266,10 +266,11 @@ describe('unpublished sections', () => {
     legacy: { type: 'article', tenants: ['scs'], title: 'Ohne Status' },
     box: {
       type: 'accordion', state: 'published', tenants: ['scs'], title: 'Box',
-      properties: { items: [{ key: 'nestedLive', label: 'A' }, { key: 'nestedDraft', label: 'B' }] },
+      properties: { items: [{ key: 'nestedLive', label: 'A' }, { key: 'nestedDraft', label: 'B' }, { key: 'nestedArchived', label: 'C' }] },
     },
     nestedLive: { type: 'article', state: 'published', tenants: ['scs'], content: { htmlContent: '<p>offen</p>' } },
     nestedDraft: { type: 'article', state: 'draft', tenants: ['scs'], content: { htmlContent: '<p>Entwurfstext</p>' } },
+    nestedArchived: { type: 'article', state: 'published', isArchived: true, tenants: ['scs'], content: { htmlContent: '<p>archiviert</p>' } },
   };
   const snap = (id: string, data: Record<string, unknown> | undefined) => ({ id, exists: data !== undefined, data: () => data });
 
@@ -290,9 +291,13 @@ describe('unpublished sections', () => {
     expect((await getSections()).map(s => s.title)).toEqual(['Live', 'Box']);
   });
 
-  it('never serves the text of an unpublished section inside an accordion', async () => {
+  it('never serves the text of an unpublished or archived section inside an accordion', async () => {
     const box = (await getSections()).find(s => s.title === 'Box');
-    expect(box?.items).toEqual([{ label: 'A', content: '<p>offen</p>' }, { label: 'B', content: '' }]);
+    expect(box?.items).toEqual([
+      { label: 'A', content: '<p>offen</p>' },
+      { label: 'B', content: '' },
+      { label: 'C', content: '' },
+    ]);
   });
 
   it('does not gate on the page: the website pages are isPrivate and in state draft', async () => {
