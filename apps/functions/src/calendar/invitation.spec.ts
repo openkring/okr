@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { invitationPushBody, inviteesToRecompute, shouldNotifyInvitation, shouldRecomputeInvitations } from './invitation';
+import { answerOfWrite, answerRecipients, eventInTenant, invitationAnswerPushBody, invitationPushBody, inviteesToRecompute, shouldNotifyInvitation, shouldRecomputeInvitations } from './invitation';
 
 const inv = { tenants: ['scs'], inviteeKey: 'p', caleventKey: 'e', state: 'pending' };
 const event = { name: 'test2', startDate: '20261001', startTime: '11:00' };
@@ -66,5 +66,60 @@ describe('shouldRecomputeInvitations (1.127 B1)', () => {
     expect(inviteesToRecompute(pending, { ...pending, inviteeKey: 'q' })).toEqual(['p', 'q']);
     expect(inviteesToRecompute(pending, { ...pending, state: 'declined' })).toEqual(['p']);
     expect(inviteesToRecompute(pending, undefined)).toEqual(['p']);
+  });
+});
+
+describe('eventInTenant', () => {
+  it('returns an event of the tenant', () => expect(eventInTenant({ name: 'a', tenants: ['scs'] }, ['scs'])?.name).toBe('a'));
+  it('returns a shared event of the tenant', () => expect(eventInTenant({ name: 'a', tenants: ['p13', 'scs'] }, ['scs'])?.name).toBe('a'));
+  it('hides an event of another tenant', () => expect(eventInTenant({ name: 'a', tenants: ['p13'] }, ['scs'])).toBeUndefined());
+  it('hides a missing event and an event without tenants', () => {
+    expect(eventInTenant(undefined, ['scs'])).toBeUndefined();
+    expect(eventInTenant({ name: 'a' }, ['scs'])).toBeUndefined();
+  });
+  it('refuses an invitation with a second tenant, in either order', () => {
+    expect(eventInTenant({ tenants: ['p13'] }, ['p13', 'scs'])).toBeUndefined();
+    expect(eventInTenant({ tenants: ['p13'] }, ['scs', 'p13'])).toBeUndefined();
+  });
+  it('refuses an invitation without a tenant', () => {
+    expect(eventInTenant({ tenants: ['scs'] }, [])).toBeUndefined();
+    expect(eventInTenant({ tenants: ['scs'] }, undefined)).toBeUndefined();
+  });
+});
+
+describe('answerOfWrite', () => {
+  const pending = { ...inv, state: 'pending' };
+  it('reports a first answer', () => {
+    expect(answerOfWrite(pending, { ...inv, state: 'accepted' })).toBe('accepted');
+    expect(answerOfWrite(pending, { ...inv, state: 'declined' })).toBe('declined');
+  });
+  it('reports a changed answer', () => expect(answerOfWrite({ ...inv, state: 'accepted' }, { ...inv, state: 'declined' })).toBe('declined'));
+  it('stays quiet when the state did not change', () => expect(answerOfWrite({ ...inv, state: 'accepted' }, { ...inv, state: 'accepted', notes: 'x' })).toBeUndefined());
+  it('stays quiet on a reset to pending', () => expect(answerOfWrite({ ...inv, state: 'accepted' }, pending)).toBeUndefined());
+  it('stays quiet on create and delete', () => {
+    expect(answerOfWrite(undefined, { ...inv, state: 'accepted' })).toBeUndefined();
+    expect(answerOfWrite({ ...inv, state: 'accepted' }, undefined)).toBeUndefined();
+  });
+  it('stays quiet on an archived invitation', () => expect(answerOfWrite(pending, { ...inv, state: 'accepted', isArchived: true })).toBeUndefined());
+});
+
+describe('answerRecipients', () => {
+  const person = (key: string) => ({ key, name1: '', name2: '', modelType: 'person', type: '', subType: '', label: '' });
+  it('takes the organisers and the inviter, each once', () => {
+    expect(answerRecipients({ ...inv, inviterKey: 'o2' }, { responsiblePersons: [person('o1'), person('o2')] })).toEqual(['o1', 'o2']);
+  });
+  it('reaches an inviter who is no organiser', () => {
+    expect(answerRecipients({ ...inv, inviterKey: 'i' }, { responsiblePersons: [person('o1')] })).toEqual(['o1', 'i']);
+  });
+  it('leaves out the person who answered', () => {
+    expect(answerRecipients({ ...inv, inviterKey: 'p' }, { responsiblePersons: [person('p')] })).toEqual([]);
+  });
+  it('copes with a legacy event and a missing inviter', () => expect(answerRecipients(inv, {})).toEqual([]));
+});
+
+describe('invitationAnswerPushBody', () => {
+  it('says yes or no', () => {
+    expect(invitationAnswerPushBody('Anna Muster', 'accepted')).toBe('Anna Muster hat zugesagt');
+    expect(invitationAnswerPushBody('Anna Muster', 'declined')).toBe('Anna Muster hat abgesagt');
   });
 });

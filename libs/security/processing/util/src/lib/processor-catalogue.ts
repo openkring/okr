@@ -137,7 +137,7 @@ export const PROCESSOR_CATALOGUE: readonly CatalogueEntry[] = [
     // E-Mail ist nicht abwählbar: ohne sie gibt es keine Registrierung und kein
     // Passwort-Zurücksetzen.
     alwaysOn: true,
-    cloudFunctions: ['auth/sendEmail', 'esign/esign-send-by-email', 'publicApi/contact', 'matrix-simple/chat-email.ts'],
+    cloudFunctions: ['auth/sendEmail', 'email/group-mail', 'esign/esign-send-by-email', 'publicApi/contact', 'matrix-simple/chat-email.ts'],
     memberNoticeDe:
       'Bereits versandte E-Mails lassen sich nicht zurückholen, auch nicht, wenn eine Chat-Nachricht später gelöscht wird. Die Zustellprotokolle beim Versanddienst löschen sich nach dessen eigener Frist.',
   },

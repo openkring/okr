@@ -1793,6 +1793,25 @@ takeover_cases += [
     ("userD(admin t1) self-detach shared calevent tenants=[t2] -> ALLOW", True,
      lambda: req("PATCH", "calevents/tkoShared", token=D, data=body({"tenants": ["t2"]}), mask=["tenants"])),
 ]
+# An invitation stays in one tenant and on one event: the functions read `caleventKey` with the
+# Admin SDK, so a second tenant, a self-detach down to the foreign one or a repointed key would
+# reach another tenant's event.
+seed("invitations/invOne", {"tenants": ["t1"], "isArchived": False, "caleventKey": "ev1", "state": "pending"})
+seed("invitations/invTwo", {"tenants": ["t1", "t2"], "isArchived": False, "caleventKey": "ev1", "state": "pending"})
+takeover_cases += [
+    ("userD(admin t1) CREATE invitations tenants=[t1] -> ALLOW (control)", True,
+     lambda: req("POST", "invitations?documentId=invNew", token=D, data=body({"tenants": ["t1"], "isArchived": False, "caleventKey": "ev1"}))),
+    ("userD(admin t1) CREATE invitations tenants=[t2,t1] -> DENY (a second tenant)", False,
+     lambda: req("POST", "invitations?documentId=invNew2", token=D, data=body({"tenants": ["t2", "t1"], "isArchived": False, "caleventKey": "ev1"}))),
+    ("userD(admin t1) PATCH invitations state -> ALLOW (an answer)", True,
+     lambda: req("PATCH", "invitations/invOne", token=D, data=body({"state": "accepted"}), mask=["state"])),
+    ("userD(admin t1) PATCH invitations caleventKey -> DENY (repointed)", False,
+     lambda: req("PATCH", "invitations/invOne", token=D, data=body({"caleventKey": "ev2"}), mask=["caleventKey"])),
+    ("userD(admin t1) PATCH invitations tenants=[t2,t1] -> DENY (adds a tenant)", False,
+     lambda: req("PATCH", "invitations/invOne", token=D, data=body({"tenants": ["t2", "t1"]}), mask=["tenants"])),
+    ("userD(admin t1) self-detach invitations tenants=[t2] -> DENY (down to the foreign tenant)", False,
+     lambda: req("PATCH", "invitations/invTwo", token=D, data=body({"tenants": ["t2"]}), mask=["tenants"])),
+]
 for label, expect, run in takeover_cases:
     code = run()
     ok = (code in (200, 201)) == expect

@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { doc, runTransaction } from 'firebase/firestore';
-import { Observable } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
@@ -10,7 +10,7 @@ import { DateFormat, getFullName, getSystemQuery, getTodayStr, removeKeyFromOkrM
 
 import { applyInvitationAnswer, removeInvitedAttendee } from '@okr/calendar-calevent-util';
 import { createComment } from '@okr/comment-util';
-import { getInvitationIndex, getLockCommentKey, getResponseComment, normaliseInvitation } from '@okr/relationship-invitation-util';
+import { getInvitationIndex, getLockCommentKey, getResponseComment, isInvitationAnswerable, normaliseInvitation } from '@okr/relationship-invitation-util';
 
 const PFX = '@relationship/invitation/data-access.';
 
@@ -94,6 +94,17 @@ export class InvitationService {
     await this.addResponseComment(invitation, getResponseComment(newState, note), currentUser);
     await this.recordAnswerOnCalevent(invitation, newState);
     return true;
+  }
+
+  /**
+   * Whether the invitation can still be answered, see `isInvitationAnswerable`. The tenant-scoped
+   * read gives undefined for an archived event, which counts as gone.
+   */
+  public async isAnswerable(invitation: InvitationModel): Promise<boolean> {
+    const calevent = invitation.caleventKey && !invitation.isLocked
+      ? await firstValueFrom(this.firestoreService.readTenantModel<CalEventModel>(CalEventCollection, invitation.caleventKey, this.env.tenantId))
+      : undefined;
+    return isInvitationAnswerable(invitation, calevent);
   }
 
   /**

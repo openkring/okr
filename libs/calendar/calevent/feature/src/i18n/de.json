@@ -355,6 +355,10 @@
     "placeholder": "nn",
     "helper": "Höchstzahl der Teilnehmenden. Wer sich danach anmeldet, kommt auf die Warteliste. 0 heisst: unbeschränkt."
   },
+  "notifyOnAnswer": {
+    "label": "Antworten auf Einladungen melden",
+    "helper": "Die Organisation erhält eine Nachricht, sobald jemand eine Einladung annimmt oder ablehnt."
+  },
   "locationKey": {
     "label": "Ort",
     "placeholder": "Ort suchen oder erfassen",

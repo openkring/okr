@@ -230,6 +230,7 @@ export { onBadgeCountsWritten } from './badge/on-badge-counts-written';
 // email webhooks
 export const mailtrapWebhook = Email.mailtrapWebhook;
 export const onMailJob = Email.onMailJob;
+export const sendGroupEmail = Email.sendGroupEmail;
 
 // bexio router (3.41 A6) + one 06:00 sync slot (D4); the six names below stay as aliases
 export const bexio = BexioRouter.bexio;

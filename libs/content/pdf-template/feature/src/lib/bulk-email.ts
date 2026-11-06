@@ -7,7 +7,9 @@ import { AddressCollection, AddressModel } from '@okr/shared-models';
 import { DistributionList, DistributionListModal } from '@okr/shared-ui';
 import { EmailEntry } from '@okr/shared-util-angular';
 import { getSystemQuery } from '@okr/shared-util-core';
-import { EmailComposerModal } from '@okr/content-pdf-template-ui';
+import { type ComposedEmail, EmailComposerModal } from '@okr/content-pdf-template-ui';
+
+export type { ComposedEmail };
 
 /** What a list store has to hand over to run the bulk-mail flow. */
 export interface BulkEmailContext {
@@ -24,11 +26,14 @@ export interface BulkEmailContext {
  * `to` offers the default org's email addresses (favourite preselected), `bcc` the given
  * recipients. Does nothing if the user cancels either modal.
  * @param attachment an already stored file (storage path + filename) to attach, e.g. a minutes PDF
+ * @param sendHandler sends instead of the `mailJobs` queue, for a caller the queue's rule keeps out
+ *        (a group admin); the server then decides the sender, so the composer locks that field
  */
 export async function openBulkEmailFlow(
   ctx: BulkEmailContext,
   recipients: EmailEntry[],
   attachment?: { storagePath: string; filename: string },
+  sendHandler?: (mail: ComposedEmail) => Promise<void>,
 ): Promise<void> {
   const { orgEmails, favOrgEmail } = await loadOrgEmails(ctx);
 
@@ -48,6 +53,8 @@ export async function openBulkEmailFlow(
       bcc: data.bcc.join(', '),
       storagePath: attachment?.storagePath ?? '',
       filename: attachment?.filename ?? '',
+      sendHandler,
+      fromLocked: !!sendHandler,
     },
     cssClass: 'wide-modal',
   });
@@ -55,7 +62,11 @@ export async function openBulkEmailFlow(
   await composer.onWillDismiss();
 }
 
-/** All email addresses of the tenant's own org, plus its favourite one. */
+/**
+ * All email addresses of the tenant's own org, plus its favourite one. Raw addresses are for
+ * privileged users and memberAdmins, and a denied read comes back empty: everybody else gets the
+ * favourite from the directory, without which the list could never be confirmed.
+ */
 async function loadOrgEmails(ctx: BulkEmailContext): Promise<{ orgEmails: string[]; favOrgEmail: string }> {
   const parentKey = `org.${ctx.tenantId}`;
   const query = getSystemQuery(ctx.tenantId);
@@ -64,5 +75,6 @@ async function loadOrgEmails(ctx: BulkEmailContext): Promise<{ orgEmails: string
   const addresses = await ctx.firestoreService.getDataOnce<AddressModel>(AddressCollection, query, 'none');
   const orgEmails = addresses.map(a => a.email).filter(Boolean);
   const favEmail = ctx.appStore.getDirectoryEntry(parentKey)?.favEmail ?? '';
+  if (orgEmails.length === 0 && favEmail) orgEmails.push(favEmail);
   return { orgEmails, favOrgEmail: favEmail || orgEmails[0] || '' };
 }

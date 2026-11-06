@@ -1026,7 +1026,18 @@ service cloud.firestore {
     }
     match /i18nTenantOverride/{id} { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     match /icons/{id}              { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
-    match /invitations/{id}        { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
+    // An invitation belongs to one tenant and one event for life. `caleventKey` names the event the
+    // Cloud Functions read and write with the Admin SDK, and the signed answer link stays valid after
+    // issue, so a second tenant on the doc (or a self-detach down to the foreign one) or a repointed
+    // key would reach another tenant's event. Hence one tenant on create, and no change to either
+    // field afterwards. An invitation is never shared, so there is nothing to detach.
+    match /invitations/{id} {
+      allow read: if tenantRead();
+      allow create: if tenantCreate() && request.resource.data.tenants.size() == 1;
+      allow update: if tenantUpdate()
+                      && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['tenants', 'caleventKey']);
+      allow delete: if tenantDelete();
+    }
     match /locations/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     // weather: written ONLY by the scheduled Cloud Function, which uses the Admin SDK and
     // bypasses these rules. No client may write — a forged forecast is not worth the attack

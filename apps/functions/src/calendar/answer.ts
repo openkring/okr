@@ -18,7 +18,7 @@ import { splitAttendees } from '@okr/calendar-calevent-util';
 
 import { allowedAnswers, answerFunctionUrl, invitationLinkSecret, isAnswerChoice } from './answer-link';
 import { brandOf, eventUrl, NO_TENANT_LINKS, tenantLinks } from './deliver';
-import { AnswerableEvent, InvitationDoc } from './invitation';
+import { AnswerableEvent, eventInTenant, InvitationDoc } from './invitation';
 import { answerPage, answerResultPage, Brand, eventWhen } from './mail';
 import { todayStoreDate } from './recipients';
 import { toStoreDateTime } from '../srv/zurich-time';
@@ -103,9 +103,10 @@ async function recordAnswer(invRef: DocumentReference, eventRef: DocumentReferen
 
   return db.runTransaction(async (tx) => {
     const [freshInv, freshEvent] = await Promise.all([tx.get(invRef), tx.get(eventRef)]);
+    const current = freshInv.exists ? (freshInv.data() as InvitationDoc) : undefined;
     const refusal = decideAnswer(
-      freshInv.exists ? (freshInv.data() as InvitationDoc) : undefined,
-      freshEvent.exists ? (freshEvent.data() as AnswerableEvent) : undefined,
+      current,
+      eventInTenant(freshEvent.data(), current?.tenants),
       todayStoreDate(),
     );
     if (refusal) return { refusal };
@@ -171,7 +172,7 @@ export const invitationAnswer = onRequest(
       const caleventKey = inv.caleventKey ?? '';
       const eventRef = caleventKey ? db.collection('calevents').doc(caleventKey) : undefined;
       const eventSnap = eventRef ? await eventRef.get() : undefined;
-      const event = eventSnap?.exists ? (eventSnap.data() as AnswerableEvent) : undefined;
+      const event = eventInTenant(eventSnap?.data(), inv.tenants);
       const refusal = decideAnswer(inv, event, todayStoreDate());
       if (refusal || !eventRef) { refuse(refusal ?? 'eventGone'); return; }
 

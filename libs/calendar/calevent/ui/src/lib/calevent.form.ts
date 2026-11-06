@@ -260,21 +260,27 @@ const DEFAULT_RECURRING_PERIODICITY = 'weekly';
 
     <!-- ANMELDUNG: jeder Anlass hat eine Teilnehmerliste, die begrenzt werden kann. Der Schalter
          offen/geschlossen ist 2026-09 entfallen — wer den Anlass sieht, entscheidet der Kalender.
-         Ein persoenlicher Anlass hat keine Anmeldung. -->
-    @if(!isPersonal()) {
-      <ion-card>
-        <ion-card-content class="ion-no-padding">
-          <ion-grid>
+         Ein persoenlicher Anlass hat keine Anmeldung, wohl aber Einladungen: der Schalter fuer die
+         Benachrichtigung gilt deshalb fuer beide. -->
+    <ion-card>
+      <ion-card-content class="ion-no-padding">
+        <ion-grid>
+          @if(!isPersonal()) {
             <ion-row>
               <ion-col size="12" size-md="6">
                 <okr-number-input [i18n]="maxAttendeesI18n()" [value]="maxAttendees()" (valueChange)="onFieldChange('maxAttendees', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
                 <okr-error-note [errors]="maxAttendeesErrors()" />
               </ion-col>
             </ion-row>
-          </ion-grid>
-        </ion-card-content>
-      </ion-card>
-    }
+          }
+          <ion-row>
+            <ion-col size="12">
+              <okr-checkbox [i18n]="notifyOnAnswerI18n()" [checked]="notifyOnAnswer()" (checkedChange)="onFieldChange('notifyOnAnswer', $event)" [toggle]="true" iconName="email" labelPlacement="start" justify="space-between" [showHelper]="true" [readOnly]="isReadOnly()" />
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+      </ion-card-content>
+    </ion-card>
 
     <!---------------------------------------------------
       ORGANISATION: calendars and tags are internal organisation data — behind the toolbar toggle
@@ -477,6 +483,7 @@ export class CalEventForm {
   /** Shown right under the start-date field, for single events as well as series. */
   protected startWeekday = computed(() => this.weekdayLabel(this.startDate()));
   protected isPollSeries = computed(() => this.formData().pollMultiSelect === true);
+  protected notifyOnAnswer = computed(() => this.formData().notifyOnAnswer ?? false);
   protected repeatUntilDate = computed(() => this.formData().repeatUntilDate ?? DEFAULT_DATE);
   protected url = computed(() => this.formData().url ?? DEFAULT_URL);
   protected urlLabel = computed(() => this.formData().urlLabel ?? DEFAULT_LABEL);
@@ -610,6 +617,12 @@ export class CalEventForm {
     name: 'isRecurring',
     label: this.i18n().recurring_label(),
     helper: this.i18n().recurring_helper(),
+  } as CheckboxI18n));
+
+  protected notifyOnAnswerI18n = computed(() => ({
+    name: 'notifyOnAnswer',
+    label: this.i18n().notifyOnAnswer_label(),
+    helper: this.i18n().notifyOnAnswer_helper(),
   } as CheckboxI18n));
 
 

@@ -1,7 +1,7 @@
-import { AvatarInfo } from '@okr/shared-models';
+import { AvatarInfo, CalEventModel } from '@okr/shared-models';
 import {
   createPersonAvatar, getInvitationIndex, getInvitationIndexInfo, getLockCommentKey, getResponseComment,
-  hasResponded, isInvitation, normaliseInvitation, sortInvitees, toStoreDateTime
+  hasResponded, isInvitation, isInvitationAnswerable, isOwnInvitation, normaliseInvitation, sortInvitees, toStoreDateTime
 } from './invitation.util';
 import { InvitationModel } from '@okr/shared-models';
 import { describe, expect, it } from 'vitest';
@@ -178,6 +178,47 @@ describe('invitation.util', () => {
 
     it('passes undefined through', () => {
       expect(normaliseInvitation(undefined)).toBeUndefined();
+    });
+  });
+
+  describe('isOwnInvitation', () => {
+    it('is true only for the invitee', () => {
+      const invitation = { ...new InvitationModel(tenantId), inviteeKey: 'p1' };
+      expect(isOwnInvitation(invitation, 'p1')).toBe(true);
+      expect(isOwnInvitation(invitation, 'p2')).toBe(false);
+    });
+
+    it('is false without a person, also for an invitation without invitee', () => {
+      expect(isOwnInvitation(new InvitationModel(tenantId), undefined)).toBe(false);
+      expect(isOwnInvitation(new InvitationModel(tenantId), '')).toBe(false);
+    });
+  });
+
+  describe('isInvitationAnswerable', () => {
+    const invitation = { ...new InvitationModel(tenantId), caleventKey: 'e1', state: 'accepted' as const };
+    const future = { ...new CalEventModel(tenantId), startDate: '29991231', endDate: '' };
+
+    it('allows changing an answer while the event is open', () => {
+      expect(isInvitationAnswerable(invitation, future)).toBe(true);
+    });
+
+    it('refuses a locked invitation', () => {
+      expect(isInvitationAnswerable({ ...invitation, isLocked: true }, future)).toBe(false);
+    });
+
+    it('refuses when the event is gone or archived', () => {
+      expect(isInvitationAnswerable(invitation, undefined)).toBe(false);
+      expect(isInvitationAnswerable(invitation, { ...future, isArchived: true })).toBe(false);
+    });
+
+    it('refuses a past, locked or cancelled event', () => {
+      expect(isInvitationAnswerable(invitation, { ...future, startDate: '20000101' })).toBe(false);
+      expect(isInvitationAnswerable(invitation, { ...future, isLocked: true })).toBe(false);
+      expect(isInvitationAnswerable(invitation, { ...future, state: 'cancelled' })).toBe(false);
+    });
+
+    it('allows an invitation without an event', () => {
+      expect(isInvitationAnswerable({ ...invitation, caleventKey: '' }, undefined)).toBe(true);
     });
   });
 });

@@ -80,7 +80,8 @@ An NgRx Signal Store that manages all invitation state.
 | `invitePerson(calevent)` | Opens a person-select dialog and creates a new invitation |
 | `edit(invitation?, readOnly)` | Opens `InvitationEditModal` to view or edit an invitation |
 | `delete(invitation, readOnly)` | Confirms and deletes an invitation |
-| `changeState(invitation, newState)` | Updates the response state and sets `respondedAt` to today |
+| `changeState(invitation, newState)` | Answers through `InvitationService.respond` (state, `respondedAt`, comment, attendee), refused when locked or no longer answerable |
+| `isAnswerable(invitation)` | Whether the invitation can still be answered, the rule in `InvitationService.isAnswerable` |
 | `setScope(caleventKey, inviteeKey, showOnlyCurrent)` | Sets the accordion scope (used by `InviteesAccordion`) |
 
 ## Components
@@ -103,8 +104,10 @@ Tapping an invitee row opens an ActionSheet. Invitees can change the state of th
 
 ### `InvitationList`
 
-A standalone list view of invitations with search, tag, and state filters. Supports add/edit/delete actions via the store.
+A standalone list view of invitations with search, tag, and state filters. Supports add/edit/delete actions via the store. The invitee also answers their own invitation here, as long as it is answerable.
 
 ### `InvitationEditModal`
 
 An Ionic modal for editing an `InvitationModel`. Opened by `InvitationStore.edit()`.
+
+The invitee sees two answer buttons (`okr-invitation-answer`) in the view and the edit mode, as long as the invitation is answerable. An answer closes the modal. A state changed by an admin in the form is an answer too: `InvitationStore.edit()` sends it through `respond`, so `calevent.attendees` follows.

@@ -9,7 +9,7 @@ import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, DateFormat, getTodayStr, hasRole } from '@okr/shared-util-core';
 import { PrettyDatePipe, PrettyDateTimePipe } from '@okr/shared-pipes';
 import { AvatarDisplay, AvatarInput } from '@okr/avatar-ui';
-import { invitationValidations, createPersonAvatar, InvitationI18n } from '@okr/relationship-invitation-util';
+import { invitationValidations, createPersonAvatar, InvitationI18n, isOwnInvitation } from '@okr/relationship-invitation-util';
 
 @Component({
   selector: 'okr-invitation-form',
@@ -26,7 +26,7 @@ import { invitationValidations, createPersonAvatar, InvitationI18n } from '@okr/
         @if(currentUser(); as currentUser) {
           <ion-card>
             <ion-card-header>
-              <ion-card-title>Invitation</ion-card-title>
+              <ion-card-title>{{ i18n().invitation() }}</ion-card-title>
             </ion-card-header>
             <ion-card-content class="ion-no-padding">
               <ion-grid>
@@ -50,7 +50,7 @@ import { invitationValidations, createPersonAvatar, InvitationI18n } from '@okr/
                 <ion-row>
                   <!-- inviter -->
                   <ion-col size="12" size-md="6">
-                    <ion-label>Inviter</ion-label>
+                    <ion-label>{{ i18n().inviter() }}</ion-label>
                   </ion-col>
                   <ion-col size="12" size-md="6">
                     <ion-item lines="none">
@@ -64,7 +64,7 @@ import { invitationValidations, createPersonAvatar, InvitationI18n } from '@okr/
 
                   <!-- invitee -->
                   <ion-col size="12" size-md="6">
-                    <ion-label>Invitee</ion-label>
+                    <ion-label>{{ i18n().invitee() }}</ion-label>
                   </ion-col>
                   <ion-col size="12" size-md="6">
                     <ion-item lines="none">
@@ -104,8 +104,9 @@ import { invitationValidations, createPersonAvatar, InvitationI18n } from '@okr/
           <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
         } 
         
-        @if(hasRole('admin')) {
-          <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
+        <!-- the notes hold the inviter's message, so the invitee reads them too -->
+        @if(hasRole('admin') || showMessage()) {
+          <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly() || !hasRole('admin')" [errors]="notesErrors()" />
         }
       </form>
     }
@@ -166,6 +167,7 @@ export class InvitationForm {
   protected readonly tags = computed(() => this.formData().tags ?? DEFAULT_TAGS);
   protected readonly notes = computed(() => this.formData().notes ?? DEFAULT_NOTES);
   protected okey = computed(() => this.formData().okey ?? '');
+  protected readonly showMessage = computed(() => this.notes().length > 0 && isOwnInvitation(this.formData(), this.currentUser()?.personKey));
 
   // passing constants to template
   protected nameLength = NAME_LENGTH;
