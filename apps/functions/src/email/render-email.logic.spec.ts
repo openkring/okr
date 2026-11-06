@@ -30,31 +30,26 @@ describe('isUsableEmailTemplate', () => {
 });
 
 describe('placeResetLink', () => {
-  const token = '0f8fad5b-d9cb-469f-a165-70867728950e';
+  const token = 'okr-reset-0f8fad5b-d9cb-469f-a165-70867728950e';
   const link = 'https://a.ch/auth?mode=resetPassword&oobCode=x$&y"z';
   const mail = (html: string, text = `Link: ${token}`, subject = 'Passwort') => ({ html, text, subject });
   const button = `<a href="${token}" target="_blank" style="color:#fff">Passwort setzen</a>`;
 
-  it('puts the link into the href, attribute-escaped, and raw into the text', () => {
+  it('puts the link into the href, attribute-escaped, and raw into the text, inside the fixed shell', () => {
     expect(placeResetLink(mail(`<p>${button}</p>`), token, link)).toEqual({
-      html: '<p><a href="https://a.ch/auth?mode=resetPassword&amp;oobCode=x$&amp;y&quot;z" target="_blank" style="color:#fff">Passwort setzen</a></p>',
+      html: '<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>'
+        + '<body style="margin:0;padding:0;background-color:#fff;">'
+        + '<p><a href="https://a.ch/auth?mode=resetPassword&amp;oobCode=x$&amp;y&quot;z" target="_blank" style="color:#fff">Passwort setzen</a></p>'
+        + '</body></html>',
       text: `Link: ${link}`,
     });
   });
 
-  it('accepts several links and a replacement-pattern link literally', () => {
-    const placed = placeResetLink(mail(`<A class="b" HREF="${token}">a</A> <a href = "${token}">b</a>`, `${token}\n${token}`), token, "https://a.ch/$'$`$&");
-    expect(placed?.text).toBe("https://a.ch/$'$`$&\nhttps://a.ch/$'$`$&");
-    expect(placed?.html.split('href').length).toBe(2);
-    expect(placed?.html).toContain('<a href = "https://a.ch/$\'$`$&amp;">b</a>');
-  });
-
-  it('accepts the seeded document around the button: doctype, comments, style, title', () => {
-    const html = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-      <html><head><!--[if gte mso 9]><xml></xml><![endif]--><!--[if !mso]><!--><meta content="IE=edge"><!--<![endif]-->
-      <title>x</title><style type="text/css">p { margin:0; } a[x-apple-data-detectors=true] { color:inherit; }</style></head>
-      <body><a href="https://a.ch" target="_blank"><img src="https://a.ch/l.png" alt="a > b"></a><p>${button}</p></body></html>`;
-    expect(placeResetLink(mail(html), token, link)).toBeDefined();
+  it('accepts several links, with href anywhere in the tag, and takes a replacement pattern literally', () => {
+    const pattern = "https://a.ch/$'$`$&";
+    const placed = placeResetLink(mail(`<a target="_blank" href="${token}">a</a> <a href="${token}">b</a>`, `${token}\n${token}`), token, pattern);
+    expect(placed?.text).toBe(`${pattern}\n${pattern}`);
+    expect(placed?.html).toContain(`<a target="_blank" href="https://a.ch/$'$\`$&amp;">a</a>`);
   });
 
   it.each([
@@ -62,32 +57,12 @@ describe('placeResetLink', () => {
     ['an image source', `<img src="${token}">`],
     ['a longer url', `<a href="https://evil/?l=${token}">x</a>`],
     ['a value that only starts with the token', `<a href="${token}x">x</a>`],
-    ['another attribute', `<a data-x="${token}" href="https://a.ch">x</a>`],
-    ['another attribute next to a good link', `<a data-x="${token}" href="${token}">x</a>`],
-    ['an attribute name', `<a ${token}="1" href="${token}">x</a>`],
-    ['a style block', `${button}<style>a { background: url(https://evil/${token}); }</style>`],
-    ['a style block that looks like a link', `<style><a href="${token}">x</a></style>`],
-    ['a title that looks like a link', `<title><a href="${token}">x</a></title>`],
-    ['a textarea that looks like a link', `<textarea><a href="${token}">x</a></textarea>`],
+    ['another attribute', `<a title="${token}" href="https://a.ch">x</a>`],
+    ['another attribute next to a good link', `<a title="${token}" href="${token}">x</a>`],
     ['visible text', `${button}<p>${token}</p>`],
     ['only visible text', `<p>${token}</p>`],
-    ['a comment', `${button}<!-- ${token} -->`],
-    ['a comment that looks like a link', `<!-- <a href="${token}">x</a> -->`],
-    ['an unclosed comment', `<!-- <a href="${token}">x</a>`],
-    ['an unclosed style block', `<style> ${button}`],
-    ['a single-quoted attribute that looks like a link', `<img alt='<a href="${token}">' src="https://a.ch/x.png">`],
-    ['a double-quoted attribute around a broken quote', `<img alt="<a href='${token}'>">`],
-    ['a tag the quote keeps open', `<img src="x<a href="${token}">`],
-    ['an end tag', `</a href="${token}">`],
-    ['a declaration', `<!x <a href="${token}">`],
-    ['single quotes', `<a href='${token}'>x</a>`],
-    ['no quotes', `<a href=${token}>x</a>`],
-    ['an href on another tag', `<area href="${token}">`],
-    ['a tag that only starts with a', `<abbr href="${token}">x</abbr>`],
-    ['a second href', `<a href="https://a.ch" href="${token}">x</a>`],
-    ['an unfinished tag', `<a href="${token}"`],
-    ['a script', `${button}<script></script>`],
-    ['a plaintext element', `<plaintext></plaintext>${button}`],
+    ['an href on another tag', `<abbr href="${token}">x</abbr>`],
+    ['escaped quotes in an attribute', `<a title=" href=&quot;${token}&quot;" href="https://a.ch">x</a>`],
   ])('refuses the token in html: %s', (_, html) => {
     expect(placeResetLink(mail(html), token, link)).toBeUndefined();
   });
@@ -96,8 +71,23 @@ describe('placeResetLink', () => {
     expect(placeResetLink(mail(button, token, `Link ${token}`), token, link)).toBeUndefined();
   });
 
-  it('needs the token in the text half', () => {
-    expect(placeResetLink(mail(button, 'no link'), token, link)).toBeUndefined();
+  it.each([
+    ['alone', token],
+    ['on its own line', `Klicke hier:\n\n${token}\n\nGruss`],
+    ['after a label and a space', `Link: ${token}`],
+    ['several times', `${token}\n${token}`],
+  ])('accepts a token that stands alone in the text: %s', (_, text) => {
+    expect(placeResetLink(mail(button, text), token, link)).toBeDefined();
+  });
+
+  it.each([
+    ['missing', 'no link'],
+    ['inside a longer url', `https://evil/?l=${token}`],
+    ['with text behind it', `${token}&x=1`],
+    ['one good, one inside a url', `${token}\nhttps://evil/?l=${token}`],
+    ['twice in a row', `${token}${token}`],
+  ])('refuses a token in the text: %s', (_, text) => {
+    expect(placeResetLink(mail(button, text), token, link)).toBeUndefined();
   });
 });
 

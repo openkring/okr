@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { sanitizeEmailBody, sanitizeHtml } from './sanitize';
+import { sanitizeEmailBody, sanitizeHtml, sanitizeResetMail } from './sanitize';
 
 describe('sanitizeEmailBody', () => {
   it('keeps http links and images, drops scripts and handlers', async () => {
@@ -50,5 +50,52 @@ describe('sanitizeEmailBody policy', () => {
 describe('sanitizeHtml (documents)', () => {
   it('still refuses http links', async () => {
     expect(await sanitizeHtml('<a href="http://a.ch">x</a>')).not.toContain('href=');
+  });
+});
+
+describe('sanitizeResetMail', () => {
+  it('keeps the shape of the seeded mail', async () => {
+    const html = await sanitizeResetMail(
+      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#fff;"><tr>'
+      + '<td align="center" style="padding:24px;"><a href="https://a.ch" target="_blank"><img src="https://a.ch/l.png" alt="Logo" width="209" style="display:block;"></a></td></tr></table>'
+    );
+    expect(html).toContain('<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#fff">');
+    expect(html).toContain('<td align="center" style="padding:24px">');
+    expect(html).toContain('<a href="https://a.ch" target="_blank">');
+    expect(html).toContain('<img src="https://a.ch/l.png" alt="Logo" width="209" style="display:block" />');
+  });
+
+  it('keeps a token without a scheme as href', async () => {
+    expect(await sanitizeResetMail('<a href="okr-reset-1234">x</a>')).toBe('<a href="okr-reset-1234">x</a>');
+  });
+
+  it('drops the document around the content, the title with its text', async () => {
+    const html = await sanitizeResetMail('<!DOCTYPE html><html><head><title>Titel</title><meta charset="utf-8"></head><body><p>x</p></body></html>');
+    expect(html).toBe('<p style="margin:0">x</p>');
+  });
+
+  it('gives a paragraph a margin of 0 and keeps its style', async () => {
+    expect(await sanitizeResetMail('<p style="color:red">x</p>')).toBe('<p style="margin:0;color:red">x</p>');
+    expect(await sanitizeResetMail('<p>&nbsp;</p>')).toContain('<p style="margin:0">');
+  });
+
+  it('drops style blocks, comments, conditional comments and active content', async () => {
+    const html = await sanitizeResetMail('<style>a{color:red}</style><!-- c --><!--[if mso]><b>m</b><![endif]--><script>x()</script><noscript>n</noscript><svg></svg><math></math><base href="https://evil/"><form action="https://evil/"><textarea>t</textarea></form><p>ok</p>');
+    expect(html).toBe('<p style="margin:0">ok</p>');
+  });
+
+  it('drops class, id, name, data, event and ping attributes', async () => {
+    const html = await sanitizeResetMail('<a href="https://a.ch" class="c" id="i" name="n" data-x="1" onclick="x()" ping="https://evil/">x</a>');
+    expect(html).toBe('<a href="https://a.ch">x</a>');
+  });
+
+  it('allows only https and mailto links and https images, nothing protocol-relative', async () => {
+    expect(await sanitizeResetMail('<a href="mailto:a@b.ch">x</a>')).toContain('href="mailto:a@b.ch"');
+    for (const href of ['http://a.ch', 'javascript:x()', 'data:text/html,x', 'tel:+41', '//evil/x']) {
+      expect(await sanitizeResetMail(`<a href="${href}">x</a>`)).toBe('<a>x</a>');
+    }
+    for (const src of ['http://a.ch/x.png', 'data:image/png;base64,AA', '//evil/x.png']) {
+      expect(await sanitizeResetMail(`<img src="${src}">`)).not.toContain('src=');
+    }
   });
 });

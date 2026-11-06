@@ -16,7 +16,7 @@ import {
 } from '@okr/shared-models';
 import { forkKeyFor } from '@okr/shared-util-core';
 import { getAppEmailConfig } from '../auth/email-templates';
-import { sanitizeEmailBody } from '../pdf/sanitize';
+import { sanitizeEmailBody, sanitizeResetMail } from '../pdf/sanitize';
 import { compileTemplate } from '../pdf/template-cache';
 import { reportToSentry } from '../srv/sentry';
 import { htmlToText } from './html-to-text';
@@ -204,7 +204,8 @@ export async function composeBody(
  * source. A password reset must never fail because of a template, so this never throws.
  *
  * Templates are tenant-editable and the link opens any account, so they render a random token as `url`.
- * The link replaces the token only afterwards, and only where `placeResetLink` allows (design 7.5).
+ * The html is then sanitised to a strict allowlist, and only that output is sent. The link replaces the
+ * token last, and only where `placeResetLink` allows (design 7.5).
  */
 export async function renderPasswordResetEmail(
   tenantId: string,
@@ -224,12 +225,13 @@ export async function renderPasswordResetEmail(
 
   try {
     const link = variables['url'] ?? '';
-    const token = randomUUID();
+    // No scheme and no colon: the sanitiser has to keep it as an href.
+    const token = `okr-reset-${randomUUID()}`;
     const mail = await renderEmail(
       { tenantId, layout: 'standard', textKey: EmailTextPasswordResetKey, noPlainFallback: true, variables: { ...variables, url: token } },
       read
     );
-    const placed = link ? placeResetLink(mail, token, link) : undefined;
+    const placed = link ? placeResetLink({ ...mail, html: await sanitizeResetMail(mail.html) }, token, link) : undefined;
     if (!placed) return await fail('The rendered mail has no valid place for the link', 'link-refused');
     // The caller needs a subject: an empty one would make the send throw with no fallback.
     const subject = mail.subject.trim();

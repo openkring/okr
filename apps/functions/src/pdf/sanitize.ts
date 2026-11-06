@@ -44,6 +44,14 @@ const SANITIZE_OPTIONS = {
   allowVulnerableTags: true,
 };
 
+/** A `transformTags` entry: the margin goes first, so a margin the author set wins. */
+function withMargin(margin: string) {
+  return (tagName: string, attribs: Record<string, string>) => ({
+    tagName,
+    attribs: { ...attribs, style: attribs['style'] ? `margin:${margin};${attribs['style']}` : `margin:${margin}` },
+  });
+}
+
 async function sanitizeWith(html: string, options: Record<string, unknown>): Promise<string> {
   const sanitize = (await import('sanitize-html')).default;
   return sanitize(html, options);
@@ -70,4 +78,33 @@ const EMAIL_SANITIZE_OPTIONS = {
 /** Sanitize the body of a composed mail (composer, mail jobs, invoice mails). */
 export function sanitizeEmailBody(html: string): Promise<string> {
   return sanitizeWith(html, EMAIL_SANITIZE_OPTIONS);
+}
+
+// A reset mail carries a link that opens an account, and its templates are tenant-editable. Everything
+// that could read or lead away the link goes: <style> (attribute selectors read an href), comments, active
+// content, and every attribute that fetches or runs something from an <a>. The output is well-formed
+// whatever went in, which is what lets `placeResetLink` check it, and it is what gets sent.
+const RESET_MAIL_SANITIZE_OPTIONS = {
+  allowedTags: [
+    'table', 'thead', 'tbody', 'tfoot', 'tr', 'td', 'th', 'caption', 'colgroup', 'col',
+    'div', 'span', 'p', 'br', 'hr', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    'strong', 'b', 'em', 'i', 'u', 'small', 'a', 'img', 'ul', 'ol', 'li', 'center', 'blockquote',
+  ],
+  allowedAttributes: {
+    '*': ['style', 'align', 'valign', 'width', 'height', 'bgcolor', 'role', 'cellpadding', 'cellspacing', 'border', 'colspan', 'rowspan', 'dir'],
+    a: ['href', 'target', 'rel', 'title'],
+    img: ['src', 'alt', 'width', 'height'],
+  },
+  allowedSchemes: ['https', 'mailto'],
+  allowedSchemesByTag: { a: ['https', 'mailto'], img: ['https'] },
+  allowProtocolRelative: false,
+  // The default list, plus the document title that would otherwise land in the mail as text.
+  nonTextTags: ['script', 'style', 'textarea', 'option', 'noscript', 'title'],
+  // The layout's `p { margin:0; }` block is gone, and the seeded text spaces itself with `<p>&nbsp;</p>`.
+  transformTags: { p: withMargin('0') },
+};
+
+/** The rendered html of a password-reset mail, as it may be sent. Never used for other mail. */
+export function sanitizeResetMail(html: string): Promise<string> {
+  return sanitizeWith(html, RESET_MAIL_SANITIZE_OPTIONS);
 }
