@@ -2,12 +2,13 @@ import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https
 import { logger } from 'firebase-functions/v2';
 import { DocumentReference, Firestore, getFirestore } from 'firebase-admin/firestore';
 
-import { DEFAULT_REMINDER_DUE_DAYS, FinanceDocumentCollection, InvoiceCollection } from '@okr/shared-models';
+import { DEFAULT_REMINDER_DUE_DAYS, EmailLayoutChoice, FinanceDocumentCollection, InvoiceCollection } from '@okr/shared-models';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId } from '@okr/shared-util-functions';
 
 import { DEFAULT_EMAIL_PROVIDER, EmailAttachment, sendEmailViaProvider } from '../auth/email-transport';
-import { getAppEmailConfig } from '../auth/email-templates';
+import { effectiveSender, getAppEmailConfig } from '../auth/email-templates';
+import { composeBody, EmailTemplateError, RenderedEmail } from '../email/render-email';
 import { privateBucket } from '../_storage/private-bucket';
 import { reportToSentry } from '../srv/sentry';
 import { loadOwnedAccountingConfig, ReceiverRef, refuse } from './invoice-context';
@@ -60,6 +61,8 @@ interface PreparedInvoiceMail {
   level: number;
   favEmail: string;
   from: string;
+  /** The tenant's verified sending domain; a composed `from` must be on it. */
+  senderDomain: string;
   subject: string;
   html: string;
   pdfPath: string;
@@ -144,12 +147,32 @@ async function prepareInvoiceMail(db: Firestore, tenantId: string, data: Invoice
   return {
     invoiceRef, target, level, favEmail,
     from: emailConfig.from,
+    senderDomain: emailConfig.senderDomain,
     subject: invoiceEmailSubject(text, name, invoiceId, orgName),
     html: invoiceEmailHtml(text, name, invoiceId, chf(open), dueDate ? viewDate(dueDate) : '', orgName, asksPayment),
     pdfPath,
     filename: target.kind === 'invoice' ? `${invoiceId}.pdf` : reminderMailFilename(name, invoiceId),
     invoicePdfPath, invoiceFilename: `${invoiceId}.pdf`,
   };
+}
+
+/**
+ * The body in the tenant's layout. A failure refuses the send with nothing sent (design 8); the
+ * log and the report carry the cause code only, never the body or an address.
+ */
+async function wrapBody(tenantId: string, documentKey: string, input: { body: string; layout?: EmailLayoutChoice; attachmentName?: string }): Promise<RenderedEmail> {
+  try {
+    return await composeBody(tenantId, input);
+  } catch (e) {
+    const code = e instanceof EmailTemplateError ? e.code : 'render-failed';
+    logger.error(`${CF_NAME}: the mail for ${documentKey} could not be rendered (${code})`);
+    await reportToSentry({
+      message: 'sendInvoiceEmail: mail could not be rendered',
+      tags: { appId: tenantId, code },
+      fingerprint: ['sendInvoiceEmail-render', code],
+    });
+    throw refuse('render-failed', `the mail for ${documentKey} could not be rendered: ${code}`);
+  }
 }
 
 async function guard(request: CallableRequest<unknown>, cfName: string): Promise<string> {
@@ -194,17 +217,25 @@ export const sendInvoiceEmail = onCall(
 
     let to: string[]; let cc: string[] = []; let bcc: string[] = [];
     let from = prepared.from; let subject = prepared.subject; let html = prepared.html;
+    let text: string | undefined;
     const extra: EmailAttachment[] = [];
     if (request.data?.mail) {
       const checked = normalizeComposedMail(request.data.mail, prepared.from);
       if (!checked.ok) throw refuse(checked.reason, `composed mail for ${documentKey} refused: ${checked.reason}`);
       ({ to, cc, bcc, from, subject, html } = checked.mail);
+      from = effectiveSender(from, { from: prepared.from, senderDomain: prepared.senderDomain });
+      // A body is wrapped by the server; html alone is an old client and goes out as composed.
+      if (checked.mail.body !== undefined) {
+        ({ html, text } = await wrapBody(tenantId, documentKey, { body: checked.mail.body, layout: checked.mail.layout, attachmentName: checked.mail.attachmentName }));
+      }
       for (const a of checked.mail.extraAttachments) {
         extra.push({ filename: a.filename, content: Buffer.from(a.contentBase64, 'base64'), contentType: a.contentType ?? 'application/octet-stream' });
       }
     } else {
       if (!prepared.favEmail) throw refuse('no-email', `the receiver of invoice ${invoiceRef.id} has no favourite email`);
       to = [prepared.favEmail];
+      // The Mahnlauf text is built here, so it is the body of the standard layout.
+      ({ html, text } = await wrapBody(tenantId, documentKey, { body: prepared.html, layout: 'standard' }));
     }
 
     let content: Buffer;
@@ -234,6 +265,7 @@ export const sendInvoiceEmail = onCall(
     try {
       await sendEmailViaProvider(provider, {
         from, to, subject, html, attachments,
+        ...(text !== undefined ? { text } : {}),
         ...(cc.length > 0 ? { cc } : {}),
         ...(bcc.length > 0 ? { bcc } : {}),
       });

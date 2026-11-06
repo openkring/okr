@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { activeMemberKeys, inlineAttachments, unknownRecipients } from './group-mail';
+import { activeMemberKeys, groupMailContent, inlineAttachments, unknownRecipients } from './group-mail';
 
 const member = { tenants: ['scs'], memberKey: 'p1', memberModelType: 'person', dateOfExit: '99991231' };
 
@@ -47,4 +47,24 @@ describe('inlineAttachments', () => {
     expect(() => inlineAttachments([{ filename: 'a.pdf', contentBase64: 1 }])).toThrow();
   });
   it('copes with no attachments', () => expect(inlineAttachments(undefined)).toEqual([]));
+});
+
+describe('groupMailContent', () => {
+  it('takes a body with its layout and attachment name', () => {
+    expect(groupMailContent({ body: '<p>x</p>', layout: 'plain', attachmentName: 'a.pdf' })).toEqual({ body: '<p>x</p>', layout: 'plain', attachmentName: 'a.pdf' });
+  });
+  it('defaults the layout to standard and leaves the attachment out', () => {
+    expect(groupMailContent({ body: '<p>x</p>' })).toEqual({ body: '<p>x</p>', layout: 'standard' });
+  });
+  it('still takes html alone from an old client', () => {
+    expect(groupMailContent({ html: '<p>x</p>' })).toEqual({ html: '<p>x</p>' });
+  });
+  it('lets the body win over html', () => {
+    expect(groupMailContent({ body: '<p>b</p>', html: '<p>h</p>' })).toEqual({ body: '<p>b</p>', layout: 'standard' });
+  });
+  it('refuses a request with neither, or with an empty body and no html', () => {
+    expect(() => groupMailContent({})).toThrow();
+    expect(() => groupMailContent({ body: '  ' })).toThrow();
+    expect(() => groupMailContent({ body: 3 as never })).toThrow();
+  });
 });

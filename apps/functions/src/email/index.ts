@@ -1,5 +1,6 @@
 export * from './mail-job';
 export * from './group-mail';
+export * from './render-email-preview';
 
 import { onRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';

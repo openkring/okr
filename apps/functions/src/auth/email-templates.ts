@@ -3,10 +3,12 @@ import { logger } from 'firebase-functions/v2';
 
 import { DEFAULT_EMAIL_PROVIDER, effectiveProvider, type EmailProvider } from './email-transport';
 
-interface AppEmailConfig {
+export interface AppEmailConfig {
   appName: string;
   appDomain: string;
   from: string;
+  /** The domain the provider verifies for this tenant: `emailDomain`, else `appDomain`. */
+  senderDomain: string;
   replyTo: string;
   continueUrl: string;
   /** Address shown in a composer mail's footer: the tenant's `mailFrom`, else the sender address. */
@@ -60,6 +62,7 @@ export async function getAppEmailConfig(appId: string): Promise<AppEmailConfig> 
     appName,
     appDomain,
     from: `"${appName}" <app@${senderDomain}>`,
+    senderDomain,
     replyTo,
     continueUrl: `https://${appDomain}${loginPath}`,
     contactEmail: mailFrom || replyTo,
@@ -88,4 +91,27 @@ export async function getEmailProvider(tenantId: string): Promise<EmailProvider>
     logger.warn(`getEmailProvider: unknown emailProvider in app-config/${tenantId} — using ${provider}`);
   }
   return provider;
+}
+
+/** `"Name" <a@b.ch>` → `a@b.ch`; a bare address passes through. */
+export function bareAddress(from: string): string {
+  return /<([^>]+)>/.exec(from)?.[1] ?? from.trim();
+}
+
+const SENDER_ADDRESS = /^[^\s@<>,;"]+@([^\s@<>,;"]+)$/;
+
+/**
+ * The sender a caller-supplied `from` may become: itself when its address is on the tenant's sending
+ * domain (equal, or either side a subdomain of the other, as `isSenderDomainAllowed` for the composer),
+ * else the tenant's own sender. The decision is on the parsed address, never on the display name, so a
+ * name like `"info@club.ch" <x@evil.ch>` does not pass. A line break or a second address fails the
+ * address pattern and falls back too. Never used on the password-reset path, which has `config.from`.
+ */
+export function effectiveSender(from: string | undefined, config: { from: string; senderDomain: string }): string {
+  if (!from) return config.from;
+  const domain = SENDER_ADDRESS.exec(bareAddress(from))?.[1]?.toLowerCase();
+  const expected = (config.senderDomain ?? '').trim().toLowerCase();
+  if (!domain || !expected || /[\r\n]/.test(from)) return config.from;
+  const allowed = domain === expected || domain.endsWith(`.${expected}`) || expected.endsWith(`.${domain}`);
+  return allowed ? from : config.from;
 }

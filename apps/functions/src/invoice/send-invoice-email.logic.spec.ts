@@ -147,6 +147,28 @@ describe('normalizeComposedMail', () => {
     expect(normalizeComposedMail({ ...base, html: '<p></p>' }, 'x@y.ch')).toEqual({ ok: false, reason: 'no-body' });
   });
 
+  it('accepts body and layout', () => {
+    const r = normalizeComposedMail({ to: ['anna@example.ch'], subject: 'Rechnung 1', body: '<p>Hallo</p>', layout: 'plain', attachmentName: 'R1.pdf' }, 'x@y.ch');
+    expect(r.ok && r.mail).toMatchObject({ body: '<p>Hallo</p>', layout: 'plain', attachmentName: 'R1.pdf' });
+  });
+
+  it('defaults the layout to standard when a body comes without one', () => {
+    const r = normalizeComposedMail({ to: ['anna@example.ch'], subject: 'Rechnung 1', body: '<p>Hallo</p>' }, 'x@y.ch');
+    expect(r.ok && r.mail.layout).toBe('standard');
+  });
+
+  it('still accepts html alone from an old client', () => {
+    const r = normalizeComposedMail(base, 'x@y.ch');
+    expect(r.ok && r.mail).toMatchObject({ html: '<p>Hallo</p>' });
+    expect(r.ok && r.mail.body).toBeUndefined();
+  });
+
+  it('refuses an empty body', () => {
+    expect(normalizeComposedMail({ ...base, html: undefined, body: '<p> </p>' }, 'x@y.ch')).toEqual({ ok: false, reason: 'no-body' });
+    expect(normalizeComposedMail({ ...base, html: '<p>Hallo</p>', body: '' }, 'x@y.ch')).toEqual({ ok: false, reason: 'no-body' });
+    expect(normalizeComposedMail({ to: ['anna@example.ch'], subject: 'x' }, 'x@y.ch')).toEqual({ ok: false, reason: 'no-body' });
+  });
+
   it('accepts inline attachments only, within the size cap', () => {
     const ok = normalizeComposedMail({ ...base, extraAttachments: [{ filename: 'a.txt', contentBase64: 'aGk=', contentType: 'text/plain' }] }, 'x@y.ch');
     expect(ok.ok && ok.mail.extraAttachments).toEqual([{ filename: 'a.txt', contentBase64: 'aGk=', contentType: 'text/plain' }]);

@@ -1,6 +1,6 @@
 // apps/functions/src/email/render-email.logic.ts
 // Pure decisions of the email renderer. The Firestore-backed renderer builds on these.
-import type { TemplateKind } from '@okr/shared-models';
+import type { EmailLayoutChoice, TemplateKind } from '@okr/shared-models';
 
 /** The slice of a `templates/{id}` doc the renderer reads. Legacy docs have no `kind`. */
 export interface StoredTemplate {
@@ -32,4 +32,9 @@ export function layoutHasContent(source: string): boolean {
  */
 export function resetLinkPresent(mail: { html: string; text: string }, link: string, escapedLink: string): boolean {
   return (mail.html.includes(link) || mail.html.includes(escapedLink)) && mail.text.includes(link);
+}
+
+/** The layout a client asked for: `plain` only when it says so, `standard` for anything else (also none). */
+export function asLayoutChoice(value: unknown): EmailLayoutChoice {
+  return value === 'plain' ? 'plain' : 'standard';
 }

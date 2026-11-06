@@ -16,7 +16,7 @@ vi.mock('firebase-functions/v2', () => ({ logger: { info: vi.fn(), error: vi.fn(
 
 import { logger } from 'firebase-functions/v2';
 import { reportToSentry } from '../srv/sentry';
-import { EmailTemplateError, renderEmail, renderPasswordResetEmail, TemplateReader } from './render-email';
+import { composeBody, EmailTemplateError, renderEmail, renderPasswordResetEmail, TemplateReader } from './render-email';
 import type { StoredTemplate } from './render-email.logic';
 
 interface Entry {
@@ -211,5 +211,32 @@ describe('renderPasswordResetEmail', () => {
     const logged = JSON.stringify([(logger.error as ReturnType<typeof vi.fn>).mock.calls, (reportToSentry as ReturnType<typeof vi.fn>).mock.calls]);
     expect(logged).not.toContain('oobCode');
     expect(logged).not.toContain('x@example.org');
+  });
+});
+
+describe('composeBody', () => {
+  it('sanitises the body, wraps it in the standard layout and passes the contact address', async () => {
+    const mail = await composeBody('scs', { body: '<p>Hallo</p><script>x()</script><a href="http://a.ch">l</a>' }, readerOf(base));
+    expect(mail.html).toContain('class="std"');
+    expect(mail.html).toContain('<p>Hallo</p>');
+    expect(mail.html).toContain('href="http://a.ch"');
+    expect(mail.html).not.toContain('<script');
+    expect(mail.html).toContain('info@example.org');
+    expect(mail.text).toContain('Hallo');
+  });
+
+  it('uses the plain layout when asked', async () => {
+    const mail = await composeBody('scs', { body: '<p>x</p>', layout: 'plain' }, readerOf(base));
+    expect(mail.html).toContain('class="plain"');
+    expect(mail.html).not.toContain('info@example.org');
+  });
+
+  it('appends the attachment note', async () => {
+    const mail = await composeBody('scs', { body: '<p>x</p>', attachmentName: 'R1.pdf' }, readerOf(base));
+    expect(mail.html).toContain('<strong>R1.pdf</strong>');
+  });
+
+  it('throws when no layout is usable', async () => {
+    await expect(composeBody('scs', { body: '<p>x</p>' }, readerOf({}))).rejects.toBeInstanceOf(EmailTemplateError);
   });
 });

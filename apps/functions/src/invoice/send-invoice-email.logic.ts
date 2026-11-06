@@ -1,4 +1,7 @@
+import type { EmailLayoutChoice } from '@okr/shared-models';
 import { addDuration } from '@okr/shared-util-core';
+
+import { asLayoutChoice } from '../email/render-email.logic';
 
 import { isPayableState, isValidStoreDate, ReminderLike } from './invoice-payment.logic';
 
@@ -112,6 +115,11 @@ export interface ComposedInvoiceMail {
   bcc?: unknown;
   from?: unknown;
   subject?: unknown;
+  /** The composer body; the server wraps it in `layout`. Wins over `html`. */
+  body?: unknown;
+  layout?: unknown;
+  attachmentName?: unknown;
+  /** Old clients: a finished HTML mail, sent as is while `body` is absent. */
   html?: unknown;
   extraAttachments?: unknown;
 }
@@ -122,7 +130,12 @@ export interface NormalizedInvoiceMail {
   bcc: string[];
   from: string;
   subject: string;
+  /** The finished HTML of an old client's mail; '' when the mail came as a `body`. */
   html: string;
+  /** Set when the mail came as a body: the server wraps it. */
+  body?: string;
+  layout?: EmailLayoutChoice;
+  attachmentName?: string;
   extraAttachments: InlineMailAttachment[];
 }
 
@@ -153,8 +166,12 @@ export function normalizeComposedMail(mail: ComposedInvoiceMail, defaultFrom: st
   if (fromRaw && !EMAIL_PATTERN.test(fromRaw)) return { ok: false, reason: 'bad-from' };
   const subject = typeof mail.subject === 'string' ? mail.subject.trim() : '';
   if (!subject) return { ok: false, reason: 'no-subject' };
-  const html = typeof mail.html === 'string' ? mail.html : '';
-  if (html.replace(/<[^>]*>/g, '').trim().length === 0) return { ok: false, reason: 'no-body' };
+  // A body wins over html, as on the other send paths; html alone is an old client.
+  const hasBody = mail.body !== undefined;
+  const text = hasBody ? mail.body : mail.html;
+  const content = typeof text === 'string' ? text : '';
+  if (content.replace(/<[^>]*>/g, '').trim().length === 0) return { ok: false, reason: 'no-body' };
+  const attachmentName = typeof mail.attachmentName === 'string' ? mail.attachmentName.trim() : '';
   const rawAttachments = mail.extraAttachments ?? [];
   if (!Array.isArray(rawAttachments)) return { ok: false, reason: 'bad-attachment' };
   const extraAttachments: InlineMailAttachment[] = [];
@@ -164,5 +181,7 @@ export function normalizeComposedMail(mail: ComposedInvoiceMail, defaultFrom: st
     if (Math.floor(item.contentBase64.length * 3 / 4) > MAX_INLINE_ATTACHMENT_BYTES) return { ok: false, reason: 'bad-attachment' };
     extraAttachments.push({ filename: item.filename, contentBase64: item.contentBase64, ...(typeof item.contentType === 'string' && item.contentType ? { contentType: item.contentType } : {}) });
   }
-  return { ok: true, mail: { to, cc, bcc, from: fromRaw || defaultFrom, subject, html, extraAttachments } };
+  const common = { to, cc, bcc, from: fromRaw || defaultFrom, subject, extraAttachments };
+  if (!hasBody) return { ok: true, mail: { ...common, html: content } };
+  return { ok: true, mail: { ...common, html: '', body: content, layout: asLayoutChoice(mail.layout), ...(attachmentName ? { attachmentName } : {}) } };
 }

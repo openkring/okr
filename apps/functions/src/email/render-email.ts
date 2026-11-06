@@ -15,6 +15,7 @@ import {
 } from '@okr/shared-models';
 import { forkKeyFor } from '@okr/shared-util-core';
 import { getAppEmailConfig } from '../auth/email-templates';
+import { sanitizeEmailBody } from '../pdf/sanitize';
 import { compileTemplate } from '../pdf/template-cache';
 import { reportToSentry } from '../srv/sentry';
 import { htmlToText } from './html-to-text';
@@ -170,6 +171,23 @@ export async function renderEmail(req: RenderEmailRequest, read: TemplateReader 
   const html = (await compiled(layout, 'html'))({ ...vars, content: contentHtml });
   const text = (await compiled(layout, 'text'))({ ...vars, content: contentText });
   return { subject, html, text };
+}
+
+/**
+ * A composer body in its layout: the body is sanitised here (never trust the client's HTML), the tenant's
+ * contact address goes into the footer, and the result carries both halves. A failure throws; the sender
+ * sees an error and nothing is sent (design 8).
+ */
+export async function composeBody(
+  tenantId: string,
+  input: { body: string; layout?: EmailLayoutChoice; attachmentName?: string },
+  read: TemplateReader = firestoreTemplateReader
+): Promise<RenderedEmail> {
+  const body = await sanitizeEmailBody(input.body);
+  return renderEmail(
+    { tenantId, layout: input.layout ?? 'standard', body, attachmentName: input.attachmentName, includeContact: true },
+    read
+  );
 }
 
 /**

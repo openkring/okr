@@ -5,14 +5,15 @@ import { getAuth, UserRecord } from 'firebase-admin/auth';
 import { getStorage } from 'firebase-admin/storage';
 import { DocumentData, getFirestore } from 'firebase-admin/firestore';
 import { checkAdminRole, checkAppCheckToken, checkAuthentication, checkStringField, chunk, getCallerContext, getCallerTenantId, isOperatorUserData, isSoleTenantUserData, mayDeleteAuthUser } from '@okr/shared-util-functions';
-import { PasskeyCollection } from '@okr/shared-models';
+import { EmailLayoutChoice, PasskeyCollection } from '@okr/shared-models';
 import { isSyntheticLoginEmail } from '@okr/user-util';
-import { getAppEmailConfig, getEmailProvider } from './email-templates';
+import { effectiveSender, getAppEmailConfig, getEmailProvider } from './email-templates';
 import { EmailAttachment, sendEmailViaProvider } from './email-transport';
 import { findUserByLoginId } from './login-id';
 import { loginTenantsOf } from './login-tenants';
 import { loadTenantUser, restoreAuthEmail, withIndex } from './tenant-user';
-import { renderPasswordResetEmail } from '../email/render-email';
+import { composeBody, EmailTemplateError, renderPasswordResetEmail } from '../email/render-email';
+import { asLayoutChoice } from '../email/render-email.logic';
 import { reportToSentry } from '../srv/sentry';
 
 /** Storage prefixes that `generateDocument` writes generated documents to. */
@@ -605,7 +606,10 @@ export function callerMaySendFor(userData: Record<string, unknown> | undefined, 
  * @param cc                optional CC addresses; ignored on a password reset
  * @param bcc               optional BCC addresses; ignored on a password reset
  * @param appId             human-readable app identifier (e.g. 'scs', 'test')
- * @param html              HTML body (may be empty when using a template)
+ * @param html              finished HTML mail (old clients; may be empty when using a template). Ignored when `body` is set
+ * @param body              composer body: the server sanitises it and wraps it in `layout` (html and text halves)
+ * @param layout            'standard' (default) or 'plain'; only with `body`
+ * @param attachmentName    file name shown as the «Beilage» note; only with `body`
  * @param from              sender address (derived from app config for password reset)
  * @param subject           email subject line (derived from app config for password reset)
  * (the email provider is decided by the server from app-config/{appId}.emailProvider; a `provider` sent by the client is ignored)
@@ -620,7 +624,7 @@ export const sendEmail = functions.onCall(
     enforceAppCheck: true,
     secrets: ['MAILGUN_SMTP_PASSWORD', 'MAILTRAP_APIKEY', 'NETZONE_SMTP_PASSWORD', 'MAILTRAP_TEST_USER', 'MAILTRAP_TEST_PASS', 'SENTRY_FUNCTIONS_DSN'],
   },
-  async (request: functions.CallableRequest<{ to: string[]; cc?: string[]; bcc?: string[]; appId: string; html?: string; from?: string; subject?: string; provider?: string; template?: string; templateVariables?: Record<string, string>; attachments?: AttachmentRef[]; loginId?: string; tenantId?: string }>) => {
+  async (request: functions.CallableRequest<{ to: string[]; cc?: string[]; bcc?: string[]; appId: string; html?: string; body?: string; layout?: EmailLayoutChoice; attachmentName?: string; from?: string; subject?: string; provider?: string; template?: string; templateVariables?: Record<string, string>; attachments?: AttachmentRef[]; loginId?: string; tenantId?: string }>) => {
     const CF_NAME = 'sendEmail';
     checkAppCheckToken(request as any, CF_NAME);
 
@@ -673,6 +677,30 @@ export const sendEmail = functions.onCall(
     // The server decides the provider from the tenant's app-config; `request.data.provider` is
     // ignored (old clients still send it).
     const provider = await getEmailProvider(appId);
+
+    // A composer body is wrapped by the server (design 7.7); `html` alone is an old client and goes out as sent.
+    if (!isPasswordReset && request.data.body !== undefined) {
+      if (typeof request.data.body !== 'string' || !request.data.body.trim()) {
+        throw new functions.HttpsError('invalid-argument', 'body must not be empty.');
+      }
+      try {
+        ({ html, text } = await composeBody(appId, {
+          body: request.data.body,
+          layout: asLayoutChoice(request.data.layout),
+          attachmentName: typeof request.data.attachmentName === 'string' && request.data.attachmentName.trim() ? request.data.attachmentName.trim() : undefined,
+        }));
+      } catch (error) {
+        // No address, no body in the log or the report: only what identifies the cause.
+        const code = error instanceof EmailTemplateError ? error.code : 'render-failed';
+        logger.error(`${CF_NAME}: the mail could not be rendered (appId=${appId}, ${code})`);
+        await reportToSentry({
+          message: 'sendEmail: composer mail could not be rendered',
+          tags: { appId, code },
+          fingerprint: ['sendEmail-render', code],
+        });
+        throw new functions.HttpsError('failed-precondition', 'Die E-Mail konnte nicht aufgebaut werden. Es wurde nichts gesendet.');
+      }
+    }
 
     if (isPasswordReset) {
       const config = await getAppEmailConfig(appId);
@@ -745,7 +773,8 @@ export const sendEmail = functions.onCall(
 
     // When the caller does not supply a sender, fall back to the app's verified sender
     // address (same one used for password-reset) so the provider accepts the from-domain.
-    if (!from) from = (await getAppEmailConfig(appId)).from;
+    // The reset path already has `config.from`; anywhere else the caller's sender must be on the tenant's domain.
+    if (!isPasswordReset) from = effectiveSender(from, await getAppEmailConfig(appId));
     if (!from) throw new functions.HttpsError('invalid-argument', 'from is required.');
     if (!subject) throw new functions.HttpsError('invalid-argument', 'subject is required.');
 

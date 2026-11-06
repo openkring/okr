@@ -44,8 +44,25 @@ const SANITIZE_OPTIONS = {
   allowVulnerableTags: true,
 };
 
-/** Sanitize untrusted HTML for Puppeteer rendering. */
-export async function sanitizeHtml(html: string): Promise<string> {
+async function sanitizeWith(html: string, options: typeof SANITIZE_OPTIONS): Promise<string> {
   const sanitize = (await import('sanitize-html')).default;
-  return sanitize(html, SANITIZE_OPTIONS);
+  return sanitize(html, options);
+}
+
+/** Sanitize untrusted HTML for Puppeteer rendering. */
+export function sanitizeHtml(html: string): Promise<string> {
+  return sanitizeWith(html, SANITIZE_OPTIONS);
+}
+
+// A composed mail is read in a mail client, not rendered by Puppeteer: plain http links are common in
+// hand-typed text, and a tel: link is the point of a phone number in a signature. Images stay TLS or
+// data only, so a mail cannot make the reader's client fetch over cleartext.
+const EMAIL_SANITIZE_OPTIONS = {
+  ...SANITIZE_OPTIONS,
+  allowedSchemes: ['https', 'http', 'data', 'mailto', 'tel'],
+};
+
+/** Sanitize the body of a composed mail (composer, mail jobs, invoice mails). */
+export function sanitizeEmailBody(html: string): Promise<string> {
+  return sanitizeWith(html, EMAIL_SANITIZE_OPTIONS);
 }

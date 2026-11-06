@@ -16,9 +16,12 @@ import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 
-import { getAppEmailConfig } from '../auth/email-templates';
+import type { EmailLayoutChoice } from '@okr/shared-models';
+
+import { bareAddress, effectiveSender, getAppEmailConfig } from '../auth/email-templates';
 import { DEFAULT_EMAIL_PROVIDER, sendEmailViaProvider } from '../auth/email-transport';
 import { AttachmentRef, resolveAttachments } from '../auth';
+import { composeBody } from './render-email';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'onMailJob';
@@ -40,7 +43,12 @@ export interface MailJobDoc {
   bcc?: string[];
   from?: string;
   subject: string;
-  html: string;
+  /** The mail body; `onMailJob` wraps it in `layout`. Wins over `html`. */
+  body?: string;
+  layout?: EmailLayoutChoice;
+  attachmentName?: string;
+  /** Jobs from before the layouts: a finished HTML mail, sent as is while `body` is absent. */
+  html?: string;
   attachments?: AttachmentRef[];
   state?: 'pending' | 'sending' | 'sent' | 'failed';
   blocksSent?: number;
@@ -54,9 +62,22 @@ async function providerFor(tenantId: string): Promise<string> {
   return String(snap.data()?.['emailProvider'] ?? DEFAULT_EMAIL_PROVIDER);
 }
 
-/** `"Name" <a@b.ch>` → `a@b.ch`; a bare address passes through. */
-export function bareAddress(from: string): string {
-  return /<([^>]+)>/.exec(from)?.[1] ?? from.trim();
+/**
+ * The html and text halves of a job. A body is wrapped once for the whole job (every block carries the
+ * same content); an old job's html goes out unchanged. A render failure is thrown, so the job ends as
+ * `failed` and nothing is sent. `compose` is injectable for the test.
+ */
+export async function resolveJobContent(
+  job: MailJobDoc,
+  tenantId: string,
+  compose: typeof composeBody = composeBody
+): Promise<{ html: string; text: string | undefined }> {
+  if (typeof job.body === 'string') {
+    const { html, text } = await compose(tenantId, { body: job.body, layout: job.layout, attachmentName: job.attachmentName });
+    return { html, text };
+  }
+  if (typeof job.html !== 'string') throw new Error('The mail job has neither a body nor html.');
+  return { html: job.html, text: undefined };
 }
 
 /**
@@ -97,7 +118,9 @@ export const onMailJob = onDocumentCreated(
     let blocksTotal = 1;
     let sent = 0;
     try {
-      const from = job.from || (await getAppEmailConfig(tenantId)).from;
+      // The sender must be on the tenant's domain; a job from a tampered client falls back to the tenant sender.
+      const from = effectiveSender(job.from, await getAppEmailConfig(tenantId));
+      const { html, text } = await resolveJobContent(job, tenantId);
       const provider = await providerFor(tenantId);
       const attachments = await resolveAttachments(job.attachments, CF_NAME);
       const blocks = mailJobBlocks(job, from);
@@ -110,7 +133,8 @@ export const onMailJob = onDocumentCreated(
           from,
           ...block,
           subject: job.subject,
-          html: job.html,
+          html,
+          ...(text !== undefined ? { text } : {}),
           attachments,
         });
         sent = i + 1;

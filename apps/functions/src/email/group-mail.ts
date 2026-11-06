@@ -18,13 +18,15 @@
 import { CallableRequest, HttpsError, onCall } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
+import type { EmailLayoutChoice } from '@okr/shared-models';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
-import { getAppEmailConfig } from '../auth/email-templates';
+import { bareAddress, getAppEmailConfig } from '../auth/email-templates';
 import { AttachmentRef } from '../auth';
 import { assertCallerIsGroupAdmin } from '../content/group-content.util';
-import { bareAddress, MailJobCollection, MailJobDoc } from './mail-job';
+import { MailJobCollection, MailJobDoc } from './mail-job';
+import { asLayoutChoice } from './render-email.logic';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'sendGroupEmail';
@@ -36,7 +38,12 @@ export interface GroupEmailRequest {
   cc: string[];
   bcc: string[];
   subject: string;
-  html: string;
+  /** The mail body; the server wraps it in `layout`. Wins over `html`. */
+  body?: string;
+  layout?: EmailLayoutChoice;
+  attachmentName?: string;
+  /** Old clients: a finished HTML mail, sent as is while `body` is absent. */
+  html?: string;
   attachments: AttachmentRef[];
 }
 
@@ -81,6 +88,24 @@ export function inlineAttachments(attachments: unknown): AttachmentRef[] {
   });
 }
 
+/**
+ * What the job carries as content: the `body` with its layout and attachment name, or an old client's
+ * finished `html`. Neither is refused. Only fields that are set go on the job (Firestore refuses undefined).
+ */
+export function groupMailContent(data: Pick<GroupEmailRequest, 'body' | 'layout' | 'attachmentName' | 'html'>): Pick<MailJobDoc, 'body' | 'layout' | 'attachmentName' | 'html'> {
+  const { body, html, attachmentName } = data;
+  if (body !== undefined) {
+    if (typeof body !== 'string' || !body.trim()) throw new HttpsError('invalid-argument', 'body must not be empty.');
+    return {
+      body,
+      layout: asLayoutChoice(data.layout),
+      ...(typeof attachmentName === 'string' && attachmentName.trim() ? { attachmentName: attachmentName.trim() } : {}),
+    };
+  }
+  if (typeof html !== 'string') throw new HttpsError('invalid-argument', 'body is required.');
+  return { html };
+}
+
 function stringList(value: unknown, field: string): string[] {
   if (!Array.isArray(value) || value.some((item) => typeof item !== 'string')) {
     throw new HttpsError('invalid-argument', `${field} must be a list of strings.`);
@@ -101,13 +126,14 @@ export const sendGroupEmail = onCall(
   async (request: CallableRequest<GroupEmailRequest>): Promise<{ recipients: number }> => {
     checkAppCheckToken(request as never, CF_NAME);
     checkAuthentication(request as never, CF_NAME);
-    const { tenantId, groupKey, subject, html } = request.data ?? {};
+    const { tenantId, groupKey, subject } = request.data ?? {};
     if (typeof tenantId !== 'string' || !tenantId || typeof groupKey !== 'string' || !groupKey) {
       throw new HttpsError('invalid-argument', 'tenantId and groupKey are required.');
     }
-    if (typeof subject !== 'string' || !subject.trim() || typeof html !== 'string') {
-      throw new HttpsError('invalid-argument', 'subject and html are required.');
+    if (typeof subject !== 'string' || !subject.trim()) {
+      throw new HttpsError('invalid-argument', 'subject is required.');
     }
+    const content = groupMailContent(request.data);
     const to = stringList(request.data.to, 'to');
     const cc = stringList(request.data.cc ?? [], 'cc');
     const bcc = stringList(request.data.bcc, 'bcc');
@@ -130,7 +156,7 @@ export const sendGroupEmail = onCall(
       throw new HttpsError('permission-denied', 'Every recipient must be a member of the group.');
     }
 
-    const job: MailJobDoc = { tenants: [tenantId], to, cc, bcc, subject, html, attachments: inlineAttachments(request.data.attachments), state: 'pending' };
+    const job: MailJobDoc = { tenants: [tenantId], to, cc, bcc, subject, ...content, attachments: inlineAttachments(request.data.attachments), state: 'pending' };
     await db.collection(MailJobCollection).add(job);
     logger.info(`${CF_NAME}: queued a mail to ${to.length + cc.length + bcc.length} recipient(s) (tenant ${tenantId})`);
     return { recipients: bcc.length };

@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { bareAddress, mailJobBlocks, MailJobDoc } from './mail-job';
+import { mailJobBlocks, MailJobDoc, resolveJobContent } from './mail-job';
 
 const job = (bcc: string[]): MailJobDoc => ({
   tenants: ['scs'],
@@ -12,13 +12,6 @@ const job = (bcc: string[]): MailJobDoc => ({
 });
 
 const addresses = (n: number) => Array.from({ length: n }, (_, i) => `m${i}@scs.ch`);
-
-describe('bareAddress', () => {
-  it('strips the display name and passes a bare address through', () => {
-    expect(bareAddress('"Seeclub" <app@seeclub.org>')).toBe('app@seeclub.org');
-    expect(bareAddress(' app@seeclub.org ')).toBe('app@seeclub.org');
-  });
-});
 
 describe('mailJobBlocks', () => {
   const from = '"Seeclub" <app@seeclub.org>';
@@ -38,5 +31,36 @@ describe('mailJobBlocks', () => {
     expect(first.cc).toEqual(['revision@scs.ch']);
     expect(second.to).toEqual(['app@seeclub.org']);   // NOT the org address — no copy per block
     expect(second.cc).toEqual([]);
+  });
+});
+
+describe('resolveJobContent', () => {
+  const rendered = { subject: '', html: '<div>wrapped</div>', text: 'wrapped' };
+
+  it('wraps a body through the composer with the job layout and attachment', async () => {
+    const compose = vi.fn(async () => rendered);
+    const content = await resolveJobContent({ ...job([]), html: undefined, body: '<p>x</p>', layout: 'plain', attachmentName: 'a.pdf' }, 'scs', compose);
+    expect(content).toEqual({ html: rendered.html, text: rendered.text });
+    expect(compose).toHaveBeenCalledWith('scs', { body: '<p>x</p>', layout: 'plain', attachmentName: 'a.pdf' });
+  });
+
+  it('sends the html of an old job unchanged, with no text half', async () => {
+    const compose = vi.fn(async () => rendered);
+    expect(await resolveJobContent(job([]), 'scs', compose)).toEqual({ html: '<p>x</p>', text: undefined });
+    expect(compose).not.toHaveBeenCalled();
+  });
+
+  it('prefers the body when a job carries both', async () => {
+    const compose = vi.fn(async () => rendered);
+    expect((await resolveJobContent({ ...job([]), body: '<p>b</p>' }, 'scs', compose)).html).toBe(rendered.html);
+  });
+
+  it('lets a render failure through, so the job ends as failed', async () => {
+    const compose = vi.fn(async () => { throw new Error('no layout'); });
+    await expect(resolveJobContent({ ...job([]), body: '<p>b</p>' }, 'scs', compose)).rejects.toThrow('no layout');
+  });
+
+  it('refuses a job with neither body nor html', async () => {
+    await expect(resolveJobContent({ ...job([]), html: undefined }, 'scs', vi.fn())).rejects.toThrow();
   });
 });
