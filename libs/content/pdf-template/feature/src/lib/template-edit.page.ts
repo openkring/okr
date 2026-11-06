@@ -219,7 +219,7 @@ type EditorTab = 'metadata' | 'html' | 'css' | 'text' | 'preview';
       @if(activeTab() === 'text') {
         <textarea
           class="code-editor"
-          [value]="editorVersion().text"
+          [value]="editorVersion().text ?? ''"
           (input)="onVersionChange('text', $any($event.target).value)"
           [readOnly]="readOnly()"
           spellcheck="false"
@@ -422,12 +422,16 @@ export class TemplateEditPage implements OnDestroy {
     this.dirty.set(true);
   }
 
-  /** Persist the metadata + draft version (driven by the change-confirmation banner). */
-  protected async save(): Promise<void> {
+  /**
+   * Persist the metadata + draft version (driven by the change-confirmation banner).
+   * @return false when the draft version could not be written: nothing else is touched and
+   *   the edits stay dirty, so a publish or preview must not go on with it.
+   */
+  protected async save(): Promise<boolean> {
     this.saving.set(true);
     try {
       const draft = this.draftVersion();
-      await this.store.saveDraft(this.templateKey(), draft);
+      if (!await this.store.saveDraft(this.templateKey(), draft)) return false;
       const tmpl = this.template();
       if (tmpl) {
         // Record the active draft on the template so re-editing reuses this version
@@ -447,6 +451,7 @@ export class TemplateEditPage implements OnDestroy {
       }
       this.dirty.set(false);
       this.savedOnce = true;
+      return true;
     } finally {
       this.saving.set(false);
     }
@@ -478,7 +483,7 @@ export class TemplateEditPage implements OnDestroy {
   }
 
   protected async publish(): Promise<void> {
-    await this.save();
+    if (!await this.save()) return;
     const draft = this.draftVersion();
     const current = this.template();
     if (current && this.isEmail()) {
@@ -511,7 +516,7 @@ export class TemplateEditPage implements OnDestroy {
     // stays stable (no orphan/incrementing drafts). Read-only views the published
     // version, which already exists — no save needed.
     if (!this.readOnly() && (this.dirty() || !this.hasSavedDraft())) {
-      await this.save();
+      if (!await this.save()) return;
     }
     if (this.isEmail()) {
       await this.store.generateEmailPreview(this.templateKey(), this.editorVersion().version);

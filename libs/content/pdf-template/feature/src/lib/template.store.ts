@@ -97,7 +97,10 @@ export const TemplateStore = signalStore(
       return templates;
     }),
   })),
-  withMethods(store => ({
+  withMethods(store => {
+  // newest email preview request; an older call that resolves later must not overwrite it
+  let emailPreviewSeq = 0;
+  return {
     setSearchTerm(term: string): void {
       patchState(store, { searchTerm: term });
     },
@@ -192,7 +195,8 @@ export const TemplateStore = signalStore(
       }
     },
 
-    async saveDraft(templateKey: string, version: TemplateVersionModel): Promise<void> {
+    /** @return true when the draft version was written; false after the error toast. */
+    async saveDraft(templateKey: string, version: TemplateVersionModel): Promise<boolean> {
       try {
         await store.templateService.saveDraftVersion(templateKey, version, store.currentUser());
         const toast = await store.toastController.create({
@@ -201,6 +205,7 @@ export const TemplateStore = signalStore(
           color:    'success',
         });
         await toast.present();
+        return true;
       } catch {
         const toast = await store.toastController.create({
           message:  store.i18n.save_draft_error(),
@@ -208,6 +213,7 @@ export const TemplateStore = signalStore(
           color:    'danger',
         });
         await toast.present();
+        return false;
       }
     },
 
@@ -266,12 +272,15 @@ export const TemplateStore = signalStore(
      * detail goes to the console.
      */
     async generateEmailPreview(templateKey: string, version: number): Promise<RenderedTemplatePreview | undefined> {
+      const id = ++emailPreviewSeq;
       patchState(store, { previewLoading: true, emailPreview: undefined });
       try {
         const rendered = await store.docEmailService.renderTemplatePreview(templateKey, version);
+        if (id !== emailPreviewSeq) return undefined;
         patchState(store, { emailPreview: rendered });
         return rendered;
       } catch (err) {
+        if (id !== emailPreviewSeq) return undefined;
         console.error('TemplateStore.generateEmailPreview: renderEmailPreview failed', err);
         const toast = await store.toastController.create({
           message:  store.i18n.preview_error(),
@@ -281,7 +290,7 @@ export const TemplateStore = signalStore(
         await toast.present();
         return undefined;
       } finally {
-        patchState(store, { previewLoading: false });
+        if (id === emailPreviewSeq) patchState(store, { previewLoading: false });
       }
     },
 
@@ -333,5 +342,6 @@ export const TemplateStore = signalStore(
         patchState(store, { previewLoading: false });
       }
     },
-  }))
+  };
+  })
 );
