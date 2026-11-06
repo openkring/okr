@@ -18,12 +18,12 @@ import {
   EmailInput, EmailInputI18n, ErrorNote, Spinner, StringSelect, StringSelectI18n, TextInput, TextInputI18n,
 } from '@okr/shared-ui';
 import type { OkrEditor } from '@okr/shared-ui-editor';
-import type { EmailLayoutChoice } from '@okr/shared-models';
+import { EmailLayoutChoice, LAYOUT_CHOICES } from '@okr/shared-models';
 import { needsEmailNormalization } from '@okr/shared-util-core';
 import { dismissOverlay, isBrowser, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 import {
-  emailBodyHasContent, isSenderDomainAllowed, LAYOUT_CHOICES, parseEmails,
+  emailBodyHasContent, isSenderDomainAllowed, parseEmails,
   EmailComposerFormModel, emailComposerValidations,
   EMAIL_COMPOSER_I18N_KEYS, EMAIL_COMPOSER_MSG_KEYS, EmailComposerI18n,
 } from '@okr/content-pdf-template-util';

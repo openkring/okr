@@ -18,6 +18,8 @@ export type TemplateLanguage = 'de' | 'fr' | 'it' | 'en';
 export type TemplateKind = 'pdf' | 'emailLayout' | 'emailText';
 /** Which email layout a send uses. */
 export type EmailLayoutChoice = 'standard' | 'plain';
+/** The layouts a sender can choose; the server treats anything but `plain` as `standard`. */
+export const LAYOUT_CHOICES: readonly EmailLayoutChoice[] = ['standard', 'plain'];
 export type DocGenerationStatus = 'success' | 'failed';
 /** Which side of the window envelope shows the recipient address; 'none' = no envelope. */
 export type TemplateAddressWindow = 'none' | 'left' | 'right';
