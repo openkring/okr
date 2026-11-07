@@ -21,7 +21,7 @@ import { bareAddress, effectiveSender, getAppEmailConfig, getEmailProvider } fro
 import { sendEmailViaProvider } from '../auth/email-transport';
 import { AttachmentRef, resolveAttachments } from '../auth';
 import { composeBody } from './render-email';
-import { ANSWER_URL_PLACEHOLDER, answerBlockHtml, AnswerEventLine, fillAnswerUrl, PER_MAIL_PAUSE_MS, personalOutcome, PersonalEntry, sendErrorCode } from './personal-mail.logic';
+import { ANSWER_URL_PLACEHOLDER, answerBlockHtml, AnswerEventLine, fillAnswerUrl, hasAnswerPlaceholder, PER_MAIL_PAUSE_MS, personalOutcome, PersonalEntry, sendErrorCode } from './personal-mail.logic';
 import { asLayoutChoice } from './render-email.logic';
 
 const REGION = 'europe-west6';
@@ -132,6 +132,8 @@ async function sendPersonal(
   const composed = await composeBody(tenantId, {
     body: job.body + answerBlockHtml(ANSWER_URL_PLACEHOLDER, events), layout: asLayoutChoice(job.layout), attachmentName: job.attachmentName,
   });
+  // fail closed: a layout or sanitiser that rewrote the placeholder would send everybody a dummy link
+  if (!hasAnswerPlaceholder(composed)) throw new Error('The answer link is missing from the composed mail.');
   let sent = 0;
   let failed = 0;
   let errorCode: string | undefined;
@@ -139,6 +141,7 @@ async function sendPersonal(
     if (i > 0) await new Promise((resolve) => setTimeout(resolve, PER_MAIL_PAUSE_MS));
     try {
       const { html, text } = fillAnswerUrl(composed, entry.answerUrl);
+      if (html.includes(ANSWER_URL_PLACEHOLDER) || text?.includes(ANSWER_URL_PLACEHOLDER)) throw new Error('placeholder left');
       await sendEmailViaProvider(provider, {
         from, to: [entry.to], ...(job.to[0] ? { replyTo: job.to[0] } : {}), subject: job.subject, html, ...(text !== undefined ? { text } : {}), attachments,
       });

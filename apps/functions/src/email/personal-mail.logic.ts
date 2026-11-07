@@ -90,3 +90,8 @@ export function sendErrorCode(error: unknown): string {
   const mailtrap = error instanceof Error ? /^Mailtrap API error (\d{3})/.exec(error.message)?.[1] : undefined;
   return [name, detail ?? mailtrap].filter((v) => v !== undefined).join(' ').slice(0, 60);
 }
+
+/** Whether the composed mail still carries the placeholder in every half it has: without it no personal link can be set. */
+export function hasAnswerPlaceholder(rendered: { html: string; text?: string }): boolean {
+  return rendered.html.includes(ANSWER_URL_PLACEHOLDER) && (rendered.text === undefined || rendered.text.includes(ANSWER_URL_PLACEHOLDER));
+}
