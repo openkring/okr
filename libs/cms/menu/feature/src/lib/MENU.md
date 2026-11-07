@@ -4,7 +4,7 @@
 
 The Menu domain manages the navigation structure of the application. Each `MenuItemModel` represents one node in the navigation tree. Menu items can navigate to internal routes, open external URLs in the browser, act as group containers for sub-menus, serve as visual dividers, or trigger in-app calls (e.g. dismiss a popover with a value). Menu items are filtered by the `roleNeeded` field so that only users with the required role can see them.
 
-The `Menu` (`bk-menu`) is the primary rendering component. It receives a menu item name as input, loads the item from the `MenuStore`, and switches on the `action` field to render the appropriate UI (leaf item, sub-menu accordion, divider, main list, or context list). It is recursive: sub-menus render nested `<bk-menu>` components.
+The `Menu` (`okr-menu`) is the primary rendering component. It receives a menu item name as input, loads the item from the `MenuStore`, and switches on the `action` field to render the appropriate UI (leaf item, sub-menu accordion, divider, main list, or context list). It is recursive: sub-menus render nested `<okr-menu>` components.
 
 ## Firestore Collection
 
@@ -28,6 +28,8 @@ Collection name: `menuItems`
 | `roleNeeded` | RoleName | Minimum role required to see this item (default: `contentAdmin`) |
 | `description` | string | Human-readable notes about the menu item |
 | `tags` | string | Comma-separated tags for filtering |
+| `menuType` | MenuType | Layout of the main menu: `left` (default), `right`, `top` or `segmented`. Read on the root document `main_<tenantId>` only |
+| `submenuOffset` | number | Indent of submenu rows and gap below a dropdown, in px (default `DEFAULT_SUBMENU_OFFSET`). Root document only |
 
 ## Action Types
 
@@ -40,6 +42,9 @@ Collection name: `menuItems`
 | `main` | Renders a flat `IonList` of child items (top-level sidebar menu) |
 | `context` | Renders a flat `IonList` of child items (context / popover menu) |
 | `call` | Dismisses the current popover, passing `url` as the selected value |
+| `toggle` | Like `call`, but icon and label reflect `toggleStates` (e.g. an edit-mode switch) |
+| `books` | Segment over the available sets of books, shown only with several; no `url` (the books switcher row in «Buchhaltung») |
+| `workflow` | Like `call`, then fires the `ui.menuCalled` workflow event for the row's `name` |
 
 ## Authorization
 
@@ -50,7 +55,7 @@ The `roleNeeded` field is evaluated by `hasRole()` at render time. Items whose `
 State is split across two stores, because the two halves have different scopes.
 
 `MenuStore` is declared `providedIn: 'root'` but `Menu` (`menu.ts`) lists it under
-`providers: [MenuStore]`, so there is **one instance per `<bk-menu>` node**. That is deliberate —
+`providers: [MenuStore]`, so there is **one instance per `<okr-menu>` node**. That is deliberate —
 `name` is the state of that particular node — and `Menu` renders itself recursively, so a menu
 tree creates as many stores as it has nodes. It holds:
 
@@ -83,8 +88,10 @@ hoisting the list, → 1 expected after dropping `menuResource`.
 
 | Component | Selector | Role |
 |---|---|---|
-| `Menu` | `bk-menu` | Recursive renderer; switches on `action` type |
-| `MenuList` | `bk-menu-item-all-list` | Admin list with search/filter and CRUD action sheet |
+| `Menu` | `okr-menu` | Recursive renderer; switches on `action` type |
+| `MenuList` | `okr-menu-list` | Admin list with search/filter and CRUD action sheet |
+| `MenuBar` | `okr-menu-bar` | The main menu as a bar (`menuType` `top` or `segmented`); see the `menu` skill, section 5 |
+| `MenuLayout` | (service) | `menuType`, `side`, `barActive`, `submenuOffset` for the shell |
 | `MenuItemModal` | (modal) | Edit/view modal for a single menu item |
 
 ## Data Access

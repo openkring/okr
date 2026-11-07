@@ -279,6 +279,37 @@
       "description": "Lanza un evento al pulsar. Lo que ocurre después se configura como una regla."
     }
   },
+  "menu_type": {
+    "label": "Diseño del menú",
+    "helper": "Dónde aparece el menú principal: como barra lateral a la izquierda o a la derecha, como barra superior o como segmentos.",
+    "left": {
+      "label": "Izquierda",
+      "description": "Barra lateral en el borde izquierdo."
+    },
+    "right": {
+      "label": "Derecha",
+      "description": "Barra lateral en el borde derecho."
+    },
+    "top": {
+      "label": "Arriba",
+      "description": "Barra en el borde superior. Los submenús se abren hacia abajo."
+    },
+    "segmented": {
+      "label": "Segmentos",
+      "description": "Barra de segmentos del mismo rango, sin submenús."
+    }
+  },
+  "submenu_offset": {
+    "label": "Sangría de los submenús",
+    "placeholder": "5",
+    "helper": "Sangría de las entradas del submenú en píxeles (0 a 40). En un menú superior, el espacio bajo el desplegable."
+  },
+  "bar": {
+    "segment_sub": "Un menú por segmentos no puede mostrar submenús",
+    "account_menu": "Cuenta y ajustes",
+    "cookie_settings": "Ajustes de cookies",
+    "more": "Más"
+  },
   "item": {
     "task-my": "Mis tareas",
     "icon-sync": "Sincronizar almacenamiento",

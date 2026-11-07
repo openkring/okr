@@ -17,13 +17,23 @@ import { MenuInfo } from './menu-info';
     IonBadge, IonIcon, IonAvatar, IonItem, IonLabel
   ],
   styles: [`
+    /* Ionic's own hover overlay (.item-native::after, only under any-hover: hover): it tints the
+       row instead of replacing its background and follows the theme without a media query */
+    ion-item {
+      --background-hover: var(--ion-text-color);
+      --background-hover-opacity: 0.1;
+    }
+
     ion-item::part(native) {
       transition: background-color 0.2s ease;
     }
 
-    ion-item:hover::part(native) {
-      background: rgba(0, 0, 0, 0.08);
+    /* the row of the current page (main menu only, see Menu.isActive) */
+    ion-item.active::part(native) {
+      background: rgba(var(--ion-color-primary-rgb), 0.14);
+      box-shadow: inset 3px 0 0 var(--ion-color-primary);
     }
+    ion-item.active ion-label { font-weight: 600; }
 
     ion-icon { color: var(--ion-color-dark); margin-inline-end: 8px; }
     .letter { color: black; }
@@ -34,10 +44,6 @@ import { MenuInfo } from './menu-info';
     ion-label { white-space: normal; overflow: visible; text-overflow: clip; }
 
     @media (prefers-color-scheme: dark) {
-      ion-item:hover::part(native) {
-        background: rgba(255, 255, 255, 0.12);
-      }
-
       ion-icon { color: var(--ion-color-white); margin-inline-end: 8px; }
       .letter { color: white; }
     }
@@ -71,7 +77,7 @@ import { MenuInfo } from './menu-info';
     @if(icon(); as icon) {
       @if(name(); as name) {
         @if (icon.startsWith('@@')) {
-          <ion-item [button]="true">
+          <ion-item [button]="true" [class.active]="active()" [attr.aria-current]="active() ? 'page' : null">
             <ion-avatar slot="start" class="letter-avatar">
               <div class="letter">{{ name }}</div>
             </ion-avatar>
@@ -85,7 +91,7 @@ import { MenuInfo } from './menu-info';
           </ion-item>
         } @else {
           @if(icon.startsWith('//')) {
-            <ion-item [button]="true">
+            <ion-item [button]="true" [class.active]="active()" [attr.aria-current]="active() ? 'page' : null">
               <ion-avatar slot="start" class="logo-avatar">
                 <img okrImg src="{{ name | avatar:getModelName(name) }}" alt="Avatar Logo" />
               </ion-avatar>
@@ -103,7 +109,7 @@ import { MenuInfo } from './menu-info';
         @if(safariWorkaround()) {
           <!-- label→input: user's click is trusted in Safari; popover dismiss event is not.
             ion-item[button] ensures dismissOnSelect closes the popover after the click. -->
-          <ion-item button detail="false" lines="none">
+          <ion-item button detail="false" lines="none" [class.active]="active()" [attr.aria-current]="active() ? 'page' : null">
             <label for="doc-files-input" style="width:100%;cursor:pointer;display:flex;align-items:center;gap:12px;padding:4px 0;">
               <ion-icon slot="start" src="{{icon | svgIcon }}" />
               <ion-label>{{ label() }}</ion-label>
@@ -114,7 +120,7 @@ import { MenuInfo } from './menu-info';
             }
           </ion-item>
         } @else {
-          <ion-item [button]="true">
+          <ion-item [button]="true" [class.active]="active()" [attr.aria-current]="active() ? 'page' : null">
             <ion-icon slot="start" src="{{icon | svgIcon }}" />
             <ion-label>{{ label() }}</ion-label>
             @if(badge() > 0) {
@@ -144,6 +150,8 @@ export class MultiAvatar {
   public statusIcon = input<string>('');
   public statusLabel = input<string>('');
   public statusClicked = output<void>();
+  /** marks the row of the current page: tint, bar, semibold label and aria-current */
+  public active = input(false);
 
   /** the status icon must not also fire the row's own click */
   protected onStatusClick(event: Event): void {

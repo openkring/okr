@@ -48,6 +48,8 @@ function withFormDefaults(item: MenuItemModel): MenuItemModel | undefined {
           [showForm]="showForm()"
           [roles]="roles()"
           [types]="types()"
+          [menuTypes]="menuTypes()"
+          [childActions]="childActions()"
           [tenantId]="tenantId"
           [readOnly]="isReadOnly()"
           [allTags]="allTags()"
@@ -87,6 +89,20 @@ export class MenuModal {
   protected showForm = signal(true);
 
   // derived signals
+  /**
+   * Only a main menu has a layout. Reading the category for any other row would send a Sentry warning
+   * on every edit for as long as `menu_type` is not seeded.
+   */
+  protected readonly menuTypes = computed(() =>
+    this.formData()?.action === 'main' ? this.store.getMenuTypes() : new CategoryListModel(this.tenantId));
+  /**
+   * `name` -> `action` of every menu document the tenant has. Whether a segmented menu holds a
+   * submenu cannot be seen from the root's own `menuItems` (those are only names), and the form
+   * lets the editor add children after opening, so the whole map goes in rather than the rows
+   * the root held at open time.
+   */
+  protected readonly childActions = computed(() =>
+    Object.fromEntries((this.store.menuItems() ?? []).map(item => [item.name, item.action])) as Record<string, string>);
   protected headerTitle = computed(() => {
     if (this.isReadOnly()) return this.i18n.view();
     return this.menuItem().okey?.length > 0 ? this.i18n.edit() : this.i18n.create();

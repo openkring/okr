@@ -263,6 +263,7 @@
     "rows_add_toast": "Ligne de menu ajoutée",
     "rows_adjust_catalogue_toast": "Note copiée — transmets-la à l'équipe de développement pour que le catalogue soit adapté",
     "rows_nothing_planned": "Il n'y a rien à reprendre — la valeur est déjà à jour ou fixée",
+    "bar_overflow_warning": "Ton menu affichera alors plus de 6 entrées, le reste apparaît sous «Plus».",
     "compare_title": "Comparaison des champs",
     "compare_col_field": "Champ",
     "compare_col_database": "Base de données",

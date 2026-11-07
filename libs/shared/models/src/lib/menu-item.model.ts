@@ -3,6 +3,9 @@ import { BaseProperty, OkrModel, NamedModel, SearchableModel, TaggedModel } from
 
 export type RoleName = 'none' | 'anonymous' | 'registered' | 'privileged' | 'contentAdmin' | 'resourceAdmin' | 'memberAdmin' | 'eventAdmin' | 'treasurer' | 'admin' | 'public' | 'groupAdmin' | 'kiosk' | 'tripAdmin' | 'auditor' | 'tester';
 
+/** How a tenant's main menu is laid out; absent on the root document means 'left'. */
+export type MenuType = 'left' | 'right' | 'top' | 'segmented';
+
 export class MenuItemModel implements OkrModel, NamedModel, SearchableModel, TaggedModel {
   public okey = DEFAULT_KEY; // unique key of the model in the database
   public name = DEFAULT_NAME; //  name: e.g. aoc, help, members ...
@@ -39,6 +42,10 @@ export class MenuItemModel implements OkrModel, NamedModel, SearchableModel, Tag
   public ownedFields?: string[];
   public data?: BaseProperty[] = []; // URL parameters that should be passed to the url
   public menuItems?: string[] = []; // the keys of the sub menu items
+  /** action 'main' only: how this tenant's main menu is laid out. Absent means 'left'. */
+  public menuType?: MenuType;
+  /** action 'main' only: indent of submenu rows and gap below a dropdown, in px. Absent means DEFAULT_SUBMENU_OFFSET. */
+  public submenuOffset?: number;
   public roleNeeded?: RoleName = 'contentAdmin'; // the role that is needed to see the menu item
   public tenants: string[] = DEFAULT_TENANTS; // the tenants that the menu item is available for
   public description = DEFAULT_NOTES; // a description of the menu item
