@@ -244,7 +244,8 @@ describe('renderPasswordResetEmail', () => {
       .replaceAll('%%LOGO_URL%%', 'https://images.example.org/email-header.png')
       .replaceAll('%%LOGO_ALT%%', 'Seeclub')
       .replaceAll('%%LOGO_WIDTH%%', '209')
-      .replaceAll('%%FOOTER_NAME%%', 'Seeclub');
+      .replaceAll('%%FOOTER_NAME%%', 'Seeclub')
+      .replaceAll('%%BAND_COLOR%%', '#009d53');
     const read = readerOf({
       'email-layout_scs': { doc: layoutDoc('scs'), version: { html: source('layout-standard.html'), text: source('layout-standard.txt') } },
       'email-text-password-reset': { doc: textDoc('system'), version: { html: source('text-password-reset.html'), text: source('text-password-reset.txt'), subject: source('text-password-reset.subject.txt') } },
@@ -255,7 +256,9 @@ describe('renderPasswordResetEmail', () => {
     expect(html.match(/<html/g)).toHaveLength(1);
     expect(html).toContain('<a href="https://app.example.org/auth/confirm?mode=resetPassword&amp;oobCode=abc" target="_blank"');
     expect(html).toContain('Passwort setzen');
+    expect(html).toContain('background:#009d53');
     expect(html).toContain('background:#2c6ee0');
+    expect(html).not.toContain('%%');
     expect(html).toContain('<a href="https://www.example.org" target="_blank">');
     expect(html).toContain('<img src="https://images.example.org/email-header.png" alt="Seeclub" width="209"');
     expect(html).toContain(`© ${new Date().getFullYear()} Seeclub`);

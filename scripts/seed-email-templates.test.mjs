@@ -11,6 +11,7 @@ const ROW = {
   logoWidth: 180,
   headerLink: 'https://www.acme.example',
   footerName: 'Acme AG',
+  bandColor: '#014da2',
 };
 const NOW = '20261106';
 
@@ -31,6 +32,13 @@ test('fillLayout does not read "$&" in a value as a replacement pattern', () => 
 test('fillLayout throws on a row with a missing value', () => {
   assert.throws(() => fillLayout('%%LOGO_URL%% %%FOOTER_NAME%%', { ...ROW, logoUrl: '' }), /LOGO_URL/);
   assert.throws(() => fillLayout('%%HEADER_LINK%%', { ...ROW, headerLink: undefined }), /HEADER_LINK/);
+});
+
+test('fillLayout fills the band colour and accepts only #rrggbb, because it lands in a style attribute', () => {
+  assert.equal(fillLayout('background:%%BAND_COLOR%%;', ROW), 'background:#014da2;');
+  assert.throws(() => fillLayout('%%BAND_COLOR%%', { ...ROW, bandColor: 'red' }), /BAND_COLOR/);
+  assert.throws(() => fillLayout('%%BAND_COLOR%%', { ...ROW, bandColor: '#014da2;" onload="x' }), /BAND_COLOR/);
+  assert.throws(() => fillLayout('%%BAND_COLOR%%', { ...ROW, bandColor: undefined }), /BAND_COLOR/);
 });
 
 test('fillLayout throws on a placeholder it does not know and on a value that opens Handlebars', () => {

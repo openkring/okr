@@ -27,6 +27,12 @@ const PLACEHOLDERS = {
   LOGO_WIDTH: 'logoWidth',
   HEADER_LINK: 'headerLink',
   FOOTER_NAME: 'footerName',
+  BAND_COLOR: 'bandColor',
+};
+
+/** Values that land inside a `style` attribute: anything but the expected shape could close the attribute. */
+const PATTERNS = {
+  BAND_COLOR: /^#[0-9a-fA-F]{6}$/,
 };
 
 /**
@@ -44,6 +50,7 @@ export function fillLayout(sourceText, row) {
     }
     const text = String(value);
     if (text.includes('{{')) throw new Error(`fillLayout: ${field} (%%${name}%%) must not contain Handlebars`);
+    if (PATTERNS[name] && !PATTERNS[name].test(text)) throw new Error(`fillLayout: ${field} (%%${name}%%) has an invalid value`);
     return text;
   });
 }
