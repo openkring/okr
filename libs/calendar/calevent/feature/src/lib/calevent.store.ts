@@ -984,6 +984,7 @@ export const CalEventStore = signalStore(
               calevent,
               store.invitations().some(inv => inv.caleventKey === calevent.okey),
               mayJoinOpenCalevent(calevent.calendars, store.groupCalendarKeys(), store.calendarsOfCurrentUser()),
+              !!store.appStore.currentUser()?.personKey && !!calevent.attendees?.some(a => a.person.key === store.appStore.currentUser()?.personKey),
             ),
           }
         });

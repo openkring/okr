@@ -213,7 +213,13 @@ export class EventsSectionComponent implements OnInit {
   private canAttend(calevent: CalEventModel): boolean {
     const hasInvitation = this.store.invitations().some(invitation => invitation.caleventKey === calevent.okey);
     const groupCalendarKeys = this.store.allCalendars().filter(cal => cal.owner?.startsWith('group.')).map(cal => cal.okey);
-    return canAttendCalevent(calevent, hasInvitation, mayJoinOpenCalevent(calevent.calendars, groupCalendarKeys, this.store.calendarsOfCurrentUser()));
+    return canAttendCalevent(calevent, hasInvitation, mayJoinOpenCalevent(calevent.calendars, groupCalendarKeys, this.store.calendarsOfCurrentUser()), this.isAttendee(calevent));
+  }
+
+  /** The current person is on the attendee list (any state) — they may always change their answer. */
+  private isAttendee(calevent: CalEventModel): boolean {
+    const personKey = this.currentUser()?.personKey;
+    return !!personKey && !!calevent.attendees?.some(attendee => attendee.person.key === personKey);
   }
 
   /**

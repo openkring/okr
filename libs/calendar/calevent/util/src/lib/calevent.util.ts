@@ -72,10 +72,13 @@ export function isPersonalCalevent(calevent: CalEventModel): boolean {
  * @param canJoinOpen   false only on a group calendar the user does not belong to; derive it with
  *                      {@link mayJoinOpenCalevent}. Defaults to true so every caller that has
  *                      nothing to do with group calendars keeps the old behaviour.
+ * @param isAttendee    true if the current person is already on `calevent.attendees` (any state), e.g.
+ *                      signed up through a personal answer link from outside the group: whoever is on
+ *                      the list may always change their own answer while the event is answerable.
  */
-export function canAttendCalevent(calevent: CalEventModel, hasInvitation: boolean, canJoinOpen = true): boolean {
+export function canAttendCalevent(calevent: CalEventModel, hasInvitation: boolean, canJoinOpen = true, isAttendee = false): boolean {
   if (isAttendanceClosed(calevent)) return false;
-  return canJoinOpen || hasInvitation || isPersonalCalevent(calevent);
+  return canJoinOpen || hasInvitation || isAttendee || isPersonalCalevent(calevent);
 }
 
 /**

@@ -250,7 +250,7 @@ export class YearlyEvents {
     // gesperrte oder abgesagte Anlaesse nehmen keine Antwort mehr entgegen.
     const showAttendance = !isAttendanceClosed(calevent);
     const hasInvitation = this.store.invitations().some(inv => inv.caleventKey === calevent.okey);
-    if (showAttendance && canAttendCalevent(calevent, hasInvitation, this.mayJoinOpen(calevent))) {
+    if (showAttendance && canAttendCalevent(calevent, hasInvitation, this.mayJoinOpen(calevent), this.isAttendee(calevent))) {
       const state = getAttendanceState(calevent, this.currentUser()?.personKey ?? '');
       if (state !== 'accepted') {
         actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.store.i18n.invitation_subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
@@ -358,7 +358,7 @@ export class YearlyEvents {
     const hasInvitation = this.store.invitations().some(inv => inv.caleventKey === event.okey);
     if (isAttendanceClosed(event)) return undefined;
     const state = getAttendanceState(event, this.currentUser()?.personKey ?? '');
-    if (!state) return canAttendCalevent(event, hasInvitation, this.mayJoinOpen(event)) ? 'invited' : undefined;
+    if (!state) return canAttendCalevent(event, hasInvitation, this.mayJoinOpen(event), this.isAttendee(event)) ? 'invited' : undefined;
     return state === 'accepted' || state === 'declined' ? state : 'invited';
   }
 
@@ -370,6 +370,12 @@ export class YearlyEvents {
 
   protected getAttendanceIcon = getAttendanceIcon;
   protected getAttendanceColor = getAttendanceColor;
+
+  /** The current person is on the attendee list (any state) — they may always change their answer. */
+  protected isAttendee(calevent: CalEventModel): boolean {
+    const personKey = this.currentUser()?.personKey;
+    return !!personKey && !!calevent.attendees?.some(attendee => attendee.person.key === personKey);
+  }
 
   protected mayJoinOpen(event: CalEventModel): boolean {
     return mayJoinOpenCalevent(event.calendars, this.store.groupCalendarKeys(), this.store.calendarsOfCurrentUser());

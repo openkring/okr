@@ -300,6 +300,14 @@ describe('canAttendCalevent', () => {
     expect(canAttendCalevent(event(), false, false)).toBe(false);
   });
 
+  it('lets an attendee outside the group still answer', () => {
+    expect(canAttendCalevent(event(), false, false, true)).toBe(true);
+  });
+
+  it('refuses an attendee of a past event', () => {
+    expect(canAttendCalevent(event({ startDate: '20200101' }), false, false, true)).toBe(false);
+  });
+
   it('is possible on a personal event (the organiser is neither in reach nor invited)', () => {
     expect(canAttendCalevent(event({ calendars: [] }), false, false)).toBe(true);
   });
