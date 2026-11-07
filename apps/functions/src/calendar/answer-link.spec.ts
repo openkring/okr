@@ -1,5 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { allowedAnswers, answerFunctionUrl, isAnswerChoice, respondUrl, signAnswer, signRespond, verifyAnswer } from './answer-link';
+import {
+  allowedAnswers,
+  answerFunctionUrl,
+  isAnswerChoice,
+  mailingAnswerFunctionUrl,
+  mailingAnswerUrl,
+  respondUrl,
+  signAnswer,
+  signMailing,
+  signRespond,
+  verifyAnswer,
+  verifyMailing,
+} from './answer-link';
 
 const SECRET = 'test-secret';
 
@@ -61,5 +73,29 @@ describe('respondUrl', () => {
     expect(url.searchParams.get('i')).toBe('inv 1');
     expect(url.searchParams.has('a')).toBe(false);
     expect(allowedAnswers('inv 1', 'p1', url.searchParams.get('s') ?? '', SECRET)).toEqual(['accept', 'decline']);
+  });
+});
+
+describe('mailing links', () => {
+  it('verifies its own signature', () => {
+    expect(verifyMailing('m1', 'p1', signMailing('m1', 'p1', SECRET), SECRET)).toBe(true);
+  });
+  it('rejects another person', () => {
+    expect(verifyMailing('m1', 'p2', signMailing('m1', 'p1', SECRET), SECRET)).toBe(false);
+  });
+  it('never accepts an invitation respond signature', () => {
+    expect(verifyMailing('m1', 'p1', signRespond('m1', 'p1', SECRET), SECRET)).toBe(false);
+  });
+  it('rejects an empty secret or signature', () => {
+    expect(verifyMailing('m1', 'p1', '', SECRET)).toBe(false);
+    expect(verifyMailing('m1', 'p1', signMailing('m1', 'p1', SECRET), '')).toBe(false);
+  });
+  it('builds the url with m, p and s', () => {
+    const url = new URL(mailingAnswerUrl(mailingAnswerFunctionUrl('proj'), 'm1', 'p1', SECRET));
+    expect(url.origin).toBe('https://europe-west6-proj.cloudfunctions.net');
+    expect(url.pathname).toBe('/mailingAnswer');
+    expect(url.searchParams.get('m')).toBe('m1');
+    expect(url.searchParams.get('p')).toBe('p1');
+    expect(url.searchParams.get('s')).toBe(signMailing('m1', 'p1', SECRET));
   });
 });

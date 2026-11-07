@@ -9,6 +9,8 @@
 // - «Antworten» (current): one link, signed for `respond`, opens a page offering BOTH answers.
 // - «ich nehme teil / nicht teil» (before 2026-10-01): one link per answer, signed for that answer
 //   alone. Still honoured, so mails already in inboxes keep working; such a page offers only it.
+// - Versand mailing (spec 1.145): one personal link per recipient of a mailing, signed for `mailing`
+//   and keyed by the mailing and the person. It is a third kind, never valid on the invitation function.
 
 import { createHmac, timingSafeEqual } from 'crypto';
 import { defineSecret } from 'firebase-functions/params';
@@ -68,5 +70,30 @@ export function respondUrl(baseUrl: string, invitationKey: string, inviteeKey: s
   const url = new URL(baseUrl);
   url.searchParams.set('i', invitationKey);
   url.searchParams.set('s', signRespond(invitationKey, inviteeKey, secret));
+  return url.toString();
+}
+
+/** What the mailing signature binds — never a valid AnswerChoice nor the respond scope. */
+const MAILING = 'mailing';
+
+export function signMailing(mailingKey: string, personKey: string, secret: string): string {
+  return sign(mailingKey, personKey, MAILING, secret);
+}
+
+export function verifyMailing(mailingKey: string, personKey: string, signature: string, secret: string): boolean {
+  return verify(mailingKey, personKey, MAILING, signature, secret);
+}
+
+/** The function's own URL for the Versand answer page. */
+export function mailingAnswerFunctionUrl(projectId: string): string {
+  return `https://europe-west6-${projectId}.cloudfunctions.net/mailingAnswer`;
+}
+
+/** The personal Versand answer link: `m` = mailing, `p` = person, `s` = signature. */
+export function mailingAnswerUrl(baseUrl: string, mailingKey: string, personKey: string, secret: string): string {
+  const url = new URL(baseUrl);
+  url.searchParams.set('m', mailingKey);
+  url.searchParams.set('p', personKey);
+  url.searchParams.set('s', signMailing(mailingKey, personKey, secret));
   return url.toString();
 }
