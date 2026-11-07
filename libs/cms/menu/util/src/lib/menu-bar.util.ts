@@ -80,3 +80,18 @@ export function exceedsBarLimit(
 ): boolean {
   return isBarMenuType(type) && countBarItems(menuItems, childActions) + added > MAX_MENU_BAR_ITEMS;
 }
+
+/**
+ * `call` actions that are only offered on a wide screen (spec 1.145 §4.6): the Versand modal with its
+ * recipient × delivery-type table does not fit a phone. Width is none of the three stored gates
+ * (tenant, feature block, role), so it lives here, keyed by the action the entry calls.
+ */
+export const WIDE_SCREEN_CALLS = ['sendEmailToList'];
+
+/** Viewport query for {@link WIDE_SCREEN_CALLS}: Ionic's `md` breakpoint. */
+export const WIDE_SCREEN_QUERY = '(min-width: 768px)';
+
+/** Whether an entry is hidden on the current screen because it needs a wide one. */
+export function isHiddenOnNarrowScreen(item: Pick<MenuItemModel, 'action' | 'url'> | undefined, isWide: boolean): boolean {
+  return !isWide && item?.action === 'call' && WIDE_SCREEN_CALLS.includes(item.url ?? '');
+}

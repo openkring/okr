@@ -106,22 +106,6 @@
       "placeholder": "Password"
     }
   },
-  "distribution": {
-    "title": "Preparare la lista di distribuzione",
-    "empty": "Nessun indirizzo selezionato.",
-    "next": "Avanti",
-    "segment": {
-      "to": "A",
-      "cc": "cc",
-      "bcc": "bcc"
-    },
-    "add": {
-      "label": "Aggiungi indirizzo",
-      "placeholder": "nome@dominio.ch, ...",
-      "helper": "Separare più indirizzi con una virgola o un punto e virgola.",
-      "invalid": "Nessun indirizzo e-mail valido trovato."
-    }
-  },
   "duration": {
     "title": "Seleziona periodo",
     "from": "Da",

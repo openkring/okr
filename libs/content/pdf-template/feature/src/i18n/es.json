@@ -102,7 +102,8 @@
     },
     "bcc": {
       "label": "Cco",
-      "placeholder": "email1@domain.com, email2@domain.com"
+      "placeholder": "email1@domain.com, email2@domain.com",
+      "from_delivery": "Quien tiene correo en la entrega recibe el envío en Cco."
     },
     "subject": {
       "label": "Asunto",
@@ -115,7 +116,8 @@
     },
     "attachment": {
       "add": "Añadir",
-      "toolarge": "Archivo demasiado grande (máx. {{ maxMb }} MB): {{ name }}"
+      "toolarge": "Archivo demasiado grande (máx. {{ maxMb }} MB): {{ name }}",
+      "label": "Adjuntos"
     },
     "send": {
       "conf": "Documento enviado a {{ recipients }}",
@@ -125,11 +127,12 @@
     "revert": {
       "label": "Descartar"
     },
-    "title_plain": "Enviar correo",
+    "title_plain": "Preparar el envío",
     "segment": {
       "editor": "Editor",
       "preview": "Vista previa",
-      "list": "Destinatarios"
+      "list": "Destinatarios",
+      "delivery": "Entrega"
     },
     "preview": {
       "empty": "Todavía no hay nada que mostrar.",
@@ -137,7 +140,30 @@
       "error": "No se pudo cargar la vista previa."
     },
     "list": {
-      "empty": "No hay destinatarios."
+      "empty": "No hay destinatarios.",
+      "email_only": "Para, Cc y Cco solo valen para el envío por correo."
+    },
+    "delivery": {
+      "recipient": "Destinatario",
+      "total": "Total",
+      "chat": "En la app",
+      "email": "Correo",
+      "post": "Correo postal",
+      "soon": "pronto",
+      "unreachable": "No localizables:",
+      "hint": "Tus cambios solo valen para este envío. El perfil de los destinatarios no cambia.",
+      "empty": "Con esta selección nadie recibe el envío.",
+      "error": "No se pudieron cargar las formas de entrega. El envío va a todas las personas con correo."
+    },
+    "info": {
+      "title": "Cómo funciona un envío",
+      "action": "Info",
+      "p1": "Cada miembro elige en su perfil cómo quiere recibir los mensajes: en la app, por correo o por correo postal. Se pueden elegir varias formas.",
+      "p2": "En «Entrega» ves esa elección para cada destinatario. Puedes cambiarla para este envío; el perfil no cambia. Quien no tiene cuenta recibe un correo, o una carta si no se conoce su correo.",
+      "p3": "Correo: el texto del editor se coloca en la plantilla elegida y los adjuntos se añaden al correo. Para, Cc y Cco solo valen aquí. Los destinatarios van en Cco, así nadie ve a los demás.",
+      "p4": "En la app: el envío aparece como comunicado en el panel, con texto y adjuntos. El destinatario recibe una notificación push que lo abre.",
+      "p5": "Correo postal: el texto se imprime como carta con la dirección del destinatario, los adjuntos van detrás y la carta sale por correo. Cada carta cuesta algo.",
+      "p6": "La app y el correo postal llegarán pronto. Hasta entonces, un envío sale solo por correo."
     }
   },
   "category": {

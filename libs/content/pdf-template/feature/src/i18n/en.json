@@ -102,7 +102,8 @@
     },
     "bcc": {
       "label": "Bcc",
-      "placeholder": "email1@domain.com, email2@domain.com"
+      "placeholder": "email1@domain.com, email2@domain.com",
+      "from_delivery": "Everyone with email under Delivery receives the mailing as Bcc."
     },
     "subject": {
       "label": "Subject",
@@ -115,7 +116,8 @@
     },
     "attachment": {
       "add": "Add",
-      "toolarge": "File too large (max. {{ maxMb }} MB): {{ name }}"
+      "toolarge": "File too large (max. {{ maxMb }} MB): {{ name }}",
+      "label": "Attachments"
     },
     "send": {
       "conf": "Document sent to {{ recipients }}",
@@ -125,11 +127,12 @@
     "revert": {
       "label": "Discard"
     },
-    "title_plain": "Send email",
+    "title_plain": "Prepare mailing",
     "segment": {
       "editor": "Editor",
       "preview": "Preview",
-      "list": "Recipients"
+      "list": "Recipients",
+      "delivery": "Delivery"
     },
     "preview": {
       "empty": "Nothing to preview yet.",
@@ -137,7 +140,30 @@
       "error": "The preview could not be loaded."
     },
     "list": {
-      "empty": "No recipients entered."
+      "empty": "No recipients entered.",
+      "email_only": "To, Cc and Bcc only apply to delivery by email."
+    },
+    "delivery": {
+      "recipient": "Recipient",
+      "total": "Total",
+      "chat": "In-app",
+      "email": "Email",
+      "post": "Post",
+      "soon": "coming",
+      "unreachable": "Not reachable:",
+      "hint": "Your changes apply to this mailing only. The recipients’ profiles stay as they are.",
+      "empty": "With this selection nobody receives the mailing.",
+      "error": "The delivery choices could not be loaded. The mailing goes to everyone with an email address."
+    },
+    "info": {
+      "title": "How a mailing works",
+      "action": "Info",
+      "p1": "Every member chooses in their profile how they want to receive news: in-app, email or post. Several ways are possible.",
+      "p2": "Under «Delivery» you see that choice for each recipient. You can change it for this one mailing; the profile stays as it is. People without an account get an email, or a letter if no email address is known.",
+      "p3": "Email: the text from the editor is set into the chosen template and the attachments are attached to the email. To, Cc and Bcc only apply here. Recipients are in Bcc, so nobody sees the others.",
+      "p4": "In-app: the mailing appears as a notice on the dashboard, with its text and attachments. The recipient gets a push notification that opens it.",
+      "p5": "Post: the text is printed as a letter with the recipient’s address, the attachments follow, and the letter goes out by post. Each letter costs money.",
+      "p6": "In-app and post are coming soon. Until then a mailing goes out by email only."
     }
   },
   "category": {

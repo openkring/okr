@@ -9,7 +9,7 @@ import { dismissOverlay, VersionCheckService } from '@okr/shared-util-angular';
 import { DEFAULT_MENU_ACTION } from '@okr/shared-constants';
 
 import { MenuInfo, MultiAvatar } from '@okr/cms-menu-ui';
-import { isMenuBlocked, nextVisitedKeys } from '@okr/cms-menu-util';
+import { isHiddenOnNarrowScreen, isMenuBlocked, nextVisitedKeys, WIDE_SCREEN_QUERY } from '@okr/cms-menu-util';
 
 import { MenuItemsStore } from './menu-items.store';
 import { MenuLayout } from './menu-layout.service';
@@ -213,9 +213,13 @@ export class Menu {
   protected readonly effectiveIcon = computed(() =>
     this.toggleActive() ? (this.menuItem()?.iconAlt ?? this.icon()) : this.icon()
   );
+  /** Read when the menu renders: a context menu is built fresh each time its popover opens. */
+  private readonly isWideScreen = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+    ? window.matchMedia(WIDE_SCREEN_QUERY).matches : true;
   protected readonly isVisible = computed(() => {
     const name = this.menuItem()?.name;
     if (name && this.excludeNames().includes(name)) return false;
+    if (isHiddenOnNarrowScreen(this.menuItem(), this.isWideScreen)) return false;
     return this.forceVisible() || this.forceVisibleSelf() || hasRole(this.roleNeeded(), this.currentUser());
   });
   /** the release-notes row (catalogue `version`; a tenant fork keeps the name) */

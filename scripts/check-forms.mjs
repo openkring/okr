@@ -158,7 +158,6 @@ const MODAL_ALLOWLIST = {
   'libs/auth/feature/src/lib/login.modal.ts': 'auth form with its own submit, nothing is edited',
   'libs/chat/feature/src/lib/forward-message.modal.ts': 'picker: choose target chats for forwarding',
   'libs/chat/feature/src/lib/pin-message.modal.ts': 'picker: pin duration and scope',
-  'libs/shared/ui/src/lib/distribution-list.modal.ts': 'picker: choose recipients for the email composer',
   'libs/calendar/calevent/ui/src/lib/regression-selection.modal.ts': 'picker: scope of a series change (this / future / all)',
   'libs/calendar/calevent/ui/src/lib/organiser-contact.modal.ts': 'action picker: whom to contact and how',
   'libs/calendar/calevent/ui/src/lib/calendar-sync.modal.ts': 'tool: shows / copies / resets a subscription link',

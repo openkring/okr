@@ -102,7 +102,8 @@
     },
     "bcc": {
       "label": "Bcc",
-      "placeholder": "email1@domain.com, email2@domain.com"
+      "placeholder": "email1@domain.com, email2@domain.com",
+      "from_delivery": "Wer in der Zustellung E-Mail hat, erhält den Versand als Bcc."
     },
     "subject": {
       "label": "Betreff",
@@ -115,7 +116,8 @@
     },
     "attachment": {
       "add": "Hinzufügen",
-      "toolarge": "Datei zu gross (max. {{ maxMb }} MB): {{ name }}"
+      "toolarge": "Datei zu gross (max. {{ maxMb }} MB): {{ name }}",
+      "label": "Anhänge"
     },
     "send": {
       "conf": "Dokument gesendet an {{ recipients }}",
@@ -125,11 +127,12 @@
     "revert": {
       "label": "Verwerfen"
     },
-    "title_plain": "Email senden",
+    "title_plain": "Versand vorbereiten",
     "segment": {
       "editor": "Editor",
       "preview": "Vorschau",
-      "list": "Verteiler"
+      "list": "Verteiler",
+      "delivery": "Zustellung"
     },
     "preview": {
       "empty": "Noch kein Inhalt zum Anzeigen.",
@@ -137,7 +140,30 @@
       "error": "Die Vorschau konnte nicht geladen werden."
     },
     "list": {
-      "empty": "Keine Empfänger erfasst."
+      "empty": "Keine Empfänger erfasst.",
+      "email_only": "An, Cc und Bcc gelten nur für den Versand per E-Mail."
+    },
+    "delivery": {
+      "recipient": "Empfänger",
+      "total": "Total",
+      "chat": "In-App",
+      "email": "E-Mail",
+      "post": "Post",
+      "soon": "folgt",
+      "unreachable": "Nicht erreichbar:",
+      "hint": "Deine Änderungen gelten nur für diesen Versand. Das Profil der Empfänger bleibt, wie es ist.",
+      "empty": "Mit dieser Auswahl erhält niemand den Versand.",
+      "error": "Die Zustellwege konnten nicht geladen werden. Der Versand geht an alle mit E-Mail-Adresse."
+    },
+    "info": {
+      "title": "So funktioniert der Versand",
+      "action": "Info",
+      "p1": "Jedes Mitglied wählt in seinem Profil, wie es Nachrichten erhalten möchte: In-App, E-Mail oder Post. Mehrere Wege sind möglich.",
+      "p2": "Unter «Zustellung» siehst du diese Wahl pro Empfänger. Du kannst sie für diesen einen Versand ändern, das Profil bleibt unverändert. Wer kein Konto hat, erhält eine E-Mail, oder einen Brief, wenn keine E-Mail-Adresse bekannt ist.",
+      "p3": "E-Mail: Der Text aus dem Editor wird in die gewählte Vorlage gesetzt, die Anhänge werden der E-Mail beigelegt. An, Cc und Bcc gelten nur hier. Die Empfänger stehen im Bcc, so sieht niemand die anderen.",
+      "p4": "In-App: Der Versand erscheint als Mitteilung auf dem Dashboard, mit Text und Anhängen. Der Empfänger erhält eine Push-Nachricht, die die Mitteilung öffnet.",
+      "p5": "Post: Der Text wird als Brief mit der Adresse des Empfängers gedruckt, die Anhänge folgen dahinter, und der Brief geht per Post hinaus. Jeder Brief kostet etwas.",
+      "p6": "In-App und Post folgen bald. Bis dahin geht ein Versand nur per E-Mail hinaus."
     }
   },
   "category": {

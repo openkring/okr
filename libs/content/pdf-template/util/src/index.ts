@@ -4,3 +4,4 @@ export * from './lib/pdf-template-i18n';
 export * from './lib/email-html.util';
 export * from './lib/email-composer.validations';
 export * from './lib/template-publish.validations';
+export * from './lib/versand.util';

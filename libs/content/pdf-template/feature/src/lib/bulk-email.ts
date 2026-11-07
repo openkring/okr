@@ -3,13 +3,11 @@ import { ModalController } from '@ionic/angular';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
-import { AddressCollection, AddressModel } from '@okr/shared-models';
-import { DistributionList, DistributionListModal } from '@okr/shared-ui';
-import { EmailEntry } from '@okr/shared-util-angular';
-import { getSystemQuery } from '@okr/shared-util-core';
-import { type ComposedEmail, EmailComposerModal } from '@okr/content-pdf-template-ui';
+import { AddressCollection, AddressModel, PersonModel } from '@okr/shared-models';
+import { getFullName, getSystemQuery } from '@okr/shared-util-core';
+import { type ComposedEmail, EmailComposerModal, type VersandRecipient } from '@okr/content-pdf-template-ui';
 
-export type { ComposedEmail };
+export type { ComposedEmail, VersandRecipient };
 
 /** What a list store has to hand over to run the bulk-mail flow. */
 export interface BulkEmailContext {
@@ -20,43 +18,48 @@ export interface BulkEmailContext {
 }
 
 /**
- * The two-step bulk-mail flow shared by the person and membership lists:
- * "Verteiler vorbereiten" (to/cc/bcc) → the email composer, which sends in throttled blocks.
+ * The persons of a list as Versand recipients, sorted by last name. Unlike a mail list, a person
+ * without an email address stays in: the Zustellung table may still reach them another way.
+ */
+export function toVersandRecipients(persons: PersonModel[], getEmail: (person: PersonModel) => string | undefined): VersandRecipient[] {
+  return [...persons]
+    .filter((p) => !!p.okey)
+    .sort((a, b) => (a.lastName ?? '').localeCompare(b.lastName ?? ''))
+    .map((p) => ({ personKey: p.okey, name: getFullName(p.firstName, p.lastName), email: getEmail(p) ?? '' }));
+}
+
+/**
+ * The Versand flow shared by the person, membership and meeting lists (spec 1.145): one modal,
+ * «Versand vorbereiten», with the segments Editor, Vorschau, Zustellung and Verteiler.
  *
- * `to` offers the default org's email addresses (favourite preselected), `bcc` the given
- * recipients. Does nothing if the user cancels either modal.
+ * `to` is the default org's favourite email address; the Bcc follows from the Zustellung table,
+ * which the composer loads for `recipients` (persons without an email address included, they may
+ * be reachable another way). Does nothing more if the user cancels.
  * @param attachment an already stored file (storage path + filename) to attach, e.g. a minutes PDF
  * @param sendHandler sends instead of the `mailJobs` queue, for a caller the queue's rule keeps out
  *        (a group admin); the server then decides the sender, so the composer locks that field
+ * @param groupKey a group admin's Versand: the server only reports on the group's members
  */
 export async function openBulkEmailFlow(
   ctx: BulkEmailContext,
-  recipients: EmailEntry[],
+  recipients: VersandRecipient[],
   attachment?: { storagePath: string; filename: string },
   sendHandler?: (mail: ComposedEmail) => Promise<void>,
+  groupKey?: string,
 ): Promise<void> {
-  const { orgEmails, favOrgEmail } = await loadOrgEmails(ctx);
-
-  const listModal = await ctx.modalController.create({
-    component: DistributionListModal,
-    componentProps: { orgEmails, favOrgEmail, recipients },
-  });
-  await listModal.present();
-  const { data, role } = await listModal.onWillDismiss<DistributionList>();
-  if (role !== 'confirm' || !data) return;
-
+  const { favOrgEmail } = await loadOrgEmails(ctx);
   const composer = await ctx.modalController.create({
     component: EmailComposerModal,
     componentProps: {
-      to: data.to.join(', '),
-      cc: data.cc.join(', '),
-      bcc: data.bcc.join(', '),
+      to: favOrgEmail,
+      versandRecipients: recipients,
+      groupKey: groupKey ?? '',
       storagePath: attachment?.storagePath ?? '',
       filename: attachment?.filename ?? '',
       sendHandler,
       fromLocked: !!sendHandler,
     },
-    cssClass: 'wide-modal',
+    cssClass: ['wide-modal', 'auto-height-modal'],
   });
   await composer.present();
   await composer.onWillDismiss();

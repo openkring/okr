@@ -231,6 +231,7 @@ export { onBadgeCountsWritten } from './badge/on-badge-counts-written';
 export const onMailJob = Email.onMailJob;
 export const sendGroupEmail = Email.sendGroupEmail;
 export const renderEmailPreview = Email.renderEmailPreview;
+export const getMailingRecipients = Email.getMailingRecipients;  // Versand Zustellung table (spec 1.145)
 
 // bexio router (3.41 A6) + one 06:00 sync slot (D4); the six names below stay as aliases
 export const bexio = BexioRouter.bexio;

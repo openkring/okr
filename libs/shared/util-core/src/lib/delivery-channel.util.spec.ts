@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DeliveryChannel } from '@okr/shared-models';
-import { toDeliveryChannels, toEditableChannels } from './delivery-channel.util';
+import { mailingChannels, toDeliveryChannels, toEditableChannels } from './delivery-channel.util';
 
 describe('toDeliveryChannels', () => {
   it('maps the legacy numeric DeliveryType values', () => {
@@ -58,5 +58,34 @@ describe('toEditableChannels', () => {
 
   it('passes an array with an unknown entry through unchanged', () => {
     expect(toEditableChannels(['fax'])).toEqual(['fax']);
+  });
+});
+
+describe('mailingChannels', () => {
+  const base = { personKey: 'p', hasAccount: true, hasEmail: true, hasPostal: true };
+
+  it('takes the profile choice of an account, in column order', () => {
+    expect(mailingChannels({ ...base, newsDelivery: ['email', 'chat'] }))
+      .toEqual({ personKey: 'p', possible: ['chat', 'email', 'post'], initial: ['chat', 'email'] });
+  });
+
+  it('drops a profile choice that is not possible', () => {
+    expect(mailingChannels({ ...base, hasPostal: false, newsDelivery: ['post'] }).initial).toEqual([]);
+  });
+
+  it('never offers signal in a Versand', () => {
+    expect(mailingChannels({ ...base, newsDelivery: ['signal'] }).initial).toEqual([]);
+  });
+
+  it('reads a legacy numeric profile value', () => {
+    expect(mailingChannels({ ...base, newsDelivery: 0 }).initial).toEqual(['post']);
+  });
+
+  it('defaults a person without account to email, else post, else nothing', () => {
+    const none = { personKey: 'p', hasAccount: false, hasEmail: false, hasPostal: false };
+    expect(mailingChannels({ ...none, hasEmail: true, hasPostal: true, newsDelivery: ['chat'] }))
+      .toEqual({ personKey: 'p', possible: ['email', 'post'], initial: ['email'] });
+    expect(mailingChannels({ ...none, hasPostal: true }).initial).toEqual(['post']);
+    expect(mailingChannels(none)).toEqual({ personKey: 'p', possible: [], initial: [] });
   });
 });

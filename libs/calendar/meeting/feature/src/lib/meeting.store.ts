@@ -8,14 +8,14 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AgendaItem, DocumentModel, MeetingModel, MeetingModelName, MembershipModel, TaskModel } from '@okr/shared-models';
-import { AlertService, EmailEntry } from '@okr/shared-util-angular';
+import { AlertService } from '@okr/shared-util-angular';
 import { DateFormat, convertDateFormatToString, debugListLoaded, fileName, getAvatarInfoForCurrentUser, getTodayStr, hasRole, nameMatches } from '@okr/shared-util-core';
 
 import { MeetingService } from '@okr/calendar-meeting-data-access';
 import { MEETING_I18N_KEYS, buildMinutesDocument, carryOverAgendaItems, getMeetingRelatedKey, newAttendees, newMeetingModel } from '@okr/calendar-meeting-util';
 import { DocumentService } from '@okr/content-document-data-access';
 import { DocGenerationService } from '@okr/content-pdf-template-data-access';
-import { openBulkEmailFlow } from '@okr/content-pdf-template-feature';
+import { openBulkEmailFlow, type VersandRecipient } from '@okr/content-pdf-template-feature';
 import { EsignService } from '@okr/content-esign-data-access';
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import { TaskService } from '@okr/project-task-data-access';
@@ -288,14 +288,13 @@ export const MeetingStore = signalStore(
         store.alertService.error(store.i18n.send_noPdf());
         return;
       }
-      const recipients: EmailEntry[] = (meeting.attendees ?? [])
+      const recipients: VersandRecipient[] = (meeting.attendees ?? [])
+        .filter(a => !!a.person?.key)
         .map(a => ({
+          personKey: a.person?.key ?? '',
+          name: `${a.person?.name1 ?? ''} ${a.person?.name2 ?? ''}`.trim(),
           email: store.appStore.getDirectoryEntry(`person.${a.person?.key}`)?.favEmail ?? '',
-          memberKey: a.person?.key ?? '',
-          memberName: `${a.person?.name1 ?? ''} ${a.person?.name2 ?? ''}`.trim(),
-          lastName: a.person?.name2 ?? '',
-        }))
-        .filter(e => !!e.email);
+        }));
 
       await openBulkEmailFlow({
         modalController: store.modalController,

@@ -13,7 +13,7 @@ import { AddressCollection, AddressModel, CategoryListModel, DefaultLanguage, Me
 import { AlertService, copyToClipboardWithConfirmation, getCcEmailAddresses, getMainEmailAddresses, lazyService, navigateByUrl, showToast } from '@okr/shared-util-angular';
 import { chipMatches, debugItemLoaded, getSystemQuery, hasRole, isPerson, nameMatches, PHOTO_USAGE_ALL, photoUsageMatches, chatBlockedAlertMessage, isChatBlockedError } from '@okr/shared-util-core';
 import { EmailAddressesModal, MapViewModal, openReport } from '@okr/shared-ui';
-import { openBulkEmailFlow } from '@okr/content-pdf-template-feature';
+import { openBulkEmailFlow, toVersandRecipients } from '@okr/content-pdf-template-feature';
 import { Languages } from '@okr/shared-categories';
 import { I18nService } from '@okr/shared-i18n';
 
@@ -476,12 +476,12 @@ export const PersonStore = signalStore(
         },
 
         /**
-         * Bulk mail to the currently filtered persons: first the distribution-list modal
-         * (to/cc/bcc), then the email composer, which sends the mail in throttled blocks.
+         * Versand to the currently filtered persons (spec 1.145): the composer with its Zustellung
+         * table, which sends the email part in throttled blocks.
          */
         async sendEmailToList(): Promise<void> {
           const persons = store.filteredPersons();
-          const recipients = getMainEmailAddresses(persons, (p) => store.appStore.getDirectoryEntry(`person.${p.okey}`)?.favEmail);
+          const recipients = toVersandRecipients(persons, (p) => store.appStore.getDirectoryEntry(`person.${p.okey}`)?.favEmail);
           await openBulkEmailFlow({
             modalController: store.modalController,
             firestoreService: store.firestoreService,
