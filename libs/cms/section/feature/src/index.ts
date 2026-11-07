@@ -42,5 +42,6 @@ export * from './lib/trip-stats-section.store';
 export * from './lib/toc-section';
 export * from './lib/testimonial-section';
 export * from './lib/timeline-section';
+export * from './lib/counter-section';
 export * from './lib/advent-section';
 export * from './lib/hero-section';

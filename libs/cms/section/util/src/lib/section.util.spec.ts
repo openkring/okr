@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ButtonAction, ButtonSection, ColorIonic, SECTION_TYPES, SectionType, WeatherSection, LearningSection, EnergySection } from '@okr/shared-models';
+import { ButtonAction, ButtonSection, ColorIonic, SECTION_TYPES, SectionType, WeatherSection, LearningSection, EnergySection, CounterSection, COUNTER_CONFIG_SHAPE } from '@okr/shared-models';
 
 import { createSection, narrowSection } from './section.util';
 
@@ -115,6 +115,15 @@ describe('createSection — energy', () => {
   it('seeds both config keys, because section saves merge', () => {
     const section = createSection('energy', tenantId) as EnergySection;
     expect(section.properties).toEqual({ locationKey: '', compareKeys: [] });
+  });
+});
+
+describe('createSection — counter', () => {
+  it('gives every counter section its own properties, seeded with every config key', () => {
+    const a = createSection('counter', tenantId) as CounterSection;
+    const b = createSection('counter', tenantId) as CounterSection;
+    expect(a.properties).not.toBe(b.properties);
+    expect(a.properties).toEqual(COUNTER_CONFIG_SHAPE);
   });
 });
 

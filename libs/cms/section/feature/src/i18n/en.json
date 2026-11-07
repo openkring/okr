@@ -1241,6 +1241,10 @@
     "weather": {
       "label": "Weather",
       "description": "Weather widgets: day summary, forecast, map or rain radar"
+    },
+    "counter": {
+      "label": "Counter",
+      "description": "A number you count up and down by hand, or that keeps counting by itself"
     }
   },
   "message_center": {
@@ -1528,5 +1532,49 @@
       "label": "Compare with",
       "helper": "Up to 4 more municipalities for the comparison table"
     }
+  },
+  "counter": {
+    "label": "Counter",
+    "title": "Counter configuration",
+    "subtitle": "How the counter looks and how it counts. The heading is the section title.",
+    "region": "Counter",
+    "uiType": {
+      "label": "Style",
+      "display": "Large number",
+      "stepper": "Compact with plus and minus",
+      "flip": "Flip board",
+      "ring": "Ring"
+    },
+    "caption": {
+      "label": "Caption",
+      "placeholder": "e.g. Participants",
+      "helper": "Short text shown with the number"
+    },
+    "showUp": {
+      "label": "Show plus button",
+      "helper": "Counts up by one"
+    },
+    "showDown": {
+      "label": "Show minus button",
+      "helper": "Counts down by one"
+    },
+    "showButtonLabels": {
+      "label": "Label the buttons",
+      "helper": "Shows \"Plus\" or \"Minus\" next to the icon"
+    },
+    "isAuto": {
+      "label": "Count automatically",
+      "helper": "The counter keeps running by itself while the page is open"
+    },
+    "interval": {
+      "label": "Interval"
+    },
+    "direction": {
+      "label": "Direction",
+      "up": "Up",
+      "down": "Down"
+    },
+    "up": "Plus",
+    "down": "Minus"
   }
 }

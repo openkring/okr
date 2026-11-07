@@ -8,7 +8,7 @@ import type {
   ChartSection, ChatConfig, ChatSection, ContextDiagramConfig, ContextDiagramSection, EditorConfig, EventsConfig, EventsSection,
   FormSection, FormSectionConfig,
   HeroConfig, HeroSection, IconConfig, IframeConfig,
-  IframeSection, InvitationsConfig, InvitationsSection, MapConfig, WeatherConfig, WeatherSection, ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, MapSection, MemberAgeConfig, MemberAgeSection, MemberCatConfig, MemberCatSection, OrgchartConfig, OrgchartSection, PeopleConfig,
+  IframeSection, InvitationsConfig, InvitationsSection, MapConfig, WeatherConfig, WeatherSection, ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, MapSection, MemberAgeConfig, MemberAgeSection, MemberCatConfig, MemberCatSection, OrgchartConfig, OrgchartSection, PeopleConfig,
   PeopleSection, RagConfig, RagSection, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TimelineConfig, TimelineSection, AdventConfig, AdventSection, NewsConfig, NewsSection, TasksConfig, TasksSection, ActivitiesConfig, ActivitiesSection, MessagesConfig, MessagesSection, TripStatsConfig, TripStatsSection, ResponsibilityConfig, ResponsibilitySection, SliderConfig, SliderSection, TableConfig, TableSection,
   TrackerConfig, TrackerSection, VideoConfig, VideoSection
 } from "./section.model";
@@ -590,6 +590,24 @@ export const FORM_SECTION_SHAPE = {
   type: 'form' as const,
   properties: FORM_SECTION_CONFIG_SHAPE,
 } as FormSection;
+// --------------------------------------- COUNTER ----------------------------------------
+export const COUNTER_CONFIG_SHAPE: CounterConfig = {
+  uiType: 'display',
+  label: '',
+  showUpButton: true,
+  showDownButton: true,
+  showButtonLabels: false,
+  isAuto: false,
+  autoInterval: 1000,
+  autoDirection: 'up',
+};
+
+export const COUNTER_SECTION_SHAPE = {
+  ...BASE_SECTION_SHAPE,
+  type: 'counter' as const,
+  properties: COUNTER_CONFIG_SHAPE,
+} as CounterSection;
+
 // --------------------------------------- LEARNING ----------------------------------------
 export const LEARNING_CONFIG_SHAPE: LearningConfig = {
   folder: '',

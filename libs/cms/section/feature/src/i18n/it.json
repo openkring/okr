@@ -1241,6 +1241,10 @@
     "weather": {
       "label": "Meteo",
       "description": "Widget meteo: riepilogo del giorno, previsione, mappa o radar della pioggia"
+    },
+    "counter": {
+      "label": "Contatore",
+      "description": "Un numero che aumenti e diminuisci a mano, o che avanza da solo"
     }
   },
   "message_center": {
@@ -1528,5 +1532,49 @@
       "label": "Confronta con",
       "helper": "Fino a 4 altri comuni per la tabella di confronto"
     }
+  },
+  "counter": {
+    "label": "Contatore",
+    "title": "Configurazione del contatore",
+    "subtitle": "L’aspetto del contatore e come conta. L’intestazione è il titolo della sezione.",
+    "region": "Contatore",
+    "uiType": {
+      "label": "Presentazione",
+      "display": "Numero grande",
+      "stepper": "Compatto con più e meno",
+      "flip": "Tabellone a palette",
+      "ring": "Cerchio"
+    },
+    "caption": {
+      "label": "Didascalia",
+      "placeholder": "p. es. Partecipanti",
+      "helper": "Breve testo mostrato accanto al numero"
+    },
+    "showUp": {
+      "label": "Mostra il pulsante più",
+      "helper": "Aumenta di uno"
+    },
+    "showDown": {
+      "label": "Mostra il pulsante meno",
+      "helper": "Diminuisce di uno"
+    },
+    "showButtonLabels": {
+      "label": "Etichetta i pulsanti",
+      "helper": "Mostra «Più» o «Meno» accanto al simbolo"
+    },
+    "isAuto": {
+      "label": "Conta automaticamente",
+      "helper": "Il contatore avanza da solo finché la pagina è aperta"
+    },
+    "interval": {
+      "label": "Cadenza"
+    },
+    "direction": {
+      "label": "Direzione",
+      "up": "Crescente",
+      "down": "Decrescente"
+    },
+    "up": "Più",
+    "down": "Meno"
   }
 }

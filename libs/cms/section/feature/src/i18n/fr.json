@@ -1241,6 +1241,10 @@
     "weather": {
       "label": "Météo",
       "description": "Widgets météo : résumé du jour, prévision, carte ou radar de pluie"
+    },
+    "counter": {
+      "label": "Compteur",
+      "description": "Un nombre que tu fais monter et descendre à la main, ou qui avance tout seul"
     }
   },
   "message_center": {
@@ -1528,5 +1532,49 @@
       "label": "Comparer avec",
       "helper": "Jusqu’à 4 autres communes pour le tableau de comparaison"
     }
+  },
+  "counter": {
+    "label": "Compteur",
+    "title": "Configuration du compteur",
+    "subtitle": "L’apparence du compteur et sa façon de compter. Le titre est celui de la section.",
+    "region": "Compteur",
+    "uiType": {
+      "label": "Présentation",
+      "display": "Grand nombre",
+      "stepper": "Compact avec plus et moins",
+      "flip": "Tableau à volets",
+      "ring": "Cercle"
+    },
+    "caption": {
+      "label": "Légende",
+      "placeholder": "p. ex. Participants",
+      "helper": "Court texte affiché avec le nombre"
+    },
+    "showUp": {
+      "label": "Afficher le bouton plus",
+      "helper": "Augmente de un"
+    },
+    "showDown": {
+      "label": "Afficher le bouton moins",
+      "helper": "Diminue de un"
+    },
+    "showButtonLabels": {
+      "label": "Libeller les boutons",
+      "helper": "Affiche « Plus » ou « Moins » à côté du symbole"
+    },
+    "isAuto": {
+      "label": "Compter automatiquement",
+      "helper": "Le compteur avance tout seul tant que la page est ouverte"
+    },
+    "interval": {
+      "label": "Cadence"
+    },
+    "direction": {
+      "label": "Sens",
+      "up": "Croissant",
+      "down": "Décroissant"
+    },
+    "up": "Plus",
+    "down": "Moins"
   }
 }

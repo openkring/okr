@@ -16,6 +16,7 @@ import { tableSectionValidations } from './table-section.validations';
 import { trackerSectionValidations } from './tracker-section.validations';
 import { videoSectionValidations } from './video-section.validations';
 import { energySectionValidations } from './energy-section.validations';
+import { counterSectionValidations } from './counter-section.validations';
 import { weatherSectionValidations } from './weather-section.validations';
 import { adventSectionValidations } from './advent-section.validations';
 import { departuresSectionValidations } from './departures-section.validations';
@@ -56,6 +57,7 @@ export const SECTION_VALIDATION_SUITES: Partial<Record<SectionType, SectionSuite
   advent: adventSectionValidations as SectionSuite,
   departures: departuresSectionValidations as SectionSuite,
   energy: energySectionValidations as SectionSuite,
+  counter: counterSectionValidations as SectionSuite,
   form: ((model: SectionModel, context?: SectionValidationContext) =>
     formSectionValidations(model as FormSection, context?.formImplicitFields)) as SectionSuite
 };

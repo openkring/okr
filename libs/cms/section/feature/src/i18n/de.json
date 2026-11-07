@@ -1241,6 +1241,10 @@
     "weather": {
       "label": "Wetter",
       "description": "Wetter-Widgets: Tagesübersicht, Prognose, Karte oder Regenradar"
+    },
+    "counter": {
+      "label": "Zähler",
+      "description": "Eine Zahl, die man von Hand hoch- und runterzählt oder die von selbst weiterläuft"
     }
   },
   "message_center": {
@@ -1528,5 +1532,49 @@
       "label": "Vergleich mit",
       "helper": "Bis zu 4 weitere Gemeinden für die Vergleichstabelle"
     }
+  },
+  "counter": {
+    "label": "Zähler",
+    "title": "Zähler-Konfiguration",
+    "subtitle": "Wie der Zähler aussieht und wie er zählt. Die Überschrift ist der Titel der Sektion.",
+    "region": "Zähler",
+    "uiType": {
+      "label": "Darstellung",
+      "display": "Grosse Zahl",
+      "stepper": "Kompakt mit Plus und Minus",
+      "flip": "Klapptafel",
+      "ring": "Kreis"
+    },
+    "caption": {
+      "label": "Beschriftung",
+      "placeholder": "z.B. Teilnehmende",
+      "helper": "Kurzer Text, der bei der Zahl steht"
+    },
+    "showUp": {
+      "label": "Plus-Knopf zeigen",
+      "helper": "Damit zählt man um eins hoch"
+    },
+    "showDown": {
+      "label": "Minus-Knopf zeigen",
+      "helper": "Damit zählt man um eins runter"
+    },
+    "showButtonLabels": {
+      "label": "Knöpfe beschriften",
+      "helper": "Neben dem Symbol steht «Plus» bzw. «Minus»"
+    },
+    "isAuto": {
+      "label": "Automatisch zählen",
+      "helper": "Der Zähler läuft von selbst weiter, sobald die Seite offen ist"
+    },
+    "interval": {
+      "label": "Takt"
+    },
+    "direction": {
+      "label": "Richtung",
+      "up": "Aufwärts",
+      "down": "Abwärts"
+    },
+    "up": "Plus",
+    "down": "Minus"
   }
 }

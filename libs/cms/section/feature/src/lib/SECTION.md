@@ -51,6 +51,7 @@ Collection name: `sections`
 | `cal` | `CalendarOptions` | Full-calendar view (FullCalendar options) |
 | `chart` | `EChartsOption` | Apache ECharts chart |
 | `chat` | `ChatConfig` | Matrix chat channel |
+| `counter` | `CounterConfig` | Number counted up/down by hand or automatically; four looks (display, stepper, flip, ring); local to the viewer, not persisted |
 | `emergency` | — | Emergency notice section |
 | `energy` | `EnergyConfig` | Energy figures of one municipality: key figures, trends, tariffs, comparison (read-only, from `energy-figures`) |
 | `events` | `EventsConfig` | Upcoming / past calendar event list |

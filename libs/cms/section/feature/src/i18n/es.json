@@ -1241,6 +1241,10 @@
     "weather": {
       "label": "Tiempo",
       "description": "Widgets del tiempo: resumen del día, pronóstico, mapa o radar de lluvia"
+    },
+    "counter": {
+      "label": "Contador",
+      "description": "Un número que subes y bajas a mano, o que avanza solo"
     }
   },
   "message_center": {
@@ -1528,5 +1532,49 @@
       "label": "Comparar con",
       "helper": "Hasta 4 municipios más para la tabla de comparación"
     }
+  },
+  "counter": {
+    "label": "Contador",
+    "title": "Configuración del contador",
+    "subtitle": "Cómo se ve el contador y cómo cuenta. El encabezado es el título de la sección.",
+    "region": "Contador",
+    "uiType": {
+      "label": "Presentación",
+      "display": "Número grande",
+      "stepper": "Compacto con más y menos",
+      "flip": "Tablero abatible",
+      "ring": "Círculo"
+    },
+    "caption": {
+      "label": "Leyenda",
+      "placeholder": "p. ej. Participantes",
+      "helper": "Texto breve que aparece junto al número"
+    },
+    "showUp": {
+      "label": "Mostrar botón más",
+      "helper": "Sube de uno en uno"
+    },
+    "showDown": {
+      "label": "Mostrar botón menos",
+      "helper": "Baja de uno en uno"
+    },
+    "showButtonLabels": {
+      "label": "Rotular los botones",
+      "helper": "Muestra «Más» o «Menos» junto al símbolo"
+    },
+    "isAuto": {
+      "label": "Contar automáticamente",
+      "helper": "El contador avanza solo mientras la página está abierta"
+    },
+    "interval": {
+      "label": "Ritmo"
+    },
+    "direction": {
+      "label": "Dirección",
+      "up": "Ascendente",
+      "down": "Descendente"
+    },
+    "up": "Más",
+    "down": "Menos"
   }
 }

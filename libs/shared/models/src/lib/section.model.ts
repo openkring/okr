@@ -24,7 +24,7 @@ export const SECTION_TYPES = [
     'album', 'article', 'button', 'cal', 'chart', 'chat', 'emergency', 'hero', 'iframe', 'map',
     'people', 'responsibility', 'slider', 'table', 'tracker', 'video', 'accordion', 'events', 'invitations', 'tasks',
     'news', 'activities', 'messages', 'rag', 'orgchart', 'context', 'member-age', 'member-cat', 'trip-stats', 'form',
-    'sankey', 'spider', 'toc', 'testimonial', 'timeline', 'weather', 'learning', 'advent', 'connections', 'departures', 'energy',
+    'sankey', 'spider', 'toc', 'testimonial', 'timeline', 'weather', 'learning', 'advent', 'connections', 'departures', 'energy', 'counter',
 ] as const;
 
 export type SectionType = (typeof SECTION_TYPES)[number];
@@ -34,7 +34,7 @@ export type SectionModel =
     AlbumSection | ArticleSection | ButtonSection | CalendarSection | ChartSection | ChatSection |
     HeroSection | IframeSection | MapSection | PeopleSection | ResponsibilitySection | SliderSection |
     TableSection | TrackerSection | VideoSection | AccordionSection | EventsSection | InvitationsSection | TasksSection |
-    NewsSection | ActivitiesSection | MessagesSection | RagSection | OrgchartSection | ContextDiagramSection | MemberAgeSection | MemberCatSection | TripStatsSection | FormSection | SankeySection | SpiderSection | TocSection | TestimonialSection | TimelineSection | WeatherSection | LearningSection | AdventSection | ConnectionsSection | DeparturesSection | EnergySection;
+    NewsSection | ActivitiesSection | MessagesSection | RagSection | OrgchartSection | ContextDiagramSection | MemberAgeSection | MemberCatSection | TripStatsSection | FormSection | SankeySection | SpiderSection | TocSection | TestimonialSection | TimelineSection | WeatherSection | LearningSection | AdventSection | ConnectionsSection | DeparturesSection | EnergySection | CounterSection;
 
 // --------------------------------------- ABSTRACT BASE SECTION MODELS ----------------------------------------
 // --------------------------------------- ORGCHART ----------------------------------------
@@ -251,7 +251,7 @@ export interface BaseSection {
   content: EditorConfig; // content from rich text editor
   properties?: AccordionConfig | AlbumConfig | ArticleConfig | ButtonConfig | CalendarOptions | EChartsOption | ChatConfig | HeroConfig |
   IframeConfig | MapConfig | OrgchartConfig | ContextDiagramConfig | PeopleConfig | ResponsibilityConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig | EventsConfig | InvitationsConfig |
-  TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | RagConfig | MemberAgeConfig | MemberCatConfig | TripStatsConfig | FormSectionConfig | SankeyConfig | SpiderConfig | TocConfig | TestimonialConfig | TimelineConfig | WeatherConfig | LearningConfig | AdventConfig | ConnectionsConfig | DeparturesConfig | EnergyConfig;
+  TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | RagConfig | MemberAgeConfig | MemberCatConfig | TripStatsConfig | FormSectionConfig | SankeyConfig | SpiderConfig | TocConfig | TestimonialConfig | TimelineConfig | WeatherConfig | LearningConfig | AdventConfig | ConnectionsConfig | DeparturesConfig | EnergyConfig | CounterConfig;
   notes: string;
   tags: string;
   tenants: string[]; // list of tenant ids
@@ -821,6 +821,36 @@ export interface EnergyConfig {
   locationKey: string;
   /** Up to four further municipalities for the comparison table. Always present, may be empty. */
   compareKeys: string[];
+}
+
+// --------------------------------------- COUNTER ----------------------------------------
+/**
+ * A number a visitor counts up or down by hand, or that ticks by itself (`isAuto`). The count is
+ * local to the viewer and starts at 0 on every render — nothing is written back. The visible
+ * heading is the base section's `title`/`subTitle`; `label` is the caption next to the number.
+ */
+export interface CounterSection extends BaseSection {
+  type: 'counter';
+  properties: CounterConfig;
+}
+
+/** The look of a counter: big number, compact stepper, flip-clock tiles or a ring. */
+export const COUNTER_UI_TYPES = ['display', 'stepper', 'flip', 'ring'] as const;
+export type CounterUiType = (typeof COUNTER_UI_TYPES)[number];
+export type CounterDirection = 'up' | 'down';
+
+export interface CounterConfig {
+  uiType: CounterUiType;
+  /** caption shown with the number, e.g. «Teilnehmende»; may be empty */
+  label: string;
+  showUpButton: boolean;
+  showDownButton: boolean;
+  /** buttons show «Plus»/«Minus» beside their icon */
+  showButtonLabels: boolean;
+  /** counts by itself, one step every `autoInterval` ms in `autoDirection` */
+  isAuto: boolean;
+  autoInterval: number;
+  autoDirection: CounterDirection;
 }
 
 // --------------------------------------- LEARNING ----------------------------------------

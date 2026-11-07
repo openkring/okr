@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
 
-import { ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, FORM_SECTION_CONFIG_SHAPE, FormSection, FormSectionConfig, AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
+import { ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FormSectionConfig, AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
 import { Chips, ErrorNote, ImageConfigEdit, NotesInput, NotesInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole, sanitizeFileName } from '@okr/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS, IMAGE_MIMETYPES } from '@okr/shared-constants';
@@ -20,6 +20,7 @@ import { WeatherConfiguration, WeatherLocationOption } from './weather-configura
 import { ConnectionsConfiguration } from './connections-configuration';
 import { DeparturesConfiguration } from './departures-configuration';
 import { EnergyConfiguration } from './energy-configuration';
+import { CounterConfiguration } from './counter-configuration';
 import { ContractOption } from './button-action-configuration';
 import { PeopleConfiguration } from './people-configuration';
 import { ResponsibilityConfiguration } from './responsibility-configuration';
@@ -56,7 +57,7 @@ import { CourseOption, FormOption, FormSectionConfiguration } from './form-secti
     IonItem, IonToggle,
     Chips, ImageConfigEdit, NotesInput, ErrorNote,
     SectionConfiguration, EditorConfiguration, ImageStyleConfiguration, AlbumConfiguration,
-    IframeConfiguration, WeatherConfiguration, ConnectionsConfiguration, DeparturesConfiguration, EnergyConfiguration, PeopleConfiguration, ResponsibilityConfiguration, VideoConfiguration,
+    IframeConfiguration, WeatherConfiguration, ConnectionsConfiguration, DeparturesConfiguration, EnergyConfiguration, CounterConfiguration, PeopleConfiguration, ResponsibilityConfiguration, VideoConfiguration,
     ButtonStyleConfiguration, ButtonActionConfiguration, IconConfiguration, ChatConfiguration,
     MapConfiguration, TrackerConfiguration, TableGridConfiguration,  TableStyleConfiguration, TableHeader,
     TableBody, EventsConfiguration, InvitationsConfiguration, ImagesConfiguration, CalendarConfiguration, ChartConfiguration,
@@ -302,6 +303,16 @@ import { CourseOption, FormOption, FormSectionConfiguration } from './form-secti
               [formData]="energyConfig" (formDataChange)="onEnergyConfigChange($event)"
               [readOnly]="isReadOnly()"
               [locations]="energyLocations()"
+              [i18n]="i18n()"
+              [errors]="errors()"
+            />
+          }
+        }
+        @case('counter') {
+          @if(counterConfig(); as counterConfig) {
+            <okr-counter-config
+              [formData]="counterConfig" (formDataChange)="onCounterConfigChange($event)"
+              [readOnly]="isReadOnly()"
               [i18n]="i18n()"
               [errors]="errors()"
             />
@@ -666,6 +677,7 @@ export class SectionForm {
   protected connectionsConfig = computed(() => this.getConnectionsConfig());
   protected departuresConfig = computed(() => this.getDeparturesConfig());
   protected energyConfig = computed(() => this.getEnergyConfig());
+  protected counterConfig = computed(() => this.getCounterConfig());
   protected mapConfig = computed(() => this.getMapConfig());
   protected peopleConfig = computed(() => this.getPeopleConfig());
   protected responsibilityConfig = computed(() => this.getResponsibilityConfig());
@@ -875,6 +887,13 @@ export class SectionForm {
   private getEnergyConfig(): EnergyConfig | undefined {
     if (this.formData().type === 'energy') {
       return (this.formData() as EnergySection).properties;
+    }
+    return undefined;
+  }
+
+  private getCounterConfig(): CounterConfig | undefined {
+    if (this.formData().type === 'counter') {
+      return (this.formData() as CounterSection).properties;
     }
     return undefined;
   }
@@ -1223,6 +1242,13 @@ export class SectionForm {
     const section = this.formData();
     if (section.type === 'energy') {
       this.formData.set({ ...section, properties: config } as EnergySection);
+    }
+  }
+
+  protected onCounterConfigChange(config: CounterConfig): void {
+    const section = this.formData();
+    if (section.type === 'counter') {
+      this.formData.set({ ...section, properties: config } as CounterSection);
     }
   }
 

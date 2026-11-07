@@ -29,6 +29,7 @@ export * from './lib/orgchart-cycle.util';
 export * from './lib/weather-section.validations';
 export * from './lib/departures-section.validations';
 export * from './lib/energy-section.validations';
+export * from './lib/counter-section.validations';
 export * from './lib/advent.util';
 export * from './lib/advent-section.validations';
 export * from './lib/modal-registry';
