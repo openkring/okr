@@ -19,7 +19,7 @@ import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
 import { isAdminMember } from '@okr/subject-group-util';
 
-import { CalEventDurationPipe, canAttendCalevent, courseKeysOf, courseOfKey, courseSeriesPatch, isCourseOver, isCourseTrainerFor, countPollAcceptances, countPollResponses, formatDateTimeLabel, getCalEventCssClass, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, mayJoinOpenCalevent, resetActivity, resetAttendance, resolveCalendars, upcomingOccurrences } from '@okr/calendar-calevent-util';
+import { CalEventDurationPipe, canAttendCalevent, isCaleventAttendee, courseKeysOf, courseOfKey, courseSeriesPatch, isCourseOver, isCourseTrainerFor, countPollAcceptances, countPollResponses, formatDateTimeLabel, getCalEventCssClass, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, mayJoinOpenCalevent, resetActivity, resetAttendance, resolveCalendars, upcomingOccurrences } from '@okr/calendar-calevent-util';
 import { OrganiserContactModal, showCalendarSync } from '@okr/calendar-calevent-ui';
 import { CalendarFeedService } from '@okr/calendar-calevent-data-access';
 import type { OrganiserContactAction, OrganiserContactResult } from '@okr/calendar-calevent-ui';
@@ -1055,7 +1055,7 @@ export class CalEventList implements OnInit {
     // Anwesenheit: eine Regel statt zweier Zweige. Wer antworten darf, entscheidet die Reichweite
     // des Kalenders bzw. eine Einladung (canAttendCalevent) — nicht mehr, wo die Antwort liegt.
     const hasInvitation = this.store.invitations().some(inv => inv.caleventKey === calevent.okey);
-    if (showAttendance && canAttendCalevent(calevent, hasInvitation, this.mayJoinOpen(calevent), this.isAttendee(calevent))) {
+    if (showAttendance && canAttendCalevent(calevent, hasInvitation, this.mayJoinOpen(calevent), isCaleventAttendee(calevent, this.currentUser()?.personKey))) {
       const state = getAttendanceState(calevent, this.currentUser()?.personKey ?? '');
       if (state !== 'accepted') {
         actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.store.i18n.invitation_subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
@@ -1609,15 +1609,10 @@ export class CalEventList implements OnInit {
   protected attendanceState(event: CalEventModel): AttendanceState | undefined {
     const hasInvitation = this.store.invitations().some(inv => inv.caleventKey === event.okey);
     const state = getAttendanceState(event, this.currentUser()?.personKey ?? '');
-    if (!state) return canAttendCalevent(event, hasInvitation, this.mayJoinOpen(event), this.isAttendee(event)) ? 'invited' : undefined;
+    if (!state) return canAttendCalevent(event, hasInvitation, this.mayJoinOpen(event), isCaleventAttendee(event, this.currentUser()?.personKey)) ? 'invited' : undefined;
     return state === 'accepted' || state === 'declined' ? state : 'invited';
   }
 
-  /** The current person is on the attendee list (any state) — they may always change their answer. */
-  protected isAttendee(calevent: CalEventModel): boolean {
-    const personKey = this.currentUser()?.personKey;
-    return !!personKey && !!calevent.attendees?.some(attendee => attendee.person.key === personKey);
-  }
 
   /**
    * Whether the current user is let into this event's open sign-up. Only a group calendar narrows

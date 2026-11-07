@@ -10,7 +10,7 @@ import { createActionSheetButton, createActionSheetDivider, createActionSheetOpt
 import { SvgIconPipe, WeekdayPipe } from '@okr/shared-pipes';
 import { I18nService, TranslatePipe } from '@okr/shared-i18n';
 
-import { CALEVENT_I18N_KEYS, canAttendCalevent, mayJoinOpenCalevent } from '@okr/calendar-calevent-util';
+import { CALEVENT_I18N_KEYS, canAttendCalevent, isCaleventAttendee, mayJoinOpenCalevent } from '@okr/calendar-calevent-util';
 import { showCalEventInfo } from '@okr/calendar-calevent-ui';
 import { CalendarFeedService } from '@okr/calendar-calevent-data-access';
 import { isAdminMember } from '@okr/subject-group-util';
@@ -213,14 +213,9 @@ export class EventsSectionComponent implements OnInit {
   private canAttend(calevent: CalEventModel): boolean {
     const hasInvitation = this.store.invitations().some(invitation => invitation.caleventKey === calevent.okey);
     const groupCalendarKeys = this.store.allCalendars().filter(cal => cal.owner?.startsWith('group.')).map(cal => cal.okey);
-    return canAttendCalevent(calevent, hasInvitation, mayJoinOpenCalevent(calevent.calendars, groupCalendarKeys, this.store.calendarsOfCurrentUser()), this.isAttendee(calevent));
+    return canAttendCalevent(calevent, hasInvitation, mayJoinOpenCalevent(calevent.calendars, groupCalendarKeys, this.store.calendarsOfCurrentUser()), isCaleventAttendee(calevent, this.currentUser()?.personKey));
   }
 
-  /** The current person is on the attendee list (any state) — they may always change their answer. */
-  private isAttendee(calevent: CalEventModel): boolean {
-    const personKey = this.currentUser()?.personKey;
-    return !!personKey && !!calevent.attendees?.some(attendee => attendee.person.key === personKey);
-  }
 
   /**
    * Displays the ActionSheet, waits for the user to select an action and executes the selected action.

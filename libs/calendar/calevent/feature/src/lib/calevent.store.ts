@@ -27,7 +27,7 @@ import { LocationService } from '@okr/location-data-access';
 import { CalEventService } from '@okr/calendar-calevent-data-access';
 import { AliasMintService } from '@okr/system-alias-data-access';
 import { SeenService } from '@okr/user-data-access';
-import { addInvitedAttendee, applyInvitationAnswer, canAttendCalevent, mayJoinOpenCalevent, courseKeyChanged, courseKeysOf, lockedCoursesOf, seriesPlanCourseKeys, toAttendeeState, CALEVENT_I18N_KEYS, resetActivity, resetAttendance, confirmedOccurrences, seenKeyFor, toSeenCounts, unseenActivityFor, findConflictingCalEvents, duplicateEventFindings, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventGroupKey, getCaleventIndex, isAttendanceClosed, getSeriesUpdateFields, isCalEvent, isCaleventFull, isCaleventInView, isPersonalCalendarName, mergeAttendee, planSeriesReconcile, resolveCalendars, SchedulePollFormData, SchedulePollRow } from '@okr/calendar-calevent-util';
+import { addInvitedAttendee, applyInvitationAnswer, canAttendCalevent, isCaleventAttendee, mayJoinOpenCalevent, courseKeyChanged, courseKeysOf, lockedCoursesOf, seriesPlanCourseKeys, toAttendeeState, CALEVENT_I18N_KEYS, resetActivity, resetAttendance, confirmedOccurrences, seenKeyFor, toSeenCounts, unseenActivityFor, findConflictingCalEvents, duplicateEventFindings, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventGroupKey, getCaleventIndex, isAttendanceClosed, getSeriesUpdateFields, isCalEvent, isCaleventFull, isCaleventInView, isPersonalCalendarName, mergeAttendee, planSeriesReconcile, resolveCalendars, SchedulePollFormData, SchedulePollRow } from '@okr/calendar-calevent-util';
 import { RegressionSelectionModal, showCalEventInfo } from '@okr/calendar-calevent-ui';
 import { createComment } from '@okr/comment-util';
 import { openReport } from '@okr/shared-ui';
@@ -973,6 +973,7 @@ export const CalEventStore = signalStore(
       async view(calevent: CalEventModel): Promise<void> {
         this.markSeen(calevent);
         const { CalEventViewModal } = await import('./calevent-view.modal');
+        const personKey = store.appStore.currentUser()?.personKey;
         const modal = await store.modalController.create({
           component: CalEventViewModal,
           componentProps: {
@@ -984,7 +985,7 @@ export const CalEventStore = signalStore(
               calevent,
               store.invitations().some(inv => inv.caleventKey === calevent.okey),
               mayJoinOpenCalevent(calevent.calendars, store.groupCalendarKeys(), store.calendarsOfCurrentUser()),
-              !!store.appStore.currentUser()?.personKey && !!calevent.attendees?.some(a => a.person.key === store.appStore.currentUser()?.personKey),
+              isCaleventAttendee(calevent, personKey),
             ),
           }
         });

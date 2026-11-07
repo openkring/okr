@@ -1,7 +1,7 @@
 import { AttendanceEntry, Attendee, AvatarInfo, CalEventModel, InvitationState } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ATTENDANCE_FIELDS, confirmedOccurrences, resetAttendance, withoutAttendance, withoutCourseFields, addInvitedAttendee, removeInvitedAttendee, bestScheduleColumn, buildCalEventLink, canAttendCalevent, buildSchedulePollLink, convertCalEventToFullCalendar, formatDurationLabel, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getCaleventGroupKey, getCaleventIndex, getPublicCaleventIndex, getSeriesUpdateFields, isCaleventInView, isCalEvent, isFullDayEvent, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isCaleventFull, isSchedulePoll, resolveCalendars, mayJoinOpenCalevent, mergeAttendee, nextInvitationState, planSeriesReconcile, splitAttendees, toInvitationState } from './calevent.util';
+import { ATTENDANCE_FIELDS, confirmedOccurrences, resetAttendance, withoutAttendance, withoutCourseFields, addInvitedAttendee, removeInvitedAttendee, bestScheduleColumn, buildCalEventLink, canAttendCalevent, isCaleventAttendee, buildSchedulePollLink, convertCalEventToFullCalendar, formatDurationLabel, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getCaleventGroupKey, getCaleventIndex, getPublicCaleventIndex, getSeriesUpdateFields, isCaleventInView, isCalEvent, isFullDayEvent, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isCaleventFull, isSchedulePoll, resolveCalendars, mayJoinOpenCalevent, mergeAttendee, nextInvitationState, planSeriesReconcile, splitAttendees, toInvitationState } from './calevent.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -310,6 +310,29 @@ describe('canAttendCalevent', () => {
 
   it('is possible on a personal event (the organiser is neither in reach nor invited)', () => {
     expect(canAttendCalevent(event({ calendars: [] }), false, false)).toBe(true);
+  });
+});
+
+describe('isCaleventAttendee', () => {
+  const withAttendees = (attendees?: CalEventModel['attendees']): CalEventModel =>
+    ({ ...new CalEventModel('t1'), attendees });
+  const attendee = (key: string, state: 'accepted' | 'declined' | 'invited') =>
+    ({ person: { key }, state }) as unknown as NonNullable<CalEventModel['attendees']>[number];
+
+  it('is true when the key is on the list, in any state', () => {
+    expect(isCaleventAttendee(withAttendees([attendee('p1', 'declined')]), 'p1')).toBe(true);
+  });
+
+  it('is false when the key is absent', () => {
+    expect(isCaleventAttendee(withAttendees([attendee('p2', 'accepted')]), 'p1')).toBe(false);
+  });
+
+  it('is false without a key', () => {
+    expect(isCaleventAttendee(withAttendees([attendee('p1', 'accepted')]), undefined)).toBe(false);
+  });
+
+  it('is false when the event has no attendees', () => {
+    expect(isCaleventAttendee(withAttendees(undefined), 'p1')).toBe(false);
   });
 });
 

@@ -1,7 +1,7 @@
 import type { EventInput } from '@fullcalendar/core';
 
 import { Attendee, AvatarInfo, CalendarModel, CalEventModel, InvitationState } from '@okr/shared-models';
-import { addTime, applyInvitationAnswer, convertDateFormatToString, DateFormat, getEventLocationName, getIsoDateTime, isCaleventAttendanceClosed, isPastDate, isType, toAttendeeState } from '@okr/shared-util-core';
+import { addTime, applyInvitationAnswer, convertDateFormatToString, DateFormat, getAttendee, getEventLocationName, getIsoDateTime, isCaleventAttendanceClosed, isPastDate, isType, toAttendeeState } from '@okr/shared-util-core';
 
 export { applyInvitationAnswer, toAttendeeState };
 
@@ -79,6 +79,11 @@ export function isPersonalCalevent(calevent: CalEventModel): boolean {
 export function canAttendCalevent(calevent: CalEventModel, hasInvitation: boolean, canJoinOpen = true, isAttendee = false): boolean {
   if (isAttendanceClosed(calevent)) return false;
   return canJoinOpen || hasInvitation || isAttendee || isPersonalCalevent(calevent);
+}
+
+/** True when `personKey` is on `calevent.attendees`, whatever their state. False for no key or no list. */
+export function isCaleventAttendee(calevent: CalEventModel, personKey: string | undefined): boolean {
+  return !!personKey && !!getAttendee(calevent, personKey);
 }
 
 /**
