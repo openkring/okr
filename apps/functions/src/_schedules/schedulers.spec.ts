@@ -10,8 +10,8 @@ import { SRV_SECRETS } from '../_gateway/adapters/srv';
 const names = (jobs: { name: string }[]) => jobs.map((j) => j.name);
 
 describe('time-slot schedulers', () => {
-  it('nightly runs its eleven jobs in order', () => {
-    expect(names(NIGHTLY_JOBS)).toEqual(['tripStatsReconcile', 'crewTrackCleanup', 'trackerExpiry', 'roomPostPolicySweep', 'expiredMembershipSweep', 'pinboardSweep', 'billScanReap', 'privacyExportReap', 'courseEndTasks', 'energyFiguresFetch', 'webhookStuckCheck']);
+  it('nightly runs its twelve jobs in order', () => {
+    expect(names(NIGHTLY_JOBS)).toEqual(['tripStatsReconcile', 'crewTrackCleanup', 'trackerExpiry', 'roomPostPolicySweep', 'expiredMembershipSweep', 'pinboardSweep', 'billScanReap', 'privacyExportReap', 'mailingLettersReap', 'courseEndTasks', 'energyFiguresFetch', 'webhookStuckCheck']);
   });
 
   it('morning runs its six jobs in order', () => {

@@ -150,7 +150,7 @@
       "chat": "En la app",
       "email": "Correo",
       "post": "Correo postal",
-      "soon": "pronto",
+      "soon": "no disponible",
       "unreachable": "No localizables:",
       "hint": "Tus cambios solo valen para este envío. El perfil de los destinatarios no cambia.",
       "empty": "Con esta selección nadie recibe el envío.",
@@ -164,7 +164,16 @@
       "p3": "Correo: el texto del editor se coloca en la plantilla elegida y los adjuntos se añaden al correo. Para, Cc y Cco solo valen aquí. Los destinatarios van en Cco, así nadie ve a los demás.",
       "p4": "En la app: el envío aparece como comunicado en el panel, con texto y adjuntos. El destinatario recibe una notificación push que lo abre.",
       "p5": "Correo postal: el texto se compone como carta con la dirección del destinatario y los adjuntos van detrás. Descargas las cartas en PDF, las imprimes y las envías tú.",
-      "p6": "El correo postal llegará pronto: entonces descargarás las cartas en PDF. Hasta entonces, un envío sale por correo y en la app."
+      "p6": "Las cartas quedan disponibles 7 días y luego se borran, porque contienen direcciones. Como admin de grupo no puedes enviar por correo postal."
+    },
+    "letters": {
+      "pending": "Se están creando las cartas …",
+      "download": "Descargar cartas",
+      "kept": "Las cartas quedan disponibles 7 días y luego se borran, porque contienen direcciones.",
+      "expired": "Las cartas ya no están disponibles.",
+      "failed": "No se pudieron crear las cartas. Los correos y comunicados salen de todos modos.",
+      "missing": "Sin dirección postal, sin carta:",
+      "skipped": "No va en la carta, porque no es un PDF:"
     }
   },
   "category": {

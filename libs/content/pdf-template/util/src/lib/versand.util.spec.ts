@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DeliveryChannel } from '@okr/shared-models';
-import { buildVersandRows, deliveryTotals, isDeliveryEditable, toggleDelivery, unreachableCount, versandBcc, versandDeliveries } from './versand.util';
+import { buildVersandRows, deliveryTotals, GROUP_ADMIN_MAILING_CHANNELS, isDeliveryEditable, nonPdfAttachmentNames, toggleDelivery, unreachableCount, versandBcc, versandDeliveries } from './versand.util';
 
 const anna = { personKey: 'a', name: 'Anna', email: 'anna@x.ch' };
 const beat = { personKey: 'b', name: 'Beat', email: '' };
@@ -12,7 +12,7 @@ describe('buildVersandRows', () => {
       { personKey: 'b', possible: [DeliveryChannel.Post], initial: [DeliveryChannel.Post] },
     ]);
     expect(rows.map((r) => r.possible)).toEqual([['chat', 'email'], ['post']]);
-    expect(deliveries).toEqual({ a: ['chat', 'email'], b: [] });
+    expect(deliveries).toEqual({ a: ['chat', 'email'], b: ['post'] });
   });
 
   it('leaves out a person the server did not answer for', () => {
@@ -34,10 +34,11 @@ describe('toggleDelivery', () => {
     expect(toggleDelivery({ a: [DeliveryChannel.Email] }, row, DeliveryChannel.Email)).toEqual({ a: [] });
   });
 
-  it('ignores a channel that is not sendable yet or not possible', () => {
+  it('ignores a channel that is not possible, or not allowed for the sender', () => {
     const before = { a: [] };
-    expect(toggleDelivery(before, { ...row, possible: [DeliveryChannel.Post] }, DeliveryChannel.Post)).toBe(before);
     expect(toggleDelivery(before, row, DeliveryChannel.Post)).toBe(before);
+    expect(toggleDelivery(before, { ...row, possible: [DeliveryChannel.Post] }, DeliveryChannel.Post, GROUP_ADMIN_MAILING_CHANNELS)).toBe(before);
+    expect(toggleDelivery(before, { ...row, possible: [DeliveryChannel.Post] }, DeliveryChannel.Post)).toEqual({ a: ['post'] });
     expect(isDeliveryEditable({ ...row, possible: [] }, DeliveryChannel.Email)).toBe(false);
   });
 });
@@ -67,5 +68,22 @@ describe('versandDeliveries', () => {
       { ...beat, possible: [] },
     ];
     expect(versandDeliveries(rows, { a: [DeliveryChannel.Chat], b: [] })).toEqual([{ personKey: 'a', channels: ['chat'] }]);
+  });
+});
+
+describe('group admin channels', () => {
+  it('drop the profile\'s post tick for a group admin', () => {
+    const { deliveries } = buildVersandRows([beat], [{ personKey: 'b', possible: [DeliveryChannel.Post], initial: [DeliveryChannel.Post] }], GROUP_ADMIN_MAILING_CHANNELS);
+    expect(deliveries).toEqual({ b: [] });
+  });
+});
+
+describe('nonPdfAttachmentNames', () => {
+  it('lists what a letter cannot carry', () => {
+    expect(nonPdfAttachmentNames([
+      { filename: 'a.pdf', contentType: 'application/pdf' },
+      { filename: 'b.PDF' },
+      { filename: 'c.jpg', contentType: 'image/jpeg' },
+    ])).toEqual(['c.jpg']);
   });
 });

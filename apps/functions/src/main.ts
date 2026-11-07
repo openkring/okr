@@ -235,6 +235,7 @@ export const getMailingRecipients = Email.getMailingRecipients;  // Versand Zust
 export const sendMailing = Email.sendMailing;                    // Versand: checks the caller, writes mailings (spec 1.145 P2)
 export const onMailing = Email.onMailing;                        // Versand fan-out: mailJobs, notices, push
 export const getNoticeAttachment = Email.getNoticeAttachment;    // signed URL for a Mitteilung file
+export const getMailingLetters = Email.getMailingLetters;        // Versand Post: state + signed URL of the letters PDF (P3)
 
 // bexio router (3.41 A6) + one 06:00 sync slot (D4); the six names below stay as aliases
 export const bexio = BexioRouter.bexio;

@@ -66,6 +66,15 @@ export interface SendMailingRequest {
   deliveries: { personKey: string; channels: string[] }[];
 }
 
+/** The state of a Versand's letters, as `getMailingLetters` reports it. */
+export interface MailingLetters {
+  state: 'none' | 'pending' | 'ready' | 'failed' | 'expired';
+  url?: string;
+  count?: number;
+  /** Post recipients without a postal address, left out */
+  missing?: number;
+}
+
 /** What the `renderEmailPreview` callable gets for a composer body. */
 export interface RenderPreviewRequest {
   body: string;
@@ -187,6 +196,16 @@ export class DocEmailService {
     const callable = httpsCallable<SendMailingRequest, { mailingKey: string }>(this.functions, 'sendMailing');
     const { data } = await callable(req);
     return data.mailingKey;
+  }
+
+  /**
+   * The Post part of a Versand (spec 1.145 P3): `pending` while the server builds the letters, `ready`
+   * with a 10-minute download URL, or `failed` / `expired` / `none`.
+   */
+  public async getMailingLetters(mailingKey: string): Promise<MailingLetters> {
+    const callable = httpsCallable<{ mailingKey: string }, MailingLetters>(this.functions, 'getMailingLetters');
+    const { data } = await callable({ mailingKey });
+    return data;
   }
 
   /** The three content fields every send path hands to the server, which composes the final mail. */

@@ -23,11 +23,12 @@ import { needsEmailNormalization } from '@okr/shared-util-core';
 import { dismissOverlay, isBrowser, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 import {
-  buildVersandRows, emailBodyHasContent, isSenderDomainAllowed, parseEmails, toggleDelivery, versandBcc, versandDeliveries,
+  ACTIVE_MAILING_CHANNELS, buildVersandRows, emailBodyHasContent, GROUP_ADMIN_MAILING_CHANNELS, isSenderDomainAllowed,
+  nonPdfAttachmentNames, parseEmails, toggleDelivery, versandBcc, versandDeliveries,
   EmailComposerFormModel, emailComposerValidations, VersandDeliveries, VersandRow,
   EMAIL_COMPOSER_I18N_KEYS, EMAIL_COMPOSER_MSG_KEYS, EmailComposerI18n,
 } from '@okr/content-pdf-template-util';
-import { DocEmailService, InlineAttachment } from '@okr/content-pdf-template-data-access';
+import { DocEmailService, InlineAttachment, MailingLetters } from '@okr/content-pdf-template-data-access';
 
 import { VersandDeliveryTable } from './versand-delivery-table';
 import { VersandInfoModal } from './versand-info.modal';
@@ -97,6 +98,28 @@ type ComposerSegment = 'editor' | 'preview' | 'delivery' | 'list';
     }
 
     <ion-content class="ion-no-padding">
+      <!-- After a Versand with Post: the letters are built on the server, then downloaded here (P3). -->
+      @if (letters(); as letters) {
+        <ion-card>
+          <ion-card-content>
+            @switch (letters.state) {
+              @case ('pending') { <okr-spinner /><ion-note>{{ i18n.letters_pending() }}</ion-note> }
+              @case ('ready') {
+                <ion-button expand="block" (click)="downloadLetters(letters)">
+                  <ion-icon src="{{ 'download' | svgIcon }}" slot="start" />
+                  {{ i18n.letters_download() }} ({{ letters.count }})
+                </ion-button>
+                <ion-note class="note">{{ i18n.letters_kept() }}</ion-note>
+              }
+              @case ('expired') { <ion-note color="warning">{{ i18n.letters_expired() }}</ion-note> }
+              @default { <ion-note color="danger">{{ i18n.letters_failed() }}</ion-note> }
+            }
+            @if ((letters.missing ?? 0) > 0) {
+              <ion-note color="warning" class="note">{{ i18n.letters_missing() }} {{ letters.missing }}</ion-note>
+            }
+          </ion-card-content>
+        </ion-card>
+      }
       <div class="segment">
         <ion-segment [(ngModel)]="activeSegment">
           <ion-segment-button value="editor"><ion-label>{{ i18n.segment_editor() }}</ion-label></ion-segment-button>
@@ -201,7 +224,10 @@ type ComposerSegment = 'editor' | 'preview' | 'delivery' | 'list';
                     <ion-note color="warning" class="note">{{ i18n.delivery_error() }}</ion-note>
                   }
                   <okr-versand-delivery-table [rows]="versandRows()" [deliveries]="deliveries()" [i18n]="i18n"
-                    (toggled)="onDeliveryToggle($event.row, $event.channel)" />
+                    [active]="activeChannels()" (toggled)="onDeliveryToggle($event.row, $event.channel)" />
+                  @if (postSkipped().length > 0) {
+                    <ion-note color="warning" class="note">{{ i18n.post_skipped() }} {{ postSkipped().join(', ') }}</ion-note>
+                  }
                 }
               </ion-card-content>
             </ion-card>
@@ -286,6 +312,8 @@ export class EmailComposerModal {
   protected readonly editorRef = signal<ComponentRef<OkrEditor> | undefined>(undefined);
   /** Guards against a second mount while the chunk is still in flight. */
   private creatingEditor = false;
+  /** Set when the modal closes: stops waiting for the letters. */
+  private destroyed = false;
 
   // inputs
   public readonly to            = input<string>('');
@@ -347,6 +375,17 @@ export class EmailComposerModal {
   protected readonly deliveries = signal<VersandDeliveries>({});
   private initialDeliveries: VersandDeliveries = {};
   protected readonly versandLoaded = signal(false);
+  /** A group admin sends no Post: the letters would carry members' postal addresses (spec 1.145 §6.1). */
+  protected readonly activeChannels = computed(() => this.groupKey() ? GROUP_ADMIN_MAILING_CHANNELS : ACTIVE_MAILING_CHANNELS);
+  /** The attachments left out of the letters while somebody is ticked under Post. */
+  protected readonly postSkipped = computed(() => {
+    const anyPost = Object.values(this.deliveries()).some((d) => d.includes(DeliveryChannel.Post));
+    if (!anyPost) return [];
+    const doc = this.filename() ? [{ filename: this.filename(), contentType: this.outputFormat() === 'pdf' ? 'application/pdf' : '' }] : [];
+    return nonPdfAttachmentNames([...doc, ...this.extraAttachments()]);
+  });
+  /** The letters of a sent Versand with Post recipients; undefined before sending or without Post. */
+  protected readonly letters = signal<MailingLetters | undefined>(undefined);
   /** The server could not answer: every person with an email address is mailed, nothing else. */
   protected readonly versandFailed = signal(false);
 
@@ -364,7 +403,7 @@ export class EmailComposerModal {
   protected readonly showForm = signal(true);
   /** A Versand needs its Zustellung loaded and at least one ticked recipient. */
   protected readonly showConfirmation = computed(() =>
-    this.composerForm().valid() && this.isDirty() && !this.isSending()
+    this.composerForm().valid() && this.isDirty() && !this.isSending() && !this.letters()
     && (!this.isVersand() || (this.versandLoaded() && versandDeliveries(this.versandRows(), this.deliveries()).length > 0)));
 
   // field accessors
@@ -517,7 +556,10 @@ export class EmailComposerModal {
       ref.setInput('content', content);
       ref.setInput('buttonCopyI18n', buttonCopyI18n);
     });
-    this.destroyRef.onDestroy(() => this.editorRef()?.destroy());
+    this.destroyRef.onDestroy(() => {
+      this.destroyed = true;
+      this.editorRef()?.destroy();
+    });
     // The Zustellung table: asked once per opened Versand. The request runs untracked.
     effect(() => {
       const persons = this.versandRecipients();
@@ -536,7 +578,7 @@ export class EmailComposerModal {
       console.error('EmailComposerModal.loadVersand: getMailingRecipients failed', err);
       this.versandFailed.set(true);
     }
-    const { rows, deliveries } = buildVersandRows(persons, channels);
+    const { rows, deliveries } = buildVersandRows(persons, channels, this.activeChannels());
     this.versandRows.set(rows);
     this.initialDeliveries = deliveries;
     this.applyDeliveries(deliveries);
@@ -551,7 +593,7 @@ export class EmailComposerModal {
   }
 
   protected onDeliveryToggle(row: VersandRow, channel: DeliveryChannel): void {
-    const next = toggleDelivery(this.deliveries(), row, channel);
+    const next = toggleDelivery(this.deliveries(), row, channel, this.activeChannels());
     if (next === this.deliveries()) return;
     this.isDirty.set(true);
     this.applyDeliveries(next);
@@ -710,7 +752,7 @@ export class EmailComposerModal {
       // server-side (spec 1.145 §10): the Bcc is resolved there, so the client's list is not sent.
       if (this.isVersand()) {
         const deliveries = versandDeliveries(this.versandRows(), this.deliveries());
-        await this.docEmailService.sendMailing({
+        const mailingKey = await this.docEmailService.sendMailing({
           tenantId: this.appStore.tenantId(),
           ...(this.groupKey() ? { groupKey: this.groupKey() } : {}),
           to: request.to, cc: request.cc, from: request.from,
@@ -723,6 +765,12 @@ export class EmailComposerModal {
           emails: deliveries.filter((d) => d.channels.includes(DeliveryChannel.Email)).length,
           notices: deliveries.filter((d) => d.channels.includes(DeliveryChannel.Chat)).length,
         });
+        // With Post the modal stays open: the letters are built on the server and downloaded here.
+        if (deliveries.some((d) => d.channels.includes(DeliveryChannel.Post))) {
+          this.letters.set({ state: 'pending' });
+          void this.awaitLetters(mailingKey);
+          return;
+        }
         await dismissOverlay(this.modalController, { sent: true }, 'confirm');
         return;
       }
@@ -748,6 +796,34 @@ export class EmailComposerModal {
         { error: sent ? `${message} (${sent})` : message }, 'danger');
       this.isSending.set(false);
     }
+  }
+
+  /**
+   * Asks for the letters every 3 s until they are no longer pending (at most ~9 minutes, the trigger's
+   * own limit). Closing the modal stops the asking; the letters stay on the server for 7 days.
+   */
+  private async awaitLetters(mailingKey: string): Promise<void> {
+    for (let attempt = 0; attempt < 180; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      if (this.destroyed) return;
+      try {
+        const letters = await this.docEmailService.getMailingLetters(mailingKey);
+        if (letters.state !== 'pending' && letters.state !== 'none') {
+          this.letters.set(letters);
+          return;
+        }
+      } catch (err) {
+        console.error('EmailComposerModal.awaitLetters: getMailingLetters failed', err);
+        this.letters.set({ state: 'failed' });
+        return;
+      }
+    }
+    this.letters.set({ state: 'failed' });
+  }
+
+  /** The URL is fetched before the click, so the browser opens it without a popup block. */
+  protected downloadLetters(letters: MailingLetters): void {
+    if (letters.url) window.open(letters.url, '_blank', 'noopener');
   }
 
   /**

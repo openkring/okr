@@ -150,7 +150,7 @@
       "chat": "In-App",
       "email": "E-Mail",
       "post": "Post",
-      "soon": "folgt",
+      "soon": "nicht möglich",
       "unreachable": "Nicht erreichbar:",
       "hint": "Deine Änderungen gelten nur für diesen Versand. Das Profil der Empfänger bleibt, wie es ist.",
       "empty": "Mit dieser Auswahl erhält niemand den Versand.",
@@ -164,7 +164,16 @@
       "p3": "E-Mail: Der Text aus dem Editor wird in die gewählte Vorlage gesetzt, die Anhänge werden der E-Mail beigelegt. An, Cc und Bcc gelten nur hier. Die Empfänger stehen im Bcc, so sieht niemand die anderen.",
       "p4": "In-App: Der Versand erscheint als Mitteilung auf dem Dashboard, mit Text und Anhängen. Der Empfänger erhält eine Push-Nachricht, die die Mitteilung öffnet.",
       "p5": "Post: Der Text wird als Brief mit der Adresse des Empfängers gesetzt, die Anhänge folgen dahinter. Du lädst die Briefe als PDF herunter, druckst sie und verschickst sie selbst.",
-      "p6": "Post folgt bald: dann lädst du die Briefe als PDF herunter. Bis dahin geht ein Versand per E-Mail und In-App hinaus."
+      "p6": "Briefe bleiben 7 Tage zum Herunterladen bereit und werden dann gelöscht, weil sie Adressen enthalten. Als Gruppenadmin kannst du nicht per Post versenden."
+    },
+    "letters": {
+      "pending": "Die Briefe werden erstellt …",
+      "download": "Briefe herunterladen",
+      "kept": "Die Briefe bleiben 7 Tage zum Herunterladen bereit und werden dann gelöscht, weil sie Adressen enthalten.",
+      "expired": "Die Briefe sind nicht mehr verfügbar.",
+      "failed": "Die Briefe konnten nicht erstellt werden. Die E-Mails und Mitteilungen sind trotzdem unterwegs.",
+      "missing": "Ohne Postadresse, kein Brief:",
+      "skipped": "Nicht im Brief, weil kein PDF:"
     }
   },
   "category": {

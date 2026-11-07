@@ -25,6 +25,7 @@ import { runRegasoftApiWatch } from '../srv/api-watch';
 import { SRV_SECRETS } from '../_gateway/adapters/srv';
 import { runCourseEndTasks } from '../course/course-end-tasks';
 import { runWebhookStuckCheck } from '../_webhooks/stuck-check';
+import { runMailingLettersReap } from '../email/mailing-letters';
 
 const REGION = 'europe-west6';
 const TIME_ZONE = 'Europe/Zurich';
@@ -38,6 +39,7 @@ export const NIGHTLY_JOBS: NamedJob[] = [
   { name: 'pinboardSweep', run: runPinboardSweep },
   { name: 'billScanReap', run: runBillScanReap },
   { name: 'privacyExportReap', run: runPrivacyExportReap },
+  { name: 'mailingLettersReap', run: runMailingLettersReap },
   { name: 'courseEndTasks', run: runCourseEndTasks },
   { name: 'energyFiguresFetch', run: runEnergyFiguresFetch },
   { name: 'webhookStuckCheck', run: runWebhookStuckCheck },

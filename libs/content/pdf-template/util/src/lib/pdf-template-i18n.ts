@@ -182,6 +182,14 @@ export const EMAIL_COMPOSER_I18N_KEYS = {
   info_p4:              PFX + 'composer.info.p4',
   info_p5:              PFX + 'composer.info.p5',
   info_p6:              PFX + 'composer.info.p6',
+  // Post (P3): the letters after sending
+  letters_pending:      PFX + 'composer.letters.pending',
+  letters_download:     PFX + 'composer.letters.download',
+  letters_kept:         PFX + 'composer.letters.kept',
+  letters_expired:      PFX + 'composer.letters.expired',
+  letters_failed:       PFX + 'composer.letters.failed',
+  letters_missing:      PFX + 'composer.letters.missing',
+  post_skipped:         PFX + 'composer.letters.skipped',
 
   send:             PFX + 'doc.send.label',
   /** The bulk-send job document could not be written — nothing was sent. */

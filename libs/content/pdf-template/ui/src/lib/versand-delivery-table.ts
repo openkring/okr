@@ -11,8 +11,8 @@ import {
 
 /**
  * The Zustellung segment of a Versand (spec 1.144 §4.3): one row per recipient, one column per
- * delivery type, totals on top. A cell that is not possible for that person — or not sendable yet —
- * is disabled; every other cell can be ticked for this Versand only.
+ * delivery type, totals on top. A cell that is not possible for that person — or not allowed for this
+ * sender — is disabled; every other cell can be ticked for this Versand only.
  */
 @Component({
   selector: 'okr-versand-delivery-table',
@@ -80,6 +80,8 @@ export class VersandDeliveryTable {
   public readonly rows = input.required<VersandRow[]>();
   public readonly deliveries = input.required<VersandDeliveries>();
   public readonly i18n = input.required<EmailComposerI18n>();
+  /** the delivery types this sender may tick (a group admin has no Post) */
+  public readonly active = input<DeliveryChannel[]>(ACTIVE_MAILING_CHANNELS);
 
   // outputs
   public readonly toggled = output<{ row: VersandRow; channel: DeliveryChannel }>();
@@ -97,7 +99,7 @@ export class VersandDeliveryTable {
   }
 
   protected isActive(channel: DeliveryChannel): boolean {
-    return ACTIVE_MAILING_CHANNELS.includes(channel);
+    return this.active().includes(channel);
   }
 
   protected isTicked(row: VersandRow, channel: DeliveryChannel): boolean {
@@ -105,6 +107,6 @@ export class VersandDeliveryTable {
   }
 
   protected isEditable(row: VersandRow, channel: DeliveryChannel): boolean {
-    return isDeliveryEditable(row, channel);
+    return isDeliveryEditable(row, channel, this.active());
   }
 }
