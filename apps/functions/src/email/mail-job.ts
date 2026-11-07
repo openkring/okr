@@ -5,7 +5,7 @@
 // The composer used to run the block loop in the browser: the tab had to stay open and a failed
 // block could not be resumed. Now the client writes ONE job document and this trigger performs the
 // send, writing progress and the final state back onto the same document — which is also the status
-// the composer displays, and (with the per-address events from `mailtrapWebhook`) the whole of §6.
+// the composer displays, and (with the per-address Mailtrap events from `/webhooks/mailtrap`) the whole of §6.
 //
 // Deliberately no batch documents and no scheduler worker: one event-driven function has 540 s,
 // which at 500 bcc per block and ~1.1 s between blocks covers far more recipients than any tenant
