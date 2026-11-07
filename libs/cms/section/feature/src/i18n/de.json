@@ -1249,6 +1249,10 @@
     "footer": {
       "label": "Fusszeile",
       "description": "Fusszeile mit bis zu drei Spalten: Titel, Texte, Links, Icons und Logos"
+    },
+    "notices": {
+      "label": "Mitteilungen",
+      "description": "Die neusten Mitteilungen an die lesende Person, aus dem Versand"
     }
   },
   "message_center": {

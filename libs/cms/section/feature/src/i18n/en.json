@@ -1249,6 +1249,10 @@
     "footer": {
       "label": "Footer",
       "description": "Footer with up to three columns: titles, texts, links, icons and logos"
+    },
+    "notices": {
+      "label": "Notices",
+      "description": "The latest notices to the reader, from a mailing"
     }
   },
   "message_center": {
