@@ -1,5 +1,5 @@
 // libs/content/pdf-template/util/src/lib/email-composer.validations.ts
-import { enforce, staticSuite, test } from 'vest';
+import { enforce, omitWhen, staticSuite, test } from 'vest';
 import type { EmailLayoutChoice } from '@okr/shared-models';
 import { emailBodyHasContent, parseEmails } from './email-html.util';
 
@@ -22,8 +22,11 @@ function looksLikeEmail(email: string): boolean {
   return email.includes('@') && email.includes('.');
 }
 
-/** `hasAttachment`: the mail carries a document or file, whose note gives it content without a body. */
-export const emailComposerValidations = staticSuite((model: EmailComposerFormModel, hasAttachment = false) => {
+/**
+ * `hasAttachment`: the mail carries a document or file, whose note gives it content without a body.
+ * `ccHidden`: a Versand with answer links sends no Cc and hides the field, so its rule must not block.
+ */
+export const emailComposerValidations = staticSuite((model: EmailComposerFormModel, hasAttachment = false, ccHidden = false) => {
   test('to', '@content/pdf-template/feature.validation.to_required', () => {
     enforce(parseEmails(model.to).length).greaterThan(0);
   });
@@ -46,8 +49,10 @@ export const emailComposerValidations = staticSuite((model: EmailComposerFormMod
     enforce(hasAttachment || emailBodyHasContent(model.body)).isTruthy();
   });
 
-  test('cc', '@content/pdf-template/feature.validation.cc_invalid', () => {
-    enforce(parseEmails(model.cc).every(looksLikeEmail)).isTruthy();
+  omitWhen(ccHidden, () => {
+    test('cc', '@content/pdf-template/feature.validation.cc_invalid', () => {
+      enforce(parseEmails(model.cc).every(looksLikeEmail)).isTruthy();
+    });
   });
   test('bcc', '@content/pdf-template/feature.validation.bcc_invalid', () => {
     enforce(parseEmails(model.bcc).every(looksLikeEmail)).isTruthy();

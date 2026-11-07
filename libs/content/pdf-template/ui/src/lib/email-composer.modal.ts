@@ -346,9 +346,20 @@ export class EmailComposerModal {
   /** What the mail names as «Beilage»: the document, else the added files. Empty without an attachment. */
   protected readonly attachmentName = computed(() =>
     this.filename() || this.extraAttachments().map((a) => a.filename).join(', '));
-  // an attachment gives the mail content without a body, which validateVestTree cannot pass to the suite
+  protected readonly isVersand = computed(() => this.versandRecipients() !== undefined);
+  // Anlässe: the events whose personal answer link every E-Mail recipient gets (own mail per person)
+  protected readonly caleventKeys = computed(() => this.formData().caleventKeys ?? []);
+  protected readonly showEvents = computed(() => this.isVersand() && !this.groupKey() && this.versandEvents().length > 0);
+  protected readonly chosenEvents = computed(() => {
+    if (!this.showEvents()) return [];
+    const keys = new Set(this.caleventKeys());
+    return this.versandEvents().filter((event) => keys.has(event.caleventKey));
+  });
+  protected readonly hasEvents = computed(() => this.chosenEvents().length > 0);
+
+  // an attachment gives the mail content without a body, and chosen events hide the Cc: validateVestTree cannot pass either to the suite
   private readonly suiteWithContext = (model: EmailComposerFormModel) =>
-    emailComposerValidations(model, this.attachmentName().length > 0);
+    emailComposerValidations(model, this.attachmentName().length > 0, this.hasEvents());
   protected readonly composerForm = form(this.formData, (path) =>
     validateVestTree(path, this.suiteWithContext as any));
   private readonly validationResult = vestErrors(this.composerForm);
@@ -364,7 +375,6 @@ export class EmailComposerModal {
   protected readonly addressLength = 200;
 
   // Versand (spec 1.145 §4.3): rows and ticks of the Zustellung table, loaded once from the server
-  protected readonly isVersand = computed(() => this.versandRecipients() !== undefined);
   protected readonly versandRows = signal<VersandRow[]>([]);
   protected readonly deliveries = signal<VersandDeliveries>({});
   private initialDeliveries: VersandDeliveries = {};
@@ -385,15 +395,6 @@ export class EmailComposerModal {
   protected readonly progress = signal('');
   protected readonly showForm = signal(true);
 
-  // Anlässe: the events whose personal answer link every E-Mail recipient gets (own mail per person)
-  protected readonly caleventKeys = computed(() => this.formData().caleventKeys ?? []);
-  protected readonly showEvents = computed(() => this.isVersand() && !this.groupKey() && this.versandEvents().length > 0);
-  protected readonly chosenEvents = computed(() => {
-    if (!this.showEvents()) return [];
-    const keys = new Set(this.caleventKeys());
-    return this.versandEvents().filter((event) => keys.has(event.caleventKey));
-  });
-  protected readonly hasEvents = computed(() => this.chosenEvents().length > 0);
   /** Per chosen group event: the E-Mail recipients outside that group (they can still answer). */
   protected readonly reachWarnings = computed(() => {
     const deliveries = this.deliveries();

@@ -51,4 +51,9 @@ describe('emailComposerValidations', () => {
     expect(emailComposerValidations(model({ cc: '', bcc: '' })).isValid()).toBe(true);
     expect(emailComposerValidations(model({ cc: 'bad' })).isValid()).toBe(false);
   });
+
+  it('skips the Cc rule while the Cc is hidden (answer links)', () => {
+    expect(emailComposerValidations(model({ cc: 'not-an-address' })).isValid()).toBe(false);
+    expect(emailComposerValidations(model({ cc: 'not-an-address' }), false, true).isValid()).toBe(true);
+  });
 });
