@@ -89,6 +89,18 @@ if (pin !== verified) {
   console.log(`\n✔ Canary passed. Recorded pnpm@${pin} as verified — commit scripts/functions-pnpm-verified.json.`);
 }
 
+// Every function that binds the receiver's secrets now needs WEBHOOK_SELFTEST_SECRET (spec 1.143).
+// Gen-2 refuses the whole deploy when a bound secret is missing, so check first and say how to fix it.
+const SELFTEST_SECRET_USERS = ['webhooks', 'webhookSelftestScheduled', 'runWebhookSelftestNow'];
+if (!targets.length || targets.some((t) => SELFTEST_SECRET_USERS.includes(t))) {
+  const project = JSON.parse(readFileSync(join(repoRoot, '.firebaserc'), 'utf8')).projects?.default;
+  try {
+    execFileSync('gcloud', ['secrets', 'describe', 'WEBHOOK_SELFTEST_SECRET', `--project=${project}`], { stdio: 'ignore' });
+  } catch {
+    abort('Secret WEBHOOK_SELFTEST_SECRET fehlt (oder gcloud ist nicht angemeldet). Setzen mit:\n  firebase functions:secrets:set WEBHOOK_SELFTEST_SECRET   # beliebiger zufälliger Wert');
+  }
+}
+
 // Deploy the requested functions (or all).
 const only = targets.length ? targets.map((n) => `functions:${n}`).join(',') : 'functions';
 console.log(`\nDeploying ${targets.length ? only : 'ALL functions'} (buildpack pnpm@${pin})…`);
