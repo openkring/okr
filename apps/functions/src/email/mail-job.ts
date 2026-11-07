@@ -134,7 +134,7 @@ export const onMailJob = onDocumentCreated(
       const { html, text } = await resolveJobContent(job, tenantId);
       const provider = await getEmailProvider(tenantId);
       // a Versand (onMailing) references its files in the private bucket, below its own tenant only
-      const attachments = await resolveAttachments(job.attachments, CF_NAME, `mailings/${tenantId}/`);
+      const attachments = await resolveAttachments(job.attachments, CF_NAME, `mailings/${tenantId}/`, tenantId);
       const blocks = mailJobBlocks(job, from);
       blocksTotal = blocks.length;
       await snap.ref.update({ state: 'sending', blocksTotal, blocksSent: 0 });

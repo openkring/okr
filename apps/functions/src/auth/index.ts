@@ -54,6 +54,8 @@ export async function resolveAttachments(
   cfName: string,
   /** where private-bucket refs may point, e.g. `mailings/<tenantId>/`; '' refuses them all */
   privatePrefix = '',
+  /** set: a generated document must belong to this tenant (`generated-docs[-ephemeral]/<tenantId>/…`) */
+  tenantId = '',
 ): Promise<EmailAttachment[]> {
   if (!refs?.length) return [];
   const bucket = getStorage().bucket();
@@ -84,7 +86,7 @@ export async function resolveAttachments(
     }
     // Storage reference — validate against the allow-list and download via the Admin SDK.
     const path = ref.storagePath ?? '';
-    const isAllowed = ALLOWED_ATTACHMENT_PREFIXES.some(p => path.startsWith(p));
+    const isAllowed = ALLOWED_ATTACHMENT_PREFIXES.some(p => path.startsWith(tenantId ? `${p}${tenantId}/` : p));
     if (!isAllowed || path.includes('..')) {
       throw new functions.HttpsError('invalid-argument', `${cfName}: attachment path not allowed: ${path}`);
     }

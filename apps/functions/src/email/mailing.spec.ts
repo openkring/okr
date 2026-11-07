@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { keysFor, noticeExcerpt, parseDeliveries, privateRefs, safeFilename } from './mailing';
+import { isTenantDocumentPath, keysFor, noticeExcerpt, parseDeliveries, privateRefs, safeFilename } from './mailing';
 
 describe('parseDeliveries', () => {
   it('keeps each person once with the sendable channels in a fixed order', () => {
@@ -48,5 +48,20 @@ describe('privateRefs', () => {
   it('references the stored files instead of copying their content', () => {
     expect(privateRefs([{ filename: 'a.pdf', storagePath: 'mailings/scs/m1/0-a.pdf', contentType: 'application/pdf' }]))
       .toEqual([{ privatePath: 'mailings/scs/m1/0-a.pdf', filename: 'a.pdf', contentType: 'application/pdf' }]);
+  });
+});
+
+describe('isTenantDocumentPath', () => {
+  it('accepts the tenant\'s own generated documents', () => {
+    expect(isTenantDocumentPath('generated-docs/scs/uid1/g1.pdf', 'scs')).toBe(true);
+    expect(isTenantDocumentPath('generated-docs-ephemeral/scs/g1.pdf', 'scs')).toBe(true);
+  });
+
+  it('refuses another tenant\'s documents, traversal and other prefixes', () => {
+    expect(isTenantDocumentPath('generated-docs/kwa/uid1/g1.pdf', 'scs')).toBe(false);
+    expect(isTenantDocumentPath('generated-docs/scs/../kwa/g1.pdf', 'scs')).toBe(false);
+    expect(isTenantDocumentPath('generated-docs/scsx/g1.pdf', 'scs')).toBe(false);
+    expect(isTenantDocumentPath('tenant/scs/logo.png', 'scs')).toBe(false);
+    expect(isTenantDocumentPath('generated-docs/scs/g1.pdf', '')).toBe(false);
   });
 });

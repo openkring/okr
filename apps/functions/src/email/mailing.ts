@@ -41,8 +41,14 @@ const IN_CHUNK = 30;
 const MAX_RECIPIENTS = 3000;
 /** The callable carries at most ~10 MB; the email provider caps the whole mail lower still. */
 const MAX_ATTACHMENTS_BYTES = 8 * 1024 * 1024;
-/** Generated documents a sender may attach by path (the same allow-list as the document mailer). */
-const DOCUMENT_PREFIXES = ['generated-docs/', 'generated-docs-ephemeral/'];
+/**
+ * Generated documents a sender may attach by path: only the Versand's own tenant's
+ * (`render-document.ts` writes `generated-docs/<tenantId>/<uid>/…` and `generated-docs-ephemeral/<tenantId>/…`).
+ */
+export function isTenantDocumentPath(path: string, tenantId: string): boolean {
+  if (!tenantId || path.includes('..')) return false;
+  return path.startsWith(`generated-docs/${tenantId}/`) || path.startsWith(`generated-docs-ephemeral/${tenantId}/`);
+}
 /** The channels a Versand sends today; `post` follows with P3. */
 const SENDABLE: string[] = [DeliveryChannel.Email, DeliveryChannel.Chat];
 
@@ -156,7 +162,7 @@ async function storeAttachments(req: MailingRequest, tenantId: string, mailingKe
     out.push({ filename: safeFilename(filename), storagePath, contentType });
   };
   if (req.storagePath) {
-    if (!DOCUMENT_PREFIXES.some((p) => req.storagePath?.startsWith(p)) || req.storagePath.includes('..')) {
+    if (!isTenantDocumentPath(req.storagePath, tenantId)) {
       throw new HttpsError('invalid-argument', 'This document cannot be attached.');
     }
     const file = getStorage().bucket().file(req.storagePath);
