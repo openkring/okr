@@ -15,10 +15,13 @@ import { getDocumentStoragePath } from '@okr/content-document-util';
 import { DocumentsAccordion } from '@okr/content-document-feature';
 
 import { BillAccordion } from '@okr/finance-bill-feature';
+import { InvoiceAccordion } from '@okr/finance-invoice-feature';
 
 import { MembersAccordion, MembershipAccordion } from '@okr/relationship-membership-feature';
 import { OwnershipAccordion } from '@okr/relationship-ownership-feature';
 import { ReservationsAccordion } from '@okr/relationship-reservation-feature';
+import { WorkrelAccordion } from '@okr/relationship-workrel-feature';
+import { FeatureStore } from '@okr/tenant-feature';
 
 import { AddressesAccordion } from '@okr/subject-address-feature';
 import { OrgForm } from '@okr/subject-org-ui';
@@ -33,7 +36,7 @@ import { AppStore } from '@okr/shared-feature';
     Header, ChangeConfirmation,
     AvatarToolbar, AddressesAccordion, CommentsAccordion,
     OwnershipAccordion, OrgForm, MembershipAccordion, MembersAccordion,
-    ReservationsAccordion, DocumentsAccordion, BillAccordion,
+    ReservationsAccordion, DocumentsAccordion, BillAccordion, InvoiceAccordion, WorkrelAccordion,
     IonContent, IonAccordionGroup, IonCard, IonCardContent
   ],
   providers: [OrgStore],
@@ -69,6 +72,7 @@ import { AppStore } from '@okr/shared-feature';
               <ion-accordion-group value="addresses" [multiple]="true">
                 <okr-addresses-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" [priv]="priv()" />
                 <okr-membership-accordion [member]="org" [readOnly]="isReadOnly()" modelType="org" />
+                <okr-workrel-accordion [orgKey]="orgKey()" [readOnly]="isReadOnly()" />
 
                 @if(hasRole('privileged') || hasRole('memberAdmin') || hasRole('resourceAdmin')) {
                     @if(resource(); as resource) {
@@ -76,9 +80,12 @@ import { AppStore } from '@okr/shared-feature';
                       <okr-reservations-accordion [listId]="listId()" [readOnly]="isReadOnly()" />
                     }
                     <okr-members-accordion [orgKey]="orgKey()" [orgType]="orgType()" [readOnly]="isReadOnly()" />
-                    <okr-bill-accordion [listId]="orgKey()" />
                     <okr-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()"/>
                     <okr-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
+                }
+                @if(showFinance()) {
+                  <okr-invoice-accordion [listId]="orgKey()" />
+                  <okr-bill-accordion [listId]="orgKey()" />
                 }
               </ion-accordion-group>
             </ion-card-content>
@@ -93,6 +100,7 @@ export class OrgEditModal {
   private readonly modalController = inject(ModalController);
   private readonly avatarService = inject(AvatarService);
   private readonly env = inject(ENV);
+  private readonly featureStore = inject(FeatureStore);
 
   // inputs
   public org = input.required<OrgModel>();
@@ -124,6 +132,10 @@ export class OrgEditModal {
   protected isNew = computed(() => !this.org()?.okey.length);
   protected listId = computed(() => 'o_' + this.orgKey());
   protected priv = computed(() => this.store.privacySettings());
+  // the bills and invoices rules let only treasurers and admins read other parties' documents;
+  // for anybody else the query is denied and the accordion would stay silently empty
+  protected showFinance = computed(() => this.featureStore.isEnabled()('finance')
+    && (this.hasRole('treasurer') || this.hasRole('admin')));
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
 

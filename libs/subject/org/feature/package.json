@@ -32,6 +32,10 @@
     "@okr/subject-org-data-access": "*",
     "@okr/cms-menu-feature": "*",
     "@okr/vcard-util": "*",
-    "@okr/vcard-feature": "*"
+    "@okr/vcard-feature": "*",
+    "@okr/finance-bill-feature": "*",
+    "@okr/finance-invoice-feature": "*",
+    "@okr/relationship-workrel-feature": "*",
+    "@okr/tenant-feature": "*"
   }
 }

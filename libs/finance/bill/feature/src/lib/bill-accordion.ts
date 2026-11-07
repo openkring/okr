@@ -1,6 +1,7 @@
-import { Component, computed, inject, input, OnInit } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAccordion, IonItem, IonLabel, IonList } from '@ionic/angular';
+import { Component, computed, effect, inject, input } from '@angular/core';
+import { ActionSheetController, ActionSheetOptions, IonAccordion, IonIcon, IonItem, IonLabel, IonList } from '@ionic/angular';
 import { BillModel } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
 import { DateFormat, convertDateFormatToString } from '@okr/shared-util-core';
 
@@ -11,12 +12,14 @@ import { BillStore } from './bill.store';
   standalone: true,
   providers: [BillStore],
   imports: [
-    IonAccordion, IonItem, IonLabel, IonList,
+    SvgIconPipe,
+    IonAccordion, IonIcon, IonItem, IonLabel, IonList,
   ],
   template: `
     <ion-accordion toggle-icon-slot="start" value="bills">
       <ion-item slot="header" lines="none">
         <ion-label>{{ store.i18n.bills() }}</ion-label>
+        <ion-icon src="{{ 'invoice' | svgIcon }}" slot="end" />
       </ion-item>
       <div slot="content">
         <ion-list lines="inset">
@@ -40,18 +43,25 @@ import { BillStore } from './bill.store';
     </ion-accordion>
   `
 })
-export class BillAccordion implements OnInit {
+export class BillAccordion {
   protected readonly store = inject(BillStore);
   private readonly actionSheetController = inject(ActionSheetController);
 
+  /** 'all' | 'my' | the vendor key (e.g. an org's okey) */
   public readonly listId = input.required<string>();
 
   protected readonly isLoading = computed(() => this.store.isLoading());
   protected readonly myBills = computed(() => this.store.filteredBills());
-  protected readonly imgixBaseUrl = computed(() => this.store.appStore.env.services.imgixBaseUrl);
 
-  public ngOnInit(): void {
-    this.store.setListId(this.listId());
+  constructor() {
+    effect(() => this.store.setListId(this.listId()));
+    // Outside the accounting routes nobody has chosen the books yet, and the bills query waits for
+    // them: fall back to the selected (else the app's default) books — never the app tenant.
+    effect(() => {
+      const accountingStore = this.store.accountingStore;
+      const books = accountingStore.selectedBooks();
+      if (!accountingStore.accountingTenantId() && books) accountingStore.setTenant(books);
+    });
   }
 
   protected formatDate(storeDate: string): string {
@@ -66,12 +76,12 @@ export class BillAccordion implements OnInit {
 
   protected async showActions(bill: BillModel): Promise<void> {
     const options: ActionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
-    const base = this.imgixBaseUrl();
-    options.buttons.push(createActionSheetButton('bill.view', base, 'eye-on', this.store.i18n.view()));
+    const base = this.store.appStore.env.services.imgixBaseUrl;
+    options.buttons.push(createActionSheetButton('bill.view', this.store.i18n.view(), base, 'eye-on'));
     if (bill.attachments.length > 0) {
-      options.buttons.push(createActionSheetButton('bill.download', base, 'download', this.store.i18n.download()));
+      options.buttons.push(createActionSheetButton('bill.download', this.store.i18n.download(), base, 'download'));
     }
-    options.buttons.push(createActionSheetButton('cancel', base, 'cancel', this.store.i18n.cancel()));
+    options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), base, 'cancel'));
 
     const actionSheet = await this.actionSheetController.create(options);
     await actionSheet.present();

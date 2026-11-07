@@ -78,12 +78,13 @@ export class WorkrelAccordion {
   private actionSheetController = inject(ActionSheetController);
 
   public personKey = input<string>();
+  public orgKey = input<string>();
   public color = input('primary');
   public title = input<string | undefined>();
   public readOnly = input(true);
   protected types = computed(() => this.store.appStore.getCategory('workrel_type'));
   
-  protected workRels = computed(() => this.store.allWorkrels());  // tbd: better define: a) all, b) open c) current year ...
+  protected workRels = computed(() => this.store.parentWorkrels());  // tbd: better define: a) all, b) open c) current year ...
   protected currentUser = computed(() => this.store.appStore.currentUser());
   protected accordionTitle = computed(() => this.title() ?? this.store.i18n.workrels());
   
@@ -91,16 +92,17 @@ export class WorkrelAccordion {
 
   constructor() {
     effect(() => {
-      if (this.personKey()) {
-        this.store.setPersonKey(this.personKey() ?? '');
-      }
+      const personKey = this.personKey();
+      const orgKey = this.orgKey();
+      if (orgKey) this.store.setOrgKey(orgKey);
+      else if (personKey) this.store.setPersonKey(personKey);
     });
     effect(() => this.store.setShowMode(hasRole('admin')));
   }
 
   /******************************* actions *************************************** */
   protected async add(): Promise<void> {
-    await this.store.add();
+    await this.store.add(this.readOnly());
   }
 
   /**

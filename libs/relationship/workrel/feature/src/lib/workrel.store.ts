@@ -1,5 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { of } from 'rxjs';
 import { AlertController, ModalController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
@@ -50,9 +51,11 @@ export const WorkrelStore = signalStore(
     workrelsResource: rxResource({
       params: () => ({
         personKey: store.personKey(),
+        orgKey: store.orgKey(),
       }),
       stream: ({params}) => {
-        return params.personKey ? 
+        if (!params.personKey && params.orgKey) return of([]);  // an org parent reads workersResource
+        return params.personKey ?
           store.workrelService.listWorkrelsOfPerson(params.personKey) : 
           store.workrelService.list().pipe(
             debugListLoaded('WorkrelStore.workrels of person', store.appStore.currentUser())
@@ -80,6 +83,8 @@ export const WorkrelStore = signalStore(
 
       // workers (org as parent)
       allWorkers: computed(() => state.workersResource.value() ?? []),
+      /** the rows of an accordion: the workers of the parent org, else the work relationships of the parent person */
+      parentWorkrels: computed(() => (state.orgKey() ? state.workersResource.value() : state.workrelsResource.value()) ?? []),
       currentWorkers: computed(() => state.workersResource.value()?.filter(p => isValidAt(p.validFrom, p.validTo)) ?? []),
       workers: computed(() => state.showOnlyCurrent() ? state.workersResource.value() ?? [] : state.workersResource.value()?.filter(m => isValidAt(m.validFrom, m.validTo)) ?? []),
 
@@ -108,6 +113,7 @@ export const WorkrelStore = signalStore(
 
       reload() {
         store.workrelsResource.reload();
+        store.workersResource.reload();
       },
 
       /******************************** setters (filter) ******************************************* */
@@ -135,7 +141,7 @@ export const WorkrelStore = signalStore(
 
       setOrgKey(orgKey: string) {
         patchState(store, { orgKey, personKey: undefined });
-        store.workrelsResource.reload();
+        store.workersResource.reload();
       },
 
       setShowMode(showOnlyCurrent: boolean) {
@@ -164,20 +170,25 @@ export const WorkrelStore = signalStore(
        * Show a modal to add a new work relationship.
        * @param subject person that has a work relationship with an org
        * @param object org that has a work relationship with a person
-       * tbd: consider an already existing personKey or orgKey to prefill the new workrel (means: personKey/orgKey need to be resolved to Person/OrgModel)
+       * The parent of an accordion (personKey or orgKey) is prefilled; the other side falls back to the
+       * current person resp. the tenant's default org.
        */
       async add(readOnly = true): Promise<void> {
         if (readOnly) return;
+        const personKey = store.personKey();
+        const orgKey = store.orgKey();
+        const person = (personKey ? store.appStore.getPerson(personKey) : undefined) ?? store.currentPerson();
+        const org = (orgKey ? store.appStore.getOrg(orgKey) : undefined) ?? store.currentOrg();
         const newWorkrel = new WorkrelModel(store.appStore.tenantId());
-        newWorkrel.subjectKey = store.currentPerson().okey;
-        newWorkrel.subjectName1 = store.currentPerson().firstName;
-        newWorkrel.subjectName2 = store.currentPerson().lastName;
+        newWorkrel.subjectKey = person.okey;
+        newWorkrel.subjectName1 = person.firstName;
+        newWorkrel.subjectName2 = person.lastName;
         newWorkrel.subjectModelType = 'person';
-        newWorkrel.subjectType = store.currentPerson().gender;
+        newWorkrel.subjectType = person.gender;
 
-        newWorkrel.objectKey = store.currentOrg().okey;
-        newWorkrel.objectName = store.currentOrg().name;
-        newWorkrel.objectType = store.currentOrg().type;
+        newWorkrel.objectKey = org.okey;
+        newWorkrel.objectName = org.name;
+        newWorkrel.objectType = org.type;
 
         newWorkrel.validFrom = getTodayStr();
         newWorkrel.validTo = END_FUTURE_DATE_STR;

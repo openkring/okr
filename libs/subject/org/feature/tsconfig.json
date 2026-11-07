@@ -2,11 +2,17 @@
   "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
-    "types": ["node", "vitest"],
+    "types": [
+      "node",
+      "vitest"
+    ],
     "declaration": true,
     "module": "preserve",
     "moduleResolution": "bundler",
-    "lib": ["dom", "es2022"],
+    "lib": [
+      "dom",
+      "es2022"
+    ],
     "ignoreDeprecations": "6.0",
     "rootDir": "src"
   },
@@ -16,8 +22,14 @@
     "disableTypeScriptVersionCheck": true,
     "compileNonExportedClasses": true
   },
-  "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts"],
-  "exclude": ["dist/**/*"],
+  "include": [
+    "src/**/*",
+    "**/*.spec.ts",
+    "**/*.test.ts"
+  ],
+  "exclude": [
+    "dist/**/*"
+  ],
   "references": [
     {
       "path": "../../../shared/models/tsconfig.lib.json"
@@ -105,6 +117,18 @@
     },
     {
       "path": "../../../vcard/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../finance/invoice/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../relationship/workrel/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../shared/constants/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../tenant/feature/tsconfig.lib.json"
     }
   ]
 }
