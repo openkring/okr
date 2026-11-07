@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { answerPage, answerResultPage, brandColorOf, chatDigestEmail, commentEmail, DEFAULT_BRAND_COLOR, escapeHtml, eventWhen, invitationAnswerEmail, invitationEmail, textColorOn } from './mail';
+import { answerPage, answerResultPage, brandColorOf, chatDigestEmail, commentEmail, DEFAULT_BRAND_COLOR, escapeHtml, eventWhen, invitationAnswerEmail, invitationEmail, mailingAnswerPage, textColorOn } from './mail';
 
 const EVIL = '<script>alert("x")</script> & co';
 const base = { appName: 'Seeclub', brandColor: '#009D53', logoUrl: 'https://img.x/logo.png?w=96&fm=png', eventName: EVIL, when: '01.10.2026, 11:00', location: EVIL };
@@ -136,5 +136,44 @@ describe('answer pages', () => {
     const html = answerResultPage({ appName: 'Seeclub', brandColor: '#009D53', title: EVIL, message: EVIL });
     expect(html).not.toContain('<script>alert');
     expect(html).toContain('bgcolor="#009d53"');
+  });
+});
+
+describe('mailingAnswerPage', () => {
+  const page = {
+    appName: 'Seeclub', firstName: 'Anna', postUrl: 'https://f.x/answer', mailingKey: 'm1', personKey: 'p1', signature: 'sig',
+    events: [
+      { caleventKey: 'e1', name: '<b>Hock</b>', when: '01.10.2026', location: 'Club', state: 'open' as const },
+      { caleventKey: 'e2', name: 'Regatta', when: '02.10.2026', location: '', state: 'accepted' as const },
+      { caleventKey: 'e3', name: 'Abgesagt', when: '', location: '', state: 'declined' as const, refusal: 'cancelled' as const },
+    ],
+  };
+  it('escapes event names', () => {
+    const html = mailingAnswerPage(page);
+    expect(html).toContain('&lt;b&gt;Hock&lt;/b&gt;');
+    expect(html).not.toContain('<b>Hock</b>');
+  });
+  it('has a form with the event key for each answerable event', () => {
+    const html = mailingAnswerPage(page);
+    expect(html).toContain('name="e" value="e1"');
+    expect(html).toContain('name="e" value="e2"');
+    expect(html).toContain('name="m" value="m1"');
+    expect(html).toContain('name="p" value="p1"');
+    expect(html).toContain('name="s" value="sig"');
+    expect(html.match(/value="accept"/g)).toHaveLength(2);
+    expect(html.match(/value="decline"/g)).toHaveLength(2);
+  });
+  it('shows no form for a refused event, only its title', () => {
+    const html = mailingAnswerPage(page);
+    expect(html).not.toContain('name="e" value="e3"');
+    expect(html).toContain('Anlass abgesagt');
+  });
+  it('shows the state of each event and the message on top', () => {
+    const html = mailingAnswerPage({ ...page, message: 'Bitte <i>antworten</i>' });
+    expect(html).toContain('noch offen');
+    expect(html).toContain('angemeldet');
+    expect(html).toContain('abgemeldet');
+    expect(html).toContain('Bitte &lt;i&gt;antworten&lt;/i&gt;');
+    expect(html.indexOf('Bitte')).toBeLessThan(html.indexOf('Hock'));
   });
 });

@@ -10,6 +10,8 @@
 
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 
+import { AnswerRefusal, REFUSAL_TEXT } from './answer';
+
 /** The tenant's look: app-config `appName`, `brandColor` and the raster logo beside `logoUrl`. */
 export interface Brand {
   appName: string;
@@ -190,6 +192,54 @@ export function answerPage(p: EventSummary & { answers: ('accept' | 'decline')[]
     + submit('accept', 'Ich nehme teil', primaryStyle(p))
     + submit('decline', 'Ich nehme nicht teil', SECONDARY)
     + `</form>`);
+}
+
+const MAILING_STATE: Record<'accepted' | 'waiting' | 'declined' | 'open', string> = {
+  accepted: 'angemeldet',
+  waiting: 'auf der Warteliste',
+  declined: 'abgemeldet',
+  open: 'noch offen',
+};
+
+export interface MailingAnswerEvent {
+  caleventKey: string;
+  name: string;
+  when: string;
+  location: string;
+  state: 'accepted' | 'waiting' | 'declined' | 'open';
+  refusal?: AnswerRefusal;
+}
+
+/**
+ * The answer page behind a Versand's personal link: one block per event, each with its own two
+ * forms (the pressed form's `a` is the answer, `e` the event). An event that can no longer be
+ * answered shows the refusal title instead of the forms.
+ */
+export function mailingAnswerPage(p: Brand & { firstName: string; postUrl: string; mailingKey: string; personKey: string; signature: string; message?: string; events: MailingAnswerEvent[] }): string {
+  const form = (event: MailingAnswerEvent, answer: 'accept' | 'decline', label: string, style: string): string =>
+    `<form method="post" action="${escapeHtml(p.postUrl)}" style="display:inline;">`
+    + `<input type="hidden" name="m" value="${escapeHtml(p.mailingKey)}">`
+    + `<input type="hidden" name="p" value="${escapeHtml(p.personKey)}">`
+    + `<input type="hidden" name="s" value="${escapeHtml(p.signature)}">`
+    + `<input type="hidden" name="e" value="${escapeHtml(event.caleventKey)}">`
+    + `<input type="hidden" name="a" value="${answer}">`
+    + `<button type="submit" style="${style}border:0;cursor:pointer;font-size:16px;font-family:inherit;">${label}</button></form>`;
+  const block = (event: MailingAnswerEvent): string => {
+    const rows = [
+      `<strong>${escapeHtml(event.name)}</strong>`,
+      event.when ? escapeHtml(event.when) : '',
+      event.location ? escapeHtml(event.location) : '',
+    ].filter(Boolean).join('<br>');
+    const actions = event.refusal
+      ? `<p style="margin:8px 0 0;color:#57606a;">${escapeHtml(REFUSAL_TEXT[event.refusal].title)}</p>`
+      : `<p style="margin:8px 0 0;">${form(event, 'accept', 'Ich nehme teil', primaryStyle(p))}${form(event, 'decline', 'Ich nehme nicht teil', SECONDARY)}</p>`;
+    return `<div style="margin:16px 0;padding:12px 16px;background:#f6f8fa;border-radius:6px;">${rows}`
+      + `<br><span style="color:#57606a;">Dein Stand: ${MAILING_STATE[event.state]}</span>${actions}</div>`;
+  };
+  return layout(p,
+    `<h1 style="font-size:20px;margin:0 0 8px;">Hallo ${escapeHtml(p.firstName)}, nimmst du teil?</h1>`
+    + (p.message ? `<p>${paragraphText(p.message)}</p>` : '')
+    + p.events.map(block).join(''));
 }
 
 export function answerResultPage(p: Brand & { title: string; message: string; eventUrl?: string }): string {
