@@ -51,8 +51,13 @@ describe('journal guest logic', () => {
     expect(applyManage(revoked.links, 'create', 'anna', '2027-01-03T00:00:00Z', code).links).toHaveLength(2);
   });
 
+  it('a settings request from an older client asking for signal gets email', () => {
+    expect(parseGuestRequest({ journalKey: 'j1', code: CODE, action: 'settings', channel: 'signal' }).channel).toBe('email');
+    expect(() => parseGuestRequest({ journalKey: 'j1', code: CODE, action: 'settings', channel: 'sms' })).toThrow(GuestRequestError);
+  });
+
   it('the delivery choice', () => {
-    expect(deliveryFor('signal')).toEqual(['signal']);
+    expect(deliveryFor('email')).toEqual(['email']);
     expect(deliveryFor('none')).toEqual([]);
   });
 

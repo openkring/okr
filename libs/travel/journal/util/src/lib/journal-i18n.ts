@@ -177,7 +177,6 @@ export const JOURNAL_I18N_KEYS = {
   guest_settings: PFX + 'guest.settings',
   guest_settings_title: PFX + 'guest.settings_title',
   guest_channel_email: PFX + 'guest.channel_email',
-  guest_channel_signal: PFX + 'guest.channel_signal',
   guest_mute: PFX + 'guest.mute',
   guest_unmute: PFX + 'guest.unmute',
   guest_muted: PFX + 'guest.muted',

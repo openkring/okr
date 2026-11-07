@@ -57,7 +57,7 @@ export function toggleDelivery(deliveries: VersandDeliveries, row: VersandRow, c
 
 /** Ticks per delivery type, in column order. */
 export function deliveryTotals(deliveries: VersandDeliveries): Record<DeliveryChannel, number> {
-  const totals = { [DeliveryChannel.Post]: 0, [DeliveryChannel.Email]: 0, [DeliveryChannel.Chat]: 0, [DeliveryChannel.Signal]: 0 };
+  const totals = { [DeliveryChannel.Post]: 0, [DeliveryChannel.Email]: 0, [DeliveryChannel.Chat]: 0 };
   for (const ticked of Object.values(deliveries)) for (const channel of ticked) totals[channel]++;
   return totals;
 }

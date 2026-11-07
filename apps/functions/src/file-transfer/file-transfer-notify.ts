@@ -74,8 +74,7 @@ export interface NotificationPlan {
 
 /**
  * Who gets what. A person whose chat channel is served by a posted card gets no push; email is
- * independent of the card. 'signal' is skipped (no Signal send path in the functions yet, spec
- * 1.113), 'post' is ignored for transfers.
+ * independent of the card. 'post' is ignored for transfers.
  *
  * A person's mail carries the private member link, an outside address's mail its token link.
  *

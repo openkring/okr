@@ -110,11 +110,11 @@ describe('file-transfer-notify', () => {
       expect(plan.mails.map(m => m.recipientId)).toEqual(['p:p2']);
     });
 
-    it('an uncovered chat member is pushed; signal and post only reach nobody', () => {
-      const signalOnly = { personKey: 'p3', name: 'Dora', email: 'd@example.ch', channels: [DeliveryChannel.Signal, DeliveryChannel.Post] };
-      const recipients = recipientsForSend([mailAndChat, signalOnly], []);
-      const plan = planNotifications(recipients, new Map([['p2', mailAndChat.channels], ['p3', signalOnly.channels]]),
-        new Map([['p2', mailAndChat.email], ['p3', signalOnly.email]]), new Set());
+    it('an uncovered chat member is pushed; post only reaches nobody', () => {
+      const postOnly = { personKey: 'p3', name: 'Dora', email: 'd@example.ch', channels: [DeliveryChannel.Post] };
+      const recipients = recipientsForSend([mailAndChat, postOnly], []);
+      const plan = planNotifications(recipients, new Map([['p2', mailAndChat.channels], ['p3', postOnly.channels]]),
+        new Map([['p2', mailAndChat.email], ['p3', postOnly.email]]), new Set());
       expect(plan.pushKeys).toEqual(['p2']);
       expect(plan.mails.map(m => m.recipientId)).toEqual(['p:p2']);
     });

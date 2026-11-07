@@ -21,7 +21,6 @@ import { isJournalKey } from './apply-journal-change.logic';
 import { requireJournalAuthor } from './journal-auth';
 import { checkNotice } from './notify.logic';
 import { NoticeTooSoon, previewNotice, sendNotice } from './notify';
-import { journalSenderToken } from './signal';
 
 const REGION = 'europe-west6';
 const imgixPrivateToken = defineSecret('IMGIX_PRIVATE_TOKEN');
@@ -150,7 +149,8 @@ async function guestView(db: Firestore, jk: string, ctx: GuestContext): Promise<
   const result = unsorted.sort((a, b) => (`${a.date}${a.time}` < `${b.date}${b.time}` ? -1 : 1));
 
   const delivery = (person.data()?.['newsDelivery'] as unknown[] | undefined) ?? undefined;
-  const channel = Array.isArray(delivery) ? (delivery.includes('signal') ? 'signal' : delivery.includes('email') ? 'email' : 'none') : 'email';
+  // a stored 'signal' from before the Signal channel was retired counts as email
+  const channel = Array.isArray(delivery) ? (delivery.includes('email') || delivery.includes('signal') ? 'email' : 'none') : 'email';
   return {
     journal: { key: jk, title: ctx.journal['title'] ?? '', subTitle: ctx.journal['subTitle'] ?? '' },
     me: { personKey: pk, name: ctx.name, channel, muted: !!ctx.link.mutedAt, expiresAt: ctx.link.expiresAt ?? '' },
@@ -228,7 +228,7 @@ export const journalGuest = onCall(
  * `journals/{jk}/private/guestLinks`, which no client can read.
  */
 export const manageJournalGuest = onCall(
-  { ...SMALL, timeoutSeconds: 300, enforceAppCheck: true, cors: true, secrets: [journalSenderToken] },
+  { ...SMALL, timeoutSeconds: 300, enforceAppCheck: true, cors: true },
   async (request: CallableRequest<unknown>): Promise<Data> => {
     checkAppCheckToken(request as never, 'manageJournalGuest');
     checkAuthentication(request as never, 'manageJournalGuest');

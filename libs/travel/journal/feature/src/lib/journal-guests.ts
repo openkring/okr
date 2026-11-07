@@ -51,12 +51,11 @@ export class JournalGuestsSheet {
     }
     try {
       const preview = await this.guestService.previewNotice(journalKey);
-      const reachable = preview.recipients.email + preview.recipients.signal;
-      if (reachable === 0) {
+      if (preview.recipients.email === 0) {
         await this.toast(i18n.notice_no_guests());
         return;
       }
-      const recipients = [fill(i18n.notice_recipients(), { email: preview.recipients.email, signal: preview.recipients.signal }),
+      const recipients = [fill(i18n.notice_recipients(), { email: preview.recipients.email }),
         preview.recipients.muted > 0 ? fill(i18n.notice_muted(), { muted: preview.recipients.muted }) : ''].filter((x) => x).join(' ');
       const modal = await this.modalController.create({
         component: NoticeModal, componentProps: { notice: { subject: preview.subject, text: preview.text }, recipients },
@@ -65,7 +64,7 @@ export class JournalGuestsSheet {
       const { data, role } = await modal.onWillDismiss<NoticeFormModel>();
       if (role !== 'confirm' || !data) return;
       const sent = await this.guestService.sendNotice(journalKey, data.subject, data.text);
-      await this.toast(fill(i18n.notice_sent(), { count: sent.email + sent.signal }));
+      await this.toast(fill(i18n.notice_sent(), { count: sent.email }));
     } catch (error) {
       if (guestErrorOf(error).code === 'resource-exhausted') await this.toast(i18n.notice_too_soon());
       else await showJournalError(this.toastController, i18n, error);

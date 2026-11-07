@@ -7,14 +7,12 @@ import {
   PersonCollection,
 } from '@okr/shared-models';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
-import { getProjectedAddresses } from '@okr/shared-util-functions';
 import { acceptRecord, DigestItem, digestOf, materialize } from '@okr/travel-journal-util';
 
 import { notifyPersons, tenantLinks } from '../calendar/deliver';
 import { createFirestoreDeps } from '../workflow/firestore-deps';
 import { OutboxDoc, WorkflowOutboxCollection } from '../workflow/outbox';
 import { chooseChannel, digestRecipients, GuestChannelChoice, guestComments, guestMessage, proposedNotice } from './notify.logic';
-import { journalSenderToken, sendSignal } from './signal';
 
 /*
  * News of the travel journals (spec 1.113 §8, plans 7 and 8). Guests are notified only when an author sends a
@@ -41,9 +39,10 @@ async function newsSince(db: Firestore, journalKey: string, cursor: Timestamp | 
   return { news: accepted(fresh), state: materialize(accepted(all.docs)), newest };
 }
 
-export interface NoticePreview { items: DigestItem[]; subject: string; text: string; recipients: Record<GuestChannelChoice | 'muted', number> }
+/** `signal` is always 0 since the Signal channel was retired; kept for clients older than that release. */
+export interface NoticePreview { items: DigestItem[]; subject: string; text: string; recipients: Record<GuestChannelChoice | 'muted' | 'signal', number> }
 
-interface Recipient { link: JournalGuestLink; channel: GuestChannelChoice; email: string; phone: string }
+interface Recipient { link: JournalGuestLink; channel: GuestChannelChoice; email: string }
 
 /** Every guest with a live link, their channel and addresses — muted ones are counted, never contacted. */
 async function recipientsOf(db: Firestore, journalKey: string, tenantId: string): Promise<{ recipients: Recipient[]; muted: number }> {
@@ -51,17 +50,11 @@ async function recipientsOf(db: Firestore, journalKey: string, tenantId: string)
   const now = new Date().toISOString();
   const live = digestRecipients(links, now);
   const muted = digestRecipients(links.map((l) => ({ ...l, mutedAt: undefined })), now).length - live.length;
-  const config = (await db.collection('app-config').doc(tenantId).get()).data();
-  const signalEnabled = (config?.['integrations'] as Record<string, unknown> | undefined)?.['signal'] === true;
   const deps = createFirestoreDeps();
   const recipients = await Promise.all(live.map(async (link): Promise<Recipient> => {
     const person = (await db.collection(PersonCollection).doc(link.personKey).get()).data();
     const email = await deps.emailFor(link.personKey, tenantId);
-    const phone = signalEnabled
-      ? (await getProjectedAddresses(db, `person.${link.personKey}`, 'privileged', tenantId))
-        .filter((a) => a.addressChannel === 'phone' && a.phone).sort((a, b) => Number(b.isFavorite) - Number(a.isFavorite))[0]?.phone ?? ''
-      : '';
-    return { link, email, phone, channel: chooseChannel(person?.['newsDelivery'], signalEnabled, phone !== '', email !== '') };
+    return { link, email, channel: chooseChannel(person?.['newsDelivery'], email !== '') };
   }));
   return { recipients, muted };
 }
@@ -73,10 +66,13 @@ export async function previewNotice(db: Firestore, journalKey: string, journal: 
   const items = digestOf(news, state, journalKey);
   const { recipients, muted } = await recipientsOf(db, journalKey, tenantId);
   const count = (c: GuestChannelChoice) => recipients.filter((r) => r.channel === c).length;
-  return { items, ...proposedNotice(String(journal['title'] ?? ''), items), recipients: { email: count('email'), signal: count('signal'), none: count('none'), muted } };
+  return { items, ...proposedNotice(String(journal['title'] ?? ''), items), recipients: { email: count('email'), signal: 0, none: count('none'), muted } };
 }
 
-/** Sends the author's notice to every live, unmuted guest and moves the cursor. Returns how many were reached. */
+/**
+ * Sends the author's notice to every live, unmuted guest and moves the cursor. Returns how many were reached
+ * (`signal` is always 0, kept for clients older than the release that retired the Signal channel).
+ */
 export async function sendNotice(db: Firestore, journalKey: string, tenantId: string, notice: { subject: string; text: string }): Promise<{ email: number; signal: number }> {
   // reserve the send slot first (transaction), so two calls cannot both pass the throttle
   const notifyRef = privateRef(db, journalKey, JournalNotifyDoc);
@@ -90,15 +86,10 @@ export async function sendNotice(db: Firestore, journalKey: string, tenantId: st
   const { recipients } = await recipientsOf(db, journalKey, tenantId);
   const day = getTodayStr(DateFormat.StoreDate);
   let email = 0;
-  let signal = 0;
   for (const r of recipients) {
     const link = `${appUrl}/g/${journalKey}/${r.link.linkCode}`;
     const message = guestMessage(notice, link, `${link}?mute=1`);
     try {
-      if (r.channel === 'signal' && (await sendSignal(db, journalKey, r.link.personKey, r.phone, message.text))) {
-        signal += 1;
-        continue;
-      }
       if (r.channel === 'none' || !r.email) continue;
       const doc: OutboxDoc = {
         tenants: [tenantId], kind: 'sendEmail', ruleKey: `journal:${journalKey}`, day, state: 'pending',
@@ -112,8 +103,8 @@ export async function sendNotice(db: Firestore, journalKey: string, tenantId: st
     }
   }
   await privateRef(db, journalKey, JournalNotifyDoc).set({ lastNotifiedAt: newest ?? Timestamp.now() }, { merge: true });
-  logger.info(`journal notice: ${journalKey}: ${email} email(s), ${signal} Signal message(s)`);
-  return { email, signal };
+  logger.info(`journal notice: ${journalKey}: ${email} email(s)`);
+  return { email, signal: 0 };
 }
 
 /**
@@ -121,7 +112,7 @@ export async function sendNotice(db: Firestore, journalKey: string, tenantId: st
  * notified automatically (plan 8). The function keeps its name until the Cloud Functions consolidation renames it.
  */
 export const notifyJournalGuests = onSchedule(
-  { schedule: 'every 60 minutes', region: 'europe-west6', cpu: 'gcf_gen1', memory: '512MiB', maxInstances: 1, timeoutSeconds: 540, secrets: [journalSenderToken] },
+  { schedule: 'every 60 minutes', region: 'europe-west6', cpu: 'gcf_gen1', memory: '512MiB', maxInstances: 1, timeoutSeconds: 540 },
   async () => {
     const db = getFirestore();
     const journals = await db.collection(JournalCollection).where('isArchived', '==', false).get();
