@@ -12,14 +12,14 @@ import { BootError, Spinner, ConnectionStatusButton, AvatarUser } from '@okr/sha
 import { coerceBoolean, getImgixUrlWithAutoParams, hasRole } from '@okr/shared-util-core';
 
 import { AuthInfo } from '@okr/auth-ui';
-import { Menu } from '@okr/cms-menu-feature';
+import { Menu, MENU_WIDE_QUERY, MenuBar, MenuLayout } from '@okr/cms-menu-feature';
 import { ProfileEditModal } from '@okr/profile-feature';
 import { CookieBanner } from '@okr/consent-ui';
 import { ConsentService } from '@okr/consent-data-access';
 
 @Component({
   imports: [
-    Menu, AuthInfo, BootError, Spinner, ConnectionStatusButton, AvatarUser, CookieBanner,
+    Menu, MenuBar, AuthInfo, BootError, Spinner, ConnectionStatusButton, AvatarUser, CookieBanner,
     IonApp, IonSplitPane, IonMenu, IonHeader, IonContent, IonToolbar, IonRouterOutlet, IonButton, IonButtons,
     IonLabel, IonItem
 ],
@@ -111,13 +111,16 @@ import { ConsentService } from '@okr/consent-data-access';
         bk app has one single, left menu -> main-menu
         menuitem contents are dependent on e.g. authentication and user role
         register all menus here, derive them from BaseMenu and set a menu id within the class
-        use MenuController with this.menu.enable(true, menuId) to switch the menus
+        switch a menu through its [disabled] binding, see the <ion-menu> below
       -->
     <ion-app>
       <okr-cookie-banner />
-      <ion-split-pane contentId="main" [disabled]="!showMenu()" (ionSplitPaneVisible)="onSplitPaneVisible($event)">
+      <ion-split-pane contentId="main" [disabled]="!showMenu() || menuLayout.barActive()" (ionSplitPaneVisible)="onSplitPaneVisible($event)">
+        <!-- Known drift from the apps: they keep <ion-menu> mounted and gate it only through its
+             [disabled] binding (unmounting it leaves dead hamburgers, see okr-root.ts there). This
+             template still unmounts it as well; align it when the generator is next touched. -->
         @if(showMenu()) {
-        <ion-menu side="start" menuId="main" contentId="main" type="overlay" (ionWillOpen)="menuOpened.set(true)">
+        <ion-menu [side]="menuLayout.side()" [disabled]="!showMenu() || menuLayout.barActive()" menuId="main" contentId="main" type="overlay" (ionWillOpen)="menuOpened.set(true)">
           <ion-header>
             <ion-toolbar color="secondary">
               <ion-buttons slot="start">
@@ -131,7 +134,9 @@ import { ConsentService } from '@okr/consent-data-access';
                    already lazy) and the switcher created into it — keeps the library and its
                    per-tenant app-config listeners out of every single-tenant boot (spec 1.49, T1.7). -->
               <ion-buttons slot="end">
-                <ng-container #tenantSwitcherHost />
+                @if (!menuLayout.barActive()) {
+                  <ng-container #tenantSwitcherHost />
+                }
               </ion-buttons>
               @if(appStore.currentUser(); as currentUser) {
                 <ion-buttons slot="end">
@@ -171,7 +176,7 @@ import { ConsentService } from '@okr/consent-data-access';
           content inside it. The .ion-page class fills the pane when the split-pane is
           disabled/not-visible (matching ion-router-outlet's own absolute fill).
         -->
-        <div id="main" class="ion-page">
+        <div id="main" class="ion-page" [style.--okr-menu-bar-top]="barShown() ? menuLayout.barTop() : null">
           <!--
             The <ion-router-outlet> must ALWAYS stay in the DOM. Removing it (e.g. via
             @if) while an Ionic navigation transition is in flight destroys the
@@ -181,7 +186,29 @@ import { ConsentService } from '@okr/consent-data-access';
             app.routes.ts); here we only overlay a spinner on top of the still-mounted
             outlet during the not-ready window.
           -->
-          <ion-router-outlet />
+          <!--
+            The menu bar (menu-layouts spec §6): one instance, absolutely positioned at the top of
+            #main while a bar layout is active and the menu is wanted at all. Like the sidebar's menu
+            tree it waits for the session, so the tenant-wide menu query does not run as a visitor and
+            again on sign-in. The outlet moves down by the bar's height from the start (barShown, no
+            jump when the bar arrives) and gives the safe area to the bar (bindings on the outlet below).
+            --okr-menu-bar-top sits on #main, not on the outlet: the outlet zeroes
+            --ion-safe-area-top for its pages, which would zero the bar's own share as well.
+          -->
+          @if (barShown() && isUserSessionReady()) {
+            <okr-menu-bar (profileClicked)="openProfile()" (cookieSettingsClicked)="openCookieSettings()">
+              <ng-container ngProjectAs="[okrMenuBarEnd]">
+                <!-- the one tenant switcher host while the bar is shown; the sidebar has none then -->
+                @if (menuLayout.barActive()) {
+                  <ng-container #tenantSwitcherHost />
+                }
+                @if (showDebugInfo()) {
+                  <okr-auth-info [currentUser]="appStore.currentUser()" [fbUser]="appStore.fbUser()" [isAuthenticated]="appStore.isAuthenticated()" [isAdmin]="hasRole('admin')" />
+                }
+              </ng-container>
+            </okr-menu-bar>
+          }
+          <ion-router-outlet [style.top]="barShown() ? 'var(--okr-menu-bar-top)' : null" [style.--ion-safe-area-top]="barShown() ? '0px' : null" />
           @if (isDegradedSession()) {
             <div class="app-ready-overlay">
               <div class="degraded-message">
@@ -234,6 +261,13 @@ export class OkrRoot {
     ),
     { initialValue: undefined as boolean | undefined }
   );
+  /**
+   * Whether this route gets a menu at all. Together with barActive() it drives the [disabled]
+   * binding on <ion-menu>, the one switch for the menu and every <ion-menu-button>: `disabled` emits
+   * ionMenuChange, the only event autoHide listens to. It is a binding and not
+   * MenuController.enable() because at boot the menu still sits inside @defer, where the controller
+   * finds nothing and does nothing, and a stored bar layout gives no later change to retry on.
+   */
   protected readonly showMenu = computed(() => {
     const qp = this.queryParamMap()?.get('showMenu');
     if (qp != null) return coerceBoolean(qp);
@@ -245,18 +279,32 @@ export class OkrRoot {
   // does not wait for that first event. 992px is Ionic's default `when="lg"` of ion-split-pane.
   private readonly splitPaneVisible = signal(
     isPlatformBrowser(inject(PLATFORM_ID)) && typeof window.matchMedia === 'function'
-      ? window.matchMedia('(min-width: 992px)').matches
+      ? window.matchMedia(MENU_WIDE_QUERY).matches
       : false
   );
   /** Set once the overlay menu opens for the first time; the tree stays mounted afterwards. */
   protected readonly menuOpened = signal(false);
   protected readonly menuMounted = computed(() => this.splitPaneVisible() || this.menuOpened());
 
+  /** Where the menu sits (left or right) and, later, whether a bar replaces it; see the menu-layouts spec. */
+  protected readonly menuLayout = inject(MenuLayout);
+  /** Whether the menu bar is on screen: a bar layout, on a route that wants a menu. */
+  protected readonly barShown = computed(() => this.showMenu() && this.menuLayout.barActive());
+  /**
+   * Connects the layout to the menu list once the tree is mounted, so it never joins the boot path,
+   * and once the session is ready, so the tenant-wide query does not run as a visitor and again on sign-in.
+   */
+  private readonly startMenuLayout = effect(() => { if (this.menuMounted() && this.appStore.isUserSessionReady()) this.menuLayout.start(); });
+
   protected onSplitPaneVisible(event: Event): void {
     this.splitPaneVisible.set((event as CustomEvent<{ visible: boolean }>).detail.visible);
   }
 
-  /** Host of the lazily created tenant switcher; empty while nobody with several tenants is signed in. */
+  /**
+   * Host of the lazily created tenant switcher; empty while nobody with several tenants is signed in.
+   * The template has two (sidebar, menu bar) but only one exists at a time; the effect below loads into
+   * whichever is there, again after a switch of layout.
+   */
   private readonly tenantSwitcherHost = viewChild('tenantSwitcherHost', { read: ViewContainerRef });
   private tenantSwitcherLoadedInto: ViewContainerRef | undefined;
 

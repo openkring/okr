@@ -198,7 +198,11 @@ export class FilesPage {
   protected editMode = signal(false);
   protected page = computed(() => this.store.page());
   // Accordion sections are not supported in Blog pages. Makes the implementation easier.
-  protected sections = computed(() => this.store.pageSections());
+  // Like the content page: readers get published sections only, a contentAdmin sees all of them.
+  protected sections = computed(() => {
+    const sections = this.store.pageSections();
+    return this.hasRole('contentAdmin') ? sections : sections.filter(s => s.state === 'published');
+  });
   protected isEmptyPage = computed(() => this.sections().length === 0);
 
 

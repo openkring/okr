@@ -248,6 +248,11 @@ export const _MenuStore = signalStore(
       getTypes(): CategoryListModel {
         return store.appStore.getCategory('menu_action');
       },
+
+      /** The layouts a main menu can have; the category is seeded after the release that ships them. */
+      getMenuTypes(): CategoryListModel {
+        return store.appStore.getCategory('menu_type');
+      },
       
       /******************************* actions *************************************** */
       async delete(menuItem?: MenuItemModel, readOnly = true): Promise<void> {
@@ -338,6 +343,7 @@ export const _MenuStore = signalStore(
               store.appNavigationService.resetLinkHistory(store.router.url);
               store.appNavigationService.pushLink(menuItem.url);
             } else {
+              store.menuItemsStore.noteSelected(menuItem.name);
               store.appNavigationService.resetLinkHistory(menuItem.url);
             }
           }

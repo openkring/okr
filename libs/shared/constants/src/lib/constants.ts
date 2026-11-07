@@ -71,6 +71,14 @@ export const DEFAULT_LOCATION_TYPE = 'address';
 export const DEFAULT_MCAT = 'active';
 export const DEFAULT_MSTATE = 'active';
 export const DEFAULT_MENU_ACTION = 'browse';
+/** Most rows a `top` or `segmented` main menu shows (the reserved account rows do not count). */
+export const MAX_MENU_BAR_ITEMS = 6;
+/** Indent of submenu rows and gap below a dropdown, in px, when `submenuOffset` is absent. */
+export const DEFAULT_SUBMENU_OFFSET = 5;
+/** Upper bound of `submenuOffset`, in px. */
+export const MAX_SUBMENU_OFFSET = 40;
+/** Names of the main-menu rows that live in the account area of the bar and do not count against the limit. */
+export const MENU_BAR_ACCOUNT_KEYS: readonly string[] = ['login', 'logout', 'profile'];
 export const DEFAULT_OCAT = 'use';
 export const DEFAULT_ORG_TYPE = 'association';
 export const DEFAULT_OSTATE = 'active';
@@ -183,6 +191,27 @@ export const DEFAULT_MIMETYPES = [
  * (Capacitor) expects mime types, so it keeps using DEFAULT_MIMETYPES.
  */
 export const DEFAULT_ACCEPT_ATTRIBUTE = [...DEFAULT_MIMETYPES, '.heic', '.heif', '.webp', '.mp4', '.mov', '.avi'].join(',');
+/**
+ * The accept attribute of the RAG upload: what the assistant can read. Text files come first
+ * because they index best; pictures, videos and archives are left out on purpose, the RAG store
+ * cannot index them and the failure would stay invisible. The bare extensions are needed for a
+ * browser that reports an empty type for .md.
+ */
+export const RAG_ACCEPT_ATTRIBUTE = [
+    'text/markdown',
+    'text/plain',
+    '.md',
+    '.markdown',
+    '.txt',
+    'application/pdf',
+    '.pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/msword',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+    ].join(',');
 export const DEFAULT_BANNER_URL = 'tenant/default/app/banner.jpg';
 
 /**-------------------------------------------------------------------------

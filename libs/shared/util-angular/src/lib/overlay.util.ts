@@ -17,9 +17,13 @@
 /** The exact string Ionic rejects with when no matching overlay is on top. */
 const OVERLAY_MISSING = 'overlay does not exist';
 
-/** Narrow Ionic's overlay controllers to the one member used here (they share no base type). */
+/**
+ * Narrow Ionic's overlay controllers and overlay elements to the one member used here (they share
+ * no base type). Only `data` and `role` are declared: the third parameter differs (a controller's
+ * is an overlay `id`, a popover element's is `dismissParentPopover`), and none is passed here.
+ */
 export interface OverlayDismisser {
-  dismiss(data?: unknown, role?: string, id?: string): Promise<boolean>;
+  dismiss(data?: unknown, role?: string): Promise<boolean>;
 }
 
 /**

@@ -15,7 +15,7 @@ import { AlertService, copyToClipboard } from '@okr/shared-util-angular';
 import type { CategoryListModel, FeatureRolloutModel, MenuItemModel } from '@okr/shared-models';
 import {
   FEATURE_BLOCKS, FEATURE_BUNDLES, FEATURE_PICKER_I18N_KEYS, FEATURE_PROFILES, effectiveFeatures,
-  findStructuralDrift, hiddenKeySet, holdersOf, indexMenuDocsByName, isEmptyPlan, menuOutlineOf,
+  entriesOfKind, findStructuralDrift, hiddenKeySet, holdersOf, indexMenuDocsByName, isEmptyPlan, menuOutlineOf,
   pinnedFieldsOf, resolveAvailability, resolveWithDeps, summarizePlanConsequences, withHiddenKey,
   withoutHiddenKey,
 } from '@okr/tenant-util';
@@ -25,6 +25,7 @@ import type {
 } from '@okr/tenant-util';
 import { FeatureRolloutService, FeatureSelectionService } from '@okr/tenant-data-access';
 import { MenuService } from '@okr/cms-menu-data-access';
+import { exceedsBarLimit } from '@okr/cms-menu-util';
 import type { BlockEnableResult } from '@okr/tenant-ui';
 import { BlockEnableModal, MenuCompareModal, PickerHelpModal } from '@okr/tenant-ui';
 
@@ -692,6 +693,8 @@ export class FeaturePicker {
       return;
     }
 
+    await this.warnIfBarOverflows(preview);
+
     const alsoBlocks = preview.alsoEnabled
       .map(entry => this.catalogue.find(candidate => candidate.id === entry.id))
       .filter((candidate): candidate is FeatureBlock => candidate !== undefined);
@@ -722,6 +725,20 @@ export class FeaturePicker {
     } catch (error) {
       this.alertService.error(`FeaturePicker.onEnable: ${error}`);
     }
+  }
+
+  /**
+   * Informs, without stopping the flow, when the rows this dry run would attach to the root menu take
+   * a `top` or `segmented` bar past `MAX_MENU_BAR_ITEMS`: `planRootMenuOp` appends them on the server
+   * without validation, and the bar then shows the rest under «Mehr» (menu-layouts spec §6.5).
+   */
+  private async warnIfBarOverflows(preview: ApplyPlanPreview): Promise<void> {
+    const added = entriesOfKind(preview, 'menu-attached').length;
+    const docs = this.menuByName();
+    const root = docs.get(`main_${this.tenantId()}`);
+    const childActions = Object.fromEntries([...docs.values()].map(doc => [doc.name, doc.action]));
+    if (added === 0 || !exceedsBarLimit(root?.menuType, root?.menuItems, added, childActions)) return;
+    await this.alertService.confirm(this.i18n.bar_overflow_warning());
   }
 
   /**
@@ -886,6 +903,7 @@ export class FeaturePicker {
       await this.alertService.showToast(this.i18n.rows_nothing_planned());
       return;
     }
+    await this.warnIfBarOverflows(preview);
     // One counted line per distinct sentence, never one sentence per row: a group add plans an
     // entry per row of the subtree, all of them usually carrying the SAME consequence.
     const message = summarizePlanConsequences(preview.entries, this.i18n);

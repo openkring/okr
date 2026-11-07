@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_ACCEPT_ATTRIBUTE, DEFAULT_MIMETYPES } from '@okr/shared-constants';
-import { baseName, dirName, fileExtension, fileName, fileSizeUnit, isPhotoCancellation, isVideo, resolveMimeType, sanitizeFileName, suffixFileName, withResolvedMimeType } from './file.util';
+import { DEFAULT_ACCEPT_ATTRIBUTE, DEFAULT_MIMETYPES, RAG_ACCEPT_ATTRIBUTE } from '@okr/shared-constants';
+import { baseName, dirName, fileExtension, fileName, fileSizeUnit, isPdf, isPhotoCancellation, isVideo, resolveMimeType, sanitizeFileName, suffixFileName, withResolvedMimeType } from './file.util';
 
 describe('file.util', () => {
 
@@ -257,5 +257,27 @@ describe('withResolvedMimeType', () => {
   it('keeps a file whose extension is unknown', () => {
     const file = new File(['x'], 'README', { type: '' });
     expect(withResolvedMimeType(file)).toBe(file);
+  });
+});
+
+describe('rag upload formats', () => {
+  const accepted = RAG_ACCEPT_ATTRIBUTE.split(',');
+
+  it('offers markdown and plain text, by type and by extension', () => {
+    expect(accepted).toEqual(expect.arrayContaining(['text/markdown', '.md', '.markdown', 'text/plain', '.txt']));
+  });
+
+  it('still offers pdf', () => {
+    expect(accepted).toEqual(expect.arrayContaining(['application/pdf', '.pdf']));
+  });
+
+  it('leaves out what the rag store cannot index', () => {
+    expect(accepted.some((t) => t.startsWith('video/') || t.startsWith('image/') || t.includes('zip'))).toBe(false);
+  });
+
+  it('recognises a pdf by its name, whatever the case', () => {
+    expect(isPdf('protokoll.pdf')).toBe(true);
+    expect(isPdf('PROTOKOLL.PDF')).toBe(true);
+    expect(isPdf('protokoll.md')).toBe(false);
   });
 });

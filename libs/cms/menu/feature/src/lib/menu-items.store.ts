@@ -1,13 +1,14 @@
-import { computed, effect, inject, Injectable } from '@angular/core';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { catchError, from, of, timeout } from 'rxjs';
+import { computed, effect, inject, Injectable, signal } from '@angular/core';
+import { rxResource, toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router } from '@angular/router';
+import { catchError, filter, from, map, of, timeout } from 'rxjs';
 
-import { AppStore } from '@okr/shared-feature';
+import { AppStore, SelectedBooks } from '@okr/shared-feature';
 import { MenuItemModel } from '@okr/shared-models';
-import { debugData, withOfflineSnapshot } from '@okr/shared-util-core';
+import { debugData, hasRole, withOfflineSnapshot } from '@okr/shared-util-core';
 
 import { MenuService } from '@okr/cms-menu-data-access';
-import { canOpenMenu } from '@okr/cms-menu-util';
+import { ActiveMenu, canOpenMenu, findActiveMenu, lacksBooks } from '@okr/cms-menu-util';
 import { resourceParams } from '@okr/shared-util-angular';
 
 /**
@@ -32,6 +33,8 @@ import { resourceParams } from '@okr/shared-util-angular';
 export class MenuItemsStore {
   private readonly menuService = inject(MenuService);
   private readonly appStore = inject(AppStore);
+  private readonly router = inject(Router);
+  private readonly selectedBooks = inject(SelectedBooks);
 
   /**
    * Wie lange der Live-Listener Zeit bekommt, seinen ERSTEN Snapshot zu liefern.
@@ -104,6 +107,43 @@ export class MenuItemsStore {
    */
   public readonly isLoading = computed(() => this.resource.isLoading() && !this.resource.hasValue());
   public readonly hasLoadError = computed(() => this.resource.status() === 'error');
+
+  /** Die aktuelle Url nach Weiterleitungen; `router.url` als Startwert, weil die erste Navigation schon gelaufen sein kann. */
+  private readonly currentPath = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map(e => e.urlAfterRedirects),
+    ),
+    { initialValue: this.router.url },
+  );
+
+  /** Die zuletzt im Hauptmenü gewählte Zeile — Ersatz, wenn die Url zu keiner Zeile passt (z.B. eine Detailseite). */
+  private readonly lastSelectedKey = signal('');
+
+  /**
+   * Die aktive Zeile des Hauptmenüs (`main_<tenantId>`) samt den `sub`-Zeilen darüber. Dieselbe
+   * Sichtbarkeit wie beim Rendern (Rolle, `@BOOKS@` ohne Buchhaltung); das Ergebnis hängt an der Url,
+   * nicht an einem Klick, damit auch ein Seitenaufruf oder «Zurück» die richtige Zeile markiert.
+   */
+  public readonly activeMenu = computed<ActiveMenu | undefined>(() => {
+    const items = this.menuItems();
+    if (!items) return undefined;
+    const user = this.appStore.currentUser();
+    const tokenContext = { version: '', tenantId: this.appStore.tenantId(), booksId: this.selectedBooks.current() };
+    return findActiveMenu({
+      rootKey: `main_${this.appStore.tenantId()}`,
+      items,
+      path: this.currentPath(),
+      canSee: item => hasRole(item.roleNeeded, user) && !lacksBooks(item.url ?? '', tokenContext),
+      tokenContext,
+      lastSelectedKey: this.lastSelectedKey(),
+    });
+  });
+
+  /** Merkt sich die gewählte Hauptmenü-Zeile für `activeMenu`, falls die Url zu keiner Zeile passt. */
+  public noteSelected(key: string): void {
+    this.lastSelectedKey.set(key);
+  }
 
   constructor() {
     effect(() => {

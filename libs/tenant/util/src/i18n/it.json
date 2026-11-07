@@ -263,6 +263,7 @@
     "rows_add_toast": "Riga di menu aggiunta",
     "rows_adjust_catalogue_toast": "Nota copiata — passala al team di sviluppo perché il catalogo venga adattato",
     "rows_nothing_planned": "Non c'è nulla da applicare — il valore è già aggiornato oppure fissato",
+    "bar_overflow_warning": "Il tuo menu mostrerà allora più di 6 voci, il resto compare sotto «Altro».",
     "compare_title": "Confronto dei campi",
     "compare_col_field": "Campo",
     "compare_col_database": "Database",

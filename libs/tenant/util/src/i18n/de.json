@@ -263,6 +263,7 @@
     "rows_add_toast": "Menüzeile hinzugefügt",
     "rows_adjust_catalogue_toast": "Notiz kopiert — gib sie an die Entwicklung weiter, damit der Katalog angepasst wird",
     "rows_nothing_planned": "Es gibt nichts zu übernehmen — der Wert ist bereits aktuell oder fixiert",
+    "bar_overflow_warning": "Dein Menü zeigt dann mehr als 6 Einträge, der Rest erscheint unter «Mehr».",
     "compare_title": "Feldvergleich",
     "compare_col_field": "Feld",
     "compare_col_database": "Datenbank",

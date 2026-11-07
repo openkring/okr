@@ -794,6 +794,7 @@
     "label": "Retrieval Augmented Generation (RAG)",
     "placeholder": "Posez n'importe quelle question sur le Seeclub Stäfa",
     "upload": "Téléverser des documents vers le store RAG",
+    "pdfWarning": "Téléversement terminé. L'assistant lit les fichiers texte comme .md plus fiablement que les fichiers PDF : si tu peux, téléverse plutôt un fichier texte.",
     "config": {
       "title": "Configuration RAG",
       "subtitle": "Modèle, vector store et comportement de l'assistant.",

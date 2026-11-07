@@ -28,6 +28,15 @@ export function titleToI18n(title: string, titleI18n?: I18nString): I18nString {
   return { de: title ?? '' };
 }
 
+/**
+ * Whether a section may leave the app. Same strict check as the app's content page, so a section
+ * without a state stays hidden. Deliberately about the section, not its page: the website pages
+ * are `isPrivate` and in state draft, so gating on the page would blank the websites.
+ */
+export function isPublishedSection(section: { state?: string }): boolean {
+  return section.state === 'published';
+}
+
 export function setCacheHeaders(res: import('express').Response): void {
   res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
 }

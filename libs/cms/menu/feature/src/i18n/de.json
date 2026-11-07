@@ -279,6 +279,37 @@
       "description": "Löst beim Anklicken ein Ereignis aus. Was danach passiert, legst du als Regel fest."
     }
   },
+  "menu_type": {
+    "label": "Menü-Layout",
+    "helper": "Wo das Hauptmenü erscheint: als Seitenleiste links oder rechts, als Leiste oben oder als Segmente.",
+    "left": {
+      "label": "Links",
+      "description": "Seitenleiste am linken Rand."
+    },
+    "right": {
+      "label": "Rechts",
+      "description": "Seitenleiste am rechten Rand."
+    },
+    "top": {
+      "label": "Oben",
+      "description": "Leiste am oberen Rand. Untermenüs klappen nach unten auf."
+    },
+    "segmented": {
+      "label": "Segmente",
+      "description": "Leiste mit gleichrangigen Segmenten, ohne Untermenüs."
+    }
+  },
+  "submenu_offset": {
+    "label": "Einzug der Untermenüs",
+    "placeholder": "5",
+    "helper": "Einzug der Untermenü-Einträge in Pixel (0 bis 40). Bei einem Menü oben der Abstand unter dem Aufklappmenü."
+  },
+  "bar": {
+    "segment_sub": "Ein Segment-Menü kann keine Untermenüs zeigen",
+    "account_menu": "Konto und Einstellungen",
+    "cookie_settings": "Cookie-Einstellungen",
+    "more": "Mehr"
+  },
   "item": {
     "task-my": "Meine Aufgaben",
     "icon-sync": "Storage synchronisieren",

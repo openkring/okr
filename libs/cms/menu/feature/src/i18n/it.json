@@ -279,6 +279,37 @@
       "description": "Attiva un evento al clic. Ciò che segue si configura come una regola."
     }
   },
+  "menu_type": {
+    "label": "Layout del menu",
+    "helper": "Dove compare il menu principale: come barra laterale a sinistra o a destra, come barra in alto o come segmenti.",
+    "left": {
+      "label": "Sinistra",
+      "description": "Barra laterale sul bordo sinistro."
+    },
+    "right": {
+      "label": "Destra",
+      "description": "Barra laterale sul bordo destro."
+    },
+    "top": {
+      "label": "Alto",
+      "description": "Barra sul bordo superiore. I sotto-menu si aprono verso il basso."
+    },
+    "segmented": {
+      "label": "Segmenti",
+      "description": "Barra di segmenti dello stesso livello, senza sotto-menu."
+    }
+  },
+  "submenu_offset": {
+    "label": "Rientro dei sotto-menu",
+    "placeholder": "5",
+    "helper": "Rientro delle voci dei sotto-menu in pixel (0 a 40). In un menu in alto, lo spazio sotto il menu a tendina."
+  },
+  "bar": {
+    "segment_sub": "Un menu a segmenti non può mostrare sottomenu",
+    "account_menu": "Account e impostazioni",
+    "cookie_settings": "Impostazioni dei cookie",
+    "more": "Altro"
+  },
   "item": {
     "task-my": "Le mie attività",
     "icon-sync": "Sincronizza archiviazione",

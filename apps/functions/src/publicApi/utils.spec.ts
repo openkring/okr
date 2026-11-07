@@ -1,8 +1,22 @@
 import { describe, it, expect } from 'vitest';
 import {
-  storeDateToIso, locationName, parseTags, mapCategory, titleToI18n
+  storeDateToIso, locationName, parseTags, mapCategory, titleToI18n, isPublishedSection
 } from './utils';
 import { validateContact } from './routes/contact';
+
+describe('isPublishedSection', () => {
+  it('accepts a published section', () => {
+    expect(isPublishedSection({ state: 'published' })).toBe(true);
+  });
+  it('rejects every other state', () => {
+    for (const state of ['draft', 'inReview', 'decommitted', 'archived']) {
+      expect(isPublishedSection({ state })).toBe(false);
+    }
+  });
+  it('rejects a legacy section without a state, as the app does', () => {
+    expect(isPublishedSection({})).toBe(false);
+  });
+});
 
 describe('storeDateToIso', () => {
   it('converts valid storeDate', () => {

@@ -794,6 +794,7 @@
     "label": "Retrieval Augmented Generation (RAG)",
     "placeholder": "Ask anything about Seeclub Stäfa",
     "upload": "Upload documents to the RAG store",
+    "pdfWarning": "Uploaded. The assistant reads text files such as .md more reliably than PDF files, so upload a text file instead where you can.",
     "config": {
       "title": "RAG configuration",
       "subtitle": "Model, vector store and behavior of the assistant.",

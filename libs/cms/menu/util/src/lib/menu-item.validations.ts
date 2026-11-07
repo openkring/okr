@@ -6,11 +6,18 @@ import { enforce, omitWhen, staticSuite, test } from 'vest';
 // strings live. An '@'-prefixed message is instead looked up as a TOP-LEVEL bundle key
 // and silently misses — that is what rendered these four as empty error notes.
 
-import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
+import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, MAX_MENU_BAR_ITEMS, MAX_SUBMENU_OFFSET, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { MenuItemModel } from '@okr/shared-models';
 import { booleanValidations, isArrayOfBaseProperties, isArrayOfStrings, numberValidations, stringValidations, urlValidations } from '@okr/shared-util-core';
 
-export const menuItemValidations = staticSuite((model: MenuItemModel, tenants: string, tags: string) => {
+import { countBarItems } from './menu-bar.util';
+
+/**
+ * `childActions` maps the `name` of each child row of a root menu to its `action`. The suite cannot
+ * look the documents up, so the form passes them in; a child that is missing from it is not checked
+ * for a submenu and counts as a row.
+ */
+export const menuItemValidations = staticSuite((model: MenuItemModel, tenants: string, tags: string, childActions: Record<string, string> = {}) => {
   stringValidations('okey', model.okey);
   stringValidations('name', model.name, SHORT_NAME_LENGTH);
 //  tenantValidations(model.tenants);
@@ -57,5 +64,29 @@ export const menuItemValidations = staticSuite((model: MenuItemModel, tenants: s
       enforce(model.menuItems).isEmpty();
     });
   });  
-});
 
+  // `menuType` is a selector value, so it carries no length cap (see the building-forms skill).
+  // A non-array `menuItems` is reported by 'menuItemsType' above; here it counts as no rows.
+  const children = Array.isArray(model.menuItems) ? model.menuItems : [];
+  // The limit applies to the bar layouts only; a vertical or absent menuType never reaches these.
+  omitWhen(model.action !== 'main' || model.menuType !== 'top', () => {
+    test('menuItems', 'menuTopTooManyItems', () => {
+      enforce(countBarItems(children, childActions)).lessThanOrEquals(MAX_MENU_BAR_ITEMS);
+    });
+  });
+
+  omitWhen(model.action !== 'main' || model.menuType !== 'segmented', () => {
+    test('menuItems', 'menuSegmentedTooManyItems', () => {
+      enforce(countBarItems(children, childActions)).lessThanOrEquals(MAX_MENU_BAR_ITEMS);
+    });
+    // a segment says «one of these peers is selected»; it has no dropdown for a `sub` row
+    test('menuItems', 'menuSegmentedNoSubmenus', () => {
+      enforce(children.some(name => childActions[name] === 'sub')).isFalsy();
+    });
+  });
+
+  // optional, and absent on every existing doc — only checked once it is set
+  omitWhen(model.submenuOffset === undefined, () => {
+    numberValidations('submenuOffset', model.submenuOffset, true, 0, MAX_SUBMENU_OFFSET);
+  });
+});

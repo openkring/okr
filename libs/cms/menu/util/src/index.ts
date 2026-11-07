@@ -5,3 +5,5 @@ export * from './lib/menu-item.validations';
 export * from './lib/menu-i18n';
 export * from './lib/menu-info.util';
 export * from './lib/menu-access.util';
+export * from './lib/menu-active.util';
+export * from './lib/menu-bar.util';

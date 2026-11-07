@@ -279,6 +279,37 @@
       "description": "Fires an event when selected. What happens next is configured as a rule."
     }
   },
+  "menu_type": {
+    "label": "Menu layout",
+    "helper": "Where the main menu appears: as a sidebar on the left or right, as a bar at the top, or as segments.",
+    "left": {
+      "label": "Left",
+      "description": "Sidebar on the left edge."
+    },
+    "right": {
+      "label": "Right",
+      "description": "Sidebar on the right edge."
+    },
+    "top": {
+      "label": "Top",
+      "description": "Bar along the top edge. Submenus open downwards."
+    },
+    "segmented": {
+      "label": "Segments",
+      "description": "Bar of equal segments, without submenus."
+    }
+  },
+  "submenu_offset": {
+    "label": "Submenu indent",
+    "placeholder": "5",
+    "helper": "Indent of the submenu entries in pixels (0 to 40). For a menu at the top, the gap below the dropdown."
+  },
+  "bar": {
+    "segment_sub": "A segmented menu cannot show submenus",
+    "account_menu": "Account and settings",
+    "cookie_settings": "Cookie settings",
+    "more": "More"
+  },
   "item": {
     "task-my": "My tasks",
     "icon-sync": "Synchronise storage",

@@ -566,6 +566,7 @@ export const SECTION_I18N_KEYS = {
   // rag
   rag_placeholder:                          PFX + 'rag.placeholder',
   rag_upload:                               PFX + 'rag.upload',
+  rag_pdfWarning:                           PFX + 'rag.pdfWarning',
 
   // rag config
   rag_config_title:                         PFX + 'rag.config.title',

@@ -54,6 +54,21 @@ export const MENU_I18N_KEYS = {
   menu_action_label:              PFX + 'menu_action.label',
   menu_action_helper:             PFX + 'menu_action.helper',
 
+  // action 'main' only: layout of the main menu, and the indent of its submenu rows
+  menu_type_label:                PFX + 'menu_type.label',
+  submenu_offset_label:           PFX + 'submenu_offset.label',
+  submenu_offset_placeholder:     PFX + 'submenu_offset.placeholder',
+  submenu_offset_helper:          PFX + 'submenu_offset.helper',
+
+  // shown to admins in place of a `sub` row that reached a segmented bar
+  bar_segment_sub:                PFX + 'bar.segment_sub',
+
+  // account area at the end of the bar
+  bar_account_menu:               PFX + 'bar.account_menu',
+  bar_cookie_settings:            PFX + 'bar.cookie_settings',
+  // the entry holding the rows that do not fit the bar
+  bar_more:                       PFX + 'bar.more',
+
   error_save:                     PFX + 'error.save',
   error_load:                     PFX + 'error.load',
   error_delete:                   PFX + 'error.delete',
