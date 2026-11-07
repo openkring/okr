@@ -216,7 +216,6 @@ export class EventsSectionComponent implements OnInit {
     return canAttendCalevent(calevent, hasInvitation, mayJoinOpenCalevent(calevent.calendars, groupCalendarKeys, this.store.calendarsOfCurrentUser()), isCaleventAttendee(calevent, this.currentUser()?.personKey));
   }
 
-
   /**
    * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
    * @param actionSheetOptions 

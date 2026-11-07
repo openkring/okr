@@ -1613,7 +1613,6 @@ export class CalEventList implements OnInit {
     return state === 'accepted' || state === 'declined' ? state : 'invited';
   }
 
-
   /**
    * Whether the current user is let into this event's open sign-up. Only a group calendar narrows
    * it, and then to that group's members — see `mayJoinOpenCalevent`.

@@ -371,7 +371,6 @@ export class YearlyEvents {
   protected getAttendanceIcon = getAttendanceIcon;
   protected getAttendanceColor = getAttendanceColor;
 
-
   protected mayJoinOpen(event: CalEventModel): boolean {
     return mayJoinOpenCalevent(event.calendars, this.store.groupCalendarKeys(), this.store.calendarsOfCurrentUser());
   }
