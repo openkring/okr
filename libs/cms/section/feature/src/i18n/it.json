@@ -1245,6 +1245,10 @@
     "counter": {
       "label": "Contatore",
       "description": "Un numero che aumenti e diminuisci a mano, o che avanza da solo"
+    },
+    "footer": {
+      "label": "Piè di pagina",
+      "description": "Piè di pagina con fino a tre colonne: titoli, testi, link, icone e loghi"
     }
   },
   "message_center": {
@@ -1576,5 +1580,66 @@
     },
     "up": "Più",
     "down": "Meno"
+  },
+  "footer": {
+    "label": "Piè di pagina",
+    "title": "Configurazione del piè di pagina",
+    "subtitle": "Cosa mostrano le colonne del piè di pagina. Su schermi grandi le colonne stanno affiancate, sul telefono una sotto l’altra.",
+    "region": "Piè di pagina",
+    "columnCount": "Numero di colonne",
+    "column": "Colonna {n}",
+    "columnHidden": "Nascosta perché hai scelto meno colonne. I suoi elementi restano salvati.",
+    "empty": "Ancora nessun elemento",
+    "add": "Aggiungi elemento",
+    "addTitle": "Cosa vuoi aggiungere?",
+    "actions": "Elemento",
+    "edit": "Modifica",
+    "moveUp": "Sposta su",
+    "moveDown": "Sposta giù",
+    "remove": "Rimuovi",
+    "showBottomLine": {
+      "label": "Mostra riga finale",
+      "helper": "Una riga sotto le colonne, ad es. per il copyright"
+    },
+    "bottomLine": {
+      "label": "Riga finale",
+      "placeholder": "ad es. © 2026 Seeclub Stäfa",
+      "helper": "Breve testo sotto le colonne"
+    },
+    "type": {
+      "title": "Titolo",
+      "text": "Testo",
+      "link": "Link",
+      "icon": "Icona",
+      "logo": "Logo"
+    },
+    "itemLabel": {
+      "title": "Titolo",
+      "text": "Testo",
+      "link": "Testo del link",
+      "icon": "Didascalia",
+      "logo": "Testo alternativo",
+      "logoHelper": "Descrive il logo per chi non può vederlo"
+    },
+    "url": {
+      "label": "Link",
+      "placeholder": "https://… , mailto:… o /pagina",
+      "helper": "Una pagina web (https), un indirizzo e-mail (mailto:), un numero di telefono (tel:) o una pagina dell’app (/…)"
+    },
+    "icon": {
+      "label": "Nome dell’icona",
+      "placeholder": "ad es. email",
+      "helper": "Nome di un’icona della raccolta"
+    },
+    "logo": {
+      "upload": "Carica logo",
+      "replace": "Sostituisci logo"
+    },
+    "height": {
+      "label": "Dimensione",
+      "small": "Piccolo",
+      "medium": "Medio",
+      "large": "Grande"
+    }
   }
 }

@@ -7,7 +7,7 @@ vi.mock('firebase-admin/firestore', () => ({ getFirestore: () => fakeDb.current 
 import type { Request, Response } from 'express';
 
 import {
-  articleImageLayout, buildLearningSection, isPublicPageRead, isPublishedPage, learningDefaultTab, loadLearningSection, pageCors, pageRouter,
+  articleImageLayout, buildLearningSection, mapFooter, isPublicPageRead, isPublishedPage, learningDefaultTab, loadLearningSection, pageCors, pageRouter,
 } from './page';
 import { getHtmlSanitizer } from '../sanitize';
 
@@ -39,6 +39,53 @@ describe('articleImageLayout', () => {
     expect(articleImageLayout(1, 3, undefined).imageColSize).toBe(6);
     expect(articleImageLayout(1, 3, 0).imageColSize).toBe(6);
     expect(articleImageLayout(1, 3, 12).imageColSize).toBe(6);
+  });
+});
+
+describe('mapFooter', () => {
+  const item = (fields: Record<string, unknown>) => ({ label: '', url: '', icon: '', image: '', height: 'medium', ...fields });
+
+  it('keeps only the visible columns and the bottom line', () => {
+    const out = mapFooter({
+      columnCount: 2, showBottomLine: true, bottomLine: '© 2026 Seeclub',
+      columns: [{ items: [item({ type: 'title', label: 'A' })] }, { items: [] }, { items: [item({ type: 'title', label: 'C' })] }],
+    });
+    expect(out.columnCount).toBe(2);
+    expect(out.columns).toHaveLength(2);
+    expect(out.columns[0].items[0]).toMatchObject({ type: 'title', label: 'A' });
+    expect(out.bottomLine).toBe('© 2026 Seeclub');
+  });
+
+  it('hides the bottom line when switched off and clamps a broken count', () => {
+    const out = mapFooter({ columnCount: 9, showBottomLine: false, bottomLine: 'x', columns: [] });
+    expect(out.columnCount).toBe(3);
+    expect(out.columns.every(c => c.items.length === 0)).toBe(true);
+    expect(out.bottomLine).toBe('');
+  });
+
+  it('drops unsafe link targets but keeps the words', () => {
+    const [js, ok, mail] = mapFooter({ columnCount: 1, columns: [{ items: [
+      item({ type: 'link', label: 'Bad', url: 'javascript:alert(1)' }),
+      item({ type: 'link', label: 'Impressum', url: 'https://seeclub.org/impressum' }),
+      item({ type: 'link', label: 'Mail', url: 'mailto:info@seeclub.org' }),
+    ] }] }).columns[0].items;
+    expect(js).toMatchObject({ label: 'Bad', url: '' });
+    expect(ok.url).toBe('https://seeclub.org/impressum');
+    expect(mail.url).toBe('mailto:info@seeclub.org');
+  });
+
+  it('resolves icons and logos to urls and rejects odd names and paths', () => {
+    const items = mapFooter({ columnCount: 1, columns: [{ items: [
+      item({ type: 'icon', icon: 'email', label: 'Mail' }),
+      item({ type: 'icon', icon: '../x' }),
+      item({ type: 'logo', image: 'tenant/scs/sponsor a.png', height: 'large', label: 'Sponsor' }),
+      item({ type: 'logo', image: 'javascript:x' }),
+      item({ type: 'logo', image: '' }),
+    ] }] }).columns[0].items;
+    expect(items).toHaveLength(2);
+    expect(items[0].src).toBe('https://bkaiser.imgix.net/logo/icons/email.svg');
+    expect(items[1]).toMatchObject({ type: 'logo', height: 72, label: 'Sponsor' });
+    expect(items[1].src).toBe('https://bkaiser.imgix.net/tenant/scs/sponsor%20a.png?h=144&auto=format,compress');
   });
 });
 

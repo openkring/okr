@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
 
-import { ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FormSectionConfig, AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
+import { ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, FooterConfig, FooterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FormSectionConfig, AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
 import { Chips, ErrorNote, ImageConfigEdit, NotesInput, NotesInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole, sanitizeFileName } from '@okr/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS, IMAGE_MIMETYPES } from '@okr/shared-constants';
@@ -21,6 +21,7 @@ import { ConnectionsConfiguration } from './connections-configuration';
 import { DeparturesConfiguration } from './departures-configuration';
 import { EnergyConfiguration } from './energy-configuration';
 import { CounterConfiguration } from './counter-configuration';
+import { FooterConfiguration } from './footer-configuration';
 import { ContractOption } from './button-action-configuration';
 import { PeopleConfiguration } from './people-configuration';
 import { ResponsibilityConfiguration } from './responsibility-configuration';
@@ -57,7 +58,7 @@ import { CourseOption, FormOption, FormSectionConfiguration } from './form-secti
     IonItem, IonToggle,
     Chips, ImageConfigEdit, NotesInput, ErrorNote,
     SectionConfiguration, EditorConfiguration, ImageStyleConfiguration, AlbumConfiguration,
-    IframeConfiguration, WeatherConfiguration, ConnectionsConfiguration, DeparturesConfiguration, EnergyConfiguration, CounterConfiguration, PeopleConfiguration, ResponsibilityConfiguration, VideoConfiguration,
+    IframeConfiguration, WeatherConfiguration, ConnectionsConfiguration, DeparturesConfiguration, EnergyConfiguration, CounterConfiguration, FooterConfiguration, PeopleConfiguration, ResponsibilityConfiguration, VideoConfiguration,
     ButtonStyleConfiguration, ButtonActionConfiguration, IconConfiguration, ChatConfiguration,
     MapConfiguration, TrackerConfiguration, TableGridConfiguration,  TableStyleConfiguration, TableHeader,
     TableBody, EventsConfiguration, InvitationsConfiguration, ImagesConfiguration, CalendarConfiguration, ChartConfiguration,
@@ -312,6 +313,19 @@ import { CourseOption, FormOption, FormSectionConfiguration } from './form-secti
           @if(counterConfig(); as counterConfig) {
             <okr-counter-config
               [formData]="counterConfig" (formDataChange)="onCounterConfigChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+              [errors]="errors()"
+            />
+          }
+        }
+        @case('footer') {
+          @if(footerConfig(); as footerConfig) {
+            <okr-footer-config
+              [formData]="footerConfig" (formDataChange)="onFooterConfigChange($event)"
+              [storagePath]="storagePath()"
+              [currentUser]="currentUser()"
+              [tenantId]="tenantId()"
               [readOnly]="isReadOnly()"
               [i18n]="i18n()"
               [errors]="errors()"
@@ -678,6 +692,7 @@ export class SectionForm {
   protected departuresConfig = computed(() => this.getDeparturesConfig());
   protected energyConfig = computed(() => this.getEnergyConfig());
   protected counterConfig = computed(() => this.getCounterConfig());
+  protected footerConfig = computed(() => this.getFooterConfig());
   protected mapConfig = computed(() => this.getMapConfig());
   protected peopleConfig = computed(() => this.getPeopleConfig());
   protected responsibilityConfig = computed(() => this.getResponsibilityConfig());
@@ -894,6 +909,13 @@ export class SectionForm {
   private getCounterConfig(): CounterConfig | undefined {
     if (this.formData().type === 'counter') {
       return (this.formData() as CounterSection).properties;
+    }
+    return undefined;
+  }
+
+  private getFooterConfig(): FooterConfig | undefined {
+    if (this.formData().type === 'footer') {
+      return (this.formData() as FooterSection).properties;
     }
     return undefined;
   }
@@ -1249,6 +1271,13 @@ export class SectionForm {
     const section = this.formData();
     if (section.type === 'counter') {
       this.formData.set({ ...section, properties: config } as CounterSection);
+    }
+  }
+
+  protected onFooterConfigChange(config: FooterConfig): void {
+    const section = this.formData();
+    if (section.type === 'footer') {
+      this.formData.set({ ...section, properties: config } as FooterSection);
     }
   }
 

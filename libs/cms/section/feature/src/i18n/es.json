@@ -1245,6 +1245,10 @@
     "counter": {
       "label": "Contador",
       "description": "Un número que subes y bajas a mano, o que avanza solo"
+    },
+    "footer": {
+      "label": "Pie de página",
+      "description": "Pie de página con hasta tres columnas: títulos, textos, enlaces, iconos y logotipos"
     }
   },
   "message_center": {
@@ -1576,5 +1580,66 @@
     },
     "up": "Más",
     "down": "Menos"
+  },
+  "footer": {
+    "label": "Pie de página",
+    "title": "Configuración del pie de página",
+    "subtitle": "Lo que muestran las columnas del pie de página. En pantallas grandes las columnas van una al lado de otra, en el móvil una debajo de otra.",
+    "region": "Pie de página",
+    "columnCount": "Número de columnas",
+    "column": "Columna {n}",
+    "columnHidden": "Oculta porque elegiste menos columnas. Sus elementos se conservan.",
+    "empty": "Todavía no hay elementos",
+    "add": "Añadir elemento",
+    "addTitle": "¿Qué quieres añadir?",
+    "actions": "Elemento",
+    "edit": "Editar",
+    "moveUp": "Subir",
+    "moveDown": "Bajar",
+    "remove": "Quitar",
+    "showBottomLine": {
+      "label": "Mostrar línea final",
+      "helper": "Una línea debajo de las columnas, p. ej. para el copyright"
+    },
+    "bottomLine": {
+      "label": "Línea final",
+      "placeholder": "p. ej. © 2026 Seeclub Stäfa",
+      "helper": "Texto corto debajo de las columnas"
+    },
+    "type": {
+      "title": "Título",
+      "text": "Texto",
+      "link": "Enlace",
+      "icon": "Icono",
+      "logo": "Logotipo"
+    },
+    "itemLabel": {
+      "title": "Título",
+      "text": "Texto",
+      "link": "Texto del enlace",
+      "icon": "Leyenda",
+      "logo": "Texto alternativo",
+      "logoHelper": "Describe el logotipo para las personas que no pueden verlo"
+    },
+    "url": {
+      "label": "Enlace",
+      "placeholder": "https://… , mailto:… o /pagina",
+      "helper": "Una página web (https), un correo (mailto:), un teléfono (tel:) o una página de la app (/…)"
+    },
+    "icon": {
+      "label": "Nombre del icono",
+      "placeholder": "p. ej. email",
+      "helper": "Nombre de un icono de la colección"
+    },
+    "logo": {
+      "upload": "Subir logotipo",
+      "replace": "Sustituir logotipo"
+    },
+    "height": {
+      "label": "Tamaño",
+      "small": "Pequeño",
+      "medium": "Mediano",
+      "large": "Grande"
+    }
   }
 }

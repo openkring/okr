@@ -95,6 +95,74 @@ export function articleImageLayout(
   return { imagePosition: VIEW_POSITIONS[position ?? 0] ?? 'none', imageColSize: size };
 }
 
+// --------------------------------------- FOOTER ----------------------------------------
+// Mirrors FooterConfig (shared-models) and the app's FooterSectionComponent. The public JSON carries
+// content only — the website styles it — with every url resolved and checked here, because the
+// renderer puts them straight into href/src on an unauthenticated page.
+const FOOTER_MAX_COLUMNS = 3;
+const FOOTER_LOGO_HEIGHTS: Record<string, number> = { small: 32, medium: 48, large: 72 };
+
+export interface PublicFooterItem {
+  type: 'title' | 'text' | 'link' | 'icon' | 'logo';
+  label: string;
+  /** '' when the item has no (safe) target */
+  url: string;
+  /** icon: the svg url; logo: the imgix url; '' otherwise */
+  src: string;
+  /** logo height in px; 0 otherwise */
+  height: number;
+}
+
+/** Same rule as isFooterUrl (cms-section-util): https, mailto, tel or an app route. */
+function safeFooterUrl(url: unknown): string {
+  const u = typeof url === 'string' ? url.trim() : '';
+  return /^(https:\/\/|mailto:|tel:|\/(?!\/))/i.test(u) ? u : '';
+}
+
+function mapFooterItem(raw: Record<string, unknown>): PublicFooterItem | undefined {
+  const label = typeof raw['label'] === 'string' ? raw['label'] : '';
+  const url = safeFooterUrl(raw['url']);
+  switch (raw['type']) {
+    case 'title':
+    case 'text':
+      return label ? { type: raw['type'], label, url: '', src: '', height: 0 } : undefined;
+    case 'link':
+      // a link without a safe target still shows its words, as plain text
+      return label ? { type: 'link', label, url, src: '', height: 0 } : undefined;
+    case 'icon': {
+      const icon = typeof raw['icon'] === 'string' ? raw['icon'] : '';
+      if (!/^[a-z0-9-]+$/i.test(icon)) return undefined;
+      return { type: 'icon', label, url, src: `${IMGIX_BASE}/logo/icons/${icon}.svg`, height: 0 };
+    }
+    case 'logo': {
+      const image = typeof raw['image'] === 'string' ? raw['image'] : '';
+      // a storage path (no scheme, no traversal) or an https url
+      const isPath = /^[\w][\w\-./ ]*$/.test(image) && !image.includes('..');
+      if (!isPath && !/^https:\/\//.test(image)) return undefined;
+      const height = FOOTER_LOGO_HEIGHTS[String(raw['height'])] ?? FOOTER_LOGO_HEIGHTS['medium'];
+      // png/svg logos keep their transparency: no format=jpg here, unlike toImgixUrl
+      const src = isPath ? `${IMGIX_BASE}/${image.split('/').map(encodeURIComponent).join('/')}?h=${height * 2}&auto=format,compress` : image;
+      return { type: 'logo', label, url, src, height };
+    }
+    default:
+      return undefined;
+  }
+}
+
+/** The public form of a footer section's properties (only the visible columns). */
+export function mapFooter(props: Record<string, unknown>): { columnCount: number; columns: { items: PublicFooterItem[] }[]; bottomLine: string } {
+  const rawCount = props['columnCount'];
+  const columnCount = Number.isInteger(rawCount) ? Math.min(Math.max(rawCount as number, 1), FOOTER_MAX_COLUMNS) : FOOTER_MAX_COLUMNS;
+  const rawColumns = Array.isArray(props['columns']) ? props['columns'] as { items?: unknown }[] : [];
+  const columns = Array.from({ length: columnCount }, (_, c) => {
+    const items = Array.isArray(rawColumns[c]?.items) ? rawColumns[c].items as Record<string, unknown>[] : [];
+    return { items: items.map(mapFooterItem).filter((i): i is PublicFooterItem => !!i) };
+  });
+  const showBottomLine = props['showBottomLine'] !== false;
+  const bottomLine = showBottomLine && typeof props['bottomLine'] === 'string' ? props['bottomLine'] : '';
+  return { columnCount, columns, bottomLine };
+}
+
 function mapSection(s: SectionDoc, nestedSections: Map<string, SectionDoc>, sanitize: SanitizeFn): unknown {
   const type = s.type ?? 'article';
   const props = (s.properties ?? {}) as Record<string, unknown>;
@@ -176,6 +244,9 @@ function mapSection(s: SectionDoc, nestedSections: Map<string, SectionDoc>, sani
         });
       return { type: 'accordion', title, subTitle, items };
     }
+
+    case 'footer':
+      return { type: 'footer', title, subTitle, ...mapFooter(props) };
 
     case 'article':
     default: {

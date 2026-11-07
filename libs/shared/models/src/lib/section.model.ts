@@ -24,7 +24,7 @@ export const SECTION_TYPES = [
     'album', 'article', 'button', 'cal', 'chart', 'chat', 'emergency', 'hero', 'iframe', 'map',
     'people', 'responsibility', 'slider', 'table', 'tracker', 'video', 'accordion', 'events', 'invitations', 'tasks',
     'news', 'activities', 'messages', 'rag', 'orgchart', 'context', 'member-age', 'member-cat', 'trip-stats', 'form',
-    'sankey', 'spider', 'toc', 'testimonial', 'timeline', 'weather', 'learning', 'advent', 'connections', 'departures', 'energy', 'counter',
+    'sankey', 'spider', 'toc', 'testimonial', 'timeline', 'weather', 'learning', 'advent', 'connections', 'departures', 'energy', 'counter', 'footer',
 ] as const;
 
 export type SectionType = (typeof SECTION_TYPES)[number];
@@ -34,7 +34,7 @@ export type SectionModel =
     AlbumSection | ArticleSection | ButtonSection | CalendarSection | ChartSection | ChatSection |
     HeroSection | IframeSection | MapSection | PeopleSection | ResponsibilitySection | SliderSection |
     TableSection | TrackerSection | VideoSection | AccordionSection | EventsSection | InvitationsSection | TasksSection |
-    NewsSection | ActivitiesSection | MessagesSection | RagSection | OrgchartSection | ContextDiagramSection | MemberAgeSection | MemberCatSection | TripStatsSection | FormSection | SankeySection | SpiderSection | TocSection | TestimonialSection | TimelineSection | WeatherSection | LearningSection | AdventSection | ConnectionsSection | DeparturesSection | EnergySection | CounterSection;
+    NewsSection | ActivitiesSection | MessagesSection | RagSection | OrgchartSection | ContextDiagramSection | MemberAgeSection | MemberCatSection | TripStatsSection | FormSection | SankeySection | SpiderSection | TocSection | TestimonialSection | TimelineSection | WeatherSection | LearningSection | AdventSection | ConnectionsSection | DeparturesSection | EnergySection | CounterSection | FooterSection;
 
 // --------------------------------------- ABSTRACT BASE SECTION MODELS ----------------------------------------
 // --------------------------------------- ORGCHART ----------------------------------------
@@ -251,7 +251,7 @@ export interface BaseSection {
   content: EditorConfig; // content from rich text editor
   properties?: AccordionConfig | AlbumConfig | ArticleConfig | ButtonConfig | CalendarOptions | EChartsOption | ChatConfig | HeroConfig |
   IframeConfig | MapConfig | OrgchartConfig | ContextDiagramConfig | PeopleConfig | ResponsibilityConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig | EventsConfig | InvitationsConfig |
-  TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | RagConfig | MemberAgeConfig | MemberCatConfig | TripStatsConfig | FormSectionConfig | SankeyConfig | SpiderConfig | TocConfig | TestimonialConfig | TimelineConfig | WeatherConfig | LearningConfig | AdventConfig | ConnectionsConfig | DeparturesConfig | EnergyConfig | CounterConfig;
+  TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | RagConfig | MemberAgeConfig | MemberCatConfig | TripStatsConfig | FormSectionConfig | SankeyConfig | SpiderConfig | TocConfig | TestimonialConfig | TimelineConfig | WeatherConfig | LearningConfig | AdventConfig | ConnectionsConfig | DeparturesConfig | EnergyConfig | CounterConfig | FooterConfig;
   notes: string;
   tags: string;
   tenants: string[]; // list of tenant ids
@@ -851,6 +851,53 @@ export interface CounterConfig {
   isAuto: boolean;
   autoInterval: number;
   autoDirection: CounterDirection;
+}
+
+// --------------------------------------- FOOTER ----------------------------------------
+/**
+ * A page footer of one to three columns plus an optional bottom line (copyright, small print).
+ * Each column is an ordered list of items: titles, texts, links, icons and logos (sponsors,
+ * «Swiss made software»). Rendered by the app and, through the public API, by the website with
+ * its own styling — so the config holds content only, never colors or CSS.
+ * `columns` always holds FOOTER_MAX_COLUMNS entries; a lower `columnCount` hides the rest
+ * without losing their items.
+ */
+export interface FooterSection extends BaseSection {
+  type: 'footer';
+  properties: FooterConfig;
+}
+
+export const FOOTER_MAX_COLUMNS = 3;
+export const FOOTER_ITEM_TYPES = ['title', 'text', 'link', 'icon', 'logo'] as const;
+export type FooterItemType = (typeof FOOTER_ITEM_TYPES)[number];
+export const FOOTER_LOGO_HEIGHTS = ['small', 'medium', 'large'] as const;
+export type FooterLogoHeight = (typeof FOOTER_LOGO_HEIGHTS)[number];
+
+export interface FooterConfig {
+  /** 1–3 visible columns */
+  columnCount: number;
+  columns: FooterColumn[];
+  showBottomLine: boolean;
+  /** e.g. «© 2026 Seeclub Stäfa»; may be empty */
+  bottomLine: string;
+}
+
+export interface FooterColumn {
+  items: FooterItem[];
+}
+
+export interface FooterItem {
+  type: FooterItemType;
+  /** the text of a title/text/link, the caption of an icon, the alt text of a logo */
+  label: string;
+  /** target: required for a link, optional for an icon or a logo, unused otherwise */
+  url: string;
+  /** icon name in the `icons` set (type 'icon') */
+  icon: string;
+  /** storage path of the logo image (type 'logo'), rendered through imgix */
+  image: string;
+  /** rendered height of a logo */
+  height: FooterLogoHeight;
 }
 
 // --------------------------------------- LEARNING ----------------------------------------

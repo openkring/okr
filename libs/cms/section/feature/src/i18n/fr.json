@@ -1245,6 +1245,10 @@
     "counter": {
       "label": "Compteur",
       "description": "Un nombre que tu fais monter et descendre à la main, ou qui avance tout seul"
+    },
+    "footer": {
+      "label": "Pied de page",
+      "description": "Pied de page jusqu’à trois colonnes : titres, textes, liens, icônes et logos"
     }
   },
   "message_center": {
@@ -1576,5 +1580,66 @@
     },
     "up": "Plus",
     "down": "Moins"
+  },
+  "footer": {
+    "label": "Pied de page",
+    "title": "Configuration du pied de page",
+    "subtitle": "Ce qui figure dans les colonnes du pied de page. Sur un grand écran, les colonnes sont côte à côte, sur un téléphone l’une sous l’autre.",
+    "region": "Pied de page",
+    "columnCount": "Nombre de colonnes",
+    "column": "Colonne {n}",
+    "columnHidden": "Masquée, car tu as choisi moins de colonnes. Les éléments sont conservés.",
+    "empty": "Aucun élément pour l’instant",
+    "add": "Ajouter un élément",
+    "addTitle": "Que veux-tu ajouter ?",
+    "actions": "Élément",
+    "edit": "Modifier",
+    "moveUp": "Monter",
+    "moveDown": "Descendre",
+    "remove": "Retirer",
+    "showBottomLine": {
+      "label": "Afficher la ligne finale",
+      "helper": "Une ligne sous les colonnes, p. ex. pour le copyright"
+    },
+    "bottomLine": {
+      "label": "Ligne finale",
+      "placeholder": "p. ex. © 2026 Seeclub Stäfa",
+      "helper": "Court texte sous les colonnes"
+    },
+    "type": {
+      "title": "Titre",
+      "text": "Texte",
+      "link": "Lien",
+      "icon": "Icône",
+      "logo": "Logo"
+    },
+    "itemLabel": {
+      "title": "Titre",
+      "text": "Texte",
+      "link": "Texte du lien",
+      "icon": "Légende",
+      "logo": "Texte alternatif",
+      "logoHelper": "Décrit le logo pour les personnes qui ne peuvent pas le voir"
+    },
+    "url": {
+      "label": "Lien",
+      "placeholder": "https://… , mailto:… ou /page",
+      "helper": "Une page web (https), une adresse e-mail (mailto:), un numéro de téléphone (tel:) ou une page de l’app (/…)"
+    },
+    "icon": {
+      "label": "Nom de l’icône",
+      "placeholder": "p. ex. email",
+      "helper": "Nom d’une icône de la collection"
+    },
+    "logo": {
+      "upload": "Téléverser le logo",
+      "replace": "Remplacer le logo"
+    },
+    "height": {
+      "label": "Taille",
+      "small": "Petit",
+      "medium": "Moyen",
+      "large": "Grand"
+    }
   }
 }

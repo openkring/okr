@@ -1245,6 +1245,10 @@
     "counter": {
       "label": "Zähler",
       "description": "Eine Zahl, die man von Hand hoch- und runterzählt oder die von selbst weiterläuft"
+    },
+    "footer": {
+      "label": "Fusszeile",
+      "description": "Fusszeile mit bis zu drei Spalten: Titel, Texte, Links, Icons und Logos"
     }
   },
   "message_center": {
@@ -1576,5 +1580,66 @@
     },
     "up": "Plus",
     "down": "Minus"
+  },
+  "footer": {
+    "label": "Fusszeile",
+    "title": "Fusszeilen-Konfiguration",
+    "subtitle": "Was in den Spalten der Fusszeile steht. Auf grossen Bildschirmen stehen die Spalten nebeneinander, auf dem Handy untereinander.",
+    "region": "Fusszeile",
+    "columnCount": "Anzahl Spalten",
+    "column": "Spalte {n}",
+    "columnHidden": "Ausgeblendet, weil weniger Spalten gewählt sind. Die Elemente bleiben erhalten.",
+    "empty": "Noch keine Elemente",
+    "add": "Element hinzufügen",
+    "addTitle": "Was möchtest du hinzufügen?",
+    "actions": "Element",
+    "edit": "Bearbeiten",
+    "moveUp": "Nach oben",
+    "moveDown": "Nach unten",
+    "remove": "Entfernen",
+    "showBottomLine": {
+      "label": "Schlusszeile zeigen",
+      "helper": "Eine Zeile unter den Spalten, z.B. für das Copyright"
+    },
+    "bottomLine": {
+      "label": "Schlusszeile",
+      "placeholder": "z.B. © 2026 Seeclub Stäfa",
+      "helper": "Kurzer Text unter den Spalten"
+    },
+    "type": {
+      "title": "Titel",
+      "text": "Text",
+      "link": "Link",
+      "icon": "Icon",
+      "logo": "Logo"
+    },
+    "itemLabel": {
+      "title": "Titel",
+      "text": "Text",
+      "link": "Linktext",
+      "icon": "Beschriftung",
+      "logo": "Alternativtext",
+      "logoHelper": "Beschreibt das Logo für Menschen, die es nicht sehen können"
+    },
+    "url": {
+      "label": "Link",
+      "placeholder": "https://… , mailto:… oder /seite",
+      "helper": "Eine Webseite (https), eine E-Mail-Adresse (mailto:), eine Telefonnummer (tel:) oder eine Seite der App (/…)"
+    },
+    "icon": {
+      "label": "Icon-Name",
+      "placeholder": "z.B. email",
+      "helper": "Name eines Icons aus der Icon-Sammlung"
+    },
+    "logo": {
+      "upload": "Logo hochladen",
+      "replace": "Logo ersetzen"
+    },
+    "height": {
+      "label": "Grösse",
+      "small": "Klein",
+      "medium": "Mittel",
+      "large": "Gross"
+    }
   }
 }

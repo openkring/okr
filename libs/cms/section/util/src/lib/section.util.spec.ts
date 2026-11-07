@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ButtonAction, ButtonSection, ColorIonic, SECTION_TYPES, SectionType, WeatherSection, LearningSection, EnergySection, CounterSection, COUNTER_CONFIG_SHAPE } from '@okr/shared-models';
+import { ButtonAction, ButtonSection, ColorIonic, SECTION_TYPES, SectionType, WeatherSection, LearningSection, EnergySection, CounterSection, COUNTER_CONFIG_SHAPE, FooterSection, FOOTER_CONFIG_SHAPE } from '@okr/shared-models';
 
 import { createSection, narrowSection } from './section.util';
 
@@ -115,6 +115,17 @@ describe('createSection — energy', () => {
   it('seeds both config keys, because section saves merge', () => {
     const section = createSection('energy', tenantId) as EnergySection;
     expect(section.properties).toEqual({ locationKey: '', compareKeys: [] });
+  });
+});
+
+describe('createSection — footer', () => {
+  it('gives every footer section its own columns and item arrays', () => {
+    const a = createSection('footer', tenantId) as FooterSection;
+    const b = createSection('footer', tenantId) as FooterSection;
+    expect(a.properties.columns).not.toBe(b.properties.columns);
+    expect(a.properties.columns[0].items).not.toBe(a.properties.columns[1].items);
+    expect(a.properties.columns[0].items).not.toBe(FOOTER_CONFIG_SHAPE.columns[0].items);
+    expect(a.properties).toEqual(FOOTER_CONFIG_SHAPE);
   });
 });
 

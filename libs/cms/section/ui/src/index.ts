@@ -27,6 +27,7 @@ export * from './lib/advent-configuration';
 export * from './lib/weather-configuration';
 export * from './lib/energy-configuration';
 export * from './lib/counter-configuration';
+export * from './lib/footer-configuration';
 export * from './lib/connections-configuration';
 export * from './lib/departures-configuration';
 export * from './lib/request-status-note';

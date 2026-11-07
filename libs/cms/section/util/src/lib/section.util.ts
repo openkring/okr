@@ -1,4 +1,4 @@
-import { ALBUM_SECTION_SHAPE, AlbumSection, ARTICLE_CONFIG_SHAPE, ARTICLE_SECTION_SHAPE, ArticleSection, BUTTON_SECTION_SHAPE, ButtonAction, ButtonSection, CAL_SECTION_SHAPE, CalendarSection, CHART_SECTION_SHAPE, ChartSection, CHAT_SECTION_SHAPE, ChatSection, ColorIonic, CONTEXT_DIAGRAM_SECTION_SHAPE, ContextDiagramSection, EVENTS_SECTION_SHAPE, EventsSection, HERO_SECTION_SHAPE, HeroSection, IFRAME_SECTION_SHAPE, IframeSection, INVITATIONS_SECTION_SHAPE, InvitationsSection, MAP_SECTION_SHAPE, MapSection, MEMBER_AGE_SECTION_SHAPE, MemberAgeSection, MEMBER_CAT_SECTION_SHAPE, MemberCatSection, PEOPLE_SECTION_SHAPE, PeopleSection, RAG_SECTION_SHAPE, RagSection, RESPONSIBILITY_SECTION_SHAPE, ResponsibilitySection, SANKEY_SECTION_SHAPE, SankeySection, SPIDER_SECTION_SHAPE, SpiderSection, TOC_SECTION_SHAPE, TocSection, TESTIMONIAL_SECTION_SHAPE, TestimonialSection, TIMELINE_SECTION_SHAPE, TimelineSection, SectionModel, SectionType, SLIDER_SECTION_SHAPE, SliderSection, TABLE_SECTION_SHAPE, TableSection, TRACKER_SECTION_SHAPE, TrackerSection, VIDEO_SECTION_SHAPE, VideoSection, ViewPosition, WEATHER_CONFIG_SHAPE, WEATHER_SECTION_SHAPE, WeatherSection, CONNECTIONS_CONFIG_SHAPE, CONNECTIONS_SECTION_SHAPE, ConnectionsSection, DEPARTURES_CONFIG_SHAPE, DEPARTURES_SECTION_SHAPE, DeparturesSection, ENERGY_CONFIG_SHAPE, ENERGY_SECTION_SHAPE, EnergySection, COUNTER_CONFIG_SHAPE, COUNTER_SECTION_SHAPE, CounterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FORM_SECTION_SHAPE, LEARNING_CONFIG_SHAPE, LEARNING_SECTION_SHAPE, LearningSection, ADVENT_CONFIG_SHAPE, ADVENT_SECTION_SHAPE, AdventSection, NEWS_CONFIG_SHAPE, NEWS_SECTION_SHAPE, NewsSection, TASKS_CONFIG_SHAPE, TASKS_SECTION_SHAPE, TasksSection, ACTIVITIES_CONFIG_SHAPE, ACTIVITIES_SECTION_SHAPE, ActivitiesSection, MESSAGES_CONFIG_SHAPE, MESSAGES_SECTION_SHAPE, MessagesSection, TRIP_STATS_CONFIG_SHAPE, TRIP_STATS_SECTION_SHAPE, TripStatsSection } from '@okr/shared-models';
+import { ALBUM_SECTION_SHAPE, AlbumSection, ARTICLE_CONFIG_SHAPE, ARTICLE_SECTION_SHAPE, ArticleSection, BUTTON_SECTION_SHAPE, ButtonAction, ButtonSection, CAL_SECTION_SHAPE, CalendarSection, CHART_SECTION_SHAPE, ChartSection, CHAT_SECTION_SHAPE, ChatSection, ColorIonic, CONTEXT_DIAGRAM_SECTION_SHAPE, ContextDiagramSection, EVENTS_SECTION_SHAPE, EventsSection, HERO_SECTION_SHAPE, HeroSection, IFRAME_SECTION_SHAPE, IframeSection, INVITATIONS_SECTION_SHAPE, InvitationsSection, MAP_SECTION_SHAPE, MapSection, MEMBER_AGE_SECTION_SHAPE, MemberAgeSection, MEMBER_CAT_SECTION_SHAPE, MemberCatSection, PEOPLE_SECTION_SHAPE, PeopleSection, RAG_SECTION_SHAPE, RagSection, RESPONSIBILITY_SECTION_SHAPE, ResponsibilitySection, SANKEY_SECTION_SHAPE, SankeySection, SPIDER_SECTION_SHAPE, SpiderSection, TOC_SECTION_SHAPE, TocSection, TESTIMONIAL_SECTION_SHAPE, TestimonialSection, TIMELINE_SECTION_SHAPE, TimelineSection, SectionModel, SectionType, SLIDER_SECTION_SHAPE, SliderSection, TABLE_SECTION_SHAPE, TableSection, TRACKER_SECTION_SHAPE, TrackerSection, VIDEO_SECTION_SHAPE, VideoSection, ViewPosition, WEATHER_CONFIG_SHAPE, WEATHER_SECTION_SHAPE, WeatherSection, CONNECTIONS_CONFIG_SHAPE, CONNECTIONS_SECTION_SHAPE, ConnectionsSection, DEPARTURES_CONFIG_SHAPE, DEPARTURES_SECTION_SHAPE, DeparturesSection, ENERGY_CONFIG_SHAPE, ENERGY_SECTION_SHAPE, EnergySection, COUNTER_CONFIG_SHAPE, COUNTER_SECTION_SHAPE, CounterSection, FOOTER_CONFIG_SHAPE, FOOTER_MAX_COLUMNS, FOOTER_SECTION_SHAPE, FooterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FORM_SECTION_SHAPE, LEARNING_CONFIG_SHAPE, LEARNING_SECTION_SHAPE, LearningSection, ADVENT_CONFIG_SHAPE, ADVENT_SECTION_SHAPE, AdventSection, NEWS_CONFIG_SHAPE, NEWS_SECTION_SHAPE, NewsSection, TASKS_CONFIG_SHAPE, TASKS_SECTION_SHAPE, TasksSection, ACTIVITIES_CONFIG_SHAPE, ACTIVITIES_SECTION_SHAPE, ActivitiesSection, MESSAGES_CONFIG_SHAPE, MESSAGES_SECTION_SHAPE, MessagesSection, TRIP_STATS_CONFIG_SHAPE, TRIP_STATS_SECTION_SHAPE, TripStatsSection } from '@okr/shared-models';
 import { createAdventDoors, newAdventSeed } from './advent.util';
 import { buildSearchTokens, DateFormat, die, getTodayStr } from '@okr/shared-util-core';
 
@@ -84,6 +84,13 @@ export function createSection(type: SectionType, tenantId: string): SectionModel
     case 'counter':
       section = { ...COUNTER_SECTION_SHAPE, properties: { ...COUNTER_CONFIG_SHAPE } } as CounterSection;
       break;
+    case 'footer':
+      // columns and their items are ARRAYS: a fresh set per section, see 'weather'
+      section = {
+        ...FOOTER_SECTION_SHAPE,
+        properties: { ...FOOTER_CONFIG_SHAPE, columns: Array.from({ length: FOOTER_MAX_COLUMNS }, () => ({ items: [] })) }
+      } as FooterSection;
+      break;
     case 'learning':
       section = { ...LEARNING_SECTION_SHAPE, properties: { ...LEARNING_CONFIG_SHAPE, curators: [] } } as LearningSection;
       break;
@@ -146,6 +153,7 @@ export function narrowSection(section: any): SectionModel | undefined {
     case 'departures': return section as DeparturesSection;
     case 'energy': return section as EnergySection;
     case 'counter': return section as CounterSection;
+    case 'footer': return section as FooterSection;
     case 'learning': return section as LearningSection;
     case 'advent': return section as AdventSection;
     case 'news': return section as NewsSection;

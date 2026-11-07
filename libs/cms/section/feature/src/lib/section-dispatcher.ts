@@ -41,6 +41,7 @@ import { AdventSectionComponent } from './advent-section';
 import { TripStatsSectionComponent } from './trip-stats-section';
 import { FormSectionComponent } from './form-section';
 import { CounterSectionComponent } from './counter-section';
+import { FooterSectionComponent } from './footer-section';
 import { WeatherSectionComponent } from '@okr/weather-feature';
 import { EnergySectionComponent } from '@okr/energy-feature';
 import { ConnectionsSectionComponent, DeparturesSectionComponent } from '@okr/mobility-transit-feature';
@@ -67,6 +68,7 @@ import { SectionStore } from './section.store';
     TripStatsSectionComponent,
     FormSectionComponent,
     CounterSectionComponent,
+    FooterSectionComponent,
     WeatherSectionComponent,
     EnergySectionComponent,
     ConnectionsSectionComponent,
@@ -181,6 +183,9 @@ import { SectionStore } from './section.store';
           }
           @case('counter') {
             <okr-counter-section [section]="section" />
+          }
+          @case('footer') {
+            <okr-footer-section [section]="section" />
           }
           @case('energy') {
             <okr-energy-section [section]="section" />

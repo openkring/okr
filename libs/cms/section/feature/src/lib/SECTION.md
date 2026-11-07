@@ -52,6 +52,7 @@ Collection name: `sections`
 | `chart` | `EChartsOption` | Apache ECharts chart |
 | `chat` | `ChatConfig` | Matrix chat channel |
 | `counter` | `CounterConfig` | Number counted up/down by hand or automatically; four looks (display, stepper, flip, ring); local to the viewer, not persisted |
+| `footer` | `FooterConfig` | Page footer: 1–3 columns of titles, texts, links, icons and logos, plus an optional bottom line; columns sit side by side on wide sections and stack below 576px (container queries); also rendered on the public website |
 | `emergency` | — | Emergency notice section |
 | `energy` | `EnergyConfig` | Energy figures of one municipality: key figures, trends, tariffs, comparison (read-only, from `energy-figures`) |
 | `events` | `EventsConfig` | Upcoming / past calendar event list |

@@ -8,7 +8,7 @@ import type {
   ChartSection, ChatConfig, ChatSection, ContextDiagramConfig, ContextDiagramSection, EditorConfig, EventsConfig, EventsSection,
   FormSection, FormSectionConfig,
   HeroConfig, HeroSection, IconConfig, IframeConfig,
-  IframeSection, InvitationsConfig, InvitationsSection, MapConfig, WeatherConfig, WeatherSection, ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, MapSection, MemberAgeConfig, MemberAgeSection, MemberCatConfig, MemberCatSection, OrgchartConfig, OrgchartSection, PeopleConfig,
+  IframeSection, InvitationsConfig, InvitationsSection, MapConfig, WeatherConfig, WeatherSection, ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, FooterColumn, FooterConfig, FooterItem, FooterSection, MapSection, MemberAgeConfig, MemberAgeSection, MemberCatConfig, MemberCatSection, OrgchartConfig, OrgchartSection, PeopleConfig,
   PeopleSection, RagConfig, RagSection, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TimelineConfig, TimelineSection, AdventConfig, AdventSection, NewsConfig, NewsSection, TasksConfig, TasksSection, ActivitiesConfig, ActivitiesSection, MessagesConfig, MessagesSection, TripStatsConfig, TripStatsSection, ResponsibilityConfig, ResponsibilitySection, SliderConfig, SliderSection, TableConfig, TableSection,
   TrackerConfig, TrackerSection, VideoConfig, VideoSection
 } from "./section.model";
@@ -607,6 +607,32 @@ export const COUNTER_SECTION_SHAPE = {
   type: 'counter' as const,
   properties: COUNTER_CONFIG_SHAPE,
 } as CounterSection;
+
+// --------------------------------------- FOOTER ----------------------------------------
+export const FOOTER_ITEM_SHAPE: FooterItem = {
+  type: 'text',
+  label: '',
+  url: '',
+  icon: '',
+  image: '',
+  height: 'medium',
+};
+
+/** Arrays inside: clone per section (see createSection), never share this object. */
+export const FOOTER_COLUMN_SHAPE: FooterColumn = { items: [] };
+
+export const FOOTER_CONFIG_SHAPE: FooterConfig = {
+  columnCount: 3,
+  columns: [FOOTER_COLUMN_SHAPE, FOOTER_COLUMN_SHAPE, FOOTER_COLUMN_SHAPE],
+  showBottomLine: true,
+  bottomLine: '',
+};
+
+export const FOOTER_SECTION_SHAPE = {
+  ...BASE_SECTION_SHAPE,
+  type: 'footer' as const,
+  properties: FOOTER_CONFIG_SHAPE,
+} as FooterSection;
 
 // --------------------------------------- LEARNING ----------------------------------------
 export const LEARNING_CONFIG_SHAPE: LearningConfig = {
