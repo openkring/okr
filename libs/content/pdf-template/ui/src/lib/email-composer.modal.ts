@@ -95,7 +95,7 @@ type ComposerSegment = 'editor' | 'preview' | 'delivery' | 'list';
 
     @if (showConfirmation()) {
       <okr-change-confirmation [i18n]="changeConfirmationI18n()" (saveClicked)="send()" (cancelClicked)="revert()" />
-      @for (warning of reachWarnings(); track warning.eventName) {
+      @for (warning of reachWarnings(); track warning.caleventKey) {
         <ion-note color="warning" class="note">{{ reachWarningText(warning) }}</ion-note>
       }
     }

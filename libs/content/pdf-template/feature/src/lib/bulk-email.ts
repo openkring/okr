@@ -7,10 +7,8 @@ import {
   AddressCollection, AddressModel, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel,
   MembershipCollection, MembershipModel, PersonModel,
 } from '@okr/shared-models';
-import {
-  convertDateFormatToString, DateFormat, formatExportTime, getFullName, getSystemQuery, getTodayStr, isActiveMembership,
-} from '@okr/shared-util-core';
-import type { VersandEvent } from '@okr/content-pdf-template-util';
+import { addDuration, getFullName, getSystemQuery, getTodayStr, isActiveMembership } from '@okr/shared-util-core';
+import { type VersandEvent, VERSAND_EVENT_MONTHS, versandEventsOf } from '@okr/content-pdf-template-util';
 import { type ComposedEmail, EmailComposerModal, type VersandRecipient } from '@okr/content-pdf-template-ui';
 
 export type { ComposedEmail, VersandRecipient };
@@ -93,33 +91,22 @@ async function loadOrgEmails(ctx: BulkEmailContext): Promise<{ orgEmails: string
 }
 
 /**
- * The tenant's upcoming events a Versand can attach (not archived, not cancelled, from today on, by date),
- * each with the group whose calendar it sits in, plus the active member person keys of those groups.
- * A read that fails comes back empty: the «Anlässe» field is then simply not offered.
+ * The tenant's events a Versand can ask about (see `versandEventsOf`: from today up to six months ahead, not
+ * personal, archived, cancelled, locked or a poll date, by date), each with the group whose calendar it sits
+ * in, plus the active member person keys of those groups. A read that fails comes back empty: the «Anlässe»
+ * field is then simply not offered. A multi-day event that already started is not offered: catching it
+ * would need an `endDate` range query, and with it a new index.
  */
 async function loadVersandEvents(ctx: BulkEmailContext): Promise<{ events: VersandEvent[]; membersByGroup: Record<string, string[]> }> {
   const today = getTodayStr();
   const eventQuery = getSystemQuery(ctx.tenantId);
   eventQuery.push({ key: 'startDate', operator: '>=', value: today });
+  eventQuery.push({ key: 'startDate', operator: '<=', value: addDuration(today, { months: VERSAND_EVENT_MONTHS }) });
   const [calevents, calendars] = await Promise.all([
     ctx.firestoreService.getDataOnce<CalEventModel>(CalEventCollection, eventQuery, 'startDate'),
     ctx.firestoreService.getDataOnce<CalendarModel>(CalendarCollection, getSystemQuery(ctx.tenantId)),
   ]);
-  const groupOfCalendar = new Map(calendars
-    .filter((c) => (c.owner ?? '').startsWith('group.'))
-    .map((c) => [c.okey, c.owner.slice('group.'.length)]));
-
-  const events: VersandEvent[] = calevents
-    .filter((e) => e.state !== 'cancelled' && !e.isArchived)
-    .map((e) => {
-      const groupKey = (e.calendars ?? []).map((key) => groupOfCalendar.get(key)).find((key) => !!key);
-      return {
-        caleventKey: e.okey,
-        name: e.name,
-        when: eventWhen(e),
-        ...(groupKey ? { groupKey } : {}),
-      };
-    });
+  const events = versandEventsOf(calevents, calendars, today);
 
   const groupKeys = [...new Set(events.map((e) => e.groupKey).filter((key): key is string => !!key))];
   const membersByGroup: Record<string, string[]> = {};
@@ -132,11 +119,4 @@ async function loadVersandEvents(ctx: BulkEmailContext): Promise<{ events: Versa
     membersByGroup[groupKey] = memberships.filter((m) => isActiveMembership(m, today)).map((m) => m.memberKey);
   }));
   return { events, membersByGroup };
-}
-
-/** «01.12.2026» for an all-day event, «01.12.2026 19:30» with a start time. */
-function eventWhen(event: CalEventModel): string {
-  const date = convertDateFormatToString(event.startDate, DateFormat.StoreDate, DateFormat.ViewDate, false);
-  const time = formatExportTime(event.startTime);
-  return time ? `${date} ${time}` : date;
 }

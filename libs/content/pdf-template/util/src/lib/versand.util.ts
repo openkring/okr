@@ -1,6 +1,6 @@
 // libs/content/pdf-template/util/src/lib/versand.util.ts
-import { DeliveryChannel } from '@okr/shared-models';
-import { MAILING_CHANNELS, MailingRecipientChannels } from '@okr/shared-util-core';
+import { CalEventModel, DeliveryChannel } from '@okr/shared-models';
+import { addDuration, convertDateFormatToString, DateFormat, MAILING_CHANNELS, MailingRecipientChannels } from '@okr/shared-util-core';
 
 /**
  * The delivery types a Versand can actually send today: E-Mail, and In-App since P2 (spec 1.145 §10).
@@ -92,10 +92,54 @@ export function versandBcc(rows: VersandRow[], deliveries: VersandDeliveries): s
 export interface VersandEvent {
   caleventKey: string;
   name: string;
-  /** the date (and time) as shown to the sender and in the mail, e.g. «01.12.2026 19:30» */
+  /** the date (and time) as shown to the sender and in the mail, e.g. «01.12.2026, 19:30» */
   when: string;
   /** the group whose calendar the event sits in, if any */
   groupKey?: string;
+}
+
+/** How far ahead a Versand offers events. */
+export const VERSAND_EVENT_MONTHS = 6;
+
+/**
+ * «01.12.2026, 19:30» with a start time, «01.12.2026» without: the same text the answer block in the mail
+ * shows (`eventWhen` in apps/functions/src/calendar/mail.ts), so the preview matches what is sent.
+ */
+export function versandEventWhen(startDate: string | undefined, startTime: string | undefined): string {
+  if (!startDate) return '';
+  const date = convertDateFormatToString(startDate, DateFormat.StoreDate, DateFormat.ViewDate, false);
+  return startTime ? `${date}, ${startTime}` : date;
+}
+
+/**
+ * The events a Versand can ask about, in the order given (the query sorts by date): from `today` up to
+ * VERSAND_EVENT_MONTHS ahead, and only the ones `sendMailing` accepts — no personal event (no calendar:
+ * same rule as isPersonalCalevent in @okr/calendar-calevent-util, not imported because that barrel
+ * carries an Angular pipe), nothing archived, cancelled, locked or still a poll date (`proposed`).
+ * Each carries the group whose calendar it sits in, if any (a calendar owned by `group.<key>`).
+ */
+export function versandEventsOf(
+  calevents: CalEventModel[],
+  calendars: { okey: string; owner?: string }[],
+  today: string,
+): VersandEvent[] {
+  const until = addDuration(today, { months: VERSAND_EVENT_MONTHS });
+  const groupOfCalendar = new Map(calendars
+    .filter((c) => (c.owner ?? '').startsWith('group.'))
+    .map((c) => [c.okey, (c.owner ?? '').slice('group.'.length)]));
+  return calevents
+    .filter((e) => (e.calendars?.length ?? 0) > 0)
+    .filter((e) => !e.isArchived && !e.isLocked && e.state !== 'cancelled' && e.state !== 'proposed')
+    .filter((e) => !!e.startDate && e.startDate >= today && e.startDate <= until)
+    .map((e) => {
+      const groupKey = (e.calendars ?? []).map((key) => groupOfCalendar.get(key)).find((key) => !!key);
+      return {
+        caleventKey: e.okey,
+        name: e.name,
+        when: versandEventWhen(e.startDate, e.startTime),
+        ...(groupKey ? { groupKey } : {}),
+      };
+    });
 }
 
 /**
@@ -107,13 +151,13 @@ export function groupReachWarnings(
   events: VersandEvent[],
   emailKeys: string[],
   membersByGroup: Record<string, string[]>,
-): { eventName: string; count: number }[] {
-  const out: { eventName: string; count: number }[] = [];
+): { caleventKey: string; eventName: string; count: number }[] {
+  const out: { caleventKey: string; eventName: string; count: number }[] = [];
   for (const event of events) {
     if (!event.groupKey) continue;
     const members = new Set(membersByGroup[event.groupKey] ?? []);
     const count = emailKeys.filter((key) => !members.has(key)).length;
-    if (count > 0) out.push({ eventName: event.name, count });
+    if (count > 0) out.push({ caleventKey: event.caleventKey, eventName: event.name, count });
   }
   return out;
 }
