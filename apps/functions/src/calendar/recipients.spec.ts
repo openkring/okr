@@ -149,6 +149,6 @@ describe('shorten', () => {
 
 describe('caleventDeepLink', () => {
   it('targets the list route that opens the event — a bare /calevent/<okey> matches no route', () => {
-    expect(caleventDeepLink('e1')).toBe('/calevent/all/c-calevents?event=e1');
+    expect(caleventDeepLink('e1')).toBe('/calevent/my/c-calevents?event=e1');
   });
 });

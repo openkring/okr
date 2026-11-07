@@ -396,11 +396,13 @@ export function formatSchedulePollInviteMessage(name: string, link: string): str
  * `listId` binden und eine LEERE Liste rendern statt des Termins. Deshalb dasselbe Muster wie
  * `buildSchedulePollLink`: die Liste lädt normal und öffnet den Termin danach selbst.
  *
- * `listId` ist bewusst 'all' und nicht der Kalender des Termins — der Empfänger des Links muss
- * den Kalender nicht abonniert haben, um den Termin zu sehen.
+ * `listId` ist bewusst 'my' und nicht der Kalender des Termins: der Empfänger muss den Kalender
+ * nicht abonniert haben, weil die Liste den Termin per Schlüssel liest (`viewByKey`), nicht aus
+ * der geladenen Liste. Und nicht 'all' — das ist die ungefilterte Mandantensicht der eventAdmins;
+ * wer das Modal schloss, sah dahinter plötzlich fremde Gruppentermine (2026-11-07).
  */
 export function buildCalEventLink(origin: string, okey: string): string {
-  return `${origin.replace(/\/$/, '')}/calevent/all/c-calevents?event=${okey}`;
+  return `${origin.replace(/\/$/, '')}/calevent/my/c-calevents?event=${okey}`;
 }
 
 /**

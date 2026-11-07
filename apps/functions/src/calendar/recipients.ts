@@ -177,9 +177,11 @@ export function todayStoreDate(): string {
  * named by `?event=` (`CalEventList.event` input — the same deep link the shared short link
  * uses). A bare `/calevent/<okey>` matches no route and lands on the app root, which is why
  * the first comment pushes were "impossible to find in the app" (2026-09-15).
+ * `my`, not `all`: `all` is the unfiltered tenant-wide view of the eventAdmins — closing the
+ * modal left a member looking at every group's events (2026-11-07).
  */
 export function caleventDeepLink(caleventKey: string): string {
-  return `/calevent/all/c-calevents?event=${encodeURIComponent(caleventKey)}`;
+  return `/calevent/my/c-calevents?event=${encodeURIComponent(caleventKey)}`;
 }
 
 /** The calevent key behind a `calevent.<okey>` parent/folder key, or '' for anything else. */

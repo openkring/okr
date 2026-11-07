@@ -537,14 +537,14 @@ describe('buildCalEventLink', () => {
     // An okey would bind as :listId and render an EMPTY list — the reason the alias target
     // is a url and not a model target.
     expect(buildCalEventLink('https://scs.app', 'abc'))
-      .toBe('https://scs.app/calevent/all/c-calevents?event=abc');
+      .toBe('https://scs.app/calevent/my/c-calevents?event=abc');
   });
   it('drops a trailing slash on the origin', () => {
     expect(buildCalEventLink('https://scs.app/', 'abc'))
-      .toBe('https://scs.app/calevent/all/c-calevents?event=abc');
+      .toBe('https://scs.app/calevent/my/c-calevents?event=abc');
   });
-  it('uses `all`, so the recipient need not have the event\'s calendar selected', () => {
-    expect(buildCalEventLink('https://scs.app', 'abc')).toContain('/calevent/all/');
+  it('uses `my`, not the unfiltered `all` view the recipient lands in after closing the modal', () => {
+    expect(buildCalEventLink('https://scs.app', 'abc')).toContain('/calevent/my/');
   });
 });
 

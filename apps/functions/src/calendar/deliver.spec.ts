@@ -45,7 +45,7 @@ describe('recipientChannels', () => {
 
 describe('eventUrl', () => {
   it('is absolute on the app domain', () => {
-    expect(eventUrl({ appName: 'x', appUrl: 'https://app.seeclub.org', brandColor: '', logoUrl: '' }, 'abc')).toBe('https://app.seeclub.org/calevent/all/c-calevents?event=abc');
+    expect(eventUrl({ appName: 'x', appUrl: 'https://app.seeclub.org', brandColor: '', logoUrl: '' }, 'abc')).toBe('https://app.seeclub.org/calevent/my/c-calevents?event=abc');
   });
 });
 

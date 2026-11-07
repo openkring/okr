@@ -392,7 +392,7 @@ export class CalEventList implements OnInit {
    */
   public readonly poll = input<string | undefined>(undefined);
   /**
-   * Deep link of a shared short link: `/calevent/all/c-calevents?event=<okey>` opens the event.
+   * Deep link of a shared short link: `/calevent/my/c-calevents?event=<okey>` opens the event.
    * Same undefined-default reasoning as `poll` above.
    */
   public readonly event = input<string | undefined>(undefined);
@@ -821,6 +821,14 @@ export class CalEventList implements OnInit {
     effect(() => {
       const okey = this.event();
       if (!okey || this.eventOpened) return;
+      // Links minted before 2026-11-07 (aliases are permanent) and older pushes point at
+      // /calevent/all — the unfiltered tenant-wide view of the eventAdmins. Re-target them to 'my',
+      // otherwise closing the modal leaves a member looking at every group's events.
+      if (this.listId() === 'all') {
+        untracked(() => this.router.navigate(['/calevent', 'my', this.contextMenuName()],
+          { queryParams: { event: okey }, replaceUrl: true }));
+        return;
+      }
       this.eventOpened = true;
       untracked(() => this.store.viewByKey(okey).then(() =>
         this.router.navigate([], { queryParams: { event: null }, queryParamsHandling: 'merge', replaceUrl: true })));
