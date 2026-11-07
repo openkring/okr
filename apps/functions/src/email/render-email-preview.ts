@@ -11,6 +11,7 @@ import { checkAppCheckToken, checkAuthentication, checkRoles } from '@okr/shared
 
 import { callerMaySendFor } from '../auth';
 import { composeBody, EmailTemplateError, firestoreTemplateReader, RenderedEmail, renderEmail } from './render-email';
+import { answerBlockHtml, AnswerEventLine } from './personal-mail.logic';
 import { asLayoutChoice, StoredTemplate } from './render-email.logic';
 
 const REGION = 'europe-west6';
@@ -23,6 +24,8 @@ export interface RenderPreviewRequest {
   layout?: EmailLayoutChoice;
   body?: string;
   attachmentName?: string;
+  /** The events of a Versand with answer links: the preview shows the answer block under the body. */
+  answerEvents?: AnswerEventLine[];
   templateKey?: string;
   version?: number;
 }
@@ -108,7 +111,10 @@ export const renderEmailPreview = onCall(
     try {
       if (data.body !== undefined) {
         if (typeof data.body !== 'string') throw new HttpsError('invalid-argument', 'body must be a string.');
-        return await composeBody(tenantId, { body: data.body, layout: asLayoutChoice(data.layout), attachmentName: data.attachmentName });
+        const events = (Array.isArray(data.answerEvents) ? data.answerEvents : []).filter((e) => e && typeof e === 'object')
+          .map((e) => ({ name: String(e.name ?? ''), when: String(e.when ?? '') }));
+        const body = events.length > 0 ? data.body + answerBlockHtml('#', events) : data.body;
+        return await composeBody(tenantId, { body, layout: asLayoutChoice(data.layout), attachmentName: data.attachmentName });
       }
       if (data.templateKey !== undefined) return await previewTemplate(request, tenantId);
     } catch (error) {

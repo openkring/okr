@@ -22,8 +22,11 @@ import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { DeliveryChannel, type EmailLayoutChoice, NoticeAttachment, NoticeCollection, type NoticeModel } from '@okr/shared-models';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
+import { projectID } from 'firebase-functions/params';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
+import { invitationLinkSecret, mailingAnswerFunctionUrl, mailingAnswerUrl } from '../calendar/answer-link';
+import { eventWhen } from '../calendar/mail';
 import { privateBucket } from '../_storage/private-bucket';
 import { getAppEmailConfig } from '../auth/email-templates';
 import { assertCallerIsGroupAdmin } from '../content/group-content.util';
@@ -32,7 +35,9 @@ import { pushToPersons, selectUserDocs } from '../srv/push';
 import { activeMemberKeys, MembershipDoc, unknownRecipients } from './group-mail';
 import { htmlToText } from './html-to-text';
 import { MailJobCollection, MailJobDoc } from './mail-job';
+import { lastEventDate } from './mailing-answer.logic';
 import { chunk, isElevated } from './mailing-recipients';
+import { MAX_PERSONAL_RECIPIENTS, parseCaleventKeys, personalEntries } from './personal-mail.logic';
 import { asLayoutChoice } from './render-email.logic';
 
 const REGION = 'europe-west6';
@@ -71,6 +76,8 @@ export interface MailingRequest {
   filename?: string;
   extraAttachments?: { filename: string; contentBase64: string; contentType?: string }[];
   deliveries: MailingDelivery[];
+  /** The events to ask about; each email recipient then gets a personal answer link. Not for group admins. */
+  caleventKeys?: string[];
 }
 
 /** The `mailings` doc. Written only here; `state` and the counts are owned by `onMailing`. */
@@ -147,6 +154,18 @@ function stringList(value: unknown, field: string): string[] {
   return value as string[];
 }
 
+/** The favorite email per person (`person.<key>` docs of the directory), keyed by the bare personKey. */
+async function directoryEmailsByKey(db: Firestore, tenantId: string, personKeys: string[]): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  if (personKeys.length === 0) return out;
+  const snaps = await db.getAll(...personKeys.map((key) => db.collection('address-directory').doc(`${tenantId}_person.${key}`)));
+  snaps.forEach((snap, i) => {
+    const email = String(snap.data()?.['favEmail'] ?? '');
+    if (email) out.set(personKeys[i], email);
+  });
+  return out;
+}
+
 async function directoryEmails(db: Firestore, tenantId: string, parentKeys: string[]): Promise<string[]> {
   if (parentKeys.length === 0) return [];
   const snaps = await db.getAll(...parentKeys.map((key) => db.collection('address-directory').doc(`${tenantId}_${key}`)));
@@ -196,10 +215,20 @@ export const sendMailing = onCall(
     const to = stringList(data.to, 'to');
     const cc = stringList(data.cc, 'cc');
     const deliveries = parseDeliveries(data.deliveries);
+    const caleventKeys = parseCaleventKeys(data.caleventKeys);
     if (deliveries.length === 0) throw new HttpsError('invalid-argument', 'Nobody receives this Versand.');
     if (deliveries.length > MAX_RECIPIENTS) throw new HttpsError('invalid-argument', `At most ${MAX_RECIPIENTS} recipients.`);
     if (keysFor(deliveries, DeliveryChannel.Email).length > 0 && to.length === 0) {
       throw new HttpsError('invalid-argument', 'to must not be empty for an email delivery.');
+    }
+
+    if (caleventKeys.length > 0) {
+      if (typeof groupKey === 'string' && groupKey) {
+        throw new HttpsError('permission-denied', 'A group admin cannot send answer links.');
+      }
+      if (keysFor(deliveries, DeliveryChannel.Email).length > MAX_PERSONAL_RECIPIENTS) {
+        throw new HttpsError('invalid-argument', `At most ${MAX_PERSONAL_RECIPIENTS} email recipients with events.`);
+      }
     }
 
     const db = getFirestore();
@@ -228,6 +257,19 @@ export const sendMailing = onCall(
       from = '';                                   // a group admin's Versand leaves under the tenant's sender
     }
 
+    let validUntil: string | undefined;
+    if (caleventKeys.length > 0) {
+      const today = getTodayStr(DateFormat.StoreDate);
+      const snaps = await db.getAll(...caleventKeys.map((key) => db.collection('calevents').doc(key)));
+      const events = snaps.map((snap) => snap.data() as { tenants?: string[]; isArchived?: boolean; state?: string; startDate?: string; endDate?: string } | undefined);
+      for (const event of events) {
+        if (!event || !event.tenants?.includes(tenantId) || event.isArchived || event.state === 'cancelled' || (event.endDate || event.startDate || '') < today) {
+          throw new HttpsError('invalid-argument', 'An event cannot be answered: it is missing, archived, cancelled or over.');
+        }
+      }
+      validUntil = lastEventDate(events as { startDate?: string; endDate?: string }[]);
+    }
+
     const ref = db.collection(MailingCollection).doc();
     const attachments = await storeAttachments(data, tenantId, ref.id);
     const senderKey = String(caller['personKey'] ?? '');
@@ -247,6 +289,7 @@ export const sendMailing = onCall(
       deliveries,
       createdAt: getTodayStr(DateFormat.StoreDateTime),
       state: 'pending',
+      ...(caleventKeys.length > 0 ? { caleventKeys, ...(validUntil ? { validUntil } : {}) } : {}),
     };
     await ref.set(doc);
     logger.info(`${CF_NAME}: Versand ${ref.id} to ${deliveries.length} recipient(s) (tenant ${tenantId})`);
@@ -271,7 +314,7 @@ async function keysWithAccount(db: Firestore, tenantId: string, keys: string[]):
 }
 
 export const onMailing = onDocumentCreated(
-  { document: `${MailingCollection}/{mailingKey}`, region: REGION, memory: '512MiB', timeoutSeconds: 300 },
+  { document: `${MailingCollection}/{mailingKey}`, region: REGION, memory: '512MiB', timeoutSeconds: 300, secrets: [invitationLinkSecret] },
   async (event) => {
     const CF_NAME = 'onMailing';
     const snap = event.data;
@@ -287,23 +330,39 @@ export const onMailing = onDocumentCreated(
     try {
       const emailKeys = keysFor(mailing.deliveries, DeliveryChannel.Email);
       if (emailKeys.length > 0) {
-        const bcc = [...new Set(await directoryEmails(db, tenantId, emailKeys.map((key) => `person.${key}`)))];
-        if (bcc.length > 0) {
-          const job: MailJobDoc = {
-            tenants: [tenantId],
-            to: mailing.to,
-            cc: mailing.cc,
-            bcc,
-            ...(mailing.from ? { from: mailing.from } : { from: (await getAppEmailConfig(tenantId)).from }),
-            subject: mailing.subject,
-            body: mailing.body,
-            layout: mailing.layout,
-            ...(mailing.attachmentName ? { attachmentName: mailing.attachmentName } : {}),
-            attachments: privateRefs(mailing.attachments),
-            state: 'pending',
-          };
-          result.mailJobKey = (await db.collection(MailJobCollection).add(job)).id;
-          result.emails = bcc.length;
+        // read only when a job is written: the tenant's sender config is not needed for an empty list
+        const base = async (): Promise<MailJobDoc> => ({
+          tenants: [tenantId],
+          to: mailing.to,
+          from: mailing.from || (await getAppEmailConfig(tenantId)).from,
+          subject: mailing.subject,
+          body: mailing.body,
+          layout: mailing.layout,
+          attachments: privateRefs(mailing.attachments),
+          state: 'pending',
+        });
+        const attachmentName = mailing.attachmentName ? { attachmentName: mailing.attachmentName } : {};
+        if (mailing.caleventKeys?.length) {
+          // one mail per person, each with that person's own signed link; no Bcc, no dedupe by address
+          const emailByKey = await directoryEmailsByKey(db, tenantId, emailKeys);
+          const secret = invitationLinkSecret.value();
+          const answerBase = mailingAnswerFunctionUrl(projectID.value());
+          const personal = personalEntries(emailKeys, emailByKey, (personKey) => mailingAnswerUrl(answerBase, snap.id, personKey, secret));
+          if (personal.length > 0) {
+            const eventSnaps = await db.getAll(...mailing.caleventKeys.map((key) => db.collection('calevents').doc(key)));
+            const answerEvents = eventSnaps.map((s2) => s2.data() as { name?: string; startDate?: string; startTime?: string } | undefined)
+              .filter((e) => !!e).map((e) => ({ name: String(e?.name ?? ''), when: eventWhen(e?.startDate, e?.startTime) }));
+            const job: MailJobDoc = { ...(await base()), ...attachmentName, personal, answerEvents };
+            result.mailJobKey = (await db.collection(MailJobCollection).add(job)).id;
+            result.emails = personal.length;
+          }
+        } else {
+          const bcc = [...new Set(await directoryEmails(db, tenantId, emailKeys.map((key) => `person.${key}`)))];
+          if (bcc.length > 0) {
+            const job: MailJobDoc = { ...(await base()), cc: mailing.cc, bcc, ...attachmentName };
+            result.mailJobKey = (await db.collection(MailJobCollection).add(job)).id;
+            result.emails = bcc.length;
+          }
         }
       }
 

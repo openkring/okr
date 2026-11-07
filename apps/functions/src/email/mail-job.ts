@@ -21,6 +21,7 @@ import { bareAddress, effectiveSender, getAppEmailConfig, getEmailProvider } fro
 import { sendEmailViaProvider } from '../auth/email-transport';
 import { AttachmentRef, resolveAttachments } from '../auth';
 import { composeBody } from './render-email';
+import { answerBlockHtml, AnswerEventLine, PER_MAIL_PAUSE_MS, personalOutcome, PersonalEntry } from './personal-mail.logic';
 import { asLayoutChoice } from './render-email.logic';
 
 const REGION = 'europe-west6';
@@ -50,6 +51,9 @@ export interface MailJobDoc {
   /** Jobs from before the layouts: a finished HTML mail, sent as is while `body` is absent. */
   html?: string;
   attachments?: AttachmentRef[];
+  /** A Versand with answer links: one mail per entry (no Bcc), each with its own link. */
+  personal?: PersonalEntry[];
+  answerEvents?: AnswerEventLine[];
   state?: 'pending' | 'sending' | 'sent' | 'failed';
   blocksSent?: number;
   blocksTotal?: number;
@@ -107,6 +111,43 @@ export function mailJobBlocks(job: MailJobDoc, from: string): { to: string[]; cc
   return envelopes.length > 0 ? envelopes : [{ to: job.to, cc: job.cc ?? [], bcc: [] }];
 }
 
+/** Updates the progress counter this often during a personal send. */
+const PERSONAL_PROGRESS_EVERY = 10;
+
+/**
+ * The personal path: one mail per entry, the body plus that person's answer block in the layout. A failed
+ * mail is counted and the others still go out; the job fails only when nothing was sent.
+ */
+async function sendPersonal(
+  snap: { ref: { update(data: object): Promise<unknown> } },
+  job: MailJobDoc, tenantId: string, from: string, provider: string, attachments: Awaited<ReturnType<typeof resolveAttachments>>,
+): Promise<void> {
+  const personal = job.personal ?? [];
+  const events = job.answerEvents ?? [];
+  if (typeof job.body !== 'string' || !job.body.trim()) throw new Error('The mail job has an empty body.');
+  await snap.ref.update({ state: 'sending', blocksTotal: personal.length, blocksSent: 0 });
+  let sent = 0;
+  let failed = 0;
+  for (const [i, entry] of personal.entries()) {
+    if (i > 0) await new Promise((resolve) => setTimeout(resolve, PER_MAIL_PAUSE_MS));
+    try {
+      const { html, text } = await composeBody(tenantId, {
+        body: job.body + answerBlockHtml(entry.answerUrl, events), layout: asLayoutChoice(job.layout), attachmentName: job.attachmentName,
+      });
+      await sendEmailViaProvider(provider, {
+        from, to: [entry.to], ...(job.to[0] ? { replyTo: job.to[0] } : {}), subject: job.subject, html, ...(text !== undefined ? { text } : {}), attachments,
+      });
+      sent++;
+    } catch {
+      failed++;                                    // no address or message in the log: counts only
+    }
+    if ((i + 1) % PERSONAL_PROGRESS_EVERY === 0) await snap.ref.update({ blocksSent: sent });
+  }
+  const outcome = personalOutcome(sent, failed);
+  await snap.ref.update({ blocksSent: sent, ...outcome });
+  logger.info(`${CF_NAME}: sent ${sent} personal mail(s), ${failed} failed (tenant ${tenantId})`);
+}
+
 export const onMailJob = onDocumentCreated(
   {
     document: `${MailJobCollection}/{id}`,
@@ -131,10 +172,16 @@ export const onMailJob = onDocumentCreated(
     try {
       // The sender must be on the tenant's domain; a job from a tampered client falls back to the tenant sender.
       const from = effectiveSender(job.from, await getAppEmailConfig(tenantId));
-      const { html, text } = await resolveJobContent(job, tenantId);
+      const personalJob = Array.isArray(job.personal) && job.personal.length > 0;
+      const { html, text } = personalJob ? { html: '', text: undefined } : await resolveJobContent(job, tenantId);
       const provider = await getEmailProvider(tenantId);
       // a Versand (onMailing) references its files in the private bucket, below its own tenant only
       const attachments = await resolveAttachments(job.attachments, CF_NAME, `mailings/${tenantId}/`, tenantId);
+      if (personalJob) {
+        blocksTotal = job.personal?.length ?? 0;
+        await sendPersonal(snap, job, tenantId, from, provider, attachments);
+        return;
+      }
       const blocks = mailJobBlocks(job, from);
       blocksTotal = blocks.length;
       await snap.ref.update({ state: 'sending', blocksTotal, blocksSent: 0 });

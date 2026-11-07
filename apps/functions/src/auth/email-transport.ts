@@ -34,6 +34,7 @@ export interface EmailOptions {
   to: string[];
   cc?: string[];
   bcc?: string[];
+  replyTo?: string;                             // defaults to `from` for SMTP; unset for the Mailtrap API
   subject: string;
   html: string;
   text?: string;                                // plain-text alternative; left out when empty, never sent with a template
@@ -93,7 +94,7 @@ async function sendViaSMTP(config: object, options: EmailOptions): Promise<void>
   const transporter = nodemailer.createTransport(config);
   await transporter.sendMail({
     from: options.from,
-    replyTo: options.from,
+    replyTo: options.replyTo ?? options.from,
     to: options.to.join(', '),
     ...(options.cc?.length  ? { cc:  options.cc.join(', ')  } : {}),
     ...(options.bcc?.length ? { bcc: options.bcc.join(', ') } : {}),
@@ -117,6 +118,7 @@ export function mailtrapBody(options: EmailOptions): Record<string, unknown> {
     to:   options.to.map(e => ({ email: e })),
   };
 
+  if (options.replyTo) body['reply_to'] = parseFrom(options.replyTo);
   if (options.cc?.length)  body['cc']  = options.cc.map(e => ({ email: e }));
   if (options.bcc?.length) body['bcc'] = options.bcc.map(e => ({ email: e }));
 
