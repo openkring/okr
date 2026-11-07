@@ -2,7 +2,7 @@ import '@angular/compiler';
 import { describe, it, expect } from 'vitest';
 import { TemplateModel } from '@okr/shared-models';
 import {
-  canDeleteEmailTemplate, emailCopyKey, emailCopyPlan, emailPublishProblem, isEmailTemplate, templateKindOf,
+  canDeleteEmailTemplate, emailCopyKey, emailCopyPlan, emailLayoutOptions, emailPublishProblem, isEmailTemplate, templateKindOf,
 } from './email-template.util';
 
 describe('templateKindOf', () => {
@@ -97,5 +97,37 @@ describe('emailCopyKey', () => {
 
   it('still appends for another tenant', () => {
     expect(emailCopyKey('email-layout_scs', 'abc')).toBe('email-layout_scs_abc');
+  });
+});
+
+describe('emailLayoutOptions', () => {
+  const layout = (okey: string, tenants: string[], name: string, extra: Partial<TemplateModel> = {}) =>
+    ({ okey, tenants, name, kind: 'emailLayout', isArchived: false, currentVersion: 1, ...extra }) as TemplateModel;
+
+  it('leaves out standard and plain, which the select offers first', () => {
+    const list = [layout('email-layout_scs', ['scs'], 'Std'), layout('email-layout-plain', ['system'], 'Plain'), layout('email-layout-plain_scs', ['scs'], 'Plain')];
+    expect(emailLayoutOptions(list, 'scs')).toEqual([]);
+  });
+
+  it('offers shared and own layouts by name', () => {
+    const list = [layout('news_scs', ['scs'], 'Zeitung'), layout('event', ['system'], 'Anlass')];
+    expect(emailLayoutOptions(list, 'scs')).toEqual([{ key: 'event', name: 'Anlass' }, { key: 'news_scs', name: 'Zeitung' }]);
+  });
+
+  it('offers a tenant copy once, under the shared key', () => {
+    const list = [layout('event', ['system'], 'Anlass'), layout('event_scs', ['scs'], 'Anlass SCS')];
+    expect(emailLayoutOptions(list, 'scs')).toEqual([{ key: 'event', name: 'Anlass SCS' }]);
+  });
+
+  it('skips drafts, archived, foreign, mixed-owner and non-layout templates', () => {
+    const list = [
+      layout('a_scs', ['scs'], 'Draft', { currentVersion: 0 }),
+      layout('b_scs', ['scs'], 'Archived', { isArchived: true }),
+      layout('c_p13', ['p13'], 'Foreign'),
+      layout('d', ['scs', 'system'], 'Mixed'),
+      layout('e_scs', ['scs'], 'Text', { kind: 'emailText' }),
+      layout('f_scs', ['scs'], 'Pdf', { kind: undefined as never }),
+    ];
+    expect(emailLayoutOptions(list, 'scs')).toEqual([]);
   });
 });

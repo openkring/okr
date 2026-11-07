@@ -1,5 +1,5 @@
 // apps/functions/src/email/render-email.ts
-// The only place that composes a mail: a layout (standard or plain) around either a text template
+// The only place that composes a mail: a layout (standard, plain or a chosen layout key) around either a text template
 // or a composer body. Templates are found by fixed document id (design 7.2), never chosen per send.
 import { randomUUID } from 'node:crypto';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -20,7 +20,7 @@ import { sanitizeEmailBody, sanitizeResetMail } from '../pdf/sanitize';
 import { compileTemplate } from '../pdf/template-cache';
 import { reportToSentry } from '../srv/sentry';
 import { htmlToText } from './html-to-text';
-import { isUsableEmailTemplate, layoutHasContent, placeResetLink, SHARED_TEMPLATE_OWNER, StoredTemplate } from './render-email.logic';
+import { isUsableEmailTemplate, layoutHasContent, layoutTargetFor, placeResetLink, SHARED_TEMPLATE_OWNER, StoredTemplate } from './render-email.logic';
 
 type StoredVersion = Pick<TemplateVersionModel, 'html' | 'text' | 'subject' | 'status'>;
 
@@ -113,7 +113,16 @@ async function resolvePreview(read: TemplateReader, preview: { okey: string; ver
 
 async function resolveLayout(read: TemplateReader, req: RenderEmailRequest, override?: Resolved): Promise<Resolved> {
   if (override) return override;
-  if (req.layout === 'standard') {
+  const target = layoutTargetFor(req.layout, req.tenantId);
+  if (target.mode === 'key') {
+    // A chosen layout that cannot be used is refused: no silent fallback changes how the mail looks.
+    const chosen = target.own
+      ? await readOwned(read, target.key, req.tenantId, 'emailLayout')
+      : await resolveTemplate(read, req.tenantId, 'emailLayout', target.key);
+    if (!chosen) throw new EmailTemplateError('The chosen email layout is not usable', 'no-layout');
+    return chosen;
+  }
+  if (target.mode === 'standard') {
     // Only the tenant's own doc: the standard layout has no shared doc (design 7.2).
     const standard = await readOwned(read, forkKeyFor(EmailLayoutKey, req.tenantId), req.tenantId, 'emailLayout');
     if (standard) return standard;

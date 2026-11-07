@@ -1,6 +1,6 @@
 import { forkKeyFor } from '@okr/shared-util-core';
 import {
-  EmailLayoutKey, EmailPlainLayoutKey, EmailTextPasswordResetKey, TemplateKind, TemplateModel, TemplateVersionModel,
+  EmailLayoutChoice, EmailLayoutKey, EmailPlainLayoutKey, EmailTextPasswordResetKey, TemplateKind, TemplateModel, TemplateVersionModel,
 } from '@okr/shared-models';
 
 /** The kind of a template. Legacy docs have no `kind` and are PDF templates. */
@@ -74,4 +74,37 @@ export function emailCopyPlan(
 export function emailCopyKey(okey: string, tenantId: string): string {
   const suffix = '_' + tenantId;
   return okey.endsWith(suffix) ? okey : forkKeyFor(okey, tenantId);
+}
+
+/** An email layout a sender can choose besides `standard` and `plain`: the key the server resolves, and its name. */
+export interface EmailLayoutOption {
+  key: EmailLayoutChoice;
+  name: string;
+}
+
+/**
+ * The tenant's further email layouts for the Vorlage select (spec 1.145), sorted by name. Only published, live
+ * layouts owned exactly by the tenant or by `system` count, as on the server. Standard and plain stay out: the
+ * select offers them first under their own labels. A tenant copy of a shared layout is offered once, under the
+ * shared key, so the server picks the copy and falls back to the shared doc as for every 1.141 template.
+ */
+export function emailLayoutOptions(
+  templates: Pick<TemplateModel, 'okey' | 'kind' | 'name' | 'tenants' | 'isArchived' | 'currentVersion'>[],
+  tenantId: string
+): EmailLayoutOption[] {
+  const usable = templates.filter((t) =>
+    templateKindOf(t) === 'emailLayout' && !t.isArchived && (t.currentVersion ?? 0) > 0
+    && t.tenants?.length === 1 && (t.tenants[0] === tenantId || t.tenants[0] === 'system')
+    && !isKeyOrTenantCopy(t.okey, EmailLayoutKey) && !isKeyOrTenantCopy(t.okey, EmailPlainLayoutKey));
+  const shared = new Set(usable.filter((t) => t.tenants[0] === 'system').map((t) => t.okey));
+  const suffix = '_' + tenantId;
+  const byKey = new Map<string, EmailLayoutOption>();
+  for (const t of usable) {
+    const base = t.okey.endsWith(suffix) ? t.okey.slice(0, -suffix.length) : '';
+    const isCopy = !!base && shared.has(base);
+    const key = isCopy ? base : t.okey;
+    // the tenant's copy names the layout the tenant actually gets
+    if (!byKey.has(key) || isCopy) byKey.set(key, { key, name: t.name || key });
+  }
+  return [...byKey.values()].sort((a, b) => a.name.localeCompare(b.name, 'de'));
 }

@@ -16,9 +16,12 @@ export type TemplateLanguage = 'de' | 'fr' | 'it' | 'en';
  * Legacy docs have no `kind`: every reader coalesces with `kind ?? 'pdf'`.
  */
 export type TemplateKind = 'pdf' | 'emailLayout' | 'emailText';
-/** Which email layout a send uses. */
-export type EmailLayoutChoice = 'standard' | 'plain';
-/** The layouts a sender can choose; the server treats anything but `plain` as `standard`. */
+/**
+ * Which email layout a send uses: `standard`, `plain`, or the document id of an emailLayout template
+ * (spec 1.145 §9). The server reads a malformed value as `standard` and refuses a key it cannot use.
+ */
+export type EmailLayoutChoice = 'standard' | 'plain' | (string & {});
+/** The two fixed layouts, always offered first. */
 export const LAYOUT_CHOICES: readonly EmailLayoutChoice[] = ['standard', 'plain'];
 export type DocGenerationStatus = 'success' | 'failed';
 /** Which side of the window envelope shows the recipient address; 'none' = no envelope. */

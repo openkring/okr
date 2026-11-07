@@ -1,5 +1,6 @@
 // libs/content/pdf-template/ui/src/lib/email-composer.modal.ts
 import { ChangeDetectionStrategy, Component, ComponentRef, computed, DestroyRef, effect, inject, input, linkedSignal, PLATFORM_ID, signal, untracked, ViewContainerRef, viewChild } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { form } from '@angular/forms/signals';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -23,12 +24,12 @@ import { fill, needsEmailNormalization } from '@okr/shared-util-core';
 import { dismissOverlay, isBrowser, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 import {
-  ACTIVE_MAILING_CHANNELS, buildVersandRows, emailBodyHasContent, GROUP_ADMIN_MAILING_CHANNELS, groupReachWarnings, isSenderDomainAllowed,
+  ACTIVE_MAILING_CHANNELS, buildVersandRows, emailBodyHasContent, emailLayoutOptions, GROUP_ADMIN_MAILING_CHANNELS, groupReachWarnings, isSenderDomainAllowed,
   nonPdfAttachmentNames, parseEmails, toggleDelivery, versandBcc, versandDeliveries,
   EmailComposerFormModel, emailComposerValidations, VersandDeliveries, VersandEvent, VersandRow,
   EMAIL_COMPOSER_I18N_KEYS, EMAIL_COMPOSER_MSG_KEYS, EmailComposerI18n,
 } from '@okr/content-pdf-template-util';
-import { DocEmailService, InlineAttachment, MailingLetters } from '@okr/content-pdf-template-data-access';
+import { DocEmailService, InlineAttachment, MailingLetters, TemplateService } from '@okr/content-pdf-template-data-access';
 
 import { VersandDeliveryTable } from './versand-delivery-table';
 import { VersandEventsSelect } from './versand-events-select';
@@ -152,7 +153,7 @@ type ComposerSegment = 'editor' | 'preview' | 'delivery' | 'list';
                   </ion-row>
                   <ion-row>
                     <ion-col size="12" size-md="6">
-                      <okr-string-select [i18n]="layoutI18n()" [stringList]="layoutChoices" [labels]="layoutLabels()"
+                      <okr-string-select [i18n]="layoutI18n()" [stringList]="layoutChoices()" [labels]="layoutLabels()"
                         [selectedString]="layout()" (selectedStringChange)="onLayoutChange($event)" [readOnly]="false" />
                     </ion-col>
                   </ion-row>
@@ -316,6 +317,7 @@ type ComposerSegment = 'editor' | 'preview' | 'delivery' | 'list';
 export class EmailComposerModal {
   private readonly appStore = inject(AppStore);
   private readonly docEmailService = inject(DocEmailService);
+  private readonly templateService = inject(TemplateService);
   private readonly modalController = inject(ModalController);
   private readonly toastController = inject(ToastController);
   private readonly sanitizer = inject(DomSanitizer);
@@ -456,8 +458,13 @@ export class EmailComposerModal {
   protected readonly body     = computed(() => this.formData().body);
   protected readonly layout   = computed(() => this.formData().layout);
 
-  protected readonly layoutChoices = [...LAYOUT_CHOICES];
-  protected readonly layoutLabels = computed(() => [this.i18n.layout_standard(), this.i18n.layout_plain()]);
+  /** Vorlage: standard and plain first, then the tenant's further email layouts by name (spec 1.145). */
+  private readonly emailTemplates = toSignal(this.templateService.listEmailTemplates(), { initialValue: [] });
+  private readonly layoutOptions = computed(() => emailLayoutOptions(this.emailTemplates(), this.appStore.tenantId()));
+  protected readonly layoutChoices = computed<EmailLayoutChoice[]>(() => [...LAYOUT_CHOICES, ...this.layoutOptions().map((o) => o.key)]);
+  protected readonly layoutLabels = computed(() => [
+    this.i18n.layout_standard(), this.i18n.layout_plain(), ...this.layoutOptions().map((o) => o.name),
+  ]);
 
   /** Every recipient of this mail, flattened for the Verteiler overview. */
   protected readonly recipients = computed(() => {
@@ -721,7 +728,7 @@ export class EmailComposerModal {
 
   /** Only the offered layouts are accepted; the select can hand back nothing else, but the form is typed. */
   protected onLayoutChange(value: string): void {
-    const layout = LAYOUT_CHOICES.find((choice) => choice === value);
+    const layout = this.layoutChoices().find((choice) => choice === value);
     if (!layout || layout === this.layout()) return;
     this.isDirty.set(true);
     this.formData.update((vm) => ({ ...vm, layout }));

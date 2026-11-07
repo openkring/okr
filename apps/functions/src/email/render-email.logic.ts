@@ -1,6 +1,7 @@
 // apps/functions/src/email/render-email.logic.ts
 // Pure decisions of the email renderer. The Firestore-backed renderer builds on these.
-import type { EmailLayoutChoice, TemplateKind } from '@okr/shared-models';
+import { EmailLayoutChoice, EmailLayoutKey, EmailPlainLayoutKey, type TemplateKind } from '@okr/shared-models';
+import { forkKeyFor } from '@okr/shared-util-core';
 
 /** The slice of a `templates/{id}` doc the renderer reads. Legacy docs have no `kind`. */
 export interface StoredTemplate {
@@ -77,7 +78,28 @@ export function placeResetLink(mail: { html: string; text: string; subject: stri
   };
 }
 
-/** The layout a client asked for: `plain` only when it says so, `standard` for anything else (also none). */
+/** A document id a client may name as a layout: no path separator, no dots, nothing that reads as a query. */
+const LAYOUT_KEY = /^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$/;
+
+/**
+ * The layout a client asked for: `standard`, `plain`, or the key of an emailLayout template (spec 1.145).
+ * Anything that is not a well-formed key (also none) is `standard`, as before layouts had keys.
+ */
 export function asLayoutChoice(value: unknown): EmailLayoutChoice {
-  return value === 'plain' ? 'plain' : 'standard';
+  return typeof value === 'string' && LAYOUT_KEY.test(value) ? value : 'standard';
+}
+
+/** How the renderer finds a layout: one of the two fixed resolutions, or a template key. */
+export type LayoutTarget = { mode: 'standard' } | { mode: 'plain' } | { mode: 'key'; key: string; own: boolean };
+
+/**
+ * Where a layout choice points. The ids of the standard and plain layouts (base or this tenant's copy) mean
+ * those layouts, so the base key `email-layout` is never read. A key ending in `_<tenantId>` is the tenant's
+ * own doc (`own`); any other key is a shared doc, which the tenant's copy `<key>_<tenantId>` overrides.
+ */
+export function layoutTargetFor(layout: unknown, tenantId: string): LayoutTarget {
+  const choice = asLayoutChoice(layout);
+  if (choice === 'standard' || choice === EmailLayoutKey || choice === forkKeyFor(EmailLayoutKey, tenantId)) return { mode: 'standard' };
+  if (choice === 'plain' || choice === EmailPlainLayoutKey || choice === forkKeyFor(EmailPlainLayoutKey, tenantId)) return { mode: 'plain' };
+  return { mode: 'key', key: choice, own: choice.endsWith('_' + tenantId) };
 }

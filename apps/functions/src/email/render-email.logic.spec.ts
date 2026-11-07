@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isUsableEmailTemplate, layoutHasContent, placeResetLink } from './render-email.logic';
+import { asLayoutChoice, isUsableEmailTemplate, layoutHasContent, layoutTargetFor, placeResetLink } from './render-email.logic';
 
 describe('isUsableEmailTemplate', () => {
   const ok = { kind: 'emailText', tenants: ['system'], currentVersion: 1 } as const;
@@ -105,5 +105,32 @@ describe('layoutHasContent', () => {
   it('detects the content slot', () => {
     expect(layoutHasContent('<td>{{{ content }}}</td>')).toBe(true);
     expect(layoutHasContent('<td>{{content}}</td>')).toBe(false);
+  });
+});
+
+describe('asLayoutChoice', () => {
+  it('keeps standard, plain and well-formed keys', () => {
+    expect(asLayoutChoice('standard')).toBe('standard');
+    expect(asLayoutChoice('plain')).toBe('plain');
+    expect(asLayoutChoice('email-layout-news_scs')).toBe('email-layout-news_scs');
+  });
+
+  it('reads anything else as standard, as old clients expect', () => {
+    for (const value of [undefined, null, 3, '', ' plain', 'a/b', '../x', 'a.b', '_x', 'x'.repeat(101)]) {
+      expect(asLayoutChoice(value)).toBe('standard');
+    }
+  });
+});
+
+describe('layoutTargetFor', () => {
+  it('maps the standard and plain ids to their fixed resolution', () => {
+    for (const v of ['standard', 'email-layout', 'email-layout_scs', undefined, 'a/b']) expect(layoutTargetFor(v, 'scs')).toEqual({ mode: 'standard' });
+    for (const v of ['plain', 'email-layout-plain', 'email-layout-plain_scs']) expect(layoutTargetFor(v, 'scs')).toEqual({ mode: 'plain' });
+  });
+
+  it('tells a tenant own key from a shared key', () => {
+    expect(layoutTargetFor('news_scs', 'scs')).toEqual({ mode: 'key', key: 'news_scs', own: true });
+    expect(layoutTargetFor('news_p13', 'scs')).toEqual({ mode: 'key', key: 'news_p13', own: false });
+    expect(layoutTargetFor('email-layout_p13', 'scs')).toEqual({ mode: 'key', key: 'email-layout_p13', own: false });
   });
 });

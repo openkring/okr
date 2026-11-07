@@ -225,6 +225,56 @@ describe('template ownership', () => {
   });
 });
 
+describe('layout by key (spec 1.145)', () => {
+  const NEWS = { html: '<div class="news">{{{content}}}</div>', text: 'NEWS\n{{{content}}}' };
+  const OWN = { html: '<div class="own">{{{content}}}</div>', text: 'OWN\n{{{content}}}' };
+  const body = (layout: string, read: TemplateReader, tenantId = 'scs') => renderEmail({ tenantId, layout, body: '<p>x</p>' }, read);
+
+  it('uses a shared layout by its key', async () => {
+    const read = readerOf({ ...base, 'email-layout-news': { doc: layoutDoc('system'), version: NEWS } });
+    expect((await body('email-layout-news', read)).html).toContain('class="news"');
+  });
+
+  it('prefers the tenant copy of a shared layout', async () => {
+    const read = readerOf({ ...base, 'email-layout-news': { doc: layoutDoc('system'), version: NEWS }, 'email-layout-news_scs': { doc: layoutDoc('scs'), version: OWN } });
+    expect((await body('email-layout-news', read)).html).toContain('class="own"');
+  });
+
+  it('uses the tenant own layout by its key', async () => {
+    const read = readerOf({ ...base, 'club-news_scs': { doc: layoutDoc('scs'), version: OWN } });
+    expect((await body('club-news_scs', read)).html).toContain('class="own"');
+  });
+
+  it('refuses another tenant own layout', async () => {
+    const read = readerOf({ ...base, 'club-news_p13': { doc: layoutDoc('p13'), version: OWN } });
+    await expect(body('club-news_p13', read)).rejects.toMatchObject({ code: 'no-layout' });
+  });
+
+  it('refuses an unknown, draft, archived or text key without falling back', async () => {
+    const read = readerOf({
+      ...base,
+      'draft_scs': { doc: layoutDoc('scs'), version: { ...OWN, status: 'draft' } },
+      'gone_scs': { doc: { ...layoutDoc('scs'), isArchived: true }, version: OWN },
+    });
+    for (const key of ['nope', 'draft_scs', 'gone_scs', 'email-text-password-reset']) {
+      await expect(body(key, read)).rejects.toMatchObject({ code: 'no-layout' });
+    }
+  });
+
+  it('reads the ids of the standard and plain layouts as those layouts', async () => {
+    const read = readerOf(base);
+    expect((await body('email-layout_scs', read)).html).toContain('class="std"');
+    expect((await body('email-layout-plain', read)).html).toContain('class="plain"');
+    expect((await body('email-layout', read, 'p13')).html).toContain('class="plain"');
+  });
+
+  it('keeps standard and plain working as before', async () => {
+    const read = readerOf(base);
+    expect((await body('standard', read)).html).toContain('class="std"');
+    expect((await body('plain', read)).html).toContain('class="plain"');
+  });
+});
+
 describe('renderPasswordResetEmail', () => {
   const vars = { url, email: 'x@example.org', app_name: 'Seeclub', login_id: '' };
 
