@@ -49,6 +49,23 @@ export interface SendDocumentByEmailRequest {
   tenantId?: string;
 }
 
+/** A Versand as `sendMailing` takes it (spec 1.145 §10): the content plus who gets it on which delivery type. */
+export interface SendMailingRequest {
+  tenantId: string;
+  /** a group admin's Versand: the server checks the recipients against this group */
+  groupKey?: string;
+  subject: string;
+  body: string;
+  layout: EmailLayoutChoice;
+  from?: string;
+  to: string[];
+  cc: string[];
+  storagePath?: string;
+  filename?: string;
+  extraAttachments: InlineAttachment[];
+  deliveries: { personKey: string; channels: string[] }[];
+}
+
 /** What the `renderEmailPreview` callable gets for a composer body. */
 export interface RenderPreviewRequest {
   body: string;
@@ -160,6 +177,16 @@ export class DocEmailService {
       this.functions, 'getMailingRecipients');
     const { data } = await callable({ tenantId, personKeys, ...(groupKey ? { groupKey } : {}) });
     return data.recipients;
+  }
+
+  /**
+   * Starts a Versand. The server checks the sender, stores the files and fans the send out by delivery
+   * type; the tab may close as soon as this resolves. Rejects with the server's message on a refusal.
+   */
+  public async sendMailing(req: SendMailingRequest): Promise<string> {
+    const callable = httpsCallable<SendMailingRequest, { mailingKey: string }>(this.functions, 'sendMailing');
+    const { data } = await callable(req);
+    return data.mailingKey;
   }
 
   /** The three content fields every send path hands to the server, which composes the final mail. */

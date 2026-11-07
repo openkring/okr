@@ -121,6 +121,7 @@ export const COLLECTION_LABELS: Record<string, string> = {
   // the export row is the decision asked of or caused by the member, not the rule.
   approvals: 'Freigaben',
   comments: 'Kommentare',
+  notices: 'Mitteilungen',
   docs: 'Dokumente',
   documents: 'Dokumente',
   calevents: 'Kalendereinträge',

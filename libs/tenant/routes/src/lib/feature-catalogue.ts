@@ -231,6 +231,19 @@ const cms: BlockRoutes = {
   id: 'cms',
   routes: (): Route[] => [
     {
+      // A Mitteilung (spec 1.145 §10), opened from the dashboard's notices section or from its push.
+      // In the always-on cms block so every member's push opens. No role guard: the `notices` read
+      // rule lets only the recipients (and memberAdmin / privileged) read it; NoticePage shows the
+      // not-found state for anyone else.
+      path: 'notice',
+      canActivate: [isAuthenticatedGuard],
+      children: [{
+        path: ':noticeKey',
+        loadComponent: () => import('@okr/content-notice-feature').then(m => m.NoticePage),
+        data: { color: 'secondary' },
+      }],
+    },
+    {
       // 'calendar' deliberately NOT here — it moved to calevent's own 'public' fragment
       // (task 12 review round 2). See the comment there for why.
       path: 'public',

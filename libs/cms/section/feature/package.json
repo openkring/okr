@@ -55,6 +55,8 @@
     "@okr/content-folder-util": "*",
     "@okr/user-data-access": "*",
     "@okr/finance-expense-feature": "*",
-    "@okr/mobility-transit-feature": "*"
+    "@okr/mobility-transit-feature": "*",
+    "@okr/content-notice-data-access": "*",
+    "@okr/content-notice-util": "*"
   }
 }

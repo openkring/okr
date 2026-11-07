@@ -1431,6 +1431,21 @@ service cloud.firestore {
                        && request.resource.data.tenants.size() == 1;
       allow update, delete: if false;
     }
+    // mailings (spec 1.145 §10): one doc per Versand, written only by `sendMailing` (Admin SDK) and
+    // updated by `onMailing`. memberAdmin / privileged may follow their tenant's sends; no client write.
+    match /mailings/{id}           {
+      allow read:   if (isPrivileged() || hasRole('memberAdmin')) && tenantRead();
+      allow write:  if false;
+    }
+    // notices (spec 1.145 §10): the In-App delivery of a Versand, written only by `onMailing`. A
+    // recipient reads it (the «my notices» query is `recipients array-contains <personKey>`, same shape
+    // as contracts' partyPersonKeys), and so do memberAdmin / privileged of its tenant. Files are opened
+    // through `getNoticeAttachment` only.
+    match /notices/{id}            {
+      allow read:   if (callerPersonKey() != '' && callerPersonKey() in resource.data.get('recipients', []))
+                       || ((isPrivileged() || hasRole('memberAdmin')) && tenantRead());
+      allow write:  if false;
+    }
     // external-reports (spec 1.133 §8): marks that a case was reported to an external organisation
     // (SRV Sekretariat), so the next report only holds new cases. No names, only keys. Privileged or
     // memberAdmin of the tenant; the doc is written to the caller's own tenant only. No delete: a mark

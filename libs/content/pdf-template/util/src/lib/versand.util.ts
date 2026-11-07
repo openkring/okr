@@ -3,11 +3,18 @@ import { DeliveryChannel } from '@okr/shared-models';
 import { MAILING_CHANNELS, MailingRecipientChannels } from '@okr/shared-util-core';
 
 /**
- * The delivery types a Versand can actually send today. In-App and Post follow with spec 1.144 P2/P3;
- * until then their columns are shown but cannot be ticked (§3.1), so the table never promises a
- * delivery that does not happen.
+ * The delivery types a Versand can actually send today: E-Mail, and In-App since P2 (spec 1.145 §10).
+ * Post follows with P3 (the letter PDF); until then its column is shown but cannot be ticked (§3.1),
+ * so the table never promises a delivery that does not happen.
  */
-export const ACTIVE_MAILING_CHANNELS: DeliveryChannel[] = [DeliveryChannel.Email];
+export const ACTIVE_MAILING_CHANNELS: DeliveryChannel[] = [DeliveryChannel.Email, DeliveryChannel.Chat];
+
+/** What `sendMailing` gets per recipient: the ticked delivery types, persons without a tick left out. */
+export function versandDeliveries(rows: VersandRow[], deliveries: VersandDeliveries): { personKey: string; channels: DeliveryChannel[] }[] {
+  return rows
+    .map((row) => ({ personKey: row.personKey, channels: deliveries[row.personKey] ?? [] }))
+    .filter((d) => d.channels.length > 0);
+}
 
 /** One row of the Zustellung table: who, their email (empty when none), and what is possible. */
 export interface VersandRow {

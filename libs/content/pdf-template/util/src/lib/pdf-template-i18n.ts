@@ -200,5 +200,7 @@ export type EmailComposerI18n = { [K in keyof typeof EMAIL_COMPOSER_I18N_KEYS]: 
 export const EMAIL_COMPOSER_MSG_KEYS = {
   send_conf:           PFX + 'composer.send.conf',
   send_error:          PFX + 'composer.send.error',
+  /** A Versand was handed to the server; params `emails`, `notices` (recipient counts). */
+  send_mailing:        PFX + 'composer.send.mailing',
   attachment_toolarge: PFX + 'composer.attachment.toolarge',
 } satisfies Record<string, string>;

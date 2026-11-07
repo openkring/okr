@@ -1,0 +1,10 @@
+{
+  "title": "Notice",
+  "from": "From",
+  "sent": "sent on",
+  "attachments": "Attachments",
+  "not_found": "This notice does not exist, or it is not meant for you.",
+  "attachment_error": "The attachment could not be opened.",
+  "empty": "No notices yet.",
+  "more": "All notices"
+}

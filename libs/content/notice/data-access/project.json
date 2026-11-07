@@ -1,0 +1,24 @@
+{
+  "name": "content-notice-data-access",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/content/notice/data-access/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:data-access", "scope:content", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/content/notice/data-access",
+        "main": "libs/content/notice/data-access/src/index.ts",
+        "tsConfig": "libs/content/notice/data-access/tsconfig.lib.json",
+        "assets": ["libs/content/notice/data-access/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

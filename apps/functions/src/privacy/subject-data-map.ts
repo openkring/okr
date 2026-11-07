@@ -978,6 +978,23 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     retention: CLUB_RECORD,
   },
   {
+    // Mitteilungen (spec 1.145 §10): the In-App delivery of a Versand. The subject is a recipient;
+    // read access follows `recipients`, so their key must leave it at tenant exit and on erasure.
+    // The sender (`senderKey`/`senderName`) acts for the club, like a comment's author on a club
+    // record, and is not looked up here: a Versand is the association's communication.
+    collection: 'notices',
+    dataClass: 'communication',
+    tier: 'T4',
+    onTenantExit: 'anonymize',
+    find: (c: SubjectCtx) => db().collection('notices').where('recipients', 'array-contains', c.personKey),
+    tenantScope: 'tenantsArray',
+    onExport: 'index',
+    indexFields: { title: 'subject', date: 'sentAt', route: '/notice' },
+    onErasure: 'anonymize',
+    anonymizeFields: ['recipients'],
+    retention: CLUB_RECORD,
+  },
+  {
     collection: 'docs',
     dataClass: 'content',
     tier: 'T4',

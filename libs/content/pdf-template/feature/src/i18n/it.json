@@ -122,7 +122,8 @@
     "send": {
       "conf": "Documento inviato a {{ recipients }}",
       "error": "Invio non riuscito: {{ error }}",
-      "queue_error": "Impossibile creare il processo di invio."
+      "queue_error": "Impossibile creare il processo di invio.",
+      "mailing": "L’invio è partito: {{ emails }} via e-mail, {{ notices }} come comunicazione."
     },
     "revert": {
       "label": "Annulla"
@@ -162,8 +163,8 @@
       "p2": "In «Consegna» vedi questa scelta per ogni destinatario. Puoi cambiarla per questo invio; il profilo resta invariato. Chi non ha un account riceve un’e-mail, o una lettera se non si conosce un indirizzo e-mail.",
       "p3": "E-mail: il testo dell’editor viene inserito nel modello scelto e gli allegati vengono aggiunti all’e-mail. A, Cc e Ccn valgono solo qui. I destinatari sono in Ccn, così nessuno vede gli altri.",
       "p4": "In app: l’invio appare come comunicazione nella dashboard, con testo e allegati. Il destinatario riceve una notifica push che la apre.",
-      "p5": "Posta: il testo viene stampato come lettera con l’indirizzo del destinatario, gli allegati seguono e la lettera parte per posta. Ogni lettera ha un costo.",
-      "p6": "App e posta arriveranno presto. Fino ad allora un invio parte solo via e-mail."
+      "p5": "Posta: il testo viene impaginato come lettera con l’indirizzo del destinatario, seguito dagli allegati. Scarichi le lettere in PDF, le stampi e le spedisci tu.",
+      "p6": "La posta arriverà presto: allora scaricherai le lettere in PDF. Fino ad allora un invio parte via e-mail e in app."
     }
   },
   "category": {
