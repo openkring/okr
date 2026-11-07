@@ -329,6 +329,7 @@ type PickerSegment = 'blocks' | 'rows';
       border-radius: 10px;
       padding: 2px 8px;
       font-weight: 600;
+      align-self: center;
     }
     .active { --background: var(--ion-color-light-shade); }
 
