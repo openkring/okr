@@ -7,7 +7,7 @@ import { Header, ImgDirective, showImageSlider } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { AvatarDisplay, AvatarPipe } from '@okr/avatar-ui';
 import { weatherCodeToIcon, WEATHER_ICON_SET } from '@okr/weather-util';
-import { sunTimesLine } from '@okr/shared-util-core';
+import { sunTimesRange } from '@okr/shared-util-core';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { formatClockTime } from '@okr/mobility-tracker-util';
 
@@ -43,7 +43,9 @@ export interface DiaryNeighbours {
   styles: [`
     .body { padding: 16px; line-height: 1.5; }
     .meta ion-chip { margin-right: 4px; }
-    .meta ion-note.weather { text-align: right; }
+    /* one icon per line, the icons in a column and the texts starting at the same edge */
+    .weather { display: grid; grid-template-columns: auto auto; align-items: center; column-gap: 8px; row-gap: 2px; }
+    .weather ion-icon { font-size: 1.25rem; justify-self: center; }
     .people { display: flex; flex-wrap: wrap; gap: 8px; }
     .person, .location { cursor: pointer; }
     .tracks { padding: 0; }
@@ -98,10 +100,15 @@ export interface DiaryNeighbours {
         <ion-item>
           <ion-label><h2>{{ dateLabel() }}</h2></ion-label>
           @if (current().scope === 'day' && hasWeather()) {
-            <ion-icon slot="end" src="{{ weatherIcon() | svgIcon: weatherIconSet }}" />
-            <ion-note slot="end" class="weather">
-              {{ weatherLine() }}
-              @if (sunLine()) { <br />{{ sunLine() }} }
+            <ion-note slot="end">
+              <div class="weather">
+                <ion-icon src="{{ weatherIcon() | svgIcon: weatherIconSet }}" />
+                <span>{{ weatherLine() }}</span>
+                @if (sunTimes()) {
+                  <ion-icon src="{{ 'sunny' | svgIcon: weatherIconSet }}" />
+                  <span>{{ sunTimes() }}</span>
+                }
+              </div>
             </ion-note>
           } @else if (canRefreshWeather()) {
             <ion-button slot="end" fill="clear" size="small" [disabled]="weatherBusy()" (click)="fetchWeather()">
@@ -262,7 +269,7 @@ export class DiaryViewModal {
   protected readonly driveUrl = computed(() => driveFolderUrl(this.current().driveFolderId || this.resolvedFolderId()));
   protected readonly hasWeather = computed(() => hasDiaryWeather(this.current().weather));
   protected readonly weatherLine = computed(() => diaryWeatherLine(this.current().weather));
-  protected readonly sunLine = computed(() => sunTimesLine(this.current().weather));
+  protected readonly sunTimes = computed(() => sunTimesRange(this.current().weather));
   protected readonly weatherIcon = computed(() => weatherCodeToIcon(this.current().weather.code));
   protected readonly weatherIconSet = WEATHER_ICON_SET;
   /** weather needs a day and a resolved location (its coordinates); free text has none */

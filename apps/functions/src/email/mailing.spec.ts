@@ -6,8 +6,9 @@ describe('parseDeliveries', () => {
     expect(parseDeliveries([
       { personKey: 'a', channels: ['chat', 'email'] },
       { personKey: 'a', channels: ['email'] },
-      { personKey: 'b', channels: ['post'] },
-    ])).toEqual([{ personKey: 'a', channels: ['email', 'chat'] }]);
+      { personKey: 'b', channels: ['post', 'signal'] },
+      { personKey: 'c', channels: ['signal'] },
+    ])).toEqual([{ personKey: 'a', channels: ['email', 'chat'] }, { personKey: 'b', channels: ['post'] }]);
   });
 
   it('refuses anything that is not the expected shape', () => {

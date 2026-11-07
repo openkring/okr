@@ -152,7 +152,7 @@
       "chat": "In app",
       "email": "E-mail",
       "post": "Posta",
-      "soon": "in arrivo",
+      "soon": "non disponibile",
       "unreachable": "Non raggiungibili:",
       "hint": "Le tue modifiche valgono solo per questo invio. Il profilo dei destinatari resta com’è.",
       "empty": "Con questa selezione nessuno riceve l’invio.",
@@ -166,7 +166,16 @@
       "p3": "E-mail: il testo dell’editor viene inserito nel modello scelto e gli allegati vengono aggiunti all’e-mail. A, Cc e Ccn valgono solo qui. I destinatari sono in Ccn, così nessuno vede gli altri.",
       "p4": "In app: l’invio appare come comunicazione nella dashboard, con testo e allegati. Il destinatario riceve una notifica push che la apre.",
       "p5": "Posta: il testo viene impaginato come lettera con l’indirizzo del destinatario, seguito dagli allegati. Scarichi le lettere in PDF, le stampi e le spedisci tu.",
-      "p6": "La posta arriverà presto: allora scaricherai le lettere in PDF. Fino ad allora un invio parte via e-mail e in app."
+      "p6": "Le lettere restano disponibili per 7 giorni e poi vengono cancellate, perché contengono indirizzi. Come admin di gruppo non puoi spedire per posta."
+    },
+    "letters": {
+      "pending": "Le lettere sono in preparazione …",
+      "download": "Scarica le lettere",
+      "kept": "Le lettere restano disponibili per 7 giorni e poi vengono cancellate, perché contengono indirizzi.",
+      "expired": "Le lettere non sono più disponibili.",
+      "failed": "Non è stato possibile creare le lettere. Le e-mail e le comunicazioni partono comunque.",
+      "missing": "Senza indirizzo postale, nessuna lettera:",
+      "skipped": "Non nella lettera, perché non è un PDF:"
     },
     "events": {
       "label": "Eventi",

@@ -3,11 +3,16 @@ import { CalEventModel, DeliveryChannel } from '@okr/shared-models';
 import { addDuration, convertDateFormatToString, DateFormat, MAILING_CHANNELS, MailingRecipientChannels } from '@okr/shared-util-core';
 
 /**
- * The delivery types a Versand can actually send today: E-Mail, and In-App since P2 (spec 1.145 §10).
- * Post follows with P3 (the letter PDF); until then its column is shown but cannot be ticked (§3.1),
- * so the table never promises a delivery that does not happen.
+ * The delivery types a Versand sends (spec 1.145): E-Mail, In-App (P2), and Post as a letter PDF the
+ * sender downloads (P3).
  */
-export const ACTIVE_MAILING_CHANNELS: DeliveryChannel[] = [DeliveryChannel.Email, DeliveryChannel.Chat];
+export const ACTIVE_MAILING_CHANNELS: DeliveryChannel[] = [DeliveryChannel.Email, DeliveryChannel.Chat, DeliveryChannel.Post];
+
+/**
+ * What a group admin may send: no Post, because the letters carry members' postal addresses, which the
+ * address vault keeps from a group admin (spec 1.145 §6.1). The column is shown but cannot be ticked.
+ */
+export const GROUP_ADMIN_MAILING_CHANNELS: DeliveryChannel[] = [DeliveryChannel.Email, DeliveryChannel.Chat];
 
 /** What `sendMailing` gets per recipient: the ticked delivery types, persons without a tick left out. */
 export function versandDeliveries(rows: VersandRow[], deliveries: VersandDeliveries): { personKey: string; channels: DeliveryChannel[] }[] {
@@ -34,6 +39,7 @@ export type VersandDeliveries = Record<string, DeliveryChannel[]>;
 export function buildVersandRows(
   persons: { personKey: string; name: string; email: string }[],
   channels: MailingRecipientChannels[] | undefined,
+  active: DeliveryChannel[] = ACTIVE_MAILING_CHANNELS,
 ): { rows: VersandRow[]; deliveries: VersandDeliveries } {
   const byKey = new Map((channels ?? []).map((c) => [c.personKey, c]));
   const rows: VersandRow[] = [];
@@ -44,19 +50,21 @@ export function buildVersandRows(
     const fallback = person.email ? [DeliveryChannel.Email] : [];
     const possible = answer?.possible ?? fallback;
     rows.push({ ...person, possible });
-    deliveries[person.personKey] = (answer?.initial ?? fallback).filter((c) => ACTIVE_MAILING_CHANNELS.includes(c));
+    deliveries[person.personKey] = (answer?.initial ?? fallback).filter((c) => active.includes(c));
   }
   return { rows, deliveries };
 }
 
 /** Whether a cell can be ticked: possible for that person and sendable today. */
-export function isDeliveryEditable(row: VersandRow, channel: DeliveryChannel): boolean {
-  return ACTIVE_MAILING_CHANNELS.includes(channel) && row.possible.includes(channel);
+export function isDeliveryEditable(row: VersandRow, channel: DeliveryChannel, active: DeliveryChannel[] = ACTIVE_MAILING_CHANNELS): boolean {
+  return active.includes(channel) && row.possible.includes(channel);
 }
 
 /** Ticks or unticks one cell; a cell that is not editable is left as it is. */
-export function toggleDelivery(deliveries: VersandDeliveries, row: VersandRow, channel: DeliveryChannel): VersandDeliveries {
-  if (!isDeliveryEditable(row, channel)) return deliveries;
+export function toggleDelivery(
+  deliveries: VersandDeliveries, row: VersandRow, channel: DeliveryChannel, active: DeliveryChannel[] = ACTIVE_MAILING_CHANNELS,
+): VersandDeliveries {
+  if (!isDeliveryEditable(row, channel, active)) return deliveries;
   const current = deliveries[row.personKey] ?? [];
   const next = current.includes(channel) ? current.filter((c) => c !== channel) : [...current, channel];
   return { ...deliveries, [row.personKey]: MAILING_CHANNELS.filter((c) => next.includes(c)) };
@@ -160,4 +168,11 @@ export function groupReachWarnings(
     if (count > 0) out.push({ caleventKey: event.caleventKey, eventName: event.name, count });
   }
   return out;
+}
+
+/** The attachments a letter cannot carry: everything that is not a PDF (spec 1.145 §6.1). */
+export function nonPdfAttachmentNames(files: { filename: string; contentType?: string }[]): string[] {
+  return files
+    .filter((f) => f.filename && f.contentType !== 'application/pdf' && !f.filename.toLowerCase().endsWith('.pdf'))
+    .map((f) => f.filename);
 }

@@ -152,7 +152,7 @@
       "chat": "In-app",
       "email": "Email",
       "post": "Post",
-      "soon": "coming",
+      "soon": "not available",
       "unreachable": "Not reachable:",
       "hint": "Your changes apply to this mailing only. The recipients’ profiles stay as they are.",
       "empty": "With this selection nobody receives the mailing.",
@@ -166,7 +166,16 @@
       "p3": "Email: the text from the editor is set into the chosen template and the attachments are attached to the email. To, Cc and Bcc only apply here. Recipients are in Bcc, so nobody sees the others.",
       "p4": "In-app: the mailing appears as a notice on the dashboard, with its text and attachments. The recipient gets a push notification that opens it.",
       "p5": "Post: the text is set as a letter with the recipient’s address, followed by the attachments. You download the letters as a PDF, print them and post them yourself.",
-      "p6": "Post is coming soon: you will then download the letters as a PDF. Until then a mailing goes out by email and in-app."
+      "p6": "Letters stay ready for download for 7 days and are then deleted, because they contain addresses. As a group admin you cannot send by post."
+    },
+    "letters": {
+      "pending": "The letters are being created …",
+      "download": "Download letters",
+      "kept": "The letters stay ready for download for 7 days and are then deleted, because they contain addresses.",
+      "expired": "The letters are no longer available.",
+      "failed": "The letters could not be created. The emails and notices are on their way anyway.",
+      "missing": "No postal address, no letter:",
+      "skipped": "Not in the letter, because not a PDF:"
     },
     "events": {
       "label": "Events",

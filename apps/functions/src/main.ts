@@ -236,6 +236,7 @@ export const sendMailing = Email.sendMailing;                    // Versand: che
 export const onMailing = Email.onMailing;                        // Versand fan-out: mailJobs, notices, push
 export const mailingAnswer = Email.mailingAnswer;                // Versand: answer page behind the mail's personal link
 export const getNoticeAttachment = Email.getNoticeAttachment;    // signed URL for a Mitteilung file
+export const getMailingLetters = Email.getMailingLetters;        // Versand Post: state + signed URL of the letters PDF (P3)
 
 // bexio router (3.41 A6) + one 06:00 sync slot (D4); the six names below stay as aliases
 export const bexio = BexioRouter.bexio;

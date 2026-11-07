@@ -1249,6 +1249,10 @@
     "footer": {
       "label": "Pie de página",
       "description": "Pie de página con hasta tres columnas: títulos, textos, enlaces, iconos y logotipos"
+    },
+    "notices": {
+      "label": "Comunicados",
+      "description": "Los últimos comunicados para quien lee, procedentes de un envío"
     }
   },
   "message_center": {

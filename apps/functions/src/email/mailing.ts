@@ -10,7 +10,7 @@
 //   email → one `mailJobs` doc, the existing throttled sender. The Bcc is read here from
 //           `address-directory`, never taken from the client.
 //   chat  → one `notices` doc for the recipients with an account in the tenant, and a push that opens it.
-//   post  → nothing yet (P3: PDF download).
+//   post  → one PDF with a letter per recipient, for the sender to download (mailing-letters.ts, P3).
 //
 // Who may send: memberAdmin / privileged / admin of the tenant, or an admin of `groupKey`, who then reaches
 // only the group's current members and the tenant's own addresses (the boundary of sendGroupEmail).
@@ -41,6 +41,7 @@ import { lastEventDate } from './mailing-answer.logic';
 import { chunk, isElevated } from './mailing-recipients';
 import { MAX_PERSONAL_RECIPIENTS, parseCaleventKeys, personalEntries, refusedEventMessage, sendableEventRefusal } from './personal-mail.logic';
 import { asLayoutChoice } from './render-email.logic';
+import { buildMailingLetters } from './mailing-letters';
 
 const REGION = 'europe-west6';
 export const MailingCollection = 'mailings';
@@ -56,8 +57,8 @@ export function isTenantDocumentPath(path: string, tenantId: string): boolean {
   if (!tenantId || path.includes('..')) return false;
   return path.startsWith(`generated-docs/${tenantId}/`) || path.startsWith(`generated-docs-ephemeral/${tenantId}/`);
 }
-/** The channels a Versand sends today; `post` follows with P3. */
-const SENDABLE: string[] = [DeliveryChannel.Email, DeliveryChannel.Chat];
+/** The channels a Versand sends: E-Mail, In-App, and Post as a letter PDF for the sender (P3). */
+const SENDABLE: string[] = [DeliveryChannel.Email, DeliveryChannel.Chat, DeliveryChannel.Post];
 
 export interface MailingDelivery {
   personKey: string;
@@ -104,6 +105,8 @@ export interface MailingDoc {
   pushes?: number;
   mailJobKey?: string;
   noticeKey?: string;
+  /** the Post part (P3): built by `onMailing`, downloaded through `getMailingLetters` */
+  letters?: { state: 'pending' | 'ready' | 'failed'; storagePath?: string; count?: number; missing?: number; error?: string };
   error?: string;
   /** The events a Versand with answer links asks about (calevent keys); absent = no answer links. */
   caleventKeys?: string[];
@@ -244,6 +247,10 @@ export const sendMailing = onCall(
       }
       await assertCallerIsGroupAdmin(db, uid, tenantId, groupKey, 'Only an admin of the group may send to its members.');
       if (data.storagePath) throw new HttpsError('permission-denied', 'A group admin may only attach files from the device.');
+      // the letters carry members' postal addresses, which the address vault keeps from a group admin
+      if (keysFor(deliveries, DeliveryChannel.Post).length > 0) {
+        throw new HttpsError('permission-denied', 'A group admin cannot send by post.');
+      }
       const memberships = await db.collection('memberships').where('orgKey', '==', groupKey).where('orgModelType', '==', 'group').get();
       const members = new Set(activeMemberKeys(memberships.docs.map((doc) => doc.data() as MembershipDoc), tenantId, getTodayStr(DateFormat.StoreDate)));
       if (deliveries.some((d) => !members.has(d.personKey))) {
@@ -294,6 +301,7 @@ export const sendMailing = onCall(
       createdAt: getTodayStr(DateFormat.StoreDateTime),
       state: 'pending',
       ...(caleventKeys.length > 0 ? { caleventKeys, ...(validUntil ? { validUntil } : {}) } : {}),
+      ...(keysFor(deliveries, DeliveryChannel.Post).length > 0 ? { letters: { state: 'pending' as const } } : {}),
     };
     await ref.set(doc);
     logger.info(`${CF_NAME}: Versand ${ref.id} to ${deliveries.length} recipient(s) (tenant ${tenantId})`);
@@ -318,7 +326,8 @@ async function keysWithAccount(db: Firestore, tenantId: string, keys: string[]):
 }
 
 export const onMailing = onDocumentCreated(
-  { document: `${MailingCollection}/{mailingKey}`, region: REGION, memory: '512MiB', timeoutSeconds: 300, secrets: [invitationLinkSecret] },
+  // 2GiB, 540 s: the Post part renders one letter per recipient in Chromium (as generateDocument does)
+  { document: `${MailingCollection}/{mailingKey}`, region: REGION, memory: '2GiB', timeoutSeconds: 540, secrets: [invitationLinkSecret] },
   async (event) => {
     const CF_NAME = 'onMailing';
     const snap = event.data;
@@ -397,6 +406,22 @@ export const onMailing = onDocumentCreated(
         } catch (err) {
           // the notice is on the dashboard either way; a failed push is not a failed Versand
           logger.warn(`${CF_NAME}: push for notice ${noticeRef.id} failed:`, err);
+        }
+      }
+      // Post last: the slowest part, and its failure must not undo the mails and notices already out
+      const postKeys = keysFor(mailing.deliveries, DeliveryChannel.Post);
+      if (postKeys.length > 0) {
+        try {
+          const built = await buildMailingLetters({
+            tenantId, mailingKey: snap.id, personKeys: postKeys,
+            subject: mailing.subject, body: await sanitizeEmailBody(mailing.body), attachments: mailing.attachments,
+          });
+          result.letters = built?.storagePath
+            ? { state: 'ready', storagePath: built.storagePath, count: built.letters, missing: built.missing }
+            : { state: 'failed', count: 0, missing: built?.missing ?? postKeys.length, error: 'No recipient has a postal address.' };
+        } catch (err) {
+          logger.error(`${CF_NAME}: letters for Versand ${snap.id} failed:`, err);
+          result.letters = { state: 'failed', error: err instanceof Error ? err.message : String(err) };
         }
       }
       await snap.ref.update({ ...result, state: 'sent' });

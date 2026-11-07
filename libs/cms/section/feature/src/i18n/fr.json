@@ -1249,6 +1249,10 @@
     "footer": {
       "label": "Pied de page",
       "description": "Pied de page jusqu’à trois colonnes : titres, textes, liens, icônes et logos"
+    },
+    "notices": {
+      "label": "Communications",
+      "description": "Les dernières communications adressées à la personne qui lit, issues d’un envoi"
     }
   },
   "message_center": {

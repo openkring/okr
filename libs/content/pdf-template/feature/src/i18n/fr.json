@@ -152,7 +152,7 @@
       "chat": "Dans l’app",
       "email": "E-mail",
       "post": "Courrier",
-      "soon": "bientôt",
+      "soon": "pas possible",
       "unreachable": "Injoignables :",
       "hint": "Tes modifications ne valent que pour cet envoi. Le profil des destinataires reste inchangé.",
       "empty": "Avec cette sélection, personne ne reçoit l’envoi.",
@@ -166,7 +166,16 @@
       "p3": "E-mail : le texte de l’éditeur est placé dans le modèle choisi et les pièces jointes sont jointes à l’e-mail. À, Cc et Cci ne valent qu’ici. Les destinataires sont en Cci, personne ne voit les autres.",
       "p4": "Dans l’app : l’envoi apparaît comme communication sur le tableau de bord, avec texte et pièces jointes. Le destinataire reçoit une notification push qui l’ouvre.",
       "p5": "Courrier : le texte est mis en page comme lettre avec l’adresse du destinataire, les pièces jointes suivent. Tu télécharges les lettres en PDF, tu les imprimes et tu les envoies toi-même.",
-      "p6": "Le courrier arrive bientôt : tu téléchargeras alors les lettres en PDF. D’ici là, un envoi part par e-mail et dans l’app."
+      "p6": "Les lettres restent disponibles 7 jours, puis elles sont supprimées, car elles contiennent des adresses. En tant qu’admin de groupe, tu ne peux pas envoyer par courrier."
+    },
+    "letters": {
+      "pending": "Les lettres sont en cours de création …",
+      "download": "Télécharger les lettres",
+      "kept": "Les lettres restent disponibles 7 jours, puis elles sont supprimées, car elles contiennent des adresses.",
+      "expired": "Les lettres ne sont plus disponibles.",
+      "failed": "Les lettres n’ont pas pu être créées. Les e-mails et communications partent quand même.",
+      "missing": "Sans adresse postale, pas de lettre :",
+      "skipped": "Pas dans la lettre, car ce n’est pas un PDF :"
     },
     "events": {
       "label": "Événements",

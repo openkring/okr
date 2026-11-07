@@ -1249,6 +1249,10 @@
     "footer": {
       "label": "Piè di pagina",
       "description": "Piè di pagina con fino a tre colonne: titoli, testi, link, icone e loghi"
+    },
+    "notices": {
+      "label": "Comunicazioni",
+      "description": "Le ultime comunicazioni a chi legge, provenienti da un invio"
     }
   },
   "message_center": {
