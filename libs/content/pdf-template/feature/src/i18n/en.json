@@ -88,7 +88,8 @@
     "title": "Send document",
     "to": {
       "label": "To",
-      "placeholder": "email@domain.com"
+      "placeholder": "email@domain.com",
+      "reply_label": "Reply address"
     },
     "from": {
       "label": "From",
@@ -142,7 +143,8 @@
     },
     "list": {
       "empty": "No recipients entered.",
-      "email_only": "To, Cc and Bcc only apply to delivery by email."
+      "email_only": "To, Cc and Bcc only apply to delivery by email.",
+      "personal": "Each person gets their own email with a personal link."
     },
     "delivery": {
       "recipient": "Recipient",
@@ -165,6 +167,11 @@
       "p4": "In-app: the mailing appears as a notice on the dashboard, with its text and attachments. The recipient gets a push notification that opens it.",
       "p5": "Post: the text is set as a letter with the recipient’s address, followed by the attachments. You download the letters as a PDF, print them and post them yourself.",
       "p6": "Post is coming soon: you will then download the letters as a PDF. Until then a mailing goes out by email and in-app."
+    },
+    "events": {
+      "label": "Events",
+      "placeholder": "Choose events the recipients can sign up for",
+      "reach_warning": "{count} recipients are not in the group of «{eventName}» and can still sign up through the link."
     }
   },
   "category": {

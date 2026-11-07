@@ -14,6 +14,7 @@ export interface EmailComposerFormModel {
   subject: string;
   body: string;     // html body
   layout: EmailLayoutChoice;  // which frame the server wraps the body in
+  caleventKeys: string[];     // Versand only: events whose personal answer link is mailed; no validation rule
 }
 
 /** Lightweight email shape check (matches the auth credential suite style). */

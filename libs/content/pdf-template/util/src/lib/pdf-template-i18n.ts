@@ -162,6 +162,14 @@ export const EMAIL_COMPOSER_I18N_KEYS = {
   bcc_from_delivery: PFX + 'composer.bcc.from_delivery',
   attachment_label: PFX + 'composer.attachment.label',
 
+  // Versand with answer links: the «Anlässe» field and its notes
+  events_label:        PFX + 'composer.events.label',
+  events_placeholder:  PFX + 'composer.events.placeholder',
+  /** single braces: `{count}`, `{eventName}`, filled with `fill()` */
+  events_reach_warning: PFX + 'composer.events.reach_warning',
+  list_personal:       PFX + 'composer.list.personal',
+  to_reply_label:      PFX + 'composer.to.reply_label',
+
   // Versand (spec 1.145): the Zustellung table and the info modal
   segment_delivery:     PFX + 'composer.segment.delivery',
   delivery_recipient:   PFX + 'composer.delivery.recipient',

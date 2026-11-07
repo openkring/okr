@@ -64,6 +64,8 @@ export interface SendMailingRequest {
   filename?: string;
   extraAttachments: InlineAttachment[];
   deliveries: { personKey: string; channels: string[] }[];
+  /** events whose personal answer link the server mails to every E-Mail recipient; never with groupKey */
+  caleventKeys?: string[];
 }
 
 /** What the `renderEmailPreview` callable gets for a composer body. */
@@ -71,6 +73,8 @@ export interface RenderPreviewRequest {
   body: string;
   layout: EmailLayoutChoice;
   attachmentName?: string;
+  /** the events of a Versand with answer links, to show the link block in the preview */
+  answerEvents?: { name: string; when: string }[];
 }
 
 /** A mail as the server renders it: the composer's message, or a template version with sample data. */
@@ -152,6 +156,7 @@ export class DocEmailService {
       body: req.body,
       layout: req.layout,
       ...(req.attachmentName ? { attachmentName: req.attachmentName } : {}),
+      ...(req.answerEvents?.length ? { answerEvents: req.answerEvents } : {}),
     });
     return data;
   }

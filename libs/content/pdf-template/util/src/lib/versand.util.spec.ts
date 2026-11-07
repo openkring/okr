@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DeliveryChannel } from '@okr/shared-models';
-import { buildVersandRows, deliveryTotals, isDeliveryEditable, toggleDelivery, unreachableCount, versandBcc, versandDeliveries } from './versand.util';
+import { buildVersandRows, deliveryTotals, isDeliveryEditable, toggleDelivery, unreachableCount, versandBcc, versandDeliveries, groupReachWarnings, VersandEvent } from './versand.util';
 
 const anna = { personKey: 'a', name: 'Anna', email: 'anna@x.ch' };
 const beat = { personKey: 'b', name: 'Beat', email: '' };
@@ -67,5 +67,22 @@ describe('versandDeliveries', () => {
       { ...beat, possible: [] },
     ];
     expect(versandDeliveries(rows, { a: [DeliveryChannel.Chat], b: [] })).toEqual([{ personKey: 'a', channels: ['chat'] }]);
+  });
+});
+
+describe('groupReachWarnings', () => {
+  const cup: VersandEvent = { caleventKey: 'e1', name: 'Cup', when: '01.12.2026', groupKey: 'g1' };
+  const open: VersandEvent = { caleventKey: 'e2', name: 'Fest', when: '02.12.2026' };
+
+  it('groupReachWarnings counts only non-members', () => {
+    expect(groupReachWarnings([cup], ['a', 'b', 'c'], { g1: ['a'] })).toEqual([{ eventName: 'Cup', count: 2 }]);
+  });
+
+  it('groupReachWarnings skips events without groupKey', () => {
+    expect(groupReachWarnings([open], ['a', 'b'], {})).toEqual([]);
+  });
+
+  it('groupReachWarnings drops a zero count', () => {
+    expect(groupReachWarnings([cup], ['a'], { g1: ['a', 'z'] })).toEqual([]);
   });
 });

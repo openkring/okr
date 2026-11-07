@@ -88,7 +88,8 @@
     "title": "Dokument senden",
     "to": {
       "label": "An",
-      "placeholder": "email@domain.com"
+      "placeholder": "email@domain.com",
+      "reply_label": "Antwortadresse"
     },
     "from": {
       "label": "Von",
@@ -142,7 +143,8 @@
     },
     "list": {
       "empty": "Keine Empfänger erfasst.",
-      "email_only": "An, Cc und Bcc gelten nur für den Versand per E-Mail."
+      "email_only": "An, Cc und Bcc gelten nur für den Versand per E-Mail.",
+      "personal": "Jede Person bekommt eine eigene Mail mit ihrem persönlichen Link."
     },
     "delivery": {
       "recipient": "Empfänger",
@@ -165,6 +167,11 @@
       "p4": "In-App: Der Versand erscheint als Mitteilung auf dem Dashboard, mit Text und Anhängen. Der Empfänger erhält eine Push-Nachricht, die die Mitteilung öffnet.",
       "p5": "Post: Der Text wird als Brief mit der Adresse des Empfängers gesetzt, die Anhänge folgen dahinter. Du lädst die Briefe als PDF herunter, druckst sie und verschickst sie selbst.",
       "p6": "Post folgt bald: dann lädst du die Briefe als PDF herunter. Bis dahin geht ein Versand per E-Mail und In-App hinaus."
+    },
+    "events": {
+      "label": "Anlässe",
+      "placeholder": "Wähle Anlässe, zu denen sich die Empfänger anmelden können",
+      "reach_warning": "{count} Empfänger sind nicht in der Gruppe von «{eventName}» und können sich über den Link trotzdem anmelden."
     }
   },
   "category": {

@@ -3,8 +3,14 @@ import { ModalController } from '@ionic/angular';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
-import { AddressCollection, AddressModel, PersonModel } from '@okr/shared-models';
-import { getFullName, getSystemQuery } from '@okr/shared-util-core';
+import {
+  AddressCollection, AddressModel, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel,
+  MembershipCollection, MembershipModel, PersonModel,
+} from '@okr/shared-models';
+import {
+  convertDateFormatToString, DateFormat, formatExportTime, getFullName, getSystemQuery, getTodayStr, isActiveMembership,
+} from '@okr/shared-util-core';
+import type { VersandEvent } from '@okr/content-pdf-template-util';
 import { type ComposedEmail, EmailComposerModal, type VersandRecipient } from '@okr/content-pdf-template-ui';
 
 export type { ComposedEmail, VersandRecipient };
@@ -48,12 +54,16 @@ export async function openBulkEmailFlow(
   groupKey?: string,
 ): Promise<void> {
   const { favOrgEmail } = await loadOrgEmails(ctx);
+  // A group admin's Versand never carries answer links (the server refuses them): no events to load.
+  const { events, membersByGroup } = groupKey ? { events: [], membersByGroup: {} } : await loadVersandEvents(ctx);
   const composer = await ctx.modalController.create({
     component: EmailComposerModal,
     componentProps: {
       to: favOrgEmail,
       versandRecipients: recipients,
       groupKey: groupKey ?? '',
+      versandEvents: events,
+      membersByGroup,
       storagePath: attachment?.storagePath ?? '',
       filename: attachment?.filename ?? '',
       sendHandler,
@@ -80,4 +90,53 @@ async function loadOrgEmails(ctx: BulkEmailContext): Promise<{ orgEmails: string
   const favEmail = ctx.appStore.getDirectoryEntry(parentKey)?.favEmail ?? '';
   if (orgEmails.length === 0 && favEmail) orgEmails.push(favEmail);
   return { orgEmails, favOrgEmail: favEmail || orgEmails[0] || '' };
+}
+
+/**
+ * The tenant's upcoming events a Versand can attach (not archived, not cancelled, from today on, by date),
+ * each with the group whose calendar it sits in, plus the active member person keys of those groups.
+ * A read that fails comes back empty: the «Anlässe» field is then simply not offered.
+ */
+async function loadVersandEvents(ctx: BulkEmailContext): Promise<{ events: VersandEvent[]; membersByGroup: Record<string, string[]> }> {
+  const today = getTodayStr();
+  const eventQuery = getSystemQuery(ctx.tenantId);
+  eventQuery.push({ key: 'startDate', operator: '>=', value: today });
+  const [calevents, calendars] = await Promise.all([
+    ctx.firestoreService.getDataOnce<CalEventModel>(CalEventCollection, eventQuery, 'startDate'),
+    ctx.firestoreService.getDataOnce<CalendarModel>(CalendarCollection, getSystemQuery(ctx.tenantId)),
+  ]);
+  const groupOfCalendar = new Map(calendars
+    .filter((c) => (c.owner ?? '').startsWith('group.'))
+    .map((c) => [c.okey, c.owner.slice('group.'.length)]));
+
+  const events: VersandEvent[] = calevents
+    .filter((e) => e.state !== 'cancelled' && !e.isArchived)
+    .map((e) => {
+      const groupKey = (e.calendars ?? []).map((key) => groupOfCalendar.get(key)).find((key) => !!key);
+      return {
+        caleventKey: e.okey,
+        name: e.name,
+        when: eventWhen(e),
+        ...(groupKey ? { groupKey } : {}),
+      };
+    });
+
+  const groupKeys = [...new Set(events.map((e) => e.groupKey).filter((key): key is string => !!key))];
+  const membersByGroup: Record<string, string[]> = {};
+  await Promise.all(groupKeys.map(async (groupKey) => {
+    const query = getSystemQuery(ctx.tenantId);
+    query.push({ key: 'memberModelType', operator: '==', value: 'person' });
+    query.push({ key: 'orgKey', operator: '==', value: groupKey });
+    query.push({ key: 'orgModelType', operator: '==', value: 'group' });
+    const memberships = await ctx.firestoreService.getDataOnce<MembershipModel>(MembershipCollection, query, 'memberName2');
+    membersByGroup[groupKey] = memberships.filter((m) => isActiveMembership(m, today)).map((m) => m.memberKey);
+  }));
+  return { events, membersByGroup };
+}
+
+/** «01.12.2026» for an all-day event, «01.12.2026 19:30» with a start time. */
+function eventWhen(event: CalEventModel): string {
+  const date = convertDateFormatToString(event.startDate, DateFormat.StoreDate, DateFormat.ViewDate, false);
+  const time = formatExportTime(event.startTime);
+  return time ? `${date} ${time}` : date;
 }

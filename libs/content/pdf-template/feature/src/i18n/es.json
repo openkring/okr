@@ -88,7 +88,8 @@
     "title": "Enviar documento",
     "to": {
       "label": "Para",
-      "placeholder": "email@domain.com"
+      "placeholder": "email@domain.com",
+      "reply_label": "Dirección de respuesta"
     },
     "from": {
       "label": "De",
@@ -142,7 +143,8 @@
     },
     "list": {
       "empty": "No hay destinatarios.",
-      "email_only": "Para, Cc y Cco solo valen para el envío por correo."
+      "email_only": "Para, Cc y Cco solo valen para el envío por correo.",
+      "personal": "Cada persona recibe su propio correo con su enlace personal."
     },
     "delivery": {
       "recipient": "Destinatario",
@@ -165,6 +167,11 @@
       "p4": "En la app: el envío aparece como comunicado en el panel, con texto y adjuntos. El destinatario recibe una notificación push que lo abre.",
       "p5": "Correo postal: el texto se compone como carta con la dirección del destinatario y los adjuntos van detrás. Descargas las cartas en PDF, las imprimes y las envías tú.",
       "p6": "El correo postal llegará pronto: entonces descargarás las cartas en PDF. Hasta entonces, un envío sale por correo y en la app."
+    },
+    "events": {
+      "label": "Eventos",
+      "placeholder": "Elige eventos a los que los destinatarios pueden apuntarse",
+      "reach_warning": "{count} destinatarios no están en el grupo de «{eventName}» y aun así pueden apuntarse con el enlace."
     }
   },
   "category": {

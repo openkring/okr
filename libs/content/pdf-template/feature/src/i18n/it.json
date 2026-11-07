@@ -88,7 +88,8 @@
     "title": "Invia documento",
     "to": {
       "label": "A",
-      "placeholder": "email@domain.com"
+      "placeholder": "email@domain.com",
+      "reply_label": "Indirizzo di risposta"
     },
     "from": {
       "label": "Da",
@@ -142,7 +143,8 @@
     },
     "list": {
       "empty": "Nessun destinatario inserito.",
-      "email_only": "A, Cc e Ccn valgono solo per l’invio via e-mail."
+      "email_only": "A, Cc e Ccn valgono solo per l’invio via e-mail.",
+      "personal": "Ogni persona riceve una propria e-mail con il suo link personale."
     },
     "delivery": {
       "recipient": "Destinatario",
@@ -165,6 +167,11 @@
       "p4": "In app: l’invio appare come comunicazione nella dashboard, con testo e allegati. Il destinatario riceve una notifica push che la apre.",
       "p5": "Posta: il testo viene impaginato come lettera con l’indirizzo del destinatario, seguito dagli allegati. Scarichi le lettere in PDF, le stampi e le spedisci tu.",
       "p6": "La posta arriverà presto: allora scaricherai le lettere in PDF. Fino ad allora un invio parte via e-mail e in app."
+    },
+    "events": {
+      "label": "Eventi",
+      "placeholder": "Scegli gli eventi a cui i destinatari possono iscriversi",
+      "reach_warning": "{count} destinatari non fanno parte del gruppo di «{eventName}» e possono comunque iscriversi tramite il link."
     }
   },
   "category": {

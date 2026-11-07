@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import { emailComposerValidations, EmailComposerFormModel } from './email-composer.validations';
 
 function model(over: Partial<EmailComposerFormModel> = {}): EmailComposerFormModel {
-  return { to: 'a@x.ch', from: 'app@seeclub.org', cc: '', bcc: '', subject: 'Hi', body: '<p>x</p>', layout: 'standard', ...over };
+  return { to: 'a@x.ch', from: 'app@seeclub.org', cc: '', bcc: '', subject: 'Hi', body: '<p>x</p>', layout: 'standard', caleventKeys: [], ...over };
 }
 
 describe('emailComposerValidations', () => {

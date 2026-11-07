@@ -87,3 +87,33 @@ export function versandBcc(rows: VersandRow[], deliveries: VersandDeliveries): s
   }
   return out;
 }
+
+/** An event a Versand can attach: its personal answer link goes into every mail. */
+export interface VersandEvent {
+  caleventKey: string;
+  name: string;
+  /** the date (and time) as shown to the sender and in the mail, e.g. «01.12.2026 19:30» */
+  when: string;
+  /** the group whose calendar the event sits in, if any */
+  groupKey?: string;
+}
+
+/**
+ * Per chosen event of a group: how many of the E-Mail recipients are not in that group. They still get
+ * the link and can answer, so this is a note, not a block. Events without a group, and a count of 0,
+ * give no entry.
+ */
+export function groupReachWarnings(
+  events: VersandEvent[],
+  emailKeys: string[],
+  membersByGroup: Record<string, string[]>,
+): { eventName: string; count: number }[] {
+  const out: { eventName: string; count: number }[] = [];
+  for (const event of events) {
+    if (!event.groupKey) continue;
+    const members = new Set(membersByGroup[event.groupKey] ?? []);
+    const count = emailKeys.filter((key) => !members.has(key)).length;
+    if (count > 0) out.push({ eventName: event.name, count });
+  }
+  return out;
+}

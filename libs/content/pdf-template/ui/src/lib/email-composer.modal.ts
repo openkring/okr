@@ -19,17 +19,18 @@ import {
 } from '@okr/shared-ui';
 import type { OkrEditor } from '@okr/shared-ui-editor';
 import { DeliveryChannel, EmailLayoutChoice, LAYOUT_CHOICES } from '@okr/shared-models';
-import { needsEmailNormalization } from '@okr/shared-util-core';
+import { fill, needsEmailNormalization } from '@okr/shared-util-core';
 import { dismissOverlay, isBrowser, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 import {
-  buildVersandRows, emailBodyHasContent, isSenderDomainAllowed, parseEmails, toggleDelivery, versandBcc, versandDeliveries,
-  EmailComposerFormModel, emailComposerValidations, VersandDeliveries, VersandRow,
+  buildVersandRows, emailBodyHasContent, groupReachWarnings, isSenderDomainAllowed, parseEmails, toggleDelivery, versandBcc, versandDeliveries,
+  EmailComposerFormModel, emailComposerValidations, VersandDeliveries, VersandEvent, VersandRow,
   EMAIL_COMPOSER_I18N_KEYS, EMAIL_COMPOSER_MSG_KEYS, EmailComposerI18n,
 } from '@okr/content-pdf-template-util';
 import { DocEmailService, InlineAttachment } from '@okr/content-pdf-template-data-access';
 
 import { VersandDeliveryTable } from './versand-delivery-table';
+import { VersandEventsSelect } from './versand-events-select';
 import { VersandInfoModal } from './versand-info.modal';
 
 /** Reject files larger than this client-side (the CF caps inline attachments at 8 MB). */
@@ -74,7 +75,7 @@ type ComposerSegment = 'editor' | 'preview' | 'delivery' | 'list';
     FormsModule,
     SvgIconPipe,
     Header, Spinner, ButtonCopy, ChangeConfirmation, EmailInput, ErrorNote, StringSelect, TextInput,
-    VersandDeliveryTable,
+    VersandDeliveryTable, VersandEventsSelect,
     IonContent, IonButton,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonIcon, IonChip, IonLabel, IonNote,
     IonSegment, IonSegmentButton, IonList, IonItem,
@@ -94,6 +95,9 @@ type ComposerSegment = 'editor' | 'preview' | 'delivery' | 'list';
 
     @if (showConfirmation()) {
       <okr-change-confirmation [i18n]="changeConfirmationI18n()" (saveClicked)="send()" (cancelClicked)="revert()" />
+      @for (warning of reachWarnings(); track warning.eventName) {
+        <ion-note color="warning" class="note">{{ reachWarningText(warning) }}</ion-note>
+      }
     }
 
     <ion-content class="ion-no-padding">
@@ -129,6 +133,15 @@ type ComposerSegment = 'editor' | 'preview' | 'delivery' | 'list';
                         [selectedString]="layout()" (selectedStringChange)="onLayoutChange($event)" [readOnly]="false" />
                     </ion-col>
                   </ion-row>
+                  @if (showEvents()) {
+                    <ion-row>
+                      <ion-col size="12" size-md="6">
+                        <okr-versand-events-select [events]="versandEvents()" [label]="i18n.events_label()"
+                          [placeholder]="i18n.events_placeholder()"
+                          [selected]="caleventKeys()" (selectedChange)="onEventsChange($event)" />
+                      </ion-col>
+                    </ion-row>
+                  }
                   <ion-row>
                     <ion-col size="12">
                       @if (!editorRef()) {
@@ -214,6 +227,9 @@ type ComposerSegment = 'editor' | 'preview' | 'delivery' | 'list';
                 @if (isVersand()) {
                   <ion-note class="note">{{ i18n.list_email_only() }}</ion-note>
                 }
+                @if (hasEvents()) {
+                  <ion-note class="note">{{ i18n.list_personal() }}</ion-note>
+                }
                 <ion-grid>
                   <ion-row>
                     <ion-col size="12" size-md="6">
@@ -231,11 +247,13 @@ type ComposerSegment = 'editor' | 'preview' | 'delivery' | 'list';
                     </ion-col>
                   </ion-row>
                   <ion-row>
-                    <ion-col size="12" size-md="6">
-                      <okr-text-input [i18n]="ccI18n()" [value]="ccField()"
-                        (valueChange)="onFieldChange('cc', $event)" [maxLength]="addressLength" [readOnly]="false" />
-                      <okr-error-note [errors]="ccErrors()" />
-                    </ion-col>
+                    @if (!hasEvents()) {
+                      <ion-col size="12" size-md="6">
+                        <okr-text-input [i18n]="ccI18n()" [value]="ccField()"
+                          (valueChange)="onFieldChange('cc', $event)" [maxLength]="addressLength" [readOnly]="false" />
+                        <okr-error-note [errors]="ccErrors()" />
+                      </ion-col>
+                    }
                     <ion-col size="12" size-md="6">
                       @if (isVersand()) {
                         <ion-note class="note">{{ i18n.bcc_label() }}: {{ i18n.bcc_from_delivery() }}</ion-note>
@@ -315,6 +333,10 @@ export class EmailComposerModal {
   public readonly versandRecipients = input<VersandRecipient[] | undefined>(undefined);
   /** A group admin's Versand: the server only answers for the group's members. */
   public readonly groupKey       = input<string>('');
+  /** The events a Versand may attach with answer links (empty on a group admin's path: field hidden). */
+  public readonly versandEvents  = input<VersandEvent[]>([]);
+  /** groupKey → personKeys of its members, for the «not in the group» note. */
+  public readonly membersByGroup = input<Record<string, string[]>>({});
 
   protected readonly activeSegment = signal<ComposerSegment>('editor');
 
@@ -362,6 +384,24 @@ export class EmailComposerModal {
   /** "<block>/<blocks>" while a chunked bulk send is running, empty for a single message. */
   protected readonly progress = signal('');
   protected readonly showForm = signal(true);
+
+  // Anlässe: the events whose personal answer link every E-Mail recipient gets (own mail per person)
+  protected readonly caleventKeys = computed(() => this.formData().caleventKeys ?? []);
+  protected readonly showEvents = computed(() => this.isVersand() && !this.groupKey() && this.versandEvents().length > 0);
+  protected readonly chosenEvents = computed(() => {
+    if (!this.showEvents()) return [];
+    const keys = new Set(this.caleventKeys());
+    return this.versandEvents().filter((event) => keys.has(event.caleventKey));
+  });
+  protected readonly hasEvents = computed(() => this.chosenEvents().length > 0);
+  /** Per chosen group event: the E-Mail recipients outside that group (they can still answer). */
+  protected readonly reachWarnings = computed(() => {
+    const deliveries = this.deliveries();
+    const emailKeys = this.versandRows()
+      .filter((row) => (deliveries[row.personKey] ?? []).includes(DeliveryChannel.Email))
+      .map((row) => row.personKey);
+    return groupReachWarnings(this.chosenEvents(), emailKeys, this.membersByGroup());
+  });
   /** A Versand needs its Zustellung loaded and at least one ticked recipient. */
   protected readonly showConfirmation = computed(() =>
     this.composerForm().valid() && this.isDirty() && !this.isSending()
@@ -384,7 +424,7 @@ export class EmailComposerModal {
     const fd = this.formData();
     return [
       ...parseEmails(fd.to).map((email) => ({ email, kind: 'To' })),
-      ...parseEmails(fd.cc).map((email) => ({ email, kind: 'Cc' })),
+      ...(this.hasEvents() ? [] : parseEmails(fd.cc)).map((email) => ({ email, kind: 'Cc' })),
       ...parseEmails(fd.bcc).map((email) => ({ email, kind: 'Bcc' })),
     ];
   });
@@ -424,7 +464,7 @@ export class EmailComposerModal {
 
   // adapters at the shared/ui boundary (these components define their own minimal i18n interfaces)
   protected readonly toI18n = computed(() => ({
-    name: 'to', label: this.i18n.to_label(), placeholder: this.i18n.to_placeholder(), helper: '',
+    name: 'to', label: this.hasEvents() ? this.i18n.to_reply_label() : this.i18n.to_label(), placeholder: this.i18n.to_placeholder(), helper: '',
   } as TextInputI18n));
   protected readonly fromI18n = computed(() => ({
     name: 'from', label: this.i18n.from_label(), placeholder: this.i18n.from_placeholder(),
@@ -466,9 +506,10 @@ export class EmailComposerModal {
       const body = this.body();
       const layout = this.layout();
       const attachmentName = this.attachmentName();
+      const events = this.chosenEvents();
       untracked(() => {
         if (open && this.hasContent()) {
-          void this.loadPreview(body, layout, attachmentName);
+          void this.loadPreview(body, layout, attachmentName, events);
         } else {
           this.previewRequest++;       // leaving the preview (or nothing to show): a late response is stale
           this.previewLoading.set(false);
@@ -590,6 +631,7 @@ export class EmailComposerModal {
       subject: this.subjectDefault() || this.initialSubject(prefix),
       body: this.bodyDefault() || '<p></p>',
       layout: 'standard',
+      caleventKeys: [],
     };
   }
 
@@ -604,12 +646,15 @@ export class EmailComposerModal {
    * Ask the server for the rendered mail. The user may switch layout or segment while a request runs, so
    * only the latest request may write its result: an older response is dropped.
    */
-  private async loadPreview(body: string, layout: EmailLayoutChoice, attachmentName: string): Promise<void> {
+  private async loadPreview(body: string, layout: EmailLayoutChoice, attachmentName: string, events: VersandEvent[]): Promise<void> {
     const request = ++this.previewRequest;
     this.previewLoading.set(true);
     this.previewFailed.set(false);
     try {
-      const rendered = await this.docEmailService.renderPreview({ body, layout, attachmentName });
+      const rendered = await this.docEmailService.renderPreview({
+        body, layout, attachmentName,
+        ...(events.length > 0 ? { answerEvents: events.map((e) => ({ name: e.name, when: e.when })) } : {}),
+      });
       if (request !== this.previewRequest) return;
       this.previewHtml.set(this.sanitizer.bypassSecurityTrustHtml(rendered.html));
     } catch (err) {
@@ -622,7 +667,7 @@ export class EmailComposerModal {
     }
   }
 
-  protected onFieldChange(field: keyof EmailComposerFormModel, value: string): void {
+  protected onFieldChange(field: Exclude<keyof EmailComposerFormModel, 'caleventKeys'>, value: string): void {
     // pasted 'Name <a@b.ch>' / 'mailto:a@b.ch' recipients are reduced to the bare address
     if ((field === 'to' || field === 'cc' || field === 'bcc') && needsEmailNormalization(value)) {
       value = parseEmails(value).join(', ');
@@ -637,6 +682,17 @@ export class EmailComposerModal {
     if (!layout || layout === this.layout()) return;
     this.isDirty.set(true);
     this.formData.update((vm) => ({ ...vm, layout }));
+  }
+
+  protected onEventsChange(keys: string[]): void {
+    const current = this.caleventKeys();
+    if (keys.length === current.length && keys.every((key, i) => key === current[i])) return;
+    this.isDirty.set(true);
+    this.formData.update((vm) => ({ ...vm, caleventKeys: keys }));
+  }
+
+  protected reachWarningText(warning: { eventName: string; count: number }): string {
+    return fill(this.i18n.events_reach_warning(), { count: warning.count, eventName: warning.eventName });
   }
 
   protected clearBody(): void {
@@ -713,11 +769,14 @@ export class EmailComposerModal {
         await this.docEmailService.sendMailing({
           tenantId: this.appStore.tenantId(),
           ...(this.groupKey() ? { groupKey: this.groupKey() } : {}),
-          to: request.to, cc: request.cc, from: request.from,
+          to: request.to, from: request.from,
+          // with events every person gets their own mail: no Cc, the address in «An» is the reply address
+          cc: this.hasEvents() ? [] : request.cc,
           subject: request.subject, body: request.body, layout: request.layout,
           ...(request.storagePath ? { storagePath: request.storagePath, filename: request.filename } : {}),
           extraAttachments: request.extraAttachments,
           deliveries,
+          ...(this.hasEvents() ? { caleventKeys: this.chosenEvents().map((e) => e.caleventKey) } : {}),
         });
         await this.showParamToast(EMAIL_COMPOSER_MSG_KEYS.send_mailing, {
           emails: deliveries.filter((d) => d.channels.includes(DeliveryChannel.Email)).length,

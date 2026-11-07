@@ -88,7 +88,8 @@
     "title": "Envoyer le document",
     "to": {
       "label": "À",
-      "placeholder": "email@domain.com"
+      "placeholder": "email@domain.com",
+      "reply_label": "Adresse de réponse"
     },
     "from": {
       "label": "De",
@@ -142,7 +143,8 @@
     },
     "list": {
       "empty": "Aucun destinataire saisi.",
-      "email_only": "À, Cc et Cci ne valent que pour l’envoi par e-mail."
+      "email_only": "À, Cc et Cci ne valent que pour l’envoi par e-mail.",
+      "personal": "Chaque personne reçoit son propre e-mail avec son lien personnel."
     },
     "delivery": {
       "recipient": "Destinataire",
@@ -165,6 +167,11 @@
       "p4": "Dans l’app : l’envoi apparaît comme communication sur le tableau de bord, avec texte et pièces jointes. Le destinataire reçoit une notification push qui l’ouvre.",
       "p5": "Courrier : le texte est mis en page comme lettre avec l’adresse du destinataire, les pièces jointes suivent. Tu télécharges les lettres en PDF, tu les imprimes et tu les envoies toi-même.",
       "p6": "Le courrier arrive bientôt : tu téléchargeras alors les lettres en PDF. D’ici là, un envoi part par e-mail et dans l’app."
+    },
+    "events": {
+      "label": "Événements",
+      "placeholder": "Choisis des événements auxquels les destinataires peuvent s'inscrire",
+      "reach_warning": "{count} destinataires ne font pas partie du groupe de «{eventName}» et peuvent quand même s'inscrire via le lien."
     }
   },
   "category": {
