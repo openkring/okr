@@ -68,6 +68,22 @@ export function responseCommentKey(state: 'accepted' | 'declined'): string {
   return `@relationship/invitation/feature.comment.${state}`;
 }
 
+/** The answer comment on invitation.<okey>, as InvitationService.respond writes it. */
+export function answerCommentDoc(invitationKey: string, personKey: string, authorName: string, state: 'accepted' | 'declined', now: string, tenantId: string): Record<string, unknown> {
+  return {
+    parentKey: `invitation.${invitationKey}`,
+    isArchived: false,
+    tenants: [tenantId],
+    description: responseCommentKey(state),
+    authorKey: personKey,
+    creationDateTime: now,
+    tags: '',
+    attachmentKeys: [],
+    index: `ak:${personKey}, d:${now}, pk:invitation.${invitationKey}`,
+    authorName,
+  };
+}
+
 interface FullInvitation extends InvitationDoc { inviteeFirstName?: string; inviteeLastName?: string }
 
 /** GET reads the query (the email link), POST only the form body (the confirm page). */
@@ -103,18 +119,7 @@ async function recordAnswer(invRef: DocumentReference, eventRef: DocumentReferen
     const attendees = applyInvitationAnswer(freshEvent.data()?.['attendees'] as Attendee[] | undefined, person, state);
     tx.update(invRef, { state, respondedAt: now });
     tx.update(eventRef, { attendees });
-    tx.set(db.collection('comments').doc(), {
-      parentKey: `invitation.${invitationKey}`,
-      isArchived: false,
-      tenants: [tenantId],
-      description: responseCommentKey(state),
-      authorKey: person.key,
-      creationDateTime: now,
-      tags: '',
-      attachmentKeys: [],
-      index: `ak:${person.key}, d:${now}, pk:invitation.${invitationKey}`,
-      authorName,
-    });
+    tx.set(db.collection('comments').doc(), answerCommentDoc(invitationKey, person.key, authorName, state, now, tenantId));
     return { waiting: splitAttendees(attendees, freshEvent.data()?.['maxAttendees'] as number | undefined).waiting.some((attendee) => attendee.person.key === person.key) };
   });
 }

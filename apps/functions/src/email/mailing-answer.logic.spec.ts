@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Attendee } from '@okr/shared-models';
-import { attendeeStateOf, eventRefusal, lastEventDate, mayAnswer } from './mailing-answer.logic';
+import { attendeeStateOf, eventRefusal, invitationRefusal, lastEventDate, mayAnswer } from './mailing-answer.logic';
 
 const doc = {
   deliveries: [{ personKey: 'p1', channels: ['email'] }, { personKey: 'p2', channels: ['chat'] }],
@@ -57,4 +57,13 @@ describe('attendeeStateOf', () => {
     expect(attendeeStateOf(list, 1, 'p1')).toBe('waiting');
   });
   it('is declined for a declined entry', () => expect(attendeeStateOf([att('p1', 'declined')], 1, 'p1')).toBe('declined'));
+});
+
+describe('invitationRefusal', () => {
+  it('is locked for a live locked invitation', () => expect(invitationRefusal({ isLocked: true })).toBe('locked'));
+  it('ignores archived, absent and unlocked invitations', () => {
+    expect(invitationRefusal({ isLocked: true, isArchived: true })).toBeUndefined();
+    expect(invitationRefusal(undefined)).toBeUndefined();
+    expect(invitationRefusal({ isLocked: false })).toBeUndefined();
+  });
 });

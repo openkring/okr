@@ -32,6 +32,11 @@ export function eventRefusal(caleventKey: string, caleventKeys: string[], event:
   return eventRefusalOf(event, today);
 }
 
+/** Whether the person's own invitation to the event is frozen (undefined = may answer; absent or archived = no invitation to protect). */
+export function invitationRefusal(inv: { isArchived?: boolean; isLocked?: boolean } | undefined): AnswerRefusal | undefined {
+  return inv && !inv.isArchived && inv.isLocked ? 'locked' : undefined;
+}
+
 /** Where the person stands on an event; a yes beyond maxAttendees is on the waiting list. */
 export function attendeeStateOf(attendees: Attendee[] | undefined, maxAttendees: number | undefined, personKey: string): 'accepted' | 'waiting' | 'declined' | 'open' {
   const split = splitAttendees(attendees, maxAttendees);

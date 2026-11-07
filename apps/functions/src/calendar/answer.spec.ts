@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { REFUSAL_TEXT, answerResultText, decideAnswer, linkRefusal, responseCommentKey } from './answer';
+import { REFUSAL_TEXT, answerCommentDoc, answerResultText, decideAnswer, linkRefusal, responseCommentKey } from './answer';
 
 const inv = { tenants: ['scs'], inviteeKey: 'p', caleventKey: 'e', state: 'pending' };
 const event = { name: 'test2', startDate: '20261001', startTime: '11:00' };
@@ -60,5 +60,16 @@ describe('responseCommentKey', () => {
   it('matches the client key', () => {
     expect(responseCommentKey('accepted')).toBe('@relationship/invitation/feature.comment.accepted');
     expect(responseCommentKey('declined')).toBe('@relationship/invitation/feature.comment.declined');
+  });
+});
+
+describe('answerCommentDoc', () => {
+  it('writes the comment on the invitation with the indexed author and date', () => {
+    expect(answerCommentDoc('i1', 'p1', 'Ann Lee', 'accepted', '20261101120000', 'scs')).toEqual({
+      parentKey: 'invitation.i1', isArchived: false, tenants: ['scs'],
+      description: '@relationship/invitation/feature.comment.accepted',
+      authorKey: 'p1', creationDateTime: '20261101120000', tags: '', attachmentKeys: [],
+      index: 'ak:p1, d:20261101120000, pk:invitation.i1', authorName: 'Ann Lee',
+    });
   });
 });

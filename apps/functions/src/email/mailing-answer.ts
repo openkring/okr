@@ -16,14 +16,14 @@ import { AvatarInfo, Attendee } from '@okr/shared-models';
 import { splitAttendees } from '@okr/calendar-calevent-util';
 
 import { isAnswerChoice, invitationLinkSecret, mailingAnswerFunctionUrl, verifyMailing } from '../calendar/answer-link';
-import { answerResultText, responseCommentKey } from '../calendar/answer';
+import { answerCommentDoc, answerResultText } from '../calendar/answer';
 import { brandOf, NO_TENANT_LINKS, tenantLinks } from '../calendar/deliver';
 import { AnswerableEvent, eventInTenant, InvitationDoc } from '../calendar/invitation';
 import { answerResultPage, Brand, eventWhen, mailingAnswerPage, MailingAnswerEvent } from '../calendar/mail';
 import { todayStoreDate } from '../calendar/recipients';
 import { AnswerRefusal, REFUSAL_TEXT } from '../calendar/refusal';
 import { toStoreDateTime } from '../srv/zurich-time';
-import { attendeeStateOf, eventRefusal, mayAnswer } from './mailing-answer.logic';
+import { attendeeStateOf, eventRefusal, invitationRefusal, mayAnswer } from './mailing-answer.logic';
 import { MailingDoc } from './mailing';
 
 const CF_NAME = 'mailingAnswer';
@@ -110,7 +110,8 @@ export const mailingAnswer = onRequest(
       const answer = param(params, 'a');
       if (!isAnswerChoice(answer)) { refuse('invalid', 403); return; }
       const early = eventRefusal(caleventKey, caleventKeys, events.get(caleventKey), today);
-      if (early) { refuse(early, early === 'invalid' ? 403 : 200); return; }
+      if (early === 'invalid') { refuse('invalid', 403); return; }
+      if (early) { res.status(200).send(page(REFUSAL_TEXT[early].message)); return; }
 
       const state = answer === 'accept' ? 'accepted' : 'declined';
       const eventRef = db.collection('calevents').doc(caleventKey);
@@ -132,27 +133,25 @@ export const mailingAnswer = onRequest(
         const [freshEvent, freshInv] = await Promise.all([tx.get(eventRef), invRef ? tx.get(invRef) : Promise.resolve(undefined)]);
         const refusal = eventRefusal(caleventKey, caleventKeys, eventInTenant(freshEvent.data(), doc.tenants), todayStoreDate());
         if (refusal) return { refusal };
+        const invData = freshInv?.exists ? (freshInv.data() as InvitationDoc) : undefined;
+        const invLocked = invitationRefusal(invData);
+        if (invLocked) return { refusal: invLocked };
         const attendees = applyInvitationAnswer(freshEvent.data()?.['attendees'] as Attendee[] | undefined, person, state);
         tx.update(eventRef, { attendees });
-        if (invRef && freshInv?.exists && !(freshInv.data() as InvitationDoc).isArchived) {
+        if (invRef && invData && !invData.isArchived) {
           const invitationKey = invRef.id;
           tx.update(invRef, { state, respondedAt: now });
-          tx.set(db.collection('comments').doc(), {
-            parentKey: `invitation.${invitationKey}`,
-            isArchived: false,
-            tenants: [tenantId],
-            description: responseCommentKey(state),
-            authorKey: personKey,
-            creationDateTime: now,
-            tags: '',
-            attachmentKeys: [],
-            index: `ak:${personKey}, d:${now}, pk:invitation.${invitationKey}`,
-            authorName,
-          });
+          tx.set(db.collection('comments').doc(), answerCommentDoc(invitationKey, personKey, authorName, state, now, tenantId));
         }
         return { waiting: splitAttendees(attendees, freshEvent.data()?.['maxAttendees'] as number | undefined).waiting.some((a) => a.person.key === personKey) };
       });
-      if ('refusal' in outcome) { refuse(outcome.refusal); return; }
+      if ('refusal' in outcome) {
+        // only this event is refused; the others stay answerable
+        const fresh = await eventRef.get();
+        events.set(caleventKey, eventOf(fresh.data(), doc.tenants));
+        res.status(200).send(page(REFUSAL_TEXT[outcome.refusal].message));
+        return;
+      }
       logger.info(`${CF_NAME}: recorded ${state} for one mailing answer (tenant ${tenantId})`);
 
       // The page again, with the new state of that event: re-read it so the block shows the answer.
