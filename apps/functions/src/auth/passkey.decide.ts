@@ -6,7 +6,6 @@ import type { PasskeyItem } from '@okr/shared-models';
 import { escapeHtml } from '../calendar/mail';
 
 export const CHALLENGE_TTL_MS = 300_000;
-export const RECENT_SIGNIN_SECONDS = 300;
 
 export type ChallengePurpose = 'register' | 'login';
 
@@ -70,24 +69,12 @@ export function isChallengeUsable(c: StoredChallenge | undefined, purpose: Chall
   return !!c && c.purpose === purpose && nowMs <= c.expiresAt;
 }
 
-/** @param authTimeSec the ID token's auth_time (seconds since epoch) */
-export function isRecentSignIn(authTimeSec: number | undefined, nowMs: number): boolean {
-  if (authTimeSec === undefined) return false;
-  return nowMs - authTimeSec * 1000 <= RECENT_SIGNIN_SECONDS * 1000;
-}
-
 /**
- * Why this session may not add a passkey, or undefined when it may. An admin's impersonation
- * session (`createCustomToken` stamps `impersonatedBy`) is always fresh, so without this check
- * it could plant a passkey and keep a permanent login to the member's account.
+ * An admin's impersonation session (`createCustomToken` stamps `impersonatedBy`) may not add a
+ * passkey: it could plant one and keep a permanent login to the member's account.
  */
-export function registrationBlock(
-  token: { auth_time?: number; impersonatedBy?: unknown } | undefined,
-  nowMs: number,
-): 'impersonated' | 'recent-login-required' | undefined {
-  if (token?.impersonatedBy) return 'impersonated';
-  if (!isRecentSignIn(token?.auth_time, nowMs)) return 'recent-login-required';
-  return undefined;
+export function isImpersonated(token: { impersonatedBy?: unknown } | undefined): boolean {
+  return !!token?.impersonatedBy;
 }
 
 export function checkLoginTarget(t: {

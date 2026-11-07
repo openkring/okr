@@ -5,11 +5,13 @@ import { ActionSheetController, AlertController, ToastController } from '@ionic/
 import { PasskeyItem } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';
 import { AppStore } from '@okr/shared-feature';
-import { AuthService, PasskeyService } from '@okr/auth-data-access';
+import { PasskeyService, PreparedRegistration } from '@okr/auth-data-access';
 import { AUTH_I18N_KEYS, passkeyErrorKind } from '@okr/auth-util';
 import { confirm, createActionSheetButton, createActionSheetOptions, okrPrompt, showToast } from '@okr/shared-util-angular';
 
 const MAX_LABEL = 40;
+/** A prepared challenge lives 5 minutes on the server; stop using it a little earlier. */
+const PREPARED_MAX_AGE_MS = 240_000;
 
 interface PasskeyState {
   uid: string;
@@ -24,7 +26,6 @@ export const PasskeyStore = signalStore(
   withProps(() => ({
     appStore: inject(AppStore),
     passkeyService: inject(PasskeyService),
-    authService: inject(AuthService),
     i18nService: inject(I18nService),
     alertController: inject(AlertController),
     toastController: inject(ToastController),
@@ -34,6 +35,17 @@ export const PasskeyStore = signalStore(
     i18n: store.i18nService.translateAll(AUTH_I18N_KEYS),
   })),
   withMethods((store) => {
+    let prepared: { options: PreparedRegistration; at: number } | undefined;
+
+    /** Best effort: without prepared options, register() fetches them after the tap. */
+    const prepareAdd = async (): Promise<void> => {
+      try {
+        prepared = { options: await store.passkeyService.prepareRegistration(), at: Date.now() };
+      } catch {
+        prepared = undefined;
+      }
+    };
+
     /** `quiet`: the initial load on every profile visit must not toast when offline or the function is unreachable. */
     const reload = async (quiet = false): Promise<void> => {
       const uid = store.uid();
@@ -49,16 +61,6 @@ export const PasskeyStore = signalStore(
       } finally {
         if (store.uid() === uid) patchState(store, { loading: false });
       }
-    };
-
-    /** Asks for the password, re-authenticates; false when cancelled or wrong. */
-    const askReauth = async (): Promise<boolean> => {
-      const password = await okrPrompt(store.alertController, store.i18n.passkey_reauth(), store.i18n.passkey_reauth(), store.i18n.ok(), store.i18n.cancel());
-      if (!password) return false;
-      const loginId = store.appStore.currentUser()?.loginId || undefined;
-      const ok = await store.authService.reauthenticate(password, loginId);
-      if (!ok) await showToast(store.toastController, store.i18n.passkey_error());
-      return ok;
     };
 
     const rename = async (item: PasskeyItem): Promise<void> => {
@@ -83,6 +85,7 @@ export const PasskeyStore = signalStore(
       try {
         await store.passkeyService.remove(item.okey);
         await reload();
+        if (prepared) void prepareAdd(); // they exclude the passkey just deleted
       } catch {
         await showToast(store.toastController, store.i18n.passkey_error());
       }
@@ -105,27 +108,22 @@ export const PasskeyStore = signalStore(
       reload: (): Promise<void> => reload(),
       rename,
       remove,
+      prepareAdd,
 
       async add(): Promise<void> {
-        let retried = false;
-        for (;;) {
-          try {
-            await store.passkeyService.register();
-            await showToast(store.toastController, store.i18n.passkey_added());
-            await reload();
-            return;
-          } catch (err) {
-            const kind = passkeyErrorKind(err);
-            if (kind === 'cancelled') return;
-            if (kind === 'exists') { await showToast(store.toastController, store.i18n.passkey_exists()); return; }
-            if (kind === 'reauth' && !retried) {
-              retried = true;
-              if (await askReauth()) continue;
-              return;
-            }
-            await showToast(store.toastController, kind === 'unsupported' ? store.i18n.passkey_unavailable() : store.i18n.passkey_error());
-            return;
-          }
+        const options = prepared && Date.now() - prepared.at < PREPARED_MAX_AGE_MS ? prepared.options : undefined;
+        prepared = undefined;
+        try {
+          await store.passkeyService.register(options);
+          await showToast(store.toastController, store.i18n.passkey_added());
+          await reload();
+        } catch (err) {
+          const kind = passkeyErrorKind(err);
+          if (kind === 'cancelled') return;
+          if (kind === 'exists') { await showToast(store.toastController, store.i18n.passkey_exists()); return; }
+          await showToast(store.toastController, kind === 'unsupported' ? store.i18n.passkey_unavailable() : store.i18n.passkey_error());
+        } finally {
+          void prepareAdd();
         }
       },
 

@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { AlertController } from '@ionic/angular';
-import { browserLocalPersistence, confirmPasswordReset, EmailAuthProvider, reauthenticateWithCredential, setPersistence, signInWithCustomToken, signInWithEmailAndPassword, signOut, verifyPasswordResetCode } from 'firebase/auth';
+import { browserLocalPersistence, confirmPasswordReset, setPersistence, signInWithCustomToken, signInWithEmailAndPassword, signOut, verifyPasswordResetCode } from 'firebase/auth';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
@@ -199,29 +199,6 @@ export class AuthService {
     } catch (ex) {
       if (passkeyErrorKind(ex) === 'cancelled') return;
       console.warn('AuthService.offerPasskey: ', ex);
-    }
-  }
-
-  /**
-   * Prove the password again to get a fresh auth_time (passkey management requires a recent login).
-   * With a loginId (Benutzername account, synthetic email) the server checks the password and the
-   * user is signed in again; otherwise the current email credential is re-authenticated.
-   * @returns false on any failure
-   */
-  public async reauthenticate(password: string, loginId?: string): Promise<boolean> {
-    try {
-      if (!password) return false;
-      if (loginId) {
-        await this.signInWithLoginId(normalizeLoginIdInput(loginId), password);
-      } else {
-        const user = this.auth.currentUser;
-        if (!user?.email) return false;
-        await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, password));
-      }
-      return true;
-    } catch (ex) {
-      console.error('AuthService.reauthenticate: error: ', ex);
-      return false;
     }
   }
 

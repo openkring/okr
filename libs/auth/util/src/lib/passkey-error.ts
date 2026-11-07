@@ -1,5 +1,5 @@
 /** What went wrong with a passkey ceremony or callable, reduced to what the UI reacts to. */
-export type PasskeyErrorKind = 'cancelled' | 'exists' | 'reauth' | 'unsupported' | 'error';
+export type PasskeyErrorKind = 'cancelled' | 'exists' | 'unsupported' | 'error';
 
 function nameOf(err: unknown): string {
   if (typeof err !== 'object' || err === null) return '';
@@ -19,8 +19,5 @@ export function passkeyErrorKind(err: unknown): PasskeyErrorKind {
     if (name === 'InvalidStateError') return 'exists';
     if (name === 'NotSupportedError') return 'unsupported';
   }
-  const { code, message } = err as { code?: unknown; message?: unknown };
-  if (code === 'functions/already-exists') return 'exists';
-  if (code === 'functions/failed-precondition' && message === 'recent-login-required') return 'reauth';
-  return 'error';
+  return (err as { code?: unknown }).code === 'functions/already-exists' ? 'exists' : 'error';
 }

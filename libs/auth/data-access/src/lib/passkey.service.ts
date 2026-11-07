@@ -2,11 +2,17 @@ import { Injectable, inject } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { firstValueFrom, timeout } from 'rxjs';
 import { WebAuthnAbortService, browserSupportsWebAuthn, browserSupportsWebAuthnAutofill, platformAuthenticatorIsAvailable, startAuthentication, startRegistration } from '@simplewebauthn/browser';
 import type { PublicKeyCredentialCreationOptionsJSON, PublicKeyCredentialRequestOptionsJSON } from '@simplewebauthn/browser';
 
 import { ENV } from '@okr/shared-config';
+import { offersPasskeys } from '@okr/auth-util';
+import { AppConfigService } from '@okr/shared-data-access';
 import { PasskeyItem } from '@okr/shared-models';
+
+/** Without an answer by then nothing is offered: a passkey needs the network anyway. */
+const APP_CONFIG_TIMEOUT_MS = 5000;
 
 type OptionsResult<T> = { challengeId: string; options: T };
 
@@ -30,13 +36,14 @@ export type PreparedLogin = OptionsResult<PublicKeyCredentialRequestOptionsJSON>
 @Injectable({ providedIn: 'root' })
 export class PasskeyService {
   private readonly env = inject(ENV);
+  private readonly appConfigService = inject(AppConfigService);
   /** Native only: the app host the plugin signs for, once its shim is installed; undefined = no passkeys. */
   private nativeHost: Promise<string | undefined> | undefined;
 
   /** Can this device offer "sign in with passkey"? */
   public async canSignIn(): Promise<boolean> {
     if (Capacitor.isNativePlatform()) return (await this.getNativeHost()) !== undefined;
-    return browserSupportsWebAuthn();
+    return offersPasskeys(location.hostname, await this.getAppDomain()) && browserSupportsWebAuthn();
   }
 
   /** Can this device create a passkey (a platform authenticator is present)? */
@@ -120,6 +127,16 @@ export class PasskeyService {
       return { tenantId: this.env.tenantId, rpId: host, origin: `https://${host}` };
     }
     return { tenantId: this.env.tenantId, rpId: location.hostname, origin: location.origin };
+  }
+
+  /** The tenant's `app-config.appDomain`; empty when it cannot be read. */
+  private async getAppDomain(): Promise<string> {
+    try {
+      const config = await firstValueFrom(this.appConfigService.read(this.env.tenantId).pipe(timeout(APP_CONFIG_TIMEOUT_MS)));
+      return config?.appDomain ?? '';
+    } catch {
+      return '';
+    }
   }
 
   /** Installs the plugin's WebAuthn shim once and resolves to the host it signs for. */

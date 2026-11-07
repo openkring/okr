@@ -120,7 +120,6 @@
     "added": "Clé d’accès ajoutée.",
     "unavailable": "Les clés d’accès ne sont pas disponibles sur cet appareil.",
     "exists": "Cet appareil a déjà une clé d’accès pour ton compte.",
-    "reauth": "Pour ta sécurité, saisis encore une fois ton mot de passe.",
     "synced": "synchronisée",
     "created": "Créée",
     "lastUsed": "Dernière utilisation",

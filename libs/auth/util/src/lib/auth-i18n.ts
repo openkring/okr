@@ -76,7 +76,6 @@ export const AUTH_I18N_KEYS = {
   passkey_added:            PFX + 'passkey.added',
   passkey_unavailable:      PFX + 'passkey.unavailable',
   passkey_exists:           PFX + 'passkey.exists',
-  passkey_reauth:           PFX + 'passkey.reauth',
   passkey_synced:           PFX + 'passkey.synced',
   passkey_created:          PFX + 'passkey.created',
   passkey_lastUsed:         PFX + 'passkey.lastUsed',

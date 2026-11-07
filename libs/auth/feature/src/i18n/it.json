@@ -120,7 +120,6 @@
     "added": "Passkey aggiunta.",
     "unavailable": "Le passkey non sono disponibili su questo dispositivo.",
     "exists": "Su questo dispositivo c’è già una passkey per il tuo account.",
-    "reauth": "Per sicurezza, inserisci di nuovo la tua password.",
     "synced": "sincronizzata",
     "created": "Creata",
     "lastUsed": "Ultimo utilizzo",
