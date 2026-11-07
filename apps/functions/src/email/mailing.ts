@@ -26,6 +26,7 @@ import { projectID } from 'firebase-functions/params';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
 import { invitationLinkSecret, mailingAnswerFunctionUrl, mailingAnswerUrl } from '../calendar/answer-link';
+import { todayStoreDate } from '../calendar/recipients';
 import type { AnswerableEvent } from '../calendar/invitation';
 import { eventWhen } from '../calendar/mail';
 import { privateBucket } from '../_storage/private-bucket';
@@ -38,7 +39,7 @@ import { htmlToText } from './html-to-text';
 import { MailJobCollection, MailJobDoc } from './mail-job';
 import { lastEventDate } from './mailing-answer.logic';
 import { chunk, isElevated } from './mailing-recipients';
-import { MAX_PERSONAL_RECIPIENTS, parseCaleventKeys, personalEntries, sendableEventRefusal } from './personal-mail.logic';
+import { MAX_PERSONAL_RECIPIENTS, parseCaleventKeys, personalEntries, refusedEventMessage, sendableEventRefusal } from './personal-mail.logic';
 import { asLayoutChoice } from './render-email.logic';
 
 const REGION = 'europe-west6';
@@ -260,12 +261,14 @@ export const sendMailing = onCall(
 
     let validUntil: string | undefined;
     if (caleventKeys.length > 0) {
-      const today = getTodayStr(DateFormat.StoreDate);
+      const today = todayStoreDate();               // Zurich, the same day the answer page judges by
       const snaps = await db.getAll(...caleventKeys.map((key) => db.collection('calevents').doc(key)));
       const events = snaps.map((snap) => snap.data() as AnswerableEvent | undefined);
       for (const event of events) {
         if (sendableEventRefusal(event, tenantId, today)) {
-          throw new HttpsError('invalid-argument', 'An event cannot be answered: it is missing, archived, cancelled, locked or over.');
+          // the name only when the event belongs to this tenant: another tenant's name must not leak
+          const name = event?.tenants?.includes(tenantId) ? event.name : undefined;
+          throw new HttpsError('invalid-argument', refusedEventMessage(name));
         }
       }
       validUntil = lastEventDate(events as AnswerableEvent[]);

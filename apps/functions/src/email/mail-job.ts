@@ -21,7 +21,10 @@ import { bareAddress, effectiveSender, getAppEmailConfig, getEmailProvider } fro
 import { sendEmailViaProvider } from '../auth/email-transport';
 import { AttachmentRef, resolveAttachments } from '../auth';
 import { composeBody } from './render-email';
-import { ANSWER_URL_PLACEHOLDER, answerBlockHtml, AnswerEventLine, fillAnswerUrl, hasAnswerPlaceholder, PER_MAIL_PAUSE_MS, personalOutcome, PersonalEntry, sendErrorCode } from './personal-mail.logic';
+import {
+  ANSWER_URL_PLACEHOLDER, answerBlockHtml, AnswerEventLine, deadlineOutcome, deadlineReached, fillAnswerUrl, hasAnswerPlaceholder,
+  PER_MAIL_PAUSE_MS, personalOutcome, PersonalEntry, sendErrorCode,
+} from './personal-mail.logic';
 import { asLayoutChoice } from './render-email.logic';
 
 const REGION = 'europe-west6';
@@ -118,34 +121,47 @@ const PERSONAL_PROGRESS_EVERY = 10;
 
 /**
  * The personal path: one mail per entry, the body plus that person's answer block in the layout. A failed
- * mail is counted and the others still go out; the job fails only when nothing was sent.
+ * mail is counted and the others still go out; the job fails only when nothing was sent. Past the
+ * deadline no further mail is started and the job ends `failed` with the count. `progress.sent` is
+ * shared with the caller, so a failure mid-loop still reports how many mails went out. `now` is
+ * injectable for the test.
  */
-async function sendPersonal(
+export async function sendPersonal(
   snap: { ref: { update(data: object): Promise<unknown> } },
   job: MailJobDoc, tenantId: string, from: string, provider: string, attachments: Awaited<ReturnType<typeof resolveAttachments>>,
+  progress: { sent: number },
+  deps: { now?: () => number; send?: typeof sendEmailViaProvider; compose?: typeof composeBody; pauseMs?: number } = {},
 ): Promise<void> {
+  const now = deps.now ?? Date.now;
+  const send = deps.send ?? sendEmailViaProvider;
+  const pauseMs = deps.pauseMs ?? PER_MAIL_PAUSE_MS;
+  const startMs = now();
   const personal = job.personal ?? [];
   const events = job.answerEvents ?? [];
   if (typeof job.body !== 'string' || !job.body.trim()) throw new Error('The mail job has an empty body.');
   await snap.ref.update({ state: 'sending', blocksTotal: personal.length, blocksSent: 0 });
   // composed once for everybody (sanitise, layout, template reads); each mail only swaps in its own link
-  const composed = await composeBody(tenantId, {
+  const composed = await (deps.compose ?? composeBody)(tenantId, {
     body: job.body + answerBlockHtml(ANSWER_URL_PLACEHOLDER, events), layout: asLayoutChoice(job.layout), attachmentName: job.attachmentName,
   });
   // fail closed: a layout or sanitiser that rewrote the placeholder would send everybody a dummy link
   if (!hasAnswerPlaceholder(composed)) throw new Error('The answer link is missing from the composed mail.');
-  let sent = 0;
   let failed = 0;
   let errorCode: string | undefined;
   for (const [i, entry] of personal.entries()) {
-    if (i > 0) await new Promise((resolve) => setTimeout(resolve, PER_MAIL_PAUSE_MS));
+    if (deadlineReached(startMs, now())) {
+      await snap.ref.update({ blocksSent: progress.sent, ...deadlineOutcome(progress.sent, personal.length), ...(errorCode ? { errorCode } : {}) });
+      logger.error(`${CF_NAME}: deadline reached after ${progress.sent}/${personal.length} personal mail(s) (tenant ${tenantId})`);
+      return;
+    }
+    if (i > 0 && pauseMs > 0) await new Promise((resolve) => setTimeout(resolve, pauseMs));
     try {
       const { html, text } = fillAnswerUrl(composed, entry.answerUrl);
       if (html.includes(ANSWER_URL_PLACEHOLDER) || text?.includes(ANSWER_URL_PLACEHOLDER)) throw new Error('placeholder left');
-      await sendEmailViaProvider(provider, {
+      await send(provider, {
         from, to: [entry.to], ...(job.to[0] ? { replyTo: job.to[0] } : {}), subject: job.subject, html, ...(text !== undefined ? { text } : {}), attachments,
       });
-      sent++;
+      progress.sent++;
     } catch (error) {
       failed++;
       if (!errorCode) {
@@ -153,11 +169,11 @@ async function sendPersonal(
         logger.error(`${CF_NAME}: first personal mail failed (${errorCode}) (tenant ${tenantId})`);
       }
     }
-    if ((i + 1) % PERSONAL_PROGRESS_EVERY === 0) await snap.ref.update({ blocksSent: sent });
+    if ((i + 1) % PERSONAL_PROGRESS_EVERY === 0) await snap.ref.update({ blocksSent: progress.sent });
   }
-  const outcome = personalOutcome(sent, failed);
-  await snap.ref.update({ blocksSent: sent, ...outcome, ...(errorCode ? { errorCode } : {}) });
-  logger.info(`${CF_NAME}: sent ${sent} personal mail(s), ${failed} failed (tenant ${tenantId})`);
+  const outcome = personalOutcome(progress.sent, failed);
+  await snap.ref.update({ blocksSent: progress.sent, ...outcome, ...(errorCode ? { errorCode } : {}) });
+  logger.info(`${CF_NAME}: sent ${progress.sent} personal mail(s), ${failed} failed (tenant ${tenantId})`);
 }
 
 export const onMailJob = onDocumentCreated(
@@ -191,7 +207,12 @@ export const onMailJob = onDocumentCreated(
       const attachments = await resolveAttachments(job.attachments, CF_NAME, `mailings/${tenantId}/`, tenantId);
       if (personalJob) {
         blocksTotal = job.personal?.length ?? 0;
-        await sendPersonal(snap, job, tenantId, from, provider, attachments);
+        const progress = { sent: 0 };
+        try {
+          await sendPersonal(snap, job, tenantId, from, provider, attachments, progress);
+        } finally {
+          sent = progress.sent;                    // the outer catch reports the true count
+        }
         return;
       }
       const blocks = mailJobBlocks(job, from);

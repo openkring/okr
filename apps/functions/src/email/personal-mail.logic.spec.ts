@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { ANSWER_URL_PLACEHOLDER, answerBlockHtml, fillAnswerUrl, parseCaleventKeys, personalEntries, personalOutcome, sendableEventRefusal, sendErrorCode } from './personal-mail.logic';
+import {
+  ANSWER_URL_PLACEHOLDER, answerBlockHtml, deadlineOutcome, deadlineReached, fillAnswerUrl, parseCaleventKeys, PERSONAL_DEADLINE_MS, personalEntries,
+  personalOutcome, refusedEventMessage, sendableEventRefusal, sendErrorCode,
+} from './personal-mail.logic';
 
 describe('personalEntries', () => {
   const urlFor = (key: string) => `https://x/?p=${key}`;
@@ -63,7 +66,12 @@ describe('fillAnswerUrl', () => {
 });
 
 describe('sendableEventRefusal', () => {
-  const ok = { tenants: ['t'], startDate: '20261210' };
+  const ok = { tenants: ['t'], calendars: ['scs'], startDate: '20261210' };
+  it('refuses a personal event (no calendar) as gone', () => {
+    expect(sendableEventRefusal({ ...ok, calendars: [] }, 't', '20261107')).toBe('eventGone');
+    expect(sendableEventRefusal({ tenants: ['t'], startDate: '20261210' }, 't', '20261107')).toBe('eventGone');
+  });
+
   it('refuses other tenant, missing, archived, past, cancelled and locked', () => {
     expect(sendableEventRefusal({ ...ok, tenants: ['o'] }, 't', '20261107')).toBe('eventGone');
     expect(sendableEventRefusal(undefined, 't', '20261107')).toBe('eventGone');
@@ -83,5 +91,32 @@ describe('sendErrorCode', () => {
     expect(sendErrorCode(new Error('Mailtrap API error 422: a@x.ch bad'))).toBe('Error 422');
     expect(sendErrorCode(Object.assign(new Error('boom a@x.ch'), { code: 'EENVELOPE' }))).toBe('Error EENVELOPE');
     expect(sendErrorCode(undefined)).toBe('Error');
+  });
+});
+
+describe('refusedEventMessage', () => {
+  it('names the event, or says «Ein Anlass» without a name', () => {
+    expect(refusedEventMessage('GV 2026')).toContain('«GV 2026»');
+    expect(refusedEventMessage(' ')).toMatch(/^Ein Anlass/);
+    expect(refusedEventMessage(undefined)).toMatch(/^Ein Anlass/);
+  });
+});
+
+describe('deadlineReached', () => {
+  it('is reached only once more than the limit has passed', () => {
+    expect(deadlineReached(1000, 1000 + PERSONAL_DEADLINE_MS)).toBe(false);
+    expect(deadlineReached(1000, 1001 + PERSONAL_DEADLINE_MS)).toBe(true);
+    expect(deadlineReached(0, 50, 40)).toBe(true);
+    expect(deadlineReached(0, 40, 40)).toBe(false);
+  });
+
+  it('allows 480 s', () => {
+    expect(PERSONAL_DEADLINE_MS).toBe(480_000);
+  });
+});
+
+describe('deadlineOutcome', () => {
+  it('fails the job and says how many mails went out', () => {
+    expect(deadlineOutcome(312, 800)).toEqual({ state: 'failed', error: '312 von 800 Mails gesendet – die Zeit hat nicht gereicht.' });
   });
 });

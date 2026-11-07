@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { mailJobBlocks, MailJobDoc, mailJobTenant, resolveJobContent } from './mail-job';
+import { mailJobBlocks, MailJobDoc, mailJobTenant, resolveJobContent, sendPersonal } from './mail-job';
+import { ANSWER_URL_PLACEHOLDER } from './personal-mail.logic';
 
 const job = (bcc: string[]): MailJobDoc => ({
   tenants: ['scs'],
@@ -93,5 +94,47 @@ describe('resolveJobContent', () => {
 
   it('refuses a job with neither body nor html', async () => {
     await expect(resolveJobContent({ ...job([]), html: undefined }, 'scs', vi.fn())).rejects.toThrow();
+  });
+});
+
+describe('sendPersonal', () => {
+  const personalJob = (n: number): MailJobDoc => ({
+    tenants: ['scs'], to: ['info@scs.ch'], subject: 's', body: '<p>Hallo</p>',
+    personal: Array.from({ length: n }, (_, i) => ({ to: `m${i}@scs.ch`, answerUrl: `https://x/?p=${i}` })),
+    answerEvents: [{ name: 'GV', when: '01.12.2026, 19:30' }],
+  });
+  const compose = vi.fn(async () => ({ subject: '', html: `<a href="${ANSWER_URL_PLACEHOLDER}">x</a>`, text: ANSWER_URL_PLACEHOLDER }));
+
+  it('stops at the deadline and fails the job with the count sent so far', async () => {
+    const updates: object[] = [];
+    const snap = { ref: { update: async (data: object) => { updates.push(data); } } };
+    let clock = 0;
+    const send = vi.fn(async () => { clock += 200_000; });   // every mail takes 200 s
+    const progress = { sent: 0 };
+    await sendPersonal(snap, personalJob(5), 'scs', 'app@scs.ch', 'mailtrap_api', [], progress, { now: () => clock, send, compose, pauseMs: 0 });
+    // mails start at 0, 200 and 400 s; at 600 s the 480 s deadline is passed
+    expect(send).toHaveBeenCalledTimes(3);
+    expect(progress.sent).toBe(3);
+    expect(updates.at(-1)).toEqual({ blocksSent: 3, state: 'failed', error: '3 von 5 Mails gesendet – die Zeit hat nicht gereicht.' });
+  });
+
+  it('sends everything within the deadline and ends sent', async () => {
+    const updates: object[] = [];
+    const snap = { ref: { update: async (data: object) => { updates.push(data); } } };
+    const send = vi.fn(async () => undefined);
+    const progress = { sent: 0 };
+    await sendPersonal(snap, personalJob(3), 'scs', 'app@scs.ch', 'mailtrap_api', [], progress, { now: () => 0, send, compose, pauseMs: 0 });
+    expect(send).toHaveBeenCalledTimes(3);
+    expect(updates.at(-1)).toEqual({ blocksSent: 3, state: 'sent' });
+  });
+
+  it('keeps the true count in progress when a progress write fails mid-loop', async () => {
+    let calls = 0;
+    const snap = { ref: { update: async () => { calls++; if (calls > 1) throw new Error('write failed'); } } };
+    const send = vi.fn(async () => undefined);
+    const progress = { sent: 0 };
+    await expect(sendPersonal(snap, personalJob(12), 'scs', 'app@scs.ch', 'mailtrap_api', [], progress, { now: () => 0, send, compose, pauseMs: 0 }))
+      .rejects.toThrow('write failed');
+    expect(progress.sent).toBe(10);                          // the first progress write comes after mail 10
   });
 });

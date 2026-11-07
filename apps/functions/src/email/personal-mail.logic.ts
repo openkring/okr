@@ -15,6 +15,21 @@ export const MAX_ANSWER_EVENTS = 20;
 export const MAX_PERSONAL_RECIPIENTS = 800;
 /** Pause between two personal mails; keeps the provider's per-second limit. */
 export const PER_MAIL_PAUSE_MS = 200;
+/**
+ * A personal send stops starting new mails after this long, so the 540 s run still has time to write
+ * how far it got. Slow providers and big attachments can make 800 mails take longer than the run.
+ */
+export const PERSONAL_DEADLINE_MS = 480_000;
+
+/** Whether a personal send has used up its time and must not start another mail. */
+export function deadlineReached(startMs: number, nowMs: number, limitMs = PERSONAL_DEADLINE_MS): boolean {
+  return nowMs - startMs > limitMs;
+}
+
+/** The job's end state when the deadline stopped the send: failed, with how many mails went out. */
+export function deadlineOutcome(sent: number, total: number): { state: 'failed'; error: string } {
+  return { state: 'failed', error: `${sent} von ${total} Mails gesendet – die Zeit hat nicht gereicht.` };
+}
 
 export interface PersonalEntry {
   to: string;
@@ -76,10 +91,22 @@ export function fillAnswerUrl(rendered: { html: string; text?: string }, url: st
   };
 }
 
-/** Why an event cannot be asked about at send time (undefined = fine): the tenant check, then the answer rules. */
+/**
+ * Why an event cannot be asked about at send time (undefined = fine): the tenant check, a personal event
+ * (no calendar: only its organiser and invitees may see it, never a Versand list), then the answer rules.
+ */
 export function sendableEventRefusal(event: AnswerableEvent | undefined, tenantId: string, today: string): AnswerRefusal | undefined {
   if (!event?.tenants?.includes(tenantId)) return 'eventGone';
+  if (!Array.isArray(event.calendars) || event.calendars.length === 0) return 'eventGone';
   return eventRefusalOf(event, today);
+}
+
+/** The sender's message for an event `sendMailing` refuses: names the event, so they know which to remove. */
+export function refusedEventMessage(name: string | undefined): string {
+  const label = (name ?? '').trim();
+  return label
+    ? `Der Anlass «${label}» kann nicht mehr beantwortet werden (nicht mehr vorhanden, abgesagt, geschlossen oder vorbei). Entferne ihn bitte aus dem Versand.`
+    : 'Ein Anlass kann nicht mehr beantwortet werden (nicht mehr vorhanden, abgesagt, geschlossen oder vorbei). Entferne ihn bitte aus dem Versand.';
 }
 
 /** A non-PII code for a failed send: the error class and an HTTP status or error code when it carries one. */

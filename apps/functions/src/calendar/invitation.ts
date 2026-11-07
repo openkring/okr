@@ -47,6 +47,8 @@ export interface InvitationDoc {
 
 export interface AnswerableEvent {
   tenants?: string[];
+  /** none = a personal event (organiser + invitees only) */
+  calendars?: string[];
   name?: string;
   startDate?: string;
   endDate?: string;
