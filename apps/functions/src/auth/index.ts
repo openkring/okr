@@ -15,6 +15,7 @@ import { loadTenantUser, restoreAuthEmail, withIndex } from './tenant-user';
 import { composeBody, EmailTemplateError, renderPasswordResetEmail } from '../email/render-email';
 import { asLayoutChoice } from '../email/render-email.logic';
 import { reportToSentry } from '../srv/sentry';
+import { privateBucket } from '../_storage/private-bucket';
 
 /** Storage prefixes that `generateDocument` writes generated documents to. */
 const ALLOWED_ATTACHMENT_PREFIXES = ['generated-docs/', 'generated-docs-ephemeral/'];
@@ -28,7 +29,9 @@ const MAX_INLINE_ATTACHMENT_BYTES = 8 * 1024 * 1024;
  */
 export type AttachmentRef =
   | { storagePath: string; filename?: string }
-  | { filename: string; contentBase64: string; contentType?: string };
+  | { filename: string; contentBase64: string; contentType?: string }
+  /** a Versand file in the private bucket (spec 1.145 §10), honoured only under `privatePrefix` */
+  | { privatePath: string; filename: string; contentType?: string };
 
 /** Infer a content type from a storage path extension (attachments are PDFs in practice). */
 function contentTypeFromPath(path: string): string {
@@ -49,6 +52,10 @@ function contentTypeFromPath(path: string): string {
 export async function resolveAttachments(
   refs: AttachmentRef[] | undefined,
   cfName: string,
+  /** where private-bucket refs may point, e.g. `mailings/<tenantId>/`; '' refuses them all */
+  privatePrefix = '',
+  /** set: a generated document must belong to this tenant (`generated-docs[-ephemeral]/<tenantId>/…`) */
+  tenantId = '',
 ): Promise<EmailAttachment[]> {
   if (!refs?.length) return [];
   const bucket = getStorage().bucket();
@@ -67,9 +74,19 @@ export async function resolveAttachments(
       });
       continue;
     }
+    // Private-bucket file of a Versand — only below the prefix the caller vouches for (its tenant).
+    if ('privatePath' in ref) {
+      const path = ref.privatePath ?? '';
+      if (!privatePrefix || !path.startsWith(privatePrefix) || path.includes('..')) {
+        throw new functions.HttpsError('invalid-argument', `${cfName}: attachment path not allowed: ${path}`);
+      }
+      const [content] = await privateBucket().file(path).download();
+      resolved.push({ filename: ref.filename || 'attachment', content, contentType: ref.contentType || 'application/octet-stream' });
+      continue;
+    }
     // Storage reference — validate against the allow-list and download via the Admin SDK.
     const path = ref.storagePath ?? '';
-    const isAllowed = ALLOWED_ATTACHMENT_PREFIXES.some(p => path.startsWith(p));
+    const isAllowed = ALLOWED_ATTACHMENT_PREFIXES.some(p => path.startsWith(tenantId ? `${p}${tenantId}/` : p));
     if (!isAllowed || path.includes('..')) {
       throw new functions.HttpsError('invalid-argument', `${cfName}: attachment path not allowed: ${path}`);
     }

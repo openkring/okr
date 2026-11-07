@@ -9,7 +9,7 @@ import type {
   FormSection, FormSectionConfig,
   HeroConfig, HeroSection, IconConfig, IframeConfig,
   IframeSection, InvitationsConfig, InvitationsSection, MapConfig, WeatherConfig, WeatherSection, ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, FooterColumn, FooterConfig, FooterItem, FooterSection, MapSection, MemberAgeConfig, MemberAgeSection, MemberCatConfig, MemberCatSection, OrgchartConfig, OrgchartSection, PeopleConfig,
-  PeopleSection, RagConfig, RagSection, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TimelineConfig, TimelineSection, AdventConfig, AdventSection, NewsConfig, NewsSection, TasksConfig, TasksSection, ActivitiesConfig, ActivitiesSection, MessagesConfig, MessagesSection, TripStatsConfig, TripStatsSection, ResponsibilityConfig, ResponsibilitySection, SliderConfig, SliderSection, TableConfig, TableSection,
+  PeopleSection, RagConfig, RagSection, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TimelineConfig, TimelineSection, AdventConfig, AdventSection, NewsConfig, NewsSection, TasksConfig, TasksSection, ActivitiesConfig, ActivitiesSection, MessagesConfig, MessagesSection, NoticesConfig, NoticesSection, TripStatsConfig, TripStatsSection, ResponsibilityConfig, ResponsibilitySection, SliderConfig, SliderSection, TableConfig, TableSection,
   TrackerConfig, TrackerSection, VideoConfig, VideoSection
 } from "./section.model";
 import { ButtonAction } from './enums/button-action.enum';
@@ -552,6 +552,13 @@ export const MESSAGES_SECTION_SHAPE = {
   type: 'messages' as const,
   properties: MESSAGES_CONFIG_SHAPE,
 } as MessagesSection;
+
+export const NOTICES_CONFIG_SHAPE: NoticesConfig = { moreUrl: '', maxItems: 5 };
+export const NOTICES_SECTION_SHAPE = {
+  ...BASE_SECTION_SHAPE,
+  type: 'notices' as const,
+  properties: NOTICES_CONFIG_SHAPE,
+} as NoticesSection;
 
 // --------------------------------------- TRIP STATS ----------------------------------------
 export const TRIP_STATS_CONFIG_SHAPE: TripStatsConfig = { viewType: 'list', contentType: 'boat' };

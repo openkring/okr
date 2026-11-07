@@ -23,7 +23,7 @@ import { needsEmailNormalization } from '@okr/shared-util-core';
 import { dismissOverlay, isBrowser, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 import {
-  buildVersandRows, emailBodyHasContent, isSenderDomainAllowed, parseEmails, toggleDelivery, versandBcc,
+  buildVersandRows, emailBodyHasContent, isSenderDomainAllowed, parseEmails, toggleDelivery, versandBcc, versandDeliveries,
   EmailComposerFormModel, emailComposerValidations, VersandDeliveries, VersandRow,
   EMAIL_COMPOSER_I18N_KEYS, EMAIL_COMPOSER_MSG_KEYS, EmailComposerI18n,
 } from '@okr/content-pdf-template-util';
@@ -362,10 +362,10 @@ export class EmailComposerModal {
   /** "<block>/<blocks>" while a chunked bulk send is running, empty for a single message. */
   protected readonly progress = signal('');
   protected readonly showForm = signal(true);
-  /** A Versand needs its Zustellung loaded and at least one email recipient (P1 sends email only). */
+  /** A Versand needs its Zustellung loaded and at least one ticked recipient. */
   protected readonly showConfirmation = computed(() =>
     this.composerForm().valid() && this.isDirty() && !this.isSending()
-    && (!this.isVersand() || (this.versandLoaded() && parseEmails(this.bccField()).length > 0)));
+    && (!this.isVersand() || (this.versandLoaded() && versandDeliveries(this.versandRows(), this.deliveries()).length > 0)));
 
   // field accessors
   protected readonly toField  = computed(() => this.formData().to);
@@ -706,6 +706,26 @@ export class EmailComposerModal {
         attachmentName: this.attachmentName(),
         extraAttachments: this.extraAttachments(),
       };
+      // A Versand goes through `sendMailing`, which checks the sender and fans out by delivery type
+      // server-side (spec 1.145 §10): the Bcc is resolved there, so the client's list is not sent.
+      if (this.isVersand()) {
+        const deliveries = versandDeliveries(this.versandRows(), this.deliveries());
+        await this.docEmailService.sendMailing({
+          tenantId: this.appStore.tenantId(),
+          ...(this.groupKey() ? { groupKey: this.groupKey() } : {}),
+          to: request.to, cc: request.cc, from: request.from,
+          subject: request.subject, body: request.body, layout: request.layout,
+          ...(request.storagePath ? { storagePath: request.storagePath, filename: request.filename } : {}),
+          extraAttachments: request.extraAttachments,
+          deliveries,
+        });
+        await this.showParamToast(EMAIL_COMPOSER_MSG_KEYS.send_mailing, {
+          emails: deliveries.filter((d) => d.channels.includes(DeliveryChannel.Email)).length,
+          notices: deliveries.filter((d) => d.channels.includes(DeliveryChannel.Chat)).length,
+        });
+        await dismissOverlay(this.modalController, { sent: true }, 'confirm');
+        return;
+      }
       const handler = this.sendHandler();
       // A bulk send (bcc list) runs server-side: the job survives closing this modal. A single
       // mail goes straight through the callable so the provider error surfaces immediately.

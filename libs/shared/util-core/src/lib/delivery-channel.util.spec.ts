@@ -73,8 +73,8 @@ describe('mailingChannels', () => {
     expect(mailingChannels({ ...base, hasPostal: false, newsDelivery: ['post'] }).initial).toEqual([]);
   });
 
-  it('never offers signal in a Versand', () => {
-    expect(mailingChannels({ ...base, newsDelivery: ['signal'] }).initial).toEqual([]);
+  it('treats a retired signal choice like no choice: the profile default', () => {
+    expect(mailingChannels({ ...base, newsDelivery: ['signal'] }).initial).toEqual(['chat', 'email']);
   });
 
   it('reads a legacy numeric profile value', () => {

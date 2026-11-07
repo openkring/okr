@@ -122,7 +122,8 @@
     "send": {
       "conf": "Document envoyé à {{ recipients }}",
       "error": "Échec de l'envoi : {{ error }}",
-      "queue_error": "La tâche d'envoi n'a pas pu être créée."
+      "queue_error": "La tâche d'envoi n'a pas pu être créée.",
+      "mailing": "L’envoi est en route : {{ emails }} par e-mail, {{ notices }} comme communication."
     },
     "revert": {
       "label": "Annuler"
@@ -162,8 +163,8 @@
       "p2": "Sous «Distribution», tu vois ce choix pour chaque destinataire. Tu peux le modifier pour cet envoi ; le profil reste inchangé. Les personnes sans compte reçoivent un e-mail, ou une lettre si aucune adresse e-mail n’est connue.",
       "p3": "E-mail : le texte de l’éditeur est placé dans le modèle choisi et les pièces jointes sont jointes à l’e-mail. À, Cc et Cci ne valent qu’ici. Les destinataires sont en Cci, personne ne voit les autres.",
       "p4": "Dans l’app : l’envoi apparaît comme communication sur le tableau de bord, avec texte et pièces jointes. Le destinataire reçoit une notification push qui l’ouvre.",
-      "p5": "Courrier : le texte est imprimé comme lettre avec l’adresse du destinataire, les pièces jointes suivent, et la lettre part par la poste. Chaque lettre coûte quelque chose.",
-      "p6": "L’app et le courrier arrivent bientôt. D’ici là, un envoi part uniquement par e-mail."
+      "p5": "Courrier : le texte est mis en page comme lettre avec l’adresse du destinataire, les pièces jointes suivent. Tu télécharges les lettres en PDF, tu les imprimes et tu les envoies toi-même.",
+      "p6": "Le courrier arrive bientôt : tu téléchargeras alors les lettres en PDF. D’ici là, un envoi part par e-mail et dans l’app."
     }
   },
   "category": {

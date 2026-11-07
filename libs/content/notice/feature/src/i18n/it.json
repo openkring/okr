@@ -1,0 +1,10 @@
+{
+  "title": "Comunicazione",
+  "from": "Da",
+  "sent": "inviata il",
+  "attachments": "Allegati",
+  "not_found": "Questa comunicazione non esiste, o non è destinata a te.",
+  "attachment_error": "Non è stato possibile aprire l’allegato.",
+  "empty": "Ancora nessuna comunicazione.",
+  "more": "Tutte le comunicazioni"
+}

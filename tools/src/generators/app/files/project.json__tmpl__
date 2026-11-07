@@ -302,6 +302,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/content/notice/feature/src/i18n",
+            "output": "./assets/i18n/content/notice/feature"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/content/pdf-template/data-access/src/i18n",
             "output": "./assets/i18n/content/pdf-template/data-access"
           },

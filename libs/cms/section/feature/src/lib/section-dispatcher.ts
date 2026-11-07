@@ -25,6 +25,7 @@ import { InvitationsSectionComponent } from './invitations-section';
 import { TasksSectionComponent } from './tasks-section';
 import { ActivitiesSectionComponent } from './activities-section';
 import { MessagesSectionComponent } from './messages-section';
+import { NoticesSectionComponent } from './notices-section';
 import { NewsSectionComponent } from './news-section';
 import { OrgchartSectionComponent } from './orgchart-section';
 import { RagSectionComponent } from './rag-section';
@@ -62,7 +63,7 @@ import { SectionStore } from './section.store';
     ArticleSectionComponent, MissingSectionComponent, TableSectionComponent, VideoSectionComponent, EventsSectionComponent,
     IframeSectionComponent, MapSectionComponent, AlbumSectionComponent, ButtonSectionComponent,
     PeopleSectionComponent, ResponsibilitySectionComponent, TrackerSectionComponent, HeroSectionComponent,
-    InvitationsSectionComponent, TasksSectionComponent, ActivitiesSectionComponent, MessagesSectionComponent, NewsSectionComponent, OrgchartSectionComponent, RagSectionComponent, ContextDiagramSectionComponent, MemberAgeSectionComponent, MemberCatSectionComponent, SankeySectionComponent, SpiderSectionComponent, TocSectionComponent, TestimonialSectionComponent, TimelineSectionComponent, AdventSectionComponent,
+    InvitationsSectionComponent, TasksSectionComponent, ActivitiesSectionComponent, MessagesSectionComponent, NoticesSectionComponent, NewsSectionComponent, OrgchartSectionComponent, RagSectionComponent, ContextDiagramSectionComponent, MemberAgeSectionComponent, MemberCatSectionComponent, SankeySectionComponent, SpiderSectionComponent, TocSectionComponent, TestimonialSectionComponent, TimelineSectionComponent, AdventSectionComponent,
     IonItem, IonLabel, Spinner, DeferError,
     CalendarSectionComponent, ChartSectionComponent, SliderSectionComponent,
     TripStatsSectionComponent,
@@ -128,6 +129,9 @@ import { SectionStore } from './section.store';
           }
           @case('news') {
             <okr-news-section [section]="section" [editMode]="editMode()" />
+          }
+          @case('notices') {
+            <okr-notices-section [section]="section" [editMode]="editMode()" />
           }
           @case('orgchart') {
             @defer (on viewport) {

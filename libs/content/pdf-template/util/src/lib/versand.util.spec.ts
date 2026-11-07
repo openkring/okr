@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DeliveryChannel } from '@okr/shared-models';
-import { buildVersandRows, deliveryTotals, isDeliveryEditable, toggleDelivery, unreachableCount, versandBcc } from './versand.util';
+import { buildVersandRows, deliveryTotals, isDeliveryEditable, toggleDelivery, unreachableCount, versandBcc, versandDeliveries } from './versand.util';
 
 const anna = { personKey: 'a', name: 'Anna', email: 'anna@x.ch' };
 const beat = { personKey: 'b', name: 'Beat', email: '' };
@@ -12,7 +12,7 @@ describe('buildVersandRows', () => {
       { personKey: 'b', possible: [DeliveryChannel.Post], initial: [DeliveryChannel.Post] },
     ]);
     expect(rows.map((r) => r.possible)).toEqual([['chat', 'email'], ['post']]);
-    expect(deliveries).toEqual({ a: ['email'], b: [] });
+    expect(deliveries).toEqual({ a: ['chat', 'email'], b: [] });
   });
 
   it('leaves out a person the server did not answer for', () => {
@@ -36,7 +36,8 @@ describe('toggleDelivery', () => {
 
   it('ignores a channel that is not sendable yet or not possible', () => {
     const before = { a: [] };
-    expect(toggleDelivery(before, row, DeliveryChannel.Chat)).toBe(before);
+    expect(toggleDelivery(before, { ...row, possible: [DeliveryChannel.Post] }, DeliveryChannel.Post)).toBe(before);
+    expect(toggleDelivery(before, row, DeliveryChannel.Post)).toBe(before);
     expect(isDeliveryEditable({ ...row, possible: [] }, DeliveryChannel.Email)).toBe(false);
   });
 });
@@ -56,5 +57,15 @@ describe('totals, unreachable and bcc', () => {
 
   it('builds a deduplicated bcc', () => {
     expect(versandBcc(rows, deliveries)).toEqual(['anna@x.ch']);
+  });
+});
+
+describe('versandDeliveries', () => {
+  it('lists the ticks per person and leaves out the unticked', () => {
+    const rows = [
+      { ...anna, possible: [DeliveryChannel.Chat, DeliveryChannel.Email] },
+      { ...beat, possible: [] },
+    ];
+    expect(versandDeliveries(rows, { a: [DeliveryChannel.Chat], b: [] })).toEqual([{ personKey: 'a', channels: ['chat'] }]);
   });
 });

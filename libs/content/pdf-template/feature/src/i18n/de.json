@@ -122,7 +122,8 @@
     "send": {
       "conf": "Dokument gesendet an {{ recipients }}",
       "error": "Senden fehlgeschlagen: {{ error }}",
-      "queue_error": "Der Auftrag konnte nicht erstellt werden."
+      "queue_error": "Der Auftrag konnte nicht erstellt werden.",
+      "mailing": "Der Versand ist unterwegs: {{ emails }} per E-Mail, {{ notices }} als Mitteilung."
     },
     "revert": {
       "label": "Verwerfen"
@@ -162,8 +163,8 @@
       "p2": "Unter «Zustellung» siehst du diese Wahl pro Empfänger. Du kannst sie für diesen einen Versand ändern, das Profil bleibt unverändert. Wer kein Konto hat, erhält eine E-Mail, oder einen Brief, wenn keine E-Mail-Adresse bekannt ist.",
       "p3": "E-Mail: Der Text aus dem Editor wird in die gewählte Vorlage gesetzt, die Anhänge werden der E-Mail beigelegt. An, Cc und Bcc gelten nur hier. Die Empfänger stehen im Bcc, so sieht niemand die anderen.",
       "p4": "In-App: Der Versand erscheint als Mitteilung auf dem Dashboard, mit Text und Anhängen. Der Empfänger erhält eine Push-Nachricht, die die Mitteilung öffnet.",
-      "p5": "Post: Der Text wird als Brief mit der Adresse des Empfängers gedruckt, die Anhänge folgen dahinter, und der Brief geht per Post hinaus. Jeder Brief kostet etwas.",
-      "p6": "In-App und Post folgen bald. Bis dahin geht ein Versand nur per E-Mail hinaus."
+      "p5": "Post: Der Text wird als Brief mit der Adresse des Empfängers gesetzt, die Anhänge folgen dahinter. Du lädst die Briefe als PDF herunter, druckst sie und verschickst sie selbst.",
+      "p6": "Post folgt bald: dann lädst du die Briefe als PDF herunter. Bis dahin geht ein Versand per E-Mail und In-App hinaus."
     }
   },
   "category": {

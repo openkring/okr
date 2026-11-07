@@ -122,7 +122,8 @@
     "send": {
       "conf": "Document sent to {{ recipients }}",
       "error": "Sending failed: {{ error }}",
-      "queue_error": "The send job could not be created."
+      "queue_error": "The send job could not be created.",
+      "mailing": "The mailing is on its way: {{ emails }} by email, {{ notices }} as a notice."
     },
     "revert": {
       "label": "Discard"
@@ -162,8 +163,8 @@
       "p2": "Under «Delivery» you see that choice for each recipient. You can change it for this one mailing; the profile stays as it is. People without an account get an email, or a letter if no email address is known.",
       "p3": "Email: the text from the editor is set into the chosen template and the attachments are attached to the email. To, Cc and Bcc only apply here. Recipients are in Bcc, so nobody sees the others.",
       "p4": "In-app: the mailing appears as a notice on the dashboard, with its text and attachments. The recipient gets a push notification that opens it.",
-      "p5": "Post: the text is printed as a letter with the recipient’s address, the attachments follow, and the letter goes out by post. Each letter costs money.",
-      "p6": "In-app and post are coming soon. Until then a mailing goes out by email only."
+      "p5": "Post: the text is set as a letter with the recipient’s address, followed by the attachments. You download the letters as a PDF, print them and post them yourself.",
+      "p6": "Post is coming soon: you will then download the letters as a PDF. Until then a mailing goes out by email and in-app."
     }
   },
   "category": {
