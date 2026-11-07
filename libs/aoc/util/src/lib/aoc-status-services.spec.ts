@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import {
   AOC_STATUS_SERVICES,
+  WEBHOOK_RECEIVER_PART,
+  WEBHOOK_RECEIVER_SERVICE_ID,
   ServiceStatus,
   ServiceStatusResult,
   StatusLevel,
@@ -31,10 +33,16 @@ describe('AOC_STATUS_SERVICES', () => {
   });
 
   it('gives a service with a live source a feed url and parts', () => {
-    for (const s of AOC_STATUS_SERVICES.filter(x => x.source !== 'none')) {
+    for (const s of AOC_STATUS_SERVICES.filter(x => x.source !== 'none' && x.source !== 'internal')) {
       expect(s.feedUrl, s.id).toMatch(/^https:\/\//);
       expect(s.parts.length, s.id).toBeGreaterThan(0);
     }
+  });
+
+  it('gives the internal webhook receiver row one part and no feed (1.143)', () => {
+    const s = AOC_STATUS_SERVICES.find(x => x.id === WEBHOOK_RECEIVER_SERVICE_ID);
+    expect(s).toMatchObject({ source: 'internal', statusUrl: '', featureBlocks: ['auth', 'esign'], parts: [{ label: WEBHOOK_RECEIVER_PART }] });
+    expect(s?.feedUrl).toBeUndefined();
   });
 
   it('gives a link-only service no parts and no feed url', () => {

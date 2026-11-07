@@ -104,7 +104,7 @@ function readGatus(body: unknown): PartReader | undefined {
   };
 }
 
-const READERS: Record<Exclude<StatusSource, 'none'>, (body: unknown, service: StatusService, catalog: unknown) => PartReader | undefined> = {
+const READERS: Record<Exclude<StatusSource, 'none' | 'internal'>, (body: unknown, service: StatusService, catalog: unknown) => PartReader | undefined> = {
   betterstack: readBetterStack,
   statuspage: readComponents,
   instatus: readComponents,
@@ -118,7 +118,7 @@ const READERS: Record<Exclude<StatusSource, 'none'>, (body: unknown, service: St
  * not mention, is `unknown`, never `ok`.
  */
 export function parseFeed(service: StatusService, body: unknown, catalog?: unknown): ServiceStatus {
-  if (service.source === 'none') return { parts: {} };
+  if (service.source === 'none' || service.source === 'internal') return { parts: {} };
   let read: PartReader | undefined;
   try {
     read = READERS[service.source](body, service, catalog);

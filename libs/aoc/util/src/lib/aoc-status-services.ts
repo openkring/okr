@@ -1,5 +1,12 @@
-/** Spec 1.137 — how a service reports its status. `none` = link only, no live status. */
-export type StatusSource = 'betterstack' | 'statuspage' | 'instatus' | 'google' | 'apple' | 'gatus' | 'none';
+/**
+ * Spec 1.137 — how a service reports its status. `none` = link only, no live status.
+ * `internal` = our own check, read from a result document instead of a feed (spec 1.143).
+ */
+export type StatusSource = 'betterstack' | 'statuspage' | 'instatus' | 'google' | 'apple' | 'gatus' | 'internal' | 'none';
+
+/** Spec 1.143: the receiver self-test row and its one part. */
+export const WEBHOOK_RECEIVER_SERVICE_ID = 'webhook-receiver';
+export const WEBHOOK_RECEIVER_PART = 'Selbsttest';
 
 export type StatusLevel = 'ok' | 'degraded' | 'down' | 'maintenance' | 'unknown';
 
@@ -116,6 +123,8 @@ export const AOC_STATUS_SERVICES: readonly StatusService[] = [
     'Geocoding API',
     'Places API',
   ], 'https://status.cloud.google.com/maps-platform/products.json'),
+  // Shared by every tenant; shown wherever a feature receives webhooks (email delivery, e-signing).
+  { id: WEBHOOK_RECEIVER_SERVICE_ID, name: 'Webhook-Empfang', statusUrl: '', source: 'internal', featureBlocks: ['auth', 'esign'], parts: [{ label: WEBHOOK_RECEIVER_PART }] },
   linkOnly('mailtrap', 'Mailtrap', 'https://status.mailtrap.info', ['auth']),
   linkOnly('googleAnalytics', 'Google Analytics', '', ['consent']),
   linkOnly('gemini', 'Gemini', 'https://aistudio.google.com/status', ['cms', 'finance', 'contracts']),

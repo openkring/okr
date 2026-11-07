@@ -7,6 +7,9 @@ import { requireAdmin } from '../business/shared';
 import { CacheEntry, isExpired, readCache, writeCache } from '../_gateway/cache';
 import { gatewayFetch } from '../_gateway/http';
 import { parseFeed } from './status-parsers';
+import { withSelftest } from './selftest-status';
+import { WEBHOOK_SELFTEST_DOC, WebhookSelftestCollection, type WebhookSelftestResult } from '../_webhooks/selftest';
+import { getFirestore } from 'firebase-admin/firestore';
 
 const CF_NAME = 'getServiceStatus';
 const CACHE_PROVIDER = 'serviceStatus';
@@ -72,6 +75,17 @@ export const getServiceStatus = onCall(
   { region: 'europe-west6', enforceAppCheck: true, maxInstances: 2 },
   async (request): Promise<ServiceStatusResult> => {
     await requireAdmin(request, CF_NAME);
-    return loadServiceStatus(LIVE_DEPS, Date.now());
+    const [status, selftest] = await Promise.all([loadServiceStatus(LIVE_DEPS, Date.now()), readSelftest()]);
+    return withSelftest(status, selftest, Date.now());
   },
 );
+
+/** Best effort: an unreadable result shows the receiver row as unknown, never fails the page. */
+async function readSelftest(): Promise<WebhookSelftestResult | undefined> {
+  try {
+    return (await getFirestore().collection(WebhookSelftestCollection).doc(WEBHOOK_SELFTEST_DOC).get()).data() as WebhookSelftestResult | undefined;
+  } catch (error) {
+    logger.warn(`${CF_NAME}: selftest result unreadable`, { error: String(error) });
+    return undefined;
+  }
+}

@@ -199,7 +199,7 @@ describe('gatus', () => {
 });
 
 describe('a feed we cannot read', () => {
-  const live = AOC_STATUS_SERVICES.filter(s => s.source !== 'none');
+  const live = AOC_STATUS_SERVICES.filter(s => s.source !== 'none' && s.source !== 'internal');
   const sources = [...new Set(live.map(s => s.source))] as StatusSource[];
   const oneOf = (source: StatusSource) => live.find(s => s.source === source) as StatusService;
 
