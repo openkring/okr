@@ -140,7 +140,7 @@ type PickerSegment = 'blocks' | 'rows';
                 <ion-item slot="header">
                   <ion-icon slot="start" src="{{ group.bundle.icon | svgIcon }}" />
                   <ion-label>{{ bundleLabels[group.bundle.id]?.() || group.bundle.id }}</ion-label>
-                  <ion-note slot="end">{{ liveCountOf(group.blocks) }} / {{ group.blocks.length }}</ion-note>
+                  <ion-note slot="end" [class.pending]="hasPendingAction(group.blocks)">{{ liveCountOf(group.blocks) }} / {{ group.blocks.length }}</ion-note>
                 </ion-item>
                 <div slot="content">
                 @for (block of group.blocks; track block.id) {
@@ -321,6 +321,15 @@ type PickerSegment = 'blocks' | 'rows';
   `,
   styles: [`
     .highlighted { --background: var(--ion-color-warning-tint); }
+    /* A bundle count with an «Einschalten» or «Menü ergänzen» inside it — visible while the
+       accordion is closed, so a full «13 / 13» no longer hides a block with missing rows. */
+    ion-note.pending {
+      color: var(--ion-color-warning-contrast);
+      background: var(--ion-color-warning);
+      border-radius: 10px;
+      padding: 2px 8px;
+      font-weight: 600;
+    }
     .active { --background: var(--ion-color-light-shade); }
 
     /* Everything a block has to say lives UNDER its label as secondary lines, never in the
@@ -570,6 +579,20 @@ export class FeaturePicker {
 
   protected liveCountOf(blocks: FeatureBlock[]): number {
     return blocks.filter(block => this.liveBlocks().has(block.id)).length;
+  }
+
+  /** Does any block of the bundle offer «Einschalten» or «Menü ergänzen»? Mirrors the
+   *  template's button switch, so the bundle count is flagged exactly when one of those
+   *  buttons waits inside the (possibly closed) accordion. */
+  protected hasPendingAction(blocks: FeatureBlock[]): boolean {
+    return blocks.some(block => {
+      switch (this.blockState(block)) {
+        case 'off': return true;
+        case 'on': return this.missingRowCount(block) > 0;
+        case 'required': return !this.isStored(block) || this.missingRowCount(block) > 0;
+        default: return false;
+      }
+    });
   }
 
   protected onToggleRow(row: MenuTreeRow): void {
