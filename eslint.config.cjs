@@ -77,7 +77,7 @@ module.exports = [
             // here on purpose. Do not widen a list to silence an error without deciding that the
             // dependency belongs.
             { sourceTag: 'scope:person', onlyDependOnLibsWithTags: [...SCOPE_BASE('person'), 'scope:address', 'scope:chat', 'scope:membership', 'scope:org', 'scope:ownership', 'scope:personal-rel', 'scope:reservation', 'scope:swisscities', 'scope:vcard', 'scope:workrel'] },
-            { sourceTag: 'scope:org', onlyDependOnLibsWithTags: [...SCOPE_BASE('org'), 'scope:address', 'scope:finance', 'scope:membership', 'scope:ownership', 'scope:reservation', 'scope:swisscities', 'scope:vcard'] },
+            { sourceTag: 'scope:org', onlyDependOnLibsWithTags: [...SCOPE_BASE('org'), 'scope:address', 'scope:finance', 'scope:membership', 'scope:ownership', 'scope:reservation', 'scope:swisscities', 'scope:tenant', 'scope:vcard', 'scope:workrel'] },
             { sourceTag: 'scope:resource', onlyDependOnLibsWithTags: [...SCOPE_BASE('resource'), 'scope:reservation', 'scope:ownership'] },
             { sourceTag: 'scope:membership', onlyDependOnLibsWithTags: [...SCOPE_BASE('membership'), 'scope:address', 'scope:chat', 'scope:finance', 'scope:ownership', 'scope:person', 'scope:swisscities', 'scope:vcard'] },
             // scope:course — spec 1.132: the «Kurse» chip of a group calendar asks CourseService (data-access only), through a

@@ -13,7 +13,7 @@ import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
 
 import { WorkrelService } from '@okr/relationship-workrel-data-access';
-import { isWorkrel, WORKREL_I18N_KEYS, WorkrelI18n } from '@okr/relationship-workrel-util';
+import { isWorkrel, WORKREL_I18N_KEYS } from '@okr/relationship-workrel-util';
 
 export type WorkrelState = {
   personKey: string | undefined;    // parent e.g. in accordions
