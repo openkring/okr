@@ -170,7 +170,7 @@ function storeToView(d: string): string {
                  Eine Liste fuer alle: Mitglieder wie Eingeladene stehen seit 2026-09 in
                  calevent.attendees, Eingeladene mit dem Zustand 'invited'. -->
             <ion-accordion-group value="attendees">
-              <okr-attendees-accordion [calevent]="calevent()" [currentUser]="appStore.currentUser()" [readOnly]="true" />
+              <okr-attendees-accordion [calevent]="calevent()" [currentUser]="appStore.currentUser()" [readOnly]="true" [canAnswer]="canAnswer()" />
               <!-- documents: only the organiser (edit modal) may add/delete; commenting is open to every registered user -->
               <okr-documents-accordion [parentKey]="parentKey()" [readOnly]="true" />
               <okr-comments-accordion [parentKey]="parentKey()" [readOnly]="false" />
@@ -204,6 +204,8 @@ export class CalEventViewModal {
   public locale = input.required<string>();
   /** Set by the store, which also navigates: this modal must not import it. */
   public showGroupChat = input(false);
+  /** Set by the store (`canAttendCalevent` needs its calendars and invitations): offers the first answer. */
+  public canAnswer = input(false);
 
   protected readonly parentKey = computed(() => `${CalEventModelName}.${this.calevent().okey}`);
 

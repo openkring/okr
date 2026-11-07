@@ -6,7 +6,7 @@ import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, Ion
 import { Attendee, CalEventModel, InvitationCollection, InvitationModel, MembershipModel, UserModel } from '@okr/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { CountPill, EmptyList, ImgDirective } from '@okr/shared-ui';
-import { coerceBoolean, fill, getAttendanceColor, getAttendanceIcon, getSystemQuery, isOngoing, isPerson } from '@okr/shared-util-core';
+import { coerceBoolean, fill, getAttendanceColor, getAttendanceIcon, getAvatarInfoForCurrentUser, getSystemQuery, isOngoing, isPerson } from '@okr/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
 import { PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
 import { ENV } from '@okr/shared-config';
@@ -60,6 +60,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
       border-top: 2px solid var(--ion-color-warning);
     }
     .waiting-count { color: var(--ion-color-warning-shade); }
+    .answer-icon { font-size: 26px; cursor: pointer; margin-inline-start: 12px; }
     ion-accordion.accordion-expanded okr-count-pill {
       --okr-pill-background: var(--ion-color-primary-tint);
       --okr-pill-color: var(--ion-color-primary-shade);
@@ -80,6 +81,13 @@ import { AvatarPipe } from '@okr/avatar-ui';
     <div slot="content">
         @if(attendees().length === 0) {
         <okr-empty-list [message]="i18n.attendance_empty()" />
+        @if(showAnswerIcons()) {
+          <ion-list lines="none">
+            <ion-item lines="none">
+              <ng-container *ngTemplateOutlet="answerIcons" />
+            </ion-item>
+          </ion-list>
+        }
       } @else {
         <ion-list lines="inset">
           <!-- confirmed, then the waiting list below the divider, then everyone who occupies no
@@ -98,14 +106,27 @@ import { AvatarPipe } from '@okr/avatar-ui';
           }
         </ion-list>
         <ion-list lines="none">
-          <ion-label>
-            {{ countLabel() }}
-            @if(split().waiting.length > 0) { <span class="waiting-count"> · {{ waitingLabel() }}</span> }
-          </ion-label>
+          <ion-item lines="none">
+            <ion-label>
+              {{ countLabel() }}
+              @if(split().waiting.length > 0) { <span class="waiting-count"> · {{ waitingLabel() }}</span> }
+            </ion-label>
+            @if(showAnswerIcons()) {
+              <ng-container *ngTemplateOutlet="answerIcons" />
+            }
+          </ion-item>
         </ion-list>
       }
     </div>
   </ion-accordion>
+
+  <!-- the current user's first answer; once given, their row's ActionSheet changes it -->
+  <ng-template #answerIcons>
+    <ion-icon slot="end" class="answer-icon" color="danger" src="{{'cancel' | svgIcon }}"
+      [attr.aria-label]="i18n.invitation_unsubscribe()" [title]="i18n.invitation_unsubscribe()" (click)="answer('declined')" />
+    <ion-icon slot="end" class="answer-icon" color="success" src="{{'checkbox-circle' | svgIcon }}"
+      [attr.aria-label]="i18n.invitation_subscribe()" [title]="i18n.invitation_subscribe()" (click)="answer('accepted')" />
+  </ng-template>
 
   <!-- one row definition for all three blocks -->
   <ng-template #row let-attendee>
@@ -138,6 +159,11 @@ export class AttendeesAccordion {
   public tenantId = input<string>('');
   public readonly color = input('primary');
   public readonly readOnly = input<boolean>(true);
+  /**
+   * The current user may answer this event (`canAttendCalevent`, decided by the caller: the reach
+   * rule needs the calendars and invitations the store holds). Only then are the answer icons offered.
+   */
+  public readonly canAnswer = input<boolean>(false);
 
   // coerced boolean inputs
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
@@ -163,6 +189,16 @@ export class AttendeesAccordion {
     if (max <= 0) return `${this.acceptedCount()}/${this.attendees().length} ${this.i18n.attendance_accepted()}`;
     return fill(this.i18n.attendance_confirmed_count(), { confirmed: this.split().confirmed.length, max });
   });
+  /** The current user's entry; undefined until they answered (or were invited). */
+  private myAttendee = computed(() => {
+    const personKey = this.currentUser()?.personKey;
+    return personKey ? this.attendees().find(a => a.person.key === personKey) : undefined;
+  });
+  /** Unanswered = no entry yet, or an invitation still open. */
+  protected showAnswerIcons = computed(() =>
+    coerceBoolean(this.canAnswer()) && !isAttendanceClosed(this.calevent()) &&
+    (this.myAttendee()?.state ?? 'invited') === 'invited'
+  );
   protected waitingLabel = computed(() =>
     fill(this.i18n.attendance_waiting_count(), { count: this.split().waiting.length })
   );
@@ -226,6 +262,20 @@ export class AttendeesAccordion {
     }
   }
 
+  /** The answer icons: the user answers for themselves, with a new entry when they have none yet. */
+  protected async answer(newState: 'accepted' | 'declined'): Promise<void> {
+    if (!this.showAnswerIcons()) return;
+    const existing = this.myAttendee();
+    if (existing) {
+      await this.changeOwnState(existing, newState);
+      return;
+    }
+    const user = this.currentUser();
+    const avatar = user ? getAvatarInfoForCurrentUser(user) : undefined;
+    if (!avatar) return;
+    await this.changeOwnState({ person: avatar, state: 'invited' }, newState);
+  }
+
   /******************************* helpers *************************************** */
   protected isOngoing(membership: MembershipModel): boolean {
     return isOngoing(membership.dateOfExit);
@@ -278,7 +328,7 @@ export class AttendeesAccordion {
   }
 
   private withState(attendee: Attendee, newState: 'accepted' | 'declined'): Attendee[] {
-    if (newState === 'accepted' && attendee.state !== 'accepted') {
+    if ((newState === 'accepted' && attendee.state !== 'accepted') || !this.attendees().includes(attendee)) {
       return [...this.attendees().filter(a => a !== attendee), { ...attendee, state: newState }];
     }
     return this.attendees().map(a => a === attendee ? { ...a, state: newState } : a);
