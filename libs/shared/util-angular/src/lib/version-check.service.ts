@@ -6,13 +6,15 @@ import { doc, onSnapshot } from 'firebase/firestore';
 
 import { ENV, FIRESTORE } from '@okr/shared-config';
 import { I18nService } from '@okr/shared-i18n';
-import { fill } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, fill } from '@okr/shared-util-core';
 
 import packageJson from '../../../../../package.json';
 import { compareAppVersions } from './app-version.util';
 
 /** The version of this build (the monorepo version). */
 export const CURRENT_APP_VERSION: string = packageJson.version;
+/** The day this version was released (yyyy-mm-dd), stamped into package.json by the release script's bump. */
+export const CURRENT_APP_RELEASE_DATE: string = (packageJson as { releaseDate?: string }).releaseDate ?? '';
 
 export interface AppVersionConfig {
   minVersion: string;
@@ -100,6 +102,11 @@ export class VersionCheckService {
 
   getCurrentVersion(): string {
     return this.currentVersion;
+  }
+
+  /** The release date of this build as dd.mm.yyyy; '' when package.json carries none. */
+  getCurrentReleaseDate(): string {
+    return convertDateFormatToString(CURRENT_APP_RELEASE_DATE, DateFormat.IsoDate, DateFormat.ViewDate, false);
   }
 
   /** The version live for THIS app, falling back to the fleet-wide `latestVersion`. */

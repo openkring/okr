@@ -184,15 +184,17 @@ export const _MenuStore = signalStore(
         // toggle items show labelAlt while active; base label otherwise
         const useAlt = item?.action === 'toggle' && store.toggleActive();
         const menuLabel = (useAlt ? (item?.labelAlt ?? item?.label) : item?.label) ?? '';
-        return resolveMenuLabelKey(menuLabel, { version: store.versionService.getCurrentVersion() });
+        return resolveMenuLabelKey(menuLabel, {
+          version: store.versionService.getCurrentVersion(), releaseDate: store.versionService.getCurrentReleaseDate(),
+        });
       })).pipe(
         switchMap(key => store.i18nService.translate(key)),
         // A translation VALUE may carry a token too (`item.accounting-menu` = "@TID_UPPER@
         // Buchhaltung"), so expand once more on the translated text. Token-free text passes
         // through unchanged.
         map(text => expandMenuTokens(text, {
-          version: store.versionService.getCurrentVersion(), tenantId: store.appStore.tenantId(),
-          booksId: store.selectedBooks.current(),
+          version: store.versionService.getCurrentVersion(), releaseDate: store.versionService.getCurrentReleaseDate(),
+          tenantId: store.appStore.tenantId(), booksId: store.selectedBooks.current(),
         })),
       ),
       { initialValue: '' }

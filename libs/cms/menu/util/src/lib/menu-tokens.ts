@@ -7,6 +7,8 @@
 export interface MenuTokenContext {
   /** Current app version, e.g. '4.2.0'. */
   version: string;
+  /** Release date of that version as dd.mm.yyyy, e.g. '05.11.2026'; '' or absent = not shown. */
+  releaseDate?: string;
   /**
    * Base URL of the git repository this app is built from, e.g. 'https://github.com/openkring/okr'
    * (no trailing slash), derived from `app-config`'s `gitOrg`/`gitRepo`. Optional because label
@@ -30,7 +32,8 @@ export interface MenuTokenContext {
 
 /** Registry of supported tokens → resolver. Keys are the literal tokens found in labels. */
 export const MENU_TOKENS: Record<string, (ctx: MenuTokenContext) => string> = {
-  '@VERSION@': (ctx) => 'v' + ctx.version,
+  // 'v7.57.1/05.11.2026' — the release date only when the build carries one
+  '@VERSION@': (ctx) => 'v' + ctx.version + (ctx.releaseDate ? '/' + ctx.releaseDate : ''),
   // Used in a `browse` item's URL, not in a label: '@REPO_URL@/commits/main/'. Keeping the
   // repository out of the menu document means a repo move is one app-config edit, not a hunt
   // through every tenant's menu docs (which is exactly how the bk2 → openkring/okr rename

@@ -9,6 +9,10 @@ describe('expandMenuTokens', () => {
     expect(expandMenuTokens('@VERSION@', ctx)).toBe('v4.2.0');
   });
 
+  it('appends the release date to @VERSION@ when there is one', () => {
+    expect(expandMenuTokens('Release @VERSION@', { ...ctx, releaseDate: '05.11.2026' })).toBe('Release v4.2.0/05.11.2026');
+  });
+
   it('replaces a token embedded in surrounding text', () => {
     expect(expandMenuTokens('App @VERSION@', ctx)).toBe('App v4.2.0');
   });

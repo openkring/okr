@@ -103,8 +103,15 @@ export function bump(v, kind) {
   return `${maj}.${min}.${pat + 1}`;
 }
 export const readVersion = () => JSON.parse(readFileSync(pkgPath, 'utf8')).version;
+/** Today as yyyy-mm-dd in local time — the date the Release menu row shows next to the version. */
+const isoToday = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
 export const writeVersion = (current, next) =>
-  writeFileSync(pkgPath, readFileSync(pkgPath, 'utf8').replace(`"version": "${current}"`, `"version": "${next}"`));
+  writeFileSync(pkgPath, readFileSync(pkgPath, 'utf8')
+    .replace(`"version": "${current}"`, `"version": "${next}"`)
+    .replace(/"releaseDate": "[^"]*"/, `"releaseDate": "${isoToday()}"`));
 
 // ---- preflight (all branches) -------------------------------------------
 export async function preflight() {
