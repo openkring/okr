@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { MenuItemModel } from '@okr/shared-models';
 
-import { barAccountKeys, barRenderableRows, countBarItems, exceedsBarLimit, isBarActive, isBarMenuType, splitBarRows, visibleBarRows } from './menu-bar.util';
+import { barAccountKeys, barRenderableRows, countBarItems, exceedsBarLimit, isBarActive, isBarMenuType, isHiddenOnNarrowScreen, splitBarRows, visibleBarRows } from './menu-bar.util';
 
 describe('isBarMenuType', () => {
   it('is true for top and segmented, false for the vertical types and for absent', () => {
@@ -184,5 +184,18 @@ describe('exceedsBarLimit', () => {
     const withDivider = [...six, 'line'];
     expect(exceedsBarLimit('top', withDivider, 1)).toBe(true);
     expect(exceedsBarLimit('top', [...five, 'line'], 1, { line: 'divider' })).toBe(false);
+  });
+});
+
+describe('isHiddenOnNarrowScreen', () => {
+  it('hides the Versand call on a narrow screen only', () => {
+    expect(isHiddenOnNarrowScreen({ action: 'call', url: 'sendEmailToList' }, false)).toBe(true);
+    expect(isHiddenOnNarrowScreen({ action: 'call', url: 'sendEmailToList' }, true)).toBe(false);
+  });
+
+  it('leaves every other entry alone', () => {
+    expect(isHiddenOnNarrowScreen({ action: 'call', url: 'exportRaw' }, false)).toBe(false);
+    expect(isHiddenOnNarrowScreen({ action: 'navigate', url: 'sendEmailToList' }, false)).toBe(false);
+    expect(isHiddenOnNarrowScreen(undefined, false)).toBe(false);
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  ANDROID_SIGNING_SHA256, apkKeyHashOrigin, byCreatedAtDesc, checkLoginTarget, defaultPasskeyLabel, expectedOrigin, isChallengeUsable, isCredentialId, isRecentSignIn, mayManagePasskey, registrationBlock,
+  ANDROID_SIGNING_SHA256, apkKeyHashOrigin, byCreatedAtDesc, checkLoginTarget, defaultPasskeyLabel, expectedOrigin, isChallengeUsable, isCredentialId, isImpersonated, mayManagePasskey,
   normalizePasskeyLabel, toPasskeyItem,
   passkeyAddedMail, resolveRpId, StoredChallenge, verifyOrigins,
 } from './passkey.decide';
@@ -51,14 +51,6 @@ describe('isChallengeUsable', () => {
     expect(isChallengeUsable(c, 'login', 1_001)).toBe(false);
     expect(isChallengeUsable(c, 'register', 999)).toBe(false);
     expect(isChallengeUsable(undefined, 'login', 0)).toBe(false);
-  });
-});
-
-describe('isRecentSignIn', () => {
-  it('allows 300 s since auth_time', () => {
-    expect(isRecentSignIn(1_000, 1_000_000 + 299_000)).toBe(true);
-    expect(isRecentSignIn(1_000, 1_000_000 + 301_000)).toBe(false);
-    expect(isRecentSignIn(undefined, 0)).toBe(false);
   });
 });
 
@@ -154,15 +146,12 @@ describe('byCreatedAtDesc', () => {
   });
 });
 
-describe('registrationBlock', () => {
-  it('refuses an impersonation session even when it is fresh', () => {
-    expect(registrationBlock({ auth_time: 1_000, impersonatedBy: 'admin-uid' }, 1_000_000)).toBe('impersonated');
+describe('isImpersonated', () => {
+  it('recognises an impersonation session', () => {
+    expect(isImpersonated({ impersonatedBy: 'admin-uid' })).toBe(true);
   });
-  it('asks for a fresh sign-in when auth_time is old or missing', () => {
-    expect(registrationBlock({ auth_time: 1_000 }, 1_000_000 + 301_000)).toBe('recent-login-required');
-    expect(registrationBlock(undefined, 0)).toBe('recent-login-required');
-  });
-  it('lets a fresh own session register', () => {
-    expect(registrationBlock({ auth_time: 1_000 }, 1_000_000 + 299_000)).toBeUndefined();
+  it('lets the member\'s own session through, however old', () => {
+    expect(isImpersonated({})).toBe(false);
+    expect(isImpersonated(undefined)).toBe(false);
   });
 });

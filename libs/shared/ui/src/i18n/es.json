@@ -106,22 +106,6 @@
       "placeholder": "Contraseña"
     }
   },
-  "distribution": {
-    "title": "Preparar la lista de distribución",
-    "empty": "No hay direcciones seleccionadas.",
-    "next": "Siguiente",
-    "segment": {
-      "to": "Para",
-      "cc": "cc",
-      "bcc": "bcc"
-    },
-    "add": {
-      "label": "Añadir dirección",
-      "placeholder": "nombre@dominio.ch, ...",
-      "helper": "Separe varias direcciones con una coma o un punto y coma.",
-      "invalid": "No se encontró ninguna dirección de correo válida."
-    }
-  },
   "duration": {
     "title": "Seleccionar período",
     "from": "Desde",

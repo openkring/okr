@@ -34,7 +34,7 @@ import { DEFAULT_EMAIL_PROVIDER, isValidProvider, sendEmailViaProvider } from '.
 import { tenantAppDomain } from './login-id';
 import {
   byCreatedAtDesc, ChallengePurpose, CHALLENGE_TTL_MS, checkLoginTarget, defaultPasskeyLabel, expectedOrigin, verifyOrigins,
-  isChallengeUsable, isCredentialId, mayManagePasskey, registrationBlock, normalizePasskeyLabel, passkeyAddedMail,
+  isChallengeUsable, isCredentialId, isImpersonated, mayManagePasskey, normalizePasskeyLabel, passkeyAddedMail,
   PASSKEY_LABEL_MAX, resolveRpId, StoredChallenge, toPasskeyItem,
 } from './passkey.decide';
 
@@ -162,14 +162,11 @@ function registrationUserName(user: Record<string, unknown>, displayName: string
   return String(user['loginId'] ?? '') || displayName || uid;
 }
 
-/** D4 + no impersonation: only the member's own, fresh sign-in may add a passkey. */
+/** No impersonation: only the member's own session may add a passkey. */
 function assertMayRegister(request: CallableRequest): void {
-  const block = registrationBlock(request.auth?.token, Date.now());
-  if (block === 'impersonated') {
-    logger.warn(`${CF_NAME}: passkey registration refused in an impersonation session for users/${request.auth?.uid}`);
-    throw new HttpsError('permission-denied', 'Einen Passkey kann nur die Person selbst einrichten.');
-  }
-  if (block === 'recent-login-required') throw new HttpsError('failed-precondition', 'recent-login-required');
+  if (!isImpersonated(request.auth?.token)) return;
+  logger.warn(`${CF_NAME}: passkey registration refused in an impersonation session for users/${request.auth?.uid}`);
+  throw new HttpsError('permission-denied', 'Einen Passkey kann nur die Person selbst einrichten.');
 }
 
 async function registerOptions(request: CallableRequest, data: PasskeyRequest) {

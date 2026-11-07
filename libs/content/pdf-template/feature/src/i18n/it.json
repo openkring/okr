@@ -102,7 +102,8 @@
     },
     "bcc": {
       "label": "Ccn",
-      "placeholder": "email1@domain.com, email2@domain.com"
+      "placeholder": "email1@domain.com, email2@domain.com",
+      "from_delivery": "Chi ha l’e-mail nella consegna riceve l’invio in Ccn."
     },
     "subject": {
       "label": "Oggetto",
@@ -115,7 +116,8 @@
     },
     "attachment": {
       "add": "Aggiungi",
-      "toolarge": "File troppo grande (max. {{ maxMb }} MB): {{ name }}"
+      "toolarge": "File troppo grande (max. {{ maxMb }} MB): {{ name }}",
+      "label": "Allegati"
     },
     "send": {
       "conf": "Documento inviato a {{ recipients }}",
@@ -125,11 +127,12 @@
     "revert": {
       "label": "Annulla"
     },
-    "title_plain": "Inviare e-mail",
+    "title_plain": "Preparare l’invio",
     "segment": {
       "editor": "Editor",
       "preview": "Anteprima",
-      "list": "Destinatari"
+      "list": "Destinatari",
+      "delivery": "Consegna"
     },
     "preview": {
       "empty": "Non c’è ancora nulla da mostrare.",
@@ -137,7 +140,30 @@
       "error": "Impossibile caricare l’anteprima."
     },
     "list": {
-      "empty": "Nessun destinatario inserito."
+      "empty": "Nessun destinatario inserito.",
+      "email_only": "A, Cc e Ccn valgono solo per l’invio via e-mail."
+    },
+    "delivery": {
+      "recipient": "Destinatario",
+      "total": "Totale",
+      "chat": "In app",
+      "email": "E-mail",
+      "post": "Posta",
+      "soon": "in arrivo",
+      "unreachable": "Non raggiungibili:",
+      "hint": "Le tue modifiche valgono solo per questo invio. Il profilo dei destinatari resta com’è.",
+      "empty": "Con questa selezione nessuno riceve l’invio.",
+      "error": "Non è stato possibile caricare i modi di consegna. L’invio va a tutti con un indirizzo e-mail."
+    },
+    "info": {
+      "title": "Come funziona un invio",
+      "action": "Info",
+      "p1": "Ogni membro sceglie nel suo profilo come ricevere i messaggi: in app, via e-mail o per posta. Sono possibili più modi.",
+      "p2": "In «Consegna» vedi questa scelta per ogni destinatario. Puoi cambiarla per questo invio; il profilo resta invariato. Chi non ha un account riceve un’e-mail, o una lettera se non si conosce un indirizzo e-mail.",
+      "p3": "E-mail: il testo dell’editor viene inserito nel modello scelto e gli allegati vengono aggiunti all’e-mail. A, Cc e Ccn valgono solo qui. I destinatari sono in Ccn, così nessuno vede gli altri.",
+      "p4": "In app: l’invio appare come comunicazione nella dashboard, con testo e allegati. Il destinatario riceve una notifica push che la apre.",
+      "p5": "Posta: il testo viene stampato come lettera con l’indirizzo del destinatario, gli allegati seguono e la lettera parte per posta. Ogni lettera ha un costo.",
+      "p6": "App e posta arriveranno presto. Fino ad allora un invio parte solo via e-mail."
     }
   },
   "category": {

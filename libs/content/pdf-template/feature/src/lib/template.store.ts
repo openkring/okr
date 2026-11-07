@@ -261,7 +261,7 @@ export const TemplateStore = signalStore(
           filename: store.previewFilename() || 'document.pdf',
           outputFormat: 'pdf',
         },
-        cssClass: 'wide-modal',
+        cssClass: ['wide-modal', 'auto-height-modal'],
       });
       await modal.present();
     },

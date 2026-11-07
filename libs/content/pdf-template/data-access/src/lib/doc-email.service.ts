@@ -7,6 +7,7 @@ import { Observable } from 'rxjs';
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import type { EmailLayoutChoice } from '@okr/shared-models';
+import type { MailingRecipientChannels } from '@okr/shared-util-core';
 
 /** A user-picked file attached inline (base64) to the email. */
 export interface InlineAttachment {
@@ -148,6 +149,17 @@ export class DocEmailService {
       this.functions, 'renderEmailPreview');
     const { data } = await callable({ appId: this.env.appId, templateKey, version });
     return data;
+  }
+
+  /**
+   * The Zustellung table of a Versand (spec 1.145 §5): per person, the possible delivery types and the
+   * profile's choice. A group admin passes `groupKey` and only learns about the group's members.
+   */
+  public async getMailingRecipients(tenantId: string, personKeys: string[], groupKey?: string): Promise<MailingRecipientChannels[]> {
+    const callable = httpsCallable<{ tenantId: string; personKeys: string[]; groupKey?: string }, { recipients: MailingRecipientChannels[] }>(
+      this.functions, 'getMailingRecipients');
+    const { data } = await callable({ tenantId, personKeys, ...(groupKey ? { groupKey } : {}) });
+    return data.recipients;
   }
 
   /** The three content fields every send path hands to the server, which composes the final mail. */

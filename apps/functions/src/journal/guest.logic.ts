@@ -10,7 +10,7 @@ import { isJournalKey } from './apply-journal-change.logic';
  */
 
 export type GuestAction = 'view' | 'comment' | 'deleteComment' | 'like' | 'unlike' | 'settings' | 'mute' | 'unmute';
-export type GuestChannel = 'email' | 'signal' | 'none';
+export type GuestChannel = 'email' | 'none';
 
 export interface GuestRequest {
   journalKey: string;
@@ -51,8 +51,10 @@ export function parseGuestRequest(data: unknown): GuestRequest {
     req.text = text;
   }
   if (action === 'settings') {
-    if (d['channel'] !== 'email' && d['channel'] !== 'signal' && d['channel'] !== 'none') throw new GuestRequestError('invalid channel');
-    req.channel = d['channel'];
+    // 'signal' comes from clients older than the release that retired the Signal channel: it means email now
+    const channel = d['channel'] === 'signal' ? 'email' : d['channel'];
+    if (channel !== 'email' && channel !== 'none') throw new GuestRequestError('invalid channel');
+    req.channel = channel;
   }
   return req;
 }

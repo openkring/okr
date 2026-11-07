@@ -17,13 +17,11 @@ describe('journal notify logic', () => {
     expect(digestRecipients(links, NOW).map((l) => l.personKey)).toEqual(['anna', 'leo']);
   });
 
-  it('the channel: own choice, Signal only when possible, email by default', () => {
-    expect(chooseChannel(undefined, true, true, true)).toBe('email');
-    expect(chooseChannel(['signal'], true, true, true)).toBe('signal');
-    expect(chooseChannel(['signal'], false, true, true)).toBe('email'); // integration off
-    expect(chooseChannel(['signal'], true, false, true)).toBe('email'); // no mobile number
-    expect(chooseChannel([], true, true, true)).toBe('none');
-    expect(chooseChannel(['email'], true, true, false)).toBe('none');
+  it('the channel: own choice, email by default', () => {
+    expect(chooseChannel(undefined, true)).toBe('email');
+    expect(chooseChannel(['signal'], true)).toBe('email'); // retired channel
+    expect(chooseChannel([], true)).toBe('none');
+    expect(chooseChannel(['email'], false)).toBe('none');
   });
 
   it('the proposal lists each footprint once; the author text gets the links per guest', () => {

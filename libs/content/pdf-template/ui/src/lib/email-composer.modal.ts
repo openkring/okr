@@ -5,7 +5,7 @@ import { form } from '@angular/forms/signals';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { filter, firstValueFrom, tap } from 'rxjs';
 import {
-  IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent,
+  IonButton, IonContent,
   IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonIcon, IonChip, IonLabel, IonNote,
   IonSegment, IonSegmentButton, IonList, IonItem,
   ModalController, ToastController,
@@ -15,19 +15,22 @@ import { AppStore } from '@okr/shared-feature';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import {
   ButtonCopy, ButtonCopyI18n, ChangeConfirmation, ChangeConfirmationI18n,
-  EmailInput, EmailInputI18n, ErrorNote, Spinner, StringSelect, StringSelectI18n, TextInput, TextInputI18n,
+  EmailInput, EmailInputI18n, ErrorNote, Header, Spinner, StringSelect, StringSelectI18n, TextInput, TextInputI18n,
 } from '@okr/shared-ui';
 import type { OkrEditor } from '@okr/shared-ui-editor';
-import { EmailLayoutChoice, LAYOUT_CHOICES } from '@okr/shared-models';
+import { DeliveryChannel, EmailLayoutChoice, LAYOUT_CHOICES } from '@okr/shared-models';
 import { needsEmailNormalization } from '@okr/shared-util-core';
 import { dismissOverlay, isBrowser, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 import {
-  emailBodyHasContent, isSenderDomainAllowed, parseEmails,
-  EmailComposerFormModel, emailComposerValidations,
+  buildVersandRows, emailBodyHasContent, isSenderDomainAllowed, parseEmails, toggleDelivery, versandBcc,
+  EmailComposerFormModel, emailComposerValidations, VersandDeliveries, VersandRow,
   EMAIL_COMPOSER_I18N_KEYS, EMAIL_COMPOSER_MSG_KEYS, EmailComposerI18n,
 } from '@okr/content-pdf-template-util';
 import { DocEmailService, InlineAttachment } from '@okr/content-pdf-template-data-access';
+
+import { VersandDeliveryTable } from './versand-delivery-table';
+import { VersandInfoModal } from './versand-info.modal';
 
 /** Reject files larger than this client-side (the CF caps inline attachments at 8 MB). */
 const MAX_ATTACHMENT_BYTES = 7 * 1024 * 1024;
@@ -50,8 +53,18 @@ export interface ComposedEmail {
   extraAttachments: InlineAttachment[];
 }
 
-/** The three views of the composer: write the mail, see it rendered, check the recipients. */
-type ComposerSegment = 'editor' | 'preview' | 'list';
+/** A person a Versand goes to, as the list hands it over: `email` is empty when none is known. */
+export interface VersandRecipient {
+  personKey: string;
+  name: string;
+  email: string;
+}
+
+/**
+ * The views of the composer: write the mail, see it rendered, choose the delivery types per recipient
+ * (a Versand only, spec 1.145 §4.3), and the email addresses.
+ */
+type ComposerSegment = 'editor' | 'preview' | 'delivery' | 'list';
 
 @Component({
   selector: 'okr-email-composer-modal',
@@ -60,91 +73,60 @@ type ComposerSegment = 'editor' | 'preview' | 'list';
   imports: [
     FormsModule,
     SvgIconPipe,
-    Spinner, ButtonCopy, ChangeConfirmation, EmailInput, ErrorNote, StringSelect, TextInput,
-    IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent,
+    Header, Spinner, ButtonCopy, ChangeConfirmation, EmailInput, ErrorNote, StringSelect, TextInput,
+    VersandDeliveryTable,
+    IonContent, IonButton,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonIcon, IonChip, IonLabel, IonNote,
     IonSegment, IonSegmentButton, IonList, IonItem,
   ],
   styles: [`
-    /* two toolbars in the header (title + segment) — the sticky change-confirmation
-       bar stacks below both, not below a single 56px toolbar. */
-    :host { --okr-sticky-header-height: 112px; }
     @media (width <= 600px) { ion-card { margin: 5px; } }
+    .segment { padding: 8px 12px 0; }
     .editor-actions { display: flex; justify-content: flex-end; align-items: center; gap: 4px; padding: 4px 12px; }
-    .attachment { padding: 0 12px; }
+    .note { display: block; padding: 0 12px 8px; }
+    .attachments { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+    .attachments .spacer { flex: 1; }
     .preview-frame { width: 100%; min-height: 420px; border: 0; background: #ffffff; }
   `],
   template: `
-    <ion-header>
-      <ion-toolbar color="secondary">
-        <ion-title>{{ headerTitle() }}@if (progress(); as p) { <span> — {{ p }}</span> }</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="cancel()">
-            <ion-icon src="{{ 'cancel-circle' | svgIcon }}" slot="icon-only" />
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-      <ion-toolbar>
-        <ion-segment [(ngModel)]="activeSegment">
-          <ion-segment-button value="editor"><ion-label>{{ i18n.segment_editor() }}</ion-label></ion-segment-button>
-          <ion-segment-button value="preview"><ion-label>{{ i18n.segment_preview() }}</ion-label></ion-segment-button>
-          <ion-segment-button value="list"><ion-label>{{ i18n.segment_list() }} ({{ recipientCount() }})</ion-label></ion-segment-button>
-        </ion-segment>
-      </ion-toolbar>
-    </ion-header>
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true"
+      [actionIcon]="isVersand() ? 'info-circle' : ''" [actionTitle]="i18n.info_action()" (actionClicked)="showInfo()" />
 
     @if (showConfirmation()) {
       <okr-change-confirmation [i18n]="changeConfirmationI18n()" (saveClicked)="send()" (cancelClicked)="revert()" />
     }
 
     <ion-content class="ion-no-padding">
+      <div class="segment">
+        <ion-segment [(ngModel)]="activeSegment">
+          <ion-segment-button value="editor"><ion-label>{{ i18n.segment_editor() }}</ion-label></ion-segment-button>
+          <ion-segment-button value="preview"><ion-label>{{ i18n.segment_preview() }}</ion-label></ion-segment-button>
+          @if (isVersand()) {
+            <ion-segment-button value="delivery"><ion-label>{{ i18n.segment_delivery() }} ({{ versandRows().length }})</ion-label></ion-segment-button>
+          }
+          <ion-segment-button value="list"><ion-label>{{ i18n.segment_list() }} ({{ recipientCount() }})</ion-label></ion-segment-button>
+        </ion-segment>
+      </div>
+
       @if (showForm()) {
         <form novalidate (submit)="$event.preventDefault()">
-          <!-- Editor: sender, subject, attachments and the message body. -->
+          <!-- Editor: subject, layout, the message body and its attachments — in that order. -->
           @if (activeSegment() === 'editor') {
             <ion-card>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
                   <ion-row>
-                    <ion-col size="12" size-md="4">
-                      <okr-email [i18n]="fromI18n()" [value]="from()"
-                        (valueChange)="onFieldChange('from', $event)" [readOnly]="fromLocked()" />
-                      @if (fromWarning(); as warning) {
-                        <ion-note color="warning" class="attachment">{{ warning }}</ion-note>
-                      }
-                    </ion-col>
-                    <ion-col size="12" size-md="5">
+                    <ion-col size="12">
                       <okr-text-input [i18n]="subjectI18n()" [value]="subject()"
                         (valueChange)="onFieldChange('subject', $event)"
-                        [autofocus]="true" [maxLength]="100" [readOnly]="false" />
-                    </ion-col>
-                    <ion-col size="12" size-md="3">
-                      <okr-string-select [i18n]="layoutI18n()" [stringList]="layoutChoices" [labels]="layoutLabels()"
-                        [selectedString]="layout()" (selectedStringChange)="onLayoutChange($event)" [readOnly]="false" />
+                        [autofocus]="true" [maxLength]="subjectLength" [readOnly]="false" />
+                      <okr-error-note [errors]="subjectErrors()" />
                     </ion-col>
                   </ion-row>
-                  <ion-row class="ion-align-items-center">
-                    <ion-col size="9">
-                      @if (filename().length > 0) {
-                        <ion-chip [outline]="true">
-                          <ion-icon src="{{ 'attachment' | svgIcon }}" />
-                          <ion-label>{{ filename() }}</ion-label>
-                        </ion-chip>
-                      }
-                      @for (att of extraAttachments(); track att.filename) {
-                        <ion-chip [outline]="true">
-                          <ion-icon src="{{ 'attachment' | svgIcon }}" />
-                          <ion-label>{{ att.filename }}</ion-label>
-                          <ion-icon src="{{ 'cancel' | svgIcon }}" (click)="removeAttachment(att.filename)" />
-                        </ion-chip>
-                      }
-                    </ion-col>
-                    <ion-col size="3" class="ion-text-end">
-                      <ion-button fill="outline" size="small" (click)="fileInput.click()">
-                        <ion-icon src="{{ 'add' | svgIcon }}" slot="start" />
-                        {{ i18n.attachment_add() }}
-                      </ion-button>
-                      <input #fileInput type="file" hidden (change)="onFileSelected($event)" />
+                  <ion-row>
+                    <ion-col size="12" size-md="6">
+                      <okr-string-select [i18n]="layoutI18n()" [stringList]="layoutChoices" [labels]="layoutLabels()"
+                        [selectedString]="layout()" (selectedStringChange)="onLayoutChange($event)" [readOnly]="false" />
                     </ion-col>
                   </ion-row>
                   <ion-row>
@@ -160,6 +142,32 @@ type ComposerSegment = 'editor' | 'preview' | 'list';
                       <okr-error-note [errors]="bodyErrors()" />
                     </ion-col>
                   </ion-row>
+                  <ion-row>
+                    <ion-col size="12">
+                      <div class="attachments">
+                        <ion-label>{{ i18n.attachment_label() }}</ion-label>
+                        @if (filename().length > 0) {
+                          <ion-chip [outline]="true">
+                            <ion-icon src="{{ 'attachment' | svgIcon }}" />
+                            <ion-label>{{ filename() }}</ion-label>
+                          </ion-chip>
+                        }
+                        @for (att of extraAttachments(); track att.filename) {
+                          <ion-chip [outline]="true">
+                            <ion-icon src="{{ 'attachment' | svgIcon }}" />
+                            <ion-label>{{ att.filename }}</ion-label>
+                            <ion-icon src="{{ 'cancel' | svgIcon }}" (click)="removeAttachment(att.filename)" />
+                          </ion-chip>
+                        }
+                        <span class="spacer"></span>
+                        <ion-button fill="outline" size="small" (click)="fileInput.click()">
+                          <ion-icon src="{{ 'add' | svgIcon }}" slot="start" />
+                          {{ i18n.attachment_add() }}
+                        </ion-button>
+                        <input #fileInput type="file" hidden (change)="onFileSelected($event)" />
+                      </div>
+                    </ion-col>
+                  </ion-row>
                 </ion-grid>
               </ion-card-content>
             </ion-card>
@@ -170,11 +178,11 @@ type ComposerSegment = 'editor' | 'preview' | 'list';
             <ion-card>
               <ion-card-content class="ion-no-padding">
                 @if (!hasContent()) {
-                  <ion-note class="attachment">{{ i18n.preview_empty() }}</ion-note>
+                  <ion-note class="note">{{ i18n.preview_empty() }}</ion-note>
                 } @else if (previewLoading()) {
                   <okr-spinner />
                 } @else if (previewFailed()) {
-                  <ion-note color="danger" class="attachment">{{ i18n.preview_error() }}</ion-note>
+                  <ion-note color="danger" class="note">{{ i18n.preview_error() }}</ion-note>
                 } @else {
                   <iframe class="preview-frame" [title]="i18n.preview_frame()" sandbox="" [srcdoc]="previewHtml()"></iframe>
                 }
@@ -182,33 +190,68 @@ type ComposerSegment = 'editor' | 'preview' | 'list';
             </ion-card>
           }
 
-          <!-- Verteiler: who the mail goes to, editable here and nowhere else. -->
+          <!-- Zustellung (Versand only): the delivery types per recipient, for this Versand. -->
+          @if (activeSegment() === 'delivery') {
+            <ion-card>
+              <ion-card-content class="ion-no-padding">
+                @if (!versandLoaded()) {
+                  <okr-spinner />
+                } @else {
+                  @if (versandFailed()) {
+                    <ion-note color="warning" class="note">{{ i18n.delivery_error() }}</ion-note>
+                  }
+                  <okr-versand-delivery-table [rows]="versandRows()" [deliveries]="deliveries()" [i18n]="i18n"
+                    (toggled)="onDeliveryToggle($event.row, $event.channel)" />
+                }
+              </ion-card-content>
+            </ion-card>
+          }
+
+          <!-- Verteiler: sender and addresses of the email part. -->
           @if (activeSegment() === 'list') {
             <ion-card>
               <ion-card-content class="ion-no-padding">
+                @if (isVersand()) {
+                  <ion-note class="note">{{ i18n.list_email_only() }}</ion-note>
+                }
                 <ion-grid>
                   <ion-row>
-                    <ion-col size="12">
+                    <ion-col size="12" size-md="6">
+                      <okr-email [i18n]="fromI18n()" [value]="from()"
+                        (valueChange)="onFieldChange('from', $event)" [readOnly]="fromLocked()" />
+                      <okr-error-note [errors]="fromErrors()" />
+                      @if (fromWarning(); as warning) {
+                        <ion-note color="warning" class="note">{{ warning }}</ion-note>
+                      }
+                    </ion-col>
+                    <ion-col size="12" size-md="6">
                       <okr-text-input [i18n]="toI18n()" [value]="toField()"
-                        (valueChange)="onFieldChange('to', $event)" [maxLength]="200" [readOnly]="false" />
+                        (valueChange)="onFieldChange('to', $event)" [maxLength]="addressLength" [readOnly]="false" />
+                      <okr-error-note [errors]="toErrors()" />
                     </ion-col>
                   </ion-row>
                   <ion-row>
                     <ion-col size="12" size-md="6">
                       <okr-text-input [i18n]="ccI18n()" [value]="ccField()"
-                        (valueChange)="onFieldChange('cc', $event)" [maxLength]="200" [readOnly]="false" />
+                        (valueChange)="onFieldChange('cc', $event)" [maxLength]="addressLength" [readOnly]="false" />
+                      <okr-error-note [errors]="ccErrors()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
-                      <okr-text-input [i18n]="bccI18n()" [value]="bccField()"
-                        (valueChange)="onFieldChange('bcc', $event)" [maxLength]="200" [readOnly]="false" />
+                      @if (isVersand()) {
+                        <ion-note class="note">{{ i18n.bcc_label() }}: {{ i18n.bcc_from_delivery() }}</ion-note>
+                      } @else {
+                        <okr-text-input [i18n]="bccI18n()" [value]="bccField()"
+                          (valueChange)="onFieldChange('bcc', $event)" [maxLength]="addressLength" [readOnly]="false" />
+                      }
+                      <okr-error-note [errors]="bccErrors()" />
                     </ion-col>
                   </ion-row>
                 </ion-grid>
                 @if (recipientCount() === 0) {
-                  <ion-note class="attachment">{{ i18n.list_empty() }}</ion-note>
+                  <ion-note class="note">{{ i18n.list_empty() }}</ion-note>
                 } @else {
                   <ion-list lines="full">
-                    @for (entry of recipients(); track entry.email) {
+                    @for (entry of recipients(); track entry.kind + entry.email) {
                       <ion-item>
                         <ion-label>
                           <p>{{ entry.kind }}</p>
@@ -265,6 +308,13 @@ export class EmailComposerModal {
    * server handles). It throws to report a failure; the composer then stays open with the error.
    */
   public readonly sendHandler    = input<((mail: ComposedEmail) => Promise<void>) | undefined>(undefined);
+  /**
+   * The persons of a Versand (spec 1.145). Set, the composer shows the Zustellung segment and derives
+   * the Bcc from it; unset, it is a plain document mail with hand-typed addresses.
+   */
+  public readonly versandRecipients = input<VersandRecipient[] | undefined>(undefined);
+  /** A group admin's Versand: the server only answers for the group's members. */
+  public readonly groupKey       = input<string>('');
 
   protected readonly activeSegment = signal<ComposerSegment>('editor');
 
@@ -281,18 +331,41 @@ export class EmailComposerModal {
     validateVestTree(path, this.suiteWithContext as any));
   private readonly validationResult = vestErrors(this.composerForm);
   protected readonly bodyErrors = computed(() => this.validationResult().getErrors('body'));
+  protected readonly subjectErrors = computed(() => this.validationResult().getErrors('subject'));
+  protected readonly fromErrors = computed(() => this.validationResult().getErrors('from'));
+  protected readonly toErrors = computed(() => this.validationResult().getErrors('to'));
+  protected readonly ccErrors = computed(() => this.validationResult().getErrors('cc'));
+  protected readonly bccErrors = computed(() => this.validationResult().getErrors('bcc'));
+
+  /** template caps: the suite sets none on these fields, so they only bound typing */
+  protected readonly subjectLength = 100;
+  protected readonly addressLength = 200;
+
+  // Versand (spec 1.145 §4.3): rows and ticks of the Zustellung table, loaded once from the server
+  protected readonly isVersand = computed(() => this.versandRecipients() !== undefined);
+  protected readonly versandRows = signal<VersandRow[]>([]);
+  protected readonly deliveries = signal<VersandDeliveries>({});
+  private initialDeliveries: VersandDeliveries = {};
+  protected readonly versandLoaded = signal(false);
+  /** The server could not answer: every person with an email address is mailed, nothing else. */
+  protected readonly versandFailed = signal(false);
 
   protected readonly isDirty = signal(false);
   protected readonly isSending = signal(false);
   /** Without an attached document this is a plain mail, not "send document". */
-  protected readonly headerTitle = computed(() =>
-    this.filename().length === 0 ? this.i18n.title_plain() : this.i18n.title());
+  protected readonly headerTitle = computed(() => {
+    const title = this.isVersand() || this.filename().length === 0 ? this.i18n.title_plain() : this.i18n.title();
+    const progress = this.progress();
+    return progress ? `${title} — ${progress}` : title;
+  });
 
   /** "<block>/<blocks>" while a chunked bulk send is running, empty for a single message. */
   protected readonly progress = signal('');
   protected readonly showForm = signal(true);
+  /** A Versand needs its Zustellung loaded and at least one email recipient (P1 sends email only). */
   protected readonly showConfirmation = computed(() =>
-    this.composerForm().valid() && this.isDirty() && !this.isSending());
+    this.composerForm().valid() && this.isDirty() && !this.isSending()
+    && (!this.isVersand() || (this.versandLoaded() && parseEmails(this.bccField()).length > 0)));
 
   // field accessors
   protected readonly toField  = computed(() => this.formData().to);
@@ -445,6 +518,51 @@ export class EmailComposerModal {
       ref.setInput('buttonCopyI18n', buttonCopyI18n);
     });
     this.destroyRef.onDestroy(() => this.editorRef()?.destroy());
+    // The Zustellung table: asked once per opened Versand. The request runs untracked.
+    effect(() => {
+      const persons = this.versandRecipients();
+      const groupKey = this.groupKey();
+      if (!persons) return;
+      untracked(() => void this.loadVersand(persons, groupKey));
+    });
+  }
+
+  private async loadVersand(persons: VersandRecipient[], groupKey: string): Promise<void> {
+    let channels;
+    try {
+      channels = await this.docEmailService.getMailingRecipients(
+        this.appStore.tenantId(), persons.map((p) => p.personKey), groupKey || undefined);
+    } catch (err) {
+      console.error('EmailComposerModal.loadVersand: getMailingRecipients failed', err);
+      this.versandFailed.set(true);
+    }
+    const { rows, deliveries } = buildVersandRows(persons, channels);
+    this.versandRows.set(rows);
+    this.initialDeliveries = deliveries;
+    this.applyDeliveries(deliveries);
+    this.versandLoaded.set(true);
+  }
+
+  /** The ticks decide the Bcc: set both together, so the email part never disagrees with the table. */
+  private applyDeliveries(deliveries: VersandDeliveries): void {
+    this.deliveries.set(deliveries);
+    const bcc = versandBcc(this.versandRows(), deliveries).join(', ');
+    this.formData.update((vm) => ({ ...vm, bcc }));
+  }
+
+  protected onDeliveryToggle(row: VersandRow, channel: DeliveryChannel): void {
+    const next = toggleDelivery(this.deliveries(), row, channel);
+    if (next === this.deliveries()) return;
+    this.isDirty.set(true);
+    this.applyDeliveries(next);
+  }
+
+  protected async showInfo(): Promise<void> {
+    const modal = await this.modalController.create({
+      component: VersandInfoModal,
+      componentProps: { i18n: this.i18n },
+    });
+    await modal.present();
   }
 
   /**
@@ -467,7 +585,8 @@ export class EmailComposerModal {
       to: this.to() || (this.sendHandler() ? '' : fallback),
       from: this.fromDefault() || fallback,
       cc: this.cc(),
-      bcc: this.bcc(),
+      // untracked: the rows land after the server answers, and a tracked read would reset the whole form
+      bcc: this.isVersand() ? untracked(() => versandBcc(this.versandRows(), this.initialDeliveries)).join(', ') : this.bcc(),
       subject: this.subjectDefault() || this.initialSubject(prefix),
       body: this.bodyDefault() || '<p></p>',
       layout: 'standard',
@@ -559,6 +678,7 @@ export class EmailComposerModal {
     this.isDirty.set(false);
     this.extraAttachments.set([]);
     this.formData.set(this.buildInitial());
+    if (this.isVersand()) this.applyDeliveries(this.initialDeliveries);
     this.showForm.set(false);          // toggle to clear stale Vest state
     setTimeout(() => this.showForm.set(true), 0);
   }

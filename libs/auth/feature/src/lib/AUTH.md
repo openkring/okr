@@ -69,7 +69,7 @@ One router callable (`apps/functions/src/auth/passkey.ts`), selected by `op`:
 
 | op | Auth | Does |
 | --- | --- | --- |
-| `registerOptions` | signed in, sign-in within 5 minutes | creates a challenge, excludes already registered credentials |
+| `registerOptions` | signed in, not impersonated | creates a challenge, excludes already registered credentials |
 | `registerVerify` | signed in | verifies the attestation, stores the `passkeys` doc, mails the account holder |
 | `loginOptions` | none (App Check) | creates a challenge for the `rpId` |
 | `loginVerify` | none (App Check) | verifies the assertion, returns a custom token (like `loginWithLoginId`) |
@@ -86,9 +86,11 @@ One router callable (`apps/functions/src/auth/passkey.ts`), selected by `op`:
 
 `rpId` = `app-config/{tenantId}.appDomain`. `localhost` is accepted only from an `http://localhost` origin. A change of `appDomain` orphans all passkeys of that tenant: users fall back to the password and register again.
 
+Passkeys exist only on `appDomain`: on any other host that serves the app, the client shows no passkey button, autofill, post-login offer or profile panel (`offersPasskeys`), and the function refuses it. `seeclub.org` is such a host: it still serves the scs app for historical reasons, but the app belongs on `app.seeclub.org`, and a new website will take over `seeclub.org`.
+
 ### Rules
 
-- D4: adding a passkey requires a sign-in within the last 5 minutes. The client asks for the password; Benutzername accounts re-sign-in through `loginWithLoginId`.
+- D4: adding a passkey needs no fresh sign-in and no password, only the member's own session; an admin's impersonation session is refused. The profile fetches the options before the tap, like the post-login offer, because Safari wants the WebAuthn call close to the tap.
 - D6: every new passkey sends a mail to the account holder (skipped for synthetic login emails).
 - Admin revoke: «Benutzer & Zugänge» row ActionSheet → «Passkeys» → delete. Deleting the Firebase login (`deleteFirebaseAuthUser`) cascades to the user's passkeys.
 

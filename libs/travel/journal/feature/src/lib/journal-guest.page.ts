@@ -311,7 +311,6 @@ export class JournalGuestPage {
       header: this.i18n.guest_settings_title(),
       buttons: [
         { text: mark(me.channel === 'email') + this.i18n.guest_channel_email(), handler: () => void this.act('settings', { channel: 'email' }) },
-        { text: mark(me.channel === 'signal') + this.i18n.guest_channel_signal(), handler: () => void this.act('settings', { channel: 'signal' }) },
         me.muted
           ? { text: this.i18n.guest_unmute(), handler: () => void this.act('unmute').then(() => this.toast(this.i18n.guest_unmuted())) }
           : { text: this.i18n.guest_mute(), handler: () => void this.act('mute').then(() => this.toast(this.i18n.guest_muted())) },

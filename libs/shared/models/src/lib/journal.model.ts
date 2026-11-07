@@ -50,7 +50,6 @@ export class JournalModel implements OkrModel, SearchableModel, TaggedModel {
   public authors: AvatarInfo[] = []; // persons who may write
   public authorKeys: string[] = []; // person.okey of every author — for rules and array-contains queries
   public guests: JournalGuest[] = []; // persons who may read, comment and like
-  public signalSender?: string; // person.okey of the author whose Matrix account is logged into the Signal bridge
   public state: JournalState = 'draft';
 
   constructor(tenantId: string) {
@@ -95,7 +94,6 @@ export const JournalGuestLinksDoc = 'guestLinks';
 export const JournalPeerDoc = 'peer';
 export const JournalNotifyDoc = 'notify'; // private: { lastNotifiedAt } — the digest cursor (plan 7)
 export const JournalGuestSeqDoc = 'guestSeq'; // private: per guest the last seq of their change records
-export const JournalSignalRoomsDoc = 'signalRooms'; // private: personKey → Signal portal room id
 export const JournalModelName = 'journal';
 
 /**

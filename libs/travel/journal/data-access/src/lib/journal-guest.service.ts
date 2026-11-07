@@ -10,12 +10,12 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
  */
 export interface GuestLinkView { personKey: string; url: string; expiresAt: string; revokedAt: string; mutedAt: string }
 
-export type GuestChannel = 'email' | 'signal' | 'none';
+export type GuestChannel = 'email' | 'none';
 
 export interface NoticePreview {
   subject: string;
   text: string;
-  recipients: { email: number; signal: number; none: number; muted: number };
+  recipients: { email: number; none: number; muted: number };
 }
 
 export interface GuestPhotoView { key: string; width: number; height: number; latitude?: number; longitude?: number; takenAt?: string; url: string; thumb: string }
@@ -62,8 +62,8 @@ export class JournalGuestService {
     return this.call<NoticePreview>('manageJournalGuest', { journalKey, action: 'previewNotice' });
   }
 
-  public async sendNotice(journalKey: string, subject: string, text: string): Promise<{ email: number; signal: number }> {
-    return (await this.call<{ sent: { email: number; signal: number } }>('manageJournalGuest', { journalKey, action: 'sendNotice', subject, text })).sent;
+  public async sendNotice(journalKey: string, subject: string, text: string): Promise<{ email: number }> {
+    return (await this.call<{ sent: { email: number } }>('manageJournalGuest', { journalKey, action: 'sendNotice', subject, text })).sent;
   }
 
   // ---- guests (link code) ----

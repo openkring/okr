@@ -16,7 +16,7 @@ import { confirm, copyToClipboardWithConfirmation, exportCsv, getCcEmailAddresse
 import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
 import { EmailAddressesModal, openReport, selectDate } from '@okr/shared-ui';
-import { type ComposedEmail, openBulkEmailFlow } from '@okr/content-pdf-template-feature';
+import { type ComposedEmail, openBulkEmailFlow, toVersandRecipients } from '@okr/content-pdf-template-feature';
 
 import { OwnershipService } from '@okr/relationship-ownership-data-access';
 import { MembershipService } from '@okr/relationship-membership-data-access';
@@ -1056,22 +1056,22 @@ export const _MembershipStore = signalStore(
       },
 
       /**
-       * Bulk mail to the currently filtered members: first the distribution-list modal
-       * (to/cc/bcc), then the email composer, which sends the mail in throttled blocks.
+       * Versand to the currently filtered members (spec 1.145): the composer with its Zustellung
+       * table, which sends the email part in throttled blocks.
        * A group admin without `memberAdmin` or `privileged` may not write the mail queue: their
        * mail goes through `sendGroupEmail`, which checks the recipients against the group.
        */
       async sendEmailToList(listId: string): Promise<void> {
         const memberKeySet = new Set(this.getFilteredMemberships(listId).map(m => m.memberKey));
         const filteredPersons = store.appStore.allPersons().filter(p => p.okey && memberKeySet.has(p.okey));
-        const recipients = getMainEmailAddresses(filteredPersons, (p) => store.appStore.getDirectoryEntry(`person.${p.okey}`)?.favEmail);
+        const recipients = toVersandRecipients(filteredPersons, (p) => store.appStore.getDirectoryEntry(`person.${p.okey}`)?.favEmail);
         const mayQueue = hasRole('privileged', store.currentUser()) || hasRole('memberAdmin', store.currentUser());
         await openBulkEmailFlow({
           modalController: store.modalController,
           firestoreService: store.firestoreService,
           appStore: store.appStore,
           tenantId: store.tenantId(),
-        }, recipients, undefined, mayQueue ? undefined : (mail) => this.sendGroupEmail(mail));
+        }, recipients, undefined, mayQueue ? undefined : (mail) => this.sendGroupEmail(mail), mayQueue ? undefined : store.orgId());
       },
 
       /** Throws to report a failure: the composer shows the text and stays open. */

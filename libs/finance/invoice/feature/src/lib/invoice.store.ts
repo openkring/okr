@@ -788,7 +788,7 @@ export const InvoiceStore = signalStore(
           filename: draft.filename || `${label}.pdf`,
           sendHandler,
         },
-        cssClass: 'wide-modal',
+        cssClass: ['wide-modal', 'auto-height-modal'],
       });
       await modal.present();
       await modal.onDidDismiss();

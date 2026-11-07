@@ -120,7 +120,6 @@
     "added": "Passkey added.",
     "unavailable": "Passkeys are not available on this device.",
     "exists": "This device already has a passkey for your account.",
-    "reauth": "For your security, please enter your password again.",
     "synced": "synced",
     "created": "Created",
     "lastUsed": "Last used",

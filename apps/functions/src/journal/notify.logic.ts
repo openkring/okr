@@ -6,7 +6,7 @@ import { DigestItem, guestLinkState, NOTICE_SUBJECT_MAX, NOTICE_TEXT_MAX } from 
  * hourly function only reads and sends. Texts: German, «du», friendly, no jargon (CLAUDE.md).
  */
 
-export type GuestChannelChoice = 'signal' | 'email' | 'none';
+export type GuestChannelChoice = 'email' | 'none';
 
 /** Guests who get the digest: a live link (not revoked, not expired) and not muted. */
 export function digestRecipients(links: JournalGuestLink[], nowIso: string): JournalGuestLink[] {
@@ -15,12 +15,11 @@ export function digestRecipients(links: JournalGuestLink[], nowIso: string): Jou
 
 /**
  * The guest's channel (spec §8.1): their own `newsDelivery` on the person; nothing chosen yet = email.
- * Signal only where the tenant switched the integration on and a mobile number exists; otherwise email.
+ * A stored 'signal' from before the Signal channel was retired counts as email.
  */
-export function chooseChannel(newsDelivery: unknown, signalEnabled: boolean, hasPhone: boolean, hasEmail: boolean): GuestChannelChoice {
+export function chooseChannel(newsDelivery: unknown, hasEmail: boolean): GuestChannelChoice {
   const chosen = Array.isArray(newsDelivery) ? newsDelivery : undefined;
   if (chosen && chosen.length === 0) return 'none';
-  if (chosen?.includes('signal') && signalEnabled && hasPhone) return 'signal';
   return hasEmail ? 'email' : 'none';
 }
 

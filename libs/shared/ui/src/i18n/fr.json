@@ -106,22 +106,6 @@
       "placeholder": "Mot de passe"
     }
   },
-  "distribution": {
-    "title": "Préparer la liste de diffusion",
-    "empty": "Aucune adresse sélectionnée.",
-    "next": "Suivant",
-    "segment": {
-      "to": "À",
-      "cc": "cc",
-      "bcc": "bcc"
-    },
-    "add": {
-      "label": "Ajouter une adresse",
-      "placeholder": "nom@domaine.ch, ...",
-      "helper": "Séparez plusieurs adresses par une virgule ou un point-virgule.",
-      "invalid": "Aucune adresse e-mail valide trouvée."
-    }
-  },
   "duration": {
     "title": "Choisir la période",
     "from": "Du",

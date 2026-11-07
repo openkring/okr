@@ -10,9 +10,6 @@ describe('passkeyErrorKind', () => {
     expect(passkeyErrorKind(new DOMException('x', 'InvalidStateError'))).toBe('exists');
     expect(passkeyErrorKind({ code: 'functions/already-exists' })).toBe('exists');
   });
-  it('maps a stale login to reauth', () => {
-    expect(passkeyErrorKind({ code: 'functions/failed-precondition', message: 'recent-login-required' })).toBe('reauth');
-  });
   it('maps missing support', () => {
     expect(passkeyErrorKind(new DOMException('x', 'NotSupportedError'))).toBe('unsupported');
   });

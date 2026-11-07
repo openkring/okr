@@ -13,7 +13,7 @@ const LEGACY_BY_INDEX: DeliveryChannel[] = [
   DeliveryChannel.Chat,   // 4 InAppNotification
 ];
 
-const CANONICAL_ORDER: DeliveryChannel[] = [DeliveryChannel.Post, DeliveryChannel.Email, DeliveryChannel.Chat, DeliveryChannel.Signal];
+const CANONICAL_ORDER: DeliveryChannel[] = [DeliveryChannel.Post, DeliveryChannel.Email, DeliveryChannel.Chat];
 
 function isChannel(value: unknown): value is DeliveryChannel {
   return typeof value === 'string' && CANONICAL_ORDER.includes(value as DeliveryChannel);
@@ -52,4 +52,46 @@ export function toDeliveryChannels(raw: unknown): DeliveryChannel[] {
  */
 export function toEditableChannels(raw: unknown): DeliveryChannel[] {
   return Array.isArray(raw) ? (raw as DeliveryChannel[]) : toDeliveryChannels(raw);
+}
+
+/** The delivery types a Versand offers, in the column order of its Zustellung table (spec 1.145 §4.3). */
+export const MAILING_CHANNELS: DeliveryChannel[] = [DeliveryChannel.Chat, DeliveryChannel.Email, DeliveryChannel.Post];
+
+/** What the server knows about one Versand recipient — never an address value (privacy-model skill). */
+export interface MailingRecipientFacts {
+  personKey: string;
+  /** an account in the sending tenant: only then is In-App possible and the profile read */
+  hasAccount: boolean;
+  /** the account's `newsDelivery`, raw as stored; ignored without an account */
+  newsDelivery?: unknown;
+  hasEmail: boolean;
+  hasPostal: boolean;
+}
+
+/** One recipient's row in the Zustellung table: which ways are possible, and which are ticked at the start. */
+export interface MailingRecipientChannels {
+  personKey: string;
+  possible: DeliveryChannel[];
+  initial: DeliveryChannel[];
+}
+
+/**
+ * The delivery types of one Versand recipient (spec 1.145 §5). With an account in the tenant, the
+ * profile's choice, as far as it is possible. Without one: email if there is an address, else post.
+ * A profile choice that is not possible (post without a postal address) is dropped, so the recipient
+ * shows as unreachable instead of as served.
+ */
+export function mailingChannels(facts: MailingRecipientFacts): MailingRecipientChannels {
+  const possible = MAILING_CHANNELS.filter((channel) =>
+    channel === DeliveryChannel.Chat ? facts.hasAccount
+      : channel === DeliveryChannel.Email ? facts.hasEmail
+        : facts.hasPostal);
+  let initial: DeliveryChannel[];
+  if (facts.hasAccount) {
+    const profile = toDeliveryChannels(facts.newsDelivery);
+    initial = possible.filter((channel) => profile.includes(channel));
+  } else {
+    initial = facts.hasEmail ? [DeliveryChannel.Email] : facts.hasPostal ? [DeliveryChannel.Post] : [];
+  }
+  return { personKey: facts.personKey, possible, initial };
 }

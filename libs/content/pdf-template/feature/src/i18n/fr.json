@@ -102,7 +102,8 @@
     },
     "bcc": {
       "label": "Cci",
-      "placeholder": "email1@domain.com, email2@domain.com"
+      "placeholder": "email1@domain.com, email2@domain.com",
+      "from_delivery": "Les personnes avec e-mail dans la distribution reçoivent l’envoi en Cci."
     },
     "subject": {
       "label": "Objet",
@@ -115,7 +116,8 @@
     },
     "attachment": {
       "add": "Ajouter",
-      "toolarge": "Fichier trop volumineux (max. {{ maxMb }} Mo) : {{ name }}"
+      "toolarge": "Fichier trop volumineux (max. {{ maxMb }} Mo) : {{ name }}",
+      "label": "Pièces jointes"
     },
     "send": {
       "conf": "Document envoyé à {{ recipients }}",
@@ -125,11 +127,12 @@
     "revert": {
       "label": "Annuler"
     },
-    "title_plain": "Envoyer un e-mail",
+    "title_plain": "Préparer l’envoi",
     "segment": {
       "editor": "Éditeur",
       "preview": "Aperçu",
-      "list": "Destinataires"
+      "list": "Destinataires",
+      "delivery": "Distribution"
     },
     "preview": {
       "empty": "Rien à afficher pour le moment.",
@@ -137,7 +140,30 @@
       "error": "L’aperçu n’a pas pu être chargé."
     },
     "list": {
-      "empty": "Aucun destinataire saisi."
+      "empty": "Aucun destinataire saisi.",
+      "email_only": "À, Cc et Cci ne valent que pour l’envoi par e-mail."
+    },
+    "delivery": {
+      "recipient": "Destinataire",
+      "total": "Total",
+      "chat": "Dans l’app",
+      "email": "E-mail",
+      "post": "Courrier",
+      "soon": "bientôt",
+      "unreachable": "Injoignables :",
+      "hint": "Tes modifications ne valent que pour cet envoi. Le profil des destinataires reste inchangé.",
+      "empty": "Avec cette sélection, personne ne reçoit l’envoi.",
+      "error": "Les modes de distribution n’ont pas pu être chargés. L’envoi part à toutes les personnes avec une adresse e-mail."
+    },
+    "info": {
+      "title": "Comment fonctionne un envoi",
+      "action": "Info",
+      "p1": "Chaque membre choisit dans son profil comment recevoir les messages : dans l’app, par e-mail ou par courrier. Plusieurs modes sont possibles.",
+      "p2": "Sous «Distribution», tu vois ce choix pour chaque destinataire. Tu peux le modifier pour cet envoi ; le profil reste inchangé. Les personnes sans compte reçoivent un e-mail, ou une lettre si aucune adresse e-mail n’est connue.",
+      "p3": "E-mail : le texte de l’éditeur est placé dans le modèle choisi et les pièces jointes sont jointes à l’e-mail. À, Cc et Cci ne valent qu’ici. Les destinataires sont en Cci, personne ne voit les autres.",
+      "p4": "Dans l’app : l’envoi apparaît comme communication sur le tableau de bord, avec texte et pièces jointes. Le destinataire reçoit une notification push qui l’ouvre.",
+      "p5": "Courrier : le texte est imprimé comme lettre avec l’adresse du destinataire, les pièces jointes suivent, et la lettre part par la poste. Chaque lettre coûte quelque chose.",
+      "p6": "L’app et le courrier arrivent bientôt. D’ici là, un envoi part uniquement par e-mail."
     }
   },
   "category": {

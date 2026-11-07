@@ -158,6 +158,30 @@ export const EMAIL_COMPOSER_I18N_KEYS = {
   /** The server preview could not be fetched — sending stays possible. */
   preview_error:    PFX + 'composer.preview.error',
   list_empty:       PFX + 'composer.list.empty',
+  list_email_only:  PFX + 'composer.list.email_only',
+  bcc_from_delivery: PFX + 'composer.bcc.from_delivery',
+  attachment_label: PFX + 'composer.attachment.label',
+
+  // Versand (spec 1.145): the Zustellung table and the info modal
+  segment_delivery:     PFX + 'composer.segment.delivery',
+  delivery_recipient:   PFX + 'composer.delivery.recipient',
+  delivery_total:       PFX + 'composer.delivery.total',
+  delivery_chat:        PFX + 'composer.delivery.chat',
+  delivery_email:       PFX + 'composer.delivery.email',
+  delivery_post:        PFX + 'composer.delivery.post',
+  delivery_soon:        PFX + 'composer.delivery.soon',
+  delivery_unreachable: PFX + 'composer.delivery.unreachable',
+  delivery_hint:        PFX + 'composer.delivery.hint',
+  delivery_empty:       PFX + 'composer.delivery.empty',
+  delivery_error:       PFX + 'composer.delivery.error',
+  info_action:          PFX + 'composer.info.action',
+  info_title:           PFX + 'composer.info.title',
+  info_p1:              PFX + 'composer.info.p1',
+  info_p2:              PFX + 'composer.info.p2',
+  info_p3:              PFX + 'composer.info.p3',
+  info_p4:              PFX + 'composer.info.p4',
+  info_p5:              PFX + 'composer.info.p5',
+  info_p6:              PFX + 'composer.info.p6',
 
   send:             PFX + 'doc.send.label',
   /** The bulk-send job document could not be written — nothing was sent. */
