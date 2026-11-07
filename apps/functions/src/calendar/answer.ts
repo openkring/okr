@@ -20,22 +20,16 @@ import { allowedAnswers, answerFunctionUrl, invitationLinkSecret, isAnswerChoice
 import { brandOf, eventUrl, NO_TENANT_LINKS, tenantLinks } from './deliver';
 import { AnswerableEvent, eventInTenant, InvitationDoc } from './invitation';
 import { answerPage, answerResultPage, Brand, eventWhen } from './mail';
+import { AnswerRefusal, eventRefusalOf, REFUSAL_TEXT } from './refusal';
 import { todayStoreDate } from './recipients';
 import { toStoreDateTime } from '../srv/zurich-time';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'invitationAnswer';
 
-export type AnswerRefusal = 'invalid' | 'gone' | 'locked' | 'eventGone' | 'past' | 'cancelled';
-
-export const REFUSAL_TEXT: Record<AnswerRefusal, { title: string; message: string }> = {
-  invalid:   { title: 'Link ungültig', message: 'Dieser Link ist nicht gültig. Öffne die Einladung bitte in der App.' },
-  gone:      { title: 'Einladung nicht mehr vorhanden', message: 'Diese Einladung gibt es nicht mehr.' },
-  locked:    { title: 'Antworten geschlossen', message: 'Die Antworten zu diesem Anlass sind geschlossen. Wende dich bitte an die Organisation.' },
-  eventGone: { title: 'Anlass nicht mehr vorhanden', message: 'Diesen Anlass gibt es nicht mehr.' },
-  past:      { title: 'Anlass vorbei', message: 'Dieser Anlass hat bereits stattgefunden.' },
-  cancelled: { title: 'Anlass abgesagt', message: 'Dieser Anlass wurde abgesagt.' },
-};
+// re-exported so existing importers keep working
+export type { AnswerRefusal };
+export { REFUSAL_TEXT };
 
 /**
  * Whether the invitation may still be answered (undefined = yes). Signature checking is separate, see linkRefusal.
@@ -45,11 +39,7 @@ export const REFUSAL_TEXT: Record<AnswerRefusal, { title: string; message: strin
 export function decideAnswer(inv: InvitationDoc | undefined, event: AnswerableEvent | undefined, today: string): AnswerRefusal | undefined {
   if (!inv || inv.isArchived) return 'gone';
   if (inv.isLocked) return 'locked';
-  if (!event || event.isArchived) return 'eventGone';
-  if ((event.endDate || event.startDate || '') < today) return 'past';
-  if (event.state === 'cancelled') return 'cancelled';
-  if (event.isLocked) return 'locked';
-  return undefined;
+  return eventRefusalOf(event, today);
 }
 
 /** What the invitee reads after answering. A yes past the cap is recorded, and lands on the waiting list. */

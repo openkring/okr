@@ -10,7 +10,7 @@
 
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 
-import { AnswerRefusal, REFUSAL_TEXT } from './answer';
+import { AnswerRefusal, REFUSAL_TEXT } from './refusal';
 
 /** The tenant's look: app-config `appName`, `brandColor` and the raster logo beside `logoUrl`. */
 export interface Brand {
