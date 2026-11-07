@@ -96,6 +96,10 @@ export interface MailingDoc {
   mailJobKey?: string;
   noticeKey?: string;
   error?: string;
+  /** The events a Versand with answer links asks about (calevent keys); absent = no answer links. */
+  caleventKeys?: string[];
+  /** StoreDate of the last event's last day: the answer links stop working after it. */
+  validUntil?: string;
 }
 
 /**

@@ -1,0 +1,46 @@
+// apps/functions/src/email/mailing-answer.logic.ts
+//
+// Who may answer a Versand's events from the mail's personal link, and what the answer page shows
+// per event. Pure functions; the endpoint (mailing-answer.ts) reads the docs and calls these.
+
+import { Attendee, DeliveryChannel } from '@okr/shared-models';
+import { splitAttendees } from '@okr/calendar-calevent-util';
+
+import { AnswerRefusal } from '../calendar/answer';
+import { AnswerableEvent } from '../calendar/invitation';
+import { keysFor, MailingDoc } from './mailing';
+
+/** Whether `personKey` may still answer: ticked for email, the Versand asks about events, and the last one is not over. */
+export function mayAnswer(doc: Pick<MailingDoc, 'deliveries' | 'caleventKeys' | 'validUntil'>, personKey: string, today: string): boolean {
+  if (!doc.caleventKeys?.length || !doc.validUntil) return false;
+  if (today > doc.validUntil) return false;
+  return keysFor(doc.deliveries, DeliveryChannel.Email).includes(personKey);
+}
+
+/** The last day any of the events takes place (StoreDate); undefined without events. */
+export function lastEventDate(events: { startDate?: string; endDate?: string }[]): string | undefined {
+  const days = events.map((event) => event.endDate || event.startDate || '').filter((day) => day !== '');
+  return days.length === 0 ? undefined : days.reduce((max, day) => (day > max ? day : max));
+}
+
+/**
+ * Whether one event of the Versand may still be answered (undefined = yes). The event half of
+ * decideAnswer (calendar/answer.ts), plus the rule that the key must be one the Versand asks about.
+ */
+export function eventRefusal(caleventKey: string, caleventKeys: string[], event: AnswerableEvent | undefined, today: string): AnswerRefusal | undefined {
+  if (!caleventKeys.includes(caleventKey)) return 'invalid';
+  if (!event || event.isArchived) return 'eventGone';
+  if ((event.endDate || event.startDate || '') < today) return 'past';
+  if (event.state === 'cancelled') return 'cancelled';
+  if (event.isLocked) return 'locked';
+  return undefined;
+}
+
+/** Where the person stands on an event; a yes beyond maxAttendees is on the waiting list. */
+export function attendeeStateOf(attendees: Attendee[] | undefined, maxAttendees: number | undefined, personKey: string): 'accepted' | 'waiting' | 'declined' | 'open' {
+  const split = splitAttendees(attendees, maxAttendees);
+  if (split.confirmed.some((a) => a.person.key === personKey)) return 'accepted';
+  if (split.waiting.some((a) => a.person.key === personKey)) return 'waiting';
+  if (split.others.some((a) => a.person.key === personKey && a.state === 'declined')) return 'declined';
+  return 'open';
+}
