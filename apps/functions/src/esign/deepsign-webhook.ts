@@ -173,7 +173,9 @@ export const deepSignLegacyClient: WebhookClient = {
 };
 
 /** Documents created at or after this instant are refused on the legacy URL. Empty = no cutoff. */
-export const ESIGN_LEGACY_CUTOFF_ISO = '';
+// Set after stage 3 of the cutover: the last sending function (onWorkflowOutbox) was updated at
+// 13:26:30Z, so every document created from 13:30Z on carries a token made with the new key.
+export const ESIGN_LEGACY_CUTOFF_ISO = '2026-11-07T13:30:00Z';
 
 /** The cutoff in ms. A non-empty cutoff that does not parse throws: it must never silently refuse nothing. */
 function cutoffMillis(cutoffIso: string): number {
