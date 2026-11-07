@@ -22,10 +22,13 @@ const deepsignServiceUsernameInt  = defineSecret('DEEPSIGN_SERVICE_USERNAME_INT'
 const deepsignServicePasswordProd = defineSecret('DEEPSIGN_SERVICE_PASSWORD_PROD');
 const deepsignServicePasswordInt  = defineSecret('DEEPSIGN_SERVICE_PASSWORD_INT');
 
-// The webhook HMAC key is OUR own secret — DeepSign only echoes the token back, it
-// never validates it — so it is independent of the DeepSign environment and shared
-// across both. A single deployed webhook function verifies int and prod callbacks.
+// Legacy webhook HMAC key. It now serves only documents sent before the cutover: DeepSign
+// held it too (it was handed over as `callbackSecret`), so it is retired together with the
+// esignWebhook wrapper. New documents use webhookTokenSecret, which DeepSign never receives.
 export const webhookSecret = defineSecret('WEBHOOK_SECRET');
+
+// Webhook HMAC key for new documents: OUR own secret, independent of the DeepSign environment.
+export const webhookTokenSecret = defineSecret('DEEPSIGN_WEBHOOK_TOKEN_SECRET');
 
 export const ALL_ESIGN_SECRETS = [
   deepsignEnv,
@@ -33,7 +36,7 @@ export const ALL_ESIGN_SECRETS = [
   deepsignClientSecretProd, deepsignClientSecretInt,
   deepsignServiceUsernameProd, deepsignServiceUsernameInt,
   deepsignServicePasswordProd, deepsignServicePasswordInt,
-  webhookSecret,
+  webhookTokenSecret,
 ] as const;
 
 // ─── Per-environment endpoints (URLs are not secret, so they live in code) ─────
@@ -126,7 +129,14 @@ export function computeWebhookToken(esignId: string, secret: string): string {
   return createHmac('sha256', secret).update(esignId).digest('hex');
 }
 
+/** The URL token for a new document: always webhookTokenSecret, never the legacy key. */
+export function newDocumentWebhookToken(esignId: string): string {
+  return computeWebhookToken(esignId, webhookTokenSecret.value());
+}
+
 export function verifyWebhookToken(esignId: string, token: string, secret: string): boolean {
+  // An unset secret reads as '' and an HMAC with an empty key is computable by anyone: fail closed.
+  if (secret === '') return false;
   const expected = computeWebhookToken(esignId, secret);
   try {
     const a = Buffer.from(expected, 'hex');

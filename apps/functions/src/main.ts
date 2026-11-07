@@ -571,3 +571,6 @@ export { getServiceStatus } from './aoc-status/get-service-status';
 
 // time-slot schedulers (spec 1.118 A9): replace fifteen separate onSchedule functions
 export { nightlyMaintenance, morningJobs, eveningJobs, halfHourlyJobs } from './_schedules';
+
+// inbound webhook receiver: one function for all senders (`/<clientId>`), plus the trigger that processes each stored event (spec 1.142)
+export { webhooks, onWebhookEvent } from './_webhooks';

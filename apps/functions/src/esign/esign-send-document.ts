@@ -3,10 +3,11 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
 import axios from 'axios';
+import { randomBytes } from 'crypto';
 import {
   ALL_ESIGN_SECRETS, REGION,
-  getDeepSignAccessToken, getEsignApiBase, downloadFromStorage, computeWebhookToken, getCallerTenants,
-  mapDeepSignSignees, webhookSecret,
+  getDeepSignAccessToken, getEsignApiBase, downloadFromStorage, newDocumentWebhookToken, getCallerTenants,
+  mapDeepSignSignees,
 } from './shared';
 import { EsignCollection } from '@okr/shared-models';
 
@@ -99,9 +100,9 @@ export async function startSignatureRun(
     ]);
     const apiBase = getEsignApiBase();
 
-    const webhookToken = computeWebhookToken(esignId, webhookSecret.value());
+    const webhookToken = newDocumentWebhookToken(esignId);
     const projectId = process.env['GCLOUD_PROJECT'] ?? '';
-    const webhookBase = `https://${REGION}-${projectId}.cloudfunctions.net/esignWebhook`;
+    const webhookBase = `https://${REGION}-${projectId}.cloudfunctions.net/webhooks/deepsign`;
     const webhookUrl = `${webhookBase}?esignId=${esignId}&token=${webhookToken}`;
 
     const docData = {
@@ -115,7 +116,8 @@ export async function startSignatureRun(
       // `callbacks`/`documentStatusUrl` are NOT real fields — DeepSign silently drops them.
       callbackUrl: webhookUrl,
       callbackEventTypes: ['signee-completed', 'document-completed'],
-      callbackSecret: webhookSecret.value(),
+      // Fresh per document and stored nowhere: DeepSign gets no key that could forge our URL token.
+      callbackSecret: randomBytes(32).toString('hex'),
     };
 
     const formData = new FormData();
