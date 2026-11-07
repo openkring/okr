@@ -770,6 +770,13 @@ describe('isCaleventInView', () => {
     expect(isCaleventInView(groupEvent(), 'scs', ctx({ isInvited: true }))).toBe(false);
   });
 
+  it("shows a group event under 'my' to a non-member on the attendee list (spec §5.7)", () => {
+    const attended = { ...groupEvent(), attendees: [{ person: { key: 'udo' }, state: 'accepted' }] } as unknown as CalEventModel;
+    expect(isCaleventInView(attended, 'my', ctx())).toBe(true);
+    expect(isCaleventInView(attended, 'my', ctx({ personKey: 'anna' }))).toBe(false);
+    expect(isCaleventInView(attended, 'my', ctx({ personKey: '' }))).toBe(false);
+  });
+
   it('keeps a personal event to its organiser and its invitees', () => {
     const organiser = { okey: 'e2', calendars: [], responsiblePersons: [{ key: 'udo' }] } as unknown as CalEventModel;
     expect(isCaleventInView(organiser, 'my', ctx())).toBe(true);

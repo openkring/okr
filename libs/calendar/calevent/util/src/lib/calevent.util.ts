@@ -533,7 +533,8 @@ export function isCaleventFull(calevent: CalEventModel): boolean {
  * defines it as «die Bitte um eine Antwort an eine Person ausserhalb der Sichtbarkeit — zugleich
  * die Erlaubnis, genau dieses eine Vorkommen zu sehen». So an invitee sees the event under 'my'
  * although the owning group's calendar is none of theirs, and sees it there only for the one
- * occurrence they hold an invitation for.
+ * occurrence they hold an invitation for. **The attendee list is the third**: whoever is on
+ * `calevent.attendees` (e.g. signed up through a Versand answer link) sees the event under 'my'.
  *
  * @param calevent the event to judge
  * @param view     the store's `calendarName`: 'all' | 'my' | 'personal' | a calendar okey
@@ -556,7 +557,9 @@ export function isCaleventInView(
   if (view === 'personal') return false;
   if (view === 'all') return true;
   if (view === 'my') {
-    return ctx.isInvited || ctx.myCalendarKeys.some(key => calevent.calendars?.includes(key) === true);
+    // on the attendee list (e.g. signed up through a Versand answer link from outside the group, spec §5.7)
+    return ctx.isInvited || isCaleventAttendee(calevent, ctx.personKey)
+      || ctx.myCalendarKeys.some(key => calevent.calendars?.includes(key) === true);
   }
   return calevent.calendars?.includes(view) === true;   // explicit calendar okey
 }
