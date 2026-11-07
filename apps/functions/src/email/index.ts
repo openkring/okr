@@ -4,3 +4,4 @@ export * from './render-email-preview';
 export * from './mailing-recipients';
 export * from './mailing';
 export * from './notice-attachment';
+export * from './mailing-answer';

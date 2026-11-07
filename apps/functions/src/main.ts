@@ -234,6 +234,7 @@ export const renderEmailPreview = Email.renderEmailPreview;
 export const getMailingRecipients = Email.getMailingRecipients;  // Versand Zustellung table (spec 1.145)
 export const sendMailing = Email.sendMailing;                    // Versand: checks the caller, writes mailings (spec 1.145 P2)
 export const onMailing = Email.onMailing;                        // Versand fan-out: mailJobs, notices, push
+export const mailingAnswer = Email.mailingAnswer;                // Versand: answer page behind the mail's personal link
 export const getNoticeAttachment = Email.getNoticeAttachment;    // signed URL for a Mitteilung file
 
 // bexio router (3.41 A6) + one 06:00 sync slot (D4); the six names below stay as aliases
