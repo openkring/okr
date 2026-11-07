@@ -2,13 +2,13 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent, ModalController } from '@ionic/angular';
 
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
-import { DateFormat, debugFormModel, fill, getCurrentTime, getTodayStr, safeStructuredClone } from '@okr/shared-util-core';
+import { DateFormat, debugFormModel, fill, getCurrentTime, getTodayStr, hasRole, safeStructuredClone } from '@okr/shared-util-core';
 import { AlertService, dismissOverlay } from '@okr/shared-util-angular';
 import { AvatarInfo, ResourceModel, TripModel, UserModel } from '@okr/shared-models';
 
 import { TripEditForm } from '@okr/trip-ui';
 import { TripStore } from './trip.store';
-import { DEFAULT_TRIP_DISTANCE_KM, getBoatSeats, getTripIndex, newTripName } from '@okr/trip-util';
+import { DEFAULT_TRIP_DISTANCE_KM, getBoatSeats, getTripIndex, hasParticipant, newTripName, uniqueParticipants } from '@okr/trip-util';
 import { TripService } from '@okr/trip-data-access';
 
 @Component({
@@ -75,17 +75,20 @@ export class TripEditModal {
     (this.store.appStore.allResources() ?? []).filter((r: ResourceModel) => r.type === 'rboat')
   );
   protected category = computed(() => this.store.appStore.getCategory('rboat_type'));
+  /** Crew size the selected boat allows (see seatsOf); 0 = no limit. */
+  protected maxParticipants = computed(() => this.seatsOf(this.formData()?.resource));
   /**
-   * Crew size the selected boat allows — a 1x takes one person, a 4x four. Derived from the
-   * boat's rboat_type subType (the trip stores the resolved rigging), falling back to the
-   * resource's own `seats` field for a subType the pattern does not know. 0 = no boat / no limit.
+   * 'end' prefills the end with now, so the form shows the date and time the trip is closed with
+   * (an admin may still correct them). Only empty fields are filled — a stored end stays.
    */
-  protected maxParticipants = computed(() => {
-    const boat = this.formData()?.resource;
-    if (!boat?.key) return 0;
-    return getBoatSeats(boat.subType) || (this.boats().find(b => b.okey === boat.key)?.seats ?? 0);
+  public formData = linkedSignal(() => {
+    const trip = safeStructuredClone(this.trip());
+    if (trip && this.mode() === 'end') {
+      trip.endDate = trip.endDate || getTodayStr(DateFormat.StoreDate);
+      trip.endTime = trip.endTime || getCurrentTime();
+    }
+    return trip;
   });
-  public formData = linkedSignal(() => safeStructuredClone(this.trip()));
 
   protected headerTitle = computed(() => {
     switch (this.mode()) {
@@ -115,8 +118,11 @@ export class TripEditModal {
 
     switch (this.mode()) {
       // a copy is saved exactly like a new trip — it only differs in how the form was prefilled
+      // the form does not show the start for a new trip: it starts when it is saved, not when the form was opened
       case 'add':
       case 'copy':
+        trip.startDate = getTodayStr(DateFormat.StoreDate);
+        trip.startTime = getCurrentTime();
         trip.state = 'open';
         await this.tripService.create(trip, this.store.currentUser());
         break;
@@ -124,7 +130,12 @@ export class TripEditModal {
         await this.tripService.update(trip, this.store.currentUser());
         break;
       case 'end':
-        // an admin may have typed the end into the form; only fill what is still empty
+        // a tripAdmin may have corrected the prefilled end in the form; for everybody else the
+        // fields are read-only, so the trip ends when it is saved, not when the form was opened
+        if (!hasRole('tripAdmin', this.store.currentUser())) {
+          trip.endDate = getTodayStr(DateFormat.StoreDate);
+          trip.endTime = getCurrentTime();
+        }
         trip.endDate = trip.endDate || getTodayStr(DateFormat.StoreDate);
         trip.endTime = trip.endTime || getCurrentTime();
         trip.state = 'closed';
@@ -155,6 +166,11 @@ export class TripEditModal {
     }
     const person = await this.store.selectPersonAvatar();
     if (!person) return;
+    // every person sits in the boat at most once
+    if (hasParticipant(participants, person)) {
+      await this.alertService.showToast(fill(this.store.i18n.warning_participant_duplicate(), { name: `${person.name1} ${person.name2}`.trim() }));
+      return;
+    }
     participants.push(person);
     this.onFieldChange('participants', participants);
   }
@@ -169,13 +185,30 @@ export class TripEditModal {
     if (!trip) return;
     const crew = await this.store.selectTrainingCrew(trip.startDate, this.maxParticipants());
     if (!crew) return;
-    this.onFieldChange('participants', crew);
+    this.onFieldChange('participants', uniqueParticipants(crew));
   }
 
   protected async addBoat(): Promise<void> {
     const boat = await this.store.selectResourceAvatar(this.trip().okey);
     if (!boat) return;
+    // the crew may have been entered first: a boat with fewer seats than people is refused
+    const seats = this.seatsOf(boat);
+    const count = this.formData()?.participants?.length ?? 0;
+    if (seats > 0 && count > seats) {
+      await this.alertService.showToast(fill(this.store.i18n.warning_boat_too_small(), { boat: boat.name2 || boat.name1, seats, count }));
+      return;
+    }
     this.onFieldChange('resource', boat);
+  }
+
+  /**
+   * Crew size a boat allows — a 1x takes one person, a 4x four. Derived from the boat's
+   * rboat_type subType (the trip stores the resolved rigging), falling back to the resource's own
+   * `seats` field for a subType the pattern does not know. 0 = no boat, an ad-hoc boat or no limit.
+   */
+  private seatsOf(boat: AvatarInfo | undefined): number {
+    if (!boat?.key) return 0;
+    return getBoatSeats(boat.subType) || (this.boats().find(b => b.okey === boat.key)?.seats ?? 0);
   }
 
   protected async addLocation(): Promise<void> {

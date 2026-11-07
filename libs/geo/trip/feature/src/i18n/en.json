@@ -119,6 +119,8 @@
     "distance_zero": "Please enter a distance between 1 and 500 km.",
     "seats_mismatch": "The number of participants does not match the boat capacity.",
     "max_participants": "This boat seats at most {count} people.",
+    "participant_duplicate": "{name} is already on board.",
+    "boat_too_small": "{boat} only seats {seats} people, but {count} are selected. Choose a bigger boat or remove people first.",
     "note": "To prevent misuse, various checks run in the background. Should misuse be detected, the admin is notified.",
     "end_before_start": "The end of the trip is before its start.",
     "boat_required": "Select a boat.",

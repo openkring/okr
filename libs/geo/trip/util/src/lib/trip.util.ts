@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 
-import { CREW_TRACK_DAYS, TripModel } from '@okr/shared-models';
+import { AvatarInfo, CREW_TRACK_DAYS, TripModel } from '@okr/shared-models';
 import { addIndexElement, convertDateFormatToString, DateFormat, getCurrentTime, getTodayStr, parseDate } from '@okr/shared-util-core';
 
 /** Editing of an ended trip is allowed for this long after its endTime. */
@@ -43,7 +43,7 @@ export function newTrip(tenantId: string, type = ''): TripModel {
 export function copyTrip(trip: TripModel, tenantId: string): TripModel {
   const copy = newTrip(tenantId, trip.type);
   copy.resource = trip.resource ? { ...trip.resource } : undefined;
-  copy.participants = (trip.participants ?? []).map((p) => ({ ...p }));
+  copy.participants = uniqueParticipants(trip.participants ?? []).map((p) => ({ ...p }));
   copy.locations = (trip.locations ?? []).map((l) => ({ ...l }));
   copy.customLocationLabel = trip.customLocationLabel;
   copy.distance = trip.distance;
@@ -178,4 +178,23 @@ export function withoutTrackLink<T extends Pick<TripModel, 'trackKey' | 'trackRe
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { trackKey, trackRequest, ...rest } = trip;
   return rest;
+}
+
+/**
+ * Whether two crew avatars are the same person. A member is identified by its person key; a guest
+ * has no key ('') and is told apart by name, so two different guests may sit in the same boat.
+ */
+export function isSameParticipant(a: AvatarInfo, b: AvatarInfo): boolean {
+  if (a.key || b.key) return a.key === b.key;
+  return `${a.name1} ${a.name2}`.trim().toLowerCase() === `${b.name1} ${b.name2}`.trim().toLowerCase();
+}
+
+/** Whether `person` already sits in `participants`. Pure. */
+export function hasParticipant(participants: AvatarInfo[], person: AvatarInfo): boolean {
+  return participants.some((p) => isSameParticipant(p, person));
+}
+
+/** The crew with every person listed at most once (first occurrence wins). Pure; the input is not changed. */
+export function uniqueParticipants(participants: AvatarInfo[]): AvatarInfo[] {
+  return participants.filter((p, i) => participants.findIndex((q) => isSameParticipant(p, q)) === i);
 }

@@ -7,7 +7,7 @@ import { AppStore } from '@okr/shared-feature';
 import { PERSON_EDIT_MODAL, PersonEditModalLoader } from '@okr/subject-person-ui';
 import { Header } from '@okr/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
-import { convertDateFormatToString, DateFormat, fill, getWeekdayI18nKey, isKioskOnly } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, fill, getWeekdayI18nKey, hasRole, isKioskOnly } from '@okr/shared-util-core';
 import { AlertService, downloadFile, resourceParams } from '@okr/shared-util-angular';
 import { I18nService, TranslatePipe } from '@okr/shared-i18n';
 import { AvatarDisplay } from '@okr/avatar-ui';
@@ -112,7 +112,8 @@ function crewSectionRow(s: CrewTrackSection): TrackSectionRow {
             </ion-label>
           </ion-item>
 
-          @if(trip().notes) {
+          <!-- the notes are an admin field: written and read by admins only -->
+          @if(isAdmin() && trip().notes) {
             <ion-item lines="none">
               <ion-icon slot="start" src="{{'notes' | svgIcon}}" />
               <ion-label class="ion-text-wrap">
@@ -211,6 +212,7 @@ export class TripViewModal {
     await modal.present();
   }
 
+  protected readonly isAdmin = computed(() => hasRole('admin', this.appStore.currentUser()));
   protected readonly weekdayKey = computed(() => getWeekdayI18nKey(this.trip().startDate, false));
   /** one single-element array per person, so each avatar is rendered with its name on its own line */
   protected readonly participants = computed(() => this.trip().participants.map(p => [p]));

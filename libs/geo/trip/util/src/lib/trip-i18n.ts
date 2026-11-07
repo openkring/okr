@@ -119,6 +119,8 @@ export const TRIP_I18N_KEYS = {
   warning_distance_zero:    PFX + 'warning.distance_zero',
   warning_seats_mismatch:   PFX + 'warning.seats_mismatch',
   warning_max_participants: PFX + 'warning.max_participants',
+  warning_participant_duplicate: PFX + 'warning.participant_duplicate',
+  warning_boat_too_small:   PFX + 'warning.boat_too_small',
   warning_note:             PFX + 'warning.note',
   warning_track_carrier_missing: PFX + 'warning.track_carrier_missing',
   warning_track_carrier_not_crew: PFX + 'warning.track_carrier_not_crew',

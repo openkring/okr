@@ -40,8 +40,11 @@ import { formatTripTime, isTrainingCrewBoat, MAX_TRIP_DISTANCE_KM, TripI18n, tri
       <ion-card>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
-            <!-- date/time: read-only for the kiosk, editable for a tripAdmin/admin correcting a trip -->
-            @if(hasRole('tripAdmin')) {
+            <!-- date/time: not shown for a new trip (it starts when saved); read-only for the kiosk,
+                 editable for a tripAdmin/admin correcting a trip -->
+            @if(isNewTrip()) {
+              <!-- nothing: start date/time are set on save, the end when the trip is closed -->
+            } @else if(hasRole('tripAdmin')) {
               <ion-row>
                 <ion-col size="12" size-md="6">
                   <okr-date-input [i18n]="startDateI18n()" [storeDate]="startDate()"
@@ -227,6 +230,9 @@ export class TripEditForm {
       });
     });
   }
+
+  /** 'add' and 'copy' create a trip that starts on save — its date/time fields are hidden */
+  protected isNewTrip = computed(() => this.mode() === 'add' || this.mode() === 'copy');
 
   // date/time fields — only rendered for an admin, but computed unconditionally (cheap)
   // formatTripTime turns the legacy 'HHmm' storage form into the 'HH:mm' the input expects

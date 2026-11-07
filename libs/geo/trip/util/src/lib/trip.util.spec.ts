@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { TripModel } from '@okr/shared-models';
+import { AvatarInfo, TripModel } from '@okr/shared-models';
 import {
   newTrip,
   newTripName,
@@ -8,6 +8,9 @@ import {
   getTripIndex,
   groupTripsByDay,
   getBoatSeats,
+  hasParticipant,
+  isSameParticipant,
+  uniqueParticipants,
   matchesStateFilter,
   compareTripDate,
   formatTripTime,
@@ -348,5 +351,42 @@ describe('withoutTrackLink', () => {
   it('is a no-op shape-wise on a trip without a link', () => {
     const t = Object.assign(new TripModel('scs'), { okey: 'L2' });
     expect(withoutTrackLink(t)).toMatchObject({ okey: 'L2' });
+  });
+});
+
+describe('participants are unique', () => {
+  const avatar = (key: string, name1: string, name2: string): AvatarInfo =>
+    ({ key, name1, name2, label: '', modelType: 'person', type: '', subType: '' }) as AvatarInfo;
+  const anna = avatar('p1', 'Anna', 'Muster');
+  const ben = avatar('p2', 'Ben', 'Muster');
+  const guest = avatar('', 'Gast', 'Eins');
+
+  it('matches members by key, regardless of name', () => {
+    expect(isSameParticipant(anna, { ...anna, name1: 'Anna-Lena' })).toBe(true);
+    expect(isSameParticipant(anna, ben)).toBe(false);
+  });
+
+  it('matches guests (no key) by name, case-insensitive', () => {
+    expect(isSameParticipant(guest, avatar('', 'gast', 'eins'))).toBe(true);
+    expect(isSameParticipant(guest, avatar('', 'Gast', 'Zwei'))).toBe(false);
+  });
+
+  it('never matches a guest with a member of the same name', () => {
+    expect(isSameParticipant(avatar('', 'Anna', 'Muster'), anna)).toBe(false);
+  });
+
+  it('hasParticipant finds a person already in the crew', () => {
+    expect(hasParticipant([anna, guest], anna)).toBe(true);
+    expect(hasParticipant([anna, guest], ben)).toBe(false);
+  });
+
+  it('uniqueParticipants keeps the first occurrence of each person', () => {
+    expect(uniqueParticipants([anna, ben, anna, guest, guest])).toEqual([anna, ben, guest]);
+  });
+
+  it('copyTrip drops a duplicate from the crew', () => {
+    const trip = newTrip('scs');
+    trip.participants = [anna, anna, ben];
+    expect(copyTrip(trip, 'scs').participants).toEqual([anna, ben]);
   });
 });
