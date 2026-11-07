@@ -94,3 +94,18 @@ const only = targets.length ? targets.map((n) => `functions:${n}`).join(',') : '
 console.log(`\nDeploying ${targets.length ? only : 'ALL functions'} (buildpack pnpm@${pin})…`);
 run('firebase', ['deploy', '--only', only]);
 console.log('\n✔ Functions deployed.');
+
+// Receiver self-test (spec 1.143) when the deploy touched the webhook path. It fires the
+// selftest's own scheduler job; the result lands on the AOC status page and a failure raises the
+// `webhooks:` log alert. A failure here never undoes the deploy.
+const SELFTEST_TRIGGERS = ['webhooks', 'onWebhookEvent', 'webhookSelftestScheduled'];
+if (!targets.length || targets.some((t) => SELFTEST_TRIGGERS.includes(t))) {
+  const project = JSON.parse(readFileSync(join(repoRoot, '.firebaserc'), 'utf8')).projects?.default;
+  const job = 'firebase-schedule-webhookSelftestScheduled-europe-west6';
+  try {
+    run('gcloud', ['scheduler', 'jobs', 'run', job, '--location=europe-west6', `--project=${project}`]);
+    console.log('\n✔ Webhook-Selbsttest gestartet — Ergebnis in ~1 min auf der AOC-Statusseite («Webhook-Empfang»).');
+  } catch {
+    console.error(`\n⚠ Webhook-Selbsttest konnte nicht gestartet werden (gcloud scheduler jobs run ${job}). Deploy bleibt bestehen.`);
+  }
+}

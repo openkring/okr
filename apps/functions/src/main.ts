@@ -574,3 +574,4 @@ export { nightlyMaintenance, morningJobs, eveningJobs, halfHourlyJobs } from './
 
 // inbound webhook receiver: one function for all senders (`/<clientId>`), plus the trigger that processes each stored event (spec 1.142)
 export { webhooks, onWebhookEvent } from './_webhooks';
+export { webhookSelftestScheduled, runWebhookSelftestNow } from './_webhooks/run-selftest';
