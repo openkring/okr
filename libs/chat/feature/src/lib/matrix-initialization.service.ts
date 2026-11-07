@@ -13,7 +13,7 @@ import { ChatStatusService, FcmService, FirestoreService, writeBadgeLedgerFromPa
 import { BADGE_COUNTS_DOC_ID, BadgeCollection, ChatBlockedError, UserCollection } from '@okr/shared-models';
 import { allPartsReady, BadgeParts, BadgePartsReady, chatBlockedAlertMessage, correctionAllowed, countedDeliveredNotifications, LEDGER_CORRECTION_WINDOW_MS, ledgerPartsToWrite, nextCorrectionAt, ServerBadgeLedger, isKioskOnly, isRegistrationStale, PUSH_PROMPT_SNOOZE_MS, readyBadgeParts, shouldAskForPush } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
-import { CHAT_BLOCKED_ALERT_I18N_KEYS, ChatBlockedAlertI18n, PUSH_PROMPT_I18N_KEYS, PushPromptI18n } from '@okr/chat-util';
+import { CHAT_BLOCKED_ALERT_I18N_KEYS, ChatBlockedAlertI18n, PUSH_PROMPT_I18N_KEYS } from '@okr/chat-util';
 import { AlertController } from '@ionic/angular';
 
 import { KioskCallWindow } from './kiosk-call-window';
@@ -48,7 +48,7 @@ export class MatrixInitializationService {
   private readonly fcmService = inject(FcmService);
   private readonly firestoreService = inject(FirestoreService);
   private readonly alertController = inject(AlertController);
-  private readonly pushPromptI18n = inject(I18nService).translateAll(PUSH_PROMPT_I18N_KEYS) as PushPromptI18n;
+  private readonly i18nService = inject(I18nService);
   private readonly blockedAlertI18n = inject(I18nService).translateAll(CHAT_BLOCKED_ALERT_I18N_KEYS) as ChatBlockedAlertI18n;
   private readonly router = inject(Router);
   private readonly injector = inject(Injector);
@@ -129,14 +129,19 @@ export class MatrixInitializationService {
     const state = await this.fcmService.getPermissionState();
     if (!shouldAskForPush({ state, isNative: Capacitor.isNativePlatform(), isStandalone, snoozedUntil, now: Date.now() })) return;
 
-    const i18n = this.pushPromptI18n;
+    // Resolved here, not via translateAll: this runs right after login, before the chat scope has
+    // loaded, and a translateAll signal still reads '' then — the native app showed an empty alert.
+    const [header, message, later, allow] = await Promise.all([
+      PUSH_PROMPT_I18N_KEYS.header, PUSH_PROMPT_I18N_KEYS.message, PUSH_PROMPT_I18N_KEYS.later, PUSH_PROMPT_I18N_KEYS.allow,
+    ].map(key => this.i18nService.translateOnce(key)));
+    if (!header || !allow) return; // scope failed to load: ask on the next login instead
     const alert = await this.alertController.create({
-      header: i18n.header(),
-      message: i18n.message(),
+      header,
+      message,
       buttons: [
-        { text: i18n.later(), role: 'cancel' },
+        { text: later, role: 'cancel' },
         {
-          text: i18n.allow(),
+          text: allow,
           role: 'confirm',
           // Not awaited: enablePush runs synchronously up to Notification.requestPermission(),
           // so the prompt is reached inside the click (1.127).
