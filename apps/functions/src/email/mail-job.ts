@@ -21,7 +21,7 @@ import { bareAddress, effectiveSender, getAppEmailConfig, getEmailProvider } fro
 import { sendEmailViaProvider } from '../auth/email-transport';
 import { AttachmentRef, resolveAttachments } from '../auth';
 import { composeBody } from './render-email';
-import { answerBlockHtml, AnswerEventLine, PER_MAIL_PAUSE_MS, personalOutcome, PersonalEntry } from './personal-mail.logic';
+import { ANSWER_URL_PLACEHOLDER, answerBlockHtml, AnswerEventLine, fillAnswerUrl, PER_MAIL_PAUSE_MS, personalOutcome, PersonalEntry, sendErrorCode } from './personal-mail.logic';
 import { asLayoutChoice } from './render-email.logic';
 
 const REGION = 'europe-west6';
@@ -58,6 +58,8 @@ export interface MailJobDoc {
   blocksSent?: number;
   blocksTotal?: number;
   error?: string;
+  /** A personal send: class and status of the first failed mail, never its message. */
+  errorCode?: string;
 }
 
 /**
@@ -126,25 +128,32 @@ async function sendPersonal(
   const events = job.answerEvents ?? [];
   if (typeof job.body !== 'string' || !job.body.trim()) throw new Error('The mail job has an empty body.');
   await snap.ref.update({ state: 'sending', blocksTotal: personal.length, blocksSent: 0 });
+  // composed once for everybody (sanitise, layout, template reads); each mail only swaps in its own link
+  const composed = await composeBody(tenantId, {
+    body: job.body + answerBlockHtml(ANSWER_URL_PLACEHOLDER, events), layout: asLayoutChoice(job.layout), attachmentName: job.attachmentName,
+  });
   let sent = 0;
   let failed = 0;
+  let errorCode: string | undefined;
   for (const [i, entry] of personal.entries()) {
     if (i > 0) await new Promise((resolve) => setTimeout(resolve, PER_MAIL_PAUSE_MS));
     try {
-      const { html, text } = await composeBody(tenantId, {
-        body: job.body + answerBlockHtml(entry.answerUrl, events), layout: asLayoutChoice(job.layout), attachmentName: job.attachmentName,
-      });
+      const { html, text } = fillAnswerUrl(composed, entry.answerUrl);
       await sendEmailViaProvider(provider, {
         from, to: [entry.to], ...(job.to[0] ? { replyTo: job.to[0] } : {}), subject: job.subject, html, ...(text !== undefined ? { text } : {}), attachments,
       });
       sent++;
-    } catch {
-      failed++;                                    // no address or message in the log: counts only
+    } catch (error) {
+      failed++;
+      if (!errorCode) {
+        errorCode = sendErrorCode(error);          // class and status only: the message may carry an address
+        logger.error(`${CF_NAME}: first personal mail failed (${errorCode}) (tenant ${tenantId})`);
+      }
     }
     if ((i + 1) % PERSONAL_PROGRESS_EVERY === 0) await snap.ref.update({ blocksSent: sent });
   }
   const outcome = personalOutcome(sent, failed);
-  await snap.ref.update({ blocksSent: sent, ...outcome });
+  await snap.ref.update({ blocksSent: sent, ...outcome, ...(errorCode ? { errorCode } : {}) });
   logger.info(`${CF_NAME}: sent ${sent} personal mail(s), ${failed} failed (tenant ${tenantId})`);
 }
 

@@ -6,6 +6,8 @@
 import { HttpsError } from 'firebase-functions/v2/https';
 
 import { escapeHtml } from '../calendar/mail';
+import { eventRefusalOf, type AnswerRefusal } from '../calendar/refusal';
+import type { AnswerableEvent } from '../calendar/invitation';
 
 /** At most this many events one Versand asks about. */
 export const MAX_ANSWER_EVENTS = 20;
@@ -61,4 +63,30 @@ export function answerBlockHtml(url: string, events: AnswerEventLine[]): string 
 export function personalOutcome(sent: number, failed: number): { state: 'sent' | 'failed'; error?: string } {
   const state = sent === 0 && failed > 0 ? 'failed' : 'sent';
   return failed > 0 ? { state, error: `${failed} von ${sent + failed} Mails konnten nicht gesendet werden.` } : { state };
+}
+
+/** The answer block's url while the mail is composed once for everybody; cannot occur in user text. */
+export const ANSWER_URL_PLACEHOLDER = 'https://answer.invalid/__OKR_ANSWER_URL__';
+
+/** One person's mail out of the shared composition: the placeholder becomes the url (escaped in html, raw in text). */
+export function fillAnswerUrl(rendered: { html: string; text?: string }, url: string): { html: string; text?: string } {
+  return {
+    html: rendered.html.split(ANSWER_URL_PLACEHOLDER).join(escapeHtml(url)),
+    ...(rendered.text !== undefined ? { text: rendered.text.split(ANSWER_URL_PLACEHOLDER).join(url) } : {}),
+  };
+}
+
+/** Why an event cannot be asked about at send time (undefined = fine): the tenant check, then the answer rules. */
+export function sendableEventRefusal(event: AnswerableEvent | undefined, tenantId: string, today: string): AnswerRefusal | undefined {
+  if (!event?.tenants?.includes(tenantId)) return 'eventGone';
+  return eventRefusalOf(event, today);
+}
+
+/** A non-PII code for a failed send: the error class and an HTTP status or error code when it carries one. */
+export function sendErrorCode(error: unknown): string {
+  const e = error as { name?: unknown; code?: unknown; status?: unknown; responseCode?: unknown } | undefined;
+  const name = typeof e?.name === 'string' ? e.name : 'Error';
+  const detail = [e?.status, e?.responseCode, e?.code].find((v) => typeof v === 'number' || typeof v === 'string');
+  const mailtrap = error instanceof Error ? /^Mailtrap API error (\d{3})/.exec(error.message)?.[1] : undefined;
+  return [name, detail ?? mailtrap].filter((v) => v !== undefined).join(' ').slice(0, 60);
 }

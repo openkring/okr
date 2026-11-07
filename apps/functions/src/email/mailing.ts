@@ -26,6 +26,7 @@ import { projectID } from 'firebase-functions/params';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
 import { invitationLinkSecret, mailingAnswerFunctionUrl, mailingAnswerUrl } from '../calendar/answer-link';
+import type { AnswerableEvent } from '../calendar/invitation';
 import { eventWhen } from '../calendar/mail';
 import { privateBucket } from '../_storage/private-bucket';
 import { getAppEmailConfig } from '../auth/email-templates';
@@ -37,7 +38,7 @@ import { htmlToText } from './html-to-text';
 import { MailJobCollection, MailJobDoc } from './mail-job';
 import { lastEventDate } from './mailing-answer.logic';
 import { chunk, isElevated } from './mailing-recipients';
-import { MAX_PERSONAL_RECIPIENTS, parseCaleventKeys, personalEntries } from './personal-mail.logic';
+import { MAX_PERSONAL_RECIPIENTS, parseCaleventKeys, personalEntries, sendableEventRefusal } from './personal-mail.logic';
 import { asLayoutChoice } from './render-email.logic';
 
 const REGION = 'europe-west6';
@@ -261,13 +262,13 @@ export const sendMailing = onCall(
     if (caleventKeys.length > 0) {
       const today = getTodayStr(DateFormat.StoreDate);
       const snaps = await db.getAll(...caleventKeys.map((key) => db.collection('calevents').doc(key)));
-      const events = snaps.map((snap) => snap.data() as { tenants?: string[]; isArchived?: boolean; state?: string; startDate?: string; endDate?: string } | undefined);
+      const events = snaps.map((snap) => snap.data() as AnswerableEvent | undefined);
       for (const event of events) {
-        if (!event || !event.tenants?.includes(tenantId) || event.isArchived || event.state === 'cancelled' || (event.endDate || event.startDate || '') < today) {
-          throw new HttpsError('invalid-argument', 'An event cannot be answered: it is missing, archived, cancelled or over.');
+        if (sendableEventRefusal(event, tenantId, today)) {
+          throw new HttpsError('invalid-argument', 'An event cannot be answered: it is missing, archived, cancelled, locked or over.');
         }
       }
-      validUntil = lastEventDate(events as { startDate?: string; endDate?: string }[]);
+      validUntil = lastEventDate(events as AnswerableEvent[]);
     }
 
     const ref = db.collection(MailingCollection).doc();
