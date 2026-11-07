@@ -4,8 +4,10 @@
 import type { WebhookHandler } from './process';
 import { mailtrapHandler } from '../email/mailtrap-webhook';
 import { deepSignHandler } from '../esign/deepsign-webhook';
+import { selftestHandler } from './selftest-client';
 
 export const WEBHOOK_HANDLERS: Record<string, WebhookHandler> = {
   mailtrap: mailtrapHandler,
   deepsign: deepSignHandler,
+  selftest: selftestHandler,
 };
