@@ -195,6 +195,14 @@ export const AOC_STATUS_I18N_KEYS = {
   level_down:        PFX + 'status.level.down',
   level_maintenance: PFX + 'status.level.maintenance',
   level_unknown:     PFX + 'status.level.unknown',
+  test_now:          PFX + 'status.testNow',
+  test_running:      PFX + 'status.testRunning',
+  test_ok:           PFX + 'status.testOk',
+  test_failed:       PFX + 'status.testFailed',
+  step_http:         PFX + 'status.step.http',
+  step_stored:       PFX + 'status.step.stored',
+  step_processed:    PFX + 'status.step.processed',
+  selftest_hint:     PFX + 'status.selftestHint',
 };
 
 export type AocStatusI18n = { [K in keyof typeof AOC_STATUS_I18N_KEYS]: Signal<string> };

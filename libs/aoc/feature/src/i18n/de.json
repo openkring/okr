@@ -263,7 +263,17 @@
       "down": "Ausfall",
       "maintenance": "Wartung",
       "unknown": "Unbekannt"
-    }
+    },
+    "testNow": "Jetzt testen",
+    "testRunning": "Der Test läuft, das dauert bis zu einer Minute.",
+    "testOk": "Der Test war erfolgreich: Nachrichten von Partnerdiensten kommen an.",
+    "testFailed": "Der Test ist fehlgeschlagen: {step}",
+    "step": {
+      "http": "Die Nachricht wurde nicht angenommen.",
+      "stored": "Die Nachricht wurde nicht gespeichert.",
+      "processed": "Die Nachricht wurde nicht verarbeitet."
+    },
+    "selftestHint": "Prüft jede Nacht, ob Nachrichten von Partnerdiensten (E-Mail-Zustellung, elektronische Unterschrift) bei uns ankommen."
   },
   "hub": {
     "area": {

@@ -263,7 +263,17 @@
       "down": "Guasto",
       "maintenance": "Manutenzione",
       "unknown": "Sconosciuto"
-    }
+    },
+    "testNow": "Prova ora",
+    "testRunning": "Il test è in corso, richiede fino a un minuto.",
+    "testOk": "Il test è riuscito: i messaggi dei servizi partner arrivano.",
+    "testFailed": "Il test non è riuscito: {step}",
+    "step": {
+      "http": "Il messaggio non è stato accettato.",
+      "stored": "Il messaggio non è stato salvato.",
+      "processed": "Il messaggio non è stato elaborato."
+    },
+    "selftestHint": "Controlla ogni notte che i messaggi dei servizi partner (invio e-mail, firma elettronica) ci raggiungano."
   },
   "hub": {
     "area": {

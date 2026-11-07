@@ -263,7 +263,17 @@
       "down": "Outage",
       "maintenance": "Maintenance",
       "unknown": "Unknown"
-    }
+    },
+    "testNow": "Test now",
+    "testRunning": "The test is running; this takes up to a minute.",
+    "testOk": "The test passed: messages from partner services are arriving.",
+    "testFailed": "The test failed: {step}",
+    "step": {
+      "http": "The message was not accepted.",
+      "stored": "The message was not saved.",
+      "processed": "The message was not processed."
+    },
+    "selftestHint": "Checks every night that messages from partner services (email delivery, electronic signatures) reach us."
   },
   "hub": {
     "area": {

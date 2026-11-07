@@ -263,7 +263,17 @@
       "down": "Panne",
       "maintenance": "Maintenance",
       "unknown": "Inconnu"
-    }
+    },
+    "testNow": "Tester maintenant",
+    "testRunning": "Le test est en cours, cela prend jusqu'à une minute.",
+    "testOk": "Le test a réussi : les messages des services partenaires arrivent.",
+    "testFailed": "Le test a échoué : {step}",
+    "step": {
+      "http": "Le message n'a pas été accepté.",
+      "stored": "Le message n'a pas été enregistré.",
+      "processed": "Le message n'a pas été traité."
+    },
+    "selftestHint": "Vérifie chaque nuit que les messages des services partenaires (envoi d'e-mails, signature électronique) nous parviennent."
   },
   "hub": {
     "area": {

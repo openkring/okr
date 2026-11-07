@@ -263,7 +263,17 @@
       "down": "Avería",
       "maintenance": "Mantenimiento",
       "unknown": "Desconocido"
-    }
+    },
+    "testNow": "Probar ahora",
+    "testRunning": "La prueba está en curso, tarda hasta un minuto.",
+    "testOk": "La prueba ha salido bien: los mensajes de los servicios asociados llegan.",
+    "testFailed": "La prueba ha fallado: {step}",
+    "step": {
+      "http": "El mensaje no fue aceptado.",
+      "stored": "El mensaje no se guardó.",
+      "processed": "El mensaje no se procesó."
+    },
+    "selftestHint": "Comprueba cada noche que los mensajes de los servicios asociados (envío de correos, firma electrónica) nos llegan."
   },
   "hub": {
     "area": {

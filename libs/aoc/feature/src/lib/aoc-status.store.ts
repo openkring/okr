@@ -4,6 +4,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { I18nService } from '@okr/shared-i18n';
+import { fill } from '@okr/shared-util-core';
 import { FeatureStore } from '@okr/tenant-feature';
 import { AOC_STATUS_I18N_KEYS, AOC_STATUS_SERVICES, ServiceStatusResult, sortByProblem, statusSummary, visibleStatusServices } from '@okr/aoc-util';
 
@@ -11,9 +12,15 @@ export type AocStatusState = {
   result: ServiceStatusResult | undefined;
   loading: boolean;
   failed: boolean;
+  /** Spec 1.143: the manual webhook self-test. */
+  testing: boolean;
+  testMessage: string;
 };
 
-const initialState: AocStatusState = { result: undefined, loading: false, failed: false };
+type SelftestStep = 'http' | 'stored' | 'processed';
+type SelftestAnswer = { level: 'ok' | 'down'; failedStep?: SelftestStep };
+
+const initialState: AocStatusState = { result: undefined, loading: false, failed: false, testing: false, testMessage: '' };
 
 /**
  * Spec 1.137: the live status comes from `getServiceStatus`, cached server-side for five minutes.
@@ -50,6 +57,23 @@ export const AocStatusStore = signalStore(
         console.warn('AocStatusStore: could not load the service status', e);
         patchState(store, { loading: false, failed: true });
       }
+    },
+
+    /** Runs the receiver self-test now, then reloads so the row shows the fresh result. */
+    async runSelftest(): Promise<void> {
+      const i18n = store.i18n;
+      patchState(store, { testing: true, testMessage: i18n.test_running() });
+      try {
+        const fn = httpsCallable<void, SelftestAnswer>(getFunctions(getApp(), 'europe-west6'), 'runWebhookSelftestNow', { timeout: 120_000 });
+        const { data } = await fn();
+        const step = { http: i18n.step_http, stored: i18n.step_stored, processed: i18n.step_processed }[data.failedStep ?? 'http'];
+        patchState(store, { testMessage: data.level === 'ok' ? i18n.test_ok() : fill(i18n.test_failed(), { step: step() }) });
+      } catch (e) {
+        console.warn('AocStatusStore: the webhook self-test could not run', e);
+        patchState(store, { testMessage: fill(i18n.test_failed(), { step: i18n.step_http() }) });
+      }
+      patchState(store, { testing: false });
+      await this.load();
     },
   })),
 

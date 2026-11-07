@@ -102,6 +102,19 @@ const LEVEL_COLOR: Record<StatusLevel, string> = {
                 } @empty {
                   <ion-item><ion-label color="medium">{{ store.i18n.no_live_status() }}</ion-label></ion-item>
                 }
+                @if (service.source === 'internal') {
+                  <ion-item>
+                    <ion-label class="ion-text-wrap">
+                      <ion-note>{{ store.i18n.selftest_hint() }}</ion-note>
+                      @if (store.testMessage(); as message) {
+                        <p>{{ message }}</p>
+                      }
+                    </ion-label>
+                    <ion-button slot="end" fill="outline" [disabled]="store.testing()" (click)="store.runSelftest()">
+                      {{ store.i18n.test_now() }}
+                    </ion-button>
+                  </ion-item>
+                }
                 @if (service.statusUrl) {
                   <ion-item [href]="service.statusUrl" target="_blank" rel="noopener" detail="true">
                     <ion-label color="primary">{{ store.i18n.open_page() }}</ion-label>
