@@ -89,7 +89,7 @@ type SettingsView = 'mine' | 'club';
         }
 
         <div class="actions">
-          <ion-button fill="outline" size="small" (click)="reset.emit()">{{ i18n().reset_defaults() }}</ion-button>
+          <ion-button fill="outline" size="small" (click)="resetDefaults.emit()">{{ i18n().reset_defaults() }}</ion-button>
         </div>
 
         <ion-list lines="none">
@@ -198,7 +198,7 @@ export class NewsSettingsModal {
   public readonly hide = output<string>();
   public readonly show = output<string>();
   public readonly add = output<string>();
-  public readonly reset = output<void>();
+  public readonly resetDefaults = output<void>();
   public readonly suggest = output<NewsRequestFormData>();
   public readonly clubSave = output<NewsChannelModel>();
   public readonly clubArchive = output<string>();

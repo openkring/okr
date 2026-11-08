@@ -21,7 +21,7 @@ import { NewsCenterStore } from './news-center.store';
       [mine]="store.channels()" [hidden]="store.hiddenChannels()" [optional]="store.optionalChannels()" [club]="store.clubChannels()"
       [myRequests]="store.myRequests()" [openRequests]="store.openRequests()" [canSuggest]="store.canSuggest()"
       [resolved]="store.resolved()" [preview]="store.preview()" [resolveError]="store.resolveError()"
-      (hide)="store.hide($event)" (show)="store.show($event)" (add)="store.add($event)" (reset)="store.reset()"
+      (hide)="store.hide($event)" (show)="store.show($event)" (add)="store.add($event)" (resetDefaults)="store.reset()"
       (suggest)="store.suggest($event)" (resolve)="store.resolve($event)"
       (clubSave)="store.clubSave($event)" (accept)="store.accept($event)" (reject)="store.reject($event)"
       (clubArchive)="store.clubArchive($event)" (clubReorder)="store.clubReorder($event)" />
