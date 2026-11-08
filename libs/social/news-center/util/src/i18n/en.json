@@ -1,0 +1,41 @@
+{
+  "title": "News",
+  "segment": {
+    "video": "Video",
+    "audio": "Audio",
+    "text": "Text",
+    "webcam": "Webcam"
+  },
+  "all_channels": "All channels",
+  "settings": "Settings",
+  "my_channels": "My channels",
+  "club_list": "Club list",
+  "add_channel": "Add channel",
+  "reset_defaults": "Restore defaults",
+  "suggest_channel": "Suggest another channel",
+  "your_suggestions": "Your suggestions",
+  "status": {
+    "open": "Open",
+    "accepted": "Accepted",
+    "rejected": "Declined"
+  },
+  "default_on": "on by default",
+  "offered_only": "offered only",
+  "accept": "Accept",
+  "reject": "Decline",
+  "read_article": "Read the full article",
+  "open_on_youtube": "Open on YouTube",
+  "image_unavailable": "Image not available",
+  "no_feed_found": "We could not find a feed for this link.",
+  "ip_hint": "Images, audio and webcam pictures are loaded directly from the source.",
+  "empty": "There is nothing to see here yet. Pick a channel in the settings.",
+  "empty_channel": "This channel has no posts right now.",
+  "load_error": "The posts could not be loaded right now. Please try again later.",
+  "suggest_limit": "You already have five open suggestions. Once one is decided, you can send a new one.",
+  "validation": {
+    "segment": "Please choose video, audio, text or webcam.",
+    "urlRequired": "Please enter a link.",
+    "urlInvalid": "The link has to start with http:// or https://.",
+    "noteTooLong": "The note is too long (500 characters at most)."
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "title": "Actualités",
+  "segment": {
+    "video": "Vidéo",
+    "audio": "Audio",
+    "text": "Texte",
+    "webcam": "Webcam"
+  },
+  "all_channels": "Toutes les chaînes",
+  "settings": "Réglages",
+  "my_channels": "Mes chaînes",
+  "club_list": "Liste du club",
+  "add_channel": "Ajouter une chaîne",
+  "reset_defaults": "Rétablir les réglages par défaut",
+  "suggest_channel": "Proposer une autre chaîne",
+  "your_suggestions": "Tes propositions",
+  "status": {
+    "open": "En attente",
+    "accepted": "Acceptée",
+    "rejected": "Refusée"
+  },
+  "default_on": "activée par défaut",
+  "offered_only": "proposée seulement",
+  "accept": "Accepter",
+  "reject": "Refuser",
+  "read_article": "Lire l'article en entier",
+  "open_on_youtube": "Ouvrir sur YouTube",
+  "image_unavailable": "Image non disponible",
+  "no_feed_found": "Nous n'avons trouvé aucun flux pour ce lien.",
+  "ip_hint": "Les images, les fichiers audio et les images de webcam sont chargés directement depuis la source.",
+  "empty": "Il n'y a encore rien à voir ici. Choisis une chaîne dans les réglages.",
+  "empty_channel": "Cette chaîne n'a aucune publication pour le moment.",
+  "load_error": "Les publications n'ont pas pu être chargées pour le moment. Réessaie plus tard.",
+  "suggest_limit": "Tu as déjà cinq propositions en attente. Dès que l'une est traitée, tu peux en envoyer une nouvelle.",
+  "validation": {
+    "segment": "Choisis vidéo, audio, texte ou webcam.",
+    "urlRequired": "Saisis un lien.",
+    "urlInvalid": "Le lien doit commencer par http:// ou https://.",
+    "noteTooLong": "La note est trop longue (500 caractères au maximum)."
+  }
+}

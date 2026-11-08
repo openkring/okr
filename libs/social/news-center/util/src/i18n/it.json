@@ -1,0 +1,41 @@
+{
+  "title": "Notizie",
+  "segment": {
+    "video": "Video",
+    "audio": "Audio",
+    "text": "Testo",
+    "webcam": "Webcam"
+  },
+  "all_channels": "Tutti i canali",
+  "settings": "Impostazioni",
+  "my_channels": "I miei canali",
+  "club_list": "Elenco del club",
+  "add_channel": "Aggiungi canale",
+  "reset_defaults": "Ripristina le impostazioni predefinite",
+  "suggest_channel": "Suggerisci un altro canale",
+  "your_suggestions": "I tuoi suggerimenti",
+  "status": {
+    "open": "Aperto",
+    "accepted": "Accettato",
+    "rejected": "Rifiutato"
+  },
+  "default_on": "attivo di default",
+  "offered_only": "solo proposto",
+  "accept": "Accetta",
+  "reject": "Rifiuta",
+  "read_article": "Leggi l'articolo completo",
+  "open_on_youtube": "Apri su YouTube",
+  "image_unavailable": "Immagine non disponibile",
+  "no_feed_found": "Per questo link non abbiamo trovato nessun feed.",
+  "ip_hint": "Le immagini, l'audio e le immagini della webcam vengono caricati direttamente dalla fonte.",
+  "empty": "Qui non c'è ancora niente da vedere. Scegli un canale nelle impostazioni.",
+  "empty_channel": "Questo canale al momento non ha contenuti.",
+  "load_error": "Al momento non è stato possibile caricare i contenuti. Riprova più tardi.",
+  "suggest_limit": "Hai già cinque suggerimenti aperti. Appena uno viene deciso, puoi inviarne uno nuovo.",
+  "validation": {
+    "segment": "Scegli video, audio, testo o webcam.",
+    "urlRequired": "Inserisci un link.",
+    "urlInvalid": "Il link deve iniziare con http:// o https://.",
+    "noteTooLong": "La nota è troppo lunga (al massimo 500 caratteri)."
+  }
+}

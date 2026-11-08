@@ -1,0 +1,41 @@
+{
+  "title": "Nachrichten",
+  "segment": {
+    "video": "Video",
+    "audio": "Audio",
+    "text": "Text",
+    "webcam": "Webcam"
+  },
+  "all_channels": "Alle Kanäle",
+  "settings": "Einstellungen",
+  "my_channels": "Meine Kanäle",
+  "club_list": "Vereinsliste",
+  "add_channel": "Kanal hinzufügen",
+  "reset_defaults": "Standard wiederherstellen",
+  "suggest_channel": "Weiteren Kanal vorschlagen",
+  "your_suggestions": "Deine Vorschläge",
+  "status": {
+    "open": "Offen",
+    "accepted": "Übernommen",
+    "rejected": "Abgelehnt"
+  },
+  "default_on": "standardmässig an",
+  "offered_only": "nur angeboten",
+  "accept": "Übernehmen",
+  "reject": "Ablehnen",
+  "read_article": "Ganzen Artikel lesen",
+  "open_on_youtube": "Auf YouTube öffnen",
+  "image_unavailable": "Bild nicht verfügbar",
+  "no_feed_found": "Für diesen Link haben wir keinen Feed gefunden.",
+  "ip_hint": "Bilder, Audio und Webcam-Bilder werden direkt von der Quelle geladen.",
+  "empty": "Hier gibt es noch nichts zu sehen. Wähle in den Einstellungen einen Kanal aus.",
+  "empty_channel": "Dieser Kanal hat im Moment keine Beiträge.",
+  "load_error": "Die Beiträge konnten gerade nicht geladen werden. Versuche es später noch einmal.",
+  "suggest_limit": "Du hast schon fünf offene Vorschläge. Sobald einer entschieden ist, kannst du einen neuen senden.",
+  "validation": {
+    "segment": "Bitte wähle Video, Audio, Text oder Webcam.",
+    "urlRequired": "Bitte gib einen Link ein.",
+    "urlInvalid": "Der Link muss mit http:// oder https:// beginnen.",
+    "noteTooLong": "Die Notiz ist zu lang (höchstens 500 Zeichen)."
+  }
+}

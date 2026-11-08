@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/">
+  <title>Clubblog</title>
+  <id>urn:uuid:blog</id>
+  <entry>
+    <title>Saisonstart</title>
+    <id>urn:uuid:1</id>
+    <link rel="alternate" href="https://example.org/blog/saisonstart"/>
+    <published>2026-11-01T10:00:00Z</published>
+    <updated>2026-11-01T11:00:00Z</updated>
+    <summary type="html">&lt;p&gt;Die &lt;em&gt;Saison&lt;/em&gt; beginnt.&lt;/p&gt;</summary>
+    <media:thumbnail url="https://example.org/img/saison.jpg"/>
+  </entry>
+  <entry>
+    <title>Sommerfest</title>
+    <id>urn:uuid:2</id>
+    <link rel="alternate" href="https://example.org/blog/sommerfest"/>
+    <updated>2026-10-15T08:00:00Z</updated>
+    <content type="html">&lt;p&gt;Fotos:&lt;/p&gt;&lt;img src="https://example.org/img/fest.jpg"/&gt;</content>
+  </entry>
+</feed>

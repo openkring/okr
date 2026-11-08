@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Vereinsnews</title>
+    <link>https://example.org</link>
+    <item>
+      <title>Neuer Steg eingeweiht</title>
+      <link>https://example.org/news/steg</link>
+      <guid>https://example.org/news/steg</guid>
+      <pubDate>Mon, 02 Nov 2026 09:00:00 +0100</pubDate>
+      <description><![CDATA[<p>Der <strong>neue</strong> Steg ist offen.</p><script>alert(1)</script>]]></description>
+      <media:thumbnail url="https://example.org/img/steg-thumb.jpg"/>
+    </item>
+    <item>
+      <title>Generalversammlung</title>
+      <link>https://example.org/news/gv</link>
+      <guid>gv-2026</guid>
+      <pubDate>Wed, 28 Oct 2026 12:00:00 +0100</pubDate>
+      <description>Am 20. November um 19 Uhr.</description>
+      <enclosure url="https://example.org/img/gv.png" length="1000" type="image/png"/>
+    </item>
+    <item>
+      <title>Bootshaus renoviert</title>
+      <link>https://example.org/news/bootshaus</link>
+      <description><![CDATA[<p>Fertig!</p><img src="https://example.org/img/bootshaus.jpg" alt="Bootshaus"/>]]></description>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/" xmlns="http://www.w3.org/2005/Atom">
+  <link rel="self" href="http://www.youtube.com/feeds/videos.xml?channel_id=UC123"/>
+  <id>yt:channel:UC123</id>
+  <yt:channelId>UC123</yt:channelId>
+  <title>Seeclub Kanal</title>
+  <entry>
+    <id>yt:video:dQw4w9WgXcQ</id>
+    <yt:videoId>dQw4w9WgXcQ</yt:videoId>
+    <yt:channelId>UC123</yt:channelId>
+    <title>Regatta auf dem Zürichsee</title>
+    <link rel="alternate" href="https://www.youtube.com/watch?v=dQw4w9WgXcQ"/>
+    <published>2026-11-02T18:30:00+00:00</published>
+    <updated>2026-11-03T08:00:00+00:00</updated>
+    <media:group>
+      <media:title>Regatta auf dem Zürichsee</media:title>
+      <media:content url="https://www.youtube.com/v/dQw4w9WgXcQ?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+      <media:thumbnail url="https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg" width="480" height="360"/>
+      <media:description>Die Highlights vom Wochenende.</media:description>
+    </media:group>
+  </entry>
+  <entry>
+    <id>yt:video:abc123XYZ_-</id>
+    <yt:videoId>abc123XYZ_-</yt:videoId>
+    <yt:channelId>UC123</yt:channelId>
+    <title>Training im Winter</title>
+    <link rel="alternate" href="https://www.youtube.com/watch?v=abc123XYZ_-"/>
+    <published>2026-10-20T10:00:00+00:00</published>
+    <updated>2026-10-20T10:00:00+00:00</updated>
+    <media:group>
+      <media:title>Training im Winter</media:title>
+      <media:thumbnail url="https://i.ytimg.com/vi/abc123XYZ_-/hqdefault.jpg" width="480" height="360"/>
+      <media:description>So bleiben wir fit.</media:description>
+    </media:group>
+  </entry>
+</feed>

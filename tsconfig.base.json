@@ -267,6 +267,7 @@
       "@okr/content-notice-data-access": ["libs/content/notice/data-access/src/index.ts"],
       "@okr/content-notice-feature": ["libs/content/notice/feature/src/index.ts"],
       "@okr/content-notice-util": ["libs/content/notice/util/src/index.ts"],
+      "@okr/social-news-center-util": ["libs/social/news-center/util/src/index.ts"],
       "@okr/content-pdf-template-data-access": ["libs/content/pdf-template/data-access/src/index.ts"],
       "@okr/content-pdf-template-feature": ["libs/content/pdf-template/feature/src/index.ts"],
       "@okr/content-pdf-template-ui": ["libs/content/pdf-template/ui/src/index.ts"],
