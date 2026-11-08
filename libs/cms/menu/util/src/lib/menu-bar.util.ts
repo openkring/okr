@@ -86,7 +86,8 @@ export function exceedsBarLimit(
  * recipient × delivery-type table does not fit a phone. Width is none of the three stored gates
  * (tenant, feature block, role), so it lives here, keyed by the action the entry calls.
  */
-export const WIDE_SCREEN_CALLS = ['commCenter'];
+// 'sendEmailToList': the pre-migration name of the comm-center row, until scripts/migrate-comm-center-menu.mjs ran
+export const WIDE_SCREEN_CALLS = ['commCenter', 'sendEmailToList'];
 
 /** Viewport query for {@link WIDE_SCREEN_CALLS}: Ionic's `md` breakpoint. */
 export const WIDE_SCREEN_QUERY = '(min-width: 768px)';

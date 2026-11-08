@@ -315,6 +315,8 @@ export class MembershipList {
       case 'exportClubdesk': await this.store.export("clubdesk", this.filteredMemberships()); break;
       case 'exportAddresses': await this.store.export("address", this.filteredMemberships()); break;
       case 'copyEmailAddresses': await this.store.copyEmailAddresses(this.listId(), this.readOnly()); break;
+      // 'sendEmailToList': the pre-migration menu row (scripts/migrate-comm-center-menu.mjs), kept until every app is released
+      case 'sendEmailToList':
       case 'commCenter': await this.store.openCommCenter(this.listId()); break;
       case 'oldJuniors': await this.store.oldJuniors(this.orgId()); break;
       case 'categoryChanges': await this.store.categoryChanges(this.orgId()); break;

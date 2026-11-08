@@ -627,6 +627,8 @@
     "filter-toggle-show": "Mostra filtro",
     "filter-toggle-show_alt": "Nascondi filtro",
     "comm-center": "Comunicazione",
+    "membership-sendemail": "Creare un invio",
+    "person-send-email": "Creare un invio",
     "aoc-kiosk": "Kiosk",
     "aoc-allocation": "Assegnazione dei tenant",
     "aoc-diary": "Diario",
