@@ -58,10 +58,13 @@ async function pageFrame(tenantId: string): Promise<string | undefined> {
   }
 }
 
-/** The line on top of the page after the comment box was sent. */
-const COMMENT_RESULT: Record<'saved' | 'duplicate' | 'empty' | 'limit', string> = {
-  saved: 'Dein Kommentar ist gespeichert.',
-  duplicate: 'Dein Kommentar ist gespeichert.',
+/**
+ * The line on top of the page after the comment box was sent. None for a saved comment (or a re-post
+ * of it): the comment itself appears above the box.
+ */
+const COMMENT_RESULT: Record<'saved' | 'duplicate' | 'empty' | 'limit', string | undefined> = {
+  saved: undefined,
+  duplicate: undefined,
   empty: 'Schreib zuerst deinen Kommentar ins Feld.',
   limit: 'Zu diesem Anlass hast du schon viele Kommentare geschrieben. Weitere kannst du in der App schreiben.',
 };
