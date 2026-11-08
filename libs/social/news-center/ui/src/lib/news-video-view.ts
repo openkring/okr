@@ -1,9 +1,10 @@
-import { Component, computed, inject, input, linkedSignal } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { IonButton, IonIcon } from '@ionic/angular';
 
 import { NewsChannelModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
+import { isNativePlatform } from '@okr/shared-util-angular';
 import { NewsCenterI18n, NewsItem } from '@okr/social-news-center-util';
 
 import { formatNewsDate } from './news-date';
@@ -32,15 +33,14 @@ const VIMEO_ID = /^\d{1,12}$/;
   template: `
     <div class="player">
       @if (embedUrl(); as src) {
-        @if (!embedFailed()) {
+        @if (!isNative) {
           <iframe
             [src]="src" [title]="item().title" allowfullscreen loading="lazy"
             allow="fullscreen; picture-in-picture; encrypted-media"
             referrerpolicy="strict-origin-when-cross-origin"
-            sandbox="allow-scripts allow-same-origin allow-presentation"
-            (error)="embedFailed.set(true)"></iframe>
+            sandbox="allow-scripts allow-same-origin allow-presentation"></iframe>
         } @else if (item().thumbnailUrl) {
-          <img [src]="item().thumbnailUrl" alt="" />
+          <img [src]="item().thumbnailUrl" alt="" referrerpolicy="no-referrer" />
         }
       }
     </div>
@@ -52,7 +52,7 @@ const VIMEO_ID = /^\d{1,12}$/;
       </div>
       @if (watchUrl(); as url) {
         <ion-button fill="outline" size="small" [href]="url" target="_blank" rel="noopener noreferrer">
-          {{ i18n().open_on_youtube() }}
+          {{ isVimeo() ? 'Vimeo' : i18n().open_on_youtube() }}
           <ion-icon slot="end" src="{{ 'arrow-forward' | svgIcon }}" />
         </ion-button>
       }
@@ -69,8 +69,8 @@ export class NewsVideoView {
   public readonly channel = input<NewsChannelModel>();
   public readonly i18n = input.required<NewsCenterI18n>();
 
-  /** Set when the iframe reports an error (thumbnail + link replace the embed). */
-  protected readonly embedFailed = linkedSignal<NewsItem, boolean>({ source: this.item, computation: () => false });
+  /** Native shells refuse many embeds (e.g. YouTube error 153) without any event, so skip the iframe there. */
+  protected readonly isNative = isNativePlatform();
 
   private readonly videoId = computed(() => {
     const id = this.item().mediaUrl ?? '';
@@ -89,10 +89,13 @@ export class NewsVideoView {
     return this.sanitizer.bypassSecurityTrustResourceUrl(url);
   });
 
-  /** Built from the id, never from `item.link`. YouTube only. */
+  protected readonly isVimeo = computed(() => this.channel()?.kind === 'vimeo');
+
+  /** Built from the validated id, never from `item.link`. */
   protected readonly watchUrl = computed(() => {
     const id = this.videoId();
-    return id && this.channel()?.kind === 'youtube' ? `https://www.youtube.com/watch?v=${encodeURIComponent(id)}` : '';
+    if (!id) return '';
+    return this.isVimeo() ? `https://vimeo.com/${encodeURIComponent(id)}` : `https://www.youtube.com/watch?v=${encodeURIComponent(id)}`;
   });
 
   protected readonly date = computed(() => formatNewsDate(this.item().publishedAt));

@@ -22,7 +22,7 @@ import { formatNewsDate, isHttpUrl } from './news-date';
   `],
   template: `
     @if (item().thumbnailUrl && !imageFailed()) {
-      <img [src]="item().thumbnailUrl" alt="" loading="lazy" (error)="imageFailed.set(true)" />
+      <img [src]="item().thumbnailUrl" alt="" loading="lazy" (error)="imageFailed.set(true)" referrerpolicy="no-referrer" />
     }
     <div class="body">
       <h2>{{ item().title }}</h2>

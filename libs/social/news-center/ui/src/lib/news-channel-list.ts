@@ -25,7 +25,7 @@ import { NewsCenterI18n } from '@okr/social-news-center-util';
         <ion-item button detail="false" [class.selected]="selectedKey() === channel.okey" (click)="selected.emit(channel.okey)">
           <ion-avatar slot="start">
             @if (channel.avatarUrl) {
-              <img okrImg [src]="channel.avatarUrl" alt="" />
+              <img okrImg [src]="channel.avatarUrl" alt="" referrerpolicy="no-referrer" />
             } @else {
               <div class="initial">{{ channel.name.charAt(0) }}</div>
             }

@@ -39,7 +39,7 @@ import { formatNewsDate, formatNewsDuration } from './news-date';
     <button type="button" class="card">
       <div class="thumb" [class.square]="segment() === 'audio'">
         @if (item().thumbnailUrl && !failed()) {
-          <img [src]="item().thumbnailUrl" alt="" loading="lazy" decoding="async" (error)="failed.set(true)" />
+          <img [src]="item().thumbnailUrl" alt="" loading="lazy" decoding="async" (error)="failed.set(true)" referrerpolicy="no-referrer" />
         } @else {
           <div class="placeholder">
             <ion-icon src="{{ 'image' | svgIcon }}" />
@@ -52,7 +52,7 @@ import { formatNewsDate, formatNewsDuration } from './news-date';
       </div>
       <div class="meta">
         @if (channel()?.avatarUrl) {
-          <ion-avatar><img okrImg [src]="channel()!.avatarUrl" alt="" /></ion-avatar>
+          <ion-avatar><img okrImg [src]="channel()!.avatarUrl" alt="" referrerpolicy="no-referrer" /></ion-avatar>
         }
         <div class="text">
           <div class="title">{{ item().title }}</div>

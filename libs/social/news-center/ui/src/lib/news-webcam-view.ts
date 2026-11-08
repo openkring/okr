@@ -24,7 +24,7 @@ import { formatNewsTime } from './news-date';
   `],
   template: `
     @if (imageUrl() && !failed()) {
-      <img [src]="imageUrl()" alt="" (error)="failed.set(true)" />
+      <img [src]="imageUrl()" alt="" (error)="failed.set(true)" referrerpolicy="no-referrer" />
     } @else {
       <div class="placeholder">
         <ion-icon src="{{ 'image' | svgIcon }}" />
