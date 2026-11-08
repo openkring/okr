@@ -24,7 +24,6 @@ import { isOrgRecipient, ORG_RECIPIENT_PREFIX, recipientParentKey } from '@okr/s
 
 import { privateBucket } from '../_storage/private-bucket';
 import { formatPostalAddress } from '../contract/contract-request.util';
-import { resolveAssetUrls } from '../pdf/asset-resolver';
 import { getBrowser } from '../pdf/browser-pool';
 import { registerHelpers } from '../pdf/handlebars-helpers';
 import { resolvePayee } from '../pdf/qr-slip';
@@ -161,16 +160,18 @@ export interface LetterTemplate {
   version: number;
   html: string;
   css: string;
-  partials: Record<string, string>;
-  assets: TemplateAssetRef[];
 }
 
-/** Only the tenant's own (tenants exactly [tenantId]), live PDF template with a published current version. */
+/**
+ * Only the tenant's own (tenants exactly [tenantId]), live PDF template with a published current version, and
+ * without partials or assets (those would be per-template state on the shared Handlebars instance).
+ */
 export function isUsableLetterTemplate(doc: StoredLetterTemplate | undefined, version: StoredLetterVersion | undefined, tenantId: string): boolean {
   if (!doc || !version) return false;
   const tenants = doc.tenants ?? [];
   return (doc.kind ?? 'pdf') === 'pdf' && !doc.isArchived && tenants.length === 1 && tenants[0] === tenantId
-    && (doc.currentVersion ?? 0) >= 1 && version.status === 'published' && !!version.html;
+    && (doc.currentVersion ?? 0) >= 1 && version.status === 'published' && !!version.html
+    && Object.keys(version.partials ?? {}).length === 0 && (version.assets ?? []).length === 0;
 }
 
 export async function readLetterTemplate(db: Firestore, tenantId: string): Promise<LetterTemplate | undefined> {
@@ -184,10 +185,10 @@ export async function readLetterTemplate(db: Firestore, tenantId: string): Promi
   const versionSnap = await ref.collection(TemplateVersionSubcollection).doc(String(versionNo)).get();
   const version = versionSnap.exists ? (versionSnap.data() as StoredLetterVersion) : undefined;
   if (!isUsableLetterTemplate(doc, version, tenantId) || !version) {
-    logger.warn(`mailing letters: ${key} is not usable (unpublished, archived or foreign); using the built-in layout`);
+    logger.warn(`mailing letters: ${key} is not usable (unpublished, archived, foreign, or with partials/assets); using the built-in layout`);
     return undefined;
   }
-  return { key, version: versionNo, html: version.html ?? '', css: version.css ?? '', partials: version.partials ?? {}, assets: version.assets ?? [] };
+  return { key, version: versionNo, html: version.html ?? '', css: version.css ?? '' };
 }
 
 export interface LetterRecipient extends PostalFields {
@@ -222,21 +223,13 @@ export function letterDate(now: Date): string {
 }
 
 /**
- * The https origins a template letter may load: those written in the template itself (its logo) and those
- * of its signed asset URLs. Everything else, e.g. a link in the user's text, stays blocked.
+ * The only origin a template letter may load from: our image CDN (the tenant logos). Fixed, never read from
+ * the template, because the template is tenant-editable and the page holds the recipient's address.
  */
-export function allowedOrigins(texts: string[]): Set<string> {
-  const origins = new Set<string>();
-  for (const text of texts) {
-    for (const match of text.matchAll(/https:\/\/[^\s"'()<>]+/g)) {
-      try { origins.add(new URL(match[0]).origin); } catch { /* not a URL */ }
-    }
-  }
-  return origins;
-}
+export const LETTER_TEMPLATE_ORIGINS: ReadonlySet<string> = new Set(['https://bkaiser.imgix.net']);
 
 /** True for a request the letter page may make: data: URIs, and https URLs of an allowed origin. */
-export function isAllowedLetterRequest(url: string, origins: Set<string>): boolean {
+export function isAllowedLetterRequest(url: string, origins: ReadonlySet<string>): boolean {
   if (url.startsWith('data:')) return true;
   try {
     const parsed = new URL(url);
@@ -248,27 +241,26 @@ export function isAllowedLetterRequest(url: string, origins: Set<string>): boole
 
 let helpersRegistered = false;
 
-/** Compiles the template for one recipient. Helpers and partials are the ones `generateDocument` offers. */
-async function compileLetter(t: LetterTemplate, payee: unknown): Promise<{ render: (payload: Record<string, unknown>) => string; origins: Set<string> }> {
-  const { default: Handlebars } = await import('handlebars');
+/**
+ * Compiles the template once per Versand. Only the static helpers of `generateDocument` (formatIban, …) are
+ * global; partials and `assetUrl` would be per-template state on the shared Handlebars instance, which a
+ * parallel run for another tenant could overwrite, so a letter template carries neither (see readLetterTemplate).
+ */
+async function compileLetter(t: LetterTemplate, payee: unknown): Promise<(payload: Record<string, unknown>) => string> {
   if (!helpersRegistered) {
     await registerHelpers();
     helpersRegistered = true;
   }
-  const assetUrls = await resolveAssetUrls(t.assets);
-  Handlebars.registerHelper('assetUrl', (key: string) => assetUrls[key] ?? '');
-  for (const [name, content] of Object.entries(t.partials)) Handlebars.registerPartial(name, content);
   const compiled = await compileTemplate(`${t.key}@${t.version}`, t.html, t.css);
-  return {
-    render: (payload) => compiled({ ...payload, payee }),
-    origins: allowedOrigins([t.html, t.css, ...Object.values(t.partials), ...Object.values(assetUrls)]),
-  };
+  return (payload) => compiled({ ...payload, payee });
 }
 
-async function renderOne(html: string, origins: Set<string> = new Set()): Promise<Uint8Array> {
+async function renderOne(html: string, origins: ReadonlySet<string> = new Set()): Promise<Uint8Array> {
   const page = await (await getBrowser()).newPage();
   try {
-    // The body is user HTML: only data: URIs, and for a template letter the template's own origins (its logo).
+    // The body is user HTML and the template tenant-editable: no script, only data: URIs and, for a template
+    // letter, the fixed image CDN.
+    await page.setJavaScriptEnabled(false);
     await page.setRequestInterception(true);
     page.on('request', (req) => { if (isAllowedLetterRequest(req.url(), origins)) void req.continue(); else void req.abort(); });
     // 'load' waits for the images, the template's logo included
@@ -326,9 +318,9 @@ export async function buildMailingLetters(args: {
     const lastName = isOrg ? '' : String(p['lastName'] ?? '').trim();
     const name = isOrg ? String(p['name'] ?? '').trim() : `${firstName} ${lastName}`.trim();
     const bytes = letterTemplate
-      ? await renderOne(letterTemplate.render(letterPayload({
+      ? await renderOne(letterTemplate(letterPayload({
         recipient: { name, firstName, lastName, ...address }, sender, date: letterDate(now), placeAndDate: date, subject: args.subject, body: args.body,
-      })), letterTemplate.origins)
+      })), LETTER_TEMPLATE_ORIGINS)
       : await renderOne(buildLetterHtml({
         sender, recipient: { name, street: address.street, zipCity: address.zipCity }, placeAndDate: date, subject: args.subject, body: args.body,
       }));

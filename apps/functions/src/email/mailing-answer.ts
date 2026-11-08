@@ -23,7 +23,7 @@ import { answerResultPage, Brand, eventWhen, mailingAnswerPage, MailingAnswerEve
 import { todayStoreDate } from '../calendar/recipients';
 import { AnswerRefusal, REFUSAL_TEXT } from '../calendar/refusal';
 import { toStoreDateTime } from '../srv/zurich-time';
-import { attendeeStateOf, eventRefusal, invitationRefusal, mayAnswer } from './mailing-answer.logic';
+import { ANSWER_PAGE_CSP, attendeeStateOf, eventRefusal, invitationRefusal, mayAnswer, stripMetaRefresh } from './mailing-answer.logic';
 import { MailingDoc } from './mailing';
 import { renderEmail } from './render-email';
 
@@ -45,12 +45,13 @@ function eventOf(data: unknown, tenants: string[]): EventData | undefined {
 
 /**
  * The page in the tenant's standard email layout, so it opens with the same header (logo band) as the mail
- * that led here. Without a usable standard layout the page keeps its built-in banner.
+ * that led here. Without a usable standard layout the page keeps its built-in banner. The layout is
+ * tenant-editable, so the page is served with ANSWER_PAGE_CSP (no script runs).
  */
 async function pageFrame(tenantId: string): Promise<string | undefined> {
   try {
     const { html } = await renderEmail({ tenantId, layout: 'standard', body: PAGE_CONTENT_SLOT, noPlainFallback: true });
-    return html.includes(PAGE_CONTENT_SLOT) ? html : undefined;
+    return html.includes(PAGE_CONTENT_SLOT) ? stripMetaRefresh(html) : undefined;
   } catch (err) {
     logger.warn(`${CF_NAME}: no standard layout for the page, using the built-in banner`, err);
     return undefined;
@@ -63,6 +64,8 @@ export const mailingAnswer = onRequest(
     res.set('Content-Type', 'text/html; charset=utf-8');
     res.set('Cache-Control', 'no-store');
     res.set('Referrer-Policy', 'no-referrer');
+    // The page frame is the tenant-editable email layout: no script of any kind, forms only back to this function.
+    res.set('Content-Security-Policy', ANSWER_PAGE_CSP);
     if (req.method !== 'GET' && req.method !== 'POST') { res.set('Allow', 'GET, POST'); res.status(405).send(''); return; }
 
     // Everything below can throw (Firestore/tenantLinks failure, transaction contention); an

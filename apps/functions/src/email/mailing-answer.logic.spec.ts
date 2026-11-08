@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Attendee } from '@okr/shared-models';
-import { attendeeStateOf, eventRefusal, invitationRefusal, lastEventDate, mayAnswer } from './mailing-answer.logic';
+import { ANSWER_PAGE_CSP, attendeeStateOf, eventRefusal, invitationRefusal, lastEventDate, mayAnswer, stripMetaRefresh } from './mailing-answer.logic';
 
 const doc = {
   deliveries: [{ personKey: 'p1', channels: ['email'] }, { personKey: 'p2', channels: ['chat'] }],
@@ -65,5 +65,18 @@ describe('invitationRefusal', () => {
     expect(invitationRefusal({ isLocked: true, isArchived: true })).toBeUndefined();
     expect(invitationRefusal(undefined)).toBeUndefined();
     expect(invitationRefusal({ isLocked: false })).toBeUndefined();
+  });
+});
+
+describe('answer page hardening', () => {
+  it('allows no script and posts forms only back to the function', () => {
+    expect(ANSWER_PAGE_CSP).toContain("default-src 'none'");
+    expect(ANSWER_PAGE_CSP).toContain("form-action 'self'");
+    expect(ANSWER_PAGE_CSP).not.toContain('script-src');
+  });
+
+  it('drops a meta refresh from the frame, keeps other meta tags', () => {
+    const html = '<head><meta charset="utf-8"><META HTTP-EQUIV=Refresh content="0;url=https://x.example"><meta http-equiv="refresh" content="1"></head>';
+    expect(stripMetaRefresh(html)).toBe('<head><meta charset="utf-8"></head>');
   });
 });

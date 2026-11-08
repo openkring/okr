@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  allowedOrigins, buildLetterHtml, escapeHtml, isAllowedLetterRequest, isPdfAttachment, isReapableLetters, isUsableLetterTemplate,
+  buildLetterHtml, LETTER_TEMPLATE_ORIGINS, escapeHtml, isAllowedLetterRequest, isPdfAttachment, isReapableLetters, isUsableLetterTemplate,
   letterDate, letterPayload, letterTemplateKey, lettersPath, mayGetLetters, placeAndDate,
 } from './mailing-letters';
 
@@ -92,6 +92,10 @@ describe('letter template', () => {
     expect(isUsableLetterTemplate(doc, { ...version, status: 'draft' }, 'scs')).toBe(false);
     expect(isUsableLetterTemplate(doc, { ...version, html: '' }, 'scs')).toBe(false);
     expect(isUsableLetterTemplate(undefined, version, 'scs')).toBe(false);
+    // partials and assets would be per-template state on the shared Handlebars instance
+    expect(isUsableLetterTemplate(doc, { ...version, partials: { head: '<b>x</b>' } }, 'scs')).toBe(false);
+    expect(isUsableLetterTemplate(doc, { ...version, assets: [{ key: 'logo', storagePath: 'a/b.png' }] as never }, 'scs')).toBe(false);
+    expect(isUsableLetterTemplate(doc, { ...version, partials: {}, assets: [] }, 'scs')).toBe(true);
   });
 
   it('hands the template the address lines, the single fields, the subject and the body', () => {
@@ -113,13 +117,12 @@ describe('letter template', () => {
     expect(letterDate(new Date(2026, 10, 7))).toBe('07.11.2026');
   });
 
-  it('lets the page load only data: URIs and the origins written in the template', () => {
-    const origins = allowedOrigins(['<img src="https://bkaiser.imgix.net/tenant/scs/logo/scs-wordmark.png">', 'url(http://plain.example/x)']);
-    expect([...origins]).toEqual(['https://bkaiser.imgix.net']);
-    expect(isAllowedLetterRequest('data:image/png;base64,AAA', origins)).toBe(true);
-    expect(isAllowedLetterRequest('https://bkaiser.imgix.net/other.png', origins)).toBe(true);
-    expect(isAllowedLetterRequest('https://evil.example/track.png', origins)).toBe(false);
-    expect(isAllowedLetterRequest('http://bkaiser.imgix.net/x.png', origins)).toBe(false);
-    expect(isAllowedLetterRequest('https://evil.example/x', new Set())).toBe(false);
+  it('lets the page load only data: URIs and the fixed image CDN, never an origin from the template', () => {
+    expect([...LETTER_TEMPLATE_ORIGINS]).toEqual(['https://bkaiser.imgix.net']);
+    expect(isAllowedLetterRequest('data:image/png;base64,AAA', LETTER_TEMPLATE_ORIGINS)).toBe(true);
+    expect(isAllowedLetterRequest('https://bkaiser.imgix.net/tenant/scs/logo/scs-wordmark.png', LETTER_TEMPLATE_ORIGINS)).toBe(true);
+    expect(isAllowedLetterRequest('https://evil.example/track.png?street=Seestrasse', LETTER_TEMPLATE_ORIGINS)).toBe(false);
+    expect(isAllowedLetterRequest('http://bkaiser.imgix.net/x.png', LETTER_TEMPLATE_ORIGINS)).toBe(false);
+    expect(isAllowedLetterRequest('https://bkaiser.imgix.net/x', new Set())).toBe(false);
   });
 });

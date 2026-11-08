@@ -45,3 +45,11 @@ export function attendeeStateOf(attendees: Attendee[] | undefined, maxAttendees:
   if (split.others.some((a) => a.person.key === personKey && a.state === 'declined')) return 'declined';
   return 'open';
 }
+
+/** No script, no plugins, no framing; images over https, inline styles, forms only to this function. */
+export const ANSWER_PAGE_CSP = "default-src 'none'; img-src https: data:; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'";
+
+/** A meta refresh would navigate away despite the CSP; the frame never needs one. */
+export function stripMetaRefresh(html: string): string {
+  return html.replace(/<meta\b[^>]*http-equiv\s*=\s*["']?refresh[^>]*>/gi, '');
+}
