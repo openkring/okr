@@ -23,8 +23,8 @@ export const NEWS_RELAY_TIMEOUT_MS = 8000;
 export const NEWS_RELAY_MAX_BYTES = 2 * 1024 * 1024;
 export const NEWS_RELAY_MAX_REDIRECTS = 3;
 const NEWS_WINDOW = { limit: 120, windowMs: 60_000 };
-/** Content types the feed relay passes on (design §7). */
-const FEED_CONTENT_TYPE = /xml|rss|atom|json|html/i;
+/** Content types the feed relay passes on (design §7); newsResolve applies the same rule. */
+export const FEED_CONTENT_TYPE = /xml|rss|atom|json|html/i;
 /** Firestore auto ids and hand-made keys; never a path separator, never `.`/`..`. */
 const CHANNEL_KEY = /^[A-Za-z0-9_-]{1,128}$/;
 
@@ -127,6 +127,8 @@ export async function relayFetch(url: string, opts: RelayFetchOptions): Promise<
     maxBytes: NEWS_RELAY_MAX_BYTES,
     maxRetries: 0,
     maxRedirects: NEWS_RELAY_MAX_REDIRECTS,
+    // never through an env-configured proxy: the guarded lookup must see the real upstream host
+    proxy: false,
     headers: { Accept: opts.accept ?? '*/*', 'User-Agent': 'openkring-newscenter/1.0' },
     // every hop: scheme, port, credentials, IP literals, and (newsImage) the host may not change
     beforeRedirect: (o: Record<string, unknown>) => {

@@ -4,21 +4,30 @@
 // a feed, a web page, a webcam image) and gets back what a `news-channels` doc needs — kind, feed
 // URL, site URL, name, avatar — plus the feed text for a preview.
 //
-// Admin/contentAdmin only, interactive, not cached and not a gateway adapter. The URL is
+// Admin/contentAdmin only (from `users/{uid}.roles` — this project mints no custom claims),
+// rate-limited per uid, interactive, not cached and not a gateway adapter. The URL is
 // admin-typed, so it runs under the same relay guards as newsFeed (relayFetch): https and port 443
 // only, every resolved address and every redirect hop checked. The single exception: an `http:`
 // URL (or one with an explicit port) is accepted when it serves a JPEG/PNG/WebP image — a webcam
 // that only the newsImage relay can show, so it comes back with `viaRelay: true`.
+//
+// Resolve applies the guards of the op that will later serve the channel, so a link that
+// resolves here also works there: the http image is fetched with newsImage's same-host rule,
+// `relayable` says whether newsImage would accept the image type, and a feed must pass
+// newsFeed's content-type rule.
 //
 // No DOM in functions: the page and feed are scanned with plain string/regex helpers below.
 
 import type { CallableRequest } from 'firebase-functions/v2/https';
 import { HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
-import { NEWS_SEGMENTS, type NewsChannelKind, type NewsSegment } from '@okr/shared-models';
+import { getFirestore } from 'firebase-admin/firestore';
+import { NEWS_SEGMENTS, UserCollection, type NewsChannelKind, type NewsSegment } from '@okr/shared-models';
 import { gatewayFetch } from '../_gateway/http';
-import { contentTypeOf, relayFetch, type NewsRelayDeps, type RelayFetchOptions } from '../_gateway/adapters/news-feed';
+import { contentTypeOf, FEED_CONTENT_TYPE, relayFetch, type NewsRelayDeps, type RelayFetchOptions } from '../_gateway/adapters/news-feed';
 import { NEWS_IMAGE_TYPES } from '../_gateway/adapters/news-image';
+import { checkRateLimit } from '../publicApi/rateLimit';
+import { hasAdminRole } from '../pdf/resolve-admin';
 
 export interface ResolvedNewsSource {
   kind: NewsChannelKind;
@@ -30,13 +39,16 @@ export interface ResolvedNewsSource {
   body: string;
   /** True for an `http:` webcam: it can only be shown through the newsImage relay. */
   viaRelay: boolean;
+  /** Whether newsImage would serve this source (a JPEG/PNG/WebP image); false for feeds. */
+  relayable: boolean;
 }
 
 const MAX_URL_LENGTH = 2048;
 const YOUTUBE_HOSTS = ['youtube.com', 'www.youtube.com', 'm.youtube.com'];
 const VIMEO_HOSTS = ['vimeo.com', 'www.vimeo.com'];
 const UC_ID = /UC[\w-]{22}/;
-const ACCEPTED_CONTENT_TYPE = /xml|rss|atom|json|html/i;
+/** Interactive and admin-only: generous for pasting a few links, tight against a loop. */
+const RESOLVE_WINDOW = { limit: 30, windowMs: 60_000 };
 
 const SEGMENT_KINDS: Record<NewsSegment, NewsChannelKind[]> = {
   video: ['youtube', 'vimeo'],
@@ -218,6 +230,26 @@ function pageTitle(html: string): string {
 
 type ResolveDeps = Pick<NewsRelayDeps, 'fetch' | 'lookup'>;
 
+/** Seams of the op handler: the network ones plus the role read and the rate limiter. */
+interface ResolveHandlerDeps extends ResolveDeps {
+  /** `users/{uid}.roles`; undefined when there is no user doc. */
+  readRoles: (uid: string) => Promise<Record<string, unknown> | undefined>;
+  /** Throws `resource-exhausted` when the uid is over its window. */
+  rateLimit: (uid: string) => Promise<void>;
+}
+
+async function readUserRoles(uid: string): Promise<Record<string, unknown> | undefined> {
+  const snap = await getFirestore().collection(UserCollection).doc(uid).get();
+  return snap.data()?.['roles'] as Record<string, unknown> | undefined;
+}
+
+async function resolveRateLimit(uid: string): Promise<void> {
+  const res = await checkRateLimit('news_resolve', uid, RESOLVE_WINDOW);
+  if (!res.allowed) {
+    throw new HttpsError('resource-exhausted', 'Too many link checks. Retry later.', { retryAfterMs: res.retryAfterMs });
+  }
+}
+
 interface Fetched {
   contentType: string;
   bytes: Buffer;
@@ -269,13 +301,24 @@ function parseInput(data: unknown): { url: URL; segment: NewsSegment } {
   return { url, segment: d.segment as NewsSegment };
 }
 
-/** `http:` or an explicit port: only a JPEG/PNG/WebP image is accepted (newsImage relays it). */
+/** A feed response must pass newsFeed's content-type rule, or the channel would never load. */
+function assertFeedType(f: Fetched): void {
+  if (!FEED_CONTENT_TYPE.test(f.contentType)) throw noFeed();
+}
+
+/**
+ * `http:` or an explicit port: only a JPEG/PNG/WebP image is accepted, fetched exactly as newsImage
+ * will fetch it (same host on every redirect).
+ */
 async function resolveRelayImage(url: URL, deps: ResolveDeps): Promise<ResolvedNewsSource> {
-  const f = await get(url.href, deps, { allowHttp: true, allowAnyPort: true, accept: NEWS_IMAGE_TYPES.join(', ') });
+  const f = await get(url.href, deps, { allowHttp: true, allowAnyPort: true, sameHost: true, accept: NEWS_IMAGE_TYPES.join(', ') });
   if (!NEWS_IMAGE_TYPES.includes(mediaType(f.contentType))) {
     throw new HttpsError('invalid-argument', 'http links only for webcam images', { reason: 'http-not-image' });
   }
-  return { kind: 'image', feedUrl: url.href, siteUrl: '', name: url.hostname, avatarUrl: '', body: '', viaRelay: url.protocol === 'http:' };
+  return {
+    kind: 'image', feedUrl: url.href, siteUrl: '', name: url.hostname, avatarUrl: '', body: '',
+    viaRelay: url.protocol === 'http:', relayable: true,
+  };
 }
 
 async function resolveYoutube(url: URL, deps: ResolveDeps): Promise<ResolvedNewsSource> {
@@ -300,7 +343,9 @@ async function resolveYoutube(url: URL, deps: ResolveDeps): Promise<ResolvedNews
   id = id ?? youtubeChannelId(page);
   if (!id) throw noFeed();
   const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${id}`;
-  const body = asText(await get(feedUrl, deps, { responseType: 'text', accept: 'application/atom+xml, application/xml' }));
+  const feed = await get(feedUrl, deps, { responseType: 'text', accept: 'application/atom+xml, application/xml' });
+  assertFeedType(feed);
+  const body = asText(feed);
   if (detectNewsKind('text/xml', body) !== 'youtube') throw noFeed();
   const meta = feedMeta(body, feedUrl);
   return {
@@ -311,6 +356,7 @@ async function resolveYoutube(url: URL, deps: ResolveDeps): Promise<ResolvedNews
     avatarUrl: httpsOrEmpty(metaContent(page, 'og:image')),
     body,
     viaRelay: false,
+    relayable: false,
   };
 }
 
@@ -326,9 +372,13 @@ async function resolveGeneric(url: URL, deps: ResolveDeps): Promise<ResolvedNews
   const first = await get(url.href, deps);
   const ct = mediaType(first.contentType);
   if (ct.startsWith('image/')) {
-    return { kind: 'image', feedUrl: url.href, siteUrl: '', name: url.hostname, avatarUrl: '', body: '', viaRelay: false };
+    // shown directly; the curator may switch it to the relay only when newsImage would serve it
+    return {
+      kind: 'image', feedUrl: url.href, siteUrl: '', name: url.hostname, avatarUrl: '', body: '',
+      viaRelay: false, relayable: NEWS_IMAGE_TYPES.includes(ct),
+    };
   }
-  if (!ACCEPTED_CONTENT_TYPE.test(ct)) throw noFeed();
+  assertFeedType(first);
   let body = asText(first);
   let kind = detectNewsKind(ct, body);
   let feedUrl = url.href;
@@ -339,6 +389,7 @@ async function resolveGeneric(url: URL, deps: ResolveDeps): Promise<ResolvedNews
     if (!alt) throw noFeed();
     if (alt.startsWith('http:')) alt = `https:${alt.slice('http:'.length)}`; // newsFeed is https-only
     const feed = await get(alt, deps);
+    assertFeedType(feed);
     body = asText(feed);
     feedUrl = alt;
     kind = detectNewsKind(mediaType(feed.contentType), body);
@@ -354,18 +405,21 @@ async function resolveGeneric(url: URL, deps: ResolveDeps): Promise<ResolvedNews
     avatarUrl: meta.avatarUrl || httpsOrEmpty(metaContent(page, 'og:image')),
     body,
     viaRelay: false,
+    relayable: false,
   };
 }
 
 /** The `newsResolve` op handler (seams injectable for tests). */
-export function makeNewsResolve(overrides: Partial<ResolveDeps>) {
-  const deps: ResolveDeps = { fetch: gatewayFetch, ...overrides };
+export function makeNewsResolve(overrides: Partial<ResolveHandlerDeps>) {
+  const deps: ResolveHandlerDeps = { fetch: gatewayFetch, readRoles: readUserRoles, rateLimit: resolveRateLimit, ...overrides };
   return async (request: CallableRequest<unknown>): Promise<ResolvedNewsSource> => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
-    const token = request.auth.token as Record<string, unknown> | undefined;
-    if (token?.['admin'] !== true && token?.['contentAdmin'] !== true) {
-      throw new HttpsError('permission-denied', 'admin or contentAdmin required');
-    }
+    const uid = request.auth.uid;
+    const claims = request.auth.token as Record<string, unknown> | undefined;
+    // claims are a free fast path; the roles live on users/{uid} (see pdf/resolve-admin.ts)
+    const isCurator = hasAdminRole(claims, undefined) || hasAdminRole(undefined, await deps.readRoles(uid));
+    if (!isCurator) throw new HttpsError('permission-denied', 'admin or contentAdmin required');
+    await deps.rateLimit(uid);
     const { url, segment } = parseInput(request.data);
     let res: ResolvedNewsSource;
     try {

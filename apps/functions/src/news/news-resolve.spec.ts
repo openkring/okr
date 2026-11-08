@@ -30,9 +30,21 @@ const ROUTES: Record<string, Route> = {
   'http://scstaefa.example.org:8080/snap.jpeg': { body: Buffer.from([0xff, 0xd8]), contentType: 'image/jpeg' },
   'http://http-feed.example.ch/rss': { body: fixture('rss.xml'), contentType: 'application/rss+xml' },
   'https://gone.example.ch/': { body: '', contentType: 'text/html', status: 404 },
+  'https://cam.example.ch/live.gif': { body: Buffer.from('GIF89a'), contentType: 'image/gif' },
+  'https://odd.example.ch/': {
+    body: '<html><head><link rel="alternate" type="application/rss+xml" href="/feed.bin"></head></html>',
+    contentType: 'text/html',
+  },
+  'https://odd.example.ch/feed.bin': { body: fixture('rss.xml'), contentType: 'application/octet-stream' },
 };
 
-function setup(lookup: (h: string) => Promise<string[]> = async () => ['93.184.216.34']) {
+interface SetupOptions {
+  /** users/{uid}.roles as stored in Firestore; undefined = no user doc. */
+  roles?: Record<string, unknown>;
+  rateLimit?: (uid: string) => Promise<void>;
+}
+
+function setup(lookup: (h: string) => Promise<string[]> = async () => ['93.184.216.34'], opts: SetupOptions = {}) {
   const fetch = vi.fn(async (url: string) => {
     const r = ROUTES[url];
     if (!r || (r.status ?? 200) >= 400) {
@@ -40,10 +52,12 @@ function setup(lookup: (h: string) => Promise<string[]> = async () => ['93.184.2
     }
     return { data: Buffer.isBuffer(r.body) ? r.body : Buffer.from(r.body, 'utf8'), headers: { 'content-type': r.contentType }, status: 200 };
   });
-  const handler = makeNewsResolve({ fetch: fetch as never, lookup });
+  const readRoles = vi.fn(async (_uid: string) => opts.roles);
+  const rateLimit = vi.fn(opts.rateLimit ?? (async (_uid: string) => undefined));
+  const handler = makeNewsResolve({ fetch: fetch as never, lookup, readRoles, rateLimit });
   const call = (data: unknown, token: Record<string, unknown> = { admin: true }) =>
     handler({ auth: { uid: 'u1', token }, data } as never);
-  return { fetch, call };
+  return { fetch, call, readRoles, rateLimit };
 }
 
 describe('newsResolve — authorization and input', () => {
@@ -51,6 +65,29 @@ describe('newsResolve — authorization and input', () => {
     const { fetch, call } = setup();
     await expect(call({ url: 'https://www.example-club.ch/feed.xml', segment: 'text' }, {})).rejects.toMatchObject({ code: 'permission-denied' });
     await expect(call({ url: 'https://www.example-club.ch/feed.xml', segment: 'text' }, { privileged: true })).rejects.toMatchObject({ code: 'permission-denied' });
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('accepts a curator whose roles live only on users/{uid} (no custom claims are ever minted)', async () => {
+    const { call, readRoles } = setup(undefined, { roles: { registered: true, contentAdmin: true } });
+    await expect(call({ url: 'https://www.example-club.ch/feed.xml', segment: 'text' }, {})).resolves.toMatchObject({ kind: 'rss' });
+    expect(readRoles).toHaveBeenCalledWith('u1');
+    const admin = setup(undefined, { roles: { admin: true } });
+    await expect(admin.call({ url: 'https://www.example-club.ch/feed.xml', segment: 'text' }, {})).resolves.toMatchObject({ kind: 'rss' });
+  });
+
+  it('refuses a registered member (roles without admin/contentAdmin) before any fetch', async () => {
+    const { fetch, call, rateLimit } = setup(undefined, { roles: { registered: true, privileged: true } });
+    await expect(call({ url: 'https://www.example-club.ch/feed.xml', segment: 'text' }, {})).rejects.toMatchObject({ code: 'permission-denied' });
+    expect(fetch).not.toHaveBeenCalled();
+    expect(rateLimit).not.toHaveBeenCalled();
+  });
+
+  it('rate-limits per uid before any fetch', async () => {
+    const exhausted = Object.assign(new Error('limit'), { code: 'resource-exhausted' });
+    const { fetch, call, rateLimit } = setup(undefined, { rateLimit: async () => { throw exhausted; } });
+    await expect(call({ url: 'https://www.example-club.ch/feed.xml', segment: 'text' })).rejects.toMatchObject({ code: 'resource-exhausted' });
+    expect(rateLimit).toHaveBeenCalledWith('u1');
     expect(fetch).not.toHaveBeenCalled();
   });
 
@@ -176,6 +213,25 @@ describe('newsResolve — other sources', () => {
       body: '',
       viaRelay: true,
     });
+  });
+
+  it('an https JPEG/PNG/WebP image may be relayed; any other image type may not', async () => {
+    const { call } = setup();
+    await expect(call({ url: 'https://cam.example.ch/live.jpg', segment: 'webcam' })).resolves.toMatchObject({ relayable: true, viaRelay: false });
+    await expect(call({ url: 'https://cam.example.ch/live.gif', segment: 'webcam' })).resolves.toMatchObject({ kind: 'image', relayable: false, viaRelay: false });
+  });
+
+  it('an http: image is fetched like newsImage does: same host on every redirect', async () => {
+    const { fetch, call } = setup();
+    await expect(call({ url: 'http://scstaefa.example.org:8080/snap.jpeg', segment: 'webcam' })).resolves.toMatchObject({ viaRelay: true, relayable: true });
+    const cfg = (fetch.mock.calls[0] as unknown as [string, { beforeRedirect: (o: Record<string, unknown>) => void }])[1];
+    expect(() => cfg.beforeRedirect({ href: 'http://scstaefa.example.org:8080/other.jpeg' })).not.toThrow();
+    expect(() => cfg.beforeRedirect({ href: 'http://elsewhere.example.org/snap.jpeg' })).toThrow();
+  });
+
+  it('an alternate feed served with a type newsFeed would refuse → not-found «no-feed»', async () => {
+    const { call } = setup();
+    await expect(call({ url: 'https://odd.example.ch/', segment: 'text' })).rejects.toMatchObject({ code: 'not-found', details: { reason: 'no-feed' } });
   });
 
   it('an http: URL that is not an image → invalid-argument', async () => {

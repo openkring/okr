@@ -60,7 +60,7 @@ describe('newsFeedAdapter.fetch', () => {
     expect(fetch).toHaveBeenCalledTimes(1);
     const [url, opts] = fetch.mock.calls[0] as unknown as [string, Record<string, unknown>];
     expect(url).toBe('https://feeds.example.com/rss.xml');
-    expect(opts).toMatchObject({ responseType: 'text', timeoutMs: 8000, maxBytes: 2 * 1024 * 1024, maxRetries: 0, maxRedirects: 3 });
+    expect(opts).toMatchObject({ responseType: 'text', timeoutMs: 8000, maxBytes: 2 * 1024 * 1024, maxRetries: 0, maxRedirects: 3, proxy: false });
     expect(typeof opts['beforeRedirect']).toBe('function');
     expect(typeof opts['lookup']).toBe('function');
     expect(raw).toEqual({ body: '<rss/>', contentType: 'application/rss+xml; charset=utf-8', fetchedAt: '2026-11-08T10:00:00.000Z' });
