@@ -149,6 +149,8 @@ export const COLLECTION_LABELS: Record<string, string> = {
   // spec 1.115: the shipped list title is «Meine Transfers» (libs/content/file-transfer/util/src/i18n/de.json);
   // «Datei-» keeps them apart from the ownership `transfers` row just above.
   'file-transfers': 'Dateitransfers',
+  'news-subscriptions': 'NewsCenter-Abonnements',
+  'news-channel-requests': 'NewsCenter-Kanalwünsche',
   'file-transfer-events': 'Dateitransfer-Protokoll',
   // Learning-room ratings (libs/content/learning/util/src/i18n/de.json: "Bewertung"); «Lernräume»
   // keeps them apart from the other rating-like rows of the export.

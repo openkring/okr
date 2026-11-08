@@ -258,7 +258,8 @@ describe('SUBJECT_DATA_MAP — tiers and tenant-exit disposition', () => {
     // `trips/tracker` joined 2026-10-27 (1.121 / 1.123): a person's own GPS recordings and the crew
     // copies made for them — owned via `track.personKey`, voluntary, not the club's Logbuch record.
     // `diarySources` joined 2026-11-04 (1.77 §12): one owner's pull settings, the same owner-locked shape as `diaries`.
-    expect(SUBJECT_DATA_MAP.filter((e) => e.tier === 'T2').map((e) => e.collection)).toEqual(['avatars', 'prospects', 'trips/tracker', 'diaries', 'diaryAlbums', 'diarySources', 'diaryImports', 'hearingQuizResults', 'chatReminders', 'ratings']);
+    // `news-subscriptions` joined 2026-11-08 (NewsCenter): a member's own channel picks, doc id = uid — owner-locked and voluntary.
+    expect(SUBJECT_DATA_MAP.filter((e) => e.tier === 'T2').map((e) => e.collection)).toEqual(['avatars', 'prospects', 'trips/tracker', 'diaries', 'diaryAlbums', 'diarySources', 'diaryImports', 'hearingQuizResults', 'chatReminders', 'ratings', 'news-subscriptions']);
   });
 
   // Regression guard on the strictest-tier rule. `addresses` holds both the favorite

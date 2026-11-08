@@ -1552,6 +1552,32 @@ service cloud.firestore {
       allow read: if tenantRead() && (resource == null || resource.data.senderKey == callerPersonKey() || isAdmin());
       allow write: if false;
     }
+    // NewsCenter (design 2026-11-08 §6). Channels are club-curated: ONLY admin/contentAdmin of the
+    // tenant write them, because the news relay fetches the stored `feedUrl` and allows http `newsImage`
+    // only on `viaRelay` channels — a member-writable channel would be an SSRF/allowlist bypass.
+    match /news-channels/{docId} {
+      allow read:   if tenantRead();
+      allow create: if isContentAdminOrAdmin() && tenantCreate();
+      allow update: if isContentAdminOrAdmin() && tenantUpdate();
+      allow delete: if false;
+    }
+    // Per-user subscriptions: doc id = the owner's uid. The tenants[] check keeps a doc from leaking across tenants.
+    match /news-subscriptions/{uid} {
+      allow read:   if signedIn() && request.auth.uid == uid && tenantRead();
+      allow create: if signedIn() && request.auth.uid == uid && tenantCreate();
+      allow update: if signedIn() && request.auth.uid == uid && tenantUpdate();
+      allow delete: if signedIn() && request.auth.uid == uid && tenantDelete();
+    }
+    // Channel requests: a member files one (open), the requester and content admins read, content admins decide.
+    match /news-channel-requests/{docId} {
+      allow read:   if tenantRead() && (resource == null || resource.data.requesterUid == request.auth.uid || isContentAdminOrAdmin());
+      allow create: if tenantCreate()
+                       && request.resource.data.requesterUid == request.auth.uid
+                       && request.resource.data.status == 'open';
+      allow update: if isContentAdminOrAdmin() && tenantUpdate()
+                       && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'decidedAt', 'channelKey']);
+      allow delete: if false;
+    }
     match /file-transfer-events/{docId} {
       allow read: if tenantRead() && (resource == null || isAdmin() || resource.data.senderKey == callerPersonKey());
       allow write: if false;

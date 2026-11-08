@@ -2108,5 +2108,67 @@ for label, expect, run in diary_source_cases:
     passed += ok; failed += not ok
     print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
 
+# ------------------------------------------------------------ NewsCenter ----
+# Design 2026-11-08 §6. A=plain member t1 (registered), C=contentAdmin t1, D=admin t1, B=admin t2.
+# Channel writes are admin-only because the relay's feedUrl/viaRelay allowlist depends on it.
+seed("news-channels/ncT1", {"tenants": ["t1"], "segment": "video", "order": 1, "feedUrl": "https://a.example/f", "viaRelay": False})
+seed("news-subscriptions/uidA", {"tenants": ["t1"], "channelKeys": []})
+seed("news-subscriptions/uidE", {"tenants": ["t1"], "channelKeys": []})
+seed("news-channel-requests/ncrA", {"tenants": ["t1"], "requesterUid": "uidA", "requesterName": "A", "status": "open"})
+NC_A, NC_B, NC_C, NC_D, NC_E = jwt("uidA"), jwt("uidB"), jwt("uidC"), jwt("uidD"), jwt("uidE")
+def nc_req(uid, status="open", tenants=("t1",)):
+    return {"tenants": list(tenants), "requesterUid": uid, "requesterName": "n", "status": status}
+news_cases = [
+    ("news-channels: member of t1 READ -> ALLOW", True, lambda: req("GET", "news-channels/ncT1", token=NC_A)),
+    ("news-channels: admin of other tenant READ -> DENY", False, lambda: req("GET", "news-channels/ncT1", token=NC_B)),
+    ("news-channels: contentAdmin t1 CREATE -> ALLOW", True,
+     lambda: req("POST", "news-channels?documentId=ncC", token=NC_C, data=body({"tenants": ["t1"], "segment": "text", "order": 2, "feedUrl": "https://b.example/f", "viaRelay": False}))),
+    ("news-channels: admin t1 UPDATE -> ALLOW", True,
+     lambda: req("PATCH", "news-channels/ncT1", token=NC_D, data=body({"order": 3}), mask=["order"])),
+    ("news-channels: registered member CREATE -> DENY", False,
+     lambda: req("POST", "news-channels?documentId=ncX", token=NC_A, data=body({"tenants": ["t1"], "segment": "text", "order": 2, "feedUrl": "https://evil.example/f", "viaRelay": True}))),
+    ("news-channels: registered member UPDATE feedUrl -> DENY", False,
+     lambda: req("PATCH", "news-channels/ncT1", token=NC_A, data=body({"feedUrl": "http://169.254.169.254/"}), mask=["feedUrl"])),
+    ("news-channels: registered member flips viaRelay -> DENY", False,
+     lambda: req("PATCH", "news-channels/ncT1", token=NC_A, data=body({"viaRelay": True}), mask=["viaRelay"])),
+    ("news-channels: admin of other tenant UPDATE -> DENY", False,
+     lambda: req("PATCH", "news-channels/ncT1", token=NC_B, data=body({"order": 9}), mask=["order"])),
+    ("news-subscriptions: owner READ -> ALLOW", True, lambda: req("GET", "news-subscriptions/uidA", token=NC_A)),
+    ("news-subscriptions: owner WRITE -> ALLOW", True,
+     lambda: req("PATCH", "news-subscriptions/uidA", token=NC_A, data=body({"channelKeys": ["ncT1"]}), mask=["channelKeys"])),
+    ("news-subscriptions: owner CREATE own doc -> ALLOW", True,
+     lambda: req("POST", "news-subscriptions?documentId=uidC", token=NC_C, data=body({"tenants": ["t1"], "channelKeys": []}))),
+    ("news-subscriptions: another uid READ -> DENY", False, lambda: req("GET", "news-subscriptions/uidE", token=NC_A)),
+    ("news-subscriptions: another uid WRITE -> DENY", False,
+     lambda: req("PATCH", "news-subscriptions/uidE", token=NC_A, data=body({"channelKeys": ["x"]}), mask=["channelKeys"])),
+    ("news-subscriptions: admin cannot READ another user's doc -> DENY", False, lambda: req("GET", "news-subscriptions/uidE", token=NC_D)),
+    ("news-subscriptions: own doc with foreign tenant CREATE -> DENY", False,
+     lambda: req("POST", "news-subscriptions?documentId=uidB", token=NC_B, data=body({"tenants": ["t1"], "channelKeys": []}))),
+    ("news-channel-requests: member CREATE own open -> ALLOW", True,
+     lambda: req("POST", "news-channel-requests?documentId=ncrE", token=NC_E, data=body(nc_req("uidE")))),
+    ("news-channel-requests: CREATE with another requesterUid -> DENY", False,
+     lambda: req("POST", "news-channel-requests?documentId=ncrF", token=NC_E, data=body(nc_req("uidA")))),
+    ("news-channel-requests: CREATE with status accepted -> DENY", False,
+     lambda: req("POST", "news-channel-requests?documentId=ncrG", token=NC_E, data=body(nc_req("uidE", status="accepted")))),
+    ("news-channel-requests: CREATE for a foreign tenant -> DENY", False,
+     lambda: req("POST", "news-channel-requests?documentId=ncrH", token=NC_B, data=body(nc_req("uidB", tenants=("t1",))))),
+    ("news-channel-requests: requester READ own -> ALLOW", True, lambda: req("GET", "news-channel-requests/ncrA", token=NC_A)),
+    ("news-channel-requests: other member READ -> DENY", False, lambda: req("GET", "news-channel-requests/ncrA", token=NC_E)),
+    ("news-channel-requests: contentAdmin READ -> ALLOW", True, lambda: req("GET", "news-channel-requests/ncrA", token=NC_C)),
+    ("news-channel-requests: contentAdmin decides status/decidedAt/channelKey -> ALLOW", True,
+     lambda: req("PATCH", "news-channel-requests/ncrA", token=NC_C,
+                 data=body({"status": "accepted", "decidedAt": "20261108", "channelKey": "ncT1"}),
+                 mask=["status", "decidedAt", "channelKey"])),
+    ("news-channel-requests: contentAdmin edits requesterUid -> DENY", False,
+     lambda: req("PATCH", "news-channel-requests/ncrA", token=NC_C, data=body({"requesterUid": "uidC"}), mask=["requesterUid"])),
+    ("news-channel-requests: requester UPDATE own -> DENY", False,
+     lambda: req("PATCH", "news-channel-requests/ncrE", token=NC_E, data=body({"status": "accepted"}), mask=["status"])),
+]
+for label, expect, run in news_cases:
+    code = run()
+    ok = (code in (200, 201)) == expect
+    passed += ok; failed += not ok
+    print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
+
 print(f"\n{passed} passed, {failed} failed")
 raise SystemExit(1 if failed else 0)

@@ -133,6 +133,7 @@ export const AOC_STATUS_SERVICES: readonly StatusService[] = [
   linkOnly('what3words', 'what3words', '', ['geo']),
   linkOnly('searchCh', 'search.ch', '', ['subject']),
   linkOnly('zefix', 'Zefix', '', ['subject']),
+  linkOnly('youtube', 'YouTube', '', ['news-center']),
   live('bexio', 'bexio', 'https://www.bexio-status.com', 'statuspage', 'https://bexio.statuspage.io/api/v2/summary.json', ['finance'], ['API']),
   linkOnly('snb', 'Schweizerische Nationalbank', '', ['finance']),
   live('deepcloud', 'DeepCloud', 'https://status.deepcloud.swiss', 'instatus', 'https://status.deepcloud.swiss/v2/components.json', ['esign'], [

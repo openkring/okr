@@ -1646,6 +1646,33 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     onErasure: 'delete',
     retention: LOG_24M,
   },
+  {
+    // NewsCenter (design 2026-11-08 §6): the member's own subscriptions, doc id = uid. Preferences
+    // only (which channels), no content of others.
+    collection: 'news-subscriptions',
+    dataClass: 'content',
+    tier: 'T2',
+    onTenantExit: 'delete',
+    find: (c: SubjectCtx) => db().collection('news-subscriptions').where(FieldPath.documentId(), '==', c.uid),
+    tenantScope: 'tenantsArray',
+    onExport: 'full',
+    onErasure: 'delete',
+    retention: KEEP_WHILE_MEMBER,
+  },
+  {
+    // A member's request for a new channel, with their snapshot name. The decision record stays for
+    // the club; on erasure the identity goes, the request text and status stay.
+    collection: 'news-channel-requests',
+    dataClass: 'communication',
+    tier: 'T4',
+    onTenantExit: 'anonymize',
+    find: (c: SubjectCtx) => db().collection('news-channel-requests').where('requesterUid', '==', c.uid),
+    tenantScope: 'tenantsArray',
+    onExport: 'full',
+    onErasure: 'anonymize',
+    anonymizeFields: ['requesterUid', 'requesterName'],
+    retention: CLUB_RECORD,
+  },
 ];
 
 export function entriesFor(mode: 'full' | 'index'): readonly SubjectDataEntry[] {
@@ -1717,6 +1744,8 @@ export async function resolveArrayItemDocs(entry: SubjectDataEntry, ctx: Subject
 // not personal data: commissionEntries — a ledger line (C3 §7): partnerKey, tenantId, band,
 //   amounts. No natural person appears on it; the contact-of-record stays on the metering
 //   record it was derived from.
+// not personal data: news-channels — a club-curated feed/stream channel (NewsCenter): title, segment, feedUrl,
+//   order, viaRelay. Curated by admins, no natural person's data.
 // not personal data: formStats — response counters per form / form×section (1.125 B), no answers
 //   and no person: a count and the form/section id only.
 // gap: external-reports — marks that a case (e.g. a membership change) was reported to an external

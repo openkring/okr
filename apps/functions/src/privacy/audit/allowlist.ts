@@ -40,6 +40,7 @@ export const NON_PERSONAL_COLLECTIONS: ReadonlySet<string> = new Set([
   'icons',
   'locations',
   'menuItems',
+  'news-channels',
   'ocr-rules',
   'orgs',
   'pages',

@@ -373,6 +373,29 @@ export const PROCESSOR_CATALOGUE: readonly CatalogueEntry[] = [
     memberNoticeDe:
       'Beim Erfassen deiner Adresse wurde eine Suchanfrage mit deinem Namen und Ort an das Verzeichnis gesendet. Übermittelt wurde nur die Anfrage, nicht dein Datensatz.',
   },
+  {
+    key: 'youtube',
+    name: 'YouTube (eingebettete Videos, NewsCenter)',
+    legalEntity: 'Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, IE',
+    role: 'processor',
+    category: 'saasService',
+    country: 'IE',
+    transferMechanism: 'adequacyDecision',
+    purposes: ['Abspielen von Videos, die der Verein im NewsCenter als Kanal eingebunden hat'],
+    // Client-Einbettung: Der Browser der Person lädt den Player erst beim Abspielen direkt von
+    // YouTube; es läuft keine Cloud Function dazwischen.
+    dataClasses: ['log'],
+    retentionText: 'Gemäss Aufbewahrung des Anbieters; Daten fallen erst an, wenn ein Video abgespielt wird',
+    securityMeasures: ['Verschlüsselte Übertragung', 'Player wird erst nach Klick auf Abspielen geladen'],
+    // Nicht verifiziert — bewusst leer, bis die Seiten geprüft sind.
+    dpaUrl: '',
+    privacyUrl: '',
+    contact: '',
+    enabledWhen: byIntegration('youtube'),
+    cloudFunctions: [],
+    memberNoticeDe:
+      'Beim Abspielen eines eingebetteten Videos im NewsCenter wurden deine IP-Adresse und Wiedergabedaten an YouTube übermittelt.',
+  },
 ] as const;
 
 /**
