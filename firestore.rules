@@ -1427,8 +1427,10 @@ service cloud.firestore {
     match /mailJobs/{id}           {
       allow read:   if (isPrivileged() || hasRole('memberAdmin')) && tenantRead();
       // Exactly one tenant: `onMailJob` checks the sender against it and sends under it.
+      // `category` ties the job's Mailtrap events to a Versand (getMailingDeliveries): only onMailing sets it.
       allow create: if (isPrivileged() || hasRole('memberAdmin')) && tenantCreate()
-                       && request.resource.data.tenants.size() == 1;
+                       && request.resource.data.tenants.size() == 1
+                       && !('category' in request.resource.data);
       allow update, delete: if false;
     }
     // mailings (spec 1.145 §10): one doc per Versand, written only by `sendMailing` (Admin SDK) and

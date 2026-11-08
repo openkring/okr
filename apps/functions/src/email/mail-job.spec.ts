@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { mailJobBlocks, MailJobDoc, mailJobTenant, resolveJobContent, sendPersonal } from './mail-job';
+import { mailJobBlocks, MailJobDoc, mailJobTenant, resolveJobContent, sendPersonal, trustedCategory } from './mail-job';
 import { ANSWER_URL_PLACEHOLDER } from './personal-mail.logic';
 
 const job = (bcc: string[]): MailJobDoc => ({
@@ -152,5 +152,26 @@ describe('sendPersonal', () => {
     await expect(sendPersonal(snap, personalJob(12), 'scs', 'app@scs.ch', 'mailtrap_api', [], progress, { now: () => 0, send, compose, pauseMs: 0 }))
       .rejects.toThrow('write failed');
     expect(progress.sent).toBe(10);                          // the first progress write comes after mail 10
+  });
+});
+
+describe('trustedCategory', () => {
+  const tenantsOf = (map: Record<string, string[]>) => async (key: string) => map[key];
+  const read = tenantsOf({ m1: ['scs'], m2: ['p13'], m3: ['scs', 'p13'] });
+
+  it('keeps a category that names a Versand of the job\'s own tenant', async () => {
+    expect(await trustedCategory({ category: 'mailing.m1' }, 'scs', read)).toBe('mailing.m1');
+  });
+  it('drops one that names another tenant\'s, a shared or a missing Versand', async () => {
+    expect(await trustedCategory({ category: 'mailing.m2' }, 'scs', read)).toBeUndefined();
+    expect(await trustedCategory({ category: 'mailing.m3' }, 'scs', read)).toBeUndefined();
+    expect(await trustedCategory({ category: 'mailing.nope' }, 'scs', read)).toBeUndefined();
+  });
+  it('drops anything not shaped like a Versand category without reading', async () => {
+    const spy = vi.fn(read);
+    for (const category of [undefined, 42, '', 'invoice.x', 'mailing.', 'mailing.a/b', `mailing.${'x'.repeat(65)}`]) {
+      expect(await trustedCategory({ category } as never, 'scs', spy)).toBeUndefined();
+    }
+    expect(spy).not.toHaveBeenCalled();
   });
 });

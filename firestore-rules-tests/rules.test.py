@@ -2020,6 +2020,9 @@ mail_job_cases = [
      lambda: req("POST", "mailJobs?documentId=mj4", token=B, data=body(mail_job(["t1"])))),
     ("mailJobs: userA(member t1) CREATE tenants=[t1] -> DENY (no role)", False,
      lambda: req("POST", "mailJobs?documentId=mj5", token=A, data=body(mail_job(["t1"])))),
+    # only onMailing ties a job to a Versand's delivery status; a client-set category could poison another one
+    ("mailJobs: userP(privileged t1) CREATE with category -> DENY", False,
+     lambda: req("POST", "mailJobs?documentId=mj6", token=P, data=body({**mail_job(["t1"]), "category": "mailing.x"}))),
 ]
 for label, expect, run in mail_job_cases:
     code = run()

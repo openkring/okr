@@ -137,7 +137,7 @@ export function mailtrapBody(options: EmailOptions): Record<string, unknown> {
     body['subject'] = options.subject;
     body['html']    = options.html;
     if (options.text) body['text'] = options.text;
-    if (options.category) body['category'] = options.category.slice(0, 255);
+    if (typeof options.category === 'string' && options.category) body['category'] = options.category.slice(0, 255);
   }
 
   if (options.attachments?.length) {

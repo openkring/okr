@@ -14,6 +14,7 @@
 
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { logger } from 'firebase-functions/v2';
+import { getFirestore } from 'firebase-admin/firestore';
 
 import type { EmailLayoutChoice } from '@okr/shared-models';
 
@@ -65,6 +66,25 @@ export interface MailJobDoc {
   errorCode?: string;
   /** The Mailtrap category every mail of the job carries; a Versand sets `mailing.<mailingKey>` (getMailingDeliveries). */
   category?: string;
+}
+
+/** The shape of a Versand category: `mailing.<firestore id>`. */
+const MAILING_CATEGORY = /^mailing\.([A-Za-z0-9]{1,64})$/;
+
+/**
+ * The job's Mailtrap category, or undefined unless it names a Versand of the job's own tenant. Only
+ * onMailing writes it (the rules refuse it on a client create); this is the second gate, so a job written
+ * some other way can never tie its events to another tenant's Versand. `readMailingTenants` is injectable for the test.
+ */
+export async function trustedCategory(
+  job: Pick<MailJobDoc, 'category'>, tenantId: string,
+  readMailingTenants: (mailingKey: string) => Promise<string[] | undefined>,
+): Promise<string | undefined> {
+  if (typeof job.category !== 'string') return undefined;
+  const key = MAILING_CATEGORY.exec(job.category)?.[1];
+  if (!key) return undefined;
+  const tenants = await readMailingTenants(key);
+  return tenants?.length === 1 && tenants[0] === tenantId ? job.category : undefined;
 }
 
 /**
@@ -203,6 +223,10 @@ export const onMailJob = onDocumentCreated(
     try {
       // The sender must be on the tenant's domain; a job from a tampered client falls back to the tenant sender.
       const from = effectiveSender(job.from, await getAppEmailConfig(tenantId));
+      const category = await trustedCategory(job, tenantId, async (key) =>
+        (await getFirestore().collection('mailings').doc(key).get()).data()?.['tenants'] as string[] | undefined);
+      if (job.category && !category) logger.warn(`${CF_NAME}: job ${snap.id} carries a category that names no Versand of its tenant; sent without it`);
+      job.category = category;
       const personalJob = Array.isArray(job.personal) && job.personal.length > 0;
       const { html, text } = personalJob ? { html: '', text: undefined } : await resolveJobContent(job, tenantId);
       const provider = await getEmailProvider(tenantId);
