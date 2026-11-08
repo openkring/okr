@@ -112,3 +112,17 @@ describe('AOC hub area routes match AOC_AREA_ROUTES (spec 1.101 phase 5)', () =>
     expect(areaRoutes).toHaveLength(AOC_AREA_IDS.length);
   });
 });
+
+describe('news-center routes (design 2026-11-08)', () => {
+  const children = () => FEATURE_ROUTES.find(b => b.id === 'news-center')!.routes().find(r => r.path === 'private')?.children ?? [];
+
+  it('a bare /private/news-center opens the video tab instead of falling through to cms', () => {
+    const bare = children().find(r => r.path === 'news-center');
+    expect(bare).toMatchObject({ redirectTo: 'news-center/video', pathMatch: 'full' });
+  });
+
+  it('the block is listed ahead of cms, so neither path reaches cms\'s private/:id catch-all', () => {
+    const ids = FEATURE_ROUTES.map(b => b.id);
+    expect(ids.indexOf('news-center')).toBeLessThan(ids.indexOf('cms'));
+  });
+});

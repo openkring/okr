@@ -1824,6 +1824,7 @@ const learning: BlockRoutes = {
  *
  * - `private/news-center/:segment` — the page, any signed-in member; `:segment` is the tab
  *   (`video` | `audio` | `text` | `webcam`, anything else shows `video`).
+ * - `private/news-center` — redirects to the video tab (otherwise a bare link would reach cms).
  */
 const newsCenter: BlockRoutes = {
   id: 'news-center',
@@ -1832,6 +1833,7 @@ const newsCenter: BlockRoutes = {
       path: 'private',
       canActivate: [isAuthenticatedGuard],
       children: [
+        { path: 'news-center', pathMatch: 'full', redirectTo: 'news-center/video' },
         { path: 'news-center/:segment', loadComponent: () => import('@okr/social-news-center-feature').then(m => m.NewsCenterPage) },
       ],
     },
