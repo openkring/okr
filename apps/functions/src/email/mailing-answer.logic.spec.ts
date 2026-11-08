@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Attendee } from '@okr/shared-models';
-import { ANSWER_PAGE_CSP, attendeeCommentOf, attendeeStateOf, eventRefusal, invitationRefusal, lastEventDate, mayAnswer, neutralizeMeta, normalizeComment, withAttendeeComment } from './mailing-answer.logic';
+import { ANSWER_PAGE_CSP, attendeeStateOf, caleventCommentDoc, commentRefusal, commentWhen, MAILING_COMMENTS_PER_EVENT_MAX, eventRefusal, invitationRefusal, lastEventDate, mayAnswer, neutralizeMeta, normalizeComment } from './mailing-answer.logic';
 
 const doc = {
   deliveries: [{ personKey: 'p1', channels: ['email'] }, { personKey: 'p2', channels: ['chat'] }],
@@ -94,29 +94,32 @@ describe('answer page hardening', () => {
   });
 });
 
-describe('answer remark', () => {
-  const who = (key: string): Attendee['person'] => ({ key, name1: key, name2: '', modelType: 'person', type: '', subType: '', label: '' });
-  const list: Attendee[] = [
-    { person: who('p1'), state: 'accepted', comment: 'alt' },
-    { person: who('p2'), state: 'declined', comment: 'fremd' },
-  ];
-  it('reads the own remark, empty without one', () => {
-    expect(attendeeCommentOf(list, 'p1')).toBe('alt');
-    expect(attendeeCommentOf(list, 'p3')).toBe('');
-    expect(attendeeCommentOf(undefined, 'p1')).toBe('');
-  });
-  it('trims and cuts the typed remark', () => {
+describe('answer-page comment', () => {
+  it('trims and cuts the typed comment', () => {
     expect(normalizeComment('  komme später  ', 500)).toBe('komme später');
     expect(normalizeComment('x'.repeat(600), 500)).toHaveLength(500);
   });
-  it('sets the own remark and leaves the others alone', () => {
-    const next = withAttendeeComment(list, 'p1', 'neu');
-    expect(next[0].comment).toBe('neu');
-    expect(next[1]).toBe(list[1]);
+  const own = [
+    { description: 'erster', creationDateTime: '202611081000' },
+    { description: 'zweiter', creationDateTime: '202611081200' },
+  ];
+  it('writes a new comment', () => expect(commentRefusal(own, 'dritter')).toBeUndefined());
+  it('refuses an empty comment', () => expect(commentRefusal(own, '')).toBe('empty'));
+  it('refuses a re-post of the latest comment (reload)', () => {
+    expect(commentRefusal(own, 'zweiter')).toBe('duplicate');
+    expect(commentRefusal(own, 'erster')).toBeUndefined();
   });
-  it('removes the field for an empty remark (no undefined in Firestore arrays)', () => {
-    const next = withAttendeeComment(list, 'p1', '');
-    expect('comment' in next[0]).toBe(false);
-    expect(next[0].state).toBe('accepted');
+  it('refuses beyond the per-event limit', () => {
+    const many = Array.from({ length: MAILING_COMMENTS_PER_EVENT_MAX }, (_, i) => ({ description: `c${i}`, creationDateTime: `2026110810${String(i).padStart(2, '0')}` }));
+    expect(commentRefusal(many, 'noch einer')).toBe('limit');
+  });
+  it('formats the comment time', () => {
+    expect(commentWhen('202611081205')).toBe('08.11.2026, 12:05');
+    expect(commentWhen('20261108')).toBe('08.11.2026');
+  });
+  it('builds a comment on the calevent', () => {
+    const c = caleventCommentDoc('e1', 'p1', 'Anna Muster', 'komme später', '202611081200', 'scs');
+    expect(c).toMatchObject({ parentKey: 'calevent.e1', authorKey: 'p1', authorName: 'Anna Muster', description: 'komme später', tenants: ['scs'], isArchived: false });
+    expect(c['index']).toBe('ak:p1, d:202611081200, pk:calevent.e1');
   });
 });

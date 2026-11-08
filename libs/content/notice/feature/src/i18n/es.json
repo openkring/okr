@@ -7,5 +7,6 @@
   "attachment_error": "No se pudo abrir el adjunto.",
   "empty": "Todavía no hay comunicados.",
   "more": "Todos los comunicados",
-  "list_title": "Comunicados"
+  "list_title": "Comunicados",
+  "events": "Eventos"
 }

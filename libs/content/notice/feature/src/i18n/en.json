@@ -7,5 +7,6 @@
   "attachment_error": "The attachment could not be opened.",
   "empty": "No notices yet.",
   "more": "All notices",
-  "list_title": "Notices"
+  "list_title": "Notices",
+  "events": "Events"
 }

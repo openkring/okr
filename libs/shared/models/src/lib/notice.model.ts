@@ -32,6 +32,8 @@ export class NoticeModel implements OkrModel {
   public senderName = '';
   /** FK -> mailings (the Versand this notice belongs to). */
   public mailingKey = '';
+  /** FK -> calevents: the events the Versand asks about; the notice page links to them. Absent on notices sent before 2026-11-08. */
+  public caleventKeys: string[] = [];
   /** StoreDateTime (yyyyMMddHHmmss) */
   public sentAt = '';
 

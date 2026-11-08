@@ -7,5 +7,6 @@
   "attachment_error": "La pièce jointe n’a pas pu être ouverte.",
   "empty": "Pas encore de communications.",
   "more": "Toutes les communications",
-  "list_title": "Communications"
+  "list_title": "Communications",
+  "events": "Événements"
 }

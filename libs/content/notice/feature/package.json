@@ -16,6 +16,8 @@
     "@okr/content-notice-data-access": "*",
     "@okr/content-notice-util": "*",
     "@okr/shared-feature": "*",
-    "@okr/shared-util-angular": "*"
+    "@okr/shared-util-angular": "*",
+    "@okr/calendar-calevent-data-access": "*",
+    "@okr/calendar-calevent-feature": "*"
   }
 }

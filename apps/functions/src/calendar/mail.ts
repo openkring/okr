@@ -219,12 +219,12 @@ export interface MailingAnswerEvent {
   when: string;
   location: string;
   state: 'accepted' | 'waiting' | 'declined' | 'open';
-  /** The person's own remark on their answer, prefilled into the comment field. */
-  comment?: string;
+  /** The comments the person already left on this event, oldest first (`when` already formatted). */
+  comments?: { text: string; when: string }[];
   refusal?: AnswerRefusal;
 }
 
-/** How long an answer remark may be; the endpoint cuts a longer one. */
+/** How long a comment from the answer page may be; the endpoint cuts a longer one. */
 export const MAILING_COMMENT_MAX = 500;
 
 /** `color` mixed with white: `share` of the colour (0…1), the rest white. For the hover tint. */
@@ -248,34 +248,50 @@ function mailingAnswerStyle(brand: Brand): string {
     + 'background:#d0d7de;color:#1f2328;border:1px solid #8c959f;}'
     + `.okr-answer-btn:hover,.okr-answer-btn:focus-visible{background:${tintOf(color, 0.25)};border-color:${color};color:#1f2328;}`
     + `.okr-answer-btn.is-chosen{background:${color};border-color:${color};color:${textColorOn(color)};}`
-    + '.okr-answer-label{display:block;margin:10px 0 4px;color:#57606a;font-size:14px;}'
-    + '.okr-answer-comment{display:block;width:100%;box-sizing:border-box;padding:8px;border:1px solid #8c959f;border-radius:6px;font-size:15px;font-family:inherit;resize:vertical;}'
+    // the comment box, drawn like the app's comment composer: rounded box, text on top, round send button below right
+    + '.okr-composer{margin:12px 0 0;border:1px solid #d0d7de;border-radius:14px;background:#fff;padding:8px 8px 8px 12px;}'
+    + `.okr-composer:focus-within{border-color:${color};box-shadow:0 0 0 3px ${tintOf(color, 0.2)};}`
+    + '.okr-composer textarea{display:block;width:100%;box-sizing:border-box;border:0;outline:0;padding:4px 0;font-size:16px;line-height:1.4;font-family:inherit;resize:none;background:transparent;}'
+    + '.okr-composer-row{display:flex;justify-content:flex-end;}'
+    + `.okr-send{width:44px;height:44px;border-radius:50%;border:0;padding:0;cursor:pointer;background:${color};color:${textColorOn(color)};display:flex;align-items:center;justify-content:center;}`
+    + '.okr-composer:has(textarea:placeholder-shown) .okr-send{opacity:0.45;}'
+    + '.okr-own-comment{margin:10px 0 0;padding:8px 12px;background:#fff;border:1px solid #d0d7de;border-radius:10px;}'
+    + '.okr-own-comment small{display:block;color:#57606a;}'
     + '</style>';
 }
 
+/** The send icon of the app's comment composer (a paper plane), inline: the page loads no images but the logo. */
+const SEND_ICON = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true">'
+  + '<path d="M3 4l18 8-18 8 3-8-3-8z"/><path d="M6 12h15"/></svg>';
+
 /**
- * The answer page behind a Versand's personal link: one block per event, each with its own form
- * (an optional remark, and one submit button per answer — the pressed button's `a` is the answer,
- * `e` the event). The button of the current answer is drawn in the brand colour. An event that can
- * no longer be answered shows the refusal title instead of the form.
+ * The answer page behind a Versand's personal link: one block per event with two forms. The answer
+ * form has one submit button per answer (the pressed button's `a` is the answer, `e` the event); the
+ * button of the current answer is drawn in the brand colour. The comment form (`a=comment`, text in
+ * `c`) writes a comment on the event, which the app shows in the event's comment list; the person's
+ * earlier comments are listed above it. An event that can no longer be answered shows the refusal
+ * title instead of both forms.
  */
 export function mailingAnswerPage(p: Brand & { firstName: string; postUrl: string; mailingKey: string; personKey: string; signature: string; message?: string; events: MailingAnswerEvent[] }): string {
+  const hidden = (event: MailingAnswerEvent): string =>
+    `<input type="hidden" name="m" value="${escapeHtml(p.mailingKey)}">`
+    + `<input type="hidden" name="p" value="${escapeHtml(p.personKey)}">`
+    + `<input type="hidden" name="s" value="${escapeHtml(p.signature)}">`
+    + `<input type="hidden" name="e" value="${escapeHtml(event.caleventKey)}">`;
   const submit = (answer: 'accept' | 'decline', label: string, chosen: boolean): string =>
     `<button type="submit" name="a" value="${answer}" class="okr-answer-btn${chosen ? ' is-chosen' : ''}"${chosen ? ' aria-pressed="true"' : ''}>${label}</button>`;
-  const form = (event: MailingAnswerEvent): string => {
-    const id = `c-${escapeHtml(event.caleventKey)}`;
-    return `<form method="post" action="${escapeHtml(p.postUrl)}" style="margin:0;">`
-      + `<input type="hidden" name="m" value="${escapeHtml(p.mailingKey)}">`
-      + `<input type="hidden" name="p" value="${escapeHtml(p.personKey)}">`
-      + `<input type="hidden" name="s" value="${escapeHtml(p.signature)}">`
-      + `<input type="hidden" name="e" value="${escapeHtml(event.caleventKey)}">`
-      + `<label class="okr-answer-label" for="${id}">Bemerkung (freiwillig)</label>`
-      + `<textarea class="okr-answer-comment" id="${id}" name="c" rows="2" maxlength="${MAILING_COMMENT_MAX}">${escapeHtml(event.comment)}</textarea>`
-      + `<p style="margin:8px 0 0;">`
-      + submit('accept', 'Ich nehme teil', event.state === 'accepted' || event.state === 'waiting')
-      + submit('decline', 'Ich nehme nicht teil', event.state === 'declined')
-      + `</p></form>`;
-  };
+  const answerForm = (event: MailingAnswerEvent): string =>
+    `<form method="post" action="${escapeHtml(p.postUrl)}" style="margin:8px 0 0;">${hidden(event)}`
+    + submit('accept', 'Ich nehme teil', event.state === 'accepted' || event.state === 'waiting')
+    + submit('decline', 'Ich nehme nicht teil', event.state === 'declined')
+    + `</form>`;
+  const ownComments = (event: MailingAnswerEvent): string => (event.comments ?? [])
+    .map((c) => `<p class="okr-own-comment"><small>Dein Kommentar, ${escapeHtml(c.when)}</small>${paragraphText(c.text)}</p>`).join('');
+  const commentForm = (event: MailingAnswerEvent): string =>
+    `<form method="post" action="${escapeHtml(p.postUrl)}" class="okr-composer">${hidden(event)}`
+    + `<textarea name="c" rows="2" required maxlength="${MAILING_COMMENT_MAX}" placeholder="Kommentar schreiben …" aria-label="Kommentar zu ${escapeHtml(event.name)}"></textarea>`
+    + `<div class="okr-composer-row"><button type="submit" name="a" value="comment" class="okr-send" aria-label="Kommentar senden">${SEND_ICON}</button></div>`
+    + `</form>`;
   const block = (event: MailingAnswerEvent): string => {
     const rows = [
       `<strong>${escapeHtml(event.name)}</strong>`,
@@ -284,7 +300,7 @@ export function mailingAnswerPage(p: Brand & { firstName: string; postUrl: strin
     ].filter(Boolean).join('<br>');
     const actions = event.refusal
       ? `<p style="margin:8px 0 0;color:#57606a;">${escapeHtml(REFUSAL_TEXT[event.refusal].title)}</p>`
-      : form(event);
+      : answerForm(event) + ownComments(event) + commentForm(event);
     return `<div style="margin:16px 0;padding:12px 16px;background:#f6f8fa;border-radius:6px;">${rows}`
       + `<br><span style="color:#57606a;">Dein Stand: ${MAILING_STATE[event.state]}</span>${actions}</div>`;
   };

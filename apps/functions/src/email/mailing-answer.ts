@@ -5,8 +5,8 @@
 // its own two buttons. GET never writes (mail scanners open every link); the POST re-checks
 // signature and event and writes what invitationAnswer writes — the attendee entry of the event
 // (applyInvitationAnswer, in a transaction) and, when the person also holds an invitation to that
-// event, its state + respondedAt and the answer comment. An optional remark per event is kept on
-// the attendee entry (Attendee.comment) and, with an invitation, as a comment on it too.
+// event, its state + respondedAt and the answer comment. Each event also has a comment box
+// (a=comment): the text becomes a comment on calevent.<okey>, shown in the event's comment list.
 
 import { onRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
@@ -23,7 +23,7 @@ import { answerResultPage, Brand, eventWhen, MAILING_COMMENT_MAX, mailingAnswerP
 import { todayStoreDate } from '../calendar/recipients';
 import { AnswerRefusal, REFUSAL_TEXT } from '../calendar/refusal';
 import { toStoreDateTime } from '../srv/zurich-time';
-import { ANSWER_PAGE_CSP, attendeeCommentOf, attendeeStateOf, eventRefusal, invitationRefusal, mayAnswer, neutralizeMeta, normalizeComment, withAttendeeComment } from './mailing-answer.logic';
+import { ANSWER_PAGE_CSP, attendeeStateOf, caleventCommentDoc, commentRefusal, commentWhen, eventRefusal, invitationRefusal, mayAnswer, neutralizeMeta, normalizeComment, OwnComment } from './mailing-answer.logic';
 import { MailingDoc } from './mailing';
 import { renderEmail } from './render-email';
 
@@ -57,6 +57,14 @@ async function pageFrame(tenantId: string): Promise<string | undefined> {
     return undefined;
   }
 }
+
+/** The line on top of the page after the comment box was sent. */
+const COMMENT_RESULT: Record<'saved' | 'duplicate' | 'empty' | 'limit', string> = {
+  saved: 'Dein Kommentar ist gespeichert.',
+  duplicate: 'Dein Kommentar ist gespeichert.',
+  empty: 'Schreib zuerst deinen Kommentar ins Feld.',
+  limit: 'Zu diesem Anlass hast du schon viele Kommentare geschrieben. Weitere kannst du in der App schreiben.',
+};
 
 export const mailingAnswer = onRequest(
   { region: 'europe-west6', secrets: [invitationLinkSecret], cors: false, maxInstances: 10 },
@@ -103,6 +111,19 @@ export const mailingAnswer = onRequest(
         caleventKeys.map((key, i) => [key, eventOf(eventSnaps[i].data(), doc.tenants)]),
       );
 
+      // The person's own comments per event (only their own: the page is reachable by link alone).
+      const readOwnComments = async (key: string): Promise<OwnComment[]> => {
+        const snap = await db.collection('comments')
+          .where('parentKey', '==', `calevent.${key}`).where('authorKey', '==', personKey).get();
+        return snap.docs.map((d) => d.data())
+          .filter((c) => c['isArchived'] !== true && (c['tenants'] as string[] | undefined)?.includes(tenantId))
+          .map((c) => ({ description: String(c['description'] ?? ''), creationDateTime: String(c['creationDateTime'] ?? '') }))
+          .sort((a, b) => a.creationDateTime.localeCompare(b.creationDateTime));
+      };
+      const ownComments = new Map<string, OwnComment[]>(
+        await Promise.all(caleventKeys.map(async (key): Promise<[string, OwnComment[]]> => [key, await readOwnComments(key)])),
+      );
+
       const page = (message?: string): string => mailingAnswerPage({
         ...brand,
         firstName: names.firstName ?? '',
@@ -117,7 +138,7 @@ export const mailingAnswer = onRequest(
             when: event && refusal !== 'eventGone' ? eventWhen(event.startDate, event.startTime) : '',
             location: event && refusal !== 'eventGone' ? getEventLocationName(event) : '',
             state: attendeeStateOf(event?.attendees, event?.maxAttendees, personKey),
-            comment: attendeeCommentOf(event?.attendees, personKey),
+            comments: (ownComments.get(key) ?? []).map((c) => ({ text: c.description, when: commentWhen(c.creationDateTime) })),
             refusal,
           };
         }),
@@ -127,11 +148,23 @@ export const mailingAnswer = onRequest(
 
       const caleventKey = param(params, 'e');
       const answer = param(params, 'a');
-      const comment = normalizeComment(param(params, 'c'), MAILING_COMMENT_MAX);
-      if (!isAnswerChoice(answer)) { refuse('invalid', 403); return; }
+      if (!isAnswerChoice(answer) && answer !== 'comment') { refuse('invalid', 403); return; }
       const early = eventRefusal(caleventKey, caleventKeys, events.get(caleventKey), today);
       if (early === 'invalid') { refuse('invalid', 403); return; }
       if (early) { res.status(200).send(page(REFUSAL_TEXT[early].message)); return; }
+      const authorName = `${names.firstName ?? ''} ${names.lastName ?? ''}`.trim();
+
+      if (answer === 'comment') {
+        const text = normalizeComment(param(params, 'c'), MAILING_COMMENT_MAX);
+        const why = commentRefusal(ownComments.get(caleventKey) ?? [], text);
+        if (!why) {
+          await db.collection('comments').add(caleventCommentDoc(caleventKey, personKey, authorName, text, toStoreDateTime(new Date()), tenantId));
+          ownComments.set(caleventKey, await readOwnComments(caleventKey));
+          logger.info(`${CF_NAME}: recorded one event comment (tenant ${tenantId})`);
+        }
+        res.status(200).send(page(COMMENT_RESULT[why ?? 'saved']));
+        return;
+      }
 
       const state = answer === 'accept' ? 'accepted' : 'declined';
       const eventRef = db.collection('calevents').doc(caleventKey);
@@ -147,8 +180,6 @@ export const mailingAnswer = onRequest(
         key: personKey, name1: names.firstName ?? '', name2: names.lastName ?? '',
         modelType: 'person', type: '', subType: '', label: '',
       };
-      const authorName = `${names.firstName ?? ''} ${names.lastName ?? ''}`.trim();
-
       const outcome = await db.runTransaction(async (tx): Promise<{ refusal: AnswerRefusal } | { saved: true }> => {
         const [freshEvent, freshInv] = await Promise.all([tx.get(eventRef), invRef ? tx.get(invRef) : Promise.resolve(undefined)]);
         const refusal = eventRefusal(caleventKey, caleventKeys, eventInTenant(freshEvent.data(), doc.tenants), todayStoreDate());
@@ -156,15 +187,12 @@ export const mailingAnswer = onRequest(
         const invData = freshInv?.exists ? (freshInv.data() as InvitationDoc) : undefined;
         const invLocked = invitationRefusal(invData);
         if (invLocked) return { refusal: invLocked };
-        const answered = applyInvitationAnswer(freshEvent.data()?.['attendees'] as Attendee[] | undefined, person, state);
-        const attendees = withAttendeeComment(answered, personKey, comment);
+        const attendees = applyInvitationAnswer(freshEvent.data()?.['attendees'] as Attendee[] | undefined, person, state);
         tx.update(eventRef, { attendees });
         if (invRef && invData && !invData.isArchived) {
           const invitationKey = invRef.id;
           tx.update(invRef, { state, respondedAt: now });
           tx.set(db.collection('comments').doc(), answerCommentDoc(invitationKey, personKey, authorName, state, now, tenantId));
-          // the remark also lands in the invitation's comment thread, where the inviter reads answers
-          if (comment) tx.set(db.collection('comments').doc(), { ...answerCommentDoc(invitationKey, personKey, authorName, state, now, tenantId), description: comment });
         }
         return { saved: true };
       });

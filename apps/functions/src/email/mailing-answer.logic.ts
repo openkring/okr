@@ -5,6 +5,7 @@
 
 import { Attendee, DeliveryChannel } from '@okr/shared-models';
 import { splitAttendees } from '@okr/calendar-calevent-util';
+import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 
 import { AnswerableEvent } from '../calendar/invitation';
 import { AnswerRefusal, eventRefusalOf } from '../calendar/refusal';
@@ -46,26 +47,51 @@ export function attendeeStateOf(attendees: Attendee[] | undefined, maxAttendees:
   return 'open';
 }
 
-/** The person's own remark on their answer to an event ('' without one). */
-export function attendeeCommentOf(attendees: Attendee[] | undefined, personKey: string): string {
-  return (attendees ?? []).find((a) => a.person.key === personKey)?.comment ?? '';
-}
-
-/** The remark as typed into the answer page: trimmed and cut to `max` characters. */
+/** The comment as typed into the answer page: trimmed and cut to `max` characters. */
 export function normalizeComment(value: string, max: number): string {
   return value.trim().slice(0, max);
 }
 
+/** How many comments one person may leave on one event from the answer page. */
+export const MAILING_COMMENTS_PER_EVENT_MAX = 20;
+
+/** A comment the person already left on the event, as the answer page lists it. */
+export interface OwnComment { description: string; creationDateTime: string }
+
 /**
- * The attendee list with the person's remark set — or removed when it is empty (Firestore takes no
- * undefined inside an array element). Everyone else's entries stay untouched.
+ * Why a comment from the answer page is not written (undefined = write it). `duplicate`: the same text
+ * as the person's latest comment — a reload re-posts the form. `limit`: too many comments on that event.
  */
-export function withAttendeeComment(attendees: Attendee[], personKey: string, comment: string): Attendee[] {
-  return attendees.map((a) => {
-    if (a.person.key !== personKey) return a;
-    const { comment: _old, ...rest } = a;
-    return comment ? { ...rest, comment } : rest;
-  });
+export function commentRefusal(own: OwnComment[], text: string): 'empty' | 'duplicate' | 'limit' | undefined {
+  if (!text) return 'empty';
+  const latest = [...own].sort((a, b) => b.creationDateTime.localeCompare(a.creationDateTime))[0];
+  if (latest?.description === text) return 'duplicate';
+  if (own.length >= MAILING_COMMENTS_PER_EVENT_MAX) return 'limit';
+  return undefined;
+}
+
+/** A comment's creationDateTime (StoreDateTime, yyyyMMddHHmm) as the page shows it: «08.11.2026, 12:00». */
+export function commentWhen(creationDateTime: string): string {
+  const date = convertDateFormatToString(creationDateTime.slice(0, 8), DateFormat.StoreDate, DateFormat.ViewDate, false);
+  const time = creationDateTime.slice(8, 12);
+  return time.length === 4 ? `${date}, ${time.slice(0, 2)}:${time.slice(2)}` : date;
+}
+
+/** A comment on calevent.<okey>, shaped as the app's comment list writes it (CommentModel). */
+export function caleventCommentDoc(caleventKey: string, personKey: string, authorName: string, text: string, now: string, tenantId: string): Record<string, unknown> {
+  const parentKey = `calevent.${caleventKey}`;
+  return {
+    parentKey,
+    isArchived: false,
+    tenants: [tenantId],
+    description: text,
+    authorKey: personKey,
+    authorName,
+    creationDateTime: now,
+    tags: '',
+    attachmentKeys: [],
+    index: `ak:${personKey}, d:${now}, pk:${parentKey}`,
+  };
 }
 
 /**

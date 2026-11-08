@@ -397,6 +397,7 @@ export const onMailing = onDocumentCreated(
           senderKey: mailing.senderKey,
           senderName: mailing.senderName,
           mailingKey: snap.id,
+          caleventKeys: mailing.caleventKeys ?? [],
           sentAt: getTodayStr(DateFormat.StoreDateTime),
         };
         await noticeRef.set(notice);

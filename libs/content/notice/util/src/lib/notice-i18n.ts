@@ -14,6 +14,7 @@ export const NOTICE_I18N_KEYS = {
   empty:            PFX + 'empty',
   more:             PFX + 'more',
   list_title:       PFX + 'list_title',
+  events:           PFX + 'events',
 } satisfies Record<string, string>;
 
 export type NoticeI18n = { [K in keyof typeof NOTICE_I18N_KEYS]: Signal<string> };

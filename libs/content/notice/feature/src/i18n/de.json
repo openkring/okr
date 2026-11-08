@@ -7,5 +7,6 @@
   "attachment_error": "Der Anhang konnte nicht geöffnet werden.",
   "empty": "Noch keine Mitteilungen.",
   "more": "Alle Mitteilungen",
-  "list_title": "Mitteilungen"
+  "list_title": "Mitteilungen",
+  "events": "Anlässe"
 }

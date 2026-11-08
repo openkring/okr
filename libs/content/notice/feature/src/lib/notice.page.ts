@@ -3,16 +3,18 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import {
   IonBackButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle,
-  IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonNote, IonTitle, IonToolbar,
+  IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonNote, IonTitle, IonToolbar, ModalController,
 } from '@ionic/angular';
-import { catchError, of } from 'rxjs';
+import { catchError, combineLatest, map, Observable, of } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
 import { I18nService } from '@okr/shared-i18n';
-import { NoticeAttachment, NoticeModel } from '@okr/shared-models';
+import { CalEventModel, NoticeAttachment, NoticeModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Spinner } from '@okr/shared-ui';
-import { prettyFormatDateTime } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, prettyFormatDateTime } from '@okr/shared-util-core';
+import { AppStore } from '@okr/shared-feature';
+import { CalEventService } from '@okr/calendar-calevent-data-access';
 import { NoticeService } from '@okr/content-notice-data-access';
 import { NOTICE_I18N_KEYS, NoticeI18n } from '@okr/content-notice-util';
 
@@ -58,6 +60,22 @@ import { NOTICE_I18N_KEYS, NoticeI18n } from '@okr/content-notice-util';
             <div class="body" [innerHTML]="notice.body"></div>
           </ion-card-content>
         </ion-card>
+        @if (events().length > 0) {
+          <ion-card>
+            <ion-list lines="full">
+              <ion-list-header><ion-label>{{ i18n.events() }}</ion-label></ion-list-header>
+              @for (event of events(); track event.okey) {
+                <ion-item [button]="true" [detail]="true" (click)="openEvent(event)">
+                  <ion-icon slot="start" src="{{ 'calendar' | svgIcon }}" />
+                  <ion-label>
+                    <h3>{{ event.name }}</h3>
+                    <p>{{ eventWhen(event) }}</p>
+                  </ion-label>
+                </ion-item>
+              }
+            </ion-list>
+          </ion-card>
+        }
         @if (notice.attachments.length > 0) {
           <ion-card>
             <ion-list lines="full">
@@ -86,6 +104,9 @@ export class NoticePage {
 
   private readonly env = inject(ENV);
   private readonly noticeService = inject(NoticeService);
+  private readonly calEventService = inject(CalEventService);
+  private readonly appStore = inject(AppStore);
+  private readonly modalController = inject(ModalController);
   protected readonly i18n = inject(I18nService).translateAll(NOTICE_I18N_KEYS) as NoticeI18n;
 
   private readonly noticeResource = rxResource<NoticeModel | undefined, string>({
@@ -100,8 +121,37 @@ export class NoticePage {
     const notice = this.noticeResource.value();
     return notice && !notice.isArchived && (notice.tenants ?? []).includes(this.env.tenantId) ? notice : undefined;
   });
+  /** The events the Versand asked about; one the reader may not read, or one gone or archived, is left out. */
+  private readonly eventsResource = rxResource<CalEventModel[], string[]>({
+    params: () => this.notice()?.caleventKeys ?? [],
+    stream: ({ params }) => params.length === 0 ? of([]) : combineLatest(params.map((key): Observable<CalEventModel | undefined> =>
+      this.calEventService.read(key).pipe(catchError(() => of(undefined))),
+    )).pipe(map((events) => events
+      .filter((e): e is CalEventModel => !!e && !e.isArchived)
+      .sort((a, b) => (a.startDate + a.startTime).localeCompare(b.startDate + b.startTime)))),
+  });
+  protected readonly events = computed(() => this.eventsResource.hasValue() ? this.eventsResource.value() : []);
   protected readonly sentAt = computed(() => prettyFormatDateTime(this.notice()?.sentAt));
   protected readonly attachmentFailed = signal(false);
+
+  protected eventWhen(event: CalEventModel): string {
+    const date = convertDateFormatToString(event.startDate, DateFormat.StoreDate, DateFormat.ViewDate, false);
+    return event.startTime ? `${date}, ${event.startTime}` : date;
+  }
+
+  /** The event in its view modal, as the invitations section opens it. Loaded lazily: the calevent feature is heavy. */
+  protected async openEvent(calevent: CalEventModel): Promise<void> {
+    const { CalEventViewModal } = await import('@okr/calendar-calevent-feature');
+    const modal = await this.modalController.create({
+      component: CalEventViewModal,
+      componentProps: {
+        calevent,
+        periodicities: this.appStore.getCategory('periodicity'),
+        locale: this.appStore.appConfig().locale,
+      },
+    });
+    await modal.present();
+  }
 
   protected async open(notice: NoticeModel, attachment: NoticeAttachment): Promise<void> {
     this.attachmentFailed.set(false);

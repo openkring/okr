@@ -144,7 +144,7 @@ describe('mailingAnswerPage', () => {
     appName: 'Seeclub', firstName: 'Anna', postUrl: 'https://f.x/answer', mailingKey: 'm1', personKey: 'p1', signature: 'sig',
     events: [
       { caleventKey: 'e1', name: '<b>Hock</b>', when: '01.10.2026', location: 'Club', state: 'open' as const },
-      { caleventKey: 'e2', name: 'Regatta', when: '02.10.2026', location: '', state: 'accepted' as const, comment: '<i>komme später</i>' },
+      { caleventKey: 'e2', name: 'Regatta', when: '02.10.2026', location: '', state: 'accepted' as const, comments: [{ text: '<i>komme später</i>', when: '08.11.2026, 12:00' }] },
       { caleventKey: 'e3', name: 'Abgesagt', when: '', location: '', state: 'declined' as const, refusal: 'cancelled' as const },
     ],
   };
@@ -178,12 +178,12 @@ describe('mailingAnswerPage', () => {
   });
 });
 
-describe('mailingAnswerPage buttons and remark', () => {
+describe('mailingAnswerPage buttons and comments', () => {
   const page = {
     appName: 'Seeclub', brandColor: '#009D53', firstName: 'Anna', postUrl: 'https://f.x/answer', mailingKey: 'm1', personKey: 'p1', signature: 'sig',
     events: [
       { caleventKey: 'e1', name: 'Hock', when: '', location: '', state: 'open' as const },
-      { caleventKey: 'e2', name: 'Regatta', when: '', location: '', state: 'accepted' as const, comment: '<i>komme später</i>' },
+      { caleventKey: 'e2', name: 'Regatta', when: '', location: '', state: 'accepted' as const, comments: [{ text: '<i>komme später</i>', when: '08.11.2026, 12:00' }] },
       { caleventKey: 'e3', name: 'Fondue', when: '', location: '', state: 'declined' as const },
     ],
   };
@@ -198,10 +198,20 @@ describe('mailingAnswerPage buttons and remark', () => {
     expect(formOf(html, 'e2')).toMatch(/value="decline" class="okr-answer-btn"/);
     expect(formOf(html, 'e3')).toMatch(/value="decline" class="okr-answer-btn is-chosen"/);
   });
-  it('has a remark field per event, prefilled and escaped', () => {
+  it('has an empty comment box with its own send button per event', () => {
     const html = mailingAnswerPage(page);
-    expect(html.match(/name="c"/g)).toHaveLength(3);
-    expect(formOf(html, 'e2')).toContain('&lt;i&gt;komme später&lt;/i&gt;</textarea>');
+    expect(html.match(/<textarea name="c"/g)).toHaveLength(3);
+    expect(html.match(/name="a" value="comment"/g)).toHaveLength(3);
+    expect(html).toContain('placeholder="Kommentar schreiben …"');
+    expect(html).not.toContain('Bemerkung');
+    // the comment is not part of the answer form: answering sends no text along
+    expect(formOf(html, 'e2')).not.toContain('name="c"');
+  });
+  it('lists the earlier comments escaped', () => {
+    const html = mailingAnswerPage(page);
+    expect(html).toContain('Dein Kommentar, 08.11.2026, 12:00');
+    expect(html).toContain('&lt;i&gt;komme später&lt;/i&gt;');
+    expect(html).not.toContain('<i>komme später</i>');
   });
   it('tints the hover state from the brand colour and colours the chosen button with it', () => {
     const html = mailingAnswerPage(page);
