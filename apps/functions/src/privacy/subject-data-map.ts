@@ -1670,7 +1670,10 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     tenantScope: 'tenantsArray',
     onExport: 'full',
     onErasure: 'anonymize',
-    anonymizeFields: ['requesterUid', 'requesterName'],
+    // One row only: the map forbids two rows per collection (spec test), so «delete open, anonymize decided»
+    // (design §9) is not expressible. `note` is the member's free text; clearing it, the uid and the name
+    // leaves an inert open request in the queue instead of personal data.
+    anonymizeFields: ['requesterUid', 'requesterName', 'note'],
     retention: CLUB_RECORD,
   },
 ];

@@ -2162,7 +2162,15 @@ news_cases = [
     ("news-channel-requests: contentAdmin edits requesterUid -> DENY", False,
      lambda: req("PATCH", "news-channel-requests/ncrA", token=NC_C, data=body({"requesterUid": "uidC"}), mask=["requesterUid"])),
     ("news-channel-requests: requester UPDATE own -> DENY", False,
-     lambda: req("PATCH", "news-channel-requests/ncrE", token=NC_E, data=body({"status": "accepted"}), mask=["status"])),
+     lambda: req("PATCH", "news-channel-requests/ncrA", token=NC_A, data=body({"status": "accepted"}), mask=["status"])),
+    ("news-channel-requests: CREATE with two tenants -> DENY", False,
+     lambda: req("POST", "news-channel-requests?documentId=ncrI", token=NC_E, data=body(nc_req("uidE", tenants=("t1", "t2"))))),
+    ("news-channel-requests: CREATE carrying channelKey -> DENY", False,
+     lambda: req("POST", "news-channel-requests?documentId=ncrJ", token=NC_E, data=body({**nc_req("uidE"), "channelKey": "ncT1"}))),
+    ("news-channel-requests: CREATE with an unknown key -> DENY", False,
+     lambda: req("POST", "news-channel-requests?documentId=ncrK", token=NC_E, data=body({**nc_req("uidE"), "extra": "x"}))),
+    ("news-channel-requests: contentAdmin sets status to an unknown value -> DENY", False,
+     lambda: req("PATCH", "news-channel-requests/ncrA", token=NC_C, data=body({"status": "weird"}), mask=["status"])),
 ]
 for label, expect, run in news_cases:
     code = run()
