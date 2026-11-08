@@ -19,7 +19,15 @@ export interface Brand {
   brandColor?: string;
   /** Absolute raster URL; '' = banner without logo. */
   logoUrl?: string;
+  /**
+   * A whole page frame with PAGE_CONTENT_SLOT where the body goes (the tenant's standard email layout,
+   * rendered server-side). Set, it replaces the banner and page shell; a frame without the slot is ignored.
+   */
+  frame?: string;
 }
+
+/** Where a page body goes in `Brand.frame`. An HTML comment, so a frame rendered without a body shows nothing. */
+export const PAGE_CONTENT_SLOT = '<!--okr-page-content-->';
 
 export interface EventSummary extends Brand {
   eventName: string;
@@ -101,6 +109,9 @@ function banner(brand: Brand): string {
 }
 
 function layout(brand: Brand, body: string): string {
+  // slice, not replace: a body with '$&' must not be read as a replacement pattern
+  const slot = brand.frame?.indexOf(PAGE_CONTENT_SLOT) ?? -1;
+  if (brand.frame && slot >= 0) return brand.frame.slice(0, slot) + body + brand.frame.slice(slot + PAGE_CONTENT_SLOT.length);
   return `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(brand.appName)}</title></head>`
     + `<body style="margin:0;padding:24px 16px;background:#ffffff;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1f2328;line-height:1.5;">`
     + `<div style="max-width:560px;margin:0 auto;">`

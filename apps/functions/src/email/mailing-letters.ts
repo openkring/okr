@@ -3,9 +3,10 @@
 // The Post delivery of a Versand (spec 1.145 P3): one PDF with one letter per Post recipient, which the
 // sender downloads, prints and posts. No external service — Pingen is 2.144.
 //
-// Each letter is a built-in A4 layout: the club (the tenant's default org) as sender, the recipient's
-// address in the Swiss window position (right window, C5/6 envelope), place and date, subject and the
-// editor text. The PDF attachments follow each letter; other file types go only by E-Mail and In-App.
+// Each letter is the tenant's letter template (`templates/mailing-letter_<tenantId>`, a PDF template filled
+// with the recipient's address and the editor text) when it has a published one, else a built-in A4 layout:
+// the club (the tenant's default org) as sender, the recipient's address in the Swiss window position
+// (right window, C5/6 envelope), place and date, subject and the editor text. The PDF attachments follow each letter; other file types go only by E-Mail and In-App.
 // Every letter is rendered on its own, so a long text never shifts the attachments onto the next
 // recipient's pages.
 //
@@ -17,13 +18,17 @@ import { CallableRequest, HttpsError, onCall } from 'firebase-functions/v2/https
 import { logger } from 'firebase-functions/v2';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { PDFDocument } from 'pdf-lib';
-import type { NoticeAttachment } from '@okr/shared-models';
+import { TemplateCollection, TemplateVersionSubcollection, type NoticeAttachment, type TemplateAssetRef } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 import { isOrgRecipient, ORG_RECIPIENT_PREFIX, recipientParentKey } from '@okr/shared-util-core';
 
 import { privateBucket } from '../_storage/private-bucket';
 import { formatPostalAddress } from '../contract/contract-request.util';
+import { resolveAssetUrls } from '../pdf/asset-resolver';
 import { getBrowser } from '../pdf/browser-pool';
+import { registerHelpers } from '../pdf/handlebars-helpers';
+import { resolvePayee } from '../pdf/qr-slip';
+import { compileTemplate } from '../pdf/template-cache';
 import { isElevated } from './mailing-recipients';
 
 const REGION = 'europe-west6';
@@ -97,20 +102,176 @@ export function buildLetterHtml(c: LetterContent): string {
   </body></html>`;
 }
 
+/** A postal address formatted for the letter, plus its single fields for a letter template. */
+export interface PostalFields {
+  street: string;
+  zipCity: string;
+  streetName: string;
+  streetNumber: string;
+  zipCode: string;
+  city: string;
+  countryCode: string;
+}
+
 /** The favourite (else the first) postal address of a parent (`person.<okey>` / `org.<okey>`) in the tenant. */
-export async function postalOf(db: Firestore, parentKey: string, tenantId: string): Promise<{ street: string; zipCity: string } | undefined> {
+export async function postalOf(db: Firestore, parentKey: string, tenantId: string): Promise<PostalFields | undefined> {
   const snap = await db.collection('addresses').where('parentKey', '==', parentKey).where('addressChannel', '==', 'postal').get();
   const postal = snap.docs.map((d) => d.data())
     .filter((a) => !a['isArchived'] && ((a['tenants'] as string[]) ?? []).includes(tenantId));
-  return formatPostalAddress(postal.find((a) => a['isFavorite'] === true) ?? postal[0]);
+  const chosen = postal.find((a) => a['isFavorite'] === true) ?? postal[0];
+  const formatted = formatPostalAddress(chosen);
+  if (!formatted || !chosen) return undefined;
+  const field = (name: string): string => String(chosen[name] ?? '').trim();
+  return {
+    ...formatted,
+    streetName: field('streetName'), streetNumber: field('streetNumber'),
+    zipCode: field('zipCode'), city: field('city'), countryCode: field('countryCode') || 'CH',
+  };
 }
 
-async function renderOne(html: string): Promise<Uint8Array> {
+// ---- letter template (spec 1.145 follow-up) ----------------------------------------------------------
+//
+// A tenant may own a PDF template under the fixed id `mailing-letter_<tenantId>`: each letter is then that
+// template, filled with the recipient's address and the editor text (`{{{body}}}`), instead of the built-in
+// layout above. Without a usable, published template the built-in layout stays.
+
+export const LETTER_TEMPLATE_KEY = 'mailing-letter';
+
+export function letterTemplateKey(tenantId: string): string {
+  return `${LETTER_TEMPLATE_KEY}_${tenantId}`;
+}
+
+interface StoredLetterTemplate {
+  kind?: string;
+  tenants?: string[];
+  isArchived?: boolean;
+  currentVersion?: number;
+}
+
+interface StoredLetterVersion {
+  status?: string;
+  html?: string;
+  css?: string;
+  partials?: Record<string, string>;
+  assets?: TemplateAssetRef[];
+}
+
+export interface LetterTemplate {
+  key: string;
+  version: number;
+  html: string;
+  css: string;
+  partials: Record<string, string>;
+  assets: TemplateAssetRef[];
+}
+
+/** Only the tenant's own (tenants exactly [tenantId]), live PDF template with a published current version. */
+export function isUsableLetterTemplate(doc: StoredLetterTemplate | undefined, version: StoredLetterVersion | undefined, tenantId: string): boolean {
+  if (!doc || !version) return false;
+  const tenants = doc.tenants ?? [];
+  return (doc.kind ?? 'pdf') === 'pdf' && !doc.isArchived && tenants.length === 1 && tenants[0] === tenantId
+    && (doc.currentVersion ?? 0) >= 1 && version.status === 'published' && !!version.html;
+}
+
+export async function readLetterTemplate(db: Firestore, tenantId: string): Promise<LetterTemplate | undefined> {
+  const key = letterTemplateKey(tenantId);
+  const ref = db.collection(TemplateCollection).doc(key);
+  const snap = await ref.get();
+  if (!snap.exists) return undefined;
+  const doc = snap.data() as StoredLetterTemplate;
+  const versionNo = doc.currentVersion ?? 0;
+  if (versionNo < 1) return undefined;
+  const versionSnap = await ref.collection(TemplateVersionSubcollection).doc(String(versionNo)).get();
+  const version = versionSnap.exists ? (versionSnap.data() as StoredLetterVersion) : undefined;
+  if (!isUsableLetterTemplate(doc, version, tenantId) || !version) {
+    logger.warn(`mailing letters: ${key} is not usable (unpublished, archived or foreign); using the built-in layout`);
+    return undefined;
+  }
+  return { key, version: versionNo, html: version.html ?? '', css: version.css ?? '', partials: version.partials ?? {}, assets: version.assets ?? [] };
+}
+
+export interface LetterRecipient extends PostalFields {
+  name: string;
+  firstName: string;
+  lastName: string;
+}
+
+/**
+ * What a letter template sees (besides `payee.*`, added at render time): the recipient's address as whole
+ * lines and as single fields, the sender, the date, the subject and the sanitised editor text as `body`
+ * (render it with `{{{body}}}`).
+ */
+export function letterPayload(args: { recipient: LetterRecipient; sender: LetterParty; date: string; placeAndDate: string; subject: string; body: string }): Record<string, unknown> {
+  const { recipient: r } = args;
+  return {
+    name: r.name, firstName: r.firstName, lastName: r.lastName,
+    street: r.street, zipCity: r.zipCity,
+    streetName: r.streetName, streetNumber: r.streetNumber, zipCode: r.zipCode, city: r.city, countryCode: r.countryCode,
+    sender: args.sender,
+    date: args.date,
+    placeAndDate: args.placeAndDate,
+    subject: args.subject,
+    body: args.body,
+  };
+}
+
+/** 'DD.MM.YYYY' of a day. */
+export function letterDate(now: Date): string {
+  const pad = (n: number): string => String(n).padStart(2, '0');
+  return `${pad(now.getDate())}.${pad(now.getMonth() + 1)}.${now.getFullYear()}`;
+}
+
+/**
+ * The https origins a template letter may load: those written in the template itself (its logo) and those
+ * of its signed asset URLs. Everything else, e.g. a link in the user's text, stays blocked.
+ */
+export function allowedOrigins(texts: string[]): Set<string> {
+  const origins = new Set<string>();
+  for (const text of texts) {
+    for (const match of text.matchAll(/https:\/\/[^\s"'()<>]+/g)) {
+      try { origins.add(new URL(match[0]).origin); } catch { /* not a URL */ }
+    }
+  }
+  return origins;
+}
+
+/** True for a request the letter page may make: data: URIs, and https URLs of an allowed origin. */
+export function isAllowedLetterRequest(url: string, origins: Set<string>): boolean {
+  if (url.startsWith('data:')) return true;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' && origins.has(parsed.origin);
+  } catch {
+    return false;
+  }
+}
+
+let helpersRegistered = false;
+
+/** Compiles the template for one recipient. Helpers and partials are the ones `generateDocument` offers. */
+async function compileLetter(t: LetterTemplate, payee: unknown): Promise<{ render: (payload: Record<string, unknown>) => string; origins: Set<string> }> {
+  const { default: Handlebars } = await import('handlebars');
+  if (!helpersRegistered) {
+    await registerHelpers();
+    helpersRegistered = true;
+  }
+  const assetUrls = await resolveAssetUrls(t.assets);
+  Handlebars.registerHelper('assetUrl', (key: string) => assetUrls[key] ?? '');
+  for (const [name, content] of Object.entries(t.partials)) Handlebars.registerPartial(name, content);
+  const compiled = await compileTemplate(`${t.key}@${t.version}`, t.html, t.css);
+  return {
+    render: (payload) => compiled({ ...payload, payee }),
+    origins: allowedOrigins([t.html, t.css, ...Object.values(t.partials), ...Object.values(assetUrls)]),
+  };
+}
+
+async function renderOne(html: string, origins: Set<string> = new Set()): Promise<Uint8Array> {
   const page = await (await getBrowser()).newPage();
   try {
-    // The letter is built here from data, but the body is user HTML: no network at all, only data: URIs.
+    // The body is user HTML: only data: URIs, and for a template letter the template's own origins (its logo).
     await page.setRequestInterception(true);
-    page.on('request', (req) => { if (req.url().startsWith('data:')) void req.continue(); else void req.abort(); });
+    page.on('request', (req) => { if (isAllowedLetterRequest(req.url(), origins)) void req.continue(); else void req.abort(); });
+    // 'load' waits for the images, the template's logo included
     await page.setContent(html, { waitUntil: 'load' });
     return await page.pdf({ format: 'A4', printBackground: true, margin: { top: '0', bottom: '0', left: '0', right: '0' } });
   } finally {
@@ -138,7 +299,10 @@ export async function buildMailingLetters(args: {
   const orgSnap = await db.collection('orgs').doc(tenantId).get();
   const senderAddress = await postalOf(db, `org.${tenantId}`, tenantId);
   const sender: LetterParty = { name: String(orgSnap.data()?.['name'] ?? ''), street: senderAddress?.street ?? '', zipCity: senderAddress?.zipCity ?? '' };
-  const date = placeAndDate(sender.zipCity, new Date());
+  const now = new Date();
+  const date = placeAndDate(sender.zipCity, now);
+  const template = await readLetterTemplate(db, tenantId);
+  const letterTemplate = template ? await compileLetter(template, await resolvePayee(db, tenantId)) : undefined;
 
   const appendix: PDFDocument[] = [];
   for (const a of args.attachments.filter(isPdfAttachment)) {
@@ -158,12 +322,17 @@ export async function buildMailingLetters(args: {
     const [subjectSnap, address] = await Promise.all([subjectRef.get(), postalOf(db, recipientParentKey(personKey), tenantId)]);
     if (!address) { missing++; continue; }
     const p = subjectSnap.data() ?? {};
-    const name = isOrg
-      ? String(p['name'] ?? '').trim()
-      : `${String(p['firstName'] ?? '')} ${String(p['lastName'] ?? '')}`.trim();
-    const letter = await PDFDocument.load(await renderOne(buildLetterHtml({
-      sender, recipient: { name, ...address }, placeAndDate: date, subject: args.subject, body: args.body,
-    })));
+    const firstName = isOrg ? '' : String(p['firstName'] ?? '').trim();
+    const lastName = isOrg ? '' : String(p['lastName'] ?? '').trim();
+    const name = isOrg ? String(p['name'] ?? '').trim() : `${firstName} ${lastName}`.trim();
+    const bytes = letterTemplate
+      ? await renderOne(letterTemplate.render(letterPayload({
+        recipient: { name, firstName, lastName, ...address }, sender, date: letterDate(now), placeAndDate: date, subject: args.subject, body: args.body,
+      })), letterTemplate.origins)
+      : await renderOne(buildLetterHtml({
+        sender, recipient: { name, street: address.street, zipCity: address.zipCity }, placeAndDate: date, subject: args.subject, body: args.body,
+      }));
+    const letter = await PDFDocument.load(bytes);
     for (const doc of [letter, ...appendix]) {
       const pages = await out.copyPages(doc, doc.getPageIndices());
       pages.forEach((page) => out.addPage(page));

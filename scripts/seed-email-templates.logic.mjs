@@ -13,12 +13,14 @@ export const USAGE = 'Usage: node scripts/seed-email-templates.mjs [--tenant <id
 /** Document ids of the shared templates (design §7.2). A tenant copy is `<id>_<tenantId>`. */
 export const LAYOUT_KEY = 'email-layout';
 export const PLAIN_LAYOUT_KEY = 'email-layout-plain';
+/** The «Logo-only» layout: a small logo top right, no band, the standard footer. Tenant docs only. */
+export const LOGO_LAYOUT_KEY = 'email-layout-logo';
 export const RESET_TEXT_KEY = 'email-text-password-reset';
 export const SYSTEM_TENANT = 'system';
 export const SEED_USER = 'seed';
 
 /** Longest first, so `email-layout-plain_x` is not read as the base `email-layout`. */
-const BASE_KEYS = [PLAIN_LAYOUT_KEY, RESET_TEXT_KEY, LAYOUT_KEY];
+const BASE_KEYS = [PLAIN_LAYOUT_KEY, RESET_TEXT_KEY, LOGO_LAYOUT_KEY, LAYOUT_KEY];
 
 /** Seed-time placeholder -> field of a tenant row. Handlebars (`{{...}}`) is left to the renderer. */
 const PLACEHOLDERS = {
@@ -28,11 +30,14 @@ const PLACEHOLDERS = {
   HEADER_LINK: 'headerLink',
   FOOTER_NAME: 'footerName',
   BAND_COLOR: 'bandColor',
+  MARK_URL: 'markUrl',
+  MARK_WIDTH: 'markWidth',
 };
 
 /** Values that land inside a `style` attribute: anything but the expected shape could close the attribute. */
 const PATTERNS = {
   BAND_COLOR: /^#[0-9a-fA-F]{6}$/,
+  MARK_WIDTH: /^\d{2,3}$/,
 };
 
 /**
@@ -144,6 +149,7 @@ function seedDoc({ okey, tenants, name, description, kind, sampleData, html, tex
 }
 
 const LAYOUT_DESCRIPTION = 'Kopf- und Fusszeile für E-Mails. Der Inhalt der Mail steht an der Stelle {{{content}}}.';
+const LOGO_DESCRIPTION = 'E-Mail mit kleinem Logo oben rechts, ohne Farbband, mit der Fusszeile des Standards. Der Inhalt der Mail steht an der Stelle {{{content}}}.';
 const PLAIN_DESCRIPTION = 'Schlichte E-Mail ohne Bild und Farben. Der Inhalt der Mail steht an der Stelle {{{content}}}.';
 const RESET_DESCRIPTION = 'Text der Mail, mit der ein Passwort zurückgesetzt wird.';
 
@@ -191,12 +197,33 @@ function standardLayout(row, now) {
   });
 }
 
+/** The Logo-only logo of a tenant: `logo-master.png` beside the logo master, unless the row names one (`markUrl`). */
+export function markUrlFor(row) {
+  return row.markUrl || `https://bkaiser.imgix.net/tenant/${row.tenant}/logo/logo-master.png?w=128`;
+}
+
+function logoLayout(row, now) {
+  if (!row?.tenant) throw new Error('logoLayout: the row has no tenant');
+  const filled = { ...row, markUrl: markUrlFor(row), markWidth: row.markWidth ?? 64 };
+  return seedDoc({
+    okey: `${LOGO_LAYOUT_KEY}_${row.tenant}`,
+    tenants: [row.tenant],
+    name: 'Logo-only',
+    description: LOGO_DESCRIPTION,
+    kind: 'emailLayout',
+    sampleData: SAMPLE_LAYOUT,
+    html: fillLayout(source('layout-logo.html'), filled),
+    text: fillLayout(source('layout-logo.txt'), filled),
+    now,
+  });
+}
+
 /**
  * The docs to seed: without a row the shared (`system`) templates, with a tenant row that tenant's standard
- * layout (`email-layout_<tenant>`). `now` is a StoreDate and defaults to today.
+ * layout (`email-layout_<tenant>`) and its Logo-only layout (`email-layout-logo_<tenant>`). `now` is a StoreDate and defaults to today.
  */
 export function templateDocs(row, { now = todayStoreDate() } = {}) {
-  return row ? [standardLayout(row, now)] : [plainLayout(undefined, now), resetText(undefined, now)];
+  return row ? [standardLayout(row, now), logoLayout(row, now)] : [plainLayout(undefined, now), resetText(undefined, now)];
 }
 
 /**
@@ -213,6 +240,12 @@ export function docForOkey(okey, rows, { now = todayStoreDate(), version, change
     const row = rows?.[tenant];
     if (!row) throw new Error(`docForOkey: no row for tenant ${tenant} in the seed table`);
     return withVersion(standardLayout({ ...row, tenant }, now), version, changelog, now);
+  }
+  if (base === LOGO_LAYOUT_KEY) {
+    if (!tenant) throw new Error(`docForOkey: ${okey} has no shared doc; name a tenant layout (${LOGO_LAYOUT_KEY}_<tenant>)`);
+    const row = rows?.[tenant];
+    if (!row) throw new Error(`docForOkey: no row for tenant ${tenant} in the seed table`);
+    return withVersion(logoLayout({ ...row, tenant }, now), version, changelog, now);
   }
   const doc = base === PLAIN_LAYOUT_KEY ? plainLayout(tenant, now) : resetText(tenant, now);
   return withVersion(doc, version, changelog, now);

@@ -1,6 +1,7 @@
 /**
  * Seeds the email templates (spec 1.141, design §9) into `templates/{okey}` + `templates/{okey}/versions/1`
- * as PUBLISHED version 1: the standard layout of one tenant (`email-layout_<tenantId>`), and the shared
+ * as PUBLISHED version 1: the standard and the Logo-only layout of one tenant (`email-layout_<tenantId>`,
+ * `email-layout-logo_<tenantId>`), and the shared
  * (`tenants: ['system']`) plain layout and password-reset text.
  *
  * Default mode SKIPS a doc that exists, so a re-run never overwrites a tenant's edit. `--update <okey>` is the

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { answerPage, answerResultPage, brandColorOf, chatDigestEmail, commentEmail, DEFAULT_BRAND_COLOR, escapeHtml, eventWhen, invitationAnswerEmail, invitationEmail, mailingAnswerPage, textColorOn } from './mail';
+import { answerPage, answerResultPage, brandColorOf, chatDigestEmail, commentEmail, DEFAULT_BRAND_COLOR, escapeHtml, eventWhen, invitationAnswerEmail, invitationEmail, mailingAnswerPage, PAGE_CONTENT_SLOT, textColorOn } from './mail';
 
 const EVIL = '<script>alert("x")</script> & co';
 const base = { appName: 'Seeclub', brandColor: '#009D53', logoUrl: 'https://img.x/logo.png?w=96&fm=png', eventName: EVIL, when: '01.10.2026, 11:00', location: EVIL };
@@ -175,5 +175,23 @@ describe('mailingAnswerPage', () => {
     expect(html).toContain('abgemeldet');
     expect(html).toContain('Bitte &lt;i&gt;antworten&lt;/i&gt;');
     expect(html.indexOf('Bitte')).toBeLessThan(html.indexOf('Hock'));
+  });
+});
+
+describe('page frame', () => {
+  const base = { appName: 'Seeclub', brandColor: '#00763e', logoUrl: 'https://img.example/logo.png' };
+
+  it('puts the page into the tenant frame instead of the built-in banner', () => {
+    const frame = `<html><body><div class="band"></div>${PAGE_CONTENT_SLOT}<div class="footer">© 2026</div></body></html>`;
+    const html = answerResultPage({ ...base, frame, title: 'Danke', message: 'Gespeichert $& fertig' });
+    expect(html.startsWith('<html><body><div class="band"></div><h1')).toBe(true);
+    expect(html).toContain('Gespeichert $&amp; fertig');
+    expect(html).toContain('<div class="footer">© 2026</div>');
+    expect(html).not.toContain('img.example/logo.png');
+  });
+
+  it('keeps the built-in banner for a frame without the slot', () => {
+    const html = answerResultPage({ ...base, frame: '<html>no slot</html>', title: 'Danke', message: 'x' });
+    expect(html).toContain('img.example/logo.png');
   });
 });

@@ -19,12 +19,13 @@ import { isAnswerChoice, invitationLinkSecret, mailingAnswerFunctionUrl, verifyM
 import { answerCommentDoc, answerResultText } from '../calendar/answer';
 import { brandOf, NO_TENANT_LINKS, tenantLinks } from '../calendar/deliver';
 import { AnswerableEvent, eventInTenant, InvitationDoc } from '../calendar/invitation';
-import { answerResultPage, Brand, eventWhen, mailingAnswerPage, MailingAnswerEvent } from '../calendar/mail';
+import { answerResultPage, Brand, eventWhen, mailingAnswerPage, MailingAnswerEvent, PAGE_CONTENT_SLOT } from '../calendar/mail';
 import { todayStoreDate } from '../calendar/recipients';
 import { AnswerRefusal, REFUSAL_TEXT } from '../calendar/refusal';
 import { toStoreDateTime } from '../srv/zurich-time';
 import { attendeeStateOf, eventRefusal, invitationRefusal, mayAnswer } from './mailing-answer.logic';
 import { MailingDoc } from './mailing';
+import { renderEmail } from './render-email';
 
 const CF_NAME = 'mailingAnswer';
 
@@ -40,6 +41,20 @@ type EventData = AnswerableEvent & { attendees?: Attendee[]; maxAttendees?: numb
 /** The event, only when it belongs to the Versand's tenant. */
 function eventOf(data: unknown, tenants: string[]): EventData | undefined {
   return eventInTenant(data, tenants) as EventData | undefined;
+}
+
+/**
+ * The page in the tenant's standard email layout, so it opens with the same header (logo band) as the mail
+ * that led here. Without a usable standard layout the page keeps its built-in banner.
+ */
+async function pageFrame(tenantId: string): Promise<string | undefined> {
+  try {
+    const { html } = await renderEmail({ tenantId, layout: 'standard', body: PAGE_CONTENT_SLOT, noPlainFallback: true });
+    return html.includes(PAGE_CONTENT_SLOT) ? html : undefined;
+  } catch (err) {
+    logger.warn(`${CF_NAME}: no standard layout for the page, using the built-in banner`, err);
+    return undefined;
+  }
 }
 
 export const mailingAnswer = onRequest(
@@ -63,7 +78,7 @@ export const mailingAnswer = onRequest(
       const doc = mailingSnap?.exists ? (mailingSnap.data() as MailingDoc) : undefined;
       const tenantId = doc?.tenants?.[0] ?? '';
       const links = tenantId ? await tenantLinks(tenantId) : NO_TENANT_LINKS;
-      brand = brandOf(links);
+      brand = { ...brandOf(links), ...(tenantId ? { frame: await pageFrame(tenantId) } : {}) };
 
       const refuse = (reason: AnswerRefusal, status = 200): void => {
         res.status(status).send(answerResultPage({ ...brand, ...REFUSAL_TEXT[reason] }));

@@ -8,7 +8,7 @@ import { filter, firstValueFrom, tap } from 'rxjs';
 import {
   IonButton, IonContent,
   IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonIcon, IonChip, IonLabel, IonNote,
-  IonSegment, IonSegmentButton, IonList, IonItem,
+  IonSegment, IonSegmentButton, IonItem, IonAccordionGroup, IonAccordion,
   ModalController, ToastController,
 } from '@ionic/angular';
 
@@ -31,6 +31,7 @@ import {
 } from '@okr/content-pdf-template-util';
 import { DocEmailService, InlineAttachment, MailingLetters, TemplateService } from '@okr/content-pdf-template-data-access';
 
+import { VersandAddressList } from './versand-address-list';
 import { VersandDeliveryTable } from './versand-delivery-table';
 import { VersandEventsSelect } from './versand-events-select';
 import { VersandInfoModal } from './versand-info.modal';
@@ -69,6 +70,19 @@ export interface VersandRecipient {
  */
 type ComposerSegment = 'editor' | 'preview' | 'delivery' | 'list';
 
+type AddressFieldKey = 'to' | 'cc' | 'bcc';
+
+/** One accordion of the Verteiler: a recipient field shown one address per line. */
+interface AddressField {
+  key: AddressFieldKey;
+  /** The mail header name, deliberately untranslated. */
+  label: string;
+  addresses: string[];
+  editable: boolean;
+  placeholder: string;
+  errors: string[];
+}
+
 @Component({
   selector: 'okr-email-composer-modal',
   standalone: true,
@@ -80,7 +94,8 @@ type ComposerSegment = 'editor' | 'preview' | 'delivery' | 'list';
     VersandDeliveryTable, VersandEventsSelect,
     IonContent, IonButton,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonIcon, IonChip, IonLabel, IonNote,
-    IonSegment, IonSegmentButton, IonList, IonItem,
+    IonSegment, IonSegmentButton, IonItem, IonAccordionGroup, IonAccordion,
+    VersandAddressList,
   ],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px; } }
@@ -268,55 +283,41 @@ type ComposerSegment = 'editor' | 'preview' | 'delivery' | 'list';
                 @if (hasEvents()) {
                   <ion-note class="note">{{ i18n.list_personal() }}</ion-note>
                 }
-                <ion-grid>
-                  <ion-row>
-                    <ion-col size="12" size-md="6">
+                @if (recipientCount() === 0) {
+                  <ion-note class="note">{{ i18n.list_empty() }}</ion-note>
+                }
+                <!-- One accordion per address field, one address per line. The labels are the mail header names (not translated). -->
+                <ion-accordion-group [multiple]="true" [value]="openAccordions()">
+                  @for (field of addressFields(); track field.key) {
+                    <ion-accordion [value]="field.key">
+                      <ion-item slot="header">
+                        <ion-label>{{ field.label }} ({{ field.addresses.length }})</ion-label>
+                      </ion-item>
+                      <div slot="content">
+                        @if (field.key === 'bcc' && isVersand()) {
+                          <ion-note class="note">{{ i18n.bcc_from_delivery() }}</ion-note>
+                        }
+                        <okr-versand-address-list [addresses]="field.addresses" [editable]="field.editable"
+                          [label]="field.label" [placeholder]="field.placeholder"
+                          (added)="addAddresses(field.key, $event)" (removed)="removeAddress(field.key, $event)" />
+                        <okr-error-note [errors]="field.errors" />
+                      </div>
+                    </ion-accordion>
+                  }
+                  <ion-accordion value="from">
+                    <ion-item slot="header">
+                      <ion-label>From: {{ from() }}</ion-label>
+                    </ion-item>
+                    <div slot="content">
                       <okr-email [i18n]="fromI18n()" [value]="from()"
                         (valueChange)="onFieldChange('from', $event)" [readOnly]="fromLocked()" />
                       <okr-error-note [errors]="fromErrors()" />
                       @if (fromWarning(); as warning) {
                         <ion-note color="warning" class="note">{{ warning }}</ion-note>
                       }
-                    </ion-col>
-                    <ion-col size="12" size-md="6">
-                      <okr-text-input [i18n]="toI18n()" [value]="toField()"
-                        (valueChange)="onFieldChange('to', $event)" [maxLength]="addressLength" [readOnly]="false" />
-                      <okr-error-note [errors]="toErrors()" />
-                    </ion-col>
-                  </ion-row>
-                  <ion-row>
-                    @if (!hasEvents()) {
-                      <ion-col size="12" size-md="6">
-                        <okr-text-input [i18n]="ccI18n()" [value]="ccField()"
-                          (valueChange)="onFieldChange('cc', $event)" [maxLength]="addressLength" [readOnly]="false" />
-                        <okr-error-note [errors]="ccErrors()" />
-                      </ion-col>
-                    }
-                    <ion-col size="12" size-md="6">
-                      @if (isVersand()) {
-                        <ion-note class="note">{{ i18n.bcc_label() }}: {{ i18n.bcc_from_delivery() }}</ion-note>
-                      } @else {
-                        <okr-text-input [i18n]="bccI18n()" [value]="bccField()"
-                          (valueChange)="onFieldChange('bcc', $event)" [maxLength]="addressLength" [readOnly]="false" />
-                      }
-                      <okr-error-note [errors]="bccErrors()" />
-                    </ion-col>
-                  </ion-row>
-                </ion-grid>
-                @if (recipientCount() === 0) {
-                  <ion-note class="note">{{ i18n.list_empty() }}</ion-note>
-                } @else {
-                  <ion-list lines="full">
-                    @for (entry of recipients(); track entry.kind + entry.email) {
-                      <ion-item>
-                        <ion-label>
-                          <p>{{ entry.kind }}</p>
-                          {{ entry.email }}
-                        </ion-label>
-                      </ion-item>
-                    }
-                  </ion-list>
-                }
+                    </div>
+                  </ion-accordion>
+                </ion-accordion-group>
               </ion-card-content>
             </ion-card>
           }
@@ -413,7 +414,6 @@ export class EmailComposerModal {
 
   /** template caps: the suite sets none on these fields, so they only bound typing */
   protected readonly subjectLength = 100;
-  protected readonly addressLength = 200;
 
   // Versand (spec 1.145 §4.3): rows and ticks of the Zustellung table, loaded once from the server
   protected readonly versandRows = signal<VersandRow[]>([]);
@@ -461,10 +461,7 @@ export class EmailComposerModal {
     && (!this.isVersand() || (this.versandLoaded() && versandDeliveries(this.versandRows(), this.deliveries()).length > 0)));
 
   // field accessors
-  protected readonly toField  = computed(() => this.formData().to);
   protected readonly from     = computed(() => this.formData().from);
-  protected readonly ccField  = computed(() => this.formData().cc);
-  protected readonly bccField = computed(() => this.formData().bcc);
   protected readonly subject  = computed(() => this.formData().subject);
   protected readonly body     = computed(() => this.formData().body);
   protected readonly layout   = computed(() => this.formData().layout);
@@ -477,16 +474,24 @@ export class EmailComposerModal {
     this.i18n.layout_standard(), this.i18n.layout_plain(), ...this.layoutOptions().map((o) => o.name),
   ]);
 
-  /** Every recipient of this mail, flattened for the Verteiler overview. */
-  protected readonly recipients = computed(() => {
+  /**
+   * The Verteiler accordions: To, CC (hidden while events are chosen: every person gets their own mail) and BCC,
+   * each address on its own line. A Versand derives the BCC from the Zustellung, so it is read-only there.
+   */
+  protected readonly addressFields = computed<AddressField[]>(() => {
     const fd = this.formData();
-    return [
-      ...parseEmails(fd.to).map((email) => ({ email, kind: 'To' })),
-      ...(this.hasEvents() ? [] : parseEmails(fd.cc)).map((email) => ({ email, kind: 'Cc' })),
-      ...parseEmails(fd.bcc).map((email) => ({ email, kind: 'Bcc' })),
+    const fields: AddressField[] = [
+      { key: 'to', label: 'To:', addresses: parseEmails(fd.to), editable: true, placeholder: this.i18n.to_placeholder(), errors: this.toErrors() },
     ];
+    if (!this.hasEvents()) {
+      fields.push({ key: 'cc', label: 'CC:', addresses: parseEmails(fd.cc), editable: true, placeholder: this.i18n.to_placeholder(), errors: this.ccErrors() });
+    }
+    fields.push({ key: 'bcc', label: 'BCC:', addresses: parseEmails(fd.bcc), editable: !this.isVersand(), placeholder: this.i18n.to_placeholder(), errors: this.bccErrors() });
+    return fields;
   });
-  protected readonly recipientCount = computed(() => this.recipients().length);
+  protected readonly recipientCount = computed(() => this.addressFields().reduce((n, f) => n + f.addresses.length, 0));
+  /** To and From open by default; a long BCC list stays folded. */
+  protected readonly openAccordions = signal<string[]>(['to', 'from']);
 
   /**
    * Domain the mail provider has verified as a sender. The app is served from `app.<domain>` while
@@ -521,18 +526,9 @@ export class EmailComposerModal {
   private previewRequest = 0;
 
   // adapters at the shared/ui boundary (these components define their own minimal i18n interfaces)
-  protected readonly toI18n = computed(() => ({
-    name: 'to', label: this.hasEvents() ? this.i18n.to_reply_label() : this.i18n.to_label(), placeholder: this.i18n.to_placeholder(), helper: '',
-  } as TextInputI18n));
   protected readonly fromI18n = computed(() => ({
     name: 'from', label: this.i18n.from_label(), placeholder: this.i18n.from_placeholder(),
   } as EmailInputI18n));
-  protected readonly ccI18n = computed(() => ({
-    name: 'cc', label: this.i18n.cc_label(), placeholder: this.i18n.cc_placeholder(), helper: '',
-  } as TextInputI18n));
-  protected readonly bccI18n = computed(() => ({
-    name: 'bcc', label: this.i18n.bcc_label(), placeholder: this.i18n.bcc_placeholder(), helper: '',
-  } as TextInputI18n));
   protected readonly layoutI18n = computed(() => ({
     name: 'layout', label: this.i18n.layout_label(),
   } as StringSelectI18n));
@@ -743,6 +739,19 @@ export class EmailComposerModal {
     if (!layout || layout === this.layout()) return;
     this.isDirty.set(true);
     this.formData.update((vm) => ({ ...vm, layout }));
+  }
+
+  /** Adds typed addresses to an address field, skipping the ones it already holds. */
+  protected addAddresses(field: AddressFieldKey, typed: string[]): void {
+    const current = parseEmails(this.formData()[field]);
+    const known = new Set(current.map((a) => a.toLowerCase()));
+    const added = typed.filter((a) => !known.has(a.toLowerCase()));
+    if (added.length === 0) return;
+    this.onFieldChange(field, [...current, ...added].join(', '));
+  }
+
+  protected removeAddress(field: AddressFieldKey, address: string): void {
+    this.onFieldChange(field, parseEmails(this.formData()[field]).filter((a) => a !== address).join(', '));
   }
 
   protected onEventsChange(keys: string[]): void {

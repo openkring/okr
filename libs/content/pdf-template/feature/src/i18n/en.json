@@ -166,7 +166,9 @@
       "p3": "Email: the text from the editor is set into the chosen template and the attachments are attached to the email. To, Cc and Bcc only apply here. Recipients are in Bcc, so nobody sees the others.",
       "p4": "In-app: the mailing appears as a notice on the dashboard, with its text and attachments. The recipient gets a push notification that opens it.",
       "p5": "Post: the text is set as a letter with the recipient’s address, followed by the attachments. You download the letters as a PDF, print them and post them yourself.",
-      "p6": "Letters stay ready for download for 7 days and are then deleted, because they contain addresses. As a group admin you cannot send by post."
+      "p6": "Letters stay ready for download for 7 days and are then deleted, because they contain addresses. As a group admin you cannot send by post.",
+      "p7": "Events: If you choose events in the editor, everyone who gets the mailing by email receives their own mail with a personal link. With it they accept or decline each event, even without an account in the app. The answer appears right away in the event's attendee list, and the link works until the day of the last event. The address under «To:» then becomes the reply address, and Cc is not possible. Notices and letters contain no link.",
+      "p8": "Attachments: With «Add» you attach files of up to 7 MB each. By email they come along as attachments, in-app they are part of the notice. Only PDF files go into the letters, where they follow each letter. Other files go by email and in-app only."
     },
     "letters": {
       "pending": "The letters are being created …",

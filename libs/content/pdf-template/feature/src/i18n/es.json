@@ -166,7 +166,9 @@
       "p3": "Correo: el texto del editor se coloca en la plantilla elegida y los adjuntos se añaden al correo. Para, Cc y Cco solo valen aquí. Los destinatarios van en Cco, así nadie ve a los demás.",
       "p4": "En la app: el envío aparece como comunicado en el panel, con texto y adjuntos. El destinatario recibe una notificación push que lo abre.",
       "p5": "Correo postal: el texto se compone como carta con la dirección del destinatario y los adjuntos van detrás. Descargas las cartas en PDF, las imprimes y las envías tú.",
-      "p6": "Las cartas quedan disponibles 7 días y luego se borran, porque contienen direcciones. Como admin de grupo no puedes enviar por correo postal."
+      "p6": "Las cartas quedan disponibles 7 días y luego se borran, porque contienen direcciones. Como admin de grupo no puedes enviar por correo postal.",
+      "p7": "Eventos: si eliges eventos en el editor, cada persona que recibe el envío por correo recibe su propio correo con un enlace personal. Con él acepta o rechaza cada evento, también sin cuenta en la app. La respuesta aparece enseguida en la lista de participantes, y el enlace vale hasta el día del último evento. La dirección en «To:» pasa a ser la dirección de respuesta, y Cc no es posible. Los avisos y las cartas no llevan enlace.",
+      "p8": "Adjuntos: con «Añadir» adjuntas archivos de hasta 7 MB cada uno. Por correo llegan como adjuntos, en la app forman parte del aviso. En las cartas solo entran archivos PDF, que siguen a cada carta. Los demás archivos se envían solo por correo y en la app."
     },
     "letters": {
       "pending": "Se están creando las cartas …",

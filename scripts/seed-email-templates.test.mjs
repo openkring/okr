@@ -77,7 +77,7 @@ test('templateDocs writes system docs for the shared templates', () => {
 
 test('templateDocs writes tenants [id] and okey email-layout_<id> for a layout', () => {
   const docs = templateDocs(ROW, { now: NOW });
-  assert.equal(docs.length, 1);
+  assert.deepEqual(docs.map((x) => x.okey), ['email-layout_acme', 'email-layout-logo_acme']);
   const [d] = docs;
   assert.equal(d.okey, 'email-layout_acme');
   assert.deepEqual(d.template.tenants, ['acme']);
@@ -88,6 +88,28 @@ test('templateDocs writes tenants [id] and okey email-layout_<id> for a layout',
   assert.ok(d.version.text.includes('{{{content}}}'));
   assert.ok(!d.version.html.includes('%%') && !d.version.text.includes('%%'));
   assert.equal(d.version.subject, '');
+});
+
+test('the Logo-only layout has the logo mark top right, no band, and the standard footer', () => {
+  const [standard, logo] = templateDocs(ROW, { now: NOW });
+  assert.equal(logo.template.name, 'Logo-only');
+  assert.deepEqual(logo.template.tenants, ['acme']);
+  assert.ok(logo.version.html.includes('src="https://bkaiser.imgix.net/tenant/acme/logo/logo-master.png?w=128"'));
+  assert.ok(logo.version.html.includes('align="right"'));
+  assert.ok(!logo.version.html.includes('#014da2'));
+  assert.ok(logo.version.html.includes('© {{year}} Acme AG'));
+  assert.equal(logo.version.text, standard.version.text);
+  assert.ok(templateDocs({ ...ROW, markUrl: 'https://img.example.test/mark.png' }, { now: NOW })[1].version.html.includes('src="https://img.example.test/mark.png"'));
+  assert.ok(logo.version.html.includes('width="64"'));
+  const wide = templateDocs({ ...ROW, markUrl: 'https://img.example.test/pennant.png', markWidth: 120 }, { now: NOW })[1].version.html;
+  assert.ok(wide.includes('width="120"') && wide.includes('max-width:120px'));
+  assert.throws(() => templateDocs({ ...ROW, markWidth: '120px;" onload="x' }, { now: NOW }), /MARK_WIDTH/);
+});
+
+test('the plain layout carries only the content, no app name', () => {
+  const [plain] = templateDocs(undefined, { now: NOW });
+  assert.ok(!plain.version.html.includes('{{app_name}}</p>'));
+  assert.equal(plain.version.text.trim(), '{{{content}}}');
 });
 
 test('the search index follows getTemplateIndex: n:<name> c:<category> l:<language>', () => {
@@ -109,6 +131,8 @@ test('docForOkey derives the layout row from the okey and finds shared and tenan
   assert.deepEqual(docForOkey('email-text-password-reset_acme', rows, { now: NOW }).template.tenants, ['acme']);
   assert.throws(() => docForOkey('email-layout_nobody', rows, { now: NOW }), /nobody/);
   assert.throws(() => docForOkey('email-layout', rows, { now: NOW }), /email-layout/);
+  assert.equal(docForOkey('email-layout-logo_acme', rows, { now: NOW }).template.name, 'Logo-only');
+  assert.throws(() => docForOkey('email-layout-logo', rows, { now: NOW }), /email-layout-logo/);
   assert.throws(() => docForOkey('something-else', rows, { now: NOW }), /something-else/);
 });
 

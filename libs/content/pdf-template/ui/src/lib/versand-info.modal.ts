@@ -7,7 +7,8 @@ import { EmailComposerI18n } from '@okr/content-pdf-template-util';
 
 /**
  * Read-only explanation of how a Versand works (spec 1.144 §4.5): the profile decides the delivery
- * type, to/cc/bcc only matter for email, and what each delivery type does with text and attachments.
+ * type, to/cc/bcc only matter for email, what each delivery type does with text and attachments, and
+ * how chosen events (personal answer links) and attachments behave.
  */
 @Component({
   selector: 'okr-versand-info-modal',
@@ -27,6 +28,8 @@ import { EmailComposerI18n } from '@okr/content-pdf-template-util';
           <p>{{ i18n().info_p3() }}</p>
           <p>{{ i18n().info_p4() }}</p>
           <p>{{ i18n().info_p5() }}</p>
+          <p>{{ i18n().info_p7() }}</p>
+          <p>{{ i18n().info_p8() }}</p>
           <p><strong>{{ i18n().info_p6() }}</strong></p>
         </ion-card-content>
       </ion-card>

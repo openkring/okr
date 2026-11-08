@@ -166,7 +166,9 @@
       "p3": "E-mail: il testo dell’editor viene inserito nel modello scelto e gli allegati vengono aggiunti all’e-mail. A, Cc e Ccn valgono solo qui. I destinatari sono in Ccn, così nessuno vede gli altri.",
       "p4": "In app: l’invio appare come comunicazione nella dashboard, con testo e allegati. Il destinatario riceve una notifica push che la apre.",
       "p5": "Posta: il testo viene impaginato come lettera con l’indirizzo del destinatario, seguito dagli allegati. Scarichi le lettere in PDF, le stampi e le spedisci tu.",
-      "p6": "Le lettere restano disponibili per 7 giorni e poi vengono cancellate, perché contengono indirizzi. Come admin di gruppo non puoi spedire per posta."
+      "p6": "Le lettere restano disponibili per 7 giorni e poi vengono cancellate, perché contengono indirizzi. Come admin di gruppo non puoi spedire per posta.",
+      "p7": "Eventi: se scegli degli eventi nell’editor, ogni persona che riceve l’invio via e-mail riceve una propria e-mail con un link personale. Con questo link accetta o rifiuta ogni evento, anche senza un account nell’app. La risposta compare subito nella lista dei partecipanti, e il link vale fino al giorno dell’ultimo evento. L’indirizzo sotto «To:» diventa allora l’indirizzo di risposta, e il Cc non è possibile. Comunicazioni e lettere non contengono alcun link.",
+      "p8": "Allegati: con «Aggiungi» alleghi file di al massimo 7 MB ciascuno. Via e-mail arrivano come allegati, in app fanno parte della comunicazione. Nelle lettere vanno solo i file PDF, che seguono ogni lettera. Gli altri file partono solo via e-mail e in app."
     },
     "letters": {
       "pending": "Le lettere sono in preparazione …",

@@ -1,0 +1,5 @@
+{{{content}}}
+
+--
+© {{year}} %%FOOTER_NAME%%{{#if contact_email}}
+{{contact_email}}{{/if}}
