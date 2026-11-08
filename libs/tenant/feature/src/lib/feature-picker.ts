@@ -15,7 +15,7 @@ import { AlertService, copyToClipboard } from '@okr/shared-util-angular';
 import type { CategoryListModel, FeatureRolloutModel, MenuItemModel } from '@okr/shared-models';
 import {
   FEATURE_BLOCKS, FEATURE_BUNDLES, FEATURE_PICKER_I18N_KEYS, FEATURE_PROFILES, effectiveFeatures,
-  entriesOfKind, findStructuralDrift, hiddenKeySet, holdersOf, indexMenuDocsByName, isEmptyPlan, menuOutlineOf,
+  addsMenuRows, entriesOfKind, findStructuralDrift, hiddenKeySet, holdersOf, indexMenuDocsByName, isEmptyPlan, menuOutlineOf,
   pinnedFieldsOf, resolveAvailability, resolveWithDeps, summarizePlanConsequences, withHiddenKey,
   withoutHiddenKey,
 } from '@okr/tenant-util';
@@ -717,6 +717,15 @@ export class FeaturePicker {
       return;
     }
 
+    // «Menü ergänzen»: the block is already on, so only menu rows can change. When the server plans none
+    // (a row the deployed function does not know yet, or one already there), say so instead of offering a
+    // dialog whose confirmation would write nothing.
+    const completing = this.isCompleting(block);
+    if (completing && !addsMenuRows(preview)) {
+      await this.showBlockToast(FEATURE_PICKER_I18N_KEYS.menu_nothing_added_toast, block);
+      return;
+    }
+
     await this.warnIfBarOverflows(preview);
 
     const alsoBlocks = preview.alsoEnabled
@@ -741,14 +750,28 @@ export class FeaturePicker {
           .join('; ');
         const message = await this.translateOrFallback(FEATURE_PICKER_I18N_KEYS.withheld_toast, { blocks: names }, names);
         await this.alertService.showToast(message);
+      } else if (!completing) {
+        await this.showBlockToast(FEATURE_PICKER_I18N_KEYS.enabled_toast, block);
       } else {
-        const name = this.blockLabels[block.id]?.() || block.id;
-        const message = await this.translateOrFallback(FEATURE_PICKER_I18N_KEYS.enabled_toast, { block: name }, name);
-        await this.alertService.showToast(message);
+        // the admin may have unticked every row: only claim a change the run actually made
+        await this.showBlockToast(addsMenuRows(result.preview)
+          ? FEATURE_PICKER_I18N_KEYS.menu_completed_toast
+          : FEATURE_PICKER_I18N_KEYS.menu_nothing_added_toast, block);
       }
     } catch (error) {
       this.alertService.error(`FeaturePicker.onEnable: ${error}`);
     }
+  }
+
+  /** The button reads «Menü ergänzen»: the block already runs in its own right and only rows are missing. */
+  private isCompleting(block: FeatureBlock): boolean {
+    const state = this.blockState(block);
+    return state === 'on' || (state === 'required' && this.isStored(block));
+  }
+
+  private async showBlockToast(key: string, block: FeatureBlock): Promise<void> {
+    const name = this.blockLabels[block.id]?.() || block.id;
+    await this.alertService.showToast(await this.translateOrFallback(key, { block: name }, name));
   }
 
   /**

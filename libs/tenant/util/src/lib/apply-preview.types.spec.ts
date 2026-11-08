@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { entriesOfKind, isEmptyPlan, type ApplyPlanPreview } from './apply-preview.types';
+import { addsMenuRows, entriesOfKind, isEmptyPlan, type ApplyPlanPreview } from './apply-preview.types';
 
 const empty: ApplyPlanPreview = { entries: [], alsoEnabled: [], withheld: [] };
 
@@ -22,5 +22,23 @@ describe('ApplyPlanPreview', () => {
       ],
     };
     expect(entriesOfKind(preview, 'menu-created').map(e => e.subject)).toEqual(['calevent-all']);
+  });
+});
+
+describe('addsMenuRows', () => {
+  const plan = (...kinds: ApplyPlanPreview['entries'][number]['kind'][]): ApplyPlanPreview => ({
+    entries: kinds.map(kind => ({ kind, subject: 'x', consequence: '' })), alsoEnabled: [], withheld: [],
+  });
+
+  it('is true as soon as one menu row is created, shared, reactivated or attached', () => {
+    expect(addsMenuRows(plan('menu-created'))).toBe(true);
+    expect(addsMenuRows(plan('block-enabled', 'menu-extended'))).toBe(true);
+    expect(addsMenuRows(plan('menu-reactivated'))).toBe(true);
+    expect(addsMenuRows(plan('menu-attached'))).toBe(true);
+  });
+
+  it('is false for a plan without menu rows', () => {
+    expect(addsMenuRows(plan())).toBe(false);
+    expect(addsMenuRows(plan('block-enabled', 'seed-created', 'field-pinned'))).toBe(false);
   });
 });

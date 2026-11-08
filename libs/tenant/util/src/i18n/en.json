@@ -223,6 +223,8 @@
     "complete_menu_button": "Complete menu",
     "disable_confirm": "Do you want to switch off \"{{block}}\"? Its menu rows stay in place and are only hidden, your data stays unchanged. You can switch the block back on at any time.",
     "enabled_toast": "\"{{block}}\" is switched on",
+    "menu_completed_toast": "The menu of \"{{block}}\" is completed",
+    "menu_nothing_added_toast": "No menu row was added to \"{{block}}\". The rows are already there or not ready yet. Try again later, or tell support.",
     "disabled_toast": "\"{{block}}\" is switched off",
     "profiles_title": "Apply a profile",
     "profile_highlight_note": "The highlighted blocks belong to this profile. Nothing is switched on yet — do that for each highlighted block yourself with \"Enable\".",

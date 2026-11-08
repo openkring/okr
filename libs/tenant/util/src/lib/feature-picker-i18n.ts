@@ -42,6 +42,8 @@ export const FEATURE_PICKER_I18N_KEYS = {
    *  is untouched. Nothing is deleted, unlike the old checkbox model's implied removal. */
   disable_confirm: PFX + 'picker.disable_confirm',
   enabled_toast: PFX + 'picker.enabled_toast',
+  menu_completed_toast: PFX + 'picker.menu_completed_toast',
+  menu_nothing_added_toast: PFX + 'picker.menu_nothing_added_toast',
   disabled_toast: PFX + 'picker.disabled_toast',
   // Proposal 6 — named block selections. The per-profile `label`/`description` keys are NOT
   // listed here: like block and bundle labels they are resolved dynamically per catalogue

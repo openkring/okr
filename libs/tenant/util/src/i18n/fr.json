@@ -223,6 +223,8 @@
     "complete_menu_button": "Compléter le menu",
     "disable_confirm": "Veux-tu désactiver « {{block}} » ? Les lignes de menu restent en place et sont seulement masquées, tes données ne changent pas. Tu peux réactiver le module à tout moment.",
     "enabled_toast": "« {{block}} » est activé",
+    "menu_completed_toast": "Le menu de « {{block}} » est complété",
+    "menu_nothing_added_toast": "Aucune ligne de menu n’a été ajoutée à « {{block}} ». Les lignes existent déjà ou ne sont pas encore prêtes. Réessaie plus tard ou signale-le au support.",
     "disabled_toast": "« {{block}} » est désactivé",
     "profiles_title": "Appliquer un profil",
     "profile_highlight_note": "Les modules surlignés appartiennent à ce profil. Rien n'est encore activé — fais-le toi-même pour chaque module surligné avec « Activer ».",

@@ -223,6 +223,8 @@
     "complete_menu_button": "Completa il menu",
     "disable_confirm": "Vuoi disattivare «{{block}}»? Le righe di menu restano e vengono solo nascoste, i tuoi dati non cambiano. Puoi riattivare il blocco in qualsiasi momento.",
     "enabled_toast": "«{{block}}» è attivo",
+    "menu_completed_toast": "Il menu di «{{block}}» è completato",
+    "menu_nothing_added_toast": "Nessuna riga di menu è stata aggiunta a «{{block}}». Le righe ci sono già o non sono ancora pronte. Riprova più tardi o segnalalo al supporto.",
     "disabled_toast": "«{{block}}» è disattivato",
     "profiles_title": "Applica un profilo",
     "profile_highlight_note": "I blocchi evidenziati appartengono a questo profilo. Non è ancora stato attivato nulla — fallo tu stesso per ogni blocco evidenziato con «Attiva».",

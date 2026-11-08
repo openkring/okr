@@ -86,6 +86,18 @@ export function isEmptyPlan(preview: ApplyPlanPreview): boolean {
     && preview.withheld.length === 0;
 }
 
+/** The menu kinds of a plan: a row created, shared, reactivated or attached somewhere. */
+const MENU_KINDS: ReadonlySet<PlanEntryKind> = new Set(['menu-created', 'menu-extended', 'menu-reactivated', 'menu-attached']);
+
+/**
+ * Does the plan write any menu row? «Menü ergänzen» on a block that is already on changes nothing else,
+ * so a plan without a menu entry means nothing would be added — e.g. a row the deployed function does not
+ * know yet, or one that is already there. The picker then says so instead of confirming a change.
+ */
+export function addsMenuRows(preview: ApplyPlanPreview): boolean {
+  return preview.entries.some(e => MENU_KINDS.has(e.kind));
+}
+
 export function entriesOfKind(preview: ApplyPlanPreview, kind: PlanEntryKind): PlanEntry[] {
   return preview.entries.filter(e => e.kind === kind);
 }

@@ -223,6 +223,8 @@
     "complete_menu_button": "Completar el menú",
     "disable_confirm": "¿Quieres desactivar «{{block}}»? Las filas de menú se mantienen y solo se ocultan, tus datos no cambian. Puedes volver a activar el bloque en cualquier momento.",
     "enabled_toast": "«{{block}}» está activado",
+    "menu_completed_toast": "El menú de «{{block}}» está completo",
+    "menu_nothing_added_toast": "No se añadió ninguna fila de menú a «{{block}}». Las filas ya existen o aún no están listas. Vuelve a intentarlo más tarde o avisa al soporte.",
     "disabled_toast": "«{{block}}» está desactivado",
     "profiles_title": "Aplicar un perfil",
     "profile_highlight_note": "Los bloques resaltados pertenecen a este perfil. Todavía no se ha activado nada — hazlo tú mismo para cada bloque resaltado con «Activar».",

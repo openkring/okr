@@ -223,6 +223,8 @@
     "complete_menu_button": "Menü ergänzen",
     "disable_confirm": "Willst du «{{block}}» ausschalten? Die Menüzeilen bleiben bestehen und werden nur ausgeblendet, deine Daten bleiben unverändert. Du kannst den Baustein jederzeit wieder einschalten.",
     "enabled_toast": "«{{block}}» ist eingeschaltet",
+    "menu_completed_toast": "Das Menü von «{{block}}» ist ergänzt",
+    "menu_nothing_added_toast": "Bei «{{block}}» kam keine Menüzeile dazu. Die Zeilen sind schon vorhanden oder noch nicht bereit. Versuch es später nochmals, sonst melde es dem Support.",
     "disabled_toast": "«{{block}}» ist ausgeschaltet",
     "profiles_title": "Profil anwenden",
     "profile_highlight_note": "Die markierten Bausteine gehören zu diesem Profil. Damit ist noch nichts eingeschaltet — das machst du für jeden markierten Baustein einzeln mit «Einschalten».",
