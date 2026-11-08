@@ -1,0 +1,24 @@
+{
+  "name": "social-news-center-ui",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/social/news-center/ui/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:ui", "scope:social", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/social/news-center/ui",
+        "main": "libs/social/news-center/ui/src/index.ts",
+        "tsConfig": "libs/social/news-center/ui/tsconfig.lib.json",
+        "assets": ["libs/social/news-center/ui/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

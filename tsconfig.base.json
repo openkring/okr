@@ -269,6 +269,7 @@
       "@okr/content-notice-util": ["libs/content/notice/util/src/index.ts"],
       "@okr/social-news-center-data-access": ["libs/social/news-center/data-access/src/index.ts"],
       "@okr/social-news-center-util": ["libs/social/news-center/util/src/index.ts"],
+      "@okr/social-news-center-ui": ["libs/social/news-center/ui/src/index.ts"],
       "@okr/content-pdf-template-data-access": ["libs/content/pdf-template/data-access/src/index.ts"],
       "@okr/content-pdf-template-feature": ["libs/content/pdf-template/feature/src/index.ts"],
       "@okr/content-pdf-template-ui": ["libs/content/pdf-template/ui/src/index.ts"],
