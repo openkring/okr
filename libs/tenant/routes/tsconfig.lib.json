@@ -103,6 +103,7 @@
     { "path": "../../security/audit/feature/tsconfig.lib.json" },
     { "path": "../../security/processing/feature/tsconfig.lib.json" },
     { "path": "../../shared/feature/tsconfig.lib.json" },
+    { "path": "../../social/news-center/feature/tsconfig.lib.json" },
     { "path": "../../subject/address/feature/tsconfig.lib.json" },
     { "path": "../../subject/application/feature/tsconfig.lib.json" },
     { "path": "../../subject/group/feature/tsconfig.lib.json" },

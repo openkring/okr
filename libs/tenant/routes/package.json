@@ -92,6 +92,7 @@
     "@okr/resource-ui": "*",
     "@okr/travel-journal-feature": "*",
     "@okr/content-learning-feature": "*",
-    "@okr/content-notice-feature": "*"
+    "@okr/content-notice-feature": "*",
+    "@okr/social-news-center-feature": "*"
   }
 }

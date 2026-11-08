@@ -1815,8 +1815,31 @@ const learning: BlockRoutes = {
   ],
 };
 
+/**
+ * `news-center` — NewsCenter (design 2026-11-08).
+ *
+ * ORDER IN `FEATURE_ROUTES` IS LOAD-BEARING, for the same reason as `file-transfer`: listed after
+ * `cms`, `/private/news-center/video` would match `cms`'s `private/:id/:contextMenuName` and
+ * render `PageDispatcher` for a page called "news-center".
+ *
+ * - `private/news-center/:segment` — the page, any signed-in member; `:segment` is the tab
+ *   (`video` | `audio` | `text` | `webcam`, anything else shows `video`).
+ */
+const newsCenter: BlockRoutes = {
+  id: 'news-center',
+  routes: (): Route[] => [
+    {
+      path: 'private',
+      canActivate: [isAuthenticatedGuard],
+      children: [
+        { path: 'news-center/:segment', loadComponent: () => import('@okr/social-news-center-feature').then(m => m.NewsCenterPage) },
+      ],
+    },
+  ],
+};
+
 export const FEATURE_ROUTES: BlockRoutes[] = [
-  calevent, fileTransfer, learning, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, murdoku, memory, backgammon, klondike, mahjong, jasstafel, tetris, mampf, wordle, chess,
+  calevent, fileTransfer, learning, newsCenter, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, murdoku, memory, backgammon, klondike, mahjong, jasstafel, tetris, mampf, wordle, chess,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,

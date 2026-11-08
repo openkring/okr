@@ -209,6 +209,9 @@
     },
     "learning": {
       "label": "Learning rooms"
+    },
+    "news-center": {
+      "label": "News (videos, podcasts, articles, webcams)"
     }
   },
   "picker": {

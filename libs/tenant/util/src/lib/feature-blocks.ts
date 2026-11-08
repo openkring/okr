@@ -103,8 +103,8 @@ function subjectsMenuParent(children: MenuSpec[]): MenuSpec {
  */
 /**
  * The «Tools» accordion (owner ruling 2026-11-02): one main-menu row for small helpers instead
- * of one row each. Owned by `instruments` (Rechner, Lupe, Übersetzer) and `file-transfer`
- * (Datei-Transfer) — same shared-parent pattern as `cmsMenuParent`: every owner re-declares it
+ * of one row each. Owned by `instruments` (Rechner, Lupe, Übersetzer), `news-center` (Nachrichten)
+ * and `file-transfer` (Datei-Transfer) — same shared-parent pattern as `cmsMenuParent`: every owner re-declares it
  * field-identically, it renders as soon as ANY owner is effective, and `rootNavKeys` attaches
  * only the parent to `main_<tenantId>`.
  */
@@ -3343,8 +3343,42 @@ const learningBlock: FeatureBlock = {
   ],
 };
 
+/**
+ * `libs/social/news-center/*` — NewsCenter (design 2026-11-08): videos, podcasts, articles and
+ * webcams from sources the club chose, fetched through the `newsCenter` relay callable.
+ *
+ * `defaultAvailability: 'ga'` like `file-transfer` and `learning`: the block is offered to every
+ * tenant, but nothing shows until a tenant admin ticks it at `/tenant/features` (design §10:
+ * «ships off»). No anonymous route, so the `file-transfer` gate reason does not apply.
+ *
+ * `dependsOn: []` — channels, subscriptions and suggestions are its own collections; the page
+ * needs only the core menu and the signed-in user.
+ *
+ * Menu: «Nachrichten» for every registered member, nested under the shared «Tools» accordion
+ * (`toolsMenuParent`), pointing at the video tab. The page's fixed «…» context menu
+ * `c-news-center` has one `call` row «Einstellungen» (url `settings`), which the page handles in
+ * `onPopoverDismiss`. Icon `news`: the brief's `newspaper` is not in the DB icon set.
+ */
+const newsCenter: FeatureBlock = {
+  id: 'news-center',
+  bundle: 'communication',
+  label: '@tenant/util.feature.news-center.label',
+  icon: 'news',
+  defaultAvailability: 'ga',
+  dependsOn: [],
+  collections: ['news-channels', 'news-subscriptions', 'news-channel-requests'],
+  menu: [
+    toolsMenuParent([
+      { key: 'news-center', name: 'news-center', url: '/private/news-center/video', action: 'navigate', roleNeeded: 'registered', icon: 'news', label: '@item.news-center' },
+    ]),
+    { key: 'c-news-center', name: 'c-news-center', url: '', action: 'context', roleNeeded: 'registered', icon: 'help-circle', label: '', children: [
+      { key: 'news-center-settings', name: 'news-center-settings', url: 'settings', action: 'call', roleNeeded: 'registered', icon: 'settings', label: '@item.news-center-settings' },
+    ] },
+  ],
+};
+
 export const FEATURE_BLOCKS: FeatureBlock[] = [
-  calevent, fileTransfer, learningBlock, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, murdoku, memory, backgammon, klondike, mahjong, jasstafel, tetris, mampf, wordle, chess,
+  calevent, fileTransfer, learningBlock, newsCenter, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, murdoku, memory, backgammon, klondike, mahjong, jasstafel, tetris, mampf, wordle, chess,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,

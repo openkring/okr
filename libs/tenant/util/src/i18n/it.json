@@ -209,6 +209,9 @@
     },
     "learning": {
       "label": "Spazi di apprendimento"
+    },
+    "news-center": {
+      "label": "Notizie (video, podcast, articoli, webcam)"
     }
   },
   "picker": {

@@ -812,6 +812,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/social/news-center/util/src/i18n",
+            "output": "./assets/i18n/social/news-center/util"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/subject/address/data-access/src/i18n",
             "output": "./assets/i18n/subject/address/data-access"
           },

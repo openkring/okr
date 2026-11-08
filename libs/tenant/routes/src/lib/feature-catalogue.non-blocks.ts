@@ -37,6 +37,10 @@ export const NON_BLOCK_DOMAINS: Record<string, string> = {
   // subdomain `libs/travel/journal` IS catalogued, as the `journal` block. The container itself
   // ships no route and no menu doc.
   travel: 'container; its subdomain `journal` is catalogued as the `journal` block (spec 1.113)',
+  // The `social` CONTAINER (2026-11-08, NewsCenter design): same shape as `travel` — its one
+  // subdomain `libs/social/news-center` IS catalogued, as the `news-center` block. The container
+  // itself ships no route and no menu doc.
+  social: 'container; its subdomain `news-center` is catalogued as the `news-center` block (design 2026-11-08)',
   // The `content` CONTAINER created on 2026-08-14, when `document`, `folder`, `esign` and
   // `pdf-template` moved from `libs/<domain>/` into `libs/content/<domain>/` and `meeting`
   // (spec 2.7) was added beside them. It is listed here rather than made a block because its
