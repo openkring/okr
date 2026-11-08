@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Attendee } from '@okr/shared-models';
-import { ANSWER_PAGE_CSP, attendeeStateOf, eventRefusal, invitationRefusal, lastEventDate, mayAnswer, stripMetaRefresh } from './mailing-answer.logic';
+import { ANSWER_PAGE_CSP, attendeeStateOf, eventRefusal, invitationRefusal, lastEventDate, mayAnswer, neutralizeMeta } from './mailing-answer.logic';
 
 const doc = {
   deliveries: [{ personKey: 'p1', channels: ['email'] }, { personKey: 'p2', channels: ['chat'] }],
@@ -75,8 +75,21 @@ describe('answer page hardening', () => {
     expect(ANSWER_PAGE_CSP).not.toContain('script-src');
   });
 
-  it('drops a meta refresh from the frame, keeps other meta tags', () => {
-    const html = '<head><meta charset="utf-8"><META HTTP-EQUIV=Refresh content="0;url=https://x.example"><meta http-equiv="refresh" content="1"></head>';
-    expect(stripMetaRefresh(html)).toBe('<head><meta charset="utf-8"></head>');
+  it('loads images only from the fixed CDN', () => {
+    expect(ANSWER_PAGE_CSP).toContain('img-src https://bkaiser.imgix.net data:;');
+    expect(ANSWER_PAGE_CSP).not.toMatch(/img-src https: /);
+  });
+
+  it('turns every meta element into an inert tag, however it is written, and sets its own viewport', () => {
+    const html = '<html><head><meta charset="utf-8"><META HTTP-EQUIV=Refresh content="0;url=https://x.example">'
+      + '<meta content="a>b" http-equiv="&#114;efresh"><meta\thttp-equiv=refresh></head><body>x</body></html>';
+    const out = neutralizeMeta(html);
+    expect(out).not.toMatch(/<meta(?!\s+name="viewport")/i);
+    expect(out.startsWith('<html><head><meta name="viewport"')).toBe(true);
+    expect(out).toContain('<x-meta charset="utf-8">');
+  });
+
+  it('prepends the viewport to a frame without head', () => {
+    expect(neutralizeMeta('<p>x</p>')).toBe('<meta name="viewport" content="width=device-width,initial-scale=1"><p>x</p>');
   });
 });

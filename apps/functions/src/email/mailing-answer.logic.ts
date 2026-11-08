@@ -46,10 +46,24 @@ export function attendeeStateOf(attendees: Attendee[] | undefined, maxAttendees:
   return 'open';
 }
 
-/** No script, no plugins, no framing; images over https, inline styles, forms only to this function. */
-export const ANSWER_PAGE_CSP = "default-src 'none'; img-src https: data:; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'";
+/**
+ * No script, no plugins, no framing; inline styles, forms only to this function. Images only from the fixed
+ * image CDN: the frame is tenant-editable, and a CSS attribute selector on the hidden signature field could
+ * otherwise leak it through a background-image URL.
+ */
+export const ANSWER_PAGE_CSP = "default-src 'none'; img-src https://bkaiser.imgix.net data:; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'";
 
-/** A meta refresh would navigate away despite the CSP; the frame never needs one. */
-export function stripMetaRefresh(html: string): string {
-  return html.replace(/<meta\b[^>]*http-equiv\s*=\s*["']?refresh[^>]*>/gi, '');
+const PAGE_VIEWPORT = '<meta name="viewport" content="width=device-width,initial-scale=1">';
+
+/**
+ * Neutralises every meta element of the frame (a meta refresh would navigate away despite the CSP) by renaming
+ * the tag: `<x-meta …>` is no meta element, whatever its attributes or quoting, so no parser differential.
+ * Then sets our own viewport; the charset comes from the Content-Type header.
+ */
+export function neutralizeMeta(html: string): string {
+  const renamed = html.replace(/<meta/gi, '<x-meta');
+  const head = /<head(?:\s[^>]*)?>/i.exec(renamed);
+  return head
+    ? renamed.slice(0, head.index + head[0].length) + PAGE_VIEWPORT + renamed.slice(head.index + head[0].length)
+    : PAGE_VIEWPORT + renamed;
 }

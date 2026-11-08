@@ -23,7 +23,7 @@ import { answerResultPage, Brand, eventWhen, mailingAnswerPage, MailingAnswerEve
 import { todayStoreDate } from '../calendar/recipients';
 import { AnswerRefusal, REFUSAL_TEXT } from '../calendar/refusal';
 import { toStoreDateTime } from '../srv/zurich-time';
-import { ANSWER_PAGE_CSP, attendeeStateOf, eventRefusal, invitationRefusal, mayAnswer, stripMetaRefresh } from './mailing-answer.logic';
+import { ANSWER_PAGE_CSP, attendeeStateOf, eventRefusal, invitationRefusal, mayAnswer, neutralizeMeta } from './mailing-answer.logic';
 import { MailingDoc } from './mailing';
 import { renderEmail } from './render-email';
 
@@ -51,7 +51,7 @@ function eventOf(data: unknown, tenants: string[]): EventData | undefined {
 async function pageFrame(tenantId: string): Promise<string | undefined> {
   try {
     const { html } = await renderEmail({ tenantId, layout: 'standard', body: PAGE_CONTENT_SLOT, noPlainFallback: true });
-    return html.includes(PAGE_CONTENT_SLOT) ? stripMetaRefresh(html) : undefined;
+    return html.includes(PAGE_CONTENT_SLOT) ? neutralizeMeta(html) : undefined;
   } catch (err) {
     logger.warn(`${CF_NAME}: no standard layout for the page, using the built-in banner`, err);
     return undefined;
