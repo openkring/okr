@@ -22,7 +22,7 @@ import { NewsCenterStore } from './news-center.store';
       [myRequests]="store.myRequests()" [openRequests]="store.openRequests()" [canSuggest]="store.canSuggest()"
       [resolved]="store.resolved()" [preview]="store.preview()" [resolveError]="store.resolveError()"
       (hide)="store.hide($event)" (show)="store.show($event)" (add)="store.add($event)" (resetDefaults)="store.reset()"
-      (suggest)="store.suggest($event)" (resolve)="store.resolve($event)"
+      (suggest)="store.suggest($event)" (resolve)="store.resolve($event)" (resolveClear)="store.clearResolve()"
       (clubSave)="store.clubSave($event)" (accept)="store.accept($event)" (reject)="store.reject($event)"
       (clubArchive)="store.clubArchive($event)" (clubReorder)="store.clubReorder($event)" />
   `,

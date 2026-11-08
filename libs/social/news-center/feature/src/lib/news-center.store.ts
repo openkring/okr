@@ -245,6 +245,11 @@ export const NewsCenterStore = signalStore(
       },
 
       /*---------------- settings: club list (curators) ----------------*/
+      /** A new add flow starts from nothing resolved. */
+      clearResolve(): void {
+        patchState(store, { resolved: undefined, preview: [], resolveError: undefined });
+      },
+
       async resolve(request: { url: string; segment: NewsSegment }): Promise<void> {
         patchState(store, { resolved: undefined, preview: [], resolveError: undefined });
         try {

@@ -145,9 +145,9 @@ type SettingsView = 'mine' | 'club';
           </ion-list-header>
         </ion-list>
         @if (adding()) {
-          <okr-news-channel-add [segment]="segment()" [resolved]="resolved()" [preview]="preview()" [error]="resolveError()"
+          <okr-news-channel-add [segment]="addSegment()" [resolved]="resolved()" [preview]="preview()" [error]="resolveError()"
             [prefillUrl]="prefillUrl()" [i18n]="i18n()"
-            (resolve)="resolve.emit({ url: $event, segment: segment() })" (save)="onClubSave($event)" />
+            (resolve)="resolve.emit({ url: $event, segment: addSegment() })" (save)="onClubSave($event)" />
         }
         <ion-list lines="full">
           <ion-reorder-group [disabled]="false" (ionReorderEnd)="onReorder($event)">
@@ -155,8 +155,8 @@ type SettingsView = 'mine' | 'club';
               <ion-item>
                 <ng-container *ngTemplateOutlet="avatarTpl; context: { $implicit: channel }" />
                 <ion-label>{{ channel.name }}</ion-label>
-                <okr-checkbox slot="end" [i18n]="defaultOnI18n()" [checked]="channel.defaultOn" [readOnly]="false" [toggle]="true"
-                  (checkedChange)="toggleDefaultOn(channel, $event)" />
+                <okr-checkbox slot="end" [i18n]="channel.defaultOn ? defaultOnI18n() : offeredOnlyI18n()" [checked]="channel.defaultOn"
+                  [readOnly]="false" [toggle]="true" (checkedChange)="toggleDefaultOn(channel, $event)" />
                 <ion-button slot="end" fill="clear" color="medium" [attr.aria-label]="i18n().archive_channel()" (click)="clubArchive.emit(channel.okey)">
                   <ion-icon slot="icon-only" src="{{ 'trash' | svgIcon }}" />
                 </ion-button>
@@ -206,6 +206,8 @@ export class NewsSettingsModal {
   public readonly accept = output<NewsChannelRequestModel>();
   public readonly reject = output<NewsChannelRequestModel>();
   public readonly resolve = output<{ url: string; segment: NewsSegment }>();
+  /** A new add flow starts: drop the previous link's resolution, so its preview cannot be saved for this one. */
+  public readonly resolveClear = output<void>();
 
   protected readonly view = signal<SettingsView>('mine');
   protected readonly showRequestForm = signal(false);
@@ -215,9 +217,17 @@ export class NewsSettingsModal {
   protected readonly prefillUrl = signal('');
   /** The suggestion being accepted; marked accepted once its channel is saved. */
   private readonly pendingRequest = signal<NewsChannelRequestModel | undefined>(undefined);
+  /**
+   * The segment the add flow resolves and saves for: an accepted suggestion keeps the segment the
+   * member chose, which need not be the tab the settings were opened from.
+   */
+  protected readonly addSegment = computed(() => this.pendingRequest()?.segment ?? this.segment());
 
   protected readonly defaultOnI18n = computed(() => ({
     name: 'defaultOn', label: this.i18n().default_on(), helper: '',
+  } as CheckboxI18n));
+  protected readonly offeredOnlyI18n = computed(() => ({
+    name: 'defaultOn', label: this.i18n().offered_only(), helper: '',
   } as CheckboxI18n));
 
   protected onViewChange(value: string | number | null | undefined): void {
@@ -237,12 +247,14 @@ export class NewsSettingsModal {
   }
 
   protected startAccept(request: NewsChannelRequestModel): void {
+    this.resolveClear.emit();
     this.pendingRequest.set(request);
     this.prefillUrl.set(request.url);
     this.adding.set(true);
   }
 
   protected startAdd(): void {
+    this.resolveClear.emit();
     this.pendingRequest.set(undefined);
     this.prefillUrl.set('');
     this.adding.set(true);

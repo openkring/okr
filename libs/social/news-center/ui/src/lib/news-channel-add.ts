@@ -3,7 +3,7 @@ import { IonAvatar, IonButton, IonItem, IonLabel, IonList, IonNote, IonText } fr
 
 import { NewsChannelModel, NewsSegment } from '@okr/shared-models';
 import { Checkbox, CheckboxI18n, ErrorNote, ImgDirective, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { NEWS_CENTER_I18N_KEYS, NewsCenterI18n, NewsItem, ResolvedNewsSource, parseNewsFeed } from '@okr/social-news-center-util';
+import { NEWS_CENTER_I18N_KEYS, NewsCenterI18n, NewsItem, ResolvedNewsSource, newsRelayState, parseNewsFeed } from '@okr/social-news-center-util';
 
 /** Why the relay could not resolve a pasted link; the store sets it, this component words it. */
 export type NewsResolveError = 'no-feed' | 'segment' | 'url' | 'blocked' | 'http-not-image' | 'permission-denied' | 'unknown';
@@ -49,7 +49,7 @@ export type NewsResolveError = 'no-feed' | 'segment' | 'url' | 'blocked' | 'http
         }
         @if (source.kind === 'image') {
           <okr-checkbox [i18n]="relayI18n()" [checked]="viaRelay()" (checkedChange)="viaRelayChoice.set($event)"
-            [readOnly]="relayLocked()" [toggle]="true" [showHelper]="true" />
+            [readOnly]="relayState().readOnly" [toggle]="true" [showHelper]="true" />
         }
         <okr-checkbox [i18n]="defaultOnI18n()" [checked]="defaultOn()" (checkedChange)="defaultOn.set($event)"
           [readOnly]="false" [toggle]="true" />
@@ -77,9 +77,9 @@ export class NewsChannelAdd {
   protected readonly viaRelayChoice = signal<boolean | undefined>(undefined);
   protected readonly defaultOn = signal(true);
 
-  /** An http: image can only be shown through the relay (design §7.1), so the switch stays on. */
-  protected readonly relayLocked = computed(() => this.resolved()?.feedUrl.startsWith('http:') ?? false);
-  protected readonly viaRelay = computed(() => this.relayLocked() || (this.viaRelayChoice() ?? this.resolved()?.viaRelay ?? false));
+  /** http: camera → on and locked; an image the relay would refuse → off and locked (design §7.1). */
+  protected readonly relayState = computed(() => newsRelayState(this.resolved(), this.viaRelayChoice()));
+  protected readonly viaRelay = computed(() => this.relayState().viaRelay);
 
   /** The store's parsed preview when it gives one, else the resolved feed text parsed here; three items at most. */
   protected readonly topItems = computed(() => {
@@ -110,15 +110,22 @@ export class NewsChannelAdd {
   protected readonly relayI18n = computed(() => ({
     name: 'viaRelay', label: this.i18n().via_relay(), helper: this.i18n().via_relay_hint(),
   } as CheckboxI18n));
+  /** The switch says what the channel will be: «standardmässig an» or «nur angeboten». */
   protected readonly defaultOnI18n = computed(() => ({
-    name: 'defaultOn', label: this.i18n().default_on(), helper: '',
+    name: 'defaultOn', label: this.defaultOn() ? this.i18n().default_on() : this.i18n().offered_only(), helper: '',
   } as CheckboxI18n));
 
   constructor() {
-    // a new resolution starts from its own defaults
+    // another link to check (a different suggestion, or a fresh add) replaces what was typed
+    effect(() => {
+      this.prefillUrl();
+      this.typedUrl.set(undefined);
+    });
+    // a new resolution starts from its own defaults: relay as resolved, «standardmässig an»
     effect(() => {
       this.resolved();
       this.viaRelayChoice.set(undefined);
+      this.defaultOn.set(true);
     });
   }
 
@@ -135,7 +142,7 @@ export class NewsChannelAdd {
     channel.name = source.name;
     channel.avatarUrl = source.avatarUrl;
     channel.defaultOn = this.defaultOn();
-    channel.viaRelay = source.kind === 'image' && this.viaRelay();
+    channel.viaRelay = this.viaRelay();
     this.save.emit(channel);
   }
 }
