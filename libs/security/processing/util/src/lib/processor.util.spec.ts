@@ -91,6 +91,19 @@ describe('activeProcessors', () => {
     expect(activeProcessors({} as AppConfig).length).toBeGreaterThan(0);
   });
 
+  it('lists YouTube when the news-center feature block is switched on, and not otherwise', () => {
+    const keys = (c: AppConfig) => activeProcessors(c).map((p) => p.key);
+    expect(keys(config({ enabledFeatures: ['news-center'] }))).toContain('youtube');
+    expect(keys(config({ enabledFeatures: ['calevent'] }))).not.toContain('youtube');
+    expect(keys(config({ enabledFeatures: [] }))).not.toContain('youtube');
+    // an `integrations.youtube` flag does not exist and changes nothing
+    expect(keys(config({ enabledFeatures: [], integrations: { youtube: true } }))).not.toContain('youtube');
+  });
+
+  it('lists YouTube on a legacy config without enabledFeatures (every non-internal block is on)', () => {
+    expect(activeProcessors(config()).map((p) => p.key)).toContain('youtube');
+  });
+
   it('does not leak the enabledWhen predicate into the returned entry', () => {
     for (const p of activeProcessors(config())) {
       expect(p, `${p.key} still carries catalogue-only fields`).not.toHaveProperty('enabledWhen');

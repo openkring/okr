@@ -18,7 +18,9 @@ import type { AppConfig, ProcessorEntry } from '@okr/shared-models';
  *    an auditor reads first.
  * 2. **Never invent an enablement flag.** A gated entry's predicate reads
  *    `AppConfig.integrations[key]`; where a real flag already exists (search.ch has
- *    `personLookupEnabled`) the predicate honours it as well.
+ *    `personLookupEnabled`) the predicate honours it as well. A transfer that belongs to a
+ *    feature block rather than an integration (YouTube → `news-center`) reads
+ *    `AppConfig.enabledFeatures` through `byFeatureBlock`.
  *
  * Seeded from `planning/reference/privacy-data-inventory.md` §4 plus the always-on
  * platform layer. `purposes`, `securityMeasures` and `retentionText` are **German legal
@@ -54,6 +56,16 @@ export interface CatalogueEntry extends ProcessorEntry {
 
 /** Standard predicate: the tenant switched this integration on. */
 const byIntegration = (key: string) => (config: AppConfig) => config?.integrations?.[key] === true;
+
+/**
+ * Predicate for a transfer that a feature block makes (not an integration): the tenant has the
+ * block switched on in `AppConfig.enabledFeatures`. A legacy config without that field runs every
+ * non-internal block (D-BB-10, `effectiveFeatures`), so it counts as on — the register would
+ * rather list a transfer a rollout deny-list suppressed than omit one that happens.
+ * Only for blocks whose `defaultAvailability` is not `internal`.
+ */
+const byFeatureBlock = (blockId: string) => (config: AppConfig) =>
+  config?.enabledFeatures === undefined || config.enabledFeatures.includes(blockId);
 
 export const PROCESSOR_CATALOGUE: readonly CatalogueEntry[] = [
   // ── Always-on platform layer ────────────────────────────────────────────────────────
@@ -381,20 +393,28 @@ export const PROCESSOR_CATALOGUE: readonly CatalogueEntry[] = [
     category: 'saasService',
     country: 'IE',
     transferMechanism: 'adequacyDecision',
-    purposes: ['Abspielen von Videos, die der Verein im NewsCenter als Kanal eingebunden hat'],
-    // Client-Einbettung: Der Browser der Person lädt den Player erst beim Abspielen direkt von
-    // YouTube; es läuft keine Cloud Function dazwischen.
+    purposes: [
+      'Anzeigen der Vorschaubilder und Abspielen von Videos, die der Verein im NewsCenter als Kanal eingebunden hat',
+    ],
+    // Client-Einbettung, keine Cloud Function dazwischen: Der Browser der Person lädt die
+    // Vorschaubilder von i.ytimg.com, sobald der Video-Tab geöffnet wird, und den Player von
+    // YouTube, sobald die Detailansicht eines Videos geöffnet wird (nicht erst beim Abspielen).
     dataClasses: ['log'],
-    retentionText: 'Gemäss Aufbewahrung des Anbieters; Daten fallen erst an, wenn ein Video abgespielt wird',
-    securityMeasures: ['Verschlüsselte Übertragung', 'Player wird erst nach Klick auf Abspielen geladen'],
+    retentionText:
+      'Gemäss Aufbewahrung des Anbieters; Daten fallen an, sobald der Video-Tab (Vorschaubilder) oder die Detailansicht eines Videos (Player) geöffnet wird',
+    securityMeasures: [
+      'Verschlüsselte Übertragung',
+      'Vorschaubilder ohne Referrer geladen',
+      'Player wird erst in der Detailansicht eines Videos geladen',
+    ],
     // Nicht verifiziert — bewusst leer, bis die Seiten geprüft sind.
     dpaUrl: '',
     privacyUrl: '',
     contact: '',
-    enabledWhen: byIntegration('youtube'),
+    enabledWhen: byFeatureBlock('news-center'),
     cloudFunctions: [],
     memberNoticeDe:
-      'Beim Abspielen eines eingebetteten Videos im NewsCenter wurden deine IP-Adresse und Wiedergabedaten an YouTube übermittelt.',
+      'Beim Öffnen des Video-Tabs im NewsCenter wurde deine IP-Adresse beim Laden der Vorschaubilder an YouTube übermittelt, beim Öffnen eines Videos zusätzlich Wiedergabedaten.',
   },
 ] as const;
 
