@@ -14,6 +14,8 @@
     "@okr/shared-ui": "*",
     "@okr/shared-util-core": "*",
     "@okr/content-notice-data-access": "*",
-    "@okr/content-notice-util": "*"
+    "@okr/content-notice-util": "*",
+    "@okr/shared-feature": "*",
+    "@okr/shared-util-angular": "*"
   }
 }

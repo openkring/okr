@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Attendee } from '@okr/shared-models';
-import { ANSWER_PAGE_CSP, attendeeStateOf, eventRefusal, invitationRefusal, lastEventDate, mayAnswer, neutralizeMeta } from './mailing-answer.logic';
+import { ANSWER_PAGE_CSP, attendeeCommentOf, attendeeStateOf, eventRefusal, invitationRefusal, lastEventDate, mayAnswer, neutralizeMeta, normalizeComment, withAttendeeComment } from './mailing-answer.logic';
 
 const doc = {
   deliveries: [{ personKey: 'p1', channels: ['email'] }, { personKey: 'p2', channels: ['chat'] }],
@@ -91,5 +91,32 @@ describe('answer page hardening', () => {
 
   it('prepends the viewport to a frame without head', () => {
     expect(neutralizeMeta('<p>x</p>')).toBe('<meta name="viewport" content="width=device-width,initial-scale=1"><p>x</p>');
+  });
+});
+
+describe('answer remark', () => {
+  const who = (key: string): Attendee['person'] => ({ key, name1: key, name2: '', modelType: 'person', type: '', subType: '', label: '' });
+  const list: Attendee[] = [
+    { person: who('p1'), state: 'accepted', comment: 'alt' },
+    { person: who('p2'), state: 'declined', comment: 'fremd' },
+  ];
+  it('reads the own remark, empty without one', () => {
+    expect(attendeeCommentOf(list, 'p1')).toBe('alt');
+    expect(attendeeCommentOf(list, 'p3')).toBe('');
+    expect(attendeeCommentOf(undefined, 'p1')).toBe('');
+  });
+  it('trims and cuts the typed remark', () => {
+    expect(normalizeComment('  komme später  ', 500)).toBe('komme später');
+    expect(normalizeComment('x'.repeat(600), 500)).toHaveLength(500);
+  });
+  it('sets the own remark and leaves the others alone', () => {
+    const next = withAttendeeComment(list, 'p1', 'neu');
+    expect(next[0].comment).toBe('neu');
+    expect(next[1]).toBe(list[1]);
+  });
+  it('removes the field for an empty remark (no undefined in Firestore arrays)', () => {
+    const next = withAttendeeComment(list, 'p1', '');
+    expect('comment' in next[0]).toBe(false);
+    expect(next[0].state).toBe('accepted');
   });
 });

@@ -2,7 +2,8 @@
 //
 // HTML for the calendar notification emails and the answer pages (spec 1.73 §2–§5).
 // Pure string builders: every piece of user text goes through escapeHtml, the rest is fixed
-// copy. Inline styles only — mail clients drop <style> blocks.
+// copy. Inline styles only — mail clients drop <style> blocks (the Versand answer page, a web
+// page, is the one exception: its buttons need a hover state).
 //
 // Every mail and every answer page opens with the same tenant banner (brand colour + logo), so
 // the landing page visibly belongs to the mail that led there. The banner is a table with
@@ -218,23 +219,63 @@ export interface MailingAnswerEvent {
   when: string;
   location: string;
   state: 'accepted' | 'waiting' | 'declined' | 'open';
+  /** The person's own remark on their answer, prefilled into the comment field. */
+  comment?: string;
   refusal?: AnswerRefusal;
 }
 
+/** How long an answer remark may be; the endpoint cuts a longer one. */
+export const MAILING_COMMENT_MAX = 500;
+
+/** `color` mixed with white: `share` of the colour (0…1), the rest white. For the hover tint. */
+export function tintOf(color: string, share: number): string {
+  const hex = brandColorOf(color);
+  const mix = (i: number): string => {
+    const c = parseInt(hex.slice(i, i + 2), 16);
+    return Math.round(255 - (255 - c) * share).toString(16).padStart(2, '0');
+  };
+  return `#${mix(1)}${mix(3)}${mix(5)}`;
+}
+
 /**
- * The answer page behind a Versand's personal link: one block per event, each with its own two
- * forms (the pressed form's `a` is the answer, `e` the event). An event that can no longer be
- * answered shows the refusal title instead of the forms.
+ * The answer buttons' look. A web page, not a mail, so a <style> block works (ANSWER_PAGE_CSP allows
+ * inline styles) and the buttons get a hover state: grey until hovered (brand tint) or chosen (brand colour).
+ */
+function mailingAnswerStyle(brand: Brand): string {
+  const color = brandColorOf(brand.brandColor);
+  return '<style>'
+    + '.okr-answer-btn{display:inline-block;padding:10px 18px;margin:4px 8px 4px 0;border-radius:6px;font-weight:600;font-size:16px;font-family:inherit;cursor:pointer;'
+    + 'background:#d0d7de;color:#1f2328;border:1px solid #8c959f;}'
+    + `.okr-answer-btn:hover,.okr-answer-btn:focus-visible{background:${tintOf(color, 0.25)};border-color:${color};color:#1f2328;}`
+    + `.okr-answer-btn.is-chosen{background:${color};border-color:${color};color:${textColorOn(color)};}`
+    + '.okr-answer-label{display:block;margin:10px 0 4px;color:#57606a;font-size:14px;}'
+    + '.okr-answer-comment{display:block;width:100%;box-sizing:border-box;padding:8px;border:1px solid #8c959f;border-radius:6px;font-size:15px;font-family:inherit;resize:vertical;}'
+    + '</style>';
+}
+
+/**
+ * The answer page behind a Versand's personal link: one block per event, each with its own form
+ * (an optional remark, and one submit button per answer — the pressed button's `a` is the answer,
+ * `e` the event). The button of the current answer is drawn in the brand colour. An event that can
+ * no longer be answered shows the refusal title instead of the form.
  */
 export function mailingAnswerPage(p: Brand & { firstName: string; postUrl: string; mailingKey: string; personKey: string; signature: string; message?: string; events: MailingAnswerEvent[] }): string {
-  const form = (event: MailingAnswerEvent, answer: 'accept' | 'decline', label: string, style: string): string =>
-    `<form method="post" action="${escapeHtml(p.postUrl)}" style="display:inline;">`
-    + `<input type="hidden" name="m" value="${escapeHtml(p.mailingKey)}">`
-    + `<input type="hidden" name="p" value="${escapeHtml(p.personKey)}">`
-    + `<input type="hidden" name="s" value="${escapeHtml(p.signature)}">`
-    + `<input type="hidden" name="e" value="${escapeHtml(event.caleventKey)}">`
-    + `<input type="hidden" name="a" value="${answer}">`
-    + `<button type="submit" style="${style}border:0;cursor:pointer;font-size:16px;font-family:inherit;">${label}</button></form>`;
+  const submit = (answer: 'accept' | 'decline', label: string, chosen: boolean): string =>
+    `<button type="submit" name="a" value="${answer}" class="okr-answer-btn${chosen ? ' is-chosen' : ''}"${chosen ? ' aria-pressed="true"' : ''}>${label}</button>`;
+  const form = (event: MailingAnswerEvent): string => {
+    const id = `c-${escapeHtml(event.caleventKey)}`;
+    return `<form method="post" action="${escapeHtml(p.postUrl)}" style="margin:0;">`
+      + `<input type="hidden" name="m" value="${escapeHtml(p.mailingKey)}">`
+      + `<input type="hidden" name="p" value="${escapeHtml(p.personKey)}">`
+      + `<input type="hidden" name="s" value="${escapeHtml(p.signature)}">`
+      + `<input type="hidden" name="e" value="${escapeHtml(event.caleventKey)}">`
+      + `<label class="okr-answer-label" for="${id}">Bemerkung (freiwillig)</label>`
+      + `<textarea class="okr-answer-comment" id="${id}" name="c" rows="2" maxlength="${MAILING_COMMENT_MAX}">${escapeHtml(event.comment)}</textarea>`
+      + `<p style="margin:8px 0 0;">`
+      + submit('accept', 'Ich nehme teil', event.state === 'accepted' || event.state === 'waiting')
+      + submit('decline', 'Ich nehme nicht teil', event.state === 'declined')
+      + `</p></form>`;
+  };
   const block = (event: MailingAnswerEvent): string => {
     const rows = [
       `<strong>${escapeHtml(event.name)}</strong>`,
@@ -243,12 +284,13 @@ export function mailingAnswerPage(p: Brand & { firstName: string; postUrl: strin
     ].filter(Boolean).join('<br>');
     const actions = event.refusal
       ? `<p style="margin:8px 0 0;color:#57606a;">${escapeHtml(REFUSAL_TEXT[event.refusal].title)}</p>`
-      : `<p style="margin:8px 0 0;">${form(event, 'accept', 'Ich nehme teil', primaryStyle(p))}${form(event, 'decline', 'Ich nehme nicht teil', SECONDARY)}</p>`;
+      : form(event);
     return `<div style="margin:16px 0;padding:12px 16px;background:#f6f8fa;border-radius:6px;">${rows}`
       + `<br><span style="color:#57606a;">Dein Stand: ${MAILING_STATE[event.state]}</span>${actions}</div>`;
   };
   return layout(p,
-    `<h1 style="font-size:20px;margin:0 0 8px;">Hallo ${escapeHtml(p.firstName)}, nimmst du teil?</h1>`
+    mailingAnswerStyle(p)
+    + `<h1 style="font-size:20px;margin:0 0 8px;">Hallo ${escapeHtml(p.firstName)}, nimmst du teil?</h1>`
     + (p.message ? `<p>${paragraphText(p.message)}</p>` : '')
     + p.events.map(block).join(''));
 }

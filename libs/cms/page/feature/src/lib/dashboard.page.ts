@@ -12,8 +12,12 @@ import { SectionDispatcher, SectionStore } from '@okr/cms-section-feature';
 
 import { PageStore } from './page.store';
 
-/** Section types that form the right-hand column of the two-column (lg) dashboard. */
-const SIDE_SECTION_TYPES = ['news'];
+/**
+ * Section types that get a column of their own on the multi-column (lg) dashboard, left to right after
+ * the first column (every other section): notices in the middle, news on the right.
+ */
+const COLUMN_SECTION_TYPES: string[][] = [['notices'], ['news']];
+const OWN_COLUMN_TYPES = COLUMN_SECTION_TYPES.flat();
 
 /** A section plus its position in the page, so the one-column layout keeps the page order. */
 interface DashboardItem { section: SectionModel; order: number; }
@@ -51,10 +55,11 @@ interface DashboardItem { section: SectionModel; order: number; }
       padding: 8px;
     }
 
-    /* Two columns from lg on (iPad landscape, desktop): the activity cards (invitations, chat,
-       events, tasks) stack on the left, news on the right — each column packs its own cards, so a
-       short card no longer leaves a gap beside a tall one. Below lg (and when one column would be
-       empty) the columns dissolve into the row and the sections follow the page order again. */
+    /* Up to three columns from lg on (iPad landscape, desktop): the activity cards (invitations, chat,
+       events, tasks) stack on the left, the Mitteilungen in the middle, news on the right — each
+       column packs its own cards, so a short card no longer leaves a gap beside a tall one. Empty
+       columns are left out. Below lg (and with a single column) the columns dissolve into the row
+       and the sections follow the page order again. */
     .dashboard-column {
       display: contents;
     }
@@ -302,16 +307,13 @@ interface DashboardItem { section: SectionModel; order: number; }
       } @else {     <!-- page contains sections -->
         <ion-grid>
           <ion-row [class.split]="isSplit()">
-            <div class="dashboard-column">
-              @for(item of mainSections(); track item.section.okey) {
-                <ng-container *ngTemplateOutlet="sectionCol; context: { $implicit: item }" />
-              }
-            </div>
-            <div class="dashboard-column">
-              @for(item of sideSections(); track item.section.okey) {
-                <ng-container *ngTemplateOutlet="sectionCol; context: { $implicit: item }" />
-              }
-            </div>
+            @for(column of columns(); track $index) {
+              <div class="dashboard-column">
+                @for(item of column; track item.section.okey) {
+                  <ng-container *ngTemplateOutlet="sectionCol; context: { $implicit: item }" />
+                }
+              </div>
+            }
           </ion-row>
         </ion-grid>
       }
@@ -357,9 +359,15 @@ export class DashboardPage {
   });
   protected isEmptyPage = computed(() => this.sections().length === 0);
   private items = computed((): DashboardItem[] => this.sections().map((section, order) => ({ section, order })));
-  protected mainSections = computed(() => this.items().filter(item => !SIDE_SECTION_TYPES.includes(item.section.type)));
-  protected sideSections = computed(() => this.items().filter(item => SIDE_SECTION_TYPES.includes(item.section.type)));
-  protected isSplit = computed(() => this.mainSections().length > 0 && this.sideSections().length > 0);
+  /** The non-empty columns, left to right: every other section first, then one per COLUMN_SECTION_TYPES entry. */
+  protected columns = computed((): DashboardItem[][] => {
+    const items = this.items();
+    return [
+      items.filter(item => !OWN_COLUMN_TYPES.includes(item.section.type)),
+      ...COLUMN_SECTION_TYPES.map(types => items.filter(item => types.includes(item.section.type))),
+    ].filter(column => column.length > 0);
+  });
+  protected isSplit = computed(() => this.columns().length > 1);
 
   constructor() {
     effect(() => {

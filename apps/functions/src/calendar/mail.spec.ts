@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { answerPage, answerResultPage, brandColorOf, chatDigestEmail, commentEmail, DEFAULT_BRAND_COLOR, escapeHtml, eventWhen, invitationAnswerEmail, invitationEmail, mailingAnswerPage, PAGE_CONTENT_SLOT, textColorOn } from './mail';
+import { answerPage, answerResultPage, brandColorOf, chatDigestEmail, tintOf, commentEmail, DEFAULT_BRAND_COLOR, escapeHtml, eventWhen, invitationAnswerEmail, invitationEmail, mailingAnswerPage, PAGE_CONTENT_SLOT, textColorOn } from './mail';
 
 const EVIL = '<script>alert("x")</script> & co';
 const base = { appName: 'Seeclub', brandColor: '#009D53', logoUrl: 'https://img.x/logo.png?w=96&fm=png', eventName: EVIL, when: '01.10.2026, 11:00', location: EVIL };
@@ -144,7 +144,7 @@ describe('mailingAnswerPage', () => {
     appName: 'Seeclub', firstName: 'Anna', postUrl: 'https://f.x/answer', mailingKey: 'm1', personKey: 'p1', signature: 'sig',
     events: [
       { caleventKey: 'e1', name: '<b>Hock</b>', when: '01.10.2026', location: 'Club', state: 'open' as const },
-      { caleventKey: 'e2', name: 'Regatta', when: '02.10.2026', location: '', state: 'accepted' as const },
+      { caleventKey: 'e2', name: 'Regatta', when: '02.10.2026', location: '', state: 'accepted' as const, comment: '<i>komme später</i>' },
       { caleventKey: 'e3', name: 'Abgesagt', when: '', location: '', state: 'declined' as const, refusal: 'cancelled' as const },
     ],
   };
@@ -175,6 +175,46 @@ describe('mailingAnswerPage', () => {
     expect(html).toContain('abgemeldet');
     expect(html).toContain('Bitte &lt;i&gt;antworten&lt;/i&gt;');
     expect(html.indexOf('Bitte')).toBeLessThan(html.indexOf('Hock'));
+  });
+});
+
+describe('mailingAnswerPage buttons and remark', () => {
+  const page = {
+    appName: 'Seeclub', brandColor: '#009D53', firstName: 'Anna', postUrl: 'https://f.x/answer', mailingKey: 'm1', personKey: 'p1', signature: 'sig',
+    events: [
+      { caleventKey: 'e1', name: 'Hock', when: '', location: '', state: 'open' as const },
+      { caleventKey: 'e2', name: 'Regatta', when: '', location: '', state: 'accepted' as const, comment: '<i>komme später</i>' },
+      { caleventKey: 'e3', name: 'Fondue', when: '', location: '', state: 'declined' as const },
+    ],
+  };
+  const formOf = (html: string, key: string): string => {
+    const at = html.indexOf(`name="e" value="${key}"`);
+    return html.slice(at, html.indexOf('</form>', at));
+  };
+  it('marks only the button of the current answer as chosen', () => {
+    const html = mailingAnswerPage(page);
+    expect(formOf(html, 'e1')).not.toContain('is-chosen');
+    expect(formOf(html, 'e2')).toMatch(/value="accept" class="okr-answer-btn is-chosen"/);
+    expect(formOf(html, 'e2')).toMatch(/value="decline" class="okr-answer-btn"/);
+    expect(formOf(html, 'e3')).toMatch(/value="decline" class="okr-answer-btn is-chosen"/);
+  });
+  it('has a remark field per event, prefilled and escaped', () => {
+    const html = mailingAnswerPage(page);
+    expect(html.match(/name="c"/g)).toHaveLength(3);
+    expect(formOf(html, 'e2')).toContain('&lt;i&gt;komme später&lt;/i&gt;</textarea>');
+  });
+  it('tints the hover state from the brand colour and colours the chosen button with it', () => {
+    const html = mailingAnswerPage(page);
+    expect(html).toContain(`:hover,.okr-answer-btn:focus-visible{background:${tintOf('#009d53', 0.25)}`);
+    expect(html).toContain('.okr-answer-btn.is-chosen{background:#009d53');
+  });
+});
+
+describe('tintOf', () => {
+  it('mixes the colour with white', () => {
+    expect(tintOf('#000000', 0.25)).toBe('#bfbfbf');
+    expect(tintOf('#009d53', 1)).toBe('#009d53');
+    expect(tintOf('#009d53', 0)).toBe('#ffffff');
   });
 });
 

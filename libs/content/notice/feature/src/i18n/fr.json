@@ -6,5 +6,6 @@
   "not_found": "Cette communication n’existe pas, ou elle ne t’est pas destinée.",
   "attachment_error": "La pièce jointe n’a pas pu être ouverte.",
   "empty": "Pas encore de communications.",
-  "more": "Toutes les communications"
+  "more": "Toutes les communications",
+  "list_title": "Communications"
 }

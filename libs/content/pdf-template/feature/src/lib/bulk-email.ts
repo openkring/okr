@@ -121,7 +121,7 @@ async function loadVersandEvents(ctx: BulkEmailContext): Promise<{ events: Versa
   ]);
   const events = versandEventsOf(calevents, calendars, today);
 
-  const groupKeys = [...new Set(events.map((e) => e.groupKey).filter((key): key is string => !!key))];
+  const groupKeys = [...new Set(events.flatMap((e) => e.groupKeys ?? []))];
   const membersByGroup: Record<string, string[]> = {};
   await Promise.all(groupKeys.map(async (groupKey) => {
     const query = getSystemQuery(ctx.tenantId);

@@ -38,7 +38,7 @@ import { NOTICE_I18N_KEYS, NoticeI18n } from '@okr/content-notice-util';
     <ion-header>
       <ion-toolbar color="secondary">
         <ion-buttons slot="start">
-          <ion-back-button defaultHref="/" />
+          <ion-back-button defaultHref="/notice" />
         </ion-buttons>
         <ion-title>{{ i18n.title() }}</ion-title>
       </ion-toolbar>

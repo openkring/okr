@@ -6,5 +6,6 @@
   "not_found": "Diese Mitteilung gibt es nicht, oder sie ist nicht für dich bestimmt.",
   "attachment_error": "Der Anhang konnte nicht geöffnet werden.",
   "empty": "Noch keine Mitteilungen.",
-  "more": "Alle Mitteilungen"
+  "more": "Alle Mitteilungen",
+  "list_title": "Mitteilungen"
 }

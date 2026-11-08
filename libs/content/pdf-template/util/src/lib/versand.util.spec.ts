@@ -75,15 +75,20 @@ describe('versandDeliveries', () => {
 });
 
 describe('groupReachWarnings', () => {
-  const cup: VersandEvent = { caleventKey: 'e1', name: 'Cup', when: '01.12.2026', groupKey: 'g1' };
+  const cup: VersandEvent = { caleventKey: 'e1', name: 'Cup', when: '01.12.2026', groupKeys: ['g1'] };
   const open: VersandEvent = { caleventKey: 'e2', name: 'Fest', when: '02.12.2026' };
 
   it('groupReachWarnings counts only non-members', () => {
     expect(groupReachWarnings([cup], ['a', 'b', 'c'], { g1: ['a'] })).toEqual([{ caleventKey: 'e1', eventName: 'Cup', count: 2 }]);
   });
 
-  it('groupReachWarnings skips events without groupKey', () => {
+  it('groupReachWarnings skips events without groups', () => {
     expect(groupReachWarnings([open], ['a', 'b'], {})).toEqual([]);
+  });
+
+  it('groupReachWarnings counts a member of any of the event\'s groups as reached', () => {
+    const two: VersandEvent = { ...cup, groupKeys: ['g1', 'g2'] };
+    expect(groupReachWarnings([two], ['a', 'b', 'c'], { g1: ['a'], g2: ['b'] })).toEqual([{ caleventKey: 'e1', eventName: 'Cup', count: 1 }]);
   });
 
   it('groupReachWarnings drops a zero count', () => {
@@ -95,7 +100,7 @@ describe('versandEventsOf', () => {
   const today = '20261107';
   const ev = (over: Partial<CalEventModel>): CalEventModel =>
     ({ okey: 'e', name: 'GV', startDate: '20261201', startTime: '19:30', calendars: ['scs'], state: 'planned', ...over }) as CalEventModel;
-  const calendars = [{ okey: 'scs', owner: 'org.scs' }, { okey: 'u14', owner: 'group.g14' }];
+  const calendars = [{ okey: 'scs', owner: 'org.scs' }, { okey: 'u14', owner: 'group.g14' }, { okey: 'u16', owner: 'group.g16' }];
   const keys = (events: CalEventModel[]) => versandEventsOf(events, calendars, today).map((e) => e.caleventKey);
 
   it('keeps a club event, with the mail\'s date text and no group', () => {
@@ -117,8 +122,12 @@ describe('versandEventsOf', () => {
     ])).toEqual(['today', 'edge']);
   });
 
-  it('takes the group from a group-owned calendar', () => {
-    expect(versandEventsOf([ev({ calendars: ['scs', 'u14'] })], calendars, today)[0].groupKey).toBe('g14');
+  it('takes the groups from group-owned calendars', () => {
+    expect(versandEventsOf([ev({ calendars: ['u14', 'u16'] })], calendars, today)[0].groupKeys).toEqual(['g14', 'g16']);
+  });
+
+  it('has no groups when the event is also in a club calendar (it reaches everyone)', () => {
+    expect(versandEventsOf([ev({ calendars: ['scs', 'u14'] })], calendars, today)[0].groupKeys).toBeUndefined();
   });
 });
 

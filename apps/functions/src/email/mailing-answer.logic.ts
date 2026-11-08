@@ -46,6 +46,28 @@ export function attendeeStateOf(attendees: Attendee[] | undefined, maxAttendees:
   return 'open';
 }
 
+/** The person's own remark on their answer to an event ('' without one). */
+export function attendeeCommentOf(attendees: Attendee[] | undefined, personKey: string): string {
+  return (attendees ?? []).find((a) => a.person.key === personKey)?.comment ?? '';
+}
+
+/** The remark as typed into the answer page: trimmed and cut to `max` characters. */
+export function normalizeComment(value: string, max: number): string {
+  return value.trim().slice(0, max);
+}
+
+/**
+ * The attendee list with the person's remark set — or removed when it is empty (Firestore takes no
+ * undefined inside an array element). Everyone else's entries stay untouched.
+ */
+export function withAttendeeComment(attendees: Attendee[], personKey: string, comment: string): Attendee[] {
+  return attendees.map((a) => {
+    if (a.person.key !== personKey) return a;
+    const { comment: _old, ...rest } = a;
+    return comment ? { ...rest, comment } : rest;
+  });
+}
+
 /**
  * No script, no plugins, no framing; inline styles, forms only to this function. Images only from the fixed
  * image CDN: the frame is tenant-editable, and a CSS attribute selector on the hidden signature field could

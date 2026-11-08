@@ -6,5 +6,6 @@
   "not_found": "Este comunicado no existe, o no es para ti.",
   "attachment_error": "No se pudo abrir el adjunto.",
   "empty": "Todavía no hay comunicados.",
-  "more": "Todos los comunicados"
+  "more": "Todos los comunicados",
+  "list_title": "Comunicados"
 }

@@ -237,11 +237,19 @@ const cms: BlockRoutes = {
       // not-found state for anyone else.
       path: 'notice',
       canActivate: [isAuthenticatedGuard],
-      children: [{
-        path: ':noticeKey',
-        loadComponent: () => import('@okr/content-notice-feature').then(m => m.NoticePage),
-        data: { color: 'secondary' },
-      }],
+      children: [
+        {
+          // Mitteilungen: all of the reader's notices, behind the section's «Alle Mitteilungen» button
+          path: '',
+          pathMatch: 'full',
+          loadComponent: () => import('@okr/content-notice-feature').then(m => m.NoticeListPage),
+        },
+        {
+          path: ':noticeKey',
+          loadComponent: () => import('@okr/content-notice-feature').then(m => m.NoticePage),
+          data: { color: 'secondary' },
+        },
+      ],
     },
     {
       // 'calendar' deliberately NOT here — it moved to calevent's own 'public' fragment

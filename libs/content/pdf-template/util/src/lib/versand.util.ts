@@ -102,8 +102,11 @@ export interface VersandEvent {
   name: string;
   /** the date (and time) as shown to the sender and in the mail, e.g. «01.12.2026, 19:30» */
   when: string;
-  /** the group whose calendar the event sits in, if any */
-  groupKey?: string;
+  /**
+   * The groups whose calendars the event sits in — only when it sits in group calendars ONLY. An event
+   * that is also in a club (non-group) calendar reaches everyone, so it has no groups here.
+   */
+  groupKeys?: string[];
 }
 
 /** How far ahead a Versand offers events. */
@@ -124,7 +127,8 @@ export function versandEventWhen(startDate: string | undefined, startTime: strin
  * VERSAND_EVENT_MONTHS ahead, and only the ones `sendMailing` accepts — no personal event (no calendar:
  * same rule as isPersonalCalevent in @okr/calendar-calevent-util, not imported because that barrel
  * carries an Angular pipe), nothing archived, cancelled, locked or still a poll date (`proposed`).
- * Each carries the group whose calendar it sits in, if any (a calendar owned by `group.<key>`).
+ * Each carries the groups whose calendars it sits in (a calendar owned by `group.<key>`), but only when ALL
+ * its calendars are group calendars: one club calendar among them means the event is open to everyone.
  */
 export function versandEventsOf(
   calevents: CalEventModel[],
@@ -140,20 +144,21 @@ export function versandEventsOf(
     .filter((e) => !e.isArchived && !e.isLocked && e.state !== 'cancelled' && e.state !== 'proposed')
     .filter((e) => !!e.startDate && e.startDate >= today && e.startDate <= until)
     .map((e) => {
-      const groupKey = (e.calendars ?? []).map((key) => groupOfCalendar.get(key)).find((key) => !!key);
+      const groups = (e.calendars ?? []).map((key) => groupOfCalendar.get(key));
+      const groupKeys = groups.every((key) => !!key) ? [...new Set(groups as string[])] : [];
       return {
         caleventKey: e.okey,
         name: e.name,
         when: versandEventWhen(e.startDate, e.startTime),
-        ...(groupKey ? { groupKey } : {}),
+        ...(groupKeys.length > 0 ? { groupKeys } : {}),
       };
     });
 }
 
 /**
- * Per chosen event of a group: how many of the E-Mail recipients are not in that group. They still get
- * the link and can answer, so this is a note, not a block. Events without a group, and a count of 0,
- * give no entry.
+ * Per chosen group-only event: how many of the E-Mail recipients are in none of its groups. They still get
+ * the link and can answer, so this is a note, not a block. Events without groups (open to the club), and a
+ * count of 0, give no entry.
  */
 export function groupReachWarnings(
   events: VersandEvent[],
@@ -162,8 +167,8 @@ export function groupReachWarnings(
 ): { caleventKey: string; eventName: string; count: number }[] {
   const out: { caleventKey: string; eventName: string; count: number }[] = [];
   for (const event of events) {
-    if (!event.groupKey) continue;
-    const members = new Set(membersByGroup[event.groupKey] ?? []);
+    if (!event.groupKeys?.length) continue;
+    const members = new Set(event.groupKeys.flatMap((key) => membersByGroup[key] ?? []));
     const count = emailKeys.filter((key) => !members.has(key)).length;
     if (count > 0) out.push({ caleventKey: event.caleventKey, eventName: event.name, count });
   }

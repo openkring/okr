@@ -5,7 +5,8 @@
 // its own two buttons. GET never writes (mail scanners open every link); the POST re-checks
 // signature and event and writes what invitationAnswer writes — the attendee entry of the event
 // (applyInvitationAnswer, in a transaction) and, when the person also holds an invitation to that
-// event, its state + respondedAt and the answer comment.
+// event, its state + respondedAt and the answer comment. An optional remark per event is kept on
+// the attendee entry (Attendee.comment) and, with an invitation, as a comment on it too.
 
 import { onRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
@@ -13,17 +14,16 @@ import { projectID } from 'firebase-functions/params';
 import { getFirestore } from 'firebase-admin/firestore';
 import { applyInvitationAnswer, getEventLocationName } from '@okr/shared-util-core';
 import { AvatarInfo, Attendee } from '@okr/shared-models';
-import { splitAttendees } from '@okr/calendar-calevent-util';
 
 import { isAnswerChoice, invitationLinkSecret, mailingAnswerFunctionUrl, verifyMailing } from '../calendar/answer-link';
-import { answerCommentDoc, answerResultText } from '../calendar/answer';
+import { answerCommentDoc } from '../calendar/answer';
 import { brandOf, NO_TENANT_LINKS, tenantLinks } from '../calendar/deliver';
 import { AnswerableEvent, eventInTenant, InvitationDoc } from '../calendar/invitation';
-import { answerResultPage, Brand, eventWhen, mailingAnswerPage, MailingAnswerEvent, PAGE_CONTENT_SLOT } from '../calendar/mail';
+import { answerResultPage, Brand, eventWhen, MAILING_COMMENT_MAX, mailingAnswerPage, MailingAnswerEvent, PAGE_CONTENT_SLOT } from '../calendar/mail';
 import { todayStoreDate } from '../calendar/recipients';
 import { AnswerRefusal, REFUSAL_TEXT } from '../calendar/refusal';
 import { toStoreDateTime } from '../srv/zurich-time';
-import { ANSWER_PAGE_CSP, attendeeStateOf, eventRefusal, invitationRefusal, mayAnswer, neutralizeMeta } from './mailing-answer.logic';
+import { ANSWER_PAGE_CSP, attendeeCommentOf, attendeeStateOf, eventRefusal, invitationRefusal, mayAnswer, neutralizeMeta, normalizeComment, withAttendeeComment } from './mailing-answer.logic';
 import { MailingDoc } from './mailing';
 import { renderEmail } from './render-email';
 
@@ -117,6 +117,7 @@ export const mailingAnswer = onRequest(
             when: event && refusal !== 'eventGone' ? eventWhen(event.startDate, event.startTime) : '',
             location: event && refusal !== 'eventGone' ? getEventLocationName(event) : '',
             state: attendeeStateOf(event?.attendees, event?.maxAttendees, personKey),
+            comment: attendeeCommentOf(event?.attendees, personKey),
             refusal,
           };
         }),
@@ -126,6 +127,7 @@ export const mailingAnswer = onRequest(
 
       const caleventKey = param(params, 'e');
       const answer = param(params, 'a');
+      const comment = normalizeComment(param(params, 'c'), MAILING_COMMENT_MAX);
       if (!isAnswerChoice(answer)) { refuse('invalid', 403); return; }
       const early = eventRefusal(caleventKey, caleventKeys, events.get(caleventKey), today);
       if (early === 'invalid') { refuse('invalid', 403); return; }
@@ -147,21 +149,24 @@ export const mailingAnswer = onRequest(
       };
       const authorName = `${names.firstName ?? ''} ${names.lastName ?? ''}`.trim();
 
-      const outcome = await db.runTransaction(async (tx): Promise<{ refusal: AnswerRefusal } | { waiting: boolean }> => {
+      const outcome = await db.runTransaction(async (tx): Promise<{ refusal: AnswerRefusal } | { saved: true }> => {
         const [freshEvent, freshInv] = await Promise.all([tx.get(eventRef), invRef ? tx.get(invRef) : Promise.resolve(undefined)]);
         const refusal = eventRefusal(caleventKey, caleventKeys, eventInTenant(freshEvent.data(), doc.tenants), todayStoreDate());
         if (refusal) return { refusal };
         const invData = freshInv?.exists ? (freshInv.data() as InvitationDoc) : undefined;
         const invLocked = invitationRefusal(invData);
         if (invLocked) return { refusal: invLocked };
-        const attendees = applyInvitationAnswer(freshEvent.data()?.['attendees'] as Attendee[] | undefined, person, state);
+        const answered = applyInvitationAnswer(freshEvent.data()?.['attendees'] as Attendee[] | undefined, person, state);
+        const attendees = withAttendeeComment(answered, personKey, comment);
         tx.update(eventRef, { attendees });
         if (invRef && invData && !invData.isArchived) {
           const invitationKey = invRef.id;
           tx.update(invRef, { state, respondedAt: now });
           tx.set(db.collection('comments').doc(), answerCommentDoc(invitationKey, personKey, authorName, state, now, tenantId));
+          // the remark also lands in the invitation's comment thread, where the inviter reads answers
+          if (comment) tx.set(db.collection('comments').doc(), { ...answerCommentDoc(invitationKey, personKey, authorName, state, now, tenantId), description: comment });
         }
-        return { waiting: splitAttendees(attendees, freshEvent.data()?.['maxAttendees'] as number | undefined).waiting.some((a) => a.person.key === personKey) };
+        return { saved: true };
       });
       if ('refusal' in outcome) {
         // only this event is refused; the others stay answerable
@@ -173,10 +178,10 @@ export const mailingAnswer = onRequest(
       logger.info(`${CF_NAME}: recorded ${state} for one mailing answer (tenant ${tenantId})`);
 
       // The page again, with the new state of that event: re-read it so the block shows the answer.
+      // No extra message: the chosen button and «Dein Stand» say which event got which answer.
       const fresh = await eventRef.get();
       events.set(caleventKey, eventOf(fresh.data(), doc.tenants));
-      const { title, message } = answerResultText(state, outcome.waiting);
-      res.status(200).send(page(`${title}. ${message}`));
+      res.status(200).send(page());
     } catch (err) {
       // Never log the keys, signature, or any name/email — only that it failed.
       logger.error(`${CF_NAME}: failed`, err);
