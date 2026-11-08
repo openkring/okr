@@ -252,5 +252,65 @@
     "cc_invalid": "Indirizzo Cc non valido.",
     "bcc_invalid": "Indirizzo Ccn non valido.",
     "changelog_required": "Descrivi brevemente cosa è cambiato in questa versione."
+  },
+  "mailing": {
+    "list": {
+      "title": "Invii",
+      "empty": "Ancora nessun invio."
+    },
+    "subject": "Oggetto",
+    "no_subject": "(senza oggetto)",
+    "sender": "Mittente",
+    "date": "Data",
+    "state": {
+      "label": "Stato",
+      "pending": "In corso",
+      "sent": "Inviato",
+      "failed": "Non riuscito"
+    },
+    "recipients": "Destinatari",
+    "counts": {
+      "emails": "E-mail",
+      "notices": "Comunicazioni",
+      "pushes": "Notifiche push",
+      "letters": "Lettere"
+    },
+    "not_found": "Questo invio non esiste, oppure non puoi vederlo.",
+    "summary": "Panoramica",
+    "error": "Errore",
+    "attachments": "Allegati",
+    "valid_until": "Risposte possibili fino al",
+    "job": {
+      "title": "Consegna e-mail",
+      "pending": "In attesa di avvio",
+      "sending": "Invio in corso",
+      "sent": "Inviato",
+      "failed": "Non riuscito",
+      "progress": "Avanzamento",
+      "error_code": "Tipo di errore",
+      "none": "Questo invio non contiene e-mail."
+    },
+    "letters": {
+      "title": "Lettere",
+      "failed": "Non è stato possibile creare le lettere.",
+      "load_error": "Non è stato possibile consultare le lettere."
+    },
+    "deliveries": {
+      "title": "Consegna",
+      "empty": "Nessuno su questo canale.",
+      "unknown_person": "Persona sconosciuta"
+    },
+    "events": {
+      "title": "Risposte",
+      "missing": "Questo evento non esiste più."
+    },
+    "answer": {
+      "accepted": "Accettato",
+      "waiting": "Lista d'attesa",
+      "declined": "Rifiutato",
+      "open": "Aperto",
+      "hint": "Lo stato attuale della lista dei partecipanti, per tutti i destinatari di questo invio."
+    },
+    "back": "Indietro"
   }
 }

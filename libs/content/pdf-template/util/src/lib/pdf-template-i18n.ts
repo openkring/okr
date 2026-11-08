@@ -223,3 +223,63 @@ export const EMAIL_COMPOSER_MSG_KEYS = {
   send_mailing:        PFX + 'composer.send.mailing',
   attachment_toolarge: PFX + 'composer.attachment.toolarge',
 } satisfies Record<string, string>;
+
+/** Keys for the Versand overview (MailingList, MailingPage): the status of a send. */
+export const MAILING_I18N_KEYS = {
+  list_title:        PFX + 'mailing.list.title',
+  empty:             PFX + 'mailing.list.empty',
+  subject:           PFX + 'mailing.subject',
+  no_subject:        PFX + 'mailing.no_subject',
+  sender:            PFX + 'mailing.sender',
+  date:              PFX + 'mailing.date',
+  state:             PFX + 'mailing.state.label',
+  state_pending:     PFX + 'mailing.state.pending',
+  state_sent:        PFX + 'mailing.state.sent',
+  state_failed:      PFX + 'mailing.state.failed',
+  recipients:        PFX + 'mailing.recipients',
+  emails:            PFX + 'mailing.counts.emails',
+  notices:           PFX + 'mailing.counts.notices',
+  pushes:            PFX + 'mailing.counts.pushes',
+  letters_count:     PFX + 'mailing.counts.letters',
+  not_found:         PFX + 'mailing.not_found',
+  summary:           PFX + 'mailing.summary',
+  error:             PFX + 'mailing.error',
+  attachments:       PFX + 'mailing.attachments',
+  valid_until:       PFX + 'mailing.valid_until',
+  // mail job
+  job_title:         PFX + 'mailing.job.title',
+  job_pending:       PFX + 'mailing.job.pending',
+  job_sending:       PFX + 'mailing.job.sending',
+  job_sent:          PFX + 'mailing.job.sent',
+  job_failed:        PFX + 'mailing.job.failed',
+  job_progress:      PFX + 'mailing.job.progress',
+  job_error_code:    PFX + 'mailing.job.error_code',
+  job_none:          PFX + 'mailing.job.none',
+  // letters
+  letters_title:     PFX + 'mailing.letters.title',
+  letters_pending:   PFX + 'composer.letters.pending',
+  letters_download:  PFX + 'composer.letters.download',
+  letters_kept:      PFX + 'composer.letters.kept',
+  letters_expired:   PFX + 'composer.letters.expired',
+  letters_failed:    PFX + 'mailing.letters.failed',
+  letters_missing:   PFX + 'composer.letters.missing',
+  letters_load_error: PFX + 'mailing.letters.load_error',
+  // deliveries
+  deliveries_title:  PFX + 'mailing.deliveries.title',
+  deliveries_empty:  PFX + 'mailing.deliveries.empty',
+  delivery_email:    PFX + 'composer.delivery.email',
+  delivery_chat:     PFX + 'composer.delivery.chat',
+  delivery_post:     PFX + 'composer.delivery.post',
+  unknown_person:    PFX + 'mailing.deliveries.unknown_person',
+  // events
+  events_title:      PFX + 'mailing.events.title',
+  event_missing:     PFX + 'mailing.events.missing',
+  answer_accepted:   PFX + 'mailing.answer.accepted',
+  answer_waiting:    PFX + 'mailing.answer.waiting',
+  answer_declined:   PFX + 'mailing.answer.declined',
+  answer_open:       PFX + 'mailing.answer.open',
+  answer_hint:       PFX + 'mailing.answer.hint',
+  back:              PFX + 'mailing.back',
+} satisfies Record<string, string>;
+
+export type MailingI18n = { [K in keyof typeof MAILING_I18N_KEYS]: Signal<string> };

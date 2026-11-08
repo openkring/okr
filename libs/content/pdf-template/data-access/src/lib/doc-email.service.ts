@@ -25,6 +25,8 @@ export interface MailJobStatus {
   blocksSent?: number;
   blocksTotal?: number;
   error?: string;
+  /** A personal send (answer links): class and status of the first failed mail, never its message. */
+  errorCode?: string;
 }
 
 export interface SendDocumentByEmailRequest {

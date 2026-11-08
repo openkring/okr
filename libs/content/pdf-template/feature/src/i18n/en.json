@@ -252,5 +252,65 @@
     "cc_invalid": "Invalid CC address.",
     "bcc_invalid": "Invalid BCC address.",
     "changelog_required": "Briefly describe what changed in this version."
+  },
+  "mailing": {
+    "list": {
+      "title": "Mailings",
+      "empty": "No mailing yet."
+    },
+    "subject": "Subject",
+    "no_subject": "(no subject)",
+    "sender": "Sender",
+    "date": "Date",
+    "state": {
+      "label": "Status",
+      "pending": "In progress",
+      "sent": "Sent",
+      "failed": "Failed"
+    },
+    "recipients": "Recipients",
+    "counts": {
+      "emails": "Emails",
+      "notices": "Notices",
+      "pushes": "Push messages",
+      "letters": "Letters"
+    },
+    "not_found": "This mailing does not exist, or you may not see it.",
+    "summary": "Overview",
+    "error": "Error",
+    "attachments": "Attachments",
+    "valid_until": "Answers possible until",
+    "job": {
+      "title": "Email delivery",
+      "pending": "Waiting to start",
+      "sending": "Sending",
+      "sent": "Sent",
+      "failed": "Failed",
+      "progress": "Progress",
+      "error_code": "Kind of error",
+      "none": "This mailing has no emails."
+    },
+    "letters": {
+      "title": "Letters",
+      "failed": "The letters could not be created.",
+      "load_error": "The letters could not be looked up."
+    },
+    "deliveries": {
+      "title": "Delivery",
+      "empty": "Nobody on this channel.",
+      "unknown_person": "Unknown person"
+    },
+    "events": {
+      "title": "Answers",
+      "missing": "This event no longer exists."
+    },
+    "answer": {
+      "accepted": "Accepted",
+      "waiting": "Waiting list",
+      "declined": "Declined",
+      "open": "Open",
+      "hint": "The current attendee list of the event, for every recipient of this mailing."
+    },
+    "back": "Back"
   }
 }

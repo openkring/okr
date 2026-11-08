@@ -967,6 +967,9 @@ const subject: FeatureBlock = {
       // `memberAdmin` matches `isMemberAdminGuard` on the route — which here is the only gate,
       // since persons are tenant-readable.
       { key: 'person-privacy', name: 'person-privacy', url: '/person/privacy', action: 'navigate', roleNeeded: 'memberAdmin', icon: 'shield', label: '@item.person-privacy' },
+      // Versand overview (spec 1.145). Seeded, never mirrored; `memberAdmin` matches `isMemberAdminGuard`
+      // on the route and the `mailings` read rule. In this block because the comm center that sends is here.
+      { key: 'mailing-all', name: 'mailing-all', url: '/mailings/all', action: 'navigate', roleNeeded: 'memberAdmin', icon: 'send', label: '@item.mailing-all' },
       { key: 'group-all', name: 'group-all', url: '/group/all/c-groups', action: 'navigate', roleNeeded: 'memberAdmin', icon: 'persons', label: '@item.group-all' },
     ]),
     // Live root-level sibling of `subjects-menu` in `main_scs`, NOT nested under it —

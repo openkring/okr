@@ -252,5 +252,65 @@
     "cc_invalid": "Dirección CC no válida.",
     "bcc_invalid": "Dirección CCO no válida.",
     "changelog_required": "Describe brevemente qué ha cambiado en esta versión."
+  },
+  "mailing": {
+    "list": {
+      "title": "Envíos",
+      "empty": "Todavía no hay envíos."
+    },
+    "subject": "Asunto",
+    "no_subject": "(sin asunto)",
+    "sender": "Remitente",
+    "date": "Fecha",
+    "state": {
+      "label": "Estado",
+      "pending": "En curso",
+      "sent": "Enviado",
+      "failed": "Fallido"
+    },
+    "recipients": "Destinatarios",
+    "counts": {
+      "emails": "Correos",
+      "notices": "Avisos",
+      "pushes": "Notificaciones push",
+      "letters": "Cartas"
+    },
+    "not_found": "Este envío no existe, o no puedes verlo.",
+    "summary": "Resumen",
+    "error": "Error",
+    "attachments": "Adjuntos",
+    "valid_until": "Respuestas posibles hasta",
+    "job": {
+      "title": "Entrega de correos",
+      "pending": "Esperando el inicio",
+      "sending": "Enviando",
+      "sent": "Enviado",
+      "failed": "Fallido",
+      "progress": "Progreso",
+      "error_code": "Tipo de error",
+      "none": "Este envío no tiene correos."
+    },
+    "letters": {
+      "title": "Cartas",
+      "failed": "No se pudieron crear las cartas.",
+      "load_error": "No se pudieron consultar las cartas."
+    },
+    "deliveries": {
+      "title": "Entrega",
+      "empty": "Nadie por este canal.",
+      "unknown_person": "Persona desconocida"
+    },
+    "events": {
+      "title": "Respuestas",
+      "missing": "Este evento ya no existe."
+    },
+    "answer": {
+      "accepted": "Aceptado",
+      "waiting": "Lista de espera",
+      "declined": "Rechazado",
+      "open": "Abierto",
+      "hint": "El estado actual de la lista de participantes, para todos los destinatarios de este envío."
+    },
+    "back": "Volver"
   }
 }

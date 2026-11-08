@@ -252,5 +252,65 @@
     "cc_invalid": "Adresse Cc non valide.",
     "bcc_invalid": "Adresse Cci non valide.",
     "changelog_required": "Décris brièvement ce qui a changé dans cette version."
+  },
+  "mailing": {
+    "list": {
+      "title": "Envois",
+      "empty": "Aucun envoi pour l'instant."
+    },
+    "subject": "Objet",
+    "no_subject": "(sans objet)",
+    "sender": "Expéditeur",
+    "date": "Date",
+    "state": {
+      "label": "État",
+      "pending": "En cours",
+      "sent": "Envoyé",
+      "failed": "Échoué"
+    },
+    "recipients": "Destinataires",
+    "counts": {
+      "emails": "E-mails",
+      "notices": "Messages",
+      "pushes": "Notifications push",
+      "letters": "Lettres"
+    },
+    "not_found": "Cet envoi n'existe pas, ou tu n'as pas le droit de le voir.",
+    "summary": "Aperçu",
+    "error": "Erreur",
+    "attachments": "Pièces jointes",
+    "valid_until": "Réponses possibles jusqu'au",
+    "job": {
+      "title": "Distribution des e-mails",
+      "pending": "En attente",
+      "sending": "Envoi en cours",
+      "sent": "Envoyé",
+      "failed": "Échoué",
+      "progress": "Progression",
+      "error_code": "Type d'erreur",
+      "none": "Cet envoi ne contient pas d'e-mails."
+    },
+    "letters": {
+      "title": "Lettres",
+      "failed": "Les lettres n'ont pas pu être créées.",
+      "load_error": "Les lettres n'ont pas pu être consultées."
+    },
+    "deliveries": {
+      "title": "Distribution",
+      "empty": "Personne par ce canal.",
+      "unknown_person": "Personne inconnue"
+    },
+    "events": {
+      "title": "Réponses",
+      "missing": "Cet événement n'existe plus."
+    },
+    "answer": {
+      "accepted": "Accepté",
+      "waiting": "Liste d'attente",
+      "declined": "Refusé",
+      "open": "Ouvert",
+      "hint": "L'état actuel de la liste des participants, pour tous les destinataires de cet envoi."
+    },
+    "back": "Retour"
   }
 }

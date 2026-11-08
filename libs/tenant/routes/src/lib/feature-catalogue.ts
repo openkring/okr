@@ -578,6 +578,18 @@ const subject: BlockRoutes = {
       ],
     },
     {
+      // Versand overview (spec 1.145): the status of the sends the comm center of this block starts.
+      // `isMemberAdminGuard` = privileged ∨ memberAdmin, the read rule of `mailings`. `view/:mailingKey`
+      // has two segments, so it cannot collide with `:listId`.
+      path: 'mailings',
+      canActivate: [isAuthenticatedGuard, isMemberAdminGuard],
+      children: [
+        { path: 'view/:mailingKey', loadComponent: () => import('@okr/content-pdf-template-feature').then(m => m.MailingPage) },
+        { path: ':listId', loadComponent: () => import('@okr/content-pdf-template-feature').then(m => m.MailingList) },
+        { path: '', redirectTo: 'all', pathMatch: 'full' },
+      ],
+    },
+    {
       path: 'org',
       canActivate: [isAuthenticatedGuard],
       children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/subject-org-feature').then(m => m.OrgList) }],

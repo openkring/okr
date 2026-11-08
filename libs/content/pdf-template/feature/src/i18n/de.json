@@ -252,5 +252,65 @@
     "cc_invalid": "Ungültige CC-Adresse.",
     "bcc_invalid": "Ungültige BCC-Adresse.",
     "changelog_required": "Beschreibe kurz, was sich in dieser Version geändert hat."
+  },
+  "mailing": {
+    "list": {
+      "title": "Versände",
+      "empty": "Noch kein Versand."
+    },
+    "subject": "Betreff",
+    "no_subject": "(ohne Betreff)",
+    "sender": "Absender",
+    "date": "Datum",
+    "state": {
+      "label": "Stand",
+      "pending": "In Arbeit",
+      "sent": "Versendet",
+      "failed": "Fehlgeschlagen"
+    },
+    "recipients": "Empfänger",
+    "counts": {
+      "emails": "E-Mails",
+      "notices": "Mitteilungen",
+      "pushes": "Push-Nachrichten",
+      "letters": "Briefe"
+    },
+    "not_found": "Diesen Versand gibt es nicht, oder du darfst ihn nicht sehen.",
+    "summary": "Übersicht",
+    "error": "Fehler",
+    "attachments": "Anhänge",
+    "valid_until": "Antworten möglich bis",
+    "job": {
+      "title": "E-Mail-Zustellung",
+      "pending": "Wartet auf den Start",
+      "sending": "Wird gesendet",
+      "sent": "Gesendet",
+      "failed": "Fehlgeschlagen",
+      "progress": "Fortschritt",
+      "error_code": "Fehlerart",
+      "none": "Dieser Versand hat keine E-Mails."
+    },
+    "letters": {
+      "title": "Briefe",
+      "failed": "Die Briefe konnten nicht erstellt werden.",
+      "load_error": "Die Briefe konnten nicht abgefragt werden."
+    },
+    "deliveries": {
+      "title": "Zustellung",
+      "empty": "Niemand auf diesem Weg.",
+      "unknown_person": "Unbekannte Person"
+    },
+    "events": {
+      "title": "Antworten",
+      "missing": "Diesen Anlass gibt es nicht mehr."
+    },
+    "answer": {
+      "accepted": "Zugesagt",
+      "waiting": "Warteliste",
+      "declined": "Abgesagt",
+      "open": "Offen",
+      "hint": "Der Stand der Teilnehmerliste des Anlasses, für alle Empfänger dieses Versands."
+    },
+    "back": "Zurück"
   }
 }
