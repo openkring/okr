@@ -167,6 +167,7 @@ export const EMAIL_COMPOSER_I18N_KEYS = {
   events_placeholder:  PFX + 'composer.events.placeholder',
   /** single braces: `{count}`, `{eventName}`, filled with `fill()` */
   events_reach_warning: PFX + 'composer.events.reach_warning',
+  events_remove:       PFX + 'composer.events.remove',
   list_personal:       PFX + 'composer.list.personal',
   to_reply_label:      PFX + 'composer.to.reply_label',
 

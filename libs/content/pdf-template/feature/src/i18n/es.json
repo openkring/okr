@@ -180,7 +180,8 @@
     "events": {
       "label": "Eventos",
       "placeholder": "Elige eventos a los que los destinatarios pueden apuntarse",
-      "reach_warning": "{count} destinatarios no están en el grupo de «{eventName}» y aun así pueden apuntarse con el enlace."
+      "reach_warning": "{count} destinatarios no están en el grupo de «{eventName}» y aun así pueden apuntarse con el enlace.",
+      "remove": "Quitar el evento"
     }
   },
   "category": {

@@ -180,7 +180,8 @@
     "events": {
       "label": "Anlässe",
       "placeholder": "Wähle Anlässe, zu denen sich die Empfänger anmelden können",
-      "reach_warning": "{count} Empfänger sind nicht in der Gruppe von «{eventName}» und können sich über den Link trotzdem anmelden."
+      "reach_warning": "{count} Empfänger sind nicht in der Gruppe von «{eventName}» und können sich über den Link trotzdem anmelden.",
+      "remove": "Anlass entfernen"
     }
   },
   "category": {

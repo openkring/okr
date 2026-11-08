@@ -180,7 +180,8 @@
     "events": {
       "label": "Events",
       "placeholder": "Choose events the recipients can sign up for",
-      "reach_warning": "{count} recipients are not in the group of «{eventName}» and can still sign up through the link."
+      "reach_warning": "{count} recipients are not in the group of «{eventName}» and can still sign up through the link.",
+      "remove": "Remove event"
     }
   },
   "category": {

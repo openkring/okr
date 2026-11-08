@@ -87,6 +87,10 @@ type ComposerSegment = 'editor' | 'preview' | 'delivery' | 'list';
     .segment { padding: 8px 12px 0; }
     .editor-actions { display: flex; justify-content: flex-end; align-items: center; gap: 4px; padding: 4px 12px; }
     .note { display: block; padding: 0 12px 8px; }
+    .reach-warnings { background: var(--ion-background-color, #ffffff); border-left: 4px solid var(--ion-color-warning); padding: 8px 12px; }
+    .reach-warning { display: flex; align-items: flex-start; gap: 8px; color: var(--ion-text-color); font-size: 0.9rem; line-height: 1.4; }
+    .reach-warning + .reach-warning { margin-top: 4px; }
+    .reach-warning ion-icon { flex: none; font-size: 1.1rem; margin-top: 1px; color: var(--ion-color-warning-shade); }
     .attachments { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
     .attachments .spacer { flex: 1; }
     .preview-frame { width: 100%; min-height: 420px; border: 0; background: #ffffff; }
@@ -97,8 +101,15 @@ type ComposerSegment = 'editor' | 'preview' | 'delivery' | 'list';
 
     @if (showConfirmation()) {
       <okr-change-confirmation [i18n]="changeConfirmationI18n()" (saveClicked)="send()" (cancelClicked)="revert()" />
-      @for (warning of reachWarnings(); track warning.caleventKey) {
-        <ion-note color="warning" class="note">{{ reachWarningText(warning) }}</ion-note>
+      @if (reachWarnings().length > 0) {
+        <div class="reach-warnings" role="status">
+          @for (warning of reachWarnings(); track warning.caleventKey) {
+            <div class="reach-warning">
+              <ion-icon src="{{ 'warning' | svgIcon }}" />
+              <span>{{ reachWarningText(warning) }}</span>
+            </div>
+          }
+        </div>
       }
     }
 
@@ -159,9 +170,9 @@ type ComposerSegment = 'editor' | 'preview' | 'delivery' | 'list';
                   </ion-row>
                   @if (showEvents()) {
                     <ion-row>
-                      <ion-col size="12" size-md="6">
+                      <ion-col size="12">
                         <okr-versand-events-select [events]="versandEvents()" [label]="i18n.events_label()"
-                          [placeholder]="i18n.events_placeholder()"
+                          [placeholder]="i18n.events_placeholder()" [removeLabel]="i18n.events_remove()"
                           [selected]="caleventKeys()" (selectedChange)="onEventsChange($event)" />
                       </ion-col>
                     </ion-row>

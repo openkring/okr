@@ -180,7 +180,8 @@
     "events": {
       "label": "Eventi",
       "placeholder": "Scegli gli eventi a cui i destinatari possono iscriversi",
-      "reach_warning": "{count} destinatari non fanno parte del gruppo di «{eventName}» e possono comunque iscriversi tramite il link."
+      "reach_warning": "{count} destinatari non fanno parte del gruppo di «{eventName}» e possono comunque iscriversi tramite il link.",
+      "remove": "Rimuovi l'evento"
     }
   },
   "category": {

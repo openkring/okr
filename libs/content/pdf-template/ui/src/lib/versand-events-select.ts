@@ -1,33 +1,51 @@
 // libs/content/pdf-template/ui/src/lib/versand-events-select.ts
 import { ChangeDetectionStrategy, Component, computed, input, model } from '@angular/core';
-import { IonItem, IonSelect, IonSelectOption } from '@ionic/angular';
+import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonSelect, IonSelectOption } from '@ionic/angular';
 
 import type { VersandEvent } from '@okr/content-pdf-template-util';
+import { SvgIconPipe } from '@okr/shared-pipes';
 
 /**
- * The «Anlässe» field of a Versand: a multi-select over the offered events, each shown as
- * `when · name`. Presentational — the composer owns the chosen keys.
+ * The «Anlässe» field of a Versand: a picker over the events not yet chosen, followed by the
+ * chosen events as a list — one per line, each shown as `when · name` with a button that
+ * removes it again. Presentational — the composer owns the chosen keys.
  */
 @Component({
   selector: 'okr-versand-events-select',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IonItem, IonSelect, IonSelectOption],
+  imports: [IonButton, IonIcon, IonItem, IonLabel, IonList, IonSelect, IonSelectOption, SvgIconPipe],
+  styles: [`
+    .chosen ion-label { white-space: normal; }
+  `],
   template: `
-    <ion-item lines="none">
-      <ion-select name="caleventKeys"
-        [label]="label()"
-        [placeholder]="placeholder()"
-        label-placement="floating"
-        interface="popover"
-        [multiple]="true"
-        [value]="selected()"
-        (ionChange)="onChange($event.detail.value)">
-        @for (option of options(); track option.key) {
-          <ion-select-option [value]="option.key">{{ option.text }}</ion-select-option>
+    @if (available().length > 0) {
+      <ion-item lines="none">
+        <ion-select #picker name="caleventKeys"
+          [label]="label()"
+          [placeholder]="placeholder()"
+          label-placement="floating"
+          interface="popover"
+          (ionChange)="add(picker, $event.detail.value)">
+          @for (option of available(); track option.key) {
+            <ion-select-option [value]="option.key">{{ option.text }}</ion-select-option>
+          }
+        </ion-select>
+      </ion-item>
+    }
+    @if (chosen().length > 0) {
+      <ion-list lines="inset" class="chosen">
+        @for (option of chosen(); track option.key) {
+          <ion-item>
+            <ion-label>{{ option.text }}</ion-label>
+            <ion-button slot="end" fill="clear" color="medium" [attr.aria-label]="removeLabel()" [title]="removeLabel()"
+              (click)="remove(option.key)">
+              <ion-icon slot="icon-only" src="{{ 'cancel-circle' | svgIcon }}" />
+            </ion-button>
+          </ion-item>
         }
-      </ion-select>
-    </ion-item>
+      </ion-list>
+    }
   `,
 })
 export class VersandEventsSelect {
@@ -35,14 +53,35 @@ export class VersandEventsSelect {
   public readonly events = input.required<VersandEvent[]>();
   public readonly label = input.required<string>();
   public readonly placeholder = input<string>('');
+  public readonly removeLabel = input<string>('');
 
   /** the chosen `caleventKey`s */
   public readonly selected = model<string[]>([]);
 
-  protected readonly options = computed(() =>
+  private readonly options = computed(() =>
     this.events().map((event) => ({ key: event.caleventKey, text: `${event.when} · ${event.name}` })));
 
-  protected onChange(value: unknown): void {
-    this.selected.set(Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : []);
+  /** the chosen events, in the order they were picked */
+  protected readonly chosen = computed(() => {
+    const byKey = new Map(this.options().map((option) => [option.key, option]));
+    return this.selected().flatMap((key) => byKey.get(key) ?? []);
+  });
+
+  /** the events that can still be picked */
+  protected readonly available = computed(() => {
+    const chosen = new Set(this.selected());
+    return this.options().filter((option) => !chosen.has(option.key));
+  });
+
+  protected add(picker: IonSelect, value: unknown): void {
+    if (typeof value !== 'string' || value.length === 0) return;
+    // the picker is an «add» control: clear it again so the chosen event only shows in the list
+    picker.value = undefined;
+    if (this.selected().includes(value)) return;
+    this.selected.set([...this.selected(), value]);
+  }
+
+  protected remove(key: string): void {
+    this.selected.set(this.selected().filter((k) => k !== key));
   }
 }
