@@ -101,49 +101,30 @@ export class NewsCenterService {
     }
   }
 
-  /** Loads the channels with at most `concurrency` requests in flight; reports each result as soon as it is there. */
+  /**
+   * Loads the channels through the shared `queue` (at most 4 relay calls in flight for the whole
+   * page) and reports each result as soon as it is there. A channel that is no longer `wanted`
+   * when its turn comes (its segment was left) is not fetched; `onSkipped` reports it instead.
+   */
   public async loadChannels(
     channels: NewsChannelModel[],
-    onLoaded: (channelKey: string, state: NewsFeedState) => void,
-    concurrency = NEWS_FETCH_CONCURRENCY,
+    queue: NewsFetchQueue,
+    handlers: { onLoaded: (channelKey: string, state: NewsFeedState) => void; onSkipped?: (channelKey: string) => void },
+    wanted: (channel: NewsChannelModel) => boolean = () => true,
     now: () => number = Date.now
   ): Promise<void> {
-    const queue = [...channels];
-    const worker = async (): Promise<void> => {
-      for (let channel = queue.shift(); channel; channel = queue.shift()) {
-        onLoaded(channel.okey, await this.loadChannel(channel, now()));
-      }
-    };
-    await Promise.all(Array.from({ length: Math.min(concurrency, queue.length) }, worker));
+    await Promise.all(channels.map((channel) => queue.enqueue({
+      wanted: () => wanted(channel),
+      run: async () => handlers.onLoaded(channel.okey, await this.loadChannel(channel, now())),
+      skip: () => handlers.onSkipped?.(channel.okey),
+    })));
   }
 
   /*-------------------------- subscription --------------------------------*/
 
-  /** «Entfernen»: a default channel goes on the hidden list, an added one comes off the added list. */
-  public hide(sub: NewsSubscriptionModel, channel: NewsChannelModel): Promise<NewsSubscriptionModel> {
-    return this.save(channel.defaultOn
-      ? { ...sub, hiddenChannelKeys: addKey(sub.hiddenChannelKeys, channel.okey) }
-      : { ...sub, addedChannelKeys: removeKey(sub.addedChannelKeys, channel.okey) });
-  }
-
-  /** «wieder einblenden» for a hidden default channel. */
-  public show(sub: NewsSubscriptionModel, channelKey: string): Promise<NewsSubscriptionModel> {
-    return this.save({ ...sub, hiddenChannelKeys: removeKey(sub.hiddenChannelKeys, channelKey) });
-  }
-
-  /** «Kanal hinzufügen» for an offered channel. */
-  public add(sub: NewsSubscriptionModel, channelKey: string): Promise<NewsSubscriptionModel> {
-    return this.save({ ...sub, addedChannelKeys: addKey(sub.addedChannelKeys, channelKey) });
-  }
-
-  /** «Standard wiederherstellen» for one segment. */
-  public reset(sub: NewsSubscriptionModel, channels: NewsChannelModel[], segment: NewsSegment): Promise<NewsSubscriptionModel> {
-    return this.save(resetSegment(sub, channels, segment));
-  }
-
-  private async save(sub: NewsSubscriptionModel): Promise<NewsSubscriptionModel> {
-    await this.subscriptionService.save(sub);
-    return sub;
+  /** A per-page writer for the user's subscription doc; `onLocalChange` receives the optimistic doc (undefined = back to the server's). */
+  public subscriptionWriter(onLocalChange: (sub: NewsSubscriptionModel | undefined) => void): NewsSubscriptionWriter {
+    return new NewsSubscriptionWriter((sub) => this.subscriptionService.save(sub), onLocalChange);
   }
 
   /*-------------------------- suggestions --------------------------------*/
@@ -199,6 +180,124 @@ export class NewsCenterService {
       const channel = byKey.get(key);
       if (channel && channel.order !== index) await this.channelService.update({ ...channel, order: index });
     }
+  }
+}
+
+/** One unit of work for `NewsFetchQueue`. */
+export interface NewsFetchTask {
+  /** checked when the task would start; false drops it without running */
+  wanted: () => boolean;
+  run: () => Promise<void>;
+  skip: () => void;
+}
+
+/**
+ * The page-wide limit on relay calls: at most `max` tasks run at once, however many refreshes
+ * queued them. Tasks that are no longer wanted are dropped instead of started (`prune` drops them
+ * at once, e.g. on a segment switch).
+ */
+export class NewsFetchQueue {
+  private readonly waiting: { task: NewsFetchTask; done: () => void }[] = [];
+  private active = 0;
+
+  constructor(private readonly max = NEWS_FETCH_CONCURRENCY) {}
+
+  /** Resolves when the task has run or was dropped; never rejects. */
+  public enqueue(task: NewsFetchTask): Promise<void> {
+    return new Promise<void>((done) => {
+      this.waiting.push({ task, done });
+      this.pump();
+    });
+  }
+
+  /** Drops every waiting task that is no longer wanted. */
+  public prune(): void {
+    for (let i = this.waiting.length - 1; i >= 0; i--) {
+      const entry = this.waiting[i];
+      if (!entry.task.wanted()) {
+        this.waiting.splice(i, 1);
+        this.drop(entry);
+      }
+    }
+  }
+
+  private pump(): void {
+    while (this.active < this.max && this.waiting.length > 0) {
+      const entry = this.waiting.shift();
+      if (!entry) return;
+      if (!entry.task.wanted()) {
+        this.drop(entry);
+        continue;
+      }
+      this.active++;
+      entry.task.run()
+        .catch((error) => console.warn('NewsFetchQueue:', error))
+        .finally(() => {
+          this.active--;
+          entry.done();
+          this.pump();
+        });
+    }
+  }
+
+  private drop(entry: { task: NewsFetchTask; done: () => void }): void {
+    entry.task.skip();
+    entry.done();
+  }
+}
+
+/**
+ * Saves the user's subscription without losing quick taps. Each change is applied at once to a
+ * local copy (built on the previous change, not on the last server snapshot) and the writes run
+ * one after another. When the last write has finished, the local copy is dropped and the server's
+ * doc (which then carries every change) takes over again — also after a failed write.
+ */
+export class NewsSubscriptionWriter {
+  private local: NewsSubscriptionModel | undefined;
+  private chain: Promise<unknown> = Promise.resolve();
+  private pending = 0;
+
+  constructor(
+    private readonly persist: (sub: NewsSubscriptionModel) => Promise<void>,
+    private readonly onLocalChange: (sub: NewsSubscriptionModel | undefined) => void
+  ) {}
+
+  /** «Entfernen»: a default channel goes on the hidden list, an added one comes off the added list. */
+  public hide(base: NewsSubscriptionModel, channel: NewsChannelModel): Promise<NewsSubscriptionModel> {
+    return this.apply(base, (sub) => (channel.defaultOn
+      ? { ...sub, hiddenChannelKeys: addKey(sub.hiddenChannelKeys, channel.okey) }
+      : { ...sub, addedChannelKeys: removeKey(sub.addedChannelKeys, channel.okey) }));
+  }
+
+  /** «wieder einblenden» for a hidden default channel. */
+  public show(base: NewsSubscriptionModel, channelKey: string): Promise<NewsSubscriptionModel> {
+    return this.apply(base, (sub) => ({ ...sub, hiddenChannelKeys: removeKey(sub.hiddenChannelKeys, channelKey) }));
+  }
+
+  /** «Kanal hinzufügen» for an offered channel. */
+  public add(base: NewsSubscriptionModel, channelKey: string): Promise<NewsSubscriptionModel> {
+    return this.apply(base, (sub) => ({ ...sub, addedChannelKeys: addKey(sub.addedChannelKeys, channelKey) }));
+  }
+
+  /** «Standard wiederherstellen» for one segment. */
+  public reset(base: NewsSubscriptionModel, channels: NewsChannelModel[], segment: NewsSegment): Promise<NewsSubscriptionModel> {
+    return this.apply(base, (sub) => resetSegment(sub, channels, segment));
+  }
+
+  private apply(base: NewsSubscriptionModel, change: (sub: NewsSubscriptionModel) => NewsSubscriptionModel): Promise<NewsSubscriptionModel> {
+    const next = change(this.local ?? base);
+    this.local = next;
+    this.pending++;
+    this.onLocalChange(next);
+    // the bookkeeping runs before the caller's await resumes, so a settled tap never sees a stale local copy
+    const settled = this.chain.then(() => this.persist(next)).finally(() => {
+      if (--this.pending === 0) {
+        this.local = undefined;
+        this.onLocalChange(undefined);
+      }
+    });
+    this.chain = settled.catch(() => undefined);
+    return settled.then(() => next);
   }
 }
 

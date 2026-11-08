@@ -10,19 +10,21 @@ import { inject } from '@angular/core';
 import { NewsChannelModel, NewsChannelRequestModel, NewsSubscriptionModel } from '@okr/shared-models';
 import { NewsChannelRequestService, NewsChannelService, NewsRelayService, NewsSubscriptionService } from '@okr/social-news-center-data-access';
 
-import { emptySubscription, NewsCenterService, NewsFeedState, NEWS_REFETCH_MS, staleChannels, toResolveError } from './news-center.service';
+import { emptySubscription, NewsCenterService, NewsFeedState, NewsFetchQueue, NEWS_REFETCH_MS, staleChannels, toResolveError } from './news-center.service';
 
 const RSS = `<?xml version="1.0"?><rss version="2.0"><channel><title>t</title>
   <item><title>One</title><link>https://x.ch/1</link><guid>1</guid><pubDate>Sat, 07 Nov 2026 10:00:00 GMT</pubDate></item>
 </channel></rss>`;
 
 const relay = { fetchFeed: vi.fn(), fetchImage: vi.fn(), resolve: vi.fn() };
-const subscriptions = { save: vi.fn(async () => undefined), read: vi.fn() };
+const subscriptions = { save: vi.fn<(sub: NewsSubscriptionModel) => Promise<void>>(async () => undefined), read: vi.fn() };
 const channelsSvc = { create: vi.fn(async () => 'new-channel'), update: vi.fn(async () => 'k'), archive: vi.fn(), list: vi.fn() };
 const requests = { create: vi.fn<(req: NewsChannelRequestModel) => Promise<string>>(async () => 'req-key'), decide: vi.fn(async () => undefined), listOpen: vi.fn(), listMine: vi.fn() };
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // clearAllMocks keeps queued mockImplementationOnce entries; a failed test must not leak them
+  subscriptions.save.mockReset().mockImplementation(async () => undefined);
   vi.mocked(inject).mockImplementation(((token: unknown) => {
     if (token === NewsRelayService) return relay;
     if (token === NewsSubscriptionService) return subscriptions;
@@ -49,7 +51,7 @@ describe('NewsCenterService.loadChannels', () => {
     const results: Record<string, NewsFeedState> = {};
     vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
-    await new NewsCenterService().loadChannels([channel('a'), channel('bad'), channel('c')], (k, s) => (results[k] = s), 4, () => 1000);
+    await new NewsCenterService().loadChannels([channel('a'), channel('bad'), channel('c')], new NewsFetchQueue(), { onLoaded: (k, s) => (results[k] = s) }, undefined, () => 1000);
 
     expect(results['bad']).toEqual({ items: [], loading: false, error: true, fetchedAt: 1000 });
     expect(results['a'].error).toBe(false);
@@ -62,7 +64,7 @@ describe('NewsCenterService.loadChannels', () => {
     const results: Record<string, NewsFeedState> = {};
     vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
-    await new NewsCenterService().loadChannels([channel('html'), channel('ok')], (k, s) => (results[k] = s));
+    await new NewsCenterService().loadChannels([channel('html'), channel('ok')], new NewsFetchQueue(), { onLoaded: (k, s) => (results[k] = s) });
 
     expect(results['html'].error).toBe(true);
     expect(results['ok'].error).toBe(false);
@@ -79,7 +81,7 @@ describe('NewsCenterService.loadChannels', () => {
     });
     const loaded: string[] = [];
 
-    await new NewsCenterService().loadChannels(['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((k) => channel(k)), (k) => loaded.push(k));
+    await new NewsCenterService().loadChannels(['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((k) => channel(k)), new NewsFetchQueue(), { onLoaded: (k) => loaded.push(k) });
 
     expect(peak).toBe(4);
     expect(loaded).toHaveLength(9);
@@ -91,12 +93,43 @@ describe('NewsCenterService.loadChannels', () => {
     const direct = channel('cam', { kind: 'image', segment: 'webcam', feedUrl: 'https://cam.ch/snap.jpg' });
     const relayed = channel('relayed', { kind: 'image', segment: 'webcam', feedUrl: 'http://cam.ch:8080/snap.jpg', viaRelay: true });
 
-    await new NewsCenterService().loadChannels([direct, relayed], (k, s) => (results[k] = s), 4, () => 5000);
+    await new NewsCenterService().loadChannels([direct, relayed], new NewsFetchQueue(), { onLoaded: (k, s) => (results[k] = s) }, undefined, () => 5000);
 
     expect(relay.fetchFeed).not.toHaveBeenCalled();
     expect(relay.fetchImage).toHaveBeenCalledWith('relayed');
     expect(results['cam'].items[0].mediaUrl).toBe('https://cam.ch/snap.jpg?t=5000');
     expect(results['relayed'].items[0].mediaUrl).toBe('data:image/jpeg;base64,AAAA');
+  });
+
+  it('two quick refreshes on different segments share one limit of four and drop the left segment', async () => {
+    let inFlight = 0;
+    let peak = 0;
+    relay.fetchFeed.mockImplementation(async () => {
+      peak = Math.max(peak, ++inFlight);
+      await new Promise((r) => setTimeout(r, 2));
+      inFlight--;
+      return { body: RSS, contentType: 'application/rss+xml' };
+    });
+    const service = new NewsCenterService();
+    const queue = new NewsFetchQueue();
+    let segment = 'video';
+    const wanted = (c: NewsChannelModel) => c.segment === segment;
+    const loaded: string[] = [];
+    const skipped: string[] = [];
+    const handlers = { onLoaded: (k: string) => loaded.push(k), onSkipped: (k: string) => skipped.push(k) };
+    const videos = ['v1', 'v2', 'v3', 'v4', 'v5', 'v6'].map((k) => channel(k, { segment: 'video' }));
+    const audios = ['a1', 'a2', 'a3', 'a4', 'a5', 'a6'].map((k) => channel(k, { segment: 'audio', kind: 'podcast' }));
+
+    const first = service.loadChannels(videos, queue, handlers, wanted);
+    segment = 'audio';
+    queue.prune();
+    const second = service.loadChannels(audios, queue, handlers, wanted);
+    await Promise.all([first, second]);
+
+    expect(peak).toBe(4);
+    expect(skipped).toEqual(['v6', 'v5']);
+    expect(loaded.sort()).toEqual(['a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'v1', 'v2', 'v3', 'v4']);
+    expect(relay.fetchFeed).toHaveBeenCalledTimes(10);
   });
 });
 
@@ -124,29 +157,63 @@ describe('staleChannels (refetch on setSegment)', () => {
   });
 });
 
-describe('NewsCenterService subscription changes', () => {
+describe('NewsSubscriptionWriter (via NewsCenterService.subscriptionWriter)', () => {
   it('hide writes hiddenChannelKeys for a default channel', async () => {
     const sub = emptySubscription('u1', 'scs');
 
-    await new NewsCenterService().hide(sub, channel('a', { defaultOn: true }));
+    await new NewsCenterService().subscriptionWriter(() => undefined).hide(sub, channel('a', { defaultOn: true }));
 
     expect(subscriptions.save).toHaveBeenCalledWith(expect.objectContaining({ okey: 'u1', tenants: ['scs'], hiddenChannelKeys: ['a'] }));
+  });
+
+  it('two hide taps back to back, from the same snapshot, both end up hidden', async () => {
+    const saved: NewsSubscriptionModel[] = [];
+    let release: () => void = () => undefined;
+    subscriptions.save.mockImplementationOnce(async (s: NewsSubscriptionModel) => {
+      await new Promise<void>((r) => (release = r));   // the first write is slow (readModelOnce + write)
+      saved.push(s);
+    }).mockImplementationOnce(async (s: NewsSubscriptionModel) => { saved.push(s); });
+    const locals: (NewsSubscriptionModel | undefined)[] = [];
+    const writer = new NewsCenterService().subscriptionWriter((s) => locals.push(s));
+    const snapshot = emptySubscription('u1', 'scs');
+
+    const first = writer.hide(snapshot, channel('a', { defaultOn: true }));
+    const second = writer.hide(snapshot, channel('b', { defaultOn: true }));
+    expect(locals.map((l) => l?.hiddenChannelKeys)).toEqual([['a'], ['a', 'b']]);   // optimistic, synchronous
+    await vi.waitFor(() => expect(subscriptions.save).toHaveBeenCalledTimes(1));
+    await new Promise((r) => setTimeout(r, 5));
+    expect(subscriptions.save).toHaveBeenCalledTimes(1);                             // the second waits for the first
+    release();
+    await Promise.all([first, second]);
+
+    expect(saved.map((s) => s.hiddenChannelKeys)).toEqual([['a'], ['a', 'b']]);
+    expect(locals.at(-1)).toBeUndefined();   // idle again: the server doc takes over
+  });
+
+  it('a failed write rejects its tap and hands back to the server doc', async () => {
+    subscriptions.save.mockRejectedValueOnce(new Error('denied'));
+    const locals: (NewsSubscriptionModel | undefined)[] = [];
+    const writer = new NewsCenterService().subscriptionWriter((s) => locals.push(s));
+
+    await expect(writer.add(emptySubscription('u1', 'scs'), 'x')).rejects.toThrow('denied');
+
+    expect(locals.at(-1)).toBeUndefined();
   });
 
   it('hide of an added channel takes it off addedChannelKeys', async () => {
     const sub: NewsSubscriptionModel = { ...emptySubscription('u1', 'scs'), addedChannelKeys: ['x', 'y'] };
 
-    await new NewsCenterService().hide(sub, channel('x', { defaultOn: false }));
+    await new NewsCenterService().subscriptionWriter(() => undefined).hide(sub, channel('x', { defaultOn: false }));
 
     expect(subscriptions.save).toHaveBeenCalledWith(expect.objectContaining({ hiddenChannelKeys: [], addedChannelKeys: ['y'] }));
   });
 
   it('show and add change only their own list, without duplicates', async () => {
     const sub: NewsSubscriptionModel = { ...emptySubscription('u1', 'scs'), hiddenChannelKeys: ['a'], addedChannelKeys: ['b'] };
-    const service = new NewsCenterService();
+    const writer = new NewsCenterService().subscriptionWriter(() => undefined);
 
-    await service.show(sub, 'a');
-    await service.add(sub, 'b');
+    await writer.show(sub, 'a');
+    await writer.add(sub, 'b');
 
     expect(subscriptions.save).toHaveBeenNthCalledWith(1, expect.objectContaining({ hiddenChannelKeys: [], addedChannelKeys: ['b'] }));
     expect(subscriptions.save).toHaveBeenNthCalledWith(2, expect.objectContaining({ hiddenChannelKeys: ['a'], addedChannelKeys: ['b'] }));

@@ -119,6 +119,15 @@ export class NewsCenterPage {
     });
   }
 
+  /** Ionic lifecycle: the page stays alive in the stack when navigating away, so its timers must pause. */
+  public ionViewDidEnter(): void {
+    this.store.setActive(true);
+  }
+
+  public ionViewWillLeave(): void {
+    this.store.setActive(false);
+  }
+
   protected segmentLabel(segment: NewsSegment): string {
     return this.store.i18n[`segment_${segment}`]();
   }

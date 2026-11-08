@@ -16,7 +16,7 @@ import {
   optionalChannels, parseNewsFeed, ResolvedNewsSource,
 } from '@okr/social-news-center-util';
 
-import { emptySubscription, NEWS_MAX_ALL, NewsCenterService, NewsFeedState, staleChannels, toResolveError } from './news-center.service';
+import { emptySubscription, NEWS_MAX_ALL, NewsCenterService, NewsFeedState, NewsFetchQueue, staleChannels, toResolveError } from './news-center.service';
 
 /** How often the webcam segment checks whether a camera is due (each camera keeps its own `refreshMinutes`). */
 const WEBCAM_TICK_MS = 30_000;
@@ -31,6 +31,10 @@ export type NewsCenterState = {
   resolved: ResolvedNewsSource | undefined;
   preview: NewsItem[];
   resolveError: NewsResolveError | undefined;
+  /** the page is on screen (ionViewDidEnter … ionViewWillLeave); the webcam timer runs only then */
+  active: boolean;
+  /** optimistic subscription while writes are pending; undefined = the server's doc */
+  localSubscription: NewsSubscriptionModel | undefined;
 };
 
 const initialState: NewsCenterState = {
@@ -40,6 +44,8 @@ const initialState: NewsCenterState = {
   resolved: undefined,
   preview: [],
   resolveError: undefined,
+  active: false,
+  localSubscription: undefined,
 };
 
 /** Legacy / partial docs miss the arrays (Firestore reads skip model defaults). */
@@ -75,6 +81,9 @@ export const NewsCenterStore = signalStore(
 
   withProps((store) => ({
     i18n: store.i18nService.translateAll(NEWS_CENTER_I18N_KEYS) as NewsCenterI18n,
+    /** one limit for every refresh of this page: at most 4 relay calls in flight */
+    fetchQueue: new NewsFetchQueue(),
+    subscriptionWriter: store.newsService.subscriptionWriter((localSubscription) => patchState(store, { localSubscription })),
   })),
 
   withComputed((store) => ({
@@ -104,7 +113,9 @@ export const NewsCenterStore = signalStore(
 
   withComputed((store) => {
     const allChannels = computed(() => store.channelsResource.value() ?? []);
-    const subscription = computed(() => normalizeSubscription(store.subscriptionResource.value(), store.uid(), store.tenantId()));
+    const subscription = computed(() => store.localSubscription() ?? normalizeSubscription(store.subscriptionResource.value(), store.uid(), store.tenantId()));
+    /** the user's own doc has been read (or failed): before that, channels() would still list the ones they hid */
+    const subscriptionReady = computed(() => !!store.uid() && ['resolved', 'local', 'error'].includes(store.subscriptionResource.status()));
     const channels = computed(() => effectiveChannels(allChannels(), subscription(), store.segment()));
     const failedKeys = computed(() => channels().filter((c) => store.feeds()[c.okey]?.error).map((c) => c.okey));
     const myRequests = computed(() => store.myRequestsResource.value() ?? []);
@@ -114,6 +125,7 @@ export const NewsCenterStore = signalStore(
     return {
       allChannels,
       subscription,
+      subscriptionReady,
       channels,
       failedKeys,
       activeKey,
@@ -171,6 +183,8 @@ export const NewsCenterStore = signalStore(
         if (segment === store.segment()) return;
         // refetching happens in the effect below: channels() follows the segment
         patchState(store, { segment, selectedKey: 'all' });
+        // queued fetches of the segment just left are dropped, not started
+        store.fetchQueue.prune();
       },
 
       select(key: string): void {
@@ -179,10 +193,16 @@ export const NewsCenterStore = signalStore(
 
       /** Loads the channels of the active segment that are missing or too old (all of them with `force`). */
       async refresh(force = false): Promise<void> {
+        // until the user's doc is read, channels() still lists channels they hid
+        if (!store.subscriptionReady()) return;
         const due = staleChannels(store.channels(), store.feeds(), Date.now(), force);
         if (due.length === 0) return;
         for (const channel of due) patchFeed(channel.okey, { loading: true });
-        await store.newsService.loadChannels(due, (key, state) => patchFeed(key, state));
+        await store.newsService.loadChannels(due, store.fetchQueue, {
+          onLoaded: (key, state) => patchFeed(key, state),
+          // dropped before it started: not loading any more, and still stale for the next visit
+          onSkipped: (key) => patchFeed(key, { loading: false }),
+        }, (channel) => channel.segment === store.segment());
       },
 
       async openItem(item: NewsItem): Promise<void> {
@@ -208,16 +228,16 @@ export const NewsCenterStore = signalStore(
       /*---------------- settings: my channels (save on every tap) ----------------*/
       async hide(channelKey: string): Promise<void> {
         const channel = findChannel(channelKey);
-        if (channel) await run(() => store.newsService.hide(store.subscription(), channel));
+        if (channel) await run(() => store.subscriptionWriter.hide(store.subscription(), channel));
       },
       async show(channelKey: string): Promise<void> {
-        await run(() => store.newsService.show(store.subscription(), channelKey));
+        await run(() => store.subscriptionWriter.show(store.subscription(), channelKey));
       },
       async add(channelKey: string): Promise<void> {
-        await run(() => store.newsService.add(store.subscription(), channelKey));
+        await run(() => store.subscriptionWriter.add(store.subscription(), channelKey));
       },
       async reset(): Promise<void> {
-        await run(() => store.newsService.reset(store.subscription(), store.allChannels(), store.segment()));
+        await run(() => store.subscriptionWriter.reset(store.subscription(), store.allChannels(), store.segment()));
       },
       async suggest(data: NewsRequestFormData): Promise<void> {
         if (!store.canSuggest()) return;
@@ -277,18 +297,29 @@ export const NewsCenterStore = signalStore(
     };
   }),
 
+  withMethods((store) => ({
+    /** The page is on screen (ionViewDidEnter) or not (ionViewWillLeave). Coming back refetches what went stale. */
+    setActive(active: boolean): void {
+      patchState(store, { active });
+      if (active) void store.refresh();
+    },
+  })),
+
   withHooks((store) => {
     let timer: ReturnType<typeof setInterval> | undefined;
     return {
       onInit(): void {
-        // fetch whatever is missing or older than 10 min whenever the segment or its channel list changes
+        // fetch whatever is missing or older than 10 min whenever the segment or its channel list
+        // changes — first once the user's own doc is read, so hidden channels are never fetched
         effect(() => {
           store.channels();
+          if (!store.subscriptionReady()) return;
           untracked(() => void store.refresh());
         });
         // webcams: reload each camera after its refreshMinutes while the webcam segment is on screen
+        // (page shown, not navigated away from, browser tab visible)
         timer = setInterval(() => {
-          if (store.segment() === 'webcam' && document.visibilityState === 'visible') void store.refresh();
+          if (store.active() && store.segment() === 'webcam' && document.visibilityState === 'visible') void store.refresh();
         }, WEBCAM_TICK_MS);
       },
       onDestroy(): void {

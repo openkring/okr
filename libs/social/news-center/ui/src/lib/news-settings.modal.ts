@@ -2,7 +2,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, input, output, signal } from '@angular/core';
 import {
   IonAvatar, IonBadge, IonButton, IonChip, IonContent, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonNote,
-  IonReorder, IonReorderGroup, IonSegment, IonSegmentButton, ItemReorderEventDetail,
+  IonReorder, IonReorderGroup, IonSegment, IonSegmentButton, ReorderEndCustomEvent,
 } from '@ionic/angular';
 
 import { NewsChannelModel, NewsChannelRequestModel, NewsSegment } from '@okr/shared-models';
@@ -150,7 +150,7 @@ type SettingsView = 'mine' | 'club';
             (resolve)="resolve.emit({ url: $event, segment: segment() })" (save)="onClubSave($event)" />
         }
         <ion-list lines="full">
-          <ion-reorder-group [disabled]="false" (ionReorder)="onReorder($event)">
+          <ion-reorder-group [disabled]="false" (ionReorderEnd)="onReorder($event)">
             @for (channel of club(); track channel.okey) {
               <ion-item>
                 <ng-container *ngTemplateOutlet="avatarTpl; context: { $implicit: channel }" />
@@ -260,7 +260,7 @@ export class NewsSettingsModal {
     if (channel.defaultOn !== defaultOn) this.clubSave.emit({ ...channel, defaultOn });
   }
 
-  protected onReorder(event: CustomEvent<ItemReorderEventDetail>): void {
+  protected onReorder(event: ReorderEndCustomEvent): void {
     const keys = event.detail.complete(this.club().map((c) => c.okey)) as string[];
     this.clubReorder.emit(keys);
   }
