@@ -62,6 +62,7 @@ export * from './lib/chat-reminder.model';
 export * from './lib/metering.model';
 export * from './lib/prospect.model';
 export * from './lib/ticket.model';
+export * from './lib/news-center.model';
 export * from './lib/firebase-user.model';
 export * from './lib/folder.model';
 export * from './lib/geoposition.model';
