@@ -108,6 +108,10 @@ interface AddressField {
     .reach-warning ion-icon { flex: none; font-size: 1.1rem; margin-top: 1px; color: var(--ion-color-warning-shade); }
     .attachments { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
     .attachments .spacer { flex: 1; }
+    /* each recipient field its own bordered block, so the accordions do not run into each other */
+    .verteiler ion-accordion { margin: 0 0 12px; border: 1px solid var(--ion-border-color, #d0d7de); border-radius: 8px; overflow: hidden; }
+    .verteiler ion-accordion ion-item[slot='header'] { --background: var(--ion-color-light); font-weight: 600; }
+    .verteiler [slot='content'] { padding: 4px 0 8px; }
     .preview-frame { width: 100%; min-height: 420px; border: 0; background: #ffffff; }
   `],
   template: `
@@ -115,7 +119,7 @@ interface AddressField {
       [actionIcon]="isVersand() ? 'info-circle' : ''" [actionTitle]="i18n.info_action()" (actionClicked)="showInfo()" />
 
     @if (showConfirmation()) {
-      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (saveClicked)="send()" (cancelClicked)="revert()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" [saveDisabled]="!canSend()" (saveClicked)="send()" (cancelClicked)="revert()" />
       @if (reachWarnings().length > 0) {
         <div class="reach-warnings" role="status">
           @for (warning of reachWarnings(); track warning.caleventKey) {
@@ -287,7 +291,7 @@ interface AddressField {
                   <ion-note class="note">{{ i18n.list_empty() }}</ion-note>
                 }
                 <!-- One accordion per address field, one address per line. The labels are the mail header names (not translated). -->
-                <ion-accordion-group [multiple]="true" [value]="openAccordions()">
+                <ion-accordion-group class="verteiler" [multiple]="true" [value]="openAccordions()">
                   @for (field of addressFields(); track field.key) {
                     <ion-accordion [value]="field.key">
                       <ion-item slot="header">
@@ -299,6 +303,7 @@ interface AddressField {
                         }
                         <okr-versand-address-list [addresses]="field.addresses" [editable]="field.editable"
                           [label]="field.label" [placeholder]="field.placeholder"
+                          [addLabel]="field.label" [removeLabel]="field.label"
                           (added)="addAddresses(field.key, $event)" (removed)="removeAddress(field.key, $event)" />
                         <okr-error-note [errors]="field.errors" />
                       </div>
@@ -306,7 +311,7 @@ interface AddressField {
                   }
                   <ion-accordion value="from">
                     <ion-item slot="header">
-                      <ion-label>From: {{ from() }}</ion-label>
+                      <ion-label>From: ({{ from() ? 1 : 0 }})</ion-label>
                     </ion-item>
                     <div slot="content">
                       <okr-email [i18n]="fromI18n()" [value]="from()"
@@ -455,9 +460,14 @@ export class EmailComposerModal {
       .map((row) => row.personKey);
     return groupReachWarnings(this.chosenEvents(), emailKeys, this.membersByGroup());
   });
-  /** A Versand needs its Zustellung loaded and at least one ticked recipient. */
-  protected readonly showConfirmation = computed(() =>
-    this.composerForm().valid() && this.isDirty() && !this.isSending() && !this.letters()
+  /**
+   * The Senden toolbar appears with the first change, so a change in any segment shows how it is sent;
+   * «Senden» stays disabled until the mail can go out (canSend).
+   */
+  protected readonly showConfirmation = computed(() => this.isDirty() && !this.isSending() && !this.letters());
+  /** A valid form; a Versand also needs its Zustellung loaded and at least one ticked recipient. */
+  protected readonly canSend = computed(() =>
+    this.composerForm().valid()
     && (!this.isVersand() || (this.versandLoaded() && versandDeliveries(this.versandRows(), this.deliveries()).length > 0)));
 
   // field accessors
@@ -484,9 +494,9 @@ export class EmailComposerModal {
       { key: 'to', label: 'To:', addresses: parseEmails(fd.to), editable: true, placeholder: this.i18n.to_placeholder(), errors: this.toErrors() },
     ];
     if (!this.hasEvents()) {
-      fields.push({ key: 'cc', label: 'CC:', addresses: parseEmails(fd.cc), editable: true, placeholder: this.i18n.to_placeholder(), errors: this.ccErrors() });
+      fields.push({ key: 'cc', label: 'Cc:', addresses: parseEmails(fd.cc), editable: true, placeholder: this.i18n.to_placeholder(), errors: this.ccErrors() });
     }
-    fields.push({ key: 'bcc', label: 'BCC:', addresses: parseEmails(fd.bcc), editable: !this.isVersand(), placeholder: this.i18n.to_placeholder(), errors: this.bccErrors() });
+    fields.push({ key: 'bcc', label: 'Bcc:', addresses: parseEmails(fd.bcc), editable: !this.isVersand(), placeholder: this.i18n.to_placeholder(), errors: this.bccErrors() });
     return fields;
   });
   protected readonly recipientCount = computed(() => this.addressFields().reduce((n, f) => n + f.addresses.length, 0));
@@ -527,7 +537,8 @@ export class EmailComposerModal {
 
   // adapters at the shared/ui boundary (these components define their own minimal i18n interfaces)
   protected readonly fromI18n = computed(() => ({
-    name: 'from', label: this.i18n.from_label(), placeholder: this.i18n.from_placeholder(),
+    // no visible label: the accordion header says From:, a second «Von» label only confused
+    name: 'from', label: '', placeholder: this.i18n.from_placeholder(),
   } as EmailInputI18n));
   protected readonly layoutI18n = computed(() => ({
     name: 'layout', label: this.i18n.layout_label(),
@@ -814,7 +825,7 @@ export class EmailComposerModal {
   }
 
   protected async send(): Promise<void> {
-    if (!this.composerForm().valid() || this.isSending()) return;
+    if (!this.canSend() || this.isSending()) return;
     this.isSending.set(true);
     try {
       const fd = this.formData();

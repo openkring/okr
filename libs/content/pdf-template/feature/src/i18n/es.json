@@ -98,13 +98,13 @@
       "unknown": "(desconocido)"
     },
     "cc": {
-      "label": "Cc",
+      "label": "Cc:",
       "placeholder": "email1@domain.com, email2@domain.com"
     },
     "bcc": {
-      "label": "Cco",
+      "label": "Bcc:",
       "placeholder": "email1@domain.com, email2@domain.com",
-      "from_delivery": "Quien tiene correo en la entrega recibe el envío en Cco."
+      "from_delivery": "Quien tiene correo en la entrega recibe el envío en Bcc:."
     },
     "subject": {
       "label": "Asunto",
@@ -143,7 +143,7 @@
     },
     "list": {
       "empty": "No hay destinatarios.",
-      "email_only": "Para, Cc y Cco solo valen para el envío por correo.",
+      "email_only": "To:, Cc: y Bcc: solo valen para el envío por correo.",
       "personal": "Cada persona recibe su propio correo con su enlace personal."
     },
     "delivery": {
@@ -163,11 +163,11 @@
       "action": "Info",
       "p1": "Cada miembro elige en su perfil cómo quiere recibir los mensajes: en la app, por correo o por correo postal. Se pueden elegir varias formas.",
       "p2": "En «Entrega» ves esa elección para cada destinatario. Puedes cambiarla para este envío; el perfil no cambia. Quien no tiene cuenta recibe un correo, o una carta si no se conoce su correo.",
-      "p3": "Correo: el texto del editor se coloca en la plantilla elegida y los adjuntos se añaden al correo. Para, Cc y Cco solo valen aquí. Los destinatarios van en Cco, así nadie ve a los demás.",
+      "p3": "Correo: el texto del editor se coloca en la plantilla elegida y los adjuntos se añaden al correo. To:, Cc: y Bcc: solo valen aquí. Los destinatarios van en Bcc:, así nadie ve a los demás.",
       "p4": "En la app: el envío aparece como comunicado en el panel, con texto y adjuntos. El destinatario recibe una notificación push que lo abre.",
       "p5": "Correo postal: el texto se compone como carta con la dirección del destinatario y los adjuntos van detrás. Descargas las cartas en PDF, las imprimes y las envías tú.",
       "p6": "Las cartas quedan disponibles 7 días y luego se borran, porque contienen direcciones. Como admin de grupo no puedes enviar por correo postal.",
-      "p7": "Eventos: si eliges eventos en el editor, cada persona que recibe el envío por correo recibe su propio correo con un enlace personal. Con él acepta o rechaza cada evento, también sin cuenta en la app. La respuesta aparece enseguida en la lista de participantes, y el enlace vale hasta el día del último evento. La dirección en «To:» pasa a ser la dirección de respuesta, y Cc no es posible. Los avisos y las cartas no llevan enlace.",
+      "p7": "Eventos: si eliges eventos en el editor, cada persona que recibe el envío por correo recibe su propio correo con un enlace personal. Con él acepta o rechaza cada evento, también sin cuenta en la app. La respuesta aparece enseguida en la lista de participantes, y el enlace vale hasta el día del último evento. La dirección en «To:» pasa a ser la dirección de respuesta, y Cc: no es posible. Los avisos y las cartas no llevan enlace.",
       "p8": "Adjuntos: con «Añadir» adjuntas archivos de hasta 7 MB cada uno. Por correo llegan como adjuntos, en la app forman parte del aviso. En las cartas solo entran archivos PDF, que siguen a cada carta. Los demás archivos se envían solo por correo y en la app."
     },
     "letters": {

@@ -98,13 +98,13 @@
       "unknown": "(inconnu)"
     },
     "cc": {
-      "label": "Cc",
+      "label": "Cc:",
       "placeholder": "email1@domain.com, email2@domain.com"
     },
     "bcc": {
-      "label": "Cci",
+      "label": "Bcc:",
       "placeholder": "email1@domain.com, email2@domain.com",
-      "from_delivery": "Les personnes avec e-mail dans la distribution reçoivent l’envoi en Cci."
+      "from_delivery": "Les personnes avec e-mail dans la distribution reçoivent l’envoi en Bcc:."
     },
     "subject": {
       "label": "Objet",
@@ -143,7 +143,7 @@
     },
     "list": {
       "empty": "Aucun destinataire saisi.",
-      "email_only": "À, Cc et Cci ne valent que pour l’envoi par e-mail.",
+      "email_only": "To:, Cc: et Bcc: ne valent que pour l’envoi par e-mail.",
       "personal": "Chaque personne reçoit son propre e-mail avec son lien personnel."
     },
     "delivery": {
@@ -163,11 +163,11 @@
       "action": "Info",
       "p1": "Chaque membre choisit dans son profil comment recevoir les messages : dans l’app, par e-mail ou par courrier. Plusieurs modes sont possibles.",
       "p2": "Sous «Distribution», tu vois ce choix pour chaque destinataire. Tu peux le modifier pour cet envoi ; le profil reste inchangé. Les personnes sans compte reçoivent un e-mail, ou une lettre si aucune adresse e-mail n’est connue.",
-      "p3": "E-mail : le texte de l’éditeur est placé dans le modèle choisi et les pièces jointes sont jointes à l’e-mail. À, Cc et Cci ne valent qu’ici. Les destinataires sont en Cci, personne ne voit les autres.",
+      "p3": "E-mail : le texte de l’éditeur est placé dans le modèle choisi et les pièces jointes sont jointes à l’e-mail. To:, Cc: et Bcc: ne valent qu’ici. Les destinataires sont en Bcc:, personne ne voit les autres.",
       "p4": "Dans l’app : l’envoi apparaît comme communication sur le tableau de bord, avec texte et pièces jointes. Le destinataire reçoit une notification push qui l’ouvre.",
       "p5": "Courrier : le texte est mis en page comme lettre avec l’adresse du destinataire, les pièces jointes suivent. Tu télécharges les lettres en PDF, tu les imprimes et tu les envoies toi-même.",
       "p6": "Les lettres restent disponibles 7 jours, puis elles sont supprimées, car elles contiennent des adresses. En tant qu’admin de groupe, tu ne peux pas envoyer par courrier.",
-      "p7": "Événements : si tu choisis des événements dans l’éditeur, chaque personne qui reçoit l’envoi par e-mail reçoit son propre e-mail avec un lien personnel. Avec ce lien, elle accepte ou refuse chaque événement, même sans compte dans l’app. La réponse apparaît tout de suite dans la liste des participants, et le lien reste valable jusqu’au jour du dernier événement. L’adresse sous «To:» devient alors l’adresse de réponse, et Cc n’est pas possible. Les messages et les lettres ne contiennent pas de lien.",
+      "p7": "Événements : si tu choisis des événements dans l’éditeur, chaque personne qui reçoit l’envoi par e-mail reçoit son propre e-mail avec un lien personnel. Avec ce lien, elle accepte ou refuse chaque événement, même sans compte dans l’app. La réponse apparaît tout de suite dans la liste des participants, et le lien reste valable jusqu’au jour du dernier événement. L’adresse sous «To:» devient alors l’adresse de réponse, et Cc: n’est pas possible. Les messages et les lettres ne contiennent pas de lien.",
       "p8": "Pièces jointes : avec «Ajouter», tu joins des fichiers de 7 Mo au maximum chacun. Par e-mail, ils sont joints au message ; dans l’app, ils figurent dans le message. Seuls les fichiers PDF vont dans les lettres, où ils suivent chaque lettre. Les autres fichiers partent uniquement par e-mail et dans l’app."
     },
     "letters": {

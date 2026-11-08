@@ -98,13 +98,13 @@
       "unknown": "(unknown)"
     },
     "cc": {
-      "label": "Cc",
+      "label": "Cc:",
       "placeholder": "email1@domain.com, email2@domain.com"
     },
     "bcc": {
-      "label": "Bcc",
+      "label": "Bcc:",
       "placeholder": "email1@domain.com, email2@domain.com",
-      "from_delivery": "Everyone with email under Delivery receives the mailing as Bcc."
+      "from_delivery": "Everyone with email under Delivery receives the mailing as Bcc:."
     },
     "subject": {
       "label": "Subject",
@@ -143,7 +143,7 @@
     },
     "list": {
       "empty": "No recipients entered.",
-      "email_only": "To, Cc and Bcc only apply to delivery by email.",
+      "email_only": "To:, Cc: and Bcc: only apply to delivery by email.",
       "personal": "Each person gets their own email with a personal link."
     },
     "delivery": {
@@ -163,11 +163,11 @@
       "action": "Info",
       "p1": "Every member chooses in their profile how they want to receive news: in-app, email or post. Several ways are possible.",
       "p2": "Under «Delivery» you see that choice for each recipient. You can change it for this one mailing; the profile stays as it is. People without an account get an email, or a letter if no email address is known.",
-      "p3": "Email: the text from the editor is set into the chosen template and the attachments are attached to the email. To, Cc and Bcc only apply here. Recipients are in Bcc, so nobody sees the others.",
+      "p3": "Email: the text from the editor is set into the chosen template and the attachments are attached to the email. To:, Cc: and Bcc: only apply here. Recipients are in Bcc:, so nobody sees the others.",
       "p4": "In-app: the mailing appears as a notice on the dashboard, with its text and attachments. The recipient gets a push notification that opens it.",
       "p5": "Post: the text is set as a letter with the recipient’s address, followed by the attachments. You download the letters as a PDF, print them and post them yourself.",
       "p6": "Letters stay ready for download for 7 days and are then deleted, because they contain addresses. As a group admin you cannot send by post.",
-      "p7": "Events: If you choose events in the editor, everyone who gets the mailing by email receives their own mail with a personal link. With it they accept or decline each event, even without an account in the app. The answer appears right away in the event's attendee list, and the link works until the day of the last event. The address under «To:» then becomes the reply address, and Cc is not possible. Notices and letters contain no link.",
+      "p7": "Events: If you choose events in the editor, everyone who gets the mailing by email receives their own mail with a personal link. With it they accept or decline each event, even without an account in the app. The answer appears right away in the event's attendee list, and the link works until the day of the last event. The address under «To:» then becomes the reply address, and Cc: is not possible. Notices and letters contain no link.",
       "p8": "Attachments: With «Add» you attach files of up to 7 MB each. By email they come along as attachments, in-app they are part of the notice. Only PDF files go into the letters, where they follow each letter. Other files go by email and in-app only."
     },
     "letters": {

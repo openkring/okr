@@ -98,13 +98,13 @@
       "unknown": "(unbekannt)"
     },
     "cc": {
-      "label": "Cc",
+      "label": "Cc:",
       "placeholder": "email1@domain.com, email2@domain.com"
     },
     "bcc": {
-      "label": "Bcc",
+      "label": "Bcc:",
       "placeholder": "email1@domain.com, email2@domain.com",
-      "from_delivery": "Wer in der Zustellung E-Mail hat, erhält den Versand als Bcc."
+      "from_delivery": "Wer in der Zustellung E-Mail hat, erhält den Versand als Bcc:."
     },
     "subject": {
       "label": "Betreff",
@@ -143,7 +143,7 @@
     },
     "list": {
       "empty": "Keine Empfänger erfasst.",
-      "email_only": "An, Cc und Bcc gelten nur für den Versand per E-Mail.",
+      "email_only": "To:, Cc: und Bcc: gelten nur für den Versand per E-Mail.",
       "personal": "Jede Person bekommt eine eigene Mail mit ihrem persönlichen Link."
     },
     "delivery": {
@@ -163,11 +163,11 @@
       "action": "Info",
       "p1": "Jedes Mitglied wählt in seinem Profil, wie es Nachrichten erhalten möchte: In-App, E-Mail oder Post. Mehrere Wege sind möglich.",
       "p2": "Unter «Zustellung» siehst du diese Wahl pro Empfänger. Du kannst sie für diesen einen Versand ändern, das Profil bleibt unverändert. Wer kein Konto hat, erhält eine E-Mail, oder einen Brief, wenn keine E-Mail-Adresse bekannt ist.",
-      "p3": "E-Mail: Der Text aus dem Editor wird in die gewählte Vorlage gesetzt, die Anhänge werden der E-Mail beigelegt. An, Cc und Bcc gelten nur hier. Die Empfänger stehen im Bcc, so sieht niemand die anderen.",
+      "p3": "E-Mail: Der Text aus dem Editor wird in die gewählte Vorlage gesetzt, die Anhänge werden der E-Mail beigelegt. To:, Cc: und Bcc: gelten nur hier. Die Empfänger stehen im Bcc:, so sieht niemand die anderen.",
       "p4": "In-App: Der Versand erscheint als Mitteilung auf dem Dashboard, mit Text und Anhängen. Der Empfänger erhält eine Push-Nachricht, die die Mitteilung öffnet.",
       "p5": "Post: Der Text wird als Brief mit der Adresse des Empfängers gesetzt, die Anhänge folgen dahinter. Du lädst die Briefe als PDF herunter, druckst sie und verschickst sie selbst.",
       "p6": "Briefe bleiben 7 Tage zum Herunterladen bereit und werden dann gelöscht, weil sie Adressen enthalten. Als Gruppenadmin kannst du nicht per Post versenden.",
-      "p7": "Anlässe: Wählst du im Editor Anlässe aus, erhält jede Person, die den Versand per E-Mail bekommt, eine eigene Mail mit ihrem persönlichen Link. Darüber sagt sie für jeden Anlass zu oder ab, auch ohne Konto in der App. Die Antwort steht sofort in der Teilnehmerliste des Anlasses, und der Link gilt bis zum Tag des letzten Anlasses. Die Adresse unter «To:» ist dann die Antwortadresse, Cc ist nicht möglich. Mitteilungen und Briefe enthalten keinen Link.",
+      "p7": "Anlässe: Wählst du im Editor Anlässe aus, erhält jede Person, die den Versand per E-Mail bekommt, eine eigene Mail mit ihrem persönlichen Link. Darüber sagt sie für jeden Anlass zu oder ab, auch ohne Konto in der App. Die Antwort steht sofort in der Teilnehmerliste des Anlasses, und der Link gilt bis zum Tag des letzten Anlasses. Die Adresse unter «To:» ist dann die Antwortadresse, Cc: ist nicht möglich. Mitteilungen und Briefe enthalten keinen Link.",
       "p8": "Anhänge: Mit «Hinzufügen» legst du Dateien bei, jede höchstens 7 MB gross. Per E-Mail kommen sie als Beilage mit, In-App stehen sie in der Mitteilung. In die Briefe kommen nur PDF-Dateien, sie folgen hinter jedem Brief. Andere Dateien gehen nur per E-Mail und In-App."
     },
     "letters": {
