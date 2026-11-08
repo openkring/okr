@@ -311,6 +311,18 @@
       "open": "Offen",
       "hint": "Der Stand der Teilnehmerliste des Anlasses, für alle Empfänger dieses Versands."
     },
-    "back": "Zurück"
+    "back": "Zurück",
+    "status": {
+      "delivered": "Zugestellt",
+      "deferred": "Verzögert",
+      "rejected": "Abgewiesen",
+      "spam": "Als Spam markiert",
+      "pending": "Ausstehend",
+      "none": "Vom Mailserver liegt noch keine Rückmeldung vor. Den Zustellstand gibt es nur für Versände ab dem 8.11.2026, und er bleibt 30 Tage lang sichtbar.",
+      "error": "Der Zustellstand konnte nicht geladen werden.",
+      "refresh": "Zustellstand aktualisieren",
+      "unmatched": "{count} weitere Rückmeldungen passen zu keinem Empfänger mehr, etwa weil sich eine Adresse seither geändert hat.",
+      "addresses": "An, Cc und Absender"
+    }
   }
 }

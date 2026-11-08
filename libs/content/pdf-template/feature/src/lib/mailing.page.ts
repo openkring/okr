@@ -7,8 +7,11 @@ import {
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Spinner } from '@okr/shared-ui';
-import { MailingAnswer, mailingAnswerColor, mailingStateColor, mailJobProgress } from '@okr/content-pdf-template-util';
-import { prettyFormatDate, prettyFormatDateTime } from '@okr/shared-util-core';
+import {
+  deliveryStatusColor, deliveryStatusCounts, hasDeliveryReports, MailDeliveryStatus, MailingAnswer, mailingAnswerColor,
+  mailingRecipientsFor, mailingStateColor, mailJobProgress,
+} from '@okr/content-pdf-template-util';
+import { fill, prettyFormatDate, prettyFormatDateTime } from '@okr/shared-util-core';
 
 import { MailingStore } from './mailing.store';
 
@@ -160,14 +163,63 @@ const LETTERS_URL_TTL_MS = 9 * 60 * 1000;
                 </ion-segment-button>
               }
             </ion-segment>
+            @let showStatus = channel() === 'email' && !!m.mailJobKey;
+            @if (showStatus) {
+              <!-- the mail server's reports (Mailtrap events via getMailingDeliveries), kept 30 days -->
+              @if (store.deliveriesError()) {
+                <ion-note color="danger">{{ store.i18n.status_error() }}</ion-note>
+              } @else if (store.deliveries() && !hasReports()) {
+                <ion-note>{{ store.i18n.status_none() }}</ion-note>
+              } @else if (hasReports()) {
+                <div class="counts">
+                  @for (s of statusKinds; track s) {
+                    @if (statusCounts()[s] > 0) {
+                      <ion-chip [outline]="true" [color]="statusColor(s)">{{ statusCounts()[s] }} {{ statusLabel(s) }}</ion-chip>
+                    }
+                  }
+                </div>
+              }
+              <ion-button fill="clear" size="small" [disabled]="store.deliveriesLoading()" (click)="store.loadDeliveries(m)">
+                <ion-icon slot="start" src="{{ 'reload' | svgIcon }}" />
+                {{ store.i18n.status_refresh() }}
+              </ion-button>
+            }
             @if (channelRows().length === 0) {
               <ion-note>{{ store.i18n.deliveries_empty() }}</ion-note>
             } @else {
               <ion-list lines="inset">
                 @for (row of channelRows(); track row.personKey) {
-                  <ion-item><ion-label>{{ row.name }}</ion-label></ion-item>
+                  <ion-item>
+                    <ion-label>
+                      {{ row.name }}
+                      @if (showStatus && hasReports()) {
+                        @let d = store.deliveryByPerson().get(row.personKey);
+                        @if (d?.reason) { <p>{{ d?.reason }}</p> }
+                      }
+                    </ion-label>
+                    @if (showStatus && hasReports()) {
+                      @let s = store.deliveryByPerson().get(row.personKey)?.status ?? 'pending';
+                      <ion-badge slot="end" [color]="statusColor(s)">{{ statusLabel(s) }}</ion-badge>
+                    }
+                  </ion-item>
                 }
               </ion-list>
+            }
+            @if (showStatus && store.deliveries(); as reports) {
+              @if (reports.addresses.length > 0) {
+                <ion-list lines="inset">
+                  <ion-item lines="none"><ion-label><strong>{{ store.i18n.status_addresses() }}</strong></ion-label></ion-item>
+                  @for (a of reports.addresses; track a.email) {
+                    <ion-item>
+                      <ion-label>{{ a.email }}@if (a.reason) { <p>{{ a.reason }}</p> }</ion-label>
+                      <ion-badge slot="end" [color]="statusColor(a.status)">{{ statusLabel(a.status) }}</ion-badge>
+                    </ion-item>
+                  }
+                </ion-list>
+              }
+              @if (reports.unmatched > 0) {
+                <ion-note>{{ unmatchedNote() }}</ion-note>
+              }
             }
           </ion-card-content>
         </ion-card>
@@ -212,12 +264,18 @@ export class MailingPage {
   public readonly mailingKey = input.required<string>();
 
   protected readonly answerKinds: MailingAnswer[] = ['accepted', 'waiting', 'declined', 'open'];
+  protected readonly statusKinds: (MailDeliveryStatus | 'pending')[] = ['delivered', 'deferred', 'spam', 'rejected', 'pending'];
   protected readonly channel = signal<string>('email');
   private lettersFetchedAt = 0;
 
   protected readonly mailing = computed(() => this.store.mailing());
   protected readonly channelRows = computed(() => this.store.channels().find((c) => c.channel === this.channel())?.rows ?? []);
   protected readonly attachmentNames = computed(() => (this.mailing()?.attachments ?? []).map((a) => a.filename).join(', '));
+  protected readonly hasReports = computed(() => hasDeliveryReports(this.store.deliveries()));
+  protected readonly statusCounts = computed(() =>
+    deliveryStatusCounts(mailingRecipientsFor(this.mailing()?.deliveries, 'email'), this.store.deliveryByPerson()));
+  protected readonly unmatchedNote = computed(() =>
+    fill(this.store.i18n.status_unmatched(), { count: this.store.deliveries()?.unmatched ?? 0 }));
   protected readonly stateColor = computed(() => mailingStateColor(this.mailing()?.state, this.store.partlyFailed()));
   protected readonly jobProgress = computed(() => mailJobProgress(this.store.mailJob()));
   protected readonly jobColor = computed(() => {
@@ -251,6 +309,14 @@ export class MailingPage {
       if (mailing?.letters?.state !== 'ready') return;
       untracked(() => {
         if (!this.store.letters()) void this.fetchLetters();
+      });
+    });
+    // the mail server's reports, once per Versand with an E-Mail part (the button asks again)
+    effect(() => {
+      const mailing = this.mailing();
+      if (!mailing?.mailJobKey) return;
+      untracked(() => {
+        if (!this.store.deliveries() && !this.store.deliveriesLoading() && !this.store.deliveriesError()) void this.store.loadDeliveries(mailing);
       });
     });
     // open on the delivery type that has recipients
@@ -303,6 +369,20 @@ export class MailingPage {
       case 'declined': return this.store.i18n.answer_declined();
       default: return this.store.i18n.answer_open();
     }
+  }
+
+  protected statusLabel(status: MailDeliveryStatus | 'pending'): string {
+    switch (status) {
+      case 'delivered': return this.store.i18n.status_delivered();
+      case 'deferred': return this.store.i18n.status_deferred();
+      case 'rejected': return this.store.i18n.status_rejected();
+      case 'spam': return this.store.i18n.status_spam();
+      default: return this.store.i18n.status_pending();
+    }
+  }
+
+  protected statusColor(status: MailDeliveryStatus | 'pending'): string {
+    return deliveryStatusColor(status);
   }
 
   protected answerColor(answer: MailingAnswer): string {

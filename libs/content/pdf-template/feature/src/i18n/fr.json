@@ -311,6 +311,18 @@
       "open": "Ouvert",
       "hint": "L'état actuel de la liste des participants, pour tous les destinataires de cet envoi."
     },
-    "back": "Retour"
+    "back": "Retour",
+    "status": {
+      "delivered": "Distribué",
+      "deferred": "Retardé",
+      "rejected": "Refusé",
+      "spam": "Marqué comme spam",
+      "pending": "En attente",
+      "none": "Le serveur de messagerie n'a encore rien signalé. L'état de distribution n'existe que pour les envois à partir du 8.11.2026 et reste visible 30 jours.",
+      "error": "L'état de distribution n'a pas pu être chargé.",
+      "refresh": "Actualiser l'état de distribution",
+      "unmatched": "{count} autres retours ne correspondent plus à aucun destinataire, par exemple parce qu'une adresse a changé depuis.",
+      "addresses": "À, Cc et expéditeur"
+    }
   }
 }

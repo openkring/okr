@@ -42,6 +42,7 @@ import { chunk, isElevated } from './mailing-recipients';
 import { MAX_PERSONAL_RECIPIENTS, parseCaleventKeys, personalEntries, refusedEventMessage, sendableEventRefusal } from './personal-mail.logic';
 import { asLayoutChoice } from './render-email.logic';
 import { buildMailingLetters } from './mailing-letters';
+import { mailingCategory } from './mailing-deliveries.logic';
 
 const REGION = 'europe-west6';
 export const MailingCollection = 'mailings';
@@ -160,7 +161,7 @@ function stringList(value: unknown, field: string): string[] {
 }
 
 /** The favorite email per recipient (its `person.<key>` / `org.<key>` directory doc), keyed by the recipient key. */
-async function directoryEmailsByKey(db: Firestore, tenantId: string, personKeys: string[]): Promise<Map<string, string>> {
+export async function directoryEmailsByKey(db: Firestore, tenantId: string, personKeys: string[]): Promise<Map<string, string>> {
   const out = new Map<string, string>();
   if (personKeys.length === 0) return out;
   const snaps = await db.getAll(...personKeys.map((key) => db.collection('address-directory').doc(`${tenantId}_${recipientParentKey(key)}`)));
@@ -357,6 +358,8 @@ export const onMailing = onDocumentCreated(
           layout: mailing.layout,
           attachments: privateRefs(mailing.attachments),
           state: 'pending',
+          // every mail of the job carries it, so its Mailtrap events can be told apart (getMailingDeliveries)
+          category: mailingCategory(snap.id),
         });
         const attachmentName = mailing.attachmentName ? { attachmentName: mailing.attachmentName } : {};
         if (mailing.caleventKeys?.length) {

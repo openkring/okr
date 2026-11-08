@@ -311,6 +311,18 @@
       "open": "Abierto",
       "hint": "El estado actual de la lista de participantes, para todos los destinatarios de este envío."
     },
-    "back": "Volver"
+    "back": "Volver",
+    "status": {
+      "delivered": "Entregado",
+      "deferred": "Retrasado",
+      "rejected": "Rechazado",
+      "spam": "Marcado como spam",
+      "pending": "Pendiente",
+      "none": "El servidor de correo todavía no ha informado nada. El estado de entrega solo existe para los envíos desde el 8.11.2026 y se ve durante 30 días.",
+      "error": "No se pudo cargar el estado de entrega.",
+      "refresh": "Actualizar el estado de entrega",
+      "unmatched": "{count} avisos más ya no corresponden a ningún destinatario, por ejemplo porque una dirección ha cambiado desde entonces.",
+      "addresses": "Para, Cc y remitente"
+    }
   }
 }

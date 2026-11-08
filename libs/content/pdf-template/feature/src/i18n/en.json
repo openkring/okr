@@ -311,6 +311,18 @@
       "open": "Open",
       "hint": "The current attendee list of the event, for every recipient of this mailing."
     },
-    "back": "Back"
+    "back": "Back",
+    "status": {
+      "delivered": "Delivered",
+      "deferred": "Delayed",
+      "rejected": "Rejected",
+      "spam": "Marked as spam",
+      "pending": "Pending",
+      "none": "The mail server has not reported anything yet. The delivery status exists only for mailings sent from 8 November 2026 and stays visible for 30 days.",
+      "error": "The delivery status could not be loaded.",
+      "refresh": "Refresh delivery status",
+      "unmatched": "{count} more reports match no recipient any more, for example because an address has changed since.",
+      "addresses": "To, Cc and sender"
+    }
   }
 }

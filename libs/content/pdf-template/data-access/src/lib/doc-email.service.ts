@@ -8,6 +8,7 @@ import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import type { EmailLayoutChoice } from '@okr/shared-models';
 import type { MailingRecipientChannels } from '@okr/shared-util-core';
+import type { MailingDeliveries } from '@okr/content-pdf-template-util';
 
 /** A user-picked file attached inline (base64) to the email. */
 export interface InlineAttachment {
@@ -211,6 +212,16 @@ export class DocEmailService {
    */
   public async getMailingLetters(mailingKey: string): Promise<MailingLetters> {
     const callable = httpsCallable<{ mailingKey: string }, MailingLetters>(this.functions, 'getMailingLetters');
+    const { data } = await callable({ mailingKey });
+    return data;
+  }
+
+  /**
+   * What the mail server reported for each E-Mail of a Versand (Mailtrap events, kept 30 days). Recipients
+   * come back by personKey; an address only for the Versand's own To/Cc/sender.
+   */
+  public async getMailingDeliveries(mailingKey: string): Promise<MailingDeliveries> {
+    const callable = httpsCallable<{ mailingKey: string }, MailingDeliveries>(this.functions, 'getMailingDeliveries');
     const { data } = await callable({ mailingKey });
     return data;
   }

@@ -41,6 +41,12 @@ export interface EmailOptions {
   attachments?: EmailAttachment[];
   template?: string;                            // Mailtrap template UUID (mailtrap_api only)
   templateVariables?: Record<string, string>;   // Variables passed to the Mailtrap template
+  /**
+   * Mailtrap category (mailtrap_api only), returned on every webhook event of the mail, so `emailEvents`
+   * rows can be found again by it (a Versand sets `mailing.<mailingKey>`). Mailtrap refuses it next to
+   * a template, and caps it at 255 characters.
+   */
+  category?: string;
 }
 
 // ─── SMTP configs ────────────────────────────────────────────────────────────
@@ -131,6 +137,7 @@ export function mailtrapBody(options: EmailOptions): Record<string, unknown> {
     body['subject'] = options.subject;
     body['html']    = options.html;
     if (options.text) body['text'] = options.text;
+    if (options.category) body['category'] = options.category.slice(0, 255);
   }
 
   if (options.attachments?.length) {

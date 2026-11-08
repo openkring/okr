@@ -6,3 +6,4 @@ export * from './mailing';
 export * from './notice-attachment';
 export * from './mailing-answer';
 export * from './mailing-letters';
+export * from './mailing-deliveries';

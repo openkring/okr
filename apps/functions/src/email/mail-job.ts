@@ -63,6 +63,8 @@ export interface MailJobDoc {
   error?: string;
   /** A personal send: class and status of the first failed mail, never its message. */
   errorCode?: string;
+  /** The Mailtrap category every mail of the job carries; a Versand sets `mailing.<mailingKey>` (getMailingDeliveries). */
+  category?: string;
 }
 
 /**
@@ -160,6 +162,7 @@ export async function sendPersonal(
       if (html.includes(ANSWER_URL_PLACEHOLDER) || text?.includes(ANSWER_URL_PLACEHOLDER)) throw new Error('placeholder left');
       await send(provider, {
         from, to: [entry.to], ...(job.to[0] ? { replyTo: job.to[0] } : {}), subject: job.subject, html, ...(text !== undefined ? { text } : {}), attachments,
+        ...(job.category ? { category: job.category } : {}),
       });
       progress.sent++;
     } catch (error) {
@@ -228,6 +231,7 @@ export const onMailJob = onDocumentCreated(
           html,
           ...(text !== undefined ? { text } : {}),
           attachments,
+          ...(job.category ? { category: job.category } : {}),
         });
         sent = i + 1;
         await snap.ref.update({ blocksSent: sent });

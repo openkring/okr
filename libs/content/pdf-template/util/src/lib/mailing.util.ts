@@ -105,3 +105,56 @@ export function mailingAnswerColor(answer: MailingAnswer): string {
     default: return 'medium';
   }
 }
+
+/**
+ * What the mail server reported for one E-Mail (`getMailingDeliveries`, from the Mailtrap events).
+ * `delivered`: the receiving server took it; `deferred`: a soft bounce, the provider retries;
+ * `rejected`: it will not arrive; `spam`: delivered and marked as spam by the recipient.
+ */
+export type MailDeliveryStatus = 'delivered' | 'deferred' | 'rejected' | 'spam';
+
+export interface MailDelivery {
+  status: MailDeliveryStatus;
+  /** why it was rejected or deferred, without addresses */
+  reason?: string;
+  /** ISO time */
+  at?: string;
+}
+
+/** The answer of `getMailingDeliveries`. A recipient missing from `recipients` has no report yet. */
+export interface MailingDeliveries {
+  recipients: ({ personKey: string } & MailDelivery)[];
+  /** the Versand's own To/Cc/sender addresses, which the caller already sees on the mailings doc */
+  addresses: ({ email: string } & MailDelivery)[];
+  /** reports for addresses that match no recipient any more (e.g. changed since) */
+  unmatched: number;
+  truncated?: boolean;
+}
+
+/** Whether the mail server reported anything at all (else the Versand predates the reports, or they expired). */
+export function hasDeliveryReports(deliveries: MailingDeliveries | undefined): boolean {
+  return !!deliveries && (deliveries.recipients.length > 0 || deliveries.addresses.length > 0 || deliveries.unmatched > 0);
+}
+
+/** personKey → its report. */
+export function deliveryByPerson(deliveries: MailingDeliveries | undefined): Map<string, MailDelivery> {
+  return new Map((deliveries?.recipients ?? []).map(({ personKey, ...delivery }) => [personKey, delivery]));
+}
+
+/** How many E-Mail recipients have which status; `pending` = no report yet. */
+export function deliveryStatusCounts(personKeys: string[], byPerson: Map<string, MailDelivery>): Record<MailDeliveryStatus | 'pending', number> {
+  const counts: Record<MailDeliveryStatus | 'pending', number> = { delivered: 0, deferred: 0, rejected: 0, spam: 0, pending: 0 };
+  for (const key of personKeys) counts[byPerson.get(key)?.status ?? 'pending']++;
+  return counts;
+}
+
+/** The Ionic color of a delivery badge. */
+export function deliveryStatusColor(status: MailDeliveryStatus | 'pending'): string {
+  switch (status) {
+    case 'delivered': return 'success';
+    case 'deferred': return 'warning';
+    case 'spam': return 'warning';
+    case 'rejected': return 'danger';
+    default: return 'medium';
+  }
+}

@@ -9,8 +9,8 @@ import { I18nService } from '@okr/shared-i18n';
 import { CalEventModel, NameDisplay } from '@okr/shared-models';
 import { DocEmailService, MailingLetters, MailingService } from '@okr/content-pdf-template-data-access';
 import {
-  MAILING_I18N_KEYS, MAILING_VIEW_CHANNELS, MailingAnswer, mailingAnswerCounts, mailingAnswerOf, MailingI18n,
-  mailingRecipientsFor, MailingView,
+  deliveryByPerson, MAILING_I18N_KEYS, MAILING_VIEW_CHANNELS, MailingAnswer, mailingAnswerCounts, mailingAnswerOf, MailingDeliveries,
+  MailingI18n, mailingRecipientsFor, MailingView,
 } from '@okr/content-pdf-template-util';
 import { getFullName, isOrgRecipient, nameMatches } from '@okr/shared-util-core';
 
@@ -35,6 +35,10 @@ interface MailingState {
   letters: MailingLetters | undefined;
   lettersLoading: boolean;
   lettersError: boolean;
+  /** what `getMailingDeliveries` answered (the mail server's reports); undefined until asked */
+  deliveries: MailingDeliveries | undefined;
+  deliveriesLoading: boolean;
+  deliveriesError: boolean;
 }
 
 const initialState: MailingState = {
@@ -43,6 +47,9 @@ const initialState: MailingState = {
   letters: undefined,
   lettersLoading: false,
   lettersError: false,
+  deliveries: undefined,
+  deliveriesLoading: false,
+  deliveriesError: false,
 };
 
 /**
@@ -134,6 +141,8 @@ export const MailingStore = signalStore(
       if (!term) return all;
       return all.filter((m) => nameMatches(`${m.subject ?? ''} ${m.senderName ?? ''}`, term));
     }),
+    /** personKey → the mail server's report for that recipient's E-Mail */
+    deliveryByPerson: computed(() => deliveryByPerson(store.deliveries())),
     /** a sent Versand whose mail job or letters failed is only partly through */
     partlyFailed: computed(() => {
       const mailing = store.mailing();
@@ -147,13 +156,31 @@ export const MailingStore = signalStore(
 
     setMailingKey(mailingKey: string): void {
       if (mailingKey === store.mailingKey()) return;
-      patchState(store, { mailingKey, letters: undefined, lettersLoading: false, lettersError: false });
+      patchState(store, {
+        mailingKey, letters: undefined, lettersLoading: false, lettersError: false,
+        deliveries: undefined, deliveriesLoading: false, deliveriesError: false,
+      });
     },
 
     /**
      * Asks the server for the letters: a fresh download link while they are kept (7 days), or
      * `expired` after. The link is fetched before the click, so the browser opens it without a popup block.
      */
+    /** Asks the server what the mail server reported for each E-Mail of the Versand. */
+    async loadDeliveries(mailing: MailingView | undefined): Promise<void> {
+      if (!mailing?.okey || !mailing.mailJobKey || store.deliveriesLoading()) return;
+      patchState(store, { deliveriesLoading: true, deliveriesError: false });
+      try {
+        const deliveries = await store.docEmailService.getMailingDeliveries(mailing.okey);
+        if (store.mailingKey() === mailing.okey) patchState(store, { deliveries });
+      } catch (err) {
+        console.error('MailingStore.loadDeliveries', err);
+        patchState(store, { deliveriesError: true });
+      } finally {
+        patchState(store, { deliveriesLoading: false });
+      }
+    },
+
     async loadLetters(mailing: MailingView | undefined): Promise<void> {
       if (!mailing?.okey || !mailing.letters || store.lettersLoading()) return;
       patchState(store, { lettersLoading: true, lettersError: false });

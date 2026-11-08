@@ -19,6 +19,13 @@ describe('effectiveProvider', () => {
 });
 
 describe('mailtrapBody', () => {
+  it('passes a category on, capped at 255 characters, and never next to a template', () => {
+    expect(mailtrapBody({ ...base, category: 'mailing.abc' })['category']).toBe('mailing.abc');
+    expect(mailtrapBody(base)).not.toHaveProperty('category');
+    expect(String(mailtrapBody({ ...base, category: 'x'.repeat(300) })['category'])).toHaveLength(255);
+    expect(mailtrapBody({ ...base, category: 'mailing.abc', template: '12345678-1234-1234-1234-123456789abc' })).not.toHaveProperty('category');
+  });
+
   it('leaves out an empty text half', () => {
     expect(mailtrapBody({ ...base, text: '' })).not.toHaveProperty('text');
     expect(mailtrapBody({ ...base, text: 'x' })['text']).toBe('x');

@@ -134,6 +134,16 @@ describe('sendPersonal', () => {
     expect(updates.at(-1)).toEqual({ blocksSent: 3, state: 'sent' });
   });
 
+  it('puts the job\'s category on every personal mail, and none without one', async () => {
+    const snap = { ref: { update: async () => undefined } };
+    const send = vi.fn(async (_provider: string, _options: { category?: string }) => undefined);
+    await sendPersonal(snap, { ...personalJob(2), category: 'mailing.m1' }, 'scs', 'app@scs.ch', 'mailtrap_api', [], { sent: 0 }, { now: () => 0, send, compose, pauseMs: 0 });
+    expect(send.mock.calls.map((c) => c[1].category)).toEqual(['mailing.m1', 'mailing.m1']);
+    send.mockClear();
+    await sendPersonal(snap, personalJob(1), 'scs', 'app@scs.ch', 'mailtrap_api', [], { sent: 0 }, { now: () => 0, send, compose, pauseMs: 0 });
+    expect(send.mock.calls[0][1]).not.toHaveProperty('category');
+  });
+
   it('keeps the true count in progress when a progress write fails mid-loop', async () => {
     let calls = 0;
     const snap = { ref: { update: async () => { calls++; if (calls > 1) throw new Error('write failed'); } } };

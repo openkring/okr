@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Attendee } from '@okr/shared-models';
 import {
+  deliveryByPerson, deliveryStatusColor, deliveryStatusCounts, hasDeliveryReports,
   mailingAnswerColor, mailingAnswerCounts, mailingAnswerOf, mailingChannelCounts, mailingRecipientsFor, mailingStateColor,
   mailJobProgress, sortMailingsNewestFirst,
 } from './mailing.util';
@@ -68,5 +69,27 @@ describe('mailingAnswerCounts / mailingAnswerColor', () => {
   });
   it('colors the badges', () => {
     expect(['accepted', 'waiting', 'declined', 'open'].map((a) => mailingAnswerColor(a as never))).toEqual(['success', 'warning', 'danger', 'medium']);
+  });
+});
+
+describe('delivery reports', () => {
+  const reports = {
+    recipients: [{ personKey: 'a', status: 'delivered' as const }, { personKey: 'b', status: 'rejected' as const, reason: 'gone' }],
+    addresses: [], unmatched: 0,
+  };
+  it('knows whether there are any', () => {
+    expect(hasDeliveryReports(undefined)).toBe(false);
+    expect(hasDeliveryReports({ recipients: [], addresses: [], unmatched: 0 })).toBe(false);
+    expect(hasDeliveryReports({ recipients: [], addresses: [], unmatched: 2 })).toBe(true);
+    expect(hasDeliveryReports(reports)).toBe(true);
+  });
+  it('maps by person and counts, a recipient without a report as pending', () => {
+    const byPerson = deliveryByPerson(reports);
+    expect(byPerson.get('b')).toEqual({ status: 'rejected', reason: 'gone' });
+    expect(deliveryStatusCounts(['a', 'b', 'c'], byPerson)).toEqual({ delivered: 1, deferred: 0, rejected: 1, spam: 0, pending: 1 });
+  });
+  it('colors the badges', () => {
+    expect(['delivered', 'deferred', 'rejected', 'spam', 'pending'].map((s) => deliveryStatusColor(s as never)))
+      .toEqual(['success', 'warning', 'danger', 'warning', 'medium']);
   });
 });

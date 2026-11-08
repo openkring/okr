@@ -271,6 +271,18 @@ export const MAILING_I18N_KEYS = {
   delivery_chat:     PFX + 'composer.delivery.chat',
   delivery_post:     PFX + 'composer.delivery.post',
   unknown_person:    PFX + 'mailing.deliveries.unknown_person',
+  // the mail server's reports per E-Mail recipient (getMailingDeliveries)
+  status_delivered:  PFX + 'mailing.status.delivered',
+  status_deferred:   PFX + 'mailing.status.deferred',
+  status_rejected:   PFX + 'mailing.status.rejected',
+  status_spam:       PFX + 'mailing.status.spam',
+  status_pending:    PFX + 'mailing.status.pending',
+  status_none:       PFX + 'mailing.status.none',
+  status_error:      PFX + 'mailing.status.error',
+  status_refresh:    PFX + 'mailing.status.refresh',
+  /** single braces: `{count}`, filled with `fill()` */
+  status_unmatched:  PFX + 'mailing.status.unmatched',
+  status_addresses:  PFX + 'mailing.status.addresses',
   // events
   events_title:      PFX + 'mailing.events.title',
   event_missing:     PFX + 'mailing.events.missing',

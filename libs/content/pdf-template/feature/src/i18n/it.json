@@ -311,6 +311,18 @@
       "open": "Aperto",
       "hint": "Lo stato attuale della lista dei partecipanti, per tutti i destinatari di questo invio."
     },
-    "back": "Indietro"
+    "back": "Indietro",
+    "status": {
+      "delivered": "Consegnato",
+      "deferred": "In ritardo",
+      "rejected": "Respinto",
+      "spam": "Segnalato come spam",
+      "pending": "In attesa",
+      "none": "Il server di posta non ha ancora segnalato nulla. Lo stato di consegna esiste solo per gli invii dall'8.11.2026 e resta visibile per 30 giorni.",
+      "error": "Non è stato possibile caricare lo stato di consegna.",
+      "refresh": "Aggiorna lo stato di consegna",
+      "unmatched": "Altre {count} segnalazioni non corrispondono più a nessun destinatario, ad esempio perché un indirizzo è cambiato nel frattempo.",
+      "addresses": "A, Cc e mittente"
+    }
   }
 }
