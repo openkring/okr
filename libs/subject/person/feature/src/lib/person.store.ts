@@ -476,10 +476,10 @@ export const PersonStore = signalStore(
         },
 
         /**
-         * Versand to the currently filtered persons (spec 1.145): the composer with its Zustellung
+         * Opens the comm center (spec 1.145) for the currently filtered persons: the composer with its Zustellung
          * table, which sends the email part in throttled blocks.
          */
-        async sendEmailToList(): Promise<void> {
+        async openCommCenter(): Promise<void> {
           const persons = store.filteredPersons();
           const recipients = toVersandRecipients(persons, (p) => store.appStore.getDirectoryEntry(`person.${p.okey}`)?.favEmail);
           await openBulkEmailFlow({

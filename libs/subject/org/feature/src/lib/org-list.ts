@@ -205,6 +205,7 @@ export class OrgList {
       case 'exportAddresses': await this.store.export("addresses"); break;
       case 'exportRaw': await this.store.export("raw_orgs"); break;
       case 'copyEmailAddresses': await this.store.copyEmailAddresses(); break;
+      case 'commCenter': await this.store.openCommCenter(); break;
       default: this.alertService.error(`OrgList.call: unknown method ${selectedMethod}`);
     }
   }

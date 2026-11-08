@@ -1056,12 +1056,12 @@ export const _MembershipStore = signalStore(
       },
 
       /**
-       * Versand to the currently filtered members (spec 1.145): the composer with its Zustellung
+       * Opens the comm center (spec 1.145) for the currently filtered members: the composer with its Zustellung
        * table, which sends the email part in throttled blocks.
        * A group admin without `memberAdmin` or `privileged` may not write the mail queue: their
        * mail goes through `sendGroupEmail`, which checks the recipients against the group.
        */
-      async sendEmailToList(listId: string): Promise<void> {
+      async openCommCenter(listId: string): Promise<void> {
         const memberKeySet = new Set(this.getFilteredMemberships(listId).map(m => m.memberKey));
         const filteredPersons = store.appStore.allPersons().filter(p => p.okey && memberKeySet.has(p.okey));
         const recipients = toVersandRecipients(filteredPersons, (p) => store.appStore.getDirectoryEntry(`person.${p.okey}`)?.favEmail);

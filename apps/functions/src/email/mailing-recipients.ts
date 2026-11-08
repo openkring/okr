@@ -11,7 +11,7 @@
 import { CallableRequest, HttpsError, onCall } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
-import { DateFormat, getTodayStr, MailingRecipientChannels, MailingRecipientFacts, mailingChannels } from '@okr/shared-util-core';
+import { DateFormat, getTodayStr, isOrgRecipient, MailingRecipientChannels, MailingRecipientFacts, mailingChannels, recipientParentKey } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
 import { assertCallerIsGroupAdmin } from '../content/group-content.util';
@@ -52,17 +52,22 @@ export function admissibleKeys(requested: string[], members?: string[]): string[
   return [...new Set(requested.filter((key) => key.length > 0 && (!allowed || allowed.has(key))))];
 }
 
-async function readFacts(db: Firestore, tenantId: string, personKeys: string[]): Promise<MailingRecipientFacts[]> {
+/**
+ * The facts per recipient key — a bare person okey or `org.<okey>` (see `recipientParentKey`). An org
+ * has no account: only its email and postal address count.
+ */
+async function readFacts(db: Firestore, tenantId: string, recipientKeys: string[]): Promise<MailingRecipientFacts[]> {
   const accounts = new Map<string, { uid: string; tenants?: string[]; isArchived?: boolean; newsDelivery?: unknown }[]>();
-  const postal = new Set<string>();
-  for (const keys of chunk(personKeys, IN_CHUNK)) {
+  const postal = new Set<string>();      // parentKeys with a postal address in the tenant
+  for (const keys of chunk(recipientKeys, IN_CHUNK)) {
+    const personKeys = keys.filter((key) => !isOrgRecipient(key));
     const [users, addresses] = await Promise.all([
-      db.collection('users').where('personKey', 'in', keys).get(),
+      personKeys.length > 0 ? db.collection('users').where('personKey', 'in', personKeys).get() : undefined,
       db.collection('addresses')
-        .where('parentKey', 'in', keys.map((key) => `person.${key}`))
+        .where('parentKey', 'in', keys.map(recipientParentKey))
         .where('addressChannel', '==', 'postal').get(),
     ]);
-    for (const doc of users.docs) {
+    for (const doc of users?.docs ?? []) {
       const data = doc.data();
       const key = String(data['personKey'] ?? '');
       accounts.set(key, [...(accounts.get(key) ?? []), { uid: doc.id, ...data }]);
@@ -70,22 +75,24 @@ async function readFacts(db: Firestore, tenantId: string, personKeys: string[]):
     for (const doc of addresses.docs) {
       const data = doc.data();
       if (data['isArchived'] === true || !((data['tenants'] ?? []) as string[]).includes(tenantId)) continue;
-      postal.add(String(data['parentKey'] ?? '').replace(/^person\./, ''));
+      postal.add(String(data['parentKey'] ?? ''));
     }
   }
   // email: the favourite in the directory projection, which is also what the composer sends to
-  const directory = await db.getAll(...personKeys.map((key) => db.collection('address-directory').doc(`${tenantId}_person.${key}`)));
-  const hasEmail = new Set(directory.filter((snap) => String(snap.data()?.['favEmail'] ?? '').length > 0)
-    .map((snap) => String(snap.data()?.['parentKey'] ?? '').replace(/^person\./, '')));
+  const directory = await db.getAll(...recipientKeys.map((key) => db.collection('address-directory').doc(`${tenantId}_${recipientParentKey(key)}`)));
+  const hasEmail = new Set(recipientKeys.filter((_, i) => String(directory[i].data()?.['favEmail'] ?? '').length > 0));
 
-  return personKeys.map((personKey) => {
+  return recipientKeys.map((personKey) => {
+    if (isOrgRecipient(personKey)) {
+      return { personKey, hasAccount: false, hasEmail: hasEmail.has(personKey), hasPostal: postal.has(personKey) };
+    }
     const [account] = selectUserDocs(accounts.get(personKey) ?? [], tenantId) as { newsDelivery?: unknown }[];
     return {
       personKey,
       hasAccount: !!account,
       newsDelivery: account?.newsDelivery,
       hasEmail: hasEmail.has(personKey),
-      hasPostal: postal.has(personKey),
+      hasPostal: postal.has(recipientParentKey(personKey)),
     };
   });
 }

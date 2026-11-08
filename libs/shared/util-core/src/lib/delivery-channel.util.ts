@@ -57,6 +57,29 @@ export function toEditableChannels(raw: unknown): DeliveryChannel[] {
 /** The delivery types a Versand offers, in the column order of its Zustellung table (spec 1.145 §4.3). */
 export const MAILING_CHANNELS: DeliveryChannel[] = [DeliveryChannel.Chat, DeliveryChannel.Email, DeliveryChannel.Post];
 
+/**
+ * The comm center reaches persons and orgs. A recipient key (the `personKey` field of the Versand
+ * types, kept under that name on the wire so older clients and stored mailings stay valid) is
+ * either a bare person okey or `org.<okey>`. An org has no account, so it is reached by email or
+ * post only, and it never gets answer links.
+ */
+export const ORG_RECIPIENT_PREFIX = 'org.';
+
+/** The recipient key of an org. */
+export function orgRecipientKey(orgKey: string): string {
+  return `${ORG_RECIPIENT_PREFIX}${orgKey}`;
+}
+
+/** Whether a recipient key names an org rather than a person. */
+export function isOrgRecipient(key: string): boolean {
+  return key.startsWith(ORG_RECIPIENT_PREFIX);
+}
+
+/** The address `parentKey` of a recipient: `org.<okey>` as it is, a bare person okey as `person.<okey>`. */
+export function recipientParentKey(key: string): string {
+  return isOrgRecipient(key) ? key : `person.${key}`;
+}
+
 /** What the server knows about one Versand recipient — never an address value (privacy-model skill). */
 export interface MailingRecipientFacts {
   personKey: string;

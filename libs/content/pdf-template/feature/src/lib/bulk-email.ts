@@ -5,9 +5,9 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import {
   AddressCollection, AddressModel, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel,
-  MembershipCollection, MembershipModel, PersonModel,
+  MembershipCollection, MembershipModel, OrgModel, PersonModel,
 } from '@okr/shared-models';
-import { addDuration, getFullName, getSystemQuery, getTodayStr, isActiveMembership } from '@okr/shared-util-core';
+import { addDuration, getFullName, getSystemQuery, getTodayStr, isActiveMembership, isOrgRecipient, orgRecipientKey } from '@okr/shared-util-core';
 import { type VersandEvent, VERSAND_EVENT_MONTHS, versandEventsOf } from '@okr/content-pdf-template-util';
 import { type ComposedEmail, EmailComposerModal, type VersandRecipient } from '@okr/content-pdf-template-ui';
 
@@ -33,6 +33,17 @@ export function toVersandRecipients(persons: PersonModel[], getEmail: (person: P
 }
 
 /**
+ * The orgs of a list as comm-center recipients (key `org.<okey>`), sorted by name. As with persons,
+ * an org without an email address stays in: it may still be reached by post.
+ */
+export function toOrgVersandRecipients(orgs: OrgModel[], getEmail: (org: OrgModel) => string | undefined): VersandRecipient[] {
+  return [...orgs]
+    .filter((o) => !!o.okey)
+    .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))
+    .map((o) => ({ personKey: orgRecipientKey(o.okey), name: o.name ?? '', email: getEmail(o) ?? '' }));
+}
+
+/**
  * The Versand flow shared by the person, membership and meeting lists (spec 1.145): one modal,
  * «Versand vorbereiten», with the segments Editor, Vorschau, Zustellung and Verteiler.
  *
@@ -52,8 +63,10 @@ export async function openBulkEmailFlow(
   groupKey?: string,
 ): Promise<void> {
   const { favOrgEmail } = await loadOrgEmails(ctx);
-  // A group admin's Versand never carries answer links (the server refuses them): no events to load.
-  const { events, membersByGroup } = groupKey ? { events: [], membersByGroup: {} } : await loadVersandEvents(ctx);
+  // A group admin's Versand never carries answer links (the server refuses them), and neither does one
+  // to an org, which cannot answer: no events to load.
+  const noEvents = !!groupKey || recipients.some((r) => isOrgRecipient(r.personKey));
+  const { events, membersByGroup } = noEvents ? { events: [], membersByGroup: {} } : await loadVersandEvents(ctx);
   const composer = await ctx.modalController.create({
     component: EmailComposerModal,
     componentProps: {

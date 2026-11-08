@@ -21,7 +21,7 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { DeliveryChannel, type EmailLayoutChoice, NoticeAttachment, NoticeCollection, type NoticeModel } from '@okr/shared-models';
-import { DateFormat, getTodayStr } from '@okr/shared-util-core';
+import { DateFormat, getTodayStr, isOrgRecipient, recipientParentKey } from '@okr/shared-util-core';
 import { projectID } from 'firebase-functions/params';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
@@ -159,11 +159,11 @@ function stringList(value: unknown, field: string): string[] {
   return value as string[];
 }
 
-/** The favorite email per person (`person.<key>` docs of the directory), keyed by the bare personKey. */
+/** The favorite email per recipient (its `person.<key>` / `org.<key>` directory doc), keyed by the recipient key. */
 async function directoryEmailsByKey(db: Firestore, tenantId: string, personKeys: string[]): Promise<Map<string, string>> {
   const out = new Map<string, string>();
   if (personKeys.length === 0) return out;
-  const snaps = await db.getAll(...personKeys.map((key) => db.collection('address-directory').doc(`${tenantId}_person.${key}`)));
+  const snaps = await db.getAll(...personKeys.map((key) => db.collection('address-directory').doc(`${tenantId}_${recipientParentKey(key)}`)));
   snaps.forEach((snap, i) => {
     const email = String(snap.data()?.['favEmail'] ?? '');
     if (email) out.set(personKeys[i], email);
@@ -230,6 +230,10 @@ export const sendMailing = onCall(
     if (caleventKeys.length > 0) {
       if (typeof groupKey === 'string' && groupKey) {
         throw new HttpsError('permission-denied', 'A group admin cannot send answer links.');
+      }
+      // an answer records a person's attendance: an org cannot answer
+      if (deliveries.some((d) => isOrgRecipient(d.personKey))) {
+        throw new HttpsError('invalid-argument', 'Answer links go to persons only.');
       }
       if (keysFor(deliveries, DeliveryChannel.Email).length > MAX_PERSONAL_RECIPIENTS) {
         throw new HttpsError('invalid-argument', `At most ${MAX_PERSONAL_RECIPIENTS} email recipients with events.`);
@@ -370,7 +374,7 @@ export const onMailing = onDocumentCreated(
             result.emails = personal.length;
           }
         } else {
-          const bcc = [...new Set(await directoryEmails(db, tenantId, emailKeys.map((key) => `person.${key}`)))];
+          const bcc = [...new Set(await directoryEmails(db, tenantId, emailKeys.map(recipientParentKey)))];
           if (bcc.length > 0) {
             const job: MailJobDoc = { ...(await base()), cc: mailing.cc, bcc, ...attachmentName };
             result.mailJobKey = (await db.collection(MailJobCollection).add(job)).id;
@@ -379,7 +383,8 @@ export const onMailing = onDocumentCreated(
         }
       }
 
-      const chatKeys = await keysWithAccount(db, tenantId, keysFor(mailing.deliveries, DeliveryChannel.Chat));
+      // an org has no account: In-App is for persons only
+      const chatKeys = await keysWithAccount(db, tenantId, keysFor(mailing.deliveries, DeliveryChannel.Chat).filter((key) => !isOrgRecipient(key)));
       if (chatKeys.length > 0) {
         const noticeRef = db.collection(NoticeCollection).doc();
         const notice: Omit<NoticeModel, 'okey'> = {

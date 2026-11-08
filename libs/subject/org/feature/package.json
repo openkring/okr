@@ -33,6 +33,7 @@
     "@okr/cms-menu-feature": "*",
     "@okr/vcard-util": "*",
     "@okr/vcard-feature": "*",
+    "@okr/content-pdf-template-feature": "*",
     "@okr/finance-bill-feature": "*",
     "@okr/finance-invoice-feature": "*",
     "@okr/relationship-workrel-feature": "*",

@@ -189,13 +189,13 @@ describe('exceedsBarLimit', () => {
 
 describe('isHiddenOnNarrowScreen', () => {
   it('hides the Versand call on a narrow screen only', () => {
-    expect(isHiddenOnNarrowScreen({ action: 'call', url: 'sendEmailToList' }, false)).toBe(true);
-    expect(isHiddenOnNarrowScreen({ action: 'call', url: 'sendEmailToList' }, true)).toBe(false);
+    expect(isHiddenOnNarrowScreen({ action: 'call', url: 'commCenter' }, false)).toBe(true);
+    expect(isHiddenOnNarrowScreen({ action: 'call', url: 'commCenter' }, true)).toBe(false);
   });
 
   it('leaves every other entry alone', () => {
     expect(isHiddenOnNarrowScreen({ action: 'call', url: 'exportRaw' }, false)).toBe(false);
-    expect(isHiddenOnNarrowScreen({ action: 'navigate', url: 'sendEmailToList' }, false)).toBe(false);
+    expect(isHiddenOnNarrowScreen({ action: 'navigate', url: 'commCenter' }, false)).toBe(false);
     expect(isHiddenOnNarrowScreen(undefined, false)).toBe(false);
   });
 });

@@ -17,6 +17,7 @@ import { AddressService } from '@okr/subject-address-data-access';
 import { OrgService } from '@okr/subject-org-data-access';
 import { convertFormToNewOrg, convertNewOrgFormToEmailAddress, convertNewOrgFormToPhoneAddress, convertNewOrgFormToPostalAddress, convertNewOrgFormToWebAddress, OrgNewFormModel, ORG_I18N_KEYS } from '@okr/subject-org-util';
 import { VcardExportService } from '@okr/vcard-feature';
+import { openBulkEmailFlow, toOrgVersandRecipients } from '@okr/content-pdf-template-feature';
 
 
 export type OrgState = {
@@ -250,6 +251,20 @@ export const OrgStore = signalStore(
         emails.toString() ?? '',
         store.i18n.copy_email_conf()
       );
+    },
+
+    /**
+     * Opens the comm center (spec 1.145) for the currently filtered orgs: each org is a recipient of
+     * its own (key `org.<okey>`), reached by email or post — an org has no account, so no In-App.
+     */
+    async openCommCenter(): Promise<void> {
+      const recipients = toOrgVersandRecipients(store.filteredOrgs(), (org) => store.appStore.getDirectoryEntry(`org.${org.okey}`)?.favEmail);
+      await openBulkEmailFlow({
+        modalController: store.modalController,
+        firestoreService: store.firestoreService,
+        appStore: store.appStore,
+        tenantId: store.tenantId(),
+      }, recipients);
     },
   }))
 );

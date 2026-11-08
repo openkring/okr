@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DeliveryChannel } from '@okr/shared-models';
-import { mailingChannels, toDeliveryChannels, toEditableChannels } from './delivery-channel.util';
+import { isOrgRecipient, mailingChannels, orgRecipientKey, recipientParentKey, toDeliveryChannels, toEditableChannels } from './delivery-channel.util';
 
 describe('toDeliveryChannels', () => {
   it('maps the legacy numeric DeliveryType values', () => {
@@ -87,5 +87,18 @@ describe('mailingChannels', () => {
       .toEqual({ personKey: 'p', possible: ['email', 'post'], initial: ['email'] });
     expect(mailingChannels({ ...none, hasPostal: true }).initial).toEqual(['post']);
     expect(mailingChannels(none)).toEqual({ personKey: 'p', possible: [], initial: [] });
+  });
+});
+
+describe('recipient keys', () => {
+  it('keeps a bare person okey as a person', () => {
+    expect(isOrgRecipient('p1')).toBe(false);
+    expect(recipientParentKey('p1')).toBe('person.p1');
+  });
+
+  it('marks an org with the org. prefix', () => {
+    expect(orgRecipientKey('o1')).toBe('org.o1');
+    expect(isOrgRecipient('org.o1')).toBe(true);
+    expect(recipientParentKey('org.o1')).toBe('org.o1');
   });
 });

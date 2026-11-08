@@ -19,6 +19,7 @@ import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { PDFDocument } from 'pdf-lib';
 import type { NoticeAttachment } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
+import { isOrgRecipient, ORG_RECIPIENT_PREFIX, recipientParentKey } from '@okr/shared-util-core';
 
 import { privateBucket } from '../_storage/private-bucket';
 import { formatPostalAddress } from '../contract/contract-request.util';
@@ -148,11 +149,18 @@ export async function buildMailingLetters(args: {
   const out = await PDFDocument.create();
   let letters = 0;
   let missing = 0;
+  // a recipient key is a bare person okey or `org.<okey>` (the comm center reaches both)
   for (const personKey of personKeys) {
-    const [personSnap, address] = await Promise.all([db.collection('persons').doc(personKey).get(), postalOf(db, `person.${personKey}`, tenantId)]);
+    const isOrg = isOrgRecipient(personKey);
+    const subjectRef = isOrg
+      ? db.collection('orgs').doc(personKey.slice(ORG_RECIPIENT_PREFIX.length))
+      : db.collection('persons').doc(personKey);
+    const [subjectSnap, address] = await Promise.all([subjectRef.get(), postalOf(db, recipientParentKey(personKey), tenantId)]);
     if (!address) { missing++; continue; }
-    const p = personSnap.data() ?? {};
-    const name = `${String(p['firstName'] ?? '')} ${String(p['lastName'] ?? '')}`.trim();
+    const p = subjectSnap.data() ?? {};
+    const name = isOrg
+      ? String(p['name'] ?? '').trim()
+      : `${String(p['firstName'] ?? '')} ${String(p['lastName'] ?? '')}`.trim();
     const letter = await PDFDocument.load(await renderOne(buildLetterHtml({
       sender, recipient: { name, ...address }, placeAndDate: date, subject: args.subject, body: args.body,
     })));
