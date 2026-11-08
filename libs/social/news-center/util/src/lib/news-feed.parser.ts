@@ -48,9 +48,11 @@ export function parseDuration(value: string | null | undefined): number | undefi
 }
 
 function youtubeItem(entry: Element, channelKey: string): NewsItem {
-  const videoId = textNS(entry, NS_YT, 'videoId');
+  const rawId = textNS(entry, NS_YT, 'videoId');
+  // the id ends up in an embed url path: accept only the YouTube id alphabet
+  const videoId = /^[\w-]{1,32}$/.test(rawId) ? rawId : '';
   return {
-    id: videoId || text(entry, 'id'),
+    id: videoId || text(entry, 'id') || rawId,
     channelKey,
     title: toPlainText(text(entry, 'title')),
     publishedAt: toIso(text(entry, 'published') || text(entry, 'updated')),

@@ -26,6 +26,13 @@ describe('parseNewsFeed', () => {
     });
   });
 
+  it('drops a hostile yt:videoId from mediaUrl', () => {
+    for (const bad of ['x/../evil', 'a?b=1', 'a#b', 'a&quot;b', '']) {
+      const xml = youtubeXml.replace('<yt:videoId>dQw4w9WgXcQ</yt:videoId>', `<yt:videoId>${bad}</yt:videoId>`);
+      expect(parseNewsFeed(xml, 'youtube', 'c1')[0].mediaUrl, bad).toBeUndefined();
+    }
+  });
+
   it('reads podcast enclosure, itunes:image and itunes:duration', () => {
     const [ep, ep2] = parseNewsFeed(podcastXml, 'podcast', 'p1');
     expect(ep.mediaUrl).toMatch(/\.mp3/);
