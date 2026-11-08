@@ -21,7 +21,7 @@ import { todayStoreDate } from '../calendar/recipients';
 import { createBoathouseReservation } from './reservation-target';
 import { emitEvent } from '../workflow/emit';
 import { buildSubmissionTaskNotes, prepareSubmission, type SubmissionRow, type ValueNames } from './submission-pipeline';
-import { projectPublicFormDefinition } from './public-definition';
+import { categoryNamesOfFields, projectPublicCategories, projectPublicFormDefinition, type PublicCategoryList } from './public-definition';
 import {
   acceptanceForSection,
   captchaRequired,
@@ -286,7 +286,7 @@ export const getFormToken = onCall(
 // ──────────────────────────────────────────
 export const getFormDefinition = onCall(
   { region: REGION },
-  async (request: CallableRequest<{ formKey: string; tenantId: string; sectionId?: string }>) => {
+  async (request: CallableRequest<{ formKey: string; tenantId: string; sectionId?: string; withCategories?: boolean }>) => {
     const formKey = request.data?.formKey;
     const tenantId = request.data?.tenantId;
     if (!formKey || !tenantId) {
@@ -310,9 +310,30 @@ export const getFormDefinition = onCall(
     const section = await readVerifiedSection(db, request.data?.sectionId, formKey, tenantId);
     const { availability } = await availabilityOf(db, formDef, section);
     // Public-safe projection — whitelist only (see public-definition.ts).
-    return { ...projectPublicFormDefinition(doc.id, doc.data(), formKey, tenantId), availability };
+    const projected = { ...projectPublicFormDefinition(doc.id, doc.data(), formKey, tenantId), availability };
+    // The static website cannot read `categories` itself (no Firestore client): it asks for the lists of
+    // the form's category fields here. The app reads them on its own and never sends the flag.
+    if (request.data?.withCategories !== true) return projected;
+    return { ...projected, categories: await readPublicCategories(db, formDef.fields, tenantId) };
   }
 );
+
+/** The item keys of the category lists a form's 'category' fields need — for the static website. */
+async function readPublicCategories(
+  db: FirebaseFirestore.Firestore,
+  fields: unknown,
+  tenantId: string,
+): Promise<PublicCategoryList[]> {
+  const names = categoryNamesOfFields(fields).slice(0, 30);   // `in` takes at most 30 values
+  if (names.length === 0) return [];
+  try {
+    const snap = await db.collection('categories').where('name', 'in', names).get();
+    return projectPublicCategories(snap.docs.map(d => d.data()), names, tenantId);
+  } catch (e) {
+    logger.warn('getFormDefinition: could not read categories', e);
+    return [];   // the website then shows the category field as free text
+  }
+}
 
 // ──────────────────────────────────────────
 // Acceptance (1.125 B, spec §11)

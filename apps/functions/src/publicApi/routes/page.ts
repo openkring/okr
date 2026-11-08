@@ -163,7 +163,21 @@ export function mapFooter(props: Record<string, unknown>): { columnCount: number
   return { columnCount, columns, bottomLine };
 }
 
-function mapSection(s: SectionDoc, nestedSections: Map<string, SectionDoc>, sanitize: SanitizeFn): unknown {
+/**
+ * A form section for the static website: only what it needs to load the form through the public
+ * `getFormDefinition` callable and to name the section in `submitForm`. Everything else on the
+ * section stays on the server — the board e-mail addresses, the responsibility, the implicit values
+ * (`submitForm` reads them from the verified section itself) and the acceptance overrides
+ * (`getFormDefinition` applies them for this `sectionId`).
+ */
+export function mapFormSection(sectionId: string, title: string, props: Record<string, unknown>): {
+  type: 'form'; title: string; sectionId: string; formKey: string;
+} {
+  const formKey = typeof props['formKey'] === 'string' ? props['formKey'] : '';
+  return { type: 'form', title, sectionId, formKey };
+}
+
+function mapSection(id: string, s: SectionDoc, nestedSections: Map<string, SectionDoc>, sanitize: SanitizeFn): unknown {
   const type = s.type ?? 'article';
   const props = (s.properties ?? {}) as Record<string, unknown>;
   const title = pickI18n(props['titleI18n'] as I18nString | undefined, s.title ?? '');
@@ -247,6 +261,9 @@ function mapSection(s: SectionDoc, nestedSections: Map<string, SectionDoc>, sani
 
     case 'footer':
       return { type: 'footer', title, subTitle, ...mapFooter(props) };
+
+    case 'form':
+      return mapFormSection(id, title, props);
 
     case 'article':
     default: {
@@ -516,7 +533,7 @@ export async function pageRouter(req: Request, res: Response): Promise<void> {
     const sanitize = await getHtmlSanitizer();
     const sections = await Promise.all(liveSections.map(({ id, doc: s }) => (s.type === 'learning'
       ? loadLearningSection(db, s, mayServeRoom(pageData, pageKey, id), tenantId, sanitize)
-      : mapSection(s, nestedSections, sanitize))));
+      : mapSection(id, s, nestedSections, sanitize))));
 
     setCacheHeaders(res);
     res.json({ ...pageEnvelope, sections });

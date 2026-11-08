@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { projectPublicFormDefinition } from './public-definition';
+import { categoryNamesOfFields, projectPublicCategories, projectPublicFormDefinition } from './public-definition';
 
 const FIELDS = [
   { id: 'a', key: 'dateOfBirth', type: 'date', label: 'Geburtsdatum', required: true, width: 'full', order: 0 },
@@ -55,5 +55,42 @@ describe('projectPublicFormDefinition', () => {
     expect(out).not.toHaveProperty('createdBy');
     expect(out).not.toHaveProperty('derivedValues');
     expect(out['okey']).toBe('d1');
+  });
+});
+
+describe('categoryNamesOfFields', () => {
+  it('lists each category field\'s list once, in form order', () => {
+    const fields = [
+      { type: 'category', categoryName: 'gender' }, { type: 'text', categoryName: 'ignored' },
+      { type: 'category', categoryName: 'boat' }, { type: 'category', categoryName: 'gender' }, { type: 'category' },
+    ];
+    expect(categoryNamesOfFields(fields)).toEqual(['gender', 'boat']);
+  });
+
+  it('reads garbage as no fields', () => {
+    expect(categoryNamesOfFields(undefined)).toEqual([]);
+    expect(categoryNamesOfFields('x')).toEqual([]);
+  });
+});
+
+describe('projectPublicCategories', () => {
+  const system = { name: 'gender', tenants: ['system', 'scs'], items: [{ name: 'male', abbreviation: 'M', icon: 'male' }, { name: 'female', abbreviation: 'F' }] };
+
+  it('returns the item keys only, in the asked order', () => {
+    expect(projectPublicCategories([system], ['gender'], 'scs')).toEqual([
+      { name: 'gender', items: [{ name: 'male', abbreviation: 'M' }, { name: 'female', abbreviation: 'F' }] },
+    ]);
+  });
+
+  it('prefers the tenant\'s own list over the shared system list', () => {
+    const own = { name: 'gender', tenants: ['scs'], items: [{ name: 'other' }] };
+    expect(projectPublicCategories([{ ...system, tenants: ['system'] }, own], ['gender'], 'scs')[0].items)
+      .toEqual([{ name: 'other', abbreviation: '' }]);
+  });
+
+  it('never serves another tenant\'s list or an archived one', () => {
+    const foreign = { name: 'gender', tenants: ['p13'], items: [{ name: 'x' }] };
+    const archived = { ...system, isArchived: true };
+    expect(projectPublicCategories([foreign, archived], ['gender'], 'scs')).toEqual([]);
   });
 });

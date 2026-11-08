@@ -7,7 +7,7 @@ vi.mock('firebase-admin/firestore', () => ({ getFirestore: () => fakeDb.current 
 import type { Request, Response } from 'express';
 
 import {
-  articleImageLayout, buildLearningSection, mapFooter, isPublicPageRead, isPublishedPage, learningDefaultTab, loadLearningSection, pageCors, pageRouter,
+  articleImageLayout, buildLearningSection, mapFooter, mapFormSection, isPublicPageRead, isPublishedPage, learningDefaultTab, loadLearningSection, pageCors, pageRouter,
 } from './page';
 import { getHtmlSanitizer } from '../sanitize';
 
@@ -305,10 +305,28 @@ describe('learning section wiring', () => {
   });
 });
 
+describe('mapFormSection', () => {
+  it('passes the form key and the section id, nothing else of the section', () => {
+    const props = {
+      formKey: 'mitgliedschaft-beantragen', emailAddresses: ['vorstand@example.ch'], responsibilityKey: 'r1',
+      implicitValues: { courseId: 'c1' }, maxResponses: 8,
+    };
+    expect(mapFormSection('s1', 'Antrag', props)).toEqual({
+      type: 'form', title: 'Antrag', sectionId: 's1', formKey: 'mitgliedschaft-beantragen',
+    });
+  });
+
+  it('gives an empty form key for a section without one', () => {
+    expect(mapFormSection('s1', '', {}).formKey).toBe('');
+    expect(mapFormSection('s1', '', { formKey: 42 }).formKey).toBe('');
+  });
+});
+
 describe('unpublished sections', () => {
   const page = { tenants: ['scs'], type: 'content', sections: ['live', 'draft', 'legacy', 'box'] };
   const sections: Record<string, Record<string, unknown>> = {
     live: { type: 'article', state: 'published', tenants: ['scs'], title: 'Live' },
+    antrag: { type: 'form', state: 'published', tenants: ['scs'], title: 'Antrag', properties: { formKey: 'f1', emailAddresses: ['a@b.ch'] } },
     draft: { type: 'article', state: 'draft', tenants: ['scs'], title: 'Entwurf' },
     legacy: { type: 'article', tenants: ['scs'], title: 'Ohne Status' },
     box: {
@@ -333,6 +351,11 @@ describe('unpublished sections', () => {
     await pageRouter({ query: { tenantId: 'scs' }, params: { pageKey: 'p1' } } as never, res as never);
     return body!.sections;
   }
+
+  it('serves a form section with its own document id and without its mail addresses', async () => {
+    const sections = await getSections({ sections: ['antrag'] });
+    expect(sections).toEqual([{ type: 'form', title: 'Antrag', sectionId: 'antrag', formKey: 'f1' }]);
+  });
 
   it('serves published sections only, like the app', async () => {
     expect((await getSections()).map(s => s.title)).toEqual(['Live', 'Box']);
