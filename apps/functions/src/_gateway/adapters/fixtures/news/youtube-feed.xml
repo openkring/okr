@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/" xmlns="http://www.w3.org/2005/Atom">
+ <link rel="self" href="http://www.youtube.com/feeds/videos.xml?channel_id=UCa1b2c3d4e5f6g7h8i9j0kA"/>
+ <id>yt:channel:a1b2c3d4e5f6g7h8i9j0kA</id>
+ <yt:channelId>a1b2c3d4e5f6g7h8i9j0kA</yt:channelId>
+ <title>Segelclub Beispiel</title>
+ <link rel="alternate" href="https://www.youtube.com/channel/UCa1b2c3d4e5f6g7h8i9j0kA"/>
+ <author><name>Segelclub Beispiel</name><uri>https://www.youtube.com/channel/UCa1b2c3d4e5f6g7h8i9j0kA</uri></author>
+ <published>2019-03-01T10:00:00+00:00</published>
+ <entry>
+  <id>yt:video:dQw4w9WgXcQ</id><yt:videoId>dQw4w9WgXcQ</yt:videoId>
+  <title>Regatta 2026</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=dQw4w9WgXcQ"/>
+  <author><name>Segelclub Beispiel</name></author>
+  <published>2026-10-01T10:00:00+00:00</published>
+ </entry>
+</feed>

@@ -581,3 +581,6 @@ export { nightlyMaintenance, morningJobs, eveningJobs, halfHourlyJobs } from './
 // inbound webhook receiver: one function for all senders (`/<clientId>`), plus the trigger that processes each stored event (spec 1.142)
 export { webhooks, onWebhookEvent } from './_webhooks';
 export { webhookSelftestScheduled, runWebhookSelftestNow } from './_webhooks/run-selftest';
+
+// newsCenter: NewsCenter relay — feed text of a configured channel, relayed webcam stills, admin link resolver (design 2026-11-08 §7)
+export { newsCenter } from './news';

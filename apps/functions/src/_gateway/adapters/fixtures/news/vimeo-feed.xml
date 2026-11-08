@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Bootswerft Muster videos</title>
+    <link>https://vimeo.com/bootswerftmuster/videos</link>
+    <atom:link href="https://vimeo.com/bootswerftmuster/videos/rss" rel="self" type="application/rss+xml"/>
+    <image><url>https://i.vimeocdn.com/portrait/123_300x300.jpg</url></image>
+    <item><title>Stapellauf</title><link>https://vimeo.com/76979871</link><enclosure url="https://player.vimeo.com/external/76979871.sd.mp4" type="video/mp4" length="0"/></item>
+  </channel>
+</rss>
