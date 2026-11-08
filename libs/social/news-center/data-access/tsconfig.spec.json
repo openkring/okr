@@ -1,0 +1,40 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "../../../../dist/out-tsc/libs/social/news-center/data-access/spec",
+    "rootDir": "./",
+    "types": [
+      "node",
+      "vitest"
+    ],
+    "module": "es2020",
+    "target": "es2020",
+    "esModuleInterop": true,
+    "allowJs": true,
+    "ignoreDeprecations": "6.0"
+  },
+  "include": [
+    "vite.config.ts",
+    "src/**/*",
+    "**/*.spec.ts",
+    "**/*.test.ts"
+  ],
+  "exclude": [],
+  "references": [
+    {
+      "path": "../../../shared/config/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../shared/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../shared/models/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../shared/util-core/tsconfig.lib.json"
+    },
+    {
+      "path": "../util/tsconfig.lib.json"
+    }
+  ]
+}
