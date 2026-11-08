@@ -29,6 +29,8 @@ export class NewsChannelModel implements OkrModel, NamedModel {
   public defaultOn = true;
   public order = 0;
   public refreshMinutes = 5;
+  /** Webcams only: load the image through the relay op `newsImage` (design §7.1) instead of directly; required for http: image URLs. */
+  public viaRelay = false;
 }
 
 export const NewsChannelCollection = 'news-channels';
