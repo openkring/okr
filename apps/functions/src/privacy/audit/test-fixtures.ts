@@ -18,9 +18,14 @@ const toDocs = (rows: Record<string, unknown>[]): AuditDoc[] =>
     updatedAt: row['updatedAt'] as number | undefined,
   }));
 
+/**
+ * The default config is a tenant that switched nothing on: no integrations, and
+ * `enabledFeatures: []` — an absent field would read as a legacy doc running every
+ * non-internal block, which activates the feature-gated register rows (YouTube).
+ */
 export const ctxWith = (data: Fixture): AuditCtx => ({
   tenantId: 'scs',
-  config: { integrations: {}, additionalProcessors: [], privacyPolicyVersion: '', ...(data.config ?? {}) } as AppConfig,
+  config: { integrations: {}, enabledFeatures: [], additionalProcessors: [], privacyPolicyVersion: '', ...(data.config ?? {}) } as AppConfig,
   load: async (collection) => toDocs((data[collection] as Record<string, unknown>[]) ?? []),
   listCollections: async () => Object.keys(data).filter((k) => k !== 'config'),
 });

@@ -36,6 +36,11 @@ describe('check 5 — incomplete register entries', () => {
     }
   });
 
+  it('reports YouTube once the news-center block is on (its DPA is not verified yet)', async () => {
+    const f = await check5.run(ctxWith({ config: { enabledFeatures: ['news-center'] } as Partial<AppConfig> }));
+    expect(f?.sampleKeys).toContain('youtube');
+  });
+
   it('reports the catalogue entries the tenant enabled that ship without a DPA', async () => {
     // deepsign, matrix, regasoft and searchch publish no DPA — enabling one must surface it.
     const f = await check5.run(ctxWith({ config: { integrations: { deepsign: true } } as Partial<AppConfig> }));
