@@ -12,6 +12,7 @@
     "@okr/shared-pipes": "*",
     "@okr/shared-ui": "*",
     "@okr/shared-util-angular": "*",
+    "@okr/shared-util-core": "*",
     "@okr/social-news-center-util": "*"
   }
 }

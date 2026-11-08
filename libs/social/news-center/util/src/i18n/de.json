@@ -37,5 +37,26 @@
     "urlRequired": "Bitte gib einen Link ein.",
     "urlInvalid": "Der Link muss mit http:// oder https:// beginnen.",
     "noteTooLong": "Die Notiz ist zu lang (höchstens 500 Zeichen)."
-  }
+  },
+  "send": "Senden",
+  "link_label": "Link",
+  "link_placeholder": "https://…",
+  "note_label": "Notiz (optional)",
+  "note_placeholder": "Warum soll der Kanal dazu?",
+  "show_again": "Wieder einblenden",
+  "remove_channel": "Kanal entfernen",
+  "archive_channel": "Kanal archivieren",
+  "hidden_channels": "Ausgeblendet",
+  "requests_title": "Vorschläge",
+  "check_link": "Link prüfen",
+  "paste_link": "Link einfügen",
+  "via_relay": "Über Server laden",
+  "via_relay_hint": "Nötig, wenn die Kamera nur über http erreichbar ist.",
+  "preview": "Vorschau",
+  "error_segment": "Dieser Link passt nicht zu diesem Bereich.",
+  "error_url": "Dieser Link ist nicht gültig.",
+  "error_blocked": "Diese Adresse kann nicht geladen werden.",
+  "error_http_not_image": "Über http lassen sich nur Bilder laden. Bitte gib einen https-Link ein.",
+  "error_permission_denied": "Dafür fehlt dir die Berechtigung.",
+  "error_unknown": "Das hat gerade nicht geklappt. Versuche es später noch einmal."
 }

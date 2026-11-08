@@ -37,5 +37,26 @@
     "urlRequired": "Saisis un lien.",
     "urlInvalid": "Le lien doit commencer par http:// ou https://.",
     "noteTooLong": "La note est trop longue (500 caractères au maximum)."
-  }
+  },
+  "send": "Envoyer",
+  "link_label": "Lien",
+  "link_placeholder": "https://…",
+  "note_label": "Note (facultative)",
+  "note_placeholder": "Pourquoi cette chaîne devrait-elle être ajoutée ?",
+  "show_again": "Réafficher",
+  "remove_channel": "Retirer la chaîne",
+  "archive_channel": "Archiver la chaîne",
+  "hidden_channels": "Masquées",
+  "requests_title": "Suggestions",
+  "check_link": "Vérifier le lien",
+  "paste_link": "Coller le lien",
+  "via_relay": "Charger via le serveur",
+  "via_relay_hint": "Nécessaire si la caméra n’est accessible qu’en http.",
+  "preview": "Aperçu",
+  "error_segment": "Ce lien ne correspond pas à cette rubrique.",
+  "error_url": "Ce lien n’est pas valide.",
+  "error_blocked": "Cette adresse ne peut pas être chargée.",
+  "error_http_not_image": "En http, seules les images peuvent être chargées. Saisis un lien https.",
+  "error_permission_denied": "Tu n’as pas l’autorisation pour cela.",
+  "error_unknown": "Cela n’a pas fonctionné. Réessaie plus tard."
 }

@@ -8,3 +8,6 @@ export * from './lib/news-text-view';
 export * from './lib/news-video-view';
 export * from './lib/news-audio-view';
 export * from './lib/news-webcam-view';
+export * from './lib/news-channel-add';
+export * from './lib/news-request.form';
+export * from './lib/news-settings.modal';

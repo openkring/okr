@@ -37,5 +37,26 @@
     "urlRequired": "Inserisci un link.",
     "urlInvalid": "Il link deve iniziare con http:// o https://.",
     "noteTooLong": "La nota è troppo lunga (al massimo 500 caratteri)."
-  }
+  },
+  "send": "Invia",
+  "link_label": "Link",
+  "link_placeholder": "https://…",
+  "note_label": "Nota (facoltativa)",
+  "note_placeholder": "Perché dovremmo aggiungere questo canale?",
+  "show_again": "Mostra di nuovo",
+  "remove_channel": "Rimuovi canale",
+  "archive_channel": "Archivia canale",
+  "hidden_channels": "Nascosti",
+  "requests_title": "Suggerimenti",
+  "check_link": "Controlla link",
+  "paste_link": "Incolla link",
+  "via_relay": "Carica tramite server",
+  "via_relay_hint": "Necessario se la telecamera è raggiungibile solo via http.",
+  "preview": "Anteprima",
+  "error_segment": "Questo link non è adatto a questa sezione.",
+  "error_url": "Questo link non è valido.",
+  "error_blocked": "Questo indirizzo non può essere caricato.",
+  "error_http_not_image": "Via http si possono caricare solo immagini. Inserisci un link https.",
+  "error_permission_denied": "Non hai l’autorizzazione per questo.",
+  "error_unknown": "Non ha funzionato. Riprova più tardi."
 }

@@ -37,5 +37,26 @@
     "urlRequired": "Please enter a link.",
     "urlInvalid": "The link has to start with http:// or https://.",
     "noteTooLong": "The note is too long (500 characters at most)."
-  }
+  },
+  "send": "Send",
+  "link_label": "Link",
+  "link_placeholder": "https://…",
+  "note_label": "Note (optional)",
+  "note_placeholder": "Why should this channel be added?",
+  "show_again": "Show again",
+  "remove_channel": "Remove channel",
+  "archive_channel": "Archive channel",
+  "hidden_channels": "Hidden",
+  "requests_title": "Suggestions",
+  "check_link": "Check link",
+  "paste_link": "Paste link",
+  "via_relay": "Load via server",
+  "via_relay_hint": "Needed when the camera is only reachable over http.",
+  "preview": "Preview",
+  "error_segment": "This link does not fit this section.",
+  "error_url": "This link is not valid.",
+  "error_blocked": "This address cannot be loaded.",
+  "error_http_not_image": "Over http only images can be loaded. Please enter an https link.",
+  "error_permission_denied": "You do not have permission for this.",
+  "error_unknown": "That did not work just now. Please try again later."
 }

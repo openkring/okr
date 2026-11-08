@@ -37,5 +37,26 @@
     "urlRequired": "Introduce un enlace.",
     "urlInvalid": "El enlace debe empezar por http:// o https://.",
     "noteTooLong": "La nota es demasiado larga (500 caracteres como máximo)."
-  }
+  },
+  "send": "Enviar",
+  "link_label": "Enlace",
+  "link_placeholder": "https://…",
+  "note_label": "Nota (opcional)",
+  "note_placeholder": "¿Por qué debería añadirse este canal?",
+  "show_again": "Mostrar de nuevo",
+  "remove_channel": "Quitar canal",
+  "archive_channel": "Archivar canal",
+  "hidden_channels": "Ocultos",
+  "requests_title": "Sugerencias",
+  "check_link": "Comprobar enlace",
+  "paste_link": "Pegar enlace",
+  "via_relay": "Cargar mediante servidor",
+  "via_relay_hint": "Necesario si la cámara solo es accesible por http.",
+  "preview": "Vista previa",
+  "error_segment": "Este enlace no encaja en esta sección.",
+  "error_url": "Este enlace no es válido.",
+  "error_blocked": "Esta dirección no se puede cargar.",
+  "error_http_not_image": "Por http solo se pueden cargar imágenes. Introduce un enlace https.",
+  "error_permission_denied": "No tienes permiso para esto.",
+  "error_unknown": "Eso no ha funcionado. Inténtalo de nuevo más tarde."
 }
