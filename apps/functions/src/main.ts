@@ -312,6 +312,9 @@ export const attachBookingVoucher = Booking.attachBookingVoucher;
 export const writeInvoice = Invoice.writeInvoice;
 export const issueInvoice = Invoice.issueInvoice;
 export const recordInvoicePayment = Invoice.recordInvoicePayment;
+// Stripe tenant billing: save a payment method, pay one of our invoices online (success arrives by webhook)
+export { createPaymentMethodSession, removePaymentMethod } from './collection/payment-method';
+export { createInvoicePaymentSession } from './collection/pay-invoice';
 export const cancelInvoice = Invoice.cancelInvoice;
 export const createPaymentConfirmation = Invoice.createPaymentConfirmation;
 export const createInvoiceReminder = Invoice.createInvoiceReminder;
