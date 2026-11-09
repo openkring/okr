@@ -59,6 +59,9 @@ export interface SubmitDeps {
   now(): Date;
 }
 
+/** What the failure path (failSending) needs: Task 9's webhook handler runs it without a Pingen client. */
+export type FailDeps = Pick<SubmitDeps, 'updateSending' | 'loadMailing' | 'reverseShare' | 'hasOpenTask' | 'createTask' | 'avatar' | 'now'>;
+
 export type FailReason = 'address' | 'other';
 
 /** A retryable failure older than this fails the letter and returns its share instead of retrying forever. */
@@ -113,7 +116,7 @@ function patchFailed(rec: SendingRow, detail: string, failReason: FailReason, at
 }
 
 /** Never throws: the money has to go back and the task has to exist, whatever else failed. */
-async function reverse(deps: SubmitDeps, rec: SendingRow, mailing: SendingMailing | undefined, reason: string): Promise<void> {
+async function reverse(deps: FailDeps, rec: SendingRow, mailing: SendingMailing | undefined, reason: string): Promise<void> {
   const tenantId = rec.tenants[0] ?? '';
   if (!mailing?.creditEntryId) {
     logger.error('submit-sending: no deduction entry for the letter, reverse by hand', { id: rec.id, source: rec.source });
@@ -134,7 +137,7 @@ async function reverse(deps: SubmitDeps, rec: SendingRow, mailing: SendingMailin
  * Task 9 reuses it for letters Pingen reports undeliverable (`reverse` as decided there).
  */
 export async function failSending(
-  deps: SubmitDeps, record: SendingRow, reason: string, reverseShare: boolean, failReason: FailReason = 'other', expectState?: SendingRow['state'],
+  deps: FailDeps, record: SendingRow, reason: string, reverseShare: boolean, failReason: FailReason = 'other', expectState?: SendingRow['state'],
 ): Promise<void> {
   const tenantId = record.tenants[0] ?? '';
   const at = deps.now().toISOString();

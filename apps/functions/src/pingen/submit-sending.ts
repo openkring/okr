@@ -28,13 +28,20 @@ function pingenClient(): PingenClient {
 
 /** The production wiring: Pingen, the private bucket, `sendings`, `mailings`, tasks, the credit port. */
 export function submitDeps(): SubmitDeps {
+  return {
+    client: pingenClient(),
+    env: pingenEnv.value() === 'production' ? 'production' : 'staging',
+    ...sendingDeps(),
+  };
+}
+
+/** Everything but the Pingen client and env: the webhook handler (Task 9) needs no Pingen credentials. */
+export function sendingDeps(): Omit<SubmitDeps, 'client' | 'env'> {
   const db = getFirestore();
   const col = () => db.collection(SendingCollection);
   const tasks = createFirestoreDeps();
   const row = (d: FirebaseFirestore.QueryDocumentSnapshot | FirebaseFirestore.DocumentSnapshot): SendingRow => ({ ...(d.data() as Omit<SendingRow, 'id'>), id: d.id });
   return {
-    client: pingenClient(),
-    env: pingenEnv.value() === 'production' ? 'production' : 'staging',
     readPdf: async (path) => (await privateBucket().file(path).download())[0],
     getSending: async (id) => { const s = await col().doc(id).get(); return s.exists ? row(s) : undefined; },
     updateSending: async (id, patch, expectState) => {

@@ -1,0 +1,132 @@
+{
+  "_comment": "Fictional payloads in the shape of Pingen's OpenAPI (api.pingen.com/documentation, read 2026-11-09): data.type = webhook_issues|webhook_sent|webhook_undeliverable|webhook_delivered; letter id = data.relationships.deliverable.data.id (type 'letters'); event id = data.relationships.event.data.id. Neither a letter status nor a tracking number is in the payload.",
+  "sent": {
+    "data": {
+      "id": "00000000-0000-4000-8000-000000000036",
+      "type": "webhook_sent",
+      "attributes": {
+        "url": "https://example.invalid/webhooks/pingen",
+        "created_at": "2026-11-09T09:42:48+0100"
+      },
+      "relationships": {
+        "organisation": {
+          "data": {
+            "id": "11111111-1111-4111-8111-111111111111",
+            "type": "organisations"
+          }
+        },
+        "deliverable": {
+          "data": {
+            "id": "22222222-2222-4222-8222-222222222222",
+            "type": "letters"
+          }
+        },
+        "event": {
+          "data": {
+            "id": "e0000000-0000-4000-8000-000000000001",
+            "type": "deliverables_events"
+          }
+        }
+      }
+    }
+  },
+  "delivered": {
+    "data": {
+      "id": "00000000-0000-4000-8000-000000000036",
+      "type": "webhook_delivered",
+      "attributes": {
+        "url": "https://example.invalid/webhooks/pingen",
+        "created_at": "2026-11-09T09:42:48+0100"
+      },
+      "relationships": {
+        "organisation": {
+          "data": {
+            "id": "11111111-1111-4111-8111-111111111111",
+            "type": "organisations"
+          }
+        },
+        "deliverable": {
+          "data": {
+            "id": "22222222-2222-4222-8222-222222222222",
+            "type": "letters"
+          }
+        },
+        "event": {
+          "data": {
+            "id": "e0000000-0000-4000-8000-000000000002",
+            "type": "deliverables_events"
+          }
+        }
+      }
+    }
+  },
+  "undeliverable": {
+    "data": {
+      "id": "00000000-0000-4000-8000-000000000036",
+      "type": "webhook_undeliverable",
+      "attributes": {
+        "reason": "Recipient could not be determined at the specified address.",
+        "corrected_address": {
+          "name": "Test Person",
+          "street": "Teststrasse",
+          "number": "1",
+          "zip": "8000",
+          "city": "Zürich"
+        },
+        "url": "https://example.invalid/webhooks/pingen",
+        "created_at": "2026-11-09T09:42:48+0100"
+      },
+      "relationships": {
+        "organisation": {
+          "data": {
+            "id": "11111111-1111-4111-8111-111111111111",
+            "type": "organisations"
+          }
+        },
+        "deliverable": {
+          "data": {
+            "id": "22222222-2222-4222-8222-222222222222",
+            "type": "letters"
+          }
+        },
+        "event": {
+          "data": {
+            "id": "e0000000-0000-4000-8000-000000000003",
+            "type": "deliverables_events"
+          }
+        }
+      }
+    }
+  },
+  "issues": {
+    "data": {
+      "id": "00000000-0000-4000-8000-000000000036",
+      "type": "webhook_issues",
+      "attributes": {
+        "reason": "Content failed inspection",
+        "url": "https://example.invalid/webhooks/pingen",
+        "created_at": "2026-11-09T09:42:48+0100"
+      },
+      "relationships": {
+        "organisation": {
+          "data": {
+            "id": "11111111-1111-4111-8111-111111111111",
+            "type": "organisations"
+          }
+        },
+        "deliverable": {
+          "data": {
+            "id": "22222222-2222-4222-8222-222222222222",
+            "type": "letters"
+          }
+        },
+        "event": {
+          "data": {
+            "id": "e0000000-0000-4000-8000-000000000004",
+            "type": "deliverables_events"
+          }
+        }
+      }
+    }
+  }
+}
