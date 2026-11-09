@@ -3,9 +3,9 @@
 // The seam between Postversand (spec 1.150) and the tenant's prepaid credit (spec 1.149). Everything
 // Postversand needs from the credit ledger goes through `CreditPort`; nothing else in pingen/ imports 1.149.
 //
-// The 1.149 code lives on a branch that is not merged yet. Until it is, `makeCreditPort` wraps the
-// contract it will expose (`CreditPortDeps`), and `creditPort` stays unbound: a caller that needs it
-// fails closed with `unavailable` instead of pricing or deducting against nothing.
+// Bound to the real 1.149 ledger by ./credit-binding (imported from pingen/index.ts), not here: this file stays
+// free of firebase-admin so its specs run without it. `makeCreditPort` wraps the 1.149 contract (`CreditPortDeps`);
+// an unbound `getCreditPort()` fails closed with `unavailable` instead of pricing or deducting against nothing.
 
 import { HttpsError } from 'firebase-functions/v2/https';
 
@@ -58,7 +58,7 @@ export function makeCreditPort(deps: CreditPortDeps): CreditPort {
 
 let bound: CreditPort | undefined;
 
-/** Binds the real port (a later step, once the 1.149 branch is merged). */
+/** Binds the real port (done by ./credit-binding; specs bind fakes). */
 export function bindCreditPort(port: CreditPort | undefined): void {
   bound = port;
 }
