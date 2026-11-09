@@ -42,50 +42,75 @@ export function makePostFanOut(args: { tenantId: string; mailingKey: string; pos
   // frozen at acceptance: never recomputed from today's prices
   const price = post.total / post.letters;
   const quotedPages = post.pages / post.letters;
+  // a fractional price is an acceptance bug: no records, no reversal; the operator decides
+  const invalid = !Number.isInteger(price);
   const handled = new Set<string>();
+  const ids = (parentKey: string) => ({
+    tenantId, mailingKey, recipient: parentKey, creditEntryId: post.creditEntryId, amount: price, pages: quotedPages, key: sendingId(mailingKey, parentKey),
+    total: post.total, letters: post.letters,
+  });
+  const base = (parentKey: string, name: string, storagePath: string, pages: number): SendingRecord => ({
+    tenants: [tenantId], isArchived: false, channel: 'post', source: `mailing.${mailingKey}`, recipientKey: parentKey, recipientName: name,
+    storagePath, options: post.options, pages, price, provider: 'pingen', providerId: '', state: 'queued',
+    history: [{ state: 'queued', at: nowIso }], trackingNumber: '', createdAt: nowIso, updatedAt: nowIso,
+  });
 
   const onLetter = async (l: RenderedLetter): Promise<void> => {
     const parentKey = recipientParentKey(l.recipientKey);
     if (!charged.has(parentKey) || !isSwissAddress(l.countryCode)) return;
-    const id = sendingId(mailingKey, parentKey);
-    if (!(await deps.exists(id))) {
-      const storagePath = sendingPdfPath(tenantId, mailingKey, parentKey);
-      if (l.pages !== quotedPages) {
-        logger.warn(`mailing-sendings: Versand ${mailingKey}: rendered pages differ from the quote, charging the quoted price`, {
-          mailingKey, recipient: parentKey, quotedPages, renderedPages: l.pages,
-        });
-      }
-      await deps.savePdf(storagePath, l.pdf);
-      await deps.create(id, {
-        tenants: [tenantId], isArchived: false, channel: 'post', source: `mailing.${mailingKey}`, recipientKey: parentKey,
-        recipientName: l.recipientName, storagePath, options: post.options, pages: l.pages, price, provider: 'pingen', providerId: '',
-        state: 'queued', history: [{ state: 'queued', at: nowIso }], trackingNumber: '', createdAt: nowIso, updatedAt: nowIso,
-      });
+    if (invalid) {
+      logger.error(`mailing-sendings: Versand ${mailingKey}: total is not a whole multiple of letters, no record created`, ids(parentKey));
+      return;
     }
-    handled.add(parentKey);
+    const id = sendingId(mailingKey, parentKey);
+    // one letter's failure must not abort the others or the download: finish() tombstones and reverses it
+    try {
+      if (!(await deps.exists(id))) {
+        const storagePath = sendingPdfPath(tenantId, mailingKey, parentKey);
+        if (l.pages !== quotedPages) {
+          logger.warn(`mailing-sendings: Versand ${mailingKey}: rendered pages differ from the quote, charging the quoted price`, {
+            mailingKey, recipient: parentKey, quotedPages, renderedPages: l.pages,
+          });
+        }
+        await deps.savePdf(storagePath, l.pdf);
+        await deps.create(id, base(parentKey, l.recipientName, storagePath, l.pages));
+      }
+      handled.add(parentKey);
+    } catch (err) {
+      logger.error(`mailing-sendings: Versand ${mailingKey}: letter could not be stored`, { ...ids(parentKey), error: err instanceof Error ? err.message : String(err) });
+    }
   };
 
-  /** Reverses the share of every charged recipient that has no record (after the build, whether it finished or failed). */
+  /**
+   * Reverses the share of every charged recipient that has no record. A tombstone record (state 'failed') is
+   * created first: record and reversal are mutually exclusive by id, so a later run can never send a letter
+   * whose share was returned. ALREADY_EXISTS = a record or tombstone exists: no reversal.
+   */
   const finish = async (reason = 'no letter was stored'): Promise<void> => {
+    if (invalid) return;
     for (const parentKey of charged) {
       if (handled.has(parentKey)) continue;
       const id = sendingId(mailingKey, parentKey);
+      const tombstone: SendingRecord = {
+        ...base(parentKey, '', '', quotedPages), price: 0, state: 'failed',
+        history: [{ state: 'failed', at: nowIso, detail: 'no letter - share returned' }],
+      };
       try {
-        if (await deps.exists(id)) continue;
-      } catch { /* unknown: fall through to the reversal, which is idempotent by key */ }
+        if (!(await deps.create(id, tombstone))) continue;
+      } catch (err) {
+        logger.error(`mailing-sendings: Versand ${mailingKey}: state unknown, share not reversed`, { ...ids(parentKey), error: err instanceof Error ? err.message : String(err) });
+        continue;
+      }
       try {
         await deps.reverseShare(tenantId, post.creditEntryId, { units: 1, pages: quotedPages }, id, `Versand ${mailingKey}: ${reason}`);
       } catch (err) {
         // never fail the whole Versand for it: everything needed to reverse by hand is in the log
-        logger.error(`mailing-sendings: reversal for Versand ${mailingKey} failed, reverse by hand`, {
-          tenantId, mailingKey, recipient: parentKey, creditEntryId: post.creditEntryId, amount: price, pages: quotedPages, key: id,
-          error: err instanceof Error ? err.message : String(err),
-        });
+        logger.error(`mailing-sendings: reversal for Versand ${mailingKey} failed, reverse by hand`, { ...ids(parentKey), error: err instanceof Error ? err.message : String(err) });
       }
     }
   };
 
-  return { onLetter, finish, only: (l: RenderedLetter): boolean => !isSwissAddress(l.countryCode) };
+  return { onLetter, finish, invalid, only: (l: RenderedLetter): boolean => !isSwissAddress(l.countryCode) };
 }
 
 /** The production wiring: private bucket, `sendings`, the credit port. */

@@ -580,9 +580,9 @@ export function isReapableSendingLetter(
 
 /**
  * Nightly: deletes letters files — they hold postal addresses. A file that a `sendings` record points to (the
- * per-letter PDF, `mailing-letters/<mailingKey>/<recipientKey>.pdf`) follows that record: 90 days after it
+ * per-letter PDF, `mailing-letters/<tenantId>/<mailingKey>/<recipientParentKey>.pdf`) follows that record: 90 days after it
  * became final, never while it is open. Every other file (the combined download PDF) goes after 7 days.
- * Combined and per-letter paths have the same depth, so the record lookup by `storagePath` tells them apart.
+ * The combined path is one level shallower (`mailing-letters/<tenantId>/<mailingKey>.pdf`); the record lookup by `storagePath` is what tells them apart.
  */
 export async function runMailingLettersReap(): Promise<void> {
   const [files] = await privateBucket().getFiles({ prefix: LETTERS_PREFIX });

@@ -81,12 +81,11 @@ describe('makePostFanOut', () => {
   });
 
   it('skips when create loses a race (ALREADY_EXISTS)', async () => {
-    const { fan, records } = setup();
+    const { records } = setup();
     const deps = { savePdf: async () => undefined, exists: async () => false, create: async () => false, reverseShare: vi.fn() };
     const f = makePostFanOut({ tenantId: 'scs', mailingKey: 'm1', post: POST, nowIso: 'x', deps });
     await expect(f.onLetter(letter('p1'))).resolves.toBeUndefined();
     expect(records.size).toBe(0);
-    void fan;
   });
 
   it('reverses the share of a charged recipient that got no letter', async () => {
@@ -102,7 +101,7 @@ describe('makePostFanOut', () => {
     await fan.onLetter(letter('p1'));
     await fan.onLetter(letter('org.o1', { countryCode: 'DE' }));
     await fan.finish();
-    expect(records.has('m1_org.o1')).toBe(false);
+    expect(records.get('m1_org.o1')).toMatchObject({ state: 'failed', storagePath: '' });
     expect(reverseShare).toHaveBeenCalledWith('scs', 'e1', { units: 1, pages: 2 }, 'm1_org.o1', expect.any(String));
   });
 
@@ -128,6 +127,62 @@ describe('makePostFanOut', () => {
     expect(fan.only(letter('p1', { countryCode: 'CH' }))).toBe(false);
     expect(fan.only(letter('p1', { countryCode: '' }))).toBe(false);
     expect(fan.only(letter('p1', { countryCode: 'DE' }))).toBe(true);
+  });
+});
+
+describe('tombstone and isolation', () => {
+  it('a reversed recipient never gets a record on a re-run', async () => {
+    const { fan, records, reverseShare } = setup();
+    await fan.onLetter(letter('p1'));
+    await fan.finish();
+    expect(records.get('m1_org.o1')).toMatchObject({ state: 'failed', storagePath: '', price: 0, pages: 2, history: [{ state: 'failed', detail: 'no letter - share returned' }] });
+    expect(reverseShare).toHaveBeenCalledTimes(1);
+    const again = makePostFanOut({ tenantId: 'scs', mailingKey: 'm1', post: POST, nowIso: 'x', deps: { savePdf: async () => undefined, exists: async (id) => records.has(id), create: async (id, d) => { if (records.has(id)) return false; records.set(id, d as never); return true; }, reverseShare } });
+    await again.onLetter(letter('org.o1'));
+    expect(records.get('m1_org.o1')).toMatchObject({ state: 'failed' });
+  });
+
+  it('finish skips the reversal when a record exists (lost race)', async () => {
+    const reverseShare = vi.fn();
+    const f = makePostFanOut({ tenantId: 'scs', mailingKey: 'm1', post: POST, nowIso: 'x', deps: { savePdf: async () => undefined, exists: async () => false, create: async () => false, reverseShare } });
+    await f.finish();
+    expect(reverseShare).not.toHaveBeenCalled();
+  });
+
+  it('an unknown create error skips the reversal and logs', async () => {
+    const reverseShare = vi.fn();
+    const f = makePostFanOut({ tenantId: 'scs', mailingKey: 'm1', post: POST, nowIso: 'x', deps: { savePdf: async () => undefined, exists: async () => false, create: async () => { throw new Error('boom'); }, reverseShare } });
+    await f.finish();
+    expect(reverseShare).not.toHaveBeenCalled();
+    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('m1'), expect.objectContaining({ creditEntryId: 'e1', recipient: expect.any(String), amount: 180 }));
+  });
+
+  it('a failing letter does not abort the others and is tombstoned and reversed', async () => {
+    const { records, reverseShare } = setup();
+    const f = makePostFanOut({ tenantId: 'scs', mailingKey: 'm1', post: POST, nowIso: 'x', deps: {
+      savePdf: async (path) => { if (path.includes('person.p1')) throw new Error('disk'); },
+      exists: async (id) => records.has(id),
+      create: async (id, d) => { if (records.has(id)) return false; records.set(id, d as never); return true; },
+      reverseShare,
+    } });
+    await expect(f.onLetter(letter('p1'))).resolves.toBeUndefined();
+    await f.onLetter(letter('org.o1'));
+    await f.finish();
+    expect(records.get('m1_org.o1')).toMatchObject({ state: 'queued' });
+    expect(records.get('m1_person.p1')).toMatchObject({ state: 'failed' });
+    expect(reverseShare).toHaveBeenCalledTimes(1);
+    expect(reverseShare).toHaveBeenCalledWith('scs', 'e1', { units: 1, pages: 2 }, 'm1_person.p1', expect.any(String));
+  });
+
+  it('a fractional price creates no records and reverses nothing', async () => {
+    const { records, reverseShare } = setup();
+    const f = makePostFanOut({ tenantId: 'scs', mailingKey: 'm1', post: { ...POST, total: 361 }, nowIso: 'x', deps: { savePdf: async () => undefined, exists: async () => false, create: async (id, d) => { records.set(id, d as never); return true; }, reverseShare } });
+    await f.onLetter(letter('p1'));
+    await f.finish();
+    expect(f.invalid).toBe(true);
+    expect(records.size).toBe(0);
+    expect(reverseShare).not.toHaveBeenCalled();
+    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('m1'), expect.objectContaining({ total: 361, letters: 2, creditEntryId: 'e1' }));
   });
 });
 

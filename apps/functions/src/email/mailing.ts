@@ -559,7 +559,9 @@ export const onMailing = onDocumentCreated(
             ...(fanOut ? { onLetter: fanOut.onLetter, only: fanOut.only } : {}),
           });
           await fanOut?.finish();
-          result.letters = lettersResult(built, postKeys.length, !!fanOut);
+          result.letters = fanOut?.invalid
+            ? { state: 'failed', error: 'The accepted total does not divide into whole letter prices; no letter was queued.' }
+            : lettersResult(built, postKeys.length, !!fanOut);
         } catch (err) {
           logger.error(`${CF_NAME}: letters for Versand ${snap.id} failed:`, err);
           // no retry: a charged recipient without a record will never get a letter, so give the share back
