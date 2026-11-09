@@ -33,7 +33,7 @@ export async function ingest(
 
   if (req.method !== 'POST') return reject(405, 'Method Not Allowed');
   if ((req.rawBody?.length ?? 0) > client.maxBodyBytes) return reject(413, 'Payload Too Large');
-  if (!verifyClient(client, req, deps.secretValue(client))) return reject(401, 'Unauthorized');
+  if (!verifyClient(client, req, deps.secretValue(client), Math.floor(deps.now() / 1000))) return reject(401, 'Unauthorized');
 
   let events: unknown[];
   let ids: string[];
