@@ -6,7 +6,7 @@ import { defineSecret } from 'firebase-functions/params';
 
 import type { DocumentLink, ImageConfig, ImageStyle } from '@okr/shared-models';
 import { DocumentCollection, FolderCollection } from '@okr/shared-models';
-import { buildOverlayText } from '@okr/shared-util-core';
+import { buildImageCaption } from '@okr/shared-util-core';
 import { learningTabOf, parseTopics, type LearningTab, type PublicLearningItem, type PublicLearningSection } from '@okr/content-learning-util';
 
 import { isPublishedSection, setCacheHeaders } from '../utils';
@@ -56,26 +56,30 @@ function pickI18n(value: I18nString | undefined, fallback = ''): string {
 
 interface StoredImage { url?: string; altText?: string; label?: string; overlay?: string; credit?: string }
 
-/** The caption toggles of a section's `properties.imageStyle`. */
-type StoredImageStyle = Pick<ImageStyle, 'showTitle' | 'showSource'>;
+/** The caption setting of a section's `properties.imageStyle`. */
+type StoredImageStyle = Pick<ImageStyle, 'captionPosition'>;
 
 /** An image as the website receives it; `caption` is '' when nothing is shown over the image. */
 export interface PublicImage { url: string; alt: string; caption: string }
 
 /**
- * Maps a stored image to its public form. The caption follows the app's okr-img exactly
- * (buildOverlayText): a free-form `overlay` wins, else title and/or credit per the section's
- * `imageStyle.showTitle` / `showSource`. The website draws it over the image's bottom edge.
+ * Maps a stored image to its public form. The caption follows the app's okr-img exactly:
+ * nothing when the section's `imageStyle.captionPosition` is 'none' (the default), otherwise
+ * buildImageCaption — the image's own Untertitel, else its Quelle, else the `fallbacks` (the
+ * article passes its subtitle, then its title). A Quelle next to an Untertitel becomes the
+ * second line. The website draws the caption over the image's bottom edge.
  */
-export function mapImage(img: StoredImage | undefined, style?: StoredImageStyle): PublicImage | undefined {
+export function mapImage(img: StoredImage | undefined, style?: StoredImageStyle, fallbacks: (string | undefined)[] = []): PublicImage | undefined {
   if (!img?.url) return undefined;
-  const caption = buildOverlayText(img as ImageConfig, (style ?? {}) as ImageStyle);
+  const shown = (style?.captionPosition ?? 'none') !== 'none';
+  const parts = shown ? buildImageCaption(img as ImageConfig, fallbacks) : undefined;
+  const caption = parts?.text ? [parts.text, parts.source].filter(t => t.length > 0).join('\n') : '';
   return { url: toImgixUrl(img.url), alt: img.altText ?? img.label ?? '', caption };
 }
 
-function mapImages(raw: unknown, style: StoredImageStyle | undefined): PublicImage[] {
+function mapImages(raw: unknown, style: StoredImageStyle | undefined, fallbacks: (string | undefined)[] = []): PublicImage[] {
   return ((raw as StoredImage[] | undefined) ?? [])
-    .map(img => mapImage(img, style))
+    .map(img => mapImage(img, style, fallbacks))
     .filter((i): i is PublicImage => !!i);
 }
 
@@ -285,7 +289,7 @@ function mapSection(id: string, s: SectionDoc, nestedSections: Map<string, Secti
 
     case 'article':
     default: {
-      const images = mapImages(props['images'], imageStyle);
+      const images = mapImages(props['images'], imageStyle, [subTitle, title]);
       const content = s.content as { position?: number; colSize?: number } | undefined;
       const layout = articleImageLayout(images.length, content?.position, content?.colSize);
       // A position of 'none' hides the images in the app as well.

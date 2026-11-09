@@ -44,24 +44,30 @@ describe('articleImageLayout', () => {
 
 describe('mapImage caption', () => {
   const img = { url: 'tenant/scs/a.jpg', label: 'Achter', credit: 'Foto: Muster', overlay: '' };
+  const on = { captionPosition: 'bottom' as const };
 
-  it('shows no caption unless the style asks for one', () => {
+  it('shows no caption while the section has it switched off (the default)', () => {
     expect(mapImage(img)?.caption).toBe('');
-    expect(mapImage(img, { showTitle: false, showSource: false })?.caption).toBe('');
+    expect(mapImage({ ...img, overlay: 'Regatta' }, { captionPosition: 'none' })?.caption).toBe('');
   });
 
-  it('composes title and source like the app', () => {
-    expect(mapImage(img, { showTitle: true })?.caption).toBe('Achter');
-    expect(mapImage(img, { showSource: true })?.caption).toBe('Foto: Muster');
-    expect(mapImage(img, { showTitle: true, showSource: true })?.caption).toBe('Achter\nFoto: Muster');
+  it('a) the image Untertitel, with the Quelle as second line', () => {
+    expect(mapImage({ ...img, overlay: ' Regatta 2026 ' }, on)?.caption).toBe('Regatta 2026\nFoto: Muster');
   });
 
-  it('lets a free-form overlay win', () => {
-    expect(mapImage({ ...img, overlay: ' Regatta 2026 ' })?.caption).toBe('Regatta 2026');
+  it('b) the Quelle alone, before any section fallback', () => {
+    expect(mapImage(img, on, ['Untertitel', 'Titel'])?.caption).toBe('Foto: Muster');
+  });
+
+  it('c) and d) the section subtitle, then the section title — never the image label', () => {
+    const bare = { url: 'tenant/scs/a.jpg', label: 'Achter' };
+    expect(mapImage(bare, on, ['Untertitel', 'Titel'])?.caption).toBe('Untertitel');
+    expect(mapImage(bare, on, ['', 'Titel'])?.caption).toBe('Titel');
+    expect(mapImage(bare, on)?.caption).toBe('');
   });
 
   it('drops an image without url', () => {
-    expect(mapImage({ label: 'x' }, { showTitle: true })).toBeUndefined();
+    expect(mapImage({ label: 'x' }, on)).toBeUndefined();
   });
 });
 
