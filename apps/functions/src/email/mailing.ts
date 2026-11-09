@@ -186,31 +186,60 @@ async function directoryEmails(db: Firestore, tenantId: string, parentKeys: stri
   return snaps.map((snap) => String(snap.data()?.['favEmail'] ?? '')).filter((email) => email.length > 0);
 }
 
-/** Copies every attachment into the private bucket and returns where each one lives. */
-async function storeAttachments(req: MailingRequest, tenantId: string, mailingKey: string): Promise<NoticeAttachment[]> {
-  const bucket = privateBucket();
-  const out: NoticeAttachment[] = [];
+/** An attachment of a Versand request as bytes: what both the quote and the send read. */
+export interface ResolvedAttachment {
+  filename: string;
+  content: Buffer;
+  contentType: string;
+}
+
+/** The attachment fields of a Versand request. */
+export type MailingAttachmentFields = Pick<MailingRequest, 'storagePath' | 'filename' | 'extraAttachments'>;
+
+/**
+ * Reads the request's attachments into memory: a tenant document from the default bucket (checked by
+ * `isTenantDocumentPath`, then the inline ones. Nothing is stored. `readDocument` is injectable for tests.
+ */
+export async function resolveAttachmentBytes(
+  req: MailingAttachmentFields,
+  tenantId: string,
+  readDocument: (path: string) => Promise<{ content: Buffer; contentType: string }> = async (path) => {
+    const file = getStorage().bucket().file(path);
+    const [[content], [meta]] = await Promise.all([file.download(), file.getMetadata()]);
+    return { content, contentType: String(meta.contentType ?? 'application/pdf') };
+  },
+): Promise<ResolvedAttachment[]> {
+  const out: ResolvedAttachment[] = [];
   let total = 0;
-  const store = async (filename: string, content: Buffer, contentType: string) => {
+  const add = (filename: string, content: Buffer, contentType: string) => {
     total += content.length;
     if (total > MAX_ATTACHMENTS_BYTES) throw new HttpsError('invalid-argument', 'The attachments are too large.');
-    const storagePath = `mailings/${tenantId}/${mailingKey}/${out.length}-${safeFilename(filename)}`;
-    await bucket.file(storagePath).save(content, { contentType, resumable: false });
-    out.push({ filename: safeFilename(filename), storagePath, contentType });
+    out.push({ filename, content, contentType });
   };
   if (req.storagePath) {
     if (!isTenantDocumentPath(req.storagePath, tenantId)) {
       throw new HttpsError('invalid-argument', 'This document cannot be attached.');
     }
-    const file = getStorage().bucket().file(req.storagePath);
-    const [[content], [meta]] = await Promise.all([file.download(), file.getMetadata()]);
-    await store(req.filename || req.storagePath.split('/').pop() || 'document.pdf', content, String(meta.contentType ?? 'application/pdf'));
+    const doc = await readDocument(req.storagePath);
+    add(req.filename || req.storagePath.split('/').pop() || 'document.pdf', doc.content, doc.contentType);
   }
   for (const att of req.extraAttachments ?? []) {
     if (typeof att?.filename !== 'string' || typeof att.contentBase64 !== 'string') {
       throw new HttpsError('invalid-argument', 'Invalid attachment.');
     }
-    await store(att.filename, Buffer.from(att.contentBase64, 'base64'), att.contentType || 'application/octet-stream');
+    add(att.filename, Buffer.from(att.contentBase64, 'base64'), att.contentType || 'application/octet-stream');
+  }
+  return out;
+}
+
+/** Copies every attachment into the private bucket and returns where each one lives. */
+async function storeAttachments(req: MailingRequest, tenantId: string, mailingKey: string): Promise<NoticeAttachment[]> {
+  const bucket = privateBucket();
+  const out: NoticeAttachment[] = [];
+  for (const att of await resolveAttachmentBytes(req, tenantId)) {
+    const storagePath = `mailings/${tenantId}/${mailingKey}/${out.length}-${safeFilename(att.filename)}`;
+    await bucket.file(storagePath).save(att.content, { contentType: att.contentType, resumable: false });
+    out.push({ filename: safeFilename(att.filename), storagePath, contentType: att.contentType });
   }
   return out;
 }

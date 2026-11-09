@@ -5,8 +5,9 @@ vi.mock('../email/mailing-letters', () => ({ countLetterPages: vi.fn(), postalOf
 vi.mock('../calendar/mail', () => ({ eventWhen: vi.fn() }));
 vi.mock('firebase-admin/firestore', () => ({ getFirestore: vi.fn() }));
 
+import { resolveAttachmentBytes } from '../email/mailing';
 import { makeCreditPort } from './credit-port';
-import { quoteMailingLettersCore, signQuote, verifyQuote, type QuoteDeps, type QuoteInput, type QuotePayload } from './quote';
+import { draftHashOf, quoteMailingLettersCore, signQuote, verifyQuote, type QuoteDeps, type QuoteInput, type QuotePayload } from './quote';
 
 const OPTIONS = { deliveryProduct: 'cheap', printSpectrum: 'grayscale', printMode: 'simplex' } as const;
 const ADMIN = { roles: { memberAdmin: true }, tenants: ['scs'] };
@@ -98,5 +99,27 @@ describe('makeCreditPort', () => {
     expect(deductCredit).toHaveBeenCalledWith('scs', { product: 'pingen-letter', units: 3, pages: 6, reference: 'r', actor: 'u' });
     expect(await port.reverseShare('scs', 'e1', 2, 'k', 'why')).toEqual({ amount: 150, duplicate: false });
     expect(reverseCredit).toHaveBeenCalledWith('scs', 'e1', 'why', { units: 1, pages: 2 }, 'k');
+  });
+});
+
+describe('attachments', () => {
+  it('refuses a storagePath outside the tenant', async () => {
+    const read = vi.fn();
+    await expect(resolveAttachmentBytes({ storagePath: 'generated-docs/other/x.pdf' }, 'scs', read)).rejects.toMatchObject({ code: 'invalid-argument' });
+    await expect(resolveAttachmentBytes({ storagePath: 'generated-docs/scs/../other/x.pdf' }, 'scs', read)).rejects.toMatchObject({ code: 'invalid-argument' });
+    expect(read).not.toHaveBeenCalled();
+  });
+
+  it('reads a tenant document and inline attachments into memory', async () => {
+    const read = vi.fn(async () => ({ content: Buffer.from('doc'), contentType: 'application/pdf' }));
+    const got = await resolveAttachmentBytes({ storagePath: 'generated-docs/scs/x.pdf', filename: 'x.pdf', extraAttachments: [{ filename: 'y.txt', contentBase64: Buffer.from('hi').toString('base64') }] }, 'scs', read);
+    expect(got.map((a) => [a.filename, a.content.toString(), a.contentType])).toEqual([['x.pdf', 'doc', 'application/pdf'], ['y.txt', 'hi', 'application/octet-stream']]);
+  });
+
+  it('hash changes when an attachment\'s bytes change', () => {
+    const base = { subject: 'S', body: 'B', letterQrCodes: false, caleventKeys: [] };
+    const att = (c: string) => [{ filename: 'a.pdf', contentType: 'application/pdf', content: Buffer.from(c) }];
+    expect(draftHashOf({ ...base, attachments: att('one') })).toBe(draftHashOf({ ...base, attachments: att('one') }));
+    expect(draftHashOf({ ...base, attachments: att('one') })).not.toBe(draftHashOf({ ...base, attachments: att('two') }));
   });
 });

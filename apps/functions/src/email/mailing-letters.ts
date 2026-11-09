@@ -351,7 +351,7 @@ interface LetterRenderContext {
 async function prepareLetterContext(
   db: Firestore,
   tenantId: string,
-  args: { subject: string; body: string; attachments: NoticeAttachment[] },
+  args: { subject: string; body: string; attachments: NoticeAttachment[]; attachmentBytes?: { filename: string; contentType: string; content: Buffer }[] },
 ): Promise<LetterRenderContext> {
   const orgSnap = await db.collection('orgs').doc(tenantId).get();
   const senderAddress = await postalOf(db, `org.${tenantId}`, tenantId);
@@ -361,6 +361,10 @@ async function prepareLetterContext(
   const compiled = template ? await compileLetter(template, await resolvePayee(db, tenantId)) : undefined;
   const appendix: PDFDocument[] = [];
   const pdfAttachments = args.attachments.filter(isPdfAttachment);
+  // attachments already in memory (a draft's page count): only the PDFs go into a letter, as from the bucket
+  for (const a of (args.attachmentBytes ?? []).filter(isPdfAttachment)) {
+    appendix.push(await PDFDocument.load(a.content, { ignoreEncryption: true }));
+  }
   if (pdfAttachments.length > 0) {
     const bucket = privateBucket();
     for (const a of pdfAttachments) {
@@ -483,11 +487,13 @@ export async function countLetterPages(args: {
   tenantId: string;
   subject: string;
   body: string;
-  attachments: NoticeAttachment[];
+  attachments?: NoticeAttachment[];
+  /** PDF attachments as bytes (not stored yet); other types are ignored */
+  attachmentBytes?: { filename: string; contentType: string; content: Buffer }[];
   withQrBlock: boolean;
   answerEvents?: LetterEvent[];
 }): Promise<number> {
-  const ctx = await prepareLetterContext(getFirestore(), args.tenantId, args);
+  const ctx = await prepareLetterContext(getFirestore(), args.tenantId, { ...args, attachments: args.attachments ?? [] });
   const eventsHtml = args.withQrBlock && args.answerEvents?.length
     ? eventsBlockHtml(args.answerEvents, await qrSvgOf(`https://app.example.org/answer/${'x'.repeat(60)}`))
     : '';

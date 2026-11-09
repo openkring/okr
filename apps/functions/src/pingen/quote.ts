@@ -10,13 +10,14 @@ import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import { CallableRequest, HttpsError, onCall } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
 import { getFirestore } from 'firebase-admin/firestore';
-import { DEFAULT_POST_OPTIONS, type NoticeAttachment, type PostOptions } from '@okr/shared-models';
+import { DEFAULT_POST_OPTIONS, type PostOptions } from '@okr/shared-models';
 import { isSwissAddress } from '@okr/content-pdf-template-util';
 import { getEventLocationName, recipientParentKey } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
 import { eventWhen } from '../calendar/mail';
 import { countLetterPages, postalOf, type LetterEvent } from '../email/mailing-letters';
+import { resolveAttachmentBytes, type MailingAttachmentFields, type ResolvedAttachment } from '../email/mailing';
 import { isElevated } from '../email/mailing-recipients';
 import { parseCaleventKeys } from '../email/personal-mail.logic';
 import { getCreditPort, type CreditPort } from './credit-port';
@@ -53,7 +54,7 @@ export interface QuoteInput {
   tenantId: string;
   subject: string;
   body: string;
-  attachments: NoticeAttachment[];
+  attachments: ResolvedAttachment[];
   letterQrCodes: boolean;
   caleventKeys: string[];
   postKeys: string[];
@@ -85,10 +86,10 @@ export function verifyQuote(token: string, payload: QuotePayload, secret: string
   return given.length === expected.length && timingSafeEqual(given, expected);
 }
 
-/** SHA-256 over what the letters are made of: subject, body, attachment paths, QR flag, calevent keys. */
+/** SHA-256 over what the letters are made of: subject, body, each attachment (name + SHA-256 of its bytes), QR flag, calevent keys. */
 export function draftHashOf(i: Pick<QuoteInput, 'subject' | 'body' | 'attachments' | 'letterQrCodes' | 'caleventKeys'>): string {
   return createHash('sha256').update(canonicalJson({
-    subject: i.subject, body: i.body, attachments: i.attachments.map((a) => a.storagePath),
+    subject: i.subject, body: i.body, attachments: i.attachments.map((a) => ({ filename: a.filename, sha256: createHash('sha256').update(a.content).digest('hex') })),
     letterQrCodes: i.letterQrCodes, caleventKeys: i.caleventKeys,
   })).digest('hex');
 }
@@ -97,7 +98,7 @@ export interface QuoteDeps {
   port: CreditPort;
   secret: string;
   /** Page count of one letter of the draft (letter + PDF attachments, with the QR block when asked). */
-  countLetterPages(args: { tenantId: string; subject: string; body: string; attachments: NoticeAttachment[]; withQrBlock: boolean }): Promise<number>;
+  countLetterPages(args: { tenantId: string; subject: string; body: string; attachments: ResolvedAttachment[]; withQrBlock: boolean }): Promise<number>;
   /** Per recipient key (same order): the country code of its postal address, or undefined when it has none. */
   readCountryCodes(tenantId: string, keys: string[]): Promise<(string | undefined)[]>;
 }
@@ -141,7 +142,8 @@ export async function quoteMailingLettersCore(deps: QuoteDeps, input: QuoteInput
   return { letters, abroad, missing, pagesPerLetter, pages, total, balance, sufficient: balance >= total, token: signQuote(payload, deps.secret) };
 }
 
-function parseInput(raw: unknown): QuoteInput {
+/** The request's own fields; the attachments are resolved to bytes afterwards. */
+export function parseInput(raw: unknown): Omit<QuoteInput, 'attachments'> {
   const d = (raw ?? {}) as Record<string, unknown>;
   if (typeof d['tenantId'] !== 'string' || !d['tenantId']) throw new HttpsError('invalid-argument', 'tenantId is required.');
   const tenantId = d['tenantId'];
@@ -150,14 +152,6 @@ function parseInput(raw: unknown): QuoteInput {
   const postKeys = d['postKeys'];
   if (!Array.isArray(postKeys) || postKeys.some((k) => typeof k !== 'string' || !k)) throw new HttpsError('invalid-argument', 'postKeys must be a list of strings.');
   if (postKeys.length > MAX_POST_RECIPIENTS) throw new HttpsError('invalid-argument', `At most ${MAX_POST_RECIPIENTS} recipients.`);
-  const rawAttachments = d['attachments'] ?? [];
-  if (!Array.isArray(rawAttachments)) throw new HttpsError('invalid-argument', 'attachments must be a list.');
-  const attachments = rawAttachments.map((a: Record<string, unknown>): NoticeAttachment => {
-    const storagePath = typeof a?.['storagePath'] === 'string' ? a['storagePath'] : '';
-    // only files this tenant's Versand drafts own; the path is read from the private bucket
-    if (!storagePath.startsWith(`mailings/${tenantId}/`) || storagePath.includes('..')) throw new HttpsError('invalid-argument', 'This document cannot be attached.');
-    return { storagePath, filename: String(a['filename'] ?? ''), contentType: String(a['contentType'] ?? '') };
-  });
   const o = (d['options'] ?? {}) as Partial<PostOptions>;
   const options: PostOptions = {
     deliveryProduct: o.deliveryProduct === 'fast' ? 'fast' : o.deliveryProduct === 'cheap' ? 'cheap' : DEFAULT_POST_OPTIONS.deliveryProduct,
@@ -165,7 +159,7 @@ function parseInput(raw: unknown): QuoteInput {
     printMode: o.printMode === 'duplex' ? 'duplex' : o.printMode === 'simplex' ? 'simplex' : DEFAULT_POST_OPTIONS.printMode,
   };
   return {
-    tenantId, subject: d['subject'], body: d['body'], attachments, options,
+    tenantId, subject: d['subject'], body: d['body'], options,
     letterQrCodes: d['letterQrCodes'] === true, caleventKeys: parseCaleventKeys(d['caleventKeys']), postKeys: postKeys as string[],
   };
 }
@@ -200,14 +194,15 @@ export const quoteMailingLetters = onCall(
     const CF_NAME = 'quoteMailingLetters';
     checkAppCheckToken(request as never, CF_NAME);
     checkAuthentication(request as never, CF_NAME);
-    const input = parseInput(request.data);
+    const parsed = parseInput(request.data);
     const port = getCreditPort();
     const caller = (await getFirestore().collection('users').doc(request.auth?.uid ?? '').get()).data() ?? {};
-    assertMayPost(caller, input.tenantId);   // before any render or address read
+    assertMayPost(caller, parsed.tenantId);   // before any attachment, render or address read
+    const input: QuoteInput = { ...parsed, attachments: await resolveAttachmentBytes(request.data as MailingAttachmentFields, parsed.tenantId) };
     const answerEvents = input.letterQrCodes ? await answerEventsOf(input.caleventKeys) : [];
     return quoteMailingLettersCore({
       port, secret: quoteTokenSecret.value(), readCountryCodes,
-      countLetterPages: (a) => countLetterPages({ ...a, answerEvents }),
+      countLetterPages: (a) => countLetterPages({ ...a, attachmentBytes: a.attachments, attachments: [], answerEvents }),
     }, input, caller);
   },
 );
