@@ -184,3 +184,64 @@ export function commissionForTenant(input: CommissionInput): CommissionResult {
     unknownAddOns: addOns.unknown,
   };
 }
+
+/**
+ * Transaction prices (pricing spec §7.2) — per-use costs paid from a prepaid tenant credit, not
+ * monthly add-ons. Amounts are integer Rappen, excl. MWST.
+ */
+export type TransactionProduct = 'pingen-letter';
+
+export interface TransactionPrice {
+  /** Price of one unit (one letter), Rappen. Includes the first `includedPages` pages. */
+  perUnit: number;
+  /** Price of each page beyond the included ones, Rappen. */
+  perPage: number;
+  /** Pages per unit covered by `perUnit`. */
+  includedPages: number;
+}
+
+export const TRANSACTION_PRICES: Readonly<Record<TransactionProduct, TransactionPrice>> = {
+  'pingen-letter': { perUnit: 120, perPage: 30, includedPages: 1 },
+};
+
+export interface TransactionQuote {
+  product: TransactionProduct;
+  units: number;
+  pages: number;
+  /** The per-unit rate from the table (Rappen), not the sum over all units. */
+  unitPrice: number;
+  /** The per-page rate from the table (Rappen), not the sum over all pages. */
+  pagePrice: number;
+  /** Total cost in Rappen: `units * unitPrice` plus the billable pages at `pagePrice`. */
+  total: number;
+}
+
+/**
+ * Prices `units` transactions carrying `pages` pages in total (Rappen).
+ *
+ * @throws RangeError when `units` is not a positive integer, or `pages` is not an integer of at
+ *   least `units` (every unit has at least one page).
+ */
+export function quoteTransaction(product: TransactionProduct, units: number, pages: number): TransactionQuote {
+  if (!Number.isInteger(units) || units < 1) {
+    throw new RangeError(`units must be a positive integer, got ${units}`);
+  }
+  if (!Number.isInteger(pages) || pages < units) {
+    throw new RangeError(`pages must be an integer of at least ${units}, got ${pages}`);
+  }
+  const price = TRANSACTION_PRICES[product];
+  const billablePages = Math.max(0, pages - units * price.includedPages);
+  return {
+    product,
+    units,
+    pages,
+    unitPrice: price.perUnit,
+    pagePrice: price.perPage,
+    total: units * price.perUnit + billablePages * price.perPage,
+  };
+}
+
+/** Smallest prepaid top-up (Rappen), CHF 50. */
+export const MIN_TOPUP = 5000;
+/** Largest prepaid top-up (Rappen), CHF 5'000. */
+export const MAX_TOPUP = 500000;
