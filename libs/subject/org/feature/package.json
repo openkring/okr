@@ -37,6 +37,8 @@
     "@okr/finance-bill-feature": "*",
     "@okr/finance-invoice-feature": "*",
     "@okr/relationship-workrel-feature": "*",
-    "@okr/tenant-feature": "*"
+    "@okr/tenant-feature": "*",
+    "@okr/social-news-center-data-access": "*",
+    "@okr/social-news-center-feature": "*"
   }
 }

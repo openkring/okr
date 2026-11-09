@@ -1,4 +1,6 @@
-import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, ComponentRef, computed, DestroyRef, effect, inject, input, linkedSignal, signal, untracked, viewChild, ViewContainerRef } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { of, switchMap } from 'rxjs';
 import { Photo } from '@capacitor/camera';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular';
 
@@ -22,6 +24,7 @@ import { OwnershipAccordion } from '@okr/relationship-ownership-feature';
 import { ReservationsAccordion } from '@okr/relationship-reservation-feature';
 import { WorkrelAccordion } from '@okr/relationship-workrel-feature';
 import { FeatureStore } from '@okr/tenant-feature';
+import { NewsChannelService } from '@okr/social-news-center-data-access';
 
 import { AddressesAccordion } from '@okr/subject-address-feature';
 import { OrgForm } from '@okr/subject-org-ui';
@@ -73,6 +76,8 @@ import { AppStore } from '@okr/shared-feature';
                 <okr-addresses-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" [priv]="priv()" />
                 <okr-membership-accordion [member]="org" [readOnly]="isReadOnly()" modelType="org" />
                 <okr-workrel-accordion [orgKey]="orgKey()" [readOnly]="isReadOnly()" />
+                <!-- the org's webcams (NewsCenter, design 2026-11-09 §5.4), mounted lazily by mountWebcams -->
+                <ng-container #webcamHost />
 
                 @if(hasRole('privileged') || hasRole('memberAdmin') || hasRole('resourceAdmin')) {
                     @if(resource(); as resource) {
@@ -101,6 +106,8 @@ export class OrgEditModal {
   private readonly avatarService = inject(AvatarService);
   private readonly env = inject(ENV);
   private readonly featureStore = inject(FeatureStore);
+  private readonly newsChannelService = inject(NewsChannelService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   // inputs
   public org = input.required<OrgModel>();
@@ -136,7 +143,52 @@ export class OrgEditModal {
   // for anybody else the query is denied and the accordion would stay silently empty
   protected showFinance = computed(() => this.featureStore.isEnabled()('finance')
     && (this.hasRole('treasurer') || this.hasRole('admin')));
+  // webcams hosted by this org: only with NewsCenter on and at least one camera; the panel's code
+  // (@okr/social-news-center-feature) is imported only then, never statically by this lib
+  private readonly orgWebcams = toSignal(
+    toObservable(this.orgKey).pipe(switchMap((key) => (key ? this.newsChannelService.listByOrg(this.tenantId(), key) : of([])))),
+    { initialValue: [] },
+  );
+  protected readonly showWebcams = computed(() => this.featureStore.isEnabled()('news-center') && this.orgWebcams().length > 0);
+  private readonly webcamHost = viewChild('webcamHost', { read: ViewContainerRef });
+  private webcamRef: ComponentRef<unknown> | undefined;
+  private webcamHostRef: ViewContainerRef | undefined;
+
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
+
+  constructor() {
+    effect(() => {
+      const host = this.webcamHost();
+      const show = this.showWebcams();
+      const orgKey = this.orgKey();
+      untracked(() => void this.syncWebcamPanel(host, show, orgKey));
+    });
+    inject(DestroyRef).onDestroy(() => this.webcamRef?.destroy());
+  }
+
+  /** Creates, re-keys or drops the lazily loaded webcam panel (memory: lazy host in @if, createComponent CD pass). */
+  private async syncWebcamPanel(host: ViewContainerRef | undefined, show: boolean, orgKey: string): Promise<void> {
+    if (host !== this.webcamHostRef) {   // the host left or was re-rendered: its old ref is dead
+      this.webcamRef?.destroy();
+      this.webcamRef = undefined;
+      this.webcamHostRef = host;
+    }
+    if (!host || !show) {
+      this.webcamRef?.destroy();
+      this.webcamRef = undefined;
+      return;
+    }
+    if (this.webcamRef) {
+      this.webcamRef.setInput('orgKey', orgKey);
+      return;
+    }
+    const { NewsWebcamPanel } = await import('@okr/social-news-center-feature');
+    if (host !== this.webcamHostRef || this.webcamRef || !this.showWebcams()) return;   // changed while loading
+    this.webcamRef = host.createComponent(NewsWebcamPanel);
+    this.webcamRef.setInput('orgKey', orgKey);
+    this.webcamRef.changeDetectorRef.detectChanges();
+    this.cdr.markForCheck();
+  }
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
