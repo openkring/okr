@@ -13,6 +13,12 @@ describe('nextSendingState', () => {
   it('keeps an unrejected issue as history only', () => {
     expect(nextSendingState('submitted', 'issues', false)).toBeUndefined();
   });
+  it('moves forward from queued and fails only before the post took it', () => {
+    expect(nextSendingState('queued', 'sent', false)).toBe('sent');
+    expect(nextSendingState('queued', 'issues', true)).toBe('failed');
+    expect(nextSendingState('submitted', 'undeliverable', false)).toBeUndefined();
+    expect(nextSendingState('sent', 'issues', true)).toBeUndefined();
+  });
   it('never moves backwards or out of a terminal state', () => {
     expect(nextSendingState('delivered', 'sent', false)).toBeUndefined();
     expect(nextSendingState('failed', 'sent', false)).toBeUndefined();
