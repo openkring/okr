@@ -112,8 +112,12 @@ export interface QuoteCaller {
 }
 
 /** Post goes only through memberAdmin / privileged / admin of the tenant; a group admin may not send by post. */
+export function mayPost(caller: QuoteCaller, tenantId: string): boolean {
+  return isElevated(caller.roles) && (caller.tenants ?? []).includes(tenantId);
+}
+
 export function assertMayPost(caller: QuoteCaller, tenantId: string): void {
-  if (!isElevated(caller.roles) || !(caller.tenants ?? []).includes(tenantId)) {
+  if (!mayPost(caller, tenantId)) {
     throw new HttpsError('permission-denied', 'This operation requires the memberAdmin or privileged role.');
   }
 }

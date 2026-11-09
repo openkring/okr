@@ -7,7 +7,7 @@ vi.mock('firebase-admin/firestore', () => ({ getFirestore: vi.fn() }));
 
 import { resolveAttachmentBytes } from '../email/mailing';
 import { makeCreditPort } from './credit-port';
-import { draftHashOf, QUOTE_TTL_MS, quoteMailingLettersCore, quoteWithCaller, type QuoteEnv, signQuote, verifyQuote, type QuoteDeps, type QuoteInput, type QuotePayload } from './quote';
+import { draftHashOf, QUOTE_TTL_MS, quoteMailingLettersCore, quoteWithCaller, type QuoteCallableEnv, signQuote, verifyQuote, type QuoteDeps, type QuoteInput, type QuotePayload } from './quote';
 
 const OPTIONS = { deliveryProduct: 'cheap', printSpectrum: 'grayscale', printMode: 'simplex' } as const;
 const ADMIN = { roles: { memberAdmin: true }, tenants: ['scs'] };
@@ -143,10 +143,10 @@ describe('attachments', () => {
 });
 
 describe('quoteWithCaller', () => {
-  function env(over: Partial<QuoteEnv> = {}) {
+  function env(over: Partial<QuoteCallableEnv> = {}) {
     const readDocument = vi.fn(async () => ({ content: Buffer.from('x'), contentType: 'application/pdf' }));
-    const e: QuoteEnv = {
-      getPort: () => setup(['CH']).deps.port, secret: 'k', now: 5000, readDocument,
+    const e: QuoteCallableEnv = {
+      getPort: () => setup(['CH']).deps.port, secret: 'k', now: 5000, readDocument, hasCreditAccount: async () => true,
       readCountryCodes: async () => ['CH'], answerEventsOf: async () => [], renderPages: async () => 1, ...over,
     };
     return { e, readDocument };
@@ -154,9 +154,20 @@ describe('quoteWithCaller', () => {
   const data = { tenantId: 'scs', subject: 'S', body: 'B', postKeys: ['p0'] };
   const unbound = (): never => { throw new HttpsError('unavailable', 'credit not configured'); };
 
-  it('an unauthorised caller gets permission-denied, not unavailable, and nothing is read', async () => {
-    const { e, readDocument } = env({ getPort: unbound });
-    await expect(quoteWithCaller(e, { ...data, storagePath: 'generated-docs/scs/x.pdf' }, { roles: {}, tenants: ['scs'] })).rejects.toMatchObject({ code: 'permission-denied' });
+  it('a caller who may not post (a group admin) gets pingenAvailable false, not an error, and nothing is read', async () => {
+    const hasCreditAccount = vi.fn(async () => true);
+    const { e, readDocument } = env({ getPort: unbound, hasCreditAccount });
+    expect(await quoteWithCaller(e, { ...data, storagePath: 'generated-docs/scs/x.pdf' }, { roles: { groupAdmin: true }, tenants: ['scs'] })).toEqual({ pingenAvailable: false });
+    expect(await quoteWithCaller(e, data, { roles: { memberAdmin: true }, tenants: ['other'] })).toEqual({ pingenAvailable: false });
+    expect(readDocument).not.toHaveBeenCalled();
+    expect(hasCreditAccount).not.toHaveBeenCalled();
+  });
+
+  it('a tenant without a credit account gets pingenAvailable false, not an error, before the port or any read', async () => {
+    const getPort = vi.fn(unbound);
+    const { e, readDocument } = env({ getPort, hasCreditAccount: async () => false });
+    expect(await quoteWithCaller(e, { ...data, storagePath: 'generated-docs/scs/x.pdf' }, ADMIN)).toEqual({ pingenAvailable: false });
+    expect(getPort).not.toHaveBeenCalled();
     expect(readDocument).not.toHaveBeenCalled();
   });
 
@@ -169,6 +180,8 @@ describe('quoteWithCaller', () => {
   it('quotes for an authorised caller and returns issuedAt', async () => {
     const { e } = env();
     const q = await quoteWithCaller(e, data, ADMIN);
+    expect(q.pingenAvailable).toBe(true);
+    if (!q.pingenAvailable) return;
     expect([q.letters, q.issuedAt]).toEqual([1, 5000]);
   });
 

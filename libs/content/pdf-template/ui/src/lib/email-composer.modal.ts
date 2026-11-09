@@ -500,7 +500,7 @@ export class EmailComposerModal {
   protected readonly postAccepted = signal(false);
   /** The server refused the price the sender saw: it is quoted again and must be accepted again. */
   protected readonly postPriceChanged = signal(false);
-  /** False once the server says the credit is not set up: only the PDF download is left. */
+  /** False once the server says Pingen is not available here (no credit set up, or no right to post): only the PDF download is left. */
   protected readonly pingenAvailable = signal(true);
   protected readonly canTopUp = computed(() => hasRole('admin', this.appStore.currentUser()));
   /** The persons ticked under Post. */
@@ -794,6 +794,13 @@ export class EmailComposerModal {
       });
       if (request !== this.quoteRequest) return;
       this.postError.set(undefined);
+      if (!quote.pingenAvailable) {
+        // spec 1.150 §10: no prepaid credit for the tenant, or the sender may not send by post: only the download
+        this.postQuote.set(undefined);
+        this.pingenAvailable.set(false);
+        this.postMode.set('download');
+        return;
+      }
       this.postQuote.set(quote);
     } catch (err) {
       if (request !== this.quoteRequest) return;

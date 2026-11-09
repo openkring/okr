@@ -8,7 +8,7 @@ vi.mock('firebase-admin/firestore', () => ({ getFirestore: vi.fn() }));
 import { makeCreditPort } from './credit-port';
 import { logger } from 'firebase-functions/v2';
 import { type PostLock, draftHashOf, parsePostRequest, type PostOrderArgs, type QuoteEnv, withPostOrder } from './post-order';
-import { quoteWithCaller } from './quote';
+import { quoteWithCaller, type QuoteCallableEnv } from './quote';
 
 const ADMIN = { roles: { memberAdmin: true }, tenants: ['scs'] };
 const OPTIONS = { deliveryProduct: 'cheap', printSpectrum: 'grayscale', printMode: 'simplex' } as const;
@@ -28,8 +28,8 @@ function setup(countries: (string | undefined)[], deduct?: () => Promise<{ entry
     quoteTransaction: (_p, units, pages) => ({ total: units * 120 + pages * 30, perUnit: 120, perPage: 30 }),
     readBalance: async () => 10_000, deductCredit, reverseCredit,
   });
-  const env: QuoteEnv = {
-    getPort: () => port, secret: 'k', now: 5000, readCountryCodes: async () => countries,
+  const env: QuoteCallableEnv = {
+    getPort: () => port, secret: 'k', now: 5000, readCountryCodes: async () => countries, hasCreditAccount: async () => true,
     answerEventsOf: async () => [], renderPages: async () => 2,
   };
   const request = { tenantId: 'scs', subject: 'S', body: 'B', postKeys: countries.map((_, i) => `p${i}`), options: OPTIONS };
@@ -48,7 +48,8 @@ function fakeLock(initial?: LockState): PostLock & { state: () => LockState | un
 }
 
 async function accepted(env: QuoteEnv, request: object, overrides: Partial<PostOrderArgs> = {}): Promise<PostOrderArgs> {
-  const q = await quoteWithCaller(env, request, ADMIN);
+  const q = await quoteWithCaller(env as QuoteCallableEnv, request, ADMIN);
+  if (!q.pingenAvailable) throw new Error('the spec quotes for an admin of a tenant with credit');
   const r = request as typeof request & { tenantId: string; subject: string; body: string; postKeys: string[] };
   return {
     post: { via: 'pingen', options: OPTIONS, token: q.token, issuedAt: q.issuedAt },

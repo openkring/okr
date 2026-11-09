@@ -86,6 +86,7 @@ export type QuoteMailingRequest = Pick<SendMailingRequest, 'tenantId' | 'subject
 
 /** The price of a Versand by post, as `quoteMailingLetters` answers it (all amounts in Rappen). */
 export interface PostQuote {
+  pingenAvailable: true;
   /** the time the token was signed; hand it back in `post.issuedAt` */
   issuedAt: number;
   letters: number;
@@ -101,6 +102,16 @@ export interface PostQuote {
   sufficient: boolean;
   token: string;
 }
+
+/**
+ * `quoteMailingLetters`' other answer (spec 1.150 §10): the tenant has no prepaid credit, or the caller may not send
+ * by post. Not an error: only the PDF download is offered.
+ */
+export interface PingenUnavailable {
+  pingenAvailable: false;
+}
+
+export type PostQuoteResult = PostQuote | PingenUnavailable;
 
 /** The state of a Versand's letters, as `getMailingLetters` reports it. */
 export interface MailingLetters {
@@ -244,8 +255,8 @@ export class DocEmailService {
   }
 
   /** What a Versand by post would cost, and the signed token `sendMailing` verifies. The request is the Versand's, without `post`. */
-  public async quoteMailingLetters(req: QuoteMailingRequest): Promise<PostQuote> {
-    const callable = httpsCallable<typeof req, PostQuote>(this.functions, 'quoteMailingLetters');
+  public async quoteMailingLetters(req: QuoteMailingRequest): Promise<PostQuoteResult> {
+    const callable = httpsCallable<typeof req, PostQuoteResult>(this.functions, 'quoteMailingLetters');
     const { data } = await callable(req);
     return data;
   }

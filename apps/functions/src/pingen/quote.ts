@@ -8,6 +8,7 @@
 
 import { CallableRequest, HttpsError, onCall } from 'firebase-functions/v2/https';
 import { getFirestore } from 'firebase-admin/firestore';
+import { CreditAccountCollection } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
 import { countLetterPages } from '../email/mailing-letters';
@@ -15,7 +16,7 @@ import { resolveAttachmentBytes, type MailingAttachmentFields } from '../email/m
 import { parseCaleventKeys } from '../email/personal-mail.logic';
 import { getCreditPort } from './credit-port';
 import {
-  answerEventsOf, assertMayPost, computeQuote, parseOptions, quoteDepsOf, quoteTokenSecret, readCountryCodes, signQuote,
+  answerEventsOf, assertMayPost, computeQuote, mayPost, parseOptions, quoteDepsOf, quoteTokenSecret, readCountryCodes, signQuote,
   type QuoteCaller, type QuoteDeps, type QuoteEnv, type QuoteInput,
 } from './post-order';
 
@@ -27,6 +28,8 @@ const REGION = 'europe-west6';
 const MAX_POST_RECIPIENTS = 3000;
 
 export interface PostQuote {
+  /** spec 1.150 §10: the Pingen option is offered; see PingenUnavailable for the other answer */
+  pingenAvailable: true;
   /** the `iat` the token was signed with; `sendMailing` rebuilds the payload with it */
   issuedAt: number;
   letters: number;
@@ -43,12 +46,30 @@ export interface PostQuote {
   token: string;
 }
 
+/**
+ * Spec 1.150 §10: the tenant has no prepaid credit account, or the caller may not send by post (a group admin).
+ * Not an error: the composer offers only the PDF download. `sendMailing` still refuses a Pingen send in both cases.
+ */
+export interface PingenUnavailable {
+  pingenAvailable: false;
+}
+
+export type PostQuoteResult = PostQuote | PingenUnavailable;
+
+const UNAVAILABLE: PingenUnavailable = { pingenAvailable: false };
+
+/** What the callable needs beyond the pricing environment. */
+export interface QuoteCallableEnv extends QuoteEnv {
+  /** whether `credit-accounts/{tenantId}` exists: without it the tenant has no prepaid credit for letters */
+  hasCreditAccount(tenantId: string): Promise<boolean>;
+}
+
 export async function quoteMailingLettersCore(deps: QuoteDeps, input: QuoteInput, caller: QuoteCaller): Promise<PostQuote> {
   assertMayPost(caller, input.tenantId);
   const c = await computeQuote(deps, input);
   const balance = await deps.port.balance(input.tenantId);
   return {
-    issuedAt: deps.now, letters: c.letters, abroad: c.abroad, missing: c.missing, pagesPerLetter: c.pagesPerLetter, pages: c.pages, total: c.total, perUnit: c.perUnit, perPage: c.perPage,
+    pingenAvailable: true, issuedAt: deps.now, letters: c.letters, abroad: c.abroad, missing: c.missing, pagesPerLetter: c.pagesPerLetter, pages: c.pages, total: c.total, perUnit: c.perUnit, perPage: c.perPage,
     balance, sufficient: balance >= c.total, token: signQuote(c.payload, deps.secret),
   };
 }
@@ -74,12 +95,14 @@ export function parseInput(raw: unknown): Omit<QuoteInput, 'attachments'> {
 }
 
 /**
- * Everything the callable does after the App Check / auth checks. Order matters: input shape, then the caller
- * (permission-denied before anything else is learned), then the credit port, then attachment reads and renders.
+ * Everything the callable does after the App Check / auth checks. Order matters: input shape, then the caller and the
+ * tenant's credit account (`pingenAvailable: false` before anything else is learned or read), then the credit port,
+ * then attachment reads and renders.
  */
-export async function quoteWithCaller(env: QuoteEnv, data: unknown, caller: QuoteCaller): Promise<PostQuote> {
+export async function quoteWithCaller(env: QuoteCallableEnv, data: unknown, caller: QuoteCaller): Promise<PostQuoteResult> {
   const parsed = parseInput(data);
-  assertMayPost(caller, parsed.tenantId);
+  if (!mayPost(caller, parsed.tenantId)) return UNAVAILABLE;
+  if (!(await env.hasCreditAccount(parsed.tenantId))) return UNAVAILABLE;
   const port = env.getPort();
   const input: QuoteInput = { ...parsed, attachments: await resolveAttachmentBytes(data as MailingAttachmentFields, parsed.tenantId, env.readDocument) };
   return quoteMailingLettersCore(await quoteDepsOf(env, port, input, env.now), input, caller);
@@ -88,14 +111,16 @@ export async function quoteWithCaller(env: QuoteEnv, data: unknown, caller: Quot
 // 2GiB: one sample letter is rendered in Chromium, as onMailing and generateDocument do
 export const quoteMailingLetters = onCall(
   { region: REGION, enforceAppCheck: true, cors: true, memory: '2GiB', timeoutSeconds: 120, secrets: [quoteTokenSecret] },
-  async (request: CallableRequest<unknown>): Promise<PostQuote> => {
+  async (request: CallableRequest<unknown>): Promise<PostQuoteResult> => {
     const CF_NAME = 'quoteMailingLetters';
     checkAppCheckToken(request as never, CF_NAME);
     checkAuthentication(request as never, CF_NAME);
-    const caller = (await getFirestore().collection('users').doc(request.auth?.uid ?? '').get()).data() ?? {};
+    const db = getFirestore();
+    const caller = (await db.collection('users').doc(request.auth?.uid ?? '').get()).data() ?? {};
     return quoteWithCaller({
       getPort: getCreditPort, secret: quoteTokenSecret.value(), now: Date.now(),
       readCountryCodes, answerEventsOf, renderPages: countLetterPages,
+      hasCreditAccount: async (tenantId) => (await db.collection(CreditAccountCollection).doc(tenantId).get()).exists,
     }, request.data, caller);
   },
 );
