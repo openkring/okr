@@ -1911,6 +1911,8 @@ export async function resolveArrayItemDocs(entry: SubjectDataEntry, ctx: Subject
 // gap: webhook-events — inbound provider webhooks (spec 1.142): the stored payload holds recipient
 //   addresses and member names as the provider sent them. Expires after 30 days through the TTL policy
 //   on `expiresAt`, and is Admin-SDK only (rules deny every client read and write).
+// not personal data: post-orders — the Postversand lock per Pingen quote token (spec 1.150): tenantId, a
+//   pending/done/failed state and two timestamps; no recipient, name or address. Admin-SDK only.
 // gap: journal-books — the travel book of a journal (spec 1.113 phase 2 §6), one doc per journal: updatedBy
 //   (person key), the chosen guest commentKeys, export paths. The exported PDFs (exportJournalBook) in the
 //   private bucket under tenant/<t>/journal/<jk>/book/ print the authors' names and, when picked, guest

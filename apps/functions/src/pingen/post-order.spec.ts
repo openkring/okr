@@ -42,6 +42,7 @@ function fakeLock(initial?: LockState): PostLock & { state: () => LockState | un
   return {
     acquire: async () => { if (state === undefined) { state = 'pending'; return { acquired: true }; } return { acquired: false, state }; },
     set: async (next) => { state = next; },
+    remove: async () => { state = undefined; },
     state: () => state,
   };
 }
@@ -147,6 +148,31 @@ describe('withPostOrder failure handling', () => {
     const lock = fakeLock();
     await expect(withPostOrder(env, await accepted(env, request, { lock }), async () => { throw new Error('x'); })).rejects.toThrow('x');
     expect(lock.state()).toBe('failed');
+  });
+
+  it('insufficient credit deletes the lock so the same quote can be retried after a top-up', async () => {
+    const { env, request, reverseCredit } = setup(['CH'], async () => { throw new HttpsError('failed-precondition', 'insufficient-credit'); });
+    const lock = fakeLock();
+    await expect(withPostOrder(env, await accepted(env, request, { lock }), vi.fn())).rejects.toMatchObject({ message: 'insufficient-credit' });
+    expect(lock.state()).toBeUndefined();
+    expect(reverseCredit).not.toHaveBeenCalled();
+  });
+
+  it('deduct throws after commit: reversed by deterministic id and logged', async () => {
+    const { env, request, reverseCredit } = setup(['CH', 'CH'], async () => { throw new HttpsError('unavailable', 'commit timeout'); });
+    const logged = vi.spyOn(logger, 'error').mockImplementation(() => undefined);
+    await expect(withPostOrder(env, await accepted(env, request), vi.fn())).rejects.toMatchObject({ code: 'unavailable' });
+    expect(reverseCredit).toHaveBeenCalledWith('scs', 'deduct-mailing.m1', 'mailing not stored', { units: 2, pages: 4 }, 'mailing.m1-undo');
+    expect(JSON.stringify(logged.mock.calls)).toContain('mailing.m1');
+    logged.mockRestore();
+  });
+
+  it('no Swiss letter: no lock is taken', async () => {
+    const { env, request } = setup(['DE']);
+    const lock = fakeLock();
+    const acquire = vi.spyOn(lock, 'acquire');
+    await withPostOrder(env, await accepted(env, request, { lock }), async () => 1);
+    expect(acquire).not.toHaveBeenCalled();
   });
 
   it('success sets the lock to done', async () => {

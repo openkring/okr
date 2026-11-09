@@ -268,6 +268,7 @@ function postLockOf(db: Firestore, key: string, tenantId: string): PostLock {
       }
     },
     set: async (state) => { await lockRef.update({ state }); },
+    remove: async () => { await lockRef.delete(); },
   };
 }
 

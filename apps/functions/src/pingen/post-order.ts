@@ -265,6 +265,8 @@ export interface PostLock {
   /** creates the lock as `pending`; when it exists already, says in which state */
   acquire(): Promise<{ acquired: true } | { acquired: false; state: PostLockState }>;
   set(state: 'done' | 'failed'): Promise<void>;
+  /** drops the lock: no money moved, the same quote may be retried */
+  remove(): Promise<void>;
 }
 
 export interface PostOrderDoc {
@@ -305,6 +307,9 @@ export async function withPostOrder<T>(env: QuoteEnv, args: PostOrderArgs, work:
   const computed = await computeQuote(await quoteDepsOf(env, port, input, args.post.issuedAt), input);
   if (!verifyQuote(args.post.token, computed.payload, env.secret, env.now)) throw new HttpsError('failed-precondition', 'price-changed');
 
+  // no Swiss letter: no money moves, so no lock either; the Post part is the download
+  if (computed.letters === 0) return { duplicate: false, value: await work(undefined) };
+
   const taken = await args.lock.acquire();
   if (!taken.acquired) {
     if (taken.state === 'done') return { duplicate: true };
@@ -319,36 +324,54 @@ export async function withPostOrder<T>(env: QuoteEnv, args: PostOrderArgs, work:
       logger.error('postversand: lock not updated', { tenantId: args.tenantId, mailingKey: args.mailingKey, state, error: String((e as Error)?.message ?? e) });
     }
   };
+  const reference = `mailing.${args.mailingKey}`;
   let entryId: string | undefined;
+  let deducting = false;
   try {
     let post: MailingPost | undefined;
-    if (computed.letters > 0) {
-      // insufficient credit surfaces as the port's failed-precondition
-      const entry = await port.deduct(args.tenantId, { letters: computed.letters, pages: computed.pages, reference: `mailing.${args.mailingKey}`, actor: args.actor });
-      entryId = entry.entryId;
-      post = {
-        via: 'pingen', options: args.post.options, recipients: [...new Set(computed.payload.recipients)].sort(),
-        letters: computed.letters, abroad: computed.abroad, pages: computed.pages, total: computed.total,
-        creditEntryId: entry.entryId, acceptedBy: args.actor, acceptedAt: args.nowIso,
-      };
-    }
+    // insufficient credit surfaces as the port's failed-precondition
+    deducting = true;
+    const entry = await port.deduct(args.tenantId, { letters: computed.letters, pages: computed.pages, reference, actor: args.actor });
+    entryId = entry.entryId;
+    post = {
+      via: 'pingen', options: args.post.options, recipients: [...new Set(computed.payload.recipients)].sort(),
+      letters: computed.letters, abroad: computed.abroad, pages: computed.pages, total: computed.total,
+      creditEntryId: entry.entryId, acceptedBy: args.actor, acceptedAt: args.nowIso,
+    };
     const value = await work(post);
     await setLock('done');
     return { duplicate: false, value };
   } catch (error) {
+    if (entryId === undefined && isInsufficientCredit(error)) {
+      // no money moved: the sender may top up and retry with the same quote
+      try { await args.lock.remove(); } catch (e) {
+        logger.error('postversand: lock not removed', { tenantId: args.tenantId, mailingKey: args.mailingKey, error: String((e as Error)?.message ?? e) });
+      }
+      throw error;
+    }
+    // deduct may have thrown after its transaction committed: the entry id is deterministic (`deduct-<reference>`)
+    const reverseId = entryId ?? (deducting ? `deduct-${reference}` : undefined);
+    if (entryId === undefined && deducting) {
+      logger.error('postversand: deduct failed, reversing by reference', { tenantId: args.tenantId, reference, error: String((error as Error)?.message ?? error) });
+    }
     let committed = false;
     try {
       committed = await args.mailingExists();
-      if (!committed && entryId !== undefined) {
-        await port.reverseShare(args.tenantId, entryId, { units: computed.letters, pages: computed.pages }, key, 'mailing not stored');
+      if (!committed && reverseId !== undefined) {
+        await port.reverseShare(args.tenantId, reverseId, { units: computed.letters, pages: computed.pages }, key, 'mailing not stored');
       }
     } catch (reversalError) {
       logger.error('postversand: deduction not reversed', {
-        tenantId: args.tenantId, entryId, key, letters: computed.letters, pages: computed.pages, total: computed.total,
+        tenantId: args.tenantId, entryId: reverseId, reference, key, letters: computed.letters, pages: computed.pages, total: computed.total,
         error: String((error as Error)?.message ?? error), reversalError: String((reversalError as Error)?.message ?? reversalError),
       });
     }
     await setLock(committed ? 'done' : 'failed');
     throw error;
   }
+}
+
+function isInsufficientCredit(error: unknown): boolean {
+  const e = error as { code?: unknown; message?: unknown } | null;
+  return e?.code === 'failed-precondition' && e?.message === 'insufficient-credit';
 }
