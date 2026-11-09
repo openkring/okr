@@ -24,7 +24,7 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 import { NEWS_SEGMENTS, UserCollection, type NewsChannelKind, type NewsSegment } from '@okr/shared-models';
 import { gatewayFetch } from '../_gateway/http';
-import { contentTypeOf, FEED_CONTENT_TYPE, relayFetch, type NewsRelayDeps, type RelayFetchOptions } from '../_gateway/adapters/news-feed';
+import { contentTypeOf, FEED_CONTENT_TYPE, NEWS_FEED_MAX_BYTES, relayFetch, trimFeed, type NewsRelayDeps, type RelayFetchOptions } from '../_gateway/adapters/news-feed';
 import { NEWS_IMAGE_TYPES } from '../_gateway/adapters/news-image';
 import { checkRateLimit } from '../publicApi/rateLimit';
 import { hasAdminRole } from '../pdf/resolve-admin';
@@ -354,7 +354,7 @@ async function resolveYoutube(url: URL, deps: ResolveDeps): Promise<ResolvedNews
     siteUrl: `https://www.youtube.com/channel/${id}`,
     name: meta.title || pageTitle(page).replace(/\s+-\s+YouTube$/, ''),
     avatarUrl: httpsOrEmpty(metaContent(page, 'og:image')),
-    body,
+    body: trimFeed(body),
     viaRelay: false,
     relayable: false,
   };
@@ -369,7 +369,7 @@ function vimeoFeedFallback(url: URL): string | undefined {
 }
 
 async function resolveGeneric(url: URL, deps: ResolveDeps): Promise<ResolvedNewsSource> {
-  const first = await get(url.href, deps);
+  const first = await get(url.href, deps, { maxBytes: NEWS_FEED_MAX_BYTES });
   const ct = mediaType(first.contentType);
   if (ct.startsWith('image/')) {
     // shown directly; the curator may switch it to the relay only when newsImage would serve it
@@ -388,7 +388,7 @@ async function resolveGeneric(url: URL, deps: ResolveDeps): Promise<ResolvedNews
     let alt = alternateFeedUrl(page, first.finalUrl) ?? (VIMEO_HOSTS.includes(url.hostname) ? vimeoFeedFallback(url) : undefined);
     if (!alt) throw noFeed();
     if (alt.startsWith('http:')) alt = `https:${alt.slice('http:'.length)}`; // newsFeed is https-only
-    const feed = await get(alt, deps);
+    const feed = await get(alt, deps, { maxBytes: NEWS_FEED_MAX_BYTES });
     assertFeedType(feed);
     body = asText(feed);
     feedUrl = alt;

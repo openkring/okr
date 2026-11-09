@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { createServer } from 'http';
 import type { AddressInfo } from 'net';
 import type { NewsChannelModel } from '@okr/shared-models';
-import { makeNewsFeedAdapter, relayFetch, type NewsRelayDeps } from './news-feed';
+import { makeNewsFeedAdapter, relayFetch, trimFeed, type NewsRelayDeps } from './news-feed';
 import { gatewayFetch } from '../http';
 import { BlockedUrlError } from '../ssrf';
 import type { GatewayContext } from '../provider';
@@ -60,7 +60,7 @@ describe('newsFeedAdapter.fetch', () => {
     expect(fetch).toHaveBeenCalledTimes(1);
     const [url, opts] = fetch.mock.calls[0] as unknown as [string, Record<string, unknown>];
     expect(url).toBe('https://feeds.example.com/rss.xml');
-    expect(opts).toMatchObject({ responseType: 'text', timeoutMs: 8000, maxBytes: 2 * 1024 * 1024, maxRetries: 0, maxRedirects: 3, proxy: false });
+    expect(opts).toMatchObject({ responseType: 'text', timeoutMs: 8000, maxBytes: 16 * 1024 * 1024, maxRetries: 0, maxRedirects: 3, proxy: false });
     expect(typeof opts['beforeRedirect']).toBe('function');
     expect(typeof opts['lookup']).toBe('function');
     expect(raw).toEqual({ body: '<rss/>', contentType: 'application/rss+xml; charset=utf-8', fetchedAt: '2026-11-08T10:00:00.000Z' });
@@ -208,5 +208,26 @@ describe('relayFetch — socket-level guard (real axios, local server)', () => {
     } finally {
       server.close();
     }
+  });
+});
+
+describe('trimFeed', () => {
+  const rss = (n: number) => `<?xml version="1.0"?><rss><channel><title>t</title>${Array.from({ length: n }, (_, i) => `<item><guid>${i}</guid></item>`).join('')}</channel></rss>`;
+  it('keeps the first max items and closes the document', () => {
+    const out = trimFeed(rss(50), 3);
+    expect(out.match(/<item>/g)).toHaveLength(3);
+    expect(out).toContain('<guid>2</guid>');
+    expect(out).not.toContain('<guid>3</guid>');
+    expect(out.trimEnd().endsWith('</channel>\n</rss>')).toBe(true);
+  });
+  it('returns a short feed unchanged', () => {
+    expect(trimFeed(rss(3), 3)).toBe(rss(3));
+    expect(trimFeed(rss(2), 3)).toBe(rss(2));
+  });
+  it('trims atom entries', () => {
+    const atom = `<feed><title>a</title>${'<entry><id>x</id></entry>'.repeat(5)}</feed>`;
+    const out = trimFeed(atom, 2);
+    expect(out.match(/<entry>/g)).toHaveLength(2);
+    expect(out.endsWith('</feed>')).toBe(true);
   });
 });

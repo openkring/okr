@@ -22,6 +22,27 @@ import { assertPublicResolvedUrl, assertPublicUrlShape, BlockedUrlError, guarded
 
 export const NEWS_RELAY_TIMEOUT_MS = 8000;
 export const NEWS_RELAY_MAX_BYTES = 2 * 1024 * 1024;
+/** Feeds may be much larger than images: podcast feeds carry every episode ever published (acast: 8.5 MB). */
+export const NEWS_FEED_MAX_BYTES = 16 * 1024 * 1024;
+/** A relayed feed keeps only its newest entries; the client shows at most 20 per channel. */
+export const NEWS_FEED_MAX_ITEMS = 30;
+
+/**
+ * `xml` cut after its first `max` `<item>`/`<entry>` elements, closed again with the root's end tags.
+ * Feeds list newest first, so this keeps the newest entries and drops a large back catalogue. A feed
+ * with `max` entries or fewer is returned unchanged.
+ */
+export function trimFeed(xml: string, max = NEWS_FEED_MAX_ITEMS): string {
+  const isAtom = !/<item[\s>]/i.test(xml) && /<entry[\s>]/i.test(xml);
+  const close = isAtom ? /<\/entry\s*>/gi : /<\/item\s*>/gi;
+  let count = 0;
+  let cut = -1;
+  for (let m = close.exec(xml); m; m = close.exec(xml)) {
+    if (++count === max) { cut = m.index + m[0].length; break; }
+  }
+  if (cut < 0 || !close.exec(xml)) return xml;
+  return xml.slice(0, cut) + (isAtom ? '\n</feed>' : '\n</channel>\n</rss>');
+}
 export const NEWS_RELAY_MAX_REDIRECTS = 3;
 const NEWS_WINDOW = { limit: 120, windowMs: 60_000 };
 /** Content types the feed relay passes on (design §7); newsResolve applies the same rule. */
@@ -89,6 +110,8 @@ export interface RelayFetchOptions extends Pick<PublicUrlOptions, 'allowHttp' | 
   sameHost?: boolean;
   /** Accept header sent upstream. */
   accept?: string;
+  /** Response size cap; default NEWS_RELAY_MAX_BYTES (images). Feeds pass NEWS_FEED_MAX_BYTES. */
+  maxBytes?: number;
   deps: Pick<NewsRelayDeps, 'fetch' | 'lookup'>;
 }
 
@@ -125,7 +148,7 @@ export async function relayFetch(url: string, opts: RelayFetchOptions): Promise<
     method: 'GET',
     responseType: opts.responseType,
     timeoutMs: NEWS_RELAY_TIMEOUT_MS,
-    maxBytes: NEWS_RELAY_MAX_BYTES,
+    maxBytes: opts.maxBytes ?? NEWS_RELAY_MAX_BYTES,
     maxRetries: 0,
     maxRedirects: NEWS_RELAY_MAX_REDIRECTS,
     // never through an env-configured proxy: the guarded lookup must see the real upstream host
@@ -194,6 +217,7 @@ export function makeNewsFeedAdapter(overrides: Partial<NewsRelayDeps>): Provider
       const res = await relayFetch(channel.feedUrl, {
         responseType: 'text',
         accept: isHtml ? 'text/html, application/xhtml+xml;q=0.9' : 'application/rss+xml, application/atom+xml, application/xml;q=0.9, text/xml;q=0.9, */*;q=0.5',
+        maxBytes: isHtml ? NEWS_RELAY_MAX_BYTES : NEWS_FEED_MAX_BYTES,
         deps,
       });
       const contentType = contentTypeOf(res.headers);
@@ -214,7 +238,7 @@ export function makeNewsFeedAdapter(overrides: Partial<NewsRelayDeps>): Provider
         }
         return { body: rss, contentType: 'application/rss+xml; charset=utf-8', fetchedAt: deps.now().toISOString() };
       }
-      return { body: text, contentType, fetchedAt: deps.now().toISOString() };
+      return { body: trimFeed(text), contentType, fetchedAt: deps.now().toISOString() };
     },
     map: (raw) => ({ body: raw.body, contentType: raw.contentType }),
     sourceTimestamp: (raw) => raw.fetchedAt,
