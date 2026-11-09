@@ -18,9 +18,10 @@ export function reconcileDeps(): ReconcileDeps {
   return {
     ...submitDeps(),
     fanOut: postFanOutDeps(),
-    listPostMailings: async (sinceIso, beforeIso, limit): Promise<ReconMailing[]> => {
-      // a single-field range on `post.acceptedAt` (ISO): needs no composite index; the rest is filtered here
-      const snap = await db.collection('mailings').where('post.acceptedAt', '>=', sinceIso).where('post.acceptedAt', '<=', beforeIso).limit(limit).get();
+    listPostMailings: async (since, before, limit): Promise<ReconMailing[]> => {
+      // a single-field range on `post.acceptedAt` (StoreDateTime, as sendMailing writes it): needs no composite index;
+      // the rest is filtered here
+      const snap = await db.collection('mailings').where('post.acceptedAt', '>=', since).where('post.acceptedAt', '<=', before).limit(limit).get();
       const out: ReconMailing[] = [];
       for (const d of snap.docs) {
         const m = d.data() as { tenants?: string[]; senderKey?: string; senderName?: string; subject?: string; post?: MailingPost };

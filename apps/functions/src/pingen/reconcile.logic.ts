@@ -11,7 +11,7 @@
 //   4. `submitted` records Pingen never reported on for 7 days: one task, no state change.
 
 import { logger } from 'firebase-functions/v2';
-import { recipientParentKey } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, recipientParentKey, subDuration } from '@okr/shared-util-core';
 import { makePostFanOut, sendingId, type PostFanOutDeps } from '../email/mailing-sendings';
 import type { MailingPost } from './post-order';
 import { flagAmbiguous, submitSending, type SendingRow, type SubmitDeps } from './submit-sending.logic';
@@ -34,8 +34,11 @@ export interface ReconMailing {
 }
 
 export interface ReconcileDeps extends SubmitDeps {
-  /** Pingen Versand accepted between `sinceIso` and `beforeIso` (post.via 'pingen', letters > 0) */
-  listPostMailings(sinceIso: string, beforeIso: string, limit: number): Promise<ReconMailing[]>;
+  /**
+   * Pingen Versand accepted between `since` and `before` (post.via 'pingen', letters > 0). Both bounds are
+   * StoreDateTime (`yyyyMMddHHmmss`), the format `sendMailing` writes into `post.acceptedAt`.
+   */
+  listPostMailings(since: string, before: string, limit: number): Promise<ReconMailing[]>;
   /** ids of every `sendings` record (any state, tombstones included) of the source */
   listSendingIds(source: string): Promise<string[]>;
   listByState(state: SendingRow['state'], limit: number): Promise<SendingRow[]>;
@@ -62,10 +65,28 @@ const ms = (iso: string | undefined): number => {
 const olderThan = (iso: string | undefined, ageMs: number, nowMs: number): boolean => nowMs - ms(iso) > ageMs;
 const msg = (e: unknown): string => (e instanceof Error ? e.message : String(e));
 
+/**
+ * `now` as StoreDateTime in the process's local wall clock, the clock `getTodayStr(DateFormat.StoreDateTime)` writes
+ * `post.acceptedAt` with. `Date.prototype.toString()` starts with `Www Mmm DD YYYY HH:mm:ss` (ECMA-262), which is
+ * DateFormat.DateTime.
+ */
+export function storeDateTimeOf(now: Date): string {
+  return convertDateFormatToString(now.toString().slice(0, 24), DateFormat.DateTime, DateFormat.StoreDateTime);
+}
+
+/** The `post.acceptedAt` range part 1 looks at: from 30 days ago up to one hour ago, both StoreDateTime. */
+export function acceptedAtWindow(now: Date): { since: string; before: string } {
+  const nowStr = storeDateTimeOf(now);
+  return {
+    since: subDuration(nowStr, { seconds: MAILING_WINDOW_MS / 1000 }, DateFormat.StoreDateTime),
+    before: subDuration(nowStr, { seconds: HOUR_MS / 1000 }, DateFormat.StoreDateTime),
+  };
+}
+
 /** Part 1. */
 export async function repairIncompleteFanOuts(deps: ReconcileDeps, counts: ReconcileCounts): Promise<void> {
-  const nowMs = deps.now().getTime();
-  const mailings = await deps.listPostMailings(new Date(nowMs - MAILING_WINDOW_MS).toISOString(), new Date(nowMs - HOUR_MS).toISOString(), QUERY_LIMIT);
+  const { since, before } = acceptedAtWindow(deps.now());
+  const mailings = await deps.listPostMailings(since, before, QUERY_LIMIT);
   if (mailings.length >= QUERY_LIMIT) logger.warn(`post-reconcile: ${mailings.length} Versand in the last 30 days: the limit is hit, older ones may not be checked`);
   for (const m of mailings) {
     counts.mailingsChecked++;

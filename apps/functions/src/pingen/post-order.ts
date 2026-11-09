@@ -226,6 +226,7 @@ export interface MailingPost {
   total: number;
   creditEntryId: string;
   acceptedBy: string;
+  /** StoreDateTime (`yyyyMMddHHmmss`, `getTodayStr(DateFormat.StoreDateTime)`): the nightly reconcile ranges on it */
   acceptedAt: string;
 }
 
@@ -246,7 +247,7 @@ export interface PostOrderArgs {
   /** the caller's uid: the credit entry records who spent it */
   actor: string;
   caller: QuoteCaller;
-  /** for `acceptedAt` */
+  /** for `acceptedAt`: StoreDateTime (getTodayStr), despite the name */
   nowIso: string;
 }
 

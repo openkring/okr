@@ -5,17 +5,24 @@ vi.mock('firebase-functions/params', () => ({ defineSecret: () => ({}), defineSt
 vi.mock('firebase-admin/firestore', () => ({ getFirestore: vi.fn() }));
 vi.mock('firebase-admin/storage', () => ({ getStorage: vi.fn() }));
 
+import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 import type { PingenClient } from './pingen-client';
 import type { MailingPost } from './post-order';
-import { reconcilePostVersand, type ReconcileDeps, type ReconMailing } from './reconcile.logic';
+import { acceptedAtWindow, reconcilePostVersand, type ReconcileDeps, type ReconMailing } from './reconcile.logic';
 import type { SendingRow, SubmitDeps } from './submit-sending.logic';
 
 const OPTIONS = { deliveryProduct: 'cheap', printSpectrum: 'grayscale', printMode: 'simplex' } as const;
 const NOW = new Date('2026-11-09T10:00:00.000Z');
 const ago = (h: number) => new Date(NOW.getTime() - h * 3600_000).toISOString();
+/** exactly what sendMailing writes into `post.acceptedAt`: getTodayStr(StoreDateTime) at that moment */
+function acceptedAtAgo(h: number): string {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date(NOW.getTime() - h * 3600_000));
+  try { return getTodayStr(DateFormat.StoreDateTime); } finally { vi.useRealTimers(); }
+}
 const POST: MailingPost = {
   via: 'pingen', options: OPTIONS, recipients: ['p1', 'p2', 'p3'], letters: 3, abroad: 0, pages: 6, total: 3 * 120 + 6 * 30,
-  creditEntryId: 'e1', acceptedBy: 'u', acceptedAt: ago(3),
+  creditEntryId: 'e1', acceptedBy: 'u', acceptedAt: acceptedAtAgo(3),
 };
 const MAILING: ReconMailing = { id: 'm1', tenantId: 'scs', senderKey: 'pe1', senderName: 'Sandra', subject: 'Einladung', post: POST };
 
@@ -53,7 +60,8 @@ function setup(rows: SendingRow[], mailings: ReconMailing[] = [], createLetter?:
     createTask: async (t) => { tasks.push(t as never); },
     reverseShare,
     now: () => NOW,
-    listPostMailings: async () => mailings,
+    // the Firestore range query: a lexicographic range on `post.acceptedAt`
+    listPostMailings: async (since, before) => mailings.filter((m) => m.post.acceptedAt >= since && m.post.acceptedAt <= before),
     listSendingIds: async (source) => [...store.values()].filter((r) => r.source === source).map((r) => r.id),
     listByState: async (state) => [...store.values()].filter((r) => r.state === state),
     hasAnyTask: async (relatedKey) => tasks.some((t) => t.relatedKey === relatedKey),
@@ -86,6 +94,20 @@ describe('reconcilePostVersand - incomplete fan-out', () => {
     await reconcilePostVersand(deps);
     expect(reverseShare).toHaveBeenCalledTimes(3);
     expect(tasks).toHaveLength(1);
+  });
+
+  it('finds a Versand by the acceptedAt sendMailing writes (StoreDateTime), not one younger than an hour or older than 30 days', async () => {
+    const young = { ...MAILING, id: 'm2', post: { ...POST, acceptedAt: acceptedAtAgo(0.5) } };
+    const old = { ...MAILING, id: 'm3', post: { ...POST, acceptedAt: acceptedAtAgo(31 * 24) } };
+    const { deps, reverseShare } = setup([], [MAILING, young, old]);
+    const counts = await reconcilePostVersand(deps);
+    expect(POST.acceptedAt).toMatch(/^\d{14}$/);
+    expect(counts).toMatchObject({ mailingsChecked: 1, mailingsRepaired: 1, lettersReversed: 3 });
+    expect(reverseShare.mock.calls.every((c) => String(c[3]).startsWith('m1_'))).toBe(true);
+  });
+
+  it('the window bounds are StoreDateTime in the clock getTodayStr writes with', () => {
+    expect(acceptedAtWindow(NOW)).toEqual({ since: acceptedAtAgo(30 * 24), before: acceptedAtAgo(1) });
   });
 
   it('leaves a complete Versand alone', async () => {
