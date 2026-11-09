@@ -119,6 +119,11 @@ export class AppConfig {
    * apps/functions/src/auth/index.ts). Only used when `emailProvider` is `mailtrap_api`.
    */
   public mailtrapPasswordResetTemplate = '';
+
+  /** Postversand via Pingen (spec 1.150): the tenant's default letter options, see `PostOptions`. */
+  public postDeliveryProduct: 'fast' | 'cheap' = 'cheap';
+  public postPrintSpectrum: 'color' | 'grayscale' = 'grayscale';
+  public postPrintMode: 'simplex' | 'duplex' = 'simplex';
   public rootUrl = '/public/welcome';
   public logoUrl = DEFAULT_URL;
   /**
