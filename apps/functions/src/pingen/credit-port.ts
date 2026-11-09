@@ -20,7 +20,7 @@ export interface CreditPort {
   reverseShare(
     tenantId: string,
     entryId: string,
-    pages: number,
+    part: { units: number; pages: number },
     key: string,
     reason: string,
   ): Promise<{ amount: number; duplicate: boolean }>;
@@ -49,8 +49,8 @@ export function makeCreditPort(deps: CreditPortDeps): CreditPort {
     quote: (letters, pages) => deps.quoteTransaction('pingen-letter', letters, pages),
     balance: (tenantId) => deps.readBalance(tenantId),
     deduct: (tenantId, input) => deps.deductCredit(tenantId, { product: 'pingen-letter', units: input.letters, pages: input.pages, reference: input.reference, actor: input.actor }),
-    reverseShare: async (tenantId, entryId, pages, key, reason) => {
-      const r = await deps.reverseCredit(tenantId, entryId, reason, { units: 1, pages }, key);
+    reverseShare: async (tenantId, entryId, part, key, reason) => {
+      const r = await deps.reverseCredit(tenantId, entryId, reason, part, key);
       return { amount: r.amount, duplicate: r.duplicate };
     },
   };

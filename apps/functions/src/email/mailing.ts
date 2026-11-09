@@ -20,7 +20,7 @@ import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
-import { DeliveryChannel, type EmailLayoutChoice, NoticeAttachment, NoticeCollection, type NoticeModel } from '@okr/shared-models';
+import { DeliveryChannel, type EmailLayoutChoice, NoticeAttachment, NoticeCollection, type NoticeModel, type PostOptions } from '@okr/shared-models';
 import { DateFormat, getEventLocationName, getTodayStr, isOrgRecipient, recipientParentKey } from '@okr/shared-util-core';
 import { projectID } from 'firebase-functions/params';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
@@ -41,8 +41,10 @@ import { lastEventDate } from './mailing-answer.logic';
 import { chunk, isElevated } from './mailing-recipients';
 import { MAX_PERSONAL_RECIPIENTS, parseCaleventKeys, personalEntries, refusedEventMessage, sendableEventRefusal } from './personal-mail.logic';
 import { asLayoutChoice } from './render-email.logic';
-import { buildMailingLetters, LetterEvent } from './mailing-letters';
+import { buildMailingLetters, countLetterPages, LetterEvent } from './mailing-letters';
 import { mailingCategory } from './mailing-deliveries.logic';
+import { getCreditPort } from '../pingen/credit-port';
+import { answerEventsOf, type MailingPost, parsePostRequest, quoteTokenSecret, readCountryCodes, type QuoteEnv, withPostOrder } from '../pingen/post-order';
 
 const REGION = 'europe-west6';
 export const MailingCollection = 'mailings';
@@ -86,6 +88,8 @@ export interface MailingRequest {
   dashboard?: boolean;
   /** «QR-Code für Link anzeigen»: each letter ends with the events, each with a QR code of the answer link. */
   letterQrCodes?: boolean;
+  /** «Per Pingen senden»: the quote the sender saw; the server recomputes it and takes the price from the credit. */
+  post?: { via: 'pingen'; options: PostOptions; token: string; issuedAt: number };
 }
 
 /** The `mailings` doc. Written only here; `state` and the counts are owned by `onMailing`. */
@@ -121,6 +125,8 @@ export interface MailingDoc {
   dashboard?: boolean;
   /** The letters carry the events with a QR code of the answer link; the Post recipients may then answer too. */
   letterQrCodes?: boolean;
+  /** An accepted Pingen order (credit deducted); absent = the Post part is the download. */
+  post?: MailingPost;
 }
 
 /**
@@ -233,10 +239,10 @@ export async function resolveAttachmentBytes(
 }
 
 /** Copies every attachment into the private bucket and returns where each one lives. */
-async function storeAttachments(req: MailingRequest, tenantId: string, mailingKey: string): Promise<NoticeAttachment[]> {
+async function storeAttachments(resolved: ResolvedAttachment[], tenantId: string, mailingKey: string): Promise<NoticeAttachment[]> {
   const bucket = privateBucket();
   const out: NoticeAttachment[] = [];
-  for (const att of await resolveAttachmentBytes(req, tenantId)) {
+  for (const att of resolved) {
     const storagePath = `mailings/${tenantId}/${mailingKey}/${out.length}-${safeFilename(att.filename)}`;
     await bucket.file(storagePath).save(att.content, { contentType: att.contentType, resumable: false });
     out.push({ filename: safeFilename(att.filename), storagePath, contentType: att.contentType });
@@ -244,8 +250,13 @@ async function storeAttachments(req: MailingRequest, tenantId: string, mailingKe
   return out;
 }
 
+/** The pricing environment of a Pingen send: the same functions the quote uses. */
+function postEnv(): QuoteEnv {
+  return { getPort: getCreditPort, secret: quoteTokenSecret.value(), now: Date.now(), readCountryCodes, answerEventsOf, renderPages: countLetterPages };
+}
+
 export const sendMailing = onCall(
-  { region: REGION, enforceAppCheck: true, cors: true, memory: '512MiB', timeoutSeconds: 120 },
+  { region: REGION, enforceAppCheck: true, cors: true, memory: '2GiB', timeoutSeconds: 120, secrets: [quoteTokenSecret] },
   async (request: CallableRequest<MailingRequest>): Promise<{ mailingKey: string }> => {
     const CF_NAME = 'sendMailing';
     checkAppCheckToken(request as never, CF_NAME);
@@ -258,6 +269,7 @@ export const sendMailing = onCall(
     const to = stringList(data.to, 'to');
     const cc = stringList(data.cc, 'cc');
     const deliveries = parseDeliveries(data.deliveries);
+    const postRequest = parsePostRequest(data.post);
     const caleventKeys = parseCaleventKeys(data.caleventKeys);
     if (deliveries.length === 0) throw new HttpsError('invalid-argument', 'Nobody receives this Versand.');
     if (deliveries.length > MAX_RECIPIENTS) throw new HttpsError('invalid-argument', `At most ${MAX_RECIPIENTS} recipients.`);
@@ -326,30 +338,45 @@ export const sendMailing = onCall(
     // QR codes only where they lead somewhere: letters to print and events to answer
     const letterQrCodes = data.letterQrCodes === true && caleventKeys.length > 0 && keysFor(deliveries, DeliveryChannel.Post).length > 0;
     const ref = db.collection(MailingCollection).doc();
-    const attachments = await storeAttachments(data, tenantId, ref.id);
+    const resolved = await resolveAttachmentBytes(data, tenantId);
     const senderKey = String(caller['personKey'] ?? '');
-    const doc: MailingDoc = {
-      tenants: [tenantId],
-      senderUid: uid,
-      senderKey,
-      senderName: String(caller['displayName'] ?? caller['loginEmail'] ?? ''),
-      subject: data.subject.trim(),
-      body: data.body,
-      layout: asLayoutChoice(data.layout),
-      from,
-      to,
-      cc,
-      attachmentName: attachments.map((a) => a.filename).join(', '),
-      attachments,
-      deliveries,
-      createdAt: getTodayStr(DateFormat.StoreDateTime),
-      state: 'pending',
-      ...(caleventKeys.length > 0 ? { caleventKeys, ...(validUntil ? { validUntil } : {}) } : {}),
-      ...(keysFor(deliveries, DeliveryChannel.Post).length > 0 ? { letters: { state: 'pending' as const } } : {}),
-      ...(data.dashboard === true ? { dashboard: true } : {}),
-      ...(letterQrCodes ? { letterQrCodes: true } : {}),
+    const build = async (post: MailingPost | undefined): Promise<void> => {
+      const attachments = await storeAttachments(resolved, tenantId, ref.id);
+      const doc: MailingDoc = {
+        tenants: [tenantId],
+        senderUid: uid,
+        senderKey,
+        senderName: String(caller['displayName'] ?? caller['loginEmail'] ?? ''),
+        subject: data.subject.trim(),
+        body: data.body,
+        layout: asLayoutChoice(data.layout),
+        from,
+        to,
+        cc,
+        attachmentName: attachments.map((a) => a.filename).join(', '),
+        attachments,
+        deliveries,
+        createdAt: getTodayStr(DateFormat.StoreDateTime),
+        state: 'pending',
+        ...(caleventKeys.length > 0 ? { caleventKeys, ...(validUntil ? { validUntil } : {}) } : {}),
+        ...(keysFor(deliveries, DeliveryChannel.Post).length > 0 ? { letters: { state: 'pending' as const } } : {}),
+        ...(data.dashboard === true ? { dashboard: true } : {}),
+        ...(letterQrCodes ? { letterQrCodes: true } : {}),
+        ...(post ? { post } : {}),
+      };
+      await ref.set(doc);
     };
-    await ref.set(doc);
+    if (postRequest) {
+      // the actor of the credit entry is the caller's uid
+      await withPostOrder(postEnv(), {
+        // subject and QR flag exactly as the quote saw them (the token hashes the request, not the stored doc)
+        post: postRequest, tenantId, subject: data.subject, body: data.body, attachments: resolved, letterQrCodes: data.letterQrCodes === true,
+        caleventKeys, postKeys: keysFor(deliveries, DeliveryChannel.Post), mailingKey: ref.id, actor: uid,
+        caller: caller as { roles?: unknown; tenants?: string[] }, nowIso: getTodayStr(DateFormat.StoreDateTime),
+      }, build);
+    } else {
+      await build(undefined);
+    }
     logger.info(`${CF_NAME}: Versand ${ref.id} to ${deliveries.length} recipient(s) (tenant ${tenantId})`);
     return { mailingKey: ref.id };
   },

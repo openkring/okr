@@ -109,7 +109,7 @@ describe('makeCreditPort', () => {
     const port = makeCreditPort({ quoteTransaction: vi.fn(), readBalance: vi.fn(), deductCredit, reverseCredit });
     await port.deduct('scs', { letters: 3, pages: 6, reference: 'r', actor: 'u' });
     expect(deductCredit).toHaveBeenCalledWith('scs', { product: 'pingen-letter', units: 3, pages: 6, reference: 'r', actor: 'u' });
-    expect(await port.reverseShare('scs', 'e1', 2, 'k', 'why')).toEqual({ amount: 150, duplicate: false });
+    expect(await port.reverseShare('scs', 'e1', { units: 1, pages: 2 }, 'k', 'why')).toEqual({ amount: 150, duplicate: false });
     expect(reverseCredit).toHaveBeenCalledWith('scs', 'e1', 'why', { units: 1, pages: 2 }, 'k');
   });
 });
