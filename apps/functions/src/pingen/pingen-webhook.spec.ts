@@ -162,9 +162,49 @@ describe('pingenHandler', () => {
       expect(r.state).toBe('submitted');
       expect(r.history).toHaveLength(2);
       expect(r.history.at(-1)?.detail).toContain('Content failed inspection');
-      expect(tasks).toHaveLength(0);
+      expect(tasks).toHaveLength(1); // one task for the sender, see the next test
       expect(reverseShare).not.toHaveBeenCalled();
     }
+  });
+
+  it('a non-rejecting issues event opens ONE task «Pingen meldet ein Problem …» (reason max 120 chars), deduped on sending.<id>.issue', async () => {
+    const { handler, store, tasks, reverseShare } = setup([row()]);
+    const p = JSON.parse(JSON.stringify(FIX['issues']));
+    p.data.attributes.reason = 'x'.repeat(300);
+    await handler(stored(p), 'w1');
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0]).toMatchObject({ relatedKey: 'sending.s1.issue', linkKey: 'mailing.m1', tenantId: 'scs' });
+    expect(tasks[0].name).toBe(`Pingen meldet ein Problem mit dem Brief an Test Person: ${'x'.repeat(120)}`);
+    const again = JSON.parse(JSON.stringify(FIX['issues']));
+    again.data.relationships.event.data.id = 'e0000000-0000-4000-8000-0000000000fe';
+    await handler(stored(again), 'w2');
+    expect(tasks).toHaveLength(1);
+    expect(store.get('s1')?.state).toBe('submitted');
+    expect(reverseShare).not.toHaveBeenCalled();
+  });
+
+  it('the dedupe marker and the failure are ONE write; a retry after a crash before failSending still fails the letter', async () => {
+    const { handler, store, deps, reverseShare } = setup([row()]);
+    const real = deps.updateSending;
+    let crash = true;
+    deps.updateSending = async (id, patch, expect) => {
+      if (crash) { crash = false; throw new Error('crash'); }
+      return real(id, patch, expect);
+    };
+    const rejected = withStatus(FIX['issues'], 'unprintable');
+    await expect(handler(stored(rejected), 'w1')).rejects.toThrow('crash');
+    expect(store.get('s1')?.history).toHaveLength(1); // no marker without the failure
+    await handler(stored(rejected), 'w1');
+    const r = store.get('s1')!;
+    expect(r.state).toBe('failed');
+    expect(r.history.filter((h) => (h.detail ?? '').includes('e0000000-0000-4000-8000-000000000004'))).toHaveLength(1);
+    expect(reverseShare).toHaveBeenCalledTimes(1);
+  });
+
+  it('a matched record without tenants is ignored', async () => {
+    const { handler, store } = setup([row({ tenants: [] })]);
+    expect(await handler(stored(FIX['sent']), 'w1')).toEqual({ state: 'ignored' });
+    expect(store.get('s1')?.state).toBe('submitted');
   });
 
   it('a late rejection after sent is history only', async () => {

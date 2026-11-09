@@ -125,6 +125,24 @@ function nextSteps(rec: SendingRow, e: ParsedEvent): Array<'sent' | 'delivered' 
 }
 
 const MAX_ATTEMPTS = 3;
+const LIVE: Array<SendingRow['state']> = ['queued', 'submitting', 'submitted', 'sent'];
+
+/** One task per letter for a problem Pingen reports without ending the letter; never throws. */
+async function openIssueTask(deps: PingenWebhookDeps, rec: SendingRow, reason: string): Promise<void> {
+  const tenantId = rec.tenants[0] ?? '';
+  try {
+    const mailing = await deps.loadMailing(rec.source, tenantId);
+    if (!mailing) { logger.error('pingen-webhook: no Versand for the letter with a problem, no task', { id: rec.id, source: rec.source }); return; }
+    const relatedKey = `sending.${rec.id}.issue`;
+    if (await deps.hasOpenTask(relatedKey, mailing.senderKey, tenantId)) return;
+    await deps.createTask({
+      tenantId, name: `Pingen meldet ein Problem mit dem Brief an ${rec.recipientName}${reason ? `: ${reason.slice(0, 120)}` : ''}`,
+      assignee: await deps.avatar(mailing.senderKey, tenantId, mailing.senderName), dueInDays: 3, relatedModelType: 'sending', relatedKey, linkKey: rec.source, notes: `Brief ${rec.id}`,
+    });
+  } catch (err) {
+    logger.error('pingen-webhook: task for a letter problem not created', { id: rec.id, error: err instanceof Error ? err.message : String(err) });
+  }
+}
 
 export function makePingenHandler(deps: PingenWebhookDeps): WebhookHandler {
   return async (event) => {
@@ -137,23 +155,24 @@ export function makePingenHandler(deps: PingenWebhookDeps): WebhookHandler {
       return { state: 'ignored' };
     }
     const tenantId = rec.tenants[0];
+    if (!tenantId) { logger.warn('pingen-webhook: the sending has no tenant, ignored', { id: rec.id }); return { state: 'ignored' }; }
     for (let attempt = 0; attempt < MAX_ATTEMPTS && rec; attempt++) {
       if (seen(rec, e)) return { state: 'handled', tenantId };
       const at = deps.now().toISOString();
       const steps = nextSteps(rec, e);
       const guard = rec.state;
       if (steps.length === 0) {
+        // a problem report (or a late rejection) on a live letter: one task for the sender, before the marker so a replay still opens it
+        if (e.category === 'issues' && LIVE.includes(rec.state)) await openIssueTask(deps, rec, e.reason);
         // history only: the state is not touched, the guard keeps a concurrent move from being overwritten
         if (await deps.updateSending(rec.id, { history: [...rec.history, { state: rec.state, at, detail: detailOf(e) }], updatedAt: at }, guard)) return { state: 'handled', tenantId };
       } else if (steps[steps.length - 1] === 'failed') {
-        // reverse + task: failSending writes the history entry (reason only) itself, guarded on the current state
-        const withMarker = { ...rec, history: [...rec.history, { state: rec.state, at, detail: detailOf(e) }] };
-        await deps.updateSending(rec.id, { history: withMarker.history }, guard);
+        // marker, failure, reversal and task: the marker is the failed entry's detail, so one guarded write carries both
+        await failSending(deps, rec, `Pingen hat den Brief abgelehnt${e.reason ? `: ${e.reason}` : ''}`, true, failReasonOf(e.reason), guard, detailOf(e));
         const fresh = await deps.getSending(rec.id);
-        if (fresh?.state === guard) {
-          await failSending(deps, fresh, `Pingen hat den Brief abgelehnt${e.reason ? `: ${e.reason}` : ''}`, true, failReasonOf(e.reason), guard);
-          return { state: 'handled', tenantId };
-        }
+        if (fresh?.state === 'failed') return { state: 'handled', tenantId };
+        rec = fresh;
+        continue;
       } else {
         const last = steps[steps.length - 1];
         const history = [...rec.history, ...steps.map((s, i) => ({ state: s, at, ...(i === steps.length - 1 ? { detail: detailOf(e) } : {}) }))];

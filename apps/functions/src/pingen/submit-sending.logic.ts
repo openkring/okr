@@ -137,12 +137,12 @@ async function reverse(deps: FailDeps, rec: SendingRow, mailing: SendingMailing 
  * Task 9 reuses it for letters Pingen reports undeliverable (`reverse` as decided there).
  */
 export async function failSending(
-  deps: FailDeps, record: SendingRow, reason: string, reverseShare: boolean, failReason: FailReason = 'other', expectState?: SendingRow['state'],
+  deps: FailDeps, record: SendingRow, reason: string, reverseShare: boolean, failReason: FailReason = 'other', expectState?: SendingRow['state'], historyDetail?: string,
 ): Promise<void> {
   const tenantId = record.tenants[0] ?? '';
   const at = deps.now().toISOString();
   // guarded on the submit path: a record that left `submitting` meanwhile gets no task and no refund
-  if (!(await deps.updateSending(record.id, patchFailed(record, reason, failReason, at), expectState))) return;
+  if (!(await deps.updateSending(record.id, patchFailed(record, historyDetail ?? reason, failReason, at), expectState))) return;
   let mailing: SendingMailing | undefined;
   try {
     mailing = await deps.loadMailing(record.source, tenantId);
