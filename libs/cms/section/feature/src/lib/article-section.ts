@@ -1,7 +1,8 @@
-import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, effect, inject, input } from '@angular/core';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonRow } from '@ionic/angular';
+import { CUSTOM_ELEMENTS_SCHEMA, Component, ElementRef, computed, effect, inject, input, viewChild } from '@angular/core';
+import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonRow } from '@ionic/angular';
 
 import { ArticleSection, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ViewPosition } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
 import { Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
 
 import { ArticleStore } from './article-section.store';
@@ -10,8 +11,8 @@ import { ArticleStore } from './article-section.store';
   selector: 'okr-article-section',
   standalone: true,
   imports: [
-    Spinner, Img, OptionalCardHeader,
-    IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonItem
+    Spinner, Img, OptionalCardHeader, SvgIconPipe,
+    IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonButton, IonIcon
   ],
   schemas: [
     CUSTOM_ELEMENTS_SCHEMA
@@ -66,18 +67,21 @@ import { ArticleStore } from './article-section.store';
     }
     .carousel-slide::scroll-marker:hover { background: #9ca3af; }
     .carousel-slide::scroll-marker:target-current { background: #3b82f6; transform: scale(1.3); border: 1px solid black; }
-    .carousel::scroll-button(*) {
-      border: none; background: white; color: #374151;
-      font-size: 1.25rem; width: 40px; height: 40px;
-      border-radius: 50%; cursor: pointer;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      transition: all 0.2s;
-      position: absolute; top: 50%; transform: translateY(-50%); z-index: 10;
+    /* prev / next: real buttons (the native ::scroll-button stops at both ends and is Chrome-only);
+       they loop, from the last slide to the first and back */
+    .carousel-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 10;
+      --border-radius: 50%;
+      --padding-start: 0;
+      --padding-end: 0;
+      width: 40px;
+      height: 40px;
     }
-    .carousel::scroll-button(*):hover:not(:disabled) { background: #3b82f6; color: white; }
-    .carousel::scroll-button(*):disabled { opacity: 0.3; cursor: not-allowed; }
-    .carousel::scroll-button(left)  { content: "<"; left: 1.5rem; }
-    .carousel::scroll-button(right) { content: ">"; right: 1.5rem; }
+    .carousel-nav.prev { left: 0.75rem; }
+    .carousel-nav.next { right: 0.75rem; }
   `],
   providers: [ArticleStore],
   template: `
@@ -125,13 +129,19 @@ import { ArticleStore } from './article-section.store';
                     <ion-row>
                       <ion-col size="12">
                         <div class="carousel-container">
-                          <div class="carousel">
+                          <div class="carousel" #carousel>
                             @for(img of images(); track img.url) {
                               <div class="carousel-slide">
                                 <okr-img [captionFallbacks]="captionFallbacks()" [image]="img" [imageStyle]="carouselImageStyle()" [editMode]="editMode()" [gallery]="images()" [zoomTitle]="store.i18n.article_zoomed()" />
                               </div>
                             }
                           </div>
+                          <ion-button class="carousel-nav prev" fill="solid" color="light" (click)="step(-1)" aria-label="Previous image">
+                            <ion-icon slot="icon-only" src="{{ 'chevron-back' | svgIcon }}" />
+                          </ion-button>
+                          <ion-button class="carousel-nav next" fill="solid" color="light" (click)="step(1)" aria-label="Next image">
+                            <ion-icon slot="icon-only" src="{{ 'chevron-forward' | svgIcon }}" />
+                          </ion-button>
                         </div>
                       </ion-col>
                     </ion-row>
@@ -233,6 +243,22 @@ export class ArticleSectionComponent {
   protected captionFallbacks = computed(() => [this.subTitle(), this.title()]);
 
   public VP = ViewPosition;
+
+  private carousel = viewChild<ElementRef<HTMLElement>>('carousel');
+
+  /** scrolls the carousel one slide back (-1) or forward (1); loops at both ends */
+  protected step(direction: -1 | 1): void {
+    const el = this.carousel()?.nativeElement;
+    if (!el) return;
+    const slides = Array.from(el.children) as HTMLElement[];
+    if (slides.length === 0) return;
+    // the current slide is the one whose left edge is nearest to the scroll position
+    const current = slides.reduce((best, slide, i) =>
+      Math.abs(slide.offsetLeft - el.offsetLeft - el.scrollLeft) <
+      Math.abs(slides[best].offsetLeft - el.offsetLeft - el.scrollLeft) ? i : best, 0);
+    const target = (current + direction + slides.length) % slides.length;
+    el.scrollTo({ left: slides[target].offsetLeft - el.offsetLeft });
+  }
 
   constructor() {
     effect(() => {
