@@ -14,6 +14,10 @@ export type Attendee = {
   comment?: string;
 }
 
+/** Who is notified about a new comment on an event, see `CalEventModel.commentNotify`. */
+export type CommentNotify = 'default' | 'all' | 'organisers' | 'none';
+export const COMMENT_NOTIFY_VALUES: CommentNotify[] = ['default', 'all', 'organisers', 'none'];
+
 export class CalEventModel implements OkrModel, NamedModel, SearchableModel, TaggedModel {
   public okey = DEFAULT_KEY; // unique key of the model in the database
   public tenants: string[] = DEFAULT_TENANTS; // tenant IDs that this model belongs to
@@ -85,6 +89,14 @@ export class CalEventModel implements OkrModel, NamedModel, SearchableModel, Tag
    * invitation does not count. Optional on read: legacy documents lack it, which reads as false.
    */
   public notifyOnAnswer = false;
+  /**
+   * Who hears about a new comment or document on this event (spec 1.147):
+   * 'all' = everyone who has not declined plus the organisers, 'organisers' = `responsiblePersons`
+   * only, 'none' = nobody (the comment still shows in the app). 'default' lets the function decide:
+   * organisers for an event in a Versand or with more than 10 people who have not declined,
+   * everyone otherwise. Optional on read: legacy documents lack it, which reads as 'default'.
+   */
+  public commentNotify: CommentNotify = 'default';
   public state: 'proposed' | 'provisional' | 'definitive' | 'cancelled' = 'definitive'; // scheduling state; 'cancelled' = the event was called off
   public cancelMessage = DEFAULT_NOTES; // why the event was cancelled; shown as a red banner, only set when state === 'cancelled'
   public isLocked = false; // frozen by an organiser/eventAdmin: no invitation response or attendance change is possible while true

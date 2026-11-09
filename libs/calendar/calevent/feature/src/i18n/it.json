@@ -359,6 +359,14 @@
     "label": "Segnala le risposte agli inviti",
     "helper": "L'organizzazione riceve un messaggio non appena qualcuno accetta o rifiuta un invito."
   },
+  "commentNotify": {
+    "label": "Notifica dei commenti",
+    "helper": "Chi riceve un messaggio quando qualcuno scrive un commento o aggiunge un documento. Tutti quelli che vedono l'evento possono leggere i commenti. «Automatico» avvisa solo l'organizzazione per gli eventi grandi (più di 10 partecipanti o inviati tramite invio) e tutti negli altri casi.",
+    "default": "Automatico",
+    "all": "Tutti i partecipanti",
+    "organisers": "Solo l'organizzazione",
+    "none": "Nessuno (visibile solo nell'app)"
+  },
   "locationKey": {
     "label": "Chiave del luogo",
     "placeholder": "sssssss",

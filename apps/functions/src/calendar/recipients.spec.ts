@@ -11,6 +11,10 @@ import {
   declinedAttendeeKeys,
   isFutureOrToday,
   responsibleKeys,
+  COMMENT_NOTIFY_THRESHOLD,
+  commentRecipients,
+  versandLayout,
+  resolveCommentNotify,
 } from './recipients';
 
 const openEvent = (attendees: [string, string][], responsible: string[] = []): CalEventNotifyDoc => ({
@@ -150,5 +154,61 @@ describe('shorten', () => {
 describe('caleventDeepLink', () => {
   it('targets the list route that opens the event — a bare /calevent/<okey> matches no route', () => {
     expect(caleventDeepLink('e1')).toBe('/calevent/my/c-calevents?event=e1');
+  });
+});
+
+describe('resolveCommentNotify (spec 1.147)', () => {
+  it('an explicit setting wins over Versand and size', () => {
+    expect(resolveCommentNotify('all', true, 500)).toBe('all');
+    expect(resolveCommentNotify('none', false, 2)).toBe('none');
+    expect(resolveCommentNotify('organisers', false, 2)).toBe('organisers');
+  });
+
+  it('default on a Versand event tells the organisers only', () => {
+    expect(resolveCommentNotify('default', true, 3)).toBe('organisers');
+  });
+
+  it('default switches to organisers above the threshold, not at it', () => {
+    expect(COMMENT_NOTIFY_THRESHOLD).toBe(10);
+    expect(resolveCommentNotify('default', false, 10)).toBe('all');
+    expect(resolveCommentNotify('default', false, 11)).toBe('organisers');
+  });
+
+  it('a legacy document (no field) or an unknown value reads as default', () => {
+    expect(resolveCommentNotify(undefined, false, 4)).toBe('all');
+    expect(resolveCommentNotify('everyone', false, 40)).toBe('organisers');
+  });
+});
+
+describe('versandLayout', () => {
+  it('takes the layout of the newest Versand of the tenant', () => {
+    expect(versandLayout([
+      { tenants: ['scs'], createdAt: '20261108173142', layout: 'standard' },
+      { tenants: ['scs'], createdAt: '20261108211434', layout: 'email-layout-logo_scs' },
+      { tenants: ['other'], createdAt: '20261109000000', layout: 'plain' },
+    ], 'scs')).toBe('email-layout-logo_scs');
+  });
+
+  it('is undefined without a Versand of the tenant, standard for one without a layout', () => {
+    expect(versandLayout([{ tenants: ['other'], layout: 'plain' }], 'scs')).toBeUndefined();
+    expect(versandLayout([{ tenants: ['scs'] }], 'scs')).toBe('standard');
+  });
+});
+
+describe('commentRecipients', () => {
+  const event = openEvent([['a', 'accepted'], ['b', 'invited'], ['c', 'declined'], ['org2', 'declined']], ['org1', 'org2', 'a']);
+
+  it("'all' is collectRecipients: not declined plus organisers, minus the author", () => {
+    expect(commentRecipients(event, 'all', ['b']).sort()).toEqual(['a', 'org1']);
+  });
+
+  it("'organisers' keeps only responsiblePersons, minus declined and the author", () => {
+    expect(commentRecipients(event, 'organisers').sort()).toEqual(['a', 'org1']);
+    expect(commentRecipients(event, 'organisers', ['org1'])).toEqual(['a']);
+  });
+
+  it("'none' and an archived event reach nobody", () => {
+    expect(commentRecipients(event, 'none')).toEqual([]);
+    expect(commentRecipients({ ...event, isArchived: true }, 'all')).toEqual([]);
   });
 });

@@ -12,7 +12,7 @@
 // The pure functions carry the rules and are unit-tested; only the resolver touches Firestore.
 
 import { getFirestore } from 'firebase-admin/firestore';
-import { AvatarInfo } from '@okr/shared-models';
+import { AvatarInfo, CommentNotify, type EmailLayoutChoice } from '@okr/shared-models';
 
 import { toStoreDate } from '../srv/zurich-time';
 
@@ -37,6 +37,7 @@ export interface CalEventNotifyDoc {
   attendees?: AttendeeDoc[];
   responsiblePersons?: { key?: string }[];
   tenants?: string[];
+  commentNotify?: CommentNotify;
 }
 
 /**
@@ -105,6 +106,50 @@ export function collectRecipients(
   for (const key of declined) recipients.delete(key);
   for (const key of exclude) recipients.delete(key);
   return [...recipients];
+}
+
+/** Who a comment or document notification reaches, once the event's setting is resolved (spec 1.147). */
+export type CommentNotifyMode = 'all' | 'organisers' | 'none';
+
+/** Above this many reachable people (not declined), the default only tells the organisers. */
+export const COMMENT_NOTIFY_THRESHOLD = 10;
+
+/**
+ * The effective mode of an event (spec 1.147 §3.3). An explicit setting wins; 'default', an
+ * unknown value or a legacy document without the field resolve to: organisers when a Versand
+ * lists the event or more than COMMENT_NOTIFY_THRESHOLD people are reachable, everyone otherwise.
+ */
+export function resolveCommentNotify(setting: string | undefined, isVersand: boolean, reachableCount: number): CommentNotifyMode {
+  if (setting === 'all' || setting === 'organisers' || setting === 'none') return setting;
+  return isVersand || reachableCount > COMMENT_NOTIFY_THRESHOLD ? 'organisers' : 'all';
+}
+
+/** The fields of a `mailings` doc the comment notification reads. */
+export interface VersandRef { tenants?: string[]; createdAt?: string; layout?: EmailLayoutChoice }
+
+/**
+ * The layout of the newest Versand of `tenantId` among `mailings` (all of them list the event), or
+ * undefined when none belongs to the tenant. The comment mail is framed in it (spec 1.147 §5.1);
+ * without a Versand the caller uses 'standard'.
+ */
+export function versandLayout(mailings: VersandRef[], tenantId: string): EmailLayoutChoice | undefined {
+  const own = mailings.filter((m) => m.tenants?.includes(tenantId));
+  if (own.length === 0) return undefined;
+  const newest = own.reduce((a, b) => ((b.createdAt ?? '') > (a.createdAt ?? '') ? b : a));
+  return newest.layout || 'standard';
+}
+
+/**
+ * The recipients of a comment/document notification on ONE event.
+ *
+ * 'all' is `collectRecipients` unchanged. 'organisers' keeps only `responsiblePersons`, with the
+ * same two subtractions (declined, then `exclude`). 'none' is nobody.
+ */
+export function commentRecipients(event: CalEventNotifyDoc, mode: CommentNotifyMode, exclude: string[] = []): string[] {
+  if (mode === 'none' || event.isArchived) return [];
+  if (mode === 'all') return collectRecipients([event], exclude);
+  const dropped = new Set([...declinedAttendeeKeys(event), ...exclude]);
+  return [...new Set(responsibleKeys(event))].filter((key) => !dropped.has(key));
 }
 
 /** `true` once the event lies in the past — a broadcast about it would be pointless. */

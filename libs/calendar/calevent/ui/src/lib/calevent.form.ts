@@ -4,8 +4,8 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, I
 
 import { ChFutureDate, LowercaseWordMask } from '@okr/shared-config';
 import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TIME, DEFAULT_URL, MAX_DATES_PER_SERIES, NAME_LENGTH } from '@okr/shared-constants';
-import { AvatarInfo, CalEventModel, CategoryListModel, LocationModel, RoleName, UserModel } from '@okr/shared-models';
-import { AddChip, CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringList, TextInput, TextInputI18n, TimeInput, TimeInputI18n, UrlInput, UrlInputI18n } from '@okr/shared-ui';
+import { AvatarInfo, CalEventModel, CategoryListModel, COMMENT_NOTIFY_VALUES, LocationModel, RoleName, UserModel } from '@okr/shared-models';
+import { AddChip, CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringList, StringSelect, StringSelectI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n, UrlInput, UrlInputI18n } from '@okr/shared-ui';
 import { MODEL_SELECTOR, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, convertDateFormatToString, DateFormat, fill, freeTextLocationAvatar, getEventLocationName, hasRole, locationToAvatar } from '@okr/shared-util-core';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -22,7 +22,7 @@ const DEFAULT_RECURRING_PERIODICITY = 'weekly';
   standalone: true,
   imports: [
     CategorySelect, Chips, NotesInput, DateInput, TimeInput, NumberInput,
-    TextInput, ErrorNote, StringList, Avatars, Checkbox, UrlInput, AddChip,
+    TextInput, ErrorNote, StringList, StringSelect, Avatars, Checkbox, UrlInput, AddChip,
     SvgIconPipe,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonList, IonItem, IonLabel, IonNote, IonIcon
   ],
@@ -278,6 +278,12 @@ const DEFAULT_RECURRING_PERIODICITY = 'weekly';
               <okr-checkbox [i18n]="notifyOnAnswerI18n()" [checked]="notifyOnAnswer()" (checkedChange)="onFieldChange('notifyOnAnswer', $event)" [toggle]="true" iconName="email" labelPlacement="start" justify="space-between" [showHelper]="true" [readOnly]="isReadOnly()" />
             </ion-col>
           </ion-row>
+          <ion-row>
+            <ion-col size="12">
+              <okr-string-select [i18n]="commentNotifyI18n()" [stringList]="commentNotifyValues" [labels]="commentNotifyLabels()"
+                [selectedString]="commentNotify()" (selectedStringChange)="onFieldChange('commentNotify', $event)" [readOnly]="isReadOnly()" />
+            </ion-col>
+          </ion-row>
         </ion-grid>
       </ion-card-content>
     </ion-card>
@@ -484,6 +490,13 @@ export class CalEventForm {
   protected startWeekday = computed(() => this.weekdayLabel(this.startDate()));
   protected isPollSeries = computed(() => this.formData().pollMultiSelect === true);
   protected notifyOnAnswer = computed(() => this.formData().notifyOnAnswer ?? false);
+  /** spec 1.147 — legacy events lack the field, which reads as 'default' («Automatisch») */
+  protected commentNotify = computed(() => this.formData().commentNotify ?? 'default');
+  protected readonly commentNotifyValues: string[] = COMMENT_NOTIFY_VALUES;
+  protected readonly commentNotifyLabels = computed(() => [
+    this.i18n().commentNotify_default(), this.i18n().commentNotify_all(),
+    this.i18n().commentNotify_organisers(), this.i18n().commentNotify_none(),
+  ]);
   protected repeatUntilDate = computed(() => this.formData().repeatUntilDate ?? DEFAULT_DATE);
   protected url = computed(() => this.formData().url ?? DEFAULT_URL);
   protected urlLabel = computed(() => this.formData().urlLabel ?? DEFAULT_LABEL);
@@ -619,6 +632,11 @@ export class CalEventForm {
     helper: this.i18n().recurring_helper(),
   } as CheckboxI18n));
 
+  protected commentNotifyI18n = computed(() => ({
+    name: 'commentNotify',
+    label: this.i18n().commentNotify_label(),
+    helper: this.i18n().commentNotify_helper(),
+  } as StringSelectI18n));
   protected notifyOnAnswerI18n = computed(() => ({
     name: 'notifyOnAnswer',
     label: this.i18n().notifyOnAnswer_label(),

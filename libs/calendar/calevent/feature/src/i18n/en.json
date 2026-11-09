@@ -359,6 +359,14 @@
     "label": "Report answers to invitations",
     "helper": "The organisers get a message as soon as someone accepts or declines an invitation."
   },
+  "commentNotify": {
+    "label": "Notify about comments",
+    "helper": "Who gets a message when someone writes a comment or adds a document. Everyone who can see the event can read the comments. «Automatic» notifies only the organisers for large events (more than 10 participants or sent by mailing), everyone otherwise.",
+    "default": "Automatic",
+    "all": "All participants",
+    "organisers": "Organisers only",
+    "none": "Nobody (visible in the app only)"
+  },
   "locationKey": {
     "label": "Location key",
     "placeholder": "sssssss",

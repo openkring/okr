@@ -359,6 +359,14 @@
     "label": "Antworten auf Einladungen melden",
     "helper": "Die Organisation erhält eine Nachricht, sobald jemand eine Einladung annimmt oder ablehnt."
   },
+  "commentNotify": {
+    "label": "Benachrichtigung bei Kommentaren",
+    "helper": "Wer eine Nachricht bekommt, wenn jemand einen Kommentar schreibt oder ein Dokument hinzufügt. Lesen können die Kommentare alle, die den Anlass sehen. «Automatisch» benachrichtigt bei grossen Anlässen (mehr als 10 Teilnehmende oder per Versand verschickt) nur die Organisation, sonst alle.",
+    "default": "Automatisch",
+    "all": "Alle Teilnehmenden",
+    "organisers": "Nur die Organisation",
+    "none": "Niemand (nur in der App sichtbar)"
+  },
   "locationKey": {
     "label": "Ort",
     "placeholder": "Ort suchen oder erfassen",

@@ -151,14 +151,26 @@ export function invitationAnswerEmail(p: EventSummary & { inviteeName: string; a
   return { subject, html };
 }
 
-export function commentEmail(p: EventSummary & { authorName: string; comment: string; eventUrl: string }): { subject: string; html: string } {
-  const subject = `${p.authorName} hat ${p.eventName} kommentiert`;
-  const html = layout(p,
-    `<p>${escapeHtml(p.authorName)} hat einen Kommentar geschrieben:</p>`
-    + `<p style="margin:16px 0;padding:12px 16px;border-left:3px solid #d0d7de;">${paragraphText(p.comment)}</p>`
-    + eventBlock(p)
-    + `<p>${button(p.eventUrl, 'Anlass öffnen', primaryStyle(p))}</p>`);
-  return { subject, html };
+type CommentMail = EventSummary & { authorName: string; comment: string; eventUrl: string };
+
+/**
+ * The comment mail WITHOUT a frame: subject plus the content block. The caller sets it into the
+ * tenant layout the Versand chose, or the standard one (spec 1.147 §5.1, `renderEmail`).
+ */
+export function commentEmailContent(p: CommentMail): { subject: string; content: string } {
+  return {
+    subject: `${p.authorName} hat ${p.eventName} kommentiert`,
+    content: `<p>${escapeHtml(p.authorName)} hat einen Kommentar geschrieben:</p>`
+      + `<p style="margin:16px 0;padding:12px 16px;border-left:3px solid #d0d7de;">${paragraphText(p.comment)}</p>`
+      + eventBlock(p)
+      + `<p>${button(p.eventUrl, 'Anlass öffnen', primaryStyle(p))}</p>`,
+  };
+}
+
+/** The comment mail in the built-in banner frame — the fallback when no tenant layout is usable. */
+export function commentEmail(p: CommentMail): { subject: string; html: string } {
+  const { subject, content } = commentEmailContent(p);
+  return { subject, html: layout(p, content) };
 }
 
 const CHAT_TIME = new Intl.DateTimeFormat('de-CH', { timeZone: 'Europe/Zurich', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });

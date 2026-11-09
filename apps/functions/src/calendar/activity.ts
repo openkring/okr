@@ -9,6 +9,9 @@
 //
 // CREATE ONLY, because a corrected typo is not news.
 //
+// WHO is told follows the event's `commentNotify` (spec 1.147): everyone, the organisers only, or
+// nobody — by default the organisers only on a Versand event or one with more than 10 people.
+//
 // Comments are delivered by each recipient's `newsDelivery` (spec 1.73 §5) — push and/or
 // email, via `notifyPersons`. Documents stay push-only: ambient activity, not an
 // announcement — a direct message per uploaded photo would be noise.
@@ -20,18 +23,25 @@ import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { logger } from 'firebase-functions/v2';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { DateFormat, getEventLocationName, getTodayStr } from '@okr/shared-util-core';
+import type { EmailLayoutChoice } from '@okr/shared-models';
 
 import { pushToPersons } from '../srv/push';
-import { commentEmail, eventWhen } from './mail';
+import { renderEmail } from '../email/render-email';
+import { commentEmail, commentEmailContent, eventWhen } from './mail';
 import { brandOf, eventUrl, notifyPersons, tenantLinks, TenantLinks } from './deliver';
 import {
   caleventDeepLink,
   caleventKeyFromFolders,
   caleventKeyFromParent,
   CalEventNotifyDoc,
-  resolveCalEventRecipients,
+  commentRecipients,
+  loadCalEventsInScope,
+  reachableAttendeeKeys,
+  resolveCommentNotify,
   shorten,
   todayStoreDate,
+  VersandRef,
+  versandLayout,
 } from './recipients';
 
 const REGION = 'europe-west6';
@@ -86,34 +96,40 @@ async function notifyAboutEvent(
   authorKey: string,
   body: string,
   context: string,
-  email?: (event: CalEventNotifyDoc & { location?: string }, links: TenantLinks) => { subject: string; html: string },
+  email?: (event: CalEventNotifyDoc & { location?: string }, links: TenantLinks) => { subject: string; content: string; fallbackHtml: string },
 ): Promise<void> {
-  const { events, personKeys } = await resolveCalEventRecipients(
-    caleventKey, 'event', todayStoreDate(), [authorKey]);
-
-  const event = events[0];
+  const [event] = await loadCalEventsInScope(caleventKey, 'event', todayStoreDate());
   if (!event) {
     logger.warn(`${context}: calevent ${caleventKey} not found`);
     return;
   }
-  // A cancelled event still gets its activity through: "wir treffen uns trotzdem" is exactly
-  // the kind of message that follows a cancellation.
-  if (event.isArchived || personKeys.length === 0) return;
   const tenantId = event.tenants?.[0] ?? '';
   if (!tenantId) {
     logger.warn(`${context}: calevent ${caleventKey} has no tenant`);
     return;
   }
+  // Who hears about it is the event's own setting (spec 1.147); a Versand of the event makes the
+  // default «organisers» and lends the mail its layout.
+  const reachable = reachableAttendeeKeys(event).length;
+  const versand = await versandOf(caleventKey, tenantId, context);
+  const mode = resolveCommentNotify(event.commentNotify, versand.isVersand, reachable);
+  const personKeys = commentRecipients(event, mode, [authorKey]);
+  logger.info(`${context}: ${caleventKey} notifies ${mode} (${personKeys.length} person(s))`);
+  // A cancelled event still gets its activity through: "wir treffen uns trotzdem" is exactly
+  // the kind of message that follows a cancellation.
+  if (event.isArchived || personKeys.length === 0) return;
 
   if (email) {
     const links = await tenantLinks(tenantId);
+    const mail = email(event, links);
+    const html = await framed(tenantId, versand.layout ?? 'standard', mail.content, context) ?? mail.fallbackHtml;
     await notifyPersons({
       personKeys,
       tenantId,
       ruleKey: `calevent:${caleventKey}`,
       context,
       push: { type: 'calevent', tenantId, title: event.name ?? '', body, url: caleventDeepLink(caleventKey), channelId: `calevent.${caleventKey}` },
-      email: () => email(event, links),
+      email: () => ({ subject: mail.subject, html }),
     });
     return;
   }
@@ -133,23 +149,39 @@ async function notifyAboutEvent(
 }
 
 /**
- * `true` when a Versand (mailing) asks about this event. Such events have hundreds of
- * participants who answered from a mass mail; a "freu mi" comment must not mail all of them
- * (2026-11-09, Fondueabend). Hotfix until per-event notification settings exist.
- * On a lookup failure, stay silent rather than spam.
+ * Whether a Versand (mailing) of the tenant asks about this event, and the layout of the newest
+ * one. Such events reach hundreds of people who answered from a mass mail; a «freu mi» comment
+ * must not mail all of them (2026-11-09, Fondueabend). On a lookup failure, assume a Versand:
+ * telling only the organisers beats spam.
  */
-async function isVersandEvent(caleventKey: string): Promise<boolean> {
+async function versandOf(caleventKey: string, tenantId: string, context: string): Promise<{ isVersand: boolean; layout?: EmailLayoutChoice }> {
   try {
-    const snap = await getFirestore().collection('mailings')
-      .where('caleventKeys', 'array-contains', caleventKey).limit(1).get();
-    return !snap.empty;
+    const snap = await getFirestore().collection('mailings').where('caleventKeys', 'array-contains', caleventKey).get();
+    const layout = versandLayout(snap.docs.map((d) => d.data() as VersandRef), tenantId);
+    return { isVersand: layout !== undefined, layout };
   } catch (err) {
-    logger.warn(`onCalEventCommentCreated: Versand lookup for ${caleventKey} failed, not notifying:`, err);
-    return true;
+    logger.warn(`${context}: Versand lookup for ${caleventKey} failed, treating it as a Versand:`, err);
+    return { isVersand: true };
   }
 }
 
-/** A new comment on a calendar event notifies its participants — except on Versand events. */
+/**
+ * The content in the tenant's email layout: the Versand's choice, else 'standard' (spec 1.147 §5.1).
+ * An unusable chosen layout falls back to 'standard'; without a standard layout the caller keeps
+ * its built-in banner frame — a notification is never dropped over its frame.
+ */
+async function framed(tenantId: string, layout: EmailLayoutChoice, content: string, context: string): Promise<string | undefined> {
+  for (const choice of layout === 'standard' ? ['standard'] : [layout, 'standard']) {
+    try {
+      return (await renderEmail({ tenantId, layout: choice, body: content, noPlainFallback: true })).html;
+    } catch (err) {
+      logger.warn(`${context}: email layout ${choice} not usable for ${tenantId}:`, err);
+    }
+  }
+  return undefined;
+}
+
+/** A new comment on a calendar event notifies whom the event's `commentNotify` names. */
 export const onCalEventCommentCreated = onDocumentCreated(
   { document: 'comments/{commentId}', region: REGION },
   async (event) => {
@@ -159,27 +191,26 @@ export const onCalEventCommentCreated = onDocumentCreated(
     const caleventKey = caleventKeyFromParent(comment.parentKey);
     if (!caleventKey) return;                                  // a comment on something else
     await recordActivity(caleventKey, 'onCalEventCommentCreated');
-    if (await isVersandEvent(caleventKey)) {
-      logger.info(`onCalEventCommentCreated: ${caleventKey} belongs to a Versand, no notification`);
-      return;
-    }
 
     const author = comment.authorName ?? '';
     const body = author ? `${author}: ${shorten(comment.description)}` : shorten(comment.description);
     await notifyAboutEvent(caleventKey, comment.authorKey ?? '', body, 'onCalEventCommentCreated',
-      (event, links) => commentEmail({
-        ...brandOf(links),
-        eventName: event.name ?? '',
-        when: eventWhen(event.startDate, event.startTime),
-        location: getEventLocationName(event),
-        authorName: author,
-        comment: comment.description ?? '',
-        eventUrl: eventUrl(links, caleventKey),
-      }));
+      (event, links) => {
+        const p = {
+          ...brandOf(links),
+          eventName: event.name ?? '',
+          when: eventWhen(event.startDate, event.startTime),
+          location: getEventLocationName(event),
+          authorName: author,
+          comment: comment.description ?? '',
+          eventUrl: eventUrl(links, caleventKey),
+        };
+        return { ...commentEmailContent(p), fallbackHtml: commentEmail(p).html };
+      });
   },
 );
 
-/** A new document on a calendar event notifies its participants. */
+/** A new document on a calendar event notifies whom the event's `commentNotify` names (push only). */
 export const onCalEventDocumentCreated = onDocumentCreated(
   { document: 'docs/{docId}', region: REGION },
   async (event) => {

@@ -377,6 +377,13 @@ export const CALEVENT_I18N_KEYS = {
   maxAttendees_helper:            PFX + 'maxAttendees.helper',
   notifyOnAnswer_label:           PFX + 'notifyOnAnswer.label',
   notifyOnAnswer_helper:          PFX + 'notifyOnAnswer.helper',
+  // spec 1.147: who is notified about a new comment or document
+  commentNotify_label:            PFX + 'commentNotify.label',
+  commentNotify_helper:           PFX + 'commentNotify.helper',
+  commentNotify_default:          PFX + 'commentNotify.default',
+  commentNotify_all:              PFX + 'commentNotify.all',
+  commentNotify_organisers:       PFX + 'commentNotify.organisers',
+  commentNotify_none:             PFX + 'commentNotify.none',
 
   locationKey_label:              PFX + 'locationKey.label',
   locationKey_placeholder:        PFX + 'locationKey.placeholder',
