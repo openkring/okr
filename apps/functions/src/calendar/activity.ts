@@ -132,7 +132,24 @@ async function notifyAboutEvent(
   );
 }
 
-/** A new comment on a calendar event notifies its participants. */
+/**
+ * `true` when a Versand (mailing) asks about this event. Such events have hundreds of
+ * participants who answered from a mass mail; a "freu mi" comment must not mail all of them
+ * (2026-11-09, Fondueabend). Hotfix until per-event notification settings exist.
+ * On a lookup failure, stay silent rather than spam.
+ */
+async function isVersandEvent(caleventKey: string): Promise<boolean> {
+  try {
+    const snap = await getFirestore().collection('mailings')
+      .where('caleventKeys', 'array-contains', caleventKey).limit(1).get();
+    return !snap.empty;
+  } catch (err) {
+    logger.warn(`onCalEventCommentCreated: Versand lookup for ${caleventKey} failed, not notifying:`, err);
+    return true;
+  }
+}
+
+/** A new comment on a calendar event notifies its participants — except on Versand events. */
 export const onCalEventCommentCreated = onDocumentCreated(
   { document: 'comments/{commentId}', region: REGION },
   async (event) => {
@@ -142,6 +159,10 @@ export const onCalEventCommentCreated = onDocumentCreated(
     const caleventKey = caleventKeyFromParent(comment.parentKey);
     if (!caleventKey) return;                                  // a comment on something else
     await recordActivity(caleventKey, 'onCalEventCommentCreated');
+    if (await isVersandEvent(caleventKey)) {
+      logger.info(`onCalEventCommentCreated: ${caleventKey} belongs to a Versand, no notification`);
+      return;
+    }
 
     const author = comment.authorName ?? '';
     const body = author ? `${author}: ${shorten(comment.description)}` : shorten(comment.description);
