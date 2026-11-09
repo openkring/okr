@@ -1,7 +1,7 @@
 {
   "name": "okr",
-  "version": "7.58.3",
-  "releaseDate": "2026-11-08",
+  "version": "7.59.0",
+  "releaseDate": "2026-11-09",
   "packageManager": "pnpm@12.10.1",
   "license": "MIT",
   "type": "module",
