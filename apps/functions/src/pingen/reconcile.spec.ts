@@ -111,6 +111,24 @@ describe('reconcilePostVersand - incomplete fan-out', () => {
   });
 });
 
+describe('reconcilePostVersand - fan-out outcome', () => {
+  it('words the task without «zurückerstattet» when a reversal failed', async () => {
+    const { deps, tasks, reverseShare } = setup([], [MAILING]);
+    reverseShare.mockRejectedValueOnce(new Error('ledger down'));
+    await reconcilePostVersand(deps);
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].name).toBe('Versand Einladung: 3 Briefe konnten nicht erstellt werden — Rückerstattung wird geprüft');
+  });
+
+  it('creates no task when another run already tombstoned everything', async () => {
+    const { deps, tasks } = setup([], [MAILING]);
+    deps.listSendingIds = async () => [];            // stale listing: the records appear meanwhile
+    deps.fanOut.create = async () => false;
+    await reconcilePostVersand(deps);
+    expect(tasks).toHaveLength(0);
+  });
+});
+
 describe('reconcilePostVersand - queued', () => {
   it('submits a queued record older than one hour through the submit core', async () => {
     const { deps, store, letter } = setup([row('m1_p1'), row('m1_p2', { createdAt: ago(0.5), updatedAt: ago(0.5) }), row('m1_p3', { state: 'failed' })]);
@@ -128,13 +146,44 @@ describe('reconcilePostVersand - queued', () => {
 });
 
 describe('reconcilePostVersand - submitting', () => {
-  it('flags a stuck submitting record once', async () => {
-    const { deps, tasks, store } = setup([row('m1_p1', { state: 'submitting', updatedAt: ago(2) }), row('m1_p2', { state: 'submitting', updatedAt: ago(0.2) })]);
-    await reconcilePostVersand(deps);
+  it('flags a stuck submitting record Pingen may hold, once', async () => {
+    const { deps, tasks, store, letter } = setup([
+      row('m1_p1', { state: 'submitting', updatedAt: ago(2), attemptedAt: ago(2) }),
+      row('m1_p2', { state: 'submitting', updatedAt: ago(0.2), attemptedAt: ago(0.2) }),
+    ]);
+    const first = await reconcilePostVersand(deps);
     await reconcilePostVersand(deps);
     expect(tasks.filter((t) => t.relatedKey === 'sending.m1_p1')).toHaveLength(1);
     expect(tasks.some((t) => t.relatedKey === 'sending.m1_p2')).toBe(false);
     expect(store.get('m1_p1')?.state).toBe('submitting');
+    expect(letter).not.toHaveBeenCalled();
+    expect(first.submittingFlagged).toBe(1);
+  });
+
+  it('sends a submitting record Pingen was never reached for through the submit core, no ambiguity task', async () => {
+    const { deps, tasks, store, letter } = setup([row('m1_p1', { state: 'submitting', updatedAt: ago(2) })]);
+    const counts = await reconcilePostVersand(deps);
+    expect(letter).toHaveBeenCalledTimes(1);
+    expect(store.get('m1_p1')?.state).toBe('submitted');
+    expect(tasks).toHaveLength(0);
+    expect(counts).toMatchObject({ submittingResubmitted: 1, submittingFlagged: 0 });
+  });
+
+  it('refunds a never-reached letter once the submit core gives up after 24 h', async () => {
+    const { deps, store, reverseShare } = setup([row('m1_p1', { state: 'submitting', createdAt: ago(30), updatedAt: ago(30) })]);
+    deps.readPdf = async () => { throw new Error('storage down'); };
+    await reconcilePostVersand(deps);
+    expect(store.get('m1_p1')?.state).toBe('failed');
+    expect(reverseShare).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not starve: 150 letters that already have their task do not hide a new one', async () => {
+    const old = Array.from({ length: 150 }, (_, i) => row(`m1_o${i}`, { state: 'submitting', updatedAt: ago(5), attemptedAt: ago(5) }));
+    const { deps, tasks } = setup([...old, row('m1_new', { state: 'submitting', updatedAt: ago(2), attemptedAt: ago(2) })]);
+    for (const r of old) tasks.push({ name: 'x', relatedKey: `sending.${r.id}` });
+    await reconcilePostVersand(deps);
+    expect(tasks.some((t) => t.relatedKey === 'sending.m1_new')).toBe(true);
+    expect(tasks).toHaveLength(151);
   });
 });
 
@@ -153,4 +202,29 @@ describe('reconcilePostVersand - silent submitted', () => {
     expect(tasks[0]).toMatchObject({ name: 'Brief an Name m1_p1: keine Rückmeldung von Pingen seit 7 Tagen', relatedKey: 'sending.m1_p1.stale' });
     expect(store.get('m1_p1')?.state).toBe('submitted');
   });
+
+  it('is not silent when Pingen reported an issue (history detail or issue task)', async () => {
+    const old = ago(8 * 24);
+    const { deps, tasks } = setup([
+      row('m1_p1', { state: 'submitted', updatedAt: old, history: [{ state: 'submitted', at: old }, { state: 'submitted', at: old, detail: 'pingen:ev1 Content failed inspection' }] }),
+      row('m1_p2', { state: 'submitted', updatedAt: old }),
+      row('m1_p3', { state: 'submitted', updatedAt: old }),
+    ]);
+    tasks.push({ name: 'issue', relatedKey: 'sending.m1_p2.issue' });
+    await reconcilePostVersand(deps);
+    expect(tasks.filter((t) => t.relatedKey.endsWith('.stale')).map((t) => t.relatedKey)).toEqual(['sending.m1_p3.stale']);
+  });
+
+  it('does not starve: 150 letters with a stale task do not hide a new one, and the dedupe runs before loadMailing', async () => {
+    const old = ago(8 * 24);
+    const done = Array.from({ length: 150 }, (_, i) => row(`m1_o${i}`, { state: 'submitted', updatedAt: old }));
+    const { deps, tasks } = setup([...done, row('m1_new', { state: 'submitted', updatedAt: old })]);
+    for (const r of done) tasks.push({ name: 'x', relatedKey: `sending.${r.id}.stale` });
+    const loadMailing = vi.fn(deps.loadMailing);
+    deps.loadMailing = loadMailing;
+    await reconcilePostVersand(deps);
+    expect(tasks.some((t) => t.relatedKey === 'sending.m1_new.stale')).toBe(true);
+    expect(loadMailing).toHaveBeenCalledTimes(1);
+  });
 });
+
