@@ -191,7 +191,7 @@
     "post": {
       "title": "Posta",
       "mode_pingen": "Invia con Pingen",
-      "mode_pingen_hint": "Pingen stampa e spedisce le lettere. L’importo viene detratto dal vostro credito.",
+      "mode_pingen_hint": "Pingen stampa e spedisce le lettere. L’importo viene detratto dal credito della tua associazione.",
       "mode_download": "Scarica il PDF",
       "mode_download_hint": "Gratuito. Stampi e spedisci le lettere tu stesso.",
       "delivery_label": "Recapito",
@@ -219,7 +219,7 @@
       "loading": "Calcolo del prezzo …",
       "error": "Non è stato possibile calcolare il prezzo. Puoi scaricare le lettere in PDF.",
       "price_changed": "Il prezzo è cambiato. Controllalo ancora una volta.",
-      "unavailable": "L’invio di lettere con Pingen non è ancora configurato per voi. Puoi scaricare le lettere in PDF.",
+      "unavailable": "L’invio di lettere con Pingen non è disponibile per te qui. Puoi scaricare le lettere in PDF.",
       "none": "Nessuno ha un indirizzo postale, non viene creata alcuna lettera.",
       "pending": "Controlla sotto «Recapito» il prezzo delle lettere e confermalo prima di inviare."
     }

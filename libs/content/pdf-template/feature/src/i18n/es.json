@@ -191,7 +191,7 @@
     "post": {
       "title": "Correo postal",
       "mode_pingen": "Enviar con Pingen",
-      "mode_pingen_hint": "Pingen imprime y envía las cartas. El importe se descuenta de vuestro saldo.",
+      "mode_pingen_hint": "Pingen imprime y envía las cartas. El importe se descuenta del saldo de tu asociación.",
       "mode_download": "Descargar PDF",
       "mode_download_hint": "Gratis. Tú imprimes y envías las cartas.",
       "delivery_label": "Entrega",
@@ -219,7 +219,7 @@
       "loading": "Calculando el precio …",
       "error": "No se pudo calcular el precio. Puedes descargar las cartas en PDF.",
       "price_changed": "El precio ha cambiado. Compruébalo de nuevo.",
-      "unavailable": "El envío de cartas con Pingen aún no está configurado para vosotros. Puedes descargar las cartas en PDF.",
+      "unavailable": "El envío de cartas con Pingen no está disponible para ti aquí. Puedes descargar las cartas en PDF.",
       "none": "Nadie tiene dirección postal, no se crea ninguna carta.",
       "pending": "Comprueba en «Entrega» el precio de las cartas y confírmalo antes de enviar."
     }

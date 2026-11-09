@@ -191,7 +191,7 @@
     "post": {
       "title": "Post",
       "mode_pingen": "Per Pingen senden",
-      "mode_pingen_hint": "Pingen druckt und verschickt die Briefe. Der Betrag wird von eurem Guthaben abgezogen.",
+      "mode_pingen_hint": "Pingen druckt und verschickt die Briefe. Der Betrag wird vom Guthaben deines Vereins abgezogen.",
       "mode_download": "PDF herunterladen",
       "mode_download_hint": "Kostenlos. Du druckst und verschickst die Briefe selbst.",
       "delivery_label": "Zustellung",
@@ -219,7 +219,7 @@
       "loading": "Der Preis wird berechnet …",
       "error": "Der Preis konnte nicht berechnet werden. Du kannst die Briefe stattdessen als PDF herunterladen.",
       "price_changed": "Der Preis hat sich geändert. Bitte prüfe ihn nochmals.",
-      "unavailable": "Der Briefversand über Pingen ist für euch noch nicht eingerichtet. Du kannst die Briefe als PDF herunterladen.",
+      "unavailable": "Der Briefversand über Pingen steht dir hier nicht zur Verfügung. Du kannst die Briefe als PDF herunterladen.",
       "none": "Niemand hat eine Postadresse, es entsteht kein Brief.",
       "pending": "Bitte prüfe unter «Zustellung» den Preis für die Briefe und bestätige ihn, bevor du sendest."
     }

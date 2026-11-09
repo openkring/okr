@@ -191,7 +191,7 @@
     "post": {
       "title": "Courrier",
       "mode_pingen": "Envoyer via Pingen",
-      "mode_pingen_hint": "Pingen imprime et expédie les lettres. Le montant est déduit de votre crédit.",
+      "mode_pingen_hint": "Pingen imprime et expédie les lettres. Le montant est déduit du crédit de ton association.",
       "mode_download": "Télécharger le PDF",
       "mode_download_hint": "Gratuit. Tu imprimes et envoies les lettres toi-même.",
       "delivery_label": "Distribution",
@@ -219,7 +219,7 @@
       "loading": "Calcul du prix …",
       "error": "Le prix n’a pas pu être calculé. Tu peux télécharger les lettres en PDF à la place.",
       "price_changed": "Le prix a changé. Vérifie-le encore une fois.",
-      "unavailable": "L’envoi de lettres via Pingen n’est pas encore configuré pour vous. Tu peux télécharger les lettres en PDF.",
+      "unavailable": "L’envoi de lettres via Pingen n’est pas disponible pour toi ici. Tu peux télécharger les lettres en PDF.",
       "none": "Personne n’a d’adresse postale, aucune lettre n’est créée.",
       "pending": "Vérifie sous « Distribution » le prix des lettres et confirme-le avant d’envoyer."
     }

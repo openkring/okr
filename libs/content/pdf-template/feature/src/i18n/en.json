@@ -191,7 +191,7 @@
     "post": {
       "title": "Post",
       "mode_pingen": "Send via Pingen",
-      "mode_pingen_hint": "Pingen prints and posts the letters. The amount is deducted from your credit.",
+      "mode_pingen_hint": "Pingen prints and posts the letters. The amount is deducted from your club's credit.",
       "mode_download": "Download PDF",
       "mode_download_hint": "Free of charge. You print and post the letters yourself.",
       "delivery_label": "Delivery",
@@ -219,7 +219,7 @@
       "loading": "Calculating the price …",
       "error": "The price could not be calculated. You can download the letters as a PDF instead.",
       "price_changed": "The price has changed. Please check it again.",
-      "unavailable": "Sending letters via Pingen is not set up for you yet. You can download the letters as a PDF.",
+      "unavailable": "Sending letters via Pingen is not available to you here. You can download the letters as a PDF.",
       "none": "Nobody has a postal address, so no letter is created.",
       "pending": "Please check the price of the letters under “Delivery” and confirm it before you send."
     }
