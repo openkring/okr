@@ -9,7 +9,7 @@ import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { NEWS_SEGMENTS, NewsSegment } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { contextMenuId } from '@okr/shared-util-core';
-import { NewsChannelList, NewsChannelSheet, NewsGrid } from '@okr/social-news-center-ui';
+import { NewsChannelList, NewsChannelSheet, NewsGrid, NewsWebcamView } from '@okr/social-news-center-ui';
 
 import { toNewsSegment } from './news-center.service';
 import { NewsCenterStore } from './news-center.store';
@@ -26,7 +26,7 @@ import { NewsCenterStore } from './news-center.store';
   selector: 'okr-news-center-page',
   standalone: true,
   imports: [
-    SvgIconPipe, Menu, NewsChannelList, NewsChannelSheet, NewsGrid,
+    SvgIconPipe, Menu, NewsChannelList, NewsChannelSheet, NewsGrid, NewsWebcamView,
     IonHeader, IonToolbar, IonButtons, IonButton, IonMenuButton, IonTitle, IonIcon, IonPopover, IonContent,
     IonSegment, IonSegmentButton, IonLabel, IonChip,
   ],
@@ -36,6 +36,7 @@ import { NewsCenterStore } from './news-center.store';
     .channels { display: none; }
     .main { flex: 1; min-width: 0; }
     .filter { padding: 8px 8px 0; }
+    .webcam { padding: 16px; }
     @media (min-width: 768px) {
       .channels { display: block; flex: 0 0 260px; position: sticky; top: 0; max-height: 100%; overflow-y: auto;
         border-right: 1px solid var(--ion-color-light-shade); }
@@ -85,8 +86,14 @@ import { NewsCenterStore } from './news-center.store';
               <ion-icon src="{{ 'chevron-down' | svgIcon }}" />
             </ion-chip>
           </div>
-          <okr-news-grid [items]="store.visibleItems()" [channels]="store.channels()" [segment]="store.segment()"
-            [loading]="store.isLoading()" [i18n]="store.i18n" (opened)="store.openItem($event)" />
+          @if (singleWebcam(); as cam) {
+            <!-- one camera selected: its image full width right in the page, no modal -->
+            <okr-news-webcam-view class="webcam" [imageUrl]="cam.imageUrl" [capturedAt]="cam.capturedAt"
+              [i18n]="store.i18n" />
+          } @else {
+            <okr-news-grid [items]="store.visibleItems()" [channels]="store.channels()" [segment]="store.segment()"
+              [loading]="store.isLoading()" [i18n]="store.i18n" (opened)="store.openItem($event)" />
+          }
         </div>
       </div>
       <okr-news-channel-sheet [open]="sheetOpen()" [channels]="store.channels()" [selectedKey]="store.activeKey()"
@@ -110,6 +117,17 @@ export class NewsCenterPage {
   protected readonly selectedName = computed(() => {
     const key = this.store.activeKey();
     return key === 'all' ? this.store.i18n.all_channels() : (this.store.channels().find((c) => c.okey === key)?.name ?? this.store.i18n.all_channels());
+  });
+
+  /**
+   * The webcam tab with ONE camera selected shows that camera full width in the page. The item comes
+   * from the store, so it follows the camera's refreshMinutes timer like the detail modal does.
+   */
+  protected readonly singleWebcam = computed(() => {
+    if (this.store.segment() !== 'webcam' || this.store.activeKey() === 'all') return undefined;
+    const item = this.store.visibleItems()[0];
+    if (!item) return undefined;
+    return { imageUrl: item.mediaUrl ?? '', capturedAt: item.publishedAt ? new Date(item.publishedAt) : null };
   });
 
   constructor() {
