@@ -12,7 +12,7 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 import type { Firestore } from 'firebase-admin/firestore';
 import { PaymentAttemptCollection, SubscriptionCollection } from '@okr/shared-models';
-import type { AutoTopUp, PaymentAttemptModel } from '@okr/shared-models';
+import type { PaymentAttemptModel } from '@okr/shared-models';
 
 import type { WebhookHandler, WebhookOutcome } from '../_webhooks/process';
 import type { WebhookClient } from '../_webhooks/types';
@@ -24,7 +24,7 @@ import { assertLeafAccount, loadOwnedAccountingConfig } from '../invoice/invoice
 import { BOOKING_COLLECTION, BOOKING_LINE_COLLECTION, postInvoicePayment } from '../invoice/invoice-payment.core';
 import { invoiceBookingIndex, withoutUndefined } from '../invoice/invoice.logic';
 import { toStoreDateTime } from '../srv/zurich-time';
-import { clearAutoTopUp } from '../credit/auto-topup-request';
+import { clearAutoTopUp, switchOffAutoTopUp } from '../credit/auto-topup-request';
 import { notifyAutoTopUpFailed } from '../credit/topup-failed-mail';
 import { ensureSubscription } from './payment-method';
 import { platformBilling } from './platform';
@@ -255,12 +255,7 @@ async function onTopUpChargeFailed(
 ): Promise<void> {
   if (attempt.purpose !== 'topup' || !attempt.offSession) return;
   const payer = attempt.payerTenantId;
-  const subRef = db.collection(SubscriptionCollection).doc(payer);
-  const sub = (await subRef.get()).data();
-  if (sub) {
-    const autoTopUp = (sub['autoTopUp'] ?? { enabled: false, threshold: 0, amount: 0 }) as AutoTopUp;
-    if (autoTopUp.enabled) await subRef.update({ autoTopUp: { ...autoTopUp, enabled: false } });
-  }
+  await switchOffAutoTopUp(db, payer);
   await clearAutoTopUp(db, payer, attempt.invoiceKey);
   try {
     await deps.notifyTopUpFailed?.(payer, { attemptKey, invoiceKey: attempt.invoiceKey, amount: attempt.amount });

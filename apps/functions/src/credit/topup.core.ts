@@ -7,6 +7,7 @@ import { HttpsError } from 'firebase-functions/v2/https';
 import type { Firestore } from 'firebase-admin/firestore';
 import { PaymentAttemptCollection, PaymentAttemptModel, SubscriptionCollection } from '@okr/shared-models';
 import type { AutoTopUp, AvatarInfo, SavedPaymentMethod } from '@okr/shared-models';
+import { getDeletePatch } from '@okr/shared-util-core';
 
 import { createAndIssueInvoice } from '../invoice/invoice-issue.core';
 import { loadOwnedAccountingConfig, refuse } from '../invoice/invoice-context';
@@ -16,7 +17,7 @@ import type { StripePort } from '../collection/stripe-port';
 import { settleSucceededPayment } from '../collection/stripe-webhook';
 import type { StripeHandlerPort } from '../collection/stripe-webhook';
 import { toStoreDate, toStoreDateTime } from '../srv/zurich-time';
-import { autoTopUpRequestRef, clearAutoTopUp } from './auto-topup-request';
+import { autoTopUpRequestRef, clearAutoTopUp, switchOffAutoTopUp } from './auto-topup-request';
 import { applyCreditEntry } from './credit-ledger';
 import {
   autoTopUpInvoiceKey, pendingInvoiceRerunnable, topUpAmountRefusal,
@@ -79,10 +80,11 @@ type AutoTopUpRequest = { requestedAt: string; pendingInvoiceKey: string; retryC
  *   - still in flight (processing, requires_action, …) → no charge, the request stays pending;
  *   - requires_payment_method / canceled / none → charged again with key `<invoiceKey>-r<n>` (n counted on the request).
  *   A pending invoice paid or cancelled meanwhile just clears the request.
- * - Anything failing in the FIRST run before the charge call clears the request. In a re-run (a charge was attempted
- *   before) a failure — the read-back, the settle, anything — keeps it pending. A charge call that throws keeps it
- *   pending too.
- * - A declined charge clears the request; the webhook switches auto top-up off and tells the admin.
+ * - Anything failing in the FIRST run before the charge call clears the request; a `topup-…` invoice that this run
+ *   left as a draft (never issued, no number) is archived first. In a re-run (a charge was attempted before) a
+ *   failure — the read-back, the settle, anything — keeps it pending. A charge call that throws keeps it pending too.
+ * - A declined charge switches auto top-up off right here and clears the request, so a late or failed webhook never
+ *   lets the next deduction charge the declining card again. The webhook does the same (idempotent) and tells the admin.
  */
 export async function runAutoTopUp(
   db: Firestore, port: AutoTopUpPort, tenantId: string, request: AutoTopUpRequest, log: Log,
@@ -100,6 +102,7 @@ export async function runAutoTopUp(
       });
       throw err;
     }
+    await archiveUnissuedDraft(db, autoTopUpInvoiceKey(tenantId, request.requestedAt), log);
     await clearAutoTopUp(db, tenantId);
     throw err;
   }
@@ -115,9 +118,28 @@ export async function runAutoTopUp(
     log('info', 'autoTopUp: charged', { tenantId, invoiceKey, amount: charge.amount, status: pi.status, idempotencyKey: charge.idempotencyKey });
     return 'charged';
   }
+  await switchOffAutoTopUp(db, tenantId);
   await clearAutoTopUp(db, tenantId, invoiceKey);
-  log('warn', 'autoTopUp: charge declined', { tenantId, invoiceKey, status: pi.status });
+  log('warn', 'autoTopUp: charge declined, auto top-up switched off', { tenantId, invoiceKey, status: pi.status });
   return 'declined';
+}
+
+/**
+ * Best effort after a failed first run: the top-up invoice `invoiceKey`, if it is still a draft (never issued, no
+ * number), is archived per the deleting-models rule (getDeletePatch: it carries only the operator tenant). An
+ * issued or `issuing` invoice is left alone. Never throws: the run's own error is the one that counts.
+ */
+async function archiveUnissuedDraft(db: Firestore, invoiceKey: string, log: Log): Promise<void> {
+  try {
+    const ref = db.collection('invoices').doc(invoiceKey);
+    const invoice = (await ref.get()).data();
+    if (!invoice || invoice['state'] !== 'draft') return;
+    const tenants = (invoice['tenants'] as string[] | undefined) ?? [];
+    await ref.update(getDeletePatch(tenants, tenants[0] ?? ''));
+    log('info', 'autoTopUp: unissued top-up draft archived', { invoiceKey });
+  } catch (err) {
+    log('error', 'autoTopUp: could not archive the unissued top-up draft', { invoiceKey, error: err instanceof Error ? err.message : String(err) });
+  }
 }
 
 /** Everything before the charge: settings, invoice (new or the stale pending one), the earlier charge, pending mark, attempt. */

@@ -28,9 +28,13 @@ export const TOPUP_FAILED_DEFAULTS: Record<keyof typeof TOPUP_FAILED_I18N_KEYS, 
   subject: 'Die automatische Aufladung deines Guthabens hat nicht geklappt',
   body: 'Die automatische Aufladung deines Guthabens über CHF {amount} konnte nicht belastet werden. '
     + 'Wir haben die automatische Aufladung deshalb ausgeschaltet, damit nichts weiter versucht wird. '
-    + 'Prüfe bitte dein Zahlungsmittel und schalte die Aufladung danach wieder ein.',
-  link: 'Zur Abrechnung',
+    + 'Die Rechnung für diese Aufladung ist noch offen: Über den Link unten kannst du sie mit einer anderen Zahlungsart begleichen, '
+    + 'danach wird dein Guthaben aufgeladen. Prüfe bitte auch dein Zahlungsmittel und schalte die Aufladung danach wieder ein.',
+  link: 'Rechnung ansehen und bezahlen',
 };
+
+/** The pay page of the declined top-up invoice: payable there by any method; once paid, onTopUpPaid credits it. */
+export const topUpPayLink = (appOrigin: string, invoiceKey: string): string => `${appOrigin}/pay/${encodeURIComponent(invoiceKey)}`;
 
 const chf = (rappen: number): string => (rappen / 100).toFixed(2);
 const escapeHtml = (s: string): string => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -61,7 +65,7 @@ export async function notifyAutoTopUpFailed(
     logger.warn(`notifyAutoTopUpFailed: tenant ${tenantId} has no billing or admin e-mail`, { attemptKey: topUp.attemptKey });
     return;
   }
-  const link = `${await appOriginOf(db, tenantId)}/billing`;
+  const link = topUpPayLink(await appOriginOf(db, tenantId), topUp.invoiceKey);
   const params = { amount: chf(topUp.amount) };
   const subject = await text(tenantId, 'subject', params);
   const body = await text(tenantId, 'body', params);

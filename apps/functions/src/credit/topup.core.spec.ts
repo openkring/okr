@@ -196,10 +196,53 @@ describe('runAutoTopUp', () => {
     expect(store[REQUEST]).toEqual({ requestedAt: '20261109100000', pendingInvoiceKey: 'topup-scs-20261109100000', retryCount: 0 });
   });
 
-  it('a declined charge clears the request', async () => {
+  it('a declined charge switches auto top-up off itself and clears the request (no reliance on the webhook)', async () => {
     const store = seed();
     await expect(runAutoTopUp(fakeDb(store), port('requires_payment_method'), 'scs', fresh, log)).resolves.toBe('declined');
     expect(store[REQUEST]).toEqual({ requestedAt: '', pendingInvoiceKey: '', retryCount: 0 });
+    expect(store['subscriptions/scs']['autoTopUp']).toEqual({ enabled: false, threshold: 1000, amount: 10000 });
+  });
+
+  it('after a declined charge the next request charges nothing', async () => {
+    const store = seed();
+    const db = fakeDb(store);
+    await runAutoTopUp(db, port('requires_payment_method'), 'scs', fresh, log);
+    const p = port('succeeded');
+    await expect(runAutoTopUp(db, p, 'scs', { requestedAt: '20261109110000', pendingInvoiceKey: '' }, log)).resolves.toBe('skipped');
+    expect(p.chargeOffSession).not.toHaveBeenCalled();
+  });
+
+  describe('a first run failing in the issue step', () => {
+    const KEY = 'topup-scs-20261109100000';
+    it('archives the draft it left behind', async () => {
+      const store = seed();
+      store[`invoices/${KEY}`] = { tenants: ['kring'], state: 'draft', billingKind: 'topup', invoiceNo: 0 };
+      vi.mocked(createAndIssueInvoice).mockRejectedValueOnce(new Error('pdf render failed'));
+      await expect(runAutoTopUp(fakeDb(store), port('succeeded'), 'scs', fresh, log)).rejects.toThrow('pdf render failed');
+      expect(store[`invoices/${KEY}`]).toMatchObject({ state: 'draft', isArchived: true, tenants: ['kring'] });
+      expect(store[REQUEST]).toEqual({ requestedAt: '', pendingInvoiceKey: '', retryCount: 0 });
+    });
+
+    it('leaves an issued (or issuing) invoice alone', async () => {
+      for (const state of ['pending', 'issuing']) {
+        const store = seed();
+        store[`invoices/${KEY}`] = { tenants: ['kring'], state, billingKind: 'topup', invoiceNo: 202600042 };
+        vi.mocked(createAndIssueInvoice).mockRejectedValueOnce(new Error('later step failed'));
+        await expect(runAutoTopUp(fakeDb(store), port('succeeded'), 'scs', fresh, log)).rejects.toThrow('later step failed');
+        expect(store[`invoices/${KEY}`]['isArchived']).toBeUndefined();
+      }
+    });
+
+    it('a re-run that fails archives nothing and keeps the request pending', async () => {
+      const store = seed();
+      const STALE = 'topup-scs-20261108080000';
+      store[REQUEST] = { requestedAt: '20261109100000', pendingInvoiceKey: STALE };
+      store[`invoices/${STALE}`] = { tenants: ['kring'], state: 'draft', billingKind: 'topup', totalAmount: { amount: 7000 } };
+      vi.mocked(createAndIssueInvoice).mockRejectedValueOnce(new Error('pdf render failed'));
+      await expect(runAutoTopUp(fakeDb(store), port('succeeded'), 'scs', store[REQUEST] as typeof fresh, log)).rejects.toThrow('pdf render failed');
+      expect(store[`invoices/${STALE}`]['isArchived']).toBeUndefined();
+      expect(store[REQUEST]).toMatchObject({ pendingInvoiceKey: STALE });
+    });
   });
 
   it('no saved method: no invoice, request cleared', async () => {

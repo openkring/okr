@@ -45,7 +45,6 @@ export const NON_PERSONAL_COLLECTIONS: ReadonlySet<string> = new Set([
   'orgs',
   'pages',
   'partners',
-  'payment-attempts',
   'periods',
   'platform-config',
   'resources',

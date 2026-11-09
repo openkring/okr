@@ -1760,9 +1760,8 @@ export async function resolveArrayItemDocs(entry: SubjectDataEntry, ctx: Subject
 //   sub-collection ledger lines carry `createdBy` (the uid of the admin who booked a correction). A
 //   financial record of the org (OR Art. 958f retention applies), but the uid links a line to a natural
 //   person, so it is not «not personal data». Not yet a row.
-// not personal data: payment-attempts — one Stripe collection attempt of a tenant (state, amount in Rappen,
-//   Stripe ids, booking keys, error text). A financial record of the org keyed by tenant and invoice;
-//   no natural person's name or contact detail is stored on it.
+// gap: payment-attempts — one Stripe collection attempt of a tenant (state, amount in Rappen, Stripe ids,
+//   booking keys, error text) that carries `createdBy` (the uid of the admin or treasurer who opened it). Not yet a row.
 // not personal data: platform-config — platform-wide configuration (doc 'billing': operator tenant and
 //   accounting tenant ids). No natural person's data.
 // gap: external-reports — marks that a case (e.g. a membership change) was reported to an external

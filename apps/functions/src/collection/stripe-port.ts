@@ -20,6 +20,7 @@ export interface PaymentIntentInfo {
  * Invoices, Subscriptions or Prices. Amounts are integer Rappen (= Stripe's CHF minor unit).
  */
 export interface StripePort {
+  /** Creates the customer or updates its name. `email` '' = none on create, unchanged on update. */
   ensureCustomer(input: { tenantId: string; name: string; email: string; existingId: string }): Promise<string>;
   createSetupSession(input: { customerId: string; tenantId: string; successUrl: string; cancelUrl: string }): Promise<{ id: string; url: string }>;
   createPaymentSession(input: {
@@ -72,11 +73,12 @@ export function stripePort(): StripePort {
 
   return {
     async ensureCustomer({ tenantId, name, email, existingId }) {
+      const withEmail = email ? { email } : {};
       if (existingId) {
-        await stripe.customers.update(existingId, { name, email });
+        await stripe.customers.update(existingId, { name, ...withEmail });
         return existingId;
       }
-      const customer = await stripe.customers.create({ name, email, metadata: { tenantId } });
+      const customer = await stripe.customers.create({ name, ...withEmail, metadata: { tenantId } });
       return customer.id;
     },
 

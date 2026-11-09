@@ -7,7 +7,8 @@ import { PaymentAttemptCollection, PaymentAttemptModel } from '@okr/shared-model
 
 import { asInvoiceLike } from '../invoice/invoice-payment.core';
 import { openAmount } from '../invoice/invoice-payment.logic';
-import { canPayInvoice, pickReusableAttempt } from './collection-access.logic';
+import { toStoreDateTime } from '../srv/zurich-time';
+import { canPayInvoice, LIVE_SESSION_STATES, pickReusableAttempt } from './collection-access.logic';
 import { appOriginOf, callerIsAdmin, ensureStripeCustomer, ensureSubscription } from './payment-method';
 import { platformBilling } from './platform';
 import { stripePort, stripeSecretKey } from './stripe-port';
@@ -16,6 +17,7 @@ const REGION = 'europe-west6';
 const CF_NAME = 'createInvoicePaymentSession';
 const REUSE_MS = 23 * 60 * 60 * 1000;
 
+/** expiresAt only: UTC, compared against UTC now. createdAt/updatedAt are Zurich (toStoreDateTime) like every other doc. */
 const storeDateTimeUtc = (d: Date): string => d.toISOString().replace(/\D/g, '').slice(0, 14);
 
 /** Fresh Stripe Checkout (card, TWINT, PayPal) for one of our invoices. Success arrives by webhook, not the redirect. */
@@ -56,17 +58,20 @@ export const createInvoicePaymentSession = onCall(
     const payerTenantId = receiverKey;
     const purpose = invoice['billingKind'] === 'topup' ? 'topup' : 'invoice';
     const nowDate = new Date();
-    const now = storeDateTimeUtc(nowDate);
+    const nowUtc = storeDateTimeUtc(nowDate);
+    const now = toStoreDateTime(nowDate);
 
     // R11: a double click reuses the open session while it is younger than 23 h, but only for the same
-    // creator, save choice and amount. Any other open session of this invoice and payer is closed first.
+    // creator, save choice and amount. Any other live session of this invoice and payer is closed first,
+    // including a 'failed' one (a card declined inside Checkout leaves its session payable).
     const offerSave = caller.isAdmin && tenantId === receiverKey;
     const openAttempts = await db.collection(PaymentAttemptCollection)
       .where('invoiceKey', '==', invoiceKey).where('payerTenantId', '==', payerTenantId)
-      .where('state', '==', 'open').where('expiresAt', '>', now).get();
+      .where('state', 'in', LIVE_SESSION_STATES).where('expiresAt', '>', nowUtc).get();
     const { reuse, stale } = pickReusableAttempt(
       openAttempts.docs.map((d) => ({
         id: d.id,
+        state: String(d.data()['state'] ?? ''),
         createdBy: String(d.data()['createdBy'] ?? ''),
         offerSave: d.data()['offerSave'] === true,
         amount: Number(d.data()['amount'] ?? 0),
@@ -91,7 +96,7 @@ export const createInvoicePaymentSession = onCall(
     let sessionUrl = '';
     try {
       const sub = await ensureSubscription(db, payerTenantId);
-      const customerId = await ensureStripeCustomer(db, request, payerTenantId, sub);
+      const customerId = await ensureStripeCustomer(db, request, payerTenantId, sub, caller.isAdmin && tenantId === receiverKey);
       const origin = await appOriginOf(db, tenantId);
       const base = `${origin}/pay/${invoiceKey}`;
       const session = await stripePort().createPaymentSession({
@@ -108,7 +113,7 @@ export const createInvoicePaymentSession = onCall(
       });
       sessionUrl = session.url;
     } catch (err) {
-      await attemptRef.update({ state: 'failed', error: err instanceof Error ? err.message : String(err), updatedAt: storeDateTimeUtc(new Date()) });
+      await attemptRef.update({ state: 'failed', error: err instanceof Error ? err.message : String(err), updatedAt: toStoreDateTime(new Date()) });
       throw err;
     }
     logger.info(`${CF_NAME}: session for invoice ${invoiceKey} (payer=${payerTenantId}, attempt=${attemptRef.id})`);
