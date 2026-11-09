@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { newestRealWebhookMs, parsePingenBalance, parsePingenLastWebhook, parsePingenSelftest, withPingen, PINGEN_LOW_BALANCE_CHF } from './pingen-status';
+import { describe, it, expect, vi } from 'vitest';
+import { newestRealWebhookMs, parsePingenBalance, parsePingenLastWebhook, parsePingenSelftest, withPingen, withPingenForOperator, PINGEN_LOW_BALANCE_CHF } from './pingen-status';
 import type { WebhookSelftestResult } from '../_webhooks/selftest';
 
 const NOW = Date.parse('2026-11-09T12:00:00Z');
@@ -72,5 +72,24 @@ describe('newestRealWebhookMs', () => {
   it('is undefined without rows and survives odd payloads', () => {
     expect(newestRealWebhookMs([])).toBeUndefined();
     expect(newestRealWebhookMs([{ receivedAtMs: 4, payload: null }])).toBe(4);
+  });
+});
+
+describe('withPingenForOperator', () => {
+  const base = { checkedAt: 'x', services: { apple: { parts: {} }, pingen: { parts: {} } } };
+  const input = { organisation: org(300), lastWebhookMs: NOW, selftest: undefined, nowMs: NOW };
+
+  it('gives the operator the pingen row', async () => {
+    const out = await withPingenForOperator(base, true, async () => input);
+    expect(out.services['pingen'].parts['Guthaben'].level).toBe('ok');
+    expect(out.services['apple']).toEqual({ parts: {} });
+  });
+
+  it('omits the row for any other admin and never reads Pingen', async () => {
+    const read = vi.fn(async () => input);
+    const out = await withPingenForOperator(base, false, read);
+    expect('pingen' in out.services).toBe(false);
+    expect(out.services['apple']).toEqual({ parts: {} });
+    expect(read).not.toHaveBeenCalled();
   });
 });

@@ -78,3 +78,19 @@ export function withPingen(result: ServiceStatusResult, input: PingenStatusInput
     },
   };
 }
+
+/**
+ * The Pingen row is the platform operator's alone: the balance is bkaiser's prepaid account, shared by every
+ * tenant, and no tenant admin has a use for it (nor a right to see it). For anybody else the row is left out and
+ * `read` is never called, so no Pingen request is made on their behalf.
+ */
+export async function withPingenForOperator(
+  result: ServiceStatusResult, isOperator: boolean, read: () => Promise<PingenStatusInput>,
+): Promise<ServiceStatusResult> {
+  if (!isOperator) {
+    const { [PINGEN_SERVICE_ID]: _omitted, ...services } = result.services;
+    void _omitted;
+    return { ...result, services };
+  }
+  return withPingen(result, await read());
+}

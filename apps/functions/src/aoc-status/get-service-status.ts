@@ -3,6 +3,7 @@ import { logger } from 'firebase-functions/v2';
 
 import { AOC_STATUS_SERVICES, ServiceStatusResult } from '@okr/aoc-util';
 
+import { getCallerContext } from '@okr/shared-util-functions';
 import { requireAdmin } from '../business/shared';
 import { CacheEntry, isExpired, readCache, writeCache } from '../_gateway/cache';
 import { gatewayFetch } from '../_gateway/http';
@@ -13,7 +14,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { WebhookEventCollection } from '../_webhooks/types';
 import { makePingenClient, pingenClientId, pingenClientSecret, pingenEnv, pingenOrganisationId } from '../pingen/pingen-client';
 import { pingenWebhookSecret } from '../pingen/pingen-webhook';
-import { newestRealWebhookMs, withPingen, type PingenOrganisationRead } from './pingen-status';
+import { newestRealWebhookMs, withPingenForOperator, type PingenOrganisationRead } from './pingen-status';
 
 const CF_NAME = 'getServiceStatus';
 const CACHE_PROVIDER = 'serviceStatus';
@@ -79,11 +80,14 @@ export const getServiceStatus = onCall(
   { region: 'europe-west6', enforceAppCheck: true, maxInstances: 2, secrets: [pingenClientId, pingenClientSecret, pingenWebhookSecret] },
   async (request): Promise<ServiceStatusResult> => {
     await requireAdmin(request, CF_NAME);
+    // Pingen is bkaiser's own prepaid account: only the platform operator sees (and triggers a read of) it
+    const { isOperator } = await getCallerContext(request, CF_NAME);
     const now = Date.now();
-    const [status, selftest, organisation, lastWebhookMs] = await Promise.all([
-      loadServiceStatus(LIVE_DEPS, now), readSelftest(), readPingenOrganisation(now), readLastPingenWebhookMs(),
-    ]);
-    return withPingen(withSelftest(status, selftest, now), { organisation, lastWebhookMs, selftest, nowMs: now });
+    const [status, selftest] = await Promise.all([loadServiceStatus(LIVE_DEPS, now), readSelftest()]);
+    return withPingenForOperator(withSelftest(status, selftest, now), isOperator, async () => {
+      const [organisation, lastWebhookMs] = await Promise.all([readPingenOrganisation(now), readLastPingenWebhookMs()]);
+      return { organisation, lastWebhookMs, selftest, nowMs: now };
+    });
   },
 );
 
