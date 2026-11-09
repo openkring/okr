@@ -20,6 +20,7 @@
 // Env:
 //   FUNCTIONS_PNPM=11.9.0     # try a different buildpack pin (canary-gated)
 //   FUNCTIONS_CANARY=getEcho  # override the canary function (default: getEcho)
+//   FUNCTIONS_FORCE=1         # pass --force (needed for functions with retry: true)
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -103,8 +104,11 @@ if (!targets.length || targets.some((t) => SELFTEST_SECRET_USERS.includes(t))) {
 
 // Deploy the requested functions (or all).
 const only = targets.length ? targets.map((n) => `functions:${n}`).join(',') : 'functions';
-console.log(`\nDeploying ${targets.length ? only : 'ALL functions'} (buildpack pnpm@${pin})…`);
-run('firebase', ['deploy', '--only', only]);
+// FUNCTIONS_FORCE=1 appends --force: firebase refuses (non-interactive) to deploy a function with a
+// failure policy (`retry: true`, e.g. onTopUpPaid) without it. Opt-in, so a plain deploy never forces.
+const force = process.env.FUNCTIONS_FORCE === '1' ? ['--force'] : [];
+console.log(`\nDeploying ${targets.length ? only : 'ALL functions'} (buildpack pnpm@${pin})${force.length ? ' with --force' : ''}…`);
+run('firebase', ['deploy', '--only', only, ...force]);
 console.log('\n✔ Functions deployed.');
 
 // Receiver self-test (spec 1.143) when the deploy touched the webhook path. It fires the
