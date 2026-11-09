@@ -41,11 +41,11 @@ import { ArticleStore } from './article-section.store';
       left: 50%;
       transform: translateX(-50%);
     }
-    /* every slide is the same box (full width, ~75% of the viewport high); portrait and landscape
+    /* every slide is the same box (full width, at most half the viewport high); portrait and landscape
        images are fitted into it whole, at their own proportions (object-fit: contain, never cropped) */
     .carousel-slide {
       flex: 0 0 100%;
-      height: 75dvh;
+      height: 50dvh;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -217,7 +217,7 @@ export class ArticleSectionComponent {
   protected carouselImageStyle = computed((): ImageStyle => ({
     ...this.imageStyle(),
     width: '100%',
-    height: '75dvh',
+    height: '50dvh',
     fill: false,
     border: '',
     borderRadius: '',
