@@ -359,5 +359,37 @@
       "unmatched": "Altre {count} segnalazioni non corrispondono più a nessun destinatario, ad esempio perché un indirizzo è cambiato nel frattempo.",
       "addresses": "A, Cc e mittente"
     }
+  },
+  "sending": {
+    "list_title": "Lettere",
+    "empty": "Nessuna lettera ancora inviata.",
+    "page_empty": "Questo invio non ha ancora lettere.",
+    "card_title": "Lettere",
+    "summary_total": "{count} lettere",
+    "part_in_production": "in produzione",
+    "part_sent": "spedite",
+    "part_delivered": "consegnate",
+    "part_problem": "problema",
+    "part_undeliverable": "non recapitabili",
+    "status_all": "Tutte",
+    "status_in_production": "In produzione",
+    "status_sent": "Spedita",
+    "status_delivered": "Consegnata",
+    "status_problem": "Problema",
+    "status_undeliverable": "Non recapitabile",
+    "period_all": "Sempre",
+    "period_days30": "Ultimi 30 giorni",
+    "period_days90": "Ultimi 90 giorni",
+    "period_year": "Ultimo anno",
+    "period": "Periodo",
+    "recipient": "Destinatario",
+    "pages": "Pagine",
+    "status": "Stato",
+    "date": "Data",
+    "price": "Prezzo",
+    "unknown_recipient": "Destinatario sconosciuto",
+    "task_created": "Attività creata",
+    "open_letters": "Tutte le lettere",
+    "back": "Indietro"
   }
 }

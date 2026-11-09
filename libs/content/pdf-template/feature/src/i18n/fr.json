@@ -359,5 +359,37 @@
       "unmatched": "{count} autres retours ne correspondent plus à aucun destinataire, par exemple parce qu'une adresse a changé depuis.",
       "addresses": "À, Cc et expéditeur"
     }
+  },
+  "sending": {
+    "list_title": "Lettres",
+    "empty": "Aucune lettre envoyée pour l'instant.",
+    "page_empty": "Cet envoi ne contient pas encore de lettres.",
+    "card_title": "Lettres",
+    "summary_total": "{count} lettres",
+    "part_in_production": "en production",
+    "part_sent": "expédiées",
+    "part_delivered": "distribuées",
+    "part_problem": "problème",
+    "part_undeliverable": "non distribuables",
+    "status_all": "Toutes",
+    "status_in_production": "En production",
+    "status_sent": "Expédiée",
+    "status_delivered": "Distribuée",
+    "status_problem": "Problème",
+    "status_undeliverable": "Non distribuable",
+    "period_all": "Toute la période",
+    "period_days30": "30 derniers jours",
+    "period_days90": "90 derniers jours",
+    "period_year": "Dernière année",
+    "period": "Période",
+    "recipient": "Destinataire",
+    "pages": "Pages",
+    "status": "Statut",
+    "date": "Date",
+    "price": "Prix",
+    "unknown_recipient": "Destinataire inconnu",
+    "task_created": "Tâche créée",
+    "open_letters": "Toutes les lettres",
+    "back": "Retour"
   }
 }

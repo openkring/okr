@@ -329,3 +329,39 @@ export const MAILING_I18N_KEYS = {
 } satisfies Record<string, string>;
 
 export type MailingI18n = { [K in keyof typeof MAILING_I18N_KEYS]: Signal<string> };
+
+/** Keys for the letter status board (SendingList, the «Briefe» card of MailingPage; spec 1.150 §9). */
+export const SENDING_I18N_KEYS = {
+  list_title: PFX + 'sending.list_title',
+  empty: PFX + 'sending.empty',
+  page_empty: PFX + 'sending.page_empty',
+  card_title: PFX + 'sending.card_title',
+  summary_total: PFX + 'sending.summary_total',
+  part_in_production: PFX + 'sending.part_in_production',
+  part_sent: PFX + 'sending.part_sent',
+  part_delivered: PFX + 'sending.part_delivered',
+  part_problem: PFX + 'sending.part_problem',
+  part_undeliverable: PFX + 'sending.part_undeliverable',
+  status_all: PFX + 'sending.status_all',
+  status_in_production: PFX + 'sending.status_in_production',
+  status_sent: PFX + 'sending.status_sent',
+  status_delivered: PFX + 'sending.status_delivered',
+  status_problem: PFX + 'sending.status_problem',
+  status_undeliverable: PFX + 'sending.status_undeliverable',
+  period_all: PFX + 'sending.period_all',
+  period_days30: PFX + 'sending.period_days30',
+  period_days90: PFX + 'sending.period_days90',
+  period_year: PFX + 'sending.period_year',
+  period: PFX + 'sending.period',
+  recipient: PFX + 'sending.recipient',
+  pages: PFX + 'sending.pages',
+  status: PFX + 'sending.status',
+  date: PFX + 'sending.date',
+  price: PFX + 'sending.price',
+  unknown_recipient: PFX + 'sending.unknown_recipient',
+  task_created: PFX + 'sending.task_created',
+  open_letters: PFX + 'sending.open_letters',
+  back: PFX + 'sending.back',
+} satisfies Record<string, string>;
+
+export type SendingI18n = { [K in keyof typeof SENDING_I18N_KEYS]: Signal<string> };

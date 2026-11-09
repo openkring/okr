@@ -359,5 +359,37 @@
       "unmatched": "{count} weitere Rückmeldungen passen zu keinem Empfänger mehr, etwa weil sich eine Adresse seither geändert hat.",
       "addresses": "An, Cc und Absender"
     }
+  },
+  "sending": {
+    "list_title": "Briefe",
+    "empty": "Noch keine Briefe verschickt.",
+    "page_empty": "Zu diesem Versand gibt es noch keine Briefe.",
+    "card_title": "Briefe",
+    "summary_total": "{count} Briefe",
+    "part_in_production": "in Produktion",
+    "part_sent": "versandt",
+    "part_delivered": "zugestellt",
+    "part_problem": "Problem",
+    "part_undeliverable": "unzustellbar",
+    "status_all": "Alle",
+    "status_in_production": "In Produktion",
+    "status_sent": "Versandt",
+    "status_delivered": "Zugestellt",
+    "status_problem": "Problem",
+    "status_undeliverable": "Unzustellbar",
+    "period_all": "Alle Zeiten",
+    "period_days30": "Letzte 30 Tage",
+    "period_days90": "Letzte 90 Tage",
+    "period_year": "Letztes Jahr",
+    "period": "Zeitraum",
+    "recipient": "Empfänger",
+    "pages": "Seiten",
+    "status": "Status",
+    "date": "Datum",
+    "price": "Preis",
+    "unknown_recipient": "Empfänger unbekannt",
+    "task_created": "Aufgabe erstellt",
+    "open_letters": "Alle Briefe",
+    "back": "Zurück"
   }
 }

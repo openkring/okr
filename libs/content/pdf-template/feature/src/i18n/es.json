@@ -359,5 +359,37 @@
       "unmatched": "{count} avisos más ya no corresponden a ningún destinatario, por ejemplo porque una dirección ha cambiado desde entonces.",
       "addresses": "Para, Cc y remitente"
     }
+  },
+  "sending": {
+    "list_title": "Cartas",
+    "empty": "Todavía no se ha enviado ninguna carta.",
+    "page_empty": "Este envío todavía no tiene cartas.",
+    "card_title": "Cartas",
+    "summary_total": "{count} cartas",
+    "part_in_production": "en producción",
+    "part_sent": "enviadas",
+    "part_delivered": "entregadas",
+    "part_problem": "problema",
+    "part_undeliverable": "no entregables",
+    "status_all": "Todas",
+    "status_in_production": "En producción",
+    "status_sent": "Enviada",
+    "status_delivered": "Entregada",
+    "status_problem": "Problema",
+    "status_undeliverable": "No entregable",
+    "period_all": "Todo el tiempo",
+    "period_days30": "Últimos 30 días",
+    "period_days90": "Últimos 90 días",
+    "period_year": "Último año",
+    "period": "Período",
+    "recipient": "Destinatario",
+    "pages": "Páginas",
+    "status": "Estado",
+    "date": "Fecha",
+    "price": "Precio",
+    "unknown_recipient": "Destinatario desconocido",
+    "task_created": "Tarea creada",
+    "open_letters": "Todas las cartas",
+    "back": "Atrás"
   }
 }

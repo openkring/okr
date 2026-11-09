@@ -7,10 +7,10 @@ import { combineLatest, of } from 'rxjs';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { CalEventModel, NameDisplay } from '@okr/shared-models';
-import { DocEmailService, MailingLetters, MailingService } from '@okr/content-pdf-template-data-access';
+import { DocEmailService, MailingLetters, MailingService, SendingService } from '@okr/content-pdf-template-data-access';
 import {
   deliveryByPerson, MAILING_I18N_KEYS, MAILING_VIEW_CHANNELS, MailingAnswer, mailingAnswerCounts, mailingAnswerOf, MailingDeliveries,
-  MailingI18n, mailingRecipientsFor, MailingView,
+  MailingI18n, mailingRecipientsFor, MailingView, SENDING_I18N_KEYS, SendingI18n, summarizeSendings,
 } from '@okr/content-pdf-template-util';
 import { getFullName, isOrgRecipient, nameMatches } from '@okr/shared-util-core';
 
@@ -61,9 +61,11 @@ export const MailingStore = signalStore(
   withState(initialState),
   withProps(() => ({
     i18n: inject(I18nService).translateAll(MAILING_I18N_KEYS) as MailingI18n,
+    sendingI18n: inject(I18nService).translateAll(SENDING_I18N_KEYS) as SendingI18n,
     appStore: inject(AppStore),
     mailingService: inject(MailingService),
     docEmailService: inject(DocEmailService),
+    sendingService: inject(SendingService),
   })),
   withProps((store) => ({
     mailingsResource: rxResource({
@@ -76,6 +78,18 @@ export const MailingStore = signalStore(
     }),
   })),
   withProps((store) => ({
+    /** the letters of a Pingen Versand, live (spec 1.150 §9); only asked for when the Versand goes through Pingen */
+    sendingsResource: rxResource({
+      // a string, so the live mailing doc re-emitting does not re-subscribe the letters' listener
+      params: () => {
+        const tenantId = store.appStore.tenantId();
+        return store.mailingResource.value()?.post?.via === 'pingen' && tenantId ? `${tenantId}|${store.mailingKey()}` : undefined;
+      },
+      stream: ({ params }) => {
+        const [tenantId, key] = params.split('|');
+        return store.sendingService.listForMailing(tenantId, key);
+      },
+    }),
     mailJobResource: rxResource({
       params: () => {
         const key = store.mailingResource.value()?.mailJobKey;
@@ -113,6 +127,10 @@ export const MailingStore = signalStore(
       mailing: computed(() => store.mailingResource.value()),
       isMailingLoading: computed(() => store.mailingResource.isLoading()),
       mailJob: computed(() => store.mailJobResource.value()),
+      sendings: computed(() => store.sendingsResource.value() ?? []),
+      sendingsLoading: computed(() => store.sendingsResource.isLoading()),
+      /** a Versand sent through Pingen shows the «Briefe» card */
+      isPingen: computed(() => store.mailingResource.value()?.post?.via === 'pingen'),
       /** per delivery type, the recipients ticked for it, sorted by name */
       channels: computed(() => {
         const deliveries = store.mailingResource.value()?.deliveries;
@@ -141,6 +159,7 @@ export const MailingStore = signalStore(
       if (!term) return all;
       return all.filter((m) => nameMatches(`${m.subject ?? ''} ${m.senderName ?? ''}`, term));
     }),
+    sendingSummary: computed(() => summarizeSendings(store.sendingsResource.value() ?? [])),
     /** personKey → the mail server's report for that recipient's E-Mail */
     deliveryByPerson: computed(() => deliveryByPerson(store.deliveries())),
     /** a sent Versand whose mail job or letters failed is only partly through */

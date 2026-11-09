@@ -31,6 +31,8 @@ export interface MailingView {
   noticeKey?: string;
   letters?: { state: 'pending' | 'ready' | 'failed'; storagePath?: string; count?: number; missing?: number; error?: string };
   caleventKeys?: string[];
+  /** the Post delivery of a Versand sent through the post provider (spec 1.150) */
+  post?: { via?: string };
   /** StoreDate: the answer links stop working after it */
   validUntil?: string;
 }

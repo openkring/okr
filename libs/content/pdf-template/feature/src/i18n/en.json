@@ -359,5 +359,37 @@
       "unmatched": "{count} more reports match no recipient any more, for example because an address has changed since.",
       "addresses": "To, Cc and sender"
     }
+  },
+  "sending": {
+    "list_title": "Letters",
+    "empty": "No letters sent yet.",
+    "page_empty": "This mailing has no letters yet.",
+    "card_title": "Letters",
+    "summary_total": "{count} letters",
+    "part_in_production": "in production",
+    "part_sent": "sent",
+    "part_delivered": "delivered",
+    "part_problem": "problem",
+    "part_undeliverable": "undeliverable",
+    "status_all": "All",
+    "status_in_production": "In production",
+    "status_sent": "Sent",
+    "status_delivered": "Delivered",
+    "status_problem": "Problem",
+    "status_undeliverable": "Undeliverable",
+    "period_all": "All time",
+    "period_days30": "Last 30 days",
+    "period_days90": "Last 90 days",
+    "period_year": "Last year",
+    "period": "Period",
+    "recipient": "Recipient",
+    "pages": "Pages",
+    "status": "Status",
+    "date": "Date",
+    "price": "Price",
+    "unknown_recipient": "Recipient unknown",
+    "task_created": "Task created",
+    "open_letters": "All letters",
+    "back": "Back"
   }
 }
