@@ -4,10 +4,10 @@
 // every effect (Pingen, Storage, Firestore, tasks, the credit port, the clock) is injected, so the tests touch
 // none of them. The production wiring and the trigger are in submit-sending.ts.
 //
-// Exactly-once: the model has no "submitting" state, so there is no claim step. The record id is Pingen's
-// `Idempotency-Key`: a retried trigger (or a crash between Pingen's answer and our write) calls createLetter with
-// the same key and gets the SAME Pingen letter back, never a second one. A record that is no longer `queued`
-// (a retry after success, a tombstone) is returned from untouched.
+// Exactly-once: the trigger claims `queued` -> `submitting` in a transaction before it calls Pingen. The record id
+// is Pingen's `Idempotency-Key`, so a delivery that finds `submitting` (a previous attempt crashed or was retried
+// after claiming) calls Pingen again and gets the SAME letter back, never a second one. The success write is
+// guarded on `submitting`, a failure write too: whatever a webhook (or Task 9) moved the record to is not overwritten.
 
 import { logger } from 'firebase-functions/v2';
 import { shouldHoldVersand } from '@okr/content-pdf-template-util';
@@ -57,6 +57,9 @@ export interface SubmitDeps {
 
 export type FailReason = 'address' | 'other';
 
+/** A retryable failure older than this fails the letter and returns its share instead of retrying forever. */
+export const MAX_AGE_MS = 24 * 3600 * 1000;
+
 export const HOLD_DETAIL = 'angehalten: zu viele Adressfehler';
 
 /**
@@ -68,6 +71,28 @@ export const HOLD_DETAIL = 'angehalten: zu viele Adressfehler';
 export function isAddressFailure(err: unknown): boolean {
   if (!(err instanceof PingenError)) return false;
   return err.status === 400 || err.status === 422 || /address|adresse|recipient|postal|country|zip/i.test(err.message);
+}
+
+/** 422 or a message naming the address: certainly an address problem (a bare 400 is only likely one). */
+export function isClearAddressFailure(err: unknown): boolean {
+  return err instanceof PingenError && (err.status === 422 || /address|adresse|recipient|postal|country|zip/i.test(err.message));
+}
+
+/**
+ * A 409, or an error whose code/title speaks of idempotency: Pingen may or may not hold the letter. Neither
+ * retrying nor refunding is safe.
+ */
+export function isAmbiguousFailure(err: unknown): boolean {
+  return err instanceof PingenError && (err.status === 409 || /idempoten/i.test(err.message));
+}
+
+/**
+ * Retryable in this trigger: the client's retryable set plus 402 (Pingen's own balance is empty: bkaiser tops up,
+ * the letter goes out on a later attempt). Classified here, not in pingen-client, whose generic mapping stays
+ * "4xx is final" for its other callers.
+ */
+export function isRetryableHere(err: PingenError): boolean {
+  return err.retryable || err.status === 402;
 }
 
 /** A safe file name; on staging the recipient's name, so Pingen's simulation names work with test persons. */
@@ -104,16 +129,21 @@ async function reverse(deps: SubmitDeps, rec: SendingRow, mailing: SendingMailin
  * a crash after that loses the task/reversal (logged), never causes a second send.
  * Task 9 reuses it for letters Pingen reports undeliverable (`reverse` as decided there).
  */
-export async function failSending(deps: SubmitDeps, record: SendingRow, reason: string, reverseShare: boolean, failReason: FailReason = 'other'): Promise<void> {
+export async function failSending(
+  deps: SubmitDeps, record: SendingRow, reason: string, reverseShare: boolean, failReason: FailReason = 'other', expectState?: SendingRow['state'],
+): Promise<void> {
   const tenantId = record.tenants[0] ?? '';
   const at = deps.now().toISOString();
-  await deps.updateSending(record.id, patchFailed(record, reason, failReason, at));
+  // guarded on the submit path: a record that left `submitting` meanwhile gets no task and no refund
+  if (!(await deps.updateSending(record.id, patchFailed(record, reason, failReason, at), expectState))) return;
   let mailing: SendingMailing | undefined;
   try {
     mailing = await deps.loadMailing(record.source, tenantId);
   } catch (err) {
     logger.error('submit-sending: mailing unreadable', { id: record.id, error: err instanceof Error ? err.message : String(err) });
   }
+  // the keyed, idempotent reversal first: the money must not depend on the task being written
+  if (reverseShare) await reverse(deps, record, mailing, `Brief ${record.id}: ${reason}`);
   if (mailing) {
     try {
       const relatedKey = `sending.${record.id}`;
@@ -130,7 +160,24 @@ export async function failSending(deps: SubmitDeps, record: SendingRow, reason: 
   } else {
     logger.error('submit-sending: no Versand for the letter, no task', { id: record.id, source: record.source });
   }
-  if (reverseShare) await reverse(deps, record, mailing, `Brief ${record.id}: ${reason}`);
+}
+
+/** Pingen may hold the letter: keep `submitting`, no refund, no retry, one task for the sender (deduped by record). */
+async function flagAmbiguous(deps: SubmitDeps, rec: SendingRow, err: PingenError): Promise<void> {
+  const tenantId = rec.tenants[0] ?? '';
+  logger.error('submit-sending: letter status unclear (Pingen may hold it), no refund, check in Pingen', { id: rec.id, tenantId, source: rec.source, status: err.status, error: err.message });
+  try {
+    const mailing = await deps.loadMailing(rec.source, tenantId);
+    if (!mailing) return;
+    const relatedKey = `sending.${rec.id}`;
+    if (await deps.hasOpenTask(relatedKey, mailing.senderKey, tenantId)) return;
+    await deps.createTask({
+      tenantId, name: `Briefstatus unklar: ${rec.recipientName}`, assignee: await deps.avatar(mailing.senderKey, tenantId, mailing.senderName),
+      dueInDays: 3, relatedModelType: 'sending', relatedKey, linkKey: rec.source, notes: `Brief ${rec.id}: ${err.message}`,
+    });
+  } catch (e) {
+    logger.error('submit-sending: task for an unclear letter not created', { id: rec.id, error: e instanceof Error ? e.message : String(e) });
+  }
 }
 
 /**
@@ -138,7 +185,7 @@ export async function failSending(deps: SubmitDeps, record: SendingRow, reason: 
  * the whole Versand. Idempotent: the task is looked up before it is created, and each record is claimed with
  * expectState 'queued', so a second failure (or a concurrent instance) neither re-holds nor reverses twice.
  */
-async function holdVersand(deps: SubmitDeps, source: string, tenantId: string): Promise<void> {
+async function holdVersand(deps: SubmitDeps, source: string, tenantId: string, clearlyAddress: boolean): Promise<void> {
   const queued = await deps.listQueued(source);
   if (queued.length === 0) return;
   const mailing = await deps.loadMailing(source, tenantId);
@@ -148,7 +195,7 @@ async function holdVersand(deps: SubmitDeps, source: string, tenantId: string): 
       // before the records change: a second run that still finds queued letters sees the task
       if (!(await deps.hasOpenTask(relatedKey, mailing.senderKey, tenantId))) {
         await deps.createTask({
-          tenantId, name: `Versand ${mailing.subject}: Briefe angehalten — Adressen prüfen`,
+          tenantId, name: `Versand ${mailing.subject}: Briefe angehalten — ${clearlyAddress ? 'Adressen prüfen' : 'Pingen hat mehrere Briefe abgelehnt'}`,
           assignee: await deps.avatar(mailing.senderKey, tenantId, mailing.senderName), dueInDays: 3,
           relatedModelType: 'mailing', relatedKey, notes: `${queued.length} Briefe wurden nicht verschickt, ihr Anteil ist zurückgebucht.`,
         });
@@ -165,30 +212,52 @@ async function holdVersand(deps: SubmitDeps, source: string, tenantId: string): 
   }
 }
 
+/** A retryable failure rethrows (the trigger retries with the same key), unless the letter is older than 24 h. */
+async function retryOrGiveUp(deps: SubmitDeps, rec: SendingRow, err: unknown): Promise<void> {
+  const created = Date.parse(rec.createdAt);
+  if (Number.isFinite(created) && deps.now().getTime() - created > MAX_AGE_MS) {
+    await failSending(deps, rec, err instanceof Error ? err.message : String(err), true, 'other', 'submitting');
+    return;
+  }
+  throw err;
+}
+
 /** Submits one `sendings` record. Throws only when a retry can help (retryable Pingen error, Storage failure). */
 export async function submitSending(deps: SubmitDeps, id: string): Promise<void> {
-  const rec = await deps.getSending(id);
-  if (!rec || rec.state !== 'queued') return;   // tombstone, or a retry after success
-  const pdf = await deps.readPdf(rec.storagePath);   // a Storage failure rethrows: retry
+  let rec = await deps.getSending(id);
+  if (!rec || (rec.state !== 'queued' && rec.state !== 'submitting')) return;   // tombstone, or a retry after success
+  if (rec.state === 'queued') {
+    const history = [...rec.history, { state: 'submitting' as const, at: deps.now().toISOString() }];
+    if (!(await deps.updateSending(rec.id, { state: 'submitting', history, updatedAt: deps.now().toISOString() }, 'queued'))) return;   // another delivery claimed it
+    rec = { ...rec, state: 'submitting', history };
+  }
+  // from here a `submitting` record is ours (or a crashed attempt's): Pingen dedupes by the key
+  let pdf: Buffer;
+  try {
+    pdf = await deps.readPdf(rec.storagePath);
+  } catch (err) {
+    return retryOrGiveUp(deps, rec, err);
+  }
   let letter;
   try {
     letter = await deps.client.createLetter({ pdf, fileName: sendingFileName(deps.env, rec.id, rec.recipientName), options: rec.options, idempotencyKey: rec.id });
   } catch (err) {
-    if (err instanceof PingenError && !err.retryable) {
-      const failReason: FailReason = isAddressFailure(err) ? 'address' : 'other';
-      await failSending(deps, rec, err.message, true, failReason);
-      if (failReason === 'address') {
-        const tenantId = rec.tenants[0] ?? '';
-        if (shouldHoldVersand(await deps.countAddressFailures(rec.source))) await holdVersand(deps, rec.source, tenantId);
-      }
-      return;
+    if (!(err instanceof PingenError)) return retryOrGiveUp(deps, rec, err);
+    if (isAmbiguousFailure(err)) return flagAmbiguous(deps, rec, err);
+    if (isRetryableHere(err)) return retryOrGiveUp(deps, rec, err);
+    const failReason: FailReason = isAddressFailure(err) ? 'address' : 'other';
+    await failSending(deps, rec, err.message, true, failReason, 'submitting');
+    if (failReason === 'address') {
+      const tenantId = rec.tenants[0] ?? '';
+      if (shouldHoldVersand(await deps.countAddressFailures(rec.source))) await holdVersand(deps, rec.source, tenantId, isClearAddressFailure(err));
     }
-    throw err;   // retryable, or not a Pingen error at all: the trigger retries with the same Idempotency-Key
+    return;
   }
   if (letter.filePages !== rec.pages) {
     logger.warn('submit-sending: Pingen counts other pages than we charged, keeping ours', { id: rec.id, ours: rec.pages, pingen: letter.filePages });
   }
-  const at = deps.now().toISOString();
-  await deps.updateSending(rec.id, { state: 'submitted', providerId: letter.id, history: [...rec.history, { state: 'submitted', at }], updatedAt: at });
+  // the cost first (idempotent set): a crash before the state write redoes both on the retry
   await deps.writeCost(rec.id, { providerPrice: Math.round(letter.priceValue * 100), currency: letter.priceCurrency });
+  const at = deps.now().toISOString();
+  await deps.updateSending(rec.id, { state: 'submitted', providerId: letter.id, history: [...rec.history, { state: 'submitted', at }], updatedAt: at }, 'submitting');
 }

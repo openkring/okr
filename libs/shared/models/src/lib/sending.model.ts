@@ -4,7 +4,12 @@ import { OkrModel } from './base.model';
 export const SendingCollection = 'sendings';
 export const SendingModelName = 'sending';
 
-export type SendingState = 'queued' | 'submitted' | 'sent' | 'delivered' | 'failed' | 'undeliverable';
+/**
+ * `submitting` is claimed by the submit trigger just before it calls Pingen (queued -> submitting); it is
+ * left only by the trigger (submitted / failed) or by a Pingen webhook. A record found here was claimed by an
+ * attempt that may or may not have reached Pingen.
+ */
+export type SendingState = 'queued' | 'submitting' | 'submitted' | 'sent' | 'delivered' | 'failed' | 'undeliverable';
 
 /** How a letter is printed and delivered; tenant defaults live in `AppConfig.post*`. */
 export interface PostOptions {

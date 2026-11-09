@@ -9,6 +9,7 @@ import { failSending, isAddressFailure, sendingFileName, submitSending, type Sub
 
 const OPTIONS = { deliveryProduct: 'cheap', printSpectrum: 'grayscale', printMode: 'simplex' } as const;
 const NOW = new Date('2026-11-09T10:00:00.000Z');
+const ago = (h: number) => new Date(NOW.getTime() - h * 3600_000).toISOString();
 
 const row = (id: string, over: Partial<SendingRow> = {}): SendingRow => ({
   id, tenants: ['scs'], isArchived: false, channel: 'post', source: 'mailing.m1', recipientKey: id.split('_')[1] ?? 'p1',
@@ -20,7 +21,8 @@ function setup(rows: SendingRow[], createLetter?: PingenClient['createLetter'], 
   const store = new Map(rows.map((r) => [r.id, r]));
   const costs = new Map<string, unknown>();
   const tasks: Array<{ name: string; relatedKey: string; relatedModelType: string; linkKey?: string; assignee: { key: string } }> = [];
-  const reverseShare = vi.fn(async () => ({ amount: 150, duplicate: false }));
+  const order: string[] = [];
+  const reverseShare = vi.fn(async () => { order.push('reverse'); return { amount: 150, duplicate: false }; });
   const letter = createLetter ?? vi.fn(async () => ({ id: 'pg1', status: 'valid', filePages: 2, priceValue: 1.05, priceCurrency: 'CHF' }));
   const deps: SubmitDeps = {
     client: { createLetter: letter, readOrganisation: vi.fn() } as unknown as PingenClient,
@@ -30,20 +32,21 @@ function setup(rows: SendingRow[], createLetter?: PingenClient['createLetter'], 
     updateSending: async (id, patch, expect) => {
       const cur = store.get(id);
       if (!cur || (expect && cur.state !== expect)) return false;
+      if (patch.state) order.push(`state:${patch.state}`);
       store.set(id, { ...cur, ...patch } as SendingRow);
       return true;
     },
-    writeCost: async (id, cost) => { costs.set(id, cost); },
+    writeCost: async (id, cost) => { order.push('cost'); costs.set(id, cost); },
     loadMailing: async () => ({ senderKey: 'pe1', senderName: 'Sandra Sender', subject: 'Einladung', creditEntryId: 'e1', pagesPerLetter: 2 }),
     countAddressFailures: async (source) => [...store.values()].filter((r) => r.source === source && r.state === 'failed' && r.failReason === 'address').length,
     listQueued: async (source) => [...store.values()].filter((r) => r.source === source && r.state === 'queued'),
     avatar: async (key, _t, name) => ({ key, name1: name, name2: '', modelType: 'person', type: '', subType: '', label: '' }),
     hasOpenTask: async (relatedKey) => tasks.some((t) => t.relatedKey === relatedKey),
-    createTask: async (t) => { tasks.push(t as never); },
+    createTask: async (t) => { order.push('task'); tasks.push(t as never); },
     reverseShare,
     now: () => NOW,
   };
-  return { deps, store, costs, tasks, reverseShare, letter };
+  return { deps, store, costs, tasks, reverseShare, letter, order };
 }
 
 describe('submitSending', () => {
@@ -78,10 +81,10 @@ describe('submitSending', () => {
     expect(letter).toHaveBeenCalledWith(expect.objectContaining({ fileName: 'Max Muster.pdf' }));
   });
 
-  it('rethrows a retryable error and leaves the record queued', async () => {
+  it('rethrows a retryable error and leaves the record submitting', async () => {
     const { deps, store, tasks, reverseShare } = setup([row('m1_p1')], async () => { throw new PingenError('Pingen 503', 503, true); });
     await expect(submitSending(deps, 'm1_p1')).rejects.toThrow('Pingen 503');
-    expect(store.get('m1_p1')!.state).toBe('queued');
+    expect(store.get('m1_p1')!.state).toBe('submitting');
     expect(tasks).toHaveLength(0);
     expect(reverseShare).not.toHaveBeenCalled();
   });
@@ -90,7 +93,7 @@ describe('submitSending', () => {
     const { deps, store } = setup([row('m1_p1')]);
     deps.readPdf = async () => { throw new Error('storage down'); };
     await expect(submitSending(deps, 'm1_p1')).rejects.toThrow('storage down');
-    expect(store.get('m1_p1')!.state).toBe('queued');
+    expect(store.get('m1_p1')!.state).toBe('submitting');
   });
 
   it('a non-retryable error fails the record, opens one task and reverses the share by record id', async () => {
@@ -158,7 +161,124 @@ describe('submitSending', () => {
   });
 });
 
+describe('claim, ambiguity, age', () => {
+  it('claims queued -> submitting before calling Pingen, then submitted', async () => {
+    const { deps, order } = setup([row('m1_p1')]);
+    await submitSending(deps, 'm1_p1');
+    expect(order.filter((o) => o.startsWith('state:'))).toEqual(['state:submitting', 'state:submitted']);
+  });
+
+  it('writes the cost before the submitted state', async () => {
+    const { deps, order } = setup([row('m1_p1')]);
+    await submitSending(deps, 'm1_p1');
+    expect(order.indexOf('cost')).toBeGreaterThan(-1);
+    expect(order.indexOf('cost')).toBeLessThan(order.indexOf('state:submitted'));
+  });
+
+  it('two deliveries: the second sees submitted and neither fails the record', async () => {
+    const { deps, store, letter } = setup([row('m1_p1')]);
+    await Promise.all([submitSending(deps, 'm1_p1'), submitSending(deps, 'm1_p1')]);
+    expect(store.get('m1_p1')!.state).toBe('submitted');
+    await submitSending(deps, 'm1_p1');
+    // every Pingen call used the same Idempotency-Key
+    for (const c of (letter as ReturnType<typeof vi.fn>).mock.calls) expect(c[0].idempotencyKey).toBe('m1_p1');
+  });
+
+  it('a delivery that finds submitting calls Pingen again with the same key', async () => {
+    const { deps, store, letter } = setup([row('m1_p1', { state: 'submitting' })]);
+    await submitSending(deps, 'm1_p1');
+    expect(letter).toHaveBeenCalledWith(expect.objectContaining({ idempotencyKey: 'm1_p1' }));
+    expect(store.get('m1_p1')!.state).toBe('submitted');
+  });
+
+  it('a failure on a record that left submitting does not fail it, open a task or refund', async () => {
+    const { deps, store, tasks, reverseShare } = setup([row('m1_p1')], async () => { throw new PingenError('Pingen -> 422 address', 422, false); });
+    const upd = deps.updateSending;
+    deps.updateSending = async (id, patch, expect) => {
+      if (patch.state === 'failed') { store.set(id, { ...store.get(id)!, state: 'sent' }); }   // a webhook got there first
+      return upd(id, patch, expect);
+    };
+    await submitSending(deps, 'm1_p1');
+    expect(store.get('m1_p1')!.state).toBe('sent');
+    expect(tasks).toHaveLength(0);
+    expect(reverseShare).not.toHaveBeenCalled();
+  });
+
+  it('the hold skips a submitting record', async () => {
+    const { deps, store } = setup(
+      [row('m1_a'), row('m1_b'), row('m1_c'), row('m1_d', { state: 'submitting' }), row('m1_e')],
+      async () => { throw new PingenError('Pingen -> 422 invalid address', 422, false); },
+    );
+    await submitSending(deps, 'm1_a');
+    await submitSending(deps, 'm1_b');
+    await submitSending(deps, 'm1_c');
+    expect(store.get('m1_d')!.state).toBe('submitting');
+    expect(store.get('m1_e')!.state).toBe('failed');
+  });
+
+  it('409 is ambiguous: stays submitting, one task, no refund, no throw', async () => {
+    const { deps, store, tasks, reverseShare } = setup([row('m1_p1')], async () => { throw new PingenError('Pingen POST -> 409 conflict', 409, false); });
+    await expect(submitSending(deps, 'm1_p1')).resolves.toBeUndefined();
+    await submitSending(deps, 'm1_p1');   // a second delivery must not add a second task
+    expect(store.get('m1_p1')!.state).toBe('submitting');
+    expect(reverseShare).not.toHaveBeenCalled();
+    expect(tasks.filter((t) => t.name === 'Briefstatus unklar: Name m1_p1')).toHaveLength(1);
+    expect(logger.error).toHaveBeenCalled();
+  });
+
+  it('an idempotency code in the message is ambiguous too', async () => {
+    const { deps, store, reverseShare } = setup([row('m1_p1')], async () => { throw new PingenError('Pingen POST -> 422 idempotency_key_reused', 422, false); });
+    await submitSending(deps, 'm1_p1');
+    expect(store.get('m1_p1')!.state).toBe('submitting');
+    expect(reverseShare).not.toHaveBeenCalled();
+  });
+
+  it('a retryable error on a record older than 24 h fails it and refunds', async () => {
+    const { deps, store, reverseShare, tasks } = setup([row('m1_p1', { createdAt: ago(25) })], async () => { throw new PingenError('Pingen 503', 503, true); });
+    await submitSending(deps, 'm1_p1');
+    expect(store.get('m1_p1')!.state).toBe('failed');
+    expect(store.get('m1_p1')!.failReason).toBe('other');
+    expect(reverseShare).toHaveBeenCalledWith('scs', 'e1', { units: 1, pages: 2 }, 'm1_p1', expect.any(String));
+    expect(tasks).toHaveLength(1);
+  });
+
+  it('a Storage failure on a record older than 24 h fails it too', async () => {
+    const { deps, store } = setup([row('m1_p1', { createdAt: ago(30) })]);
+    deps.readPdf = async () => { throw new Error('storage down'); };
+    await submitSending(deps, 'm1_p1');
+    expect(store.get('m1_p1')!.state).toBe('failed');
+  });
+
+  it('a retryable error on a young record rethrows and stays submitting', async () => {
+    const { deps, store } = setup([row('m1_p1', { createdAt: ago(1) })], async () => { throw new PingenError('Pingen 503', 503, true); });
+    await expect(submitSending(deps, 'm1_p1')).rejects.toThrow('Pingen 503');
+    expect(store.get('m1_p1')!.state).toBe('submitting');
+  });
+
+  it('402 (Pingen balance) is retryable here', async () => {
+    const { deps, store, reverseShare } = setup([row('m1_p1')], async () => { throw new PingenError('Pingen POST -> 402 payment required', 402, false); });
+    await expect(submitSending(deps, 'm1_p1')).rejects.toThrow('402');
+    expect(store.get('m1_p1')!.state).toBe('submitting');
+    expect(reverseShare).not.toHaveBeenCalled();
+  });
+
+  it('a hold caused by unclear 400s keeps the task text generic', async () => {
+    const { deps, tasks } = setup(['m1_a', 'm1_b', 'm1_c', 'm1_d'].map((i) => row(i)), async () => { throw new PingenError('Pingen POST -> 400 bad request', 400, false); });
+    await submitSending(deps, 'm1_a');
+    await submitSending(deps, 'm1_b');
+    await submitSending(deps, 'm1_c');
+    expect(tasks.find((t) => t.relatedKey === 'mailing.m1')?.name).toBe('Versand Einladung: Briefe angehalten — Pingen hat mehrere Briefe abgelehnt');
+  });
+});
+
 describe('failSending', () => {
+  it('reverses the share before it creates the task', async () => {
+    const { deps, order } = setup([row('m1_p1')]);
+    await failSending(deps, row('m1_p1'), 'x', true);
+    expect(order.indexOf('reverse')).toBeGreaterThan(-1);
+    expect(order.indexOf('reverse')).toBeLessThan(order.indexOf('task'));
+  });
+
   it('skips the reversal when reverse is false', async () => {
     const { deps, reverseShare, tasks } = setup([row('m1_p1')]);
     await failSending(deps, row('m1_p1'), 'undeliverable', false);

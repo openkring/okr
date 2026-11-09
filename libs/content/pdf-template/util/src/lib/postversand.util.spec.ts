@@ -19,6 +19,12 @@ describe('nextSendingState', () => {
     expect(nextSendingState('submitted', 'undeliverable', false)).toBeUndefined();
     expect(nextSendingState('sent', 'issues', true)).toBeUndefined();
   });
+  it('orders submitting between queued and submitted', () => {
+    expect(nextSendingState('submitting', 'sent', false)).toBe('sent');
+    expect(nextSendingState('submitting', 'issues', true)).toBe('failed');
+    expect(nextSendingState('submitting', 'undeliverable', false)).toBeUndefined();
+    expect(nextSendingState('submitted', 'issues', true)).toBe('failed');
+  });
   it('never moves backwards or out of a terminal state', () => {
     expect(nextSendingState('delivered', 'sent', false)).toBeUndefined();
     expect(nextSendingState('failed', 'sent', false)).toBeUndefined();

@@ -8,16 +8,17 @@ export const SENDING_FINAL: SendingState[] = ['sent', 'delivered', 'failed', 'un
 
 const ORDER: Record<SendingState, number> = {
   queued: 0,
-  submitted: 1,
-  sent: 2,
-  delivered: 3,
+  submitting: 1,
+  submitted: 2,
+  sent: 3,
+  delivered: 4,
   failed: 99,
   undeliverable: 99,
 };
 
 /**
  * The state a Pingen webhook moves a sending to, or `undefined` if the event is history only.
- * Never moves backwards. A rejection fails a letter only from `queued`/`submitted`. `failed` and `undeliverable` are terminal, `undeliverable` may follow `sent`.
+ * Never moves backwards. A rejection fails a letter only from `queued`/`submitting`/`submitted`. `failed` and `undeliverable` are terminal, `undeliverable` may follow `sent`.
  * `rejected` only matters for the `issues` category (Pingen rejected the letter).
  */
 export function nextSendingState(
@@ -30,7 +31,7 @@ export function nextSendingState(
   switch (category) {
     case 'issues':
       // A letter already handed to the post (sent) was produced: a late rejection is history only.
-      target = rejected && (current === 'queued' || current === 'submitted') ? 'failed' : undefined;
+      target = rejected && (current === 'queued' || current === 'submitting' || current === 'submitted') ? 'failed' : undefined;
       break;
     case 'sent':
     case 'delivered':
