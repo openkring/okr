@@ -926,7 +926,8 @@
         "styles": [
           "apps/<%= tenantId %>-app/src/styles.scss",
           "apps/<%= tenantId %>-app/src/theme/variables.scss",
-          "node_modules/leaflet/dist/leaflet.css"
+          "node_modules/leaflet/dist/leaflet.css",
+          "libs/shared/ui/src/styles/zoom-guard.css"
         ],
         "allowedCommonJsDependencies": [
           "leaflet",
