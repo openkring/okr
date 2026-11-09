@@ -7,14 +7,22 @@ vi.mock('firebase-admin/firestore', () => ({ getFirestore: vi.fn() }));
 
 import { makeCreditPort } from './credit-port';
 import { logger } from 'firebase-functions/v2';
-import { draftHashOf, parsePostRequest, type PostOrderArgs, type QuoteEnv, withPostOrder } from './post-order';
+import { type PostLock, draftHashOf, parsePostRequest, type PostOrderArgs, type QuoteEnv, withPostOrder } from './post-order';
 import { quoteWithCaller } from './quote';
 
 const ADMIN = { roles: { memberAdmin: true }, tenants: ['scs'] };
 const OPTIONS = { deliveryProduct: 'cheap', printSpectrum: 'grayscale', printMode: 'simplex' } as const;
 
 function setup(countries: (string | undefined)[], deduct?: () => Promise<{ entryId: string; balanceAfter: number }>) {
-  const deductCredit = vi.fn(deduct ?? (async () => ({ entryId: 'e1', balanceAfter: 5 })));
+  // 1.149 contract: deducting twice under one reference returns the first entry and charges nothing more
+  const byReference = new Map<string, { entryId: string; balanceAfter: number }>();
+  const deductCredit = vi.fn(async (...a: Parameters<Parameters<typeof makeCreditPort>[0]['deductCredit']>) => {
+    const reference = a[1].reference;
+    if (byReference.has(reference)) return byReference.get(reference) as { entryId: string; balanceAfter: number };
+    const entry = await (deduct ?? (async () => ({ entryId: 'e1', balanceAfter: 5 })))();
+    byReference.set(reference, entry);
+    return entry;
+  });
   const reverseCredit = vi.fn(async () => ({ amount: 1, balanceAfter: 6, duplicate: false }));
   const port = makeCreditPort({
     quoteTransaction: (_p, units, pages) => ({ total: units * 120 + pages * 30, perUnit: 120, perPage: 30 }),
@@ -28,13 +36,23 @@ function setup(countries: (string | undefined)[], deduct?: () => Promise<{ entry
   return { env, deductCredit, reverseCredit, request };
 }
 
+type LockState = 'pending' | 'done' | 'failed';
+function fakeLock(initial?: LockState): PostLock & { state: () => LockState | undefined } {
+  let state = initial;
+  return {
+    acquire: async () => { if (state === undefined) { state = 'pending'; return { acquired: true }; } return { acquired: false, state }; },
+    set: async (next) => { state = next; },
+    state: () => state,
+  };
+}
+
 async function accepted(env: QuoteEnv, request: object, overrides: Partial<PostOrderArgs> = {}): Promise<PostOrderArgs> {
   const q = await quoteWithCaller(env, request, ADMIN);
   const r = request as typeof request & { tenantId: string; subject: string; body: string; postKeys: string[] };
   return {
     post: { via: 'pingen', options: OPTIONS, token: q.token, issuedAt: q.issuedAt },
     tenantId: r.tenantId, subject: r.subject, body: r.body, attachments: [], letterQrCodes: false, caleventKeys: [], postKeys: r.postKeys,
-    mailingKey: 'm1', mailingExists: async () => false, actor: 'uid1', caller: ADMIN, nowIso: '2026-11-09 10:00:00', ...overrides,
+    mailingKey: 'm1', mailingExists: async () => false, lock: fakeLock(), actor: 'uid1', caller: ADMIN, nowIso: '2026-11-09 10:00:00', ...overrides,
   };
 }
 
@@ -108,26 +126,51 @@ describe('withPostOrder', () => {
 });
 
 describe('withPostOrder failure handling', () => {
-  it('a second send with the same token does not deduct and returns the same key', async () => {
+  it('done lock returns the same key without deducting', async () => {
     const { env, deductCredit, request } = setup(['CH']);
     const work = vi.fn();
-    const r = await withPostOrder(env, await accepted(env, request, { mailingExists: async () => true }), work);
+    const r = await withPostOrder(env, await accepted(env, request, { lock: fakeLock('done') }), work);
     expect(r.duplicate).toBe(true);
     expect(deductCredit).not.toHaveBeenCalled();
     expect(work).not.toHaveBeenCalled();
   });
 
-  it('ALREADY_EXISTS on create counts as the same duplicate: no reversal, no error', async () => {
-    const { env, request, reverseCredit } = setup(['CH']);
-    const exists = vi.fn().mockResolvedValueOnce(false).mockResolvedValue(true);
-    const r = await withPostOrder(env, await accepted(env, request, { mailingExists: exists }), async () => { throw Object.assign(new Error('exists'), { code: 6 }); });
-    expect(r.duplicate).toBe(true);
-    expect(reverseCredit).not.toHaveBeenCalled();
+  it('concurrent second request while pending gets aborted and touches nothing', async () => {
+    const { env, deductCredit, reverseCredit, request } = setup(['CH']);
+    const work = vi.fn();
+    await expect(withPostOrder(env, await accepted(env, request, { lock: fakeLock('pending') }), work)).rejects.toMatchObject({ code: 'aborted', message: 'send in progress' });
+    expect([deductCredit, reverseCredit, work].map((m) => m.mock.calls.length)).toEqual([0, 0, 0]);
+  });
+
+  it('failure sets the lock to failed', async () => {
+    const { env, request } = setup(['CH']);
+    const lock = fakeLock();
+    await expect(withPostOrder(env, await accepted(env, request, { lock }), async () => { throw new Error('x'); })).rejects.toThrow('x');
+    expect(lock.state()).toBe('failed');
+  });
+
+  it('success sets the lock to done', async () => {
+    const { env, request } = setup(['CH']);
+    const lock = fakeLock();
+    await withPostOrder(env, await accepted(env, request, { lock }), async () => 1);
+    expect(lock.state()).toBe('done');
+  });
+
+  it('retry after a failed and reversed send is refused with price-changed and charges nothing net', async () => {
+    const { env, deductCredit, reverseCredit, request } = setup(['CH']);
+    const lock = fakeLock();
+    const args = await accepted(env, request, { lock });
+    await expect(withPostOrder(env, args, async () => { throw new Error('write failed'); })).rejects.toThrow('write failed');
+    const work = vi.fn();
+    await expect(withPostOrder(env, args, work)).rejects.toMatchObject({ code: 'failed-precondition', message: 'price-changed' });
+    expect(work).not.toHaveBeenCalled();
+    expect(deductCredit).toHaveBeenCalledTimes(1);
+    expect(reverseCredit).toHaveBeenCalledTimes(1);
   });
 
   it('write committed but reported failure: no reversal, original error rethrown', async () => {
     const { env, request, reverseCredit } = setup(['CH']);
-    const exists = vi.fn().mockResolvedValueOnce(false).mockResolvedValue(true);
+    const exists = vi.fn().mockResolvedValue(true);
     const boom = new Error('deadline');
     await expect(withPostOrder(env, await accepted(env, request, { mailingExists: exists }), async () => { throw boom; })).rejects.toBe(boom);
     expect(reverseCredit).not.toHaveBeenCalled();

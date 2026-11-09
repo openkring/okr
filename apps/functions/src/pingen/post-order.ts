@@ -237,6 +237,8 @@ export interface PostOrderArgs {
   mailingKey: string;
   /** whether the mailing doc already exists (a replay of the same quote, or a write that committed) */
   mailingExists(): Promise<boolean>;
+  /** the `post-orders` lock of this quote: taken before any money moves */
+  lock: PostLock;
   /** the caller's uid: the credit entry records who spent it */
   actor: string;
   caller: QuoteCaller;
@@ -253,14 +255,29 @@ export function parsePostRequest(raw: unknown): PostRequest | undefined {
   return { via: 'pingen', options: parseOptions(p['options']), token: p['token'], issuedAt: p['issuedAt'] };
 }
 
+/** Functions-only collection (no client access, see firestore.rules). */
+export const PostOrderCollection = 'post-orders';
+
+export type PostLockState = 'pending' | 'done' | 'failed';
+
+/** The `post-orders/{mailingKey}` lock doc (functions-only collection): one holder per quote token. */
+export interface PostLock {
+  /** creates the lock as `pending`; when it exists already, says in which state */
+  acquire(): Promise<{ acquired: true } | { acquired: false; state: PostLockState }>;
+  set(state: 'done' | 'failed'): Promise<void>;
+}
+
+export interface PostOrderDoc {
+  tenantId: string;
+  state: PostLockState;
+  createdAt: string;
+  /** createdAt + 1 day; a Firestore TTL policy on this field can be added later */
+  expiresAt: string;
+}
+
 /** The mailing id of a Pingen send: the same quote token always names the same Versand, so a replay cannot charge twice. */
 export function postMailingKey(tenantId: string, token: string): string {
   return createHash('sha256').update(`${tenantId}:${token}`).digest('hex').slice(0, 20);
-}
-
-function isAlreadyExists(error: unknown): boolean {
-  const code = (error as { code?: unknown } | null)?.code;
-  return code === 6 || code === 'already-exists' || code === 'ALREADY_EXISTS';
 }
 
 export interface PostOrderResult<T> {
@@ -271,10 +288,12 @@ export interface PostOrderResult<T> {
 
 /**
  * Accepts a Pingen order around `work` (which stores the attachments and creates the mailing doc):
- * port (fails closed) → recompute and verify the quote → replay check → deduct once → `work(post)`.
- * If `work` fails the deduction is reversed in whole, unless the mailing doc exists after all (the write
- * committed); the ORIGINAL error is always rethrown, a failed reversal is only logged.
- * With no Swiss letter nothing is deducted and `work` gets `undefined`: the Post part is the download.
+ * port (fails closed) → recompute and verify the quote → take the lock → deduct once → `work(post)` → lock `done`.
+ * A lock that exists: `done` = the same Versand (duplicate, nothing deducted), `pending` = another request is
+ * on it (`aborted`), `failed` = the quote was spent on a failed send, so the sender re-quotes (`price-changed`).
+ * Only the holder deducts. If anything fails after the lock, the holder reverses its deduction in whole (unless the
+ * mailing doc exists after all), sets the lock `failed` and rethrows the ORIGINAL error; a failed reversal or lock
+ * update is only logged. With no Swiss letter nothing is deducted and the Post part is the download.
  */
 export async function withPostOrder<T>(env: QuoteEnv, args: PostOrderArgs, work: (post: MailingPost | undefined) => Promise<T>): Promise<PostOrderResult<T>> {
   assertMayPost(args.caller, args.tenantId);
@@ -285,33 +304,51 @@ export async function withPostOrder<T>(env: QuoteEnv, args: PostOrderArgs, work:
   };
   const computed = await computeQuote(await quoteDepsOf(env, port, input, args.post.issuedAt), input);
   if (!verifyQuote(args.post.token, computed.payload, env.secret, env.now)) throw new HttpsError('failed-precondition', 'price-changed');
-  if (await args.mailingExists()) return { duplicate: true };
-  if (computed.letters === 0) return { duplicate: false, value: await work(undefined) };
 
-  // insufficient credit surfaces as the port's failed-precondition
-  const entry = await port.deduct(args.tenantId, { letters: computed.letters, pages: computed.pages, reference: `mailing.${args.mailingKey}`, actor: args.actor });
-  const post: MailingPost = {
-    via: 'pingen', options: args.post.options, recipients: [...new Set(computed.payload.recipients)].sort(),
-    letters: computed.letters, abroad: computed.abroad, pages: computed.pages, total: computed.total,
-    creditEntryId: entry.entryId, acceptedBy: args.actor, acceptedAt: args.nowIso,
-  };
-  try {
-    return { duplicate: false, value: await work(post) };
-  } catch (error) {
-    const key = `mailing.${args.mailingKey}-undo`;
+  const taken = await args.lock.acquire();
+  if (!taken.acquired) {
+    if (taken.state === 'done') return { duplicate: true };
+    if (taken.state === 'pending') throw new HttpsError('aborted', 'send in progress');
+    throw new HttpsError('failed-precondition', 'price-changed');
+  }
+  const key = `mailing.${args.mailingKey}-undo`;
+  const setLock = async (state: 'done' | 'failed'): Promise<void> => {
     try {
-      if (await args.mailingExists()) {
-        // the write committed (or a concurrent send of the same quote won): the deduction pays for it
-        if (isAlreadyExists(error)) return { duplicate: true };
-      } else {
-        await port.reverseShare(args.tenantId, entry.entryId, { units: computed.letters, pages: computed.pages }, key, 'mailing not stored');
+      await args.lock.set(state);
+    } catch (e) {
+      logger.error('postversand: lock not updated', { tenantId: args.tenantId, mailingKey: args.mailingKey, state, error: String((e as Error)?.message ?? e) });
+    }
+  };
+  let entryId: string | undefined;
+  try {
+    let post: MailingPost | undefined;
+    if (computed.letters > 0) {
+      // insufficient credit surfaces as the port's failed-precondition
+      const entry = await port.deduct(args.tenantId, { letters: computed.letters, pages: computed.pages, reference: `mailing.${args.mailingKey}`, actor: args.actor });
+      entryId = entry.entryId;
+      post = {
+        via: 'pingen', options: args.post.options, recipients: [...new Set(computed.payload.recipients)].sort(),
+        letters: computed.letters, abroad: computed.abroad, pages: computed.pages, total: computed.total,
+        creditEntryId: entry.entryId, acceptedBy: args.actor, acceptedAt: args.nowIso,
+      };
+    }
+    const value = await work(post);
+    await setLock('done');
+    return { duplicate: false, value };
+  } catch (error) {
+    let committed = false;
+    try {
+      committed = await args.mailingExists();
+      if (!committed && entryId !== undefined) {
+        await port.reverseShare(args.tenantId, entryId, { units: computed.letters, pages: computed.pages }, key, 'mailing not stored');
       }
     } catch (reversalError) {
       logger.error('postversand: deduction not reversed', {
-        tenantId: args.tenantId, entryId: entry.entryId, key, letters: computed.letters, pages: computed.pages, total: computed.total,
+        tenantId: args.tenantId, entryId, key, letters: computed.letters, pages: computed.pages, total: computed.total,
         error: String((error as Error)?.message ?? error), reversalError: String((reversalError as Error)?.message ?? reversalError),
       });
     }
+    await setLock(committed ? 'done' : 'failed');
     throw error;
   }
 }

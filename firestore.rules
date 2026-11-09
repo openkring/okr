@@ -1605,6 +1605,11 @@ service cloud.firestore {
     match /webhook-events/{docId} {
       allow read, write: if false;
     }
+    // Postversand locks (spec 1.150): one per Pingen quote token, taken before any credit moves. Admin-SDK only.
+    // A TTL policy on `post-orders.expiresAt` can be added later.
+    match /post-orders/{id} {
+      allow read, write: if false;
+    }
     // External Data Gateway — provider response cache. Admin-SDK only.
     // Configure a Firestore TTL policy on `apiCache.expiresAt`.
     match /apiCache/{docId} {

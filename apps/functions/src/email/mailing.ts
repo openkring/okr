@@ -44,7 +44,7 @@ import { asLayoutChoice } from './render-email.logic';
 import { buildMailingLetters, countLetterPages, LetterEvent } from './mailing-letters';
 import { mailingCategory } from './mailing-deliveries.logic';
 import { getCreditPort } from '../pingen/credit-port';
-import { answerEventsOf, type MailingPost, parsePostRequest, postMailingKey, quoteTokenSecret, readCountryCodes, type QuoteEnv, withPostOrder } from '../pingen/post-order';
+import { answerEventsOf, type MailingPost, type PostLock, type PostOrderDoc, PostOrderCollection, parsePostRequest, postMailingKey, quoteTokenSecret, readCountryCodes, type QuoteEnv, withPostOrder } from '../pingen/post-order';
 
 const REGION = 'europe-west6';
 export const MailingCollection = 'mailings';
@@ -250,6 +250,27 @@ async function storeAttachments(resolved: ResolvedAttachment[], tenantId: string
   return out;
 }
 
+/** The `post-orders/{key}` lock of a Pingen send (Admin SDK only, see firestore.rules). */
+function postLockOf(db: Firestore, key: string, tenantId: string): PostLock {
+  const lockRef = db.collection(PostOrderCollection).doc(key);
+  return {
+    acquire: async () => {
+      const now = new Date();
+      const doc: PostOrderDoc = { tenantId, state: 'pending', createdAt: now.toISOString(), expiresAt: new Date(now.getTime() + 24 * 3600 * 1000).toISOString() };
+      try {
+        await lockRef.create(doc);
+        return { acquired: true as const };
+      } catch (error) {
+        const code = (error as { code?: unknown }).code;
+        if (code !== 6 && code !== 'already-exists') throw error;
+        const state = (await lockRef.get()).data()?.['state'];
+        return { acquired: false as const, state: state === 'done' || state === 'failed' ? state : 'pending' };
+      }
+    },
+    set: async (state) => { await lockRef.update({ state }); },
+  };
+}
+
 /** After a failed send: drops the files stored for it, unless the mailing doc exists (then they are its files). Never throws. */
 async function removeStoredAttachments(ref: FirebaseFirestore.DocumentReference, tenantId: string): Promise<void> {
   try {
@@ -388,7 +409,7 @@ export const sendMailing = onCall(
       await withPostOrder(postEnv(), {
         // subject and QR flag exactly as the quote saw them (the token hashes the request, not the stored doc)
         post: postRequest, tenantId, subject: data.subject, body: data.body, attachments: resolved, letterQrCodes: data.letterQrCodes === true,
-        caleventKeys, postKeys: keysFor(deliveries, DeliveryChannel.Post), mailingKey: ref.id, mailingExists: async () => (await ref.get()).exists, actor: uid,
+        caleventKeys, postKeys: keysFor(deliveries, DeliveryChannel.Post), mailingKey: ref.id, mailingExists: async () => (await ref.get()).exists, lock: postLockOf(db, ref.id, tenantId), actor: uid,
         caller: caller as { roles?: unknown; tenants?: string[] }, nowIso: getTodayStr(DateFormat.StoreDateTime),
       }, build);
     } else {
