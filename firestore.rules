@@ -1439,6 +1439,16 @@ service cloud.firestore {
       allow read:   if (isPrivileged() || hasRole('memberAdmin')) && tenantRead();
       allow write:  if false;
     }
+    // sendings (spec 1.150): one doc per letter sent by post through Pingen, written only by Cloud Functions
+    // (Admin SDK). memberAdmin / privileged of the tenant may follow them; no client write. `private/cost` holds
+    // what the provider charges bkaiser (SendingCost): never readable by a client.
+    match /sendings/{id}           {
+      allow read:   if (isPrivileged() || hasRole('memberAdmin')) && tenantRead();
+      allow write:  if false;
+      match /private/{doc} {
+        allow read, write: if false;
+      }
+    }
     // notices (spec 1.145 §10): the In-App delivery of a Versand, written only by `onMailing`. A
     // recipient reads it (the «my notices» query is `recipients array-contains <personKey>`, same shape
     // as contracts' partyPersonKeys), and so do memberAdmin / privileged of its tenant. Files are opened

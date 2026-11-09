@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  buildLetterHtml, eventsBlockHtml, LETTER_QR_INTRO, LETTER_TEMPLATE_ORIGINS, qrSvgOf, withEventsBlock, escapeHtml, isAllowedLetterRequest, isPdfAttachment, isReapableLetters, isUsableLetterTemplate,
+  buildLetterHtml, eventsBlockHtml, LETTER_QR_INTRO, LETTER_TEMPLATE_ORIGINS, qrSvgOf, withEventsBlock, escapeHtml, isAllowedLetterRequest, isPdfAttachment, isReapableLetters, isReapableSendingLetter, isUsableLetterTemplate,
   letterDate, letterPayload, letterTemplateKey, lettersPath, mayGetLetters, placeAndDate,
 } from './mailing-letters';
 
@@ -174,5 +174,32 @@ describe('buildLetterHtml with events', () => {
       placeAndDate: '', subject: 'S', body: '<p>Text</p>', eventsHtml: '<div class="okr-letter-events"></div>',
     });
     expect(html.indexOf('<p>Text</p>')).toBeLessThan(html.indexOf('okr-letter-events'));
+  });
+});
+
+describe('per-letter PDFs of a sending (spec 1.150)', () => {
+  const now = Date.parse('2026-11-20T00:00:00Z');
+  const name = 'mailing-letters/m1/p1.pdf';
+  const day = 24 * 60 * 60 * 1000;
+
+  it('keeps a per-letter PDF of a sent record for 90 days', () => {
+    const updatedAt = new Date(now - 89 * day).toISOString();
+    expect(isReapableSendingLetter(name, now, { state: 'sent', updatedAt })).toBe(false);
+  });
+
+  it('deletes it after 90 days', () => {
+    const updatedAt = new Date(now - 91 * day).toISOString();
+    expect(isReapableSendingLetter(name, now, { state: 'sent', updatedAt })).toBe(true);
+    expect(isReapableSendingLetter(name, now, { state: 'failed', updatedAt })).toBe(true);
+  });
+
+  it("never deletes a queued record's PDF", () => {
+    const updatedAt = new Date(now - 400 * day).toISOString();
+    expect(isReapableSendingLetter(name, now, { state: 'queued', updatedAt })).toBe(false);
+    expect(isReapableSendingLetter(name, now, { state: 'submitted', updatedAt })).toBe(false);
+  });
+
+  it('never deletes on a missing or unreadable updatedAt', () => {
+    expect(isReapableSendingLetter(name, now, { state: 'sent', updatedAt: '' })).toBe(false);
   });
 });

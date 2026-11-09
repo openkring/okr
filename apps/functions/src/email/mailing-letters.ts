@@ -12,7 +12,7 @@
 //
 // The file holds postal addresses: it lives in the private bucket under `mailing-letters/`, is handed out
 // only through `getMailingLetters` (a signed URL for the sender or memberAdmin / privileged), and the
-// nightly `mailingLettersReap` deletes it after 7 days.
+// nightly `mailingLettersReap` deletes the combined file after 7 days (a per-letter PDF of a sending follows its record, 90 days).
 
 import { CallableRequest, HttpsError, onCall } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
@@ -21,6 +21,7 @@ import { PDFDocument } from 'pdf-lib';
 import QRCode from 'qrcode';
 import { TemplateCollection, TemplateVersionSubcollection, type NoticeAttachment, type TemplateAssetRef } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
+import { SENDING_FINAL } from '@okr/content-pdf-template-util';
 import { isOrgRecipient, ORG_RECIPIENT_PREFIX, recipientParentKey } from '@okr/shared-util-core';
 
 import { privateBucket } from '../_storage/private-bucket';
@@ -35,6 +36,8 @@ const REGION = 'europe-west6';
 export const LETTERS_PREFIX = 'mailing-letters/';
 /** How long the letters wait for their download. */
 export const LETTERS_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+/** How long the PDF of a finished sending (spec 1.150) stays as the proof of what went out. */
+export const SENDING_LETTER_MAX_AGE_MS = 90 * 24 * 60 * 60 * 1000;
 const URL_LIFETIME_MS = 10 * 60 * 1000;
 
 export interface LetterParty {
@@ -448,13 +451,43 @@ export function isReapableLetters(name: string, timeCreated: string | undefined,
   return nowMs - createdMs > maxAgeMs;
 }
 
-/** Nightly: deletes letters files after 7 days — they hold postal addresses and were meant for one download. */
+/**
+ * Whether the PDF of one sending (`sendings` record found by its `storagePath`) may go: only once the record is
+ * final (sent / delivered / failed / undeliverable) and has not changed for 90 days. A queued or submitted record
+ * keeps its PDF, and so does one without a readable `updatedAt`.
+ */
+export function isReapableSendingLetter(
+  name: string,
+  nowMs: number,
+  sending: { state?: string; updatedAt?: string },
+  maxAgeMs = SENDING_LETTER_MAX_AGE_MS,
+): boolean {
+  if (!name.startsWith(LETTERS_PREFIX)) return false;
+  if (!(SENDING_FINAL as string[]).includes(sending.state ?? '')) return false;
+  const updatedMs = new Date(sending.updatedAt ?? 0).getTime();
+  if (!Number.isFinite(updatedMs) || updatedMs <= 0) return false;
+  return nowMs - updatedMs > maxAgeMs;
+}
+
+/**
+ * Nightly: deletes letters files — they hold postal addresses. A file that a `sendings` record points to (the
+ * per-letter PDF, `mailing-letters/<mailingKey>/<recipientKey>.pdf`) follows that record: 90 days after it
+ * became final, never while it is open. Every other file (the combined download PDF) goes after 7 days.
+ * Combined and per-letter paths have the same depth, so the record lookup by `storagePath` tells them apart.
+ */
 export async function runMailingLettersReap(): Promise<void> {
   const [files] = await privateBucket().getFiles({ prefix: LETTERS_PREFIX });
+  const db = getFirestore();
   const now = Date.now();
   let deleted = 0;
   for (const f of files) {
-    if (isReapableLetters(f.name, f.metadata.timeCreated, now)) {
+    // nothing younger than 7 days can be reaped by either rule, so skip the lookup
+    if (!isReapableLetters(f.name, f.metadata.timeCreated, now)) continue;
+    const owner = await db.collection('sendings').where('storagePath', '==', f.name).limit(1).get();
+    const reap = owner.empty
+      ? true
+      : isReapableSendingLetter(f.name, now, owner.docs[0].data() as { state?: string; updatedAt?: string });
+    if (reap) {
       await f.delete();
       deleted++;
     }
