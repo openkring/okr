@@ -10,6 +10,10 @@ import { parseFeed } from './status-parsers';
 import { withSelftest } from './selftest-status';
 import { WEBHOOK_SELFTEST_DOC, WebhookSelftestCollection, type WebhookSelftestResult } from '../_webhooks/selftest';
 import { getFirestore } from 'firebase-admin/firestore';
+import { WebhookEventCollection } from '../_webhooks/types';
+import { makePingenClient, pingenClientId, pingenClientSecret, pingenEnv, pingenOrganisationId } from '../pingen/pingen-client';
+import { pingenWebhookSecret } from '../pingen/pingen-webhook';
+import { newestRealWebhookMs, withPingen, type PingenOrganisationRead } from './pingen-status';
 
 const CF_NAME = 'getServiceStatus';
 const CACHE_PROVIDER = 'serviceStatus';
@@ -72,13 +76,49 @@ export async function loadServiceStatus(deps: StatusDeps, nowMs: number): Promis
  * europe-west6's CPU quota is full and the default of 20 is what eats it.
  */
 export const getServiceStatus = onCall(
-  { region: 'europe-west6', enforceAppCheck: true, maxInstances: 2 },
+  { region: 'europe-west6', enforceAppCheck: true, maxInstances: 2, secrets: [pingenClientId, pingenClientSecret, pingenWebhookSecret] },
   async (request): Promise<ServiceStatusResult> => {
     await requireAdmin(request, CF_NAME);
-    const [status, selftest] = await Promise.all([loadServiceStatus(LIVE_DEPS, Date.now()), readSelftest()]);
-    return withSelftest(status, selftest, Date.now());
+    const now = Date.now();
+    const [status, selftest, organisation, lastWebhookMs] = await Promise.all([
+      loadServiceStatus(LIVE_DEPS, now), readSelftest(), readPingenOrganisation(now), readLastPingenWebhookMs(),
+    ]);
+    return withPingen(withSelftest(status, selftest, now), { organisation, lastWebhookMs, selftest, nowMs: now });
   },
 );
+
+const PINGEN_TTL_MS = 5 * 60 * 1000;
+let pingenMemo: { at: number; read: PingenOrganisationRead } | undefined;
+
+/** The organisation's balance. Memoised per instance for 5 minutes (a Pingen call per page open is needless); a failure is a code, never a throw. */
+async function readPingenOrganisation(nowMs: number): Promise<PingenOrganisationRead> {
+  if (pingenMemo && nowMs - pingenMemo.at < PINGEN_TTL_MS) return pingenMemo.read;
+  try {
+    const client = makePingenClient({
+      fetch, now: () => nowMs, clientId: pingenClientId.value(), clientSecret: pingenClientSecret.value(),
+      organisationId: pingenOrganisationId.value(), env: pingenEnv.value() === 'production' ? 'production' : 'staging',
+    });
+    const read = await client.readOrganisation();
+    pingenMemo = { at: nowMs, read };
+    return read;
+  } catch (error) {
+    const code = String((error as { status?: unknown })?.status ?? 'unavailable');
+    logger.warn(`${CF_NAME}: pingen organisation unreadable`, { code });
+    return { error: code };
+  }
+}
+
+/** Newest real webhook. Needs the clientId + receivedAt index; until it is deployed the part reads unknown. */
+async function readLastPingenWebhookMs(): Promise<number | undefined> {
+  try {
+    const snap = await getFirestore().collection(WebhookEventCollection)
+      .where('clientId', '==', 'pingen').orderBy('receivedAt', 'desc').limit(10).get();
+    return newestRealWebhookMs(snap.docs.map(d => ({ receivedAtMs: d.get('receivedAt').toMillis() as number, payload: d.get('payload') })));
+  } catch (error) {
+    logger.warn(`${CF_NAME}: pingen webhooks unreadable`, { error: String(error) });
+    return undefined;
+  }
+}
 
 /** Best effort: an unreadable result shows the receiver row as unknown, never fails the page. */
 async function readSelftest(): Promise<WebhookSelftestResult | undefined> {

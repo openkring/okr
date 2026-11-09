@@ -45,6 +45,12 @@ describe('AOC_STATUS_SERVICES', () => {
     expect(s?.feedUrl).toBeUndefined();
   });
 
+  it('gives the internal Pingen row a verified status page, three parts and the mailing block (1.150)', () => {
+    expect(service('pingen')).toMatchObject({ source: 'internal', statusUrl: 'https://status.pingen.com', featureBlocks: ['subject'] });
+    expect(service('pingen').parts.map(p => p.label)).toEqual(['Guthaben', 'Letzter Webhook', 'Webhook-Selbsttest']);
+    expect(service('pingen').feedUrl).toBeUndefined();
+  });
+
   it('gives a link-only service no parts and no feed url', () => {
     for (const s of AOC_STATUS_SERVICES.filter(x => x.source === 'none')) {
       expect(s.parts, s.id).toEqual([]);

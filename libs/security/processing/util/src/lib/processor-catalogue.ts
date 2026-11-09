@@ -451,6 +451,42 @@ export const PROCESSOR_CATALOGUE: readonly CatalogueEntry[] = [
     memberNoticeDe:
       'Beim Öffnen des Video-Tabs im NewsCenter wurde deine IP-Adresse beim Laden der Vorschaubilder an YouTube übermittelt, beim Öffnen eines Videos zusätzlich Wiedergabedaten.',
   },
+  {
+    key: 'pingen',
+    name: 'Pingen (Druck und Versand von Briefen)',
+    legalEntity: 'Pingen GmbH, Badenerstrasse 47, 8004 Zürich, CH',
+    role: 'processor',
+    category: 'saasService',
+    country: 'CH',
+    transferMechanism: 'domestic',
+    purposes: [
+      'Druck und Versand von Briefen (Postversand), die ein Verein aus der Mitteilungszentrale in Auftrag gibt',
+    ],
+    // Übermittelt wird der fertige Brief als PDF: Empfängername und Postadresse stehen im Adressfenster,
+    // dazu der Brieftext. Die Webhook-Ereignisse von Pingen enthalten keine Personendaten; eine dort
+    // gemeldete korrigierte Adresse wird nie gespeichert. bkaiser zahlt für alle Mandanten aus einem
+    // vorausbezahlten Konto bei Pingen (eine Organisation) und verrechnet den Mandanten den Versand.
+    dataClasses: ['identity', 'contact', 'content'],
+    retentionText:
+      'Solange die Geschäftsbeziehung besteht, längstens bis 18 Monate nach Abschluss des Auftrags (Datenschutzerklärung des Anbieters)',
+    securityMeasures: [
+      'TLS-verschlüsselte Übertragung',
+      'Zugangsdaten und Webhook-Signaturschlüssel serverseitig im Secret Manager, nie im Client',
+      'Webhook-Signatur wird bei jedem Ereignis geprüft',
+      'Adresse und Briefinhalt gelangen nur mit dem Versandauftrag zu Pingen, nie in Ereignisprotokolle',
+    ],
+    // Pingen veröffentlicht keinen Auftragsverarbeitungsvertrag (Datenschutzerklärung geprüft am 2026-11-09;
+    // sie verweist nur auf eine Liste der Unterauftragnehmer). Bewusst leer: Prüfung 5 meldet die Lücke,
+    // der Vertrag ist bei Pingen anzufordern.
+    dpaUrl: '',
+    privacyUrl: 'https://www.pingen.ch/en/privacy-policy/',
+    contact: 'dsgvo@pingen.com',
+    // Kein Mandanten-Schalter: jeder Mandant mit der Mitteilungszentrale kann Briefe versenden.
+    enabledWhen: byFeatureBlock('subject'),
+    cloudFunctions: ['pingen/quoteMailingLetters', 'pingen/onSendingCreated', 'webhooks/pingen'],
+    memberNoticeDe:
+      'Wenn der Verein dir einen Brief per Post schickt, wurden dein Name und deine Postadresse zusammen mit dem Brief an den Druck- und Versanddienst übermittelt. Ein bereits versandter Brief lässt sich nicht zurückholen. Der Dienst löscht seine Daten nach eigener Frist, spätestens 18 Monate nach Abschluss des Auftrags.',
+  },
 ] as const;
 
 /**

@@ -5079,6 +5079,25 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "clientId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "receivedAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "webhook-events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
           "fieldPath": "state",
           "order": "ASCENDING"
         },
