@@ -17,7 +17,7 @@ import { NewsCenterStore } from './news-center.store';
   imports: [NewsSettingsModal],
   template: `
     <okr-news-settings-modal class="ion-page"
-      [segment]="store.segment()" [isCurator]="store.isCurator()" [i18n]="store.i18n"
+      [segment]="store.segment()" [isCurator]="store.isCurator()" [avatars]="store.avatars()" [i18n]="store.i18n"
       [mine]="store.channels()" [hidden]="store.hiddenChannels()" [optional]="store.optionalChannels()" [club]="store.clubChannels()"
       [myRequests]="store.myRequests()" [openRequests]="store.openRequests()" [canSuggest]="store.canSuggest()"
       [resolved]="store.resolved()" [preview]="store.preview()" [resolveError]="store.resolveError()"

@@ -19,7 +19,7 @@ import { NewsChannelList } from './news-channel-list';
       <ng-template>
         <ion-content>
           <okr-news-channel-list
-            [channels]="channels()" [selectedKey]="selectedKey()" [failedKeys]="failedKeys()" [i18n]="i18n()"
+            [channels]="channels()" [selectedKey]="selectedKey()" [failedKeys]="failedKeys()" [avatars]="avatars()" [i18n]="i18n()"
             (selected)="onSelected($event)" />
         </ion-content>
       </ng-template>
@@ -31,6 +31,7 @@ export class NewsChannelSheet {
   public readonly channels = input.required<NewsChannelModel[]>();
   public readonly selectedKey = input<string>('all');
   public readonly failedKeys = input<string[]>([]);
+  public readonly avatars = input<Record<string, string>>({});
   public readonly i18n = input.required<NewsCenterI18n>();
 
   public readonly selected = output<string>();

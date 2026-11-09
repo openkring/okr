@@ -172,8 +172,8 @@ type SettingsView = 'mine' | 'club';
 
     <ng-template #avatarTpl let-channel>
       <ion-avatar slot="start">
-        @if (channel.avatarUrl) {
-          <img okrImg [src]="channel.avatarUrl | newsImage" alt="" referrerpolicy="no-referrer" />
+        @if (avatars()[channel.okey]; as avatar) {
+          <img okrImg [src]="avatar | newsImage" alt="" referrerpolicy="no-referrer" />
         } @else {
           <div class="initial">{{ channel.name.charAt(0) }}</div>
         }
@@ -184,6 +184,7 @@ type SettingsView = 'mine' | 'club';
 export class NewsSettingsModal {
   public readonly segment = input.required<NewsSegment>();
   public readonly isCurator = input(false);
+  public readonly avatars = input<Record<string, string>>({});
   public readonly mine = input<NewsChannelModel[]>([]);
   public readonly hidden = input<NewsChannelModel[]>([]);
   public readonly optional = input<NewsChannelModel[]>([]);

@@ -26,8 +26,8 @@ import { NewsImagePipe } from './news-image.pipe';
       @for (channel of channels(); track channel.okey) {
         <ion-item button detail="false" [class.selected]="selectedKey() === channel.okey" (click)="selected.emit(channel.okey)">
           <ion-avatar slot="start">
-            @if (channel.avatarUrl) {
-              <img okrImg [src]="channel.avatarUrl | newsImage" alt="" referrerpolicy="no-referrer" />
+            @if (avatars()[channel.okey]; as avatar) {
+              <img okrImg [src]="avatar | newsImage" alt="" referrerpolicy="no-referrer" />
             } @else {
               <div class="initial">{{ channel.name.charAt(0) }}</div>
             }
@@ -45,6 +45,8 @@ export class NewsChannelList {
   public readonly channels = input.required<NewsChannelModel[]>();
   public readonly selectedKey = input<string>('all');
   public readonly failedKeys = input<string[]>([]);
+  /** okey → avatar url (explicit avatarUrl or a webcam's current still), from `NewsCenterStore.avatars` */
+  public readonly avatars = input<Record<string, string>>({});
   public readonly i18n = input.required<NewsCenterI18n>();
 
   public readonly selected = output<string>();

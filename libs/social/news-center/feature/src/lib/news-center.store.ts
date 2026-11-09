@@ -12,7 +12,7 @@ import { getFullName, hasRole } from '@okr/shared-util-core';
 import { NewsChannelRequestService, NewsChannelService, NewsRelayService, NewsSubscriptionService } from '@okr/social-news-center-data-access';
 import type { NewsResolveError } from '@okr/social-news-center-ui';
 import {
-  canSuggest, effectiveChannels, hiddenChannels, mergeNewest, NEWS_CENTER_I18N_KEYS, NewsCenterI18n, NewsItem, NewsRequestFormData,
+  avatarOf, canSuggest, effectiveChannels, hiddenChannels, mergeNewest, NEWS_CENTER_I18N_KEYS, NewsCenterI18n, NewsItem, NewsRequestFormData,
   optionalChannels, parseNewsFeed, ResolvedNewsSource,
 } from '@okr/social-news-center-util';
 
@@ -133,6 +133,15 @@ export const NewsCenterStore = signalStore(
       optionalChannels: computed(() => optionalChannels(allChannels(), subscription(), store.segment())),
       /** curator view: every channel of the segment, in club order */
       clubChannels: computed(() => allChannels().filter((c) => c.segment === store.segment())),
+      /** okey → avatar url: an explicit avatarUrl, else a webcam's current still (design 2026-11-09 §5.2) */
+      avatars: computed(() => {
+        const out: Record<string, string> = {};
+        for (const c of allChannels()) {
+          const url = avatarOf(c, store.feeds()[c.okey]);
+          if (url) out[c.okey] = url;
+        }
+        return out;
+      }),
       myRequests,
       openRequests,
       openRequestCount: computed(() => openRequests().length),

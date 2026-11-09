@@ -23,7 +23,7 @@ import { NewsCard } from './news-card';
       <div class="grid">
         @for (item of items(); track item.channelKey + '/' + item.id) {
           <okr-news-card
-            [item]="item" [channel]="channelOf(item)" [segment]="segment()" [i18n]="i18n()"
+            [item]="item" [channel]="channelOf(item)" [avatarUrl]="avatars()[item.channelKey] ?? ''" [segment]="segment()" [i18n]="i18n()"
             (click)="opened.emit(item)" />
         }
       </div>
@@ -40,6 +40,7 @@ export class NewsGrid {
   public readonly channels = input.required<NewsChannelModel[]>();
   public readonly segment = input<NewsSegment>('video');
   public readonly loading = input(false);
+  public readonly avatars = input<Record<string, string>>({});
   public readonly i18n = input.required<NewsCenterI18n>();
 
   public readonly opened = output<NewsItem>();

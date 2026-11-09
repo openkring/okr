@@ -53,8 +53,8 @@ import { formatNewsDate, formatNewsDuration } from './news-date';
         }
       </div>
       <div class="meta">
-        @if (channel()?.avatarUrl) {
-          <ion-avatar><img okrImg [src]="channel()!.avatarUrl | newsImage" alt="" referrerpolicy="no-referrer" /></ion-avatar>
+        @if (avatarUrl()) {
+          <ion-avatar><img okrImg [src]="avatarUrl() | newsImage" alt="" referrerpolicy="no-referrer" /></ion-avatar>
         }
         <div class="text">
           <div class="title">{{ item().title }}</div>
@@ -70,6 +70,8 @@ import { formatNewsDate, formatNewsDuration } from './news-date';
 export class NewsCard {
   public readonly item = input.required<NewsItem>();
   public readonly channel = input<NewsChannelModel>();
+  /** the channel's avatar (explicit or a webcam's current still); '' = none */
+  public readonly avatarUrl = input('');
   public readonly segment = input<NewsSegment>('video');
   public readonly i18n = input.required<NewsCenterI18n>();
 

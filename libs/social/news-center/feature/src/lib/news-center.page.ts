@@ -76,7 +76,7 @@ import { NewsCenterStore } from './news-center.store';
     <ion-content>
       <div class="layout">
         <aside class="channels">
-          <okr-news-channel-list [channels]="store.channels()" [selectedKey]="store.activeKey()" [failedKeys]="store.failedKeys()"
+          <okr-news-channel-list [channels]="store.channels()" [selectedKey]="store.activeKey()" [failedKeys]="store.failedKeys()" [avatars]="store.avatars()"
             [i18n]="store.i18n" (selected)="store.select($event)" />
         </aside>
         <div class="main">
@@ -91,13 +91,13 @@ import { NewsCenterStore } from './news-center.store';
             <okr-news-webcam-view class="webcam" [imageUrl]="cam.imageUrl" [capturedAt]="cam.capturedAt"
               [i18n]="store.i18n" />
           } @else {
-            <okr-news-grid [items]="store.visibleItems()" [channels]="store.channels()" [segment]="store.segment()"
+            <okr-news-grid [items]="store.visibleItems()" [channels]="store.channels()" [avatars]="store.avatars()" [segment]="store.segment()"
               [loading]="store.isLoading()" [i18n]="store.i18n" (opened)="store.openItem($event)" />
           }
         </div>
       </div>
       <okr-news-channel-sheet [open]="sheetOpen()" [channels]="store.channels()" [selectedKey]="store.activeKey()"
-        [failedKeys]="store.failedKeys()" [i18n]="store.i18n" (selected)="store.select($event)" (closed)="sheetOpen.set(false)" />
+        [failedKeys]="store.failedKeys()" [avatars]="store.avatars()" [i18n]="store.i18n" (selected)="store.select($event)" (closed)="sheetOpen.set(false)" />
     </ion-content>
   `,
 })
