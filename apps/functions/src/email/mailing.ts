@@ -198,7 +198,7 @@ export type MailingAttachmentFields = Pick<MailingRequest, 'storagePath' | 'file
 
 /**
  * Reads the request's attachments into memory: a tenant document from the default bucket (checked by
- * `isTenantDocumentPath`, then the inline ones. Nothing is stored. `readDocument` is injectable for tests.
+ * `isTenantDocumentPath`), then the inline ones. Nothing is stored. `readDocument` is injectable for tests.
  */
 export async function resolveAttachmentBytes(
   req: MailingAttachmentFields,

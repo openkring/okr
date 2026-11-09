@@ -328,6 +328,13 @@ describe('letters rendered one by one (spec 1.150)', () => {
     expect(n).toBe(5);
   });
 
+  it('an unreadable PDF attachment is invalid-argument', async () => {
+    await expect(countLetterPages({
+      tenantId: 'scs', subject: 'S', body: '<p>B</p>', withQrBlock: false,
+      attachmentBytes: [{ filename: 'bad.pdf', contentType: 'application/pdf', content: Buffer.from('not a pdf') }],
+    })).rejects.toMatchObject({ code: 'invalid-argument' });
+  });
+
   it('countLetterPages renders the QR block when asked', async () => {
     const events = [{ name: 'GV', when: '01.12.2026, 19:30', location: 'Stäfa' }];
     const n = await countLetterPages({ tenantId: 'scs', subject: 'S', body: '<p>B</p>', attachments: [], withQrBlock: true, answerEvents: events });

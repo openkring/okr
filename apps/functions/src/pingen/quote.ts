@@ -28,7 +28,12 @@ const ADDRESS_READ_CHUNK = 20;
 
 export const quoteTokenSecret = defineSecret('POSTVERSAND_QUOTE_SECRET');
 
+/** A token older than this is refused: the price and the balance it was quoted against are stale. */
+export const QUOTE_TTL_MS = 30 * 60 * 1000;
+
 export interface QuotePayload {
+  /** issued at, ms epoch */
+  iat: number;
   tenantId: string;
   draftHash: string;
   recipients: string[];
@@ -39,6 +44,8 @@ export interface QuotePayload {
 }
 
 export interface PostQuote {
+  /** the `iat` the token was signed with; `sendMailing` rebuilds the payload with it */
+  issuedAt: number;
   letters: number;
   abroad: number;
   missing: number;
@@ -72,24 +79,25 @@ function canonicalJson(value: unknown): string {
 }
 
 function normalized(p: QuotePayload): QuotePayload {
-  return { ...p, recipients: [...p.recipients].sort() };
+  return { ...p, recipients: [...new Set(p.recipients)].sort() };
 }
 
 export function signQuote(payload: QuotePayload, secret: string): string {
   return createHmac('sha256', secret).update(canonicalJson(normalized(payload))).digest('hex');
 }
 
-export function verifyQuote(token: string, payload: QuotePayload, secret: string): boolean {
+export function verifyQuote(token: string, payload: QuotePayload, secret: string, now: number): boolean {
   if (typeof token !== 'string') return false;
+  if (!Number.isFinite(payload.iat) || now - payload.iat > QUOTE_TTL_MS || payload.iat > now) return false;
   const expected = Buffer.from(signQuote(payload, secret), 'utf8');
   const given = Buffer.from(token, 'utf8');
   return given.length === expected.length && timingSafeEqual(given, expected);
 }
 
-/** SHA-256 over what the letters are made of: subject, body, each attachment (name + SHA-256 of its bytes), QR flag, calevent keys. */
+/** SHA-256 over what the letters are made of: subject, body, each attachment (name, content type, SHA-256 of its bytes), QR flag, calevent keys. */
 export function draftHashOf(i: Pick<QuoteInput, 'subject' | 'body' | 'attachments' | 'letterQrCodes' | 'caleventKeys'>): string {
   return createHash('sha256').update(canonicalJson({
-    subject: i.subject, body: i.body, attachments: i.attachments.map((a) => ({ filename: a.filename, sha256: createHash('sha256').update(a.content).digest('hex') })),
+    subject: i.subject, body: i.body, attachments: i.attachments.map((a) => ({ filename: a.filename, contentType: a.contentType, sha256: createHash('sha256').update(a.content).digest('hex') })),
     letterQrCodes: i.letterQrCodes, caleventKeys: i.caleventKeys,
   })).digest('hex');
 }
@@ -97,6 +105,8 @@ export function draftHashOf(i: Pick<QuoteInput, 'subject' | 'body' | 'attachment
 export interface QuoteDeps {
   port: CreditPort;
   secret: string;
+  /** ms epoch; the token's `iat` */
+  now: number;
   /** Page count of one letter of the draft (letter + PDF attachments, with the QR block when asked). */
   countLetterPages(args: { tenantId: string; subject: string; body: string; attachments: ResolvedAttachment[]; withQrBlock: boolean }): Promise<number>;
   /** Per recipient key (same order): the country code of its postal address, or undefined when it has none. */
@@ -137,14 +147,17 @@ export async function quoteMailingLettersCore(deps: QuoteDeps, input: QuoteInput
   const total = letters === 0 ? 0 : deps.port.quote(letters, pages).total;
   const balance = await deps.port.balance(input.tenantId);
   const payload: QuotePayload = {
-    tenantId: input.tenantId, draftHash: draftHashOf(input), recipients: swiss, options: input.options, letters, pages, total,
+    iat: deps.now, tenantId: input.tenantId, draftHash: draftHashOf(input), recipients: swiss, options: input.options, letters, pages, total,
   };
-  return { letters, abroad, missing, pagesPerLetter, pages, total, balance, sufficient: balance >= total, token: signQuote(payload, deps.secret) };
+  return { issuedAt: deps.now, letters, abroad, missing, pagesPerLetter, pages, total, balance, sufficient: balance >= total, token: signQuote(payload, deps.secret) };
 }
 
 /** The request's own fields; the attachments are resolved to bytes afterwards. */
 export function parseInput(raw: unknown): Omit<QuoteInput, 'attachments'> {
-  const d = (raw ?? {}) as Record<string, unknown>;
+  const d = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  const text = (v: unknown): boolean => v === undefined || typeof v === 'string';
+  if (!text(d['storagePath']) || !text(d['filename'])) throw new HttpsError('invalid-argument', 'Invalid attachment.');
+  if (d['extraAttachments'] !== undefined && !Array.isArray(d['extraAttachments'])) throw new HttpsError('invalid-argument', 'extraAttachments must be a list.');
   if (typeof d['tenantId'] !== 'string' || !d['tenantId']) throw new HttpsError('invalid-argument', 'tenantId is required.');
   const tenantId = d['tenantId'];
   if (typeof d['subject'] !== 'string' || !d['subject'].trim()) throw new HttpsError('invalid-argument', 'subject is required.');
@@ -187,6 +200,34 @@ async function answerEventsOf(caleventKeys: string[]): Promise<LetterEvent[]> {
     .map((e) => ({ name: String(e?.name ?? ''), when: eventWhen(e?.startDate, e?.startTime), location: getEventLocationName(e) }));
 }
 
+export interface QuoteEnv {
+  /** throws HttpsError 'unavailable' while no credit port is bound */
+  getPort(): CreditPort;
+  secret: string;
+  now: number;
+  readDocument?: Parameters<typeof resolveAttachmentBytes>[2];
+  readCountryCodes: QuoteDeps['readCountryCodes'];
+  /** the events of the letters' QR block */
+  answerEventsOf(caleventKeys: string[]): Promise<LetterEvent[]>;
+  renderPages(args: Parameters<typeof countLetterPages>[0]): Promise<number>;
+}
+
+/**
+ * Everything the callable does after the App Check / auth checks. Order matters: input shape, then the caller
+ * (permission-denied before anything else is learned), then the credit port, then attachment reads and renders.
+ */
+export async function quoteWithCaller(env: QuoteEnv, data: unknown, caller: QuoteCaller): Promise<PostQuote> {
+  const parsed = parseInput(data);
+  assertMayPost(caller, parsed.tenantId);
+  const port = env.getPort();
+  const input: QuoteInput = { ...parsed, attachments: await resolveAttachmentBytes(data as MailingAttachmentFields, parsed.tenantId, env.readDocument) };
+  const answerEvents = input.letterQrCodes ? await env.answerEventsOf(input.caleventKeys) : [];
+  return quoteMailingLettersCore({
+    port, secret: env.secret, now: env.now, readCountryCodes: env.readCountryCodes,
+    countLetterPages: (a) => env.renderPages({ ...a, attachmentBytes: a.attachments, attachments: [], answerEvents }),
+  }, input, caller);
+}
+
 // 2GiB: one sample letter is rendered in Chromium, as onMailing and generateDocument do
 export const quoteMailingLetters = onCall(
   { region: REGION, enforceAppCheck: true, cors: true, memory: '2GiB', timeoutSeconds: 120, secrets: [quoteTokenSecret] },
@@ -194,15 +235,10 @@ export const quoteMailingLetters = onCall(
     const CF_NAME = 'quoteMailingLetters';
     checkAppCheckToken(request as never, CF_NAME);
     checkAuthentication(request as never, CF_NAME);
-    const parsed = parseInput(request.data);
-    const port = getCreditPort();
     const caller = (await getFirestore().collection('users').doc(request.auth?.uid ?? '').get()).data() ?? {};
-    assertMayPost(caller, parsed.tenantId);   // before any attachment, render or address read
-    const input: QuoteInput = { ...parsed, attachments: await resolveAttachmentBytes(request.data as MailingAttachmentFields, parsed.tenantId) };
-    const answerEvents = input.letterQrCodes ? await answerEventsOf(input.caleventKeys) : [];
-    return quoteMailingLettersCore({
-      port, secret: quoteTokenSecret.value(), readCountryCodes,
-      countLetterPages: (a) => countLetterPages({ ...a, attachmentBytes: a.attachments, attachments: [], answerEvents }),
-    }, input, caller);
+    return quoteWithCaller({
+      getPort: getCreditPort, secret: quoteTokenSecret.value(), now: Date.now(),
+      readCountryCodes, answerEventsOf, renderPages: countLetterPages,
+    }, request.data, caller);
   },
 );

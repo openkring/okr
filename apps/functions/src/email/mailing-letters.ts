@@ -363,7 +363,11 @@ async function prepareLetterContext(
   const pdfAttachments = args.attachments.filter(isPdfAttachment);
   // attachments already in memory (a draft's page count): only the PDFs go into a letter, as from the bucket
   for (const a of (args.attachmentBytes ?? []).filter(isPdfAttachment)) {
-    appendix.push(await PDFDocument.load(a.content, { ignoreEncryption: true }));
+    try {
+      appendix.push(await PDFDocument.load(a.content, { ignoreEncryption: true }));
+    } catch {
+      throw new HttpsError('invalid-argument', `The attachment ${a.filename} is not a readable PDF.`);
+    }
   }
   if (pdfAttachments.length > 0) {
     const bucket = privateBucket();
