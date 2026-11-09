@@ -125,6 +125,9 @@ export interface ComputedQuote {
   pagesPerLetter: number;
   pages: number;
   total: number;
+  /** the rates the total is made of (Rappen); 0 without a letter */
+  perUnit: number;
+  perPage: number;
   payload: QuotePayload;
 }
 
@@ -150,11 +153,12 @@ export async function computeQuote(deps: Omit<QuoteDeps, 'secret'>, input: Quote
     withQrBlock: input.letterQrCodes && input.caleventKeys.length > 0,
   });
   const pages = letters * pagesPerLetter;
-  const total = letters === 0 ? 0 : deps.port.quote(letters, pages).total;
+  const priced = letters === 0 ? { total: 0, perUnit: 0, perPage: 0 } : deps.port.quote(letters, pages);
+  const total = priced.total;
   const payload: QuotePayload = {
     iat: deps.now, tenantId: input.tenantId, draftHash: draftHashOf(input), recipients: swiss, options: input.options, letters, pages, total,
   };
-  return { letters, abroad, missing, pagesPerLetter, pages, total, payload };
+  return { letters, abroad, missing, pagesPerLetter, pages, total, perUnit: priced.perUnit, perPage: priced.perPage, payload };
 }
 
 export async function readCountryCodes(tenantId: string, keys: string[]): Promise<(string | undefined)[]> {

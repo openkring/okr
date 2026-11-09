@@ -38,7 +38,7 @@ describe('quoteMailingLettersCore', () => {
     const { deps, input, quoteTransaction } = setup(['CH', 'CH', 'CH', 'DE']);
     const q = await quoteMailingLettersCore(deps, input, ADMIN);
     expect(quoteTransaction).toHaveBeenCalledWith('pingen-letter', 3, 6);
-    expect([q.pagesPerLetter, q.pages, q.total]).toEqual([2, 6, 540]);
+    expect([q.pagesPerLetter, q.pages, q.total, q.perUnit, q.perPage]).toEqual([2, 6, 540, 120, 30]);
   });
 
   it('sufficient is false below the total', async () => {
@@ -51,7 +51,7 @@ describe('quoteMailingLettersCore', () => {
   it('renders nothing and prices nothing without a Swiss letter', async () => {
     const { deps, input, countLetterPages, quoteTransaction } = setup(['DE', undefined]);
     const q = await quoteMailingLettersCore(deps, input, ADMIN);
-    expect([q.letters, q.pages, q.total, q.sufficient]).toEqual([0, 0, 0, true]);
+    expect([q.letters, q.pages, q.total, q.sufficient, q.perUnit, q.perPage]).toEqual([0, 0, 0, true, 0, 0]);
     expect(countLetterPages).not.toHaveBeenCalled();
     expect(quoteTransaction).not.toHaveBeenCalled();
   });

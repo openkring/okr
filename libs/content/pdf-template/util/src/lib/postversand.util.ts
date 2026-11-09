@@ -1,4 +1,3 @@
-import { TRANSACTION_PRICES } from '@okr/business-metering-util';
 import type { SendingState } from '@okr/shared-models';
 
 /** The category Pingen reports a letter under (webhook payload). */
@@ -81,16 +80,14 @@ export interface PostCostLines {
 }
 
 /**
- * The cost box lines for a Versand. The rates come from the pricing table the server bills with
- * (`TRANSACTION_PRICES`), never from a number typed into the UI; the quote's total stays the amount that is charged.
+ * The cost box lines of a Versand, from the rates the server quoted (Rappen per letter and per page).
+ * The quote's total stays the amount that is charged; these lines only explain it.
  */
-export function postCostLines(letters: number, pages: number): PostCostLines {
-  const price = TRANSACTION_PRICES['pingen-letter'];
-  const billablePages = Math.max(0, pages - price.includedPages * letters);
+export function postCostLines(letters: number, pages: number, perUnit: number, perPage: number): PostCostLines {
   return {
-    letterPrice: formatChf(price.perUnit),
-    letterTotal: formatChf(price.perUnit * letters),
-    pagePrice: formatChf(price.perPage),
-    pageTotal: formatChf(price.perPage * billablePages),
+    letterPrice: formatChf(perUnit),
+    letterTotal: formatChf(perUnit * letters),
+    pagePrice: formatChf(perPage),
+    pageTotal: formatChf(perPage * pages),
   };
 }

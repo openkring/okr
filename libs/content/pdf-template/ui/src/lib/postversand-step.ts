@@ -139,10 +139,10 @@ export class PostversandStep {
   public readonly acceptedChange = output<boolean>();
   public readonly topUp = output<void>();
 
-  /** The rates come from the pricing table, the sums from the quote's counts. */
+  /** The rates and counts both come from the quote. */
   protected readonly lines = computed(() => {
     const q = this.quote();
-    return postCostLines(q?.letters ?? 0, q?.pages ?? 0);
+    return postCostLines(q?.letters ?? 0, q?.pages ?? 0, q?.perUnit ?? 0, q?.perPage ?? 0);
   });
   protected readonly lettersLine = computed(() =>
     fill(this.i18n().post_cost_letters(), { count: this.quote()?.letters ?? 0, price: this.lines().letterPrice }));

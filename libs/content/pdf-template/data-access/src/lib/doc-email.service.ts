@@ -94,6 +94,9 @@ export interface PostQuote {
   pagesPerLetter: number;
   pages: number;
   total: number;
+  /** Rappen per letter and per page, as the server prices them; 0 without a letter */
+  perUnit: number;
+  perPage: number;
   balance: number;
   sufficient: boolean;
   token: string;

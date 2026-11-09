@@ -35,6 +35,9 @@ export interface PostQuote {
   pagesPerLetter: number;
   pages: number;
   total: number;
+  /** Rappen per letter and per page; the total is letters x perUnit + pages x perPage */
+  perUnit: number;
+  perPage: number;
   balance: number;
   sufficient: boolean;
   token: string;
@@ -45,7 +48,7 @@ export async function quoteMailingLettersCore(deps: QuoteDeps, input: QuoteInput
   const c = await computeQuote(deps, input);
   const balance = await deps.port.balance(input.tenantId);
   return {
-    issuedAt: deps.now, letters: c.letters, abroad: c.abroad, missing: c.missing, pagesPerLetter: c.pagesPerLetter, pages: c.pages, total: c.total,
+    issuedAt: deps.now, letters: c.letters, abroad: c.abroad, missing: c.missing, pagesPerLetter: c.pagesPerLetter, pages: c.pages, total: c.total, perUnit: c.perUnit, perPage: c.perPage,
     balance, sufficient: balance >= c.total, token: signQuote(c.payload, deps.secret),
   };
 }

@@ -71,8 +71,8 @@ describe('formatChf', () => {
 });
 
 describe('postCostLines', () => {
-  it('prices the letters and the pages from the pricing table', () => {
-    expect(postCostLines(42, 126)).toEqual({
+  it('prices the letters and the pages from the quoted rates', () => {
+    expect(postCostLines(42, 126, 120, 30)).toEqual({
       letterPrice: 'CHF 1.20', letterTotal: 'CHF 50.40', pagePrice: 'CHF 0.30', pageTotal: 'CHF 37.80',
     });
   });
