@@ -170,7 +170,7 @@ export async function failSending(
 }
 
 /** Pingen may hold the letter: keep `submitting`, no refund, no retry, one task for the sender (deduped by record). */
-async function flagAmbiguous(deps: SubmitDeps, rec: SendingRow, err: { status?: number; message: string }): Promise<void> {
+export async function flagAmbiguous(deps: SubmitDeps, rec: SendingRow, err: { status?: number; message: string }): Promise<void> {
   const tenantId = rec.tenants[0] ?? '';
   logger.error('submit-sending: letter status unclear (Pingen may hold it), no refund, check in Pingen', { id: rec.id, tenantId, source: rec.source, status: err.status, error: err.message });
   try {

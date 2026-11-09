@@ -26,6 +26,8 @@ import { SRV_SECRETS } from '../_gateway/adapters/srv';
 import { runCourseEndTasks } from '../course/course-end-tasks';
 import { runWebhookStuckCheck } from '../_webhooks/stuck-check';
 import { runMailingLettersReap } from '../email/mailing-letters';
+import { runPostReconcile } from '../pingen/reconcile';
+import { pingenClientId, pingenClientSecret } from '../pingen/pingen-client';
 
 const REGION = 'europe-west6';
 const TIME_ZONE = 'Europe/Zurich';
@@ -40,6 +42,7 @@ export const NIGHTLY_JOBS: NamedJob[] = [
   { name: 'billScanReap', run: runBillScanReap },
   { name: 'privacyExportReap', run: runPrivacyExportReap },
   { name: 'mailingLettersReap', run: runMailingLettersReap },
+  { name: 'postVersandReconcile', run: runPostReconcile }, // after the reap: it never touches letter files
   { name: 'courseEndTasks', run: runCourseEndTasks },
   { name: 'energyFiguresFetch', run: runEnergyFiguresFetch },
   { name: 'webhookStuckCheck', run: runWebhookStuckCheck },
@@ -70,7 +73,7 @@ export const HALF_HOURLY_JOBS: NamedJob[] = [
 
 // 03:15, not 02:00: 02:00-02:59 is skipped/repeated at DST changes; 03:15 was already the old slot of three of these jobs.
 // 512MiB: each job fit 256MiB alone, but six in one instance hit 267MiB on 2026-10-25 (privacyExportReap was lost).
-export const NIGHTLY_OPTIONS = { schedule: '15 3 * * *', timeZone: TIME_ZONE, region: REGION, timeoutSeconds: 540, memory: '512MiB' as const, secrets: [matrixAdminToken] };
+export const NIGHTLY_OPTIONS = { schedule: '15 3 * * *', timeZone: TIME_ZONE, region: REGION, timeoutSeconds: 540, memory: '512MiB' as const, secrets: [matrixAdminToken, pingenClientId, pingenClientSecret] };
 export const MORNING_OPTIONS = { schedule: '0 7 * * *', timeZone: TIME_ZONE, region: REGION, timeoutSeconds: 540, memory: '256MiB' as const, secrets: [matrixAdminToken, ...SRV_SECRETS] };
 export const EVENING_OPTIONS = { schedule: '50 23 * * *', timeZone: TIME_ZONE, region: REGION, timeoutSeconds: 300 };
 export const HALF_HOURLY_OPTIONS = { schedule: '*/30 * * * *', timeZone: TIME_ZONE, region: REGION, timeoutSeconds: 540, memory: '256MiB' as const };
