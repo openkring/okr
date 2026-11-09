@@ -53,8 +53,8 @@ import { formatNewsDate, formatNewsDuration } from './news-date';
         }
       </div>
       <div class="meta">
-        @if (avatarUrl()) {
-          <ion-avatar><img okrImg [src]="avatarUrl() | newsImage" alt="" referrerpolicy="no-referrer" /></ion-avatar>
+        @if (avatarUrl() && !avatarFailed()) {
+          <ion-avatar><img okrImg [src]="avatarUrl() | newsImage" alt="" referrerpolicy="no-referrer" (error)="avatarFailed.set(true)" /></ion-avatar>
         }
         <div class="text">
           <div class="title">{{ item().title }}</div>
@@ -72,6 +72,8 @@ export class NewsCard {
   public readonly channel = input<NewsChannelModel>();
   /** the channel's avatar (explicit or a webcam's current still); '' = none */
   public readonly avatarUrl = input('');
+  /** a failed still hides the avatar; the next still URL gets a fresh chance */
+  protected readonly avatarFailed = linkedSignal<string, boolean>({ source: this.avatarUrl, computation: () => false });
   public readonly segment = input<NewsSegment>('video');
   public readonly i18n = input.required<NewsCenterI18n>();
 

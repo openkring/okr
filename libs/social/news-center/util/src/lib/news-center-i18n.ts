@@ -73,6 +73,7 @@ export const NEWS_CENTER_I18N_KEYS = {
   map_overview: PFX + 'map_overview',
   unplaced: PFX + 'unplaced',
   open_org: PFX + 'open_org',
+  org_no_address: PFX + 'org_no_address',
   cancel: '@cancel',
   save: '@save.label',
   validation_name_required: PFX + 'validation.nameRequired',

@@ -74,5 +74,6 @@
   "location_from_org": "Usar el lugar de la organización",
   "map_overview": "Vista en el mapa",
   "unplaced": "sin lugar",
-  "open_org": "Abrir la organización"
+  "open_org": "Abrir la organización",
+  "org_no_address": "Esta organización no tiene dirección postal. Elige el lugar a mano."
 }

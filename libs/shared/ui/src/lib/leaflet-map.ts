@@ -156,6 +156,9 @@ export class LeafletMap {
       const leafletMarker = L.marker([marker.lat, marker.lng], { icon });
       leafletMarker.on('click', () => this.markerClick.emit(marker));
       leafletMarker.addTo(this.markerLayer);
+      // a thumbnail that fails to load (camera down) is removed instead of showing a broken-image glyph
+      const thumb = leafletMarker.getElement()?.querySelector<HTMLImageElement>('.okr-pin-thumb');
+      thumb?.addEventListener('error', () => thumb.remove(), { once: true });
       latLngs.push([marker.lat, marker.lng]);
     }
 

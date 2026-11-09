@@ -157,7 +157,10 @@ export const NewsCenterStore = signalStore(
       clubChannels: computed(() => allChannels().filter((c) => c.segment === store.segment())),
       avatars,
       /** «Kartenübersicht»: one pin per placed visible webcam, with its current still */
-      mapMarkers: computed(() => webcamMarkers(channels(), avatars())),
+      // equal by content: feed loading flips create new avatar objects; rebuilding every pin then made thumbnails flash
+      mapMarkers: computed(() => webcamMarkers(channels(), avatars()), {
+        equal: (a, b) => a.length === b.length && a.every((m, i) => m.id === b[i].id && m.lat === b[i].lat && m.lng === b[i].lng && m.imageUrl === b[i].imageUrl && m.title === b[i].title),
+      }),
       /** visible webcams without a position, listed under the map so curators see what to place */
       unplacedChannels: computed(() => channels().filter((c) => !isPlaced(c))),
       myRequests,
@@ -342,7 +345,11 @@ export const NewsCenterStore = signalStore(
         const geocodeOrg = async (orgKey: string): Promise<NewsPosition | undefined> => {
           const directory = await firstValueFrom(store.addressDirectory.read(`org.${orgKey}`)).catch(() => undefined);
           const address = orgPostalString(directory);
-          if (!address) return undefined;
+          if (!address) {
+            // GeocodingService only alerts once it geocodes; without a postal address say so here (spec §3)
+            await showToast(store.toastController, store.i18n.org_no_address());
+            return undefined;
+          }
           const coords = await store.geocoder.geocodeAddress(address);
           return coords ? { latitude: coords.lat, longitude: coords.lng } : undefined;
         };

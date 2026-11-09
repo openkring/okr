@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input, output, signal } from '@angular/core';
 import { IonAvatar, IonIcon, IonItem, IonLabel, IonList } from '@ionic/angular';
 
 import { NewsChannelModel } from '@okr/shared-models';
@@ -32,8 +32,8 @@ import { NewsImagePipe } from './news-image.pipe';
       @for (channel of channels(); track channel.okey) {
         <ion-item button detail="false" [class.selected]="selectedKey() === channel.okey" (click)="selected.emit(channel.okey)">
           <ion-avatar slot="start">
-            @if (avatars()[channel.okey]; as avatar) {
-              <img okrImg [src]="avatar | newsImage" alt="" referrerpolicy="no-referrer" />
+            @if (avatarOk(channel.okey); as avatar) {
+              <img okrImg [src]="avatar | newsImage" alt="" referrerpolicy="no-referrer" (error)="onAvatarError(avatar)" />
             } @else {
               <div class="initial">{{ channel.name.charAt(0) }}</div>
             }
@@ -57,6 +57,16 @@ export class NewsChannelList {
   public readonly showMapEntry = input(false);
 
   protected readonly mapKey = NEWS_MAP_KEY;
+
+  /** avatar URLs that failed to load (a camera that is down): they show the initial; a new still URL gets a fresh chance */
+  protected readonly failedAvatars = signal<ReadonlySet<string>>(new Set());
+  protected onAvatarError(url: string): void {
+    this.failedAvatars.update((s) => new Set(s).add(url));
+  }
+  protected avatarOk(okey: string): string {
+    const url = this.avatars()[okey] ?? '';
+    return url && !this.failedAvatars().has(url) ? url : '';
+  }
   public readonly i18n = input.required<NewsCenterI18n>();
 
   public readonly selected = output<string>();

@@ -31,6 +31,7 @@ import { isPlaced, NEWS_CHANNEL_NAME_MAX_LENGTH, NewsCenterI18n, NewsChannelForm
                   <okr-error-note [errors]="nameErrors()" />
                 </ion-col>
               </ion-row>
+              @if (showPlace()) {
               <ion-row>
                 <ion-col size="12" size-md="6">
                   <ion-item lines="none">
@@ -74,6 +75,7 @@ import { isPlaced, NEWS_CHANNEL_NAME_MAX_LENGTH, NewsCenterI18n, NewsChannelForm
                   </ion-item>
                 </ion-col>
               </ion-row>
+              }
             </ion-grid>
           </ion-card-content>
         </ion-card>
@@ -87,6 +89,8 @@ export class NewsChannelForm {
   public formData = model.required<NewsChannelFormData>();
   public readonly readOnly = input(false);
   public readonly showForm = input(true);
+  /** position + host org rows: webcams only (design 2026-11-09 G2) */
+  public readonly showPlace = input(true);
 
   // outputs
   public readonly dirty = output<boolean>();

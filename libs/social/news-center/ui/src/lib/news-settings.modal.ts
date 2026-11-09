@@ -176,8 +176,8 @@ type SettingsView = 'mine' | 'club';
 
     <ng-template #avatarTpl let-channel>
       <ion-avatar slot="start">
-        @if (avatars()[channel.okey]; as avatar) {
-          <img okrImg [src]="avatar | newsImage" alt="" referrerpolicy="no-referrer" />
+        @if (avatarOk(channel.okey); as avatar) {
+          <img okrImg [src]="avatar | newsImage" alt="" referrerpolicy="no-referrer" (error)="onAvatarError(avatar)" />
         } @else {
           <div class="initial">{{ channel.name.charAt(0) }}</div>
         }
@@ -188,6 +188,16 @@ type SettingsView = 'mine' | 'club';
 export class NewsSettingsModal {
   public readonly segment = input.required<NewsSegment>();
   public readonly isCurator = input(false);
+
+  /** avatar URLs that failed to load (a camera that is down): they show the initial; a new still URL gets a fresh chance */
+  protected readonly failedAvatars = signal<ReadonlySet<string>>(new Set());
+  protected onAvatarError(url: string): void {
+    this.failedAvatars.update((s) => new Set(s).add(url));
+  }
+  protected avatarOk(okey: string): string {
+    const url = this.avatars()[okey] ?? '';
+    return url && !this.failedAvatars().has(url) ? url : '';
+  }
   public readonly avatars = input<Record<string, string>>({});
   public readonly mine = input<NewsChannelModel[]>([]);
   public readonly hidden = input<NewsChannelModel[]>([]);

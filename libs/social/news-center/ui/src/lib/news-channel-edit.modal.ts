@@ -37,6 +37,7 @@ export interface NewsPosition {
           (formDataChange)="onFormDataChange($event)"
           [i18n]="i18n()"
           [showForm]="showForm()"
+          [showPlace]="channel().segment === 'webcam'"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
           (pickLocation)="onPickLocation()"

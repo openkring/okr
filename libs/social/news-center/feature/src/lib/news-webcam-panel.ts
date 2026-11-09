@@ -40,9 +40,9 @@ import { NewsCenterService } from './news-center.service';
           <div class="cam">
             <h3>{{ channel.name }}</h3>
             @if (stills()[channel.okey]; as still) {
-              @if (still.mediaUrl) {
+              @if (still.mediaUrl && !failedUrls().has(still.mediaUrl)) {
                 <div class="zoom" [okrPinchZoom]="img" [resetKey]="still.mediaUrl">
-                  <img #img [src]="still.mediaUrl | newsImage" alt="" referrerpolicy="no-referrer" />
+                  <img #img [src]="still.mediaUrl | newsImage" alt="" referrerpolicy="no-referrer" (error)="onImageError(still.mediaUrl)" />
                 </div>
                 <div class="captured">{{ captured(still) }}</div>
               } @else {
@@ -69,6 +69,8 @@ export class NewsWebcamPanel {
   );
   /** okey → the camera's latest still */
   protected readonly stills = signal<Record<string, NewsItem>>({});
+  /** stills that failed to load (camera down): «Bild nicht verfügbar»; the next refresh URL gets a fresh chance */
+  protected readonly failedUrls = signal<ReadonlySet<string>>(new Set());
   private readonly timers = new Map<string, ReturnType<typeof setInterval>>();
 
   constructor() {
@@ -82,6 +84,10 @@ export class NewsWebcamPanel {
       }
     });
     inject(DestroyRef).onDestroy(() => this.clearTimers());
+  }
+
+  protected onImageError(url: string): void {
+    this.failedUrls.update((s) => new Set(s).add(url));
   }
 
   protected captured(item: NewsItem): string {
