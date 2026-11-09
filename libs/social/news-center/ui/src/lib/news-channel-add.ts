@@ -5,6 +5,8 @@ import { NewsChannelModel, NewsSegment } from '@okr/shared-models';
 import { Checkbox, CheckboxI18n, ErrorNote, ImgDirective, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { NEWS_CENTER_I18N_KEYS, NewsCenterI18n, NewsItem, ResolvedNewsSource, newsRelayState, parseNewsFeed } from '@okr/social-news-center-util';
 
+import { NewsImagePipe } from './news-image.pipe';
+
 /** Why the relay could not resolve a pasted link; the store sets it, this component words it. */
 export type NewsResolveError = 'no-feed' | 'segment' | 'url' | 'blocked' | 'http-not-image' | 'permission-denied' | 'unknown';
 
@@ -15,7 +17,7 @@ export type NewsResolveError = 'no-feed' | 'segment' | 'url' | 'blocked' | 'http
 @Component({
   selector: 'okr-news-channel-add',
   standalone: true,
-  imports: [IonList, IonItem, IonLabel, IonAvatar, IonButton, IonNote, IonText, TextInput, Checkbox, ErrorNote, ImgDirective],
+  imports: [NewsImagePipe, IonList, IonItem, IonLabel, IonAvatar, IonButton, IonNote, IonText, TextInput, Checkbox, ErrorNote, ImgDirective],
   styles: [`.actions { padding: 8px 16px; } img.still { width: 100%; max-height: 220px; object-fit: contain; }`],
   template: `
     <okr-text-input [i18n]="urlI18n()" [value]="url()" (valueChange)="onUrlChange($event)"
@@ -31,7 +33,7 @@ export type NewsResolveError = 'no-feed' | 'segment' | 'url' | 'blocked' | 'http
       <ion-list lines="none">
         <ion-item>
           @if (source.avatarUrl) {
-            <ion-avatar slot="start"><img okrImg [src]="source.avatarUrl" alt="" referrerpolicy="no-referrer" /></ion-avatar>
+            <ion-avatar slot="start"><img okrImg [src]="source.avatarUrl | newsImage" alt="" referrerpolicy="no-referrer" /></ion-avatar>
           }
           <ion-label>
             <h2>{{ source.name }}</h2>

@@ -7,6 +7,8 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { isNativePlatform } from '@okr/shared-util-angular';
 import { NewsCenterI18n, NewsItem } from '@okr/social-news-center-util';
 
+import { NewsImagePipe } from './news-image.pipe';
+
 import { formatNewsDate } from './news-date';
 
 const YOUTUBE_ID = /^[\w-]{1,32}$/;
@@ -20,7 +22,7 @@ const VIMEO_ID = /^\d{1,12}$/;
 @Component({
   selector: 'okr-news-video-view',
   standalone: true,
-  imports: [IonButton, IonIcon, SvgIconPipe],
+  imports: [NewsImagePipe, IonButton, IonIcon, SvgIconPipe],
   styles: [`
     :host { display: block; }
     .player { position: relative; aspect-ratio: 16 / 9; width: 100%; background: #000; }
@@ -40,7 +42,7 @@ const VIMEO_ID = /^\d{1,12}$/;
             referrerpolicy="strict-origin-when-cross-origin"
             sandbox="allow-scripts allow-same-origin allow-presentation"></iframe>
         } @else if (item().thumbnailUrl) {
-          <img [src]="item().thumbnailUrl" alt="" referrerpolicy="no-referrer" />
+          <img [src]="item().thumbnailUrl | newsImage" alt="" referrerpolicy="no-referrer" />
         }
       }
     </div>

@@ -6,6 +6,8 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { ImgDirective } from '@okr/shared-ui';
 import { NewsCenterI18n, NewsItem } from '@okr/social-news-center-util';
 
+import { NewsImagePipe } from './news-image.pipe';
+
 import { formatNewsDate, formatNewsDuration } from './news-date';
 
 /**
@@ -16,7 +18,7 @@ import { formatNewsDate, formatNewsDuration } from './news-date';
 @Component({
   selector: 'okr-news-card',
   standalone: true,
-  imports: [IonAvatar, IonIcon, SvgIconPipe, ImgDirective],
+  imports: [NewsImagePipe, IonAvatar, IonIcon, SvgIconPipe, ImgDirective],
   styles: [`
     :host { display: block; }
     .card { display: block; width: 100%; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; color: inherit; font: inherit; }
@@ -39,7 +41,7 @@ import { formatNewsDate, formatNewsDuration } from './news-date';
     <button type="button" class="card">
       <div class="thumb" [class.square]="segment() === 'audio'">
         @if (item().thumbnailUrl && !failed()) {
-          <img [src]="item().thumbnailUrl" alt="" loading="lazy" decoding="async" (error)="failed.set(true)" referrerpolicy="no-referrer" />
+          <img [src]="item().thumbnailUrl | newsImage" alt="" loading="lazy" decoding="async" (error)="failed.set(true)" referrerpolicy="no-referrer" />
         } @else {
           <div class="placeholder">
             <ion-icon src="{{ 'image' | svgIcon }}" />
@@ -52,7 +54,7 @@ import { formatNewsDate, formatNewsDuration } from './news-date';
       </div>
       <div class="meta">
         @if (channel()?.avatarUrl) {
-          <ion-avatar><img okrImg [src]="channel()!.avatarUrl" alt="" referrerpolicy="no-referrer" /></ion-avatar>
+          <ion-avatar><img okrImg [src]="channel()!.avatarUrl | newsImage" alt="" referrerpolicy="no-referrer" /></ion-avatar>
         }
         <div class="text">
           <div class="title">{{ item().title }}</div>

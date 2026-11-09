@@ -4,6 +4,8 @@ import { IonIcon } from '@ionic/angular';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { NewsCenterI18n } from '@okr/social-news-center-util';
 
+import { NewsImagePipe } from './news-image.pipe';
+
 import { formatNewsTime } from './news-date';
 
 /**
@@ -13,7 +15,7 @@ import { formatNewsTime } from './news-date';
 @Component({
   selector: 'okr-news-webcam-view',
   standalone: true,
-  imports: [IonIcon, SvgIconPipe],
+  imports: [NewsImagePipe, IonIcon, SvgIconPipe],
   styles: [`
     :host { display: block; }
     img { display: block; width: 100%; height: auto; }
@@ -24,7 +26,7 @@ import { formatNewsTime } from './news-date';
   `],
   template: `
     @if (imageUrl() && !failed()) {
-      <img [src]="imageUrl()" alt="" (error)="failed.set(true)" referrerpolicy="no-referrer" />
+      <img [src]="imageUrl() | newsImage" alt="" (error)="failed.set(true)" referrerpolicy="no-referrer" />
     } @else {
       <div class="placeholder">
         <ion-icon src="{{ 'image' | svgIcon }}" />

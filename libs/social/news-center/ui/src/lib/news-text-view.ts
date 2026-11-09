@@ -5,13 +5,15 @@ import { NewsChannelModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { NewsCenterI18n, NewsItem } from '@okr/social-news-center-util';
 
+import { NewsImagePipe } from './news-image.pipe';
+
 import { formatNewsDate, isHttpUrl } from './news-date';
 
 /** Article teaser: image, plain-text summary (interpolation only, never innerHTML) and a link to the original. */
 @Component({
   selector: 'okr-news-text-view',
   standalone: true,
-  imports: [IonButton, IonIcon, SvgIconPipe],
+  imports: [NewsImagePipe, IonButton, IonIcon, SvgIconPipe],
   styles: [`
     :host { display: block; }
     img { display: block; width: 100%; max-height: 360px; object-fit: cover; }
@@ -22,7 +24,7 @@ import { formatNewsDate, isHttpUrl } from './news-date';
   `],
   template: `
     @if (item().thumbnailUrl && !imageFailed()) {
-      <img [src]="item().thumbnailUrl" alt="" loading="lazy" (error)="imageFailed.set(true)" referrerpolicy="no-referrer" />
+      <img [src]="item().thumbnailUrl | newsImage" alt="" loading="lazy" (error)="imageFailed.set(true)" referrerpolicy="no-referrer" />
     }
     <div class="body">
       <h2>{{ item().title }}</h2>

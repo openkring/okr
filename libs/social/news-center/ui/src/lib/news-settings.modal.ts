@@ -11,6 +11,8 @@ import { Checkbox, CheckboxI18n, Header, ImgDirective } from '@okr/shared-ui';
 import { prettyFormatDateTime } from '@okr/shared-util-core';
 import { NewsCenterI18n, NewsItem, NewsRequestFormData, ResolvedNewsSource } from '@okr/social-news-center-util';
 
+import { NewsImagePipe } from './news-image.pipe';
+
 import { NewsChannelAdd, NewsResolveError } from './news-channel-add';
 import { NewsRequestForm } from './news-request.form';
 
@@ -24,7 +26,7 @@ type SettingsView = 'mine' | 'club';
 @Component({
   selector: 'okr-news-settings-modal',
   standalone: true,
-  imports: [
+  imports: [NewsImagePipe, 
     NgTemplateOutlet, IonContent, IonList, IonListHeader, IonItem, IonLabel, IonAvatar, IonButton, IonIcon, IonChip,
     IonNote, IonBadge, IonSegment, IonSegmentButton, IonReorderGroup, IonReorder, SvgIconPipe, ImgDirective, Header,
     Checkbox, NewsRequestForm, NewsChannelAdd,
@@ -171,7 +173,7 @@ type SettingsView = 'mine' | 'club';
     <ng-template #avatarTpl let-channel>
       <ion-avatar slot="start">
         @if (channel.avatarUrl) {
-          <img okrImg [src]="channel.avatarUrl" alt="" referrerpolicy="no-referrer" />
+          <img okrImg [src]="channel.avatarUrl | newsImage" alt="" referrerpolicy="no-referrer" />
         } @else {
           <div class="initial">{{ channel.name.charAt(0) }}</div>
         }

@@ -6,11 +6,13 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { ImgDirective } from '@okr/shared-ui';
 import { NewsCenterI18n } from '@okr/social-news-center-util';
 
+import { NewsImagePipe } from './news-image.pipe';
+
 /** Channel column of the NewsCenter page: «Alle Kanäle» on top, then one row per channel. */
 @Component({
   selector: 'okr-news-channel-list',
   standalone: true,
-  imports: [IonList, IonItem, IonAvatar, IonLabel, IonIcon, SvgIconPipe, ImgDirective],
+  imports: [NewsImagePipe, IonList, IonItem, IonAvatar, IonLabel, IonIcon, SvgIconPipe, ImgDirective],
   styles: [`
     ion-item.selected { --background: var(--ion-color-light); font-weight: 600; }
     .initial { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;
@@ -25,7 +27,7 @@ import { NewsCenterI18n } from '@okr/social-news-center-util';
         <ion-item button detail="false" [class.selected]="selectedKey() === channel.okey" (click)="selected.emit(channel.okey)">
           <ion-avatar slot="start">
             @if (channel.avatarUrl) {
-              <img okrImg [src]="channel.avatarUrl" alt="" referrerpolicy="no-referrer" />
+              <img okrImg [src]="channel.avatarUrl | newsImage" alt="" referrerpolicy="no-referrer" />
             } @else {
               <div class="initial">{{ channel.name.charAt(0) }}</div>
             }

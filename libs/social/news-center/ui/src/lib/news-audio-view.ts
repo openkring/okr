@@ -4,13 +4,15 @@ import { IonButton } from '@ionic/angular';
 import { NewsChannelModel } from '@okr/shared-models';
 import { NewsItem } from '@okr/social-news-center-util';
 
+import { NewsImagePipe } from './news-image.pipe';
+
 import { formatNewsDate, isHttpUrl } from './news-date';
 
 /** Cover, native `<audio>` with −15 s / +30 s and speed buttons; episode notes as plain text. */
 @Component({
   selector: 'okr-news-audio-view',
   standalone: true,
-  imports: [IonButton],
+  imports: [NewsImagePipe, IonButton],
   styles: [`
     :host { display: block; }
     .cover { display: block; width: min(100%, 360px); aspect-ratio: 1 / 1; margin: 16px auto 0; object-fit: cover; border-radius: 12px; }
@@ -23,7 +25,7 @@ import { formatNewsDate, isHttpUrl } from './news-date';
   `],
   template: `
     @if (item().thumbnailUrl) {
-      <img class="cover" [src]="item().thumbnailUrl" alt="" loading="lazy" referrerpolicy="no-referrer" />
+      <img class="cover" [src]="item().thumbnailUrl | newsImage" alt="" loading="lazy" referrerpolicy="no-referrer" />
     }
     <div class="body">
       <h2>{{ item().title }}</h2>

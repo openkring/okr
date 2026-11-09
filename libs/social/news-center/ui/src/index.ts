@@ -11,3 +11,4 @@ export * from './lib/news-webcam-view';
 export * from './lib/news-channel-add';
 export * from './lib/news-request.form';
 export * from './lib/news-settings.modal';
+export * from './lib/news-image.pipe';
