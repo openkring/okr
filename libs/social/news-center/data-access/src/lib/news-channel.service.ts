@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { map, Observable } from 'rxjs';
+import { map, Observable, of } from 'rxjs';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { NewsChannelCollection, NewsChannelModel } from '@okr/shared-models';
@@ -18,6 +18,12 @@ export class NewsChannelService {
     return this.firestoreService
       .searchData<NewsChannelModel>(NewsChannelCollection, [{ key: 'tenants', operator: 'array-contains', value: tenantId }], 'none')
       .pipe(map((channels) => channels.filter((c) => !c.isArchived).sort((a, b) => (a.order ?? 0) - (b.order ?? 0))));
+  }
+
+  /** The webcams an org hosts (design 2026-11-09 §5.4): filtered from `list`, no extra index. */
+  public listByOrg(tenantId: string, orgKey: string): Observable<NewsChannelModel[]> {
+    if (!orgKey) return of([]);
+    return this.list(tenantId).pipe(map((channels) => channels.filter((c) => c.segment === 'webcam' && c.orgKey === orgKey)));
   }
 
   public create(channel: NewsChannelModel): Promise<string | undefined> {
