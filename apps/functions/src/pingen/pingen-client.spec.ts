@@ -152,4 +152,62 @@ describe('pingen client', () => {
     expect(err).toBeInstanceOf(PingenError);
     expect(err.retryable).toBe(true);
   });
+
+  it('re-authenticates once after a 401', async () => {
+    let first = true;
+    const { client, calls } = setup({
+      'GET /file-upload': () => {
+        if (first) {
+          first = false;
+          return json(401, {});
+        }
+        return json(200, { data: { attributes: { url: 'https://upload.example/x', url_signature: 'SIG' } } });
+      },
+    });
+    await client.createLetter(input);
+    expect(calls.filter(c => c.url.includes('/auth/access-tokens')).length).toBe(2);
+  });
+
+  it('a second 401 throws a non-retryable error', async () => {
+    const { client } = setup({ 'GET /file-upload': () => json(401, {}) });
+    const err = await client.createLetter(input).catch(e => e);
+    expect(err).toBeInstanceOf(PingenError);
+    expect(err.status).toBe(401);
+    expect(err.retryable).toBe(false);
+  });
+
+  it.each([{}, { access_token: '', expires_in: 3600 }, { access_token: 'T', expires_in: 0 }, { access_token: 'T', expires_in: 'x' }])('rejects an invalid token response %j as retryable', async body => {
+    const { client } = setup({ 'POST /auth/access-tokens': () => json(200, body) });
+    const err = await client.readOrganisation().catch(e => e);
+    expect(err).toBeInstanceOf(PingenError);
+    expect(err.retryable).toBe(true);
+  });
+
+  it('keeps the raw response body out of the error message', async () => {
+    const { client } = setup({
+      'POST /organisations/org1/deliveries/letters': () => json(422, { errors: [{ code: '422', title: 'Unprocessable', detail: 'Hans Muster, Bahnhofstr. 1' }] }),
+    });
+    const err = await client.createLetter(input).catch(e => e);
+    expect(err.message).toContain('422');
+    expect(err.message).toContain('Unprocessable');
+    expect(err.message).not.toContain('Hans Muster');
+    expect(err.message).not.toContain('Bahnhofstr');
+  });
+
+  it.each([
+    ['invalid JSON', () => new Response('<html>', { status: 200 })],
+    ['missing attributes', () => json(200, { data: {} })],
+  ])('a malformed 200 body (%s) is a retryable PingenError', async (_n, make) => {
+    const { client } = setup({ 'GET /organisations/org1': make });
+    const err = await client.readOrganisation().catch(e => e);
+    expect(err).toBeInstanceOf(PingenError);
+    expect(err.retryable).toBe(true);
+  });
+
+  it('sends no Authorization header to the signed upload URL', async () => {
+    const { client, calls } = setup();
+    await client.createLetter(input);
+    const put = calls.find(c => c.init.method === 'PUT')!;
+    expect(put.init.headers).toBeUndefined();
+  });
 });

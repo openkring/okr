@@ -38,12 +38,14 @@ export interface PingenLetter {
   id: string;
   status: string;
   filePages: number;
+  /** CHF decimal as Pingen returns it (not Rappen). */
   priceValue: number;
   priceCurrency: string;
 }
 
 export interface PingenClient {
   createLetter(input: { pdf: Buffer; fileName: string; options: PostOptions; idempotencyKey: string }): Promise<PingenLetter>;
+  /** billingBalance and missingCredits are decimals in `currency` (CHF) as Pingen returns them, not Rappen. */
   readOrganisation(): Promise<{ billingBalance: number; missingCredits: number; currency: string }>;
 }
 
@@ -74,13 +76,15 @@ export function makePingenClient(deps: PingenClientDeps): PingenClient {
     }
     if (!res.ok) {
       const retryAfter = Number(res.headers.get('retry-after'));
-      let detail = '';
+      // Only status and Pingen's error code/title: the body can echo recipient data (privacy).
+      let reason = '';
       try {
-        detail = (await res.text()).slice(0, 500);
+        const first = ((await res.json()) as Json)['errors']?.[0] as Json | undefined;
+        reason = [first?.['code'], first?.['title']].filter(v => typeof v === 'string' || typeof v === 'number').join(' ');
       } catch {
-        /* body unreadable */
+        /* body unreadable or not JSON */
       }
-      throw new PingenError(`Pingen ${init.method ?? 'GET'} ${new URL(url).pathname} -> ${res.status} ${detail}`.trim(), res.status, isRetryable(res.status), Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : undefined);
+      throw new PingenError(`Pingen ${init.method ?? 'GET'} ${new URL(url).pathname} -> ${res.status}${reason ? ` ${reason}` : ''}`, res.status, isRetryable(res.status), Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : undefined);
     }
     return res;
   }
@@ -92,22 +96,49 @@ export function makePingenClient(deps: PingenClientDeps): PingenClient {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({ grant_type: 'client_credentials', client_id: deps.clientId, client_secret: deps.clientSecret }).toString(),
     });
-    const body = (await res.json()) as Json;
-    token = { value: String(body['access_token']), expiresAt: deps.now() + Number(body['expires_in']) * 1000 };
-    return token.value;
+    const body = await readJson(res);
+    const value = body['access_token'];
+    const expiresIn = Number(body['expires_in']);
+    if (typeof value !== 'string' || !value || !Number.isFinite(expiresIn) || expiresIn <= 0) {
+      throw new PingenError('Pingen token response invalid', 200, true);
+    }
+    token = { value, expiresAt: deps.now() + expiresIn * 1000 };
+    return value;
+  }
+
+  /** A 200 whose body is not the expected JSON is a transient server problem, not a caller error. */
+  async function readJson(res: Response): Promise<Json> {
+    try {
+      const body = (await res.json()) as unknown;
+      if (body && typeof body === 'object') return body as Json;
+    } catch {
+      /* fall through */
+    }
+    throw new PingenError('Pingen response is not valid JSON', res.status, true);
   }
 
   async function api(path: string, init: RequestInit = {}, extra: Record<string, string> = {}): Promise<Json> {
-    const res = await send(`${hosts.api}${path}`, {
-      ...init,
-      headers: { Authorization: `Bearer ${await accessToken()}`, ...extra },
-    });
-    return (await res.json()) as Json;
+    const call = async () => send(`${hosts.api}${path}`, { ...init, headers: { Authorization: `Bearer ${await accessToken()}`, ...extra } });
+    let res: Response;
+    try {
+      res = await call();
+    } catch (e) {
+      if (!(e instanceof PingenError) || e.status !== 401) throw e;
+      token = undefined; // revoked or expired early: re-authenticate once, retry once
+      res = await call();
+    }
+    return readJson(res);
   }
+
+  const attributes = (body: Json): Json => {
+    const a = body['data']?.['attributes'];
+    if (!a || typeof a !== 'object') throw new PingenError('Pingen response lacks data.attributes', 200, true);
+    return a as Json;
+  };
 
   return {
     async createLetter({ pdf, fileName, options, idempotencyKey }) {
-      const upload = (await api('/file-upload'))['data']['attributes'] as Json;
+      const upload = attributes(await api('/file-upload'));
       await send(String(upload['url']), { method: 'PUT', body: new Uint8Array(pdf) });
       const body = await api(
         `/organisations/${encodeURIComponent(deps.organisationId)}/deliveries/letters`,
@@ -131,8 +162,8 @@ export function makePingenClient(deps: PingenClientDeps): PingenClient {
         },
         { 'Content-Type': 'application/vnd.api+json', 'Idempotency-Key': idempotencyKey }
       );
+      const a = attributes(body);
       const d = body['data'] as Json;
-      const a = d['attributes'] as Json;
       return {
         id: String(d['id']),
         status: String(a['status']),
@@ -143,7 +174,7 @@ export function makePingenClient(deps: PingenClientDeps): PingenClient {
     },
 
     async readOrganisation() {
-      const a = (await api(`/organisations/${encodeURIComponent(deps.organisationId)}`))['data']['attributes'] as Json;
+      const a = attributes(await api(`/organisations/${encodeURIComponent(deps.organisationId)}`));
       return { billingBalance: Number(a['billing_balance']), missingCredits: Number(a['missing_credits']), currency: String(a['billing_currency']) };
     },
   };
