@@ -30,6 +30,7 @@ export interface WebhookClient {
   /** How the sender is authenticated. */
   auth:
     | { kind: 'hmac-body'; header: string; secret: SecretParam }
+    | { kind: 'stripe-signature'; secret: SecretParam; toleranceSec: number }
     | { kind: 'record-token'; verify: (req: WebhookRequest, secret: string) => boolean; secret: SecretParam };
   /** A fixed tenant, the operator scope, or resolved by the handler from our own record. */
   tenant: { fixed: string } | { scope: 'platform' } | { resolve: 'record' };

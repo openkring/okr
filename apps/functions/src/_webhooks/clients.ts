@@ -3,11 +3,12 @@
 // The registry of inbound webhook senders. One entry per sender, added by the task
 // that owns the provider. The URL segment is the client's `id`.
 import type { WebhookClient } from './types';
+import { stripeClient } from '../collection/stripe-webhook';
 import { mailtrapClient } from '../email/mailtrap-webhook';
 import { deepSignClient } from '../esign/deepsign-webhook';
 import { selftestClient } from './selftest-client';
 
-export const WEBHOOK_CLIENTS: WebhookClient[] = [mailtrapClient, deepSignClient, selftestClient];
+export const WEBHOOK_CLIENTS: WebhookClient[] = [mailtrapClient, deepSignClient, stripeClient, selftestClient];
 
 export function findClient(id: string): WebhookClient | undefined {
   return WEBHOOK_CLIENTS.find(c => c.id === id);

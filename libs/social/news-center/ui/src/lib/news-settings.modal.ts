@@ -161,7 +161,7 @@ type SettingsView = 'mine' | 'club';
                 <ng-container *ngTemplateOutlet="avatarTpl; context: { $implicit: channel }" />
                 <ion-label>{{ channel.name }}</ion-label>
                 <ion-button slot="end" fill="clear" color="medium" [attr.aria-label]="i18n().edit_channel()" (click)="edit.emit(channel)">
-                  <ion-icon slot="icon-only" src="{{ 'create' | svgIcon }}" />
+                  <ion-icon slot="icon-only" src="{{ 'edit' | svgIcon }}" />
                 </ion-button>
                 <ion-button slot="end" fill="clear" color="medium" [attr.aria-label]="i18n().archive_channel()" (click)="clubArchive.emit(channel.okey)">
                   <ion-icon slot="icon-only" src="{{ 'trash' | svgIcon }}" />

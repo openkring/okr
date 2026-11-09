@@ -1772,6 +1772,19 @@ export async function resolveArrayItemDocs(entry: SubjectDataEntry, ctx: Subject
 //   order, viaRelay. Curated by admins, no natural person's data.
 // not personal data: formStats — response counters per form / form×section (1.125 B), no answers
 //   and no person: a count and the form/section id only.
+// gap: subscriptions — how a tenant pays bkaiser (Stripe billing): doc id = tenantId, `billingEmail` (the
+//   tenant's billing contact, a natural person's e-mail, like the metering contact below), the Stripe
+//   customer id and a saved payment method's display data (brand, last4, PayPal payer e-mail). Keyed by
+//   TENANT, not by person, so no subject lookup exists. Not yet a row: export/erasure of the billing
+//   contact is still to be decided; erasure must also detach the Stripe payment method.
+// gap: credit-accounts — a tenant's prepaid credit balance (doc id = tenantId); its `entries`
+//   sub-collection ledger lines carry `createdBy` (the uid of the admin who booked a correction). A
+//   financial record of the org (OR Art. 958f retention applies), but the uid links a line to a natural
+//   person, so it is not «not personal data». Not yet a row.
+// gap: payment-attempts — one Stripe collection attempt of a tenant (state, amount in Rappen, Stripe ids,
+//   booking keys, error text) that carries `createdBy` (the uid of the admin or treasurer who opened it). Not yet a row.
+// not personal data: platform-config — platform-wide configuration (doc 'billing': operator tenant and
+//   accounting tenant ids). No natural person's data.
 // gap: external-reports — marks that a case (e.g. a membership change) was reported to an external
 //   organisation (spec 1.133): externalOrg, caseKey/caseType, externalRef, reportedAt and `subjectKey`
 //   ('person.<okey>'). No name or contact detail is stored, but `subjectKey` links the marker to a

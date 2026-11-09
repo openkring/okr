@@ -7,7 +7,7 @@ import { Observable, of } from 'rxjs';
 import { ColorsIonic } from '@okr/shared-categories';
 import { ColorIonic } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';
-import { coerceBoolean } from '@okr/shared-util-core';
+import { coerceBoolean, fill } from '@okr/shared-util-core';
 
 @Component({
   selector: 'okr-error-note',
@@ -37,6 +37,8 @@ export class ErrorNote {
   public color = input<ColorIonic>(ColorIonic.Danger);
   /** Render without the ion-item wrapper so the note can sit in a caller-provided row. */
   public inline = input(false);
+  /** Values for `{name}` placeholders in the translated message (single braces, see fill()); {} fills nothing. */
+  public params = input<Record<string, string | number>>({});
 
   // computed
   protected hasErrors = computed(() => this.errors().length > 0);
@@ -48,7 +50,7 @@ export class ErrorNote {
       errors: this.errors()
     }),
     stream: ({params}) => this.translate(params.errors) });
-  protected error = computed (() => this.errorRef.value() as string);
+  protected error = computed (() => fill((this.errorRef.value() as string) ?? '', this.params()));
   
   // passing constants to the template
   protected colorsIonic = ColorsIonic;

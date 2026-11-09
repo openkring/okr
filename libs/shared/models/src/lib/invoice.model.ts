@@ -42,6 +42,8 @@ export class InvoiceModel implements OkrModel, SearchableModel, TaggedModel {
   public sentAt = '';               // StoreDate (yyyyMMdd) of the last send of the invoice PDF (email or post, see sentVia); '' = never (spec 1.76 D13)
   public sentVia: InvoiceSentVia | '' = '';  // how the invoice was sent: 'email' (sendInvoiceEmail) or 'post' (marked by hand); '' = unknown / not sent
 
+  public billingKind: InvoiceBillingKind = ''; // set on bkaiser's own tenant invoices collected via Stripe: 'subscription' | 'topup'; '' = an ordinary invoice
+
   // Stamped (StoreDateTime) when a data-subject erasure pseudonymized this record
   // (privacy 1.19, D-P5-6): the name fields and the person link are overwritten, the
   // amounts, dates and document references stay. '' = never anonymized.
@@ -51,6 +53,9 @@ export class InvoiceModel implements OkrModel, SearchableModel, TaggedModel {
     this.tenants = [tenantId];
   }
 }
+
+/** What a tenant invoice from the operator bills: the subscription or a credit top-up ('' = ordinary). */
+export type InvoiceBillingKind = '' | 'subscription' | 'topup';
 
 export const InvoiceCollection = 'invoices';
 export const InvoiceModelName = 'invoice';

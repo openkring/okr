@@ -126,6 +126,8 @@ export const AOC_STATUS_SERVICES: readonly StatusService[] = [
   // Shared by every tenant; shown wherever a feature receives webhooks (email delivery, e-signing).
   { id: WEBHOOK_RECEIVER_SERVICE_ID, name: 'Webhook-Empfang', statusUrl: '', source: 'internal', featureBlocks: ['auth', 'esign'], parts: [{ label: WEBHOOK_RECEIVER_PART }] },
   linkOnly('mailtrap', 'Mailtrap', 'https://status.mailtrap.info', ['auth']),
+  // Block 'auth' is a core block, so the row shows for every tenant (mailtrap precedent).
+  linkOnly('stripe', 'Stripe', 'https://status.stripe.com', ['auth']),
   linkOnly('googleAnalytics', 'Google Analytics', '', ['consent']),
   linkOnly('gemini', 'Gemini', 'https://aistudio.google.com/status', ['cms', 'finance', 'contracts']),
   linkOnly('swisstopo', 'swisstopo', 'https://docs.geo.admin.ch/page/status-page.html', ['geo']),

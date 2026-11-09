@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  ADD_ON_PRICES, BANDS, addOnTotal, applyHysteresis, bandOf, commissionForTenant,
-  priceOfBand, roundToFiveCentimes, weightedUsers,
+  ADD_ON_PRICES, BANDS, MAX_TOPUP, MIN_TOPUP, TRANSACTION_PRICES, addOnTotal, applyHysteresis,
+  bandOf, commissionForTenant, priceOfBand, quoteTransaction, roundToFiveCentimes, transactionAmount, weightedUsers,
 } from './pricing';
 import type { BandId } from './pricing';
 
@@ -170,5 +170,58 @@ describe('the formula is not the price (§5)', () => {
     const f = (n: number) => 9 + 0.16 * Math.pow(n, 0.75);
     expect(Math.round(f(1000))).not.toBe(priceOfBand('KringXXL'));
     expect(priceOfBand('KringXXL')).toBe(59);
+  });
+});
+
+describe('transaction price list — prepaid per-unit costs (Pingen letters)', () => {
+  it('states the Pingen letter price in Rappen: CHF 1.20 per letter, CHF 0.30 for every page (owner 2026-11-09)', () => {
+    expect(TRANSACTION_PRICES['pingen-letter']).toEqual({ perUnit: 120, perPage: 30, includedPages: 0 });
+  });
+
+  it('prices one letter of one page at CHF 1.50 (120 + 30 Rappen)', () => {
+    expect(quoteTransaction('pingen-letter', 1, 1).total).toBe(150);
+  });
+
+  it('charges the page price for the first page as well', () => {
+    // 1 letter, 3 pages: 120 + 3 * 30 = 210.
+    expect(quoteTransaction('pingen-letter', 1, 3).total).toBe(210);
+  });
+
+  it('charges every page of every letter', () => {
+    // 2 letters, 5 pages in total: 2 * 120 + 5 * 30 = 390.
+    expect(quoteTransaction('pingen-letter', 2, 5).total).toBe(2 * 120 + 5 * 30);
+  });
+
+  it('charges the page price on every letter that has exactly one page', () => {
+    expect(quoteTransaction('pingen-letter', 4, 4).total).toBe(4 * (120 + 30));
+  });
+
+  it('reports the unit and page prices next to the total', () => {
+    expect(quoteTransaction('pingen-letter', 2, 5)).toEqual({
+      product: 'pingen-letter', units: 2, pages: 5, unitPrice: 120, pagePrice: 30, total: 390,
+    });
+  });
+
+  it('rejects fewer pages than letters', () => {
+    expect(() => quoteTransaction('pingen-letter', 2, 1)).toThrow(RangeError);
+  });
+
+  it('rejects zero or non-integer letters and pages', () => {
+    expect(() => quoteTransaction('pingen-letter', 0, 0)).toThrow(RangeError);
+    expect(() => quoteTransaction('pingen-letter', 1.5, 2)).toThrow(RangeError);
+    expect(() => quoteTransaction('pingen-letter', 1, 2.5)).toThrow(RangeError);
+  });
+
+  it('bounds a prepaid top-up between CHF 50 and CHF 5000 (Rappen)', () => {
+    expect(MIN_TOPUP).toBe(5000);
+    expect(MAX_TOPUP).toBe(500000);
+  });
+});
+
+describe('transactionAmount', () => {
+  it('charges units plus the pages beyond the included ones', () => {
+    expect(transactionAmount({ perUnit: 120, perPage: 30, includedPages: 0 }, 1, 2)).toBe(180);
+    expect(transactionAmount({ perUnit: 120, perPage: 30, includedPages: 1 }, 2, 3)).toBe(270);
+    expect(transactionAmount({ perUnit: 120, perPage: 30, includedPages: 2 }, 1, 1)).toBe(120);
   });
 });

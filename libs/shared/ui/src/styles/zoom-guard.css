@@ -1,0 +1,36 @@
+/*
+ * Zoom guard — keeps iPad/iPhone from zooming the app in by accident.
+ *
+ * Loaded globally by every tenant app (project.json → build.options.styles).
+ * A zoomed-in app hides ion-header and the menu button off-screen and users
+ * cannot find their way back, so the two accidental zooms are suppressed while
+ * deliberate pinch-zoom stays available (accessibility). Deliberately NOT done via
+ * `maximum-scale=1` / `user-scalable=no` in the viewport meta: Android Chrome
+ * honours those and would lose pinch-zoom entirely.
+ */
+
+/*
+ * 1. Double-tap zoom. ion-content's scroll host already sets this (Ionic core
+ *    content.css); the header, toolbar, menu and footer sit outside it. touch-action
+ *    is intersected down the ancestor chain, so setting it on the root covers them.
+ *    Long form instead of `manipulation`: WebKit drops pointercancel with the alias
+ *    (https://bugs.webkit.org/show_bug.cgi?id=240917) — same choice Ionic makes.
+ *    Elements that need `none` (leaflet map, range, reorder) still get it.
+ */
+html {
+  touch-action: pan-x pan-y pinch-zoom;
+}
+
+/*
+ * 2. Focus zoom. iOS/iPadOS Safari zooms in on any focused field whose font-size
+ *    is below 16px and never zooms back out. `-webkit-touch-callout` is supported
+ *    only by iOS/iPadOS WebKit, so desktop and Android keep their sizes. max()
+ *    leaves larger fonts untouched.
+ */
+@supports (-webkit-touch-callout: none) {
+  input,
+  textarea,
+  select {
+    font-size: max(16px, 1em) !important;
+  }
+}
