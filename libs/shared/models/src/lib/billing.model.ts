@@ -11,6 +11,9 @@ export const PaymentAttemptModelName = 'paymentAttempt';
 export const CreditAccountCollection = 'credit-accounts';
 export const CreditAccountModelName = 'creditAccount';
 export const CreditEntrySubcollection = 'entries';
+/** credit-accounts/{tenantId}/auto-top-up/request holds the AutoTopUpRequest (Cloud Functions only). */
+export const CreditAutoTopUpSubcollection = 'auto-top-up';
+export const CreditAutoTopUpRequestDocId = 'request';
 /** platform-config: doc 'billing' holds PlatformBillingConfig. */
 export const PlatformConfigCollection = 'platform-config';
 export const PlatformConfigBillingDocId = 'billing';
@@ -117,15 +120,22 @@ export class CreditAccountModel implements OkrModel {
 
   public balance = 0; // Rappen
   public updatedAt = ''; // StoreDateTime
-  /** Set by a deduction that took the balance below the auto top-up threshold; '' = no request open. */
-  public autoTopUpRequestedAt = ''; // StoreDateTime
-  /** The top-up invoice an auto top-up is charging; '' = none pending. At most one auto top-up is pending. */
-  public autoTopUpPendingInvoiceKey = '';
 
   constructor(tenantId: string) {
     this.okey = tenantId;
     this.tenants = [tenantId];
   }
+}
+
+/**
+ * The open auto top-up of a tenant. Kept out of the credit account so the heavy auto top-up trigger fires only
+ * when a request changes, not on every balance change. At most one auto top-up is pending.
+ */
+export interface AutoTopUpRequest {
+  /** Stamped by a deduction that took the balance below the threshold; '' = no request. StoreDateTime. */
+  requestedAt: string;
+  /** The top-up invoice being charged; '' = none. Older than 24 h (by requestedAt): stale, re-run with this key. */
+  pendingInvoiceKey: string;
 }
 
 /** platform-config/billing: which tenant and books bill the other tenants. */

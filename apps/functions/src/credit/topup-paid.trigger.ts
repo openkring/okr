@@ -11,12 +11,18 @@ import { topUpTurnedPaid } from './auto-topup.logic';
 import { creditPaidTopUp } from './topup.core';
 
 export const onTopUpPaid = onDocumentUpdated(
-  { document: `${InvoiceCollection}/{invoiceKey}`, region: 'europe-west6' },
+  // retry: a transient failure (contention, a closed period being reopened) is tried again; the credit is idempotent
+  // on its entry id, so a retried or replayed event never credits twice.
+  { document: `${InvoiceCollection}/{invoiceKey}`, region: 'europe-west6', retry: true },
   async event => {
     const after = event.data?.after?.data();
     if (!after || !topUpTurnedPaid(event.data?.before?.data(), after)) return;
     const invoiceKey = event.params['invoiceKey'] as string;
-    // Thrown errors are logged by the runtime; the credit is idempotent, so a replay (e.g. a manual re-save) is safe.
-    await creditPaidTopUp(getFirestore(), invoiceKey, after, (level, message, data) => logger[level](message, data));
+    try {
+      await creditPaidTopUp(getFirestore(), invoiceKey, after, (level, message, data) => logger[level](message, data));
+    } catch (err) {
+      logger.error(`onTopUpPaid: top-up invoice ${invoiceKey} not credited`, { invoiceKey, error: err instanceof Error ? err.message : String(err) });
+      throw err; // rethrown so the event is retried
+    }
   },
 );

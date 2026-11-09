@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { autoTopUpDue, isAutoTopUpPending, newAutoTopUpRequest, topUpAmountRefusal, topUpTurnedPaid } from './auto-topup.logic';
+import {
+  autoTopUpDue, idPartRefusal, isAutoTopUpPending, newAutoTopUpRequest, pendingInvoiceRerunnable, topUpAmountRefusal, topUpTurnedPaid,
+} from './auto-topup.logic';
 
 const on = { enabled: true, threshold: 2000, amount: 10000 };
 
@@ -17,10 +19,33 @@ describe('autoTopUpDue', () => {
 });
 
 describe('isAutoTopUpPending', () => {
-  it('a request or a pending invoice counts', () => {
-    expect(isAutoTopUpPending({})).toBe(false);
-    expect(isAutoTopUpPending({ autoTopUpRequestedAt: '20261109100000' })).toBe(true);
-    expect(isAutoTopUpPending({ autoTopUpPendingInvoiceKey: 'topup-scs-1' })).toBe(true);
+  const staleBefore = '20261108100000'; // now = 20261109100000
+  it('a fresh request or pending invoice blocks', () => {
+    expect(isAutoTopUpPending({}, staleBefore)).toBe(false);
+    expect(isAutoTopUpPending({ requestedAt: '20261109090000', pendingInvoiceKey: '' }, staleBefore)).toBe(true);
+    expect(isAutoTopUpPending({ requestedAt: '20261109090000', pendingInvoiceKey: 'topup-scs-1' }, staleBefore)).toBe(true);
+  });
+  it('one older than 24 h no longer blocks', () => {
+    expect(isAutoTopUpPending({ requestedAt: '20261108090000', pendingInvoiceKey: 'topup-scs-1' }, staleBefore)).toBe(false);
+    expect(isAutoTopUpPending({ requestedAt: staleBefore, pendingInvoiceKey: '' }, staleBefore)).toBe(false);
+    expect(isAutoTopUpPending({ requestedAt: '', pendingInvoiceKey: 'topup-scs-1' }, staleBefore)).toBe(false);
+  });
+});
+
+describe('idPartRefusal', () => {
+  it('refuses empty and slashes, never rewrites', () => {
+    expect(idPartRefusal('reference', 'mailing.m1')).toBe('');
+    expect(idPartRefusal('reference', '')).toBeTruthy();
+    expect(idPartRefusal('reference', '  ')).toBeTruthy();
+    expect(idPartRefusal('reference', 'a/b')).toBeTruthy();
+    expect(idPartRefusal('reference', 5)).toBeTruthy();
+  });
+});
+
+describe('pendingInvoiceRerunnable', () => {
+  it('open states re-run, paid and cancelled do not', () => {
+    expect(['draft', 'pending', 'partial'].every(pendingInvoiceRerunnable)).toBe(true);
+    expect(['paid', 'cancelled', undefined].some(pendingInvoiceRerunnable)).toBe(false);
   });
 });
 
@@ -35,11 +60,11 @@ describe('topUpAmountRefusal', () => {
 });
 
 describe('newAutoTopUpRequest', () => {
-  it('only a new request without a pending invoice', () => {
-    expect(newAutoTopUpRequest({}, { autoTopUpRequestedAt: 't1' })).toBe('t1');
-    expect(newAutoTopUpRequest({ autoTopUpRequestedAt: 't1' }, { autoTopUpRequestedAt: 't1', balance: 5 })).toBe('');
-    expect(newAutoTopUpRequest({ autoTopUpRequestedAt: 't1' }, { autoTopUpRequestedAt: '' })).toBe('');
-    expect(newAutoTopUpRequest({}, { autoTopUpRequestedAt: 't1', autoTopUpPendingInvoiceKey: 'k' })).toBe('');
+  it('a new requestedAt, also over a stale pending invoice', () => {
+    expect(newAutoTopUpRequest(undefined, { requestedAt: 't1', pendingInvoiceKey: '' })).toBe('t1');
+    expect(newAutoTopUpRequest({ requestedAt: 't0', pendingInvoiceKey: 'k' }, { requestedAt: 't1', pendingInvoiceKey: 'k' })).toBe('t1');
+    expect(newAutoTopUpRequest({ requestedAt: 't1', pendingInvoiceKey: '' }, { requestedAt: 't1', pendingInvoiceKey: 'k' })).toBe('');
+    expect(newAutoTopUpRequest({ requestedAt: 't1' }, { requestedAt: '' })).toBe('');
   });
 });
 

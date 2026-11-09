@@ -252,12 +252,12 @@ describe('stripeHandler: payment-failed and expired', () => {
     const store = seed();
     Object.assign(store['payment-attempts']['att1'], { purpose: 'topup', offSession: true, invoiceKey: 'topup-scs-1', amount: 10000 });
     store['subscriptions']['scs']['autoTopUp'] = { enabled: true, threshold: 1000, amount: 10000 };
-    store['credit-accounts'] = { scs: { balance: 500, autoTopUpRequestedAt: '20261109100000', autoTopUpPendingInvoiceKey: 'topup-scs-1' } };
+    store['credit-accounts/scs/auto-top-up'] = { request: { requestedAt: '20261109100000', pendingInvoiceKey: 'topup-scs-1' } };
     const notify = vi.fn(async () => undefined);
     const handler = makeStripeHandler({ db: () => fakeDb(store), port: () => fakePort(), now: () => NOW, log: () => undefined, notifyTopUpFailed: notify });
     await handler(row({ id: 'evt_2', type: 'payment_intent.payment_failed', data: { object: { id: 'pi_1', metadata: { ...meta, purpose: 'topup' } } } }), 'row2');
     expect(store['subscriptions']['scs']['autoTopUp']).toEqual({ enabled: false, threshold: 1000, amount: 10000 });
-    expect(store['credit-accounts']['scs']).toMatchObject({ autoTopUpRequestedAt: '', autoTopUpPendingInvoiceKey: '' });
+    expect(store['credit-accounts/scs/auto-top-up']['request']).toEqual({ requestedAt: '', pendingInvoiceKey: '' });
     expect(notify).toHaveBeenCalledWith('scs', { attemptKey: 'att1', invoiceKey: 'topup-scs-1', amount: 10000 });
   });
 

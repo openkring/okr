@@ -5,7 +5,7 @@
 import { HttpsError } from 'firebase-functions/v2/https';
 import type { Firestore } from 'firebase-admin/firestore';
 import { CreditAccountCollection, CreditAccountModel, CreditEntrySubcollection } from '@okr/shared-models';
-import type { CreditEntry } from '@okr/shared-models';
+import type { AutoTopUp, CreditEntry } from '@okr/shared-models';
 
 import { periodKeyFor } from '../bank-import/bank-import.util';
 import { allocateBookingNo } from '../booking/booking-no';
@@ -15,6 +15,7 @@ import { assertLeafAccount, loadOwnedAccountingConfig, refuse } from '../invoice
 import { BOOKING_COLLECTION, BOOKING_LINE_COLLECTION } from '../invoice/invoice-payment.core';
 import { withoutUndefined } from '../invoice/invoice.logic';
 import { platformBilling } from '../collection/platform';
+import { AUTO_TOPUP_REQUEST_ID, autoTopUpCollectionPath, autoTopUpDue, isAutoTopUpPending } from './auto-topup.logic';
 import { creditBookingKey, creditBookingLines, creditDecision, signMatchesKind } from './credit.logic';
 
 export type CreditEntryInput = Omit<CreditEntry, 'balanceAfter' | 'bookingKey'>;
@@ -48,6 +49,12 @@ export interface ApplyCreditOptions {
    * running `reversedAmount` is raised with the write.
    */
   parentEntryId?: string;
+  /**
+   * A deduction that may start an auto top-up (Ruling R9): in the same transaction the request doc
+   * (credit-accounts/{tenantId}/auto-top-up/request) is read and, when `autoTopUpDue`, stamped with
+   * `requestedAt`. A stale pending invoice key is kept, so the trigger charges that invoice again.
+   */
+  autoTopUp?: { settings: AutoTopUp; autopay: boolean; requestedAt: string; staleBefore: string };
 }
 
 export async function applyCreditEntry(
@@ -62,6 +69,7 @@ export async function applyCreditEntry(
     throw new HttpsError('invalid-argument', 'a parent entry is only given for a reversal of another entry');
   }
   const parentRef = options.parentEntryId ? accountRef.collection(CreditEntrySubcollection).doc(options.parentEntryId) : undefined;
+  const requestRef = options.autoTopUp ? db.collection(autoTopUpCollectionPath(tenantId)).doc(AUTO_TOPUP_REQUEST_ID) : undefined;
   // A retried duplicate answers from the stored entry, even if the books' config changed meanwhile.
   const prior = await entryRef.get();
   if (prior.exists) return { balanceAfter: Number((prior.data() ?? {})['balanceAfter'] ?? 0), duplicate: true };
@@ -88,6 +96,14 @@ export async function applyCreditEntry(
         throw new HttpsError('failed-precondition', 'reversal-exceeds-entry', { reason: 'reversal-exceeds-entry' });
       }
     }
+    let request: Record<string, unknown> | undefined;
+    if (requestRef && options.autoTopUp) {
+      const { settings, autopay, staleBefore } = options.autoTopUp;
+      const current = (await tx.get(requestRef)).data();
+      if (autoTopUpDue(decision.balanceAfter, settings, autopay, isAutoTopUpPending(current, staleBefore))) {
+        request = { requestedAt: options.autoTopUp.requestedAt, pendingInvoiceKey: String(current?.['pendingInvoiceKey'] ?? '') };
+      }
+    }
 
     let bookingNo = 0;
     if (ctx) {
@@ -107,6 +123,7 @@ export async function applyCreditEntry(
     }
     tx.set(entryRef, { ...entry, balanceAfter: decision.balanceAfter, bookingKey });
     if (parentRef) tx.update(parentRef, { reversedAmount: reversedAfter });
+    if (requestRef && request) tx.set(requestRef, request);
 
     if (ctx) {
       const lines = creditBookingLines(entry.kind, entry.amount, ctx.prepaymentKey, ctx.revenueKey) ?? [];

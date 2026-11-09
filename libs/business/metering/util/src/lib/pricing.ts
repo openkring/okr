@@ -231,15 +231,24 @@ export function quoteTransaction(product: TransactionProduct, units: number, pag
     throw new RangeError(`pages must be an integer of at least ${units}, got ${pages}`);
   }
   const price = TRANSACTION_PRICES[product];
-  const billablePages = Math.max(0, pages - units * price.includedPages);
   return {
     product,
     units,
     pages,
     unitPrice: price.perUnit,
     pagePrice: price.perPage,
-    total: units * price.perUnit + billablePages * price.perPage,
+    total: transactionAmount(price, units, pages),
   };
+}
+
+/**
+ * The one billing rule of a transaction (Rappen): `units * perUnit` plus the pages beyond the included ones
+ * at `perPage`. No validation: `quoteTransaction` checks a whole send; a partial reversal of a send (one
+ * rejected letter) reuses the rule with the prices stored on its entry.
+ */
+export function transactionAmount(price: TransactionPrice, units: number, pages: number): number {
+  const billablePages = Math.max(0, pages - units * price.includedPages);
+  return units * price.perUnit + billablePages * price.perPage;
 }
 
 /** Smallest prepaid top-up (Rappen), CHF 50. */

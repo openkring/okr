@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   ADD_ON_PRICES, BANDS, MAX_TOPUP, MIN_TOPUP, TRANSACTION_PRICES, addOnTotal, applyHysteresis,
-  bandOf, commissionForTenant, priceOfBand, quoteTransaction, roundToFiveCentimes, weightedUsers,
+  bandOf, commissionForTenant, priceOfBand, quoteTransaction, roundToFiveCentimes, transactionAmount, weightedUsers,
 } from './pricing';
 import type { BandId } from './pricing';
 
@@ -215,5 +215,13 @@ describe('transaction price list — prepaid per-unit costs (Pingen letters)', (
   it('bounds a prepaid top-up between CHF 50 and CHF 5000 (Rappen)', () => {
     expect(MIN_TOPUP).toBe(5000);
     expect(MAX_TOPUP).toBe(500000);
+  });
+});
+
+describe('transactionAmount', () => {
+  it('charges units plus the pages beyond the included ones', () => {
+    expect(transactionAmount({ perUnit: 120, perPage: 30, includedPages: 0 }, 1, 2)).toBe(180);
+    expect(transactionAmount({ perUnit: 120, perPage: 30, includedPages: 1 }, 2, 3)).toBe(270);
+    expect(transactionAmount({ perUnit: 120, perPage: 30, includedPages: 2 }, 1, 1)).toBe(120);
   });
 });
