@@ -6,12 +6,13 @@
 // setup session stores the tenant's payment method. Every effect is idempotent: Stripe retries, and the
 // replay script may run a row again.
 //
-// The credit for a paid top-up is NOT written here: Task 9's invoice trigger handles Stripe and QR alike.
+// The credit for a paid top-up is NOT written here: Task 9's invoice trigger (credit/topup-paid.trigger.ts)
+// handles Stripe and QR alike. A failed off-session top-up switches auto top-up off here.
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 import type { Firestore } from 'firebase-admin/firestore';
 import { PaymentAttemptCollection, SubscriptionCollection } from '@okr/shared-models';
-import type { PaymentAttemptModel } from '@okr/shared-models';
+import type { AutoTopUp, PaymentAttemptModel } from '@okr/shared-models';
 
 import type { WebhookHandler, WebhookOutcome } from '../_webhooks/process';
 import type { WebhookClient } from '../_webhooks/types';
@@ -23,6 +24,8 @@ import { assertLeafAccount, loadOwnedAccountingConfig } from '../invoice/invoice
 import { BOOKING_COLLECTION, BOOKING_LINE_COLLECTION, postInvoicePayment } from '../invoice/invoice-payment.core';
 import { invoiceBookingIndex, withoutUndefined } from '../invoice/invoice.logic';
 import { toStoreDateTime } from '../srv/zurich-time';
+import { clearAutoTopUp } from '../credit/topup.core';
+import { notifyAutoTopUpFailed } from '../credit/topup-failed-mail';
 import { ensureSubscription } from './payment-method';
 import { platformBilling } from './platform';
 import { stripePort, stripeWebhookSecret } from './stripe-port';
@@ -59,6 +62,8 @@ export interface StripeHandlerDeps {
   port(): StripeHandlerPort;
   now(): Date;
   log(level: 'info' | 'warn' | 'error', message: string, data: Record<string, unknown>): void;
+  /** Tells the payer's admin that an auto top-up failed (idempotent per attempt); absent in tests that do not care. */
+  notifyTopUpFailed?(payerTenantId: string, topUp: { attemptKey: string; invoiceKey: string; amount: number }): Promise<void>;
 }
 
 type Attempt = Omit<PaymentAttemptModel, 'okey'>;
@@ -224,18 +229,36 @@ async function paymentFailed(
     state: 'failed', error: action.error, updatedAt: toStoreDateTime(deps.now()),
     ...(action.paymentIntentId ? { stripePaymentIntentId: action.paymentIntentId } : {}),
   });
-  await onTopUpChargeFailed(db, attempt, action);
+  await onTopUpChargeFailed(db, deps, action.attemptKey, attempt);
   deps.log('warn', 'stripeHandler: payment failed', { attemptKey: action.attemptKey, error: action.error });
   return { state: 'handled', tenantId: operatorOf(attempt) };
 }
 
 /**
- * Branch point for Task 9: a failed off-session top-up charge (auto top-up) will switch autopay off and
- * notify the tenant here. A no-op today.
+ * A failed off-session top-up charge (auto top-up, plan 1.149 Task 9): auto top-up is switched off on the payer's
+ * subscription, the pending top-up is cleared so a new one can start once it is switched on again, and the
+ * payer's admin is told. A top-up paid by hand in Checkout changes nothing here: the payer saw the decline.
+ * Every step is idempotent (Stripe retries; the mail is queued once per attempt).
  */
-async function onTopUpChargeFailed(_db: Firestore, attempt: Attempt, _action: Extract<StripeAction, { kind: 'payment-failed' }>): Promise<void> {
+async function onTopUpChargeFailed(
+  db: Firestore, deps: StripeHandlerDeps, attemptKey: string, attempt: Attempt,
+): Promise<void> {
   if (attempt.purpose !== 'topup' || !attempt.offSession) return;
-  // Task 9
+  const payer = attempt.payerTenantId;
+  const subRef = db.collection(SubscriptionCollection).doc(payer);
+  const sub = (await subRef.get()).data();
+  if (sub) {
+    const autoTopUp = (sub['autoTopUp'] ?? { enabled: false, threshold: 0, amount: 0 }) as AutoTopUp;
+    if (autoTopUp.enabled) await subRef.update({ autoTopUp: { ...autoTopUp, enabled: false } });
+  }
+  await clearAutoTopUp(db, payer, attempt.invoiceKey);
+  try {
+    await deps.notifyTopUpFailed?.(payer, { attemptKey, invoiceKey: attempt.invoiceKey, amount: attempt.amount });
+  } catch (err) {
+    // The switch-off stands; a missing mail must not make Stripe retry the whole event.
+    deps.log('error', 'stripeHandler: could not notify the failed auto top-up', { attemptKey, payer, error: err instanceof Error ? err.message : String(err) });
+  }
+  deps.log('warn', 'stripeHandler: auto top-up failed, switched off', { attemptKey, payer, invoiceKey: attempt.invoiceKey });
 }
 
 async function expireAttempt(db: Firestore, deps: StripeHandlerDeps, attemptKey: string): Promise<void> {
@@ -292,4 +315,5 @@ export const stripeHandler: WebhookHandler = makeStripeHandler({
   port: () => stripePort(),
   now: () => new Date(),
   log: (level, message, data) => logger[level](message, data),
+  notifyTopUpFailed: (payerTenantId, topUp) => notifyAutoTopUpFailed(getFirestore(), payerTenantId, topUp),
 });

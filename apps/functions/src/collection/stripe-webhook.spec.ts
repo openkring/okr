@@ -248,6 +248,30 @@ describe('stripeHandler: payment-failed and expired', () => {
     expect(store['payment-attempts']['att1']['state']).toBe('succeeded');
   });
 
+  it('a failed off-session top-up switches auto top-up off, clears it as pending and tells the admin', async () => {
+    const store = seed();
+    Object.assign(store['payment-attempts']['att1'], { purpose: 'topup', offSession: true, invoiceKey: 'topup-scs-1', amount: 10000 });
+    store['subscriptions']['scs']['autoTopUp'] = { enabled: true, threshold: 1000, amount: 10000 };
+    store['credit-accounts'] = { scs: { balance: 500, autoTopUpRequestedAt: '20261109100000', autoTopUpPendingInvoiceKey: 'topup-scs-1' } };
+    const notify = vi.fn(async () => undefined);
+    const handler = makeStripeHandler({ db: () => fakeDb(store), port: () => fakePort(), now: () => NOW, log: () => undefined, notifyTopUpFailed: notify });
+    await handler(row({ id: 'evt_2', type: 'payment_intent.payment_failed', data: { object: { id: 'pi_1', metadata: { ...meta, purpose: 'topup' } } } }), 'row2');
+    expect(store['subscriptions']['scs']['autoTopUp']).toEqual({ enabled: false, threshold: 1000, amount: 10000 });
+    expect(store['credit-accounts']['scs']).toMatchObject({ autoTopUpRequestedAt: '', autoTopUpPendingInvoiceKey: '' });
+    expect(notify).toHaveBeenCalledWith('scs', { attemptKey: 'att1', invoiceKey: 'topup-scs-1', amount: 10000 });
+  });
+
+  it('a failed top-up paid by hand (not off-session) leaves auto top-up alone', async () => {
+    const store = seed();
+    Object.assign(store['payment-attempts']['att1'], { purpose: 'topup', offSession: false });
+    store['subscriptions']['scs']['autoTopUp'] = { enabled: true, threshold: 1000, amount: 10000 };
+    const notify = vi.fn(async () => undefined);
+    const handler = makeStripeHandler({ db: () => fakeDb(store), port: () => fakePort(), now: () => NOW, log: () => undefined, notifyTopUpFailed: notify });
+    await handler(row({ id: 'evt_2', type: 'payment_intent.payment_failed', data: { object: { id: 'pi_1', metadata: meta } } }), 'row2');
+    expect(store['subscriptions']['scs']['autoTopUp']).toMatchObject({ enabled: true });
+    expect(notify).not.toHaveBeenCalled();
+  });
+
   it('checkout.session.expired marks an open attempt expired and is ignored', async () => {
     const store = seed();
     const { handler } = setup(store);
