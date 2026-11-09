@@ -10,7 +10,7 @@ import { privateBucket } from '../_storage/private-bucket';
 import { renderDocument } from '../pdf/render-document';
 import { buildInvoicePayload } from './invoice.logic';
 import { loadOwnedAccountingConfig, receiverAddress, receiverGender, ReceiverRef, refuse, treasurerContact } from './invoice-context';
-import { readPositions } from './issue-invoice';
+import { readPositions } from './invoice-issue.core';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'previewInvoicePdf';
