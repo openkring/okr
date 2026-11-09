@@ -27,7 +27,7 @@ import { ensureSubscription } from './payment-method';
 import { platformBilling } from './platform';
 import { stripePort, stripeWebhookSecret } from './stripe-port';
 import type { StripePort } from './stripe-port';
-import { feeBookingLines, isSettledRefusal, stripeActionOf, stripePaymentId } from './stripe-webhook.logic';
+import { feeBookingLines, isSettledRefusal, reduceStripeEvent, stripeActionOf, stripePaymentId } from './stripe-webhook.logic';
 import type { StripeAction } from './stripe-webhook.logic';
 
 export type { StripeAction } from './stripe-webhook.logic';
@@ -40,7 +40,8 @@ export const stripeClient: WebhookClient = {
   type: 'stripe',
   auth: { kind: 'stripe-signature', secret: stripeWebhookSecret, toleranceSec: 300 },
   tenant: { scope: 'platform' },
-  split: raw => [JSON.parse(raw.toString('utf8')) as unknown],
+  // Only the fields the handler reads are stored: no customer names, emails or addresses in webhook-events.
+  split: raw => [reduceStripeEvent(JSON.parse(raw.toString('utf8')))],
   dedupeKey: event => {
     const id = isObject(event) ? event['id'] : undefined;
     if (typeof id !== 'string' || id === '') throw new Error('Stripe event has no id');
@@ -104,12 +105,26 @@ async function paymentSucceeded(
   if (SETTLED_STATES.includes(attempt.state)) return { state: 'ignored', tenantId: operatorOf(attempt) };
   if (!paymentIntentId || !chargeId) throw new Error(`Stripe payment for attempt ${attemptKey} has no PaymentIntent or charge`);
 
+  const stripeIds = { stripePaymentIntentId: paymentIntentId, stripeChargeId: chargeId };
+  const fail = async (error: string, data: Record<string, unknown>): Promise<WebhookOutcome> => {
+    await attemptRef.update({ state: 'failed', ...stripeIds, error, updatedAt: toStoreDateTime(deps.now()) });
+    deps.log('error', `stripeHandler: payment not recorded (${error})`, { attemptKey, paymentIntentId, ...data });
+    return { state: 'handled', tenantId: operatorOf(attempt) };
+  };
+
+  // Guards before anything is posted: our books are in CHF and belong to the operator.
+  if (action.currency !== 'chf') return fail(`currency-mismatch: ${action.currency || '(none)'}`, { amount });
   const { operatorTenantId, accountingTenantId } = await platformBilling(db);
   const invoiceKey = attempt.invoiceKey;
+  const invoiceBooks = String((await db.collection('invoices').doc(invoiceKey).get()).data()?.['accountingTenantId'] ?? '');
+  if (invoiceBooks !== accountingTenantId) return fail(`books-mismatch: invoice ${invoiceBooks || '(none)'}, operator ${accountingTenantId}`, { invoiceKey });
+  // The money arrived: a different amount is still posted as received, and the difference is noted on the attempt.
+  const mismatch = amount !== attempt.amount ? `amount-mismatch: expected ${attempt.amount} received ${amount}` : '';
+  if (mismatch) deps.log('warn', `stripeHandler: ${mismatch}`, { attemptKey, invoiceKey, paymentIntentId });
+
   const config = await loadOwnedAccountingConfig(db, operatorTenantId, invoiceKey, accountingTenantId, 'paid');
   const clearingKey = String(config['stripeClearingAccountKey'] ?? '');
   if (!clearingKey) throw new Error(`${accountingTenantId} has no stripeClearingAccountKey: Stripe collection is not set up`);
-  const stripeIds = { stripePaymentIntentId: paymentIntentId, stripeChargeId: chargeId };
 
   // 2. the payment on our invoice, Stripe clearing as the bank (idempotent on paymentId)
   let paymentBookingKey: string;
@@ -142,8 +157,14 @@ async function paymentSucceeded(
     });
   }
 
-  // 4. the attempt is done
-  await attemptRef.update({ state: 'succeeded', ...stripeIds, fee, paymentBookingKey, feeBookingKey, error: '', updatedAt: toStoreDateTime(deps.now()) });
+  // 4. the payer agreed to save the method in Checkout: store it like a setup session would (before the attempt
+  //    is marked succeeded, so a retry after a failure here saves it again)
+  if (attempt.offerSave && action.paymentMethodId) {
+    await saveMethod(db, deps, attempt.payerTenantId, action.paymentMethodId, action.customerId);
+  }
+
+  // 5. the attempt is done
+  await attemptRef.update({ state: 'succeeded', ...stripeIds, fee, paymentBookingKey, feeBookingKey, error: mismatch, updatedAt: toStoreDateTime(deps.now()) });
   deps.log('info', 'stripeHandler: payment recorded', { attemptKey, invoiceKey, amount, fee });
   return { state: 'handled', tenantId: operatorTenantId };
 }
@@ -227,11 +248,28 @@ async function expireAttempt(db: Firestore, deps: StripeHandlerDeps, attemptKey:
 async function methodSaved(
   db: Firestore, deps: StripeHandlerDeps, action: Extract<StripeAction, { kind: 'method-saved' }>,
 ): Promise<WebhookOutcome> {
-  const { tenantId } = action;
-  const port = deps.port();
-  const paymentMethodId = action.paymentMethodId || (await port.setupIntentPaymentMethod(action.setupIntentId));
-  const display = await port.paymentMethodDisplay(paymentMethodId);
+  const resolve = async () => action.paymentMethodId || deps.port().setupIntentPaymentMethod(action.setupIntentId);
+  const saved = await saveMethod(db, deps, action.tenantId, resolve, action.customerId);
+  return saved ? { state: 'handled', tenantId: action.tenantId } : { state: 'ignored', tenantId: action.tenantId };
+}
+
+/**
+ * Stores a payment method on subscriptions/{tenantId} with autopay on and detaches a different previous one
+ * (best effort). Refuses (false, error log) when the Stripe customer is not the subscription's; that check runs
+ * before Stripe is asked anything. `method` is the id, or a resolver for it (a setup session's intent).
+ */
+async function saveMethod(
+  db: Firestore, deps: StripeHandlerDeps, tenantId: string, method: string | (() => Promise<string>), customerId: string,
+): Promise<boolean> {
   const sub = await ensureSubscription(db, tenantId);
+  const expectedCustomer = String(sub['stripeCustomerId'] ?? '');
+  if (!customerId || customerId !== expectedCustomer) {
+    deps.log('error', 'stripeHandler: payment method of another Stripe customer, not saved', { tenantId, customerId, expectedCustomer });
+    return false;
+  }
+  const port = deps.port();
+  const paymentMethodId = typeof method === 'string' ? method : await method();
+  const display = await port.paymentMethodDisplay(paymentMethodId);
   const previous = String((sub['paymentMethod'] as { stripePaymentMethodId?: string } | null | undefined)?.stripePaymentMethodId ?? '');
   await db.collection(SubscriptionCollection).doc(tenantId).update({
     paymentMethod: { ...display, consentAt: toStoreDateTime(deps.now()) },
@@ -246,7 +284,7 @@ async function methodSaved(
     }
   }
   deps.log('info', 'stripeHandler: payment method saved', { tenantId, type: display.type });
-  return { state: 'handled', tenantId };
+  return true;
 }
 
 export const stripeHandler: WebhookHandler = makeStripeHandler({

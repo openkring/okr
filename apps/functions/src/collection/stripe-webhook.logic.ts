@@ -6,8 +6,12 @@ import { toStoreDate } from '../srv/zurich-time';
 
 export type StripeAction =
   /** A setup session finished. `paymentMethodId` is '' unless the event carries it; the handler then asks Stripe via `setupIntentId`. */
-  | { kind: 'method-saved'; tenantId: string; paymentMethodId: string; setupIntentId: string }
-  | { kind: 'payment-succeeded'; attemptKey: string; paymentIntentId: string; chargeId: string; amount: number; date: string }
+  | { kind: 'method-saved'; tenantId: string; paymentMethodId: string; setupIntentId: string; customerId: string }
+  /** `currency` lower-case as Stripe sends it; `paymentMethodId`/`customerId` '' when absent (used to save the method on offerSave). */
+  | {
+      kind: 'payment-succeeded'; attemptKey: string; paymentIntentId: string; chargeId: string; amount: number; date: string;
+      currency: string; paymentMethodId: string; customerId: string;
+    }
   | { kind: 'payment-failed'; attemptKey: string; paymentIntentId: string; error: string }
   /** `expireAttemptKey`: an expired payment session; the handler marks that attempt `expired` (if still open). */
   | { kind: 'ignore'; reason: string; expireAttemptKey?: string };
@@ -47,7 +51,7 @@ export function stripeActionOf(event: unknown): StripeAction {
       const setupIntentId = idOf(setupIntent);
       const paymentMethodId = isObject(setupIntent) ? idOf(setupIntent['payment_method']) : '';
       if (!setupIntentId && !paymentMethodId) return { kind: 'ignore', reason: 'setup session without a setup intent' };
-      return { kind: 'method-saved', tenantId, paymentMethodId, setupIntentId };
+      return { kind: 'method-saved', tenantId, paymentMethodId, setupIntentId, customerId: idOf(object['customer']) };
     }
     case 'payment_intent.succeeded': {
       if (!attemptKey) return { kind: 'ignore', reason: 'payment intent without metadata.attemptKey' };
@@ -61,6 +65,9 @@ export function stripeActionOf(event: unknown): StripeAction {
         chargeId: idOf(charge),
         amount: num(object['amount_received']) || num(object['amount']),
         date: storeDateOfUnix(created),
+        currency: str(object['currency']).toLowerCase(),
+        paymentMethodId: idOf(object['payment_method']),
+        customerId: idOf(object['customer']),
       };
     }
     case 'payment_intent.payment_failed': {
@@ -92,4 +99,37 @@ export function feeBookingLines(feeAccountKey: string, clearingAccountKey: strin
     { accountKey: feeAccountKey, debitAmount: { amount: fee, currency: 'CHF' } },
     { accountKey: clearingAccountKey, creditAmount: { amount: fee, currency: 'CHF' } },
   ];
+}
+
+/** The fields of `data.object` the logic reads; everything else (customer_details, billing details, charges …) is dropped. */
+const KEPT_OBJECT_FIELDS = [
+  'id', 'object', 'mode', 'status', 'metadata', 'payment_intent', 'setup_intent', 'customer', 'payment_method',
+  'amount', 'amount_received', 'currency', 'latest_charge', 'created', 'last_payment_error',
+] as const;
+
+/** A string metadata map only (Stripe metadata values are strings). */
+function stringMap(v: unknown): Record<string, string> {
+  if (!isObject(v)) return {};
+  return Object.fromEntries(Object.entries(v).filter((e): e is [string, string] => typeof e[1] === 'string'));
+}
+
+/**
+ * The stored shape of a Stripe event: `id`, `type`, `created` and a reduced `data.object`. Keeps personal data
+ * (names, emails, addresses) out of webhook-events and avoids nested arrays Firestore rejects. Pure.
+ */
+export function reduceStripeEvent(event: unknown): Record<string, unknown> {
+  if (!isObject(event)) throw new Error('Stripe event is not an object');
+  const source = isObject(event['data']) && isObject(event['data']['object']) ? event['data']['object'] : {};
+  const object: Record<string, unknown> = {};
+  for (const k of KEPT_OBJECT_FIELDS) {
+    const v = source[k];
+    if (v === undefined || v === null) continue;
+    if (k === 'metadata') object[k] = stringMap(v);
+    else if (k === 'latest_charge') object[k] = isObject(v) ? { id: idOf(v), created: num(v['created']) } : v;
+    else if (k === 'setup_intent') object[k] = isObject(v) ? { id: idOf(v), payment_method: idOf(v['payment_method']) } : v;
+    else if (k === 'last_payment_error') object[k] = isObject(v) ? { message: str(v['message']) } : {};
+    else if (k === 'payment_intent' || k === 'customer' || k === 'payment_method') object[k] = idOf(v);
+    else if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') object[k] = v;
+  }
+  return { id: str(event['id']), type: str(event['type']), created: num(event['created']), data: { object } };
 }

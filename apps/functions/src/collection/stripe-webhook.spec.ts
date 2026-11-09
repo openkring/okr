@@ -101,10 +101,13 @@ const row = (payload: unknown): StoredWebhookEvent => ({
   receivedAt: Timestamp.fromMillis(NOW.getTime()), expiresAt: Timestamp.fromMillis(NOW.getTime()),
 });
 const meta = { attemptKey: 'att1', tenantId: 'scs', accountingTenantId: 'bka', purpose: 'invoice', invoiceKey: 'inv1' };
-const succeeded = row({
-  id: 'evt_1', type: 'payment_intent.succeeded', created: NOW.getTime() / 1000,
-  data: { object: { id: 'pi_3AbC_123', amount: 5000, amount_received: 5000, latest_charge: 'ch_1', metadata: meta } },
+const piObject = {
+  id: 'pi_3AbC_123', amount: 5000, amount_received: 5000, currency: 'chf', latest_charge: 'ch_1', payment_method: 'pm_card', customer: 'cus_1', metadata: meta,
+};
+const succeededWith = (overrides: Record<string, unknown>) => row({
+  id: 'evt_1', type: 'payment_intent.succeeded', created: NOW.getTime() / 1000, data: { object: { ...piObject, ...overrides } },
 });
+const succeeded = succeededWith({});
 
 function setup(store: Store) {
   const port = fakePort();
@@ -174,6 +177,56 @@ describe('stripeHandler: payment-succeeded', () => {
   });
 });
 
+describe('stripeHandler: payment-succeeded guards', () => {
+  it('a non-CHF payment fails the attempt and posts nothing', async () => {
+    const store = seed();
+    const { port, handler } = setup(store);
+    const out = await handler(succeededWith({ currency: 'eur' }), 'row1');
+    expect(out).toEqual({ state: 'handled', tenantId: 'kring' });
+    expect(store['bookings']).toBeUndefined();
+    expect(store['invoices']['inv1']['payments']).toHaveLength(0);
+    expect(store['payment-attempts']['att1']).toMatchObject({ state: 'failed', error: 'currency-mismatch: eur' });
+    expect(port.calls).toEqual([]);
+  });
+
+  it('a different amount is still posted as received, and the mismatch is stored on the attempt', async () => {
+    const store = seed();
+    const { handler } = setup(store);
+    await handler(succeededWith({ amount: 4000, amount_received: 4000 }), 'row1');
+    expect(store['invoices']['inv1']['payments']).toMatchObject([{ amount: 4000 }]);
+    expect(store['invoices']['inv1']['state']).toBe('pending');
+    expect(store['payment-attempts']['att1']).toMatchObject({ state: 'succeeded', error: 'amount-mismatch: expected 5000 received 4000' });
+  });
+
+  it('an invoice of other books fails the attempt and posts nothing', async () => {
+    const store = seed({ accountingTenantId: 'scs' });
+    const { port, handler } = setup(store);
+    const out = await handler(succeeded, 'row1');
+    expect(out.state).toBe('handled');
+    expect(store['bookings']).toBeUndefined();
+    expect(store['payment-attempts']['att1']).toMatchObject({ state: 'failed', error: 'books-mismatch: invoice scs, operator bka' });
+    expect(port.calls).toEqual([]);
+  });
+
+  it('offerSave: the card used is saved on the payer subscription with autopay, the old one detached', async () => {
+    const store = seed();
+    store['payment-attempts']['att1']['offerSave'] = true;
+    store['subscriptions']['scs']['paymentMethod'] = { stripePaymentMethodId: 'pm_old', type: 'card' };
+    const { port, handler } = setup(store);
+    await handler(succeeded, 'row1');
+    expect(store['subscriptions']['scs']).toMatchObject({ autopay: true, paymentMethod: { stripePaymentMethodId: 'pm_card' } });
+    expect(port.calls).toEqual(['fee:ch_1', 'detach:pm_old']);
+    expect(store['payment-attempts']['att1']['state']).toBe('succeeded');
+  });
+
+  it('without offerSave the card is not saved', async () => {
+    const store = seed();
+    const { handler } = setup(store);
+    await handler(succeeded, 'row1');
+    expect(store['subscriptions']['scs']).toMatchObject({ autopay: false, paymentMethod: null });
+  });
+});
+
 describe('stripeHandler: payment-failed and expired', () => {
   it('payment_intent.payment_failed marks an open attempt failed', async () => {
     const store = seed();
@@ -207,7 +260,7 @@ describe('stripeHandler: payment-failed and expired', () => {
 describe('stripeHandler: method-saved', () => {
   const setupDone = row({
     id: 'evt_4', type: 'checkout.session.completed',
-    data: { object: { mode: 'setup', setup_intent: 'seti_1', metadata: { tenantId: 'scs' } } },
+    data: { object: { mode: 'setup', setup_intent: 'seti_1', customer: 'cus_1', metadata: { tenantId: 'scs' } } },
   });
 
   it('stores the payment method, switches autopay on and detaches the previous one', async () => {
@@ -232,6 +285,16 @@ describe('stripeHandler: method-saved', () => {
     vi.mocked(port.detachPaymentMethod).mockRejectedValueOnce(new Error('already detached'));
     await expect(handler(setupDone, 'row4')).resolves.toMatchObject({ state: 'handled' });
     expect(store['subscriptions']['scs']['autopay']).toBe(true);
+  });
+
+  it('a session of another Stripe customer is ignored and changes nothing', async () => {
+    const store = seed();
+    store['subscriptions']['scs']['stripeCustomerId'] = 'cus_other';
+    const { port, handler } = setup(store);
+    const out = await handler(setupDone, 'row4');
+    expect(out.state).toBe('ignored');
+    expect(store['subscriptions']['scs']).toMatchObject({ autopay: false, paymentMethod: null });
+    expect(port.calls).toEqual([]);
   });
 
   it('the same method again does not detach it', async () => {
