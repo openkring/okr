@@ -121,15 +121,60 @@ export function registerStaleChunkRecovery(): void {
   });
 }
 
+/** Upper bound for the serialized value in a `describeNonError` message. */
+const NON_ERROR_DETAIL_MAX = 300;
+
+/**
+ * True for the values Sentry's Angular ErrorHandler can report on its own: a string, an
+ * `Error`, or an error-like object (string `name` + `message`, optional string `stack`).
+ * Mirrors `isErrorOrErrorLikeObject` in `@sentry/angular`'s errorhandler.
+ */
+export function isReportableError(value: unknown): boolean {
+  if (typeof value === 'string' || value instanceof Error) return true;
+  if (value === null || typeof value !== 'object') return false;
+  const c = value as { name?: unknown; message?: unknown; stack?: unknown };
+  return typeof c.name === 'string' && typeof c.message === 'string'
+    && (c.stack === undefined || typeof c.stack === 'string');
+}
+
+/**
+ * One-line description of a thrown value that is not an Error — its type, constructor and a
+ * truncated serialization — so the report says WHAT was thrown.
+ */
+export function describeNonError(value: unknown): string {
+  if (value === undefined) return 'undefined';
+  if (value === null) return 'null';
+  if (typeof value !== 'object') return `${typeof value} ${String(value).slice(0, NON_ERROR_DETAIL_MAX)}`;
+  const ctor = (value as object).constructor?.name || 'Object';
+  // An Event (e.g. an <img>/<script> `error` event, or a rejected FileReader) serializes to `{}`.
+  const eventType = typeof Event !== 'undefined' && value instanceof Event ? ` type=${value.type}` : '';
+  let detail: string;
+  try {
+    detail = JSON.stringify(value) ?? '';
+  } catch {
+    detail = `keys=[${Object.keys(value).join(',')}]`;
+  }
+  return `${ctor}${eventType} ${detail.slice(0, NON_ERROR_DETAIL_MAX)}`.trim();
+}
+
 /**
  * ErrorHandler that recovers from stale lazy-chunk failures by reloading once, and
  * delegates every other error to the wrapped handler (Sentry's).
+ *
+ * A thrown value that is neither a string nor an Error (`undefined`, a plain object, an
+ * Event) is wrapped in an Error that describes it. Sentry would otherwise file it as a
+ * stackless "Handled unknown error" with no trace of the value (SCS-EJ), and group every
+ * such case into that one bucket.
  */
 export class ChunkLoadErrorHandler implements ErrorHandler {
   constructor(private readonly delegate: ErrorHandler) {}
 
   handleError(error: unknown): void {
     if (recoverFromStaleChunk(error)) return;
+    if (!isReportableError(error)) {
+      this.delegate.handleError(new Error(`Non-Error thrown: ${describeNonError(error)}`, { cause: error }));
+      return;
+    }
     this.delegate.handleError(error);
   }
 }

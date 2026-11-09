@@ -1,6 +1,6 @@
 import { ErrorHandler } from '@angular/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { BOOT_FAILURE_RELOAD_KEY, ChunkLoadErrorHandler, STALE_CHUNK_FORCE_KEY, STALE_CHUNK_RELOAD_KEY, forceBootRecovery, isStaleChunkError, recoverFromBootFailure, registerStaleChunkRecovery } from './chunk-load-error-handler';
+import { BOOT_FAILURE_RELOAD_KEY, ChunkLoadErrorHandler, STALE_CHUNK_FORCE_KEY, STALE_CHUNK_RELOAD_KEY, describeNonError, forceBootRecovery, isStaleChunkError, recoverFromBootFailure, registerStaleChunkRecovery } from './chunk-load-error-handler';
 
 describe('isStaleChunkError', () => {
   it('matches the per-browser dynamic-import failure messages', () => {
@@ -109,6 +109,44 @@ describe('ChunkLoadErrorHandler', () => {
     handler.handleError(err);
     expect(reload).not.toHaveBeenCalled();
     expect(delegate.handleError).toHaveBeenCalledWith(err);
+  });
+
+  it('wraps a non-Error value in a descriptive Error so Sentry does not file "Handled unknown error" (SCS-EJ)', () => {
+    const handler = new ChunkLoadErrorHandler(delegate);
+    const thrown = { code: 'x' };
+    handler.handleError(thrown);
+    const forwarded = vi.mocked(delegate.handleError).mock.calls[0][0] as Error;
+    expect(forwarded).toBeInstanceOf(Error);
+    expect(forwarded.message).toBe('Non-Error thrown: Object {"code":"x"}');
+    expect(forwarded.cause).toBe(thrown);
+  });
+
+  it('forwards strings and error-like objects unchanged', () => {
+    const handler = new ChunkLoadErrorHandler(delegate);
+    const errorLike = { name: 'FirebaseError', message: 'denied' };
+    handler.handleError('plain');
+    handler.handleError(errorLike);
+    expect(delegate.handleError).toHaveBeenNthCalledWith(1, 'plain');
+    expect(delegate.handleError).toHaveBeenNthCalledWith(2, errorLike);
+  });
+});
+
+describe('describeNonError', () => {
+  it('names primitives, null and undefined', () => {
+    expect(describeNonError(undefined)).toBe('undefined');
+    expect(describeNonError(null)).toBe('null');
+    expect(describeNonError(42)).toBe('number 42');
+  });
+
+  it('names the constructor and event type, and survives circular values', () => {
+    expect(describeNonError(new Event('error'))).toBe('Event type=error {"isTrusted":false}');
+    const circular: Record<string, unknown> = { a: 1 };
+    circular['self'] = circular;
+    expect(describeNonError(circular)).toBe('Object keys=[a,self]');
+  });
+
+  it('truncates long serializations', () => {
+    expect(describeNonError({ s: 'x'.repeat(1000) }).length).toBeLessThan(320);
   });
 });
 
