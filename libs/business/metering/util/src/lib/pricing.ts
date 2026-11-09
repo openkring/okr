@@ -192,16 +192,17 @@ export function commissionForTenant(input: CommissionInput): CommissionResult {
 export type TransactionProduct = 'pingen-letter';
 
 export interface TransactionPrice {
-  /** Price of one unit (one letter), Rappen. Includes the first `includedPages` pages. */
+  /** Price of one unit (one letter), Rappen. Excludes all pages; pages are priced by `perPage`. */
   perUnit: number;
-  /** Price of each page beyond the included ones, Rappen. */
+  /** Price of every page, the first one included, Rappen. */
   perPage: number;
-  /** Pages per unit covered by `perUnit`. */
+  /** Pages per unit covered by `perUnit`. Always 0 now that every page is charged. */
   includedPages: number;
 }
 
+/** Owner decision 2026-11-09: CHF 1.20 per letter excl. pages, plus CHF 0.30 for every page. */
 export const TRANSACTION_PRICES: Readonly<Record<TransactionProduct, TransactionPrice>> = {
-  'pingen-letter': { perUnit: 120, perPage: 30, includedPages: 1 },
+  'pingen-letter': { perUnit: 120, perPage: 30, includedPages: 0 },
 };
 
 export interface TransactionQuote {

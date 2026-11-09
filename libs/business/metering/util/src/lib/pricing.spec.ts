@@ -174,26 +174,31 @@ describe('the formula is not the price (§5)', () => {
 });
 
 describe('transaction price list — prepaid per-unit costs (Pingen letters)', () => {
-  it('states the Pingen letter price in Rappen, first page included', () => {
-    expect(TRANSACTION_PRICES['pingen-letter']).toEqual({ perUnit: 120, perPage: 30, includedPages: 1 });
+  it('states the Pingen letter price in Rappen: CHF 1.20 per letter, CHF 0.30 for every page (owner 2026-11-09)', () => {
+    expect(TRANSACTION_PRICES['pingen-letter']).toEqual({ perUnit: 120, perPage: 30, includedPages: 0 });
   });
 
-  it('prices one letter of one page at the base price', () => {
-    expect(quoteTransaction('pingen-letter', 1, 1).total).toBe(120);
+  it('prices one letter of one page at CHF 1.50 (120 + 30 Rappen)', () => {
+    expect(quoteTransaction('pingen-letter', 1, 1).total).toBe(150);
   });
 
-  it('adds the page price for every page beyond the included ones', () => {
-    // 2 letters, 5 pages in total: 2 included pages, 3 further pages at 30 Rappen each.
-    expect(quoteTransaction('pingen-letter', 2, 5).total).toBe(2 * 120 + 3 * 30);
+  it('charges the page price for the first page as well', () => {
+    // 1 letter, 3 pages: 120 + 3 * 30 = 210.
+    expect(quoteTransaction('pingen-letter', 1, 3).total).toBe(210);
   });
 
-  it('charges no page surcharge when every letter has exactly one page', () => {
-    expect(quoteTransaction('pingen-letter', 4, 4).total).toBe(4 * 120);
+  it('charges every page of every letter', () => {
+    // 2 letters, 5 pages in total: 2 * 120 + 5 * 30 = 390.
+    expect(quoteTransaction('pingen-letter', 2, 5).total).toBe(2 * 120 + 5 * 30);
+  });
+
+  it('charges the page price on every letter that has exactly one page', () => {
+    expect(quoteTransaction('pingen-letter', 4, 4).total).toBe(4 * (120 + 30));
   });
 
   it('reports the unit and page prices next to the total', () => {
     expect(quoteTransaction('pingen-letter', 2, 5)).toEqual({
-      product: 'pingen-letter', units: 2, pages: 5, unitPrice: 120, pagePrice: 30, total: 330,
+      product: 'pingen-letter', units: 2, pages: 5, unitPrice: 120, pagePrice: 30, total: 390,
     });
   });
 
