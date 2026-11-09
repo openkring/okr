@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, Component, ElementRef, computed, effect, inject, input, viewChild } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, Component, DestroyRef, ElementRef, afterRenderEffect, computed, effect, inject, input, viewChild } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonRow } from '@ionic/angular';
 
 import { ArticleSection, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ViewPosition } from '@okr/shared-models';
@@ -65,10 +65,12 @@ import { ArticleStore } from './article-section.store';
       cursor: pointer;
       transition: all 0.2s;
     }
+    /* the two loop copies (last image before the first, first image after the last) get no dot */
+    .carousel-slide.clone::scroll-marker { content: none; }
     .carousel-slide::scroll-marker:hover { background: #9ca3af; }
     .carousel-slide::scroll-marker:target-current { background: #3b82f6; transform: scale(1.3); border: 1px solid black; }
     /* prev / next: real buttons (the native ::scroll-button stops at both ends and is Chrome-only);
-       they loop, from the last slide to the first and back */
+       the carousel loops endlessly in the direction of travel (see step / settleLoop) */
     .carousel-nav {
       position: absolute;
       top: 50%;
@@ -129,10 +131,10 @@ import { ArticleStore } from './article-section.store';
                     <ion-row>
                       <ion-col size="12">
                         <div class="carousel-container">
-                          <div class="carousel" #carousel>
-                            @for(img of images(); track img.url) {
-                              <div class="carousel-slide">
-                                <okr-img [captionFallbacks]="captionFallbacks()" [image]="img" [imageStyle]="carouselImageStyle()" [editMode]="editMode()" [gallery]="images()" [zoomTitle]="store.i18n.article_zoomed()" />
+                          <div class="carousel" #carousel (scroll)="onCarouselScroll()">
+                            @for(slide of loopSlides(); track $index) {
+                              <div class="carousel-slide" [class.clone]="slide.clone" [attr.aria-hidden]="slide.clone ? 'true' : null">
+                                <okr-img [captionFallbacks]="captionFallbacks()" [image]="slide.image" [imageStyle]="carouselImageStyle()" [editMode]="editMode()" [gallery]="images()" [zoomTitle]="store.i18n.article_zoomed()" />
                               </div>
                             }
                           </div>
@@ -244,25 +246,82 @@ export class ArticleSectionComponent {
 
   public VP = ViewPosition;
 
-  private carousel = viewChild<ElementRef<HTMLElement>>('carousel');
+  // Endless carousel: a copy of the last image sits before the first, a copy of the first after the
+  // last. Going forward from the last image scrolls on to the copy of the first (always the same
+  // direction); once the scroll settles, the carousel jumps without animation to the real first image,
+  // which looks identical. The same happens backwards, and when swiping.
+  protected loopSlides = computed((): { image: ImageConfig; clone: boolean }[] => {
+    const images = this.images();
+    if (images.length < 2) return images.map(image => ({ image, clone: false }));
+    return [
+      { image: images[images.length - 1], clone: true },
+      ...images.map(image => ({ image, clone: false })),
+      { image: images[0], clone: true },
+    ];
+  });
 
-  /** scrolls the carousel one slide back (-1) or forward (1); loops at both ends */
+  private carousel = viewChild<ElementRef<HTMLElement>>('carousel');
+  private settleTimer: ReturnType<typeof setTimeout> | undefined;
+
+  /** scrolls the carousel one slide back (-1) or forward (1), endlessly in that direction */
   protected step(direction: -1 | 1): void {
     const el = this.carousel()?.nativeElement;
     if (!el) return;
+    const count = el.children.length;
+    if (count < 3) return;
+    let current = this.currentSlide(el);
+    // standing on a copy (e.g. a quick second click): first move to the real image it shows
+    if (current === count - 1) current = this.jumpTo(el, 1);
+    else if (current === 0) current = this.jumpTo(el, count - 2);
+    this.scrollToSlide(el, current + direction, 'smooth');
+  }
+
+  /** after every scroll (button or swipe) has come to rest, leave a copy for the real image */
+  protected onCarouselScroll(): void {
+    clearTimeout(this.settleTimer);
+    this.settleTimer = setTimeout(() => this.settleLoop(), 150);
+  }
+
+  private settleLoop(): void {
+    const el = this.carousel()?.nativeElement;
+    if (!el) return;
+    const count = el.children.length;
+    if (count < 3) return;
+    const current = this.currentSlide(el);
+    if (current === count - 1) this.jumpTo(el, 1);
+    else if (current === 0) this.jumpTo(el, count - 2);
+  }
+
+  /** the slide whose left edge is nearest to the scroll position */
+  private currentSlide(el: HTMLElement): number {
     const slides = Array.from(el.children) as HTMLElement[];
-    if (slides.length === 0) return;
-    // the current slide is the one whose left edge is nearest to the scroll position
-    const current = slides.reduce((best, slide, i) =>
-      Math.abs(slide.offsetLeft - el.offsetLeft - el.scrollLeft) <
-      Math.abs(slides[best].offsetLeft - el.offsetLeft - el.scrollLeft) ? i : best, 0);
-    const target = (current + direction + slides.length) % slides.length;
-    el.scrollTo({ left: slides[target].offsetLeft - el.offsetLeft });
+    return slides.reduce((best, slide, i) =>
+      Math.abs(this.slideLeft(el, i) - el.scrollLeft) < Math.abs(this.slideLeft(el, best) - el.scrollLeft) ? i : best, 0);
+  }
+
+  private jumpTo(el: HTMLElement, index: number): number {
+    this.scrollToSlide(el, index, 'instant');
+    return index;
+  }
+
+  private scrollToSlide(el: HTMLElement, index: number, behavior: ScrollBehavior): void {
+    el.scrollTo({ left: this.slideLeft(el, index), behavior });
+  }
+
+  private slideLeft(el: HTMLElement, index: number): number {
+    const slide = el.children[index] as HTMLElement | undefined;
+    return slide ? slide.offsetLeft - el.offsetLeft : 0;
   }
 
   constructor() {
     effect(() => {
       this.store.setConfig(this.section()?.properties);
     });
+    // start on the real first image (slide 1), not on the copy of the last one before it
+    afterRenderEffect(() => {
+      const el = this.carousel()?.nativeElement;
+      if (el && this.loopSlides().length >= 3) this.jumpTo(el, 1);
+    });
+    inject(DestroyRef).onDestroy(() => clearTimeout(this.settleTimer));
   }
 }
