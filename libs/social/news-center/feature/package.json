@@ -16,6 +16,7 @@
     "@okr/shared-util-core": "*",
     "@okr/social-news-center-data-access": "*",
     "@okr/social-news-center-ui": "*",
-    "@okr/social-news-center-util": "*"
+    "@okr/social-news-center-util": "*",
+    "@okr/subject-address-data-access": "*"
   }
 }

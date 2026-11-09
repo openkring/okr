@@ -12,3 +12,5 @@ export * from './lib/news-channel-add';
 export * from './lib/news-request.form';
 export * from './lib/news-settings.modal';
 export * from './lib/news-image.pipe';
+export * from './lib/news-channel.form';
+export * from './lib/news-channel-edit.modal';

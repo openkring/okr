@@ -2,17 +2,20 @@ import { computed, effect, inject, Injector, untracked } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController, ToastController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
-import { of } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 
-import { AppStore } from '@okr/shared-feature';
+import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { NewsChannelModel, NewsChannelRequestModel, NewsSegment, NewsSubscriptionModel } from '@okr/shared-models';
 import { resourceParams, showToast } from '@okr/shared-util-angular';
 import { getFullName, hasRole } from '@okr/shared-util-core';
 import { NewsChannelRequestService, NewsChannelService, NewsRelayService, NewsSubscriptionService } from '@okr/social-news-center-data-access';
-import type { NewsResolveError } from '@okr/social-news-center-ui';
+import { AddressDirectoryService, GeocodingService } from '@okr/subject-address-data-access';
+import type { NewsChannelFormData } from '@okr/social-news-center-util';
+import { NewsChannelEditModal } from '@okr/social-news-center-ui';
+import type { NewsPosition, NewsResolveError } from '@okr/social-news-center-ui';
 import {
-  avatarOf, canSuggest, effectiveChannels, hiddenChannels, mergeNewest, NEWS_CENTER_I18N_KEYS, NewsCenterI18n, NewsItem, NewsRequestFormData,
+  avatarOf, canSuggest, orgPostalString, effectiveChannels, hiddenChannels, mergeNewest, NEWS_CENTER_I18N_KEYS, NewsCenterI18n, NewsItem, NewsRequestFormData,
   optionalChannels, parseNewsFeed, ResolvedNewsSource,
 } from '@okr/social-news-center-util';
 
@@ -77,6 +80,9 @@ export const NewsCenterStore = signalStore(
     toastController: inject(ToastController),
     injector: inject(Injector),
     i18nService: inject(I18nService),
+    modelSelect: inject(ModelSelectService),
+    addressDirectory: inject(AddressDirectoryService),
+    geocoder: inject(GeocodingService),
   })),
 
   withProps((store) => ({
@@ -303,6 +309,39 @@ export const NewsCenterStore = signalStore(
       async clubArchive(channelKey: string): Promise<void> {
         const channel = findChannel(channelKey);
         if (channel) await run(() => store.newsService.archiveChannel(channel));
+      },
+
+      /**
+       * Curator edit of a webcam (design 2026-11-09 §5.3): name, position, host org. The modal gets the
+       * pickers and the org geocoding as callbacks; save writes exactly what the form holds.
+       */
+      async editChannel(channel: NewsChannelModel): Promise<void> {
+        const orgName = channel.orgKey ? (store.appStore.allOrgs().find((o) => o.okey === channel.orgKey)?.name ?? '') : '';
+        const pickLocation = async (): Promise<NewsPosition | undefined> => {
+          const pick = await store.modelSelect.selectLocation('', true, false, true);
+          if (pick?.kind === 'predefined') return { latitude: pick.location.latitude, longitude: pick.location.longitude };
+          if (pick?.kind === 'current') return { latitude: pick.latitude, longitude: pick.longitude };
+          return undefined;
+        };
+        const pickOrg = async (): Promise<{ orgKey: string; orgName: string } | undefined> => {
+          const org = await store.modelSelect.selectOrg();
+          return org ? { orgKey: org.okey, orgName: org.name } : undefined;
+        };
+        const geocodeOrg = async (orgKey: string): Promise<NewsPosition | undefined> => {
+          const directory = await firstValueFrom(store.addressDirectory.read(`org.${orgKey}`)).catch(() => undefined);
+          const address = orgPostalString(directory);
+          if (!address) return undefined;
+          const coords = await store.geocoder.geocodeAddress(address);
+          return coords ? { latitude: coords.lat, longitude: coords.lng } : undefined;
+        };
+        const modal = await store.modalController.create({
+          component: NewsChannelEditModal,
+          componentProps: { channel, orgName, i18n: store.i18n, pickLocation, pickOrg, geocodeOrg },
+        });
+        await modal.present();
+        const { data, role } = await modal.onWillDismiss<NewsChannelFormData>();
+        if (role !== 'confirm' || !data) return;
+        await run(() => store.channelService.update({ ...channel, name: data.name, latitude: data.latitude, longitude: data.longitude, orgKey: data.orgKey }));
       },
 
       async clubReorder(orderedKeys: string[]): Promise<void> {
