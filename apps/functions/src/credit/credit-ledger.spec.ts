@@ -15,7 +15,10 @@ import { applyCreditEntry } from './credit-ledger';
 type Doc = Record<string, unknown>;
 type Store = Record<string, Doc>; // keyed by full path
 
+/** Optimistic concurrency like Firestore: versions per document, recorded on get, checked at commit, retried on conflict. */
 function fakeDb(store: Store): Firestore {
+  const versions: Record<string, number> = {};
+  const ver = (p: string) => versions[p] ?? 0;
   const docRef = (path: string): unknown => ({
     path,
     get: async () => ({ exists: store[path] !== undefined, data: () => (store[path] ? { ...store[path] } : undefined) }),
@@ -25,11 +28,25 @@ function fakeDb(store: Store): Firestore {
   const pathOf = (r: unknown) => (r as { path: string }).path;
   return {
     collection: (name: string) => colRef(name),
-    runTransaction: async <T>(fn: (tx: unknown) => Promise<T>): Promise<T> => fn({
-      get: async (r: unknown) => (r as { get(): Promise<unknown> }).get(),
-      set: (r: unknown, d: Doc) => { store[pathOf(r)] = d; },
-      update: (r: unknown, d: Doc) => { store[pathOf(r)] = { ...store[pathOf(r)], ...d }; },
-    }),
+    runTransaction: async <T>(fn: (tx: unknown) => Promise<T>): Promise<T> => {
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const reads = new Map<string, number>();
+        const writes: (() => void)[] = [];
+        const result = await fn({
+          get: async (r: unknown) => {
+            const p = pathOf(r);
+            reads.set(p, ver(p));
+            const snap = await (r as { get(): Promise<unknown> }).get();
+            await new Promise(res => setTimeout(res, 0)); // let a concurrent transaction read too
+            return snap;
+          },
+          set: (r: unknown, d: Doc) => writes.push(() => { store[pathOf(r)] = d; versions[pathOf(r)] = ver(pathOf(r)) + 1; }),
+          update: (r: unknown, d: Doc) => writes.push(() => { store[pathOf(r)] = { ...store[pathOf(r)], ...d }; versions[pathOf(r)] = ver(pathOf(r)) + 1; }),
+        });
+        if ([...reads].every(([p, v]) => ver(p) === v)) { writes.forEach(w => w()); return result; }
+      }
+      throw new Error('too much contention');
+    },
   } as unknown as Firestore;
 }
 
@@ -84,5 +101,59 @@ describe('applyCreditEntry', () => {
     const store = seed({ prepaymentAccountKey: '' });
     await expect(applyCreditEntry(fakeDb(store), 'scs', 'e1', entry({ kind: 'deduction', amount: -1 }))).rejects.toMatchObject({ details: { reason: 'credit-accounts-missing' } });
     expect(store['credit-accounts/scs']).toBeUndefined();
+  });
+
+  it('rejects a sign that does not match the kind, nothing written', async () => {
+    const store = seed();
+    const db = fakeDb(store);
+    for (const bad of [{ kind: 'deduction' as const, amount: 5 }, { kind: 'reversal' as const, amount: -5 }, { kind: 'topup' as const, amount: -5 }, { kind: 'correction' as const, amount: 0 }]) {
+      await expect(applyCreditEntry(db, 'scs', 'e1', entry(bad))).rejects.toMatchObject({ code: 'invalid-argument', message: 'credit-sign-mismatch' });
+    }
+    expect(Object.keys(store)).toEqual(['platform-config/billing', 'accounting-configs/bka']);
+  });
+
+  it('a duplicate answers duplicate:true even when the books config is gone', async () => {
+    const store = seed();
+    const db = fakeDb(store);
+    await applyCreditEntry(db, 'scs', 'e1', entry());
+    store['accounting-configs/bka'] = { tenants: ['kring'] };
+    await expect(applyCreditEntry(db, 'scs', 'e1', entry())).resolves.toEqual({ balanceAfter: 2000, duplicate: true });
+  });
+
+  it('error texts do not call the entry an invoice', async () => {
+    const store = seed();
+    delete store['accounting-configs/bka'];
+    const err = await applyCreditEntry(fakeDb(store), 'scs', 'e9', entry({ kind: 'deduction', amount: -1 })).catch(e => e as Error);
+    expect((err as Error).message).toMatch(/credit e9|accounting config/);
+    expect((err as Error).message).not.toMatch(/invoice/);
+  });
+
+  describe('concurrency', () => {
+    const run = async (start: number, each: number) => {
+      const store = seed();
+      const db = fakeDb(store);
+      await applyCreditEntry(db, 'scs', 'top', entry({ amount: start }));
+      const results = await Promise.allSettled([
+        applyCreditEntry(db, 'scs', 'a', entry({ kind: 'deduction', amount: -each })),
+        applyCreditEntry(db, 'scs', 'b', entry({ kind: 'deduction', amount: -each })),
+      ]);
+      return { store, results };
+    };
+
+    it('2000 with two parallel -1500: one succeeds, balance 500, one booking', async () => {
+      const { store, results } = await run(2000, 1500);
+      expect(results.filter(r => r.status === 'fulfilled')).toHaveLength(1);
+      const rejected = results.find(r => r.status === 'rejected') as PromiseRejectedResult;
+      expect(rejected.reason).toMatchObject({ code: 'failed-precondition', message: 'insufficient-credit' });
+      expect(store['credit-accounts/scs']['balance']).toBe(500);
+      expect(Object.keys(store).filter(k => /^credit-accounts\/scs\/entries\/[ab]$/.test(k))).toHaveLength(1);
+      expect(Object.keys(store).filter(k => k.startsWith('bookings/'))).toHaveLength(1);
+    });
+
+    it('150 with two parallel -120: one passes, balance 30', async () => {
+      const { store, results } = await run(150, 120);
+      expect(results.filter(r => r.status === 'fulfilled')).toHaveLength(1);
+      expect(store['credit-accounts/scs']['balance']).toBe(30);
+    });
   });
 });

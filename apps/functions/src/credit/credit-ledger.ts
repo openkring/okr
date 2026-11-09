@@ -15,7 +15,7 @@ import { assertLeafAccount, loadOwnedAccountingConfig, refuse } from '../invoice
 import { BOOKING_COLLECTION, BOOKING_LINE_COLLECTION } from '../invoice/invoice-payment.core';
 import { withoutUndefined } from '../invoice/invoice.logic';
 import { platformBilling } from '../collection/platform';
-import { creditBookingKey, creditBookingLines, creditDecision } from './credit.logic';
+import { creditBookingKey, creditBookingLines, creditDecision, signMatchesKind } from './credit.logic';
 
 export type CreditEntryInput = Omit<CreditEntry, 'balanceAfter' | 'bookingKey'>;
 
@@ -29,9 +29,9 @@ interface BookingContext {
 }
 
 /** Operator books and account keys for an entry that is booked; refuses (nothing written) when they are missing. */
-async function loadBookingContext(db: Firestore, entry: CreditEntryInput): Promise<BookingContext> {
+async function loadBookingContext(db: Firestore, entryId: string): Promise<BookingContext> {
   const { operatorTenantId, accountingTenantId } = await platformBilling(db);
-  const config = await loadOwnedAccountingConfig(db, operatorTenantId, entry.reference, accountingTenantId, 'booked');
+  const config = await loadOwnedAccountingConfig(db, operatorTenantId, `credit ${entryId}`, accountingTenantId, 'booked');
   const prepaymentKey = String(config['prepaymentAccountKey'] ?? '');
   const revenueKey = String(config['transactionRevenueAccountKey'] ?? '');
   if (!prepaymentKey || !revenueKey) {
@@ -46,8 +46,14 @@ export async function applyCreditEntry(
 ): Promise<{ balanceAfter: number; duplicate: boolean }> {
   const accountRef = db.collection(CreditAccountCollection).doc(tenantId);
   const entryRef = accountRef.collection(CreditEntrySubcollection).doc(entryId);
+  if (!signMatchesKind(entry.kind, entry.amount)) {
+    throw new HttpsError('invalid-argument', 'credit-sign-mismatch', { reason: 'credit-sign-mismatch' });
+  }
+  // A retried duplicate answers from the stored entry, even if the books' config changed meanwhile.
+  const prior = await entryRef.get();
+  if (prior.exists) return { balanceAfter: Number((prior.data() ?? {})['balanceAfter'] ?? 0), duplicate: true };
   const booked = creditBookingLines(entry.kind, entry.amount, 'p', 'r') !== null;
-  const ctx = booked ? await loadBookingContext(db, entry) : undefined;
+  const ctx = booked ? await loadBookingContext(db, entryId) : undefined;
   const date = entry.date.substring(0, 8);
 
   return db.runTransaction(async tx => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { creditBookingKey, creditBookingLines, creditDecision } from './credit.logic';
+import { creditBookingKey, creditBookingLines, creditDecision, signMatchesKind } from './credit.logic';
 
 describe('creditDecision', () => {
   it('deducts within the balance', () => expect(creditDecision(500, -120)).toEqual({ ok: true, balanceAfter: 380 }));
@@ -20,4 +20,18 @@ describe('creditBookingLines', () => {
   });
   it('topup has no booking', () => expect(creditBookingLines('topup', 2000, 'P', 'R')).toBeNull());
   it('key', () => expect(creditBookingKey('scs', 'e1')).toBe('credit-scs-e1'));
+});
+
+describe('signMatchesKind', () => {
+  it('requires the sign of each kind', () => {
+    expect(signMatchesKind('deduction', -1)).toBe(true);
+    expect(signMatchesKind('deduction', 1)).toBe(false);
+    expect(signMatchesKind('reversal', 1)).toBe(true);
+    expect(signMatchesKind('reversal', -1)).toBe(false);
+    expect(signMatchesKind('topup', 1)).toBe(true);
+    expect(signMatchesKind('topup', -1)).toBe(false);
+    expect(signMatchesKind('correction', -5)).toBe(true);
+    expect(signMatchesKind('correction', 5)).toBe(true);
+    expect(signMatchesKind('correction', 0)).toBe(false);
+  });
 });

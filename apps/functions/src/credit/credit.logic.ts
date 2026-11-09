@@ -32,3 +32,13 @@ export function creditBookingLines(kind: CreditEntryKind, amount: number, prepay
 }
 
 export const creditBookingKey = (tenantId: string, entryId: string): string => `credit-${tenantId}-${entryId}`;
+
+/** deduction < 0, reversal > 0, topup > 0, correction either way but not 0. */
+export function signMatchesKind(kind: CreditEntryKind, amount: number): boolean {
+  switch (kind) {
+    case 'deduction': return amount < 0;
+    case 'reversal':
+    case 'topup': return amount > 0;
+    case 'correction': return amount !== 0;
+  }
+}
