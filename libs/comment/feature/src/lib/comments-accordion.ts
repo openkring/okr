@@ -23,16 +23,13 @@ import { CommentListStore } from './comment-list.store';
   styles: [`
     .header-icon {
       font-size: 20px;
-      color: var(--ion-color-medium);
+      /* inherit the header item's text colour, i.e. the contrast of its [color] (white on primary) */
+      color: inherit;
       margin-inline-end: 10px;
     }
-    /* Ionic sets .accordion-expanded on the host while the accordion is open. */
-    ion-accordion.accordion-expanded .header-icon { color: var(--ion-color-primary); }
-    ion-accordion.accordion-expanded ion-label { color: var(--ion-color-primary-shade); font-weight: 600; }
-    ion-accordion.accordion-expanded okr-count-pill {
-      --okr-pill-background: var(--ion-color-primary-tint);
-      --okr-pill-color: var(--ion-color-primary-shade);
-    }
+    /* Ionic sets .accordion-expanded on the host while the accordion is open. The header sits on a
+       coloured item, so only the weight changes — icon, label and pill keep their contrast colours. */
+    ion-accordion.accordion-expanded ion-label { font-weight: 600; }
 
     .content { padding: 12px 12px 10px; }
     .composer { margin-top: 14px; }
