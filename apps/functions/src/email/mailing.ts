@@ -43,6 +43,7 @@ import { MAX_PERSONAL_RECIPIENTS, parseCaleventKeys, personalEntries, refusedEve
 import { asLayoutChoice } from './render-email.logic';
 import { buildMailingLetters, countLetterPages, LetterEvent } from './mailing-letters';
 import { mailingCategory } from './mailing-deliveries.logic';
+import { lettersResult, makePostFanOut, postFanOutDeps } from './mailing-sendings';
 import { getCreditPort } from '../pingen/credit-port';
 import { answerEventsOf, type MailingPost, type PostLock, type PostOrderDoc, PostOrderCollection, parsePostRequest, postMailingKey, quoteTokenSecret, readCountryCodes, type QuoteEnv, withPostOrder } from '../pingen/post-order';
 
@@ -115,7 +116,7 @@ export interface MailingDoc {
   mailJobKey?: string;
   noticeKey?: string;
   /** the Post part (P3): built by `onMailing`, downloaded through `getMailingLetters` */
-  letters?: { state: 'pending' | 'ready' | 'failed'; storagePath?: string; count?: number; missing?: number; error?: string };
+  letters?: { state: 'none' | 'pending' | 'ready' | 'failed'; storagePath?: string; count?: number; missing?: number; error?: string };
   error?: string;
   /** The events a Versand with answer links asks about (calevent keys); absent = no answer links. */
   caleventKeys?: string[];
@@ -546,17 +547,23 @@ export const onMailing = onDocumentCreated(
       // Post last: the slowest part, and its failure must not undo the mails and notices already out
       const postKeys = keysFor(mailing.deliveries, DeliveryChannel.Post);
       if (postKeys.length > 0) {
+        // a Pingen send (spec 1.150): the charged Swiss letters become `sendings` records, the download holds the abroad ones
+        const fanOut = mailing.post?.via === 'pingen'
+          ? makePostFanOut({ tenantId, mailingKey: snap.id, post: mailing.post, nowIso: new Date().toISOString(), deps: postFanOutDeps() })
+          : undefined;
         try {
           const built = await buildMailingLetters({
             tenantId, mailingKey: snap.id, personKeys: postKeys,
             subject: mailing.subject, body: await sanitizeEmailBody(mailing.body), attachments: mailing.attachments,
             ...(mailing.letterQrCodes && mailing.caleventKeys?.length ? await letterAnswers(db, snap.id, mailing.caleventKeys) : {}),
+            ...(fanOut ? { onLetter: fanOut.onLetter, only: fanOut.only } : {}),
           });
-          result.letters = built?.storagePath
-            ? { state: 'ready', storagePath: built.storagePath, count: built.letters, missing: built.missing }
-            : { state: 'failed', count: 0, missing: built?.missing ?? postKeys.length, error: 'No recipient has a postal address.' };
+          await fanOut?.finish();
+          result.letters = lettersResult(built, postKeys.length, !!fanOut);
         } catch (err) {
           logger.error(`${CF_NAME}: letters for Versand ${snap.id} failed:`, err);
+          // no retry: a charged recipient without a record will never get a letter, so give the share back
+          await fanOut?.finish('the letters could not be built');
           result.letters = { state: 'failed', error: err instanceof Error ? err.message : String(err) };
         }
       }
