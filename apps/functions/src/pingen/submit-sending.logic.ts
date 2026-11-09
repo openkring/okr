@@ -216,6 +216,26 @@ async function holdVersand(deps: SubmitDeps, source: string, tenantId: string, c
   }
 }
 
+/** Pingen accepted a letter for a record that is `failed` (and refunded): log it and open one task for a human. */
+async function flagSentDespiteRefund(deps: SubmitDeps, rec: SendingRow, providerId: string): Promise<void> {
+  const tenantId = rec.tenants[0] ?? '';
+  logger.error('submit-sending: Pingen holds a letter whose share was refunded, check and settle by hand', { tenantId, id: rec.id, providerId, source: rec.source, price: rec.price });
+  try {
+    const mailing = await deps.loadMailing(rec.source, tenantId);
+    if (!mailing) return;
+    // its own key: the failed letter's own task (`sending.<id>`) is usually still open and would suppress this one
+    const relatedKey = `sending.${rec.id}.sent-after-refund`;
+    if (await deps.hasOpenTask(relatedKey, mailing.senderKey, tenantId)) return;
+    await deps.createTask({
+      tenantId, name: `Brief an ${rec.recipientName} wurde trotz Rückerstattung verschickt — prüfen`,
+      assignee: await deps.avatar(mailing.senderKey, tenantId, mailing.senderName), dueInDays: 3,
+      relatedModelType: 'sending', relatedKey, linkKey: rec.source, notes: `Brief ${rec.id}, Pingen ${providerId}`,
+    });
+  } catch (e) {
+    logger.error('submit-sending: task for a refunded-but-sent letter not created', { id: rec.id, error: e instanceof Error ? e.message : String(e) });
+  }
+}
+
 /**
  * A retryable failure rethrows (the trigger retries with the same key). Past 24 h it stops: with an empty
  * `attemptedAt` Pingen was certainly never reached (the PDF read kept failing), so the letter fails and is
@@ -274,7 +294,11 @@ export async function submitSending(deps: SubmitDeps, id: string): Promise<void>
   // the cost first (idempotent set): a crash before the state write redoes both on the retry
   await deps.writeCost(rec.id, { providerPrice: Math.round(letter.priceValue * 100), currency: letter.priceCurrency });
   // the id whenever the record is not failed (a webhook may have moved it on), the state only out of `submitting`
-  await deps.setProviderId(rec.id, letter.id);
+  if (!(await deps.setProviderId(rec.id, letter.id))) {
+    // Pingen produced a letter whose share a concurrent delivery already refunded: nothing may be lost silently
+    await flagSentDespiteRefund(deps, rec, letter.id);
+    return;
+  }
   const at = deps.now().toISOString();
   await deps.updateSending(rec.id, { state: 'submitted', history: [...rec.history, { state: 'submitted', at }], updatedAt: at }, 'submitting');
   // a duplicate delivery may have opened «Briefstatus unklar» while this one succeeded

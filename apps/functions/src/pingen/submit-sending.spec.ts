@@ -327,6 +327,25 @@ describe('success races', () => {
   });
 });
 
+describe('letter sent despite a refund', () => {
+  it('logs and opens one task when the record was failed meanwhile', async () => {
+    const ref: { store?: Map<string, SendingRow> } = {};
+    const { deps, store, tasks, costs } = setup([row('m1_p1')], async () => {
+      ref.store!.set('m1_p1', { ...ref.store!.get('m1_p1')!, state: 'failed' });   // a concurrent delivery failed and refunded it
+      return { id: 'pg9', status: 'valid', filePages: 2, priceValue: 1, priceCurrency: 'CHF' };
+    });
+    ref.store = store;
+    vi.mocked(logger.error).mockClear();
+    await submitSending(deps, 'm1_p1');
+    expect(store.get('m1_p1')!.state).toBe('failed');
+    expect(costs.get('m1_p1')).toBeDefined();
+    expect(logger.error).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ tenantId: 'scs', id: 'm1_p1', providerId: 'pg9', source: 'mailing.m1', price: 180 }));
+    expect(tasks.map((t) => t.name)).toEqual(['Brief an Name m1_p1 wurde trotz Rückerstattung verschickt — prüfen']);
+    await submitSending(deps, 'm1_p1');   // failed: nothing more
+    expect(tasks).toHaveLength(1);
+  });
+});
+
 describe('failSending', () => {
   it('reverses the share before it creates the task', async () => {
     const { deps, order } = setup([row('m1_p1')]);
