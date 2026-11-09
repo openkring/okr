@@ -999,6 +999,10 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     // (`recipientKey` = `person.<okey>` or `org.<okey>`; only a person is found here); the record holds the key
     // and name and points at a letter PDF with the postal address in the private bucket. The provider cost
     // sits in `private/cost` (bkaiser's, no personal data).
+    // `storagePath` is cleared too: erasure then leaves no record that points at the PDF, so the nightly
+    // `mailingLettersReap` finds no `sendings` owner for the file and applies its 7-day rule (the PDF goes
+    // within 7 days of its creation, at once when older). `history[].detail` only holds the provider's error
+    // code and title, no personal data.
     collection: 'sendings',
     dataClass: 'communication',
     tier: 'T4',
@@ -1008,7 +1012,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     onExport: 'index',
     indexFields: { title: 'recipientName', date: 'updatedAt', route: '/sending' },
     onErasure: 'anonymize',
-    anonymizeFields: ['recipientKey', 'recipientName'],
+    anonymizeFields: ['recipientKey', 'recipientName', 'storagePath'],
     retention: CLUB_RECORD,
   },
   {
