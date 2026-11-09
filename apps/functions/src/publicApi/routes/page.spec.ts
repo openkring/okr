@@ -7,7 +7,7 @@ vi.mock('firebase-admin/firestore', () => ({ getFirestore: () => fakeDb.current 
 import type { Request, Response } from 'express';
 
 import {
-  articleImageLayout, buildLearningSection, mapFooter, mapFormSection, isPublicPageRead, isPublishedPage, learningDefaultTab, loadLearningSection, pageCors, pageRouter,
+  articleImageLayout, buildLearningSection, mapImage, mapFooter, mapFormSection, isPublicPageRead, isPublishedPage, learningDefaultTab, loadLearningSection, pageCors, pageRouter,
 } from './page';
 import { getHtmlSanitizer } from '../sanitize';
 
@@ -39,6 +39,29 @@ describe('articleImageLayout', () => {
     expect(articleImageLayout(1, 3, undefined).imageColSize).toBe(6);
     expect(articleImageLayout(1, 3, 0).imageColSize).toBe(6);
     expect(articleImageLayout(1, 3, 12).imageColSize).toBe(6);
+  });
+});
+
+describe('mapImage caption', () => {
+  const img = { url: 'tenant/scs/a.jpg', label: 'Achter', credit: 'Foto: Muster', overlay: '' };
+
+  it('shows no caption unless the style asks for one', () => {
+    expect(mapImage(img)?.caption).toBe('');
+    expect(mapImage(img, { showTitle: false, showSource: false })?.caption).toBe('');
+  });
+
+  it('composes title and source like the app', () => {
+    expect(mapImage(img, { showTitle: true })?.caption).toBe('Achter');
+    expect(mapImage(img, { showSource: true })?.caption).toBe('Foto: Muster');
+    expect(mapImage(img, { showTitle: true, showSource: true })?.caption).toBe('Achter\nFoto: Muster');
+  });
+
+  it('lets a free-form overlay win', () => {
+    expect(mapImage({ ...img, overlay: ' Regatta 2026 ' })?.caption).toBe('Regatta 2026');
+  });
+
+  it('drops an image without url', () => {
+    expect(mapImage({ label: 'x' }, { showTitle: true })).toBeUndefined();
   });
 });
 

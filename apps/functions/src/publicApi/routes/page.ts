@@ -4,8 +4,9 @@ import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 import { defineSecret } from 'firebase-functions/params';
 
-import type { DocumentLink } from '@okr/shared-models';
+import type { DocumentLink, ImageConfig, ImageStyle } from '@okr/shared-models';
 import { DocumentCollection, FolderCollection } from '@okr/shared-models';
+import { buildOverlayText } from '@okr/shared-util-core';
 import { learningTabOf, parseTopics, type LearningTab, type PublicLearningItem, type PublicLearningSection } from '@okr/content-learning-util';
 
 import { isPublishedSection, setCacheHeaders } from '../utils';
@@ -53,11 +54,29 @@ function pickI18n(value: I18nString | undefined, fallback = ''): string {
   return value['de'] ?? value['en'] ?? Object.values(value)[0] ?? fallback;
 }
 
-interface StoredImage { url?: string; altText?: string; label?: string }
+interface StoredImage { url?: string; altText?: string; label?: string; overlay?: string; credit?: string }
 
-function mapImage(img: StoredImage | undefined): { url: string; alt: string } | undefined {
+/** The caption toggles of a section's `properties.imageStyle`. */
+type StoredImageStyle = Pick<ImageStyle, 'showTitle' | 'showSource'>;
+
+/** An image as the website receives it; `caption` is '' when nothing is shown over the image. */
+export interface PublicImage { url: string; alt: string; caption: string }
+
+/**
+ * Maps a stored image to its public form. The caption follows the app's okr-img exactly
+ * (buildOverlayText): a free-form `overlay` wins, else title and/or credit per the section's
+ * `imageStyle.showTitle` / `showSource`. The website draws it over the image's bottom edge.
+ */
+export function mapImage(img: StoredImage | undefined, style?: StoredImageStyle): PublicImage | undefined {
   if (!img?.url) return undefined;
-  return { url: toImgixUrl(img.url), alt: img.altText ?? img.label ?? '' };
+  const caption = buildOverlayText(img as ImageConfig, (style ?? {}) as ImageStyle);
+  return { url: toImgixUrl(img.url), alt: img.altText ?? img.label ?? '', caption };
+}
+
+function mapImages(raw: unknown, style: StoredImageStyle | undefined): PublicImage[] {
+  return ((raw as StoredImage[] | undefined) ?? [])
+    .map(img => mapImage(img, style))
+    .filter((i): i is PublicImage => !!i);
 }
 
 interface SectionDoc {
@@ -183,10 +202,11 @@ function mapSection(id: string, s: SectionDoc, nestedSections: Map<string, Secti
   const title = pickI18n(props['titleI18n'] as I18nString | undefined, s.title ?? '');
   const subTitle = pickI18n(props['subTitleI18n'] as I18nString | undefined, s.subTitle ?? '');
   const articleHtml = sanitize(pickI18n(props['contentI18n'] as I18nString | undefined, s.content?.htmlContent ?? ''));
+  const imageStyle = props['imageStyle'] as StoredImageStyle | undefined;
 
   switch (type) {
     case 'hero': {
-      const heroImg = mapImage(props['hero'] as StoredImage | undefined);
+      const heroImg = mapImage(props['hero'] as StoredImage | undefined, imageStyle);
       const logoImg = mapImage(props['logo'] as StoredImage | undefined);
       return { type: 'hero', title, subTitle, content: articleHtml, background: heroImg, logo: logoImg };
     }
@@ -201,9 +221,7 @@ function mapSection(id: string, s: SectionDoc, nestedSections: Map<string, Secti
     }
 
     case 'album': {
-      const images = ((props['images'] as StoredImage[] | undefined) ?? [])
-        .map(mapImage)
-        .filter((i): i is { url: string; alt: string } => !!i);
+      const images = mapImages(props['images'], imageStyle);
       return { type: 'album', title, subTitle, images };
     }
 
@@ -267,9 +285,7 @@ function mapSection(id: string, s: SectionDoc, nestedSections: Map<string, Secti
 
     case 'article':
     default: {
-      const images = ((props['images'] as StoredImage[] | undefined) ?? [])
-        .map(mapImage)
-        .filter((i): i is { url: string; alt: string } => !!i);
+      const images = mapImages(props['images'], imageStyle);
       const content = s.content as { position?: number; colSize?: number } | undefined;
       const layout = articleImageLayout(images.length, content?.position, content?.colSize);
       // A position of 'none' hides the images in the app as well.
