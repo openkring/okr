@@ -59,6 +59,22 @@ export const NEWS_CENTER_I18N_KEYS = {
   validation_url_required: PFX + 'validation.urlRequired',
   validation_url_invalid: PFX + 'validation.urlInvalid',
   validation_note_too_long: PFX + 'validation.noteTooLong',
+  edit_channel: PFX + 'edit_channel',
+  channel_name: PFX + 'channel_name',
+  location: PFX + 'location',
+  no_location: PFX + 'no_location',
+  pick_location: PFX + 'pick_location',
+  clear_location: PFX + 'clear_location',
+  org: PFX + 'org',
+  no_org: PFX + 'no_org',
+  pick_org: PFX + 'pick_org',
+  clear_org: PFX + 'clear_org',
+  location_from_org: PFX + 'location_from_org',
+  map_overview: PFX + 'map_overview',
+  unplaced: PFX + 'unplaced',
+  open_org: PFX + 'open_org',
+  validation_name_required: PFX + 'validation.nameRequired',
+  validation_name_too_long: PFX + 'validation.nameTooLong',
 } satisfies Record<string, string>;
 
 export type NewsCenterI18n = { [K in keyof typeof NEWS_CENTER_I18N_KEYS]: Signal<string> };

@@ -36,7 +36,9 @@
     "segment": "Bitte wähle Video, Audio, Text oder Webcam.",
     "urlRequired": "Bitte gib einen Link ein.",
     "urlInvalid": "Der Link muss mit http:// oder https:// beginnen.",
-    "noteTooLong": "Die Notiz ist zu lang (höchstens 500 Zeichen)."
+    "noteTooLong": "Die Notiz ist zu lang (höchstens 500 Zeichen).",
+    "nameRequired": "Gib einen Namen ein.",
+    "nameTooLong": "Der Name ist zu lang (höchstens 80 Zeichen)."
   },
   "send": "Senden",
   "link_label": "Link",
@@ -58,5 +60,19 @@
   "error_blocked": "Diese Adresse kann nicht geladen werden.",
   "error_http_not_image": "Über http lassen sich nur Bilder laden. Bitte gib einen https-Link ein.",
   "error_permission_denied": "Dafür fehlt dir die Berechtigung.",
-  "error_unknown": "Das hat gerade nicht geklappt. Versuche es später noch einmal."
+  "error_unknown": "Das hat gerade nicht geklappt. Versuche es später noch einmal.",
+  "edit_channel": "Kanal bearbeiten",
+  "channel_name": "Name",
+  "location": "Ort",
+  "no_location": "kein Ort",
+  "pick_location": "Ort wählen",
+  "clear_location": "Ort entfernen",
+  "org": "Organisation",
+  "no_org": "keine",
+  "pick_org": "Organisation wählen",
+  "clear_org": "Verknüpfung entfernen",
+  "location_from_org": "Ort aus Organisation übernehmen",
+  "map_overview": "Kartenübersicht",
+  "unplaced": "ohne Ort",
+  "open_org": "Organisation öffnen"
 }

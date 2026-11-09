@@ -36,7 +36,9 @@
     "segment": "Scegli video, audio, testo o webcam.",
     "urlRequired": "Inserisci un link.",
     "urlInvalid": "Il link deve iniziare con http:// o https://.",
-    "noteTooLong": "La nota è troppo lunga (al massimo 500 caratteri)."
+    "noteTooLong": "La nota è troppo lunga (al massimo 500 caratteri).",
+    "nameRequired": "Inserisci un nome.",
+    "nameTooLong": "Il nome è troppo lungo (al massimo 80 caratteri)."
   },
   "send": "Invia",
   "link_label": "Link",
@@ -58,5 +60,19 @@
   "error_blocked": "Questo indirizzo non può essere caricato.",
   "error_http_not_image": "Via http si possono caricare solo immagini. Inserisci un link https.",
   "error_permission_denied": "Non hai l’autorizzazione per questo.",
-  "error_unknown": "Non ha funzionato. Riprova più tardi."
+  "error_unknown": "Non ha funzionato. Riprova più tardi.",
+  "edit_channel": "Modifica canale",
+  "channel_name": "Nome",
+  "location": "Luogo",
+  "no_location": "nessun luogo",
+  "pick_location": "Scegli il luogo",
+  "clear_location": "Rimuovi il luogo",
+  "org": "Organizzazione",
+  "no_org": "nessuna",
+  "pick_org": "Scegli l'organizzazione",
+  "clear_org": "Rimuovi il collegamento",
+  "location_from_org": "Usa il luogo dell'organizzazione",
+  "map_overview": "Panoramica sulla mappa",
+  "unplaced": "senza luogo",
+  "open_org": "Apri l'organizzazione"
 }

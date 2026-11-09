@@ -5,3 +5,5 @@ export * from './lib/news-list.util';
 export * from './lib/news-request.validations';
 export * from './lib/resolved-news-source';
 export * from './lib/news-image.util';
+export * from './lib/news-channel-place.util';
+export * from './lib/news-channel.validations';

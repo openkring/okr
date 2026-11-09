@@ -36,7 +36,9 @@
     "segment": "Please choose video, audio, text or webcam.",
     "urlRequired": "Please enter a link.",
     "urlInvalid": "The link has to start with http:// or https://.",
-    "noteTooLong": "The note is too long (500 characters at most)."
+    "noteTooLong": "The note is too long (500 characters at most).",
+    "nameRequired": "Enter a name.",
+    "nameTooLong": "The name is too long (80 characters at most)."
   },
   "send": "Send",
   "link_label": "Link",
@@ -58,5 +60,19 @@
   "error_blocked": "This address cannot be loaded.",
   "error_http_not_image": "Over http only images can be loaded. Please enter an https link.",
   "error_permission_denied": "You do not have permission for this.",
-  "error_unknown": "That did not work just now. Please try again later."
+  "error_unknown": "That did not work just now. Please try again later.",
+  "edit_channel": "Edit channel",
+  "channel_name": "Name",
+  "location": "Location",
+  "no_location": "no location",
+  "pick_location": "Choose location",
+  "clear_location": "Remove location",
+  "org": "Organisation",
+  "no_org": "none",
+  "pick_org": "Choose organisation",
+  "clear_org": "Remove link",
+  "location_from_org": "Use the organisation's location",
+  "map_overview": "Map overview",
+  "unplaced": "without location",
+  "open_org": "Open organisation"
 }

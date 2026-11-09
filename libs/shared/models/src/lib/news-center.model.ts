@@ -54,6 +54,14 @@ export class NewsChannelModel implements OkrModel, NamedModel {
    * then that image (same host only). Legacy docs lack the field: read it as `false`.
    */
   public snapshotPage = false;
+  /**
+   * Webcams only: where the camera is (design 2026-11-09 webcam places). `0/0` = not placed; legacy docs
+   * lack both fields — read them as not placed (`isPlaced`).
+   */
+  public latitude = 0;
+  public longitude = 0;
+  /** Webcams only: okey of the org that hosts the camera ('' = none). Linking an org fills the position once. */
+  public orgKey = '';
   /** `kind: 'html'` only: how the relay finds the news entries in the page at `feedUrl` (design §7.2). */
   public scrape?: NewsScrapeConfig;
 }
