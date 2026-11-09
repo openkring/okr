@@ -2,6 +2,7 @@ import { Component, DestroyRef, ElementRef, PLATFORM_ID, effect, inject, input, 
 import type * as L from 'leaflet';
 
 import { isBrowser } from '@okr/shared-util-angular';
+import { pinHtml } from '@okr/shared-util-core';
 
 export interface GeoCoordinates {
   lat: number;
@@ -13,6 +14,8 @@ export interface MapMarker extends GeoCoordinates {
   what3words?: string;
   distance?: number; // distance in km from a reference point
   inRoute?: boolean; // with `route`: false keeps this pin off the polyline (default: on it)
+  id?: string; // caller's key, handed back with markerClick
+  imageUrl?: string; // a small thumbnail on the pin (http(s) or data:image); with it the pin shows `pinIconUrl`
 }
 
 /**
@@ -45,10 +48,6 @@ const FIT_PADDING: [number, number] = [40, 40];
 const MAX_FIT_ZOOM = 16;
 const PIN_STYLE_ID = 'okr-map-view-pin-styles';
 
-const HTML_ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, c => HTML_ESCAPES[c]);
-}
 
 /**
  * An inline Leaflet map with labelled pins, optionally connected by a polyline (`route`).
@@ -75,6 +74,7 @@ export class LeafletMap {
   public tiles = input<LeafletTiles>('swisstopo');
   public zoom = input(15); // zoom when a single marker is shown
   public fallbackLabel = input(''); // pin label of a marker without a title
+  public pinIconUrl = input(''); // icon above an image pin's thumbnail (e.g. the 'location' svgIcon url)
 
   // outputs
   public markerClick = output<MapMarker>();
@@ -145,11 +145,12 @@ export class LeafletMap {
 
     const latLngs: L.LatLngExpression[] = [];
     for (const marker of markers) {
-      const label = escapeHtml(marker.title || fallback);
+      const withImage = !!marker.imageUrl;
       const icon = L.divIcon({
         className: 'okr-pin-icon',
-        html: `<div class="okr-pin"><div class="okr-pin-marker"></div><div class="okr-pin-label">${label}</div></div>`,
-        iconSize: [140, 52],
+        html: pinHtml(marker, fallback, this.pinIconUrl()),
+        // image pins: 24px icon + 36px thumbnail + label; the icon's bottom sits on the coordinate
+        iconSize: withImage ? [140, 88] : [140, 52],
         iconAnchor: [70, 24], // pin tip (centre-x, ~bottom of the 24px marker) sits on the coordinate
       });
       const leafletMarker = L.marker([marker.lat, marker.lng], { icon });
@@ -189,6 +190,8 @@ function injectPinStyles(): void {
     '.okr-pin-marker::after { content: ""; position: absolute; top: 50%; left: 50%; width: 8px; height: 8px; background: #fff; border-radius: 50%; transform: translate(-50%, -50%); }',
     '.okr-pin-label { margin-top: 5px; font-size: 12px; font-weight: 600; color: #222; white-space: nowrap; text-align: center; text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff; }',
     '.okr-route-line { stroke: var(--ion-color-primary, #3880ff); }',
+    '.okr-pin-image .okr-pin-icon { width: 24px; height: 24px; }',
+    '.okr-pin-thumb { margin-top: 2px; width: 64px; height: 36px; object-fit: cover; border: 2px solid #fff; border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.45); background: #ddd; cursor: pointer; }',
   ].join('\n');
   document.head.appendChild(style);
 }
