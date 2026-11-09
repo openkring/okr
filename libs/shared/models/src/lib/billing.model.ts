@@ -106,6 +106,8 @@ export interface CreditEntry {
   reason: string;
   bookingKey: string;
   createdBy: string;
+  /** Deductions only: the sum of the reversals of this entry so far (Rappen, positive), kept by the ledger. */
+  reversedAmount?: number;
 }
 
 export class CreditAccountModel implements OkrModel {
@@ -115,6 +117,10 @@ export class CreditAccountModel implements OkrModel {
 
   public balance = 0; // Rappen
   public updatedAt = ''; // StoreDateTime
+  /** Set by a deduction that took the balance below the auto top-up threshold; '' = no request open. */
+  public autoTopUpRequestedAt = ''; // StoreDateTime
+  /** The top-up invoice an auto top-up is charging; '' = none pending. At most one auto top-up is pending. */
+  public autoTopUpPendingInvoiceKey = '';
 
   constructor(tenantId: string) {
     this.okey = tenantId;

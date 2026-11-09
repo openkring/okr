@@ -1,6 +1,5 @@
 /** applyCreditEntry against a small in-memory Firestore with transactions (period lock, numbering, leaf check stubbed). */
 import { describe, expect, it, vi } from 'vitest';
-import type { Firestore } from 'firebase-admin/firestore';
 
 vi.mock('../booking/period-lock', () => ({ assertPeriodsOpen: vi.fn(async () => undefined), touchedPeriodKeys: vi.fn(() => []) }));
 vi.mock('../booking/booking-no', () => ({ allocateBookingNo: vi.fn(async () => 7) }));
@@ -11,44 +10,7 @@ vi.mock('../invoice/invoice-context', async importOriginal => ({
 }));
 
 import { applyCreditEntry } from './credit-ledger';
-
-type Doc = Record<string, unknown>;
-type Store = Record<string, Doc>; // keyed by full path
-
-/** Optimistic concurrency like Firestore: versions per document, recorded on get, checked at commit, retried on conflict. */
-function fakeDb(store: Store): Firestore {
-  const versions: Record<string, number> = {};
-  const ver = (p: string) => versions[p] ?? 0;
-  const docRef = (path: string): unknown => ({
-    path,
-    get: async () => ({ exists: store[path] !== undefined, data: () => (store[path] ? { ...store[path] } : undefined) }),
-    collection: (name: string) => colRef(`${path}/${name}`),
-  });
-  const colRef = (path: string): unknown => ({ path, doc: (id: string) => docRef(`${path}/${id}`) });
-  const pathOf = (r: unknown) => (r as { path: string }).path;
-  return {
-    collection: (name: string) => colRef(name),
-    runTransaction: async <T>(fn: (tx: unknown) => Promise<T>): Promise<T> => {
-      for (let attempt = 0; attempt < 5; attempt++) {
-        const reads = new Map<string, number>();
-        const writes: (() => void)[] = [];
-        const result = await fn({
-          get: async (r: unknown) => {
-            const p = pathOf(r);
-            reads.set(p, ver(p));
-            const snap = await (r as { get(): Promise<unknown> }).get();
-            await new Promise(res => setTimeout(res, 0)); // let a concurrent transaction read too
-            return snap;
-          },
-          set: (r: unknown, d: Doc) => writes.push(() => { store[pathOf(r)] = d; versions[pathOf(r)] = ver(pathOf(r)) + 1; }),
-          update: (r: unknown, d: Doc) => writes.push(() => { store[pathOf(r)] = { ...store[pathOf(r)], ...d }; versions[pathOf(r)] = ver(pathOf(r)) + 1; }),
-        });
-        if ([...reads].every(([p, v]) => ver(p) === v)) { writes.forEach(w => w()); return result; }
-      }
-      throw new Error('too much contention');
-    },
-  } as unknown as Firestore;
-}
+import { fakeDb, type Doc, type Store } from './testing/credit-fake-db';
 
 const seed = (config: Doc = {}): Store => ({
   'platform-config/billing': { operatorTenantId: 'kring', accountingTenantId: 'bka' },
