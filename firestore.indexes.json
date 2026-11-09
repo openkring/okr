@@ -5114,6 +5114,28 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "payment-attempts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "invoiceKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "payerTenantId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "state",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "expiresAt",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": [

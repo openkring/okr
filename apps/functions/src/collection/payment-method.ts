@@ -3,7 +3,7 @@ import { logger } from 'firebase-functions/v2';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 
-import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId } from '@okr/shared-util-functions';
+import { checkAppCheckToken, checkAuthentication, getCallerTenantId } from '@okr/shared-util-functions';
 import { publicAppOrigin } from '@okr/shared-util-core';
 import { SubscriptionCollection, SubscriptionModel } from '@okr/shared-models';
 
@@ -12,13 +12,27 @@ import { stripePort, stripeSecretKey } from './stripe-port';
 const REGION = 'europe-west6';
 
 /** Reads the subscription doc, creating it with the model defaults (billing 'exempt') when missing. */
-async function ensureSubscription(db: Firestore, tenantId: string): Promise<Record<string, unknown>> {
+export async function ensureSubscription(db: Firestore, tenantId: string): Promise<Record<string, unknown>> {
   const ref = db.collection(SubscriptionCollection).doc(tenantId);
   const snap = await ref.get();
   if (snap.exists) return snap.data() as Record<string, unknown>;
   const { okey: _okey, ...fresh } = new SubscriptionModel(tenantId);
   await ref.set(fresh);
   return fresh as unknown as Record<string, unknown>;
+}
+
+/** The one admin check of both billing files: users/{uid}.roles.admin (role claims are never minted) or the legacy token claim. */
+export async function callerIsAdmin(db: Firestore, request: CallableRequest): Promise<boolean> {
+  if (request.auth?.token?.['admin'] === true) return true;
+  const roles = ((await db.collection('users').doc(request.auth?.uid ?? '').get()).data()?.['roles'] ?? {}) as Record<string, boolean>;
+  return roles['admin'] === true;
+}
+
+export async function assertCallerIsAdmin(db: Firestore, request: CallableRequest, cfName: string): Promise<void> {
+  if (!(await callerIsAdmin(db, request))) {
+    logger.error(`${cfName}: user ${request.auth?.uid} must be an admin`);
+    throw new HttpsError('permission-denied', 'This operation requires the admin role.');
+  }
 }
 
 export async function appOriginOf(db: Firestore, tenantId: string): Promise<string> {
@@ -47,9 +61,9 @@ export const createPaymentMethodSession = onCall(
     const CF_NAME = 'createPaymentMethodSession';
     checkAppCheckToken(request as never, CF_NAME);
     checkAuthentication(request as never, CF_NAME);
-    await checkRoles(request as never, CF_NAME, []); // admin only
-    const tenantId = await getCallerTenantId(request as never, CF_NAME);
     const db = getFirestore();
+    await assertCallerIsAdmin(db, request, CF_NAME);
+    const tenantId = await getCallerTenantId(request as never, CF_NAME);
 
     const sub = await ensureSubscription(db, tenantId);
     const customerId = await ensureStripeCustomer(db, request, tenantId, sub);
@@ -69,9 +83,9 @@ export const removePaymentMethod = onCall(
     const CF_NAME = 'removePaymentMethod';
     checkAppCheckToken(request as never, CF_NAME);
     checkAuthentication(request as never, CF_NAME);
-    await checkRoles(request as never, CF_NAME, []); // admin only
-    const tenantId = await getCallerTenantId(request as never, CF_NAME);
     const db = getFirestore();
+    await assertCallerIsAdmin(db, request, CF_NAME);
+    const tenantId = await getCallerTenantId(request as never, CF_NAME);
 
     const ref = db.collection(SubscriptionCollection).doc(tenantId);
     const sub = (await ref.get()).data();
