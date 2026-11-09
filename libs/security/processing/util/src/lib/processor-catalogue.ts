@@ -387,7 +387,7 @@ export const PROCESSOR_CATALOGUE: readonly CatalogueEntry[] = [
   },
   {
     key: 'stripe',
-    name: 'Stripe (Online-Zahlung der Plattformgebühren)',
+    name: 'Stripe (Online-Zahlung der Plattformgebühren, nur bkaiser-Abrechnung)',
     legalEntity: 'Stripe Payments Europe Limited, 1 Grand Canal Street Lower, Grand Canal Dock, Dublin, D02 H210, IE',
     role: 'processor',
     category: 'saasService',
@@ -396,6 +396,7 @@ export const PROCESSOR_CATALOGUE: readonly CatalogueEntry[] = [
     purposes: [
       'Einzug von Rechnungen und Guthaben-Aufladungen der Plattform per Karte oder PayPal',
       'Hinterlegen der Zahlungsart der Organisation für wiederkehrende Belastungen',
+      'Gilt für Mandanten, die bkaiser selbst abrechnet (Selbstanmeldung); keine Mitgliederdaten',
     ],
     // Übermittelt werden Name der Organisation, Rechnungs-E-Mail, Rechnungsnummer und
     // Beträge. Karten- und PayPal-Daten erfasst und hält Stripe selbst; wir speichern nur
@@ -411,10 +412,13 @@ export const PROCESSOR_CATALOGUE: readonly CatalogueEntry[] = [
     dpaUrl: 'https://stripe.com/legal/dpa',
     privacyUrl: 'https://stripe.com/privacy',
     contact: '',
-    enabledWhen: byIntegration('stripe'),
+    // Plattformebene: bkaiser ist selbst Verantwortliche ihrer Abrechnung, Stripe bearbeitet
+    // in deren Auftrag. Gilt für jeden von bkaiser abgerechneten Mandanten (Selbstanmeldung),
+    // ohne Mitgliederdaten; kein Mandanten-Schalter, daher kein `integrations`-Schlüssel.
+    alwaysOn: true,
     cloudFunctions: ['collection/*', 'webhooks/stripe'],
     memberNoticeDe:
-      'Betroffen sind nur Organisationen, die Plattformgebühren online bezahlen, keine einzelnen Mitglieder. Zahlungsdaten liegen beim Zahlungsdienst; wende dich für eine Löschung an die Datenschutz-Kontaktstelle (siehe Impressum).',
+      'Betroffen sind nur Organisationen, die bkaiser Plattformgebühren online bezahlen, keine einzelnen Mitglieder. Zahlungsdaten liegen beim Zahlungsdienst; wende dich für eine Löschung an die Datenschutz-Kontaktstelle (siehe Impressum).',
   },
   {
     key: 'youtube',

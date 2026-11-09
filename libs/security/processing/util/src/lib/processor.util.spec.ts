@@ -47,6 +47,15 @@ describe('PROCESSOR_CATALOGUE', () => {
     }
   });
 
+  it('models Stripe as bkaiser\'s platform-level processor, not a per-tenant integration', () => {
+    const stripe = PROCESSOR_CATALOGUE.find((p) => p.key === 'stripe');
+    expect(stripe?.alwaysOn).toBe(true);
+    expect(stripe?.enabledWhen).toBeUndefined();
+    expect(INTEGRATION_KEYS).not.toContain('stripe');
+    expect(stripe?.dataClasses).not.toContain('membership');
+    expect(activeProcessors(config()).map((p) => p.key)).toContain('stripe');
+  });
+
   it('never ships a fabricated link — a url is either empty or absolute https', () => {
     for (const p of PROCESSOR_CATALOGUE) {
       for (const [field, url] of [['dpaUrl', p.dpaUrl], ['privacyUrl', p.privacyUrl]] as const) {
