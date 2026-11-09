@@ -137,6 +137,26 @@ describe('runAutoTopUp', () => {
       expect(p.chargeOffSession).toHaveBeenCalledWith(expect.objectContaining({ idempotencyKey: `${KEY}-r2` }));
     });
 
+    it('the read-back throws: no charge, the request stays pending', async () => {
+      const store = stale({ stripePaymentIntentId: 'pi_old' });
+      const before = { ...store[REQUEST] };
+      const p = port('succeeded');
+      p.retrievePaymentIntent.mockRejectedValueOnce(new Error('Stripe 500'));
+      await expect(run(store, p)).rejects.toThrow('Stripe 500');
+      expect(p.chargeOffSession).not.toHaveBeenCalled();
+      expect(store[REQUEST]).toEqual(before);
+    });
+
+    it('the settle throws: no charge, the request stays pending', async () => {
+      const store = stale({ stripePaymentIntentId: 'pi_old' });
+      const before = { ...store[REQUEST] };
+      const p = port('succeeded', { retrieved: intent('succeeded') });
+      vi.mocked(settleSucceededPayment).mockRejectedValueOnce(new Error('period locked'));
+      await expect(run(store, p)).rejects.toThrow('period locked');
+      expect(p.chargeOffSession).not.toHaveBeenCalled();
+      expect(store[REQUEST]).toEqual(before);
+    });
+
     it('no PaymentIntent id (the charge call threw earlier): the search finds it succeeded, no charge', async () => {
       const store = stale({});
       const p = port('succeeded', { found: intent('succeeded', 'pi_found') });

@@ -79,7 +79,9 @@ type AutoTopUpRequest = { requestedAt: string; pendingInvoiceKey: string; retryC
  *   - still in flight (processing, requires_action, …) → no charge, the request stays pending;
  *   - requires_payment_method / canceled / none → charged again with key `<invoiceKey>-r<n>` (n counted on the request).
  *   A pending invoice paid or cancelled meanwhile just clears the request.
- * - Anything failing BEFORE the charge call clears the request; a charge call that throws keeps it pending.
+ * - Anything failing in the FIRST run before the charge call clears the request. In a re-run (a charge was attempted
+ *   before) a failure — the read-back, the settle, anything — keeps it pending. A charge call that throws keeps it
+ *   pending too.
  * - A declined charge clears the request; the webhook switches auto top-up off and tells the admin.
  */
 export async function runAutoTopUp(
@@ -89,6 +91,15 @@ export async function runAutoTopUp(
   try {
     prepared = await prepareAutoTopUp(db, port, tenantId, request, log);
   } catch (err) {
+    if (request.pendingInvoiceKey) {
+      // A re-run: a charge was attempted before and may have succeeded (the lookup or the settle failed). Keep the
+      // request pending, so the money is never left unbooked and charged again under a new invoice; the next
+      // re-run (24 h) tries again.
+      log('error', 'autoTopUp: re-run failed, the top-up stays pending', {
+        tenantId, invoiceKey: request.pendingInvoiceKey, error: err instanceof Error ? err.message : String(err),
+      });
+      throw err;
+    }
     await clearAutoTopUp(db, tenantId);
     throw err;
   }
