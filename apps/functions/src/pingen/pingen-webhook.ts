@@ -46,7 +46,16 @@ const CATEGORY_BY_TYPE: Record<string, PingenCategory> = {
 
 const MAX_DETAIL = 200;
 
-export type PingenWebhookDeps = FailDeps & Pick<SubmitDeps, 'getSending'> & { findByProviderId(letterId: string): Promise<SendingRow | undefined> };
+export type PingenWebhookDeps = FailDeps & Pick<SubmitDeps, 'getSending'> & {
+  findByProviderId(letterId: string): Promise<SendingRow | undefined>;
+  /** injected so the specs do not wait */
+  sleep(ms: number): Promise<void>;
+};
+
+/** How long an event for an unknown letter waits before the one re-read: the submit writes the providerId right after Pingen answers. */
+export const UNKNOWN_LETTER_REREAD_MS = 2000;
+/** The webhook self-test's probe letters (`_webhooks/selftest.ts` PINGEN_PROBE_PREFIX): never a record, always `ignored`. */
+const SELFTEST_LETTER_PREFIX = 'selftest-';
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const str = (v: unknown): string => (typeof v === 'string' ? v : '');
@@ -149,10 +158,15 @@ export function makePingenHandler(deps: PingenWebhookDeps): WebhookHandler {
     const e = parse(event.payload);
     if (!e) { logger.warn('pingen-webhook: not a letter event, ignored'); return { state: 'ignored' }; }
     let rec = await deps.findByProviderId(e.letterId);
+    if (!rec && e.letterId.startsWith(SELFTEST_LETTER_PREFIX)) return { state: 'ignored' };
     if (!rec) {
-      // a letter sent outside the app, or our providerId write has not landed yet (Pingen retries on 5xx only)
-      logger.warn('pingen-webhook: no sending for this letter, ignored', { letterId: e.letterId, category: e.category });
-      return { state: 'ignored' };
+      // most likely our providerId write has not landed yet (Pingen retries on 5xx only): one re-read after a moment
+      await deps.sleep(UNKNOWN_LETTER_REREAD_MS);
+      rec = await deps.findByProviderId(e.letterId);
+    }
+    if (!rec) {
+      // never dropped silently: the receiver marks the row failed, the stuck-check surfaces it, the replay script re-runs it
+      throw new Error(`pingen-webhook: no sending for Pingen letter ${e.letterId} (${e.category}) yet, replay the event once the letter is recorded`);
     }
     const tenantId = rec.tenants[0];
     if (!tenantId) { logger.warn('pingen-webhook: the sending has no tenant, ignored', { id: rec.id }); return { state: 'ignored' }; }
@@ -193,6 +207,7 @@ function productionDeps(): PingenWebhookDeps {
   const base = sendingDeps();
   return {
     ...base,
+    sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
     findByProviderId: async (letterId) => {
       const snap = await getFirestore().collection(SendingCollection).where('providerId', '==', letterId).limit(1).get();
       const d = snap.docs[0];

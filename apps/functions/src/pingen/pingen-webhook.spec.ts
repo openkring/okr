@@ -25,7 +25,9 @@ function setup(rows: SendingRow[]) {
   const store = new Map(rows.map((r) => [r.id, r]));
   const tasks: Array<{ name: string; relatedKey: string; tenantId: string; linkKey?: string }> = [];
   const reverseShare = vi.fn(async () => ({ amount: 150, duplicate: false }));
+  const sleep = vi.fn(async (_ms: number) => undefined);
   const deps: PingenWebhookDeps = {
+    sleep,
     findByProviderId: async (id) => [...store.values()].find((r) => r.providerId === id),
     getSending: async (id) => store.get(id),
     updateSending: async (id, patch, expect) => {
@@ -41,7 +43,7 @@ function setup(rows: SendingRow[]) {
     reverseShare,
     now: () => NOW,
   };
-  return { deps, store, tasks, reverseShare, handler: makePingenHandler(deps) };
+  return { deps, store, tasks, reverseShare, sleep, handler: makePingenHandler(deps) };
 }
 
 const stored = (payload: unknown): StoredWebhookEvent => ({ clientId: 'pingen', type: 'pingen', tenants: [], payload } as unknown as StoredWebhookEvent);
@@ -243,10 +245,29 @@ describe('pingenHandler', () => {
     expect(store.get('s1')?.state).toBe('sent');
   });
 
-  it('an unknown letter is ignored without throwing', async () => {
-    const { handler, store } = setup([row()]);
-    expect(await handler(stored(withLetter(FIX['sent'], 'ffffffff-ffff-4fff-8fff-ffffffffffff')), 'w1')).toEqual({ state: 'ignored' });
+  it('an unknown letter is read again once after ~2 s, then throws a PII-free error so the row ends failed (replayable)', async () => {
+    const { handler, store, sleep } = setup([row()]);
+    const unknown = 'ffffffff-ffff-4fff-8fff-ffffffffffff';
+    const err = await handler(stored(withLetter(FIX['sent'], unknown)), 'w1').then(() => undefined, (e: unknown) => e);
+    expect(err).toBeInstanceOf(Error);
+    expect((err as Error).message).toMatch(/no sending for Pingen letter .*replay/i);
+    expect((err as Error).message).not.toContain('Test Person');
+    expect(sleep).toHaveBeenCalledTimes(1);
+    expect(sleep.mock.calls[0][0]).toBeGreaterThanOrEqual(1500);
     expect(store.get('s1')?.state).toBe('submitted');
+  });
+
+  it('a letter whose providerId lands during the wait is handled on the re-read', async () => {
+    const { handler, store, sleep } = setup([row({ providerId: '' })]);
+    sleep.mockImplementationOnce(async () => { store.set('s1', { ...store.get('s1')!, providerId: LETTER }); });
+    expect(await handler(stored(FIX['sent']), 'w1')).toEqual({ state: 'handled', tenantId: 'scs' });
+    expect(store.get('s1')?.state).toBe('sent');
+  });
+
+  it('the self-test probe (selftest- letter) stays ignored, without waiting', async () => {
+    const { handler, sleep } = setup([row()]);
+    expect(await handler(stored(withLetter(FIX['sent'], 'selftest-run1')), 'w1')).toEqual({ state: 'ignored' });
+    expect(sleep).not.toHaveBeenCalled();
   });
 
   it('ignores a deliverable that is not a letter, and an event without a letter id', async () => {
