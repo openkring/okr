@@ -44,10 +44,13 @@ export interface CheckboxI18n {
           [justify]="justify()"
           [disabled]="isReadOnly()"
           [color]="colorName()"
+          [attr.aria-label]="ariaLabel() || null"
         >
-          <div class="ion-text-wrap">
-            {{ i18n().label }}
-          </div>
+          @if (!ariaLabel()) {
+            <div class="ion-text-wrap">
+              {{ i18n().label }}
+            </div>
+          }
         </ion-toggle>
       } @else { <!-- editable mode: show checkbox -->
         <ion-checkbox required
@@ -59,10 +62,13 @@ export interface CheckboxI18n {
           [disabled]="isReadOnly()" 
           [color]="colorName()"
           [indeterminate]="isIndeterminate()"
+          [attr.aria-label]="ariaLabel() || null"
         >
-          <div class="ion-text-wrap">
-            {{ i18n().label }}
-          </div>
+          @if (!ariaLabel()) {
+            <div class="ion-text-wrap">
+              {{ i18n().label }}
+            </div>
+          }
         </ion-checkbox>
       }
     </ion-item>
@@ -86,6 +92,8 @@ export class Checkbox {
   public color = input<ColorIonic>(ColorIonic.Secondary);
   public justify = input<'start'|'end'|'space-between'>('start');
   public showHelper = input<boolean>(false);
+  /** When set: no visible label; this text becomes the control's aria-label (e.g. a compact toggle at the start of a list row). */
+  public ariaLabel = input('');
   public labelPlacement = input<'start'|'end'|'fixed'>('end'); // placement of the label
   public indeterminate = input<boolean>(false); // if true, the checkbox can be in indeterminate state
   /**

@@ -155,10 +155,14 @@ type SettingsView = 'mine' | 'club';
           <ion-reorder-group [disabled]="false" (ionReorderEnd)="onReorder($event)">
             @for (channel of club(); track channel.okey) {
               <ion-item>
+                <okr-checkbox slot="start" [i18n]="channel.defaultOn ? defaultOnI18n() : offeredOnlyI18n()" [checked]="channel.defaultOn"
+                  [ariaLabel]="(channel.defaultOn ? defaultOnI18n() : offeredOnlyI18n()).label"
+                  [readOnly]="false" [toggle]="true" (checkedChange)="toggleDefaultOn(channel, $event)" />
                 <ng-container *ngTemplateOutlet="avatarTpl; context: { $implicit: channel }" />
                 <ion-label>{{ channel.name }}</ion-label>
-                <okr-checkbox slot="end" [i18n]="channel.defaultOn ? defaultOnI18n() : offeredOnlyI18n()" [checked]="channel.defaultOn"
-                  [readOnly]="false" [toggle]="true" (checkedChange)="toggleDefaultOn(channel, $event)" />
+                <ion-button slot="end" fill="clear" color="medium" [attr.aria-label]="i18n().edit_channel()" (click)="edit.emit(channel)">
+                  <ion-icon slot="icon-only" src="{{ 'create' | svgIcon }}" />
+                </ion-button>
                 <ion-button slot="end" fill="clear" color="medium" [attr.aria-label]="i18n().archive_channel()" (click)="clubArchive.emit(channel.okey)">
                   <ion-icon slot="icon-only" src="{{ 'trash' | svgIcon }}" />
                 </ion-button>
@@ -205,6 +209,8 @@ export class NewsSettingsModal {
   public readonly suggest = output<NewsRequestFormData>();
   public readonly clubSave = output<NewsChannelModel>();
   public readonly clubArchive = output<string>();
+  /** curator: open the edit modal of a club channel (design 2026-11-09 §5.3) */
+  public readonly edit = output<NewsChannelModel>();
   public readonly clubReorder = output<string[]>();
   public readonly accept = output<NewsChannelRequestModel>();
   public readonly reject = output<NewsChannelRequestModel>();
