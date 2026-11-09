@@ -20,11 +20,11 @@ import { formatNewsDate, formatNewsDuration } from './news-date';
   standalone: true,
   imports: [NewsImagePipe, IonAvatar, IonIcon, SvgIconPipe, ImgDirective],
   styles: [`
-    :host { display: block; }
+    :host { display: block; min-width: 0; }
     .card { display: block; width: 100%; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; color: inherit; font: inherit; }
     .thumb { position: relative; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 8px; background: var(--ion-color-light); }
     .thumb.square { aspect-ratio: 1 / 1; }
-    .thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .thumb img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; }
     .placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
       width: 100%; height: 100%; font-size: 0.8rem; color: var(--ion-color-medium); }
     .placeholder ion-icon { font-size: 1.6rem; }
@@ -33,7 +33,7 @@ import { formatNewsDate, formatNewsDuration } from './news-date';
     .meta { display: flex; gap: 8px; padding-top: 8px; }
     ion-avatar { flex: none; width: 32px; height: 32px; }
     .text { min-width: 0; }
-    .title { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    .title { display: -webkit-box; overflow-wrap: anywhere; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
       font-weight: 600; line-height: 1.25; }
     .sub { color: var(--ion-color-medium); font-size: 0.8rem; }
   `],
