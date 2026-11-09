@@ -1,7 +1,7 @@
 import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, effect, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonRow } from '@ionic/angular';
 
-import { ArticleSection, IMAGE_STYLE_SHAPE, ImageConfig, ViewPosition } from '@okr/shared-models';
+import { ArticleSection, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ViewPosition } from '@okr/shared-models';
 import { Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
 
 import { ArticleStore } from './article-section.store';
@@ -41,12 +41,20 @@ import { ArticleStore } from './article-section.store';
       left: 50%;
       transform: translateX(-50%);
     }
+    /* every slide is the same box (full width, ~75% of the viewport high); portrait and landscape
+       images are fitted into it whole, at their own proportions (object-fit: contain, never cropped) */
     .carousel-slide {
       flex: 0 0 100%;
+      height: 75dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
       scroll-snap-align: center;
       container-type: scroll-state;
       container-name: slide;
     }
+    .carousel-slide okr-img { display: block; width: 100%; }
     .carousel-slide::scroll-marker {
       content: "";
       width: 12px; height: 12px;
@@ -120,7 +128,7 @@ import { ArticleStore } from './article-section.store';
                           <div class="carousel">
                             @for(img of images(); track img.url) {
                               <div class="carousel-slide">
-                                <okr-img [captionFallbacks]="captionFallbacks()" [image]="img" [imageStyle]="imageStyle()" [editMode]="editMode()" [gallery]="images()" [zoomTitle]="store.i18n.article_zoomed()" />
+                                <okr-img [captionFallbacks]="captionFallbacks()" [image]="img" [imageStyle]="carouselImageStyle()" [editMode]="editMode()" [gallery]="images()" [zoomTitle]="store.i18n.article_zoomed()" />
                               </div>
                             }
                           </div>
@@ -203,6 +211,17 @@ export class ArticleSectionComponent {
   });
 
   protected imageStyle = computed(() => this.section()?.properties.imageStyle ?? IMAGE_STYLE_SHAPE);
+  // the carousel: one fixed box for all slides; the image is shown whole at its own proportions
+  // (no fill/crop, no pixel ar= crop), letterboxed inside the box. No border: it would frame the
+  // letterbox rather than the image.
+  protected carouselImageStyle = computed((): ImageStyle => ({
+    ...this.imageStyle(),
+    width: '100%',
+    height: '75dvh',
+    fill: false,
+    border: '',
+    borderRadius: '',
+  }));
   // Shared texts (e.g. the privacy statement, one set of sections for every tenant) name the
   // tenant through placeholders such as @APPNAME@ and @DOMAIN@, like the title does.
   protected content = computed(() => this.store.appStore.replacePlaceholders(this.section()?.content?.htmlContent ?? '<p></p>'));
