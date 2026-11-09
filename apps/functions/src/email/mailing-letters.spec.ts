@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  buildLetterHtml, LETTER_TEMPLATE_ORIGINS, escapeHtml, isAllowedLetterRequest, isPdfAttachment, isReapableLetters, isUsableLetterTemplate,
+  buildLetterHtml, eventsBlockHtml, LETTER_QR_INTRO, LETTER_TEMPLATE_ORIGINS, qrSvgOf, withEventsBlock, escapeHtml, isAllowedLetterRequest, isPdfAttachment, isReapableLetters, isUsableLetterTemplate,
   letterDate, letterPayload, letterTemplateKey, lettersPath, mayGetLetters, placeAndDate,
 } from './mailing-letters';
 
@@ -124,5 +124,55 @@ describe('letter template', () => {
     expect(isAllowedLetterRequest('https://evil.example/track.png?street=Seestrasse', LETTER_TEMPLATE_ORIGINS)).toBe(false);
     expect(isAllowedLetterRequest('http://bkaiser.imgix.net/x.png', LETTER_TEMPLATE_ORIGINS)).toBe(false);
     expect(isAllowedLetterRequest('https://bkaiser.imgix.net/x', new Set())).toBe(false);
+  });
+});
+
+describe('eventsBlockHtml', () => {
+  const events = [
+    { name: 'GV <2026>', when: '01.12.2026, 19:30', location: 'Bootshaus' },
+    { name: 'Chlaus', when: '06.12.2026', location: '' },
+  ];
+
+  it('is empty without events or without a QR code', () => {
+    expect(eventsBlockHtml([], '<svg></svg>')).toBe('');
+    expect(eventsBlockHtml(events, '')).toBe('');
+  });
+
+  it('leads every event with the QR code, escapes the details and keeps the block on one page', () => {
+    const html = eventsBlockHtml(events, '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 21"></svg>');
+    expect(html.match(/<svg width="100%" height="100%"/g)?.length).toBe(2);
+    expect(html).toContain('<strong>GV &lt;2026&gt;</strong><br>01.12.2026, 19:30<br>Bootshaus');
+    expect(html).toContain('<strong>Chlaus</strong><br>06.12.2026</td>');
+    expect(html).toContain(LETTER_QR_INTRO);
+    expect(html.startsWith('<div class="okr-letter-events" style="break-inside:avoid;page-break-inside:avoid;')).toBe(true);
+    expect(html.match(/<tr style="break-inside:avoid;page-break-inside:avoid;">/g)?.length).toBe(2);
+  });
+});
+
+describe('withEventsBlock', () => {
+  it('goes before the last </body>', () => {
+    expect(withEventsBlock('<html><body><p>x</p></BODY></html>', '<div>E</div>')).toBe('<html><body><p>x</p><div>E</div></BODY></html>');
+  });
+  it('is appended to a fragment and leaves the page alone without a block', () => {
+    expect(withEventsBlock('<p>x</p>', '<div>E</div>')).toBe('<p>x</p><div>E</div>');
+    expect(withEventsBlock('<body></body>', '')).toBe('<body></body>');
+  });
+});
+
+describe('qrSvgOf', () => {
+  it('encodes the link as an SVG', async () => {
+    const svg = await qrSvgOf('https://example.org/answer?m=1&p=2&s=3');
+    expect(svg.startsWith('<svg')).toBe(true);
+    expect(svg).toContain('viewBox');
+  });
+});
+
+describe('buildLetterHtml with events', () => {
+  it('puts the events block below the text', () => {
+    const html = buildLetterHtml({
+      sender: { name: 'S', street: '', zipCity: '' }, recipient: { name: 'R', street: '', zipCity: '' },
+      placeAndDate: '', subject: 'S', body: '<p>Text</p>', eventsHtml: '<div class="okr-letter-events"></div>',
+    });
+    expect(html.indexOf('<p>Text</p>')).toBeLessThan(html.indexOf('okr-letter-events'));
   });
 });

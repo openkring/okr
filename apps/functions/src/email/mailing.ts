@@ -21,7 +21,7 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { DeliveryChannel, type EmailLayoutChoice, NoticeAttachment, NoticeCollection, type NoticeModel } from '@okr/shared-models';
-import { DateFormat, getTodayStr, isOrgRecipient, recipientParentKey } from '@okr/shared-util-core';
+import { DateFormat, getEventLocationName, getTodayStr, isOrgRecipient, recipientParentKey } from '@okr/shared-util-core';
 import { projectID } from 'firebase-functions/params';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
@@ -41,7 +41,7 @@ import { lastEventDate } from './mailing-answer.logic';
 import { chunk, isElevated } from './mailing-recipients';
 import { MAX_PERSONAL_RECIPIENTS, parseCaleventKeys, personalEntries, refusedEventMessage, sendableEventRefusal } from './personal-mail.logic';
 import { asLayoutChoice } from './render-email.logic';
-import { buildMailingLetters } from './mailing-letters';
+import { buildMailingLetters, LetterEvent } from './mailing-letters';
 import { mailingCategory } from './mailing-deliveries.logic';
 
 const REGION = 'europe-west6';
@@ -82,6 +82,10 @@ export interface MailingRequest {
   deliveries: MailingDelivery[];
   /** The events to ask about; each email recipient then gets a personal answer link. Not for group admins. */
   caleventKeys?: string[];
+  /** «Anzeige im Dashboard»: the E-Mail recipients with an account also get the notice (without a push). */
+  dashboard?: boolean;
+  /** «QR-Code für Link anzeigen»: each letter ends with the events, each with a QR code of the answer link. */
+  letterQrCodes?: boolean;
 }
 
 /** The `mailings` doc. Written only here; `state` and the counts are owned by `onMailing`. */
@@ -113,6 +117,10 @@ export interface MailingDoc {
   caleventKeys?: string[];
   /** StoreDate of the last event's last day: the answer links stop working after it. */
   validUntil?: string;
+  /** The E-Mail recipients with an account also find the Versand on their dashboard (a notice, no push). */
+  dashboard?: boolean;
+  /** The letters carry the events with a QR code of the answer link; the Post recipients may then answer too. */
+  letterQrCodes?: boolean;
 }
 
 /**
@@ -286,6 +294,8 @@ export const sendMailing = onCall(
       validUntil = lastEventDate(events as AnswerableEvent[]);
     }
 
+    // QR codes only where they lead somewhere: letters to print and events to answer
+    const letterQrCodes = data.letterQrCodes === true && caleventKeys.length > 0 && keysFor(deliveries, DeliveryChannel.Post).length > 0;
     const ref = db.collection(MailingCollection).doc();
     const attachments = await storeAttachments(data, tenantId, ref.id);
     const senderKey = String(caller['personKey'] ?? '');
@@ -307,12 +317,26 @@ export const sendMailing = onCall(
       state: 'pending',
       ...(caleventKeys.length > 0 ? { caleventKeys, ...(validUntil ? { validUntil } : {}) } : {}),
       ...(keysFor(deliveries, DeliveryChannel.Post).length > 0 ? { letters: { state: 'pending' as const } } : {}),
+      ...(data.dashboard === true ? { dashboard: true } : {}),
+      ...(letterQrCodes ? { letterQrCodes: true } : {}),
     };
     await ref.set(doc);
     logger.info(`${CF_NAME}: Versand ${ref.id} to ${deliveries.length} recipient(s) (tenant ${tenantId})`);
     return { mailingKey: ref.id };
   },
 );
+
+/** The events for the letters' QR block and the signed answer link per recipient (the one the mail would carry). */
+async function letterAnswers(db: Firestore, mailingKey: string, caleventKeys: string[]): Promise<{ answerEvents: LetterEvent[]; answerUrl: (personKey: string) => string }> {
+  const snaps = await db.getAll(...caleventKeys.map((key) => db.collection('calevents').doc(key)));
+  const answerEvents = snaps
+    .map((s) => s.data() as ({ name?: string; startDate?: string; startTime?: string } & Parameters<typeof getEventLocationName>[0]) | undefined)
+    .filter((e) => !!e)
+    .map((e) => ({ name: String(e?.name ?? ''), when: eventWhen(e?.startDate, e?.startTime), location: getEventLocationName(e) }));
+  const secret = invitationLinkSecret.value();
+  const answerBase = mailingAnswerFunctionUrl(projectID.value());
+  return { answerEvents, answerUrl: (personKey) => mailingAnswerUrl(answerBase, mailingKey, personKey, secret) };
+}
 
 /** The stored attachments as private-bucket refs for the mail job: no file content in the job doc (1 MB cap). */
 export function privateRefs(attachments: NoticeAttachment[]): MailJobDoc['attachments'] {
@@ -388,7 +412,12 @@ export const onMailing = onDocumentCreated(
 
       // an org has no account: In-App is for persons only
       const chatKeys = await keysWithAccount(db, tenantId, keysFor(mailing.deliveries, DeliveryChannel.Chat).filter((key) => !isOrgRecipient(key)));
-      if (chatKeys.length > 0) {
+      // «Anzeige im Dashboard»: the E-Mail recipients with an account get the notice too, but no push (the mail reached them)
+      const dashboardKeys = mailing.dashboard
+        ? (await keysWithAccount(db, tenantId, emailKeys.filter((key) => !isOrgRecipient(key)))).filter((key) => !chatKeys.includes(key))
+        : [];
+      const noticeKeys = [...chatKeys, ...dashboardKeys];
+      if (noticeKeys.length > 0) {
         const noticeRef = db.collection(NoticeCollection).doc();
         const notice: Omit<NoticeModel, 'okey'> = {
           tenants: [tenantId],
@@ -396,7 +425,7 @@ export const onMailing = onDocumentCreated(
           subject: mailing.subject,
           body: await sanitizeEmailBody(mailing.body),
           attachments: mailing.attachments,
-          recipients: chatKeys,
+          recipients: noticeKeys,
           senderKey: mailing.senderKey,
           senderName: mailing.senderName,
           mailingKey: snap.id,
@@ -405,16 +434,18 @@ export const onMailing = onDocumentCreated(
         };
         await noticeRef.set(notice);
         result.noticeKey = noticeRef.id;
-        result.notices = chatKeys.length;
-        try {
-          const pushed = await pushToPersons(chatKeys, {
-            type: 'notice', tenantId, title: mailing.subject, body: noticeExcerpt(notice.body),
-            url: `/notice/${noticeRef.id}`, channelId: `notice-${noticeRef.id}`,
-          }, CF_NAME);
-          result.pushes = pushed.sent;
-        } catch (err) {
-          // the notice is on the dashboard either way; a failed push is not a failed Versand
-          logger.warn(`${CF_NAME}: push for notice ${noticeRef.id} failed:`, err);
+        result.notices = noticeKeys.length;
+        if (chatKeys.length > 0) {
+          try {
+            const pushed = await pushToPersons(chatKeys, {
+              type: 'notice', tenantId, title: mailing.subject, body: noticeExcerpt(notice.body),
+              url: `/notice/${noticeRef.id}`, channelId: `notice-${noticeRef.id}`,
+            }, CF_NAME);
+            result.pushes = pushed.sent;
+          } catch (err) {
+            // the notice is on the dashboard either way; a failed push is not a failed Versand
+            logger.warn(`${CF_NAME}: push for notice ${noticeRef.id} failed:`, err);
+          }
         }
       }
       // Post last: the slowest part, and its failure must not undo the mails and notices already out
@@ -424,6 +455,7 @@ export const onMailing = onDocumentCreated(
           const built = await buildMailingLetters({
             tenantId, mailingKey: snap.id, personKeys: postKeys,
             subject: mailing.subject, body: await sanitizeEmailBody(mailing.body), attachments: mailing.attachments,
+            ...(mailing.letterQrCodes && mailing.caleventKeys?.length ? await letterAnswers(db, snap.id, mailing.caleventKeys) : {}),
           });
           result.letters = built?.storagePath
             ? { state: 'ready', storagePath: built.storagePath, count: built.letters, missing: built.missing }

@@ -15,7 +15,7 @@ import {
 import { AppStore } from '@okr/shared-feature';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import {
-  ButtonCopy, ButtonCopyI18n, ChangeConfirmation, ChangeConfirmationI18n,
+  ButtonCopy, ButtonCopyI18n, ChangeConfirmation, ChangeConfirmationI18n, Checkbox, CheckboxI18n,
   EmailInput, EmailInputI18n, ErrorNote, Header, Spinner, StringSelect, StringSelectI18n, TextInput, TextInputI18n,
 } from '@okr/shared-ui';
 import type { OkrEditor } from '@okr/shared-ui-editor';
@@ -24,7 +24,8 @@ import { fill, needsEmailNormalization } from '@okr/shared-util-core';
 import { dismissOverlay, isBrowser, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 import {
-  ACTIVE_MAILING_CHANNELS, buildVersandRows, emailBodyHasContent, emailLayoutOptions, GROUP_ADMIN_MAILING_CHANNELS, groupReachWarnings, isSenderDomainAllowed,
+  ACTIVE_MAILING_CHANNELS, buildVersandRows, EMAIL_ONLY_MAILING_CHANNELS, emailBodyHasContent, emailLayoutOptions, emailOnlyDeliveries,
+  GROUP_ADMIN_MAILING_CHANNELS, groupReachWarnings, hasPostDelivery, isSenderDomainAllowed,
   nonPdfAttachmentNames, parseEmails, toggleDelivery, versandBcc, versandDeliveries,
   EmailComposerFormModel, emailComposerValidations, VersandDeliveries, VersandEvent, VersandRow,
   EMAIL_COMPOSER_I18N_KEYS, EMAIL_COMPOSER_MSG_KEYS, EmailComposerI18n,
@@ -90,7 +91,7 @@ interface AddressField {
   imports: [
     FormsModule,
     SvgIconPipe,
-    Header, Spinner, ButtonCopy, ChangeConfirmation, EmailInput, ErrorNote, StringSelect, TextInput,
+    Header, Spinner, ButtonCopy, ChangeConfirmation, Checkbox, EmailInput, ErrorNote, StringSelect, TextInput,
     VersandDeliveryTable, VersandEventsSelect,
     IonContent, IonButton,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonIcon, IonChip, IonLabel, IonNote,
@@ -267,6 +268,14 @@ interface AddressField {
                   @if (versandFailed()) {
                     <ion-note color="warning" class="note">{{ i18n.delivery_error() }}</ion-note>
                   }
+                  <!-- the options of this Versand: E-Mail only (then optionally on the dashboard), QR codes in the letters -->
+                  <okr-checkbox [i18n]="emailOnlyI18n()" [checked]="emailOnly()" (checkedChange)="onEmailOnlyChange($event)" [readOnly]="false" />
+                  @if (emailOnly()) {
+                    <okr-checkbox [i18n]="dashboardI18n()" [checked]="showOnDashboard()" (checkedChange)="onDashboardChange($event)" [readOnly]="false" />
+                  }
+                  @if (showQrOption()) {
+                    <okr-checkbox [i18n]="qrCodesI18n()" [checked]="letterQrCodes()" (checkedChange)="onQrCodesChange($event)" [readOnly]="false" />
+                  }
                   <okr-versand-delivery-table [rows]="versandRows()" [deliveries]="deliveries()" [i18n]="i18n"
                     [active]="activeChannels()" (toggled)="onDeliveryToggle($event.row, $event.channel)" />
                   @if (postSkipped().length > 0) {
@@ -425,12 +434,27 @@ export class EmailComposerModal {
   protected readonly deliveries = signal<VersandDeliveries>({});
   private initialDeliveries: VersandDeliveries = {};
   protected readonly versandLoaded = signal(false);
-  /** A group admin sends no Post: the letters would carry members' postal addresses (spec 1.145 §6.1). */
-  protected readonly activeChannels = computed(() => this.groupKey() ? GROUP_ADMIN_MAILING_CHANNELS : ACTIVE_MAILING_CHANNELS);
+  /**
+   * «Versand nur via E-Mail»: Post and In-App cannot be ticked. A group admin never has Post: the letters
+   * would carry members' postal addresses (spec 1.145 §6.1).
+   */
+  protected readonly emailOnly = signal(false);
+  /** With «Versand nur via E-Mail»: the message also appears on the recipients' dashboard (no push). */
+  protected readonly showOnDashboard = signal(true);
+  /** Each letter ends with the chosen events, each with a QR code of the recipient's answer link. */
+  protected readonly letterQrCodes = signal(false);
+  /** The Post and In-App ticks from before «Versand nur via E-Mail»: they come back when it is switched off. */
+  private ticksBeforeEmailOnly: VersandDeliveries = {};
+  protected readonly activeChannels = computed(() => {
+    if (this.emailOnly()) return EMAIL_ONLY_MAILING_CHANNELS;
+    return this.groupKey() ? GROUP_ADMIN_MAILING_CHANNELS : ACTIVE_MAILING_CHANNELS;
+  });
+  protected readonly anyPost = computed(() => hasPostDelivery(this.deliveries()));
+  /** The QR option only makes sense with letters to print and events to answer. */
+  protected readonly showQrOption = computed(() => this.anyPost() && this.hasEvents());
   /** The attachments left out of the letters while somebody is ticked under Post. */
   protected readonly postSkipped = computed(() => {
-    const anyPost = Object.values(this.deliveries()).some((d) => d.includes(DeliveryChannel.Post));
-    if (!anyPost) return [];
+    if (!this.anyPost()) return [];
     const doc = this.filename() ? [{ filename: this.filename(), contentType: this.outputFormat() === 'pdf' ? 'application/pdf' : '' }] : [];
     return nonPdfAttachmentNames([...doc, ...this.extraAttachments()]);
   });
@@ -547,6 +571,15 @@ export class EmailComposerModal {
     name: 'subject', label: this.i18n.subject_label(), placeholder: '', helper: '',
   } as TextInputI18n));
   protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.i18n.copy_conf() } as ButtonCopyI18n));
+  protected readonly emailOnlyI18n = computed(() => ({
+    name: 'emailOnly', label: this.i18n.delivery_email_only(), helper: '',
+  } as CheckboxI18n));
+  protected readonly dashboardI18n = computed(() => ({
+    name: 'showOnDashboard', label: this.i18n.delivery_dashboard(), helper: '',
+  } as CheckboxI18n));
+  protected readonly qrCodesI18n = computed(() => ({
+    name: 'letterQrCodes', label: this.i18n.delivery_qr_codes(), helper: '',
+  } as CheckboxI18n));
   protected readonly changeConfirmationI18n = computed(() => ({
     cancel: this.i18n.revert(), save: this.i18n.send(),
   } as ChangeConfirmationI18n));
@@ -664,6 +697,26 @@ export class EmailComposerModal {
     if (next === this.deliveries()) return;
     this.isDirty.set(true);
     this.applyDeliveries(next);
+  }
+
+  protected onEmailOnlyChange(emailOnly: boolean): void {
+    if (emailOnly === this.emailOnly()) return;
+    if (emailOnly) this.ticksBeforeEmailOnly = this.deliveries();
+    this.isDirty.set(true);
+    this.emailOnly.set(emailOnly);
+    this.applyDeliveries(emailOnlyDeliveries(this.deliveries(), emailOnly, this.ticksBeforeEmailOnly));
+  }
+
+  protected onDashboardChange(show: boolean): void {
+    if (show === this.showOnDashboard()) return;
+    this.isDirty.set(true);
+    this.showOnDashboard.set(show);
+  }
+
+  protected onQrCodesChange(qrCodes: boolean): void {
+    if (qrCodes === this.letterQrCodes()) return;
+    this.isDirty.set(true);
+    this.letterQrCodes.set(qrCodes);
   }
 
   protected async showInfo(): Promise<void> {
@@ -815,6 +868,10 @@ export class EmailComposerModal {
     this.isDirty.set(false);
     this.extraAttachments.set([]);
     this.formData.set(this.buildInitial());
+    this.emailOnly.set(false);
+    this.showOnDashboard.set(true);
+    this.letterQrCodes.set(false);
+    this.ticksBeforeEmailOnly = {};
     if (this.isVersand()) this.applyDeliveries(this.initialDeliveries);
     this.showForm.set(false);          // toggle to clear stale Vest state
     setTimeout(() => this.showForm.set(true), 0);
@@ -858,6 +915,8 @@ export class EmailComposerModal {
           extraAttachments: request.extraAttachments,
           deliveries,
           ...(this.hasEvents() ? { caleventKeys: this.chosenEvents().map((e) => e.caleventKey) } : {}),
+          ...(this.emailOnly() && this.showOnDashboard() ? { dashboard: true } : {}),
+          ...(this.showQrOption() && this.letterQrCodes() ? { letterQrCodes: true } : {}),
         });
         await this.showParamToast(EMAIL_COMPOSER_MSG_KEYS.send_mailing, {
           emails: deliveries.filter((d) => d.channels.includes(DeliveryChannel.Email)).length,

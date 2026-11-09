@@ -156,7 +156,10 @@
       "unreachable": "No localizables:",
       "hint": "Tus cambios solo valen para este envío. El perfil de los destinatarios no cambia.",
       "empty": "Con esta selección nadie recibe el envío.",
-      "error": "No se pudieron cargar las formas de entrega. El envío va a todas las personas con correo."
+      "error": "No se pudieron cargar las formas de entrega. El envío va a todas las personas con correo.",
+      "email_only": "Envío solo por correo electrónico",
+      "dashboard": "Mostrar en el panel",
+      "qr_codes": "Mostrar el código QR del enlace"
     },
     "info": {
       "title": "Cómo funciona un envío",

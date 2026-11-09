@@ -12,10 +12,12 @@ import { AnswerRefusal, eventRefusalOf } from '../calendar/refusal';
 import { keysFor, MailingDoc } from './mailing';
 
 /** Whether `personKey` may still answer: ticked for email, the Versand asks about events, and the last one is not over. */
-export function mayAnswer(doc: Pick<MailingDoc, 'deliveries' | 'caleventKeys' | 'validUntil'>, personKey: string, today: string): boolean {
+export function mayAnswer(doc: Pick<MailingDoc, 'deliveries' | 'caleventKeys' | 'validUntil' | 'letterQrCodes'>, personKey: string, today: string): boolean {
   if (!doc.caleventKeys?.length || !doc.validUntil) return false;
   if (today > doc.validUntil) return false;
-  return keysFor(doc.deliveries, DeliveryChannel.Email).includes(personKey);
+  // a letter with QR codes carries the same link as the mail
+  return keysFor(doc.deliveries, DeliveryChannel.Email).includes(personKey)
+    || (doc.letterQrCodes === true && keysFor(doc.deliveries, DeliveryChannel.Post).includes(personKey));
 }
 
 /** The last day any of the events takes place (StoreDate); undefined without events. */

@@ -18,6 +18,7 @@ import { CallableRequest, HttpsError, onCall } from 'firebase-functions/v2/https
 import { logger } from 'firebase-functions/v2';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { PDFDocument } from 'pdf-lib';
+import QRCode from 'qrcode';
 import { TemplateCollection, TemplateVersionSubcollection, type NoticeAttachment, type TemplateAssetRef } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 import { isOrgRecipient, ORG_RECIPIENT_PREFIX, recipientParentKey } from '@okr/shared-util-core';
@@ -50,6 +51,52 @@ export interface LetterContent {
   subject: string;
   /** sanitised HTML */
   body: string;
+  /** the events block below the text (eventsBlockHtml); '' or absent = none */
+  eventsHtml?: string;
+}
+
+/** An event of the Versand as a letter shows it below the text. */
+export interface LetterEvent {
+  name: string;
+  /** e.g. '01.12.2026, 19:30' */
+  when: string;
+  location: string;
+}
+
+/** Above the QR codes: what the reader does with them. */
+export const LETTER_QR_INTRO = 'Scanne den QR-Code, um zu- oder abzusagen.';
+
+/**
+ * The events below the letter text, each led by a QR code of the recipient's answer link (`qrSvg`, one SVG for
+ * all: the link is per recipient, its page lists every event). Inline styles only, so it also fits into a
+ * tenant's letter template; the block and each row avoid a page break.
+ */
+export function eventsBlockHtml(events: LetterEvent[], qrSvg: string): string {
+  if (events.length === 0 || !qrSvg) return '';
+  // the generated SVG has only a viewBox: size it to its box
+  const svg = qrSvg.replace(/<svg\b/, '<svg width="100%" height="100%"');
+  const avoid = 'break-inside:avoid;page-break-inside:avoid;';
+  const rows = events.map((e) => {
+    const details = [`<strong>${escapeHtml(e.name)}</strong>`, escapeHtml(e.when), escapeHtml(e.location)].filter(Boolean).join('<br>');
+    return `<tr style="${avoid}">`
+      + `<td style="width:30mm;padding:2mm 4mm 2mm 0;vertical-align:top;"><div style="width:26mm;height:26mm;">${svg}</div></td>`
+      + `<td style="padding:2mm 0;vertical-align:top;font-size:10pt;line-height:1.35;">${details}</td></tr>`;
+  }).join('');
+  return `<div class="okr-letter-events" style="${avoid}margin-top:8mm;">`
+    + `<div style="font-size:9pt;margin-bottom:2mm;">${escapeHtml(LETTER_QR_INTRO)}</div>`
+    + `<table style="border-collapse:collapse;width:100%;">${rows}</table></div>`;
+}
+
+/** Puts the events block at the end of a letter page: before its last </body>, else at the very end. */
+export function withEventsBlock(html: string, block: string): string {
+  if (!block) return html;
+  const at = html.toLowerCase().lastIndexOf('</body>');
+  return at < 0 ? html + block : html.slice(0, at) + block + html.slice(at);
+}
+
+/** The QR code of one link as an SVG string, without a quiet zone (the block's padding gives it room). */
+export async function qrSvgOf(url: string): Promise<string> {
+  return QRCode.toString(url, { type: 'svg', margin: 0, errorCorrectionLevel: 'M' });
 }
 
 export function escapeHtml(text: string): string {
@@ -80,7 +127,9 @@ export function buildLetterHtml(c: LetterContent): string {
   const lines = (p: LetterParty) => [p.name, p.street, p.zipCity].filter(Boolean).map(escapeHtml).join('<br>');
   const returnLine = [c.sender.name, c.sender.street, c.sender.zipCity].filter(Boolean).map(escapeHtml).join(', ');
   return `<!doctype html><html><head><meta charset="utf-8"><style>
-    @page { size: A4; margin: 0; }
+    @page { size: A4; margin: 15mm 0 15mm 0; }
+    /* page 1 keeps its top at the paper edge: the window positions below are measured from it */
+    @page :first { margin: 0 0 15mm 0; }
     html, body { margin: 0; font-family: Helvetica, Arial, sans-serif; font-size: 11pt; color: #000; }
     .sender { position: absolute; left: 20mm; top: 15mm; font-size: 9pt; line-height: 1.35; }
     .window { position: absolute; left: 118mm; top: 52mm; width: 80mm; }
@@ -97,6 +146,7 @@ export function buildLetterHtml(c: LetterContent): string {
       <div class="date">${escapeHtml(c.placeAndDate)}</div>
       <div class="subject">${escapeHtml(c.subject)}</div>
       <div class="body">${c.body}</div>
+      ${c.eventsHtml ?? ''}
     </div>
   </body></html>`;
 }
@@ -282,6 +332,9 @@ export async function buildMailingLetters(args: {
   subject: string;
   body: string;
   attachments: NoticeAttachment[];
+  /** «QR-Code für Link anzeigen»: the events below each person's letter, with a QR code of `answerUrl(personKey)` */
+  answerEvents?: LetterEvent[];
+  answerUrl?: (personKey: string) => string;
 }): Promise<{ storagePath: string; letters: number; missing: number } | undefined> {
   const { tenantId, mailingKey, personKeys } = args;
   if (personKeys.length === 0) return undefined;
@@ -317,12 +370,16 @@ export async function buildMailingLetters(args: {
     const firstName = isOrg ? '' : String(p['firstName'] ?? '').trim();
     const lastName = isOrg ? '' : String(p['lastName'] ?? '').trim();
     const name = isOrg ? String(p['name'] ?? '').trim() : `${firstName} ${lastName}`.trim();
+    // an org cannot answer (an answer records a person's attendance): its letter has no events block
+    const eventsHtml = !isOrg && args.answerUrl && args.answerEvents?.length
+      ? eventsBlockHtml(args.answerEvents, await qrSvgOf(args.answerUrl(personKey)))
+      : '';
     const bytes = letterTemplate
-      ? await renderOne(letterTemplate(letterPayload({
+      ? await renderOne(withEventsBlock(letterTemplate(letterPayload({
         recipient: { name, firstName, lastName, ...address }, sender, date: letterDate(now), placeAndDate: date, subject: args.subject, body: args.body,
-      })), LETTER_TEMPLATE_ORIGINS)
+      })), eventsHtml), LETTER_TEMPLATE_ORIGINS)
       : await renderOne(buildLetterHtml({
-        sender, recipient: { name, street: address.street, zipCity: address.zipCity }, placeAndDate: date, subject: args.subject, body: args.body,
+        sender, recipient: { name, street: address.street, zipCity: address.zipCity }, placeAndDate: date, subject: args.subject, body: args.body, eventsHtml,
       }));
     const letter = await PDFDocument.load(bytes);
     for (const doc of [letter, ...appendix]) {

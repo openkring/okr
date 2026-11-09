@@ -156,7 +156,10 @@
       "unreachable": "Non raggiungibili:",
       "hint": "Le tue modifiche valgono solo per questo invio. Il profilo dei destinatari resta com’è.",
       "empty": "Con questa selezione nessuno riceve l’invio.",
-      "error": "Non è stato possibile caricare i modi di consegna. L’invio va a tutti con un indirizzo e-mail."
+      "error": "Non è stato possibile caricare i modi di consegna. L’invio va a tutti con un indirizzo e-mail.",
+      "email_only": "Invio solo via e-mail",
+      "dashboard": "Mostra nella dashboard",
+      "qr_codes": "Mostra il codice QR del link"
     },
     "info": {
       "title": "Come funziona un invio",

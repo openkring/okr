@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { answerPage, answerResultPage, brandColorOf, chatDigestEmail, tintOf, commentEmail, DEFAULT_BRAND_COLOR, escapeHtml, eventWhen, invitationAnswerEmail, invitationEmail, mailingAnswerPage, PAGE_CONTENT_SLOT, textColorOn } from './mail';
+import { answerPage, BANNER_TINT, answerResultPage, brandColorOf, chatDigestEmail, tintOf, commentEmail, DEFAULT_BRAND_COLOR, escapeHtml, eventWhen, invitationAnswerEmail, invitationEmail, mailingAnswerPage, PAGE_CONTENT_SLOT, textColorOn } from './mail';
 
 const EVIL = '<script>alert("x")</script> & co';
 const base = { appName: 'Seeclub', brandColor: '#009D53', logoUrl: 'https://img.x/logo.png?w=96&fm=png', eventName: EVIL, when: '01.10.2026, 11:00', location: EVIL };
@@ -51,7 +51,7 @@ describe('invitationEmail', () => {
     expect(mail.html.match(/<a /g)).toHaveLength(1);
   });
   it('opens with the tenant banner: brand colour, logo, app name', () => {
-    expect(mail.html).toContain('bgcolor="#009d53"');
+    expect(mail.html).toContain(`bgcolor="${tintOf('#009d53', BANNER_TINT)}"`);
     expect(mail.html).toContain('src="https://img.x/logo.png?w=96&amp;fm=png"');
     expect(mail.html.indexOf('Seeclub</span>')).toBeLessThan(mail.html.indexOf('lädt dich ein'));
   });
@@ -120,7 +120,7 @@ describe('answer pages', () => {
   });
   it('answer page starts with the tenant banner', () => {
     const html = answerPage({ ...page, answers: ['accept', 'decline'] });
-    expect(html).toContain('bgcolor="#009d53"');
+    expect(html).toContain(`bgcolor="${tintOf('#009d53', BANNER_TINT)}"`);
     expect(html.indexOf('<img')).toBeLessThan(html.indexOf('Nimmst du teil?'));
   });
   it('offers only the signed answer of a legacy link', () => {
@@ -135,7 +135,7 @@ describe('answer pages', () => {
   it('result page escapes title and message and carries the banner', () => {
     const html = answerResultPage({ appName: 'Seeclub', brandColor: '#009D53', title: EVIL, message: EVIL });
     expect(html).not.toContain('<script>alert');
-    expect(html).toContain('bgcolor="#009d53"');
+    expect(html).toContain(`bgcolor="${tintOf('#009d53', BANNER_TINT)}"`);
   });
 });
 

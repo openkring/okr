@@ -156,7 +156,10 @@
       "unreachable": "Nicht erreichbar:",
       "hint": "Deine Änderungen gelten nur für diesen Versand. Das Profil der Empfänger bleibt, wie es ist.",
       "empty": "Mit dieser Auswahl erhält niemand den Versand.",
-      "error": "Die Zustellwege konnten nicht geladen werden. Der Versand geht an alle mit E-Mail-Adresse."
+      "error": "Die Zustellwege konnten nicht geladen werden. Der Versand geht an alle mit E-Mail-Adresse.",
+      "email_only": "Versand nur via E-Mail",
+      "dashboard": "Anzeige im Dashboard",
+      "qr_codes": "QR-Code für Link anzeigen"
     },
     "info": {
       "title": "So funktioniert der Versand",

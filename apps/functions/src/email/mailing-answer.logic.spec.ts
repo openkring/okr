@@ -17,6 +17,12 @@ describe('mayAnswer', () => {
     expect(mayAnswer({ ...doc, caleventKeys: [] }, 'p1', '20261101')).toBe(false);
   });
   it('is false without validUntil', () => expect(mayAnswer({ ...doc, validUntil: undefined }, 'p1', '20261101')).toBe(false));
+  it('lets a Post recipient answer only when the letters carry QR codes', () => {
+    const post = { ...doc, deliveries: [...doc.deliveries, { personKey: 'p3', channels: ['post'] }] };
+    expect(mayAnswer(post, 'p3', '20261101')).toBe(false);
+    expect(mayAnswer({ ...post, letterQrCodes: true }, 'p3', '20261101')).toBe(true);
+    expect(mayAnswer({ ...post, letterQrCodes: true }, 'p2', '20261101')).toBe(false);
+  });
 });
 
 describe('lastEventDate', () => {

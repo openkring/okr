@@ -14,6 +14,28 @@ export const ACTIVE_MAILING_CHANNELS: DeliveryChannel[] = [DeliveryChannel.Email
  */
 export const GROUP_ADMIN_MAILING_CHANNELS: DeliveryChannel[] = [DeliveryChannel.Email, DeliveryChannel.Chat];
 
+/** «Versand nur via E-Mail»: only the E-Mail column can be ticked, Post and In-App are off. */
+export const EMAIL_ONLY_MAILING_CHANNELS: DeliveryChannel[] = [DeliveryChannel.Email];
+
+/**
+ * The ticks after «Versand nur via E-Mail» is switched: on, every Post and In-App tick goes; off, the ticks
+ * kept from before come back beside the E-Mail ticks as they are now.
+ */
+export function emailOnlyDeliveries(deliveries: VersandDeliveries, emailOnly: boolean, before: VersandDeliveries = {}): VersandDeliveries {
+  const out: VersandDeliveries = {};
+  for (const key of new Set([...Object.keys(deliveries), ...Object.keys(before)])) {
+    const email = (deliveries[key] ?? []).includes(DeliveryChannel.Email);
+    const others = emailOnly ? [] : (before[key] ?? []).filter((c) => c !== DeliveryChannel.Email);
+    out[key] = MAILING_CHANNELS.filter((c) => (c === DeliveryChannel.Email ? email : others.includes(c)));
+  }
+  return out;
+}
+
+/** Whether anybody is ticked under Post. */
+export function hasPostDelivery(deliveries: VersandDeliveries): boolean {
+  return Object.values(deliveries).some((d) => d.includes(DeliveryChannel.Post));
+}
+
 /** What `sendMailing` gets per recipient: the ticked delivery types, persons without a tick left out. */
 export function versandDeliveries(rows: VersandRow[], deliveries: VersandDeliveries): { personKey: string; channels: DeliveryChannel[] }[] {
   return rows

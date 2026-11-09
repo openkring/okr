@@ -69,6 +69,10 @@ export interface SendMailingRequest {
   deliveries: { personKey: string; channels: string[] }[];
   /** events whose personal answer link the server mails to every E-Mail recipient; never with groupKey */
   caleventKeys?: string[];
+  /** «Versand nur via E-Mail» with «Anzeige im Dashboard»: the E-Mail recipients also find it on their dashboard */
+  dashboard?: boolean;
+  /** the letters end with the events, each with a QR code of the recipient's answer link */
+  letterQrCodes?: boolean;
 }
 
 /** The state of a Versand's letters, as `getMailingLetters` reports it. */

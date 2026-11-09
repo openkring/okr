@@ -5,7 +5,7 @@
 // copy. Inline styles only — mail clients drop <style> blocks (the Versand answer page, a web
 // page, is the one exception: its buttons need a hover state).
 //
-// Every mail and every answer page opens with the same tenant banner (brand colour + logo), so
+// Every mail and every answer page opens with the same tenant banner (a light tint of the brand colour + logo), so
 // the landing page visibly belongs to the mail that led there. The banner is a table with
 // `bgcolor` because Outlook renders through Word, which ignores a <div> background.
 
@@ -98,8 +98,11 @@ function eventBlock(p: EventSummary): string {
   return `<p style="margin:16px 0;padding:12px 16px;background:#f6f8fa;border-radius:6px;">${rows}</p>`;
 }
 
+/** The banner's share of the brand colour: a light tint, so a logo in the brand colour stays visible on it. */
+export const BANNER_TINT = 0.2;
+
 function banner(brand: Brand): string {
-  const color = brandColorOf(brand.brandColor);
+  const color = tintOf(brandColorOf(brand.brandColor), BANNER_TINT);
   const logo = brand.logoUrl
     ? `<img src="${escapeHtml(brand.logoUrl)}" width="48" height="48" alt="" style="display:inline-block;vertical-align:middle;width:48px;height:48px;border:0;border-radius:8px;margin-right:12px;padding:4px;background:#ffffff;">`
     : '';

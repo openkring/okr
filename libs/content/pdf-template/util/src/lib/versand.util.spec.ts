@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CalEventModel, DeliveryChannel } from '@okr/shared-models';
 import {
-  buildVersandRows, deliveryTotals, GROUP_ADMIN_MAILING_CHANNELS, isDeliveryEditable, nonPdfAttachmentNames, toggleDelivery, unreachableCount,
+  buildVersandRows, deliveryTotals, emailOnlyDeliveries, hasPostDelivery, GROUP_ADMIN_MAILING_CHANNELS, isDeliveryEditable, nonPdfAttachmentNames, toggleDelivery, unreachableCount,
   versandBcc, versandDeliveries, groupReachWarnings, VersandEvent, versandEventsOf, versandEventWhen,
 } from './versand.util';
 
@@ -153,5 +153,26 @@ describe('nonPdfAttachmentNames', () => {
       { filename: 'b.PDF' },
       { filename: 'c.jpg', contentType: 'image/jpeg' },
     ])).toEqual(['c.jpg']);
+  });
+});
+
+describe('emailOnlyDeliveries', () => {
+  const E = DeliveryChannel.Email, C = DeliveryChannel.Chat, P = DeliveryChannel.Post;
+
+  it('switched on, keeps only the E-Mail ticks', () => {
+    expect(emailOnlyDeliveries({ a: [P, E, C], b: [C] }, true)).toEqual({ a: [E], b: [] });
+  });
+
+  it('switched off, brings back the earlier Post and In-App ticks beside the current E-Mail ticks', () => {
+    const before = { a: [P, E, C], b: [C] };
+    // meanwhile a lost E-Mail, b gained it
+    expect(emailOnlyDeliveries({ a: [], b: [E] }, false, before)).toEqual({ a: [C, P], b: [C, E] });
+  });
+});
+
+describe('hasPostDelivery', () => {
+  it('is true when anybody is ticked under Post', () => {
+    expect(hasPostDelivery({ a: [DeliveryChannel.Email], b: [DeliveryChannel.Post] })).toBe(true);
+    expect(hasPostDelivery({ a: [DeliveryChannel.Email] })).toBe(false);
   });
 });

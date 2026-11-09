@@ -156,7 +156,10 @@
       "unreachable": "Not reachable:",
       "hint": "Your changes apply to this mailing only. The recipients’ profiles stay as they are.",
       "empty": "With this selection nobody receives the mailing.",
-      "error": "The delivery choices could not be loaded. The mailing goes to everyone with an email address."
+      "error": "The delivery choices could not be loaded. The mailing goes to everyone with an email address.",
+      "email_only": "Send by email only",
+      "dashboard": "Show on the dashboard",
+      "qr_codes": "Show QR code for the link"
     },
     "info": {
       "title": "How a mailing works",
