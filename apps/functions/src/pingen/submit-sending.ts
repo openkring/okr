@@ -9,7 +9,7 @@ import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 import { privateBucket } from '../_storage/private-bucket';
 import { createFirestoreDeps } from '../workflow/firestore-deps';
 import { getCreditPort } from './credit-port';
-import { makePingenClient, pingenClientId, pingenClientSecret, pingenEnv, pingenOrganisationId, type PingenClient } from './pingen-client';
+import { makePingenClient, PINGEN_ENV, pingenClientId, pingenClientSecret, pingenOrganisationId, type PingenClient } from './pingen-client';
 import { submitSending, type SendingMailing, type SendingRow, type SubmitDeps } from './submit-sending.logic';
 
 export { failSending } from './submit-sending.logic';
@@ -21,7 +21,7 @@ let client: PingenClient | undefined;
 function pingenClient(): PingenClient {
   client ??= makePingenClient({
     fetch, now: () => Date.now(), clientId: pingenClientId.value(), clientSecret: pingenClientSecret.value(),
-    organisationId: pingenOrganisationId.value(), env: pingenEnv.value() === 'production' ? 'production' : 'staging',
+    organisationId: pingenOrganisationId.value(), env: PINGEN_ENV,
   });
   return client;
 }
@@ -30,7 +30,7 @@ function pingenClient(): PingenClient {
 export function submitDeps(): SubmitDeps {
   return {
     client: pingenClient(),
-    env: pingenEnv.value() === 'production' ? 'production' : 'staging',
+    env: PINGEN_ENV,
     ...sendingDeps(),
   };
 }
@@ -103,7 +103,7 @@ export function sendingDeps(): Omit<SubmitDeps, 'client' | 'env'> {
 export const onSendingCreated = onDocumentCreated(
   {
     document: `${SendingCollection}/{id}`, region: REGION, retry: true, maxInstances: 4, concurrency: 1,
-    secrets: [pingenClientId, pingenClientSecret],
+    secrets: [pingenClientId, pingenClientSecret, pingenOrganisationId],
   },
   async (event) => {
     await submitSending(submitDeps(), event.params['id']);

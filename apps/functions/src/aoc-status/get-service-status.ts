@@ -12,7 +12,7 @@ import { withSelftest } from './selftest-status';
 import { WEBHOOK_SELFTEST_DOC, WebhookSelftestCollection, type WebhookSelftestResult } from '../_webhooks/selftest';
 import { getFirestore } from 'firebase-admin/firestore';
 import { WebhookEventCollection } from '../_webhooks/types';
-import { makePingenClient, pingenClientId, pingenClientSecret, pingenEnv, pingenOrganisationId } from '../pingen/pingen-client';
+import { makePingenClient, PINGEN_ENV, pingenClientId, pingenClientSecret, pingenOrganisationId } from '../pingen/pingen-client';
 import { pingenWebhookSecret } from '../pingen/pingen-webhook';
 import { newestRealWebhookMs, withPingenForOperator, type PingenOrganisationRead } from './pingen-status';
 
@@ -77,7 +77,7 @@ export async function loadServiceStatus(deps: StatusDeps, nowMs: number): Promis
  * europe-west6's CPU quota is full and the default of 20 is what eats it.
  */
 export const getServiceStatus = onCall(
-  { region: 'europe-west6', enforceAppCheck: true, maxInstances: 2, secrets: [pingenClientId, pingenClientSecret, pingenWebhookSecret] },
+  { region: 'europe-west6', enforceAppCheck: true, maxInstances: 2, secrets: [pingenClientId, pingenClientSecret, pingenOrganisationId, pingenWebhookSecret] },
   async (request): Promise<ServiceStatusResult> => {
     await requireAdmin(request, CF_NAME);
     // Pingen is bkaiser's own prepaid account: only the platform operator sees (and triggers a read of) it
@@ -100,7 +100,7 @@ async function readPingenOrganisation(nowMs: number): Promise<PingenOrganisation
   try {
     const client = makePingenClient({
       fetch, now: () => nowMs, clientId: pingenClientId.value(), clientSecret: pingenClientSecret.value(),
-      organisationId: pingenOrganisationId.value(), env: pingenEnv.value() === 'production' ? 'production' : 'staging',
+      organisationId: pingenOrganisationId.value(), env: PINGEN_ENV,
     });
     const read = await client.readOrganisation();
     pingenMemo = { at: nowMs, read };

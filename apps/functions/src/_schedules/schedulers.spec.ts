@@ -6,6 +6,7 @@ import {
 } from './schedulers';
 import { matrixAdminToken } from '../matrix-simple/shared';
 import { SRV_SECRETS } from '../_gateway/adapters/srv';
+import { pingenClientId, pingenClientSecret, pingenOrganisationId } from '../pingen/pingen-client';
 
 const names = (jobs: { name: string }[]) => jobs.map((j) => j.name);
 
@@ -36,7 +37,7 @@ describe('time-slot schedulers', () => {
   it('scheduler options match the slot table', () => {
     const { secrets, ...nightly } = NIGHTLY_OPTIONS;
     expect(nightly).toEqual({ schedule: '15 3 * * *', timeZone: 'Europe/Zurich', region: 'europe-west6', timeoutSeconds: 540, memory: '512MiB' });
-    expect(secrets).toHaveLength(3);
+    expect(secrets).toEqual([matrixAdminToken, pingenClientId, pingenClientSecret, pingenOrganisationId]);
     expect(MORNING_OPTIONS).toEqual({ schedule: '0 7 * * *', timeZone: 'Europe/Zurich', region: 'europe-west6', timeoutSeconds: 540, memory: '256MiB', secrets: [matrixAdminToken, ...SRV_SECRETS] });
     expect(EVENING_OPTIONS).toEqual({ schedule: '50 23 * * *', timeZone: 'Europe/Zurich', region: 'europe-west6', timeoutSeconds: 300 });
     expect(HALF_HOURLY_OPTIONS).toEqual({ schedule: '*/30 * * * *', timeZone: 'Europe/Zurich', region: 'europe-west6', timeoutSeconds: 540, memory: '256MiB' });

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { PingenError, makePingenClient } from './pingen-client';
+import { PINGEN_ENV, PingenError, makePingenClient, pingenOrganisationId } from './pingen-client';
 
 interface Call {
   url: string;
@@ -209,5 +209,13 @@ describe('pingen client', () => {
     await client.createLetter(input);
     const put = calls.find(c => c.init.method === 'PUT')!;
     expect(put.init.headers).toBeUndefined();
+  });
+});
+
+describe('deploy parameters', () => {
+  it('the organisation id is a secret (no un-defaulted param blocks a scripted deploy) and the env is staging in code', () => {
+    expect(pingenOrganisationId.constructor.name).toBe('SecretParam');
+    expect(pingenOrganisationId.name).toBe('PINGEN_ORGANISATION_ID');
+    expect(PINGEN_ENV).toBe('staging');
   });
 });

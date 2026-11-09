@@ -10,14 +10,22 @@
 //   - Resource API: https://api.pingen.com (production) | https://api-staging.pingen.com (staging).
 //   - Staging is a fully separate environment with its own account and client ids.
 //   - Rate limit 300 requests/minute; 429 carries Retry-After.
-import { defineSecret, defineString } from 'firebase-functions/params';
+import { defineSecret } from 'firebase-functions/params';
 import type { PostOptions } from '@okr/shared-models';
 
-// Set with: firebase functions:secrets:set PINGEN_CLIENT_ID / PINGEN_CLIENT_SECRET
+// Set with: firebase functions:secrets:set PINGEN_CLIENT_ID / PINGEN_CLIENT_SECRET / PINGEN_ORGANISATION_ID
+// The organisation id is a secret, not a defineString: a string param without a default makes `firebase deploy`
+// prompt for it, which blocks every scripted deploy (see auth/login-with-login-id.ts and srv/shared.ts).
 export const pingenClientId = defineSecret('PINGEN_CLIENT_ID');
 export const pingenClientSecret = defineSecret('PINGEN_CLIENT_SECRET');
-export const pingenOrganisationId = defineString('PINGEN_ORGANISATION_ID');
-export const pingenEnv = defineString('PINGEN_ENV', { default: 'staging' });
+export const pingenOrganisationId = defineSecret('PINGEN_ORGANISATION_ID');
+
+/**
+ * The Pingen environment every function talks to. A code constant, not a deploy parameter: production is switched
+ * on by a deliberate commit (this line -> 'production', with the production secrets set) after the staging run of
+ * spec 1.150, never by a value someone types at deploy time.
+ */
+export const PINGEN_ENV: 'staging' | 'production' = 'staging';
 
 const HOSTS = {
   staging: { api: 'https://api-staging.pingen.com', identity: 'https://identity-staging.pingen.com' },
