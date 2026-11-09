@@ -5,6 +5,16 @@ import type { SavedPaymentMethod } from '@okr/shared-models';
 export const stripeSecretKey = defineSecret('STRIPE_SECRET_KEY');
 export const stripeWebhookSecret = defineSecret('STRIPE_WEBHOOK_SECRET');
 
+/** What we read back of a PaymentIntent. `amountReceived` in Rappen, `created` in Unix seconds. */
+export interface PaymentIntentInfo {
+  id: string;
+  status: string;
+  amountReceived: number;
+  chargeId: string;
+  created: number;
+  currency: string;
+}
+
 /**
  * The only door to Stripe. Stripe is a pure payment processor behind our own invoice: no Stripe
  * Invoices, Subscriptions or Prices. Amounts are integer Rappen (= Stripe's CHF minor unit).
@@ -36,6 +46,23 @@ export interface StripePort {
   detachPaymentMethod(paymentMethodId: string): Promise<void>;
   /** Expires an open Checkout session; an already expired or completed one is not an error. */
   expireSession(sessionId: string): Promise<void>;
+  retrievePaymentIntent(id: string): Promise<PaymentIntentInfo>;
+  /**
+   * The PaymentIntent created for one of our invoices (search on metadata.invoiceKey), or null. Several: a
+   * succeeded one first, then one still in flight, then the newest. Stripe search lags up to about a minute.
+   */
+  findPaymentIntentByInvoiceKey(invoiceKey: string): Promise<PaymentIntentInfo | null>;
+}
+
+/** Statuses of a PaymentIntent whose money may still arrive: never charge again while one exists. */
+export const PI_IN_FLIGHT = ['processing', 'requires_action', 'requires_confirmation', 'requires_capture'];
+
+/** The PaymentIntent that decides about a re-charge: succeeded first, then in flight, then the newest. */
+export function pickPaymentIntent(intents: readonly PaymentIntentInfo[]): PaymentIntentInfo | null {
+  if (intents.length === 0) return null;
+  return intents.find(pi => pi.status === 'succeeded')
+    ?? intents.find(pi => PI_IN_FLIGHT.includes(pi.status))
+    ?? [...intents].sort((a, b) => b.created - a.created)[0];
 }
 
 const CURRENCY = 'chf';
@@ -152,6 +179,16 @@ export function stripePort(): StripePort {
       await stripe.paymentMethods.detach(paymentMethodId);
     },
 
+    async retrievePaymentIntent(id) {
+      return intentInfo(await stripe.paymentIntents.retrieve(id));
+    },
+
+    async findPaymentIntentByInvoiceKey(invoiceKey) {
+      const quoted = invoiceKey.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      const result = await stripe.paymentIntents.search({ query: `metadata['invoiceKey']:'${quoted}'`, limit: 20 });
+      return pickPaymentIntent(result.data.map(intentInfo));
+    },
+
     async expireSession(sessionId) {
       try {
         await stripe.checkout.sessions.expire(sessionId);
@@ -167,6 +204,10 @@ export function stripePort(): StripePort {
 function urlOf(session: Stripe.Checkout.Session): string {
   if (!session.url) throw new Error(`Stripe checkout session ${session.id} has no url`);
   return session.url;
+}
+
+function intentInfo(pi: Stripe.PaymentIntent): PaymentIntentInfo {
+  return { id: pi.id, status: pi.status, amountReceived: pi.amount_received, chargeId: chargeIdOf(pi), created: pi.created, currency: pi.currency };
 }
 
 function chargeIdOf(pi: Stripe.PaymentIntent): string {

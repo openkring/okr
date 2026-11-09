@@ -257,7 +257,7 @@ describe('stripeHandler: payment-failed and expired', () => {
     const handler = makeStripeHandler({ db: () => fakeDb(store), port: () => fakePort(), now: () => NOW, log: () => undefined, notifyTopUpFailed: notify });
     await handler(row({ id: 'evt_2', type: 'payment_intent.payment_failed', data: { object: { id: 'pi_1', metadata: { ...meta, purpose: 'topup' } } } }), 'row2');
     expect(store['subscriptions']['scs']['autoTopUp']).toEqual({ enabled: false, threshold: 1000, amount: 10000 });
-    expect(store['credit-accounts/scs/auto-top-up']['request']).toEqual({ requestedAt: '', pendingInvoiceKey: '' });
+    expect(store['credit-accounts/scs/auto-top-up']['request']).toEqual({ requestedAt: '', pendingInvoiceKey: '', retryCount: 0 });
     expect(notify).toHaveBeenCalledWith('scs', { attemptKey: 'att1', invoiceKey: 'topup-scs-1', amount: 10000 });
   });
 

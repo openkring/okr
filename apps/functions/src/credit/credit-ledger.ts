@@ -101,7 +101,11 @@ export async function applyCreditEntry(
       const { settings, autopay, staleBefore } = options.autoTopUp;
       const current = (await tx.get(requestRef)).data();
       if (autoTopUpDue(decision.balanceAfter, settings, autopay, isAutoTopUpPending(current, staleBefore))) {
-        request = { requestedAt: options.autoTopUp.requestedAt, pendingInvoiceKey: String(current?.['pendingInvoiceKey'] ?? '') };
+        request = {
+          requestedAt: options.autoTopUp.requestedAt,
+          pendingInvoiceKey: String(current?.['pendingInvoiceKey'] ?? ''),
+          retryCount: Number(current?.['retryCount'] ?? 0),
+        };
       }
     }
 

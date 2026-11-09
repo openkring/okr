@@ -11,11 +11,15 @@ import type { AutoTopUp, AvatarInfo, SavedPaymentMethod } from '@okr/shared-mode
 import { createAndIssueInvoice } from '../invoice/invoice-issue.core';
 import { loadOwnedAccountingConfig, refuse } from '../invoice/invoice-context';
 import { platformBilling } from '../collection/platform';
+import { PI_IN_FLIGHT } from '../collection/stripe-port';
 import type { StripePort } from '../collection/stripe-port';
-import { toStoreDateTime } from '../srv/zurich-time';
+import { settleSucceededPayment } from '../collection/stripe-webhook';
+import type { StripeHandlerPort } from '../collection/stripe-webhook';
+import { toStoreDate, toStoreDateTime } from '../srv/zurich-time';
+import { autoTopUpRequestRef, clearAutoTopUp } from './auto-topup-request';
 import { applyCreditEntry } from './credit-ledger';
 import {
-  AUTO_TOPUP_REQUEST_ID, autoTopUpCollectionPath, autoTopUpInvoiceKey, pendingInvoiceRerunnable, topUpAmountRefusal,
+  autoTopUpInvoiceKey, pendingInvoiceRerunnable, topUpAmountRefusal,
 } from './auto-topup.logic';
 
 const TOPUP_DUE_DAYS = 10;
@@ -51,52 +55,45 @@ export async function issueTopUpInvoice(db: Firestore, input: { tenantId: string
   return { invoiceKey, invoiceNo, operatorTenantId, accountingTenantId };
 }
 
-const requestRef = (db: Firestore, tenantId: string) => db.collection(autoTopUpCollectionPath(tenantId)).doc(AUTO_TOPUP_REQUEST_ID);
-
-/** Clears the auto top-up request; with `invoiceKey`, only while that invoice is the pending one. */
-export async function clearAutoTopUp(db: Firestore, tenantId: string, invoiceKey?: string): Promise<void> {
-  const ref = requestRef(db, tenantId);
-  await db.runTransaction(async tx => {
-    const request = (await tx.get(ref)).data();
-    if (!request) return;
-    if (invoiceKey !== undefined && String(request['pendingInvoiceKey'] ?? '') !== invoiceKey) return;
-    tx.set(ref, { requestedAt: '', pendingInvoiceKey: '' });
-  });
-}
-
 /** Statuses of an off-session PaymentIntent after which the money is (or will be) on its way. */
 const CHARGE_ON_ITS_WAY = ['succeeded', 'processing'];
 const SETTLED_ATTEMPT_STATES = ['succeeded', 'overpaid'];
 
 export type AutoTopUpOutcome = 'charged' | 'declined' | 'skipped';
 
+/** What the auto top-up needs of Stripe: the charge, reading a PaymentIntent back, and the webhook's settle path. */
+export type AutoTopUpPort = Pick<StripePort, 'chargeOffSession' | 'retrievePaymentIntent' | 'findPaymentIntentByInvoiceKey'> & StripeHandlerPort;
+
+type AutoTopUpRequest = { requestedAt: string; pendingInvoiceKey: string; retryCount?: number };
+
 /**
  * Runs one auto top-up request (`requestedAt` and the request's `pendingInvoiceKey`, from
  * credit-accounts/{tenantId}/auto-top-up/request). The credit itself is written by the topup-paid trigger once the
- * webhook has recorded the payment.
+ * payment is recorded on the invoice.
  *
- * - A request over a stale pending invoice (older than 24 h) charges THAT invoice again, with the same okey and the
- *   same Stripe idempotency key; a pending invoice that is paid or cancelled meanwhile just clears the request.
- * - Otherwise a new invoice `topup-<tenantId>-<requestedAt>` is issued, marked pending, and charged off-session.
- * - Anything failing BEFORE the charge is called clears the request (the next deduction asks again). A charge call
- *   that throws (network) keeps the pending state: the webhook or the 24 h staleness resolves it.
- * - A declined charge clears the request; the webhook (payment_intent.payment_failed) switches auto top-up off and
- *   tells the admin.
+ * - A new request issues `topup-<tenantId>-<requestedAt>`, marks it pending and charges it (idempotency key = invoice key).
+ * - A request over a stale pending invoice (older than 24 h) re-runs THAT invoice (same okey). Stripe's idempotency
+ *   window is 24 h too, so before any re-charge the earlier PaymentIntent is read back (by the attempt's id, else by
+ *   a search on metadata.invoiceKey — the charge call may have thrown after Stripe created it):
+ *   - succeeded → recorded through the webhook's settle path (payment, fee, attempt), no charge;
+ *   - still in flight (processing, requires_action, …) → no charge, the request stays pending;
+ *   - requires_payment_method / canceled / none → charged again with key `<invoiceKey>-r<n>` (n counted on the request).
+ *   A pending invoice paid or cancelled meanwhile just clears the request.
+ * - Anything failing BEFORE the charge call clears the request; a charge call that throws keeps it pending.
+ * - A declined charge clears the request; the webhook switches auto top-up off and tells the admin.
  */
 export async function runAutoTopUp(
-  db: Firestore, port: Pick<StripePort, 'chargeOffSession'>, tenantId: string, request: { requestedAt: string; pendingInvoiceKey: string }, log: Log,
+  db: Firestore, port: AutoTopUpPort, tenantId: string, request: AutoTopUpRequest, log: Log,
 ): Promise<AutoTopUpOutcome> {
-  let charge: Parameters<StripePort['chargeOffSession']>[0];
-  let attemptKey: string;
-  let invoiceKey: string;
+  let prepared: Awaited<ReturnType<typeof prepareAutoTopUp>>;
   try {
-    const prepared = await prepareAutoTopUp(db, tenantId, request, log);
-    if (prepared === 'skipped') return 'skipped';
-    ({ charge, attemptKey, invoiceKey } = prepared);
+    prepared = await prepareAutoTopUp(db, port, tenantId, request, log);
   } catch (err) {
     await clearAutoTopUp(db, tenantId);
     throw err;
   }
+  if (prepared === 'skipped') return 'skipped';
+  const { charge, attemptKey, invoiceKey } = prepared;
 
   // From here on the charge may have reached Stripe: never clear on a thrown error.
   const pi = await port.chargeOffSession(charge);
@@ -104,7 +101,7 @@ export async function runAutoTopUp(
     stripePaymentIntentId: pi.id, stripeChargeId: pi.chargeId, updatedAt: toStoreDateTime(new Date()),
   });
   if (CHARGE_ON_ITS_WAY.includes(pi.status)) {
-    log('info', 'autoTopUp: charged', { tenantId, invoiceKey, amount: charge.amount, status: pi.status });
+    log('info', 'autoTopUp: charged', { tenantId, invoiceKey, amount: charge.amount, status: pi.status, idempotencyKey: charge.idempotencyKey });
     return 'charged';
   }
   await clearAutoTopUp(db, tenantId, invoiceKey);
@@ -112,9 +109,9 @@ export async function runAutoTopUp(
   return 'declined';
 }
 
-/** Everything before the charge: settings, invoice (new or the stale pending one), pending mark, attempt. */
+/** Everything before the charge: settings, invoice (new or the stale pending one), the earlier charge, pending mark, attempt. */
 async function prepareAutoTopUp(
-  db: Firestore, tenantId: string, request: { requestedAt: string; pendingInvoiceKey: string }, log: Log,
+  db: Firestore, port: AutoTopUpPort, tenantId: string, request: AutoTopUpRequest, log: Log,
 ): Promise<'skipped' | { charge: Parameters<StripePort['chargeOffSession']>[0]; attemptKey: string; invoiceKey: string }> {
   const sub = (await db.collection(SubscriptionCollection).doc(tenantId).get()).data() ?? {};
   const settings = (sub['autoTopUp'] ?? {}) as Partial<AutoTopUp>;
@@ -127,8 +124,9 @@ async function prepareAutoTopUp(
     return 'skipped';
   }
 
+  const rerun = request.pendingInvoiceKey !== '';
   let okey = autoTopUpInvoiceKey(tenantId, request.requestedAt);
-  if (request.pendingInvoiceKey) {
+  if (rerun) {
     const stale = (await db.collection('invoices').doc(request.pendingInvoiceKey).get()).data();
     if (!stale || !pendingInvoiceRerunnable(stale['state'])) {
       log('info', 'autoTopUp: stale pending top-up is settled, request cleared', { tenantId, invoiceKey: request.pendingInvoiceKey, state: stale?.['state'] });
@@ -142,22 +140,50 @@ async function prepareAutoTopUp(
   }
   const { invoiceKey, invoiceNo, operatorTenantId, accountingTenantId } = await issueTopUpInvoice(db, { tenantId, amount, okey, actor: 'system' });
 
-  // Pending before the charge: a fast webhook may credit (and clear) the top-up before chargeOffSession returns.
-  await requestRef(db, tenantId).set({ requestedAt: request.requestedAt, pendingInvoiceKey: invoiceKey });
-
   const attemptRef = db.collection(PaymentAttemptCollection).doc(`auto-${invoiceKey}`);
-  const now = toStoreDateTime(new Date());
   const existing = (await attemptRef.get()).data();
+  if (existing && SETTLED_ATTEMPT_STATES.includes(String(existing['state']))) {
+    // paid by an earlier run whose webhook already posted it; the invoice trigger credits and clears
+    log('info', 'autoTopUp: the pending top-up is already paid', { tenantId, invoiceKey });
+    return 'skipped';
+  }
+
+  let retryCount = Number(request.retryCount ?? 0);
+  let idempotencyKey = invoiceKey;
+  if (rerun && existing) {
+    const earlierId = String(existing['stripePaymentIntentId'] ?? '');
+    const earlier = earlierId ? await port.retrievePaymentIntent(earlierId) : await port.findPaymentIntentByInvoiceKey(invoiceKey);
+    if (earlier?.status === 'succeeded') {
+      // the money arrived but its webhook did not: record it the way the webhook would; onTopUpPaid credits and clears
+      const date = toStoreDate(new Date(earlier.created * 1000));
+      await settleSucceededPayment(db, { db: () => db, port: () => port, now: () => new Date(), log }, {
+        kind: 'payment-succeeded', attemptKey: attemptRef.id, paymentIntentId: earlier.id, chargeId: earlier.chargeId,
+        amount: earlier.amountReceived, date, currency: earlier.currency, paymentMethodId: '', customerId: '',
+      });
+      log('warn', 'autoTopUp: earlier charge had succeeded, recorded instead of charging again', { tenantId, invoiceKey, paymentIntentId: earlier.id });
+      return 'skipped';
+    }
+    if (earlier && PI_IN_FLIGHT.includes(earlier.status)) {
+      log('warn', 'autoTopUp: earlier charge still in flight, not charging again', { tenantId, invoiceKey, paymentIntentId: earlier.id, status: earlier.status });
+      return 'skipped';
+    }
+    retryCount += 1;
+    idempotencyKey = `${invoiceKey}-r${retryCount}`;
+  }
+
+  // Pending before the charge: a fast webhook may credit (and clear) the top-up before chargeOffSession returns.
+  await autoTopUpRequestRef(db, tenantId).set({ requestedAt: request.requestedAt, pendingInvoiceKey: invoiceKey, retryCount });
+
+  const now = toStoreDateTime(new Date());
   if (!existing) {
     const { okey: _okey, ...attempt } = new PaymentAttemptModel(operatorTenantId);
     await attemptRef.set({
       ...attempt, payerTenantId: tenantId, accountingTenantId, purpose: 'topup', invoiceKey, amount, offSession: true,
       createdBy: 'system', state: 'open', createdAt: now, updatedAt: now,
     });
-  } else if (SETTLED_ATTEMPT_STATES.includes(String(existing['state']))) {
-    // paid by an earlier run whose webhook already posted it; the invoice trigger credits and clears
-    log('info', 'autoTopUp: the pending top-up is already paid', { tenantId, invoiceKey });
-    return 'skipped';
+  } else {
+    // a re-charge: the attempt follows the new PaymentIntent
+    await attemptRef.update({ state: 'open', error: '', stripePaymentIntentId: '', stripeChargeId: '', updatedAt: now });
   }
 
   return {
@@ -167,7 +193,7 @@ async function prepareAutoTopUp(
       customerId, paymentMethodId: method.stripePaymentMethodId, amount,
       description: `Guthaben-Aufladung, Rechnung ${invoiceNo}`,
       metadata: { attemptKey: attemptRef.id, tenantId, accountingTenantId, purpose: 'topup', invoiceKey },
-      idempotencyKey: invoiceKey,
+      idempotencyKey,
     },
   };
 }

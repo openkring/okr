@@ -136,6 +136,8 @@ export interface AutoTopUpRequest {
   requestedAt: string;
   /** The top-up invoice being charged; '' = none. Older than 24 h (by requestedAt): stale, re-run with this key. */
   pendingInvoiceKey: string;
+  /** Re-charges of the pending invoice after a declined/canceled charge (idempotency key `<invoiceKey>-r<n>`); 0 = none. */
+  retryCount: number;
 }
 
 /** platform-config/billing: which tenant and books bill the other tenants. */

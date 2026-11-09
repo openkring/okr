@@ -27,7 +27,7 @@ export const onAutoTopUpRequested = onDocumentWritten(
     const tenantId = event.params['tenantId'] as string;
     try {
       await runAutoTopUp(getFirestore(), stripePort(), tenantId, {
-        requestedAt, pendingInvoiceKey: String(after?.['pendingInvoiceKey'] ?? ''),
+        requestedAt, pendingInvoiceKey: String(after?.['pendingInvoiceKey'] ?? ''), retryCount: Number(after?.['retryCount'] ?? 0),
       }, (level, message, data) => logger[level](message, data));
     } catch (err) {
       logger.error(`onAutoTopUpRequested: auto top-up for ${tenantId} failed`, { requestedAt, error: err instanceof Error ? err.message : String(err) });

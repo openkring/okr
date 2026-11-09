@@ -5,7 +5,11 @@ vi.mock('../invoice/invoice-issue.core', () => ({
   createAndIssueInvoice: vi.fn(async (...args: unknown[]) => ({ invoiceKey: (args[1] as { okey?: string } | undefined)?.okey ?? '', invoiceNo: 202600042 })),
 }));
 
+vi.mock('../collection/stripe-webhook', () => ({ settleSucceededPayment: vi.fn(async () => ({ state: 'handled' })) }));
+
 import { createAndIssueInvoice } from '../invoice/invoice-issue.core';
+import { settleSucceededPayment } from '../collection/stripe-webhook';
+import type { PaymentIntentInfo } from '../collection/stripe-port';
 import { creditPaidTopUp, issueTopUpInvoice, runAutoTopUp } from './topup.core';
 import { fakeDb, type Store } from './testing/credit-fake-db';
 
@@ -24,9 +28,18 @@ const seed = (sub: Record<string, unknown> = {}): Store => ({
     paymentMethod: { stripePaymentMethodId: 'pm_1' }, ...sub,
   },
 });
-const port = (status: string) => ({ chargeOffSession: vi.fn(async () => ({ id: 'pi_1', status, chargeId: 'ch_1' })) });
+const intent = (status: string, id = 'pi_old'): PaymentIntentInfo => ({ id, status, amountReceived: status === 'succeeded' ? 7000 : 0, chargeId: 'ch_old', created: 1762650000, currency: 'chf' });
+const port = (status: string, earlier: { retrieved?: PaymentIntentInfo; found?: PaymentIntentInfo | null } = {}) => ({
+  chargeOffSession: vi.fn(async () => ({ id: 'pi_1', status, chargeId: 'ch_1' })),
+  retrievePaymentIntent: vi.fn(async (id: string) => earlier.retrieved ?? intent('canceled', id)),
+  findPaymentIntentByInvoiceKey: vi.fn(async () => earlier.found ?? null),
+  feeOfCharge: vi.fn(async () => 0),
+  paymentMethodDisplay: vi.fn(),
+  setupIntentPaymentMethod: vi.fn(),
+  detachPaymentMethod: vi.fn(),
+});
 
-beforeEach(() => vi.mocked(createAndIssueInvoice).mockClear());
+beforeEach(() => { vi.mocked(createAndIssueInvoice).mockClear(); vi.mocked(settleSucceededPayment).mockClear(); });
 
 describe('issueTopUpInvoice', () => {
   it('issues in the operator books to orgs/{tenant} on the prepayment account, due in 10 days', async () => {
@@ -59,7 +72,7 @@ describe('runAutoTopUp', () => {
     expect(store[`payment-attempts/auto-${key}`]).toMatchObject({
       tenants: ['kring'], payerTenantId: 'scs', purpose: 'topup', offSession: true, amount: 10000, state: 'open', stripePaymentIntentId: 'pi_1',
     });
-    expect(store[REQUEST]).toEqual({ requestedAt: '20261109100000', pendingInvoiceKey: key });
+    expect(store[REQUEST]).toEqual({ requestedAt: '20261109100000', pendingInvoiceKey: key, retryCount: 0 });
   });
 
   it('a stale pending invoice that is still open is charged again with the same okey and idempotency key', async () => {
@@ -71,8 +84,68 @@ describe('runAutoTopUp', () => {
     const p = port('succeeded');
     await expect(runAutoTopUp(fakeDb(store), p, 'scs', store[REQUEST] as typeof fresh, log)).resolves.toBe('charged');
     expect(createAndIssueInvoice).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ okey: key, positions: [expect.objectContaining({ amount: 7000 })] }));
-    expect(p.chargeOffSession).toHaveBeenCalledWith(expect.objectContaining({ idempotencyKey: key, amount: 7000 }));
-    expect(store[REQUEST]['pendingInvoiceKey']).toBe(key);
+    expect(p.findPaymentIntentByInvoiceKey).toHaveBeenCalledWith(key);
+    expect(p.chargeOffSession).toHaveBeenCalledWith(expect.objectContaining({ idempotencyKey: `${key}-r1`, amount: 7000 }));
+    expect(store[REQUEST]).toMatchObject({ pendingInvoiceKey: key, retryCount: 1 });
+  });
+
+  describe('a stale re-run reads the earlier charge back first', () => {
+    const KEY = 'topup-scs-20261108080000';
+    const stale = (attempt: Record<string, unknown>, retryCount = 0) => {
+      const store = seed();
+      store[REQUEST] = { requestedAt: '20261109100000', pendingInvoiceKey: KEY, retryCount };
+      store[`invoices/${KEY}`] = { state: 'pending', billingKind: 'topup', totalAmount: { amount: 7000 } };
+      store[`payment-attempts/auto-${KEY}`] = { state: 'open', invoiceKey: KEY, ...attempt };
+      return store;
+    };
+    const run = (store: Store, p: ReturnType<typeof port>) => runAutoTopUp(fakeDb(store), p, 'scs', store[REQUEST] as typeof fresh, log);
+
+    it('succeeded: no charge, the payment is recorded through the webhook settle path', async () => {
+      const store = stale({ stripePaymentIntentId: 'pi_old' });
+      const p = port('succeeded', { retrieved: intent('succeeded') });
+      await expect(run(store, p)).resolves.toBe('skipped');
+      expect(p.retrievePaymentIntent).toHaveBeenCalledWith('pi_old');
+      expect(p.chargeOffSession).not.toHaveBeenCalled();
+      expect(settleSucceededPayment).toHaveBeenCalledWith(expect.anything(), expect.anything(), expect.objectContaining({
+        kind: 'payment-succeeded', attemptKey: `auto-${KEY}`, paymentIntentId: 'pi_old', chargeId: 'ch_old', amount: 7000, currency: 'chf',
+      }));
+    });
+
+    it('processing: no charge, the request stays pending', async () => {
+      const store = stale({ stripePaymentIntentId: 'pi_old' });
+      const before = { ...store[REQUEST] };
+      const p = port('succeeded', { retrieved: intent('processing') });
+      await expect(run(store, p)).resolves.toBe('skipped');
+      expect(p.chargeOffSession).not.toHaveBeenCalled();
+      expect(settleSucceededPayment).not.toHaveBeenCalled();
+      expect(store[REQUEST]).toEqual(before);
+    });
+
+    it('canceled: charged again with a fresh idempotency key -r1, the attempt follows the new PaymentIntent', async () => {
+      const store = stale({ stripePaymentIntentId: 'pi_old', state: 'failed' });
+      const p = port('succeeded', { retrieved: intent('canceled') });
+      await expect(run(store, p)).resolves.toBe('charged');
+      expect(p.chargeOffSession).toHaveBeenCalledWith(expect.objectContaining({ idempotencyKey: `${KEY}-r1` }));
+      expect(store[`payment-attempts/auto-${KEY}`]).toMatchObject({ state: 'open', stripePaymentIntentId: 'pi_1' });
+      expect(store[REQUEST]).toMatchObject({ pendingInvoiceKey: KEY, retryCount: 1 });
+    });
+
+    it('a second re-charge counts on: -r2', async () => {
+      const store = stale({ stripePaymentIntentId: 'pi_old' }, 1);
+      const p = port('succeeded', { retrieved: intent('requires_payment_method') });
+      await run(store, p);
+      expect(p.chargeOffSession).toHaveBeenCalledWith(expect.objectContaining({ idempotencyKey: `${KEY}-r2` }));
+    });
+
+    it('no PaymentIntent id (the charge call threw earlier): the search finds it succeeded, no charge', async () => {
+      const store = stale({});
+      const p = port('succeeded', { found: intent('succeeded', 'pi_found') });
+      await expect(run(store, p)).resolves.toBe('skipped');
+      expect(p.retrievePaymentIntent).not.toHaveBeenCalled();
+      expect(p.findPaymentIntentByInvoiceKey).toHaveBeenCalledWith(KEY);
+      expect(p.chargeOffSession).not.toHaveBeenCalled();
+      expect(settleSucceededPayment).toHaveBeenCalledWith(expect.anything(), expect.anything(), expect.objectContaining({ paymentIntentId: 'pi_found' }));
+    });
   });
 
   it('a stale pending invoice that is paid meanwhile clears the request, nothing charged', async () => {
@@ -84,7 +157,7 @@ describe('runAutoTopUp', () => {
     await expect(runAutoTopUp(fakeDb(store), p, 'scs', store[REQUEST] as typeof fresh, log)).resolves.toBe('skipped');
     expect(createAndIssueInvoice).not.toHaveBeenCalled();
     expect(p.chargeOffSession).not.toHaveBeenCalled();
-    expect(store[REQUEST]).toEqual({ requestedAt: '', pendingInvoiceKey: '' });
+    expect(store[REQUEST]).toEqual({ requestedAt: '', pendingInvoiceKey: '', retryCount: 0 });
   });
 
   it('an error before the charge clears the request', async () => {
@@ -93,20 +166,20 @@ describe('runAutoTopUp', () => {
     const p = port('succeeded');
     await expect(runAutoTopUp(fakeDb(store), p, 'scs', fresh, log)).rejects.toThrow('pdf render failed');
     expect(p.chargeOffSession).not.toHaveBeenCalled();
-    expect(store[REQUEST]).toEqual({ requestedAt: '', pendingInvoiceKey: '' });
+    expect(store[REQUEST]).toEqual({ requestedAt: '', pendingInvoiceKey: '', retryCount: 0 });
   });
 
   it('a charge call that throws keeps the pending state', async () => {
     const store = seed();
-    const p = { chargeOffSession: vi.fn(async () => { throw new Error('ECONNRESET'); }) };
+    const p = { ...port('succeeded'), chargeOffSession: vi.fn(async () => { throw new Error('ECONNRESET'); }) };
     await expect(runAutoTopUp(fakeDb(store), p, 'scs', fresh, log)).rejects.toThrow('ECONNRESET');
-    expect(store[REQUEST]).toEqual({ requestedAt: '20261109100000', pendingInvoiceKey: 'topup-scs-20261109100000' });
+    expect(store[REQUEST]).toEqual({ requestedAt: '20261109100000', pendingInvoiceKey: 'topup-scs-20261109100000', retryCount: 0 });
   });
 
   it('a declined charge clears the request', async () => {
     const store = seed();
     await expect(runAutoTopUp(fakeDb(store), port('requires_payment_method'), 'scs', fresh, log)).resolves.toBe('declined');
-    expect(store[REQUEST]).toEqual({ requestedAt: '', pendingInvoiceKey: '' });
+    expect(store[REQUEST]).toEqual({ requestedAt: '', pendingInvoiceKey: '', retryCount: 0 });
   });
 
   it('no saved method: no invoice, request cleared', async () => {
@@ -131,7 +204,7 @@ describe('creditPaidTopUp', () => {
     await expect(creditPaidTopUp(db, 'inv9', invoice(), log)).resolves.toBe(true);
     await creditPaidTopUp(db, 'inv9', invoice(), log);
     expect(store['credit-accounts/scs']).toMatchObject({ balance: 10500 });
-    expect(store[REQUEST]).toEqual({ requestedAt: '', pendingInvoiceKey: '' });
+    expect(store[REQUEST]).toEqual({ requestedAt: '', pendingInvoiceKey: '', retryCount: 0 });
     expect(store['credit-accounts/scs/entries/topup-inv9']).toMatchObject({ kind: 'topup', amount: 10000, reference: 'inv9' });
   });
 

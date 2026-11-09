@@ -24,7 +24,7 @@ import { assertLeafAccount, loadOwnedAccountingConfig } from '../invoice/invoice
 import { BOOKING_COLLECTION, BOOKING_LINE_COLLECTION, postInvoicePayment } from '../invoice/invoice-payment.core';
 import { invoiceBookingIndex, withoutUndefined } from '../invoice/invoice.logic';
 import { toStoreDateTime } from '../srv/zurich-time';
-import { clearAutoTopUp } from '../credit/topup.core';
+import { clearAutoTopUp } from '../credit/auto-topup-request';
 import { notifyAutoTopUpFailed } from '../credit/topup-failed-mail';
 import { ensureSubscription } from './payment-method';
 import { platformBilling } from './platform';
@@ -99,6 +99,16 @@ async function loadAttempt(db: Firestore, attemptKey: string): Promise<Attempt> 
 }
 
 const operatorOf = (attempt: Attempt): string | undefined => attempt.tenants?.[0];
+
+/**
+ * Records a succeeded PaymentIntent on its attempt's invoice: payment (Stripe clearing), fee, attempt succeeded.
+ * Idempotent. Also used by the auto top-up when it finds a charge whose webhook never arrived.
+ */
+export async function settleSucceededPayment(
+  db: Firestore, deps: StripeHandlerDeps, action: Extract<StripeAction, { kind: 'payment-succeeded' }>,
+): Promise<WebhookOutcome> {
+  return paymentSucceeded(db, deps, action);
+}
 
 async function paymentSucceeded(
   db: Firestore, deps: StripeHandlerDeps, action: Extract<StripeAction, { kind: 'payment-succeeded' }>,
