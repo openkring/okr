@@ -112,7 +112,7 @@ describe('find() query shapes', () => {
     // the prefixed form — `createdBy` ('person.<okey>', who minted it) and `targetKey`
     // ('person.<okey>', an alias pointing AT the subject). It is the first row outside the
     // address vault to do so, which is exactly why this assertion is spelled out by name.
-    expect(prefixUsers.sort()).toEqual(['address-directory', 'addresses', 'aliases', 'avatars']);
+    expect(prefixUsers.sort()).toEqual(['address-directory', 'addresses', 'aliases', 'avatars', 'sendings']);
   });
 
   it('uses the RAW personKey for memberships and the other relation collections', () => {

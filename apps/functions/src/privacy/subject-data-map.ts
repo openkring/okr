@@ -995,6 +995,23 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     retention: CLUB_RECORD,
   },
   {
+    // Postversand (spec 1.150): one record per letter sent by post. The subject is the recipient
+    // (`recipientKey` = `person.<okey>` or `org.<okey>`; only a person is found here); the record holds the key
+    // and name and points at a letter PDF with the postal address in the private bucket. The provider cost
+    // sits in `private/cost` (bkaiser's, no personal data).
+    collection: 'sendings',
+    dataClass: 'communication',
+    tier: 'T4',
+    onTenantExit: 'anonymize',
+    find: (c: SubjectCtx) => db().collection('sendings').where('recipientKey', '==', c.parentKey),
+    tenantScope: 'tenantsArray',
+    onExport: 'index',
+    indexFields: { title: 'recipientName', date: 'updatedAt', route: '/sending' },
+    onErasure: 'anonymize',
+    anonymizeFields: ['recipientKey', 'recipientName'],
+    retention: CLUB_RECORD,
+  },
+  {
     collection: 'docs',
     dataClass: 'content',
     tier: 'T4',
