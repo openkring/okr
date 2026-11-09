@@ -5,8 +5,25 @@ import { NamedModel, OkrModel } from './base.model';
 export type NewsSegment = 'video' | 'audio' | 'text' | 'webcam';
 export const NEWS_SEGMENTS: NewsSegment[] = ['video', 'audio', 'text', 'webcam'];
 
-/** How a channel's `feedUrl` is read: a video platform feed, a podcast/RSS feed, or a refreshing still image (webcam). */
-export type NewsChannelKind = 'youtube' | 'vimeo' | 'podcast' | 'rss' | 'image';
+/**
+ * How a channel's `feedUrl` is read: a video platform feed, a podcast/RSS feed, a refreshing still image (webcam),
+ * or an HTML news list without a feed that the relay turns into RSS using the channel's `scrape` selectors.
+ */
+export type NewsChannelKind = 'youtube' | 'vimeo' | 'podcast' | 'rss' | 'image' | 'html';
+
+/**
+ * CSS selectors for a `kind: 'html'` channel. `item` selects one element per news entry in the page at
+ * `feedUrl`; the other selectors are evaluated inside each item. `link`/`image` read `href`/`src` from the
+ * matched element (or the item itself when it is the link). `date` text is parsed as `dd.mm.yyyy` or ISO.
+ */
+export interface NewsScrapeConfig {
+  item: string;
+  link: string;
+  title: string;
+  date?: string;
+  image?: string;
+  description?: string;
+}
 
 /** Where a user's channel suggestion stands. */
 export type NewsRequestStatus = 'open' | 'accepted' | 'rejected';
@@ -31,6 +48,8 @@ export class NewsChannelModel implements OkrModel, NamedModel {
   public refreshMinutes = 5;
   /** Webcams only: load the image through the relay op `newsImage` (design §7.1) instead of directly; required for http: image URLs. */
   public viaRelay = false;
+  /** `kind: 'html'` only: how the relay finds the news entries in the page at `feedUrl` (design §7.2). */
+  public scrape?: NewsScrapeConfig;
 }
 
 export const NewsChannelCollection = 'news-channels';

@@ -17,6 +17,7 @@ import axios from 'axios';
 import { NewsChannelCollection, type NewsChannelModel } from '@okr/shared-models';
 import type { GatewayContext, ProviderAdapter } from '../provider';
 import { gatewayFetch, type GatewayFetchOptions } from '../http';
+import { htmlToRss, isValidScrapeConfig } from './news-scrape';
 import { assertPublicResolvedUrl, assertPublicUrlShape, BlockedUrlError, guardedLookup, isBlockedUrlError, type PublicUrlOptions } from '../ssrf';
 
 export const NEWS_RELAY_TIMEOUT_MS = 8000;
@@ -172,7 +173,10 @@ export interface NewsFeedData {
   contentType: string;
 }
 
-/** op `newsFeed`: `{ channelKey }` → the feed text of a non-image channel of the caller's tenant. */
+/**
+ * op `newsFeed`: `{ channelKey }` → the feed text of a non-image channel of the caller's tenant.
+ * A `kind: 'html'` channel (§7.2) is fetched as a page and returned as RSS built from its `scrape` selectors.
+ */
 export function makeNewsFeedAdapter(overrides: Partial<NewsRelayDeps>): ProviderAdapter<NewsChannelParams, NewsFeedRaw, NewsFeedData> {
   const deps: NewsRelayDeps = { ...realNewsRelayDeps, ...overrides };
   return {
@@ -185,18 +189,32 @@ export function makeNewsFeedAdapter(overrides: Partial<NewsRelayDeps>): Provider
     windowLimit: NEWS_WINDOW,
     attribution: NEWS_ATTRIBUTION,
     async fetch(params, ctx) {
-      const channel = await loadRelayChannel(params, ctx, deps, (c) => c.kind !== 'image');
+      const channel = await loadRelayChannel(params, ctx, deps, (c) => c.kind !== 'image' && (c.kind !== 'html' || isValidScrapeConfig(c.scrape)));
+      const isHtml = channel.kind === 'html';
       const res = await relayFetch(channel.feedUrl, {
         responseType: 'text',
-        accept: 'application/rss+xml, application/atom+xml, application/xml;q=0.9, text/xml;q=0.9, */*;q=0.5',
+        accept: isHtml ? 'text/html, application/xhtml+xml;q=0.9' : 'application/rss+xml, application/atom+xml, application/xml;q=0.9, text/xml;q=0.9, */*;q=0.5',
         deps,
       });
       const contentType = contentTypeOf(res.headers);
-      if (!FEED_CONTENT_TYPE.test(contentType)) {
+      if (isHtml ? !/html/i.test(contentType) : !FEED_CONTENT_TYPE.test(contentType)) {
         logger.warn('newsCenter: unsupported content type', { host: hostOf(channel.feedUrl), status: res.status });
         throw new HttpsError('failed-precondition', 'unsupported content type', { reason: 'content-type' });
       }
-      return { body: typeof res.data === 'string' ? res.data : String(res.data ?? ''), contentType, fetchedAt: deps.now().toISOString() };
+      const text = typeof res.data === 'string' ? res.data : String(res.data ?? '');
+      if (isHtml && channel.scrape) {
+        // relative links resolve against the page actually served (after redirects)
+        let rss: string;
+        try {
+          rss = htmlToRss(text, res.finalUrl, channel.scrape, channel.name);
+        } catch (error) {
+          // an admin-entered selector css-select cannot parse: a channel misconfiguration, not a relay fault
+          logger.warn('newsCenter: scrape failed', { host: hostOf(channel.feedUrl), message: (error as Error)?.message });
+          throw new HttpsError('failed-precondition', 'scrape failed', { reason: 'scrape' });
+        }
+        return { body: rss, contentType: 'application/rss+xml; charset=utf-8', fetchedAt: deps.now().toISOString() };
+      }
+      return { body: text, contentType, fetchedAt: deps.now().toISOString() };
     },
     map: (raw) => ({ body: raw.body, contentType: raw.contentType }),
     sourceTimestamp: (raw) => raw.fetchedAt,

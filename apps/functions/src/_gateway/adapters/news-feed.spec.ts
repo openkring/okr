@@ -112,6 +112,48 @@ describe('newsFeedAdapter.fetch', () => {
   });
 });
 
+describe('newsFeedAdapter.fetch — kind html (§7.2)', () => {
+  const scrape = { item: 'article', link: 'a', title: 'h3', date: '.date' };
+  const page = '<article><a href="/de/news/a"><span class="date">05.11.2026</span><h3>A &amp; B</h3></a></article>';
+  const htmlChannel = (patch: Partial<NewsChannelModel> = {}) => channel({ kind: 'html', feedUrl: 'https://www.swissrowing.ch/de/alle-news', scrape, ...patch });
+
+  it('fetches the page and returns RSS built from the scrape selectors, links resolved against the final URL', async () => {
+    const { d, fetch } = deps(htmlChannel(), { data: page, headers: { 'content-type': 'text/html; charset=UTF-8' } });
+    const raw = await makeNewsFeedAdapter(d).fetch({ channelKey: 'ch1' }, ctx);
+    const [, opts] = fetch.mock.calls[0] as unknown as [string, Record<string, unknown>];
+    expect((opts['headers'] as Record<string, string>)['Accept']).toMatch(/^text\/html/);
+    expect(raw.contentType).toBe('application/rss+xml; charset=utf-8');
+    expect(raw.body).toContain('<title>Club</title>');
+    expect(raw.body).toContain('<item><title>A &amp; B</title><link>https://www.swissrowing.ch/de/news/a</link>');
+    expect(raw.body).toContain('<pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>');
+  });
+
+  it.each([
+    ['no scrape config', htmlChannel({ scrape: undefined })],
+    ['a scrape config without a title selector', htmlChannel({ scrape: { item: 'article', link: 'a', title: '' } })],
+  ])('is not-found for an html channel with %s, without fetching', async (_label, ch) => {
+    const { d, fetch } = deps(ch);
+    await expect(makeNewsFeedAdapter(d).fetch({ channelKey: 'ch1' }, ctx)).rejects.toMatchObject({ code: 'not-found' });
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('refuses a non-HTML response for an html channel', async () => {
+    const { d } = deps(htmlChannel(), { data: '<rss/>', headers: { 'content-type': 'application/rss+xml' } });
+    await expect(makeNewsFeedAdapter(d).fetch({ channelKey: 'ch1' }, ctx)).rejects.toMatchObject({ code: 'failed-precondition' });
+  });
+
+  it('reports an unparseable selector as failed-precondition, not internal', async () => {
+    const { d } = deps(htmlChannel({ scrape: { item: 'article[', link: 'a', title: 'h3' } }), { data: page, headers: { 'content-type': 'text/html' } });
+    await expect(makeNewsFeedAdapter(d).fetch({ channelKey: 'ch1' }, ctx)).rejects.toMatchObject({ code: 'failed-precondition', details: { reason: 'scrape' } });
+  });
+
+  it('stays https-only', async () => {
+    const { d, fetch } = deps(htmlChannel({ feedUrl: 'http://www.swissrowing.ch/de/alle-news' }));
+    await expect(makeNewsFeedAdapter(d).fetch({ channelKey: 'ch1' }, ctx)).rejects.toMatchObject({ code: 'failed-precondition' });
+    expect(fetch).not.toHaveBeenCalled();
+  });
+});
+
 describe('relayFetch — redirect hops', () => {
   async function beforeRedirectOf(opts: Parameters<typeof relayFetch>[1]) {
     const fetch = vi.fn(async () => ({ data: '', headers: {}, status: 200 }));

@@ -53,7 +53,7 @@ const RESOLVE_WINDOW = { limit: 30, windowMs: 60_000 };
 const SEGMENT_KINDS: Record<NewsSegment, NewsChannelKind[]> = {
   video: ['youtube', 'vimeo'],
   audio: ['podcast'],
-  text: ['rss'],
+  text: ['rss', 'html'],
   webcam: ['image'],
 };
 
