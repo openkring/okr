@@ -57,6 +57,11 @@ describe('formDefinitionValidations', () => {
     expect(formDefinitionValidations(fd).hasErrors('target.mappingKey')).toBe(false);
   });
 
+  it('accepts a mail-only target (no mapping, no URL)', () => {
+    const fd = newDefinition({ target: { kind: 'mail' } });
+    expect(formDefinitionValidations(fd).isValid()).toBe(true);
+  });
+
   describe('unique field keys (spec 7.3)', () => {
     const field = (id: string, type: string, key: string, order: number) => ({ id, key, type, label: id, required: false, width: 'full', order }) as Field;
 
@@ -112,6 +117,8 @@ describe('formDefinitionValidations', () => {
       expect(formDefinitionValidations(reservation).getErrors('fields')).toContain(MSG);
       const url = newDefinition({ target: { kind: 'url', url: 'https://example.com/hook' }, fields: [ssn('ssnId')] });
       expect(formDefinitionValidations(url).getErrors('fields')).toContain(MSG);
+      const mail = newDefinition({ target: { kind: 'mail' }, fields: [ssn('ssnId')] });
+      expect(formDefinitionValidations(mail).getErrors('fields')).toContain(MSG);
     });
   });
 

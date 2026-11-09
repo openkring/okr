@@ -178,6 +178,8 @@
     "name_placeholder": "Kontaktformular",
     "target_kind": "Einreichungen speichern in",
     "target_url_short": "Externe URL",
+    "target_mail_short": "Nur per E-Mail",
+    "target_mail_hint": "Die Antworten werden nicht gespeichert. Sie gehen per E-Mail an die Adressen, die du in der Formular-Sektion einträgst.",
     "collection": "Sammlung",
     "select_placeholder": "Auswählen…",
     "pdf_template": "PDF-Template-ID (optional)",

@@ -178,6 +178,8 @@
     "name_placeholder": "Modulo di contatto",
     "target_kind": "Salvare gli invii in",
     "target_url_short": "URL esterno",
+    "target_mail_short": "Solo via e-mail",
+    "target_mail_hint": "Le risposte non vengono salvate. Vengono inviate via e-mail agli indirizzi che inserisci nella sezione del modulo.",
     "collection": "Raccolta",
     "select_placeholder": "Selezionare…",
     "pdf_template": "ID modello PDF (facoltativo)",

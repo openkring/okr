@@ -22,7 +22,7 @@ import { AcceptanceSettingsInput } from './acceptance-settings.input';
 import { ConfirmationSettingsInput } from './confirmation-settings.input';
 import { DerivedValuesInput } from './derived-values.input';
 
-const TARGET_KINDS: SubmissionTarget['kind'][] = ['collection', 'url'];
+const TARGET_KINDS: SubmissionTarget['kind'][] = ['collection', 'url', 'mail'];
 
 /**
  * Settings of a form definition: name, description, key, submission target, PDF template, the help text for
@@ -79,6 +79,8 @@ const TARGET_KINDS: SubmissionTarget['kind'][] = ['collection', 'url'];
                     <okr-string-select [i18n]="collectionI18n()" [stringList]="mappingKeys" [labels]="mappingLabels"
                       [selectedString]="collectionMappingKey()" (selectedStringChange)="setMappingKey($event)" [readOnly]="isReadOnly()" />
                     <okr-error-note [errors]="mappingKeyErrors()" />
+                  } @else if (targetKind() === 'mail') {
+                    <ion-item lines="none" class="hint"><ion-note>{{ i18n().def_target_mail_hint() }}</ion-note></ion-item>
                   } @else {
                     <okr-text-input [i18n]="urlI18n()" [value]="urlTarget()" (valueChange)="setUrl($event)"
                       inputMode="url" [maxLength]="urlLength" [readOnly]="isReadOnly()" />
@@ -285,7 +287,9 @@ export class FormDefinitionForm {
   protected readonly targetKindI18n = computed<RadioGroupI18n>(() => ({
     name: 'targetKind', label: this.i18n().def_target_kind(),
   }));
-  protected readonly targetKindLabels = computed(() => [this.i18n().target_collection(), this.i18n().def_target_url_short()]);
+  protected readonly targetKindLabels = computed(() => [
+    this.i18n().target_collection(), this.i18n().def_target_url_short(), this.i18n().def_target_mail_short(),
+  ]);
   protected readonly collectionI18n = computed<StringSelectI18n>(() => ({
     name: 'mappingKey', label: this.i18n().def_collection(),
   }));
@@ -332,10 +336,10 @@ export class FormDefinitionForm {
   protected setTargetKind(kind: string): void {
     const fd = this.formData();
     // ignore an echo of the current kind so it doesn't wipe the selected mapping
-    if (fd.target.kind === kind || (kind !== 'collection' && kind !== 'url')) return;
+    if (fd.target.kind === kind || (kind !== 'collection' && kind !== 'url' && kind !== 'mail')) return;
     const target: SubmissionTarget = kind === 'collection'
       ? { kind: 'collection', mappingKey: '', modelType: '', collectionName: '' }
-      : { kind: 'url', url: '' };
+      : kind === 'url' ? { kind: 'url', url: '' } : { kind: 'mail' };
     this.dirty.emit(true);
     this.formData.set({ ...fd, target });
   }

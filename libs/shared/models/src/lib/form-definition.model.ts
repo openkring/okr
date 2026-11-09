@@ -110,7 +110,10 @@ export type Field =
 
 export type SubmissionTarget =
   | { kind: 'collection'; mappingKey: string; modelType: string; collectionName: string }
-  | { kind: 'url'; url: string };
+  | { kind: 'url'; url: string }
+  /** Nothing is stored: `submitForm` only mails the answers to the form section's `emailAddresses`
+   *  (and opens its responsibility task, if any) — e.g. a website contact form. */
+  | { kind: 'mail' };
 
 // ──────────────────────────────────────────
 // Form mapping — whitelists a Firestore collection as a submission target

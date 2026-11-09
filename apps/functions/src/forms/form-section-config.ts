@@ -108,3 +108,11 @@ export function missingSectionOnlyValues(fields: Field[] | undefined, implicit: 
     .map((f) => f.key)
     .filter((key) => implicit[key] === undefined);
 }
+
+/**
+ * Whether a section names at least one recipient for the board mail. A mail-only form (`target.kind === 'mail'`)
+ * stores nothing, so a section without one would swallow every message: `submitForm` refuses it.
+ */
+export function hasMailRecipients(emailAddresses: unknown): boolean {
+  return Array.isArray(emailAddresses) && emailAddresses.some((a) => typeof a === 'string' && a.trim() !== '');
+}

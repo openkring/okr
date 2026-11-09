@@ -4,7 +4,7 @@ import type { Firestore } from 'firebase-admin/firestore';
 import type { Field } from '@okr/shared-models';
 import { computeFormAvailability } from '@okr/shared-util-core';
 
-import { acceptanceForSection, captchaRequired, missingSectionOnlyValues, readVerifiedSection, requiresSection, verifySectionForForm } from './form-section-config';
+import { acceptanceForSection, captchaRequired, hasMailRecipients, missingSectionOnlyValues, readVerifiedSection, requiresSection, verifySectionForForm } from './form-section-config';
 
 const SECTION = {
   type: 'form',
@@ -163,5 +163,18 @@ describe('captchaRequired', () => {
 
   it('only a literal true counts', () => {
     expect(captchaRequired('true', { props: { formKey: 'f1', showCaptcha: 'yes' as unknown as boolean } }, 'true')).toBe(false);
+  });
+});
+
+describe('hasMailRecipients', () => {
+  it('is true when at least one non-blank address is set', () => {
+    expect(hasMailRecipients(['info@seeclub.org'])).toBe(true);
+    expect(hasMailRecipients(['', ' info@seeclub.org '])).toBe(true);
+  });
+  it('is false for a missing, empty or blank-only list (a mail-only form would swallow the message)', () => {
+    expect(hasMailRecipients(undefined)).toBe(false);
+    expect(hasMailRecipients([])).toBe(false);
+    expect(hasMailRecipients(['', '  '])).toBe(false);
+    expect(hasMailRecipients('info@seeclub.org')).toBe(false);
   });
 });

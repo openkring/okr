@@ -178,6 +178,8 @@
     "name_placeholder": "Formulaire de contact",
     "target_kind": "Enregistrer les envois dans",
     "target_url_short": "URL externe",
+    "target_mail_short": "Uniquement par e-mail",
+    "target_mail_hint": "Les réponses ne sont pas enregistrées. Elles sont envoyées par e-mail aux adresses que tu indiques dans la section du formulaire.",
     "collection": "Collection",
     "select_placeholder": "Sélectionner…",
     "pdf_template": "ID du modèle PDF (facultatif)",

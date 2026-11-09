@@ -178,6 +178,8 @@
     "name_placeholder": "Contact form",
     "target_kind": "Store submissions in",
     "target_url_short": "External URL",
+    "target_mail_short": "E-mail only",
+    "target_mail_hint": "Answers are not stored. They are sent by e-mail to the addresses you enter in the form section.",
     "collection": "Collection",
     "select_placeholder": "Select…",
     "pdf_template": "PDF template ID (optional)",

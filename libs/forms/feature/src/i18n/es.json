@@ -178,6 +178,8 @@
     "name_placeholder": "Formulario de contacto",
     "target_kind": "Guardar los envíos en",
     "target_url_short": "URL externa",
+    "target_mail_short": "Solo por correo",
+    "target_mail_hint": "Las respuestas no se guardan. Se envían por correo a las direcciones que indicas en la sección del formulario.",
     "collection": "Colección",
     "select_placeholder": "Seleccionar…",
     "pdf_template": "ID de plantilla PDF (opcional)",

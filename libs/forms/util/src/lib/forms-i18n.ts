@@ -84,6 +84,8 @@ export const FORM_I18N_KEYS = {
   def_name_placeholder:       PFX + 'definition.name_placeholder',
   def_target_kind:            PFX + 'definition.target_kind',
   def_target_url_short:       PFX + 'definition.target_url_short',
+  def_target_mail_short:      PFX + 'definition.target_mail_short',
+  def_target_mail_hint:       PFX + 'definition.target_mail_hint',
   def_collection:             PFX + 'definition.collection',
   def_select_placeholder:     PFX + 'definition.select_placeholder',
   def_pdf_template:           PFX + 'definition.pdf_template',

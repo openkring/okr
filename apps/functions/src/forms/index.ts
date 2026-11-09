@@ -25,6 +25,7 @@ import { categoryNamesOfFields, projectPublicCategories, projectPublicFormDefini
 import {
   acceptanceForSection,
   captchaRequired,
+  hasMailRecipients,
   isDocumentId,
   missingSectionOnlyValues,
   readVerifiedSection,
@@ -34,6 +35,7 @@ import { persistWithSlot, readResponseCount } from './form-stats';
 import {
   buildFillerMail,
   escapeHtml,
+  firstVisibleEmail,
   FILLER_MAIL_PER_FORM,
   FILLER_MAIL_PER_RECIPIENT,
   mailErrorCode,
@@ -63,7 +65,12 @@ interface SubmissionTargetUrl {
   url: string;
 }
 
-type SubmissionTarget = SubmissionTargetCollection | SubmissionTargetUrl;
+/** Nothing is stored: the answers only go to the section's `emailAddresses` (e.g. a contact form). */
+interface SubmissionTargetMail {
+  kind: 'mail';
+}
+
+type SubmissionTarget = SubmissionTargetCollection | SubmissionTargetUrl | SubmissionTargetMail;
 
 interface FormMapping {
   mappingKey: string;
@@ -390,6 +397,7 @@ async function runSideEffects(
   submissionId: string,
   submittedAt: string,
   cfName: string,
+  replyTo?: string,
 ): Promise<void> {
   // The section was read and verified once by submitForm (a section of THIS form in THIS tenant):
   // a forged reference opens no task and mails no board.
@@ -436,7 +444,7 @@ async function runSideEffects(
       const subject = `${formDef.name} – neue Einreichung`;
       const html = buildSubmissionEmailHtml(formDef, rows, submissionId, submittedAt);
 
-      await sendEmailViaProvider('mailtrap_api', { from, to: emailAddresses, subject, html });
+      await sendEmailViaProvider('mailtrap_api', { from, to: emailAddresses, subject, html, ...(replyTo ? { replyTo } : {}) });
       logger.info(`${cfName}: notification email sent to ${emailAddresses.join(', ')}`);
     } catch (e) {
       logger.error(`${cfName}: failed to send notification email`, e);
@@ -661,6 +669,12 @@ export const submitForm = onCall(
     if (target.kind === 'collection' && !mapping) {
       throw new HttpsError('failed-precondition', `Unknown mapping: ${target.mappingKey}`);
     }
+    // A mail-only form stores nothing: without recipients on its verified section the message would vanish.
+    // Refused like a closed form, so the filler sees it instead of a false «thank you».
+    if (target.kind === 'mail' && !hasMailRecipients(section?.props.emailAddresses)) {
+      logger.warn(`${CF_NAME}: mail-only formKey=${payload.formKey} (form ${formDef.okey}) via section ${section?.id ?? 'none'} has no e-mail addresses — refused`);
+      throw new HttpsError('failed-precondition', 'form-closed');
+    }
     const implicit = resolveImplicitValues(fields, section?.props.implicitValues, payload.values ?? {});
     // A section saved before the implicit field existed passes the check above but carries no value for it:
     // the registration would be stored without its course. Refused like a closed form — before a place is taken.
@@ -719,7 +733,7 @@ export const submitForm = onCall(
     const shareableValues = omitSsnValues(formDef.fields, cleanValues);
 
     if (target.kind === 'collection') collectionName = target.collectionName;
-    else targetUrl = target.url;
+    else if (target.kind === 'url') targetUrl = target.url;
 
     const write = async (): Promise<string> => {
       if (target.kind === 'collection') {
@@ -762,6 +776,9 @@ export const submitForm = onCall(
         const docRef = await db.collection(target.collectionName).add(record);
         return docRef.id;
       }
+
+      // mail-only: nothing to persist — the board mail in step 7 is the delivery
+      if (target.kind === 'mail') return crypto.randomUUID();
 
       if (!isSpam) {
         const body = new URLSearchParams();
@@ -820,6 +837,8 @@ export const submitForm = onCall(
         db, section.props, payload.tenantId,
         formDef, shareableValues, prepared.rows, submissionId, payload.meta.submittedAt,
         CF_NAME,
+        // a mail-only message (contact form) is answered by replying to the board mail
+        target.kind === 'mail' ? firstVisibleEmail(fields, prepared.answers, prepared.visible) : undefined,
       );
     }
 
