@@ -6,7 +6,8 @@ vi.mock('../calendar/mail', () => ({ eventWhen: vi.fn() }));
 vi.mock('firebase-admin/firestore', () => ({ getFirestore: vi.fn() }));
 
 import { makeCreditPort } from './credit-port';
-import { parsePostRequest, type PostOrderArgs, type QuoteEnv, withPostOrder } from './post-order';
+import { logger } from 'firebase-functions/v2';
+import { draftHashOf, parsePostRequest, type PostOrderArgs, type QuoteEnv, withPostOrder } from './post-order';
 import { quoteWithCaller } from './quote';
 
 const ADMIN = { roles: { memberAdmin: true }, tenants: ['scs'] };
@@ -33,7 +34,7 @@ async function accepted(env: QuoteEnv, request: object, overrides: Partial<PostO
   return {
     post: { via: 'pingen', options: OPTIONS, token: q.token, issuedAt: q.issuedAt },
     tenantId: r.tenantId, subject: r.subject, body: r.body, attachments: [], letterQrCodes: false, caleventKeys: [], postKeys: r.postKeys,
-    mailingKey: 'm1', actor: 'uid1', caller: ADMIN, nowIso: '2026-11-09 10:00:00', ...overrides,
+    mailingKey: 'm1', mailingExists: async () => false, actor: 'uid1', caller: ADMIN, nowIso: '2026-11-09 10:00:00', ...overrides,
   };
 }
 
@@ -41,11 +42,11 @@ describe('withPostOrder', () => {
   it('deducts once with reference mailing.<key> and hands the accepted order to the write', async () => {
     const { env, deductCredit, request } = setup(['CH', 'CH', 'DE', undefined]);
     const work = vi.fn(async () => 'ok');
-    expect(await withPostOrder(env, await accepted(env, request), work)).toBe('ok');
+    expect(await withPostOrder(env, await accepted(env, request), work)).toEqual({ duplicate: false, value: 'ok' });
     expect(deductCredit).toHaveBeenCalledTimes(1);
     expect(deductCredit).toHaveBeenCalledWith('scs', { product: 'pingen-letter', units: 2, pages: 4, reference: 'mailing.m1', actor: 'uid1' });
     expect(work).toHaveBeenCalledWith({
-      via: 'pingen', options: OPTIONS, letters: 2, abroad: 1, pages: 4, total: 360, creditEntryId: 'e1', acceptedBy: 'uid1', acceptedAt: '2026-11-09 10:00:00',
+      via: 'pingen', options: OPTIONS, recipients: ['p0', 'p1'], letters: 2, abroad: 1, pages: 4, total: 360, creditEntryId: 'e1', acceptedBy: 'uid1', acceptedAt: '2026-11-09 10:00:00',
     });
   });
 
@@ -103,6 +104,49 @@ describe('withPostOrder', () => {
     const unbound: QuoteEnv = { ...env, getPort: () => { throw new HttpsError('unavailable', 'credit not configured'); } };
     await expect(withPostOrder(unbound, args, vi.fn())).rejects.toMatchObject({ code: 'unavailable' });
     await expect(withPostOrder(env, { ...args, caller: { roles: { groupAdmin: true }, tenants: ['scs'] } }, vi.fn())).rejects.toMatchObject({ code: 'permission-denied' });
+  });
+});
+
+describe('withPostOrder failure handling', () => {
+  it('a second send with the same token does not deduct and returns the same key', async () => {
+    const { env, deductCredit, request } = setup(['CH']);
+    const work = vi.fn();
+    const r = await withPostOrder(env, await accepted(env, request, { mailingExists: async () => true }), work);
+    expect(r.duplicate).toBe(true);
+    expect(deductCredit).not.toHaveBeenCalled();
+    expect(work).not.toHaveBeenCalled();
+  });
+
+  it('ALREADY_EXISTS on create counts as the same duplicate: no reversal, no error', async () => {
+    const { env, request, reverseCredit } = setup(['CH']);
+    const exists = vi.fn().mockResolvedValueOnce(false).mockResolvedValue(true);
+    const r = await withPostOrder(env, await accepted(env, request, { mailingExists: exists }), async () => { throw Object.assign(new Error('exists'), { code: 6 }); });
+    expect(r.duplicate).toBe(true);
+    expect(reverseCredit).not.toHaveBeenCalled();
+  });
+
+  it('write committed but reported failure: no reversal, original error rethrown', async () => {
+    const { env, request, reverseCredit } = setup(['CH']);
+    const exists = vi.fn().mockResolvedValueOnce(false).mockResolvedValue(true);
+    const boom = new Error('deadline');
+    await expect(withPostOrder(env, await accepted(env, request, { mailingExists: exists }), async () => { throw boom; })).rejects.toBe(boom);
+    expect(reverseCredit).not.toHaveBeenCalled();
+  });
+
+  it('both fail: original error rethrown, reversal failure logged', async () => {
+    const { env, request, reverseCredit } = setup(['CH', 'CH']);
+    reverseCredit.mockRejectedValueOnce(new Error('ledger down'));
+    const logged = vi.spyOn(logger, 'error').mockImplementation(() => undefined);
+    const boom = new Error('firestore down');
+    await expect(withPostOrder(env, await accepted(env, request), async () => { throw boom; })).rejects.toBe(boom);
+    const text = JSON.stringify(logged.mock.calls);
+    for (const part of ['scs', 'e1', 'mailing.m1-undo', 'ledger down', 'firestore down', '"letters":2', '"pages":4', '"total":360']) expect(text).toContain(part);
+    logged.mockRestore();
+  });
+
+  it('the calevent key order does not change the draft hash', () => {
+    const base = { subject: 'S', body: 'B', attachments: [], letterQrCodes: true };
+    expect(draftHashOf({ ...base, caleventKeys: ['b', 'a'] })).toBe(draftHashOf({ ...base, caleventKeys: ['a', 'b'] }));
   });
 });
 

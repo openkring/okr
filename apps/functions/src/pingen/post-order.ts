@@ -8,6 +8,7 @@
 
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import { HttpsError } from 'firebase-functions/v2/https';
+import { logger } from 'firebase-functions/v2';
 import { defineSecret } from 'firebase-functions/params';
 import { getFirestore } from 'firebase-admin/firestore';
 import { DEFAULT_POST_OPTIONS, type PostOptions } from '@okr/shared-models';
@@ -80,7 +81,7 @@ export function verifyQuote(token: string, payload: QuotePayload, secret: string
 export function draftHashOf(i: Pick<QuoteInput, 'subject' | 'body' | 'attachments' | 'letterQrCodes' | 'caleventKeys'>): string {
   return createHash('sha256').update(canonicalJson({
     subject: i.subject, body: i.body, attachments: i.attachments.map((a) => ({ filename: a.filename, contentType: a.contentType, sha256: createHash('sha256').update(a.content).digest('hex') })),
-    letterQrCodes: i.letterQrCodes, caleventKeys: i.caleventKeys,
+    letterQrCodes: i.letterQrCodes, caleventKeys: [...i.caleventKeys].sort(),
   })).digest('hex');
 }
 
@@ -213,6 +214,8 @@ export interface PostRequest {
 export interface MailingPost {
   via: 'pingen';
   options: PostOptions;
+  /** the priced Swiss recipients (deduped, sorted): exactly the set the deduction covers; the letters go to these */
+  recipients: string[];
   letters: number;
   abroad: number;
   pages: number;
@@ -232,6 +235,8 @@ export interface PostOrderArgs {
   caleventKeys: string[];
   postKeys: string[];
   mailingKey: string;
+  /** whether the mailing doc already exists (a replay of the same quote, or a write that committed) */
+  mailingExists(): Promise<boolean>;
   /** the caller's uid: the credit entry records who spent it */
   actor: string;
   caller: QuoteCaller;
@@ -248,13 +253,30 @@ export function parsePostRequest(raw: unknown): PostRequest | undefined {
   return { via: 'pingen', options: parseOptions(p['options']), token: p['token'], issuedAt: p['issuedAt'] };
 }
 
+/** The mailing id of a Pingen send: the same quote token always names the same Versand, so a replay cannot charge twice. */
+export function postMailingKey(tenantId: string, token: string): string {
+  return createHash('sha256').update(`${tenantId}:${token}`).digest('hex').slice(0, 20);
+}
+
+function isAlreadyExists(error: unknown): boolean {
+  const code = (error as { code?: unknown } | null)?.code;
+  return code === 6 || code === 'already-exists' || code === 'ALREADY_EXISTS';
+}
+
+export interface PostOrderResult<T> {
+  /** the same quote was accepted before: nothing deducted, nothing written */
+  duplicate: boolean;
+  value?: T;
+}
+
 /**
- * Accepts a Pingen order around `work` (which stores the attachments and writes the mailing doc):
- * port (fails closed) → recompute and verify the quote → deduct once → `work(post)`. If `work` throws, the
- * WHOLE deduction is reversed and the error rethrown. With no Swiss letter nothing is deducted and `work`
- * gets `undefined`: the Post part is the download for everyone.
+ * Accepts a Pingen order around `work` (which stores the attachments and creates the mailing doc):
+ * port (fails closed) → recompute and verify the quote → replay check → deduct once → `work(post)`.
+ * If `work` fails the deduction is reversed in whole, unless the mailing doc exists after all (the write
+ * committed); the ORIGINAL error is always rethrown, a failed reversal is only logged.
+ * With no Swiss letter nothing is deducted and `work` gets `undefined`: the Post part is the download.
  */
-export async function withPostOrder<T>(env: QuoteEnv, args: PostOrderArgs, work: (post: MailingPost | undefined) => Promise<T>): Promise<T> {
+export async function withPostOrder<T>(env: QuoteEnv, args: PostOrderArgs, work: (post: MailingPost | undefined) => Promise<T>): Promise<PostOrderResult<T>> {
   assertMayPost(args.caller, args.tenantId);
   const port = env.getPort();
   const input: QuoteInput = {
@@ -263,18 +285,33 @@ export async function withPostOrder<T>(env: QuoteEnv, args: PostOrderArgs, work:
   };
   const computed = await computeQuote(await quoteDepsOf(env, port, input, args.post.issuedAt), input);
   if (!verifyQuote(args.post.token, computed.payload, env.secret, env.now)) throw new HttpsError('failed-precondition', 'price-changed');
-  if (computed.letters === 0) return work(undefined);
+  if (await args.mailingExists()) return { duplicate: true };
+  if (computed.letters === 0) return { duplicate: false, value: await work(undefined) };
 
   // insufficient credit surfaces as the port's failed-precondition
   const entry = await port.deduct(args.tenantId, { letters: computed.letters, pages: computed.pages, reference: `mailing.${args.mailingKey}`, actor: args.actor });
   const post: MailingPost = {
-    via: 'pingen', options: args.post.options, letters: computed.letters, abroad: computed.abroad, pages: computed.pages, total: computed.total,
+    via: 'pingen', options: args.post.options, recipients: [...new Set(computed.payload.recipients)].sort(),
+    letters: computed.letters, abroad: computed.abroad, pages: computed.pages, total: computed.total,
     creditEntryId: entry.entryId, acceptedBy: args.actor, acceptedAt: args.nowIso,
   };
   try {
-    return await work(post);
+    return { duplicate: false, value: await work(post) };
   } catch (error) {
-    await port.reverseShare(args.tenantId, entry.entryId, { units: computed.letters, pages: computed.pages }, `mailing.${args.mailingKey}-undo`, 'mailing not stored');
+    const key = `mailing.${args.mailingKey}-undo`;
+    try {
+      if (await args.mailingExists()) {
+        // the write committed (or a concurrent send of the same quote won): the deduction pays for it
+        if (isAlreadyExists(error)) return { duplicate: true };
+      } else {
+        await port.reverseShare(args.tenantId, entry.entryId, { units: computed.letters, pages: computed.pages }, key, 'mailing not stored');
+      }
+    } catch (reversalError) {
+      logger.error('postversand: deduction not reversed', {
+        tenantId: args.tenantId, entryId: entry.entryId, key, letters: computed.letters, pages: computed.pages, total: computed.total,
+        error: String((error as Error)?.message ?? error), reversalError: String((reversalError as Error)?.message ?? reversalError),
+      });
+    }
     throw error;
   }
 }
