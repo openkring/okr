@@ -11,3 +11,24 @@ export function canPayInvoice(
   if (!isPayableState(invoice.state) || invoice.openAmount <= 0) return 'not-open';
   return 'ok';
 }
+
+export interface OpenAttempt {
+  id: string;
+  createdBy: string;
+  offerSave: boolean;
+  amount: number;
+  checkoutUrl: string;
+  stripeCheckoutSessionId: string;
+}
+
+/**
+ * Of the open, unexpired attempts for one invoice and payer: the one to hand back (same creator, same
+ * save choice, same open amount, has a URL), and the others, whose Stripe session must be expired.
+ */
+export function pickReusableAttempt(
+  attempts: OpenAttempt[], want: { uid: string; offerSave: boolean; amount: number },
+): { reuse: OpenAttempt | undefined; stale: OpenAttempt[] } {
+  const matches = (a: OpenAttempt): boolean => a.createdBy === want.uid && a.offerSave === want.offerSave && a.amount === want.amount && a.checkoutUrl !== '';
+  const reuse = attempts.find(matches);
+  return { reuse, stale: attempts.filter((a) => a !== reuse) };
+}

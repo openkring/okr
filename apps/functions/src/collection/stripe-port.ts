@@ -34,6 +34,8 @@ export interface StripePort {
   setupIntentPaymentMethod(setupIntentId: string): Promise<string>;
   feeOfCharge(chargeId: string): Promise<number /* Rappen */>;
   detachPaymentMethod(paymentMethodId: string): Promise<void>;
+  /** Expires an open Checkout session; an already expired or completed one is not an error. */
+  expireSession(sessionId: string): Promise<void>;
 }
 
 const CURRENCY = 'chf';
@@ -148,6 +150,16 @@ export function stripePort(): StripePort {
 
     async detachPaymentMethod(paymentMethodId) {
       await stripe.paymentMethods.detach(paymentMethodId);
+    },
+
+    async expireSession(sessionId) {
+      try {
+        await stripe.checkout.sessions.expire(sessionId);
+      } catch (err) {
+        // Already expired or completed: nothing left to close.
+        if (err instanceof Stripe.errors.StripeInvalidRequestError) return;
+        throw err;
+      }
     },
   };
 }

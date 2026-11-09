@@ -71,6 +71,8 @@ export class PaymentAttemptModel implements OkrModel {
   public state: PaymentAttemptState = 'open';
   public offSession = false;
   public stripeCheckoutSessionId = '';
+  public createdBy = ''; // uid of the caller who opened the session; a session is reused only by the same caller
+  public offerSave = false; // whether the session offers to save the payment method
   public checkoutUrl = ''; // hosted Checkout URL, reused while the session is open (spec 1.149 R11)
   public expiresAt = ''; // StoreDateTime (UTC): our reuse window for checkoutUrl, createdAt + 23 h
   public stripePaymentIntentId = '';

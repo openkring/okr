@@ -7,7 +7,7 @@ import { PaymentAttemptCollection, PaymentAttemptModel } from '@okr/shared-model
 
 import { asInvoiceLike } from '../invoice/invoice-payment.core';
 import { openAmount } from '../invoice/invoice-payment.logic';
-import { canPayInvoice } from './collection-access.logic';
+import { canPayInvoice, pickReusableAttempt } from './collection-access.logic';
 import { appOriginOf, callerIsAdmin, ensureStripeCustomer, ensureSubscription } from './payment-method';
 import { platformBilling } from './platform';
 import { stripePort, stripeSecretKey } from './stripe-port';
@@ -58,18 +58,34 @@ export const createInvoicePaymentSession = onCall(
     const nowDate = new Date();
     const now = storeDateTimeUtc(nowDate);
 
-    // R11: a double click reuses the open session while it is younger than 23 h.
-    const reusable = await db.collection(PaymentAttemptCollection)
+    // R11: a double click reuses the open session while it is younger than 23 h, but only for the same
+    // creator, save choice and amount. Any other open session of this invoice and payer is closed first.
+    const offerSave = caller.isAdmin && tenantId === receiverKey;
+    const openAttempts = await db.collection(PaymentAttemptCollection)
       .where('invoiceKey', '==', invoiceKey).where('payerTenantId', '==', payerTenantId)
       .where('state', '==', 'open').where('expiresAt', '>', now).get();
-    const reuse = reusable.docs.map((d) => String(d.data()['checkoutUrl'] ?? '')).find((u) => u !== '');
-    if (reuse) return { url: reuse };
+    const { reuse, stale } = pickReusableAttempt(
+      openAttempts.docs.map((d) => ({
+        id: d.id,
+        createdBy: String(d.data()['createdBy'] ?? ''),
+        offerSave: d.data()['offerSave'] === true,
+        amount: Number(d.data()['amount'] ?? 0),
+        checkoutUrl: String(d.data()['checkoutUrl'] ?? ''),
+        stripeCheckoutSessionId: String(d.data()['stripeCheckoutSessionId'] ?? ''),
+      })),
+      { uid, offerSave, amount: open },
+    );
+    if (reuse) return { url: reuse.checkoutUrl };
+    for (const old of stale) {
+      if (old.stripeCheckoutSessionId) await stripePort().expireSession(old.stripeCheckoutSessionId);
+      await db.collection(PaymentAttemptCollection).doc(old.id).update({ state: 'expired', updatedAt: now });
+    }
 
     // The attempt exists before the session so the webhook always finds it.
     const attemptRef = db.collection(PaymentAttemptCollection).doc();
     const { okey: _okey, ...attempt } = new PaymentAttemptModel(operatorTenantId);
     await attemptRef.set({
-      ...attempt, payerTenantId, accountingTenantId, purpose, invoiceKey, amount: open, state: 'open', createdAt: now, updatedAt: now,
+      ...attempt, payerTenantId, accountingTenantId, purpose, invoiceKey, amount: open, createdBy: uid, offerSave, state: 'open', createdAt: now, updatedAt: now,
     });
 
     let sessionUrl = '';
@@ -85,7 +101,7 @@ export const createInvoicePaymentSession = onCall(
         metadata: { attemptKey: attemptRef.id, tenantId: payerTenantId, accountingTenantId, purpose, invoiceKey },
         successUrl: `${base}?stripe=done`,
         cancelUrl: `${base}?stripe=cancel`,
-        offerSave: caller.isAdmin && tenantId === receiverKey,
+        offerSave,
       });
       await attemptRef.update({
         stripeCheckoutSessionId: session.id, checkoutUrl: session.url, expiresAt: storeDateTimeUtc(new Date(nowDate.getTime() + REUSE_MS)),

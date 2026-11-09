@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canPayInvoice } from './collection-access.logic';
+import { canPayInvoice, pickReusableAttempt, type OpenAttempt } from './collection-access.logic';
 
 const open = { receiverKey: 't1', receiverIsTenant: true, state: 'pending', openAmount: 5000 };
 const admin = { tenantId: 't1', isAdmin: true, isTreasurerOfBooks: false };
@@ -17,4 +17,14 @@ describe('canPayInvoice', () => {
     expect(canPayInvoice(admin, { ...open, receiverIsTenant: false })).toBe('receiver-not-a-tenant');
     expect(canPayInvoice({ tenantId: 'op', isAdmin: false, isTreasurerOfBooks: true }, { ...open, receiverKey: '' })).toBe('receiver-not-a-tenant');
   });
+});
+
+describe('pickReusableAttempt', () => {
+  const att: OpenAttempt = { id: 'a1', createdBy: 'u1', offerSave: true, amount: 5000, checkoutUrl: 'https://x/1', stripeCheckoutSessionId: 'cs_1' };
+  const want = { uid: 'u1', offerSave: true, amount: 5000 };
+  it('reuses for the same uid, save choice and amount', () => expect(pickReusableAttempt([att], want)).toEqual({ reuse: att, stale: [] }));
+  it('expires the old one when the amount changed', () => expect(pickReusableAttempt([att], { ...want, amount: 4000 })).toEqual({ reuse: undefined, stale: [att] }));
+  it('does not reuse another uid\'s session', () => expect(pickReusableAttempt([att], { ...want, uid: 'u2' })).toEqual({ reuse: undefined, stale: [att] }));
+  it('does not reuse when the save choice differs', () => expect(pickReusableAttempt([att], { ...want, offerSave: false }).reuse).toBeUndefined());
+  it('does not reuse an attempt without a url', () => expect(pickReusableAttempt([{ ...att, checkoutUrl: '' }], want).reuse).toBeUndefined());
 });
