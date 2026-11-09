@@ -313,6 +313,18 @@ service cloud.firestore {
       allow read: if signedIn();
       allow write: if isOperator();
     }
+    // Stripe tenant billing (spec 1.149): all written by Cloud Functions only (Admin SDK).
+    // The tenant's own admin reads its subscription and credit account (+ ledger entries);
+    // payment attempts also by the books' treasurer/privileged; platform-config/billing by any signed-in user.
+    function ownBillingAdmin(tenantId) { return isAdmin() && tenantId in callerTenants(); }
+    match /subscriptions/{tenantId} { allow read: if ownBillingAdmin(tenantId); allow write: if false; }
+    match /credit-accounts/{tenantId} {
+      allow read: if ownBillingAdmin(tenantId);
+      allow write: if false;
+      match /entries/{entryId} { allow read: if ownBillingAdmin(tenantId); allow write: if false; }
+    }
+    match /payment-attempts/{id} { allow read: if tenantRead() && (isTreasurerOrAdmin() || hasRole('privileged')); allow write: if false; }
+    match /platform-config/{doc} { allow read: if signedIn(); allow write: if false; }
     // Mail delivery telemetry (spec 1.101 phase 5): written only by the onWebhookEvent Cloud
     // Function (Admin SDK, bypasses rules); the cross-tenant AOC e-mail page is operator-only.
     match /emailEvents/{id} {

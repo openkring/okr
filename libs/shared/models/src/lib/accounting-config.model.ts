@@ -111,6 +111,10 @@ export class AccountingConfigModel implements OkrModel {
   public reviewAssigneePersonKey = ''; // treasurer person.okey who reviews OCR bookings; '' → first treasurer
   public incomingPaymentLabel = DEFAULT_INCOMING_PAYMENT_LABEL; // shown instead of "Zahlungseingang" in booking texts (display only); '' = unchanged
   public outgoingPaymentLabel = DEFAULT_OUTGOING_PAYMENT_LABEL; // shown instead of "Zahlungsausgang" in booking texts (display only); '' = unchanged
+  public stripeClearingAccountKey = '';          // Account leaf: Stripe payouts clearing (Durchlaufkonto); '' = Stripe collection not set up
+  public stripeFeeAccountKey = '';               // Account leaf: Stripe fees expense; '' = none
+  public prepaymentAccountKey = '';              // Account leaf: customer prepayments (credit top-ups); '' = none
+  public transactionRevenueAccountKey = '';      // Account leaf: revenue from credit deductions (per-transaction products); '' = none
   public ownerKey = '';   // owner of the books, printed on reports: 'org.<okey>' | 'person.<okey>'; '' = not set (spec 1.105 amendment)
   public projectReportTemplateId = '';           // templates/{id} (category 'report') rendering the project result PDF; '' = built-in layout
 
