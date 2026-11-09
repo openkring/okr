@@ -90,7 +90,8 @@ export class PayPage {
     this.state.set('redirecting');
     try {
       const fn = httpsCallable<{ invoiceKey: string }, { url: string }>(this.functions, 'createInvoicePaymentSession');
-      const { url } = (await fn({ invoiceKey })).data;
+      const url = (await fn({ invoiceKey })).data?.url;
+      if (!url) throw new Error('createInvoicePaymentSession returned no url');
       window.location.assign(url); // busy stays true: the page is leaving
     } catch (e) {
       const kind = payErrorKind(e);

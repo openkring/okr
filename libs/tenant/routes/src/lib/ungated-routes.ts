@@ -5,9 +5,10 @@ import { isAdminGuard, isAuthenticatedGuard } from '@okr/auth-feature';
  * Routes that belong to NO feature block and must therefore never pass through
  * `isFeatureEnabledGuard` — but which a catalogued `menuItems` document may still point at.
  *
- * There is exactly one today: the feature picker. It must not be feature-gated, because it is
- * the screen you use to switch a block back on — gating it on a block would let a tenant lock
- * itself out of its own configuration. `tenant` is in `NON_BLOCK_DOMAINS` for the same reason:
+ * Today these are the feature picker and the two billing screens (`billing`, `pay/:invoiceKey`).
+ * The picker must not be feature-gated, because it is the screen you use to switch a block back
+ * on — gating it on a block would let a tenant lock itself out of its own configuration. Billing
+ * is how the tenant pays the operator; no block may switch it off. `tenant` is in `NON_BLOCK_DOMAINS` for the same reason:
  * control plane, not a product feature.
  *
  * WHY THIS EXISTS AS AN EXPORTED CONSTANT rather than a literal in each app's `app.routes.ts`,

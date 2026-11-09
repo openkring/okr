@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { MAX_TOPUP, MIN_TOPUP } from '@okr/business-metering-util';
 import type { SavedPaymentMethod } from '@okr/shared-models';
 
-import { formatChfAmount, formatSignedChf, payErrorKind, paymentMethodLabel, topUpAmountError } from './collection.util';
+import { formatChfAmount, formatSignedChf, payErrorKind, stripeReturnNotice, topUpBounds, zurichStoreDateTime, paymentMethodLabel, topUpAmountError } from './collection.util';
 
 const card: SavedPaymentMethod = {
   type: 'card', brand: 'visa', last4: '4242', expMonth: 8, expYear: 2028, email: '', stripePaymentMethodId: 'pm_1', consentAt: '',
@@ -60,4 +60,41 @@ describe('payErrorKind', () => {
     expect(payErrorKind(new Error('network'))).toBe('error');
     expect(payErrorKind(undefined)).toBe('error');
   });
+});
+
+describe('zurichStoreDateTime', () => {
+  it('renders the Zurich wall clock (CET, winter)', () => expect(zurichStoreDateTime(new Date('2026-11-09T10:05:07Z'))).toBe('20261109110507'));
+  it('renders the Zurich wall clock (CEST, summer)', () => expect(zurichStoreDateTime(new Date('2026-07-01T22:30:00Z'))).toBe('20260702003000'));
+});
+
+describe('stripeReturnNotice', () => {
+  const now = new Date('2026-11-09T10:00:00Z'); // 11:00 in Zurich
+  const old = { ...card, stripePaymentMethodId: 'pm_old', consentAt: '20260101120000' };
+  it('is empty without a Stripe return', () => expect(stripeReturnNotice(undefined, old, 'pm_old', now)).toBe(''));
+  it('done, no method yet: saving', () => expect(stripeReturnNotice('done', null, '', now)).toBe('saving'));
+  it('done, still the old method (stale doc): saving', () => expect(stripeReturnNotice('done', old, 'pm_old', now)).toBe('saving'));
+  it('done, the method changed since landing: saved', () => {
+    expect(stripeReturnNotice('done', { ...old, stripePaymentMethodId: 'pm_new' }, 'pm_old', now)).toBe('saved');
+  });
+  it('done, first method arrived after landing: saved', () => {
+    expect(stripeReturnNotice('done', { ...old, stripePaymentMethodId: 'pm_new' }, '', now)).toBe('saved');
+  });
+  it('done, webhook wrote before the page loaded (consent within 10 minutes): saved', () => {
+    expect(stripeReturnNotice('done', { ...old, consentAt: '20261109105500' }, 'pm_old', now)).toBe('saved');
+  });
+  it('done, consent older than 10 minutes and unchanged: saving', () => {
+    expect(stripeReturnNotice('done', { ...old, consentAt: '20261109104900' }, 'pm_old', now)).toBe('saving');
+  });
+  it('done, before the first snapshot: saving unless the consent is fresh', () => {
+    expect(stripeReturnNotice('done', old, undefined, now)).toBe('saving');
+    expect(stripeReturnNotice('done', { ...old, consentAt: '20261109105900' }, undefined, now)).toBe('saved');
+  });
+  it('cancel: cancelled without a method, nothing with one', () => {
+    expect(stripeReturnNotice('cancel', null, '', now)).toBe('cancelled');
+    expect(stripeReturnNotice('cancel', old, 'pm_old', now)).toBe('');
+  });
+});
+
+describe('topUpBounds', () => {
+  it('formats MIN_TOPUP and MAX_TOPUP as CHF', () => expect(topUpBounds()).toEqual({ min: '50.00', max: "5'000.00" }));
 });

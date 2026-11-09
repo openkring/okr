@@ -32,9 +32,6 @@
   ],
   "references": [
     {
-      "path": "../../../business/metering/util/tsconfig.lib.json"
-    },
-    {
       "path": "../ui/tsconfig.lib.json"
     },
     {

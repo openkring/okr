@@ -6,7 +6,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonNote, IonRow } fr
 import { AmountInput, AmountInputI18n, Checkbox, CheckboxI18n, ErrorNote } from '@okr/shared-ui';
 import { coerceBoolean } from '@okr/shared-util-core';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
-import { AutoTopUpFormModel, autoTopUpValidations, CollectionI18n } from '@okr/finance-collection-util';
+import { AutoTopUpFormModel, autoTopUpValidations, CollectionI18n, topUpBounds } from '@okr/finance-collection-util';
 
 /**
  * The auto top-up settings: on/off, the threshold and the amount (both Rappen). Without a saved payment method the
@@ -47,7 +47,7 @@ import { AutoTopUpFormModel, autoTopUpValidations, CollectionI18n } from '@okr/f
                 <ion-col size="12" size-md="6">
                   <okr-amount-input [i18n]="amountI18n()" [value]="amount()" (valueChange)="onFieldChange('amount', $event)"
                     [readOnly]="isReadOnly()" />
-                  <okr-error-note [errors]="amountErrors()" />
+                  <okr-error-note [errors]="amountErrors()" [params]="amountBounds" />
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -79,6 +79,9 @@ export class AutoTopUpForm {
   constructor() {
     effect(() => this.valid.emit(this.autoTopUpForm().valid()));
   }
+
+  /** fills `{min}` / `{max}` in the amount messages from MIN_TOPUP / MAX_TOPUP */
+  protected readonly amountBounds = topUpBounds();
 
   // field accessors (coalesced: a subscription doc may predate autoTopUp)
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()) || !this.hasPaymentMethod());

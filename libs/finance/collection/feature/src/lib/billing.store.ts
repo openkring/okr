@@ -18,10 +18,9 @@ import {
 import { parseAmountToMinor } from '@okr/shared-ui';
 import { confirm, okrPrompt, resourceParams, showToast } from '@okr/shared-util-angular';
 import { fill } from '@okr/shared-util-core';
-import { MAX_TOPUP, MIN_TOPUP } from '@okr/business-metering-util';
 import { AutoTopUpModal } from '@okr/finance-collection-ui';
 import {
-  AutoTopUpFormModel, COLLECTION_I18N_KEYS, CollectionI18n, formatChfAmount, paymentMethodLabel, topUpAmountError,
+  AutoTopUpFormModel, COLLECTION_I18N_KEYS, CollectionI18n, paymentMethodLabel, topUpAmountError, topUpBounds,
 } from '@okr/finance-collection-util';
 
 /** subscriptions/{tenantId} as read: every field may be missing on a doc written before it existed. */
@@ -136,11 +135,11 @@ export const BillingStore = signalStore(
       /** «Guthaben aufladen»: one amount, a top-up invoice, then the pay page of that invoice. */
       async topUp(): Promise<void> {
         if (store.busy()) return;
-        const bounds = { min: formatChfAmount(MIN_TOPUP), max: formatChfAmount(MAX_TOPUP) };
+        const bounds = topUpBounds();
         const text = await okrPrompt(store.alertController, store.i18n.topup_header(),
           fill(store.i18n.topup_placeholder(), bounds), store.i18n.topup_next(), store.i18n.cancel());
         if (text === undefined || !text.trim()) return;
-        const amount = parseAmountToMinor(text);
+        const amount = parseAmountToMinor(text.trim());
         if (topUpAmountError(amount)) {
           await showToast(store.toastController, fill(store.i18n.topup_amount_invalid(), bounds));
           return;

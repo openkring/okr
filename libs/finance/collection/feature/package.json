@@ -7,7 +7,6 @@
   "private": true,
   "dependencies": {
     "tslib": "^2.8.1",
-    "@okr/business-metering-util": "*",
     "@okr/finance-collection-ui": "*",
     "@okr/finance-collection-util": "*",
     "@okr/shared-data-access": "*",

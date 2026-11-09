@@ -1,12 +1,12 @@
 // libs/finance/collection/feature/src/lib/billing.page.ts
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import {
   IonButton, IonButtons, IonContent, IonItem, IonItemDivider, IonItemGroup, IonLabel, IonList, IonNote, IonSpinner,
 } from '@ionic/angular';
 
 import { Header } from '@okr/shared-ui';
 import { fill, prettyFormatDateTime } from '@okr/shared-util-core';
-import { formatChfAmount, formatSignedChf } from '@okr/finance-collection-util';
+import { formatChfAmount, formatSignedChf, stripeReturnNotice } from '@okr/finance-collection-util';
 
 import { BillingStore, CreditEntryRow } from './billing.store';
 
@@ -108,10 +108,28 @@ export class BillingPage {
 
   protected readonly balance = computed(() => formatChfAmount(this.store.balance()));
 
+  /**
+   * The saved method's id on the first subscription emission after landing ('' = none, undefined = not read yet).
+   * A doc that still holds the old method then reads «wird gespeichert» until the webhook writes the new one.
+   */
+  private readonly baselineId = signal<string | undefined>(undefined);
+  /** landing time: a method whose consent is younger than 10 minutes counts as just saved */
+  private readonly landedAt = new Date();
+
+  constructor() {
+    effect(() => {
+      const status = this.store.subscriptionResource.status();
+      if (status !== 'resolved' && status !== 'local') return;
+      const id = this.store.paymentMethod()?.stripePaymentMethodId ?? '';
+      untracked(() => { if (this.baselineId() === undefined) this.baselineId.set(id); });
+    });
+  }
+
   protected readonly methodNotice = computed(() => {
-    switch (this.stripe()) {
-      case 'done': return this.store.hasPaymentMethod() ? this.i18n.method_saved() : this.i18n.method_saving();
-      case 'cancel': return this.store.hasPaymentMethod() ? '' : this.i18n.method_cancelled();
+    switch (stripeReturnNotice(this.stripe(), this.store.paymentMethod(), this.baselineId(), this.landedAt)) {
+      case 'saved': return this.i18n.method_saved();
+      case 'saving': return this.i18n.method_saving();
+      case 'cancelled': return this.i18n.method_cancelled();
       default: return '';
     }
   });

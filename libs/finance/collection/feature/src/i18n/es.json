@@ -63,7 +63,7 @@
   },
   "validation": {
     "threshold_negative": "El importe no puede ser inferior a 0.",
-    "amount_min": "Introduce al menos CHF 50.00.",
-    "amount_max": "Introduce como máximo CHF 5'000.00."
+    "amount_min": "Introduce al menos CHF {min}.",
+    "amount_max": "Introduce como máximo CHF {max}."
   }
 }
