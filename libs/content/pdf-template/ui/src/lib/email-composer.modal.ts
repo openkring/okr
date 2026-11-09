@@ -306,7 +306,8 @@ interface AddressField {
                       [options]="postOptions()" (optionsChange)="onPostOptionsChange($event)"
                       [mode]="postMode()" (modeChange)="onPostModeChange($event)"
                       [accepted]="postAccepted()" (acceptedChange)="onPostAcceptedChange($event)"
-                      [canTopUp]="canTopUp()" [pingenAvailable]="pingenAvailable()" (topUp)="topUp()" />
+                      [canTopUp]="canTopUp()" [canSaveDefaults]="canTopUp()" (saveDefaults)="saveDefaults($event)"
+                      [pingenAvailable]="pingenAvailable()" (topUp)="topUp()" />
                     @if (postPriceChanged()) {
                       <ion-note color="warning" class="note">{{ i18n.post_price_changed() }}</ion-note>
                     }
@@ -839,6 +840,17 @@ export class EmailComposerModal {
     this.postAccepted.set(accepted);
   }
 
+  /** «Als Vorgabe speichern» (administrators only; the server checks it again). */
+  protected async saveDefaults(options: PostOptions): Promise<void> {
+    try {
+      await this.docEmailService.setPostDefaults(this.appStore.tenantId(), options);
+      await this.showToast(this.i18n.post_defaults_saved(), 'success');
+    } catch (e) {
+      console.warn('EmailComposerModal: could not save the post defaults', e);
+      await this.showToast(this.i18n.post_defaults_failed(), 'danger');
+    }
+  }
+
   /** The top-up screen is for administrators; the composer closes first so the sender lands on it. */
   protected async topUp(): Promise<void> {
     await dismissOverlay(this.modalController, null, 'cancel');
@@ -1190,6 +1202,11 @@ export class EmailComposerModal {
       filter((j) => j?.state === 'sent' || j?.state === 'failed'),
     ));
     if (job?.state === 'failed') throw new Error(job.error ?? '');
+  }
+
+  private async showToast(message: string, color: string): Promise<void> {
+    const toast = await this.toastController.create({ message, duration: 3000, color, position: 'bottom' });
+    await toast.present();
   }
 
   /**

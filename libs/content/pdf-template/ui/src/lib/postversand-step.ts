@@ -81,6 +81,10 @@ export type PostMode = 'pingen' | 'download';
             </ion-segment>
           </div>
 
+          @if (canSaveDefaults()) {
+            <ion-button class="topup" fill="clear" size="small" (click)="saveDefaults.emit(options())">{{ i18n().post_save_defaults() }}</ion-button>
+          }
+
           @if (loading()) {
             <div class="note"><okr-spinner /><ion-note>{{ i18n().post_loading() }}</ion-note></div>
           } @else if (error(); as message) {
@@ -133,11 +137,15 @@ export class PostversandStep {
   public readonly canTopUp = input<boolean>(false);
   /** The tenant's credit is configured on the server; false offers the download only. */
   public readonly pingenAvailable = input<boolean>(true);
+  /** Only an administrator may change the tenant's default letter options. */
+  public readonly canSaveDefaults = input<boolean>(false);
 
   public readonly optionsChange = output<PostOptions>();
   public readonly modeChange = output<PostMode>();
   public readonly acceptedChange = output<boolean>();
   public readonly topUp = output<void>();
+  /** «Als Vorgabe speichern»: the options as shown become the tenant's default. */
+  public readonly saveDefaults = output<PostOptions>();
 
   /** The rates and counts both come from the quote. */
   protected readonly lines = computed(() => {

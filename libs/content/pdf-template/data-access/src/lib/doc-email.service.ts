@@ -237,6 +237,12 @@ export class DocEmailService {
     return data.mailingKey;
   }
 
+  /** Admin only: stores the tenant's default letter options (`AppConfig.post*`). */
+  public async setPostDefaults(tenantId: string, options: PostOptions): Promise<void> {
+    const callable = httpsCallable<{ tenantId: string; options: PostOptions }, { ok: true }>(this.functions, 'setPostDefaults');
+    await callable({ tenantId, options });
+  }
+
   /** What a Versand by post would cost, and the signed token `sendMailing` verifies. The request is the Versand's, without `post`. */
   public async quoteMailingLetters(req: QuoteMailingRequest): Promise<PostQuote> {
     const callable = httpsCallable<typeof req, PostQuote>(this.functions, 'quoteMailingLetters');
