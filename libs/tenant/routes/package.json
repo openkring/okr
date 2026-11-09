@@ -93,6 +93,7 @@
     "@okr/travel-journal-feature": "*",
     "@okr/content-learning-feature": "*",
     "@okr/content-notice-feature": "*",
-    "@okr/social-news-center-feature": "*"
+    "@okr/social-news-center-feature": "*",
+    "@okr/finance-collection-feature": "*"
   }
 }

@@ -1,0 +1,69 @@
+{
+  "billing": {
+    "title": "Zahlung & Guthaben"
+  },
+  "loading": "Wird geladen …",
+  "error_generic": "Das hat leider nicht geklappt. Versuche es bitte später noch einmal.",
+  "ok": "OK",
+  "cancel": "Abbrechen",
+  "save": "Speichern",
+  "method": {
+    "title": "Zahlungsart",
+    "none": "Du hast noch keine Zahlungsart gespeichert.",
+    "add": "Hinzufügen",
+    "change": "Ändern",
+    "remove": "Entfernen",
+    "remove_confirm": "Möchtest du die gespeicherte Zahlungsart entfernen? Automatisches Aufladen ist danach nicht mehr möglich.",
+    "removed": "Die Zahlungsart ist entfernt.",
+    "saved": "Deine Zahlungsart ist gespeichert.",
+    "saving": "Deine Zahlungsart wird gespeichert. Das dauert einen Moment.",
+    "cancelled": "Es wurde keine Zahlungsart gespeichert."
+  },
+  "credit": {
+    "title": "Guthaben",
+    "balance": "Aktuelles Guthaben"
+  },
+  "topup": {
+    "button": "Guthaben aufladen",
+    "header": "Guthaben aufladen",
+    "placeholder": "Betrag in CHF, zum Beispiel {min}",
+    "next": "Weiter",
+    "amount_invalid": "Bitte gib einen Betrag zwischen CHF {min} und CHF {max} ein."
+  },
+  "entries": {
+    "title": "Bewegungen",
+    "empty": "Noch keine Bewegungen.",
+    "kind": {
+      "topup": "Aufladung",
+      "deduction": "Versand",
+      "reversal": "Rückerstattung",
+      "correction": "Korrektur"
+    }
+  },
+  "autotopup": {
+    "title": "Automatisch aufladen",
+    "off": "Aus",
+    "on": "Unter CHF {threshold} wird um CHF {amount} aufgeladen",
+    "saved": "Automatisches Aufladen ist gespeichert.",
+    "enabled_label": "Automatisch aufladen",
+    "enabled_helper": "Fällt dein Guthaben unter den Betrag unten, laden wir es mit deiner gespeicherten Zahlungsart auf.",
+    "threshold_label": "Aufladen, wenn das Guthaben unter diesen Betrag fällt (CHF)",
+    "amount_label": "Betrag pro Aufladung (CHF)",
+    "no_method": "Speichere zuerst eine Zahlungsart. Danach kannst du automatisch aufladen."
+  },
+  "pay": {
+    "title": "Zahlung",
+    "redirecting": "Weiterleitung zur Zahlung …",
+    "done": "Danke, deine Zahlung ist unterwegs. Die Rechnung wird als bezahlt markiert, sobald die Zahlung bestätigt ist.",
+    "cancelled": "Die Zahlung wurde abgebrochen. Du kannst es jederzeit noch einmal versuchen.",
+    "retry": "Erneut versuchen",
+    "paid": "Diese Rechnung ist bereits bezahlt.",
+    "not_tenant": "Diese Rechnung kann hier nicht online bezahlt werden.",
+    "error": "Die Zahlung konnte nicht gestartet werden. Versuche es bitte später noch einmal."
+  },
+  "validation": {
+    "threshold_negative": "Der Betrag kann nicht kleiner als 0 sein.",
+    "amount_min": "Bitte gib mindestens CHF 50.00 ein.",
+    "amount_max": "Bitte gib höchstens CHF 5'000.00 ein."
+  }
+}

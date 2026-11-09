@@ -1,0 +1,69 @@
+{
+  "billing": {
+    "title": "Paiement et crédit"
+  },
+  "loading": "Chargement …",
+  "error_generic": "Cela n’a malheureusement pas fonctionné. Réessaie plus tard.",
+  "ok": "OK",
+  "cancel": "Annuler",
+  "save": "Enregistrer",
+  "method": {
+    "title": "Moyen de paiement",
+    "none": "Tu n’as pas encore enregistré de moyen de paiement.",
+    "add": "Ajouter",
+    "change": "Modifier",
+    "remove": "Supprimer",
+    "remove_confirm": "Veux-tu supprimer le moyen de paiement enregistré ? La recharge automatique ne sera alors plus possible.",
+    "removed": "Le moyen de paiement a été supprimé.",
+    "saved": "Ton moyen de paiement est enregistré.",
+    "saving": "Ton moyen de paiement est en cours d’enregistrement. Cela prend un instant.",
+    "cancelled": "Aucun moyen de paiement n’a été enregistré."
+  },
+  "credit": {
+    "title": "Crédit",
+    "balance": "Crédit actuel"
+  },
+  "topup": {
+    "button": "Recharger le crédit",
+    "header": "Recharger le crédit",
+    "placeholder": "Montant en CHF, par exemple {min}",
+    "next": "Continuer",
+    "amount_invalid": "Saisis un montant entre CHF {min} et CHF {max}."
+  },
+  "entries": {
+    "title": "Mouvements",
+    "empty": "Aucun mouvement pour l’instant.",
+    "kind": {
+      "topup": "Recharge",
+      "deduction": "Envoi",
+      "reversal": "Remboursement",
+      "correction": "Correction"
+    }
+  },
+  "autotopup": {
+    "title": "Recharge automatique",
+    "off": "Désactivée",
+    "on": "En dessous de CHF {threshold}, CHF {amount} sont rechargés",
+    "saved": "La recharge automatique est enregistrée.",
+    "enabled_label": "Recharger automatiquement",
+    "enabled_helper": "Si ton crédit passe sous le montant ci-dessous, nous le rechargeons avec ton moyen de paiement enregistré.",
+    "threshold_label": "Recharger quand le crédit passe sous ce montant (CHF)",
+    "amount_label": "Montant par recharge (CHF)",
+    "no_method": "Enregistre d’abord un moyen de paiement. Ensuite tu pourras recharger automatiquement."
+  },
+  "pay": {
+    "title": "Paiement",
+    "redirecting": "Redirection vers le paiement …",
+    "done": "Merci, ton paiement est en route. La facture sera marquée comme payée dès que le paiement sera confirmé.",
+    "cancelled": "Le paiement a été annulé. Tu peux réessayer à tout moment.",
+    "retry": "Réessayer",
+    "paid": "Cette facture est déjà payée.",
+    "not_tenant": "Cette facture ne peut pas être payée en ligne ici.",
+    "error": "Le paiement n’a pas pu être lancé. Réessaie plus tard."
+  },
+  "validation": {
+    "threshold_negative": "Le montant ne peut pas être inférieur à 0.",
+    "amount_min": "Saisis au moins CHF 50.00.",
+    "amount_max": "Saisis au plus CHF 5'000.00."
+  }
+}

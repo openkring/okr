@@ -1,0 +1,69 @@
+{
+  "billing": {
+    "title": "Pagamento e credito"
+  },
+  "loading": "Caricamento …",
+  "error_generic": "Purtroppo non ha funzionato. Riprova più tardi.",
+  "ok": "OK",
+  "cancel": "Annulla",
+  "save": "Salva",
+  "method": {
+    "title": "Metodo di pagamento",
+    "none": "Non hai ancora salvato un metodo di pagamento.",
+    "add": "Aggiungi",
+    "change": "Modifica",
+    "remove": "Rimuovi",
+    "remove_confirm": "Vuoi rimuovere il metodo di pagamento salvato? La ricarica automatica non sarà più possibile.",
+    "removed": "Il metodo di pagamento è stato rimosso.",
+    "saved": "Il tuo metodo di pagamento è salvato.",
+    "saving": "Il tuo metodo di pagamento viene salvato. Ci vuole un momento.",
+    "cancelled": "Non è stato salvato alcun metodo di pagamento."
+  },
+  "credit": {
+    "title": "Credito",
+    "balance": "Credito attuale"
+  },
+  "topup": {
+    "button": "Ricarica il credito",
+    "header": "Ricarica il credito",
+    "placeholder": "Importo in CHF, per esempio {min}",
+    "next": "Continua",
+    "amount_invalid": "Inserisci un importo tra CHF {min} e CHF {max}."
+  },
+  "entries": {
+    "title": "Movimenti",
+    "empty": "Ancora nessun movimento.",
+    "kind": {
+      "topup": "Ricarica",
+      "deduction": "Invio",
+      "reversal": "Rimborso",
+      "correction": "Correzione"
+    }
+  },
+  "autotopup": {
+    "title": "Ricarica automatica",
+    "off": "Disattivata",
+    "on": "Sotto CHF {threshold} vengono ricaricati CHF {amount}",
+    "saved": "La ricarica automatica è salvata.",
+    "enabled_label": "Ricarica automaticamente",
+    "enabled_helper": "Se il tuo credito scende sotto l’importo qui sotto, lo ricarichiamo con il tuo metodo di pagamento salvato.",
+    "threshold_label": "Ricarica quando il credito scende sotto questo importo (CHF)",
+    "amount_label": "Importo per ricarica (CHF)",
+    "no_method": "Salva prima un metodo di pagamento. Poi potrai ricaricare automaticamente."
+  },
+  "pay": {
+    "title": "Pagamento",
+    "redirecting": "Reindirizzamento al pagamento …",
+    "done": "Grazie, il tuo pagamento è in arrivo. La fattura verrà segnata come pagata appena il pagamento sarà confermato.",
+    "cancelled": "Il pagamento è stato annullato. Puoi riprovare in qualsiasi momento.",
+    "retry": "Riprova",
+    "paid": "Questa fattura è già pagata.",
+    "not_tenant": "Questa fattura non può essere pagata online qui.",
+    "error": "Non è stato possibile avviare il pagamento. Riprova più tardi."
+  },
+  "validation": {
+    "threshold_negative": "L’importo non può essere inferiore a 0.",
+    "amount_min": "Inserisci almeno CHF 50.00.",
+    "amount_max": "Inserisci al massimo CHF 5'000.00."
+  }
+}

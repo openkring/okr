@@ -1,0 +1,69 @@
+{
+  "billing": {
+    "title": "Pago y saldo"
+  },
+  "loading": "Cargando …",
+  "error_generic": "Lo sentimos, no ha funcionado. Inténtalo de nuevo más tarde.",
+  "ok": "OK",
+  "cancel": "Cancelar",
+  "save": "Guardar",
+  "method": {
+    "title": "Método de pago",
+    "none": "Todavía no has guardado ningún método de pago.",
+    "add": "Añadir",
+    "change": "Cambiar",
+    "remove": "Eliminar",
+    "remove_confirm": "¿Quieres eliminar el método de pago guardado? La recarga automática ya no será posible.",
+    "removed": "El método de pago se ha eliminado.",
+    "saved": "Tu método de pago está guardado.",
+    "saving": "Tu método de pago se está guardando. Tarda un momento.",
+    "cancelled": "No se ha guardado ningún método de pago."
+  },
+  "credit": {
+    "title": "Saldo",
+    "balance": "Saldo actual"
+  },
+  "topup": {
+    "button": "Recargar saldo",
+    "header": "Recargar saldo",
+    "placeholder": "Importe en CHF, por ejemplo {min}",
+    "next": "Continuar",
+    "amount_invalid": "Introduce un importe entre CHF {min} y CHF {max}."
+  },
+  "entries": {
+    "title": "Movimientos",
+    "empty": "Todavía no hay movimientos.",
+    "kind": {
+      "topup": "Recarga",
+      "deduction": "Envío",
+      "reversal": "Reembolso",
+      "correction": "Corrección"
+    }
+  },
+  "autotopup": {
+    "title": "Recarga automática",
+    "off": "Desactivada",
+    "on": "Por debajo de CHF {threshold} se recargan CHF {amount}",
+    "saved": "La recarga automática está guardada.",
+    "enabled_label": "Recargar automáticamente",
+    "enabled_helper": "Si tu saldo baja del importe de abajo, lo recargamos con tu método de pago guardado.",
+    "threshold_label": "Recargar cuando el saldo baje de este importe (CHF)",
+    "amount_label": "Importe por recarga (CHF)",
+    "no_method": "Guarda primero un método de pago. Después podrás recargar automáticamente."
+  },
+  "pay": {
+    "title": "Pago",
+    "redirecting": "Redirigiendo al pago …",
+    "done": "Gracias, tu pago está en camino. La factura se marcará como pagada en cuanto se confirme el pago.",
+    "cancelled": "El pago se ha cancelado. Puedes volver a intentarlo cuando quieras.",
+    "retry": "Intentar de nuevo",
+    "paid": "Esta factura ya está pagada.",
+    "not_tenant": "Esta factura no se puede pagar en línea aquí.",
+    "error": "No se ha podido iniciar el pago. Inténtalo de nuevo más tarde."
+  },
+  "validation": {
+    "threshold_negative": "El importe no puede ser inferior a 0.",
+    "amount_min": "Introduce al menos CHF 50.00.",
+    "amount_max": "Introduce como máximo CHF 5'000.00."
+  }
+}

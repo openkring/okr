@@ -50,6 +50,7 @@
     { "path": "../../finance/bill/feature/tsconfig.lib.json" },
     { "path": "../../finance/booking/feature/tsconfig.lib.json" },
     { "path": "../../finance/budget/feature/tsconfig.lib.json" },
+    { "path": "../../finance/collection/feature/tsconfig.lib.json" },
     { "path": "../../finance/cost-center/feature/tsconfig.lib.json" },
     { "path": "../../finance/expense/feature/tsconfig.lib.json" },
     { "path": "../../finance/invoice/feature/tsconfig.lib.json" },

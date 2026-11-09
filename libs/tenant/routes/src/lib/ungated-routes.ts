@@ -1,5 +1,5 @@
 import type { Route } from '@angular/router';
-import { isAdminGuard } from '@okr/auth-feature';
+import { isAdminGuard, isAuthenticatedGuard } from '@okr/auth-feature';
 
 /**
  * Routes that belong to NO feature block and must therefore never pass through
@@ -28,5 +28,17 @@ export const UNGATED_ROUTES: Route[] = [
     path: 'tenant/features',
     canActivate: [isAdminGuard()],
     loadComponent: () => import('@okr/tenant-feature').then(m => m.FeaturePicker),
+  },
+  // Billing (spec 1.149): how this tenant pays the operator — control plane, never a block a tenant could switch off.
+  // Stripe returns to both with `?stripe=done|cancel`; the urls are built by the callables, so keep the paths stable.
+  {
+    path: 'billing',
+    canActivate: [isAdminGuard()],
+    loadComponent: () => import('@okr/finance-collection-feature').then(m => m.BillingPage),
+  },
+  {
+    path: 'pay/:invoiceKey',
+    canActivate: [isAuthenticatedGuard],
+    loadComponent: () => import('@okr/finance-collection-feature').then(m => m.PayPage),
   },
 ];

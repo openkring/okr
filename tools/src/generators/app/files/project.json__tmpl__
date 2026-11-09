@@ -392,6 +392,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/finance/collection/feature/src/i18n",
+            "output": "./assets/i18n/finance/collection/feature"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/finance/cost-center/data-access/src/i18n",
             "output": "./assets/i18n/finance/cost-center/data-access"
           },

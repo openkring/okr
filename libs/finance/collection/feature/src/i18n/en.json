@@ -1,0 +1,69 @@
+{
+  "billing": {
+    "title": "Payment & credit"
+  },
+  "loading": "Loading …",
+  "error_generic": "Sorry, that did not work. Please try again later.",
+  "ok": "OK",
+  "cancel": "Cancel",
+  "save": "Save",
+  "method": {
+    "title": "Payment method",
+    "none": "You have not saved a payment method yet.",
+    "add": "Add",
+    "change": "Change",
+    "remove": "Remove",
+    "remove_confirm": "Do you want to remove the saved payment method? Automatic top-up will no longer be possible.",
+    "removed": "The payment method has been removed.",
+    "saved": "Your payment method is saved.",
+    "saving": "Your payment method is being saved. This takes a moment.",
+    "cancelled": "No payment method was saved."
+  },
+  "credit": {
+    "title": "Credit",
+    "balance": "Current credit"
+  },
+  "topup": {
+    "button": "Top up credit",
+    "header": "Top up credit",
+    "placeholder": "Amount in CHF, for example {min}",
+    "next": "Continue",
+    "amount_invalid": "Please enter an amount between CHF {min} and CHF {max}."
+  },
+  "entries": {
+    "title": "Transactions",
+    "empty": "No transactions yet.",
+    "kind": {
+      "topup": "Top-up",
+      "deduction": "Sending",
+      "reversal": "Refund",
+      "correction": "Correction"
+    }
+  },
+  "autotopup": {
+    "title": "Automatic top-up",
+    "off": "Off",
+    "on": "Below CHF {threshold}, CHF {amount} is added",
+    "saved": "Automatic top-up is saved.",
+    "enabled_label": "Top up automatically",
+    "enabled_helper": "When your credit falls below the amount below, we top it up with your saved payment method.",
+    "threshold_label": "Top up when the credit falls below (CHF)",
+    "amount_label": "Amount per top-up (CHF)",
+    "no_method": "Save a payment method first. Then you can top up automatically."
+  },
+  "pay": {
+    "title": "Payment",
+    "redirecting": "Redirecting to payment …",
+    "done": "Thank you, your payment is on its way. The invoice is marked as paid as soon as the payment is confirmed.",
+    "cancelled": "The payment was cancelled. You can try again at any time.",
+    "retry": "Try again",
+    "paid": "This invoice has already been paid.",
+    "not_tenant": "This invoice cannot be paid online here.",
+    "error": "The payment could not be started. Please try again later."
+  },
+  "validation": {
+    "threshold_negative": "The amount cannot be less than 0.",
+    "amount_min": "Please enter at least CHF 50.00.",
+    "amount_max": "Please enter at most CHF 5'000.00."
+  }
+}
