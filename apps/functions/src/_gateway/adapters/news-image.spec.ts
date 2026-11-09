@@ -84,3 +84,39 @@ describe('newsImageAdapter', () => {
     }
   });
 });
+
+describe('newsImageAdapter — snapshotPage cameras', () => {
+  const page = (img: string) => `<!DOCTYPE html><html><head><script src="RediCamPhoto1.js"></script></head><body><img src="${img}"><img src="other.jpg"></body></html>`;
+
+  function snapDeps(html: string, ct = 'image/jpeg') {
+    const fetch = vi.fn(async (url: string) =>
+      url.includes('snap.cgi')
+        ? { data: html, headers: { 'content-type': 'text/html' }, status: 200 }
+        : { data: Buffer.from([0xff, 0xd8, 0xff]), headers: { 'content-type': ct }, status: 200 });
+    const ch = cam({ feedUrl: 'https://mythenquai.example.org/snap.cgi?l=1', snapshotPage: true });
+    const d: Partial<NewsRelayDeps> = { readChannel: async () => ch, fetch: fetch as unknown as NewsRelayDeps['fetch'], lookup: async () => ['93.184.216.34'], now: () => new Date('2026-11-08T10:00:00Z') };
+    return { d, fetch };
+  }
+
+  it('loads the page, then its first image resolved against the page', async () => {
+    const { d, fetch } = snapDeps(page('Mythenquai21609.jpg'));
+    const raw = await makeNewsImageAdapter(d).fetch({ channelKey: 'cam1' }, ctx);
+    const calls = fetch.mock.calls as unknown as [string, Record<string, unknown>][];
+    expect(calls.map((c) => c[0])).toEqual(['https://mythenquai.example.org/snap.cgi?l=1', 'https://mythenquai.example.org/Mythenquai21609.jpg']);
+    expect(calls[0][1]).toMatchObject({ responseType: 'text' });
+    expect(calls[1][1]).toMatchObject({ responseType: 'arraybuffer' });
+    expect(raw.dataUrl).toBe('data:image/jpeg;base64,/9j/');
+  });
+
+  it('refuses an image on another host without fetching it', async () => {
+    const { d, fetch } = snapDeps(page('https://tracker.example.com/pixel.jpg'));
+    await expect(makeNewsImageAdapter(d).fetch({ channelKey: 'cam1' }, ctx)).rejects.toMatchObject({ code: 'failed-precondition' });
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('is failed-precondition when the page has no image', async () => {
+    const { d, fetch } = snapDeps('<html><body>Kamera offline</body></html>');
+    await expect(makeNewsImageAdapter(d).fetch({ channelKey: 'cam1' }, ctx)).rejects.toMatchObject({ code: 'failed-precondition' });
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+});

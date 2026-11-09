@@ -9,10 +9,16 @@
 // guard still applies to every connection, and a redirect may not switch to another host.
 // The cache is per tenant and channel, 60 s, so many members watching one camera cause one
 // upstream fetch a minute.
+//
+// `snapshotPage` cameras (RediCam) store every still under a new name, so `feedUrl` is the HTML page
+// that shows the newest one: the relay loads that page, takes its first `<img>` and fetches it. The
+// image must be on the page's host. Loading the page makes such a camera take a photo, which the
+// 60 s cache keeps to at most one a minute per tenant.
 
 import { HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import type { ProviderAdapter } from '../provider';
+import { snapshotImageUrl } from './news-scrape';
 import { contentTypeOf, loadRelayChannel, NEWS_ATTRIBUTION, realNewsRelayDeps, relayFetch, type NewsChannelParams, type NewsRelayDeps } from './news-feed';
 
 /** Image types the relay passes on: no SVG (script-capable), no GIF. */
@@ -43,7 +49,8 @@ export function makeNewsImageAdapter(overrides: Partial<NewsRelayDeps>): Provide
     attribution: NEWS_ATTRIBUTION,
     async fetch(params, ctx) {
       const channel = await loadRelayChannel(params, ctx, deps, (c) => c.kind === 'image' && c.viaRelay === true);
-      const res = await relayFetch(channel.feedUrl, {
+      const imageUrl = channel.snapshotPage === true ? await resolveSnapshot(channel.feedUrl, deps) : channel.feedUrl;
+      const res = await relayFetch(imageUrl, {
         responseType: 'arraybuffer',
         allowHttp: true,
         allowAnyPort: true,
@@ -62,6 +69,17 @@ export function makeNewsImageAdapter(overrides: Partial<NewsRelayDeps>): Provide
     map: (raw) => ({ dataUrl: raw.dataUrl, contentType: raw.contentType }),
     sourceTimestamp: (raw) => raw.fetchedAt,
   };
+}
+
+/** The current still of a snapshot page: its first `<img>`, on the page's own host. */
+async function resolveSnapshot(pageUrl: string, deps: NewsRelayDeps): Promise<string> {
+  const page = await relayFetch(pageUrl, { responseType: 'text', allowHttp: true, allowAnyPort: true, sameHost: true, accept: 'text/html', deps });
+  const imageUrl = snapshotImageUrl(typeof page.data === 'string' ? page.data : '', page.finalUrl);
+  if (!imageUrl || new URL(imageUrl).hostname !== new URL(pageUrl).hostname) {
+    logger.warn('newsCenter: snapshot page without a same-host image', { host: new URL(pageUrl).hostname });
+    throw new HttpsError('failed-precondition', 'no snapshot image', { reason: 'snapshot' });
+  }
+  return imageUrl;
 }
 
 export const newsImageAdapter = makeNewsImageAdapter({});

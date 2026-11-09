@@ -48,6 +48,12 @@ export class NewsChannelModel implements OkrModel, NamedModel {
   public refreshMinutes = 5;
   /** Webcams only: load the image through the relay op `newsImage` (design §7.1) instead of directly; required for http: image URLs. */
   public viaRelay = false;
+  /**
+   * Webcams with `viaRelay` only: `feedUrl` is an HTML page (e.g. a RediCam `snap.cgi`) whose first `<img>`
+   * is the current still, because the camera stores each snapshot under a new name. The relay loads the page,
+   * then that image (same host only). Legacy docs lack the field: read it as `false`.
+   */
+  public snapshotPage = false;
   /** `kind: 'html'` only: how the relay finds the news entries in the page at `feedUrl` (design §7.2). */
   public scrape?: NewsScrapeConfig;
 }

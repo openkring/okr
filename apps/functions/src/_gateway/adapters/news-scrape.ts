@@ -160,3 +160,13 @@ export function htmlToRss(html: string, pageUrl: string, scrape: NewsScrapeConfi
     `<description>${escapeXml(channelName)}</description>${items.join('')}</channel></rss>`
   );
 }
+
+/**
+ * The absolute http(s) URL of the first `<img src>` in a snapshot page (a webcam with `snapshotPage`,
+ * e.g. a RediCam `snap.cgi` that names each still differently), or '' when there is none.
+ */
+export function snapshotImageUrl(html: string, pageUrl: string): string {
+  const doc = parseDocument(html, { decodeEntities: true });
+  const img = selectOne<AnyNode, Element>('img[src]', doc as unknown as AnyNode);
+  return absoluteHttpUrl(img ? getAttributeValue(img, 'src') : undefined, pageUrl);
+}

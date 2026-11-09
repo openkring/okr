@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { XMLParser } from 'fast-xml-parser';
-import { absoluteHttpUrl, escapeXml, htmlToRss, isValidScrapeConfig, SCRAPE_MAX_ITEMS, scrapedDateToRfc822, scrapeItems } from './news-scrape';
+import { absoluteHttpUrl, escapeXml, htmlToRss, isValidScrapeConfig, SCRAPE_MAX_ITEMS, scrapedDateToRfc822, scrapeItems, snapshotImageUrl } from './news-scrape';
 
 // trimmed from https://www.swissrowing.ch/de/alle-news (2026-11-08)
 const PAGE = `<html><body><div class="view">
@@ -111,5 +111,17 @@ describe('htmlToRss', () => {
     expect(ch.item[0].enclosure['@_url']).toContain('/a.jpg?h=1&itok=x');
     expect(ch.item[1].title).toBe('BaselHead Regatta');
     expect(xml).not.toContain('<script');
+  });
+});
+
+describe('snapshotImageUrl', () => {
+  it('takes the first <img src>, absolute against the page', () => {
+    expect(snapshotImageUrl('<script src="a.js"></script><img src="Mythenquai21609.jpg"><img src="b.jpg">', 'https://cam.example.org/snap.cgi?l=1'))
+      .toBe('https://cam.example.org/Mythenquai21609.jpg');
+  });
+  it('is empty without an image or for a non-http src', () => {
+    expect(snapshotImageUrl('<p>offline</p>', 'https://cam.example.org/')).toBe('');
+    expect(snapshotImageUrl('<img src="javascript:alert(1)">', 'https://cam.example.org/')).toBe('');
+    expect(snapshotImageUrl('<img alt="x">', 'https://cam.example.org/')).toBe('');
   });
 });
