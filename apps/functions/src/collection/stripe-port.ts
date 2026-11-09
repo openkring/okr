@@ -60,7 +60,7 @@ export function stripePort(): StripePort {
         metadata: { tenantId },
         setup_intent_data: { metadata: { tenantId } },
       });
-      return { id: session.id, url: session.url ?? '' };
+      return { id: session.id, url: urlOf(session) };
     },
 
     async createPaymentSession({ customerId, amount, description, metadata, successUrl, cancelUrl, offerSave }) {
@@ -85,7 +85,7 @@ export function stripePort(): StripePort {
             }
           : {}),
       });
-      return { id: session.id, url: session.url ?? '' };
+      return { id: session.id, url: urlOf(session) };
     },
 
     async chargeOffSession({ customerId, paymentMethodId, amount, description, metadata, idempotencyKey }) {
@@ -131,13 +131,20 @@ export function stripePort(): StripePort {
     async feeOfCharge(chargeId) {
       const charge = await stripe.charges.retrieve(chargeId, { expand: ['balance_transaction'] });
       const bt = charge.balance_transaction;
-      return bt && typeof bt !== 'string' ? bt.fee : 0;
+      if (!bt || typeof bt === 'string') throw new Error(`Stripe charge ${chargeId} has no expanded balance transaction`);
+      if (bt.currency !== CURRENCY) throw new Error(`Stripe charge ${chargeId} fee is in ${bt.currency}, not ${CURRENCY}`);
+      return bt.fee;
     },
 
     async detachPaymentMethod(paymentMethodId) {
       await stripe.paymentMethods.detach(paymentMethodId);
     },
   };
+}
+
+function urlOf(session: Stripe.Checkout.Session): string {
+  if (!session.url) throw new Error(`Stripe checkout session ${session.id} has no url`);
+  return session.url;
 }
 
 function chargeIdOf(pi: Stripe.PaymentIntent): string {
