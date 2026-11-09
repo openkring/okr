@@ -2,17 +2,22 @@
 //
 // The nightly reconcile of the Postversand (spec 1.150): no paid letter is left in limbo. The fan-out trigger
 // (`onMailing`) and the submit trigger have no safety net of their own beyond their retries; this is it. Pure core:
-// every effect is injected. Four independent parts, each bounded and each failing alone.
+// every effect is injected. Five independent parts, each bounded and each failing alone, all under one time budget
+// (RECONCILE_BUDGET_MS: the reconcile shares the nightly slot, so it stops starting new work and logs what is left).
 //
+//   0. a `post-orders` lock left `pending` for more than an hour (the callable died between the deduction and the
+//      mailing doc): no mailing doc = the WHOLE deduction back, lock `failed`; a mailing doc = lock `done`.
 //   1. a Pingen Versand with fewer `sendings` than letters: the charged recipients without a record get a
-//      tombstone and their share back (the fan-out's own `finish`), ONE task for the sender.
+//      tombstone and their share back (the fan-out's own `finish`), ONE task for the sender. Tombstones that
+//      already exist get their keyed reversal again (a crash between tombstone and reversal lost it; the ledger
+//      answers a duplicate for every other one).
 //   2. `queued` records the submit trigger never took: submitted from here, with the same guards.
 //   3. `submitting` records without an answer: «Briefstatus unklar» (stays `submitting`, no refund).
 //   4. `submitted` records Pingen never reported on for 7 days: one task, no state change.
 
 import { logger } from 'firebase-functions/v2';
 import { convertDateFormatToString, DateFormat, recipientParentKey, subDuration } from '@okr/shared-util-core';
-import { makePostFanOut, sendingId, type PostFanOutDeps } from '../email/mailing-sendings';
+import { makePostFanOut, sendingId, TOMBSTONE_DETAIL, type PostFanOutDeps } from '../email/mailing-sendings';
 import type { MailingPost } from './post-order';
 import { flagAmbiguous, submitSending, type SendingRow, type SubmitDeps } from './submit-sending.logic';
 
@@ -23,6 +28,8 @@ export const MAILING_WINDOW_MS = 30 * 24 * HOUR_MS;
 export const MAX_PER_PART = 100;
 /** what one query reads; a part acts on at most MAX_PER_PART of it, AFTER dropping what is already handled */
 export const QUERY_LIMIT = 500;
+/** the share of the nightly slot (540 s, shared with a dozen jobs) the reconcile may take */
+export const RECONCILE_BUDGET_MS = 120_000;
 
 export interface ReconMailing {
   id: string;
@@ -39,15 +46,32 @@ export interface ReconcileDeps extends SubmitDeps {
    * StoreDateTime (`yyyyMMddHHmmss`), the format `sendMailing` writes into `post.acceptedAt`.
    */
   listPostMailings(since: string, before: string, limit: number): Promise<ReconMailing[]>;
-  /** ids of every `sendings` record (any state, tombstones included) of the source */
-  listSendingIds(source: string): Promise<string[]>;
+  /** every `sendings` record (any state, tombstones included) of the source, reduced to what part 1 reads */
+  listSendings(source: string): Promise<Array<Pick<SendingRow, 'id' | 'state' | 'history'>>>;
+  /** `post-orders` locks in state `pending` (any age) */
+  listPendingPostOrders(limit: number): Promise<PendingPostOrder[]>;
+  mailingExists(mailingKey: string): Promise<boolean>;
+  setPostOrderState(mailingKey: string, state: 'done' | 'failed'): Promise<void>;
   listByState(state: SendingRow['state'], limit: number): Promise<SendingRow[]>;
   /** a task of that key in ANY state: a closed one must not be reopened every night */
   hasAnyTask(relatedKey: string, tenantId: string): Promise<boolean>;
   fanOut: PostFanOutDeps;
 }
 
+/** A `post-orders/{mailingKey}` lock as part 0 reads it; `letters`/`pages` are missing on locks from before 1.150's fix. */
+export interface PendingPostOrder {
+  id: string;
+  tenantId: string;
+  createdAt: string;
+  letters?: number;
+  pages?: number;
+}
+
 export interface ReconcileCounts {
+  /** stale locks: whole deduction reversed / lock set failed / lock set done (the mailing exists) */
+  ordersReversed: number;
+  ordersFailed: number;
+  ordersDone: number;
   mailingsChecked: number;
   mailingsRepaired: number;
   lettersReversed: number;
@@ -56,6 +80,19 @@ export interface ReconcileCounts {
   submittingResubmitted: number;
   submittingFlagged: number;
   staleTasks: number;
+  /** tombstones whose lost reversal was booked now (the ledger did not answer duplicate) */
+  tombstonesRefunded: number;
+  /** items not started because the time budget was used up; the next run takes them */
+  leftForNextRun: number;
+}
+
+/** One run: the counts and the time budget. */
+export interface ReconcileRun {
+  counts: ReconcileCounts;
+  /** true once the budget is used up: no new submit or reversal is started */
+  over(): boolean;
+  /** records `n` items of `part` left for the next run */
+  leave(part: string, n: number): void;
 }
 
 const ms = (iso: string | undefined): number => {
@@ -83,16 +120,86 @@ export function acceptedAtWindow(now: Date): { since: string; before: string } {
   };
 }
 
+const errorCode = (e: unknown): unknown => (e as { code?: unknown } | null)?.code;
+
+/**
+ * Part 0. A lock older than an hour is dead (the callable runs at most 120 s). Its mailing doc decides: there = the
+ * order went through (`done`); missing = the deduction, if it committed, is reversed in whole under the same key
+ * withPostOrder's own rollback uses (`mailing.<id>-undo`, so the two can never both book), then `failed`. A missing
+ * deduction entry means nothing was charged: logged, `failed` all the same. Any other ledger error keeps the lock
+ * `pending` for the next run.
+ */
+export async function settleStalePostOrders(deps: ReconcileDeps, run: ReconcileRun): Promise<void> {
+  const { counts } = run;
+  const nowMs = deps.now().getTime();
+  const all = await deps.listPendingPostOrders(QUERY_LIMIT);
+  if (all.length >= QUERY_LIMIT) logger.warn(`post-reconcile: ${all.length} pending post orders: the limit is hit, later ones wait for the next run`);
+  const stale = all.filter((o) => olderThan(o.createdAt, HOUR_MS, nowMs)).slice(0, MAX_PER_PART);
+  for (const [i, o] of stale.entries()) {
+    if (run.over()) { run.leave('orders', stale.length - i); break; }
+    try {
+      if (await deps.mailingExists(o.id)) {
+        await deps.setPostOrderState(o.id, 'done');
+        counts.ordersDone++;
+        continue;
+      }
+      const { letters, pages } = o;
+      if (!o.tenantId || !Number.isInteger(letters) || !Number.isInteger(pages) || (letters ?? 0) <= 0 || (pages ?? -1) < 0) {
+        logger.error('post-reconcile: stale post order is a legacy lock without letters/pages, reverse by hand', { id: o.id, tenantId: o.tenantId, entryId: `deduct-mailing.${o.id}` });
+        continue;
+      }
+      try {
+        await deps.reverseShare(o.tenantId, `deduct-mailing.${o.id}`, { units: letters as number, pages: pages as number }, `mailing.${o.id}-undo`, 'Versand nicht gespeichert');
+        counts.ordersReversed++;
+      } catch (err) {
+        if (errorCode(err) !== 'not-found') throw err;
+        logger.warn('post-reconcile: stale post order without a deduction entry, nothing to reverse', { id: o.id, tenantId: o.tenantId });
+      }
+      await deps.setPostOrderState(o.id, 'failed');
+      counts.ordersFailed++;
+    } catch (err) {
+      logger.error(`post-reconcile: stale post order ${o.id} not settled, next run`, { tenantId: o.tenantId, error: msg(err) });
+    }
+  }
+}
+
+const isTombstone = (r: Pick<SendingRow, 'state' | 'history'>): boolean => r.state === 'failed' && r.history.some((h) => h.detail === TOMBSTONE_DETAIL);
+
+/** Part 1b: the keyed reversal of each existing tombstone again; the ledger books only a lost one. Never throws. */
+async function reissueTombstoneReversals(deps: ReconcileDeps, run: ReconcileRun, m: ReconMailing, records: Array<Pick<SendingRow, 'id' | 'state' | 'history'>>): Promise<boolean> {
+  const tombstones = records.filter(isTombstone);
+  if (tombstones.length === 0) return true;
+  if (!Number.isInteger(m.post.total / m.post.letters)) return true;   // the fan-out never reversed either; logged there
+  const pages = m.post.pages / m.post.letters;
+  for (const [i, t] of tombstones.entries()) {
+    if (run.over()) { run.leave('tombstones', tombstones.length - i); return false; }
+    try {
+      const r = await deps.fanOut.reverseShare(m.tenantId, m.post.creditEntryId, { units: 1, pages }, t.id, `Versand ${m.id}: letters were not built`);
+      if (!r.duplicate) {
+        run.counts.tombstonesRefunded++;
+        logger.warn('post-reconcile: a tombstone\'s lost reversal is booked now', { id: t.id, tenantId: m.tenantId });
+      }
+    } catch (err) {
+      logger.error('post-reconcile: tombstone reversal failed, next run', { id: t.id, tenantId: m.tenantId, error: msg(err) });
+    }
+  }
+  return true;
+}
+
 /** Part 1. */
-export async function repairIncompleteFanOuts(deps: ReconcileDeps, counts: ReconcileCounts): Promise<void> {
+export async function repairIncompleteFanOuts(deps: ReconcileDeps, run: ReconcileRun): Promise<void> {
+  const { counts } = run;
   const { since, before } = acceptedAtWindow(deps.now());
   const mailings = await deps.listPostMailings(since, before, QUERY_LIMIT);
   if (mailings.length >= QUERY_LIMIT) logger.warn(`post-reconcile: ${mailings.length} Versand in the last 30 days: the limit is hit, older ones may not be checked`);
-  for (const m of mailings) {
+  for (const [i, m] of mailings.entries()) {
+    if (run.over()) { run.leave('fan-outs', mailings.length - i); break; }
     counts.mailingsChecked++;
     try {
       const source = `mailing.${m.id}`;
-      const existing = new Set(await deps.listSendingIds(source));
+      const records = await deps.listSendings(source);
+      if (!(await reissueTombstoneReversals(deps, run, m, records))) break;
+      const existing = new Set(records.map((r) => r.id));
       if (existing.size >= m.post.letters) continue;
       const missing = [...new Set(m.post.recipients.map(recipientParentKey))].filter((pk) => !existing.has(sendingId(m.id, pk)));
       if (missing.length === 0) continue;
@@ -136,11 +243,13 @@ export async function repairIncompleteFanOuts(deps: ReconcileDeps, counts: Recon
 }
 
 /** Part 2: the same submit core as the trigger, so every guard applies. */
-export async function resubmitQueued(deps: ReconcileDeps, counts: ReconcileCounts): Promise<void> {
+export async function resubmitQueued(deps: ReconcileDeps, run: ReconcileRun): Promise<void> {
+  const { counts } = run;
   const nowMs = deps.now().getTime();
   const all = await listState(deps, 'queued');
   const due = all.filter((r) => olderThan(r.createdAt, HOUR_MS, nowMs)).slice(0, MAX_PER_PART);
-  for (const r of due) {
+  for (const [i, r] of due.entries()) {
+    if (run.over()) { run.leave('queued', due.length - i); break; }
     try {
       await submitSending(deps, r.id);
       counts.queuedResubmitted++;
@@ -162,11 +271,13 @@ async function listState(deps: ReconcileDeps, state: SendingRow['state']): Promi
  * whose 24 h rule refunds it. With `attemptedAt` Pingen may hold the letter: «Briefstatus unklar», never a refund.
  * Records that already carry that task are dropped BEFORE the bound, or the same hundred would come back every night.
  */
-export async function flagStuckSubmitting(deps: ReconcileDeps, counts: ReconcileCounts): Promise<void> {
+export async function flagStuckSubmitting(deps: ReconcileDeps, run: ReconcileRun): Promise<void> {
+  const { counts } = run;
   const nowMs = deps.now().getTime();
   const stuck = (await listState(deps, 'submitting')).filter((r) => olderThan(r.updatedAt, HOUR_MS, nowMs));
   const unreached = stuck.filter((r) => !r.attemptedAt).slice(0, MAX_PER_PART);
-  for (const r of unreached) {
+  for (const [i, r] of unreached.entries()) {
+    if (run.over()) { run.leave('submitting', unreached.length - i); break; }
     try {
       await submitSending(deps, r.id);
       counts.submittingResubmitted++;
@@ -183,7 +294,8 @@ export async function flagStuckSubmitting(deps: ReconcileDeps, counts: Reconcile
       logger.error(`post-reconcile: task lookup for letter ${r.id} failed`, { error: msg(err) });
     }
   }
-  for (const r of open) {
+  for (const [i, r] of open.entries()) {
+    if (run.over()) { run.leave('submitting-unclear', open.length - i); break; }
     try {
       await flagAmbiguous(deps, r, { message: 'submitting for more than an hour without an answer' });
       if (await deps.hasAnyTask(`sending.${r.id}`, r.tenants[0] ?? '')) counts.submittingFlagged++;
@@ -197,7 +309,8 @@ export async function flagStuckSubmitting(deps: ReconcileDeps, counts: Reconcile
  * Part 4: no state change, one task per letter for ever (a closed task is not reopened). A letter Pingen reported on
  * (sent, delivered, undeliverable, or an `issues` event: any history entry with a detail, or an issue task) is not silent.
  */
-export async function flagSilentSubmitted(deps: ReconcileDeps, counts: ReconcileCounts): Promise<void> {
+export async function flagSilentSubmitted(deps: ReconcileDeps, run: ReconcileRun): Promise<void> {
+  const { counts } = run;
   const nowMs = deps.now().getTime();
   const candidates = (await listState(deps, 'submitted')).filter((r) => olderThan(r.updatedAt, STALE_SUBMITTED_MS, nowMs)
     && !r.history.some((h) => h.state === 'sent' || h.state === 'delivered' || h.state === 'undeliverable' || !!h.detail));
@@ -214,7 +327,8 @@ export async function flagSilentSubmitted(deps: ReconcileDeps, counts: Reconcile
     }
   }
   const mailings = new Map<string, Awaited<ReturnType<SubmitDeps['loadMailing']>>>();
-  for (const r of due) {
+  for (const [i, r] of due.entries()) {
+    if (run.over()) { run.leave('silent', due.length - i); break; }
     try {
       const tenantId = r.tenants[0] ?? '';
       if (!mailings.has(r.source)) mailings.set(r.source, await deps.loadMailing(r.source, tenantId));
@@ -235,18 +349,32 @@ export async function flagSilentSubmitted(deps: ReconcileDeps, counts: Reconcile
   }
 }
 
-/** Runs the four parts in order; one part's failure is logged and the rest still run. */
+/**
+ * Runs the five parts in order; one part's failure is logged and the rest still run. Past RECONCILE_BUDGET_MS (by
+ * the injected clock) no part starts a new item; what was left is logged and taken by the next night.
+ */
 export async function reconcilePostVersand(deps: ReconcileDeps): Promise<ReconcileCounts> {
-  const counts: ReconcileCounts = { mailingsChecked: 0, mailingsRepaired: 0, lettersReversed: 0, queuedResubmitted: 0, submittingResubmitted: 0, submittingFlagged: 0, staleTasks: 0 };
+  const counts: ReconcileCounts = {
+    ordersReversed: 0, ordersFailed: 0, ordersDone: 0, mailingsChecked: 0, mailingsRepaired: 0, lettersReversed: 0, queuedResubmitted: 0,
+    submittingResubmitted: 0, submittingFlagged: 0, staleTasks: 0, tombstonesRefunded: 0, leftForNextRun: 0,
+  };
+  const startMs = deps.now().getTime();
+  const left: Record<string, number> = {};
+  const run: ReconcileRun = {
+    counts,
+    over: () => deps.now().getTime() - startMs >= RECONCILE_BUDGET_MS,
+    leave: (part, n) => { left[part] = (left[part] ?? 0) + n; counts.leftForNextRun += n; },
+  };
   for (const [name, part] of [
-    ['fan-outs', repairIncompleteFanOuts], ['queued', resubmitQueued], ['submitting', flagStuckSubmitting], ['silent', flagSilentSubmitted],
+    ['orders', settleStalePostOrders], ['fan-outs', repairIncompleteFanOuts], ['queued', resubmitQueued], ['submitting', flagStuckSubmitting], ['silent', flagSilentSubmitted],
   ] as const) {
     try {
-      await part(deps, counts);
+      await part(deps, run);
     } catch (err) {
       logger.error(`post-reconcile: part ${name} failed`, { error: msg(err) });
     }
   }
+  if (counts.leftForNextRun > 0) logger.warn('post-reconcile: time budget used up, the rest waits for the next run', left);
   logger.info('post-reconcile: done', { ...counts });
   return counts;
 }

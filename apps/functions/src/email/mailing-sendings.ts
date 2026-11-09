@@ -27,6 +27,9 @@ export interface PostFanOutDeps {
   reverseShare(tenantId: string, entryId: string, part: { units: number; pages: number }, key: string, reason: string): Promise<{ amount: number; duplicate: boolean }>;
 }
 
+/** The history detail of a tombstone: a charged recipient without a letter whose share went back (the reconcile looks for it). */
+export const TOMBSTONE_DETAIL = 'no letter - share returned';
+
 export function sendingId(mailingKey: string, parentKey: string): string {
   return `${mailingKey}_${parentKey}`;
 }
@@ -93,7 +96,7 @@ export function makePostFanOut(args: { tenantId: string; mailingKey: string; pos
       const id = sendingId(mailingKey, parentKey);
       const tombstone: SendingRecord = {
         ...base(parentKey, '', '', quotedPages), price: 0, state: 'failed',
-        history: [{ state: 'failed', at: nowIso, detail: 'no letter - share returned' }],
+        history: [{ state: 'failed', at: nowIso, detail: TOMBSTONE_DETAIL }],
       };
       try {
         if (!(await deps.create(id, tombstone))) continue;

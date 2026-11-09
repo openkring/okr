@@ -175,6 +175,14 @@ describe('withPostOrder failure handling', () => {
     expect(acquire).not.toHaveBeenCalled();
   });
 
+  it('the lock records letters and pages, so the reconcile can reverse a dead order in whole', async () => {
+    const { env, request } = setup(['CH', 'CH', 'DE']);
+    const lock = fakeLock();
+    const acquire = vi.spyOn(lock, 'acquire');
+    await withPostOrder(env, await accepted(env, request, { lock }), async () => 1);
+    expect(acquire).toHaveBeenCalledWith({ letters: 2, pages: 4 });
+  });
+
   it('success sets the lock to done', async () => {
     const { env, request } = setup(['CH']);
     const lock = fakeLock();

@@ -12,7 +12,7 @@ const names = (jobs: { name: string }[]) => jobs.map((j) => j.name);
 
 describe('time-slot schedulers', () => {
   it('nightly runs its thirteen jobs in order', () => {
-    expect(names(NIGHTLY_JOBS)).toEqual(['tripStatsReconcile', 'crewTrackCleanup', 'trackerExpiry', 'roomPostPolicySweep', 'expiredMembershipSweep', 'pinboardSweep', 'billScanReap', 'privacyExportReap', 'mailingLettersReap', 'postVersandReconcile', 'courseEndTasks', 'energyFiguresFetch', 'webhookStuckCheck']);
+    expect(names(NIGHTLY_JOBS)).toEqual(['tripStatsReconcile', 'crewTrackCleanup', 'trackerExpiry', 'roomPostPolicySweep', 'expiredMembershipSweep', 'pinboardSweep', 'billScanReap', 'privacyExportReap', 'mailingLettersReap', 'courseEndTasks', 'energyFiguresFetch', 'webhookStuckCheck', 'postVersandReconcile']);
   });
 
   it('morning runs its six jobs in order', () => {

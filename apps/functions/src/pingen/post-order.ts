@@ -267,8 +267,11 @@ export type PostLockState = 'pending' | 'done' | 'failed';
 
 /** The `post-orders/{mailingKey}` lock doc (functions-only collection): one holder per quote token. */
 export interface PostLock {
-  /** creates the lock as `pending`; when it exists already, says in which state */
-  acquire(): Promise<{ acquired: true } | { acquired: false; state: PostLockState }>;
+  /**
+   * creates the lock as `pending` with what the deduction will charge (the nightly reconcile reverses a dead order
+   * in whole from it); when it exists already, says in which state
+   */
+  acquire(order: { letters: number; pages: number }): Promise<{ acquired: true } | { acquired: false; state: PostLockState }>;
   set(state: 'done' | 'failed'): Promise<void>;
   /** drops the lock: no money moved, the same quote may be retried */
   remove(): Promise<void>;
@@ -280,6 +283,9 @@ export interface PostOrderDoc {
   createdAt: string;
   /** createdAt + 1 day; a Firestore TTL policy on this field can be added later */
   expiresAt: string;
+  /** what the deduction charges; missing on locks written before the reconcile needed them (logged, skipped there) */
+  letters?: number;
+  pages?: number;
 }
 
 /** The mailing id of a Pingen send: the same quote token always names the same Versand, so a replay cannot charge twice. */
@@ -315,7 +321,7 @@ export async function withPostOrder<T>(env: QuoteEnv, args: PostOrderArgs, work:
   // no Swiss letter: no money moves, so no lock either; the Post part is the download
   if (computed.letters === 0) return { duplicate: false, value: await work(undefined) };
 
-  const taken = await args.lock.acquire();
+  const taken = await args.lock.acquire({ letters: computed.letters, pages: computed.pages });
   if (!taken.acquired) {
     if (taken.state === 'done') return { duplicate: true };
     if (taken.state === 'pending') throw new HttpsError('aborted', 'send in progress');

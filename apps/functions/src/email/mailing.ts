@@ -255,9 +255,9 @@ async function storeAttachments(resolved: ResolvedAttachment[], tenantId: string
 function postLockOf(db: Firestore, key: string, tenantId: string): PostLock {
   const lockRef = db.collection(PostOrderCollection).doc(key);
   return {
-    acquire: async () => {
+    acquire: async ({ letters, pages }) => {
       const now = new Date();
-      const doc: PostOrderDoc = { tenantId, state: 'pending', createdAt: now.toISOString(), expiresAt: new Date(now.getTime() + 24 * 3600 * 1000).toISOString() };
+      const doc: PostOrderDoc = { tenantId, state: 'pending', createdAt: now.toISOString(), expiresAt: new Date(now.getTime() + 24 * 3600 * 1000).toISOString(), letters, pages };
       try {
         await lockRef.create(doc);
         return { acquired: true as const };

@@ -10,7 +10,7 @@ import { postFanOutDeps } from '../email/mailing-sendings';
 import { reconcilePostVersand, type ReconcileDeps, type ReconMailing } from './reconcile.logic';
 import { submitDeps } from './submit-sending';
 import type { SendingRow } from './submit-sending.logic';
-import type { MailingPost } from './post-order';
+import { PostOrderCollection, type MailingPost, type PostOrderDoc } from './post-order';
 
 export function reconcileDeps(): ReconcileDeps {
   const db = getFirestore();
@@ -31,7 +31,16 @@ export function reconcileDeps(): ReconcileDeps {
       }
       return out;
     },
-    listSendingIds: async (source) => (await col().where('source', '==', source).select().get()).docs.map((d) => d.id),
+    listSendings: async (source) => (await col().where('source', '==', source).select('state', 'history').get()).docs.map((d) => ({
+      id: d.id, state: d.get('state') as SendingRow['state'], history: (d.get('history') as SendingRow['history'] | undefined) ?? [],
+    })),
+    // a single-field equality: no composite index; the age is filtered in the logic
+    listPendingPostOrders: async (limit) => (await db.collection(PostOrderCollection).where('state', '==', 'pending').limit(limit).get()).docs.map((d) => {
+      const o = d.data() as Partial<PostOrderDoc>;
+      return { id: d.id, tenantId: o.tenantId ?? '', createdAt: o.createdAt ?? '', letters: o.letters, pages: o.pages };
+    }),
+    mailingExists: async (key) => (await db.collection('mailings').doc(key).get()).exists,
+    setPostOrderState: async (key, state) => { await db.collection(PostOrderCollection).doc(key).update({ state }); },
     listByState: async (state, limit) =>
       (await col().where('state', '==', state).limit(limit).get()).docs.map((d) => ({ ...(d.data() as Omit<SendingRow, 'id'>), id: d.id })),
     hasAnyTask: async (relatedKey, tenantId) => {

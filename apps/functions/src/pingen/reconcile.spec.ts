@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('firebase-functions/v2', () => ({ logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() } }));
+const logger = vi.hoisted(() => ({ warn: vi.fn(), error: vi.fn(), info: vi.fn() }));
+vi.mock('firebase-functions/v2', () => ({ logger }));
 vi.mock('firebase-functions/params', () => ({ defineSecret: () => ({}), defineString: () => ({}) }));
 vi.mock('firebase-admin/firestore', () => ({ getFirestore: vi.fn() }));
 vi.mock('firebase-admin/storage', () => ({ getStorage: vi.fn() }));
@@ -8,7 +9,8 @@ vi.mock('firebase-admin/storage', () => ({ getStorage: vi.fn() }));
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 import type { PingenClient } from './pingen-client';
 import type { MailingPost } from './post-order';
-import { acceptedAtWindow, reconcilePostVersand, type ReconcileDeps, type ReconMailing } from './reconcile.logic';
+import { TOMBSTONE_DETAIL } from '../email/mailing-sendings';
+import { acceptedAtWindow, reconcilePostVersand, RECONCILE_BUDGET_MS, type PendingPostOrder, type ReconcileDeps, type ReconMailing } from './reconcile.logic';
 import type { SendingRow, SubmitDeps } from './submit-sending.logic';
 
 const OPTIONS = { deliveryProduct: 'cheap', printSpectrum: 'grayscale', printMode: 'simplex' } as const;
@@ -32,11 +34,19 @@ const row = (id: string, over: Partial<SendingRow> = {}): SendingRow => ({
   history: [{ state: 'queued', at: ago(3) }], trackingNumber: '', createdAt: ago(3), updatedAt: ago(3), ...over,
 });
 
-function setup(rows: SendingRow[], mailings: ReconMailing[] = [], createLetter?: PingenClient['createLetter']) {
+function setup(rows: SendingRow[], mailings: ReconMailing[] = [], createLetter?: PingenClient['createLetter'], orderList: PendingPostOrder[] = []) {
   const store = new Map(rows.map((r) => [r.id, r]));
   const tasks: Array<{ name: string; relatedKey: string }> = [];
   const closedTasks = new Set<string>();
-  const reverseShare = vi.fn(async () => ({ amount: 150, duplicate: false }));
+  // the ledger is idempotent on the key: a second reversal with the same key is a duplicate, nothing is booked
+  const reversalKeys = new Set<string>();
+  const reverseShare = vi.fn(async (_t: string, _e: string, _p: { units: number; pages: number }, key: string, _r: string) => {
+    const duplicate = reversalKeys.has(key);
+    reversalKeys.add(key);
+    return { amount: 150, duplicate };
+  });
+  const orders = new Map(orderList.map((o) => [o.id, { ...o, state: 'pending' as 'pending' | 'done' | 'failed' }]));
+  const storedMailings = new Set<string>();
   const letter = createLetter ?? vi.fn(async () => ({ id: 'pg1', status: 'valid', filePages: 2, priceValue: 1, priceCurrency: 'CHF' }));
   const deps: ReconcileDeps = {
     client: { createLetter: letter, readOrganisation: vi.fn() } as unknown as PingenClient,
@@ -62,7 +72,10 @@ function setup(rows: SendingRow[], mailings: ReconMailing[] = [], createLetter?:
     now: () => NOW,
     // the Firestore range query: a lexicographic range on `post.acceptedAt`
     listPostMailings: async (since, before) => mailings.filter((m) => m.post.acceptedAt >= since && m.post.acceptedAt <= before),
-    listSendingIds: async (source) => [...store.values()].filter((r) => r.source === source).map((r) => r.id),
+    listSendings: async (source) => [...store.values()].filter((r) => r.source === source).map(({ id, state, history }) => ({ id, state, history })),
+    listPendingPostOrders: async () => [...orders.values()].filter((o) => o.state === 'pending'),
+    mailingExists: async (id) => storedMailings.has(id),
+    setPostOrderState: async (id, state) => { const o = orders.get(id); if (o) o.state = state; },
     listByState: async (state) => [...store.values()].filter((r) => r.state === state),
     hasAnyTask: async (relatedKey) => tasks.some((t) => t.relatedKey === relatedKey),
     fanOut: {
@@ -72,7 +85,7 @@ function setup(rows: SendingRow[], mailings: ReconMailing[] = [], createLetter?:
       reverseShare,
     },
   };
-  return { deps: deps as ReconcileDeps & SubmitDeps, store, tasks, reverseShare, letter, closedTasks };
+  return { deps: deps as ReconcileDeps & SubmitDeps, store, tasks, reverseShare, letter, closedTasks, orders, storedMailings, reversalKeys };
 }
 
 describe('reconcilePostVersand - incomplete fan-out', () => {
@@ -89,10 +102,13 @@ describe('reconcilePostVersand - incomplete fan-out', () => {
   });
 
   it('is idempotent across runs: no second reversal, no second task', async () => {
-    const { deps, tasks, reverseShare } = setup([], [MAILING]);
+    const { deps, tasks, reverseShare, reversalKeys } = setup([], [MAILING]);
     await reconcilePostVersand(deps);
-    await reconcilePostVersand(deps);
-    expect(reverseShare).toHaveBeenCalledTimes(3);
+    const second = await reconcilePostVersand(deps);
+    // the second run re-issues the keyed reversal of each tombstone (item: a lost reversal), the ledger answers duplicate
+    expect(reverseShare.mock.calls.slice(3).every((c) => reversalKeys.has(c[3]))).toBe(true);
+    expect(reversalKeys.size).toBe(3);
+    expect(second).toMatchObject({ tombstonesRefunded: 0, mailingsRepaired: 0 });
     expect(tasks).toHaveLength(1);
   });
 
@@ -144,7 +160,7 @@ describe('reconcilePostVersand - fan-out outcome', () => {
 
   it('creates no task when another run already tombstoned everything', async () => {
     const { deps, tasks } = setup([], [MAILING]);
-    deps.listSendingIds = async () => [];            // stale listing: the records appear meanwhile
+    deps.listSendings = async () => [];              // stale listing: the records appear meanwhile
     deps.fanOut.create = async () => false;
     await reconcilePostVersand(deps);
     expect(tasks).toHaveLength(0);
@@ -250,3 +266,113 @@ describe('reconcilePostVersand - silent submitted', () => {
   });
 });
 
+
+const tombstone = (id: string): SendingRow => row(id, { state: 'failed', price: 0, storagePath: '', history: [{ state: 'failed', at: ago(3), detail: TOMBSTONE_DETAIL }] });
+
+describe('reconcilePostVersand - tombstones whose reversal was lost', () => {
+  it('re-issues the keyed reversal of an existing tombstone of a complete Versand, once in effect', async () => {
+    const rows = [row('m1_person.p1', { state: 'submitted', updatedAt: ago(1) }), tombstone('m1_person.p2'), row('m1_person.p3', { state: 'sent', updatedAt: ago(1) })];
+    const { deps, reverseShare, tasks } = setup(rows, [MAILING]);
+    const first = await reconcilePostVersand(deps);
+    expect(reverseShare).toHaveBeenCalledWith('scs', 'e1', { units: 1, pages: 2 }, 'm1_person.p2', expect.any(String));
+    expect(first).toMatchObject({ tombstonesRefunded: 1, mailingsRepaired: 0 });
+    const second = await reconcilePostVersand(deps);
+    expect(second.tombstonesRefunded).toBe(0);                 // the ledger said duplicate: nothing booked twice
+    expect(tasks).toHaveLength(0);
+  });
+
+  it('leaves a failed letter that is not a tombstone alone (its refund belongs to the submit path)', async () => {
+    const rows = [row('m1_person.p1', { state: 'failed', history: [{ state: 'failed', at: ago(2), detail: 'Pingen hat abgelehnt' }] }), row('m1_person.p2', { state: 'sent' }), row('m1_person.p3', { state: 'sent' })];
+    const { deps, reverseShare } = setup(rows, [MAILING]);
+    await reconcilePostVersand(deps);
+    expect(reverseShare).not.toHaveBeenCalled();
+  });
+
+  it('a fractional price re-issues nothing', async () => {
+    const { deps, reverseShare } = setup([tombstone('m1_person.p2')], [{ ...MAILING, post: { ...POST, total: 1000 } }]);
+    await reconcilePostVersand(deps);
+    expect(reverseShare).not.toHaveBeenCalled();
+  });
+});
+
+describe('reconcilePostVersand - stale post-order locks (part 0)', () => {
+  const order = (id: string, over: Partial<PendingPostOrder> = {}): PendingPostOrder => ({ id, tenantId: 'scs', createdAt: ago(2), letters: 3, pages: 6, ...over });
+
+  it('reverses the whole deduction of a pending lock older than an hour without a mailing, then fails the lock', async () => {
+    const { deps, reverseShare, orders } = setup([], [], undefined, [order('k1')]);
+    const counts = await reconcilePostVersand(deps);
+    expect(reverseShare).toHaveBeenCalledWith('scs', 'deduct-mailing.k1', { units: 3, pages: 6 }, 'mailing.k1-undo', expect.any(String));
+    expect(orders.get('k1')?.state).toBe('failed');
+    expect(counts).toMatchObject({ ordersReversed: 1, ordersFailed: 1 });
+  });
+
+  it('marks the lock done when the mailing exists: no reversal', async () => {
+    const { deps, reverseShare, orders, storedMailings } = setup([], [], undefined, [order('k1')]);
+    storedMailings.add('k1');
+    const counts = await reconcilePostVersand(deps);
+    expect(reverseShare).not.toHaveBeenCalled();
+    expect(orders.get('k1')?.state).toBe('done');
+    expect(counts.ordersDone).toBe(1);
+  });
+
+  it('leaves a lock younger than an hour alone', async () => {
+    const { deps, reverseShare, orders } = setup([], [], undefined, [order('k1', { createdAt: ago(0.5) })]);
+    await reconcilePostVersand(deps);
+    expect(reverseShare).not.toHaveBeenCalled();
+    expect(orders.get('k1')?.state).toBe('pending');
+  });
+
+  it('a missing deduction entry (deduct never committed) is logged and the lock still fails', async () => {
+    const { deps, reverseShare, orders } = setup([], [], undefined, [order('k1')]);
+    reverseShare.mockRejectedValueOnce(Object.assign(new Error('credit entry deduct-mailing.k1 not found'), { code: 'not-found' }));
+    const counts = await reconcilePostVersand(deps);
+    expect(orders.get('k1')?.state).toBe('failed');
+    expect(counts).toMatchObject({ ordersReversed: 0, ordersFailed: 1 });
+  });
+
+  it('any other ledger failure keeps the lock pending for the next run', async () => {
+    const { deps, reverseShare, orders } = setup([], [], undefined, [order('k1')]);
+    reverseShare.mockRejectedValueOnce(new Error('ledger down'));
+    await reconcilePostVersand(deps);
+    expect(orders.get('k1')?.state).toBe('pending');
+  });
+
+  it('a legacy lock without letters/pages is logged and skipped', async () => {
+    const { deps, reverseShare, orders } = setup([], [], undefined, [order('k1', { letters: undefined, pages: undefined })]);
+    logger.error.mockClear();
+    await reconcilePostVersand(deps);
+    expect(reverseShare).not.toHaveBeenCalled();
+    expect(orders.get('k1')?.state).toBe('pending');
+    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('legacy'), expect.objectContaining({ id: 'k1' }));
+  });
+
+  it('is idempotent: a second run finds the lock failed and does nothing', async () => {
+    const { deps, reverseShare } = setup([], [], undefined, [order('k1')]);
+    await reconcilePostVersand(deps);
+    await reconcilePostVersand(deps);
+    expect(reverseShare).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('reconcilePostVersand - time budget', () => {
+  it('stops starting new submits once the budget is used up and logs what was left', async () => {
+    let t = NOW.getTime();
+    const letter = vi.fn(async () => { t += 70_000; return { id: 'pg1', status: 'valid', filePages: 2, priceValue: 1, priceCurrency: 'CHF' }; });
+    const { deps, store } = setup([row('m1_p1'), row('m1_p2'), row('m1_p3'), row('m1_p4', { state: 'submitting', updatedAt: ago(2) })], [], letter);
+    deps.now = () => new Date(t);
+    logger.warn.mockClear();
+    const counts = await reconcilePostVersand(deps);
+    expect(RECONCILE_BUDGET_MS).toBe(120_000);
+    expect(letter).toHaveBeenCalledTimes(2);                   // 0 s and 70 s started, 140 s did not
+    expect(counts.queuedResubmitted).toBe(2);
+    expect(store.get('m1_p3')?.state).toBe('queued');
+    expect(store.get('m1_p4')?.state).toBe('submitting');
+    expect(counts.leftForNextRun).toBe(2);
+    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('time budget'), expect.objectContaining({ queued: 1, submitting: 1 }));
+  });
+
+  it('a run inside the budget leaves nothing', async () => {
+    const { deps } = setup([row('m1_p1')]);
+    expect((await reconcilePostVersand(deps)).leftForNextRun).toBe(0);
+  });
+});
