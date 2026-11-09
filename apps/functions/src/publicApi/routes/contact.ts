@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { logger } from 'firebase-functions/v2';
 import { sendEmailViaProvider } from '../../auth/email-transport';
+import { renderEmail } from '../../email/render-email';
+import { htmlToText } from '../../email/html-to-text';
 import { clientIp, checkRateLimit } from '../rateLimit';
 
 // Per-IP (best-effort) + global backstop. The global cap bounds total relayed
@@ -29,6 +31,19 @@ export function validateContact(body: Partial<ContactRequest>): string | null {
   if (!body.message || body.message.length < 10 || body.message.length > 5000) return 'message must be 10-5000 chars';
   if (body.honeypot) return 'spam detected';
   return null;
+}
+
+/** The labels the website shows in its subject dropdown (scs-website kontakt.html). */
+const SUBJECT_LABELS: Record<Subject, string> = {
+  general: 'Allgemeine Anfrage',
+  course: 'Kursanmeldung',
+  lateral: 'Quereinstieg',
+  youth: 'Jugendrudern',
+  boathouse: 'Bootshaus-Projekt',
+};
+
+export function subjectLabel(subject: Subject): string {
+  return SUBJECT_LABELS[subject] ?? subject;
 }
 
 function escHtml(str: string | undefined): string {
@@ -67,23 +82,31 @@ export async function contactRouter(req: Request, res: Response): Promise<void> 
   const provider = process.env['EMAIL_PROVIDER'] ?? 'mailtrap_api';
   const reference = `msg_${Date.now().toString(36)}`;
 
-  const phoneText = body.phone ? `<br><strong>Telefon:</strong> ${escHtml(body.phone)}` : '';
-  const html = `
-    <p><strong>Kontaktformular-Nachricht</strong> (Ref: ${reference})</p>
-    <p>
-      <strong>Name:</strong> ${escHtml(body.name)}<br>
-      <strong>E-Mail:</strong> ${escHtml(body.email)}${phoneText}<br>
-      <strong>Betreff:</strong> ${escHtml(body.subject)}
-    </p>
-    <p><strong>Nachricht:</strong><br>${escHtml(body.message?.replace(/\n/g, '<br>'))}</p>
-  `;
+  const tenantId = process.env['CONTACT_TENANT'] ?? 'scs';
+  const label = subjectLabel(body.subject as Subject);
+  const mailSubject = `Kontaktformular: ${label}`;
+  const fallbackHtml = buildContactBody(body as ContactRequest, reference);
+  let html = fallbackHtml;
+  let text = htmlToText(fallbackHtml);
+  try {
+    // The tenant's standard email layout (header, logo, footer) around the message.
+    const rendered = await renderEmail({ tenantId, layout: 'standard', body: fallbackHtml });
+    html = rendered.html;
+    text = rendered.text;
+  } catch (err) {
+    // A template problem must never lose a message: send the bare body instead.
+    logger.warn('publicApi /contact: email layout failed, sending plain body', { tenantId, err });
+  }
 
   try {
     await sendEmailViaProvider(provider, {
       from: 'Website Kontakt <app@seeclub.org>',
       to: [toEmail],
-      subject: `Kontaktformular: ${body.subject} [${reference}]`,
+      subject: mailSubject,
       html,
+      text,
+      // A reply goes straight to the person who wrote, not back to the app address.
+      replyTo: body.email,
     });
 
     logger.info('publicApi /contact: email sent', { reference, subject: body.subject });
@@ -92,4 +115,29 @@ export async function contactRouter(req: Request, res: Response): Promise<void> 
     logger.error('publicApi /contact: email failed', { err });
     res.status(500).json({ error: { code: 'internal_error', message: 'Failed to send message' } });
   }
+}
+
+/**
+ * The message as a readable mail body: who wrote, how to reach them, what about, and the text itself.
+ * Every user value is escaped; line breaks become <br> only after escaping.
+ */
+export function buildContactBody(body: ContactRequest, reference: string): string {
+  const row = (label: string, value: string): string =>
+    `<tr><td style="padding:4px 16px 4px 0;color:#555555;vertical-align:top;white-space:nowrap;">${label}</td><td style="padding:4px 0;vertical-align:top;">${value}</td></tr>`;
+  const email = escHtml(body.email);
+  const rows = [
+    row('Name', escHtml(body.name)),
+    row('E-Mail', `<a href="mailto:${email}">${email}</a>`),
+    ...(body.phone ? [row('Telefon', escHtml(body.phone))] : []),
+    row('Thema', escHtml(subjectLabel(body.subject))),
+  ].join('');
+  const message = escHtml(body.message).replace(/\r?\n/g, '<br>');
+  return `
+    <p>Über das Kontaktformular der Website ist eine neue Nachricht eingegangen.</p>
+    <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:16px 0;">${rows}</table>
+    <p style="margin:16px 0 4px 0;color:#555555;">Nachricht</p>
+    <p style="margin:0;padding:12px 16px;background:#f5f7fa;border-left:3px solid #cccccc;">${message}</p>
+    <p style="margin-top:16px;color:#555555;font-size:13px;">Mit «Antworten» schreibst du direkt an ${escHtml(body.name)}.</p>
+    <p style="color:#999999;font-size:12px;">Referenz: ${reference}</p>
+  `;
 }
