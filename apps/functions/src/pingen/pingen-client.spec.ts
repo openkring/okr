@@ -212,6 +212,17 @@ describe('pingen client', () => {
   });
 });
 
+describe('letter created before Pingen priced it (auto_send)', () => {
+  it('null price_value / file_pages become NaN, never 0', async () => {
+    const body = { data: { id: 'L2', attributes: { status: 'validating', file_pages: null, price_value: null, price_currency: null } } };
+    const { client } = setup({ 'POST /organisations/org1/deliveries/letters': () => json(201, body) });
+    const letter = await client.createLetter(input);
+    expect(letter.id).toBe('L2');
+    expect(Number.isNaN(letter.priceValue)).toBe(true);
+    expect(Number.isNaN(letter.filePages)).toBe(true);
+  });
+});
+
 describe('deploy parameters', () => {
   it('the organisation id is a secret (no un-defaulted param blocks a scripted deploy) and the env is staging in code', () => {
     expect(pingenOrganisationId.constructor.name).toBe('SecretParam');

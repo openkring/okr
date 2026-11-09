@@ -291,11 +291,14 @@ export async function submitSending(deps: SubmitDeps, id: string): Promise<void>
     }
     return;
   }
-  if (letter.filePages !== rec.pages) {
+  // with auto_send Pingen may answer before it has counted or priced the letter (null): no warning, no cost, never NaN
+  if (Number.isFinite(letter.filePages) && letter.filePages > 0 && letter.filePages !== rec.pages) {
     logger.warn('submit-sending: Pingen counts other pages than we charged, keeping ours', { id: rec.id, ours: rec.pages, pingen: letter.filePages });
   }
   // the cost first (idempotent set): a crash before the state write redoes both on the retry
-  await deps.writeCost(rec.id, { providerPrice: Math.round(letter.priceValue * 100), currency: letter.priceCurrency });
+  if (Number.isFinite(letter.priceValue)) {
+    await deps.writeCost(rec.id, { providerPrice: Math.round(letter.priceValue * 100), currency: letter.priceCurrency });
+  }
   // the id whenever the record is not failed (a webhook may have moved it on), the state only out of `submitting`
   if (!(await deps.setProviderId(rec.id, letter.id))) {
     // Pingen produced a letter whose share a concurrent delivery already refunded: nothing may be lost silently

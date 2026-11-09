@@ -45,8 +45,9 @@ export class PingenError extends Error {
 export interface PingenLetter {
   id: string;
   status: string;
+  /** NaN while Pingen has not counted the pages yet (null at creation with auto_send) */
   filePages: number;
-  /** CHF decimal as Pingen returns it (not Rappen). */
+  /** CHF decimal as Pingen returns it (not Rappen); NaN while Pingen has not priced the letter yet (null at creation). */
   priceValue: number;
   priceCurrency: string;
 }
@@ -70,6 +71,9 @@ export interface PingenClientDeps {
 const isRetryable = (status: number): boolean => status === 429 || status >= 500;
 
 type Json = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+/** A numeric attribute; null / missing / '' is NaN (Number(null) would be a false 0). */
+const numberOrNaN = (v: unknown): number => (v === null || v === undefined || v === '' ? NaN : Number(v));
 
 export function makePingenClient(deps: PingenClientDeps): PingenClient {
   const hosts = HOSTS[deps.env];
@@ -175,9 +179,9 @@ export function makePingenClient(deps: PingenClientDeps): PingenClient {
       return {
         id: String(d['id']),
         status: String(a['status']),
-        filePages: Number(a['file_pages']),
-        priceValue: Number(a['price_value']),
-        priceCurrency: String(a['price_currency']),
+        filePages: numberOrNaN(a['file_pages']),
+        priceValue: numberOrNaN(a['price_value']),
+        priceCurrency: typeof a['price_currency'] === 'string' ? a['price_currency'] : '',
       };
     },
 

@@ -69,6 +69,22 @@ describe('submitSending', () => {
     expect(costs.get('m1_p1')).toEqual({ providerPrice: 105, currency: 'CHF' });
   });
 
+  it('no price yet (NaN): no cost sub-doc, no NaN written, the letter is still submitted', async () => {
+    const { deps, store, costs } = setup([row('m1_p1')], async () => ({ id: 'pg1', status: 'validating', filePages: NaN, priceValue: NaN, priceCurrency: '' }));
+    vi.mocked(logger.warn).mockClear();
+    await submitSending(deps, 'm1_p1');
+    expect(costs.has('m1_p1')).toBe(false);
+    expect(store.get('m1_p1')).toMatchObject({ state: 'submitted', providerId: 'pg1', pages: 2 });
+    expect(logger.warn).not.toHaveBeenCalledWith(expect.stringContaining('other pages'), expect.anything());
+  });
+
+  it('no page-mismatch warning while Pingen has not counted the pages (0)', async () => {
+    const { deps } = setup([row('m1_p1')], async () => ({ id: 'pg1', status: 'validating', filePages: 0, priceValue: 1, priceCurrency: 'CHF' }));
+    vi.mocked(logger.warn).mockClear();
+    await submitSending(deps, 'm1_p1');
+    expect(logger.warn).not.toHaveBeenCalledWith(expect.stringContaining('other pages'), expect.anything());
+  });
+
   it('warns when Pingen counts other pages but keeps ours', async () => {
     const { deps, store } = setup([row('m1_p1')], async () => ({ id: 'pg1', status: 'valid', filePages: 3, priceValue: 1, priceCurrency: 'CHF' }));
     await submitSending(deps, 'm1_p1');
