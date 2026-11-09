@@ -53,6 +53,11 @@ export class SendingModel implements OkrModel {
   public state: SendingState = 'queued';
   public history: SendingHistoryEntry[] = [];
   public trackingNumber = '';
+  /**
+   * Why a `failed` letter failed, machine-readable: 'address' = the post provider refused the recipient's
+   * address (counts towards holding a Versand), 'other' = anything else. Absent on letters that did not fail.
+   */
+  public failReason?: 'address' | 'other';
   /** ISO */
   public createdAt = '';
   /** ISO */

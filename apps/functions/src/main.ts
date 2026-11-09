@@ -239,6 +239,7 @@ export const getNoticeAttachment = Email.getNoticeAttachment;    // signed URL f
 export const getMailingLetters = Email.getMailingLetters;        // Versand Post: state + signed URL of the letters PDF (P3)
 export const getMailingDeliveries = Email.getMailingDeliveries;  // Versand overview: Mailtrap status per E-Mail recipient (emailEvents)
 export { quoteMailingLetters } from './pingen';                    // Versand Post: letters, pages, price + signed token before sending (spec 1.150)
+export { onSendingCreated } from './pingen';                        // Versand Post: submits each queued letter to Pingen, failure becomes a task (spec 1.150)
 
 // bexio router (3.41 A6) + one 06:00 sync slot (D4); the six names below stay as aliases
 export const bexio = BexioRouter.bexio;
