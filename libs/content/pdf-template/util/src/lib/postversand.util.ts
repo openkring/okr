@@ -1,3 +1,4 @@
+import { TRANSACTION_PRICES } from '@okr/business-metering-util';
 import type { SendingState } from '@okr/shared-models';
 
 /** The category Pingen reports a letter under (webhook payload). */
@@ -62,4 +63,34 @@ export function letterShare(pages: number): { units: 1; pages: number } {
 /** A Versand with this many address issues is held back for review. */
 export function shouldHoldVersand(addressIssues: number): boolean {
   return addressIssues >= 3;
+}
+
+/** An amount in Rappen as the books show it: `CHF 1.20`. */
+export function formatChf(rappen: number): string {
+  return `CHF ${(rappen / 100).toFixed(2)}`;
+}
+
+/** The two lines of the cost box: what a letter and what a page cost, and the sums for this Versand. */
+export interface PostCostLines {
+  /** price of one letter, e.g. `CHF 1.20` */
+  letterPrice: string;
+  letterTotal: string;
+  /** price of one page, e.g. `CHF 0.30` */
+  pagePrice: string;
+  pageTotal: string;
+}
+
+/**
+ * The cost box lines for a Versand. The rates come from the pricing table the server bills with
+ * (`TRANSACTION_PRICES`), never from a number typed into the UI; the quote's total stays the amount that is charged.
+ */
+export function postCostLines(letters: number, pages: number): PostCostLines {
+  const price = TRANSACTION_PRICES['pingen-letter'];
+  const billablePages = Math.max(0, pages - price.includedPages * letters);
+  return {
+    letterPrice: formatChf(price.perUnit),
+    letterTotal: formatChf(price.perUnit * letters),
+    pagePrice: formatChf(price.perPage),
+    pageTotal: formatChf(price.perPage * billablePages),
+  };
 }

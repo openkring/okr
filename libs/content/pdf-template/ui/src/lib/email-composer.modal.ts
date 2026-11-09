@@ -4,6 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { form } from '@angular/forms/signals';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 import { filter, firstValueFrom, tap } from 'rxjs';
 import {
   IonButton, IonContent,
@@ -19,8 +20,8 @@ import {
   EmailInput, EmailInputI18n, ErrorNote, Header, Spinner, StringSelect, StringSelectI18n, TextInput, TextInputI18n,
 } from '@okr/shared-ui';
 import type { OkrEditor } from '@okr/shared-ui-editor';
-import { DeliveryChannel, EmailLayoutChoice, LAYOUT_CHOICES } from '@okr/shared-models';
-import { fill, needsEmailNormalization } from '@okr/shared-util-core';
+import { DEFAULT_POST_OPTIONS, DeliveryChannel, EmailLayoutChoice, LAYOUT_CHOICES, PostOptions } from '@okr/shared-models';
+import { fill, hasRole, needsEmailNormalization } from '@okr/shared-util-core';
 import { dismissOverlay, isBrowser, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 import {
@@ -30,12 +31,23 @@ import {
   EmailComposerFormModel, emailComposerValidations, VersandDeliveries, VersandEvent, VersandRow,
   EMAIL_COMPOSER_I18N_KEYS, EMAIL_COMPOSER_MSG_KEYS, EmailComposerI18n,
 } from '@okr/content-pdf-template-util';
-import { DocEmailService, InlineAttachment, MailingLetters, TemplateService } from '@okr/content-pdf-template-data-access';
+import { DocEmailService, InlineAttachment, MailingLetters, PostQuote, SendMailingRequest, TemplateService } from '@okr/content-pdf-template-data-access';
 
 import { VersandAddressList } from './versand-address-list';
 import { VersandDeliveryTable } from './versand-delivery-table';
 import { VersandEventsSelect } from './versand-events-select';
+import { PostMode, PostversandStep } from './postversand-step';
 import { VersandInfoModal } from './versand-info.modal';
+
+/** Debounce of the price request while the sender changes options or the draft. */
+const QUOTE_DEBOUNCE_MS = 400;
+
+/** The message and code a callable error carries: Firebase prefixes the code with `functions/`. */
+function callableError(err: unknown): { code: string; message: string } {
+  const e = err as { code?: unknown; message?: unknown } | undefined;
+  const code = typeof e?.code === 'string' ? e.code.replace(/^functions\//, '') : '';
+  return { code, message: typeof e?.message === 'string' ? e.message : String(err) };
+}
 
 /** Reject files larger than this client-side (the CF caps inline attachments at 8 MB). */
 const MAX_ATTACHMENT_BYTES = 7 * 1024 * 1024;
@@ -92,7 +104,7 @@ interface AddressField {
     FormsModule,
     SvgIconPipe,
     Header, Spinner, ButtonCopy, ChangeConfirmation, Checkbox, EmailInput, ErrorNote, StringSelect, TextInput,
-    VersandDeliveryTable, VersandEventsSelect,
+    VersandDeliveryTable, VersandEventsSelect, PostversandStep,
     IonContent, IonButton,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonIcon, IonChip, IonLabel, IonNote,
     IonSegment, IonSegmentButton, IonItem, IonAccordionGroup, IonAccordion,
@@ -121,6 +133,14 @@ interface AddressField {
 
     @if (showConfirmation()) {
       <okr-change-confirmation [i18n]="changeConfirmationI18n()" [saveDisabled]="!canSend()" (saveClicked)="send()" (cancelClicked)="revert()" />
+      @if (anyPost() && !postAllowsSend()) {
+        <div class="reach-warnings" role="status">
+          <div class="reach-warning">
+            <ion-icon src="{{ 'warning' | svgIcon }}" />
+            <span>{{ i18n.post_pending() }}</span>
+          </div>
+        </div>
+      }
       @if (reachWarnings().length > 0) {
         <div class="reach-warnings" role="status">
           @for (warning of reachWarnings(); track warning.caleventKey) {
@@ -281,6 +301,16 @@ interface AddressField {
                   @if (postSkipped().length > 0) {
                     <ion-note color="warning" class="note">{{ i18n.post_skipped() }} {{ postSkipped().join(', ') }}</ion-note>
                   }
+                  @if (anyPost()) {
+                    <okr-postversand-step [i18n]="i18n" [quote]="postQuote()" [loading]="postLoading()" [error]="postError()"
+                      [options]="postOptions()" (optionsChange)="onPostOptionsChange($event)"
+                      [mode]="postMode()" (modeChange)="onPostModeChange($event)"
+                      [accepted]="postAccepted()" (acceptedChange)="onPostAcceptedChange($event)"
+                      [canTopUp]="canTopUp()" [pingenAvailable]="pingenAvailable()" (topUp)="topUp()" />
+                    @if (postPriceChanged()) {
+                      <ion-note color="warning" class="note">{{ i18n.post_price_changed() }}</ion-note>
+                    }
+                  }
                 }
               </ion-card-content>
             </ion-card>
@@ -348,6 +378,7 @@ export class EmailComposerModal {
   private readonly toastController = inject(ToastController);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly i18nService = inject(I18nService);
+  private readonly router = inject(Router);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly i18n = this.i18nService.translateAll(EMAIL_COMPOSER_I18N_KEYS) as EmailComposerI18n;
@@ -458,6 +489,29 @@ export class EmailComposerModal {
     const doc = this.filename() ? [{ filename: this.filename(), contentType: this.outputFormat() === 'pdf' ? 'application/pdf' : '' }] : [];
     return nonPdfAttachmentNames([...doc, ...this.extraAttachments()]);
   });
+  // Postversand via Pingen (spec 1.150 §6.2): the options, the price the server quoted and the sender's consent to it
+  protected readonly postMode = signal<PostMode>('pingen');
+  /** Start from what the tenant set as default (`AppConfig.post*`); the sender may change them for this Versand. */
+  protected readonly postOptions = signal<PostOptions>(this.tenantPostOptions());
+  protected readonly postQuote = signal<PostQuote | undefined>(undefined);
+  protected readonly postLoading = signal(false);
+  protected readonly postError = signal<string | undefined>(undefined);
+  protected readonly postAccepted = signal(false);
+  /** The server refused the price the sender saw: it is quoted again and must be accepted again. */
+  protected readonly postPriceChanged = signal(false);
+  /** False once the server says the credit is not set up: only the PDF download is left. */
+  protected readonly pingenAvailable = signal(true);
+  protected readonly canTopUp = computed(() => hasRole('admin', this.appStore.currentUser()));
+  /** The persons ticked under Post. */
+  protected readonly postKeys = computed(() => {
+    const deliveries = this.deliveries();
+    return this.versandRows()
+      .filter((row) => (deliveries[row.personKey] ?? []).includes(DeliveryChannel.Post))
+      .map((row) => row.personKey);
+  }, { equal: (a, b) => a.length === b.length && a.every((key, i) => key === b[i]) });
+  private quoteTimer: ReturnType<typeof setTimeout> | undefined;
+  /** Number of the latest quote request: a response with an older number is dropped. */
+  private quoteRequest = 0;
   /** The letters of a sent Versand with Post recipients; undefined before sending or without Post. */
   protected readonly letters = signal<MailingLetters | undefined>(undefined);
   /** The server could not answer: every person with an email address is mailed, nothing else. */
@@ -492,7 +546,14 @@ export class EmailComposerModal {
   /** A valid form; a Versand also needs its Zustellung loaded and at least one ticked recipient. */
   protected readonly canSend = computed(() =>
     this.composerForm().valid()
-    && (!this.isVersand() || (this.versandLoaded() && versandDeliveries(this.versandRows(), this.deliveries()).length > 0)));
+    && (!this.isVersand() || (this.versandLoaded() && versandDeliveries(this.versandRows(), this.deliveries()).length > 0))
+    && this.postAllowsSend());
+  /** Post by download is free; by Pingen the sender needs a sufficient, accepted price. */
+  private readonly postAllowsSend = computed(() => {
+    if (!this.anyPost() || this.postMode() === 'download') return true;
+    const quote = this.postQuote();
+    return this.pingenAvailable() && !this.postLoading() && !!quote && quote.letters > 0 && quote.sufficient && this.postAccepted();
+  });
 
   // field accessors
   protected readonly from     = computed(() => this.formData().from);
@@ -658,7 +719,29 @@ export class EmailComposerModal {
     });
     this.destroyRef.onDestroy(() => {
       this.destroyed = true;
+      clearTimeout(this.quoteTimer);
       this.editorRef()?.destroy();
+    });
+    // The price of the letters: asked when Post is ticked and again (debounced) whenever what it depends on changes.
+    // Any change of the options or the draft also withdraws the consent to the price shown before.
+    effect(() => {
+      const wanted = this.anyPost() && this.postMode() === 'pingen' && this.pingenAvailable() && !this.letters();
+      const keys = this.postKeys();
+      const options = this.postOptions();
+      this.subject(); this.body(); this.caleventKeys(); this.letterQrCodes();
+      this.filename(); this.storagePath(); this.extraAttachments();
+      untracked(() => {
+        clearTimeout(this.quoteTimer);
+        this.quoteRequest++;                          // a response still in flight is stale
+        this.postAccepted.set(false);
+        if (!wanted || keys.length === 0 || !isBrowser(this.platformId)) {
+          this.postLoading.set(false);
+          this.postQuote.set(undefined);
+          return;
+        }
+        this.postLoading.set(true);
+        this.quoteTimer = setTimeout(() => void this.loadQuote(keys, options), QUOTE_DEBOUNCE_MS);
+      });
     });
     // The Zustellung table: asked once per opened Versand. The request runs untracked.
     effect(() => {
@@ -683,6 +766,83 @@ export class EmailComposerModal {
     this.initialDeliveries = deliveries;
     this.applyDeliveries(deliveries);
     this.versandLoaded.set(true);
+  }
+
+  private tenantPostOptions(): PostOptions {
+    const cfg = this.appStore.appConfig();
+    return {
+      deliveryProduct: cfg.postDeliveryProduct ?? DEFAULT_POST_OPTIONS.deliveryProduct,
+      printSpectrum: cfg.postPrintSpectrum ?? DEFAULT_POST_OPTIONS.printSpectrum,
+      printMode: cfg.postPrintMode ?? DEFAULT_POST_OPTIONS.printMode,
+    };
+  }
+
+  /** The Versand as the server prices it: the same content and attachments as the send, plus who gets a letter. */
+  private async loadQuote(postKeys: string[], options: PostOptions): Promise<void> {
+    const request = this.quoteRequest;
+    try {
+      const fd = this.formData();
+      const quote = await this.docEmailService.quoteMailingLetters({
+        tenantId: this.appStore.tenantId(),
+        subject: fd.subject, body: fd.body,
+        ...(this.storagePath() ? { storagePath: this.storagePath(), filename: this.filename() } : {}),
+        extraAttachments: this.extraAttachments(),
+        ...(this.hasEvents() ? { caleventKeys: this.chosenEvents().map((e) => e.caleventKey) } : {}),
+        ...(this.showQrOption() && this.letterQrCodes() ? { letterQrCodes: true } : {}),
+        postKeys, options,
+      });
+      if (request !== this.quoteRequest) return;
+      this.postError.set(undefined);
+      this.postQuote.set(quote);
+    } catch (err) {
+      if (request !== this.quoteRequest) return;
+      this.postQuote.set(undefined);
+      if (callableError(err).code === 'unavailable') {
+        // the tenant's credit is not set up: only the free download is left
+        this.pingenAvailable.set(false);
+        this.postMode.set('download');
+        this.postError.set(undefined);
+      } else {
+        console.error('EmailComposerModal.loadQuote: quoteMailingLetters failed', err);
+        this.postError.set(this.i18n.post_error());
+      }
+    } finally {
+      if (request === this.quoteRequest) this.postLoading.set(false);
+    }
+  }
+
+  /** Asks for the price again right now (after the server refused the one the sender had accepted). */
+  private requote(): void {
+    const keys = this.postKeys();
+    this.quoteRequest++;
+    this.postAccepted.set(false);
+    if (keys.length === 0) return;
+    this.postLoading.set(true);
+    void this.loadQuote(keys, this.postOptions());
+  }
+
+  protected onPostOptionsChange(options: PostOptions): void {
+    this.isDirty.set(true);
+    this.postPriceChanged.set(false);
+    this.postOptions.set(options);
+  }
+
+  protected onPostModeChange(mode: PostMode): void {
+    if (mode === 'pingen' && !this.pingenAvailable()) return;
+    this.isDirty.set(true);
+    this.postPriceChanged.set(false);
+    this.postMode.set(mode);
+  }
+
+  protected onPostAcceptedChange(accepted: boolean): void {
+    this.postPriceChanged.set(false);
+    this.postAccepted.set(accepted);
+  }
+
+  /** The top-up screen is for administrators; the composer closes first so the sender lands on it. */
+  protected async topUp(): Promise<void> {
+    await dismissOverlay(this.modalController, null, 'cancel');
+    await this.router.navigateByUrl('/billing');
   }
 
   /** The ticks decide the Bcc: set both together, so the email part never disagrees with the table. */
@@ -917,6 +1077,7 @@ export class EmailComposerModal {
           ...(this.hasEvents() ? { caleventKeys: this.chosenEvents().map((e) => e.caleventKey) } : {}),
           ...(this.emailOnly() && this.showOnDashboard() ? { dashboard: true } : {}),
           ...(this.showQrOption() && this.letterQrCodes() ? { letterQrCodes: true } : {}),
+          ...this.postPayload(),
         });
         await this.showParamToast(EMAIL_COMPOSER_MSG_KEYS.send_mailing, {
           emails: deliveries.filter((d) => d.channels.includes(DeliveryChannel.Email)).length,
@@ -946,6 +1107,10 @@ export class EmailComposerModal {
       await this.showParamToast(EMAIL_COMPOSER_MSG_KEYS.send_conf, { recipients: recipients.join(', ') });
       await dismissOverlay(this.modalController, { sent: true }, 'confirm');
     } catch (err) {
+      if (this.handlePostRefusal(err)) {
+        this.isSending.set(false);
+        return;
+      }
       const message = err instanceof Error ? err.message : String(err);
       // A bulk send aborts on the first failing block — say how far it got, never claim success.
       const sent = this.progress();
@@ -953,6 +1118,37 @@ export class EmailComposerModal {
         { error: sent ? `${message} (${sent})` : message }, 'danger');
       this.isSending.set(false);
     }
+  }
+
+  /** «Per Pingen senden»: the options and the signed quote the sender accepted. Without Pingen the letters are only built for download. */
+  private postPayload(): Pick<SendMailingRequest, 'post'> {
+    const quote = this.postQuote();
+    if (!this.anyPost() || this.postMode() !== 'pingen' || !quote) return {};
+    return { post: { via: 'pingen', options: this.postOptions(), token: quote.token, issuedAt: quote.issuedAt } };
+  }
+
+  /**
+   * The server's refusals that only ask the sender to look at the price again. True = handled here (no error toast).
+   * `price-changed`: quote again, consent withdrawn. `insufficient-credit`: the balance moved, quote again.
+   * `unavailable`: only the download is left.
+   */
+  private handlePostRefusal(err: unknown): boolean {
+    const { code, message } = callableError(err);
+    if (code === 'failed-precondition' && message === 'price-changed') {
+      this.postPriceChanged.set(true);
+      this.requote();
+      return true;
+    }
+    if (code === 'failed-precondition' && message === 'insufficient-credit') {
+      this.requote();
+      return true;
+    }
+    if (code === 'unavailable' && this.postMode() === 'pingen' && this.anyPost()) {
+      this.pingenAvailable.set(false);
+      this.postMode.set('download');
+      return true;
+    }
+    return false;
   }
 
   /**

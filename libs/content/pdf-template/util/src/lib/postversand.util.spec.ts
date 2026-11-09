@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isSwissAddress, letterShare, nextSendingState, SENDING_FINAL, shouldHoldVersand } from './postversand.util';
+import { formatChf, isSwissAddress, postCostLines, letterShare, nextSendingState, SENDING_FINAL, shouldHoldVersand } from './postversand.util';
 
 describe('nextSendingState', () => {
   it('moves forward', () => {
@@ -58,5 +58,22 @@ describe('letterShare / SENDING_FINAL', () => {
   });
   it('lists the final states', () => {
     expect(SENDING_FINAL).toEqual(['sent', 'delivered', 'failed', 'undeliverable']);
+  });
+});
+
+describe('formatChf', () => {
+  it('shows Rappen as CHF with two decimals', () => {
+    expect(formatChf(120)).toBe('CHF 1.20');
+    expect(formatChf(5)).toBe('CHF 0.05');
+    expect(formatChf(0)).toBe('CHF 0.00');
+    expect(formatChf(8820)).toBe('CHF 88.20');
+  });
+});
+
+describe('postCostLines', () => {
+  it('prices the letters and the pages from the pricing table', () => {
+    expect(postCostLines(42, 126)).toEqual({
+      letterPrice: 'CHF 1.20', letterTotal: 'CHF 50.40', pagePrice: 'CHF 0.30', pageTotal: 'CHF 37.80',
+    });
   });
 });
