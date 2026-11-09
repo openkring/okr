@@ -63,6 +63,11 @@ export class SendingModel implements OkrModel {
    * address (counts towards holding a Versand), 'other' = anything else. Absent on letters that did not fail.
    */
   public failReason?: 'address' | 'other';
+  /**
+   * ISO. Set once, just before the first call to the post provider. Empty = the provider was certainly never
+   * reached; set = it may hold the letter even if no answer came back (so the share must not be refunded blindly).
+   */
+  public attemptedAt?: string;
   /** ISO */
   public createdAt = '';
   /** ISO */

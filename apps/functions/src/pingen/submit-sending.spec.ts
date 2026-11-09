@@ -22,6 +22,7 @@ function setup(rows: SendingRow[], createLetter?: PingenClient['createLetter'], 
   const costs = new Map<string, unknown>();
   const tasks: Array<{ name: string; relatedKey: string; relatedModelType: string; linkKey?: string; assignee: { key: string } }> = [];
   const order: string[] = [];
+  const closed = new Set<string>();
   const reverseShare = vi.fn(async () => { order.push('reverse'); return { amount: 150, duplicate: false }; });
   const letter = createLetter ?? vi.fn(async () => ({ id: 'pg1', status: 'valid', filePages: 2, priceValue: 1.05, priceCurrency: 'CHF' }));
   const deps: SubmitDeps = {
@@ -41,12 +42,19 @@ function setup(rows: SendingRow[], createLetter?: PingenClient['createLetter'], 
     countAddressFailures: async (source) => [...store.values()].filter((r) => r.source === source && r.state === 'failed' && r.failReason === 'address').length,
     listQueued: async (source) => [...store.values()].filter((r) => r.source === source && r.state === 'queued'),
     avatar: async (key, _t, name) => ({ key, name1: name, name2: '', modelType: 'person', type: '', subType: '', label: '' }),
-    hasOpenTask: async (relatedKey) => tasks.some((t) => t.relatedKey === relatedKey),
+    hasOpenTask: async (relatedKey) => tasks.some((t) => t.relatedKey === relatedKey && !closed.has(t.relatedKey)),
+    closeOpenTask: async (relatedKey) => { closed.add(relatedKey); },
+    setProviderId: async (id, providerId) => {
+      const cur = store.get(id);
+      if (!cur || cur.state === 'failed') return false;
+      store.set(id, { ...cur, providerId });
+      return true;
+    },
     createTask: async (t) => { order.push('task'); tasks.push(t as never); },
     reverseShare,
     now: () => NOW,
   };
-  return { deps, store, costs, tasks, reverseShare, letter, order };
+  return { deps, store, costs, tasks, reverseShare, letter, order, closed };
 }
 
 describe('submitSending', () => {
@@ -233,16 +241,36 @@ describe('claim, ambiguity, age', () => {
     expect(reverseShare).not.toHaveBeenCalled();
   });
 
-  it('a retryable error on a record older than 24 h fails it and refunds', async () => {
-    const { deps, store, reverseShare, tasks } = setup([row('m1_p1', { createdAt: ago(25) })], async () => { throw new PingenError('Pingen 503', 503, true); });
-    await submitSending(deps, 'm1_p1');
-    expect(store.get('m1_p1')!.state).toBe('failed');
-    expect(store.get('m1_p1')!.failReason).toBe('other');
-    expect(reverseShare).toHaveBeenCalledWith('scs', 'e1', { units: 1, pages: 2 }, 'm1_p1', expect.any(String));
-    expect(tasks).toHaveLength(1);
+  it('past 24 h after a Pingen attempt: ambiguous, no refund (Pingen may hold the letter)', async () => {
+    const { deps, store, reverseShare, tasks } = setup([row('m1_p1', { createdAt: ago(25), attemptedAt: ago(20) })], async () => { throw new PingenError('Pingen 503', 503, true); });
+    await expect(submitSending(deps, 'm1_p1')).resolves.toBeUndefined();
+    expect(store.get('m1_p1')!.state).toBe('submitting');
+    expect(reverseShare).not.toHaveBeenCalled();
+    expect(tasks.map((t) => t.name)).toEqual(['Briefstatus unklar: Name m1_p1']);
   });
 
-  it('a Storage failure on a record older than 24 h fails it too', async () => {
+  it('a first attempt already past 24 h is ambiguous too: attemptedAt is set before createLetter', async () => {
+    const { deps, store, reverseShare } = setup([row('m1_p1', { createdAt: ago(25) })], async () => { throw new PingenError('Pingen 503', 503, true); });
+    await submitSending(deps, 'm1_p1');
+    expect(store.get('m1_p1')!.attemptedAt).toBe(NOW.toISOString());
+    expect(store.get('m1_p1')!.state).toBe('submitting');
+    expect(reverseShare).not.toHaveBeenCalled();
+  });
+
+  it('attemptedAt is set once and not overwritten', async () => {
+    const { deps, store } = setup([row('m1_p1', { attemptedAt: '2026-11-08T00:00:00.000Z' })]);
+    await submitSending(deps, 'm1_p1');
+    expect(store.get('m1_p1')!.attemptedAt).toBe('2026-11-08T00:00:00.000Z');
+  });
+
+  it('a Storage failure never sets attemptedAt', async () => {
+    const { deps, store } = setup([row('m1_p1')]);
+    deps.readPdf = async () => { throw new Error('storage down'); };
+    await expect(submitSending(deps, 'm1_p1')).rejects.toThrow();
+    expect(store.get('m1_p1')!.attemptedAt).toBeUndefined();
+  });
+
+  it('a Storage failure on a record older than 24 h fails it and refunds (Pingen never reached)', async () => {
     const { deps, store } = setup([row('m1_p1', { createdAt: ago(30) })]);
     deps.readPdf = async () => { throw new Error('storage down'); };
     await submitSending(deps, 'm1_p1');
@@ -268,6 +296,34 @@ describe('claim, ambiguity, age', () => {
     await submitSending(deps, 'm1_b');
     await submitSending(deps, 'm1_c');
     expect(tasks.find((t) => t.relatedKey === 'mailing.m1')?.name).toBe('Versand Einladung: Briefe angehalten — Pingen hat mehrere Briefe abgelehnt');
+  });
+});
+
+describe('success races', () => {
+  it('a record a webhook already moved to sent keeps its state but gets the providerId and the cost', async () => {
+    const ref: { store?: Map<string, SendingRow> } = {};
+    const { deps, store, costs } = setup([row('m1_p1')], async () => {
+      ref.store!.set('m1_p1', { ...ref.store!.get('m1_p1')!, state: 'sent' });   // the webhook lands while Pingen answers
+      return { id: 'pg1', status: 'valid', filePages: 2, priceValue: 1, priceCurrency: 'CHF' };
+    });
+    ref.store = store;
+    await submitSending(deps, 'm1_p1');
+    expect(store.get('m1_p1')!.state).toBe('sent');
+    expect(store.get('m1_p1')!.providerId).toBe('pg1');
+    expect(costs.get('m1_p1')).toBeDefined();
+  });
+
+  it('a success closes the open «Briefstatus unklar» task', async () => {
+    let attempt = 0;
+    const { deps, tasks, closed } = setup([row('m1_p1')], async () => {
+      if (attempt++ === 0) throw new PingenError('Pingen POST -> 409 conflict', 409, false);
+      return { id: 'pg1', status: 'valid', filePages: 2, priceValue: 1, priceCurrency: 'CHF' };
+    });
+    await submitSending(deps, 'm1_p1');
+    expect(tasks).toHaveLength(1);
+    expect(closed.has('sending.m1_p1')).toBe(false);
+    await submitSending(deps, 'm1_p1');   // the other delivery succeeds
+    expect(closed.has('sending.m1_p1')).toBe(true);
   });
 });
 

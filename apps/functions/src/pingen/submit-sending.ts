@@ -5,6 +5,7 @@
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { getFirestore } from 'firebase-admin/firestore';
 import { SendingCollection, type AvatarInfo, type SendingCost } from '@okr/shared-models';
+import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 import { privateBucket } from '../_storage/private-bucket';
 import { createFirestoreDeps } from '../workflow/firestore-deps';
 import { getCreditPort } from './credit-port';
@@ -48,6 +49,21 @@ export function submitDeps(): SubmitDeps {
       });
     },
     writeCost: async (id, cost: SendingCost) => { await col().doc(id).collection('private').doc('cost').set(cost); },
+    setProviderId: (id, providerId) => db.runTransaction(async (tx) => {
+      const ref = col().doc(id);
+      const snap = await tx.get(ref);
+      if (!snap.exists || snap.data()?.['state'] === 'failed') return false;
+      tx.update(ref, { providerId });
+      return true;
+    }),
+    closeOpenTask: async (relatedKey, tenantId) => {
+      const snap = await db.collection('tasks').where('relatedKey', '==', relatedKey).get();
+      for (const d of snap.docs) {
+        const t = d.data();
+        if (t['isArchived'] || t['state'] === 'done' || (t['completionDate'] ?? '') !== '' || !((t['tenants'] as string[]) ?? []).includes(tenantId)) continue;
+        await d.ref.update({ state: 'done', completionDate: getTodayStr(DateFormat.StoreDate) });
+      }
+    },
     loadMailing: async (source, tenantId): Promise<SendingMailing | undefined> => {
       if (!source.startsWith('mailing.')) return undefined;
       const snap = await db.collection('mailings').doc(source.slice('mailing.'.length)).get();

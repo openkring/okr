@@ -45,6 +45,10 @@ export interface SubmitDeps {
   /** merges `patch`; with `expectState` only when the record is in that state. false = not applied */
   updateSending(id: string, patch: Partial<SendingRow>, expectState?: SendingRow['state']): Promise<boolean>;
   writeCost(id: string, cost: SendingCost): Promise<void>;
+  /** merges the Pingen id whenever the record is not `failed`, without touching its state */
+  setProviderId(id: string, providerId: string): Promise<boolean>;
+  /** completes any open task of that key */
+  closeOpenTask(relatedKey: string, tenantId: string): Promise<void>;
   loadMailing(source: string, tenantId: string): Promise<SendingMailing | undefined>;
   countAddressFailures(source: string): Promise<number>;
   listQueued(source: string): Promise<SendingRow[]>;
@@ -163,7 +167,7 @@ export async function failSending(
 }
 
 /** Pingen may hold the letter: keep `submitting`, no refund, no retry, one task for the sender (deduped by record). */
-async function flagAmbiguous(deps: SubmitDeps, rec: SendingRow, err: PingenError): Promise<void> {
+async function flagAmbiguous(deps: SubmitDeps, rec: SendingRow, err: { status?: number; message: string }): Promise<void> {
   const tenantId = rec.tenants[0] ?? '';
   logger.error('submit-sending: letter status unclear (Pingen may hold it), no refund, check in Pingen', { id: rec.id, tenantId, source: rec.source, status: err.status, error: err.message });
   try {
@@ -212,12 +216,17 @@ async function holdVersand(deps: SubmitDeps, source: string, tenantId: string, c
   }
 }
 
-/** A retryable failure rethrows (the trigger retries with the same key), unless the letter is older than 24 h. */
+/**
+ * A retryable failure rethrows (the trigger retries with the same key). Past 24 h it stops: with an empty
+ * `attemptedAt` Pingen was certainly never reached (the PDF read kept failing), so the letter fails and is
+ * refunded; otherwise Pingen may hold it (a lost response), so it stays `submitting` for a human, no refund.
+ */
 async function retryOrGiveUp(deps: SubmitDeps, rec: SendingRow, err: unknown): Promise<void> {
   const created = Date.parse(rec.createdAt);
   if (Number.isFinite(created) && deps.now().getTime() - created > MAX_AGE_MS) {
-    await failSending(deps, rec, err instanceof Error ? err.message : String(err), true, 'other', 'submitting');
-    return;
+    const message = err instanceof Error ? err.message : String(err);
+    if (!rec.attemptedAt) return failSending(deps, rec, message, true, 'other', 'submitting');
+    return flagAmbiguous(deps, rec, { status: err instanceof PingenError ? err.status : undefined, message });
   }
   throw err;
 }
@@ -237,6 +246,12 @@ export async function submitSending(deps: SubmitDeps, id: string): Promise<void>
     pdf = await deps.readPdf(rec.storagePath);
   } catch (err) {
     return retryOrGiveUp(deps, rec, err);
+  }
+  if (!rec.attemptedAt) {
+    // BEFORE the first call: from here on Pingen may hold the letter whatever comes back
+    const attemptedAt = deps.now().toISOString();
+    if (!(await deps.updateSending(rec.id, { attemptedAt }, 'submitting'))) return;
+    rec = { ...rec, attemptedAt };
   }
   let letter;
   try {
@@ -258,6 +273,14 @@ export async function submitSending(deps: SubmitDeps, id: string): Promise<void>
   }
   // the cost first (idempotent set): a crash before the state write redoes both on the retry
   await deps.writeCost(rec.id, { providerPrice: Math.round(letter.priceValue * 100), currency: letter.priceCurrency });
+  // the id whenever the record is not failed (a webhook may have moved it on), the state only out of `submitting`
+  await deps.setProviderId(rec.id, letter.id);
   const at = deps.now().toISOString();
-  await deps.updateSending(rec.id, { state: 'submitted', providerId: letter.id, history: [...rec.history, { state: 'submitted', at }], updatedAt: at }, 'submitting');
+  await deps.updateSending(rec.id, { state: 'submitted', history: [...rec.history, { state: 'submitted', at }], updatedAt: at }, 'submitting');
+  // a duplicate delivery may have opened «Briefstatus unklar» while this one succeeded
+  try {
+    await deps.closeOpenTask(`sending.${rec.id}`, rec.tenants[0] ?? '');
+  } catch (err) {
+    logger.error('submit-sending: open task not closed', { id: rec.id, error: err instanceof Error ? err.message : String(err) });
+  }
 }
