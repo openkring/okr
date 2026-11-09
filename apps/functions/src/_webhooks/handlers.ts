@@ -2,6 +2,7 @@
 //
 // Handlers by client `type`. A type without a handler is stored and marked `logged`.
 import type { WebhookHandler } from './process';
+import { stripeHandler } from '../collection/stripe-webhook';
 import { mailtrapHandler } from '../email/mailtrap-webhook';
 import { deepSignHandler } from '../esign/deepsign-webhook';
 import { selftestHandler } from './selftest-client';
@@ -9,5 +10,6 @@ import { selftestHandler } from './selftest-client';
 export const WEBHOOK_HANDLERS: Record<string, WebhookHandler> = {
   mailtrap: mailtrapHandler,
   deepsign: deepSignHandler,
+  stripe: stripeHandler,
   selftest: selftestHandler,
 };

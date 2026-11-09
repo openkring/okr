@@ -30,6 +30,8 @@ export interface StripePort {
     idempotencyKey: string;
   }): Promise<{ id: string; status: string; chargeId: string }>;
   paymentMethodDisplay(paymentMethodId: string): Promise<SavedPaymentMethod>;
+  /** The payment method a finished SetupIntent saved (the webhook's checkout.session.completed only names the intent). */
+  setupIntentPaymentMethod(setupIntentId: string): Promise<string>;
   feeOfCharge(chargeId: string): Promise<number /* Rappen */>;
   detachPaymentMethod(paymentMethodId: string): Promise<void>;
 }
@@ -126,6 +128,14 @@ export function stripePort(): StripePort {
         stripePaymentMethodId: pm.id,
         consentAt: '',
       };
+    },
+
+    async setupIntentPaymentMethod(setupIntentId) {
+      const si = await stripe.setupIntents.retrieve(setupIntentId);
+      const pm = si.payment_method;
+      const id = typeof pm === 'string' ? pm : (pm?.id ?? '');
+      if (!id) throw new Error(`Stripe setup intent ${setupIntentId} has no payment method`);
+      return id;
     },
 
     async feeOfCharge(chargeId) {
