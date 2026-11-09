@@ -27,6 +27,11 @@ import { NewsWebcamView } from './news-webcam-view';
       <ion-toolbar color="secondary">
         <ion-title>{{ channel()?.name ?? item().title }}</ion-title>
         <ion-buttons slot="end">
+          @if (openOrg(); as open) {
+            <ion-button [attr.aria-label]="i18n().open_org()" (click)="open()">
+              <ion-icon slot="icon-only" src="{{ 'link' | svgIcon }}" />
+            </ion-button>
+          }
           <ion-button (click)="close()">
             <ion-icon slot="icon-only" src="{{ 'close' | svgIcon }}" />
           </ion-button>
@@ -54,6 +59,8 @@ export class NewsDetailModal {
   public readonly i18n = input.required<NewsCenterI18n>();
   public readonly imageUrl = input('');
   public readonly capturedAt = input<Date | null>(null);
+  /** the camera's host org (design 2026-11-09 §5.4): set by the host only when there is one and the app can open orgs */
+  public readonly openOrg = input<(() => Promise<void>) | undefined>(undefined);
 
   protected close(): Promise<boolean> {
     return dismissOverlay(this.modalController, null, 'cancel');
