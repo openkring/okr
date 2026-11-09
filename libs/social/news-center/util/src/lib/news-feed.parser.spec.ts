@@ -39,6 +39,23 @@ describe('parseNewsFeed', () => {
     expect(ep.durationSec).toBe(3130);
     expect(ep.thumbnailUrl).toBe('https://example.org/ep12.jpg');
     expect(ep2.durationSec).toBe(1800);
+    // no episode image (SRF feeds work this way): falls back to the feed's channel-level itunes:image
+    expect(ep2.thumbnailUrl).toBe('https://example.org/cover.jpg');
+  });
+
+  it('falls back to the feed image: rss <image><url>, atom <logo>; never an item-level image of another entry', () => {
+    const rss = `<?xml version="1.0"?><rss version="2.0"><channel><title>t</title>
+      <image><url>https://example.org/logo.png</url><title>t</title><link>https://example.org</link></image>
+      <item><title>a</title><guid>a</guid></item></channel></rss>`;
+    expect(parseNewsFeed(rss, 'rss', 'r1')[0].thumbnailUrl).toBe('https://example.org/logo.png');
+
+    const atom = `<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom"><title>t</title>
+      <logo>https://example.org/atom-logo.png</logo><entry><id>e1</id><title>e</title></entry></feed>`;
+    expect(parseNewsFeed(atom, 'rss', 'a1')[0].thumbnailUrl).toBe('https://example.org/atom-logo.png');
+
+    const noFeedImage = podcastXml.replace('<itunes:image href="https://example.org/cover.jpg"/>', '');
+    const [ep, ep2] = parseNewsFeed(noFeedImage, 'podcast', 'p1');
+    expect(ep.thumbnailUrl).toBe('https://example.org/ep12.jpg');
     expect(ep2.thumbnailUrl).toBeUndefined();
   });
 

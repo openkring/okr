@@ -21,7 +21,31 @@ export function parseNewsFeed(xml: string, kind: NewsChannelKind, channelKey: st
     throw new NewsFeedParseError();
   }
   const entries = Array.from(doc.getElementsByTagName(root.localName === 'rss' ? 'item' : 'entry'));
-  return entries.slice(0, Math.max(0, max)).map((entry) => (kind === 'youtube' ? youtubeItem(entry, channelKey) : genericItem(entry, kind, channelKey)));
+  const feedImage = feedImageOf(root);
+  return entries.slice(0, Math.max(0, max)).map((entry) => {
+    const item = kind === 'youtube' ? youtubeItem(entry, channelKey) : genericItem(entry, kind, channelKey);
+    // many podcast feeds (all of SRF's) carry artwork only once, for the whole feed
+    if (!item.thumbnailUrl && feedImage) item.thumbnailUrl = feedImage;
+    return item;
+  });
+}
+
+/**
+ * The feed's own artwork — direct children of the rss `<channel>` (itunes:image, else `<image><url>`)
+ * or of the atom `<feed>` (`<logo>`, else `<icon>`). Direct children only, so an item-level image of
+ * one entry never becomes the fallback for the others.
+ */
+function feedImageOf(root: Element): string | undefined {
+  const container = root.localName === 'rss' ? Array.from(root.children).find((c) => c.localName === 'channel') : root;
+  if (!container) return undefined;
+  const kids = Array.from(container.children);
+  const itunes = kids.find((c) => c.namespaceURI === NS_ITUNES && c.localName === 'image')?.getAttribute('href');
+  if (safeUrl(itunes)) return safeUrl(itunes);
+  const rssImage = kids.find((c) => c.localName === 'image' && c.namespaceURI !== NS_ITUNES);
+  const rssUrl = rssImage ? Array.from(rssImage.children).find((c) => c.localName === 'url')?.textContent : undefined;
+  if (safeUrl(rssUrl)) return safeUrl(rssUrl);
+  const atom = kids.find((c) => c.localName === 'logo') ?? kids.find((c) => c.localName === 'icon');
+  return safeUrl(atom?.textContent);
 }
 
 /** A webcam is a still image reloaded from the same url; the timestamp defeats every cache in between. */
