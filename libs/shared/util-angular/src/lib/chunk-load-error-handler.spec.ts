@@ -113,11 +113,13 @@ describe('ChunkLoadErrorHandler', () => {
 
   it('wraps a non-Error value in a descriptive Error so Sentry does not file "Handled unknown error" (SCS-EJ)', () => {
     const handler = new ChunkLoadErrorHandler(delegate);
-    const thrown = { code: 'x' };
+    const thrown = { code: 'x', email: 'someone@example.com' };
     handler.handleError(thrown);
     const forwarded = vi.mocked(delegate.handleError).mock.calls[0][0] as Error;
     expect(forwarded).toBeInstanceOf(Error);
-    expect(forwarded.message).toBe('Non-Error thrown: Object {"code":"x"}');
+    // Key names only — values never enter the free-text message, which Sentry does not scrub.
+    expect(forwarded.message).toBe('Non-Error thrown: Object keys=[code,email]');
+    expect(forwarded.message).not.toContain('someone@example.com');
     expect(forwarded.cause).toBe(thrown);
   });
 
@@ -132,21 +134,24 @@ describe('ChunkLoadErrorHandler', () => {
 });
 
 describe('describeNonError', () => {
-  it('names primitives, null and undefined', () => {
+  it('names primitives, null and undefined without their values', () => {
     expect(describeNonError(undefined)).toBe('undefined');
     expect(describeNonError(null)).toBe('null');
-    expect(describeNonError(42)).toBe('number 42');
+    expect(describeNonError(42)).toBe('number');
   });
 
   it('names the constructor and event type, and survives circular values', () => {
-    expect(describeNonError(new Event('error'))).toBe('Event type=error {"isTrusted":false}');
+    expect(describeNonError(new Event('error'))).toBe('Event type=error keys=[isTrusted]');
     const circular: Record<string, unknown> = { a: 1 };
     circular['self'] = circular;
     expect(describeNonError(circular)).toBe('Object keys=[a,self]');
   });
 
-  it('truncates long serializations', () => {
-    expect(describeNonError({ s: 'x'.repeat(1000) }).length).toBeLessThan(320);
+  it('truncates a long key list and never includes values', () => {
+    const many = Object.fromEntries(Array.from({ length: 200 }, (_, i) => [`key${i}`, 'secret-token']));
+    const d = describeNonError(many);
+    expect(d.length).toBeLessThan(330);
+    expect(d).not.toContain('secret-token');
   });
 });
 

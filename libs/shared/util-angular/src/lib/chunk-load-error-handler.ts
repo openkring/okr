@@ -121,7 +121,7 @@ export function registerStaleChunkRecovery(): void {
   });
 }
 
-/** Upper bound for the serialized value in a `describeNonError` message. */
+/** Upper bound for the key list in a `describeNonError` message. */
 const NON_ERROR_DETAIL_MAX = 300;
 
 /**
@@ -138,23 +138,23 @@ export function isReportableError(value: unknown): boolean {
 }
 
 /**
- * One-line description of a thrown value that is not an Error — its type, constructor and a
- * truncated serialization — so the report says WHAT was thrown.
+ * One-line description of a thrown value that is not an Error — its type, constructor, Event
+ * type and top-level key NAMES — so the report says WHAT was thrown.
+ *
+ * Never the values: the message is free text, which Sentry's key-based scrubbing does not
+ * reach, and a thrown object can be a Firestore doc or an auth payload carrying personal data
+ * or tokens. Primitives are reduced to their type for the same reason (a thrown string never
+ * gets here — it is reportable as-is).
  */
 export function describeNonError(value: unknown): string {
   if (value === undefined) return 'undefined';
   if (value === null) return 'null';
-  if (typeof value !== 'object') return `${typeof value} ${String(value).slice(0, NON_ERROR_DETAIL_MAX)}`;
+  if (typeof value !== 'object') return typeof value;
   const ctor = (value as object).constructor?.name || 'Object';
-  // An Event (e.g. an <img>/<script> `error` event, or a rejected FileReader) serializes to `{}`.
+  // An Event (e.g. an <img>/<script> `error` event, or a rejected FileReader) has no own keys.
   const eventType = typeof Event !== 'undefined' && value instanceof Event ? ` type=${value.type}` : '';
-  let detail: string;
-  try {
-    detail = JSON.stringify(value) ?? '';
-  } catch {
-    detail = `keys=[${Object.keys(value).join(',')}]`;
-  }
-  return `${ctor}${eventType} ${detail.slice(0, NON_ERROR_DETAIL_MAX)}`.trim();
+  const keys = Object.keys(value).join(',').slice(0, NON_ERROR_DETAIL_MAX);
+  return `${ctor}${eventType} keys=[${keys}]`;
 }
 
 /**
