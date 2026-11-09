@@ -427,10 +427,21 @@ export interface CreateAndIssueInvoiceInput {
   actor: string;
 }
 
+/** The fields in which a stored invoice differs from a createAndIssueInvoice input: books, billing kind, total (Rappen). */
+export function okeyMismatch(existing: InvoiceDoc, input: Pick<CreateAndIssueInvoiceInput, 'accountingTenantId' | 'billingKind' | 'positions'>): string[] {
+  const fields: string[] = [];
+  if (String(existing['accountingTenantId'] ?? '') !== input.accountingTenantId) fields.push('accountingTenantId');
+  if (String(existing['billingKind'] ?? '') !== input.billingKind) fields.push('billingKind');
+  const total = input.positions.reduce((sum, p) => sum + p.amount, 0);
+  if (Number((existing['totalAmount'] as { amount?: number } | undefined)?.amount ?? Number.NaN) !== total) fields.push('totalAmount');
+  return fields;
+}
+
 /**
  * Create a draft invoice with its positions in the given books and issue it (number, QR reference,
  * booking, PDF). Idempotent on `okey`: an issued invoice returns its key and number without writing; a
- * draft (or a run interrupted while `issuing`) is issued as stored, the input is not written again.
+ * draft (or a run interrupted while `issuing`) is issued as stored, the input is not written again. An
+ * existing invoice whose books, billing kind or total differ from the input is refused (`okey-mismatch`).
  * Invoice date is today; the due date is today + `dueDays`. The PDF uses the books' default template.
  */
 export async function createAndIssueInvoice(db: Firestore, input: CreateAndIssueInvoiceInput): Promise<{ invoiceKey: string; invoiceNo: number }> {
@@ -460,6 +471,11 @@ export async function createAndIssueInvoice(db: Firestore, input: CreateAndIssue
     if (existing) {
       if (!((existing['tenants'] as string[] | undefined) ?? []).includes(tenantId)) {
         throw new HttpsError('permission-denied', 'invoice belongs to another tenant');
+      }
+      // the same okey must mean the same invoice: never issue or return a different one under this key
+      const mismatch = okeyMismatch(existing, input);
+      if (mismatch.length > 0) {
+        throw refuse('okey-mismatch', `invoice ${okey} exists with a different ${mismatch.join(', ')}`, { fields: mismatch });
       }
       return; // already written: the issue step below decides (issued → stored result, draft → issue)
     }
