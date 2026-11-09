@@ -7,3 +7,4 @@ export * from './lib/resolved-news-source';
 export * from './lib/news-image.util';
 export * from './lib/news-channel-place.util';
 export * from './lib/news-channel.validations';
+export * from './lib/news-map.util';

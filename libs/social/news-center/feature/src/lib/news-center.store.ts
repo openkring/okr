@@ -15,7 +15,7 @@ import type { NewsChannelFormData } from '@okr/social-news-center-util';
 import { NewsChannelEditModal } from '@okr/social-news-center-ui';
 import type { NewsPosition, NewsResolveError } from '@okr/social-news-center-ui';
 import {
-  avatarOf, canSuggest, orgPostalString, effectiveChannels, hiddenChannels, mergeNewest, NEWS_CENTER_I18N_KEYS, NewsCenterI18n, NewsItem, NewsRequestFormData,
+  avatarOf, canSuggest, isPlaced, NEWS_MAP_KEY, orgPostalString, webcamMarkers, effectiveChannels, hiddenChannels, mergeNewest, NEWS_CENTER_I18N_KEYS, NewsCenterI18n, NewsItem, NewsRequestFormData,
   optionalChannels, parseNewsFeed, ResolvedNewsSource,
 } from '@okr/social-news-center-util';
 
@@ -126,8 +126,24 @@ export const NewsCenterStore = signalStore(
     const failedKeys = computed(() => channels().filter((c) => store.feeds()[c.okey]?.error).map((c) => c.okey));
     const myRequests = computed(() => store.myRequestsResource.value() ?? []);
     const openRequests = computed(() => store.openRequestsResource.value() ?? []);
-    /** a selection that left the list (hidden, archived, other segment) falls back to «Alle Kanäle» */
-    const activeKey = computed(() => (channels().some((c) => c.okey === store.selectedKey()) ? store.selectedKey() : 'all'));
+    /**
+     * a selection that left the list (hidden, archived, other segment) falls back to «Alle Kanäle»;
+     * «Kartenübersicht» ('map') exists only in the webcam tab
+     */
+    const activeKey = computed(() => {
+      const key = store.selectedKey();
+      if (key === NEWS_MAP_KEY) return store.segment() === 'webcam' ? NEWS_MAP_KEY : 'all';
+      return channels().some((c) => c.okey === key) ? key : 'all';
+    });
+    /** okey → avatar url: an explicit avatarUrl, else a webcam's current still (design 2026-11-09 §5.2) */
+    const avatars = computed(() => {
+      const out: Record<string, string> = {};
+      for (const c of allChannels()) {
+        const url = avatarOf(c, store.feeds()[c.okey]);
+        if (url) out[c.okey] = url;
+      }
+      return out;
+    });
     return {
       allChannels,
       subscription,
@@ -139,29 +155,25 @@ export const NewsCenterStore = signalStore(
       optionalChannels: computed(() => optionalChannels(allChannels(), subscription(), store.segment())),
       /** curator view: every channel of the segment, in club order */
       clubChannels: computed(() => allChannels().filter((c) => c.segment === store.segment())),
-      /** okey → avatar url: an explicit avatarUrl, else a webcam's current still (design 2026-11-09 §5.2) */
-      avatars: computed(() => {
-        const out: Record<string, string> = {};
-        for (const c of allChannels()) {
-          const url = avatarOf(c, store.feeds()[c.okey]);
-          if (url) out[c.okey] = url;
-        }
-        return out;
-      }),
+      avatars,
+      /** «Kartenübersicht»: one pin per placed visible webcam, with its current still */
+      mapMarkers: computed(() => webcamMarkers(channels(), avatars())),
+      /** visible webcams without a position, listed under the map so curators see what to place */
+      unplacedChannels: computed(() => channels().filter((c) => !isPlaced(c))),
       myRequests,
       openRequests,
       openRequestCount: computed(() => openRequests().length),
       canSuggest: computed(() => canSuggest(myRequests().filter((r) => r.status === 'open').length)),
       visibleItems: computed(() => {
         const key = activeKey();
-        if (key !== 'all') return store.feeds()[key]?.items ?? [];
+        if (key !== 'all' && key !== NEWS_MAP_KEY) return store.feeds()[key]?.items ?? [];
         const failed = new Set(failedKeys());
         return mergeNewest(channels().filter((c) => !failed.has(c.okey)).map((c) => store.feeds()[c.okey]?.items ?? []), NEWS_MAX_ALL);
       }),
       /** the grid shows its spinner only while nothing is there yet */
       isLoading: computed(() => {
         const key = activeKey();
-        const keys = key === 'all' ? channels().map((c) => c.okey) : [key];
+        const keys = key === 'all' || key === NEWS_MAP_KEY ? channels().map((c) => c.okey) : [key];
         return keys.some((k) => store.feeds()[k]?.loading) && keys.every((k) => !(store.feeds()[k]?.items.length));
       }),
       requesterName: computed(() => {

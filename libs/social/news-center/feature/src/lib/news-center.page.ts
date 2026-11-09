@@ -8,8 +8,10 @@ import {
 import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { NEWS_SEGMENTS, NewsSegment } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
+import { LeafletMap, MapMarker } from '@okr/shared-ui';
 import { contextMenuId } from '@okr/shared-util-core';
 import { NewsChannelList, NewsChannelSheet, NewsGrid, NewsWebcamView } from '@okr/social-news-center-ui';
+import { NEWS_MAP_KEY } from '@okr/social-news-center-util';
 
 import { toNewsSegment } from './news-center.service';
 import { NewsCenterStore } from './news-center.store';
@@ -26,7 +28,7 @@ import { NewsCenterStore } from './news-center.store';
   selector: 'okr-news-center-page',
   standalone: true,
   imports: [
-    SvgIconPipe, Menu, NewsChannelList, NewsChannelSheet, NewsGrid, NewsWebcamView,
+    SvgIconPipe, Menu, NewsChannelList, NewsChannelSheet, NewsGrid, NewsWebcamView, LeafletMap,
     IonHeader, IonToolbar, IonButtons, IonButton, IonMenuButton, IonTitle, IonIcon, IonPopover, IonContent,
     IonSegment, IonSegmentButton, IonLabel, IonChip,
   ],
@@ -37,6 +39,9 @@ import { NewsCenterStore } from './news-center.store';
     .main { flex: 1; min-width: 0; }
     .filter { padding: 8px 8px 0; }
     .webcam { padding: 16px; }
+    .map { display: block; height: 70vh; min-height: 320px; }
+    .unplaced { padding: 8px 16px; color: var(--ion-color-medium); font-size: 0.85rem; }
+    .unplaced h3 { margin: 8px 0 4px; font-size: 0.9rem; }
     @media (min-width: 768px) {
       .channels { display: block; flex: 0 0 260px; position: sticky; top: 0; max-height: 100%; overflow-y: auto;
         border-right: 1px solid var(--ion-color-light-shade); }
@@ -77,7 +82,7 @@ import { NewsCenterStore } from './news-center.store';
       <div class="layout">
         <aside class="channels">
           <okr-news-channel-list [channels]="store.channels()" [selectedKey]="store.activeKey()" [failedKeys]="store.failedKeys()" [avatars]="store.avatars()"
-            [i18n]="store.i18n" (selected)="store.select($event)" />
+            [showMapEntry]="isWebcamTab()" [i18n]="store.i18n" (selected)="store.select($event)" />
         </aside>
         <div class="main">
           <div class="filter">
@@ -86,7 +91,17 @@ import { NewsCenterStore } from './news-center.store';
               <ion-icon src="{{ 'chevron-down' | svgIcon }}" />
             </ion-chip>
           </div>
-          @if (singleWebcam(); as cam) {
+          @if (isMap()) {
+            <!-- «Kartenübersicht»: one pin per placed webcam, tap the thumbnail for the big image -->
+            <okr-leaflet-map class="map" [markers]="store.mapMarkers()" [pinIconUrl]="'location' | svgIcon"
+              (markerClick)="onMarkerClick($event)" />
+            @if (store.unplacedChannels().length > 0) {
+              <div class="unplaced">
+                <h3>{{ store.i18n.unplaced() }}</h3>
+                @for (channel of store.unplacedChannels(); track channel.okey) { <div>{{ channel.name }}</div> }
+              </div>
+            }
+          } @else if (singleWebcam(); as cam) {
             <!-- one camera selected: its image full width right in the page, no modal -->
             <okr-news-webcam-view class="webcam" [imageUrl]="cam.imageUrl" [capturedAt]="cam.capturedAt"
               [i18n]="store.i18n" />
@@ -97,7 +112,7 @@ import { NewsCenterStore } from './news-center.store';
         </div>
       </div>
       <okr-news-channel-sheet [open]="sheetOpen()" [channels]="store.channels()" [selectedKey]="store.activeKey()"
-        [failedKeys]="store.failedKeys()" [avatars]="store.avatars()" [i18n]="store.i18n" (selected)="store.select($event)" (closed)="sheetOpen.set(false)" />
+        [failedKeys]="store.failedKeys()" [avatars]="store.avatars()" [showMapEntry]="isWebcamTab()" [i18n]="store.i18n" (selected)="store.select($event)" (closed)="sheetOpen.set(false)" />
     </ion-content>
   `,
 })
@@ -114,8 +129,12 @@ export class NewsCenterPage {
   protected readonly segments: NewsSegment[] = NEWS_SEGMENTS;
   protected readonly sheetOpen = signal(false);
 
+  protected readonly isWebcamTab = computed(() => this.store.segment() === 'webcam');
+  protected readonly isMap = computed(() => this.store.activeKey() === NEWS_MAP_KEY);
+
   protected readonly selectedName = computed(() => {
     const key = this.store.activeKey();
+    if (key === NEWS_MAP_KEY) return this.store.i18n.map_overview();
     return key === 'all' ? this.store.i18n.all_channels() : (this.store.channels().find((c) => c.okey === key)?.name ?? this.store.i18n.all_channels());
   });
 
@@ -124,7 +143,7 @@ export class NewsCenterPage {
    * from the store, so it follows the camera's refreshMinutes timer like the detail modal does.
    */
   protected readonly singleWebcam = computed(() => {
-    if (this.store.segment() !== 'webcam' || this.store.activeKey() === 'all') return undefined;
+    if (this.store.segment() !== 'webcam' || this.store.activeKey() === 'all' || this.isMap()) return undefined;
     const item = this.store.visibleItems()[0];
     if (!item) return undefined;
     return { imageUrl: item.mediaUrl ?? '', capturedAt: item.publishedAt ? new Date(item.publishedAt) : null };
@@ -144,6 +163,12 @@ export class NewsCenterPage {
 
   public ionViewWillLeave(): void {
     this.store.setActive(false);
+  }
+
+  /** A pin of the map: open that camera's current still in the detail modal (the big image). */
+  protected async onMarkerClick(marker: MapMarker): Promise<void> {
+    const item = marker.id ? this.store.feeds()[marker.id]?.items[0] : undefined;
+    if (item) await this.store.openItem(item);
   }
 
   protected segmentLabel(segment: NewsSegment): string {

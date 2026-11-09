@@ -4,7 +4,7 @@ import { IonAvatar, IonIcon, IonItem, IonLabel, IonList } from '@ionic/angular';
 import { NewsChannelModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ImgDirective } from '@okr/shared-ui';
-import { NewsCenterI18n } from '@okr/social-news-center-util';
+import { NEWS_MAP_KEY, NewsCenterI18n } from '@okr/social-news-center-util';
 
 import { NewsImagePipe } from './news-image.pipe';
 
@@ -20,6 +20,12 @@ import { NewsImagePipe } from './news-image.pipe';
   `],
   template: `
     <ion-list lines="none">
+      @if (showMapEntry()) {
+        <ion-item button detail="false" [class.selected]="selectedKey() === mapKey" (click)="selected.emit(mapKey)">
+          <ion-icon slot="start" src="{{ 'map' | svgIcon }}" />
+          <ion-label>{{ i18n().map_overview() }}</ion-label>
+        </ion-item>
+      }
       <ion-item button detail="false" [class.selected]="selectedKey() === 'all'" (click)="selected.emit('all')">
         <ion-label>{{ i18n().all_channels() }}</ion-label>
       </ion-item>
@@ -47,6 +53,10 @@ export class NewsChannelList {
   public readonly failedKeys = input<string[]>([]);
   /** okey → avatar url (explicit avatarUrl or a webcam's current still), from `NewsCenterStore.avatars` */
   public readonly avatars = input<Record<string, string>>({});
+  /** webcam tab: show «Kartenübersicht» above «Alle Kanäle» */
+  public readonly showMapEntry = input(false);
+
+  protected readonly mapKey = NEWS_MAP_KEY;
   public readonly i18n = input.required<NewsCenterI18n>();
 
   public readonly selected = output<string>();
