@@ -59,7 +59,8 @@ export type PaymentAttemptState = 'open' | 'succeeded' | 'failed' | 'requires_ac
 
 export class PaymentAttemptModel implements OkrModel {
   public okey = DEFAULT_KEY;
-  public tenants: string[] = DEFAULT_TENANTS;
+  public tenants: string[] = DEFAULT_TENANTS; // holds the operator tenant (the books' owner), not the payer
+  public payerTenantId = ''; // the paying tenant
   public isArchived = false;
 
   public accountingTenantId = '';
