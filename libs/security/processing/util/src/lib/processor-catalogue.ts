@@ -386,6 +386,37 @@ export const PROCESSOR_CATALOGUE: readonly CatalogueEntry[] = [
       'Beim Erfassen deiner Adresse wurde eine Suchanfrage mit deinem Namen und Ort an das Verzeichnis gesendet. Übermittelt wurde nur die Anfrage, nicht dein Datensatz.',
   },
   {
+    key: 'stripe',
+    name: 'Stripe (Online-Zahlung der Plattformgebühren)',
+    legalEntity: 'Stripe Payments Europe Limited, 1 Grand Canal Street Lower, Grand Canal Dock, Dublin, D02 H210, IE',
+    role: 'processor',
+    category: 'saasService',
+    country: 'IE',
+    transferMechanism: 'adequacyDecision',
+    purposes: [
+      'Einzug von Rechnungen und Guthaben-Aufladungen der Plattform per Karte oder PayPal',
+      'Hinterlegen der Zahlungsart der Organisation für wiederkehrende Belastungen',
+    ],
+    // Übermittelt werden Name der Organisation, Rechnungs-E-Mail, Rechnungsnummer und
+    // Beträge. Karten- und PayPal-Daten erfasst und hält Stripe selbst; wir speichern nur
+    // Anzeigedaten (Marke, letzte vier Ziffern, Ablauf, PayPal-E-Mail).
+    dataClasses: ['identity', 'contact', 'financial'],
+    retentionText: 'Gemäss Aufbewahrungspflichten des Anbieters (Zahlungs- und Geldwäschereivorschriften)',
+    securityMeasures: [
+      'Verschlüsselte Übertragung',
+      'Karten- und PayPal-Daten werden nie auf unseren Systemen verarbeitet oder gespeichert',
+      'API-Schlüssel und Webhook-Geheimnis serverseitig im Secret Manager, nie im Client',
+      'Webhook-Signatur wird bei jedem Ereignis geprüft',
+    ],
+    dpaUrl: 'https://stripe.com/legal/dpa',
+    privacyUrl: 'https://stripe.com/privacy',
+    contact: '',
+    enabledWhen: byIntegration('stripe'),
+    cloudFunctions: ['collection/*', 'webhooks/stripe'],
+    memberNoticeDe:
+      'Betroffen sind nur Organisationen, die Plattformgebühren online bezahlen, keine einzelnen Mitglieder. Zahlungsdaten liegen beim Zahlungsdienst; wende dich für eine Löschung an die Datenschutz-Kontaktstelle (siehe Impressum).',
+  },
+  {
     key: 'youtube',
     name: 'YouTube (eingebettete Videos, NewsCenter)',
     legalEntity: 'Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, IE',
