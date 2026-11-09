@@ -18,9 +18,17 @@ import {
     getPosterStyle,
     getImgixUrlWithAutoParams,
     getSizedImgixParamsByExtension,
+    toPixelNumber,
     getThumbnailUrl,
     buildOverlayParams,
+    getCaptionCss,
+    getImageFrameCss,
+    toCssLength,
+    getCaptionLuminanceUrl,
+    getCaptionTone,
     buildOverlayText,
+    buildImageCaption,
+    appendImgixParams,
     extractCredit,
     IMGIX_JPG_PARAMS,
     IMGIX_JSON_PARAMS,
@@ -405,6 +413,32 @@ describe('img.util', () => {
       
       expect(result).toBe('');
     });
+
+    it('should not crop when a size is not a pixel value', () => {
+      mockIsPdf.mockReturnValue(false);
+      mockIsImage.mockReturnValue(true);
+      expect(getSizedImgixParamsByExtension('photo.jpg', '100%', 'auto')).toBe('auto=format,compress,enhance&fit=crop');
+      expect(getSizedImgixParamsByExtension('photo.jpg', '400px', '300px')).toBe('ar=400:300&auto=format,compress,enhance&fit=crop');
+      expect(getSizedImgixParamsByExtension('photo.jpg', '400', 'auto')).not.toContain('ar=');
+    });
+  });
+
+  describe('toPixelNumber', () => {
+    it('reads plain numbers and px as pixels', () => {
+      expect(toPixelNumber('300')).toBe(300);
+      expect(toPixelNumber('300px')).toBe(300);
+      expect(toPixelNumber(' 12.5px ')).toBe(12.5);
+      expect(toPixelNumber(800)).toBe(800);
+    });
+
+    it('returns undefined for relative or missing sizes', () => {
+      expect(toPixelNumber('100%')).toBeUndefined();
+      expect(toPixelNumber('50vw')).toBeUndefined();
+      expect(toPixelNumber('auto')).toBeUndefined();
+      expect(toPixelNumber('')).toBeUndefined();
+      expect(toPixelNumber(undefined)).toBeUndefined();
+      expect(toPixelNumber('0')).toBeUndefined();
+    });
   });
 
   describe('getThumbnailUrl', () => {
@@ -522,78 +556,79 @@ describe('img.util', () => {
     });
   });
 
-  describe('buildOverlayParams', () => {
+  describe('buildImageCaption', () => {
     const img = (over: Partial<ImageConfig> = {}): ImageConfig =>
-      ({ label: '', type: ImageType.Image, url: '', actionUrl: '', altText: '', overlay: '', credit: '', ...over });
-    const style = (over: Partial<ImageStyle> = {}): ImageStyle =>
-      ({ showTitle: false, showSource: false, ...over } as ImageStyle);
+      ({ label: 'Label', type: ImageType.Image, url: '', actionUrl: '', altText: '', overlay: '', credit: '', ...over });
 
-    it('returns empty string when nothing is shown', () => {
-      expect(buildOverlayParams(img({ label: 'Sunset', credit: 'J. Doe' }), style())).toBe('');
+    it('a) uses the image Untertitel, with the Quelle as second line', () => {
+      expect(buildImageCaption(img({ overlay: 'Doppelvierer', credit: 'Foto: Swiss Rowing' }), ['Sub', 'Title']))
+        .toEqual({ text: 'Doppelvierer', source: 'Foto: Swiss Rowing' });
+      expect(buildImageCaption(img({ overlay: 'Doppelvierer' }), ['Sub'])).toEqual({ text: 'Doppelvierer', source: '' });
     });
 
-    it('renders the title when showTitle is true', () => {
-      const result = buildOverlayParams(img({ label: 'Sunset' }), style({ showTitle: true }));
-      expect(result).toContain('txt=Sunset');
-      expect(result).toContain('txt-align=bottom,left');
+    it('b) falls back to the Quelle alone', () => {
+      expect(buildImageCaption(img({ credit: 'Foto: Swiss Rowing' }), ['Sub', 'Title']))
+        .toEqual({ text: 'Foto: Swiss Rowing', source: '' });
     });
 
-    it('renders the credit when showSource is true', () => {
-      const result = buildOverlayParams(img({ credit: 'Photo: J. Doe' }), style({ showSource: true }));
-      expect(result).toContain(encodeURIComponent('Photo: J. Doe'));
+    it('c) and d) fall back to the section subtitle, then the section title', () => {
+      expect(buildImageCaption(img(), ['Sub', 'Title'])).toEqual({ text: 'Sub', source: '' });
+      expect(buildImageCaption(img(), ['  ', 'Title'])).toEqual({ text: 'Title', source: '' });
+      expect(buildImageCaption(img(), [undefined, ''])).toEqual({ text: '', source: '' });
     });
 
-    it('joins title and credit with a newline, title first', () => {
-      const result = buildOverlayParams(img({ label: 'Sunset', credit: 'J. Doe' }), style({ showTitle: true, showSource: true }));
-      expect(result).toContain('txt=' + encodeURIComponent('Sunset\nJ. Doe'));
-    });
-
-    it('lets the free-form overlay override the composed text', () => {
-      const result = buildOverlayParams(img({ label: 'Sunset', credit: 'J. Doe', overlay: 'Custom caption' }), style({ showTitle: true, showSource: true }));
-      expect(result).toContain('txt=' + encodeURIComponent('Custom caption'));
-      expect(result).not.toContain('Sunset');
-    });
-
-    it('skips a toggled line whose value is empty', () => {
-      const result = buildOverlayParams(img({ label: 'Sunset', credit: '' }), style({ showTitle: true, showSource: true }));
-      expect(result).toContain('txt=' + encodeURIComponent('Sunset'));
+    it('never uses the image label and trims whitespace', () => {
+      expect(buildImageCaption(img({ label: 'Sunset' })).text).toBe('');
+      expect(buildImageCaption(img({ overlay: '  Sunset  ' })).text).toBe('Sunset');
+      expect(buildImageCaption(undefined)).toEqual({ text: '', source: '' });
     });
   });
 
   describe('buildOverlayText', () => {
     const img = (over: Partial<ImageConfig> = {}): ImageConfig =>
+      ({ label: 'Label', type: ImageType.Image, url: '', actionUrl: '', altText: '', overlay: '', credit: '', ...over });
+
+    it('joins Untertitel and Quelle on two lines', () => {
+      expect(buildOverlayText(img({ overlay: 'Custom', credit: 'J. Doe' }))).toBe('Custom\nJ. Doe');
+    });
+
+    it('shows the Quelle alone, and nothing for an image without either', () => {
+      expect(buildOverlayText(img({ credit: 'J. Doe' }))).toBe('J. Doe');
+      expect(buildOverlayText(img())).toBe('');
+    });
+  });
+
+  describe('buildOverlayParams', () => {
+    const img = (over: Partial<ImageConfig> = {}): ImageConfig =>
       ({ label: '', type: ImageType.Image, url: '', actionUrl: '', altText: '', overlay: '', credit: '', ...over });
-    const style = (over: Partial<ImageStyle> = {}): ImageStyle =>
-      ({ showTitle: false, showSource: false, ...over } as ImageStyle);
 
-    it('returns empty string when nothing is shown', () => {
-      expect(buildOverlayText(img({ label: 'Sunset', credit: 'J. Doe' }), style())).toBe('');
+    it('renders nothing when the caption is switched off (the default)', () => {
+      expect(buildOverlayParams(img({ overlay: 'Sunset' }), {} as ImageStyle)).toBe('');
+      expect(buildOverlayParams(img({ overlay: 'Sunset' }), { captionPosition: 'none' } as ImageStyle)).toBe('');
     });
 
-    it('returns the title when showTitle is true', () => {
-      expect(buildOverlayText(img({ label: 'Sunset' }), style({ showTitle: true }))).toBe('Sunset');
+    it('url-encodes the caption into txt', () => {
+      const result = buildOverlayParams(img({ overlay: 'Sunset', credit: 'J. Doe' }), { captionPosition: 'bottom-overlay' } as ImageStyle);
+      expect(result).toContain('txt=' + encodeURIComponent('Sunset\nJ. Doe'));
     });
 
-    it('returns the credit when showSource is true', () => {
-      expect(buildOverlayText(img({ credit: 'Photo: J. Doe' }), style({ showSource: true }))).toBe('Photo: J. Doe');
+    it('renders nothing for an image without caption text', () => {
+      expect(buildOverlayParams(img(), { captionPosition: 'bottom' } as ImageStyle)).toBe('');
+    });
+  });
+
+  describe('appendImgixParams', () => {
+    const url = 'https://bkaiser.imgix.net/tenant/scs/a.jpg?auto=format';
+    it('appends the extra parameters after the generated ones', () => {
+      expect(appendImgixParams(url, 'sat=-100')).toBe(url + '&sat=-100');
+      expect(appendImgixParams(url, '?sat=-100&blur=20')).toBe(url + '&sat=-100&blur=20');
+      expect(appendImgixParams('https://bkaiser.imgix.net/a.jpg', '&sat=-100')).toBe('https://bkaiser.imgix.net/a.jpg?sat=-100');
     });
 
-    it('joins title and credit with a newline, title first', () => {
-      expect(buildOverlayText(img({ label: 'Sunset', credit: 'J. Doe' }), style({ showTitle: true, showSource: true })))
-        .toBe('Sunset\nJ. Doe');
-    });
-
-    it('lets the free-form overlay override the composed text', () => {
-      expect(buildOverlayText(img({ label: 'Sunset', credit: 'J. Doe', overlay: 'Custom caption' }), style({ showTitle: true, showSource: true })))
-        .toBe('Custom caption');
-    });
-
-    it('skips a toggled line whose value is empty', () => {
-      expect(buildOverlayText(img({ label: 'Sunset', credit: '' }), style({ showTitle: true, showSource: true }))).toBe('Sunset');
-    });
-
-    it('trims surrounding whitespace', () => {
-      expect(buildOverlayText(img({ label: '  Sunset  ' }), style({ showTitle: true }))).toBe('Sunset');
+    it('leaves the url alone without parameters or for non-imgix urls', () => {
+      expect(appendImgixParams(url, '')).toBe(url);
+      expect(appendImgixParams(url, undefined)).toBe(url);
+      expect(appendImgixParams('https://example.com/a.jpg', 'sat=-100')).toBe('https://example.com/a.jpg');
     });
   });
 
@@ -738,5 +773,103 @@ describe('collageTiles', () => {
     expect(collageTiles(5).map((t) => [t.colSpan, t.rowSpan])).toEqual([[2, 2], [1, 1], [1, 1], [2, 1], [1, 1]]);
     expect(collageTiles(7).map((t) => t.index)).toEqual([0, 1, 2, 3, 4, 5, 6]);
     expect(collageTiles(0)).toEqual([]);
+  });
+
+  describe('getCaptionCss', () => {
+    it('falls back to 0.8rem italic for a legacy style', () => {
+      expect(getCaptionCss(undefined)).toEqual({ 'font-size': '0.8rem', 'font-style': 'italic', 'font-weight': 'normal', 'text-align': 'left' });
+      expect(getCaptionCss({ captionSize: '  ' } as ImageStyle)['font-size']).toBe('0.8rem');
+    });
+
+    it('maps each caption style onto font-style and font-weight', () => {
+      const css = (captionStyle: ImageStyle['captionStyle']) => getCaptionCss({ captionStyle } as ImageStyle);
+      expect(css('normal')).toMatchObject({ 'font-style': 'normal', 'font-weight': 'normal' });
+      expect(css('italic')).toMatchObject({ 'font-style': 'italic', 'font-weight': 'normal' });
+      expect(css('bold')).toMatchObject({ 'font-style': 'normal', 'font-weight': '600' });
+      expect(css('bold-italic')).toMatchObject({ 'font-style': 'italic', 'font-weight': '600' });
+    });
+
+    it('uses the configured alignment', () => {
+      expect(getCaptionCss({ captionAlign: 'center' } as ImageStyle)['text-align']).toBe('center');
+      expect(getCaptionCss({ captionAlign: 'right' } as ImageStyle)['text-align']).toBe('right');
+    });
+
+    it('uses the configured size', () => {
+      expect(getCaptionCss({ captionSize: '14px' } as ImageStyle)['font-size']).toBe('14px');
+    });
+  });
+
+  describe('buildOverlayParams caption position', () => {
+    const image = { overlay: 'Hallo' } as ImageConfig;
+    it('aligns at the bottom by default and at the top for top positions', () => {
+      expect(buildOverlayParams(image, { captionPosition: 'bottom' } as ImageStyle)).toContain('txt-align=bottom,left');
+      expect(buildOverlayParams(image, { captionPosition: 'top' } as ImageStyle)).toContain('txt-align=top,left');
+      expect(buildOverlayParams(image, { captionPosition: 'top-overlay' } as ImageStyle)).toContain('txt-align=top,left');
+    });
+
+    it('places a middle overlay and honours the horizontal alignment', () => {
+      expect(buildOverlayParams(image, { captionPosition: 'middle-overlay', captionAlign: 'center' } as ImageStyle)).toContain('txt-align=middle,center');
+      expect(buildOverlayParams(image, { captionPosition: 'bottom-overlay', captionAlign: 'right' } as ImageStyle)).toContain('txt-align=bottom,right');
+    });
+  });
+
+  describe('getCaptionLuminanceUrl', () => {
+    const url = 'https://bkaiser.imgix.net/tenant/scs/section/x/image.jpg?auto=format&w=640';
+    it('measures only overlay positions', () => {
+      expect(getCaptionLuminanceUrl(url, undefined)).toBeUndefined();
+      expect(getCaptionLuminanceUrl(url, { captionPosition: 'top' } as ImageStyle)).toBeUndefined();
+      expect(getCaptionLuminanceUrl(url, { captionPosition: 'bottom' } as ImageStyle)).toBeUndefined();
+    });
+
+    it('crops to the band under the caption and drops the original query', () => {
+      expect(getCaptionLuminanceUrl(url, { captionPosition: 'bottom-overlay' } as ImageStyle))
+        .toBe('https://bkaiser.imgix.net/tenant/scs/section/x/image.jpg?rect=0,0.8,0.34,0.2&palette=json&colors=1');
+      expect(getCaptionLuminanceUrl(url, { captionPosition: 'top-overlay', captionAlign: 'right' } as ImageStyle))
+        .toContain('rect=0.66,0,0.34,0.2');
+      expect(getCaptionLuminanceUrl(url, { captionPosition: 'middle-overlay', captionAlign: 'center' } as ImageStyle))
+        .toContain('rect=0.33,0.4,0.34,0.2');
+    });
+
+    it('ignores images that are not served by imgix', () => {
+      expect(getCaptionLuminanceUrl('https://example.com/a.jpg', { captionPosition: 'bottom-overlay' } as ImageStyle)).toBeUndefined();
+    });
+  });
+
+  describe('getCaptionTone', () => {
+    it('picks dark text only for a measurably light band', () => {
+      expect(getCaptionTone(undefined)).toBe('dark');
+      expect(getCaptionTone(0.24)).toBe('dark');
+      expect(getCaptionTone(0.55)).toBe('dark');
+      expect(getCaptionTone(0.8)).toBe('light');
+    });
+  });
+
+  describe('toCssLength', () => {
+    it('reads a plain number as px and passes css values through', () => {
+      expect(toCssLength('4')).toBe('4px');
+      expect(toCssLength('2.5')).toBe('2.5px');
+      expect(toCssLength('4px')).toBe('4px');
+      expect(toCssLength('50%')).toBe('50%');
+      expect(toCssLength('  ')).toBeUndefined();
+      expect(toCssLength(undefined)).toBeUndefined();
+    });
+  });
+
+  describe('getImageFrameCss', () => {
+    it('applies border and radius as given', () => {
+      expect(getImageFrameCss({ border: '1px solid', borderRadius: '4px' } as ImageStyle))
+        .toEqual({ 'border': '1px solid', 'border-radius': '4px' });
+    });
+
+    it('keeps legacy values working', () => {
+      // '1px' has no line style and so draws no border, as before; '4' becomes 4px
+      expect(getImageFrameCss({ border: '1px', borderRadius: '4' } as ImageStyle))
+        .toEqual({ 'border': '1px', 'border-radius': '4px' });
+    });
+
+    it('is empty for a style without frame settings', () => {
+      expect(getImageFrameCss(undefined)).toEqual({});
+      expect(getImageFrameCss({ border: '', borderRadius: '' } as ImageStyle)).toEqual({});
+    });
   });
 });

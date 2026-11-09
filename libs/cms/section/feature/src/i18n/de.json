@@ -523,14 +523,14 @@
         "helper": "Die URL, welche beim Auslösen einer Aktion benutzt wird. Normalerweise liegen die Bilder im Storage der App. Die URL ist dann eine relative URL /tenant/scs..."
       },
       "overlay": {
-        "label": "Überblendtext",
-        "placeholder": "text",
-        "helper": "Ein Text, der auf dem Bild als Overlay angezeigt werden soll. Überschreibt Titel/Quelle, wenn gesetzt."
+        "label": "Untertitel",
+        "placeholder": "Text unter dem Bild",
+        "helper": "Der Untertitel zum Bild. Ist keiner eingetragen, wird die Bildquelle gezeigt, sonst der Untertitel oder Titel der Sektion. Wo und wie er erscheint, legst du unter «Bild Styles» fest."
       },
       "credit": {
         "label": "Bildquelle",
         "placeholder": "z. B. Foto: J. Muster / Keystone",
-        "helper": "Urhebernachweis des Bildes. Wird als Quelle im Bild angezeigt, wenn «Quelle anzeigen» aktiviert ist.",
+        "helper": "Urhebernachweis des Bildes. Er steht als zweite, etwas kleinere Zeile unter dem Untertitel, oder allein, wenn das Bild keinen Untertitel hat.",
         "read": "Aus Bilddatei auslesen",
         "readEmpty": "Diese Bilddatei enthält keine Angaben zum Urheber."
       },
@@ -551,20 +551,20 @@
       "helper": "Cascading Style Sheets (CSS) ist eine Beschreibungssprache für die Darstellung von HTML-Content.",
       "imgIxParams": {
         "label": "ImgIx-Parameter",
-        "placeholder": "w=768&h=1024&fit=crop",
-        "helper": "ImgIx parameter werden als query-parameter auf der URL an imgix mitgeschickt und beeinflussen, wie der Bild angezeigt wird."
+        "placeholder": "sat=-100&blur=20",
+        "helper": "Zusätzliche imgix-Parameter, die an die Bildadresse angehängt werden, z. B. sat=-100 für Schwarzweiss. Nur nötig für besondere Effekte."
       },
       "width": {
         "label": "Breite",
-        "placeholder": "nnn",
-        "helper": "Die Breite der Darstellung in Pixeln.",
-        "error": "Es muss eine Ganzzahl aus lauter Ziffern eingegeben werden."
+        "placeholder": "100%",
+        "helper": "Die Breite des Bildes, z. B. 100%, 300px oder 50vw. Eine reine Zahl gilt als Pixel.",
+        "error": "Gib eine Breite wie 100%, 300px oder auto ein."
       },
       "height": {
         "label": "Höhe",
-        "placeholder": "nnn",
-        "helper": "Die Höhe der Darstellung in Pixeln.",
-        "error": "Es muss eine Ganzzahl aus lauter Ziffern eingegeben werden."
+        "placeholder": "auto",
+        "helper": "Die Höhe des Bildes, z. B. auto, 300px oder 50vh. Eine reine Zahl gilt als Pixel.",
+        "error": "Gib eine Höhe wie auto, 300px oder 50vh ein."
       },
       "sizes": {
         "label": "Bild Grössen",
@@ -574,13 +574,13 @@
       },
       "border": {
         "label": "Rahmen",
-        "placeholder": "ssss",
-        "helper": "frame"
+        "placeholder": "1px solid",
+        "helper": "Der Rahmen um das Bild: Dicke, Linienart und optional Farbe, z. B. 1px solid oder 2px solid #ccc. Leer lassen für keinen Rahmen."
       },
       "borderRadius": {
         "label": "Eckenradius",
-        "placeholder": "8px",
-        "helper": "Die Abrundung der Ecken eines Rahmens."
+        "placeholder": "4px",
+        "helper": "Wie stark die Ecken abgerundet sind, z. B. 4px. 0 ergibt eckige Ecken."
       },
       "zoom": {
         "label": "Zoom-Faktor",
@@ -602,20 +602,47 @@
         "helper": "Das Bild wird als Thumbnail angezeigt."
       },
       "fill": {
-        "label": "Füllung",
-        "helper": "Darstellungsart von Flächen"
+        "label": "Bild zuschneiden",
+        "helper": "Das Bild füllt einen festen Rahmen in der eingestellten Höhe und wird dafür zugeschnitten, z. B. für gleich hohe Bilder. Braucht eine Höhe wie 300px; bei auto wird das ganze Bild gezeigt. Aus: das ganze Bild in seinen eigenen Proportionen."
       },
       "hasPriority": {
         "label": "Priorität",
-        "helper": "Definiert höhere Priorität beim Laden von Bildern."
+        "helper": "Lädt das Bild vor allen anderen. Schalte das nur beim ersten Bild ein, das sofort sichtbar ist – sonst wird die Seite langsamer."
       },
-      "showTitle": {
-        "label": "Titel anzeigen",
-        "helper": "Zeigt den Bildtitel als Textzeile unten im Bild an."
+      "captionPosition": {
+        "label": "Position des Untertitels",
+        "helper": "Wo der Untertitel erscheint, oder ob er gar nicht gezeigt wird. Der Untertitel ist der beim Bild eingetragene Untertitel, sonst die Bildquelle, sonst der Untertitel der Sektion, sonst ihr Titel.",
+        "none": "nicht darstellen",
+        "top": "oben",
+        "bottom": "unten",
+        "topOverlay": "oben auf dem Bild",
+        "middleOverlay": "in der Mitte auf dem Bild",
+        "bottomOverlay": "unten auf dem Bild"
       },
-      "showSource": {
-        "label": "Quelle anzeigen",
-        "helper": "Zeigt den Urhebernachweis (Bildquelle) als Textzeile unten im Bild an."
+      "captionSize": {
+        "label": "Schriftgrösse des Untertitels",
+        "placeholder": "0.8rem",
+        "helper": "Die Schriftgrösse, z. B. 0.8rem, 14px oder 1em."
+      },
+      "captionStyle": {
+        "label": "Schriftstil des Untertitels",
+        "helper": "Wie der Untertitel gesetzt wird.",
+        "normal": "normal",
+        "italic": "kursiv",
+        "bold": "fett",
+        "boldItalic": "fett und kursiv"
+      },
+      "captionAlign": {
+        "label": "Ausrichtung des Untertitels",
+        "helper": "Ob der Untertitel links, mittig oder rechts steht.",
+        "left": "links",
+        "center": "mittig",
+        "right": "rechts"
+      },
+      "group": {
+        "image": "Bild",
+        "caption": "Untertitel",
+        "action": "Aktion"
       }
     }
   },

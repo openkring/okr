@@ -84,7 +84,7 @@ import { ArticleStore } from './article-section.store';
                   <ion-row>
                     @if(image(); as image) {
                       <ion-col size="12" [sizeMd]="colSizeImage()">
-                        <okr-img [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" [zoomTitle]="store.i18n.article_zoomed()" />
+                        <okr-img [captionFallbacks]="captionFallbacks()" [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" [zoomTitle]="store.i18n.article_zoomed()" />
                       </ion-col>
                     }
                     <ion-col size="12" [sizeMd]="colSizeText()">
@@ -105,7 +105,7 @@ import { ArticleStore } from './article-section.store';
                     </ion-col>
                     @if(image(); as image) {
                       <ion-col size="12" [sizeMd]="colSizeImage()">
-                        <okr-img [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" />
+                        <okr-img [captionFallbacks]="captionFallbacks()" [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" />
                       </ion-col>
                     }
                   </ion-row>
@@ -120,7 +120,7 @@ import { ArticleStore } from './article-section.store';
                           <div class="carousel">
                             @for(img of images(); track img.url) {
                               <div class="carousel-slide">
-                                <okr-img [image]="img" [imageStyle]="imageStyle()" [editMode]="editMode()" [gallery]="images()" [zoomTitle]="store.i18n.article_zoomed()" />
+                                <okr-img [captionFallbacks]="captionFallbacks()" [image]="img" [imageStyle]="imageStyle()" [editMode]="editMode()" [gallery]="images()" [zoomTitle]="store.i18n.article_zoomed()" />
                               </div>
                             }
                           </div>
@@ -130,7 +130,7 @@ import { ArticleStore } from './article-section.store';
                   } @else if(image(); as image) {
                     <ion-row>
                       <ion-col size="12">
-                        <okr-img [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" />
+                        <okr-img [captionFallbacks]="captionFallbacks()" [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" />
                       </ion-col>
                     </ion-row>
                   }
@@ -163,7 +163,7 @@ import { ArticleStore } from './article-section.store';
                   @if(image(); as image) {
                     <ion-row>
                       <ion-col size="12">
-                        <okr-img [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" />
+                        <okr-img [captionFallbacks]="captionFallbacks()" [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" />
                       </ion-col>
                     </ion-row>
                   }
@@ -210,6 +210,8 @@ export class ArticleSectionComponent {
   protected colSizeText = computed(() => 12 - this.colSizeImage());
   protected title = computed(() => this.store.appStore.replacePlaceholders(this.section()?.title ?? ''));
   protected subTitle = computed(() => this.store.appStore.replacePlaceholders(this.section()?.subTitle ?? ''));
+  // the image caption falls back to the section subtitle, then the section title
+  protected captionFallbacks = computed(() => [this.subTitle(), this.title()]);
 
   public VP = ViewPosition;
 

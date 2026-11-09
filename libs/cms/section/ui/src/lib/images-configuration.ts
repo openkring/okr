@@ -241,7 +241,7 @@ export class ImagesConfiguration {
     const modal = await this.modalController.create({
       component: ImageEditModal,
       componentProps: {
-        formData: { ...img },
+        image: { ...img },
         readOnly: this.readOnly(),
         i18n: this.i18n(),
       },

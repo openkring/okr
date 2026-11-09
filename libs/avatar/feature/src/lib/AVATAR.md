@@ -50,7 +50,7 @@ NgRx Signal Store (provided at component level). Key behaviours:
 - `setKey(key)` / `setModelType(modelType)` — Update state from component inputs via an `effect()`.
 - `urlResource` — `rxResource` that calls `AvatarService.getRelStorageUrl(key)` reactively; falls back to `getDefaultIcon(modelType)` when the storage URL is empty.
 - `url` (computed) — calls `AvatarService.getAvatarUrl(key, defaultIcon)` to build the full imgix URL.
-- `showZoomedImage()` — Reads image dimensions from Firebase Storage metadata (or calculates and uploads them) then opens a zoom modal.
+- `showZoomedImage()` — Opens the shared zoom view for the avatar's storage path. The view sizes the image itself, so no dimensions are read; the shared `IMAGE_STYLE_SHAPE` is passed unchanged and must never be written to.
 - `uploadPhoto()` — Delegates to `UploadService.takePhoto()` (Capacitor Camera).
 
 ## Related Libraries

@@ -1,13 +1,21 @@
 import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
-import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonRow, IonSpinner, IonTitle, IonToolbar, ModalController } from '@ionic/angular';
+import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonRow, IonSpinner, IonTitle, IonToolbar, ModalController } from '@ionic/angular';
 import { getDownloadURL, getMetadata, ref } from 'firebase/storage';
 
-import { STORAGE } from '@okr/shared-config';
+import { ENV, STORAGE } from '@okr/shared-config';
 import { fileSizeUnit } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
+import { SvgIconPipe } from '@okr/shared-pipes';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
-export interface ImageDetailRow { label: string; value: string; }
+import { ButtonCopy } from './button-copy';
+
+export interface ImageDetailRow {
+  label: string;
+  value: string;
+  /** shows a copy button after the value */
+  copyable?: boolean;
+}
 
 /**
  * Read-only detail view for an image stored in Firebase Storage.
@@ -20,13 +28,17 @@ export interface ImageDetailRow { label: string; value: string; }
   standalone: true,
   imports: [
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonSpinner,
-    IonContent, IonGrid, IonRow, IonCol,
+    IonContent, IonGrid, IonRow, IonCol, IonIcon,
+    ButtonCopy, SvgIconPipe,
   ],
   styles: [`
+    :host { border: 1px solid var(--ion-color-medium); border-radius: inherit; }
     ion-row { border-bottom: 1px solid var(--ion-color-light); }
     .preview { display: flex; justify-content: center; margin-bottom: 1rem; min-height: 60px; }
     .preview img { max-width: 100%; max-height: 240px; border-radius: 8px; }
-    .value { word-break: break-all; }
+    .value { word-break: break-all; display: flex; align-items: flex-start; gap: 0.5rem; }
+    .value span { flex: 1; }
+    .value okr-button-copy { flex: none; cursor: pointer; }
     .section-title { margin: 1.25rem 0 0.5rem; font-weight: 600; color: var(--ion-color-medium); }
     .hint { color: var(--ion-color-medium); font-style: italic; }
   `],
@@ -35,7 +47,9 @@ export interface ImageDetailRow { label: string; value: string; }
       <ion-toolbar color="secondary">
         <ion-title>{{ labels().title }}</ion-title>
         <ion-buttons slot="end">
-          <ion-button (click)="close()">{{ labels().close }}</ion-button>
+          <ion-button (click)="close()" [attr.aria-label]="labels().close">
+            <ion-icon slot="icon-only" src="{{ 'cancel' | svgIcon }}" />
+          </ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
@@ -43,8 +57,10 @@ export interface ImageDetailRow { label: string; value: string; }
       <div class="preview">
         @if (downloadUrl(); as url) {
           <img [src]="url" [alt]="fileName()" />
-        } @else {
+        } @else if (loading()) {
           <ion-spinner name="dots" />
+        } @else {
+          <p class="hint">{{ i18n.loadError() }}</p>
         }
       </div>
 
@@ -52,7 +68,12 @@ export interface ImageDetailRow { label: string; value: string; }
         @for (row of rows(); track row.label) {
           <ion-row>
             <ion-col size="4"><strong>{{ row.label }}</strong></ion-col>
-            <ion-col size="8" class="value">{{ row.value || '—' }}</ion-col>
+            <ion-col size="8" class="value">
+              <span>{{ row.value || '—' }}</span>
+              @if (row.copyable && row.value) {
+                <okr-button-copy [value]="row.value" [i18n]="{}" />
+              }
+            </ion-col>
           </ion-row>
         }
       </ion-grid>
@@ -78,6 +99,7 @@ export interface ImageDetailRow { label: string; value: string; }
 export class ImageDetailModal implements OnInit {
   private readonly modalController = inject(ModalController);
   private readonly storage = inject(STORAGE);
+  private readonly imgixBaseUrl = inject(ENV).services.imgixBaseUrl;
 
   /** Full storage path of the image, e.g. tenant/<tid>/section/<key>/file.jpg */
   public fullPath = input.required<string>();
@@ -93,6 +115,7 @@ export class ImageDetailModal implements OnInit {
     created: '@shared/ui.image.created', modified: '@shared/ui.image.modified',
     md5: '@shared/ui.image.md5', downloadUrl: '@shared/ui.image.downloadUrl',
     noExif: '@shared/ui.image.noExif', exifError: '@shared/ui.image.exifError',
+    loadError: '@shared/ui.image.loadError',
   });
   protected readonly labels = computed(() => ({
     title: this.title() ?? this.i18n.title(),
@@ -100,6 +123,8 @@ export class ImageDetailModal implements OnInit {
   }));
 
   protected readonly downloadUrl = signal<string | undefined>(undefined);
+  /** true until the storage lookup has finished — success or failure; never leaves a spinner behind */
+  protected readonly loading = signal(true);
   protected readonly rows = signal<ImageDetailRow[]>([]);
   protected readonly exifLoading = signal(true);
   protected readonly exifRows = signal<ImageDetailRow[]>([]);
@@ -107,33 +132,44 @@ export class ImageDetailModal implements OnInit {
   protected readonly exifHint = signal('');
 
   protected fileName(): string {
-    const p = this.fullPath();
+    const p = decodeURIComponent((this.fullPath() ?? '').split('?')[0]);
     return p.split('/').pop() ?? p;
   }
 
   public async ngOnInit(): Promise<void> {
-    const fullPath = this.fullPath();
-    const sref = ref(this.storage, fullPath);
+    const fullPath = this.fullPath() ?? '';
+    const storagePath = this.toStoragePath(fullPath);
 
-    // storage metadata + download URL
+    // storage metadata + download URL. Everything that can throw — ref() included, which rejects
+    // a non-storage URL synchronously — stays inside the try, so a failure ends the loading state.
     let url: string | undefined;
     try {
+      if (!storagePath) throw new Error(`ImageDetailModal: not a storage path: ${fullPath}`);
+      const sref = ref(this.storage, storagePath);
       const [metadata, downloadUrl] = await Promise.all([getMetadata(sref), getDownloadURL(sref)]);
       url = downloadUrl;
       this.downloadUrl.set(downloadUrl);
       this.rows.set([
         ...this.extraRows(),
-        { label: this.i18n.name(),        value: this.fileName() },
-        { label: this.i18n.path(),        value: fullPath },
+        { label: this.i18n.name(),        value: this.fileName(), copyable: true },
+        { label: this.i18n.path(),        value: storagePath, copyable: true },
         { label: this.i18n.mime(),        value: metadata.contentType ?? '' },
         { label: this.i18n.size(),        value: fileSizeUnit(metadata.size) },
         { label: this.i18n.created(),     value: this.formatIso(metadata.timeCreated) },
         { label: this.i18n.modified(),    value: this.formatIso(metadata.updated) },
-        { label: this.i18n.md5(),         value: metadata.md5Hash ?? '' },
-        { label: this.i18n.downloadUrl(), value: downloadUrl },
+        { label: this.i18n.md5(),         value: metadata.md5Hash ?? '', copyable: true },
+        { label: this.i18n.downloadUrl(), value: downloadUrl, copyable: true },
       ]);
-    } catch {
-      this.rows.set([...this.extraRows(), { label: this.i18n.path(), value: fullPath }]);
+    } catch (ex) {
+      console.warn('ImageDetailModal: storage lookup failed', fullPath, ex);
+      // an external http(s) image still gets a preview, just without storage metadata
+      if (/^https?:\/\//.test(fullPath)) {
+        url = fullPath;
+        this.downloadUrl.set(fullPath);
+      }
+      this.rows.set([...this.extraRows(), { label: this.i18n.path(), value: fullPath, copyable: true }]);
+    } finally {
+      this.loading.set(false);
     }
 
     // EXIF parsed from the original bytes (NOT the imgix-transformed image)
@@ -149,6 +185,32 @@ export class ImageDetailModal implements OnInit {
       this.exifRows.set([]);
     } finally {
       this.exifLoading.set(false);
+    }
+  }
+
+  /**
+   * Map what an image reference may hold onto a Firebase Storage path:
+   * - a relative storage path (the normal case) is returned as is,
+   * - gs:// and firebasestorage download URLs are understood by ref() directly,
+   * - a legacy imgix URL (https://<x>.imgix.net/tenant%2Fscs%2F...) mirrors the default bucket,
+   *   so its decoded pathname is the storage path,
+   * - anything else (empty, external URL) has no storage object: undefined.
+   */
+  private toStoragePath(url: string): string | undefined {
+    const value = url.trim();
+    if (!value) return undefined;
+    if (value.startsWith('gs://')) return value;
+    if (!/^https?:\/\//.test(value)) return value;
+    try {
+      const parsed = new URL(value);
+      if (parsed.hostname === 'firebasestorage.googleapis.com') return value;
+      const isImgix = parsed.hostname.endsWith('.imgix.net')
+        || (!!this.imgixBaseUrl && value.startsWith(this.imgixBaseUrl));
+      if (!isImgix) return undefined;
+      const path = decodeURIComponent(parsed.pathname).replace(/^\/+/, '');
+      return path || undefined;
+    } catch {
+      return undefined;
     }
   }
 

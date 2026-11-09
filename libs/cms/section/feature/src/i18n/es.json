@@ -523,14 +523,14 @@
         "helper": "La URL que se utiliza al activar una acción. Normalmente las imágenes se encuentran en el almacenamiento de la aplicación. La URL es entonces una URL relativa /tenant/scs..."
       },
       "overlay": {
-        "label": "Texto superpuesto",
-        "placeholder": "texto",
-        "helper": "Un texto que se mostrará superpuesto sobre la imagen. Sobrescribe el título/la fuente cuando está definido."
+        "label": "Pie de foto",
+        "placeholder": "Texto debajo de la imagen",
+        "helper": "El pie de foto de la imagen. Si no hay ninguno, se muestra la fuente de la imagen; si no, el subtítulo o el título de la sección. Dónde y cómo aparece lo eliges en «Estilos de imagen»."
       },
       "credit": {
         "label": "Fuente de la imagen",
         "placeholder": "p. ej. Foto: J. Muster / Keystone",
-        "helper": "Atribución de autoría de la imagen. Se muestra como fuente en la imagen cuando «Mostrar fuente» está activado.",
+        "helper": "La autoría de la imagen. Aparece como segunda línea, algo más pequeña, debajo del pie de foto, o sola si la imagen no tiene pie de foto.",
         "read": "Leer del archivo de imagen",
         "readEmpty": "Este archivo de imagen no contiene datos de autoría."
       },
@@ -551,20 +551,20 @@
       "helper": "Cascading Style Sheets (CSS) es un lenguaje de descripción para la presentación de contenido HTML.",
       "imgIxParams": {
         "label": "Parámetros de ImgIx",
-        "placeholder": "w=768&h=1024&fit=crop",
-        "helper": "Los parámetros de ImgIx se envían a imgix como parámetros de consulta en la URL e influyen en cómo se muestra la imagen."
+        "placeholder": "sat=-100&blur=20",
+        "helper": "Parámetros imgix adicionales que se añaden a la dirección de la imagen, p. ej. sat=-100 para blanco y negro. Solo hacen falta para efectos especiales."
       },
       "width": {
         "label": "Anchura",
-        "placeholder": "nnn",
-        "helper": "La anchura de la visualización en píxeles.",
-        "error": "Debe introducirse un número entero compuesto únicamente de cifras."
+        "placeholder": "100%",
+        "helper": "El ancho de la imagen, p. ej. 100%, 300px o 50vw. Un número solo cuenta como píxeles.",
+        "error": "Introduce un ancho como 100%, 300px o auto."
       },
       "height": {
         "label": "Altura",
-        "placeholder": "nnn",
-        "helper": "La altura de la visualización en píxeles.",
-        "error": "Debe introducirse un número entero compuesto únicamente de cifras."
+        "placeholder": "auto",
+        "helper": "La altura de la imagen, p. ej. auto, 300px o 50vh. Un número solo cuenta como píxeles.",
+        "error": "Introduce una altura como auto, 300px o 50vh."
       },
       "sizes": {
         "label": "Tamaños de imagen",
@@ -574,13 +574,13 @@
       },
       "border": {
         "label": "Borde",
-        "placeholder": "ssss",
-        "helper": "marco"
+        "placeholder": "1px solid",
+        "helper": "El marco alrededor de la imagen: grosor, tipo de línea y opcionalmente color, p. ej. 1px solid o 2px solid #ccc. Déjalo vacío para no tener marco."
       },
       "borderRadius": {
         "label": "Radio de las esquinas",
-        "placeholder": "8px",
-        "helper": "El redondeo de las esquinas de un borde."
+        "placeholder": "4px",
+        "helper": "Cuánto se redondean las esquinas, p. ej. 4px. 0 da esquinas rectas."
       },
       "zoom": {
         "label": "Factor de zoom",
@@ -602,20 +602,47 @@
         "helper": "La imagen se muestra como miniatura."
       },
       "fill": {
-        "label": "Relleno",
-        "helper": "Modo de representación de las superficies"
+        "label": "Recortar",
+        "helper": "La imagen llena un marco fijo de la altura indicada y se recorta para ello, p. ej. para imágenes de la misma altura. Necesita una altura como 300px; con auto se muestra la imagen entera. Desactivado: la imagen entera en sus propias proporciones."
       },
       "hasPriority": {
         "label": "Prioridad",
-        "helper": "Define una prioridad más alta al cargar las imágenes."
+        "helper": "Carga la imagen antes que todas las demás. Actívalo solo para la primera imagen visible de inmediato; si no, la página se vuelve más lenta."
       },
-      "showTitle": {
-        "label": "Mostrar título",
-        "helper": "Muestra el título de la imagen como una línea de texto en la parte inferior de la imagen."
+      "captionPosition": {
+        "label": "Posición del pie de foto",
+        "helper": "Dónde aparece el pie de foto, o si no se muestra. El pie de foto es el indicado en la imagen; si no, la fuente de la imagen; si no, el subtítulo de la sección; si no, su título.",
+        "none": "no mostrar",
+        "top": "arriba",
+        "bottom": "abajo",
+        "topOverlay": "arriba sobre la imagen",
+        "middleOverlay": "en el centro sobre la imagen",
+        "bottomOverlay": "abajo sobre la imagen"
       },
-      "showSource": {
-        "label": "Mostrar fuente",
-        "helper": "Muestra la atribución de autoría (fuente de la imagen) como una línea de texto en la parte inferior de la imagen."
+      "captionSize": {
+        "label": "Tamaño del pie de foto",
+        "placeholder": "0.8rem",
+        "helper": "El tamaño de letra, p. ej. 0.8rem, 14px o 1em."
+      },
+      "captionStyle": {
+        "label": "Estilo del pie de foto",
+        "helper": "Cómo se compone el pie de foto.",
+        "normal": "normal",
+        "italic": "cursiva",
+        "bold": "negrita",
+        "boldItalic": "negrita cursiva"
+      },
+      "captionAlign": {
+        "label": "Alineación del pie de foto",
+        "helper": "Si el pie de foto va a la izquierda, centrado o a la derecha.",
+        "left": "izquierda",
+        "center": "centrado",
+        "right": "derecha"
+      },
+      "group": {
+        "image": "Imagen",
+        "caption": "Pie de foto",
+        "action": "Acción"
       }
     }
   },

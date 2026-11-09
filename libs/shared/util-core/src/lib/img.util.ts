@@ -140,67 +140,192 @@ export function getThumbnailUrl(path: string, width: string, height: string): st
  */
 export function getSizedImgixParamsByExtension(pathOrExtension: string | undefined, width: string, height: string): string {
   if (!pathOrExtension || pathOrExtension.length === 0) return '';
-  const arParams = `ar=${width}:${height}`;
+  // an aspect-ratio crop only makes sense for two pixel sizes; '100%' / 'auto' keep the image's own ratio
+  const w = toPixelNumber(width);
+  const h = toPixelNumber(height);
+  const arParams = w !== undefined && h !== undefined ? `ar=${w}:${h}` : '';
   const params = getImgixParamsByExtension(pathOrExtension);
   if (isPdf(pathOrExtension)) {
-    return params + '&' + arParams;
+    return arParams ? params + '&' + arParams : params;
   }
   if (isImage(pathOrExtension)) {
-    return arParams + '&' + params;
+    return arParams ? arParams + '&' + params : params;
   }
   return '';
 }
 
 /**
- * Builds the imgix text-overlay parameters rendered at the bottom of an image.
+ * Reads a css size as a pixel number: '300' and '300px' give 300; '100%', '50vw', 'auto' and empty give
+ * undefined, because they are not a fixed pixel size.
+ */
+export function toPixelNumber(value: string | number | undefined): number | undefined {
+  if (typeof value === 'number') return Number.isFinite(value) && value > 0 ? value : undefined;
+  const m = value?.trim().match(/^(\d+(?:\.\d+)?)(px)?$/);
+  if (!m) return undefined;
+  const n = parseFloat(m[1]);
+  return n > 0 ? n : undefined;
+}
+
+/**
+ * Builds the imgix text-overlay parameters, placed per `style.captionPosition` (top/middle/bottom) and
+ * `style.captionAlign` (left/center/right)
+ * (an image baked by imgix cannot place text outside itself, so 'top'/'bottom' map onto the edges).
  *
- * Composition rule:
- * - if `image.overlay` (free-form) is set, it wins verbatim (manual override);
- * - otherwise the overlay is composed from the image's title (`label`) when
- *   `style.showTitle` is true and its attribution (`credit`) when `style.showSource`
- *   is true. Lines are joined with a newline; title first, source second.
+ * The text is {@link buildOverlayText} (Untertitel, then Quelle). Nothing is rendered when the style's
+ * captionPosition is 'none' (the default) or the image has neither.
  *
  * Returns an empty string when there is nothing to render (so callers can append
  * it unconditionally, e.g. `params + (overlay ? '&' + overlay : '')`).
  *
- * @param image the image configuration (label, credit, overlay)
- * @param style the image style (showTitle, showSource toggles)
+ * @param image the image configuration (credit, overlay)
+ * @param style the image style (captionPosition, captionAlign)
  * @returns imgix `txt*` params (without a leading separator), or '' when empty
  */
 export function buildOverlayParams(image: ImageConfig, style: ImageStyle): string {
-  const text = buildOverlayText(image, style);
+  if ((style.captionPosition ?? 'none') === 'none') return '';
+  const text = buildOverlayText(image);
   if (text.length === 0) return '';
   // bottom-left aligned white text with a shadow for readability over any background.
   const encoded = encodeURIComponent(text);
-  return `txt=${encoded}&txt-align=bottom,left&txt-color=ffffff&txt-size=14&txt-pad=15&txt-shad=6`;
+  const position = style.captionPosition;
+  const vertical = position === 'top' || position === 'top-overlay' ? 'top' : position === 'middle-overlay' ? 'middle' : 'bottom';
+  const horizontal = style.captionAlign ?? 'left';
+  return `txt=${encoded}&txt-align=${vertical},${horizontal}&txt-color=ffffff&txt-size=14&txt-pad=15&txt-shad=6`;
+}
+
+/** the caption of an image: the main line and, below it, the attribution (Quelle) */
+export interface ImageCaption {
+  text: string;
+  source: string;
 }
 
 /**
- * Builds the caption text shown over an image (title and/or attribution).
+ * Builds the caption (Untertitel) of an image:
+ * a) the Untertitel set on the image itself (`image.overlay`) — with the Quelle (`image.credit`)
+ *    as a second line when both exist;
+ * b) otherwise the Quelle of the image;
+ * c) otherwise the first non-empty fallback, in order — the article passes its section subtitle,
+ *    then its section title.
  *
- * Composition rule:
- * - if `image.overlay` (free-form) is set, it wins verbatim (manual override);
- * - otherwise the caption is composed from the image's title (`label`) when
- *   `style.showTitle` is true and its attribution (`credit`) when `style.showSource`
- *   is true. Lines are joined with a newline; title first, source second.
+ * Whether and where the caption appears is the style's `captionPosition`; this only decides the text.
  *
- * Returns an empty string when there is nothing to render, so callers can skip the
- * caption element entirely. Renderers that draw the caption as DOM (okr-img, the
- * slider/zoom modals) use this directly; renderers that cannot overlay DOM (the album's
- * CSS `background-image`) bake the same text into the imgix url via
- * {@link buildOverlayParams}.
- *
- * @param image the image configuration (label, credit, overlay)
- * @param style the image style (showTitle, showSource toggles)
- * @returns the caption text (possibly multi-line), or '' when there is nothing to show
+ * @param image the image (overlay, credit)
+ * @param fallbacks texts to use when the image has neither, in order of preference
+ * @returns the caption; `text` is '' when there is nothing to show
  */
-export function buildOverlayText(image: ImageConfig, style: ImageStyle): string {
-  const manual = image.overlay?.trim() ?? '';
-  if (manual.length > 0) return manual;
-  const lines: string[] = [];
-  if (style.showTitle && image.label?.trim()) lines.push(image.label.trim());
-  if (style.showSource && image.credit?.trim()) lines.push(image.credit.trim());
-  return lines.join('\n');
+export function buildImageCaption(image: ImageConfig | undefined, fallbacks: (string | undefined)[] = []): ImageCaption {
+  const own = image?.overlay?.trim() ?? '';
+  const credit = image?.credit?.trim() ?? '';
+  if (own) return { text: own, source: credit };
+  if (credit) return { text: credit, source: '' };
+  const fallback = fallbacks.map(t => t?.trim() ?? '').find(t => t.length > 0) ?? '';
+  return { text: fallback, source: '' };
+}
+
+/**
+ * The caption of an image as one string (Untertitel and Quelle on separate lines), for the viewers
+ * (zoom, slider) and the imgix text overlay. Uses rules a) and b) of {@link buildImageCaption}; the
+ * section fallbacks only apply inside the section itself.
+ *
+ * @param image the image (overlay, credit)
+ * @returns the caption text, or '' when the image has neither an Untertitel nor a Quelle
+ */
+export function buildOverlayText(image: ImageConfig | undefined): string {
+  const caption = buildImageCaption(image);
+  return [caption.text, caption.source].filter(t => t.length > 0).join('\n');
+}
+
+/**
+ * Appends the style's free imgix parameters to an imgix url. They come after the generated ones,
+ * so they can add effects (sat=-100, blur=20, …). Urls not served by imgix are returned unchanged.
+ *
+ * @param url the image url (absolute imgix url, possibly with a query)
+ * @param extra the style's imgIxParams, with or without a leading '?' / '&'
+ */
+export function appendImgixParams(url: string, extra: string | undefined): string {
+  const params = extra?.trim().replace(/^[?&]+/, '') ?? '';
+  if (!params || !url || !/\.imgix\.net\//.test(url)) return url;
+  return url + (url.includes('?') ? '&' : '?') + params;
+}
+
+/** above this average luminance (0..1) a caption band counts as light and gets dark text */
+export const CAPTION_LIGHT_LUMINANCE = 0.55;
+
+/**
+ * Builds the imgix url that reports the average brightness of the band an overlay caption covers:
+ * `rect` crops to the band in relative values — 20 % of the height at the top, middle or bottom, and the
+ * left, middle or right third of the width (where the aligned text mostly sits); `palette=json` makes
+ * imgix answer with JSON that carries `average_luminance`.
+ *
+ * Only overlay positions are measured; captions above/below the image sit on the page.
+ *
+ * @param absoluteImageUrl the absolute imgix url of the image (any query is dropped)
+ * @param style the image style (captionPosition, captionAlign)
+ * @returns the palette url, or undefined when nothing is to be measured
+ */
+export function getCaptionLuminanceUrl(absoluteImageUrl: string, style: ImageStyle | undefined): string | undefined {
+  const position = style?.captionPosition ?? 'none';
+  const y = position === 'top-overlay' ? 0 : position === 'middle-overlay' ? 0.4 : position === 'bottom-overlay' ? 0.8 : undefined;
+  if (y === undefined) return undefined;
+  const base = absoluteImageUrl.split('?')[0];
+  if (!/^https:\/\/[^/]+\.imgix\.net\//.test(base)) return undefined;
+  const align = style?.captionAlign ?? 'left';
+  const x = align === 'center' ? 0.33 : align === 'right' ? 0.66 : 0;
+  return `${base}?rect=${x},${y},0.34,0.2&palette=json&colors=1`;
+}
+
+/**
+ * Decides the caption tone from the measured band brightness: 'light' band → dark text,
+ * 'dark' band → white text. Without a measurement it stays 'dark' (white text on the dark
+ * gradient), which is readable on any image.
+ */
+export function getCaptionTone(luminance: number | undefined): 'light' | 'dark' {
+  return typeof luminance === 'number' && luminance > CAPTION_LIGHT_LUMINANCE ? 'light' : 'dark';
+}
+
+/** a plain number ('4', '2.5') is read as px; anything else is passed through as a css value */
+export function toCssLength(value: string | undefined): string | undefined {
+  const v = value?.trim();
+  if (!v) return undefined;
+  return /^\d+(\.\d+)?$/.test(v) ? v + 'px' : v;
+}
+
+/**
+ * Builds the frame of an image from the style's border and borderRadius.
+ * A border without a line style (legacy '1px') draws nothing, exactly as before; the default
+ * for new sections is '1px solid'. A unitless radius (legacy '4') is read as px.
+ *
+ * @param style the image style (border, borderRadius)
+ * @returns border and border-radius for `[ngStyle]`; empty when neither is set
+ */
+export function getImageFrameCss(style: ImageStyle | undefined): Record<string, string> {
+  const css: Record<string, string> = {};
+  const border = toCssLength(style?.border);
+  if (border) css['border'] = border;
+  const radius = toCssLength(style?.borderRadius);
+  if (radius) css['border-radius'] = radius;
+  return css;
+}
+
+/** css font-size of an image caption when the style does not set one */
+export const DEFAULT_CAPTION_SIZE = '0.8rem';
+
+/**
+ * Builds the inline css of an image caption from the style's captionSize, captionStyle and captionAlign.
+ * Legacy styles without these fields get the defaults (0.8rem, italic, left).
+ *
+ * @param style the image style (captionSize, captionStyle)
+ * @returns font-size, font-style, font-weight and text-align for `[ngStyle]`
+ */
+export function getCaptionCss(style: ImageStyle | undefined): Record<string, string> {
+  const size = style?.captionSize?.trim() || DEFAULT_CAPTION_SIZE;
+  const captionStyle = style?.captionStyle ?? 'italic';
+  return {
+    'font-size': size,
+    'font-style': captionStyle === 'italic' || captionStyle === 'bold-italic' ? 'italic' : 'normal',
+    'font-weight': captionStyle === 'bold' || captionStyle === 'bold-italic' ? '600' : 'normal',
+    'text-align': style?.captionAlign ?? 'left',
+  };
 }
 
 /**

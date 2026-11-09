@@ -523,14 +523,14 @@
         "helper": "L'URL utilizzato all'attivazione di un'azione. Normalmente le immagini si trovano nello storage dell'app. L'URL è quindi un URL relativo /tenant/scs..."
       },
       "overlay": {
-        "label": "Testo in sovrimpressione",
-        "placeholder": "testo",
-        "helper": "Un testo da visualizzare in sovrimpressione sull'immagine. Sovrascrive titolo/fonte quando impostato."
+        "label": "Didascalia",
+        "placeholder": "Testo sotto l’immagine",
+        "helper": "La didascalia dell’immagine. Se non ne è inserita nessuna, viene mostrata la fonte dell’immagine, altrimenti il sottotitolo o il titolo della sezione. Dove e come appare lo scegli in «Stili immagine»."
       },
       "credit": {
         "label": "Fonte dell'immagine",
         "placeholder": "ad es. Foto: J. Muster / Keystone",
-        "helper": "Attribuzione dell'immagine. Viene visualizzata come fonte nell'immagine quando «Mostrare la fonte» è attivato.",
+        "helper": "L’autore dell’immagine. Appare come seconda riga, un po’ più piccola, sotto la didascalia, oppure da sola se l’immagine non ha didascalia.",
         "read": "Leggi dal file immagine",
         "readEmpty": "Questo file immagine non contiene informazioni sull'autore."
       },
@@ -551,20 +551,20 @@
       "helper": "Cascading Style Sheets (CSS) è un linguaggio di descrizione per la presentazione di contenuti HTML.",
       "imgIxParams": {
         "label": "Parametri ImgIx",
-        "placeholder": "w=768&h=1024&fit=crop",
-        "helper": "I parametri ImgIx vengono inviati a imgix come parametri di query sull'URL e influenzano il modo in cui l'immagine viene visualizzata."
+        "placeholder": "sat=-100&blur=20",
+        "helper": "Parametri imgix aggiuntivi aggiunti all’indirizzo dell’immagine, p. es. sat=-100 per il bianco e nero. Servono solo per effetti speciali."
       },
       "width": {
         "label": "Larghezza",
-        "placeholder": "nnn",
-        "helper": "La larghezza della visualizzazione in pixel.",
-        "error": "Deve essere inserito un numero intero composto solo da cifre."
+        "placeholder": "100%",
+        "helper": "La larghezza dell’immagine, p. es. 100%, 300px o 50vw. Un numero da solo vale come pixel.",
+        "error": "Inserisci una larghezza come 100%, 300px o auto."
       },
       "height": {
         "label": "Altezza",
-        "placeholder": "nnn",
-        "helper": "L'altezza della visualizzazione in pixel.",
-        "error": "Deve essere inserito un numero intero composto solo da cifre."
+        "placeholder": "auto",
+        "helper": "L’altezza dell’immagine, p. es. auto, 300px o 50vh. Un numero da solo vale come pixel.",
+        "error": "Inserisci un’altezza come auto, 300px o 50vh."
       },
       "sizes": {
         "label": "Dimensioni immagine",
@@ -574,13 +574,13 @@
       },
       "border": {
         "label": "Bordo",
-        "placeholder": "ssss",
-        "helper": "cornice"
+        "placeholder": "1px solid",
+        "helper": "La cornice attorno all’immagine: spessore, tipo di linea ed eventualmente colore, p. es. 1px solid o 2px solid #ccc. Lascia vuoto per nessuna cornice."
       },
       "borderRadius": {
         "label": "Raggio degli angoli",
-        "placeholder": "8px",
-        "helper": "L'arrotondamento degli angoli di un bordo."
+        "placeholder": "4px",
+        "helper": "Quanto sono arrotondati gli angoli, p. es. 4px. 0 dà angoli squadrati."
       },
       "zoom": {
         "label": "Fattore di zoom",
@@ -602,20 +602,47 @@
         "helper": "L'immagine viene visualizzata come anteprima."
       },
       "fill": {
-        "label": "Riempimento",
-        "helper": "Modalità di rappresentazione delle superfici"
+        "label": "Ritaglia",
+        "helper": "L’immagine riempie una cornice fissa dell’altezza impostata e viene ritagliata per questo, p. es. per immagini della stessa altezza. Serve un’altezza come 300px; con auto viene mostrata l’immagine intera. Disattivato: l’immagine intera nelle sue proporzioni."
       },
       "hasPriority": {
         "label": "Priorità",
-        "helper": "Definisce una priorità più alta durante il caricamento delle immagini."
+        "helper": "Carica l’immagine prima di tutte le altre. Attivalo solo per la prima immagine visibile subito, altrimenti la pagina diventa più lenta."
       },
-      "showTitle": {
-        "label": "Mostrare il titolo",
-        "helper": "Mostra il titolo dell'immagine come riga di testo nella parte inferiore dell'immagine."
+      "captionPosition": {
+        "label": "Posizione della didascalia",
+        "helper": "Dove appare la didascalia, o se non viene mostrata. La didascalia è quella inserita sull’immagine, altrimenti la fonte dell’immagine, altrimenti il sottotitolo della sezione, altrimenti il suo titolo.",
+        "none": "non mostrare",
+        "top": "in alto",
+        "bottom": "in basso",
+        "topOverlay": "in alto sull’immagine",
+        "middleOverlay": "al centro sull’immagine",
+        "bottomOverlay": "in basso sull’immagine"
       },
-      "showSource": {
-        "label": "Mostrare la fonte",
-        "helper": "Mostra l'attribuzione (fonte dell'immagine) come riga di testo nella parte inferiore dell'immagine."
+      "captionSize": {
+        "label": "Dimensione della didascalia",
+        "placeholder": "0.8rem",
+        "helper": "La dimensione del carattere, p. es. 0.8rem, 14px o 1em."
+      },
+      "captionStyle": {
+        "label": "Stile della didascalia",
+        "helper": "Come viene composta la didascalia.",
+        "normal": "normale",
+        "italic": "corsivo",
+        "bold": "grassetto",
+        "boldItalic": "grassetto corsivo"
+      },
+      "captionAlign": {
+        "label": "Allineamento della didascalia",
+        "helper": "Se la didascalia sta a sinistra, al centro o a destra.",
+        "left": "a sinistra",
+        "center": "al centro",
+        "right": "a destra"
+      },
+      "group": {
+        "image": "Immagine",
+        "caption": "Didascalia",
+        "action": "Azione"
       }
     }
   },

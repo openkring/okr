@@ -523,14 +523,14 @@
         "helper": "L'URL utilisée lors du déclenchement d'une action. Normalement, les images se trouvent dans le stockage de l'application. L'URL est alors une URL relative /tenant/scs..."
       },
       "overlay": {
-        "label": "Texte en surimpression",
-        "placeholder": "texte",
-        "helper": "Un texte à afficher en surimpression sur l'image. Remplace le titre/la source lorsqu'il est défini."
+        "label": "Légende",
+        "placeholder": "Texte sous l’image",
+        "helper": "La légende de l’image. Si aucune n’est saisie, la source de l’image est affichée, sinon le sous-titre ou le titre de la section. Tu choisis où et comment elle apparaît sous «Styles d’image»."
       },
       "credit": {
         "label": "Source de l'image",
         "placeholder": "p. ex. Photo : J. Muster / Keystone",
-        "helper": "Mention de l'auteur de l'image. Affichée comme source dans l'image lorsque « Afficher la source » est activé.",
+        "helper": "La mention de l’auteur de l’image. Elle apparaît comme deuxième ligne, un peu plus petite, sous la légende, ou seule si l’image n’a pas de légende.",
         "read": "Lire depuis le fichier image",
         "readEmpty": "Ce fichier image ne contient aucune information sur l'auteur."
       },
@@ -551,20 +551,20 @@
       "helper": "Cascading Style Sheets (CSS) est un langage de description pour la présentation de contenu HTML.",
       "imgIxParams": {
         "label": "Paramètres ImgIx",
-        "placeholder": "w=768&h=1024&fit=crop",
-        "helper": "Les paramètres ImgIx sont transmis à imgix comme paramètres de requête sur l'URL et influencent la manière dont l'image est affichée."
+        "placeholder": "sat=-100&blur=20",
+        "helper": "Paramètres imgix supplémentaires ajoutés à l’adresse de l’image, p. ex. sat=-100 pour le noir et blanc. Utile seulement pour des effets particuliers."
       },
       "width": {
         "label": "Largeur",
-        "placeholder": "nnn",
-        "helper": "La largeur de l'affichage en pixels.",
-        "error": "Un nombre entier composé uniquement de chiffres doit être saisi."
+        "placeholder": "100%",
+        "helper": "La largeur de l’image, p. ex. 100%, 300px ou 50vw. Un nombre seul compte en pixels.",
+        "error": "Saisis une largeur comme 100%, 300px ou auto."
       },
       "height": {
         "label": "Hauteur",
-        "placeholder": "nnn",
-        "helper": "La hauteur de l'affichage en pixels.",
-        "error": "Un nombre entier composé uniquement de chiffres doit être saisi."
+        "placeholder": "auto",
+        "helper": "La hauteur de l’image, p. ex. auto, 300px ou 50vh. Un nombre seul compte en pixels.",
+        "error": "Saisis une hauteur comme auto, 300px ou 50vh."
       },
       "sizes": {
         "label": "Tailles d'image",
@@ -574,13 +574,13 @@
       },
       "border": {
         "label": "Bordure",
-        "placeholder": "ssss",
-        "helper": "cadre"
+        "placeholder": "1px solid",
+        "helper": "Le cadre autour de l’image : épaisseur, type de trait et éventuellement couleur, p. ex. 1px solid ou 2px solid #ccc. Laisse vide pour aucun cadre."
       },
       "borderRadius": {
         "label": "Rayon des coins",
-        "placeholder": "8px",
-        "helper": "L'arrondi des coins d'une bordure."
+        "placeholder": "4px",
+        "helper": "L’arrondi des coins, p. ex. 4px. 0 donne des coins carrés."
       },
       "zoom": {
         "label": "Facteur de zoom",
@@ -602,20 +602,47 @@
         "helper": "L'image est affichée comme vignette."
       },
       "fill": {
-        "label": "Remplissage",
-        "helper": "Mode de représentation des surfaces"
+        "label": "Recadrer",
+        "helper": "L’image remplit un cadre fixe de la hauteur choisie et est recadrée pour cela, p. ex. pour des images de même hauteur. Il faut une hauteur comme 300px ; avec auto, l’image entière est affichée. Désactivé : l’image entière dans ses propres proportions."
       },
       "hasPriority": {
         "label": "Priorité",
-        "helper": "Définit une priorité plus élevée lors du chargement des images."
+        "helper": "Charge l’image avant toutes les autres. Active-le seulement pour la première image visible tout de suite, sinon la page devient plus lente."
       },
-      "showTitle": {
-        "label": "Afficher le titre",
-        "helper": "Affiche le titre de l'image comme ligne de texte au bas de l'image."
+      "captionPosition": {
+        "label": "Position de la légende",
+        "helper": "Où la légende apparaît, ou si elle n’est pas affichée. La légende est celle saisie sur l’image, sinon la source de l’image, sinon le sous-titre de la section, sinon son titre.",
+        "none": "ne pas afficher",
+        "top": "en haut",
+        "bottom": "en bas",
+        "topOverlay": "en haut sur l’image",
+        "middleOverlay": "au milieu sur l’image",
+        "bottomOverlay": "en bas sur l’image"
       },
-      "showSource": {
-        "label": "Afficher la source",
-        "helper": "Affiche la mention de l'auteur (source de l'image) comme ligne de texte au bas de l'image."
+      "captionSize": {
+        "label": "Taille de la légende",
+        "placeholder": "0.8rem",
+        "helper": "La taille de police, p. ex. 0.8rem, 14px ou 1em."
+      },
+      "captionStyle": {
+        "label": "Style de la légende",
+        "helper": "Comment la légende est composée.",
+        "normal": "normal",
+        "italic": "italique",
+        "bold": "gras",
+        "boldItalic": "gras italique"
+      },
+      "captionAlign": {
+        "label": "Alignement de la légende",
+        "helper": "Si la légende est à gauche, au centre ou à droite.",
+        "left": "à gauche",
+        "center": "au centre",
+        "right": "à droite"
+      },
+      "group": {
+        "image": "Image",
+        "caption": "Légende",
+        "action": "Action"
       }
     }
   },

@@ -1,11 +1,11 @@
 import { IMAGE_LOADER, ImageLoaderConfig, NgOptimizedImage, NgStyle } from '@angular/common';
-import { Component, computed, ElementRef, inject, input, viewChild } from '@angular/core';
+import { Component, computed, ElementRef, inject, input, resource, viewChild } from '@angular/core';
 import { IonThumbnail, ModalController, ToastController } from '@ionic/angular';
 import { Browser } from '@capacitor/browser';
 
 import { ENV } from '@okr/shared-config';
 import { ImageActionType, ImageConfig, ImageStyle } from '@okr/shared-models';
-import { buildOverlayText, getImgixUrl, getSizedImgixParamsByExtension, getThumbnailUrl, isDirectImageUrl } from '@okr/shared-util-core';
+import { appendImgixParams, buildImageCaption, getCaptionCss, getCaptionLuminanceUrl, getCaptionTone, getImageFrameCss, getImgixUrl, getSizedImgixParamsByExtension, getThumbnailUrl, isDirectImageUrl, toCssLength, toPixelNumber } from '@okr/shared-util-core';
 import { downloadToBrowser } from '@okr/shared-util-angular';
 
 import { findImageIndex, showImageSlider, showZoomedImage } from './ui.util';
@@ -84,17 +84,49 @@ See <a href="https://sandbox.imgix.com/view?url=https://assets.imgix.net/~text?f
       /* the caption is rendered as DOM (not baked into the imgix url) so that it is never
          cropped away by object-fit and stays legible at every srcset rendition. */
       .image-caption {
-        position: absolute;
-        left: 0; right: 0; bottom: 0;
-        padding: 8px 12px;
-        font-size: 0.8rem;
         line-height: 1.25;
-        color: #fff;
         white-space: pre-line;
-        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
-        background: linear-gradient(to top, rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0));
         pointer-events: none;
       }
+      /* top / bottom: a plain text line above or below the image, in the page's text colour */
+      .image-caption .caption-text,
+      .image-caption .caption-source { display: block; }
+      /* the Quelle as second line, 10 % smaller than the Untertitel */
+      .image-caption .caption-source { font-size: 0.9em; }
+      .image-caption.outside {
+        padding: 4px 2px;
+        color: var(--ion-color-medium-shade, #666);
+      }
+      /* top-overlay / bottom-overlay: laid over the image edge, white on a soft gradient */
+      .image-caption.overlay {
+        position: absolute;
+        left: 0; right: 0;
+        padding: 8px 12px;
+        color: #fff;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+      }
+      .image-caption.overlay.bottom {
+        bottom: 0;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0));
+      }
+      .image-caption.overlay.top {
+        top: 0;
+        background: linear-gradient(to bottom, rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0));
+      }
+      /* middle-overlay: a band across the vertical centre */
+      .image-caption.overlay.middle {
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(0, 0, 0, 0.45);
+      }
+      /* the band under the caption was measured light (imgix palette): dark text on a light wash */
+      .image-caption.overlay.light {
+        color: #111;
+        text-shadow: 0 1px 3px rgba(255, 255, 255, 0.8);
+      }
+      .image-caption.overlay.light.bottom { background: linear-gradient(to top, rgba(255, 255, 255, 0.65), rgba(255, 255, 255, 0)); }
+      .image-caption.overlay.light.top { background: linear-gradient(to bottom, rgba(255, 255, 255, 0.65), rgba(255, 255, 255, 0)); }
+      .image-caption.overlay.light.middle { background: rgba(255, 255, 255, 0.45); }
     `],
   template: `
       @if(image(); as image) {
@@ -109,18 +141,21 @@ See <a href="https://sandbox.imgix.com/view?url=https://assets.imgix.net/~text?f
           </ion-thumbnail>
         }
         @else {
+          @if(caption(); as caption) { @if(captionPosition() === 'top') {
+            <div class="image-caption outside" [ngStyle]="captionStyles()"><span class="caption-text">{{ caption.text }}</span>@if(caption.source) {<span class="caption-source">{{ caption.source }}</span>}</div>
+          } }
           <div class="image-container" [ngStyle]="containerStyles()">
             @if(isExternalImage()) {
               <img
                 [src]="url"
-                [width]="numericWidth()"
-                [height]="numericHeight()"
+                [attr.width]="numericWidth() ?? null"
+                [attr.height]="numericHeight() ?? null"
                 [alt]="altText()"
                 [ngStyle]="imageStyles()"
                 (click)="onImageClicked()"
               />
             }
-            @else if(fill()) {
+            @else if(useFill()) {
               <img
                 [ngSrc]="imgixUrl()"
                 [ngSrcset]="srcset()"
@@ -132,21 +167,36 @@ See <a href="https://sandbox.imgix.com/view?url=https://assets.imgix.net/~text?f
               />
             }
             @else {
+              <!-- the whole image at its own proportions: a plain img (NgOptimizedImage needs fixed
+                   width/height attributes, which a '100%' / 'auto' style does not have), with the same
+                   imgix srcset the loader would build -->
               <img
-                [ngSrc]="imgixUrl()"
-                [ngSrcset]="srcset()"
-                [width]="numericWidth() ?? 800"
-                [height]="numericHeight() ?? 600"
+                [src]="imgixUrl()"
+                [srcset]="plainSrcset()"
                 [sizes]="sizes()"
-                [priority]="hasPriority()"
+                [attr.width]="numericWidth() ?? null"
+                [attr.height]="numericHeight() ?? null"
+                [attr.loading]="hasPriority() ? 'eager' : 'lazy'"
+                [attr.fetchpriority]="hasPriority() ? 'high' : null"
+                decoding="async"
                 [alt]="altText()"
+                [ngStyle]="imageStyles()"
                 (click)="onImageClicked()"
               />
             }
             @if(caption(); as caption) {
-              <div class="image-caption">{{ caption }}</div>
+              @if(captionPosition() === 'top-overlay') {
+                <div class="image-caption overlay top" [class.light]="captionTone() === 'light'" [ngStyle]="captionStyles()"><span class="caption-text">{{ caption.text }}</span>@if(caption.source) {<span class="caption-source">{{ caption.source }}</span>}</div>
+              } @else if(captionPosition() === 'middle-overlay') {
+                <div class="image-caption overlay middle" [class.light]="captionTone() === 'light'" [ngStyle]="captionStyles()"><span class="caption-text">{{ caption.text }}</span>@if(caption.source) {<span class="caption-source">{{ caption.source }}</span>}</div>
+              } @else if(captionPosition() === 'bottom-overlay') {
+                <div class="image-caption overlay bottom" [class.light]="captionTone() === 'light'" [ngStyle]="captionStyles()"><span class="caption-text">{{ caption.text }}</span>@if(caption.source) {<span class="caption-source">{{ caption.source }}</span>}</div>
+              }
             }
           </div>
+          @if(caption(); as caption) { @if(captionPosition() === 'bottom') {
+            <div class="image-caption outside" [ngStyle]="captionStyles()"><span class="caption-text">{{ caption.text }}</span>@if(caption.source) {<span class="caption-source">{{ caption.source }}</span>}</div>
+          } }
         }
       }
     } 
@@ -165,6 +215,8 @@ export class Img {
   // Optional sibling images (e.g. the enclosing carousel/slider). When set, zooming this image
   // opens the full-screen viewer with prev/next navigation across the whole gallery.
   public gallery = input<ImageConfig[]>([]);
+  /** caption texts used when the image has neither an Untertitel nor a Quelle, in order (e.g. section subtitle, title) */
+  public captionFallbacks = input<(string | undefined)[]>([]);
 
   protected imageContainer = viewChild('.image-container', { read: ElementRef });
 
@@ -187,7 +239,34 @@ export class Img {
   protected isLocalImage = computed(() => isDirectImageUrl(this.url()) && !/^https?:/i.test(this.url()));
   protected srcset = computed(() => this.generateSrcset());
   // title/credit caption, rendered as an overlay element on top of the image
-  protected caption = computed(() => buildOverlayText(this.image(), this.imageStyle()));
+  // the caption (Untertitel): the image's own, else its Quelle, else the section's fallbacks;
+  // undefined when it is switched off (captionPosition 'none', the default) or there is no text
+  protected caption = computed(() => {
+    if (this.captionPosition() === 'none') return undefined;
+    const caption = buildImageCaption(this.image(), this.captionFallbacks());
+    return caption.text ? caption : undefined;
+  });
+  // where and how the caption is shown; legacy styles without these fields get the defaults
+  protected captionPosition = computed(() => this.imageStyle()?.captionPosition ?? 'none');
+  protected captionStyles = computed(() => getCaptionCss(this.imageStyle()));
+  // overlay captions only: imgix measures the brightness of the band under the caption, so a light
+  // band gets dark text. One small JSON request per captioned image (CDN-cached); while it loads or
+  // when it fails the caption stays white on the dark gradient, which is readable on any image.
+  private captionLuminanceUrl = computed(() => {
+    if (!this.caption() || this.isExternalImage() || this.isThumbnail()) return undefined;
+    return getCaptionLuminanceUrl(this.imgixUrl(), this.imageStyle());
+  });
+  private captionLuminance = resource({
+    params: () => this.captionLuminanceUrl(),
+    loader: async ({ params, abortSignal }): Promise<number | undefined> => {
+      const response = await fetch(params, { signal: abortSignal });
+      if (!response.ok) return undefined;
+      const palette = await response.json() as { average_luminance?: unknown };
+      return typeof palette.average_luminance === 'number' ? palette.average_luminance : undefined;
+    },
+  });
+  protected captionTone = computed(() =>
+    getCaptionTone(this.captionLuminance.hasValue() ? this.captionLuminance.value() : undefined));
 
   protected generateSrcset(): string {
     // ngSrcset must be width descriptors only; IMAGE_LOADER appends &w= to imgixUrl() (the ngSrc).
@@ -198,7 +277,7 @@ export class Img {
   protected style = computed(() => {
     return {
       '--size': this.imageStyle()?.width ?? '150px',
-      '--rounded': this.imageStyle()?.borderRadius ?? '5px'
+      '--border-radius': getImageFrameCss(this.imageStyle())['border-radius'] ?? '4px'
     };
   });
   protected width = computed(() => {
@@ -213,45 +292,55 @@ export class Img {
   // Convert width/height to numeric values for img attributes (only if they're pixel values)
   // BEWARE: CSS allows strings like '100%', '50vw', 'auto' for width and height,
   // but the img attributes require numeric values in pixels or nothing at all (auto)
-  protected numericWidth = computed(() => {
-    let w = this.width();
-    if (w.endsWith('px')) w = w.replace('px', '');
-    const num = parseInt(w, 10);
-    return isNaN(num) ? undefined : num;
-  });
+  // ('100%' used to be parsed as 100 px, which drew the default image as a 100 × 600 strip)
+  protected numericWidth = computed(() => toPixelNumber(this.width()));
+  protected numericHeight = computed(() => toPixelNumber(this.height()));
 
-  protected numericHeight = computed(() => {
-    let h = this.height();
-    if (h.endsWith('px')) h = h.replace('px', '');
-    const num = parseInt(h, 10);
-    return isNaN(num) ? undefined : num;
-  });
-
-  // styles for the img element, also supports e.g. 100%, 50vw, auto, 100px, etc.
+  // styles for the img element: css sizes as given (100%, 50vw, auto, 300px …); a plain number is px.
+  // max-width keeps a large pixel width inside its column; height auto keeps the image's own ratio.
   protected imageStyles = computed(() => {
     return {
+      'display': 'block',
       'object-fit': 'contain',
-      'width': this.width(),
-      'height': this.height()
+      'width': toCssLength(this.width()) ?? '100%',
+      'height': toCssLength(this.height()) ?? 'auto',
+      'max-width': '100%',
+      ...this.frame(),
     };
+  });
+
+  /** fill = a fixed, cropped box; it needs a real height, so with height 'auto' the whole image is shown instead */
+  protected useFill = computed(() => {
+    const h = this.height()?.trim();
+    return this.fill() && !!h && h !== 'auto';
+  });
+
+  /** the imgix srcset NgOptimizedImage's loader would build, for the plain img */
+  protected plainSrcset = computed(() => {
+    const url = this.imgixUrl();
+    if (!url) return '';
+    const separator = url.includes('?') ? '&' : '?';
+    return [320, 640, 960, 1280, 1920].map(w => `${url}${separator}w=${w} ${w}w`).join(', ');
   });
 
   // fill mode requires the container to have position:relative and an explicit height.
   // height may arrive as a plain number string (e.g. '329') or with a unit ('329px' / '50%').
   // Plain numbers are treated as px so that ngStyle emits a valid CSS value.
   protected containerStyles = computed(() => {
-    if (!this.fill()) return {};
-    const h = this.height();
-    if (h === 'auto') return { 'height': '400px' };
-    const cssHeight = /^\d+(\.\d+)?$/.test(h) ? h + 'px' : h;
-    return { 'height': cssHeight };
+    if (!this.useFill()) return {};
+    // in fill mode the img is absolutely positioned, so the frame goes on the container (clipped)
+    const frame = { ...this.frame(), 'overflow': 'hidden', 'box-sizing': 'border-box' };
+    return { 'height': toCssLength(this.height()) ?? '400px', ...frame };
   });
+
+  /** border + corner radius from the image style (applied to the img, or to the container in fill mode) */
+  protected frame = computed(() => getImageFrameCss(this.imageStyle()));
 
   // that was the original idea: we do not use the baseImgixUrl here, because it is already provided by the provideImgixLoader for NgOptimizedImage
   // now we eplicitely add imgixBaseUrl
   protected imgixUrl = computed(() => {
     const params = getSizedImgixParamsByExtension(this.url(), this.width(), this.height());
-    return this.toAbsoluteUrl(getImgixUrl(this.url(), params));
+    return appendImgixParams(this.toAbsoluteUrl(getImgixUrl(this.url(), params)), this.imageStyle()?.imgIxParams);
   });
 
   /** Prepend the imgix base URL to a storage path ('tenant/...'); other urls are already absolute. */

@@ -124,7 +124,7 @@ export class ImageSliderModal {
   // inputs
   public images = input.required<ImageConfig[]>();
   public startIndex = input(0);
-  // drives the caption: showTitle/showSource decide whether label/credit are rendered
+  // the viewer always shows the image's own Untertitel / Quelle (buildOverlayText), whatever the position
   public style = input.required<ImageStyle>();
 
   // passing constants to the template
@@ -137,10 +137,10 @@ export class ImageSliderModal {
 
   protected current = computed(() => this.images()[this.currentIndex()] ?? this.images()[0]);
   protected currentAltText = computed(() => this.current()?.altText ?? '');
-  // title/credit caption of the current image, rendered as DOM over the letterboxed image
+  // Untertitel / Quelle of the current image, rendered as DOM over the letterboxed image
   protected caption = computed(() => {
     const image = this.current();
-    return image ? buildOverlayText(image, this.style()) : '';
+    return image ? buildOverlayText(image) : '';
   });
 
   // Full-screen view: request the whole image (fit=max, no aspect-ratio crop) up to a large

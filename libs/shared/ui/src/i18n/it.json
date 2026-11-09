@@ -127,7 +127,8 @@
     "md5": "MD5 (Base64)",
     "downloadUrl": "URL di download",
     "noExif": "Nessun dato EXIF disponibile.",
-    "exifError": "Non è stato possibile leggere i dati EXIF."
+    "exifError": "Non è stato possibile leggere i dati EXIF.",
+    "loadError": "Non è stato possibile caricare l'immagine."
   },
   "close": "Chiudere",
   "withTime": "con orario",

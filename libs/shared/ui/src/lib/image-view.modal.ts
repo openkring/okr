@@ -173,8 +173,8 @@ export class ImageViewModal {
   protected current = computed(() => this.gallery()[this.currentIndex()] ?? this.gallery()[0]);
   protected currentUrl = computed(() => this.current().url);
   protected currentAltText = computed(() => this.current().altText);
-  // title/credit caption of the current image, rendered as DOM over the letterboxed image
-  protected caption = computed(() => buildOverlayText(this.current(), this.style()));
+  // Untertitel / Quelle of the current image, rendered as DOM over the letterboxed image
+  protected caption = computed(() => buildOverlayText(this.current()));
 
   // computed
   // Full-screen view: request the whole image (fit=max, no aspect-ratio crop) up to a large

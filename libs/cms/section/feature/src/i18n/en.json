@@ -523,14 +523,14 @@
         "helper": "The URL used when an action is triggered. Normally the images are located in the app's storage. The URL is then a relative URL /tenant/scs..."
       },
       "overlay": {
-        "label": "Overlay text",
-        "placeholder": "text",
-        "helper": "A text to be displayed as an overlay on the image. Overrides title/source when set."
+        "label": "Caption",
+        "placeholder": "Text below the image",
+        "helper": "The caption of the image. If none is set, the image source is shown, otherwise the section subtitle or title. Where and how it appears is set under «Image styles»."
       },
       "credit": {
         "label": "Image source",
         "placeholder": "e.g. Photo: J. Muster / Keystone",
-        "helper": "Attribution of the image. Displayed as the source in the image when «Show source» is enabled.",
+        "helper": "The attribution of the image. It appears as a second, slightly smaller line below the caption, or on its own when the image has no caption.",
         "read": "Read from image file",
         "readEmpty": "This image file contains no attribution data."
       },
@@ -551,20 +551,20 @@
       "helper": "Cascading Style Sheets (CSS) is a description language for the presentation of HTML content.",
       "imgIxParams": {
         "label": "ImgIx parameters",
-        "placeholder": "w=768&h=1024&fit=crop",
-        "helper": "ImgIx parameters are sent to imgix as query parameters on the URL and influence how the image is displayed."
+        "placeholder": "sat=-100&blur=20",
+        "helper": "Extra imgix parameters added to the image address, e.g. sat=-100 for black and white. Only needed for special effects."
       },
       "width": {
         "label": "Width",
-        "placeholder": "nnn",
-        "helper": "The width of the display in pixels.",
-        "error": "A whole number of digits must be entered."
+        "placeholder": "100%",
+        "helper": "The width of the image, e.g. 100%, 300px or 50vw. A plain number counts as pixels.",
+        "error": "Enter a width like 100%, 300px or auto."
       },
       "height": {
         "label": "Height",
-        "placeholder": "nnn",
-        "helper": "The height of the display in pixels.",
-        "error": "A whole number of digits must be entered."
+        "placeholder": "auto",
+        "helper": "The height of the image, e.g. auto, 300px or 50vh. A plain number counts as pixels.",
+        "error": "Enter a height like auto, 300px or 50vh."
       },
       "sizes": {
         "label": "Image sizes",
@@ -574,13 +574,13 @@
       },
       "border": {
         "label": "Border",
-        "placeholder": "ssss",
-        "helper": "frame"
+        "placeholder": "1px solid",
+        "helper": "The frame around the image: thickness, line style and optionally a colour, e.g. 1px solid or 2px solid #ccc. Leave empty for no frame."
       },
       "borderRadius": {
         "label": "Corner radius",
-        "placeholder": "8px",
-        "helper": "The rounding of the corners of a border."
+        "placeholder": "4px",
+        "helper": "How rounded the corners are, e.g. 4px. 0 gives square corners."
       },
       "zoom": {
         "label": "Zoom factor",
@@ -602,20 +602,47 @@
         "helper": "The image is displayed as a thumbnail."
       },
       "fill": {
-        "label": "Fill",
-        "helper": "Rendering style of areas"
+        "label": "Crop to fit",
+        "helper": "The image fills a fixed frame of the set height and is cropped to do so, e.g. for images of equal height. Needs a height like 300px; with auto the whole image is shown. Off: the whole image at its own proportions."
       },
       "hasPriority": {
         "label": "Priority",
-        "helper": "Defines higher priority when loading images."
+        "helper": "Loads the image before all others. Only turn this on for the first image that is visible right away, otherwise the page gets slower."
       },
-      "showTitle": {
-        "label": "Show title",
-        "helper": "Shows the image title as a text line at the bottom of the image."
+      "captionPosition": {
+        "label": "Caption position",
+        "helper": "Where the caption appears, or whether it is not shown at all. The caption is the one set on the image, otherwise the image source, otherwise the section subtitle, otherwise the section title.",
+        "none": "do not show",
+        "top": "top",
+        "bottom": "bottom",
+        "topOverlay": "top overlay",
+        "middleOverlay": "middle overlay",
+        "bottomOverlay": "bottom overlay"
       },
-      "showSource": {
-        "label": "Show source",
-        "helper": "Shows the attribution (image source) as a text line at the bottom of the image."
+      "captionSize": {
+        "label": "Caption font size",
+        "placeholder": "0.8rem",
+        "helper": "The font size, e.g. 0.8rem, 14px or 1em."
+      },
+      "captionStyle": {
+        "label": "Caption font style",
+        "helper": "How the caption is set.",
+        "normal": "normal",
+        "italic": "italic",
+        "bold": "bold",
+        "boldItalic": "bold italic"
+      },
+      "captionAlign": {
+        "label": "Caption alignment",
+        "helper": "Whether the caption sits on the left, in the centre or on the right.",
+        "left": "left",
+        "center": "center",
+        "right": "right"
+      },
+      "group": {
+        "image": "Image",
+        "caption": "Caption",
+        "action": "Action"
       }
     }
   },

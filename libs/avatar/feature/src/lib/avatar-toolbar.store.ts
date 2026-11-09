@@ -6,7 +6,7 @@ import { Observable, of } from 'rxjs';
 import { ModalController } from '@ionic/angular';
 
 import { AppStore } from '@okr/shared-feature';
-import { getImageDimensionsFromMetadata, showZoomedImage, updateImageDimensions } from '@okr/shared-ui';
+import { showZoomedImage } from '@okr/shared-ui';
 import { getModelAndKey, warn } from '@okr/shared-util-core';
 import { CategoryItemModel, IMAGE_STYLE_SHAPE } from '@okr/shared-models';
 
@@ -54,10 +54,9 @@ export const AvatarToolbarStore = signalStore(
       imgixBaseUrl: computed(() => state.appStore.services.imgixBaseUrl()),
       // The real storage path of the avatar, or '' when the subject has none. Never falls back
       // to getDefaultIcon(): that returns an ICON NAME ('person'), not a storage path, and
-      // showZoomedImage() below hands this straight to getMetadata() — which then hits
-      // storage.rules on the bare path 'person' and throws storage/unauthorized (SCS-4D).
+      // an icon name handed to the zoom view as a storage path hit storage.rules on the bare
+      // path 'person' and threw storage/unauthorized (SCS-4D).
       relStorageUrl: computed(() => state.urlResource.value() ?? ''),
-      currentUser: computed(() => state.appStore.currentUser()),
     };
   }),
 
@@ -85,20 +84,10 @@ export const AvatarToolbarStore = signalStore(
         const path = store.relStorageUrl();
         if (path && path.length > 0) {
           try {
-            let dimensions = await getImageDimensionsFromMetadata(path);
-
-            // if we can not read the dimensions from the image meta data, calculate them from the image file and upload as metadata to firebase storage
-            if (!dimensions) {
-              dimensions = await updateImageDimensions(path, store.currentUser());
-            }
-
-            // if we have valid dimensions, show the zoomed image in a modal
-            if (dimensions) {
-              const imageStyle = IMAGE_STYLE_SHAPE;
-              imageStyle.width = dimensions.width;
-              imageStyle.height = dimensions.height;
-              await showZoomedImage(store.modalController, path, title, imageStyle, title);
-            }
+            // The zoom view sizes the image itself (imgix fit=max, w=2000), so it needs no stored
+            // dimensions. Pass the shared default style as is: it is a module-level constant that
+            // section shapes embed by reference, so it must never be written to.
+            await showZoomedImage(store.modalController, path, title, IMAGE_STYLE_SHAPE, title);
           } catch (ex) {
             // a missing/unreadable object must not surface as an unhandled rejection (the two
             // call sites in avatar-toolbar.ts are fire-and-forget click handlers)

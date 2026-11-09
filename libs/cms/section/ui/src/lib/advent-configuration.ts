@@ -269,7 +269,7 @@ export class AdventConfiguration {
     const modal = await this.modalController.create({
       component: ImageEditModal,
       componentProps: {
-        formData: { ...door.image },
+        image: { ...door.image },
         readOnly: this.readOnly(),
         i18n: this.i18n(),
       },
