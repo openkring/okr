@@ -3,7 +3,7 @@ import type { PageModel, WebsiteModel, WebsiteNode } from '@okr/shared-models';
 import type { SectionDoc } from './section-mapper';
 import { pageKeysInTree, siteWarnings, type WebsiteWarningCode } from './website-tree-read.util';
 
-export type PublishProblemCode = WebsiteWarningCode | 'templateMissing' | 'noBaseRelease' | 'renderFailed';
+export type PublishProblemCode = WebsiteWarningCode | 'templateMissing' | 'noBaseRelease' | 'renderFailed' | 'domainMissing';
 
 export interface PublishProblem {
   code: PublishProblemCode;
@@ -21,9 +21,28 @@ export interface TemplateManifest {
   legacyRedirects?: { from: string; key: string }[];
 }
 
-/** Same one-liner as publicApi's isPublishedSection (functions cannot be imported here). */
-function isPublished(section: SectionDoc): boolean {
-  return section.state === 'published';
+/**
+ * The same gate as publicApi's isServableSection (functions cannot be imported here): not archived,
+ * owned by one of the site's tenants, published. A page can list keys that resolve to another
+ * tenant's documents, so the tenant check is not redundant.
+ */
+export function isServableSection(section: SectionDoc | undefined, tenants: string[]): section is SectionDoc {
+  return !!section && section.isArchived !== true
+    && (section.tenants ?? []).some((t) => tenants.includes(t))
+    && section.state === 'published';
+}
+
+/** A section key as listed (may contain `@TID@`), resolved to the first servable sections/{key}. */
+export function resolveServableSection(
+  raw: string,
+  tenants: string[],
+  sections: Map<string, SectionDoc>,
+): { sectionKey: string; section: SectionDoc } | undefined {
+  for (const key of [raw, ...tenants.map((t) => raw.replace('@TID@', t))]) {
+    const section = sections.get(key);
+    if (isServableSection(section, tenants)) return { sectionKey: key, section };
+  }
+  return undefined;
 }
 
 /** Whether a non-archived node of the tree already points at `pageKey` (siteWarnings reports it). */
@@ -40,17 +59,15 @@ export interface PageSection {
 }
 
 /**
- * The published sections of a page in page order: each listed key as is, else with `@TID@` replaced
- * by one of the site's tenants. Missing and draft sections are left out. Validation and rendering
- * both list a page's sections through here.
+ * The servable sections of a page in page order: each listed key as is, else with `@TID@` replaced
+ * by one of the site's tenants. Missing, draft, archived and foreign-tenant sections are left out.
+ * Validation and rendering both list a page's sections through here.
  */
 export function publishedPageSections(page: PageModel | undefined, tenants: string[], sections: Map<string, SectionDoc>): PageSection[] {
   const out: PageSection[] = [];
   for (const raw of page?.sections ?? []) {
-    const sectionKey = [raw, ...tenants.map((t) => raw.replace('@TID@', t))].find((k) => sections.has(k));
-    const section = sectionKey ? sections.get(sectionKey) : undefined;
-    if (!sectionKey || !section || !isPublished(section)) continue;
-    out.push({ raw, sectionKey, section });
+    const found = resolveServableSection(raw, tenants, sections);
+    if (found) out.push({ raw, ...found });
   }
   return out;
 }
@@ -69,6 +86,8 @@ export function validateForPublish(
   const problems: PublishProblem[] = siteWarnings(site, pages)
     .filter((w) => w.code !== 'homeMissing')
     .map((w) => ({ code: w.code, nodeId: w.nodeId }));
+  // sitemap.xml and hreflang need absolute urls
+  if (!(site.domain ?? '').trim()) problems.push({ code: 'domainMissing' });
   if (!site.homePageKey || !pages.has(site.homePageKey)) {
     problems.push({ code: 'homeMissing', pageKey: site.homePageKey || undefined });
   }

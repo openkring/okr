@@ -32,7 +32,7 @@
  */
 import type { PageModel, WebsiteModel, WebsiteNode } from '@okr/shared-models';
 
-import { publishedPageSections, validateForPublish, type PublishProblem, type TemplateManifest } from './publish-validation';
+import { publishedPageSections, resolveServableSection, validateForPublish, type PublishProblem, type TemplateManifest } from './publish-validation';
 import {
   alternates,
   navItems,
@@ -111,6 +111,25 @@ function pageEntries(site: WebsiteModel): PageEntry[] {
   const nodes = activePageNodes([...site.nav, ...site.footer]);
   const home: PageEntry = { key: site.homePageKey, file: 'index', path: '/', node: nodes.find((n) => n.pageKey === site.homePageKey) };
   return [home, ...nodes.map((n) => ({ key: n.pageKey as string, file: n.slug ?? '', path: nodePath(n, site.homePageKey), node: n }))];
+}
+
+/**
+ * The sections an accordion may show, as publicApi builds them: each item key resolved against the
+ * site's tenants, servable sections only. Stored under the listed key (what mapSection looks up) and
+ * the resolved key.
+ */
+function nestedSectionsOf(section: SectionDoc, tenants: string[], sections: Map<string, SectionDoc>): Map<string, SectionDoc> {
+  const nested = new Map<string, SectionDoc>();
+  if (section.type !== 'accordion') return nested;
+  const items = (section.properties?.['items'] as { key?: unknown }[] | undefined) ?? [];
+  for (const it of Array.isArray(items) ? items : []) {
+    if (typeof it?.key !== 'string' || !it.key) continue;
+    const found = resolveServableSection(it.key, tenants, sections);
+    if (!found) continue;
+    nested.set(it.key, found.section);
+    nested.set(found.sectionKey, found.section);
+  }
+  return nested;
 }
 
 function message(e: unknown): string {
@@ -246,7 +265,7 @@ export function renderSite(input: RenderInput): RenderResult {
           continue;
         }
         try {
-          rendered.push({ type, key: sectionKey, html: template(mapSection(sectionKey, section, sections, sanitize, lang), data) });
+          rendered.push({ type, key: sectionKey, html: template(mapSection(sectionKey, section, nestedSectionsOf(section, tenants, sections), sanitize, lang), data) });
         } catch (e) {
           problems.push({ code: 'renderFailed', pageKey: entry.key, sectionKey: raw, detail: message(e) });
         }

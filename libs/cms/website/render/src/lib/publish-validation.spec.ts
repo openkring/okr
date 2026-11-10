@@ -6,13 +6,13 @@ import type { SectionDoc } from './section-mapper';
 const manifest: TemplateManifest = { siteId: 's', version: '1', sectionTypes: ['article', 'hero'], fixedPages: [] };
 const page = (id: string, slug: string, pageKey = `p-${id}`): WebsiteNode => ({ id, type: 'page', label: id, slug, pageKey });
 const site = (nav: WebsiteNode[], homePageKey = 'p-a'): WebsiteModel =>
-  ({ tenants: ['scs'], nav, footer: [], homePageKey }) as unknown as WebsiteModel;
+  ({ tenants: ['scs'], domain: 'https://example.org', nav, footer: [], homePageKey }) as unknown as WebsiteModel;
 const pg = (sections: string[] = [], extra: Partial<PageModel> = {}): PageModel => ({ sections, ...extra }) as unknown as PageModel;
 
 describe('validateForPublish', () => {
   it('is clean for a valid site', () => {
     const pages = new Map([['p-a', pg(['s1'])]]);
-    const sections = new Map<string, SectionDoc>([['s1', { type: 'article', state: 'published' }]]);
+    const sections = new Map<string, SectionDoc>([['s1', { type: 'article', state: 'published', tenants: ['scs'] }]]);
     expect(validateForPublish(site([page('a', 'a')]), pages, sections, manifest)).toEqual([]);
   });
   it('reuses the tree codes', () => {
@@ -21,7 +21,7 @@ describe('validateForPublish', () => {
   });
   it('flags a published section of an unknown type', () => {
     const pages = new Map([['p-a', pg(['s1'])]]);
-    const sections = new Map<string, SectionDoc>([['s1', { type: 'weird', state: 'published' }]]);
+    const sections = new Map<string, SectionDoc>([['s1', { type: 'weird', state: 'published', tenants: ['scs'] }]]);
     expect(validateForPublish(site([page('a', 'a')]), pages, sections, manifest)).toEqual([
       { code: 'templateMissing', pageKey: 'p-a', sectionKey: 's1', detail: 'weird' },
     ]);
@@ -33,7 +33,7 @@ describe('validateForPublish', () => {
   });
   it('counts the home page though it is not in the nav', () => {
     const pages = new Map([['p-h', pg(['s1'])]]);
-    const sections = new Map<string, SectionDoc>([['s1', { type: 'weird', state: 'published' }]]);
+    const sections = new Map<string, SectionDoc>([['s1', { type: 'weird', state: 'published', tenants: ['scs'] }]]);
     const p = validateForPublish(site([], 'p-h'), pages, sections, manifest);
     expect(p.map((x) => x.code)).toEqual(['templateMissing']);
   });
@@ -43,7 +43,7 @@ describe('validateForPublish', () => {
   });
   it('resolves @TID@ in section keys', () => {
     const pages = new Map([['p-a', pg(['x-@TID@'])]]);
-    const sections = new Map<string, SectionDoc>([['x-scs', { type: 'weird', state: 'published' }]]);
+    const sections = new Map<string, SectionDoc>([['x-scs', { type: 'weird', state: 'published', tenants: ['scs'] }]]);
     expect(validateForPublish(site([page('a', 'a')]), pages, sections, manifest).map((x) => x.code)).toEqual(['templateMissing']);
   });
   it('flags an archived home page outside the tree', () => {
@@ -66,5 +66,19 @@ describe('validateForPublish', () => {
     expect(dupPage).toContainEqual({ code: 'pageDuplicate', nodeId: 'b' });
     const bad = validateForPublish(site([page('a', 'a'), { id: 'l', type: 'link', label: 'l', url: 'javascript:alert(1)' }]), pages, new Map(), manifest);
     expect(bad).toContainEqual({ code: 'linkInvalid', nodeId: 'l' });
+  });
+  it('ignores an archived section of an unknown type', () => {
+    const pages = new Map([['p-a', pg(['s1'])]]);
+    const sections = new Map<string, SectionDoc>([['s1', { type: 'weird', state: 'published', tenants: ['scs'], isArchived: true }]]);
+    expect(validateForPublish(site([page('a', 'a')]), pages, sections, manifest)).toEqual([]);
+  });
+  it('ignores a section of another tenant', () => {
+    const pages = new Map([['p-a', pg(['s1'])]]);
+    const sections = new Map<string, SectionDoc>([['s1', { type: 'weird', state: 'published', tenants: ['other'] }]]);
+    expect(validateForPublish(site([page('a', 'a')]), pages, sections, manifest)).toEqual([]);
+  });
+  it('flags a missing domain', () => {
+    const s = { ...site([page('a', 'a')]), domain: ' ' } as WebsiteModel;
+    expect(validateForPublish(s, new Map([['p-a', pg()]]), new Map(), manifest)).toEqual([{ code: 'domainMissing' }]);
   });
 });

@@ -57,10 +57,10 @@ function input(overrides: Partial<RenderInput> = {}, siteExtra: Partial<WebsiteM
     ['scsw_alt', pg([])],
   ]);
   const sections = new Map<string, SectionDoc>([
-    ['s-hero', { type: 'hero', state: 'published', title: 'Willkommen', properties: { titleI18n: { en: 'Welcome' } } }],
-    ['s-board-scs', { type: 'article', state: 'published', title: 'Unser Vorstand', properties: { titleI18n: { en: 'Our board' } } }],
-    ['s-plain', { type: 'article', state: 'published', title: 'Nur Deutsch', content: { htmlContent: '<p onclick="x">a</p><script>1</script>' } }],
-    ['s-draft', { type: 'article', state: 'draft', title: 'Entwurf geheim' }],
+    ['s-hero', { type: 'hero', state: 'published', tenants: ['scs'], title: 'Willkommen', properties: { titleI18n: { en: 'Welcome' } } }],
+    ['s-board-scs', { type: 'article', state: 'published', tenants: ['scs'], title: 'Unser Vorstand', properties: { titleI18n: { en: 'Our board' } } }],
+    ['s-plain', { type: 'article', state: 'published', tenants: ['scs'], title: 'Nur Deutsch', content: { htmlContent: '<p onclick="x">a</p><script>1</script>' } }],
+    ['s-draft', { type: 'article', state: 'draft', tenants: ['scs'], title: 'Entwurf geheim' }],
   ]);
   return { site, pages, sections, templates: fixtureTemplates(), imageUrl: (p) => `https://img.example/${p}`, sanitize, ...overrides };
 }
@@ -178,5 +178,39 @@ describe('renderSite', () => {
     expect(files).toEqual([]);
     expect(problems).toContainEqual(expect.objectContaining({ code: 'renderFailed', pageKey: 'scsw_vorstand', sectionKey: 's-board-@TID@' }));
     expect(problems[0].detail).toContain('sections/article.hbs');
+  });
+
+  it('skips archived and foreign-tenant sections without templateMissing', () => {
+    const i = input();
+    (i.pages.get('scsw_vorstand') as PageModel).sections.push('s-arch', 's-foreign');
+    i.sections.set('s-arch', { type: 'weird', state: 'published', tenants: ['scs'], isArchived: true, title: 'Archiviert geheim' });
+    i.sections.set('s-foreign', { type: 'article', state: 'published', tenants: ['other'], title: 'Fremd geheim' });
+    const { files, problems } = renderSite(i);
+    expect(problems).toEqual([]);
+    expect(files.some((f) => f.content.includes('Archiviert geheim') || f.content.includes('Fremd geheim'))).toBe(false);
+  });
+
+  it('renders only servable nested accordion sections', () => {
+    const i = input();
+    i.templates.manifest.sectionTypes.push('accordion');
+    i.templates.sections['accordion'] = '{{#each items}}<div>{{label}}:{{{content}}}</div>{{/each}}';
+    (i.pages.get('scsw_vorstand') as PageModel).sections.push('s-acc');
+    i.sections.set('s-acc', { type: 'accordion', state: 'published', tenants: ['scs'], properties: { items: [
+      { key: 'n-ok-@TID@', label: 'ok' }, { key: 'n-draft', label: 'draft' }, { key: 'n-arch', label: 'arch' }, { key: 'n-foreign', label: 'foreign' },
+    ] } });
+    i.sections.set('n-ok-scs', { state: 'published', tenants: ['scs'], content: { htmlContent: '<p>Sichtbar</p>' } });
+    i.sections.set('n-draft', { state: 'draft', tenants: ['scs'], content: { htmlContent: '<p>Entwurf geheim</p>' } });
+    i.sections.set('n-arch', { state: 'published', tenants: ['scs'], isArchived: true, content: { htmlContent: '<p>Archiv geheim</p>' } });
+    i.sections.set('n-foreign', { state: 'published', tenants: ['other'], content: { htmlContent: '<p>Fremd geheim</p>' } });
+    const de = fileOf(renderSite(i).files, 'vorstand.html') ?? '';
+    expect(de).toContain('<div>ok:<p>Sichtbar</p></div>');
+    expect(de).toContain('<div>draft:</div>');
+    expect(de).not.toMatch(/Entwurf geheim|Archiv geheim|Fremd geheim/);
+  });
+
+  it('refuses a site without domain', () => {
+    const { files, problems } = renderSite(input({}, { domain: '' }));
+    expect(files).toEqual([]);
+    expect(problems).toEqual([{ code: 'domainMissing' }]);
   });
 });
