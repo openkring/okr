@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { IonButton } from '@ionic/angular';
 import { BaseType, CategoryListModel, DerivedValue, Field, FormDefinitionModel, OTHER_OPTION_VALUE } from '@okr/shared-models';
-import { FORM_OTHER_TEXT_MAX, PublicCourseOption, computeDerivedValues, coursesForAudience, getTodayStr, getVisibleFieldIds, resolveImplicitValues } from '@okr/shared-util-core';
+import { FORM_OTHER_TEXT_MAX, PublicCourseOption, computeDerivedValues, coursesForAudience, getTodayStr, shouldClearCourseChoice, getVisibleFieldIds, resolveImplicitValues } from '@okr/shared-util-core';
 import { validatorsFor, defaultFor, isInputField } from '@okr/forms-util';
 import { DEFAULT_FIELD_COURSE_I18N, DEFAULT_FIELD_OTHER_I18N, FieldCourseI18n, FieldOtherI18n, FieldRenderer } from './field-renderer';
 
@@ -182,13 +182,13 @@ export class FormRenderer implements OnInit {
 
   /** a ticked course that left the list (the applicant type changed, or it filled up) is unticked */
   private readonly clearCourse = effect(() => {
-    const keys = new Set(this.courseList().filter(c => !c.isFull).map(c => c.key));
+    const list = this.courseList();
     const field = this.courseField();
     if (!field) return;
     untracked(() => {
       const control = this._form.get(field.key);
       const value = control?.value;
-      if (control && typeof value === 'string' && value !== '' && !keys.has(value)) control.setValue('');
+      if (control && typeof value === 'string' && shouldClearCourseChoice(value, list)) control.setValue('');
     });
   });
 

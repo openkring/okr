@@ -279,9 +279,13 @@ export class FormSectionComponent {
 
   /** the course was taken, ended or no longer fits: reload the list without losing the answers, say so */
   private async onCourseUnavailable(def: PublicFormDefinition): Promise<void> {
-    const fresh = await this.formSubmitService.fetchDefinition(def.formKey, this.store.appStore.tenantId(), this.section().okey || undefined);
-    const next = Array.isArray(fresh) ? fresh[0] : fresh;
-    if (next) this.refreshed.set(next);
+    try {
+      const fresh = await this.formSubmitService.fetchDefinition(def.formKey, this.store.appStore.tenantId(), this.section().okey || undefined);
+      const next = Array.isArray(fresh) ? fresh[0] : fresh;
+      if (next) this.refreshed.set(next);
+    } catch {
+      // the list could not be reloaded: the notice still tells the filler to choose again
+    }
     this.courseNotice.set(true);
   }
 

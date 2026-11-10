@@ -6,6 +6,7 @@ import {
   coursesForAudience,
   defaultIsAnnounced,
   formatCourseRange,
+  shouldClearCourseChoice,
   holdsCoursePlace,
   isAnnouncedCourseOpen,
   toCourseOption,
@@ -127,5 +128,24 @@ describe('formatCourseRange', () => {
   it('gives empty text for a missing or malformed date', () => {
     expect(formatCourseRange('', '20270430')).toBe('');
     expect(formatCourseRange('20270312', 'x')).toBe('');
+  });
+});
+
+describe('shouldClearCourseChoice', () => {
+  const opt = (p: Partial<PublicCourseOption> = {}): PublicCourseOption => ({
+    key: 'c1', name: 'Kurs', startDate: '20270312', endDate: '20270430', audience: ['youth'], remaining: -1, isFull: false, ...p,
+  });
+  it('clears a youth course when the audience becomes adult (list without it)', () => {
+    const adultList = coursesForAudience([opt()], 'adult');
+    expect(shouldClearCourseChoice('c1', adultList)).toBe(true);
+  });
+  it('keeps a course that is still offered', () => {
+    expect(shouldClearCourseChoice('c1', coursesForAudience([opt()], 'youth'))).toBe(false);
+  });
+  it('never clears an empty choice', () => {
+    expect(shouldClearCourseChoice('', [])).toBe(false);
+  });
+  it('clears a course that is now full', () => {
+    expect(shouldClearCourseChoice('c1', [opt({ isFull: true, remaining: 0 })])).toBe(true);
   });
 });

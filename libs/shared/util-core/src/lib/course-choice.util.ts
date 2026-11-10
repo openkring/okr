@@ -86,6 +86,16 @@ export function courseChoiceRefusal(
   return undefined;
 }
 
+/**
+ * Whether a ticked course must be unticked: it is not (or no longer) offered to this applicant type,
+ * or it has filled up. Nothing ticked never needs clearing.
+ */
+export function shouldClearCourseChoice(ticked: string, available: PublicCourseOption[]): boolean {
+  if (!ticked) return false;
+  const match = available.find(c => c.key === ticked);
+  return !match || match.isFull;
+}
+
 /** «12.03.–30.04.2027» for two StoreDates; a missing or malformed date gives ''. */
 export function formatCourseRange(startDate: string, endDate: string): string {
   if (!/^\d{8}$/.test(startDate ?? '') || !/^\d{8}$/.test(endDate ?? '')) return '';
