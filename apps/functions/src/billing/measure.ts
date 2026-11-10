@@ -1,18 +1,13 @@
 import { getAuth } from 'firebase-admin/auth';
 import type { Firestore } from 'firebase-admin/firestore';
 
-import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
+import { logger } from 'firebase-functions/v2';
 
+import { toStoreDate } from '../srv/zurich-time';
 import { countUsers } from './measure.logic';
 import type { UserForCount } from './measure.logic';
 
 const AUTH_BATCH = 100; // getUsers() accepts at most 100 identifiers
-
-/** Zurich wall-clock calendar day of an Auth creation time, as StoreDate. */
-function zurichStoreDate(creationTime: string): string {
-  const iso = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Zurich' }).format(new Date(creationTime));
-  return convertDateFormatToString(iso, DateFormat.IsoDate, DateFormat.StoreDate);
-}
 
 /**
  * Counts a tenant's billable users (pricing §9.1). `users/{uid}` supplies tenant, roles and
@@ -24,20 +19,27 @@ export async function measureTenant(db: Firestore, tenantId: string, lastDay: st
   const snap = await db.collection('users').where('tenants', 'array-contains', tenantId).get();
   const docs = snap.docs.filter((d) => d.data()['isArchived'] !== true);
   const users: UserForCount[] = [];
+  let unmatched = 0;
   for (let i = 0; i < docs.length; i += AUTH_BATCH) {
     const batch = docs.slice(i, i + AUTH_BATCH);
     const res = await getAuth().getUsers(batch.map((d) => ({ uid: d.id })));
     const byUid = new Map(res.users.map((r) => [r.uid, r]));
     for (const d of batch) {
       const rec = byUid.get(d.id);
-      if (!rec) continue;
+      if (!rec) {
+        unmatched++;
+        continue;
+      }
       users.push({
         roles: (d.data()['roles'] ?? {}) as Record<string, boolean>,
         isArchived: false,
         disabled: rec.disabled,
-        createdAt: rec.metadata.creationTime ? zurichStoreDate(rec.metadata.creationTime) : undefined,
+        createdAt: rec.metadata.creationTime ? toStoreDate(new Date(rec.metadata.creationTime)) : undefined,
       });
     }
+  }
+  if (unmatched > 0) {
+    logger.warn(`measureTenant: ${unmatched} users/{uid} docs of tenant ${tenantId} have no Auth record and are not counted.`);
   }
   return countUsers(users, lastDay);
 }

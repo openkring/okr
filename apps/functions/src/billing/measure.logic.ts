@@ -1,4 +1,4 @@
-import { BILLING_PRIVILEGED_ROLES, weightedUsers } from '@okr/business-metering-util';
+import { BILLING_EXCLUDED_ROLES, BILLING_PRIVILEGED_ROLES, weightedUsers } from '@okr/business-metering-util';
 import { DateFormat, subDuration } from '@okr/shared-util-core';
 
 /** A user reduced to what pricing spec §9.1 looks at. */
@@ -20,7 +20,9 @@ export function countUsers(users: UserForCount[], lastDay: string): { totalUsers
   let privilegedUsers = 0;
   for (const user of users) {
     if (user.isArchived || user.disabled) continue;
+    // a user created after the measuring day did not exist on it (1.32 §9.1: measured on the last day of the month)
     if (user.createdAt && user.createdAt > lastDay) continue;
+    if (BILLING_EXCLUDED_ROLES.some((role) => user.roles?.[role] === true)) continue;
     totalUsers++;
     if (BILLING_PRIVILEGED_ROLES.some((role) => user.roles?.[role] === true)) privilegedUsers++;
   }

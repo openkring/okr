@@ -17,6 +17,10 @@ describe('countUsers', () => {
     const r = countUsers([u({ admin: true, treasurer: true })], '20261130');
     expect(r).toEqual({ totalUsers: 1, privilegedUsers: 1, weighted: 2 });
   });
+  it('does not count kiosk or tester users, even with a privileged role', () => {
+    const users = [u({ kiosk: true }), u({ tester: true, admin: true }), u({ registered: true })];
+    expect(countUsers(users, '20261130')).toEqual({ totalUsers: 1, privilegedUsers: 0, weighted: 1 });
+  });
   it('ignores false role flags', () => {
     expect(countUsers([u({ admin: false, registered: true })], '20261130').privilegedUsers).toBe(0);
   });

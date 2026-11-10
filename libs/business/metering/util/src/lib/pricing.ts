@@ -79,6 +79,9 @@ export const BILLING_PRIVILEGED_ROLES: readonly RoleName[] = [
   'groupAdmin',
 ];
 
+/** §9.1 (4): not billable users — `kiosk` (shared device login) and `tester` (internal). */
+export const BILLING_EXCLUDED_ROLES: readonly RoleName[] = ['kiosk', 'tester'];
+
 /**
  * Weighted user count `n` (pricing §3): privileged accounts count **double**.
  *
