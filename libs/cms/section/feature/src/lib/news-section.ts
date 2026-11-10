@@ -5,11 +5,12 @@ import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, Ion
 
 import { EmptyList, MoreButton, OptionalCardHeader, Spinner } from '@okr/shared-ui';
 import { debugMessage, hasRole, shortenText } from '@okr/shared-util-core';
-import { createActionSheetButton, createActionSheetOptions, isBrowser, navigateByUrl } from '@okr/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions, isBrowser } from '@okr/shared-util-angular';
 import { ArticleSection, IMAGE_STYLE_SHAPE, NewsConfig, SectionModel } from '@okr/shared-models';
 import { ThumbnailUrlPipe } from '@okr/shared-pipes';
 
 import { NewsStore } from './news-section.store';
+import { isAppMoreUrl, openMoreLink } from './section-link';
 
 @Component({
   selector: 'okr-news-section',
@@ -61,7 +62,7 @@ import { NewsStore } from './news-section.store';
                 </ion-item>
               }
               @if(showMoreButton() && !editMode()) {
-                <okr-more-button [url]="moreUrl()" [label]="store.i18n.more()" />
+                <okr-more-button [url]="moreUrl()" [label]="store.i18n.more()" [navigate]="false" (opened)="openMoreUrl()" />
               }
             </ion-list>
           }
@@ -145,15 +146,17 @@ export class NewsSectionComponent implements OnInit {
     }
   }
 
+  /** The «more» url: an app route, or a website page (seeded homepage: «news.html»). */
   protected openMoreUrl(): void {
     if (this.editMode()) return;
-    navigateByUrl(this.router, this.moreUrl());
+    openMoreLink(this.router, this.moreUrl());
   }
 
   protected navigateToArticle(article: ArticleSection): void {
     if (this.editMode()) return;
-    const url = this.moreUrl();
+    const url = this.moreUrl().trim();
     if (!url) return;
-    this.router.navigate([url], { fragment: article.okey });
+    if (isAppMoreUrl(url)) void this.router.navigate([url], { fragment: article.okey });
+    else openMoreLink(this.router, url);
   }
 }

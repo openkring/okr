@@ -17,6 +17,7 @@ import { isAdminMember } from '@okr/subject-group-util';
 
 import { CalendarStore } from './calendar-section.store';
 import { reservedListHeight } from './list-reservation';
+import { openMoreLink } from './section-link';
 
 @Component({
   selector: 'okr-events-section',
@@ -73,7 +74,7 @@ import { reservedListHeight } from './list-reservation';
         }
         </div>
         @if(showMoreButton() && !editMode()) {
-          <okr-more-button class="events-more" [url]="moreUrl()" [label]="store.i18n.event_more_button()" />
+          <okr-more-button class="events-more" [url]="moreUrl()" [label]="store.i18n.event_more_button()" [navigate]="false" (opened)="openMore($event)" />
         }
       </ion-card-content>
     </ion-card>
@@ -110,6 +111,11 @@ export class EventsSectionComponent implements OnInit {
 
   /** Only the label of the info button — the explainer itself lives in the calevent domain. */
   protected readonly caleventI18n = inject(I18nService).translateAll({ info_open: CALEVENT_I18N_KEYS.info_open, activity_unseen: CALEVENT_I18N_KEYS.activity_unseen, schedule_view: CALEVENT_I18N_KEYS.schedule_view });
+
+  /** The «more» url: an app route, or a website page (seeded homepage: «termine.html»). */
+  protected openMore(url: string): void {
+    openMoreLink(this.router, url);
+  }
 
   /** Opens the shared 'Kalender & Einladungen' explainer. */
   protected async showInfo(): Promise<void> {

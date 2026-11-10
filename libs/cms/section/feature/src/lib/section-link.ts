@@ -1,6 +1,7 @@
 import { Router } from '@angular/router';
 
 import { isSectionCtaUrl } from '@okr/cms-section-util';
+import { navigateByUrl } from '@okr/shared-util-angular';
 
 /**
  * Follows a section link (tile card / call to action).
@@ -20,4 +21,25 @@ export function openSectionLink(router: Router, url: string | undefined): void {
   } else {
     window.open('/web/' + u, '_blank', 'noopener,noreferrer');
   }
+}
+
+/**
+ * True when a «more» url is an app route: `/…`, or a legacy bare route such as «news» that is no
+ * website link (no `.html`, anchor, https, mailto or tel) — the router has always resolved those
+ * from the root.
+ */
+export function isAppMoreUrl(url: string): boolean {
+  const u = url.trim();
+  return u.startsWith('/') || !isSectionCtaUrl(u);
+}
+
+/**
+ * Follows the «more» url of an events/news section: an app route through `navigateByUrl`, a website
+ * link (seeded homepage: «termine.html», «news.html») through `openSectionLink`.
+ */
+export function openMoreLink(router: Router, url: string | undefined): void {
+  const u = url?.trim();
+  if (!u) return;
+  if (isAppMoreUrl(u)) void navigateByUrl(router, u);
+  else openSectionLink(router, u);
 }

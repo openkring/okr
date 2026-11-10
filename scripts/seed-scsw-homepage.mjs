@@ -13,7 +13,8 @@
  *
  * Usage:
  *   node scripts/seed-scsw-homepage.mjs            dry-run (reads prod, prints every write)
- *   node scripts/seed-scsw-homepage.mjs --apply    performs the writes (existing sections/page are skipped)
+ *   node scripts/seed-scsw-homepage.mjs --apply    performs the writes (existing sections/page are skipped);
+ *                                                  refuses unless the LIVE publicApi already maps section names (R10 gate)
  *   ... --apply --force                            also overwrites existing sections/page
  *   node scripts/seed-scsw-homepage.mjs --retire   dry-run: lists the homepage websiteContent docs to archive (no seeding)
  *   ... --retire --apply                           sets isArchived: true on them; refuses unless pages/scsw_homepage has sections
@@ -216,7 +217,8 @@ function sections() {
       emphasis: 'banner',
     }, para(bh.lead.de), POSITION_RIGHT),
 
-    scsw_homepage_events: base('scsw_homepage_events', 'events', 'termine', ev.title.de, '', 5, {
+    // name = the calendar key the app's events section reads (R9): the website lists the 'public' calendar
+    scsw_homepage_events: base('scsw_homepage_events', 'events', 'public', ev.title.de, '', 5, {
       moreUrl: 'termine.html', maxEvents: 4, showPastEvents: false, showUpcomingEvents: true,
       showEventTime: true, showEventLocation: false,
       kicker: ev.kicker.de, kickerI18n: i18n(ev.kicker), titleI18n: i18n(ev.title),
@@ -271,9 +273,43 @@ async function retire() {
   log(`\n${todo} to archive${APPLY ? ' (done)' : ''}, ${done} already archived, ${shared} shared (skipped), ${hits.length} matching of ${snap.size} scs websiteContent docs`);
 }
 
+// ── rollout gate (R10): the website must not see the CMS homepage before publicApi maps it ──
+/** An existing published scs page, read through the LIVE public API. */
+export const GATE_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/publicApi/public/api/v1/pages/scsw_kontakt?tenantId=scs&lang=en';
+
+/** True when every section of the live response carries `name` — only the 1.151 page mapper emits it. */
+export function liveApiHasSectionNames(body) {
+  const sections = Array.isArray(body?.sections) ? body.sections : [];
+  return sections.length > 0 && sections.every((s) => s && typeof s === 'object' && 'name' in s);
+}
+
+/** Reads the live API; returns { ok, detail }. Never throws. */
+async function checkRolloutGate() {
+  try {
+    const res = await fetch(GATE_URL, { headers: { Accept: 'application/json' } });
+    if (!res.ok) return { ok: false, detail: `HTTP ${res.status}` };
+    const body = await res.json();
+    const n = Array.isArray(body?.sections) ? body.sections.length : 0;
+    return liveApiHasSectionNames(body)
+      ? { ok: true, detail: `${n} section(s) carry name` }
+      : { ok: false, detail: `${n} section(s), no name field (old mapper)` };
+  } catch (e) {
+    return { ok: false, detail: `fetch failed: ${e?.message ?? e}` };
+  }
+}
+
 async function main() {
   if (RETIRE) return retire();
   log(APPLY ? '*** APPLY ***' : '(dry-run: nothing is written; pass --apply to write)');
+  const gate = await checkRolloutGate();
+  log(`rollout gate: ${gate.ok ? 'PASS' : 'FAIL'} — live publicApi scsw_kontakt: ${gate.detail}`);
+  if (!gate.ok) {
+    if (APPLY) {
+      console.error('refusing to seed: the live publicApi does not map section names yet — deploy publicApi first (pnpm run deploy:functions), then re-run --apply');
+      process.exit(1);
+    }
+    log('(dry-run continues; --apply would refuse: deploy publicApi first)');
+  }
   await loadLive();
   const secs = sections();
 

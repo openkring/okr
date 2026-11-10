@@ -1,4 +1,4 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, inject, input, output } from '@angular/core';
 import { IonButton, IonCol, IonGrid, IonRow } from '@ionic/angular';
 import { Router } from '@angular/router';
 
@@ -33,8 +33,17 @@ export class MoreButton {
   // inputs
   public url = input.required<string>();
   public label = input.required<string>();
+  /** false: the button only emits `opened` and the parent follows the url (e.g. a website link). */
+  public navigate = input(true);
+
+  // outputs
+  public opened = output<string>();
 
   protected openMoreUrl(): void {
-    navigateByUrl(this.router, this.url());
+    if (this.navigate()) {
+      void navigateByUrl(this.router, this.url());
+    } else {
+      this.opened.emit(this.url());
+    }
   }
 }
