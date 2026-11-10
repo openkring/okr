@@ -421,6 +421,7 @@
       "resp_select": "Choisir une responsabilité",
       "resp_clear": "Retirer",
       "resp_helper": "La personne responsable reçoit une tâche pour chaque réponse.",
+      "form_open": "Ouvrir dans l'éditeur de formulaires",
       "captcha": "Afficher la protection anti-spam (captcha)",
       "captcha_helper": "Les personnes prouvent brièvement qu'elles ne sont pas un robot avant d'envoyer.",
       "encrypt": "Chiffrer les fichiers",

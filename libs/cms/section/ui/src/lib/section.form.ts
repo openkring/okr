@@ -53,7 +53,7 @@ import { CtaConfiguration } from './cta-configuration';
 import { ArticleEmphasis, KickerConfiguration } from './kicker-configuration';
 import { TimelineConfiguration } from './timeline-configuration';
 import { AdventConfiguration } from './advent-configuration';
-import { CourseOption, FormOption, FormSectionConfiguration } from './form-section-configuration';
+import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOption } from './form-section-configuration';
 
 @Component({
   selector: 'okr-section-form',
@@ -228,11 +228,13 @@ import { CourseOption, FormOption, FormSectionConfiguration } from './form-secti
                 [formData]="formConfig" (formDataChange)="onFormConfigChange($event)"
                 [forms]="forms()"
                 [courses]="courses()"
+                [responsibilities]="responsibilities()"
                 [readOnly]="isReadOnly()"
                 [i18n]="i18n()"
                 [formI18n]="formI18n"
                 [errors]="errors()"
                 (responsibilitySelectClicked)="selectFormResponsibility()"
+                (openFormClicked)="openFormClicked.emit($event)"
               />
             }
           }
@@ -632,6 +634,8 @@ export class SectionForm {
 
   // outputs
   public readonly valid = output<boolean>();
+  /** form section: open the form builder for this form key (the modal owns the builder) */
+  public readonly openFormClicked = output<string>();
 
   // validation (per-type suite, picked from formData().type)
   /** handed to every configuration child so each field can show its own error note */
@@ -695,6 +699,8 @@ export class SectionForm {
   public readonly forms = input<FormOption[]>([]);
   /** Courses a form section may fix for a course form (D-W4). Empty for every other section type. */
   public readonly courses = input<CourseOption[]>([]);
+  /** form section: the tenant's responsibilities, to show the chosen one by name */
+  public readonly responsibilities = input<ResponsibilityOption[]>([]);
   /** The forms keys, for the acceptance card of a form section. Unset for every other section type. */
   public readonly formI18n = input<FormI18n | undefined>(undefined);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));

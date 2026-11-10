@@ -43,6 +43,7 @@
     { "path": "../../../content/notice/util/tsconfig.lib.json" },
     { "path": "../../../finance/expense/feature/tsconfig.lib.json" },
     { "path": "../../../forms/data-access/tsconfig.lib.json" },
+    { "path": "../../../forms/feature/tsconfig.lib.json" },
     { "path": "../../../forms/ui/tsconfig.lib.json" },
     { "path": "../../../forms/util/tsconfig.lib.json" },
     { "path": "../../../geo/energy/feature/tsconfig.lib.json" },

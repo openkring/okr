@@ -421,6 +421,7 @@
       "resp_select": "Choose responsibility",
       "resp_clear": "Remove",
       "resp_helper": "The responsible person gets a task for every answer.",
+      "form_open": "Open in the form builder",
       "captcha": "Show spam protection (captcha)",
       "captcha_helper": "People briefly prove they are not a robot before they can submit.",
       "encrypt": "Encrypt files",

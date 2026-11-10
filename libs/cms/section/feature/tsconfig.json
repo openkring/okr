@@ -155,6 +155,9 @@
       "path": "../../../forms/ui/tsconfig.lib.json"
     },
     {
+      "path": "../../../forms/feature/tsconfig.lib.json"
+    },
+    {
       "path": "../../../geo/weather/feature/tsconfig.lib.json"
     },
     {

@@ -436,6 +436,7 @@ export const SECTION_I18N_KEYS = {
   form_cfg_resp_select:                      PFX + 'form.config.resp_select',
   form_cfg_resp_clear:                       PFX + 'form.config.resp_clear',
   form_cfg_resp_helper:                      PFX + 'form.config.resp_helper',
+  form_cfg_form_open:                        PFX + 'form.config.form_open',
   form_cfg_captcha:                          PFX + 'form.config.captcha',
   form_cfg_captcha_helper:                   PFX + 'form.config.captcha_helper',
   form_cfg_encrypt:                          PFX + 'form.config.encrypt',
