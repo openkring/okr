@@ -43,15 +43,23 @@ const db = getFirestore();
 const bucket = getStorage().bucket();
 
 // ── retire: which websiteContent keys the CMS page replaces ──────────────
-const RETIRE_PREFIXES = ['hero.', 'about.', 'offers.', 'boathouse.'];
-const RETIRE_EXACT = ['events.kicker', 'events.title', 'news.kicker', 'news.titleHome'];
-/** Pure: true for a homepage key (never events.all, news.all, nav.*, footer, ...). */
+/** The websiteContent keys the seed reads to build scsw_homepage: the single source for seed (text() rejects others) and retire. */
+export const HOMEPAGE_KEYS = Object.freeze([
+  'hero.kicker', 'hero.title', 'hero.subtitle', 'hero.lead', 'hero.cta1', 'hero.cta2',
+  'about.kicker', 'about.title', 'about.p1', 'about.p2', 'about.stat1', 'about.stat2', 'about.stat3', 'about.stat4',
+  'offers.kicker', 'offers.title', 'offers.lead', 'offers.cta',
+  'offers.course.title', 'offers.course.desc', 'offers.youth.title', 'offers.youth.desc',
+  'offers.membership.title', 'offers.membership.desc',
+  'boathouse.kicker', 'boathouse.title', 'boathouse.lead', 'boathouse.cta', 'boathouse.caption',
+  'events.kicker', 'events.title', 'news.kicker', 'news.titleHome',
+]);
+/** Pure: exact membership, no prefix matching. */
 export function isHomepageKey(key) {
-  return typeof key === 'string' && (RETIRE_EXACT.includes(key) || RETIRE_PREFIXES.some((p) => key.startsWith(p)));
+  return typeof key === 'string' && HOMEPAGE_KEYS.includes(key);
 }
 (function selfCheck() {
-  const yes = ['hero.title', 'about.stat1', 'offers.course.title', 'boathouse.cta', 'events.kicker', 'events.title', 'news.kicker', 'news.titleHome'];
-  const no = ['events.all', 'news.all', 'nav.home', 'footer.imprint', 'events.other', 'news.title', 'heroic', 'aboutus', 'offers', '', undefined];
+  const yes = [...HOMEPAGE_KEYS];
+  const no = ['boathouse.facts.year', 'boathouse.story.p1', 'boathouse.page.title', 'boathouse.support.cta', 'offers.competitive.title', 'offers.lateral.desc', 'events.all', 'news.all', 'nav.home', 'footer.imprint', 'events.other', 'news.title', 'heroic', 'aboutus', 'offers', '', undefined];
   for (const k of yes) if (!isHomepageKey(k)) throw new Error(`isHomepageKey self-check: ${k} should match`);
   for (const k of no) if (isHomepageKey(k)) throw new Error(`isHomepageKey self-check: ${k} must not match`);
 })();
@@ -79,6 +87,7 @@ async function loadLive() {
 
 /** [de, en] of a key: live doc first, index.html fallback per language. */
 function text(key) {
+  if (!isHomepageKey(key)) throw new Error(`text(${key}): key missing from HOMEPAGE_KEYS (retire would not archive it)`);
   const l = live.get(key);
   const pick = (lang) => {
     const v = l?.[lang];
