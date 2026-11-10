@@ -38,6 +38,11 @@ describe('isBillable', () => {
   it('bills when billingStart is the 1st of the run month', () => {
     expect(isBillable(sub({ billingStart: '20261201' }), '202612')).toBe(true);
   });
+  it('fails closed on a malformed billingStart', () => {
+    for (const bad of ['2026-12-01', '2026120', '20261301', '20260230', 'abc']) {
+      expect(isBillable(sub({ billingStart: bad }), '202701')).toBe(false);
+    }
+  });
   it('rolls over the year boundary', () => {
     expect(isBillable(sub({ billingStart: '20261220' }), '202612')).toBe(false);
     expect(isBillable(sub({ billingStart: '20261220' }), '202701')).toBe(true);
@@ -88,6 +93,11 @@ describe('monthlyPositions', () => {
     expect(positions[3].accountKey).toBe('6100');
     expect(positions[3].title).toContain('12 Briefe, 20 Seiten');
     expect(positions[3].title).toContain('CHF 8.40');
+  });
+  it('skips inherited property names as options', () => {
+    const { positions, skipped } = monthlyPositions({ period: '202612', band: 'KringXXS', options: ['constructor', 'toString'], credit: [], accounts });
+    expect(skipped).toEqual(['constructor', 'toString']);
+    expect(positions).toHaveLength(1);
   });
   it('skips unknown options and reports them', () => {
     const { positions, skipped } = monthlyPositions({ period: '202612', band: 'KringXXS', options: ['crm', 'bogus'], credit: [], accounts });

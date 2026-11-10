@@ -35,13 +35,25 @@ function firstBilledPeriod(billingStart: string): string {
   return m === 12 ? `${year + 1}01` : `${year}${String(m + 1).padStart(2, '0')}`;
 }
 
+function isValidStoreDate(value: string): boolean {
+  if (!/^\d{8}$/.test(value)) return false;
+  const y = Number(value.slice(0, 4));
+  const m = Number(value.slice(4, 6));
+  const d = Number(value.slice(6, 8));
+  const date = new Date(Date.UTC(y, m - 1, d));
+  return date.getUTCFullYear() === y && date.getUTCMonth() === m - 1 && date.getUTCDate() === d;
+}
+
 /** Whether the monthly run should invoice this subscription for `period` (yyyyMM). */
 export function isBillable(sub: SubscriptionLike, period: string): boolean {
   if (sub.billing !== 'stripe') return false;
   const state = sub.state ?? 'active';
   if (state !== 'active' && state !== 'pastDue') return false;
   if ((sub.lastRunPeriod ?? '') === period) return false;
-  if (sub.billingStart && period < firstBilledPeriod(sub.billingStart)) return false;
+  if (sub.billingStart) {
+    if (!isValidStoreDate(sub.billingStart)) return false; // malformed start: fail closed
+    if (period < firstBilledPeriod(sub.billingStart)) return false;
+  }
   return true;
 }
 
@@ -87,8 +99,8 @@ export function monthlyPositions(input: {
   ];
   const skipped: string[] = [];
   for (const id of [...new Set(input.options)]) {
-    const price = ADD_ON_PRICES[id];
-    if (price === undefined) {
+    const price = Object.hasOwn(ADD_ON_PRICES, id) ? ADD_ON_PRICES[id] : undefined;
+    if (typeof price !== 'number') {
       skipped.push(id);
       continue;
     }
