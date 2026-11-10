@@ -9,7 +9,7 @@ import type { RenderedFile } from '@okr/cms-website-render';
 const BASE = 'https://firebasehosting.googleapis.com/v1beta1';
 
 /** Everything the renderer owns; the clone keeps css, js, images, fonts, … */
-export const CLONE_EXCLUDE_REGEXES = ['\\.html$', '^/sitemap\\.xml$', '^/robots\\.txt$'];
+export const CLONE_EXCLUDE_REGEXES = ['^.*\\.html$', '^/sitemap\\.xml$', '^/robots\\.txt$'];
 
 export interface ReleaseInfo {
   name: string;
@@ -30,16 +30,37 @@ async function accessToken(): Promise<string> {
   return token.access_token;
 }
 
+/**
+ * An axios error carries `config.headers.Authorization`; thrown as is, it would put the bearer token into
+ * the function log. Only method, URL path, status and the API's message leave this module.
+ */
+function wrapError(error: unknown, method: string, url: string): Error {
+  const e = error as { response?: { status?: number; data?: { error?: { message?: string } } }; message?: string };
+  let path = url;
+  try {
+    path = new URL(url).pathname;
+  } catch {
+    // not a URL: keep as given
+  }
+  const status = e.response?.status ?? 'no response';
+  const detail = e.response?.data?.error?.message ?? (e.response ? '' : 'network error');
+  return new Error(`Hosting ${method} ${path} failed (${status})${detail ? `: ${detail}` : ''}`);
+}
+
 async function call<T>(method: 'GET' | 'POST' | 'PATCH', url: string, options: { params?: Record<string, unknown>; data?: unknown } = {}): Promise<T> {
-  const response = await axios.request<T>({
-    method,
-    url,
-    params: options.params,
-    data: options.data,
-    headers: { Authorization: `Bearer ${await accessToken()}` },
-    timeout: 60_000,
-  });
-  return response.data;
+  try {
+    const response = await axios.request<T>({
+      method,
+      url,
+      params: options.params,
+      data: options.data,
+      headers: { Authorization: `Bearer ${await accessToken()}` },
+      timeout: 60_000,
+    });
+    return response.data;
+  } catch (error) {
+    throw wrapError(error, method, url);
+  }
 }
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -88,14 +109,19 @@ export async function uploadFiles(version: string, files: RenderedFile[]): Promi
   for (const hash of required) {
     const body = byHash.get(hash);
     if (!body) throw new Error(`Hosting asked for unknown hash ${hash}`);
-    await axios.request({
-      method: 'POST',
-      url: `${populated.uploadUrl}/${hash}`,
-      data: body,
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/octet-stream' },
-      maxBodyLength: Infinity,
-      timeout: 60_000,
-    });
+    const url = `${populated.uploadUrl}/${hash}`;
+    try {
+      await axios.request({
+        method: 'POST',
+        url,
+        data: body,
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/octet-stream' },
+        maxBodyLength: Infinity,
+        timeout: 60_000,
+      });
+    } catch (error) {
+      throw wrapError(error, 'POST', url);
+    }
   }
 }
 

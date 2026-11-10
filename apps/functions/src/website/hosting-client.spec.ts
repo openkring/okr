@@ -10,6 +10,7 @@ vi.mock('firebase-admin/app', () => ({
 }));
 
 import {
+  CLONE_EXCLUDE_REGEXES,
   cloneStaticAssets,
   finalizeAndRelease,
   getLiveVersion,
@@ -58,7 +59,7 @@ describe('cloneStaticAssets', () => {
     expect(clone.data).toEqual({
       sourceVersion: 'sites/s/versions/v1',
       finalize: false,
-      exclude: { regexes: ['\\.html$', '^/sitemap\\.xml$', '^/robots\\.txt$'] },
+      exclude: { regexes: ['^.*\\.html$', '^/sitemap\\.xml$', '^/robots\\.txt$'] },
     });
     expect(poll.method).toBe('GET');
     expect(poll.url).toBe(`${BASE}/operations/op1`);
@@ -138,5 +139,54 @@ describe('listReleases', () => {
   it('returns [] when there are none', async () => {
     axiosMock.request.mockResolvedValue({ data: {} });
     expect(await listReleases('s', 5)).toEqual([]);
+  });
+});
+
+describe('CLONE_EXCLUDE_REGEXES', () => {
+  const excluded = ['/en/vorstand.html', '/index.html', '/sitemap.xml', '/robots.txt'];
+  const kept = ['/assets/app.js', '/assets/app.html.map', '/assets/logo.svg', '/styles.css'];
+  const full = (r: string) => new RegExp('^(?:' + r + ')$');
+  const partial = (r: string) => new RegExp(r);
+  const hit = (make: (r: string) => RegExp, path: string) => CLONE_EXCLUDE_REGEXES.some((r) => make(r).test(path));
+
+  it.each([
+    ['full-match', full],
+    ['partial-match', partial],
+  ])('excludes the rendered files under %s semantics', (_n, make) => {
+    for (const p of excluded) expect(hit(make, p), p).toBe(true);
+  });
+
+  it.each([
+    ['full-match', full],
+    ['partial-match', partial],
+  ])('keeps static assets under %s semantics', (_n, make) => {
+    for (const p of kept) expect(hit(make, p), p).toBe(false);
+  });
+});
+
+describe('error hygiene', () => {
+  it('never leaks the bearer token through a failed call', async () => {
+    const axiosError = Object.assign(new Error('Request failed with status code 403'), {
+      isAxiosError: true,
+      config: { headers: { Authorization: 'Bearer tok' }, url: `${BASE}/sites/s/releases` },
+      response: { status: 403, data: { error: { message: 'permission denied' } } },
+    });
+    axiosMock.request.mockRejectedValue(axiosError);
+    const err = await getLiveVersion('s').catch((e) => e);
+    expect(err).toBeInstanceOf(Error);
+    expect(err.message).toContain('403');
+    expect(err.message).toContain('permission denied');
+    expect(err.message).toContain('/sites/s/releases');
+    const serialized = JSON.stringify(err, Object.getOwnPropertyNames(err)) + String(err.stack);
+    expect(serialized).not.toMatch(/Authorization|Bearer|tok\b/);
+    expect(err.config).toBeUndefined();
+  });
+
+  it('also wraps a failed upload', async () => {
+    axiosMock.request
+      .mockResolvedValueOnce({ data: { uploadRequiredHashes: ['h'], uploadUrl: 'https://u/up' } })
+      .mockRejectedValueOnce(Object.assign(new Error('x'), { config: { headers: { Authorization: 'Bearer tok' } }, response: { status: 500 } }));
+    // hash 'h' is unknown to the client -> its own error, never an axios error
+    await expect(uploadFiles('sites/s/versions/v', [{ path: 'a.html', content: 'x' }])).rejects.toThrow(/unknown hash/);
   });
 });

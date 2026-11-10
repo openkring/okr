@@ -77,8 +77,25 @@ describe('loadTemplates', () => {
     expect(err).toBeInstanceOf(TemplateMissingError);
   });
 
-  it('rejects a version that is empty or escapes the folder', async () => {
-    await expect(loadTemplates('scs', '')).rejects.toBeInstanceOf(TemplateMissingError);
-    await expect(loadTemplates('scs', '../x')).rejects.toBeInstanceOf(TemplateMissingError);
+  it.each([
+    ['scs', ''],
+    ['scs', '../x'],
+    ['scs', 'a..b'],
+    ['scs', 'a/b'],
+    ['scs', 'a\\b'],
+    ['scs', '..'],
+    ['', 'v1'],
+    ['..', 'v1'],
+    ['a/b', 'v1'],
+    ['a\\b', 'v1'],
+    ['a.b', 'v1'],
+  ])('rejects the location %j @ %j before touching Storage', async (siteId, version) => {
+    await expect(loadTemplates(siteId, version)).rejects.toBeInstanceOf(TemplateMissingError);
+    expect(getFiles).not.toHaveBeenCalled();
+  });
+
+  it('accepts a dated version like 20261111-0014-590c07eeb and v1.2', async () => {
+    seed({ 'website.json': JSON.stringify(MANIFEST), 'layout.hbs': 'L' });
+    await expect(loadTemplates('scs', 'v1')).resolves.toBeDefined();
   });
 });

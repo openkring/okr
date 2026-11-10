@@ -16,7 +16,8 @@ export class TemplateMissingError extends Error {
   }
 }
 
-const SAFE_SEGMENT = /^[\w.-]+$/;
+const SAFE_SITE = /^[A-Za-z0-9_-]+$/;
+const SAFE_VERSION = /^[A-Za-z0-9._-]+$/;
 const MAX_CACHE = 20;
 const cache = new Map<string, TemplateSet>();
 
@@ -31,7 +32,7 @@ function splitHbs(relative: string): [string, string] | undefined {
 }
 
 export async function loadTemplates(siteId: string, version: string): Promise<TemplateSet> {
-  if (!SAFE_SEGMENT.test(siteId) || !SAFE_SEGMENT.test(version) || version === '.' || version === '..') {
+  if (!SAFE_SITE.test(siteId) || !SAFE_VERSION.test(version) || version.includes('..')) {
     throw new TemplateMissingError(`invalid template location ${siteId}@${version}`);
   }
   const key = `${siteId}@${version}`;
