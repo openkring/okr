@@ -105,7 +105,7 @@ if (!targets.length || targets.some((t) => SELFTEST_SECRET_USERS.includes(t))) {
 // Deploy the requested functions (or all).
 const only = targets.length ? targets.map((n) => `functions:${n}`).join(',') : 'functions';
 // FUNCTIONS_FORCE=1 appends --force: firebase refuses (non-interactive) to deploy a function with a
-// failure policy (`retry: true`, e.g. onTopUpPaid) without it. Opt-in, so a plain deploy never forces.
+// failure policy (`retry: true`, e.g. onBillingInvoicePaid) without it. Opt-in, so a plain deploy never forces.
 const force = process.env.FUNCTIONS_FORCE === '1' ? ['--force'] : [];
 console.log(`\nDeploying ${targets.length ? only : 'ALL functions'} (buildpack pnpm@${pin})${force.length ? ' with --force' : ''}…`);
 run('firebase', ['deploy', '--only', only, ...force]);

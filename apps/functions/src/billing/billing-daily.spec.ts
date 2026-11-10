@@ -187,6 +187,75 @@ describe('runBillingDaily: retries', () => {
   });
 });
 
+describe('runBillingDaily: review fixes', () => {
+  it('a retry charged and paid (fast webhook) before the transition: active, no pastDue mail', async () => {
+    const store = seed();
+    const p = port({ charge: 'succeeded' });
+    p.chargeOffSession.mockImplementationOnce(async () => {
+      store[`invoices/${KEY}`] = { ...store[`invoices/${KEY}`], state: 'paid' }; // the webhook pays the invoice
+      return { id: 'pi_new', status: 'succeeded', chargeId: 'ch_new' };
+    });
+    await run(store, '20261212', p); // retry on a missed day, invoice due 20261211
+    expect(p.chargeOffSession).toHaveBeenCalledTimes(1);
+    expect(store[SUB]).toMatchObject({ state: 'active', pastDueSince: '' });
+    expect(notifyPastDue).not.toHaveBeenCalled();
+  });
+
+  it('an invoice with a retry charged today is not overdue', async () => {
+    const store = seed();
+    await run(store, '20261212', port({ charge: 'processing' }));
+    expect(store[SUB]).toMatchObject({ state: 'active' });
+    expect(notifyPastDue).not.toHaveBeenCalled();
+  });
+
+  it('a failing mail queue leaves the state unchanged; the next run mails and commits', async () => {
+    const store = seed({ autopay: false });
+    delete store[ATTEMPT];
+    vi.mocked(notifyPastDue).mockRejectedValueOnce(new Error('outbox down'));
+    await expect(run(store, '20261212')).rejects.toThrow(/1 of 1/);
+    expect(store[SUB]).toMatchObject({ state: 'active', pastDueSince: '' });
+    await run(store, '20261212');
+    expect(notifyPastDue).toHaveBeenCalledTimes(2);
+    expect(notifyPastDue).toHaveBeenLastCalledWith(expect.anything(), 'scs', { invoiceKeys: [KEY], pastDueSince: '20261212' });
+    expect(store[SUB]).toMatchObject({ state: 'pastDue', pastDueSince: '20261212' });
+  });
+
+  it('a retry on a missed day never leaves the next one due today: a second run charges nothing', async () => {
+    const store = seed({ state: 'pastDue', pastDueSince: '20261202' });
+    const p = port({ charge: 'succeeded' });
+    await run(store, '20261210', p); // planned day 7 (20261208) is already past
+    expect(store[ATTEMPT]).toMatchObject({ retryCount: 1, nextRetryAt: '20261211' });
+    await run(store, '20261210', p);
+    expect(p.chargeOffSession).toHaveBeenCalledTimes(1);
+  });
+
+  it('a declined retry on a missed day plans tomorrow at the earliest', async () => {
+    const store = seed({ state: 'pastDue', pastDueSince: '20261202' });
+    await run(store, '20261210');
+    expect(store[ATTEMPT]).toMatchObject({ state: 'failed', retryCount: 1, nextRetryAt: '20261211' });
+  });
+
+  it('a charged third retry gets a read-back-only pass in 3 days: a lost webhook is settled, nothing charged', async () => {
+    const store = seed({ state: 'pastDue', pastDueSince: '20261202' }, { [ATTEMPT]: attempt({ retryCount: 2, nextRetryAt: '20261215' }) });
+    await run(store, '20261215', port({ charge: 'succeeded' }));
+    expect(store[ATTEMPT]).toMatchObject({ state: 'open', retryCount: 3, nextRetryAt: '20261218', stripePaymentIntentId: 'pi_new' });
+    const later = port({ earlier: intent('succeeded', 'pi_new') });
+    await run(store, '20261218', later);
+    expect(later.retrievePaymentIntent).toHaveBeenCalledWith('pi_new');
+    expect(later.chargeOffSession).not.toHaveBeenCalled();
+    expect(settleSucceededPayment).toHaveBeenCalledWith(expect.anything(), expect.anything(), expect.objectContaining({ paymentIntentId: 'pi_new' }));
+    expect(store[SUB]).toMatchObject({ state: 'active' });
+  });
+
+  it('the read-back-only pass of a failed third retry charges nothing and ends the plan', async () => {
+    const store = seed({ state: 'pastDue', pastDueSince: '20261202' }, { [ATTEMPT]: attempt({ state: 'open', retryCount: 3, nextRetryAt: '20261218', stripePaymentIntentId: 'pi_3' }) });
+    const p = port({ earlier: intent('requires_payment_method', 'pi_3') });
+    await run(store, '20261218', p);
+    expect(p.chargeOffSession).not.toHaveBeenCalled();
+    expect(store[ATTEMPT]).toMatchObject({ nextRetryAt: '' });
+  });
+});
+
 describe('runBillingDaily: due dates and days', () => {
   const manual = { autopay: false };
   const noAttempt = { [ATTEMPT]: undefined as unknown as Record<string, unknown> };
