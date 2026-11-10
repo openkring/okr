@@ -1,6 +1,7 @@
 /**
- * 1.125 phase A, spec §13.1 — seeds the ONE SCS membership application form «Mitgliedschaft
- * beantragen» (tenant `scs`, mapping `applications.default`) that replaces the four old forms, and
+ * 1.125 phase A, spec §13.1 — seeds the ONE SCS membership application form «Anmeldung» (renamed
+ * from «Mitgliedschaft beantragen» in 1.152, formKey unchanged; course field per 1.152 §7)
+ * (tenant `scs`, mapping `applications.default`) that replaces the four old forms, and
  * repairs the duplicate field key `field_11` in two existing form definitions (spec §7.3).
  *
  * Run with:  node scripts/seed-scs-application-form.mjs [--dry]                 seed the form
@@ -106,6 +107,14 @@ const FIELDS = [
     asProperty: true,
     visibleIf: rule('all', when('dateOfBirth', 'ageLt', 20)),
   }),
+
+  // 1.152 §7 — the announced courses for the derived applicant type. Optional (A3); the server re-checks
+  // audience, announcement and places. The visibleIf matters: without a date of birth `applicationAs`
+  // falls back to 'adult', so adult courses would show before the age is known.
+  field(22, 'courseKey', 'course', 'Möchtest du dich gleich für einen Kurs anmelden?', {
+    audienceFrom: 'applicationAs',
+    visibleIf: rule('all', when('dateOfBirth', 'isFilled')),
+  }),
 ];
 
 // Spec §6 — the server derives `applicationAs`; the filler never types it. First matching case wins.
@@ -125,8 +134,8 @@ const RATE_LIMIT = { limit: 5, periodMinutes: 10 };
 const formDefinition = {
   tenants: [TENANT],
   isArchived: false,
-  name: 'Mitgliedschaft beantragen',
-  description: 'Ein Antrag für alle: Junioren, Kandidierende und Quereinsteiger. Die Art des Antrags ergibt sich aus Alter und Rudererfahrung.',
+  name: 'Anmeldung',
+  description: 'Eine Anmeldung für alle: Junioren, Kandidierende und Quereinsteiger. Die Art der Anmeldung ergibt sich aus Alter und Rudererfahrung.',
   tags: '',
   notes: '',
   formKey: FORM_KEY,
