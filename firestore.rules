@@ -368,8 +368,8 @@ service cloud.firestore {
     }
     // CMS content rendered by the anonymous PWA landing — public read.
     match /pages/{id}           { allow read: if true; allow create: if isContentManager() && tenantCreateOrDetach() && learningPageCreateOk(); allow update: if isContentManager() && tenantCreateOrDetach() && learningPublishOk(); allow delete: if isContentManager() && canWriteTenant(resource.data) && learningPageDeleteOk(); }
-    // websites (spec 1.153): the sitemap tree of a tenant's public site. Tenant read; only contentAdmin writes; never deleted.
-    match /websites/{id} { allow read: if tenantRead(); allow create, update: if hasRole('contentAdmin') && tenantCreateOrDetach(); allow delete: if false; }
+    // websites (spec 1.153): the sitemap tree of a tenant's public site. Tenant read; contentAdmin or admin writes; never deleted.
+    match /websites/{id} { allow read: if tenantRead(); allow create, update: if isContentAdminOrAdmin() && tenantCreateOrDetach(); allow delete: if false; }
     match /sections/{id}        { allow read: if true; allow create, update: if isContentManager() && tenantCreateOrDetach() && learningSectionWriteOk(); allow delete: if isContentManager() && canWriteTenant(resource.data) && learningSectionWriteOk(); }
     // menuItems/categories: navigation + select metadata. menuItems is read by the
     // app shell's menu store (ungated); categories are CMS select-lists. Low
