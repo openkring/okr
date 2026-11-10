@@ -358,6 +358,10 @@
     "lastOnly": {
       "label": "Last name",
       "description": "Only the last name is shown. Caution: duplicates can arise that are hard to distinguish. With a nickname this display format may still make sense."
+    },
+    "none": {
+      "label": "none",
+      "description": "The name is not shown."
     }
   },
   "calendarSmallScreenView": {

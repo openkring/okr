@@ -25,6 +25,9 @@ export class ResponsibilityModel implements OkrModel, SearchableModel, NamedMode
   //             course_k    / Einsteigerkurse               (Antrag/Anmeldung)
   //             course_j    / Kurse Jugendliche
 
+  /** public contact address of the role, typically a club alias (e.g. praesident@club.ch); may be published */
+  public email = '';
+
   public parentKey = '';   // "modelType.okey" of the parent org/group/person this responsibility belongs to
 
   public responsibleAvatar: AvatarInfo | undefined;   // Person or Group

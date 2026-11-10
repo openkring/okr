@@ -358,6 +358,10 @@
     "lastOnly": {
       "label": "Apellido",
       "description": "Solo se muestra el apellido. Atención: pueden surgir duplicados difíciles de distinguir. Con un apodo este modo de presentación puede tener sentido de todos modos."
+    },
+    "none": {
+      "label": "ninguno",
+      "description": "El nombre no se muestra."
     }
   },
   "calendarSmallScreenView": {

@@ -195,6 +195,7 @@ export interface NameObject { name: string }
  * @returns the trimmed combined full name
  */
 export function getFullName(name1?: string, name2?: string, nameDisplay = NameDisplay.FirstLast): string {
+  if (nameDisplay === NameDisplay.None) return '';
   if (!name2?.trim().length) return name1?.trim() ?? ''; // name2 is optional
   if (!name1?.trim().length) return name2?.trim() ?? ''; // name1 is optional
   switch (nameDisplay) {

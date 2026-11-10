@@ -394,6 +394,7 @@ import { CourseOption, FormOption, FormSectionConfiguration } from './form-secti
                 [currentUser]="currentUser()"
                 [readOnly]="isReadOnly()"
                 [i18n]="i18n()"
+                [errors]="errors()"
                 (selectClicked)="selectPerson()"
                 (groupSelectClicked)="selectGroup()"
                 (responsibilitySelectClicked)="selectResponsibility()"

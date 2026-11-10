@@ -803,9 +803,9 @@
     "description": "Las personas que se enumeran aquí se muestran como avatar en la sección.",
     "type": "Tipo de persona",
     "title": {
-      "label": "Lista de personas",
-      "placeholder": "texto",
-      "helper": "El título de la lista de personas."
+      "label": "Nombre de la lista de personas",
+      "placeholder": "p. ej. Junta",
+      "helper": "Si pones un nombre, se muestra junto a las personas. Al hacer clic se abre la sección enlazada."
     },
     "linkedSection": {
       "label": "Sección vinculada",
@@ -814,11 +814,12 @@
     },
     "color": {
       "label": "Color",
-      "select": "Selección de color"
+      "select": "Selección de color",
+      "helper": "Color de fondo detrás del nombre y los datos de cada persona."
     },
     "nameDisplay": {
-      "label": "Visualización del nombre",
-      "helper": "Determina el modo de visualización de los nombres de las personas."
+      "label": "Presentación del nombre",
+      "helper": "Determina cómo se muestra el nombre de una persona. Con «ninguno» no se muestra ningún nombre."
     },
     "add": "Añadir persona",
     "edit": "Modificar la configuración de las personas",
@@ -827,15 +828,99 @@
       "person": "Seleccionar persona",
       "responsibility": "Elegir responsable"
     },
-    "show": {
-      "name": {
-        "label": "Mostrar nombre",
-        "helper": "Muestra el nombre de la persona."
-      },
-      "label": {
-        "label": "Mostrar etiqueta",
-        "helper": "Muestra la etiqueta."
-      }
+    "segment": {
+      "content": "Contenido",
+      "view": "Presentación",
+      "image": "Imagen",
+      "info": "Datos"
+    },
+    "typeHelper": "De dónde vienen las personas: personas elegidas una a una, los miembros de un grupo o los titulares de un cargo.",
+    "typeOption": {
+      "persons": "Personas individuales",
+      "group": "Miembros de un grupo",
+      "responsibility": "Titulares de un cargo"
+    },
+    "altText": {
+      "label": "Texto alternativo",
+      "placeholder": "Avatar de @NAME@",
+      "helper": "Este texto se añade a cada foto como texto alternativo. Es una descripción que ayuda a las personas con discapacidad visual a entender el contenido del sitio. @NAME@ se sustituye por el nombre de la persona."
+    },
+    "view": {
+      "label": "Tipo",
+      "helper": "Las tarjetas son tan grandes como su contenido. La cuadrícula reparte a las personas en columnas de igual ancho. El slider las muestra en 1 a 4 filas para desplazarse.",
+      "card": "Tarjetas",
+      "grid": "Cuadrícula",
+      "slider": "Slider"
+    },
+    "perRow": {
+      "label": "Personas por fila",
+      "placeholder": "5",
+      "helper": "Cuántas personas se ven a la vez en el slider (de 3 a 10)."
+    },
+    "sliderRows": {
+      "label": "Número de filas",
+      "placeholder": "1",
+      "helper": "En cuántas filas del slider se reparten las personas (de 1 a 4)."
+    },
+    "imgWidth": {
+      "label": "Ancho de la imagen (px)",
+      "placeholder": "120",
+      "helper": "Ancho de cada foto en píxeles."
+    },
+    "imgHeight": {
+      "label": "Alto de la imagen (px)",
+      "placeholder": "120",
+      "helper": "Alto de cada foto en píxeles."
+    },
+    "imgRadius": {
+      "label": "Radio de las esquinas",
+      "placeholder": "50%",
+      "helper": "Redondeo de las esquinas en píxeles, p. ej. 8. Con 50% la imagen queda redonda."
+    },
+    "facePad": {
+      "label": "Margen alrededor de la cara",
+      "placeholder": "0",
+      "helper": "Recorta la imagen a la cara: 1 es ajustado, 2 deja mucho margen. Con 0 la imagen solo se centra en la cara."
+    },
+    "background": {
+      "label": "Fondo",
+      "helper": "Recortar quita el fondo de la foto; después se puede rellenar con un color. El recorte tiene un coste en el servicio de imágenes (una vez por imagen).",
+      "original": "Foto original",
+      "removed": "Recortada, sin fondo",
+      "orgColor": "Recortada, color del club",
+      "colors": "Recortada, colores propios"
+    },
+    "bgOrgColor": {
+      "label": "Color del club",
+      "helper": "Qué color de tu club rellena el fondo.",
+      "primary": "Color principal",
+      "secondary": "Color secundario"
+    },
+    "bgColors": {
+      "label": "Colores de fondo",
+      "helper": "De 1 a 4 colores. Se alternan de una persona a otra.",
+      "add": "Añadir color",
+      "color": "Color"
+    },
+    "grayscale": {
+      "label": "Blanco y negro",
+      "helper": "Muestra las fotos en blanco y negro."
+    },
+    "info": {
+      "label": "Datos",
+      "helper": "Lo que se muestra además del nombre. Solo los miembros conectados ven el correo de una persona. Para los titulares de un cargo se muestra la dirección de correo del cargo.",
+      "function": "Función",
+      "email": "Correo"
+    },
+    "infoPosition": {
+      "label": "Posición de los datos",
+      "helper": "Dónde están el nombre y los datos respecto a la imagen.",
+      "overlayTop": "Sobre la imagen, arriba",
+      "overlayBottom": "Sobre la imagen, abajo",
+      "above": "Encima de la imagen",
+      "below": "Debajo de la imagen",
+      "left": "A la izquierda de la imagen",
+      "right": "A la derecha de la imagen"
     }
   },
   "rag": {

@@ -95,5 +95,10 @@
   "no_parent": "Nessun elemento padre",
   "responsible_unset": "Responsabile non definito",
   "delegate_unset": "Supplente non definito",
-  "delegate_expired": "Delega scaduta"
+  "delegate_expired": "Delega scaduta",
+  "email": {
+    "label": "E-mail della carica",
+    "placeholder": "presidente@iltuoclub.ch",
+    "helper": "Indirizzo pubblico di questa carica, idealmente un alias del tuo club. Può essere mostrato sul sito."
+  }
 }

@@ -95,5 +95,10 @@
   "no_parent": "No parent element",
   "responsible_unset": "Responsible person not set",
   "delegate_unset": "Deputy not set",
-  "delegate_expired": "Delegation expired"
+  "delegate_expired": "Delegation expired",
+  "email": {
+    "label": "Email of the role",
+    "placeholder": "president@yourclub.org",
+    "helper": "Public address for this role, ideally an alias of your club. It may be shown on the website."
+  }
 }

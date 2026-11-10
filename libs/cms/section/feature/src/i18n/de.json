@@ -803,9 +803,9 @@
     "description": "Die hier aufgeführten Personen werden in der Sektion als Avatar angezeigt.",
     "type": "Personentyp",
     "title": {
-      "label": "Personen-Liste",
-      "placeholder": "text",
-      "helper": "Der Titel der Personen-Liste."
+      "label": "Name der Personen-Liste",
+      "placeholder": "z.B. Vorstand",
+      "helper": "Wenn du einen Namen setzt, wird er bei den Personen angezeigt. Ein Klick darauf öffnet die verknüpfte Sektion."
     },
     "linkedSection": {
       "label": "Verknüpfte Sektion",
@@ -814,11 +814,12 @@
     },
     "color": {
       "label": "Farbe",
-      "select": "Farbwahl"
+      "select": "Farbwahl",
+      "helper": "Hintergrundfarbe hinter Name und Angaben jeder Person."
     },
     "nameDisplay": {
       "label": "Namensdarstellung",
-      "helper": "Bestimmt die Darstellungsart von Personennamen."
+      "helper": "Bestimmt, wie der Name einer Person angezeigt wird. Mit «keine» wird kein Name angezeigt."
     },
     "add": "Person hinzufügen",
     "edit": "Personen Konfiguration ändern",
@@ -827,15 +828,99 @@
       "person": "Person auswählen",
       "responsibility": "Verantwortliche wählen"
     },
-    "show": {
-      "name": {
-        "label": "Name anzeigen",
-        "helper": "Zeigt den Namen der Person."
-      },
-      "label": {
-        "label": "Beschriftung anzeigen",
-        "helper": "Zeigt die Beschriftung an."
-      }
+    "segment": {
+      "content": "Inhalt",
+      "view": "Darstellung",
+      "image": "Bild",
+      "info": "Angaben"
+    },
+    "typeHelper": "Woher die Personen kommen: einzeln ausgewählte Personen, die Mitglieder einer Gruppe oder die Verantwortlichen eines Amts.",
+    "typeOption": {
+      "persons": "Einzelne Personen",
+      "group": "Mitglieder einer Gruppe",
+      "responsibility": "Verantwortliche eines Amts"
+    },
+    "altText": {
+      "label": "Alternativtext",
+      "placeholder": "Avatar von @NAME@",
+      "helper": "Dieser Text wird jedem Personenbild als Alternativtext hinzugefügt. Es ist eine Beschreibung, die sehbehinderten Anwendern hilft, den Inhalt der Website zu verstehen. @NAME@ wird durch den Namen der Person ersetzt."
+    },
+    "view": {
+      "label": "Art",
+      "helper": "Karten sind so gross wie ihr Inhalt. Das Raster verteilt die Personen auf gleich breite Spalten. Der Slider zeigt sie in 1 bis 4 Zeilen zum Durchblättern.",
+      "card": "Karten",
+      "grid": "Raster",
+      "slider": "Slider"
+    },
+    "perRow": {
+      "label": "Personen pro Zeile",
+      "placeholder": "5",
+      "helper": "Wie viele Personen im Slider gleichzeitig sichtbar sind (3 bis 10)."
+    },
+    "sliderRows": {
+      "label": "Anzahl Zeilen",
+      "placeholder": "1",
+      "helper": "Auf wie viele Slider-Zeilen die Personen verteilt werden (1 bis 4)."
+    },
+    "imgWidth": {
+      "label": "Bildbreite (px)",
+      "placeholder": "120",
+      "helper": "Breite jedes Personenbilds in Pixel."
+    },
+    "imgHeight": {
+      "label": "Bildhöhe (px)",
+      "placeholder": "120",
+      "helper": "Höhe jedes Personenbilds in Pixel."
+    },
+    "imgRadius": {
+      "label": "Eckenradius",
+      "placeholder": "50%",
+      "helper": "Rundung der Bildecken in Pixel, z.B. 8. Mit 50% wird das Bild rund."
+    },
+    "facePad": {
+      "label": "Rand ums Gesicht",
+      "placeholder": "0",
+      "helper": "Schneidet das Bild auf das Gesicht zu: 1 ist eng, 2 lässt viel Rand. Mit 0 wird das Bild nur aufs Gesicht ausgerichtet."
+    },
+    "background": {
+      "label": "Hintergrund",
+      "helper": "Freistellen entfernt den Hintergrund des Fotos; danach kann er mit einer Farbe gefüllt werden. Das Freistellen ist beim Bilddienst kostenpflichtig (einmal pro Bild).",
+      "original": "Originalfoto",
+      "removed": "Freigestellt, ohne Hintergrund",
+      "orgColor": "Freigestellt, Vereinsfarbe",
+      "colors": "Freigestellt, eigene Farben"
+    },
+    "bgOrgColor": {
+      "label": "Vereinsfarbe",
+      "helper": "Welche Farbe deines Vereins den Hintergrund füllt.",
+      "primary": "Hauptfarbe",
+      "secondary": "Zweitfarbe"
+    },
+    "bgColors": {
+      "label": "Hintergrundfarben",
+      "helper": "1 bis 4 Farben. Sie wechseln sich von Person zu Person ab.",
+      "add": "Farbe hinzufügen",
+      "color": "Farbe"
+    },
+    "grayscale": {
+      "label": "Schwarz-weiss",
+      "helper": "Zeigt die Personenbilder in Schwarz-weiss."
+    },
+    "info": {
+      "label": "Angaben",
+      "helper": "Was zusätzlich zum Namen angezeigt wird. Die E-Mail einer Person sehen nur angemeldete Mitglieder. Bei Verantwortlichen wird die E-Mail-Adresse des Amts angezeigt.",
+      "function": "Funktion",
+      "email": "E-Mail"
+    },
+    "infoPosition": {
+      "label": "Position der Angaben",
+      "helper": "Wo Name und Angaben im Verhältnis zum Bild stehen.",
+      "overlayTop": "Auf dem Bild, oben",
+      "overlayBottom": "Auf dem Bild, unten",
+      "above": "Über dem Bild",
+      "below": "Unter dem Bild",
+      "left": "Links vom Bild",
+      "right": "Rechts vom Bild"
     }
   },
   "rag": {

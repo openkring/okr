@@ -95,5 +95,10 @@
   "no_parent": "Sin elemento padre",
   "responsible_unset": "Responsable sin definir",
   "delegate_unset": "Suplente sin definir",
-  "delegate_expired": "Delegación caducada"
+  "delegate_expired": "Delegación caducada",
+  "email": {
+    "label": "Correo del cargo",
+    "placeholder": "presidente@tuclub.org",
+    "helper": "Dirección pública de este cargo, idealmente un alias de tu club. Puede mostrarse en el sitio web."
+  }
 }

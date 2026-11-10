@@ -32,3 +32,15 @@ export const NameDisplays: NameDisplayCategory[] = [
     icon: 'arrow-down-circle'
   }
 ]
+
+/** NameDisplays plus «keine» — only where hiding the name makes sense (people section). */
+export const PeopleNameDisplays: NameDisplayCategory[] = [
+  ...NameDisplays,
+  {
+    id: NameDisplay.None,
+    abbreviation: 'N',
+    name: 'none',
+    i18nBase: '@shared/categories.nameDisplay.none',
+    icon: 'close-circle'
+  }
+];

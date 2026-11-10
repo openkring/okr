@@ -358,6 +358,10 @@
     "lastOnly": {
       "label": "Nom",
       "description": "Seul le nom est affiché. Attention : des doublons difficiles à distinguer peuvent apparaître. Un surnom peut malgré tout donner un sens à ce mode d'affichage."
+    },
+    "none": {
+      "label": "aucun",
+      "description": "Le nom n'est pas affiché."
     }
   },
   "calendarSmallScreenView": {

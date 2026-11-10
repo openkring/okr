@@ -803,9 +803,9 @@
     "description": "The people listed here are displayed as avatars in the section.",
     "type": "Person type",
     "title": {
-      "label": "People list",
-      "placeholder": "text",
-      "helper": "The title of the people list."
+      "label": "Name of the people list",
+      "placeholder": "e.g. Board",
+      "helper": "If you set a name, it is shown with the people. Clicking it opens the linked section."
     },
     "linkedSection": {
       "label": "Linked section",
@@ -814,11 +814,12 @@
     },
     "color": {
       "label": "Color",
-      "select": "Color selection"
+      "select": "Color selection",
+      "helper": "Background color behind the name and details of each person."
     },
     "nameDisplay": {
       "label": "Name display",
-      "helper": "Determines the display style of person names."
+      "helper": "Determines how a person’s name is shown. With “none” no name is shown."
     },
     "add": "Add person",
     "edit": "Change people configuration",
@@ -827,15 +828,99 @@
       "person": "Select person",
       "responsibility": "Select responsible person"
     },
-    "show": {
-      "name": {
-        "label": "Show name",
-        "helper": "Shows the name of the person."
-      },
-      "label": {
-        "label": "Show label",
-        "helper": "Shows the label."
-      }
+    "segment": {
+      "content": "Content",
+      "view": "Layout",
+      "image": "Image",
+      "info": "Details"
+    },
+    "typeHelper": "Where the people come from: individually selected people, the members of a group, or the holders of a role.",
+    "typeOption": {
+      "persons": "Individual people",
+      "group": "Members of a group",
+      "responsibility": "Holders of a role"
+    },
+    "altText": {
+      "label": "Alternative text",
+      "placeholder": "Avatar of @NAME@",
+      "helper": "This text is added to every person’s picture as alternative text. It is a description that helps visually impaired users understand the content of the website. @NAME@ is replaced by the person’s name."
+    },
+    "view": {
+      "label": "Type",
+      "helper": "Cards are as large as their content. The grid spreads the people over equally wide columns. The slider shows them in 1 to 4 rows to browse through.",
+      "card": "Cards",
+      "grid": "Grid",
+      "slider": "Slider"
+    },
+    "perRow": {
+      "label": "People per row",
+      "placeholder": "5",
+      "helper": "How many people are visible at once in the slider (3 to 10)."
+    },
+    "sliderRows": {
+      "label": "Number of rows",
+      "placeholder": "1",
+      "helper": "Into how many slider rows the people are split (1 to 4)."
+    },
+    "imgWidth": {
+      "label": "Image width (px)",
+      "placeholder": "120",
+      "helper": "Width of each person’s picture in pixels."
+    },
+    "imgHeight": {
+      "label": "Image height (px)",
+      "placeholder": "120",
+      "helper": "Height of each person’s picture in pixels."
+    },
+    "imgRadius": {
+      "label": "Corner radius",
+      "placeholder": "50%",
+      "helper": "Rounding of the picture corners in pixels, e.g. 8. With 50% the picture becomes round."
+    },
+    "facePad": {
+      "label": "Space around the face",
+      "placeholder": "0",
+      "helper": "Crops the picture to the face: 1 is tight, 2 leaves plenty of space. With 0 the picture is only centred on the face."
+    },
+    "background": {
+      "label": "Background",
+      "helper": "Cutting out removes the background of the photo; it can then be filled with a color. Cutting out is charged by the image service (once per picture).",
+      "original": "Original photo",
+      "removed": "Cut out, no background",
+      "orgColor": "Cut out, club color",
+      "colors": "Cut out, own colors"
+    },
+    "bgOrgColor": {
+      "label": "Club color",
+      "helper": "Which of your club’s colors fills the background.",
+      "primary": "Main color",
+      "secondary": "Second color"
+    },
+    "bgColors": {
+      "label": "Background colors",
+      "helper": "1 to 4 colors. They alternate from person to person.",
+      "add": "Add color",
+      "color": "Color"
+    },
+    "grayscale": {
+      "label": "Black and white",
+      "helper": "Shows the pictures in black and white."
+    },
+    "info": {
+      "label": "Details",
+      "helper": "What is shown in addition to the name. Only signed-in members see a person’s email. For role holders, the email address of the role is shown.",
+      "function": "Function",
+      "email": "Email"
+    },
+    "infoPosition": {
+      "label": "Position of the details",
+      "helper": "Where the name and details sit relative to the picture.",
+      "overlayTop": "On the picture, top",
+      "overlayBottom": "On the picture, bottom",
+      "above": "Above the picture",
+      "below": "Below the picture",
+      "left": "Left of the picture",
+      "right": "Right of the picture"
     }
   },
   "rag": {

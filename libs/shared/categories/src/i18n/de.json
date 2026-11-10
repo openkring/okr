@@ -358,6 +358,10 @@
     "lastOnly": {
       "label": "Nachname",
       "description": "Nur der Nachname wird dargestellt. Vorsicht: es können Doubletten entstehen, die kaum zu unterschieden sind. Mit Übername kann diese Darstellungsart vielleicht trotzdem Sinn machen."
+    },
+    "none": {
+      "label": "keine",
+      "description": "Der Name wird nicht angezeigt."
     }
   },
   "calendarSmallScreenView": {

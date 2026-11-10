@@ -358,6 +358,10 @@
     "lastOnly": {
       "label": "Cognome",
       "description": "Viene visualizzato solo il cognome. Attenzione: possono formarsi duplicati difficili da distinguere. Con un soprannome questa modalità di visualizzazione può forse avere comunque senso."
+    },
+    "none": {
+      "label": "nessuno",
+      "description": "Il nome non viene visualizzato."
     }
   },
   "calendarSmallScreenView": {

@@ -3,13 +3,13 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { map, of } from 'rxjs';
 
-import { AVATAR_CONFIG_SHAPE, AvatarConfig, AvatarInfo, PeopleSection } from '@okr/shared-models';
+import { AvatarConfig, AvatarInfo, PeopleSection } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import { ResponsibilityService } from '@okr/relationship-responsibility-data-access';
 import { I18nService } from '@okr/shared-i18n';
 
-import { SECTION_I18N_KEYS, SectionI18n } from '@okr/cms-section-util';
+import { normalizeAvatarConfig, SECTION_I18N_KEYS, SectionI18n } from '@okr/cms-section-util';
 
 export type PeopleSectionState = {
   section: PeopleSection | undefined;
@@ -48,7 +48,7 @@ export const PeopleSectionStore = signalStore(
     }),
   })),
   withComputed((state) => ({
-    avatarConfig: computed<AvatarConfig>(() => state.section()?.properties.avatar ?? AVATAR_CONFIG_SHAPE),
+    avatarConfig: computed<AvatarConfig>(() => normalizeAvatarConfig(state.section()?.properties.avatar)),
     persons: computed<AvatarInfo[]>(() => {
       const type = state.section()?.properties.type ?? 'persons';
       switch (type) {
@@ -69,6 +69,34 @@ export const PeopleSectionStore = signalStore(
       }
     }),
     isLoading: computed(() => state.groupMembersResource.isLoading() || state.responsibilityResource.isLoading()),
+  })),
+  withComputed((state) => ({
+    /**
+     * person key → email shown with the person (only when info contains 'email'):
+     * - responsibility: the role's public address (ResponsibilityModel.email, typically a club alias)
+     * - persons / group: the favorite email of the address-directory projection, which only signed-in
+     *   members of the tenant can read — anonymous visitors get an empty map.
+     */
+    emails: computed<Record<string, string>>(() => {
+      const section = state.section();
+      if (!section || !state.avatarConfig().info.includes('email')) return {};
+      const emails: Record<string, string> = {};
+      if ((section.properties.type ?? 'persons') === 'responsibility') {
+        const r = state.responsibilityResource.value();
+        const email = r?.email?.trim();
+        if (!r || !email) return {};
+        for (const avatar of [r.responsibleAvatar, r.delegateAvatar]) {
+          if (avatar?.key) emails[avatar.key] = email;
+        }
+        return emails;
+      }
+      if (!state.appStore.currentUser()) return {};
+      for (const person of state.persons()) {
+        const email = state.appStore.getDirectoryEntry(`${person.modelType}.${person.key}`)?.favEmail?.trim();
+        if (email) emails[person.key] = email;
+      }
+      return emails;
+    }),
   })),
   withMethods((store) => ({
     setSection(section: PeopleSection | undefined): void {

@@ -23,8 +23,10 @@ const IMPLICIT_VALUES_PREFIX = 'implicitValues.';
 const TILES_PREFIX = 'tiles.';
 /** Marks the `ctas[0].label`-style keys of a hero section's call-to-action buttons. */
 const CTAS_PREFIX = 'ctas[';
+/** Marks the `avatar.imgWidth`-style keys of a people section (see peopleSectionValidations). */
+const PEOPLE_PREFIX = 'avatar.';
 /** Inline fields that stand for every key starting with them. */
-const PREFIX_FIELDS = [IMAGES_PREFIX, IMPLICIT_VALUES_PREFIX, TILES_PREFIX, CTAS_PREFIX];
+const PREFIX_FIELDS = [IMAGES_PREFIX, IMPLICIT_VALUES_PREFIX, TILES_PREFIX, CTAS_PREFIX, PEOPLE_PREFIX];
 
 /**
  * Field names the configuration components of a given section type render an inline
@@ -83,6 +85,9 @@ export function getInlineErrorFields(type: SectionType, showAdvanced = false): s
     case 'events':
       fields.push('moreUrl');
       break;
+    case 'people':
+      fields.push(PEOPLE_PREFIX);
+      break;
     case 'slider':
       fields.push(IMAGES_PREFIX);
       if (showAdvanced) fields.push(...IMAGE_STYLE_FIELDS);
@@ -117,6 +122,14 @@ export function getRemainingErrors(errors: SectionErrors, inlineFields: string[]
 /** Messages of a single field, safe for a template call on a possibly missing key. */
 export function getFieldErrors(errors: SectionErrors | undefined, field: string): string[] {
   return errors?.[field] ?? [];
+}
+
+/** Messages of a field and of its per-item keys (`avatar.info` + `avatar.info[0]` …). */
+export function getFieldAndItemErrors(errors: SectionErrors | undefined, field: string): string[] {
+  if (!errors) return [];
+  return Object.entries(errors)
+    .filter(([key]) => key === field || key.startsWith(field + '['))
+    .flatMap(([, messages]) => messages);
 }
 
 /** All `images[i].*` messages, flattened — the image list shows them below its card. */

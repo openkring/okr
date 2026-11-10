@@ -23,6 +23,7 @@ export * from './lib/hero-section.validations';
 export * from './lib/iframe-section.validations';
 export * from './lib/map-section.validations';
 export * from './lib/people-section.validations';
+export * from './lib/people-section.util';
 export * from './lib/slider-section.validations';
 export * from './lib/table-section.validations';
 export * from './lib/tracker-section.validations';

@@ -8,7 +8,7 @@ import { ENV } from '@okr/shared-config';
 import { THUMBNAIL_SIZE } from '@okr/shared-constants';
 import { APP_STORE_MIN, FirestoreService } from '@okr/shared-data-access';
 import { AvatarCollection, AvatarModel } from '@okr/shared-models';
-import { addImgixParams } from '@okr/shared-util-core';
+import { addImgixParams, getImgixUrl, isImage } from '@okr/shared-util-core';
 
 import { avatarDocId, newAvatarModel, readAsFile } from '@okr/avatar-util';
 import { UploadService } from './upload.service';
@@ -148,6 +148,19 @@ export class AvatarService {
     
     // Construct the URL with imgix parameters
     return `${imgixBaseUrl}/${addImgixParams(storagePath, size)}`;
+  }
+
+  /**
+   * Like getAvatarUrl, but with the caller's own imgix query (e.g. the people section's
+   * size, facearea crop and background removal). Non-image avatars (pdf) keep the default params.
+   * @param key the key of the avatar in the format ModelType.ModelKey e.g. person.1123123asdf
+   * @param defaultIcon the icon shown when the subject has no avatar
+   * @param imgixParams the imgix query without '?'
+   */
+  public getAvatarUrlWithParams(key: string, defaultIcon: string, imgixParams: string): string {
+    const storagePath = key ? this.resolveStoragePath(key) : null;
+    if (!storagePath || !isImage(storagePath)) return this.getAvatarUrl(key, defaultIcon);
+    return `${this.env.services.imgixBaseUrl}/${getImgixUrl(storagePath, imgixParams)}`;
   }
 
   /**

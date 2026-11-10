@@ -52,6 +52,10 @@ export const RESPONSIBILITY_I18N_KEYS = {
   name_placeholder:                PFX + 'name.placeholder',
   name_helper:                     PFX + 'name.helper',
 
+  email_label:                     PFX + 'email.label',
+  email_placeholder:               PFX + 'email.placeholder',
+  email_helper:                    PFX + 'email.helper',
+
   validFrom_label:               PFX + 'valid.from.label',
   validFrom_placeholder:         PFX + 'valid.from.placeholder',
   validFrom_helper:              PFX + 'valid.from.helper',

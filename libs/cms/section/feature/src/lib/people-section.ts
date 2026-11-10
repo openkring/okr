@@ -3,7 +3,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow, Mo
 import { firstValueFrom } from 'rxjs';
 
 import { AvatarInfo, PeopleSection, PersonModelName } from "@okr/shared-models";
-import { Spinner } from "@okr/shared-ui";
+import { OptionalCardHeader, Spinner } from "@okr/shared-ui";
 import { AppStore } from '@okr/shared-feature';
 
 import { PersonsWidget } from '@okr/cms-section-ui';
@@ -16,7 +16,7 @@ import { PeopleSectionStore } from './people-section.store';
   selector: 'okr-people-section',
   standalone: true,
   imports: [
-    Spinner, PersonsWidget,
+    Spinner, PersonsWidget, OptionalCardHeader,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonLabel
   ],
   providers: [PeopleSectionStore],
@@ -27,35 +27,27 @@ import { PeopleSectionStore } from './people-section.store';
   template: `
     @if(section(); as section) {
       <ion-card>
+        <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
           <ion-grid class="ion-no-padding">
             <ion-row>
-              @if(avatarTitle(); as avatarTitle) {
-                <ion-col size="12" size-md="3">
-                  <ion-item lines="none" (click)="showLinkedSection()">
-                    <ion-label>{{ avatarTitle }}</ion-label>
+              @if(listName(); as listName) {
+                <ion-col size="12" [sizeMd]="nameBeside() ? 3 : 12">
+                  <ion-item lines="none" [button]="hasLinkedSection() && !editMode()" (click)="showLinkedSection()">
+                    <ion-label>{{ listName }}</ion-label>
                   </ion-item>
                 </ion-col>
-                <ion-col size="12" size-md="9">
-                  <okr-persons-widget 
-                    [persons]="store.persons()"
-                    [avatarConfig]="store.avatarConfig()"
-                    [editMode]="editMode()"
-                    [i18n]="store.i18n"
-                    (personClicked)="showPerson($event)"
-                  />
-                </ion-col>
-              } @else {
-                <ion-col size="12">
-                  <okr-persons-widget
-                    [persons]="store.persons()"
-                    [avatarConfig]="store.avatarConfig()"
-                    [editMode]="editMode()"
-                    [i18n]="store.i18n"
-                    (personClicked)="showPerson($event)"
-                  />
-                </ion-col>
               }
+              <ion-col size="12" [sizeMd]="listName() && nameBeside() ? 9 : 12">
+                <okr-persons-widget
+                  [persons]="store.persons()"
+                  [avatarConfig]="store.avatarConfig()"
+                  [emails]="store.emails()"
+                  [editMode]="editMode()"
+                  [i18n]="store.i18n"
+                  (personClicked)="showPerson($event)"
+                />
+              </ion-col>
             </ion-row>
           </ion-grid>
         </ion-card-content>
@@ -74,8 +66,14 @@ export class PeopleSectionComponent {
   public section = input<PeopleSection>();
   public editMode = input(false);
 
-  protected readonly avatarTitle = computed(() => this.store.avatarConfig().title);
+  protected readonly title = computed(() => this.section()?.title);
+  protected readonly subTitle = computed(() => this.section()?.subTitle);
+  /** name of the person list (Personen-Liste), shown only when set */
+  protected readonly listName = computed(() => this.store.avatarConfig().title?.trim());
+  /** a slider needs the full width, so the list name goes above it */
+  protected readonly nameBeside = computed(() => this.store.avatarConfig().view !== 'slider');
   private readonly linkedSectionId = computed(() => this.store.avatarConfig().linkedSection);
+  protected readonly hasLinkedSection = computed(() => !!this.linkedSectionId()?.trim());
 
   constructor() {
     effect(() => this.store.setSection(this.section()));
@@ -111,7 +109,7 @@ export class PeopleSectionComponent {
       cssClass: 'wide-modal',
       componentProps: {
         section: linkedSection,
-        title: this.avatarTitle()
+        title: this.listName()
       }
     });
     modal.present();

@@ -95,5 +95,10 @@
   "no_parent": "Aucun élément parent",
   "responsible_unset": "Responsable non défini",
   "delegate_unset": "Suppléant non défini",
-  "delegate_expired": "Délégation expirée"
+  "delegate_expired": "Délégation expirée",
+  "email": {
+    "label": "E-mail de la fonction",
+    "placeholder": "president@tonclub.ch",
+    "helper": "Adresse publique de cette fonction, idéalement un alias de ton club. Elle peut être affichée sur le site."
+  }
 }

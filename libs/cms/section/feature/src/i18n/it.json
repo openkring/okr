@@ -803,9 +803,9 @@
     "description": "Le persone elencate qui vengono visualizzate come avatar nella sezione.",
     "type": "Tipo di persona",
     "title": {
-      "label": "Elenco delle persone",
-      "placeholder": "testo",
-      "helper": "Il titolo dell'elenco delle persone."
+      "label": "Nome dell’elenco di persone",
+      "placeholder": "p. es. Comitato",
+      "helper": "Se imposti un nome, viene mostrato accanto alle persone. Un clic apre la sezione collegata."
     },
     "linkedSection": {
       "label": "Sezione collegata",
@@ -814,11 +814,12 @@
     },
     "color": {
       "label": "Colore",
-      "select": "Scelta del colore"
+      "select": "Scelta del colore",
+      "helper": "Colore di sfondo dietro nome e informazioni di ogni persona."
     },
     "nameDisplay": {
       "label": "Visualizzazione del nome",
-      "helper": "Determina la modalità di visualizzazione dei nomi delle persone."
+      "helper": "Stabilisce come viene mostrato il nome di una persona. Con «nessuno» il nome non viene mostrato."
     },
     "add": "Aggiungere persona",
     "edit": "Modificare la configurazione delle persone",
@@ -827,15 +828,99 @@
       "person": "Selezionare la persona",
       "responsibility": "Scegliere il responsabile"
     },
-    "show": {
-      "name": {
-        "label": "Mostrare il nome",
-        "helper": "Mostra il nome della persona."
-      },
-      "label": {
-        "label": "Mostrare l'etichetta",
-        "helper": "Mostra l'etichetta."
-      }
+    "segment": {
+      "content": "Contenuto",
+      "view": "Presentazione",
+      "image": "Immagine",
+      "info": "Informazioni"
+    },
+    "typeHelper": "Da dove provengono le persone: persone scelte singolarmente, i membri di un gruppo o i titolari di una carica.",
+    "typeOption": {
+      "persons": "Singole persone",
+      "group": "Membri di un gruppo",
+      "responsibility": "Titolari di una carica"
+    },
+    "altText": {
+      "label": "Testo alternativo",
+      "placeholder": "Avatar di @NAME@",
+      "helper": "Questo testo viene aggiunto a ogni foto come testo alternativo. È una descrizione che aiuta le persone ipovedenti a capire il contenuto del sito. @NAME@ viene sostituito dal nome della persona."
+    },
+    "view": {
+      "label": "Tipo",
+      "helper": "Le schede sono grandi quanto il loro contenuto. La griglia distribuisce le persone su colonne di uguale larghezza. Lo slider le mostra su 1-4 righe da scorrere.",
+      "card": "Schede",
+      "grid": "Griglia",
+      "slider": "Slider"
+    },
+    "perRow": {
+      "label": "Persone per riga",
+      "placeholder": "5",
+      "helper": "Quante persone sono visibili contemporaneamente nello slider (da 3 a 10)."
+    },
+    "sliderRows": {
+      "label": "Numero di righe",
+      "placeholder": "1",
+      "helper": "Su quante righe dello slider vengono distribuite le persone (da 1 a 4)."
+    },
+    "imgWidth": {
+      "label": "Larghezza immagine (px)",
+      "placeholder": "120",
+      "helper": "Larghezza di ogni foto in pixel."
+    },
+    "imgHeight": {
+      "label": "Altezza immagine (px)",
+      "placeholder": "120",
+      "helper": "Altezza di ogni foto in pixel."
+    },
+    "imgRadius": {
+      "label": "Raggio degli angoli",
+      "placeholder": "50%",
+      "helper": "Arrotondamento degli angoli in pixel, p. es. 8. Con 50% l’immagine diventa rotonda."
+    },
+    "facePad": {
+      "label": "Margine attorno al viso",
+      "placeholder": "0",
+      "helper": "Ritaglia l’immagine sul viso: 1 è stretto, 2 lascia molto margine. Con 0 l’immagine viene solo centrata sul viso."
+    },
+    "background": {
+      "label": "Sfondo",
+      "helper": "Lo scontorno rimuove lo sfondo della foto, che poi può essere riempito con un colore. Lo scontorno è a pagamento presso il servizio immagini (una volta per immagine).",
+      "original": "Foto originale",
+      "removed": "Scontornata, senza sfondo",
+      "orgColor": "Scontornata, colore del club",
+      "colors": "Scontornata, colori propri"
+    },
+    "bgOrgColor": {
+      "label": "Colore del club",
+      "helper": "Quale colore del tuo club riempie lo sfondo.",
+      "primary": "Colore principale",
+      "secondary": "Colore secondario"
+    },
+    "bgColors": {
+      "label": "Colori di sfondo",
+      "helper": "Da 1 a 4 colori. Si alternano da una persona all’altra.",
+      "add": "Aggiungi colore",
+      "color": "Colore"
+    },
+    "grayscale": {
+      "label": "Bianco e nero",
+      "helper": "Mostra le foto in bianco e nero."
+    },
+    "info": {
+      "label": "Informazioni",
+      "helper": "Cosa viene mostrato oltre al nome. Solo i membri connessi vedono l’e-mail di una persona. Per i titolari di una carica viene mostrato l’indirizzo e-mail della carica.",
+      "function": "Funzione",
+      "email": "E-mail"
+    },
+    "infoPosition": {
+      "label": "Posizione delle informazioni",
+      "helper": "Dove si trovano nome e informazioni rispetto all’immagine.",
+      "overlayTop": "Sull’immagine, in alto",
+      "overlayBottom": "Sull’immagine, in basso",
+      "above": "Sopra l’immagine",
+      "below": "Sotto l’immagine",
+      "left": "A sinistra dell’immagine",
+      "right": "A destra dell’immagine"
     }
   },
   "rag": {

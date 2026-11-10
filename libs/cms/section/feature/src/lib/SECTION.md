@@ -65,7 +65,7 @@ Collection name: `sections`
 | `messages` | `MessagesConfig` | Latest Matrix chat messages for the current user |
 | `news` | `NewsConfig` | Links to latest blog articles |
 | `orgchart` | `OrgchartConfig` | Interactive organization chart starting from a root group |
-| `people` | `PeopleConfig` | Avatar + name grid of persons |
+| `people` | `PeopleConfig` | Persons (explicit list, group members or role holders) as cards, grid or 1–4 slider lines; imgix portraits (size, radius, facearea crop, b/w, background removal + colour); name, function, email above/below/beside/over the picture |
 | `rag` | `RagConfig` | Retrieval-augmented generation chat interface |
 | `slider` | `SliderConfig` | Image slider / carousel |
 | `table` | `TableConfig` | HTML-rendered data table with styled header/body |
@@ -113,7 +113,7 @@ Notable store actions:
 | `AlbumSectionComponent` | `bk-album-section` | Photo/video gallery |
 | `CalendarSectionComponent` | `bk-calendar-section` | FullCalendar |
 | `OrgchartSectionComponent` | `bk-orgchart-section` | Organization chart |
-| `PeopleSectionComponent` | `bk-people-section` | Avatar grid |
+| `PeopleSectionComponent` | `okr-people-section` | Card header (title/subtitle) + list name + `okr-persons-widget` |
 | `EventsSectionComponent` | `bk-events-section` | Event list |
 | `NewsSectionComponent` | `bk-news-section` | Blog news list |
 | `RagSectionComponent` | `bk-rag-section` | RAG chat interface |

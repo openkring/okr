@@ -95,5 +95,10 @@
   "no_parent": "Kein Elternelement",
   "responsible_unset": "Verantwortlicher unbestimmt",
   "delegate_unset": "Stellvertreter unbestimmt",
-  "delegate_expired": "Delegation abgelaufen"
+  "delegate_expired": "Delegation abgelaufen",
+  "email": {
+    "label": "E-Mail des Amts",
+    "placeholder": "praesident@deinverein.ch",
+    "helper": "Öffentliche Adresse für dieses Amt, am besten ein Alias deines Vereins. Sie kann auf der Website angezeigt werden."
+  }
 }

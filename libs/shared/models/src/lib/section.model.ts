@@ -622,8 +622,8 @@ export interface NewsConfig {
 // --------------------------------------- PEOPLE ----------------------------------------
 /**
  * The people section shows a list of persons with their avatars and names. 
- * The properties of the people section can be used to configure how the avatars are displayed (e.g. color, size, shape), 
- * how the names are displayed (e.g. first name, last name, both), and whether to show a label (e.g. role) next to the name.
+ * The properties configure the layout (card, grid, slider), the portrait (size, radius, face crop,
+ * background via imgix), how the names are displayed and which details (function, email) are shown.
  */
 export interface PeopleSection extends BaseSection {
   type: 'people';
@@ -638,14 +638,64 @@ export interface PeopleConfig {
   responsibilityId: string; // persons with this responsibility are shown (responsible and delegate)
 }
 
+/** How the persons of a people section are laid out. */
+export type PeopleView = 'card' | 'grid' | 'slider';
+export const PEOPLE_VIEWS: PeopleView[] = ['card', 'grid', 'slider'];
+
+/** Which details are shown with each person (the name itself is governed by `nameDisplay`). */
+export type PeopleInfo = 'function' | 'email';
+export const PEOPLE_INFOS: PeopleInfo[] = ['function', 'email'];
+
+/** Where the details sit relative to the image. */
+export type PeopleInfoPosition = 'overlayTop' | 'overlayBottom' | 'above' | 'below' | 'left' | 'right';
+export const PEOPLE_INFO_POSITIONS: PeopleInfoPosition[] = ['overlayTop', 'overlayBottom', 'above', 'below', 'left', 'right'];
+
+/**
+ * The background of the portrait (imgix):
+ * - original: the photo as uploaded
+ * - removed: background cut out (bg-remove=true, transparent)
+ * - orgColor: background cut out and filled with the tenant's primary or secondary colour
+ * - colors: background cut out and filled with 1–4 colours, cycled over the persons
+ * Every mode except `original` uses the paid imgix background removal.
+ */
+export type PeopleBackground = 'original' | 'removed' | 'orgColor' | 'colors';
+export const PEOPLE_BACKGROUNDS: PeopleBackground[] = ['original', 'removed', 'orgColor', 'colors'];
+export type PeopleOrgColor = 'primary' | 'secondary';
+export const PEOPLE_ORG_COLORS: PeopleOrgColor[] = ['primary', 'secondary'];
+
+/** Placeholder in `altText` that is replaced by the full name of each person. */
+export const PEOPLE_NAME_PLACEHOLDER = '@NAME@';
+
 export interface AvatarConfig {
-  altText: string; // alt text for the image, default is 'avatar'
-  color: ColorIonic; // background color of the avatar, default is ColorIonic.Light
-  linkedSection: string; // this section content will be shown in a modal when the title is clicked
-  nameDisplay: NameDisplay; // NameDisplay enum, default is FirstLast
-  showLabel: boolean; // if true, the label of the avatar is displayed as () after the name, default is true
-  showName: boolean; // if true, the name of the avatar is displayed, default is true
-  title: string; // to add a short text besides the avatar (e.g. Finanzen:   Bruno Kaiser (bkaiser))
+  altText: string; // alt text for each image; @NAME@ is replaced by the person's full name
+  color: ColorIonic; // background color of the info area (ion-item), default is ColorIonic.Light
+  linkedSection: string; // this section content will be shown in a modal when the list name is clicked
+  nameDisplay: NameDisplay; // NameDisplay enum incl. None, default is FirstLast
+  title: string; // name of the person list (e.g. Vorstand), shown beside / above the persons when set
+
+  // view
+  view: PeopleView; // default: card
+  perRow: number; // slider: persons visible per slide (3-10)
+  sliderRows: number; // slider: number of slider lines (1-4)
+
+  // image
+  imgWidth: number; // px
+  imgHeight: number; // px
+  imgRadius: string; // border radius: 'NNpx' or '50%' (circle)
+  facePad: number; // imgix fit=facearea facepad (0 = off: crop=faces, otherwise 1-2)
+  background: PeopleBackground;
+  bgOrgColor: PeopleOrgColor; // used when background = orgColor
+  bgColors: string[]; // hex colours (#rrggbb), used when background = colors
+  grayscale: boolean; // portrait in black and white (sat=-100)
+
+  // info
+  info: PeopleInfo[]; // details shown besides the name
+  infoPosition: PeopleInfoPosition;
+
+  /** @deprecated replaced by nameDisplay = None; still read from sections saved before 2026-11-10 */
+  showName?: boolean;
+  /** @deprecated replaced by info 'function'; still read from sections saved before 2026-11-10 */
+  showLabel?: boolean;
 }
 
 // --------------------------------------- RESPONSIBILITY ----------------------------------------

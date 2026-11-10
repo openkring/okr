@@ -154,14 +154,24 @@ export const MAP_CONFIG_SHAPE = {
 
 // --------------------------------------- PEOPLE ----------------------------------------
 export const AVATAR_CONFIG_SHAPE = {
-  cols: 2,
   color: ColorIonic.Light,
-  showName: true,
-  showLabel: false,
   nameDisplay: NameDisplay.FirstLast,
-  altText: 'avatar',
+  altText: 'Avatar von @NAME@',
   title: DEFAULT_TITLE,
-  linkedSection: DEFAULT_KEY
+  linkedSection: DEFAULT_KEY,
+  view: 'card',
+  perRow: 5,
+  sliderRows: 1,
+  imgWidth: 120,
+  imgHeight: 120,
+  imgRadius: '50%',
+  facePad: 0,
+  background: 'original',
+  bgOrgColor: 'primary',
+  bgColors: [] as string[],
+  grayscale: false,
+  info: ['function'],
+  infoPosition: 'below',
 } as AvatarConfig;
 
 export const PEOPLE_CONFIG_SHAPE = {

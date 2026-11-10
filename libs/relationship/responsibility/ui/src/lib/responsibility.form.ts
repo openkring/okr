@@ -1,9 +1,9 @@
 import { Component, computed, effect, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow, IonText } from '@ionic/angular';
-import { DEFAULT_DATE, WORD_LENGTH } from '@okr/shared-constants';
+import { DEFAULT_DATE, DEFAULT_EMAIL, EMAIL_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 import { ResponsibilityModel, RoleName, UserModel } from '@okr/shared-models';
-import { ButtonCopy, ButtonCopyI18n, DateInput, DateInputI18n, ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { ButtonCopy, ButtonCopyI18n, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { getAvatarName, hasRole } from '@okr/shared-util-core';
 
@@ -14,7 +14,7 @@ import { LowercaseWordMask } from '@okr/shared-config';
   selector: 'okr-responsibility-form',
   standalone: true,
   imports: [
-    TextInput, DateInput, ButtonCopy, ErrorNote,
+    TextInput, DateInput, ButtonCopy, ErrorNote, EmailInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
     IonItem, IonLabel, IonButton, IonText
   ],
@@ -42,6 +42,10 @@ import { LowercaseWordMask } from '@okr/shared-config';
               <ion-col size="12" size-md="6">
                 <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [copyable]="true" [readOnly]="false" />
                 <okr-error-note [errors]="nameErrors()" />
+              </ion-col>
+              <ion-col size="12" size-md="6">
+                <okr-email [i18n]="emailI18n()" [value]="email()" (valueChange)="onFieldChange('email', $event)" [maxLength]="emailLength" [readOnly]="false" />
+                <okr-error-note [errors]="emailErrors()" />
               </ion-col>
             </ion-row>
             <ion-row>
@@ -132,6 +136,7 @@ export class ResponsibilityForm {
   protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf() } as ButtonCopyI18n));
   protected okeyI18n = computed(() => ({ name: 'okey', label: this.i18n().okey_label(), placeholder: this.i18n().okey_placeholder(), helper: this.i18n().okey_helper() } as TextInputI18n));
   protected nameI18n = computed(() => ({ name: 'name', label: this.i18n().name_label(), placeholder: this.i18n().name_placeholder(), helper: this.i18n().name_helper() } as TextInputI18n));
+  protected emailI18n = computed(() => ({ name: 'email', label: this.i18n().email_label(), placeholder: this.i18n().email_placeholder(), helper: this.i18n().email_helper() } as EmailInputI18n));
   protected validFromI18n = computed(() => ({ name: 'validFrom', label: this.i18n().validFrom_label(), placeholder: this.i18n().validFrom_placeholder(), helper: this.i18n().validFrom_helper() } as DateInputI18n));
   protected validToI18n = computed(() => ({ name: 'validTo', label: this.i18n().validTo_label(), placeholder: this.i18n().validTo_placeholder(), helper: this.i18n().validTo_helper() } as DateInputI18n));
   protected delegateValidFromI18n = computed(() => ({ name: 'delegateValidFrom', label: this.i18n().delegateValidFrom_label(), placeholder: this.i18n().delegateValidFrom_placeholder(), helper: this.i18n().delegateValidFrom_helper() } as DateInputI18n));
@@ -169,11 +174,13 @@ export class ResponsibilityForm {
   protected validFromErrors = computed(() => this.validationResult().getErrors('validFrom'));
   protected validToErrors = computed(() => this.validationResult().getErrors('validTo'));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
+  protected emailErrors = computed(() => this.validationResult().getErrors('email'));
   protected okeyErrors = computed(() => this.validationResult().getErrors('okey'));
 
   // fields
   protected okey = computed(() => this.formData().okey ?? '');
   protected name = computed(() => this.formData().name ?? '');
+  protected email = computed(() => this.formData().email ?? DEFAULT_EMAIL);
   protected validFrom = computed(() => this.formData().validFrom ?? DEFAULT_DATE);
   protected validTo = computed(() => this.formData().validTo ?? DEFAULT_DATE);
   protected delegateValidFrom = computed(() => this.formData().delegateValidFrom ?? DEFAULT_DATE);
@@ -185,6 +192,8 @@ export class ResponsibilityForm {
   // passing constants to template
   protected mask = LowercaseWordMask;
   protected readonly maxWordLength = WORD_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly emailLength = EMAIL_LENGTH;
 
   constructor() {
     effect(() => this.valid.emit(this.responsibilityForm().valid()));
