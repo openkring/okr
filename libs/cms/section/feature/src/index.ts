@@ -46,3 +46,4 @@ export * from './lib/counter-section';
 export * from './lib/footer-section';
 export * from './lib/advent-section';
 export * from './lib/hero-section';
+export * from './lib/tiles-section';

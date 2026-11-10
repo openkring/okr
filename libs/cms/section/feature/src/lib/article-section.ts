@@ -1,11 +1,14 @@
 import { CUSTOM_ELEMENTS_SCHEMA, Component, DestroyRef, ElementRef, afterRenderEffect, computed, effect, inject, input, viewChild } from '@angular/core';
+import { Router } from '@angular/router';
 import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonRow } from '@ionic/angular';
 
 import { ArticleSection, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ViewPosition } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
+import { validCtas } from '@okr/cms-section-util';
 import { Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
 
 import { ArticleStore } from './article-section.store';
+import { openSectionLink } from './section-link';
 
 @Component({
   selector: 'okr-article-section',
@@ -19,6 +22,9 @@ import { ArticleStore } from './article-section.store';
   ],
   styles: [`
     ion-card-content { padding: 5px; }
+    ion-card.banner { background: color-mix(in srgb, var(--ion-color-secondary) 12%, transparent); border-radius: 8px; padding: 12px; }
+    .kicker { margin: 0px 0px 4px 0px; padding: 0px 5px; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ion-color-secondary); }
+    .cta { padding: 8px 5px 0px 5px; }
     ion-card { padding: 0px; margin: 0px; border: 0px; box-shadow: none !important; }
 
     .carousel-container { position: relative; margin: 0.5rem 0; }
@@ -88,7 +94,8 @@ import { ArticleStore } from './article-section.store';
   providers: [ArticleStore],
   template: `
     @if(section()) {
-      <ion-card>
+      <ion-card [class.banner]="isBanner()">
+        @if (kicker()) { <p class="kicker">{{ kicker() }}</p> }
         <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
           @if (images().length > 0 || (content() && content()!.length > 7)) {
@@ -196,6 +203,11 @@ import { ArticleStore } from './article-section.store';
               }
             }
           }
+          @if (cta(); as cta) {
+            <div class="cta">
+              <ion-button [color]="cta.style === 'secondary' ? 'secondary' : 'primary'" [fill]="cta.style === 'secondary' ? 'outline' : 'solid'" (click)="open(cta.url)">{{ cta.label }}</ion-button>
+            </div>
+          }
         </ion-card-content>
       </ion-card>
     } @else {
@@ -205,6 +217,7 @@ import { ArticleStore } from './article-section.store';
 })
 export class ArticleSectionComponent {
   protected store = inject(ArticleStore);
+  private readonly router = inject(Router);
 
   // inputs
   public section = input<ArticleSection>();
@@ -237,6 +250,12 @@ export class ArticleSectionComponent {
   // Shared texts (e.g. the privacy statement, one set of sections for every tenant) name the
   // tenant through placeholders such as @APPNAME@ and @DOMAIN@, like the title does.
   protected content = computed(() => this.store.appStore.replacePlaceholders(this.section()?.content?.htmlContent ?? '<p></p>'));
+  protected kicker = computed(() => this.store.appStore.replacePlaceholders(this.section()?.properties.kicker?.trim() ?? ''));
+  protected isBanner = computed(() => this.section()?.properties.emphasis === 'banner');
+  protected cta = computed(() => {
+    const c = this.section()?.properties.cta;
+    return c ? validCtas([c], 1)[0] : undefined;
+  });
   protected colSizeImage = computed(() => this.section()?.content?.colSize ?? 6);
   protected colSizeText = computed(() => 12 - this.colSizeImage());
   protected title = computed(() => this.store.appStore.replacePlaceholders(this.section()?.title ?? ''));
@@ -311,6 +330,10 @@ export class ArticleSectionComponent {
   private slideLeft(el: HTMLElement, index: number): number {
     const slide = el.children[index] as HTMLElement | undefined;
     return slide ? slide.offsetLeft - el.offsetLeft : 0;
+  }
+
+  protected open(url: string): void {
+    openSectionLink(this.router, url);
   }
 
   constructor() {

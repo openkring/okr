@@ -37,6 +37,7 @@ import { SankeySectionComponent } from './sankey-section';
 import { SpiderSectionComponent } from './spider-section';
 import { TocSectionComponent } from './toc-section';
 import { TestimonialSectionComponent } from './testimonial-section';
+import { TilesSectionComponent } from './tiles-section';
 import { TimelineSectionComponent } from './timeline-section';
 import { AdventSectionComponent } from './advent-section';
 import { TripStatsSectionComponent } from './trip-stats-section';
@@ -63,7 +64,7 @@ import { SectionStore } from './section.store';
     ArticleSectionComponent, MissingSectionComponent, TableSectionComponent, VideoSectionComponent, EventsSectionComponent,
     IframeSectionComponent, MapSectionComponent, AlbumSectionComponent, ButtonSectionComponent,
     PeopleSectionComponent, ResponsibilitySectionComponent, TrackerSectionComponent, HeroSectionComponent,
-    InvitationsSectionComponent, TasksSectionComponent, ActivitiesSectionComponent, MessagesSectionComponent, NoticesSectionComponent, NewsSectionComponent, OrgchartSectionComponent, RagSectionComponent, ContextDiagramSectionComponent, MemberAgeSectionComponent, MemberCatSectionComponent, SankeySectionComponent, SpiderSectionComponent, TocSectionComponent, TestimonialSectionComponent, TimelineSectionComponent, AdventSectionComponent,
+    InvitationsSectionComponent, TasksSectionComponent, ActivitiesSectionComponent, MessagesSectionComponent, NoticesSectionComponent, NewsSectionComponent, OrgchartSectionComponent, RagSectionComponent, ContextDiagramSectionComponent, MemberAgeSectionComponent, MemberCatSectionComponent, SankeySectionComponent, SpiderSectionComponent, TocSectionComponent, TestimonialSectionComponent, TilesSectionComponent, TimelineSectionComponent, AdventSectionComponent,
     IonItem, IonLabel, Spinner, DeferError,
     CalendarSectionComponent, ChartSectionComponent, SliderSectionComponent,
     TripStatsSectionComponent,
@@ -247,6 +248,9 @@ import { SectionStore } from './section.store';
           }
           @case('testimonial') {
             <okr-testimonial-section [section]="section" />
+          }
+          @case('tiles') {
+            <okr-tiles-section [section]="section" />
           }
           @case('timeline') {
             <okr-timeline-section [section]="section" />
