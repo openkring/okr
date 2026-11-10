@@ -6,7 +6,7 @@ import type { Firestore, WriteBatch } from 'firebase-admin/firestore';
 
 import {
   AppConfigCollection, FeatureEventCollection, FeatureRolloutCollection,
-  MenuItemCollection, UserCollection,
+  MenuItemCollection, SubscriptionCollection, UserCollection,
   type FeatureEvent, type MenuItemModel,
 } from '@okr/shared-models';
 import {
@@ -18,6 +18,8 @@ import {
 } from '@okr/tenant-util';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
+
+import { paidOptionChanges } from '../billing/paid-options.logic';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'applyFeatureSelection';
@@ -860,6 +862,55 @@ export async function planPinField(
   };
 }
 
+/**
+ * The paid-option fence (plan 2 Task 7). A `stripe` tenant may only ENABLE a paid option it has
+ * subscribed to (`subscriptions/{t}.options`); `exempt` tenants and tenants without a subscription doc
+ * are not fenced. Disabling is always allowed. Throws failed-precondition 'option-not-subscribed'.
+ */
+async function assertPaidOptionsSubscribed(
+  db: Firestore, catalogue: FeatureBlock[], tenantId: string, blockId: string,
+): Promise<void> {
+  const sub = (await db.collection(SubscriptionCollection).doc(tenantId).get()).data();
+  if (sub?.['billing'] !== 'stripe') return;
+  const configSnap = await db.collection(AppConfigCollection).doc(tenantId).get();
+  const current = effectiveEnabled(configSnap.data(), catalogue);
+  const ids = paidOptionChanges(current, resolveWithDeps(catalogue, [blockId]),
+    (sub['options'] as string[] | undefined) ?? []);
+  if (ids.length > 0) {
+    throw new HttpsError('failed-precondition',
+      `${CF_NAME}: option-not-subscribed (${ids.join(', ')})`, { reason: 'option-not-subscribed', ids });
+  }
+}
+
+/** Every menu key of a block's tree — "all rows ticked", the default of a plain enable. */
+function allMenuKeys(specs: MenuSpec[]): string[] {
+  return specs.flatMap(s => [s.key, ...allMenuKeys(s.children ?? [])]);
+}
+
+/**
+ * Server core without the caller's authorisation (the callers authorise): switch `enable` blocks on (all menu
+ * rows, dependencies via `planEnableBlock`/`planSelection`) and `disable` blocks off, committing each step.
+ * Disables run first so a refusal (a running block still depends on it) throws before anything is enabled.
+ * Ids that are not catalogue blocks are skipped. The paid-option fence is NOT applied here — the caller
+ * (`setSubscriptionOptions`) has just made the subscription the authority.
+ */
+export async function applySelection(
+  db: Firestore, catalogue: FeatureBlock[], tenantId: string, actor: string,
+  change: { enable: string[]; disable: string[] },
+): Promise<void> {
+  const known = new Set(catalogue.map(b => b.id));
+  const rollouts = (await db.collection(FeatureRolloutCollection).get())
+    .docs.map(d => ({ okey: d.id, ...d.data() }) as FeatureRollout);
+  for (const id of change.disable.filter(i => known.has(i))) {
+    await commitChunked(db, (await planDisableBlock(db, catalogue, tenantId, actor, id)).writes);
+  }
+  for (const id of change.enable.filter(i => known.has(i))) {
+    const block = catalogue.find(b => b.id === id) as FeatureBlock;
+    await commitChunked(db,
+      (await planEnableBlock(db, catalogue, rollouts, tenantId, actor, id, allMenuKeys(block.menu))).writes);
+  }
+}
+
 // ────────────────────────────────────────────────────────────────────────────────────
 // The single server-side write path for a tenant's feature selection (D-BB-9).
 //
@@ -958,6 +1009,7 @@ export function createApplyFeatureSelection(catalogue: FeatureBlock[]) {
       let result: VerbResult;
       switch (intent.verb) {
         case 'enableBlock':
+          await assertPaidOptionsSubscribed(db, catalogue, tenantId, intent.blockId);
           result = await planEnableBlock(db, catalogue, rollouts, tenantId, uid,
             intent.blockId, Array.isArray(intent.menuKeys) ? intent.menuKeys : []);
           break;

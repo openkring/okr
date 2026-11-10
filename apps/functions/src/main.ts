@@ -315,6 +315,7 @@ export const recordInvoicePayment = Invoice.recordInvoicePayment;
 // Stripe tenant billing: save a payment method, pay one of our invoices online (success arrives by webhook)
 export { createPaymentMethodSession, removePaymentMethod } from './collection/payment-method';
 export { createInvoicePaymentSession } from './collection/pay-invoice';
+export { setSubscriptionOptions, setBillingEmail } from './billing/options';
 // Prepaid credit (Guthaben): quote, top-up invoice, auto top-up settings; the auto top-up and the credit of a paid top-up
 export { quoteCredit, createTopUpInvoice, setAutoTopUp } from './credit/credit-callables';
 export { onAutoTopUpRequested } from './credit/auto-topup.trigger';
