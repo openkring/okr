@@ -3,3 +3,4 @@ export * from './lib/website-tree-read.util';
 export * from './lib/section-mapper';
 export * from './lib/sanitize';
 export * from './lib/image-caption';
+export * from './lib/publish-validation';
