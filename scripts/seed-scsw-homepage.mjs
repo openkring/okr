@@ -15,6 +15,8 @@
  *   node scripts/seed-scsw-homepage.mjs            dry-run (reads prod, prints every write)
  *   node scripts/seed-scsw-homepage.mjs --apply    performs the writes (existing sections/page are skipped)
  *   ... --apply --force                            also overwrites existing sections/page
+ *   node scripts/seed-scsw-homepage.mjs --retire   dry-run: lists the homepage websiteContent docs to archive (no seeding)
+ *   ... --retire --apply                           sets isArchived: true on them; refuses unless pages/scsw_homepage has sections
  *
  * Requires: gcloud auth application-default login (or GOOGLE_APPLICATION_CREDENTIALS)
  */
@@ -29,6 +31,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const APPLY = process.argv.includes('--apply');
 const FORCE = process.argv.includes('--force'); // overwrite sections/page that already exist
+const RETIRE = process.argv.includes('--retire'); // archive the old homepage websiteContent keys instead of seeding
 const TENANT = 'scs';
 const BUCKET = 'bkaiser-org.appspot.com';
 const WEBSITE_MENU_ID = 'cxr388m8e1e6jakzmgw1'; // menuItems/cms-website
@@ -39,6 +42,20 @@ if (!getApps().length) initializeApp({ projectId: 'bkaiser-org', storageBucket: 
 const db = getFirestore();
 const bucket = getStorage().bucket();
 
+// ── retire: which websiteContent keys the CMS page replaces ──────────────
+const RETIRE_PREFIXES = ['hero.', 'about.', 'offers.', 'boathouse.'];
+const RETIRE_EXACT = ['events.kicker', 'events.title', 'news.kicker', 'news.titleHome'];
+/** Pure: true for a homepage key (never events.all, news.all, nav.*, footer, ...). */
+export function isHomepageKey(key) {
+  return typeof key === 'string' && (RETIRE_EXACT.includes(key) || RETIRE_PREFIXES.some((p) => key.startsWith(p)));
+}
+(function selfCheck() {
+  const yes = ['hero.title', 'about.stat1', 'offers.course.title', 'boathouse.cta', 'events.kicker', 'events.title', 'news.kicker', 'news.titleHome'];
+  const no = ['events.all', 'news.all', 'nav.home', 'footer.imprint', 'events.other', 'news.title', 'heroic', 'aboutus', 'offers', '', undefined];
+  for (const k of yes) if (!isHomepageKey(k)) throw new Error(`isHomepageKey self-check: ${k} should match`);
+  for (const k of no) if (isHomepageKey(k)) throw new Error(`isHomepageKey self-check: ${k} must not match`);
+})();
+
 // ── texts ────────────────────────────────────────────────────────────────
 function loadHomeStrings() {
   const html = fs.readFileSync(path.join(ROOT, 'apps/scs-website/index.html'), 'utf8');
@@ -47,7 +64,7 @@ function loadHomeStrings() {
   return vm.runInNewContext(`(${m[1]})`);
 }
 
-const fallback = loadHomeStrings();
+const fallback = RETIRE ? {} : loadHomeStrings();
 const live = new Map(); // key -> { de, en }
 const source = { live: new Set(), fallback: new Set() };
 
@@ -212,7 +229,30 @@ async function set(collection, id, data) {
   if (APPLY) await db.collection(collection).doc(id).set(data);
 }
 
+async function retire() {
+  log(APPLY ? '*** APPLY (retire) ***' : '(dry-run retire: nothing is written; pass --apply to archive)');
+  if (APPLY) {
+    const page = await db.collection('pages').doc(PAGE_ID).get();
+    const n = page.exists ? (page.get('sections') ?? []).length : 0;
+    if (n < 1) {
+      console.error(`refusing: pages/${PAGE_ID} ${page.exists ? 'has no sections' : 'does not exist'}; archiving now would strip the live homepage overrides for nothing. Seed the page first.`);
+      process.exit(1);
+    }
+  }
+  const snap = await db.collection('websiteContent').where('tenants', 'array-contains', TENANT).get();
+  const hits = snap.docs.filter((d) => isHomepageKey(d.get('key'))).sort((a, b) => a.get('key').localeCompare(b.get('key')));
+  let todo = 0, done = 0;
+  for (const d of hits) {
+    if (d.get('isArchived') === true) { log(`already archived  ${d.get('key')}  (${d.id})`); done++; continue; }
+    log(`${APPLY ? 'archive' : 'would archive'}  ${d.get('key')}  (${d.id})`);
+    todo++;
+    if (APPLY) await d.ref.update({ isArchived: true });
+  }
+  log(`\n${todo} to archive${APPLY ? ' (done)' : ''}, ${done} already archived, ${hits.length} matching of ${snap.size} scs websiteContent docs`);
+}
+
 async function main() {
+  if (RETIRE) return retire();
   log(APPLY ? '*** APPLY ***' : '(dry-run: nothing is written; pass --apply to write)');
   await loadLive();
   const secs = sections();
