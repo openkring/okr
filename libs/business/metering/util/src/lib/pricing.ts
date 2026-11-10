@@ -13,7 +13,7 @@
  * about half of what their own calculator quoted the customer.
  */
 
-import type { BandId } from '@okr/shared-models';
+import type { BandId, RoleName } from '@okr/shared-models';
 
 /** A band id. Stable, and a SKU key — never rename one for a live tenant. Defined in shared-models. */
 export type { BandId };
@@ -63,6 +63,21 @@ export const ADD_ON_PRICES: Readonly<Record<string, number>> = {
 
 /** Commission share of the partner channel — C2 Ziff. 4.2 / parent spec D4. */
 export const COMMISSION_RATE = 0.1;
+
+/**
+ * The eight roles that count double — pricing spec §9.1 (4), copied verbatim. `registered` and
+ * `auditor` count once; `kiosk` and `tester` are not billable users.
+ */
+export const BILLING_PRIVILEGED_ROLES: readonly RoleName[] = [
+  'privileged',
+  'admin',
+  'contentAdmin',
+  'resourceAdmin',
+  'memberAdmin',
+  'eventAdmin',
+  'treasurer',
+  'groupAdmin',
+];
 
 /**
  * Weighted user count `n` (pricing §3): privileged accounts count **double**.
