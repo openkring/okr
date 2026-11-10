@@ -758,7 +758,28 @@
     "empty": "Non ci sono novità.",
     "view": "Mostrare l'articolo",
     "edit": "Modificare l'articolo",
-    "label": "Notizie"
+    "label": "Notizie",
+    "title": "Configurazione delle notizie",
+    "subtitle": "Gli articoli più recenti del blog, con un link a tutte le notizie.",
+    "max": {
+      "label": "Numero di articoli",
+      "placeholder": "5",
+      "helper": "Vengono mostrati al massimo tanti articoli."
+    },
+    "more": {
+      "label": "Link a tutte le notizie",
+      "placeholder": "p. es. /public/news",
+      "helper": "Dove porta il pulsante «Altro»"
+    },
+    "showMore": {
+      "label": "Mostra il pulsante «Altro»",
+      "helper": "Mostra sotto l'elenco un pulsante che porta a tutte le notizie."
+    },
+    "blogPage": {
+      "label": "Pagina del blog",
+      "placeholder": "p. es. news_@TID@",
+      "helper": "La pagina da cui provengono gli articoli. @TID@ sta per il tuo club."
+    }
   },
   "orgchart": {
     "label": "Organigramma",
@@ -1261,6 +1282,10 @@
       "label": "Testimonianze",
       "description": "Citazioni di membri, clienti o partner — a griglia o come carosello."
     },
+    "tiles": {
+      "label": "Riquadri",
+      "description": "Cifre chiave o schede in griglia, p. es. per dati sul club od offerte con link."
+    },
     "timeline": {
       "label": "Cronologia",
       "description": "Tutti gli appuntamenti del calendario scelto come cronologia."
@@ -1376,6 +1401,70 @@
     "columns": {
       "label": "Colonne",
       "helper": "Numero di colonne della griglia a partire dalla larghezza del tablet (1–4); sul cellulare sempre una sola colonna."
+    }
+  },
+  "tiles": {
+    "label": "Riquadri",
+    "title": "Configurazione dei riquadri",
+    "subtitle": "Cifre chiave o schede in griglia. Sul telefono i riquadri stanno uno sotto l'altro.",
+    "variant": {
+      "label": "Tipo di riquadri",
+      "stat": "Cifre chiave",
+      "card": "Schede"
+    },
+    "columns": {
+      "label": "Colonne",
+      "helper": "Numero di colonne dalla larghezza tablet (1–4); sul telefono sempre una colonna."
+    },
+    "lead": {
+      "label": "Introduzione",
+      "placeholder": "p. es. Cosa ci distingue",
+      "helper": "Una frase breve sotto il titolo"
+    },
+    "linkLabel": {
+      "label": "Testo del link",
+      "placeholder": "p. es. Scopri di più",
+      "helper": "Appare su ogni scheda che ha un link. Lascialo vuoto se non deve apparire nessun testo."
+    },
+    "items": "Riquadri",
+    "empty": "Ancora nessun riquadro",
+    "add": "Aggiungi riquadro",
+    "actions": "Riquadro",
+    "edit": "Modifica",
+    "moveUp": "Sposta su",
+    "moveDown": "Sposta giù",
+    "remove": "Rimuovi",
+    "value": {
+      "label": "Valore",
+      "placeholder": "p. es. 120+",
+      "helper": "Il numero grande o la parola breve del riquadro"
+    },
+    "caption": {
+      "label": "Didascalia",
+      "placeholder": "p. es. Soci"
+    },
+    "itemTitle": {
+      "label": "Titolo",
+      "placeholder": "p. es. Imparare a remare"
+    },
+    "text": {
+      "label": "Testo",
+      "placeholder": "Una o due frasi"
+    },
+    "icon": {
+      "label": "Nome dell'icona",
+      "placeholder": "p. es. people",
+      "helper": "Nome di un'icona della raccolta di icone"
+    },
+    "url": {
+      "label": "Link",
+      "placeholder": "https://… , /pagina o pagina.html",
+      "helper": "Facoltativo: un sito web (https), un indirizzo e-mail (mailto:), un numero di telefono (tel:) o una pagina (/… o ….html)"
+    },
+    "tone": {
+      "label": "Colore",
+      "primary": "Colore principale",
+      "secondary": "Colore secondario"
     }
   },
   "timeline": {
@@ -1671,6 +1760,42 @@
       "small": "Piccolo",
       "medium": "Medio",
       "large": "Grande"
+    }
+  },
+  "kicker": {
+    "title": "Occhiello",
+    "subtitle": "Una piccola riga sopra il titolo",
+    "label": "Occhiello",
+    "placeholder": "p. es. Benvenuto",
+    "helper": "Testo breve che appare in piccolo sopra il titolo. Lascialo vuoto se non deve apparire nessun occhiello."
+  },
+  "emphasis": {
+    "label": "Aspetto",
+    "none": "Normale",
+    "banner": "Come fascia colorata",
+    "helper": "Come fascia colorata l'articolo occupa tutta la larghezza e si fa notare."
+  },
+  "cta": {
+    "title": "Pulsanti",
+    "subtitle": "Pulsanti che portano a una pagina o a un link",
+    "button": "Pulsante {n}",
+    "empty": "Ancora nessun pulsante",
+    "add": "Aggiungi pulsante",
+    "remove": "Rimuovi pulsante",
+    "label": {
+      "label": "Testo",
+      "placeholder": "p. es. Diventa socio",
+      "helper": "Cosa c'è scritto sul pulsante"
+    },
+    "url": {
+      "label": "Link",
+      "placeholder": "https://… , /pagina o pagina.html",
+      "helper": "Un sito web (https), un indirizzo e-mail (mailto:), un numero di telefono (tel:) o una pagina (/… o ….html)"
+    },
+    "style": {
+      "label": "Aspetto",
+      "primary": "In evidenza",
+      "secondary": "Discreto"
     }
   }
 }

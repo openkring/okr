@@ -758,7 +758,28 @@
     "empty": "No hay novedades.",
     "view": "Mostrar artículo",
     "edit": "Modificar artículo",
-    "label": "Novedades"
+    "label": "Novedades",
+    "title": "Configuración de las novedades",
+    "subtitle": "Los artículos más recientes del blog, con un enlace a todas las novedades.",
+    "max": {
+      "label": "Número de artículos",
+      "placeholder": "5",
+      "helper": "Se muestran como máximo tantos artículos."
+    },
+    "more": {
+      "label": "Enlace a todas las novedades",
+      "placeholder": "p. ej. /public/news",
+      "helper": "Adónde lleva el botón «Más»"
+    },
+    "showMore": {
+      "label": "Mostrar el botón «Más»",
+      "helper": "Muestra debajo de la lista un botón que lleva a todas las novedades."
+    },
+    "blogPage": {
+      "label": "Página del blog",
+      "placeholder": "p. ej. news_@TID@",
+      "helper": "La página de la que vienen los artículos. @TID@ representa tu club."
+    }
   },
   "orgchart": {
     "label": "Organigrama",
@@ -1261,6 +1282,10 @@
       "label": "Testimonios",
       "description": "Citas de miembros, clientas o socios: en cuadrícula o en carrusel."
     },
+    "tiles": {
+      "label": "Mosaicos",
+      "description": "Cifras clave o tarjetas en cuadrícula, p. ej. para datos del club u ofertas con enlace."
+    },
     "timeline": {
       "label": "Línea de tiempo",
       "description": "Todas las citas del calendario elegido como cronología."
@@ -1376,6 +1401,70 @@
     "columns": {
       "label": "Columnas",
       "helper": "Número de columnas de la cuadrícula a partir del ancho de tableta (1–4); en el móvil siempre una sola columna."
+    }
+  },
+  "tiles": {
+    "label": "Mosaicos",
+    "title": "Configuración de los mosaicos",
+    "subtitle": "Cifras clave o tarjetas en cuadrícula. En el móvil los mosaicos van uno debajo de otro.",
+    "variant": {
+      "label": "Tipo de mosaicos",
+      "stat": "Cifras clave",
+      "card": "Tarjetas"
+    },
+    "columns": {
+      "label": "Columnas",
+      "helper": "Número de columnas a partir del ancho de tableta (1–4); en el móvil siempre una columna."
+    },
+    "lead": {
+      "label": "Introducción",
+      "placeholder": "p. ej. Lo que nos distingue",
+      "helper": "Una frase corta debajo del título"
+    },
+    "linkLabel": {
+      "label": "Texto del enlace",
+      "placeholder": "p. ej. Saber más",
+      "helper": "Aparece en cada tarjeta que tiene un enlace. Déjalo vacío si no debe aparecer ningún texto."
+    },
+    "items": "Mosaicos",
+    "empty": "Todavía no hay mosaicos",
+    "add": "Añadir mosaico",
+    "actions": "Mosaico",
+    "edit": "Editar",
+    "moveUp": "Subir",
+    "moveDown": "Bajar",
+    "remove": "Quitar",
+    "value": {
+      "label": "Valor",
+      "placeholder": "p. ej. 120+",
+      "helper": "El número grande o la palabra corta del mosaico"
+    },
+    "caption": {
+      "label": "Leyenda",
+      "placeholder": "p. ej. Socios"
+    },
+    "itemTitle": {
+      "label": "Título",
+      "placeholder": "p. ej. Aprender a remar"
+    },
+    "text": {
+      "label": "Texto",
+      "placeholder": "Una o dos frases"
+    },
+    "icon": {
+      "label": "Nombre del icono",
+      "placeholder": "p. ej. people",
+      "helper": "Nombre de un icono de la colección de iconos"
+    },
+    "url": {
+      "label": "Enlace",
+      "placeholder": "https://… , /pagina o pagina.html",
+      "helper": "Opcional: un sitio web (https), una dirección de correo (mailto:), un número de teléfono (tel:) o una página (/… o ….html)"
+    },
+    "tone": {
+      "label": "Color",
+      "primary": "Color principal",
+      "secondary": "Color secundario"
     }
   },
   "timeline": {
@@ -1671,6 +1760,42 @@
       "small": "Pequeño",
       "medium": "Mediano",
       "large": "Grande"
+    }
+  },
+  "kicker": {
+    "title": "Antetítulo",
+    "subtitle": "Una línea pequeña encima del título",
+    "label": "Antetítulo",
+    "placeholder": "p. ej. Bienvenido",
+    "helper": "Texto corto que aparece en pequeño encima del título. Déjalo vacío si no debe aparecer ningún antetítulo."
+  },
+  "emphasis": {
+    "label": "Presentación",
+    "none": "Normal",
+    "banner": "Como banda de color",
+    "helper": "Como banda de color, el artículo ocupa todo el ancho y llama la atención."
+  },
+  "cta": {
+    "title": "Botones",
+    "subtitle": "Botones que llevan a una página o a un enlace",
+    "button": "Botón {n}",
+    "empty": "Todavía no hay botones",
+    "add": "Añadir botón",
+    "remove": "Quitar botón",
+    "label": {
+      "label": "Texto",
+      "placeholder": "p. ej. Hazte socio",
+      "helper": "Lo que pone en el botón"
+    },
+    "url": {
+      "label": "Enlace",
+      "placeholder": "https://… , /pagina o pagina.html",
+      "helper": "Un sitio web (https), una dirección de correo (mailto:), un número de teléfono (tel:) o una página (/… o ….html)"
+    },
+    "style": {
+      "label": "Aspecto",
+      "primary": "Destacado",
+      "secondary": "Discreto"
     }
   }
 }

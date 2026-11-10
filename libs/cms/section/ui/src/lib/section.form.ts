@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
 
-import { ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, FooterConfig, FooterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FormSectionConfig, AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
+import { ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, FooterConfig, FooterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FormSectionConfig, AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TilesConfig, TilesSection, NewsConfig, NewsSection, SectionCta, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
 import { Chips, ErrorNote, ImageConfigEdit, NotesInput, NotesInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole, sanitizeFileName } from '@okr/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS, IMAGE_MIMETYPES } from '@okr/shared-constants';
@@ -47,6 +47,10 @@ import { SankeyConfiguration } from './sankey-configuration';
 import { SpiderConfiguration } from './spider-configuration';
 import { TocConfiguration } from './toc-configuration';
 import { TestimonialConfiguration } from './testimonial-configuration';
+import { TilesConfiguration } from './tiles-configuration';
+import { NewsConfiguration } from './news-configuration';
+import { CtaConfiguration } from './cta-configuration';
+import { ArticleEmphasis, KickerConfiguration } from './kicker-configuration';
 import { TimelineConfiguration } from './timeline-configuration';
 import { AdventConfiguration } from './advent-configuration';
 import { CourseOption, FormOption, FormSectionConfiguration } from './form-section-configuration';
@@ -62,7 +66,8 @@ import { CourseOption, FormOption, FormSectionConfiguration } from './form-secti
     ButtonStyleConfiguration, ButtonActionConfiguration, IconConfiguration, ChatConfiguration,
     MapConfiguration, TrackerConfiguration, TableGridConfiguration,  TableStyleConfiguration, TableHeader,
     TableBody, EventsConfiguration, InvitationsConfiguration, ImagesConfiguration, CalendarConfiguration, ChartConfiguration,
-    MemberConfiguration, RagConfiguration, FormSectionConfiguration, SankeyConfiguration, SpiderConfiguration, TocConfiguration, TestimonialConfiguration, TimelineConfiguration, AdventConfiguration
+    MemberConfiguration, RagConfiguration, FormSectionConfiguration, SankeyConfiguration, SpiderConfiguration, TocConfiguration, TestimonialConfiguration, TimelineConfiguration, AdventConfiguration,
+    TilesConfiguration, NewsConfiguration, CtaConfiguration, KickerConfiguration
 ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -98,6 +103,13 @@ import { CourseOption, FormOption, FormSectionConfiguration } from './form-secti
         }
 
         @case('article') {
+          <okr-kicker-config
+            [kicker]="kicker()" (kickerChange)="onKickerChange($event)"
+            [emphasis]="articleEmphasis()" (emphasisChange)="onArticleEmphasisChange($event)"
+            [showEmphasis]="true"
+            [readOnly]="isReadOnly()"
+            [i18n]="i18n()"
+          />
           @if(content(); as content) {
             <okr-editor-config
               [formData]="content" (formDataChange)="onContentChange($event)"
@@ -110,6 +122,14 @@ import { CourseOption, FormOption, FormSectionConfiguration } from './form-secti
             [images]="images()" (imagesChange)="onImagesChange($event)"
             [storagePath]="storagePath()"
             [currentUser]="currentUser()"
+            [readOnly]="isReadOnly()"
+            [i18n]="i18n()"
+            [errors]="errors()"
+          />
+          <okr-cta-config
+            [formData]="articleCtas()" (formDataChange)="onArticleCtasChange($event)"
+            [max]="1"
+            errorKey="cta"
             [readOnly]="isReadOnly()"
             [i18n]="i18n()"
             [errors]="errors()"
@@ -236,6 +256,12 @@ import { CourseOption, FormOption, FormSectionConfiguration } from './form-secti
           }
         }
         @case('hero') {
+          <okr-kicker-config
+            [kicker]="kicker()" (kickerChange)="onKickerChange($event)"
+            [showEmphasis]="false"
+            [readOnly]="isReadOnly()"
+            [i18n]="i18n()"
+          />
           @if(logoConfig(); as logoConfig) {
             <okr-image-config
               [formData]="logoConfig" (formDataChange)="onLogoConfigChange($event)"
@@ -256,6 +282,14 @@ import { CourseOption, FormOption, FormSectionConfiguration } from './form-secti
               (uploadRequested)="onHeroImageUpload('hero')"
             />
           }
+          <okr-cta-config
+            [formData]="heroCtas()" (formDataChange)="onHeroCtasChange($event)"
+            [max]="2"
+            errorKey="ctas"
+            [readOnly]="isReadOnly()"
+            [i18n]="i18n()"
+            [errors]="errors()"
+          />
           @if(showAdvanced()) {
             @if(imageStyle(); as imageStyle) {
               <okr-image-style
@@ -499,6 +533,25 @@ import { CourseOption, FormOption, FormSectionConfiguration } from './form-secti
             />
           }
         }
+        @case('tiles') {
+          @if(tilesConfig(); as tilesConfig) {
+            <okr-tiles-config
+              [formData]="tilesConfig" (formDataChange)="onTilesConfigChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+              [errors]="errors()"
+            />
+          }
+        }
+        @case('news') {
+          @if(newsConfig(); as newsConfig) {
+            <okr-news-config
+              [formData]="newsConfig" (formDataChange)="onNewsConfigChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+            />
+          }
+        }
         @case('advent') {
           @if(adventConfig(); as adventConfig) {
             <okr-advent-config
@@ -678,6 +731,26 @@ export class SectionForm {
   protected spiderConfig = computed(() => this.getSpiderConfig());
   protected tocConfig = computed(() => this.getTocConfig());
   protected testimonialConfig = computed(() => this.getTestimonialConfig());
+  protected tilesConfig = computed(() => this.getTilesConfig());
+  protected newsConfig = computed(() => this.getNewsConfig());
+  /** the small line above the title of a hero or an article */
+  protected kicker = computed(() => {
+    const section = this.formData();
+    return section.type === 'hero' || section.type === 'article' ? section.properties?.kicker ?? '' : '';
+  });
+  protected articleEmphasis = computed<ArticleEmphasis>(() => {
+    const section = this.formData();
+    return section.type === 'article' ? section.properties?.emphasis ?? 'none' : 'none';
+  });
+  protected heroCtas = computed<SectionCta[]>(() => {
+    const section = this.formData();
+    return section.type === 'hero' ? section.properties?.ctas ?? [] : [];
+  });
+  /** an article has at most one button; the cta editor works on a list */
+  protected articleCtas = computed<SectionCta[]>(() => {
+    const section = this.formData();
+    return section.type === 'article' && section.properties?.cta ? [section.properties.cta] : [];
+  });
   protected timelineConfig = computed(() => this.getTimelineConfig());
   protected adventConfig = computed(() => this.getAdventConfig());
   protected memberConfig = computed(() => this.getMemberConfig());
@@ -825,6 +898,20 @@ export class SectionForm {
     if (this.formData().type === 'testimonial') {
       return ((this.formData() as TestimonialSection).properties as TestimonialConfig);
     }
+  }
+
+  private getTilesConfig(): TilesConfig | undefined {
+    if (this.formData().type === 'tiles') {
+      return ((this.formData() as TilesSection).properties as TilesConfig);
+    }
+    return undefined;
+  }
+
+  private getNewsConfig(): NewsConfig | undefined {
+    if (this.formData().type === 'news') {
+      return ((this.formData() as NewsSection).properties as NewsConfig);
+    }
+    return undefined;
   }
 
   private getAdventConfig(): AdventConfig | undefined {
@@ -1186,6 +1273,54 @@ export class SectionForm {
         ...section,
         properties: config
       } as TestimonialSection);
+    }
+  }
+
+  protected onTilesConfigChange(config: TilesConfig): void {
+    const section = this.formData();
+    if (section.type === 'tiles') {
+      this.formData.set({ ...section, properties: config } as TilesSection);
+    }
+  }
+
+  protected onNewsConfigChange(config: NewsConfig): void {
+    const section = this.formData();
+    if (section.type === 'news') {
+      this.formData.set({ ...section, properties: config } as NewsSection);
+    }
+  }
+
+  protected onKickerChange(kicker: string | undefined): void {
+    const section = this.formData();
+    if (section.type === 'hero') {
+      this.formData.set({ ...section, properties: { ...section.properties, kicker: kicker ?? '' } } as HeroSection);
+    } else if (section.type === 'article') {
+      this.formData.set({ ...section, properties: { ...section.properties, kicker: kicker ?? '' } } as ArticleSection);
+    }
+  }
+
+  protected onArticleEmphasisChange(emphasis: ArticleEmphasis | undefined): void {
+    const section = this.formData();
+    if (section.type === 'article') {
+      this.formData.set({ ...section, properties: { ...section.properties, emphasis: emphasis ?? 'none' } } as ArticleSection);
+    }
+  }
+
+  protected onHeroCtasChange(ctas: SectionCta[]): void {
+    const section = this.formData();
+    if (section.type === 'hero') {
+      this.formData.set({ ...section, properties: { ...section.properties, ctas } } as HeroSection);
+    }
+  }
+
+  /** the button list holds zero or one entry; no entry removes the article's button */
+  protected onArticleCtasChange(ctas: SectionCta[]): void {
+    const section = this.formData();
+    if (section.type === 'article') {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { cta: _removed, ...properties } = section.properties ?? {};
+      const cta = ctas[0];
+      this.formData.set({ ...section, properties: cta ? { ...properties, cta } : properties } as ArticleSection);
     }
   }
 

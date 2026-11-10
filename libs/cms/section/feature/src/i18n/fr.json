@@ -758,7 +758,28 @@
     "empty": "Il n'y a aucune actualité.",
     "view": "Afficher l'article",
     "edit": "Modifier l'article",
-    "label": "Actualités"
+    "label": "Actualités",
+    "title": "Configuration des actualités",
+    "subtitle": "Les derniers articles du blog, avec un lien vers toutes les actualités.",
+    "max": {
+      "label": "Nombre d'articles",
+      "placeholder": "5",
+      "helper": "Au maximum ce nombre d'articles est affiché."
+    },
+    "more": {
+      "label": "Lien vers toutes les actualités",
+      "placeholder": "p. ex. /public/news",
+      "helper": "Où mène le bouton « Plus »"
+    },
+    "showMore": {
+      "label": "Afficher le bouton « Plus »",
+      "helper": "Affiche sous la liste un bouton qui mène à toutes les actualités."
+    },
+    "blogPage": {
+      "label": "Page du blog",
+      "placeholder": "p. ex. news_@TID@",
+      "helper": "La page d'où viennent les articles. @TID@ représente ton club."
+    }
   },
   "orgchart": {
     "label": "Organigramme",
@@ -1261,6 +1282,10 @@
       "label": "Témoignages",
       "description": "Citations de membres, de clientes ou de partenaires — en grille ou en carrousel."
     },
+    "tiles": {
+      "label": "Tuiles",
+      "description": "Chiffres clés ou cartes en grille, p. ex. pour des chiffres sur le club ou des offres avec lien."
+    },
     "timeline": {
       "label": "Frise chronologique",
       "description": "Tous les événements du calendrier choisi sous forme de chronologie."
@@ -1376,6 +1401,70 @@
     "columns": {
       "label": "Colonnes",
       "helper": "Nombre de colonnes de la grille à partir de la largeur tablette (1–4) ; toujours une seule colonne sur mobile."
+    }
+  },
+  "tiles": {
+    "label": "Tuiles",
+    "title": "Configuration des tuiles",
+    "subtitle": "Chiffres clés ou cartes en grille. Sur le téléphone, les tuiles sont les unes sous les autres.",
+    "variant": {
+      "label": "Type de tuiles",
+      "stat": "Chiffres clés",
+      "card": "Cartes"
+    },
+    "columns": {
+      "label": "Colonnes",
+      "helper": "Nombre de colonnes à partir de la largeur tablette (1–4) ; toujours une colonne sur le téléphone."
+    },
+    "lead": {
+      "label": "Introduction",
+      "placeholder": "p. ex. Ce qui nous distingue",
+      "helper": "Une courte phrase sous le titre"
+    },
+    "linkLabel": {
+      "label": "Texte du lien",
+      "placeholder": "p. ex. En savoir plus",
+      "helper": "Affiché sur chaque carte qui a un lien. Laisse vide si aucun texte ne doit apparaître."
+    },
+    "items": "Tuiles",
+    "empty": "Pas encore de tuiles",
+    "add": "Ajouter une tuile",
+    "actions": "Tuile",
+    "edit": "Modifier",
+    "moveUp": "Vers le haut",
+    "moveDown": "Vers le bas",
+    "remove": "Supprimer",
+    "value": {
+      "label": "Valeur",
+      "placeholder": "p. ex. 120+",
+      "helper": "Le grand chiffre ou le mot court de la tuile"
+    },
+    "caption": {
+      "label": "Légende",
+      "placeholder": "p. ex. Membres"
+    },
+    "itemTitle": {
+      "label": "Titre",
+      "placeholder": "p. ex. Apprendre à ramer"
+    },
+    "text": {
+      "label": "Texte",
+      "placeholder": "Une ou deux phrases"
+    },
+    "icon": {
+      "label": "Nom de l'icône",
+      "placeholder": "p. ex. people",
+      "helper": "Nom d'une icône de la collection d'icônes"
+    },
+    "url": {
+      "label": "Lien",
+      "placeholder": "https://… , /page ou page.html",
+      "helper": "Facultatif : un site web (https), une adresse e-mail (mailto:), un numéro de téléphone (tel:) ou une page (/… ou ….html)"
+    },
+    "tone": {
+      "label": "Couleur",
+      "primary": "Couleur principale",
+      "secondary": "Couleur secondaire"
     }
   },
   "timeline": {
@@ -1671,6 +1760,42 @@
       "small": "Petit",
       "medium": "Moyen",
       "large": "Grand"
+    }
+  },
+  "kicker": {
+    "title": "Surtitre",
+    "subtitle": "Une petite ligne au-dessus du titre",
+    "label": "Surtitre",
+    "placeholder": "p. ex. Bienvenue",
+    "helper": "Texte court affiché en petit au-dessus du titre. Laisse vide si aucun surtitre ne doit apparaître."
+  },
+  "emphasis": {
+    "label": "Affichage",
+    "none": "Normal",
+    "banner": "En bandeau coloré",
+    "helper": "En bandeau coloré, l'article s'étend sur toute la largeur et attire l'attention."
+  },
+  "cta": {
+    "title": "Boutons",
+    "subtitle": "Des boutons qui mènent à une page ou à un lien",
+    "button": "Bouton {n}",
+    "empty": "Pas encore de boutons",
+    "add": "Ajouter un bouton",
+    "remove": "Supprimer le bouton",
+    "label": {
+      "label": "Libellé",
+      "placeholder": "p. ex. Deviens membre",
+      "helper": "Ce qui est écrit sur le bouton"
+    },
+    "url": {
+      "label": "Lien",
+      "placeholder": "https://… , /page ou page.html",
+      "helper": "Un site web (https), une adresse e-mail (mailto:), un numéro de téléphone (tel:) ou une page (/… ou ….html)"
+    },
+    "style": {
+      "label": "Apparence",
+      "primary": "Mis en avant",
+      "secondary": "Discret"
     }
   }
 }

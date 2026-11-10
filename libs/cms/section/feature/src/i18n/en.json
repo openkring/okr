@@ -758,7 +758,28 @@
     "empty": "There is no news.",
     "view": "Show article",
     "edit": "Change article",
-    "label": "News"
+    "label": "News",
+    "title": "News configuration",
+    "subtitle": "The latest articles from the blog, with a link to all news.",
+    "max": {
+      "label": "Number of articles",
+      "placeholder": "5",
+      "helper": "At most this many articles are shown."
+    },
+    "more": {
+      "label": "Link to all news",
+      "placeholder": "e.g. /public/news",
+      "helper": "Where the «More» button leads"
+    },
+    "showMore": {
+      "label": "Show «More» button",
+      "helper": "Shows a button below the list that leads to all news."
+    },
+    "blogPage": {
+      "label": "Blog page",
+      "placeholder": "e.g. news_@TID@",
+      "helper": "The page the articles come from. @TID@ stands for your club."
+    }
   },
   "orgchart": {
     "label": "Org chart",
@@ -1261,6 +1282,10 @@
       "label": "Testimonials",
       "description": "Quotes from members, customers or partners — as a grid or a carousel."
     },
+    "tiles": {
+      "label": "Tiles",
+      "description": "Key figures or cards in a grid, e.g. for facts about the club or offers with a link."
+    },
     "timeline": {
       "label": "Timeline",
       "description": "All events of the selected calendar as a chronology."
@@ -1376,6 +1401,70 @@
     "columns": {
       "label": "Columns",
       "helper": "Number of grid columns from tablet width upwards (1–4); always a single column on mobile."
+    }
+  },
+  "tiles": {
+    "label": "Tiles",
+    "title": "Tiles configuration",
+    "subtitle": "Key figures or cards in a grid. On a phone the tiles stack below each other.",
+    "variant": {
+      "label": "Kind of tiles",
+      "stat": "Key figures",
+      "card": "Cards"
+    },
+    "columns": {
+      "label": "Columns",
+      "helper": "Number of columns from tablet width (1–4); always one column on a phone."
+    },
+    "lead": {
+      "label": "Introduction",
+      "placeholder": "e.g. What makes us special",
+      "helper": "A short sentence below the title"
+    },
+    "linkLabel": {
+      "label": "Link text",
+      "placeholder": "e.g. Learn more",
+      "helper": "Shown on every card that has a link. Leave empty if no text should appear."
+    },
+    "items": "Tiles",
+    "empty": "No tiles yet",
+    "add": "Add tile",
+    "actions": "Tile",
+    "edit": "Edit",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "remove": "Remove",
+    "value": {
+      "label": "Value",
+      "placeholder": "e.g. 120+",
+      "helper": "The big number or short word of the tile"
+    },
+    "caption": {
+      "label": "Caption",
+      "placeholder": "e.g. Members"
+    },
+    "itemTitle": {
+      "label": "Title",
+      "placeholder": "e.g. Learn to row"
+    },
+    "text": {
+      "label": "Text",
+      "placeholder": "One or two sentences"
+    },
+    "icon": {
+      "label": "Icon name",
+      "placeholder": "e.g. people",
+      "helper": "Name of an icon from the icon collection"
+    },
+    "url": {
+      "label": "Link",
+      "placeholder": "https://… , /page or page.html",
+      "helper": "Optional: a website (https), an email address (mailto:), a phone number (tel:) or a page (/… or ….html)"
+    },
+    "tone": {
+      "label": "Colour",
+      "primary": "Main colour",
+      "secondary": "Second colour"
     }
   },
   "timeline": {
@@ -1671,6 +1760,42 @@
       "small": "Small",
       "medium": "Medium",
       "large": "Large"
+    }
+  },
+  "kicker": {
+    "title": "Kicker",
+    "subtitle": "A small line above the title",
+    "label": "Kicker",
+    "placeholder": "e.g. Welcome",
+    "helper": "Short text shown small above the title. Leave empty if no kicker should appear."
+  },
+  "emphasis": {
+    "label": "Appearance",
+    "none": "Normal",
+    "banner": "As a coloured band",
+    "helper": "As a coloured band the article spans the full width and stands out."
+  },
+  "cta": {
+    "title": "Buttons",
+    "subtitle": "Buttons that lead to a page or a link",
+    "button": "Button {n}",
+    "empty": "No buttons yet",
+    "add": "Add button",
+    "remove": "Remove button",
+    "label": {
+      "label": "Caption",
+      "placeholder": "e.g. Become a member",
+      "helper": "What the button says"
+    },
+    "url": {
+      "label": "Link",
+      "placeholder": "https://… , /page or page.html",
+      "helper": "A website (https), an email address (mailto:), a phone number (tel:) or a page (/… or ….html)"
+    },
+    "style": {
+      "label": "Look",
+      "primary": "Prominent",
+      "secondary": "Subtle"
     }
   }
 }

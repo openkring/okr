@@ -758,7 +758,28 @@
     "empty": "Es gibt keine Neuigkeiten.",
     "view": "Artikel anzeigen",
     "edit": "Artikel ändern",
-    "label": "Neuigkeiten"
+    "label": "Neuigkeiten",
+    "title": "Neuigkeiten-Konfiguration",
+    "subtitle": "Die neusten Artikel aus dem Blog, mit Link zu allen Neuigkeiten.",
+    "max": {
+      "label": "Anzahl Artikel",
+      "placeholder": "5",
+      "helper": "So viele Artikel werden höchstens gezeigt."
+    },
+    "more": {
+      "label": "Link zu allen Neuigkeiten",
+      "placeholder": "z.B. /public/news",
+      "helper": "Wohin der Button «Mehr» führt"
+    },
+    "showMore": {
+      "label": "Button «Mehr» zeigen",
+      "helper": "Zeigt unter der Liste einen Button, der zu allen Neuigkeiten führt."
+    },
+    "blogPage": {
+      "label": "Blog-Seite",
+      "placeholder": "z.B. news_@TID@",
+      "helper": "Die Seite, aus der die Artikel stammen. @TID@ steht für deinen Verein."
+    }
   },
   "orgchart": {
     "label": "Organigramm",
@@ -1261,6 +1282,10 @@
       "label": "Stimmen",
       "description": "Zitate von Mitgliedern, Kundinnen oder Partnern — als Raster oder Karussell."
     },
+    "tiles": {
+      "label": "Kacheln",
+      "description": "Kennzahlen oder Karten im Raster, z.B. für Zahlen zum Verein oder Angebote mit Link."
+    },
     "timeline": {
       "label": "Zeitstrahl",
       "description": "Alle Termine des gewählten Kalenders als Chronologie."
@@ -1376,6 +1401,70 @@
     "columns": {
       "label": "Spalten",
       "helper": "Anzahl Spalten im Raster ab Tablet-Breite (1–4); auf dem Handy immer einspaltig."
+    }
+  },
+  "tiles": {
+    "label": "Kacheln",
+    "title": "Kacheln-Konfiguration",
+    "subtitle": "Kennzahlen oder Karten im Raster. Auf dem Handy stehen die Kacheln untereinander.",
+    "variant": {
+      "label": "Art der Kacheln",
+      "stat": "Kennzahlen",
+      "card": "Karten"
+    },
+    "columns": {
+      "label": "Spalten",
+      "helper": "Anzahl Spalten ab Tablet-Breite (1–4); auf dem Handy immer einspaltig."
+    },
+    "lead": {
+      "label": "Einleitung",
+      "placeholder": "z.B. Was uns ausmacht",
+      "helper": "Ein kurzer Satz unter dem Titel"
+    },
+    "linkLabel": {
+      "label": "Linktext",
+      "placeholder": "z.B. Mehr erfahren",
+      "helper": "Steht auf jeder Karte, die einen Link hat. Leer lassen, wenn kein Text erscheinen soll."
+    },
+    "items": "Kacheln",
+    "empty": "Noch keine Kacheln",
+    "add": "Kachel hinzufügen",
+    "actions": "Kachel",
+    "edit": "Bearbeiten",
+    "moveUp": "Nach oben",
+    "moveDown": "Nach unten",
+    "remove": "Entfernen",
+    "value": {
+      "label": "Wert",
+      "placeholder": "z.B. 120+",
+      "helper": "Die grosse Zahl oder das kurze Wort der Kachel"
+    },
+    "caption": {
+      "label": "Beschriftung",
+      "placeholder": "z.B. Mitglieder"
+    },
+    "itemTitle": {
+      "label": "Titel",
+      "placeholder": "z.B. Rudern lernen"
+    },
+    "text": {
+      "label": "Text",
+      "placeholder": "Ein bis zwei Sätze"
+    },
+    "icon": {
+      "label": "Icon-Name",
+      "placeholder": "z.B. people",
+      "helper": "Name eines Icons aus der Icon-Sammlung"
+    },
+    "url": {
+      "label": "Link",
+      "placeholder": "https://… , /seite oder seite.html",
+      "helper": "Optional: eine Webseite (https), eine E-Mail-Adresse (mailto:), eine Telefonnummer (tel:) oder eine Seite (/… oder ….html)"
+    },
+    "tone": {
+      "label": "Farbe",
+      "primary": "Hauptfarbe",
+      "secondary": "Zweitfarbe"
     }
   },
   "timeline": {
@@ -1671,6 +1760,42 @@
       "small": "Klein",
       "medium": "Mittel",
       "large": "Gross"
+    }
+  },
+  "kicker": {
+    "title": "Überzeile",
+    "subtitle": "Eine kleine Zeile über dem Titel",
+    "label": "Überzeile",
+    "placeholder": "z.B. Willkommen",
+    "helper": "Kurzer Text, der klein über dem Titel steht. Leer lassen, wenn keine Überzeile erscheinen soll."
+  },
+  "emphasis": {
+    "label": "Darstellung",
+    "none": "Normal",
+    "banner": "Als farbiges Band",
+    "helper": "Als farbiges Band zieht sich der Artikel über die ganze Breite und fällt auf."
+  },
+  "cta": {
+    "title": "Buttons",
+    "subtitle": "Buttons, die zu einer Seite oder einem Link führen",
+    "button": "Button {n}",
+    "empty": "Noch keine Buttons",
+    "add": "Button hinzufügen",
+    "remove": "Button entfernen",
+    "label": {
+      "label": "Beschriftung",
+      "placeholder": "z.B. Jetzt Mitglied werden",
+      "helper": "Was auf dem Button steht"
+    },
+    "url": {
+      "label": "Link",
+      "placeholder": "https://… , /seite oder seite.html",
+      "helper": "Eine Webseite (https), eine E-Mail-Adresse (mailto:), eine Telefonnummer (tel:) oder eine Seite (/… oder ….html)"
+    },
+    "style": {
+      "label": "Aussehen",
+      "primary": "Hervorgehoben",
+      "secondary": "Zurückhaltend"
     }
   }
 }

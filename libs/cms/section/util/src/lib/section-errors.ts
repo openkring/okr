@@ -19,6 +19,12 @@ const IMAGE_STYLE_FIELDS = [
 const IMAGES_PREFIX = 'images[';
 /** Marks the `implicitValues.courseId`-style keys of a form section (one fixed value per implicit field). */
 const IMPLICIT_VALUES_PREFIX = 'implicitValues.';
+/** Marks the `tiles.columns` / `tiles.i0.title`-style keys of a tiles section (see tilesSectionValidations). */
+const TILES_PREFIX = 'tiles.';
+/** Marks the `ctas[0].label`-style keys of a hero section's call-to-action buttons. */
+const CTAS_PREFIX = 'ctas[';
+/** Inline fields that stand for every key starting with them. */
+const PREFIX_FIELDS = [IMAGES_PREFIX, IMPLICIT_VALUES_PREFIX, TILES_PREFIX, CTAS_PREFIX];
 
 /**
  * Field names the configuration components of a given section type render an inline
@@ -38,7 +44,7 @@ export function getInlineErrorFields(type: SectionType, showAdvanced = false): s
       fields.push('folder', 'albumStyle', 'showVideos', 'showStreamingVideos', 'showDocs', 'showPdfs', 'effect');
       break;
     case 'article':
-      fields.push(IMAGES_PREFIX);
+      fields.push(IMAGES_PREFIX, 'cta.label', 'cta.url');
       if (showAdvanced) fields.push(...IMAGE_STYLE_FIELDS);
       break;
     case 'button':
@@ -61,6 +67,7 @@ export function getInlineErrorFields(type: SectionType, showAdvanced = false): s
       fields.push('formKey', 'emailAddresses', IMPLICIT_VALUES_PREFIX, 'closesAt', 'maxResponses', 'closedMessage');
       break;
     case 'hero':
+      fields.push('ctas', CTAS_PREFIX);
       if (showAdvanced) fields.push(...IMAGE_STYLE_FIELDS);
       break;
     case 'iframe':
@@ -68,6 +75,9 @@ export function getInlineErrorFields(type: SectionType, showAdvanced = false): s
       break;
     case 'map':
       fields.push('centerLatitude', 'centerLongitude', 'zoom', 'useCurrentLocationAsCenter');
+      break;
+    case 'tiles':
+      fields.push(TILES_PREFIX);
       break;
     case 'slider':
       fields.push(IMAGES_PREFIX);
@@ -86,7 +96,7 @@ export function getInlineErrorFields(type: SectionType, showAdvanced = false): s
 /** True when `field` is rendered inline by one of the configuration components. */
 export function isInlineErrorField(field: string, inlineFields: string[]): boolean {
   return inlineFields.some((inlineField) =>
-    inlineField === IMAGES_PREFIX || inlineField === IMPLICIT_VALUES_PREFIX ? field.startsWith(inlineField) : inlineField === field);
+    PREFIX_FIELDS.includes(inlineField) ? field.startsWith(inlineField) : inlineField === field);
 }
 
 /**

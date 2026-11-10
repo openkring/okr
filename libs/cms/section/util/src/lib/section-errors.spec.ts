@@ -97,3 +97,25 @@ describe('getUnrenderedFixedKeys', () => {
     expect(getUnrenderedFixedKeys({}, ['courseId'])).toEqual([]);
   });
 });
+
+describe('tiles and call-to-action error fields (1.151)', () => {
+  it('shows every tiles error inline, so none lands in the fallback list', () => {
+    const errors = { 'tiles.columns': ['invalidValue'], 'tiles.i0.title': ['required'], 'tiles.i2.url': ['invalidValue'] };
+    expect(getRemainingErrors(errors, getInlineErrorFields('tiles'))).toEqual([]);
+  });
+
+  it('shows the hero buttons inline, the list rule and each indexed field', () => {
+    const errors = { ctas: ['invalidValue'], 'ctas[0].label': ['required'], 'ctas[1].url': ['invalidValue'] };
+    expect(getRemainingErrors(errors, getInlineErrorFields('hero'))).toEqual([]);
+  });
+
+  it('shows the article button inline', () => {
+    const errors = { 'cta.label': ['required'], 'cta.url': ['invalidValue'] };
+    expect(getRemainingErrors(errors, getInlineErrorFields('article'))).toEqual([]);
+  });
+
+  it('does not hide a tiles-like key of another section type', () => {
+    const errors = { 'tiles.columns': ['invalidValue'] };
+    expect(getRemainingErrors(errors, getInlineErrorFields('article'))).toHaveLength(1);
+  });
+});
