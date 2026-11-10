@@ -325,6 +325,7 @@ export { onBillingInvoicePaid } from './credit/topup-paid.trigger';
 export { onBillingRunRequested } from './billing/billing-run';
 // Tenant admins read their own bkaiser invoices (operator books are closed to them under the rules) and a signed PDF link
 export { listMyBillingInvoices, getMyBillingInvoicePdf } from './billing/my-invoices';
+export { getBillingOverview, setTenantBilling, setTenantState } from './billing/operator';
 export const cancelInvoice = Invoice.cancelInvoice;
 export const createPaymentConfirmation = Invoice.createPaymentConfirmation;
 export const createInvoiceReminder = Invoice.createInvoiceReminder;
