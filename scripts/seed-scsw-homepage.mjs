@@ -13,7 +13,8 @@
  *
  * Usage:
  *   node scripts/seed-scsw-homepage.mjs            dry-run (reads prod, prints every write)
- *   node scripts/seed-scsw-homepage.mjs --apply    performs the writes
+ *   node scripts/seed-scsw-homepage.mjs --apply    performs the writes (existing sections/page are skipped)
+ *   ... --apply --force                            also overwrites existing sections/page
  *
  * Requires: gcloud auth application-default login (or GOOGLE_APPLICATION_CREDENTIALS)
  */
@@ -27,6 +28,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const APPLY = process.argv.includes('--apply');
+const FORCE = process.argv.includes('--force'); // overwrite sections/page that already exist
 const TENANT = 'scs';
 const BUCKET = 'bkaiser-org.appspot.com';
 const WEBSITE_MENU_ID = 'cxr388m8e1e6jakzmgw1'; // menuItems/cms-website
@@ -74,10 +76,14 @@ function text(key) {
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 // ── shapes ───────────────────────────────────────────────────────────────
+// Hand-copied from libs/shared/models/src/lib/image.shapes.ts (IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE) and
+// section.shapes.ts (BASE_SECTION_SHAPE; HERO/ARTICLE/TILES/EVENTS/NEWS_*_CONFIG_SHAPE, see the properties below).
+// Enums are stored numerically: ColorIonic.Primary = 0, ViewPosition (None 0, Top 1, Right 4), ImageType.Image = 0,
+// ImageActionType.OpenSlider = 2. Keep this in step with those files.
 const IMAGE_CONFIG = { label: '', type: 0, url: '', actionUrl: '', altText: '', overlay: '', documentKey: '', credit: '' };
 const IMAGE_STYLE = {
   imgIxParams: '', width: '100%', height: 'auto', sizes: '(max-width: 1240px) 50vw, 300px', border: '1px solid',
-  borderRadius: '4px', isThumbnail: false, slot: 'none', fill: false, hasPriority: false, action: 1, zoomFactor: 2,
+  borderRadius: '4px', isThumbnail: false, slot: 'none', fill: false, hasPriority: false, action: 2 /* ImageActionType.OpenSlider */, zoomFactor: 2,
   showTitle: false, showSource: false, captionPosition: 'none', captionSize: '0.8rem', captionStyle: 'italic', captionAlign: 'left',
 };
 
@@ -85,7 +91,7 @@ function base(id, type, name, title, subTitle, index, properties, content = '<p>
   return {
     type, state: 'published', name, title, subTitle,
     index: `n:${name} a:${type} k:${id}`,
-    color: 'primary', colSize: '12', roleNeeded: 'none', isArchived: false,
+    color: 0 /* ColorIonic.Primary */, colSize: '12', roleNeeded: 'none', isArchived: false,
     content: { htmlContent: content, colSize: 3, position: contentPosition },
     notes: '', tags: '', tenants: [TENANT],
     properties,
@@ -188,8 +194,6 @@ function sections() {
   };
 }
 
-// The caption of the boathouse image: the stored English alt/overlay stays German; titleI18n covers the rest.
-
 // ── writes ───────────────────────────────────────────────────────────────
 const log = (...a) => console.log(...a);
 async function upload(rel, dest, contentType) {
@@ -200,8 +204,11 @@ async function upload(rel, dest, contentType) {
   if (APPLY) await file.save(fs.readFileSync(path.join(ROOT, rel)), { contentType, resumable: false });
 }
 
+/** Creates the doc; an existing one (content admins may have edited it) is left untouched unless --force. */
 async function set(collection, id, data) {
-  log(`\n── ${collection}/${id} ──\n${JSON.stringify(data, null, 2)}`);
+  const exists = (await db.collection(collection).doc(id).get()).exists;
+  if (exists && !FORCE) { log(`\n── ${collection}/${id}: exists, left untouched (--force overwrites)`); return; }
+  log(`\n── ${collection}/${id} (${exists ? 'OVERWRITE (--force)' : 'create'}) ──\n${JSON.stringify(data, null, 2)}`);
   if (APPLY) await db.collection(collection).doc(id).set(data);
 }
 
