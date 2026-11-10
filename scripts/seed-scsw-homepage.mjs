@@ -53,14 +53,23 @@ export const HOMEPAGE_KEYS = Object.freeze([
   'boathouse.kicker', 'boathouse.title', 'boathouse.lead', 'boathouse.cta', 'boathouse.caption',
   'events.kicker', 'events.title', 'news.kicker', 'news.titleHome',
 ]);
-/** Pure: exact membership, no prefix matching. */
+/** Read by the seed but also used by other pages, so retiring them would drop those overrides:
+ *  boathouse.kicker (bootshaus.html), news.kicker (news.html). */
+export const SHARED_KEYS = Object.freeze(['boathouse.kicker', 'news.kicker']);
+/** Pure: exact membership, no prefix matching. Seed side: every key the seed may read. */
 export function isHomepageKey(key) {
   return typeof key === 'string' && HOMEPAGE_KEYS.includes(key);
+}
+/** Pure: the keys retire may archive = HOMEPAGE_KEYS minus SHARED_KEYS. */
+export function isRetireKey(key) {
+  return isHomepageKey(key) && !SHARED_KEYS.includes(key);
 }
 (function selfCheck() {
   const yes = [...HOMEPAGE_KEYS];
   const no = ['boathouse.facts.year', 'boathouse.story.p1', 'boathouse.page.title', 'boathouse.support.cta', 'offers.competitive.title', 'offers.lateral.desc', 'events.all', 'news.all', 'nav.home', 'footer.imprint', 'events.other', 'news.title', 'heroic', 'aboutus', 'offers', '', undefined];
   for (const k of yes) if (!isHomepageKey(k)) throw new Error(`isHomepageKey self-check: ${k} should match`);
+  for (const k of yes) if (isRetireKey(k) === SHARED_KEYS.includes(k)) throw new Error(`isRetireKey self-check: ${k}`);
+  for (const k of ['boathouse.kicker', 'news.kicker']) if (isRetireKey(k)) throw new Error(`isRetireKey self-check: ${k} must not retire`);
   for (const k of no) if (isHomepageKey(k)) throw new Error(`isHomepageKey self-check: ${k} must not match`);
 })();
 
@@ -249,15 +258,17 @@ async function retire() {
     }
   }
   const snap = await db.collection('websiteContent').where('tenants', 'array-contains', TENANT).get();
-  const hits = snap.docs.filter((d) => isHomepageKey(d.get('key'))).sort((a, b) => a.get('key').localeCompare(b.get('key')));
-  let todo = 0, done = 0;
+  const hits = snap.docs.filter((d) => isRetireKey(d.get('key'))).sort((a, b) => a.get('key').localeCompare(b.get('key')));
+  let todo = 0, done = 0, shared = 0;
   for (const d of hits) {
-    if (d.get('isArchived') === true) { log(`already archived  ${d.get('key')}  (${d.id})`); done++; continue; }
-    log(`${APPLY ? 'archive' : 'would archive'}  ${d.get('key')}  (${d.id})`);
+    const tenants = d.get('tenants') ?? [];
+    if (d.get('isArchived') === true) { log(`already archived  ${d.get('key')}  (${d.id})  tenants=${JSON.stringify(tenants)}`); done++; continue; }
+    if (tenants.length > 1) { log(`shared with ${tenants.join(', ')} — skipped (detach by hand)  ${d.get('key')}  (${d.id})`); shared++; continue; }
+    log(`${APPLY ? 'archive' : 'would archive'}  ${d.get('key')}  (${d.id})  tenants=${JSON.stringify(tenants)}`);
     todo++;
     if (APPLY) await d.ref.update({ isArchived: true });
   }
-  log(`\n${todo} to archive${APPLY ? ' (done)' : ''}, ${done} already archived, ${hits.length} matching of ${snap.size} scs websiteContent docs`);
+  log(`\n${todo} to archive${APPLY ? ' (done)' : ''}, ${done} already archived, ${shared} shared (skipped), ${hits.length} matching of ${snap.size} scs websiteContent docs`);
 }
 
 async function main() {
