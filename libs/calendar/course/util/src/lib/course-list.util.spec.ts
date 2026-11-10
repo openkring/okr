@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { AvatarInfo, CourseModel } from '@okr/shared-models';
 
-import { buildCourseListRows, CourseListCsvLabels, formatCoursePeriod } from './course-list.util';
+import { buildCourseListRows, CourseListCsvLabels, coursePlacesLabel, formatCoursePeriod } from './course-list.util';
 
 const labels: CourseListCsvLabels = { name: 'Kurs', period: 'Zeitraum', responsible: 'Verantwortliche', trainers: 'Trainer', status: 'Status', locked: 'eingefroren', reported: 'gemeldet' };
 
@@ -45,5 +45,24 @@ describe('buildCourseListRows', () => {
 
   it('returns only the header for no courses', () => {
     expect(buildCourseListRows([], labels)).toHaveLength(1);
+  });
+});
+
+describe('coursePlacesLabel', () => {
+  it('shows taken/max when places are limited', () => {
+    expect(coursePlacesLabel(8, 5)).toBe('5/8');
+    expect(coursePlacesLabel(8, 0)).toBe('0/8');
+  });
+
+  it('shows only the count when unlimited', () => {
+    expect(coursePlacesLabel(0, 5)).toBe('5');
+  });
+
+  it('is empty when unlimited and nobody has a place', () => {
+    expect(coursePlacesLabel(0, 0)).toBe('');
+  });
+
+  it('coalesces missing numbers', () => {
+    expect(coursePlacesLabel(undefined as unknown as number, 0)).toBe('');
   });
 });

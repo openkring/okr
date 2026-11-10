@@ -65,6 +65,21 @@
       "title": "Session types",
       "description": "Assign the matching J+S activity to each session type. Sessions without an assignment are not reported.",
       "none": "Do not report"
+    },
+    "announce": {
+      "title": "Announcement",
+      "audience": "Who is the course for?",
+      "youth": "Juniors",
+      "adult": "Candidates",
+      "transfer": "Lateral entrants",
+      "audienceHelper": "Only applicants of these groups can choose the course when they apply.",
+      "isAnnounced": "Announced on the website",
+      "isAnnouncedHelper": "The course then appears in the application form. You need at least one group for this.",
+      "places": {
+        "label": "Places (0 = unlimited)",
+        "placeholder": "0",
+        "helper": "With 0 there is no upper limit."
+      }
     }
   },
   "profile": {
@@ -115,7 +130,9 @@
     "rateInvalid": "Enter an amount of 0 or more.",
     "duplicatePerson": "Each person can be listed only once.",
     "personRequired": "Choose the person from the list of persons.",
-    "attendanceInvalid": "Every person needs an attendance and a function."
+    "attendanceInvalid": "Every person needs an attendance and a function.",
+    "placesInvalid": "Enter a whole number of 0 or more.",
+    "announceNeedsAudience": "Choose at least one group so the course can be announced."
   },
   "list": {
     "open": "Open course table",
@@ -137,7 +154,8 @@
       "reported": "Reported"
     },
     "csvFile": "courses",
-    "financeUnavailable": "The compensation details could not be loaded. The course opens without them. Please try again later."
+    "financeUnavailable": "The compensation details could not be loaded. The course opens without them. Please try again later.",
+    "announced": "announced"
   },
   "yearly": {
     "title": "Compensation per year",

@@ -65,6 +65,21 @@
       "title": "Tipos de sesión",
       "description": "Asigna a cada tipo de sesión la actividad J+S correspondiente. Las sesiones sin asignación no se informan.",
       "none": "No informar"
+    },
+    "announce": {
+      "title": "Anuncio",
+      "audience": "¿Para quién es el curso?",
+      "youth": "Júniores",
+      "adult": "Candidatos",
+      "transfer": "Ingresos laterales",
+      "audienceHelper": "Solo las personas de estos grupos pueden elegir el curso al inscribirse.",
+      "isAnnounced": "Anunciado en el sitio web",
+      "isAnnouncedHelper": "El curso aparece entonces en el formulario de inscripción. Necesitas al menos un grupo.",
+      "places": {
+        "label": "Plazas (0 = ilimitadas)",
+        "placeholder": "0",
+        "helper": "Con 0 no hay límite."
+      }
     }
   },
   "profile": {
@@ -115,7 +130,9 @@
     "rateInvalid": "Introduce un importe de 0 o más.",
     "duplicatePerson": "Cada persona solo puede aparecer una vez.",
     "personRequired": "Elige la persona de la lista de personas.",
-    "attendanceInvalid": "Cada persona necesita una asistencia y una función."
+    "attendanceInvalid": "Cada persona necesita una asistencia y una función.",
+    "placesInvalid": "Introduce un número entero de 0 o más.",
+    "announceNeedsAudience": "Elige al menos un grupo para que el curso pueda anunciarse."
   },
   "list": {
     "open": "Abrir la tabla del curso",
@@ -137,7 +154,8 @@
       "reported": "Notificado"
     },
     "csvFile": "cursos",
-    "financeUnavailable": "No se pudieron cargar las compensaciones. El curso se abre sin ellas. Inténtalo de nuevo más tarde."
+    "financeUnavailable": "No se pudieron cargar las compensaciones. El curso se abre sin ellas. Inténtalo de nuevo más tarde.",
+    "announced": "anunciado"
   },
   "yearly": {
     "title": "Compensaciones por año",

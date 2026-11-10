@@ -65,6 +65,21 @@
       "title": "Terminarten",
       "description": "Ordne jeder Terminart die passende J+S-Aktivität zu. Termine ohne Zuordnung werden nicht gemeldet.",
       "none": "Nicht melden"
+    },
+    "announce": {
+      "title": "Ausschreibung",
+      "audience": "Für wen ist der Kurs?",
+      "youth": "Junioren",
+      "adult": "Kandidierende",
+      "transfer": "Quereinsteiger",
+      "audienceHelper": "Nur Bewerbende dieser Gruppen können den Kurs bei der Anmeldung wählen.",
+      "isAnnounced": "Auf der Website angekündigt",
+      "isAnnouncedHelper": "Der Kurs erscheint dann in der Anmeldung. Du brauchst dafür mindestens eine Gruppe.",
+      "places": {
+        "label": "Plätze (0 = unbeschränkt)",
+        "placeholder": "0",
+        "helper": "Bei 0 gibt es keine Obergrenze."
+      }
     }
   },
   "profile": {
@@ -115,7 +130,9 @@
     "rateInvalid": "Gib einen Betrag von 0 oder mehr ein.",
     "duplicatePerson": "Jede Person kann nur einmal aufgeführt werden.",
     "personRequired": "Wähle die Person aus der Personenliste aus.",
-    "attendanceInvalid": "Jede Person braucht eine Anwesenheit und eine Funktion."
+    "attendanceInvalid": "Jede Person braucht eine Anwesenheit und eine Funktion.",
+    "placesInvalid": "Gib eine ganze Zahl von 0 oder mehr ein.",
+    "announceNeedsAudience": "Wähle mindestens eine Gruppe, damit der Kurs angekündigt werden kann."
   },
   "list": {
     "open": "Kurstabelle öffnen",
@@ -137,7 +154,8 @@
       "reported": "Gemeldet"
     },
     "csvFile": "kurse",
-    "financeUnavailable": "Die Entschädigungsangaben konnten nicht geladen werden. Der Kurs öffnet sich ohne sie. Versuche es später noch einmal."
+    "financeUnavailable": "Die Entschädigungsangaben konnten nicht geladen werden. Der Kurs öffnet sich ohne sie. Versuche es später noch einmal.",
+    "announced": "angekündigt"
   },
   "yearly": {
     "title": "Entschädigungen pro Jahr",

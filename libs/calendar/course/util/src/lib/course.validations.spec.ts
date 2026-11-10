@@ -19,6 +19,32 @@ function course(over: Partial<CourseModel> = {}): CourseModel {
 }
 
 describe('courseValidations', () => {
+  it('maxParticipants: a whole number of 0 or more', () => {
+    expect(courseValidations(course({ maxParticipants: -1 })).getErrors('maxParticipants')).toContain(PFX + 'placesInvalid');
+    expect(courseValidations(course({ maxParticipants: 2.5 })).getErrors('maxParticipants')).toContain(PFX + 'placesInvalid');
+    expect(courseValidations(course({ maxParticipants: 0 })).getErrors('maxParticipants')).toEqual([]);
+    expect(courseValidations(course({ maxParticipants: 8 })).getErrors('maxParticipants')).toEqual([]);
+  });
+
+  it('maxParticipants: a legacy document without the field is fine', () => {
+    const legacy = course();
+    delete (legacy as Partial<CourseModel>).maxParticipants;
+    expect(courseValidations(legacy).getErrors('maxParticipants')).toEqual([]);
+  });
+
+  it('isAnnounced needs a non-empty audience', () => {
+    expect(courseValidations(course({ isAnnounced: true, audience: [] })).getErrors('isAnnounced')).toContain(PFX + 'announceNeedsAudience');
+    expect(courseValidations(course({ isAnnounced: true, audience: ['youth'] })).getErrors('isAnnounced')).toEqual([]);
+    expect(courseValidations(course({ isAnnounced: false, audience: [] })).getErrors('isAnnounced')).toEqual([]);
+  });
+
+  it('a legacy document without audience / isAnnounced is valid', () => {
+    const legacy = course();
+    delete (legacy as Partial<CourseModel>).audience;
+    delete (legacy as Partial<CourseModel>).isAnnounced;
+    expect(courseValidations(legacy).isValid()).toBe(true);
+  });
+
   it('accepts a complete course', () => {
     expect(courseValidations(course()).isValid()).toBe(true);
   });

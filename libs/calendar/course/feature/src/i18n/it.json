@@ -65,6 +65,21 @@
       "title": "Tipi di incontro",
       "description": "Assegna a ogni tipo di incontro l'attività G+S corrispondente. Gli incontri senza assegnazione non vengono annunciati.",
       "none": "Non annunciare"
+    },
+    "announce": {
+      "title": "Annuncio",
+      "audience": "A chi è rivolto il corso?",
+      "youth": "Junior",
+      "adult": "Candidati",
+      "transfer": "Ingressi laterali",
+      "audienceHelper": "Solo le persone di questi gruppi possono scegliere il corso durante l’iscrizione.",
+      "isAnnounced": "Annunciato sul sito web",
+      "isAnnouncedHelper": "Il corso appare quindi nel modulo di iscrizione. Ti serve almeno un gruppo.",
+      "places": {
+        "label": "Posti (0 = illimitati)",
+        "placeholder": "0",
+        "helper": "Con 0 non c’è un limite."
+      }
     }
   },
   "profile": {
@@ -115,7 +130,9 @@
     "rateInvalid": "Inserisci un importo di 0 o più.",
     "duplicatePerson": "Ogni persona può comparire una sola volta.",
     "personRequired": "Scegli la persona dall'elenco delle persone.",
-    "attendanceInvalid": "Ogni persona ha bisogno di una presenza e di una funzione."
+    "attendanceInvalid": "Ogni persona ha bisogno di una presenza e di una funzione.",
+    "placesInvalid": "Inserisci un numero intero pari o superiore a 0.",
+    "announceNeedsAudience": "Scegli almeno un gruppo per poter annunciare il corso."
   },
   "list": {
     "open": "Apri la tabella del corso",
@@ -137,7 +154,8 @@
       "reported": "Annunciato"
     },
     "csvFile": "corsi",
-    "financeUnavailable": "Non è stato possibile caricare le indennità. Il corso si apre senza di esse. Riprova più tardi."
+    "financeUnavailable": "Non è stato possibile caricare le indennità. Il corso si apre senza di esse. Riprova più tardi.",
+    "announced": "annunciato"
   },
   "yearly": {
     "title": "Indennità per anno",

@@ -6,7 +6,7 @@ import {
 
 import { AvatarDisplay } from '@okr/avatar-ui';
 import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
-import { formatCoursePeriod } from '@okr/calendar-course-util';
+import { coursePlacesLabel, formatCoursePeriod } from '@okr/calendar-course-util';
 import { formatChf } from '@okr/finance-booking-util';
 import { CourseModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -82,6 +82,12 @@ import { CourseStore } from './course.store';
               <div slot="end" class="ion-hide-sm-down">
                 <okr-avatar-display [avatars]="course.responsiblePersons" [showName]="false" />
               </div>
+              @if (course.isAnnounced) {
+                <ion-chip slot="end" color="secondary">{{ store.i18n.list_announced() }}</ion-chip>
+              }
+              @if (places(course); as places) {
+                <ion-chip slot="end" color="light">{{ places }}</ion-chip>
+              }
               @if (course.isLocked) {
                 <ion-chip slot="end" color="medium">{{ store.i18n.list_status_locked() }}</ion-chip>
               }
@@ -142,6 +148,11 @@ export class CourseList {
 
   protected period(course: CourseModel): string {
     return formatCoursePeriod(course);
+  }
+
+  /** «5/8» (taken/places); '' when unlimited and nobody has a place */
+  protected places(course: CourseModel): string {
+    return coursePlacesLabel(course.maxParticipants ?? 0, this.store.placesTakenOf(course));
   }
 
   protected money(minor: number): string {

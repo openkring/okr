@@ -56,6 +56,20 @@ export const COURSE_I18N_KEYS = {
   form_trainers_description:    PFX + 'form.trainers.description',
   form_person_add:              PFX + 'form.person.add',
 
+  // Ausschreibung (spec 1.152 §10)
+  form_announce_title:      PFX + 'form.announce.title',
+  form_announce_audience:   PFX + 'form.announce.audience',
+  form_announce_youth:      PFX + 'form.announce.youth',
+  form_announce_adult:      PFX + 'form.announce.adult',
+  form_announce_transfer:   PFX + 'form.announce.transfer',
+  form_announce_audienceHelper: PFX + 'form.announce.audienceHelper',
+  form_announce_isAnnounced:       PFX + 'form.announce.isAnnounced',
+  form_announce_isAnnouncedHelper: PFX + 'form.announce.isAnnouncedHelper',
+  form_announce_places_label:       PFX + 'form.announce.places.label',
+  form_announce_places_placeholder: PFX + 'form.announce.places.placeholder',
+  form_announce_places_helper:      PFX + 'form.announce.places.helper',
+  list_announced: PFX + 'list.announced',
+
   // report profile
   form_report_title:      PFX + 'form.report.title',
   form_profile_label:     PFX + 'form.profile.label',
@@ -277,6 +291,8 @@ export const COURSE_I18N_KEYS = {
   validation_rateInvalid:         PFX + 'validation.rateInvalid',
   validation_duplicatePerson:     PFX + 'validation.duplicatePerson',
   validation_personRequired:      PFX + 'validation.personRequired',
+  validation_placesInvalid:       PFX + 'validation.placesInvalid',
+  validation_announceNeedsAudience: PFX + 'validation.announceNeedsAudience',
 } satisfies Record<string, string>;
 
 export type CourseI18n = { [K in keyof typeof COURSE_I18N_KEYS]: Signal<string> };

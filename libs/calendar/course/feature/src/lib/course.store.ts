@@ -152,6 +152,13 @@ export const CourseStore = signalStore(
     mayManage(course: CourseModel): boolean {
       return mayManageCourse(course, this.accessFor(course));
     },
+    /**
+     * Places taken on a course (A7). 0 until the application count is wired in (spec 1.152 task 11 replaces the body);
+     * the list only reads it through this method.
+     */
+    placesTakenOf(_course: CourseModel): number {
+      return 0;
+    },
     /** name of the course's group, for the overview rows */
     groupNameOf(course: CourseModel): string {
       return store.appStore.getGroup(course.groupKey)?.name ?? '';

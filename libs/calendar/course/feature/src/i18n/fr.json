@@ -65,6 +65,21 @@
       "title": "Types de séance",
       "description": "Attribue à chaque type de séance l'activité J+S correspondante. Les séances sans attribution ne sont pas annoncées.",
       "none": "Ne pas annoncer"
+    },
+    "announce": {
+      "title": "Annonce",
+      "audience": "À qui s’adresse le cours ?",
+      "youth": "Juniors",
+      "adult": "Candidats",
+      "transfer": "Entrants latéraux",
+      "audienceHelper": "Seules les personnes de ces groupes peuvent choisir le cours lors de leur inscription.",
+      "isAnnounced": "Annoncé sur le site web",
+      "isAnnouncedHelper": "Le cours apparaît alors dans le formulaire d’inscription. Tu as besoin d’au moins un groupe pour cela.",
+      "places": {
+        "label": "Places (0 = illimité)",
+        "placeholder": "0",
+        "helper": "Avec 0, il n’y a pas de limite."
+      }
     }
   },
   "profile": {
@@ -115,7 +130,9 @@
     "rateInvalid": "Saisis un montant de 0 ou plus.",
     "duplicatePerson": "Chaque personne ne peut figurer qu'une seule fois.",
     "personRequired": "Choisis la personne dans la liste des personnes.",
-    "attendanceInvalid": "Chaque personne a besoin d'une présence et d'une fonction."
+    "attendanceInvalid": "Chaque personne a besoin d'une présence et d'une fonction.",
+    "placesInvalid": "Saisis un nombre entier de 0 ou plus.",
+    "announceNeedsAudience": "Choisis au moins un groupe pour que le cours puisse être annoncé."
   },
   "list": {
     "open": "Ouvrir le tableau du cours",
@@ -137,7 +154,8 @@
       "reported": "Annoncé"
     },
     "csvFile": "cours",
-    "financeUnavailable": "Les indemnités n'ont pas pu être chargées. Le cours s'ouvre sans elles. Réessaie plus tard."
+    "financeUnavailable": "Les indemnités n'ont pas pu être chargées. Le cours s'ouvre sans elles. Réessaie plus tard.",
+    "announced": "annoncé"
   },
   "yearly": {
     "title": "Indemnités par année",

@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, model, output } from '@angular/core';
+import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular';
@@ -6,16 +6,17 @@ import { combineLatest, of, switchMap } from 'rxjs';
 
 import { NAME_LENGTH } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
-import { AvatarInfo, CategoryListModel, CourseModel, JsReportSettings, ReportProfile } from '@okr/shared-models';
-import { DateInput, DateInputI18n, ErrorNote, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { ApplicationKind, AvatarInfo, CategoryListModel, CourseModel, JsReportSettings, ReportProfile } from '@okr/shared-models';
+import { Checkbox, CheckboxI18n, DateInput, DateInputI18n, ErrorNote, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { MODEL_SELECTOR, validateVestTree, vestErrors } from '@okr/shared-util-angular';
-import { coerceBoolean, getItemLabel } from '@okr/shared-util-core';
+import { coerceBoolean, defaultIsAnnounced, getItemLabel } from '@okr/shared-util-core';
 
 import { Avatars } from '@okr/avatar-ui';
 import {
   COURSE_NUMBER_LENGTH, CourseI18n, courseValidations, DEFAULT_JS_TYPE_MAPPING, JS_ACTIVITY_TYPES, JS_USER_GROUPS, jsMainSportCategories
 } from '@okr/calendar-course-util';
 
+const AUDIENCE_KINDS: ApplicationKind[] = ['youth', 'adult', 'transfer'];
 const REPORT_PROFILES: ReportProfile[] = ['none', 'generic', 'js'];
 
 /**
@@ -29,7 +30,7 @@ const REPORT_PROFILES: ReportProfile[] = ['none', 'generic', 'js'];
   selector: 'okr-course-form',
   standalone: true,
   imports: [
-    TextInput, DateInput, StringSelect, ErrorNote, Avatars,
+    TextInput, DateInput, StringSelect, ErrorNote, Avatars, Checkbox, NumberInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonItem, IonLabel, IonNote
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
@@ -88,6 +89,46 @@ const REPORT_PROFILES: ReportProfile[] = ['none', 'generic', 'js'];
           [description]="i18n().form_trainers_description()"
           [sectionStyle]="true" titleIcon="people"
           [addLabel]="i18n().form_person_add()" />
+
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>{{ i18n().form_announce_title() }}</ion-card-title>
+          </ion-card-header>
+          <ion-card-content class="ion-no-padding">
+            <ion-grid>
+              <ion-row>
+                <ion-col size="12">
+                  <ion-item lines="none">
+                    <ion-label class="ion-text-wrap">
+                      <h3>{{ i18n().form_announce_audience() }}</h3>
+                      <ion-note>{{ i18n().form_announce_audienceHelper() }}</ion-note>
+                    </ion-label>
+                  </ion-item>
+                </ion-col>
+              </ion-row>
+              <ion-row>
+                @for (option of audienceOptions(); track option.kind) {
+                  <ion-col size="12" size-md="4">
+                    <okr-checkbox [i18n]="option.i18n" [checked]="option.checked" (checkedChange)="onAudienceChange(option.kind, $event)"
+                      [readOnly]="isReadOnly()" />
+                  </ion-col>
+                }
+              </ion-row>
+              <ion-row>
+                <ion-col size="12" size-md="6">
+                  <okr-checkbox [i18n]="isAnnouncedI18n()" [checked]="isAnnounced()" (checkedChange)="onAnnouncedChange($event)"
+                    [toggle]="true" [showHelper]="true" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="isAnnouncedErrors()" />
+                </ion-col>
+                <ion-col size="12" size-md="6">
+                  <okr-number-input [i18n]="placesI18n()" [value]="maxParticipants()" (valueChange)="onPlacesChange($event)"
+                    [integer]="true" [min]="0" [clearInput]="false" [showHelper]="true" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="placesErrors()" />
+                </ion-col>
+              </ion-row>
+            </ion-grid>
+          </ion-card-content>
+        </ion-card>
 
         <ion-card>
           <ion-card-header>
@@ -152,6 +193,12 @@ export class CourseForm {
   protected readonly profiles: string[] = REPORT_PROFILES;
   protected readonly userGroups: string[] = [...JS_USER_GROUPS];
 
+  /**
+   * Has the author touched the «angekündigt» switch? Until then a NEW course follows `defaultIsAnnounced(audience)`.
+   * An existing course (it has an `okey`) shows its stored value and is never re-defaulted.
+   */
+  private readonly announceTouched = signal(false);
+
   private readonly modelSelector = inject(MODEL_SELECTOR);
   private readonly i18nService = inject(I18nService);
 
@@ -183,6 +230,8 @@ export class CourseForm {
   protected readonly responsibleErrors = computed(() => this.validationResult().getErrors('responsiblePersons'));
   protected readonly courseNumberErrors = computed(() => this.validationResult().getErrors('reportSettings.courseNumber'));
   protected readonly userGroupErrors = computed(() => this.validationResult().getErrors('reportSettings.userGroup'));
+  protected readonly isAnnouncedErrors = computed(() => this.validationResult().getErrors('isAnnounced'));
+  protected readonly placesErrors = computed(() => this.validationResult().getErrors('maxParticipants'));
   protected readonly categoryErrors = computed(() => this.validationResult().getErrors('reportSettings.mainSportCategory'));
 
   // fields (Firestore hands over raw documents: coalesce what came later)
@@ -193,6 +242,9 @@ export class CourseForm {
   protected readonly responsiblePersons = computed(() => this.formData().responsiblePersons ?? []);
   protected readonly trainers = computed(() => this.formData().trainers ?? []);
   protected readonly reportProfile = computed(() => this.formData().reportProfile ?? 'generic');
+  protected readonly audience = computed(() => this.formData().audience ?? []);
+  protected readonly isAnnounced = computed(() => this.formData().isAnnounced ?? false);
+  protected readonly maxParticipants = computed(() => this.formData().maxParticipants ?? 0);
   private readonly settings = computed(() => this.formData().reportSettings ?? {});
   protected readonly courseNumber = computed(() => this.settings().courseNumber ?? '');
   protected readonly userGroup = computed(() => this.settings().userGroup ?? '');
@@ -224,6 +276,20 @@ export class CourseForm {
     value: this.typeMapping()[item.name] ?? '',
   })));
 
+  protected readonly audienceOptions = computed(() => {
+    const i18n = this.i18n();
+    const labels: Record<ApplicationKind, string> = { youth: i18n.form_announce_youth(), adult: i18n.form_announce_adult(), transfer: i18n.form_announce_transfer() };
+    return AUDIENCE_KINDS.map(kind => ({
+      kind, checked: this.audience().includes(kind), i18n: { name: 'audience-' + kind, label: labels[kind], helper: '' } as CheckboxI18n,
+    }));
+  });
+  protected readonly isAnnouncedI18n = computed(() => ({
+    name: 'isAnnounced', label: this.i18n().form_announce_isAnnounced(), helper: this.i18n().form_announce_isAnnouncedHelper(),
+  } as CheckboxI18n));
+  protected readonly placesI18n = computed(() => ({
+    name: 'maxParticipants', label: this.i18n().form_announce_places_label(), placeholder: this.i18n().form_announce_places_placeholder(),
+    helper: this.i18n().form_announce_places_helper(),
+  } as NumberInputI18n));
   protected readonly nameI18n = computed(() => ({
     name: 'name', label: this.i18n().form_name_label(), placeholder: this.i18n().form_name_placeholder(), helper: this.i18n().form_name_helper(),
   } as TextInputI18n));
@@ -257,6 +323,33 @@ export class CourseForm {
   protected onFieldChange(fieldName: string, fieldValue: string | AvatarInfo[] | Record<string, string>): void {
     this.dirty.emit(true);
     this.formData.update(vm => ({ ...vm, [fieldName]: fieldValue }));
+  }
+
+  protected onAudienceChange(kind: ApplicationKind, checked: boolean): void {
+    const current = this.audience();
+    // keep the canonical order, whatever order the boxes were ticked in
+    const audience = AUDIENCE_KINDS.filter(k => k === kind ? checked : current.includes(k));
+    this.dirty.emit(true);
+    this.formData.update(vm => {
+      const next: CourseModel = { ...vm, audience };
+      if (!vm.okey && !this.announceTouched()) next.isAnnounced = defaultIsAnnounced(audience);
+      return next;
+    });
+  }
+
+  protected onAnnouncedChange(isAnnounced: boolean): void {
+    // the checkbox also emits when the model is re-set to the value it already has: only a real change is a touch
+    if (isAnnounced === this.isAnnounced()) return;
+    this.announceTouched.set(true);
+    this.dirty.emit(true);
+    this.formData.update(vm => ({ ...vm, isAnnounced }));
+  }
+
+  protected onPlacesChange(value: number | null): void {
+    const places = value ?? 0;
+    if (places === this.maxParticipants()) return;
+    this.dirty.emit(true);
+    this.formData.update(vm => ({ ...vm, maxParticipants: places }));
   }
 
   /** The J+S start of a course: an empty mapping is prefilled with the default («training» → Training). */

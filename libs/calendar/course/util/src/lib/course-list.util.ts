@@ -32,6 +32,17 @@ export function formatCoursePeriod(course: Pick<CourseModel, 'startDate' | 'endD
 }
 
 /**
+ * Places of a course as shown in the list: «5/8» when limited, «5» when unlimited, '' when unlimited and nobody has
+ * a place yet. `maxParticipants` 0 (or missing on a legacy document) = unlimited.
+ */
+export function coursePlacesLabel(maxParticipants: number, taken: number): string {
+  const max = maxParticipants ?? 0;
+  const count = taken ?? 0;
+  if (max > 0) return `${count}/${max}`;
+  return count > 0 ? String(count) : '';
+}
+
+/**
  * The course list as CSV rows, header first (the `exportGeneric` action of the list). Free text (course name, person
  * names) is neutralised against formula injection; the status column carries «locked» / «reported» words only.
  */

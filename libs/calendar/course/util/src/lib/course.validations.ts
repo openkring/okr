@@ -36,6 +36,17 @@ export const courseValidations = staticSuite((model: CourseModel) => {
     enforce((model.responsiblePersons ?? []).length).greaterThan(0);
   });
 
+  // Ausschreibung (spec 1.152 §4.1): documents without these fields are valid (`?? 0`, `?? []`, `?? false`)
+  test('maxParticipants', PFX + 'placesInvalid', () => {
+    const places = model.maxParticipants ?? 0;
+    enforce(Number.isInteger(places) && places >= 0).isTruthy();
+  });
+  omitWhen(model.isAnnounced !== true, () => {
+    test('isAnnounced', PFX + 'announceNeedsAudience', () => {
+      enforce((model.audience ?? []).length).greaterThan(0);
+    });
+  });
+
   omitWhen(model.reportProfile !== 'js', () => {
     const settings = model.reportSettings ?? {};
     stringValidations('reportSettings.courseNumber', settings.courseNumber ?? '', COURSE_NUMBER_LENGTH);
