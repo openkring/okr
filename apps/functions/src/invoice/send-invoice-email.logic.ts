@@ -71,13 +71,15 @@ const escapeHtml = (s: string): string =>
 /**
  * Short German du-form body; every input is HTML-escaped, no links. With `asksPayment` false (an
  * invoice already paid, or nothing open) the invoice body only names the attachment — no payment request.
+ * `extraHtml` (server-built, trusted, NOT escaped) goes between the text and the signature.
  */
 export function invoiceEmailHtml(
   kind: EmailText, reminderName: string, invoiceId: string, amountDueChf: string, dueDateView: string, orgName: string, asksPayment = true,
+  extraHtml = '',
 ): string {
   const id = escapeHtml(invoiceId);
   const signature = `<p>Freundliche Grüsse<br>${escapeHtml(orgName)}</p>`;
-  if (kind === 'invoice' && !asksPayment) return `<p>Hallo,</p><p>im Anhang findest du die Rechnung ${id}.</p>${signature}`;
+  if (kind === 'invoice' && !asksPayment) return `<p>Hallo,</p><p>im Anhang findest du die Rechnung ${id}.</p>${extraHtml}${signature}`;
   const amount = escapeHtml(amountDueChf);
   const due = escapeHtml(dueDateView);
   const until = due ? ` bis ${due}` : '';
@@ -86,7 +88,7 @@ export function invoiceEmailHtml(
     : kind === 'followUp'
       ? `vielleicht ist unsere Rechnung untergegangen. Im Anhang findest du nochmals die Rechnung ${id}. Bitte überweise den offenen Betrag von CHF ${amount}${until}.`
       : `im Anhang findest du die ${escapeHtml(reminderName)} zu Rechnung ${id}. Bitte überweise den offenen Betrag von CHF ${amount}${until}.`;
-  return `<p>Hallo,</p><p>${sentence} Vielen Dank.</p>${signature}`;
+  return `<p>Hallo,</p><p>${sentence} Vielen Dank.</p>${extraHtml}${signature}`;
 }
 
 /** The address-directory doc id of the receiver (`getAddressDirectoryKey(tenant, '{type}.{key}')`), or undefined. */

@@ -33,6 +33,11 @@ describe('invoiceEmailHtml', () => {
     expect(html).toContain('Seeclub');
     expect(html).not.toContain('!');
   });
+  it('extra server html goes unescaped between the text and the signature', () => {
+    const html = invoiceEmailHtml('invoice', '', '202600001', '120.50', '31.10.2026', 'Kring', true, '<p><a href="https://x/pay/1">x</a></p>');
+    expect(html).toContain('Vielen Dank.</p><p><a href="https://x/pay/1">x</a></p><p>Freundliche Grüsse');
+    expect(invoiceEmailHtml('invoice', '', '1', '0.00', '', 'K', false, '<p>E</p>')).toContain('</p><p>E</p><p>Freundliche');
+  });
   it('reminder body names the reminder and the open amount', () => {
     const html = invoiceEmailHtml('reminder', '2. Mahnung', '7', '30.00', '15.11.2026', 'Seeclub');
     expect(html).toContain('2. Mahnung zu Rechnung 7');
