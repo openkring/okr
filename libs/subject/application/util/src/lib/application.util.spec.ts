@@ -350,6 +350,12 @@ describe('mergeApplications', () => {
     const { merged } = mergeApplications(mk({ properties: [p('a', '1')] }), mk({ properties: [p('a', '2'), p('b', '3')] }));
     expect(merged.properties.map(x => [x.key, x.value])).toEqual([['a', '1'], ['b', '3']]);
   });
+  it('takes drop\'s property value when keep\'s is empty, but keeps false', () => {
+    const p = (key: string, value: unknown): TypedProperty => ({ key, type: 'text', value } as unknown as TypedProperty);
+    const r = mergeApplications(mk({ properties: [p('a', ''), p('b', false)] }), mk({ properties: [p('a', '2'), p('b', true)] }));
+    expect(r.merged.properties.map(x => [x.key, x.value])).toEqual([['a', '2'], ['b', false]]);
+    expect(r.takenFromDrop).toContain('properties');
+  });
   it('takes the higher course state with its course', () => {
     const { merged, takenFromDrop } = mergeApplications(
       mk({ courseState: 'registered', courseKey: 'c1' }),

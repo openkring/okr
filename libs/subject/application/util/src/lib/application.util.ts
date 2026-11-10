@@ -228,10 +228,19 @@ export function mergeApplications(keep: ApplicationModel, drop: ApplicationModel
   if (isEmptyValue(merged.reviewer) && !isEmptyValue(drop.reviewer)) { merged.reviewer = drop.reviewer; taken.push('reviewer'); }
   if (isEmptyValue(merged.tags) && !isEmptyValue(drop.tags)) { merged.tags = drop.tags; taken.push('tags'); }
 
-  // properties: union by key, keep wins
+  // properties: union by key, keep wins unless keep's value is empty (false is NOT empty)
+  const isEmptyProp = (v: unknown): boolean => v === undefined || v === null || v === '' || (typeof v === 'number' && Number.isNaN(v));
+  const dropByKey = new Map((drop.properties ?? []).map(p => [p.key, p]));
+  let propsTaken = false;
+  merged.properties = merged.properties.map(p => {
+    const d = dropByKey.get(p.key);
+    if (d && isEmptyProp(p.value) && !isEmptyProp(d.value)) { propsTaken = true; return { ...p, value: d.value }; }
+    return p;
+  });
   const have = new Set(merged.properties.map(p => p.key));
   const extra = (drop.properties ?? []).filter(p => !have.has(p.key));
-  if (extra.length > 0) { merged.properties = [...merged.properties, ...extra]; taken.push('properties'); }
+  if (extra.length > 0) { merged.properties = [...merged.properties, ...extra]; propsTaken = true; }
+  if (propsTaken) taken.push('properties');
 
   // course: the further state wins and brings its course key and timestamps
   if (courseRank(drop.courseState) > courseRank(keep.courseState)) {
