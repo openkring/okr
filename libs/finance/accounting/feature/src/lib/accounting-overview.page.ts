@@ -8,6 +8,7 @@ import { AccountingOverviewStore } from './accounting-overview.store';
 import { AccountingSegments } from './accounting-segments';
 import { AccountingBooks } from './accounting-books';
 import { AccountingStore } from './accounting.store';
+import { FeatureStore } from '@okr/tenant-feature';
 
 function fill(template: string, values: Record<string, string>): string {
   return template.replace(/\{(\w+)\}/g, (_, k: string) => values[k] ?? '');
@@ -108,10 +109,12 @@ function chf(minor: number | undefined): string {
               <span class="k">{{ i18n.overview_fig_result() }} {{ store.fiscalYearLabel() }}</span>
               <span class="v">@if (store.figuresLoading()) {<ion-spinner name="dots" />} @else { {{ money(store.figures()?.result) }} }</span>
             </div>
-            <div class="card">
-              <span class="k">{{ i18n.overview_fig_budget() }}</span>
-              <span class="v">@if (store.figuresLoading()) {<ion-spinner name="dots" />} @else { {{ budgetText() }} }</span>
-            </div>
+            @if (hasCostAccounting()) {
+              <div class="card">
+                <span class="k">{{ i18n.overview_fig_budget() }}</span>
+                <span class="v">@if (store.figuresLoading()) {<ion-spinner name="dots" />} @else { {{ budgetText() }} }</span>
+              </div>
+            }
             <div class="card">
               <span class="k">{{ i18n.overview_fig_openItems() }}</span>
               <span class="v" style="font-size:1.25rem">@if (store.todosLoading()) {<ion-spinner name="dots" />} @else { {{ openItemsText() }} }</span>
@@ -145,7 +148,17 @@ export class AccountingOverviewPage {
   protected readonly store = inject(AccountingOverviewStore);
   protected readonly accountingStore = inject(AccountingStore);
   private readonly router = inject(Router);
+  private readonly featureStore = inject(FeatureStore);
   protected readonly i18n = this.accountingStore.i18n;
+
+  /** Budgets are Kostenrechnung (finance split, 2026-11-10): no budget figure without the block. */
+  protected readonly hasCostAccounting = computed(() => this.featureStore.effective().has('cost-accounting'));
+
+  /** A card links to a segment; it is shown only while that segment's feature block is effective (like the segment bar). */
+  private available(segmentId: string): boolean {
+    const block = this.segment(segmentId)?.featureBlock;
+    return !block || this.featureStore.effective().has(block);
+  }
 
   protected readonly books = computed(() => this.store.books());
 
@@ -167,7 +180,7 @@ export class AccountingOverviewPage {
       { key: 'invoices', segmentId: 'receivables.invoices', label: this.i18n.overview_todo_invoices(), value: n(t?.invoicesOverdue), sub: '' },
       { key: 'expenses', segmentId: 'payables.expenses', label: this.i18n.overview_todo_expenses(), value: n(t?.expensesOpen), sub: '' },
       { key: 'bankRows', segmentId: 'journal.bankImport', label: this.i18n.overview_todo_bankRows(), value: n(t?.bankRowsOpen), sub: '' },
-    ];
+    ].filter(c => this.available(c.segmentId));
   });
 
   protected readonly newsSinceText = computed(() => {
@@ -191,7 +204,7 @@ export class AccountingOverviewPage {
       card('bills', 'payables.bills', this.i18n.overview_news_bills()),
       card('invoices', 'receivables.invoices', this.i18n.overview_news_invoices()),
       card('expenses', 'payables.expenses', this.i18n.overview_news_expenses()),
-    ];
+    ].filter(c => this.available(c.segmentId));
   });
 
   protected readonly budgetText = computed(() => {
