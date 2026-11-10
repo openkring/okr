@@ -1,16 +1,16 @@
 /** Paid options on the subscription (plan 2 Task 7) and the billing e-mail (Task 12). */
 import { onCall, HttpsError, type CallableRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
-import { getFirestore } from 'firebase-admin/firestore';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 
 import { checkAppCheckToken, checkAuthentication, getCallerTenantId } from '@okr/shared-util-functions';
 import { ADD_ON_BLOCKS, optionBlocks } from '@okr/business-metering-util';
 import { SubscriptionCollection } from '@okr/shared-models';
-import { FEATURE_BLOCKS, type FeatureBlock } from '@okr/tenant-util';
+import { FEATURE_BLOCKS, resolveWithDeps, type FeatureBlock } from '@okr/tenant-util';
 
 import { assertCallerIsAdmin, ensureSubscription } from '../collection/payment-method';
 import { applySelection } from '../tenant/apply-feature-selection';
-import { isPaidOptionId } from './paid-options.logic';
+import { isPaidOptionId, paidOptionChanges } from './paid-options.logic';
 
 export { paidOptionChanges } from './paid-options.logic';
 
@@ -56,6 +56,12 @@ export const createSetSubscriptionOptions = (
     }
     const before = (sub['options'] as string[] | undefined) ?? [];
     const blocksOf = (ids: string[]) => ids.flatMap(id => optionBlocks(id, blockMap));
+    // A requested option whose dependency closure holds ANOTHER paid option's block (expense -> finance)
+    // would run that block unbilled: the implied option must be booked too.
+    const requires = paidOptionChanges([], resolveWithDeps(catalogue, blocksOf(options)), options, blockMap);
+    if (requires.length > 0) {
+      throw new HttpsError('failed-precondition', 'option-requires', { reason: 'option-requires', ids: requires });
+    }
     const stillOwned = new Set(blocksOf(options));
     // every requested option, not just the new ones: enabling is idempotent, and a retry after a failed enable converges
     const enable = blocksOf(options);
@@ -66,7 +72,15 @@ export const createSetSubscriptionOptions = (
     // never run ahead of billing, and a retry of the same input converges.
     await applySelection(db, catalogue, tenantId, actor, { enable: [], disable });
     await db.collection(SubscriptionCollection).doc(tenantId).set({ options }, { merge: true });
-    await applySelection(db, catalogue, tenantId, actor, { enable, disable: [] });
+    const { withheld } = await applySelection(db, catalogue, tenantId, actor, { enable, disable: [] });
+    // rollout withheld a block (or a block it needs): the tenant does not get it, so it must not be billed
+    const held = new Set(withheld);
+    const notGranted = options.filter(id => resolveWithDeps(catalogue, optionBlocks(id, blockMap)).some(b => held.has(b)));
+    if (notGranted.length > 0) {
+      await db.collection(SubscriptionCollection).doc(tenantId).set({ options: FieldValue.arrayRemove(...notGranted) }, { merge: true });
+      logger.warn(`${CF_NAME}: tenant ${tenantId} option(s) ${notGranted.join(',')} withheld by rollout, removed again`);
+      throw new HttpsError('failed-precondition', 'option-not-available', { reason: 'option-not-available', ids: notGranted });
+    }
     logger.info(`${CF_NAME}: tenant ${tenantId} options ${before.join(',')} -> ${options.join(',')}`);
     return { options };
   },

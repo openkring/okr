@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const h = vi.hoisted(() => ({ db: undefined as unknown, failCommit: false }));
-vi.mock('firebase-admin/firestore', () => ({ getFirestore: () => h.db }));
+vi.mock('firebase-admin/firestore', async () => {
+  const actual = await vi.importActual<Record<string, unknown>>('firebase-admin/firestore');
+  return { ...actual, getFirestore: () => h.db };
+});
 
 import { createSetSubscriptionOptions, paidOptionChanges, setBillingEmail } from './options';
 import { createApplyFeatureSelection } from '../tenant/apply-feature-selection';
@@ -15,10 +18,10 @@ const block = (id: string, over: Partial<FeatureBlock> = {}): FeatureBlock => ({
 });
 const CATALOGUE = [
   block('person'), block('buchhaltung', { dependsOn: ['person'] }), block('calevent'),
-  block('reports', { dependsOn: ['buchhaltung'] }),
+  block('reports', { dependsOn: ['buchhaltung'] }), block('expense', { dependsOn: ['buchhaltung'] }),
 ];
 // stubbed option -> blocks mapping (the real ADD_ON_BLOCKS is pinned against FEATURE_BLOCKS below)
-const MAP = { buchhaltung: ['buchhaltung'], crm: [] as string[] };
+const MAP = { buchhaltung: ['buchhaltung'], 'spesen-ocr': ['expense'], crm: [] as string[] };
 
 /** fakeDb has no WriteBatch (commitChunked needs one) and no `parent` on refs: add both. */
 const withBatch = (store: Store): unknown => {
@@ -81,6 +84,28 @@ describe('fence in applyFeatureSelection', () => {
       code: 'failed-precondition', details: { reason: 'option-not-subscribed', ids: ['buchhaltung'] },
     });
   });
+  const disable = (store: Record<string, Record<string, unknown>>, blockId: string) => {
+    current = store; h.db = fakeDb(store);
+    return createApplyFeatureSelection(CATALOGUE, MAP).run(req({
+      tenantId: 'scs', intent: { verb: 'disableBlock', blockId },
+    }));
+  };
+  it('refuses a stripe tenant disabling the block of a subscribed option (P8)', async () => {
+    const store = seed('stripe', ['buchhaltung'], ['buchhaltung', 'person']);
+    await expect(disable(store, 'buchhaltung')).rejects.toMatchObject({
+      code: 'failed-precondition', details: { reason: 'option-subscribed', ids: ['buchhaltung'] },
+    });
+    expect(current['app-config/scs']['enabledFeatures']).toEqual(['buchhaltung', 'person']);
+  });
+  it('lets a stripe tenant disable a paid block it is not subscribed to, and an unpaid block', async () => {
+    await expect(disable(seed('stripe', [], ['buchhaltung', 'person']), 'buchhaltung')).resolves.toMatchObject({ applied: true });
+    await expect(disable(seed('stripe', ['buchhaltung'], ['buchhaltung', 'person', 'calevent']), 'calevent'))
+      .resolves.toMatchObject({ applied: true });
+  });
+  it('lets an exempt tenant disable a block of a listed option', async () => {
+    await expect(disable(seed('exempt', ['buchhaltung'], ['buchhaltung', 'person']), 'buchhaltung'))
+      .resolves.toMatchObject({ applied: true });
+  });
   it('lets a stripe tenant enable a subscribed one', async () => {
     await expect(call(seed('stripe', ['buchhaltung']))).resolves.toMatchObject({ applied: true });
   });
@@ -135,6 +160,28 @@ describe('setSubscriptionOptions', () => {
     const store = seed('stripe', ['buchhaltung'], ['buchhaltung', 'person', 'reports']);
     await expect(call(store, [])).rejects.toMatchObject({ code: 'failed-precondition' });
     expect(current['subscriptions/scs']['options']).toEqual(['buchhaltung']);
+  });
+  it('refuses an option whose dependencies hold another paid option, before any write', async () => {
+    const store = seed('stripe');
+    await expect(call(store, ['spesen-ocr'])).rejects.toMatchObject({
+      code: 'failed-precondition', message: 'option-requires', details: { reason: 'option-requires', ids: ['buchhaltung'] },
+    });
+    expect(current['subscriptions/scs']['options']).toEqual([]);
+    expect(current['app-config/scs']['enabledFeatures']).toEqual([]);
+  });
+  it('accepts the dependent option together with the option it requires', async () => {
+    const store = seed('stripe');
+    await expect(call(store, ['spesen-ocr', 'buchhaltung'])).resolves.toEqual({ options: ['spesen-ocr', 'buchhaltung'] });
+    expect(current['app-config/scs']['enabledFeatures']).toEqual(expect.arrayContaining(['expense', 'buchhaltung']));
+  });
+  it('removes an option again and refuses it when rollout withholds its block', async () => {
+    const store = seed('stripe', ['buchhaltung'], ['buchhaltung', 'person']);
+    store['feature-rollout/expense'] = { availability: 'disabled', allowTenants: [], denyTenants: [], reason: 'Bug' };
+    await expect(call(store, ['buchhaltung', 'spesen-ocr'])).rejects.toMatchObject({
+      code: 'failed-precondition', message: 'option-not-available', details: { reason: 'option-not-available', ids: ['spesen-ocr'] },
+    });
+    expect(current['subscriptions/scs']['options']).toEqual(['buchhaltung']);
+    expect(current['app-config/scs']['enabledFeatures']).not.toContain('expense');
   });
   it('rejects an unknown id', async () => {
     await expect(call(seed('stripe'), ['nope'])).rejects.toMatchObject({ code: 'invalid-argument' });

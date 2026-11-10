@@ -883,6 +883,27 @@ async function assertPaidOptionsSubscribed(
   }
 }
 
+/**
+ * The other half of the fence (ruling P8): a `stripe` tenant may not switch off, in the picker, a block that
+ * belongs to an option it is subscribed to — the option would stay billed. Stopping a paid option is the Abo
+ * section's job (`setSubscriptionOptions`, which disables through `applySelection` and is not fenced). A
+ * disable never cascades (`planDisableBlock` refuses while a holder runs), so only the block itself counts.
+ * Throws failed-precondition 'option-subscribed'.
+ */
+async function assertNotSubscribedOptionBlock(
+  db: Firestore, tenantId: string, blockId: string, optionBlocksMap: Record<string, readonly string[]>,
+): Promise<void> {
+  const sub = (await db.collection(SubscriptionCollection).doc(tenantId).get()).data();
+  if (sub?.['billing'] !== 'stripe') return;
+  const subscribed = (sub['options'] as string[] | undefined) ?? [];
+  const ids = subscribed.filter(option =>
+    Object.prototype.hasOwnProperty.call(optionBlocksMap, option) && optionBlocksMap[option].includes(blockId));
+  if (ids.length > 0) {
+    throw new HttpsError('failed-precondition',
+      `${CF_NAME}: option-subscribed (${ids.join(', ')})`, { reason: 'option-subscribed', ids });
+  }
+}
+
 /** Every menu key of a block's tree — "all rows ticked", the default of a plain enable. */
 function allMenuKeys(specs: MenuSpec[]): string[] {
   return specs.flatMap(s => [s.key, ...allMenuKeys(s.children ?? [])]);
@@ -892,24 +913,28 @@ function allMenuKeys(specs: MenuSpec[]): string[] {
  * Server core without the caller's authorisation (the callers authorise): switch `enable` blocks on (all menu
  * rows, dependencies via `planEnableBlock`/`planSelection`) and `disable` blocks off, committing each step.
  * Disables run first so a refusal (a running block still depends on it) throws before anything is enabled.
- * Ids that are not catalogue blocks are skipped. The paid-option fence is NOT applied here — the caller
+ * Ids that are not catalogue blocks are skipped. Returns the block ids rollout withheld on the enables (reported,
+ * never written). The paid-option fence is NOT applied here — the caller
  * (`setSubscriptionOptions`) has just made the subscription the authority.
  */
 export async function applySelection(
   db: Firestore, catalogue: FeatureBlock[], tenantId: string, actor: string,
   change: { enable: string[]; disable: string[] },
-): Promise<void> {
+): Promise<{ withheld: string[] }> {
   const known = new Set(catalogue.map(b => b.id));
   const rollouts = (await db.collection(FeatureRolloutCollection).get())
     .docs.map(d => ({ okey: d.id, ...d.data() }) as FeatureRollout);
   for (const id of change.disable.filter(i => known.has(i))) {
     await commitChunked(db, (await planDisableBlock(db, catalogue, tenantId, actor, id)).writes);
   }
+  const withheld = new Set<string>();
   for (const id of change.enable.filter(i => known.has(i))) {
     const block = catalogue.find(b => b.id === id) as FeatureBlock;
-    await commitChunked(db,
-      (await planEnableBlock(db, catalogue, rollouts, tenantId, actor, id, allMenuKeys(block.menu))).writes);
+    const result = await planEnableBlock(db, catalogue, rollouts, tenantId, actor, id, allMenuKeys(block.menu));
+    result.preview.withheld.forEach(w => withheld.add(w.id));
+    await commitChunked(db, result.writes);
   }
+  return { withheld: [...withheld] };
 }
 
 // ────────────────────────────────────────────────────────────────────────────────────
@@ -1017,6 +1042,7 @@ export function createApplyFeatureSelection(
             intent.blockId, Array.isArray(intent.menuKeys) ? intent.menuKeys : []);
           break;
         case 'disableBlock':
+          await assertNotSubscribedOptionBlock(db, tenantId, intent.blockId, optionBlocksMap);
           result = await planDisableBlock(db, catalogue, tenantId, uid, intent.blockId);
           break;
         case 'addMenuRows':
