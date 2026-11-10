@@ -116,3 +116,40 @@ export function monthlyPositions(input: {
   }
   return { positions, skipped };
 }
+
+/** The month before `period` (yyyyMM). */
+export function previousPeriod(period: string): string {
+  const year = Number(period.slice(0, 4));
+  const m = Number(period.slice(4, 6));
+  return m === 1 ? `${year - 1}12` : `${year}${String(m - 1).padStart(2, '0')}`;
+}
+
+/** A credit ledger entry as the run reads it (credit-accounts/{t}/entries). */
+export interface CreditEntryLike {
+  kind?: string;
+  amount?: number; // signed Rappen: a deduction is negative, a reversal positive
+  product?: string;
+  units?: number;
+  pages?: number;
+}
+
+/**
+ * The past month's transactions per product, net of reversals: units, pages and amount (Rappen, positive) =
+ * deductions − reversals. Other kinds (top-ups, corrections) are ignored; a product that nets to nothing is dropped.
+ * Sorted by product id.
+ */
+export function creditOfMonth(entries: CreditEntryLike[]): Array<{ product: string; units: number; pages: number; amount: number }> {
+  const byProduct = new Map<string, { product: string; units: number; pages: number; amount: number }>();
+  for (const e of entries) {
+    const sign = e.kind === 'deduction' ? 1 : e.kind === 'reversal' ? -1 : 0;
+    if (sign === 0 || !e.product) continue;
+    const sum = byProduct.get(e.product) ?? { product: e.product, units: 0, pages: 0, amount: 0 };
+    sum.units += sign * Number(e.units ?? 0);
+    sum.pages += sign * Number(e.pages ?? 0);
+    sum.amount += sign * Math.abs(Number(e.amount ?? 0));
+    byProduct.set(e.product, sum);
+  }
+  return [...byProduct.values()]
+    .filter((c) => c.amount > 0 || c.units > 0)
+    .sort((a, b) => a.product.localeCompare(b.product));
+}

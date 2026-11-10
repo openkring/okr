@@ -58,8 +58,8 @@ async function text(tenantId: string, key: MailKey, params: Record<string, strin
   return BILLING_MAIL_DEFAULTS[key].replace(/\{(\w+)\}/g, (match: string, k: string) => params[k] ?? match);
 }
 
-/** billingEmail of the subscription, else the e-mail of the tenant's first admin. */
-async function recipientOf(db: Firestore, tenantId: string): Promise<string> {
+/** billingEmail of the subscription, else the e-mail of the tenant's first admin; '' when neither exists. */
+export async function billingRecipient(db: Firestore, tenantId: string): Promise<string> {
   const billingEmail = String((await db.collection(SubscriptionCollection).doc(tenantId).get()).data()?.['billingEmail'] ?? '');
   if (billingEmail) return billingEmail;
   const deps = createFirestoreDeps();
@@ -83,7 +83,7 @@ async function queue(
 ): Promise<void> {
   const ref = db.collection(WorkflowOutboxCollection).doc(docId);
   if ((await ref.get()).exists) return;
-  const to = await recipientOf(db, tenantId);
+  const to = await billingRecipient(db, tenantId);
   if (!to) {
     logger.warn(`${ruleKey}: tenant ${tenantId} has no billing or admin e-mail`, { docId });
     return;

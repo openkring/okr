@@ -26,6 +26,7 @@ import { SRV_SECRETS } from '../_gateway/adapters/srv';
 import { runCourseEndTasks } from '../course/course-end-tasks';
 import { runWebhookStuckCheck } from '../_webhooks/stuck-check';
 import { runMailingLettersReap } from '../email/mailing-letters';
+import { isFirstOfMonthInZurich, runMonthlyBillingRequests } from '../billing/billing-run';
 
 const REGION = 'europe-west6';
 const TIME_ZONE = 'Europe/Zurich';
@@ -52,6 +53,8 @@ export const MORNING_JOBS: NamedJob[] = [
   { name: 'taskDaily', run: runTaskDaily },
   { name: 'pruneStalePushTokens', run: runPruneStalePushTokens },
   { name: 'regasoftApiWatch', run: () => runRegasoftApiWatch() },
+  // the 1st (Zurich) only: one billing-run request per billable tenant; onBillingRunRequested does the work
+  { name: 'monthlyBilling', run: () => runMonthlyBillingRequests(), when: isFirstOfMonthInZurich },
 ];
 
 export const EVENING_JOBS: NamedJob[] = [
@@ -79,8 +82,10 @@ export const nightlyMaintenance = onSchedule(NIGHTLY_OPTIONS, async () => {
   await runJobs('nightlyMaintenance', NIGHTLY_JOBS);
 });
 
-export const morningJobs = onSchedule(MORNING_OPTIONS, async () => {
-  await runJobs('morningJobs', MORNING_JOBS);
+export const morningJobs = onSchedule(MORNING_OPTIONS, async (event) => {
+  // the scheduled instant, so a late start still sees the day it was scheduled for (monthlyBilling's `when`)
+  const scheduled = new Date(event.scheduleTime);
+  await runJobs('morningJobs', MORNING_JOBS, Number.isNaN(scheduled.getTime()) ? new Date() : scheduled);
 });
 
 export const eveningJobs = onSchedule(EVENING_OPTIONS, async () => {

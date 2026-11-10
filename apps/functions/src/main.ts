@@ -319,6 +319,8 @@ export { createInvoicePaymentSession } from './collection/pay-invoice';
 export { quoteCredit, createTopUpInvoice, setAutoTopUp } from './credit/credit-callables';
 export { onAutoTopUpRequested } from './credit/auto-topup.trigger';
 export { onTopUpPaid } from './credit/topup-paid.trigger';
+// Monthly billing run (plan 2): the morning job on the 1st requests one run per billed tenant; this trigger bills it
+export { onBillingRunRequested } from './billing/billing-run';
 export const cancelInvoice = Invoice.cancelInvoice;
 export const createPaymentConfirmation = Invoice.createPaymentConfirmation;
 export const createInvoiceReminder = Invoice.createInvoiceReminder;

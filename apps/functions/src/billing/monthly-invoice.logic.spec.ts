@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { billingPeriod, chooseBand, isBillable, isIndividuallyPriced, monthlyPositions } from './monthly-invoice.logic';
+import { billingPeriod, chooseBand, creditOfMonth, isBillable, isIndividuallyPriced, monthlyPositions, previousPeriod } from './monthly-invoice.logic';
 
 const sub = (extra: Record<string, unknown> = {}) => ({ billing: 'stripe' as const, state: 'active' as const, billingStart: '20260101', lastRunPeriod: '', ...extra });
 
@@ -103,5 +103,34 @@ describe('monthlyPositions', () => {
     const { positions, skipped } = monthlyPositions({ period: '202612', band: 'KringXXS', options: ['crm', 'bogus'], credit: [], accounts });
     expect(skipped).toEqual(['bogus']);
     expect(positions).toHaveLength(2);
+  });
+});
+
+describe('previousPeriod', () => {
+  it('steps back a month, over the year boundary', () => {
+    expect(previousPeriod('202612')).toBe('202611');
+    expect(previousPeriod('202701')).toBe('202612');
+  });
+});
+
+describe('creditOfMonth', () => {
+  it('nets deductions and reversals per product; top-ups and corrections are ignored', () => {
+    expect(creditOfMonth([
+      { kind: 'deduction', product: 'pingen-letter', amount: -500, units: 5, pages: 8 },
+      { kind: 'deduction', product: 'pingen-letter', amount: -400, units: 4, pages: 4 },
+      { kind: 'reversal', product: 'pingen-letter', amount: 100, units: 1, pages: 1 },
+      { kind: 'topup', product: '', amount: 10000 },
+      { kind: 'correction', product: 'pingen-letter', amount: -50 },
+      { kind: 'deduction', product: 'a-sms', amount: -30, units: 3, pages: 0 },
+    ])).toEqual([
+      { product: 'a-sms', units: 3, pages: 0, amount: 30 },
+      { product: 'pingen-letter', units: 8, pages: 11, amount: 800 },
+    ]);
+  });
+  it('drops a product whose deductions were fully reversed', () => {
+    expect(creditOfMonth([
+      { kind: 'deduction', product: 'pingen-letter', amount: -100, units: 1, pages: 1 },
+      { kind: 'reversal', product: 'pingen-letter', amount: 100, units: 1, pages: 1 },
+    ])).toEqual([]);
   });
 });

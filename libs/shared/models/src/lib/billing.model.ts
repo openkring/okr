@@ -32,8 +32,17 @@ export interface SubscriptionMeasurement {
   period: string; // yyyyMM
   totalUsers: number;
   privilegedUsers: number;
+  /** Not counted: kiosk-only accounts and the operator-listed excludedUids. */
+  excludedUsers: number;
   weighted: number;
 }
+
+/**
+ * Why the monthly run refused a tenant, for the operator board: the operator books are not VAT-exempt, the tenant
+ * is priced individually (≥ 1000 weighted users), an account key of the operator books is missing, the run failed
+ * permanently, or the invoice could not be mailed (no billing or admin e-mail).
+ */
+export type BillingFlag = 'vat-blocked' | 'individual-band' | 'accounts-missing' | 'run-failed' | 'no-recipient';
 
 export type PaymentMethodType = 'card' | 'paypal';
 
@@ -78,6 +87,7 @@ export class SubscriptionModel implements OkrModel {
   public pastDueSince = ''; // StoreDate, '' when not pastDue
   public closingSince = ''; // StoreDate
   public cancelledAt = ''; // StoreDate
+  public billingFlags: BillingFlag[] = []; // set by the monthly run when it refused this tenant; cleared by a run that issued
 
   constructor(tenantId: string) {
     this.okey = tenantId;

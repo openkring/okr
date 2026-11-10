@@ -14,8 +14,13 @@ describe('time-slot schedulers', () => {
     expect(names(NIGHTLY_JOBS)).toEqual(['tripStatsReconcile', 'crewTrackCleanup', 'trackerExpiry', 'roomPostPolicySweep', 'expiredMembershipSweep', 'pinboardSweep', 'billScanReap', 'privacyExportReap', 'mailingLettersReap', 'courseEndTasks', 'energyFiguresFetch', 'webhookStuckCheck']);
   });
 
-  it('morning runs its six jobs in order', () => {
-    expect(names(MORNING_JOBS)).toEqual(['contractDeadlineScan', 'snbRates', 'partnerHeartbeats', 'taskDaily', 'pruneStalePushTokens', 'regasoftApiWatch']);
+  it('morning runs its seven jobs in order; monthlyBilling only on the 1st in Zurich', () => {
+    expect(names(MORNING_JOBS)).toEqual(['contractDeadlineScan', 'snbRates', 'partnerHeartbeats', 'taskDaily', 'pruneStalePushTokens', 'regasoftApiWatch', 'monthlyBilling']);
+    const billing = MORNING_JOBS[6];
+    expect(billing.when?.(new Date('2026-12-01T06:00:00Z'))).toBe(true); // 07:00 Zurich
+    expect(billing.when?.(new Date('2026-07-01T05:00:00Z'))).toBe(true); // 07:00 Zurich (summer time)
+    expect(billing.when?.(new Date('2026-12-02T06:00:00Z'))).toBe(false);
+    expect(MORNING_JOBS.slice(0, 6).every((j) => j.when === undefined)).toBe(true);
   });
 
   it('evening runs its two jobs in order', () => {
