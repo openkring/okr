@@ -158,6 +158,8 @@
     "cancel": "Disdici",
     "cancel_confirm": "Disdire l’abbonamento di {tenant}? In seguito non verranno più emesse fatture.",
     "saved": "Salvato.",
+    "flag_clear": "Rimuovi avviso",
+    "flag_clear_confirm": "Rimuovere l’avviso «{flag}» per {tenant}? Fallo solo dopo che te ne sei occupato.",
     "flag": {
       "vat_blocked": "IVA non supportata",
       "individual_band": "Prezzo individuale",

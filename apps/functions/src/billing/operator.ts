@@ -4,7 +4,9 @@ import { logger } from 'firebase-functions/v2';
 import { FieldValue, getFirestore, type Firestore } from 'firebase-admin/firestore';
 
 import { checkAppCheckToken, checkAuthentication, getCallerTenantId } from '@okr/shared-util-functions';
-import { InvoiceCollection, PaymentAttemptCollection, CreditAccountCollection, SubscriptionCollection, type BillingMode } from '@okr/shared-models';
+import {
+  InvoiceCollection, PaymentAttemptCollection, CreditAccountCollection, SubscriptionCollection, type BillingFlag, type BillingMode,
+} from '@okr/shared-models';
 
 import { callerIsAdmin, ensureSubscription } from '../collection/payment-method';
 import { platformBilling } from '../collection/platform';
@@ -14,6 +16,11 @@ import { buildOverview, optionsFromEnabledBlocks, type BillingOverviewRow } from
 const REGION = 'europe-west6';
 const IN_LIMIT = 30;
 const STATE_FLAGS = ['run-failed'] as const;
+/** Every BillingFlag of shared-models: the only values clearBillingFlags removes. */
+const KNOWN_FLAGS: readonly BillingFlag[] = [
+  'vat-blocked', 'individual-band', 'accounts-missing', 'run-failed', 'no-recipient',
+  'overpaid', 'disputed', 'refund-on-posted-payment', 'refund-failed', 'credit-negative',
+];
 
 /** Server-side operator check: the caller belongs to the operator tenant and is admin or treasurer. */
 async function assertOperator(db: Firestore, request: CallableRequest, cfName: string) {
@@ -132,5 +139,30 @@ export const setTenantState = onCall(
     await db.collection(SubscriptionCollection).doc(tenantId).set(patch, { merge: true });
     logger.info(`${CF_NAME}: tenant ${tenantId} -> ${state}`);
     return { ok: true };
+  },
+);
+
+/**
+ * The operator removes board flags of a tenant once handled (a Stripe money event is never cleared automatically).
+ * Only known BillingFlag values; the subscription doc must exist. `overpaid` / `disputed` also derive from the
+ * payment attempts on the board, so they stay visible while such an attempt is open.
+ */
+export const clearBillingFlags = onCall(
+  { region: REGION, enforceAppCheck: true, cors: true },
+  async (request: CallableRequest): Promise<{ ok: true; flags: BillingFlag[] }> => {
+    const CF_NAME = 'clearBillingFlags';
+    guard(request, CF_NAME);
+    const db = getFirestore();
+    await assertOperator(db, request, CF_NAME);
+    const tenantId = await assertTenant(db, request.data?.tenantId, CF_NAME);
+    const raw = request.data?.flags as unknown;
+    if (!Array.isArray(raw) || raw.length === 0 || raw.some(f => typeof f !== 'string' || !KNOWN_FLAGS.includes(f as BillingFlag))) {
+      throw new HttpsError('invalid-argument', `${CF_NAME}: flags must be a non-empty list of known billing flags.`);
+    }
+    const flags = [...new Set(raw as BillingFlag[])];
+    await ensureSubscription(db, tenantId);
+    await db.collection(SubscriptionCollection).doc(tenantId).set({ billingFlags: FieldValue.arrayRemove(...flags) }, { merge: true });
+    logger.info(`${CF_NAME}: tenant ${tenantId} flags ${flags.join(',')} cleared by ${request.auth?.uid}`);
+    return { ok: true, flags };
   },
 );

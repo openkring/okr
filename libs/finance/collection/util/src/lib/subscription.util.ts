@@ -118,6 +118,11 @@ export const BILLING_FLAGS: readonly BillingFlag[] = [
   'overpaid', 'disputed', 'refund-on-posted-payment', 'refund-failed', 'credit-negative',
 ];
 
+/** The clearBillingFlags request that removes one flag of a tenant; undefined for an unknown flag (the server refuses it). */
+export function clearFlagRequest(tenantId: string, flag: string): { tenantId: string; flags: BillingFlag[] } | undefined {
+  return BILLING_FLAGS.includes(flag as BillingFlag) ? { tenantId, flags: [flag as BillingFlag] } : undefined;
+}
+
 /** The i18n key name of a flag's label (`run-failed` → `board_flag_run_failed`); undefined for an unknown flag. */
 export function flagI18nKey(flag: string): keyof typeof COLLECTION_I18N_KEYS | undefined {
   if (!BILLING_FLAGS.includes(flag as BillingFlag)) return undefined;

@@ -158,6 +158,8 @@
     "cancel": "Cancel subscription",
     "cancel_confirm": "Cancel the subscription of {tenant}? No more invoices are issued afterwards.",
     "saved": "Saved.",
+    "flag_clear": "Remove notice",
+    "flag_clear_confirm": "Remove the notice “{flag}” for {tenant}? Only do this once you have dealt with it.",
     "flag": {
       "vat_blocked": "VAT not supported",
       "individual_band": "Individual price",

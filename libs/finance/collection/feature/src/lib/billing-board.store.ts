@@ -10,7 +10,8 @@ import { I18nService } from '@okr/shared-i18n';
 import { confirm, notify, showToast } from '@okr/shared-util-angular';
 import { fill } from '@okr/shared-util-core';
 import {
-  BillingOverviewRow, boardFlags, BoardStateFilter, COLLECTION_I18N_KEYS, CollectionI18n, filterBoardRows, optionI18nKey,
+  BillingOverviewRow, boardFlags, BoardStateFilter, clearFlagRequest, COLLECTION_I18N_KEYS, CollectionI18n, filterBoardRows,
+  flagI18nKey, optionI18nKey,
 } from '@okr/finance-collection-util';
 
 interface BillingBoardState {
@@ -26,8 +27,9 @@ interface BillingBoardState {
 
 /**
  * The operator's billing board (`/billing/board`, plan 2 Task 12): every tenant's subscription from getBillingOverview,
- * filtered by state and flag, with the row actions «Auf Stripe umstellen», «Wieder aktivieren» and «Kündigen». The route
- * only asks for an admin; the callables decide who is an operator (operator tenant, admin or treasurer).
+ * filtered by state and flag, with the row actions «Auf Stripe umstellen», «Wieder aktivieren», «Kündigen» and «Hinweis
+ * entfernen» per flag. The route admits an admin or a treasurer; the callables decide who is an operator (operator
+ * tenant, admin or treasurer).
  */
 export const BillingBoardStore = signalStore(
   withState<BillingBoardState>({ rows: [], loading: false, loadError: '', busy: false, stateFilter: 'all', flagFilter: 'all' }),
@@ -93,9 +95,16 @@ export const BillingBoardStore = signalStore(
       }
     }
 
+    /** the label of an operator flag; an unknown flag shows its id */
+    function flagLabel(flag: string): string {
+      const key = flagI18nKey(flag);
+      return key ? store.i18n[key]() : flag;
+    }
+
     return {
       load,
       optionName,
+      flagLabel,
 
       setStateFilter(stateFilter: BoardStateFilter): void {
         patchState(store, { stateFilter });
@@ -123,6 +132,16 @@ export const BillingBoardStore = signalStore(
         const res = await act<{ tenantId: string; state: 'active' }, { ok: boolean }>(
           fill(store.i18n.board_reactivate_confirm(), { tenant: row.name || row.tenantId }), store.i18n.board_reactivate(),
           'setTenantState', { tenantId: row.tenantId, state: 'active' });
+        if (res?.ok) await showToast(store.toastController, store.i18n.board_saved());
+      },
+
+      /** «Hinweis entfernen»: removes one handled flag from the tenant's subscription (asks first). */
+      async clearFlag(row: BillingOverviewRow, flag: string): Promise<void> {
+        const request = clearFlagRequest(row.tenantId, flag);
+        if (!request) return;
+        const res = await act<typeof request, { ok: boolean }>(
+          fill(store.i18n.board_flag_clear_confirm(), { flag: flagLabel(flag), tenant: row.name || row.tenantId }),
+          store.i18n.board_flag_clear(), 'clearBillingFlags', request);
         if (res?.ok) await showToast(store.toastController, store.i18n.board_saved());
       },
 

@@ -3,7 +3,7 @@ import { ADD_ON_BLOCKS, ADD_ON_PRICES } from '@okr/business-metering-util';
 
 import { COLLECTION_I18N_KEYS } from './collection-i18n';
 import {
-  aboStateKey, BILLING_FLAGS, BillingOverviewRow, flagI18nKey, sameOptions, boardFlags, filterBoardRows, invoiceStateKind, isInvoicePayable, isOptionAvailable,
+  aboStateKey, BILLING_FLAGS, clearFlagRequest, BillingOverviewRow, flagI18nKey, sameOptions, boardFlags, filterBoardRows, invoiceStateKind, isInvoicePayable, isOptionAvailable,
   MyBillingInvoice, nextInvoiceEstimate, optionI18nKey, optionRows,
 } from './subscription.util';
 
@@ -126,4 +126,15 @@ describe('flag labels', () => {
   it('maps dashes to underscores', () => expect(flagI18nKey('run-failed')).toBe('board_flag_run_failed'));
   it('an unknown flag has no key', () => expect(flagI18nKey('nope')).toBeUndefined());
   it('lists all ten flags of the model', () => expect(BILLING_FLAGS).toHaveLength(10));
+});
+
+describe('clearFlagRequest', () => {
+  it('builds the clearBillingFlags request for a known flag', () => {
+    expect(clearFlagRequest('scs', 'overpaid')).toEqual({ tenantId: 'scs', flags: ['overpaid'] });
+  });
+  it('offers nothing for an unknown flag (the server refuses it)', () => expect(clearFlagRequest('scs', 'nope')).toBeUndefined());
+  it('the clear action and its confirmation have labels', () => {
+    expect(COLLECTION_I18N_KEYS.board_flag_clear).toBeDefined();
+    expect(COLLECTION_I18N_KEYS.board_flag_clear_confirm).toBeDefined();
+  });
 });

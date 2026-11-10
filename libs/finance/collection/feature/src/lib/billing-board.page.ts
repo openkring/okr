@@ -7,7 +7,7 @@ import {
 import { Header } from '@okr/shared-ui';
 import { fill } from '@okr/shared-util-core';
 import {
-  aboStateKey, AboStateKey, BillingOverviewRow, BoardStateFilter, flagI18nKey, formatChfAmount,
+  aboStateKey, AboStateKey, BillingOverviewRow, BoardStateFilter, formatChfAmount,
 } from '@okr/finance-collection-util';
 
 import { BillingBoardStore } from './billing-board.store';
@@ -16,7 +16,8 @@ const STATE_FILTERS: AboStateKey[] = ['active', 'pastDue', 'closing', 'closed', 
 
 /**
  * `/billing/board` (operator): all tenants' subscriptions with state, band, options, open amount, failed attempts,
- * credit and flags. The route guard only asks for an admin; a non-operator gets «Nur für bkaiser.» from the server.
+ * credit and flags (a tap on a flag removes it after a confirmation). The route admits an admin or a treasurer; a
+ * non-operator gets «Nur für bkaiser.» from the server.
  */
 @Component({
   selector: 'okr-billing-board-page',
@@ -81,7 +82,10 @@ const STATE_FILTERS: AboStateKey[] = ['active', 'pastDue', 'closing', 'closed', 
                 @if (row.flags.length > 0) {
                   <div>
                     @for (flag of row.flags; track flag) {
-                      <ion-chip color="warning" [outline]="true">{{ flagLabel(flag) }}</ion-chip>
+                      <ion-chip color="warning" [outline]="true" [disabled]="store.busy()" (click)="store.clearFlag(row, flag)"
+                        [attr.aria-label]="i18n.board_flag_clear() + ': ' + flagLabel(flag)" [title]="i18n.board_flag_clear()">
+                        <ion-label>{{ flagLabel(flag) }} ×</ion-label>
+                      </ion-chip>
                     }
                   </div>
                 }
@@ -135,8 +139,7 @@ export class BillingBoardPage {
 
   /** the German label of an operator flag; an unknown flag shows its id */
   protected flagLabel(flag: string): string {
-    const key = flagI18nKey(flag);
-    return key ? this.i18n[key]() : flag;
+    return this.store.flagLabel(flag);
   }
 
   protected optionsText(row: BillingOverviewRow): string {

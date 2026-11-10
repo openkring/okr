@@ -6,7 +6,7 @@ vi.mock('firebase-admin/firestore', async () => {
   return { ...actual, getFirestore: () => h.db };
 });
 
-import { getBillingOverview, setTenantBilling, setTenantState } from './operator';
+import { clearBillingFlags, getBillingOverview, setTenantBilling, setTenantState } from './operator';
 import { optionsFromEnabledBlocks } from './operator.logic';
 import { toStoreDate } from '../srv/zurich-time';
 import { fakeDb, type Store } from '../credit/testing/credit-fake-db';
@@ -97,6 +97,29 @@ describe('setTenantState', () => {
     expect(store['subscriptions/scs']).toMatchObject({ state: 'active', pastDueSince: '', closingSince: '', billingFlags: ['vat-blocked'] });
     await call(setTenantState, 'opAdmin', { tenantId: 'scs', state: 'cancelled' });
     expect(store['subscriptions/scs']).toMatchObject({ state: 'cancelled', cancelledAt: toStoreDate(new Date()), pastDueSince: '', closingSince: '' });
+  });
+});
+
+describe('clearBillingFlags', () => {
+  it('removes the given flags and keeps the others', async () => {
+    store['subscriptions/scs']['billingFlags'] = ['vat-blocked', 'overpaid', 'no-recipient'];
+    await expect(call(clearBillingFlags, 'opTreasurer', { tenantId: 'scs', flags: ['overpaid', 'no-recipient'] }))
+      .resolves.toEqual({ ok: true, flags: ['overpaid', 'no-recipient'] });
+    expect(store['subscriptions/scs']['billingFlags']).toEqual(['vat-blocked']);
+  });
+  it('rejects an unknown flag, an empty list and a non-list, and writes nothing', async () => {
+    for (const flags of [['vat-blocked', 'nope'], [], 'overpaid']) {
+      await expect(call(clearBillingFlags, 'opAdmin', { tenantId: 'scs', flags })).rejects.toMatchObject({ code: 'invalid-argument' });
+    }
+    expect(store['subscriptions/scs']['billingFlags']).toEqual(['vat-blocked']);
+  });
+  it('is reserved for the operator', async () => {
+    await expect(call(clearBillingFlags, 'otherAdmin', { tenantId: 'scs', flags: ['vat-blocked'] })).rejects.toMatchObject({ code: 'permission-denied' });
+    await expect(call(clearBillingFlags, 'opMember', { tenantId: 'scs', flags: ['vat-blocked'] })).rejects.toMatchObject({ code: 'permission-denied' });
+    expect(store['subscriptions/scs']['billingFlags']).toEqual(['vat-blocked']);
+  });
+  it('rejects an unknown tenant', async () => {
+    await expect(call(clearBillingFlags, 'opAdmin', { tenantId: 'nope', flags: ['vat-blocked'] })).rejects.toMatchObject({ code: 'not-found' });
   });
 });
 

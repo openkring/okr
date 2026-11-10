@@ -138,6 +138,8 @@ export const COLLECTION_I18N_KEYS = {
   board_cancel: PFX + 'board.cancel',
   board_cancel_confirm: PFX + 'board.cancel_confirm',
   board_saved: PFX + 'board.saved',
+  board_flag_clear: PFX + 'board.flag_clear',
+  board_flag_clear_confirm: PFX + 'board.flag_clear_confirm',
   board_flag_vat_blocked: PFX + 'board.flag.vat_blocked',
   board_flag_individual_band: PFX + 'board.flag.individual_band',
   board_flag_accounts_missing: PFX + 'board.flag.accounts_missing',

@@ -158,6 +158,8 @@
     "cancel": "Cancelar suscripción",
     "cancel_confirm": "¿Cancelar la suscripción de {tenant}? Después ya no se emitirán facturas.",
     "saved": "Guardado.",
+    "flag_clear": "Quitar aviso",
+    "flag_clear_confirm": "¿Quitar el aviso «{flag}» de {tenant}? Hazlo solo cuando ya te hayas ocupado de ello.",
     "flag": {
       "vat_blocked": "IVA no admitido",
       "individual_band": "Precio individual",

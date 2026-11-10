@@ -158,6 +158,8 @@
     "cancel": "Résilier",
     "cancel_confirm": "Résilier l’abonnement de {tenant} ? Plus aucune facture ne sera émise ensuite.",
     "saved": "Enregistré.",
+    "flag_clear": "Retirer la remarque",
+    "flag_clear_confirm": "Retirer la remarque « {flag} » pour {tenant} ? Fais-le seulement une fois que tu t’en es occupé.",
     "flag": {
       "vat_blocked": "TVA non prise en charge",
       "individual_band": "Prix individuel",

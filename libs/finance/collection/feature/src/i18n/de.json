@@ -158,6 +158,8 @@
     "cancel": "Kündigen",
     "cancel_confirm": "Das Abo von {tenant} kündigen? Es werden danach keine Rechnungen mehr erstellt.",
     "saved": "Gespeichert.",
+    "flag_clear": "Hinweis entfernen",
+    "flag_clear_confirm": "Den Hinweis «{flag}» bei {tenant} entfernen? Mach das erst, wenn du dich darum gekümmert hast.",
     "flag": {
       "vat_blocked": "MWST nicht unterstützt",
       "individual_band": "Individueller Preis",
