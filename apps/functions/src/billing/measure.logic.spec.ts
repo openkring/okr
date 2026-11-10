@@ -7,7 +7,7 @@ const u = (roles: Record<string, boolean>, extra: Record<string, unknown> = {}) 
 describe('countUsers', () => {
   it('weights privileged users double (3 normal + 1 admin)', () => {
     const users = [u({ registered: true }), u({ registered: true }), u({ registered: true }), u({ admin: true })];
-    expect(countUsers(users, '20261130')).toEqual({ totalUsers: 4, privilegedUsers: 1, weighted: 5 });
+    expect(countUsers(users, '20261130')).toEqual({ totalUsers: 4, privilegedUsers: 1, excludedUsers: 0, weighted: 5 });
   });
   it('excludes archived and disabled users', () => {
     const users = [u({ registered: true }), u({ registered: true }, { isArchived: true }), u({ registered: true }, { disabled: true })];
@@ -15,11 +15,15 @@ describe('countUsers', () => {
   });
   it('counts a user with two privileged roles once as privileged', () => {
     const r = countUsers([u({ admin: true, treasurer: true })], '20261130');
-    expect(r).toEqual({ totalUsers: 1, privilegedUsers: 1, weighted: 2 });
+    expect(r).toEqual({ totalUsers: 1, privilegedUsers: 1, excludedUsers: 0, weighted: 2 });
   });
-  it('does not count kiosk or tester users, even with a privileged role', () => {
-    const users = [u({ kiosk: true }), u({ tester: true, admin: true }), u({ registered: true })];
-    expect(countUsers(users, '20261130')).toEqual({ totalUsers: 1, privilegedUsers: 0, weighted: 1 });
+  it('excludes kiosk-only and tester+registered accounts', () => {
+    const r = countUsers([u({ kiosk: true }), u({ tester: true, registered: true }), u({ registered: true })], '20261130');
+    expect(r).toEqual({ totalUsers: 1, privilegedUsers: 0, excludedUsers: 2, weighted: 1 });
+  });
+  it('counts kiosk + admin and tester + contentAdmin as privileged (no bypass)', () => {
+    const r = countUsers([u({ kiosk: true, admin: true }), u({ tester: true, contentAdmin: true })], '20261130');
+    expect(r).toEqual({ totalUsers: 2, privilegedUsers: 2, excludedUsers: 0, weighted: 4 });
   });
   it('ignores false role flags', () => {
     expect(countUsers([u({ admin: false, registered: true })], '20261130').privilegedUsers).toBe(0);
