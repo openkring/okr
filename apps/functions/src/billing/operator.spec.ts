@@ -30,6 +30,7 @@ beforeEach(() => {
       billingFlags: ['vat-blocked'], lastMeasurement: { excludedUsers: 2 } },
     'credit-accounts/scs': { balance: 700 },
     'invoices/ord': inv({ billingKind: '', totalAmount: { amount: 999 } }),
+    'invoices/arch': inv({ isArchived: true, invoiceDate: '20261201', invoiceNo: 9, totalAmount: { amount: 777 } }),
     'invoices/i1': inv(), 'invoices/i0': inv({ invoiceDate: '20261001', invoiceNo: 0, state: 'paid', totalAmount: { amount: 100 }, payments: [{ amount: 100, date: '20261002' }] }),
     'payment-attempts/a1': { tenants: ['bkg'], payerTenantId: 'scs', state: 'overpaid', invoiceKey: 'i1' },
     'payment-attempts/a2': { tenants: ['bkg'], payerTenantId: 'scs', state: 'disputed', invoiceKey: 'i1' },
