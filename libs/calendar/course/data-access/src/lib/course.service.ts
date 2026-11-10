@@ -3,7 +3,9 @@ import { deleteField, FieldPath } from 'firebase/firestore';
 import { map, Observable, of } from 'rxjs';
 
 import { ActivityService } from '@okr/activity-data-access';
-import { CourseCompensationResult, getCourseIndex } from '@okr/calendar-course-util';
+import {
+  CourseApplicantCountsResult, CourseApplicantsResult, CourseCompensationResult, getCourseIndex, InviteApplicantsResult
+} from '@okr/calendar-course-util';
 import { BookingLineService } from '@okr/finance-booking-data-access';
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
@@ -243,6 +245,44 @@ export class CourseService {
     const fn = httpsCallable<{ courseKey: string; accountingTenantId: string }, CourseCompensationResult>(
       getFunctions(undefined, 'europe-west6'), 'requestCourseCompensation');
     return (await fn({ courseKey, accountingTenantId })).data;
+  }
+
+  /*-------------------------- APPLICANTS (spec 1.152 §8, callables) --------------------------------*/
+  /**
+   * The applicants a course manager may invite (callable `listCourseApplicants`): filtered by D7 on the server, rows
+   * with name, type, age, course and state only. `applications` stay privileged-only in the rules, so a responsible
+   * person or group admin reads them only this way. Errors are not caught: the caller shows a toast.
+   */
+  public async listApplicants(courseKey: string): Promise<CourseApplicantsResult> {
+    if (!courseKey) die('CourseService.listApplicants: courseKey is mandatory.');
+    return this.callFunction<{ courseKey: string }, CourseApplicantsResult>('listCourseApplicants', { courseKey });
+  }
+
+  /**
+   * Invite applications to a course (callable `inviteApplicantsToCourse`, at most `INVITE_MAX_APPLICANTS` keys per
+   * call): mails the personal answer link and sets `courseState: 'invited'`. Errors are not caught.
+   */
+  public async inviteApplicants(courseKey: string, applicationKeys: string[]): Promise<InviteApplicantsResult> {
+    if (!courseKey) die('CourseService.inviteApplicants: courseKey is mandatory.');
+    return this.callFunction<{ courseKey: string; applicationKeys: string[] }, InviteApplicantsResult>(
+      'inviteApplicantsToCourse', { courseKey, applicationKeys });
+  }
+
+  /**
+   * Places taken per course (callable `courseApplicantCounts`, A7), for the course list: one call for all listed
+   * courses. Courses the caller may not count (neither managed nor announced) are absent from the result.
+   */
+  public async applicantCounts(courseKeys: string[]): Promise<Record<string, number>> {
+    if (courseKeys.length === 0) return {};
+    const result = await this.callFunction<{ courseKeys: string[] }, CourseApplicantCountsResult>('courseApplicantCounts', { courseKeys });
+    return result.counts ?? {};
+  }
+
+  /** The `firebase/functions` import is dynamic (as in `requestCompensation`): SSR-safe and out of the eager bundle. */
+  private async callFunction<Req, Res>(name: string, data: Req): Promise<Res> {
+    const { getFunctions, httpsCallable } = await import('firebase/functions');
+    const fn = httpsCallable<Req, Res>(getFunctions(undefined, 'europe-west6'), name);
+    return (await fn(data)).data;
   }
 
   /*-------------------------- COMPENSATION BOOKINGS (read-only) --------------------------------*/

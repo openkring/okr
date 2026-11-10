@@ -155,7 +155,9 @@
     },
     "csvFile": "corsi",
     "financeUnavailable": "Non è stato possibile caricare le indennità. Il corso si apre senza di esse. Riprova più tardi.",
-    "announced": "annunciato"
+    "announced": "annunciato",
+    "invite": "Invita candidati",
+    "placesAria": "Posti occupati: {places}"
   },
   "yearly": {
     "title": "Indennità per anno",
@@ -396,6 +398,42 @@
         "title": "Tabella del corso",
         "text": "La tabella mostra gli appuntamenti come colonne e le persone come righe, con il totale per persona. Tutte le persone del corso vedono la stessa tabella. Gli importi dell'indennità non li vedi."
       }
+    }
+  },
+  "invite": {
+    "title": "Invita candidati",
+    "send": "Invita",
+    "empty": "Al momento non ci sono candidature aperte che puoi invitare a questo corso.",
+    "counts": {
+      "places": "{max} posti",
+      "unlimited": "Posti illimitati",
+      "invited": "{n} invitati",
+      "accepted": "{n} confermati"
+    },
+    "group": {
+      "onCourse": "Per questo corso",
+      "audience": "Adatti al corso",
+      "others": "Altri candidati"
+    },
+    "age": "{age} anni",
+    "onOther": "{state} per {course}",
+    "state": {
+      "registered": "iscritto",
+      "invited": "invitato",
+      "accepted": "confermato",
+      "declined": "rifiutato"
+    },
+    "loadError": "Non è stato possibile caricare le candidature. Riprova più tardi.",
+    "error": "Non è stato possibile inviare gli inviti. Riprova più tardi.",
+    "result": {
+      "invited": "{n} invitati.",
+      "skipped": "Non invitati: {list}"
+    },
+    "reason": {
+      "noEmail": "nessun indirizzo e-mail",
+      "notFound": "non trovato",
+      "closed": "candidatura chiusa",
+      "mailFailed": "non è stato possibile inviare l'e-mail"
     }
   }
 }

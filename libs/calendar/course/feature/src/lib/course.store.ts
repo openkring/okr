@@ -3,12 +3,13 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { ModalController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { from, of } from 'rxjs';
+import { catchError, from, of } from 'rxjs';
 
 import { CourseService } from '@okr/calendar-course-data-access';
 import {
-  ALL_COURSES_KEY, buildCourseListRows, COURSE_I18N_KEYS, CourseAccess, courseListHelpRole, CourseI18n, loadFinanceForEdit, mayCreateCourse,
-  mayManageCourse, mayOpenCourseMenu, mayReadCourseFinance, mayWriteCourseFinance, yearlyTotalRows
+  ALL_COURSES_KEY, buildCourseListRows, chunkKeys, COURSE_I18N_KEYS, CourseAccess, CourseApplicantsResult, courseListHelpRole, CourseI18n,
+  INVITE_MAX_APPLICANTS, InviteApplicantsResult, inviteResultMessage, loadFinanceForEdit, mayCreateCourse, mayManageCourse, mayOpenCourseMenu,
+  mayReadCourseFinance, mayWriteCourseFinance, yearlyTotalRows
 } from '@okr/calendar-course-util';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
@@ -33,7 +34,8 @@ export const initialCourseState: CourseState = {
  * State of the course list (spec 1.132 §7.1, §7.7, §8).
  *
  * The edit modal is imported on demand (`await import()`): it pulls in the accounting data-access services
- * (books, accounts, cost centres), which the list itself does not need.
+ * (books, accounts, cost centres), which the list itself does not need. The invite dialog comes from the ui lib, on
+ * demand too (spec 1.152 §8.1).
  */
 export const CourseStore = signalStore(
   withState(initialCourseState),
@@ -121,6 +123,18 @@ export const CourseStore = signalStore(
       params: resourceParams(() => state.canSeeYearlyTotals() ? state.books() : undefined),
       stream: ({ params: books }) => books ? from(state.courseService.listPostedCompensation(books)) : of([]),
     }),
+    /**
+     * Places taken per listed course (A7), ONE callable for the whole list (`courseApplicantCounts`). The server
+     * answers only for courses the viewer manages or that are announced; a failure leaves the chips without a count.
+     */
+    placesResource: rxResource({
+      params: resourceParams(() => state.courses().slice(0, INVITE_MAX_APPLICANTS).map(c => c.okey)),
+      stream: ({ params: keys }) => keys.length === 0 ? of({} as Record<string, number>)
+        : from(state.courseService.applicantCounts(keys)).pipe(catchError((err) => {
+          console.warn('CourseStore: the places per course could not be loaded.', err);
+          return of({} as Record<string, number>);
+        })),
+    }),
   })),
   withComputed((state) => ({
     /** year → persons → amount (§7.7), newest year first; only ever filled for the treasurer / privileged / admin */
@@ -131,6 +145,7 @@ export const CourseStore = signalStore(
   withMethods((store) => ({
     reload(): void {
       store.coursesResource.reload();
+      store.placesResource.reload();
       if (store.canSeeYearlyTotals()) store.postedCompensationResource.reload();
     },
 
@@ -152,12 +167,9 @@ export const CourseStore = signalStore(
     mayManage(course: CourseModel): boolean {
       return mayManageCourse(course, this.accessFor(course));
     },
-    /**
-     * Places taken on a course (A7). 0 until the application count is wired in (spec 1.152 task 11 replaces the body);
-     * the list only reads it through this method.
-     */
-    placesTakenOf(_course: CourseModel): number {
-      return 0;
+    /** Places taken on a course (A7); `undefined` while unknown (loading, not counted for this viewer, failed). */
+    placesTakenOf(course: CourseModel): number | undefined {
+      return store.placesResource.value()?.[course.okey];
     },
     /** name of the course's group, for the overview rows */
     groupNameOf(course: CourseModel): string {
@@ -212,6 +224,53 @@ export const CourseStore = signalStore(
       if (!confirmed) return;
       await store.courseService.archive(course, store.currentUser());
       store.coursesResource.reload();
+    },
+
+    /**
+     * «Bewerbende einladen» (spec 1.152 §8): load the applicants the viewer may see (`listCourseApplicants`, D7), let
+     * them choose in the invite dialog, then `inviteApplicantsToCourse` in slices of at most 100 keys. The result
+     * toast names every skipped applicant with the reason.
+     */
+    async inviteApplicants(course: CourseModel): Promise<void> {
+      if (!this.mayManage(course)) return;
+      let applicants: CourseApplicantsResult;
+      try {
+        applicants = await store.courseService.listApplicants(course.okey);
+      } catch (err) {
+        console.warn('CourseStore.inviteApplicants: listCourseApplicants failed', err);
+        void store.alertService.showToast(store.i18n.invite_loadError());
+        return;
+      }
+      const { CourseInviteModal } = await import('@okr/calendar-course-ui');
+      const modal = await store.modalController.create({ component: CourseInviteModal, componentProps: { course, result: applicants } });
+      await modal.present();
+      const { data, role } = await modal.onDidDismiss<string[]>();
+      if (role !== 'confirm' || !data || data.length === 0) return;
+
+      const total: InviteApplicantsResult = { invited: 0, skipped: [] };
+      try {
+        for (const keys of chunkKeys(data, INVITE_MAX_APPLICANTS)) {
+          const result = await store.courseService.inviteApplicants(course.okey, keys);
+          total.invited += result.invited;
+          total.skipped.push(...(result.skipped ?? []));
+        }
+      } catch (err) {
+        console.warn('CourseStore.inviteApplicants: inviteApplicantsToCourse failed', err);
+        void store.alertService.showToast(store.i18n.invite_error());
+        store.placesResource.reload();
+        return;
+      }
+      void store.alertService.showToast(inviteResultMessage(total, applicants.rows, {
+        invited: store.i18n.invite_result_invited(),
+        skipped: store.i18n.invite_result_skipped(),
+        reasons: {
+          'no-email': store.i18n.invite_reason_noEmail(),
+          'not-found': store.i18n.invite_reason_notFound(),
+          closed: store.i18n.invite_reason_closed(),
+          'mail-failed': store.i18n.invite_reason_mailFailed(),
+        },
+      }));
+      store.placesResource.reload();
     },
 
     /** The course table (attendance, lock, export) of one course. */

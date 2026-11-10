@@ -10,3 +10,4 @@ export * from './lib/course-list.util';
 export * from './lib/course-table-view.util';
 export * from './lib/course-request.util';
 export * from './lib/course-help.util';
+export * from './lib/course-invite.util';

@@ -155,7 +155,9 @@
     },
     "csvFile": "courses",
     "financeUnavailable": "The compensation details could not be loaded. The course opens without them. Please try again later.",
-    "announced": "announced"
+    "announced": "announced",
+    "invite": "Invite applicants",
+    "placesAria": "Places taken: {places}"
   },
   "yearly": {
     "title": "Compensation per year",
@@ -396,6 +398,42 @@
         "title": "Course table",
         "text": "The table shows the events as columns and the people as rows, with the total per person. Everybody who belongs to the course sees the same table. You do not see the compensation amounts."
       }
+    }
+  },
+  "invite": {
+    "title": "Invite applicants",
+    "send": "Invite",
+    "empty": "There are no open applications you can invite to this course right now.",
+    "counts": {
+      "places": "{max} places",
+      "unlimited": "Unlimited places",
+      "invited": "{n} invited",
+      "accepted": "{n} accepted"
+    },
+    "group": {
+      "onCourse": "For this course",
+      "audience": "Suited to the course",
+      "others": "Other applicants"
+    },
+    "age": "{age} years",
+    "onOther": "{state} for {course}",
+    "state": {
+      "registered": "registered",
+      "invited": "invited",
+      "accepted": "accepted",
+      "declined": "declined"
+    },
+    "loadError": "The applications could not be loaded. Please try again later.",
+    "error": "The invitations could not be sent. Please try again later.",
+    "result": {
+      "invited": "{n} invited.",
+      "skipped": "Not invited: {list}"
+    },
+    "reason": {
+      "noEmail": "no email address",
+      "notFound": "not found",
+      "closed": "application closed",
+      "mailFailed": "email could not be sent"
     }
   }
 }

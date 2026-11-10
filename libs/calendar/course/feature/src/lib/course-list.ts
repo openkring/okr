@@ -12,7 +12,7 @@ import { CourseModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
-import { contextMenuId } from '@okr/shared-util-core';
+import { contextMenuId, fill } from '@okr/shared-util-core';
 
 import { CourseStore } from './course.store';
 
@@ -85,8 +85,8 @@ import { CourseStore } from './course.store';
               @if (course.isAnnounced) {
                 <ion-chip slot="end" color="secondary">{{ store.i18n.list_announced() }}</ion-chip>
               }
-              @if (places(course); as places) {
-                <ion-chip slot="end" color="light">{{ places }}</ion-chip>
+              @if (places(course); as placesLabel) {
+                <ion-chip slot="end" color="light" [attr.aria-label]="placesAria(placesLabel)">{{ placesLabel }}</ion-chip>
               }
               @if (course.isLocked) {
                 <ion-chip slot="end" color="medium">{{ store.i18n.list_status_locked() }}</ion-chip>
@@ -150,9 +150,15 @@ export class CourseList {
     return formatCoursePeriod(course);
   }
 
-  /** «5/8» (taken/places); '' when unlimited and nobody has a place */
+  /** «5/8» (taken/places); '' while the count is unknown, or when unlimited and nobody has a place */
   protected places(course: CourseModel): string {
-    return coursePlacesLabel(course.maxParticipants ?? 0, this.store.placesTakenOf(course));
+    const taken = this.store.placesTakenOf(course);
+    return taken === undefined ? '' : coursePlacesLabel(course.maxParticipants ?? 0, taken);
+  }
+
+  /** «Belegte Plätze: 5/8» for screen readers */
+  protected placesAria(label: string): string {
+    return fill(this.store.i18n.list_placesAria(), { places: label });
   }
 
   protected money(minor: number): string {
@@ -186,6 +192,7 @@ export class CourseList {
       options.buttons.push(createActionSheetButton('course.view', i18n.list_view(), this.imgixBaseUrl, 'eye-on'));
     }
     if (mayManage) {
+      options.buttons.push(createActionSheetButton('course.invite', i18n.list_invite(), this.imgixBaseUrl, 'email'));
       options.buttons.push(createActionSheetDivider());
       options.buttons.push(createActionSheetButton('course.archive', i18n.list_archive(), this.imgixBaseUrl, 'trash'));
     }
@@ -201,6 +208,7 @@ export class CourseList {
       case 'course.open': await this.store.openTable(course); break;
       case 'course.edit': await this.store.edit(course); break;
       case 'course.view': await this.store.edit(course, true); break;
+      case 'course.invite': await this.store.inviteApplicants(course); break;
       case 'course.archive': await this.store.archive(course); break;
     }
   }

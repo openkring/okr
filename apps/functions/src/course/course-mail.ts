@@ -110,3 +110,27 @@ export function courseAnswerNotice(p: Partial<Brand> & {
     + (p.courseUrl ? `<p>${button(p.courseUrl, 'Kurs öffnen', primaryStyle(brand))}</p>` : ''));
   return { subject: `${fullName} hat für ${p.courseName} ${verb}`, html };
 }
+
+export interface CourseInvitationMailParams extends Brand {
+  firstName: string;
+  courseName: string;
+  startDate: string;
+  endDate: string;
+  /** the personal link (`courseAnswerUrl`) */
+  answerUrl: string;
+}
+
+/**
+ * The invitation to a course (spec 1.152 §8.2): greeting by first name, course and dates, the «Antworten» button
+ * with the personal link, and that no login is needed.
+ */
+export function courseInvitationMail(p: CourseInvitationMailParams): { subject: string; html: string } {
+  const html = layout(p,
+    `<p>Hallo ${escapeHtml(p.firstName)}</p>`
+    + `<p>Du bist zu diesem Kurs eingeladen:</p>`
+    + courseBlock(p.courseName, courseDates(p.startDate, p.endDate))
+    + `<p>Sag uns bitte, ob du teilnimmst.</p>`
+    + `<p>${button(p.answerUrl, 'Antworten', primaryStyle(p))}</p>`
+    + `<p style="color:#57606a;">Für die Antwort brauchst du kein Login. Der Link gilt nur für dich, leite diese E-Mail deshalb bitte nicht weiter.</p>`);
+  return { subject: `Einladung: ${p.courseName}`, html };
+}

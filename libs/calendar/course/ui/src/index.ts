@@ -4,3 +4,4 @@ export * from './lib/course-attendance.form';
 export * from './lib/course-attendance.modal';
 export * from './lib/course-table';
 export * from './lib/course-help.modal';
+export * from './lib/course-invite.modal';

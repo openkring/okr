@@ -155,7 +155,9 @@
     },
     "csvFile": "kurse",
     "financeUnavailable": "Die Entschädigungsangaben konnten nicht geladen werden. Der Kurs öffnet sich ohne sie. Versuche es später noch einmal.",
-    "announced": "angekündigt"
+    "announced": "angekündigt",
+    "invite": "Bewerbende einladen",
+    "placesAria": "Belegte Plätze: {places}"
   },
   "yearly": {
     "title": "Entschädigungen pro Jahr",
@@ -396,6 +398,42 @@
         "title": "Kurstabelle",
         "text": "Die Tabelle zeigt die Termine als Spalten und die Personen als Zeilen, mit dem Total pro Person. Alle, die zum Kurs gehören, sehen dieselbe Tabelle. Die Beträge der Entschädigung siehst du nicht."
       }
+    }
+  },
+  "invite": {
+    "title": "Bewerbende einladen",
+    "send": "Einladen",
+    "empty": "Es gibt im Moment keine offenen Bewerbungen, die du zu diesem Kurs einladen kannst.",
+    "counts": {
+      "places": "{max} Plätze",
+      "unlimited": "Plätze unbeschränkt",
+      "invited": "{n} eingeladen",
+      "accepted": "{n} zugesagt"
+    },
+    "group": {
+      "onCourse": "Für diesen Kurs",
+      "audience": "Passend zum Kurs",
+      "others": "Weitere Bewerbende"
+    },
+    "age": "{age} Jahre",
+    "onOther": "{state} für {course}",
+    "state": {
+      "registered": "angemeldet",
+      "invited": "eingeladen",
+      "accepted": "zugesagt",
+      "declined": "abgesagt"
+    },
+    "loadError": "Die Bewerbungen konnten nicht geladen werden. Versuche es später noch einmal.",
+    "error": "Die Einladungen konnten nicht verschickt werden. Versuche es später noch einmal.",
+    "result": {
+      "invited": "{n} eingeladen.",
+      "skipped": "Nicht eingeladen: {list}"
+    },
+    "reason": {
+      "noEmail": "keine E-Mail-Adresse",
+      "notFound": "nicht gefunden",
+      "closed": "Bewerbung abgeschlossen",
+      "mailFailed": "E-Mail konnte nicht verschickt werden"
     }
   }
 }

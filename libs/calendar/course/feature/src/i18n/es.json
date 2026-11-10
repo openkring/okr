@@ -155,7 +155,9 @@
     },
     "csvFile": "cursos",
     "financeUnavailable": "No se pudieron cargar las compensaciones. El curso se abre sin ellas. Inténtalo de nuevo más tarde.",
-    "announced": "anunciado"
+    "announced": "anunciado",
+    "invite": "Invitar a candidatos",
+    "placesAria": "Plazas ocupadas: {places}"
   },
   "yearly": {
     "title": "Compensaciones por año",
@@ -396,6 +398,42 @@
         "title": "Tabla del curso",
         "text": "La tabla muestra las citas como columnas y las personas como filas, con el total por persona. Todas las personas del curso ven la misma tabla. No ves los importes de la compensación."
       }
+    }
+  },
+  "invite": {
+    "title": "Invitar a candidatos",
+    "send": "Invitar",
+    "empty": "En este momento no hay solicitudes abiertas que puedas invitar a este curso.",
+    "counts": {
+      "places": "{max} plazas",
+      "unlimited": "Plazas ilimitadas",
+      "invited": "{n} invitados",
+      "accepted": "{n} confirmados"
+    },
+    "group": {
+      "onCourse": "Para este curso",
+      "audience": "Adecuados para el curso",
+      "others": "Otros candidatos"
+    },
+    "age": "{age} años",
+    "onOther": "{state} para {course}",
+    "state": {
+      "registered": "inscrito",
+      "invited": "invitado",
+      "accepted": "confirmado",
+      "declined": "rechazado"
+    },
+    "loadError": "No se han podido cargar las solicitudes. Vuelve a intentarlo más tarde.",
+    "error": "No se han podido enviar las invitaciones. Vuelve a intentarlo más tarde.",
+    "result": {
+      "invited": "{n} invitados.",
+      "skipped": "No invitados: {list}"
+    },
+    "reason": {
+      "noEmail": "sin dirección de correo",
+      "notFound": "no encontrado",
+      "closed": "solicitud cerrada",
+      "mailFailed": "no se ha podido enviar el correo"
     }
   }
 }

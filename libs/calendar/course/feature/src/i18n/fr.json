@@ -155,7 +155,9 @@
     },
     "csvFile": "cours",
     "financeUnavailable": "Les indemnités n'ont pas pu être chargées. Le cours s'ouvre sans elles. Réessaie plus tard.",
-    "announced": "annoncé"
+    "announced": "annoncé",
+    "invite": "Inviter des candidats",
+    "placesAria": "Places occupées : {places}"
   },
   "yearly": {
     "title": "Indemnités par année",
@@ -396,6 +398,42 @@
         "title": "Tableau du cours",
         "text": "Le tableau montre les dates en colonnes et les personnes en lignes, avec le total par personne. Toutes les personnes du cours voient le même tableau. Tu ne vois pas les montants de l'indemnité."
       }
+    }
+  },
+  "invite": {
+    "title": "Inviter des candidats",
+    "send": "Inviter",
+    "empty": "Il n'y a pour le moment aucune candidature ouverte que tu peux inviter à ce cours.",
+    "counts": {
+      "places": "{max} places",
+      "unlimited": "Places illimitées",
+      "invited": "{n} invités",
+      "accepted": "{n} acceptés"
+    },
+    "group": {
+      "onCourse": "Pour ce cours",
+      "audience": "Correspondent au cours",
+      "others": "Autres candidats"
+    },
+    "age": "{age} ans",
+    "onOther": "{state} pour {course}",
+    "state": {
+      "registered": "inscrit",
+      "invited": "invité",
+      "accepted": "accepté",
+      "declined": "refusé"
+    },
+    "loadError": "Les candidatures n'ont pas pu être chargées. Réessaie plus tard.",
+    "error": "Les invitations n'ont pas pu être envoyées. Réessaie plus tard.",
+    "result": {
+      "invited": "{n} invités.",
+      "skipped": "Non invités : {list}"
+    },
+    "reason": {
+      "noEmail": "pas d'adresse e-mail",
+      "notFound": "introuvable",
+      "closed": "candidature clôturée",
+      "mailFailed": "l'e-mail n'a pas pu être envoyé"
     }
   }
 }

@@ -161,6 +161,12 @@ export const onCourseDocWritten = Course.onCourseDocWritten;
 export const requestCourseCompensation = Course.requestCourseCompensation;
 // courseAnswer: the page behind the personal course invitation link — an invited applicant answers without login (spec 1.152 §8.3)
 export const courseAnswer = Course.courseAnswer;
+// listCourseApplicants: the applicants a course manager may invite, filtered by D7 (name, type, age, course, state only) (spec 1.152 §8.1, §11)
+export const listCourseApplicants = Course.listCourseApplicants;
+// inviteApplicantsToCourse: mails the personal answer link and sets courseState 'invited' (spec 1.152 §8.2)
+export const inviteApplicantsToCourse = Course.inviteApplicantsToCourse;
+// courseApplicantCounts: places taken per course for the course list, one call per list (spec 1.152 §10, A7)
+export const courseApplicantCounts = Course.courseApplicantCounts;
 // onMembershipDocWritten: memberships/{membershipId}, one trigger fanning out to the four former membership triggers (matrixSync, pinboardSource, accountSync, exitSettlement; 1.118 A4)
 export const onMembershipDocWritten = Membership.onMembershipDocWritten;
 export const resolveNotesRoom = MatrixSimple.resolveNotesRoom;
