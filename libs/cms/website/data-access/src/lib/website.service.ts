@@ -1,4 +1,6 @@
 import { Injectable, inject } from '@angular/core';
+import { getApp } from 'firebase/app';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { Observable, of } from 'rxjs';
 
 import { FirestoreService } from '@okr/shared-data-access';
@@ -6,6 +8,16 @@ import { I18nService } from '@okr/shared-i18n';
 import { UserModel, WebsiteCollection, WebsiteModel } from '@okr/shared-models';
 
 import { PFX } from './scope';
+
+/** Result of the `publishWebsite` callable (apps/functions/src/website/publish-website.ts). `problems` non-empty = nothing was published. */
+export interface PublishWebsiteResult {
+  version?: string;
+  files: number;
+  pages: number;
+  durationMs: number;
+  problems: { code: string; nodeId?: string; pageKey?: string; sectionKey?: string; detail?: string }[];
+}
+export interface RollbackWebsiteResult { version: string }
 
 /** Written by the Admin SDK only (publishWebsite, developer deploy, import); a client save never sends them. */
 export const WEBSITE_SERVER_FIELDS = ['hostingSite', 'domain', 'templateVersion', 'lastPublishedAt', 'lastPublishedBy', 'lastPublishedVersion'] as const;
@@ -56,5 +68,23 @@ export class WebsiteService {
     for (const key of WEBSITE_SERVER_FIELDS) delete next[key];
     await this.firestoreService.updateModel<WebsiteModel>(
       WebsiteCollection, next as WebsiteModel, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
+  }
+
+  /**
+   * Publish the site (callable `publishWebsite`). With `dryRun` only the checks run.
+   * Rejects with the callable's error (`message` = code, e.g. 'alreadyRunning'); a draft that cannot be
+   * published is NOT an error but a non-empty `problems` list.
+   */
+  public async publish(siteId: string, dryRun = false): Promise<PublishWebsiteResult> {
+    const fn = httpsCallable<{ siteId: string; dryRun?: boolean }, PublishWebsiteResult>(
+      getFunctions(getApp(), 'europe-west6'), 'publishWebsite');
+    return (await fn({ siteId, dryRun })).data;
+  }
+
+  /** Put the previous published state back (callable `rollbackWebsite`, admin). Rejects on refusal. */
+  public async rollback(siteId: string): Promise<RollbackWebsiteResult> {
+    const fn = httpsCallable<{ siteId: string }, RollbackWebsiteResult>(
+      getFunctions(getApp(), 'europe-west6'), 'rollbackWebsite');
+    return (await fn({ siteId })).data;
   }
 }

@@ -95,6 +95,36 @@ export const WEBSITE_I18N_KEYS = {
   row_drafts_one:           UI + 'row.draftsOne',
   row_drafts:               UI + 'row.drafts',
 
+  // publish + rollback
+  publish_button:           PFX + 'publish.button',
+  publish_done:             PFX + 'publish.done',
+  publish_failed:           PFX + 'publish.failed',
+  publish_problems_title:   PFX + 'publish.problemsTitle',
+  publish_more:             PFX + 'publish.more',
+  publish_last:             PFX + 'publish.lastPublished',
+  publish_last_by:          PFX + 'publish.lastPublishedBy',
+  publish_never:            PFX + 'publish.never',
+  rollback_action:          PFX + 'rollback.action',
+  rollback_confirm:         PFX + 'rollback.confirm',
+  rollback_done:            PFX + 'rollback.done',
+  rollback_failed:          PFX + 'rollback.failed',
+  rollback_none:            PFX + 'rollback.none',
+
+  // publish problems, one per PublishProblemCode
+  problem_pageMissing:           PFX + 'problem.pageMissing',
+  problem_pageArchived:          PFX + 'problem.pageArchived',
+  problem_pagePrivate:           PFX + 'problem.pagePrivate',
+  problem_slugDuplicate:         PFX + 'problem.slugDuplicate',
+  problem_pageDuplicate:         PFX + 'problem.pageDuplicate',
+  problem_linkInvalid:           PFX + 'problem.linkInvalid',
+  problem_homeMissing:           PFX + 'problem.homeMissing',
+  problem_templateMissing:       PFX + 'problem.templateMissing',
+  problem_noBaseRelease:         PFX + 'problem.noBaseRelease',
+  problem_renderFailed:          PFX + 'problem.renderFailed',
+  problem_domainMissing:         PFX + 'problem.domainMissing',
+  problem_alreadyRunning:        PFX + 'problem.alreadyRunning',
+  problem_hostingSiteInvalid:    PFX + 'problem.hostingSiteInvalid',
+
   // form validation
   validation_labelRequired: PFX + 'validation.labelRequired',
   validation_labelTooLong:  PFX + 'validation.labelTooLong',

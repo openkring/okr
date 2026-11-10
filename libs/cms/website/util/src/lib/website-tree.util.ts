@@ -2,6 +2,8 @@ import type { WebsiteNode } from '@okr/shared-models';
 
 export { pageKeysInTree, siteWarnings, websiteUrl } from '@okr/cms-website-render';
 export type { WebsiteWarning, WebsiteWarningCode } from '@okr/cms-website-render';
+/** Type-only (erased at build, so no handlebars in the app bundle); the render lib is the source of truth for the codes. */
+export type { PublishProblem, PublishProblemCode } from '@okr/cms-website-render';
 
 export interface MoveTarget {
   id: string | null;

@@ -72,5 +72,37 @@
     "confirm": "Möchtest du diesen Eintrag archivieren?",
     "confirmMenu": "Möchtest du dieses Menü mit allem, was darin liegt, archivieren?",
     "confirmPage": "Möchtest du diese Seite archivieren? Sie verschwindet dann aus der Website und aus der App."
+  },
+  "publish": {
+    "button": "Veröffentlichen",
+    "done": "Die Website ist veröffentlicht.",
+    "failed": "Die Website konnte nicht veröffentlicht werden. Bitte versuche es später noch einmal.",
+    "problemsTitle": "Das lässt sich noch nicht veröffentlichen",
+    "more": "… und {count} weitere",
+    "lastPublished": "Zuletzt veröffentlicht: {date}",
+    "lastPublishedBy": "Zuletzt veröffentlicht: {date} von {name}",
+    "never": "Noch nie veröffentlicht"
+  },
+  "rollback": {
+    "action": "Vorherige Fassung wiederherstellen",
+    "confirm": "Möchtest du die vorherige Fassung der Website wiederherstellen? Die jetzige Fassung ist danach nicht mehr online.",
+    "done": "Die vorherige Fassung ist wieder online.",
+    "failed": "Die vorherige Fassung konnte nicht wiederhergestellt werden.",
+    "none": "Es gibt keine vorherige Fassung."
+  },
+  "problem": {
+    "pageMissing": "Die Seite gibt es nicht mehr.",
+    "pageArchived": "Die Seite ist archiviert.",
+    "pagePrivate": "Die Seite ist nicht öffentlich.",
+    "slugDuplicate": "Die Adresse ist doppelt vergeben.",
+    "pageDuplicate": "Diese Seite kommt mehrfach vor.",
+    "linkInvalid": "Der Link ist ungültig.",
+    "homeMissing": "Es ist noch keine Startseite festgelegt.",
+    "templateMissing": "Für diesen Sektionstyp gibt es auf der Website noch keine Darstellung.",
+    "noBaseRelease": "Die Website ist noch nicht eingerichtet. Bitte wende dich an den Support.",
+    "renderFailed": "Diese Seite konnte nicht aufgebaut werden.",
+    "domainMissing": "Für die Website ist noch keine Adresse eingetragen. Bitte wende dich an den Support.",
+    "alreadyRunning": "Die Website wird gerade veröffentlicht. Bitte versuche es in ein paar Minuten noch einmal.",
+    "hostingSiteInvalid": "Die Website ist noch nicht richtig eingerichtet. Bitte wende dich an den Support."
   }
 }

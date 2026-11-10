@@ -45,6 +45,19 @@ const WARNING_KEYS: Partial<Record<WebsiteWarningCode, keyof WebsiteI18n>> = {
           </div>
         }
       } @else {
+        @if (store.canEdit()) {
+          <ion-item lines="none">
+            <ion-label><ion-note>{{ store.lastPublishedText() }}</ion-note></ion-label>
+            @if (store.canRollback() && store.website()?.lastPublishedVersion) {
+              <ion-button slot="end" fill="clear" size="small" [disabled]="store.isPublishing()" (click)="store.rollback()">
+                {{ store.i18n.rollback_action() }}
+              </ion-button>
+            }
+            <ion-button slot="end" [disabled]="store.isPublishing()" (click)="store.publish()">
+              {{ store.i18n.publish_button() }}
+            </ion-button>
+          </ion-item>
+        }
         @for (code of store.siteLevelWarnings(); track code) {
           <ion-item lines="none">
             <ion-label><ion-note color="warning">{{ siteWarningText(code) }}</ion-note></ion-label>

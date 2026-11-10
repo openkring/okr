@@ -72,5 +72,37 @@
     "confirm": "Veux-tu archiver cette entrée ?",
     "confirmMenu": "Veux-tu archiver ce menu avec tout son contenu ?",
     "confirmPage": "Veux-tu archiver cette page ? Elle disparaîtra alors du site web et de l'app."
+  },
+  "publish": {
+    "button": "Publier",
+    "done": "Le site web est publié.",
+    "failed": "Le site web n'a pas pu être publié. Réessaie plus tard.",
+    "problemsTitle": "Cela ne peut pas encore être publié",
+    "more": "… et {count} autres",
+    "lastPublished": "Dernière publication : {date}",
+    "lastPublishedBy": "Dernière publication : {date} par {name}",
+    "never": "Jamais publié"
+  },
+  "rollback": {
+    "action": "Rétablir la version précédente",
+    "confirm": "Veux-tu rétablir la version précédente du site web ? La version actuelle ne sera alors plus en ligne.",
+    "done": "La version précédente est de nouveau en ligne.",
+    "failed": "La version précédente n'a pas pu être rétablie.",
+    "none": "Il n'y a pas de version précédente."
+  },
+  "problem": {
+    "pageMissing": "La page n'existe plus.",
+    "pageArchived": "La page est archivée.",
+    "pagePrivate": "La page n'est pas publique.",
+    "slugDuplicate": "L'adresse est utilisée deux fois.",
+    "pageDuplicate": "Cette page apparaît plusieurs fois.",
+    "linkInvalid": "Le lien n'est pas valide.",
+    "homeMissing": "Aucune page d'accueil n'est encore définie.",
+    "templateMissing": "Ce type de section n'a pas encore d'affichage sur le site web.",
+    "noBaseRelease": "Le site web n'est pas encore configuré. Contacte le support.",
+    "renderFailed": "Cette page n'a pas pu être construite.",
+    "domainMissing": "Aucune adresse n'est encore enregistrée pour le site web. Contacte le support.",
+    "alreadyRunning": "Le site web est en cours de publication. Réessaie dans quelques minutes.",
+    "hostingSiteInvalid": "Le site web n'est pas encore correctement configuré. Contacte le support."
   }
 }

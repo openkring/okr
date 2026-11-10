@@ -72,5 +72,37 @@
     "confirm": "Do you want to archive this entry?",
     "confirmMenu": "Do you want to archive this menu with everything in it?",
     "confirmPage": "Do you want to archive this page? It will then disappear from the website and from the app."
+  },
+  "publish": {
+    "button": "Publish",
+    "done": "The website is published.",
+    "failed": "The website could not be published. Please try again later.",
+    "problemsTitle": "This cannot be published yet",
+    "more": "… and {count} more",
+    "lastPublished": "Last published: {date}",
+    "lastPublishedBy": "Last published: {date} by {name}",
+    "never": "Never published"
+  },
+  "rollback": {
+    "action": "Restore previous edition",
+    "confirm": "Do you want to restore the previous edition of the website? The current edition will then no longer be online.",
+    "done": "The previous edition is online again.",
+    "failed": "The previous edition could not be restored.",
+    "none": "There is no previous edition."
+  },
+  "problem": {
+    "pageMissing": "The page no longer exists.",
+    "pageArchived": "The page is archived.",
+    "pagePrivate": "The page is not public.",
+    "slugDuplicate": "The address is used twice.",
+    "pageDuplicate": "This page appears more than once.",
+    "linkInvalid": "The link is invalid.",
+    "homeMissing": "No home page has been set yet.",
+    "templateMissing": "There is no display for this section type on the website yet.",
+    "noBaseRelease": "The website has not been set up yet. Please contact support.",
+    "renderFailed": "This page could not be built.",
+    "domainMissing": "No address has been entered for the website yet. Please contact support.",
+    "alreadyRunning": "The website is being published right now. Please try again in a few minutes.",
+    "hostingSiteInvalid": "The website is not set up correctly yet. Please contact support."
   }
 }

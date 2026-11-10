@@ -7,7 +7,7 @@ import { catchError, of } from 'rxjs';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { PageModel, SectionModel, WebsiteModel, WebsiteNode } from '@okr/shared-models';
-import { hasRole, isOwnedBy } from '@okr/shared-util-core';
+import { fill, getFullName, hasRole, isOwnedBy } from '@okr/shared-util-core';
 import { confirm, copyToClipboardDeferred, okrPrompt, resourceParams, showToast } from '@okr/shared-util-angular';
 
 import { PageService } from '@okr/cms-page-data-access';
@@ -18,7 +18,7 @@ import { WebsiteNodeEditModal } from '@okr/cms-website-ui';
 import {
   archiveNode, findNode, findParentId, insertNode, moveNode, moveTargets, newNodeId, pageKeysInTree,
   reorderSiblings, siteWarnings, slugify, uniqueSlug, updateNode, WEBSITE_I18N_KEYS, WebsiteI18n,
-  WebsiteNodeFormModel, WebsiteWarningCode, websiteUrl,
+  PublishProblem, PublishProblemCode, WebsiteNodeFormModel, WebsiteWarningCode, websiteUrl,
 } from '@okr/cms-website-util';
 
 import { WebsiteMoveModal } from './website-move.modal';
@@ -33,6 +33,18 @@ function flatten(nodes: WebsiteNode[], out: WebsiteNode[] = []): WebsiteNode[] {
   return out;
 }
 
+const PROBLEM_KEYS: Record<PublishProblemCode, keyof WebsiteI18n> = {
+  pageMissing: 'problem_pageMissing', pageArchived: 'problem_pageArchived', pagePrivate: 'problem_pagePrivate',
+  slugDuplicate: 'problem_slugDuplicate', pageDuplicate: 'problem_pageDuplicate', linkInvalid: 'problem_linkInvalid',
+  homeMissing: 'problem_homeMissing', templateMissing: 'problem_templateMissing', noBaseRelease: 'problem_noBaseRelease',
+  renderFailed: 'problem_renderFailed', domainMissing: 'problem_domainMissing', alreadyRunning: 'problem_alreadyRunning',
+  hostingSiteInvalid: 'problem_hostingSiteInvalid',
+};
+const MAX_PROBLEM_LINES = 10;
+
+const escapeHtml = (text: string): string =>
+  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
 const MOVE_ERRORS: Record<string, keyof WebsiteI18n> = {
   'website.move.intoSelf': 'move_into_self',
   'website.move.notMenu': 'move_not_menu',
@@ -45,7 +57,7 @@ const MOVE_ERRORS: Record<string, keyof WebsiteI18n> = {
  * never a snapshot captured before the await.
  */
 export const _WebsiteSitemapStore = signalStore(
-  withState({ siteId: '' }),
+  withState({ siteId: '', isPublishing: false }),
   withProps(() => ({
     appStore: inject(AppStore),
     websiteService: inject(WebsiteService),
@@ -87,6 +99,7 @@ export const _WebsiteSitemapStore = signalStore(
       siteName: computed(() => website()?.name ?? ''),
       nodeCount: computed(() => flatten(nav()).filter((n) => !n.isArchived).length),
       canEdit: computed(() => hasRole('contentAdmin', store.currentUser())),
+      canRollback: computed(() => hasRole('admin', store.currentUser())),
       warnings: computed(() => {
         const site = website();
         return site ? siteWarnings(site, pagesByKey()) : [];
@@ -105,6 +118,15 @@ export const _WebsiteSitemapStore = signalStore(
         if (w.nodeId) map.set(w.nodeId, [...(map.get(w.nodeId) ?? []), w.code]);
       }
       return map;
+    }),
+    /** «Zuletzt veröffentlicht: <Datum> von <Name>» — the name is left out when the person is not loaded */
+    lastPublishedText: computed(() => {
+      const site = store.website();
+      if (!site?.lastPublishedAt) return store.i18n.publish_never();
+      const date = new Date(site.lastPublishedAt).toLocaleString('de-CH', { dateStyle: 'medium', timeStyle: 'short' });
+      const person = site.lastPublishedBy ? store.appStore.getPerson(site.lastPublishedBy) : undefined;
+      const name = person ? getFullName(person.firstName, person.lastName) : '';
+      return name ? fill(store.i18n.publish_last_by(), { date, name }) : fill(store.i18n.publish_last(), { date });
     }),
     siteLevelWarnings: computed(() => store.warnings().filter((w) => !w.nodeId).map((w) => w.code)),
   })),
@@ -190,7 +212,72 @@ export const _WebsiteSitemapStore = signalStore(
       await insert(parentId, { id: newNodeId(), type: 'page', label: page.name, pageKey, slug: slugFor(site, page.name) });
     };
 
+    /** One line per problem: «<Eintrag>: <Text>», node label or page name in front, HTML-escaped for the alert. */
+    const problemLines = (problems: PublishProblem[]): string => {
+      const nodes = new Map(flatten([...store.nav(), ...(store.website()?.footer ?? [])]).map((n) => [n.id, n.label]));
+      const lines = problems.map((p) => {
+        const key = PROBLEM_KEYS[p.code];
+        const text = key ? store.i18n[key]() : p.code;
+        const where = (p.nodeId && nodes.get(p.nodeId)) || (p.pageKey && store.pagesByKey().get(p.pageKey)?.name) || '';
+        return escapeHtml(where ? `${where}: ${text}` : text);
+      });
+      const shown = lines.slice(0, MAX_PROBLEM_LINES);
+      if (lines.length > shown.length) shown.push(escapeHtml(fill(store.i18n.publish_more(), { count: lines.length - shown.length })));
+      return shown.join('<br>');
+    };
+
+    /** A callable refusal carries its code as message (alreadyRunning, hostingSiteInvalid, noPreviousRelease …). */
+    const refusalText = (e: unknown, fallback: string): string => {
+      const code = (e as { message?: string })?.message ?? '';
+      if (code === 'noPreviousRelease') return store.i18n.rollback_none();
+      const key = PROBLEM_KEYS[code as PublishProblemCode];
+      return key ? store.i18n[key]() : fallback;
+    };
+
     return {
+      /** Publishes the site; problems are listed in an alert, success is toasted. Ignores a second tap while running. */
+      async publish(): Promise<void> {
+        const siteId = store.siteId();
+        if (!siteId || store.isPublishing()) return;
+        patchState(store, { isPublishing: true });
+        try {
+          const result = await store.websiteService.publish(siteId);
+          if (result.problems.length > 0) {
+            const alert = await store.alertController.create({
+              header: store.i18n.publish_problems_title(),
+              message: problemLines(result.problems as PublishProblem[]),
+              buttons: [store.i18n.ok()],
+            });
+            await alert.present();
+          } else {
+            await toast(store.i18n.publish_done());
+          }
+        } catch (e) {
+          console.error('WebsiteSitemapStore.publish', e);
+          await toast(refusalText(e, store.i18n.publish_failed()));
+        } finally {
+          patchState(store, { isPublishing: false });
+        }
+      },
+
+      /** Admin only: puts the previous published state back, after a confirmation. */
+      async rollback(): Promise<void> {
+        const siteId = store.siteId();
+        if (!siteId || store.isPublishing() || !store.canRollback()) return;
+        const i18n = store.i18n;
+        if (!await confirm(store.alertController, i18n.rollback_confirm(), i18n.ok(), i18n.cancel(), true)) return;
+        patchState(store, { isPublishing: true });
+        try {
+          await store.websiteService.rollback(siteId);
+          await toast(i18n.rollback_done());
+        } catch (e) {
+          console.error('WebsiteSitemapStore.rollback', e);
+          await toast(refusalText(e, i18n.rollback_failed()));
+        } finally {
+          patchState(store, { isPublishing: false });
+        }
+      },
+
       setSiteId(siteId: string): void {
         patchState(store, { siteId });
       },

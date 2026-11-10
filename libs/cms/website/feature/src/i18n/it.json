@@ -72,5 +72,37 @@
     "confirm": "Vuoi archiviare questa voce?",
     "confirmMenu": "Vuoi archiviare questo menu con tutto il suo contenuto?",
     "confirmPage": "Vuoi archiviare questa pagina? Scomparirà dal sito web e dall'app."
+  },
+  "publish": {
+    "button": "Pubblica",
+    "done": "Il sito web è pubblicato.",
+    "failed": "Non è stato possibile pubblicare il sito web. Riprova più tardi.",
+    "problemsTitle": "Questo non si può ancora pubblicare",
+    "more": "… e altri {count}",
+    "lastPublished": "Ultima pubblicazione: {date}",
+    "lastPublishedBy": "Ultima pubblicazione: {date} da {name}",
+    "never": "Mai pubblicato"
+  },
+  "rollback": {
+    "action": "Ripristina la versione precedente",
+    "confirm": "Vuoi ripristinare la versione precedente del sito web? La versione attuale non sarà più online.",
+    "done": "La versione precedente è di nuovo online.",
+    "failed": "Non è stato possibile ripristinare la versione precedente.",
+    "none": "Non c'è una versione precedente."
+  },
+  "problem": {
+    "pageMissing": "La pagina non esiste più.",
+    "pageArchived": "La pagina è archiviata.",
+    "pagePrivate": "La pagina non è pubblica.",
+    "slugDuplicate": "L'indirizzo è usato due volte.",
+    "pageDuplicate": "Questa pagina compare più volte.",
+    "linkInvalid": "Il link non è valido.",
+    "homeMissing": "Non è ancora stata impostata una pagina iniziale.",
+    "templateMissing": "Per questo tipo di sezione non c'è ancora una visualizzazione sul sito web.",
+    "noBaseRelease": "Il sito web non è ancora configurato. Contatta il supporto.",
+    "renderFailed": "Non è stato possibile costruire questa pagina.",
+    "domainMissing": "Per il sito web non è ancora stato inserito un indirizzo. Contatta il supporto.",
+    "alreadyRunning": "Il sito web è in corso di pubblicazione. Riprova tra qualche minuto.",
+    "hostingSiteInvalid": "Il sito web non è ancora configurato correttamente. Contatta il supporto."
   }
 }

@@ -72,5 +72,37 @@
     "confirm": "¿Quieres archivar esta entrada?",
     "confirmMenu": "¿Quieres archivar este menú con todo su contenido?",
     "confirmPage": "¿Quieres archivar esta página? Desaparecerá del sitio web y de la app."
+  },
+  "publish": {
+    "button": "Publicar",
+    "done": "El sitio web está publicado.",
+    "failed": "No se pudo publicar el sitio web. Inténtalo de nuevo más tarde.",
+    "problemsTitle": "Esto todavía no se puede publicar",
+    "more": "… y {count} más",
+    "lastPublished": "Última publicación: {date}",
+    "lastPublishedBy": "Última publicación: {date} por {name}",
+    "never": "Nunca publicado"
+  },
+  "rollback": {
+    "action": "Restaurar la versión anterior",
+    "confirm": "¿Quieres restaurar la versión anterior del sitio web? La versión actual dejará de estar en línea.",
+    "done": "La versión anterior vuelve a estar en línea.",
+    "failed": "No se pudo restaurar la versión anterior.",
+    "none": "No hay una versión anterior."
+  },
+  "problem": {
+    "pageMissing": "La página ya no existe.",
+    "pageArchived": "La página está archivada.",
+    "pagePrivate": "La página no es pública.",
+    "slugDuplicate": "La dirección está usada dos veces.",
+    "pageDuplicate": "Esta página aparece varias veces.",
+    "linkInvalid": "El enlace no es válido.",
+    "homeMissing": "Todavía no se ha definido una página de inicio.",
+    "templateMissing": "Este tipo de sección todavía no tiene una vista en el sitio web.",
+    "noBaseRelease": "El sitio web todavía no está configurado. Contacta con el soporte.",
+    "renderFailed": "No se pudo construir esta página.",
+    "domainMissing": "Todavía no hay una dirección registrada para el sitio web. Contacta con el soporte.",
+    "alreadyRunning": "El sitio web se está publicando ahora mismo. Inténtalo de nuevo en unos minutos.",
+    "hostingSiteInvalid": "El sitio web todavía no está bien configurado. Contacta con el soporte."
   }
 }

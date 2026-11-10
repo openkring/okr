@@ -6,6 +6,11 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { WebsiteCollection, WebsiteModel, WebsiteNode } from '@okr/shared-models';
 
+const callable = vi.fn();
+const httpsCallable = vi.fn(() => callable);
+vi.mock('firebase/app', () => ({ getApp: vi.fn(() => ({})) }));
+vi.mock('firebase/functions', () => ({ getFunctions: vi.fn(() => ({})), httpsCallable: (...a: unknown[]) => (httpsCallable as (...x: unknown[]) => unknown)(...a) }));
+
 import { WebsiteService } from './website.service';
 
 function createFirestoreMock() {
@@ -103,5 +108,21 @@ describe('WebsiteService', () => {
       expect(Object.keys(model), key).not.toContain(key);
     }
     expect(model.okey).toBe('scs');
+  });
+
+  it('publish calls publishWebsite with siteId and dryRun and returns the data', async () => {
+    callable.mockResolvedValue({ data: { files: 3, pages: 2, durationMs: 5, problems: [] } });
+    const r = await service.publish('scs');
+    expect(httpsCallable).toHaveBeenCalledWith(expect.anything(), 'publishWebsite');
+    expect(callable).toHaveBeenCalledWith({ siteId: 'scs', dryRun: false });
+    expect(r.problems).toEqual([]);
+  });
+
+  it('rollback calls rollbackWebsite and propagates a refusal', async () => {
+    callable.mockResolvedValueOnce({ data: { version: 'v1' } });
+    expect((await service.rollback('scs')).version).toBe('v1');
+    expect(httpsCallable).toHaveBeenCalledWith(expect.anything(), 'rollbackWebsite');
+    callable.mockRejectedValueOnce(new Error('noPreviousRelease'));
+    await expect(service.rollback('scs')).rejects.toThrow('noPreviousRelease');
   });
 });
