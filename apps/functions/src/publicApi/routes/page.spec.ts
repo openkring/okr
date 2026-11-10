@@ -7,7 +7,7 @@ vi.mock('firebase-admin/firestore', () => ({ getFirestore: () => fakeDb.current 
 import type { Request, Response } from 'express';
 
 import {
-  articleImageLayout, buildLearningSection, mapCta, mapImage, mapSection, normalizeLang, pickText, safeSiteUrl, mapFooter, mapFormSection, isPublicPageRead, isPublishedPage, learningDefaultTab, loadLearningSection, pageCors, pageRouter,
+  articleImageLayout, buildLearningSection, mapCta, mapImage, mapSection, normalizeLang, pickText, safeSiteUrl, slugName, mapFooter, mapFormSection, isPublicPageRead, isPublishedPage, learningDefaultTab, loadLearningSection, pageCors, pageRouter,
 } from './page';
 import { getHtmlSanitizer } from '../sanitize';
 
@@ -529,6 +529,26 @@ describe('homepage sections (1.151)', () => {
     expect(map({ type: 'article' })['name']).toBe('');
   });
 
+  it('reduces the section name to an anchor-safe slug', () => {
+    expect(slugName('ueber-uns')).toBe('ueber-uns');
+    expect(slugName('Neubau Bootshaus')).toBe('neubau-bootshaus');
+    expect(slugName('"><script>')).toBe('script');
+    expect(slugName('***')).toBe('');
+    expect(slugName(undefined)).toBe('');
+    expect(map({ type: 'article', name: 'Neubau Bootshaus' })['name']).toBe('neubau-bootshaus');
+  });
+
+  it('pickText ignores non-string i18n values', () => {
+    expect(pickText('', { de: 5 as never, en: 'x' }, 'de')).toBe('x');
+    expect(pickText('', { en: 7 as never }, 'en')).toBe('');
+  });
+
+  it('clamps events/news maxItems to an integer 0-50', () => {
+    const n = (v: unknown) => map({ type: 'news', properties: { maxItems: v } })['maxItems'];
+    expect([n(-3), n(2.9), n(1000), n('x'), n(undefined)]).toEqual([0, 2, 50, 0, 0]);
+    expect(map({ type: 'events', properties: { maxEvents: 99 } })['maxItems']).toBe(50);
+  });
+
   it('maps events and news sections (not article)', () => {
     expect(map({ type: 'events', properties: { maxEvents: 4, moreUrl: 'termine.html', kicker: 'Agenda' } }))
       .toMatchObject({ type: 'events', maxItems: 4, moreUrl: 'termine.html', kicker: 'Agenda' });
@@ -538,7 +558,7 @@ describe('homepage sections (1.151)', () => {
   it('hero gets kicker and at most two safe ctas; article gets cta and emphasis', () => {
     const hero = map({ type: 'hero', properties: { kicker: 'Seeclub', ctas: [{ label: 'A', url: '#a', style: 'primary' }, { label: 'B', url: 'http://x', style: 'secondary' }, { label: 'C', url: '#c', style: 'secondary' }] } });
     expect(hero['kicker']).toBe('Seeclub');
-    expect(hero['ctas']).toEqual([{ label: 'A', url: '#a', style: 'primary' }]);
+    expect(hero['ctas']).toEqual([{ label: 'A', url: '#a', style: 'primary' }, { label: 'C', url: '#c', style: 'secondary' }]);
     const art = map({ type: 'article', properties: { emphasis: 'banner', cta: { label: 'Mehr', url: 'mehr.html', style: 'primary' } } });
     expect(art).toMatchObject({ emphasis: 'banner', cta: { label: 'Mehr', url: 'mehr.html' } });
   });

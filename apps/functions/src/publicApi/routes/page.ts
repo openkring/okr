@@ -63,9 +63,11 @@ export function normalizeLang(raw: unknown): string {
  */
 export function pickText(plain: string | undefined, i18n: I18nString | undefined, lang: string): string {
   const own = lang !== 'de' ? i18n?.[lang] : undefined;
-  if (own) return own;
+  if (typeof own === 'string' && own) return own;
   if (plain) return plain;
-  return i18n?.['de'] || Object.values(i18n ?? {}).find(v => !!v) || '';
+  const de = i18n?.['de'];
+  if (typeof de === 'string' && de) return de;
+  return Object.values(i18n ?? {}).find((v): v is string => typeof v === 'string' && !!v) ?? '';
 }
 
 /**
@@ -84,6 +86,16 @@ export function safeSiteUrl(url: unknown): string {
   else if (u.startsWith('/')) ok = /^\/(?![/\\])/.test(u);
   else ok = /^[\w-]+\.html([?#].*)?$/.test(u);
   return ok ? u : '';
+}
+
+/** A section name as an html id / anchor: lowercase, runs of anything but [a-z0-9-] become one '-', trimmed of '-'. */
+export function slugName(raw: unknown): string {
+  return (typeof raw === 'string' ? raw : '').toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+/** An item count: an integer from 0 to 50. */
+function clampCount(raw: unknown): number {
+  return Math.min(50, Math.max(0, Math.floor(Number(raw) || 0)));
 }
 
 export interface PublicCta { label: string; url: string; style: 'primary' | 'secondary' }
@@ -280,7 +292,7 @@ export function mapFormSection(sectionId: string, title: string, props: Record<s
 export function mapSection(id: string, s: SectionDoc, nestedSections: Map<string, SectionDoc>, sanitize: SanitizeFn, lang = 'de'): unknown {
   const type = s.type ?? 'article';
   const props = (s.properties ?? {}) as Record<string, unknown>;
-  const name = typeof s.name === 'string' ? s.name : '';
+  const name = slugName(s.name);
   const title = pickText(s.title, props['titleI18n'] as I18nString | undefined, lang);
   const subTitle = pickText(s.subTitle, props['subTitleI18n'] as I18nString | undefined, lang);
   const articleHtml = sanitize(pickText(s.content?.htmlContent, props['contentI18n'] as I18nString | undefined, lang));
@@ -291,8 +303,8 @@ export function mapSection(id: string, s: SectionDoc, nestedSections: Map<string
     case 'hero': {
       const heroImg = mapImage(props['hero'] as StoredImage | undefined, imageStyle);
       const logoImg = mapImage(props['logo'] as StoredImage | undefined);
-      const ctas = (Array.isArray(props['ctas']) ? props['ctas'] : []).slice(0, 2)
-        .map(c => mapCta(c, lang)).filter((c): c is PublicCta => !!c);
+      const ctas = (Array.isArray(props['ctas']) ? props['ctas'] : [])
+        .map(c => mapCta(c, lang)).filter((c): c is PublicCta => !!c).slice(0, 2);
       return { type: 'hero', name, title, subTitle, kicker, content: articleHtml, background: heroImg, logo: logoImg, ctas };
     }
 
@@ -383,10 +395,10 @@ export function mapSection(id: string, s: SectionDoc, nestedSections: Map<string
     }
 
     case 'events':
-      return { type: 'events', name, title, kicker, maxItems: Number(props['maxEvents']) || 0, moreUrl: safeSiteUrl(props['moreUrl']) };
+      return { type: 'events', name, title, kicker, maxItems: clampCount(props['maxEvents']), moreUrl: safeSiteUrl(props['moreUrl']) };
 
     case 'news':
-      return { type: 'news', name, title, kicker, maxItems: Number(props['maxItems']) || 0, moreUrl: safeSiteUrl(props['moreUrl']) };
+      return { type: 'news', name, title, kicker, maxItems: clampCount(props['maxItems']), moreUrl: safeSiteUrl(props['moreUrl']) };
 
     case 'article':
     default: {
@@ -487,7 +499,7 @@ export function learningDefaultTab(value: unknown): LearningTab {
 
 export function buildLearningSection(s: SectionDoc, o: LearningSectionOptions, lang = 'de'): PublicLearningSection & { name: string } {
   const props = (s.properties ?? {}) as Record<string, unknown>;
-  const name = typeof s.name === 'string' ? s.name : '';
+  const name = slugName(s.name);
   const title = pickText(s.title, props['titleI18n'] as I18nString | undefined, lang);
   const subTitle = pickText(s.subTitle, props['subTitleI18n'] as I18nString | undefined, lang);
   const folder = str(props['folder']);
