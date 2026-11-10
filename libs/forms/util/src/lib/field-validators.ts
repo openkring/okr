@@ -1,7 +1,7 @@
 import { AbstractControl, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { parsePhoneNumber } from 'libphonenumber-js';
 import { Field } from '@okr/shared-models';
-import { isBlankAhv, isSsnField, normalizeAhv } from '@okr/shared-util-core';
+import { FORM_OTHER_TEXT_MAX, isBlankAhv, isSsnField, normalizeAhv } from '@okr/shared-util-core';
 import { isDisplayField } from './field-kind';
 
 export function validatorsFor(field: Field): ValidatorFn[] {
@@ -47,6 +47,12 @@ export function validatorsFor(field: Field): ValidatorFn[] {
     case 'date':
       if (field.min) fns.push(minDateValidator(field.min));
       if (field.max) fns.push(maxDateValidator(field.max));
+      break;
+    case 'person':
+    case 'org':
+    case 'resource':
+      // the name, typed or picked: the server refuses a longer one
+      fns.push(Validators.maxLength(FORM_OTHER_TEXT_MAX));
       break;
     case 'rating':
       break;

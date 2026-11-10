@@ -4,7 +4,7 @@ import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH } from '@okr/shared-c
 import { BaseType, Field, PropertyType } from '@okr/shared-models';
 import { coerceToPropertyType, isSsnField, stringValidations } from '@okr/shared-util-core';
 
-import { FIELD_KEY_PATTERN, isDisplayField } from './field-kind';
+import { FIELD_KEY_PATTERN, isDisplayField, isModelSelectField } from './field-kind';
 import { canAllowOther } from './form-prefill-link.util';
 import { ruleTests } from './form-rules.validations';
 
@@ -94,6 +94,11 @@ export const fieldConfigValidations = staticSuite((model: Field, mappingKey?: st
   // the course choice (1.152): the derived value that holds the applicant type; «Andere …» is never offered
   omitWhen(model.type !== 'course', () => {
     stringValidations('audienceFrom', (model as { audienceFrom?: string }).audienceFrom ?? '', NAME_LENGTH, 0, true);
+  });
+
+  // a person/org/resource picker: the org/resource type its list is limited to ('' = all)
+  omitWhen(!isModelSelectField(model), () => {
+    stringValidations('filter', (model as { filter?: string }).filter ?? '', NAME_LENGTH);
   });
 
   omitWhen(model.type !== 'category', () => {

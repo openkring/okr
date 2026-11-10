@@ -857,6 +857,13 @@ export interface FormSectionConfig {
   maxResponses?: number;
   showRemaining?: boolean;
   closedMessage?: string;
+  /**
+   * The page's parameter for the form: fixed answers of visible choice fields (category, dropdown, radio),
+   * keyed by field `key` — e.g. the contact form on «Junioren» fixes its topic to 'junior'. A field with a
+   * value here is not shown and the server stores this value whatever the client sends; a field without
+   * one is asked as usual. Absent or '' = the filler chooses.
+   */
+  fixedValues?: Record<string, string>;
 }
 
 // --------------------------------------- WEATHER ----------------------------------------

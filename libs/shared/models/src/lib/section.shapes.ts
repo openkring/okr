@@ -613,6 +613,7 @@ export const FORM_SECTION_CONFIG_SHAPE: FormSectionConfig = {
   encryptFileUpload: false,
   rateLimit: { limit: 10, periodMinutes: 5 },
   implicitValues: {},
+  fixedValues: {},
 };
 export const FORM_SECTION_SHAPE = {
   ...BASE_SECTION_SHAPE,

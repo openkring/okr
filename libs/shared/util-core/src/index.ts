@@ -20,6 +20,7 @@ export * from './lib/fcm-token.util';
 export * from './lib/file.util';
 export * from './lib/ahv.util';
 export * from './lib/form-acceptance.util';
+export * from './lib/form-model-select.util';
 export * from './lib/form-prefill.util';
 export * from './lib/form-values.util';
 export * from './lib/form-visibility.util';

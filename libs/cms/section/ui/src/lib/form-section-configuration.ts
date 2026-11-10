@@ -17,6 +17,16 @@ export interface FormOption {
   implicitFields: ImplicitField[];
   /** the form-wide «Freie Plätze anzeigen»: what a section without an override of its own shows; absent = off */
   showRemaining?: boolean;
+  /** the choice questions (category, dropdown, radio) a page may answer for the filler: `fixedValues` */
+  choiceFields?: ChoiceFieldOption[];
+}
+
+/** A choice question of a form, with the values a page may fix it to. */
+export interface ChoiceFieldOption {
+  key: string;
+  label: string;
+  values: string[];
+  labels: string[];
 }
 
 /** A responsibility the answers can be assigned to, by its display name. */
@@ -143,7 +153,7 @@ interface FixedRow {
           <ion-row>
             @if (!chosenForm()) {
               <ion-col size="12"><ion-note>{{ i18n().form_cfg_fixed_pick_form() }}</ion-note></ion-col>
-            } @else if (rows().length === 0) {
+            } @else if (rows().length === 0 && choiceRows().length === 0) {
               <ion-col size="12"><ion-note>{{ i18n().form_cfg_fixed_none() }}</ion-note></ion-col>
             }
             @for (key of strayKeys(); track key) {
@@ -177,6 +187,13 @@ interface FixedRow {
                   }
                 }
                 <okr-error-note [errors]="errorsFor('implicitValues.' + row.key)" />
+              </ion-col>
+            }
+            @for (row of choiceRows(); track row.key) {
+              <!-- a choice question this page answers (its parameter, e.g. the topic 'junior'): hidden for the filler -->
+              <ion-col size="12" size-md="6">
+                <okr-string-select [i18n]="row.selectI18n" [selectedString]="row.value" (selectedStringChange)="onChoiceFixed(row.key, $event)"
+                  [stringList]="row.list" [labels]="row.labels" [showHelper]="true" [readOnly]="isReadOnly()" />
               </ion-col>
             }
           </ion-row>
@@ -299,6 +316,22 @@ export class FormSectionConfiguration {
       });
   });
 
+  /** «Feste Werte» of the choice questions: '' = the filler chooses; a stored value no longer offered stays selectable */
+  protected readonly choiceRows = computed(() => {
+    const fixed = this.formData().fixedValues ?? {};
+    return (this.chosenForm()?.choiceFields ?? []).map((field) => {
+      const value = typeof fixed[field.key] === 'string' ? fixed[field.key] : '';
+      const stray = value !== '' && !field.values.includes(value) ? [value] : [];
+      return {
+        key: field.key,
+        value,
+        list: ['', ...stray, ...field.values],
+        labels: [this.i18n().form_cfg_fixed_choice_open(), ...stray, ...field.labels],
+        selectI18n: { name: 'fixed-' + field.key, label: field.label || field.key, helper: this.i18n().form_cfg_fixed_choice_helper() } as StringSelectI18n,
+      };
+    });
+  });
+
   /** `implicitValues.<key>` errors of entries no row shows */
   protected readonly strayKeys = computed(() => getUnrenderedFixedKeys(this.errors(), this.rows().map((r) => r.key)));
 
@@ -335,7 +368,7 @@ export class FormSectionConfiguration {
   /** The fixed values belong to the old form's fields: a new form starts without them. */
   protected onFormChange(formKey: string): void {
     if (formKey === this.formKey()) return;   // echo
-    this.formData.update((vm) => ({ ...vm, formKey, implicitValues: {} }));
+    this.formData.update((vm) => ({ ...vm, formKey, implicitValues: {}, fixedValues: {} }));
   }
 
   protected onFieldChange(name: 'showCaptcha' | 'encryptFileUpload', value: boolean): void {
@@ -379,6 +412,16 @@ export class FormSectionConfiguration {
 
   protected onFixedBoolean(key: string, value: string): void {
     this.setFixed(key, value === 'true' ? true : value === 'false' ? false : undefined);
+  }
+
+  /** A choice question's fixed answer; '' removes it, so the filler chooses again. */
+  protected onChoiceFixed(key: string, value: string): void {
+    const current = this.formData().fixedValues ?? {};
+    if ((current[key] ?? '') === value) return;   // echo
+    const next = { ...current };
+    if (value === '') delete next[key];
+    else next[key] = value;
+    this.formData.update((vm) => ({ ...vm, fixedValues: next }));
   }
 
   private setFixed(key: string, value: BaseType | undefined): void {

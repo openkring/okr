@@ -1,6 +1,6 @@
 import { Component, computed, effect, input, signal, untracked } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { IonItem, IonLabel } from '@ionic/angular';
+import { IonItem, IonLabel, IonList } from '@ionic/angular';
 import {
   CategorySelect, Checkbox, CheckboxGroup, CheckboxGroupI18n, CheckboxI18n, FileInput, FileInputI18n, RadioGroup, RadioGroupI18n, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote,
   IbanInput, IbanInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, PasswordInput, PasswordInputI18n,
@@ -9,7 +9,7 @@ import {
 import { ChSsnMask } from '@okr/shared-config';
 import { SSN_LENGTH } from '@okr/shared-constants';
 import { CategoryListModel, Field, OTHER_OPTION_VALUE } from '@okr/shared-models';
-import { AhvFormat, FORM_OTHER_TEXT_MAX, PublicCourseOption, fill, formatAhv, formatCourseRange } from '@okr/shared-util-core';
+import { AhvFormat, FORM_OTHER_TEXT_MAX, ModelSelectChoice, PublicCourseOption, choiceByName, fill, formatAhv, formatCourseRange, isModelSelect, matchModelChoices } from '@okr/shared-util-core';
 
 /** Angular validator error → `validation.*` key of the main i18n bundle (resolved by okr-error-note). */
 const ERROR_KEYS: [string, string][] = [
@@ -58,6 +58,15 @@ export const DEFAULT_FIELD_COURSE_I18N: FieldCourseI18n = {
   full: 'ausgebucht',
 };
 
+/** The texts of a person / org / resource picker — resolved by the host from `FORM_I18N_KEYS`. */
+export interface FieldPickI18n {
+  /** «Nichts gefunden.» — the typed name matches no entry and free text is not allowed */
+  none: string;
+}
+
+/** The fallback for a host that passes no labels (the German text). */
+export const DEFAULT_FIELD_PICK_I18N: FieldPickI18n = { none: 'Nichts gefunden.' };
+
 /** The usual Swiss example number, shown while an AHV field is empty. */
 const SSN_PLACEHOLDER = '756.1234.5678.97';
 
@@ -69,7 +78,7 @@ const SSN_PLACEHOLDER = '756.1234.5678.97';
   selector: 'okr-field-renderer',
   standalone: true,
   imports: [
-    IonItem, IonLabel,
+    IonItem, IonLabel, IonList,
     TextInput, NotesInput, EmailInput, PhoneInput, IbanInput, PasswordInput, NumberInput,
     DateInput, TimeInput, Checkbox, CheckboxGroup, RadioGroup, FileInput, StringSelect, CategorySelect, ErrorNote,
   ],
@@ -81,8 +90,25 @@ const SSN_PLACEHOLDER = '756.1234.5678.97';
     .paragraph.indented { padding-left: 32px; }
     .paragraph.small { font-size: 0.85em; color: var(--ion-color-medium-shade); }
     .field-divider { border: none; border-top: 1px solid var(--ion-color-step-200, #ccc); margin: 12px 16px; }
+    .suggestions { margin: 0 16px 4px; padding: 0; border: 1px solid var(--ion-color-step-150, #ddd); border-radius: 6px; }
   `],
   template: `
+    @if (isPicker()) {
+      <!-- a person / org / resource: type a name, pick it from the matches below (or keep the typed name when allowed) -->
+      <okr-text-input [i18n]="textI18n()" [value]="courseValue()" (valueChange)="onPickerText($event)"
+        [maxLength]="otherTextMax" [readOnly]="readOnly()" />
+      @if (suggestions().length > 0) {
+        <ion-list class="suggestions" lines="none">
+          @for (choice of suggestions(); track choice.key) {
+            <ion-item [button]="true" [detail]="false" (click)="pickChoice(choice)">
+              <ion-label>{{ choice.name }}</ion-label>
+            </ion-item>
+          }
+        </ion-list>
+      } @else if (noMatch()) {
+        <div class="help-text">{{ pickI18n().none }}</div>
+      }
+    } @else {
     @switch (field().type) {
       @case ('text') {
         @if ($any(field()).multiline) {
@@ -179,6 +205,7 @@ const SSN_PLACEHOLDER = '756.1234.5678.97';
         </ion-item>
       }
     }
+    }
     <!-- «Andere …» picked: its own required text, stored under <key>Other (spec §9) -->
     @if (otherSelected()) {
       @if (otherControl(); as other) {
@@ -210,9 +237,28 @@ export class FieldRenderer {
   /** the applicant type is known; until then a 'course' field shows its hint */
   public readonly audienceKnown = input(false);
   public readonly courseI18n = input<FieldCourseI18n>(DEFAULT_FIELD_COURSE_I18N);
+  /** the list of a person / org / resource picker; empty = the name is typed */
+  public readonly choices = input<ModelSelectChoice[]>([]);
+  /** the `<key>Key` control of a picker — holds the okey of the picked record; absent when a real field owns that key */
+  public readonly keyControl = input<FormControl | undefined>();
+  public readonly pickI18n = input<FieldPickI18n>(DEFAULT_FIELD_PICK_I18N);
 
-  /** mirror of the control's value: the parent may clear it from outside an event */
+  /** mirror of the control's value (the course key, a picker's name): the parent may change it from outside an event */
   protected readonly courseValue = signal('');
+  /** the okey of the record picked in a picker; '' while the name is typed */
+  private readonly pickedKey = signal('');
+
+  protected readonly isPicker = computed(() => isModelSelect(this.field()));
+  /** the matches of the typed name, while nothing is picked */
+  protected readonly suggestions = computed(() =>
+    this.isPicker() && !this.readOnly() && this.pickedKey() === '' ? matchModelChoices(this.choices(), this.courseValue()) : []
+  );
+  /** a typed name that matches nothing, where only listed entries count */
+  protected readonly noMatch = computed(() => {
+    const f = this.field();
+    return isModelSelect(f) && f.allowCustom !== true && this.choices().length > 0
+      && this.pickedKey() === '' && this.courseValue().trim() !== '';
+  });
 
   constructor() {
     effect((onCleanup) => {
@@ -220,6 +266,17 @@ export class FieldRenderer {
       untracked(() => {
         this.courseValue.set(typeof control.value === 'string' ? control.value : '');
         const sub = control.valueChanges.subscribe(v => this.courseValue.set(typeof v === 'string' ? v : ''));
+        onCleanup(() => sub.unsubscribe());
+      });
+    });
+
+    // a picker's `<key>Key`: the parent resets it when the field is hidden and shown again
+    effect((onCleanup) => {
+      const control = this.keyControl();
+      untracked(() => {
+        if (!control) { this.pickedKey.set(''); return; }
+        this.pickedKey.set(typeof control.value === 'string' ? control.value : '');
+        const sub = control.valueChanges.subscribe(v => this.pickedKey.set(typeof v === 'string' ? v : ''));
         onCleanup(() => sub.unsubscribe());
       });
     });
@@ -332,6 +389,24 @@ export class FieldRenderer {
     const range = formatCourseRange(course.startDate, course.endDate);
     const label = [course.name, range].filter(Boolean).join(' · ') + (places ? ' – ' + places : '');
     return { name: this.field().key + '-' + course.key, label, helper: '' };
+  }
+
+  /** typing changes the name; a name typed exactly like one entry picks it, anything else unpicks */
+  protected onPickerText(text: string): void {
+    const match = choiceByName(this.choices(), text);
+    this.setPickedKey(match?.key ?? '');
+    this.setValue(text);
+  }
+
+  protected pickChoice(choice: ModelSelectChoice): void {
+    this.setPickedKey(choice.key);
+    this.setValue(choice.name);
+  }
+
+  private setPickedKey(key: string): void {
+    this.pickedKey.set(key);
+    const control = this.keyControl();
+    if (control && control.value !== key) control.setValue(key);
   }
 
   /** single choice in checkbox look: ticking sets the key (the others untick), unticking empties it */

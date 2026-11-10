@@ -62,7 +62,16 @@
     "course_places": "{count} places left",
     "course_places_one": "1 place left",
     "course_full": "fully booked",
-    "course_unavailable": "Sorry, this course is no longer available. Please choose another one or send your registration without a course."
+    "course_unavailable": "Sorry, this course is no longer available. Please choose another one or send your registration without a course.",
+    "filter": "Only this kind",
+    "filter_helper": "For example «club» for clubs or «rboat» for rowing boats. Leave empty to show all.",
+    "allow_custom": "Allow free text",
+    "allow_custom_helper": "Whoever cannot find the name in the list can type it themselves, as in the logbook.",
+    "pick": "Select",
+    "pick_search": "Search",
+    "pick_custom": "Use «{name}»",
+    "pick_clear": "Remove",
+    "pick_none": "Nothing found."
   },
   "fields": {
     "duplicate_key": "Two questions have the same key. Please give each question its own.",
@@ -244,7 +253,13 @@
     "implicit": "Hidden field",
     "implicit_desc": "The person does not see it. The value comes from the page or from the link.",
     "course": "Course choice",
-    "course_desc": "The person picks an announced course. Only courses that suit them are shown."
+    "course_desc": "The person picks an announced course. Only courses that suit them are shown.",
+    "person": "Person",
+    "person_desc": "The person picks someone from the list or types a name.",
+    "org": "Organisation",
+    "org_desc": "The person picks an organisation (a club, for example) or types a name.",
+    "resource": "Resource",
+    "resource_desc": "The person picks a resource (a boat, for example) or types a name."
   },
   "property": {
     "boolean": "yes/no",

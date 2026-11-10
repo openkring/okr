@@ -18,6 +18,8 @@ export interface FormSectionProperties {
   emailAddresses?: string[];
   /** §8.1 — values of the form's implicit fields, by field key. */
   implicitValues?: Record<string, BaseType>;
+  /** the page's parameter: fixed answers of choice fields, by field key (`resolveFixedValues`) */
+  fixedValues?: Record<string, unknown>;
   // §11 — per-section overrides of the form's acceptance rules
   isOpen?: boolean;
   closesAt?: string;

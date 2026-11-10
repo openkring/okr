@@ -12,7 +12,7 @@ import { coerceBoolean, fill, isPrefillable, isSsnField, propertyTypeOf } from '
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
 import {
-  canAllowOther, defaultFromText, errorsUnder, fieldConfigValidations, fieldLabelLength, FormI18n, isDisplayField, propertyTypeLabel,
+  canAllowOther, defaultFromText, errorsUnder, fieldConfigValidations, fieldLabelLength, FormI18n, isDisplayField, isModelSelectField, propertyTypeLabel,
 } from '@okr/forms-util';
 
 import { VisibilityRuleInput } from './visibility-rule.input';
@@ -117,6 +117,22 @@ const VALUE_TYPES: PropertyType[] = ['boolean', 'number', 'text'];
                     @if (derivedKeys().length === 0) {
                       <ion-item lines="none" class="hint"><ion-note>{{ i18n().field_audience_from_none() }}</ion-note></ion-item>
                     }
+                  </ion-col>
+                </ion-row>
+              }
+              @if (isModelSelect()) {
+                <!-- a person/org/resource picker: the kind its list is limited to, and «Freie Eingabe erlauben» -->
+                <ion-row>
+                  @if (formData().type !== 'person') {
+                    <ion-col size="12" size-md="6">
+                      <okr-text-input [i18n]="filterI18n()" [value]="filter()" (valueChange)="onFieldChange('filter', $event)"
+                        [maxLength]="nameLength" [showHelper]="true" [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="filterErrors()" />
+                    </ion-col>
+                  }
+                  <ion-col size="12" size-md="6">
+                    <okr-checkbox [i18n]="allowCustomI18n()" [checked]="allowCustom()" (checkedChange)="onFieldChange('allowCustom', $event)"
+                      [toggle]="true" justify="space-between" labelPlacement="start" [showHelper]="true" [readOnly]="isReadOnly()" />
                   </ion-col>
                 </ion-row>
               }
@@ -247,6 +263,7 @@ export class FieldConfigForm {
   protected labelErrors = computed(() => this.validationResult().getErrors('label'));
   protected keyErrors = computed(() => this.validationResult().getErrors('key'));
   protected categoryNameErrors = computed(() => this.validationResult().getErrors('categoryName'));
+  protected filterErrors = computed(() => this.validationResult().getErrors('filter'));
   protected helpTextErrors = computed(() => this.validationResult().getErrors('helpText'));
   protected placeholderErrors = computed(() => this.validationResult().getErrors('placeholder'));
   protected allowOtherErrors = computed(() => this.validationResult().getErrors('allowOther'));
@@ -290,6 +307,16 @@ export class FieldConfigForm {
   });
   protected readonly isImplicit = computed(() => this.formData().type === 'implicit');
   protected readonly isCourse = computed(() => this.formData().type === 'course');
+  // person / org / resource picker
+  protected readonly isModelSelect = computed(() => isModelSelectField(this.formData()));
+  protected readonly filter = computed(() => {
+    const fd = this.formData();
+    return isModelSelectField(fd) ? fd.filter ?? '' : '';
+  });
+  protected readonly allowCustom = computed(() => {
+    const fd = this.formData();
+    return isModelSelectField(fd) && fd.allowCustom === true;
+  });
   protected readonly audienceFrom = computed(() => {
     const fd = this.formData();
     return fd.type === 'course' ? fd.audienceFrom ?? '' : '';
@@ -355,6 +382,12 @@ export class FieldConfigForm {
   }));
   protected readonly categoryI18n = computed<StringSelectI18n>(() => ({
     name: 'categoryName', label: this.i18n().field_category(), helper: this.i18n().field_category_helper(),
+  }));
+  protected readonly filterI18n = computed<TextInputI18n>(() => ({
+    name: 'filter', label: this.i18n().field_filter(), placeholder: '', helper: this.i18n().field_filter_helper(),
+  }));
+  protected readonly allowCustomI18n = computed<CheckboxI18n>(() => ({
+    name: 'allowCustom', label: this.i18n().field_allow_custom(), helper: this.i18n().field_allow_custom_helper(),
   }));
   protected readonly audienceFromI18n = computed<StringSelectI18n>(() => ({
     name: 'audienceFrom', label: this.i18n().field_audience_from(), helper: this.i18n().field_audience_from_helper(),

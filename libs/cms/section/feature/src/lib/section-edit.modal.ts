@@ -6,7 +6,7 @@ import { IonContent, ModalController } from '@ionic/angular';
 import { CategoryListModel, LocationModel, SectionModel, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, ErrorBanner, Header} from '@okr/shared-ui';
 import { coerceBoolean, deepEqual, hasRole, safeStructuredClone } from '@okr/shared-util-core';
-import { CourseOption, FormOption, ResponsibilityOption, SectionForm } from '@okr/cms-section-ui';
+import { ChoiceFieldOption, CourseOption, FormOption, ResponsibilityOption, SectionForm } from '@okr/cms-section-ui';
 import { LocationService } from '@okr/location-data-access';
 import { ContractService } from '@okr/business-contract-data-access';
 import { dismissOverlay, lazyService } from '@okr/shared-util-angular';
@@ -132,6 +132,17 @@ export class SectionEditModal {
         formKey: def.formKey,
         name: def.name || def.formKey,
         implicitFields: (def.fields ?? []).flatMap((field) => (field.type === 'implicit' ? [field] : [])),
+        choiceFields: (def.fields ?? []).flatMap((field): ChoiceFieldOption[] => {
+          if (field.type === 'dropdown' || field.type === 'radio') {
+            const options = field.options ?? [];
+            return [{ key: field.key, label: field.label, values: options.map((o) => o.value), labels: options.map((o) => o.label || o.value) }];
+          }
+          if (field.type === 'category') {
+            const items = this.appStore.getCategory(field.categoryName)?.items ?? [];
+            return [{ key: field.key, label: field.label, values: items.map((i) => i.name), labels: items.map((i) => i.name) }];
+          }
+          return [];
+        }),
         showRemaining: def.showRemaining === true,
       }))),
   ), { initialValue: [] as FormOption[] });

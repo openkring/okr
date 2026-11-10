@@ -1,6 +1,7 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { CdkDragDrop, CdkDropList, CdkDropListGroup, CdkDrag, moveItemInArray } from '@angular/cdk/drag-drop';
+import { CdkScrollable } from '@angular/cdk/scrolling';
 import {
   AlertController, IonButton, IonButtons, IonChip, IonContent, IonIcon, IonItem, IonLabel, IonNote, IonSegment, IonSegmentButton, IonToolbar, ModalController,
   ToastController,
@@ -10,7 +11,7 @@ import { combineLatest, map } from 'rxjs';
 import { AppStore } from '@okr/shared-feature';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { fill, getTodayStr, replaceSubstring, safeStructuredClone, SSN_FIELD_KEY } from '@okr/shared-util-core';
+import { fill, getTodayStr, isModelSelect, ModelSelectChoice, projectModelChoices, replaceSubstring, safeStructuredClone, SSN_FIELD_KEY } from '@okr/shared-util-core';
 import { Field, FormDefinitionModel, FormMapping, FormSectionConfig, PageModel, SectionModel } from '@okr/shared-models';
 import { PageService } from '@okr/cms-page-data-access';
 import { SectionService } from '@okr/cms-section-data-access';
@@ -60,6 +61,9 @@ function newField(def: FieldTypeDef, order: number): Field {
     case 'checkbox': return { ...base, type };
     case 'avatar': return { ...base, type, avatarType: 'person' };
     case 'category': return { ...base, type, categoryName: '' };
+    // a person/org/resource picker: free text allowed, as in the Logbuch; an org list starts limited to clubs
+    case 'person': case 'resource': return { ...base, type, filter: '', allowCustom: true };
+    case 'org': return { ...base, type, filter: 'club', allowCustom: true };
     case 'paragraph': return { ...base, type, isIndented: true, isSmall: true };
     // an unsichtbares Feld starts as text: a course id
     case 'implicit': return { ...base, type, valueType: 'text' };
@@ -74,13 +78,18 @@ function newField(def: FieldTypeDef, order: number): Field {
   standalone: true,
   imports: [
     SvgIconPipe, Header, ChangeConfirmation,
-    CdkDropList, CdkDropListGroup, CdkDrag, FieldTypeLibrary, FormRenderer,
+    CdkDropList, CdkDropListGroup, CdkDrag, CdkScrollable, FieldTypeLibrary, FormRenderer,
     IonToolbar, IonButton, IonButtons, IonContent, IonItem, IonLabel, IonIcon, IonNote, IonChip,
     IonSegment, IonSegmentButton,
   ],
   styles: [`
+    /* the scroll container is a plain div marked cdkScrollable: ion-content scrolls inside its shadow
+       DOM, where the CDK cannot see it, so a drag never auto-scrolled towards a place out of view */
+    .editor-scroll { height: 100%; overflow-y: auto; }
     .editor-layout { display: flex; min-height: 100%; }
-    .library-panel { width: 260px; border-right: 1px solid var(--ion-border-color); display: flex; flex-direction: column; }
+    /* the library stays in view while the canvas scrolls, so a field can be dragged to its far end */
+    .library-panel { width: 260px; border-right: 1px solid var(--ion-border-color); display: flex; flex-direction: column;
+                     position: sticky; top: 0; align-self: flex-start; max-height: 100%; overflow-y: auto; }
     .canvas-panel  { flex: 1; padding: 8px; }
     .canvas-drop   { min-height: 200px; border: 2px dashed var(--ion-color-light-shade); border-radius: 8px; padding: 8px; }
     .canvas-empty  { display: flex; align-items: center; justify-content: center; height: 120px; color: var(--ion-color-medium); }
@@ -106,7 +115,8 @@ function newField(def: FieldTypeDef, order: number): Field {
     @if (isDirty()) {
       <okr-change-confirmation [i18n]="changeConfirmationI18n()" [saveDisabled]="hasKeyIssues()" (saveClicked)="save()" (cancelClicked)="cancel()" />
     }
-    <ion-content>
+    <ion-content [scrollY]="false">
+      <div class="editor-scroll" cdkScrollable>
       <div class="editor-layout" cdkDropListGroup>
 
         <!-- left: field-type library -->
@@ -230,6 +240,7 @@ function newField(def: FieldTypeDef, order: number): Field {
                 @for (definition of previewDefinitions(); track definition) {
                   <okr-form-renderer [definition]="definition" [categories]="appStore.allCategories()" [showSubmit]="false"
                     [otherI18n]="{ option: i18n.field_other_option(), placeholder: i18n.field_other_placeholder() }"
+                    [choices]="previewChoices()" [pickI18n]="{ none: i18n.field_pick_none() }"
                     (valueChange)="previewValues.set($event)" />
                 }
                 @if (hasDerivedValues()) {
@@ -270,6 +281,7 @@ function newField(def: FieldTypeDef, order: number): Field {
           }
         </div>
       </div>
+      </div>
     </ion-content>
   `,
 })
@@ -308,6 +320,18 @@ export class FormBuilderEditor {
    * open would otherwise have no control and stay hidden until the next answer.
    */
   protected readonly previewDefinitions = computed(() => [this.previewDefinition()]);
+
+  /** the pickers' lists in the preview — the author is signed in, so from the AppStore (same filter as the server) */
+  protected readonly previewChoices = computed<Record<string, ModelSelectChoice[]>>(() => {
+    const result: Record<string, ModelSelectChoice[]> = {};
+    const tenantId = this.appStore.tenantId();
+    for (const field of this.fields()) {
+      if (!isModelSelect(field)) continue;
+      const docs = field.type === 'person' ? this.appStore.allPersons() : field.type === 'org' ? this.appStore.allOrgs() : this.appStore.allResources();
+      result[field.key] = projectModelChoices(field, docs as unknown as Record<string, unknown>[], tenantId);
+    }
+    return result;
+  });
 
   /**
    * The preview's answers (hidden ones included), as the renderer reports them. Back to «nothing answered»

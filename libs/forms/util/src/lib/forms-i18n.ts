@@ -164,6 +164,23 @@ export const FORM_I18N_KEYS = {
   fields_course_field_mapping: PFX + 'fields.course_field_mapping',
   fields_course_audience_from_missing: PFX + 'fields.course_audience_from_missing',
 
+  // person / org / resource pickers (free text allowed, as in the Logbuch)
+  fieldtype_person:           PFX + 'fieldtype.person',
+  fieldtype_person_desc:      PFX + 'fieldtype.person_desc',
+  fieldtype_org:              PFX + 'fieldtype.org',
+  fieldtype_org_desc:         PFX + 'fieldtype.org_desc',
+  fieldtype_resource:         PFX + 'fieldtype.resource',
+  fieldtype_resource_desc:    PFX + 'fieldtype.resource_desc',
+  field_filter:               PFX + 'field.filter',
+  field_filter_helper:        PFX + 'field.filter_helper',
+  field_allow_custom:         PFX + 'field.allow_custom',
+  field_allow_custom_helper:  PFX + 'field.allow_custom_helper',
+  field_pick:                 PFX + 'field.pick',
+  field_pick_search:          PFX + 'field.pick_search',
+  field_pick_custom:          PFX + 'field.pick_custom',
+  field_pick_clear:           PFX + 'field.pick_clear',
+  field_pick_none:            PFX + 'field.pick_none',
+
   // «Nach dem Absenden» card (spec §10)
   after_title:                PFX + 'after.title',
   after_message:              PFX + 'after.message',

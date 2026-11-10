@@ -1,4 +1,4 @@
-import { Field, FieldType, FormMapping } from '@okr/shared-models';
+import { Field, FieldType, FormMapping, ModelSelectField, ModelSelectFieldType } from '@okr/shared-models';
 import { SSN_FIELD_KEY } from '@okr/shared-util-core';
 
 /** A field key becomes a property name of the submitted document: camelCase — a lower-case letter, then letters and digits (e.g. firstName). */
@@ -15,6 +15,14 @@ export function isDisplayField(type: FieldType): boolean {
 /** True for elements that collect a value (everything except display-only elements). */
 export function isInputField(field: { type: FieldType }): boolean {
   return !isDisplayField(field.type);
+}
+
+/** The field types that pick a person, an organisation or a resource by name. */
+export const MODEL_SELECT_FIELD_TYPES: readonly ModelSelectFieldType[] = ['person', 'org', 'resource'];
+
+/** True for a person/org/resource picker. */
+export function isModelSelectField(field: { type: FieldType }): field is ModelSelectField {
+  return (MODEL_SELECT_FIELD_TYPES as readonly string[]).includes(field.type);
 }
 
 /** The distinct category-list names the 'category' fields of a form refer to. */

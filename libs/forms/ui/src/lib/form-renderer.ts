@@ -3,9 +3,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { IonButton } from '@ionic/angular';
 import { BaseType, CategoryListModel, DerivedValue, Field, FormDefinitionModel, OTHER_OPTION_VALUE } from '@okr/shared-models';
-import { FORM_OTHER_TEXT_MAX, PublicCourseOption, computeDerivedValues, coursesForAudience, getTodayStr, shouldClearCourseChoice, getVisibleFieldIds, resolveImplicitValues } from '@okr/shared-util-core';
+import { FORM_OTHER_TEXT_MAX, ModelSelectChoice, PublicCourseOption, choiceByName, computeDerivedValues, coursesForAudience, getTodayStr, isModelSelect, modelSelectKeyOf, shouldClearCourseChoice, getVisibleFieldIds, resolveFixedValues, resolveImplicitValues } from '@okr/shared-util-core';
 import { validatorsFor, defaultFor, isInputField } from '@okr/forms-util';
-import { DEFAULT_FIELD_COURSE_I18N, DEFAULT_FIELD_OTHER_I18N, FieldCourseI18n, FieldOtherI18n, FieldRenderer } from './field-renderer';
+import { DEFAULT_FIELD_COURSE_I18N, DEFAULT_FIELD_OTHER_I18N, DEFAULT_FIELD_PICK_I18N, FieldCourseI18n, FieldOtherI18n, FieldPickI18n, FieldRenderer } from './field-renderer';
 
 /** The key of the «Andere» text of a field (spec §9). */
 function otherKeyOf(field: Field): string {
@@ -59,11 +59,12 @@ function isOtherValue(value: unknown): boolean {
 
       <div class="fields">
         @for (field of sortedFields(); track field.id) {
-          <!-- an implicit field only holds a control: never mounted, so no label, help text or error note -->
-          @if (field.type !== 'implicit' && visibleIds().has(field.id)) {
+          <!-- an implicit field, and one the page fixed, only hold a control: never mounted, so no label, help text or error note -->
+          @if (field.type !== 'implicit' && !isFixed(field) && visibleIds().has(field.id)) {
             <okr-field-renderer [class]="'width-' + field.width" [field]="field" [control]="getControl(field)"
               [category]="categoryOf(field)" [readOnly]="isLocked(field)" [otherControl]="otherControlOf(field)"
               [otherI18n]="otherI18n()"
+              [choices]="choicesOf(field)" [keyControl]="keyControlOf(field)" [pickI18n]="pickI18n()"
               [courses]="courseList()" [audienceKnown]="courseAudienceValue() !== undefined" [courseI18n]="courseI18n()" />
           }
         }
@@ -103,6 +104,11 @@ export class FormRenderer implements OnInit {
   public readonly courses = input<PublicCourseOption[]>([]);
   /** the texts of the course choice */
   public readonly courseI18n = input<FieldCourseI18n>(DEFAULT_FIELD_COURSE_I18N);
+  /** the page's parameter: fixed answers by field key (`PublicFormDefinition.fixedValues`); those fields are not shown */
+  public readonly fixedValues = input<Record<string, string>>({});
+  /** the lists of the person / org / resource pickers, by field key */
+  public readonly choices = input<Record<string, ModelSelectChoice[]>>({});
+  public readonly pickI18n = input<FieldPickI18n>(DEFAULT_FIELD_PICK_I18N);
   public readonly submitted = output<Record<string, unknown>>();
   /** every answer, hidden ones included (`getRawValue()`), after each change — for the builder preview */
   public readonly valueChange = output<Record<string, unknown>>();
@@ -147,6 +153,10 @@ export class FormRenderer implements OnInit {
   private lockedKeySet: ReadonlySet<string> = new Set();
   /** the `<key>Other` controls, by the owning field's key */
   private otherControls: Record<string, FormControl> = {};
+  /** the `<key>Key` controls of the pickers (the okey of the picked record), by the owning field's key */
+  private keyControls: Record<string, FormControl> = {};
+  /** keys the page fixed (`fixedValues`): held, never shown — read once, when the controls are built */
+  private fixedKeySet: ReadonlySet<string> = new Set();
 
   public constructor() {
     // Hidden means absent: a hidden input is emptied and disabled, so it drops out of form.value
@@ -174,11 +184,22 @@ export class FormRenderer implements OnInit {
           }
         }
         this.syncOtherControls();
+        this.syncKeyControls();
         // a restored value may itself show or hide a later field (converges: set only on change)
         if (restored) this.updateVisibility();
       });
     });
   }
+
+  /** a picker's list may arrive after the controls were built: check its answer against it again */
+  private readonly revalidatePickers = effect(() => {
+    this.choices();
+    untracked(() => {
+      for (const field of this.definition().fields) {
+        if (isModelSelect(field)) this._form.get(field.key)?.updateValueAndValidity({ emitEvent: false });
+      }
+    });
+  });
 
   /** a ticked course that left the list (the applicant type changed, or it filled up) is unticked */
   private readonly clearCourse = effect(() => {
@@ -199,10 +220,14 @@ export class FormRenderer implements OnInit {
     // the section's / link's values over the fields' own defaults (an AHV field never resolves — R1)
     const implicit = { ...resolveImplicitValues(fields, undefined, {}), ...this.implicitValues() };
     const inputKeys = new Set(fields.filter(f => isInputField(f)).map(f => f.key));
+    // the page's fixed answers win over the link's: the topic of a contact form on «Junioren» is 'junior'
+    const fixed = resolveFixedValues(fields, this.fixedValues());
     const controls: Record<string, FormControl> = {};
     const locked = new Set<string>();
     this.initialValues = {};
     this.otherControls = {};
+    this.keyControls = {};
+    this.fixedKeySet = new Set(Object.keys(fixed));
     for (const field of fields) {
       // Display-only elements (label, divider) hold no value — no control, not submitted.
       if (!isInputField(field)) continue;
@@ -213,12 +238,19 @@ export class FormRenderer implements OnInit {
         controls[field.key] = new FormControl(value);
         continue;
       }
-      const value = Object.prototype.hasOwnProperty.call(prefill, field.key) ? prefill[field.key] : defaultFor(field);
+      const value = Object.prototype.hasOwnProperty.call(fixed, field.key) ? fixed[field.key]
+        : Object.prototype.hasOwnProperty.call(prefill, field.key) ? prefill[field.key] : defaultFor(field);
       this.initialValues[field.key] = value;
       if (field.lockWhenPrefilled === true && prefilled.has(field.key) && Object.prototype.hasOwnProperty.call(prefill, field.key)) {
         locked.add(field.key);
       }
-      controls[field.key] = new FormControl(value, validatorsFor(field));
+      controls[field.key] = new FormControl(value, [...validatorsFor(field), ...this.pickerValidators(field)]);
+      // a picker: the okey of the picked record travels as `<key>Key`; never over a real field's key
+      if (isModelSelect(field) && !inputKeys.has(modelSelectKeyOf(field))) {
+        const keyControl = new FormControl('');
+        this.keyControls[field.key] = keyControl;
+        controls[modelSelectKeyOf(field)] = keyControl;
+      }
       // «Andere …»: its text control, enabled only while «Andere» is picked; never over a real field's key
       if (this.allowsOther(field) && !inputKeys.has(otherKeyOf(field))) {
         const other = new FormControl('', [requiredText, Validators.maxLength(FORM_OTHER_TEXT_MAX)]);
@@ -236,10 +268,12 @@ export class FormRenderer implements OnInit {
 
     this.updateVisibility();
     this.syncOtherControls();
+    this.syncKeyControls();
     this.answers.set(this._form.getRawValue() as Record<string, unknown>);
     this._form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.updateVisibility();
       this.syncOtherControls();
+      this.syncKeyControls();
       this.answers.set(this._form.getRawValue() as Record<string, unknown>);
       this.valueChange.emit(this._form.getRawValue() as Record<string, unknown>);
     });
@@ -270,6 +304,33 @@ export class FormRenderer implements OnInit {
     }
   }
 
+  /** A picker's `<key>Key` counts only while its field is shown: otherwise emptied and disabled (hidden means absent). */
+  private syncKeyControls(): void {
+    for (const [key, keyControl] of Object.entries(this.keyControls)) {
+      const owner = this._form.get(key);
+      if (owner?.enabled) {
+        if (keyControl.disabled) keyControl.enable({ emitEvent: false });
+      } else if (keyControl.enabled) {
+        keyControl.reset('', { emitEvent: false });
+        keyControl.disable({ emitEvent: false });
+      }
+    }
+  }
+
+  /**
+   * A picker without free text takes only a listed name (the server checks the same). The list is read when the
+   * control validates, so a list that arrives later counts; without a list any name is taken (an anonymous person).
+   */
+  private pickerValidators(field: Field): ((control: AbstractControl) => ValidationErrors | null)[] {
+    if (!isModelSelect(field) || field.allowCustom === true) return [];
+    return [(control: AbstractControl) => {
+      const list = this.choices()[field.key] ?? [];
+      const value = control.value;
+      if (list.length === 0 || typeof value !== 'string' || value.trim() === '') return null;
+      return choiceByName(list, value) ? null : { invalidChoice: true };
+    }];
+  }
+
   private updateVisibility(): void {
     // getRawValue(): disabled (hidden) controls still contribute their reset value
     const next = getVisibleFieldIds(
@@ -288,6 +349,18 @@ export class FormRenderer implements OnInit {
 
   protected categoryOf(field: Field): CategoryListModel | undefined {
     return field.type === 'category' ? this.categories().find(c => c.name === field.categoryName) : undefined;
+  }
+
+  protected isFixed(field: Field): boolean {
+    return this.fixedKeySet.has(field.key);
+  }
+
+  protected choicesOf(field: Field): ModelSelectChoice[] {
+    return isModelSelect(field) ? this.choices()[field.key] ?? [] : [];
+  }
+
+  protected keyControlOf(field: Field): FormControl | undefined {
+    return this.keyControls[field.key];
   }
 
   protected isLocked(field: Field): boolean {

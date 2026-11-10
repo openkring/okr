@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 
 import { DerivedValue, FormDefinitionModel } from '@okr/shared-models';
-import { FormAvailability, PublicCourseOption, sanitizeFileName } from '@okr/shared-util-core';
+import { FormAvailability, ModelSelectChoice, PublicCourseOption, sanitizeFileName } from '@okr/shared-util-core';
 
 /** What a submitted file becomes once it is in storage — plain, or encrypted at rest. */
 export interface UploadedFileRef {
@@ -35,6 +35,10 @@ export type PublicFormDefinition = FormDefinitionModel & {
   /** 1.152 — only for a form with a course field: the derived value holding the applicant type + the offered courses. */
   courseAudience?: DerivedValue;
   courses?: PublicCourseOption[];
+  /** the page's parameter: fixed answers by field key — those fields are not shown (absent = none, or an old function) */
+  fixedValues?: Record<string, string>;
+  /** the lists of the org / resource pickers, by field key (never persons) */
+  choices?: Record<string, ModelSelectChoice[]>;
 };
 
 /** What `submitForm` returns; `confirmation` (1.125 B) is the thank-you text, absent from old functions. */

@@ -451,6 +451,8 @@ export const SECTION_I18N_KEYS = {
   form_cfg_fixed_no:                         PFX + 'form.config.fixed_no',
   form_cfg_fixed_remove:                    PFX + 'form.config.fixed_remove',
   form_cfg_fixed_required:                   PFX + 'form.config.fixed_required',
+  form_cfg_fixed_choice_open:                PFX + 'form.config.fixed_choice_open',
+  form_cfg_fixed_choice_helper:              PFX + 'form.config.fixed_choice_helper',
   form_cfg_accept_title:                     PFX + 'form.config.accept_title',
   form_cfg_accept_subtitle:                  PFX + 'form.config.accept_subtitle',
   image_upload_action:                      PFX + 'image.upload.action',

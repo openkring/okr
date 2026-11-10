@@ -18,6 +18,8 @@ import { coerceToPropertyType } from './form-values.util';
  */
 export const PREFILL_EXCLUDED_TYPES: readonly string[] = [
   'password', 'iban', 'file', 'images', 'signature', 'avatar', 'ssn', 'label', 'paragraph', 'divider', 'course',
+  // a picked person/org/resource is a name plus its okey (`<key>Key`): a link would only carry the name
+  'person', 'org', 'resource',
 ];
 
 /** Excluded by type, or an AHV field by `isSsnField` (also a legacy `text` field keyed `ssnId`). */

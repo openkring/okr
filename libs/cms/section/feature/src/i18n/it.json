@@ -427,9 +427,9 @@
       "encrypt": "Cifra i file",
       "encrypt_helper": "All'invio viene chiesta una password. I file caricati vengono cifrati con essa.",
       "fixed_title": "Valori fissi",
-      "fixed_subtitle": "Qui stabilisci cosa vale in questa pagina per i campi invisibili del modulo, ad esempio per quale corso è l'iscrizione.",
+      "fixed_subtitle": "Stabilisci cosa è fisso su questa pagina: i campi invisibili del modulo (per esempio il corso) e le domande a scelta che questa pagina risponde già (per esempio il tema «Juniores»).",
       "fixed_pick_form": "Scegli prima un modulo.",
-      "fixed_none": "Questo modulo non ha campi invisibili.",
+      "fixed_none": "Questo modulo non ha campi che una pagina può fissare.",
       "fixed_course_pick": "Scegli un corso",
       "fixed_course_none": "Non c'è ancora nessun corso. Creane uno prima.",
       "fixed_yes": "Sì",
@@ -437,7 +437,9 @@
       "fixed_required": "Serve un valore, altrimenti il campo resta vuoto nelle risposte.",
       "accept_title": "Accettazione in questa pagina",
       "accept_subtitle": "Le tue regole per questa pagina, ad esempio posti e scadenza propri per un corso.",
-      "fixed_remove": "Rimuovi"
+      "fixed_remove": "Rimuovi",
+      "fixed_choice_open": "La persona sceglie",
+      "fixed_choice_helper": "Con un valore, la domanda ha già risposta su questa pagina e non viene mostrata."
     }
   },
   "hero": {

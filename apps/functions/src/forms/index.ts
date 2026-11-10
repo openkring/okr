@@ -12,7 +12,9 @@ import {
   DateFormat,
   getTodayStr,
   omitSsnValues,
+  resolveFixedValues,
   resolveImplicitValues,
+  sanitizeModelSelectAnswers,
 } from '@okr/shared-util-core';
 import { sendEmailViaProvider } from '../auth/email-transport';
 import { getAppEmailConfig } from '../auth/email-templates';
@@ -33,6 +35,7 @@ import {
 } from './form-section-config';
 import { checkCourseChoice, courseFieldOf, courseNameNote, readAnnouncedCourses, withCourseChoice } from './course-choice';
 import { persistWithSlot, readResponseCount } from './form-stats';
+import { readModelSelectChoices } from './model-select';
 import {
   buildFillerMail,
   escapeHtml,
@@ -320,8 +323,16 @@ export const getFormDefinition = onCall(
     // Public-safe projection — whitelist only (see public-definition.ts).
     // 1.152 — announced courses only for a form that has a course field
     const courses = courseFieldOf(formDef.fields) ? await readAnnouncedCourses(db, tenantId, todayStoreDate()) : [];
+    // the page's fixed answers (its parameter): the renderer hides those fields; submitForm enforces them
+    const fixedValues = resolveFixedValues(formDef.fields, section?.props.fixedValues);
+    // org / resource pickers list their records (public names); persons never leave the server here
+    const choices = await readModelSelectChoices(db, formDef.fields, tenantId, false);
     const projected = withCourseChoice(
-      { ...projectPublicFormDefinition(doc.id, doc.data(), formKey, tenantId), availability },
+      {
+        ...projectPublicFormDefinition(doc.id, doc.data(), formKey, tenantId), availability,
+        ...(Object.keys(fixedValues).length > 0 ? { fixedValues } : {}),
+        ...(Object.keys(choices).length > 0 ? { choices } : {}),
+      },
       formDef.fields, formDef.derivedValues, courses,
     );
     // The static website cannot read `categories` itself (no Firestore client): it asks for the lists of
@@ -330,6 +341,19 @@ export const getFormDefinition = onCall(
     return { ...projected, categories: await readPublicCategories(db, formDef.fields, tenantId) };
   }
 );
+
+/** A signed-in user of the tenant (`users/{uid}.tenants`): only they may pick a person from a list. */
+async function isTenantMember(db: FirebaseFirestore.Firestore, uid: string | undefined, tenantId: string): Promise<boolean> {
+  if (!uid) return false;
+  try {
+    const user = await db.collection('users').doc(uid).get();
+    const tenants = user.exists ? user.data()?.['tenants'] : undefined;
+    return Array.isArray(tenants) && tenants.includes(tenantId);
+  } catch (e) {
+    logger.warn('submitForm: could not read the user for a person picker', e);
+    return false;
+  }
+}
 
 /** The item keys of the category lists a form's 'category' fields need — for the static website. */
 async function readPublicCategories(
@@ -689,7 +713,14 @@ export const submitForm = onCall(
       logger.warn(`${CF_NAME}: mail-only formKey=${payload.formKey} (form ${formDef.okey}) via section ${section?.id ?? 'none'} has no e-mail addresses — refused`);
       throw new HttpsError('failed-precondition', 'form-closed');
     }
-    const implicit = resolveImplicitValues(fields, section?.props.implicitValues, payload.values ?? {});
+    // The page's fixed answers win over the client's (a filler cannot pick another topic by editing the request),
+    // then the pickers: a `<key>Key` only for a listed record — persons only for a signed-in member of the tenant.
+    const withFixed = { ...(payload.values ?? {}), ...resolveFixedValues(fields, section?.props.fixedValues) };
+    const withPersons = fields.some((f) => f.type === 'person') && await isTenantMember(db, request.auth?.uid, payload.tenantId);
+    const pickerChoices = await readModelSelectChoices(db, fields, payload.tenantId, withPersons);
+    const picked = sanitizeModelSelectAnswers(fields, withFixed, pickerChoices);
+    const clientValues = picked.values;
+    const implicit = resolveImplicitValues(fields, section?.props.implicitValues, clientValues);
     // A section saved before the implicit field existed passes the check above but carries no value for it:
     // the registration would be stored without its course. Refused like a closed form — before a place is taken.
     const missingImplicit = missingSectionOnlyValues(fields, implicit);
@@ -701,16 +732,22 @@ export const submitForm = onCall(
       throw new HttpsError('failed-precondition', 'form-closed');
     }
     // the board e-mail shows the course by name; only read for a submission that can mail anybody
-    const names = isSpam ? {} : await readCourseNames(db, fields, implicit, payload.values ?? {}, payload.tenantId, CF_NAME);
+    const names = isSpam ? {} : await readCourseNames(db, fields, implicit, clientValues, payload.tenantId, CF_NAME);
     const prepared = prepareSubmission(
       fields,
       formDef.derivedValues,
       mapping?.propertiesField,
-      payload.values ?? {},
+      clientValues,
       today,
       implicit,
       names,
     );
+
+    // a picker without free text whose (visible) answer names no listed record
+    const refusedPickers = picked.refused.filter((key) => fields.some((f) => f.key === key && prepared.visible.has(f.id)));
+    if (refusedPickers.length > 0) {
+      throw new HttpsError('invalid-argument', `Invalid values for fields: ${refusedPickers.join(', ')}`);
+    }
 
     if (prepared.missingRequired.length > 0) {
       throw new HttpsError(

@@ -62,7 +62,16 @@
     "course_places": "quedan {count} plazas",
     "course_places_one": "queda 1 plaza",
     "course_full": "completo",
-    "course_unavailable": "Este curso ya no está disponible. Elige otro o envía la inscripción sin curso."
+    "course_unavailable": "Este curso ya no está disponible. Elige otro o envía la inscripción sin curso.",
+    "filter": "Solo este tipo",
+    "filter_helper": "Por ejemplo «club» para clubes o «rboat» para botes de remo. Déjalo vacío para mostrar todo.",
+    "allow_custom": "Permitir texto libre",
+    "allow_custom_helper": "Si no encuentras el nombre en la lista, puedes escribirlo tú, como en el cuaderno de bitácora.",
+    "pick": "Elegir",
+    "pick_search": "Buscar",
+    "pick_custom": "Usar «{name}»",
+    "pick_clear": "Quitar",
+    "pick_none": "No se encontró nada."
   },
   "fields": {
     "duplicate_key": "Dos preguntas tienen la misma clave. Dale a cada pregunta la suya.",
@@ -244,7 +253,13 @@
     "implicit": "Campo invisible",
     "implicit_desc": "La persona no lo ve. El valor viene de la página o del enlace.",
     "course": "Elección de curso",
-    "course_desc": "La persona elige un curso anunciado. Solo se muestran los cursos que le corresponden."
+    "course_desc": "La persona elige un curso anunciado. Solo se muestran los cursos que le corresponden.",
+    "person": "Persona",
+    "person_desc": "La persona elige a alguien de la lista o escribe un nombre.",
+    "org": "Organización",
+    "org_desc": "La persona elige una organización (un club, por ejemplo) o escribe un nombre.",
+    "resource": "Recurso",
+    "resource_desc": "La persona elige un recurso (un barco, por ejemplo) o escribe un nombre."
   },
   "property": {
     "boolean": "sí/no",

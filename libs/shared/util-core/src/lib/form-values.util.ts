@@ -1,4 +1,4 @@
-import { OTHER_OPTION_VALUE } from '@okr/shared-models';
+import { MODEL_SELECT_KEY_SUFFIX, OTHER_OPTION_VALUE } from '@okr/shared-models';
 import type { BaseType, DerivedValue, Field, PropertyType, TypedProperty } from '@okr/shared-models';
 import { isBlankAhv, isSsnField, SSN_FIELD_KEY } from './ahv.util';
 import { evaluateVisibilityRule } from './form-visibility.util';
@@ -55,6 +55,9 @@ export function propertyTypeOf(field: Field): PropertyType | undefined {
     case 'date':
     case 'email':
     case 'phone':
+    case 'person':   // the name; the picked record's okey travels next to it as `<key>Key`
+    case 'org':
+    case 'resource':
       return 'text';
     case 'course': // written to `courseKey` (+ `courseState`) by the server, never a property
     default:
@@ -85,6 +88,10 @@ export function coerceToPropertyType(value: unknown, type: PropertyType): BaseTy
     default:
       return undefined;
   }
+}
+
+function isPickerType(type: string): boolean {
+  return type === 'person' || type === 'org' || type === 'resource';
 }
 
 /** Longest «Andere» text a submission may carry; a longer one is omitted here and refused by the server. */
@@ -135,6 +142,13 @@ export function buildTypedProperties(
       otherText.length <= FORM_OTHER_TEXT_MAX
     ) {
       list.push({ key: otherKey, type: 'text', value: otherText, label: `${field.label} (Andere)` });
+    }
+
+    // a picked person/org/resource: its okey goes next to the name as `<key>Key` (never over a real field's key)
+    const pickedKey = `${field.key}${MODEL_SELECT_KEY_SUFFIX}`;
+    const picked = values?.[pickedKey];
+    if (isPickerType(field.type) && !sorted.some((x) => x.key === pickedKey) && typeof picked === 'string' && picked !== '') {
+      list.push({ key: pickedKey, type: 'text', value: picked, label: `${field.label} (Schlüssel)` });
     }
   }
 

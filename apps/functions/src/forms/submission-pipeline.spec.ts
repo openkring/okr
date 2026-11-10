@@ -15,6 +15,26 @@ const rule = (fieldId: string, op: string, value?: unknown): VisibilityRule =>
   ({ match: 'all', conditions: [{ fieldId, op, value }] }) as unknown as VisibilityRule;
 
 describe('prepareSubmission', () => {
+  it('stores a picked org as its name plus <key>Key, also as a property', () => {
+    const fields = [f('previousClub', 'org', 0), f('boat', 'resource', 1, { asProperty: true })];
+    const r = prepareSubmission(fields, undefined, 'properties',
+      { previousClub: 'Belvoir', previousClubKey: 'c1', boat: 'Aare', boatKey: 'b1', strayKey: 'x' }, TODAY);
+    expect(r.values['previousClub']).toBe('Belvoir');
+    expect(r.values['previousClubKey']).toBe('c1');
+    expect(r.values['strayKey']).toBeUndefined();
+    expect(r.values['properties']).toEqual([
+      { key: 'boat', type: 'text', value: 'Aare', label: 'L-boat' },
+      { key: 'boatKey', type: 'text', value: 'b1', label: 'L-boat (Schlüssel)' },
+    ]);
+  });
+
+  it('drops <key>Key without a name, and never for a hidden picker', () => {
+    const fields = [f('previousClub', 'org', 0), f('show', 'checkbox', 1), f('club2', 'org', 2, { visibleIf: rule('show', 'isChecked') })];
+    const r = prepareSubmission(fields, undefined, undefined, { previousClub: '', previousClubKey: 'c1', show: false, club2: 'X', club2Key: 'c2' }, TODAY);
+    expect(r.values['previousClubKey']).toBeUndefined();
+    expect(r.values['club2Key']).toBeUndefined();
+  });
+
   it('accepts an empty required field that is hidden by a rule', () => {
     const fields = [
       f('wantsMore', 'checkbox', 0),

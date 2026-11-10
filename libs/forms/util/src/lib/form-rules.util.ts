@@ -57,6 +57,9 @@ export function conditionOpsFor(field: Field): ConditionOp[] {
     case 'text':
     case 'email':
     case 'phone':
+    case 'person':   // compared by the name, the answer the filler sees
+    case 'org':
+    case 'resource':
       return [...TEXT_OPS];
     case 'implicit':
       return field.valueType === 'boolean' ? ['isChecked', 'isNotChecked'] : field.valueType === 'number' ? [...NUMBER_OPS] : [...TEXT_OPS];

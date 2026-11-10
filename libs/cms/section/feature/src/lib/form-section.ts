@@ -10,11 +10,11 @@ import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Spinner } from '@okr/shared-ui';
 import { FormSection } from '@okr/shared-models';
-import { fill, parsePrefillParams, resolveImplicitValues } from '@okr/shared-util-core';
+import { fill, ModelSelectChoice, parsePrefillParams, projectModelChoices, resolveImplicitValues } from '@okr/shared-util-core';
 
 import { FormCategoryService, FormSubmitService, isCourseUnavailableError, isFormClosedError, PublicFormDefinition } from '@okr/forms-data-access';
 import { FORM_I18N_KEYS, FormI18n, hasVisibilityRules } from '@okr/forms-util';
-import { FieldCourseI18n, FieldOtherI18n, FormFillerHelpModal, FormRenderer } from '@okr/forms-ui';
+import { FieldCourseI18n, FieldOtherI18n, FieldPickI18n, FormFillerHelpModal, FormRenderer } from '@okr/forms-ui';
 import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
 
@@ -47,9 +47,9 @@ const FormSectionStore = signalStore(
   `],
   template: `
     <ion-card>
-      @if (section().title || helpAvailable()) {
+      @if (title() || helpAvailable()) {
         <ion-card-header class="title-row">
-          <ion-card-title>{{ section().title }}</ion-card-title>
+          <ion-card-title>{{ title() }}</ion-card-title>
           @if (helpAvailable()) {
             <ion-buttons>
               <ion-button fill="clear" (click)="onHelp()" [attr.aria-label]="store.formI18n.help_open()" [title]="store.formI18n.help_open()">
@@ -92,6 +92,9 @@ const FormSectionStore = signalStore(
               [courseAudience]="def.courseAudience"
               [courses]="def.courses ?? []"
               [courseI18n]="courseI18n()"
+              [fixedValues]="def.fixedValues ?? {}"
+              [choices]="choices()"
+              [pickI18n]="pickI18n()"
               (submitted)="onSubmit($event)"
             />
           }
@@ -169,6 +172,9 @@ export class FormSectionComponent {
     return this.prefill().keys.some(key => !implicitKeys.has(key));
   });
 
+  /** the section's own title, else the form's name — a page never shows a form without saying which one */
+  protected readonly title = computed(() => this.section().title?.trim() || this.definition()?.name?.trim() || '');
+
   /** absent from old functions: then the form counts as open and unlimited */
   private readonly availability = computed(() => this.definition()?.availability);
 
@@ -195,6 +201,26 @@ export class FormSectionComponent {
     option: this.store.formI18n.field_other_option(),
     placeholder: this.store.formI18n.field_other_placeholder(),
   }));
+
+  protected readonly pickI18n = computed<FieldPickI18n>(() => ({ none: this.store.formI18n.field_pick_none() }));
+
+  /**
+   * The pickers' lists: orgs and resources from the definition (public names); persons only for a signed-in
+   * member, from the AppStore — the server never sends persons, an anonymous filler types the name.
+   */
+  protected readonly choices = computed<Record<string, ModelSelectChoice[]>>(() => {
+    const def = this.definition();
+    if (!def) return {};
+    const result: Record<string, ModelSelectChoice[]> = { ...(def.choices ?? {}) };
+    const persons = this.store.appStore.currentUser() ? this.store.appStore.allPersons() : [];
+    if (persons.length > 0) {
+      const docs = persons as unknown as Record<string, unknown>[];
+      for (const field of def.fields ?? []) {
+        if (field.type === 'person') result[field.key] = projectModelChoices(field, docs, this.store.appStore.tenantId());
+      }
+    }
+    return result;
+  });
 
   protected readonly courseI18n = computed<FieldCourseI18n>(() => ({
     hint: this.store.formI18n.field_course_hint(),

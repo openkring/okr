@@ -11,7 +11,7 @@ import { fill, resolveImplicitValues } from '@okr/shared-util-core';
 
 import { FormCategoryService, FormSubmitService, isCourseUnavailableError, isFormClosedError, PublicFormDefinition } from '@okr/forms-data-access';
 import { FORM_I18N_KEYS, FormI18n, hasVisibilityRules } from '@okr/forms-util';
-import { FieldCourseI18n, FieldOtherI18n } from './field-renderer';
+import { FieldCourseI18n, FieldOtherI18n, FieldPickI18n } from './field-renderer';
 import { FormRenderer } from './form-renderer';
 
 /** The strings the modal needs. `SectionI18n` is a superset, so a section store's resolved
@@ -109,6 +109,8 @@ export interface FormModalI18n {
             [courseAudience]="def.courseAudience"
             [courses]="def.courses ?? []"
             [courseI18n]="courseI18n()"
+            [choices]="def.choices ?? {}"
+            [pickI18n]="pickI18n()"
             (submitted)="onSubmit($event)"
           />
         }
@@ -194,6 +196,8 @@ export class FormModal {
     option: this.formI18n.field_other_option(),
     placeholder: this.formI18n.field_other_placeholder(),
   }));
+
+  protected readonly pickI18n = computed<FieldPickI18n>(() => ({ none: this.formI18n.field_pick_none() }));
 
   protected readonly courseI18n = computed<FieldCourseI18n>(() => ({
     hint: this.formI18n.field_course_hint(),

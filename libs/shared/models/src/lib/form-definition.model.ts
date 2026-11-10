@@ -10,6 +10,7 @@ export type FieldType =
   | 'dropdown' | 'checkbox' | 'radio' | 'file' | 'images'
   | 'date' | 'time' | 'signature' | 'rating' | 'avatar' | 'category'
   | 'implicit' | 'course'
+  | 'person' | 'org' | 'resource'
   | 'label' | 'paragraph' | 'divider';
 
 export interface FieldOption { label: string; value: string; }
@@ -92,6 +93,22 @@ export interface ImplicitField extends FieldBase {
   /** Accept the value from the link's query parameter; false = the server ignores any client value. */
   fromLink?: boolean;
 }
+/** The field types that pick a person, an organisation or a resource by name. */
+export type ModelSelectFieldType = 'person' | 'org' | 'resource';
+/** The suffix of the key that holds the okey of a record picked from the list: `<key>Key` (like `<key>Other`, §9). */
+export const MODEL_SELECT_KEY_SUFFIX = 'Key';
+// Pick a person, organisation or resource by name. The answer is the display NAME (text, as in a mail or a
+// text field); when it was picked from the list, the record's okey travels as `<key>Key`. With `allowCustom`
+// the filler may type a name that is not in the list (as in the Logbuch), and then there is no `<key>Key`.
+// Orgs and resources are listed for anonymous fillers too (`getFormDefinition`, their names are public);
+// persons only for a signed-in filler — an anonymous one always types the name.
+export interface ModelSelectField extends FieldBase {
+  type: ModelSelectFieldType;
+  /** the org type / resource type the list is limited to (e.g. 'club', 'rboat'); '' or absent = all */
+  filter?: string;
+  /** the filler may type a name that is not in the list */
+  allowCustom?: boolean;
+}
 // Display-only elements — no input value, never submitted. `label` holds the static text.
 /** Course choice (spec 1.152): at most one per form, only on applications.* mappings, field key `courseKey`. */
 export interface CourseField extends FieldBase {
@@ -108,6 +125,7 @@ export type Field =
   | TextField | EmailField | NumberField | PhoneField | IbanField | SsnField | PasswordField | ImplicitField
   | DropdownField | CheckboxField | RadioField | FileField | ImagesField
   | DateField | TimeField | SignatureField | RatingField | AvatarField | CategoryField | CourseField
+  | ModelSelectField
   | LabelField | ParagraphField | DividerField;
 
 // ──────────────────────────────────────────

@@ -62,7 +62,16 @@
     "course_places": "encore {count} places",
     "course_places_one": "encore 1 place",
     "course_full": "complet",
-    "course_unavailable": "Ce cours n’est malheureusement plus disponible. Choisis-en un autre ou envoie ton inscription sans cours."
+    "course_unavailable": "Ce cours n’est malheureusement plus disponible. Choisis-en un autre ou envoie ton inscription sans cours.",
+    "filter": "Seulement ce type",
+    "filter_helper": "Par exemple «club» pour les clubs ou «rboat» pour les bateaux d’aviron. Laisse vide pour tout afficher.",
+    "allow_custom": "Autoriser la saisie libre",
+    "allow_custom_helper": "Si tu ne trouves pas le nom dans la liste, tu peux l’écrire toi-même, comme dans le journal de bord.",
+    "pick": "Choisir",
+    "pick_search": "Rechercher",
+    "pick_custom": "Utiliser «{name}»",
+    "pick_clear": "Retirer",
+    "pick_none": "Aucun résultat."
   },
   "fields": {
     "duplicate_key": "Deux questions ont la même clé. Donne à chaque question la sienne.",
@@ -244,7 +253,13 @@
     "implicit": "Champ invisible",
     "implicit_desc": "La personne ne le voit pas. La valeur vient de la page ou du lien.",
     "course": "Choix du cours",
-    "course_desc": "La personne choisit un cours annoncé. Seuls les cours qui lui conviennent sont affichés."
+    "course_desc": "La personne choisit un cours annoncé. Seuls les cours qui lui conviennent sont affichés.",
+    "person": "Personne",
+    "person_desc": "La personne choisit quelqu’un dans la liste ou écrit un nom.",
+    "org": "Organisation",
+    "org_desc": "La personne choisit une organisation (un club, par exemple) ou écrit un nom.",
+    "resource": "Ressource",
+    "resource_desc": "La personne choisit une ressource (un bateau, par exemple) ou écrit un nom."
   },
   "property": {
     "boolean": "oui/non",

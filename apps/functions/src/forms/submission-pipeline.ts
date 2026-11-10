@@ -7,7 +7,9 @@ import {
   FORM_OTHER_TEXT_MAX,
   formatAnswer,
   getVisibleFieldIds,
+  isModelSelect,
   isSsnField,
+  modelSelectKeyOf,
   normalizeAhv,
   omitSsnValues,
   propertyTypeOf,
@@ -187,6 +189,11 @@ export function prepareSubmission(
       answers[field.key] = false;
     }
     collectOtherText(field, value, input, defs, answers, missingRequired, invalidProperties);
+    // a picked person/org/resource: the okey `sanitizeModelSelectAnswers` checked travels as `<key>Key`
+    const pickedKey = isModelSelect(field) ? modelSelectKeyOf(field) : undefined;
+    if (pickedKey && !isEmpty(value) && typeof input[pickedKey] === 'string' && input[pickedKey] !== '' && !defs.some((x) => x.key === pickedKey)) {
+      answers[pickedKey] = input[pickedKey];
+    }
   }
 
   // A derived property without a type is text: it must never fall back to a top-level key.
@@ -211,6 +218,8 @@ export function prepareSubmission(
     values[field.key] = answers[field.key];
     const otherKey = otherTextKey(field);
     if (otherKey in answers) values[otherKey] = answers[otherKey];
+    const pickedKey = isModelSelect(field) ? modelSelectKeyOf(field) : undefined;
+    if (pickedKey && pickedKey in answers) values[pickedKey] = answers[pickedKey];
   }
 
   for (const d of derivedList) {
