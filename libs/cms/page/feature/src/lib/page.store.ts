@@ -267,8 +267,9 @@ export const _PageStore = signalStore(
        * Edit a page by opening the edit modal. If the page has no key, it will be created after saving the modal. Otherwise, the existing page will be updated.
        * @param page 
        * @param readOnly 
+       * @param websiteUrl public website address of the page, shown read-only (sitemap only)
        */
-      async edit(page: PageModel, readOnly = true): Promise<void> {
+      async edit(page: PageModel, readOnly = true, websiteUrl?: string): Promise<void> {
         const { PageEditModal } = await import('./page-edit.modal');
         const modal = await store.modalController.create({
           component: PageEditModal,
@@ -279,6 +280,7 @@ export const _PageStore = signalStore(
             roles: this.getStates(),
             types: this.getTypes(),
             states: this.getStates(),
+            websiteUrl,
             readOnly
           }
         });

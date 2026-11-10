@@ -314,7 +314,7 @@ export const _WebsiteSitemapStore = signalStore(
           await toast(store.i18n.page_not_found());
           return;
         }
-        await store.pageStore.edit(page, false);
+        await store.pageStore.edit(page, false, websiteUrl(node));
       },
     };
   }),

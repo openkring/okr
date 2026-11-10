@@ -316,5 +316,34 @@
   "result": {
     "title": "Risultati"
   },
-  "chatHelp": "Guida alla chat"
+  "chatHelp": "Guida alla chat",
+  "website": {
+    "subTitle": {
+      "label": "Sottotitolo",
+      "placeholder": "Breve sottotitolo sotto il titolo della pagina"
+    },
+    "abstract": {
+      "label": "Introduzione",
+      "placeholder": "Breve testo introduttivo, al massimo 500 caratteri"
+    },
+    "bannerUrl": {
+      "label": "Immagine banner",
+      "placeholder": "Indirizzo dell'immagine mostrata in cima alla pagina"
+    },
+    "bannerAltText": {
+      "label": "Descrizione dell'immagine",
+      "placeholder": "Descrivi l'immagine in una frase, così può essere letta anche ad alta voce"
+    },
+    "metaDescription": {
+      "label": "Descrizione per i motori di ricerca",
+      "placeholder": "Una o due frasi mostrate nei risultati di ricerca"
+    },
+    "url": {
+      "label": "Indirizzo sul sito web",
+      "placeholder": "Percorso della pagina"
+    },
+    "okey": {
+      "label": "Chiave della pagina"
+    }
+  }
 }

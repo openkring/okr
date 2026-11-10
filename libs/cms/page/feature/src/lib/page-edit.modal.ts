@@ -38,6 +38,7 @@ import { AppStore } from '@okr/shared-feature';
             [states]="states()"
             [allTags]="allTags()"
             [tenantId]="store.tenantId()"
+            [websiteUrl]="websiteUrl()"
             [readOnly]="isReadOnly()"
             (dirty)="formDirty.set($event)"
             (valid)="formValid.set($event)"
@@ -62,6 +63,8 @@ export class PageEditModal {
   public roles = input.required<CategoryListModel>();
   public types = input.required<CategoryListModel>();
   public states = input.required<CategoryListModel>();
+  /** Set by the website sitemap; shows the page's public address read-only with a copy button. */
+  public websiteUrl = input<string | undefined>();
   public readOnly = input<boolean>(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
