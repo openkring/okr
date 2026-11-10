@@ -4,6 +4,7 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 
 import { checkAppCheckToken, checkAuthentication, getCallerTenantId } from '@okr/shared-util-functions';
+import { ADD_ON_BLOCKS, optionBlocks } from '@okr/business-metering-util';
 import { SubscriptionCollection } from '@okr/shared-models';
 import { FEATURE_BLOCKS, type FeatureBlock } from '@okr/tenant-util';
 
@@ -18,7 +19,9 @@ const REGION = 'europe-west6';
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** Admin of the caller's own tenant: replace the paid options, then switch the matching blocks on/off. */
-export const createSetSubscriptionOptions = (catalogue: FeatureBlock[]) => onCall(
+export const createSetSubscriptionOptions = (
+  catalogue: FeatureBlock[], blockMap: Record<string, readonly string[]> = ADD_ON_BLOCKS,
+) => onCall(
   { region: REGION, enforceAppCheck: true, cors: true },
   async (request: CallableRequest): Promise<{ options: string[] }> => {
     const CF_NAME = 'setSubscriptionOptions';
@@ -42,13 +45,23 @@ export const createSetSubscriptionOptions = (catalogue: FeatureBlock[]) => onCal
     if (sub['billing'] !== 'stripe') {
       throw new HttpsError('failed-precondition', 'not-billed-by-stripe', { reason: 'not-billed-by-stripe' });
     }
+    const unavailable = options.filter(id => optionBlocks(id, blockMap).length === 0);
+    if (unavailable.length > 0) {
+      throw new HttpsError('failed-precondition', 'option-not-available', { reason: 'option-not-available', ids: unavailable });
+    }
     const before = (sub['options'] as string[] | undefined) ?? [];
-    const enable = options.filter(id => !before.includes(id));
-    const disable = before.filter(id => !options.includes(id));
+    const blocksOf = (ids: string[]) => ids.flatMap(id => optionBlocks(id, blockMap));
+    const stillOwned = new Set(blocksOf(options));
+    // every requested option, not just the new ones: enabling is idempotent, and a retry after a failed enable converges
+    const enable = blocksOf(options);
+    const disable = blocksOf(before.filter(id => !options.includes(id))).filter(b => !stillOwned.has(b));
+    const actor = request.auth?.uid ?? '';
 
-    // Selection first: a refusal (a running block still needs a disabled one) must leave the options untouched.
-    await applySelection(db, catalogue, tenantId, request.auth?.uid ?? '', { enable, disable });
+    // Order: disables (a refusal throws before any write), then the options, then the enables — features
+    // never run ahead of billing, and a retry of the same input converges.
+    await applySelection(db, catalogue, tenantId, actor, { enable: [], disable });
     await db.collection(SubscriptionCollection).doc(tenantId).set({ options }, { merge: true });
+    await applySelection(db, catalogue, tenantId, actor, { enable, disable: [] });
     logger.info(`${CF_NAME}: tenant ${tenantId} options ${before.join(',')} -> ${options.join(',')}`);
     return { options };
   },

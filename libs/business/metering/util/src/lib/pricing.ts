@@ -61,6 +61,27 @@ export const ADD_ON_PRICES: Readonly<Record<string, number>> = {
   logbuch: 5,
 };
 
+/**
+ * Which feature-catalogue block ids each paid option switches on (option id -> block ids). Empty until the
+ * owner has confirmed the mapping (1.32 §8.4 `finance` split): an option with no block is not offered yet.
+ */
+export const ADD_ON_BLOCKS: Readonly<Record<string, readonly string[]>> = {
+  buchhaltung: [],
+  crm: [],
+  lohnbuchhaltung: [],
+  'projekte-zeiterfassung': [],
+  kostenrechnung: [],
+  shop: [],
+  'spesen-ocr': [],
+  anlagen: [],
+  logbuch: [],
+};
+
+/** The catalogue blocks of a paid option ([] when unknown or not mapped yet). Pass `map` to override (tests). */
+export function optionBlocks(optionId: string, map: Readonly<Record<string, readonly string[]>> = ADD_ON_BLOCKS): string[] {
+  return Object.prototype.hasOwnProperty.call(map, optionId) ? [...map[optionId]] : [];
+}
+
 /** Commission share of the partner channel — C2 Ziff. 4.2 / parent spec D4. */
 export const COMMISSION_RATE = 0.1;
 

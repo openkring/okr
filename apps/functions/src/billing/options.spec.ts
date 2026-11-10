@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const h = vi.hoisted(() => ({ db: undefined as unknown }));
+const h = vi.hoisted(() => ({ db: undefined as unknown, failCommit: false }));
 vi.mock('firebase-admin/firestore', () => ({ getFirestore: () => h.db }));
 
 import { createSetSubscriptionOptions, paidOptionChanges, setBillingEmail } from './options';
@@ -12,14 +12,19 @@ const block = (id: string, over: Partial<FeatureBlock> = {}): FeatureBlock => ({
   id, bundle: 'special', label: `@f.${id}`, icon: 'help-circle', defaultAvailability: 'ga',
   dependsOn: [], menu: [], collections: [], ...over,
 });
-const CATALOGUE = [block('person'), block('buchhaltung', { dependsOn: ['person'] }), block('calevent')];
+const CATALOGUE = [
+  block('person'), block('buchhaltung', { dependsOn: ['person'] }), block('calevent'),
+  block('reports', { dependsOn: ['buchhaltung'] }),
+];
+// stubbed option -> blocks mapping (the real one is empty until the owner confirms it)
+const MAP = { buchhaltung: ['buchhaltung'], crm: [] as string[] };
 
 /** fakeDb has no WriteBatch (commitChunked needs one) and no `parent` on refs: add both. */
 const withBatch = (store: Store): unknown => {
   const db = baseFakeDb(store) as unknown as Record<string, unknown>;
   db['batch'] = () => {
     const ops: (() => Promise<void>)[] = [];
-    return { set: (ref: { set(d: unknown, o?: unknown): Promise<void> }, d: unknown, o?: unknown) => { ops.push(() => ref.set(d, o)); }, commit: async () => { for (const op of ops) await op(); } };
+    return { set: (ref: { set(d: unknown, o?: unknown): Promise<void> }, d: unknown, o?: unknown) => { ops.push(() => ref.set(d, o)); }, commit: async () => { if (h.failCommit) throw new Error('commit failed'); for (const op of ops) await op(); } };
   };
   return db;
 };
@@ -37,19 +42,19 @@ const req = (data: unknown) => ({ app: {}, auth: { uid: 'u1', token: {} }, data 
 
 describe('paidOptionChanges', () => {
   it('lists newly enabled paid ids that are not allowed', () => {
-    expect(paidOptionChanges([], ['buchhaltung', 'calevent'], [])).toEqual(['buchhaltung']);
+    expect(paidOptionChanges([], ['buchhaltung', 'calevent'], [], MAP)).toEqual(['buchhaltung']);
   });
   it('allows subscribed, already-enabled and non-paid ids', () => {
-    expect(paidOptionChanges([], ['buchhaltung'], ['buchhaltung'])).toEqual([]);
-    expect(paidOptionChanges(['crm'], ['crm'], [])).toEqual([]);
-    expect(paidOptionChanges([], ['calevent', 'toString'], [])).toEqual([]);
+    expect(paidOptionChanges([], ['buchhaltung'], ['buchhaltung'], MAP)).toEqual([]);
+    expect(paidOptionChanges(['buchhaltung'], ['buchhaltung'], [], MAP)).toEqual([]);
+    expect(paidOptionChanges([], ['calevent', 'toString'], [], MAP)).toEqual([]);
   });
 });
 
 describe('fence in applyFeatureSelection', () => {
   const call = (store: Record<string, Record<string, unknown>>) => {
     current = store; h.db = fakeDb(store);
-    return createApplyFeatureSelection(CATALOGUE).run(req({
+    return createApplyFeatureSelection(CATALOGUE, MAP).run(req({
       tenantId: 'scs', intent: { verb: 'enableBlock', blockId: 'buchhaltung', menuKeys: [] },
     }));
   };
@@ -67,10 +72,10 @@ describe('fence in applyFeatureSelection', () => {
   });
 });
 
-const setSubscriptionOptions = createSetSubscriptionOptions(CATALOGUE);
+const setSubscriptionOptions = createSetSubscriptionOptions(CATALOGUE, MAP);
 
 describe('setSubscriptionOptions', () => {
-  beforeEach(() => { h.db = undefined; });
+  beforeEach(() => { h.db = undefined; h.failCommit = false; });
   const call = (store: Record<string, Record<string, unknown>>, options: unknown) => {
     current = store; h.db = fakeDb(store);
     return setSubscriptionOptions.run(req({ options }));
@@ -90,6 +95,28 @@ describe('setSubscriptionOptions', () => {
     const s = current;
     expect(s['subscriptions/scs']['options']).toEqual([]);
     expect(s['app-config/scs']['enabledFeatures']).toEqual(['person']);
+  });
+  it('refuses an option that has no catalogue block yet', async () => {
+    await expect(call(seed('stripe'), ['crm'])).rejects.toMatchObject({
+      code: 'failed-precondition', message: 'option-not-available', details: { ids: ['crm'] },
+    });
+    expect(current['subscriptions/scs']['options']).toEqual([]);
+  });
+  it('a failing enable leaves the options written; a retry enables and keeps them', async () => {
+    const store = seed('stripe');
+    h.failCommit = true;
+    await expect(call(store, ['buchhaltung'])).rejects.toThrow('commit failed');
+    expect(current['subscriptions/scs']['options']).toEqual(['buchhaltung']);
+    expect(current['app-config/scs']['enabledFeatures']).toEqual([]);
+    h.failCommit = false;
+    await call(store, ['buchhaltung']);
+    expect(current['subscriptions/scs']['options']).toEqual(['buchhaltung']);
+    expect(current['app-config/scs']['enabledFeatures']).toEqual(expect.arrayContaining(['buchhaltung', 'person']));
+  });
+  it('a refused disable leaves the options unchanged', async () => {
+    const store = seed('stripe', ['buchhaltung'], ['buchhaltung', 'person', 'reports']);
+    await expect(call(store, [])).rejects.toMatchObject({ code: 'failed-precondition' });
+    expect(current['subscriptions/scs']['options']).toEqual(['buchhaltung']);
   });
   it('rejects an unknown id', async () => {
     await expect(call(seed('stripe'), ['nope'])).rejects.toMatchObject({ code: 'invalid-argument' });

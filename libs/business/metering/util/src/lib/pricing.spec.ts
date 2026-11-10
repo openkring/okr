@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  ADD_ON_PRICES, BANDS, MAX_TOPUP, MIN_TOPUP, TRANSACTION_PRICES, addOnTotal, applyHysteresis,
+  ADD_ON_BLOCKS, ADD_ON_PRICES, BANDS, optionBlocks, MAX_TOPUP, MIN_TOPUP, TRANSACTION_PRICES, addOnTotal, applyHysteresis,
   bandOf, commissionForTenant, priceOfBand, quoteTransaction, roundToFiveCentimes, transactionAmount, weightedUsers,
 } from './pricing';
 import type { BandId } from './pricing';
@@ -223,5 +223,17 @@ describe('transactionAmount', () => {
     expect(transactionAmount({ perUnit: 120, perPage: 30, includedPages: 0 }, 1, 2)).toBe(180);
     expect(transactionAmount({ perUnit: 120, perPage: 30, includedPages: 1 }, 2, 3)).toBe(270);
     expect(transactionAmount({ perUnit: 120, perPage: 30, includedPages: 2 }, 1, 1)).toBe(120);
+  });
+});
+
+describe('optionBlocks', () => {
+  it('maps every priced option and returns [] for the unmapped or unknown', () => {
+    expect(Object.keys(ADD_ON_BLOCKS).sort()).toEqual(Object.keys(ADD_ON_PRICES).sort());
+    expect(optionBlocks('buchhaltung')).toEqual([]);
+    expect(optionBlocks('nope')).toEqual([]);
+    expect(optionBlocks('toString')).toEqual([]);
+  });
+  it('reads a supplied mapping', () => {
+    expect(optionBlocks('crm', { crm: ['crm', 'person'] })).toEqual(['crm', 'person']);
   });
 });

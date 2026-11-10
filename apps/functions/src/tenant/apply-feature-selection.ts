@@ -19,6 +19,7 @@ import {
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
+import { ADD_ON_BLOCKS } from '@okr/business-metering-util';
 import { paidOptionChanges } from '../billing/paid-options.logic';
 
 const REGION = 'europe-west6';
@@ -868,14 +869,14 @@ export async function planPinField(
  * are not fenced. Disabling is always allowed. Throws failed-precondition 'option-not-subscribed'.
  */
 async function assertPaidOptionsSubscribed(
-  db: Firestore, catalogue: FeatureBlock[], tenantId: string, blockId: string,
+  db: Firestore, catalogue: FeatureBlock[], tenantId: string, blockId: string, optionBlocksMap: Record<string, readonly string[]>,
 ): Promise<void> {
   const sub = (await db.collection(SubscriptionCollection).doc(tenantId).get()).data();
   if (sub?.['billing'] !== 'stripe') return;
   const configSnap = await db.collection(AppConfigCollection).doc(tenantId).get();
   const current = effectiveEnabled(configSnap.data(), catalogue);
   const ids = paidOptionChanges(current, resolveWithDeps(catalogue, [blockId]),
-    (sub['options'] as string[] | undefined) ?? []);
+    (sub['options'] as string[] | undefined) ?? [], optionBlocksMap);
   if (ids.length > 0) {
     throw new HttpsError('failed-precondition',
       `${CF_NAME}: option-not-subscribed (${ids.join(', ')})`, { reason: 'option-not-subscribed', ids });
@@ -941,7 +942,9 @@ export async function applySelection(
 // dialog and the outcome are one object — and only `dryRun` decides whether `commitChunked`
 // ever runs.
 // ────────────────────────────────────────────────────────────────────────────────────
-export function createApplyFeatureSelection(catalogue: FeatureBlock[]) {
+export function createApplyFeatureSelection(
+  catalogue: FeatureBlock[], optionBlocksMap: Record<string, readonly string[]> = ADD_ON_BLOCKS,
+) {
   return onCall(
     { region: REGION, enforceAppCheck: true, cors: true },
     async (request: CallableRequest): Promise<ApplyFeatureResponse> => {
@@ -1009,7 +1012,7 @@ export function createApplyFeatureSelection(catalogue: FeatureBlock[]) {
       let result: VerbResult;
       switch (intent.verb) {
         case 'enableBlock':
-          await assertPaidOptionsSubscribed(db, catalogue, tenantId, intent.blockId);
+          await assertPaidOptionsSubscribed(db, catalogue, tenantId, intent.blockId, optionBlocksMap);
           result = await planEnableBlock(db, catalogue, rollouts, tenantId, uid,
             intent.blockId, Array.isArray(intent.menuKeys) ? intent.menuKeys : []);
           break;
