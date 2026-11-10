@@ -6,6 +6,7 @@ import {
 } from './schedulers';
 import { matrixAdminToken } from '../matrix-simple/shared';
 import { SRV_SECRETS } from '../_gateway/adapters/srv';
+import { stripeSecretKey } from '../collection/stripe-port';
 
 const names = (jobs: { name: string }[]) => jobs.map((j) => j.name);
 
@@ -14,8 +15,9 @@ describe('time-slot schedulers', () => {
     expect(names(NIGHTLY_JOBS)).toEqual(['tripStatsReconcile', 'crewTrackCleanup', 'trackerExpiry', 'roomPostPolicySweep', 'expiredMembershipSweep', 'pinboardSweep', 'billScanReap', 'privacyExportReap', 'mailingLettersReap', 'courseEndTasks', 'energyFiguresFetch', 'webhookStuckCheck']);
   });
 
-  it('morning runs its seven jobs in order; monthlyBilling only on the 1st in Zurich', () => {
-    expect(names(MORNING_JOBS)).toEqual(['contractDeadlineScan', 'snbRates', 'partnerHeartbeats', 'taskDaily', 'pruneStalePushTokens', 'regasoftApiWatch', 'monthlyBilling']);
+  it('morning runs its eight jobs in order; monthlyBilling only on the 1st in Zurich, billingDaily every day', () => {
+    expect(names(MORNING_JOBS)).toEqual(['contractDeadlineScan', 'snbRates', 'partnerHeartbeats', 'taskDaily', 'pruneStalePushTokens', 'regasoftApiWatch', 'monthlyBilling', 'billingDaily']);
+    expect(MORNING_JOBS[7].when).toBeUndefined();
     const billing = MORNING_JOBS[6];
     expect(billing.when?.(new Date('2026-12-01T06:00:00Z'))).toBe(true); // 07:00 Zurich
     expect(billing.when?.(new Date('2026-07-01T05:00:00Z'))).toBe(true); // 07:00 Zurich (summer time)
@@ -42,7 +44,7 @@ describe('time-slot schedulers', () => {
     const { secrets, ...nightly } = NIGHTLY_OPTIONS;
     expect(nightly).toEqual({ schedule: '15 3 * * *', timeZone: 'Europe/Zurich', region: 'europe-west6', timeoutSeconds: 540, memory: '512MiB' });
     expect(secrets).toHaveLength(1);
-    expect(MORNING_OPTIONS).toEqual({ schedule: '0 7 * * *', timeZone: 'Europe/Zurich', region: 'europe-west6', timeoutSeconds: 540, memory: '256MiB', secrets: [matrixAdminToken, ...SRV_SECRETS] });
+    expect(MORNING_OPTIONS).toEqual({ schedule: '0 7 * * *', timeZone: 'Europe/Zurich', region: 'europe-west6', timeoutSeconds: 540, memory: '256MiB', secrets: [matrixAdminToken, ...SRV_SECRETS, stripeSecretKey] });
     expect(EVENING_OPTIONS).toEqual({ schedule: '50 23 * * *', timeZone: 'Europe/Zurich', region: 'europe-west6', timeoutSeconds: 300 });
     expect(HALF_HOURLY_OPTIONS).toEqual({ schedule: '*/30 * * * *', timeZone: 'Europe/Zurich', region: 'europe-west6', timeoutSeconds: 540, memory: '256MiB' });
   });

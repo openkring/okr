@@ -12,11 +12,10 @@ import { getDeletePatch } from '@okr/shared-util-core';
 import { createAndIssueInvoice } from '../invoice/invoice-issue.core';
 import { loadOwnedAccountingConfig, refuse } from '../invoice/invoice-context';
 import { platformBilling } from '../collection/platform';
-import { PI_IN_FLIGHT } from '../collection/stripe-port';
+import { readBackEarlierCharge } from '../collection/charge-readback';
+import type { ReadBackPort } from '../collection/charge-readback';
 import type { StripePort } from '../collection/stripe-port';
-import { settleSucceededPayment } from '../collection/stripe-webhook';
-import type { StripeHandlerPort } from '../collection/stripe-webhook';
-import { toStoreDate, toStoreDateTime } from '../srv/zurich-time';
+import { toStoreDateTime } from '../srv/zurich-time';
 import { autoTopUpRequestRef, clearAutoTopUp, switchOffAutoTopUp } from './auto-topup-request';
 import { applyCreditEntry } from './credit-ledger';
 import {
@@ -63,7 +62,7 @@ const SETTLED_ATTEMPT_STATES = ['succeeded', 'overpaid'];
 export type AutoTopUpOutcome = 'charged' | 'declined' | 'skipped';
 
 /** What the auto top-up needs of Stripe: the charge, reading a PaymentIntent back, and the webhook's settle path. */
-export type AutoTopUpPort = Pick<StripePort, 'chargeOffSession' | 'retrievePaymentIntent' | 'findPaymentIntentByInvoiceKey'> & StripeHandlerPort;
+export type AutoTopUpPort = Pick<StripePort, 'chargeOffSession'> & ReadBackPort;
 
 type AutoTopUpRequest = { requestedAt: string; pendingInvoiceKey: string; retryCount?: number };
 
@@ -184,19 +183,15 @@ async function prepareAutoTopUp(
   let retryCount = Number(request.retryCount ?? 0);
   let idempotencyKey = invoiceKey;
   if (rerun && existing) {
-    const earlierId = String(existing['stripePaymentIntentId'] ?? '');
-    const earlier = earlierId ? await port.retrievePaymentIntent(earlierId) : await port.findPaymentIntentByInvoiceKey(invoiceKey);
-    if (earlier?.status === 'succeeded') {
-      // the money arrived but its webhook did not: record it the way the webhook would; onTopUpPaid credits and clears
-      const date = toStoreDate(new Date(earlier.created * 1000));
-      await settleSucceededPayment(db, { db: () => db, port: () => port, now: () => new Date(), log }, {
-        kind: 'payment-succeeded', attemptKey: attemptRef.id, paymentIntentId: earlier.id, chargeId: earlier.chargeId,
-        amount: earlier.amountReceived, date, currency: earlier.currency, paymentMethodId: '', customerId: '',
-      });
+    const { outcome, intent: earlier } = await readBackEarlierCharge(db, port, {
+      attemptKey: attemptRef.id, paymentIntentId: String(existing['stripePaymentIntentId'] ?? ''), invoiceKey,
+    }, log);
+    if (outcome === 'settled' && earlier) {
+      // the money arrived but its webhook did not: recorded the way the webhook would; onBillingInvoicePaid credits and clears
       log('warn', 'autoTopUp: earlier charge had succeeded, recorded instead of charging again', { tenantId, invoiceKey, paymentIntentId: earlier.id });
       return 'skipped';
     }
-    if (earlier && PI_IN_FLIGHT.includes(earlier.status)) {
+    if (outcome === 'in-flight' && earlier) {
       log('warn', 'autoTopUp: earlier charge still in flight, not charging again', { tenantId, invoiceKey, paymentIntentId: earlier.id, status: earlier.status });
       return 'skipped';
     }

@@ -33,7 +33,7 @@ export const TOPUP_FAILED_DEFAULTS: Record<keyof typeof TOPUP_FAILED_I18N_KEYS, 
   link: 'Rechnung ansehen und bezahlen',
 };
 
-/** The pay page of the declined top-up invoice: payable there by any method; once paid, onTopUpPaid credits it. */
+/** The pay page of the declined top-up invoice: payable there by any method; once paid, onBillingInvoicePaid credits it. */
 export const topUpPayLink = (appOrigin: string, invoiceKey: string): string => `${appOrigin}/pay/${encodeURIComponent(invoiceKey)}`;
 
 const chf = (rappen: number): string => (rappen / 100).toFixed(2);

@@ -1,5 +1,5 @@
 // A small in-memory Firestore for the credit and billing specs: doc get/set/create/update, simple collection
-// queries (where ==, ranges, array-contains), set with merge, FieldValue.arrayUnion/arrayRemove, and transactions with optimistic
+// queries (where ==, ranges, array-contains; dotted field paths), set with merge, FieldValue.arrayUnion/arrayRemove, and transactions with optimistic
 // concurrency like Firestore (versions per document, recorded on get, checked at commit, retried on conflict).
 // Test-only: imported by *.spec.ts, never by production code.
 import type { Firestore } from 'firebase-admin/firestore';
@@ -44,7 +44,8 @@ export function fakeDb(store: Store): Firestore {
   let autoId = 0;
   type Filter = { field: string; op: string; value: unknown };
   const matches = (d: Doc, f: Filter): boolean => {
-    const v = d[f.field] as never;
+    // a dotted field path ('receiver.key') reads the nested value, like Firestore
+    const v = f.field.split('.').reduce<unknown>((o, k) => (o as Doc | undefined)?.[k], d) as never;
     switch (f.op) {
       case '==': return v === f.value;
       case '>=': return v >= (f.value as never);

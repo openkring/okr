@@ -318,7 +318,8 @@ export { createInvoicePaymentSession } from './collection/pay-invoice';
 // Prepaid credit (Guthaben): quote, top-up invoice, auto top-up settings; the auto top-up and the credit of a paid top-up
 export { quoteCredit, createTopUpInvoice, setAutoTopUp } from './credit/credit-callables';
 export { onAutoTopUpRequested } from './credit/auto-topup.trigger';
-export { onTopUpPaid } from './credit/topup-paid.trigger';
+// a billing invoice turned paid: credits a top-up; a paid subscription invoice can return pastDue/closing to active
+export { onBillingInvoicePaid } from './credit/topup-paid.trigger';
 // Monthly billing run (plan 2): the morning job on the 1st requests one run per billed tenant; this trigger bills it
 export { onBillingRunRequested } from './billing/billing-run';
 export const cancelInvoice = Invoice.cancelInvoice;
