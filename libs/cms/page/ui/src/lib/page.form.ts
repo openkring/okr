@@ -81,6 +81,7 @@ import { PAGE_ABSTRACT_LENGTH, PageI18n, pageValidations } from '@okr/cms-page-u
               </ion-col>
               <ion-col size="12">
                 <okr-text-input [i18n]="metaI18n()" [value]="metaDescription()" (valueChange)="onMetaDescriptionChange($event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="metaErrors()" />
               </ion-col>
               @if(type() === 'blog') {
                 <ion-col size="12" size-md="6">
@@ -156,6 +157,7 @@ export class PageForm {
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected titleErrors = computed(() => this.validationResult().getErrors('title'));
   protected subTitleErrors = computed(() => this.validationResult().getErrors('subTitle'));
+  protected metaErrors = computed(() => this.validationResult().getErrors('meta'));
   protected abstractErrors = computed(() => this.validationResult().getErrors('abstract'));
   protected bannerUrlErrors = computed(() => this.validationResult().getErrors('bannerUrl'));
   protected bannerAltTextErrors = computed(() => this.validationResult().getErrors('bannerAltText'));

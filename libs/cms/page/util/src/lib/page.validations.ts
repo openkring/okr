@@ -19,6 +19,16 @@ export const pageValidations = staticSuite((model: PageModel, tenants: string, t
   test('abstract', 'tooLong', () => {
     enforce((model.abstract ?? '').length).lessThanOrEquals(PAGE_ABSTRACT_LENGTH);
   });
+  test('subTitle', 'tooLong', () => {
+    enforce((model.subTitle ?? '').length).lessThanOrEquals(NAME_LENGTH);
+  });
+  test('meta', 'tooLong', () => {
+    const description = (model.meta ?? []).find(m => m.name === 'description')?.content ?? '';
+    enforce(description.length).lessThanOrEquals(DESCRIPTION_LENGTH);
+  });
+  test('bannerAltText', 'tooLong', () => {
+    enforce((model.bannerAltText ?? '').length).lessThanOrEquals(NAME_LENGTH);
+  });
   test('bannerUrl', 'tooLong', () => {
     enforce((model.bannerUrl ?? '').length).lessThanOrEquals(URL_LENGTH);
   });
