@@ -1,4 +1,4 @@
-import type { PageModel, WebsiteModel } from '@okr/shared-models';
+import type { PageModel, WebsiteModel, WebsiteNode } from '@okr/shared-models';
 
 import type { SectionDoc } from './section-mapper';
 import { pageKeysInTree, siteWarnings, type WebsiteWarningCode } from './website-tree-read.util';
@@ -26,6 +26,11 @@ function isPublished(section: SectionDoc): boolean {
   return section.state === 'published';
 }
 
+/** Whether a non-archived node of the tree already points at `pageKey` (siteWarnings reports it). */
+function activeInTree(nodes: WebsiteNode[], pageKey: string): boolean {
+  return nodes.some((n) => !n.isArchived && ((n.type === 'page' && n.pageKey === pageKey) || activeInTree(n.children ?? [], pageKey)));
+}
+
 /**
  * Everything that must be true before a site is rendered: the tree warnings, a present home page,
  * and a template block for every published section. Nested accordion sections are plain content
@@ -42,6 +47,11 @@ export function validateForPublish(
     .map((w) => ({ code: w.code, nodeId: w.nodeId }));
   if (!site.homePageKey || !pages.has(site.homePageKey)) {
     problems.push({ code: 'homeMissing', pageKey: site.homePageKey || undefined });
+  }
+  const home = site.homePageKey ? pages.get(site.homePageKey) : undefined;
+  if (home && !activeInTree([...site.nav, ...site.footer], site.homePageKey)) {
+    if (home.isArchived) problems.push({ code: 'pageArchived', pageKey: site.homePageKey });
+    else if (home.isPrivate) problems.push({ code: 'pagePrivate', pageKey: site.homePageKey });
   }
   const keys = new Set([...pageKeysInTree([...site.nav, ...site.footer])]);
   if (site.homePageKey) keys.add(site.homePageKey);

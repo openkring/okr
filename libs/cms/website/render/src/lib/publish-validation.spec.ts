@@ -46,4 +46,25 @@ describe('validateForPublish', () => {
     const sections = new Map<string, SectionDoc>([['x-scs', { type: 'weird', state: 'published' }]]);
     expect(validateForPublish(site([page('a', 'a')]), pages, sections, manifest).map((x) => x.code)).toEqual(['templateMissing']);
   });
+  it('flags an archived home page outside the tree', () => {
+    const p = validateForPublish(site([], 'p-h'), new Map([['p-h', pg([], { isArchived: true })]]), new Map(), manifest);
+    expect(p).toEqual([{ code: 'pageArchived', pageKey: 'p-h' }]);
+  });
+  it('flags a private home page outside the tree', () => {
+    const p = validateForPublish(site([], 'p-h'), new Map([['p-h', pg([], { isPrivate: true })]]), new Map(), manifest);
+    expect(p).toEqual([{ code: 'pagePrivate', pageKey: 'p-h' }]);
+  });
+  it('does not double-report a private home page that is in the tree', () => {
+    const p = validateForPublish(site([page('a', 'a')], 'p-a'), new Map([['p-a', pg([], { isPrivate: true })]]), new Map(), manifest);
+    expect(p).toEqual([{ code: 'pagePrivate', nodeId: 'a' }]);
+  });
+  it('pins slugDuplicate, pageDuplicate and linkInvalid', () => {
+    const pages = new Map([['p-a', pg()], ['p-b', pg()]]);
+    const dupSlug = validateForPublish(site([page('a', 'x'), page('b', 'x', 'p-b')]), pages, new Map(), manifest);
+    expect(dupSlug).toContainEqual({ code: 'slugDuplicate', nodeId: 'b' });
+    const dupPage = validateForPublish(site([page('a', 'a'), page('b', 'b', 'p-a')]), pages, new Map(), manifest);
+    expect(dupPage).toContainEqual({ code: 'pageDuplicate', nodeId: 'b' });
+    const bad = validateForPublish(site([page('a', 'a'), { id: 'l', type: 'link', label: 'l', url: 'javascript:alert(1)' }]), pages, new Map(), manifest);
+    expect(bad).toContainEqual({ code: 'linkInvalid', nodeId: 'l' });
+  });
 });
