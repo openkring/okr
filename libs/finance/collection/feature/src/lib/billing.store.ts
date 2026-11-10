@@ -3,7 +3,7 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { AlertController, ModalController, ToastController } from '@ionic/angular';
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { of } from 'rxjs';
@@ -12,19 +12,25 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import {
-  AutoTopUp, CreditAccountCollection, CreditAccountModel, CreditEntry, CreditEntrySubcollection, SavedPaymentMethod,
-  SubscriptionCollection,
+  AutoTopUp, BandId, BillingMode, CreditAccountCollection, CreditAccountModel, CreditEntry, CreditEntrySubcollection,
+  SavedPaymentMethod, SubscriptionCollection, SubscriptionMeasurement, SubscriptionState,
 } from '@okr/shared-models';
 import { parseAmountToMinor } from '@okr/shared-ui';
 import { confirm, okrPrompt, resourceParams, showToast } from '@okr/shared-util-angular';
 import { fill } from '@okr/shared-util-core';
-import { AutoTopUpModal } from '@okr/finance-collection-ui';
+import { downloadFromUrl } from '@okr/finance-reporting-util';
+import { AutoTopUpModal, BillingEmailModal } from '@okr/finance-collection-ui';
 import {
-  AutoTopUpFormModel, COLLECTION_I18N_KEYS, CollectionI18n, paymentMethodLabel, topUpAmountError, topUpBounds,
+  aboStateKey, AutoTopUpFormModel, BillingEmailFormModel, COLLECTION_I18N_KEYS, CollectionI18n, formatChfAmount,
+  MyBillingInvoice, nextInvoiceEstimate, optionI18nKey, optionRows, paymentMethodLabel, topUpAmountError, topUpBounds,
 } from '@okr/finance-collection-util';
 
 /** subscriptions/{tenantId} as read: every field may be missing on a doc written before it existed. */
-type SubscriptionDoc = Partial<{ paymentMethod: SavedPaymentMethod | null; autopay: boolean; autoTopUp: AutoTopUp }>;
+type SubscriptionDoc = Partial<{
+  paymentMethod: SavedPaymentMethod | null; autopay: boolean; autoTopUp: AutoTopUp;
+  billing: BillingMode; state: SubscriptionState; options: string[]; currentBand: BandId | '';
+  lastMeasurement: SubscriptionMeasurement | null; billingEmail: string;
+}>;
 /** One ledger line with its document id. */
 export type CreditEntryRow = CreditEntry & { okey: string };
 
@@ -33,6 +39,9 @@ const AUTO_TOP_UP_OFF: AutoTopUp = { enabled: false, threshold: 0, amount: 0 };
 interface BillingState {
   /** true while a callable runs: every action button is disabled, so nothing is started twice */
   busy: boolean;
+  /** the tenant's own bkaiser invoices (listMyBillingInvoices), newest first */
+  invoices: MyBillingInvoice[];
+  invoicesLoading: boolean;
 }
 
 /**
@@ -42,7 +51,7 @@ interface BillingState {
  * go through the billing callables; the Stripe webhook writes the method, so the page shows it once it lands.
  */
 export const BillingStore = signalStore(
-  withState<BillingState>({ busy: false }),
+  withState<BillingState>({ busy: false, invoices: [], invoicesLoading: false }),
   withProps(() => {
     const appStore = inject(AppStore);
     const functions = getFunctions(getApp(), 'europe-west6');
@@ -88,7 +97,21 @@ export const BillingStore = signalStore(
     // Firestore reads skip model defaults: a missing doc, or a doc written before a field existed, coalesces here.
     const paymentMethod = computed(() => store.subscriptionResource.value()?.paymentMethod ?? null);
     const autoTopUp = computed<AutoTopUp>(() => ({ ...AUTO_TOP_UP_OFF, ...(store.subscriptionResource.value()?.autoTopUp ?? {}) }));
+    const sub = computed<SubscriptionDoc>(() => store.subscriptionResource.value() ?? {});
+    const aboState = computed(() => aboStateKey(sub()));
+    const options = computed(() => sub().options ?? []);
+    const currentBand = computed(() => sub().currentBand ?? '');
     return {
+      aboState,
+      isExempt: computed(() => aboState() === 'exempt'),
+      /** options can be booked while the tenant is billed and not ended */
+      canChangeOptions: computed(() => ['active', 'pastDue', 'closing'].includes(aboState())),
+      currentBand,
+      measurement: computed(() => sub().lastMeasurement ?? null),
+      options,
+      optionRows: computed(() => optionRows(options())),
+      estimate: computed(() => nextInvoiceEstimate(currentBand(), options())),
+      billingEmail: computed(() => sub().billingEmail ?? ''),
       paymentMethod,
       hasPaymentMethod: computed(() => !!paymentMethod()),
       paymentMethodLabel: computed(() => paymentMethodLabel(paymentMethod())),
@@ -99,6 +122,12 @@ export const BillingStore = signalStore(
     };
   }),
   withMethods((store) => {
+    /** The German (or current language) name of a paid option; the id itself when it has no name. */
+    function optionName(id: string): string {
+      const key = optionI18nKey(id);
+      return key ? store.i18n[key]() : id;
+    }
+
     /** Runs one callable with the busy flag set; a failure is logged and toasted, and resolves to undefined. */
     async function call<Req, Res>(name: string, data: Req): Promise<Res | undefined> {
       if (store.busy()) return undefined;
@@ -162,6 +191,78 @@ export const BillingStore = signalStore(
           { enabled: data.enabled, threshold: data.threshold, amount: data.amount });
         if (res?.ok) await showToast(store.toastController, store.i18n.autotopup_saved());
       },
+
+      optionName,
+
+      /**
+       * Books (`on`) or cancels a paid option from next month, after a confirmation that names the price. Resolves to
+       * whether the change was saved; the toggle reverts itself otherwise.
+       */
+      async setOption(id: string, on: boolean): Promise<boolean> {
+        if (store.busy()) return false;
+        const row = store.optionRows().find(r => r.id === id);
+        if (!row || (on && !row.available)) return false;
+        const message = on
+          ? fill(store.i18n.abo_option_on_confirm(), { option: optionName(id), price: formatChfAmount(row.price * 100) })
+          : fill(store.i18n.abo_option_off_confirm(), { option: optionName(id) });
+        const ok = await confirm(store.alertController, message, store.i18n.ok(), store.i18n.cancel(), true);
+        if (!ok) return false;
+        const current = store.options();
+        const options = on ? [...new Set([...current, id])] : current.filter(o => o !== id);
+        const res = await call<{ options: string[] }, { options: string[] }>('setSubscriptionOptions', { options });
+        if (!res) return false;
+        await showToast(store.toastController, store.i18n.abo_option_saved());
+        return true;
+      },
+
+      /** «Rechnungs-E-Mail ändern»: the e-mail modal; saved through setBillingEmail. */
+      async editBillingEmail(): Promise<void> {
+        if (store.busy()) return;
+        const modal = await store.modalController.create({
+          component: BillingEmailModal,
+          componentProps: { email: store.billingEmail() },
+        });
+        await modal.present();
+        const { data, role } = await modal.onWillDismiss<BillingEmailFormModel>();
+        if (role !== 'confirm' || !data?.email) return;
+        const res = await call<BillingEmailFormModel, { email: string }>('setBillingEmail', { email: data.email });
+        if (res?.email) await showToast(store.toastController, store.i18n.abo_email_saved());
+      },
+
+      /** Loads the tenant's own bkaiser invoices; a failure leaves the list empty and is logged. */
+      async loadInvoices(): Promise<void> {
+        patchState(store, { invoicesLoading: true });
+        try {
+          const res = await httpsCallable<Record<string, never>, MyBillingInvoice[]>(store.functions, 'listMyBillingInvoices')({});
+          patchState(store, { invoices: Array.isArray(res.data) ? res.data : [] });
+        } catch (e) {
+          console.error('BillingStore: listMyBillingInvoices failed', e);
+        } finally {
+          patchState(store, { invoicesLoading: false });
+        }
+      },
+
+      /** «Online bezahlen»: the pay page of the invoice opens a fresh Stripe Checkout. */
+      async payInvoice(invoiceKey: string): Promise<void> {
+        if (store.busy() || !invoiceKey) return;
+        await store.router.navigateByUrl(`/pay/${encodeURIComponent(invoiceKey)}`);
+      },
+
+      /**
+       * «PDF»: a short-lived signed link, fetched into a download — a window.open this many awaits after the click is no
+       * longer a user gesture and the browser would block the tab silently. The link is the fallback.
+       */
+      async openInvoicePdf(inv: MyBillingInvoice): Promise<void> {
+        const res = await call<{ invoiceKey: string }, { url: string }>('getMyBillingInvoicePdf', { invoiceKey: inv.invoiceKey });
+        if (!res?.url) return;
+        const saved = await downloadFromUrl(res.url, `rechnung-${inv.invoiceNo || inv.invoiceKey}.pdf`);
+        if (!saved) window.open(res.url, '_blank');
+      },
     };
   }),
+  withHooks((store) => ({
+    onInit(): void {
+      void store.loadInvoices();
+    },
+  })),
 );

@@ -5,7 +5,7 @@ import { isAdminGuard, isAuthenticatedGuard } from '@okr/auth-feature';
  * Routes that belong to NO feature block and must therefore never pass through
  * `isFeatureEnabledGuard` — but which a catalogued `menuItems` document may still point at.
  *
- * Today these are the feature picker and the two billing screens (`billing`, `pay/:invoiceKey`).
+ * Today these are the feature picker and the billing screens (`billing`, `billing/board`, `pay/:invoiceKey`).
  * The picker must not be feature-gated, because it is the screen you use to switch a block back
  * on — gating it on a block would let a tenant lock itself out of its own configuration. Billing
  * is how the tenant pays the operator; no block may switch it off. `tenant` is in `NON_BLOCK_DOMAINS` for the same reason:
@@ -36,6 +36,12 @@ export const UNGATED_ROUTES: Route[] = [
     path: 'billing',
     canActivate: [isAdminGuard()],
     loadComponent: () => import('@okr/finance-collection-feature').then(m => m.BillingPage),
+  },
+  // The operator's billing board: the guard only asks for an admin, the callables decide who is an operator.
+  {
+    path: 'billing/board',
+    canActivate: [isAdminGuard()],
+    loadComponent: () => import('@okr/finance-collection-feature').then(m => m.BillingBoardPage),
   },
   {
     path: 'pay/:invoiceKey',
