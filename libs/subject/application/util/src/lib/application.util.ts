@@ -1,5 +1,5 @@
 import { DEFAULT_COUNTRY } from '@okr/shared-constants';
-import { ApplicationModel, ApplicationState, BaseType, PersonModel, TypedProperty } from '@okr/shared-models';
+import { ApplicationCourseState, ApplicationModel, ApplicationState, BaseType, PersonModel, TypedProperty } from '@okr/shared-models';
 import { addIndexElement, getAge } from '@okr/shared-util-core';
 
 export function newApplication(tenantId: string): ApplicationModel {
@@ -128,4 +128,134 @@ function coercePropertyValue(type: TypedProperty['type'], value: BaseType | null
     case 'number':  return (value === null || value === undefined || value === '') ? Number.NaN : Number(value);
     default:        return value === null || value === undefined ? '' : String(value);
   }
+}
+
+
+// ---------------------------------------------------------------------------
+// List helpers (spec 1.152 §9): sort, duplicate hints, merge
+// ---------------------------------------------------------------------------
+
+/** Rank of a course state when two applications are merged; the higher one survives. */
+export const COURSE_STATE_RANK: Record<ApplicationCourseState, number> = {
+  accepted: 4, invited: 3, registered: 2, declined: 1, '': 0,
+};
+
+function courseRank(state: ApplicationCourseState | undefined | null): number {
+  return COURSE_STATE_RANK[state ?? ''] ?? 0;
+}
+
+const COLLATOR_OPTIONS: Intl.CollatorOptions = { sensitivity: 'base' };
+
+/** lastName, firstName (locale de, case/accent-insensitive), then submittedAt desc. */
+export function compareApplicationsByName(a: ApplicationModel, b: ApplicationModel): number {
+  const byLast = (a.lastName ?? '').localeCompare(b.lastName ?? '', 'de', COLLATOR_OPTIONS);
+  if (byLast !== 0) return byLast;
+  const byFirst = (a.firstName ?? '').localeCompare(b.firstName ?? '', 'de', COLLATOR_OPTIONS);
+  if (byFirst !== 0) return byFirst;
+  return (b.submittedAt ?? '').localeCompare(a.submittedAt ?? '');
+}
+
+function normName(s: string | undefined | null): string {
+  return (s ?? '').trim().replace(/\s+/g, ' ').toLowerCase().normalize('NFC');
+}
+
+function normEmail(s: string | undefined | null): string {
+  return (s ?? '').trim().toLowerCase();
+}
+
+function duplicateKeys(app: ApplicationModel): string[] {
+  const keys: string[] = [];
+  const last = normName(app.lastName);
+  const first = normName(app.firstName);
+  if (last && first) keys.push(`n:${last}|${first}`);
+  const email = normEmail(app.email);
+  if (email) keys.push(`e:${email}`);
+  const dob = (app.dateOfBirth ?? '').trim();
+  if (dob && last) keys.push(`d:${dob}|${last}`);
+  return keys;
+}
+
+/**
+ * Likely duplicates (A5): same normalised last + first name, or same e-mail, or same date of birth
+ * + last name. Only applications with at least one duplicate get an entry; the value lists the
+ * OTHER okeys. Archived applications are ignored.
+ */
+export function findDuplicateGroups(apps: ApplicationModel[]): Map<string, string[]> {
+  const live = apps.filter(a => !a.isArchived);
+  const byKey = new Map<string, string[]>();
+  for (const app of live) {
+    for (const k of duplicateKeys(app)) {
+      const list = byKey.get(k);
+      if (list) list.push(app.okey); else byKey.set(k, [app.okey]);
+    }
+  }
+  const result = new Map<string, string[]>();
+  for (const app of live) {
+    const others = new Set<string>();
+    for (const k of duplicateKeys(app)) {
+      for (const o of byKey.get(k) ?? []) if (o !== app.okey) others.add(o);
+    }
+    if (others.size > 0) result.set(app.okey, [...others]);
+  }
+  return result;
+}
+
+const MERGE_FILL_FIELDS = [
+  'firstName', 'lastName', 'dateOfBirth', 'ssnId', 'email', 'phone',
+  'streetName', 'streetNumber', 'zipCode', 'city',
+  'parentFirstName', 'parentLastName', 'parentEmail', 'parentPhone',
+  'personKey', 'taskKey',
+] as const;
+
+function isEmptyValue(v: unknown): boolean {
+  return v === undefined || v === null || v === '' || (Array.isArray(v) && v.length === 0);
+}
+
+/**
+ * Fills every empty field of `keep` from `drop`, unions `properties` by key (keep wins), keeps the
+ * further `courseState` (with its course, invitedAt, answeredAt), the earlier `submittedAt`, and
+ * appends `drop.notes`. Pure: returns a new object. `okey`, `tenants`, `state` always stay keep's.
+ */
+export function mergeApplications(keep: ApplicationModel, drop: ApplicationModel): { merged: ApplicationModel; takenFromDrop: string[] } {
+  const merged: ApplicationModel = { ...keep, properties: [...(keep.properties ?? [])] };
+  const taken: string[] = [];
+  const rec = merged as unknown as Record<string, unknown>;
+  const src = drop as unknown as Record<string, unknown>;
+
+  for (const f of MERGE_FILL_FIELDS) {
+    if (isEmptyValue(rec[f]) && !isEmptyValue(src[f])) { rec[f] = src[f]; taken.push(f); }
+  }
+  if (isEmptyValue(merged.reviewer) && !isEmptyValue(drop.reviewer)) { merged.reviewer = drop.reviewer; taken.push('reviewer'); }
+  if (isEmptyValue(merged.tags) && !isEmptyValue(drop.tags)) { merged.tags = drop.tags; taken.push('tags'); }
+
+  // properties: union by key, keep wins
+  const have = new Set(merged.properties.map(p => p.key));
+  const extra = (drop.properties ?? []).filter(p => !have.has(p.key));
+  if (extra.length > 0) { merged.properties = [...merged.properties, ...extra]; taken.push('properties'); }
+
+  // course: the further state wins and brings its course key and timestamps
+  if (courseRank(drop.courseState) > courseRank(keep.courseState)) {
+    merged.courseState = drop.courseState;
+    merged.courseKey = drop.courseKey ?? '';
+    merged.invitedAt = drop.invitedAt ?? '';
+    merged.answeredAt = drop.answeredAt ?? '';
+    taken.push('courseState', 'courseKey');
+  } else if (isEmptyValue(merged.courseKey) && !isEmptyValue(drop.courseKey)) {
+    merged.courseKey = drop.courseKey;
+    taken.push('courseKey');
+  }
+
+  // earlier submittedAt
+  if (drop.submittedAt && (!keep.submittedAt || drop.submittedAt < keep.submittedAt)) {
+    merged.submittedAt = drop.submittedAt;
+    taken.push('submittedAt');
+  }
+
+  // notes appended
+  if (!isEmptyValue(drop.notes)) {
+    merged.notes = isEmptyValue(keep.notes) ? drop.notes : `${keep.notes}\n${drop.notes}`;
+    taken.push('notes');
+  }
+
+  return { merged, takenFromDrop: taken };
 }

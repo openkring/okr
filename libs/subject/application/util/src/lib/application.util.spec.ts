@@ -18,6 +18,10 @@ import {
   isMembershipApplication,
   matchesApplicationForFilter,
   applicationCourseKey,
+  compareApplicationsByName,
+  findDuplicateGroups,
+  mergeApplications,
+  COURSE_STATE_RANK,
   setPropertyValue,
 } from './application.util';
 
@@ -288,5 +292,87 @@ describe('applicationCourseKey', () => {
     const app = newApplication('t');
     app.properties = [{ key: 'courseId', type: 'number', value: 5, label: 'x' }];
     expect(applicationCourseKey(app)).toBe('');
+  });
+});
+
+function mk(o: Partial<ApplicationModel>): ApplicationModel {
+  return Object.assign(new ApplicationModel('scs'), o);
+}
+
+describe('compareApplicationsByName', () => {
+  it('sorts by last name (de, base), first name, then newer submittedAt first', () => {
+    const list = [mk({ lastName: 'Zahn', firstName: 'Al' }), mk({ lastName: 'muller', firstName: 'Ben' }), mk({ lastName: 'Müller', firstName: 'Anna' })];
+    expect(list.sort(compareApplicationsByName).map(a => a.firstName)).toEqual(['Anna', 'Ben', 'Al']);
+    const eq = [mk({ lastName: 'A', firstName: 'B', submittedAt: '2026-01-01' }), mk({ lastName: 'A', firstName: 'B', submittedAt: '2026-02-01' })];
+    expect(eq.sort(compareApplicationsByName)[0].submittedAt).toBe('2026-02-01');
+  });
+});
+
+describe('findDuplicateGroups', () => {
+  it('groups normalised names, lists only the others', () => {
+    const g = findDuplicateGroups([mk({ okey: 'a', firstName: 'Anna', lastName: 'Müller' }), mk({ okey: 'b', firstName: ' anna ', lastName: ' müller  ' }), mk({ okey: 'c', firstName: 'Zoe', lastName: 'X' })]);
+    expect(g.get('a')).toEqual(['b']);
+    expect(g.get('b')).toEqual(['a']);
+    expect(g.has('c')).toBe(false);
+  });
+  it('does not equate Müller and Muller', () => {
+    expect(findDuplicateGroups([mk({ okey: 'a', firstName: 'A', lastName: 'Müller' }), mk({ okey: 'b', firstName: 'A', lastName: 'Muller' })]).size).toBe(0);
+  });
+  it('groups by e-mail, never on empty e-mail', () => {
+    const g = findDuplicateGroups([mk({ okey: 'a', firstName: 'A', lastName: 'B', email: ' X@y.ch ' }), mk({ okey: 'b', firstName: 'C', lastName: 'D', email: 'x@Y.ch' }), mk({ okey: 'c', firstName: 'E', lastName: 'F' }), mk({ okey: 'd', firstName: 'G', lastName: 'H' })]);
+    expect(g.get('a')).toEqual(['b']);
+    expect(g.has('c')).toBe(false);
+    expect(g.has('d')).toBe(false);
+  });
+  it('groups by dob + last name', () => {
+    const g = findDuplicateGroups([mk({ okey: 'a', firstName: 'A', lastName: 'B', dateOfBirth: '20000101' }), mk({ okey: 'b', firstName: 'C', lastName: 'B', dateOfBirth: '20000101' }), mk({ okey: 'c', firstName: 'Z', lastName: 'B' })]);
+    expect(g.get('a')).toEqual(['b']);
+    expect(g.has('c')).toBe(false);
+  });
+  it('ignores archived applications', () => {
+    expect(findDuplicateGroups([mk({ okey: 'a', firstName: 'A', lastName: 'B' }), mk({ okey: 'b', firstName: 'A', lastName: 'B', isArchived: true })]).size).toBe(0);
+  });
+});
+
+describe('mergeApplications', () => {
+  it('fills empty fields from drop and reports them', () => {
+    const keep = mk({ okey: 'k', firstName: 'A', lastName: 'B', phone: '' });
+    const drop = mk({ okey: 'd', firstName: 'Other', phone: '079', city: 'Zürich' });
+    const { merged, takenFromDrop } = mergeApplications(keep, drop);
+    expect(merged.phone).toBe('079');
+    expect(merged.firstName).toBe('A');
+    expect(takenFromDrop).toEqual(expect.arrayContaining(['phone', 'city']));
+    expect(takenFromDrop).not.toContain('firstName');
+    expect(keep.phone).toBe('');
+  });
+  it('unions properties by key, keep wins', () => {
+    const p = (key: string, value: string): TypedProperty => ({ key, type: 'string', value } as unknown as TypedProperty);
+    const { merged } = mergeApplications(mk({ properties: [p('a', '1')] }), mk({ properties: [p('a', '2'), p('b', '3')] }));
+    expect(merged.properties.map(x => [x.key, x.value])).toEqual([['a', '1'], ['b', '3']]);
+  });
+  it('takes the higher course state with its course', () => {
+    const { merged, takenFromDrop } = mergeApplications(
+      mk({ courseState: 'registered', courseKey: 'c1' }),
+      mk({ courseState: 'invited', courseKey: 'c2', invitedAt: 'T' }));
+    expect(merged.courseState).toBe('invited');
+    expect(merged.courseKey).toBe('c2');
+    expect(merged.invitedAt).toBe('T');
+    expect(takenFromDrop).toContain('courseState');
+    expect(COURSE_STATE_RANK.accepted).toBeGreaterThan(COURSE_STATE_RANK.invited);
+  });
+  it('keeps the earlier submittedAt and appends notes', () => {
+    const { merged } = mergeApplications(mk({ submittedAt: '2026-03-01', notes: 'a' }), mk({ submittedAt: '2026-01-01', notes: 'b' }));
+    expect(merged.submittedAt).toBe('2026-01-01');
+    expect(merged.notes).toBe('a\nb');
+  });
+  it('never overwrites okey, tenants, state; fills empty personKey', () => {
+    const keep = mk({ okey: 'k', state: 'reviewing', personKey: '' });
+    const drop = mk({ okey: 'd', tenants: ['x'], state: 'applied', personKey: 'person.1' });
+    const { merged } = mergeApplications(keep, drop);
+    expect(merged.okey).toBe('k');
+    expect(merged.tenants).toEqual(['scs']);
+    expect(merged.state).toBe('reviewing');
+    expect(merged.personKey).toBe('person.1');
+    expect(mergeApplications(mk({ personKey: 'p.k' }), drop).merged.personKey).toBe('p.k');
   });
 });
