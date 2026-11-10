@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { FEATURE_BLOCKS, collectMenuUrls, composeFeatureRoutes, urlResolves } from '@okr/tenant-util';
 import { FEATURE_ROUTES } from './feature-catalogue';
 import { UNGATED_ROUTES } from './ungated-routes';
+import { markedFeatureBlock } from './compose-gated-routes';
+import type { Route } from '@angular/router';
 import { AOC_AREA_IDS, AOC_AREA_ROUTES } from '@okr/aoc-util';
 
 describe('catalogue route coverage', () => {
@@ -11,6 +13,66 @@ describe('catalogue route coverage', () => {
     const routes = [...composeFeatureRoutes(FEATURE_ROUTES), ...UNGATED_ROUTES];
     const unresolved = collectMenuUrls(FEATURE_BLOCKS).filter(u => !urlResolves(routes, u));
     expect(unresolved).toEqual([]);
+  });
+});
+
+/**
+ * Every catalogued `navigate` url resolves to exactly ONE owning block (finance split review, 2026-11-10).
+ * The owner of a match is the block whose fragment matched, or — inside a fragment — the deepest child marked
+ * `data.featureBlock` on the matched path (the per-child gate `composeGatedFeatureRoutes` applies). Two blocks
+ * both able to serve one url would make the feature gate depend on route ORDER, which is how a duplicated
+ * shell or a moved screen silently keeps the old gate.
+ */
+describe('one owning block per menu url', () => {
+  const seg = (u: string): string[] => u.split('?')[0].split('/').filter(Boolean);
+
+  /** The owners this block's routes yield for `segments` (all matching paths, not just the first). */
+  function owners(routes: Route[], segments: string[], owner: string): string[] {
+    const found: string[] = [];
+    for (const route of routes) {
+      const rs = seg(route.path ?? '');
+      if (rs.length > segments.length) continue;
+      if (!rs.every((r, i) => r.startsWith(':') || r === segments[i])) continue;
+      const here = markedFeatureBlock(route) ?? owner;
+      const rest = segments.slice(rs.length);
+      if (rest.length === 0) { found.push(here); continue; }
+      found.push(...owners(route.children ?? [], rest, here));
+    }
+    return found;
+  }
+
+  /**
+   * Urls that legitimately match in two blocks because Angular takes the FIRST match in table order and a
+   * later block has a broad `:param` catch-all. Each entry: url -> the block Angular actually picks.
+   */
+  const FIRST_MATCH_WINS: Record<string, string> = {
+    // cms's `private/:id` content-page catch-all also matches these; the blocks are listed ahead of cms.
+    '/private/file-transfer': 'file-transfer',
+    '/private/file-transfer-monitor': 'file-transfer',
+    '/private/learning-rooms': 'learning',
+    '/private/news-center/video': 'news-center',
+    // subject's `person/:personKey` also matches; `profile` owns its own child of the shared `person` path.
+    '/person/profile': 'profile',
+  };
+
+  it('every catalogued navigate url resolves to exactly one owning block', () => {
+    const defects: string[] = [];
+    [...new Set(collectMenuUrls(FEATURE_BLOCKS))].forEach(url => {
+      const all = [...new Set(FEATURE_ROUTES.flatMap(b => owners(b.routes(), seg(url), b.id)))];
+      if (all.length === 1) return;
+      const first = FEATURE_ROUTES.map(b => owners(b.routes(), seg(url), b.id)[0]).find(Boolean);
+      if (all.length > 1 && FIRST_MATCH_WINS[url] === first) return;
+      defects.push(`${url}: ${all.join(', ') || 'no block'}`);
+    });
+    expect(defects).toEqual([]);
+  });
+
+  it('the moved finance screens are owned by their new blocks', () => {
+    const ownerOf = (url: string) => [...new Set(FEATURE_ROUTES.flatMap(b => owners(b.routes(), seg(url), b.id)))];
+    expect(ownerOf('/accounting/@BOOKS@/cost-center/c-cost-center')).toEqual(['cost-accounting']);
+    expect(ownerOf('/accounting/@BOOKS@/assets')).toEqual(['asset']);
+    expect(ownerOf('/expense/all/c-expense')).toEqual(['expense']);
+    expect(ownerOf('/accounting/@BOOKS@/journal/c-journal')).toEqual(['finance']);
   });
 });
 

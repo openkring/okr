@@ -9,7 +9,7 @@ import { AppStore } from '@okr/shared-feature';
 import { FeatureStore } from '@okr/tenant-feature';
 import { FEATURE_BLOCKS, urlResolves } from '@okr/tenant-util';
 
-import { composeGatedFeatureRoutes } from './compose-gated-routes';
+import { composeGatedFeatureRoutes, markedFeatureBlock } from './compose-gated-routes';
 import { FEATURE_ROUTES, type BlockRoutes } from './feature-catalogue';
 
 const ROOT_URL = '/public/welcome';
@@ -222,10 +222,13 @@ describe('composeGatedFeatureRoutes', () => {
    * compare by reference. `isPrivilegedGuard` is a plain `CanActivateFn` registered uncalled and
    * stays identity-comparable, which is the whole point of this assertion.
    */
-  it('does not touch children (the subtree is passed through by reference)', () => {
+  it('does not touch children (the subtree is passed through by reference) unless a child is marked with a block', () => {
+    const hasMarker = (routes: Route[] | undefined): boolean =>
+      (routes ?? []).some(r => markedFeatureBlock(r) !== undefined || hasMarker(r.children));
     FEATURE_ROUTES.forEach(block => {
       const { original, gated } = pin(block);
       original.forEach((before, i) => {
+        if (hasMarker(before.children)) return; // the finance shell — see 'finance split gates'
         expect(gated[i].children, `${block.id} '${before.path}'`).toBe(before.children);
       });
     });
@@ -243,10 +246,17 @@ describe('composeGatedFeatureRoutes', () => {
 /**
  * The finance split (owner decision 2026-11-10, plan 2 Task 7b): Kostenrechnung, Spesen/OCR and Anlagen are
  * paid options of their own, so their screens must be gated by their own block — a tenant that pays for
- * Buchhaltung alone must not reach them through `finance`'s gate.
+ * Buchhaltung alone must not reach them through `finance`'s gate. Inside the accounting shell this is a
+ * per-child gate (`data.featureBlock`), so the shell itself stays ONE route.
  */
 describe('finance split gates', () => {
   const routesOf = (id: string): Route[] => (FEATURE_ROUTES.find(b => b.id === id) as BlockRoutes).routes();
+  const SHELL = 'accounting/:accountingTenantId';
+  const shellChild = (path: string): Route => {
+    const child = fragmentOf('finance', SHELL).children?.find(c => c.path === path);
+    expect(child, `no shell child '${path}'`).toBeDefined();
+    return child as Route;
+  };
 
   it('a route of expense is gated by expense, not finance', async () => {
     expect(routesOf('finance').some(r => r.path === 'expense')).toBe(false);
@@ -255,24 +265,38 @@ describe('finance split gates', () => {
     expect(featureVerdict(fragmentOf('expense', 'expense'), await appFor(['finance', 'expense']))).toBe(true);
   });
 
-  it('the cost-accounting and asset screens are children of their own copy of the accounting shell', async () => {
-    const financeOnly = await appFor(['finance']);
-    expect(featureVerdict(fragmentOf('cost-accounting', 'accounting/:accountingTenantId'), financeOnly)).not.toBe(true);
-    expect(featureVerdict(fragmentOf('asset', 'accounting/:accountingTenantId'), financeOnly)).not.toBe(true);
-    expect(featureVerdict(fragmentOf('finance', 'accounting/:accountingTenantId'), financeOnly)).toBe(true);
+  it('Kostenstellen and Übersicht share the same shell routeConfig (one shell, no re-init)', () => {
+    const shells = composeGatedFeatureRoutes(FEATURE_ROUTES).filter(r => r.path === SHELL);
+    expect(shells).toHaveLength(1);
+    const paths = (shells[0].children ?? []).map(c => c.path);
+    expect(paths).toEqual(expect.arrayContaining(['overview', 'cost-center', 'budget', 'allocation', 'assets', 'depreciation-run']));
   });
 
   it.each([
-    ['/accounting/scs/cost-center/c-cost-center', 'cost-accounting'],
-    ['/accounting/scs/budget/c-budget', 'cost-accounting'],
-    ['/accounting/scs/allocation/c-allocation', 'cost-accounting'],
-    ['/my-cost-centers/scs', 'cost-accounting'],
-    ['/accounting/scs/assets', 'asset'],
-    ['/accounting/scs/depreciation-run', 'asset'],
-    ['/expense/all/c-expense', 'expense'],
-    ['/accounting-ocr-rules/scs/ocr-rule-context', 'expense'],
-  ])('%s resolves in %s and not in finance', (url, owner) => {
-    expect(urlResolves(routesOf(owner), url)).toBe(true);
-    expect(urlResolves(routesOf('finance'), url)).toBe(false);
+    ['cost-center', 'cost-accounting'], ['budget', 'cost-accounting'], ['allocation', 'cost-accounting'],
+    ['assets', 'asset'], ['depreciation-run', 'asset'],
+  ])('a tenant without the block is redirected from the shell child %s (%s)', async (path, block) => {
+    const child = shellChild(path);
+    expect(featureVerdict(child, await appFor(['finance']))).not.toBe(true);
+    expect(String(featureVerdict(child, await appFor(['finance'])))).toBe(ROOT_URL);
+    expect(featureVerdict(child, await appFor(['finance', block]))).toBe(true);
+  });
+
+  it('keeps a marked child\'s own guards after its block gate, and leaves unmarked shell children ungated', () => {
+    const own = isAdminGuard();
+    const [frag] = composeGatedFeatureRoutes([{ id: 'x', routes: (): Route[] => [{
+      path: 'x', children: [{ path: 'a', data: { featureBlock: 'y' }, canActivate: [own] }, { path: 'b' }],
+    }] }]);
+    expect(frag.children?.[0].canActivate).toHaveLength(2);
+    expect(frag.children?.[0].canActivate?.[1]).toBe(own);
+    expect(frag.children?.[1].canActivate).toBeUndefined();
+    expect(shellChild('overview').canActivate).toBeUndefined();
+  });
+
+  it.each([
+    ['/accounting/scs/cost-center/c-cost-center'], ['/accounting/scs/assets'], ['/accounting/scs/overview'],
+    ['/my-cost-centers/scs'], ['/expense/all/c-expense'], ['/accounting-ocr-rules/scs/ocr-rule-context'],
+  ])('%s still resolves against the composed table', (url) => {
+    expect(urlResolves(composeGatedFeatureRoutes(FEATURE_ROUTES), url)).toBe(true);
   });
 });

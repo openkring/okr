@@ -26,7 +26,8 @@ import { FEATURE_ROUTES, type BlockRoutes } from './feature-catalogue';
  *
  * TWO PROPERTIES THAT LOOK OPTIONAL AND ARE NOT:
  *
- * 1. THE GUARD GOES ON THE TOP-LEVEL FRAGMENT ONLY. Angular evaluates an ancestor's
+ * 1. THE GUARD GOES ON THE TOP-LEVEL FRAGMENT ONLY — except a child marked with another block's id
+ *    (`data.featureBlock`, see `gateMarkedChildren` below). Angular evaluates an ancestor's
  *    `canActivate` before activating any descendant, so a child inherits the gate; adding
  *    the same guard to `children` would buy nothing and cost one extra `inject`/`Set.has`
  *    per segment. `.map` therefore walks only the array `routes()` returns and never
@@ -69,9 +70,44 @@ export function composeGatedFeatureRoutes(sources: BlockRoutes[] = FEATURE_ROUTE
     // One closure per block, shared by that block's fragments: the guard is pure, and
     // re-creating it per fragment would only make identity assertions in tests harder.
     const featureGuard = isFeatureEnabledGuard(source.id);
-    return source.routes().map(fragment => fragment.redirectTo !== undefined ? fragment : ({
-      ...fragment,
-      canActivate: [featureGuard, ...(fragment.canActivate ?? [])],
-    }));
+    return source.routes().map(fragment => {
+      const children = gateMarkedChildren(fragment.children);
+      const withChildren = children === fragment.children ? fragment : { ...fragment, children };
+      return fragment.redirectTo !== undefined ? withChildren : {
+        ...withChildren,
+        canActivate: [featureGuard, ...(fragment.canActivate ?? [])],
+      };
+    });
   });
+}
+
+/** Route `data` key naming the feature block a CHILD route belongs to when it is not its fragment's block. */
+export const FEATURE_BLOCK_DATA_KEY = 'featureBlock';
+
+/** The block a route is marked with (`data.featureBlock`), if any. */
+export function markedFeatureBlock(route: Route): string | undefined {
+  const value = route.data?.[FEATURE_BLOCK_DATA_KEY];
+  return typeof value === 'string' && value ? value : undefined;
+}
+
+/**
+ * THE ONE EXCEPTION TO "TOP-LEVEL ONLY" (finance split, 2026-11-10). A screen of one block can live as a child
+ * of ANOTHER block's fragment — the cost-accounting and asset screens are children of `finance`'s single
+ * accounting shell, so moving between them never re-creates the shell. Such a child carries
+ * `data: { featureBlock: '<block>' }` and gets that block's gate prepended to its own `canActivate`; the
+ * ancestor's gate (finance) still runs first. Unmarked subtrees are returned BY REFERENCE (same array), so a
+ * fragment without markers is untouched. A marked redirect is left ungated (NG04014, see above).
+ */
+function gateMarkedChildren(children: Route[] | undefined): Route[] | undefined {
+  if (!children) return children;
+  let changed = false;
+  const next = children.map(child => {
+    const grand = gateMarkedChildren(child.children);
+    const block = child.redirectTo === undefined ? markedFeatureBlock(child) : undefined;
+    if (grand === child.children && !block) return child;
+    changed = true;
+    const base = grand === child.children ? child : { ...child, children: grand };
+    return block ? { ...base, canActivate: [isFeatureEnabledGuard(block), ...(child.canActivate ?? [])] } : base;
+  });
+  return changed ? next : children;
 }
