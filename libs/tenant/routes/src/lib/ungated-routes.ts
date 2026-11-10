@@ -1,5 +1,5 @@
 import type { Route } from '@angular/router';
-import { isAdminGuard, isAuthenticatedGuard } from '@okr/auth-feature';
+import { isAdminGuard, isAuthenticatedGuard, isTreasurerGuard } from '@okr/auth-feature';
 
 /**
  * Routes that belong to NO feature block and must therefore never pass through
@@ -37,10 +37,11 @@ export const UNGATED_ROUTES: Route[] = [
     canActivate: [isAdminGuard()],
     loadComponent: () => import('@okr/finance-collection-feature').then(m => m.BillingPage),
   },
-  // The operator's billing board: the guard only asks for an admin, the callables decide who is an operator.
+  // The operator's billing board: the guard admits an admin or a treasurer (isTreasurerGuard = treasurer OR admin),
+  // the callables decide who is an operator.
   {
     path: 'billing/board',
-    canActivate: [isAdminGuard()],
+    canActivate: [isTreasurerGuard],
     loadComponent: () => import('@okr/finance-collection-feature').then(m => m.BillingBoardPage),
   },
   {
