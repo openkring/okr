@@ -57,24 +57,53 @@ function pickI18n(value: I18nString | undefined, fallback = ''): string {
 interface StoredImage { url?: string; altText?: string; label?: string; overlay?: string; credit?: string }
 
 /** The caption and height settings of a section's `properties.imageStyle`. */
-type StoredImageStyle = Pick<ImageStyle, 'captionPosition' | 'height'>;
+type StoredImageStyle = Pick<ImageStyle, 'captionPosition' | 'captionSize' | 'captionStyle' | 'captionAlign' | 'height'>;
 
-/** An image as the website receives it; `caption` is '' when nothing is shown over the image. */
-export interface PublicImage { url: string; alt: string; caption: string }
+/** Where the website draws a caption; '' when there is none. Same values as the app's CaptionPosition. */
+export type PublicCaptionPosition = '' | 'top' | 'bottom' | 'top-overlay' | 'middle-overlay' | 'bottom-overlay';
+
+/** The caption's font, already checked: safe to put into a style attribute. */
+export interface PublicCaptionCss { fontSize: string; fontStyle: 'normal' | 'italic'; fontWeight: 'normal' | '600'; textAlign: 'left' | 'center' | 'right' }
+
+/** An image as the website receives it; `caption` is '' when nothing is shown. */
+export interface PublicImage { url: string; alt: string; caption: string; captionPosition: PublicCaptionPosition; captionCss: PublicCaptionCss }
+
+const CAPTION_POSITIONS: PublicCaptionPosition[] = ['top', 'bottom', 'top-overlay', 'middle-overlay', 'bottom-overlay'];
+const DEFAULT_CAPTION_SIZE = '0.8rem';
+
+/**
+ * The caption font of a section, mirroring the app's getCaptionCss. captionSize is free text in the
+ * editor and ends up in a style attribute, so only a plain length (e.g. 1rem, 14px, 90%) passes.
+ */
+export function captionCss(style: StoredImageStyle | undefined): PublicCaptionCss {
+  const size = style?.captionSize?.trim() ?? '';
+  const captionStyle = style?.captionStyle ?? 'italic';
+  const align = style?.captionAlign;
+  return {
+    fontSize: /^\d{1,3}(\.\d{1,3})?(rem|em|px|%)$/.test(size) ? size : DEFAULT_CAPTION_SIZE,
+    fontStyle: captionStyle === 'italic' || captionStyle === 'bold-italic' ? 'italic' : 'normal',
+    fontWeight: captionStyle === 'bold' || captionStyle === 'bold-italic' ? '600' : 'normal',
+    textAlign: align === 'center' || align === 'right' ? align : 'left',
+  };
+}
 
 /**
  * Maps a stored image to its public form. The caption follows the app's okr-img exactly:
  * nothing when the section's `imageStyle.captionPosition` is 'none' (the default), otherwise
  * buildImageCaption — the image's own Untertitel, else its Quelle, else the `fallbacks` (the
  * article passes its subtitle, then its title). A Quelle next to an Untertitel becomes the
- * second line. The website draws the caption over the image's bottom edge.
+ * second line. The website places it by captionPosition and styles it with captionCss.
  */
 export function mapImage(img: StoredImage | undefined, style?: StoredImageStyle, fallbacks: (string | undefined)[] = []): PublicImage | undefined {
   if (!img?.url) return undefined;
   const shown = (style?.captionPosition ?? 'none') !== 'none';
   const parts = shown ? buildImageCaption(img as ImageConfig, fallbacks) : undefined;
   const caption = parts?.text ? [parts.text, parts.source].filter(t => t.length > 0).join('\n') : '';
-  return { url: toImgixUrl(img.url), alt: img.altText ?? img.label ?? '', caption };
+  const position = CAPTION_POSITIONS.find(p => p === style?.captionPosition) ?? '';
+  return {
+    url: toImgixUrl(img.url), alt: img.altText ?? img.label ?? '', caption,
+    captionPosition: caption ? position : '', captionCss: captionCss(style),
+  };
 }
 
 function mapImages(raw: unknown, style: StoredImageStyle | undefined, fallbacks: (string | undefined)[] = []): PublicImage[] {
