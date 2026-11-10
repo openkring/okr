@@ -68,7 +68,7 @@ describe('parsePrefillValue', () => {
     expect(parsePrefillValue(f('text', { maxLength: 4 }), 'Anna')).toBe('Anna');
   });
 
-  it.each(['password', 'iban', 'file', 'images', 'signature', 'avatar', 'ssn', 'label', 'paragraph', 'divider'])(
+  it.each(['password', 'iban', 'file', 'images', 'signature', 'avatar', 'ssn', 'label', 'paragraph', 'divider', 'course'])(
     'excluded type %s is never pre-filled',
     (type) => {
       expect(PREFILL_EXCLUDED_TYPES).toContain(type);
@@ -226,6 +226,10 @@ describe('isPrefillable', () => {
   it('is false for excluded types, display elements and AHV fields (R1)', () => {
     for (const type of PREFILL_EXCLUDED_TYPES) expect(isPrefillable(f(type as Field['type']))).toBe(false);
     expect(isPrefillable(f('text', { key: 'ssnId' }))).toBe(false);
+  });
+
+  it('is false for the course choice (a link never pre-selects a course)', () => {
+    expect(isPrefillable(f('course', { key: 'courseKey' }))).toBe(false);
   });
 
   it('is true for an implicit field only with fromLink', () => {

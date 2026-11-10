@@ -12,9 +12,12 @@ import { coerceToPropertyType } from './form-values.util';
  * any other answer. Nothing here throws: a value that does not fit its field is ignored.
  */
 
-/** Field types a link may never fill (secrets, vault data, uploads, display-only elements). */
+/**
+ * Field types a link may never fill (secrets, vault data, uploads, display-only elements, and the
+ * course choice — the filler picks a course from the live list, a link never pre-selects one).
+ */
 export const PREFILL_EXCLUDED_TYPES: readonly string[] = [
-  'password', 'iban', 'file', 'images', 'signature', 'avatar', 'ssn', 'label', 'paragraph', 'divider',
+  'password', 'iban', 'file', 'images', 'signature', 'avatar', 'ssn', 'label', 'paragraph', 'divider', 'course',
 ];
 
 /** Excluded by type, or an AHV field by `isSsnField` (also a legacy `text` field keyed `ssnId`). */

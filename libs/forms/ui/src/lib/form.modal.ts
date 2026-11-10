@@ -9,9 +9,9 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { Header, Spinner } from '@okr/shared-ui';
 import { fill, resolveImplicitValues } from '@okr/shared-util-core';
 
-import { FormCategoryService, FormSubmitService, isFormClosedError, PublicFormDefinition } from '@okr/forms-data-access';
+import { FormCategoryService, FormSubmitService, isCourseUnavailableError, isFormClosedError, PublicFormDefinition } from '@okr/forms-data-access';
 import { FORM_I18N_KEYS, FormI18n, hasVisibilityRules } from '@okr/forms-util';
-import { FieldOtherI18n } from './field-renderer';
+import { FieldCourseI18n, FieldOtherI18n } from './field-renderer';
 import { FormRenderer } from './form-renderer';
 
 /** The strings the modal needs. `SectionI18n` is a superset, so a section store's resolved
@@ -95,6 +95,9 @@ export interface FormModalI18n {
           @if (remainingText()) {
             <ion-note color="primary" class="remaining">{{ remainingText() }}</ion-note>
           }
+          @if (courseNotice()) {
+            <ion-note color="warning" class="pre-line">{{ formI18n.field_course_unavailable() }}</ion-note>
+          }
           <okr-form-renderer
             [definition]="def"
             [submitLabel]="i18n().form_submit()"
@@ -103,6 +106,9 @@ export interface FormModalI18n {
             [categories]="categoriesResource.value() ?? []"
             [implicitValues]="implicitValues()"
             [otherI18n]="otherI18n()"
+            [courseAudience]="def.courseAudience"
+            [courses]="def.courses ?? []"
+            [courseI18n]="courseI18n()"
             (submitted)="onSubmit($event)"
           />
         }
@@ -141,6 +147,10 @@ export class FormModal {
   protected readonly confirmation = signal('');
   /** `submitForm` refused because the form closed or filled up after the modal opened */
   protected readonly closedByServer = signal(false);
+  /** `submitForm` refused the course choice (taken, ended or no longer fitting): the list was reloaded */
+  protected readonly courseNotice = signal(false);
+  /** the definition re-fetched after a course refusal (fresh course list); the answers stay in the renderer */
+  private readonly refreshed = signal<PublicFormDefinition | undefined>(undefined);
 
   protected readonly definitionResource = rxResource({
     params: () => ({ formKey: this.formKey(), tenantId: this.tenantId() }),
@@ -149,6 +159,8 @@ export class FormModal {
   });
 
   protected readonly definition = computed<PublicFormDefinition | undefined>(() => {
+    const refreshed = this.refreshed();
+    if (refreshed) return refreshed;
     const val = this.definitionResource.value();
     return Array.isArray(val) ? val[0] : val;
   });
@@ -181,6 +193,13 @@ export class FormModal {
   protected readonly otherI18n = computed<FieldOtherI18n>(() => ({
     option: this.formI18n.field_other_option(),
     placeholder: this.formI18n.field_other_placeholder(),
+  }));
+
+  protected readonly courseI18n = computed<FieldCourseI18n>(() => ({
+    hint: this.formI18n.field_course_hint(),
+    places: this.formI18n.field_course_places(),
+    placesOne: this.formI18n.field_course_places_one(),
+    full: this.formI18n.field_course_full(),
   }));
 
   /** the lists of the form's category fields — fetched for anonymous visitors, who have no AppStore categories */
@@ -226,6 +245,7 @@ export class FormModal {
     if (!def) return;
     this.submitting.set(true);
     this.errorMsg.set('');
+    this.courseNotice.set(false);
     try {
       const processedValues = await this.formSubmitService.uploadFiles(values, def, {
         encryptFileUpload: this.encryptFileUpload(),
@@ -250,10 +270,23 @@ export class FormModal {
     } catch (err) {
       // closed or full since the modal opened: the closed text; anything else: the generic error
       if (isFormClosedError(err)) this.closedByServer.set(true);
+      else if (isCourseUnavailableError(err)) await this.onCourseUnavailable(def);
       else this.errorMsg.set(this.i18n().form_submit_error());
     } finally {
       this.submitting.set(false);
     }
+  }
+
+  /** the course was taken, ended or no longer fits: reload the list without losing the answers, say so */
+  private async onCourseUnavailable(def: PublicFormDefinition): Promise<void> {
+    try {
+      const fresh = await this.formSubmitService.fetchDefinition(def.formKey, this.tenantId());
+      const next = Array.isArray(fresh) ? fresh[0] : fresh;
+      if (next) this.refreshed.set(next);
+    } catch {
+      // the list could not be reloaded: the notice still tells the filler to choose again
+    }
+    this.courseNotice.set(true);
   }
 
   private async promptEncryptionPassword(): Promise<string> {
