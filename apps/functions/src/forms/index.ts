@@ -31,7 +31,7 @@ import {
   readVerifiedSection,
   type FormSectionProperties,
 } from './form-section-config';
-import { courseFieldOf, readAnnouncedCourses, withCourseChoice } from './course-choice';
+import { checkCourseChoice, courseFieldOf, courseNameNote, readAnnouncedCourses, withCourseChoice } from './course-choice';
 import { persistWithSlot, readResponseCount } from './form-stats';
 import {
   buildFillerMail,
@@ -459,31 +459,39 @@ async function runSideEffects(
 }
 
 /**
- * The course name for the board e-mail row of an implicit `courseId` (1.125 B): `courses/{value}`
- * when it exists in this tenant, else nothing (the row shows the raw value). Display only — never stored.
+ * The course names for the board e-mail rows and the task note: the implicit `courseId` (1.125 B) and the
+ * `course` field's answer (1.152, key `courseKey`) — `courses/{value}` when it exists in this tenant, else
+ * nothing (the row shows the raw value). Display only — never stored; whether the course choice is allowed
+ * is decided later by `checkCourseChoice`, which refuses the submission otherwise.
  */
 async function readCourseNames(
   db: FirebaseFirestore.Firestore,
   fields: Field[],
   implicit: Record<string, BaseType>,
+  raw: Record<string, unknown>,
   tenantId: string,
   cfName: string,
 ): Promise<ValueNames> {
-  const courseId = implicit['courseId'];
-  const hasField = fields.some((f) => f?.type === 'implicit' && f.key === 'courseId');
-  if (!hasField || !isDocumentId(courseId)) return {};
-  try {
-    const snap = await db.collection(CourseCollection).doc(courseId).get();
-    const data = snap.data();
-    const tenants = data?.['tenants'];
-    const name = data?.['name'];
-    if (snap.exists && Array.isArray(tenants) && tenants.includes(tenantId) && typeof name === 'string' && name.trim() !== '') {
-      return { courseId: { [courseId]: name } };
+  const lookups: [string, unknown][] = [];
+  if (fields.some((f) => f?.type === 'implicit' && f.key === 'courseId')) lookups.push(['courseId', implicit['courseId']]);
+  const courseField = courseFieldOf(fields);
+  if (courseField) lookups.push([courseField.key, raw[courseField.key]]);
+  const names: ValueNames = {};
+  for (const [key, courseId] of lookups) {
+    if (!isDocumentId(courseId)) continue;
+    try {
+      const snap = await db.collection(CourseCollection).doc(courseId).get();
+      const data = snap.data();
+      const tenants = data?.['tenants'];
+      const name = data?.['name'];
+      if (snap.exists && Array.isArray(tenants) && tenants.includes(tenantId) && typeof name === 'string' && name.trim() !== '') {
+        names[key] = { [courseId]: name };
+      }
+    } catch (e) {
+      logger.warn(`${cfName}: could not read course ${courseId}`, e);
     }
-  } catch (e) {
-    logger.warn(`${cfName}: could not read course ${courseId}`, e);
   }
-  return {};
+  return names;
 }
 
 /**
@@ -693,7 +701,7 @@ export const submitForm = onCall(
       throw new HttpsError('failed-precondition', 'form-closed');
     }
     // the board e-mail shows the course by name; only read for a submission that can mail anybody
-    const names = isSpam ? {} : await readCourseNames(db, fields, implicit, payload.tenantId, CF_NAME);
+    const names = isSpam ? {} : await readCourseNames(db, fields, implicit, payload.values ?? {}, payload.tenantId, CF_NAME);
     const prepared = prepareSubmission(
       fields,
       formDef.derivedValues,
@@ -729,11 +737,18 @@ export const submitForm = onCall(
       logger.warn(`${CF_NAME}: derived properties dropped (value does not coerce) formKey=${payload.formKey} keys=${prepared.droppedDerivedProperties.join(', ')}`);
     }
 
+    // ── 4b. Course choice (1.152 §7.3) — checked on the server, BEFORE a form slot is taken ──
+    // Refuses a course that is not announced, not for the server-derived applicant type, or full;
+    // `courseKey`/`courseState` are only ever set here (never the client's). Spam: no check, no course.
+    const cleanValues = await checkCourseChoice(db, {
+      fields, answers: prepared.answers, derivedValues: prepared.derivedValues, values: prepared.values,
+      tenantId: payload.tenantId, today, isSpam,
+    });
+
     // ── 5. Persist ────────────────────────────────
     let collectionName: string | undefined;
     let targetUrl: string | undefined;
 
-    const cleanValues = prepared.values;
     // An AHV number (`ssn` field) is stored in the target record and nowhere else (privacy 1.19):
     // everything below that is not the generic collection write gets the answers without it.
     const shareableValues = omitSsnValues(formDef.fields, cleanValues);
@@ -841,7 +856,7 @@ export const submitForm = onCall(
     if (!isSpam && section !== undefined) {
       await runSideEffects(
         db, section.props, payload.tenantId,
-        formDef, shareableValues, prepared.rows, submissionId, payload.meta.submittedAt,
+        formDef, courseNameNote(shareableValues, names), prepared.rows, submissionId, payload.meta.submittedAt,
         CF_NAME,
         // a mail-only message (contact form) is answered by replying to the board mail
         target.kind === 'mail' ? firstVisibleEmail(fields, prepared.answers, prepared.visible) : undefined,

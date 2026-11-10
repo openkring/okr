@@ -1,7 +1,18 @@
 import { logger } from 'firebase-functions/v2';
+import { HttpsError } from 'firebase-functions/v2/https';
 
-import type { CourseField, DerivedValue } from '@okr/shared-models';
-import { holdsCoursePlace, isAnnouncedCourseOpen, toCourseOption, type PublicCourseOption } from '@okr/shared-util-core';
+import { CourseCollection } from '@okr/shared-models';
+import type { CourseField, CourseModel, DerivedValue } from '@okr/shared-models';
+import {
+  courseChoiceRefusal,
+  holdsCoursePlace,
+  isAnnouncedCourseOpen,
+  toCourseOption,
+  type PublicCourseOption,
+} from '@okr/shared-util-core';
+
+import { isDocumentId } from './form-section-config';
+import type { ValueNames } from './submission-pipeline';
 
 /**
  * Announced courses for the Anmeldung form (spec 1.152 §7.1): the gateway hands the public renderers the
@@ -71,4 +82,81 @@ export function withCourseChoice(
   if (!field) return projected;
   const courseAudience = projectCourseAudience(derived, field.audienceFrom);
   return { ...projected, ...(courseAudience ? { courseAudience } : {}), courses };
+}
+
+// ──────────────────────────────────────────
+// submitForm — the course choice (spec 1.152 §7.3)
+// ──────────────────────────────────────────
+
+/** The record fields a course choice writes. Never taken from the client: `applyCourseChoice` sets or removes both. */
+const COURSE_KEY = 'courseKey';
+const COURSE_STATE = 'courseState';
+
+/**
+ * The values with the course choice applied (pure): a key sets `courseKey` and `courseState: 'registered'`;
+ * `''` removes both. Whatever the client sent under these keys is always replaced or dropped.
+ */
+export function applyCourseChoice(values: Record<string, unknown>, courseKey: string): Record<string, unknown> {
+  const rest = { ...values };
+  delete rest[COURSE_KEY];
+  delete rest[COURSE_STATE];
+  return courseKey !== '' ? { ...rest, [COURSE_KEY]: courseKey, [COURSE_STATE]: 'registered' } : rest;
+}
+
+/** The task note (a JSON dump of the values) gets the course name next to its key. Display only — never stored on the record. */
+export function courseNameNote(values: Record<string, unknown>, names: ValueNames): Record<string, unknown> {
+  const key = values[COURSE_KEY];
+  const name = typeof key === 'string' ? names[COURSE_KEY]?.[key] : undefined;
+  return name !== undefined ? { ...values, courseName: name } : values;
+}
+
+export interface CourseChoiceInput {
+  fields: unknown;
+  /** visible answers (`PreparedSubmission.answers`): a hidden course field has no answer */
+  answers: Record<string, unknown>;
+  /** server-computed derived values (`PreparedSubmission.derivedValues`) — never the client's */
+  derivedValues: Record<string, string>;
+  /** the clean values to be stored (`PreparedSubmission.values`) */
+  values: Record<string, unknown>;
+  tenantId: string;
+  today: string;
+  isSpam: boolean;
+}
+
+function courseUnavailable(): HttpsError {
+  return new HttpsError('failed-precondition', 'course-unavailable', { reason: 'course-unavailable' });
+}
+
+/**
+ * The server check of a course choice in `submitForm` (spec 1.152 §7.3, anti-goal §2): returns the values to
+ * store, or throws `failed-precondition` / `course-unavailable`. Call it BEFORE a form slot is taken.
+ *
+ * - No course field on the form, or a spam-flagged submission: no check, and no course is stored — any
+ *   client-sent `courseKey`/`courseState` is dropped.
+ * - Nothing ticked (A3) — no answer, `null` or `''`: a plain Anmeldung, nothing is read.
+ * - Anything else that is not a document id (array, object, number, boolean, a path): refused unread.
+ * - A key: the course is read on the server and must belong to the tenant, be announced, open, for the
+ *   server-derived applicant type (`audienceFrom`) and not full (A6: counted before the write, not atomic).
+ */
+export async function checkCourseChoice(
+  db: FirebaseFirestore.Firestore,
+  input: CourseChoiceInput,
+): Promise<Record<string, unknown>> {
+  const field = courseFieldOf(input.fields);
+  if (!field || input.isSpam) return applyCourseChoice(input.values, '');
+  const answer = input.answers[field.key];
+  if (answer === undefined || answer === null || answer === '') return applyCourseChoice(input.values, '');
+  if (!isDocumentId(answer) || answer.trim() !== answer) {
+    logger.info(`submitForm: course choice refused (not a course key, ${Array.isArray(answer) ? 'array' : typeof answer})`);
+    throw courseUnavailable();
+  }
+  const snap = await db.collection(CourseCollection).doc(answer).get();
+  const course = snap.exists ? snap.data() as Partial<CourseModel> | undefined : undefined;
+  const taken = course ? await countCoursePlaces(db, input.tenantId, answer) : 0;
+  const audience = input.derivedValues[field.audienceFrom];
+  if (courseChoiceRefusal(course, input.tenantId, audience, taken, input.today) !== undefined) {
+    logger.info(`submitForm: course choice refused courseKey=${answer} audience=${audience ?? '-'} taken=${taken}`);
+    throw courseUnavailable();
+  }
+  return applyCourseChoice(input.values, answer);
 }

@@ -48,6 +48,8 @@ export interface PreparedSubmission {
   answers: Record<string, unknown>;
   /** What the notification e-mail shows: visible answers in field order, then derived values. */
   rows: SubmissionRow[];
+  /** Every derived value computed on the server, `asProperty` ones included (1.152: the applicant type of a course choice). */
+  derivedValues: Record<string, string>;
 }
 
 export interface SubmissionRow { label: string; value: string; }
@@ -227,7 +229,7 @@ export function prepareSubmission(
   }
 
   const rows = buildSubmissionRows(sorted.filter((f) => visible.has(f.id)), answers, derivedValues, names);
-  return { values, missingRequired, invalidProperties, invalidSsn, droppedDerivedProperties, visible, answers, rows };
+  return { values, missingRequired, invalidProperties, invalidSsn, droppedDerivedProperties, visible, answers, rows, derivedValues };
 }
 
 /**
