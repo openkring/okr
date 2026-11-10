@@ -215,6 +215,12 @@ service firebase.storage {
       allow write: if false;
     }
 
+    // ---- website template sets: admin SDK only (uploaded by scripts/website-templates-upload.mjs,
+    // read by publishWebsite). Explicit deny; the catch-all below would deny it anyway.
+    match /websites/{siteId}/templates/{path=**} {
+      allow read, write: if false;
+    }
+
     // ---- default deny: no catch-all grant (H-1) ----
     match /{path=**} {
       allow read, write: if false;

@@ -1,0 +1,84 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const files = vi.hoisted(() => ({ current: new Map<string, string>() }));
+const getFiles = vi.hoisted(() => vi.fn());
+
+vi.mock('firebase-admin/storage', () => ({
+  getStorage: () => ({
+    bucket: () => ({
+      getFiles,
+    }),
+  }),
+}));
+
+import { clearTemplateCache, loadTemplates, TemplateMissingError } from './template-store';
+
+const PREFIX = 'websites/scs/templates/v1/';
+const MANIFEST = { siteId: 'scs', version: 'v1', sectionTypes: ['article'], fixedPages: ['news'] };
+
+function seed(entries: Record<string, string>) {
+  files.current = new Map(Object.entries(entries).map(([k, v]) => [PREFIX + k, v]));
+}
+
+beforeEach(() => {
+  clearTemplateCache();
+  getFiles.mockReset();
+  getFiles.mockImplementation(async ({ prefix }: { prefix: string }) => [
+    [...files.current.entries()]
+      .filter(([name]) => name.startsWith(prefix))
+      .map(([name, body]) => ({ name, download: async () => [Buffer.from(body)] })),
+  ]);
+});
+
+describe('loadTemplates', () => {
+  it('reads the template folder into a TemplateSet', async () => {
+    seed({
+      'website.json': JSON.stringify(MANIFEST),
+      'layout.hbs': '<html>{{main}}</html>',
+      'partials/nav.hbs': 'NAV',
+      'sections/article.hbs': 'ART',
+      'pages/news.hbs': 'NEWS',
+    });
+    const set = await loadTemplates('scs', 'v1');
+    expect(set).toEqual({
+      manifest: MANIFEST,
+      layout: '<html>{{main}}</html>',
+      partials: { nav: 'NAV' },
+      sections: { article: 'ART' },
+      pages: { news: 'NEWS' },
+    });
+    expect(getFiles).toHaveBeenCalledWith({ prefix: PREFIX });
+  });
+
+  it('caches per siteId@version', async () => {
+    seed({ 'website.json': JSON.stringify(MANIFEST), 'layout.hbs': 'L' });
+    await loadTemplates('scs', 'v1');
+    await loadTemplates('scs', 'v1');
+    expect(getFiles).toHaveBeenCalledTimes(1);
+  });
+
+  it('fails with a templateMissing problem when website.json is absent', async () => {
+    seed({ 'layout.hbs': 'L' });
+    const err = await loadTemplates('scs', 'v1').catch((e) => e);
+    expect(err).toBeInstanceOf(TemplateMissingError);
+    expect(err.problem.code).toBe('templateMissing');
+    expect(err.problem.detail).toContain('website.json');
+  });
+
+  it('fails when layout.hbs is absent', async () => {
+    seed({ 'website.json': JSON.stringify(MANIFEST) });
+    const err = await loadTemplates('scs', 'v1').catch((e) => e);
+    expect(err.problem.detail).toContain('layout.hbs');
+  });
+
+  it('fails when website.json is not valid JSON', async () => {
+    seed({ 'website.json': '{nope', 'layout.hbs': 'L' });
+    const err = await loadTemplates('scs', 'v1').catch((e) => e);
+    expect(err).toBeInstanceOf(TemplateMissingError);
+  });
+
+  it('rejects a version that is empty or escapes the folder', async () => {
+    await expect(loadTemplates('scs', '')).rejects.toBeInstanceOf(TemplateMissingError);
+    await expect(loadTemplates('scs', '../x')).rejects.toBeInstanceOf(TemplateMissingError);
+  });
+});

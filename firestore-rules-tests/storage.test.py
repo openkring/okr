@@ -97,6 +97,9 @@ read_cases = [
     ("uidA GET own export ZIP -> DENY",       False, PRIVATE_OBJ, A),
     ("uidB(admin t2) GET t1 export ZIP -> DENY", False, PRIVATE_OBJ, B),
     ("anon GET export ZIP -> DENY",           False, PRIVATE_OBJ, None),
+    # website template sets are admin-SDK only
+    ("uidB(admin) GET website template -> DENY", False, "websites/scs/templates/v1/layout.hbs", B),
+    ("anon GET website template -> DENY",     False, "websites/scs/templates/v1/layout.hbs", None),
 ]
 # write(create): allowed -> 200 ; denied -> 403
 write_cases = [
@@ -113,6 +116,7 @@ write_cases = [
     # nobody may plant or overwrite anything in the CF-only prefix
     ("uidA PUT into private/ -> DENY",      False, "tenant/t1/private/exports/uidA/x.zip", A),
     ("uidA PUT private/ (any depth) -> DENY", False, "tenant/t1/private/x.zip", A),
+    ("uidB(admin) PUT website template -> DENY", False, "websites/scs/templates/v1/layout.hbs", B),
 ]
 
 passed = failed = 0
