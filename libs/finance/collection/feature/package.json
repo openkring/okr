@@ -15,7 +15,6 @@
     "@okr/shared-models": "*",
     "@okr/shared-ui": "*",
     "@okr/shared-util-angular": "*",
-    "@okr/shared-util-core": "*",
-    "@okr/finance-reporting-util": "*"
+    "@okr/shared-util-core": "*"
   }
 }

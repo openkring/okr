@@ -3,7 +3,7 @@ import { ADD_ON_BLOCKS, ADD_ON_PRICES } from '@okr/business-metering-util';
 
 import { COLLECTION_I18N_KEYS } from './collection-i18n';
 import {
-  aboStateKey, BillingOverviewRow, boardFlags, filterBoardRows, invoiceStateKind, isInvoicePayable, isOptionAvailable,
+  aboStateKey, BILLING_FLAGS, BillingOverviewRow, flagI18nKey, sameOptions, boardFlags, filterBoardRows, invoiceStateKind, isInvoicePayable, isOptionAvailable,
   MyBillingInvoice, nextInvoiceEstimate, optionI18nKey, optionRows,
 } from './subscription.util';
 
@@ -111,4 +111,19 @@ describe('board filters', () => {
   it('combines both', () => expect(filterBoardRows(rows, 'active', 'run-failed').map(r => r.tenantId)).toEqual(['c']));
   it('the exempt filter picks contract tenants', () => expect(filterBoardRows(rows, 'exempt', 'all').map(r => r.tenantId)).toEqual(['d']));
   it('lists the flags present, sorted, once', () => expect(boardFlags(rows)).toEqual(['overpaid', 'run-failed']));
+});
+
+describe('sameOptions', () => {
+  it('ignores order and duplicates', () => expect(sameOptions(['crm', 'buchhaltung'], ['buchhaltung', 'crm', 'crm'])).toBe(true));
+  it('differs by one id', () => expect(sameOptions(['crm'], ['crm', 'logbuch'])).toBe(false));
+  it('treats missing as empty', () => expect(sameOptions(undefined, [])).toBe(true));
+});
+
+describe('flag labels', () => {
+  it('every BillingFlag has a label key', () => {
+    for (const flag of BILLING_FLAGS) expect(COLLECTION_I18N_KEYS[flagI18nKey(flag)!]).toBeDefined();
+  });
+  it('maps dashes to underscores', () => expect(flagI18nKey('run-failed')).toBe('board_flag_run_failed'));
+  it('an unknown flag has no key', () => expect(flagI18nKey('nope')).toBeUndefined());
+  it('lists all ten flags of the model', () => expect(BILLING_FLAGS).toHaveLength(10));
 });

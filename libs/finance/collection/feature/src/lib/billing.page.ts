@@ -60,10 +60,12 @@ import { BillingStore, CreditEntryRow } from './billing.store';
                   @if (measurementText(); as m) { <p>{{ m }}</p> }
                 </ion-label>
               </ion-item>
-              <ion-item lines="none">
-                <ion-label class="ion-text-wrap">{{ i18n.abo_estimate() }}</ion-label>
-                <ion-label slot="end" class="amount">{{ estimateText() }}</ion-label>
-              </ion-item>
+              @if (store.showEstimate()) {
+                <ion-item lines="none">
+                  <ion-label class="ion-text-wrap">{{ i18n.abo_estimate() }}</ion-label>
+                  <ion-label slot="end" class="amount">{{ estimateText() }}</ion-label>
+                </ion-item>
+              }
               <ion-item lines="none">
                 <ion-label class="ion-text-wrap">
                   <h3>{{ i18n.abo_email() }}</h3>
@@ -102,6 +104,11 @@ import { BillingStore, CreditEntryRow } from './billing.store';
                 <ion-spinner slot="start" name="crescent" />
                 <ion-label>{{ i18n.loading() }}</ion-label>
               </ion-item>
+            } @else if (store.invoicesError()) {
+              <ion-item lines="none">
+                <ion-label class="ion-text-wrap">{{ i18n.error_generic() }}</ion-label>
+                <ion-button slot="end" fill="outline" [disabled]="store.invoicesLoading()" (click)="store.loadInvoices()">{{ i18n.pay_retry() }}</ion-button>
+              </ion-item>
             } @else {
               @for (inv of store.invoices(); track inv.invoiceKey) {
                 <ion-item>
@@ -114,7 +121,7 @@ import { BillingStore, CreditEntryRow } from './billing.store';
                     @if (payable(inv)) {
                       <ion-button fill="outline" [disabled]="store.busy()" (click)="store.payInvoice(inv.invoiceKey)">{{ i18n.invoices_pay() }}</ion-button>
                     }
-                    <ion-button fill="clear" [disabled]="store.busy()" (click)="store.openInvoicePdf(inv)">{{ i18n.invoices_pdf() }}</ion-button>
+                    <ion-button fill="clear" [disabled]="store.busy()" (click)="openPdf(inv)">{{ i18n.invoices_pdf() }}</ion-button>
                   </ion-buttons>
                 </ion-item>
               } @empty {
@@ -277,6 +284,13 @@ export class BillingPage {
       case 'cancelled': return this.i18n.invoice_state_cancelled();
       default: return this.i18n.invoice_state_open();
     }
+  }
+
+  /** Opens the blank tab inside the click (a user gesture); the store points it at the signed link once it has one. */
+  protected openPdf(inv: MyBillingInvoice): void {
+    if (this.store.busy()) return;
+    const win = window.open('', '_blank');
+    void this.store.openInvoicePdf(inv, win);
   }
 
   protected payable(inv: MyBillingInvoice): boolean {

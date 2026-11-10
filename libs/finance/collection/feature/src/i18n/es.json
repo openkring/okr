@@ -123,7 +123,9 @@
       "partial": "Pagada en parte",
       "paid": "Pagada",
       "cancelled": "Anulada"
-    }
+    },
+    "pdf_ready": "El PDF está listo.",
+    "pdf_open": "Abrir"
   },
   "board": {
     "title": "Resumen de suscripciones",
@@ -155,6 +157,18 @@
     "reactivate_confirm": "¿Reactivar la suscripción de {tenant}? El acceso vuelve a ser completo.",
     "cancel": "Cancelar suscripción",
     "cancel_confirm": "¿Cancelar la suscripción de {tenant}? Después ya no se emitirán facturas.",
-    "saved": "Guardado."
+    "saved": "Guardado.",
+    "flag": {
+      "vat_blocked": "IVA no admitido",
+      "individual_band": "Precio individual",
+      "accounts_missing": "Faltan cuentas",
+      "run_failed": "Ejecución fallida",
+      "no_recipient": "Sin destinatario",
+      "overpaid": "Pagado de más",
+      "disputed": "Contracargo",
+      "refund_on_posted_payment": "Reembolso de un pago contabilizado",
+      "refund_failed": "Reembolso fallido",
+      "credit_negative": "Saldo negativo"
+    }
   }
 }

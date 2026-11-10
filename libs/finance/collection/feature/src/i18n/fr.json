@@ -123,7 +123,9 @@
       "partial": "Partiellement payée",
       "paid": "Payée",
       "cancelled": "Annulée"
-    }
+    },
+    "pdf_ready": "Le PDF est prêt.",
+    "pdf_open": "Ouvrir"
   },
   "board": {
     "title": "Aperçu des abonnements",
@@ -155,6 +157,18 @@
     "reactivate_confirm": "Réactiver l’abonnement de {tenant} ? L’accès est ensuite à nouveau complet.",
     "cancel": "Résilier",
     "cancel_confirm": "Résilier l’abonnement de {tenant} ? Plus aucune facture ne sera émise ensuite.",
-    "saved": "Enregistré."
+    "saved": "Enregistré.",
+    "flag": {
+      "vat_blocked": "TVA non prise en charge",
+      "individual_band": "Prix individuel",
+      "accounts_missing": "Comptes manquants",
+      "run_failed": "Exécution échouée",
+      "no_recipient": "Aucun destinataire",
+      "overpaid": "Payé en trop",
+      "disputed": "Contestation de paiement",
+      "refund_on_posted_payment": "Remboursement d’un paiement comptabilisé",
+      "refund_failed": "Remboursement échoué",
+      "credit_negative": "Crédit négatif"
+    }
   }
 }

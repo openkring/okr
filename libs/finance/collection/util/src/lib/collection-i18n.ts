@@ -102,6 +102,8 @@ export const COLLECTION_I18N_KEYS = {
   invoices_number: PFX + 'invoices.number',
   invoices_pay: PFX + 'invoices.pay',
   invoices_pdf: PFX + 'invoices.pdf',
+  invoices_pdf_ready: PFX + 'invoices.pdf_ready',
+  invoices_pdf_open: PFX + 'invoices.pdf_open',
   invoice_state_open: PFX + 'invoices.state.open',
   invoice_state_overdue: PFX + 'invoices.state.overdue',
   invoice_state_partial: PFX + 'invoices.state.partial',
@@ -136,6 +138,16 @@ export const COLLECTION_I18N_KEYS = {
   board_cancel: PFX + 'board.cancel',
   board_cancel_confirm: PFX + 'board.cancel_confirm',
   board_saved: PFX + 'board.saved',
+  board_flag_vat_blocked: PFX + 'board.flag.vat_blocked',
+  board_flag_individual_band: PFX + 'board.flag.individual_band',
+  board_flag_accounts_missing: PFX + 'board.flag.accounts_missing',
+  board_flag_run_failed: PFX + 'board.flag.run_failed',
+  board_flag_no_recipient: PFX + 'board.flag.no_recipient',
+  board_flag_overpaid: PFX + 'board.flag.overpaid',
+  board_flag_disputed: PFX + 'board.flag.disputed',
+  board_flag_refund_on_posted_payment: PFX + 'board.flag.refund_on_posted_payment',
+  board_flag_refund_failed: PFX + 'board.flag.refund_failed',
+  board_flag_credit_negative: PFX + 'board.flag.credit_negative',
 } satisfies Record<string, string>;
 
 export type CollectionI18n = { [K in keyof typeof COLLECTION_I18N_KEYS]: Signal<string> };

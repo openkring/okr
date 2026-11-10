@@ -123,7 +123,9 @@
       "partial": "Teilweise bezahlt",
       "paid": "Bezahlt",
       "cancelled": "Storniert"
-    }
+    },
+    "pdf_ready": "Das PDF ist bereit.",
+    "pdf_open": "Öffnen"
   },
   "board": {
     "title": "Abo-Übersicht",
@@ -155,6 +157,18 @@
     "reactivate_confirm": "Das Abo von {tenant} wieder aktivieren? Der Zugang ist danach wieder uneingeschränkt.",
     "cancel": "Kündigen",
     "cancel_confirm": "Das Abo von {tenant} kündigen? Es werden danach keine Rechnungen mehr erstellt.",
-    "saved": "Gespeichert."
+    "saved": "Gespeichert.",
+    "flag": {
+      "vat_blocked": "MWST nicht unterstützt",
+      "individual_band": "Individueller Preis",
+      "accounts_missing": "Konten fehlen",
+      "run_failed": "Lauf fehlgeschlagen",
+      "no_recipient": "Kein Empfänger",
+      "overpaid": "Überzahlt",
+      "disputed": "Rückbelastung",
+      "refund_on_posted_payment": "Rückerstattung einer verbuchten Zahlung",
+      "refund_failed": "Rückerstattung fehlgeschlagen",
+      "credit_negative": "Guthaben negativ"
+    }
   }
 }

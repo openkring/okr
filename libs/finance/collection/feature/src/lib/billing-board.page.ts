@@ -6,7 +6,9 @@ import {
 
 import { Header } from '@okr/shared-ui';
 import { fill } from '@okr/shared-util-core';
-import { aboStateKey, AboStateKey, BillingOverviewRow, BoardStateFilter, formatChfAmount } from '@okr/finance-collection-util';
+import {
+  aboStateKey, AboStateKey, BillingOverviewRow, BoardStateFilter, flagI18nKey, formatChfAmount,
+} from '@okr/finance-collection-util';
 
 import { BillingBoardStore } from './billing-board.store';
 
@@ -59,7 +61,7 @@ const STATE_FILTERS: AboStateKey[] = ['active', 'pastDue', 'closing', 'closed', 
             [value]="store.flagFilter()" (ionChange)="store.setFlagFilter($event.detail.value)">
             <ion-select-option value="all">{{ i18n.board_filter_all() }}</ion-select-option>
             @for (f of store.flags(); track f) {
-              <ion-select-option [value]="f">{{ f }}</ion-select-option>
+              <ion-select-option [value]="f">{{ flagLabel(f) }}</ion-select-option>
             }
           </ion-select>
         </div>
@@ -79,7 +81,7 @@ const STATE_FILTERS: AboStateKey[] = ['active', 'pastDue', 'closing', 'closed', 
                 @if (row.flags.length > 0) {
                   <div>
                     @for (flag of row.flags; track flag) {
-                      <ion-chip color="warning" [outline]="true">{{ flag }}</ion-chip>
+                      <ion-chip color="warning" [outline]="true">{{ flagLabel(flag) }}</ion-chip>
                     }
                   </div>
                 }
@@ -110,8 +112,10 @@ export class BillingBoardPage {
   protected readonly i18n = this.store.i18n;
   protected readonly stateFilters = STATE_FILTERS;
 
-  protected readonly title = computed(() =>
-    `${this.store.filteredRows().length}/${this.store.rows().length} ${this.i18n.board_title()}`);
+  /** the count only once the board loaded: a forbidden or failed load has nothing to count */
+  protected readonly title = computed(() => this.store.loadError() || (this.store.loading() && this.store.rows().length === 0)
+    ? this.i18n.board_title()
+    : `${this.store.filteredRows().length}/${this.store.rows().length} ${this.i18n.board_title()}`);
 
   protected stateOf(row: BillingOverviewRow): AboStateKey {
     return aboStateKey(row);
@@ -127,6 +131,12 @@ export class BillingBoardPage {
       case 'cancelled': return this.i18n.board_state_cancelled();
       default: return this.i18n.board_filter_all();
     }
+  }
+
+  /** the German label of an operator flag; an unknown flag shows its id */
+  protected flagLabel(flag: string): string {
+    const key = flagI18nKey(flag);
+    return key ? this.i18n[key]() : flag;
   }
 
   protected optionsText(row: BillingOverviewRow): string {

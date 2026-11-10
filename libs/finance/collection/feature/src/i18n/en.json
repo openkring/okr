@@ -123,7 +123,9 @@
       "partial": "Partly paid",
       "paid": "Paid",
       "cancelled": "Cancelled"
-    }
+    },
+    "pdf_ready": "The PDF is ready.",
+    "pdf_open": "Open"
   },
   "board": {
     "title": "Subscription overview",
@@ -155,6 +157,18 @@
     "reactivate_confirm": "Reactivate the subscription of {tenant}? Access is then unrestricted again.",
     "cancel": "Cancel subscription",
     "cancel_confirm": "Cancel the subscription of {tenant}? No more invoices are issued afterwards.",
-    "saved": "Saved."
+    "saved": "Saved.",
+    "flag": {
+      "vat_blocked": "VAT not supported",
+      "individual_band": "Individual price",
+      "accounts_missing": "Accounts missing",
+      "run_failed": "Run failed",
+      "no_recipient": "No recipient",
+      "overpaid": "Overpaid",
+      "disputed": "Chargeback",
+      "refund_on_posted_payment": "Refund of a booked payment",
+      "refund_failed": "Refund failed",
+      "credit_negative": "Negative credit"
+    }
   }
 }

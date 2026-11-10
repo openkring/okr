@@ -1,5 +1,5 @@
 import { ADD_ON_PRICES, addOnTotal, BANDS, optionBlocks, priceOfBand } from '@okr/business-metering-util';
-import type { BandId, BillingMode, SubscriptionState } from '@okr/shared-models';
+import type { BandId, BillingFlag, BillingMode, SubscriptionState } from '@okr/shared-models';
 
 import type { COLLECTION_I18N_KEYS } from './collection-i18n';
 
@@ -57,6 +57,13 @@ export function optionRows(subscribed: readonly string[] | undefined): OptionRow
   }));
 }
 
+/** Whether two option lists hold the same ids (order and duplicates do not matter). */
+export function sameOptions(a: readonly string[] | undefined, b: readonly string[] | undefined): boolean {
+  const x = new Set(a ?? []);
+  const y = new Set(b ?? []);
+  return x.size === y.size && [...x].every(id => y.has(id));
+}
+
 /** The i18n key name of an option's display name (`projekte-zeiterfassung` → `option_projekte_zeiterfassung`). */
 export function optionI18nKey(optionId: string): keyof typeof COLLECTION_I18N_KEYS | undefined {
   if (!Object.prototype.hasOwnProperty.call(ADD_ON_PRICES, optionId)) return undefined;
@@ -103,4 +110,16 @@ export function filterBoardRows(rows: readonly BillingOverviewRow[], state: Boar
 /** The flags present on the board, sorted, each once — the choices of the flag filter. */
 export function boardFlags(rows: readonly BillingOverviewRow[]): string[] {
   return [...new Set(rows.flatMap(r => r.flags ?? []))].sort();
+}
+
+/** Every operator flag (BillingFlag of shared-models); each has a German label on the board. */
+export const BILLING_FLAGS: readonly BillingFlag[] = [
+  'vat-blocked', 'individual-band', 'accounts-missing', 'run-failed', 'no-recipient',
+  'overpaid', 'disputed', 'refund-on-posted-payment', 'refund-failed', 'credit-negative',
+];
+
+/** The i18n key name of a flag's label (`run-failed` → `board_flag_run_failed`); undefined for an unknown flag. */
+export function flagI18nKey(flag: string): keyof typeof COLLECTION_I18N_KEYS | undefined {
+  if (!BILLING_FLAGS.includes(flag as BillingFlag)) return undefined;
+  return `board_flag_${flag.replace(/-/g, '_')}` as keyof typeof COLLECTION_I18N_KEYS;
 }
