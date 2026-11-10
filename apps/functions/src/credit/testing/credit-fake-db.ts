@@ -52,6 +52,7 @@ export function fakeDb(store: Store): Firestore {
       case '>': return v > (f.value as never);
       case '<=': return v <= (f.value as never);
       case '<': return v < (f.value as never);
+      case 'in': return (f.value as unknown[]).includes(v);
       case 'array-contains': return Array.isArray(v) && (v as unknown[]).includes(f.value);
       default: throw new Error(`fakeDb: unsupported operator ${f.op}`);
     }

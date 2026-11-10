@@ -29,6 +29,7 @@ beforeEach(() => {
     'subscriptions/scs': { billing: 'stripe', state: 'pastDue', currentBand: 'KringS', options: ['buchhaltung'], autopay: true,
       billingFlags: ['vat-blocked'], lastMeasurement: { excludedUsers: 2 } },
     'credit-accounts/scs': { balance: 700 },
+    'invoices/ord': inv({ billingKind: '', totalAmount: { amount: 999 } }),
     'invoices/i1': inv(), 'invoices/i0': inv({ invoiceDate: '20261001', invoiceNo: 0, state: 'paid', totalAmount: { amount: 100 }, payments: [{ amount: 100, date: '20261002' }] }),
     'payment-attempts/a1': { tenants: ['bkg'], payerTenantId: 'scs', state: 'overpaid', invoiceKey: 'i1' },
     'payment-attempts/a2': { tenants: ['bkg'], payerTenantId: 'scs', state: 'disputed', invoiceKey: 'i1' },
@@ -76,6 +77,13 @@ describe('setTenantBilling', () => {
     await call(setTenantBilling, 'opAdmin', { tenantId: 'scs', billing: 'exempt' });
     expect(store['subscriptions/scs']).toMatchObject({ billing: 'exempt', state: 'pastDue', options: ['buchhaltung'] });
   });
+  it('keeps the billingStart of a tenant already on stripe', async () => {
+    store['subscriptions/scs']['billingStart'] = '20260101';
+    await call(setTenantBilling, 'opAdmin', { tenantId: 'scs', billing: 'stripe' });
+    expect(store['subscriptions/scs']['billingStart']).toBe('20260101');
+    await call(setTenantBilling, 'opAdmin', { tenantId: 'scs', billing: 'stripe', billingStart: '20270101' });
+    expect(store['subscriptions/scs']['billingStart']).toBe('20270101');
+  });
   it('rejects an unknown tenant', async () => {
     await expect(call(setTenantBilling, 'opAdmin', { tenantId: 'nope', billing: 'stripe' })).rejects.toMatchObject({ code: 'not-found' });
   });
@@ -87,7 +95,7 @@ describe('setTenantState', () => {
     await call(setTenantState, 'opAdmin', { tenantId: 'scs', state: 'active' });
     expect(store['subscriptions/scs']).toMatchObject({ state: 'active', pastDueSince: '', closingSince: '', billingFlags: ['vat-blocked'] });
     await call(setTenantState, 'opAdmin', { tenantId: 'scs', state: 'cancelled' });
-    expect(store['subscriptions/scs']).toMatchObject({ state: 'cancelled', cancelledAt: toStoreDate(new Date()) });
+    expect(store['subscriptions/scs']).toMatchObject({ state: 'cancelled', cancelledAt: toStoreDate(new Date()), pastDueSince: '', closingSince: '' });
   });
 });
 

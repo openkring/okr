@@ -12,6 +12,7 @@ import { toStoreDate } from '../srv/zurich-time';
 import { buildOverview, optionsFromEnabledBlocks, type BillingOverviewRow } from './operator.logic';
 
 const REGION = 'europe-west6';
+const IN_LIMIT = 30;
 const STATE_FLAGS = ['run-failed'] as const;
 
 /** Server-side operator check: the caller belongs to the operator tenant and is admin or treasurer. */
@@ -46,16 +47,24 @@ export const getBillingOverview = onCall(
     const db = getFirestore();
     const books = await assertOperator(db, request, CF_NAME);
 
-    const [configs, subs, invoices, attempts] = await Promise.all([
+    const [configs, subs, invoices] = await Promise.all([
       db.collection('app-config').get(),
       db.collection(SubscriptionCollection).get(),
+      // only the billing documents (subscription / top-up) of the operator books, not the operator's own ledger of invoices;
+      // composite index: invoices (tenants CONTAINS, accountingTenantId, billingKind)
       db.collection(InvoiceCollection)
         .where('tenants', 'array-contains', books.operatorTenantId)
         .where('accountingTenantId', '==', books.accountingTenantId)
-        .where('isArchived', '==', false).get(),
-      db.collection(PaymentAttemptCollection).where('tenants', 'array-contains', books.operatorTenantId).get(),
+        .where('billingKind', 'in', ['subscription', 'topup']).get(),
     ]);
     const tenantIds = [...new Set([...configs.docs.map(d => d.id), ...subs.docs.map(d => d.id)])];
+    // attempts of the billed tenants only: `in` is limited to 30 values, no composite index (single field)
+    const attemptDocs: Record<string, unknown>[] = [];
+    for (let i = 0; i < tenantIds.length; i += IN_LIMIT) {
+      const snap = await db.collection(PaymentAttemptCollection).where('payerTenantId', 'in', tenantIds.slice(i, i + IN_LIMIT)).get();
+      attemptDocs.push(...snap.docs.map(d => d.data() as Record<string, unknown>)
+        .filter(a => Array.isArray(a['tenants']) && (a['tenants'] as string[]).includes(books.operatorTenantId)));
+    }
     const names: Record<string, string> = {};
     const credit: Record<string, number> = {};
     await Promise.all(tenantIds.map(async t => {
@@ -68,7 +77,7 @@ export const getBillingOverview = onCall(
       subscriptions: Object.fromEntries(subs.docs.map(d => [d.id, d.data() as Record<string, unknown>])),
       names, credit, books: books.accountingTenantId,
       invoices: invoices.docs.map(d => ({ id: d.id, data: d.data() as Record<string, unknown> })),
-      attempts: attempts.docs.map(d => d.data() as Record<string, unknown>),
+      attempts: attemptDocs,
     });
   },
 );
@@ -93,7 +102,8 @@ export const setTenantBilling = onCall(
     if (given !== undefined && !(typeof given === 'string' && /^\d{8}$/.test(given))) {
       throw new HttpsError('invalid-argument', `${CF_NAME}: billingStart must be a StoreDate (yyyyMMdd).`);
     }
-    const billingStart = (given as string | undefined) || toStoreDate(new Date());
+    // an existing start stays unless one is passed
+    const billingStart = (given as string | undefined) || (sub['billing'] === 'stripe' && sub['billingStart'] ? String(sub['billingStart']) : toStoreDate(new Date()));
     const enabled = (await db.collection('app-config').doc(tenantId).get()).data()?.['enabledFeatures'] as string[] | undefined;
     const addedOptions = optionsFromEnabledBlocks(Array.isArray(enabled) ? enabled : undefined);
     if (!Array.isArray(enabled)) logger.warn(`${CF_NAME}: tenant ${tenantId} has no enabledFeatures (legacy all blocks): options ${addedOptions.join(',')}`);
@@ -118,7 +128,7 @@ export const setTenantState = onCall(
     await ensureSubscription(db, tenantId);
     const patch: Record<string, unknown> = state === 'active'
       ? { state, pastDueSince: '', closingSince: '', billingFlags: FieldValue.arrayRemove(...STATE_FLAGS) }
-      : { state, cancelledAt: toStoreDate(new Date()) };
+      : { state, cancelledAt: toStoreDate(new Date()), pastDueSince: '', closingSince: '' };
     await db.collection(SubscriptionCollection).doc(tenantId).set(patch, { merge: true });
     logger.info(`${CF_NAME}: tenant ${tenantId} -> ${state}`);
     return { ok: true };

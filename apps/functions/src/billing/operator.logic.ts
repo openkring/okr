@@ -4,6 +4,7 @@ import { ADD_ON_BLOCKS } from '@okr/business-metering-util';
 import { isTenantInvoice } from './my-invoices.logic';
 import { openAmount, type InvoiceLike } from '../invoice/invoice-payment.logic';
 
+/** `openAmount` covers all bkaiser invoices of the tenant in the operator books (subscription and top-ups, incl. reminder fees). */
 export interface BillingOverviewRow {
   tenantId: string; name: string; billing: string; state: string; band: string; options: string[]; autopay: boolean;
   lastInvoice: { key: string; no: number; amount: number; state: string } | null;
