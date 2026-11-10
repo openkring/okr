@@ -1,10 +1,12 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { HttpsError } from 'firebase-functions/v2/https';
 
 import {
   decideInvite,
+  inviteOneApplication,
   inviteRecipients,
   mayManageCourseServer,
+  safeErrorFields,
   parseInviteRequest,
   visibleApplicants,
 } from './invite-applicants';
@@ -62,16 +64,34 @@ describe('visibleApplicants (D7)', () => {
   it('rows carry name, type, age, course and state only — no address, AHV, contact or properties', () => {
     const rows = visibleApplicants(apps, course, true, { c1: 'Juniorenkurs' }, 2026);
     for (const row of rows) {
-      expect(Object.keys(row).sort()).toEqual(['age', 'applicationAs', 'courseKey', 'courseName', 'courseState', 'firstName', 'key', 'lastName']);
+      expect(Object.keys(row).sort()).toEqual(['age', 'applicationAs', 'courseKey', 'courseName', 'courseState', 'firstName', 'key', 'lastName', 'lockedReason']);
     }
     const a1 = rows.find(r => r.key === 'a1');
-    expect(a1).toEqual({ key: 'a1', firstName: 'Fa1', lastName: 'La1', applicationAs: 'youth', age: 14, courseKey: '', courseName: '', courseState: '' });
+    expect(a1).toEqual({ key: 'a1', firstName: 'Fa1', lastName: 'La1', applicationAs: 'youth', age: 14, courseKey: '', courseName: '', courseState: '', lockedReason: '' });
     expect(rows.find(r => r.key === 'a3')).toMatchObject({ courseKey: 'c1', courseName: 'Juniorenkurs', courseState: 'registered' });
   });
 
   it('tolerates old documents without course fields or date of birth', () => {
     const rows = visibleApplicants([{ okey: 'x', tenants: ['scs'], state: 'applied' }], { okey: 'c1' }, true);
-    expect(rows).toEqual([{ key: 'x', firstName: '', lastName: '', applicationAs: 'adult', age: undefined, courseKey: '', courseName: '', courseState: '' }]);
+    expect(rows).toEqual([{ key: 'x', firstName: '', lastName: '', applicationAs: 'adult', age: null, courseKey: '', courseName: '', courseState: '', lockedReason: '' }]);
+  });
+
+  it('an unknown age is null, never undefined (the callable would send null anyway)', () => {
+    const [row] = visibleApplicants([app('a1', { dateOfBirth: '' })], course, true);
+    expect(row.age).toBeNull();
+  });
+
+  it('locks, for a non-privileged manager, a visible applicant holding a place on another course', () => {
+    const onOther = app('a7', { courseKey: 'c2', courseState: 'accepted' });
+    const rows = visibleApplicants([onOther], course, false, { c2: 'Skiff 2' });
+    expect(rows).toHaveLength(1);   // D7 visibility unchanged
+    expect(rows[0]).toMatchObject({ key: 'a7', courseName: 'Skiff 2', lockedReason: 'on-other-course' });
+  });
+
+  it('does not lock a privileged user, nor an applicant whose other course state holds no place', () => {
+    expect(visibleApplicants([app('a7', { courseKey: 'c2', courseState: 'accepted' })], course, true)[0].lockedReason).toBe('');
+    expect(visibleApplicants([app('a8', { courseKey: 'c2', courseState: 'declined' })], course, false)[0].lockedReason).toBe('');
+    expect(visibleApplicants([app('a9', { courseKey: 'c1', courseState: 'registered' })], course, false)[0].lockedReason).toBe('');
   });
 
   it('a course without audience shows a non-privileged manager only its own applicants', () => {
@@ -158,6 +178,70 @@ describe('decideInvite', () => {
   it('a closed application is closed', () => {
     expect(decideInvite(app('a1', { state: 'closed.approved' }), 'scs', course, false)).toBe('closed');
     expect(decideInvite(app('a1', { state: 'closed.cancelled' }), 'scs', course, true)).toBe('closed');
+  });
+});
+
+describe('decideInvite — applicant on another course', () => {
+  const onOther = app('a7', { courseKey: 'c2', courseState: 'invited' });
+  it('a non-privileged manager may not move them (on-other-course)', () =>
+    expect(decideInvite(onOther, 'scs', course, false)).toBe('on-other-course'));
+  it('a privileged user may', () => expect(decideInvite(onOther, 'scs', course, true)).toBeUndefined());
+  it('a declined place on the other course does not hold them', () =>
+    expect(decideInvite(app('a7', { courseKey: 'c2', courseState: 'declined' }), 'scs', course, false)).toBeUndefined());
+});
+
+describe('inviteOneApplication', () => {
+  const deps = (over: Partial<Parameters<typeof inviteOneApplication>[4]> = {}) => ({
+    send: vi.fn(async () => undefined),
+    update: vi.fn(async () => undefined),
+    now: () => new Date('2026-11-10T09:30:00Z'),
+    log: vi.fn(),
+    ...over,
+  });
+
+  it('mails first, then writes courseKey, invited, invitedAt (Zurich) and clears answeredAt', async () => {
+    const d = deps();
+    expect(await inviteOneApplication(app('a1', { parentEmail: 'mum@x.ch' }), 'scs', course, false, d)).toBeUndefined();
+    expect(d.send).toHaveBeenCalledWith({ to: 'a1@example.ch', cc: ['mum@x.ch'] }, 'Fa1');
+    expect(d.update).toHaveBeenCalledWith({ courseKey: 'c1', courseState: 'invited', invitedAt: '20261110103000', answeredAt: '' });
+  });
+
+  it('no address → no-email, nothing sent, nothing written', async () => {
+    const d = deps();
+    expect(await inviteOneApplication(app('a1', { email: '', parentEmail: '' }), 'scs', course, false, d)).toBe('no-email');
+    expect(d.send).not.toHaveBeenCalled();
+    expect(d.update).not.toHaveBeenCalled();
+  });
+
+  it('a failed mail → mail-failed, state unchanged, only safe fields logged', async () => {
+    const d = deps({ send: vi.fn(async () => { throw Object.assign(new Error('550 rejected a1@example.ch'), { code: 'EENVELOPE', responseCode: 550 }); }) });
+    expect(await inviteOneApplication(app('a1'), 'scs', course, false, d)).toBe('mail-failed');
+    expect(d.update).not.toHaveBeenCalled();
+    expect(d.log).toHaveBeenCalledWith(expect.any(String), { code: 'EENVELOPE', responseCode: 550 });
+    expect(JSON.stringify(d.log.mock.calls)).not.toContain('@');
+  });
+
+  it('a failed write after the mail → write-failed, never throws (the batch goes on)', async () => {
+    const d = deps({ update: vi.fn(async () => { throw Object.assign(new Error('deadline'), { code: 4 }); }) });
+    await expect(inviteOneApplication(app('a1'), 'scs', course, false, d)).resolves.toBe('write-failed');
+    expect(d.send).toHaveBeenCalledTimes(1);
+    expect(d.log).toHaveBeenCalledWith(expect.any(String), { code: 4 });
+  });
+
+  it('a refusal sends nothing', async () => {
+    const d = deps();
+    expect(await inviteOneApplication(app('a7', { courseKey: 'c2', courseState: 'registered' }), 'scs', course, false, d)).toBe('on-other-course');
+    expect(await inviteOneApplication(undefined, 'scs', course, true, d)).toBe('not-found');
+    expect(d.send).not.toHaveBeenCalled();
+  });
+});
+
+describe('safeErrorFields', () => {
+  it('keeps code and responseCode only — no message, no object', () => {
+    expect(safeErrorFields(Object.assign(new Error('to a@b.ch failed'), { code: 'EAUTH', responseCode: 535, response: 'a@b.ch' })))
+      .toEqual({ code: 'EAUTH', responseCode: 535 });
+    expect(safeErrorFields(new Error('a@b.ch'))).toEqual({});
+    expect(safeErrorFields(undefined)).toEqual({});
   });
 });
 

@@ -3,7 +3,7 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonButton, IonButtons, IonCheckbox, IonContent, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonNote, ModalController } from '@ionic/angular';
 
 import {
-  COURSE_I18N_KEYS, CourseApplicantRow, CourseApplicantsResult, courseInviteCountsLine, CourseI18n, groupCourseApplicants, preselectedApplicantKeys
+  applicantAge, COURSE_I18N_KEYS, CourseApplicantRow, CourseApplicantsResult, courseInviteCountsLine, CourseI18n, groupCourseApplicants, preselectedApplicantKeys
 } from '@okr/calendar-course-util';
 import { I18nService } from '@okr/shared-i18n';
 import { ApplicationCourseState, ApplicationKind, CourseModel } from '@okr/shared-models';
@@ -18,7 +18,8 @@ import { fill } from '@okr/shared-util-core';
  * (`CourseStore.inviteApplicants`) calls `inviteApplicantsToCourse`. On the `check-forms` MODAL_ALLOWLIST.
  *
  * The rows come from `listCourseApplicants`, already filtered by D7: a non-privileged manager never receives the
- * third group («Weitere Bewerbende»), so it is simply empty for them.
+ * third group («Weitere Bewerbende»), so it is simply empty for them. A row the server marks `lockedReason`
+ * (holds a place on another course, the caller is not privileged) is shown disabled with that course's name.
  */
 @Component({
   selector: 'okr-course-invite-modal',
@@ -69,10 +70,13 @@ import { fill } from '@okr/shared-util-core';
 
     <ng-template #item let-row>
       <ion-item>
-        <ion-checkbox slot="start" [checked]="selected().has(row.key)" (ionChange)="toggle(row.key)" [attr.aria-label]="row.firstName + ' ' + row.lastName" />
+        <ion-checkbox slot="start" [checked]="selected().has(row.key)" [disabled]="!!row.lockedReason" (ionChange)="toggle(row.key)" [attr.aria-label]="row.firstName + ' ' + row.lastName" />
         <ion-label>
           <h3>{{ row.firstName }} {{ row.lastName }}</h3>
           <p>{{ details(row) }}</p>
+          @if (row.lockedReason) {
+            <p><ion-note>{{ lockedNote(row) }}</ion-note></p>
+          }
         </ion-label>
       </ion-item>
     </ng-template>
@@ -119,7 +123,8 @@ export class CourseInviteModal {
   /** «Junioren · 14 Jahre · angemeldet für Skiff 2» */
   protected details(row: CourseApplicantRow): string {
     const parts = [this.kindLabels()[row.applicationAs] ?? ''];
-    if (row.age !== undefined) parts.push(fill(this.i18n.invite_age(), { age: row.age }));
+    const age = applicantAge(row);
+    if (age !== undefined) parts.push(fill(this.i18n.invite_age(), { age }));
     const state = this.stateLabels()[row.courseState] ?? '';
     if (row.courseKey === this.course().okey) {
       if (state) parts.push(state);
@@ -129,7 +134,13 @@ export class CourseInviteModal {
     return parts.filter(Boolean).join(' · ');
   }
 
+  /** «Hat einen Platz in Skiff 2. …» */
+  protected lockedNote(row: CourseApplicantRow): string {
+    return fill(this.i18n.invite_locked(), { course: row.courseName });
+  }
+
   protected toggle(key: string): void {
+    if (this.result().rows.some(r => r.key === key && r.lockedReason)) return;
     const next = new Set(this.selected());
     if (!next.delete(key)) next.add(key);
     this.selected.set(next);

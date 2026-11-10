@@ -433,7 +433,11 @@
       "noEmail": "sin dirección de correo",
       "notFound": "no encontrado",
       "closed": "solicitud cerrada",
-      "mailFailed": "no se ha podido enviar el correo"
-    }
+      "mailFailed": "no se ha podido enviar el correo",
+      "onOtherCourse": "tiene una plaza en otro curso",
+      "writeFailed": "correo enviado pero no guardado – vuelve a invitar"
+    },
+    "locked": "Tiene una plaza en {course}. Solo quien gestiona todas las solicitudes puede moverlo.",
+    "ended": "Este curso ha terminado. Ya no puedes invitar a él."
   }
 }

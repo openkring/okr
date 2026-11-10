@@ -97,6 +97,10 @@ export const COURSE_I18N_KEYS = {
   invite_reason_notFound:   PFX + 'invite.reason.notFound',
   invite_reason_closed:     PFX + 'invite.reason.closed',
   invite_reason_mailFailed: PFX + 'invite.reason.mailFailed',
+  invite_reason_onOtherCourse: PFX + 'invite.reason.onOtherCourse',
+  invite_reason_writeFailed:   PFX + 'invite.reason.writeFailed',
+  invite_locked:           PFX + 'invite.locked',
+  invite_ended:            PFX + 'invite.ended',
 
   // report profile
   form_report_title:      PFX + 'form.report.title',

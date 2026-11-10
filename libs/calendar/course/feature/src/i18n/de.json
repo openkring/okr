@@ -433,7 +433,11 @@
       "noEmail": "keine E-Mail-Adresse",
       "notFound": "nicht gefunden",
       "closed": "Bewerbung abgeschlossen",
-      "mailFailed": "E-Mail konnte nicht verschickt werden"
-    }
+      "mailFailed": "E-Mail konnte nicht verschickt werden",
+      "onOtherCourse": "hat einen Platz in einem anderen Kurs",
+      "writeFailed": "E-Mail verschickt, aber nicht gespeichert – lade bitte nochmals ein"
+    },
+    "locked": "Hat einen Platz in {course}. Verschieben kann nur, wer alle Bewerbungen betreut.",
+    "ended": "Dieser Kurs ist vorbei. Du kannst nicht mehr dazu einladen."
   }
 }

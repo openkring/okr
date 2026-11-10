@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  chunkKeys, CourseApplicantRow, courseInviteCountsLine, groupCourseApplicants, inviteResultMessage, preselectedApplicantKeys,
+  applicantAge, chunkKeys, CourseApplicantRow, courseHasEnded, courseInviteCountsLine, groupCourseApplicants, inviteResultMessage,
+  preselectedApplicantKeys,
 } from './course-invite.util';
 
 const row = (key: string, extra: Partial<CourseApplicantRow> = {}): CourseApplicantRow => ({
-  key, firstName: `F${key}`, lastName: `L${key}`, applicationAs: 'youth', age: 14, courseKey: '', courseName: '', courseState: '', ...extra,
+  key, firstName: `F${key}`, lastName: `L${key}`, applicationAs: 'youth', age: 14, courseKey: '', courseName: '', courseState: '', lockedReason: '', ...extra,
 });
 
 describe('groupCourseApplicants (spec 1.152 §8.1)', () => {
@@ -49,7 +50,10 @@ describe('courseInviteCountsLine', () => {
 describe('inviteResultMessage', () => {
   const labels = {
     invited: '{n} eingeladen.', skipped: 'Nicht eingeladen: {list}',
-    reasons: { 'no-email': 'keine E-Mail-Adresse', 'not-found': 'nicht gefunden', closed: 'abgeschlossen', 'mail-failed': 'Versand fehlgeschlagen' },
+    reasons: {
+      'no-email': 'keine E-Mail-Adresse', 'not-found': 'nicht gefunden', closed: 'abgeschlossen', 'on-other-course': 'auf einem anderen Kurs',
+      'mail-failed': 'Versand fehlgeschlagen', 'write-failed': 'nicht gespeichert',
+    },
   };
   const rows = [row('a1', { firstName: 'Anna', lastName: 'Muster' }), row('a2', { firstName: 'Ben', lastName: 'Beispiel' })];
   it('says how many were invited', () => expect(inviteResultMessage({ invited: 2, skipped: [] }, rows, labels)).toBe('2 eingeladen.'));
@@ -62,5 +66,25 @@ describe('chunkKeys', () => {
   it('splits into slices of at most the given size', () => {
     expect(chunkKeys(['a', 'b', 'c'], 2)).toEqual([['a', 'b'], ['c']]);
     expect(chunkKeys([], 2)).toEqual([]);
+  });
+});
+
+describe('courseHasEnded', () => {
+  it('is over once the last day is before today', () => {
+    expect(courseHasEnded({ startDate: '20261101', endDate: '20261130' }, '20261201')).toBe(true);
+    expect(courseHasEnded({ startDate: '20261101', endDate: '20261130' }, '20261130')).toBe(false);
+  });
+  it('falls back to the start date, and a course without dates never ends', () => {
+    expect(courseHasEnded({ startDate: '20261101', endDate: '' }, '20261102')).toBe(true);
+    expect(courseHasEnded({}, '20261102')).toBe(false);
+  });
+});
+
+describe('applicantAge', () => {
+  it('shows a number only — never «null Jahre»', () => {
+    expect(applicantAge({ age: 14 })).toBe(14);
+    expect(applicantAge({ age: 0 })).toBe(0);
+    expect(applicantAge({ age: null })).toBeUndefined();
+    expect(applicantAge({} as { age: number | null })).toBeUndefined();
   });
 });

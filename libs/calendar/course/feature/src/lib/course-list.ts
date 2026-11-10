@@ -192,7 +192,9 @@ export class CourseList {
       options.buttons.push(createActionSheetButton('course.view', i18n.list_view(), this.imgixBaseUrl, 'eye-on'));
     }
     if (mayManage) {
-      options.buttons.push(createActionSheetButton('course.invite', i18n.list_invite(), this.imgixBaseUrl, 'email'));
+      if (this.store.mayInvite(course)) {
+        options.buttons.push(createActionSheetButton('course.invite', i18n.list_invite(), this.imgixBaseUrl, 'email'));
+      }
       options.buttons.push(createActionSheetDivider());
       options.buttons.push(createActionSheetButton('course.archive', i18n.list_archive(), this.imgixBaseUrl, 'trash'));
     }

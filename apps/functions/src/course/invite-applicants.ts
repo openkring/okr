@@ -31,6 +31,7 @@ import type { ApplicationCourseState, ApplicationKind } from '@okr/shared-models
 import { DateFormat, getAge, getTodayStr, holdsCoursePlace } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 import {
+  courseHasEnded,
   INVITE_MAX_APPLICANTS,
   type CourseApplicantCountsResult,
   type CourseApplicantRow,
@@ -43,7 +44,7 @@ import { courseAnswerUrl, invitationLinkSecret } from '../calendar/answer-link';
 import { brandOf, tenantLinks } from '../calendar/deliver';
 import { getAppEmailConfig, getEmailProvider } from '../auth/email-templates';
 import { sendEmailViaProvider } from '../auth/email-transport';
-import { toStoreDateTime } from '../srv/zurich-time';
+import { toStoreDate, toStoreDateTime } from '../srv/zurich-time';
 import { courseInvitationMail } from './course-mail';
 
 const REGION = 'europe-west6';
@@ -116,8 +117,19 @@ function isVisibleTo(app: Doc, course: KeyedDoc, isPrivileged: boolean): boolean
 }
 
 /**
+ * A non-privileged manager must not take an applicant away from ANOTHER course where they hold a place (A7): only a
+ * privileged user may move them. `'on-other-course'` then, else ''.
+ */
+function lockFor(app: Doc, course: KeyedDoc, isPrivileged: boolean): '' | 'on-other-course' {
+  if (isPrivileged) return '';
+  const current = str(app['courseKey']);
+  return current && current !== course.okey && holdsCoursePlace(app, current) ? 'on-other-course' : '';
+}
+
+/**
  * The rows of the invite dialog (D7): open applications the caller may see, as name, type, age, course and state
- * only, sorted by last and first name. The row is built field by field, so nothing else can leak into it.
+ * only, sorted by last and first name. The row is built field by field, so nothing else can leak into it. A row of
+ * an applicant holding a place on another course is visible but locked for a non-privileged caller (`lockedReason`).
  * @param courseNames names of the courses the rows are on, by key (another course of the tenant shows its name)
  * @param refYear the year the age is computed for (by birth year, as the club counts)
  */
@@ -133,10 +145,11 @@ export function visibleApplicants(apps: KeyedDoc[], course: KeyedDoc, isPrivileg
         firstName: str(app['firstName']),
         lastName: str(app['lastName']),
         applicationAs: kindOf(app),
-        age: age >= 0 ? age : undefined,
+        age: age >= 0 ? age : null,
         courseKey,
         courseName: courseKey ? (courseNames[courseKey] ?? '') : '',
         courseState: courseKey ? courseStateOf(app) : '',
+        lockedReason: lockFor(app, course, isPrivileged),
       };
     })
     .sort((a, b) => a.lastName.localeCompare(b.lastName, 'de', { sensitivity: 'base' })
@@ -146,12 +159,62 @@ export function visibleApplicants(apps: KeyedDoc[], course: KeyedDoc, isPrivileg
 /**
  * Whether one application may be invited (undefined = yes). Missing, archived, another tenant, or not visible to
  * the caller (D7) → `not-found`; the visibility comes first, so a manager learns nothing about an applicant they
- * could not see. A closed application → `closed`.
+ * could not see. A closed application → `closed`. For a non-privileged caller, an applicant holding a place on
+ * another course → `on-other-course` (only a privileged user may move them).
  */
-export function decideInvite(app: Doc | undefined, tenantId: string, course: KeyedDoc, isPrivileged: boolean): 'not-found' | 'closed' | undefined {
+export function decideInvite(app: Doc | undefined, tenantId: string, course: KeyedDoc, isPrivileged: boolean): 'not-found' | 'closed' | 'on-other-course' | undefined {
   if (!app || app['isArchived'] === true || !strings(app['tenants']).includes(tenantId)) return 'not-found';
   if (!isVisibleTo(app, course, isPrivileged)) return 'not-found';
   if (!OPEN_STATES.includes(str(app['state']))) return 'closed';
+  if (lockFor(app, course, isPrivileged)) return 'on-other-course';
+  return undefined;
+}
+
+/**
+ * The fields of an error that are safe to log: a code and a provider response code, never the message (an SMTP or
+ * Mailtrap error may quote the recipient address) and never the error object.
+ */
+export function safeErrorFields(err: unknown): { code?: string | number; responseCode?: number } {
+  const e = (err ?? {}) as Doc;
+  const fields: { code?: string | number; responseCode?: number } = {};
+  if (typeof e['code'] === 'string' || typeof e['code'] === 'number') fields.code = e['code'];
+  if (typeof e['responseCode'] === 'number') fields.responseCode = e['responseCode'];
+  return fields;
+}
+
+/** What `inviteOneApplication` needs from the outside: sending the mail and writing the application. */
+export type InviteDeps = {
+  send: (recipients: { to: string; cc: string[] }, firstName: string) => Promise<void>;
+  update: (fields: Doc) => Promise<void>;
+  now: () => Date;
+  log: (message: string, fields: Doc) => void;
+};
+
+/**
+ * One application: decide, mail first, then write. Never throws, so one row can never abort the batch:
+ * a failed mail → `mail-failed` (the application is unchanged); a failed write after the mail went out →
+ * `write-failed` (the person got a link the answer page will refuse as «moved» / «not found»; invite again).
+ * @returns undefined when invited, else the skip reason
+ */
+export async function inviteOneApplication(
+  app: Doc | undefined, tenantId: string, course: KeyedDoc, isPrivileged: boolean, deps: InviteDeps,
+): Promise<InviteSkipReason | undefined> {
+  const refusal = decideInvite(app, tenantId, course, isPrivileged);
+  if (refusal || !app) return refusal ?? 'not-found';
+  const recipients = inviteRecipients(app);
+  if (!recipients) return 'no-email';
+  try {
+    await deps.send(recipients, str(app['firstName']));
+  } catch (err) {
+    deps.log('the invitation mail to one applicant failed', safeErrorFields(err));
+    return 'mail-failed';
+  }
+  try {
+    await deps.update({ courseKey: course.okey, courseState: 'invited', invitedAt: toStoreDateTime(deps.now()), answeredAt: '' });
+  } catch (err) {
+    deps.log('the mail went out, but the application could not be updated', safeErrorFields(err));
+    return 'write-failed';
+  }
   return undefined;
 }
 
@@ -301,7 +364,7 @@ async function logInviteActivity(db: Firestore, tenantId: string, personKey: str
       createdAt: FieldValue.serverTimestamp(),
     });
   } catch (err) {
-    logger.warn('inviteApplicantsToCourse: could not write the activity', err);
+    logger.warn('inviteApplicantsToCourse: could not write the activity', safeErrorFields(err));
   }
 }
 
@@ -316,6 +379,9 @@ export const inviteApplicantsToCourse = onCall(
     const db = getFirestore();
     const caller = await readCaller(db, uidOf(request), cfName);
     const course = await readManagedCourse(db, courseKey, caller, cfName);
+    if (courseHasEnded({ startDate: str(course['startDate']), endDate: str(course['endDate']) }, toStoreDate(new Date()))) {
+      throw new HttpsError('failed-precondition', 'course-ended', { reason: 'course-ended' });
+    }
 
     const refs = applicationKeys.map((k) => db.collection('applications').doc(k));
     const snaps = await db.getAll(...refs);
@@ -330,33 +396,27 @@ export const inviteApplicantsToCourse = onCall(
     let invited = 0;
 
     const inviteOne = async (index: number): Promise<void> => {
-      const snap = snaps[index];
       const key = applicationKeys[index];
-      const app = snap.exists ? (snap.data() as Doc) : undefined;
-      const refusal = decideInvite(app, caller.tenantId, course, caller.isPrivileged);
-      if (refusal || !app) { skipped.push({ key, reason: refusal ?? 'not-found' }); return; }
-      const recipients = inviteRecipients(app);
-      if (!recipients) { skipped.push({ key, reason: 'no-email' }); return; }
-
-      // mail first: a failed mail leaves the application as it was
-      const { subject, html } = courseInvitationMail({
-        ...brand,
-        firstName: str(app['firstName']),
-        courseName: str(course['name']),
-        startDate: str(course['startDate']),
-        endDate: str(course['endDate']),
-        answerUrl: courseAnswerUrl(projectId, courseKey, key, secret),
+      const snap = snaps[index];
+      const reason = await inviteOneApplication(snap.exists ? (snap.data() as Doc) : undefined, caller.tenantId, course, caller.isPrivileged, {
+        send: async (recipients, firstName) => {
+          const { subject, html } = courseInvitationMail({
+            ...brand,
+            firstName,
+            courseName: str(course['name']),
+            startDate: str(course['startDate']),
+            endDate: str(course['endDate']),
+            answerUrl: courseAnswerUrl(projectId, courseKey, key, secret),
+          });
+          await sendEmailViaProvider(provider, { from, to: [recipients.to], cc: recipients.cc, subject, html });
+        },
+        update: async (fields) => { await refs[index].update(fields); },
+        now: () => new Date(),
+        // never an address, a key or an error message in the log
+        log: (message, fields) => logger.warn(`${cfName}: ${message}`, fields),
       });
-      try {
-        await sendEmailViaProvider(provider, { from, to: [recipients.to], cc: recipients.cc, subject, html });
-      } catch (err) {
-        // never the address in the log
-        logger.warn(`${cfName}: the invitation mail to one applicant failed`, err);
-        skipped.push({ key, reason: 'mail-failed' });
-        return;
-      }
-      await refs[index].update({ courseKey, courseState: 'invited', invitedAt: toStoreDateTime(new Date()), answeredAt: '' });
-      invited += 1;
+      if (reason) skipped.push({ key, reason });
+      else invited += 1;
     };
 
     for (let i = 0; i < applicationKeys.length; i += MAIL_CONCURRENCY) {

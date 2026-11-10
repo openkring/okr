@@ -1,5 +1,6 @@
 import type { ApplicationCourseState, ApplicationKind } from '@okr/shared-models';
 import { fill } from '@okr/shared-util-core';
+import type { CourseModel } from '@okr/shared-models';
 
 /**
  * Inviting applicants to a course (spec 1.152 §8.1, §8.2, D7). The callables `listCourseApplicants` and
@@ -12,18 +13,23 @@ export const INVITE_MAX_APPLICANTS = 100;
 /**
  * One applicant as a course manager may see it (D7): name, type, age, course and state — never an address, AHV
  * number, contact or form answer. `courseKey` / `courseName` / `courseState` describe the course the application is
- * on now ('' = none); `age` is by birth year, `undefined` when unknown.
+ * on now ('' = none); `age` is by birth year, `null` when unknown (a callable turns `undefined` into `null` anyway).
+ * `lockedReason` `'on-other-course'`: the applicant holds a place on another course and only a privileged user may
+ * move them (the dialog shows the row disabled); '' = may be invited.
  */
 export type CourseApplicantRow = {
   key: string;
   firstName: string;
   lastName: string;
   applicationAs: ApplicationKind;
-  age: number | undefined;
+  age: number | null;
   courseKey: string;
   courseName: string;
   courseState: ApplicationCourseState;
+  lockedReason: CourseApplicantLock;
 };
+
+export type CourseApplicantLock = '' | 'on-other-course';
 
 /**
  * `listCourseApplicants({ courseKey })`. `placesTaken`, `invited` and `accepted` count every application holding a
@@ -37,7 +43,12 @@ export type CourseApplicantsResult = {
   accepted: number;
 };
 
-export type InviteSkipReason = 'no-email' | 'not-found' | 'closed' | 'mail-failed';
+/**
+ * Why an application was not invited: no address; not found (or not visible to the caller, D7); closed; holds a place
+ * on another course and the caller is not privileged; the mail failed (state unchanged); the mail went out but the
+ * application could not be updated.
+ */
+export type InviteSkipReason = 'no-email' | 'not-found' | 'closed' | 'on-other-course' | 'mail-failed' | 'write-failed';
 
 /** `inviteApplicantsToCourse({ courseKey, applicationKeys })`. */
 export type InviteApplicantsResult = {
@@ -98,6 +109,20 @@ export function inviteResultMessage(result: InviteApplicantsResult, rows: Course
   const names = new Map(rows.map(r => [r.key, `${r.firstName} ${r.lastName}`.trim()]));
   const list = result.skipped.map(s => `${names.get(s.key) || s.key} (${labels.reasons[s.reason] ?? s.reason})`).join(', ');
   return `${invited} ${fill(labels.skipped, { list })}`;
+}
+
+/**
+ * The course is over: its last day (`endDate`, else `startDate`) lies before `today` (Europe/Zurich StoreDate).
+ * Nobody is invited to an ended course (the callable refuses with `course-ended`, the list hides the action).
+ */
+export function courseHasEnded(course: Pick<Partial<CourseModel>, 'startDate' | 'endDate'>, today: string): boolean {
+  const lastDay = course.endDate || course.startDate || '';
+  return lastDay !== '' && lastDay < today;
+}
+
+/** The age shown in the dialog, or undefined: the callable sends `null` (or nothing) when it is unknown. */
+export function applicantAge(row: Pick<CourseApplicantRow, 'age'>): number | undefined {
+  return typeof row.age === 'number' && row.age >= 0 ? row.age : undefined;
 }
 
 /** Slices of at most `size` keys. */

@@ -7,7 +7,7 @@ import { catchError, from, of } from 'rxjs';
 
 import { CourseService } from '@okr/calendar-course-data-access';
 import {
-  ALL_COURSES_KEY, buildCourseListRows, chunkKeys, COURSE_I18N_KEYS, CourseAccess, CourseApplicantsResult, courseListHelpRole, CourseI18n,
+  ALL_COURSES_KEY, buildCourseListRows, chunkKeys, courseHasEnded, COURSE_I18N_KEYS, CourseAccess, CourseApplicantsResult, courseListHelpRole, CourseI18n,
   INVITE_MAX_APPLICANTS, InviteApplicantsResult, inviteResultMessage, loadFinanceForEdit, mayCreateCourse, mayManageCourse, mayOpenCourseMenu,
   mayReadCourseFinance, mayWriteCourseFinance, yearlyTotalRows
 } from '@okr/calendar-course-util';
@@ -15,7 +15,7 @@ import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { CourseFinanceModel, CourseModel } from '@okr/shared-models';
 import { AlertService, exportCsv, resourceParams } from '@okr/shared-util-angular';
-import { deepEqual, hasRole, nameMatches } from '@okr/shared-util-core';
+import { DateFormat, deepEqual, getTodayStr, hasRole, nameMatches } from '@okr/shared-util-core';
 import { isAdminMember } from '@okr/subject-group-util';
 
 import type { CourseEditResult } from './course-edit.modal';
@@ -167,6 +167,10 @@ export const CourseStore = signalStore(
     mayManage(course: CourseModel): boolean {
       return mayManageCourse(course, this.accessFor(course));
     },
+    /** «Bewerbende einladen»: who manages the course, and only until it has ended (the callable refuses `course-ended`). */
+    mayInvite(course: CourseModel): boolean {
+      return this.mayManage(course) && !courseHasEnded(course, getTodayStr(DateFormat.StoreDate));
+    },
     /** Places taken on a course (A7); `undefined` while unknown (loading, not counted for this viewer, failed). */
     placesTakenOf(course: CourseModel): number | undefined {
       return store.placesResource.value()?.[course.okey];
@@ -232,7 +236,7 @@ export const CourseStore = signalStore(
      * toast names every skipped applicant with the reason.
      */
     async inviteApplicants(course: CourseModel): Promise<void> {
-      if (!this.mayManage(course)) return;
+      if (!this.mayInvite(course)) return;
       let applicants: CourseApplicantsResult;
       try {
         applicants = await store.courseService.listApplicants(course.okey);
@@ -256,7 +260,8 @@ export const CourseStore = signalStore(
         }
       } catch (err) {
         console.warn('CourseStore.inviteApplicants: inviteApplicantsToCourse failed', err);
-        void store.alertService.showToast(store.i18n.invite_error());
+        const ended = (err as { details?: { reason?: string } } | undefined)?.details?.reason === 'course-ended';
+        void store.alertService.showToast(ended ? store.i18n.invite_ended() : store.i18n.invite_error());
         store.placesResource.reload();
         return;
       }
@@ -267,7 +272,9 @@ export const CourseStore = signalStore(
           'no-email': store.i18n.invite_reason_noEmail(),
           'not-found': store.i18n.invite_reason_notFound(),
           closed: store.i18n.invite_reason_closed(),
+          'on-other-course': store.i18n.invite_reason_onOtherCourse(),
           'mail-failed': store.i18n.invite_reason_mailFailed(),
+          'write-failed': store.i18n.invite_reason_writeFailed(),
         },
       }));
       store.placesResource.reload();

@@ -433,7 +433,11 @@
       "noEmail": "no email address",
       "notFound": "not found",
       "closed": "application closed",
-      "mailFailed": "email could not be sent"
-    }
+      "mailFailed": "email could not be sent",
+      "onOtherCourse": "has a place in another course",
+      "writeFailed": "email sent but not saved – please invite again"
+    },
+    "locked": "Has a place in {course}. Only someone who looks after all applications can move them.",
+    "ended": "This course is over. You can no longer invite to it."
   }
 }

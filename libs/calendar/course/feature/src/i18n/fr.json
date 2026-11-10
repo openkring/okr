@@ -433,7 +433,11 @@
       "noEmail": "pas d'adresse e-mail",
       "notFound": "introuvable",
       "closed": "candidature clôturée",
-      "mailFailed": "l'e-mail n'a pas pu être envoyé"
-    }
+      "mailFailed": "l'e-mail n'a pas pu être envoyé",
+      "onOtherCourse": "a une place dans un autre cours",
+      "writeFailed": "e-mail envoyé mais pas enregistré – invite à nouveau"
+    },
+    "locked": "A une place dans {course}. Seule une personne qui gère toutes les candidatures peut le déplacer.",
+    "ended": "Ce cours est terminé. Tu ne peux plus y inviter."
   }
 }
