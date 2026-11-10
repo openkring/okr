@@ -323,6 +323,8 @@ export { onAutoTopUpRequested } from './credit/auto-topup.trigger';
 export { onBillingInvoicePaid } from './credit/topup-paid.trigger';
 // Monthly billing run (plan 2): the morning job on the 1st requests one run per billed tenant; this trigger bills it
 export { onBillingRunRequested } from './billing/billing-run';
+// Tenant admins read their own bkaiser invoices (operator books are closed to them under the rules) and a signed PDF link
+export { listMyBillingInvoices, getMyBillingInvoicePdf } from './billing/my-invoices';
 export const cancelInvoice = Invoice.cancelInvoice;
 export const createPaymentConfirmation = Invoice.createPaymentConfirmation;
 export const createInvoiceReminder = Invoice.createInvoiceReminder;
