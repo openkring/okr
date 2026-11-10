@@ -142,6 +142,8 @@
     "pick": "Merge with which application?",
     "confirm": "Taken over from the other application: {fields}. The other application is archived afterwards.",
     "confirm_nothing": "The other application brings no additional details. It is archived afterwards.",
+    "swapped": "The other application already has a course invitation, so it is the one kept. Taken over from this application: {fields}. This application is archived afterwards.",
+    "swapped_nothing": "The other application already has a course invitation, so it is the one kept. This application brings no additional details and is archived afterwards.",
     "button": "Merge",
     "conf": "Applications merged.",
     "error": "The applications could not be merged.",

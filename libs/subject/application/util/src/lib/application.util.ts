@@ -216,6 +216,24 @@ function isEmptyValue(v: unknown): boolean {
   return v === undefined || v === null || v === '' || (Array.isArray(v) && v.length === 0);
 }
 
+/** The course states that came from an invitation; the emailed answer link is signed for that okey. */
+const INVITATION_COURSE_STATES: ApplicationCourseState[] = ['invited', 'accepted', 'declined'];
+
+/** Whether the application holds a course invitation (and thus an answer link signed for its okey). */
+export function hasCourseInvitation(app: Pick<ApplicationModel, 'courseState'>): boolean {
+  return INVITATION_COURSE_STATES.includes(app.courseState ?? '');
+}
+
+/**
+ * Which application survives a merge (spec 1.152 §9, final review). The invitee's answer link is
+ * signed for one okey; archiving that application would orphan the link. So when only `drop` holds
+ * an invitation, the roles swap: `drop` is kept and `keep` is merged into it. Otherwise unchanged.
+ */
+export function pickMergeKeep(keep: ApplicationModel, drop: ApplicationModel): { keep: ApplicationModel; drop: ApplicationModel; swapped: boolean } {
+  if (hasCourseInvitation(drop) && !hasCourseInvitation(keep)) return { keep: drop, drop: keep, swapped: true };
+  return { keep, drop, swapped: false };
+}
+
 /**
  * Fills every empty field of `keep` from `drop`, unions `properties` by key (keep wins), keeps the
  * further `courseState` (with its course, invitedAt, answeredAt), the earlier `submittedAt`, and

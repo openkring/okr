@@ -21,6 +21,8 @@ import {
   compareApplicationsByName,
   findDuplicateGroups,
   mergeApplications,
+  pickMergeKeep,
+  hasCourseInvitation,
   COURSE_STATE_RANK,
   setPropertyValue,
   findPersonCandidates,
@@ -376,6 +378,37 @@ describe('findDuplicateGroups', () => {
   });
   it('ignores archived applications', () => {
     expect(findDuplicateGroups([mk({ okey: 'a', firstName: 'A', lastName: 'B' }), mk({ okey: 'b', firstName: 'A', lastName: 'B', isArchived: true })]).size).toBe(0);
+  });
+});
+
+describe('pickMergeKeep', () => {
+  it('swaps when only drop holds an invitation, so the signed answer link keeps its application', () => {
+    for (const courseState of ['invited', 'accepted', 'declined'] as const) {
+      const keep = mk({ okey: 'k', courseState: '' });
+      const drop = mk({ okey: 'd', courseState, courseKey: 'c1' });
+      const r = pickMergeKeep(keep, drop);
+      expect(r.swapped).toBe(true);
+      expect(r.keep.okey).toBe('d');
+      expect(r.drop.okey).toBe('k');
+    }
+  });
+
+  it('keeps the roles when keep holds an invitation, both do, or neither does', () => {
+    const cases: [ApplicationModel['courseState'], ApplicationModel['courseState']][] = [
+      ['invited', ''], ['invited', 'accepted'], ['', ''], ['registered', ''], ['', 'registered'], ['registered', 'registered'],
+    ];
+    for (const [k, d] of cases) {
+      const r = pickMergeKeep(mk({ okey: 'k', courseState: k }), mk({ okey: 'd', courseState: d }));
+      expect(r.swapped).toBe(false);
+      expect(r.keep.okey).toBe('k');
+    }
+  });
+
+  it('treats a legacy document without courseState as no invitation', () => {
+    const legacy = mk({ okey: 'k' }) as unknown as Record<string, unknown>;
+    delete legacy['courseState'];
+    expect(hasCourseInvitation(legacy as unknown as ApplicationModel)).toBe(false);
+    expect(pickMergeKeep(legacy as unknown as ApplicationModel, mk({ okey: 'd', courseState: 'invited' })).swapped).toBe(true);
   });
 });
 

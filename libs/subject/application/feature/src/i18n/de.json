@@ -142,6 +142,8 @@
     "pick": "Mit welchem Antrag zusammenführen?",
     "confirm": "Aus dem anderen Antrag werden übernommen: {fields}. Der andere Antrag wird danach archiviert.",
     "confirm_nothing": "Der andere Antrag bringt keine zusätzlichen Angaben mit. Er wird danach archiviert.",
+    "swapped": "Der andere Antrag hat schon eine Einladung zu einem Kurs, darum bleibt er erhalten. Aus diesem Antrag werden übernommen: {fields}. Dieser Antrag wird danach archiviert.",
+    "swapped_nothing": "Der andere Antrag hat schon eine Einladung zu einem Kurs, darum bleibt er erhalten. Dieser Antrag bringt keine zusätzlichen Angaben mit und wird danach archiviert.",
     "button": "Zusammenführen",
     "conf": "Anträge zusammengeführt.",
     "error": "Die Anträge konnten nicht zusammengeführt werden.",

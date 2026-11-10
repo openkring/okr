@@ -142,6 +142,8 @@
     "pick": "Fusionner avec quelle demande ?",
     "confirm": "Repris de l'autre demande : {fields}. L'autre demande est ensuite archivée.",
     "confirm_nothing": "L'autre demande n'apporte aucune information supplémentaire. Elle est ensuite archivée.",
+    "swapped": "L'autre demande a déjà une invitation à un cours, c'est donc elle qui est conservée. Repris de cette demande : {fields}. Cette demande est ensuite archivée.",
+    "swapped_nothing": "L'autre demande a déjà une invitation à un cours, c'est donc elle qui est conservée. Cette demande n'apporte aucune information supplémentaire et est ensuite archivée.",
     "button": "Fusionner",
     "conf": "Demandes fusionnées.",
     "error": "Les demandes n'ont pas pu être fusionnées.",

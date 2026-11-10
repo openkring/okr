@@ -142,6 +142,8 @@
     "pick": "Unire con quale domanda?",
     "confirm": "Ripreso dall'altra domanda: {fields}. L'altra domanda viene poi archiviata.",
     "confirm_nothing": "L'altra domanda non contiene dati aggiuntivi. Viene poi archiviata.",
+    "swapped": "L'altra domanda ha già un invito a un corso, quindi viene mantenuta. Ripreso da questa domanda: {fields}. Questa domanda viene poi archiviata.",
+    "swapped_nothing": "L'altra domanda ha già un invito a un corso, quindi viene mantenuta. Questa domanda non contiene dati aggiuntivi e viene poi archiviata.",
     "button": "Unisci",
     "conf": "Domande unite.",
     "error": "Non è stato possibile unire le domande.",

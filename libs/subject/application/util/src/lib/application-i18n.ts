@@ -28,6 +28,8 @@ export const APPLICATION_I18N_KEYS = {
   merge_pick:               PFX + 'merge.pick',
   merge_confirm:            PFX + 'merge.confirm',
   merge_confirm_nothing:    PFX + 'merge.confirm_nothing',
+  merge_swapped:            PFX + 'merge.swapped',
+  merge_swapped_nothing:    PFX + 'merge.swapped_nothing',
   merge_button:             PFX + 'merge.button',
   merge_field_person:       PFX + 'merge.field.person',
   merge_field_task:         PFX + 'merge.field.task',

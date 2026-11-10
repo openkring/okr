@@ -18,7 +18,7 @@ import { ApplicationService } from '@okr/application-data-access';
 import {
   APPLICATION_I18N_KEYS, ApplicationForFilter, ApplicationI18n, applicationCourseKey, compareApplicationsByName,
   findDuplicateGroups, findPersonCandidates, isMembershipApplication, isSameBirthDate, matchesApplicationForFilter,
-  matchesStateFilter, MERGE_FIELD_I18N, mergeApplications, proposeMembershipCategory, stateColor
+  matchesStateFilter, MERGE_FIELD_I18N, mergeApplications, pickMergeKeep, proposeMembershipCategory, stateColor
 } from '@okr/application-util';
 import { ApplicationEditModal } from '@okr/application-ui';
 
@@ -278,15 +278,22 @@ export const ApplicationStore = signalStore(
         : undefined;
       if (!picked) return;
 
-      const { takenFromDrop } = mergeApplications(keep, picked);
+      // the invitee's answer link is signed for one okey: when only `picked` holds the invitation,
+      // it is kept and `keep` is merged into it (pickMergeKeep), and the confirmation says so
+      const roles = pickMergeKeep(keep, picked);
+      const { takenFromDrop } = mergeApplications(roles.keep, roles.drop);
       const labels = [...new Set(takenFromDrop)]
         .map(f => { const k = MERGE_FIELD_I18N[f]; return k ? store.i18n[k]() : f; });
-      const message = labels.length > 0
-        ? fill(store.i18n.merge_confirm(), { fields: labels.join(', ') })
-        : store.i18n.merge_confirm_nothing();
+      const message = roles.swapped
+        ? (labels.length > 0
+          ? fill(store.i18n.merge_swapped(), { fields: labels.join(', ') })
+          : store.i18n.merge_swapped_nothing())
+        : (labels.length > 0
+          ? fill(store.i18n.merge_confirm(), { fields: labels.join(', ') })
+          : store.i18n.merge_confirm_nothing());
       const confirmed = await store.alertService.confirm(message, true);
       if (confirmed !== true) return;
-      await store.applicationService.merge(keep, picked, store.currentUser());
+      await store.applicationService.merge(roles.keep, roles.drop, store.currentUser());
       store.applicationsResource.reload();
     },
 

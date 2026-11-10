@@ -142,6 +142,8 @@
     "pick": "¿Fusionar con qué solicitud?",
     "confirm": "Se toma de la otra solicitud: {fields}. Después, la otra solicitud se archiva.",
     "confirm_nothing": "La otra solicitud no aporta datos adicionales. Después se archiva.",
+    "swapped": "La otra solicitud ya tiene una invitación a un curso, por eso se conserva. Se toma de esta solicitud: {fields}. Después, esta solicitud se archiva.",
+    "swapped_nothing": "La otra solicitud ya tiene una invitación a un curso, por eso se conserva. Esta solicitud no aporta datos adicionales y después se archiva.",
     "button": "Fusionar",
     "conf": "Solicitudes fusionadas.",
     "error": "No se han podido fusionar las solicitudes.",
