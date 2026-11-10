@@ -149,6 +149,16 @@ export const FORM_I18N_KEYS = {
   fields_other_not_allowed:   PFX + 'fields.other_not_allowed',
   fields_implicit_ssn:        PFX + 'fields.implicit_ssn',
 
+  // the course choice (1.152, spec §4.3)
+  fieldtype_course:           PFX + 'fieldtype.course',
+  fieldtype_course_desc:      PFX + 'fieldtype.course_desc',
+  field_audience_from:        PFX + 'field.audience_from',
+  field_audience_from_helper: PFX + 'field.audience_from_helper',
+  field_audience_from_none:   PFX + 'field.audience_from_none',
+  fields_course_field_once:   PFX + 'fields.course_field_once',
+  fields_course_field_mapping: PFX + 'fields.course_field_mapping',
+  fields_course_audience_from_missing: PFX + 'fields.course_audience_from_missing',
+
   // «Nach dem Absenden» card (spec §10)
   after_title:                PFX + 'after.title',
   after_message:              PFX + 'after.message',

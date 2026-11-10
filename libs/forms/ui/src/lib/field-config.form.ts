@@ -106,6 +106,20 @@ const VALUE_TYPES: PropertyType[] = ['boolean', 'number', 'text'];
                   </ion-col>
                 </ion-row>
               }
+              @if (isCourse()) {
+                <!-- the course choice (1.152): which derived value holds the applicant type, i.e. who sees which courses -->
+                <ion-row>
+                  <ion-col size="12" size-md="6">
+                    <okr-string-select [i18n]="audienceFromI18n()" [stringList]="derivedKeys()"
+                      [selectedString]="audienceFrom()" (selectedStringChange)="onFieldChange('audienceFrom', $event)"
+                      [showHelper]="true" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="audienceFromErrors()" />
+                    @if (derivedKeys().length === 0) {
+                      <ion-item lines="none" class="hint"><ion-note>{{ i18n().field_audience_from_none() }}</ion-note></ion-item>
+                    }
+                  </ion-col>
+                </ion-row>
+              }
               @if (formData().type === 'category') {
                 <ion-row>
                   <ion-col size="12">
@@ -211,6 +225,8 @@ export class FieldConfigForm {
   public readonly candidates = input<Field[]>([]);
   /** the form's collection mapping; only one with a `propertiesField` offers «Als eigene Angabe speichern» */
   public readonly mapping = input<FormMapping | undefined>();
+  /** keys of the form's derived values: what a `course` field may take its audience from */
+  public readonly derivedKeys = input<string[]>([]);
   public readonly readOnly = input(false);
   public readonly showForm = input(true);
 
@@ -234,6 +250,7 @@ export class FieldConfigForm {
   protected helpTextErrors = computed(() => this.validationResult().getErrors('helpText'));
   protected placeholderErrors = computed(() => this.validationResult().getErrors('placeholder'));
   protected allowOtherErrors = computed(() => this.validationResult().getErrors('allowOther'));
+  protected audienceFromErrors = computed(() => this.validationResult().getErrors('audienceFrom'));
   protected valueTypeErrors = computed(() => this.validationResult().getErrors('valueType'));
   protected defaultValueErrors = computed(() => this.validationResult().getErrors('defaultValue'));
   /** the rule's errors, keyed relative to it — the rule editor shows them under each of its controls */
@@ -269,9 +286,14 @@ export class FieldConfigForm {
   /** the property type the answer would be stored as; undefined hides the switch (no properties on this mapping, a type that cannot be one, or an AHV field — R1) */
   protected readonly propertyType = computed(() => {
     const fd = this.formData();
-    return this.mapping()?.propertiesField && !isSsnField(fd) ? propertyTypeOf(fd) : undefined;
+    return this.mapping()?.propertiesField && !isSsnField(fd) && fd.type !== 'course' ? propertyTypeOf(fd) : undefined;
   });
   protected readonly isImplicit = computed(() => this.formData().type === 'implicit');
+  protected readonly isCourse = computed(() => this.formData().type === 'course');
+  protected readonly audienceFrom = computed(() => {
+    const fd = this.formData();
+    return fd.type === 'course' ? fd.audienceFrom ?? '' : '';
+  });
   /**
    * «Andere … erlauben» belongs to a closed list of options: dropdown, radio, checkbox with options. A switch that is
    * already on (pasted JSON) is shown anyway, so its error is visible and it can be switched off.
@@ -279,12 +301,12 @@ export class FieldConfigForm {
   protected readonly offersOther = computed(() => {
     const fd = this.formData();
     const hasOptions = fd.type === 'dropdown' || fd.type === 'radio' || (fd.type === 'checkbox' && (fd.options?.length ?? 0) > 0);
-    return this.allowOther() || (!isSsnField(fd) && hasOptions);
+    return this.allowOther() || (!isSsnField(fd) && hasOptions);   // never a course field: it has no options
   });
   protected readonly canOther = computed(() => canAllowOther(this.formData(), this.mapping()?.mappingKey));
   protected readonly allowOther = computed(() => (this.formData() as { allowOther?: boolean }).allowOther === true);
   /** a field a link can fill (never an AHV field, R1); an unsichtbares Feld is never shown, so it has nothing to lock */
-  protected readonly offersLock = computed(() => !this.isImplicit() && isPrefillable(this.formData()));
+  protected readonly offersLock = computed(() => !this.isImplicit() && !this.isCourse() && isPrefillable(this.formData()));
   protected readonly lockWhenPrefilled = computed(() => this.formData().lockWhenPrefilled === true);
   // unsichtbares Feld
   protected readonly valueType = computed(() => {
@@ -333,6 +355,9 @@ export class FieldConfigForm {
   }));
   protected readonly categoryI18n = computed<StringSelectI18n>(() => ({
     name: 'categoryName', label: this.i18n().field_category(), helper: this.i18n().field_category_helper(),
+  }));
+  protected readonly audienceFromI18n = computed<StringSelectI18n>(() => ({
+    name: 'audienceFrom', label: this.i18n().field_audience_from(), helper: this.i18n().field_audience_from_helper(),
   }));
   protected readonly widthI18n = computed<StringSelectI18n>(() => ({
     name: 'width', label: this.i18n().width(),

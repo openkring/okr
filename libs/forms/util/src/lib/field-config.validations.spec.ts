@@ -175,4 +175,20 @@ describe('fieldConfigValidations', () => {
       expect(fieldConfigValidations(radio({ key: 'gender', allowOther: false }), 'applications.default').hasErrors('allowOther')).toBe(false);
     });
   });
+
+  describe('course field (1.152)', () => {
+    const course = { ...base, key: 'courseKey', type: 'course' as const, audienceFrom: 'applicationAs' };
+
+    it('accepts a course field with an audienceFrom', () => {
+      expect(fieldConfigValidations(course as Field, 'applications.default').isValid()).toBe(true);
+    });
+
+    it('requires audienceFrom', () => {
+      expect(fieldConfigValidations({ ...course, audienceFrom: '' } as Field).hasErrors('audienceFrom')).toBe(true);
+    });
+
+    it('refuses «Andere …» on a course field', () => {
+      expect(fieldConfigValidations({ ...course, allowOther: true } as unknown as Field).hasErrors('allowOther')).toBe(true);
+    });
+  });
 });

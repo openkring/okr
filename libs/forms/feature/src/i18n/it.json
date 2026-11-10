@@ -54,7 +54,10 @@
     "from_link_helper": "Senza questa spunta, il modulo ignora un valore proveniente dal link. Così nessuno può iscriversi a un altro corso cambiando l'indirizzo.",
     "other_option": "Altro …",
     "other_placeholder": "La tua risposta",
-    "invisible": "invisibile"
+    "invisible": "invisibile",
+    "audience_from": "Chi vede quali corsi?",
+    "audience_from_helper": "Il valore calcolato che indica per chi è l’iscrizione, ad esempio «applicationAs». Determina quali corsi vengono mostrati.",
+    "audience_from_none": "Aggiungi prima un valore calcolato che indica per chi è l’iscrizione."
   },
   "fields": {
     "duplicate_key": "Due domande hanno la stessa chiave. Assegna a ogni domanda la sua.",
@@ -62,7 +65,10 @@
     "ssn_placement": "Il numero AVS si può salvare solo in una domanda, con la chiave ssnId.",
     "other_key_clash": "Questa domanda ha lo stesso nome del campo di testo di «Altro …» di un'altra domanda. Dalle un altro nome.",
     "other_not_allowed": "«Altro …» non è possibile per una domanda la cui risposta viene salvata in un campo con valori fissi.",
-    "implicit_ssn": "Il numero AVS non può essere un campo invisibile."
+    "implicit_ssn": "Il numero AVS non può essere un campo invisibile.",
+    "course_field_once": "Un modulo può contenere una sola scelta del corso.",
+    "course_field_mapping": "Una scelta del corso esiste solo per un’iscrizione come socio o junior, non per altre destinazioni.",
+    "course_audience_from_missing": "La scelta del corso richiede un valore calcolato che indica per chi è l’iscrizione. Aggiungilo tra i valori calcolati e selezionalo nella scelta del corso."
   },
   "rule": {
     "range_order": "Il primo valore deve essere minore del secondo.",
@@ -231,7 +237,9 @@
     "ssn": "Numero AVS",
     "ssn_desc": "Numero AVS svizzero, ne viene verificata la validità",
     "implicit": "Campo invisibile",
-    "implicit_desc": "La persona non lo vede. Il valore viene dalla pagina o dal link."
+    "implicit_desc": "La persona non lo vede. Il valore viene dalla pagina o dal link.",
+    "course": "Scelta del corso",
+    "course_desc": "La persona sceglie un corso annunciato. Vengono mostrati solo i corsi adatti a lei."
   },
   "property": {
     "boolean": "sì/no",

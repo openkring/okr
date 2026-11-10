@@ -1,7 +1,7 @@
 import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, URL_LENGTH } from '@okr/shared-constants';
-import { FormDefinitionModel } from '@okr/shared-models';
+import { DerivedValue, Field, FormDefinitionModel } from '@okr/shared-models';
 import { classifyStoreDate, isValidPartialStoreDate, stringValidations } from '@okr/shared-util-core';
 
 import { findDuplicateKeys, isInputField, misplacedSsnFields } from './field-kind';
@@ -12,6 +12,29 @@ import {
 import { controllerTests, ruleTests } from './form-rules.validations';
 
 export const MAX_RESPONSES_LIMIT = 10000;
+
+/** The only mappings a `course` field may sit on (spec 1.152 A8): the membership applications. */
+export const COURSE_FIELD_MAPPINGS: readonly string[] = ['applications.default', 'applications.junior'];
+
+export type CourseFieldIssue = 'once' | 'mapping' | 'audience';
+
+/**
+ * What is wrong with the `course` field(s) of a form (1.152): more than one, a mapping other than the membership
+ * ones (a mail or url target has none), or an `audienceFrom` that names no derived value. Empty without a course
+ * field. Shared by `formDefinitionValidations` and the builder's save gate.
+ */
+export function courseFieldIssues(
+  fields: readonly Field[] | undefined, mappingKey: string | undefined, derivedValues: readonly DerivedValue[] | undefined,
+): CourseFieldIssue[] {
+  const courseFields = (Array.isArray(fields) ? fields : []).filter(f => f?.type === 'course');
+  if (courseFields.length === 0) return [];
+  const derivedKeys = (Array.isArray(derivedValues) ? derivedValues : []).map(d => d?.key);
+  const issues: CourseFieldIssue[] = [];
+  if (courseFields.length > 1) issues.push('once');
+  if (!COURSE_FIELD_MAPPINGS.includes(mappingKey ?? '')) issues.push('mapping');
+  if (!courseFields.every(f => derivedKeys.includes((f as { audienceFrom?: string }).audienceFrom ?? ''))) issues.push('audience');
+  return issues;
+}
 
 /**
  * The «Annahme» settings (spec §11): on a form definition, and — as overrides — on a form section, where an
@@ -67,6 +90,18 @@ export const formDefinitionValidations = staticSuite((model: FormDefinitionModel
   test('fields', '@forms/feature.fields.other_not_allowed', () => {
     const mappingKey = model.target?.kind === 'collection' ? model.target.mappingKey : undefined;
     enforce(fieldsBlockingOther(model.fields, mappingKey).length).equals(0);
+  });
+
+  // the course choice (1.152): one per form, on the membership mappings only, and its audience must be a derived value
+  const courseIssues = courseFieldIssues(model.fields, model.target?.kind === 'collection' ? model.target.mappingKey : undefined, model.derivedValues);
+  test('fields', '@forms/feature.fields.course_field_once', () => {
+    enforce(courseIssues.includes('once')).isFalsy();
+  });
+  test('fields', '@forms/feature.fields.course_field_mapping', () => {
+    enforce(courseIssues.includes('mapping')).isFalsy();
+  });
+  test('fields', '@forms/feature.fields.course_audience_from_missing', () => {
+    enforce(courseIssues.includes('audience')).isFalsy();
   });
 
   // Nach dem Absenden (spec §10)

@@ -270,4 +270,53 @@ describe('formDefinitionValidations', () => {
       expect(formDefinitionValidations(newDefinition({ fields: [color], sendFillerConfirmation: false })).hasErrors('sendFillerConfirmation')).toBe(false);
     });
   });
+  describe('course field (1.152)', () => {
+    const ONCE = '@forms/feature.fields.course_field_once';
+    const MAPPING = '@forms/feature.fields.course_field_mapping';
+    const AUDIENCE = '@forms/feature.fields.course_audience_from_missing';
+    const course = (id: string, key: string, audienceFrom = 'applicationAs') =>
+      ({ id, key, type: 'course', label: 'Kurs', required: false, width: 'full', order: 0, audienceFrom }) as Field;
+    const derived = [{ key: 'applicationAs', cases: [], otherwise: 'adult' }];
+    const scs = (overrides: Partial<FormDefinitionModel> = {}) => newDefinition({
+      target: { kind: 'collection', mappingKey: 'applications.default', modelType: 'ApplicationModel', collectionName: 'applications' },
+      derivedValues: derived, fields: [course('c1', 'courseKey')], ...overrides,
+    });
+
+    it('accepts the SCS-shaped definition', () => {
+      expect(formDefinitionValidations(scs()).isValid()).toBe(true);
+    });
+
+    it('rejects two course fields', () => {
+      const result = formDefinitionValidations(scs({ fields: [course('c1', 'courseKey'), course('c2', 'courseTwo')] }));
+      expect(result.getErrors('fields')).toContain(ONCE);
+    });
+
+    it('rejects a course field on applications.course', () => {
+      const fd = scs({ target: { kind: 'collection', mappingKey: 'applications.course', modelType: 'ApplicationModel', collectionName: 'applications' } });
+      expect(formDefinitionValidations(fd).getErrors('fields')).toContain(MAPPING);
+    });
+
+    it('rejects a course field on a mail or url target', () => {
+      expect(formDefinitionValidations(scs({ target: { kind: 'mail' } })).getErrors('fields')).toContain(MAPPING);
+      expect(formDefinitionValidations(scs({ target: { kind: 'url', url: 'https://example.com' } })).getErrors('fields')).toContain(MAPPING);
+    });
+
+    it('accepts applications.junior', () => {
+      const fd = scs({ target: { kind: 'collection', mappingKey: 'applications.junior', modelType: 'ApplicationModel', collectionName: 'applications' } });
+      expect(formDefinitionValidations(fd).getErrors('fields')).not.toContain(MAPPING);
+    });
+
+    it('rejects an audienceFrom that names no derived value', () => {
+      expect(formDefinitionValidations(scs({ fields: [course('c1', 'courseKey', 'nope')] })).getErrors('fields')).toContain(AUDIENCE);
+      expect(formDefinitionValidations(scs({ derivedValues: [] })).getErrors('fields')).toContain(AUDIENCE);
+      expect(formDefinitionValidations(scs({ derivedValues: undefined })).getErrors('fields')).toContain(AUDIENCE);
+    });
+
+    it('does not complain on a form without a course field', () => {
+      const errors = formDefinitionValidations(newDefinition()).getErrors('fields');
+      expect(errors).not.toContain(ONCE);
+      expect(errors).not.toContain(MAPPING);
+      expect(errors).not.toContain(AUDIENCE);
+    });
+  });
 });

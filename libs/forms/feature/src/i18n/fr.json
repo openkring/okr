@@ -54,7 +54,10 @@
     "from_link_helper": "Sans cette case cochée, le formulaire ignore une valeur venant du lien. Ainsi, personne ne peut se placer dans un autre cours en modifiant l'adresse.",
     "other_option": "Autre …",
     "other_placeholder": "Ta réponse",
-    "invisible": "invisible"
+    "invisible": "invisible",
+    "audience_from": "Qui voit quels cours ?",
+    "audience_from_helper": "La valeur calculée qui indique pour qui est l’inscription, par exemple «applicationAs». Elle détermine les cours affichés.",
+    "audience_from_none": "Ajoute d’abord une valeur calculée qui indique pour qui est l’inscription."
   },
   "fields": {
     "duplicate_key": "Deux questions ont la même clé. Donne à chaque question la sienne.",
@@ -62,7 +65,10 @@
     "ssn_placement": "Le numéro AVS ne peut être enregistré que dans une demande, sous la clé ssnId.",
     "other_key_clash": "Cette question porte le même nom que le champ de texte de « Autre … » d'une autre question. Donne-lui un autre nom.",
     "other_not_allowed": "« Autre … » n'est pas possible pour une question dont la réponse est enregistrée dans un champ aux valeurs fixes.",
-    "implicit_ssn": "Le numéro AVS ne peut pas être un champ invisible."
+    "implicit_ssn": "Le numéro AVS ne peut pas être un champ invisible.",
+    "course_field_once": "Un formulaire ne peut contenir qu’un seul choix de cours.",
+    "course_field_mapping": "Un choix de cours n’existe que pour une inscription de membre ou de junior, pas pour d’autres destinations.",
+    "course_audience_from_missing": "Le choix de cours a besoin d’une valeur calculée qui indique pour qui est l’inscription. Ajoute-la dans les valeurs calculées et sélectionne-la dans le choix de cours."
   },
   "rule": {
     "range_order": "La première valeur doit être inférieure à la seconde.",
@@ -231,7 +237,9 @@
     "ssn": "Numéro AVS",
     "ssn_desc": "Numéro AVS suisse, sa validité est vérifiée",
     "implicit": "Champ invisible",
-    "implicit_desc": "La personne ne le voit pas. La valeur vient de la page ou du lien."
+    "implicit_desc": "La personne ne le voit pas. La valeur vient de la page ou du lien.",
+    "course": "Choix du cours",
+    "course_desc": "La personne choisit un cours annoncé. Seuls les cours qui lui conviennent sont affichés."
   },
   "property": {
     "boolean": "oui/non",

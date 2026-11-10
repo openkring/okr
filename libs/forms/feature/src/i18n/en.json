@@ -54,7 +54,10 @@
     "from_link_helper": "Without this tick, the form ignores a value from the link. That way nobody can move themselves into another course by changing the address.",
     "other_option": "Other …",
     "other_placeholder": "Your answer",
-    "invisible": "invisible"
+    "invisible": "invisible",
+    "audience_from": "Who sees which courses?",
+    "audience_from_helper": "The calculated value that says who the registration is for, for example «applicationAs». It decides which courses are shown.",
+    "audience_from_none": "First add a calculated value that says who the registration is for."
   },
   "fields": {
     "duplicate_key": "Two questions have the same key. Please give each question its own.",
@@ -62,7 +65,10 @@
     "ssn_placement": "The AHV number can only be saved in an application, under the key ssnId.",
     "other_key_clash": "This question has the same name as the text field of \"Other …\" on another question. Give it a different name.",
     "other_not_allowed": "\"Other …\" is not possible for a question whose answer is saved in a field with fixed values.",
-    "implicit_ssn": "The AHV number cannot be a hidden field."
+    "implicit_ssn": "The AHV number cannot be a hidden field.",
+    "course_field_once": "A form can only contain one course choice.",
+    "course_field_mapping": "A course choice only exists for a membership or junior registration, not for other targets.",
+    "course_audience_from_missing": "The course choice needs a calculated value that says who the registration is for. Add it under the calculated values and select it in the course choice."
   },
   "rule": {
     "range_order": "The first value must be smaller than the second.",
@@ -231,7 +237,9 @@
     "ssn": "AHV number",
     "ssn_desc": "Swiss social security number (AHV), checked for validity",
     "implicit": "Hidden field",
-    "implicit_desc": "The person does not see it. The value comes from the page or from the link."
+    "implicit_desc": "The person does not see it. The value comes from the page or from the link.",
+    "course": "Course choice",
+    "course_desc": "The person picks an announced course. Only courses that suit them are shown."
   },
   "property": {
     "boolean": "yes/no",

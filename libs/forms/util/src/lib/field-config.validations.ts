@@ -91,6 +91,11 @@ export const fieldConfigValidations = staticSuite((model: Field, mappingKey?: st
     });
   });
 
+  // the course choice (1.152): the derived value that holds the applicant type; «Andere …» is never offered
+  omitWhen(model.type !== 'course', () => {
+    stringValidations('audienceFrom', (model as { audienceFrom?: string }).audienceFrom ?? '', NAME_LENGTH, 0, true);
+  });
+
   omitWhen(model.type !== 'category', () => {
     stringValidations('categoryName', (model as { categoryName?: string }).categoryName ?? '', undefined, 0, true);
   });

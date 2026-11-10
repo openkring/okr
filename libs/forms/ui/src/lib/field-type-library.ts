@@ -46,6 +46,8 @@ export class FieldTypeLibrary {
   public readonly i18n = input<FormI18n>();
   /** true when the form's mapping has a `propertiesField`: lists the «Eigene Angaben» templates */
   public readonly showProperties = input(false);
+  /** true on the membership mappings: only there is the «Kurswahl» card offered (1.152, A8) */
+  public readonly showCourse = input(false);
   public readonly fieldAdded = output<FieldTypeDef>();
 
   // the palette never accepts drops — items only copy out of it
@@ -54,7 +56,7 @@ export class FieldTypeLibrary {
   protected readonly searchTerm = signal('');
   protected readonly visibleDefs = computed(() => {
     const i18n = this.i18n();
-    const defs = FIELD_TYPE_DEFS.map(d => (i18n ? {
+    const defs = FIELD_TYPE_DEFS.filter(d => d.type !== 'course' || this.showCourse()).map(d => (i18n ? {
       ...d,
       label: d.labelKey ? i18n[d.labelKey]() : d.label,
       description: d.descriptionKey ? i18n[d.descriptionKey]() : d.description,

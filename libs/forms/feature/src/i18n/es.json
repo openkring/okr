@@ -54,7 +54,10 @@
     "from_link_helper": "Sin esta marca, el formulario ignora un valor del enlace. Así nadie puede apuntarse a otro curso cambiando la dirección.",
     "other_option": "Otro …",
     "other_placeholder": "Tu respuesta",
-    "invisible": "invisible"
+    "invisible": "invisible",
+    "audience_from": "¿Quién ve qué cursos?",
+    "audience_from_helper": "El valor calculado que indica para quién es la inscripción, por ejemplo «applicationAs». Decide qué cursos se muestran.",
+    "audience_from_none": "Añade primero un valor calculado que indique para quién es la inscripción."
   },
   "fields": {
     "duplicate_key": "Dos preguntas tienen la misma clave. Dale a cada pregunta la suya.",
@@ -62,7 +65,10 @@
     "ssn_placement": "El número AVS solo se puede guardar en una solicitud, con la clave ssnId.",
     "other_key_clash": "Esta pregunta se llama igual que el campo de texto de «Otro …» de otra pregunta. Ponle otro nombre.",
     "other_not_allowed": "«Otro …» no es posible en una pregunta cuya respuesta se guarda en un campo con valores fijos.",
-    "implicit_ssn": "El número AVS no puede ser un campo invisible."
+    "implicit_ssn": "El número AVS no puede ser un campo invisible.",
+    "course_field_once": "Un formulario solo puede contener una elección de curso.",
+    "course_field_mapping": "Una elección de curso solo existe para una inscripción de socio o junior, no para otros destinos.",
+    "course_audience_from_missing": "La elección de curso necesita un valor calculado que indique para quién es la inscripción. Añádelo en los valores calculados y selecciónalo en la elección de curso."
   },
   "rule": {
     "range_order": "El primer valor debe ser menor que el segundo.",
@@ -231,7 +237,9 @@
     "ssn": "Número AVS",
     "ssn_desc": "Número AVS suizo, se comprueba su validez",
     "implicit": "Campo invisible",
-    "implicit_desc": "La persona no lo ve. El valor viene de la página o del enlace."
+    "implicit_desc": "La persona no lo ve. El valor viene de la página o del enlace.",
+    "course": "Elección de curso",
+    "course_desc": "La persona elige un curso anunciado. Solo se muestran los cursos que le corresponden."
   },
   "property": {
     "boolean": "sí/no",

@@ -54,7 +54,10 @@
     "from_link_helper": "Ohne diesen Haken ignoriert das Formular einen Wert aus dem Link. So kann sich niemand selbst in einen anderen Kurs setzen, indem er die Adresse ändert.",
     "other_option": "Andere …",
     "other_placeholder": "Deine Antwort",
-    "invisible": "unsichtbar"
+    "invisible": "unsichtbar",
+    "audience_from": "Wer sieht welche Kurse?",
+    "audience_from_helper": "Der berechnete Wert, der sagt, für wen die Anmeldung ist, zum Beispiel «applicationAs». Danach richtet sich, welche Kurse angezeigt werden.",
+    "audience_from_none": "Lege zuerst einen berechneten Wert an, der sagt, für wen die Anmeldung ist."
   },
   "fields": {
     "duplicate_key": "Zwei Fragen haben denselben Schlüssel. Bitte gib jeder Frage einen eigenen.",
@@ -62,7 +65,10 @@
     "ssn_placement": "Die AHV-Nummer kann nur in einem Antrag und unter dem Schlüssel ssnId gespeichert werden.",
     "other_key_clash": "Diese Frage heisst gleich wie das Textfeld von «Andere …» bei einer anderen Frage. Gib ihr einen anderen Namen.",
     "other_not_allowed": "«Andere …» ist bei einer Frage nicht möglich, deren Antwort in einem Feld mit festen Werten gespeichert wird.",
-    "implicit_ssn": "Die AHV-Nummer kann kein unsichtbares Feld sein."
+    "implicit_ssn": "Die AHV-Nummer kann kein unsichtbares Feld sein.",
+    "course_field_once": "Ein Formular kann nur eine Kurswahl enthalten.",
+    "course_field_mapping": "Eine Kurswahl gibt es nur bei einer Anmeldung als Mitglied oder Junior, nicht bei anderen Zielen.",
+    "course_audience_from_missing": "Die Kurswahl braucht einen berechneten Wert, der sagt, für wen die Anmeldung ist. Lege ihn bei den berechneten Werten an und wähle ihn bei der Kurswahl aus."
   },
   "rule": {
     "range_order": "Der erste Wert muss kleiner sein als der zweite.",
@@ -231,7 +237,9 @@
     "ssn": "AHV-Nummer",
     "ssn_desc": "Schweizer AHV-Nummer, wird auf Gültigkeit geprüft",
     "implicit": "Unsichtbares Feld",
-    "implicit_desc": "Die Person sieht es nicht. Der Wert kommt von der Seite oder aus dem Link."
+    "implicit_desc": "Die Person sieht es nicht. Der Wert kommt von der Seite oder aus dem Link.",
+    "course": "Kurswahl",
+    "course_desc": "Die Person wählt einen ausgeschriebenen Kurs. Es werden nur Kurse gezeigt, die zu ihr passen."
   },
   "property": {
     "boolean": "ja/nein",

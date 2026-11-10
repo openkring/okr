@@ -38,6 +38,8 @@ export const FIELD_TYPE_DEFS: FieldTypeDef[] = [
   { type: 'category',  label: 'Kategorie', icon: 'list',         description: 'Single-select from a category list' },
   { type: 'implicit',  label: 'Unsichtbares Feld', icon: 'eye-off', description: 'Never shown — the value comes from the page or the link',
     labelKey: 'fieldtype_implicit', descriptionKey: 'fieldtype_implicit_desc' },
+  { type: 'course',    label: 'Kurswahl',  icon: 'school',       description: 'The person picks an announced course',
+    labelKey: 'fieldtype_course', descriptionKey: 'fieldtype_course_desc' },
   { type: 'label',     label: 'Label',     icon: 'info-circle', description: 'Static text — no input, not submitted' },
   { type: 'paragraph', label: 'Text',      icon: 'document',     description: 'Paragraph of text, optionally indented and small — not submitted' },
   { type: 'divider',   label: 'Divider',   icon: 'remove',       description: 'Visual separator line' },

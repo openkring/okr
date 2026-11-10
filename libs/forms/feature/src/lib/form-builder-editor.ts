@@ -17,7 +17,7 @@ import { SectionService } from '@okr/cms-section-data-access';
 
 import { FormDefinitionService } from '@okr/forms-data-access';
 import {
-  buildPrefillQuery, conditionalBlockMembers, conditionOpLabels, DerivedRuleIssue, derivedValuesReferencing, describeRule, fieldsReferencing,
+  buildPrefillQuery, COURSE_FIELD_MAPPINGS, courseFieldIssues, conditionalBlockMembers, conditionOpLabels, DerivedRuleIssue, derivedValuesReferencing, describeRule, fieldsReferencing,
   fieldsBlockingOther, findDerivedRuleIssues, findDuplicateKeys, findRuleIssues, FORM_I18N_KEYS, FormI18n, getFormMapping, implicitSsnFields,
   misplacedSsnFields, otherKeyClashes, previewDerivedValues, removeDerivedReferencesTo,
   removeReferencesTo, ruleConnectors, RuleIssue,
@@ -63,6 +63,8 @@ function newField(def: FieldTypeDef, order: number): Field {
     case 'paragraph': return { ...base, type, isIndented: true, isSmall: true };
     // an unsichtbares Feld starts as text: a course id
     case 'implicit': return { ...base, type, valueType: 'text' };
+    // the course choice is stored as `courseKey` (1.152); its audience is the applicant type, usually `applicationAs`
+    case 'course': return { ...base, key: 'courseKey', type, audienceFrom: 'applicationAs' };
     default: return { ...base, type } as Field;
   }
 }
@@ -109,7 +111,7 @@ function newField(def: FieldTypeDef, order: number): Field {
 
         <!-- left: field-type library -->
         <div class="library-panel">
-          <okr-field-type-library [i18n]="i18n" [showProperties]="hasProperties()" (fieldAdded)="addField($event)" />
+          <okr-field-type-library [i18n]="i18n" [showProperties]="hasProperties()" [showCourse]="offersCourse()" (fieldAdded)="addField($event)" />
         </div>
 
         <!-- right: canvas -->
@@ -146,6 +148,15 @@ function newField(def: FieldTypeDef, order: number): Field {
           @if (otherClash().length > 0) {
             <!-- same check as the settings suite: the «Andere …» text key is taken by another question or a derived value -->
             <ion-note color="danger" class="duplicate-keys">{{ i18n.fields_other_key_clash() }}</ion-note>
+          }
+          @if (courseIssues().includes('once')) {
+            <ion-note color="danger" class="duplicate-keys">{{ i18n.fields_course_field_once() }}</ion-note>
+          }
+          @if (courseIssues().includes('mapping')) {
+            <ion-note color="danger" class="duplicate-keys">{{ i18n.fields_course_field_mapping() }}</ion-note>
+          }
+          @if (courseIssues().includes('audience')) {
+            <ion-note color="danger" class="duplicate-keys">{{ i18n.fields_course_audience_from_missing() }}</ion-note>
           }
           @if (viewMode() === 'editor') {
             <!-- derived values live in the form settings; their broken conditions are flagged here, where fields change -->
@@ -337,6 +348,8 @@ export class FormBuilderEditor {
     return target?.kind === 'collection' ? getFormMapping(target.mappingKey) : undefined;
   });
   protected readonly hasProperties = computed(() => !!this.mapping()?.propertiesField);
+  /** the «Kurswahl» card: only on the membership mappings (1.152, A8) */
+  protected readonly offersCourse = computed(() => COURSE_FIELD_MAPPINGS.includes(this.mapping()?.mappingKey ?? ''));
 
   /** The «wenn … » line under every field with a rule. */
   protected readonly ruleTexts = computed(() => {
@@ -374,9 +387,11 @@ export class FormBuilderEditor {
   protected readonly implicitSsn = computed(() => implicitSsnFields(this.fields()));
   protected readonly otherBlocked = computed(() => fieldsBlockingOther(this.fields(), this.mapping()?.mappingKey));
   protected readonly otherClash = computed(() => otherKeyClashes(this.fields(), this.formData().derivedValues));
+  /** The course choice (1.152): one per form, membership mappings only, audience = a derived value. */
+  protected readonly courseIssues = computed(() => courseFieldIssues(this.fields(), this.mapping()?.mappingKey, this.formData().derivedValues));
   /** Everything the settings suite rejects across fields blocks saving here too, so a saved definition never fails there. */
   protected readonly hasKeyIssues = computed(() => this.duplicateKeys().length > 0 || this.misplacedSsn().length > 0
-    || this.implicitSsn().length > 0 || this.otherBlocked().length > 0 || this.otherClash().length > 0);
+    || this.implicitSsn().length > 0 || this.otherBlocked().length > 0 || this.otherClash().length > 0 || this.courseIssues().length > 0);
 
   /** Fields inside a divider block with a rule — indented on the canvas. */
   protected readonly blockMembers = computed(() => conditionalBlockMembers(this.fields()));
@@ -495,6 +510,7 @@ export class FormBuilderEditor {
         categories: this.appStore.allCategories(),
         fields: this.fields(),
         mapping: this.mapping(),
+        derivedKeys: (this.formData().derivedValues ?? []).map(d => d.key),
       },
     });
     await modal.present();

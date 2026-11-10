@@ -28,6 +28,7 @@ import { FieldConfigForm } from './field-config.form';
         [categories]="categories()"
         [candidates]="candidates()"
         [mapping]="mapping()"
+        [derivedKeys]="derivedKeys()"
         [readOnly]="false"
         [showForm]="showForm()"
         (dirty)="formDirty.set($event)"
@@ -48,6 +49,8 @@ export class FieldConfigModal {
   public readonly fields = input<Field[]>([]);
   /** the form's collection mapping (undefined for a URL target) */
   public readonly mapping = input<FormMapping | undefined>();
+  /** keys of the form's derived values — what a course field may take its audience from */
+  public readonly derivedKeys = input<string[]>([]);
 
   // signals
   protected formDirty = signal(false);
@@ -78,6 +81,7 @@ export class FieldConfigModal {
   private cloneField(): Field {
     const clone = safeStructuredClone(this.field()) ?? this.field();
     if (clone.type === 'category') return { ...clone, categoryName: clone.categoryName ?? '' };
+    if (clone.type === 'course') return { ...clone, audienceFrom: clone.audienceFrom ?? '' };
     if (clone.type === 'paragraph') return { ...clone, isIndented: clone.isIndented ?? true, isSmall: clone.isSmall ?? true };
     // an unsichtbares Feld pasted without a value type starts as text, like one from the library
     if (clone.type === 'implicit') return { ...clone, valueType: clone.valueType ?? 'text' };
