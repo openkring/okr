@@ -21,6 +21,7 @@ import { footerSectionValidations } from './footer-section.validations';
 import { weatherSectionValidations } from './weather-section.validations';
 import { adventSectionValidations } from './advent-section.validations';
 import { departuresSectionValidations } from './departures-section.validations';
+import { tilesSectionValidations } from './tiles-section.validations';
 import { formSectionValidations } from './form-section.validations';
 
 /**
@@ -60,6 +61,7 @@ export const SECTION_VALIDATION_SUITES: Partial<Record<SectionType, SectionSuite
   energy: energySectionValidations as SectionSuite,
   counter: counterSectionValidations as SectionSuite,
   footer: footerSectionValidations as SectionSuite,
+  tiles: tilesSectionValidations as SectionSuite,
   form: ((model: SectionModel, context?: SectionValidationContext) =>
     formSectionValidations(model as FormSection, context?.formImplicitFields)) as SectionSuite
 };

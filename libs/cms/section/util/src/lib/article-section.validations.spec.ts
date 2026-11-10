@@ -19,3 +19,29 @@ describe('articleSectionValidations', () => {
     expect(() => articleSectionValidations(model)).not.toThrow();
   });
 });
+
+describe('articleSectionValidations cta', () => {
+  const withCta = (cta: unknown) =>
+    ({ ...ARTICLE_SECTION_SHAPE, properties: { ...ARTICLE_SECTION_SHAPE.properties, cta } }) as unknown as ArticleSection;
+
+  it('does not flag an article without cta', () => {
+    const r = articleSectionValidations({ ...ARTICLE_SECTION_SHAPE });
+    expect(r.hasErrors('cta.label')).toBe(false);
+    expect(r.hasErrors('cta.url')).toBe(false);
+  });
+
+  it('accepts label and url together', () => {
+    const r = articleSectionValidations(withCta({ label: 'Los', url: 'bootshaus.html', style: 'primary' }));
+    expect(r.hasErrors('cta.label')).toBe(false);
+    expect(r.hasErrors('cta.url')).toBe(false);
+  });
+
+  it('flags a label without url and a url without label', () => {
+    expect(articleSectionValidations(withCta({ label: 'Los', url: '', style: 'primary' })).hasErrors('cta.url')).toBe(true);
+    expect(articleSectionValidations(withCta({ label: '', url: '#a', style: 'primary' })).hasErrors('cta.label')).toBe(true);
+  });
+
+  it('flags an unsafe url', () => {
+    expect(articleSectionValidations(withCta({ label: 'Los', url: 'javascript:x', style: 'primary' })).hasErrors('cta.url')).toBe(true);
+  });
+});
