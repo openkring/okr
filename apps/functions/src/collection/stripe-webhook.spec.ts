@@ -92,6 +92,7 @@ function fakePort(): StripeHandlerPort & { calls: string[] } {
       type: 'card' as const, brand: 'visa', last4: '4242', expMonth: 12, expYear: 2030, email: '', stripePaymentMethodId: id, consentAt: '',
     })),
     detachPaymentMethod: vi.fn(async (id: string) => { calls.push(`detach:${id}`); }),
+    listRefunds: vi.fn(async () => []),
   };
 }
 
@@ -156,18 +157,7 @@ describe('stripeHandler: payment-succeeded', () => {
     expect(store['payment-attempts']['att1']['state']).toBe('succeeded');
   });
 
-  it('an invoice already fully paid → attempt overpaid, no new booking', async () => {
-    const store = seed({ state: 'paid', payments: [{ date: '20261101', amount: 5000, bankAccountKey: 'acc-1021', bookingKey: 'qr-1' }] });
-    const { port, handler } = setup(store);
-
-    const out = await handler(succeeded, 'row1');
-
-    expect(out.state).toBe('handled');
-    expect(store['bookings']).toBeUndefined();
-    expect(store['invoices']['inv1']['payments']).toHaveLength(1);
-    expect(store['payment-attempts']['att1']).toMatchObject({ state: 'overpaid', stripePaymentIntentId: 'pi_3AbC_123', stripeChargeId: 'ch_1' });
-    expect(port.calls).toEqual([]);
-  });
+  // An invoice already settled (overpaid): stripe-webhook.refund.spec.ts.
 
   it('an unknown attempt fails the event (money arrived that we cannot place)', async () => {
     const store = seed();

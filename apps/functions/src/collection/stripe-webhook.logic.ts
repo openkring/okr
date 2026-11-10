@@ -13,6 +13,18 @@ export type StripeAction =
       currency: string; paymentMethodId: string; customerId: string;
     }
   | { kind: 'payment-failed'; attemptKey: string; paymentIntentId: string; error: string }
+  /**
+   * A charge was (partly) refunded. `amountRefunded` is cumulative over all its refunds; the handler lists the
+   * refunds themselves and books each once. `attemptKey` '' when the charge carries no metadata.
+   */
+  | { kind: 'charge-refunded'; chargeId: string; paymentIntentId: string; attemptKey: string; amountRefunded: number; currency: string }
+  /** A dispute (chargeback) was opened: Stripe has already taken the amount and the fee off the balance. */
+  | { kind: 'dispute-opened'; disputeId: string; chargeId: string; paymentIntentId: string; attemptKey: string; amount: number; reason: string }
+  /** A dispute was closed. `fee` = the fees of its balance transactions, `feeCurrencies` their currencies (lower-case). */
+  | {
+      kind: 'dispute-closed'; disputeId: string; chargeId: string; paymentIntentId: string; attemptKey: string; status: string;
+      amount: number; fee: number; currency: string; feeCurrencies: string[]; date: string;
+    }
   /** `expireAttemptKey`: an expired payment session; the handler marks that attempt `expired` (if still open). */
   | { kind: 'ignore'; reason: string; expireAttemptKey?: string };
 
@@ -76,6 +88,30 @@ export function stripeActionOf(event: unknown): StripeAction {
       const error = str(lastError['message']) || str(lastError['code']) || 'payment failed';
       return { kind: 'payment-failed', attemptKey, paymentIntentId: str(object['id']), error };
     }
+    case 'charge.refunded': {
+      const chargeId = str(object['id']);
+      if (!chargeId) return { kind: 'ignore', reason: 'refunded charge without an id' };
+      return {
+        kind: 'charge-refunded', chargeId, paymentIntentId: idOf(object['payment_intent']), attemptKey,
+        amountRefunded: num(object['amount_refunded']), currency: str(object['currency']).toLowerCase(),
+      };
+    }
+    case 'charge.dispute.created':
+    case 'charge.dispute.closed': {
+      const disputeId = str(object['id']);
+      const chargeId = idOf(object['charge']);
+      if (!disputeId || !chargeId) return { kind: 'ignore', reason: `${type} without a dispute or charge id` };
+      const ids = { disputeId, chargeId, paymentIntentId: idOf(object['payment_intent']), attemptKey };
+      if (type === 'charge.dispute.created') return { kind: 'dispute-opened', ...ids, amount: num(object['amount']), reason: str(object['reason']) };
+      const txns = Array.isArray(object['balance_transactions']) ? object['balance_transactions'].filter(isObject) : [];
+      return {
+        kind: 'dispute-closed', ...ids, status: str(object['status']), amount: num(object['amount']),
+        fee: txns.reduce((sum, t) => sum + num(t['fee']), 0), currency: str(object['currency']).toLowerCase(),
+        feeCurrencies: [...new Set(txns.map(t => str(t['currency']).toLowerCase()))], date: storeDateOfUnix(num(event['created'])),
+      };
+    }
+    case 'payout.paid':
+      return { kind: 'ignore', reason: 'payout: matched by the bank import' };
     case 'checkout.session.expired':
       return attemptKey
         ? { kind: 'ignore', reason: 'checkout session expired', expireAttemptKey: attemptKey }
@@ -93,18 +129,30 @@ export function isSettledRefusal(reasons: unknown): boolean {
   return Array.isArray(reasons) && (reasons.includes('overpayment') || reasons.includes('not-payable'));
 }
 
+/** A two-line CHF booking: debit one account, credit the other with the same amount (Rappen). */
+export function transferLines(debitAccountKey: string, creditAccountKey: string, amount: number) {
+  return [
+    { accountKey: debitAccountKey, debitAmount: { amount, currency: 'CHF' } },
+    { accountKey: creditAccountKey, creditAmount: { amount, currency: 'CHF' } },
+  ];
+}
+
 /** Debit the fee expense, credit the Stripe clearing account. */
 export function feeBookingLines(feeAccountKey: string, clearingAccountKey: string, fee: number) {
-  return [
-    { accountKey: feeAccountKey, debitAmount: { amount: fee, currency: 'CHF' } },
-    { accountKey: clearingAccountKey, creditAmount: { amount: fee, currency: 'CHF' } },
-  ];
+  return transferLines(feeAccountKey, clearingAccountKey, fee);
+}
+
+/** What a lost dispute costs: the disputed amount plus Stripe's dispute fee (Rappen). */
+export function disputeLoss(amount: number, fee: number): number {
+  return amount + fee;
 }
 
 /** The fields of `data.object` the logic reads; everything else (customer_details, billing details, charges …) is dropped. */
 const KEPT_OBJECT_FIELDS = [
   'id', 'object', 'mode', 'status', 'metadata', 'payment_intent', 'setup_intent', 'customer', 'payment_method',
   'amount', 'amount_received', 'currency', 'latest_charge', 'created', 'last_payment_error',
+  // charge (charge.refunded), refund, dispute (charge.dispute.*): no card, billing or evidence details
+  'charge', 'amount_refunded', 'reason', 'balance_transactions',
 ] as const;
 
 /** A string metadata map only (Stripe metadata values are strings). */
@@ -128,7 +176,8 @@ export function reduceStripeEvent(event: unknown): Record<string, unknown> {
     else if (k === 'latest_charge') object[k] = isObject(v) ? { id: idOf(v), created: num(v['created']) } : v;
     else if (k === 'setup_intent') object[k] = isObject(v) ? { id: idOf(v), payment_method: idOf(v['payment_method']) } : v;
     else if (k === 'last_payment_error') object[k] = isObject(v) ? { message: str(v['message']) } : {};
-    else if (k === 'payment_intent' || k === 'customer' || k === 'payment_method') object[k] = idOf(v);
+    else if (k === 'balance_transactions') object[k] = Array.isArray(v) ? v.filter(isObject).map(t => ({ fee: num(t['fee']), currency: str(t['currency']) })) : [];
+    else if (k === 'payment_intent' || k === 'customer' || k === 'payment_method' || k === 'charge') object[k] = idOf(v);
     else if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') object[k] = v;
   }
   return { id: str(event['id']), type: str(event['type']), created: num(event['created']), data: { object } };

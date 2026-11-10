@@ -60,6 +60,7 @@ export function fakeDb(store: Store): Firestore {
   // a query over the direct children of a collection path; equality, range and array-contains filters
   const query = (path: string, filters: Filter[]): unknown => ({
     where: (field: string, op: string, value: unknown) => query(path, [...filters, { field, op, value }]),
+    limit: () => query(path, filters), // the specs' result sets are tiny; a limit changes nothing here
     get: async () => {
       const docs = Object.keys(store)
         .filter((p) => p.startsWith(`${path}/`) && !p.slice(path.length + 1).includes('/'))

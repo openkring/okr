@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { feeBookingLines, isSettledRefusal, reduceStripeEvent, stripeActionOf, stripePaymentId } from './stripe-webhook.logic';
+import { disputeLoss, feeBookingLines, isSettledRefusal, reduceStripeEvent, stripeActionOf, stripePaymentId, transferLines } from './stripe-webhook.logic';
 
 // 2026-11-09 10:00:00 UTC = 11:00 in Zurich; 2026-11-09 23:30:00 UTC = 00:30 on the 10th in Zurich.
 const T_DAY = Date.UTC(2026, 10, 9, 10, 0, 0) / 1000;
@@ -102,6 +102,63 @@ describe('isSettledRefusal', () => {
   });
 });
 
+describe('stripeActionOf: refunds, disputes, payouts', () => {
+  const charge = { id: 'ch_1', object: 'charge', payment_intent: 'pi_1', amount: 5000, amount_refunded: 2000, currency: 'CHF', metadata: meta };
+  const dispute = {
+    id: 'dp_1', object: 'dispute', charge: 'ch_1', payment_intent: 'pi_1', amount: 5000, currency: 'chf', status: 'needs_response', reason: 'fraudulent',
+    balance_transactions: [{ id: 'txn_1', amount: -5000, fee: 1500, currency: 'chf' }],
+  };
+
+  it('charge.refunded → charge-refunded with the charge, its PaymentIntent and the attempt from metadata', () => {
+    expect(stripeActionOf(ev('charge.refunded', charge))).toEqual({
+      kind: 'charge-refunded', chargeId: 'ch_1', paymentIntentId: 'pi_1', attemptKey: 'att1', amountRefunded: 2000, currency: 'chf',
+    });
+  });
+
+  it('charge.refunded without metadata still names the charge (the handler finds the attempt by its ids)', () => {
+    expect(stripeActionOf(ev('charge.refunded', { ...charge, metadata: {}, payment_intent: { id: 'pi_1' } }))).toMatchObject({
+      kind: 'charge-refunded', attemptKey: '', paymentIntentId: 'pi_1',
+    });
+  });
+
+  it('charge.refunded without a charge id is ignored', () => {
+    expect(stripeActionOf(ev('charge.refunded', { ...charge, id: '' })).kind).toBe('ignore');
+  });
+
+  it('charge.dispute.created → dispute-opened', () => {
+    expect(stripeActionOf(ev('charge.dispute.created', dispute))).toEqual({
+      kind: 'dispute-opened', disputeId: 'dp_1', chargeId: 'ch_1', paymentIntentId: 'pi_1', attemptKey: '', amount: 5000, reason: 'fraudulent',
+    });
+  });
+
+  it('charge.dispute.closed → dispute-closed with status, fee and the Zurich day', () => {
+    expect(stripeActionOf(ev('charge.dispute.closed', { ...dispute, status: 'lost' }, T_LATE))).toEqual({
+      kind: 'dispute-closed', disputeId: 'dp_1', chargeId: 'ch_1', paymentIntentId: 'pi_1', attemptKey: '', status: 'lost',
+      amount: 5000, fee: 1500, currency: 'chf', feeCurrencies: ['chf'], date: '20261110',
+    });
+  });
+
+  it('payout.paid is ignored: the bank import matches the payout', () => {
+    expect(stripeActionOf(ev('payout.paid', { id: 'po_1', amount: 10000 }))).toEqual({ kind: 'ignore', reason: 'payout: matched by the bank import' });
+  });
+});
+
+describe('disputeLoss', () => {
+  it('is the disputed amount plus the fees of its balance transactions', () => {
+    expect(disputeLoss(5000, 1500)).toBe(6500);
+    expect(disputeLoss(5000, 0)).toBe(5000);
+  });
+});
+
+describe('transferLines', () => {
+  it('debits one account and credits the other with the same CHF amount', () => {
+    expect(transferLines('acc-1090', 'acc-2030', 700)).toEqual([
+      { accountKey: 'acc-1090', debitAmount: { amount: 700, currency: 'CHF' } },
+      { accountKey: 'acc-2030', creditAmount: { amount: 700, currency: 'CHF' } },
+    ]);
+  });
+});
+
 describe('feeBookingLines', () => {
   it('debits the fee account and credits the clearing account', () => {
     expect(feeBookingLines('acc-fee', 'acc-clr', 145)).toEqual([
@@ -146,6 +203,38 @@ describe('reduceStripeEvent', () => {
     expect(stripeActionOf(reduceStripeEvent(setup))).toEqual(stripeActionOf(setup));
     const expired = ev('checkout.session.expired', { mode: 'payment', metadata: meta, payment_intent: 'pi_1' });
     expect(stripeActionOf(reduceStripeEvent(expired))).toEqual(stripeActionOf(expired));
+  });
+
+  it('keeps the charge, refund and dispute fields the logic reads, never card or billing details', () => {
+    const chargeEvent = ev('charge.refunded', {
+      id: 'ch_1', object: 'charge', payment_intent: 'pi_1', amount: 5000, amount_refunded: 2000, currency: 'chf', metadata: meta, status: 'succeeded',
+      billing_details: { name: 'Anna', email: 'x@example.ch' }, payment_method_details: { card: { last4: '4242' } }, receipt_email: 'x@example.ch',
+      refunds: { object: 'list', data: [{ id: 're_1' }] }, balance_transaction: 'txn_1',
+    });
+    expect(reduceStripeEvent(chargeEvent)['data']).toEqual({ object: {
+      id: 'ch_1', object: 'charge', payment_intent: 'pi_1', amount: 5000, amount_refunded: 2000, currency: 'chf', metadata: meta, status: 'succeeded',
+    } });
+    expect(stripeActionOf(reduceStripeEvent(chargeEvent))).toEqual(stripeActionOf(chargeEvent));
+
+    const refundEvent = ev('charge.refund.updated', {
+      id: 're_1', object: 'refund', charge: { id: 'ch_1', billing_details: { name: 'Anna' } }, payment_intent: 'pi_1', amount: 2000, currency: 'chf',
+      status: 'succeeded', destination_details: { card: { reference: 'x' } },
+    });
+    expect(reduceStripeEvent(refundEvent)['data']).toEqual({ object: {
+      id: 're_1', object: 'refund', charge: 'ch_1', payment_intent: 'pi_1', amount: 2000, currency: 'chf', status: 'succeeded',
+    } });
+
+    const disputeEvent = ev('charge.dispute.closed', {
+      id: 'dp_1', object: 'dispute', charge: 'ch_1', payment_intent: 'pi_1', amount: 5000, currency: 'chf', status: 'lost', reason: 'fraudulent',
+      evidence: { billing_address: 'Seestrasse 1', customer_email_address: 'x@example.ch' },
+      balance_transactions: [{ id: 'txn_1', amount: -5000, fee: 1500, currency: 'chf', source: 'dp_1', fee_details: [{ amount: 1500 }] }],
+      payment_method_details: { card: { brand: 'visa' } },
+    });
+    expect(reduceStripeEvent(disputeEvent)['data']).toEqual({ object: {
+      id: 'dp_1', object: 'dispute', charge: 'ch_1', payment_intent: 'pi_1', amount: 5000, currency: 'chf', status: 'lost', reason: 'fraudulent',
+      balance_transactions: [{ fee: 1500, currency: 'chf' }],
+    } });
+    expect(stripeActionOf(reduceStripeEvent(disputeEvent))).toEqual(stripeActionOf(disputeEvent));
   });
 
   it('throws on a non-object body (the receiver answers 400)', () => {

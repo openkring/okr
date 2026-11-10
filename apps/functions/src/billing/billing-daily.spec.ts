@@ -55,7 +55,7 @@ const port = (opts: { charge?: string; earlier?: PaymentIntentInfo | null } = {}
   chargeOffSession: vi.fn(async () => ({ id: 'pi_new', status: opts.charge ?? 'requires_payment_method', chargeId: 'ch_new' })),
   retrievePaymentIntent: vi.fn(async (id: string) => opts.earlier ?? intent('requires_payment_method', id)),
   findPaymentIntentByInvoiceKey: vi.fn(async () => (opts.earlier === undefined ? intent('requires_payment_method') : opts.earlier)),
-  feeOfCharge: vi.fn(async () => 0), paymentMethodDisplay: vi.fn(), setupIntentPaymentMethod: vi.fn(), detachPaymentMethod: vi.fn(),
+  feeOfCharge: vi.fn(async () => 0), paymentMethodDisplay: vi.fn(), setupIntentPaymentMethod: vi.fn(), detachPaymentMethod: vi.fn(), listRefunds: vi.fn(),
 });
 const run = async (store: Store, today: string, p = port()) => {
   h.store = store;

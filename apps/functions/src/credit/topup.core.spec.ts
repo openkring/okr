@@ -34,6 +34,7 @@ const port = (status: string, earlier: { retrieved?: PaymentIntentInfo; found?: 
   retrievePaymentIntent: vi.fn(async (id: string) => earlier.retrieved ?? intent('canceled', id)),
   findPaymentIntentByInvoiceKey: vi.fn(async () => earlier.found ?? null),
   feeOfCharge: vi.fn(async () => 0),
+  listRefunds: vi.fn(async () => []),
   paymentMethodDisplay: vi.fn(),
   setupIntentPaymentMethod: vi.fn(),
   detachPaymentMethod: vi.fn(),

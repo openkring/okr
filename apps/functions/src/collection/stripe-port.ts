@@ -15,6 +15,16 @@ export interface PaymentIntentInfo {
   currency: string;
 }
 
+/** One refund of a charge. `amount` in Rappen, `currency` lower-case, `created` in Unix seconds. */
+export interface RefundInfo {
+  id: string;
+  amount: number;
+  currency: string;
+  /** pending | requires_action | succeeded | failed | canceled */
+  status: string;
+  created: number;
+}
+
 /**
  * The only door to Stripe. Stripe is a pure payment processor behind our own invoice: no Stripe
  * Invoices, Subscriptions or Prices. Amounts are integer Rappen (= Stripe's CHF minor unit).
@@ -45,6 +55,11 @@ export interface StripePort {
   setupIntentPaymentMethod(setupIntentId: string): Promise<string>;
   feeOfCharge(chargeId: string): Promise<number /* Rappen */>;
   detachPaymentMethod(paymentMethodId: string): Promise<void>;
+  /**
+   * All refunds of a charge (oldest pages included). charge.refunded only carries the cumulative
+   * `amount_refunded`; the Charge's `refunds` list is not part of the event on our API version.
+   */
+  listRefunds(chargeId: string): Promise<RefundInfo[]>;
   /** Expires an open Checkout session; an already expired or completed one is not an error. */
   expireSession(sessionId: string): Promise<void>;
   retrievePaymentIntent(id: string): Promise<PaymentIntentInfo>;
@@ -179,6 +194,11 @@ export function stripePort(): StripePort {
 
     async detachPaymentMethod(paymentMethodId) {
       await stripe.paymentMethods.detach(paymentMethodId);
+    },
+
+    async listRefunds(chargeId) {
+      const refunds = await stripe.refunds.list({ charge: chargeId, limit: 100 }).autoPagingToArray({ limit: 1000 });
+      return refunds.map(r => ({ id: r.id, amount: r.amount, currency: r.currency, status: r.status ?? '', created: r.created }));
     },
 
     async retrievePaymentIntent(id) {

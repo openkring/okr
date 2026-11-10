@@ -8,8 +8,13 @@
 //
 // The credit for a paid top-up is NOT written here: Task 9's invoice trigger (credit/topup-paid.trigger.ts)
 // handles Stripe and QR alike. A failed off-session top-up switches auto top-up off here.
+//
+// Plan 2 Task 10 (design §7.7): money that arrives on a settled invoice (`overpaid`) is booked clearing →
+// prepayment; a refund of such money or of a top-up is booked prepayment → clearing, once per refund id; a refund
+// of a payment posted to an invoice is only flagged (Storno by hand). A dispute marks the attempt; a lost one
+// books amount + fee to the fee account. payout.paid is left to the bank import.
 import { logger } from 'firebase-functions/v2';
-import { getFirestore } from 'firebase-admin/firestore';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import type { Firestore } from 'firebase-admin/firestore';
 import { PaymentAttemptCollection, SubscriptionCollection } from '@okr/shared-models';
 import type { PaymentAttemptModel } from '@okr/shared-models';
@@ -23,14 +28,14 @@ import { costCenterKeyForLine, loadCostCenterContext } from '../cost-center/cost
 import { assertLeafAccount, loadOwnedAccountingConfig } from '../invoice/invoice-context';
 import { BOOKING_COLLECTION, BOOKING_LINE_COLLECTION, postInvoicePayment } from '../invoice/invoice-payment.core';
 import { invoiceBookingIndex, withoutUndefined } from '../invoice/invoice.logic';
-import { toStoreDateTime } from '../srv/zurich-time';
+import { toStoreDate, toStoreDateTime } from '../srv/zurich-time';
 import { clearAutoTopUp, switchOffAutoTopUp } from '../credit/auto-topup-request';
 import { notifyAutoTopUpFailed } from '../credit/topup-failed-mail';
 import { ensureSubscription } from './payment-method';
 import { platformBilling } from './platform';
 import { stripePort, stripeWebhookSecret } from './stripe-port';
 import type { StripePort } from './stripe-port';
-import { feeBookingLines, isSettledRefusal, reduceStripeEvent, stripeActionOf, stripePaymentId } from './stripe-webhook.logic';
+import { disputeLoss, isSettledRefusal, reduceStripeEvent, stripeActionOf, stripePaymentId, transferLines } from './stripe-webhook.logic';
 import type { StripeAction } from './stripe-webhook.logic';
 
 export type { StripeAction } from './stripe-webhook.logic';
@@ -54,7 +59,7 @@ export const stripeClient: WebhookClient = {
   retentionDays: 90,
 };
 
-export type StripeHandlerPort = Pick<StripePort, 'feeOfCharge' | 'paymentMethodDisplay' | 'setupIntentPaymentMethod' | 'detachPaymentMethod'>;
+export type StripeHandlerPort = Pick<StripePort, 'feeOfCharge' | 'paymentMethodDisplay' | 'setupIntentPaymentMethod' | 'detachPaymentMethod' | 'listRefunds'>;
 
 export interface StripeHandlerDeps {
   db(): Firestore;
@@ -69,8 +74,12 @@ export interface StripeHandlerDeps {
 type Attempt = Omit<PaymentAttemptModel, 'okey'>;
 
 const ACTOR = 'stripe';
-/** Attempt states a late failure / expiry must not overwrite. */
-const SETTLED_STATES = ['succeeded', 'overpaid'];
+/** Attempt states a late failure / expiry / replayed success must not overwrite: the money has been placed. */
+const SETTLED_STATES = ['succeeded', 'overpaid', 'refunded', 'disputed'];
+/** Refunds that have left the Stripe balance (a pending one is already deducted); failed / canceled ones returned. */
+const BOOKED_REFUND_STATES = ['succeeded', 'pending'];
+/** Operator flags on subscriptions/{payer}.billingFlags (added with arrayUnion, cleared by the operator). */
+type StripeFlag = 'overpaid' | 'disputed' | 'refund-on-posted-payment';
 
 export function makeStripeHandler(deps: StripeHandlerDeps): WebhookHandler {
   return async event => {
@@ -83,6 +92,12 @@ export function makeStripeHandler(deps: StripeHandlerDeps): WebhookHandler {
         return paymentFailed(db, deps, action);
       case 'method-saved':
         return methodSaved(db, deps, action);
+      case 'charge-refunded':
+        return chargeRefunded(db, deps, action);
+      case 'dispute-opened':
+        return disputeOpened(db, deps, action);
+      case 'dispute-closed':
+        return disputeClosed(db, deps, action);
       case 'ignore':
         if (action.expireAttemptKey) await expireAttempt(db, deps, action.expireAttemptKey);
         deps.log('info', 'stripeHandler: ignored', { reason: action.reason });
@@ -99,6 +114,46 @@ async function loadAttempt(db: Firestore, attemptKey: string): Promise<Attempt> 
 }
 
 const operatorOf = (attempt: Attempt): string | undefined => attempt.tenants?.[0];
+
+/**
+ * The attempt a charge / refund / dispute belongs to: by metadata.attemptKey when the object carries it, else by
+ * the PaymentIntent, else by the charge (both stored on the attempt when the payment was recorded). Throws for an
+ * unknown charge (reported, replayable).
+ */
+async function findAttempt(
+  db: Firestore, ids: { attemptKey: string; paymentIntentId: string; chargeId: string },
+): Promise<{ key: string; attempt: Attempt }> {
+  const col = db.collection(PaymentAttemptCollection);
+  if (ids.attemptKey) {
+    const snap = await col.doc(ids.attemptKey).get();
+    if (snap.exists) return { key: ids.attemptKey, attempt: snap.data() as Attempt };
+  }
+  for (const [field, value] of [['stripePaymentIntentId', ids.paymentIntentId], ['stripeChargeId', ids.chargeId]] as const) {
+    if (!value) continue;
+    const found = await col.where(field, '==', value).limit(1).get();
+    if (!found.empty) return { key: found.docs[0].id, attempt: found.docs[0].data() as Attempt };
+  }
+  throw new Error(`Stripe event for charge ${ids.chargeId}: no payment attempt (PaymentIntent ${ids.paymentIntentId || '(none)'})`);
+}
+
+/** Adds an operator flag on the payer's subscription (atomic, never removes others). */
+async function flagPayer(db: Firestore, payerTenantId: string, flag: StripeFlag): Promise<void> {
+  await db.collection(SubscriptionCollection).doc(payerTenantId).update({ billingFlags: FieldValue.arrayUnion(flag) });
+}
+
+/** The operator books' config and Stripe clearing account. */
+async function operatorBooks(db: Firestore, invoiceKey: string) {
+  const { operatorTenantId, accountingTenantId } = await platformBilling(db);
+  const config = await loadOwnedAccountingConfig(db, operatorTenantId, invoiceKey, accountingTenantId, 'paid');
+  const clearingKey = String(config['stripeClearingAccountKey'] ?? '');
+  if (!clearingKey) throw new Error(`${accountingTenantId} has no stripeClearingAccountKey: Stripe collection is not set up`);
+  const account = (field: 'prepaymentAccountKey' | 'stripeFeeAccountKey', purpose: string): string => {
+    const key = String(config[field] ?? '');
+    if (!key) throw new Error(`${accountingTenantId} has no ${field} for ${purpose}`);
+    return key;
+  };
+  return { operatorTenantId, accountingTenantId, clearingKey, account, fiscalYearStart: Number(config['fiscalYearStart'] ?? 1) || 1 };
+}
 
 /**
  * Records a succeeded PaymentIntent on its attempt's invoice: payment (Stripe clearing), fee, attempt succeeded.
@@ -151,26 +206,31 @@ async function paymentSucceeded(
   } catch (err) {
     const details = (err as { details?: { reason?: string; reasons?: unknown } }).details;
     if (details?.reason === 'payment-blocked' && isSettledRefusal(details.reasons)) {
-      // Settled meanwhile (e.g. by QR bill): the money sits on Stripe clearing and needs a refund by hand.
-      await attemptRef.update({ state: 'overpaid', ...stripeIds, error: `invoice cannot take the payment: ${String(details.reasons)}`, updatedAt: toStoreDateTime(deps.now()) });
-      deps.log('error', 'stripeHandler: payment on a settled invoice, refund by hand', { attemptKey, invoiceKey, paymentIntentId, amount });
+      // Settled meanwhile (e.g. by QR bill): the money is booked clearing → prepayment («Überzahlung») and its
+      // fee as usual; it waits there for a refund by hand (charge.refunded books it back) or an offset.
+      const prepaymentKey = String(config['prepaymentAccountKey'] ?? '');
+      if (!prepaymentKey) throw new Error(`${accountingTenantId} has no prepaymentAccountKey for an overpaid Stripe payment`);
+      const books = { operatorTenantId, accountingTenantId, invoiceKey, fiscalYearStart: Number(config['fiscalYearStart'] ?? 1) || 1 };
+      await writeStripeBooking(db, {
+        ...books, bookingKey: `stripe-overpaid-${paymentIntentId}`, tag: 'stripe-overpaid', ref: paymentIntentId,
+        title: invoiceId => `Überzahlung Rechnung ${invoiceId}`, date, amount, debitKey: clearingKey, creditKey: prepaymentKey,
+      });
+      const { fee, feeBookingKey } = await bookFee(db, deps, { ...books, config, chargeId, paymentIntentId, date, clearingKey });
+      await flagPayer(db, attempt.payerTenantId, 'overpaid');
+      await attemptRef.update({
+        state: 'overpaid', ...stripeIds, fee, feeBookingKey, error: `invoice cannot take the payment: ${String(details.reasons)}`, updatedAt: toStoreDateTime(deps.now()),
+      });
+      deps.log('error', 'stripeHandler: payment on a settled invoice, booked as prepayment, refund by hand', { attemptKey, invoiceKey, paymentIntentId, amount });
       return { state: 'handled', tenantId: operatorTenantId };
     }
     throw err;
   }
 
   // 3. the Stripe fee: debit fee expense, credit Stripe clearing (idempotent on the booking key)
-  const fee = await deps.port().feeOfCharge(chargeId);
-  let feeBookingKey = '';
-  if (fee > 0) {
-    const feeAccountKey = String(config['stripeFeeAccountKey'] ?? '');
-    if (!feeAccountKey) throw new Error(`${accountingTenantId} has no stripeFeeAccountKey for a Stripe fee`);
-    feeBookingKey = `stripe-fee-${paymentIntentId}`;
-    await writeFeeBooking(db, {
-      operatorTenantId, accountingTenantId, invoiceKey, bookingKey: feeBookingKey, date, fee, feeAccountKey, clearingKey,
-      fiscalYearStart: Number(config['fiscalYearStart'] ?? 1) || 1,
-    });
-  }
+  const { fee, feeBookingKey } = await bookFee(db, deps, {
+    operatorTenantId, accountingTenantId, invoiceKey, config, chargeId, paymentIntentId, date, clearingKey,
+    fiscalYearStart: Number(config['fiscalYearStart'] ?? 1) || 1,
+  });
 
   // 4. the payer agreed to save the method in Checkout: store it like a setup session would (before the attempt
   //    is marked succeeded, so a retry after a failure here saves it again)
@@ -184,41 +244,70 @@ async function paymentSucceeded(
   return { state: 'handled', tenantId: operatorTenantId };
 }
 
-interface FeeBookingInput {
+interface BooksRef {
   operatorTenantId: string;
   accountingTenantId: string;
   invoiceKey: string;
-  bookingKey: string;
-  date: string;
-  fee: number;
-  feeAccountKey: string;
-  clearingKey: string;
   fiscalYearStart: number;
 }
 
-/** Same writer shape as postInvoicePayment's payment booking; a booking that already exists is left alone. */
-async function writeFeeBooking(db: Firestore, input: FeeBookingInput): Promise<void> {
-  const { operatorTenantId, accountingTenantId, invoiceKey, bookingKey, date, fee, feeAccountKey, clearingKey, fiscalYearStart } = input;
+/** Reads the charge's Stripe fee and books it (debit fee expense, credit clearing). Idempotent on `stripe-fee-<pi>`. */
+async function bookFee(
+  db: Firestore, deps: StripeHandlerDeps,
+  input: BooksRef & { config: Record<string, unknown>; chargeId: string; paymentIntentId: string; date: string; clearingKey: string },
+): Promise<{ fee: number; feeBookingKey: string }> {
+  const fee = await deps.port().feeOfCharge(input.chargeId);
+  if (fee <= 0) return { fee, feeBookingKey: '' };
+  const feeAccountKey = String(input.config['stripeFeeAccountKey'] ?? '');
+  if (!feeAccountKey) throw new Error(`${input.accountingTenantId} has no stripeFeeAccountKey for a Stripe fee`);
+  const feeBookingKey = `stripe-fee-${input.paymentIntentId}`;
+  await writeStripeBooking(db, {
+    ...input, bookingKey: feeBookingKey, tag: 'stripe-fee', ref: input.paymentIntentId,
+    title: invoiceId => `Stripe-Gebühr Rechnung ${invoiceId}`, amount: fee, debitKey: feeAccountKey, creditKey: input.clearingKey,
+  });
+  return { fee, feeBookingKey };
+}
+
+interface StripeBookingInput extends BooksRef {
+  /** The booking doc id: the idempotency key (`stripe-<tag>-<Stripe id>`). */
+  bookingKey: string;
+  /** `tags` of the booking; `notes` = `<tag>:<ref>`. */
+  tag: string;
+  ref: string;
+  title: (invoiceId: string) => string;
+  date: string;
+  amount: number;
+  debitKey: string;
+  creditKey: string;
+}
+
+/**
+ * A posted two-line CHF booking in the operator books, same writer shape as postInvoicePayment's payment booking
+ * (period lock, leaf accounts, booking number). A booking that already exists is left alone.
+ */
+async function writeStripeBooking(db: Firestore, input: StripeBookingInput): Promise<void> {
+  const { operatorTenantId, accountingTenantId, invoiceKey, bookingKey, date, amount, debitKey, creditKey, fiscalYearStart } = input;
+  if (!(amount > 0)) throw new Error(`Stripe booking ${bookingKey} has no positive amount (${amount})`);
   const invoiceRef = db.collection('invoices').doc(invoiceKey);
   const bookingRef = db.collection(BOOKING_COLLECTION).doc(bookingKey);
-  const ccCtx = await loadCostCenterContext(db, operatorTenantId, accountingTenantId, [feeAccountKey, clearingKey]);
+  const ccCtx = await loadCostCenterContext(db, operatorTenantId, accountingTenantId, [debitKey, creditKey]);
   await db.runTransaction(async tx => {
     if ((await tx.get(bookingRef)).exists) return;
     const invoice = (await tx.get(invoiceRef)).data() ?? {};
     await assertPeriodsOpen(db, touchedPeriodKeys(accountingTenantId, [date], fiscalYearStart), tx);
-    await assertLeafAccount(db, accountingTenantId, feeAccountKey, tx);
-    await assertLeafAccount(db, accountingTenantId, clearingKey, tx);
+    await assertLeafAccount(db, accountingTenantId, debitKey, tx);
+    await assertLeafAccount(db, accountingTenantId, creditKey, tx);
     const bookingNo = await allocateBookingNo(db, tx, accountingTenantId, Number(date.substring(0, 4)));
 
     const tenants = [operatorTenantId];
     const invoiceId = String(invoice['invoiceId'] ?? '');
-    const title = `Stripe-Gebühr Rechnung ${invoiceId}`;
+    const title = input.title(invoiceId);
     tx.set(bookingRef, withoutUndefined({
       tenants, accountingTenantId, isArchived: false,
-      title, date, notes: `stripe-fee:${bookingKey.replace(/^stripe-fee-/, '')}`, tags: 'stripe-fee', index: invoiceBookingIndex(date, bookingNo, title, invoiceId),
+      title, date, notes: `${input.tag}:${input.ref}`, tags: input.tag, index: invoiceBookingIndex(date, bookingNo, title, invoiceId),
       bookingNo, status: 'posted', periodKey: periodKeyFor(accountingTenantId, date, fiscalYearStart), documentKeys: [],
     }));
-    feeBookingLines(feeAccountKey, clearingKey, fee).forEach((line, i) => {
+    transferLines(debitKey, creditKey, amount).forEach((line, i) => {
       const costCenterKey = costCenterKeyForLine(ccCtx, line.accountKey, { explicit: '' });
       tx.set(db.collection(BOOKING_LINE_COLLECTION).doc(`${bookingKey}-${i}`), withoutUndefined({
         tenants, accountingTenantId, isArchived: false, bookingKey, accountKey: line.accountKey,
@@ -228,6 +317,107 @@ async function writeFeeBooking(db: Firestore, input: FeeBookingInput): Promise<v
       }));
     });
   });
+}
+
+/** The Zurich day of a Unix time, '' when missing. */
+const storeDateOf = (sec: number): string => (sec > 0 ? toStoreDate(new Date(sec * 1000)) : '');
+
+/**
+ * A charge was (partly) refunded. Money that never reached an invoice (overpaid) or reached a top-up invoice sits on
+ * prepayment: each refund is booked prepayment → clearing once (`stripe-refund-<refundId>`), the attempt becomes
+ * `refunded`. A refund of a payment posted to an invoice is only flagged: the operator reverses it (Storno) by hand.
+ */
+async function chargeRefunded(
+  db: Firestore, deps: StripeHandlerDeps, action: Extract<StripeAction, { kind: 'charge-refunded' }>,
+): Promise<WebhookOutcome> {
+  const { key, attempt } = await findAttempt(db, action);
+  // Not yet recorded (succeeded webhook still to come): fail, the replay finds it settled.
+  if (!SETTLED_STATES.includes(attempt.state)) throw new Error(`Stripe refund for attempt ${key} in state ${attempt.state}: payment not settled yet`);
+  const refunds = (await deps.port().listRefunds(action.chargeId)).filter(r => BOOKED_REFUND_STATES.includes(r.status));
+  const tenantId = operatorOf(attempt);
+  const logData = { attemptKey: key, chargeId: action.chargeId, refunds: refunds.map(r => `${r.id}:${r.amount}`) };
+  if (refunds.length === 0) {
+    deps.log('info', 'stripeHandler: charge refunded, no refund to book', logData);
+    return { state: 'handled', tenantId };
+  }
+
+  const toPrepayment = attempt.purpose === 'topup' || !attempt.paymentBookingKey;
+  if (!toPrepayment) {
+    await flagPayer(db, attempt.payerTenantId, 'refund-on-posted-payment');
+    deps.log('error', 'stripeHandler: refund of a payment posted to an invoice, reverse it by hand (Storno)', { ...logData, invoiceKey: attempt.invoiceKey });
+    return { state: 'handled', tenantId };
+  }
+
+  const books = await operatorBooks(db, attempt.invoiceKey);
+  const prepaymentKey = books.account('prepaymentAccountKey', 'a Stripe refund');
+  for (const r of refunds) {
+    if (r.currency.toLowerCase() !== 'chf') throw new Error(`Stripe refund ${r.id} is in ${r.currency}, not chf`);
+    await writeStripeBooking(db, {
+      ...books, invoiceKey: attempt.invoiceKey, bookingKey: `stripe-refund-${r.id}`, tag: 'stripe-refund', ref: r.id,
+      title: invoiceId => `Stripe-Rückerstattung Rechnung ${invoiceId}`, date: storeDateOf(r.created) || toStoreDate(deps.now()),
+      amount: r.amount, debitKey: prepaymentKey, creditKey: books.clearingKey,
+    });
+  }
+  if (attempt.state !== 'refunded') {
+    await db.collection(PaymentAttemptCollection).doc(key).update({ state: 'refunded', updatedAt: toStoreDateTime(deps.now()) });
+  }
+  if (attempt.purpose === 'topup') {
+    // The credit entry of the top-up stays: the operator corrects the credit balance (manual correction entry).
+    deps.log('warn', 'stripeHandler: top-up refunded, correct the credit balance by hand', { ...logData, payer: attempt.payerTenantId });
+  } else {
+    deps.log('info', 'stripeHandler: refund booked', logData);
+  }
+  return { state: 'handled', tenantId };
+}
+
+/** A dispute was opened: the attempt becomes `disputed` and the payer is flagged for the operator. Nothing is booked yet. */
+async function disputeOpened(
+  db: Firestore, deps: StripeHandlerDeps, action: Extract<StripeAction, { kind: 'dispute-opened' }>,
+): Promise<WebhookOutcome> {
+  const { key, attempt } = await findAttempt(db, action);
+  if (attempt.state !== 'disputed') {
+    await db.collection(PaymentAttemptCollection).doc(key).update({
+      state: 'disputed', error: `dispute ${action.disputeId}: ${action.reason || 'no reason'}`, updatedAt: toStoreDateTime(deps.now()),
+    });
+  }
+  await flagPayer(db, attempt.payerTenantId, 'disputed');
+  deps.log('error', 'stripeHandler: payment disputed', { attemptKey: key, disputeId: action.disputeId, amount: action.amount, reason: action.reason });
+  return { state: 'handled', tenantId: operatorOf(attempt) };
+}
+
+/**
+ * A dispute was closed. Lost: the disputed amount and Stripe's fee are booked fee account → clearing once
+ * (`stripe-dispute-<id>`), the attempt stays `disputed`. Otherwise (won, inquiry closed): nothing is booked and the
+ * attempt returns to the state it had (posted → succeeded, else overpaid).
+ */
+async function disputeClosed(
+  db: Firestore, deps: StripeHandlerDeps, action: Extract<StripeAction, { kind: 'dispute-closed' }>,
+): Promise<WebhookOutcome> {
+  const { key, attempt } = await findAttempt(db, action);
+  const tenantId = operatorOf(attempt);
+  if (action.status !== 'lost') {
+    if (attempt.state === 'disputed') {
+      const back = attempt.paymentBookingKey ? 'succeeded' : 'overpaid';
+      await db.collection(PaymentAttemptCollection).doc(key).update({ state: back, error: `dispute ${action.disputeId}: ${action.status}`, updatedAt: toStoreDateTime(deps.now()) });
+    }
+    deps.log('info', `stripeHandler: dispute closed (${action.status})`, { attemptKey: key, disputeId: action.disputeId });
+    return { state: 'handled', tenantId };
+  }
+  const foreign = [action.currency, ...action.feeCurrencies].filter(c => c !== 'chf');
+  if (foreign.length > 0) throw new Error(`Stripe dispute ${action.disputeId} is in ${foreign.join(', ')}, not chf`);
+  const books = await operatorBooks(db, attempt.invoiceKey);
+  const loss = disputeLoss(action.amount, action.fee);
+  await writeStripeBooking(db, {
+    ...books, invoiceKey: attempt.invoiceKey, bookingKey: `stripe-dispute-${action.disputeId}`, tag: 'stripe-dispute', ref: action.disputeId,
+    title: invoiceId => `Stripe-Rückbuchung verloren Rechnung ${invoiceId}`, date: action.date || toStoreDate(deps.now()),
+    amount: loss, debitKey: books.account('stripeFeeAccountKey', 'a lost Stripe dispute'), creditKey: books.clearingKey,
+  });
+  if (attempt.state !== 'disputed') {
+    await db.collection(PaymentAttemptCollection).doc(key).update({ state: 'disputed', updatedAt: toStoreDateTime(deps.now()) });
+  }
+  await flagPayer(db, attempt.payerTenantId, 'disputed');
+  deps.log('error', 'stripeHandler: dispute lost, booked', { attemptKey: key, disputeId: action.disputeId, loss, invoiceKey: attempt.invoiceKey });
+  return { state: 'handled', tenantId };
 }
 
 async function paymentFailed(
