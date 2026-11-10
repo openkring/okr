@@ -7,7 +7,7 @@ vi.mock('firebase-admin/firestore', () => ({ getFirestore: () => fakeDb.current 
 import type { Request, Response } from 'express';
 
 import {
-  articleImageLayout, buildLearningSection, mapCta, mapImage, mapSection, normalizeLang, pickText, safeSiteUrl, slugName, mapFooter, mapFormSection, isPublicPageRead, isPublishedPage, learningDefaultTab, loadLearningSection, pageCors, pageRouter,
+  articleImageLayout, buildLearningSection, mapCta, mapImage, mapSection, normalizeLang, pickText, safeEmbedUrl, safeSiteUrl, slugName, mapFooter, mapFormSection, isPublicPageRead, isPublishedPage, learningDefaultTab, loadLearningSection, pageCors, pageRouter,
 } from './page';
 import { getHtmlSanitizer } from '../sanitize';
 
@@ -482,6 +482,33 @@ describe('homepage sections (1.151)', () => {
     for (const ok of ['https://x.ch', 'mailto:a@b.ch', 'tel:+41', '#kurse', '/app/x', 'termine.html', 'seite.html?key=1#a']) expect(safeSiteUrl(ok)).toBe(ok);
     expect(safeSiteUrl('  #kurse ')).toBe('#kurse');
     for (const bad of ['javascript:alert(1)', '//evil.com', '/\\evil.com', '/\t/evil.com', 'http://x.ch', '../x.html', '#', '', undefined, 5]) expect(safeSiteUrl(bad)).toBe('');
+  });
+
+  it('button, iframe and video urls are checked; unsafe ones become empty (final review)', () => {
+    const bad = ['javascript:alert(1)', 'data:text/html,<script>alert(1)</script>', '//evil.com', 'http://evil.com', 'https://x.ch/\\evil', 'https://x.ch/\u0000a'];
+    for (const url of bad) {
+      expect(map({ type: 'button', properties: { action: { url }, style: { label: 'Go' } } })['url']).toBe('');
+      expect(map({ type: 'iframe', properties: { url } })['url']).toBe('');
+      // a video value without a scheme is an id: it can only land under the default embed base
+      const video = map({ type: 'video', properties: { url } })['url'] as string;
+      expect(video === '' || video.startsWith('https://www.youtube.com/embed/')).toBe(true);
+    }
+    for (const url of ['http://evil.com', 'https://x.ch/\\evil', 'https://']) expect(map({ type: 'video', properties: { url } })['url']).toBe('');
+    expect(map({ type: 'iframe', properties: { url: 'https://' } })['url']).toBe('');
+    // a video id joined to an unsafe base is rejected too
+    expect(map({ type: 'video', properties: { url: 'abc', baseUrl: 'javascript:alert(1)//' } })['url']).toBe('');
+    expect(map({ type: 'video', properties: { url: 'abc', baseUrl: '//evil.com/' } })['url']).toBe('');
+  });
+
+  it('button, iframe and video keep safe urls; the iframe style is not published (final review)', () => {
+    expect(map({ type: 'button', properties: { action: { url: ' termine.html ' } } })['url']).toBe('termine.html');
+    expect(map({ type: 'button', properties: { action: { url: 'https://x.ch' } } })['url']).toBe('https://x.ch');
+    const iframe = map({ type: 'iframe', properties: { url: 'https://maps.example.ch/e', style: 'x" onload="alert(1)' } });
+    expect(iframe['url']).toBe('https://maps.example.ch/e');
+    expect(iframe).not.toHaveProperty('style');
+    expect(map({ type: 'video', properties: { url: 'abc123' } })['url']).toBe('https://www.youtube.com/embed/abc123');
+    expect(map({ type: 'video', properties: { url: 'https://player.vimeo.com/video/1' } })['url']).toBe('https://player.vimeo.com/video/1');
+    expect(safeEmbedUrl(undefined)).toBe('');
   });
 
   it('mapCta keeps a safe cta and drops an unsafe or label-less one', () => {

@@ -79,6 +79,7 @@ export function safeSiteUrl(url: unknown): string {
   if (typeof url !== 'string') return '';
   const u = url.trim();
   if (u.length === 0) return '';
+  // eslint-disable-next-line no-control-regex -- rejecting control characters is the point
   if (/[\\\u0000-\u001f\u007f]/.test(u)) return '';
   let ok: boolean;
   if (u.startsWith('https://') || u.startsWith('mailto:') || u.startsWith('tel:')) ok = true;
@@ -86,6 +87,19 @@ export function safeSiteUrl(url: unknown): string {
   else if (u.startsWith('/')) ok = /^\/(?![/\\])/.test(u);
   else ok = /^[\w-]+\.html([?#].*)?$/.test(u);
   return ok ? u : '';
+}
+
+/**
+ * An embed url (iframe / video src) may only be an https url without backslash or control
+ * characters. Returns the trimmed url, or '' when unsafe.
+ */
+export function safeEmbedUrl(url: unknown): string {
+  if (typeof url !== 'string') return '';
+  const u = url.trim();
+  if (!u.startsWith('https://') || u.length <= 'https://'.length) return '';
+  // eslint-disable-next-line no-control-regex -- rejecting control characters is the point
+  if (/[\\\u0000-\u001f\u007f]/.test(u)) return '';
+  return u;
 }
 
 /** A section name as an html id / anchor: lowercase, runs of anything but [a-z0-9-] become one '-', trimmed of '-'. */
@@ -330,7 +344,7 @@ export function mapSection(id: string, s: SectionDoc, nestedSections: Map<string
         name,
         title,
         label: style.label ?? title,
-        url: action.url ?? '',
+        url: safeSiteUrl(action.url),
         color: style.color ?? 'primary',
       };
     }
@@ -340,15 +354,15 @@ export function mapSection(id: string, s: SectionDoc, nestedSections: Map<string
         type: 'iframe',
         name,
         title,
-        url: (props['url'] as string | undefined) ?? '',
-        style: (props['style'] as string | undefined) ?? '',
+        // the stored free-form css `style` is not published: the website uses its own frame style
+        url: safeEmbedUrl(props['url']),
       };
     }
 
     case 'video': {
       const raw = (props['url'] as string | undefined) ?? '';
       const base = (props['baseUrl'] as string | undefined) ?? 'https://www.youtube.com/embed/';
-      const url = /^https?:\/\//.test(raw) ? raw : (raw ? base + raw : '');
+      const url = safeEmbedUrl(/^https?:\/\//.test(raw) ? raw : (raw ? base + raw : ''));
       return { type: 'video', name, title, url };
     }
 
