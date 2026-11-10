@@ -7,7 +7,7 @@
 // Text: no Transloco in Cloud Functions. Keys are looked up like every server-side message (translateMessage: tenant
 // override, then the default catalog); a key nobody entered yet falls back to the German text here.
 import { logger } from 'firebase-functions/v2';
-import type { Firestore } from 'firebase-admin/firestore';
+import { FieldValue, type Firestore } from 'firebase-admin/firestore';
 import { SubscriptionCollection } from '@okr/shared-models';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
@@ -86,6 +86,8 @@ async function queue(
   const to = await billingRecipient(db, tenantId);
   if (!to) {
     logger.warn(`${ruleKey}: tenant ${tenantId} has no billing or admin e-mail`, { docId });
+    // never silent: the operator board shows the tenant (the flag is cleared by a run that issued, or by hand)
+    await db.collection(SubscriptionCollection).doc(tenantId).set({ billingFlags: FieldValue.arrayUnion('no-recipient') }, { merge: true });
     return;
   }
   const p = params(await appOriginOf(db, tenantId));

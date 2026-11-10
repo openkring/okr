@@ -16,6 +16,9 @@ type Row = { payload: { to: string; subject: string; body: string } };
 function stubDb(store: Record<string, Record<string, unknown>>, creates = { n: 0 }): Firestore {
   const doc = (path: string) => ({
     get: async () => ({ exists: store[path] !== undefined, data: () => store[path] }),
+    set: async (d: Record<string, unknown>, opts?: { merge?: boolean }) => {
+      store[path] = opts?.merge ? { ...(store[path] ?? {}), ...d } : d;
+    },
     create: async (d: Record<string, unknown>) => {
       creates.n++;
       if (store[path]) throw { code: 6 };
@@ -49,6 +52,14 @@ describe('notifyChargeFailed', () => {
     const store: Record<string, Record<string, unknown>> = {};
     await notifyChargeFailed(stubDb(store), 'scs', { invoiceKey: 'inv-1', amount: 100, attempt: 1 });
     expect((store['workflow-outbox/billing-charge-failed-inv-1-1'] as unknown as Row).payload.to).toBe('admin@seeclub.org');
+  });
+
+  it('without billingEmail and admin: queues nothing and flags no-recipient for the operator board', async () => {
+    tenantAdmin.mockResolvedValueOnce(null as never);
+    const store: Record<string, Record<string, unknown>> = { 'subscriptions/scs': { billingFlags: [] } };
+    await notifyChargeFailed(stubDb(store), 'scs', { invoiceKey: 'inv-1', amount: 100, attempt: 1 });
+    expect(Object.keys(store).filter((k) => k.startsWith('workflow-outbox/'))).toHaveLength(0);
+    expect(store['subscriptions/scs']['billingFlags']).toEqual(expect.objectContaining({ elements: ['no-recipient'] }));
   });
 
   it('queues once for the same input (create conflict ignored)', async () => {
