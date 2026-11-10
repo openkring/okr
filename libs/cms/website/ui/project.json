@@ -1,0 +1,25 @@
+{
+  "name": "cms-website-ui",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/cms/website/ui/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:ui", "scope:website", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/cms/website/ui",
+        "main": "libs/cms/website/ui/src/index.ts",
+        "tsConfig": "libs/cms/website/ui/tsconfig.lib.json",
+        "assets": ["libs/cms/website/ui/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}
+
