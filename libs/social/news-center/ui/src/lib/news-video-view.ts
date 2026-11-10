@@ -1,4 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
+import { Browser } from '@capacitor/browser';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { IonButton, IonIcon } from '@ionic/angular';
 
@@ -17,7 +18,7 @@ const VIMEO_ID = /^\d{1,12}$/;
 /**
  * Embedded player. The iframe URL is assembled here from the (re-validated) video id only — a
  * feed-supplied URL never reaches the sanitiser bypass. On a native shell the embed can be refused
- * by the platform (YouTube error 153); then the thumbnail plus the «Auf YouTube öffnen» link is shown.
+ * by the platform (YouTube error 153); there a tappable thumbnail opens the video in the in-app browser.
  */
 @Component({
   selector: 'okr-news-video-view',
@@ -27,6 +28,12 @@ const VIMEO_ID = /^\d{1,12}$/;
     :host { display: block; }
     .player { position: relative; aspect-ratio: 16 / 9; width: 100%; background: #000; }
     iframe, .player img { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; object-fit: cover; }
+    .native-play { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; background: #000; cursor: pointer; }
+    .play {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      display: flex; align-items: center; justify-content: center;
+      width: 64px; height: 64px; border-radius: 50%; background: rgba(0, 0, 0, 0.6); color: #fff; font-size: 32px;
+    }
     .body { padding: 16px; }
     h2 { margin: 0 0 4px; font-size: 1.2rem; }
     .sub { color: var(--ion-color-medium); font-size: 0.85rem; }
@@ -41,8 +48,13 @@ const VIMEO_ID = /^\d{1,12}$/;
             allow="fullscreen; picture-in-picture; encrypted-media"
             referrerpolicy="strict-origin-when-cross-origin"
             sandbox="allow-scripts allow-same-origin allow-presentation"></iframe>
-        } @else if (item().thumbnailUrl) {
-          <img [src]="item().thumbnailUrl | newsImage" alt="" referrerpolicy="no-referrer" />
+        } @else {
+          <button type="button" class="native-play" [attr.aria-label]="item().title" (click)="openWatchUrl()">
+            @if (item().thumbnailUrl) {
+              <img [src]="item().thumbnailUrl | newsImage" alt="" referrerpolicy="no-referrer" />
+            }
+            <span class="play"><ion-icon src="{{ 'play' | svgIcon }}" /></span>
+          </button>
         }
       }
     </div>
@@ -53,10 +65,17 @@ const VIMEO_ID = /^\d{1,12}$/;
         @if (date()) { · {{ date() }} }
       </div>
       @if (watchUrl(); as url) {
-        <ion-button fill="outline" size="small" [href]="url" target="_blank" rel="noopener noreferrer">
-          {{ isVimeo() ? 'Vimeo' : i18n().open_on_youtube() }}
-          <ion-icon slot="end" src="{{ 'arrow-forward' | svgIcon }}" />
-        </ion-button>
+        @if (isNative) {
+          <ion-button fill="outline" size="small" (click)="openWatchUrl()">
+            {{ isVimeo() ? 'Vimeo' : i18n().open_on_youtube() }}
+            <ion-icon slot="end" src="{{ 'arrow-forward' | svgIcon }}" />
+          </ion-button>
+        } @else {
+          <ion-button fill="outline" size="small" [href]="url" target="_blank" rel="noopener noreferrer">
+            {{ isVimeo() ? 'Vimeo' : i18n().open_on_youtube() }}
+            <ion-icon slot="end" src="{{ 'arrow-forward' | svgIcon }}" />
+          </ion-button>
+        }
       }
       @if (item().summary) {
         <p class="summary">{{ item().summary }}</p>
@@ -101,4 +120,13 @@ export class NewsVideoView {
   });
 
   protected readonly date = computed(() => formatNewsDate(this.item().publishedAt));
+
+  /**
+   * Native only: WKWebView ignores `target="_blank"`, so the link did nothing and the video never
+   * played. The in-app browser (SFSafariViewController / Custom Tabs) plays YouTube and Vimeo normally.
+   */
+  protected openWatchUrl(): void {
+    const url = this.watchUrl();
+    if (url) void Browser.open({ url });
+  }
 }
