@@ -87,4 +87,21 @@ describe('WebsiteService', () => {
     expect(model.footer).toEqual(site.footer);
     expect(model.homePageKey).toBe('h');
   });
+
+  it('saveTree() never sends the server-owned fields (hosting target, publish stamps), so a stale copy cannot overwrite them', async () => {
+    const site = new WebsiteModel('scs');
+    site.okey = 'scs';
+    site.hostingSite = 'scs-website-54aef';
+    site.domain = 'https://seeclub.org';
+    site.templateVersion = 'v1';
+    site.lastPublishedAt = '2026-11-10T10:00:00.000Z';
+    site.lastPublishedBy = 'pA';
+    site.lastPublishedVersion = 'sites/scs-website-54aef/versions/v1';
+    await service.saveTree(site, { nav: [] });
+    const model = firestore.updateModel.mock.calls[0][1];
+    for (const key of ['hostingSite', 'domain', 'templateVersion', 'lastPublishedAt', 'lastPublishedBy', 'lastPublishedVersion']) {
+      expect(Object.keys(model), key).not.toContain(key);
+    }
+    expect(model.okey).toBe('scs');
+  });
 });

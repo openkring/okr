@@ -3,8 +3,12 @@ import type { PageModel, WebsiteModel, WebsiteNode } from '@okr/shared-models';
 import type { SectionDoc } from './section-mapper';
 import { pageKeysInTree, siteWarnings, type WebsiteWarningCode } from './website-tree-read.util';
 
-/** `alreadyRunning`: another publish of the site holds the lock (younger than 5 min). */
-export type PublishProblemCode = WebsiteWarningCode | 'templateMissing' | 'noBaseRelease' | 'renderFailed' | 'domainMissing' | 'alreadyRunning';
+/**
+ * `alreadyRunning`: another publish of the site holds the lock (younger than 5 min).
+ * `hostingSiteInvalid`: `hostingSite` is not one of our website Hosting sites (`<x>-website-<id>`).
+ */
+export type PublishProblemCode =
+  | WebsiteWarningCode | 'templateMissing' | 'noBaseRelease' | 'renderFailed' | 'domainMissing' | 'alreadyRunning' | 'hostingSiteInvalid';
 
 export interface PublishProblem {
   code: PublishProblemCode;

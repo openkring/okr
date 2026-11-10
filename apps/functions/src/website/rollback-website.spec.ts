@@ -4,7 +4,7 @@ import type { WebsiteModel } from '@okr/shared-models';
 
 import { runRollback, type RollbackDeps } from './rollback-website';
 
-const SITE = { okey: 'scs', tenants: ['scs'], hostingSite: 'scs-web' } as unknown as WebsiteModel;
+const SITE = { okey: 'scs', tenants: ['scs'], hostingSite: 'scs-website-54aef' } as unknown as WebsiteModel;
 const REQ = { site: SITE, personKey: 'pA' };
 
 function deps() {
@@ -28,8 +28,8 @@ describe('runRollback', () => {
 
   it('re-releases the version before the current one and logs a rollback', async () => {
     expect(await runRollback(d, REQ)).toEqual({ version: 'sites/scs-web/versions/v1' });
-    expect(d.listReleases).toHaveBeenCalledWith('scs-web', 2);
-    expect(d.releaseExisting).toHaveBeenCalledWith('scs-web', 'sites/scs-web/versions/v1', expect.any(String));
+    expect(d.listReleases).toHaveBeenCalledWith('scs-website-54aef', 2);
+    expect(d.releaseExisting).toHaveBeenCalledWith('scs-website-54aef', 'sites/scs-web/versions/v1', expect.any(String));
     expect(d.markPublished).toHaveBeenCalledWith('scs', { lastPublishedVersion: 'sites/scs-web/versions/v1' });
     expect(d.closeLock).toHaveBeenCalledWith('scs', 'lock1', 'rollback', { version: 'sites/scs-web/versions/v1', replacedVersion: 'sites/scs-web/versions/v2' });
   });
@@ -50,12 +50,21 @@ describe('runRollback', () => {
     expect(d.closeLock).toHaveBeenCalledWith('scs', 'lock1', 'refused', { detail: 'noPreviousRelease' });
   });
 
+  it.each(['scs-app-54aef', '', 'bkaiser-org'])('refuses hostingSite %j before any Hosting call', async (hostingSite) => {
+    const error = await runRollback(d, { ...REQ, site: { ...SITE, hostingSite } as WebsiteModel }).catch((e: unknown) => e);
+    expect((error as HttpsError).code).toBe('failed-precondition');
+    expect((error as HttpsError).message).toBe('hostingSiteInvalid');
+    expect(d.acquireLock).not.toHaveBeenCalled();
+    expect(d.listReleases).not.toHaveBeenCalled();
+    expect(d.releaseExisting).not.toHaveBeenCalled();
+  });
+
   it('closes the lock failed and throws internal when Hosting fails', async () => {
     d.releaseExisting.mockRejectedValueOnce(new Error('Hosting POST /v1beta1/sites/scs-web/releases failed (403)'));
     const error = await runRollback(d, REQ).catch((e: unknown) => e);
     expect(error).toBeInstanceOf(HttpsError);
     expect((error as HttpsError).code).toBe('internal');
     expect(d.markPublished).not.toHaveBeenCalled();
-    expect(d.closeLock).toHaveBeenCalledWith('scs', 'lock1', 'failed', { detail: 'Hosting POST /v1beta1/sites/scs-web/releases failed (403)' });
+    expect(d.closeLock).toHaveBeenCalledWith('scs', 'lock1', 'failed', { detail: 'hosting' });
   });
 });

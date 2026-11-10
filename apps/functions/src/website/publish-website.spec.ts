@@ -139,7 +139,7 @@ describe('runPublish', () => {
     expect(d['closeLock']).toHaveBeenCalledWith('scs', 'lock1', 'done', expect.objectContaining({ version: 'sites/scs-website-54aef/versions/new', files: 3, pages: 2 }));
   });
 
-  it('closes the lock failed with the detail and throws a bare internal error on a Hosting failure', async () => {
+  it('closes the lock failed with a generic stage, never the raw error text, and throws a bare internal error on a Hosting failure', async () => {
     d['uploadFiles'].mockRejectedValueOnce(new Error('Hosting POST /v1beta1/x:populateFiles failed (503)'));
     const error = await runPublish(d, REQ).catch((e: unknown) => e);
     expect(error).toBeInstanceOf(HttpsError);
@@ -147,8 +147,33 @@ describe('runPublish', () => {
     expect((error as HttpsError).message).not.toContain('populateFiles');
     expect(d['finalizeAndRelease']).not.toHaveBeenCalled();
     expect(d['markPublished']).not.toHaveBeenCalled();
-    expect(d['closeLock']).toHaveBeenCalledWith('scs', 'lock1', 'failed', { detail: 'Hosting POST /v1beta1/x:populateFiles failed (503)', durationMs: expect.any(Number) });
+    expect(d['closeLock']).toHaveBeenCalledWith('scs', 'lock1', 'failed', { detail: 'hosting', durationMs: expect.any(Number) });
   });
+
+  it('logs a load failure as the generic stage "load"', async () => {
+    d['loadContent'].mockRejectedValueOnce(new Error('5 NOT_FOUND: projects/x/databases/(default)/documents/pages/secret'));
+    await runPublish(d, REQ).catch(() => undefined);
+    expect(d['closeLock']).toHaveBeenCalledWith('scs', 'lock1', 'failed', { detail: 'load', durationMs: expect.any(Number) });
+  });
+
+  it('keeps problem details (template or render error text) out of the log doc but returns them', async () => {
+    const problems = [{ code: 'renderFailed' as const, pageKey: 'home', detail: 'Parse error on line 3: {{#each x' }];
+    d['renderSite'].mockReturnValueOnce({ files: [], problems });
+    const result = await runPublish(d, REQ);
+    expect(result.problems).toEqual(problems);
+    expect(d['closeLock']).toHaveBeenCalledWith('scs', 'lock1', 'refused', expect.objectContaining({ problems: [{ code: 'renderFailed', pageKey: 'home' }] }));
+  });
+
+  it.each(['scs-app-54aef', '', 'scs-website', 'other-project/sites/x', 'SCS-website-54aef'])(
+    'refuses hostingSite %j as hostingSiteInvalid before rendering or any Hosting call',
+    async (hostingSite) => {
+      const result = await runPublish(d, { ...REQ, site: { ...SITE, hostingSite } as WebsiteModel });
+      expect(result.problems).toEqual([{ code: 'hostingSiteInvalid' }]);
+      expect(d['renderSite']).not.toHaveBeenCalled();
+      expect(hostingCalls(d)).toEqual([0, 0, 0, 0]);
+      expect(d['closeLock']).toHaveBeenCalledWith('scs', 'lock1', 'refused', expect.objectContaining({ problems: [{ code: 'hostingSiteInvalid' }] }));
+    },
+  );
 
   it('still throws internal when closing the lock fails after an error', async () => {
     d['loadContent'].mockRejectedValueOnce(new Error('firestore down'));

@@ -31,6 +31,18 @@ const REGION = 'europe-west6';
 /** Who publishes and rolls back; admin always passes checkRoles. */
 export const PUBLISH_ROLES = ['contentAdmin'];
 const SAFE_SITE_ID = /^[A-Za-z0-9_-]+$/;
+/**
+ * Our tenant website Hosting sites, e.g. `scs-website-54aef`. `hostingSite` is server-owned (rules), this
+ * is the second layer: publish and rollback never touch another Hosting site (the app's, another project's).
+ */
+const WEBSITE_HOSTING_SITE = /^[a-z0-9-]+-website-[a-z0-9]+$/;
+
+export function isWebsiteHostingSite(hostingSite: unknown): hostingSite is string {
+  return typeof hostingSite === 'string' && WEBSITE_HOSTING_SITE.test(hostingSite);
+}
+
+/** What a failed run stores as `detail` on the log doc (readable by contentAdmins): a stage, never error text. */
+export type FailureStage = 'load' | 'templates' | 'render' | 'hosting' | 'site';
 const SECTIONS = 'sections';
 const GET_ALL_CHUNK = 100;
 /** Problems kept on the publishes log doc; the response always carries all of them. */
@@ -87,11 +99,14 @@ export function renderedPageCount(site: WebsiteModel): number {
   return new Set([site.homePageKey, ...activePageKeys([...(site.nav ?? []), ...(site.footer ?? [])])].filter(Boolean)).size;
 }
 
-/** Problems as stored on the log doc: no undefined fields (Firestore rejects them), bounded in number. */
+/**
+ * Problems as stored on the log doc: codes and keys only — `detail` (template parse errors, render
+ * exceptions) stays in the response and the function log; no undefined fields; bounded in number.
+ */
 function loggable(problems: PublishProblem[]): Record<string, unknown>[] {
   return problems
     .slice(0, MAX_LOGGED_PROBLEMS)
-    .map((p) => Object.fromEntries(Object.entries(p).filter(([, v]) => v !== undefined)));
+    .map((p) => Object.fromEntries(Object.entries(p).filter(([k, v]) => k !== 'detail' && v !== undefined)));
 }
 
 function errorMessage(e: unknown): string {
@@ -112,8 +127,14 @@ export async function runPublish(deps: PublishDeps, req: PublishRequest): Promis
     return { files, pages, durationMs, problems };
   };
 
+  let stage: FailureStage = 'load';
   try {
+    if (!isWebsiteHostingSite(site.hostingSite)) {
+      logger.error(`publishWebsite: ${siteId} refused, hostingSite ${JSON.stringify(site.hostingSite)} is not a website Hosting site`);
+      return await refuse([{ code: 'hostingSiteInvalid' }]);
+    }
     const { pages: pageMap, sections } = await deps.loadContent(site);
+    stage = 'templates';
     let templates: TemplateSet;
     try {
       templates = await deps.loadTemplates(siteId, site.templateVersion);
@@ -121,6 +142,7 @@ export async function runPublish(deps: PublishDeps, req: PublishRequest): Promis
       if (e instanceof TemplateMissingError) return await refuse([e.problem]);
       throw e;
     }
+    stage = 'render';
     const sanitize = await deps.getSanitizer();
     const rendered = deps.renderSite({ site, pages: pageMap, sections, templates, imageUrl: toImgixUrl, sanitize });
     if (rendered.problems.length > 0) return await refuse(rendered.problems);
@@ -132,12 +154,14 @@ export async function runPublish(deps: PublishDeps, req: PublishRequest): Promis
       return { files, pages, durationMs, problems: [] };
     }
 
-    const live = site.hostingSite ? await deps.getLiveVersion(site.hostingSite) : undefined;
-    if (!live) return await refuse([{ code: 'noBaseRelease', ...(site.hostingSite ? {} : { detail: 'hostingSite is not set' }) }], files);
+    stage = 'hosting';
+    const live = await deps.getLiveVersion(site.hostingSite);
+    if (!live) return await refuse([{ code: 'noBaseRelease' }], files);
 
     const version = await deps.cloneStaticAssets(site.hostingSite, live);
     await deps.uploadFiles(version, rendered.files);
     await deps.finalizeAndRelease(site.hostingSite, version, `publishWebsite ${siteId} (${pages} pages, ${files} files)`);
+    stage = 'site';
     const finished = deps.now();
     await deps.markPublished(siteId, {
       lastPublishedAt: new Date(finished).toISOString(),
@@ -148,10 +172,9 @@ export async function runPublish(deps: PublishDeps, req: PublishRequest): Promis
     await deps.closeLock(siteId, lock.id, 'done', { version, files, pages, durationMs });
     return { version, files, pages, durationMs, problems: [] };
   } catch (e) {
-    const detail = errorMessage(e);
-    logger.error(`publishWebsite: ${siteId} failed: ${detail}`);
+    logger.error(`publishWebsite: ${siteId} failed at ${stage}: ${errorMessage(e)}`);
     try {
-      await deps.closeLock(siteId, lock.id, 'failed', { detail, durationMs: deps.now() - started });
+      await deps.closeLock(siteId, lock.id, 'failed', { detail: stage, durationMs: deps.now() - started });
     } catch (closeError) {
       logger.error(`publishWebsite: ${siteId} lock ${lock.id} not closed: ${errorMessage(closeError)}`);
     }

@@ -371,7 +371,14 @@ service cloud.firestore {
     // websites (spec 1.153): the sitemap tree of a tenant's public site. Tenant read; contentAdmin or admin writes; never deleted.
     // Create: the site id must be one of the doc's own tenants (siteId = tenant id, one site per tenant) so a
     // contentAdmin cannot squat another tenant's site id. Relax when a site picker arrives.
-    match /websites/{id} { allow read: if tenantRead(); allow create: if isContentAdminOrAdmin() && tenantCreateOrDetach() && id in request.resource.data.tenants; allow update: if isContentAdminOrAdmin() && tenantCreateOrDetach(); allow delete: if false; }
+    // Server-owned (Admin SDK only: publishWebsite, the developer deploy, the import script): the Hosting
+    // target, domain, template version and the publish stamps. A client create leaves them empty, a client
+    // update never changes them; otherwise a contentAdmin could aim publish at another Hosting site.
+    function websiteServerFieldsUnset(d) {
+      return d.get('hostingSite', '') in ['', null] && d.get('domain', '') in ['', null] && d.get('templateVersion', '') in ['', null]
+        && d.get('lastPublishedAt', '') in ['', null] && d.get('lastPublishedBy', '') in ['', null] && d.get('lastPublishedVersion', '') in ['', null];
+    }
+    match /websites/{id} { allow read: if tenantRead(); allow create: if isContentAdminOrAdmin() && tenantCreateOrDetach() && id in request.resource.data.tenants && websiteServerFieldsUnset(request.resource.data); allow update: if isContentAdminOrAdmin() && tenantCreateOrDetach() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['hostingSite', 'domain', 'templateVersion', 'lastPublishedAt', 'lastPublishedBy', 'lastPublishedVersion']); allow delete: if false; }
     // Publish log + lock (spec 1.153 §7.2), written only by publishWebsite/rollbackWebsite (Admin SDK).
     // Read: contentAdmin/admin of a tenant of the PARENT site (the log docs' own tenants[] is a copy).
     match /websites/{id}/publishes/{p} { allow read: if isContentAdminOrAdmin() && belongsToTenant(get(/databases/$(database)/documents/websites/$(id)).data); allow write: if false; }

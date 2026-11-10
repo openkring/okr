@@ -9,7 +9,7 @@ import { checkAppCheckToken, checkAuthentication, checkRoles } from '@okr/shared
 
 import { listReleases, releaseExisting, type ReleaseInfo } from './hosting-client';
 import { acquireLock, closeLock, type PublishLock, type PublishState } from './publish-lock';
-import { authorizeSite, markSitePublished, PUBLISH_ROLES, type SitePublishedFields } from './publish-website';
+import { authorizeSite, isWebsiteHostingSite, markSitePublished, PUBLISH_ROLES, type SitePublishedFields } from './publish-website';
 
 const REGION = 'europe-west6';
 
@@ -24,12 +24,16 @@ export interface RollbackDeps {
 export async function runRollback(deps: RollbackDeps, req: { site: WebsiteModel; personKey: string }): Promise<{ version: string }> {
   const { site, personKey } = req;
   const siteId = site.okey;
+  if (!isWebsiteHostingSite(site.hostingSite)) {
+    logger.error(`rollbackWebsite: ${siteId} refused, hostingSite ${JSON.stringify(site.hostingSite)} is not a website Hosting site`);
+    throw new HttpsError('failed-precondition', 'hostingSiteInvalid');
+  }
   const lock = await deps.acquireLock(siteId, personKey, site.tenants ?? []);
   if (!lock) throw new HttpsError('failed-precondition', 'alreadyRunning');
 
   let previous: string | undefined;
   try {
-    const releases = site.hostingSite ? await deps.listReleases(site.hostingSite, 2) : [];
+    const releases = await deps.listReleases(site.hostingSite, 2);
     previous = releases[1]?.version || undefined;
     if (previous) {
       await deps.releaseExisting(site.hostingSite, previous, `rollbackWebsite ${siteId}`);
@@ -38,10 +42,10 @@ export async function runRollback(deps: RollbackDeps, req: { site: WebsiteModel;
       return { version: previous };
     }
   } catch (e) {
-    const detail = e instanceof Error ? e.message : String(e);
-    logger.error(`rollbackWebsite: ${siteId} failed: ${detail}`);
+    // the log doc is readable by contentAdmins: a stage, never the error text (that goes to the function log)
+    logger.error(`rollbackWebsite: ${siteId} failed: ${e instanceof Error ? e.message : String(e)}`);
     try {
-      await deps.closeLock(siteId, lock.id, 'failed', { detail });
+      await deps.closeLock(siteId, lock.id, 'failed', { detail: 'hosting' });
     } catch (closeError) {
       logger.error(`rollbackWebsite: ${siteId} lock ${lock.id} not closed: ${closeError instanceof Error ? closeError.message : String(closeError)}`);
     }

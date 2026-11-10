@@ -172,7 +172,7 @@ seed("reservations/resCourse", {"tenants": ["t1"], "isArchived": False, "reason"
 seed("pages/home",   {"tenants": ["t1"], "isArchived": False, "title": "Home"})
 seed("sections/secA",{"tenants": ["t1"], "isArchived": False, "type": "article"})
 # websites (spec 1.153): the sitemap tree document; tenant read, contentAdmin write, no delete.
-seed("websites/wsA", {"tenants": ["t1"], "isArchived": False, "name": "Site A", "nav": []})
+seed("websites/wsA", {"tenants": ["t1"], "isArchived": False, "name": "Site A", "nav": [], "hostingSite": "scs-website-54aef", "domain": "https://seeclub.org", "templateVersion": "v1", "lastPublishedVersion": "sites/scs-website-54aef/versions/v1"})
 seed("websites/wsA/publishes/pub1", {"tenants": ["t1"], "state": "done", "startedBy": "pC", "startedAt": "2026-11-10T10:00:00.000Z"})
 # fork-on-edit (D-BB-8): shared catalogue-owned menu docs a tenant may detach itself from.
 seed("menuItems/shared1", {"tenants": ["t1", "t2"], "isArchived": False, "name": "shared1", "label": "L"})
@@ -610,6 +610,26 @@ single_cases = [
      body({"name": "A"}), ["name"]),
     ("userC(contentAdmin) DELETE websites/wsA -> DENY", False, DELETE, "websites/wsA", C, None, None),
     ("userD(admin) DELETE websites/wsA -> DENY", False, DELETE, "websites/wsA", D, None, None),
+    # websites server-owned fields (1.153 fix): hosting target, domain, template version and the publish stamps
+    # are written by the Admin SDK only; a client create leaves them empty, a client update never changes them.
+    ("userC(contentAdmin) create websites/wsH1 with hostingSite set -> DENY", False, POST, "websites?documentId=wsH1", C,
+     body({"tenants": ["t1", "wsH1"], "name": "New", "nav": [], "hostingSite": "scs-app-54aef"}), None),
+    ("userC(contentAdmin) create websites/wsH2 with lastPublishedVersion set -> DENY", False, POST, "websites?documentId=wsH2", C,
+     body({"tenants": ["t1", "wsH2"], "name": "New", "nav": [], "lastPublishedVersion": "sites/x/versions/v"}), None),
+    ("userC(contentAdmin) create websites/wsH3 with the model's empty server fields -> ALLOW", True, POST, "websites?documentId=wsH3", C,
+     body({"tenants": ["t1", "wsH3"], "name": "New", "nav": [], "hostingSite": "", "domain": "", "templateVersion": ""}), None),
+    ("userC(contentAdmin) PATCH websites/wsA hostingSite -> DENY", False, PATCH, "websites/wsA", C,
+     body({"hostingSite": "scs-app-54aef"}), ["hostingSite"]),
+    ("userD(admin) PATCH websites/wsA domain -> DENY", False, PATCH, "websites/wsA", D,
+     body({"domain": "https://evil.example"}), ["domain"]),
+    ("userC(contentAdmin) PATCH websites/wsA templateVersion -> DENY", False, PATCH, "websites/wsA", C,
+     body({"templateVersion": "v9"}), ["templateVersion"]),
+    ("userC(contentAdmin) PATCH websites/wsA lastPublishedVersion -> DENY", False, PATCH, "websites/wsA", C,
+     body({"lastPublishedVersion": "sites/scs-app-54aef/versions/x"}), ["lastPublishedVersion"]),
+    ("userC(contentAdmin) PATCH websites/wsA lastPublishedBy -> DENY", False, PATCH, "websites/wsA", C,
+     body({"lastPublishedBy": "pX"}), ["lastPublishedBy"]),
+    ("userC(contentAdmin) PATCH websites/wsA nav + unchanged hostingSite -> ALLOW", True, PATCH, "websites/wsA", C,
+     body({"nav": [], "hostingSite": "scs-website-54aef"}), ["nav", "hostingSite"]),
     # websites/{id}/publishes (spec 1.153 §7.2): contentAdmin/admin of the parent site's tenant read; nobody writes.
     ("userC(contentAdmin) GET websites/wsA/publishes/pub1 -> ALLOW", True, GET, "websites/wsA/publishes/pub1", C, None, None),
     ("userC(contentAdmin) LIST websites/wsA/publishes -> ALLOW", True, GET, "websites/wsA/publishes", C, None, None),

@@ -7,6 +7,9 @@ import { UserModel, WebsiteCollection, WebsiteModel } from '@okr/shared-models';
 
 import { PFX } from './scope';
 
+/** Written by the Admin SDK only (publishWebsite, developer deploy, import); a client save never sends them. */
+export const WEBSITE_SERVER_FIELDS = ['hostingSite', 'domain', 'templateVersion', 'lastPublishedAt', 'lastPublishedBy', 'lastPublishedVersion'] as const;
+
 @Injectable({
   providedIn: 'root'
 })
@@ -47,8 +50,11 @@ export class WebsiteService {
     patch: Pick<WebsiteModel, 'nav'> & Partial<Pick<WebsiteModel, 'footer' | 'homePageKey'>>,
     currentUser?: UserModel
   ): Promise<void> {
-    const next: WebsiteModel = { ...site, ...patch, draftChangedAt: new Date().toISOString() };
+    // updateModel merges: leaving the server-owned fields out keeps their stored values, so a stale `site`
+    // cannot overwrite a newer publish stamp (and firestore.rules refuses client changes to them anyway).
+    const next = { ...site, ...patch, draftChangedAt: new Date().toISOString() } as Partial<WebsiteModel>;
+    for (const key of WEBSITE_SERVER_FIELDS) delete next[key];
     await this.firestoreService.updateModel<WebsiteModel>(
-      WebsiteCollection, next, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
+      WebsiteCollection, next as WebsiteModel, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
   }
 }
