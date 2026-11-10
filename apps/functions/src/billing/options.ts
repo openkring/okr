@@ -45,6 +45,11 @@ export const createSetSubscriptionOptions = (
     if (sub['billing'] !== 'stripe') {
       throw new HttpsError('failed-precondition', 'not-billed-by-stripe', { reason: 'not-billed-by-stripe' });
     }
+    // an ended subscription books nothing: reactivating it is the operator's call (setTenantState)
+    const state = String(sub['state'] ?? 'active');
+    if (state === 'closed' || state === 'cancelled') {
+      throw new HttpsError('failed-precondition', 'subscription-not-active', { reason: 'subscription-not-active', state });
+    }
     const unavailable = options.filter(id => optionBlocks(id, blockMap).length === 0);
     if (unavailable.length > 0) {
       throw new HttpsError('failed-precondition', 'option-not-available', { reason: 'option-not-available', ids: unavailable });

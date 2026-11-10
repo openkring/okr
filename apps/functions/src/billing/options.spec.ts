@@ -145,6 +145,20 @@ describe('setSubscriptionOptions', () => {
   it('refuses an exempt tenant', async () => {
     await expect(call(seed('exempt'), ['buchhaltung'])).rejects.toMatchObject({ code: 'failed-precondition', message: expect.stringContaining('not-billed-by-stripe') });
   });
+  it.each(['closed', 'cancelled'])('refuses a %s subscription and writes nothing', async (state) => {
+    const store = seed('stripe', ['buchhaltung'], ['buchhaltung', 'person']);
+    store['subscriptions/scs']['state'] = state;
+    await expect(call(store, [])).rejects.toMatchObject({
+      code: 'failed-precondition', message: 'subscription-not-active', details: { reason: 'subscription-not-active', state },
+    });
+    expect(current['subscriptions/scs']['options']).toEqual(['buchhaltung']);
+    expect(current['app-config/scs']['enabledFeatures']).toEqual(['buchhaltung', 'person']);
+  });
+  it.each(['active', 'pastDue', 'closing', undefined])('accepts state %s (missing = active)', async (state) => {
+    const store = seed('stripe');
+    if (state) store['subscriptions/scs']['state'] = state;
+    await expect(call(store, ['buchhaltung'])).resolves.toEqual({ options: ['buchhaltung'] });
+  });
   it('refuses a non-admin', async () => {
     const store = seed('stripe');
     store['users/u1'] = { roles: {}, tenants: ['scs'] };
