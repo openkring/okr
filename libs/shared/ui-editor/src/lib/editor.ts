@@ -5,7 +5,7 @@ import { Editor, NgxEditorModule } from 'ngx-editor';
 import { AsyncPipe } from '@angular/common';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { coerceBoolean } from '@okr/shared-util-core';
+import { coerceBoolean, EDITOR_LINK_PATTERN } from '@okr/shared-util-core';
 import { I18nService, TranslatePipe } from '@okr/shared-i18n';
 
 import { ButtonCopyI18n } from '@okr/shared-ui';
@@ -112,7 +112,8 @@ export class OkrEditor implements OnInit, OnDestroy {
     this.editor = new Editor({
       history: true,
       keyboardShortcuts: true,
-      inputRules: false
+      inputRules: false,
+      linkValidationPattern: EDITOR_LINK_PATTERN
     });
   }
 
