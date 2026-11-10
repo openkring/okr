@@ -295,6 +295,19 @@
   "help": {
     "title": "Guida al corso",
     "open": "Guida",
+    "process": {
+      "title": "Come arriva qualcuno da noi",
+      "step1": "Chi si interessa al club ci scrive tramite il modulo di contatto del sito web e sceglie un argomento. Così il messaggio arriva alla persona giusta.",
+      "step2": "La persona responsabile e la persona interessata si parlano, per e-mail o per telefono.",
+      "step3": "Se va bene, la persona responsabile le chiede di compilare l'iscrizione.",
+      "step4": "L'iscrizione può essere inviata in qualsiasi momento dell'anno. Compare nell'elenco delle iscrizioni e la persona responsabile riceve un compito.",
+      "step5": "Appena un corso è organizzato, la persona responsabile invita alcune persone selezionate. Ricevono un link personale e rispondono sì o no senza accedere.",
+      "step6": "I corsi annunciati compaiono alla fine dell'iscrizione, così ci si può iscrivere subito a un corso.",
+      "invite": {
+        "title": "Come inviti i candidati",
+        "text": "Apri l'elenco dei corsi e scegli per il corso l'azione «Invita i candidati». Seleziona le persone e tocca «Invita». Nella stessa finestra vedi chi ha già risposto.\nPerché un corso compaia nell'iscrizione, deve essere «annunciato sul sito web». Se il corso ha un limite, vedi i posti liberi. Quando tutti i posti sono occupati, il corso risulta «al completo»."
+      }
+    },
     "trainer": {
       "role": "Per gli allenatori",
       "intro": "Dirigi allenamenti del corso. Qui trovi cosa puoi fare nella tabella del corso. Gli importi dell'indennità non li vedi. Li vedono solo i responsabili del corso, la direzione del gruppo, le persone privilegiate (ad esempio il comitato) e la tesoreria.",

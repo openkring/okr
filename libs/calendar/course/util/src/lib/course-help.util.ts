@@ -1,7 +1,7 @@
 import { CourseModel } from '@okr/shared-models';
 
 import { CourseAccess, isCourseTrainer, mayManageCourse } from './course-access.util';
-import { CourseI18n } from './course-i18n';
+import { COURSE_I18N_KEYS, CourseI18n } from './course-i18n';
 
 /** Whose help the (i) button opens (spec 1.132 §10, D8). */
 export type CourseHelpRole = 'trainer' | 'responsible' | 'treasurer' | 'participant';
@@ -109,3 +109,19 @@ export function isCourseLinkKey(linkKey: string | undefined | null): boolean {
 export function courseTaskHelpRole(task: { okey?: string }): CourseHelpRole {
   return /^course-.+-end$/.test(task.okey ?? '') ? 'responsible' : 'treasurer';
 }
+
+/** The six steps of the Anmeldeprozess (spec 1.152 §1), in order. Keys of `CourseI18n`. */
+export const COURSE_PROCESS_STEPS: readonly (keyof CourseI18n)[] = [
+  'help_process_step1', 'help_process_step2', 'help_process_step3', 'help_process_step4', 'help_process_step5', 'help_process_step6',
+];
+
+/** The invite block after the steps: heading and text. Keys of `CourseI18n`. */
+export const COURSE_PROCESS_INVITE: CourseHelpSection = { title: 'help_process_invite_title', text: 'help_process_invite_text' };
+
+/** Every i18n key (as stored in the i18n files) of the «Anmeldeprozess» section, in reading order. */
+export const COURSE_PROCESS_HELP_KEYS: readonly string[] = [
+  COURSE_I18N_KEYS.help_process_title,
+  ...COURSE_PROCESS_STEPS.map(step => COURSE_I18N_KEYS[step]),
+  COURSE_I18N_KEYS[COURSE_PROCESS_INVITE.title],
+  COURSE_I18N_KEYS[COURSE_PROCESS_INVITE.text],
+];

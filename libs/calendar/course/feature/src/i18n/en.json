@@ -295,6 +295,19 @@
   "help": {
     "title": "Course guide",
     "open": "Guide",
+    "process": {
+      "title": "How someone joins us",
+      "step1": "Anyone interested in the club writes to us through the contact form on the website and picks a topic. That way the message reaches the right person.",
+      "step2": "The responsible person and the interested person talk to each other, by email or phone.",
+      "step3": "If it fits, the responsible person asks them to fill out the registration.",
+      "step4": "The registration can be sent in at any time of the year. It shows up in the list of registrations, and the responsible person gets a task.",
+      "step5": "Once a course is organised, the responsible person invites selected people. They get a personal link and say yes or no without having to log in.",
+      "step6": "Announced courses appear at the end of the registration, so someone can sign up for a course right away.",
+      "invite": {
+        "title": "How to invite applicants",
+        "text": "Open the course list and choose the action \"Invite applicants\" for the course. Select the people and tap \"Invite\". In the same window you can see who has already answered.\nFor a course to appear in the registration, it must be \"announced on the website\". If the course has a limit, you see the free places. When all places are taken, the course shows as \"fully booked\"."
+      }
+    },
     "trainer": {
       "role": "For trainers",
       "intro": "You lead sessions of the course. This is what you can do in the course table. You do not see the compensation amounts. Only the responsible persons of the course, the group admins, privileged users (for example the board) and the treasurer see them.",

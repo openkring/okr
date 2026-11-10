@@ -295,6 +295,19 @@
   "help": {
     "title": "Guide du cours",
     "open": "Guide",
+    "process": {
+      "title": "Comment quelqu'un nous rejoint",
+      "step1": "Toute personne intéressée par le club nous écrit via le formulaire de contact du site web et choisit un sujet. Le message arrive ainsi à la bonne personne.",
+      "step2": "La personne responsable et la personne intéressée échangent, par e-mail ou par téléphone.",
+      "step3": "Si cela convient, la personne responsable lui demande de remplir l'inscription.",
+      "step4": "L'inscription peut être envoyée à tout moment de l'année. Elle apparaît dans la liste des inscriptions, et la personne responsable reçoit une tâche.",
+      "step5": "Dès qu'un cours est organisé, la personne responsable invite des personnes choisies. Elles reçoivent un lien personnel et répondent oui ou non sans se connecter.",
+      "step6": "Les cours annoncés apparaissent à la fin de l'inscription : on peut ainsi s'inscrire tout de suite à un cours.",
+      "invite": {
+        "title": "Comment inviter des candidats",
+        "text": "Ouvre la liste des cours et choisis l'action « Inviter des candidats » pour le cours. Sélectionne les personnes et appuie sur « Inviter ». Dans la même fenêtre, tu vois qui a déjà répondu.\nPour qu'un cours apparaisse dans l'inscription, il doit être « annoncé sur le site web ». Si le cours a une limite, tu vois les places libres. Quand toutes les places sont prises, le cours est indiqué « complet »."
+      }
+    },
     "trainer": {
       "role": "Pour les entraîneurs",
       "intro": "Tu diriges des entraînements du cours. Voici ce que tu peux faire dans le tableau du cours. Tu ne vois pas les montants de l'indemnité. Seuls les responsables du cours, la direction du groupe, les personnes privilégiées (par exemple le comité) et la trésorerie les voient.",

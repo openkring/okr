@@ -1,7 +1,7 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonContent, ModalController } from '@ionic/angular';
 
-import { COURSE_HELP_SECTIONS, COURSE_I18N_KEYS, CourseHelpRole, CourseI18n } from '@okr/calendar-course-util';
+import { COURSE_HELP_SECTIONS, COURSE_I18N_KEYS, COURSE_PROCESS_INVITE, COURSE_PROCESS_STEPS, CourseHelpRole, CourseI18n } from '@okr/calendar-course-util';
 import { I18nService } from '@okr/shared-i18n';
 import { Header } from '@okr/shared-ui';
 
@@ -34,6 +34,20 @@ import { Header } from '@okr/shared-ui';
   template: `
     <okr-header [i18n]="{ title: i18n.help_title() }" [isModal]="true" />
     <ion-content class="ion-padding">
+      @if (withProcess()) {
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>{{ i18n.help_process_title() }}</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>{{ processSteps() }}</ion-card-content>
+        </ion-card>
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>{{ processInvite().title }}</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>{{ processInvite().text }}</ion-card-content>
+        </ion-card>
+      }
       <p class="role">{{ roleLabel() }}</p>
       <p class="intro">{{ intro() }}</p>
       @for (section of sections(); track section.title) {
@@ -53,9 +67,16 @@ export class CourseHelpModal {
 
   // inputs
   public readonly role = input.required<CourseHelpRole>();
+  /** the course list shows the Anmeldeprozess first; the course table does not */
+  public readonly withProcess = input(false);
 
   protected readonly roleLabel = computed(() => this.i18n[`help_${this.role()}_role`]());
   protected readonly intro = computed(() => this.i18n[`help_${this.role()}_intro`]());
+  protected readonly processSteps = computed(() =>
+    COURSE_PROCESS_STEPS.map((step, i) => `${i + 1}. ${this.i18n[step]()}`).join('\n'));
+  protected readonly processInvite = computed(() => ({
+    title: this.i18n[COURSE_PROCESS_INVITE.title](), text: this.i18n[COURSE_PROCESS_INVITE.text](),
+  }));
   protected readonly sections = computed(() =>
     COURSE_HELP_SECTIONS[this.role()].map(section => ({ title: this.i18n[section.title](), text: this.i18n[section.text]() })));
 }
@@ -64,10 +85,10 @@ export class CourseHelpModal {
  * Opens the course help for a role. Exported so every entry point (course list, course table, the treasurer's task)
  * opens the same modal the same way.
  */
-export async function openCourseHelp(modalController: ModalController, role: CourseHelpRole): Promise<void> {
+export async function openCourseHelp(modalController: ModalController, role: CourseHelpRole, options: { withProcess?: boolean } = {}): Promise<void> {
   const modal = await modalController.create({
     component: CourseHelpModal,
-    componentProps: { role },
+    componentProps: { role, withProcess: options.withProcess ?? false },
   });
   await modal.present();
   await modal.onDidDismiss();

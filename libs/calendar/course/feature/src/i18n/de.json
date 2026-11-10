@@ -295,6 +295,19 @@
   "help": {
     "title": "Anleitung zum Kurs",
     "open": "Anleitung",
+    "process": {
+      "title": "So kommt jemand zu uns",
+      "step1": "Wer sich für den Verein interessiert, schreibt uns über das Kontaktformular auf der Website und wählt dort ein Thema. So landet die Nachricht bei der richtigen Person.",
+      "step2": "Die verantwortliche Person und die interessierte Person sprechen miteinander, per Mail oder Telefon.",
+      "step3": "Wenn es passt, bittet die verantwortliche Person darum, die Anmeldung auszufüllen.",
+      "step4": "Die Anmeldung kann das ganze Jahr über abgeschickt werden. Sie erscheint in der Liste der Anmeldungen, und die verantwortliche Person bekommt eine Aufgabe.",
+      "step5": "Sobald ein Kurs organisiert ist, lädt die verantwortliche Person ausgewählte Personen ein. Sie erhalten einen persönlichen Link und sagen ohne Anmeldung zu oder ab.",
+      "step6": "Angekündigte Kurse erscheinen am Ende der Anmeldung. So kann sich jemand gleich für einen Kurs anmelden.",
+      "invite": {
+        "title": "So lädst du Bewerbende ein",
+        "text": "Öffne die Kursliste und wähle beim Kurs die Aktion «Bewerbende einladen». Wähle die Personen aus und tippe auf «Einladen». Im selben Fenster siehst du, wer schon geantwortet hat.\nDamit ein Kurs in der Anmeldung erscheint, muss er «auf der Website angekündigt» sein. Hat der Kurs eine Obergrenze, siehst du die freien Plätze. Sind alle Plätze vergeben, steht der Kurs als «ausgebucht» da."
+      }
+    },
     "trainer": {
       "role": "Für Trainerinnen und Trainer",
       "intro": "Du leitest Trainings des Kurses. Hier steht, was du in der Kurstabelle tun kannst. Die Beträge der Entschädigung siehst du nicht. Sie sehen nur die Verantwortlichen des Kurses, die Gruppenleitung, privilegierte Personen (zum Beispiel der Vorstand) und die Kassenführung.",

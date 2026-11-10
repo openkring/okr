@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve as resolvePath } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { AvatarInfo, CourseModel } from '@okr/shared-models';
@@ -5,7 +7,7 @@ import { AvatarInfo, CourseModel } from '@okr/shared-models';
 import { CourseAccess } from './course-access.util';
 import { COURSE_I18N_KEYS } from './course-i18n';
 import {
-  COURSE_HELP_SECTIONS, courseHelpRoleFor, courseListHelpRole, courseTaskHelpRole, isCourseLinkKey, pickCourseHelpRole, strongestCourseHelpRole
+  COURSE_HELP_SECTIONS, COURSE_PROCESS_HELP_KEYS, COURSE_PROCESS_STEPS, courseHelpRoleFor, courseListHelpRole, courseTaskHelpRole, isCourseLinkKey, pickCourseHelpRole, strongestCourseHelpRole
 } from './course-help.util';
 
 function avatar(key: string): AvatarInfo {
@@ -111,4 +113,23 @@ describe('COURSE_HELP_SECTIONS', () => {
       expect(COURSE_I18N_KEYS).toHaveProperty(`help_${role}_intro`);
     }
   });
+});
+
+describe('COURSE_PROCESS_HELP_KEYS', () => {
+  const resolve = (json: unknown, key: string): unknown =>
+    key.replace('@calendar/course/feature.', '').split('.').reduce<unknown>((o, k) => (o as Record<string, unknown> | undefined)?.[k], json);
+
+  it('has the title, the six steps and the invite block', () => {
+    expect(COURSE_PROCESS_STEPS).toHaveLength(6);
+    expect(COURSE_PROCESS_HELP_KEYS).toHaveLength(1 + 6 + 2);
+  });
+  for (const lang of ['de', 'en', 'fr', 'it', 'es']) {
+    it(`every key has a text in ${lang}.json`, () => {
+      const json = JSON.parse(readFileSync(resolvePath(process.cwd(), `libs/calendar/course/feature/src/i18n/${lang}.json`), 'utf8'));
+      for (const key of COURSE_PROCESS_HELP_KEYS) {
+        const value = resolve(json, key);
+        expect(typeof value === 'string' && value.length > 0, key).toBe(true);
+      }
+    });
+  }
 });

@@ -184,7 +184,7 @@ export const CourseStore = signalStore(
     /** The (i): the help for the viewer's role. The ui lib is imported on demand, like the edit modal. */
     async showHelp(): Promise<void> {
       const { openCourseHelp } = await import('@okr/calendar-course-ui');
-      await openCourseHelp(store.modalController, store.helpRole());
+      await openCourseHelp(store.modalController, store.helpRole(), { withProcess: true });
     },
 
     async add(): Promise<void> {

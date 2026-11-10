@@ -257,6 +257,17 @@ export const COURSE_I18N_KEYS = {
   // help behind the (i) (spec 1.132 §10)
   help_title: PFX + 'help.title',
   help_open:  PFX + 'help.open',
+
+  // process section of the course list (i) (spec 1.152 §10)
+  help_process_title:       PFX + 'help.process.title',
+  help_process_step1:       PFX + 'help.process.step1',
+  help_process_step2:       PFX + 'help.process.step2',
+  help_process_step3:       PFX + 'help.process.step3',
+  help_process_step4:       PFX + 'help.process.step4',
+  help_process_step5:       PFX + 'help.process.step5',
+  help_process_step6:       PFX + 'help.process.step6',
+  help_process_invite_title: PFX + 'help.process.invite.title',
+  help_process_invite_text:  PFX + 'help.process.invite.text',
   help_trainer_role:  PFX + 'help.trainer.role',
   help_trainer_intro: PFX + 'help.trainer.intro',
   help_trainer_confirm_title: PFX + 'help.trainer.confirm.title',
