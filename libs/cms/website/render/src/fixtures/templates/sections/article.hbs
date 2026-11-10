@@ -1,0 +1,8 @@
+<section class="article"{{#if name}} id="{{name}}"{{/if}}>
+  {{#if kicker}}<p class="kicker">{{kicker}}</p>{{/if}}
+  {{#if title}}<h2>{{title}}</h2>{{/if}}
+  {{#if subTitle}}<p class="subtitle">{{subTitle}}</p>{{/if}}
+  {{#each images}}<figure><img src="{{this.url}}" alt="{{alt}}">{{#if caption}}<figcaption>{{caption}}</figcaption>{{/if}}</figure>{{/each}}
+  <div class="prose">{{{content}}}</div>
+  {{#if cta}}<a class="cta {{cta.style}}" href="{{url cta.url}}">{{cta.label}}</a>{{/if}}
+</section>

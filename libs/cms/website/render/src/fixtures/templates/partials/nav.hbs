@@ -1,0 +1,16 @@
+<nav>
+  <ul>
+    {{#each nav}}
+    <li>
+      {{#if children.length}}
+      <span>{{label}}</span>
+      <ul>
+        {{#each children}}<li><a href="{{this.url}}"{{#if current}} aria-current="page"{{/if}}>{{label}}</a></li>{{/each}}
+      </ul>
+      {{else}}
+      <a href="{{this.url}}"{{#if (eq style "button")}} class="button"{{/if}}{{#if current}} aria-current="page"{{/if}}>{{label}}</a>
+      {{/if}}
+    </li>
+    {{/each}}
+  </ul>
+</nav>

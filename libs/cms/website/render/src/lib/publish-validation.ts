@@ -31,6 +31,30 @@ function activeInTree(nodes: WebsiteNode[], pageKey: string): boolean {
   return nodes.some((n) => !n.isArchived && ((n.type === 'page' && n.pageKey === pageKey) || activeInTree(n.children ?? [], pageKey)));
 }
 
+export interface PageSection {
+  /** the key as listed on the page, may contain `@TID@` */
+  raw: string;
+  /** the resolved sections/{key} */
+  sectionKey: string;
+  section: SectionDoc;
+}
+
+/**
+ * The published sections of a page in page order: each listed key as is, else with `@TID@` replaced
+ * by one of the site's tenants. Missing and draft sections are left out. Validation and rendering
+ * both list a page's sections through here.
+ */
+export function publishedPageSections(page: PageModel | undefined, tenants: string[], sections: Map<string, SectionDoc>): PageSection[] {
+  const out: PageSection[] = [];
+  for (const raw of page?.sections ?? []) {
+    const sectionKey = [raw, ...tenants.map((t) => raw.replace('@TID@', t))].find((k) => sections.has(k));
+    const section = sectionKey ? sections.get(sectionKey) : undefined;
+    if (!sectionKey || !section || !isPublished(section)) continue;
+    out.push({ raw, sectionKey, section });
+  }
+  return out;
+}
+
 /**
  * Everything that must be true before a site is rendered: the tree warnings, a present home page,
  * and a template block for every published section. Nested accordion sections are plain content
@@ -57,10 +81,7 @@ export function validateForPublish(
   if (site.homePageKey) keys.add(site.homePageKey);
   const tenants = site.tenants ?? [];
   for (const pageKey of keys) {
-    for (const raw of pages.get(pageKey)?.sections ?? []) {
-      const sectionKey = [raw, ...tenants.map((t) => raw.replace('@TID@', t))].find((k) => sections.has(k));
-      const section = sectionKey ? sections.get(sectionKey) : undefined;
-      if (!section || !isPublished(section)) continue;
+    for (const { raw, section } of publishedPageSections(pages.get(pageKey), tenants, sections)) {
       const type = section.type ?? 'article';
       if (!manifest.sectionTypes.includes(type)) {
         problems.push({ code: 'templateMissing', pageKey, sectionKey: raw, detail: type });

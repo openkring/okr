@@ -4,3 +4,6 @@ export * from './lib/section-mapper';
 export * from './lib/sanitize';
 export * from './lib/image-caption';
 export * from './lib/publish-validation';
+export * from './lib/render-context';
+export * from './lib/render-helpers';
+export * from './lib/render-site';

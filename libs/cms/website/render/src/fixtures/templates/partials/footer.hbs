@@ -1,0 +1,14 @@
+<footer>
+  {{#if footer.tagline}}<p>{{footer.tagline}}</p>{{/if}}
+  {{#each footer.items}}
+  <section>
+    {{#if children.length}}
+    <h2>{{label}}</h2>
+    <ul>{{#each children}}<li><a href="{{this.url}}">{{label}}</a></li>{{/each}}</ul>
+    {{else}}
+    <a href="{{this.url}}">{{label}}</a>
+    {{/if}}
+  </section>
+  {{/each}}
+  <p>&copy; {{year}} {{site.name}}</p>
+</footer>

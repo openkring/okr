@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="{{lang}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{#if page.title}}{{page.title}} – {{/if}}{{site.name}}</title>
+  {{#if page.metaDescription}}<meta name="description" content="{{page.metaDescription}}">{{/if}}
+  {{#each alternates}}<link rel="alternate" hreflang="{{lang}}" href="{{this.url}}">
+  {{/each}}
+  <link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+  <header>
+    <a href="{{url "/"}}">{{site.name}}</a>
+    {{> nav}}
+    <ul class="languages">
+      {{#each alternates}}<li><a href="{{this.url}}" hreflang="{{lang}}"{{#if (eq lang @root.lang)}} aria-current="true"{{/if}}>{{lang}}</a></li>{{/each}}
+    </ul>
+  </header>
+  <main>
+    {{#if page.banner.url}}<img class="banner" src="{{page.banner.url}}" alt="{{page.banner.alt}}">{{/if}}
+    {{#if page.abstract}}<p class="abstract">{{page.abstract}}</p>{{/if}}
+    {{{main}}}
+  </main>
+  {{> footer}}
+</body>
+</html>
