@@ -78,6 +78,19 @@ describe('countCoursePlaces', () => {
     ] });
     expect(await countCoursePlaces(db, 'scs', 'k')).toBe(2);
   });
+  it('counts a form-submitted application without isArchived, never an archived one', async () => {
+    const db = fakeDb({ applications: [
+      { id: '1', data: { courseKey: 'k', courseState: 'registered', state: 'applied' } },
+      { id: '2', data: { courseKey: 'k', courseState: 'registered', state: 'applied', isArchived: true } },
+    ] });
+    expect(await countCoursePlaces(db, 'scs', 'k')).toBe(1);
+  });
+  it('does not filter on isArchived in the query', async () => {
+    const filters: string[] = [];
+    const q = { where: (f: string) => { filters.push(f); return q; }, get: async () => ({ docs: [] }) };
+    await countCoursePlaces({ collection: () => q } as unknown as FirebaseFirestore.Firestore, 'scs', 'k');
+    expect(filters).toEqual(['tenants', 'courseKey']);
+  });
 });
 
 describe('readAnnouncedCourses', () => {
@@ -158,6 +171,7 @@ describe('checkCourseChoice (submitForm, spec 1.152 §7.3)', () => {
       tenantId: 'scs',
       today: TODAY,
       isSpam: false,
+      targetCollection: 'applications',
       ...extra,
     };
   }
@@ -248,6 +262,27 @@ describe('checkCourseChoice (submitForm, spec 1.152 §7.3)', () => {
     const r = await checkCourseChoice(fake, args('k', { fields: [TEXT_FIELD], values: { name: 'A', courseKey: 'k', courseState: 'accepted' } }));
     expect(r).toEqual({ name: 'A' });
     expect(reads).toEqual([]);
+  });
+
+  it('stores no course on a mail target or a prospects mapping, without a refusal or a read', async () => {
+    for (const targetCollection of [undefined, 'prospects']) {
+      const { fake, reads } = db({});
+      const r = await checkCourseChoice(fake, args('nope', { targetCollection }));
+      expect('courseKey' in r).toBe(false);
+      expect('courseState' in r).toBe(false);
+      expect(reads).toEqual([]);
+    }
+  });
+
+  it('never stores the raw answer under a course field key other than courseKey', async () => {
+    const field = { ...COURSE_FIELD, key: 'kurs' };
+    const base = { fields: [TEXT_FIELD, field], answers: { name: 'A', kurs: 'k' }, values: { name: 'A', applicationAs: 'youth', kurs: 'k' } };
+    expect(await checkCourseChoice(db({ k: OPEN }).fake, args('k', base)))
+      .toEqual({ name: 'A', applicationAs: 'youth', courseKey: 'k', courseState: 'registered' });
+    const none = await checkCourseChoice(db({}).fake, args('k', { ...base, answers: { name: 'A' }, values: { name: 'A', kurs: '' } }));
+    expect(none).toEqual({ name: 'A' });
+    const spam = await checkCourseChoice(db({}).fake, args('k', { ...base, isSpam: true }));
+    expect('kurs' in spam).toBe(false);
   });
 
   it('drops a client courseState next to a valid choice', async () => {

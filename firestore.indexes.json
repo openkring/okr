@@ -537,10 +537,6 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "isArchived",
-          "order": "ASCENDING"
-        },
-        {
           "fieldPath": "__name__",
           "order": "ASCENDING"
         }

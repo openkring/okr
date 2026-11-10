@@ -742,7 +742,7 @@ export const submitForm = onCall(
     // `courseKey`/`courseState` are only ever set here (never the client's). Spam: no check, no course.
     const cleanValues = await checkCourseChoice(db, {
       fields, answers: prepared.answers, derivedValues: prepared.derivedValues, values: prepared.values,
-      tenantId: payload.tenantId, today, isSpam,
+      tenantId: payload.tenantId, today, isSpam, targetCollection: mapping?.collectionName,
     });
 
     // ── 5. Persist ────────────────────────────────

@@ -32,7 +32,11 @@ export function projectCourseAudience(derived: unknown, audienceFrom: string): D
   return list.find(d => d?.key === audienceFrom);
 }
 
-/** Places taken on a course: applications of this tenant that hold a place (decided in code). */
+/**
+ * Places taken on a course: applications of this tenant that hold a place (decided in code). No `isArchived`
+ * filter in the query: form-submitted applications are written without that field, and `holdsCoursePlace`
+ * already excludes `isArchived === true` — a `== false` filter would never count them (course never full).
+ */
 export async function countCoursePlaces(
   db: FirebaseFirestore.Firestore,
   tenantId: string,
@@ -41,7 +45,6 @@ export async function countCoursePlaces(
   const snap = await db.collection('applications')
     .where('tenants', 'array-contains', tenantId)
     .where('courseKey', '==', courseKey)
-    .where('isArchived', '==', false)
     .get();
   return snap.docs.filter(d => holdsCoursePlace(d.data(), courseKey)).length;
 }
@@ -121,7 +124,12 @@ export interface CourseChoiceInput {
   tenantId: string;
   today: string;
   isSpam: boolean;
+  /** the collection the submission is written to (`mapping.collectionName`), undefined for a mail/url target */
+  targetCollection: string | undefined;
 }
+
+/** Only an application holds a course place (spec 1.152: course field only on `applications.*` mappings). */
+const COURSE_TARGET = 'applications';
 
 function courseUnavailable(): HttpsError {
   return new HttpsError('failed-precondition', 'course-unavailable', { reason: 'course-unavailable' });
@@ -133,6 +141,9 @@ function courseUnavailable(): HttpsError {
  *
  * - No course field on the form, or a spam-flagged submission: no check, and no course is stored — any
  *   client-sent `courseKey`/`courseState` is dropped.
+ * - A course field on a target that is not an `applications` collection write (a definition bug): logged,
+ *   no course stored, no refusal.
+ * - The raw answer under the field's own key is never stored (only `courseKey` set here).
  * - Nothing ticked (A3) — no answer, `null` or `''`: a plain Anmeldung, nothing is read.
  * - Anything else that is not a document id (array, object, number, boolean, a path): refused unread.
  * - A key: the course is read on the server and must belong to the tenant, be announced, open, for the
@@ -143,9 +154,17 @@ export async function checkCourseChoice(
   input: CourseChoiceInput,
 ): Promise<Record<string, unknown>> {
   const field = courseFieldOf(input.fields);
-  if (!field || input.isSpam) return applyCourseChoice(input.values, '');
+  if (!field) return applyCourseChoice(input.values, '');
+  // the raw answer is stored only as the checked `courseKey`, never under a differently named field key
+  const values = { ...input.values };
+  delete values[field.key];
+  if (input.isSpam) return applyCourseChoice(values, '');
+  if (input.targetCollection !== COURSE_TARGET) {
+    logger.warn(`submitForm: course field '${field.key}' on a form not writing to '${COURSE_TARGET}' (target ${input.targetCollection ?? 'mail/url'}) — no course stored`);
+    return applyCourseChoice(values, '');
+  }
   const answer = input.answers[field.key];
-  if (answer === undefined || answer === null || answer === '') return applyCourseChoice(input.values, '');
+  if (answer === undefined || answer === null || answer === '') return applyCourseChoice(values, '');
   if (!isDocumentId(answer) || answer.trim() !== answer) {
     logger.info(`submitForm: course choice refused (not a course key, ${Array.isArray(answer) ? 'array' : typeof answer})`);
     throw courseUnavailable();
@@ -158,5 +177,5 @@ export async function checkCourseChoice(
     logger.info(`submitForm: course choice refused courseKey=${answer} audience=${audience ?? '-'} taken=${taken}`);
     throw courseUnavailable();
   }
-  return applyCourseChoice(input.values, answer);
+  return applyCourseChoice(values, answer);
 }
