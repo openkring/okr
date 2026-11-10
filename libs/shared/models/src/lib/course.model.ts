@@ -1,6 +1,7 @@
 import { DEFAULT_DATE, DEFAULT_DATETIME, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
 import { AvatarInfo } from './avatar-info';
 import { NamedModel, OkrModel, SearchableModel, TaggedModel } from './base.model';
+import type { ApplicationKind } from './application.model';
 import { MoneyModel } from './money.model';
 
 /**
@@ -57,6 +58,10 @@ export class CourseModel implements OkrModel, NamedModel, SearchableModel, Tagge
   public groupKey = DEFAULT_KEY; // okey of the training group (orgModelType 'group')
   public startDate = DEFAULT_DATE; // StoreDate, first day of the course (inclusive)
   public endDate = DEFAULT_DATE; // StoreDate, last day of the course (inclusive)
+
+  public audience: ApplicationKind[] = []; // applicant types the course is for; [] = not offered in the Anmeldung; optional on read → `?? []`
+  public isAnnounced = false; // shown in the Anmeldung; optional on read → `?? false`
+  public maxParticipants = 0; // places; 0 = unlimited; optional on read → `?? 0`
 
   public responsiblePersons: AvatarInfo[] = []; // the first one receives the task at the end of the course
   public trainers: AvatarInfo[] = []; // may confirm the attendance

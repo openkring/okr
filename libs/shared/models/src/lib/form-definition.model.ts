@@ -9,7 +9,7 @@ export type FieldType =
   | 'text' | 'email' | 'number' | 'phone' | 'iban' | 'ssn' | 'password'
   | 'dropdown' | 'checkbox' | 'radio' | 'file' | 'images'
   | 'date' | 'time' | 'signature' | 'rating' | 'avatar' | 'category'
-  | 'implicit'
+  | 'implicit' | 'course'
   | 'label' | 'paragraph' | 'divider';
 
 export interface FieldOption { label: string; value: string; }
@@ -93,6 +93,12 @@ export interface ImplicitField extends FieldBase {
   fromLink?: boolean;
 }
 // Display-only elements — no input value, never submitted. `label` holds the static text.
+/** Course choice (spec 1.152): at most one per form, only on applications.* mappings, field key `courseKey`. */
+export interface CourseField extends FieldBase {
+  type: 'course';
+  /** key of the derived value that holds the applicant type, usually 'applicationAs' */
+  audienceFrom: string;
+}
 export interface LabelField extends FieldBase { type: 'label'; }
 // A paragraph of static text (held in `label`); both flags default to true when absent.
 export interface ParagraphField extends FieldBase { type: 'paragraph'; isIndented?: boolean; isSmall?: boolean; }
@@ -101,7 +107,7 @@ export interface DividerField extends FieldBase { type: 'divider'; }
 export type Field =
   | TextField | EmailField | NumberField | PhoneField | IbanField | SsnField | PasswordField | ImplicitField
   | DropdownField | CheckboxField | RadioField | FileField | ImagesField
-  | DateField | TimeField | SignatureField | RatingField | AvatarField | CategoryField
+  | DateField | TimeField | SignatureField | RatingField | AvatarField | CategoryField | CourseField
   | LabelField | ParagraphField | DividerField;
 
 // ──────────────────────────────────────────

@@ -15,6 +15,8 @@ interface FieldTemplate {
   /** `implicit` only: the type of the stored value */
   valueType?: PropertyType;
   asProperty?: boolean;
+  /** `course` only: key of the derived value holding the applicant type */
+  audienceFrom?: string;
 }
 
 /**
@@ -41,6 +43,8 @@ const FORM_FIELD_TEMPLATES: Record<string, FieldTemplate[]> = {
     { key: 'countryCode',   type: 'text',  label: 'Land' },
     { key: 'applicationAs', type: 'radio', label: 'Bewerbung als', required: true,
       options: [{ label: 'Jugend', value: 'youth' }, { label: 'Erwachsen', value: 'adult' }, { label: 'Übertritt', value: 'transfer' }] },
+    // the announced-course choice (spec 1.152): at most one per form, stored as `courseKey`
+    { key: 'courseKey',     type: 'course', label: 'Kurs', audienceFrom: 'applicationAs' },
   ],
   'applications.junior': [
     { key: 'firstName',     type: 'text',  label: 'Vorname',       required: true },
@@ -56,6 +60,8 @@ const FORM_FIELD_TEMPLATES: Record<string, FieldTemplate[]> = {
     { key: 'city',          type: 'text',  label: 'Ort' },
     { key: 'countryCode',   type: 'text',  label: 'Land' },
     { key: 'ssnId',         type: 'ssn',   label: 'AHV-Nummer' },
+    // the announced-course choice (spec 1.152): at most one per form, stored as `courseKey`
+    { key: 'courseKey',     type: 'course', label: 'Kurs', audienceFrom: 'applicationAs' },
   ],
   'applications.course': [
     // the course (CourseModel.okey): never shown, set by the embedding section's `implicitValues` (D-W4).
@@ -94,6 +100,8 @@ function buildField(template: FieldTemplate, order: number): Field {
       return { ...base, type: template.type, avatarType: 'person' };
     case 'category':
       return { ...base, type: template.type, categoryName: '' };
+    case 'course':
+      return { ...base, type: 'course', audienceFrom: template.audienceFrom ?? 'applicationAs' };
     case 'implicit':
       return { ...base, type: 'implicit', valueType: template.valueType ?? 'text', asProperty: template.asProperty };
     default:

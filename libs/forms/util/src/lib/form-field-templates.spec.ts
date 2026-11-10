@@ -10,8 +10,18 @@ describe('getPrefillFields', () => {
     const keys = fields.map(f => f.key);
     expect(keys).toEqual([
       'firstName', 'lastName', 'gender', 'dateOfBirth', 'ssnId', 'email', 'phone',
-      'streetName', 'streetNumber', 'zipCode', 'city', 'countryCode', 'applicationAs',
+      'streetName', 'streetNumber', 'zipCode', 'city', 'countryCode', 'applicationAs', 'courseKey',
     ]);
+  });
+
+  it('offers the course choice on both application mappings, audience from applicationAs', () => {
+    for (const mappingKey of ['applications.default', 'applications.junior']) {
+      const course = getPrefillFields(mappingKey).find(f => f.key === 'courseKey');
+      expect(course?.type).toBe('course');
+      expect(course?.label).toBe('Kurs');
+      expect(course && 'audienceFrom' in course ? course.audienceFrom : undefined).toBe('applicationAs');
+    }
+    expect(getPrefillFields('applications.course').some(f => f.type === 'course')).toBe(false);
   });
 
   it('returns the course set for applications.course with an implicit courseId', () => {
@@ -82,7 +92,7 @@ describe('getPrefillFields', () => {
     const model = { fields: getPrefillFields('applications.default') };
     const afterModalClone = structuredClone(model);
     const afterFirestoreClone = structuredClone(afterModalClone);
-    expect(afterFirestoreClone.fields).toHaveLength(13);
+    expect(afterFirestoreClone.fields).toHaveLength(14);
     expect(afterFirestoreClone.fields[0].key).toBe('firstName');
   });
 });

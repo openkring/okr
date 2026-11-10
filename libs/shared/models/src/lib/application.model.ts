@@ -46,6 +46,12 @@ export class ApplicationModel implements OkrModel, SearchableModel, TaggedModel 
   // form-builder answers that are not model fields (e.g. SCS rowingExperience); generic, no tenant-specific fields
   public properties: TypedProperty[] = [];
 
+  // course (spec 1.152); all optional on read → `?? ''`
+  public courseKey = ''; // CourseModel.okey the application is on; '' = none
+  public courseState: ApplicationCourseState = ''; // '' | registered | invited | accepted | declined
+  public invitedAt = ''; // StoreDateTime of the last invitation
+  public answeredAt = ''; // StoreDateTime of the last answer
+
   // workflow bookkeeping
   public submittedAt = '';
   public reviewedAt = '';
@@ -79,3 +85,6 @@ export const APPLICATION_KIND_VALUES: ApplicationKind[] = ['youth', 'adult', 'tr
 
 export type ApplicationFor = 'membership' | 'course';
 export const APPLICATION_FOR_VALUES: ApplicationFor[] = ['membership', 'course'];
+
+export type ApplicationCourseState = '' | 'registered' | 'invited' | 'accepted' | 'declined';
+export const APPLICATION_COURSE_STATE_VALUES: ApplicationCourseState[] = ['', 'registered', 'invited', 'accepted', 'declined'];

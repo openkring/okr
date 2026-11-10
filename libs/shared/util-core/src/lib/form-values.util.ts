@@ -56,6 +56,7 @@ export function propertyTypeOf(field: Field): PropertyType | undefined {
     case 'email':
     case 'phone':
       return 'text';
+    case 'course': // written to `courseKey` (+ `courseState`) by the server, never a property
     default:
       return undefined;
   }
