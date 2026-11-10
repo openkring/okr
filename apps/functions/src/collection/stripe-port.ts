@@ -13,6 +13,8 @@ export interface PaymentIntentInfo {
   chargeId: string;
   created: number;
   currency: string;
+  /** Our metadata.attemptKey on the intent ('' / absent when none). */
+  attemptKey?: string;
 }
 
 /** One refund of a charge. `amount` in Rappen, `currency` lower-case, `created` in Unix seconds. */
@@ -229,7 +231,10 @@ function urlOf(session: Stripe.Checkout.Session): string {
 }
 
 function intentInfo(pi: Stripe.PaymentIntent): PaymentIntentInfo {
-  return { id: pi.id, status: pi.status, amountReceived: pi.amount_received, chargeId: chargeIdOf(pi), created: pi.created, currency: pi.currency };
+  return {
+    id: pi.id, status: pi.status, amountReceived: pi.amount_received, chargeId: chargeIdOf(pi), created: pi.created, currency: pi.currency,
+    attemptKey: pi.metadata?.['attemptKey'] ?? '',
+  };
 }
 
 function chargeIdOf(pi: Stripe.PaymentIntent): string {

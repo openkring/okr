@@ -6,6 +6,12 @@ describe('creditDecision', () => {
   it('refuses to go below 0', () => expect(creditDecision(100, -120)).toEqual({ ok: false, reason: 'insufficient-credit' }));
   it('allows going exactly to 0', () => expect(creditDecision(120, -120)).toEqual({ ok: true, balanceAfter: 0 }));
   it('tops up', () => expect(creditDecision(0, 2000)).toEqual({ ok: true, balanceAfter: 2000 }));
+  it('a refund may take the balance below 0 (the money has already left Stripe)', () =>
+    expect(creditDecision(100, -500, 'refund')).toEqual({ ok: true, balanceAfter: -400 }));
+  it('any other kind still refuses to go below 0', () => {
+    expect(creditDecision(100, -500, 'deduction')).toEqual({ ok: false, reason: 'insufficient-credit' });
+    expect(creditDecision(100, -500, 'correction')).toEqual({ ok: false, reason: 'insufficient-credit' });
+  });
 });
 
 describe('creditBookingLines', () => {
@@ -19,6 +25,7 @@ describe('creditBookingLines', () => {
     expect(creditBookingLines('correction', 50, 'P', 'R')?.[0]).toEqual({ accountKey: 'R', debitAmount: m(50) });
   });
   it('topup has no booking', () => expect(creditBookingLines('topup', 2000, 'P', 'R')).toBeNull());
+  it('refund has no booking (the Stripe refund booking already debited prepayment)', () => expect(creditBookingLines('refund', -2000, 'P', 'R')).toBeNull());
   it('key', () => expect(creditBookingKey('scs', 'e1')).toBe('credit-scs-e1'));
 });
 
@@ -33,5 +40,7 @@ describe('signMatchesKind', () => {
     expect(signMatchesKind('correction', -5)).toBe(true);
     expect(signMatchesKind('correction', 5)).toBe(true);
     expect(signMatchesKind('correction', 0)).toBe(false);
+    expect(signMatchesKind('refund', -1)).toBe(true);
+    expect(signMatchesKind('refund', 1)).toBe(false);
   });
 });

@@ -52,6 +52,16 @@ describe('applyCreditEntry', () => {
     expect(store['booking-lines/credit-scs-e2-1']).toMatchObject({ accountKey: 'acc-3200', creditAmount: { amount: 120 } });
   });
 
+  it('a refund takes the balance below 0 without a booking', async () => {
+    const store = seed();
+    const db = fakeDb(store);
+    await applyCreditEntry(db, 'scs', 'e1', entry());
+    const r = await applyCreditEntry(db, 'scs', 'refund-re_1', entry({ kind: 'refund', amount: -5000 }));
+    expect(r).toEqual({ balanceAfter: -3000, duplicate: false });
+    expect(store['credit-accounts/scs/entries/refund-re_1']).toMatchObject({ kind: 'refund', amount: -5000, balanceAfter: -3000, bookingKey: '' });
+    expect(Object.keys(store).filter(k => k.startsWith('bookings'))).toEqual([]);
+  });
+
   it('insufficient credit: refused, nothing written', async () => {
     const store = seed();
     await expect(applyCreditEntry(fakeDb(store), 'scs', 'e1', entry({ kind: 'deduction', amount: -1 }))).rejects.toMatchObject({ code: 'failed-precondition', message: 'insufficient-credit' });

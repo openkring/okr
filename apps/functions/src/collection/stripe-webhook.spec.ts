@@ -93,6 +93,7 @@ function fakePort(): StripeHandlerPort & { calls: string[] } {
     })),
     detachPaymentMethod: vi.fn(async (id: string) => { calls.push(`detach:${id}`); }),
     listRefunds: vi.fn(async () => []),
+    retrievePaymentIntent: vi.fn(),
   };
 }
 

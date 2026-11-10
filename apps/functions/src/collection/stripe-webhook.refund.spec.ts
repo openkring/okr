@@ -69,6 +69,9 @@ function fakePort(refunds: RefundInfo[] = []) {
     paymentMethodDisplay: vi.fn(),
     detachPaymentMethod: vi.fn(async () => undefined),
     listRefunds: vi.fn(async (chargeId: string) => { calls.push(`refunds:${chargeId}`); return port.refunds; }),
+    retrievePaymentIntent: vi.fn(async (id: string) => ({
+      id, status: 'succeeded', amountReceived: 5000, chargeId: 'ch_1', created: T, currency: 'chf', attemptKey: id === 'pi_1' ? 'att1' : '',
+    })),
   };
   return port as typeof port & StripeHandlerPort;
 }
@@ -88,13 +91,20 @@ const refunded = (metadata: Doc = meta) => row({
   id: 'evt_r', type: 'charge.refunded', created: T,
   data: { object: { id: 'ch_1', object: 'charge', payment_intent: 'pi_1', amount: 5000, amount_refunded: 2000, currency: 'chf', metadata } },
 });
-const disputeEvent = (type: string, status: string) => row({
+const WITHDRAWN = { amount: -5000, fee: 1500, currency: 'chf' };
+const disputeEvent = (type: string, status: string, balanceTransactions: Doc[] = [WITHDRAWN]) => row({
   id: `evt_${status}`, type, created: T,
   data: { object: {
     id: 'dp_1', object: 'dispute', charge: 'ch_1', payment_intent: 'pi_1', amount: 5000, currency: 'chf', status, reason: 'fraudulent',
-    balance_transactions: [{ amount: -5000, fee: 1500, currency: 'chf' }],
+    balance_transactions: balanceTransactions,
   } },
 });
+const refundUpdated = (status: string) => row({
+  id: `evt_ru_${status}`, type: 'charge.refund.updated', created: T,
+  data: { object: { id: 're_1', object: 'refund', charge: 'ch_1', payment_intent: 'pi_1', amount: 2000, currency: 'chf', status } },
+});
+const CREDIT = 'credit-accounts/scs';
+const TOPUP: Doc = { ...POSTED, purpose: 'topup' };
 
 function setup(store: Store, refunds: RefundInfo[] = []) {
   const port = fakePort(refunds);
@@ -174,14 +184,27 @@ describe('stripeHandler: charge.refunded', () => {
     expect(store[ATTEMPT]['state']).toBe('overpaid');
   });
 
-  it('a refund of a top-up charge books prepayment → clearing (the payment had reached the top-up invoice)', async () => {
-    const store = seed({ ...POSTED, purpose: 'topup', invoiceKey: 'inv1' });
-    const { handler, logs } = setup(store, [refund('re_1', 5000)]);
+  it('a refund of a top-up within the balance: booking prepayment → clearing and a credit refund entry, once', async () => {
+    const store = seed(TOPUP);
+    store[CREDIT] = { tenants: ['scs'], balance: 10000 };
+    const { handler } = setup(store, [refund('re_1', 5000)]);
+    await handler(refunded(), 'r1');
     await handler(refunded(), 'r1');
     expect(bookingKeys(store)).toEqual(['stripe-refund-re_1']);
     expect(lines(store, 'stripe-refund-re_1')[0]).toMatchObject({ accountKey: PREPAYMENT, debitAmount: { amount: 5000 } });
+    expect(store[`${CREDIT}/entries/refund-re_1`]).toMatchObject({ kind: 'refund', amount: -5000, balanceAfter: 5000, bookingKey: '', reference: 'inv1' });
+    expect(store[CREDIT]['balance']).toBe(5000);
     expect(store[ATTEMPT]['state']).toBe('refunded');
-    expect(logs.some(m => m.includes('credit balance'))).toBe(true);
+    expect(store[SUB]['billingFlags']).toEqual(['vat-blocked']);
+  });
+
+  it('a top-up refund larger than the remaining credit takes the balance below 0 and flags credit-negative', async () => {
+    const store = seed(TOPUP);
+    store[CREDIT] = { tenants: ['scs'], balance: 1000 };
+    const { handler } = setup(store, [refund('re_1', 5000)]);
+    await handler(refunded(), 'r1');
+    expect(store[CREDIT]['balance']).toBe(-4000);
+    expect(store[SUB]['billingFlags']).toEqual(['vat-blocked', 'credit-negative']);
   });
 
   it('a refund of a payment posted to an invoice books nothing, keeps the attempt and flags the payer', async () => {
@@ -227,33 +250,81 @@ describe('stripeHandler: disputes', () => {
     expect(bookingKeys(store)).toEqual([]);
   });
 
-  it('a lost dispute books amount + fee to the fee account against clearing, once', async () => {
-    const store = seed({ ...POSTED, state: 'disputed' });
+  it('a dispute on an attempt not yet settled only flags: the retried payment can still post', async () => {
+    const store = seed();
     const { handler } = setup(store);
-    await handler(disputeEvent('charge.dispute.closed', 'lost'), 'd2');
-    await handler(disputeEvent('charge.dispute.closed', 'lost'), 'd2');
-    expect(bookingKeys(store)).toEqual(['stripe-dispute-dp_1']);
-    expect(lines(store, 'stripe-dispute-dp_1')).toMatchObject([
-      { accountKey: FEE, debitAmount: { amount: 6500, currency: 'CHF' } },
-      { accountKey: CLEARING, creditAmount: { amount: 6500, currency: 'CHF' } },
-    ]);
-    expect(store['bookings/stripe-dispute-dp_1']).toMatchObject({ title: 'Stripe-Rückbuchung verloren Rechnung 202600001', date: '20261109' });
-    expect(store[ATTEMPT]['state']).toBe('disputed');
-  });
-
-  it('a won dispute books nothing and returns the attempt to its settled state', async () => {
-    const store = seed({ ...POSTED, state: 'disputed' });
-    const { handler } = setup(store);
-    expect(await handler(disputeEvent('charge.dispute.closed', 'won'), 'd3')).toEqual({ state: 'handled', tenantId: 'kring' });
-    expect(bookingKeys(store)).toEqual([]);
+    await handler(disputeEvent('charge.dispute.created', 'needs_response'), 'd1');
+    expect(store[ATTEMPT]['state']).toBe('open');
+    expect(store[SUB]['billingFlags']).toEqual(['vat-blocked', 'disputed']);
+    expect((await handler(succeeded, 'row1')).state).toBe('handled');
     expect(store[ATTEMPT]['state']).toBe('succeeded');
   });
 
-  it('a won dispute on an overpaid charge returns the attempt to overpaid', async () => {
+  it('lost on a payment posted to an invoice: amount to the fee/loss account, the fee separately, once', async () => {
+    const store = seed({ ...POSTED, state: 'disputed' });
+    const { handler } = setup(store);
+    await handler(disputeEvent('charge.dispute.closed', 'lost'), 'd2');
+    await handler(disputeEvent('charge.dispute.closed', 'lost'), 'd2');
+    expect(bookingKeys(store)).toEqual(['stripe-dispute-dp_1', 'stripe-dispute-fee-dp_1']);
+    expect(lines(store, 'stripe-dispute-dp_1')).toMatchObject([
+      { accountKey: FEE, debitAmount: { amount: 5000, currency: 'CHF' } },
+      { accountKey: CLEARING, creditAmount: { amount: 5000, currency: 'CHF' } },
+    ]);
+    expect(lines(store, 'stripe-dispute-fee-dp_1')).toMatchObject([
+      { accountKey: FEE, debitAmount: { amount: 1500 } }, { accountKey: CLEARING, creditAmount: { amount: 1500 } },
+    ]);
+    expect(store['bookings/stripe-dispute-dp_1']).toMatchObject({ title: 'Stripe-Rückbuchung verloren Rechnung 202600001', date: '20261109' });
+    expect(store[ATTEMPT]['state']).toBe('disputed');
+    expect(store[SUB]['billingFlags']).toEqual(['vat-blocked', 'disputed']);
+  });
+
+  it('lost on overpaid money: the amount comes out of prepayment, only the fee is an expense', async () => {
     const store = seed({ ...OVERPAID, state: 'disputed' });
     const { handler } = setup(store);
-    await handler(disputeEvent('charge.dispute.closed', 'won'), 'd3');
+    await handler(disputeEvent('charge.dispute.closed', 'lost'), 'd2');
+    expect(lines(store, 'stripe-dispute-dp_1')).toMatchObject([
+      { accountKey: PREPAYMENT, debitAmount: { amount: 5000 } }, { accountKey: CLEARING, creditAmount: { amount: 5000 } },
+    ]);
+    expect(lines(store, 'stripe-dispute-fee-dp_1')[0]).toMatchObject({ accountKey: FEE, debitAmount: { amount: 1500 } });
+    expect(store[`${CREDIT}/entries/dispute-dp_1`]).toBeUndefined();
+  });
+
+  it('lost on a top-up: out of prepayment plus a credit refund entry, once; below 0 flags credit-negative', async () => {
+    const store = seed({ ...TOPUP, state: 'disputed' });
+    store[CREDIT] = { tenants: ['scs'], balance: 2000 };
+    const { handler } = setup(store);
+    await handler(disputeEvent('charge.dispute.closed', 'lost'), 'd2');
+    await handler(disputeEvent('charge.dispute.closed', 'lost'), 'd2');
+    expect(lines(store, 'stripe-dispute-dp_1')[0]).toMatchObject({ accountKey: PREPAYMENT, debitAmount: { amount: 5000 } });
+    expect(store[`${CREDIT}/entries/dispute-dp_1`]).toMatchObject({ kind: 'refund', amount: -5000, balanceAfter: -3000 });
+    expect(store[CREDIT]['balance']).toBe(-3000);
+    expect(store[SUB]['billingFlags']).toEqual(['vat-blocked', 'credit-negative', 'disputed']);
+  });
+
+  it('won, fee kept by Stripe: only the fee is booked, the attempt returns to succeeded', async () => {
+    const store = seed({ ...POSTED, state: 'disputed' });
+    const { handler } = setup(store);
+    expect(await handler(disputeEvent('charge.dispute.closed', 'won', [WITHDRAWN, { amount: 5000, fee: 0, currency: 'chf' }]), 'd3'))
+      .toEqual({ state: 'handled', tenantId: 'kring' });
+    expect(bookingKeys(store)).toEqual(['stripe-dispute-fee-dp_1']);
+    expect(store[ATTEMPT]['state']).toBe('succeeded');
+  });
+
+  it('won, fee returned by Stripe: nothing is booked', async () => {
+    const store = seed({ ...POSTED, state: 'disputed' });
+    const { handler } = setup(store);
+    await handler(disputeEvent('charge.dispute.closed', 'won', [WITHDRAWN, { amount: 5000, fee: -1500, currency: 'chf' }]), 'd3');
+    expect(bookingKeys(store)).toEqual([]);
+  });
+
+  it('won on overpaid money returns the attempt to overpaid, or to refunded when it had been refunded', async () => {
+    const store = seed({ ...OVERPAID, state: 'disputed' });
+    await setup(store).handler(disputeEvent('charge.dispute.closed', 'won', []), 'd3');
     expect(store[ATTEMPT]['state']).toBe('overpaid');
+
+    const refundedStore = seed({ ...OVERPAID, state: 'disputed' });
+    await setup(refundedStore, [refund('re_1', 2000)]).handler(disputeEvent('charge.dispute.closed', 'won', []), 'd3');
+    expect(refundedStore[ATTEMPT]['state']).toBe('refunded');
   });
 
   it('a replayed payment_intent.succeeded after a refund or dispute posts nothing again', async () => {
@@ -263,6 +334,48 @@ describe('stripeHandler: disputes', () => {
       expect((await handler(succeeded, 'row1')).state).toBe('ignored');
       expect(bookingKeys(store)).toEqual([]);
     }
+  });
+});
+
+describe('stripeHandler: charge.refund.updated', () => {
+  it('a failed refund of overpaid money is reversed clearing → prepayment once, the payer flagged', async () => {
+    const store = seed(OVERPAID);
+    const { port, handler } = setup(store, [refund('re_1', 2000, 'pending')]);
+    await handler(refunded(), 'r1');
+    port.refunds = [refund('re_1', 2000, 'failed')];
+    await handler(refundUpdated('failed'), 'f1');
+    await handler(refundUpdated('failed'), 'f1');
+    expect(bookingKeys(store)).toEqual(['stripe-refund-fail-re_1', 'stripe-refund-re_1']);
+    expect(lines(store, 'stripe-refund-fail-re_1')).toMatchObject([
+      { accountKey: CLEARING, debitAmount: { amount: 2000 } }, { accountKey: PREPAYMENT, creditAmount: { amount: 2000 } },
+    ]);
+    expect(store[SUB]['billingFlags']).toEqual(['vat-blocked', 'refund-failed']);
+  });
+
+  it('a failed top-up refund gives the credit back with a top-up entry, once', async () => {
+    const store = seed(TOPUP);
+    store[CREDIT] = { tenants: ['scs'], balance: 3000 };
+    const { handler } = setup(store, [refund('re_1', 2000, 'pending')]);
+    await handler(refunded(), 'r1');
+    expect(store[CREDIT]['balance']).toBe(1000);
+    await handler(refundUpdated('canceled'), 'f1');
+    await handler(refundUpdated('canceled'), 'f1');
+    expect(store[`${CREDIT}/entries/refund-fail-re_1`]).toMatchObject({ kind: 'topup', amount: 2000, bookingKey: '' });
+    expect(store[CREDIT]['balance']).toBe(3000);
+  });
+
+  it('a failed refund that was never booked (posted payment) books nothing, only flags', async () => {
+    const store = seed(POSTED);
+    const { handler } = setup(store);
+    await handler(refundUpdated('failed'), 'f1');
+    expect(bookingKeys(store)).toEqual([]);
+    expect(store[SUB]['billingFlags']).toEqual(['vat-blocked', 'refund-failed']);
+  });
+
+  it('a refund update to succeeded is ignored', async () => {
+    const store = seed(OVERPAID);
+    const { handler } = setup(store);
+    expect((await handler(refundUpdated('succeeded'), 'f1')).state).toBe('ignored');
   });
 });
 

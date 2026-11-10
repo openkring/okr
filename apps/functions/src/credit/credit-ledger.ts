@@ -1,7 +1,8 @@
 // apps/functions/src/credit/credit-ledger.ts
 //
 // The prepaid credit ledger: one transaction reads the account (created at 0 on first use), decides, and
-// writes account + entry + booking. Idempotent on entryId. A deduction never takes the balance below 0.
+// writes account + entry + booking. Idempotent on entryId. Only a refund (money already returned by Stripe)
+// may take the balance below 0.
 import { HttpsError } from 'firebase-functions/v2/https';
 import type { Firestore } from 'firebase-admin/firestore';
 import { CreditAccountCollection, CreditAccountModel, CreditEntrySubcollection } from '@okr/shared-models';
@@ -83,7 +84,7 @@ export async function applyCreditEntry(
     if (existing.exists) return { balanceAfter: Number((existing.data() ?? {})['balanceAfter'] ?? 0), duplicate: true };
     const account = await tx.get(accountRef);
     const balance = account.exists ? Number((account.data() ?? {})['balance'] ?? 0) : 0;
-    const decision = creditDecision(balance, entry.amount);
+    const decision = creditDecision(balance, entry.amount, entry.kind);
     if (!decision.ok) throw new HttpsError('failed-precondition', decision.reason);
     let reversedAfter = 0;
     if (parentRef) {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { disputeLoss, feeBookingLines, isSettledRefusal, reduceStripeEvent, stripeActionOf, stripePaymentId, transferLines } from './stripe-webhook.logic';
+import { attemptStateAfterDispute, feeBookingLines, isSettledRefusal, reduceStripeEvent, stripeActionOf, stripePaymentId, transferLines } from './stripe-webhook.logic';
 
 // 2026-11-09 10:00:00 UTC = 11:00 in Zurich; 2026-11-09 23:30:00 UTC = 00:30 on the 10th in Zurich.
 const T_DAY = Date.UTC(2026, 10, 9, 10, 0, 0) / 1000;
@@ -138,15 +138,29 @@ describe('stripeActionOf: refunds, disputes, payouts', () => {
     });
   });
 
+  it('charge.refund.updated → refund-updated with the refund and its charge', () => {
+    expect(stripeActionOf(ev('charge.refund.updated', {
+      id: 're_1', object: 'refund', charge: 'ch_1', payment_intent: 'pi_1', amount: 2000, currency: 'CHF', status: 'failed',
+    }))).toEqual({
+      kind: 'refund-updated', refundId: 're_1', chargeId: 'ch_1', paymentIntentId: 'pi_1', attemptKey: '', amount: 2000, currency: 'chf', status: 'failed', date: '20261109',
+    });
+  });
+
   it('payout.paid is ignored: the bank import matches the payout', () => {
     expect(stripeActionOf(ev('payout.paid', { id: 'po_1', amount: 10000 }))).toEqual({ kind: 'ignore', reason: 'payout: matched by the bank import' });
   });
 });
 
-describe('disputeLoss', () => {
-  it('is the disputed amount plus the fees of its balance transactions', () => {
-    expect(disputeLoss(5000, 1500)).toBe(6500);
-    expect(disputeLoss(5000, 0)).toBe(5000);
+describe('attemptStateAfterDispute', () => {
+  it('a payment posted to an invoice → succeeded', () => {
+    expect(attemptStateAfterDispute({ purpose: 'invoice', paymentBookingKey: 'b' }, false)).toBe('succeeded');
+    expect(attemptStateAfterDispute({ purpose: 'invoice', paymentBookingKey: 'b' }, true)).toBe('succeeded');
+  });
+  it('money on prepayment → refunded when refunded, else overpaid / succeeded (top-up)', () => {
+    expect(attemptStateAfterDispute({ purpose: 'invoice', paymentBookingKey: '' }, false)).toBe('overpaid');
+    expect(attemptStateAfterDispute({ purpose: 'invoice', paymentBookingKey: '' }, true)).toBe('refunded');
+    expect(attemptStateAfterDispute({ purpose: 'topup', paymentBookingKey: 'b' }, false)).toBe('succeeded');
+    expect(attemptStateAfterDispute({ purpose: 'topup', paymentBookingKey: 'b' }, true)).toBe('refunded');
   });
 });
 
@@ -223,6 +237,7 @@ describe('reduceStripeEvent', () => {
     expect(reduceStripeEvent(refundEvent)['data']).toEqual({ object: {
       id: 're_1', object: 'refund', charge: 'ch_1', payment_intent: 'pi_1', amount: 2000, currency: 'chf', status: 'succeeded',
     } });
+    expect(stripeActionOf(reduceStripeEvent(refundEvent))).toEqual(stripeActionOf(refundEvent));
 
     const disputeEvent = ev('charge.dispute.closed', {
       id: 'dp_1', object: 'dispute', charge: 'ch_1', payment_intent: 'pi_1', amount: 5000, currency: 'chf', status: 'lost', reason: 'fraudulent',

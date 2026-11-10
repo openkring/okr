@@ -18,6 +18,11 @@ export type StripeAction =
    * refunds themselves and books each once. `attemptKey` '' when the charge carries no metadata.
    */
   | { kind: 'charge-refunded'; chargeId: string; paymentIntentId: string; attemptKey: string; amountRefunded: number; currency: string }
+  /** A refund changed state; the handler acts on `failed` / `canceled` (the money came back to the Stripe balance). */
+  | {
+      kind: 'refund-updated'; refundId: string; chargeId: string; paymentIntentId: string; attemptKey: string;
+      amount: number; currency: string; status: string; date: string;
+    }
   /** A dispute (chargeback) was opened: Stripe has already taken the amount and the fee off the balance. */
   | { kind: 'dispute-opened'; disputeId: string; chargeId: string; paymentIntentId: string; attemptKey: string; amount: number; reason: string }
   /** A dispute was closed. `fee` = the fees of its balance transactions, `feeCurrencies` their currencies (lower-case). */
@@ -96,6 +101,16 @@ export function stripeActionOf(event: unknown): StripeAction {
         amountRefunded: num(object['amount_refunded']), currency: str(object['currency']).toLowerCase(),
       };
     }
+    case 'charge.refund.updated': {
+      const refundId = str(object['id']);
+      const chargeId = idOf(object['charge']);
+      if (!refundId || !chargeId) return { kind: 'ignore', reason: 'refund update without a refund or charge id' };
+      return {
+        kind: 'refund-updated', refundId, chargeId, paymentIntentId: idOf(object['payment_intent']), attemptKey,
+        amount: num(object['amount']), currency: str(object['currency']).toLowerCase(), status: str(object['status']),
+        date: storeDateOfUnix(num(event['created'])),
+      };
+    }
     case 'charge.dispute.created':
     case 'charge.dispute.closed': {
       const disputeId = str(object['id']);
@@ -142,9 +157,18 @@ export function feeBookingLines(feeAccountKey: string, clearingAccountKey: strin
   return transferLines(feeAccountKey, clearingAccountKey, fee);
 }
 
-/** What a lost dispute costs: the disputed amount plus Stripe's dispute fee (Rappen). */
-export function disputeLoss(amount: number, fee: number): number {
-  return amount + fee;
+/**
+ * The settled state an attempt returns to when a dispute does not end in a loss: a payment posted to an invoice
+ * → succeeded; money held on prepayment (overpaid or top-up) → refunded when a refund of it left Stripe,
+ * else overpaid (never posted) or succeeded (top-up).
+ */
+export function attemptStateAfterDispute(
+  attempt: { purpose: string; paymentBookingKey: string }, refunded: boolean,
+): 'succeeded' | 'overpaid' | 'refunded' {
+  const onPrepayment = attempt.purpose === 'topup' || !attempt.paymentBookingKey;
+  if (!onPrepayment) return 'succeeded';
+  if (refunded) return 'refunded';
+  return attempt.paymentBookingKey ? 'succeeded' : 'overpaid';
 }
 
 /** The fields of `data.object` the logic reads; everything else (customer_details, billing details, charges …) is dropped. */

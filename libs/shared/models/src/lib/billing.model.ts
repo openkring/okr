@@ -42,7 +42,13 @@ export interface SubscriptionMeasurement {
  * is priced individually (≥ 1000 weighted users), an account key of the operator books is missing, the run failed
  * permanently, or the invoice could not be mailed (no billing or admin e-mail).
  */
-export type BillingFlag = 'vat-blocked' | 'individual-band' | 'accounts-missing' | 'run-failed' | 'no-recipient';
+/**
+ * Operator flags on a subscription. The first five are set by the monthly run (cleared by a run that issued);
+ * the Stripe ones by the webhook (Task 10), cleared by the operator.
+ */
+export type BillingFlag =
+  | 'vat-blocked' | 'individual-band' | 'accounts-missing' | 'run-failed' | 'no-recipient'
+  | 'overpaid' | 'disputed' | 'refund-on-posted-payment' | 'refund-failed' | 'credit-negative';
 
 export type PaymentMethodType = 'card' | 'paypal';
 
@@ -87,7 +93,7 @@ export class SubscriptionModel implements OkrModel {
   public pastDueSince = ''; // StoreDate, '' when not pastDue
   public closingSince = ''; // StoreDate
   public cancelledAt = ''; // StoreDate
-  public billingFlags: BillingFlag[] = []; // set by the monthly run when it refused this tenant; cleared by a run that issued
+  public billingFlags: BillingFlag[] = []; // operator flags: monthly-run refusals (cleared by a run that issued) and Stripe money events (cleared by the operator)
 
   constructor(tenantId: string) {
     this.okey = tenantId;
@@ -132,7 +138,8 @@ export class PaymentAttemptModel implements OkrModel {
   }
 }
 
-export type CreditEntryKind = 'topup' | 'deduction' | 'reversal' | 'correction';
+/** refund: negative, no booking, may take the balance below 0 (a top-up refunded or lost in a dispute). */
+export type CreditEntryKind = 'topup' | 'deduction' | 'reversal' | 'correction' | 'refund';
 
 /** One ledger line in credit-accounts/{tenantId}/entries. */
 export interface CreditEntry {
