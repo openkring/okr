@@ -82,6 +82,10 @@ async function main() {
   for (const [name, value] of Object.entries({ PINGEN_CLIENT_ID: clientId, PINGEN_CLIENT_SECRET: clientSecret, PINGEN_ORGANISATION_ID: org, PINGEN_WEBHOOK_SIGNING_KEY: signingKey })) {
     if (!value) fail(`${name} is not set`);
   }
+  // Pingen accepts 20-32 characters (WebhookCreatePOST.signing_key); `openssl rand -hex 16` gives 32
+  if (signingKey.length < 20 || signingKey.length > 32) {
+    fail(`PINGEN_WEBHOOK_SIGNING_KEY must be 20-32 characters (is ${signingKey.length}); create one with: openssl rand -hex 16`);
+  }
   if (!/^https:\/\/\S+$/.test(args.baseUrl)) fail('--base-url (https://...) is required');
   const url = `${args.baseUrl.replace(/\/+$/, '')}/webhooks/pingen`;
   const hosts = HOSTS[env];
