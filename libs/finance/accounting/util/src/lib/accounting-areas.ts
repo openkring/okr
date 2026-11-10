@@ -60,7 +60,7 @@ export const ACCOUNTING_AREAS: readonly AccountingArea[] = [
   { id: 'payables', i18nKey: 'nav_area_payables', segments: [
     seg('payables.bills', 'nav_seg_bills', '/accounting/{books}/bill/all/c-bill', [acc('bill')]),
     seg('payables.paymentOrders', 'nav_seg_paymentOrders', '/accounting/{books}/payments', [acc('payments')]),
-    seg('payables.expenses', 'nav_seg_expenses', '/expense/all/c-expense', [/^\/expense\/all(?:[/?#]|$)/], { booksScoped: false }),
+    seg('payables.expenses', 'nav_seg_expenses', '/expense/all/c-expense', [/^\/expense\/all(?:[/?#]|$)/], { booksScoped: false, featureBlock: 'expense' }),
   ] },
   { id: 'receivables', i18nKey: 'nav_area_receivables', segments: [
     seg('receivables.invoices', 'nav_seg_invoices', '/accounting/{books}/invoice/all/c-invoice', [acc('invoice')]),
@@ -68,9 +68,9 @@ export const ACCOUNTING_AREAS: readonly AccountingArea[] = [
     seg('receivables.aging', 'nav_seg_aging', '/accounting/{books}/aging', [acc('aging')]),
   ] },
   { id: 'cost', i18nKey: 'nav_area_cost', segments: [
-    seg('cost.costCenters', 'nav_seg_costCenters', '/accounting/{books}/cost-center/c-cost-center', [acc('cost-center')]),
-    seg('cost.budgets', 'nav_seg_budgets', '/accounting/{books}/budget/c-budget', [acc('budget')]),
-    seg('cost.allocations', 'nav_seg_allocations', '/accounting/{books}/allocation/c-allocation', [acc('allocation')]),
+    seg('cost.costCenters', 'nav_seg_costCenters', '/accounting/{books}/cost-center/c-cost-center', [acc('cost-center')], { featureBlock: 'cost-accounting' }),
+    seg('cost.budgets', 'nav_seg_budgets', '/accounting/{books}/budget/c-budget', [acc('budget')], { featureBlock: 'cost-accounting' }),
+    seg('cost.allocations', 'nav_seg_allocations', '/accounting/{books}/allocation/c-allocation', [acc('allocation')], { featureBlock: 'cost-accounting' }),
   ] },
   { id: 'reports', i18nKey: 'nav_area_reports', segments: [
     seg('reports.balance', 'nav_seg_balance', '/accounting/{books}/balance/c-report', [acc('balance')]),
@@ -80,15 +80,15 @@ export const ACCOUNTING_AREAS: readonly AccountingArea[] = [
   ] },
   { id: 'closing', i18nKey: 'nav_area_closing', segments: [
     seg('closing.periods', 'nav_seg_periods', '/accounting/{books}/periods/c-period', [acc('periods')]),
-    seg('closing.assets', 'nav_seg_assets', '/accounting/{books}/assets', [acc('assets')]),
-    seg('closing.depreciation', 'nav_seg_depreciation', '/accounting/{books}/depreciation-run', [acc('depreciation-run')]),
+    seg('closing.assets', 'nav_seg_assets', '/accounting/{books}/assets', [acc('assets')], { featureBlock: 'asset' }),
+    seg('closing.depreciation', 'nav_seg_depreciation', '/accounting/{books}/depreciation-run', [acc('depreciation-run')], { featureBlock: 'asset' }),
   ] },
   { id: 'masterData', i18nKey: 'nav_area_masterData', segments: [
     seg('masterData.accounts', 'nav_seg_accounts', '/accounting/{books}/account/c-account', [acc('account')]),
     seg('masterData.vatCodes', 'nav_seg_vatCodes', '/accounting/{books}/vat-codes', [acc('vat-codes')], { requiresVat: true }),
     seg('masterData.bankProfiles', 'nav_seg_bankProfiles', '/accounting-bank-profiles/{books}/bank-profile-context', [top('accounting-bank-profiles')]),
     seg('masterData.bankRules', 'nav_seg_bankRules', '/accounting-bank-rules/{books}/bank-rule-context', [top('accounting-bank-rules')]),
-    seg('masterData.ocrRules', 'nav_seg_ocrRules', '/accounting-ocr-rules/{books}/ocr-rule-context', [top('accounting-ocr-rules')]),
+    seg('masterData.ocrRules', 'nav_seg_ocrRules', '/accounting-ocr-rules/{books}/ocr-rule-context', [top('accounting-ocr-rules')], { featureBlock: 'expense' }),
     seg('masterData.settings', 'nav_seg_settings', '/accounting/{books}/settings', [acc('settings')]),
   ] },
 ];

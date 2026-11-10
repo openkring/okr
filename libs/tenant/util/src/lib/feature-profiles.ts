@@ -81,7 +81,7 @@ export const FEATURE_PROFILES: FeatureProfile[] = [
     blocks: [
       'subject', 'calevent', 'document', 'task', 'chat',
       'relationship', 'resource', 'forms', 'meeting', 'activity',
-      'finance', 'pdf-template', 'esign', 'trip', 'mobility', 'instruments', 'alias',
+      'finance', 'cost-accounting', 'expense', 'asset', 'pdf-template', 'esign', 'trip', 'mobility', 'instruments', 'alias',
     ],
   },
 ];

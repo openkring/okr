@@ -776,24 +776,6 @@ const finance: BlockRoutes = {
       },
     },
     {
-      path: 'expense',
-      canActivate: [isAuthenticatedGuard],
-      children: [
-        { path: ':listId/:contextMenuName', loadComponent: () => import('@okr/finance-expense-feature').then(m => m.ExpenseList) },
-        // The deep-link target of a workflow task (spec 2026-09-02 §3.4): a task for an expense
-        // carries `relatedKey: 'expense.<okey>'`, which RELATED_ROUTES maps to `/expense/<okey>`.
-        // Two segments above, one here — they cannot collide; listed after the list route anyway.
-        { path: ':expenseKey', loadComponent: () => import('@okr/finance-expense-feature').then(m => m.ExpenseDetailPage) },
-      ],
-    },
-    {
-      // «Meine Kostenstellen» (spec 1.65 §7.4, D21): any member; the callable decides what they may see.
-      // The books are a route param — the app tenant keeps several sets of books (scs: scs + gss).
-      path: 'my-cost-centers/:accountingTenantId',
-      canActivate: [isAuthenticatedGuard],
-      loadComponent: () => import('@okr/finance-budget-feature').then(m => m.MyCostCentersPage),
-    },
-    {
       // Payment approver's read-only view (spec 1.94 §3.5), reached from the daily task — any member;
       // `getBillsForApproval` is the authorisation boundary, the route only needs a login.
       path: 'bill-approval',
@@ -832,6 +814,9 @@ const finance: BlockRoutes = {
       // `scsf_*` docs declare `treasurer`) and have the navigation silently cancelled. The
       // sibling `accounting-ocr-rules`/`accounting-bank-*` routes were treasurer-gated
       // already; the menu-role-resolution spec is what caught the shell.
+      //
+      // Since the finance split (2026-11-10) `cost-center`/`budget`/`allocation` (block `cost-accounting`) and
+      // `assets`/`depreciation-run` (block `asset`) are children of their own blocks' copies of this fragment.
       path: 'accounting/:accountingTenantId',
       canActivate: [isTreasurerGuard],
       loadComponent: () => import('@okr/finance-accounting-feature').then(m => m.AccountingShell),
@@ -858,27 +843,6 @@ const finance: BlockRoutes = {
         {
           path: 'account',
           children: [{ path: ':contextMenuName', loadComponent: () => import('@okr/finance-account-feature').then(m => m.AccountList) }],
-        },
-        {
-          // Kostenstellen (spec 1.65): tree list like the Kontoplan; treasurer via the shell's guard.
-          path: 'cost-center',
-          children: [{ path: ':contextMenuName', loadComponent: () => import('@okr/finance-cost-center-feature').then(m => m.CostCenterList) }],
-        },
-        {
-          // Budgets (spec 1.65 phase 2): versions per fiscal year, grid, Soll-Ist comparison; treasurer via the shell's guard.
-          // `version/:versionKey` and `compare`
-          // must stay ABOVE `:contextMenuName`, which would otherwise swallow `compare`.
-          path: 'budget',
-          children: [
-            { path: 'version/:versionKey', loadComponent: () => import('@okr/finance-budget-feature').then(m => m.BudgetGridPage) },
-            { path: 'compare', loadComponent: () => import('@okr/finance-budget-feature').then(m => m.BudgetComparePage) },
-            { path: ':contextMenuName', loadComponent: () => import('@okr/finance-budget-feature').then(m => m.BudgetVersionList) },
-          ],
-        },
-        {
-          // Umlagen (spec 1.65 D24): allocation rules per fiscal year; treasurer via the shell's guard.
-          path: 'allocation',
-          children: [{ path: ':contextMenuName', loadComponent: () => import('@okr/finance-budget-feature').then(m => m.CostAllocationList) }],
         },
         {
           // Account links and fiscal year start of this accounting tenant (`accounting-settings` row).
@@ -926,14 +890,6 @@ const finance: BlockRoutes = {
           loadComponent: () => import('@okr/finance-reporting-feature').then(m => m.OpenItemsPage),
         },
         {
-          path: 'assets',
-          loadComponent: () => import('@okr/finance-asset-feature').then(m => m.AssetList),
-        },
-        {
-          path: 'depreciation-run',
-          loadComponent: () => import('@okr/finance-asset-feature').then(m => m.DepreciationRunPage),
-        },
-        {
           path: 'payments',
           loadComponent: () => import('@okr/finance-payment-feature').then(m => m.PaymentOrderList),
         },
@@ -949,11 +905,6 @@ const finance: BlockRoutes = {
       ],
     },
     {
-      path: 'accounting-ocr-rules/:accountingTenantId/:contextMenuName',
-      canActivate: [isTreasurerGuard],
-      loadComponent: () => import('@okr/finance-ocr-rule-feature').then(m => m.OcrRuleList),
-    },
-    {
       path: 'accounting-bank-import/:accountingTenantId/:contextMenuName',
       canActivate: [isTreasurerGuard],
       loadComponent: () => import('@okr/finance-bank-import-feature').then(m => m.BankImportList),
@@ -967,6 +918,101 @@ const finance: BlockRoutes = {
       path: 'accounting-bank-profiles/:accountingTenantId/:contextMenuName',
       canActivate: [isTreasurerGuard],
       loadComponent: () => import('@okr/finance-bank-profile-feature').then(m => m.BankProfileList),
+    },
+  ],
+};
+
+/**
+ * The finance split (owner decision 2026-11-10, plan 2 Task 7b): Kostenrechnung, Spesen/OCR and Anlagen are
+ * blocks of their own (`feature-blocks.ts` in `@okr/tenant-util`), so their routes moved out of `finance`
+ * and `composeGatedFeatureRoutes` gates them by their own id. Urls are unchanged.
+ */
+const costAccounting: BlockRoutes = {
+  id: 'cost-accounting',
+  routes: (): Route[] => [
+    {
+      // «Meine Kostenstellen» (spec 1.65 §7.4, D21): any member; the callable decides what they may see.
+      // The books are a route param — the app tenant keeps several sets of books (scs: scs + gss).
+      path: 'my-cost-centers/:accountingTenantId',
+      canActivate: [isAuthenticatedGuard],
+      loadComponent: () => import('@okr/finance-budget-feature').then(m => m.MyCostCentersPage),
+    },
+    {
+      // Kostenstellen, budgets and Umlagen: children of the accounting shell. A second `accounting/:accountingTenantId` fragment next to
+      // `finance`'s (finance split, 2026-11-10): Angular backtracks to the next sibling when no child of the
+      // first matches, so the shell is shared while the feature gate is this block's. Same guard as finance's.
+      path: 'accounting/:accountingTenantId',
+      canActivate: [isTreasurerGuard],
+      loadComponent: () => import('@okr/finance-accounting-feature').then(m => m.AccountingShell),
+      children: [
+        {
+          // Kostenstellen (spec 1.65): tree list like the Kontoplan; treasurer via the shell's guard.
+          path: 'cost-center',
+          children: [{ path: ':contextMenuName', loadComponent: () => import('@okr/finance-cost-center-feature').then(m => m.CostCenterList) }],
+        },
+        {
+          // Budgets (spec 1.65 phase 2): versions per fiscal year, grid, Soll-Ist comparison; treasurer via the shell's guard.
+          // `version/:versionKey` and `compare`
+          // must stay ABOVE `:contextMenuName`, which would otherwise swallow `compare`.
+          path: 'budget',
+          children: [
+            { path: 'version/:versionKey', loadComponent: () => import('@okr/finance-budget-feature').then(m => m.BudgetGridPage) },
+            { path: 'compare', loadComponent: () => import('@okr/finance-budget-feature').then(m => m.BudgetComparePage) },
+            { path: ':contextMenuName', loadComponent: () => import('@okr/finance-budget-feature').then(m => m.BudgetVersionList) },
+          ],
+        },
+        {
+          // Umlagen (spec 1.65 D24): allocation rules per fiscal year; treasurer via the shell's guard.
+          path: 'allocation',
+          children: [{ path: ':contextMenuName', loadComponent: () => import('@okr/finance-budget-feature').then(m => m.CostAllocationList) }],
+        },
+      ],
+    },
+  ],
+};
+
+const expense: BlockRoutes = {
+  id: 'expense',
+  routes: (): Route[] => [
+    {
+      path: 'expense',
+      canActivate: [isAuthenticatedGuard],
+      children: [
+        { path: ':listId/:contextMenuName', loadComponent: () => import('@okr/finance-expense-feature').then(m => m.ExpenseList) },
+        // The deep-link target of a workflow task (spec 2026-09-02 §3.4): a task for an expense
+        // carries `relatedKey: 'expense.<okey>'`, which RELATED_ROUTES maps to `/expense/<okey>`.
+        // Two segments above, one here — they cannot collide; listed after the list route anyway.
+        { path: ':expenseKey', loadComponent: () => import('@okr/finance-expense-feature').then(m => m.ExpenseDetailPage) },
+      ],
+    },
+    {
+      path: 'accounting-ocr-rules/:accountingTenantId/:contextMenuName',
+      canActivate: [isTreasurerGuard],
+      loadComponent: () => import('@okr/finance-ocr-rule-feature').then(m => m.OcrRuleList),
+    },
+  ],
+};
+
+const asset: BlockRoutes = {
+  id: 'asset',
+  routes: (): Route[] => [
+    {
+      // The asset register and the depreciation run: children of the accounting shell. A second `accounting/:accountingTenantId` fragment next to
+      // `finance`'s (finance split, 2026-11-10): Angular backtracks to the next sibling when no child of the
+      // first matches, so the shell is shared while the feature gate is this block's. Same guard as finance's.
+      path: 'accounting/:accountingTenantId',
+      canActivate: [isTreasurerGuard],
+      loadComponent: () => import('@okr/finance-accounting-feature').then(m => m.AccountingShell),
+      children: [
+        {
+          path: 'assets',
+          loadComponent: () => import('@okr/finance-asset-feature').then(m => m.AssetList),
+        },
+        {
+          path: 'depreciation-run',
+          loadComponent: () => import('@okr/finance-asset-feature').then(m => m.DepreciationRunPage),
+        },
+      ],
     },
   ],
 };
@@ -1845,7 +1891,7 @@ export const FEATURE_ROUTES: BlockRoutes[] = [
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,
-  finance, memberFee, esign, pdfTemplate,
+  finance, costAccounting, expense, asset, memberFee, esign, pdfTemplate,
   documentBlock, contracts, meeting, diary, journal,
   chat, socialFeed, forms,
   business, alias, weather, energy,

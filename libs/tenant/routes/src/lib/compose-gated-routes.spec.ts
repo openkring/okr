@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { isAdminGuard, isAuthenticatedGuard, isPrivilegedGuard } from '@okr/auth-feature';
 import { AppStore } from '@okr/shared-feature';
 import { FeatureStore } from '@okr/tenant-feature';
-import { FEATURE_BLOCKS } from '@okr/tenant-util';
+import { FEATURE_BLOCKS, urlResolves } from '@okr/tenant-util';
 
 import { composeGatedFeatureRoutes } from './compose-gated-routes';
 import { FEATURE_ROUTES, type BlockRoutes } from './feature-catalogue';
@@ -237,5 +237,42 @@ describe('composeGatedFeatureRoutes', () => {
   it('composes every block\'s fragments and no others', () => {
     const declared = FEATURE_ROUTES.reduce((n, b) => n + b.routes().length, 0);
     expect(composeGatedFeatureRoutes(FEATURE_ROUTES)).toHaveLength(declared);
+  });
+});
+
+/**
+ * The finance split (owner decision 2026-11-10, plan 2 Task 7b): Kostenrechnung, Spesen/OCR and Anlagen are
+ * paid options of their own, so their screens must be gated by their own block — a tenant that pays for
+ * Buchhaltung alone must not reach them through `finance`'s gate.
+ */
+describe('finance split gates', () => {
+  const routesOf = (id: string): Route[] => (FEATURE_ROUTES.find(b => b.id === id) as BlockRoutes).routes();
+
+  it('a route of expense is gated by expense, not finance', async () => {
+    expect(routesOf('finance').some(r => r.path === 'expense')).toBe(false);
+    const withoutExpense = await appFor(allBlockIds().filter(id => id !== 'expense'));
+    expect(featureVerdict(fragmentOf('expense', 'expense'), withoutExpense)).not.toBe(true);
+    expect(featureVerdict(fragmentOf('expense', 'expense'), await appFor(['finance', 'expense']))).toBe(true);
+  });
+
+  it('the cost-accounting and asset screens are children of their own copy of the accounting shell', async () => {
+    const financeOnly = await appFor(['finance']);
+    expect(featureVerdict(fragmentOf('cost-accounting', 'accounting/:accountingTenantId'), financeOnly)).not.toBe(true);
+    expect(featureVerdict(fragmentOf('asset', 'accounting/:accountingTenantId'), financeOnly)).not.toBe(true);
+    expect(featureVerdict(fragmentOf('finance', 'accounting/:accountingTenantId'), financeOnly)).toBe(true);
+  });
+
+  it.each([
+    ['/accounting/scs/cost-center/c-cost-center', 'cost-accounting'],
+    ['/accounting/scs/budget/c-budget', 'cost-accounting'],
+    ['/accounting/scs/allocation/c-allocation', 'cost-accounting'],
+    ['/my-cost-centers/scs', 'cost-accounting'],
+    ['/accounting/scs/assets', 'asset'],
+    ['/accounting/scs/depreciation-run', 'asset'],
+    ['/expense/all/c-expense', 'expense'],
+    ['/accounting-ocr-rules/scs/ocr-rule-context', 'expense'],
+  ])('%s resolves in %s and not in finance', (url, owner) => {
+    expect(urlResolves(routesOf(owner), url)).toBe(true);
+    expect(urlResolves(routesOf('finance'), url)).toBe(false);
   });
 });

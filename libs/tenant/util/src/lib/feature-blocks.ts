@@ -131,6 +131,23 @@ function resourceMenuParent(children: MenuSpec[]): MenuSpec {
  * `cmsMenuParent`/`aocMenuParent`/`subjectsMenuParent` above. `finance` keeps owning the
  * parent's full live children list; `member-fee` passes only its own row.
  */
+/**
+ * `finance-menu` («Finanzen», a live root child of `main_scs`, `action: sub`, `roleNeeded: registered`,
+ * label `@main.finance.title`; its own name/url/label carry no tenant key). A SHARED parent since the
+ * finance split (2026-11-10): its catalogued children belong to `expense` (Spesen) and `cost-accounting`
+ * (Meine Kostenstellen), each redeclaring this node with its own slice, same pattern as `cmsMenuParent`.
+ * `finance` itself declares no child of it any more, so it does not declare the parent either — a
+ * tenant with Buchhaltung alone would otherwise get an empty accordion. scs's tenant-bespoke children
+ * (`f_fees`, `f_pay`, `f_gss`, `f_versicherung`, `finance-docs`, `invoice-my`) have no owner and render
+ * whenever the parent does. Children are APPENDED, never replaced (`planMenuOps`).
+ */
+function financeMenuParent(children: MenuSpec[]): MenuSpec {
+  return {
+    key: 'finance-menu', name: 'finance-menu', url: '', action: 'sub',
+    roleNeeded: 'registered', icon: 'help-circle', label: '@main.finance.title', children,
+  };
+}
+
 function accountingMenuParent(children: MenuSpec[]): MenuSpec {
   return {
     key: 'accounting-menu', name: 'accounting-menu', url: '', action: 'sub',
@@ -1442,51 +1459,30 @@ const finance: FeatureBlock = {
   //    reference it as a string literal `OCR_RESULT_COLLECTION`, which is why a grep for the
   //    shared-models constant misses it). Holds scanned-bill OCR payloads keyed by
   //    `bookingKey`/`correlationKey` — finance's, not a shared infrastructure collection.
+  //
+  // Since the finance split (2026-11-10, plan 2 Task 7b) the cost-accounting, expense and asset
+  // collections are listed on their own blocks (`costAccounting`, `expense`, `asset` below).
+  // `ocr-results` stays HERE: it is keyed by `bookingKey` and read by the booking/bill OCR path
+  // (`apps/functions/src/booking/index.ts`), which is Buchhaltung, not Spesen.
   collections: [
-    'accounts', 'accounting-configs', 'assets', 'asset-categories', 'asset-movements',
+    'accounts', 'accounting-configs',
     'bank-import-rows', 'bank-profiles', 'bank-rules',
-    'bills', 'bookings', 'booking-lines', 'budget-lines', 'budget-versions', 'cost-allocations', 'cost-centers', 'exchange-rates', 'expenses', 'expense-documents',
-    'invoices', 'invoice-positions', 'ocr-rules', 'ocr-results', 'payments', 'payment-orders',
+    'bills', 'bookings', 'booking-lines', 'exchange-rates',
+    'invoices', 'invoice-positions', 'ocr-results', 'payments', 'payment-orders',
     'periods', 'vat-codes',
   ],
   menu: [
-    // `finance-menu` is a live root child of `main_scs` (`action: sub`, `roleNeeded:
-    // registered`, label `@main.finance.title`) whose own name/url/label carry no tenant key —
-    // so unlike `scsf_fibu`/`gssf_fibu` it IS catalogued, with only its two generic children.
-    // Every other live child of `finance-menu` is excluded (see the block comment). Children
-    // are APPENDED, never replaced (`planMenuOps`), so scs's existing six extra children
-    // survive.
-    {
-      key: 'finance-menu', name: 'finance-menu', url: '', action: 'sub',
-      roleNeeded: 'registered', icon: 'help-circle', label: '@main.finance.title', children: [
-        { key: 'expenses', name: 'expenses', url: '/expense/my/c-expense', action: 'navigate', roleNeeded: 'registered', icon: 'expense', label: '@item.expenses' },
-        { key: 'expenses-all', name: 'expenses-all', url: '/expense/all/c-expense', action: 'navigate', roleNeeded: 'treasurer', icon: 'expense', label: '@item.expenses-all' },
-        // «Meine Kostenstellen» (spec 1.65 §7.4): every member; the callable decides what they see.
-        // @BOOKS@ = the app's default books (AppConfig.defaultAccountingTenantId, never the tenant id); only the
-        // default books get this row — a second set of books (gss) has no member finance rows.
-        { key: 'my-cost-centers', name: 'my-cost-centers', url: '/my-cost-centers/@BOOKS@', action: 'navigate', roleNeeded: 'registered', icon: 'moneybag', label: '@item.my-cost-centers' },
-      ],
-    },
-    { key: 'c-expense', name: 'c-expense', url: '', action: 'context', roleNeeded: 'registered', icon: 'help-circle', label: '', children: [
-      { key: 'expense-add', name: 'expense-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: '@item.expense-add' },
-      // Live-data note: this doc's stale `index` string reads `a:callFunction`, but its
-      // `action` FIELD — the authoritative one, and the only one `MenuSpec` models — is
-      // `call`. `index` is regenerated from `name`/`action`/`okey` on every write
-      // (`menuIndex` in `menu-seed.util.ts`), so the drift self-heals; mirrored off `action`.
-      { key: 'expense-export', name: 'expense-export', url: 'export', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.expense-export' },
-    ] },
-    // The five wrappers below are catalogued even though NO catalogued `navigate` url points
+    // The context wrappers below are catalogued even though NO catalogued `navigate` url points
     // at them — every live url that does is one of the excluded tenant-bespoke `scsf_*`/
     // `gssf_*` entries. They are required all the same: each is the `:contextMenuName`
     // segment of a route this block owns (`accounting/:tid/journal/:contextMenuName`,
     // `.../invoice/:listId/:contextMenuName`, `.../bill/:listId/:contextMenuName`,
-    // `.../account/:contextMenuName`, `accounting-ocr-rules/:tid/:contextMenuName`). Without
+    // `.../account/:contextMenuName`; `ocr-rule-context` moved to `expense` in the 2026-11-10 split). Without
     // them the tenant is never added to their `tenants[]`, `MenuService.read` returns
     // nothing, and every accounting list renders with an empty action sheet — the exact p13
     // failure mode. Note the context-wrapper test in `@okr/tenant-routes` structurally CANNOT
     // catch this class: it walks `navigate` urls for `c-*` segments, and these wrappers are
-    // reachable only through a route parameter (and `ocr-rule-context` does not even match
-    // the `c-` prefix). Same precedent as `c-yearlyevents` on the `calevent` block.
+    // reachable only through a route parameter. Same precedent as `c-yearlyevents` on the `calevent` block.
     { key: 'c-journal', name: 'c-journal', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
       { key: 'journal-add', name: 'journal-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add', label: '@item.journal-add' },
       { key: 'journal-saldo', name: 'journal-saldo', url: 'toggleSaldo', action: 'toggle', roleNeeded: 'treasurer', icon: 'eye-on', iconAlt: 'eye-off', label: '@item.journal-saldo', labelAlt: '@item.journal-saldo_alt' },
@@ -1518,35 +1514,8 @@ const finance: FeatureBlock = {
       { key: 'account-import', name: 'account-import', url: 'import', action: 'call', roleNeeded: 'treasurer', icon: 'upload', label: '@item.account-import' },
       { key: 'account-export', name: 'account-export', url: 'export', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.account-export' },
     ] },
-    // Kostenstellen list (spec 1.65): *add* plus the two one-off migrations (§6.4); edit/archive live on the row's action sheet.
-    { key: 'c-cost-center', name: 'c-cost-center', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
-      { key: 'cost-center-add', name: 'cost-center-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add-circle', label: '@item.cost-center-add' },
-      { key: 'cost-center-migrate-free-text', name: 'cost-center-migrate-free-text', url: 'migrate-free-text', action: 'call', roleNeeded: 'treasurer', icon: 'sync', label: '@item.cost-center-migrate-free-text' },
-      { key: 'cost-center-migrate-backfill', name: 'cost-center-migrate-backfill', url: 'migrate-backfill', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.cost-center-migrate-backfill' },
-    ] },
-    // Budget version list (spec 1.65 phase 2): a first version of a fiscal year, and the Soll-Ist comparison; the rest lives on the row's action sheet.
-    { key: 'c-budget', name: 'c-budget', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
-      { key: 'budget-add', name: 'budget-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add-circle', label: '@item.budget-add' },
-      { key: 'budget-compare', name: 'budget-compare', url: 'compare', action: 'call', roleNeeded: 'treasurer', icon: 'swap-horizontal', label: '@item.budget-compare' },
-    ] },
-    // Umlagen (spec 1.65 D24): the list's context menu
-    { key: 'c-allocation', name: 'c-allocation', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
-      { key: 'allocation-add', name: 'allocation-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add-circle', label: '@item.allocation-add' },
-    ] },
-    // Anlagen (spec 1.100): the register's «…» menu; the route keeps its url, the list names the menu itself
-    { key: 'c-asset', name: 'c-asset', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
-      { key: 'asset-add', name: 'asset-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add-circle', label: '@item.asset-add' },
-      { key: 'asset-export', name: 'asset-export', url: 'export', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.asset-export' },
-    ] },
     { key: 'c-period', name: 'c-period', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
       { key: 'period-create', name: 'period-create', url: 'create', action: 'call', roleNeeded: 'treasurer', icon: 'add', label: '@item.period-create' },
-    ] },
-    // Not named `c-…` — the live doc really is `ocr-rule-context` (same naming outlier class
-    // as `forms-context`/`contextMenuChat`). Copied verbatim; renaming it would orphan the
-    // live doc.
-    { key: 'ocr-rule-context', name: 'ocr-rule-context', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
-      { key: 'ocr-rule-add', name: 'ocr-rule-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add-circle', label: '@item.ocr-rule-add' },
-      { key: 'ocr-rule-export', name: 'ocr-rule-export', url: 'export', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.ocr-rule-export' },
     ] },
     { key: 'bank-import-context', name: 'bank-import-context', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       { key: 'bank-import-file', name: 'bank-import-file', url: 'import', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.bank-import-file' },
@@ -1576,7 +1545,6 @@ const finance: FeatureBlock = {
       { key: 'accounting-journal', name: 'accounting-journal', url: '/accounting/@BOOKS@/journal/c-journal', action: 'navigate', roleNeeded: 'treasurer', icon: 'list', label: '@item.accounting-journal' },
       { key: 'accounting-bills', name: 'accounting-bills', url: '/accounting/@BOOKS@/bill/all/c-bill', action: 'navigate', roleNeeded: 'treasurer', icon: 'invoice', label: '@item.accounting-bills' },
       { key: 'accounting-invoices', name: 'accounting-invoices', url: '/accounting/@BOOKS@/invoice/all/c-invoice', action: 'navigate', roleNeeded: 'treasurer', icon: 'invoice', label: '@item.accounting-invoices' },
-      { key: 'accounting-cost', name: 'accounting-cost', url: '/accounting/@BOOKS@/cost-center/c-cost-center', action: 'navigate', roleNeeded: 'treasurer', icon: 'target', label: '@item.accounting-cost' },
       { key: 'accounting-reports', name: 'accounting-reports', url: '/accounting/@BOOKS@/balance/c-report', action: 'navigate', roleNeeded: 'treasurer', icon: 'chart', label: '@item.accounting-reports' },
       { key: 'accounting-closing', name: 'accounting-closing', url: '/accounting/@BOOKS@/periods/c-period', action: 'navigate', roleNeeded: 'treasurer', icon: 'calendar', label: '@item.accounting-closing' },
       { key: 'accounting-master-data', name: 'accounting-master-data', url: '/accounting/@BOOKS@/account/c-account', action: 'navigate', roleNeeded: 'treasurer', icon: 'settings', label: '@item.accounting-master-data' },
@@ -1586,6 +1554,113 @@ const finance: FeatureBlock = {
       // A tenant with `finance` but without `calevent` would get a dead row: enabling `calevent` is the fix.
       { key: 'courses-all', name: 'courses-all', url: '/course/all/all/c-courses', action: 'navigate', roleNeeded: 'treasurer', icon: 'school', label: '@item.courses-all' },
     ]),
+  ],
+};
+
+/**
+ * THE FINANCE SPLIT (owner decision 2026-11-10, plan 2 Task 7b): Buchhaltung, Kostenrechnung,
+ * Spesen/OCR and Anlagen are separately sellable paid options (`ADD_ON_BLOCKS` in
+ * `@okr/business-metering-util`), so each needs its own block. The three below were carved out of
+ * `finance` with their routes, menu rows and collections; all three `dependsOn: ['finance']` (they
+ * live in the treasurer's books — the accounting shell, accounts, bookings). Existing tenants with
+ * `finance` in `enabledFeatures` get all three added by `scripts/migrate-finance-split.mjs`.
+ *
+ * `cost-accounting` — Kostenrechnung (spec 1.65): `libs/finance/cost-center` and `libs/finance/budget`
+ * — cost centres, budget versions and the Soll-Ist comparison, Umlagen, and «Meine Kostenstellen».
+ * The `costCenterId` on booking lines stays with the ledger (`finance`); this block is the screens and
+ * their collections.
+ */
+const costAccounting: FeatureBlock = {
+  id: 'cost-accounting',
+  bundle: 'finance',
+  label: '@tenant/util.feature.cost-accounting.label',
+  icon: 'target',
+  defaultAvailability: 'ga',
+  dependsOn: ['finance'],
+  collections: ['budget-lines', 'budget-versions', 'cost-allocations', 'cost-centers'],
+  menu: [
+    financeMenuParent([
+      // «Meine Kostenstellen» (spec 1.65 §7.4): every member; the callable decides what they see.
+      // @BOOKS@ = the app's default books (AppConfig.defaultAccountingTenantId, never the tenant id); only the
+      // default books get this row — a second set of books (gss) has no member finance rows.
+      { key: 'my-cost-centers', name: 'my-cost-centers', url: '/my-cost-centers/@BOOKS@', action: 'navigate', roleNeeded: 'registered', icon: 'moneybag', label: '@item.my-cost-centers' },
+    ]),
+    // Kostenstellen list (spec 1.65): *add* plus the two one-off migrations (§6.4); edit/archive live on the row's action sheet.
+    { key: 'c-cost-center', name: 'c-cost-center', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
+      { key: 'cost-center-add', name: 'cost-center-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add-circle', label: '@item.cost-center-add' },
+      { key: 'cost-center-migrate-free-text', name: 'cost-center-migrate-free-text', url: 'migrate-free-text', action: 'call', roleNeeded: 'treasurer', icon: 'sync', label: '@item.cost-center-migrate-free-text' },
+      { key: 'cost-center-migrate-backfill', name: 'cost-center-migrate-backfill', url: 'migrate-backfill', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.cost-center-migrate-backfill' },
+    ] },
+    // Budget version list (spec 1.65 phase 2): a first version of a fiscal year, and the Soll-Ist comparison; the rest lives on the row's action sheet.
+    { key: 'c-budget', name: 'c-budget', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
+      { key: 'budget-add', name: 'budget-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add-circle', label: '@item.budget-add' },
+      { key: 'budget-compare', name: 'budget-compare', url: 'compare', action: 'call', roleNeeded: 'treasurer', icon: 'swap-horizontal', label: '@item.budget-compare' },
+    ] },
+    // Umlagen (spec 1.65 D24): the list's context menu
+    { key: 'c-allocation', name: 'c-allocation', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
+      { key: 'allocation-add', name: 'allocation-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add-circle', label: '@item.allocation-add' },
+    ] },
+    // The «Kostenrechnung» row of the accounting accordion (spec 1.100) opens the cost area.
+    accountingMenuParent([
+      { key: 'accounting-cost', name: 'accounting-cost', url: '/accounting/@BOOKS@/cost-center/c-cost-center', action: 'navigate', roleNeeded: 'treasurer', icon: 'target', label: '@item.accounting-cost' },
+    ]),
+  ],
+};
+
+/**
+ * `expense` — Spesen/OCR: `libs/finance/expense` (members submit receipts, the treasurer approves and
+ * exports) and `libs/finance/ocr-rule` (rules that pre-fill a scanned receipt). Its screen opens the
+ * `task` feature's modal (`expense.store.ts`), an edge `finance` already declares.
+ */
+const expense: FeatureBlock = {
+  id: 'expense',
+  bundle: 'finance',
+  label: '@tenant/util.feature.expense.label',
+  icon: 'expense',
+  defaultAvailability: 'ga',
+  dependsOn: ['finance'],
+  collections: ['expenses', 'expense-documents', 'ocr-rules'],
+  menu: [
+    financeMenuParent([
+      { key: 'expenses', name: 'expenses', url: '/expense/my/c-expense', action: 'navigate', roleNeeded: 'registered', icon: 'expense', label: '@item.expenses' },
+      { key: 'expenses-all', name: 'expenses-all', url: '/expense/all/c-expense', action: 'navigate', roleNeeded: 'treasurer', icon: 'expense', label: '@item.expenses-all' },
+    ]),
+    { key: 'c-expense', name: 'c-expense', url: '', action: 'context', roleNeeded: 'registered', icon: 'help-circle', label: '', children: [
+      { key: 'expense-add', name: 'expense-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: '@item.expense-add' },
+      // Live-data note: this doc's stale `index` string reads `a:callFunction`, but its
+      // `action` FIELD — the authoritative one, and the only one `MenuSpec` models — is
+      // `call`. `index` is regenerated from `name`/`action`/`okey` on every write
+      // (`menuIndex` in `menu-seed.util.ts`), so the drift self-heals; mirrored off `action`.
+      { key: 'expense-export', name: 'expense-export', url: 'export', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.expense-export' },
+    ] },
+    // Not named `c-…` — the live doc really is `ocr-rule-context` (same naming outlier class
+    // as `forms-context`/`contextMenuChat`). Copied verbatim; renaming it would orphan the
+    // live doc.
+    { key: 'ocr-rule-context', name: 'ocr-rule-context', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'ocr-rule-add', name: 'ocr-rule-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add-circle', label: '@item.ocr-rule-add' },
+      { key: 'ocr-rule-export', name: 'ocr-rule-export', url: 'export', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.ocr-rule-export' },
+    ] },
+  ],
+};
+
+/**
+ * `asset` — Anlagen (spec 1.100): `libs/finance/asset` — the asset register and the depreciation
+ * run, both segments of the «Abschluss» area of the accounting shell (no menu row of their own).
+ */
+const asset: FeatureBlock = {
+  id: 'asset',
+  bundle: 'finance',
+  label: '@tenant/util.feature.asset.label',
+  icon: 'invoice',
+  defaultAvailability: 'ga',
+  dependsOn: ['finance'],
+  collections: ['assets', 'asset-categories', 'asset-movements'],
+  menu: [
+    // Anlagen (spec 1.100): the register's «…» menu; the route keeps its url, the list names the menu itself
+    { key: 'c-asset', name: 'c-asset', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
+      { key: 'asset-add', name: 'asset-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add-circle', label: '@item.asset-add' },
+      { key: 'asset-export', name: 'asset-export', url: 'export', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.asset-export' },
+    ] },
   ],
 };
 
@@ -3382,7 +3457,7 @@ export const FEATURE_BLOCKS: FeatureBlock[] = [
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,
-  finance, memberFee, esign, pdfTemplate,
+  finance, costAccounting, expense, asset, memberFee, esign, pdfTemplate,
   documentBlock, contracts, meeting, diary, journal,
   chat, socialFeed, forms,
   business, alias, weather, energy,

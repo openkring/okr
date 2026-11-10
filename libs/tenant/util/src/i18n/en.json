@@ -90,7 +90,16 @@
       "label": "Mobility"
     },
     "finance": {
-      "label": "Finance & accounting"
+      "label": "Accounting"
+    },
+    "cost-accounting": {
+      "label": "Cost accounting"
+    },
+    "expense": {
+      "label": "Expenses & receipt scanning"
+    },
+    "asset": {
+      "label": "Fixed assets"
     },
     "member-fee": {
       "label": "Membership fees"

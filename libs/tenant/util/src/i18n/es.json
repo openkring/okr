@@ -90,7 +90,16 @@
       "label": "Movilidad"
     },
     "finance": {
-      "label": "Finanzas y contabilidad"
+      "label": "Contabilidad"
+    },
+    "cost-accounting": {
+      "label": "Contabilidad de costes"
+    },
+    "expense": {
+      "label": "Gastos & reconocimiento de recibos"
+    },
+    "asset": {
+      "label": "Activos fijos"
     },
     "member-fee": {
       "label": "Cuotas de socios"

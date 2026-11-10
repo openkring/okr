@@ -90,7 +90,16 @@
       "label": "Mobilität"
     },
     "finance": {
-      "label": "Finanzen & Buchhaltung"
+      "label": "Buchhaltung"
+    },
+    "cost-accounting": {
+      "label": "Kostenrechnung"
+    },
+    "expense": {
+      "label": "Spesen & Belegerkennung"
+    },
+    "asset": {
+      "label": "Anlagen"
     },
     "member-fee": {
       "label": "Mitgliederbeiträge"

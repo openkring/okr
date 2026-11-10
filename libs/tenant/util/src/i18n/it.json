@@ -90,7 +90,16 @@
       "label": "Mobilità"
     },
     "finance": {
-      "label": "Finanze e contabilità"
+      "label": "Contabilità"
+    },
+    "cost-accounting": {
+      "label": "Contabilità analitica"
+    },
+    "expense": {
+      "label": "Note spese & riconoscimento ricevute"
+    },
+    "asset": {
+      "label": "Immobilizzazioni"
     },
     "member-fee": {
       "label": "Quote associative"
