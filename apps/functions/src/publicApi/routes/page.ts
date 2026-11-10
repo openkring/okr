@@ -56,8 +56,8 @@ function pickI18n(value: I18nString | undefined, fallback = ''): string {
 
 interface StoredImage { url?: string; altText?: string; label?: string; overlay?: string; credit?: string }
 
-/** The caption setting of a section's `properties.imageStyle`. */
-type StoredImageStyle = Pick<ImageStyle, 'captionPosition'>;
+/** The caption and height settings of a section's `properties.imageStyle`. */
+type StoredImageStyle = Pick<ImageStyle, 'captionPosition' | 'height'>;
 
 /** An image as the website receives it; `caption` is '' when nothing is shown over the image. */
 export interface PublicImage { url: string; alt: string; caption: string }
@@ -116,6 +116,17 @@ export function articleImageLayout(
   if (imageCount === 0) return { imagePosition: 'none', imageColSize: size };
   if (imageCount > 1) return { imagePosition: 'top', imageColSize: size };
   return { imagePosition: VIEW_POSITIONS[position ?? 0] ?? 'none', imageColSize: size };
+}
+
+/**
+ * The fixed image height of an article in px, from `imageStyle.height` (e.g. '300px'), or 0 when the
+ * image keeps its natural height ('auto', '%', missing or out of range). The website then draws the
+ * image at that height with its natural width, like the app's okr-img.
+ */
+export function articleImageHeight(style: { height?: string } | undefined): number {
+  const match = /^\s*(\d{1,4})\s*px\s*$/.exec(style?.height ?? '');
+  const px = match ? Number(match[1]) : 0;
+  return px >= 16 && px <= 2000 ? px : 0;
 }
 
 // --------------------------------------- FOOTER ----------------------------------------
@@ -297,6 +308,7 @@ function mapSection(id: string, s: SectionDoc, nestedSections: Map<string, Secti
         type: 'article', title, subTitle, content: articleHtml,
         images: layout.imagePosition === 'none' ? [] : images,
         ...layout,
+        imageHeight: articleImageHeight(imageStyle),
       };
     }
   }
