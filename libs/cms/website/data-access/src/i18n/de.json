@@ -1,0 +1,10 @@
+{
+  "create": {
+    "conf": "Die Website wurde angelegt.",
+    "error": "Die Website konnte nicht angelegt werden."
+  },
+  "update": {
+    "conf": "Die Navigation wurde gespeichert.",
+    "error": "Die Navigation konnte nicht gespeichert werden."
+  }
+}

@@ -171,6 +171,8 @@ seed("reservations/resCourse", {"tenants": ["t1"], "isArchived": False, "reason"
 # CMS content stays public-readable.
 seed("pages/home",   {"tenants": ["t1"], "isArchived": False, "title": "Home"})
 seed("sections/secA",{"tenants": ["t1"], "isArchived": False, "type": "article"})
+# websites (spec 1.153): the sitemap tree document; tenant read, contentAdmin write, no delete.
+seed("websites/wsA", {"tenants": ["t1"], "isArchived": False, "name": "Site A", "nav": []})
 # fork-on-edit (D-BB-8): shared catalogue-owned menu docs a tenant may detach itself from.
 seed("menuItems/shared1", {"tenants": ["t1", "t2"], "isArchived": False, "name": "shared1", "label": "L"})
 seed("menuItems/shared2", {"tenants": ["t1", "t2"], "isArchived": False, "name": "shared2", "label": "L"})
@@ -585,6 +587,22 @@ single_cases = [
      "menuItems/shared3", C, body({"tenants": ["t2"], "label": "Renamed"}), ["tenants", "label"]),
     ("userA(no content role) detaches own tenant -> DENY", False, PATCH,
      "menuItems/shared3", A, body({"tenants": ["t2"]}), ["tenants"]),
+    # websites (spec 1.153): tenant read; contentAdmin (only) writes; nobody deletes.
+    ("userA(member) GET websites/wsA -> ALLOW", True, GET, "websites/wsA", A, None, None),
+    ("userB(other tenant) GET websites/wsA -> DENY", False, GET, "websites/wsA", B, None, None),
+    ("anon GET websites/wsA -> DENY", False, GET, "websites/wsA", None, None, None),
+    ("userC(contentAdmin) create websites/wsNew -> ALLOW", True, POST, "websites?documentId=wsNew", C,
+     body({"tenants": ["t1"], "name": "New", "nav": []}), None),
+    ("userC(contentAdmin) create websites cross-tenant t2 -> DENY", False, POST, "websites?documentId=wsX", C,
+     body({"tenants": ["t2"], "name": "X", "nav": []}), None),
+    ("userC(contentAdmin) PATCH websites/wsA nav -> ALLOW", True, PATCH, "websites/wsA", C,
+     body({"nav": [], "draftChangedAt": "2026-11-10T10:00:00.000Z"}), ["nav", "draftChangedAt"]),
+    ("userP(privileged, no contentAdmin) PATCH websites/wsA -> DENY", False, PATCH, "websites/wsA", P,
+     body({"name": "P"}), ["name"]),
+    ("userA(no role) PATCH websites/wsA -> DENY", False, PATCH, "websites/wsA", A,
+     body({"name": "A"}), ["name"]),
+    ("userC(contentAdmin) DELETE websites/wsA -> DENY", False, DELETE, "websites/wsA", C, None, None),
+    ("userD(admin) DELETE websites/wsA -> DENY", False, DELETE, "websites/wsA", D, None, None),
     # M-7: orgs/resources/tags no longer public — anon DENY, tenant member ALLOW, cross-tenant DENY.
     ("anon GET orgs/oA -> DENY", False, GET, "orgs/oA", None, None, None),
     ("anon GET resources/rA -> DENY", False, GET, "resources/rA", None, None, None),

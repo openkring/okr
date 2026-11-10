@@ -1,1 +1,1 @@
-// @okr/cms-website-data-access — filled by later tasks of plan 1.153.
+export * from './lib/website.service';

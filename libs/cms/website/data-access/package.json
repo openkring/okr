@@ -11,6 +11,7 @@
     "@okr/shared-config": "*",
     "@okr/shared-util-core": "*",
     "@okr/shared-util-angular": "*",
-    "@okr/shared-data-access": "*"
+    "@okr/shared-data-access": "*",
+    "@okr/shared-i18n": "*"
   }
 }
