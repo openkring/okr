@@ -12,9 +12,9 @@ import { Spinner } from '@okr/shared-ui';
 import { FormSection } from '@okr/shared-models';
 import { fill, parsePrefillParams, resolveImplicitValues } from '@okr/shared-util-core';
 
-import { FormCategoryService, FormSubmitService, isFormClosedError, PublicFormDefinition } from '@okr/forms-data-access';
+import { FormCategoryService, FormSubmitService, isCourseUnavailableError, isFormClosedError, PublicFormDefinition } from '@okr/forms-data-access';
 import { FORM_I18N_KEYS, FormI18n, hasVisibilityRules } from '@okr/forms-util';
-import { FieldOtherI18n, FormFillerHelpModal, FormRenderer } from '@okr/forms-ui';
+import { FieldCourseI18n, FieldOtherI18n, FormFillerHelpModal, FormRenderer } from '@okr/forms-ui';
 import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
 
@@ -76,6 +76,9 @@ const FormSectionStore = signalStore(
             @if (remainingText()) {
               <ion-note color="primary" class="remaining">{{ remainingText() }}</ion-note>
             }
+            @if (courseNotice()) {
+              <ion-note color="warning" class="pre-line">{{ store.formI18n.field_course_unavailable() }}</ion-note>
+            }
             <okr-form-renderer
               [definition]="def"
               [submitLabel]="store.i18n.form_submit()"
@@ -86,6 +89,9 @@ const FormSectionStore = signalStore(
               [lockedKeys]="prefill().keys"
               [implicitValues]="implicitValues()"
               [otherI18n]="otherI18n()"
+              [courseAudience]="def.courseAudience"
+              [courses]="def.courses ?? []"
+              [courseI18n]="courseI18n()"
               (submitted)="onSubmit($event)"
             />
           }
@@ -133,7 +139,14 @@ export class FormSectionComponent {
         : of(undefined),
   });
 
+  /** a definition fetched after a refused course choice: replaces the resource's, so the renderer (and its answers) stays */
+  private readonly refreshed = signal<PublicFormDefinition | undefined>(undefined);
+  /** `submitForm` refused the chosen course: the list was reloaded, the answers are kept */
+  protected readonly courseNotice = signal(false);
+
   protected readonly definition = computed<PublicFormDefinition | undefined>(() => {
+    const refreshed = this.refreshed();
+    if (refreshed) return refreshed;
     const val = this.definitionResource.value();
     return Array.isArray(val) ? val[0] : val;
   });
@@ -183,6 +196,13 @@ export class FormSectionComponent {
     placeholder: this.store.formI18n.field_other_placeholder(),
   }));
 
+  protected readonly courseI18n = computed<FieldCourseI18n>(() => ({
+    hint: this.store.formI18n.field_course_hint(),
+    places: this.store.formI18n.field_course_places(),
+    placesOne: this.store.formI18n.field_course_places_one(),
+    full: this.store.formI18n.field_course_full(),
+  }));
+
   /** the lists of the form's category fields — fetched for anonymous visitors, who have no AppStore categories */
   protected readonly categoriesResource = rxResource({
     params: () => ({ def: this.definition(), known: this.store.appStore.allCategories() }),
@@ -230,6 +250,7 @@ export class FormSectionComponent {
     if (!def) return;
     this.submitting.set(true);
     this.errorMsg.set('');
+    this.courseNotice.set(false);
     try {
       const processedValues = await this.formSubmitService.uploadFiles(values, def, {
         encryptFileUpload: this.section().properties?.encryptFileUpload ?? false,
@@ -249,10 +270,19 @@ export class FormSectionComponent {
     } catch (err) {
       // closed or full since the page loaded: the closed text; anything else: the generic error
       if (isFormClosedError(err)) this.closedByServer.set(true);
+      else if (isCourseUnavailableError(err)) await this.onCourseUnavailable(def);
       else this.errorMsg.set(this.store.i18n.form_submit_error());
     } finally {
       this.submitting.set(false);
     }
+  }
+
+  /** the course was taken, ended or no longer fits: reload the list without losing the answers, say so */
+  private async onCourseUnavailable(def: PublicFormDefinition): Promise<void> {
+    const fresh = await this.formSubmitService.fetchDefinition(def.formKey, this.store.appStore.tenantId(), this.section().okey || undefined);
+    const next = Array.isArray(fresh) ? fresh[0] : fresh;
+    if (next) this.refreshed.set(next);
+    this.courseNotice.set(true);
   }
 
   /** every query parameter, repeated ones as a list; nothing when the section is not under a route */

@@ -58,6 +58,18 @@ export function isFormClosedError(err: unknown): boolean {
   return isPrecondition && typeof message === 'string' && FORM_CLOSED_MESSAGES.includes(message);
 }
 
+/**
+ * Whether `submitForm` refused the chosen course (1.152): a `failed-precondition` whose message — or
+ * `details.reason` — is `course-unavailable`. The filler keeps the answers and picks again.
+ */
+export function isCourseUnavailableError(err: unknown): boolean {
+  if (typeof err !== 'object' || err === null) return false;
+  const { code, message, details } = err as { code?: unknown; message?: unknown; details?: unknown };
+  if (code !== 'failed-precondition' && code !== 'functions/failed-precondition') return false;
+  const reason = typeof details === 'object' && details !== null ? (details as { reason?: unknown }).reason : undefined;
+  return message === 'course-unavailable' || reason === 'course-unavailable';
+}
+
 export interface UploadOptions {
   encryptFileUpload: boolean;
   /** asked once, before the first file — the prompt itself is presentation and stays with

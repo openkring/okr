@@ -1,4 +1,5 @@
 import type { ApplicationKind, ApplicationModel, CourseModel } from '@okr/shared-models';
+import { convertDateFormatToString, DateFormat } from './date.util';
 
 /**
  * Course choice in the Anmeldung (spec 1.152). Pure helpers, no clock: `today` is a StoreDate
@@ -83,4 +84,12 @@ export function courseChoiceRefusal(
   const max = course.maxParticipants ?? 0;
   if (max > 0 && placesTaken >= max) return refused;
   return undefined;
+}
+
+/** «12.03.–30.04.2027» for two StoreDates; a missing or malformed date gives ''. */
+export function formatCourseRange(startDate: string, endDate: string): string {
+  if (!/^\d{8}$/.test(startDate ?? '') || !/^\d{8}$/.test(endDate ?? '')) return '';
+  const from = convertDateFormatToString(startDate, DateFormat.StoreDate, DateFormat.ViewDayMonth, false);
+  const to = convertDateFormatToString(endDate, DateFormat.StoreDate, DateFormat.ViewDate, false);
+  return from && to ? from + '–' + to : '';
 }

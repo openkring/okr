@@ -1,4 +1,4 @@
-import { Component, computed, effect, input, untracked } from '@angular/core';
+import { Component, computed, effect, input, signal, untracked } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { IonItem, IonLabel } from '@ionic/angular';
 import {
@@ -9,7 +9,7 @@ import {
 import { ChSsnMask } from '@okr/shared-config';
 import { SSN_LENGTH } from '@okr/shared-constants';
 import { CategoryListModel, Field, OTHER_OPTION_VALUE } from '@okr/shared-models';
-import { AhvFormat, FORM_OTHER_TEXT_MAX, formatAhv } from '@okr/shared-util-core';
+import { AhvFormat, FORM_OTHER_TEXT_MAX, PublicCourseOption, fill, formatAhv, formatCourseRange } from '@okr/shared-util-core';
 
 /** Angular validator error → `validation.*` key of the main i18n bundle (resolved by okr-error-note). */
 const ERROR_KEYS: [string, string][] = [
@@ -37,6 +37,26 @@ export interface FieldOtherI18n {
 
 /** The fallback for a host that passes no labels (the German texts of `field_other_option` / `field_other_placeholder`). */
 export const DEFAULT_FIELD_OTHER_I18N: FieldOtherI18n = { option: 'Andere …', placeholder: 'Deine Antwort' };
+
+/** The texts of the course choice (1.152) — resolved by the host from `FORM_I18N_KEYS`. */
+export interface FieldCourseI18n {
+  /** shown while the applicant type is unknown, e.g. «Sobald du dein Geburtsdatum angegeben hast …» */
+  hint: string;
+  /** «noch {count} Plätze» */
+  places: string;
+  /** «noch 1 Platz» */
+  placesOne: string;
+  /** «ausgebucht» */
+  full: string;
+}
+
+/** The fallback for a host that passes no labels (the German texts). */
+export const DEFAULT_FIELD_COURSE_I18N: FieldCourseI18n = {
+  hint: 'Sobald du dein Geburtsdatum angegeben hast, siehst du hier die passenden Kurse.',
+  places: 'noch {count} Plätze',
+  placesOne: 'noch 1 Platz',
+  full: 'ausgebucht',
+};
 
 /** The usual Swiss example number, shown while an AHV field is empty. */
 const SSN_PLACEHOLDER = '756.1234.5678.97';
@@ -137,6 +157,19 @@ const SSN_PLACEHOLDER = '756.1234.5678.97';
       @case ('divider') {
         <hr class="field-divider" />
       }
+      @case ('course') {
+        <!-- the course choice (1.152): one checkbox per course, ticking one unticks the others -->
+        @if (!audienceKnown()) {
+          <div class="static-label">{{ field().label }}</div>
+          <div class="help-text">{{ courseI18n().hint }}</div>
+        } @else if (courses().length > 0) {
+          <div class="static-label">{{ field().label }}</div>
+          @for (c of courses(); track c.key) {
+            <okr-checkbox [i18n]="courseCheckboxI18n(c)" [checked]="courseValue() === c.key"
+              (checkedChange)="pickCourse(c.key, $event)" [readOnly]="readOnly() || c.isFull" />
+          }
+        }
+      }
       @case ('implicit') {
         <!-- never rendered: the value comes from the section or the link (1.125 B) -->
       }
@@ -172,8 +205,25 @@ export class FieldRenderer {
   /** the `<key>Other` control of a field with `allowOther`; absent otherwise */
   public readonly otherControl = input<FormControl | undefined>();
   public readonly otherI18n = input<FieldOtherI18n>(DEFAULT_FIELD_OTHER_I18N);
+  /** the courses offered to the applicant (already filtered by type) — a 'course' field only */
+  public readonly courses = input<PublicCourseOption[]>([]);
+  /** the applicant type is known; until then a 'course' field shows its hint */
+  public readonly audienceKnown = input(false);
+  public readonly courseI18n = input<FieldCourseI18n>(DEFAULT_FIELD_COURSE_I18N);
+
+  /** mirror of the control's value: the parent may clear it from outside an event */
+  protected readonly courseValue = signal('');
 
   constructor() {
+    effect((onCleanup) => {
+      const control = this.control();
+      untracked(() => {
+        this.courseValue.set(typeof control.value === 'string' ? control.value : '');
+        const sub = control.valueChanges.subscribe(v => this.courseValue.set(typeof v === 'string' ? v : ''));
+        onCleanup(() => sub.unsubscribe());
+      });
+    });
+
     // a category select always shows an item: store the first one until the user picks another
     effect(() => {
       const category = this.category();
@@ -270,6 +320,24 @@ export class FieldRenderer {
     this.control().setValue(value);
     this.control().markAsDirty();
     this.control().markAsTouched();
+  }
+
+  /** «Name · 12.03.–30.04.2027», with «noch 3 Plätze» / «ausgebucht» when the course is limited */
+  protected courseCheckboxI18n(course: PublicCourseOption): CheckboxI18n {
+    const i18n = this.courseI18n();
+    let places = '';
+    if (course.isFull) places = i18n.full;
+    else if (course.remaining === 1) places = i18n.placesOne;
+    else if (course.remaining > 1) places = fill(i18n.places, { count: course.remaining });
+    const range = formatCourseRange(course.startDate, course.endDate);
+    const label = [course.name, range].filter(Boolean).join(' · ') + (places ? ' – ' + places : '');
+    return { name: this.field().key + '-' + course.key, label, helper: '' };
+  }
+
+  /** single choice in checkbox look: ticking sets the key (the others untick), unticking empties it */
+  protected pickCourse(key: string, checked: boolean): void {
+    if (checked) this.setValue(key);
+    else if (this.courseValue() === key) this.setValue('');
   }
 
   /** whether the answer is «Andere …» (the reserved value, or a list holding it) */

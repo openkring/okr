@@ -2,10 +2,10 @@ import { Component, computed, DestroyRef, effect, inject, input, OnInit, output,
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { IonButton } from '@ionic/angular';
-import { BaseType, CategoryListModel, Field, FormDefinitionModel, OTHER_OPTION_VALUE } from '@okr/shared-models';
-import { FORM_OTHER_TEXT_MAX, getTodayStr, getVisibleFieldIds, resolveImplicitValues } from '@okr/shared-util-core';
+import { BaseType, CategoryListModel, DerivedValue, Field, FormDefinitionModel, OTHER_OPTION_VALUE } from '@okr/shared-models';
+import { FORM_OTHER_TEXT_MAX, PublicCourseOption, computeDerivedValues, coursesForAudience, getTodayStr, getVisibleFieldIds, resolveImplicitValues } from '@okr/shared-util-core';
 import { validatorsFor, defaultFor, isInputField } from '@okr/forms-util';
-import { DEFAULT_FIELD_OTHER_I18N, FieldOtherI18n, FieldRenderer } from './field-renderer';
+import { DEFAULT_FIELD_COURSE_I18N, DEFAULT_FIELD_OTHER_I18N, FieldCourseI18n, FieldOtherI18n, FieldRenderer } from './field-renderer';
 
 /** The key of the «Andere» text of a field (spec §9). */
 function otherKeyOf(field: Field): string {
@@ -63,7 +63,8 @@ function isOtherValue(value: unknown): boolean {
           @if (field.type !== 'implicit' && visibleIds().has(field.id)) {
             <okr-field-renderer [class]="'width-' + field.width" [field]="field" [control]="getControl(field)"
               [category]="categoryOf(field)" [readOnly]="isLocked(field)" [otherControl]="otherControlOf(field)"
-              [otherI18n]="otherI18n()" />
+              [otherI18n]="otherI18n()"
+              [courses]="courseList()" [audienceKnown]="courseAudienceValue() !== undefined" [courseI18n]="courseI18n()" />
           }
         }
       </div>
@@ -96,6 +97,12 @@ export class FormRenderer implements OnInit {
   public readonly implicitValues = input<Record<string, BaseType>>({});
   /** the «Andere …» labels */
   public readonly otherI18n = input<FieldOtherI18n>(DEFAULT_FIELD_OTHER_I18N);
+  /** the derived value that says who the applicant is (`PublicFormDefinition.courseAudience`); a 'course' field takes its audience from it */
+  public readonly courseAudience = input<DerivedValue | undefined>();
+  /** the announced courses (`PublicFormDefinition.courses`); the renderer shows those that suit the audience */
+  public readonly courses = input<PublicCourseOption[]>([]);
+  /** the texts of the course choice */
+  public readonly courseI18n = input<FieldCourseI18n>(DEFAULT_FIELD_COURSE_I18N);
   public readonly submitted = output<Record<string, unknown>>();
   /** every answer, hidden ones included (`getRawValue()`), after each change — for the builder preview */
   public readonly valueChange = output<Record<string, unknown>>();
@@ -109,6 +116,23 @@ export class FormRenderer implements OnInit {
   );
 
   private readonly destroyRef = inject(DestroyRef);
+
+  /** every answer, hidden ones included, as a signal — what the derived applicant type is computed from */
+  private readonly answers = signal<Record<string, unknown>>({});
+
+  private readonly courseField = computed(() => this.definition().fields.find(f => f.type === 'course'));
+
+  /** the applicant type the server will derive (the same `computeDerivedValues`); undefined until it is known */
+  protected readonly courseAudienceValue = computed<string | undefined>(() => {
+    const field = this.courseField();
+    const derived = this.courseAudience();
+    if (field?.type !== 'course' || !derived) return undefined;
+    const value = computeDerivedValues([derived], this.definition().fields, this.answers(), this.visibleIds() as Set<string>, getTodayStr())[field.audienceFrom];
+    return value ? value : undefined;
+  });
+
+  /** the courses that suit the applicant type, sorted by start date */
+  protected readonly courseList = computed(() => coursesForAudience(this.courses(), this.courseAudienceValue()));
 
   private _form: FormGroup = new FormGroup({});
 
@@ -156,6 +180,18 @@ export class FormRenderer implements OnInit {
     });
   }
 
+  /** a ticked course that left the list (the applicant type changed, or it filled up) is unticked */
+  private readonly clearCourse = effect(() => {
+    const keys = new Set(this.courseList().filter(c => !c.isFull).map(c => c.key));
+    const field = this.courseField();
+    if (!field) return;
+    untracked(() => {
+      const control = this._form.get(field.key);
+      const value = control?.value;
+      if (control && typeof value === 'string' && value !== '' && !keys.has(value)) control.setValue('');
+    });
+  });
+
   public ngOnInit(): void {
     const fields = this.definition().fields;
     const prefill = this.prefill();
@@ -200,9 +236,11 @@ export class FormRenderer implements OnInit {
 
     this.updateVisibility();
     this.syncOtherControls();
+    this.answers.set(this._form.getRawValue() as Record<string, unknown>);
     this._form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.updateVisibility();
       this.syncOtherControls();
+      this.answers.set(this._form.getRawValue() as Record<string, unknown>);
       this.valueChange.emit(this._form.getRawValue() as Record<string, unknown>);
     });
   }

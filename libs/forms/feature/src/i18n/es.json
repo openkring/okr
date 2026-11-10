@@ -57,7 +57,12 @@
     "invisible": "invisible",
     "audience_from": "¿Quién ve qué cursos?",
     "audience_from_helper": "El valor calculado que indica para quién es la inscripción, por ejemplo «applicationAs». Decide qué cursos se muestran.",
-    "audience_from_none": "Añade primero un valor calculado que indique para quién es la inscripción."
+    "audience_from_none": "Añade primero un valor calculado que indique para quién es la inscripción.",
+    "course_hint": "En cuanto indiques tu fecha de nacimiento, verás aquí los cursos adecuados.",
+    "course_places": "quedan {count} plazas",
+    "course_places_one": "queda 1 plaza",
+    "course_full": "completo",
+    "course_unavailable": "Este curso ya no está disponible. Elige otro o envía la inscripción sin curso."
   },
   "fields": {
     "duplicate_key": "Dos preguntas tienen la misma clave. Dale a cada pregunta la suya.",

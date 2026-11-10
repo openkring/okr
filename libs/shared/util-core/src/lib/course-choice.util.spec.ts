@@ -5,6 +5,7 @@ import {
   courseChoiceRefusal,
   coursesForAudience,
   defaultIsAnnounced,
+  formatCourseRange,
   holdsCoursePlace,
   isAnnouncedCourseOpen,
   toCourseOption,
@@ -116,5 +117,15 @@ describe('courseChoiceRefusal', () => {
   });
   it('accepts a limited course with a place left', () => {
     expect(ok(course({ maxParticipants: 2 }), 'youth', 1)).toBeUndefined();
+  });
+});
+
+describe('formatCourseRange', () => {
+  it('formats a StoreDate range as dd.MM.–dd.MM.yyyy', () => {
+    expect(formatCourseRange('20270312', '20270430')).toBe('12.03.–30.04.2027');
+  });
+  it('gives empty text for a missing or malformed date', () => {
+    expect(formatCourseRange('', '20270430')).toBe('');
+    expect(formatCourseRange('20270312', 'x')).toBe('');
   });
 });

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { FormDefinitionModel } from '@okr/shared-models';
 
-import { FormSubmitService, isFormClosedError } from './form-submit.service';
+import { FormSubmitService, isCourseUnavailableError, isFormClosedError } from './form-submit.service';
 
 // The service reaches Firebase only through two dynamic imports; stubbing them keeps the
 // anti-abuse contract — what is stripped, what is lifted into `meta` — testable without any
@@ -158,5 +158,17 @@ describe('FormSubmitService', () => {
       ).resolves.toBe(values);
       expect(askPassword).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('isCourseUnavailableError', () => {
+  it('accepts a failed-precondition with the message or the details reason', () => {
+    expect(isCourseUnavailableError({ code: 'functions/failed-precondition', message: 'course-unavailable' })).toBe(true);
+    expect(isCourseUnavailableError({ code: 'failed-precondition', message: 'x', details: { reason: 'course-unavailable' } })).toBe(true);
+  });
+  it('refuses other codes, other reasons and non-errors', () => {
+    expect(isCourseUnavailableError({ code: 'functions/invalid-argument', message: 'course-unavailable' })).toBe(false);
+    expect(isCourseUnavailableError({ code: 'functions/failed-precondition', message: 'form-closed' })).toBe(false);
+    expect(isCourseUnavailableError(undefined)).toBe(false);
   });
 });
