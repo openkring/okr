@@ -102,6 +102,9 @@ export class WebsiteSitemap {
   }
 
   protected async onReorder(parentId: string | null, ev: CustomEvent<ItemReorderEventDetail>): Promise<void> {
+    // ionItemReorder bubbles: a drag in a nested menu also reaches every ancestor group. Only the
+    // group that owns the dragged item handles it, with its own parentId.
+    if (ev.target !== ev.currentTarget) return;
     const { from, to } = ev.detail;
     ev.detail.complete();
     await this.store.reorder(parentId, from, to);
@@ -143,6 +146,7 @@ export class WebsiteSitemap {
         break;
       case 'page':
         push('node.editPage', i18n.action_edit_page(), 'edit');
+        push('node.edit', i18n.action_edit_entry(), 'edit');
         push('node.copyUrl', i18n.action_copy_url(), 'copy');
         push('node.move', i18n.action_move(), 'swap-vertical');
         push('node.archive', i18n.action_archive(), 'archive');

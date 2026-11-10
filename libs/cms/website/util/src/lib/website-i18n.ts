@@ -19,6 +19,7 @@ export const WEBSITE_I18N_KEYS = {
   action_archive:           PFX + 'action.archive',
   action_edit_page:         PFX + 'action.editPage',
   action_copy_url:          PFX + 'action.copyUrl',
+  action_edit_entry:        PFX + 'action.editEntry',
 
   // warnings, one per WebsiteWarning code
   warning_page_missing:     PFX + 'warning.pageMissing',
