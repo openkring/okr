@@ -1,0 +1,19 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "../../../../dist/libs/cms/website/render",
+    "declaration": true,
+    "composite": true,
+    "types": ["node"],
+    "paths": {
+      "@okr/shared-models": ["dist/libs/shared/models/src/index.d.ts"]
+    },
+    "tsBuildInfoFile": "../../../../dist/out-tsc/cms-website-render.tsbuildinfo",
+    "ignoreDeprecations": "6.0",
+    "rootDir": "."
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"],
+  "references": [{ "path": "../../../shared/models/tsconfig.lib.json" }]
+}

@@ -1,8 +1,11 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
+import { isAllowedLinkUrl } from '@okr/cms-website-render';
 import type { WebsiteNodeType } from '@okr/shared-models';
 
 import { WEBSITE_I18N_KEYS as K } from './website-i18n';
+
+export { isAllowedLinkUrl };
 
 export const LABEL_LENGTH = 60;
 
@@ -15,14 +18,6 @@ export interface WebsiteNodeFormModel {
 }
 
 const SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
-const LINK_PREFIXES = ['/', 'https://', 'mailto:'];
-
-/** Only same-site paths, https and mailto links may enter the published navigation. */
-export function isAllowedLinkUrl(url: string): boolean {
-  const u = (url ?? '').trim();
-  if (/^\/[/\\]/.test(u)) return false; // protocol-relative (`//host`, `/\host`)
-  return LINK_PREFIXES.some((p) => u.toLowerCase().startsWith(p) && (p === '/' || u.length > p.length));
-}
 
 export const websiteNodeValidations = staticSuite((model: WebsiteNodeFormModel, field?: string) => {
   only(field);

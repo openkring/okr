@@ -388,6 +388,9 @@ importers:
       firebase-functions:
         specifier: ^7.4.0
         version: 7.4.0(firebase-admin@13.6.0(encoding@0.1.13)(supports-color@8.1.1))(supports-color@8.1.1)
+      handlebars:
+        specifier: 4.7.9
+        version: 4.7.9
       i18n-iso-countries:
         specifier: ^7.14.0
         version: 7.14.0

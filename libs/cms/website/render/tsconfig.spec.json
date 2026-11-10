@@ -1,0 +1,17 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "outDir": "../../../../dist/out-tsc/libs/cms/website/render/spec",
+    "rootDir": "./",
+    "types": ["node", "vitest"],
+    "module": "es2020",
+    "target": "es2020",
+    "esModuleInterop": true,
+    "allowJs": true,
+    "ignoreDeprecations": "6.0"
+  },
+  "include": ["vite.config.ts", "vite.config.mts", "vitest.config.ts", "vitest.config.mts", "src/**/*", "**/*.spec.ts", "**/*.test.ts"],
+  "exclude": [],
+  "references": [{ "path": "../../../shared/models/tsconfig.lib.json" }]
+}

@@ -1,0 +1,31 @@
+{
+  "name": "cms-website-render",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/cms/website/render/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:util", "scope:website", "platform:node", "platform:web", "platform:mobile"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/cms/website/render",
+        "main": "libs/cms/website/render/src/index.ts",
+        "tsConfig": "libs/cms/website/render/tsconfig.lib.json",
+        "assets": ["libs/cms/website/render/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "configFile": "libs/cms/website/render/vite.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}
