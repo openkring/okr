@@ -1,4 +1,4 @@
-import { Component, ElementRef, computed, effect, forwardRef, inject, input, signal, untracked } from '@angular/core';
+import { Component, DestroyRef, ElementRef, afterNextRender, computed, effect, forwardRef, inject, input, signal, untracked } from '@angular/core';
 import { IonAccordion, IonAccordionGroup, IonItem, IonItemDivider, IonLabel, IonList, IonProgressBar, IonSegment, IonSegmentButton } from '@ionic/angular';
 
 import { SelectedBooks } from '@okr/shared-feature';
@@ -9,7 +9,7 @@ import { dismissOverlay, VersionCheckService } from '@okr/shared-util-angular';
 import { DEFAULT_MENU_ACTION } from '@okr/shared-constants';
 
 import { MenuInfo, MultiAvatar } from '@okr/cms-menu-ui';
-import { isHiddenOnNarrowScreen, isMenuBlocked, nextVisitedKeys, WIDE_SCREEN_QUERY } from '@okr/cms-menu-util';
+import { isHiddenOnNarrowScreen, isMenuBlocked, nextVisitedKeys, popoverOffsetX, WIDE_SCREEN_QUERY } from '@okr/cms-menu-util';
 
 import { MenuItemsStore } from './menu-items.store';
 import { MenuLayout } from './menu-layout.service';
@@ -179,6 +179,7 @@ export class Menu {
   protected readonly layout = inject(MenuLayout);
   protected readonly appUpdate = inject(VersionCheckService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly destroyRef = inject(DestroyRef);
 
   // inputs
   public menuName = input.required<string>();
@@ -265,6 +266,52 @@ export class Menu {
           debugData(`Menu.cycle: circular reference to '${child}' under '${this.menuName()}'`, { path: [...this.inputVisitedKeys()] }, this.currentUser());
         }
       }
+    });
+    afterNextRender(() => this.keepPopoverOnScreen());
+  }
+
+  /**
+   * Context menu only (the root node inside a context-menu popover): keep the popover inside the
+   * screen while its content settles.
+   *
+   * Ionic positions a popover ONCE, from the width it measures at the start of the enter
+   * animation, and never again. The apps give every context-menu popover
+   * `--width: max-content`, which measures ~0 at that moment (or too narrow while the row
+   * labels are still being translated), so the box was placed for a sliver and then grew out of
+   * the screen to the right. Depending on the timing — which differs from open to open, and most
+   * on the native iOS app — the «…» seemed dead (popover entirely off-screen, only the backdrop),
+   * showed a white strip, or worked. Ionic's `left` is `calc(<px> + var(--offset-x, 0))`, so
+   * moving `--offset-x` on the popover corrects the position without fighting Ionic.
+   */
+  private keepPopoverOnScreen(): void {
+    if (this.inputDepth() !== 0 || typeof ResizeObserver === 'undefined') return;
+    const popover = this.host.nativeElement.closest('ion-popover');
+    // the menu bar's dropdowns (okr-menu-dropdown) are positioned by their own trigger rules
+    if (!popover || popover.classList.contains('okr-menu-dropdown')) return;
+    const content = popover.shadowRoot?.querySelector<HTMLElement>('.popover-content');
+    if (!content) return;
+
+    let offset = 0;
+    const fit = (): void => {
+      // offsetLeft/offsetWidth are layout px (not scaled by the enter animation or a CSS zoom),
+      // the same space as Ionic's `left`; the popover host is fixed over the whole viewport
+      const viewportWidth = popover.clientWidth;
+      if (!viewportWidth || !content.offsetWidth) return;
+      const next = popoverOffsetX(content.offsetLeft, content.offsetWidth, viewportWidth, offset);
+      if (next === offset) return;
+      offset = next;
+      popover.style.setProperty('--offset-x', `${offset}px`);
+    };
+    const observer = new ResizeObserver(fit);
+    observer.observe(content);
+    // Ionic writes `left` at the start of the animation: the size may not change after that
+    popover.addEventListener('ionPopoverDidPresent', fit);
+    this.destroyRef.onDestroy(() => {
+      observer.disconnect();
+      popover.removeEventListener('ionPopoverDidPresent', fit);
+      // the ion-popover element outlives this menu (the content unmounts on dismiss): the next
+      // open must start from Ionic's own position
+      popover.style.removeProperty('--offset-x');
     });
   }
 
