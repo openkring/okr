@@ -18,8 +18,13 @@ describe('websiteNodeValidations', () => {
     const link = (url: string) => m({ type: 'link', slug: '', url });
     expect(websiteNodeValidations(link('ftp://x')).hasErrors('url')).toBe(true);
     expect(websiteNodeValidations(link('')).hasErrors('url')).toBe(true);
-    for (const ok of ['mailto:a@b.ch', 'https://a.ch', '/termine?cat=regatta', 'tel:+41']) {
+    for (const ok of ['mailto:a@b.ch', 'https://a.ch', '/termine?cat=regatta']) {
       expect(websiteNodeValidations(link(ok)).isValid()).toBe(true);
+    }
+  });
+  it('rejects http and tel links', () => {
+    for (const bad of ['tel:+41', 'http://x.ch']) {
+      expect(websiteNodeValidations(m({ type: 'link', slug: '', url: bad })).hasErrors('url')).toBe(true);
     }
   });
   it('ignores slug for links and url for pages', () => {

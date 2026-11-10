@@ -15,9 +15,9 @@ export interface WebsiteNodeFormModel {
 }
 
 const SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
-const LINK_PREFIXES = ['/', 'https://', 'http://', 'mailto:', 'tel:'];
+const LINK_PREFIXES = ['/', 'https://', 'mailto:'];
 
-/** Only same-site paths, http(s), mailto and tel links may enter the published navigation. */
+/** Only same-site paths, https and mailto links may enter the published navigation. */
 export function isAllowedLinkUrl(url: string): boolean {
   const u = (url ?? '').trim();
   return u.length > 0 && !u.startsWith('//') && LINK_PREFIXES.some((p) => u.toLowerCase().startsWith(p));
