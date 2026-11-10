@@ -64,11 +64,22 @@ describe('makePostFanOut', () => {
     expect(reverseShare).not.toHaveBeenCalled();
   });
 
-  it('keeps the quoted price when the pages differ and warns', async () => {
+  it('keeps the quoted price when a letter is shorter than the quote and warns', async () => {
     const { fan, records } = setup();
+    await fan.onLetter(letter('p1', { pages: 1 }));
+    expect(records.get('m1_person.p1')).toMatchObject({ price: 180, pages: 1, state: 'queued' });
+    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('m1'), expect.objectContaining({ recipient: 'person.p1', quotedPages: 2, renderedPages: 1 }));
+  });
+
+  it('does not send a letter longer than the quote: tombstone with failReason, share returned', async () => {
+    const { fan, saved, records, reverseShare } = setup();
     await fan.onLetter(letter('p1', { pages: 3 }));
-    expect(records.get('m1_person.p1')).toMatchObject({ price: 180, pages: 3 });
-    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('m1'), expect.objectContaining({ recipient: 'person.p1', quotedPages: 2, renderedPages: 3 }));
+    await fan.onLetter(letter('org.o1'));
+    await fan.finish();
+    expect(saved).toEqual(['mailing-letters/scs/m1/org.o1.pdf']);
+    expect(records.get('m1_person.p1')).toMatchObject({ state: 'failed', failReason: 'other', storagePath: '', price: 0 });
+    expect(reverseShare).toHaveBeenCalledTimes(1);
+    expect(reverseShare).toHaveBeenCalledWith('scs', 'e1', { units: 1, pages: 2 }, 'm1_person.p1', expect.stringContaining('longer than the quote'));
   });
 
   it('is idempotent: an existing record is neither overwritten nor re-stored', async () => {

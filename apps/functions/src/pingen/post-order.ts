@@ -19,6 +19,7 @@ import { eventWhen } from '../calendar/mail';
 import { countLetterPages, postalOf, type LetterEvent } from '../email/mailing-letters';
 import type { ResolvedAttachment } from '../email/mailing';
 import { isElevated } from '../email/mailing-recipients';
+import { sanitizeEmailBody } from '../pdf/sanitize';
 import type { CreditPort } from './credit-port';
 
 const ADDRESS_READ_CHUNK = 20;
@@ -205,7 +206,8 @@ export async function quoteDepsOf(env: QuoteEnv, port: CreditPort, input: QuoteI
   const answerEvents = input.letterQrCodes ? await env.answerEventsOf(input.caleventKeys) : [];
   return {
     port, secret: env.secret, now, readCountryCodes: env.readCountryCodes,
-    countLetterPages: (a) => env.renderPages({ ...a, attachmentBytes: a.attachments, attachments: [], answerEvents }),
+    // count the pages of exactly the HTML that will be printed: the fan-out renders the sanitized body
+    countLetterPages: async (a) => env.renderPages({ ...a, body: await sanitizeEmailBody(a.body), attachmentBytes: a.attachments, attachments: [], answerEvents }),
   };
 }
 

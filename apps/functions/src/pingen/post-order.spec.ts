@@ -240,3 +240,16 @@ describe('parsePostRequest', () => {
     expect(() => parsePostRequest({ via: 'pingen', token: 't' })).toThrow();
   });
 });
+
+describe('quoteDepsOf', () => {
+  it('counts the pages of the sanitized body, the HTML the fan-out prints', async () => {
+    const { quoteDepsOf } = await import('./post-order');
+    const renderPages = vi.fn(async () => 2);
+    const env = { secret: 's', readCountryCodes: vi.fn(), answerEventsOf: vi.fn(async () => []), renderPages } as unknown as QuoteEnv;
+    const deps = await quoteDepsOf(env, {} as never, { letterQrCodes: false, caleventKeys: [] } as never, 0);
+    await deps.countLetterPages({ tenantId: 'scs', subject: 's', body: '<p>Hallo</p><!-- <p>versteckt</p>', attachments: [], withQrBlock: false });
+    const body = (renderPages.mock.calls[0] as unknown as [{ body: string }])[0].body;
+    expect(body).not.toContain('<!--');
+    expect(body).toContain('Hallo');
+  });
+});

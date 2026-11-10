@@ -48,6 +48,8 @@ export function makePostFanOut(args: { tenantId: string; mailingKey: string; pos
   // a fractional price is an acceptance bug: no records, no reversal; the operator decides
   const invalid = !Number.isInteger(price);
   const handled = new Set<string>();
+  /** letters longer than the quote: not sent, their share goes back (finish) */
+  const tooLong = new Set<string>();
   const ids = (parentKey: string) => ({
     tenantId, mailingKey, recipient: parentKey, creditEntryId: post.creditEntryId, amount: price, pages: quotedPages, key: sendingId(mailingKey, parentKey),
     total: post.total, letters: post.letters,
@@ -70,8 +72,16 @@ export function makePostFanOut(args: { tenantId: string; mailingKey: string; pos
     try {
       if (!(await deps.exists(id))) {
         const storagePath = sendingPdfPath(tenantId, mailingKey, parentKey);
+        if (l.pages > quotedPages) {
+          // never print pages nobody paid for: finish() tombstones this letter and returns its share
+          logger.warn(`mailing-sendings: Versand ${mailingKey}: letter is longer than the quote, not sent, share returned`, {
+            mailingKey, recipient: parentKey, quotedPages, renderedPages: l.pages,
+          });
+          tooLong.add(parentKey);
+          return;
+        }
         if (l.pages !== quotedPages) {
-          logger.warn(`mailing-sendings: Versand ${mailingKey}: rendered pages differ from the quote, charging the quoted price`, {
+          logger.warn(`mailing-sendings: Versand ${mailingKey}: letter is shorter than the quote, charging the quoted price`, {
             mailingKey, recipient: parentKey, quotedPages, renderedPages: l.pages,
           });
         }
@@ -97,7 +107,9 @@ export function makePostFanOut(args: { tenantId: string; mailingKey: string; pos
       const tombstone: SendingRecord = {
         ...base(parentKey, '', '', quotedPages), price: 0, state: 'failed',
         history: [{ state: 'failed', at: nowIso, detail: TOMBSTONE_DETAIL }],
+        ...(tooLong.has(parentKey) ? { failReason: 'other' as const } : {}),
       };
+      const why = tooLong.has(parentKey) ? 'letter longer than the quote' : reason;
       try {
         if (!(await deps.create(id, tombstone))) continue;
       } catch (err) {
@@ -105,7 +117,7 @@ export function makePostFanOut(args: { tenantId: string; mailingKey: string; pos
         continue;
       }
       try {
-        await deps.reverseShare(tenantId, post.creditEntryId, { units: 1, pages: quotedPages }, id, `Versand ${mailingKey}: ${reason}`);
+        await deps.reverseShare(tenantId, post.creditEntryId, { units: 1, pages: quotedPages }, id, `Versand ${mailingKey}: ${why}`);
       } catch (err) {
         // never fail the whole Versand for it: everything needed to reverse by hand is in the log
         logger.error(`mailing-sendings: reversal for Versand ${mailingKey} failed, reverse by hand`, { ...ids(parentKey), error: err instanceof Error ? err.message : String(err) });
