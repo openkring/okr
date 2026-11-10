@@ -23,11 +23,10 @@ export const PlatformConfigBillingDocId = 'billing';
 export type BillingMode = 'exempt' | 'stripe';
 /** Subscription lifecycle: active -> pastDue (payment failed) -> closing -> closed; cancelled = ended by the tenant. */
 export type SubscriptionState = 'active' | 'pastDue' | 'closing' | 'closed' | 'cancelled';
-/**
- * A pricing band id (KringXXS ... KringXXXL). Declared as string here: the canonical `BandId` union lives in
- * @okr/business-metering-util, which shared-models must not depend on (cycle).
- */
-export type BillingBandId = string;
+/** A pricing band id. Stable, and a SKU key — never rename one for a live tenant. Re-exported by @okr/business-metering-util. */
+export type BandId =
+  | 'KringXXS' | 'KringXS' | 'KringS' | 'KringM'
+  | 'KringL' | 'KringXL' | 'KringXXL' | 'KringXXXL';
 
 export interface SubscriptionMeasurement {
   period: string; // yyyyMM
@@ -72,8 +71,8 @@ export class SubscriptionModel implements OkrModel {
   public state: SubscriptionState = 'active';
   public billingStart = ''; // StoreDate; first billed month = month after billingStart's month (that month if billingStart is its 1st)
   public options: string[] = []; // paid option ids (keys of ADD_ON_PRICES); source of truth
-  public bandHistory: BillingBandId[] = []; // measured bands, newest first, max 3
-  public currentBand: BillingBandId | '' = '';
+  public bandHistory: BandId[] = []; // measured bands, newest first, max 3
+  public currentBand: BandId | '' = '';
   public lastMeasurement: SubscriptionMeasurement | null = null;
   public lastRunPeriod = ''; // yyyyMM of the last issued monthly invoice
   public pastDueSince = ''; // StoreDate, '' when not pastDue

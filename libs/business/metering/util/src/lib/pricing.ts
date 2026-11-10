@@ -13,10 +13,10 @@
  * about half of what their own calculator quoted the customer.
  */
 
-/** A band id. Stable, and a SKU key — never rename one for a live tenant. */
-export type BandId =
-  | 'KringXXS' | 'KringXS' | 'KringS' | 'KringM'
-  | 'KringL' | 'KringXL' | 'KringXXL' | 'KringXXXL';
+import type { BandId } from '@okr/shared-models';
+
+/** A band id. Stable, and a SKU key — never rename one for a live tenant. Defined in shared-models. */
+export type { BandId };
 
 export interface Band {
   id: BandId;
