@@ -7,6 +7,8 @@ export const SubscriptionCollection = 'subscriptions';
 export const SubscriptionModelName = 'subscription';
 export const PaymentAttemptCollection = 'payment-attempts';
 export const PaymentAttemptModelName = 'paymentAttempt';
+/** subscriptions/{tenantId}/billing-runs/{period}: doc id = period yyyyMM; the run's idempotency record (Cloud Functions only). */
+export const BillingRunSubcollection = 'billing-runs';
 /** credit-accounts: doc id = tenantId; sub-collection 'entries' holds the CreditEntry ledger. */
 export const CreditAccountCollection = 'credit-accounts';
 export const CreditAccountModelName = 'creditAccount';
@@ -19,6 +21,21 @@ export const PlatformConfigCollection = 'platform-config';
 export const PlatformConfigBillingDocId = 'billing';
 
 export type BillingMode = 'exempt' | 'stripe';
+/** Subscription lifecycle: active -> pastDue (payment failed) -> closing -> closed; cancelled = ended by the tenant. */
+export type SubscriptionState = 'active' | 'pastDue' | 'closing' | 'closed' | 'cancelled';
+/**
+ * A pricing band id (KringXXS ... KringXXXL). Declared as string here: the canonical `BandId` union lives in
+ * @okr/business-metering-util, which shared-models must not depend on (cycle).
+ */
+export type BillingBandId = string;
+
+export interface SubscriptionMeasurement {
+  period: string; // yyyyMM
+  totalUsers: number;
+  privilegedUsers: number;
+  weighted: number;
+}
+
 export type PaymentMethodType = 'card' | 'paypal';
 
 export interface SavedPaymentMethod {
@@ -38,7 +55,7 @@ export interface AutoTopUp {
   amount: number; // Rappen
 }
 
-/** How a tenant pays bkaiser. okey = tenantId. Plan 2 adds state, trial dates, band history, options. */
+/** How a tenant pays bkaiser. okey = tenantId. Plan 2 adds state, band history, options. */
 export class SubscriptionModel implements OkrModel {
   public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
@@ -51,6 +68,18 @@ export class SubscriptionModel implements OkrModel {
   public autopay = false;
   public autoTopUp: AutoTopUp = { enabled: false, threshold: 0, amount: 0 };
 
+  // Plan 2 (monthly billing run). Firestore reads skip these defaults: consumers coalesce (?? 'active', ?? []).
+  public state: SubscriptionState = 'active';
+  public billingStart = ''; // StoreDate; first billed month = month after billingStart's month (that month if billingStart is its 1st)
+  public options: string[] = []; // paid option ids (keys of ADD_ON_PRICES); source of truth
+  public bandHistory: BillingBandId[] = []; // measured bands, newest first, max 3
+  public currentBand: BillingBandId | '' = '';
+  public lastMeasurement: SubscriptionMeasurement | null = null;
+  public lastRunPeriod = ''; // yyyyMM of the last issued monthly invoice
+  public pastDueSince = ''; // StoreDate, '' when not pastDue
+  public closingSince = ''; // StoreDate
+  public cancelledAt = ''; // StoreDate
+
   constructor(tenantId: string) {
     this.okey = tenantId;
     this.tenants = [tenantId];
@@ -58,7 +87,7 @@ export class SubscriptionModel implements OkrModel {
 }
 
 export type PaymentPurpose = 'invoice' | 'topup';
-export type PaymentAttemptState = 'open' | 'succeeded' | 'failed' | 'requires_action' | 'overpaid' | 'expired';
+export type PaymentAttemptState = 'open' | 'succeeded' | 'failed' | 'requires_action' | 'overpaid' | 'expired' | 'refunded' | 'disputed';
 
 export class PaymentAttemptModel implements OkrModel {
   public okey = DEFAULT_KEY;
@@ -86,6 +115,8 @@ export class PaymentAttemptModel implements OkrModel {
   public createdAt = ''; // StoreDateTime
   public updatedAt = ''; // StoreDateTime
   public error = '';
+  public retryCount = 0; // off-session re-charges after a decline
+  public nextRetryAt = ''; // StoreDate
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

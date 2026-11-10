@@ -324,6 +324,10 @@ service cloud.firestore {
     match /subscriptions/{tenantId} {
       allow read: if ownBillingAdmin(tenantId);
       allow write: if false;
+      // billing-runs/{period}: the monthly run's idempotency record, Cloud Functions only
+      match /billing-runs/{period} {
+        allow read, write: if false;
+      }
     }
     match /credit-accounts/{tenantId} {
       allow read: if ownBillingAdmin(tenantId);
