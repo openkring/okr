@@ -17,13 +17,16 @@ describe('countUsers', () => {
     const r = countUsers([u({ admin: true, treasurer: true })], '20261130');
     expect(r).toEqual({ totalUsers: 1, privilegedUsers: 1, excludedUsers: 0, weighted: 2 });
   });
-  it('excludes kiosk-only and tester+registered accounts', () => {
-    const r = countUsers([u({ kiosk: true }), u({ tester: true, registered: true }), u({ registered: true })], '20261130');
-    expect(r).toEqual({ totalUsers: 1, privilegedUsers: 0, excludedUsers: 2, weighted: 1 });
+  it('excludes a kiosk-only account', () => {
+    expect(countUsers([u({ kiosk: true }), u({ registered: true })], '20261130')).toEqual({ totalUsers: 1, privilegedUsers: 0, excludedUsers: 1, weighted: 1 });
   });
-  it('counts kiosk + admin and tester + contentAdmin as privileged (no bypass)', () => {
-    const r = countUsers([u({ kiosk: true, admin: true }), u({ tester: true, contentAdmin: true })], '20261130');
-    expect(r).toEqual({ totalUsers: 2, privilegedUsers: 2, excludedUsers: 0, weighted: 4 });
+  it('counts registered + kiosk and tester + registered (no role bypass)', () => {
+    const r = countUsers([u({ registered: true, kiosk: true }), u({ tester: true, registered: true }), u({ kiosk: true, admin: true })], '20261130');
+    expect(r).toEqual({ totalUsers: 3, privilegedUsers: 1, excludedUsers: 0, weighted: 4 });
+  });
+  it('excludes uids on the operator list; excludedUsers counts both kinds', () => {
+    const users = [u({ kiosk: true }), { ...u({ registered: true }), uid: 'T1' }, { ...u({ admin: true }), uid: 'A' }];
+    expect(countUsers(users, '20261130', ['T1'])).toEqual({ totalUsers: 1, privilegedUsers: 1, excludedUsers: 2, weighted: 2 });
   });
   it('ignores false role flags', () => {
     expect(countUsers([u({ admin: false, registered: true })], '20261130').privilegedUsers).toBe(0);

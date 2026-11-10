@@ -174,4 +174,6 @@ export interface AutoTopUpRequest {
 export interface PlatformBillingConfig {
   operatorTenantId: string;
   accountingTenantId: string;
+  /** Operator-only: uids (internal test accounts) that never count as billable users. Default []. */
+  excludedUids: string[];
 }

@@ -79,8 +79,13 @@ export const BILLING_PRIVILEGED_ROLES: readonly RoleName[] = [
   'groupAdmin',
 ];
 
-/** §9.1 (4): not billable users — `kiosk` (shared device login) and `tester` (internal). */
-export const BILLING_EXCLUDED_ROLES: readonly RoleName[] = ['kiosk', 'tester'];
+/**
+ * §9.1 (4): `kiosk` (shared device login) is not a billable person, but only a kiosk-ONLY account
+ * (no other true role, same predicate as `isKioskOnly()`): `registered` + `kiosk` is a full member.
+ * `tester` grants no restriction and is never excluded by role; internal test accounts are listed by
+ * uid in the operator-only `platform-config/billing.excludedUids`.
+ */
+export const BILLING_EXCLUDED_ROLES: readonly RoleName[] = ['kiosk'];
 
 /**
  * Weighted user count `n` (pricing §3): privileged accounts count **double**.

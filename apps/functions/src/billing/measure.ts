@@ -3,6 +3,7 @@ import type { Firestore } from 'firebase-admin/firestore';
 
 import { logger } from 'firebase-functions/v2';
 
+import { platformBilling } from '../collection/platform';
 import { toStoreDate } from '../srv/zurich-time';
 import { countUsers } from './measure.logic';
 import type { UserForCount } from './measure.logic';
@@ -31,6 +32,7 @@ export async function measureTenant(db: Firestore, tenantId: string, lastDay: st
         continue;
       }
       users.push({
+        uid: d.id,
         roles: (d.data()['roles'] ?? {}) as Record<string, boolean>,
         isArchived: false,
         disabled: rec.disabled,
@@ -41,5 +43,6 @@ export async function measureTenant(db: Firestore, tenantId: string, lastDay: st
   if (unmatched > 0) {
     logger.warn(`measureTenant: ${unmatched} users/{uid} docs of tenant ${tenantId} have no Auth record and are not counted.`);
   }
-  return countUsers(users, lastDay);
+  const { excludedUids } = await platformBilling(db);
+  return countUsers(users, lastDay, excludedUids);
 }
