@@ -7,7 +7,10 @@ vi.mock('firebase-admin/firestore', () => ({ getFirestore: () => fakeDb.current 
 import type { Request, Response } from 'express';
 
 import {
-  articleImageHeight, articleImageLayout, buildLearningSection, captionCss, mapCta, mapImage, mapSection, normalizeLang, pickText, safeEmbedUrl, safeSiteUrl, slugName, mapFooter, mapFormSection, isPublicPageRead, isPublishedPage, learningDefaultTab, loadLearningSection, pageCors, pageRouter,
+  articleImageHeight, articleImageLayout, captionCss, mapCta, mapImage, mapSection, normalizeLang, pickText, safeEmbedUrl, safeSiteUrl, slugName, mapFooter, mapFormSection,
+} from '@okr/cms-website-render';
+import {
+  buildLearningSection, isPublicPageRead, isPublishedPage, learningDefaultTab, loadLearningSection, pageCors, pageRouter,
 } from './page';
 import { getHtmlSanitizer } from '../sanitize';
 

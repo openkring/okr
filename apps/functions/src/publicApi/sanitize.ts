@@ -17,41 +17,8 @@
 // sanitize-html is imported dynamically (and marked esbuild-external) so it is
 // not loaded at cold start for the GET routes that return no HTML.
 
-// Article-fragment allowlist: formatting + links + images, no active content.
-const ARTICLE_SANITIZE_OPTIONS = {
-  allowedTags: [
-    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'div', 'span', 'br', 'hr', 'blockquote', 'pre', 'code',
-    'strong', 'b', 'em', 'i', 'u', 's', 'small', 'sub', 'sup', 'mark',
-    'ul', 'ol', 'li', 'dl', 'dt', 'dd',
-    'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'caption', 'colgroup', 'col',
-    'a', 'img', 'figure', 'figcaption',
-  ],
-  // script, iframe, object, embed, form, base, link, meta, style are NOT listed,
-  // so sanitize-html drops them entirely. Inline `style` attributes are also
-  // dropped (not in allowedAttributes) to remove the expression()/url() vector.
-  allowedAttributes: {
-    '*': ['class', 'id', 'align', 'width', 'height'],
-    a: ['href', 'name', 'target', 'rel'],
-    img: ['src', 'alt', 'width', 'height'],
-    col: ['span', 'width'],
-    td: ['colspan', 'rowspan'],
-    th: ['colspan', 'rowspan'],
-  },
-  allowedSchemes: ['https', 'mailto'],
-  allowedSchemesByTag: { img: ['https', 'data'] },
-  allowProtocolRelative: false,
-  // Force rel=noopener noreferrer on any target=_blank link (reverse-tabnabbing).
-  transformTags: {
-    a: (tagName: string, attribs: Record<string, string>) => {
-      if (attribs['target'] === '_blank') {
-        attribs['rel'] = 'noopener noreferrer';
-      }
-      return { tagName, attribs };
-    },
-  },
-};
+import { createSanitizer, type SanitizeFn, type SanitizeHtmlLike } from '@okr/cms-website-render';
 
-type SanitizeFn = (html: string) => string;
 let cached: SanitizeFn | undefined;
 
 /**
@@ -61,7 +28,7 @@ let cached: SanitizeFn | undefined;
 export async function getHtmlSanitizer(): Promise<SanitizeFn> {
   if (cached) return cached;
   const sanitize = (await import('sanitize-html')).default;
-  cached = (html: string): string => (html ? sanitize(html, ARTICLE_SANITIZE_OPTIONS) : '');
+  cached = createSanitizer(sanitize as unknown as SanitizeHtmlLike);
   return cached;
 }
 
