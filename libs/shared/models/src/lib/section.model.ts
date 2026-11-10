@@ -24,7 +24,7 @@ export const SECTION_TYPES = [
     'album', 'article', 'button', 'cal', 'chart', 'chat', 'emergency', 'hero', 'iframe', 'map',
     'people', 'responsibility', 'slider', 'table', 'tracker', 'video', 'accordion', 'events', 'invitations', 'tasks',
     'news', 'activities', 'messages', 'rag', 'orgchart', 'context', 'member-age', 'member-cat', 'trip-stats', 'form',
-    'sankey', 'spider', 'toc', 'testimonial', 'timeline', 'weather', 'learning', 'advent', 'connections', 'departures', 'energy', 'counter', 'footer', 'notices',
+    'sankey', 'spider', 'toc', 'testimonial', 'timeline', 'weather', 'learning', 'advent', 'connections', 'departures', 'energy', 'counter', 'footer', 'notices', 'tiles',
 ] as const;
 
 export type SectionType = (typeof SECTION_TYPES)[number];
@@ -34,7 +34,7 @@ export type SectionModel =
     AlbumSection | ArticleSection | ButtonSection | CalendarSection | ChartSection | ChatSection |
     HeroSection | IframeSection | MapSection | PeopleSection | ResponsibilitySection | SliderSection |
     TableSection | TrackerSection | VideoSection | AccordionSection | EventsSection | InvitationsSection | TasksSection |
-    NewsSection | ActivitiesSection | MessagesSection | RagSection | OrgchartSection | ContextDiagramSection | MemberAgeSection | MemberCatSection | TripStatsSection | FormSection | SankeySection | SpiderSection | TocSection | TestimonialSection | TimelineSection | WeatherSection | LearningSection | AdventSection | ConnectionsSection | DeparturesSection | EnergySection | CounterSection | FooterSection | NoticesSection;
+    NewsSection | ActivitiesSection | MessagesSection | RagSection | OrgchartSection | ContextDiagramSection | MemberAgeSection | MemberCatSection | TripStatsSection | FormSection | SankeySection | SpiderSection | TocSection | TestimonialSection | TimelineSection | WeatherSection | LearningSection | AdventSection | ConnectionsSection | DeparturesSection | EnergySection | CounterSection | FooterSection | NoticesSection | TilesSection;
 
 // --------------------------------------- ABSTRACT BASE SECTION MODELS ----------------------------------------
 // --------------------------------------- ORGCHART ----------------------------------------
@@ -156,6 +156,54 @@ export interface TestimonialConfig {
   columns: number;
 }
 
+// --------------------------------------- SECTION CTA ----------------------------------------
+export const SECTION_CTA_STYLES = ['primary', 'secondary'] as const;
+export type SectionCtaStyle = (typeof SECTION_CTA_STYLES)[number];
+
+/** A call-to-action button shown by hero and article sections. The app edits German only. */
+export interface SectionCta {
+  label: string;
+  labelI18n?: I18nString;
+  url: string;
+  style: SectionCtaStyle;
+}
+
+// --------------------------------------- TILES ----------------------------------------
+export const TILE_VARIANTS = ['stat', 'card'] as const;
+export type TileVariant = (typeof TILE_VARIANTS)[number];
+export const TILE_TONES = ['primary', 'secondary'] as const;
+export type TileTone = (typeof TILE_TONES)[number];
+
+export interface TilesSection extends BaseSection {
+  type: 'tiles';
+  properties: TilesConfig;
+}
+
+/** One tile: a stat (value + text) or a card (icon + title + text), optionally linked. */
+export interface TileItem {
+  value?: string;
+  icon?: string;
+  title?: string;
+  text?: string;
+  titleI18n?: I18nString;
+  textI18n?: I18nString;
+  url?: string;
+  tone: TileTone;
+}
+
+export interface TilesConfig {
+  variant: TileVariant;
+  /** Columns from md up. Default 3. */
+  columns: number;
+  items: TileItem[];
+  kicker?: string;
+  lead?: string;
+  linkLabel?: string;
+  kickerI18n?: I18nString;
+  leadI18n?: I18nString;
+  linkLabelI18n?: I18nString;
+}
+
 // --------------------------------------- TIMELINE ----------------------------------------
 /**
  * A chronology of the events of one calendar. The calendar key lives in `name` (like the `events`
@@ -251,7 +299,7 @@ export interface BaseSection {
   content: EditorConfig; // content from rich text editor
   properties?: AccordionConfig | AlbumConfig | ArticleConfig | ButtonConfig | CalendarOptions | EChartsOption | ChatConfig | HeroConfig |
   IframeConfig | MapConfig | OrgchartConfig | ContextDiagramConfig | PeopleConfig | ResponsibilityConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig | EventsConfig | InvitationsConfig |
-  TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | RagConfig | MemberAgeConfig | MemberCatConfig | TripStatsConfig | FormSectionConfig | SankeyConfig | SpiderConfig | TocConfig | TestimonialConfig | TimelineConfig | WeatherConfig | LearningConfig | AdventConfig | ConnectionsConfig | DeparturesConfig | EnergyConfig | CounterConfig | FooterConfig | NoticesConfig;
+  TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | RagConfig | MemberAgeConfig | MemberCatConfig | TripStatsConfig | FormSectionConfig | SankeyConfig | SpiderConfig | TocConfig | TestimonialConfig | TimelineConfig | WeatherConfig | LearningConfig | AdventConfig | ConnectionsConfig | DeparturesConfig | EnergyConfig | CounterConfig | FooterConfig | NoticesConfig | TilesConfig;
   notes: string;
   tags: string;
   tenants: string[]; // list of tenant ids
@@ -339,6 +387,11 @@ export interface ArticleConfig {
   excerptI18n?: I18nString;
   contentI18n?: I18nString;
   datePublished?: string;
+  kicker?: string;          // small line above the title
+  kickerI18n?: I18nString;
+  cta?: SectionCta;         // optional call-to-action button
+  /** 'banner' renders the article as a full-width emphasised band. Default 'none'. */
+  emphasis?: 'none' | 'banner';
 }
 
 // --------------------------------------- BUTTON ----------------------------------------
@@ -446,6 +499,8 @@ export interface EventsConfig {
   showUpcomingEvents: boolean; // if true, show upcoming events
   showEventTime: boolean; // if true, show event time
   showEventLocation: boolean; // if true, show event location
+  kicker?: string;          // small line above the title
+  kickerI18n?: I18nString;
 }
 
 // --------------------------------------- HERO ----------------------------------------
@@ -459,6 +514,9 @@ export interface HeroConfig {
   hero: ImageConfig; // the hero background image
   imageStyle: ImageStyle;
   chips?: string[]; // short facts under the title, e.g. date, coordinates, place (travel journal, spec 1.113)
+  kicker?: string;          // small line above the title
+  kickerI18n?: I18nString;
+  ctas?: SectionCta[];      // call-to-action buttons
 }
 
 // --------------------------------------- IFRAME ----------------------------------------
@@ -557,6 +615,8 @@ export interface NewsConfig {
   showMoreButton: boolean; 
   maxItems: number; // maximum number of news items to show
   blogPageKey: string; // the key of the blog page where the news articles are stored, used for navigation when clicking on a news item
+  kicker?: string;          // small line above the title
+  kickerI18n?: I18nString;
 }
 
 // --------------------------------------- PEOPLE ----------------------------------------

@@ -9,7 +9,7 @@ import type {
   FormSection, FormSectionConfig,
   HeroConfig, HeroSection, IconConfig, IframeConfig,
   IframeSection, InvitationsConfig, InvitationsSection, MapConfig, WeatherConfig, WeatherSection, ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, FooterColumn, FooterConfig, FooterItem, FooterSection, MapSection, MemberAgeConfig, MemberAgeSection, MemberCatConfig, MemberCatSection, OrgchartConfig, OrgchartSection, PeopleConfig,
-  PeopleSection, RagConfig, RagSection, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TimelineConfig, TimelineSection, AdventConfig, AdventSection, NewsConfig, NewsSection, TasksConfig, TasksSection, ActivitiesConfig, ActivitiesSection, MessagesConfig, MessagesSection, NoticesConfig, NoticesSection, TripStatsConfig, TripStatsSection, ResponsibilityConfig, ResponsibilitySection, SliderConfig, SliderSection, TableConfig, TableSection,
+  PeopleSection, RagConfig, RagSection, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TilesConfig, TilesSection, TimelineConfig, TimelineSection, AdventConfig, AdventSection, NewsConfig, NewsSection, TasksConfig, TasksSection, ActivitiesConfig, ActivitiesSection, MessagesConfig, MessagesSection, NoticesConfig, NoticesSection, TripStatsConfig, TripStatsSection, ResponsibilityConfig, ResponsibilitySection, SliderConfig, SliderSection, TableConfig, TableSection,
   TrackerConfig, TrackerSection, VideoConfig, VideoSection
 } from "./section.model";
 import { ButtonAction } from './enums/button-action.enum';
@@ -507,6 +507,18 @@ export const TESTIMONIAL_SECTION_SHAPE = {
   type: 'testimonial' as const,
   properties: TESTIMONIAL_CONFIG_SHAPE,
 } as TestimonialSection;
+
+// --------------------------------------- TILES ----------------------------------------
+export const TILES_CONFIG_SHAPE: TilesConfig = {
+  variant: 'card',
+  columns: 3,
+  items: [],
+};
+export const TILES_SECTION_SHAPE = {
+  ...BASE_SECTION_SHAPE,
+  type: 'tiles' as const,
+  properties: TILES_CONFIG_SHAPE,
+} as TilesSection;
 
 // --------------------------------------- TIMELINE ----------------------------------------
 export const TIMELINE_CONFIG_SHAPE: TimelineConfig = {
