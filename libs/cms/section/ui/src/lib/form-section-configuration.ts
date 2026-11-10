@@ -1,9 +1,10 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonIcon, IonNote, IonRow } from '@ionic/angular';
+import { Component, computed, inject, input, linkedSignal, model, output } from '@angular/core';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular';
 
 import { BaseType, FormSectionConfig, ImplicitField } from '@okr/shared-models';
 import { Checkbox, CheckboxI18n, ErrorNote, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
+import { HelperVisibility } from '@okr/shared-util-angular';
 import { coerceBoolean, isSectionOnlyImplicit, isSsnField, parseEmailList } from '@okr/shared-util-core';
 import { AcceptanceFields, FormI18n } from '@okr/forms-util';
 import { AcceptanceSettingsInput } from '@okr/forms-ui';
@@ -16,6 +17,12 @@ export interface FormOption {
   implicitFields: ImplicitField[];
   /** the form-wide «Freie Plätze anzeigen»: what a section without an override of its own shows; absent = off */
   showRemaining?: boolean;
+}
+
+/** A responsibility the answers can be assigned to, by its display name. */
+export interface ResponsibilityOption {
+  okey: string;
+  name: string;
 }
 
 /** A course a registration page can be for (D-W4: the stored value is the `CourseModel.okey`). */
@@ -58,9 +65,15 @@ interface FixedRow {
   standalone: true,
   imports: [
     TextInput, NumberInput, Checkbox, StringSelect, ErrorNote, AcceptanceSettingsInput, SvgIconPipe,
-    IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonGrid, IonRow, IonCol, IonNote, IonButton, IonIcon,
+    IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonGrid, IonRow, IonCol, IonNote, IonButton, IonIcon, IonItem, IonLabel,
   ],
-  styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
+  styles: [`
+    @media (width <= 600px) { ion-card { margin: 5px;} }
+    /* the responsibility picker reads like a category select: small label above the value */
+    .field-row { --min-height: 48px; }
+    .field-row .field-label { display: block; font-size: 12px; color: var(--ion-color-medium); }
+    .field-row .field-value { display: block; font-size: 16px; }
+  `],
   template: `
     <ion-card>
       <ion-card-header>
@@ -74,18 +87,32 @@ interface FixedRow {
               <okr-string-select [i18n]="formI18nSelect()" [selectedString]="formKey()" (selectedStringChange)="onFormChange($event)"
                 [stringList]="formKeys()" [labels]="formLabels()" [readOnly]="isReadOnly()" />
               <okr-error-note [errors]="errorsFor('formKey')" />
-            </ion-col>
-            <ion-col size="12" size-md="6">
-              <ion-button fill="outline" [disabled]="isReadOnly()" (click)="responsibilitySelectClicked.emit()">
-                <ion-icon slot="start" src="{{ 'search' | svgIcon }}" />
-                {{ responsibilityKey() || i18n().form_cfg_resp_select() }}
-              </ion-button>
-              @if (responsibilityKey()) {
-                <ion-button fill="clear" [disabled]="isReadOnly()" (click)="onResponsibilityClear()">
-                  {{ i18n().form_cfg_resp_clear() }}
+              @if (chosenForm()) {
+                <ion-button fill="clear" size="small" (click)="openFormClicked.emit(formKey())">
+                  <ion-icon slot="start" src="{{ 'edit' | svgIcon }}" />
+                  {{ i18n().form_cfg_form_open() }}
                 </ion-button>
               }
-              <ion-note class="ion-padding-start">{{ i18n().form_cfg_resp_helper() }}</ion-note>
+            </ion-col>
+            <ion-col size="12" size-md="6">
+              <!-- a responsibility picker in the shape of a category select: label, value, actions at the end -->
+              <ion-item class="field-row" lines="none" [button]="!isReadOnly()" [detail]="false" (click)="onResponsibilitySelect()">
+                <ion-label>
+                  <span class="field-label">{{ i18n().form_cfg_resp() }}</span>
+                  <span class="field-value">{{ responsibilityName() || i18n().form_cfg_resp_select() }}</span>
+                </ion-label>
+                @if (!isReadOnly()) {
+                  @if (responsibilityKey()) {
+                    <ion-button slot="end" fill="clear" (click)="onResponsibilityClear($event)">{{ i18n().form_cfg_resp_clear() }}</ion-button>
+                  }
+                  <ion-icon slot="end" src="{{ 'search' | svgIcon }}" />
+                }
+              </ion-item>
+              @if (showHelpers()) {
+                <ion-item lines="none">
+                  <ion-note style="white-space: pre-line">{{ i18n().form_cfg_resp_helper() }}</ion-note>
+                </ion-item>
+              }
             </ion-col>
             <ion-col size="12">
               <okr-text-input [i18n]="emailsI18n()" [value]="emailsText()" (valueChange)="onEmailsChange($event)"
@@ -179,6 +206,8 @@ export class FormSectionConfiguration {
   public readonly formData = model.required<FormSectionConfig>();
   /** the non-archived forms of the tenant, with their implicit fields */
   public readonly forms = input<FormOption[]>([]);
+  /** the responsibilities of the tenant, to show the chosen one by name */
+  public readonly responsibilities = input<ResponsibilityOption[]>([]);
   /** the non-archived courses of the tenant, by name */
   public readonly courses = input<CourseOption[]>([]);
   public readonly readOnly = input(true);
@@ -191,12 +220,20 @@ export class FormSectionConfiguration {
   // outputs
   /** the parent opens the responsibility picker and writes `responsibilityKey` back */
   public readonly responsibilitySelectClicked = output<void>();
+  /** the parent opens the form builder for this form key */
+  public readonly openFormClicked = output<string>();
 
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  protected readonly showHelpers = inject(HelperVisibility).showHelpers;
 
   // fields — legacy sections lack the phase B ones (reads skip model defaults): coalesce
   protected readonly formKey = computed(() => this.formData().formKey ?? '');
   protected readonly responsibilityKey = computed(() => this.formData().responsibilityKey ?? '');
+  /** the chosen responsibility by name; its key while the list loads or when it is gone */
+  protected readonly responsibilityName = computed(() => {
+    const key = this.responsibilityKey();
+    return key ? (this.responsibilities().find((r) => r.okey === key)?.name || key) : '';
+  });
   protected readonly showCaptcha = computed(() => this.formData().showCaptcha === true);
   protected readonly encryptFileUpload = computed(() => this.formData().encryptFileUpload === true);
 
@@ -313,7 +350,13 @@ export class FormSectionConfiguration {
     this.formData.update((vm) => ({ ...vm, emailAddresses }));
   }
 
-  protected onResponsibilityClear(): void {
+  protected onResponsibilitySelect(): void {
+    if (!this.isReadOnly()) this.responsibilitySelectClicked.emit();
+  }
+
+  /** the button sits inside the clickable row: it must not open the picker as well */
+  protected onResponsibilityClear(event: Event): void {
+    event.stopPropagation();
     this.formData.update((vm) => {
       const next = { ...vm };
       delete next.responsibilityKey;

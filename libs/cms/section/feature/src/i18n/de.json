@@ -421,6 +421,7 @@
       "resp_select": "Zuständigkeit wählen",
       "resp_clear": "Entfernen",
       "resp_helper": "Die zuständige Person bekommt für jede Antwort eine Aufgabe.",
+      "form_open": "Im Formular-Editor öffnen",
       "captcha": "Spam-Schutz (Captcha) anzeigen",
       "captcha_helper": "Die Person muss kurz beweisen, dass sie kein Roboter ist, bevor sie abschicken kann.",
       "encrypt": "Dateien verschlüsseln",

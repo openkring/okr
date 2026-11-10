@@ -39,6 +39,7 @@
     "@okr/forms-util": "*",
     "@okr/forms-data-access": "*",
     "@okr/forms-ui": "*",
+    "@okr/forms-feature": "*",
     "@okr/chat-data-access": "*",
     "@okr/chat-util": "*",
     "@capacitor/core": "*",

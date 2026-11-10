@@ -1,17 +1,18 @@
 import { Component, computed, effect, inject, Injector, input, linkedSignal, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { catchError, from, map, of, switchMap } from 'rxjs';
+import { catchError, firstValueFrom, from, map, of, switchMap } from 'rxjs';
 import { IonContent, ModalController } from '@ionic/angular';
 
 import { CategoryListModel, LocationModel, SectionModel, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, ErrorBanner, Header} from '@okr/shared-ui';
 import { coerceBoolean, deepEqual, hasRole, safeStructuredClone } from '@okr/shared-util-core';
-import { CourseOption, FormOption, SectionForm } from '@okr/cms-section-ui';
+import { CourseOption, FormOption, ResponsibilityOption, SectionForm } from '@okr/cms-section-ui';
 import { LocationService } from '@okr/location-data-access';
 import { ContractService } from '@okr/business-contract-data-access';
 import { dismissOverlay, lazyService } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 import { FormDefinitionService } from '@okr/forms-data-access';
+import { ResponsibilityService } from '@okr/relationship-responsibility-data-access';
 import { FORM_I18N_KEYS, FormI18n } from '@okr/forms-util';
 
 import { SectionStore } from './section.store';
@@ -54,6 +55,8 @@ import { AppStore } from '@okr/shared-feature';
             [contracts]="contracts()"
             [forms]="forms()"
             [courses]="courses()"
+            [responsibilities]="responsibilities()"
+            (openFormClicked)="openFormBuilder($event)"
             [formI18n]="formI18n"
             [allTags]="allTags()"
             [tenantId]="tenantId()"
@@ -139,6 +142,28 @@ export class SectionEditModal {
       .map((course) => ({ okey: course.okey, name: course.name || course.okey }))
       .sort((a, b) => a.name.localeCompare(b.name))),
   ), { initialValue: [] as CourseOption[] });
+  /** form section: the responsibilities, so the chosen one shows by name rather than by its key */
+  private readonly responsibilityService = inject(ResponsibilityService);
+  protected responsibilities = toSignal(toObservable(this.isFormSection).pipe(
+    switchMap((ok) => (ok ? this.responsibilityService.list('name').pipe(catchError(() => of([]))) : of([]))),
+    map((list): ResponsibilityOption[] => list.map((r) => ({ okey: r.okey, name: r.name || r.okey }))),
+  ), { initialValue: [] as ResponsibilityOption[] });
+
+  /**
+   * Opens the form builder on top of this modal. The builder lives in forms-feature and is loaded on
+   * demand: its editor (drag and drop, previews) has no business in the section editor's chunk.
+   */
+  protected async openFormBuilder(formKey: string): Promise<void> {
+    const [form] = await firstValueFrom(this.formDefinitionService.list().pipe(
+      map((list) => list.filter((def) => def.formKey === formKey && !def.isArchived)),
+      catchError(() => of([])),
+    ));
+    if (!form) return;
+    const { FormBuilderEditor } = await import('@okr/forms-feature');
+    const modal = await this.modalController.create({ component: FormBuilderEditor, cssClass: 'wide-modal', componentProps: { form } });
+    await modal.present();
+  }
+
   /** the forms' texts for the acceptance card; a field initializer, because translateAll calls toSignal (no reactive context) */
   protected readonly formI18n = this.i18nService.translateAll(FORM_I18N_KEYS) as FormI18n;
 
