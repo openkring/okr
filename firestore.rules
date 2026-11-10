@@ -315,7 +315,7 @@ service cloud.firestore {
     // subscriptions, credit-accounts (+ entries): the tenant's own admin reads. One user-doc get()
     // per match (isAdmin / callerTenants share the cached read); the doc id IS the tenant id.
     // payment-attempts carry tenants:[operatorTenantId]: the operator books' treasurer/privileged read.
-    // platform-config/billing: any signed-in user.
+    // platform-config/billing: any signed-in user; platform-config/billing-private (excludedUids): nobody.
     function ownBillingAdmin(tenantId) {
       return isAdmin() && tenantId in userData().tenants;
     }
@@ -344,7 +344,7 @@ service cloud.firestore {
       allow write: if false;
     }
     match /platform-config/{doc} {
-      allow read: if signedIn();
+      allow read: if signedIn() && doc != 'billing-private';
       allow write: if false;
     }
     // Mail delivery telemetry (spec 1.101 phase 5): written only by the onWebhookEvent Cloud

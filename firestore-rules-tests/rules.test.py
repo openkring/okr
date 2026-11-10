@@ -260,6 +260,10 @@ seed("app-config/t1", {"tenantId": "t1", "gitOrg": "openkring",
 # app-status/chat (spec 1.107): global chat switch, signed-in read, any admin writes
 seed("app-status/chat", {"blocked": False, "message": ""})
 
+# platform-config (spec 1.149): 'billing' readable by any signed-in user, 'billing-private' (excludedUids) by nobody
+seed("platform-config/billing", {"operatorTenantId": "bka", "accountingTenantId": "bka"})
+seed("platform-config/billing-private", {"excludedUids": ["uidA"]})
+
 # emailEvents (1.101 phase 5): webhook-written telemetry, operator-only read
 seed("emailEvents/ev1", {"event": "delivery", "email": "x@example.org", "expiresAt": "20261101"})
 
@@ -468,6 +472,12 @@ single_cases = [
      body({"blocked": True}), ["blocked"]),
     ("userB(admin t2) PATCH app-status/chat message -> DENY (operator only)", False, PATCH,
      "app-status/chat", B, body({"message": "Wartung"}), ["message"]),
+    ("userA(member t1) GET platform-config/billing -> ALLOW", True, GET, "platform-config/billing", A, None, None),
+    ("userA(member t1) GET platform-config/billing-private -> DENY", False, GET, "platform-config/billing-private", A, None, None),
+    ("userO(admin bka) GET platform-config/billing-private -> DENY (functions only)", False, GET,
+     "platform-config/billing-private", O, None, None),
+    ("userO(admin bka) PATCH platform-config/billing-private -> DENY", False, PATCH, "platform-config/billing-private", O,
+     body({"excludedUids": []}), ["excludedUids"]),
     ("userO(admin bka) PATCH app-status/chat blocked -> ALLOW (operator)", True, PATCH, "app-status/chat", O,
      body({"blocked": True}), ["blocked"]),
     ("userO2(non-admin bka) PATCH app-status/chat -> DENY", False, PATCH, "app-status/chat", O2,

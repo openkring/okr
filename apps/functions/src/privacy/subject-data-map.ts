@@ -1763,7 +1763,9 @@ export async function resolveArrayItemDocs(entry: SubjectDataEntry, ctx: Subject
 // gap: payment-attempts — one Stripe collection attempt of a tenant (state, amount in Rappen, Stripe ids,
 //   booking keys, error text) that carries `createdBy` (the uid of the admin or treasurer who opened it). Not yet a row.
 // not personal data: platform-config — platform-wide configuration (doc 'billing': operator tenant and
-//   accounting tenant ids). No natural person's data.
+//   accounting tenant ids). No natural person's data. Doc 'billing-private' holds `excludedUids` (uids of the
+//   operator's internal test accounts, never counted as billable users): operator configuration, never
+//   client-readable (rules: no access), not a data subject's record.
 // gap: external-reports — marks that a case (e.g. a membership change) was reported to an external
 //   organisation (spec 1.133): externalOrg, caseKey/caseType, externalRef, reportedAt and `subjectKey`
 //   ('person.<okey>'). No name or contact detail is stored, but `subjectKey` links the marker to a

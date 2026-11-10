@@ -16,9 +16,11 @@ export const CreditEntrySubcollection = 'entries';
 /** credit-accounts/{tenantId}/auto-top-up/request holds the AutoTopUpRequest (Cloud Functions only). */
 export const CreditAutoTopUpSubcollection = 'auto-top-up';
 export const CreditAutoTopUpRequestDocId = 'request';
-/** platform-config: doc 'billing' holds PlatformBillingConfig. */
+/** platform-config: doc 'billing' holds PlatformBillingConfig (any signed-in user reads it); doc 'billing-private'
+ * holds PlatformBillingPrivateConfig (Cloud Functions only: no client reads or writes). */
 export const PlatformConfigCollection = 'platform-config';
 export const PlatformConfigBillingDocId = 'billing';
+export const PlatformConfigBillingPrivateDocId = 'billing-private';
 
 export type BillingMode = 'exempt' | 'stripe';
 /** Subscription lifecycle: active -> pastDue (payment failed) -> closing -> closed; cancelled = ended by the tenant. */
@@ -187,10 +189,17 @@ export interface AutoTopUpRequest {
   retryCount: number;
 }
 
-/** platform-config/billing: which tenant and books bill the other tenants. */
-export interface PlatformBillingConfig {
+/**
+ * Which tenant and books bill the other tenants (platform-config/billing), plus the operator-only exclusions
+ * (platform-config/billing-private) — the server view `platformBilling()` coalesces from both docs.
+ */
+export interface PlatformBillingConfig extends PlatformBillingPrivateConfig {
   operatorTenantId: string;
   accountingTenantId: string;
-  /** Operator-only: uids (internal test accounts) that never count as billable users. Default []. */
+}
+
+/** platform-config/billing-private: never readable by a client (the uids are the operator's staff). */
+export interface PlatformBillingPrivateConfig {
+  /** uids (internal test accounts) that never count as billable users. Default []. */
   excludedUids: string[];
 }
