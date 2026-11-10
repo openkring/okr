@@ -2188,5 +2188,31 @@ for label, expect, run in news_cases:
     passed += ok; failed += not ok
     print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
 
+# ----------------------------------------------------------- applications ----
+# 1.152: an anonymous client create (Anmeldung) never puts the application on a course. courseKey /
+# courseState / invitedAt / answeredAt are written by submitForm / the course callables (Admin SDK)
+# only; absent (old clients) or '' is allowed, any value is denied.
+def application(**extra):
+    return {"tenants": ["t1"], "state": "applied", "taskKey": "", "personKey": "",
+            "firstName": "Anna", "lastName": "Muster", **extra}
+APP_EMPTY_COURSE = {"courseKey": "", "courseState": "", "invitedAt": "", "answeredAt": ""}
+application_cases = [
+    ("applications: anonymous CREATE without course fields -> ALLOW", True,
+     lambda: req("POST", "applications?documentId=apNone", data=body(application()))),
+    ("applications: anonymous CREATE with all four course fields '' -> ALLOW", True,
+     lambda: req("POST", "applications?documentId=apEmpty", data=body(application(**APP_EMPTY_COURSE)))),
+    ("applications: anonymous CREATE with courseKey 'c1' -> DENY", False,
+     lambda: req("POST", "applications?documentId=apCourse", data=body(application(**{**APP_EMPTY_COURSE, "courseKey": "c1"})))),
+    ("applications: anonymous CREATE with courseState 'invited' -> DENY", False,
+     lambda: req("POST", "applications?documentId=apInvited", data=body(application(**{**APP_EMPTY_COURSE, "courseState": "invited"})))),
+    ("applications: anonymous CREATE with invitedAt set -> DENY", False,
+     lambda: req("POST", "applications?documentId=apInvitedAt", data=body(application(invitedAt="20261110")))),
+]
+for label, expect, run in application_cases:
+    code = run()
+    ok = (code in (200, 201)) == expect
+    passed += ok; failed += not ok
+    print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
+
 print(f"\n{passed} passed, {failed} failed")
 raise SystemExit(1 if failed else 0)
