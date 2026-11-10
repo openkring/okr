@@ -7,7 +7,7 @@ vi.mock('firebase-admin/firestore', () => ({ getFirestore: () => fakeDb.current 
 import type { Request, Response } from 'express';
 
 import {
-  articleImageLayout, buildLearningSection, mapCta, mapImage, mapSection, normalizeLang, pickText, safeEmbedUrl, safeSiteUrl, slugName, mapFooter, mapFormSection, isPublicPageRead, isPublishedPage, learningDefaultTab, loadLearningSection, pageCors, pageRouter,
+  articleImageHeight, articleImageLayout, buildLearningSection, mapCta, mapImage, mapSection, normalizeLang, pickText, safeEmbedUrl, safeSiteUrl, slugName, mapFooter, mapFormSection, isPublicPageRead, isPublishedPage, learningDefaultTab, loadLearningSection, pageCors, pageRouter,
 } from './page';
 import { getHtmlSanitizer } from '../sanitize';
 
@@ -39,6 +39,25 @@ describe('articleImageLayout', () => {
     expect(articleImageLayout(1, 3, undefined).imageColSize).toBe(6);
     expect(articleImageLayout(1, 3, 0).imageColSize).toBe(6);
     expect(articleImageLayout(1, 3, 12).imageColSize).toBe(6);
+  });
+});
+
+describe('articleImageHeight', () => {
+  it('reads a px height', () => {
+    expect(articleImageHeight({ height: '300px' })).toBe(300);
+    expect(articleImageHeight({ height: ' 120 px ' })).toBe(120);
+  });
+
+  it('is 0 for a natural height', () => {
+    for (const height of [undefined, '', 'auto', '100%', '20rem', '-5px', 'calc(1px)']) {
+      expect(articleImageHeight({ height })).toBe(0);
+    }
+    expect(articleImageHeight(undefined)).toBe(0);
+  });
+
+  it('is 0 outside 16..2000 px', () => {
+    expect(articleImageHeight({ height: '8px' })).toBe(0);
+    expect(articleImageHeight({ height: '5000px' })).toBe(0);
   });
 });
 
