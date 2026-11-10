@@ -115,7 +115,7 @@ export class ApplicationList {
     const isMembership = isMembershipApplication(app);
     if (isOpen) {
       if (isMembership) opts.buttons.push(createActionSheetButton('accept', this.store.i18n.accept(), imgix, 'check'));
-      opts.buttons.push(createActionSheetButton('deny',       this.store.i18n.deny(),   imgix, 'trash'));
+      opts.buttons.push(createActionSheetButton('deny',       this.store.i18n.deny(),   imgix, 'stop-circle'));
       if (!app.personKey) opts.buttons.push(createActionSheetButton('person', this.store.i18n.person_label(), imgix, 'person'));
     }
     if (isMembership && app.personKey) {

@@ -67,6 +67,7 @@ export class ApplicationService {
     person_conf:        LIST_PFX + 'person.conf',
     person_error:       LIST_PFX + 'person.error',
     link_conf:          LIST_PFX + 'person.link_conf',
+    link_error:         LIST_PFX + 'person.link_error',
     merge_conf:         LIST_PFX + 'merge.conf',
     merge_error:        LIST_PFX + 'merge.error',
   });
@@ -182,7 +183,11 @@ export class ApplicationService {
     try {
       const personKey = await this.provisionPerson(application, currentUser);
       application.personKey = personKey;
-      await this.writeSilently(application, currentUser);
+      // updateModel never throws: undefined means the application write failed (its own error toast is suppressed)
+      if (!await this.writeSilently(application, currentUser)) {
+        application.personKey = '';
+        throw new Error(`ApplicationService.createPerson: application write failed (person ${personKey} created)`);
+      }
       await showToast(this.toastController, this.i18n.person_conf());
       void this.activityService.log('application', 'create-person', currentUser,
         `${application.okey}: ${application.lastName}/${application.firstName} → person ${personKey}`);
@@ -197,7 +202,11 @@ export class ApplicationService {
   /** Links an existing person instead of creating one: sets `personKey` only (spec 1.152 §9). */
   public async linkPerson(application: ApplicationModel, personKey: string, currentUser?: UserModel): Promise<void> {
     application.personKey = personKey;
-    await this.writeSilently(application, currentUser);
+    if (!await this.writeSilently(application, currentUser)) {
+      application.personKey = '';
+      await showToast(this.toastController, this.i18n.link_error());
+      return;
+    }
     await showToast(this.toastController, this.i18n.link_conf());
     void this.activityService.log('application', 'link-person', currentUser,
       `${application.okey}: ${application.lastName}/${application.firstName} → person ${personKey}`);
@@ -238,9 +247,11 @@ export class ApplicationService {
     const note = `zusammengeführt in ${keep.okey}`;
     drop.notes = drop.notes ? `${drop.notes}\n${note}` : note;
     Object.assign(drop, getDeletePatch(drop.tenants, this.env.tenantId));
-    await this.firestoreService.updateModel<ApplicationModel>(
+    const droppedKey = await this.firestoreService.updateModel<ApplicationModel>(
       ApplicationCollection, drop, false, this.i18n.merge_conf(), this.i18n.merge_error(), currentUser
     );
+    // a failed archive stops here (error toast shown): no task close, and a retry starts from the reloaded drop
+    if (!droppedKey) return undefined;
     // only an open drop still has an open task (accept/deny/cancel closed the others); when the kept
     // application took that task over (it had none), the task stays open with it
     if (isOpenApplication(drop) && drop.taskKey && drop.taskKey !== merged.taskKey) {
@@ -284,11 +295,14 @@ export class ApplicationService {
     return kidsKey;
   }
 
-  /** an application write without its own toast (the caller tells the user) */
-  private async writeSilently(application: ApplicationModel, currentUser?: UserModel): Promise<void> {
+  /**
+   * An application write without any toast; the caller tells the user. Returns the key, or undefined
+   * when the write failed (updateModel never throws).
+   */
+  private async writeSilently(application: ApplicationModel, currentUser?: UserModel): Promise<string | undefined> {
     application.index = getApplicationIndex(application);
-    await this.firestoreService.updateModel<ApplicationModel>(
-      ApplicationCollection, application, false, '', '', currentUser
+    return this.firestoreService.updateModel<ApplicationModel>(
+      ApplicationCollection, application, false, '', '', currentUser, true
     );
   }
 

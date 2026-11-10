@@ -1,6 +1,5 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { formatDate } from '@angular/common';
 import { Router } from '@angular/router';
 import { ActionSheetController, AlertController, ModalController, ToastController } from '@ionic/angular';
 import { catchError, of } from 'rxjs';
@@ -44,7 +43,7 @@ function courseStateLabel(app: ApplicationModel, i18n: ApplicationI18n): string 
 
 /** «Name, Vorname · 01.02.2026» — one application of a duplicate group in the merge picker */
 function pickerLabel(app: ApplicationModel): string {
-  const date = app.submittedAt ? formatDate(app.submittedAt, 'dd.MM.yyyy', 'en-US') : '';
+  const date = convertDateFormatToString((app.submittedAt ?? '').substring(0, 10), DateFormat.IsoDate, DateFormat.ViewDate, false);
   return [`${app.lastName}, ${app.firstName}`, date].filter(Boolean).join(' · ');
 }
 

@@ -134,7 +134,8 @@
     "create_new": "create new",
     "conf": "Person added.",
     "error": "The person could not be added.",
-    "link_conf": "Person linked."
+    "link_conf": "Person linked.",
+    "link_error": "The person could not be linked."
   },
   "merge": {
     "label": "Merge …",

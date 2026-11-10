@@ -134,7 +134,8 @@
     "create_new": "neu erfassen",
     "conf": "Person erfasst.",
     "error": "Die Person konnte nicht erfasst werden.",
-    "link_conf": "Person verknüpft."
+    "link_conf": "Person verknüpft.",
+    "link_error": "Die Person konnte nicht verknüpft werden."
   },
   "merge": {
     "label": "Zusammenführen …",

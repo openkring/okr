@@ -134,7 +134,8 @@
     "create_new": "créer une nouvelle",
     "conf": "Personne enregistrée.",
     "error": "La personne n'a pas pu être enregistrée.",
-    "link_conf": "Personne liée."
+    "link_conf": "Personne liée.",
+    "link_error": "La personne n'a pas pu être liée."
   },
   "merge": {
     "label": "Fusionner …",

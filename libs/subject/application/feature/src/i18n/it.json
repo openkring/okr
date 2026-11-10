@@ -134,7 +134,8 @@
     "create_new": "crea nuova",
     "conf": "Persona registrata.",
     "error": "Non è stato possibile registrare la persona.",
-    "link_conf": "Persona collegata."
+    "link_conf": "Persona collegata.",
+    "link_error": "Non è stato possibile collegare la persona."
   },
   "merge": {
     "label": "Unisci …",
