@@ -62,3 +62,4 @@ export * from './lib/server-badge-ledger.util';
 export * from './lib/external-id.util';
 export * from './lib/location-property.util';
 export * from './lib/map-pin.util';
+export * from './lib/course-choice.util';
