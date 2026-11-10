@@ -1,1 +1,44 @@
-{}
+{
+  "edit": {
+    "title": {
+      "menu": "Menü bearbeiten",
+      "page": "Seiteneintrag bearbeiten",
+      "link": "Link bearbeiten"
+    }
+  },
+  "new": {
+    "title": {
+      "menu": "Neues Menü",
+      "link": "Neuer Link"
+    }
+  },
+  "save": "Speichern",
+  "discard": "Verwerfen",
+  "field": {
+    "label": {
+      "label": "Bezeichnung",
+      "placeholder": "z.B. Verein",
+      "helper": "So erscheint der Eintrag im Menü der Website."
+    },
+    "slug": {
+      "label": "Adresse",
+      "placeholder": "z.B. vorstand",
+      "helper": "Die Seite ist unter /adresse erreichbar.",
+      "renameHint": "Wenn du die Adresse änderst, funktionieren bisherige Links auf diese Seite nicht mehr."
+    },
+    "url": {
+      "label": "Ziel",
+      "placeholder": "z.B. /termine oder https://…",
+      "helper": "Beginnt mit /, https:// oder mailto:"
+    },
+    "style": {
+      "label": "Als Schaltfläche anzeigen",
+      "helper": "Hebt den Link im Menü als Schaltfläche hervor."
+    }
+  },
+  "row": {
+    "archived": "archiviert",
+    "draftsOne": "1 Sektion im Entwurf",
+    "drafts": "{count} Sektionen im Entwurf"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "edit": {
+    "title": {
+      "menu": "Edit menu",
+      "page": "Edit page entry",
+      "link": "Edit link"
+    }
+  },
+  "new": {
+    "title": {
+      "menu": "New menu",
+      "link": "New link"
+    }
+  },
+  "save": "Save",
+  "discard": "Discard",
+  "field": {
+    "label": {
+      "label": "Label",
+      "placeholder": "e.g. Club",
+      "helper": "This is how the entry appears in the website menu."
+    },
+    "slug": {
+      "label": "Address",
+      "placeholder": "e.g. board",
+      "helper": "The page is reachable at /address.",
+      "renameHint": "If you change the address, existing links to this page stop working."
+    },
+    "url": {
+      "label": "Target",
+      "placeholder": "e.g. /events or https://…",
+      "helper": "Starts with /, https:// or mailto:"
+    },
+    "style": {
+      "label": "Show as button",
+      "helper": "Highlights the link in the menu as a button."
+    }
+  },
+  "row": {
+    "archived": "archived",
+    "draftsOne": "1 section in draft",
+    "drafts": "{count} sections in draft"
+  }
+}

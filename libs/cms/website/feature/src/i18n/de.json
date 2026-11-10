@@ -1,1 +1,75 @@
-{}
+{
+  "type": {
+    "menu": "Menü",
+    "page": "Seite",
+    "link": "Link"
+  },
+  "action": {
+    "addMenu": "Menü hinzufügen",
+    "addPage": "Seite hinzufügen",
+    "addLink": "Link hinzufügen",
+    "edit": "Bearbeiten",
+    "move": "Verschieben nach…",
+    "archive": "Archivieren",
+    "editPage": "Seite bearbeiten",
+    "copyUrl": "URL kopieren"
+  },
+  "warning": {
+    "pageMissing": "Seite fehlt",
+    "pageArchived": "Seite archiviert",
+    "pagePrivate": "Seite nicht öffentlich",
+    "slugDuplicate": "Adresse doppelt",
+    "pageDuplicate": "Seite doppelt",
+    "linkInvalid": "Link ungültig",
+    "homeMissing": "Es ist noch keine Startseite festgelegt."
+  },
+  "move": {
+    "intoSelf": "Ein Menü kann nicht in sich selbst verschoben werden.",
+    "notMenu": "Einträge lassen sich nur in ein Menü verschieben.",
+    "topLevel": "Oberste Ebene",
+    "title": "Verschieben nach…",
+    "current": "aktuell"
+  },
+  "validation": {
+    "labelRequired": "Bitte gib eine Bezeichnung ein.",
+    "labelTooLong": "Die Bezeichnung ist zu lang.",
+    "slugRequired": "Bitte gib eine Adresse ein.",
+    "slugPattern": "Die Adresse darf nur Kleinbuchstaben, Ziffern und einzelne Bindestriche enthalten.",
+    "urlRequired": "Bitte gib ein Ziel ein.",
+    "urlPrefix": "Das Ziel muss mit /, https:// oder mailto: beginnen."
+  },
+  "sitemap": {
+    "title": "Sitemap",
+    "count": "{count} Einträge",
+    "empty": "Noch keine Menüs — füge das erste Menü hinzu",
+    "noSite": "Für diese App gibt es noch keine Website.",
+    "createSite": "Website anlegen",
+    "addTop": "Hinzufügen"
+  },
+  "actionSheet": {
+    "title": "Aktionen"
+  },
+  "ok": "OK",
+  "cancel": "Abbrechen",
+  "urlCopied": "Die Adresse wurde kopiert.",
+  "pageNotFound": "Diese Seite gibt es nicht mehr.",
+  "pageInTree": "Diese Seite ist schon in der Sitemap.",
+  "slugTaken": "Diese Adresse ist schon vergeben. Bitte wähle eine andere.",
+  "addPage": {
+    "title": "Seite hinzufügen",
+    "new": "Neue Seite",
+    "existing": "Bestehende Seite",
+    "name": "Name der neuen Seite",
+    "namePlaceholder": "z.B. Vorstand",
+    "publicConfirm": "Diese Seite wird mit dem nächsten Veröffentlichen öffentlich."
+  },
+  "picker": {
+    "title": "Bestehende Seite wählen",
+    "empty": "Alle deine Seiten sind schon in der Sitemap."
+  },
+  "archive": {
+    "confirm": "Möchtest du diesen Eintrag archivieren?",
+    "confirmMenu": "Möchtest du dieses Menü mit allem, was darin liegt, archivieren?",
+    "confirmPage": "Möchtest du diese Seite archivieren? Sie verschwindet dann aus der Website und aus der App."
+  }
+}

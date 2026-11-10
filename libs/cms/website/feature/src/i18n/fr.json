@@ -1,0 +1,75 @@
+{
+  "type": {
+    "menu": "Menu",
+    "page": "Page",
+    "link": "Lien"
+  },
+  "action": {
+    "addMenu": "Ajouter un menu",
+    "addPage": "Ajouter une page",
+    "addLink": "Ajouter un lien",
+    "edit": "Modifier",
+    "move": "Déplacer vers…",
+    "archive": "Archiver",
+    "editPage": "Modifier la page",
+    "copyUrl": "Copier l'URL"
+  },
+  "warning": {
+    "pageMissing": "Page manquante",
+    "pageArchived": "Page archivée",
+    "pagePrivate": "Page non publique",
+    "slugDuplicate": "Adresse en double",
+    "pageDuplicate": "Page en double",
+    "linkInvalid": "Lien invalide",
+    "homeMissing": "Aucune page d'accueil n'est encore définie."
+  },
+  "move": {
+    "intoSelf": "Un menu ne peut pas être déplacé dans lui-même.",
+    "notMenu": "Les entrées ne peuvent être déplacées que dans un menu.",
+    "topLevel": "Niveau supérieur",
+    "title": "Déplacer vers…",
+    "current": "actuel"
+  },
+  "validation": {
+    "labelRequired": "Saisis un libellé.",
+    "labelTooLong": "Le libellé est trop long.",
+    "slugRequired": "Saisis une adresse.",
+    "slugPattern": "L'adresse ne peut contenir que des minuscules, des chiffres et des traits d'union simples.",
+    "urlRequired": "Saisis une cible.",
+    "urlPrefix": "La cible doit commencer par /, https:// ou mailto:."
+  },
+  "sitemap": {
+    "title": "Plan du site",
+    "count": "{count} entrées",
+    "empty": "Pas encore de menus — ajoute le premier menu",
+    "noSite": "Il n'y a pas encore de site web pour cette app.",
+    "createSite": "Créer le site web",
+    "addTop": "Ajouter"
+  },
+  "actionSheet": {
+    "title": "Actions"
+  },
+  "ok": "OK",
+  "cancel": "Annuler",
+  "urlCopied": "L'adresse a été copiée.",
+  "pageNotFound": "Cette page n'existe plus.",
+  "pageInTree": "Cette page est déjà dans le plan du site.",
+  "slugTaken": "Cette adresse est déjà prise. Choisis-en une autre.",
+  "addPage": {
+    "title": "Ajouter une page",
+    "new": "Nouvelle page",
+    "existing": "Page existante",
+    "name": "Nom de la nouvelle page",
+    "namePlaceholder": "p. ex. Comité",
+    "publicConfirm": "Cette page deviendra publique lors de la prochaine publication."
+  },
+  "picker": {
+    "title": "Choisir une page existante",
+    "empty": "Toutes tes pages sont déjà dans le plan du site."
+  },
+  "archive": {
+    "confirm": "Veux-tu archiver cette entrée ?",
+    "confirmMenu": "Veux-tu archiver ce menu avec tout son contenu ?",
+    "confirmPage": "Veux-tu archiver cette page ? Elle disparaîtra alors du site web et de l'app."
+  }
+}

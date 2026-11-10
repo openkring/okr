@@ -1,0 +1,75 @@
+{
+  "type": {
+    "menu": "Menú",
+    "page": "Página",
+    "link": "Enlace"
+  },
+  "action": {
+    "addMenu": "Añadir menú",
+    "addPage": "Añadir página",
+    "addLink": "Añadir enlace",
+    "edit": "Editar",
+    "move": "Mover a…",
+    "archive": "Archivar",
+    "editPage": "Editar página",
+    "copyUrl": "Copiar URL"
+  },
+  "warning": {
+    "pageMissing": "Falta la página",
+    "pageArchived": "Página archivada",
+    "pagePrivate": "Página no pública",
+    "slugDuplicate": "Dirección duplicada",
+    "pageDuplicate": "Página duplicada",
+    "linkInvalid": "Enlace no válido",
+    "homeMissing": "Todavía no se ha definido una página de inicio."
+  },
+  "move": {
+    "intoSelf": "Un menú no se puede mover dentro de sí mismo.",
+    "notMenu": "Las entradas solo se pueden mover a un menú.",
+    "topLevel": "Nivel superior",
+    "title": "Mover a…",
+    "current": "actual"
+  },
+  "validation": {
+    "labelRequired": "Introduce una etiqueta.",
+    "labelTooLong": "La etiqueta es demasiado larga.",
+    "slugRequired": "Introduce una dirección.",
+    "slugPattern": "La dirección solo puede contener minúsculas, cifras y guiones simples.",
+    "urlRequired": "Introduce un destino.",
+    "urlPrefix": "El destino debe empezar por /, https:// o mailto:."
+  },
+  "sitemap": {
+    "title": "Mapa del sitio",
+    "count": "{count} entradas",
+    "empty": "Todavía no hay menús — añade el primer menú",
+    "noSite": "Todavía no hay sitio web para esta app.",
+    "createSite": "Crear sitio web",
+    "addTop": "Añadir"
+  },
+  "actionSheet": {
+    "title": "Acciones"
+  },
+  "ok": "OK",
+  "cancel": "Cancelar",
+  "urlCopied": "Se ha copiado la dirección.",
+  "pageNotFound": "Esta página ya no existe.",
+  "pageInTree": "Esta página ya está en el mapa del sitio.",
+  "slugTaken": "Esta dirección ya está ocupada. Elige otra.",
+  "addPage": {
+    "title": "Añadir página",
+    "new": "Página nueva",
+    "existing": "Página existente",
+    "name": "Nombre de la página nueva",
+    "namePlaceholder": "p. ej. Junta directiva",
+    "publicConfirm": "Esta página será pública con la próxima publicación."
+  },
+  "picker": {
+    "title": "Elegir una página existente",
+    "empty": "Todas tus páginas ya están en el mapa del sitio."
+  },
+  "archive": {
+    "confirm": "¿Quieres archivar esta entrada?",
+    "confirmMenu": "¿Quieres archivar este menú con todo su contenido?",
+    "confirmPage": "¿Quieres archivar esta página? Desaparecerá del sitio web y de la app."
+  }
+}

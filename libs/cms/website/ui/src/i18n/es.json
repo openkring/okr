@@ -1,0 +1,44 @@
+{
+  "edit": {
+    "title": {
+      "menu": "Editar menú",
+      "page": "Editar entrada de página",
+      "link": "Editar enlace"
+    }
+  },
+  "new": {
+    "title": {
+      "menu": "Menú nuevo",
+      "link": "Enlace nuevo"
+    }
+  },
+  "save": "Guardar",
+  "discard": "Descartar",
+  "field": {
+    "label": {
+      "label": "Etiqueta",
+      "placeholder": "p. ej. Club",
+      "helper": "Así aparece la entrada en el menú del sitio web."
+    },
+    "slug": {
+      "label": "Dirección",
+      "placeholder": "p. ej. junta",
+      "helper": "La página está disponible en /direccion.",
+      "renameHint": "Si cambias la dirección, los enlaces existentes a esta página dejarán de funcionar."
+    },
+    "url": {
+      "label": "Destino",
+      "placeholder": "p. ej. /eventos o https://…",
+      "helper": "Empieza por /, https:// o mailto:"
+    },
+    "style": {
+      "label": "Mostrar como botón",
+      "helper": "Destaca el enlace en el menú como botón."
+    }
+  },
+  "row": {
+    "archived": "archivado",
+    "draftsOne": "1 sección en borrador",
+    "drafts": "{count} secciones en borrador"
+  }
+}

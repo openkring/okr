@@ -1,0 +1,10 @@
+{
+  "create": {
+    "conf": "Il sito web è stato creato.",
+    "error": "Non è stato possibile creare il sito web."
+  },
+  "update": {
+    "conf": "La navigazione è stata salvata.",
+    "error": "Non è stato possibile salvare la navigazione."
+  }
+}

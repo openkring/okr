@@ -32,6 +32,8 @@
     "@okr/content-folder-data-access": "*",
     "@okr/shared-constants": "*",
     "@okr/tenant-util": "*",
-    "@okr/content-learning-feature": "*"
+    "@okr/content-learning-feature": "*",
+    "@okr/cms-page-data-access": "*",
+    "@okr/cms-page-feature": "*"
   }
 }

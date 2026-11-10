@@ -1,0 +1,75 @@
+{
+  "type": {
+    "menu": "Menu",
+    "page": "Pagina",
+    "link": "Link"
+  },
+  "action": {
+    "addMenu": "Aggiungi menu",
+    "addPage": "Aggiungi pagina",
+    "addLink": "Aggiungi link",
+    "edit": "Modifica",
+    "move": "Sposta in…",
+    "archive": "Archivia",
+    "editPage": "Modifica pagina",
+    "copyUrl": "Copia URL"
+  },
+  "warning": {
+    "pageMissing": "Pagina mancante",
+    "pageArchived": "Pagina archiviata",
+    "pagePrivate": "Pagina non pubblica",
+    "slugDuplicate": "Indirizzo doppio",
+    "pageDuplicate": "Pagina doppia",
+    "linkInvalid": "Link non valido",
+    "homeMissing": "Non è ancora stata definita una pagina iniziale."
+  },
+  "move": {
+    "intoSelf": "Un menu non può essere spostato in sé stesso.",
+    "notMenu": "Le voci possono essere spostate solo in un menu.",
+    "topLevel": "Livello superiore",
+    "title": "Sposta in…",
+    "current": "attuale"
+  },
+  "validation": {
+    "labelRequired": "Inserisci un'etichetta.",
+    "labelTooLong": "L'etichetta è troppo lunga.",
+    "slugRequired": "Inserisci un indirizzo.",
+    "slugPattern": "L'indirizzo può contenere solo lettere minuscole, cifre e trattini singoli.",
+    "urlRequired": "Inserisci una destinazione.",
+    "urlPrefix": "La destinazione deve iniziare con /, https:// o mailto:."
+  },
+  "sitemap": {
+    "title": "Mappa del sito",
+    "count": "{count} voci",
+    "empty": "Ancora nessun menu — aggiungi il primo menu",
+    "noSite": "Per questa app non c'è ancora un sito web.",
+    "createSite": "Crea sito web",
+    "addTop": "Aggiungi"
+  },
+  "actionSheet": {
+    "title": "Azioni"
+  },
+  "ok": "OK",
+  "cancel": "Annulla",
+  "urlCopied": "L'indirizzo è stato copiato.",
+  "pageNotFound": "Questa pagina non esiste più.",
+  "pageInTree": "Questa pagina è già nella mappa del sito.",
+  "slugTaken": "Questo indirizzo è già occupato. Scegline un altro.",
+  "addPage": {
+    "title": "Aggiungi pagina",
+    "new": "Nuova pagina",
+    "existing": "Pagina esistente",
+    "name": "Nome della nuova pagina",
+    "namePlaceholder": "p. es. Comitato",
+    "publicConfirm": "Questa pagina diventerà pubblica con la prossima pubblicazione."
+  },
+  "picker": {
+    "title": "Scegli una pagina esistente",
+    "empty": "Tutte le tue pagine sono già nella mappa del sito."
+  },
+  "archive": {
+    "confirm": "Vuoi archiviare questa voce?",
+    "confirmMenu": "Vuoi archiviare questo menu con tutto il suo contenuto?",
+    "confirmPage": "Vuoi archiviare questa pagina? Scomparirà dal sito web e dall'app."
+  }
+}

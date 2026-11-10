@@ -1,0 +1,75 @@
+{
+  "type": {
+    "menu": "Menu",
+    "page": "Page",
+    "link": "Link"
+  },
+  "action": {
+    "addMenu": "Add menu",
+    "addPage": "Add page",
+    "addLink": "Add link",
+    "edit": "Edit",
+    "move": "Move to…",
+    "archive": "Archive",
+    "editPage": "Edit page",
+    "copyUrl": "Copy URL"
+  },
+  "warning": {
+    "pageMissing": "Page missing",
+    "pageArchived": "Page archived",
+    "pagePrivate": "Page not public",
+    "slugDuplicate": "Duplicate address",
+    "pageDuplicate": "Duplicate page",
+    "linkInvalid": "Invalid link",
+    "homeMissing": "No home page has been set yet."
+  },
+  "move": {
+    "intoSelf": "A menu cannot be moved into itself.",
+    "notMenu": "Entries can only be moved into a menu.",
+    "topLevel": "Top level",
+    "title": "Move to…",
+    "current": "current"
+  },
+  "validation": {
+    "labelRequired": "Please enter a label.",
+    "labelTooLong": "The label is too long.",
+    "slugRequired": "Please enter an address.",
+    "slugPattern": "The address may only contain lowercase letters, digits and single hyphens.",
+    "urlRequired": "Please enter a target.",
+    "urlPrefix": "The target must start with /, https:// or mailto:."
+  },
+  "sitemap": {
+    "title": "Sitemap",
+    "count": "{count} entries",
+    "empty": "No menus yet — add the first menu",
+    "noSite": "There is no website for this app yet.",
+    "createSite": "Create website",
+    "addTop": "Add"
+  },
+  "actionSheet": {
+    "title": "Actions"
+  },
+  "ok": "OK",
+  "cancel": "Cancel",
+  "urlCopied": "The address was copied.",
+  "pageNotFound": "This page no longer exists.",
+  "pageInTree": "This page is already in the sitemap.",
+  "slugTaken": "This address is already taken. Please choose another one.",
+  "addPage": {
+    "title": "Add page",
+    "new": "New page",
+    "existing": "Existing page",
+    "name": "Name of the new page",
+    "namePlaceholder": "e.g. Board",
+    "publicConfirm": "This page becomes public with the next publication."
+  },
+  "picker": {
+    "title": "Choose an existing page",
+    "empty": "All your pages are already in the sitemap."
+  },
+  "archive": {
+    "confirm": "Do you want to archive this entry?",
+    "confirmMenu": "Do you want to archive this menu with everything in it?",
+    "confirmPage": "Do you want to archive this page? It will then disappear from the website and from the app."
+  }
+}

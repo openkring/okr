@@ -1,0 +1,44 @@
+{
+  "edit": {
+    "title": {
+      "menu": "Modifier le menu",
+      "page": "Modifier l'entrée de page",
+      "link": "Modifier le lien"
+    }
+  },
+  "new": {
+    "title": {
+      "menu": "Nouveau menu",
+      "link": "Nouveau lien"
+    }
+  },
+  "save": "Enregistrer",
+  "discard": "Annuler",
+  "field": {
+    "label": {
+      "label": "Libellé",
+      "placeholder": "p. ex. Club",
+      "helper": "C'est ainsi que l'entrée apparaît dans le menu du site web."
+    },
+    "slug": {
+      "label": "Adresse",
+      "placeholder": "p. ex. comite",
+      "helper": "La page est accessible sous /adresse.",
+      "renameHint": "Si tu modifies l'adresse, les liens existants vers cette page ne fonctionneront plus."
+    },
+    "url": {
+      "label": "Cible",
+      "placeholder": "p. ex. /agenda ou https://…",
+      "helper": "Commence par /, https:// ou mailto:"
+    },
+    "style": {
+      "label": "Afficher comme bouton",
+      "helper": "Met le lien en valeur dans le menu sous forme de bouton."
+    }
+  },
+  "row": {
+    "archived": "archivé",
+    "draftsOne": "1 section en brouillon",
+    "drafts": "{count} sections en brouillon"
+  }
+}

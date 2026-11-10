@@ -1,0 +1,44 @@
+{
+  "edit": {
+    "title": {
+      "menu": "Modifica menu",
+      "page": "Modifica voce di pagina",
+      "link": "Modifica link"
+    }
+  },
+  "new": {
+    "title": {
+      "menu": "Nuovo menu",
+      "link": "Nuovo link"
+    }
+  },
+  "save": "Salva",
+  "discard": "Scarta",
+  "field": {
+    "label": {
+      "label": "Etichetta",
+      "placeholder": "p. es. Club",
+      "helper": "Così appare la voce nel menu del sito web."
+    },
+    "slug": {
+      "label": "Indirizzo",
+      "placeholder": "p. es. comitato",
+      "helper": "La pagina è raggiungibile in /indirizzo.",
+      "renameHint": "Se cambi l'indirizzo, i link esistenti a questa pagina non funzioneranno più."
+    },
+    "url": {
+      "label": "Destinazione",
+      "placeholder": "p. es. /eventi o https://…",
+      "helper": "Inizia con /, https:// o mailto:"
+    },
+    "style": {
+      "label": "Mostra come pulsante",
+      "helper": "Mette in evidenza il link nel menu come pulsante."
+    }
+  },
+  "row": {
+    "archived": "archiviato",
+    "draftsOne": "1 sezione in bozza",
+    "drafts": "{count} sezioni in bozza"
+  }
+}
