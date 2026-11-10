@@ -305,7 +305,7 @@
       "step6": "Los cursos anunciados aparecen al final de la inscripción, así que se puede apuntar a un curso de inmediato.",
       "invite": {
         "title": "Cómo invitas a los candidatos",
-        "text": "Abre la lista de cursos y elige para el curso la acción «Invitar a candidatos». Selecciona a las personas y toca «Invitar». En la misma ventana ves quién ya ha respondido.\nPara que un curso aparezca en la inscripción, tiene que estar «anunciado en la web». Si el curso tiene un límite, ves las plazas libres. Cuando todas las plazas están ocupadas, el curso figura como «completo»."
+        "text": "Abre la lista de cursos y elige para el curso la acción «Invitar a candidatos». Selecciona a las personas y toca «Invitar». En la misma ventana ves quién ya ha respondido.\nPara que un curso aparezca en la inscripción, tiene que estar «anunciado en la web». En la ventana «Invitar a candidatos» ves cuántas plazas tiene el curso y cuántas personas ya están invitadas o han aceptado. Cuando todas las plazas están ocupadas, el curso figura como «completo»."
       }
     },
     "trainer": {

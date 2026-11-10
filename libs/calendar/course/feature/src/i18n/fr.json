@@ -305,7 +305,7 @@
       "step6": "Les cours annoncés apparaissent à la fin de l'inscription : on peut ainsi s'inscrire tout de suite à un cours.",
       "invite": {
         "title": "Comment inviter des candidats",
-        "text": "Ouvre la liste des cours et choisis l'action « Inviter des candidats » pour le cours. Sélectionne les personnes et appuie sur « Inviter ». Dans la même fenêtre, tu vois qui a déjà répondu.\nPour qu'un cours apparaisse dans l'inscription, il doit être « annoncé sur le site web ». Si le cours a une limite, tu vois les places libres. Quand toutes les places sont prises, le cours est indiqué « complet »."
+        "text": "Ouvre la liste des cours et choisis l'action « Inviter des candidats » pour le cours. Sélectionne les personnes et appuie sur « Inviter ». Dans la même fenêtre, tu vois qui a déjà répondu.\nPour qu'un cours apparaisse dans l'inscription, il doit être « annoncé sur le site web ». Dans la fenêtre « Inviter des candidats », tu vois combien de places le cours a et combien de personnes sont déjà invitées ou ont accepté. Quand toutes les places sont prises, le cours est indiqué « complet »."
       }
     },
     "trainer": {

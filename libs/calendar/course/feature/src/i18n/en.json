@@ -305,7 +305,7 @@
       "step6": "Announced courses appear at the end of the registration, so someone can sign up for a course right away.",
       "invite": {
         "title": "How to invite applicants",
-        "text": "Open the course list and choose the action \"Invite applicants\" for the course. Select the people and tap \"Invite\". In the same window you can see who has already answered.\nFor a course to appear in the registration, it must be \"announced on the website\". If the course has a limit, you see the free places. When all places are taken, the course shows as \"fully booked\"."
+        "text": "Open the course list and choose the action \"Invite applicants\" for the course. Select the people and tap \"Invite\". In the same window you can see who has already answered.\nFor a course to appear in the registration, it must be \"announced on the website\". In the \"Invite applicants\" window you see how many places the course has and how many people are already invited or have said yes. When all places are taken, the course shows as \"fully booked\"."
       }
     },
     "trainer": {

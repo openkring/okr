@@ -305,7 +305,7 @@
       "step6": "I corsi annunciati compaiono alla fine dell'iscrizione, così ci si può iscrivere subito a un corso.",
       "invite": {
         "title": "Come inviti i candidati",
-        "text": "Apri l'elenco dei corsi e scegli per il corso l'azione «Invita i candidati». Seleziona le persone e tocca «Invita». Nella stessa finestra vedi chi ha già risposto.\nPerché un corso compaia nell'iscrizione, deve essere «annunciato sul sito web». Se il corso ha un limite, vedi i posti liberi. Quando tutti i posti sono occupati, il corso risulta «al completo»."
+        "text": "Apri l'elenco dei corsi e scegli per il corso l'azione «Invita i candidati». Seleziona le persone e tocca «Invita». Nella stessa finestra vedi chi ha già risposto.\nPerché un corso compaia nell'iscrizione, deve essere «annunciato sul sito web». Nella finestra «Invita i candidati» vedi quanti posti ha il corso e quante persone sono già invitate o hanno accettato. Quando tutti i posti sono occupati, il corso risulta «al completo»."
       }
     },
     "trainer": {
