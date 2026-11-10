@@ -3,6 +3,7 @@ import { each, enforce, omitWhen, staticSuite, test } from 'vest';
 import { TilesSection } from '@okr/shared-models';
 
 import { baseSectionValidations } from './base-section.validations';
+import { tilesColumns } from './tiles-config.util';
 import { isSectionCtaUrl } from './section-cta.util';
 
 /** Field name of a tile field, so the error note shows under the very tile that is wrong. */
@@ -15,7 +16,8 @@ export const tilesSectionValidations = staticSuite((model: TilesSection) => {
   const config = model.properties;
 
   test('tiles.columns', 'invalidValue', () => {
-    const cols = config?.columns;
+    // legacy docs lack `columns`: undefined falls back to the default, a set value must be 1-4
+    const cols = config?.columns ?? tilesColumns(undefined);
     enforce(Number.isInteger(cols) && cols >= 1 && cols <= 4).isTruthy();
   });
 
@@ -30,7 +32,7 @@ export const tilesSectionValidations = staticSuite((model: TilesSection) => {
         enforce(item?.title?.trim()).isNotEmpty();
       });
     });
-    omitWhen(!item?.url, () => {
+    omitWhen(!item?.url?.trim(), () => {
       test(tilesItemField(i, 'url'), 'invalidValue', () => {
         enforce(isSectionCtaUrl(item.url ?? '')).isTruthy();
       });

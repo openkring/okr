@@ -9,9 +9,11 @@ export function isSectionCtaUrl(url: string): boolean {
   if (typeof url !== 'string') return false;
   const u = url.trim();
   if (u.length === 0) return false;
+  // browsers strip tab/newline and read a backslash as a slash, so these smuggle in «//host»
+  if (/[\\\u0000-\u001f\u007f]/.test(u)) return false;
   if (u.startsWith('https://') || u.startsWith('mailto:') || u.startsWith('tel:')) return true;
   if (u.startsWith('#')) return u.length > 1;
-  if (u.startsWith('/')) return !u.startsWith('//');
+  if (u.startsWith('/')) return /^\/(?![/\\])/.test(u);
   return /^[\w-]+\.html([?#].*)?$/.test(u);
 }
 

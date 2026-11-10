@@ -8,7 +8,7 @@ describe('isSectionCtaUrl', () => {
     expect(isSectionCtaUrl(u)).toBe(true);
   });
 
-  it.each(['javascript:alert(1)', '//evil.com', 'http://x.ch', '../x.html', '', 'foo'])('rejects %s', (u) => {
+  it.each(['javascript:alert(1)', '//evil.com', 'http://x.ch', '../x.html', '', 'foo', '/\\evil.com', '/\t/evil.com', '/\n/evil.com', 'https://ok.ch\\@evil.com'])('rejects %s', (u) => {
     expect(isSectionCtaUrl(u)).toBe(false);
   });
 });

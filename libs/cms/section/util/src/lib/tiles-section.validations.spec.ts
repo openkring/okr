@@ -34,4 +34,18 @@ describe('tilesSectionValidations', () => {
     const bad = tilesSectionValidations(model({ items: [{ tone: 'primary', title: 'a', url: 'javascript:x' }] }));
     expect(bad.hasErrors('tiles.i0.url')).toBe(true);
   });
+
+  it('does not flag a config without columns (legacy doc)', () => {
+    const m = model({});
+    delete (m.properties as { columns?: number }).columns;
+    expect(tilesSectionValidations(m).hasErrors('tiles.columns')).toBe(false);
+  });
+
+  it('ignores a whitespace-only url', () => {
+    expect(tilesSectionValidations(model({ items: [{ tone: 'primary', title: 'a', url: '  ' }] })).hasErrors('tiles.i0.url')).toBe(false);
+  });
+
+  it('does not require a title on a stat tile', () => {
+    expect(tilesSectionValidations(model({ variant: 'stat', items: [{ tone: 'primary', value: '1917' }] })).hasErrors('tiles.i0.title')).toBe(false);
+  });
 });
