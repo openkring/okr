@@ -7,7 +7,7 @@ vi.mock('firebase-admin/firestore', () => ({ getFirestore: () => fakeDb.current 
 import type { Request, Response } from 'express';
 
 import {
-  articleImageLayout, buildLearningSection, mapImage, mapFooter, mapFormSection, isPublicPageRead, isPublishedPage, learningDefaultTab, loadLearningSection, pageCors, pageRouter,
+  articleImageLayout, buildLearningSection, mapCta, mapImage, mapSection, normalizeLang, pickText, safeSiteUrl, mapFooter, mapFormSection, isPublicPageRead, isPublishedPage, learningDefaultTab, loadLearningSection, pageCors, pageRouter,
 } from './page';
 import { getHtmlSanitizer } from '../sanitize';
 
@@ -143,7 +143,7 @@ describe('learning section', () => {
         published: isPublishedPage(page), tenantId: 'scs', sanitize, signVideo,
         docs: [doc('d1', { title: 'A', mimeType: 'application/pdf', fullPath: 'tenant/scs/folder/f1/a.pdf' })],
       });
-      expect(out).toEqual({ type: 'learning', title: 'Lernraum', subTitle: 'Training', locked: true, defaultTab: 'files', topics: [], items: [] });
+      expect(out).toEqual({ type: 'learning', name: '', title: 'Lernraum', subTitle: 'Training', locked: true, defaultTab: 'files', topics: [], items: [] });
     }
   });
 
@@ -383,7 +383,7 @@ describe('unpublished sections', () => {
 
   it('serves a form section with its own document id and without its mail addresses', async () => {
     const sections = await getSections({ sections: ['antrag'] });
-    expect(sections).toEqual([{ type: 'form', title: 'Antrag', sectionId: 'antrag', formKey: 'f1' }]);
+    expect(sections).toEqual([{ name: '', type: 'form', title: 'Antrag', sectionId: 'antrag', formKey: 'f1' }]);
   });
 
   it('serves published sections only, like the app', async () => {
@@ -455,5 +455,98 @@ describe('page route CORS (final review)', () => {
     expect(isPublicPageRead('/public/api/v1/pagesx', 'GET')).toBe(false);
     expect(isPublicPageRead('/public/api/v1/gallery', 'GET')).toBe(false);
     expect(isPublicPageRead('/public/api/v1/contact', 'OPTIONS')).toBe(false);
+  });
+});
+
+describe('homepage sections (1.151)', () => {
+  const noNested = new Map();
+  const id = (h: string) => h;
+  const map = (s: Record<string, unknown>, lang = 'de') => mapSection('k', s as never, noNested, id, lang) as Record<string, unknown>;
+
+  it('pickText picks the translation, then the plain text', () => {
+    expect(pickText('Über uns', { en: 'About us' }, 'en')).toBe('About us');
+    expect(pickText('Über uns', { en: 'About us' }, 'fr')).toBe('Über uns');
+    expect(pickText('Neu', { de: 'Alt' }, 'de')).toBe('Neu');
+    expect(pickText('', { de: 'Alt' }, 'de')).toBe('Alt');
+    expect(pickText('', { en: 'x' }, 'fr')).toBe('x');
+    expect(pickText(undefined, undefined, 'de')).toBe('');
+  });
+
+  it('normalizeLang accepts the five languages, else de', () => {
+    expect(normalizeLang('EN')).toBe('en');
+    expect(normalizeLang('xx')).toBe('de');
+    expect(normalizeLang(undefined)).toBe('de');
+  });
+
+  it('safeSiteUrl allows safe targets and rejects the rest', () => {
+    for (const ok of ['https://x.ch', 'mailto:a@b.ch', 'tel:+41', '#kurse', '/app/x', 'termine.html', 'seite.html?key=1#a']) expect(safeSiteUrl(ok)).toBe(ok);
+    expect(safeSiteUrl('  #kurse ')).toBe('#kurse');
+    for (const bad of ['javascript:alert(1)', '//evil.com', '/\\evil.com', '/\t/evil.com', 'http://x.ch', '../x.html', '#', '', undefined, 5]) expect(safeSiteUrl(bad)).toBe('');
+  });
+
+  it('mapCta keeps a safe cta and drops an unsafe or label-less one', () => {
+    expect(mapCta({ label: 'Kurs entdecken', url: '#kurse', style: 'primary' }, 'de')).toEqual({ label: 'Kurs entdecken', url: '#kurse', style: 'primary' });
+    expect(mapCta({ label: 'x', url: 'javascript:alert(1)', style: 'primary' }, 'de')).toBeUndefined();
+    expect(mapCta({ label: 'x', url: '//evil.com', style: 'primary' }, 'de')).toBeUndefined();
+    expect(mapCta({ label: '', url: '#a', style: 'primary' }, 'de')).toBeUndefined();
+    expect(mapCta({ label: 'Hallo', labelI18n: { en: 'Hi' }, url: '#a', style: 'secondary' }, 'en')?.label).toBe('Hi');
+  });
+
+  it('maps a tiles section: items, columns, tones, unsafe urls', () => {
+    const out = map({
+      type: 'tiles', name: 'zahlen', title: 'Zahlen',
+      properties: {
+        variant: 'stat', columns: 2, kicker: 'Fakten',
+        items: [
+          { value: '120', title: 'Mitglieder', tone: 'secondary' },
+          { value: '4', title: 'Boote', url: 'javascript:x', icon: 'a b' },
+          { value: '9', title: 'Kurse', url: ' kurse.html ', icon: 'boat' },
+          { value: '7', title: 'Regatten' },
+          { title: 'ohne Wert' },
+        ],
+      },
+    });
+    const items = out['items'] as { tone: string; url: string; icon: string }[];
+    expect(out).toMatchObject({ type: 'tiles', name: 'zahlen', columns: 2, variant: 'stat', kicker: 'Fakten' });
+    expect(items.length).toBe(4);
+    expect(items.map(i => i.tone)).toEqual(['secondary', 'primary', 'primary', 'primary']);
+    expect(items[1].url).toBe('');
+    expect(items[1].icon).toBe('');
+    expect(items[2]).toMatchObject({ url: 'kurse.html', icon: 'boat' });
+  });
+
+  it('card tiles need a title and columns are clamped, default 3', () => {
+    const out = map({ type: 'tiles', properties: { variant: 'card', columns: 9, items: [{ title: 'A' }, { value: '1' }] } });
+    expect(out['columns']).toBe(4);
+    expect((out['items'] as unknown[]).length).toBe(1);
+    expect(map({ type: 'tiles', properties: { items: [] } })['columns']).toBe(3);
+  });
+
+  it('every mapped section carries its name', () => {
+    for (const type of ['article', 'hero', 'table', 'album', 'button', 'iframe', 'video', 'people', 'accordion', 'footer', 'form', 'tiles', 'events', 'news']) {
+      expect(map({ type, name: 'ueber-uns' })['name']).toBe('ueber-uns');
+    }
+    expect(map({ type: 'article' })['name']).toBe('');
+  });
+
+  it('maps events and news sections (not article)', () => {
+    expect(map({ type: 'events', properties: { maxEvents: 4, moreUrl: 'termine.html', kicker: 'Agenda' } }))
+      .toMatchObject({ type: 'events', maxItems: 4, moreUrl: 'termine.html', kicker: 'Agenda' });
+    expect(map({ type: 'news', properties: { maxItems: 3, moreUrl: 'javascript:x' } })).toMatchObject({ type: 'news', maxItems: 3, moreUrl: '' });
+  });
+
+  it('hero gets kicker and at most two safe ctas; article gets cta and emphasis', () => {
+    const hero = map({ type: 'hero', properties: { kicker: 'Seeclub', ctas: [{ label: 'A', url: '#a', style: 'primary' }, { label: 'B', url: 'http://x', style: 'secondary' }, { label: 'C', url: '#c', style: 'secondary' }] } });
+    expect(hero['kicker']).toBe('Seeclub');
+    expect(hero['ctas']).toEqual([{ label: 'A', url: '#a', style: 'primary' }]);
+    const art = map({ type: 'article', properties: { emphasis: 'banner', cta: { label: 'Mehr', url: 'mehr.html', style: 'primary' } } });
+    expect(art).toMatchObject({ emphasis: 'banner', cta: { label: 'Mehr', url: 'mehr.html' } });
+  });
+
+  it('threads lang into text and into nested accordion content', () => {
+    const nested = new Map([['n1', { content: { htmlContent: '<p>de</p>' }, properties: { contentI18n: { en: '<p>en</p>' } } }]]);
+    const out = mapSection('k', { type: 'accordion', title: 'Box', properties: { titleI18n: { en: 'Boxen' }, items: [{ key: 'n1', label: 'A' }] } } as never, nested as never, id, 'en') as { title: string; items: { content: string }[] };
+    expect(out.title).toBe('Boxen');
+    expect(out.items[0].content).toBe('<p>en</p>');
   });
 });
