@@ -5,4 +5,4 @@
  * alternation is wrapped in a non-capturing group to anchor every branch.
  */
 export const EDITOR_LINK_PATTERN =
-  '(?:(https?://)?([\\da-z.-]+)\\.([a-z.]{2,6})[/\\w .-]*/??([^#\\n\\r]*)?#?([^\\n\\r]*)|(mailto:.*[@].*)|(/[^\\s]*))';
+  '(?:(https?://)?([\\da-z.-]+)\\.([a-z.]{2,6})[/\\w .-]*/??([^#\\n\\r]*)?#?([^\\n\\r]*)|(mailto:.*[@].*)|(/(?![/\\\\])[^\\s]*))';

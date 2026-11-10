@@ -1583,6 +1583,22 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     retention: LOG_24M,
   },
   {
+    // websites (spec 1.153): the public-site config of a tenant (nav tree, hosting target).
+    // The only person link is `lastPublishedBy` — the personKey of the contentAdmin who last
+    // published (written by publishWebsite, part 2). Attribution only; rollback needs
+    // `lastPublishedVersion`, not the person, so erasure blanks the key.
+    collection: 'websites',
+    dataClass: 'log',
+    tier: 'T4',
+    onTenantExit: 'anonymize',
+    find: (c: SubjectCtx) => db().collection('websites').where('lastPublishedBy', '==', c.personKey),
+    tenantScope: 'tenantsArray',
+    onExport: 'none', // tenant site configuration, not the member's own record
+    onErasure: 'anonymize',
+    anonymizeFields: ['lastPublishedBy'],
+    retention: LOG_24M,
+  },
+  {
     // `feature-rollout` is the operator/platform-staff kill-switch table (task 7) —
     // GLOBAL, one doc per catalogue block id, not owned by any tenant. `updatedBy` is
     // the uid of whichever operator last changed a block's rollout stage. No write path

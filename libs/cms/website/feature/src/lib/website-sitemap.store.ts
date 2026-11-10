@@ -199,7 +199,7 @@ export const _WebsiteSitemapStore = signalStore(
       async createSite(): Promise<void> {
         const siteId = store.siteId();
         if (!siteId || latest()) return;
-        const site = new WebsiteModel(siteId);
+        const site = new WebsiteModel(store.tenantId());
         site.okey = siteId;
         site.name = store.appStore.appConfig().appName;
         await store.websiteService.create(site, store.currentUser());

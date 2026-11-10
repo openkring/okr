@@ -43,6 +43,11 @@ describe('moveNode', () => {
   it('throws when the target is a page', () => {
     expect(() => moveNode(tree(), 'a', 'c', 0)).toThrow('website.move.notMenu');
   });
+  it('throws when the target menu is archived', () => {
+    const t = tree();
+    t[2] = { ...t[2], isArchived: true };
+    expect(() => moveNode(t, 'c', 'm3', 0)).toThrow('website.move.notMenu');
+  });
   it('moves to top level index 0 and removes from old parent', () => {
     const r = moveNode(tree(), 'b', null, 0);
     expect(r[0].id).toBe('b');

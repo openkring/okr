@@ -13,11 +13,12 @@ function angularPattern(pattern: string): RegExp {
 describe('EDITOR_LINK_PATTERN', () => {
   const re = angularPattern(EDITOR_LINK_PATTERN);
 
-  it.each(['/vorstand', '/termine?cat=regatta', 'https://seeclub.org', 'mailto:a@b.ch'])('accepts %s', (v) => {
+  it.each(['/vorstand', '/termine?cat=regatta', 'https://seeclub.org', 'mailto:a@b.ch',
+    'https://www.seeclub.org/path?x=1#a', 'http://example.ch/', 'https://example.swiss'])('accepts %s', (v) => {
     expect(re.test(v)).toBe(true);
   });
 
-  it.each(['javascript:alert(1)', 'vorstand', '/a b', 'x/vorstand'])('rejects %s', (v) => {
+  it.each(['javascript:alert(1)', 'vorstand', '/a b', 'x/vorstand', '//evil.com', '/\\evil.com'])('rejects %s', (v) => {
     expect(re.test(v)).toBe(false);
   });
 });

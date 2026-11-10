@@ -22,6 +22,11 @@ describe('websiteNodeValidations', () => {
       expect(websiteNodeValidations(link(ok)).isValid()).toBe(true);
     }
   });
+  it('rejects protocol-relative and prefix-only links', () => {
+    for (const bad of ['//evil.com', '/\\evil.com', 'https://', 'mailto:']) {
+      expect(websiteNodeValidations(m({ type: 'link', slug: '', url: bad })).hasErrors('url')).toBe(true);
+    }
+  });
   it('rejects http and tel links', () => {
     for (const bad of ['tel:+41', 'http://x.ch']) {
       expect(websiteNodeValidations(m({ type: 'link', slug: '', url: bad })).hasErrors('url')).toBe(true);

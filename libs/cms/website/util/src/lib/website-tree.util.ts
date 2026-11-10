@@ -78,7 +78,8 @@ export function moveNode(nodes: WebsiteNode[], id: string, newParentId: string |
   if (!node) return nodes;
   if (newParentId !== null) {
     if (newParentId === id || findNode(node.children ?? [], newParentId)) throw new Error('website.move.intoSelf');
-    if (findNode(nodes, newParentId)?.type !== 'menu') throw new Error('website.move.notMenu');
+    const target = findNode(nodes, newParentId);
+    if (target?.type !== 'menu' || target.isArchived) throw new Error('website.move.notMenu');
   }
   return insertNode(removeNode(nodes, id), newParentId, node, index);
 }
