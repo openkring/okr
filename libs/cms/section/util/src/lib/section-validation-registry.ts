@@ -23,6 +23,8 @@ import { adventSectionValidations } from './advent-section.validations';
 import { departuresSectionValidations } from './departures-section.validations';
 import { tilesSectionValidations } from './tiles-section.validations';
 import { formSectionValidations } from './form-section.validations';
+import { newsSectionValidations } from './news-section.validations';
+import { eventsSectionValidations } from './events-section.validations';
 
 /**
  * What a suite may need besides the section itself. Most suites ignore it; the form section needs the
@@ -62,6 +64,8 @@ export const SECTION_VALIDATION_SUITES: Partial<Record<SectionType, SectionSuite
   counter: counterSectionValidations as SectionSuite,
   footer: footerSectionValidations as SectionSuite,
   tiles: tilesSectionValidations as SectionSuite,
+  news: newsSectionValidations as SectionSuite,
+  events: eventsSectionValidations as SectionSuite,
   form: ((model: SectionModel, context?: SectionValidationContext) =>
     formSectionValidations(model as FormSection, context?.formImplicitFields)) as SectionSuite
 };

@@ -10,6 +10,8 @@ export * from './lib/timeline-config.util';
 export * from './lib/tiles-config.util';
 export * from './lib/section-cta.util';
 export * from './lib/tiles-section.validations';
+export * from './lib/news-section.validations';
+export * from './lib/events-section.validations';
 export * from './lib/section-validation-registry';
 export * from './lib/album-section.validations';
 export * from './lib/article-section.validations';

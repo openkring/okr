@@ -243,6 +243,7 @@ import { CourseOption, FormOption, FormSectionConfiguration } from './form-secti
               [formData]="eventsConfig" (formDataChange)="onEventsConfigChange($event)"
               [readOnly]="isReadOnly()"
               [i18n]="i18n()"
+              [errors]="errors()"
             />
           }
         }
@@ -549,6 +550,7 @@ import { CourseOption, FormOption, FormSectionConfiguration } from './form-secti
               [formData]="newsConfig" (formDataChange)="onNewsConfigChange($event)"
               [readOnly]="isReadOnly()"
               [i18n]="i18n()"
+              [errors]="errors()"
             />
           }
         }

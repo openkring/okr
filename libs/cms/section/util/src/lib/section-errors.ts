@@ -79,6 +79,10 @@ export function getInlineErrorFields(type: SectionType, showAdvanced = false): s
     case 'tiles':
       fields.push(TILES_PREFIX);
       break;
+    case 'news':
+    case 'events':
+      fields.push('moreUrl');
+      break;
     case 'slider':
       fields.push(IMAGES_PREFIX);
       if (showAdvanced) fields.push(...IMAGE_STYLE_FIELDS);

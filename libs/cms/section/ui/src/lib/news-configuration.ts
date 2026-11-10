@@ -3,7 +3,8 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, 
 
 import { LONG_NAME_LENGTH, URL_LENGTH } from '@okr/shared-constants';
 import { NEWS_CONFIG_SHAPE, NewsConfig } from '@okr/shared-models';
-import { Checkbox, CheckboxI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { Checkbox, CheckboxI18n, ErrorNote, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { getFieldErrors, SectionErrors } from '@okr/cms-section-util';
 
 interface NewsConfigI18n {
   news_title:                 Signal<string>;
@@ -32,7 +33,7 @@ interface NewsConfigI18n {
   selector: 'okr-news-config',
   standalone: true,
   imports: [
-    TextInput, NumberInput, Checkbox,
+    TextInput, NumberInput, Checkbox, ErrorNote,
     IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonGrid, IonRow, IonCol
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
@@ -65,6 +66,7 @@ interface NewsConfigI18n {
               <ion-col size="12">
                 <okr-text-input [i18n]="moreUrlI18n()" [value]="config().moreUrl" (valueChange)="patch({ moreUrl: $event })"
                                 [maxLength]="urlLength" [readOnly]="readOnly()" [showHelper]="true" inputMode="url" />
+                <okr-error-note [errors]="errorsFor('moreUrl')" />
               </ion-col>
             }
           </ion-row>
@@ -77,6 +79,8 @@ export class NewsConfiguration {
   public formData = model.required<NewsConfig>();
   public readonly readOnly = input(true);
   public readonly i18n = input.required<NewsConfigI18n>();
+  /** vest field name -> messages of the running section suite (see section.form.ts) */
+  public readonly errors = input<SectionErrors>({});
 
   protected readonly kickerLength = LONG_NAME_LENGTH;
   protected readonly blogPageKeyLength = LONG_NAME_LENGTH;
@@ -117,6 +121,10 @@ export class NewsConfiguration {
     name: 'moreUrl', label: this.i18n().news_more_label(),
     placeholder: this.i18n().news_more_placeholder(), helper: this.i18n().news_more_helper(),
   } as TextInputI18n));
+
+  protected errorsFor(field: string): string[] {
+    return getFieldErrors(this.errors(), field);
+  }
 
   protected patch(changes: Partial<NewsConfig>): void {
     this.formData.set({ ...this.config(), ...changes });

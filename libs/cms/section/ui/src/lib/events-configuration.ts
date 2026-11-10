@@ -3,7 +3,8 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, 
 
 import { LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { EventsConfig } from '@okr/shared-models';
-import { Checkbox, CheckboxI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { Checkbox, CheckboxI18n, ErrorNote, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { getFieldErrors, SectionErrors } from '@okr/cms-section-util';
 
 interface EventsConfigI18n {
   event_title:                  Signal<string>;
@@ -31,7 +32,7 @@ interface EventsConfigI18n {
   selector: 'okr-events-config',
   standalone: true,
   imports: [
-    TextInput, Checkbox, NumberInput,
+    TextInput, Checkbox, NumberInput, ErrorNote,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, IonCardSubtitle
 ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -57,6 +58,7 @@ interface EventsConfigI18n {
             </ion-col>
             <ion-col size="12">
               <okr-text-input [i18n]="moreUrlI18n()" [value]="moreUrl()" (valueChange)="onFieldChange('moreUrl', $event)" [readOnly]="readOnly()" />
+              <okr-error-note [errors]="errorsFor('moreUrl')" />
             </ion-col>
             <ion-col size="12">
               <okr-number-input [i18n]="maxEventsI18n()" [value]="maxEvents()" (valueChange)="onFieldChange('maxEvents', $event)" [readOnly]="readOnly()" />
@@ -85,6 +87,8 @@ export class EventsConfiguration {
   public intro = input<string>();
   public readonly readOnly = input(true);
   public readonly i18n = input.required<EventsConfigI18n>();
+  /** vest field name -> messages of the running section suite (see section.form.ts) */
+  public readonly errors = input<SectionErrors>({});
 
   protected readonly kickerLength = LONG_NAME_LENGTH;
 
@@ -136,6 +140,10 @@ export class EventsConfiguration {
     label: this.i18n().event_show_location_label(),
     helper: this.i18n().event_show_location_helper(),
   } as CheckboxI18n));
+
+  protected errorsFor(field: string): string[] {
+    return getFieldErrors(this.errors(), field);
+  }
 
   protected onFieldChange(fieldName: string, $event: string | boolean | number): void {
     this.formData.update((vm) => ({ ...vm, [fieldName]: $event }));
