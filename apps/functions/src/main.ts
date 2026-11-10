@@ -333,7 +333,7 @@ export { onAutoTopUpRequested } from './credit/auto-topup.trigger';
 // a billing invoice turned paid: credits a top-up; a paid subscription invoice can return pastDue/closing to active
 export { onBillingInvoicePaid } from './credit/topup-paid.trigger';
 // Website publish (spec 1.153): render the public site from Firestore and release it to its Hosting site; rollback
-export { publishWebsite, rollbackWebsite } from './website';
+export { publishWebsite, rollbackWebsite, onPageWrittenForWebsite, onSectionWrittenForWebsite } from './website';
 // Monthly billing run (plan 2): the morning job on the 1st requests one run per billed tenant; this trigger bills it
 export { onBillingRunRequested } from './billing/billing-run';
 // Tenant admins read their own bkaiser invoices (operator books are closed to them under the rules) and a signed PDF link
