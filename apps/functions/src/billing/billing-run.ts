@@ -268,17 +268,22 @@ async function charge(
     metadata: { attemptKey: attemptRef.id, tenantId, accountingTenantId, purpose: 'invoice', invoiceKey },
     idempotencyKey: invoiceKey,
   });
+  const issueDate = String(invoice['invoiceDate'] || toStoreDate(now));
+  const retryDay = addDuration(issueDate, { days: RETRY_AFTER_DAYS });
   if (CHARGE_ON_ITS_WAY.includes(pi.status)) {
-    await attemptRef.update({ stripePaymentIntentId: pi.id, stripeChargeId: pi.chargeId, updatedAt: toStoreDateTime(new Date()) });
+    // a read-back day as for a decline: should the webhook be lost (or mark the charge failed), the daily job
+    // settles a succeeded PaymentIntent or retries the charge then
+    await attemptRef.update({
+      stripePaymentIntentId: pi.id, stripeChargeId: pi.chargeId, retryCount: 0, nextRetryAt: retryDay, updatedAt: toStoreDateTime(new Date()),
+    });
     log('info', 'monthlyBilling: charged', { tenantId, invoiceKey, amount, status: pi.status });
     return 'charged';
   }
   // the mail first: its id is deterministic (a re-send is a no-op), so a crash before the attempt update loses nothing
   await notifyChargeFailed(db, tenantId, { invoiceKey, amount, attempt: 1 });
-  const issueDate = String(invoice['invoiceDate'] || toStoreDate(now));
   await attemptRef.update({
     stripePaymentIntentId: pi.id, stripeChargeId: pi.chargeId, state: 'failed', error: `charge ${pi.status}`,
-    retryCount: 0, nextRetryAt: addDuration(issueDate, { days: RETRY_AFTER_DAYS }), updatedAt: toStoreDateTime(new Date()),
+    retryCount: 0, nextRetryAt: retryDay, updatedAt: toStoreDateTime(new Date()),
   });
   log('warn', 'monthlyBilling: charge declined, retried later', { tenantId, invoiceKey, status: pi.status });
   return 'declined';

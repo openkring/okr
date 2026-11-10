@@ -155,6 +155,13 @@ describe('runMonthlyBilling', () => {
     expect(p.chargeOffSession).toHaveBeenCalledTimes(1);
   });
 
+  it.each(['processing', 'succeeded'])('a %s charge plans the day-3 read-back (retryCount 0, nextRetryAt = issue + 3 days)', async (status) => {
+    const store = seed();
+    await expect(runMonthlyBilling(use(store), () => port(status), 'scs', PERIOD, log)).resolves.toBe('charged');
+    expect(store[ATTEMPT]).toMatchObject({ state: 'open', retryCount: 0, nextRetryAt: '20261204', stripePaymentIntentId: 'pi_1' });
+    expect(notifyChargeFailed).not.toHaveBeenCalled();
+  });
+
   it('decline: the failure mail goes out before the attempt is marked failed', async () => {
     const store = seed();
     let attemptStateAtMail = '';

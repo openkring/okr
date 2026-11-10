@@ -142,6 +142,25 @@ describe('runBillingDaily: retries', () => {
     expect(store[ATTEMPT]).toMatchObject({ retryCount: 0, nextRetryAt: '20261204', stripePaymentIntentId: 'pi_1' });
   });
 
+  it('a processing first charge (run planned day 3): the day-3 read-back settles a succeeded PaymentIntent', async () => {
+    const store = seed({}, { [ATTEMPT]: attempt({ state: 'open', error: '' }) });
+    const p = await run(store, '20261204', port({ earlier: intent('succeeded') }));
+    expect(p.retrievePaymentIntent).toHaveBeenCalledWith('pi_1');
+    expect(p.chargeOffSession).not.toHaveBeenCalled();
+    expect(settleSucceededPayment).toHaveBeenCalledWith(expect.anything(), expect.anything(), expect.objectContaining({
+      attemptKey: `auto-${KEY}`, paymentIntentId: 'pi_1',
+    }));
+    expect(store[SUB]).toMatchObject({ state: 'active' });
+  });
+
+  it('a first charge the webhook marked failed (run planned day 3) is retried on day 3, with a mail on decline', async () => {
+    const store = seed({}, { [ATTEMPT]: attempt({ state: 'failed', error: 'card_declined' }) });
+    const p = await run(store, '20261204');
+    expect(p.chargeOffSession).toHaveBeenCalledWith(expect.objectContaining({ idempotencyKey: `${KEY}-r1` }));
+    expect(store[ATTEMPT]).toMatchObject({ state: 'failed', retryCount: 1, nextRetryAt: '20261208' });
+    expect(notifyChargeFailed).toHaveBeenCalledWith(expect.anything(), 'scs', { invoiceKey: KEY, amount: 5000, attempt: 2 });
+  });
+
   it('without a stored PaymentIntent the read-back searches by invoice key', async () => {
     const store = seed({}, { [ATTEMPT]: attempt({ stripePaymentIntentId: '' }) });
     const p = await run(store, '20261204');
