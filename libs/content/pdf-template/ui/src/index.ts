@@ -5,3 +5,4 @@ export * from './lib/template-publish.form';
 export * from './lib/template-publish.modal';
 export * from './lib/versand-delivery-table';
 export * from './lib/versand-info.modal';
+export * from './lib/postversand-step';

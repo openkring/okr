@@ -2,9 +2,10 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import {
-  IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonLabel, IonMenuButton, IonRow, IonTitle, IonToolbar,
+  IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonLabel, IonMenuButton, IonRow, IonTitle, IonToolbar,
 } from '@ionic/angular';
 
+import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { MailingView, mailingStateColor } from '@okr/content-pdf-template-util';
 import { prettyFormatDateTime } from '@okr/shared-util-core';
@@ -23,7 +24,7 @@ import { MailingStore } from './mailing.store';
   standalone: true,
   providers: [MailingStore],
   imports: [
-    Spinner, ListFilter, EmptyList,
+    SvgIconPipe, Spinner, ListFilter, EmptyList, IonButton, IonIcon,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonMenuButton,
     IonContent, IonLabel, IonGrid, IonRow, IonCol, IonChip,
   ],
@@ -38,6 +39,13 @@ import { MailingStore } from './mailing.store';
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ filteredCount() }}/{{ count() }} {{ store.i18n.list_title() }}</ion-title>
+        <!-- the status board of all letters sent through the post provider (spec 1.150 §9) -->
+        <ion-buttons slot="end">
+          <ion-button (click)="openLetters()">
+            <ion-icon slot="start" src="{{ 'send' | svgIcon }}" />
+            {{ store.sendingI18n.open_letters() }}
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
       <okr-list-filter (searchTermChanged)="store.setSearchTerm($event)" />
       <ion-toolbar color="primary" class="ion-hide-sm-down">
@@ -120,6 +128,10 @@ export class MailingList {
       case 'failed': return this.store.i18n.state_failed();
       default: return this.store.i18n.state_pending();
     }
+  }
+
+  protected async openLetters(): Promise<void> {
+    await this.router.navigate(['/mailings', 'letters']);
   }
 
   protected async open(mailing: MailingView): Promise<void> {

@@ -20,7 +20,7 @@ import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
-import { DeliveryChannel, type EmailLayoutChoice, NoticeAttachment, NoticeCollection, type NoticeModel } from '@okr/shared-models';
+import { DeliveryChannel, type EmailLayoutChoice, NoticeAttachment, NoticeCollection, type NoticeModel, type PostOptions } from '@okr/shared-models';
 import { DateFormat, getEventLocationName, getTodayStr, isOrgRecipient, recipientParentKey } from '@okr/shared-util-core';
 import { projectID } from 'firebase-functions/params';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
@@ -41,8 +41,11 @@ import { lastEventDate } from './mailing-answer.logic';
 import { chunk, isElevated } from './mailing-recipients';
 import { MAX_PERSONAL_RECIPIENTS, parseCaleventKeys, personalEntries, refusedEventMessage, sendableEventRefusal } from './personal-mail.logic';
 import { asLayoutChoice } from './render-email.logic';
-import { buildMailingLetters, LetterEvent } from './mailing-letters';
+import { buildMailingLetters, countLetterPages, LetterEvent } from './mailing-letters';
 import { mailingCategory } from './mailing-deliveries.logic';
+import { lettersResult, makePostFanOut, postFanOutDeps } from './mailing-sendings';
+import { getCreditPort } from '../pingen/credit-port';
+import { answerEventsOf, type MailingPost, type PostLock, type PostOrderDoc, PostOrderCollection, parsePostRequest, postMailingKey, quoteTokenSecret, readCountryCodes, type QuoteEnv, withPostOrder } from '../pingen/post-order';
 
 const REGION = 'europe-west6';
 export const MailingCollection = 'mailings';
@@ -86,6 +89,8 @@ export interface MailingRequest {
   dashboard?: boolean;
   /** «QR-Code für Link anzeigen»: each letter ends with the events, each with a QR code of the answer link. */
   letterQrCodes?: boolean;
+  /** «Per Pingen senden»: the quote the sender saw; the server recomputes it and takes the price from the credit. */
+  post?: { via: 'pingen'; options: PostOptions; token: string; issuedAt: number };
 }
 
 /** The `mailings` doc. Written only here; `state` and the counts are owned by `onMailing`. */
@@ -111,7 +116,7 @@ export interface MailingDoc {
   mailJobKey?: string;
   noticeKey?: string;
   /** the Post part (P3): built by `onMailing`, downloaded through `getMailingLetters` */
-  letters?: { state: 'pending' | 'ready' | 'failed'; storagePath?: string; count?: number; missing?: number; error?: string };
+  letters?: { state: 'none' | 'pending' | 'ready' | 'failed'; storagePath?: string; count?: number; missing?: number; error?: string };
   error?: string;
   /** The events a Versand with answer links asks about (calevent keys); absent = no answer links. */
   caleventKeys?: string[];
@@ -121,6 +126,8 @@ export interface MailingDoc {
   dashboard?: boolean;
   /** The letters carry the events with a QR code of the answer link; the Post recipients may then answer too. */
   letterQrCodes?: boolean;
+  /** An accepted Pingen order (credit deducted); absent = the Post part is the download. */
+  post?: MailingPost;
 }
 
 /**
@@ -186,37 +193,103 @@ async function directoryEmails(db: Firestore, tenantId: string, parentKeys: stri
   return snaps.map((snap) => String(snap.data()?.['favEmail'] ?? '')).filter((email) => email.length > 0);
 }
 
-/** Copies every attachment into the private bucket and returns where each one lives. */
-async function storeAttachments(req: MailingRequest, tenantId: string, mailingKey: string): Promise<NoticeAttachment[]> {
-  const bucket = privateBucket();
-  const out: NoticeAttachment[] = [];
+/** An attachment of a Versand request as bytes: what both the quote and the send read. */
+export interface ResolvedAttachment {
+  filename: string;
+  content: Buffer;
+  contentType: string;
+}
+
+/** The attachment fields of a Versand request. */
+export type MailingAttachmentFields = Pick<MailingRequest, 'storagePath' | 'filename' | 'extraAttachments'>;
+
+/**
+ * Reads the request's attachments into memory: a tenant document from the default bucket (checked by
+ * `isTenantDocumentPath`), then the inline ones. Nothing is stored. `readDocument` is injectable for tests.
+ */
+export async function resolveAttachmentBytes(
+  req: MailingAttachmentFields,
+  tenantId: string,
+  readDocument: (path: string) => Promise<{ content: Buffer; contentType: string }> = async (path) => {
+    const file = getStorage().bucket().file(path);
+    const [[content], [meta]] = await Promise.all([file.download(), file.getMetadata()]);
+    return { content, contentType: String(meta.contentType ?? 'application/pdf') };
+  },
+): Promise<ResolvedAttachment[]> {
+  const out: ResolvedAttachment[] = [];
   let total = 0;
-  const store = async (filename: string, content: Buffer, contentType: string) => {
+  const add = (filename: string, content: Buffer, contentType: string) => {
     total += content.length;
     if (total > MAX_ATTACHMENTS_BYTES) throw new HttpsError('invalid-argument', 'The attachments are too large.');
-    const storagePath = `mailings/${tenantId}/${mailingKey}/${out.length}-${safeFilename(filename)}`;
-    await bucket.file(storagePath).save(content, { contentType, resumable: false });
-    out.push({ filename: safeFilename(filename), storagePath, contentType });
+    out.push({ filename, content, contentType });
   };
   if (req.storagePath) {
     if (!isTenantDocumentPath(req.storagePath, tenantId)) {
       throw new HttpsError('invalid-argument', 'This document cannot be attached.');
     }
-    const file = getStorage().bucket().file(req.storagePath);
-    const [[content], [meta]] = await Promise.all([file.download(), file.getMetadata()]);
-    await store(req.filename || req.storagePath.split('/').pop() || 'document.pdf', content, String(meta.contentType ?? 'application/pdf'));
+    const doc = await readDocument(req.storagePath);
+    add(req.filename || req.storagePath.split('/').pop() || 'document.pdf', doc.content, doc.contentType);
   }
   for (const att of req.extraAttachments ?? []) {
     if (typeof att?.filename !== 'string' || typeof att.contentBase64 !== 'string') {
       throw new HttpsError('invalid-argument', 'Invalid attachment.');
     }
-    await store(att.filename, Buffer.from(att.contentBase64, 'base64'), att.contentType || 'application/octet-stream');
+    add(att.filename, Buffer.from(att.contentBase64, 'base64'), att.contentType || 'application/octet-stream');
   }
   return out;
 }
 
+/** Copies every attachment into the private bucket and returns where each one lives. */
+async function storeAttachments(resolved: ResolvedAttachment[], tenantId: string, mailingKey: string): Promise<NoticeAttachment[]> {
+  const bucket = privateBucket();
+  const out: NoticeAttachment[] = [];
+  for (const att of resolved) {
+    const storagePath = `mailings/${tenantId}/${mailingKey}/${out.length}-${safeFilename(att.filename)}`;
+    await bucket.file(storagePath).save(att.content, { contentType: att.contentType, resumable: false });
+    out.push({ filename: safeFilename(att.filename), storagePath, contentType: att.contentType });
+  }
+  return out;
+}
+
+/** The `post-orders/{key}` lock of a Pingen send (Admin SDK only, see firestore.rules). */
+function postLockOf(db: Firestore, key: string, tenantId: string): PostLock {
+  const lockRef = db.collection(PostOrderCollection).doc(key);
+  return {
+    acquire: async ({ letters, pages }) => {
+      const now = new Date();
+      const doc: PostOrderDoc = { tenantId, state: 'pending', createdAt: now.toISOString(), expiresAt: new Date(now.getTime() + 24 * 3600 * 1000).toISOString(), letters, pages };
+      try {
+        await lockRef.create(doc);
+        return { acquired: true as const };
+      } catch (error) {
+        const code = (error as { code?: unknown }).code;
+        if (code !== 6 && code !== 'already-exists') throw error;
+        const state = (await lockRef.get()).data()?.['state'];
+        return { acquired: false as const, state: state === 'done' || state === 'failed' ? state : 'pending' };
+      }
+    },
+    set: async (state) => { await lockRef.update({ state }); },
+    remove: async () => { await lockRef.delete(); },
+  };
+}
+
+/** After a failed send: drops the files stored for it, unless the mailing doc exists (then they are its files). Never throws. */
+async function removeStoredAttachments(ref: FirebaseFirestore.DocumentReference, tenantId: string): Promise<void> {
+  try {
+    if ((await ref.get()).exists) return;
+    await privateBucket().deleteFiles({ prefix: `mailings/${tenantId}/${ref.id}/` });
+  } catch (error) {
+    logger.warn(`sendMailing: could not remove the files of the failed Versand ${ref.id}`, { error: String((error as Error)?.message ?? error) });
+  }
+}
+
+/** The pricing environment of a Pingen send: the same functions the quote uses. */
+function postEnv(): QuoteEnv {
+  return { getPort: getCreditPort, secret: quoteTokenSecret.value(), now: Date.now(), readCountryCodes, answerEventsOf, renderPages: countLetterPages };
+}
+
 export const sendMailing = onCall(
-  { region: REGION, enforceAppCheck: true, cors: true, memory: '512MiB', timeoutSeconds: 120 },
+  { region: REGION, enforceAppCheck: true, cors: true, memory: '2GiB', timeoutSeconds: 120, secrets: [quoteTokenSecret] },
   async (request: CallableRequest<MailingRequest>): Promise<{ mailingKey: string }> => {
     const CF_NAME = 'sendMailing';
     checkAppCheckToken(request as never, CF_NAME);
@@ -229,6 +302,7 @@ export const sendMailing = onCall(
     const to = stringList(data.to, 'to');
     const cc = stringList(data.cc, 'cc');
     const deliveries = parseDeliveries(data.deliveries);
+    const postRequest = parsePostRequest(data.post);
     const caleventKeys = parseCaleventKeys(data.caleventKeys);
     if (deliveries.length === 0) throw new HttpsError('invalid-argument', 'Nobody receives this Versand.');
     if (deliveries.length > MAX_RECIPIENTS) throw new HttpsError('invalid-argument', `At most ${MAX_RECIPIENTS} recipients.`);
@@ -296,31 +370,53 @@ export const sendMailing = onCall(
 
     // QR codes only where they lead somewhere: letters to print and events to answer
     const letterQrCodes = data.letterQrCodes === true && caleventKeys.length > 0 && keysFor(deliveries, DeliveryChannel.Post).length > 0;
-    const ref = db.collection(MailingCollection).doc();
-    const attachments = await storeAttachments(data, tenantId, ref.id);
+    // a Pingen send is idempotent: the quote token names the Versand, so a replay finds it instead of charging again
+    const ref = postRequest ? db.collection(MailingCollection).doc(postMailingKey(tenantId, postRequest.token)) : db.collection(MailingCollection).doc();
+    const resolved = await resolveAttachmentBytes(data, tenantId);
     const senderKey = String(caller['personKey'] ?? '');
-    const doc: MailingDoc = {
-      tenants: [tenantId],
-      senderUid: uid,
-      senderKey,
-      senderName: String(caller['displayName'] ?? caller['loginEmail'] ?? ''),
-      subject: data.subject.trim(),
-      body: data.body,
-      layout: asLayoutChoice(data.layout),
-      from,
-      to,
-      cc,
-      attachmentName: attachments.map((a) => a.filename).join(', '),
-      attachments,
-      deliveries,
-      createdAt: getTodayStr(DateFormat.StoreDateTime),
-      state: 'pending',
-      ...(caleventKeys.length > 0 ? { caleventKeys, ...(validUntil ? { validUntil } : {}) } : {}),
-      ...(keysFor(deliveries, DeliveryChannel.Post).length > 0 ? { letters: { state: 'pending' as const } } : {}),
-      ...(data.dashboard === true ? { dashboard: true } : {}),
-      ...(letterQrCodes ? { letterQrCodes: true } : {}),
+    const build = async (post: MailingPost | undefined): Promise<void> => {
+      let attachments: NoticeAttachment[];
+      try {
+        attachments = await storeAttachments(resolved, tenantId, ref.id);
+        const doc: MailingDoc = {
+          tenants: [tenantId],
+          senderUid: uid,
+          senderKey,
+          senderName: String(caller['displayName'] ?? caller['loginEmail'] ?? ''),
+          subject: data.subject.trim(),
+          body: data.body,
+          layout: asLayoutChoice(data.layout),
+          from,
+          to,
+          cc,
+          attachmentName: attachments.map((a) => a.filename).join(', '),
+          attachments,
+          deliveries,
+          createdAt: getTodayStr(DateFormat.StoreDateTime),
+          state: 'pending',
+          ...(caleventKeys.length > 0 ? { caleventKeys, ...(validUntil ? { validUntil } : {}) } : {}),
+          ...(keysFor(deliveries, DeliveryChannel.Post).length > 0 ? { letters: { state: 'pending' as const } } : {}),
+          ...(data.dashboard === true ? { dashboard: true } : {}),
+          ...(letterQrCodes ? { letterQrCodes: true } : {}),
+          ...(post ? { post } : {}),
+        };
+        await ref.create(doc);
+      } catch (error) {
+        await removeStoredAttachments(ref, tenantId);
+        throw error;
+      }
     };
-    await ref.set(doc);
+    if (postRequest) {
+      // the actor of the credit entry is the caller's uid
+      await withPostOrder(postEnv(), {
+        // subject and QR flag exactly as the quote saw them (the token hashes the request, not the stored doc)
+        post: postRequest, tenantId, subject: data.subject, body: data.body, attachments: resolved, letterQrCodes: data.letterQrCodes === true,
+        caleventKeys, postKeys: keysFor(deliveries, DeliveryChannel.Post), mailingKey: ref.id, mailingExists: async () => (await ref.get()).exists, lock: postLockOf(db, ref.id, tenantId), actor: uid,
+        caller: caller as { roles?: unknown; tenants?: string[] }, nowIso: getTodayStr(DateFormat.StoreDateTime),
+      }, build);
+    } else {
+      await build(undefined);
+    }
     logger.info(`${CF_NAME}: Versand ${ref.id} to ${deliveries.length} recipient(s) (tenant ${tenantId})`);
     return { mailingKey: ref.id };
   },
@@ -451,17 +547,25 @@ export const onMailing = onDocumentCreated(
       // Post last: the slowest part, and its failure must not undo the mails and notices already out
       const postKeys = keysFor(mailing.deliveries, DeliveryChannel.Post);
       if (postKeys.length > 0) {
+        // a Pingen send (spec 1.150): the charged Swiss letters become `sendings` records, the download holds the abroad ones
+        const fanOut = mailing.post?.via === 'pingen'
+          ? makePostFanOut({ tenantId, mailingKey: snap.id, post: mailing.post, nowIso: new Date().toISOString(), deps: postFanOutDeps() })
+          : undefined;
         try {
           const built = await buildMailingLetters({
             tenantId, mailingKey: snap.id, personKeys: postKeys,
             subject: mailing.subject, body: await sanitizeEmailBody(mailing.body), attachments: mailing.attachments,
             ...(mailing.letterQrCodes && mailing.caleventKeys?.length ? await letterAnswers(db, snap.id, mailing.caleventKeys) : {}),
+            ...(fanOut ? { onLetter: fanOut.onLetter, only: fanOut.only } : {}),
           });
-          result.letters = built?.storagePath
-            ? { state: 'ready', storagePath: built.storagePath, count: built.letters, missing: built.missing }
-            : { state: 'failed', count: 0, missing: built?.missing ?? postKeys.length, error: 'No recipient has a postal address.' };
+          await fanOut?.finish();
+          result.letters = fanOut?.invalid
+            ? { state: 'failed', error: 'The accepted total does not divide into whole letter prices; no letter was queued.' }
+            : lettersResult(built, postKeys.length, !!fanOut);
         } catch (err) {
           logger.error(`${CF_NAME}: letters for Versand ${snap.id} failed:`, err);
+          // no retry: a charged recipient without a record will never get a letter, so give the share back
+          await fanOut?.finish('the letters could not be built');
           result.letters = { state: 'failed', error: err instanceof Error ? err.message : String(err) };
         }
       }

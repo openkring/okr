@@ -1,0 +1,378 @@
+import { describe, expect, it, vi } from 'vitest';
+
+const logger = vi.hoisted(() => ({ warn: vi.fn(), error: vi.fn(), info: vi.fn() }));
+vi.mock('firebase-functions/v2', () => ({ logger }));
+vi.mock('firebase-functions/params', () => ({ defineSecret: () => ({}), defineString: () => ({}) }));
+vi.mock('firebase-admin/firestore', () => ({ getFirestore: vi.fn() }));
+vi.mock('firebase-admin/storage', () => ({ getStorage: vi.fn() }));
+
+import { DateFormat, getTodayStr } from '@okr/shared-util-core';
+import type { PingenClient } from './pingen-client';
+import type { MailingPost } from './post-order';
+import { TOMBSTONE_DETAIL } from '../email/mailing-sendings';
+import { acceptedAtWindow, reconcilePostVersand, RECONCILE_BUDGET_MS, type PendingPostOrder, type ReconcileDeps, type ReconMailing } from './reconcile.logic';
+import type { SendingRow, SubmitDeps } from './submit-sending.logic';
+
+const OPTIONS = { deliveryProduct: 'cheap', printSpectrum: 'grayscale', printMode: 'simplex' } as const;
+const NOW = new Date('2026-11-09T10:00:00.000Z');
+const ago = (h: number) => new Date(NOW.getTime() - h * 3600_000).toISOString();
+/** exactly what sendMailing writes into `post.acceptedAt`: getTodayStr(StoreDateTime) at that moment */
+function acceptedAtAgo(h: number): string {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date(NOW.getTime() - h * 3600_000));
+  try { return getTodayStr(DateFormat.StoreDateTime); } finally { vi.useRealTimers(); }
+}
+const POST: MailingPost = {
+  via: 'pingen', options: OPTIONS, recipients: ['p1', 'p2', 'p3'], letters: 3, abroad: 0, pages: 6, total: 3 * 120 + 6 * 30,
+  creditEntryId: 'e1', acceptedBy: 'u', acceptedAt: acceptedAtAgo(3),
+};
+const MAILING: ReconMailing = { id: 'm1', tenantId: 'scs', senderKey: 'pe1', senderName: 'Sandra', subject: 'Einladung', post: POST };
+
+const row = (id: string, over: Partial<SendingRow> = {}): SendingRow => ({
+  id, tenants: ['scs'], isArchived: false, channel: 'post', source: 'mailing.m1', recipientKey: 'person.p1', recipientName: `Name ${id}`,
+  storagePath: `mailing-letters/scs/m1/${id}.pdf`, options: OPTIONS, pages: 2, price: 180, provider: 'pingen', providerId: 'pg', state: 'queued',
+  history: [{ state: 'queued', at: ago(3) }], trackingNumber: '', createdAt: ago(3), updatedAt: ago(3), ...over,
+});
+
+function setup(rows: SendingRow[], mailings: ReconMailing[] = [], createLetter?: PingenClient['createLetter'], orderList: PendingPostOrder[] = []) {
+  const store = new Map(rows.map((r) => [r.id, r]));
+  const tasks: Array<{ name: string; relatedKey: string }> = [];
+  const closedTasks = new Set<string>();
+  // the ledger is idempotent on the key: a second reversal with the same key is a duplicate, nothing is booked
+  const reversalKeys = new Set<string>();
+  const reverseShare = vi.fn(async (_t: string, _e: string, _p: { units: number; pages: number }, key: string, _r: string) => {
+    const duplicate = reversalKeys.has(key);
+    reversalKeys.add(key);
+    return { amount: 150, duplicate };
+  });
+  const orders = new Map(orderList.map((o) => [o.id, { ...o, state: 'pending' as 'pending' | 'done' | 'failed' }]));
+  const storedMailings = new Set<string>();
+  const letter = createLetter ?? vi.fn(async () => ({ id: 'pg1', status: 'valid', filePages: 2, priceValue: 1, priceCurrency: 'CHF' }));
+  const deps: ReconcileDeps = {
+    client: { createLetter: letter, readOrganisation: vi.fn() } as unknown as PingenClient,
+    env: 'production',
+    readPdf: vi.fn(async () => Buffer.from('pdf')),
+    getSending: async (id) => store.get(id),
+    updateSending: async (id, patch, expect) => {
+      const cur = store.get(id);
+      if (!cur || (expect && cur.state !== expect)) return false;
+      store.set(id, { ...cur, ...patch } as SendingRow);
+      return true;
+    },
+    writeCost: async () => undefined,
+    setProviderId: async (id, providerId) => { const cur = store.get(id); if (!cur) return false; store.set(id, { ...cur, providerId }); return true; },
+    closeOpenTask: async () => undefined,
+    loadMailing: async () => ({ senderKey: 'pe1', senderName: 'Sandra', subject: 'Einladung', creditEntryId: 'e1', pagesPerLetter: 2 }),
+    countAddressFailures: async () => 0,
+    listQueued: async () => [],
+    avatar: async (key, _t, name) => ({ key, name1: name, name2: '', modelType: 'person', type: '', subType: '', label: '' }),
+    hasOpenTask: async (relatedKey) => tasks.some((t) => t.relatedKey === relatedKey && !closedTasks.has(relatedKey)),
+    createTask: async (t) => { tasks.push(t as never); },
+    reverseShare,
+    now: () => NOW,
+    // the Firestore range query: a lexicographic range on `post.acceptedAt`
+    listPostMailings: async (since, before) => mailings.filter((m) => m.post.acceptedAt >= since && m.post.acceptedAt <= before),
+    listSendings: async (source) => [...store.values()].filter((r) => r.source === source).map(({ id, state, history }) => ({ id, state, history })),
+    listPendingPostOrders: async () => [...orders.values()].filter((o) => o.state === 'pending'),
+    mailingExists: async (id) => storedMailings.has(id),
+    setPostOrderState: async (id, state) => { const o = orders.get(id); if (o) o.state = state; },
+    listByState: async (state) => [...store.values()].filter((r) => r.state === state),
+    hasAnyTask: async (relatedKey) => tasks.some((t) => t.relatedKey === relatedKey),
+    fanOut: {
+      savePdf: async () => undefined,
+      exists: async (id) => store.has(id),
+      create: async (id, doc) => { if (store.has(id)) return false; store.set(id, { ...(doc as object), id } as SendingRow); return true; },
+      reverseShare,
+    },
+  };
+  return { deps: deps as ReconcileDeps & SubmitDeps, store, tasks, reverseShare, letter, closedTasks, orders, storedMailings, reversalKeys };
+}
+
+describe('reconcilePostVersand - incomplete fan-out', () => {
+  it('tombstones and reverses each charged recipient without a record, one task', async () => {
+    const { deps, store, tasks, reverseShare } = setup([row('m1_person.p1', { state: 'submitted', updatedAt: ago(1) })], [MAILING]);
+    const counts = await reconcilePostVersand(deps);
+    expect(store.get('m1_person.p2')).toMatchObject({ state: 'failed', price: 0 });
+    expect(store.get('m1_person.p3')).toMatchObject({ state: 'failed' });
+    expect(reverseShare).toHaveBeenCalledTimes(2);
+    expect(reverseShare).toHaveBeenCalledWith('scs', 'e1', { units: 1, pages: 2 }, 'm1_person.p2', expect.any(String));
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].name).toBe('Versand Einladung: 2 Briefe konnten nicht erstellt werden — Betrag zurückerstattet');
+    expect(counts).toMatchObject({ mailingsRepaired: 1, lettersReversed: 2 });
+  });
+
+  it('is idempotent across runs: no second reversal, no second task', async () => {
+    const { deps, tasks, reverseShare, reversalKeys } = setup([], [MAILING]);
+    await reconcilePostVersand(deps);
+    const second = await reconcilePostVersand(deps);
+    // the second run re-issues the keyed reversal of each tombstone (item: a lost reversal), the ledger answers duplicate
+    expect(reverseShare.mock.calls.slice(3).every((c) => reversalKeys.has(c[3]))).toBe(true);
+    expect(reversalKeys.size).toBe(3);
+    expect(second).toMatchObject({ tombstonesRefunded: 0, mailingsRepaired: 0 });
+    expect(tasks).toHaveLength(1);
+  });
+
+  it('finds a Versand by the acceptedAt sendMailing writes (StoreDateTime), not one younger than an hour or older than 30 days', async () => {
+    const young = { ...MAILING, id: 'm2', post: { ...POST, acceptedAt: acceptedAtAgo(0.5) } };
+    const old = { ...MAILING, id: 'm3', post: { ...POST, acceptedAt: acceptedAtAgo(31 * 24) } };
+    const { deps, reverseShare } = setup([], [MAILING, young, old]);
+    const counts = await reconcilePostVersand(deps);
+    expect(POST.acceptedAt).toMatch(/^\d{14}$/);
+    expect(counts).toMatchObject({ mailingsChecked: 1, mailingsRepaired: 1, lettersReversed: 3 });
+    expect(reverseShare.mock.calls.every((c) => String(c[3]).startsWith('m1_'))).toBe(true);
+  });
+
+  it('the window bounds are StoreDateTime in the clock getTodayStr writes with', () => {
+    expect(acceptedAtWindow(NOW)).toEqual({ since: acceptedAtAgo(30 * 24), before: acceptedAtAgo(1) });
+  });
+
+  it('leaves a complete Versand alone', async () => {
+    const { deps, reverseShare, tasks } = setup([row('m1_person.p1', { state: 'submitted', updatedAt: ago(1) }), row('m1_person.p2', { state: 'failed' }), row('m1_person.p3', { state: 'sent' })], [MAILING]);
+    await reconcilePostVersand(deps);
+    expect(reverseShare).not.toHaveBeenCalled();
+    expect(tasks).toHaveLength(0);
+  });
+
+  it('does nothing for a fractional price (acceptance bug)', async () => {
+    const { deps, reverseShare, store } = setup([], [{ ...MAILING, post: { ...POST, total: 1000 } }]);
+    await reconcilePostVersand(deps);
+    expect(reverseShare).not.toHaveBeenCalled();
+    expect(store.size).toBe(0);
+  });
+
+  it('a failing Versand does not stop the others', async () => {
+    const { deps, reverseShare } = setup([], [MAILING, { ...MAILING, id: 'm2' }]);
+    const create = deps.fanOut.create;
+    deps.fanOut.create = async (id, doc) => { if (id.startsWith('m1_')) throw new Error('boom'); return create(id, doc); };
+    await reconcilePostVersand(deps);
+    expect(reverseShare).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe('reconcilePostVersand - fan-out outcome', () => {
+  it('words the task without «zurückerstattet» when a reversal failed', async () => {
+    const { deps, tasks, reverseShare } = setup([], [MAILING]);
+    reverseShare.mockRejectedValueOnce(new Error('ledger down'));
+    await reconcilePostVersand(deps);
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].name).toBe('Versand Einladung: 3 Briefe konnten nicht erstellt werden — Rückerstattung wird geprüft');
+  });
+
+  it('creates no task when another run already tombstoned everything', async () => {
+    const { deps, tasks } = setup([], [MAILING]);
+    deps.listSendings = async () => [];              // stale listing: the records appear meanwhile
+    deps.fanOut.create = async () => false;
+    await reconcilePostVersand(deps);
+    expect(tasks).toHaveLength(0);
+  });
+});
+
+describe('reconcilePostVersand - queued', () => {
+  it('submits a queued record older than one hour through the submit core', async () => {
+    const { deps, store, letter } = setup([row('m1_p1'), row('m1_p2', { createdAt: ago(0.5), updatedAt: ago(0.5) }), row('m1_p3', { state: 'failed' })]);
+    const counts = await reconcilePostVersand(deps);
+    expect(letter).toHaveBeenCalledTimes(1);
+    expect(store.get('m1_p1')?.state).toBe('submitted');
+    expect(store.get('m1_p2')?.state).toBe('queued');
+    expect(counts.queuedResubmitted).toBe(1);
+  });
+
+  it('a retryable failure does not abort the run', async () => {
+    const { deps } = setup([row('m1_p1'), row('m1_p2')], [], async () => { throw new Error('storage'); });
+    await expect(reconcilePostVersand(deps)).resolves.toMatchObject({ queuedResubmitted: 0 });
+  });
+});
+
+describe('reconcilePostVersand - submitting', () => {
+  it('flags a stuck submitting record Pingen may hold, once', async () => {
+    const { deps, tasks, store, letter } = setup([
+      row('m1_p1', { state: 'submitting', updatedAt: ago(2), attemptedAt: ago(2) }),
+      row('m1_p2', { state: 'submitting', updatedAt: ago(0.2), attemptedAt: ago(0.2) }),
+    ]);
+    const first = await reconcilePostVersand(deps);
+    await reconcilePostVersand(deps);
+    expect(tasks.filter((t) => t.relatedKey === 'sending.m1_p1')).toHaveLength(1);
+    expect(tasks.some((t) => t.relatedKey === 'sending.m1_p2')).toBe(false);
+    expect(store.get('m1_p1')?.state).toBe('submitting');
+    expect(letter).not.toHaveBeenCalled();
+    expect(first.submittingFlagged).toBe(1);
+  });
+
+  it('sends a submitting record Pingen was never reached for through the submit core, no ambiguity task', async () => {
+    const { deps, tasks, store, letter } = setup([row('m1_p1', { state: 'submitting', updatedAt: ago(2) })]);
+    const counts = await reconcilePostVersand(deps);
+    expect(letter).toHaveBeenCalledTimes(1);
+    expect(store.get('m1_p1')?.state).toBe('submitted');
+    expect(tasks).toHaveLength(0);
+    expect(counts).toMatchObject({ submittingResubmitted: 1, submittingFlagged: 0 });
+  });
+
+  it('refunds a never-reached letter once the submit core gives up after 24 h', async () => {
+    const { deps, store, reverseShare } = setup([row('m1_p1', { state: 'submitting', createdAt: ago(30), updatedAt: ago(30) })]);
+    deps.readPdf = async () => { throw new Error('storage down'); };
+    await reconcilePostVersand(deps);
+    expect(store.get('m1_p1')?.state).toBe('failed');
+    expect(reverseShare).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not starve: 150 letters that already have their task do not hide a new one', async () => {
+    const old = Array.from({ length: 150 }, (_, i) => row(`m1_o${i}`, { state: 'submitting', updatedAt: ago(5), attemptedAt: ago(5) }));
+    const { deps, tasks } = setup([...old, row('m1_new', { state: 'submitting', updatedAt: ago(2), attemptedAt: ago(2) })]);
+    for (const r of old) tasks.push({ name: 'x', relatedKey: `sending.${r.id}` });
+    await reconcilePostVersand(deps);
+    expect(tasks.some((t) => t.relatedKey === 'sending.m1_new')).toBe(true);
+    expect(tasks).toHaveLength(151);
+  });
+});
+
+describe('reconcilePostVersand - silent submitted', () => {
+  it('one task after 7 days without feedback, never twice, no state change', async () => {
+    const old = ago(8 * 24);
+    const { deps, tasks, store, closedTasks } = setup([
+      row('m1_p1', { state: 'submitted', updatedAt: old }),
+      row('m1_p2', { state: 'submitted', updatedAt: ago(24) }),
+      row('m1_p3', { state: 'submitted', updatedAt: old, history: [{ state: 'sent', at: old }, { state: 'submitted', at: old }] }),
+    ]);
+    await reconcilePostVersand(deps);
+    closedTasks.add('sending.m1_p1.stale');
+    await reconcilePostVersand(deps);
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0]).toMatchObject({ name: 'Brief an Name m1_p1: keine Rückmeldung von Pingen seit 7 Tagen', relatedKey: 'sending.m1_p1.stale' });
+    expect(store.get('m1_p1')?.state).toBe('submitted');
+  });
+
+  it('is not silent when Pingen reported an issue (history detail or issue task)', async () => {
+    const old = ago(8 * 24);
+    const { deps, tasks } = setup([
+      row('m1_p1', { state: 'submitted', updatedAt: old, history: [{ state: 'submitted', at: old }, { state: 'submitted', at: old, detail: 'pingen:ev1 Content failed inspection' }] }),
+      row('m1_p2', { state: 'submitted', updatedAt: old }),
+      row('m1_p3', { state: 'submitted', updatedAt: old }),
+    ]);
+    tasks.push({ name: 'issue', relatedKey: 'sending.m1_p2.issue' });
+    await reconcilePostVersand(deps);
+    expect(tasks.filter((t) => t.relatedKey.endsWith('.stale')).map((t) => t.relatedKey)).toEqual(['sending.m1_p3.stale']);
+  });
+
+  it('does not starve: 150 letters with a stale task do not hide a new one, and the dedupe runs before loadMailing', async () => {
+    const old = ago(8 * 24);
+    const done = Array.from({ length: 150 }, (_, i) => row(`m1_o${i}`, { state: 'submitted', updatedAt: old }));
+    const { deps, tasks } = setup([...done, row('m1_new', { state: 'submitted', updatedAt: old })]);
+    for (const r of done) tasks.push({ name: 'x', relatedKey: `sending.${r.id}.stale` });
+    const loadMailing = vi.fn(deps.loadMailing);
+    deps.loadMailing = loadMailing;
+    await reconcilePostVersand(deps);
+    expect(tasks.some((t) => t.relatedKey === 'sending.m1_new.stale')).toBe(true);
+    expect(loadMailing).toHaveBeenCalledTimes(1);
+  });
+});
+
+
+const tombstone = (id: string): SendingRow => row(id, { state: 'failed', price: 0, storagePath: '', history: [{ state: 'failed', at: ago(3), detail: TOMBSTONE_DETAIL }] });
+
+describe('reconcilePostVersand - tombstones whose reversal was lost', () => {
+  it('re-issues the keyed reversal of an existing tombstone of a complete Versand, once in effect', async () => {
+    const rows = [row('m1_person.p1', { state: 'submitted', updatedAt: ago(1) }), tombstone('m1_person.p2'), row('m1_person.p3', { state: 'sent', updatedAt: ago(1) })];
+    const { deps, reverseShare, tasks } = setup(rows, [MAILING]);
+    const first = await reconcilePostVersand(deps);
+    expect(reverseShare).toHaveBeenCalledWith('scs', 'e1', { units: 1, pages: 2 }, 'm1_person.p2', expect.any(String));
+    expect(first).toMatchObject({ tombstonesRefunded: 1, mailingsRepaired: 0 });
+    const second = await reconcilePostVersand(deps);
+    expect(second.tombstonesRefunded).toBe(0);                 // the ledger said duplicate: nothing booked twice
+    expect(tasks).toHaveLength(0);
+  });
+
+  it('leaves a failed letter that is not a tombstone alone (its refund belongs to the submit path)', async () => {
+    const rows = [row('m1_person.p1', { state: 'failed', history: [{ state: 'failed', at: ago(2), detail: 'Pingen hat abgelehnt' }] }), row('m1_person.p2', { state: 'sent' }), row('m1_person.p3', { state: 'sent' })];
+    const { deps, reverseShare } = setup(rows, [MAILING]);
+    await reconcilePostVersand(deps);
+    expect(reverseShare).not.toHaveBeenCalled();
+  });
+
+  it('a fractional price re-issues nothing', async () => {
+    const { deps, reverseShare } = setup([tombstone('m1_person.p2')], [{ ...MAILING, post: { ...POST, total: 1000 } }]);
+    await reconcilePostVersand(deps);
+    expect(reverseShare).not.toHaveBeenCalled();
+  });
+});
+
+describe('reconcilePostVersand - stale post-order locks (part 0)', () => {
+  const order = (id: string, over: Partial<PendingPostOrder> = {}): PendingPostOrder => ({ id, tenantId: 'scs', createdAt: ago(2), letters: 3, pages: 6, ...over });
+
+  it('reverses the whole deduction of a pending lock older than an hour without a mailing, then fails the lock', async () => {
+    const { deps, reverseShare, orders } = setup([], [], undefined, [order('k1')]);
+    const counts = await reconcilePostVersand(deps);
+    expect(reverseShare).toHaveBeenCalledWith('scs', 'deduct-mailing.k1', { units: 3, pages: 6 }, 'mailing.k1-undo', expect.any(String));
+    expect(orders.get('k1')?.state).toBe('failed');
+    expect(counts).toMatchObject({ ordersReversed: 1, ordersFailed: 1 });
+  });
+
+  it('marks the lock done when the mailing exists: no reversal', async () => {
+    const { deps, reverseShare, orders, storedMailings } = setup([], [], undefined, [order('k1')]);
+    storedMailings.add('k1');
+    const counts = await reconcilePostVersand(deps);
+    expect(reverseShare).not.toHaveBeenCalled();
+    expect(orders.get('k1')?.state).toBe('done');
+    expect(counts.ordersDone).toBe(1);
+  });
+
+  it('leaves a lock younger than an hour alone', async () => {
+    const { deps, reverseShare, orders } = setup([], [], undefined, [order('k1', { createdAt: ago(0.5) })]);
+    await reconcilePostVersand(deps);
+    expect(reverseShare).not.toHaveBeenCalled();
+    expect(orders.get('k1')?.state).toBe('pending');
+  });
+
+  it('a missing deduction entry (deduct never committed) is logged and the lock still fails', async () => {
+    const { deps, reverseShare, orders } = setup([], [], undefined, [order('k1')]);
+    reverseShare.mockRejectedValueOnce(Object.assign(new Error('credit entry deduct-mailing.k1 not found'), { code: 'not-found' }));
+    const counts = await reconcilePostVersand(deps);
+    expect(orders.get('k1')?.state).toBe('failed');
+    expect(counts).toMatchObject({ ordersReversed: 0, ordersFailed: 1 });
+  });
+
+  it('any other ledger failure keeps the lock pending for the next run', async () => {
+    const { deps, reverseShare, orders } = setup([], [], undefined, [order('k1')]);
+    reverseShare.mockRejectedValueOnce(new Error('ledger down'));
+    await reconcilePostVersand(deps);
+    expect(orders.get('k1')?.state).toBe('pending');
+  });
+
+  it('a legacy lock without letters/pages is logged and skipped', async () => {
+    const { deps, reverseShare, orders } = setup([], [], undefined, [order('k1', { letters: undefined, pages: undefined })]);
+    logger.error.mockClear();
+    await reconcilePostVersand(deps);
+    expect(reverseShare).not.toHaveBeenCalled();
+    expect(orders.get('k1')?.state).toBe('pending');
+    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('legacy'), expect.objectContaining({ id: 'k1' }));
+  });
+
+  it('is idempotent: a second run finds the lock failed and does nothing', async () => {
+    const { deps, reverseShare } = setup([], [], undefined, [order('k1')]);
+    await reconcilePostVersand(deps);
+    await reconcilePostVersand(deps);
+    expect(reverseShare).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('reconcilePostVersand - time budget', () => {
+  it('stops starting new submits once the budget is used up and logs what was left', async () => {
+    let t = NOW.getTime();
+    const letter = vi.fn(async () => { t += 70_000; return { id: 'pg1', status: 'valid', filePages: 2, priceValue: 1, priceCurrency: 'CHF' }; });
+    const { deps, store } = setup([row('m1_p1'), row('m1_p2'), row('m1_p3'), row('m1_p4', { state: 'submitting', updatedAt: ago(2) })], [], letter);
+    deps.now = () => new Date(t);
+    logger.warn.mockClear();
+    const counts = await reconcilePostVersand(deps);
+    expect(RECONCILE_BUDGET_MS).toBe(120_000);
+    expect(letter).toHaveBeenCalledTimes(2);                   // 0 s and 70 s started, 140 s did not
+    expect(counts.queuedResubmitted).toBe(2);
+    expect(store.get('m1_p3')?.state).toBe('queued');
+    expect(store.get('m1_p4')?.state).toBe('submitting');
+    expect(counts.leftForNextRun).toBe(2);
+    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('time budget'), expect.objectContaining({ queued: 1, submitting: 1 }));
+  });
+
+  it('a run inside the budget leaves nothing', async () => {
+    const { deps } = setup([row('m1_p1')]);
+    expect((await reconcilePostVersand(deps)).leftForNextRun).toBe(0);
+  });
+});

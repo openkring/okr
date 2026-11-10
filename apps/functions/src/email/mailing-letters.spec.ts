@@ -1,6 +1,56 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { PDFDocument } from 'pdf-lib';
+
+const state = vi.hoisted(() => ({
+  addresses: [] as Record<string, unknown>[],
+  /** page count of the fake letter render, by recipient name found in the html */
+  letterPages: 1,
+  attachment: undefined as Uint8Array | undefined,
+  saved: [] as Buffer[],
+}));
+
+vi.mock('firebase-admin/firestore', () => ({
+  getFirestore: () => ({
+    collection: (name: string) => ({
+      doc: (id: string) => ({
+        get: async () => ({ exists: true, data: () => (name === 'orgs' ? { name: 'Seeclub' } : { firstName: id, lastName: 'Muster' }) }),
+      }),
+      where: (_f: string, _o: string, parentKey: string) => ({
+        where: () => ({
+          get: async () => ({ docs: state.addresses.filter((a) => a['parentKey'] === parentKey).map((a) => ({ data: () => a })) }),
+        }),
+      }),
+    }),
+  }),
+}));
+vi.mock('../_storage/private-bucket', () => ({
+  privateBucket: () => ({
+    file: () => ({
+      download: async () => [Buffer.from(state.attachment ?? new Uint8Array())],
+      save: async (b: Buffer) => { state.saved.push(b); },
+    }),
+  }),
+}));
+vi.mock('../pdf/browser-pool', () => ({
+  getBrowser: async () => ({
+    newPage: async () => ({
+      setJavaScriptEnabled: async () => undefined,
+      setRequestInterception: async () => undefined,
+      on: () => undefined,
+      setContent: async () => undefined,
+      pdf: async () => {
+        const d = await PDFDocument.create();
+        for (let i = 0; i < state.letterPages; i++) d.addPage();
+        return d.save();
+      },
+      close: async () => undefined,
+    }),
+  }),
+}));
+vi.mock('../pdf/qr-slip', () => ({ resolvePayee: async () => ({}) }));
+
 import {
-  buildLetterHtml, eventsBlockHtml, LETTER_QR_INTRO, LETTER_TEMPLATE_ORIGINS, qrSvgOf, withEventsBlock, escapeHtml, isAllowedLetterRequest, isPdfAttachment, isReapableLetters, isUsableLetterTemplate,
+  buildLetterHtml, buildMailingLetters, countLetterPages, type RenderedLetter, eventsBlockHtml, LETTER_QR_INTRO, LETTER_TEMPLATE_ORIGINS, qrSvgOf, withEventsBlock, escapeHtml, isAllowedLetterRequest, isPdfAttachment, isReapableLetters, isReapableSendingLetter, isUsableLetterTemplate,
   letterDate, letterPayload, letterTemplateKey, lettersPath, mayGetLetters, placeAndDate,
 } from './mailing-letters';
 
@@ -174,5 +224,120 @@ describe('buildLetterHtml with events', () => {
       placeAndDate: '', subject: 'S', body: '<p>Text</p>', eventsHtml: '<div class="okr-letter-events"></div>',
     });
     expect(html.indexOf('<p>Text</p>')).toBeLessThan(html.indexOf('okr-letter-events'));
+  });
+});
+
+describe('per-letter PDFs of a sending (spec 1.150)', () => {
+  const now = Date.parse('2026-11-20T00:00:00Z');
+  const name = 'mailing-letters/m1/p1.pdf';
+  const day = 24 * 60 * 60 * 1000;
+
+  it('keeps a per-letter PDF of a sent record for 90 days', () => {
+    const updatedAt = new Date(now - 89 * day).toISOString();
+    expect(isReapableSendingLetter(name, now, { state: 'sent', updatedAt })).toBe(false);
+  });
+
+  it('deletes it after 90 days', () => {
+    const updatedAt = new Date(now - 91 * day).toISOString();
+    expect(isReapableSendingLetter(name, now, { state: 'sent', updatedAt })).toBe(true);
+    expect(isReapableSendingLetter(name, now, { state: 'failed', updatedAt })).toBe(true);
+  });
+
+  it("never deletes a queued record's PDF", () => {
+    const updatedAt = new Date(now - 400 * day).toISOString();
+    expect(isReapableSendingLetter(name, now, { state: 'queued', updatedAt })).toBe(false);
+    expect(isReapableSendingLetter(name, now, { state: 'submitted', updatedAt })).toBe(false);
+  });
+
+  it('never deletes on a missing or unreadable updatedAt', () => {
+    expect(isReapableSendingLetter(name, now, { state: 'sent', updatedAt: '' })).toBe(false);
+  });
+});
+
+async function pdfWithPages(n: number): Promise<Uint8Array> {
+  const d = await PDFDocument.create();
+  for (let i = 0; i < n; i++) d.addPage();
+  return d.save();
+}
+
+describe('letters rendered one by one (spec 1.150)', () => {
+  const addr = (parentKey: string, countryCode: string): Record<string, unknown> => ({
+    parentKey, addressChannel: 'postal', tenants: ['scs'], isFavorite: true,
+    streetName: 'Dorfweg', streetNumber: '2', zipCode: '8000', city: 'Zürich', countryCode,
+  });
+  const base = { tenantId: 'scs', mailingKey: 'm1', subject: 'S', body: '<p>B</p>', attachments: [] as never[] };
+
+  beforeEach(() => {
+    state.letterPages = 2;
+    state.attachment = undefined;
+    state.saved = [];
+    state.addresses = [addr('person.anna', ''), addr('person.beat', 'DE'), addr('org.club', 'CH')];
+  });
+
+  it('onLetter receives one PDF per recipient with its page count', async () => {
+    state.attachment = await pdfWithPages(3);
+    const got: RenderedLetter[] = [];
+    const res = await buildMailingLetters({
+      ...base, personKeys: ['anna', 'beat', 'org.club', 'nobody'],
+      attachments: [{ filename: 'a.pdf', contentType: 'application/pdf', storagePath: 'x/a.pdf' } as never],
+      onLetter: async (l) => { got.push(l); },
+    });
+    expect(res).toMatchObject({ letters: 3, missing: 1 });
+    expect(got.map((l) => [l.recipientKey, l.countryCode])).toEqual([['anna', 'CH'], ['beat', 'DE'], ['org.club', 'CH']]);
+    expect(got[0].recipientName).toBe('anna Muster');
+    for (const l of got) {
+      expect(l.pages).toBe(5);
+      expect((await PDFDocument.load(l.pdf)).getPageCount()).toBe(5);
+    }
+  });
+
+  it('only filters which letters go into the combined PDF, onLetter still sees all', async () => {
+    const got: string[] = [];
+    const res = await buildMailingLetters({
+      ...base, personKeys: ['anna', 'beat'],
+      onLetter: async (l) => { got.push(l.recipientKey); },
+      only: (l) => l.countryCode !== 'CH',
+    });
+    expect(got).toEqual(['anna', 'beat']);
+    expect(res).toMatchObject({ letters: 1, missing: 0 });
+    expect((await PDFDocument.load(state.saved[0])).getPageCount()).toBe(2);
+  });
+
+  it('without onLetter and only, every letter is in the combined PDF', async () => {
+    const res = await buildMailingLetters({ ...base, personKeys: ['anna', 'beat'] });
+    expect(res).toMatchObject({ letters: 2 });
+    expect((await PDFDocument.load(state.saved[0])).getPageCount()).toBe(4);
+  });
+
+  it('countLetterPages equals the pages of a rendered letter', async () => {
+    state.attachment = await pdfWithPages(3);
+    const attachments = [{ filename: 'a.pdf', contentType: 'application/pdf', storagePath: 'x/a.pdf' } as never];
+    const got: RenderedLetter[] = [];
+    await buildMailingLetters({ ...base, attachments, personKeys: ['anna'], onLetter: async (l) => { got.push(l); } });
+    const n = await countLetterPages({ tenantId: 'scs', subject: 'S', body: '<p>B</p>', attachments, withQrBlock: false });
+    expect(n).toBe(got[0].pages);
+    expect(n).toBe(5);
+  });
+
+  it('counts pages of an inline PDF attachment', async () => {
+    const content = Buffer.from(await pdfWithPages(3));
+    const n = await countLetterPages({
+      tenantId: 'scs', subject: 'S', body: '<p>B</p>', withQrBlock: false,
+      attachmentBytes: [{ filename: 'a.pdf', contentType: 'application/pdf', content }, { filename: 'b.png', contentType: 'image/png', content: Buffer.from('x') }],
+    });
+    expect(n).toBe(5);
+  });
+
+  it('an unreadable PDF attachment is invalid-argument', async () => {
+    await expect(countLetterPages({
+      tenantId: 'scs', subject: 'S', body: '<p>B</p>', withQrBlock: false,
+      attachmentBytes: [{ filename: 'bad.pdf', contentType: 'application/pdf', content: Buffer.from('not a pdf') }],
+    })).rejects.toMatchObject({ code: 'invalid-argument' });
+  });
+
+  it('countLetterPages renders the QR block when asked', async () => {
+    const events = [{ name: 'GV', when: '01.12.2026, 19:30', location: 'Stäfa' }];
+    const n = await countLetterPages({ tenantId: 'scs', subject: 'S', body: '<p>B</p>', attachments: [], withQrBlock: true, answerEvents: events });
+    expect(n).toBe(2);
   });
 });

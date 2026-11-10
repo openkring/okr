@@ -8,6 +8,12 @@ export type StatusSource = 'betterstack' | 'statuspage' | 'instatus' | 'google' 
 export const WEBHOOK_RECEIVER_SERVICE_ID = 'webhook-receiver';
 export const WEBHOOK_RECEIVER_PART = 'Selbsttest';
 
+/** Spec 1.150: the Pingen row (letters). Internal: balance via the Pingen API, last webhook and self-test from our own data. */
+export const PINGEN_SERVICE_ID = 'pingen';
+export const PINGEN_PART_BALANCE = 'Guthaben';
+export const PINGEN_PART_LAST_WEBHOOK = 'Letzter Webhook';
+export const PINGEN_PART_SELFTEST = 'Webhook-Selbsttest';
+
 export type StatusLevel = 'ok' | 'degraded' | 'down' | 'maintenance' | 'unknown';
 
 export interface StatusPart {
@@ -38,6 +44,8 @@ export interface StatusHistoryDay {
 
 export interface PartStatus {
   level: StatusLevel;
+  /** A short fact shown beside the part (balance, date of the last event). Never personal data. */
+  detail?: string;
   history?: StatusHistoryDay[];
 }
 
@@ -125,6 +133,10 @@ export const AOC_STATUS_SERVICES: readonly StatusService[] = [
   ], 'https://status.cloud.google.com/maps-platform/products.json'),
   // Shared by every tenant; shown wherever a feature receives webhooks (email delivery, e-signing).
   { id: WEBHOOK_RECEIVER_SERVICE_ID, name: 'Webhook-Empfang', statusUrl: '', source: 'internal', featureBlocks: ['auth', 'esign'], parts: [{ label: WEBHOOK_RECEIVER_PART }] },
+  // Pingen (print and post). Shown where letters are sent (the mailing block); status page link verified 2026-11-09.
+  { id: PINGEN_SERVICE_ID, name: 'Pingen', statusUrl: 'https://status.pingen.com', source: 'internal', featureBlocks: ['subject'], parts: [
+    { label: PINGEN_PART_BALANCE }, { label: PINGEN_PART_LAST_WEBHOOK }, { label: PINGEN_PART_SELFTEST },
+  ] },
   linkOnly('mailtrap', 'Mailtrap', 'https://status.mailtrap.info', ['auth']),
   // Block 'auth' is a core block, so the row shows for every tenant (mailtrap precedent).
   linkOnly('stripe', 'Stripe', 'https://status.stripe.com', ['auth']),

@@ -12,7 +12,7 @@
 //
 // The file holds postal addresses: it lives in the private bucket under `mailing-letters/`, is handed out
 // only through `getMailingLetters` (a signed URL for the sender or memberAdmin / privileged), and the
-// nightly `mailingLettersReap` deletes it after 7 days.
+// nightly `mailingLettersReap` deletes the combined file after 7 days (a per-letter PDF of a sending follows its record, 90 days).
 
 import { CallableRequest, HttpsError, onCall } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
@@ -21,6 +21,7 @@ import { PDFDocument } from 'pdf-lib';
 import QRCode from 'qrcode';
 import { TemplateCollection, TemplateVersionSubcollection, type NoticeAttachment, type TemplateAssetRef } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
+import { SENDING_FINAL } from '@okr/content-pdf-template-util';
 import { isOrgRecipient, ORG_RECIPIENT_PREFIX, recipientParentKey } from '@okr/shared-util-core';
 
 import { privateBucket } from '../_storage/private-bucket';
@@ -35,6 +36,8 @@ const REGION = 'europe-west6';
 export const LETTERS_PREFIX = 'mailing-letters/';
 /** How long the letters wait for their download. */
 export const LETTERS_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+/** How long the PDF of a finished sending (spec 1.150) stays as the proof of what went out. */
+export const SENDING_LETTER_MAX_AGE_MS = 90 * 24 * 60 * 60 * 1000;
 const URL_LIFETIME_MS = 10 * 60 * 1000;
 
 export interface LetterParty {
@@ -321,9 +324,96 @@ async function renderOne(html: string, origins: ReadonlySet<string> = new Set())
   }
 }
 
+/** One recipient's finished letter. */
+export interface RenderedLetter {
+  /** the delivery key exactly as passed in `personKeys`: a bare person okey or `org.<okey>` (callers convert it) */
+  recipientKey: string;
+  recipientName: string;
+  /** ISO country of the postal address; the address model stores '' for Switzerland, read here as 'CH' */
+  countryCode: string;
+  /** the complete letter of this one recipient, its PDF attachments appended */
+  pdf: Buffer;
+  /** the page count of `pdf` */
+  pages: number;
+}
+
+/** What every letter of one Versand shares: sender, date, the compiled template and the PDF attachments. */
+interface LetterRenderContext {
+  sender: LetterParty;
+  now: Date;
+  placeAndDate: string;
+  template?: (payload: Record<string, unknown>) => string;
+  appendix: PDFDocument[];
+  subject: string;
+  body: string;
+}
+
+async function prepareLetterContext(
+  db: Firestore,
+  tenantId: string,
+  args: { subject: string; body: string; attachments: NoticeAttachment[]; attachmentBytes?: { filename: string; contentType: string; content: Buffer }[] },
+): Promise<LetterRenderContext> {
+  const orgSnap = await db.collection('orgs').doc(tenantId).get();
+  const senderAddress = await postalOf(db, `org.${tenantId}`, tenantId);
+  const sender: LetterParty = { name: String(orgSnap.data()?.['name'] ?? ''), street: senderAddress?.street ?? '', zipCity: senderAddress?.zipCity ?? '' };
+  const now = new Date();
+  const template = await readLetterTemplate(db, tenantId);
+  const compiled = template ? await compileLetter(template, await resolvePayee(db, tenantId)) : undefined;
+  const appendix: PDFDocument[] = [];
+  const pdfAttachments = args.attachments.filter(isPdfAttachment);
+  // attachments already in memory (a draft's page count): only the PDFs go into a letter, as from the bucket
+  for (const a of (args.attachmentBytes ?? []).filter(isPdfAttachment)) {
+    try {
+      appendix.push(await PDFDocument.load(a.content, { ignoreEncryption: true }));
+    } catch {
+      throw new HttpsError('invalid-argument', `The attachment ${a.filename} is not a readable PDF.`);
+    }
+  }
+  if (pdfAttachments.length > 0) {
+    const bucket = privateBucket();
+    for (const a of pdfAttachments) {
+      const [bytes] = await bucket.file(a.storagePath).download();
+      appendix.push(await PDFDocument.load(bytes, { ignoreEncryption: true }));
+    }
+  }
+  return { sender, now, placeAndDate: placeAndDate(sender.zipCity, now), template: compiled, appendix, subject: args.subject, body: args.body };
+}
+
 /**
- * Builds the letters of one Versand into the private bucket and returns how many there are. A recipient
- * without a postal address (removed since the send) is skipped and counted in `missing`.
+ * The one render path of a letter: the template (else the built-in layout) filled for one recipient, with the
+ * optional events block, then the PDF attachments appended. Used by the Versand and by the page count of a draft.
+ */
+async function renderLetter(
+  ctx: LetterRenderContext,
+  who: { name: string; firstName: string; lastName: string; address: PostalFields; eventsHtml: string },
+): Promise<{ pdf: Buffer; pages: number }> {
+  const { address, eventsHtml } = who;
+  const bytes = ctx.template
+    ? await renderOne(withEventsBlock(ctx.template(letterPayload({
+      recipient: { name: who.name, firstName: who.firstName, lastName: who.lastName, ...address },
+      sender: ctx.sender, date: letterDate(ctx.now), placeAndDate: ctx.placeAndDate, subject: ctx.subject, body: ctx.body,
+    })), eventsHtml), LETTER_TEMPLATE_ORIGINS)
+    : await renderOne(buildLetterHtml({
+      sender: ctx.sender, recipient: { name: who.name, street: address.street, zipCity: address.zipCity },
+      placeAndDate: ctx.placeAndDate, subject: ctx.subject, body: ctx.body, eventsHtml,
+    }));
+  const letter = await PDFDocument.load(bytes);
+  if (ctx.appendix.length === 0) return { pdf: Buffer.from(bytes), pages: letter.getPageCount() };
+  const whole = await PDFDocument.create();
+  for (const doc of [letter, ...ctx.appendix]) {
+    const pages = await whole.copyPages(doc, doc.getPageIndices());
+    pages.forEach((page) => whole.addPage(page));
+  }
+  return { pdf: Buffer.from(await whole.save()), pages: whole.getPageCount() };
+}
+
+/**
+ * Builds the letters of one Versand and returns how many there are. A recipient without a postal address
+ * (removed since the send) is skipped and counted in `missing`.
+ *
+ * Every letter is rendered on its own and handed to `onLetter` (ALL of them, whatever `only` says; the caller
+ * decides what to do with each, e.g. store the Swiss ones). The combined PDF in the private bucket holds the
+ * letters `only` accepts (all, when it is absent); `letters` counts those.
  */
 export async function buildMailingLetters(args: {
   tenantId: string;
@@ -335,25 +425,15 @@ export async function buildMailingLetters(args: {
   /** «QR-Code für Link anzeigen»: the events below each person's letter, with a QR code of `answerUrl(personKey)` */
   answerEvents?: LetterEvent[];
   answerUrl?: (personKey: string) => string;
+  /** called with every rendered letter, before it is merged into the combined PDF */
+  onLetter?: (l: RenderedLetter) => Promise<void>;
+  /** which letters go into the combined PDF; absent = all */
+  only?: (l: RenderedLetter) => boolean;
 }): Promise<{ storagePath: string; letters: number; missing: number } | undefined> {
   const { tenantId, mailingKey, personKeys } = args;
   if (personKeys.length === 0) return undefined;
   const db = getFirestore();
-  const bucket = privateBucket();
-
-  const orgSnap = await db.collection('orgs').doc(tenantId).get();
-  const senderAddress = await postalOf(db, `org.${tenantId}`, tenantId);
-  const sender: LetterParty = { name: String(orgSnap.data()?.['name'] ?? ''), street: senderAddress?.street ?? '', zipCity: senderAddress?.zipCity ?? '' };
-  const now = new Date();
-  const date = placeAndDate(sender.zipCity, now);
-  const template = await readLetterTemplate(db, tenantId);
-  const letterTemplate = template ? await compileLetter(template, await resolvePayee(db, tenantId)) : undefined;
-
-  const appendix: PDFDocument[] = [];
-  for (const a of args.attachments.filter(isPdfAttachment)) {
-    const [bytes] = await bucket.file(a.storagePath).download();
-    appendix.push(await PDFDocument.load(bytes, { ignoreEncryption: true }));
-  }
+  const ctx = await prepareLetterContext(db, tenantId, args);
 
   const out = await PDFDocument.create();
   let letters = 0;
@@ -374,24 +454,56 @@ export async function buildMailingLetters(args: {
     const eventsHtml = !isOrg && args.answerUrl && args.answerEvents?.length
       ? eventsBlockHtml(args.answerEvents, await qrSvgOf(args.answerUrl(personKey)))
       : '';
-    const bytes = letterTemplate
-      ? await renderOne(withEventsBlock(letterTemplate(letterPayload({
-        recipient: { name, firstName, lastName, ...address }, sender, date: letterDate(now), placeAndDate: date, subject: args.subject, body: args.body,
-      })), eventsHtml), LETTER_TEMPLATE_ORIGINS)
-      : await renderOne(buildLetterHtml({
-        sender, recipient: { name, street: address.street, zipCity: address.zipCity }, placeAndDate: date, subject: args.subject, body: args.body, eventsHtml,
-      }));
-    const letter = await PDFDocument.load(bytes);
-    for (const doc of [letter, ...appendix]) {
-      const pages = await out.copyPages(doc, doc.getPageIndices());
-      pages.forEach((page) => out.addPage(page));
-    }
+    const { pdf, pages } = await renderLetter(ctx, { name, firstName, lastName, address, eventsHtml });
+    const rendered: RenderedLetter = { recipientKey: personKey, recipientName: name, countryCode: address.countryCode, pdf, pages };
+    if (args.onLetter) await args.onLetter(rendered);
+    if (args.only && !args.only(rendered)) continue;
+    const letter = await PDFDocument.load(pdf);
+    const copied = await out.copyPages(letter, letter.getPageIndices());
+    copied.forEach((page) => out.addPage(page));
     letters++;
   }
   if (letters === 0) return { storagePath: '', letters, missing };
   const storagePath = lettersPath(tenantId, mailingKey);
-  await bucket.file(storagePath).save(Buffer.from(await out.save()), { contentType: 'application/pdf', resumable: false });
+  await privateBucket().file(storagePath).save(Buffer.from(await out.save()), { contentType: 'application/pdf', resumable: false });
   return { storagePath, letters, missing };
+}
+
+/**
+ * The recipient a draft's page count is measured with: an address of about the longest a postal address gets
+ * (the window holds three lines, so a longer one wraps rather than grows the letter), so the count is not
+ * an underestimate for any real recipient. The `countryCode` is Swiss: the count prices a Swiss letter.
+ */
+export const SAMPLE_LETTER_RECIPIENT: LetterRecipient = {
+  name: 'Maximilian Alexander Muster-Hochstrasser',
+  firstName: 'Maximilian Alexander', lastName: 'Muster-Hochstrasser',
+  street: 'Sehr-Lange-Strassenbezeichnung-Weg 123a, Postfach 4567',
+  zipCity: '8000 Zürich-Oerlikon-Seebach',
+  streetName: 'Sehr-Lange-Strassenbezeichnung-Weg', streetNumber: '123a, Postfach 4567', zipCode: '8000', city: 'Zürich-Oerlikon-Seebach', countryCode: 'CH',
+};
+
+/**
+ * Pages of one letter of this draft: one sample letter (see SAMPLE_LETTER_RECIPIENT) rendered through the same
+ * path as the real letters, plus the PDF attachment pages. With `withQrBlock` the letter carries the events block
+ * with its QR code (answer link of a placeholder length).
+ */
+export async function countLetterPages(args: {
+  tenantId: string;
+  subject: string;
+  body: string;
+  attachments?: NoticeAttachment[];
+  /** PDF attachments as bytes (not stored yet); other types are ignored */
+  attachmentBytes?: { filename: string; contentType: string; content: Buffer }[];
+  withQrBlock: boolean;
+  answerEvents?: LetterEvent[];
+}): Promise<number> {
+  const ctx = await prepareLetterContext(getFirestore(), args.tenantId, { ...args, attachments: args.attachments ?? [] });
+  const eventsHtml = args.withQrBlock && args.answerEvents?.length
+    ? eventsBlockHtml(args.answerEvents, await qrSvgOf(`https://app.example.org/answer/${'x'.repeat(60)}`))
+    : '';
+  const r = SAMPLE_LETTER_RECIPIENT;
+  const { pages } = await renderLetter(ctx, { name: r.name, firstName: r.firstName, lastName: r.lastName, address: r, eventsHtml });
+  return pages;
 }
 
 interface MailingLettersDoc {
@@ -448,13 +560,43 @@ export function isReapableLetters(name: string, timeCreated: string | undefined,
   return nowMs - createdMs > maxAgeMs;
 }
 
-/** Nightly: deletes letters files after 7 days — they hold postal addresses and were meant for one download. */
+/**
+ * Whether the PDF of one sending (`sendings` record found by its `storagePath`) may go: only once the record is
+ * final (sent / delivered / failed / undeliverable) and has not changed for 90 days. A queued or submitted record
+ * keeps its PDF, and so does one without a readable `updatedAt`.
+ */
+export function isReapableSendingLetter(
+  name: string,
+  nowMs: number,
+  sending: { state?: string; updatedAt?: string },
+  maxAgeMs = SENDING_LETTER_MAX_AGE_MS,
+): boolean {
+  if (!name.startsWith(LETTERS_PREFIX)) return false;
+  if (!(SENDING_FINAL as string[]).includes(sending.state ?? '')) return false;
+  const updatedMs = new Date(sending.updatedAt ?? 0).getTime();
+  if (!Number.isFinite(updatedMs) || updatedMs <= 0) return false;
+  return nowMs - updatedMs > maxAgeMs;
+}
+
+/**
+ * Nightly: deletes letters files — they hold postal addresses. A file that a `sendings` record points to (the
+ * per-letter PDF, `mailing-letters/<tenantId>/<mailingKey>/<recipientParentKey>.pdf`) follows that record: 90 days after it
+ * became final, never while it is open. Every other file (the combined download PDF) goes after 7 days.
+ * The combined path is one level shallower (`mailing-letters/<tenantId>/<mailingKey>.pdf`); the record lookup by `storagePath` is what tells them apart.
+ */
 export async function runMailingLettersReap(): Promise<void> {
   const [files] = await privateBucket().getFiles({ prefix: LETTERS_PREFIX });
+  const db = getFirestore();
   const now = Date.now();
   let deleted = 0;
   for (const f of files) {
-    if (isReapableLetters(f.name, f.metadata.timeCreated, now)) {
+    // nothing younger than 7 days can be reaped by either rule, so skip the lookup
+    if (!isReapableLetters(f.name, f.metadata.timeCreated, now)) continue;
+    const owner = await db.collection('sendings').where('storagePath', '==', f.name).limit(1).get();
+    const reap = owner.empty
+      ? true
+      : isReapableSendingLetter(f.name, now, owner.docs[0].data() as { state?: string; updatedAt?: string });
+    if (reap) {
       await f.delete();
       deleted++;
     }

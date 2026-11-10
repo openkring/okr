@@ -7,19 +7,20 @@ import { onCall } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { requireAdmin } from '../business/shared';
 import { selftestSecret } from './selftest-client';
+import { pingenWebhookSecret } from '../pingen/pingen-webhook';
 import { runWebhookSelftest, type WebhookSelftestResult } from './selftest';
 
 const CF_NAME = 'runWebhookSelftestNow';
 
 export const webhookSelftestScheduled = onSchedule(
-  { schedule: '30 3 * * *', timeZone: 'Europe/Zurich', region: 'europe-west6', timeoutSeconds: 120, secrets: [selftestSecret] },
+  { schedule: '30 3 * * *', timeZone: 'Europe/Zurich', region: 'europe-west6', timeoutSeconds: 240, secrets: [selftestSecret, pingenWebhookSecret] },
   async () => {
     await runWebhookSelftest('nightly');
   },
 );
 
 export const runWebhookSelftestNow = onCall(
-  { region: 'europe-west6', enforceAppCheck: true, maxInstances: 1, timeoutSeconds: 120, secrets: [selftestSecret] },
+  { region: 'europe-west6', enforceAppCheck: true, maxInstances: 1, timeoutSeconds: 240, secrets: [selftestSecret, pingenWebhookSecret] },
   async (request): Promise<WebhookSelftestResult> => {
     await requireAdmin(request, CF_NAME);
     return runWebhookSelftest('manual');

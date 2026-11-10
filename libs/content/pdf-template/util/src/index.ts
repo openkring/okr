@@ -6,3 +6,5 @@ export * from './lib/email-composer.validations';
 export * from './lib/template-publish.validations';
 export * from './lib/versand.util';
 export * from './lib/mailing.util';
+export * from './lib/postversand.util';
+export * from './lib/sending.util';

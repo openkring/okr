@@ -83,6 +83,46 @@ describe('runWebhookSelftest', () => {
   });
 });
 
+describe('runWebhookSelftest, pingen probe', () => {
+  beforeEach(() => error.mockClear());
+  const withPingen = (over: Partial<SelftestDeps> & { states?: (WebhookEventState | undefined)[] } = {}) =>
+    deps({ pingen: { url: 'https://x/webhooks/pingen', secret: 'pingen-key' }, ...over });
+
+  it('is skipped without a signing key, leaving the result as before', async () => {
+    const { d } = deps();
+    expect((await runWebhookSelftest('nightly', d)).pingen).toBeUndefined();
+    expect(d.post).toHaveBeenCalledTimes(1);
+  });
+
+  it('posts a letter event signed in the Signature header for a letter no sending has', async () => {
+    const { d } = withPingen({ states: ['handled', 'received', 'ignored'] });
+    const r = await runWebhookSelftest('nightly', d);
+    expect(r.pingen).toMatchObject({ level: 'ok' });
+    const [url, body, headers] = (d.post as ReturnType<typeof vi.fn>).mock.calls[1];
+    expect(url).toBe('https://x/webhooks/pingen');
+    expect(verifyHmacHex(Buffer.from(body), headers['Signature'], 'pingen-key')).toBe(true);
+    const parsed = JSON.parse(body);
+    expect(parsed.data.type).toBe('webhook_delivered');
+    expect(parsed.data.relationships.deliverable.data).toMatchObject({ type: 'letters' });
+    expect(parsed.data.relationships.deliverable.data.id).toMatch(/^selftest-/);
+    expect(parsed.data.relationships.event.data.id).toBe(parsed.data.relationships.deliverable.data.id);
+  });
+
+  it('a failing pingen probe does not fail the receiver result, and is logged', async () => {
+    let n = 0;
+    const { d } = withPingen({ post: async () => (n++ === 0 ? 200 : 401) });
+    const r = await runWebhookSelftest('manual', d);
+    expect(r.level).toBe('ok');
+    expect(r.pingen).toMatchObject({ level: 'down', failedStep: 'http', detail: 'HTTP 401' });
+    expect(error).toHaveBeenCalledWith('webhooks: pingen selftest failed', expect.objectContaining({ failedStep: 'http' }));
+  });
+
+  it('fails the probe when its row stays received', async () => {
+    const { d } = withPingen({ states: ['handled', 'received'] });
+    expect((await runWebhookSelftest('manual', d)).pingen).toMatchObject({ level: 'down', failedStep: 'processed' });
+  });
+});
+
 describe('mergeDays', () => {
   it('keeps down when a later run on the same day passes', () => {
     expect(mergeDays([{ date: '2026-11-07', level: 'down' }], '2026-11-07', 'ok')).toEqual([{ date: '2026-11-07', level: 'down' }]);

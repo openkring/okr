@@ -47,6 +47,7 @@ export const NON_PERSONAL_COLLECTIONS: ReadonlySet<string> = new Set([
   'partners',
   'periods',
   'platform-config',
+  'post-orders',
   'resources',
   'swissCities',
   'tags',

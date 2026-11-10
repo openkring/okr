@@ -6,3 +6,5 @@ export * from './lib/template-edit.page';
 export * from './lib/mailing.store';
 export * from './lib/mailing-list';
 export * from './lib/mailing.page';
+export * from './lib/sending.store';
+export * from './lib/sending-list';

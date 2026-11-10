@@ -56,6 +56,15 @@ describe('PROCESSOR_CATALOGUE', () => {
     expect(activeProcessors(config()).map((p) => p.key)).toContain('stripe');
   });
 
+  it('records Pingen as a Swiss processor of letters, active with the mailing block, with no invented DPA link', () => {
+    const pingen = PROCESSOR_CATALOGUE.find((p) => p.key === 'pingen');
+    expect(pingen).toMatchObject({ legalEntity: expect.stringContaining('Pingen GmbH'), country: 'CH', role: 'processor', dpaUrl: '' });
+    expect(pingen?.privacyUrl).toMatch(/^https:\/\/www\.pingen\.ch\//);
+    expect(pingen?.cloudFunctions).toEqual(expect.arrayContaining(['pingen/quoteMailingLetters', 'pingen/onSendingCreated']));
+    expect(activeProcessors(config({ enabledFeatures: ['subject'] })).map((p) => p.key)).toContain('pingen');
+    expect(activeProcessors(config({ enabledFeatures: [] })).map((p) => p.key)).not.toContain('pingen');
+  });
+
   it('never ships a fabricated link — a url is either empty or absolute https', () => {
     for (const p of PROCESSOR_CATALOGUE) {
       for (const [field, url] of [['dpaUrl', p.dpaUrl], ['privacyUrl', p.privacyUrl]] as const) {

@@ -122,6 +122,7 @@ export const COLLECTION_LABELS: Record<string, string> = {
   approvals: 'Freigaben',
   comments: 'Kommentare',
   notices: 'Mitteilungen',
+  sendings: 'Postversand',
   docs: 'Dokumente',
   documents: 'Dokumente',
   calevents: 'Kalendereinträge',

@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
-import type { EmailLayoutChoice } from '@okr/shared-models';
+import type { EmailLayoutChoice, PostOptions } from '@okr/shared-models';
 import type { MailingRecipientChannels } from '@okr/shared-util-core';
 import type { MailingDeliveries } from '@okr/content-pdf-template-util';
 
@@ -73,7 +73,45 @@ export interface SendMailingRequest {
   dashboard?: boolean;
   /** the letters end with the events, each with a QR code of the recipient's answer link */
   letterQrCodes?: boolean;
+  /** «Per Pingen senden»: the quote the sender saw (`quoteMailingLetters`); the server recomputes and verifies it */
+  post?: { via: 'pingen'; options: PostOptions; token: string; issuedAt: number };
 }
+
+/** The Versand as the quote needs it: the content the letters are made of, and who gets one. */
+export type QuoteMailingRequest = Pick<SendMailingRequest, 'tenantId' | 'subject' | 'body' | 'storagePath' | 'filename' | 'extraAttachments' | 'caleventKeys' | 'letterQrCodes'> & {
+  /** the personKeys ticked for Post */
+  postKeys: string[];
+  options: PostOptions;
+};
+
+/** The price of a Versand by post, as `quoteMailingLetters` answers it (all amounts in Rappen). */
+export interface PostQuote {
+  pingenAvailable: true;
+  /** the time the token was signed; hand it back in `post.issuedAt` */
+  issuedAt: number;
+  letters: number;
+  abroad: number;
+  missing: number;
+  pagesPerLetter: number;
+  pages: number;
+  total: number;
+  /** Rappen per letter and per page, as the server prices them; 0 without a letter */
+  perUnit: number;
+  perPage: number;
+  balance: number;
+  sufficient: boolean;
+  token: string;
+}
+
+/**
+ * `quoteMailingLetters`' other answer (spec 1.150 §10): the tenant has no prepaid credit, or the caller may not send
+ * by post. Not an error: only the PDF download is offered.
+ */
+export interface PingenUnavailable {
+  pingenAvailable: false;
+}
+
+export type PostQuoteResult = PostQuote | PingenUnavailable;
 
 /** The state of a Versand's letters, as `getMailingLetters` reports it. */
 export interface MailingLetters {
@@ -208,6 +246,19 @@ export class DocEmailService {
     const callable = httpsCallable<SendMailingRequest, { mailingKey: string }>(this.functions, 'sendMailing');
     const { data } = await callable(req);
     return data.mailingKey;
+  }
+
+  /** Admin only: stores the tenant's default letter options (`AppConfig.post*`). */
+  public async setPostDefaults(tenantId: string, options: PostOptions): Promise<void> {
+    const callable = httpsCallable<{ tenantId: string; options: PostOptions }, { ok: true }>(this.functions, 'setPostDefaults');
+    await callable({ tenantId, options });
+  }
+
+  /** What a Versand by post would cost, and the signed token `sendMailing` verifies. The request is the Versand's, without `post`. */
+  public async quoteMailingLetters(req: QuoteMailingRequest): Promise<PostQuoteResult> {
+    const callable = httpsCallable<typeof req, PostQuoteResult>(this.functions, 'quoteMailingLetters');
+    const { data } = await callable(req);
+    return data;
   }
 
   /**

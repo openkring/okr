@@ -585,6 +585,8 @@ const subject: BlockRoutes = {
       canActivate: [isAuthenticatedGuard, isMemberAdminGuard],
       children: [
         { path: 'view/:mailingKey', loadComponent: () => import('@okr/content-pdf-template-feature').then(m => m.MailingPage) },
+        // spec 1.150 §9: the letters' status board; one segment, so it must precede `:listId`
+        { path: 'letters', loadComponent: () => import('@okr/content-pdf-template-feature').then(m => m.SendingList) },
         { path: ':listId', loadComponent: () => import('@okr/content-pdf-template-feature').then(m => m.MailingList) },
         { path: '', redirectTo: 'all', pathMatch: 'full' },
       ],

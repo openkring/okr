@@ -995,6 +995,27 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     retention: CLUB_RECORD,
   },
   {
+    // Postversand (spec 1.150): one record per letter sent by post. The subject is the recipient
+    // (`recipientKey` = `person.<okey>` or `org.<okey>`; only a person is found here); the record holds the key
+    // and name and points at a letter PDF with the postal address in the private bucket. The provider cost
+    // sits in `private/cost` (bkaiser's, no personal data).
+    // `storagePath` is cleared too: erasure then leaves no record that points at the PDF, so the nightly
+    // `mailingLettersReap` finds no `sendings` owner for the file and applies its 7-day rule (the PDF goes
+    // within 7 days of its creation, at once when older). `history[].detail` only holds the provider's error
+    // code and title, no personal data.
+    collection: 'sendings',
+    dataClass: 'communication',
+    tier: 'T4',
+    onTenantExit: 'anonymize',
+    find: (c: SubjectCtx) => db().collection('sendings').where('recipientKey', '==', c.parentKey),
+    tenantScope: 'tenantsArray',
+    onExport: 'index',
+    indexFields: { title: 'recipientName', date: 'updatedAt', route: '/sending' },
+    onErasure: 'anonymize',
+    anonymizeFields: ['recipientKey', 'recipientName', 'storagePath'],
+    retention: CLUB_RECORD,
+  },
+  {
     collection: 'docs',
     dataClass: 'content',
     tier: 'T4',
@@ -1905,6 +1926,8 @@ export async function resolveArrayItemDocs(entry: SubjectDataEntry, ctx: Subject
 // gap: webhook-events — inbound provider webhooks (spec 1.142): the stored payload holds recipient
 //   addresses and member names as the provider sent them. Expires after 30 days through the TTL policy
 //   on `expiresAt`, and is Admin-SDK only (rules deny every client read and write).
+// not personal data: post-orders — the Postversand lock per Pingen quote token (spec 1.150): tenantId, a
+//   pending/done/failed state and two timestamps; no recipient, name or address. Admin-SDK only.
 // gap: journal-books — the travel book of a journal (spec 1.113 phase 2 §6), one doc per journal: updatedBy
 //   (person key), the chosen guest commentKeys, export paths. The exported PDFs (exportJournalBook) in the
 //   private bucket under tenant/<t>/journal/<jk>/book/ print the authors' names and, when picked, guest

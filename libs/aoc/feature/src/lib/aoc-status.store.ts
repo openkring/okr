@@ -6,7 +6,7 @@ import { patchState, signalStore, withComputed, withHooks, withMethods, withProp
 import { I18nService } from '@okr/shared-i18n';
 import { fill } from '@okr/shared-util-core';
 import { FeatureStore } from '@okr/tenant-feature';
-import { AOC_STATUS_I18N_KEYS, AOC_STATUS_SERVICES, ServiceStatusResult, sortByProblem, statusSummary, visibleStatusServices } from '@okr/aoc-util';
+import { AOC_STATUS_I18N_KEYS, AOC_STATUS_SERVICES, PINGEN_SERVICE_ID, ServiceStatusResult, sortByProblem, statusSummary, visibleStatusServices } from '@okr/aoc-util';
 
 export type AocStatusState = {
   result: ServiceStatusResult | undefined;
@@ -39,7 +39,9 @@ export const AocStatusStore = signalStore(
   })),
 
   withComputed(store => {
-    const visible = computed(() => visibleStatusServices(AOC_STATUS_SERVICES, store.isEnabled()));
+    // the server leaves the Pingen row out for everyone but the platform operator: no row, not a grey one
+    const visible = computed(() => visibleStatusServices(AOC_STATUS_SERVICES, store.isEnabled())
+      .filter(s => s.id !== PINGEN_SERVICE_ID || !store.result() || !!store.result()?.services[PINGEN_SERVICE_ID]));
     return {
       services: computed(() => sortByProblem(visible(), store.result(), store.isEnabled())),
       summary: computed(() => statusSummary(visible(), store.result(), store.isEnabled())),

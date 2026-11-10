@@ -9,8 +9,10 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Spinner } from '@okr/shared-ui';
 import {
   deliveryStatusColor, deliveryStatusCounts, hasDeliveryReports, MailDeliveryStatus, MailingAnswer, mailingAnswerColor,
-  mailingRecipientsFor, mailingStateColor, mailJobProgress,
+  mailingRecipientsFor, mailingStateColor, mailJobProgress, formatChf, lastSendingAt, sendingDateLabel, sendingHasTask,
+  sendingStatusColor, sendingStatusLabelKey, sendingStatusOf, SendingStatus, summaryParts,
 } from '@okr/content-pdf-template-util';
+import { SendingModel } from '@okr/shared-models';
 import { fill, prettyFormatDate, prettyFormatDateTime } from '@okr/shared-util-core';
 
 import { MailingStore } from './mailing.store';
@@ -147,6 +149,32 @@ const LETTERS_URL_TTL_MS = 9 * 60 * 1000;
               }
               @if (store.lettersError()) {
                 <ion-note color="danger">{{ store.i18n.letters_load_error() }}</ion-note>
+              }
+            </ion-card-content>
+          </ion-card>
+        }
+
+        <!-- the Pingen part (spec 1.150 §9): one row per letter, live -->
+        @if (store.isPingen()) {
+          <ion-card>
+            <ion-card-header><ion-card-title>{{ store.sendingI18n.card_title() }}</ion-card-title></ion-card-header>
+            <ion-card-content>
+              @if (store.sendings().length === 0) {
+                @if (store.sendingsLoading()) { <okr-spinner /> } @else { <ion-note>{{ store.sendingI18n.page_empty() }}</ion-note> }
+              } @else {
+                <ion-note>{{ sendingSummaryLine() }}</ion-note>
+                <ion-list lines="inset">
+                  @for (s of store.sendings(); track s.okey) {
+                    <ion-item>
+                      <ion-label>
+                        {{ recipientName(s) }}
+                        <p>{{ s.pages }} {{ store.sendingI18n.pages() }} · {{ sendingDate(s) }} · {{ chf(s.price) }}</p>
+                      </ion-label>
+                      @if (hasTask(s)) { <ion-chip slot="end" [outline]="true" color="medium">{{ store.sendingI18n.task_created() }}</ion-chip> }
+                      <ion-badge slot="end" [color]="sendingColor(s)">{{ sendingLabel(s) }}</ion-badge>
+                    </ion-item>
+                  }
+                </ion-list>
               }
             </ion-card-content>
           </ion-card>
@@ -336,6 +364,48 @@ export class MailingPage {
     if (Date.now() - this.lettersFetchedAt > LETTERS_URL_TTL_MS) await this.fetchLetters();
     const url = this.store.letters()?.url;
     if (url) window.open(url, '_blank', 'noopener');
+  }
+
+  protected readonly sendingSummaryLine = computed(() => {
+    const summary = this.store.sendingSummary();
+    const parts = summaryParts(summary).map((p) => `${p.count} ${this.partLabel(p.status)}`);
+    const total = fill(this.store.sendingI18n.summary_total(), { count: summary.total });
+    return parts.length > 0 ? `${total}: ${parts.join(' · ')}` : total;
+  });
+
+  private partLabel(status: SendingStatus): string {
+    const i18n = this.store.sendingI18n;
+    switch (status) {
+      case 'sent': return i18n.part_sent();
+      case 'delivered': return i18n.part_delivered();
+      case 'problem': return i18n.part_problem();
+      case 'undeliverable': return i18n.part_undeliverable();
+      default: return i18n.part_in_production();
+    }
+  }
+
+  protected recipientName(s: SendingModel): string {
+    return s.recipientName || this.store.sendingI18n.unknown_recipient();
+  }
+
+  protected sendingLabel(s: SendingModel): string {
+    return this.store.sendingI18n[sendingStatusLabelKey(sendingStatusOf(s.state))]();
+  }
+
+  protected sendingColor(s: SendingModel): string {
+    return sendingStatusColor(sendingStatusOf(s.state));
+  }
+
+  protected sendingDate(s: SendingModel): string {
+    return sendingDateLabel(lastSendingAt(s));
+  }
+
+  protected hasTask(s: SendingModel): boolean {
+    return sendingHasTask(s.state);
+  }
+
+  protected chf(rappen: number): string {
+    return formatChf(rappen);
   }
 
   protected date(storeDate: string | undefined): string {

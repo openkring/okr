@@ -89,6 +89,9 @@ const LEVEL_COLOR: Record<StatusLevel, string> = {
                   <ion-item>
                     <ion-label>
                       {{ part.label }}
+                      @if (detail(service, part); as text) {
+                        <ion-note class="ion-margin-start">{{ text }}</ion-note>
+                      }
                       @if (history(service, part).length) {
                         <div class="history">
                           @for (day of history(service, part); track day.day) {
@@ -157,6 +160,10 @@ export class AocStatus {
 
   protected partLevel(service: StatusService, part: StatusPart): StatusLevel {
     return this.store.result()?.services[service.id]?.parts[part.label]?.level ?? 'unknown';
+  }
+
+  protected detail(service: StatusService, part: StatusPart): string {
+    return this.store.result()?.services[service.id]?.parts[part.label]?.detail ?? '';
   }
 
   protected history(service: StatusService, part: StatusPart) {
