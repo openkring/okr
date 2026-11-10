@@ -36,10 +36,15 @@ export function isReminderDue(invoice: { state: string; dueDate: string; reminde
   return addDuration(base, { days: graceDays }) < today;
 }
 
-/** The invoices a Mahnlauf offers: the due ones, the longest overdue first. */
-export function mahnlaufCandidates<T extends { state: string; dueDate: string; reminders?: ReminderLike[] }>(invoices: T[], today: string, graceDays: number): T[] {
+/** A top-up invoice (prepaid credit) is never reminded: it is paid up front via Stripe. */
+export function isTopupInvoice(invoice: { billingKind?: string }): boolean {
+  return invoice.billingKind === 'topup';
+}
+
+/** The invoices a Mahnlauf offers: the due ones (never top-ups), the longest overdue first. */
+export function mahnlaufCandidates<T extends { state: string; dueDate: string; billingKind?: string; reminders?: ReminderLike[] }>(invoices: T[], today: string, graceDays: number): T[] {
   return invoices
-    .filter((i) => isReminderDue(i, today, graceDays))
+    .filter((i) => !isTopupInvoice(i) && isReminderDue(i, today, graceDays))
     .sort((a, b) => lastDueDate(a).localeCompare(lastDueDate(b)));
 }
 
@@ -51,8 +56,8 @@ export function reminderLevelKey(level: number): 'reminder_level_1' | 'reminder_
 }
 
 /** True when the treasurer may create a reminder: the invoice is payable (spec 1.90: no level limit). */
-export function canCreateReminder(invoice: { state: string; reminders?: ReminderLike[] }): boolean {
-  return isPayableState(invoice.state);
+export function canCreateReminder(invoice: { state: string; billingKind?: string; reminders?: ReminderLike[] }): boolean {
+  return isPayableState(invoice.state) && !isTopupInvoice(invoice);
 }
 
 /**

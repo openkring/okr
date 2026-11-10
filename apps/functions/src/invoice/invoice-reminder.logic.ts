@@ -25,6 +25,11 @@ export function reminderBlockers(invoice: { state: string }, date: string, fee: 
   return blockers;
 }
 
+/** Refusal code when the invoice may never be reminded: a top-up (prepaid credit) invoice. */
+export function reminderRefusal(invoice: { billingKind?: unknown }): 'no-reminder-for-topup' | undefined {
+  return invoice.billingKind === 'topup' ? 'no-reminder-for-topup' : undefined;
+}
+
 /** The reminder an earlier call with this idempotency key stored, if any. */
 export function reminderByRequest(reminders: ReminderLike[] | undefined, requestId: string): ReminderLike | undefined {
   if (!requestId) return undefined;

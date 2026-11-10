@@ -15,7 +15,7 @@ import { assertLeafAccount, loadOwnedAccountingConfig, receiverAddress, receiver
 import { InvoiceLike, isValidStoreDate, openAmount } from './invoice-payment.logic';
 import { confirmationDocumentFields } from './payment-confirmation.logic';
 import {
-  coalesceReminder, missingQrReference, dunningTemplateRefusal, isValidRequestId, legacyLevelFee, nextReminderLevel, reminderBlockers, reminderByRequest,
+  coalesceReminder, missingQrReference, dunningTemplateRefusal, isValidRequestId, legacyLevelFee, nextReminderLevel, reminderBlockers, reminderByRequest, reminderRefusal,
   reminderDueDate, reminderFeeLines, reminderKey, ReminderLike, storedReminder,
 } from './invoice-reminder.logic';
 import { invoiceBookingIndex, issuePeriodKeys, recipientFields, viewDate, withoutUndefined } from './invoice.logic';
@@ -93,6 +93,8 @@ export const createInvoiceReminder = onCall(
     if (!pre) throw new HttpsError('not-found', `invoice ${invoiceKey} not found`);
     const tenants = (pre['tenants'] as string[] | undefined) ?? [];
     if (!tenants.includes(tenantId)) throw new HttpsError('permission-denied', 'invoice belongs to another tenant');
+    const topupRefusal = reminderRefusal(pre);
+    if (topupRefusal) throw refuse(topupRefusal, `invoice ${invoiceKey} is a top-up invoice and gets no reminder`);
     const accountingTenantId = String(pre['accountingTenantId'] ?? '');
     const config = await loadOwnedAccountingConfig(db, tenantId, invoiceKey, accountingTenantId, 'reminded');
 

@@ -28,6 +28,14 @@ describe('invoice reminder util', () => {
     expect(isReminderDue(inv({ reminders: [{ level: 1, date: '20261021', dueDate: '20261104' }] }), '20261110', 10)).toBe(false);
     expect(isReminderDue(inv({ state: 'paid' }), '20261231', 10)).toBe(false);
   });
+  it('the Mahnlauf skips top-up invoices, keeps subscription and ordinary ones', () => {
+    const topup = inv({ billingKind: 'topup' });
+    const sub = inv({ billingKind: 'subscription' });
+    const plain = inv({ billingKind: '' });
+    expect(mahnlaufCandidates([topup, sub, plain], '20261115', 10)).toEqual([sub, plain]);
+    expect(canCreateReminder(topup)).toBe(false);
+    expect(canCreateReminder(sub)).toBe(true);
+  });
   it('an invalid due date is never due and does not throw', () => {
     expect(isReminderDue(inv({ dueDate: '20261399' }), '20261231', 10)).toBe(false);
     expect(mahnlaufCandidates([inv({ dueDate: '20261399' })], '20261231', 10)).toEqual([]);

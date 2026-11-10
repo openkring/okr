@@ -1,6 +1,6 @@
 import { generateQrReference, isValidQrReference } from '@okr/shared-util-core';
 import { describe, expect, it } from 'vitest';
-import { coalesceReminder, configReminderFee, dunningTemplateRefusal, isReminderDue, isValidRequestId, lastDueDate, legacyLevelFee, markReminderSent, nextReminderLevel, missingQrReference, ReminderLike, reminderBlockers, reminderByRequest, reminderDisplayName, reminderDueDate, reminderFeeLines, reminderFeeSum, reminderKey, unwaivedFeeKeys, waiveBlockers, waiverKey } from './invoice-reminder.logic';
+import { coalesceReminder, configReminderFee, dunningTemplateRefusal, isReminderDue, isValidRequestId, lastDueDate, legacyLevelFee, markReminderSent, nextReminderLevel, missingQrReference, ReminderLike, reminderBlockers, reminderByRequest, reminderRefusal, reminderDisplayName, reminderDueDate, reminderFeeLines, reminderFeeSum, reminderKey, unwaivedFeeKeys, waiveBlockers, waiverKey } from './invoice-reminder.logic';
 
 const inv = (o = {}) => ({ state: 'pending', dueDate: '20261010', reminders: [] as ReminderLike[], ...o });
 
@@ -19,6 +19,12 @@ describe('invoice reminder logic', () => {
     expect(isReminderDue(inv(), '20261020', 10)).toBe(false);
     expect(isReminderDue(inv({ reminders: [{ level: 1, date: '20261021', dueDate: '20261104' }] }), '20261110', 10)).toBe(false);
     expect(isReminderDue(inv({ state: 'paid' }), '20261231', 10)).toBe(false);
+  });
+  it('a top-up invoice is refused a reminder', () => {
+    expect(reminderRefusal({ billingKind: 'topup' })).toBe('no-reminder-for-topup');
+    expect(reminderRefusal({ billingKind: 'subscription' })).toBeUndefined();
+    expect(reminderRefusal({ billingKind: '' })).toBeUndefined();
+    expect(reminderRefusal({})).toBeUndefined();
   });
   it('an invalid due date is never due', () => {
     expect(isReminderDue(inv({ dueDate: '20261399' }), '20261231', 10)).toBe(false);
