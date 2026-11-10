@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 
-import { FormDefinitionModel } from '@okr/shared-models';
-import { FormAvailability, sanitizeFileName } from '@okr/shared-util-core';
+import { DerivedValue, FormDefinitionModel } from '@okr/shared-models';
+import { FormAvailability, PublicCourseOption, sanitizeFileName } from '@okr/shared-util-core';
 
 /** What a submitted file becomes once it is in storage — plain, or encrypted at rest. */
 export interface UploadedFileRef {
@@ -32,6 +32,9 @@ export interface FormSubmitArgs {
 export type PublicFormDefinition = FormDefinitionModel & {
   availability?: FormAvailability;
   sendFillerConfirmation?: boolean;
+  /** 1.152 — only for a form with a course field: the derived value holding the applicant type + the offered courses. */
+  courseAudience?: DerivedValue;
+  courses?: PublicCourseOption[];
 };
 
 /** What `submitForm` returns; `confirmation` (1.125 B) is the thank-you text, absent from old functions. */

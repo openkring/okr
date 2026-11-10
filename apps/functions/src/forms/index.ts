@@ -31,6 +31,7 @@ import {
   readVerifiedSection,
   type FormSectionProperties,
 } from './form-section-config';
+import { courseFieldOf, readAnnouncedCourses, withCourseChoice } from './course-choice';
 import { persistWithSlot, readResponseCount } from './form-stats';
 import {
   buildFillerMail,
@@ -317,7 +318,12 @@ export const getFormDefinition = onCall(
     const section = await readVerifiedSection(db, request.data?.sectionId, formKey, tenantId);
     const { availability } = await availabilityOf(db, formDef, section);
     // Public-safe projection — whitelist only (see public-definition.ts).
-    const projected = { ...projectPublicFormDefinition(doc.id, doc.data(), formKey, tenantId), availability };
+    // 1.152 — announced courses only for a form that has a course field
+    const courses = courseFieldOf(formDef.fields) ? await readAnnouncedCourses(db, tenantId, todayStoreDate()) : [];
+    const projected = withCourseChoice(
+      { ...projectPublicFormDefinition(doc.id, doc.data(), formKey, tenantId), availability },
+      formDef.fields, formDef.derivedValues, courses,
+    );
     // The static website cannot read `categories` itself (no Firestore client): it asks for the lists of
     // the form's category fields here. The app reads them on its own and never sends the flag.
     if (request.data?.withCategories !== true) return projected;

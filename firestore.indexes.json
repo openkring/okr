@@ -1381,6 +1381,21 @@
           "arrayConfig": "CONTAINS"
         },
         {
+          "fieldPath": "isAnnounced",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
           "fieldPath": "isArchived",
           "order": "ASCENDING"
         },
