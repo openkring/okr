@@ -24,6 +24,7 @@ import { Brand } from '../calendar/mail';
 import { toStoreDate, toStoreDateTime } from '../srv/zurich-time';
 import {
   COURSE_REFUSAL_TEXT,
+  CourseAnswerPageParams,
   CourseAnswerRefusal,
   courseAnswerNotice,
   courseAnswerPage,
@@ -37,6 +38,9 @@ const CF_NAME = 'courseAnswer';
 
 /** The course states that came from an invitation — only those may answer. */
 const ANSWERABLE_STATES = ['invited', 'accepted', 'declined'];
+
+/** A refused or withdrawn application no longer answers (closed.approved still does). */
+const REFUSED_APPLICATION_STATES = ['closed.denied', 'closed.cancelled'];
 
 type Doc = Record<string, unknown>;
 
@@ -60,6 +64,7 @@ export function courseAnswerTenantOk(app: Doc | undefined, course: Doc | undefin
  */
 export function decideCourseAnswer(app: Doc | undefined, course: Doc | undefined, courseKey: string, tenantOk: boolean, today: string): Exclude<CourseAnswerRefusal, 'invalid'> | undefined {
   if (!app || app['isArchived'] === true || !tenantOk) return 'not-found';
+  if (REFUSED_APPLICATION_STATES.includes(str(app['state']))) return 'not-found';
   if (str(app['courseKey']) !== courseKey) return 'moved';
   if (!ANSWERABLE_STATES.includes(str(app['courseState']))) return 'not-found';
   if (!course || course['isArchived'] === true) return 'not-found';
@@ -68,8 +73,14 @@ export function decideCourseAnswer(app: Doc | undefined, course: Doc | undefined
   return undefined;
 }
 
+/** The group's admins, only when the group belongs to the application's tenant (as invite-applicants). */
+export function tenantGroupAdminKeys(group: Doc | undefined, tenantId: string): string[] {
+  if (!group || !tenantId || !strings(group['tenants']).includes(tenantId)) return [];
+  return [...new Set(strings(group['adminKeys']))];
+}
+
 /** Who hears about an answer: the course's responsible persons, else the admins of its group (A9). */
-export async function courseNoticeRecipients(course: Doc): Promise<string[]> {
+export async function courseNoticeRecipients(course: Doc, tenantId: string): Promise<string[]> {
   const responsible = (Array.isArray(course['responsiblePersons']) ? course['responsiblePersons'] : [])
     .map((p) => str((p as Doc | undefined)?.['key']))
     .filter(Boolean);
@@ -77,7 +88,27 @@ export async function courseNoticeRecipients(course: Doc): Promise<string[]> {
   const groupKey = str(course['groupKey']);
   if (!groupKey) return [];
   const group = (await getFirestore().collection('groups').doc(groupKey).get()).data();
-  return [...new Set(strings(group?.['adminKeys']))];
+  return tenantGroupAdminKeys(group, tenantId);
+}
+
+/**
+ * What the answer page (GET) shows. Only the first name, the course and its dates — never the last
+ * name, e-mail, phone, date of birth or AHV number: whoever holds the link (a forwarded mail, a mail
+ * scanner) sees this page.
+ */
+export function courseAnswerPageParams(brand: Brand, app: Doc, course: Doc, link: { postUrl: string; courseKey: string; applicationKey: string; signature: string }): CourseAnswerPageParams {
+  return {
+    ...brand,
+    firstName: str(app['firstName']),
+    courseName: str(course['name']),
+    startDate: str(course['startDate']),
+    endDate: str(course['endDate']),
+    state: str(app['courseState']),
+    postUrl: link.postUrl,
+    courseKey: link.courseKey,
+    applicationKey: link.applicationKey,
+    signature: link.signature,
+  };
 }
 
 /** GET reads the query (the email link), POST only the form body (the answer page). */
@@ -109,7 +140,7 @@ async function recordCourseAnswer(appRef: DocumentReference, courseRef: Document
 
 async function notifyResponsible(app: Doc, course: Doc, courseKey: string, tenantId: string, links: TenantLinks, state: 'accepted' | 'declined'): Promise<void> {
   try {
-    const personKeys = await courseNoticeRecipients(course);
+    const personKeys = await courseNoticeRecipients(course, tenantId);
     if (personKeys.length === 0) { logger.info(`${CF_NAME}: no responsible person or group admin to notify`); return; }
     const firstName = str(app['firstName']);
     const lastName = str(app['lastName']);
@@ -175,16 +206,9 @@ export const courseAnswer = onRequest(
       if (refusal || !app || !course) { refuse(refusal ?? 'not-found', refusal === 'not-found' || !refusal ? 404 : 200); return; }
 
       if (req.method === 'GET') {
-        res.status(200).send(courseAnswerPage({
-          ...brand,
-          firstName: str(app['firstName']),
-          courseName: str(course['name']),
-          startDate: str(course['startDate']),
-          endDate: str(course['endDate']),
-          state: str(app['courseState']),
-          postUrl: courseAnswerFunctionUrl(projectID.value()),
-          courseKey, applicationKey, signature,
-        }));
+        res.status(200).send(courseAnswerPage(courseAnswerPageParams(brand, app, course, {
+          postUrl: courseAnswerFunctionUrl(projectID.value()), courseKey, applicationKey, signature,
+        })));
         return;
       }
 

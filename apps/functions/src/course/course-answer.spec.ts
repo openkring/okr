@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { courseAnswerTenantOk, decideCourseAnswer } from './course-answer';
+import { courseAnswerPageParams, courseAnswerTenantOk, decideCourseAnswer, tenantGroupAdminKeys } from './course-answer';
 import { courseAnswerNotice, courseAnswerPage, courseAnswerResultPage, COURSE_REFUSAL_TEXT } from './course-mail';
 
 const app = { courseKey: 'c1', courseState: 'invited', tenants: ['scs'], firstName: 'Anna', lastName: 'Muster' };
@@ -34,6 +34,50 @@ describe('decideCourseAnswer', () => {
   it('falls back to the start date when the course has no end date', () => {
     expect(decideCourseAnswer(app, { ...course, endDate: '' }, 'c1', true, '20261101')).toBeUndefined();
     expect(decideCourseAnswer(app, { ...course, endDate: '' }, 'c1', true, '20261102')).toBe('ended');
+  });
+});
+
+describe('decideCourseAnswer — the application itself was refused or withdrawn', () => {
+  it('refuses a denied or cancelled application as not found', () => {
+    expect(decideCourseAnswer({ ...app, state: 'closed.denied' }, course, 'c1', true, TODAY)).toBe('not-found');
+    expect(decideCourseAnswer({ ...app, state: 'closed.cancelled' }, course, 'c1', true, TODAY)).toBe('not-found');
+  });
+  it('still lets an approved or open application answer', () => {
+    expect(decideCourseAnswer({ ...app, state: 'closed.approved' }, course, 'c1', true, TODAY)).toBeUndefined();
+    expect(decideCourseAnswer({ ...app, state: 'applied' }, course, 'c1', true, TODAY)).toBeUndefined();
+  });
+});
+
+describe('tenantGroupAdminKeys', () => {
+  it('returns the admins only when the group belongs to the tenant', () => {
+    expect(tenantGroupAdminKeys({ tenants: ['scs'], adminKeys: ['p1', 'p1', 'p2'] }, 'scs')).toEqual(['p1', 'p2']);
+    expect(tenantGroupAdminKeys({ tenants: ['other'], adminKeys: ['p1'] }, 'scs')).toEqual([]);
+    expect(tenantGroupAdminKeys({ adminKeys: ['p1'] }, 'scs')).toEqual([]);
+    expect(tenantGroupAdminKeys(undefined, 'scs')).toEqual([]);
+    expect(tenantGroupAdminKeys({ tenants: ['scs'], adminKeys: ['p1'] }, '')).toEqual([]);
+  });
+});
+
+describe('courseAnswerPageParams — what the link page shows', () => {
+  const full = {
+    ...app, firstName: 'Anna', lastName: 'Verborgen', email: 'anna.verborgen@example.org', phone: '+41 79 555 12 34',
+    dateOfBirth: '20120317', ssnId: '756.1234.5678.97', streetName: 'Geheimweg', city: 'Hintertupf',
+    parentEmail: 'eltern@example.org', parentPhone: '+41 44 999 88 77',
+  };
+  const params = courseAnswerPageParams({ appName: 'Seeclub' }, full, course, {
+    postUrl: 'https://x/courseAnswer', courseKey: 'c1', applicationKey: 'a1', signature: 'sig',
+  });
+  const page = courseAnswerPage(params);
+  it('carries the first name, the course and the link', () => {
+    expect(page).toContain('Anna');
+    expect(page).toContain('Juniorenkurs');
+    expect(params).toMatchObject({ courseKey: 'c1', applicationKey: 'a1', signature: 'sig', state: 'invited' });
+  });
+  it('contains no other personal data of the application', () => {
+    for (const v of ['Verborgen', 'anna.verborgen@example.org', '+41 79 555 12 34', '20120317', '17.03.2012', '756.1234.5678.97',
+      'Geheimweg', 'Hintertupf', 'eltern@example.org', '+41 44 999 88 77']) {
+      expect(page).not.toContain(v);
+    }
   });
 });
 
