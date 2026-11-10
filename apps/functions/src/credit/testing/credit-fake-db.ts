@@ -1,11 +1,24 @@
 // A small in-memory Firestore for the credit and billing specs: doc get/set/create/update, simple collection
-// queries (where ==, ranges, array-contains) and transactions with optimistic
+// queries (where ==, ranges, array-contains), set with merge, FieldValue.arrayUnion/arrayRemove, and transactions with optimistic
 // concurrency like Firestore (versions per document, recorded on get, checked at commit, retried on conflict).
 // Test-only: imported by *.spec.ts, never by production code.
 import type { Firestore } from 'firebase-admin/firestore';
 
 export type Doc = Record<string, unknown>;
 export type Store = Record<string, Doc>; // keyed by full path
+
+/** A patch over `prev` with FieldValue.arrayUnion / arrayRemove applied like Firestore (by their methodName). */
+function merged(prev: Doc | undefined, patch: Doc): Doc {
+  const out: Doc = { ...(prev ?? {}) };
+  for (const [key, value] of Object.entries(patch)) {
+    const t = value as { methodName?: string; elements?: unknown[] } | null;
+    const current = Array.isArray(out[key]) ? (out[key] as unknown[]) : [];
+    if (t?.methodName === 'FieldValue.arrayUnion') out[key] = [...current, ...(t.elements ?? []).filter((e) => !current.includes(e))];
+    else if (t?.methodName === 'FieldValue.arrayRemove') out[key] = current.filter((e) => !(t.elements ?? []).includes(e));
+    else out[key] = value;
+  }
+  return out;
+}
 
 export function fakeDb(store: Store): Firestore {
   const versions: Record<string, number> = {};
@@ -15,7 +28,7 @@ export function fakeDb(store: Store): Firestore {
     path,
     id: path.split('/').pop(),
     get: async () => ({ id: path.split('/').pop(), exists: store[path] !== undefined, data: () => (store[path] ? { ...store[path] } : undefined) }),
-    set: async (d: Doc) => { store[path] = d; bump(path); },
+    set: async (d: Doc, opts?: { merge?: boolean }) => { store[path] = opts?.merge ? merged(store[path], d) : d; bump(path); },
     create: async (d: Doc) => {
       if (store[path] !== undefined) throw Object.assign(new Error(`document ${path} already exists`), { code: 6 });
       store[path] = d;
@@ -23,7 +36,7 @@ export function fakeDb(store: Store): Firestore {
     },
     update: async (d: Doc) => {
       if (!store[path]) throw new Error(`no document ${path}`);
-      store[path] = { ...store[path], ...d };
+      store[path] = merged(store[path], d);
       bump(path);
     },
     collection: (name: string) => colRef(`${path}/${name}`),
@@ -74,8 +87,8 @@ export function fakeDb(store: Store): Firestore {
             await new Promise(res => setTimeout(res, 0)); // let a concurrent transaction read too
             return snap;
           },
-          set: (r: unknown, d: Doc) => writes.push(() => { store[pathOf(r)] = d; bump(pathOf(r)); }),
-          update: (r: unknown, d: Doc) => writes.push(() => { store[pathOf(r)] = { ...store[pathOf(r)], ...d }; bump(pathOf(r)); }),
+          set: (r: unknown, d: Doc, opts?: { merge?: boolean }) => writes.push(() => { store[pathOf(r)] = opts?.merge ? merged(store[pathOf(r)], d) : d; bump(pathOf(r)); }),
+          update: (r: unknown, d: Doc) => writes.push(() => { store[pathOf(r)] = merged(store[pathOf(r)], d); bump(pathOf(r)); }),
         });
         if ([...reads].every(([p, v]) => ver(p) === v)) { writes.forEach(w => w()); return result; }
       }

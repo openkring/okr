@@ -99,7 +99,7 @@ export function monthlyPositions(input: {
   ];
   const skipped: string[] = [];
   for (const id of [...new Set(input.options)]) {
-    const price = Object.hasOwn(ADD_ON_PRICES, id) ? ADD_ON_PRICES[id] : undefined;
+    const price = Object.prototype.hasOwnProperty.call(ADD_ON_PRICES, id) ? ADD_ON_PRICES[id] : undefined;
     if (typeof price !== 'number') {
       skipped.push(id);
       continue;

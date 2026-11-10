@@ -35,7 +35,7 @@ vi.mock('../collection/payment-method', () => ({ appOriginOf: vi.fn(async () => 
 
 import { createAndIssueInvoice } from '../invoice/invoice-issue.core';
 import { sendInvoiceMail } from '../invoice/send-invoice-email.core';
-import { notifyChargeFailed } from './billing-mail';
+import { billingRecipient, notifyChargeFailed } from './billing-mail';
 import { measureTenant } from './measure';
 import { AUTOPAY_NUDGE, handleBillingRunRequest, isFirstOfMonthInZurich, requestMonthlyRuns, runMonthlyBilling } from './billing-run';
 import { fakeDb, type Store } from '../credit/testing/credit-fake-db';
@@ -155,6 +155,15 @@ describe('runMonthlyBilling', () => {
     expect(p.chargeOffSession).toHaveBeenCalledTimes(1);
   });
 
+  it('decline: the failure mail goes out before the attempt is marked failed', async () => {
+    const store = seed();
+    let attemptStateAtMail = '';
+    vi.mocked(notifyChargeFailed).mockImplementationOnce(async () => { attemptStateAtMail = String(store[ATTEMPT]?.['state']); });
+    await runMonthlyBilling(use(store), () => port('requires_payment_method'), 'scs', PERIOD, log);
+    expect(attemptStateAtMail).toBe('open');
+    expect(store[ATTEMPT]).toMatchObject({ state: 'failed' });
+  });
+
   it('no autopay: the invoice mail goes to the billing recipient with the pay link and the nudge, once', async () => {
     const store = seed({ autopay: false, paymentMethod: null });
     const db = use(store);
@@ -204,6 +213,54 @@ describe('runMonthlyBilling', () => {
     const store = seed({ billingFlags: ['vat-blocked', 'individual-band'] });
     await runMonthlyBilling(use(store), () => port(), 'scs', PERIOD, log);
     expect(store['subscriptions/scs']).toMatchObject({ billingFlags: [] });
+  });
+
+  it('stores its plan on the run doc before issuing, then moves through the phases', async () => {
+    const store = seed();
+    const db = use(store);
+    vi.mocked(createAndIssueInvoice).mockImplementationOnce(async () => {
+      expect(store[`subscriptions/scs/billing-runs/${PERIOD}`]).toMatchObject({
+        phase: 'issuing', invoiceKey: KEY, operatorTenantId: 'kring', accountingTenantId: 'bka',
+        measurement: { weighted: 40 }, positions: expect.any(Array), band: expect.any(String),
+      });
+      throw new Error('stop here');
+    });
+    await expect(runMonthlyBilling(db, () => port(), 'scs', PERIOD, log)).rejects.toThrow('stop here');
+    await runMonthlyBilling(db, () => port(), 'scs', PERIOD, log);
+    expect(store[`subscriptions/scs/billing-runs/${PERIOD}`]).toMatchObject({ phase: 'collected' });
+  });
+
+  it('crash after the issue: the retry reuses the plan, updates the subscription and charges once, whatever changed meanwhile', async () => {
+    const store = seed();
+    const db = use(store);
+    const p = port();
+    const issue = vi.mocked(createAndIssueInvoice).getMockImplementation()!;
+    vi.mocked(createAndIssueInvoice).mockImplementationOnce(async (...args) => {
+      await issue(...args); // the invoice is issued ...
+      throw new Error('instance died'); // ... but the subscription update never happens
+    });
+    await expect(runMonthlyBilling(db, () => p, 'scs', PERIOD, log)).rejects.toThrow('instance died');
+    expect(store['subscriptions/scs']).toMatchObject({ lastRunPeriod: '' });
+    const firstPositions = vi.mocked(createAndIssueInvoice).mock.calls[0][1].positions;
+
+    store['subscriptions/scs'] = { ...store['subscriptions/scs'], billing: 'exempt' }; // switched meanwhile
+    vi.mocked(measureTenant).mockResolvedValueOnce({ totalUsers: 300, privilegedUsers: 50, excludedUsers: 0, weighted: 400 });
+
+    await expect(runMonthlyBilling(db, () => p, 'scs', PERIOD, log)).resolves.toBe('charged');
+    expect(measureTenant).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(createAndIssueInvoice).mock.calls[1][1].positions).toEqual(firstPositions);
+    expect(p.chargeOffSession).toHaveBeenCalledTimes(1);
+    expect(store['subscriptions/scs']).toMatchObject({ lastRunPeriod: PERIOD, lastMeasurement: { weighted: 40 } });
+    await runMonthlyBilling(db, () => p, 'scs', PERIOD, log);
+    expect(p.chargeOffSession).toHaveBeenCalledTimes(1);
+  });
+
+  it('a cleared vat-blocked flag stays cleared when no-recipient is added later in the run', async () => {
+    vi.mocked(billingRecipient).mockResolvedValueOnce('');
+    const store = seed({ autopay: false, paymentMethod: null, billingFlags: ['vat-blocked'] });
+    await expect(runMonthlyBilling(use(store), () => port(), 'scs', PERIOD, log)).resolves.toBe('issued');
+    expect(sendInvoiceMail).not.toHaveBeenCalled();
+    expect(store['subscriptions/scs']['billingFlags']).toEqual(['no-recipient']);
   });
 
   it('a tenant no longer billable is skipped', async () => {

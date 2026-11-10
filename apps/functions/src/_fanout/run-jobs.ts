@@ -2,14 +2,15 @@ import { logger } from 'firebase-functions/v2';
 
 export interface NamedJob {
   name: string;
-  run: () => Promise<unknown>;
+  /** Gets the scheduler's `now` (its scheduled instant where the slot passes one); most jobs ignore it. */
+  run: (now: Date) => Promise<unknown>;
   /** Absent means always run. */
   when?: (now: Date) => boolean;
 }
 
 /**
  * Runs the jobs of one scheduler sequentially, in array order. Never throws: a failing job is logged
- * and reported in `failed`, later jobs still run. Jobs whose `when(now)` is false are skipped.
+ * and reported in `failed`, later jobs still run. Jobs whose `when(now)` is false are skipped; the others get `now`.
  */
 export async function runJobs(scheduler: string, jobs: NamedJob[], now: Date = new Date()): Promise<{ ran: string[]; skipped: string[]; failed: string[] }> {
   const ran: string[] = [];
@@ -22,7 +23,7 @@ export async function runJobs(scheduler: string, jobs: NamedJob[], now: Date = n
         skipped.push(job.name);
         continue;
       }
-      await job.run();
+      await job.run(now);
       ran.push(job.name);
       logger.info(`${scheduler}:${job.name} done`, { durationMs: Date.now() - start });
     } catch (err) {

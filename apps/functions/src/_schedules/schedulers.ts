@@ -54,7 +54,7 @@ export const MORNING_JOBS: NamedJob[] = [
   { name: 'pruneStalePushTokens', run: runPruneStalePushTokens },
   { name: 'regasoftApiWatch', run: () => runRegasoftApiWatch() },
   // the 1st (Zurich) only: one billing-run request per billable tenant; onBillingRunRequested does the work
-  { name: 'monthlyBilling', run: () => runMonthlyBillingRequests(), when: isFirstOfMonthInZurich },
+  { name: 'monthlyBilling', run: (now) => runMonthlyBillingRequests(now), when: isFirstOfMonthInZurich },
 ];
 
 export const EVENING_JOBS: NamedJob[] = [

@@ -6,10 +6,20 @@
 // issueInvoice's runtime options) and charges the saved payment method off-session, or mails the invoice to a manual
 // payer. Every step is idempotent (invoice okey `billing-<tenantId>-<period>`, Stripe idempotency key = invoice key,
 // attempt `auto-<invoiceKey>`, the invoice's sentAt), so the trigger runs with retry: true.
+//
+// Phases on the run doc: before issuing, the run stores what it computed (band, history, measurement, positions,
+// invoiceKey; phase 'issuing'); a retry reuses exactly that — no re-measurement, no isBillable re-check — so a crash
+// between the issue and the subscription update can neither skip the tenant nor change the invoice (okey-mismatch).
+// Then 'issued' (subscription updated) and 'collected' (charged or mailed).
+//
+// A run doc blocks re-requesting its period (the job only creates missing docs): after fixing the cause of a refused
+// or failed run, delete subscriptions/{t}/billing-runs/{period} and its creation by the next job (or by hand) re-runs it.
+// Credit: reversals net into the month they are dated in, not the month of their deduction; a product whose month
+// nets to nothing or below is dropped from the invoice.
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
-import { getFirestore } from 'firebase-admin/firestore';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import type { DocumentReference, Firestore } from 'firebase-admin/firestore';
 import {
   BillingRunSubcollection, CreditAccountCollection, CreditEntrySubcollection, InvoiceCollection, PaymentAttemptCollection,
@@ -35,7 +45,7 @@ import { lastDayOfPreviousMonth } from './measure.logic';
 import {
   billingPeriod, chooseBand, creditOfMonth, isBillable, isIndividuallyPriced, monthlyPositions, previousPeriod,
 } from './monthly-invoice.logic';
-import type { CreditEntryLike, SubscriptionLike } from './monthly-invoice.logic';
+import type { CreditEntryLike, MonthlyPosition, SubscriptionLike } from './monthly-invoice.logic';
 
 const DUE_DAYS = 10;
 /** A declined monthly charge is tried again this many days after the invoice date (Task 5 runs the retries). */
@@ -90,11 +100,21 @@ export async function requestMonthlyRuns(db: Firestore, runDate: string): Promis
   return requested;
 }
 
-/** Adds `flag` to the subscription's billingFlags (once). */
-async function flag(db: Firestore, tenantId: string, sub: Doc, value: BillingFlag): Promise<void> {
-  const flags = ((sub['billingFlags'] as BillingFlag[] | undefined) ?? []);
-  if (flags.includes(value)) return;
-  await db.collection(SubscriptionCollection).doc(tenantId).update({ billingFlags: [...flags, value] });
+/** Adds `value` to the subscription's billingFlags (once, atomically: never re-adds a flag cleared meanwhile). */
+async function flag(db: Firestore, tenantId: string, value: BillingFlag): Promise<void> {
+  await db.collection(SubscriptionCollection).doc(tenantId).update({ billingFlags: FieldValue.arrayUnion(value) });
+}
+
+/** What a run computed before issuing, stored on the run doc and reused by every retry. */
+interface RunPlan {
+  phase: 'issuing' | 'issued' | 'collected';
+  invoiceKey: string;
+  operatorTenantId: string;
+  accountingTenantId: string;
+  band: BandId;
+  history: BandId[];
+  measurement: SubscriptionMeasurement;
+  positions: MonthlyPosition[];
 }
 
 /**
@@ -110,27 +130,40 @@ export async function runMonthlyBilling(
     return 'skipped';
   }
   const invoiceKey = billingInvoiceKey(tenantId, period);
+  const ref = runRef(db, tenantId, period);
   if (sub['lastRunPeriod'] !== period) {
-    if (!isBillable(sub as SubscriptionLike, period)) {
-      log('info', 'monthlyBilling: not billable (any more), run skipped', { tenantId, period, state: sub['state'] });
-      return 'skipped';
+    const stored = (await ref.get()).data();
+    let plan = Array.isArray(stored?.['positions']) ? (stored as unknown as RunPlan) : undefined;
+    if (plan) {
+      log('info', 'monthlyBilling: resuming a run from its stored plan', { tenantId, period, phase: plan.phase });
+    } else {
+      if (!isBillable(sub as SubscriptionLike, period)) {
+        log('info', 'monthlyBilling: not billable (any more), run skipped', { tenantId, period, state: sub['state'] });
+        return 'skipped';
+      }
+      const planned = await planMonthlyInvoice(db, tenantId, period, sub, invoiceKey, log);
+      if (planned === 'refused') return 'refused';
+      plan = planned;
+      await ref.set({ ...plan }, { merge: true }); // before issuing: every retry issues exactly this invoice
     }
-    const issued = await issueMonthlyInvoice(db, tenantId, period, sub, invoiceKey, log);
-    if (issued === 'refused') return 'refused';
+    await issueAndRecord(db, tenantId, period, plan, log);
+    await ref.set({ phase: 'issued' }, { merge: true });
   }
-  return collect(db, port, tenantId, invoiceKey, sub, log, now);
+  const outcome = await collect(db, port, tenantId, invoiceKey, log, now);
+  await ref.set({ phase: 'collected' }, { merge: true });
+  return outcome;
 }
 
-/** Checks the books, measures, chooses the band, issues the invoice and records the run on the subscription. */
-async function issueMonthlyInvoice(
+/** Checks the books, measures, chooses the band and builds the positions; refuses (with a board flag) or returns the plan. */
+async function planMonthlyInvoice(
   db: Firestore, tenantId: string, period: string, sub: Doc, invoiceKey: string, log: Log,
-): Promise<'issued' | 'refused'> {
+): Promise<RunPlan | 'refused'> {
   const { operatorTenantId, accountingTenantId } = await platformBilling(db);
   const config = await loadOwnedAccountingConfig(db, operatorTenantId, invoiceKey, accountingTenantId);
   if (config['vatMethod'] !== 'exempt') {
     // VAT (§7.9) is not built: the run never issues an invoice without the tax it would owe
     log('error', 'monthlyBilling: the operator books are not VAT-exempt, no invoice', { tenantId, period, accountingTenantId, vatMethod: config['vatMethod'] });
-    await flag(db, tenantId, sub, 'vat-blocked');
+    await flag(db, tenantId, 'vat-blocked');
     return 'refused';
   }
   const accounts = {
@@ -139,7 +172,7 @@ async function issueMonthlyInvoice(
   };
   if (!accounts.subscription || !accounts.transaction) {
     log('error', 'monthlyBilling: the operator books lack a revenue account, no invoice', { tenantId, period, accountingTenantId, ...accounts });
-    await flag(db, tenantId, sub, 'accounts-missing');
+    await flag(db, tenantId, 'accounts-missing');
     return 'refused';
   }
 
@@ -147,7 +180,7 @@ async function issueMonthlyInvoice(
   const measured = await measureTenant(db, tenantId, lastDay);
   if (isIndividuallyPriced(measured.weighted)) {
     log('warn', 'monthlyBilling: tenant is priced individually, no invoice', { tenantId, period, ...measured });
-    await flag(db, tenantId, sub, 'individual-band');
+    await flag(db, tenantId, 'individual-band');
     return 'refused';
   }
   const { band, history } = chooseBand(measured.weighted, (sub['bandHistory'] as BandId[] | undefined) ?? []);
@@ -160,29 +193,33 @@ async function issueMonthlyInvoice(
   const { positions, skipped } = monthlyPositions({ period, band, options: (sub['options'] as string[] | undefined) ?? [], credit, accounts });
   if (skipped.length > 0) log('warn', 'monthlyBilling: options without a price are not billed', { tenantId, period, skipped });
 
-  const receiver = await tenantOrgAvatar(db, tenantId);
-  await createAndIssueInvoice(db, {
-    okey: invoiceKey, tenantId: operatorTenantId, accountingTenantId, receiver,
-    title: `Kring-Abo ${receiver.name2} ${period.slice(4, 6)}.${period.slice(0, 4)}`, billingKind: 'subscription',
-    positions, dueDays: DUE_DAYS, actor: 'system',
-  });
-
-  const lastMeasurement: SubscriptionMeasurement = {
+  const measurement: SubscriptionMeasurement = {
     period: lastDay.slice(0, 6), totalUsers: measured.totalUsers, privilegedUsers: measured.privilegedUsers,
     excludedUsers: measured.excludedUsers, weighted: measured.weighted,
   };
-  const flags = ((sub['billingFlags'] as BillingFlag[] | undefined) ?? []).filter((f) => !RUN_FLAGS.includes(f));
-  await db.collection(SubscriptionCollection).doc(tenantId).update({
-    currentBand: band, bandHistory: history, lastMeasurement, lastRunPeriod: period, billingFlags: flags,
+  return { phase: 'issuing', invoiceKey, operatorTenantId, accountingTenantId, band, history, measurement, positions };
+}
+
+/** Issues the planned invoice (idempotent on its okey) and records the run on the subscription in one write. */
+async function issueAndRecord(db: Firestore, tenantId: string, period: string, plan: RunPlan, log: Log): Promise<void> {
+  const receiver = await tenantOrgAvatar(db, tenantId);
+  await createAndIssueInvoice(db, {
+    okey: plan.invoiceKey, tenantId: plan.operatorTenantId, accountingTenantId: plan.accountingTenantId, receiver,
+    title: `Kring-Abo ${receiver.name2} ${period.slice(4, 6)}.${period.slice(0, 4)}`, billingKind: 'subscription',
+    positions: plan.positions, dueDays: DUE_DAYS, actor: 'system',
   });
-  log('info', 'monthlyBilling: invoice issued', { tenantId, period, invoiceKey, band, weighted: measured.weighted, credit: credit.length });
-  return 'issued';
+  await db.collection(SubscriptionCollection).doc(tenantId).update({
+    currentBand: plan.band, bandHistory: plan.history, lastMeasurement: plan.measurement, lastRunPeriod: period,
+    billingFlags: FieldValue.arrayRemove(...RUN_FLAGS),
+  });
+  log('info', 'monthlyBilling: invoice issued', { tenantId, period, invoiceKey: plan.invoiceKey, band: plan.band, weighted: plan.measurement.weighted });
 }
 
 /** Charges the issued invoice off-session (autopay) or mails it (manual payer). Idempotent. */
 async function collect(
-  db: Firestore, port: () => BillingRunPort, tenantId: string, invoiceKey: string, sub: Doc, log: Log, now: Date,
+  db: Firestore, port: () => BillingRunPort, tenantId: string, invoiceKey: string, log: Log, now: Date,
 ): Promise<BillingRunOutcome> {
+  const sub = (await db.collection(SubscriptionCollection).doc(tenantId).get()).data() ?? {};
   const invoice = (await db.collection(InvoiceCollection).doc(invoiceKey).get()).data();
   if (!invoice) throw new Error(`monthlyBilling: invoice ${invoiceKey} not found after issuing`);
   const state = String(invoice['state'] ?? '');
@@ -200,7 +237,7 @@ async function collect(
   if (sub['autopay'] === true && method?.stripePaymentMethodId && customerId) {
     return charge(db, port, tenantId, invoiceKey, invoice, amount, { customerId, paymentMethodId: method.stripePaymentMethodId }, log, now);
   }
-  return mail(db, tenantId, invoiceKey, invoice, sub, log);
+  return mail(db, tenantId, invoiceKey, invoice, log);
 }
 
 async function charge(
@@ -236,18 +273,19 @@ async function charge(
     log('info', 'monthlyBilling: charged', { tenantId, invoiceKey, amount, status: pi.status });
     return 'charged';
   }
+  // the mail first: its id is deterministic (a re-send is a no-op), so a crash before the attempt update loses nothing
+  await notifyChargeFailed(db, tenantId, { invoiceKey, amount, attempt: 1 });
   const issueDate = String(invoice['invoiceDate'] || toStoreDate(now));
   await attemptRef.update({
     stripePaymentIntentId: pi.id, stripeChargeId: pi.chargeId, state: 'failed', error: `charge ${pi.status}`,
     retryCount: 0, nextRetryAt: addDuration(issueDate, { days: RETRY_AFTER_DAYS }), updatedAt: toStoreDateTime(new Date()),
   });
-  await notifyChargeFailed(db, tenantId, { invoiceKey, amount, attempt: 1 });
   log('warn', 'monthlyBilling: charge declined, retried later', { tenantId, invoiceKey, status: pi.status });
   return 'declined';
 }
 
 /** The invoice mail (PDF with the QR slip) to the billing recipient, with the pay link and the autopay nudge. Once. */
-async function mail(db: Firestore, tenantId: string, invoiceKey: string, invoice: Doc, sub: Doc, log: Log): Promise<BillingRunOutcome> {
+async function mail(db: Firestore, tenantId: string, invoiceKey: string, invoice: Doc, log: Log): Promise<BillingRunOutcome> {
   if (invoice['sentAt']) {
     log('info', 'monthlyBilling: invoice already mailed', { tenantId, invoiceKey });
     return 'mailed';
@@ -255,7 +293,7 @@ async function mail(db: Firestore, tenantId: string, invoiceKey: string, invoice
   const to = await billingRecipient(db, tenantId);
   if (!to) {
     log('error', 'monthlyBilling: tenant has no billing or admin e-mail, invoice not mailed', { tenantId, invoiceKey });
-    await flag(db, tenantId, sub, 'no-recipient');
+    await flag(db, tenantId, 'no-recipient');
     return 'issued';
   }
   const link = payLink(await appOriginOf(db, tenantId), invoiceKey);
@@ -278,7 +316,7 @@ export async function handleBillingRunRequest(
   const ref = runRef(db, tenantId, period);
   try {
     const outcome = await runMonthlyBilling(db, port, tenantId, period, log);
-    await ref.update({ state: outcome, invoiceKey: billingInvoiceKey(tenantId, period), finishedAt: toStoreDateTime(new Date()) });
+    await ref.set({ state: outcome, invoiceKey: billingInvoiceKey(tenantId, period), finishedAt: toStoreDateTime(new Date()) }, { merge: true });
   } catch (err) {
     if (!(err instanceof HttpsError) || !PERMANENT_CODES.includes(err.code)) {
       log('error', 'monthlyBilling: run failed, retried', { tenantId, period, error: err instanceof Error ? err.message : String(err) });
@@ -286,9 +324,8 @@ export async function handleBillingRunRequest(
     }
     const reason = String((err.details as { reason?: string } | undefined)?.reason ?? err.code);
     log('error', 'monthlyBilling: run refused', { tenantId, period, reason, error: err.message });
-    const sub = (await db.collection(SubscriptionCollection).doc(tenantId).get()).data() ?? {};
-    await flag(db, tenantId, sub, 'run-failed');
-    await ref.update({ state: 'failed', reason, finishedAt: toStoreDateTime(new Date()) });
+    await flag(db, tenantId, 'run-failed');
+    await ref.set({ state: 'failed', reason, finishedAt: toStoreDateTime(new Date()) }, { merge: true });
   }
 }
 

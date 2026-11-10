@@ -93,6 +93,13 @@ describe('runJobs', () => {
     expect(res.skipped).toEqual(['x']);
   });
 
+  it('passes now to a job that runs', async () => {
+    const now = new Date('2026-12-01T06:00:00Z');
+    const run = vi.fn().mockResolvedValue(undefined);
+    await runJobs('s', [{ name: 'x', run, when: () => true }], now);
+    expect(run).toHaveBeenCalledWith(now);
+  });
+
   it('counts a throwing when() as failed', async () => {
     const res = await runJobs('s', [
       { name: 'x', run: vi.fn(), when: () => { throw new Error('w'); } },
