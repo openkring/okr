@@ -107,6 +107,29 @@ describe('createAndIssueInvoice', () => {
       .rejects.toMatchObject({ code: 'invalid-argument' });
   });
 
+  it('refuses a negative position and an invoice of information lines only', async () => {
+    const { db } = fakeDb({});
+    await expect(createAndIssueInvoice(db, { ...input, positions: [{ title: 'x', amount: -100, accountKey: 'a' }] }))
+      .rejects.toMatchObject({ code: 'invalid-argument' });
+    await expect(createAndIssueInvoice(db, { ...input, positions: [{ title: 'x', amount: 0, accountKey: 'a' }] }))
+      .rejects.toMatchObject({ code: 'invalid-argument' });
+  });
+
+  it('a position of amount 0 becomes a text line: no amount, no account, not booked', async () => {
+    const store: Store = {
+      'accounting-configs': { bka: { tenants: ['kring'], receivablesAccountKey: 'acc-1100', invoiceTemplateId: 'tpl-1', fiscalYearStart: 1 } },
+    };
+    const { db } = fakeDb(store);
+    await createAndIssueInvoice(db, {
+      ...input, okey: 'billing-scs-202612', billingKind: 'subscription',
+      positions: [{ title: 'Kring S', amount: 6000, accountKey: 'acc-3400' }, { title: 'Pingen aus Guthaben', amount: 0, accountKey: 'acc-3200' }],
+    });
+    expect(store['invoices']['billing-scs-202612']['totalAmount']).toMatchObject({ amount: 6000 });
+    const text = Object.values(store['invoice-positions']).find((p) => p['name'] === 'Pingen aus Guthaben');
+    expect(text).toMatchObject({ invoicePositionType: 'text', amount: 0, accountKey: '', isBillable: false });
+    expect(Object.values(store['booking-lines']).map((l) => l['accountKey'])).toEqual(['acc-1100', 'acc-3400']);
+  });
+
   it('a fresh okey writes the draft and issues it: total in Rappen, billingKind, pending with a number', async () => {
     const store: Store = {
       'accounting-configs': { bka: { tenants: ['kring'], receivablesAccountKey: 'acc-1100', invoiceTemplateId: 'tpl-1', fiscalYearStart: 1 } },

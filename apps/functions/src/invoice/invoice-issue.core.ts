@@ -198,7 +198,8 @@ async function checkIssuable(db: Firestore, tenantId: string, invoiceKey: string
   if (blockers.length > 0) {
     throw refuse('issue-blocked', `invoice ${invoiceKey} cannot be issued: ${blockers.join(', ')}`, { reasons: blockers });
   }
-  for (const key of [...new Set([receivablesKey, ...prePositions.map((p) => p.accountKey)])]) {
+  // layout lines and a spread discount carry no account (spec 1.84)
+  for (const key of [...new Set([receivablesKey, ...prePositions.map((p) => p.accountKey).filter((k) => k.trim())])]) {
     await assertLeafAccount(db, accountingTenantId, key);
   }
   await assertPeriodsOpen(db, issuePeriodKeys(accountingTenantId, String(pre['invoiceDate'] ?? ''), fiscalYearStart));
@@ -422,6 +423,7 @@ export interface CreateAndIssueInvoiceInput {
   receiver: AvatarInfo;
   title: string;
   billingKind: '' | 'subscription' | 'topup';
+  /** Amount 0 = an information line (a `text` position: no amount, no account, no booking), e.g. «settled from credit». */
   positions: Array<{ title: string; amount: number /* Rappen */; accountKey: string }>;
   dueDays: number;
   actor: string;
@@ -449,8 +451,8 @@ export async function createAndIssueInvoice(db: Firestore, input: CreateAndIssue
   if (typeof okey !== 'string' || !okey.trim()) throw new HttpsError('invalid-argument', 'okey is required');
   if (!Number.isInteger(input.dueDays) || input.dueDays < 0) throw new HttpsError('invalid-argument', 'dueDays must be a whole number of days, 0 or more');
   if (!Array.isArray(input.positions) || input.positions.length === 0) throw new HttpsError('invalid-argument', 'positions are required');
-  if (input.positions.some((p) => !Number.isInteger(p.amount) || p.amount <= 0)) {
-    throw new HttpsError('invalid-argument', 'every position needs a positive amount in Rappen');
+  if (input.positions.some((p) => !Number.isInteger(p.amount) || p.amount < 0) || !input.positions.some((p) => p.amount > 0)) {
+    throw new HttpsError('invalid-argument', 'every position needs a positive amount in Rappen (0 = an information line), at least one above 0');
   }
   const invoiceRef = db.collection(InvoiceCollection).doc(okey);
   const invoiceDate = getTodayStr(DateFormat.StoreDate);
@@ -462,9 +464,9 @@ export async function createAndIssueInvoice(db: Firestore, input: CreateAndIssue
     notes: '',
     billingKind: input.billingKind,
   };
-  const positions: PositionInput[] = input.positions.map((p) => ({
-    type: 'fix', name: p.title, amount: p.amount / 100, accountKey: p.accountKey, description: '',
-  }));
+  const positions: PositionInput[] = input.positions.map((p) => (p.amount === 0
+    ? { type: 'text', name: p.title, amount: 0, accountKey: '', description: '' }
+    : { type: 'fix', name: p.title, amount: p.amount / 100, accountKey: p.accountKey, description: '' }));
 
   await db.runTransaction(async (tx) => {
     const existing = (await tx.get(invoiceRef)).data();
