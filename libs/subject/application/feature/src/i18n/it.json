@@ -7,8 +7,10 @@
       "label": "Tipo",
       "all": "Tutte",
       "membership": "Adesione",
-      "course": "Corsi"
-    }
+      "course": "Corsi",
+      "duplicates": "Duplicati"
+    },
+    "duplicate": "Duplicato?"
   },
   "add": {
     "group": {
@@ -29,7 +31,8 @@
   "delete": {
     "confirm": "Eliminare davvero questa richiesta?",
     "conf": "Richiesta eliminata.",
-    "error": "Eliminazione non riuscita."
+    "error": "Eliminazione non riuscita.",
+    "label": "Elimina"
   },
   "deny": {
     "label": "Rifiuta",
@@ -116,5 +119,38 @@
     "junior": "Junior",
     "active": "Attivo/a",
     "candidate": "Candidato/a"
+  },
+  "course_state": {
+    "registered": "iscritto/a",
+    "invited": "invitato/a",
+    "accepted": "accettato",
+    "declined": "rifiutato"
+  },
+  "person": {
+    "label": "Registra come persona",
+    "exists": "Esiste già {name}{dob} — collegare questa persona?",
+    "exists_dob": ", nato/a il {date}",
+    "link": "collega",
+    "create_new": "crea nuova",
+    "conf": "Persona registrata.",
+    "error": "Non è stato possibile registrare la persona.",
+    "link_conf": "Persona collegata."
+  },
+  "merge": {
+    "label": "Unisci …",
+    "pick": "Unire con quale domanda?",
+    "confirm": "Ripreso dall'altra domanda: {fields}. L'altra domanda viene poi archiviata.",
+    "confirm_nothing": "L'altra domanda non contiene dati aggiuntivi. Viene poi archiviata.",
+    "button": "Unisci",
+    "conf": "Domande unite.",
+    "error": "Non è stato possibile unire le domande.",
+    "field": {
+      "person": "persona collegata",
+      "task": "compito",
+      "course": "corso",
+      "course_state": "stato del corso",
+      "notes": "note",
+      "tags": "parole chiave"
+    }
   }
 }

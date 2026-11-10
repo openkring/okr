@@ -10,6 +10,33 @@ export const APPLICATION_I18N_KEYS = {
   list_filter_all:          PFX + 'list.filter.all',
   list_filter_membership:   PFX + 'list.filter.membership',
   list_filter_course:       PFX + 'list.filter.course',
+  list_filter_duplicates:   PFX + 'list.filter.duplicates',
+  list_duplicate:           PFX + 'list.duplicate',
+
+  course_state_registered:  PFX + 'course_state.registered',
+  course_state_invited:     PFX + 'course_state.invited',
+  course_state_accepted:    PFX + 'course_state.accepted',
+  course_state_declined:    PFX + 'course_state.declined',
+
+  person_label:             PFX + 'person.label',
+  person_exists:            PFX + 'person.exists',
+  person_exists_dob:        PFX + 'person.exists_dob',
+  person_link:              PFX + 'person.link',
+  person_create_new:        PFX + 'person.create_new',
+
+  merge_label:              PFX + 'merge.label',
+  merge_pick:               PFX + 'merge.pick',
+  merge_confirm:            PFX + 'merge.confirm',
+  merge_confirm_nothing:    PFX + 'merge.confirm_nothing',
+  merge_button:             PFX + 'merge.button',
+  merge_field_person:       PFX + 'merge.field.person',
+  merge_field_task:         PFX + 'merge.field.task',
+  merge_field_course:       PFX + 'merge.field.course',
+  merge_field_course_state: PFX + 'merge.field.course_state',
+  merge_field_notes:        PFX + 'merge.field.notes',
+  merge_field_tags:         PFX + 'merge.field.tags',
+
+  delete:                   PFX + 'delete.label',
 
   add_group:                PFX + 'add.group.label',
   add_group_conf:           PFX + 'add.group.conf',
@@ -89,3 +116,30 @@ export const APPLICATION_I18N_KEYS = {
 } satisfies Record<string, string>;
 
 export type ApplicationI18n = { [K in keyof typeof APPLICATION_I18N_KEYS]: Signal<string> };
+
+/** The label of each field `mergeApplications` can take over, for the merge confirmation (spec 1.152 §9). */
+export const MERGE_FIELD_I18N: Record<string, keyof typeof APPLICATION_I18N_KEYS> = {
+  firstName:       'firstname',
+  lastName:        'lastname',
+  dateOfBirth:     'date_of_birth',
+  ssnId:           'ssn',
+  email:           'email',
+  phone:           'phone',
+  streetName:      'street_name',
+  streetNumber:    'street_number',
+  zipCode:         'zip_code',
+  city:            'city',
+  parentFirstName: 'parent_first_name',
+  parentLastName:  'parent_last_name',
+  parentEmail:     'parent_email',
+  parentPhone:     'parent_phone',
+  personKey:       'merge_field_person',
+  taskKey:         'merge_field_task',
+  reviewer:        'reviewer',
+  tags:            'merge_field_tags',
+  properties:      'section_properties',
+  courseKey:       'merge_field_course',
+  courseState:     'merge_field_course_state',
+  submittedAt:     'submitted',
+  notes:           'merge_field_notes',
+};

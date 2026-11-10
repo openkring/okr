@@ -1,30 +1,51 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { formatDate } from '@angular/common';
 import { Router } from '@angular/router';
-import { AlertController, ModalController, ToastController } from '@ionic/angular';
+import { ActionSheetController, AlertController, ModalController, ToastController } from '@ionic/angular';
 import { catchError, of } from 'rxjs';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { ApplicationModel, ApplicationState } from '@okr/shared-models';
-import { getAge, getAvatarInfoForCurrentUser } from '@okr/shared-util-core';
-import { AlertService } from '@okr/shared-util-angular';
+import { convertDateFormatToString, DateFormat, fill, getAge, getAvatarInfoForCurrentUser } from '@okr/shared-util-core';
+import { AlertService, createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
 
 import { CourseService } from '@okr/calendar-course-data-access';
 import { MembershipStore } from '@okr/relationship-membership-feature';
 
 import { ApplicationService } from '@okr/application-data-access';
 import {
-  APPLICATION_I18N_KEYS, ApplicationForFilter, applicationCourseKey, isMembershipApplication, matchesApplicationForFilter,
-  matchesStateFilter, proposeMembershipCategory, stateColor
+  APPLICATION_I18N_KEYS, ApplicationForFilter, ApplicationI18n, applicationCourseKey, compareApplicationsByName,
+  findDuplicateGroups, findPersonCandidates, isMembershipApplication, isSameBirthDate, matchesApplicationForFilter,
+  matchesStateFilter, MERGE_FIELD_I18N, mergeApplications, proposeMembershipCategory, stateColor
 } from '@okr/application-util';
 import { ApplicationEditModal } from '@okr/application-ui';
 
-/** the course name of a course registration; the key itself while the course is unknown (deleted, not yet loaded), '' for other applications */
+/** the course name of an application (courseKey, else the 1.125 courseId property); the key itself while the course is unknown (deleted, not yet loaded), '' without a course */
 function courseNameOf(app: ApplicationModel, names: Record<string, string>): string {
   const key = applicationCourseKey(app);
   return key ? (names[key] ?? key) : '';
+}
+
+/** The list's «Art» filter: the kind of application, or only the likely duplicates (spec 1.152 §9). */
+export type ApplicationListFilter = ApplicationForFilter | 'duplicates';
+
+function courseStateLabel(app: ApplicationModel, i18n: ApplicationI18n): string {
+  switch (app.courseState ?? '') {
+    case 'registered': return i18n.course_state_registered();
+    case 'invited':    return i18n.course_state_invited();
+    case 'accepted':   return i18n.course_state_accepted();
+    case 'declined':   return i18n.course_state_declined();
+    default:           return '';
+  }
+}
+
+/** «Name, Vorname · 01.02.2026» — one application of a duplicate group in the merge picker */
+function pickerLabel(app: ApplicationModel): string {
+  const date = app.submittedAt ? formatDate(app.submittedAt, 'dd.MM.yyyy', 'en-US') : '';
+  return [`${app.lastName}, ${app.firstName}`, date].filter(Boolean).join(' · ');
 }
 
 export const ApplicationStore = signalStore(
@@ -32,7 +53,7 @@ export const ApplicationStore = signalStore(
     searchTerm:  '',
     stateFilter: 'open' as string,
     kindFilter:  'all' as string,
-    forFilter:   'all' as ApplicationForFilter,
+    forFilter:   'all' as ApplicationListFilter,
   }),
 
   withProps(() => ({
@@ -43,6 +64,7 @@ export const ApplicationStore = signalStore(
     modalController:    inject(ModalController),
     alertService:       inject(AlertService),
     alertController:    inject(AlertController),
+    actionSheetController: inject(ActionSheetController),
     toastController:    inject(ToastController),
     router:             inject(Router),
     i18nService:        inject(I18nService),
@@ -62,19 +84,25 @@ export const ApplicationStore = signalStore(
   })),
 
   withComputed((store) => ({
+    /** application okey → okeys of its likely duplicates (A5), over all live applications */
+    duplicates: computed(() => findDuplicateGroups(store.applicationsResource.value() ?? [])),
+  })),
+
+  withComputed((store) => ({
     filteredApplications: computed(() => {
       const all  = store.applicationsResource.value() ?? [];
       const term = store.searchTerm().toLowerCase();
       const sf   = store.stateFilter();
       const kf   = store.kindFilter();
       const ff   = store.forFilter();
+      const dups = store.duplicates();
       return all
         .filter(a => !a.isArchived)
         .filter(a => matchesStateFilter(a.state, sf))
         .filter(a => kf === 'all' || a.applicationAs === kf)
-        .filter(a => matchesApplicationForFilter(a, ff))
-        .filter(a => !term || a.index.toLowerCase().includes(term))
-        .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
+        .filter(a => ff === 'duplicates' ? dups.has(a.okey) : matchesApplicationForFilter(a, ff))
+        .filter(a => !term || (a.index ?? '').toLowerCase().includes(term))
+        .sort(compareApplicationsByName);
     }),
     /** course key (`CourseModel.okey`) → course name, for the course registrations */
     courseNames: computed<Record<string, string>>(() => Object.fromEntries(
@@ -95,11 +123,18 @@ export const ApplicationStore = signalStore(
     setKindFilter(kind: string): void {
       patchState(store, { kindFilter: kind });
     },
-    setForFilter(filter: ApplicationForFilter): void {
+    setForFilter(filter: ApplicationListFilter): void {
       patchState(store, { forFilter: filter });
     },
     courseName(app: ApplicationModel): string {
       return courseNameOf(app, store.courseNames());
+    },
+    /** «Kursname · eingeladen» — the course line of a row; '' without a course */
+    courseLine(app: ApplicationModel): string {
+      return [courseNameOf(app, store.courseNames()), courseStateLabel(app, store.i18n)].filter(Boolean).join(' · ');
+    },
+    isDuplicate(app: ApplicationModel): boolean {
+      return store.duplicates().has(app.okey);
     },
 
     stateColor(state: ApplicationState): 'warning' | 'primary' | 'success' | 'danger' | 'medium' {
@@ -180,6 +215,80 @@ export const ApplicationStore = signalStore(
       // an unreadable birth date gives no age, so no proposal (as in the application form)
       const proposal = getAge(app.dateOfBirth ?? '') < 0 ? undefined : proposeMembershipCategory(app);
       await store.membershipStore.addExistingPersonToOrg(person, defaultOrg, proposal);
+    },
+
+    /**
+     * «Als Person erfassen» (spec 1.152 §9): first offers an existing person with the same first and
+     * last name (and the same date of birth, when both are known) to link instead; otherwise creates
+     * the person, its addresses and (youth) the parent. The application stays open.
+     */
+    async createPerson(app: ApplicationModel): Promise<void> {
+      if (app.personKey) return;
+      const cu = store.currentUser();
+      for (const person of findPersonCandidates(app, store.appStore.allPersons())) {
+        const dob = await store.applicationService.readPersonDateOfBirth(person.okey);
+        if (!isSameBirthDate(app.dateOfBirth, dob)) continue;
+        const dobText = dob ? fill(store.i18n.person_exists_dob(), {
+          date: convertDateFormatToString(dob, DateFormat.StoreDate, DateFormat.ViewDate, false)
+        }) : '';
+        const alert = await store.alertController.create({
+          message: fill(store.i18n.person_exists(), { name: `${person.firstName} ${person.lastName}`, dob: dobText }),
+          buttons: [
+            { text: store.i18n.person_link(),       role: 'link' },
+            { text: store.i18n.person_create_new(), role: 'create' },
+            { text: store.i18n.cancel(),            role: 'cancel' },
+          ]
+        });
+        await alert.present();
+        const { role } = await alert.onDidDismiss();
+        if (role === 'link') {
+          await store.applicationService.linkPerson(app, person.okey, cu);
+          store.applicationsResource.reload();
+          return;
+        }
+        if (role !== 'create') return;   // cancelled or dismissed
+        break;                            // «neu erfassen»: create without asking about further candidates
+      }
+      await store.applicationService.createPerson(app, cu);
+      store.applicationsResource.reload();
+    },
+
+    /**
+     * «Zusammenführen …» (spec 1.152 §9): picks the other application from the duplicate group of
+     * `keep`, lists what it brings along, then merges it into `keep` and archives it.
+     */
+    async mergeApplication(keep: ApplicationModel): Promise<void> {
+      const all    = store.applicationsResource.value() ?? [];
+      const others = (store.duplicates().get(keep.okey) ?? [])
+        .map(okey => all.find(a => a.okey === okey))
+        .filter((a): a is ApplicationModel => !!a)
+        .sort(compareApplicationsByName);
+      if (others.length === 0) return;
+
+      const imgix = store.imgixBaseUrl();
+      const opts  = createActionSheetOptions(store.i18n.merge_pick());
+      for (const other of others) {
+        opts.buttons.push(createActionSheetButton('merge.' + other.okey, pickerLabel(other), imgix));
+      }
+      opts.buttons.push(createActionSheetButton('cancel', store.i18n.cancel(), imgix, 'cancel-circle'));
+      const sheet = await store.actionSheetController.create(opts);
+      await sheet.present();
+      const { data } = await sheet.onDidDismiss();
+      const picked = typeof data?.action === 'string' && data.action.startsWith('merge.')
+        ? others.find(o => o.okey === data.action.substring('merge.'.length))
+        : undefined;
+      if (!picked) return;
+
+      const { takenFromDrop } = mergeApplications(keep, picked);
+      const labels = [...new Set(takenFromDrop)]
+        .map(f => { const k = MERGE_FIELD_I18N[f]; return k ? store.i18n[k]() : f; });
+      const message = labels.length > 0
+        ? fill(store.i18n.merge_confirm(), { fields: labels.join(', ') })
+        : store.i18n.merge_confirm_nothing();
+      const confirmed = await store.alertService.confirm(message, true);
+      if (confirmed !== true) return;
+      await store.applicationService.merge(keep, picked, store.currentUser());
+      store.applicationsResource.reload();
     },
 
     async addToGroup(_app: ApplicationModel): Promise<void> {

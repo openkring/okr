@@ -23,7 +23,10 @@ import {
   mergeApplications,
   COURSE_STATE_RANK,
   setPropertyValue,
+  findPersonCandidates,
+  isSameBirthDate,
 } from './application.util';
+import { MERGE_FIELD_I18N } from './application-i18n';
 
 describe('newApplication', () => {
   it('returns ApplicationModel with state=applied and countryCode=CH', () => {
@@ -293,6 +296,48 @@ describe('applicationCourseKey', () => {
     app.properties = [{ key: 'courseId', type: 'number', value: 5, label: 'x' }];
     expect(applicationCourseKey(app)).toBe('');
   });
+
+  it('prefers courseKey over the 1.125 courseId property', () => {
+    const app = newApplication('t');
+    app.courseKey = 'new1';
+    app.properties = [prop('courseId', 'old1')];
+    expect(applicationCourseKey(app)).toBe('new1');
+  });
+
+  it('falls back to the property when courseKey is missing on a raw document', () => {
+    const raw = { properties: [prop('courseId', 'old1')] } as unknown as ApplicationModel;
+    expect(applicationCourseKey(raw)).toBe('old1');
+    expect(applicationCourseKey({} as ApplicationModel)).toBe('');
+  });
+});
+
+describe('findPersonCandidates', () => {
+  const person = (okey: string, firstName: string, lastName: string, isArchived = false) => ({ okey, firstName, lastName, isArchived });
+  const persons = [
+    person('p1', 'Anna', 'Müller'),
+    person('p2', ' anna ', 'MÜLLER'),
+    person('p3', 'Anna', 'Meier'),
+    person('p4', 'Anna', 'Müller', true),
+  ];
+
+  it('matches normalised first + last name and skips archived persons', () => {
+    const app = mk({ firstName: 'Anna', lastName: 'Müller' });
+    expect(findPersonCandidates(app, persons).map(p => p.okey)).toEqual(['p1', 'p2']);
+  });
+
+  it('returns nothing when the application has no full name', () => {
+    expect(findPersonCandidates(mk({ firstName: '', lastName: 'Müller' }), persons)).toEqual([]);
+    expect(findPersonCandidates({} as ApplicationModel, persons)).toEqual([]);
+  });
+});
+
+describe('isSameBirthDate', () => {
+  it('excludes only when both dates are known and differ', () => {
+    expect(isSameBirthDate('20100101', '20100101')).toBe(true);
+    expect(isSameBirthDate('20100101', '20100102')).toBe(false);
+    expect(isSameBirthDate('', '20100102')).toBe(true);
+    expect(isSameBirthDate('20100101', undefined)).toBe(true);
+  });
 });
 
 function mk(o: Partial<ApplicationModel>): ApplicationModel {
@@ -380,5 +425,23 @@ describe('mergeApplications', () => {
     expect(merged.state).toBe('reviewing');
     expect(merged.personKey).toBe('person.1');
     expect(mergeApplications(mk({ personKey: 'p.k' }), drop).merged.personKey).toBe('p.k');
+  });
+});
+
+describe('MERGE_FIELD_I18N', () => {
+  it('has a label for every field a merge can take over', () => {
+    const keep = mk({ okey: 'k', firstName: '', lastName: '', email: '', submittedAt: '2026-02-01T00:00:00' });
+    const drop = mk({
+      okey: 'd', firstName: 'A', lastName: 'B', dateOfBirth: '20100101', ssnId: '756', email: 'a@b.ch', phone: '1',
+      streetName: 'S', streetNumber: '1', zipCode: '8000', city: 'Z',
+      parentFirstName: 'P', parentLastName: 'Q', parentEmail: 'p@q.ch', parentPhone: '2',
+      personKey: 'p1', taskKey: 't1', tags: 'x', notes: 'n', submittedAt: '2026-01-01T00:00:00',
+      reviewer: { key: 'r', name1: 'R', name2: '', modelType: 'person', type: '', subType: '', label: '' },
+      properties: [{ key: 'level', type: 'text', value: 'A', label: 'Level' }],
+      courseKey: 'c1', courseState: 'invited',
+    });
+    const { takenFromDrop } = mergeApplications(keep, drop);
+    expect(takenFromDrop.filter(f => !MERGE_FIELD_I18N[f])).toEqual([]);
+    expect(takenFromDrop).toContain('courseState');
   });
 });

@@ -7,8 +7,10 @@
       "label": "Type",
       "all": "All",
       "membership": "Membership",
-      "course": "Courses"
-    }
+      "course": "Courses",
+      "duplicates": "Duplicates"
+    },
+    "duplicate": "Duplicate?"
   },
   "add": {
     "group": {
@@ -29,7 +31,8 @@
   "delete": {
     "confirm": "Do you really want to delete this application?",
     "conf": "Application deleted.",
-    "error": "Deletion failed."
+    "error": "Deletion failed.",
+    "label": "Delete"
   },
   "deny": {
     "label": "Reject",
@@ -116,5 +119,38 @@
     "junior": "Junior",
     "active": "Active",
     "candidate": "Candidate"
+  },
+  "course_state": {
+    "registered": "registered",
+    "invited": "invited",
+    "accepted": "accepted",
+    "declined": "declined"
+  },
+  "person": {
+    "label": "Add as person",
+    "exists": "{name}{dob} already exists — link this person?",
+    "exists_dob": ", born {date}",
+    "link": "link",
+    "create_new": "create new",
+    "conf": "Person added.",
+    "error": "The person could not be added.",
+    "link_conf": "Person linked."
+  },
+  "merge": {
+    "label": "Merge …",
+    "pick": "Merge with which application?",
+    "confirm": "Taken over from the other application: {fields}. The other application is archived afterwards.",
+    "confirm_nothing": "The other application brings no additional details. It is archived afterwards.",
+    "button": "Merge",
+    "conf": "Applications merged.",
+    "error": "The applications could not be merged.",
+    "field": {
+      "person": "linked person",
+      "task": "task",
+      "course": "course",
+      "course_state": "course status",
+      "notes": "notes",
+      "tags": "tags"
+    }
   }
 }

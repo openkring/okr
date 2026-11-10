@@ -7,7 +7,7 @@ import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import {
-  ApplicationCollection, ApplicationModel, ApplicationState, AvatarInfo,
+  AddressCollection, AddressModel, ApplicationCollection, ApplicationModel, ApplicationState, AvatarInfo,
   PersonalRelModel, TaskModel, UserModel
 } from '@okr/shared-models';
 import {
@@ -24,9 +24,16 @@ import { createFavoriteAddress } from '@okr/subject-address-util';
 import { PersonService } from '@okr/subject-person-data-access';
 import { TaskService } from '@okr/project-task-data-access';
 import {
-  getApplicationIndex, isMembershipApplication, newParentPerson, toPersonModel
+  getApplicationIndex, isMembershipApplication, mergeApplications, newParentPerson, toPersonModel
 } from '@okr/application-util';
 import { PFX } from './scope';
+
+/** scope of the application list; the strings of the 1.152 list actions live there */
+const LIST_PFX = '@subject/application/feature.';
+
+function isOpenApplication(app: ApplicationModel): boolean {
+  return app.state === 'applied' || app.state === 'reviewing';
+}
 
 @Injectable({ providedIn: 'root' })
 export class ApplicationService {
@@ -57,6 +64,11 @@ export class ApplicationService {
     mail_failed:        PFX + 'mail.send_failed',
     mail_accepted:      PFX + 'mail.subject_accepted',
     mail_rejected:      PFX + 'mail.subject_rejected',
+    person_conf:        LIST_PFX + 'person.conf',
+    person_error:       LIST_PFX + 'person.error',
+    link_conf:          LIST_PFX + 'person.link_conf',
+    merge_conf:         LIST_PFX + 'merge.conf',
+    merge_error:        LIST_PFX + 'merge.error',
   });
 
   private readonly sendEmailFn = httpsCallable<unknown, void>(
@@ -143,19 +155,8 @@ export class ApplicationService {
     if (!isMembershipApplication(application)) return undefined;
     if (application.state !== 'reviewing') return undefined;
 
-    const tenantId = this.env.tenantId;
-    const kid      = toPersonModel(application, tenantId);
-    const kidsKey  = await this.personService.create(kid, currentUser);
-    if (!kidsKey) throw new Error('ApplicationService.accept: personService.create failed');
-
-    await this.createApplicantAddresses(application, kidsKey, currentUser);
-
-    // Defensive: a youth application without any guardian name (e.g. an old form that hid the guardian block
-    // for 18/19-year-olds) must not create a nameless parent person — the memberAdmin adds the parent by hand.
-    const hasParentName = !!application.parentFirstName?.trim() || !!application.parentLastName?.trim();
-    if (application.applicationAs === 'youth' && hasParentName) {
-      await this.provisionYouthExtras(application, kidsKey, kid, tenantId, currentUser);
-    }
+    // the person exists already when «Als Person erfassen» ran (or a person was linked) before accepting
+    const kidsKey = application.personKey || await this.provisionPerson(application, currentUser);
 
     application.state     = 'closed.approved';
     application.closedAt  = new Date().toISOString();
@@ -167,6 +168,87 @@ export class ApplicationService {
     void this.activityService.log('application', 'accept', currentUser,
       `${application.okey}: ${application.lastName}/${application.firstName} (${application.applicationAs}) → closed.approved`);
     return kidsKey;
+  }
+
+  /**
+   * «Als Person erfassen» (spec 1.152 §9): the person part of `accept()` — person, addresses and,
+   * for youth, the parent — without deciding the application. Sets `personKey`, leaves `state` open.
+   * Offered for every open application without a person, course registrations included (A8).
+   * Returns the person key, or undefined when nothing was created.
+   */
+  public async createPerson(application: ApplicationModel, currentUser?: UserModel): Promise<string | undefined> {
+    if (application.personKey) return application.personKey;
+    if (!isOpenApplication(application)) return undefined;
+    try {
+      const personKey = await this.provisionPerson(application, currentUser);
+      application.personKey = personKey;
+      await this.writeSilently(application, currentUser);
+      await showToast(this.toastController, this.i18n.person_conf());
+      void this.activityService.log('application', 'create-person', currentUser,
+        `${application.okey}: ${application.lastName}/${application.firstName} → person ${personKey}`);
+      return personKey;
+    } catch (err) {
+      console.error('ApplicationService.createPerson:', err);
+      await showToast(this.toastController, this.i18n.person_error());
+      return undefined;
+    }
+  }
+
+  /** Links an existing person instead of creating one: sets `personKey` only (spec 1.152 §9). */
+  public async linkPerson(application: ApplicationModel, personKey: string, currentUser?: UserModel): Promise<void> {
+    application.personKey = personKey;
+    await this.writeSilently(application, currentUser);
+    await showToast(this.toastController, this.i18n.link_conf());
+    void this.activityService.log('application', 'link-person', currentUser,
+      `${application.okey}: ${application.lastName}/${application.firstName} → person ${personKey}`);
+  }
+
+  /**
+   * The date of birth of a person (StoreDate), or '' when unknown. It lives only in the address vault
+   * (`dob` channel, privileged read — the applications list is privileged-only).
+   */
+  public async readPersonDateOfBirth(personKey: string): Promise<string> {
+    const query = getSystemQuery(this.env.tenantId);
+    query.push({ key: 'addressChannel', operator: '==', value: 'dob' });
+    query.push({ key: 'parentKey', operator: '==', value: 'person.' + personKey });
+    try {
+      const addresses = await firstValueFrom(
+        this.firestoreService.searchData<AddressModel>(AddressCollection, query, 'isFavorite', 'desc')
+      );
+      return addresses[0]?.dob ?? '';
+    } catch {
+      return '';
+    }
+  }
+
+  /**
+   * «Zusammenführen» (spec 1.152 §9): `keep` takes every empty field from `drop` (mergeApplications),
+   * then `drop` is archived (getDeletePatch) with a note and its open task is closed.
+   * Returns the merged application, or undefined when the write failed.
+   */
+  public async merge(keep: ApplicationModel, drop: ApplicationModel, currentUser?: UserModel): Promise<ApplicationModel | undefined> {
+    if (keep.okey === drop.okey) return undefined;
+    const { merged } = mergeApplications(keep, drop);
+    merged.index = getApplicationIndex(merged);
+    const keptKey = await this.firestoreService.updateModel<ApplicationModel>(
+      ApplicationCollection, merged, false, '', this.i18n.merge_error(), currentUser
+    );
+    if (!keptKey) return undefined;
+
+    const note = `zusammengeführt in ${keep.okey}`;
+    drop.notes = drop.notes ? `${drop.notes}\n${note}` : note;
+    Object.assign(drop, getDeletePatch(drop.tenants, this.env.tenantId));
+    await this.firestoreService.updateModel<ApplicationModel>(
+      ApplicationCollection, drop, false, this.i18n.merge_conf(), this.i18n.merge_error(), currentUser
+    );
+    // only an open drop still has an open task (accept/deny/cancel closed the others); when the kept
+    // application took that task over (it had none), the task stays open with it
+    if (isOpenApplication(drop) && drop.taskKey && drop.taskKey !== merged.taskKey) {
+      await this.closeLinkedTask(drop, currentUser, note);
+    }
+    void this.activityService.log('application', 'merge', currentUser,
+      `${drop.okey} → ${keep.okey}: ${merged.lastName}/${merged.firstName}`);
+    return merged;
   }
 
   public async deny(application: ApplicationModel, reason: string, currentUser?: UserModel): Promise<void> {
@@ -183,6 +265,32 @@ export class ApplicationService {
   }
 
   /*----------- Private helpers ----------- */
+
+  /** Creates the applicant's person, addresses and (youth) parent; returns the person key. Writes nothing on the application. */
+  private async provisionPerson(application: ApplicationModel, currentUser?: UserModel): Promise<string> {
+    const tenantId = this.env.tenantId;
+    const kid      = toPersonModel(application, tenantId);
+    const kidsKey  = await this.personService.create(kid, currentUser);
+    if (!kidsKey) throw new Error('ApplicationService.provisionPerson: personService.create failed');
+
+    await this.createApplicantAddresses(application, kidsKey, currentUser);
+
+    // Defensive: a youth application without any guardian name (e.g. an old form that hid the guardian block
+    // for 18/19-year-olds) must not create a nameless parent person — the memberAdmin adds the parent by hand.
+    const hasParentName = !!application.parentFirstName?.trim() || !!application.parentLastName?.trim();
+    if (application.applicationAs === 'youth' && hasParentName) {
+      await this.provisionYouthExtras(application, kidsKey, kid, tenantId, currentUser);
+    }
+    return kidsKey;
+  }
+
+  /** an application write without its own toast (the caller tells the user) */
+  private async writeSilently(application: ApplicationModel, currentUser?: UserModel): Promise<void> {
+    application.index = getApplicationIndex(application);
+    await this.firestoreService.updateModel<ApplicationModel>(
+      ApplicationCollection, application, false, '', '', currentUser
+    );
+  }
 
   private async createApplicantAddresses(
     app: ApplicationModel, kidsKey: string, currentUser?: UserModel
@@ -285,14 +393,14 @@ export class ApplicationService {
     await this.closeLinkedTask(application, currentUser);
   }
 
-  private async closeLinkedTask(application: ApplicationModel, currentUser?: UserModel): Promise<void> {
+  private async closeLinkedTask(application: ApplicationModel, currentUser?: UserModel, reason = application.closeReason): Promise<void> {
     if (!application.taskKey) return;
     const task = await firstValueFrom(this.taskService.read(application.taskKey));
     if (!task) return;
     task.state          = 'closed';
     task.completionDate = getTodayStr();
-    if (application.closeReason) {
-      task.notes = `${task.notes}\n[${application.state}] ${application.closeReason}`.trim();
+    if (reason) {
+      task.notes = `${task.notes}\n[${application.state}] ${reason}`.trim();
     }
     await this.taskService.update(task, currentUser);
   }

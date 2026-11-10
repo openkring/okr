@@ -7,8 +7,10 @@
       "label": "Type",
       "all": "Toutes",
       "membership": "Adhésion",
-      "course": "Cours"
-    }
+      "course": "Cours",
+      "duplicates": "Doublons"
+    },
+    "duplicate": "Doublon ?"
   },
   "add": {
     "group": {
@@ -29,7 +31,8 @@
   "delete": {
     "confirm": "Voulez-vous vraiment supprimer cette demande ?",
     "conf": "Demande supprimée.",
-    "error": "La suppression a échoué."
+    "error": "La suppression a échoué.",
+    "label": "Supprimer"
   },
   "deny": {
     "label": "Refuser",
@@ -116,5 +119,38 @@
     "junior": "Junior",
     "active": "Actif/active",
     "candidate": "Candidat/e"
+  },
+  "course_state": {
+    "registered": "inscrit·e",
+    "invited": "invité·e",
+    "accepted": "accepté",
+    "declined": "refusé"
+  },
+  "person": {
+    "label": "Enregistrer comme personne",
+    "exists": "{name}{dob} existe déjà — lier cette personne ?",
+    "exists_dob": ", né·e le {date}",
+    "link": "lier",
+    "create_new": "créer une nouvelle",
+    "conf": "Personne enregistrée.",
+    "error": "La personne n'a pas pu être enregistrée.",
+    "link_conf": "Personne liée."
+  },
+  "merge": {
+    "label": "Fusionner …",
+    "pick": "Fusionner avec quelle demande ?",
+    "confirm": "Repris de l'autre demande : {fields}. L'autre demande est ensuite archivée.",
+    "confirm_nothing": "L'autre demande n'apporte aucune information supplémentaire. Elle est ensuite archivée.",
+    "button": "Fusionner",
+    "conf": "Demandes fusionnées.",
+    "error": "Les demandes n'ont pas pu être fusionnées.",
+    "field": {
+      "person": "personne liée",
+      "task": "tâche",
+      "course": "cours",
+      "course_state": "statut du cours",
+      "notes": "notes",
+      "tags": "mots-clés"
+    }
   }
 }

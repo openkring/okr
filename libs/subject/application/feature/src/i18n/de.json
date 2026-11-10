@@ -7,8 +7,10 @@
       "label": "Art",
       "all": "Alle",
       "membership": "Mitgliedschaft",
-      "course": "Kurse"
-    }
+      "course": "Kurse",
+      "duplicates": "Duplikate"
+    },
+    "duplicate": "Duplikat?"
   },
   "add": {
     "group": {
@@ -29,7 +31,8 @@
   "delete": {
     "confirm": "Soll dieser Antrag wirklich gelöscht werden?",
     "conf": "Antrag gelöscht.",
-    "error": "Löschen fehlgeschlagen."
+    "error": "Löschen fehlgeschlagen.",
+    "label": "Löschen"
   },
   "deny": {
     "label": "Ablehnen",
@@ -116,5 +119,38 @@
     "junior": "Junior/in",
     "active": "Aktiv",
     "candidate": "Kandidat/in"
+  },
+  "course_state": {
+    "registered": "angemeldet",
+    "invited": "eingeladen",
+    "accepted": "zugesagt",
+    "declined": "abgesagt"
+  },
+  "person": {
+    "label": "Als Person erfassen",
+    "exists": "Es gibt schon {name}{dob} — diese Person verknüpfen?",
+    "exists_dob": ", geb. {date}",
+    "link": "verknüpfen",
+    "create_new": "neu erfassen",
+    "conf": "Person erfasst.",
+    "error": "Die Person konnte nicht erfasst werden.",
+    "link_conf": "Person verknüpft."
+  },
+  "merge": {
+    "label": "Zusammenführen …",
+    "pick": "Mit welchem Antrag zusammenführen?",
+    "confirm": "Aus dem anderen Antrag werden übernommen: {fields}. Der andere Antrag wird danach archiviert.",
+    "confirm_nothing": "Der andere Antrag bringt keine zusätzlichen Angaben mit. Er wird danach archiviert.",
+    "button": "Zusammenführen",
+    "conf": "Anträge zusammengeführt.",
+    "error": "Die Anträge konnten nicht zusammengeführt werden.",
+    "field": {
+      "person": "verknüpfte Person",
+      "task": "Aufgabe",
+      "course": "Kurs",
+      "course_state": "Kursstatus",
+      "notes": "Notizen",
+      "tags": "Stichworte"
+    }
   }
 }

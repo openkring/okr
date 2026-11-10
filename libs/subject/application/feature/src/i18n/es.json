@@ -7,8 +7,10 @@
       "label": "Tipo",
       "all": "Todas",
       "membership": "Membresía",
-      "course": "Cursos"
-    }
+      "course": "Cursos",
+      "duplicates": "Duplicados"
+    },
+    "duplicate": "¿Duplicado?"
   },
   "add": {
     "group": {
@@ -29,7 +31,8 @@
   "delete": {
     "confirm": "¿Desea realmente eliminar esta solicitud?",
     "conf": "Solicitud eliminada.",
-    "error": "La eliminación falló."
+    "error": "La eliminación falló.",
+    "label": "Eliminar"
   },
   "deny": {
     "label": "Rechazar",
@@ -116,5 +119,38 @@
     "junior": "Junior",
     "active": "Activo/a",
     "candidate": "Candidato/a"
+  },
+  "course_state": {
+    "registered": "inscrito/a",
+    "invited": "invitado/a",
+    "accepted": "aceptado",
+    "declined": "rechazado"
+  },
+  "person": {
+    "label": "Registrar como persona",
+    "exists": "Ya existe {name}{dob}: ¿vincular esta persona?",
+    "exists_dob": ", nacido/a el {date}",
+    "link": "vincular",
+    "create_new": "crear nueva",
+    "conf": "Persona registrada.",
+    "error": "No se ha podido registrar la persona.",
+    "link_conf": "Persona vinculada."
+  },
+  "merge": {
+    "label": "Fusionar …",
+    "pick": "¿Fusionar con qué solicitud?",
+    "confirm": "Se toma de la otra solicitud: {fields}. Después, la otra solicitud se archiva.",
+    "confirm_nothing": "La otra solicitud no aporta datos adicionales. Después se archiva.",
+    "button": "Fusionar",
+    "conf": "Solicitudes fusionadas.",
+    "error": "No se han podido fusionar las solicitudes.",
+    "field": {
+      "person": "persona vinculada",
+      "task": "tarea",
+      "course": "curso",
+      "course_state": "estado del curso",
+      "notes": "notas",
+      "tags": "etiquetas"
+    }
   }
 }

@@ -106,8 +106,13 @@ export function matchesApplicationForFilter(app: ApplicationModel, filter: Appli
 /** Key of the typed property that carries the course of a course registration (value = `CourseModel.okey`). */
 export const APPLICATION_COURSE_PROPERTY = 'courseId';
 
-/** The course a course registration is for (the `courseId` property value); '' when there is none. */
+/**
+ * The course an application is on: `courseKey` (spec 1.152), else the 1.125 B `courseId` property
+ * value of a course registration (spec 1.152 §13); '' when there is none.
+ */
 export function applicationCourseKey(app: ApplicationModel): string {
+  const key = app.courseKey ?? '';
+  if (key) return key;
   const value = (app.properties ?? []).find(p => p.key === APPLICATION_COURSE_PROPERTY)?.value;
   return typeof value === 'string' ? value : '';
 }
@@ -267,4 +272,25 @@ export function mergeApplications(keep: ApplicationModel, drop: ApplicationModel
   }
 
   return { merged, takenFromDrop: taken };
+}
+
+/**
+ * Persons that may already be the applicant (spec 1.152 §9 «Als Person erfassen»): same normalised
+ * first + last name. Archived persons are ignored. The date of birth lives in the address vault, so
+ * the caller compares it separately (`isSameBirthDate`).
+ */
+export function findPersonCandidates<P extends Pick<PersonModel, 'okey' | 'firstName' | 'lastName'> & { isArchived?: boolean }>(
+  app: ApplicationModel, persons: P[]
+): P[] {
+  const last = normName(app.lastName);
+  const first = normName(app.firstName);
+  if (!last || !first) return [];
+  return persons.filter(p => !p.isArchived && normName(p.lastName) === last && normName(p.firstName) === first);
+}
+
+/** Two birth dates contradict only when both are known and differ; an unknown one never excludes a match. */
+export function isSameBirthDate(a: string | undefined | null, b: string | undefined | null): boolean {
+  const x = (a ?? '').trim();
+  const y = (b ?? '').trim();
+  return !x || !y || x === y;
 }
