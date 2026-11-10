@@ -1712,10 +1712,17 @@ service cloud.firestore {
 
     match /applications/{appId} {
       allow read:   if isPrivileged() && (resource == null || belongsToTenant(resource.data));
+      // A client create never puts the application on a course (spec 1.152): the course choice
+      // goes through submitForm (Admin SDK, which checks audience and places), and courseState /
+      // invitedAt / answeredAt are written by the course callables only. Missing = '' (old clients).
       allow create: if request.resource.data.state == 'applied'
                      && request.resource.data.taskKey == ''
                      && request.resource.data.personKey == ''
-                     && request.resource.data.tenants.size() == 1;
+                     && request.resource.data.tenants.size() == 1
+                     && request.resource.data.get('courseKey', '') == ''
+                     && request.resource.data.get('courseState', '') == ''
+                     && request.resource.data.get('invitedAt', '') == ''
+                     && request.resource.data.get('answeredAt', '') == '';
       allow update: if isPrivileged() && canWriteTenant(resource.data);
       allow delete: if false;
     }
