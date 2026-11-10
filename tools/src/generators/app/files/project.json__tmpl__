@@ -242,6 +242,21 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/cms/website/data-access/src/i18n",
+            "output": "./assets/i18n/cms/website/data-access"
+          },
+          {
+            "glob": "*.json",
+            "input": "libs/cms/website/feature/src/i18n",
+            "output": "./assets/i18n/cms/website/feature"
+          },
+          {
+            "glob": "*.json",
+            "input": "libs/cms/website/ui/src/i18n",
+            "output": "./assets/i18n/cms/website/ui"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/comment/feature/src/i18n",
             "output": "./assets/i18n/comment/feature"
           },

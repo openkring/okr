@@ -19,6 +19,7 @@
     "@okr/cms-section-feature": "*",
     "@okr/cms-menu-feature": "*",
     "@okr/cms-icon-feature": "*",
+    "@okr/cms-website-feature": "*",
     "@okr/user-feature": "*",
     "@okr/profile-feature": "*",
     "@okr/security-processing-feature": "*",

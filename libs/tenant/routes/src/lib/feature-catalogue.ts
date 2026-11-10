@@ -296,6 +296,14 @@ const cms: BlockRoutes = {
       canActivate: [isAuthenticatedGuard],
       children: [
         {
+          // Website sitemap editor (spec 1.153): the navigation tree of `websites/{siteId}`.
+          // MUST stay above ':id/:contextMenuName', which would swallow it as id='website' /
+          // contextMenuName='sitemap'. `siteId` binds to the WebsiteSitemap input.
+          path: 'website/sitemap/:siteId',
+          canActivate: [isContentAdminGuard()],
+          loadComponent: () => import('@okr/cms-website-feature').then(m => m.WebsiteSitemap),
+        },
+        {
           path: ':id/:contextMenuName',
           loadComponent: () => import('@okr/cms-page-feature').then(m => m.PageDispatcher),
           data: { color: 'secondary' },
