@@ -12,8 +12,16 @@
  * The decision is `planFinanceSplit` (`libs/tenant/util/src/lib/finance-split.util.ts`, unit-tested); this
  * script only reads and writes. Idempotent: a second run plans nothing.
  *
- * Run it AFTER the functions deploy that ships the split catalogue (`applyFeatureSelection` and every
- * function importing FEATURE_BLOCKS) — an older function would not know the three new block ids.
+ * DEPLOY ORDER (binding):
+ *   1. functions deploy — `applyFeatureSelection`, `setSubscriptionOptions` and every function bundling
+ *      FEATURE_BLOCKS / ADD_ON_BLOCKS (a full functions deploy is simplest);
+ *   2. this migration with `--apply`;
+ *   3. hosting release of the apps.
+ * Running the migration before the new client is safe: the old client and old functions ignore the three
+ * unknown block ids. The reverse order is not: a new client before the migration hides Spesen, Kostenstellen,
+ * Anlagen, the OCR rules and the Finanzen accordion for every finance tenant until the migration runs.
+ *
+ * Writes use `FieldValue.arrayUnion`, so a concurrent picker save or options change is never overwritten.
  *
  * Usage:
  *   node scripts/migrate-finance-split.mjs                 # dry run (default): prints what would change
@@ -24,7 +32,7 @@
  */
 
 import { getApps, initializeApp } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { createJiti } from 'jiti';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -71,8 +79,12 @@ for (const configDoc of configs) {
 
   if (!APPLY) continue;
   // Options first, then the blocks: features never run ahead of billing (same order as setSubscriptionOptions).
-  if (plan.options) await db.collection(SUBSCRIPTIONS).doc(tenantId).set({ options: plan.options }, { merge: true });
-  if (plan.enabledFeatures) await db.collection(APP_CONFIG).doc(tenantId).update({ enabledFeatures: plan.enabledFeatures });
+  if (plan.addOptions.length > 0) {
+    await db.collection(SUBSCRIPTIONS).doc(tenantId).set({ options: FieldValue.arrayUnion(...plan.addOptions) }, { merge: true });
+  }
+  if (plan.addBlocks.length > 0) {
+    await db.collection(APP_CONFIG).doc(tenantId).update({ enabledFeatures: FieldValue.arrayUnion(...plan.addBlocks) });
+  }
   console.log(`  ${tenantId}: written`);
 }
 
