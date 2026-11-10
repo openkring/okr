@@ -6,7 +6,8 @@ vi.mock('firebase-admin/firestore', () => ({ getFirestore: () => h.db }));
 import { createSetSubscriptionOptions, paidOptionChanges, setBillingEmail } from './options';
 import { createApplyFeatureSelection } from '../tenant/apply-feature-selection';
 import { fakeDb as baseFakeDb, type Store } from '../credit/testing/credit-fake-db';
-import type { FeatureBlock } from '@okr/tenant-util';
+import { FEATURE_BLOCKS, type FeatureBlock } from '@okr/tenant-util';
+import { ADD_ON_BLOCKS } from '@okr/business-metering-util';
 
 const block = (id: string, over: Partial<FeatureBlock> = {}): FeatureBlock => ({
   id, bundle: 'special', label: `@f.${id}`, icon: 'help-circle', defaultAvailability: 'ga',
@@ -16,7 +17,7 @@ const CATALOGUE = [
   block('person'), block('buchhaltung', { dependsOn: ['person'] }), block('calevent'),
   block('reports', { dependsOn: ['buchhaltung'] }),
 ];
-// stubbed option -> blocks mapping (the real one is empty until the owner confirms it)
+// stubbed option -> blocks mapping (the real ADD_ON_BLOCKS is pinned against FEATURE_BLOCKS below)
 const MAP = { buchhaltung: ['buchhaltung'], crm: [] as string[] };
 
 /** fakeDb has no WriteBatch (commitChunked needs one) and no `parent` on refs: add both. */
@@ -39,6 +40,23 @@ const seed = (billing: 'stripe' | 'exempt' | null, options: string[] = [], enabl
   return store;
 };
 const req = (data: unknown) => ({ app: {}, auth: { uid: 'u1', token: {} }, data }) as never;
+
+describe('ADD_ON_BLOCKS against the real catalogue (finance split, 2026-11-10)', () => {
+  it('maps every option to existing, non-core blocks, one option per block', () => {
+    const byId = new Map(FEATURE_BLOCKS.map(b => [b.id, b]));
+    const blocks = Object.values(ADD_ON_BLOCKS).flat();
+    blocks.forEach(id => {
+      expect(byId.has(id), id).toBe(true);
+      expect(byId.get(id)?.core, id).toBeFalsy();
+    });
+    expect(new Set(blocks).size).toBe(blocks.length);
+  });
+
+  it('fences the split blocks by their own option: enabling expense needs spesen-ocr, not buchhaltung', () => {
+    expect(paidOptionChanges(['finance'], ['finance', 'expense'], ['buchhaltung'])).toEqual(['spesen-ocr']);
+    expect(paidOptionChanges(['finance'], ['finance', 'expense'], ['buchhaltung', 'spesen-ocr'])).toEqual([]);
+  });
+});
 
 describe('paidOptionChanges', () => {
   it('lists newly enabled paid ids that are not allowed', () => {

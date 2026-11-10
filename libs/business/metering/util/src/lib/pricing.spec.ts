@@ -229,7 +229,15 @@ describe('transactionAmount', () => {
 describe('optionBlocks', () => {
   it('maps every priced option and returns [] for the unmapped or unknown', () => {
     expect(Object.keys(ADD_ON_BLOCKS).sort()).toEqual(Object.keys(ADD_ON_PRICES).sort());
-    expect(optionBlocks('buchhaltung')).toEqual([]);
+    expect(optionBlocks('buchhaltung')).toEqual(['finance']);
+    expect(optionBlocks('kostenrechnung')).toEqual(['cost-accounting']);
+    expect(optionBlocks('spesen-ocr')).toEqual(['expense']);
+    expect(optionBlocks('anlagen')).toEqual(['asset']);
+    expect(optionBlocks('logbuch')).toEqual(['trip']);
+    expect(optionBlocks('crm')).toEqual(['business']);
+    expect(optionBlocks('lohnbuchhaltung')).toEqual([]);
+    expect(optionBlocks('projekte-zeiterfassung')).toEqual([]);
+    expect(optionBlocks('shop')).toEqual([]);
     expect(optionBlocks('nope')).toEqual([]);
     expect(optionBlocks('toString')).toEqual([]);
   });

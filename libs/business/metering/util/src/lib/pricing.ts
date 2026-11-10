@@ -62,19 +62,20 @@ export const ADD_ON_PRICES: Readonly<Record<string, number>> = {
 };
 
 /**
- * Which feature-catalogue block ids each paid option switches on (option id -> block ids). Empty until the
- * owner has confirmed the mapping (1.32 §8.4 `finance` split): an option with no block is not offered yet.
+ * Which feature-catalogue block ids each paid option switches on (option id -> block ids). Owner decision
+ * 2026-11-10 (1.32 §8.4, the `finance` split): one option, one block. An option mapped to [] is not sellable
+ * yet (no block exists) — `setSubscriptionOptions` refuses it and the Abo page shows «bald verfügbar».
  */
 export const ADD_ON_BLOCKS: Readonly<Record<string, readonly string[]>> = {
-  buchhaltung: [],
-  crm: [],
+  buchhaltung: ['finance'],
+  crm: ['business'],
   lohnbuchhaltung: [],
   'projekte-zeiterfassung': [],
-  kostenrechnung: [],
+  kostenrechnung: ['cost-accounting'],
   shop: [],
-  'spesen-ocr': [],
-  anlagen: [],
-  logbuch: [],
+  'spesen-ocr': ['expense'],
+  anlagen: ['asset'],
+  logbuch: ['trip'],
 };
 
 /** The catalogue blocks of a paid option ([] when unknown or not mapped yet). Pass `map` to override (tests). */
