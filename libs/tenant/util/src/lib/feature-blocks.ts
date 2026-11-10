@@ -136,10 +136,11 @@ function resourceMenuParent(children: MenuSpec[]): MenuSpec {
  * label `@main.finance.title`; its own name/url/label carry no tenant key). A SHARED parent since the
  * finance split (2026-11-10): its catalogued children belong to `expense` (Spesen) and `cost-accounting`
  * (Meine Kostenstellen), each redeclaring this node with its own slice, same pattern as `cmsMenuParent`.
- * `finance` itself declares no child of it any more, so it does not declare the parent either — a
- * tenant with Buchhaltung alone would otherwise get an empty accordion. scs's tenant-bespoke children
- * (`f_fees`, `f_pay`, `f_gss`, `f_versicherung`, `finance-docs`, `invoice-my`) have no owner and render
- * whenever the parent does. Children are APPENDED, never replaced (`planMenuOps`).
+ * `finance` declares it too, with NO catalogued child: its own rows under «Finanzen» are the tenant-bespoke
+ * ones (scs: `invoice-my`, `f_fees`, `f_pay`, `f_gss`, `f_versicherung`, `finance-docs`), which have no
+ * owner and are never catalogued. Declaring the parent keeps the accordion for a Buchhaltung-only tenant;
+ * `MenuStore.isVisible` hides a `sub` none of whose children is visible, so a tenant with no row under it
+ * sees no empty accordion. Children are APPENDED, never replaced (`planMenuOps`).
  */
 function financeMenuParent(children: MenuSpec[]): MenuSpec {
   return {
@@ -1472,6 +1473,8 @@ const finance: FeatureBlock = {
     'periods', 'vat-codes',
   ],
   menu: [
+    // «Finanzen»: the parent only — finance's rows under it are tenant-bespoke (see `financeMenuParent`).
+    financeMenuParent([]),
     // The context wrappers below are catalogued even though NO catalogued `navigate` url points
     // at them — every live url that does is one of the excluded tenant-bespoke `scsf_*`/
     // `gssf_*` entries. They are required all the same: each is the `:contextMenuName`

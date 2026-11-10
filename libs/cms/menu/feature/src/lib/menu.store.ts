@@ -15,7 +15,7 @@ import { AlertService, AppNavigationService, dismissOverlay, isInSplitPane, lazy
 import { I18nService } from '@okr/shared-i18n';
 import { ChatStatusService } from '@okr/shared-data-access';
 
-import { expandMenuTokens, getRepoUrl, lacksBooks, MENU_I18N_KEYS, MenuTokenContext, resolveMenuLabelKey, resolveMenuUrl } from '@okr/cms-menu-util';
+import { expandMenuTokens, getRepoUrl, isMenuNodeVisible, lacksBooks, MENU_I18N_KEYS, MenuTokenContext, resolveMenuLabelKey, resolveMenuUrl } from '@okr/cms-menu-util';
 
 import { MenuItemsStore } from './menu-items.store';
 
@@ -94,20 +94,23 @@ export const _MenuStore = signalStore(
     //
     // Filtering happens on the NAME list (see `menuItem` below), so a hidden key never
     // reaches the renderer and cannot produce a «Missing:» placeholder of its own.
+    // A row that opens the default books ('@BOOKS@') is hidden while the app has none. And ANY submenu
+    // (`sub`) none of whose children would render is hidden too (`isMenuNodeVisible`): the accounting menu of
+    // a tenant without books, «Finanzen» of a tenant with neither Spesen nor Kostenrechnung (finance split,
+    // 2026-11-10) — an empty accordion is a dead row.
     isVisible: (key: string): boolean => {
-      if (store.featureStore.hiddenMenuKeys().has(key)) return false;
-      // A row that opens the default books ('@BOOKS@') is hidden while the app has none — and so is a
-      // submenu whose every child does (the accounting menu of a tenant without books).
+      const hiddenKeys = store.featureStore.hiddenMenuKeys();
+      const effective = store.featureStore.effective();
       const booksCtx = { version: '', booksId: store.selectedBooks.current() };
       const all = store.menuItemsStore.menuItems() ?? [];
-      const item = all.find(i => i.name === key);
-      if (item && lacksBooks(item.url ?? '', booksCtx)) return false;
-      if (item?.action === 'sub' && (item.menuItems?.length ?? 0) > 0) {
-        const kids = (item.menuItems ?? []).map(k => all.find(i => i.name === k)).filter((i): i is MenuItemModel => !!i);
-        if (kids.length > 0 && kids.every(k => lacksBooks(k.url ?? '', booksCtx))) return false;
-      }
-      const owners = blockOwnersOfMenuKey(FEATURE_BLOCKS, key);
-      return owners.length === 0 || owners.some(id => store.featureStore.effective().has(id));
+      const byName = (name: string): MenuItemModel | undefined => all.find(i => i.name === name);
+      const rowVisible = (k: string, item: MenuItemModel | undefined): boolean => {
+        if (hiddenKeys.has(k)) return false;
+        if (item && lacksBooks(item.url ?? '', booksCtx)) return false;
+        const owners = blockOwnersOfMenuKey(FEATURE_BLOCKS, k);
+        return owners.length === 0 || owners.some(id => effective.has(id));
+      };
+      return isMenuNodeVisible(key, byName, rowVisible);
     },
   })),
   withProps((store) => ({

@@ -310,6 +310,48 @@ describe('MenuStore', () => {
    * that the confirmation is asked only when a fork will really happen, and that declining it
    * actually stops the write. The decision logic itself is covered by `menu-ownership.util.spec`.
    */
+  // Finance split (2026-11-10): «Finanzen» (`finance-menu`) is declared by finance, expense and cost-accounting.
+  // A Buchhaltung-only tenant keeps the accordion with its own (tenant-bespoke) rows; an accordion none of whose
+  // children renders is hidden instead of showing empty.
+  describe('empty submenus', () => {
+    const doc = (name: string, action: string, menuItems: string[] = [], url = '') =>
+      ({ okey: name, name, action, url, menuItems }) as unknown as MenuItemModel;
+    const financeOnly = () =>
+      featureStoreMock([...effectiveFeatures({ catalogue: FEATURE_BLOCKS, rollouts: [], enabled: ['finance'], tenantId })]);
+
+    it('a finance-only tenant sees Finanzen with its own rows', async () => {
+      const list = [
+        doc('finance-menu', 'sub', ['invoice-my', 'f_fees', 'f_pay', 'expenses', 'my-cost-centers']),
+        doc('invoice-my', 'navigate', [], '/accounting/scs/invoice/my/c-invoice'),
+        doc('f_fees', 'navigate', [], '/private/f_fees/c-contentpage'),
+        doc('f_pay', 'navigate', [], '/private/f_pay/c-contentpage'),
+        doc('expenses', 'navigate', [], '/expense/my/c-expense'),
+        doc('my-cost-centers', 'navigate', [], '/my-cost-centers/@BOOKS@'),
+      ];
+      store = makeStore(menuServiceMock(list, doc('main_p13', 'main', ['finance-menu'])), financeOnly());
+      store.setMenuName('main_p13');
+      await TestBed.inject(ApplicationRef).whenStable();
+      expect(store.menu()?.menuItems).toEqual(['finance-menu']);
+
+      store.setMenuName('finance-menu');
+      await TestBed.inject(ApplicationRef).whenStable();
+      expect(store.menu()?.menuItems).toEqual(['invoice-my', 'f_fees', 'f_pay']);
+    });
+
+    it('hides a submenu with no visible child', async () => {
+      const list = [
+        doc('finance-menu', 'sub', ['expenses', 'my-cost-centers']),
+        doc('expenses', 'navigate', [], '/expense/my/c-expense'),
+        doc('my-cost-centers', 'navigate', [], '/my-cost-centers/@BOOKS@'),
+        doc('empty-sub', 'sub', []),
+      ];
+      store = makeStore(menuServiceMock(list, doc('main_p13', 'main', ['finance-menu', 'empty-sub', 'my-custom-link'])), financeOnly());
+      store.setMenuName('main_p13');
+      await TestBed.inject(ApplicationRef).whenStable();
+      expect(store.menu()?.menuItems).toEqual(['my-custom-link']);
+    });
+  });
+
   describe('fork guard on save', () => {
     // 'aoc-menu' is catalogue-owned AND shared with another tenant → update() would fork it.
     const sharedCatalogueDoc = { okey: 'aoc-menu', name: 'aoc-menu', tenants: [tenantId, 'scs'] };
