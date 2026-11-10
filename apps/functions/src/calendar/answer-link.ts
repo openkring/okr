@@ -11,6 +11,9 @@
 //   alone. Still honoured, so mails already in inboxes keep working; such a page offers only it.
 // - Versand mailing (spec 1.145): one personal link per recipient of a mailing, signed for `mailing`
 //   and keyed by the mailing and the person. It is a third kind, never valid on the invitation function.
+// - Kurs-Einladung (spec 1.152 §8.3): one personal link per invited applicant, signed for `course` and
+//   keyed by the course and the application. A fourth kind, valid only on courseAnswer — and no other
+//   kind is valid there.
 
 import { createHmac, timingSafeEqual } from 'crypto';
 import { defineSecret } from 'firebase-functions/params';
@@ -95,5 +98,30 @@ export function mailingAnswerUrl(baseUrl: string, mailingKey: string, personKey:
   url.searchParams.set('m', mailingKey);
   url.searchParams.set('p', personKey);
   url.searchParams.set('s', signMailing(mailingKey, personKey, secret));
+  return url.toString();
+}
+
+/** What the course signature binds — never a valid AnswerChoice nor the respond or mailing scope. */
+const COURSE = 'course';
+
+export function signCourse(courseKey: string, applicationKey: string, secret: string): string {
+  return sign(courseKey, applicationKey, COURSE, secret);
+}
+
+export function verifyCourse(courseKey: string, applicationKey: string, signature: string, secret: string): boolean {
+  return verify(courseKey, applicationKey, COURSE, signature, secret);
+}
+
+/** The function's own URL for the course answer page. */
+export function courseAnswerFunctionUrl(projectId: string): string {
+  return `https://europe-west6-${projectId}.cloudfunctions.net/courseAnswer`;
+}
+
+/** The personal course invitation link: `c` = course, `a` = application, `s` = signature. */
+export function courseAnswerUrl(projectId: string, courseKey: string, applicationKey: string, secret: string): string {
+  const url = new URL(courseAnswerFunctionUrl(projectId));
+  url.searchParams.set('c', courseKey);
+  url.searchParams.set('a', applicationKey);
+  url.searchParams.set('s', signCourse(courseKey, applicationKey, secret));
   return url.toString();
 }

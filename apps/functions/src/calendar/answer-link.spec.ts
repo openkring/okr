@@ -2,14 +2,17 @@ import { describe, expect, it } from 'vitest';
 import {
   allowedAnswers,
   answerFunctionUrl,
+  courseAnswerUrl,
   isAnswerChoice,
   mailingAnswerFunctionUrl,
   mailingAnswerUrl,
   respondUrl,
   signAnswer,
+  signCourse,
   signMailing,
   signRespond,
   verifyAnswer,
+  verifyCourse,
   verifyMailing,
 } from './answer-link';
 
@@ -97,5 +100,40 @@ describe('mailing links', () => {
     expect(url.searchParams.get('m')).toBe('m1');
     expect(url.searchParams.get('p')).toBe('p1');
     expect(url.searchParams.get('s')).toBe(signMailing('m1', 'p1', SECRET));
+  });
+});
+
+describe('course links (spec 1.152 §8.3)', () => {
+  const sig = signCourse('c1', 'a1', SECRET);
+
+  it('verifies its own signature', () => expect(verifyCourse('c1', 'a1', sig, SECRET)).toBe(true));
+  it('rejects another course or application', () => {
+    expect(verifyCourse('c2', 'a1', sig, SECRET)).toBe(false);
+    expect(verifyCourse('c1', 'a2', sig, SECRET)).toBe(false);
+  });
+  it('rejects swapped keys', () => expect(verifyCourse('a1', 'c1', sig, SECRET)).toBe(false));
+  it('rejects an empty secret or signature', () => {
+    expect(verifyCourse('c1', 'a1', '', SECRET)).toBe(false);
+    expect(verifyCourse('c1', 'a1', signCourse('c1', 'a1', ''), '')).toBe(false);
+  });
+  it('never accepts an invitation, legacy answer or mailing signature over the same keys', () => {
+    expect(verifyCourse('c1', 'a1', signRespond('c1', 'a1', SECRET), SECRET)).toBe(false);
+    expect(verifyCourse('c1', 'a1', signMailing('c1', 'a1', SECRET), SECRET)).toBe(false);
+    expect(verifyCourse('c1', 'a1', signAnswer('c1', 'a1', 'accept', SECRET), SECRET)).toBe(false);
+    expect(verifyCourse('c1', 'a1', signAnswer('c1', 'a1', 'decline', SECRET), SECRET)).toBe(false);
+  });
+  it('is never valid on the invitation or mailing endpoints', () => {
+    expect(allowedAnswers('c1', 'a1', sig, SECRET)).toEqual([]);
+    expect(allowedAnswers('c1', 'a1', sig, SECRET, 'accept')).toEqual([]);
+    expect(verifyMailing('c1', 'a1', sig, SECRET)).toBe(false);
+  });
+  it('builds the function url with c, a and s', () => {
+    const url = new URL(courseAnswerUrl('proj', 'c 1', 'a1', SECRET));
+    expect(url.origin).toBe('https://europe-west6-proj.cloudfunctions.net');
+    expect(url.pathname).toBe('/courseAnswer');
+    expect(url.searchParams.get('c')).toBe('c 1');
+    expect(url.searchParams.get('a')).toBe('a1');
+    expect(url.searchParams.get('s')).toBe(signCourse('c 1', 'a1', SECRET));
+    expect(verifyCourse('c 1', 'a1', url.searchParams.get('s') ?? '', SECRET)).toBe(true);
   });
 });

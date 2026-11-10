@@ -78,14 +78,14 @@ export function textColorOn(background: string): string {
 }
 
 const BUTTON = 'display:inline-block;padding:10px 18px;margin:4px 8px 4px 0;border-radius:6px;text-decoration:none;font-weight:600;';
-const SECONDARY = `${BUTTON}background:#eef1f5;color:#1f2328;`;
+export const SECONDARY = `${BUTTON}background:#eef1f5;color:#1f2328;`;
 
-function primaryStyle(brand: Brand): string {
+export function primaryStyle(brand: Brand): string {
   const color = brandColorOf(brand.brandColor);
   return `${BUTTON}background:${color};color:${textColorOn(color)};`;
 }
 
-function button(href: string, label: string, style: string): string {
+export function button(href: string, label: string, style: string): string {
   return `<a href="${escapeHtml(href)}" style="${style}">${escapeHtml(label)}</a>`;
 }
 
@@ -112,7 +112,8 @@ function banner(brand: Brand): string {
     + `</td></tr></table>`;
 }
 
-function layout(brand: Brand, body: string): string {
+/** The page shell (tenant frame or banner) around `body`; shared with the course answer page (1.152). */
+export function layout(brand: Brand, body: string): string {
   // slice, not replace: a body with '$&' must not be read as a replacement pattern
   const slot = brand.frame?.indexOf(PAGE_CONTENT_SLOT) ?? -1;
   if (brand.frame && slot >= 0) return brand.frame.slice(0, slot) + body + brand.frame.slice(slot + PAGE_CONTENT_SLOT.length);

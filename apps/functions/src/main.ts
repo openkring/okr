@@ -159,6 +159,8 @@ export const onGroupDocWritten = Group.onGroupDocWritten;
 export const onCourseDocWritten = Course.onCourseDocWritten;
 // requestCourseCompensation: a responsible person asks for the trainers' compensation of a locked course → forReview bookings + treasurer task (spec 1.132 §7.6)
 export const requestCourseCompensation = Course.requestCourseCompensation;
+// courseAnswer: the page behind the personal course invitation link — an invited applicant answers without login (spec 1.152 §8.3)
+export const courseAnswer = Course.courseAnswer;
 // onMembershipDocWritten: memberships/{membershipId}, one trigger fanning out to the four former membership triggers (matrixSync, pinboardSource, accountSync, exitSettlement; 1.118 A4)
 export const onMembershipDocWritten = Membership.onMembershipDocWritten;
 export const resolveNotesRoom = MatrixSimple.resolveNotesRoom;
