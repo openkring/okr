@@ -1,5 +1,5 @@
-import type { ImageConfig, ImageStyle } from '@okr/shared-models';
-import { buildImageCaption } from '@okr/shared-util-core';
+import type { ImageStyle } from '@okr/shared-models';
+import { imageCaption } from './image-caption';
 
 export const IMGIX_BASE = 'https://bkaiser.imgix.net';
 
@@ -161,7 +161,7 @@ export function captionCss(style: StoredImageStyle | undefined): PublicCaptionCs
 export function mapImage(img: StoredImage | undefined, style?: StoredImageStyle, fallbacks: (string | undefined)[] = []): PublicImage | undefined {
   if (!img?.url) return undefined;
   const shown = (style?.captionPosition ?? 'none') !== 'none';
-  const parts = shown ? buildImageCaption(img as ImageConfig, fallbacks) : undefined;
+  const parts = shown ? imageCaption(img, fallbacks) : undefined;
   const caption = parts?.text ? [parts.text, parts.source].filter(t => t.length > 0).join('\n') : '';
   const position = CAPTION_POSITIONS.find(p => p === style?.captionPosition) ?? '';
   return {
