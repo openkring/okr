@@ -144,6 +144,7 @@
     "confirm_nothing": "L'altra domanda non contiene dati aggiuntivi. Viene poi archiviata.",
     "swapped": "L'altra domanda ha già un invito a un corso, quindi viene mantenuta. Ripreso da questa domanda: {fields}. Questa domanda viene poi archiviata.",
     "swapped_nothing": "L'altra domanda ha già un invito a un corso, quindi viene mantenuta. Questa domanda non contiene dati aggiuntivi e viene poi archiviata.",
+    "resend_invitation": "Dopo devi inviare di nuovo l'invito al corso.",
     "button": "Unisci",
     "conf": "Domande unite.",
     "error": "Non è stato possibile unire le domande.",

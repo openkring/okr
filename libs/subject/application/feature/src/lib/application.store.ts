@@ -279,7 +279,8 @@ export const ApplicationStore = signalStore(
       if (!picked) return;
 
       // the invitee's answer link is signed for one okey: when only `picked` holds the invitation,
-      // it is kept and `keep` is merged into it (pickMergeKeep), and the confirmation says so
+      // it is kept and `keep` is merged into it (pickMergeKeep), and the confirmation says so —
+      // unless that would reopen a closed application (then resendInvitation)
       const roles = pickMergeKeep(keep, picked);
       const { takenFromDrop } = mergeApplications(roles.keep, roles.drop);
       const labels = [...new Set(takenFromDrop)]
@@ -291,7 +292,10 @@ export const ApplicationStore = signalStore(
         : (labels.length > 0
           ? fill(store.i18n.merge_confirm(), { fields: labels.join(', ') })
           : store.i18n.merge_confirm_nothing());
-      const confirmed = await store.alertService.confirm(message, true);
+      // keep is closed, picked is open and holds the invitation: no swap (the closed state wins),
+      // so the answer link signed for picked's okey dies with it and must be sent again
+      const fullMessage = roles.resendInvitation ? `${message} ${store.i18n.merge_resend_invitation()}` : message;
+      const confirmed = await store.alertService.confirm(fullMessage, true);
       if (confirmed !== true) return;
       await store.applicationService.merge(roles.keep, roles.drop, store.currentUser());
       store.applicationsResource.reload();

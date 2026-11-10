@@ -410,6 +410,44 @@ describe('pickMergeKeep', () => {
     expect(hasCourseInvitation(legacy as unknown as ApplicationModel)).toBe(false);
     expect(pickMergeKeep(legacy as unknown as ApplicationModel, mk({ okey: 'd', courseState: 'invited' })).swapped).toBe(true);
   });
+
+  it('never loses a closed state: closed keep + open invited drop stays, takes the course, asks to resend', () => {
+    for (const state of ['closed.approved', 'closed.denied', 'closed.cancelled'] as const) {
+      const keep = mk({ okey: 'k', state, courseState: '' });
+      const drop = mk({ okey: 'd', state: 'applied', courseState: 'invited', courseKey: 'c1', invitedAt: '20261101', answeredAt: '' });
+      const r = pickMergeKeep(keep, drop);
+      expect(r.swapped).toBe(false);
+      expect(r.resendInvitation).toBe(true);
+      expect(r.keep.okey).toBe('k');
+      const { merged } = mergeApplications(r.keep, r.drop);
+      expect(merged.state).toBe(state);
+      expect(merged.okey).toBe('k');
+      expect(merged.courseState).toBe('invited');
+      expect(merged.courseKey).toBe('c1');
+      expect(merged.invitedAt).toBe('20261101');
+    }
+  });
+
+  it('swaps as before when keep is open', () => {
+    const r = pickMergeKeep(mk({ okey: 'k', state: 'applied', courseState: '' }), mk({ okey: 'd', state: 'closed.approved', courseState: 'invited' }));
+    expect(r.swapped).toBe(true);
+    expect(r.resendInvitation).toBe(false);
+    expect(r.keep.okey).toBe('d');
+    expect(mergeApplications(r.keep, r.drop).merged.state).toBe('closed.approved');
+  });
+
+  it('swaps as before when both are closed', () => {
+    const r = pickMergeKeep(mk({ okey: 'k', state: 'closed.approved', courseState: '' }), mk({ okey: 'd', state: 'closed.denied', courseState: 'accepted' }));
+    expect(r.swapped).toBe(true);
+    expect(r.resendInvitation).toBe(false);
+    expect(r.keep.okey).toBe('d');
+  });
+
+  it('never asks to resend when no swap was due', () => {
+    const r = pickMergeKeep(mk({ okey: 'k', state: 'closed.approved', courseState: 'invited' }), mk({ okey: 'd', state: 'applied', courseState: '' }));
+    expect(r.swapped).toBe(false);
+    expect(r.resendInvitation).toBe(false);
+  });
 });
 
 describe('mergeApplications', () => {

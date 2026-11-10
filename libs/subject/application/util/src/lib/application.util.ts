@@ -224,14 +224,27 @@ export function hasCourseInvitation(app: Pick<ApplicationModel, 'courseState'>):
   return INVITATION_COURSE_STATES.includes(app.courseState ?? '');
 }
 
+function isClosedState(app: Pick<ApplicationModel, 'state'>): boolean {
+  return (app.state ?? '').startsWith('closed.');
+}
+
 /**
  * Which application survives a merge (spec 1.152 §9, final review). The invitee's answer link is
  * signed for one okey; archiving that application would orphan the link. So when only `drop` holds
- * an invitation, the roles swap: `drop` is kept and `keep` is merged into it. Otherwise unchanged.
+ * an invitation, the roles swap: `drop` is kept and `keep` is merged into it.
+ *
+ * A closed state (approved/denied/cancelled) is never lost: `state` always stays the kept one's, so
+ * the swap happens only when it does not reopen a closed application — `keep` is open, or both are
+ * closed. When `keep` is closed and `drop` is open but holds the invitation, the roles stay;
+ * `mergeApplications` takes drop's course fields over by rank, and `resendInvitation` tells the
+ * caller that the answer link (signed for drop's okey) dies, so the invitation must be sent again.
  */
-export function pickMergeKeep(keep: ApplicationModel, drop: ApplicationModel): { keep: ApplicationModel; drop: ApplicationModel; swapped: boolean } {
-  if (hasCourseInvitation(drop) && !hasCourseInvitation(keep)) return { keep: drop, drop: keep, swapped: true };
-  return { keep, drop, swapped: false };
+export function pickMergeKeep(keep: ApplicationModel, drop: ApplicationModel): { keep: ApplicationModel; drop: ApplicationModel; swapped: boolean; resendInvitation: boolean } {
+  if (hasCourseInvitation(drop) && !hasCourseInvitation(keep)) {
+    if (isClosedState(keep) && !isClosedState(drop)) return { keep, drop, swapped: false, resendInvitation: true };
+    return { keep: drop, drop: keep, swapped: true, resendInvitation: false };
+  }
+  return { keep, drop, swapped: false, resendInvitation: false };
 }
 
 /**
