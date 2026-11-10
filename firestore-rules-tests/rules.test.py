@@ -173,6 +173,7 @@ seed("pages/home",   {"tenants": ["t1"], "isArchived": False, "title": "Home"})
 seed("sections/secA",{"tenants": ["t1"], "isArchived": False, "type": "article"})
 # websites (spec 1.153): the sitemap tree document; tenant read, contentAdmin write, no delete.
 seed("websites/wsA", {"tenants": ["t1"], "isArchived": False, "name": "Site A", "nav": []})
+seed("websites/wsA/publishes/pub1", {"tenants": ["t1"], "state": "done", "startedBy": "pC", "startedAt": "2026-11-10T10:00:00.000Z"})
 # fork-on-edit (D-BB-8): shared catalogue-owned menu docs a tenant may detach itself from.
 seed("menuItems/shared1", {"tenants": ["t1", "t2"], "isArchived": False, "name": "shared1", "label": "L"})
 seed("menuItems/shared2", {"tenants": ["t1", "t2"], "isArchived": False, "name": "shared2", "label": "L"})
@@ -609,6 +610,20 @@ single_cases = [
      body({"name": "A"}), ["name"]),
     ("userC(contentAdmin) DELETE websites/wsA -> DENY", False, DELETE, "websites/wsA", C, None, None),
     ("userD(admin) DELETE websites/wsA -> DENY", False, DELETE, "websites/wsA", D, None, None),
+    # websites/{id}/publishes (spec 1.153 §7.2): contentAdmin/admin of the parent site's tenant read; nobody writes.
+    ("userC(contentAdmin) GET websites/wsA/publishes/pub1 -> ALLOW", True, GET, "websites/wsA/publishes/pub1", C, None, None),
+    ("userC(contentAdmin) LIST websites/wsA/publishes -> ALLOW", True, GET, "websites/wsA/publishes", C, None, None),
+    ("userD(admin) GET websites/wsA/publishes/pub1 -> ALLOW", True, GET, "websites/wsA/publishes/pub1", D, None, None),
+    ("userA(member) GET websites/wsA/publishes/pub1 -> DENY", False, GET, "websites/wsA/publishes/pub1", A, None, None),
+    ("userP(privileged) GET websites/wsA/publishes/pub1 -> DENY", False, GET, "websites/wsA/publishes/pub1", P, None, None),
+    ("userB(admin, other tenant) GET websites/wsA/publishes/pub1 -> DENY", False, GET, "websites/wsA/publishes/pub1", B, None, None),
+    ("anon GET websites/wsA/publishes/pub1 -> DENY", False, GET, "websites/wsA/publishes/pub1", None, None, None),
+    ("userC(contentAdmin) GET publishes of a missing site -> DENY", False, GET, "websites/nosite/publishes/pub1", C, None, None),
+    ("userC(contentAdmin) create websites/wsA/publishes -> DENY", False, POST, "websites/wsA/publishes?documentId=pubX", C,
+     body({"tenants": ["t1"], "state": "running", "startedBy": "pC"}), None),
+    ("userD(admin) PATCH websites/wsA/publishes/pub1 -> DENY", False, PATCH, "websites/wsA/publishes/pub1", D,
+     body({"state": "failed"}), ["state"]),
+    ("userD(admin) DELETE websites/wsA/publishes/pub1 -> DENY", False, DELETE, "websites/wsA/publishes/pub1", D, None, None),
     # M-7: orgs/resources/tags no longer public — anon DENY, tenant member ALLOW, cross-tenant DENY.
     ("anon GET orgs/oA -> DENY", False, GET, "orgs/oA", None, None, None),
     ("anon GET resources/rA -> DENY", False, GET, "resources/rA", None, None, None),

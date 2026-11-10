@@ -3,7 +3,8 @@ import type { PageModel, WebsiteModel, WebsiteNode } from '@okr/shared-models';
 import type { SectionDoc } from './section-mapper';
 import { pageKeysInTree, siteWarnings, type WebsiteWarningCode } from './website-tree-read.util';
 
-export type PublishProblemCode = WebsiteWarningCode | 'templateMissing' | 'noBaseRelease' | 'renderFailed' | 'domainMissing';
+/** `alreadyRunning`: another publish of the site holds the lock (younger than 5 min). */
+export type PublishProblemCode = WebsiteWarningCode | 'templateMissing' | 'noBaseRelease' | 'renderFailed' | 'domainMissing' | 'alreadyRunning';
 
 export interface PublishProblem {
   code: PublishProblemCode;

@@ -1599,6 +1599,25 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     retention: LOG_24M,
   },
   {
+    // websites/{siteId}/publishes (spec 1.153 §7.2): the publish lock and log, one doc per publish,
+    // dry run or rollback, written only by publishWebsite/rollbackWebsite. `startedBy` is the
+    // personKey of the contentAdmin who started it; `tenants` is copied from the site. Attribution
+    // only (version, file count, problems are the site's history), so erasure blanks the key.
+    // Collection-group query: firestore.indexes.json carries the COLLECTION_GROUP override for
+    // publishes.startedBy; `matches` keeps it to websites' subcollection.
+    collection: 'websites/publishes',
+    dataClass: 'log',
+    tier: 'T4',
+    onTenantExit: 'anonymize',
+    find: (c: SubjectCtx) => db().collectionGroup('publishes').where('startedBy', '==', c.personKey),
+    tenantScope: 'tenantsArray',
+    matches: (doc) => doc.ref.parent.parent?.parent.id === 'websites',
+    onExport: 'none', // tenant site history, not the member's own record
+    onErasure: 'anonymize',
+    anonymizeFields: ['startedBy'],
+    retention: LOG_24M,
+  },
+  {
     // `feature-rollout` is the operator/platform-staff kill-switch table (task 7) —
     // GLOBAL, one doc per catalogue block id, not owned by any tenant. `updatedBy` is
     // the uid of whichever operator last changed a block's rollout stage. No write path

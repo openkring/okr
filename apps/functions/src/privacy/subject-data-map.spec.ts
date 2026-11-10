@@ -123,7 +123,7 @@ describe('SUBJECT_DATA_MAP — completeness, derived from shared-models', () => 
 
   it('covers the collections that carry no *Collection constant', () => {
     // subcollections / CF-written paths the constant list cannot reach
-    for (const c of ['users/fcmTokens', 'stats_members']) {
+    for (const c of ['users/fcmTokens', 'stats_members', 'websites/publishes']) {
       expect([...rows], `${c} has no row`).toContain(c);
     }
   });
@@ -724,6 +724,7 @@ describe('subject-data-map — collection names are constants, not literals', ()
     'stats_members', // derived stats, written by a scheduled function, no model
     'courses/finance', // courses/{key}/finance/settings, the compensation settings subdocument (CourseFinanceModel)
     'trips/tracker', // the tracker-type half of TripCollection, keyed by track.personKey (own row, other fate)
+    'websites/publishes', // websites/{siteId}/publishes, the publish log subcollection (no model, Admin SDK only)
   ]);
 
   it('every entry resolves to an exported collection constant', () => {

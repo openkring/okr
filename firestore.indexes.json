@@ -5303,6 +5303,25 @@
       "ttl": false
     },
     {
+      "collectionGroup": "publishes",
+      "fieldPath": "startedBy",
+      "indexes": [
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "DESCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        }
+      ],
+      "ttl": false
+    },
+    {
       "collectionGroup": "emailEvents",
       "fieldPath": "expiresAt",
       "ttl": true,
