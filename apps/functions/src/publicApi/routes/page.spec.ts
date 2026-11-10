@@ -7,7 +7,7 @@ vi.mock('firebase-admin/firestore', () => ({ getFirestore: () => fakeDb.current 
 import type { Request, Response } from 'express';
 
 import {
-  articleImageHeight, articleImageLayout, buildLearningSection, mapCta, mapImage, mapSection, normalizeLang, pickText, safeEmbedUrl, safeSiteUrl, slugName, mapFooter, mapFormSection, isPublicPageRead, isPublishedPage, learningDefaultTab, loadLearningSection, pageCors, pageRouter,
+  articleImageHeight, articleImageLayout, buildLearningSection, captionCss, mapCta, mapImage, mapSection, normalizeLang, pickText, safeEmbedUrl, safeSiteUrl, slugName, mapFooter, mapFormSection, isPublicPageRead, isPublishedPage, learningDefaultTab, loadLearningSection, pageCors, pageRouter,
 } from './page';
 import { getHtmlSanitizer } from '../sanitize';
 
@@ -58,6 +58,39 @@ describe('articleImageHeight', () => {
   it('is 0 outside 16..2000 px', () => {
     expect(articleImageHeight({ height: '8px' })).toBe(0);
     expect(articleImageHeight({ height: '5000px' })).toBe(0);
+  });
+});
+
+describe('mapImage caption position', () => {
+  const img = { url: 'tenant/scs/a.jpg', overlay: 'Regatta' };
+
+  it('passes the configured position', () => {
+    for (const p of ['top', 'bottom', 'top-overlay', 'middle-overlay', 'bottom-overlay'] as const) {
+      expect(mapImage(img, { captionPosition: p })?.captionPosition).toBe(p);
+    }
+  });
+
+  it('has no position without a caption', () => {
+    expect(mapImage(img, { captionPosition: 'none' })?.captionPosition).toBe('');
+    expect(mapImage({ url: 'tenant/scs/a.jpg' }, { captionPosition: 'top' })?.captionPosition).toBe('');
+  });
+});
+
+describe('captionCss', () => {
+  it('mirrors the app defaults', () => {
+    expect(captionCss(undefined)).toEqual({ fontSize: '0.8rem', fontStyle: 'italic', fontWeight: 'normal', textAlign: 'left' });
+  });
+
+  it('maps style, size and alignment', () => {
+    expect(captionCss({ captionStyle: 'bold', captionSize: '1rem', captionAlign: 'center' }))
+      .toEqual({ fontSize: '1rem', fontStyle: 'normal', fontWeight: '600', textAlign: 'center' });
+    expect(captionCss({ captionStyle: 'bold-italic' })).toMatchObject({ fontStyle: 'italic', fontWeight: '600' });
+  });
+
+  it('never lets a free-text size into the style attribute', () => {
+    for (const captionSize of ['1rem;color:red', 'expression(x)', '12', 'calc(1rem)', '"><script>']) {
+      expect(captionCss({ captionSize }).fontSize).toBe('0.8rem');
+    }
   });
 });
 
