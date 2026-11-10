@@ -37,7 +37,8 @@
       "topup": "Ricarica",
       "deduction": "Invio",
       "reversal": "Rimborso",
-      "correction": "Correzione"
+      "correction": "Correzione",
+      "refund": "Rimborso"
     }
   },
   "autotopup": {
@@ -64,6 +65,96 @@
   "validation": {
     "threshold_negative": "L’importo non può essere inferiore a 0.",
     "amount_min": "Inserisci almeno CHF {min}.",
-    "amount_max": "Inserisci al massimo CHF {max}."
+    "amount_max": "Inserisci al massimo CHF {max}.",
+    "email_required": "Inserisci un indirizzo e-mail, per favore.",
+    "email_invalid": "Questo indirizzo e-mail non sembra corretto.",
+    "email_too_long": "Questo indirizzo e-mail è troppo lungo."
+  },
+  "abo": {
+    "title": "Abbonamento",
+    "state": {
+      "exempt": "Contratto con bkaiser",
+      "active": "Il tuo abbonamento è attivo.",
+      "pastDue": "Una fattura è aperta. Pagala, per favore, per mantenere il tuo accesso.",
+      "closing": "Il tuo accesso è limitato finché la fattura aperta non è pagata.",
+      "closed": "Il tuo abbonamento è terminato.",
+      "cancelled": "Il tuo abbonamento è disdetto."
+    },
+    "band": "Fascia di prezzo",
+    "band_none": "Non ancora misurato",
+    "measurement": "{total} persone, di cui {privileged} con diritti estesi",
+    "options_title": "Moduli aggiuntivi",
+    "option_soon": "presto disponibile",
+    "per_month": "CHF {amount} al mese",
+    "option_on_confirm": "Dal prossimo mese {option} costa CHF {price} al mese.",
+    "option_off_confirm": "Dal prossimo mese {option} non viene più fatturato.",
+    "option_saved": "I moduli aggiuntivi sono salvati.",
+    "estimate": "Prossima fattura (prevista)",
+    "estimate_unmeasured": "Segue dopo la prima misurazione",
+    "estimate_individual": "Concordato individualmente",
+    "email": "E-mail di fatturazione",
+    "email_none": "Nessuna salvata",
+    "email_change": "Modifica",
+    "email_label": "Indirizzo e-mail per le fatture",
+    "email_placeholder": "nome@esempio.ch",
+    "email_helper": "Inviamo a questo indirizzo le tue fatture e conferme di pagamento.",
+    "email_saved": "L’e-mail di fatturazione è salvata."
+  },
+  "option": {
+    "buchhaltung": "Contabilità",
+    "crm": "CRM",
+    "lohnbuchhaltung": "Contabilità salariale",
+    "projekte_zeiterfassung": "Progetti e registrazione del tempo",
+    "kostenrechnung": "Contabilità analitica",
+    "shop": "Negozio",
+    "spesen_ocr": "Spese e ricevute",
+    "anlagen": "Immobilizzazioni",
+    "logbuch": "Giornale di bordo"
+  },
+  "invoices": {
+    "title": "Fatture",
+    "empty": "Ancora nessuna fattura.",
+    "number": "Fattura {no}",
+    "pay": "Paga online",
+    "pdf": "PDF",
+    "state": {
+      "open": "Aperta",
+      "overdue": "Scaduta",
+      "partial": "Pagata in parte",
+      "paid": "Pagata",
+      "cancelled": "Stornata"
+    }
+  },
+  "board": {
+    "title": "Panoramica abbonamenti",
+    "forbidden": "Solo per bkaiser.",
+    "empty": "Nessun mandante trovato.",
+    "filter_state": "Stato",
+    "filter_flag": "Avviso",
+    "filter_all": "Tutti",
+    "state": {
+      "exempt": "Contratto",
+      "active": "Attivo",
+      "pastDue": "Fattura aperta",
+      "closing": "Limitato",
+      "closed": "Terminato",
+      "cancelled": "Disdetto"
+    },
+    "open": "Aperto: CHF {amount}",
+    "credit": "Credito: CHF {amount}",
+    "failed": "Pagamenti non riusciti: {count}",
+    "excluded": "Non conteggiati: {count}",
+    "autopay": "Addebito automatico",
+    "last_invoice": "Ultima fattura {no}: CHF {amount}",
+    "options": "Moduli aggiuntivi: {options}",
+    "to_stripe": "Passa a Stripe",
+    "to_stripe_confirm": "Da ora {tenant} viene fatturato mensilmente tramite Stripe. I moduli aggiuntivi attivati vengono ripresi.",
+    "to_stripe_done": "{tenant} ora viene fatturato tramite Stripe. Moduli aggiuntivi ripresi: {options}.",
+    "to_stripe_done_none": "{tenant} ora viene fatturato tramite Stripe. Nessun modulo aggiuntivo è stato ripreso.",
+    "reactivate": "Riattiva",
+    "reactivate_confirm": "Riattivare l’abbonamento di {tenant}? L’accesso torna completo.",
+    "cancel": "Disdici",
+    "cancel_confirm": "Disdire l’abbonamento di {tenant}? In seguito non verranno più emesse fatture.",
+    "saved": "Salvato."
   }
 }

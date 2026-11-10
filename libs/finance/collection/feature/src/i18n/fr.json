@@ -37,7 +37,8 @@
       "topup": "Recharge",
       "deduction": "Envoi",
       "reversal": "Remboursement",
-      "correction": "Correction"
+      "correction": "Correction",
+      "refund": "Remboursement"
     }
   },
   "autotopup": {
@@ -64,6 +65,96 @@
   "validation": {
     "threshold_negative": "Le montant ne peut pas être inférieur à 0.",
     "amount_min": "Saisis au moins CHF {min}.",
-    "amount_max": "Saisis au plus CHF {max}."
+    "amount_max": "Saisis au plus CHF {max}.",
+    "email_required": "Merci de saisir une adresse e-mail.",
+    "email_invalid": "Cette adresse e-mail ne semble pas correcte.",
+    "email_too_long": "Cette adresse e-mail est trop longue."
+  },
+  "abo": {
+    "title": "Abonnement",
+    "state": {
+      "exempt": "Contrat avec bkaiser",
+      "active": "Ton abonnement est actif.",
+      "pastDue": "Une facture est ouverte. Merci de la payer pour garder ton accès.",
+      "closing": "Ton accès est limité jusqu’au paiement de la facture ouverte.",
+      "closed": "Ton abonnement est terminé.",
+      "cancelled": "Ton abonnement est résilié."
+    },
+    "band": "Palier de prix",
+    "band_none": "Pas encore mesuré",
+    "measurement": "{total} personnes, dont {privileged} avec des droits étendus",
+    "options_title": "Modules complémentaires",
+    "option_soon": "bientôt disponible",
+    "per_month": "CHF {amount} par mois",
+    "option_on_confirm": "À partir du mois prochain, {option} coûte CHF {price} par mois.",
+    "option_off_confirm": "À partir du mois prochain, {option} n’est plus facturé.",
+    "option_saved": "Les modules complémentaires sont enregistrés.",
+    "estimate": "Prochaine facture (prévisionnelle)",
+    "estimate_unmeasured": "Suit après la première mesure",
+    "estimate_individual": "Convenu individuellement",
+    "email": "E-mail de facturation",
+    "email_none": "Aucune enregistrée",
+    "email_change": "Modifier",
+    "email_label": "Adresse e-mail pour les factures",
+    "email_placeholder": "nom@exemple.ch",
+    "email_helper": "Nous envoyons tes factures et confirmations de paiement à cette adresse.",
+    "email_saved": "L’e-mail de facturation est enregistré."
+  },
+  "option": {
+    "buchhaltung": "Comptabilité",
+    "crm": "CRM",
+    "lohnbuchhaltung": "Comptabilité salariale",
+    "projekte_zeiterfassung": "Projets et saisie du temps",
+    "kostenrechnung": "Comptabilité analytique",
+    "shop": "Boutique",
+    "spesen_ocr": "Frais et justificatifs",
+    "anlagen": "Immobilisations",
+    "logbuch": "Journal de bord"
+  },
+  "invoices": {
+    "title": "Factures",
+    "empty": "Pas encore de factures.",
+    "number": "Facture {no}",
+    "pay": "Payer en ligne",
+    "pdf": "PDF",
+    "state": {
+      "open": "Ouverte",
+      "overdue": "En retard",
+      "partial": "Partiellement payée",
+      "paid": "Payée",
+      "cancelled": "Annulée"
+    }
+  },
+  "board": {
+    "title": "Aperçu des abonnements",
+    "forbidden": "Réservé à bkaiser.",
+    "empty": "Aucun mandant trouvé.",
+    "filter_state": "Statut",
+    "filter_flag": "Remarque",
+    "filter_all": "Tous",
+    "state": {
+      "exempt": "Contrat",
+      "active": "Actif",
+      "pastDue": "Facture ouverte",
+      "closing": "Limité",
+      "closed": "Terminé",
+      "cancelled": "Résilié"
+    },
+    "open": "Ouvert : CHF {amount}",
+    "credit": "Crédit : CHF {amount}",
+    "failed": "Paiements échoués : {count}",
+    "excluded": "Non comptés : {count}",
+    "autopay": "Débité automatiquement",
+    "last_invoice": "Dernière facture {no} : CHF {amount}",
+    "options": "Modules complémentaires : {options}",
+    "to_stripe": "Passer à Stripe",
+    "to_stripe_confirm": "Dès maintenant, {tenant} est facturé chaque mois via Stripe. Les modules complémentaires activés sont repris.",
+    "to_stripe_done": "{tenant} est maintenant facturé via Stripe. Modules complémentaires repris : {options}.",
+    "to_stripe_done_none": "{tenant} est maintenant facturé via Stripe. Aucun module complémentaire n’a été repris.",
+    "reactivate": "Réactiver",
+    "reactivate_confirm": "Réactiver l’abonnement de {tenant} ? L’accès est ensuite à nouveau complet.",
+    "cancel": "Résilier",
+    "cancel_confirm": "Résilier l’abonnement de {tenant} ? Plus aucune facture ne sera émise ensuite.",
+    "saved": "Enregistré."
   }
 }

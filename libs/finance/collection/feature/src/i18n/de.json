@@ -37,7 +37,8 @@
       "topup": "Aufladung",
       "deduction": "Versand",
       "reversal": "Rückerstattung",
-      "correction": "Korrektur"
+      "correction": "Korrektur",
+      "refund": "Rückbuchung"
     }
   },
   "autotopup": {
@@ -64,6 +65,96 @@
   "validation": {
     "threshold_negative": "Der Betrag kann nicht kleiner als 0 sein.",
     "amount_min": "Bitte gib mindestens CHF {min} ein.",
-    "amount_max": "Bitte gib höchstens CHF {max} ein."
+    "amount_max": "Bitte gib höchstens CHF {max} ein.",
+    "email_required": "Bitte gib eine E-Mail-Adresse ein.",
+    "email_invalid": "Diese E-Mail-Adresse sieht nicht richtig aus.",
+    "email_too_long": "Diese E-Mail-Adresse ist zu lang."
+  },
+  "abo": {
+    "title": "Abo",
+    "state": {
+      "exempt": "Vertrag mit bkaiser",
+      "active": "Dein Abo ist aktiv.",
+      "pastDue": "Eine Rechnung ist offen. Bitte bezahle sie, damit dein Zugang bleibt.",
+      "closing": "Dein Zugang ist eingeschränkt, bis die offene Rechnung bezahlt ist.",
+      "closed": "Dein Abo ist beendet.",
+      "cancelled": "Dein Abo ist gekündigt."
+    },
+    "band": "Preisstufe",
+    "band_none": "Noch nicht gemessen",
+    "measurement": "{total} Personen, davon {privileged} mit erweiterten Rechten",
+    "options_title": "Zusatzmodule",
+    "option_soon": "bald verfügbar",
+    "per_month": "CHF {amount} pro Monat",
+    "option_on_confirm": "Ab dem nächsten Monat kostet {option} CHF {price} pro Monat.",
+    "option_off_confirm": "{option} wird ab dem nächsten Monat nicht mehr verrechnet.",
+    "option_saved": "Die Zusatzmodule sind gespeichert.",
+    "estimate": "Nächste Rechnung (voraussichtlich)",
+    "estimate_unmeasured": "Folgt nach der ersten Messung",
+    "estimate_individual": "Individuell vereinbart",
+    "email": "Rechnungs-E-Mail",
+    "email_none": "Noch keine hinterlegt",
+    "email_change": "Ändern",
+    "email_label": "E-Mail-Adresse für Rechnungen",
+    "email_placeholder": "name@beispiel.ch",
+    "email_helper": "An diese Adresse schicken wir deine Rechnungen und Zahlungsbestätigungen.",
+    "email_saved": "Die Rechnungs-E-Mail ist gespeichert."
+  },
+  "option": {
+    "buchhaltung": "Buchhaltung",
+    "crm": "CRM",
+    "lohnbuchhaltung": "Lohnbuchhaltung",
+    "projekte_zeiterfassung": "Projekte und Zeiterfassung",
+    "kostenrechnung": "Kostenrechnung",
+    "shop": "Shop",
+    "spesen_ocr": "Spesen und Belege",
+    "anlagen": "Anlagen",
+    "logbuch": "Logbuch"
+  },
+  "invoices": {
+    "title": "Rechnungen",
+    "empty": "Noch keine Rechnungen.",
+    "number": "Rechnung {no}",
+    "pay": "Online bezahlen",
+    "pdf": "PDF",
+    "state": {
+      "open": "Offen",
+      "overdue": "Überfällig",
+      "partial": "Teilweise bezahlt",
+      "paid": "Bezahlt",
+      "cancelled": "Storniert"
+    }
+  },
+  "board": {
+    "title": "Abo-Übersicht",
+    "forbidden": "Nur für bkaiser.",
+    "empty": "Keine Mandanten gefunden.",
+    "filter_state": "Status",
+    "filter_flag": "Hinweis",
+    "filter_all": "Alle",
+    "state": {
+      "exempt": "Vertrag",
+      "active": "Aktiv",
+      "pastDue": "Rechnung offen",
+      "closing": "Eingeschränkt",
+      "closed": "Beendet",
+      "cancelled": "Gekündigt"
+    },
+    "open": "Offen: CHF {amount}",
+    "credit": "Guthaben: CHF {amount}",
+    "failed": "Fehlgeschlagene Zahlungen: {count}",
+    "excluded": "Nicht gezählt: {count}",
+    "autopay": "Automatisch belastet",
+    "last_invoice": "Letzte Rechnung {no}: CHF {amount}",
+    "options": "Zusatzmodule: {options}",
+    "to_stripe": "Auf Stripe umstellen",
+    "to_stripe_confirm": "{tenant} wird ab jetzt monatlich über Stripe abgerechnet. Die eingeschalteten Zusatzmodule werden übernommen.",
+    "to_stripe_done": "{tenant} wird jetzt über Stripe abgerechnet. Übernommene Zusatzmodule: {options}.",
+    "to_stripe_done_none": "{tenant} wird jetzt über Stripe abgerechnet. Es wurden keine Zusatzmodule übernommen.",
+    "reactivate": "Wieder aktivieren",
+    "reactivate_confirm": "Das Abo von {tenant} wieder aktivieren? Der Zugang ist danach wieder uneingeschränkt.",
+    "cancel": "Kündigen",
+    "cancel_confirm": "Das Abo von {tenant} kündigen? Es werden danach keine Rechnungen mehr erstellt.",
+    "saved": "Gespeichert."
   }
 }

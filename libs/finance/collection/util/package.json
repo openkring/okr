@@ -9,6 +9,7 @@
     "tslib": "^2.8.1",
     "@okr/business-metering-util": "*",
     "@okr/shared-models": "*",
-    "@angular/core": "*"
+    "@angular/core": "*",
+    "@okr/shared-constants": "*"
   }
 }

@@ -37,7 +37,8 @@
       "topup": "Top-up",
       "deduction": "Sending",
       "reversal": "Refund",
-      "correction": "Correction"
+      "correction": "Correction",
+      "refund": "Refund"
     }
   },
   "autotopup": {
@@ -64,6 +65,96 @@
   "validation": {
     "threshold_negative": "The amount cannot be less than 0.",
     "amount_min": "Please enter at least CHF {min}.",
-    "amount_max": "Please enter at most CHF {max}."
+    "amount_max": "Please enter at most CHF {max}.",
+    "email_required": "Please enter an e-mail address.",
+    "email_invalid": "This e-mail address does not look right.",
+    "email_too_long": "This e-mail address is too long."
+  },
+  "abo": {
+    "title": "Subscription",
+    "state": {
+      "exempt": "Contract with bkaiser",
+      "active": "Your subscription is active.",
+      "pastDue": "An invoice is open. Please pay it so that you keep your access.",
+      "closing": "Your access is restricted until the open invoice is paid.",
+      "closed": "Your subscription has ended.",
+      "cancelled": "Your subscription is cancelled."
+    },
+    "band": "Price tier",
+    "band_none": "Not measured yet",
+    "measurement": "{total} people, {privileged} of them with extended rights",
+    "options_title": "Add-on modules",
+    "option_soon": "available soon",
+    "per_month": "CHF {amount} per month",
+    "option_on_confirm": "From next month, {option} costs CHF {price} per month.",
+    "option_off_confirm": "From next month, {option} is no longer charged.",
+    "option_saved": "The add-on modules are saved.",
+    "estimate": "Next invoice (expected)",
+    "estimate_unmeasured": "Follows after the first measurement",
+    "estimate_individual": "Agreed individually",
+    "email": "Billing e-mail",
+    "email_none": "None saved yet",
+    "email_change": "Change",
+    "email_label": "E-mail address for invoices",
+    "email_placeholder": "name@example.com",
+    "email_helper": "We send your invoices and payment confirmations to this address.",
+    "email_saved": "The billing e-mail is saved."
+  },
+  "option": {
+    "buchhaltung": "Accounting",
+    "crm": "CRM",
+    "lohnbuchhaltung": "Payroll",
+    "projekte_zeiterfassung": "Projects and time tracking",
+    "kostenrechnung": "Cost accounting",
+    "shop": "Shop",
+    "spesen_ocr": "Expenses and receipts",
+    "anlagen": "Assets",
+    "logbuch": "Logbook"
+  },
+  "invoices": {
+    "title": "Invoices",
+    "empty": "No invoices yet.",
+    "number": "Invoice {no}",
+    "pay": "Pay online",
+    "pdf": "PDF",
+    "state": {
+      "open": "Open",
+      "overdue": "Overdue",
+      "partial": "Partly paid",
+      "paid": "Paid",
+      "cancelled": "Cancelled"
+    }
+  },
+  "board": {
+    "title": "Subscription overview",
+    "forbidden": "For bkaiser only.",
+    "empty": "No tenants found.",
+    "filter_state": "Status",
+    "filter_flag": "Note",
+    "filter_all": "All",
+    "state": {
+      "exempt": "Contract",
+      "active": "Active",
+      "pastDue": "Invoice open",
+      "closing": "Restricted",
+      "closed": "Ended",
+      "cancelled": "Cancelled"
+    },
+    "open": "Open: CHF {amount}",
+    "credit": "Credit: CHF {amount}",
+    "failed": "Failed payments: {count}",
+    "excluded": "Not counted: {count}",
+    "autopay": "Charged automatically",
+    "last_invoice": "Last invoice {no}: CHF {amount}",
+    "options": "Add-on modules: {options}",
+    "to_stripe": "Switch to Stripe",
+    "to_stripe_confirm": "From now on, {tenant} is billed monthly through Stripe. The enabled add-on modules are carried over.",
+    "to_stripe_done": "{tenant} is now billed through Stripe. Add-on modules carried over: {options}.",
+    "to_stripe_done_none": "{tenant} is now billed through Stripe. No add-on modules were carried over.",
+    "reactivate": "Reactivate",
+    "reactivate_confirm": "Reactivate the subscription of {tenant}? Access is then unrestricted again.",
+    "cancel": "Cancel subscription",
+    "cancel_confirm": "Cancel the subscription of {tenant}? No more invoices are issued afterwards.",
+    "saved": "Saved."
   }
 }
