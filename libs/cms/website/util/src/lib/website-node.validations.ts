@@ -30,8 +30,12 @@ export const websiteNodeValidations = staticSuite((model: WebsiteNodeFormModel, 
     test('slug', K.validation_slugPattern, () => { enforce(SLUG_PATTERN.test(model.slug ?? '')).isTruthy(); });
   });
 
+  // a link needs a url; a menu may carry one (its own link) and then it must be as safe
+  const url = (model.url ?? '').trim();
   omitWhen(model.type !== 'link', () => {
-    test('url', K.validation_urlRequired, () => { enforce((model.url ?? '').trim().length).greaterThan(0); });
+    test('url', K.validation_urlRequired, () => { enforce(url.length).greaterThan(0); });
+  });
+  omitWhen(!(model.type === 'link' || (model.type === 'menu' && url.length > 0)), () => {
     test('url', K.validation_urlPrefix, () => { enforce(isAllowedLinkUrl(model.url)).isTruthy(); });
   });
 });

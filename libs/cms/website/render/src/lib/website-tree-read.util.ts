@@ -33,7 +33,7 @@ export function pageKeysInTree(nodes: WebsiteNode[]): string[] {
 export function websiteUrl(node: WebsiteNode): string {
   if (node.type === 'page') return `/${node.slug ?? ''}`;
   if (node.type === 'link') return node.url ?? '';
-  return '';
+  return (node.url ?? '').trim(); // a menu: its optional own link
 }
 
 /** Walks nav and footer, skipping archived nodes and their subtrees. */
@@ -53,6 +53,12 @@ export function siteWarnings(site: WebsiteModel, pages: Map<string, PageModel>):
   for (const n of activeNodes([...(site.nav ?? []), ...(site.footer ?? [])])) {
     if (n.type === 'link') {
       if (!isAllowedLinkUrl(n.url ?? '')) warnings.push({ nodeId: n.id, code: 'linkInvalid' });
+      continue;
+    }
+    if (n.type === 'menu') {
+      // a menu's own link is optional; when set it must be as safe as a link's
+      const url = (n.url ?? '').trim();
+      if (url && !isAllowedLinkUrl(url)) warnings.push({ nodeId: n.id, code: 'linkInvalid' });
       continue;
     }
     if (n.type !== 'page') continue;

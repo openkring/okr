@@ -80,6 +80,10 @@ describe('validateForPublish', () => {
     expect(dupPage).toContainEqual({ code: 'pageDuplicate', nodeId: 'b' });
     const bad = validateForPublish(site([page('a', 'a'), { id: 'l', type: 'link', label: 'l', url: 'javascript:alert(1)' }]), pages, new Map(), manifest);
     expect(bad).toContainEqual({ code: 'linkInvalid', nodeId: 'l' });
+    const badMenu = validateForPublish(site([page('a', 'a'), { id: 'm', type: 'menu', label: 'm', url: 'ftp://x', children: [] }]), pages, new Map(), manifest);
+    expect(badMenu).toContainEqual({ code: 'linkInvalid', nodeId: 'm' });
+    const okMenu = validateForPublish(site([page('a', 'a'), { id: 'm', type: 'menu', label: 'm', url: '/termine', children: [] }]), pages, new Map(), manifest);
+    expect(okMenu).toEqual([]);
   });
   it('ignores an archived section of an unknown type', () => {
     const pages = new Map([['p-a', pg(['s1'])]]);

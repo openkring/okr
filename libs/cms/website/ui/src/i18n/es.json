@@ -29,7 +29,8 @@
     "url": {
       "label": "Destino",
       "placeholder": "p. ej. /eventos o https://…",
-      "helper": "Empieza por /, https:// o mailto:"
+      "helper": "Empieza por /, https:// o mailto:",
+      "menuHelper": "Opcional: página que se abre al hacer clic en el menú"
     },
     "style": {
       "label": "Mostrar como botón",

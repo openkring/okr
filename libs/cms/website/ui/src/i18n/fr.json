@@ -29,7 +29,8 @@
     "url": {
       "label": "Cible",
       "placeholder": "p. ex. /agenda ou https://…",
-      "helper": "Commence par /, https:// ou mailto:"
+      "helper": "Commence par /, https:// ou mailto:",
+      "menuHelper": "Facultatif : page qui s'ouvre quand tu cliques sur le menu"
     },
     "style": {
       "label": "Afficher comme bouton",

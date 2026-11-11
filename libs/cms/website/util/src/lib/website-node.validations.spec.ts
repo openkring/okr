@@ -38,5 +38,13 @@ describe('websiteNodeValidations', () => {
   });
   it('menu needs only a label', () => {
     expect(websiteNodeValidations(m({ type: 'menu', slug: '', url: '' })).isValid()).toBe(true);
+    expect(websiteNodeValidations(m({ type: 'menu', slug: '', url: '  ' })).isValid()).toBe(true);
+  });
+  it('checks a menu url only when it is set', () => {
+    const menu = (url: string) => m({ type: 'menu', slug: '', url });
+    for (const ok of ['/termine', 'https://a.ch', 'mailto:a@b.ch']) expect(websiteNodeValidations(menu(ok)).isValid()).toBe(true);
+    for (const bad of ['ftp://x', '//evil.com', 'http://x.ch', 'javascript:alert(1)']) {
+      expect(websiteNodeValidations(menu(bad)).hasErrors('url')).toBe(true);
+    }
   });
 });

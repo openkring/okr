@@ -293,9 +293,9 @@ export const _WebsiteSitemapStore = signalStore(
       },
 
       async addMenu(parentId: string | null): Promise<void> {
-        const data = await openNodeModal({ id: '', type: 'menu', label: '' }, true);
+        const data = await openNodeModal({ id: '', type: 'menu', label: '', url: '' }, true);
         if (!data) return;
-        await insert(parentId, { id: newNodeId(), type: 'menu', label: data.label, children: [] });
+        await insert(parentId, { id: newNodeId(), type: 'menu', label: data.label, ...(data.url ? { url: data.url } : {}), children: [] });
       },
 
       async addLink(parentId: string | null): Promise<void> {
@@ -340,6 +340,8 @@ export const _WebsiteSitemapStore = signalStore(
           patch.url = data.url;
           patch.style = data.style;
         }
+        // a menu's own link is optional: '' (cleared) means none, as for a menu that never had one
+        if (current.type === 'menu' && (data.url || current.url)) patch.url = data.url;
         await save(site, updateNode(site.nav, node.id, patch));
       },
 

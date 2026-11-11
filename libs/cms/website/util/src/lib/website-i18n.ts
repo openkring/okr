@@ -87,6 +87,7 @@ export const WEBSITE_I18N_KEYS = {
   url_label:                UI + 'field.url.label',
   url_placeholder:          UI + 'field.url.placeholder',
   url_helper:               UI + 'field.url.helper',
+  url_menu_helper:          UI + 'field.url.menuHelper',
   style_label:              UI + 'field.style.label',
   style_helper:             UI + 'field.style.helper',
 

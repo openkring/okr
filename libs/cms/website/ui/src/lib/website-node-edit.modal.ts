@@ -20,7 +20,7 @@ function toFormModel(node: WebsiteNode): WebsiteNodeFormModel {
 }
 
 /**
- * Edits the label (all types), the slug (page) or url + style (link) of one website node.
+ * Edits the label (all types), the slug (page), url + style (link) or the optional url (menu) of one website node.
  * Dismisses with the edited `WebsiteNodeFormModel` and role 'confirm'; the store applies it.
  */
 @Component({

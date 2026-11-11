@@ -29,7 +29,8 @@
     "url": {
       "label": "Target",
       "placeholder": "e.g. /events or https://…",
-      "helper": "Starts with /, https:// or mailto:"
+      "helper": "Starts with /, https:// or mailto:",
+      "menuHelper": "Optional: page that opens when you click the menu"
     },
     "style": {
       "label": "Show as button",

@@ -10,7 +10,10 @@ export interface NavItem {
   type: 'menu' | 'page' | 'link';
   /** the label in the render language, else German */
   label: string;
-  /** in the render language's directory ('/en/vorstand'); '' for a menu or an unsafe link */
+  /**
+   * in the render language's directory ('/en/vorstand'); for a menu its optional own link
+   * ('' when it has none); '' for an unsafe link or menu url
+   */
   url: string;
   /** 'button' = the call-to-action link (e.g. Mitgliederbereich) */
   style: 'default' | 'button';
@@ -109,7 +112,7 @@ export function navItems(nodes: WebsiteNode[], site: WebsiteModel, lang: string,
     const children = navItems(n.children ?? [], site, lang, currentKey);
     let url = '';
     if (n.type === 'page') url = langPath(nodePath(n, site.homePageKey), lang);
-    else if (n.type === 'link' && isAllowedLinkUrl(n.url ?? '')) url = langPath((n.url ?? '').trim(), lang);
+    else if ((n.type === 'link' || n.type === 'menu') && isAllowedLinkUrl(n.url ?? '')) url = langPath((n.url ?? '').trim(), lang);
     out.push({
       id: n.id,
       type: n.type,

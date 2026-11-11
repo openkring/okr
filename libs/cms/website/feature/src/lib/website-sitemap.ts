@@ -10,7 +10,7 @@ import { EmptyList, Header, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
 import { fill } from '@okr/shared-util-core';
 import { WebsiteTreeItem } from '@okr/cms-website-ui';
-import { WebsiteI18n, WebsiteWarningCode } from '@okr/cms-website-util';
+import { WebsiteI18n, WebsiteWarningCode, websiteUrl } from '@okr/cms-website-util';
 
 import { WebsiteSitemapStore } from './website-sitemap.store';
 
@@ -154,6 +154,7 @@ export class WebsiteSitemap {
         push('node.addPage', i18n.action_add_page(), 'page');
         push('node.addLink', i18n.action_add_link(), 'link');
         push('node.edit', i18n.action_edit(), 'edit');
+        if (websiteUrl(node)) push('node.copyUrl', i18n.action_copy_url(), 'copy');
         push('node.move', i18n.action_move(), 'swap-vertical');
         push('node.archive', i18n.action_archive(), 'archive');
         break;

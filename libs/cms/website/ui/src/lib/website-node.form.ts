@@ -10,7 +10,8 @@ import { LABEL_LENGTH, WebsiteI18n, WebsiteNodeFormModel, websiteNodeValidations
 
 /**
  * One node of the website navigation: a label for every type, the slug of a page node, the url
- * and style of a link node. The parent modal drives saving through the change-confirmation.
+ * and style of a link node, the optional own url of a menu node (the menu entry then navigates
+ * there). The parent modal drives saving through the change-confirmation.
  */
 @Component({
   selector: 'okr-website-node-form',
@@ -41,13 +42,15 @@ import { LABEL_LENGTH, WebsiteI18n, WebsiteNodeFormModel, websiteNodeValidations
                     }
                   </ion-col>
                 }
-                @if (type() === 'link') {
+                @if (type() === 'link' || type() === 'menu') {
                   <ion-col size="12" size-md="6">
                     <okr-text-input [i18n]="urlI18n()" [value]="url()"
                       (valueChange)="onFieldChange('url', $event)"
                       [maxLength]="urlLength" [showHelper]="true" [readOnly]="isReadOnly()" />
                     <okr-error-note [errors]="urlErrors()" />
                   </ion-col>
+                }
+                @if (type() === 'link') {
                   <ion-col size="12" size-md="6">
                     <okr-checkbox [i18n]="styleI18n()" [checked]="isButton()"
                       (checkedChange)="onFieldChange('style', $event ? 'button' : 'default')"
@@ -116,7 +119,7 @@ export class WebsiteNodeForm {
     name: 'url',
     label: this.i18n().url_label(),
     placeholder: this.i18n().url_placeholder(),
-    helper: this.i18n().url_helper(),
+    helper: this.type() === 'menu' ? this.i18n().url_menu_helper() : this.i18n().url_helper(),
   } as TextInputI18n));
   protected readonly styleI18n = computed(() => ({
     name: 'style',

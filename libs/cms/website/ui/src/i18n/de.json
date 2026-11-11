@@ -29,7 +29,8 @@
     "url": {
       "label": "Ziel",
       "placeholder": "z.B. /termine oder https://…",
-      "helper": "Beginnt mit /, https:// oder mailto:"
+      "helper": "Beginnt mit /, https:// oder mailto:",
+      "menuHelper": "Optional: Seite, die beim Klick auf das Menü geöffnet wird"
     },
     "style": {
       "label": "Als Schaltfläche anzeigen",

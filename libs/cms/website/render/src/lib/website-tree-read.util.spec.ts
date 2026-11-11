@@ -20,6 +20,7 @@ describe('pageKeysInTree / websiteUrl', () => {
     expect(websiteUrl(page('a', 'vorstand'))).toBe('/vorstand');
     expect(websiteUrl(link('l', 'mailto:a@b.ch'))).toBe('mailto:a@b.ch');
     expect(websiteUrl(menu('m'))).toBe('');
+    expect(websiteUrl({ ...menu('m'), url: ' /termine ' })).toBe('/termine');
   });
 });
 
@@ -56,6 +57,11 @@ describe('siteWarnings', () => {
   it('flags invalid links', () => {
     const w = siteWarnings(site([link('l', 'javascript:alert(1)'), link('ok', 'https://a.ch')]), pages({ 'p-a': {} }), );
     expect(w).toEqual([{ nodeId: 'l', code: 'linkInvalid' }]);
+  });
+  it('checks a menu url only when it is set', () => {
+    const withUrl = (id: string, url?: string): WebsiteNode => ({ ...menu(id), url });
+    const w = siteWarnings(site([withUrl('none'), withUrl('blank', '  '), withUrl('ok', '/termine'), withUrl('bad', 'javascript:alert(1)')]), pages({}));
+    expect(w).toEqual([{ nodeId: 'bad', code: 'linkInvalid' }]);
   });
   it('flags a missing home page', () => {
     expect(codes(siteWarnings(site([], [], ''), pages({})))).toContain('homeMissing');

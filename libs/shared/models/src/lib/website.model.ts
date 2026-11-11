@@ -13,7 +13,7 @@ export interface WebsiteNode {
   children?: WebsiteNode[]; // menu only
   pageKey?: string; // page only -> pages/{okey}
   slug?: string; // page only, unique within the site, [a-z0-9-]+
-  url?: string; // link only: '/slug', '/termine?cat=regatta', 'https://…', 'mailto:…'
+  url?: string; // link: the target, '/slug', '/termine?cat=regatta', 'https://…', 'mailto:…'; menu: optional own link (the menu entry navigates there)
   style?: 'default' | 'button'; // link only: 'button' = the Mitgliederbereich CTA
 }
 
