@@ -22,7 +22,8 @@ export interface TemplateManifest {
   siteId: string;
   version: string;
   sectionTypes: string[];
-  fixedPages: string[];
+  /** `pages/<name>.hbs` is rendered to `<slug>.html` per language */
+  fixedPages: { name: string; slug: string }[];
   legacyRedirects?: { from: string; key: string }[];
 }
 
@@ -53,6 +54,13 @@ export function resolveServableSection(
 /** Whether a non-archived node of the tree already points at `pageKey` (siteWarnings reports it). */
 function activeInTree(nodes: WebsiteNode[], pageKey: string): boolean {
   return nodes.some((n) => !n.isArchived && ((n.type === 'page' && n.pageKey === pageKey) || activeInTree(n.children ?? [], pageKey)));
+}
+
+function treePageSlugs(nodes: WebsiteNode[]): string[] {
+  return nodes.flatMap((n) => [
+    ...(!n.isArchived && n.type === 'page' && n.slug ? [n.slug] : []),
+    ...(n.isArchived ? [] : treePageSlugs(n.children ?? [])),
+  ]);
 }
 
 export interface PageSection {
@@ -100,6 +108,10 @@ export function validateForPublish(
   if (home && !activeInTree([...(site.nav ?? []), ...(site.footer ?? [])], site.homePageKey)) {
     if (home.isArchived) problems.push({ code: 'pageArchived', pageKey: site.homePageKey });
     else if (home.isPrivate !== false) problems.push({ code: 'pagePrivate', pageKey: site.homePageKey });
+  }
+  const treeSlugs = new Set(treePageSlugs([...(site.nav ?? []), ...(site.footer ?? [])]));
+  for (const { slug } of manifest.fixedPages) {
+    if (treeSlugs.has(slug) || slug === 'index') problems.push({ code: 'slugDuplicate', detail: slug });
   }
   const keys = new Set([...pageKeysInTree([...(site.nav ?? []), ...(site.footer ?? [])])]);
   if (site.homePageKey) keys.add(site.homePageKey);

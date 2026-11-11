@@ -14,7 +14,7 @@ vi.mock('firebase-admin/storage', () => ({
 import { clearTemplateCache, loadTemplates, TemplateMissingError } from './template-store';
 
 const PREFIX = 'websites/scs/templates/v1/';
-const MANIFEST = { siteId: 'scs', version: 'v1', sectionTypes: ['article'], fixedPages: ['news'] };
+const MANIFEST = { siteId: 'scs', version: 'v1', sectionTypes: ['article'], fixedPages: [{ name: 'news', slug: 'news' }] };
 
 function seed(entries: Record<string, string>) {
   files.current = new Map(Object.entries(entries).map(([k, v]) => [PREFIX + k, v]));
@@ -68,6 +68,8 @@ describe('loadTemplates', () => {
   it.each([
     ['sectionTypes missing', { siteId: 'scs', version: 'v1', fixedPages: [] }],
     ['fixedPages not an array', { siteId: 'scs', version: 'v1', sectionTypes: [], fixedPages: 'news' }],
+    ['fixedPages as plain strings', { siteId: 'scs', version: 'v1', sectionTypes: [], fixedPages: ['news'] }],
+    ['fixedPages slug invalid', { siteId: 'scs', version: 'v1', sectionTypes: [], fixedPages: [{ name: 'news', slug: 'A/b' }] }],
     ['siteId of another site', { siteId: 'other', version: 'v1', sectionTypes: [], fixedPages: [] }],
     ['version missing', { siteId: 'scs', sectionTypes: [], fixedPages: [] }],
     ['legacyRedirects malformed', { siteId: 'scs', version: 'v1', sectionTypes: [], fixedPages: [], legacyRedirects: [{ from: 'a' }] }],

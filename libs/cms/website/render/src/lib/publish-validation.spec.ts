@@ -19,6 +19,16 @@ describe('validateForPublish', () => {
     const p = validateForPublish(site([page('a', 'a'), page('b', 'b', 'p-x')]), new Map([['p-a', pg()]]), new Map(), manifest);
     expect(p).toContainEqual({ code: 'pageMissing', nodeId: 'b' });
   });
+  it('flags a fixed-page slug that a tree page already uses', () => {
+    const m: TemplateManifest = { ...manifest, fixedPages: [{ name: 'impressum', slug: 'a' }] };
+    const pages = new Map([['p-a', pg()]]);
+    const p = validateForPublish(site([page('a', 'a')]), pages, new Map(), m);
+    expect(p).toContainEqual({ code: 'slugDuplicate', detail: 'a' });
+  });
+  it('accepts a fixed page with a free slug', () => {
+    const m: TemplateManifest = { ...manifest, fixedPages: [{ name: 'impressum', slug: 'impressum' }] };
+    expect(validateForPublish(site([page('a', 'a')]), new Map([['p-a', pg()]]), new Map(), m)).toEqual([]);
+  });
   it('flags a published section of an unknown type', () => {
     const pages = new Map([['p-a', pg(['s1'])]]);
     const sections = new Map<string, SectionDoc>([['s1', { type: 'weird', state: 'published', tenants: ['scs'] }]]);

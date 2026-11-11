@@ -2,6 +2,6 @@
   "siteId": "fixture",
   "version": "1",
   "sectionTypes": ["article", "hero"],
-  "fixedPages": ["news-artikel"],
+  "fixedPages": [{ "name": "news-artikel", "slug": "news-artikel" }],
   "legacyRedirects": [{ "from": "seite.html", "key": "scsw_vorstand" }]
 }

@@ -145,6 +145,16 @@ describe('renderSite', () => {
     expect(fileOf(files, 'en/news-artikel.html')).toContain('data-lang="en"');
   });
 
+  it('renders a fixed page at its own slug', () => {
+    const i = input();
+    i.templates.manifest.fixedPages = [{ name: 'news-artikel', slug: 'impressum' }];
+    const { files, problems } = renderSite(i);
+    expect(problems).toEqual([]);
+    expect(fileOf(files, 'impressum.html')).toContain('class="news-article" data-lang="de"');
+    expect(fileOf(files, 'en/impressum.html')).toContain('data-lang="en"');
+    expect(fileOf(files, 'news-artikel.html')).toBeUndefined();
+  });
+
   it('lists every page and language in sitemap.xml', () => {
     const xml = fileOf(renderSite(input()).files, 'sitemap.xml') ?? '';
     expect(xml.match(/<url>/g)?.length).toBe(4);

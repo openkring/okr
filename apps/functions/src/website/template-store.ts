@@ -40,7 +40,12 @@ function manifestError(m: unknown, siteId: string): string | undefined {
   if (typeof o['siteId'] !== 'string' || o['siteId'] !== siteId) return `manifest siteId must be "${siteId}"`;
   if (typeof o['version'] !== 'string' || !o['version']) return 'manifest version must be a string';
   if (!isStringArray(o['sectionTypes'])) return 'manifest sectionTypes must be a string array';
-  if (!isStringArray(o['fixedPages'])) return 'manifest fixedPages must be a string array';
+  const fixed = o['fixedPages'];
+  const fixedOk = Array.isArray(fixed) && fixed.every((f) => {
+    const r = f as Record<string, unknown> | null;
+    return !!r && typeof r === 'object' && typeof r['name'] === 'string' && !!r['name'] && typeof r['slug'] === 'string' && /^[a-z0-9-]+$/.test(r['slug']);
+  });
+  if (!fixedOk) return 'manifest fixedPages must be an array of {name, slug} (slug a-z, 0-9, -)';
   const legacy = o['legacyRedirects'];
   if (legacy !== undefined) {
     const ok = Array.isArray(legacy) && legacy.every((r) => !!r && typeof r === 'object' && typeof (r as Record<string, unknown>)['from'] === 'string' && typeof (r as Record<string, unknown>)['key'] === 'string');

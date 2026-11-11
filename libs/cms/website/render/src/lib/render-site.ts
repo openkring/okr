@@ -7,7 +7,7 @@
  *   layout.hbs              the page shell; gets a TemplateContext (render-context.ts)
  *   partials/<name>.hbs     `{{> nav}}`, `{{> footer}}`, … available in every template
  *   sections/<type>.hbs     one per manifest.sectionTypes entry; gets mapSection()'s output
- *   pages/<name>.hbs        one per manifest.fixedPages entry; gets a TemplateContext (sections: [])
+ *   pages/<name>.hbs        one per manifest.fixedPages entry ({ name, slug }, rendered to <slug>.html); gets a TemplateContext (sections: [])
  *
  * Layout context (TemplateContext):
  *   {
@@ -225,8 +225,8 @@ export function renderSite(input: RenderInput): RenderResult {
     problems.push({ code: 'renderFailed', nodeId: e.node?.id, pageKey: e.key, detail: `slug ${JSON.stringify(e.file)}` });
     return false;
   });
-  const fixedPages = templates.manifest.fixedPages.filter((name) => {
-    if (SLUG.test(name) && compiled.pages.has(name)) return true;
+  const fixedPages = templates.manifest.fixedPages.filter(({ name, slug }) => {
+    if (SLUG.test(slug) && compiled.pages.has(name)) return true;
     problems.push({ code: 'templateMissing', detail: `pages/${name}.hbs` });
     return false;
   });
@@ -280,17 +280,17 @@ export function renderSite(input: RenderInput): RenderResult {
       };
       renderLayout(entry.file, lang, context, data, entry.key);
     }
-    for (const name of fixedPages) {
-      const path = `/${name}`;
+    for (const { name, slug } of fixedPages) {
+      const path = `/${slug}`;
       const base: TemplateContext = {
         ...layoutContext(lang, '', path),
-        page: pageContext(name, name, path, undefined, '', lang, imageUrl),
+        page: pageContext(name, slug, path, undefined, '', lang, imageUrl),
         sections: [],
         main: '',
       };
       try {
         const main = (compiled.pages.get(name) as RenderFn)(base, data);
-        renderLayout(name, lang, { ...base, main }, data, name);
+        renderLayout(slug, lang, { ...base, main }, data, name);
       } catch (e) {
         problems.push({ code: 'renderFailed', pageKey: name, detail: message(e) });
       }
