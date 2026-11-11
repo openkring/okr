@@ -84,11 +84,11 @@
     "never": "Never published"
   },
   "rollback": {
-    "action": "Restore previous edition",
-    "confirm": "Do you want to restore the previous edition of the website? The current edition will then no longer be online.",
-    "done": "The previous edition is online again.",
-    "failed": "The previous edition could not be restored.",
-    "none": "There is no previous edition."
+    "action": "Restore the previous state of the website",
+    "confirm": "Do you want to restore the previous state of the website? The current state will then no longer be online.",
+    "done": "The previous state of the website is online again.",
+    "failed": "The previous state of the website could not be restored.",
+    "none": "There is no previous state of the website."
   },
   "problem": {
     "pageMissing": "The page no longer exists.",

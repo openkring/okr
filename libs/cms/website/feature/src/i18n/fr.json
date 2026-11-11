@@ -84,11 +84,11 @@
     "never": "Jamais publié"
   },
   "rollback": {
-    "action": "Rétablir la version précédente",
-    "confirm": "Veux-tu rétablir la version précédente du site web ? La version actuelle ne sera alors plus en ligne.",
-    "done": "La version précédente est de nouveau en ligne.",
-    "failed": "La version précédente n'a pas pu être rétablie.",
-    "none": "Il n'y a pas de version précédente."
+    "action": "Rétablir l'état précédent du site",
+    "confirm": "Veux-tu rétablir l'état précédent du site web ? L'état actuel ne sera alors plus en ligne.",
+    "done": "L'état précédent du site web est de nouveau en ligne.",
+    "failed": "L'état précédent du site web n'a pas pu être rétabli.",
+    "none": "Il n'y a pas d'état précédent du site web."
   },
   "problem": {
     "pageMissing": "La page n'existe plus.",

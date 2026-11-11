@@ -84,11 +84,11 @@
     "never": "Nunca publicado"
   },
   "rollback": {
-    "action": "Restaurar la versión anterior",
-    "confirm": "¿Quieres restaurar la versión anterior del sitio web? La versión actual dejará de estar en línea.",
-    "done": "La versión anterior vuelve a estar en línea.",
-    "failed": "No se pudo restaurar la versión anterior.",
-    "none": "No hay una versión anterior."
+    "action": "Restaurar el estado anterior del sitio",
+    "confirm": "¿Quieres restaurar el estado anterior del sitio web? El estado actual dejará de estar en línea.",
+    "done": "El estado anterior del sitio web vuelve a estar en línea.",
+    "failed": "No se pudo restaurar el estado anterior del sitio web.",
+    "none": "No hay un estado anterior del sitio web."
   },
   "problem": {
     "pageMissing": "La página ya no existe.",
