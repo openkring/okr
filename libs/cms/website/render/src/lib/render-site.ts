@@ -9,6 +9,16 @@
  *   sections/<type>.hbs     one per manifest.sectionTypes entry; gets mapSection()'s output plus
  *                           its place on the page (sectionContexts: sectionIndex, albumIndex, typeIndex)
  *   pages/<name>.hbs        one per manifest.fixedPages entry ({ name, slug }, rendered to <slug>.html); gets a TemplateContext (sections: [])
+ *   sections/home/<type>.hbs optional homepage look of a section type (only with manifest.homeLayout)
+ *
+ * Home layout (manifest.homeLayout = 'pages/<name>'): the home page's `main` is pages/<name>.hbs,
+ * rendered with the TemplateContext plus `rows` (HomeRow[], home-layout.ts): hero / pair / single
+ * rows with `name` (anchor id), `tinted`, `variant` and the section contexts. Each hero/single
+ * section is rendered with `sections/home/<type>.hbs` when present, else `sections/<type>.hbs`, and
+ * gets `tinted` in its context; a pair (text article + stat tiles) is drawn by the page template
+ * from `sections`. A row whose template renders only whitespace is left out and takes no tint slot.
+ * There `albumIndex` counts only sections drawn by a generic template (a home variant registers no
+ * image group). The layout gets `home: true`.
  *
  * Layout context (TemplateContext):
  *   {
@@ -47,6 +57,7 @@ import {
   type TemplateContext,
 } from './render-context';
 import { compileTemplate, createTemplateEnv, escapeXml, langPath, type RenderData, type RenderFn } from './render-helpers';
+import { homeRowPlan, type HomeRow } from './home-layout';
 import { mapSection, pickText, type SanitizeFn, type SectionDoc } from './section-mapper';
 
 export interface TemplateSet {
@@ -141,17 +152,17 @@ function nestedSectionsOf(section: SectionDoc, tenants: string[], sections: Map<
  *   sectionIndex  its position among the page's published sections (0-based)
  *   albumIndex    how many earlier sections have a non-empty `images` array — a page-wide image-group
  *                 number (e.g. a lightbox registry key). mapSection leaves an article's `images` empty
- *                 when it shows none.
+ *                 when it shows none. `countsAlbum(type)` false: that section type adds no group.
  *   typeIndex     how many earlier sections of the same `type` are not `locked`
  */
-export function sectionContexts(mapped: unknown[]): Record<string, unknown>[] {
+export function sectionContexts(mapped: unknown[], countsAlbum: (type: string) => boolean = () => true): Record<string, unknown>[] {
   let albums = 0;
   const perType = new Map<string, number>();
   return mapped.map((m, sectionIndex) => {
     const own = m && typeof m === 'object' && !Array.isArray(m) ? (m as Record<string, unknown>) : {};
     const type = typeof own['type'] === 'string' ? own['type'] : '';
     const context = { ...own, sectionIndex, albumIndex: albums, typeIndex: perType.get(type) ?? 0 };
-    if (Array.isArray(own['images']) && own['images'].length > 0) albums++;
+    if (Array.isArray(own['images']) && own['images'].length > 0 && countsAlbum(type)) albums++;
     if (own['locked'] !== true) perType.set(type, (perType.get(type) ?? 0) + 1);
     return context;
   });
@@ -255,6 +266,15 @@ export function renderSite(input: RenderInput): RenderResult {
     problems.push({ code: 'templateMissing', detail: `pages/${name}.hbs` });
     return false;
   });
+  const homeLayout = templates.manifest.homeLayout;
+  let homePage: RenderFn | undefined;
+  if (homeLayout !== undefined) {
+    const name = /^pages\/([\w-]+)$/.exec(homeLayout)?.[1];
+    homePage = name ? compiled.pages.get(name) : undefined;
+    if (!name) problems.push({ code: 'templateMissing', detail: `homeLayout ${JSON.stringify(homeLayout)}` });
+    else if (!homePage) problems.push({ code: 'templateMissing', detail: `pages/${name}.hbs` });
+  }
+  const homeVariant = (type: string): RenderFn | undefined => compiled.sections.get(`home/${type}`);
   const languages = renderLanguages(site);
   const tenants = site.tenants ?? [];
   const year = new Date().getFullYear();
@@ -284,6 +304,7 @@ export function renderSite(input: RenderInput): RenderResult {
       const rendered: SectionContext[] = [];
       const published = publishedPageSections(page, tenants, sections);
       const failed = new Set<number>();
+      const asHome = entry.file === 'index' && homePage !== undefined;
       const contexts = sectionContexts(
         published.map(({ raw, sectionKey, section }, i) => {
           try {
@@ -294,7 +315,55 @@ export function renderSite(input: RenderInput): RenderResult {
             return undefined;
           }
         }),
+        asHome ? (type) => !homeVariant(type) : undefined,
       );
+      if (asHome) {
+        const ok = published.flatMap(({ raw, sectionKey, section }, i) => {
+          if (failed.has(i)) return [];
+          const type = section.type ?? 'article';
+          if (!homeVariant(type) && !compiled.sections.has(type)) {
+            problems.push({ code: 'templateMissing', pageKey: entry.key, sectionKey: raw, detail: type });
+            return [];
+          }
+          return [{ raw, sectionKey, type, context: contexts[i] }];
+        });
+        const rows: HomeRow[] = [];
+        let drawn = 0;
+        for (const plan of homeRowPlan(ok.map((s) => s.context))) {
+          const items = plan.sections.map((c) => ok.find((s) => s.context === c) as (typeof ok)[number]);
+          const tinted = plan.kind !== 'hero' && drawn % 2 === 1;
+          if (plan.kind === 'pair') {
+            drawn++;
+            rows.push({ ...plan, tinted, variant: false, html: '' });
+            rendered.push(...items.map((s) => ({ type: s.type, key: s.sectionKey, html: '' })));
+            continue;
+          }
+          const [s] = items;
+          const variant = homeVariant(s.type);
+          try {
+            const html = (variant ?? (compiled.sections.get(s.type) as RenderFn))({ ...s.context, tinted }, data);
+            if (!html.trim()) continue;
+            if (plan.kind !== 'hero') drawn++;
+            rows.push({ ...plan, tinted, variant: !!variant, html });
+            rendered.push({ type: s.type, key: s.sectionKey, html });
+          } catch (e) {
+            problems.push({ code: 'renderFailed', pageKey: entry.key, sectionKey: s.raw, detail: message(e) });
+          }
+        }
+        const base: TemplateContext = {
+          ...layoutContext(lang, entry.key, entry.path),
+          page: pageContext(entry.key, '', entry.path, page, entry.node ? pickText(entry.node.label, entry.node.labelI18n, lang) : '', lang, imageUrl),
+          sections: rendered,
+          main: '',
+          home: true,
+        };
+        try {
+          renderLayout(entry.file, lang, { ...base, main: (homePage as RenderFn)({ ...base, rows }, data) }, data, entry.key);
+        } catch (e) {
+          problems.push({ code: 'renderFailed', pageKey: entry.key, detail: message(e) });
+        }
+        continue;
+      }
       published.forEach(({ raw, sectionKey, section }, i) => {
         if (failed.has(i)) return;
         const type = section.type ?? 'article';

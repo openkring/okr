@@ -1,6 +1,7 @@
 // Loads a tenant website's Handlebars template set from Storage (design §6.4).
 // Layout: gs://<default bucket>/websites/<siteId>/templates/<version>/
-//   website.json, layout.hbs, partials/*.hbs, sections/*.hbs, pages/*.hbs
+//   website.json, layout.hbs, partials/*.hbs, sections/*.hbs, sections/home/*.hbs, pages/*.hbs
+// (sections/home/<type>.hbs = the homepage look of a type, keyed 'home/<type>'; see manifest.homeLayout)
 // Written only by scripts/website-templates-upload.mjs (storage.rules deny every client).
 import { getStorage } from 'firebase-admin/storage';
 import type { PublishProblem, TemplateManifest, TemplateSet } from '@okr/cms-website-render';
@@ -25,10 +26,12 @@ export function clearTemplateCache(): void {
   cache.clear();
 }
 
-/** `partials/nav.hbs` → ['partials', 'nav']; anything else → undefined. */
+/** `partials/nav.hbs` → ['partials', 'nav'], `sections/home/hero.hbs` → ['sections', 'home/hero']; anything else → undefined. */
 function splitHbs(relative: string): [string, string] | undefined {
   const m = /^(partials|sections|pages)\/([\w-]+)\.hbs$/.exec(relative);
-  return m ? [m[1], m[2]] : undefined;
+  if (m) return [m[1], m[2]];
+  const home = /^sections\/home\/([\w-]+)\.hbs$/.exec(relative);
+  return home ? ['sections', `home/${home[1]}`] : undefined;
 }
 
 const isStringArray = (v: unknown): v is string[] => Array.isArray(v) && v.every((x) => typeof x === 'string');
@@ -50,6 +53,10 @@ function manifestError(m: unknown, siteId: string): string | undefined {
   if (legacy !== undefined) {
     const ok = Array.isArray(legacy) && legacy.every((r) => !!r && typeof r === 'object' && typeof (r as Record<string, unknown>)['from'] === 'string' && typeof (r as Record<string, unknown>)['key'] === 'string');
     if (!ok) return 'manifest legacyRedirects must be an array of {from, key} strings';
+  }
+  const homeLayout = o['homeLayout'];
+  if (homeLayout !== undefined && (typeof homeLayout !== 'string' || !/^pages\/[\w-]+$/.test(homeLayout))) {
+    return 'manifest homeLayout must be "pages/<name>"';
   }
   return undefined;
 }

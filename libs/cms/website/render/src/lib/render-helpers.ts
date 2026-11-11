@@ -67,6 +67,8 @@ function langOf(options: HelperOptions): string {
  * - `json value` — `value` as JSON that is safe as the text of a `<script type="application/json">`:
  *   `<`, `>`, `&`, U+2028 and U+2029 are written as \u escapes, so the text can never close the
  *   script or open a comment. Use it with triple braces only there: `{{{json images}}}`.
+ * - `cssUrl u` — `u` safe inside CSS `url("…")` (see cssUrl); still escaped by `{{…}}` for the attribute.
+ * - `breaks text` — `text` escaped, each newline as `<br>` (a multi-line image caption).
  */
 export function createTemplateEnv(): HandlebarsEnv {
   const hbs = Handlebars.create();
@@ -135,8 +137,17 @@ export function scriptJson(value: unknown): string {
   return (JSON.stringify(value ?? null) ?? 'null').replace(/[<>&\u2028\u2029]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`);
 }
 
+/** A url for CSS `url("…")`: quotes, parentheses, backslash, whitespace and angle brackets percent-encoded. */
+export function cssUrl(value: unknown): string {
+  return asText(value).replace(/["'()\\\s<>]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')}`);
+}
+
 function registerDataHelpers(hbs: HandlebarsEnv): void {
   hbs.registerHelper('json', (...args: unknown[]) => scriptJson(split(args).params[0]));
+  hbs.registerHelper('cssUrl', (...args: unknown[]) => cssUrl(split(args).params[0]));
+  hbs.registerHelper('breaks', (...args: unknown[]) =>
+    new hbs.SafeString(hbs.Utils.escapeExpression(asText(split(args).params[0])).replace(/\n/g, '<br>')),
+  );
   hbs.registerHelper('or', (...args: unknown[]) => {
     const { params } = split(args);
     return params.find((p) => !!p) ?? params[params.length - 1];

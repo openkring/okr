@@ -7,3 +7,4 @@ export * from './lib/publish-validation';
 export * from './lib/render-context';
 export * from './lib/render-helpers';
 export * from './lib/render-site';
+export * from './lib/home-layout';

@@ -25,6 +25,12 @@ export interface TemplateManifest {
   /** `pages/<name>.hbs` is rendered to `<slug>.html` per language */
   fixedPages: { name: string; slug: string }[];
   legacyRedirects?: { from: string; key: string }[];
+  /**
+   * `pages/<name>` (e.g. 'pages/home'): the home page is drawn by that page template from rows of
+   * sections (home-layout.ts), each section by `sections/home/<type>.hbs` when the set has one,
+   * else by its generic template. Unset: the home page renders like every other page.
+   */
+  homeLayout?: string;
 }
 
 /**

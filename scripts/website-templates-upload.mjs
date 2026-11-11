@@ -3,7 +3,7 @@
  *
  *   node scripts/website-templates-upload.mjs <tenant> [--dry-run]
  *
- * Source:  apps/<tenant>-website/templates/**   (website.json, layout.hbs, partials/, sections/, pages/)
+ * Source:  apps/<tenant>-website/templates/**   (website.json, layout.hbs, partials/, sections/, sections/home/, pages/)
  *          website.json is read from templates/website.json, else apps/<tenant>-website/website.json
  * Target:  gs://<default bucket>/websites/<siteId>/templates/<version>/…   (siteId = website.json.siteId)
  *          version = YYYYMMDD-HHmm-<git short sha>
@@ -60,7 +60,7 @@ if (!existsSync(join(templatesDir, 'layout.hbs'))) fail('layout.hbs is missing')
 
 // website.json → target root; everything else under templates/ keeps its relative path.
 const uploads = walk(templatesDir)
-  .filter((f) => f === 'layout.hbs' || /^(partials|sections|pages)\/[\w-]+\.hbs$/.test(f))
+  .filter((f) => f === 'layout.hbs' || /^(partials|sections|pages)\/[\w-]+\.hbs$/.test(f) || /^sections\/home\/[\w-]+\.hbs$/.test(f))
   .map((f) => ({ target: f, source: join(templatesDir, f) }));
 uploads.push({ target: 'website.json', source: manifestPath });
 const ignored = walk(templatesDir).filter((f) => f !== 'website.json' && !uploads.some((u) => u.target === f));

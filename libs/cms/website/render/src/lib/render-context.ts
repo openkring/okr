@@ -79,6 +79,8 @@ export interface TemplateContext {
   /** the page body: every section's html joined, or the fixed page's rendered template */
   main: string;
   alternates: AlternateLink[];
+  /** true on the home page when `main` comes from the manifest's homeLayout page template */
+  home?: boolean;
 }
 
 /** German first (the source, rendered at the root), then the site's other known languages. */

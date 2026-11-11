@@ -73,6 +73,8 @@ describe('loadTemplates', () => {
     ['siteId of another site', { siteId: 'other', version: 'v1', sectionTypes: [], fixedPages: [] }],
     ['version missing', { siteId: 'scs', sectionTypes: [], fixedPages: [] }],
     ['legacyRedirects malformed', { siteId: 'scs', version: 'v1', sectionTypes: [], fixedPages: [], legacyRedirects: [{ from: 'a' }] }],
+    ['homeLayout not a pages/<name> path', { siteId: 'scs', version: 'v1', sectionTypes: [], fixedPages: [], homeLayout: 'layout' }],
+    ['homeLayout not a string', { siteId: 'scs', version: 'v1', sectionTypes: [], fixedPages: [], homeLayout: 1 }],
     ['a JSON array', []],
   ])('fails with a templateMissing problem for an invalid manifest (%s)', async (_label, manifest) => {
     seed({ 'website.json': JSON.stringify(manifest), 'layout.hbs': 'L' });
@@ -85,6 +87,22 @@ describe('loadTemplates', () => {
   it('accepts a manifest with valid legacyRedirects', async () => {
     seed({ 'website.json': JSON.stringify({ ...MANIFEST, legacyRedirects: [{ from: 'old', key: 'new' }] }), 'layout.hbs': 'L' });
     await expect(loadTemplates('scs', 'v1')).resolves.toBeDefined();
+  });
+
+  it('accepts homeLayout and reads the homepage section variants under sections/home/', async () => {
+    const manifest = { ...MANIFEST, homeLayout: 'pages/home' };
+    seed({
+      'website.json': JSON.stringify(manifest),
+      'layout.hbs': 'L',
+      'pages/home.hbs': 'HOME',
+      'sections/article.hbs': 'ART',
+      'sections/home/article.hbs': 'HOME-ART',
+      'sections/home/deeper/x.hbs': 'IGNORED',
+    });
+    const set = await loadTemplates('scs', 'v1');
+    expect(set.manifest).toEqual(manifest);
+    expect(set.pages).toEqual({ home: 'HOME' });
+    expect(set.sections).toEqual({ article: 'ART', 'home/article': 'HOME-ART' });
   });
 
   it('fails when layout.hbs is absent', async () => {

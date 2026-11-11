@@ -66,3 +66,15 @@ describe('template data helpers', () => {
     expect(scriptJson(undefined)).toBe('null');
   });
 });
+
+describe('homepage helpers', () => {
+  it('cssUrl: percent-encodes what could leave a CSS url("…")', () => {
+    expect(render('{{{cssUrl u}}}', { u: 'https://a.b/c d.jpg?x=(1)"\'\\<>' })).toBe('https://a.b/c%20d.jpg?x=%281%29%22%27%5C%3C%3E');
+    expect(render('{{cssUrl u}}', {})).toBe('');
+  });
+
+  it('breaks: escaped text with each newline as <br>', () => {
+    expect(render('{{breaks c}}', { c: 'Bild <1>\nQuelle & Co' })).toBe('Bild &lt;1&gt;<br>Quelle &amp; Co');
+    expect(render('{{breaks c}}', {})).toBe('');
+  });
+});

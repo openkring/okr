@@ -267,3 +267,83 @@ describe('sectionContexts', () => {
   });
 });
 
+
+describe('renderSite with a home layout (manifest.homeLayout)', () => {
+  const pub = (type: string, extra: Partial<SectionDoc> = {}): SectionDoc => ({ type, state: 'published', tenants: ['scs'], ...extra });
+
+  function homeInput(): RenderInput {
+    const i = input();
+    i.templates.manifest = { ...i.templates.manifest, homeLayout: 'pages/home', sectionTypes: ['article', 'hero', 'tiles', 'album'] };
+    i.templates.layout = '{{#if home}}HOME{{/if}}{{{main}}}';
+    i.templates.pages['home'] =
+      '<main id="home">{{#each rows}}[{{kind}}|{{name}}|{{#if tinted}}T{{/if}}|{{#if variant}}V{{/if}}|'
+      + '{{#if (eq kind "pair")}}{{#each sections}}{{type}};{{/each}}{{else}}{{{html}}}{{/if}}]{{/each}}</main>';
+    i.templates.sections['home/article'] = '<a{{#if tinted}} t{{/if}}>{{title}}:{{albumIndex}}</a>';
+    i.templates.sections['tiles'] = '<tiles/>';
+    i.templates.sections['album'] = '{{#if images.length}}<g>{{albumIndex}}</g>{{/if}}';
+    i.pages.set('scsw_home', pg(['h', 'a', 'stat', 'b', 'alb', 'empty', 'c']));
+    i.sections.set('h', pub('hero', { name: 'Top', title: 'Hallo' }));
+    i.sections.set('a', pub('article', { name: 'ueber-uns', title: 'A' }));
+    i.sections.set('stat', pub('tiles', { name: 'zahlen', properties: { variant: 'stat', items: [{ value: '1' }] } }));
+    i.sections.set('b', pub('article', { name: 'bild', title: 'B', properties: { images: [{ url: 'x.jpg' }] }, content: { htmlContent: '', position: 4 } as SectionDoc['content'] }));
+    i.sections.set('alb', pub('album', { name: 'Album 1', properties: { images: [{ url: 'y.jpg' }] } }));
+    i.sections.set('empty', pub('album', { name: 'leer' }));
+    i.sections.set('c', pub('article', { name: 'c', title: 'C' }));
+    return i;
+  }
+
+  it('renders the home page with the layout page template, rows and home section variants', () => {
+    const { files, problems } = renderSite(homeInput());
+    expect(problems).toEqual([]);
+    const home = fileOf(files, 'index.html') ?? '';
+    expect(home.startsWith('HOME<main id="home">')).toBe(true);
+    const rows = [...home.matchAll(/\[([^\]]*)\]/g)].map((m) => m[1].replace(/\s+/g, ' '));
+    expect(rows).toEqual([
+      expect.stringMatching(/^hero\|top\|\|\|<section class="hero" id="top">/),
+      'pair|ueber-uns|||article;tiles;',
+      'single|bild|T|V|<a t>B:0</a>',
+      'single|album-1|||<g>0</g>',
+      'single|c|T|V|<a t>C:1</a>',
+    ]);
+  });
+
+  it('keeps the plain layout for every other page', () => {
+    const { files } = renderSite(homeInput());
+    const vorstand = fileOf(files, 'vorstand.html') ?? '';
+    expect(vorstand.startsWith('HOME')).toBe(false);
+    expect(vorstand).toContain('<section class="article"');
+    expect(vorstand).not.toContain('<a');
+  });
+
+  it('counts image groups only for sections drawn by a generic template', () => {
+    const i = homeInput();
+    i.pages.set('scsw_home', pg(['b', 'alb', 'alb']));
+    const home = fileOf(renderSite(i).files, 'index.html') ?? '';
+    expect(home).toContain('<g>0</g>');
+    expect(home).toContain('<g>1</g>');
+  });
+
+  it('reports a missing layout page template', () => {
+    const i = homeInput();
+    delete i.templates.pages['home'];
+    const { files, problems } = renderSite(i);
+    expect(files).toEqual([]);
+    expect(problems).toContainEqual(expect.objectContaining({ code: 'templateMissing', detail: 'pages/home.hbs' }));
+  });
+
+  it('reports an invalid homeLayout', () => {
+    const i = homeInput();
+    i.templates.manifest.homeLayout = 'layout';
+    const { problems } = renderSite(i);
+    expect(problems).toContainEqual(expect.objectContaining({ code: 'templateMissing', detail: 'homeLayout "layout"' }));
+  });
+
+  it('renders the home page as before without homeLayout, ignoring the home variants', () => {
+    const i = homeInput();
+    delete i.templates.manifest.homeLayout;
+    const home = fileOf(renderSite(i).files, 'index.html') ?? '';
+    expect(home.startsWith('HOME')).toBe(false);
+    expect(home).not.toContain('<a');
+    expect(home).toContain('<section class="article" id="ueber-uns">');
+  });
+});
