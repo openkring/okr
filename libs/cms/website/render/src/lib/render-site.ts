@@ -23,7 +23,7 @@
  *   }
  * Every template also gets `@lang` and `@year`. Helpers: `eq`, `url`, `t`, `year`, and the pure data
  * helpers `or`, `and`, `not`, `gt`, `add`, `sub`, `mod`, `startsWith`, `contains`, `initials`, `count`,
- * `runs` (render-helpers.ts).
+ * `runs`, `json` (render-helpers.ts).
  * Escaping is on: `{{x}}` is always safe; use `{{{x}}}` only for `main`, `sections.[].html` and a
  * section's sanitized rich text (`content`, accordion `items.[].content`).
  *

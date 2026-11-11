@@ -64,6 +64,9 @@ function langOf(options: HelperOptions): string {
  * - `runs list field value` — `list` split into runs: consecutive records whose own `field` equals
  *   `value` form one `{ match: true, items }`; every other entry is its own `{ match: false, items: [it] }`.
  *   For markup that wraps neighbours together (e.g. a row of logos).
+ * - `json value` — `value` as JSON that is safe as the text of a `<script type="application/json">`:
+ *   `<`, `>`, `&`, U+2028 and U+2029 are written as \u escapes, so the text can never close the
+ *   script or open a comment. Use it with triple braces only there: `{{{json images}}}`.
  */
 export function createTemplateEnv(): HandlebarsEnv {
   const hbs = Handlebars.create();
@@ -127,7 +130,13 @@ export function runsOf(list: unknown, field: unknown, value: unknown): Run[] {
   return out;
 }
 
+/** JSON for the text of a `<script type="application/json">` (see the `json` helper). */
+export function scriptJson(value: unknown): string {
+  return (JSON.stringify(value ?? null) ?? 'null').replace(/[<>&\u2028\u2029]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`);
+}
+
 function registerDataHelpers(hbs: HandlebarsEnv): void {
+  hbs.registerHelper('json', (...args: unknown[]) => scriptJson(split(args).params[0]));
   hbs.registerHelper('or', (...args: unknown[]) => {
     const { params } = split(args);
     return params.find((p) => !!p) ?? params[params.length - 1];

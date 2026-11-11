@@ -1,4 +1,4 @@
-import { compileTemplate, createTemplateEnv, runsOf } from './render-helpers';
+import { compileTemplate, createTemplateEnv, runsOf, scriptJson } from './render-helpers';
 
 const render = (source: string, context: unknown = {}): string =>
   compileTemplate(createTemplateEnv(), 'spec.hbs', source)(context, { lang: 'de', year: 2026 });
@@ -56,5 +56,13 @@ describe('template data helpers', () => {
     expect(render('{{#each (runs list "type" "logo")}}[{{#if match}}{{#each items}}{{n}}{{/each}}{{else}}-{{/if}}]{{/each}}', { list: [a, b, c, d] })).toBe(
       '[12][-][4]',
     );
+  });
+
+  it('json: script-safe JSON', () => {
+    const value = { t: '</script><!-- a & b \u2028' };
+    const out = render('{{{json v}}}', { v: value });
+    expect(out).not.toMatch(/[<>&\u2028]/);
+    expect(JSON.parse(out)).toEqual(value);
+    expect(scriptJson(undefined)).toBe('null');
   });
 });
