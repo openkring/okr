@@ -113,7 +113,7 @@ describe('WebsiteService', () => {
   it('publish calls publishWebsite with siteId and dryRun and returns the data', async () => {
     callable.mockResolvedValue({ data: { files: 3, pages: 2, durationMs: 5, problems: [] } });
     const r = await service.publish('scs');
-    expect(httpsCallable).toHaveBeenCalledWith(expect.anything(), 'publishWebsite');
+    expect(httpsCallable).toHaveBeenCalledWith(expect.anything(), 'publishWebsite', { timeout: 310_000 });
     expect(callable).toHaveBeenCalledWith({ siteId: 'scs', dryRun: false });
     expect(r.problems).toEqual([]);
   });
@@ -121,7 +121,7 @@ describe('WebsiteService', () => {
   it('rollback calls rollbackWebsite and propagates a refusal', async () => {
     callable.mockResolvedValueOnce({ data: { version: 'v1' } });
     expect((await service.rollback('scs')).version).toBe('v1');
-    expect(httpsCallable).toHaveBeenCalledWith(expect.anything(), 'rollbackWebsite');
+    expect(httpsCallable).toHaveBeenCalledWith(expect.anything(), 'rollbackWebsite', { timeout: 130_000 });
     callable.mockRejectedValueOnce(new Error('noPreviousRelease'));
     await expect(service.rollback('scs')).rejects.toThrow('noPreviousRelease');
   });

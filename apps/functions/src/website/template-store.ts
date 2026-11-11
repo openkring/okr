@@ -31,6 +31,24 @@ function splitHbs(relative: string): [string, string] | undefined {
   return m ? [m[1], m[2]] : undefined;
 }
 
+const isStringArray = (v: unknown): v is string[] => Array.isArray(v) && v.every((x) => typeof x === 'string');
+
+/** Checks the parsed `website.json`; returns the problem text, or undefined when the manifest is usable. */
+function manifestError(m: unknown, siteId: string): string | undefined {
+  if (!m || typeof m !== 'object' || Array.isArray(m)) return 'manifest is not an object';
+  const o = m as Record<string, unknown>;
+  if (typeof o['siteId'] !== 'string' || o['siteId'] !== siteId) return `manifest siteId must be "${siteId}"`;
+  if (typeof o['version'] !== 'string' || !o['version']) return 'manifest version must be a string';
+  if (!isStringArray(o['sectionTypes'])) return 'manifest sectionTypes must be a string array';
+  if (!isStringArray(o['fixedPages'])) return 'manifest fixedPages must be a string array';
+  const legacy = o['legacyRedirects'];
+  if (legacy !== undefined) {
+    const ok = Array.isArray(legacy) && legacy.every((r) => !!r && typeof r === 'object' && typeof (r as Record<string, unknown>)['from'] === 'string' && typeof (r as Record<string, unknown>)['key'] === 'string');
+    if (!ok) return 'manifest legacyRedirects must be an array of {from, key} strings';
+  }
+  return undefined;
+}
+
 export async function loadTemplates(siteId: string, version: string): Promise<TemplateSet> {
   if (!SAFE_SITE.test(siteId) || !SAFE_VERSION.test(version) || version.includes('..')) {
     throw new TemplateMissingError(`invalid template location ${siteId}@${version}`);
@@ -56,12 +74,16 @@ export async function loadTemplates(siteId: string, version: string): Promise<Te
     const [buffer] = await object.download();
     const text = buffer.toString('utf8');
     if (relative === 'website.json') {
+      let parsed: unknown;
       try {
-        set.manifest = JSON.parse(text) as TemplateManifest;
-        hasManifest = true;
+        parsed = JSON.parse(text);
       } catch {
         throw new TemplateMissingError(`${prefix}website.json is not valid JSON`);
       }
+      const bad = manifestError(parsed, siteId);
+      if (bad) throw new TemplateMissingError(`${prefix}website.json: ${bad}`);
+      set.manifest = parsed as TemplateManifest;
+      hasManifest = true;
     } else if (relative === 'layout.hbs') {
       set.layout = text;
       hasLayout = true;

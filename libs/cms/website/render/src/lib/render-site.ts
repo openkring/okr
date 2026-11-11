@@ -108,7 +108,7 @@ function activePageNodes(nodes: WebsiteNode[], out: WebsiteNode[] = []): Website
 }
 
 function pageEntries(site: WebsiteModel): PageEntry[] {
-  const nodes = activePageNodes([...site.nav, ...site.footer]);
+  const nodes = activePageNodes([...(site.nav ?? []), ...(site.footer ?? [])]);
   const home: PageEntry = { key: site.homePageKey, file: 'index', path: '/', node: nodes.find((n) => n.pageKey === site.homePageKey) };
   return [home, ...nodes.map((n) => ({ key: n.pageKey as string, file: n.slug ?? '', path: nodePath(n, site.homePageKey), node: n }))];
 }
@@ -161,7 +161,7 @@ function legacyStubs(site: WebsiteModel, manifest: TemplateManifest, problems: P
       problems.push({ code: 'renderFailed', detail: `legacyRedirects: ${JSON.stringify({ from, key })}` });
       continue;
     }
-    const node = activePageNodes([...site.nav, ...site.footer]).find((n) => n.pageKey === key);
+    const node = activePageNodes([...(site.nav ?? []), ...(site.footer ?? [])]).find((n) => n.pageKey === key);
     const target = key === site.homePageKey || !node ? '/' : nodePath(node, site.homePageKey);
     const line = `if (k === ${JSON.stringify(key)}) location.replace('${target}');`;
     byPath.set(from, [...(byPath.get(from) ?? []), line]);
@@ -239,8 +239,8 @@ export function renderSite(input: RenderInput): RenderResult {
     lang,
     languages,
     site: { name: site.name ?? '', domain: siteOrigin(site), tagline: pickText(site.tagline, site.taglineI18n, lang) },
-    nav: navItems(site.nav, site, lang, key),
-    footer: { tagline: pickText(site.tagline, site.taglineI18n, lang), items: navItems(site.footer, site, lang, key) },
+    nav: navItems(site.nav ?? [], site, lang, key),
+    footer: { tagline: pickText(site.tagline, site.taglineI18n, lang), items: navItems(site.footer ?? [], site, lang, key) },
     alternates: alternates(path, languages, siteOrigin(site)),
   });
 

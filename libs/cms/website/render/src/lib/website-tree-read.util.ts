@@ -50,7 +50,7 @@ export function siteWarnings(site: WebsiteModel, pages: Map<string, PageModel>):
   const warnings: WebsiteWarning[] = [];
   const slugs = new Set<string>();
   const keys = new Set<string>();
-  for (const n of activeNodes([...site.nav, ...site.footer])) {
+  for (const n of activeNodes([...(site.nav ?? []), ...(site.footer ?? [])])) {
     if (n.type === 'link') {
       if (!isAllowedLinkUrl(n.url ?? '')) warnings.push({ nodeId: n.id, code: 'linkInvalid' });
       continue;
@@ -59,7 +59,7 @@ export function siteWarnings(site: WebsiteModel, pages: Map<string, PageModel>):
     const page = n.pageKey ? pages.get(n.pageKey) : undefined;
     if (!page) warnings.push({ nodeId: n.id, code: 'pageMissing' });
     else if (page.isArchived) warnings.push({ nodeId: n.id, code: 'pageArchived' });
-    else if (page.isPrivate) warnings.push({ nodeId: n.id, code: 'pagePrivate' });
+    else if (page.isPrivate !== false) warnings.push({ nodeId: n.id, code: 'pagePrivate' });
     if (n.slug) {
       if (slugs.has(n.slug)) warnings.push({ nodeId: n.id, code: 'slugDuplicate' });
       slugs.add(n.slug);

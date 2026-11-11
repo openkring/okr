@@ -67,7 +67,7 @@ const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve,
 
 /** Latest release's version name (`sites/<site>/versions/<id>`), undefined when the site never released. */
 export async function getLiveVersion(site: string): Promise<string | undefined> {
-  const data = await call<{ releases?: { version?: { name?: string } }[] }>('GET', `${BASE}/sites/${site}/releases`, { params: { pageSize: 1 } });
+  const data = await call<{ releases?: { version?: { name?: string } }[] }>('GET', `${BASE}/sites/${site}/channels/live/releases`, { params: { pageSize: 1 } });
   return data.releases?.[0]?.version?.name;
 }
 
@@ -141,7 +141,7 @@ export async function releaseExisting(site: string, version: string, message: st
 }
 
 export async function listReleases(site: string, pageSize: number): Promise<ReleaseInfo[]> {
-  const data = await call<{ releases?: { name: string; version?: { name?: string }; releaseTime?: string }[] }>('GET', `${BASE}/sites/${site}/releases`, {
+  const data = await call<{ releases?: { name: string; version?: { name?: string }; releaseTime?: string }[] }>('GET', `${BASE}/sites/${site}/channels/live/releases`, {
     params: { pageSize },
   });
   return (data.releases ?? []).map((r) => ({ name: r.name, version: r.version?.name ?? '', createTime: r.releaseTime ?? '' }));

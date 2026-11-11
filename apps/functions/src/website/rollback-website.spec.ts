@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpsError } from 'firebase-functions/v2/https';
 import type { WebsiteModel } from '@okr/shared-models';
 
-import { runRollback, type RollbackDeps } from './rollback-website';
+import { ROLLBACK_ROLES, runRollback, type RollbackDeps } from './rollback-website';
 
 const SITE = { okey: 'scs', tenants: ['scs'], hostingSite: 'scs-website-54aef' } as unknown as WebsiteModel;
 const REQ = { site: SITE, personKey: 'pA' };
@@ -66,5 +66,11 @@ describe('runRollback', () => {
     expect((error as HttpsError).code).toBe('internal');
     expect(d.markPublished).not.toHaveBeenCalled();
     expect(d.closeLock).toHaveBeenCalledWith('scs', 'lock1', 'failed', { detail: 'hosting' });
+  });
+});
+
+describe('rollbackWebsite roles', () => {
+  it('is an admin action (spec §7.2)', () => {
+    expect(ROLLBACK_ROLES).toEqual(['admin']);
   });
 });

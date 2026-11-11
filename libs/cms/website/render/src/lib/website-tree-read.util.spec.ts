@@ -40,6 +40,14 @@ describe('siteWarnings', () => {
     expect(w).toContainEqual({ nodeId: 'b', code: 'pageArchived' });
     expect(w).toContainEqual({ nodeId: 'c', code: 'pagePrivate' });
   });
+  it('treats a page without isPrivate as private (the model default)', () => {
+    const p = new Map([['p-a', { isArchived: false } as PageModel]]);
+    expect(siteWarnings(site([page('a', 'a')]), p)).toContainEqual({ nodeId: 'a', code: 'pagePrivate' });
+  });
+  it('does not throw for a site without footer', () => {
+    const s = { tenants: ['scs'], nav: [page('a', 'a')], homePageKey: 'p-a' } as unknown as WebsiteModel;
+    expect(siteWarnings(s, pages({ 'p-a': {} }))).toEqual([]);
+  });
   it('flags duplicate slugs and page keys', () => {
     const w = siteWarnings(site([page('a', 's', 'p-a'), page('b', 's', 'p-b'), page('c', 'c', 'p-a')]), pages({ 'p-a': {}, 'p-b': {} }));
     expect(codes(w)).toContain('slugDuplicate');

@@ -75,6 +75,15 @@ describe('renderSite', () => {
     expect(fileOf(files, 'en/index.html')).toContain('Welcome');
   });
 
+  it('renders a site without footer', () => {
+    const base = input();
+    const site = { ...base.site } as Partial<WebsiteModel>;
+    delete site.footer;
+    const { files, problems } = renderSite({ ...base, site: site as WebsiteModel });
+    expect(problems).toEqual([]);
+    expect(fileOf(files, 'index.html')).toContain('Willkommen');
+  });
+
   it('renders every page node per language, with the translation or German', () => {
     const { files } = renderSite(input());
     const de = fileOf(files, 'vorstand.html') ?? '';

@@ -65,6 +65,26 @@ describe('loadTemplates', () => {
     expect(err.problem.detail).toContain('website.json');
   });
 
+  it.each([
+    ['sectionTypes missing', { siteId: 'scs', version: 'v1', fixedPages: [] }],
+    ['fixedPages not an array', { siteId: 'scs', version: 'v1', sectionTypes: [], fixedPages: 'news' }],
+    ['siteId of another site', { siteId: 'other', version: 'v1', sectionTypes: [], fixedPages: [] }],
+    ['version missing', { siteId: 'scs', sectionTypes: [], fixedPages: [] }],
+    ['legacyRedirects malformed', { siteId: 'scs', version: 'v1', sectionTypes: [], fixedPages: [], legacyRedirects: [{ from: 'a' }] }],
+    ['a JSON array', []],
+  ])('fails with a templateMissing problem for an invalid manifest (%s)', async (_label, manifest) => {
+    seed({ 'website.json': JSON.stringify(manifest), 'layout.hbs': 'L' });
+    const err = await loadTemplates('scs', 'v1').catch((e) => e);
+    expect(err).toBeInstanceOf(TemplateMissingError);
+    expect(err.problem.code).toBe('templateMissing');
+    expect(err.problem.detail).toContain('manifest');
+  });
+
+  it('accepts a manifest with valid legacyRedirects', async () => {
+    seed({ 'website.json': JSON.stringify({ ...MANIFEST, legacyRedirects: [{ from: 'old', key: 'new' }] }), 'layout.hbs': 'L' });
+    await expect(loadTemplates('scs', 'v1')).resolves.toBeDefined();
+  });
+
   it('fails when layout.hbs is absent', async () => {
     seed({ 'website.json': JSON.stringify(MANIFEST) });
     const err = await loadTemplates('scs', 'v1').catch((e) => e);

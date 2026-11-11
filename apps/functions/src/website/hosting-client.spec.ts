@@ -35,7 +35,7 @@ describe('getLiveVersion', () => {
     expect(await getLiveVersion('s')).toBe('sites/s/versions/v1');
     const req = lastCalls()[0];
     expect(req.method).toBe('GET');
-    expect(req.url).toBe(`${BASE}/sites/s/releases`);
+    expect(req.url).toBe(`${BASE}/sites/s/channels/live/releases`);
     expect(req.params).toEqual({ pageSize: 1 });
     expect(req.headers.Authorization).toBe('Bearer tok');
   });
@@ -134,6 +134,7 @@ describe('listReleases', () => {
     });
     expect(await listReleases('s', 5)).toEqual([{ name: 'sites/s/releases/r', version: 'sites/s/versions/v', createTime: '2026-01-01T00:00:00Z' }]);
     expect(lastCalls()[0].params).toEqual({ pageSize: 5 });
+    expect(lastCalls()[0].url).toBe(`${BASE}/sites/s/channels/live/releases`);
   });
 
   it('returns [] when there are none', async () => {
@@ -168,7 +169,7 @@ describe('error hygiene', () => {
   it('never leaks the bearer token through a failed call', async () => {
     const axiosError = Object.assign(new Error('Request failed with status code 403'), {
       isAxiosError: true,
-      config: { headers: { Authorization: 'Bearer tok' }, url: `${BASE}/sites/s/releases` },
+      config: { headers: { Authorization: 'Bearer tok' }, url: `${BASE}/sites/s/channels/live/releases` },
       response: { status: 403, data: { error: { message: 'permission denied' } } },
     });
     axiosMock.request.mockRejectedValue(axiosError);
@@ -176,7 +177,7 @@ describe('error hygiene', () => {
     expect(err).toBeInstanceOf(Error);
     expect(err.message).toContain('403');
     expect(err.message).toContain('permission denied');
-    expect(err.message).toContain('/sites/s/releases');
+    expect(err.message).toContain('/sites/s/channels/live/releases');
     const serialized = JSON.stringify(err, Object.getOwnPropertyNames(err)) + String(err.stack);
     expect(serialized).not.toMatch(/Authorization|Bearer|tok\b/);
     expect(err.config).toBeUndefined();

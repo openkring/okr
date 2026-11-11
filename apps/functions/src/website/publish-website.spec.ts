@@ -132,7 +132,7 @@ describe('runPublish', () => {
     expect(d['uploadFiles']).toHaveBeenCalledWith('sites/scs-website-54aef/versions/new', FILES);
     expect(d['finalizeAndRelease']).toHaveBeenCalledWith('scs-website-54aef', 'sites/scs-website-54aef/versions/new', expect.any(String));
     expect(d['markPublished']).toHaveBeenCalledWith('scs', {
-      lastPublishedAt: new Date(4500).toISOString(),
+      lastPublishedAt: new Date(1000).toISOString(),
       lastPublishedBy: 'pA',
       lastPublishedVersion: 'sites/scs-website-54aef/versions/new',
     });

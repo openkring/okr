@@ -163,8 +163,9 @@ export async function runPublish(deps: PublishDeps, req: PublishRequest): Promis
     await deps.finalizeAndRelease(site.hostingSite, version, `publishWebsite ${siteId} (${pages} pages, ${files} files)`);
     stage = 'site';
     const finished = deps.now();
+    // stamped with the START: an edit saved while the publish ran keeps the «unpublished changes» dot
     await deps.markPublished(siteId, {
-      lastPublishedAt: new Date(finished).toISOString(),
+      lastPublishedAt: new Date(started).toISOString(),
       lastPublishedBy: personKey,
       lastPublishedVersion: version,
     });

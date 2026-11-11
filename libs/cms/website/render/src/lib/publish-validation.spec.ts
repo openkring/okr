@@ -7,7 +7,7 @@ const manifest: TemplateManifest = { siteId: 's', version: '1', sectionTypes: ['
 const page = (id: string, slug: string, pageKey = `p-${id}`): WebsiteNode => ({ id, type: 'page', label: id, slug, pageKey });
 const site = (nav: WebsiteNode[], homePageKey = 'p-a'): WebsiteModel =>
   ({ tenants: ['scs'], domain: 'https://example.org', nav, footer: [], homePageKey }) as unknown as WebsiteModel;
-const pg = (sections: string[] = [], extra: Partial<PageModel> = {}): PageModel => ({ sections, ...extra }) as unknown as PageModel;
+const pg = (sections: string[] = [], extra: Partial<PageModel> = {}): PageModel => ({ sections, isPrivate: false, ...extra }) as unknown as PageModel;
 
 describe('validateForPublish', () => {
   it('is clean for a valid site', () => {
@@ -52,6 +52,10 @@ describe('validateForPublish', () => {
   });
   it('flags a private home page outside the tree', () => {
     const p = validateForPublish(site([], 'p-h'), new Map([['p-h', pg([], { isPrivate: true })]]), new Map(), manifest);
+    expect(p).toEqual([{ code: 'pagePrivate', pageKey: 'p-h' }]);
+  });
+  it('treats a home page without isPrivate as private', () => {
+    const p = validateForPublish(site([], 'p-h'), new Map([['p-h', { sections: [] } as unknown as PageModel]]), new Map(), manifest);
     expect(p).toEqual([{ code: 'pagePrivate', pageKey: 'p-h' }]);
   });
   it('does not double-report a private home page that is in the tree', () => {

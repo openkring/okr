@@ -9,9 +9,12 @@ import { checkAppCheckToken, checkAuthentication, checkRoles } from '@okr/shared
 
 import { listReleases, releaseExisting, type ReleaseInfo } from './hosting-client';
 import { acquireLock, closeLock, type PublishLock, type PublishState } from './publish-lock';
-import { authorizeSite, isWebsiteHostingSite, markSitePublished, PUBLISH_ROLES, type SitePublishedFields } from './publish-website';
+import { authorizeSite, isWebsiteHostingSite, markSitePublished, type SitePublishedFields } from './publish-website';
 
 const REGION = 'europe-west6';
+
+/** Spec §7.2: rolling back is an admin action (publishing is open to contentAdmin). */
+export const ROLLBACK_ROLES = ['admin'];
 
 export interface RollbackDeps {
   acquireLock(siteId: string, personKey: string, tenants: string[]): Promise<PublishLock | undefined>;
@@ -72,7 +75,7 @@ export const rollbackWebsite = onCall(
     const CF_NAME = 'rollbackWebsite';
     checkAppCheckToken(request as never, CF_NAME);
     checkAuthentication(request as never, CF_NAME);
-    await checkRoles(request as never, CF_NAME, PUBLISH_ROLES);
+    await checkRoles(request as never, CF_NAME, ROLLBACK_ROLES);
     const db = getFirestore();
     const { site, personKey } = await authorizeSite(db, request, CF_NAME, request.data?.siteId);
     const result = await runRollback(realDeps(db), { site, personKey });

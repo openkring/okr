@@ -77,14 +77,17 @@ export class WebsiteService {
    */
   public async publish(siteId: string, dryRun = false): Promise<PublishWebsiteResult> {
     const fn = httpsCallable<{ siteId: string; dryRun?: boolean }, PublishWebsiteResult>(
-      getFunctions(getApp(), 'europe-west6'), 'publishWebsite');
+      getFunctions(getApp(), 'europe-west6'), 'publishWebsite',
+      // the function may run up to 300 s (clone polling); the SDK default would give up after 70 s while it still releases
+      { timeout: 310_000 });
     return (await fn({ siteId, dryRun })).data;
   }
 
   /** Put the previous published state back (callable `rollbackWebsite`, admin). Rejects on refusal. */
   public async rollback(siteId: string): Promise<RollbackWebsiteResult> {
     const fn = httpsCallable<{ siteId: string }, RollbackWebsiteResult>(
-      getFunctions(getApp(), 'europe-west6'), 'rollbackWebsite');
+      getFunctions(getApp(), 'europe-west6'), 'rollbackWebsite',
+      { timeout: 130_000 });
     return (await fn({ siteId })).data;
   }
 }
