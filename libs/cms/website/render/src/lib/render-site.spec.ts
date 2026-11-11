@@ -155,6 +155,26 @@ describe('renderSite', () => {
     expect(fileOf(files, 'news-artikel.html')).toBeUndefined();
   });
 
+  it('gives a fixed page its manifest title and description', () => {
+    const i = input();
+    i.templates.manifest.fixedPages = [{ name: 'news-artikel', slug: 'news-artikel', title: 'Artikel', description: 'Ein Artikel.' }];
+    const { files, problems } = renderSite(i);
+    expect(problems).toEqual([]);
+    const html = fileOf(files, 'news-artikel.html') ?? '';
+    expect(html).toContain('<title>Artikel – Fixture Club</title>');
+    expect(html).toContain('<meta name="description" content="Ein Artikel.">');
+  });
+
+  it('writes a standalone fixed page as the whole document, without the layout', () => {
+    const i = input();
+    i.templates.manifest.fixedPages = [{ name: 'news-artikel', slug: 'news-artikel', standalone: true }];
+    i.templates.pages['news-artikel'] = '<!doctype html><title>Solo</title><link rel="canonical" href="{{site.domain}}{{page.url}}">';
+    const { files, problems } = renderSite(i);
+    expect(problems).toEqual([]);
+    expect(fileOf(files, 'news-artikel.html')).toBe('<!doctype html><title>Solo</title><link rel="canonical" href="https://example.org/news-artikel">');
+    expect(fileOf(files, 'en/news-artikel.html')).toContain('https://example.org/en/news-artikel');
+  });
+
   it('lists every page and language in sitemap.xml', () => {
     const xml = fileOf(renderSite(input()).files, 'sitemap.xml') ?? '';
     expect(xml.match(/<url>/g)?.length).toBe(4);

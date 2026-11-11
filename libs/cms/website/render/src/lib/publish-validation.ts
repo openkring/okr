@@ -22,8 +22,13 @@ export interface TemplateManifest {
   siteId: string;
   version: string;
   sectionTypes: string[];
-  /** `pages/<name>.hbs` is rendered to `<slug>.html` per language */
-  fixedPages: { name: string; slug: string }[];
+  /**
+   * `pages/<name>.hbs` is rendered to `<slug>.html` per language. `title` and `description` become
+   * the page's `<title>` / meta description (a fixed page has no page document to take them from);
+   * `standalone` writes the template's output as the whole document, without layout.hbs (a
+   * marketing page with its own head and no site header/footer).
+   */
+  fixedPages: { name: string; slug: string; title?: string; description?: string; standalone?: boolean }[];
   legacyRedirects?: { from: string; key: string }[];
   /**
    * `pages/<name>` (e.g. 'pages/home'): the home page is drawn by that page template from rows of

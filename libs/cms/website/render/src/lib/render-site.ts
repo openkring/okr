@@ -388,17 +388,20 @@ export function renderSite(input: RenderInput): RenderResult {
       };
       renderLayout(entry.file, lang, context, data, entry.key);
     }
-    for (const { name, slug } of fixedPages) {
+    for (const { name, slug, title, description, standalone } of fixedPages) {
       const path = `/${slug}`;
+      const page = pageContext(name, slug, path, undefined, title ?? '', lang, imageUrl);
+      page.metaDescription = description ?? '';
       const base: TemplateContext = {
         ...layoutContext(lang, '', path),
-        page: pageContext(name, slug, path, undefined, '', lang, imageUrl),
+        page,
         sections: [],
         main: '',
       };
       try {
         const main = (compiled.pages.get(name) as RenderFn)(base, data);
-        renderLayout(slug, lang, { ...base, main }, data, name);
+        if (standalone) files.push({ path: filePath(lang, slug), content: main });
+        else renderLayout(slug, lang, { ...base, main }, data, name);
       } catch (e) {
         problems.push({ code: 'renderFailed', pageKey: name, detail: message(e) });
       }

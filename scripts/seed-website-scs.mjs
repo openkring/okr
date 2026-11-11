@@ -5,8 +5,10 @@
  *   - `websites/scs`, the navigation tree of today's apps/scs-website/assets/shared.js header
  *     (desktop nav: «Der Club» / «Termine» / «News» / «Kontakt» + the «Mitgliederbereich» button).
  *
- * The scsw_* pages that are not in the nav (scsw_bootshausprojekt, scsw_kontakt,
- * scsw_kurs_erwachsene, scsw_kurs_jugendliche) are deliberately NOT in the tree. Labels are plain
+ * The scsw_* pages that are not in the nav (scsw_kontakt, scsw_kurs_erwachsene,
+ * scsw_kurs_jugendliche) are deliberately NOT in the tree. scsw_bootshausprojekt IS: its page node
+ * has slug `bootshaus` (not `bootshausprojekt`), so the old /bootshaus(.html) address and the nav
+ * path stay the same (1.153 part 3, task 5). Labels are plain
  * German text, not i18n keys. Page slug = key without `scsw_`, `_` -> `-`. Node ids are stable,
  * readable ids (the model says «random, stable within the site»; these are unique within the site).
  *
@@ -37,12 +39,13 @@ const ROW = 'cms-website-sitemap';
 const PARENT = 'cms-website';
 const apply = process.argv.includes('--apply');
 
-const page = (key, label) => ({
-  id: `p-${key.replace(/^scsw_/, '').replace(/_/g, '-')}`,
+/** Page slug = key without `scsw_`, `_` -> `-`, unless `slug` overrides it (bootshaus). */
+const page = (key, label, slug = key.replace(/^scsw_/, '').replace(/_/g, '-')) => ({
+  id: `p-${slug}`,
   type: 'page',
   label,
   pageKey: key,
-  slug: key.replace(/^scsw_/, '').replace(/_/g, '-'),
+  slug,
 });
 const link = (id, label, url, style) => ({ id: `l-${id}`, type: 'link', label, url, ...(style ? { style } : {}) });
 const menu = (id, label, children) => ({ id: `m-${id}`, type: 'menu', label, children });
@@ -51,7 +54,7 @@ const menu = (id, label, children) => ({ id: `m-${id}`, type: 'menu', label, chi
 export const NAV = [
   menu('club', 'Der Club', [
     link('ueber-uns', 'Über uns', '/#ueber-uns'),
-    link('bootshaus', 'Bootshausprojekt', '/bootshaus'),
+    page('scsw_bootshausprojekt', 'Bootshausprojekt', 'bootshaus'),
     page('scsw_breitensport', 'Breitensport'),
     page('scsw_leistungssport', 'Leistungssport'),
     page('scsw_vorstand', 'Vorstand'),
