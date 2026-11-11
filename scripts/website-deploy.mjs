@@ -4,6 +4,7 @@
  *   node scripts/website-deploy.mjs <tenant> [--dry-run]
  *
  * Steps:
+ *   0. rebuild Tailwind into apps/<tenant>-website/assets/tailwind.css (warns when it changed: bump the ?v= cache-bust)
  *   1. pnpm nx build <tenant>-website                      (static assets → dist/apps/<tenant>-website)
  *   2. node scripts/website-templates-upload.mjs <tenant>  (templates → Storage, websites/<id>.templateVersion)
  *   3. render the CURRENT Firestore content (read-only) with the local templates into dist/apps/<tenant>-website
@@ -14,7 +15,7 @@
  * script's own --dry-run, which writes nothing.
  */
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 import { getDb, loadLiveSource, loadLocalTemplates, parseArgs, PROJECT_ID, render, requireTenant, ROOT } from './lib/website-tooling.mjs';
@@ -41,8 +42,11 @@ async function main() {
   const manifest = loadLocalTemplates(tenant).manifest;
 
   console.log(`${dryRun ? 'DRY RUN' : 'DEPLOY'} ${tenant}-website (siteId ${manifest.siteId}, project ${PROJECT_ID})`);
+  const css = join('apps', `${tenant}-website`, 'assets', 'tailwind.css');
+  const tailwind = ['exec', 'tailwindcss', '-c', `apps/${tenant}-website/tailwind.config.js`, '-i', `apps/${tenant}-website/tailwind.input.css`, '-o', css, '--minify'];
   const build = ['nx', 'build', `${tenant}-website`];
   const upload = ['scripts/website-templates-upload.mjs', tenant];
+  step(0, 'Rebuild Tailwind (the committed tailwind.css is the source)', `pnpm ${tailwind.join(' ')}`);
   step(1, 'Build the static assets', `pnpm ${build.join(' ')}`);
   step(2, 'Upload the templates', `node ${upload.join(' ')}`);
   step(3, `Render the current Firestore content into ${out.replace(ROOT + '/', '')}`, 'in-process (read-only)');
@@ -69,6 +73,12 @@ async function main() {
     return;
   }
 
+  const before = existsSync(join(ROOT, css)) ? readFileSync(join(ROOT, css)) : Buffer.alloc(0);
+  sh('pnpm', tailwind);
+  const after = readFileSync(join(ROOT, css));
+  if (!before.equals(after)) {
+    console.warn(`\nWARNING: ${css} changed (${before.length} -> ${after.length} bytes, ${after.length - before.length >= 0 ? '+' : ''}${after.length - before.length}). Bump the ?v= cache-bust on the stylesheet link in the templates and commit before relying on this deploy (immutable-CSS trap, website skill).\n`);
+  }
   sh('pnpm', build);
   sh('node', upload);
   const source = await loadLiveSource(tenant);

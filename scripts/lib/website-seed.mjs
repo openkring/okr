@@ -11,11 +11,17 @@ const HOSTING_SITE = /^[a-z0-9-]+-website-[a-z0-9]+$/;
 const SLUG = /^[a-z0-9-]+$/;
 const NODE_TYPES = ['menu', 'page', 'link'];
 
+const sameTenants = (list, tenant) => Array.isArray(list) && list.length === 1 && list[0] === tenant;
 const isObject = (v) => typeof v === 'object' && v !== null && !Array.isArray(v);
 const isText = (v) => typeof v === 'string' && v.trim() !== '';
 
-/** Every problem found in `seed`, as readable strings; empty = valid. */
-export function validateSeed(seed) {
+/**
+ * Every problem found in `seed`, as readable strings; empty = valid. With `{ tenant }` the seed is bound
+ * to that tenant: site.okey = the tenant's siteId (`siteId`, default the tenant), tenants = [tenant],
+ * hostingSite = <tenant>-website-<id>, page/section tenants = [tenant], image paths under
+ * websites/<siteId>/images/.
+ */
+export function validateSeed(seed, { tenant, siteId = tenant } = {}) {
   if (!isObject(seed)) return ['seed must be an object'];
   const errors = [];
   const { site, pages, sections, images } = seed;
@@ -33,6 +39,16 @@ export function validateSeed(seed) {
   else if (!(site.homePageKey in pages)) errors.push(`site.homePageKey "${site.homePageKey}" is not in pages`);
   for (const tree of ['nav', 'footer']) {
     if (!Array.isArray(site[tree])) errors.push(`site.${tree} must be a list`);
+  }
+
+  if (tenant) {
+    if (site.okey !== siteId) errors.push(`site.okey must be "${siteId}" for tenant ${tenant}`);
+    if (!sameTenants(site.tenants, tenant)) errors.push(`site.tenants must be ["${tenant}"]`);
+    if (!(typeof site.hostingSite === 'string' && new RegExp(`^${tenant}-website-[a-z0-9]+$`).test(site.hostingSite))) {
+      errors.push(`site.hostingSite must match ${tenant}-website-<id>`);
+    }
+    for (const [k, p] of Object.entries(pages)) if (isObject(p) && !sameTenants(p.tenants, tenant)) errors.push(`pages.${k}.tenants must be ["${tenant}"]`);
+    for (const [k, x] of Object.entries(sections)) if (isObject(x) && !sameTenants(x.tenants, tenant)) errors.push(`sections.${k}.tenants must be ["${tenant}"]`);
   }
 
   const ids = new Set();
@@ -62,7 +78,7 @@ export function validateSeed(seed) {
   };
   for (const tree of ['nav', 'footer']) if (Array.isArray(site[tree])) visit(site[tree], `site.${tree}`);
 
-  const tenant = Array.isArray(site.tenants) && isText(site.tenants[0]) ? site.tenants[0] : site.okey;
+  const siteTenant = Array.isArray(site.tenants) && isText(site.tenants[0]) ? site.tenants[0] : site.okey;
   for (const [key, page] of Object.entries(pages)) {
     if (!isObject(page)) {
       errors.push(`pages.${key} must be an object`);
@@ -73,7 +89,7 @@ export function validateSeed(seed) {
       continue;
     }
     for (const raw of page.sections) {
-      if (typeof raw !== 'string' || !(raw in sections || String(raw).replace('@TID@', tenant) in sections)) {
+      if (typeof raw !== 'string' || !(raw in sections || String(raw).replace('@TID@', siteTenant) in sections)) {
         errors.push(`pages.${key}: section "${raw}" is not in sections`);
       }
     }
@@ -88,10 +104,23 @@ export function validateSeed(seed) {
     else {
       images.forEach((img, i) => {
         if (!isObject(img) || !isText(img.path)) errors.push(`images[${i}].path is required`);
+        else if (img.path.split('/').includes('..')) errors.push(`images[${i}].path must not contain ..`);
+        else if (tenant && !img.path.startsWith(`websites/${siteId}/images/`)) errors.push(`images[${i}].path must be under websites/${siteId}/images/`);
         if (!isObject(img) || !isText(img.file)) errors.push(`images[${i}].file is required`);
         else if (img.file.startsWith('/') || img.file.split('/').includes('..')) errors.push(`images[${i}].file must be relative, inside content/`);
       });
     }
   }
   return errors;
+}
+
+/**
+ * Splits storage paths into those that would be created and those that already exist.
+ * `exists(path)` is async (a bucket lookup), so tests can pass a fake.
+ */
+export async function classifyObjects(paths, exists) {
+  const create = [];
+  const overwrite = [];
+  for (const path of paths) (await exists(path) ? overwrite : create).push(path);
+  return { create, overwrite };
 }

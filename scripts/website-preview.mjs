@@ -1,7 +1,7 @@
 /**
  * Renders a tenant website locally and serves it (spec 1.153 §9).
  *
- *   node scripts/website-preview.mjs <tenant> [--live] [--seed=<file>] [--no-serve] [--check] [--port=4200]
+ *   node scripts/website-preview.mjs <tenant> [--live] [--seed=<file>] [--allow-problems] [--no-serve] [--check] [--port=4200]
  *
  * Source: apps/<tenant>-website/content/seed.json, or with --live Firestore (READ-ONLY, ADC, project
  * bkaiser-org: websites/<siteId> + its pages and sections; a synthetic fixture site stands in, flagged,
@@ -9,6 +9,7 @@
  * Output: dist/website-preview/<tenant>/ = the website build's static assets (dist/apps/<tenant>-website,
  * else apps/<tenant>-website/assets) + the rendered pages. Clean URLs: /x serves x.html.
  *
+ * --allow-problems (preview only) renders despite problems, flagged prominently.
  * --no-serve renders only. --check serves on a free port, fetches every rendered page, prints
  * status + size and exits (no long-running server).
  */
@@ -51,10 +52,26 @@ export function serve(root, port) {
 }
 
 /** Renders into dist/website-preview/<tenant>; returns { out, files, problems, source }. */
-export async function renderPreview(tenant, { live, seed }) {
+/**
+ * Preview only: what the renderer needs to render at all despite problems. Pages become public and
+ * unarchived, a missing home page becomes an empty stub. The caller still reports the original problems.
+ */
+export function relaxForPreview(source) {
+  const pages = new Map();
+  for (const [k, p] of source.pages) pages.set(k, { ...p, isPrivate: false, isArchived: false });
+  if (source.site.homePageKey && !pages.has(source.site.homePageKey)) {
+    pages.set(source.site.homePageKey, { okey: source.site.homePageKey, name: source.site.name, title: source.site.name, sections: [], isPrivate: false, tenants: source.site.tenants });
+  }
+  return { ...source, pages };
+}
+
+export async function renderPreview(tenant, { live, seed, allowProblems = false }) {
   const source = live ? await loadLiveSource(tenant) : loadSeedSource(tenant, seed);
   if (!source) throw new Error(`No apps/${tenant}-website/content/seed.json. Use --live to read Firestore.`);
-  const result = render({ ...source, templates: loadLocalTemplates(tenant) });
+  const templates = loadLocalTemplates(tenant);
+  let result = render({ ...source, templates });
+  const original = result.problems;
+  if (allowProblems && original.length) result = render({ ...relaxForPreview(source), templates });
   const out = join(ROOT, 'dist/website-preview', tenant);
   rmSync(out, { recursive: true, force: true });
   mkdirSync(out, { recursive: true });
@@ -65,20 +82,25 @@ export async function renderPreview(tenant, { live, seed }) {
     mkdirSync(dirname(join(out, f.path)), { recursive: true });
     writeFileSync(join(out, f.path), f.content);
   }
-  return { out, files: result.files, problems: result.problems, source, assetsFrom: assets };
+  return { out, files: result.files, problems: allowProblems ? original : result.problems, remaining: result.problems, relaxed: allowProblems && original.length > 0, source, assetsFrom: assets };
 }
 
 async function main() {
   const { tenant, flags, values } = parseArgs(process.argv.slice(2));
-  requireTenant(tenant, 'Usage: node scripts/website-preview.mjs <tenant> [--live] [--seed=<file>] [--no-serve] [--check] [--port=4200]');
+  requireTenant(tenant, 'Usage: node scripts/website-preview.mjs <tenant> [--live] [--seed=<file>] [--allow-problems] [--no-serve] [--check] [--port=4200]');
   const live = flags.has('--live');
-  const { out, files, problems, source, assetsFrom } = await renderPreview(tenant, { live, seed: values.seed });
+  const { out, files, problems, remaining, relaxed, source, assetsFrom } = await renderPreview(tenant, { live, seed: values.seed, allowProblems: flags.has('--allow-problems') });
   console.log(`Source: ${source.origin}${source.file ? ' (' + source.file.replace(ROOT + '/', '') + ')' : ''}`);
   console.log(`Static assets from: ${assetsFrom.replace(ROOT + '/', '')}`);
   console.log(`Rendered ${files.length} files into ${out.replace(ROOT + '/', '')}`);
   for (const f of files) console.log(`  ${f.path}  ${Buffer.byteLength(f.content)} B`);
   console.log(`Problems: ${problems.length}`);
   for (const p of problems) console.log(`  ${JSON.stringify(p)}`);
+  if (relaxed) {
+    console.log('\n!!! --allow-problems: PREVIEW ONLY. Pages were forced public and a missing home page was stubbed to render despite the problems above.');
+    console.log('!!! This output is NOT publishable; website:import, website:deploy and publish still refuse.');
+    if (remaining.length) for (const p of remaining) console.log(`  still failing: ${JSON.stringify(p)}`);
+  }
   if (flags.has('--no-serve')) return;
 
   const server = await serve(out, flags.has('--check') ? 0 : Number(values.port ?? 4200));
