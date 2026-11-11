@@ -190,33 +190,32 @@ function compileAll(templates: TemplateSet): Compiled {
 
 const filePath = (lang: string, file: string): string => (lang === 'de' ? `${file}.html` : `${lang}/${file}.html`);
 
-/** One stub per legacy path: reads `?key=` and `location.replace`s to that page's slug (design §10.1). */
+/** The static legacy page: no inline script (CSP), /assets/legacy-redirect.js does the redirect. */
+const LEGACY_STUB = [
+  '<!doctype html>',
+  '<html lang="de"><head><meta charset="utf-8"><meta name="robots" content="noindex"><title>Weiterleitung</title>',
+  '<noscript><meta http-equiv="refresh" content="0; url=/"></noscript>',
+  '<script src="/assets/legacy-redirect.js"></script></head><body><a href="/">Weiter zur Startseite</a></body></html>',
+  '',
+].join('\n');
+
+/**
+ * One static stub per legacy path plus legacy-redirects.json `{ "<from>": { "<key>": "/<slug>" } }`
+ * (design §10.1). The script reads `?key=` and `location.replace`s to the mapped path.
+ */
 function legacyStubs(site: WebsiteModel, manifest: TemplateManifest, problems: PublishProblem[]): RenderedFile[] {
-  const byPath = new Map<string, string[]>();
+  const map: Record<string, Record<string, string>> = {};
   for (const { from, key } of manifest.legacyRedirects ?? []) {
     if (!LEGACY_PATH.test(from ?? '') || !LEGACY_KEY.test(key ?? '')) {
       problems.push({ code: 'renderFailed', detail: `legacyRedirects: ${JSON.stringify({ from, key })}` });
       continue;
     }
     const node = activePageNodes([...(site.nav ?? []), ...(site.footer ?? [])]).find((n) => n.pageKey === key);
-    const target = key === site.homePageKey || !node ? '/' : nodePath(node, site.homePageKey);
-    const line = `if (k === ${JSON.stringify(key)}) location.replace('${target}');`;
-    byPath.set(from, [...(byPath.get(from) ?? []), line]);
+    (map[from] ??= {})[key] = key === site.homePageKey || !node ? '/' : nodePath(node, site.homePageKey);
   }
-  return [...byPath.entries()].map(([path, lines]) => ({
-    path,
-    content: [
-      '<!doctype html>',
-      '<html lang="de"><head><meta charset="utf-8"><meta name="robots" content="noindex"><title>Weiterleitung</title>',
-      '<noscript><meta http-equiv="refresh" content="0; url=/"></noscript>',
-      '<script>',
-      "var k = new URLSearchParams(location.search).get('key');",
-      ...lines.map((l, i) => (i === 0 ? l : `else ${l}`)),
-      "else location.replace('/');",
-      '</script></head><body><a href="/">Weiter zur Startseite</a></body></html>',
-      '',
-    ].join('\n'),
-  }));
+  const paths = Object.keys(map);
+  if (paths.length === 0) return [];
+  return [...paths.map((path) => ({ path, content: LEGACY_STUB })), { path: 'legacy-redirects.json', content: JSON.stringify(map, null, 2) + '\n' }];
 }
 
 /** One `<url>` per page and language, each with its hreflang alternates. */

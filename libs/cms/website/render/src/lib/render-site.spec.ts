@@ -187,10 +187,13 @@ describe('renderSite', () => {
     expect(fileOf(renderSite(input()).files, 'robots.txt')).toContain('Sitemap: https://example.org/sitemap.xml');
   });
 
-  it('writes a stub per legacy path that maps ?key= to the slug', () => {
-    const stub = fileOf(renderSite(input()).files, 'seite.html') ?? '';
-    expect(stub).toContain("location.replace('/vorstand')");
-    expect(stub).toContain('"scsw_vorstand"');
+  it('writes a static stub per legacy path (no inline script) and legacy-redirects.json with the key to slug map', () => {
+    const files = renderSite(input()).files;
+    const stub = fileOf(files, 'seite.html') ?? '';
+    expect(stub).toContain('<script src="/assets/legacy-redirect.js"></script>');
+    expect(stub.match(/<script/g)).toHaveLength(1);
+    const map = JSON.parse(fileOf(files, 'legacy-redirects.json') ?? '{}');
+    expect(map['seite.html']['scsw_vorstand']).toBe('/vorstand');
   });
 
   it('returns the validation problems and renders nothing', () => {

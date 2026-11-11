@@ -1474,7 +1474,7 @@
           "headers": [
             {
               "key": "Content-Security-Policy",
-              "value": "default-src 'self'; script-src 'self'; script-src-elem 'self' 'sha256-qRvfJrXdyMd2HbzfHqNPmGhg56qcg8t4unytVbkZ9RQ='; script-src-attr 'unsafe-inline'; worker-src 'none'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https: blob:; media-src 'self' https:; connect-src 'self' https://europe-west6-bkaiser-org.cloudfunctions.net https://*.imgix.net; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://www.openstreetmap.org; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+              "value": "default-src 'self'; script-src 'self'; script-src-elem 'self'; script-src-attr 'unsafe-inline'; worker-src 'none'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https: blob:; media-src 'self' https:; connect-src 'self' https://europe-west6-bkaiser-org.cloudfunctions.net https://*.imgix.net; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://www.openstreetmap.org; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
             }
           ]
         }

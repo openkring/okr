@@ -59,7 +59,7 @@ describe('cloneStaticAssets', () => {
     expect(clone.data).toEqual({
       sourceVersion: 'sites/s/versions/v1',
       finalize: false,
-      exclude: { regexes: ['^/[^/]*\\.html$', '^/(en|fr|es|it)/[^/]*\\.html$', '^/sitemap\\.xml$', '^/robots\\.txt$'] },
+      exclude: { regexes: ['^/[^/]*\\.html$', '^/(en|fr|es|it)/[^/]*\\.html$', '^/sitemap\\.xml$', '^/robots\\.txt$', '^/legacy-redirects\\.json$'] },
     });
     expect(poll.method).toBe('GET');
     expect(poll.url).toBe(`${BASE}/operations/op1`);
@@ -144,7 +144,7 @@ describe('listReleases', () => {
 });
 
 describe('CLONE_EXCLUDE_REGEXES', () => {
-  const excluded = ['/en/vorstand.html', '/index.html', '/impressum.html', '/sitemap.xml', '/robots.txt'];
+  const excluded = ['/en/vorstand.html', '/index.html', '/impressum.html', '/sitemap.xml', '/robots.txt', '/legacy-redirects.json'];
   const kept = ['/assets/brand-styleguide.html', '/assets/x/y.html', '/assets/app.js', '/assets/app.html.map', '/assets/logo.svg', '/styles.css'];
   const full = (r: string) => new RegExp('^(?:' + r + ')$');
   const partial = (r: string) => new RegExp(r);

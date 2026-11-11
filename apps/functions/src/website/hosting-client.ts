@@ -9,7 +9,7 @@ import type { RenderedFile } from '@okr/cms-website-render';
 const BASE = 'https://firebasehosting.googleapis.com/v1beta1';
 
 /** Everything the renderer owns; the clone keeps css, js, images, fonts, … */
-export const CLONE_EXCLUDE_REGEXES = ['^/[^/]*\\.html$', '^/(en|fr|es|it)/[^/]*\\.html$', '^/sitemap\\.xml$', '^/robots\\.txt$'];
+export const CLONE_EXCLUDE_REGEXES = ['^/[^/]*\\.html$', '^/(en|fr|es|it)/[^/]*\\.html$', '^/sitemap\\.xml$', '^/robots\\.txt$', '^/legacy-redirects\\.json$'];
 
 export interface ReleaseInfo {
   name: string;
