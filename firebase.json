@@ -1399,6 +1399,86 @@
           ]
         }
       ]
+    },
+    {
+      "site": "scs-website-54aef",
+      "public": "dist/apps/scs-website",
+      "cleanUrls": true,
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**",
+        "**/*.map"
+      ],
+      "redirects": [
+        {
+          "source": "/private/:path*",
+          "destination": "https://seeclub.org/private/:path*",
+          "type": 301
+        },
+        {
+          "source": "/public/:path*",
+          "destination": "https://seeclub.org/public/:path*",
+          "type": 301
+        },
+        {
+          "source": "/auth/:path*",
+          "destination": "https://seeclub.org/auth/:path*",
+          "type": 301
+        },
+        {
+          "source": "/aoc/:path*",
+          "destination": "https://seeclub.org/aoc/:path*",
+          "type": 301
+        }
+      ],
+      "headers": [
+        {
+          "source": "**/*.@(js|css)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=31536000, immutable"
+            }
+          ]
+        },
+        {
+          "source": "**/*.@(jpg|jpeg|png|gif|svg|webp|avif|woff|woff2|ttf|otf|ico)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=31536000, immutable"
+            }
+          ]
+        },
+        {
+          "source": "**/*.html",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=0, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=0, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "**",
+          "headers": [
+            {
+              "key": "Content-Security-Policy",
+              "value": "default-src 'self'; script-src 'self'; script-src-elem 'self' 'sha256-qRvfJrXdyMd2HbzfHqNPmGhg56qcg8t4unytVbkZ9RQ='; script-src-attr 'unsafe-inline'; worker-src 'none'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https: blob:; media-src 'self' https:; connect-src 'self' https://europe-west6-bkaiser-org.cloudfunctions.net https://*.imgix.net; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://www.openstreetmap.org; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+            }
+          ]
+        }
+      ]
     }
   ],
   "firestore": {

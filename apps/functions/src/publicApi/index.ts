@@ -40,6 +40,11 @@ const DEFAULT_ALLOWED_ORIGINS = [
   // from the browser (their bundled /web pages). Mirrors the trusted domains in
   // main.ts. Additional/temporary origins can still be added via PUBLIC_API_ALLOWED_ORIGINS.
   'https://seeclub.org',
+  // Die eigene Hosting-Site der scs-Website (1.153): Domain www.seeclub.org und die
+  // Firebase-Default-URLs (zum Testen, bevor die Domain gemappt ist).
+  'https://www.seeclub.org',
+  'https://scs-website-54aef.web.app',
+  'https://scs-website-54aef.firebaseapp.com',
   'https://bkaiser.ch',
   'https://bkaiser.com',
   'https://bkaiser.org',
