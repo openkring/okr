@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import type { PageModel, WebsiteModel, WebsiteNode } from '@okr/shared-models';
 
 import type { TemplateManifest } from './publish-validation';
-import { renderSite, type RenderInput, type RenderedFile, type TemplateSet } from './render-site';
+import { renderSite, sectionContexts, type RenderInput, type RenderedFile, type TemplateSet } from './render-site';
 import { createSanitizer, type SanitizeHtmlLike } from './sanitize';
 import type { SectionDoc } from './section-mapper';
 
@@ -233,3 +233,37 @@ describe('renderSite', () => {
     expect(problems).toEqual([{ code: 'domainMissing' }]);
   });
 });
+
+describe('sectionContexts', () => {
+  it('adds the position on the page, the image-group and the per-type index', () => {
+    const ctx = sectionContexts([
+      { type: 'article', images: [] },
+      { type: 'article', images: [{ url: 'a' }] },
+      { type: 'album', images: [{ url: 'b' }] },
+      { type: 'learning', locked: true },
+      { type: 'learning', locked: false },
+      { type: 'article', images: [{ url: 'c' }] },
+      'not a record',
+    ]);
+    expect(ctx.map((c) => [c['sectionIndex'], c['albumIndex'], c['typeIndex']])).toEqual([
+      [0, 0, 0],
+      [1, 0, 1],
+      [2, 1, 0],
+      [3, 2, 0],
+      [4, 2, 0],
+      [5, 2, 2],
+      [6, 3, 0],
+    ]);
+    expect(ctx[1]['type']).toBe('article');
+    expect(ctx[6]['type']).toBeUndefined();
+  });
+
+  it('hands the indices to the section templates', () => {
+    const base = input();
+    const templates = { ...base.templates, sections: { ...base.templates.sections, article: '<i>{{sectionIndex}}:{{typeIndex}}</i>' } };
+    const { files } = renderSite({ ...base, templates });
+    expect(fileOf(files, 'vorstand.html')).toContain('<i>0:0</i>');
+    expect(fileOf(files, 'vorstand.html')).toContain('<i>1:1</i>');
+  });
+});
+

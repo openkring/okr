@@ -6,7 +6,8 @@
  * Template set (per tenant website, `website.json` = TemplateManifest):
  *   layout.hbs              the page shell; gets a TemplateContext (render-context.ts)
  *   partials/<name>.hbs     `{{> nav}}`, `{{> footer}}`, … available in every template
- *   sections/<type>.hbs     one per manifest.sectionTypes entry; gets mapSection()'s output
+ *   sections/<type>.hbs     one per manifest.sectionTypes entry; gets mapSection()'s output plus
+ *                           its place on the page (sectionContexts: sectionIndex, albumIndex, typeIndex)
  *   pages/<name>.hbs        one per manifest.fixedPages entry ({ name, slug }, rendered to <slug>.html); gets a TemplateContext (sections: [])
  *
  * Layout context (TemplateContext):
@@ -20,7 +21,9 @@
  *     main,                                  // the page body: sections joined, or the fixed page
  *     alternates: [{ lang, url }],           // absolute url of this page per language
  *   }
- * Every template also gets `@lang` and `@year`. Helpers: `eq`, `url`, `t`, `year` (render-helpers.ts).
+ * Every template also gets `@lang` and `@year`. Helpers: `eq`, `url`, `t`, `year`, and the pure data
+ * helpers `or`, `and`, `not`, `gt`, `add`, `sub`, `mod`, `startsWith`, `contains`, `initials`, `count`,
+ * `runs` (render-helpers.ts).
  * Escaping is on: `{{x}}` is always safe; use `{{{x}}}` only for `main`, `sections.[].html` and a
  * section's sanitized rich text (`content`, accordion `items.[].content`).
  *
@@ -130,6 +133,28 @@ function nestedSectionsOf(section: SectionDoc, tenants: string[], sections: Map<
     nested.set(found.sectionKey, found.section);
   }
   return nested;
+}
+
+/**
+ * The context of each `sections/<type>.hbs`: mapSection()'s output (a non-object counts as `{}`)
+ * plus the section's place on the page, for markup whose ids/indices count across sections:
+ *   sectionIndex  its position among the page's published sections (0-based)
+ *   albumIndex    how many earlier sections have a non-empty `images` array — a page-wide image-group
+ *                 number (e.g. a lightbox registry key). mapSection leaves an article's `images` empty
+ *                 when it shows none.
+ *   typeIndex     how many earlier sections of the same `type` are not `locked`
+ */
+export function sectionContexts(mapped: unknown[]): Record<string, unknown>[] {
+  let albums = 0;
+  const perType = new Map<string, number>();
+  return mapped.map((m, sectionIndex) => {
+    const own = m && typeof m === 'object' && !Array.isArray(m) ? (m as Record<string, unknown>) : {};
+    const type = typeof own['type'] === 'string' ? own['type'] : '';
+    const context = { ...own, sectionIndex, albumIndex: albums, typeIndex: perType.get(type) ?? 0 };
+    if (Array.isArray(own['images']) && own['images'].length > 0) albums++;
+    if (own['locked'] !== true) perType.set(type, (perType.get(type) ?? 0) + 1);
+    return context;
+  });
 }
 
 function message(e: unknown): string {
@@ -257,19 +282,33 @@ export function renderSite(input: RenderInput): RenderResult {
     for (const entry of entries) {
       const page = pages.get(entry.key);
       const rendered: SectionContext[] = [];
-      for (const { raw, sectionKey, section } of publishedPageSections(page, tenants, sections)) {
+      const published = publishedPageSections(page, tenants, sections);
+      const failed = new Set<number>();
+      const contexts = sectionContexts(
+        published.map(({ raw, sectionKey, section }, i) => {
+          try {
+            return mapSection(sectionKey, section, nestedSectionsOf(section, tenants, sections), sanitize, lang);
+          } catch (e) {
+            failed.add(i);
+            problems.push({ code: 'renderFailed', pageKey: entry.key, sectionKey: raw, detail: message(e) });
+            return undefined;
+          }
+        }),
+      );
+      published.forEach(({ raw, sectionKey, section }, i) => {
+        if (failed.has(i)) return;
         const type = section.type ?? 'article';
         const template = compiled.sections.get(type);
         if (!template) {
           problems.push({ code: 'templateMissing', pageKey: entry.key, sectionKey: raw, detail: type });
-          continue;
+          return;
         }
         try {
-          rendered.push({ type, key: sectionKey, html: template(mapSection(sectionKey, section, nestedSectionsOf(section, tenants, sections), sanitize, lang), data) });
+          rendered.push({ type, key: sectionKey, html: template(contexts[i], data) });
         } catch (e) {
           problems.push({ code: 'renderFailed', pageKey: entry.key, sectionKey: raw, detail: message(e) });
         }
-      }
+      });
       const label = entry.node ? pickText(entry.node.label, entry.node.labelI18n, lang) : '';
       const slug = entry.file === 'index' ? '' : entry.file;
       const context: TemplateContext = {

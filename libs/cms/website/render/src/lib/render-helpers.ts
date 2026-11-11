@@ -52,6 +52,18 @@ function langOf(options: HelperOptions): string {
  * - `t plain i18n` — pickText: the `i18n` map's entry for the current language, else the German
  *   `plain` text.
  * - `year` — the current year (for the copyright line).
+ *
+ * Data helpers (pure; they read their params and return a value, nothing else):
+ * - `or a b …` — the first truthy param, else the last (JS `||`): `{{or captionPosition "bottom-overlay"}}`.
+ * - `and a b …`, `not a` — booleans.
+ * - `gt a b` — `a > b` as numbers. `add a b`, `sub a b`, `mod a b` — number arithmetic.
+ * - `startsWith s prefix`, `contains s needle` — string tests; `ignoreCase=true` compares lowercased.
+ *   A non-string `s` counts as `String(s)`, null/undefined as ''.
+ * - `initials w1 w2 …` — the first character of each string param, upper-cased ('' when none).
+ * - `count list field value` — how many records of `list` have own `field` strictly equal to `value`.
+ * - `runs list field value` — `list` split into runs: consecutive records whose own `field` equals
+ *   `value` form one `{ match: true, items }`; every other entry is its own `{ match: false, items: [it] }`.
+ *   For markup that wraps neighbours together (e.g. a row of logos).
  */
 export function createTemplateEnv(): HandlebarsEnv {
   const hbs = Handlebars.create();
@@ -79,7 +91,81 @@ export function createTemplateEnv(): HandlebarsEnv {
     const year = (options.data as Partial<RenderData> | undefined)?.year;
     return typeof year === 'number' ? year : new Date().getFullYear();
   });
+  registerDataHelpers(hbs);
   return hbs;
+}
+
+const asNumber = (v: unknown): number => (typeof v === 'number' ? v : Number(v));
+const asText = (v: unknown): string => (v === null || v === undefined ? '' : String(v));
+const ownField = (it: unknown, field: unknown): unknown =>
+  isRecord(it) && typeof field === 'string' && Object.prototype.hasOwnProperty.call(it, field) ? it[field] : undefined;
+
+function stringTest(test: (s: string, part: string) => boolean): (...args: unknown[]) => boolean {
+  return (...args: unknown[]) => {
+    const { params, options } = split(args);
+    const ignoreCase = (options.hash as Record<string, unknown> | undefined)?.['ignoreCase'] === true;
+    const s = asText(params[0]);
+    const part = asText(params[1]);
+    return ignoreCase ? test(s.toLowerCase(), part.toLowerCase()) : test(s, part);
+  };
+}
+
+export interface Run {
+  match: boolean;
+  items: unknown[];
+}
+
+/** `list` split into runs of consecutive records whose own `field` equals `value` (see `runs`). */
+export function runsOf(list: unknown, field: unknown, value: unknown): Run[] {
+  const out: Run[] = [];
+  for (const it of Array.isArray(list) ? list : []) {
+    const match = ownField(it, field) === value;
+    const last = out[out.length - 1];
+    if (match && last?.match) last.items.push(it);
+    else out.push({ match, items: [it] });
+  }
+  return out;
+}
+
+function registerDataHelpers(hbs: HandlebarsEnv): void {
+  hbs.registerHelper('or', (...args: unknown[]) => {
+    const { params } = split(args);
+    return params.find((p) => !!p) ?? params[params.length - 1];
+  });
+  hbs.registerHelper('and', (...args: unknown[]) => split(args).params.every((p) => !!p));
+  hbs.registerHelper('not', (...args: unknown[]) => !split(args).params[0]);
+  hbs.registerHelper('gt', (...args: unknown[]) => {
+    const { params } = split(args);
+    return asNumber(params[0]) > asNumber(params[1]);
+  });
+  hbs.registerHelper('add', (...args: unknown[]) => {
+    const { params } = split(args);
+    return asNumber(params[0]) + asNumber(params[1]);
+  });
+  hbs.registerHelper('sub', (...args: unknown[]) => {
+    const { params } = split(args);
+    return asNumber(params[0]) - asNumber(params[1]);
+  });
+  hbs.registerHelper('mod', (...args: unknown[]) => {
+    const { params } = split(args);
+    return asNumber(params[0]) % asNumber(params[1]);
+  });
+  hbs.registerHelper('startsWith', stringTest((s, part) => s.startsWith(part)));
+  hbs.registerHelper('contains', stringTest((s, part) => s.includes(part)));
+  hbs.registerHelper('initials', (...args: unknown[]) =>
+    split(args)
+      .params.map((w) => (typeof w === 'string' ? w.charAt(0) : ''))
+      .join('')
+      .toUpperCase(),
+  );
+  hbs.registerHelper('count', (...args: unknown[]) => {
+    const { params } = split(args);
+    return Array.isArray(params[0]) ? params[0].filter((it) => ownField(it, params[1]) === params[2]).length : 0;
+  });
+  hbs.registerHelper('runs', (...args: unknown[]) => {
+    const { params } = split(args);
+    return runsOf(params[0], params[1], params[2]);
+  });
 }
 
 export type RenderFn = (context: unknown, data: RenderData) => string;
