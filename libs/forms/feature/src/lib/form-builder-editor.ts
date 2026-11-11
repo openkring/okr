@@ -134,7 +134,7 @@ function newField(def: FieldTypeDef, order: number): Field {
             </ion-segment>
             <ion-buttons slot="end">
               <ion-button fill="clear" (click)="onHelp()" [attr.aria-label]="i18n.help_open()" [title]="i18n.help_open()">
-                <ion-icon src="{{ 'information-circle' | svgIcon }}" slot="icon-only" />
+                <ion-icon src="{{ 'info-circle' | svgIcon }}" slot="icon-only" />
               </ion-button>
             </ion-buttons>
           </ion-toolbar>

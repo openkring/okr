@@ -73,7 +73,7 @@ export interface FormModalI18n {
         <!-- the filler's (i), left of the close button -->
         <ion-buttons okrHeaderEnd slot="end">
           <ion-button (click)="onHelp()" [title]="formI18n.help_open()" [attr.aria-label]="formI18n.help_open()">
-            <ion-icon slot="icon-only" src="{{ 'information-circle' | svgIcon }}" />
+            <ion-icon slot="icon-only" src="{{ 'info-circle' | svgIcon }}" />
           </ion-button>
         </ion-buttons>
       }

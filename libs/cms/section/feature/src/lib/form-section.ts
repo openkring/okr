@@ -53,7 +53,7 @@ const FormSectionStore = signalStore(
           @if (helpAvailable()) {
             <ion-buttons>
               <ion-button fill="clear" (click)="onHelp()" [attr.aria-label]="store.formI18n.help_open()" [title]="store.formI18n.help_open()">
-                <ion-icon src="{{ 'information-circle' | svgIcon }}" slot="icon-only" />
+                <ion-icon src="{{ 'info-circle' | svgIcon }}" slot="icon-only" />
               </ion-button>
             </ion-buttons>
           }
