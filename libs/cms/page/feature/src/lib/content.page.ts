@@ -278,8 +278,11 @@ export class ContentPage {
    * sort/select/add section and page-edit — is gated `contentAdmin` in the `menuItems`
    * documents, so they cannot reach edit mode at all. On a page without an album the menu would
    * hold nothing they may do, so the button stays hidden rather than opening an empty popover.
+   *
+   * Without a menu name (the route's `/c-…` segment, e.g. a `menuItems` url missing it) there is
+   * no popover at all, so the button would sit there dead — it is hidden then too.
    */
-  protected canOpenContextMenu = computed(() => this.isEditable() || !!this.albumSection());
+  protected canOpenContextMenu = computed(() => !!this.contextMenuName() && (this.isEditable() || !!this.albumSection()));
 
   protected page = computed(() => this.store.page());
   protected sections = computed(() => this.store.pageSections());
