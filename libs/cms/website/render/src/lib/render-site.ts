@@ -8,7 +8,8 @@
  *   partials/<name>.hbs     `{{> nav}}`, `{{> footer}}`, … available in every template
  *   sections/<type>.hbs     one per manifest.sectionTypes entry; gets mapSection()'s output plus
  *                           its place on the page (sectionContexts: sectionIndex, albumIndex, typeIndex)
- *   pages/<name>.hbs        one per manifest.fixedPages entry ({ name, slug }, rendered to <slug>.html); gets a TemplateContext (sections: [])
+ *   pages/<name>.hbs        one per manifest.fixedPages entry ({ name, slug, title?, description?, standalone? }, rendered to <slug>.html); gets a TemplateContext (sections: []);
+ *                           `standalone`: the output is the whole document, layout.hbs is skipped
  *   sections/home/<type>.hbs optional homepage look of a section type (only with manifest.homeLayout)
  *
  * Home layout (manifest.homeLayout = 'pages/<name>'): the home page's `main` is pages/<name>.hbs,
