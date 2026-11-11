@@ -1,0 +1,35 @@
+{
+  "format": 1,
+  "site": {
+    "okey": "demo",
+    "name": "Demo Website",
+    "tenants": ["demo"],
+    "hostingSite": "demo-website-abcde",
+    "domain": "https://demo.example.org",
+    "languages": ["de"],
+    "tagline": "Ein Beispiel.",
+    "homePageKey": "p_home",
+    "nav": [
+      { "id": "p-home", "type": "page", "label": "Start", "pageKey": "p_home", "slug": "start" },
+      {
+        "id": "m-club",
+        "type": "menu",
+        "label": "Club",
+        "children": [
+          { "id": "p-about", "type": "page", "label": "Über uns", "pageKey": "p_about", "slug": "ueber" },
+          { "id": "l-mail", "type": "link", "label": "Mail", "url": "mailto:info@example.org" }
+        ]
+      }
+    ],
+    "footer": []
+  },
+  "pages": {
+    "p_home": { "name": "Start", "title": "Start", "isPrivate": false, "sections": ["sec_a"] },
+    "p_about": { "name": "Über uns", "title": "Über uns", "isPrivate": false, "sections": ["sec_a", "@TID@_sec_b"] }
+  },
+  "sections": {
+    "sec_a": { "type": "article", "title": "Hallo", "content": "<p>Text</p>" },
+    "demo_sec_b": { "type": "article", "title": "Zweiter", "content": "<p>Mehr</p>" }
+  },
+  "images": []
+}

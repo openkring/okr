@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "website-seed.schema.json",
+  "title": "Tenant website seed (apps/<tenant>-website/content/seed.json)",
+  "description": "Input of scripts/website-import.mjs and of website-preview (without --live). The cross-reference rules (home page and page nodes name seeded pages, page sections name seeded sections with @TID@ resolved to the site tenant, unique node ids and slugs) are enforced by scripts/lib/website-seed.mjs validateSeed(), which a schema cannot express.",
+  "type": "object",
+  "required": ["site", "pages", "sections"],
+  "properties": {
+    "format": { "const": 1 },
+    "site": {
+      "description": "The websites/<okey> document (okey = site id, the doc id; stripped before write).",
+      "type": "object",
+      "required": ["okey", "name", "hostingSite", "domain", "languages", "homePageKey", "nav", "footer"],
+      "properties": {
+        "okey": { "type": "string", "pattern": "^[\\w-]+$" },
+        "name": { "type": "string", "minLength": 1 },
+        "tenants": { "type": "array", "items": { "type": "string" }, "minItems": 1, "description": "Default [okey]" },
+        "hostingSite": { "type": "string", "pattern": "^[a-z0-9-]+-website-[a-z0-9]+$" },
+        "domain": { "type": "string", "pattern": "^https://[^/\\s]+$" },
+        "languages": { "type": "array", "items": { "type": "string" }, "contains": { "const": "de" } },
+        "tagline": { "type": "string" },
+        "taglineI18n": { "type": "object", "additionalProperties": { "type": "string" } },
+        "homePageKey": { "type": "string", "minLength": 1 },
+        "nav": { "type": "array", "items": { "$ref": "#/$defs/node" } },
+        "footer": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+      }
+    },
+    "pages": {
+      "description": "pages/<key> documents; the key is the doc id.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["sections"],
+        "properties": {
+          "name": { "type": "string" },
+          "title": { "type": "string" },
+          "isPrivate": { "type": "boolean", "description": "Must be false to be rendered" },
+          "bannerUrl": { "type": "string" },
+          "sections": { "type": "array", "items": { "type": "string" }, "description": "Section ids; @TID@ is replaced by the site tenant" }
+        }
+      }
+    },
+    "sections": {
+      "description": "sections/<id> documents.",
+      "type": "object",
+      "additionalProperties": { "type": "object", "required": ["type"], "properties": { "type": { "type": "string", "minLength": 1 } } }
+    },
+    "images": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "file"],
+        "properties": {
+          "path": { "type": "string", "description": "Storage path the sections refer to" },
+          "file": { "type": "string", "description": "File relative to content/, no .." }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "node": {
+      "type": "object",
+      "required": ["id", "type", "label"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "enum": ["menu", "page", "link"] },
+        "label": { "type": "string" },
+        "labelI18n": { "type": "object", "additionalProperties": { "type": "string" } },
+        "isArchived": { "type": "boolean" },
+        "pageKey": { "type": "string" },
+        "slug": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "url": { "type": "string" },
+        "style": { "enum": ["default", "button"] },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+      }
+    }
+  }
+}
