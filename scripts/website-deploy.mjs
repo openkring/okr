@@ -80,11 +80,12 @@ async function main() {
     console.warn(`\nWARNING: ${css} changed (${before.length} -> ${after.length} bytes, ${after.length - before.length >= 0 ? '+' : ''}${after.length - before.length}). Bump the ?v= cache-bust on the stylesheet link in the templates and commit before relying on this deploy (immutable-CSS trap, website skill).\n`);
   }
   sh('pnpm', build);
-  sh('node', upload);
+  // Render (and refuse on problems) BEFORE anything is uploaded or templateVersion is written.
   const source = await loadLiveSource(tenant);
   if (source.synthetic) fail(`Refusing: websites/${manifest.siteId} does not exist.`);
   const result = render({ ...source, templates: loadLocalTemplates(tenant) });
   if (result.problems.length) fail(`Refusing: the renderer reports problems:\n${result.problems.map((p) => '  ' + JSON.stringify(p)).join('\n')}`);
+  sh('node', upload);
   for (const f of result.files) {
     mkdirSync(dirname(join(out, f.path)), { recursive: true });
     writeFileSync(join(out, f.path), f.content);

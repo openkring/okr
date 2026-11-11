@@ -194,6 +194,10 @@ describe('renderSite', () => {
     expect(stub.match(/<script/g)).toHaveLength(1);
     const map = JSON.parse(fileOf(files, 'legacy-redirects.json') ?? '{}');
     expect(map['seite.html']['scsw_vorstand']).toBe('/vorstand');
+    // the stub also exists below each language dir (relative seite.html?key=… on /en/…)
+    expect(fileOf(files, 'en/seite.html')).toBe(stub);
+    expect(fileOf(files, 'legacy-redirects.json')).toBeDefined();
+    expect(files.filter((f) => f.path.endsWith('legacy-redirects.json'))).toHaveLength(1);
   });
 
   it('returns the validation problems and renders nothing', () => {

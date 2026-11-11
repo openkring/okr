@@ -201,9 +201,10 @@ const LEGACY_STUB = [
 
 /**
  * One static stub per legacy path plus legacy-redirects.json `{ "<from>": { "<key>": "/<slug>" } }`
- * (design §10.1). The script reads `?key=` and `location.replace`s to the mapped path.
+ * (design §10.1), the stub in every language dir. The script reads `?key=` and `location.replace`s to the
+ * mapped path (language-prefixed below a language dir). The map stays at the root.
  */
-function legacyStubs(site: WebsiteModel, manifest: TemplateManifest, problems: PublishProblem[]): RenderedFile[] {
+function legacyStubs(site: WebsiteModel, manifest: TemplateManifest, problems: PublishProblem[], languages: string[]): RenderedFile[] {
   const map: Record<string, Record<string, string>> = {};
   for (const { from, key } of manifest.legacyRedirects ?? []) {
     if (!LEGACY_PATH.test(from ?? '') || !LEGACY_KEY.test(key ?? '')) {
@@ -215,7 +216,9 @@ function legacyStubs(site: WebsiteModel, manifest: TemplateManifest, problems: P
   }
   const paths = Object.keys(map);
   if (paths.length === 0) return [];
-  return [...paths.map((path) => ({ path, content: LEGACY_STUB })), { path: 'legacy-redirects.json', content: JSON.stringify(map, null, 2) + '\n' }];
+  // The stub also lives below every language dir: a relative `seite.html?key=…` on /en/… resolves to /en/seite.
+  const stubs = paths.flatMap((path) => languages.map((lang) => ({ path: lang === 'de' ? path : `${lang}/${path}`, content: LEGACY_STUB })));
+  return [...stubs, { path: 'legacy-redirects.json', content: JSON.stringify(map, null, 2) + '\n' }];
 }
 
 /** One `<url>` per page and language, each with its hreflang alternates. */
@@ -408,7 +411,7 @@ export function renderSite(input: RenderInput): RenderResult {
     }
   }
 
-  files.push(...legacyStubs(site, templates.manifest, problems));
+  files.push(...legacyStubs(site, templates.manifest, problems, languages));
   files.push({ path: 'sitemap.xml', content: sitemap(entries, site, languages) });
   files.push({ path: 'robots.txt', content: robots(site) });
 
