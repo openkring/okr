@@ -5,7 +5,7 @@ import { CallableRequest, HttpsError, onCall } from 'firebase-functions/v2/https
 import { FieldValue, Firestore, getFirestore } from 'firebase-admin/firestore';
 
 import {
-  AvatarInfo, JournalChangeCollection, JournalCollection, JournalCommentCollection, JournalFootprintCollection, JournalGuestLink,
+  AddressCollection, AddressModel, AvatarInfo, JournalChangeCollection, JournalCollection, JournalCommentCollection, JournalFootprintCollection, JournalGuestLink,
   JournalGuestLinksDoc, JournalGuestSeqDoc, JournalImageCollection, JournalPrivateCollection, JournalReactionCollection,
   JournalSectionCollection, PersonCollection,
 } from '@okr/shared-models';
@@ -15,8 +15,9 @@ import { findGuestLink, guestChangeRecord, guestLinkState, likeKey } from '@okr/
 import { IMGIX_PRIVATE_HOST, signImgixUrl } from '../_storage/imgix-sign';
 import { privateBucket } from '../_storage/private-bucket';
 import { tenantLinks } from '../calendar/deliver';
+import { createFirestoreDeps } from '../workflow/firestore-deps';
 import { windowExpiry } from '../video/video-sign.util';
-import { applyManage, clipReadUrl, deliveryFor, guestBlockKind, guestVideoClips, GuestRequest, GuestRequestError, isGuestVisibleSection, ManageAction, memberName, newLinkCode, parseGuestRequest } from './guest.logic';
+import { applyManage, clipReadUrl, deliveryFor, guestBlockKind, guestVideoClips, GuestRequest, GuestRequestError, isGuestVisibleSection, ManageAction, memberName, newLinkCode, parseGuestRequest, parseSetEmail } from './guest.logic';
 import { isJournalKey } from './apply-journal-change.logic';
 import { requireJournalAuthor } from './journal-auth';
 import { checkNotice } from './notify.logic';
@@ -221,11 +222,58 @@ export const journalGuest = onCall(
   },
 );
 
+/** Every author and guest of the journal once, authors first. */
+function journalPersonKeys(journal: Data): string[] {
+  const authors = Array.isArray(journal['authors']) ? (journal['authors'] as AvatarInfo[]) : [];
+  const guests = Array.isArray(journal['guests']) ? (journal['guests'] as { person?: AvatarInfo }[]) : [];
+  const keys = [...authors.map((a) => a?.key), ...guests.map((g) => g?.person?.key)];
+  return [...new Set(keys.filter((k): k is string => typeof k === 'string' && k !== ''))];
+}
+
+/**
+ * The email of each author and guest for the journal's authors (spec 1.154 §9, journal-author tier): the
+ * tenant's favorite email (`emailFor`), '' when there is none. Authors only — `manageJournalGuest` is
+ * behind `requireJournalAuthor`, and nothing here ever reaches a guest.
+ */
+async function journalPeople(db: Firestore, journalKey: string, tenantId: string): Promise<{ personKey: string; email: string }[]> {
+  const journal = (await db.collection(JournalCollection).doc(journalKey).get()).data() ?? {};
+  const deps = createFirestoreDeps();
+  return Promise.all(journalPersonKeys(journal).map(async (personKey) => ({ personKey, email: await deps.emailFor(personKey, tenantId) })));
+}
+
+/**
+ * Stores an author-entered email for a person of the tenant (spec 1.154 §9) — only when the person has no
+ * email in this tenant yet; an existing address is never changed. One transaction, so a double tap cannot
+ * add two favorites. Shape per the address model: flat `addresses`, `parentKey` `person.<okey>`, channel
+ * email, favorite unless a live favorite email already exists, `tenants: [tenantId]` (provenance).
+ * The answer is the same whether something was stored or not: it never tells whether an address exists.
+ */
+async function storeEmailIfMissing(db: Firestore, tenantId: string, personKey: string, email: string): Promise<void> {
+  const parentKey = `person.${personKey}`;
+  const stored = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(db.collection(AddressCollection).where('parentKey', '==', parentKey));
+    const emails = snap.docs.map((d) => d.data())
+      .filter((a) => a['isArchived'] !== true && a['addressChannel'] === 'email' && Array.isArray(a['tenants']) && (a['tenants'] as string[]).includes(tenantId));
+    if (emails.some((a) => typeof a['email'] === 'string' && a['email'] !== '')) return false;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { okey, ...address } = { ...new AddressModel(tenantId) };
+    tx.create(db.collection(AddressCollection).doc(), {
+      ...address, addressChannel: 'email', email, parentKey, tenants: [tenantId],
+      isFavorite: !emails.some((a) => a['isFavorite'] === true), isArchived: false,
+      index: `n:${email} p:${parentKey} o:`,
+    });
+    return true;
+  });
+  // no address in the log (PII)
+  logger.info(`manageJournalGuest: setEmail for ${personKey}: ${stored ? 'stored' : 'kept existing'}`);
+}
+
 /**
  * Guests of a journal for its authors (plans 7, 8): links — list, create (or reuse a live one), expiry, revoke;
  * notices — `previewNotice` (what changed since the last notice, the proposed text, who would receive it) and
- * `sendNotice` (the author's possibly changed text to every live, unmuted guest). The link codes live in
- * `journals/{jk}/private/guestLinks`, which no client can read.
+ * `sendNotice` (the author's possibly changed text to every live, unmuted guest); people (spec 1.154 §9) —
+ * `people` (the email of every author and guest) and `setEmail` (an email for a person who has none). The link
+ * codes live in `journals/{jk}/private/guestLinks`, which no client can read.
  */
 export const manageJournalGuest = onCall(
   { ...SMALL, timeoutSeconds: 300, enforceAppCheck: true, cors: true },
@@ -252,6 +300,13 @@ export const manageJournalGuest = onCall(
         if (error instanceof NoticeTooSoon) throw new HttpsError('resource-exhausted', 'notice-too-soon');
         throw error;
       }
+    }
+    if (action === 'people') return { people: await journalPeople(db, caller.journalKey, caller.tenantId) };
+    if (action === 'setEmail') {
+      const { personKey, email } = parseSetEmail(d);
+      if (!(await personInTenant(db, personKey, [caller.tenantId]))) throw new HttpsError('failed-precondition', 'person not in tenant');
+      await storeEmailIfMissing(db, caller.tenantId, personKey, email);
+      return { ok: true };
     }
     if (action !== 'create' && action !== 'expiry' && action !== 'revoke') throw new HttpsError('invalid-argument', 'action');
     const personKey = d['personKey'];

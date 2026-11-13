@@ -143,22 +143,29 @@ export const signJournalPhotos = onCall(
   },
 );
 
-/** The journal's peer secret for the P2P link (plan 5), created on first request. Authors only. */
+/**
+ * The journal's peer secret for the P2P link (plan 5), created on first request. Authors only.
+ * `rotate: true` always writes a fresh one (spec 1.154 §9: removing an author renews it); the other iPads
+ * fetch it on their next online contact.
+ */
 export const ensureJournalPeerSecret = onCall(
   { region: REGION, enforceAppCheck: true, cors: true },
   async (request: CallableRequest<unknown>): Promise<{ secret: string }> => {
     checkAppCheckToken(request as never, 'ensureJournalPeerSecret');
     checkAuthentication(request as never, 'ensureJournalPeerSecret');
     const db = getFirestore();
-    const caller = await requireJournalAuthor(db, request.auth?.uid ?? '', (request.data as { journalKey?: unknown })?.journalKey);
+    const data = request.data as { journalKey?: unknown; rotate?: unknown } | undefined;
+    const caller = await requireJournalAuthor(db, request.auth?.uid ?? '', data?.journalKey);
+    const rotate = data?.rotate === true;
     const ref = db.doc(`${JournalCollection}/${caller.journalKey}/${JournalPrivateCollection}/${JournalPeerDoc}`);
     const secret = await db.runTransaction(async (tx) => {
       const existing = (await tx.get(ref)).data()?.['secret'];
-      if (typeof existing === 'string' && existing !== '') return existing;
+      if (!rotate && typeof existing === 'string' && existing !== '') return existing;
       const created = randomBytes(32).toString('base64');
       tx.set(ref, { secret: created, tenants: [caller.tenantId] });
       return created;
     });
+    if (rotate) logger.info(`ensureJournalPeerSecret: secret of ${caller.journalKey} renewed`);
     return { secret };
   },
 );

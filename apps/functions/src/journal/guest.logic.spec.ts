@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { applyManage, clipReadUrl, deliveryFor, GuestRequestError, guestBlockKind, guestVideoClips, isGuestVisibleSection, memberName, parseGuestRequest } from './guest.logic';
+import { applyManage, clipReadUrl, deliveryFor, GuestRequestError, guestBlockKind, guestVideoClips, isGuestVisibleSection, memberName, parseGuestRequest, parseSetEmail } from './guest.logic';
 
 const CODE = '0123456789abcdef0123456789abcdef';
 const avatar = (key: string, name1: string, name2: string) => ({ key, name1, name2, modelType: 'person' as const, type: '', subType: '', label: '' });
@@ -123,5 +123,38 @@ describe('clipReadUrl', () => {
     const f = file(false);
     expect(await clipReadUrl(f, 42)).toBe('');
     expect(f.signed).toEqual([]);
+  });
+});
+
+describe('parseSetEmail', () => {
+  const codeOf = (fn: () => unknown): string => {
+    try {
+      fn();
+    } catch (error) {
+      return String((error as { code?: unknown }).code);
+    }
+    return 'no error';
+  };
+
+  it('trims and lower-cases the email', () => {
+    expect(parseSetEmail({ personKey: 'anna', email: '  Anna.Muster@Example.CH ' })).toEqual({ personKey: 'anna', email: 'anna.muster@example.ch' });
+  });
+
+  it('drops extra fields', () => {
+    expect(parseSetEmail({ personKey: 'anna', email: 'anna@example.ch', tenants: ['other'], isFavorite: false }))
+      .toEqual({ personKey: 'anna', email: 'anna@example.ch' });
+  });
+
+  it.each(['', '   ', 'anna', 'anna@', '@example.ch', 'anna@example', 'an na@example.ch', 42, undefined])('refuses the address %j', (email) => {
+    expect(codeOf(() => parseSetEmail({ personKey: 'anna', email }))).toBe('invalid-argument');
+  });
+
+  it('refuses an overlong address', () => {
+    expect(codeOf(() => parseSetEmail({ personKey: 'anna', email: `${'a'.repeat(250)}@example.ch` }))).toBe('invalid-argument');
+  });
+
+  it.each([undefined, '', 'a/b', 42])('refuses the person key %j', (personKey) => {
+    expect(codeOf(() => parseSetEmail({ personKey, email: 'anna@example.ch' }))).toBe('invalid-argument');
+    expect(codeOf(() => parseSetEmail(null))).toBe('invalid-argument');
   });
 });

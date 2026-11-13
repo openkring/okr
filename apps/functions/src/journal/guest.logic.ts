@@ -1,3 +1,5 @@
+import { HttpsError } from 'firebase-functions/v2/https';
+
 import { AvatarInfo, JournalGuestLink } from '@okr/shared-models';
 import { COMMENT_MAX } from '@okr/travel-journal-util';
 
@@ -57,6 +59,25 @@ export function parseGuestRequest(data: unknown): GuestRequest {
     req.channel = channel;
   }
   return req;
+}
+
+/** RFC 5321 caps a path at 256 octets, the address inside it at 254. */
+const EMAIL_MAX = 254;
+/** Deliberately loose: one `@`, a dot in the domain, no whitespace — the mail provider is the real judge. */
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * Shape check of `manageJournalGuest` `setEmail` (spec 1.154 §9): a guest's email, entered by an author.
+ * Trimmed and lower-cased; a malformed address or person key is refused before anything is read or stored.
+ * Extra fields are dropped — the caller never chooses tenants, favorite flag or channel.
+ */
+export function parseSetEmail(data: unknown): { personKey: string; email: string } {
+  const d = (typeof data === 'object' && data !== null ? data : {}) as Record<string, unknown>;
+  const personKey = d['personKey'];
+  if (!isJournalKey(personKey)) throw new HttpsError('invalid-argument', 'personKey');
+  const email = typeof d['email'] === 'string' ? d['email'].trim().toLowerCase() : '';
+  if (email.length > EMAIL_MAX || !EMAIL.test(email)) throw new HttpsError('invalid-argument', 'email');
+  return { personKey, email };
 }
 
 /** Display name of a journal member (author or guest) by person key; '' for anyone else. */

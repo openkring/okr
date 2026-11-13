@@ -5,12 +5,15 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 
 /**
  * The guest callables of the travel journal (spec 1.113 §7, plan 7): `manageJournalGuest` for the authors
- * (links: list, create, expiry, revoke) and `journalGuest` for the guest page, where the link code is the
+ * (links: list, create, expiry, revoke; notices; people and emails) and `journalGuest` for the guest page, where the link code is the
  * only credential (view, comment, like, unlike, settings, mute, unmute).
  */
 export interface GuestLinkView { personKey: string; url: string; expiresAt: string; revokedAt: string; mutedAt: string }
 
 export type GuestChannel = 'email' | 'none';
+
+/** An author's or guest's email as the journal's authors see it (spec 1.154 §9); '' when the person has none. */
+export interface JournalPersonEmail { personKey: string; email: string }
 
 export interface NoticePreview {
   subject: string;
@@ -64,6 +67,16 @@ export class JournalGuestService {
 
   public async sendNotice(journalKey: string, subject: string, text: string): Promise<{ email: number }> {
     return (await this.call<{ sent: { email: number } }>('manageJournalGuest', { journalKey, action: 'sendNotice', subject, text })).sent;
+  }
+
+  /** The email of every author and guest of the journal, '' when a person has none (spec 1.154 §9; authors only). */
+  public async people(journalKey: string): Promise<JournalPersonEmail[]> {
+    return (await this.call<{ people: JournalPersonEmail[] }>('manageJournalGuest', { journalKey, action: 'people' })).people;
+  }
+
+  /** Stores an email for a person of the tenant who has none yet; an existing address is kept. `invalid-argument` for a malformed one. */
+  public async setEmail(journalKey: string, personKey: string, email: string): Promise<void> {
+    await this.call<{ ok: true }>('manageJournalGuest', { journalKey, action: 'setEmail', personKey, email });
   }
 
   // ---- guests (link code) ----

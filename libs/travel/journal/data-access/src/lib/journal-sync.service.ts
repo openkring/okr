@@ -229,6 +229,16 @@ export class JournalSyncService {
     }
   }
 
+  /**
+   * Renews the journal's peer secret (spec 1.154 §9: after removing an author) and keeps the new one locally.
+   * Online only; an error reaches the caller. A running P2P session keeps the old secret until it restarts.
+   */
+  public async rotateSecret(journalKey: string): Promise<void> {
+    await ensureAppCheckToken();
+    const { secret } = await this.call<{ secret: string }>('ensureJournalPeerSecret', { journalKey, rotate: true });
+    if (secret) await this.db.setMeta(META_PEER + journalKey, secret);
+  }
+
   // ---------------------------------------------------------------- photos ------------------
 
   /**
