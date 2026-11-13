@@ -20,7 +20,14 @@ describe('journal view', () => {
       rec({ entity: 'journal', entityKey: 'j1', op: 'create', fields: { title: 'Antarktis 2027', startDate: '20270108' } }),
     ]);
     expect(journalsOf(state).map((j) => j.key)).toEqual(['j1', 'j2']);
-    expect(journalsOf(state)[0]).toEqual({ key: 'j1', title: 'Antarktis 2027', subTitle: '', startDate: '20270108', endDate: '' });
+    expect(journalsOf(state)[0]).toEqual({ key: 'j1', title: 'Antarktis 2027', subTitle: '', startDate: '20270108', endDate: '', coverImageKey: '', coverLabel: '', lastPageLabel: '' });
+  });
+
+  it('journalsOf maps cover and labels', () => {
+    const state = materialize([
+      rec({ entity: 'journal', entityKey: 'j1', op: 'create', fields: { title: 'A', coverImageKey: 'img1', coverLabel: 'Antarktis', lastPageLabel: '© 2027 B. Kaiser' } }),
+    ]);
+    expect(journalsOf(state)[0]).toMatchObject({ coverImageKey: 'img1', coverLabel: 'Antarktis', lastPageLabel: '© 2027 B. Kaiser' });
   });
 
   it('footprintsOf returns only the journal\'s footprints, sorted by date and time', () => {

@@ -5,12 +5,15 @@ import { sortByOrder } from './journal-order.util';
 
 /**
  * The journal as the UI reads it, built from the merged change log (spec 1.113 §5.2). Field names in
- * the change records are the contract: journal { title, subTitle, startDate, endDate }; footprint
+ * the change records are the contract: journal { title, subTitle, startDate, endDate, coverImageKey, coverLabel, lastPageLabel }; footprint
  * { journalKey, title, placeName, date, time, latitude, longitude, publishState }; section
  * { footprintKey, kind, html, imageKeys, order }; image { journalKey, takenAt, latitude, longitude,
  * width, height, path2048, path400, localIdentifier }.
  */
-export interface JournalView { key: string; title: string; subTitle: string; startDate: string; endDate: string }
+export interface JournalView {
+  key: string; title: string; subTitle: string; startDate: string; endDate: string;
+  coverImageKey: string; coverLabel: string; lastPageLabel: string; // '' when absent
+}
 
 export type BlockKind = 'text' | 'photos' | 'video';
 
@@ -103,6 +106,9 @@ export function journalsOf(state: JournalState): JournalView[] {
       subTitle: str(view['subTitle']),
       startDate: str(view['startDate']),
       endDate: str(view['endDate']),
+      coverImageKey: str(view['coverImageKey']),
+      coverLabel: str(view['coverLabel']),
+      lastPageLabel: str(view['lastPageLabel']),
     }))
     .sort((a, b) => cmp(a.startDate, b.startDate) || cmp(a.title, b.title));
 }

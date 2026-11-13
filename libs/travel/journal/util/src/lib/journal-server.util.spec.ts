@@ -27,6 +27,18 @@ describe('journal server util', () => {
     expect(acceptRecord(ahead(MAX_FUTURE_MS), now)).toBe(true);
   });
 
+  it('journalDocOf writes cover and labels', () => {
+    const full = materialize([
+      rec({ entity: 'journal', entityKey: 'j1', op: 'create', fields: { title: 'A', coverImageKey: 'img1', coverLabel: 'Antarktis', lastPageLabel: '© 2027 B. Kaiser' } }),
+    ]);
+    expect(journalDocOf(full, 'j1', ['bkg'])).toMatchObject({ coverImageKey: 'img1', coverLabel: 'Antarktis', lastPageLabel: '© 2027 B. Kaiser' });
+    const bare = materialize([rec({ entity: 'journal', entityKey: 'j1', op: 'create', fields: { title: 'A' } })]);
+    const doc = journalDocOf(bare, 'j1', ['bkg']);
+    expect(doc && 'coverImageKey' in doc).toBe(false);
+    expect(doc && 'coverLabel' in doc).toBe(false);
+    expect(doc && 'lastPageLabel' in doc).toBe(false);
+  });
+
   it('journalDocOf carries authorKeys from the journal fields', () => {
     const state = materialize([
       rec({ entity: 'journal', entityKey: 'j1', op: 'create', fields: { title: 'Antarktis 2027', startDate: '20270108' } }),

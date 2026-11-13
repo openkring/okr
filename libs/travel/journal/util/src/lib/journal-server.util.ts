@@ -38,6 +38,8 @@ function defined<T extends object>(doc: T): T {
   return Object.fromEntries(Object.entries(doc).filter(([, v]) => v !== undefined)) as T;
 }
 
+const optStr = (x: unknown): string | undefined => (typeof x === 'string' ? x : undefined);
+
 export function journalDocOf(state: JournalState, journalKey: string, tenants: string[]): Partial<JournalModel> | undefined {
   const { entityState, view: v } = view(state, 'journal', journalKey);
   if (!v) return undefined;
@@ -46,6 +48,8 @@ export function journalDocOf(state: JournalState, journalKey: string, tenants: s
   return defined({
     okey: journalKey, tenants, isArchived: false,
     title: str(v['title']), subTitle: str(v['subTitle']), startDate: str(v['startDate']), endDate: str(v['endDate']),
+    // absent stays absent (dropped by `defined`); only a stored string is written
+    coverImageKey: optStr(v['coverImageKey']), coverLabel: optStr(v['coverLabel']), lastPageLabel: optStr(v['lastPageLabel']),
     authors: Array.isArray(v['authors']) ? (v['authors'] as JournalModel['authors']) : undefined,
     guests: Array.isArray(v['guests'])
       ? (v['guests'] as unknown[]).filter((g): g is JournalModel['guests'][number] =>

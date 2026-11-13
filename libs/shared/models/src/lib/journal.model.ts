@@ -44,6 +44,9 @@ export class JournalModel implements OkrModel, SearchableModel, TaggedModel {
   public title = DEFAULT_TITLE; // e.g. «Antarktis 2027»
   public subTitle = DEFAULT_TITLE;
   public cover?: ImageConfig;
+  public coverImageKey?: string; // FK -> journals/{okey}/images: the photo on the book cover and the web hero
+  public coverLabel?: string; // text on the cover, e.g. «Antarktis»
+  public lastPageLabel?: string; // text on the last page of the book, e.g. «© 2027 B. Kaiser»
   public startDate = DEFAULT_DATE; // StoreDate
   public endDate = DEFAULT_DATE; // StoreDate
   public tripKey?: string; // FK -> trips, optional
