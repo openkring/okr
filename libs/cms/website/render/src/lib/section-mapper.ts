@@ -308,6 +308,15 @@ export function mapFormSection(sectionId: string, title: string, props: Record<s
 }
 
 /**
+ * An address safe to show and to put behind `mailto:` — local@domain.tld, with no whitespace, quotes,
+ * angle brackets, colon, slash or backslash (so never `javascript:` or a second header).
+ */
+export function isPlainEmail(value: unknown): value is string {
+  return typeof value === 'string' && value.length <= 254
+    && /^[^\s@<>"'`:/\\?&#=]+@[^\s@<>"'`:/\\?&#=]+\.[^\s@<>"'`:/\\?&#=.]+$/.test(value);
+}
+
+/**
  * @param people people source key (`peopleSourceKey`) → its public persons: the members of a group
  *   (`resolveGroupPeople`, §13) or the holders of the roles (`resolveRolePeople`, §13.1) of a people
  *   section of type 'group' / 'responsibility'; a source missing from the map renders no one.
@@ -388,13 +397,15 @@ export function mapSection(
         const info = (props['avatar'] as { info?: unknown } | undefined)?.info;
         const showEmail = props['type'] === 'responsibility'
           && Array.isArray(info) && (info.includes('email') || info.includes('emailLink'));
+        // the template shows the address as a mailto: link when the info asks for one, else as text
+        const emailLink = showEmail && Array.isArray(info) && info.includes('emailLink');
         const persons = resolved.map((p): PublicPerson => {
           const out: PublicPerson = { key: p.key, firstName: p.firstName, lastName: p.lastName, label: p.label };
           if (p.showImage !== undefined) out.showImage = p.showImage;
-          if (showEmail && p.email) out.email = p.email;
+          if (showEmail && isPlainEmail(p.email)) out.email = p.email;
           return out;
         });
-        return { type: 'people', name, title, subTitle, persons };
+        return { type: 'people', name, title, subTitle, persons, ...(emailLink ? { emailLink: true } : {}) };
       }
       const persons = ((props['persons'] as { key?: string; name1?: string; name2?: string; label?: string }[] | undefined) ?? [])
         .map(p => ({

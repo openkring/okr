@@ -8,7 +8,7 @@ import { peopleSourceKey, peopleSourceOf } from './people-source';
 import { renderSite, type RenderInput, type TemplateSet } from './render-site';
 import type { TemplateManifest } from './publish-validation';
 import { resolveRolePeople, type RoleAvatarDoc, type RoleDoc } from './role-people';
-import { mapSection, type SectionDoc } from './section-mapper';
+import { isPlainEmail, mapSection, type SectionDoc } from './section-mapper';
 
 const TENANTS = ['scs'];
 const av = (key: string, name1: string, name2: string, extra: Partial<RoleAvatarDoc> = {}): RoleAvatarDoc =>
@@ -144,6 +144,25 @@ describe('mapSection people from roles', () => {
     expect(persons(section(ids))[0]).not.toHaveProperty('email');
   });
 
+  it('flags the section for a mailto: link only when the info asks for emailLink', () => {
+    const ids = { type: 'responsibility', responsibilityIds: ['praesident'] };
+    const out = (info?: string[]) => mapSection('s1', section({ ...ids, avatar: { info } }), new Map(), sanitize, 'de', map) as { emailLink?: boolean };
+    expect(out(['emailLink']).emailLink).toBe(true);
+    expect(out(['email', 'emailLink']).emailLink).toBe(true);
+    expect(out(['email'])).not.toHaveProperty('emailLink');
+    expect(out(['function'])).not.toHaveProperty('emailLink');
+    const group = mapSection('s1', section({ type: 'group', groupId: 'x', avatar: { info: ['emailLink'] } }), new Map(), sanitize) as { emailLink?: boolean };
+    expect(group).not.toHaveProperty('emailLink');
+  });
+
+  it('drops a role address that is not a plain email address', () => {
+    const ids = { type: 'responsibility', responsibilityIds: ['praesident'], avatar: { info: ['emailLink'] } };
+    for (const email of ['javascript:alert(1)', 'a@b', 'x"@y.ch', 'a b@c.ch', 'a@b.ch?cc=x@y.ch', '<a@b.ch>']) {
+      const m = new Map([['responsibility.praesident', [{ ...anna, email }]]]);
+      expect(persons(section(ids), m)[0]).not.toHaveProperty('email');
+    }
+  });
+
   it('never emits an address for a group, even one that slipped into the resolved list', () => {
     const leaked = new Map([['group.vorstand', [{ ...anna, email: 'anna.privat@example.org' }]]]);
     const out = persons(section({ type: 'group', groupId: 'vorstand', avatar: { info: ['email'] } }), leaked);
@@ -178,5 +197,15 @@ describe('renderSite role people', () => {
     const res = renderSite(input(new Map([['responsibility.praesident', [{ key: 'p1', firstName: 'Anna', lastName: 'Muster', label: 'Präsidentin', email: 'praesident@seeclub.org' }]]])));
     expect(res.problems).toEqual([]);
     expect(res.files.find((f) => f.path === 'index.html')?.content).toContain('<i>Anna Muster:Präsidentin:praesident@seeclub.org</i>');
+  });
+});
+
+describe('isPlainEmail', () => {
+  it('accepts plain addresses only', () => {
+    expect(isPlainEmail('praesident@seeclub.org')).toBe(true);
+    expect(isPlainEmail('vor.stand+web@mail.seeclub.ch')).toBe(true);
+    for (const v of ['', 'javascript:alert(1)//@x.ch', 'mailto:a@b.ch', 'a@b', '@b.ch', 'a@b.ch.', 'a@@b.ch', undefined, 42]) {
+      expect(isPlainEmail(v)).toBe(false);
+    }
   });
 });
