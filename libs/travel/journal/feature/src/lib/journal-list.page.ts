@@ -10,7 +10,8 @@ import { ModelSelectService } from '@okr/shared-feature';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, okrPrompt } from '@okr/shared-util-angular';
 import { fill, registerBundledIcons } from '@okr/shared-util-core';
-import { JournalListAction, journalListMenu, journalListSheet, JournalWriteSlow } from '@okr/travel-journal-util';
+import { JournalEditModal } from '@okr/travel-journal-ui';
+import { JournalFormModel, journalFormOf, journalPatch, JournalListAction, journalListMenu, journalListSheet, JournalWriteSlow } from '@okr/travel-journal-util';
 import { continueWhenSlow, showJournalError } from './journal-errors';
 import { openJournalInfo } from './journal-info';
 import { JournalGuestsSheet } from './journal-guests';
@@ -18,6 +19,7 @@ import { openGuestsModal } from './journal-guests.modal';
 import { openJournalMenu } from './journal-menu-open';
 import { openPhotoSyncModal } from './journal-photo-sync.modal';
 import { JOURNAL_ICONS } from './journal-icons';
+import { JournalFileUrlService } from './journal-file-url.service';
 import { JournalStore } from './journal.store';
 
 /** All travel journals on this device (spec 1.113); opens one, or creates a new one. */
@@ -28,6 +30,7 @@ import { JournalStore } from './journal.store';
     .thumb { width: 48px; height: 48px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
       background: var(--ion-color-light); color: var(--ion-color-medium); }
     .thumb ion-icon { font-size: 24px; }
+    .thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; display: block; }
   `],
   template: `
     <ion-header>
@@ -46,8 +49,13 @@ import { JournalStore } from './journal.store';
       <ion-list>
           @for (journal of store.journals(); track journal.key) {
             <ion-item button detail="false" (click)="actions(journal.key, journal.title)">
-              <!-- placeholder until the cover thumbnail URL helper lands -->
-              <div slot="start" class="thumb"><ion-icon src="{{ 'map' | svgIcon }}" /></div>
+              <div slot="start" class="thumb">
+                @if (store.coverUrl(journal.key); as url) {
+                  <img [src]="url" alt="" loading="lazy" />
+                } @else {
+                  <ion-icon src="{{ 'map' | svgIcon }}" />
+                }
+              </div>
               <ion-label>{{ journal.title || store.i18n.untitled() }}</ion-label>
             </ion-item>
           } @empty {
@@ -60,6 +68,7 @@ import { JournalStore } from './journal.store';
 export class JournalListPage {
   protected readonly store = inject(JournalStore);
   private readonly router = inject(Router);
+  private readonly fileUrl = inject(JournalFileUrlService);
   private readonly alertController = inject(AlertController);
   private readonly toastController = inject(ToastController);
   private readonly actionSheetController = inject(ActionSheetController);
@@ -118,7 +127,7 @@ export class JournalListPage {
     const { data } = await sheet.onDidDismiss<{ action: string }>();
     switch (data?.action) {
       case 'journal.open': return this.open(journalKey);
-      case 'journal.edit': return this.rename(journalKey, title);
+      case 'journal.edit': return this.edit(journalKey);
       case 'journal.authors': return this.addCoAuthor(journalKey);
       case 'journal.guests': return openGuestsModal(this.modalController, this.guestsSheet, journalKey);
       case 'journal.notice': return this.guestsSheet.notify(journalKey);
@@ -126,11 +135,20 @@ export class JournalListPage {
     }
   }
 
-  private async rename(journalKey: string, current: string): Promise<void> {
-    const i18n = this.store.i18n;
-    const title = await okrPrompt(this.alertController, i18n.list_rename_journal(), i18n.list_rename_prompt(), i18n.save(), i18n.cancel(), current);
-    if (!title?.trim() || title.trim() === current) return;
-    await this.run(() => this.store.renameJournal(journalKey, title.trim()));
+  /** «Reisetagebuch ändern»: title, subtitle, cover photo and labels in one modal (spec 1.154). */
+  private async edit(journalKey: string): Promise<void> {
+    const current = this.store.journals().find((j) => j.key === journalKey);
+    if (!current) return;
+    const images = this.store.images(journalKey);
+    const seen = new Set<string>();
+    const covers = this.store.footprints(journalKey).flatMap((f) => f.blocks).filter((b) => b.kind !== 'video') // a video poster is no cover
+      .flatMap((b) => b.imageKeys ?? []).filter((k) => images.has(k) && !seen.has(k) && seen.add(k))
+      .map((key) => ({ key, url: this.fileUrl.url(images.get(key)?.path400) }));
+    const modal = await this.modalController.create({ component: JournalEditModal, componentProps: { journal: journalFormOf(current), covers } });
+    await modal.present();
+    const { data, role } = await modal.onWillDismiss<JournalFormModel>();
+    if (role !== 'confirm' || !data) return;
+    await this.run(() => this.store.updateJournal(journalKey, journalPatch(data, current)));
   }
 
   /** Picks a person (needs the person list, so online only) and makes them a co-author. */

@@ -18,7 +18,7 @@ import {
   toBase64,
 } from '@okr/travel-journal-data-access';
 import {
-  BOOK_I18N_KEYS, BOOK_LABEL_MAX, bookLabelsOf, JournalBookI18n, bookPrintCandidates, entityStateKey, hasOthersBlocks, pagesOf, PRINT_FILL_LONG_PX, PRINT_FILL_SHORT_PX, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
+  BOOK_I18N_KEYS, BOOK_LABEL_MAX, JournalFormModel, removableAuthorKeys, bookLabelsOf, JournalBookI18n, bookPrintCandidates, entityStateKey, hasOthersBlocks, pagesOf, PRINT_FILL_LONG_PX, PRINT_FILL_SHORT_PX, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
   allPhotoFiles, commentsOf, CommentView, likeKey, likesOf, JournalPhotoMode, JournalTileSource, journalsOf, journalTilePlan, MapArea, mapLayers, MapPlace, mapPlaces, parseMapAreas, parsePhotoMode, TileJob, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, reorderedOrders, CONFLICT_FIELDS, dismissedField, isConflictCopyKey, originalOfCopy, BlockView, publishedPhotoFiles, viewOf, MAX_VIDEOS_PER_BLOCK, isVideoFile,
   JournalLock, LOCK_HEARTBEAT_MS, LOCK_TTL_MS, lockedBy, mergeLocks, BoundAuthor, JournalWriteSlow, mergePending,
   AreaLayer, areaForWrite, areaLayerTilePlan, BaseLayerOption, baseLayerOptions, Bbox, finishRun, isUsable, layerDetailLevels, layerKindsFor,
@@ -1455,6 +1455,31 @@ export const JournalStore = signalStore(
         if (!me) throw new JournalWriteRefused('noAuthor');
         if (hasOthersBlocks([fp], me)) throw new JournalWriteRefused('othersContent');
         await write([{ journalKey: fp.journalKey, entity: 'footprint', entityKey: footprintKey, op: 'archive', fields: {} }]);
+      },
+
+      /** «Reisetagebuch ändern» (spec 1.154): one `journal` record with the changed fields; nothing is written for an empty patch. */
+      async updateJournal(journalKey: string, patch: Partial<JournalFormModel>): Promise<void> {
+        if (Object.keys(patch).length === 0) return;
+        await write([{ journalKey, entity: 'journal', entityKey: journalKey, op: 'set', fields: { ...patch } }]);
+        void syncNow();
+      },
+
+      /** The authors the caller may remove: everybody but the creator and the caller (pure rule: removableAuthorKeys). */
+      removableAuthorKeys(journalKey: string): string[] {
+        const entity = store.journalState()[entityStateKey('journal', journalKey)];
+        const view = viewOf(entity);
+        const authors = Array.isArray(view?.['authors']) ? (view['authors'] as AvatarInfo[]) : [];
+        return removableAuthorKeys(authors, entity?.ownerKey ?? '', store.author()?.personKey ?? '');
+      },
+
+      /** The list thumbnail: the chosen cover's, else the first photo's `path400` as a displayable URL; '' for the placeholder. */
+      coverUrl(journalKey: string): string {
+        const images = imagesOf(store.journalState(), journalKey);
+        const chosen = journalsOf(store.journalState()).find((j) => j.key === journalKey)?.coverImageKey ?? '';
+        const firstPhoto = footprintsOf(store.journalState(), journalKey).flatMap((f) => f.blocks).filter((b) => b.kind !== 'video')
+          .flatMap((b) => b.imageKeys ?? []).find((k) => images.has(k));
+        const path = images.get(chosen)?.path400 || (firstPhoto ? images.get(firstPhoto)?.path400 : '') || '';
+        return path ? store.fileUrl.url(path) : '';
       },
 
       async renameJournal(journalKey: string, title: string): Promise<void> {
