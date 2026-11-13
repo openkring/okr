@@ -1,5 +1,7 @@
-import { Component, computed, input, model, output, signal } from '@angular/core';
-import { IonBadge, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonLabel, IonRow, IonSegment, IonSegmentButton } from '@ionic/angular';
+import { Component, computed, inject, input, model, output, signal } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { map, of } from 'rxjs';
+import { IonBadge, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonChip, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow, IonSegment, IonSegmentButton } from '@ionic/angular';
 
 import { ColorsIonic, PeopleNameDisplays } from '@okr/shared-categories';
 import {
@@ -10,11 +12,11 @@ import {
   CategoryOld, CategoryOldI18n, Checkbox, CheckboxGroup, CheckboxGroupI18n, CheckboxI18n, Color, ErrorNote, NumberInput, NumberInputI18n,
   StringSelect, StringSelectI18n, TextInput, TextInputI18n
 } from '@okr/shared-ui';
-import { coerceBoolean } from '@okr/shared-util-core';
+import { coerceBoolean, getAvatarName } from '@okr/shared-util-core';
 import { SvgIconPipe } from '@okr/shared-pipes';
 
-import { Avatars } from '@okr/avatar-ui';
-import { getFieldAndItemErrors, normalizeAvatarConfig, peopleField, PEOPLE_MAX_BG_COLORS, SectionErrors, SectionI18n } from '@okr/cms-section-util';
+import { ResponsibilityService } from '@okr/relationship-responsibility-data-access';
+import { getFieldAndItemErrors, getPeopleResponsibilityIds, normalizeAvatarConfig, peopleField, PEOPLE_MAX_BG_COLORS, SectionErrors, SectionI18n } from '@okr/cms-section-util';
 
 type PeopleSegment = 'content' | 'view' | 'image' | 'info';
 const PEOPLE_SEGMENTS: PeopleSegment[] = ['content', 'view', 'image', 'info'];
@@ -39,8 +41,8 @@ const SEGMENT_FIELDS: Record<PeopleSegment, (keyof AvatarConfig)[]> = {
   imports: [
     SvgIconPipe,
     IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonButton, IonIcon,
-    IonSegment, IonSegmentButton, IonLabel, IonBadge,
-    CategoryOld, Avatars, StringSelect, Checkbox, CheckboxGroup, TextInput, NumberInput, Color, ErrorNote
+    IonSegment, IonSegmentButton, IonLabel, IonBadge, IonItem, IonChip,
+    CategoryOld, StringSelect, Checkbox, CheckboxGroup, TextInput, NumberInput, Color, ErrorNote
   ],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px;} }
@@ -48,6 +50,7 @@ const SEGMENT_FIELDS: Record<PeopleSegment, (keyof AvatarConfig)[]> = {
     ion-segment-button ion-badge { margin-left: 4px; }
     .bg-color { display: flex; align-items: center; }
     .bg-color okr-color { flex: 1; }
+    .chips { display: flex; flex-wrap: wrap; align-items: center; }
   `],
   template: `
       <ion-card>
@@ -82,13 +85,57 @@ const SEGMENT_FIELDS: Record<PeopleSegment, (keyof AvatarConfig)[]> = {
                         {{ groupId() || i18n().select_group() }}
                       </ion-button>
                     }
-                    @if(type() === 'responsibility') {
-                      <ion-button fill="outline" [disabled]="isReadOnly()" (click)="responsibilitySelectClicked.emit()">
-                        <ion-icon slot="start" src="{{ 'search' | svgIcon }}" />
-                        {{ responsibilityId() || i18n().select_responsibility() }}
-                      </ion-button>
-                    }
                   </ion-col>
+                  @if(type() === 'persons') {
+                    <ion-col size="12">
+                      <ion-item lines="none">
+                        <div class="chips">
+                          @if(!isReadOnly()) {
+                            <ion-button fill="clear" size="large" (click)="selectClicked.emit()" [attr.aria-label]="i18n().people_add()">
+                              <ion-icon slot="icon-only" src="{{ 'add-circle' | svgIcon }}" />
+                            </ion-button>
+                          }
+                          @for(person of persons(); track $index) {
+                            <ion-chip color="primary">
+                              @if(isReadOnly()) {
+                                <ion-label>{{ personName(person) }}</ion-label>
+                              } @else {
+                                <ion-button fill="clear" (click)="onPersonRemove($index)">
+                                  <ion-icon slot="start" src="{{ 'cancel' | svgIcon }}" />
+                                  <ion-label>{{ personName(person) }}</ion-label>
+                                </ion-button>
+                              }
+                            </ion-chip>
+                          }
+                        </div>
+                      </ion-item>
+                    </ion-col>
+                  }
+                  @if(type() === 'responsibility') {
+                    <ion-col size="12">
+                      <ion-item lines="none">
+                        <div class="chips">
+                          @if(!isReadOnly()) {
+                            <ion-button fill="clear" size="large" (click)="responsibilitySelectClicked.emit()" [attr.aria-label]="i18n().select_responsibility()">
+                              <ion-icon slot="icon-only" src="{{ 'add-circle' | svgIcon }}" />
+                            </ion-button>
+                          }
+                          @for(id of responsibilityIds(); track id) {
+                            <ion-chip color="primary">
+                              @if(isReadOnly()) {
+                                <ion-label>{{ responsibilityName(id) }}</ion-label>
+                              } @else {
+                                <ion-button fill="clear" (click)="onResponsibilityRemove(id)">
+                                  <ion-icon slot="start" src="{{ 'cancel' | svgIcon }}" />
+                                  <ion-label>{{ responsibilityName(id) }}</ion-label>
+                                </ion-button>
+                              }
+                            </ion-chip>
+                          }
+                        </div>
+                      </ion-item>
+                    </ion-col>
+                  }
                   <ion-col size="12" size-md="6">
                     <okr-text-input [i18n]="titleI18n()" [value]="config().title" (valueChange)="onFieldChange('title', $event)" [readOnly]="isReadOnly()" [showHelper]="true" />
                     <okr-error-note [errors]="errorsFor('title')" />
@@ -210,20 +257,11 @@ const SEGMENT_FIELDS: Record<PeopleSegment, (keyof AvatarConfig)[]> = {
           </ion-grid>
         </ion-card-content>
       </ion-card>
-      @if(segment() === 'content' && type() === 'persons') {
-        @if(currentUser(); as currentUser) {
-          <okr-avatars (selectClicked)="selectClicked.emit()"
-            [avatars]="persons()"
-            (avatarsChange)="onPersonsChange($event)"
-            [readOnly]="isReadOnly()"
-            [currentUser]="currentUser"
-            [title]="i18n().people_label()"
-          />
-        }
-      }
   `
 })
 export class PeopleConfiguration {
+  private readonly responsibilityService = inject(ResponsibilityService);
+
   // inputs
   public formData = model.required<PeopleConfig>();
   public currentUser = input.required<UserModel | undefined>();
@@ -243,7 +281,8 @@ export class PeopleConfiguration {
   protected readonly config = computed(() => normalizeAvatarConfig(this.formData()?.avatar));
   protected readonly persons = computed(() => this.formData()?.persons ?? []);
   protected readonly groupId = computed(() => this.formData()?.groupId ?? '');
-  protected readonly responsibilityId = computed(() => this.formData()?.responsibilityId ?? '');
+  /** the chosen responsibilities; a legacy single `responsibilityId` is read as a list of one */
+  protected readonly responsibilityIds = computed(() => getPeopleResponsibilityIds(this.formData()));
   protected readonly type = computed(() => this.formData()?.type ?? 'persons');
 
   // passing constants to template
@@ -257,6 +296,17 @@ export class PeopleConfiguration {
   protected readonly infos = PEOPLE_INFOS;
   protected readonly infoPositions = PEOPLE_INFO_POSITIONS;
   protected readonly maxBgColors = PEOPLE_MAX_BG_COLORS;
+
+  /** responsibility okey → name, to label the chips (only loaded while the type is responsibility) */
+  private readonly responsibilityNamesResource = rxResource({
+    params: () => ({ load: this.type() === 'responsibility' && !!this.currentUser() }),
+    stream: ({ params }) => {
+      if (!params.load) return of({} as Record<string, string>);
+      return this.responsibilityService.list().pipe(
+        map(list => Object.fromEntries(list.map(r => [r.okey, r.name])) as Record<string, string>)
+      );
+    },
+  });
 
   /** number of `avatar.*` errors per segment, so an error in a hidden segment stays visible */
   protected readonly segmentErrorCount = computed(() => {
@@ -279,10 +329,10 @@ export class PeopleConfiguration {
     this.i18n().people_background_orgColor(), this.i18n().people_background_colors()
   ]);
   protected readonly orgColorLabels = computed(() => [
-    this.i18n().people_bgOrgColor_primary(), this.i18n().people_bgOrgColor_secondary()
+    this.i18n().people_bgOrgColor_primary(), this.i18n().people_bgOrgColor_secondary(), this.i18n().people_bgOrgColor_alternating()
   ]);
   protected readonly infoLabels = computed(() => [
-    this.i18n().people_info_function(), this.i18n().people_info_email()
+    this.i18n().people_info_function(), this.i18n().people_info_email(), this.i18n().people_info_emailLink()
   ]);
   protected readonly infoPositionLabels = computed(() => [
     this.i18n().people_infoPosition_overlayTop(), this.i18n().people_infoPosition_overlayBottom(),
@@ -340,8 +390,25 @@ export class PeopleConfiguration {
     if (PEOPLE_SEGMENTS.includes(value as PeopleSegment)) this.segment.set(value as PeopleSegment);
   }
 
-  protected onPersonsChange(persons: AvatarInfo[]): void {
-    this.formData.update(vm => ({ ...vm, persons }));
+  protected personName(person: AvatarInfo): string {
+    return getAvatarName(person);
+  }
+
+  protected responsibilityName(id: string): string {
+    return this.responsibilityNamesResource.value()?.[id] || id;
+  }
+
+  protected onPersonRemove(index: number): void {
+    this.formData.update(vm => ({ ...vm, persons: (vm.persons ?? []).filter((_, i) => i !== index) }));
+  }
+
+  /** writes the list and drops the legacy single key, so a legacy section is saved in the new shape */
+  protected onResponsibilityRemove(id: string): void {
+    this.formData.update(vm => {
+      const next: PeopleConfig = { ...vm, responsibilityIds: getPeopleResponsibilityIds(vm).filter(r => r !== id) };
+      delete next.responsibilityId;
+      return next;
+    });
   }
 
   /**

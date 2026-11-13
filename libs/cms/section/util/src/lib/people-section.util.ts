@@ -1,4 +1,4 @@
-import { AVATAR_CONFIG_SHAPE, AvatarConfig, NameDisplay, PEOPLE_NAME_PLACEHOLDER } from '@okr/shared-models';
+import { AVATAR_CONFIG_SHAPE, AvatarConfig, NameDisplay, PEOPLE_NAME_PLACEHOLDER, PeopleConfig } from '@okr/shared-models';
 
 /** A colour accepted for a portrait background: #rrggbb. */
 export const HEX_COLOR_REGEX = /^#[0-9a-fA-F]{6}$/;
@@ -39,13 +39,27 @@ export function getPeopleImgRadius(radius: string | undefined): string {
 }
 
 /**
- * The background colour of the person at `index`, as #rrggbb, or undefined when the
- * background is not filled. `orgColorHex` is the tenant colour resolved by the caller.
+ * The responsibilities of a people section, in the order they were chosen. Sections saved before
+ * 2026-11-13 carry a single `responsibilityId`; it is read as a list of one.
  */
-export function getPeopleBgColor(config: AvatarConfig, index: number, orgColorHex?: string): string | undefined {
+export function getPeopleResponsibilityIds(config?: Partial<PeopleConfig>): string[] {
+  const ids = (config?.responsibilityIds ?? []).filter(id => !!id?.trim());
+  if (ids.length > 0) return ids;
+  const legacy = config?.responsibilityId?.trim();
+  return legacy ? [legacy] : [];
+}
+
+/**
+ * The background colour of the person at `index`, as #rrggbb, or undefined when the
+ * background is not filled. `orgColorHex` is the tenant colour resolved by the caller;
+ * for bgOrgColor = alternating it is the list [primary, secondary], cycled over the persons.
+ */
+export function getPeopleBgColor(config: AvatarConfig, index: number, orgColorHex?: string | string[]): string | undefined {
   switch (config.background) {
-    case 'orgColor':
-      return orgColorHex && HEX_COLOR_REGEX.test(orgColorHex) ? orgColorHex : undefined;
+    case 'orgColor': {
+      const colors = (Array.isArray(orgColorHex) ? orgColorHex : [orgColorHex ?? '']).filter(c => HEX_COLOR_REGEX.test(c));
+      return colors.length > 0 ? colors[index % colors.length] : undefined;
+    }
     case 'colors': {
       const colors = (config.bgColors ?? []).filter(c => HEX_COLOR_REGEX.test(c));
       return colors.length > 0 ? colors[index % colors.length] : undefined;
@@ -59,6 +73,8 @@ export function getPeopleBgColor(config: AvatarConfig, index: number, orgColorHe
  * The imgix query (without '?') for one portrait of a people section:
  * size at 2x density, face crop (facearea + facepad, or crop=faces when facePad is 0),
  * optional black and white, optional background removal with a fill colour.
+ * Black and white with a removed background greys only the person: imgix would desaturate its own
+ * `bg` fill too, so the fill is left out and the caller paints `bgColor` behind the transparent cut-out.
  */
 export function getPeopleImgixParams(config: AvatarConfig, bgColor?: string): string {
   const params = [
@@ -75,7 +91,7 @@ export function getPeopleImgixParams(config: AvatarConfig, bgColor?: string): st
   if (config.grayscale) params.push('sat=-100');
   if (config.background !== 'original') {
     params.push('bg-remove=true');
-    if (bgColor && HEX_COLOR_REGEX.test(bgColor)) params.push(`bg=${bgColor.slice(1).toUpperCase()}`);
+    if (!config.grayscale && bgColor && HEX_COLOR_REGEX.test(bgColor)) params.push(`bg=${bgColor.slice(1).toUpperCase()}`);
   }
   return params.join('&');
 }

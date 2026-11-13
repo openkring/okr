@@ -837,11 +837,11 @@
       "image": "Imagen",
       "info": "Datos"
     },
-    "typeHelper": "De dónde vienen las personas: personas elegidas una a una, los miembros de un grupo o los titulares de un cargo.",
+    "typeHelper": "De dónde vienen las personas: personas elegidas, los miembros de un grupo o los responsables de uno o varios cargos.",
     "typeOption": {
-      "persons": "Personas individuales",
+      "persons": "Personas",
       "group": "Miembros de un grupo",
-      "responsibility": "Titulares de un cargo"
+      "responsibility": "Responsables"
     },
     "altText": {
       "label": "Texto alternativo",
@@ -895,9 +895,10 @@
     },
     "bgOrgColor": {
       "label": "Color del club",
-      "helper": "Qué color de tu club rellena el fondo.",
+      "helper": "Qué color de tu club llena el fondo. «Alternando» cambia de persona a persona entre el color principal y el secundario.",
       "primary": "Color principal",
-      "secondary": "Color secundario"
+      "secondary": "Color secundario",
+      "alternating": "Alternando"
     },
     "bgColors": {
       "label": "Colores de fondo",
@@ -907,13 +908,14 @@
     },
     "grayscale": {
       "label": "Blanco y negro",
-      "helper": "Muestra las fotos en blanco y negro."
+      "helper": "Muestra los retratos en blanco y negro. En la foto original afecta a toda la imagen; en los retratos recortados solo a la persona: el fondo conserva su color."
     },
     "info": {
       "label": "Datos",
-      "helper": "Lo que se muestra además del nombre. Solo los miembros conectados ven el correo de una persona. Para los titulares de un cargo se muestra la dirección de correo del cargo.",
+      "helper": "Lo que se muestra además del nombre. En los responsables, la función es el nombre del cargo. «Mostrar correo» muestra la dirección; con «Solo enlazar correo», un clic en la tarjeta abre un nuevo correo. Solo los miembros conectados ven el correo de una persona; en los responsables es la dirección del cargo.",
       "function": "Función",
-      "email": "Correo"
+      "email": "Mostrar correo",
+      "emailLink": "Solo enlazar correo"
     },
     "infoPosition": {
       "label": "Posición de los datos",

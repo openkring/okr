@@ -837,11 +837,11 @@
       "image": "Image",
       "info": "Informations"
     },
-    "typeHelper": "D’où viennent les personnes : des personnes choisies une à une, les membres d’un groupe ou les titulaires d’une fonction.",
+    "typeHelper": "D'où viennent les personnes : des personnes choisies, les membres d'un groupe ou les responsables d'une ou plusieurs fonctions.",
     "typeOption": {
-      "persons": "Personnes individuelles",
+      "persons": "Personnes",
       "group": "Membres d’un groupe",
-      "responsibility": "Titulaires d’une fonction"
+      "responsibility": "Responsables"
     },
     "altText": {
       "label": "Texte alternatif",
@@ -895,9 +895,10 @@
     },
     "bgOrgColor": {
       "label": "Couleur du club",
-      "helper": "Quelle couleur de ton club remplit l’arrière-plan.",
+      "helper": "Quelle couleur de ton club remplit le fond. «En alternance» passe d'une personne à l'autre entre la couleur principale et la couleur secondaire.",
       "primary": "Couleur principale",
-      "secondary": "Couleur secondaire"
+      "secondary": "Couleur secondaire",
+      "alternating": "En alternance"
     },
     "bgColors": {
       "label": "Couleurs d’arrière-plan",
@@ -907,13 +908,14 @@
     },
     "grayscale": {
       "label": "Noir et blanc",
-      "helper": "Affiche les photos en noir et blanc."
+      "helper": "Affiche les portraits en noir et blanc. Pour la photo originale, cela vaut pour toute l'image ; pour les portraits détourés, seulement pour la personne – le fond garde sa couleur."
     },
     "info": {
       "label": "Informations",
-      "helper": "Ce qui est affiché en plus du nom. Seuls les membres connectés voient l’e-mail d’une personne. Pour les titulaires d’une fonction, l’adresse e-mail de la fonction est affichée.",
+      "helper": "Ce qui est affiché en plus du nom. Pour les responsables, la fonction est le nom de la fonction. «Afficher l'e-mail» montre l'adresse ; avec «Lien e-mail seulement», un clic sur la carte ouvre un nouvel e-mail. Seuls les membres connectés voient l'e-mail d'une personne ; pour les responsables, c'est l'adresse de la fonction.",
       "function": "Fonction",
-      "email": "E-mail"
+      "email": "Afficher l'e-mail",
+      "emailLink": "Lien e-mail seulement"
     },
     "infoPosition": {
       "label": "Position des informations",

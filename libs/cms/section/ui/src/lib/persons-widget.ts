@@ -22,6 +22,8 @@ interface PersonView {
   name: string;
   function: string;
   email: string;
+  /** set when the whole card is a mailto link (info 'emailLink') */
+  mailto: string;
   bgColor: string | undefined;
 }
 
@@ -29,7 +31,7 @@ interface PersonView {
  * Renders the persons of a people section as cards (sized by their content), a responsive
  * ion-grid, or 1–4 horizontal slider lines. Portraits are imgix crops (size, face area,
  * black and white, background removal + fill); name, function and email sit above, below,
- * beside or on top of the picture.
+ * beside or on top of the picture. With info 'emailLink' the whole card is a mailto link.
  */
 @Component({
   selector: 'okr-persons-widget',
@@ -70,6 +72,7 @@ interface PersonView {
     .function { font-size: 0.9em; }
     .email { font-size: 0.85em; word-break: break-all; }
     .email a { color: inherit; }
+    a.person-link { display: block; color: inherit; text-decoration: none; }
   `],
   template: `
     @if(count() === 0) {
@@ -111,7 +114,17 @@ interface PersonView {
     }
 
     <ng-template #personTpl let-item>
-      <div class="person" [class]="'person pos-' + config().infoPosition" [style.--info-bg]="infoBg()" [style.--info-fg]="infoFg()" (click)="showPerson(item.person)">
+      @if(item.mailto) {
+        <a class="person-link" [href]="'mailto:' + item.mailto" [attr.aria-label]="(item.name ? item.name + ', ' : '') + item.mailto" (click)="onLinkClick($event)">
+          <ng-container [ngTemplateOutlet]="bodyTpl" [ngTemplateOutletContext]="{ $implicit: item }" />
+        </a>
+      } @else {
+        <ng-container [ngTemplateOutlet]="bodyTpl" [ngTemplateOutletContext]="{ $implicit: item }" />
+      }
+    </ng-template>
+
+    <ng-template #bodyTpl let-item>
+      <div class="person" [class]="'person pos-' + config().infoPosition" [style.--info-bg]="infoBg()" [style.--info-fg]="infoFg()" (click)="onPersonClick(item)">
         <div class="img-wrap" [style.width.px]="config().imgWidth" [style.height.px]="config().imgHeight"
           [style.border-radius]="radius()" [style.background-color]="item.bgColor">
           <img okrImg [src]="item.url" [alt]="item.alt" [width]="config().imgWidth" [height]="config().imgHeight" loading="lazy" />
@@ -132,7 +145,14 @@ interface PersonView {
     <ng-template #infoTpl let-item>
       @if(item.name) { <div class="name">{{ item.name }}</div> }
       @if(item.function) { <div class="function">{{ item.function }}</div> }
-      @if(item.email) { <div class="email"><a [href]="'mailto:' + item.email" (click)="$event.stopPropagation()">{{ item.email }}</a></div> }
+      @if(item.email) {
+        <!-- inside a card that is a link already, the address is plain text (no link inside a link) -->
+        @if(item.mailto) {
+          <div class="email">{{ item.email }}</div>
+        } @else {
+          <div class="email"><a [href]="'mailto:' + item.email" (click)="$event.stopPropagation()">{{ item.email }}</a></div>
+        }
+      }
     </ng-template>
   `
 })
@@ -144,8 +164,10 @@ export class PersonsWidget {
   public persons = input.required<AvatarInfo[]>();
   /** expected normalized (see normalizeAvatarConfig) */
   public avatarConfig = input<AvatarConfig>(AVATAR_CONFIG_SHAPE);
-  /** person key → email to show (directory favEmail or the role's address), already filtered by visibility */
+  /** person key → email (directory favEmail or the role's address), already filtered by visibility */
   public emails = input<Record<string, string>>({});
+  /** person key → function to show instead of the person's label (e.g. the responsibility's name) */
+  public functions = input<Record<string, string>>({});
   public editMode = input(false);
   public readonly i18n = input.required<PersonsWidgetI18n>();
 
@@ -159,17 +181,23 @@ export class PersonsWidget {
   protected readonly infoBg = computed(() => `var(--ion-color-${this.colorName()})`);
   protected readonly infoFg = computed(() => `var(--ion-color-${this.colorName()}-contrast)`);
 
-  /** the tenant colour for background = orgColor, read from the Ionic theme (#rrggbb for imgix) */
-  private readonly orgColorHex = computed(() => {
+  /**
+   * the tenant colour for background = orgColor, read from the Ionic theme (#rrggbb for imgix);
+   * for 'alternating' the pair [primary, secondary], cycled over the persons
+   */
+  private readonly orgColorHex = computed<string | string[] | undefined>(() => {
     if (!this.isBrowser || this.config().background !== 'orgColor') return undefined;
-    const css = getComputedStyle(this.document.documentElement).getPropertyValue(`--ion-color-${this.config().bgOrgColor}`);
-    return toHexColor(css);
+    const style = getComputedStyle(this.document.documentElement);
+    const hex = (name: string) => toHexColor(style.getPropertyValue(`--ion-color-${name}`)) ?? '';
+    const orgColor = this.config().bgOrgColor;
+    return orgColor === 'alternating' ? [hex('primary'), hex('secondary')] : hex(orgColor);
   });
 
   protected readonly items = computed<PersonView[]>(() => {
     const config = this.config();
     const info = config.info ?? [];
     const emails = this.emails();
+    const functions = this.functions();
     const orgColorHex = this.orgColorHex();
     return this.persons().map((person, index) => {
       const bgColor = getPeopleBgColor(config, index, orgColorHex);
@@ -179,8 +207,9 @@ export class PersonsWidget {
         url: this.avatarService.getAvatarUrlWithParams(key, person.modelType, getPeopleImgixParams(config, bgColor)),
         alt: getPeopleAltText(config.altText, getFullName(person.name1, person.name2, NameDisplay.FirstLast)),
         name: getFullName(person.name1, person.name2, config.nameDisplay),
-        function: info.includes('function') ? (person.label ?? '') : '',
+        function: info.includes('function') ? (functions[person.key] ?? person.label ?? '') : '',
         email: info.includes('email') ? (emails[person.key] ?? '') : '',
+        mailto: info.includes('emailLink') ? (emails[person.key] ?? '') : '',
         bgColor,
       };
     });
@@ -190,6 +219,17 @@ export class PersonsWidget {
 
   protected hasInfo(item: PersonView): boolean {
     return !!(item.name || item.function || item.email);
+  }
+
+  /** a card that is a mailto link opens the mail program instead of the person */
+  protected onPersonClick(item: PersonView): void {
+    if (item.mailto) return;
+    this.showPerson(item.person);
+  }
+
+  /** in edit mode the card stays put, so the section can be configured without opening mails */
+  protected onLinkClick(event: Event): void {
+    if (this.editMode()) event.preventDefault();
   }
 
   public showPerson(person: AvatarInfo): void {

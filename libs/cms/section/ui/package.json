@@ -25,6 +25,7 @@
     "@okr/location-data-access": "*",
     "@okr/mobility-transit-data-access": "*",
     "@okr/mobility-transit-util": "*",
-    "@angular/forms": "*"
+    "@angular/forms": "*",
+    "@okr/relationship-responsibility-data-access": "*"
   }
 }

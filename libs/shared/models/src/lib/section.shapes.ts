@@ -176,7 +176,8 @@ export const AVATAR_CONFIG_SHAPE = {
 
 export const PEOPLE_CONFIG_SHAPE = {
   avatar: AVATAR_CONFIG_SHAPE,
-  persons: [] as AvatarInfo[]
+  persons: [] as AvatarInfo[],
+  responsibilityIds: [] as string[],
 } as PeopleConfig;
 
 // --------------------------------------- SLIDER ----------------------------------------

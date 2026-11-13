@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { AVATAR_CONFIG_SHAPE, AvatarConfig, NameDisplay } from '@okr/shared-models';
 
 import {
-  getPeopleAltText, getPeopleBgColor, getPeopleImgixParams, getPeopleImgRadius, normalizeAvatarConfig, splitIntoRows, toHexColor
+  getPeopleAltText, getPeopleBgColor, getPeopleImgixParams, getPeopleImgRadius, getPeopleResponsibilityIds, normalizeAvatarConfig, splitIntoRows, toHexColor
 } from './people-section.util';
 
 const config = (patch: Partial<AvatarConfig> = {}): AvatarConfig => ({ ...AVATAR_CONFIG_SHAPE, ...patch });
@@ -81,6 +81,10 @@ describe('getPeopleBgColor', () => {
   it('uses the org colour', () => {
     expect(getPeopleBgColor(config({ background: 'orgColor' }), 3, '#112233')).toBe('#112233');
   });
+  it('alternates primary and secondary org colour', () => {
+    const c = config({ background: 'orgColor', bgOrgColor: 'alternating' });
+    expect([0, 1, 2].map(i => getPeopleBgColor(c, i, ['#111111', '#222222']))).toEqual(['#111111', '#222222', '#111111']);
+  });
   it('cycles the own colours over the persons and skips invalid ones', () => {
     const c = config({ background: 'colors', bgColors: ['#ff0000', 'nope', '#00ff00'] });
     expect([0, 1, 2].map(i => getPeopleBgColor(c, i))).toEqual(['#ff0000', '#00ff00', '#ff0000']);
@@ -95,14 +99,36 @@ describe('getPeopleImgixParams', () => {
   it('uses facearea with a facepad', () => {
     expect(getPeopleImgixParams(config({ facePad: 1.5 }))).toContain('fit=facearea&facepad=1.5');
   });
-  it('adds black and white, background removal and the fill colour', () => {
-    const params = getPeopleImgixParams(config({ grayscale: true, background: 'colors' }), '#a1b2c3');
-    expect(params).toContain('sat=-100');
+  it('adds background removal and the fill colour', () => {
+    const params = getPeopleImgixParams(config({ background: 'colors' }), '#a1b2c3');
+    expect(params).not.toContain('sat=-100');
     expect(params).toContain('bg-remove=true');
     expect(params).toContain('bg=A1B2C3');
   });
+  it('greys only the person on a cut-out: no imgix fill, so the colour stays', () => {
+    const params = getPeopleImgixParams(config({ grayscale: true, background: 'colors' }), '#a1b2c3');
+    expect(params).toContain('sat=-100');
+    expect(params).toContain('bg-remove=true');
+    expect(params).not.toContain('bg=');
+  });
+  it('greys the whole original photo', () => {
+    expect(getPeopleImgixParams(config({ grayscale: true, background: 'original' }))).toContain('sat=-100');
+  });
   it('never removes the background of an original photo', () => {
     expect(getPeopleImgixParams(config({ background: 'original' }), '#a1b2c3')).not.toContain('bg');
+  });
+});
+
+describe('getPeopleResponsibilityIds', () => {
+  it('reads the list', () => {
+    expect(getPeopleResponsibilityIds({ responsibilityIds: ['a', '', 'b'] })).toEqual(['a', 'b']);
+  });
+  it('reads a legacy single responsibility as a list of one', () => {
+    expect(getPeopleResponsibilityIds({ responsibilityId: 'x' })).toEqual(['x']);
+  });
+  it('prefers the list over the legacy key and is empty without both', () => {
+    expect(getPeopleResponsibilityIds({ responsibilityIds: ['a'], responsibilityId: 'x' })).toEqual(['a']);
+    expect(getPeopleResponsibilityIds(undefined)).toEqual([]);
   });
 });
 

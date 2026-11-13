@@ -837,11 +837,11 @@
       "image": "Bild",
       "info": "Angaben"
     },
-    "typeHelper": "Woher die Personen kommen: einzeln ausgewählte Personen, die Mitglieder einer Gruppe oder die Verantwortlichen eines Amts.",
+    "typeHelper": "Woher die Personen kommen: ausgewählte Personen, die Mitglieder einer Gruppe oder die Verantwortlichen eines oder mehrerer Ämter.",
     "typeOption": {
-      "persons": "Einzelne Personen",
+      "persons": "Personen",
       "group": "Mitglieder einer Gruppe",
-      "responsibility": "Verantwortliche eines Amts"
+      "responsibility": "Verantwortliche"
     },
     "altText": {
       "label": "Alternativtext",
@@ -895,9 +895,10 @@
     },
     "bgOrgColor": {
       "label": "Vereinsfarbe",
-      "helper": "Welche Farbe deines Vereins den Hintergrund füllt.",
+      "helper": "Welche Farbe deines Vereins den Hintergrund füllt. «Alternierend» wechselt von Person zu Person zwischen Haupt- und Zweitfarbe.",
       "primary": "Hauptfarbe",
-      "secondary": "Zweitfarbe"
+      "secondary": "Zweitfarbe",
+      "alternating": "Alternierend"
     },
     "bgColors": {
       "label": "Hintergrundfarben",
@@ -907,13 +908,14 @@
     },
     "grayscale": {
       "label": "Schwarz-weiss",
-      "helper": "Zeigt die Personenbilder in Schwarz-weiss."
+      "helper": "Zeigt die Personenbilder in Schwarz-weiss. Beim Originalfoto gilt das fürs ganze Bild, bei freigestellten Bildern nur für die Person – der Hintergrund behält seine Farbe."
     },
     "info": {
       "label": "Angaben",
-      "helper": "Was zusätzlich zum Namen angezeigt wird. Die E-Mail einer Person sehen nur angemeldete Mitglieder. Bei Verantwortlichen wird die E-Mail-Adresse des Amts angezeigt.",
+      "helper": "Was zusätzlich zum Namen angezeigt wird. Bei Verantwortlichen ist die Funktion der Name des Amts. «E-Mail anzeigen» zeigt die Adresse, mit «E-Mail nur linken» öffnet ein Klick auf die Karte eine neue E-Mail. Die E-Mail einer Person sehen nur angemeldete Mitglieder; bei Verantwortlichen ist es die Adresse des Amts.",
       "function": "Funktion",
-      "email": "E-Mail"
+      "email": "E-Mail anzeigen",
+      "emailLink": "E-Mail nur linken"
     },
     "infoPosition": {
       "label": "Position der Angaben",

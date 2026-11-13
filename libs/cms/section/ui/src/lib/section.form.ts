@@ -8,7 +8,7 @@ import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS, IMAGE_MIMETYPES } from '@ok
 import { UploadService } from '@okr/avatar-data-access';
 import { confirm, MODEL_SELECTOR, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { AlertController, IonItem, IonToggle } from '@ionic/angular';
-import { ChartOption, getInlineErrorFields, getRemainingErrors, SectionErrors, SectionI18n, validateSection } from '@okr/cms-section-util';
+import { ChartOption, getPeopleResponsibilityIds, getInlineErrorFields, getRemainingErrors, SectionErrors, SectionI18n, validateSection } from '@okr/cms-section-util';
 import { FormI18n } from '@okr/forms-util';
 
 import { SectionConfiguration } from './section-configuration';
@@ -1543,6 +1543,8 @@ export class SectionForm {
     const avatar = await this.modelSelectService.selectPersonAvatar('', DEFAULT_LABEL);
     if (avatar) {
       const currentConfig = this.peopleConfig();
+      // a person shown twice would break the widget's per-person tracking
+      if ((currentConfig?.persons ?? []).some(p => p.key === avatar.key)) return;
       this.onPeopleConfigChange({
         ...currentConfig,
         persons: [...(currentConfig?.persons ?? []), avatar] } as PeopleConfig
@@ -1568,8 +1570,13 @@ export class SectionForm {
 
   public async selectResponsibility(): Promise<void> {
     const responsibility = await this.modelSelectService.selectResponsibility();
-    if (responsibility) {
-      this.onPeopleConfigChange({ ...this.peopleConfig(), responsibilityId: responsibility.okey } as PeopleConfig);
-    }
+    if (!responsibility) return;
+    const current = this.peopleConfig();
+    const ids = getPeopleResponsibilityIds(current);
+    if (ids.includes(responsibility.okey)) return;
+    // writes the list; a legacy single responsibilityId is folded into it and dropped
+    const next = { ...current, responsibilityIds: [...ids, responsibility.okey] } as PeopleConfig;
+    delete next.responsibilityId;
+    this.onPeopleConfigChange(next);
   }
 }

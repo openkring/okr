@@ -635,16 +635,23 @@ export interface PeopleConfig {
   type: 'persons' | 'group' | 'responsibility';
   persons: AvatarInfo[]; // explicit list of persons to be shown
   groupId?: string; // members of this group are shown 
-  responsibilityId: string; // persons with this responsibility are shown (responsible and delegate)
+  responsibilityIds?: string[]; // persons with these responsibilities are shown (responsible and delegate of each)
+  /** @deprecated replaced by responsibilityIds; still read from sections saved before 2026-11-13 */
+  responsibilityId?: string;
 }
 
 /** How the persons of a people section are laid out. */
 export type PeopleView = 'card' | 'grid' | 'slider';
 export const PEOPLE_VIEWS: PeopleView[] = ['card', 'grid', 'slider'];
 
-/** Which details are shown with each person (the name itself is governed by `nameDisplay`). */
-export type PeopleInfo = 'function' | 'email';
-export const PEOPLE_INFOS: PeopleInfo[] = ['function', 'email'];
+/**
+ * Which details are shown with each person (the name itself is governed by `nameDisplay`):
+ * - function: the person's label, or the responsibility's name
+ * - email: the email address is shown (as a mailto link)
+ * - emailLink: the whole person card is a mailto link (the address itself is not shown unless 'email' is set too)
+ */
+export type PeopleInfo = 'function' | 'email' | 'emailLink';
+export const PEOPLE_INFOS: PeopleInfo[] = ['function', 'email', 'emailLink'];
 
 /** Where the details sit relative to the image. */
 export type PeopleInfoPosition = 'overlayTop' | 'overlayBottom' | 'above' | 'below' | 'left' | 'right';
@@ -654,14 +661,15 @@ export const PEOPLE_INFO_POSITIONS: PeopleInfoPosition[] = ['overlayTop', 'overl
  * The background of the portrait (imgix):
  * - original: the photo as uploaded
  * - removed: background cut out (bg-remove=true, transparent)
- * - orgColor: background cut out and filled with the tenant's primary or secondary colour
+ * - orgColor: background cut out and filled with the tenant's primary or secondary colour (or both, alternating)
  * - colors: background cut out and filled with 1–4 colours, cycled over the persons
  * Every mode except `original` uses the paid imgix background removal.
  */
 export type PeopleBackground = 'original' | 'removed' | 'orgColor' | 'colors';
 export const PEOPLE_BACKGROUNDS: PeopleBackground[] = ['original', 'removed', 'orgColor', 'colors'];
-export type PeopleOrgColor = 'primary' | 'secondary';
-export const PEOPLE_ORG_COLORS: PeopleOrgColor[] = ['primary', 'secondary'];
+/** The tenant colour of background = orgColor; 'alternating' cycles primary, secondary, primary, … over the persons. */
+export type PeopleOrgColor = 'primary' | 'secondary' | 'alternating';
+export const PEOPLE_ORG_COLORS: PeopleOrgColor[] = ['primary', 'secondary', 'alternating'];
 
 /** Placeholder in `altText` that is replaced by the full name of each person. */
 export const PEOPLE_NAME_PLACEHOLDER = '@NAME@';
@@ -686,7 +694,7 @@ export interface AvatarConfig {
   background: PeopleBackground;
   bgOrgColor: PeopleOrgColor; // used when background = orgColor
   bgColors: string[]; // hex colours (#rrggbb), used when background = colors
-  grayscale: boolean; // portrait in black and white (sat=-100)
+  grayscale: boolean; // portrait in black and white (sat=-100); with a removed background only the person, never the fill colour
 
   // info
   info: PeopleInfo[]; // details shown besides the name

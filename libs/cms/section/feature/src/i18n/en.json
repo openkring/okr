@@ -837,11 +837,11 @@
       "image": "Image",
       "info": "Details"
     },
-    "typeHelper": "Where the people come from: individually selected people, the members of a group, or the holders of a role.",
+    "typeHelper": "Where the persons come from: selected persons, the members of a group or the persons responsible for one or more roles.",
     "typeOption": {
-      "persons": "Individual people",
+      "persons": "Persons",
       "group": "Members of a group",
-      "responsibility": "Holders of a role"
+      "responsibility": "Responsible persons"
     },
     "altText": {
       "label": "Alternative text",
@@ -895,9 +895,10 @@
     },
     "bgOrgColor": {
       "label": "Club color",
-      "helper": "Which of your club’s colors fills the background.",
+      "helper": "Which of your club's colours fills the background. «Alternating» switches between primary and secondary colour from person to person.",
       "primary": "Main color",
-      "secondary": "Second color"
+      "secondary": "Second color",
+      "alternating": "Alternating"
     },
     "bgColors": {
       "label": "Background colors",
@@ -907,13 +908,14 @@
     },
     "grayscale": {
       "label": "Black and white",
-      "helper": "Shows the pictures in black and white."
+      "helper": "Shows the portraits in black and white. For the original photo this applies to the whole picture; for cut-out portraits only to the person – the background keeps its colour."
     },
     "info": {
       "label": "Details",
-      "helper": "What is shown in addition to the name. Only signed-in members see a person’s email. For role holders, the email address of the role is shown.",
+      "helper": "What is shown in addition to the name. For responsibilities, the function is the name of the role. «Show email» shows the address; with «Link email only», clicking the card opens a new email. Only signed-in members see a person's email; for responsibilities it is the role's address.",
       "function": "Function",
-      "email": "Email"
+      "email": "Show email",
+      "emailLink": "Link email only"
     },
     "infoPosition": {
       "label": "Position of the details",

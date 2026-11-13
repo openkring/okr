@@ -837,11 +837,11 @@
       "image": "Immagine",
       "info": "Informazioni"
     },
-    "typeHelper": "Da dove provengono le persone: persone scelte singolarmente, i membri di un gruppo o i titolari di una carica.",
+    "typeHelper": "Da dove provengono le persone: persone scelte, i membri di un gruppo o i responsabili di una o più cariche.",
     "typeOption": {
-      "persons": "Singole persone",
+      "persons": "Persone",
       "group": "Membri di un gruppo",
-      "responsibility": "Titolari di una carica"
+      "responsibility": "Responsabili"
     },
     "altText": {
       "label": "Testo alternativo",
@@ -895,9 +895,10 @@
     },
     "bgOrgColor": {
       "label": "Colore del club",
-      "helper": "Quale colore del tuo club riempie lo sfondo.",
+      "helper": "Quale colore del tuo club riempie lo sfondo. «Alternato» passa da una persona all'altra tra colore principale e secondario.",
       "primary": "Colore principale",
-      "secondary": "Colore secondario"
+      "secondary": "Colore secondario",
+      "alternating": "Alternato"
     },
     "bgColors": {
       "label": "Colori di sfondo",
@@ -907,13 +908,14 @@
     },
     "grayscale": {
       "label": "Bianco e nero",
-      "helper": "Mostra le foto in bianco e nero."
+      "helper": "Mostra i ritratti in bianco e nero. Per la foto originale vale per tutta l'immagine; per i ritratti scontornati solo per la persona: lo sfondo mantiene il suo colore."
     },
     "info": {
       "label": "Informazioni",
-      "helper": "Cosa viene mostrato oltre al nome. Solo i membri connessi vedono l’e-mail di una persona. Per i titolari di una carica viene mostrato l’indirizzo e-mail della carica.",
+      "helper": "Cosa viene mostrato oltre al nome. Per i responsabili, la funzione è il nome della carica. «Mostra e-mail» mostra l'indirizzo; con «Solo link e-mail», un clic sulla scheda apre una nuova e-mail. Solo i membri connessi vedono l'e-mail di una persona; per i responsabili è l'indirizzo della carica.",
       "function": "Funzione",
-      "email": "E-mail"
+      "email": "Mostra e-mail",
+      "emailLink": "Solo link e-mail"
     },
     "infoPosition": {
       "label": "Posizione delle informazioni",

@@ -62,7 +62,7 @@
       "path": "../../../forms/util/tsconfig.lib.json"
     },
     {
-      "path": "../../../avatar/ui/tsconfig.lib.json"
+      "path": "../../../relationship/responsibility/data-access/tsconfig.lib.json"
     },
     {
       "path": "../../../avatar/data-access/tsconfig.lib.json"

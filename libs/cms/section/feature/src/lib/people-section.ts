@@ -43,6 +43,7 @@ import { PeopleSectionStore } from './people-section.store';
                   [persons]="store.persons()"
                   [avatarConfig]="store.avatarConfig()"
                   [emails]="store.emails()"
+                  [functions]="store.functions()"
                   [editMode]="editMode()"
                   [i18n]="store.i18n"
                   (personClicked)="showPerson($event)"
