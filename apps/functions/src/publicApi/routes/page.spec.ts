@@ -652,3 +652,73 @@ describe('homepage sections (1.151)', () => {
     expect(out.items[0].content).toBe('<p>en</p>');
   });
 });
+
+describe('people sections from a group (1.153 §13)', () => {
+  const snap = (id: string, data: Record<string, unknown> | undefined) => ({ id, exists: data !== undefined, data: () => data });
+  const sections: Record<string, Record<string, unknown>> = {
+    board: {
+      type: 'people', state: 'published', tenants: ['scs'], title: 'Vorstand',
+      properties: { type: 'group', groupId: 'vorstand', avatar: { info: ['function', 'email'] }, persons: [{ key: 'old', name1: 'Alt' }] },
+    },
+    list: { type: 'people', state: 'published', tenants: ['scs'], title: 'Liste', properties: { type: 'persons', persons: [{ key: 'p9', name1: 'Eva', name2: 'Liste', label: 'Kassierin' }] } },
+  };
+  const memberships = [
+    { orgKey: 'vorstand', orgModelType: 'group', memberKey: 'p1', memberModelType: 'person', memberName1: 'Anna', memberName2: 'Muster', tenants: ['scs'], isArchived: false, dateOfExit: '99991231' },
+    { orgKey: 'vorstand', orgModelType: 'group', memberKey: 'p2', memberModelType: 'person', memberName1: 'Beat', memberName2: 'Privat', tenants: ['scs'], isArchived: false, dateOfExit: '99991231' },
+  ];
+  const persons: Record<string, Record<string, unknown>> = {
+    p1: { tenants: ['scs'], usageName: 0, usageImages: 1 },
+    p2: { tenants: ['scs'], usageName: 1 },
+  };
+
+  async function get(o: { failQuery?: boolean } = {}) {
+    const queries: string[][] = [];
+    const query = (clauses: string[]) => ({
+      where: (f: string, op: string, v: unknown) => query([...clauses, `${f} ${op} ${JSON.stringify(v)}`]),
+      orderBy: (f: string, dir: string) => query([...clauses, `orderBy ${f} ${dir}`]),
+      get: async () => {
+        queries.push(clauses);
+        if (o.failQuery) throw new Error('FAILED_PRECONDITION: index');
+        return { docs: memberships.map(m => ({ data: () => m })) };
+      },
+    });
+    fakeDb.current = {
+      collection: (name: string) => ({
+        ...query([name]),
+        doc: (id: string) => ({
+          __path: `${name}/${id}`,
+          get: async () => snap(id, name === 'pages' ? { tenants: ['scs'], type: 'content', sections: ['board', 'list'] } : undefined),
+        }),
+      }),
+      getAll: async (...refs: { __path: string }[]) => refs.map(r => {
+        const [c, id] = r.__path.split('/');
+        return snap(id, c === 'sections' ? sections[id] : c === 'persons' ? persons[id] : undefined);
+      }),
+    };
+    let body: { sections: { title?: string; persons?: unknown[] }[] } | undefined;
+    let status = 200;
+    const res = { set: () => res, status: (s: number) => { status = s; return res; }, json: (b: typeof body) => { body = b; return res; } };
+    await pageRouter({ query: { tenantId: 'scs' }, params: { pageKey: 'p1' } } as never, res as never);
+    return { body: body!, status, queries };
+  }
+
+  it('serves the public members of the group, tenant-scoped, without the stored list and without email', async () => {
+    const { body, queries } = await get();
+    expect(queries).toHaveLength(1);
+    expect(queries[0]).toContain('tenants array-contains-any ["scs"]');
+    expect(queries[0]).toContain('orgKey == "vorstand"');
+    expect(body.sections[0].persons).toEqual([{ key: 'p1', firstName: 'Anna', lastName: 'Muster', label: '', showImage: false }]);
+    expect(JSON.stringify(body)).not.toMatch(/email|Privat|"old"/);
+  });
+
+  it('keeps the output of an explicit persons section unchanged', async () => {
+    const { body } = await get();
+    expect(body.sections[1].persons).toEqual([{ key: 'p9', firstName: 'Eva', lastName: 'Liste', label: 'Kassierin' }]);
+  });
+
+  it('a failed members read empties the group section, never the page', async () => {
+    const { body, status } = await get({ failQuery: true });
+    expect(status).toBe(200);
+    expect(body.sections.map(s => s.persons)).toEqual([[], [{ key: 'p9', firstName: 'Eva', lastName: 'Liste', label: 'Kassierin' }]]);
+  });
+});

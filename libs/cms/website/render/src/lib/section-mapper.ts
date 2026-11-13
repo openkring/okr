@@ -1,5 +1,6 @@
 import type { ImageStyle } from '@okr/shared-models';
 import { imageCaption } from './image-caption';
+import type { PublicPerson } from './group-people';
 
 export const IMGIX_BASE = 'https://bkaiser.imgix.net';
 
@@ -305,7 +306,14 @@ export function mapFormSection(sectionId: string, title: string, props: Record<s
   return { type: 'form', title, sectionId, formKey };
 }
 
-export function mapSection(id: string, s: SectionDoc, nestedSections: Map<string, SectionDoc>, sanitize: SanitizeFn, lang = 'de'): unknown {
+/**
+ * @param groupPeople group key → its public members (`resolveGroupPeople`), for people sections of
+ *   type 'group'; a group missing from the map renders no one.
+ */
+export function mapSection(
+  id: string, s: SectionDoc, nestedSections: Map<string, SectionDoc>, sanitize: SanitizeFn, lang = 'de',
+  groupPeople?: ReadonlyMap<string, PublicPerson[]>,
+): unknown {
   const type = s.type ?? 'article';
   const props = (s.properties ?? {}) as Record<string, unknown>;
   const name = slugName(s.name);
@@ -369,6 +377,13 @@ export function mapSection(id: string, s: SectionDoc, nestedSections: Map<string
     }
 
     case 'people': {
+      // group: the members resolved at read time (spec 1.153 §13), never the stored list. No email in
+      // any mode: personal email has the `registered` floor (responsibility aliases are not mapped either).
+      if (props['type'] === 'group') {
+        const groupId = typeof props['groupId'] === 'string' ? props['groupId'] : '';
+        const persons = (groupId ? groupPeople?.get(groupId) : undefined) ?? [];
+        return { type: 'people', name, title, subTitle, persons: persons.map((p) => ({ ...p })) };
+      }
       const persons = ((props['persons'] as { key?: string; name1?: string; name2?: string; label?: string }[] | undefined) ?? [])
         .map(p => ({
           key: p.key ?? '',

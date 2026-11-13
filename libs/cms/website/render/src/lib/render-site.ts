@@ -60,6 +60,7 @@ import {
 import { compileTemplate, createTemplateEnv, escapeXml, langPath, type RenderData, type RenderFn } from './render-helpers';
 import { homeRowPlan, type HomeRow } from './home-layout';
 import { mapSection, pickText, type SanitizeFn, type SectionDoc } from './section-mapper';
+import type { PublicPerson } from './group-people';
 
 export interface TemplateSet {
   manifest: TemplateManifest;
@@ -81,6 +82,8 @@ export interface RenderInput {
   imageUrl: (path: string) => string;
   /** the rich-text sanitizer, built by the caller with createSanitizer(sanitizeHtml) */
   sanitize: SanitizeFn;
+  /** group key → public members (resolveGroupPeople), for people sections of type 'group' */
+  groupPeople?: ReadonlyMap<string, PublicPerson[]>;
 }
 
 export interface RenderedFile {
@@ -311,7 +314,7 @@ export function renderSite(input: RenderInput): RenderResult {
       const contexts = sectionContexts(
         published.map(({ raw, sectionKey, section }, i) => {
           try {
-            return mapSection(sectionKey, section, nestedSectionsOf(section, tenants, sections), sanitize, lang);
+            return mapSection(sectionKey, section, nestedSectionsOf(section, tenants, sections), sanitize, lang, input.groupPeople);
           } catch (e) {
             failed.add(i);
             problems.push({ code: 'renderFailed', pageKey: entry.key, sectionKey: raw, detail: message(e) });

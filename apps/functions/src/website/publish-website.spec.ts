@@ -223,4 +223,46 @@ describe('loadSiteContent', () => {
     expect(reads[0].sort()).toEqual(['pages/foreign', 'pages/home', 'pages/old', 'pages/verein']);
     expect(reads.flat()).not.toContain('sections/secret');
   });
+
+  it('resolves the members of the groups its published people sections show (1.153 §13)', async () => {
+    const pub = { tenants: ['scs'], state: 'published' };
+    const data: Record<string, Record<string, unknown>> = {
+      'pages/home': { tenants: ['scs'], sections: ['board', 'draftBoard'] },
+      'sections/board': { ...pub, type: 'people', properties: { type: 'group', groupId: 'vorstand' } },
+      'sections/draftBoard': { tenants: ['scs'], state: 'draft', type: 'people', properties: { type: 'group', groupId: 'geheim' } },
+      'persons/p1': { tenants: ['scs'], usageName: 0 },
+    };
+    const queries: string[] = [];
+    const query = (clauses: string[]) => ({
+      where: (f: string, op: string, v: unknown) => query([...clauses, `${f} ${op} ${String(v)}`]),
+      orderBy: () => query(clauses),
+      get: async () => {
+        queries.push(clauses.join(' | '));
+        const docs = clauses.includes('orgKey == vorstand')
+          ? [{ orgKey: 'vorstand', orgModelType: 'group', memberKey: 'p1', memberModelType: 'person', memberName1: 'Anna', memberName2: 'Muster', tenants: ['scs'] }]
+          : [];
+        return { docs: docs.map((d) => ({ data: () => d })) };
+      },
+    });
+    const db = {
+      collection: (c: string) => ({ ...query([c]), doc: (id: string) => ({ path: `${c}/${id}`, id }) }),
+      getAll: async (...refs: { path: string; id: string }[]) => refs.map((r) => ({ id: r.id, data: () => data[r.path] })),
+    } as unknown as Firestore;
+    const { groupPeople } = await loadSiteContent(db, { ...site, nav: [] } as WebsiteModel);
+    expect(queries).toHaveLength(1);
+    expect(queries[0]).toContain('orgKey == vorstand');
+    expect(queries[0]).toContain('tenants array-contains-any scs');
+    expect(groupPeople?.get('vorstand')).toEqual([{ key: 'p1', firstName: 'Anna', lastName: 'Muster', label: '', showImage: true }]);
+    expect(groupPeople?.has('geheim')).toBe(false);
+  });
+});
+
+describe('runPublish group people', () => {
+  it('hands the loaded group members to renderSite', async () => {
+    const d = deps();
+    const groupPeople = new Map([['vorstand', [{ key: 'p1', firstName: 'Anna', lastName: 'Muster', label: '', showImage: true }]]]);
+    d['loadContent'].mockResolvedValueOnce({ pages: new Map(), sections: new Map(), groupPeople });
+    await runPublish(d, { ...REQ, dryRun: true });
+    expect((d['renderSite'].mock.calls[0][0] as RenderInput).groupPeople).toBe(groupPeople);
+  });
 });

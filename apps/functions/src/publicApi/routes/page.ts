@@ -6,10 +6,11 @@ import { defineSecret } from 'firebase-functions/params';
 
 import type { DocumentLink } from '@okr/shared-models';
 import { DocumentCollection, FolderCollection } from '@okr/shared-models';
-import { IMGIX_BASE, mapSection, normalizeLang, pickText, slugName, str, toImgixUrl, type I18nString, type SanitizeFn, type SectionDoc } from '@okr/cms-website-render';
+import { IMGIX_BASE, mapSection, normalizeLang, pickText, slugName, str, toImgixUrl, type I18nString, type PublicPerson, type SanitizeFn, type SectionDoc } from '@okr/cms-website-render';
 import { learningTabOf, parseTopics, type LearningTab, type PublicLearningItem, type PublicLearningSection } from '@okr/content-learning-util';
 
 import { isPublishedSection, setCacheHeaders } from '../utils';
+import { groupIdOfSection, loadGroupPeople } from '../../website/group-people';
 import { getHtmlSanitizer } from '../sanitize';
 import { IMGIX_PRIVATE_HOST, signImgixUrl } from '../../_storage/imgix-sign';
 import { albumFolderKeyOfPath, isSafeDocId, MP4_PARAMS, POSTER_PARAMS, windowExpiry } from '../../video/video-sign.util';
@@ -214,6 +215,21 @@ function isServableSection(section: SectionDoc | undefined, tenantId: string): b
     && isPublishedSection(section);
 }
 
+/**
+ * The public members of the groups shown by the page's people sections (spec 1.153 §13), as
+ * publishWebsite resolves them. A failed read empties those sections, never the page.
+ */
+async function loadPageGroupPeople(db: Firestore, groupIds: string[], tenantId: string, pageKey: string): Promise<Map<string, PublicPerson[]>> {
+  const ids = groupIds.filter(Boolean);
+  if (ids.length === 0) return new Map();
+  try {
+    return await loadGroupPeople(db, ids, [tenantId]);
+  } catch (err) {
+    logger.error('publicApi /pages: group members not loaded', { tenantId, pageKey, err: String(err) });
+    return new Map();
+  }
+}
+
 export async function pageRouter(req: Request, res: Response): Promise<void> {
   const tenantId = (req.query['tenantId'] as string)?.trim();
   if (!tenantId) {
@@ -285,10 +301,12 @@ export async function pageRouter(req: Request, res: Response): Promise<void> {
       }
     }
 
+    const groupPeople = await loadPageGroupPeople(db, liveSections.map(({ doc }) => groupIdOfSection(doc)), tenantId, pageKey);
+
     const sanitize = await getHtmlSanitizer();
     const sections = await Promise.all(liveSections.map(({ id, doc: s }) => (s.type === 'learning'
       ? loadLearningSection(db, s, mayServeRoom(pageData, pageKey, id), tenantId, sanitize, lang)
-      : mapSection(id, s, nestedSections, sanitize, lang))));
+      : mapSection(id, s, nestedSections, sanitize, lang, groupPeople))));
 
     setCacheHeaders(res);
     res.json({ ...pageEnvelope, sections });
