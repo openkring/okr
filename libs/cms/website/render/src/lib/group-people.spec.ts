@@ -68,6 +68,11 @@ describe('resolveGroupPeople', () => {
     expect(out).toEqual([]);
   });
 
+  it('leaves out a deceased person even with an open membership and a public name', () => {
+    const out = resolve([ms('p1', 'A', 'A'), ms('p2', 'B', 'B')], { p1: pub({ isDeceased: true }), p2: pub() });
+    expect(out.map((p) => p.key)).toEqual(['p2']);
+  });
+
   it('shows the portrait only when usageImages is public (missing = the default Public)', () => {
     const out = resolve([ms('p1', 'A', 'A'), ms('p2', 'B', 'B'), ms('p3', 'C', 'C'), ms('p4', 'D', 'D')], {
       p1: pub(),

@@ -34,6 +34,7 @@ export interface GroupMembershipDoc {
 export interface GroupPersonDoc {
   tenants?: string[];
   isArchived?: boolean;
+  isDeceased?: boolean;
   usageName?: number;
   usageImages?: number;
 }
@@ -93,7 +94,8 @@ export function resolveGroupPeople(
     const key = m.memberKey as string;
     if (seen.has(key)) continue;
     const person = persons.get(key);
-    if (!person || person.isArchived === true || !sharesTenant(person.tenants, siteTenants)) continue;
+    // a deceased member is not listed as a current member, whatever the membership still says
+    if (!person || person.isArchived === true || person.isDeceased === true || !sharesTenant(person.tenants, siteTenants)) continue;
     if (person.usageName !== PUBLIC_USAGE) continue;
     seen.add(key);
     out.push({
