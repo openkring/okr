@@ -103,7 +103,7 @@ export class JournalListPage {
       'journal.notice': [i18n.list_notify(), 'send'],
     };
     const groupLabels = { journal: i18n.list_group_journal(), authors: i18n.list_group_authors(), guests: i18n.list_group_guests() };
-    for (const { group, actions } of journalListSheet()) {
+    for (const { group, actions } of journalListSheet({ canWrite: this.store.canWrite() })) {
       options.buttons.push({ text: groupLabels[group], disabled: true, cssClass: 'okr-sheet-group-label' });
       actions.forEach((action, i) => {
         const [text, icon] = labels[action];

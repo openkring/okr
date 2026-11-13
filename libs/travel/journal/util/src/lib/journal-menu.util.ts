@@ -73,8 +73,9 @@ export function blockActions(ctx: { kind: BlockKind; editable: boolean }): Journ
 
 export type JournalListAction = 'journal.open' | 'journal.edit' | 'journal.delete' | 'journal.authors' | 'journal.guests' | 'journal.notice';
 
-/** The journal row's ActionSheet, grouped as spec 1.154 §8: journal, authors, guests. */
-export function journalListSheet(): { group: 'journal' | 'authors' | 'guests'; actions: JournalListAction[] }[] {
+/** The journal row's ActionSheet, grouped as spec 1.154 §8: journal, authors, guests. Non-authors may only open. */
+export function journalListSheet(ctx: { canWrite: boolean }): { group: 'journal' | 'authors' | 'guests'; actions: JournalListAction[] }[] {
+  if (!ctx.canWrite) return [{ group: 'journal', actions: ['journal.open'] }];
   return [
     { group: 'journal', actions: ['journal.open', 'journal.edit', 'journal.delete'] },
     { group: 'authors', actions: ['journal.authors'] },
