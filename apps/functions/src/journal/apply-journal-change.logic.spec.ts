@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { JournalChange } from '@okr/shared-models';
 import { conflictCopyKey, formatHlc } from '@okr/travel-journal-util';
 
-import { isBookMapFileName, isJournalFileName, journalObjectPath, uploadHeadersFor, mayOverwrite, planEntityWrite, planFootprintSections, planPeerSecret, planSectionWrites, StoredRecord } from './apply-journal-change.logic';
+import { isBookMapFileName, isJournalFileName, journalObjectPath, uploadHeadersFor, mayOverwrite, planEntityWrite, planFootprintSections, peerSecretTenants, planPeerSecret, planSectionWrites, StoredRecord } from './apply-journal-change.logic';
 
 let n = 0;
 function rec(p: Pick<JournalChange, 'entity' | 'entityKey' | 'op'> & Partial<JournalChange>, deviceId = 'dev-a', authorKey = 'bruno'): StoredRecord {
@@ -247,5 +247,24 @@ describe('planPeerSecret (spec 1.154 §9, ruling R13)', () => {
 
   it('ignores malformed keys', () => {
     expect(planPeerSecret(peer(['bruno', 7, '']), { authorKeys: ['bruno', ''] })).toEqual({ action: 'none' });
+  });
+
+  it('denies a caller who is not an author in the journal doc read with the secret (removed after the auth check)', () => {
+    // X passed requireJournalAuthor, then the apply function removed X and rotated: X must not get the new secret
+    expect(planPeerSecret(peer(['bruno']), { authorKeys: ['bruno'] }, true, 'x')).toEqual({ action: 'denied' });
+    expect(planPeerSecret(undefined, { isArchived: true }, true, 'bruno')).toEqual({ action: 'denied' });
+  });
+
+  it('decides as usual for a caller who is still an author', () => {
+    expect(planPeerSecret(peer(['bruno']), { authorKeys: ['bruno'] }, true, 'bruno')).toEqual({ action: 'none' });
+    expect(planPeerSecret(undefined, { authorKeys: ['bruno'] }, true, 'bruno')).toEqual({ action: 'create', issuedTo: ['bruno'] });
+  });
+});
+
+describe('peerSecretTenants', () => {
+  it("takes the journal's tenants, else the fallback", () => {
+    expect(peerSecretTenants({ tenants: ['bkg'] }, ['scs'])).toEqual(['bkg']);
+    expect(peerSecretTenants({ tenants: [] }, ['scs'])).toEqual(['scs']);
+    expect(peerSecretTenants(undefined, ['scs'])).toEqual(['scs']);
   });
 });

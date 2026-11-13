@@ -128,7 +128,7 @@ export function journalObjectPath(tenantId: string, journalKey: string, fileName
 
 /** What to do with the journal's peer secret doc after a journal write (spec 1.154 §9, ruling R13). */
 export type PeerSecretPlan =
-  | { action: 'none' }
+  | { action: 'none' | 'denied' }
   | { action: 'create' | 'rotate' | 'record'; issuedTo: string[] };
 
 const keysOf = (value: unknown): string[] | undefined =>
@@ -141,9 +141,14 @@ const keysOf = (value: unknown): string[] | undefined =>
  * authors only added → `record` the current list without rotating; `issuedTo` missing (a secret from before 1.154) →
  * `record` the current list (no rotation). No secret yet → `create` when `createMissing` (ensureJournalPeerSecret),
  * else nothing: the first author to sync creates it. A doc without `authorKeys` (archived journal) → nothing.
+ * `callerKey` (ensureJournalPeerSecret): the caller must be an author in THIS journal doc — the one read in the same
+ * transaction — else `denied`, so an author removed after their auth check never receives the renewed secret.
  */
-export function planPeerSecret(peer: Record<string, unknown> | undefined, journal: Record<string, unknown> | undefined, createMissing = false): PeerSecretPlan {
+export function planPeerSecret(
+  peer: Record<string, unknown> | undefined, journal: Record<string, unknown> | undefined, createMissing = false, callerKey?: string,
+): PeerSecretPlan {
   const current = keysOf(journal?.['authorKeys']);
+  if (callerKey !== undefined && !(current ?? []).includes(callerKey)) return { action: 'denied' };
   if (!current) return { action: 'none' };
   const secret = peer?.['secret'];
   if (typeof secret !== 'string' || secret === '') return createMissing ? { action: 'create', issuedTo: current } : { action: 'none' };
@@ -152,4 +157,10 @@ export function planPeerSecret(peer: Record<string, unknown> | undefined, journa
   if (issuedTo.some((key) => !current.includes(key))) return { action: 'rotate', issuedTo: current };
   if (current.some((key) => !issuedTo.includes(key))) return { action: 'record', issuedTo: current };
   return { action: 'none' };
+}
+
+/** The tenants of the peer secret doc: the journal's own (read in the same transaction), else the fallback. */
+export function peerSecretTenants(journal: Record<string, unknown> | undefined, fallback: string[]): string[] {
+  const tenants = keysOf(journal?.['tenants']);
+  return tenants && tenants.length > 0 ? tenants : fallback;
 }

@@ -11,7 +11,7 @@ import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functi
 import { originalOfCopy, withCheckedBases } from '@okr/travel-journal-util';
 
 import { privateBucket } from '../_storage/private-bucket';
-import { isJournalFileName, journalObjectPath, uploadHeadersFor, planEntityWrite, planFootprintSections, planPeerSecret, planSectionWrites, StoredRecord, mayOverwrite } from './apply-journal-change.logic';
+import { isJournalFileName, journalObjectPath, uploadHeadersFor, planEntityWrite, planFootprintSections, peerSecretTenants, planPeerSecret, planSectionWrites, StoredRecord, mayOverwrite } from './apply-journal-change.logic';
 import { requireJournalAuthor } from './journal-auth';
 
 const REGION = 'europe-west6';
@@ -91,18 +91,22 @@ function peerSecretRef(journalKey: string) {
  * transaction: a fresh secret when it was issued to someone who is no longer an author (or, with `createMissing`,
  * when there is none yet), `issuedTo` extended when authors were only added. A state comparison, so a run that
  * crashed before this step is repaired by the next journal write or the next ensureJournalPeerSecret call.
- * Returns the secret now stored ('' when there is none).
+ * With `callerKey` (ensureJournalPeerSecret) the caller must be an author in the journal doc read inside this
+ * transaction, else permission-denied: an author removed after requireJournalAuthor never gets the renewed secret.
+ * The doc's tenants are the journal's own (`tenants` only as the fallback). Returns the secret now stored ('' when none).
  */
-async function syncPeerSecret(journalKey: string, tenants: string[], createMissing: boolean): Promise<string> {
+async function syncPeerSecret(journalKey: string, tenants: string[], createMissing: boolean, callerKey?: string): Promise<string> {
   const db = getFirestore();
   const ref = peerSecretRef(journalKey);
   return db.runTransaction(async (tx) => {
     const [peerSnap, journalSnap] = await Promise.all([tx.get(ref), tx.get(db.doc(`${JournalCollection}/${journalKey}`))]);
     const peer = peerSnap.data();
-    const plan = planPeerSecret(peer, journalSnap.data(), createMissing);
+    const journal = journalSnap.data();
+    const plan = planPeerSecret(peer, journal, createMissing, callerKey);
+    if (plan.action === 'denied') throw new HttpsError('permission-denied', 'Not an author of this journal.');
     if (plan.action === 'create' || plan.action === 'rotate') {
       const secret = randomBytes(32).toString('base64');
-      tx.set(ref, { secret, tenants, issuedTo: plan.issuedTo });
+      tx.set(ref, { secret, tenants: peerSecretTenants(journal, tenants), issuedTo: plan.issuedTo });
       if (plan.action === 'rotate') logger.info(`syncPeerSecret: peer secret of ${journalKey} renewed (an author was removed)`);
       return secret;
     }
@@ -181,8 +185,9 @@ export const signJournalPhotos = onCall(
 );
 
 /**
- * The journal's peer secret for the P2P link (plan 5), created on first request. Authors only. Removing an author
- * renews it in applyJournalChange (spec 1.154 §9, ruling R11); the other iPads fetch it on their next online contact.
+ * The journal's peer secret for the P2P link (plan 5), created on first request. Authors only — checked again inside
+ * the secret's transaction. Removing an author renews it (syncPeerSecret, spec 1.154 §9, ruling R13); the other iPads
+ * fetch it on their next online contact.
  */
 export const ensureJournalPeerSecret = onCall(
   { region: REGION, enforceAppCheck: true, cors: true },
@@ -191,8 +196,9 @@ export const ensureJournalPeerSecret = onCall(
     checkAuthentication(request as never, 'ensureJournalPeerSecret');
     const db = getFirestore();
     const caller = await requireJournalAuthor(db, request.auth?.uid ?? '', (request.data as { journalKey?: unknown } | undefined)?.journalKey);
-    // the same check as after a journal write: creates a missing secret, and repairs a renewal a crash skipped
-    const secret = await syncPeerSecret(caller.journalKey, [caller.tenantId], true);
+    // the same check as after a journal write: creates a missing secret, and repairs a renewal a crash skipped;
+    // the caller is checked again against the journal doc read with the secret (a removal may land in between)
+    const secret = await syncPeerSecret(caller.journalKey, [caller.tenantId], true, caller.personKey);
     if (secret === '') throw new HttpsError('failed-precondition', 'The journal has no authors.');
     return { secret };
   },
