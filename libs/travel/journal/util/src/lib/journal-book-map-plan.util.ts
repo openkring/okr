@@ -30,7 +30,7 @@ export function bookMapPlan(state: JournalState, journalKey: string, book: Journ
 
   const boxes = new Map<string, Box>();
   for (const page of layout.pages) for (const f of page.frames) if (f.kind === 'map' && !boxes.has(f.file)) boxes.set(f.file, f.box);
-  const back = coverLayout(book, layout.title, layout.period, layout.coverImageKey)?.frames.find((f) => f.kind === 'map');
+  const back = coverLayout(book, layout.title, layout.period, layout.coverImageKey, layout.coverLabel)?.frames.find((f) => f.kind === 'map');
   if (back) boxes.set(MAP_BACK, back.box);
 
   const { stops: flyStops, points } = flyoverInputOf(published, imagesOf(state, journalKey), () => '');

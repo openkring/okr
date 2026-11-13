@@ -85,7 +85,7 @@ export interface BookInput {
   authorName: (personKey: string) => string;
   paginate: PaginateText;
 }
-/** title, period and coverImageKey (resolved default, see coverImageKeyOf) are what coverLayout needs. */
+/** title, period, coverImageKey (resolved default, see coverImageKeyOf) and coverLabel are what coverLayout needs. */
 export interface BookLayout {
   pages: BookPage[];
   warnings: BookWarning[];
@@ -94,6 +94,7 @@ export interface BookLayout {
   title: string;
   period: string;
   coverImageKey?: string;
+  coverLabel: string; // the journal's cover label, '' = none
 }
 
 /** Bleed when the book document has none (the model's default). */
@@ -272,14 +273,15 @@ function albumBlockPages(ctx: Ctx, fpKey: string, block: BlockView, exclude: str
 }
 
 /**
- * The cover photo (design §5.1): the book's `coverImageKey` when it names an image of the journal, else the first
- * visible photo of the first published footprint that has one. The journal's own cover (`JournalModel.cover`, an
- * ImageConfig URL on the Firestore journal document) is not part of the change-log state, so it cannot be matched
- * to an image here and is skipped.
+ * The cover photo (design §5.1): the book's `coverImageKey` when it names an image of the journal, else the
+ * journal's own `coverImageKey` (the journal record in the change-log state) when it names an image, else the first
+ * visible photo of the first published footprint that has one.
  */
 export function coverImageKeyOf(state: JournalState, journalKey: string, book: JournalBookModel): string | undefined {
   const images = imagesOf(state, journalKey);
   if (book.coverImageKey && images.has(book.coverImageKey)) return book.coverImageKey;
+  const journalCover = journalsOf(state).find((j) => j.key === journalKey)?.coverImageKey;
+  if (journalCover && images.has(journalCover)) return journalCover;
   const hidden = new Set(book.hiddenImageKeys ?? []);
   for (const fp of publishedFootprintsOf(state, journalKey)) {
     for (const b of fp.blocks) {
@@ -513,7 +515,7 @@ export function layoutBook(input: BookInput): BookLayout {
     extremeLat: extremeLatOf(footprints),
   };
   const statsFrames: BookFrame[] = [text({ ...TEXT_BOX, h: TEXT_BOX.h - 14 }, statsHtml(stats, labels), 'stats')];
-  const closing = [labels.credit, labels.colophon].filter((s) => s).map((s) => para(escapeHtml(s))).join('');
+  const closing = [labels.credit, journal?.lastPageLabel ? journal.lastPageLabel : labels.colophon].map((s) => plain(s)).filter((s) => s).map((s) => para(s)).join('');
   if (closing) statsFrames.push(text({ ...CREDIT_BOX, y: CREDIT_BOX.y - 6, h: 12 }, closing, 'facts'));
   pages.push({ role: 'stats', frames: statsFrames });
 
@@ -523,5 +525,5 @@ export function layoutBook(input: BookInput): BookLayout {
   if (book.print?.cover && book.print.cover !== 'none') mapFiles.push(MAP_BACK);
 
   const coverImageKey = coverImageKeyOf(state, journalKey, book);
-  return { pages, warnings: warningsOf(pages, ctx, coverImageKey), stats, mapFiles, title, period, coverImageKey };
+  return { pages, warnings: warningsOf(pages, ctx, coverImageKey), stats, mapFiles, title, period, coverImageKey, coverLabel: journal?.coverLabel ?? '' };
 }

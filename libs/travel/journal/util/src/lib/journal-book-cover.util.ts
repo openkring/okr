@@ -12,9 +12,10 @@ const BACK_MAP_H = 85;
  * front (297), bleed, wrap — width 2 × (297 + bleed) + spine + 2 × wrap, height 210 + 2 × (bleed + wrap).
  * Front: the cover photo (full bleed incl. wrap) + title + period; spine: the title rotated (spine ≥ 6 mm); back:
  * black with a small route map. Undefined when no cover is ordered. Pass `BookLayout.title`, `.period` and
- * `.coverImageKey` (the resolved default, coverImageKeyOf) — `book.coverImageKey` itself is not read here.
+ * `.coverImageKey` (the resolved default, coverImageKeyOf) and `.coverLabel` (printed under the period, '' = none) —
+ * `book.coverImageKey` itself is not read here.
  */
-export function coverLayout(book: JournalBookModel, title: string, period: string, coverImageKey: string | undefined):
+export function coverLayout(book: JournalBookModel, title: string, period: string, coverImageKey: string | undefined, coverLabel = ''):
   { width: number; height: number; frames: BookFrame[] } | undefined {
   const print = book.print;
   if (!print || print.cover === 'none') return undefined;
@@ -28,6 +29,7 @@ export function coverLayout(book: JournalBookModel, title: string, period: strin
   const t = escapeHtml(stripEmoji(title));
   frames.push({ kind: 'text', box: { x: frontX + MARGIN, y: edge + MARGIN, w: textW, h: 30 }, html: `<p>${t}</p>`, style: 'title' });
   if (period) frames.push({ kind: 'text', box: { x: frontX + MARGIN, y: edge + MARGIN + 32, w: textW, h: 10 }, html: `<p>${escapeHtml(period)}</p>`, style: 'facts' });
+  if (coverLabel) frames.push({ kind: 'text', box: { x: frontX + MARGIN, y: edge + MARGIN + 44, w: textW, h: 10 }, html: `<p>${escapeHtml(stripEmoji(coverLabel))}</p>`, style: 'facts' });
   if (spine >= SPINE_TITLE_MIN_MM) {
     frames.push({ kind: 'text', box: { x: spineX, y: edge + MARGIN, w: spine, h: PAGE_H - 2 * MARGIN }, html: `<p>${t}</p>`, style: 'title', rotate: 90 });
   }

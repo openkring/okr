@@ -156,7 +156,7 @@ async function writeExport(db: Firestore, caller: JournalCaller, req: BookExport
 
     // the cover (print only, when a cover is ordered)
     let coverPath: string | undefined;
-    const cover = print ? coverLayout(book, layout.title, layout.period, layout.coverImageKey) : undefined;
+    const cover = print ? coverLayout(book, layout.title, layout.period, layout.coverImageKey, layout.coverLabel) : undefined;
     if (cover) {
       const cdoc = createBookDoc();
       applyPdfX4(cdoc, { title: layout.title, iccFogra: iccFogra as Buffer, trim: { w: cover.width - 2 * bleedMm, h: cover.height - 2 * bleedMm }, bleedMm });

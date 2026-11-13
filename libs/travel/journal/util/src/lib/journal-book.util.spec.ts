@@ -308,6 +308,37 @@ describe('layoutBook', () => {
     expect(cover?.frames.find((f) => f.kind === 'photo')).toMatchObject({ imageKey: 'i1' });
   });
 
+  it('coverImageKeyOf prefers book, then journal, then the first photo', () => {
+    const base = [fp('f2', '20270103'), img('i1'), img('i2'), img('i3'), photos('p2', 'f2', 'a', ['i1', 'i2'])];
+    const book = (b: Partial<JournalBookModel>): JournalBookModel => ({ ...new JournalBookModel(), ...b });
+    const withCover = materialize([journal({ coverImageKey: 'i2' }), ...base]);
+    expect(coverImageKeyOf(withCover, 'j1', book({ coverImageKey: 'i3' }))).toBe('i3');
+    expect(coverImageKeyOf(withCover, 'j1', book({}))).toBe('i2');
+    expect(coverImageKeyOf(withCover, 'j1', book({ coverImageKey: 'gone' }))).toBe('i2');
+    const gone = materialize([journal({ coverImageKey: 'gone' }), ...base]);
+    expect(coverImageKeyOf(gone, 'j1', book({}))).toBe('i1');
+  });
+
+  it('layoutBook stats page uses lastPageLabel', () => {
+    const closingOf = (jf: Record<string, unknown>): string => {
+      const stats = layoutBook(input([journal(jf), fp('f1', '20270102')])).pages.find((p) => p.role === 'stats');
+      return (stats?.frames.filter((f) => f.kind === 'text').map((f) => (f as { html: string }).html) ?? []).join('');
+    };
+    const withLabel = closingOf({ lastPageLabel: '© 2027' });
+    expect(withLabel).toContain('© 2027');
+    expect(withLabel).not.toContain('Gemacht mit Kring');
+    expect(withLabel).toContain('Karten: NASA GIBS');
+    expect(closingOf({ lastPageLabel: '' })).toContain('Gemacht mit Kring');
+    const escaped = closingOf({ lastPageLabel: '<b>x</b> 🐧' });
+    expect(escaped).toContain('&lt;b&gt;x&lt;/b&gt;');
+    expect(escaped).not.toContain('🐧');
+  });
+
+  it('layoutBook carries the journal coverLabel', () => {
+    expect(layoutBook(input([journal({ coverLabel: 'Sommer 2027' }), fp('f1', '20270102')])).coverLabel).toBe('Sommer 2027');
+    expect(layoutBook(input([journal(), fp('f1', '20270102')])).coverLabel).toBe('');
+  });
+
   it('a short override page is re-laid out without empty slots', () => {
     const changes = [journal(), fp('f1', '20270102'), img('i1'), img('i2'), img('i3'), img('i4'), photos('p1', 'f1', 'a', ['i1', 'i2', 'i3', 'i4'])];
     const full = (pages: BookPage[]) => pages.filter((p) => p.role === 'photos')
@@ -432,6 +463,16 @@ describe('coverLayout', () => {
     expect(hard?.frames.some((f) => f.kind === 'text' && f.rotate === 90)).toBe(false); // spine < 6 mm: no spine title
     const noBleed = coverLayout({ ...book({ cover: 'softcover' }), print: { pageMultiple: 4, iccProfile: 'fogra39', cover: 'softcover' } as JournalBookModel['print'] }, 'A', 'B', undefined);
     expect(noBleed?.width).toBe(2 * (297 + 3)); // bleed defaults to 3 mm, as in layoutBook
+  });
+});
+
+describe('coverLayout label', () => {
+  it('coverLayout prints the cover label under the title on the front; none when empty', () => {
+    const book = { ...new JournalBookModel(), print: { bleedMm: 3, pageMultiple: 4, iccProfile: 'fogra39', cover: 'softcover', spineMm: 8 } } as JournalBookModel;
+    const texts = (label: string) => coverLayout(book, 'T', 'P', undefined, label)?.frames.filter((f) => f.kind === 'text').map((f) => (f as { html: string }).html) ?? [];
+    expect(texts('<i>Sommer</i> 🐧').some((h) => h === '<p>&lt;i&gt;Sommer&lt;/i&gt;</p>')).toBe(true);
+    expect(texts('').length).toBe(texts('x').length - 1);
+    expect(coverLayout(book, 'T', 'P', undefined)?.frames.filter((f) => f.kind === 'text').length).toBe(texts('').length);
   });
 });
 
