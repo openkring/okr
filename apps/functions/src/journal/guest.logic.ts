@@ -67,7 +67,7 @@ const EMAIL_MAX = 254;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
- * Shape check of `manageJournalGuest` `setEmail` (spec 1.154 §9): a guest's email, entered by an author.
+ * Shape check of the optional email of `manageJournalGuest` `create` (spec 1.154 §9): a guest's email, entered by an author.
  * Trimmed and lower-cased; a malformed address or person key is refused before anything is read or stored.
  * Extra fields are dropped — the caller never chooses tenants, favorite flag or channel.
  */
@@ -78,6 +78,16 @@ export function parseSetEmail(data: unknown): { personKey: string; email: string
   const email = typeof d['email'] === 'string' ? d['email'].trim().toLowerCase() : '';
   if (email.length > EMAIL_MAX || !EMAIL.test(email)) throw new HttpsError('invalid-argument', 'email');
   return { personKey, email };
+}
+
+/**
+ * Whose emails the authors see (spec 1.154 §9): the journal's `authorKeys` (written by `applyJournalChange`)
+ * and every person holding a non-revoked guest link — server-written data only, each key once, authors first.
+ */
+export function peopleKeys(authorKeys: unknown, links: JournalGuestLink[]): string[] {
+  const authors = Array.isArray(authorKeys) ? authorKeys : [];
+  const guests = links.filter((l) => !l.revokedAt).map((l) => l.personKey);
+  return [...new Set([...authors, ...guests].filter((k): k is string => isJournalKey(k)))];
 }
 
 /** Display name of a journal member (author or guest) by person key; '' for anyone else. */

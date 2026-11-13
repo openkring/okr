@@ -5,7 +5,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 
 /**
  * The guest callables of the travel journal (spec 1.113 §7, plan 7): `manageJournalGuest` for the authors
- * (links: list, create, expiry, revoke; notices; people and emails) and `journalGuest` for the guest page, where the link code is the
+ * (links: list, create, expiry, revoke; notices; people, hasEmail) and `journalGuest` for the guest page, where the link code is the
  * only credential (view, comment, like, unlike, settings, mute, unmute).
  */
 export interface GuestLinkView { personKey: string; url: string; expiresAt: string; revokedAt: string; mutedAt: string }
@@ -48,8 +48,13 @@ export class JournalGuestService {
     return (await this.call<{ links: GuestLinkView[] }>('manageJournalGuest', { journalKey, action: 'list' })).links;
   }
 
-  public async createLink(journalKey: string, personKey: string): Promise<GuestLinkView> {
-    return (await this.call<{ link: GuestLinkView }>('manageJournalGuest', { journalKey, action: 'create', personKey })).link;
+  /**
+   * Creates (or reuses) the person's guest link. `email`, when given, is stored for a person who has none yet
+   * (an existing address is kept); a malformed one is refused with `invalid-argument` before anything is written.
+   */
+  public async createLink(journalKey: string, personKey: string, email?: string): Promise<GuestLinkView> {
+    const payload = email === undefined ? { journalKey, action: 'create', personKey } : { journalKey, action: 'create', personKey, email };
+    return (await this.call<{ link: GuestLinkView }>('manageJournalGuest', payload)).link;
   }
 
   public async setExpiry(journalKey: string, personKey: string, expiresAt: string | null): Promise<GuestLinkView> {
@@ -74,9 +79,9 @@ export class JournalGuestService {
     return (await this.call<{ people: JournalPersonEmail[] }>('manageJournalGuest', { journalKey, action: 'people' })).people;
   }
 
-  /** Stores an email for a person of the tenant who has none yet; an existing address is kept. `invalid-argument` for a malformed one. */
-  public async setEmail(journalKey: string, personKey: string, email: string): Promise<void> {
-    await this.call<{ ok: true }>('manageJournalGuest', { journalKey, action: 'setEmail', personKey, email });
+  /** Whether a person of the tenant has an email (the address itself is never returned); for a guest about to be added. */
+  public async hasEmail(journalKey: string, personKey: string): Promise<boolean> {
+    return (await this.call<{ hasEmail: boolean }>('manageJournalGuest', { journalKey, action: 'hasEmail', personKey })).hasEmail;
   }
 
   // ---- guests (link code) ----

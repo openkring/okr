@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { applyManage, clipReadUrl, deliveryFor, GuestRequestError, guestBlockKind, guestVideoClips, isGuestVisibleSection, memberName, parseGuestRequest, parseSetEmail } from './guest.logic';
+import { applyManage, clipReadUrl, deliveryFor, GuestRequestError, guestBlockKind, guestVideoClips, isGuestVisibleSection, memberName, parseGuestRequest, parseSetEmail, peopleKeys } from './guest.logic';
 
 const CODE = '0123456789abcdef0123456789abcdef';
 const avatar = (key: string, name1: string, name2: string) => ({ key, name1, name2, modelType: 'person' as const, type: '', subType: '', label: '' });
@@ -156,5 +156,31 @@ describe('parseSetEmail', () => {
   it.each([undefined, '', 'a/b', 42])('refuses the person key %j', (personKey) => {
     expect(codeOf(() => parseSetEmail({ personKey, email: 'anna@example.ch' }))).toBe('invalid-argument');
     expect(codeOf(() => parseSetEmail(null))).toBe('invalid-argument');
+  });
+});
+
+describe('peopleKeys', () => {
+  it('takes the authors and every guest with a non-revoked link, authors first', () => {
+    const links = [
+      { personKey: 'anna', linkCode: CODE },
+      { personKey: 'max', linkCode: CODE, revokedAt: '2026-11-01T00:00:00.000Z' },
+      { personKey: 'eva', linkCode: CODE, expiresAt: '2026-01-01T00:00:00.000Z' },
+    ];
+    expect(peopleKeys(['bruno', 'lea'], links)).toEqual(['bruno', 'lea', 'anna', 'eva']);
+  });
+
+  it('removes duplicates: an author with a guest link, a guest with a revoked and a new link', () => {
+    const links = [
+      { personKey: 'bruno', linkCode: CODE },
+      { personKey: 'anna', linkCode: CODE, revokedAt: '2026-11-01T00:00:00.000Z' },
+      { personKey: 'anna', linkCode: CODE },
+      { personKey: 'anna', linkCode: CODE },
+    ];
+    expect(peopleKeys(['bruno', 'bruno'], links)).toEqual(['bruno', 'anna']);
+  });
+
+  it('drops malformed keys and a missing authorKeys', () => {
+    expect(peopleKeys(undefined, [{ personKey: 'anna', linkCode: CODE }])).toEqual(['anna']);
+    expect(peopleKeys(['', 'a/b', 42, 'bruno'], [{ personKey: '', linkCode: CODE }])).toEqual(['bruno']);
   });
 });

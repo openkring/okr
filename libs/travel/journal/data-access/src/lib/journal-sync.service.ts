@@ -218,14 +218,20 @@ export class JournalSyncService {
 
   // ---------------------------------------------------------------- peer secret -------------
 
+  /**
+   * Fetches the secret every online round, not only when none is cached: another author's iPad may have renewed
+   * it (spec 1.154 §9, after removing an author). A cached secret is overwritten only when the server's differs.
+   * With a cached secret, a failed call (offline included) keeps it and never fails the round — as before, when
+   * no call was made at all. A running P2P session keeps its old secret until it restarts.
+   */
   private async ensurePeerSecret(journalKey: string): Promise<void> {
-    if (await this.db.getMeta(META_PEER + journalKey)) return;
+    const cached = await this.db.getMeta(META_PEER + journalKey);
     try {
       const { secret } = await this.call<{ secret: string }>('ensureJournalPeerSecret', { journalKey });
-      if (secret) await this.db.setMeta(META_PEER + journalKey, secret);
+      if (secret && secret !== cached) await this.db.setMeta(META_PEER + journalKey, secret);
     } catch (error) {
-      if (isOffline(error)) throw error;
-      // failed-precondition: the journal is not materialised yet — next round
+      if (!cached && isOffline(error)) throw error;
+      // failed-precondition: the journal is not materialised yet — next round; with a cached secret: keep it
     }
   }
 

@@ -17,7 +17,7 @@ import { privateBucket } from '../_storage/private-bucket';
 import { tenantLinks } from '../calendar/deliver';
 import { createFirestoreDeps } from '../workflow/firestore-deps';
 import { windowExpiry } from '../video/video-sign.util';
-import { applyManage, clipReadUrl, deliveryFor, guestBlockKind, guestVideoClips, GuestRequest, GuestRequestError, isGuestVisibleSection, ManageAction, memberName, newLinkCode, parseGuestRequest, parseSetEmail } from './guest.logic';
+import { applyManage, clipReadUrl, deliveryFor, guestBlockKind, guestVideoClips, GuestRequest, GuestRequestError, isGuestVisibleSection, ManageAction, memberName, newLinkCode, parseGuestRequest, parseSetEmail, peopleKeys } from './guest.logic';
 import { isJournalKey } from './apply-journal-change.logic';
 import { requireJournalAuthor } from './journal-auth';
 import { checkNotice } from './notify.logic';
@@ -222,23 +222,19 @@ export const journalGuest = onCall(
   },
 );
 
-/** Every author and guest of the journal once, authors first. */
-function journalPersonKeys(journal: Data): string[] {
-  const authors = Array.isArray(journal['authors']) ? (journal['authors'] as AvatarInfo[]) : [];
-  const guests = Array.isArray(journal['guests']) ? (journal['guests'] as { person?: AvatarInfo }[]) : [];
-  const keys = [...authors.map((a) => a?.key), ...guests.map((g) => g?.person?.key)];
-  return [...new Set(keys.filter((k): k is string => typeof k === 'string' && k !== ''))];
-}
-
 /**
  * The email of each author and guest for the journal's authors (spec 1.154 §9, journal-author tier): the
- * tenant's favorite email (`emailFor`), '' when there is none. Authors only — `manageJournalGuest` is
+ * tenant's favorite email (`emailFor`), '' when there is none. Membership comes from server-written data only
+ * (`authorKeys`, the guest links) — never from the `authors`/`guests` arrays that change records materialise. Authors only — `manageJournalGuest` is
  * behind `requireJournalAuthor`, and nothing here ever reaches a guest.
  */
 async function journalPeople(db: Firestore, journalKey: string, tenantId: string): Promise<{ personKey: string; email: string }[]> {
-  const journal = (await db.collection(JournalCollection).doc(journalKey).get()).data() ?? {};
+  const [journal, links] = await Promise.all([
+    db.collection(JournalCollection).doc(journalKey).get(), privateDoc(db, journalKey, JournalGuestLinksDoc).get(),
+  ]);
   const deps = createFirestoreDeps();
-  return Promise.all(journalPersonKeys(journal).map(async (personKey) => ({ personKey, email: await deps.emailFor(personKey, tenantId) })));
+  return Promise.all(peopleKeys(journal.data()?.['authorKeys'], linksOf(links.data()))
+    .map(async (personKey) => ({ personKey, email: await deps.emailFor(personKey, tenantId) })));
 }
 
 /**
@@ -265,14 +261,15 @@ async function storeEmailIfMissing(db: Firestore, tenantId: string, personKey: s
     return true;
   });
   // no address in the log (PII)
-  logger.info(`manageJournalGuest: setEmail for ${personKey}: ${stored ? 'stored' : 'kept existing'}`);
+  logger.info(`manageJournalGuest: email for ${personKey}: ${stored ? 'stored' : 'kept existing'}`);
 }
 
 /**
  * Guests of a journal for its authors (plans 7, 8): links — list, create (or reuse a live one), expiry, revoke;
  * notices — `previewNotice` (what changed since the last notice, the proposed text, who would receive it) and
  * `sendNotice` (the author's possibly changed text to every live, unmuted guest); people (spec 1.154 §9) —
- * `people` (the email of every author and guest) and `setEmail` (an email for a person who has none). The link
+ * `people` (the email of every author and guest) and `hasEmail` (only whether a tenant person has one);
+ * `create` takes an optional `email`, stored for a person who has none. The link
  * codes live in `journals/{jk}/private/guestLinks`, which no client can read.
  */
 export const manageJournalGuest = onCall(
@@ -302,17 +299,21 @@ export const manageJournalGuest = onCall(
       }
     }
     if (action === 'people') return { people: await journalPeople(db, caller.journalKey, caller.tenantId) };
-    if (action === 'setEmail') {
-      const { personKey, email } = parseSetEmail(d);
+    if (action === 'hasEmail') {
+      // only whether one exists — the address itself never leaves (R6): for a person about to become a guest
+      const personKey = d['personKey'];
+      if (!isJournalKey(personKey)) throw new HttpsError('invalid-argument', 'personKey');
       if (!(await personInTenant(db, personKey, [caller.tenantId]))) throw new HttpsError('failed-precondition', 'person not in tenant');
-      await storeEmailIfMissing(db, caller.tenantId, personKey, email);
-      return { ok: true };
+      return { hasEmail: (await createFirestoreDeps().emailFor(personKey, caller.tenantId)) !== '' };
     }
     if (action !== 'create' && action !== 'expiry' && action !== 'revoke') throw new HttpsError('invalid-argument', 'action');
     const personKey = d['personKey'];
     if (!isJournalKey(personKey)) throw new HttpsError('invalid-argument', 'personKey');
     // a guest is a person of the journal's tenant — never a link to another tenant's person
+    // an optional email for a guest who has none yet (spec 1.154 §9): checked before anything is read or written
+    const email = action === 'create' && d['email'] !== undefined ? parseSetEmail({ personKey, email: d['email'] }).email : undefined;
     if (action === 'create' && !(await personInTenant(db, personKey, [caller.tenantId]))) throw new HttpsError('failed-precondition', 'person not in tenant');
+    if (email) await storeEmailIfMissing(db, caller.tenantId, personKey, email);
     const expiresAt = typeof d['expiresAt'] === 'string' && !Number.isNaN(Date.parse(d['expiresAt'])) ? new Date(d['expiresAt']).toISOString() : null;
     const link = await db.runTransaction(async (tx) => {
       const result = applyManage(linksOf((await tx.get(ref)).data()), action as ManageAction, personKey, new Date().toISOString(),
