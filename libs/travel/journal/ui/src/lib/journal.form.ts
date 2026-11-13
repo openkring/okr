@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, 
 
 import { ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
-import { coerceBoolean } from '@okr/shared-util-core';
+import { coerceBoolean, fill } from '@okr/shared-util-core';
 import { JOURNAL_LABEL_MAX, JOURNAL_SUBTITLE_MAX, JOURNAL_TITLE_MAX, JournalFormModel, JournalI18n, journalValidations } from '@okr/travel-journal-util';
 
 import { BookCoverChoice } from './journal-book-settings.form';
@@ -49,10 +49,10 @@ import { BookCoverChoice } from './journal-book-settings.form';
           <ion-card-content class="ion-no-padding">
             <div class="covers">
               <button type="button" class="cover" [class.selected]="coverImageKey() === ''" [disabled]="isReadOnly()"
-                (click)="onFieldChange('coverImageKey', '')">{{ i18n().edit_cover_auto() }}</button>
-              @for (c of covers(); track c.key) {
+                [attr.aria-label]="i18n().edit_cover_auto()" [attr.aria-pressed]="coverImageKey() === ''" (click)="onFieldChange('coverImageKey', '')">{{ i18n().edit_cover_auto() }}</button>
+              @for (c of covers(); track c.key; let i = $index) {
                 <button type="button" class="cover" [class.selected]="coverImageKey() === c.key" [disabled]="isReadOnly()"
-                  (click)="onFieldChange('coverImageKey', c.key)">
+                  [attr.aria-label]="coverName(i + 1)" [attr.aria-pressed]="coverImageKey() === c.key" (click)="onFieldChange('coverImageKey', c.key)">
                   @if (c.url) { <img [src]="c.url" alt="" loading="lazy" /> }
                 </button>
               }
@@ -126,6 +126,10 @@ export class JournalForm {
   protected readonly lastPageLabelI18n = computed(() => ({
     name: 'lastPageLabel', label: this.i18n().edit_last_page_label(), placeholder: '', helper: this.i18n().edit_last_page_helper(),
   } as TextInputI18n));
+
+  protected coverName(n: number): string {
+    return fill(this.i18n().edit_cover_n(), { n });
+  }
 
   protected onFieldChange(fieldName: keyof JournalFormModel, fieldValue: string): void {
     this.dirty.emit(true);

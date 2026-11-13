@@ -60,14 +60,10 @@ describe('journal menus (spec 1.126 phase 3: write entries follow canWrite)', ()
   });
 
   it('list sheet groups in spec order', () => {
-    expect(journalListSheet({ canWrite: true })).toEqual([
+    expect(journalListSheet()).toEqual([
       { group: 'journal', actions: ['journal.open', 'journal.edit', 'journal.delete'] },
       { group: 'authors', actions: ['journal.authors'] },
       { group: 'guests', actions: ['journal.guests', 'journal.notice'] },
     ]);
-  });
-
-  it('list sheet: a non-author may only open', () => {
-    expect(journalListSheet({ canWrite: false })).toEqual([{ group: 'journal', actions: ['journal.open'] }]);
   });
 });

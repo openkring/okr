@@ -1,7 +1,8 @@
 /*
  * Grouped ActionSheet — a small grey label opens each group, a hairline separates groups.
  *
- * Loaded globally by every tenant app (project.json → build.options.styles): Ionic renders the
+ * Loaded by the apps that use grouped sheets (bkg-app) and added to new apps by the app generator
+ * (project.json → build.options.styles): Ionic renders the
  * action sheet in an overlay outside any component, so component styles never reach it. Ionic 9
  * puts a button's `cssClass` on the `.action-sheet-button` element itself.
  *

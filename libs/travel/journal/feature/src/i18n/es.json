@@ -4,7 +4,6 @@
     "empty": "Todavía no hay diario de viaje. Crea el primero.",
     "new": "Nuevo diario de viaje",
     "new_prompt": "¿Cómo se llama el viaje?",
-    "rename": "Cambiar nombre",
     "delete": "Eliminar",
     "delete_confirm": "¿Eliminar este diario de viaje con todas sus etapas?",
     "open": "Abrir",
@@ -23,8 +22,9 @@
     "subtitle_ph": "Subtítulo",
     "cover": "Foto de portada",
     "cover_auto": "Automática",
+    "cover_n": "Foto de portada {n}",
     "cover_label_label": "Pie de la foto de portada",
-    "cover_label_helper": "Aparece en el libro debajo de la foto de portada.",
+    "cover_label_helper": "Se imprime en la cubierta si pides una cubierta impresa.",
     "last_page_label": "Texto de la última página",
     "last_page_helper": "p. ej. © 2027 Barbara y Bruno Kaiser"
   },

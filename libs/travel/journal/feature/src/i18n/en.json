@@ -4,7 +4,6 @@
     "empty": "No travel journal yet. Create the first one.",
     "new": "New travel journal",
     "new_prompt": "What is the trip called?",
-    "rename": "Rename",
     "delete": "Delete",
     "delete_confirm": "Delete this travel journal with all its footprints?",
     "open": "Open",
@@ -23,8 +22,9 @@
     "subtitle_ph": "Subtitle",
     "cover": "Cover photo",
     "cover_auto": "Automatic",
+    "cover_n": "Cover photo {n}",
     "cover_label_label": "Cover photo caption",
-    "cover_label_helper": "Appears in the book under the cover photo.",
+    "cover_label_helper": "Printed on the cover if you order a printed cover.",
     "last_page_label": "Text on the last page",
     "last_page_helper": "e.g. © 2027 Barbara and Bruno Kaiser"
   },

@@ -9,7 +9,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { FIRESTORE, ensureAppCheckToken } from '@okr/shared-config';
 import { DiaryWeather, JournalChange, JournalChangeCollection, JournalCollection } from '@okr/shared-models';
 import {
-  acceptRecord, advanceCursor, remoteChangeOf, withCheckedBases, classifyUploadError, DOWNLOAD_PAGE, downloadStart, JournalPhotoMode, pagesOf, pendingVideoStats, uploadOrder, UPLOAD_PAGE,
+  acceptRecord, advanceCursor, remoteChangeOf, withCheckedBases, classifyUploadError, DOWNLOAD_PAGE, downloadStart, JournalPhotoMode, pagesOf, pendingVideoStats, shouldRefreshPeerSecret, uploadOrder, UPLOAD_PAGE,
 } from '@okr/travel-journal-util';
 
 import { JournalDb, RemoteChange } from './journal-db';
@@ -76,6 +76,8 @@ const isOffline = (error: unknown): boolean => ['unavailable', 'deadline-exceede
 @Injectable({ providedIn: 'root' })
 export class JournalSyncService {
   private readonly db = inject(JournalDb);
+  /** when this device last fetched each journal's peer secret (memory only: a restart fetches again) */
+  private readonly peerSecretFetchedAt = new Map<string, number>();
   private readonly identity = inject(JournalIdentityService);
   private readonly firestore = inject(FIRESTORE);
   private readonly statusSignal = signal<JournalSyncStatus>({ state: 'idle', pendingRecords: 0, pendingPhotos: 0, pendingVideos: 0, pendingVideoBytes: 0, error: '' });
@@ -219,16 +221,18 @@ export class JournalSyncService {
   // ---------------------------------------------------------------- peer secret -------------
 
   /**
-   * Fetches the secret every online round, not only when none is cached: the server renews it when an author is
-   * removed (spec 1.154 §9, in applyJournalChange). A cached secret is overwritten only when the server's differs.
+   * Fetches the secret at most once per 10 minutes per journal, and always when none is cached: the server renews
+   * it when an author is removed (spec 1.154 §9, in applyJournalChange). A cached secret is overwritten only when the server's differs.
    * With a cached secret, a failed call (offline included) keeps it and never fails the round — as before, when
    * no call was made at all. A running P2P session keeps its old secret until it restarts.
    */
   private async ensurePeerSecret(journalKey: string): Promise<void> {
     const cached = await this.db.getMeta(META_PEER + journalKey);
+    if (!shouldRefreshPeerSecret(cached, this.peerSecretFetchedAt.get(journalKey), Date.now())) return;
     try {
       const { secret } = await this.call<{ secret: string }>('ensureJournalPeerSecret', { journalKey });
       if (secret && secret !== cached) await this.db.setMeta(META_PEER + journalKey, secret);
+      this.peerSecretFetchedAt.set(journalKey, Date.now());
     } catch (error) {
       if (!cached && isOffline(error)) throw error;
       // failed-precondition: the journal is not materialised yet — next round; with a cached secret: keep it

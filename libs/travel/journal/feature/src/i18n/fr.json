@@ -4,7 +4,6 @@
     "empty": "Pas encore de carnet de voyage. Crée le premier.",
     "new": "Nouveau carnet de voyage",
     "new_prompt": "Comment s'appelle le voyage ?",
-    "rename": "Renommer",
     "delete": "Supprimer",
     "delete_confirm": "Supprimer ce carnet de voyage avec toutes ses étapes ?",
     "open": "Ouvrir",
@@ -23,8 +22,9 @@
     "subtitle_ph": "Sous-titre",
     "cover": "Photo de couverture",
     "cover_auto": "Automatique",
+    "cover_n": "Photo de couverture {n}",
     "cover_label_label": "Légende de la photo de couverture",
-    "cover_label_helper": "Apparaît dans le livre sous la photo de couverture.",
+    "cover_label_helper": "Imprimé sur la couverture si tu commandes une couverture imprimée.",
     "last_page_label": "Texte de la dernière page",
     "last_page_helper": "p. ex. © 2027 Barbara et Bruno Kaiser"
   },

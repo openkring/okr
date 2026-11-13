@@ -5,7 +5,7 @@ import { materialize } from './journal-merge.util';
 import { footprintsOf } from './journal-view.util';
 import { routeLengthKm } from './journal-map.util';
 import { templateBoxes } from './journal-book-layout.util';
-import { bookBlockHtml, BookFrame, BookInput, BookLabels, BookPage, bookPrintCandidates, coverImageKeyOf, COVER_PAGE_INDEX, layoutBook, playSymbolOf, PaginateText, stripEmoji, stripUndefined } from './journal-book.util';
+import { bookBlockHtml, BookFrame, BookInput, BookLabels, BookPage, bookPrintCandidates, coverImageKeyOf, COVER_PAGE_INDEX, layoutBook, playSymbolOf, PaginateText, stripEmoji, stripUndefined, journalPeriod } from './journal-book.util';
 import { localViewDateTime } from './journal-book-i18n';
 import { coverLayout } from './journal-book-cover.util';
 
@@ -515,5 +515,16 @@ describe('bookPrintCandidates', () => {
     const state = materialize([journal(), fp('f1', '20270102'), rec('image', 'i1', { journalKey: 'j1', width: 1, height: 1, path2048: 'a', path400: 'b', localIdentifier: '' }),
       photos('s1', 'f1', 'a', ['i1'])]);
     expect(bookPrintCandidates(state, 'j1', book(), 'bruno')).toEqual([]);
+  });
+});
+
+describe('journalPeriod', () => {
+  it('formats a range, one date when start = end, and nothing when both are empty', () => {
+    expect(journalPeriod({ startDate: '20260105', endDate: '20260120' })).toBe('5.1.2026 – 20.1.2026');
+    expect(journalPeriod({ startDate: '20260105', endDate: '20260105' })).toBe('5.1.2026');
+    expect(journalPeriod({ startDate: '20260105', endDate: '' })).toBe('5.1.2026');
+    expect(journalPeriod({ startDate: '', endDate: '20260120' })).toBe('20.1.2026');
+    expect(journalPeriod({ startDate: '', endDate: '' })).toBe('');
+    expect(journalPeriod({})).toBe('');
   });
 });

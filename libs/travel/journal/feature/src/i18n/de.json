@@ -4,7 +4,6 @@
     "empty": "Noch kein Reisetagebuch. Leg das erste an.",
     "new": "Neues Reisetagebuch",
     "new_prompt": "Wie heisst die Reise?",
-    "rename": "Umbenennen",
     "delete": "Löschen",
     "delete_confirm": "Dieses Reisetagebuch mit allen Footprints löschen?",
     "open": "Öffnen",
@@ -23,8 +22,9 @@
     "subtitle_ph": "Untertitel",
     "cover": "Titelbild",
     "cover_auto": "Automatisch",
+    "cover_n": "Titelbild {n}",
     "cover_label_label": "Beschriftung des Titelbilds",
-    "cover_label_helper": "Steht im Buch unter dem Titelbild.",
+    "cover_label_helper": "Wird auf den Umschlag gedruckt, falls du einen Umschlag bestellst.",
     "last_page_label": "Text auf der letzten Seite",
     "last_page_helper": "z. B. © 2027 Barbara und Bruno Kaiser"
   },

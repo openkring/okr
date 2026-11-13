@@ -111,6 +111,15 @@ export async function retryWithBackoff<T>(fn: () => Promise<T>, tries: number, b
   }
 }
 
+/** How long a device trusts its last peer-secret fetch for one journal (spec 1.154 §9). */
+export const PEER_SECRET_REFRESH_MS = 10 * 60 * 1000;
+
+/** Whether the peer secret must be fetched now: always without a cached secret, else at most once per `PEER_SECRET_REFRESH_MS`. */
+export function shouldRefreshPeerSecret(cached: string | undefined, lastRefreshMs: number | undefined, nowMs: number): boolean {
+  if (!cached) return true;
+  return lastRefreshMs === undefined || nowMs - lastRefreshMs >= PEER_SECRET_REFRESH_MS || nowMs < lastRefreshMs;
+}
+
 /**
  * A `journal-changes` document as the browser reads it (web view, plan 8): the server's `uploadedAt` and
  * `tenants` are dropped, and a record the device merge would refuse (`acceptRecord`: bad hlc, or a clock more

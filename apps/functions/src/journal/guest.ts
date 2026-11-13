@@ -17,7 +17,7 @@ import { privateBucket } from '../_storage/private-bucket';
 import { tenantLinks } from '../calendar/deliver';
 import { createFirestoreDeps } from '../workflow/firestore-deps';
 import { windowExpiry } from '../video/video-sign.util';
-import { applyManage, clipReadUrl, deliveryFor, guestBlockKind, guestVideoClips, GuestRequest, GuestRequestError, isGuestVisibleSection, ManageAction, memberName, newLinkCode, parseGuestRequest, parseSetEmail, peopleKeys } from './guest.logic';
+import { applyManage, clipReadUrl, deliveryFor, guestBlockKind, guestVideoClips, GuestRequest, GuestRequestError, isGuestVisibleSection, ManageAction, memberName, newLinkCode, parseGuestRequest, parseGuestEmail, peopleKeys } from './guest.logic';
 import { isJournalKey } from './apply-journal-change.logic';
 import { requireJournalAuthor } from './journal-auth';
 import { checkNotice } from './notify.logic';
@@ -311,7 +311,7 @@ export const manageJournalGuest = onCall(
     if (!isJournalKey(personKey)) throw new HttpsError('invalid-argument', 'personKey');
     // a guest is a person of the journal's tenant — never a link to another tenant's person
     // an optional email for a guest who has none yet (spec 1.154 §9): checked before anything is read or written
-    const email = action === 'create' && d['email'] !== undefined ? parseSetEmail({ personKey, email: d['email'] }).email : undefined;
+    const email = action === 'create' && d['email'] !== undefined ? parseGuestEmail({ personKey, email: d['email'] }).email : undefined;
     if (action === 'create' && !(await personInTenant(db, personKey, [caller.tenantId]))) throw new HttpsError('failed-precondition', 'person not in tenant');
     if (email) await storeEmailIfMissing(db, caller.tenantId, personKey, email);
     const expiresAt = typeof d['expiresAt'] === 'string' && !Number.isNaN(Date.parse(d['expiresAt'])) ? new Date(d['expiresAt']).toISOString() : null;

@@ -9,7 +9,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, okrPrompt } from '@okr/shared-util-angular';
 import { registerBundledIcons } from '@okr/shared-util-core';
 import { JournalEditModal } from '@okr/travel-journal-ui';
-import { JournalFormModel, journalFormOf, journalPatch, JournalListAction, journalListMenu, journalListSheet, JournalWriteSlow } from '@okr/travel-journal-util';
+import { JournalFormModel, journalFormOf, journalPatch, JournalListAction, journalListMenu, journalPeriod, journalListSheet, JournalWriteSlow } from '@okr/travel-journal-util';
 import { continueWhenSlow, showJournalError } from './journal-errors';
 import { openJournalInfo } from './journal-info';
 import { JournalGuestsSheet } from './journal-guests';
@@ -45,7 +45,7 @@ import { JournalStore } from './journal.store';
     <ion-content class="ion-padding">
       <ion-list>
           @for (journal of store.journals(); track journal.key) {
-            <ion-item button detail="false" (click)="actions(journal.key, journal.title)">
+            <ion-item button detail="false" (click)="rowTap(journal.key, journal.title)">
               <div slot="start" class="thumb">
                 @if (store.coverUrl(journal.key); as url) {
                   <img [src]="url" alt="" loading="lazy" />
@@ -53,7 +53,10 @@ import { JournalStore } from './journal.store';
                   <ion-icon src="{{ 'map' | svgIcon }}" />
                 }
               </div>
-              <ion-label>{{ journal.title || store.i18n.untitled() }}</ion-label>
+              <ion-label>
+                {{ journal.title || store.i18n.untitled() }}
+                @if (journalPeriod(journal); as period) { <p>{{ period }}</p> }
+              </ion-label>
             </ion-item>
           } @empty {
             <ion-item lines="none"><ion-label class="ion-text-wrap">{{ store.i18n.list_empty() }}</ion-label></ion-item>
@@ -90,8 +93,15 @@ export class JournalListPage {
     }
   }
 
+  protected readonly journalPeriod = journalPeriod;
+
   protected open(journalKey: string): void {
     void this.router.navigate(['/journal', journalKey]);
+  }
+
+  /** An author gets the sheet; anybody else opens the journal directly. */
+  protected rowTap(journalKey: string, title: string): Promise<void> | void {
+    return this.store.canWrite() ? this.actions(journalKey, title) : this.open(journalKey);
   }
 
   protected async actions(journalKey: string, title: string): Promise<void> {
@@ -107,7 +117,7 @@ export class JournalListPage {
       'journal.notice': [i18n.list_notify(), 'send'],
     };
     const groupLabels = { journal: i18n.list_group_journal(), authors: i18n.list_group_authors(), guests: i18n.list_group_guests() };
-    for (const { group, actions } of journalListSheet({ canWrite: this.store.canWrite() })) {
+    for (const { group, actions } of journalListSheet()) {
       options.buttons.push({ text: groupLabels[group], disabled: true, cssClass: 'okr-sheet-group-label' });
       actions.forEach((action, i) => {
         const [text, icon] = labels[action];

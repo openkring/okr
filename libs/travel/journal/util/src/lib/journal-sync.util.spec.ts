@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   advanceCursor, allPhotoFiles, classifyUploadError, CURSOR_OVERLAP_MS, downloadStart, pagesOf, parsePhotoMode, photoFileName, publishedPhotoFiles,
-  remoteChangeOf, retryWithBackoff,
+  remoteChangeOf, retryWithBackoff, PEER_SECRET_REFRESH_MS, shouldRefreshPeerSecret,
 } from './journal-sync.util';
 import { formatHlc } from './journal-hlc.util';
 import { FootprintView, ImageView } from './journal-view.util';
@@ -111,5 +111,22 @@ describe('remoteChangeOf', () => {
     const images = new Map([['n', video]]);
     expect(allPhotoFiles(images)).toEqual(expect.arrayContaining(['n-2048.jpg', 'n-400.jpg', 'n-video.mp4']));
     expect(publishedPhotoFiles([footprint('f1', 'published', ['n'])], images)).toEqual(expect.arrayContaining(['n-2048.jpg', 'n-400.jpg', 'n-video.mp4']));
+  });
+});
+
+describe('shouldRefreshPeerSecret', () => {
+  it('always fetches without a cached secret', () => {
+    expect(shouldRefreshPeerSecret(undefined, 1000, 1001)).toBe(true);
+    expect(shouldRefreshPeerSecret('', 1000, 1001)).toBe(true);
+  });
+  it('fetches when there was no fetch yet', () => {
+    expect(shouldRefreshPeerSecret('s', undefined, 5)).toBe(true);
+  });
+  it('skips within the window and fetches after it', () => {
+    expect(shouldRefreshPeerSecret('s', 1000, 1000 + PEER_SECRET_REFRESH_MS - 1)).toBe(false);
+    expect(shouldRefreshPeerSecret('s', 1000, 1000 + PEER_SECRET_REFRESH_MS)).toBe(true);
+  });
+  it('fetches when the clock went backwards', () => {
+    expect(shouldRefreshPeerSecret('s', 5000, 1000)).toBe(true);
   });
 });

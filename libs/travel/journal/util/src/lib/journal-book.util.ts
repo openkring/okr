@@ -156,6 +156,14 @@ export function bookDate(storeDate: string | undefined): string {
   return `${convertDateFormatToString(storeDate, DateFormat.StoreDate, DateFormat.DDMM, false)}.${storeDate.slice(0, 4)}`;
 }
 
+/** The travel period of a journal for its list row: «d.M.yyyy – d.M.yyyy», one date when start = end, '' when neither is set. */
+export function journalPeriod(journal: { startDate?: string; endDate?: string }): string {
+  const start = bookDate(journal.startDate);
+  const end = bookDate(journal.endDate);
+  if (!start || !end || journal.startDate === journal.endDate) return start || end;
+  return `${start} – ${end}`;
+}
+
 /** Degrees and whole minutes with a compass letter: 54° 48′ S. */
 export function degMin(value: number, positive: string, negative: string): string {
   const abs = Math.abs(value);

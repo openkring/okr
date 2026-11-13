@@ -1507,10 +1507,6 @@ export const JournalStore = signalStore(
         return (choices.find((c) => c.key === chosen) ?? choices[0])?.url ?? '';
       },
 
-      async renameJournal(journalKey: string, title: string): Promise<void> {
-        await write([{ journalKey, entity: 'journal', entityKey: journalKey, op: 'set', fields: { title } }]);
-      },
-
       /** Deletes (archives) a whole journal; its footprints disappear with it from every list. */
       async archiveJournal(journalKey: string): Promise<void> {
         const me = store.author()?.personKey;

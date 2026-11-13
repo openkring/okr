@@ -71,7 +71,7 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * Trimmed and lower-cased; a malformed address or person key is refused before anything is read or stored.
  * Extra fields are dropped — the caller never chooses tenants, favorite flag or channel.
  */
-export function parseSetEmail(data: unknown): { personKey: string; email: string } {
+export function parseGuestEmail(data: unknown): { personKey: string; email: string } {
   const d = (typeof data === 'object' && data !== null ? data : {}) as Record<string, unknown>;
   const personKey = d['personKey'];
   if (!isJournalKey(personKey)) throw new HttpsError('invalid-argument', 'personKey');
