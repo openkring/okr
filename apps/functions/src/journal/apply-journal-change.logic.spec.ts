@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { JournalChange } from '@okr/shared-models';
 import { conflictCopyKey, formatHlc } from '@okr/travel-journal-util';
 
-import { droppedAuthorKeys, isBookMapFileName, isJournalFileName, journalObjectPath, uploadHeadersFor, mayOverwrite, planEntityWrite, planFootprintSections, planSectionWrites, StoredRecord } from './apply-journal-change.logic';
+import { isBookMapFileName, isJournalFileName, journalObjectPath, uploadHeadersFor, mayOverwrite, planEntityWrite, planFootprintSections, planPeerSecret, planSectionWrites, StoredRecord } from './apply-journal-change.logic';
 
 let n = 0;
 function rec(p: Pick<JournalChange, 'entity' | 'entityKey' | 'op'> & Partial<JournalChange>, deviceId = 'dev-a', authorKey = 'bruno'): StoredRecord {
@@ -209,26 +209,43 @@ describe('uploadHeadersFor', () => {
   });
 });
 
-describe('droppedAuthorKeys (spec 1.154 §9, ruling R11)', () => {
-  it('names the keys the new journal doc no longer lists as authors', () => {
-    expect(droppedAuthorKeys({ authorKeys: ['bruno', 'anna', 'tom'] }, { authorKeys: ['bruno', 'tom'] })).toEqual(['anna']);
+describe('planPeerSecret (spec 1.154 §9, ruling R13)', () => {
+  const peer = (issuedTo?: unknown) => (issuedTo === undefined ? { secret: 's' } : { secret: 's', issuedTo });
+
+  it('rotates when the secret was issued to someone who is no longer an author', () => {
+    expect(planPeerSecret(peer(['bruno', 'anna']), { authorKeys: ['bruno'] })).toEqual({ action: 'rotate', issuedTo: ['bruno'] });
   });
 
-  it('is empty when an author is added or nothing changed', () => {
-    expect(droppedAuthorKeys({ authorKeys: ['bruno'] }, { authorKeys: ['bruno', 'anna'] })).toEqual([]);
-    expect(droppedAuthorKeys({ authorKeys: ['bruno', 'anna'] }, { authorKeys: ['anna', 'bruno'] })).toEqual([]);
+  it('keeps rotating on every run until the secret doc matches (a crash before the secret write is repaired)', () => {
+    const stale = peer(['bruno', 'anna']);
+    expect(planPeerSecret(stale, { authorKeys: ['bruno'] }).action).toBe('rotate');
+    expect(planPeerSecret(stale, { authorKeys: ['bruno', 'tom'] })).toEqual({ action: 'rotate', issuedTo: ['bruno', 'tom'] });
   });
 
-  it('is empty for the first write of a journal (no previous doc)', () => {
-    expect(droppedAuthorKeys(undefined, { authorKeys: ['bruno'] })).toEqual([]);
+  it('records added authors without rotating', () => {
+    expect(planPeerSecret(peer(['bruno']), { authorKeys: ['bruno', 'anna'] })).toEqual({ action: 'record', issuedTo: ['bruno', 'anna'] });
   });
 
-  it('is empty when the journal is archived: the doc has no author list left to protect', () => {
-    expect(droppedAuthorKeys({ authorKeys: ['bruno', 'anna'] }, { isArchived: true })).toEqual([]);
+  it('does nothing when the secret was issued to exactly the current authors', () => {
+    expect(planPeerSecret(peer(['anna', 'bruno']), { authorKeys: ['bruno', 'anna'] })).toEqual({ action: 'none' });
   });
 
-  it('ignores malformed author lists', () => {
-    expect(droppedAuthorKeys({ authorKeys: 'bruno' }, { authorKeys: [] })).toEqual([]);
-    expect(droppedAuthorKeys({ authorKeys: ['bruno', 7, ''] }, { authorKeys: ['bruno'] })).toEqual([]);
+  it('treats a secret without issuedTo (before 1.154) as issued to the current authors: record, no rotation', () => {
+    expect(planPeerSecret(peer(), { authorKeys: ['bruno', 'anna'] })).toEqual({ action: 'record', issuedTo: ['bruno', 'anna'] });
+    expect(planPeerSecret(peer('bruno'), { authorKeys: ['bruno'] })).toEqual({ action: 'record', issuedTo: ['bruno'] });
+  });
+
+  it('does nothing for an archived journal (no authorKeys)', () => {
+    expect(planPeerSecret(peer(['bruno', 'anna']), { isArchived: true })).toEqual({ action: 'none' });
+    expect(planPeerSecret(peer(['bruno']), undefined)).toEqual({ action: 'none' });
+  });
+
+  it('creates a missing secret only when asked (ensureJournalPeerSecret), issued to the current authors', () => {
+    expect(planPeerSecret(undefined, { authorKeys: ['bruno'] })).toEqual({ action: 'none' });
+    expect(planPeerSecret({ secret: '' }, { authorKeys: ['bruno'] }, true)).toEqual({ action: 'create', issuedTo: ['bruno'] });
+  });
+
+  it('ignores malformed keys', () => {
+    expect(planPeerSecret(peer(['bruno', 7, '']), { authorKeys: ['bruno', ''] })).toEqual({ action: 'none' });
   });
 });

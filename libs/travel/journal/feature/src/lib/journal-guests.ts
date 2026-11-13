@@ -127,8 +127,9 @@ export class JournalGuestsSheet {
   }
 
   /**
-   * Adds a guest (spec 1.154 §9, ruling R10): person picker → does the person have an email? → if not, ask for one
-   * (cancel = nobody is added) → guest record → the link, created with that email, through the share sheet.
+   * Adds a guest (spec 1.154 §9, rulings R10/R14): person picker → does the person have an email? → if not, ask for
+   * one (cancel = nobody is added) → the link, created with that email → only then the guest record → the link
+   * through the share sheet. A failed link adds nobody (the guest is added only once an email exists).
    */
   public async add(journalKey: string, changed: () => void): Promise<void> {
     const i18n = this.store.i18n;
@@ -146,10 +147,10 @@ export class JournalGuestsSheet {
         }
         email = entered.trim();
       }
+      const link = await this.guestService.createLink(journalKey, person.key, email);
       await this.store.addGuest(journalKey, person);
       changed();
-      await this.share(journalKey, person, email);
-      changed(); // the share created the link
+      await this.share(journalKey, person, Promise.resolve(link.url));
     } catch (error) {
       await showJournalError(this.toastController, i18n, error);
     }
@@ -210,10 +211,10 @@ export class JournalGuestsSheet {
    * The personal link (created on first use) through the share sheet: Messages, Mail, Signal, AirDrop … A browser
    * without Web Share (desktop Firefox, some Chromium builds) gets the link on the clipboard instead. Runs from the
    * sheet button's handler: nothing is awaited before the clipboard write starts (the tap must still count).
-   * `email` (a new guest without one, ruling R10) is stored with the link.
+   * `link`: a link created already (a new guest, ruling R14); otherwise it is created (or reused) here.
    */
-  private async share(journalKey: string, guest: AvatarInfo, email?: string): Promise<void> {
-    const url = this.guestService.createLink(journalKey, guest.key, email).then((link) => link.url);
+  private async share(journalKey: string, guest: AvatarInfo, link?: Promise<string>): Promise<void> {
+    const url = link ?? this.guestService.createLink(journalKey, guest.key).then((l) => l.url);
     const web = !Capacitor.isNativePlatform();
     if (web && typeof navigator.share !== 'function') return this.copyLink(url);
     try {

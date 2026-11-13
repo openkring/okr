@@ -126,16 +126,30 @@ export function journalObjectPath(tenantId: string, journalKey: string, fileName
   return `tenant/${tenantId}/journal/${journalKey}/${fileName}`;
 }
 
+/** What to do with the journal's peer secret doc after a journal write (spec 1.154 §9, ruling R13). */
+export type PeerSecretPlan =
+  | { action: 'none' }
+  | { action: 'create' | 'rotate' | 'record'; issuedTo: string[] };
+
+const keysOf = (value: unknown): string[] | undefined =>
+  Array.isArray(value) ? [...new Set(value.filter((k): k is string => typeof k === 'string' && k !== ''))] : undefined;
+
 /**
- * The author keys a journal write removes (spec 1.154 §9, ruling R11): those in the stored doc's `authorKeys` that
- * the new doc no longer lists. Removing an author renews the peer secret. No previous doc (first write) or no
- * author list in the new doc (the journal is archived) removes nobody; non-string or empty keys are ignored.
+ * Compares who the peer secret was issued to (`issuedTo` on `private/peer`) with the journal's current `authorKeys`
+ * — a state comparison, not a one-time diff, so a crash between the journal write and the secret write is repaired
+ * by the next run. A key in `issuedTo` that is no longer an author → `rotate` (fresh secret for the current authors);
+ * authors only added → `record` the current list without rotating; `issuedTo` missing (a secret from before 1.154) →
+ * `record` the current list (no rotation). No secret yet → `create` when `createMissing` (ensureJournalPeerSecret),
+ * else nothing: the first author to sync creates it. A doc without `authorKeys` (archived journal) → nothing.
  */
-export function droppedAuthorKeys(previous: Record<string, unknown> | undefined, next: Record<string, unknown>): string[] {
-  const keys = (doc: Record<string, unknown> | undefined): string[] | undefined =>
-    Array.isArray(doc?.['authorKeys']) ? (doc['authorKeys'] as unknown[]).filter((k): k is string => typeof k === 'string' && k !== '') : undefined;
-  const before = keys(previous);
-  const after = keys(next);
-  if (!before || !after) return [];
-  return before.filter((key) => !after.includes(key));
+export function planPeerSecret(peer: Record<string, unknown> | undefined, journal: Record<string, unknown> | undefined, createMissing = false): PeerSecretPlan {
+  const current = keysOf(journal?.['authorKeys']);
+  if (!current) return { action: 'none' };
+  const secret = peer?.['secret'];
+  if (typeof secret !== 'string' || secret === '') return createMissing ? { action: 'create', issuedTo: current } : { action: 'none' };
+  const issuedTo = keysOf(peer?.['issuedTo']);
+  if (!issuedTo) return { action: 'record', issuedTo: current };
+  if (issuedTo.some((key) => !current.includes(key))) return { action: 'rotate', issuedTo: current };
+  if (current.some((key) => !issuedTo.includes(key))) return { action: 'record', issuedTo: current };
+  return { action: 'none' };
 }
