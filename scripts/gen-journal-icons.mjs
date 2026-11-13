@@ -14,7 +14,7 @@ const OUT = 'libs/travel/journal/feature/src/lib/journal-icons.ts';
 
 // every icon name the journal pages, its menus and ActionSheets use (keep sorted)
 const NAMES = [
-  'add', 'airplane', 'book', 'cancel', 'chatbubble', 'download', 'edit', 'ellipsis-vertical', 'eye-off', 'eye-on',
+  'add', 'airplane', 'book', 'cancel', 'cancel-circle', 'chatbubble', 'download', 'edit', 'ellipsis-vertical', 'eye-off', 'eye-on',
   'images', 'info-circle', 'map', 'navigate', 'people', 'person-add', 'reload', 'send', 'settings', 'swap-horizontal',
   'sync-circle', 'text', 'trash', 'video', 'warning',
 ];

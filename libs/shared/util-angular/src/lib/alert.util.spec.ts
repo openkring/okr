@@ -195,6 +195,12 @@ describe('alert.util', () => {
       });
     });
 
+    it('should use the given input type (e.g. email)', async () => {
+      await okrPrompt(mockAlertController, 'H', 'P', 'OK', 'Cancel', undefined, 'email');
+      const call = (mockAlertController.create as any).mock.calls[0][0];
+      expect(call.inputs[0].type).toBe('email');
+    });
+
     it('should pass value when provided', async () => {
       await okrPrompt(mockAlertController, 'H', 'P', 'OK', 'Cancel', 'existing');
       const call = (mockAlertController.create as any).mock.calls[0][0];

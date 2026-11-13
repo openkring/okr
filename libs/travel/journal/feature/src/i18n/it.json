@@ -7,9 +7,6 @@
     "rename": "Rinomina",
     "delete": "Elimina",
     "delete_confirm": "Eliminare questo diario di viaggio con tutte le sue tappe?",
-    "coauthor": "Aggiungi coautore",
-    "coauthor_done": "{name} ora scrive con te.",
-    "coauthor_offline": "Puoi aggiungere coautori solo con una connessione Internet.",
     "open": "Apri",
     "edit": "Modifica il diario …",
     "manage": "Gestisci …",
@@ -467,5 +464,17 @@
     "skipped_too_large": "Il video è diventato troppo grande e non è stato aggiunto.",
     "limit": "Un blocco video può contenere 5 video.",
     "not_loaded": "Video non ancora caricato"
+  },
+  "people": {
+    "authors_manage": "Gestisci autori",
+    "authors_offline": "Puoi gestire gli autori solo con una connessione Internet.",
+    "author_add": "Aggiungi autore",
+    "author_remove": "Rimuovi come autore",
+    "author_remove_confirm": "{name} non potrà più scrivere con te. Quello che {name} ha scritto resta.",
+    "remove": "rimuovi",
+    "no_email": "nessuna e-mail",
+    "email_prompt": "Gli ospiti hanno bisogno di un indirizzo e-mail. Qual è quello di {name}?",
+    "email_placeholder": "Indirizzo e-mail",
+    "email_invalid": "Questo non è un indirizzo e-mail valido."
   }
 }

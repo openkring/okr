@@ -1,4 +1,4 @@
-import { JournalChange, JournalChangeOp, JournalEntity, JournalGuestLink } from '@okr/shared-models';
+import { AvatarInfo, JournalChange, JournalChangeOp, JournalEntity, JournalGuestLink } from '@okr/shared-models';
 import { formatHlc } from './journal-hlc.util';
 import { entityStateKey, JournalState, viewOf } from './journal-merge.util';
 import { publishedFootprintsOf } from './journal-view.util';
@@ -127,4 +127,27 @@ export function digestOf(records: JournalChange[], state: JournalState, journalK
     }
   }
   return [...items.values()].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+}
+
+/** One row of the «Autoren verwalten» / «Gäste verwalten» modal (spec 1.154 §9). */
+export interface JournalPersonRow { person: AvatarInfo; email: string; noEmail: boolean; removable: boolean }
+
+/**
+ * The modal's rows: each person with the email the server returned for them ('' when none). `noEmail` (the
+ * warning) only for a person the server listed with '' — a guest without a link yet has no server row, so their
+ * email is unknown and gets no warning (ruling R9). `warnMissingEmail` is false for authors: only a guest needs one.
+ */
+export function journalPersonRows(
+  persons: AvatarInfo[], emails: { personKey: string; email: string }[], removableKeys: string[], warnMissingEmail: boolean,
+): JournalPersonRow[] {
+  const byKey = new Map(emails.map((e) => [e.personKey, e.email]));
+  return persons.map((person) => {
+    const email = byKey.get(person.key);
+    return { person, email: email ?? '', noEmail: warnMissingEmail && email === '', removable: removableKeys.includes(person.key) };
+  });
+}
+
+/** Deliberately loose (the same rule as `manageJournalGuest`): one `@`, a dot in the domain, no whitespace. */
+export function isEmailShape(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }

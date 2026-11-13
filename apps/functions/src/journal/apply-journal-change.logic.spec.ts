@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { JournalChange } from '@okr/shared-models';
 import { conflictCopyKey, formatHlc } from '@okr/travel-journal-util';
 
-import { isBookMapFileName, isJournalFileName, journalObjectPath, uploadHeadersFor, mayOverwrite, planEntityWrite, planFootprintSections, planSectionWrites, StoredRecord } from './apply-journal-change.logic';
+import { droppedAuthorKeys, isBookMapFileName, isJournalFileName, journalObjectPath, uploadHeadersFor, mayOverwrite, planEntityWrite, planFootprintSections, planSectionWrites, StoredRecord } from './apply-journal-change.logic';
 
 let n = 0;
 function rec(p: Pick<JournalChange, 'entity' | 'entityKey' | 'op'> & Partial<JournalChange>, deviceId = 'dev-a', authorKey = 'bruno'): StoredRecord {
@@ -206,5 +206,29 @@ describe('uploadHeadersFor', () => {
   it('binds a photo to image/jpeg and a clip to video/mp4', () => {
     expect(uploadHeadersFor('a-2048.jpg')).toEqual({ 'Content-Type': 'image/jpeg', 'x-goog-content-length-range': '0,15728640' });
     expect(uploadHeadersFor('ab-video.mp4')).toEqual({ 'Content-Type': 'video/mp4', 'x-goog-content-length-range': '0,9000000' });
+  });
+});
+
+describe('droppedAuthorKeys (spec 1.154 §9, ruling R11)', () => {
+  it('names the keys the new journal doc no longer lists as authors', () => {
+    expect(droppedAuthorKeys({ authorKeys: ['bruno', 'anna', 'tom'] }, { authorKeys: ['bruno', 'tom'] })).toEqual(['anna']);
+  });
+
+  it('is empty when an author is added or nothing changed', () => {
+    expect(droppedAuthorKeys({ authorKeys: ['bruno'] }, { authorKeys: ['bruno', 'anna'] })).toEqual([]);
+    expect(droppedAuthorKeys({ authorKeys: ['bruno', 'anna'] }, { authorKeys: ['anna', 'bruno'] })).toEqual([]);
+  });
+
+  it('is empty for the first write of a journal (no previous doc)', () => {
+    expect(droppedAuthorKeys(undefined, { authorKeys: ['bruno'] })).toEqual([]);
+  });
+
+  it('is empty when the journal is archived: the doc has no author list left to protect', () => {
+    expect(droppedAuthorKeys({ authorKeys: ['bruno', 'anna'] }, { isArchived: true })).toEqual([]);
+  });
+
+  it('ignores malformed author lists', () => {
+    expect(droppedAuthorKeys({ authorKeys: 'bruno' }, { authorKeys: [] })).toEqual([]);
+    expect(droppedAuthorKeys({ authorKeys: ['bruno', 7, ''] }, { authorKeys: ['bruno'] })).toEqual([]);
   });
 });

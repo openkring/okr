@@ -125,3 +125,17 @@ export function mayOverwrite(name: string, overwrite: unknown): boolean {
 export function journalObjectPath(tenantId: string, journalKey: string, fileName: string): string {
   return `tenant/${tenantId}/journal/${journalKey}/${fileName}`;
 }
+
+/**
+ * The author keys a journal write removes (spec 1.154 §9, ruling R11): those in the stored doc's `authorKeys` that
+ * the new doc no longer lists. Removing an author renews the peer secret. No previous doc (first write) or no
+ * author list in the new doc (the journal is archived) removes nobody; non-string or empty keys are ignored.
+ */
+export function droppedAuthorKeys(previous: Record<string, unknown> | undefined, next: Record<string, unknown>): string[] {
+  const keys = (doc: Record<string, unknown> | undefined): string[] | undefined =>
+    Array.isArray(doc?.['authorKeys']) ? (doc['authorKeys'] as unknown[]).filter((k): k is string => typeof k === 'string' && k !== '') : undefined;
+  const before = keys(previous);
+  const after = keys(next);
+  if (!before || !after) return [];
+  return before.filter((key) => !after.includes(key));
+}

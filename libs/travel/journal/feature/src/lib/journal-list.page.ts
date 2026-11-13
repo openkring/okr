@@ -1,22 +1,20 @@
 import { Component, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { Network } from '@capacitor/network';
 import {
   ActionSheetController, AlertController, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton,
   IonTitle, IonToolbar, ModalController, PopoverController, ToastController,
 } from '@ionic/angular';
 
-import { ModelSelectService } from '@okr/shared-feature';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, okrPrompt } from '@okr/shared-util-angular';
-import { fill, registerBundledIcons } from '@okr/shared-util-core';
+import { registerBundledIcons } from '@okr/shared-util-core';
 import { JournalEditModal } from '@okr/travel-journal-ui';
 import { JournalFormModel, journalFormOf, journalPatch, JournalListAction, journalListMenu, journalListSheet, JournalWriteSlow } from '@okr/travel-journal-util';
 import { continueWhenSlow, showJournalError } from './journal-errors';
 import { openJournalInfo } from './journal-info';
 import { JournalGuestsSheet } from './journal-guests';
-import { openGuestsModal } from './journal-guests.modal';
 import { openJournalMenu } from './journal-menu-open';
+import { openPeopleModal } from './journal-people.modal';
 import { openPhotoSyncModal } from './journal-photo-sync.modal';
 import { JOURNAL_ICONS } from './journal-icons';
 import { JournalStore } from './journal.store';
@@ -70,7 +68,6 @@ export class JournalListPage {
   private readonly alertController = inject(AlertController);
   private readonly toastController = inject(ToastController);
   private readonly actionSheetController = inject(ActionSheetController);
-  private readonly modelSelectService = inject(ModelSelectService);
   private readonly guestsSheet = inject(JournalGuestsSheet);
   private readonly modalController = inject(ModalController);
   private readonly popoverController = inject(PopoverController);
@@ -126,8 +123,8 @@ export class JournalListPage {
     switch (data?.action) {
       case 'journal.open': return this.open(journalKey);
       case 'journal.edit': return this.edit(journalKey);
-      case 'journal.authors': return this.addCoAuthor(journalKey);
-      case 'journal.guests': return openGuestsModal(this.modalController, this.guestsSheet, journalKey);
+      case 'journal.authors': return openPeopleModal(this.modalController, this.guestsSheet, journalKey, 'authors');
+      case 'journal.guests': return openPeopleModal(this.modalController, this.guestsSheet, journalKey, 'guests');
       case 'journal.notice': return this.guestsSheet.notify(journalKey);
       case 'journal.delete': return this.confirmDelete(journalKey);
     }
@@ -143,26 +140,6 @@ export class JournalListPage {
     const { data, role } = await modal.onWillDismiss<JournalFormModel>();
     if (role !== 'confirm' || !data) return;
     await this.run(() => this.store.updateJournal(journalKey, journalPatch(data, current)));
-  }
-
-  /** Picks a person (needs the person list, so online only) and makes them a co-author. */
-  private async addCoAuthor(journalKey: string): Promise<void> {
-    const i18n = this.store.i18n;
-    if (!(await Network.getStatus()).connected) {
-      await this.toast(i18n.list_coauthor_offline());
-      return;
-    }
-    const person = await this.modelSelectService.selectPersonAvatar();
-    if (!person?.key) return; // cancelled, or a free-text name without a person
-    await this.run(async () => {
-      await this.store.addCoAuthor(journalKey, person);
-      await this.toast(fill(i18n.list_coauthor_done(), { name: `${person.name1} ${person.name2}`.trim() }));
-    });
-  }
-
-  private async toast(message: string): Promise<void> {
-    const toast = await this.toastController.create({ message, duration: 2500, position: 'bottom' });
-    await toast.present();
   }
 
   private async confirmDelete(journalKey: string): Promise<void> {

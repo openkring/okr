@@ -11,7 +11,7 @@ import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functi
 import { originalOfCopy, withCheckedBases } from '@okr/travel-journal-util';
 
 import { privateBucket } from '../_storage/private-bucket';
-import { isJournalFileName, journalObjectPath, uploadHeadersFor, planEntityWrite, planFootprintSections, planSectionWrites, StoredRecord, mayOverwrite } from './apply-journal-change.logic';
+import { droppedAuthorKeys, isJournalFileName, journalObjectPath, uploadHeadersFor, planEntityWrite, planFootprintSections, planSectionWrites, StoredRecord, mayOverwrite } from './apply-journal-change.logic';
 import { requireJournalAuthor } from './journal-auth';
 
 const REGION = 'europe-west6';
@@ -71,9 +71,30 @@ export const applyJournalChange = onDocumentCreated(
       await writeFootprintSections(change.journalKey, change.entityKey, tenants);
       return;
     }
+    if (change.entity === 'journal') {
+      const previous = (await db.doc(write.path).get()).data();
+      await db.doc(write.path).set(write.data);
+      // after the write: a removed author is no longer in authorKeys, so ensureJournalPeerSecret refuses them the new secret
+      const dropped = droppedAuthorKeys(previous, write.data);
+      if (dropped.length > 0) {
+        await peerSecretRef(change.journalKey).set(freshPeerSecret(tenants));
+        logger.info(`applyJournalChange: peer secret of ${change.journalKey} renewed (${dropped.length} author(s) removed)`);
+      }
+      return;
+    }
     await db.doc(write.path).set(write.data);
   },
 );
+
+/** The journal's peer secret document (authors only, spec 1.113 plan 5). */
+function peerSecretRef(journalKey: string) {
+  return getFirestore().doc(`${JournalCollection}/${journalKey}/${JournalPrivateCollection}/${JournalPeerDoc}`);
+}
+
+/** A new peer secret document: the one shape both writers use (first request, and renewal after removing an author). */
+function freshPeerSecret(tenants: string[]): { secret: string; tenants: string[] } {
+  return { secret: randomBytes(32).toString('base64'), tenants };
+}
 
 async function writeFootprintSections(journalKey: string, footprintKey: string, tenants: string[]): Promise<void> {
   const db = getFirestore();
@@ -144,9 +165,8 @@ export const signJournalPhotos = onCall(
 );
 
 /**
- * The journal's peer secret for the P2P link (plan 5), created on first request. Authors only.
- * `rotate: true` always writes a fresh one (spec 1.154 §9: removing an author renews it); the other iPads
- * fetch it on their next online contact.
+ * The journal's peer secret for the P2P link (plan 5), created on first request. Authors only. Removing an author
+ * renews it in applyJournalChange (spec 1.154 §9, ruling R11); the other iPads fetch it on their next online contact.
  */
 export const ensureJournalPeerSecret = onCall(
   { region: REGION, enforceAppCheck: true, cors: true },
@@ -154,18 +174,15 @@ export const ensureJournalPeerSecret = onCall(
     checkAppCheckToken(request as never, 'ensureJournalPeerSecret');
     checkAuthentication(request as never, 'ensureJournalPeerSecret');
     const db = getFirestore();
-    const data = request.data as { journalKey?: unknown; rotate?: unknown } | undefined;
-    const caller = await requireJournalAuthor(db, request.auth?.uid ?? '', data?.journalKey);
-    const rotate = data?.rotate === true;
-    const ref = db.doc(`${JournalCollection}/${caller.journalKey}/${JournalPrivateCollection}/${JournalPeerDoc}`);
+    const caller = await requireJournalAuthor(db, request.auth?.uid ?? '', (request.data as { journalKey?: unknown } | undefined)?.journalKey);
+    const ref = peerSecretRef(caller.journalKey);
     const secret = await db.runTransaction(async (tx) => {
       const existing = (await tx.get(ref)).data()?.['secret'];
-      if (!rotate && typeof existing === 'string' && existing !== '') return existing;
-      const created = randomBytes(32).toString('base64');
-      tx.set(ref, { secret: created, tenants: [caller.tenantId] });
-      return created;
+      if (typeof existing === 'string' && existing !== '') return existing;
+      const created = freshPeerSecret([caller.tenantId]);
+      tx.set(ref, created);
+      return created.secret;
     });
-    if (rotate) logger.info(`ensureJournalPeerSecret: secret of ${caller.journalKey} renewed`);
     return { secret };
   },
 );

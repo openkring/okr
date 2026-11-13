@@ -18,7 +18,7 @@ import {
   toBase64,
 } from '@okr/travel-journal-data-access';
 import {
-  BOOK_I18N_KEYS, BOOK_LABEL_MAX, JournalFormModel, removableAuthorKeys, bookLabelsOf, JournalBookI18n, bookPrintCandidates, entityStateKey, hasOthersBlocks, pagesOf, PRINT_FILL_LONG_PX, PRINT_FILL_SHORT_PX, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
+  BOOK_I18N_KEYS, BOOK_LABEL_MAX, JournalFormModel, removableAuthorKeys, authorsWithout, bookLabelsOf, JournalBookI18n, bookPrintCandidates, entityStateKey, hasOthersBlocks, pagesOf, PRINT_FILL_LONG_PX, PRINT_FILL_SHORT_PX, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
   allPhotoFiles, commentsOf, CommentView, likeKey, likesOf, JournalPhotoMode, JournalTileSource, journalsOf, journalTilePlan, MapArea, mapLayers, MapPlace, mapPlaces, parseMapAreas, parsePhotoMode, TileJob, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, reorderedOrders, CONFLICT_FIELDS, dismissedField, isConflictCopyKey, originalOfCopy, BlockView, publishedPhotoFiles, viewOf, MAX_VIDEOS_PER_BLOCK, isVideoFile,
   JournalLock, LOCK_HEARTBEAT_MS, LOCK_TTL_MS, lockedBy, mergeLocks, BoundAuthor, JournalWriteSlow, mergePending,
   AreaLayer, areaForWrite, areaLayerTilePlan, BaseLayerOption, baseLayerOptions, Bbox, finishRun, isUsable, layerDetailLevels, layerKindsFor,
@@ -1478,6 +1478,23 @@ export const JournalStore = signalStore(
         const view = viewOf(entity);
         const authors = Array.isArray(view?.['authors']) ? (view['authors'] as AvatarInfo[]) : [];
         return removableAuthorKeys(authors, entity?.ownerKey ?? '', store.author()?.personKey ?? '');
+      },
+
+      /**
+       * Removes a co-author (spec 1.154 §9): one journal record with `authors` and `authorKeys` without them (pure rule:
+       * authorsWithout — never the creator, never yourself). Their sections stay. The function renews the peer secret
+       * once the shortened `authorKeys` is materialised (ruling R11), so nothing is rotated here.
+       */
+      async removeAuthor(journalKey: string, personKey: string): Promise<void> {
+        const me = store.author();
+        if (!me) throw new JournalWriteRefused('noAuthor');
+        const entity = store.journalState()[entityStateKey('journal', journalKey)];
+        const view = viewOf(entity);
+        const authors = Array.isArray(view?.['authors']) ? (view['authors'] as AvatarInfo[]) : [];
+        const authorKeys = Array.isArray(view?.['authorKeys']) ? (view['authorKeys'] as unknown[]).filter((k): k is string => typeof k === 'string') : [];
+        const next = authorsWithout(authors, authorKeys, entity?.ownerKey ?? '', personKey, me.personKey);
+        await write([{ journalKey, entity: 'journal', entityKey: journalKey, op: 'set', fields: { authors: next.authors, authorKeys: next.authorKeys } }]);
+        void syncNow();
       },
 
       /** The photos the author may pick as the cover, in book order (a video poster is no cover), each with a displayable thumbnail URL. */

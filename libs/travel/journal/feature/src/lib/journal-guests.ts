@@ -2,20 +2,26 @@ import { inject, Injectable } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
 import { Network } from '@capacitor/network';
 import { Share } from '@capacitor/share';
-import { ActionSheetController, ModalController, ToastController } from '@ionic/angular';
+import { ActionSheetController, AlertController, ModalController, ToastController } from '@ionic/angular';
 
 import { AvatarInfo } from '@okr/shared-models';
 import { ModelSelectService } from '@okr/shared-feature';
-import { copyToClipboardDeferred } from '@okr/shared-util-angular';
+import { copyToClipboardDeferred, okrPrompt } from '@okr/shared-util-angular';
 import { fill } from '@okr/shared-util-core';
 import { GuestLinkView, guestErrorOf, JournalGuestService } from '@okr/travel-journal-data-access';
 import { NoticeModal } from '@okr/travel-journal-ui';
-import { NoticeFormModel } from '@okr/travel-journal-util';
+import { isEmailShape, journalPersonRows, JournalPersonRow, NoticeFormModel } from '@okr/travel-journal-util';
 
 import { showJournalError } from './journal-errors';
 import { JournalStore } from './journal.store';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Which list the «Autoren verwalten» / «Gäste verwalten» modal shows (spec 1.154 §9). */
+export type JournalPeopleMode = 'authors' | 'guests';
+
+/** A modal row: the person, their email (authors only see it), and for a guest the link state. */
+export interface JournalPeopleRow extends JournalPersonRow { state: string }
 
 /**
  * Web Share is missing («Share API not available in this browser», from Capacitor's web Share) or refused
@@ -27,8 +33,9 @@ function isShareUnavailable(error: unknown): boolean {
 }
 
 /**
- * Guest actions of a journal (spec 1.113 §7, plan 7; listed in the «Gäste verwalten» modal since 1.126 §3): add a
- * guest (person picker), share the personal link, set how long it works, block access, remove (confirmed).
+ * Author and guest actions of a journal (spec 1.113 §7, plan 7; the «Autoren/Gäste verwalten» modal since 1.154 §9):
+ * add a guest (person picker, with an email when the person has none), share the personal link, set how long it
+ * works, block access, remove (confirmed); add and remove co-authors.
  */
 @Injectable({ providedIn: 'root' })
 export class JournalGuestsSheet {
@@ -38,6 +45,7 @@ export class JournalGuestsSheet {
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly toastController = inject(ToastController);
   private readonly modalController = inject(ModalController);
+  private readonly alertController = inject(AlertController);
 
   /**
    * «Gäste benachrichtigen» (plan 8): the server collects what changed since the last notice and proposes a
@@ -72,23 +80,35 @@ export class JournalGuestsSheet {
   }
 
   /**
-   * The journal's guests with their link state, for the «Gäste verwalten» modal. Online only — the links live behind a
-   * callable. A live link of a person who is no longer on the guest list stays visible, so it can still be blocked.
+   * The rows of the «Autoren/Gäste verwalten» modal. Online only — links and emails live behind a callable.
+   * Authors: the journal's author list (yourself when nobody was added yet); only co-authors other than the creator
+   * and yourself are removable. Guests: a live link of a person who is no longer on the guest list stays visible, so
+   * it can still be blocked. Emails come from `people()`, which lists authors and guests holding a link (ruling R9):
+   * a guest without a link has no email row yet and shows «noch kein Link» rather than the «keine E-Mail» warning.
    */
-  public async load(journalKey: string): Promise<{ guest: AvatarInfo; state: string }[]> {
-    const links = new Map((await this.guestService.links(journalKey)).filter((l) => !l.revokedAt).map((l) => [l.personKey, l]));
+  public async rows(journalKey: string, mode: JournalPeopleMode): Promise<JournalPeopleRow[]> {
+    if (mode === 'authors') {
+      const me = this.store.author();
+      const listed = this.store.authors(journalKey);
+      const authors = listed.length > 0 || !me ? listed
+        : [{ key: me.personKey, name1: me.name, name2: '', modelType: 'person', type: '', subType: '', label: me.name } as AvatarInfo];
+      const emails = await this.guestService.people(journalKey);
+      return journalPersonRows(authors, emails, this.store.removableAuthorKeys(journalKey), false).map((row) => ({ ...row, state: '' }));
+    }
+    const [linkList, emails] = await Promise.all([this.guestService.links(journalKey), this.guestService.people(journalKey)]);
+    const links = new Map(linkList.filter((l) => !l.revokedAt).map((l) => [l.personKey, l]));
     const guests = [...this.store.guests(journalKey)];
     for (const personKey of links.keys()) {
       if (!guests.some((g) => g.key === personKey)) {
         guests.push({ key: personKey, name1: personKey, name2: '', modelType: 'person', type: '', subType: '', label: personKey });
       }
     }
-    return guests.map((guest) => ({ guest, state: this.stateOf(links.get(guest.key)) }));
+    return journalPersonRows(guests, emails, guests.map((g) => g.key), true).map((row) => ({ ...row, state: this.stateOf(links.get(row.person.key)) }));
   }
 
-  public async isOnline(): Promise<boolean> {
+  public async isOnline(mode: JournalPeopleMode = 'guests'): Promise<boolean> {
     if ((await Network.getStatus()).connected) return true;
-    await this.toast(this.store.i18n.guest_offline());
+    await this.toast(mode === 'authors' ? this.store.i18n.people_authors_offline() : this.store.i18n.guest_offline());
     return false;
   }
 
@@ -106,20 +126,72 @@ export class JournalGuestsSheet {
     return parts.join(', ');
   }
 
+  /**
+   * Adds a guest (spec 1.154 §9, ruling R10): person picker → does the person have an email? → if not, ask for one
+   * (cancel = nobody is added) → guest record → the link, created with that email, through the share sheet.
+   */
   public async add(journalKey: string, changed: () => void): Promise<void> {
+    const i18n = this.store.i18n;
     const person = await this.modelSelectService.selectPersonAvatar();
     if (!person?.key) return; // cancelled, or a free-text name without a person
     try {
+      let email: string | undefined;
+      if (!(await this.guestService.hasEmail(journalKey, person.key))) {
+        const entered = await okrPrompt(this.alertController, fill(i18n.people_email_prompt(), { name: this.nameOf(person) }),
+          i18n.people_email_placeholder(), i18n.save(), i18n.cancel(), undefined, 'email');
+        if (entered === undefined) return;
+        if (!isEmailShape(entered)) {
+          await this.toast(i18n.people_email_invalid());
+          return;
+        }
+        email = entered.trim();
+      }
       await this.store.addGuest(journalKey, person);
       changed();
-      await this.share(journalKey, person);
+      await this.share(journalKey, person, email);
       changed(); // the share created the link
+    } catch (error) {
+      await showJournalError(this.toastController, i18n, error);
+    }
+  }
+
+  /** Adds a co-author through the person picker (plan 4); the creator always stays an author. */
+  public async addAuthor(journalKey: string, changed: () => void): Promise<void> {
+    const person = await this.modelSelectService.selectPersonAvatar();
+    if (!person?.key) return; // cancelled, or a free-text name without a person
+    try {
+      await this.store.addCoAuthor(journalKey, person);
+      changed();
     } catch (error) {
       await showJournalError(this.toastController, this.store.i18n, error);
     }
   }
 
-  /** The per-guest sheet; `changed` runs after an action that alters the guest list or a link. */
+  /** The red «entfernen» icon of a row: always asks first (a destructive action sheet). */
+  public async confirmRemove(journalKey: string, person: AvatarInfo, mode: JournalPeopleMode, changed: () => void): Promise<void> {
+    if (mode === 'guests') return this.confirmRevoke(journalKey, person, true, changed);
+    const i18n = this.store.i18n;
+    const sheet = await this.actionSheetController.create({
+      header: fill(i18n.people_author_remove_confirm(), { name: this.nameOf(person) }),
+      buttons: [
+        {
+          text: i18n.people_author_remove(), role: 'destructive',
+          handler: () => void (async () => {
+            try {
+              await this.store.removeAuthor(journalKey, person.key);
+              changed();
+            } catch (error) {
+              await showJournalError(this.toastController, i18n, error);
+            }
+          })(),
+        },
+        { text: i18n.cancel(), role: 'cancel' },
+      ],
+    });
+    await sheet.present();
+  }
+
+  /** The per-guest sheet (removing is the row's red icon); `changed` runs after an action that alters a link. */
   public async guestActions(journalKey: string, guest: AvatarInfo, changed: () => void): Promise<void> {
     const i18n = this.store.i18n;
     const sheet = await this.actionSheetController.create({
@@ -128,7 +200,6 @@ export class JournalGuestsSheet {
         { text: i18n.guest_share(), handler: () => void this.share(journalKey, guest) },
         { text: i18n.guest_expiry(), handler: () => void this.expiry(journalKey, guest, changed) },
         { text: i18n.guest_revoke(), role: 'destructive', handler: () => void this.confirmRevoke(journalKey, guest, false, changed) },
-        { text: i18n.guest_remove(), role: 'destructive', handler: () => void this.confirmRevoke(journalKey, guest, true, changed) },
         { text: i18n.cancel(), role: 'cancel' },
       ],
     });
@@ -139,9 +210,10 @@ export class JournalGuestsSheet {
    * The personal link (created on first use) through the share sheet: Messages, Mail, Signal, AirDrop … A browser
    * without Web Share (desktop Firefox, some Chromium builds) gets the link on the clipboard instead. Runs from the
    * sheet button's handler: nothing is awaited before the clipboard write starts (the tap must still count).
+   * `email` (a new guest without one, ruling R10) is stored with the link.
    */
-  private async share(journalKey: string, guest: AvatarInfo): Promise<void> {
-    const url = this.guestService.createLink(journalKey, guest.key).then((link) => link.url);
+  private async share(journalKey: string, guest: AvatarInfo, email?: string): Promise<void> {
+    const url = this.guestService.createLink(journalKey, guest.key, email).then((link) => link.url);
     const web = !Capacitor.isNativePlatform();
     if (web && typeof navigator.share !== 'function') return this.copyLink(url);
     try {

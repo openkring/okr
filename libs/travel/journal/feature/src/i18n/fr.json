@@ -7,9 +7,6 @@
     "rename": "Renommer",
     "delete": "Supprimer",
     "delete_confirm": "Supprimer ce carnet de voyage avec toutes ses étapes ?",
-    "coauthor": "Ajouter un co-auteur",
-    "coauthor_done": "{name} écrit désormais avec toi.",
-    "coauthor_offline": "Tu ne peux ajouter des co-auteurs qu’avec une connexion Internet.",
     "open": "Ouvrir",
     "edit": "Modifier le journal …",
     "manage": "Gérer …",
@@ -467,5 +464,17 @@
     "skipped_too_large": "La vidéo est devenue trop volumineuse et n’a pas été ajoutée.",
     "limit": "Un bloc vidéo peut contenir 5 vidéos.",
     "not_loaded": "Vidéo pas encore chargée"
+  },
+  "people": {
+    "authors_manage": "Gérer les auteurs",
+    "authors_offline": "Tu ne peux gérer les auteurs qu’avec une connexion Internet.",
+    "author_add": "Ajouter un auteur",
+    "author_remove": "Retirer comme auteur",
+    "author_remove_confirm": "{name} ne pourra plus écrire avec toi. Ce que {name} a écrit reste.",
+    "remove": "retirer",
+    "no_email": "pas d’e-mail",
+    "email_prompt": "Les invités ont besoin d’une adresse e-mail. Quelle est celle de {name} ?",
+    "email_placeholder": "Adresse e-mail",
+    "email_invalid": "Ce n’est pas une adresse e-mail valide."
   }
 }

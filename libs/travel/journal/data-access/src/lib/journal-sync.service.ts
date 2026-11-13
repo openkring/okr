@@ -219,8 +219,8 @@ export class JournalSyncService {
   // ---------------------------------------------------------------- peer secret -------------
 
   /**
-   * Fetches the secret every online round, not only when none is cached: another author's iPad may have renewed
-   * it (spec 1.154 §9, after removing an author). A cached secret is overwritten only when the server's differs.
+   * Fetches the secret every online round, not only when none is cached: the server renews it when an author is
+   * removed (spec 1.154 §9, in applyJournalChange). A cached secret is overwritten only when the server's differs.
    * With a cached secret, a failed call (offline included) keeps it and never fails the round — as before, when
    * no call was made at all. A running P2P session keeps its old secret until it restarts.
    */
@@ -233,16 +233,6 @@ export class JournalSyncService {
       if (!cached && isOffline(error)) throw error;
       // failed-precondition: the journal is not materialised yet — next round; with a cached secret: keep it
     }
-  }
-
-  /**
-   * Renews the journal's peer secret (spec 1.154 §9: after removing an author) and keeps the new one locally.
-   * Online only; an error reaches the caller. A running P2P session keeps the old secret until it restarts.
-   */
-  public async rotateSecret(journalKey: string): Promise<void> {
-    await ensureAppCheckToken();
-    const { secret } = await this.call<{ secret: string }>('ensureJournalPeerSecret', { journalKey, rotate: true });
-    if (secret) await this.db.setMeta(META_PEER + journalKey, secret);
   }
 
   // ---------------------------------------------------------------- photos ------------------

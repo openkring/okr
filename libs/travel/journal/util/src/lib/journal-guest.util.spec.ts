@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { JournalChange } from '@okr/shared-models';
+import { AvatarInfo, JournalChange } from '@okr/shared-models';
 import { formatHlc, isValidHlc } from './journal-hlc.util';
 import { materialize } from './journal-merge.util';
 import {
-  commentsOf, digestOf, findGuestLink, guestChangeRecord, guestDeviceId, guestLinkState, likeKey, likesOf,
+  commentsOf, digestOf, findGuestLink, guestChangeRecord, guestDeviceId, guestLinkState, isEmailShape, journalPersonRows, likeKey, likesOf,
 } from './journal-guest.util';
 import { footprintsOf, publishedFootprintsOf } from './journal-view.util';
 
@@ -92,5 +92,37 @@ describe('journal guests', () => {
 
     const imageOfCopy = rec({ entity: 'image', entityKey: 'i2', op: 'create', fields: { journalKey: 'j1' } });
     expect(digestOf([imageOfCopy], materialize([fp, draft, c, anna, bruno, imageOfCopy]), 'j1')).toEqual([]);
+  });
+});
+
+describe('journalPersonRows (spec 1.154 §9)', () => {
+  const person = (key: string): AvatarInfo => ({ key, name1: key, name2: '', modelType: 'person', type: '', subType: '', label: key });
+
+  it('shows each person with the email the server returned, removable as given', () => {
+    const rows = journalPersonRows([person('anna'), person('bruno')], [{ personKey: 'anna', email: 'anna@example.ch' }, { personKey: 'bruno', email: 'b@example.ch' }], ['anna'], true);
+    expect(rows.map((r) => [r.person.key, r.email, r.noEmail, r.removable])).toEqual([
+      ['anna', 'anna@example.ch', false, true],
+      ['bruno', 'b@example.ch', false, false],
+    ]);
+  });
+
+  it('warns only for a person the server knows to have no email', () => {
+    const rows = journalPersonRows([person('anna'), person('tom')], [{ personKey: 'anna', email: '' }], [], true);
+    // anna: a server row with '' — no email; tom: no server row (a guest without a link yet) — unknown, no warning
+    expect(rows.map((r) => [r.person.key, r.email, r.noEmail])).toEqual([['anna', '', true], ['tom', '', false]]);
+  });
+
+  it('never warns when the list does not ask for it (authors)', () => {
+    expect(journalPersonRows([person('anna')], [{ personKey: 'anna', email: '' }], [], false)[0].noEmail).toBe(false);
+  });
+});
+
+describe('isEmailShape', () => {
+  it('accepts a plain address, trimmed', () => {
+    expect(isEmailShape(' anna@example.ch ')).toBe(true);
+  });
+
+  it('refuses empty, spaces, a missing @ or a domain without a dot', () => {
+    for (const value of ['', 'anna', 'anna@example', 'an na@example.ch', 'a@b@c.ch']) expect(isEmailShape(value)).toBe(false);
   });
 });

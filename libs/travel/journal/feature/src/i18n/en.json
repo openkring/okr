@@ -7,9 +7,6 @@
     "rename": "Rename",
     "delete": "Delete",
     "delete_confirm": "Delete this travel journal with all its footprints?",
-    "coauthor": "Add co-author",
-    "coauthor_done": "{name} now writes along.",
-    "coauthor_offline": "You can only add co-authors with an Internet connection.",
     "open": "Open",
     "edit": "Edit journal …",
     "manage": "Manage …",
@@ -467,5 +464,17 @@
     "skipped_too_large": "The video became too large and was not added.",
     "limit": "A video block has room for 5 videos.",
     "not_loaded": "Video not loaded yet"
+  },
+  "people": {
+    "authors_manage": "Manage authors",
+    "authors_offline": "You can only manage authors with an Internet connection.",
+    "author_add": "Add author",
+    "author_remove": "Remove as author",
+    "author_remove_confirm": "{name} will no longer be able to write along. What {name} has written stays.",
+    "remove": "remove",
+    "no_email": "no email",
+    "email_prompt": "Guests need an email address. What is {name}'s?",
+    "email_placeholder": "Email address",
+    "email_invalid": "That is not a valid email address."
   }
 }

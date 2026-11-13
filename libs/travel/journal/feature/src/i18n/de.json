@@ -7,9 +7,6 @@
     "rename": "Umbenennen",
     "delete": "Löschen",
     "delete_confirm": "Dieses Reisetagebuch mit allen Footprints löschen?",
-    "coauthor": "Mitautor hinzufügen",
-    "coauthor_done": "{name} schreibt jetzt mit.",
-    "coauthor_offline": "Mitautoren kannst du nur mit Internet hinzufügen.",
     "open": "Öffnen",
     "edit": "Reisetagebuch ändern …",
     "manage": "Verwalten …",
@@ -467,5 +464,17 @@
     "skipped_too_large": "Das Video ist zu gross geworden und wurde nicht übernommen.",
     "limit": "Ein Videoblock hat Platz für 5 Videos.",
     "not_loaded": "Video noch nicht geladen"
+  },
+  "people": {
+    "authors_manage": "Autoren verwalten",
+    "authors_offline": "Autoren verwaltest du nur mit Internet.",
+    "author_add": "Autor hinzufügen",
+    "author_remove": "Als Autor entfernen",
+    "author_remove_confirm": "{name} kann danach nicht mehr mitschreiben. Was {name} geschrieben hat, bleibt.",
+    "remove": "entfernen",
+    "no_email": "keine E-Mail",
+    "email_prompt": "Gäste brauchen eine E-Mail-Adresse. Welche hat {name}?",
+    "email_placeholder": "E-Mail-Adresse",
+    "email_invalid": "Das ist keine gültige E-Mail-Adresse."
   }
 }

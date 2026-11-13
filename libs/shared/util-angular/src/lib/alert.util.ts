@@ -86,7 +86,7 @@ export async function notify(
   await alert.onWillDismiss();
 }
 
-export type PromptInputType = 'text' | 'number' | 'password';
+export type PromptInputType = 'text' | 'number' | 'password' | 'email';
 
 export async function okrPrompt(
   alertController: AlertController,
@@ -94,7 +94,8 @@ export async function okrPrompt(
   placeholder: string,
   okLabel: string,
   cancelLabel: string,
-  value?: string
+  value?: string,
+  type: PromptInputType | 'textarea' = 'textarea'
 ): Promise<string | undefined> {
   const alert = await alertController.create({
     header,
@@ -103,7 +104,7 @@ export async function okrPrompt(
       { text: cancelLabel, role: 'cancel' },
       { text: okLabel, role: 'confirm' }
     ],
-    inputs: [{ type: 'textarea', placeholder, value }]
+    inputs: [{ type, placeholder, value }]
   });
   await alert.present();
   const { data, role } = await alert.onWillDismiss();
