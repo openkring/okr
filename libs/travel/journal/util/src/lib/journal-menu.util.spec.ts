@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { blockActions, footprintMenu, JournalMenuItem, journalListMenu, journalOverviewMenu } from './journal-menu.util';
+import { blockActions, footprintMenu, JournalMenuItem, journalListMenu, journalListSheet, journalOverviewMenu } from './journal-menu.util';
 
 const actions = (items: JournalMenuItem[]) => items.map((i) => i.action);
 
@@ -57,5 +57,13 @@ describe('journal menus (spec 1.126 phase 3: write entries follow canWrite)', ()
     expect(blockActions({ kind: 'photos', editable: true })).toEqual(['block.addphotos', 'block.delete']);
     expect(blockActions({ kind: 'text', editable: false })).toEqual([]);
     expect(blockActions({ kind: 'video', editable: true })).toEqual(['block.edit', 'block.addvideos', 'block.delete']);
+  });
+
+  it('list sheet groups in spec order', () => {
+    expect(journalListSheet()).toEqual([
+      { group: 'journal', actions: ['journal.open', 'journal.edit', 'journal.delete'] },
+      { group: 'authors', actions: ['journal.authors'] },
+      { group: 'guests', actions: ['journal.guests', 'journal.notice'] },
+    ]);
   });
 });

@@ -4,7 +4,6 @@
     "empty": "Pas encore de carnet de voyage. Crée le premier.",
     "new": "Nouveau carnet de voyage",
     "new_prompt": "Comment s'appelle le voyage ?",
-    "actions": "Plus",
     "rename": "Renommer",
     "rename_prompt": "Nouveau titre",
     "delete": "Supprimer",
@@ -13,7 +12,13 @@
     "coauthor_done": "{name} écrit désormais avec toi.",
     "coauthor_offline": "Tu ne peux ajouter des co-auteurs qu’avec une connexion Internet.",
     "rename_journal": "Renommer le carnet de voyage",
-    "open": "Ouvrir"
+    "open": "Ouvrir",
+    "edit": "Modifier le journal …",
+    "manage": "Gérer …",
+    "notify": "Notifier …",
+    "group_journal": "Carnet de voyage",
+    "group_authors": "Auteurs",
+    "group_guests": "Invités"
   },
   "native_only": "Pour l'instant, le carnet de voyage n'est disponible que dans l'app iPad.",
   "untitled": "Sans titre",

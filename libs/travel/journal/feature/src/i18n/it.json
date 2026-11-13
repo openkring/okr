@@ -4,7 +4,6 @@
     "empty": "Ancora nessun diario di viaggio. Crea il primo.",
     "new": "Nuovo diario di viaggio",
     "new_prompt": "Come si chiama il viaggio?",
-    "actions": "Altro",
     "rename": "Rinomina",
     "rename_prompt": "Nuovo titolo",
     "delete": "Elimina",
@@ -13,7 +12,13 @@
     "coauthor_done": "{name} ora scrive con te.",
     "coauthor_offline": "Puoi aggiungere coautori solo con una connessione Internet.",
     "rename_journal": "Rinomina il diario di viaggio",
-    "open": "Apri"
+    "open": "Apri",
+    "edit": "Modifica il diario …",
+    "manage": "Gestisci …",
+    "notify": "Avvisa …",
+    "group_journal": "Diario di viaggio",
+    "group_authors": "Autori",
+    "group_guests": "Ospiti"
   },
   "native_only": "Per ora il diario di viaggio è disponibile solo nell'app per iPad.",
   "untitled": "Senza titolo",

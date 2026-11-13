@@ -70,3 +70,14 @@ export function blockActions(ctx: { kind: BlockKind; editable: boolean }): Journ
   if (ctx.kind === 'video') return ['block.edit', 'block.addvideos', 'block.delete']; // block.edit edits the caption
   return [ctx.kind === 'text' ? 'block.edit' : 'block.addphotos', 'block.delete'];
 }
+
+export type JournalListAction = 'journal.open' | 'journal.edit' | 'journal.delete' | 'journal.authors' | 'journal.guests' | 'journal.notice';
+
+/** The journal row's ActionSheet, grouped as spec 1.154 §8: journal, authors, guests. */
+export function journalListSheet(): { group: 'journal' | 'authors' | 'guests'; actions: JournalListAction[] }[] {
+  return [
+    { group: 'journal', actions: ['journal.open', 'journal.edit', 'journal.delete'] },
+    { group: 'authors', actions: ['journal.authors'] },
+    { group: 'guests', actions: ['journal.guests', 'journal.notice'] },
+  ];
+}

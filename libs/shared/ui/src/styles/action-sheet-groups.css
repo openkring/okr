@@ -1,0 +1,25 @@
+/*
+ * Grouped ActionSheet — a small grey label opens each group, a hairline separates groups.
+ *
+ * Loaded globally by every tenant app (project.json → build.options.styles): Ionic renders the
+ * action sheet in an overlay outside any component, so component styles never reach it. Ionic 9
+ * puts a button's `cssClass` on the `.action-sheet-button` element itself.
+ *
+ *   cssClass: 'okr-sheet-group-label'  non-interactive group heading (use with `disabled: true`)
+ *   cssClass: 'okr-sheet-group-start'  first action of a group: a line above it
+ */
+.action-sheet-button.okr-sheet-group-label {
+  pointer-events: none;
+  min-height: 28px;
+  height: 28px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ion-color-medium);
+  opacity: 1;
+}
+
+.action-sheet-button.okr-sheet-group-start {
+  border-top: 1px solid var(--ion-color-light-shade);
+}

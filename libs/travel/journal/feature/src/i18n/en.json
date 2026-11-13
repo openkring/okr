@@ -4,7 +4,6 @@
     "empty": "No travel journal yet. Create the first one.",
     "new": "New travel journal",
     "new_prompt": "What is the trip called?",
-    "actions": "More",
     "rename": "Rename",
     "rename_prompt": "New title",
     "delete": "Delete",
@@ -13,7 +12,13 @@
     "coauthor_done": "{name} now writes along.",
     "coauthor_offline": "You can only add co-authors with an Internet connection.",
     "rename_journal": "Rename travel journal",
-    "open": "Open"
+    "open": "Open",
+    "edit": "Edit journal …",
+    "manage": "Manage …",
+    "notify": "Notify …",
+    "group_journal": "Travel journal",
+    "group_authors": "Authors",
+    "group_guests": "Guests"
   },
   "native_only": "For now the travel journal is only available in the iPad app.",
   "untitled": "Untitled",

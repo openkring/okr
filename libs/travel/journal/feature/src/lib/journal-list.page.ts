@@ -10,7 +10,7 @@ import { ModelSelectService } from '@okr/shared-feature';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, okrPrompt } from '@okr/shared-util-angular';
 import { fill, registerBundledIcons } from '@okr/shared-util-core';
-import { journalListMenu, JournalWriteSlow } from '@okr/travel-journal-util';
+import { JournalListAction, journalListMenu, journalListSheet, JournalWriteSlow } from '@okr/travel-journal-util';
 import { continueWhenSlow, showJournalError } from './journal-errors';
 import { openJournalInfo } from './journal-info';
 import { JournalGuestsSheet } from './journal-guests';
@@ -25,7 +25,9 @@ import { JournalStore } from './journal.store';
   selector: 'okr-journal-list-page',
   imports: [IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonList, IonItem, IonLabel, IonButton, IonIcon, SvgIconPipe],
   styles: [`
-    .title { cursor: pointer; }
+    .thumb { width: 48px; height: 48px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      background: var(--ion-color-light); color: var(--ion-color-medium); }
+    .thumb ion-icon { font-size: 24px; }
   `],
   template: `
     <ion-header>
@@ -43,11 +45,10 @@ import { JournalStore } from './journal.store';
     <ion-content class="ion-padding">
       <ion-list>
           @for (journal of store.journals(); track journal.key) {
-            <ion-item>
-              <ion-label class="title" (click)="open(journal.key)">{{ journal.title || store.i18n.untitled() }}</ion-label>
-              @if (store.canWrite()) {
-                <ion-button slot="end" fill="clear" (click)="actions(journal.key, journal.title)">{{ store.i18n.list_actions() }}</ion-button>
-              }
+            <ion-item button detail="false" (click)="actions(journal.key, journal.title)">
+              <!-- placeholder until the cover thumbnail URL helper lands -->
+              <div slot="start" class="thumb"><ion-icon src="{{ 'map' | svgIcon }}" /></div>
+              <ion-label>{{ journal.title || store.i18n.untitled() }}</ion-label>
             </ion-item>
           } @empty {
             <ion-item lines="none"><ion-label class="ion-text-wrap">{{ store.i18n.list_empty() }}</ion-label></ion-item>
@@ -93,22 +94,32 @@ export class JournalListPage {
     const i18n = this.store.i18n;
     const imgix = this.store.appStore.services.imgixBaseUrl();
     const options = createActionSheetOptions(title || i18n.untitled());
-    options.buttons.push(
-      createActionSheetButton('journal.open', i18n.list_open(), imgix, 'map'),
-      createActionSheetButton('journal.rename', i18n.list_rename_journal(), imgix, 'edit'),
-      createActionSheetButton('journal.coauthor', i18n.list_coauthor(), imgix, 'person-add'),
-      createActionSheetButton('journal.guests', i18n.guests_manage(), imgix, 'people'),
-      createActionSheetButton('journal.notice', i18n.notice_menu(), imgix, 'send'),
-      createActionSheetButton('journal.delete', i18n.list_delete(), imgix, 'trash'),
-      createActionSheetButton('cancel', i18n.cancel(), imgix, 'cancel'),
-    );
+    const labels: Record<JournalListAction, [string, string]> = {
+      'journal.open': [i18n.list_open(), 'map'],
+      'journal.edit': [i18n.list_edit(), 'edit'],
+      'journal.delete': [i18n.list_delete(), 'trash'],
+      'journal.authors': [i18n.list_manage(), 'person-add'],
+      'journal.guests': [i18n.list_manage(), 'people'],
+      'journal.notice': [i18n.list_notify(), 'send'],
+    };
+    const groupLabels = { journal: i18n.list_group_journal(), authors: i18n.list_group_authors(), guests: i18n.list_group_guests() };
+    for (const { group, actions } of journalListSheet()) {
+      options.buttons.push({ text: groupLabels[group], disabled: true, cssClass: 'okr-sheet-group-label' });
+      actions.forEach((action, i) => {
+        const [text, icon] = labels[action];
+        const button = createActionSheetButton(action, text, imgix, icon);
+        if (i === 0) button.cssClass = 'okr-sheet-group-start';
+        options.buttons.push(button);
+      });
+    }
+    options.buttons.push(createActionSheetButton('cancel', i18n.cancel(), imgix, 'cancel'));
     const sheet = await this.actionSheetController.create(options);
     await sheet.present();
     const { data } = await sheet.onDidDismiss<{ action: string }>();
     switch (data?.action) {
       case 'journal.open': return this.open(journalKey);
-      case 'journal.rename': return this.rename(journalKey, title);
-      case 'journal.coauthor': return this.addCoAuthor(journalKey);
+      case 'journal.edit': return this.rename(journalKey, title);
+      case 'journal.authors': return this.addCoAuthor(journalKey);
       case 'journal.guests': return openGuestsModal(this.modalController, this.guestsSheet, journalKey);
       case 'journal.notice': return this.guestsSheet.notify(journalKey);
       case 'journal.delete': return this.confirmDelete(journalKey);
