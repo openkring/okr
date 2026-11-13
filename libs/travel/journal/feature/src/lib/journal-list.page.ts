@@ -19,7 +19,6 @@ import { openGuestsModal } from './journal-guests.modal';
 import { openJournalMenu } from './journal-menu-open';
 import { openPhotoSyncModal } from './journal-photo-sync.modal';
 import { JOURNAL_ICONS } from './journal-icons';
-import { JournalFileUrlService } from './journal-file-url.service';
 import { JournalStore } from './journal.store';
 
 /** All travel journals on this device (spec 1.113); opens one, or creates a new one. */
@@ -68,7 +67,6 @@ import { JournalStore } from './journal.store';
 export class JournalListPage {
   protected readonly store = inject(JournalStore);
   private readonly router = inject(Router);
-  private readonly fileUrl = inject(JournalFileUrlService);
   private readonly alertController = inject(AlertController);
   private readonly toastController = inject(ToastController);
   private readonly actionSheetController = inject(ActionSheetController);
@@ -139,11 +137,7 @@ export class JournalListPage {
   private async edit(journalKey: string): Promise<void> {
     const current = this.store.journals().find((j) => j.key === journalKey);
     if (!current) return;
-    const images = this.store.images(journalKey);
-    const seen = new Set<string>();
-    const covers = this.store.footprints(journalKey).flatMap((f) => f.blocks).filter((b) => b.kind !== 'video') // a video poster is no cover
-      .flatMap((b) => b.imageKeys ?? []).filter((k) => images.has(k) && !seen.has(k) && seen.add(k))
-      .map((key) => ({ key, url: this.fileUrl.url(images.get(key)?.path400) }));
+    const covers = this.store.coverChoices(journalKey);
     const modal = await this.modalController.create({ component: JournalEditModal, componentProps: { journal: journalFormOf(current), covers } });
     await modal.present();
     const { data, role } = await modal.onWillDismiss<JournalFormModel>();

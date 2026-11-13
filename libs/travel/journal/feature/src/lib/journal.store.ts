@@ -901,6 +901,14 @@ export const JournalStore = signalStore(
     // one shared load: a second page instance must not replace state that a write already extended
     let loading: Promise<void> | undefined;
 
+    function coverChoices(journalKey: string): { key: string; url: string }[] {
+      const images = imagesOf(store.journalState(), journalKey);
+      const seen = new Set<string>();
+      return footprintsOf(store.journalState(), journalKey).flatMap((f) => f.blocks).filter((b) => b.kind !== 'video')
+        .flatMap((b) => b.imageKeys ?? []).filter((k) => images.has(k) && !seen.has(k) && seen.add(k))
+        .map((key) => ({ key, url: store.fileUrl.url(images.get(key)?.path400) }));
+    }
+
     /**
      * The printed author names of the book (ruling R13), one source for the preview and the export request: the
      * journal's author list, and the signed-in person when they are not on it (yet). Names longer than the callable
@@ -1472,14 +1480,14 @@ export const JournalStore = signalStore(
         return removableAuthorKeys(authors, entity?.ownerKey ?? '', store.author()?.personKey ?? '');
       },
 
+      /** The photos the author may pick as the cover, in book order (a video poster is no cover), each with a displayable thumbnail URL. */
+      coverChoices,
+
       /** The list thumbnail: the chosen cover's, else the first photo's `path400` as a displayable URL; '' for the placeholder. */
       coverUrl(journalKey: string): string {
-        const images = imagesOf(store.journalState(), journalKey);
+        const choices = coverChoices(journalKey);
         const chosen = journalsOf(store.journalState()).find((j) => j.key === journalKey)?.coverImageKey ?? '';
-        const firstPhoto = footprintsOf(store.journalState(), journalKey).flatMap((f) => f.blocks).filter((b) => b.kind !== 'video')
-          .flatMap((b) => b.imageKeys ?? []).find((k) => images.has(k));
-        const path = images.get(chosen)?.path400 || (firstPhoto ? images.get(firstPhoto)?.path400 : '') || '';
-        return path ? store.fileUrl.url(path) : '';
+        return (choices.find((c) => c.key === chosen) ?? choices[0])?.url ?? '';
       },
 
       async renameJournal(journalKey: string, title: string): Promise<void> {
