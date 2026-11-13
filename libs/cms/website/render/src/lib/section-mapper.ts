@@ -1,6 +1,7 @@
 import type { ImageStyle } from '@okr/shared-models';
 import { imageCaption } from './image-caption';
 import type { PublicPerson } from './group-people';
+import { peopleSourceKey, peopleSourceOf } from './people-source';
 
 export const IMGIX_BASE = 'https://bkaiser.imgix.net';
 
@@ -307,12 +308,13 @@ export function mapFormSection(sectionId: string, title: string, props: Record<s
 }
 
 /**
- * @param groupPeople group key → its public members (`resolveGroupPeople`), for people sections of
- *   type 'group'; a group missing from the map renders no one.
+ * @param people people source key (`peopleSourceKey`) → its public persons: the members of a group
+ *   (`resolveGroupPeople`, §13) or the holders of the roles (`resolveRolePeople`, §13.1) of a people
+ *   section of type 'group' / 'responsibility'; a source missing from the map renders no one.
  */
 export function mapSection(
   id: string, s: SectionDoc, nestedSections: Map<string, SectionDoc>, sanitize: SanitizeFn, lang = 'de',
-  groupPeople?: ReadonlyMap<string, PublicPerson[]>,
+  people?: ReadonlyMap<string, PublicPerson[]>,
 ): unknown {
   const type = s.type ?? 'article';
   const props = (s.properties ?? {}) as Record<string, unknown>;
@@ -377,12 +379,22 @@ export function mapSection(
     }
 
     case 'people': {
-      // group: the members resolved at read time (spec 1.153 §13), never the stored list. No email in
-      // any mode: personal email has the `registered` floor (responsibility aliases are not mapped either).
-      if (props['type'] === 'group') {
-        const groupId = typeof props['groupId'] === 'string' ? props['groupId'] : '';
-        const persons = (groupId ? groupPeople?.get(groupId) : undefined) ?? [];
-        return { type: 'people', name, title, subTitle, persons: persons.map((p) => ({ ...p })) };
+      // group / responsibility: the persons resolved at read time (spec 1.153 §13, §13.1), never the
+      // stored list. Personal email never: it has the `registered` floor. The only address ever emitted
+      // is a role's public alias (resolveRolePeople), and only when the section's info shows email.
+      if (props['type'] === 'group' || props['type'] === 'responsibility') {
+        const source = peopleSourceOf(s);
+        const resolved = (source ? people?.get(peopleSourceKey(source)) : undefined) ?? [];
+        const info = (props['avatar'] as { info?: unknown } | undefined)?.info;
+        const showEmail = props['type'] === 'responsibility'
+          && Array.isArray(info) && (info.includes('email') || info.includes('emailLink'));
+        const persons = resolved.map((p): PublicPerson => {
+          const out: PublicPerson = { key: p.key, firstName: p.firstName, lastName: p.lastName, label: p.label };
+          if (p.showImage !== undefined) out.showImage = p.showImage;
+          if (showEmail && p.email) out.email = p.email;
+          return out;
+        });
+        return { type: 'people', name, title, subTitle, persons };
       }
       const persons = ((props['persons'] as { key?: string; name1?: string; name2?: string; label?: string }[] | undefined) ?? [])
         .map(p => ({

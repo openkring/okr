@@ -722,3 +722,52 @@ describe('people sections from a group (1.153 §13)', () => {
     expect(body.sections.map(s => s.persons)).toEqual([[], [{ key: 'p9', firstName: 'Eva', lastName: 'Liste', label: 'Kassierin' }]]);
   });
 });
+
+describe('people sections from roles (1.153 §13.1)', () => {
+  const snap = (id: string, data: Record<string, unknown> | undefined) => ({ id, exists: data !== undefined, data: () => data });
+  const avatar = (key: string, name1: string, name2: string) => ({ key, name1, name2, modelType: 'person' });
+  const docs: Record<string, Record<string, unknown>> = {
+    'sections/contact': {
+      type: 'people', state: 'published', tenants: ['scs'], title: 'Kontakt',
+      properties: { type: 'responsibility', responsibilityIds: ['praesident', 'kassier'], avatar: { info: ['function', 'email'] } },
+    },
+    'sections/legacy': {
+      type: 'people', state: 'published', tenants: ['scs'], title: 'Alt',
+      properties: { type: 'responsibility', responsibilityId: 'kassier' },
+    },
+    'responsibilities/praesident': { name: 'Präsident', email: 'praesident@seeclub.org', tenants: ['scs'], responsibleAvatar: avatar('p1', 'Anna', 'Muster'), delegateAvatar: avatar('p2', 'Beat', 'Privat') },
+    'responsibilities/kassier': { name: 'Kassier', tenants: ['scs'], responsibleAvatar: avatar('p1', 'Anna', 'Muster') },
+    'persons/p1': { tenants: ['scs'], usageName: 0, email: 'anna.privat@example.org' },
+    'persons/p2': { tenants: ['scs'], usageName: 1 },
+  };
+
+  async function get() {
+    const reads: string[] = [];
+    fakeDb.current = {
+      collection: (name: string) => ({
+        doc: (id: string) => ({
+          __path: `${name}/${id}`,
+          get: async () => snap(id, name === 'pages' ? { tenants: ['scs'], type: 'content', sections: ['contact', 'legacy'] } : undefined),
+        }),
+      }),
+      getAll: async (...refs: { __path: string }[]) => refs.map(r => {
+        reads.push(r.__path);
+        return snap(r.__path.split('/')[1], docs[r.__path]);
+      }),
+    };
+    let body: { sections: { persons?: unknown[] }[] } | undefined;
+    const res = { set: () => res, status: () => res, json: (b: typeof body) => { body = b; return res; } };
+    await pageRouter({ query: { tenantId: 'scs' }, params: { pageKey: 'p1' } } as never, res as never);
+    return { body: body!, reads };
+  }
+
+  it('serves the public role holders with the role names and only the role address', async () => {
+    const { body, reads } = await get();
+    expect(reads).toEqual(expect.arrayContaining(['responsibilities/praesident', 'responsibilities/kassier', 'persons/p1', 'persons/p2']));
+    expect(body.sections[0].persons).toEqual([
+      { key: 'p1', firstName: 'Anna', lastName: 'Muster', label: 'Präsident, Kassier', showImage: true, email: 'praesident@seeclub.org' },
+    ]);
+    expect(body.sections[1].persons).toEqual([{ key: 'p1', firstName: 'Anna', lastName: 'Muster', label: 'Kassier', showImage: true }]);
+    expect(JSON.stringify(body)).not.toMatch(/Privat|anna\.privat/);
+  });
+});

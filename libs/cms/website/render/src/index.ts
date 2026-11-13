@@ -9,3 +9,5 @@ export * from './lib/render-helpers';
 export * from './lib/render-site';
 export * from './lib/home-layout';
 export * from './lib/group-people';
+export * from './lib/people-source';
+export * from './lib/role-people';

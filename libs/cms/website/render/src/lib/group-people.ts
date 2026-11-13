@@ -14,6 +14,11 @@ export interface PublicPerson {
   label: string;
   /** Group members only: false when the person's `usageImages` is not Public — the site shows initials. */
   showImage?: boolean;
+  /**
+   * Role sections only (§13.1): the role's public address (`ResponsibilityModel.email`), emitted by
+   * mapSection only when the section's info shows email. Never a personal address.
+   */
+  email?: string;
 }
 
 /** The fields of a `memberships` document the resolver reads. */
@@ -41,7 +46,8 @@ export interface GroupPersonDoc {
 
 const STORE_DATE = /^\d{8}$/;
 
-function sharesTenant(tenants: unknown, siteTenants: string[]): boolean {
+/** True when one of `tenants` is a site tenant. */
+export function sharesTenant(tenants: unknown, siteTenants: string[]): boolean {
   return Array.isArray(tenants) && tenants.some((t) => siteTenants.includes(t as string));
 }
 

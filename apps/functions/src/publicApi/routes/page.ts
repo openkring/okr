@@ -10,7 +10,7 @@ import { IMGIX_BASE, mapSection, normalizeLang, pickText, slugName, str, toImgix
 import { learningTabOf, parseTopics, type LearningTab, type PublicLearningItem, type PublicLearningSection } from '@okr/content-learning-util';
 
 import { isPublishedSection, setCacheHeaders } from '../utils';
-import { groupIdOfSection, loadGroupPeople } from '../../website/group-people';
+import { loadSectionPeople } from '../../website/group-people';
 import { getHtmlSanitizer } from '../sanitize';
 import { IMGIX_PRIVATE_HOST, signImgixUrl } from '../../_storage/imgix-sign';
 import { albumFolderKeyOfPath, isSafeDocId, MP4_PARAMS, POSTER_PARAMS, windowExpiry } from '../../video/video-sign.util';
@@ -216,16 +216,15 @@ function isServableSection(section: SectionDoc | undefined, tenantId: string): b
 }
 
 /**
- * The public members of the groups shown by the page's people sections (spec 1.153 §13), as
+ * The public persons shown by the page's people sections from a group or roles (spec 1.153 §13, §13.1), as
  * publishWebsite resolves them. A failed read empties those sections, never the page.
  */
-async function loadPageGroupPeople(db: Firestore, groupIds: string[], tenantId: string, pageKey: string): Promise<Map<string, PublicPerson[]>> {
-  const ids = groupIds.filter(Boolean);
-  if (ids.length === 0) return new Map();
+async function loadPagePeople(db: Firestore, sections: SectionDoc[], tenantId: string, pageKey: string): Promise<Map<string, PublicPerson[]>> {
+  if (!sections.some((s) => s.type === 'people')) return new Map();
   try {
-    return await loadGroupPeople(db, ids, [tenantId]);
+    return await loadSectionPeople(db, sections, [tenantId]);
   } catch (err) {
-    logger.error('publicApi /pages: group members not loaded', { tenantId, pageKey, err: String(err) });
+    logger.error('publicApi /pages: people of people sections not loaded', { tenantId, pageKey, err: String(err) });
     return new Map();
   }
 }
@@ -301,12 +300,12 @@ export async function pageRouter(req: Request, res: Response): Promise<void> {
       }
     }
 
-    const groupPeople = await loadPageGroupPeople(db, liveSections.map(({ doc }) => groupIdOfSection(doc)), tenantId, pageKey);
+    const people = await loadPagePeople(db, liveSections.map(({ doc }) => doc), tenantId, pageKey);
 
     const sanitize = await getHtmlSanitizer();
     const sections = await Promise.all(liveSections.map(({ id, doc: s }) => (s.type === 'learning'
       ? loadLearningSection(db, s, mayServeRoom(pageData, pageKey, id), tenantId, sanitize, lang)
-      : mapSection(id, s, nestedSections, sanitize, lang, groupPeople))));
+      : mapSection(id, s, nestedSections, sanitize, lang, people))));
 
     setCacheHeaders(res);
     res.json({ ...pageEnvelope, sections });

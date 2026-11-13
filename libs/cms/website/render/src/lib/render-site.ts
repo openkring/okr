@@ -82,8 +82,11 @@ export interface RenderInput {
   imageUrl: (path: string) => string;
   /** the rich-text sanitizer, built by the caller with createSanitizer(sanitizeHtml) */
   sanitize: SanitizeFn;
-  /** group key → public members (resolveGroupPeople), for people sections of type 'group' */
-  groupPeople?: ReadonlyMap<string, PublicPerson[]>;
+  /**
+   * people source key (`peopleSourceKey`) → public persons, for people sections of type 'group'
+   * (resolveGroupPeople) and 'responsibility' (resolveRolePeople)
+   */
+  people?: ReadonlyMap<string, PublicPerson[]>;
 }
 
 export interface RenderedFile {
@@ -314,7 +317,7 @@ export function renderSite(input: RenderInput): RenderResult {
       const contexts = sectionContexts(
         published.map(({ raw, sectionKey, section }, i) => {
           try {
-            return mapSection(sectionKey, section, nestedSectionsOf(section, tenants, sections), sanitize, lang, input.groupPeople);
+            return mapSection(sectionKey, section, nestedSectionsOf(section, tenants, sections), sanitize, lang, input.people);
           } catch (e) {
             failed.add(i);
             problems.push({ code: 'renderFailed', pageKey: entry.key, sectionKey: raw, detail: message(e) });

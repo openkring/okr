@@ -105,19 +105,19 @@ describe('mapSection people', () => {
 
   it('a group section shows the resolved members of its group, never the stored list', () => {
     const s = people({ type: 'group', groupId: 'vorstand', persons: [{ key: 'old', name1: 'Alt', name2: 'Gespeichert' }] });
-    const out = mapSection('s1', s, new Map(), sanitize, 'de', new Map([['vorstand', [anna]]])) as { persons: PublicPerson[] };
+    const out = mapSection('s1', s, new Map(), sanitize, 'de', new Map([['group.vorstand', [anna]]])) as { persons: PublicPerson[] };
     expect(out.persons).toEqual([anna]);
   });
 
   it('a group section without resolved members renders no one', () => {
     const s = people({ type: 'group', groupId: 'vorstand', persons: [{ key: 'old', name1: 'Alt' }] });
     expect((mapSection('s1', s, new Map(), sanitize) as { persons: unknown[] }).persons).toEqual([]);
-    expect((mapSection('s1', people({ type: 'group' }), new Map(), sanitize, 'de', new Map([['vorstand', [anna]]])) as { persons: unknown[] }).persons).toEqual([]);
+    expect((mapSection('s1', people({ type: 'group' }), new Map(), sanitize, 'de', new Map([['group.vorstand', [anna]]])) as { persons: unknown[] }).persons).toEqual([]);
   });
 
   it('emits no email for group or persons sections, even with the email info option', () => {
     const avatar = { info: ['function', 'email'] };
-    const group = mapSection('s1', people({ type: 'group', groupId: 'vorstand', avatar }), new Map(), sanitize, 'de', new Map([['vorstand', [anna]]]));
+    const group = mapSection('s1', people({ type: 'group', groupId: 'vorstand', avatar }), new Map(), sanitize, 'de', new Map([['group.vorstand', [anna]]]));
     const persons = mapSection('s2', people({ type: 'persons', avatar, persons: [{ key: 'p1', name1: 'Anna', name2: 'Muster', label: 'Präsidentin' }] }), new Map(), sanitize);
     expect(JSON.stringify([group, persons])).not.toMatch(/email|@/i);
   });
@@ -141,18 +141,18 @@ describe('renderSite group people', () => {
     sections: { people: '{{#each persons}}<i>{{firstName}} {{lastName}}:{{showImage}}</i>{{/each}}' },
     pages: {},
   };
-  const input = (groupPeople?: RenderInput['groupPeople']): RenderInput => ({
+  const input = (people?: RenderInput['people']): RenderInput => ({
     site: { okey: 'fixture', tenants: ['scs'], name: 'F', domain: 'https://example.org', languages: ['de'], nav: [], footer: [], homePageKey: 'home' } as never,
     pages: new Map([['home', { okey: 'home', tenants: ['scs'], sections: ['s1'], title: 'Start', isPrivate: false } as unknown as PageModel]]),
     sections: new Map([['s1', { type: 'people', state: 'published', tenants: ['scs'], properties: { type: 'group', groupId: 'vorstand' } }]]),
     templates,
     imageUrl: (p) => p,
     sanitize: (h) => h,
-    groupPeople,
+    people,
   });
 
   it('passes the resolved members to the people template', () => {
-    const res = renderSite(input(new Map([['vorstand', [{ key: 'p1', firstName: 'Anna', lastName: 'Muster', label: '', showImage: false }]]])));
+    const res = renderSite(input(new Map([['group.vorstand', [{ key: 'p1', firstName: 'Anna', lastName: 'Muster', label: '', showImage: false }]]])));
     expect(res.problems).toEqual([]);
     expect(res.files.find((f) => f.path === 'index.html')?.content).toContain('<i>Anna Muster:false</i>');
   });

@@ -24,7 +24,7 @@ import {
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId } from '@okr/shared-util-functions';
 
 import { getHtmlSanitizer } from '../publicApi/sanitize';
-import { groupIdOfSection, loadGroupPeople } from './group-people';
+import { loadSectionPeople } from './group-people';
 import { cloneStaticAssets, finalizeAndRelease, getLiveVersion, uploadFiles } from './hosting-client';
 import { acquireLock, closeLock, type PublishLock, type PublishState } from './publish-lock';
 import { loadTemplates, TemplateMissingError } from './template-store';
@@ -61,8 +61,11 @@ export interface PublishWebsiteResult {
 export interface SiteContent {
   pages: Map<string, PageModel>;
   sections: Map<string, SectionDoc>;
-  /** group key → public members, for the people sections in group mode (spec 1.153 §13) */
-  groupPeople?: Map<string, PublicPerson[]>;
+  /**
+   * people source key (`peopleSourceKey`) → public persons, for the people sections from a group or
+   * from roles (spec 1.153 §13, §13.1)
+   */
+  people?: Map<string, PublicPerson[]>;
 }
 
 export type SitePublishedFields = Partial<Pick<WebsiteModel, 'lastPublishedAt' | 'lastPublishedBy' | 'lastPublishedVersion'>>;
@@ -137,7 +140,7 @@ export async function runPublish(deps: PublishDeps, req: PublishRequest): Promis
       logger.error(`publishWebsite: ${siteId} refused, hostingSite ${JSON.stringify(site.hostingSite)} is not a website Hosting site`);
       return await refuse([{ code: 'hostingSiteInvalid' }]);
     }
-    const { pages: pageMap, sections, groupPeople } = await deps.loadContent(site);
+    const { pages: pageMap, sections, people } = await deps.loadContent(site);
     stage = 'templates';
     let templates: TemplateSet;
     try {
@@ -148,7 +151,7 @@ export async function runPublish(deps: PublishDeps, req: PublishRequest): Promis
     }
     stage = 'render';
     const sanitize = await deps.getSanitizer();
-    const rendered = deps.renderSite({ site, pages: pageMap, sections, templates, imageUrl: toImgixUrl, sanitize, groupPeople });
+    const rendered = deps.renderSite({ site, pages: pageMap, sections, templates, imageUrl: toImgixUrl, sanitize, people });
     if (rendered.problems.length > 0) return await refuse(rendered.problems);
     const files = rendered.files.length;
 
@@ -207,7 +210,8 @@ function sectionCandidates(raw: string, tenants: string[]): string[] {
 /**
  * The pages of the tree (any node, archived ones included, so validation sees them) plus the home page,
  * owned by one of the site's tenants (a foreign page reads as missing); the sections they list and the
- * accordion items of those sections, and the public members of the groups their people sections show.
+ * accordion items of those sections, and the public persons their people sections show (group members,
+ * role holders).
  * Batched getAll reads, as publicApi's page route.
  */
 export async function loadSiteContent(db: Firestore, site: WebsiteModel): Promise<SiteContent> {
@@ -233,11 +237,10 @@ export async function loadSiteContent(db: Firestore, site: WebsiteModel): Promis
   await loadSections([...pages.values()].flatMap((p) => (p.sections ?? []).flatMap((raw) => sectionCandidates(raw, tenants))));
 
   const nested: string[] = [];
-  const groupIds = new Set<string>();
+  const peopleSections: SectionDoc[] = [];
   for (const page of pages.values()) {
     for (const { section } of publishedPageSections(page, tenants, sections)) {
-      const groupId = groupIdOfSection(section);
-      if (groupId) groupIds.add(groupId);
+      if (section.type === 'people') peopleSections.push(section);
       if (section.type !== 'accordion') continue;
       const items = section.properties?.['items'];
       for (const it of Array.isArray(items) ? (items as { key?: unknown }[]) : []) {
@@ -246,8 +249,8 @@ export async function loadSiteContent(db: Firestore, site: WebsiteModel): Promis
     }
   }
   if (nested.length > 0) await loadSections(nested);
-  const groupPeople = await loadGroupPeople(db, [...groupIds], tenants);
-  return { pages, sections, groupPeople };
+  const people = await loadSectionPeople(db, peopleSections, tenants);
+  return { pages, sections, people };
 }
 
 function collectPageKeys(nodes: WebsiteNode[], out: string[] = []): string[] {

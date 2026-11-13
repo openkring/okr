@@ -248,21 +248,38 @@ describe('loadSiteContent', () => {
       collection: (c: string) => ({ ...query([c]), doc: (id: string) => ({ path: `${c}/${id}`, id }) }),
       getAll: async (...refs: { path: string; id: string }[]) => refs.map((r) => ({ id: r.id, data: () => data[r.path] })),
     } as unknown as Firestore;
-    const { groupPeople } = await loadSiteContent(db, { ...site, nav: [] } as WebsiteModel);
+    const { people } = await loadSiteContent(db, { ...site, nav: [] } as WebsiteModel);
     expect(queries).toHaveLength(1);
     expect(queries[0]).toContain('orgKey == vorstand');
     expect(queries[0]).toContain('tenants array-contains-any scs');
-    expect(groupPeople?.get('vorstand')).toEqual([{ key: 'p1', firstName: 'Anna', lastName: 'Muster', label: '', showImage: true }]);
-    expect(groupPeople?.has('geheim')).toBe(false);
+    expect(people?.get('group.vorstand')).toEqual([{ key: 'p1', firstName: 'Anna', lastName: 'Muster', label: '', showImage: true }]);
+    expect(people?.has('group.geheim')).toBe(false);
+  });
+
+  it('resolves the holders of the roles its published people sections show (1.153 §13.1)', async () => {
+    const pub = { tenants: ['scs'], state: 'published' };
+    const anna = { key: 'p1', name1: 'Anna', name2: 'Muster', modelType: 'person' };
+    const { db, reads } = fakeDb({
+      'pages/home': { tenants: ['scs'], sections: ['contact', 'legacy'] },
+      'sections/contact': { ...pub, type: 'people', properties: { type: 'responsibility', responsibilityIds: ['praesident', 'kassier'] } },
+      'sections/legacy': { ...pub, type: 'people', properties: { type: 'responsibility', responsibilityId: 'kassier' } },
+      'responsibilities/praesident': { name: 'Präsident', tenants: ['scs'], responsibleAvatar: anna },
+      'responsibilities/kassier': { name: 'Kassier', tenants: ['scs'], isArchived: true, responsibleAvatar: anna },
+      'persons/p1': { tenants: ['scs'], usageName: 0 },
+    });
+    const { people } = await loadSiteContent(db, { ...site, nav: [] } as WebsiteModel);
+    expect(reads.flat()).toEqual(expect.arrayContaining(['responsibilities/praesident', 'responsibilities/kassier', 'persons/p1']));
+    expect(people?.get('responsibility.praesident,kassier')).toEqual([{ key: 'p1', firstName: 'Anna', lastName: 'Muster', label: 'Präsident', showImage: true }]);
+    expect(people?.get('responsibility.kassier')).toEqual([]);
   });
 });
 
-describe('runPublish group people', () => {
-  it('hands the loaded group members to renderSite', async () => {
+describe('runPublish people', () => {
+  it('hands the loaded people to renderSite', async () => {
     const d = deps();
-    const groupPeople = new Map([['vorstand', [{ key: 'p1', firstName: 'Anna', lastName: 'Muster', label: '', showImage: true }]]]);
-    d['loadContent'].mockResolvedValueOnce({ pages: new Map(), sections: new Map(), groupPeople });
+    const people = new Map([['group.vorstand', [{ key: 'p1', firstName: 'Anna', lastName: 'Muster', label: '', showImage: true }]]]);
+    d['loadContent'].mockResolvedValueOnce({ pages: new Map(), sections: new Map(), people });
     await runPublish(d, { ...REQ, dryRun: true });
-    expect((d['renderSite'].mock.calls[0][0] as RenderInput).groupPeople).toBe(groupPeople);
+    expect((d['renderSite'].mock.calls[0][0] as RenderInput).people).toBe(people);
   });
 });
