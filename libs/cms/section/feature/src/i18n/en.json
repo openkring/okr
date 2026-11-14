@@ -1957,5 +1957,56 @@
     "cover": "Cover photo",
     "clips": "Videos",
     "empty": "Nothing chosen yet."
+  },
+  "layout": {
+    "title": "Choose image layout",
+    "pair": {
+      "label": "Pair",
+      "description": "Two images of equal size side by side."
+    },
+    "big-small": {
+      "label": "Large + small",
+      "description": "One large and one small image side by side."
+    },
+    "stacked": {
+      "label": "Stacked",
+      "description": "The images sit one below the other, each at full width."
+    },
+    "big-left": {
+      "label": "Large left",
+      "description": "One large image on the left, the others smaller beside it."
+    },
+    "big-top": {
+      "label": "Large on top",
+      "description": "One large image on top, the others smaller below it."
+    },
+    "big-right": {
+      "label": "Large right",
+      "description": "One large image on the right, the others smaller beside it."
+    },
+    "row": {
+      "label": "Row",
+      "description": "All images of equal size in one row."
+    },
+    "grid": {
+      "label": "Grid",
+      "description": "All images of equal size in a grid."
+    },
+    "filmstrip": {
+      "label": "Filmstrip",
+      "description": "Narrow images in one continuous strip."
+    },
+    "mosaic": {
+      "label": "Mosaic",
+      "description": "Rows with alternately two and three images."
+    },
+    "big-grid": {
+      "label": "Large + grid",
+      "description": "One large image with a grid beside and below it."
+    },
+    "slider": {
+      "label": "Slider",
+      "description": "The images are paged through one at a time."
+    }
   }
 }

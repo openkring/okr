@@ -1957,5 +1957,56 @@
     "cover": "Foto de portada",
     "clips": "Vídeos",
     "empty": "Todavía no has elegido nada."
+  },
+  "layout": {
+    "title": "Elige la disposición de las imágenes",
+    "pair": {
+      "label": "Pareja",
+      "description": "Dos imágenes del mismo tamaño una al lado de la otra."
+    },
+    "big-small": {
+      "label": "Grande + pequeña",
+      "description": "Una imagen grande y una pequeña una al lado de la otra."
+    },
+    "stacked": {
+      "label": "Apiladas",
+      "description": "Las imágenes van una debajo de otra, cada una a todo el ancho."
+    },
+    "big-left": {
+      "label": "Grande a la izquierda",
+      "description": "Una imagen grande a la izquierda, las demás más pequeñas al lado."
+    },
+    "big-top": {
+      "label": "Grande arriba",
+      "description": "Una imagen grande arriba, las demás más pequeñas debajo."
+    },
+    "big-right": {
+      "label": "Grande a la derecha",
+      "description": "Una imagen grande a la derecha, las demás más pequeñas al lado."
+    },
+    "row": {
+      "label": "Fila",
+      "description": "Todas las imágenes del mismo tamaño en una fila."
+    },
+    "grid": {
+      "label": "Cuadrícula",
+      "description": "Todas las imágenes del mismo tamaño en una cuadrícula."
+    },
+    "filmstrip": {
+      "label": "Tira",
+      "description": "Imágenes estrechas en una tira continua."
+    },
+    "mosaic": {
+      "label": "Mosaico",
+      "description": "Filas con dos y tres imágenes alternadas."
+    },
+    "big-grid": {
+      "label": "Grande + cuadrícula",
+      "description": "Una imagen grande con una cuadrícula al lado y debajo."
+    },
+    "slider": {
+      "label": "Carrusel",
+      "description": "Las imágenes se pasan de una en una."
+    }
   }
 }

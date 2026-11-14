@@ -1957,5 +1957,56 @@
     "cover": "Titelbild",
     "clips": "Videos",
     "empty": "Noch nichts ausgewählt."
+  },
+  "layout": {
+    "title": "Bildlayout wählen",
+    "pair": {
+      "label": "Paar",
+      "description": "Zwei gleich grosse Bilder nebeneinander."
+    },
+    "big-small": {
+      "label": "Gross + klein",
+      "description": "Ein grosses und ein kleines Bild nebeneinander."
+    },
+    "stacked": {
+      "label": "Übereinander",
+      "description": "Die Bilder stehen untereinander, jedes in voller Breite."
+    },
+    "big-left": {
+      "label": "Gross links",
+      "description": "Ein grosses Bild links, die übrigen kleiner rechts daneben."
+    },
+    "big-top": {
+      "label": "Gross oben",
+      "description": "Ein grosses Bild oben, die übrigen kleiner darunter."
+    },
+    "big-right": {
+      "label": "Gross rechts",
+      "description": "Ein grosses Bild rechts, die übrigen kleiner links daneben."
+    },
+    "row": {
+      "label": "Reihe",
+      "description": "Alle Bilder gleich gross in einer Reihe."
+    },
+    "grid": {
+      "label": "Raster",
+      "description": "Alle Bilder gleich gross in einem Raster."
+    },
+    "filmstrip": {
+      "label": "Filmstreifen",
+      "description": "Schmale Bilder in einem durchgehenden Streifen."
+    },
+    "mosaic": {
+      "label": "Mosaik",
+      "description": "Reihen mit abwechselnd zwei und drei Bildern."
+    },
+    "big-grid": {
+      "label": "Gross + Raster",
+      "description": "Ein grosses Bild, daneben und darunter ein Raster."
+    },
+    "slider": {
+      "label": "Slider",
+      "description": "Die Bilder werden einzeln nacheinander durchgeblättert."
+    }
   }
 }

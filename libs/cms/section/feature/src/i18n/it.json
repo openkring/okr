@@ -1957,5 +1957,56 @@
     "cover": "Foto di copertina",
     "clips": "Video",
     "empty": "Non hai ancora scelto niente."
+  },
+  "layout": {
+    "title": "Scegli il layout delle immagini",
+    "pair": {
+      "label": "Coppia",
+      "description": "Due immagini della stessa dimensione affiancate."
+    },
+    "big-small": {
+      "label": "Grande + piccola",
+      "description": "Un’immagine grande e una piccola affiancate."
+    },
+    "stacked": {
+      "label": "Sovrapposte",
+      "description": "Le immagini stanno una sotto l’altra, ciascuna a tutta larghezza."
+    },
+    "big-left": {
+      "label": "Grande a sinistra",
+      "description": "Un’immagine grande a sinistra, le altre più piccole accanto."
+    },
+    "big-top": {
+      "label": "Grande in alto",
+      "description": "Un’immagine grande in alto, le altre più piccole sotto."
+    },
+    "big-right": {
+      "label": "Grande a destra",
+      "description": "Un’immagine grande a destra, le altre più piccole accanto."
+    },
+    "row": {
+      "label": "Riga",
+      "description": "Tutte le immagini della stessa dimensione in una riga."
+    },
+    "grid": {
+      "label": "Griglia",
+      "description": "Tutte le immagini della stessa dimensione in una griglia."
+    },
+    "filmstrip": {
+      "label": "Pellicola",
+      "description": "Immagini strette in una striscia continua."
+    },
+    "mosaic": {
+      "label": "Mosaico",
+      "description": "Righe con alternativamente due e tre immagini."
+    },
+    "big-grid": {
+      "label": "Grande + griglia",
+      "description": "Un’immagine grande con una griglia accanto e sotto."
+    },
+    "slider": {
+      "label": "Slider",
+      "description": "Le immagini scorrono una alla volta."
+    }
   }
 }

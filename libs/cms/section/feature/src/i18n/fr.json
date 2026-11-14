@@ -1957,5 +1957,56 @@
     "cover": "Photo de couverture",
     "clips": "Vidéos",
     "empty": "Rien de choisi pour le moment."
+  },
+  "layout": {
+    "title": "Choisir la mise en page",
+    "pair": {
+      "label": "Paire",
+      "description": "Deux images de même taille côte à côte."
+    },
+    "big-small": {
+      "label": "Grande + petite",
+      "description": "Une grande et une petite image côte à côte."
+    },
+    "stacked": {
+      "label": "Superposées",
+      "description": "Les images sont l’une sous l’autre, chacune en pleine largeur."
+    },
+    "big-left": {
+      "label": "Grande à gauche",
+      "description": "Une grande image à gauche, les autres plus petites à côté."
+    },
+    "big-top": {
+      "label": "Grande en haut",
+      "description": "Une grande image en haut, les autres plus petites en dessous."
+    },
+    "big-right": {
+      "label": "Grande à droite",
+      "description": "Une grande image à droite, les autres plus petites à côté."
+    },
+    "row": {
+      "label": "Rangée",
+      "description": "Toutes les images de même taille sur une rangée."
+    },
+    "grid": {
+      "label": "Grille",
+      "description": "Toutes les images de même taille dans une grille."
+    },
+    "filmstrip": {
+      "label": "Pellicule",
+      "description": "Des images étroites dans une bande continue."
+    },
+    "mosaic": {
+      "label": "Mosaïque",
+      "description": "Des rangées de deux et trois images en alternance."
+    },
+    "big-grid": {
+      "label": "Grande + grille",
+      "description": "Une grande image avec une grille à côté et en dessous."
+    },
+    "slider": {
+      "label": "Diaporama",
+      "description": "Les images défilent une par une."
+    }
   }
 }

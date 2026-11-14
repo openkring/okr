@@ -39,3 +39,6 @@ export * from './lib/request-status-note';
 export * from './lib/context-diagram-config.form';
 export * from './lib/context-diagram-config.modal';
 export * from './lib/form-section-configuration';
+
+export * from './lib/image-layout-preview';
+export * from './lib/image-layout-select.modal';
