@@ -20,3 +20,4 @@ export * from './lib/journal-world-map';
 export * from './lib/journal-video-block';
 export * from './lib/journal.form';
 export * from './lib/journal-edit.modal';
+export * from './lib/journal-track-pick.modal';

@@ -203,7 +203,8 @@
     "layer_world": "Weltkarte",
     "layer_switch": "Karte wählen",
     "layer_icebergs": "Eisberge",
-    "iceberg_seen": "zuletzt gesehen am {date}"
+    "iceberg_seen": "zuletzt gesehen am {date}",
+    "no_position": "Dieser Footprint hat noch keinen Ort."
   },
   "reactions": {
     "comment_write": "Kommentar schreiben",
@@ -492,5 +493,18 @@
     "video_alt": "Video vom {date}",
     "photo": "Foto",
     "video": "Video"
+  },
+  "track": {
+    "pick_title": "Strecke wählen",
+    "pick_empty": "Hier sind noch keine Strecken. Zeichne eine mit dem Tracker auf.",
+    "pick_offline": "Ohne Verbindung siehst du nur die Strecken, die schon im Reisetagebuch sind.",
+    "in_journal": "im Reisetagebuch",
+    "attaching": "Die Strecke wird übernommen …",
+    "photos_skipped": "{count} Fotos der Strecke sind auf diesem Gerät nicht da und fehlen deshalb.",
+    "missing": "Diese Strecke ist noch nicht auf diesem Gerät.",
+    "untitled": "Strecke",
+    "elevation_title": "Höhenprofil",
+    "elevation_gain": "Aufstieg",
+    "elevation_loss": "Abstieg"
   }
 }

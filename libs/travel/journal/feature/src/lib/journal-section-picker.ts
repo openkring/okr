@@ -1,7 +1,7 @@
 import { computed, inject, Injector, runInInjectionContext } from '@angular/core';
 import { ModalController, ToastController } from '@ionic/angular';
 
-import { SECTION_IMAGE_PICKER, SectionImagePicker } from '@okr/cms-section-util';
+import { SECTION_IMAGE_PICKER, SECTION_TRACK_PICKER, SectionImagePicker, SectionTrackPicker } from '@okr/cms-section-util';
 import { IMAGE_CONFIG_SHAPE, ImageConfig } from '@okr/shared-models';
 import { convertDateFormatToString, DateFormat, fill } from '@okr/shared-util-core';
 import { JournalPhotoPickModal, PickablePhoto } from '@okr/travel-journal-ui';
@@ -11,6 +11,7 @@ import { JournalFileUrlService } from './journal-file-url.service';
 import { JournalWebPhotos } from './journal-web-photos.service';
 import { JournalWebVideos } from './journal-web-videos.service';
 import { showJournalError } from './journal-errors';
+import { JournalTrackPicker } from './journal-track-picker';
 import { JournalStore } from './journal.store';
 
 /**
@@ -135,12 +136,23 @@ export class JournalSectionPicker implements SectionImagePicker {
   }
 }
 
+/** The journal's track picker for one footprint (the story page's «Strecke» add flow uses it directly). */
+export function journalTrackPicker(parent: Injector, journalKey: string, footprintKey: string): SectionTrackPicker {
+  return runInInjectionContext(parent, () => new JournalTrackPicker(journalKey, footprintKey));
+}
+
 /**
- * An injector that provides the journal's picker to the section editor. `ModalController.create({ injector })` takes
+ * An injector that provides the journal's pickers to the section editor. `ModalController.create({ injector })` takes
  * it, so `okr-images-config` inside the modal finds SECTION_IMAGE_PICKER (it injects it optionally; without it, and
- * with `requirePicker`, the editor would offer no «add» at all).
+ * with `requirePicker`, the editor would offer no «add» at all), and the track form finds SECTION_TRACK_PICKER.
  */
 export function journalSectionPickerInjector(parent: Injector, journalKey: string, footprintKey: string): Injector {
   const picker = runInInjectionContext(parent, () => new JournalSectionPicker(journalKey, footprintKey));
-  return Injector.create({ providers: [{ provide: SECTION_IMAGE_PICKER, useValue: picker }], parent });
+  return Injector.create({
+    providers: [
+      { provide: SECTION_IMAGE_PICKER, useValue: picker },
+      { provide: SECTION_TRACK_PICKER, useValue: journalTrackPicker(parent, journalKey, footprintKey) },
+    ],
+    parent,
+  });
 }

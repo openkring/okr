@@ -6,7 +6,7 @@ import { Network } from '@capacitor/network';
 import { doc, getDoc } from 'firebase/firestore';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AvatarInfo, JournalBookModel, JournalChange, SectionModel, TRANSPORT_MODES, TransportMode } from '@okr/shared-models';
+import { AvatarInfo, JournalBookModel, JournalChange, SectionModel, TrackPhoto, TRANSPORT_MODES, TransportMode, TripModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { FIRESTORE } from '@okr/shared-config';
 import { GoogleMapType, GoogleTiles } from '@okr/shared-data-access';
@@ -24,6 +24,7 @@ import {
   JournalLock, LOCK_HEARTBEAT_MS, LOCK_TTL_MS, lockedBy, mergeLocks, BoundAuthor, JournalWriteSlow, mergePending,
   AreaLayer, areaForWrite, areaLayerTilePlan, BaseLayerOption, baseLayerOptions, Bbox, finishRun, isUsable, layerDetailLevels, layerKindsFor,
   layerTilesToFree, MapLayerKind, MapSource, migrateOfflineMap, NO_OFFLINE_LAYER, offlineAreaKey, OfflineLayerStatus, parseOfflineLayer, pickBaseLayer,
+  localWallClock, trackCopyOf, TrackCopyInput, trackKeyOf, trackOf, trackPhotoPlan, trackRecordFields, tracksOf, TrackView,
 } from '@okr/travel-journal-util';
 import type { IcebergSnapshot } from '@okr/travel-journal-util';
 
@@ -441,6 +442,51 @@ export const JournalStore = signalStore(
       const bases: Record<string, string> = {};
       for (const field of Object.keys(fields)) if (conflictFields.includes(field)) bases[field] = hlcs[field] ?? '';
       return Object.keys(bases).length > 0 ? bases : undefined;
+    }
+
+    /**
+     * iPad (decision 8): a recorded track's photos into the journal as images, by their PhotoKit id — a 2048 px and a
+     * 400 px JPEG through the plugin's original export (the picker imports the same renditions). A photo this iPad's
+     * library does not have (taken on another device, outside a limited selection, iCloud offline) is skipped. The
+     * browser cannot reach a Photos library: every photo is skipped there.
+     */
+    async function importTrackPhotos(journalKey: string, photos: TrackPhoto[]): Promise<{ drafts: ChangeDraft[]; keys: Record<string, string>; skipped: number }> {
+      const drafts: ChangeDraft[] = [];
+      const keys: Record<string, string> = {};
+      if (!store.native()) return { drafts, keys, skipped: photos.length };
+      let skipped = 0;
+      for (const photo of photos) {
+        const name = crypto.randomUUID();
+        const file2048 = `${name}-2048.jpg`;
+        const file400 = `${name}-400.jpg`;
+        try {
+          const large = await JournalPhotos.exportOriginal({ journalKey, localIdentifier: photo.assetId, file: file2048, fillLongPx: 2048, fillShortPx: 1 });
+          if ('skipped' in large) {
+            skipped++;
+            continue;
+          }
+          const small = await JournalPhotos.exportOriginal({ journalKey, localIdentifier: photo.assetId, file: file400, fillLongPx: 400, fillShortPx: 1 });
+          if ('skipped' in small) {
+            await JournalPhotos.deleteFile({ journalKey, file: file2048 }).catch(() => undefined);
+            skipped++;
+            continue;
+          }
+          const key = crypto.randomUUID();
+          keys[photo.assetId] = key;
+          drafts.push({
+            journalKey, entity: 'image', entityKey: key, op: 'create',
+            fields: {
+              journalKey, takenAt: localWallClock(photo.takenAt) || undefined, latitude: photo.lat, longitude: photo.lng,
+              width: large.width, height: large.height, path2048: `journals/${journalKey}/${file2048}`, path400: `journals/${journalKey}/${file400}`,
+              localIdentifier: photo.assetId,
+            },
+          });
+        } catch (error) {
+          console.warn('journal: a track photo could not be imported', photo.assetId, error);
+          skipped++;
+        }
+      }
+      return { drafts: drafts.map((d) => ({ ...d, fields: stripUndefined(d.fields) })), keys, skipped };
     }
 
     /** Re-reads the log after a download; keeps records a write added meanwhile. */
@@ -1577,6 +1623,45 @@ export const JournalStore = signalStore(
         await write([{ journalKey, entity: 'journal', entityKey: journalKey, op: 'archive', fields: {} }]);
       },
 
+      /** The journal's tracks, newest first (the offline picker, decision 7). */
+      tracks(journalKey: string): TrackView[] {
+        return tracksOf(store.journalState(), journalKey);
+      },
+
+      /** One track of the journal; undefined before it reached this device. */
+      track(trackKey: string): TrackView | undefined {
+        return trackOf(store.journalState(), trackKey);
+      },
+
+      /**
+       * Brings a recorded tracker trip into the journal (decisions 2, 7, 8): its visible photos become journal images
+       * (those the journal has are reused, those this device cannot reach are skipped and counted), then the derived
+       * copy is written as the `track` entity — images and track in one write. A track the journal already holds is not
+       * written again (one entity per trip; re-deriving is a separate step). `sections`: the trip's recorded points per
+       * section. Resolves once the track is in the state; a slow browser write keeps its records (they will land) and
+       * resolves with `slow` set.
+       */
+      async attachTrack(journalKey: string, trip: TripModel, sections: TrackCopyInput[]): Promise<{ trackKey: string; skipped: number; slow: boolean }> {
+        if (!store.author()) throw new JournalWriteRefused('noAuthor');
+        const trackKey = trackKeyOf(trip.okey);
+        if (trackOf(store.journalState(), trackKey)) return { trackKey, skipped: 0, slow: false };
+        const plan = trackPhotoPlan(trip, imagesOf(store.journalState(), journalKey).values());
+        const imported = await importTrackPhotos(journalKey, plan.toImport);
+        const copy = trackCopyOf(trip, sections, { ...plan.keys, ...imported.keys });
+        let slow = false;
+        try {
+          await write([
+            ...imported.drafts,
+            { journalKey, entity: 'track', entityKey: trackKey, op: 'create', fields: trackRecordFields(journalKey, copy) },
+          ]);
+        } catch (error) {
+          if (!(error instanceof JournalWriteSlow)) throw error;
+          slow = true;
+        }
+        return { trackKey, skipped: imported.skipped, slow };
+      },
+
+      /** Archives the section only: a track section's `track` entity stays (never archived — the trip stays attachable). */
       async archiveSection(sectionKey: string): Promise<void> {
         const { journalKey } = sectionOf(sectionKey);
         await write([{ journalKey, entity: 'section', entityKey: sectionKey, op: 'archive', fields: {} }]);

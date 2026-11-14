@@ -1411,6 +1411,10 @@
       "edit": "Tracker Konfiguration ändern",
       "description": "Tracking-Elemente, z.B. für Regatten, Wanderfahrten, Trainings"
     },
+    "track": {
+      "label": "Strecke",
+      "description": "Eine mit dem Tracker aufgezeichnete Strecke mit Karte, Höhenprofil und Fotos"
+    },
     "video": {
       "label": "Video",
       "edit": "Video Konfiguration ändern",

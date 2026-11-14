@@ -203,7 +203,8 @@
     "layer_world": "Carte du monde",
     "layer_switch": "Choisir la carte",
     "layer_icebergs": "Icebergs",
-    "iceberg_seen": "vu pour la dernière fois le {date}"
+    "iceberg_seen": "vu pour la dernière fois le {date}",
+    "no_position": "Ce footprint n’a pas encore de lieu."
   },
   "reactions": {
     "comment_write": "Écrire un commentaire",
@@ -492,5 +493,18 @@
     "video_alt": "Vidéo du {date}",
     "photo": "Photo",
     "video": "Vidéo"
+  },
+  "track": {
+    "pick_title": "Choisir un parcours",
+    "pick_empty": "Il n’y a pas encore de parcours ici. Enregistres-en un avec le tracker.",
+    "pick_offline": "Sans connexion, tu ne vois que les parcours déjà dans le carnet de voyage.",
+    "in_journal": "dans le carnet de voyage",
+    "attaching": "Le parcours est repris …",
+    "photos_skipped": "{count} photos du parcours ne sont pas sur cet appareil et manquent donc.",
+    "missing": "Ce parcours n’est pas encore sur cet appareil.",
+    "untitled": "Parcours",
+    "elevation_title": "Profil d’altitude",
+    "elevation_gain": "montée",
+    "elevation_loss": "descente"
   }
 }

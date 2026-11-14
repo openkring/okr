@@ -325,6 +325,18 @@ export const JOURNAL_I18N_KEYS = {
   picker_video_alt: PFX + 'picker.video_alt',
   picker_photo: PFX + 'picker.photo',
   picker_video: PFX + 'picker.video',
+  track_pick_title: PFX + 'track.pick_title',
+  track_pick_empty: PFX + 'track.pick_empty',
+  track_pick_offline: PFX + 'track.pick_offline',
+  track_in_journal: PFX + 'track.in_journal',
+  track_attaching: PFX + 'track.attaching',
+  track_photos_skipped: PFX + 'track.photos_skipped',
+  track_missing: PFX + 'track.missing',
+  track_untitled: PFX + 'track.untitled',
+  track_elevation_title: PFX + 'track.elevation_title',
+  track_elevation_gain: PFX + 'track.elevation_gain',
+  track_elevation_loss: PFX + 'track.elevation_loss',
+  map_no_position: PFX + 'map.no_position',
 } satisfies Record<string, string>;
 
 export type JournalI18n = { [K in keyof typeof JOURNAL_I18N_KEYS]: Signal<string> };

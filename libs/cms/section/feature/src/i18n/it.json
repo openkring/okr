@@ -1411,6 +1411,10 @@
       "edit": "Modificare la configurazione del tracker",
       "description": "Elementi di tracciamento, ad es. per regate, escursioni, allenamenti"
     },
+    "track": {
+      "label": "Percorso",
+      "description": "Un percorso registrato con il tracker, con mappa, profilo altimetrico e foto"
+    },
     "video": {
       "label": "Video",
       "edit": "Modificare la configurazione del video",

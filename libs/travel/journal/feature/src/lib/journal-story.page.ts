@@ -14,10 +14,10 @@ import { fill, registerBundledIcons } from '@okr/shared-util-core';
 import { FootprintEditModal, JournalFeedbackAction, JournalSectionSortModal, SortableSection, VideoClip } from '@okr/travel-journal-ui';
 import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { CategoryItemModel, CategoryListModel, IMAGE_STYLE_SHAPE, ImageConfig, SectionFeedback, SectionModel, UserModel } from '@okr/shared-models';
+import { CategoryItemModel, CategoryListModel, IMAGE_STYLE_SHAPE, ImageConfig, MapConfig, SectionFeedback, SectionModel, UserModel } from '@okr/shared-models';
 import {
-  addableSectionTypes, feedbackOf, filledHero, footprintMenu, FootprintFormModel, FootprintView, footprintOverlayText, heroHasCover, htmlToPlainText,
-  imageTitle, ImageView, parentKeyOf,
+  addableSectionTypes, Bbox, boundsOf, feedbackOf, filledHero, footprintMenu, FootprintFormModel, FootprintView, footprintOverlayText, heroHasCover, htmlToPlainText,
+  imageTitle, ImageView, journalMapData, parentKeyOf, sectionTrackKey, trackPointsOf, trackSummary, trackTileSources,
   isJournalSectionType, JournalSectionType, lostValueText, photoFileName, sectionActions, sectionModelOf, SectionView, sortByOrder,
   travelStartDate, weatherLine,
 } from '@okr/travel-journal-util';
@@ -31,8 +31,9 @@ import { JournalFileUrlService } from './journal-file-url.service';
 import { showJournalError } from './journal-errors';
 import { openJournalMenu } from './journal-menu-open';
 import { JOURNAL_ICONS } from './journal-icons';
-import { JournalSection } from './journal-section';
-import { journalSectionPickerInjector } from './journal-section-picker';
+import { routeBaseLayers } from './journal-base-layers';
+import { JournalSection, JournalSectionMap, JournalSectionMapI18n, JournalSectionTrack, JournalTrackPhoto } from './journal-section';
+import { journalSectionPickerInjector, journalTrackPicker } from './journal-section-picker';
 import { JournalStore } from './journal.store';
 
 /** One section as the story renders it: the change-log view, the CMS model with resolved urls, and what the page adds. */
@@ -48,6 +49,8 @@ interface StorySection {
   images: ImageConfig[]; // article, album: the images shown, urls resolved
   badges: Record<string, string>; // per image label: «❤ n · 💬 n»
   image: ImageThread | undefined; // the image whose comments are open under the section
+  map: JournalSectionMap | undefined; // a map section, resolved
+  track: JournalSectionTrack | undefined; // a track section, resolved
 }
 
 /** The image whose comments the author opened from its sheet. */
@@ -129,7 +132,9 @@ const SECTION_TYPE_I18N = '@cms/section/feature.section_type';
           <div class="section" [class.editable]="editMode() && canEdit()" (click)="tapSection(item.view)">
             <okr-journal-section [section]="item.section" [clips]="item.clips" [overlayText]="item.overlayText" [chipIcon]="weatherChipIcon()"
               [editMode]="editMode()" [notLoaded]="store.i18n.video_not_loaded()" [imageBadges]="item.badges"
-              [emitImageClicks]="item.feedback.imageComments || item.feedback.imageReactions" (imageSelected)="tapImage(item, $event)" />
+              [emitImageClicks]="item.feedback.imageComments || item.feedback.imageReactions" (imageSelected)="tapImage(item, $event)"
+              [map]="item.map" [track]="item.track" [mapI18n]="mapI18n()" [googleAttributionFetch]="googleFetch"
+              (baseLayerSelected)="store.selectBaseLayer($event)" (googleTileError)="store.renewGoogle($event)" />
           </div>
           @if (item.feedback.comments || item.feedback.reactions || item.image) {
             <okr-journal-feedback [section]="item.thread" [feedback]="item.feedback" [image]="item.image" [canWrite]="canEdit()" [busy]="sending()"
@@ -218,6 +223,8 @@ export class JournalStoryPage {
         ? { ...this.thread(imageParentKey(open.image)), title: this.imageName(open.image, open.index) } : undefined;
       return {
         ...resolved, view, overlayText: isLead ? overlay : undefined, lead: isLead, feedback, images: shown, image,
+        map: view.type === 'map' ? this.mapOf(model, fp) : undefined,
+        track: view.type === 'track' ? this.trackOf(view, images) : undefined,
         thread: this.thread(parentKeyOf({ kind: 'section', id: view.key })),
         badges: imageBadgesOf(shown, feedback, (i) => this.thread(imageParentKey(i))),
       };
@@ -227,6 +234,62 @@ export class JournalStoryPage {
   /** The reactions and comments of a section or image, from the journal's log (offline too). */
   private thread(parentKey: string): FeedbackThread {
     return { parentKey, reactions: this.store.feedbackReactions(parentKey), comments: this.store.feedbackComments(parentKey) };
+  }
+
+  /** The texts of the map and track sections. */
+  protected readonly mapI18n = computed<JournalSectionMapI18n>(() => {
+    const i18n = this.store.i18n;
+    return {
+      layerSwitch: i18n.layer_switch(), noPosition: i18n.map_no_position(), trackMissing: i18n.track_missing(),
+      elevation: { elevation_title: i18n.track_elevation_title, elevation_gain: i18n.track_elevation_gain, elevation_loss: i18n.track_elevation_loss },
+    };
+  });
+  /** The viewport copyright of a Google layer on a map section (phase 4 design §1). */
+  protected readonly googleFetch = (bbox: Bbox, zoom: number, type: 'roadmap' | 'satellite'): Promise<string> => this.store.googleAttribution(bbox, zoom, type);
+  /** The journal route and footprint pins (photo positions in time order, as on the overview). */
+  private readonly journalMap = computed(() => journalMapData(this.footprints(), this.store.images(this.journalKey())));
+
+  /**
+   * A map section (decision 5): centred on the footprint at the section's zoom, its pin, the journal route when the
+   * section shows it, and the journal's base layers around the footprint — the section's layer when this device offers
+   * it, else the device's choice (pickBaseLayer).
+   */
+  private mapOf(model: SectionModel, fp: FootprintView): JournalSectionMap {
+    const config = model.properties as unknown as MapConfig;
+    const journalKey = this.journalKey();
+    const center: [number, number] | undefined = fp.latitude !== undefined && fp.longitude !== undefined ? [fp.latitude, fp.longitude] : undefined;
+    const bbox: Bbox | undefined = center ? [center[1], center[0], center[1], center[0]] : undefined;
+    const options = this.store.baseLayerOptionsFor(journalKey, bbox);
+    const selectedBaseId = config.layer && options.some((o) => o.id === config.layer) ? config.layer : this.store.selectedBaseLayerFor(journalKey, bbox);
+    const map = this.journalMap();
+    const pins = map.pins.filter((p) => p.key === fp.key)
+      .map((p) => ({ key: p.key, lat: p.lat, lng: p.lng, label: p.label, thumbnailUrl: this.fileUrl.url(p.imagePath) }));
+    return {
+      center, zoom: config.zoom, pins, route: config.showRoute ? map.route : [],
+      baseLayers: routeBaseLayers(options, this.store.i18n), selectedBaseId,
+    };
+  }
+
+  /**
+   * A track section (decision 6): the journal's copy of the track, its photos that can be shown here (thumbnail and full
+   * size), and the track map's tiles — only raster, non-Google layers (ruling R4). Without the track on this device the
+   * section says so.
+   */
+  private trackOf(view: SectionView, images: Map<string, ImageView>): JournalSectionTrack {
+    const track = this.store.track(sectionTrackKey(view));
+    if (!track) return { summary: '', photos: [] };
+    const native = this.store.native();
+    const photos: JournalTrackPhoto[] = track.photos.flatMap((p, i) => {
+      const image = images.get(p.imageKey);
+      const url = this.fileUrl.url(image?.path2048);
+      if (!image || url === '' || (!native && this.fileUrl.isMissing(image.path2048))) return [];
+      const alt = fill(this.store.i18n.image_photo(), { n: i + 1 });
+      return [{ imageKey: p.imageKey, lat: p.lat, lng: p.lng, thumb: this.fileUrl.url(image.path400) || url, url, alt }];
+    });
+    const bbox = boundsOf(trackPointsOf(track).flatMap((s) => s.points));
+    const options = this.store.baseLayerOptionsFor(this.journalKey(), bbox);
+    const tiles = trackTileSources(options, this.store.selectedBaseLayerFor(this.journalKey(), bbox), this.store.online());
+    return { track, summary: trackSummary(track, this.store.i18n.track_untitled()), photos, ...(tiles ? { tiles } : {}) };
   }
 
   private imageName(image: ImageConfig, index: number): string {
@@ -392,7 +455,14 @@ export class JournalStoryPage {
     const { data, role } = await modal.onWillDismiss<CategoryItemModel>();
     const type = data?.name;
     if (role !== 'confirm' || !isJournalSectionType(type)) return;
-    const edited = await this.openSectionEditor(sectionModelOf(emptySection(type), tenantId));
+    const section = emptySection(type);
+    if (type === 'track') {
+      // a track section needs its track first: the picker writes the `track` record before it resolves
+      const chosen = await journalTrackPicker(this.injector, this.journalKey(), fp.key).pick();
+      if (!chosen) return;
+      section.properties = { track: { trackKey: chosen.trackKey } };
+    }
+    const edited = await this.openSectionEditor(sectionModelOf(section, tenantId));
     if (edited) await this.run(() => this.store.addSection(fp.key, type, edited));
   }
 

@@ -10,8 +10,12 @@ import { Bbox } from './journal-tiles.util';
  * GIBS world background (OpenStreetMap additionally over the downloaded satellite tiles); «Weltkarte» is always last.
  */
 export type BaseLayerKind = 'google' | 'live' | 'offline' | 'background';
+/** Every base-layer id; the journal map section's form offers the same list (`JOURNAL_MAP_LAYER_IDS`, cms-section-util). */
+export const BASE_LAYER_IDS = [
+  'google-roadmap', 'google-satellite', 'swisstopo-live', 'offline-osm', 'offline-satellite', 'offline-swisstopo', 'world',
+] as const;
 export interface BaseLayerOption {
-  id: 'google-roadmap' | 'google-satellite' | 'swisstopo-live' | 'offline-osm' | 'offline-satellite' | 'offline-swisstopo' | 'world';
+  id: (typeof BASE_LAYER_IDS)[number];
   kind: BaseLayerKind;
   sources: JournalTileSource[];
   googleType?: 'roadmap' | 'satellite';

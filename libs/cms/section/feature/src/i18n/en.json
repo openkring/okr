@@ -1411,6 +1411,10 @@
       "edit": "Change tracker configuration",
       "description": "Tracking elements, e.g. for regattas, touring trips, trainings"
     },
+    "track": {
+      "label": "Track",
+      "description": "A track recorded with the tracker, with map, elevation profile and photos"
+    },
     "video": {
       "label": "Video",
       "edit": "Change video configuration",

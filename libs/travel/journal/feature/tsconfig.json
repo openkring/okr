@@ -32,6 +32,9 @@
   ],
   "references": [
     { "path": "../../../geo/weather/util/tsconfig.lib.json" },
+    { "path": "../../../mobility/tracker/data-access/tsconfig.lib.json" },
+    { "path": "../../../mobility/tracker/ui/tsconfig.lib.json" },
+    { "path": "../../../mobility/tracker/util/tsconfig.lib.json" },
     {
       "path": "../../../auth/feature/tsconfig.lib.json"
     },

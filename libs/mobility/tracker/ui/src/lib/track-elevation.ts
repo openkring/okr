@@ -8,6 +8,9 @@ const H = 200;
 /** More points than pixels buy nothing: the line is thinned to this many. */
 const MAX_CHART_POINTS = 400;
 
+/** The labels the chart reads: the tracker passes its TrackerI18n, the travel journal its own three labels. */
+export type TrackElevationI18n = Pick<TrackerI18n, 'elevation_title' | 'elevation_gain' | 'elevation_loss'>;
+
 /**
  * The height-over-distance profile of a Strecke (spec 1.128 §4): an area chart without a chart library, climb and
  * descent above it. Moving the pointer or a finger across it emits the point underneath (`pointed`), which the page
@@ -64,7 +67,7 @@ const MAX_CHART_POINTS = 400;
 })
 export class TrackElevation {
   public readonly profile = input.required<ElevationProfile>();
-  public readonly i18n = input.required<TrackerI18n>();
+  public readonly i18n = input.required<TrackElevationI18n>();
   /** a line under the chart, e.g. the terrain model's attribution; '' = none */
   public readonly note = input('');
 

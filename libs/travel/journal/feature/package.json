@@ -36,6 +36,9 @@
     "@sentry/angular": "*",
     "@okr/avatar-ui": "*",
     "@okr/chat-ui": "*",
-    "@okr/comment-util": "*"
+    "@okr/comment-util": "*",
+    "@okr/mobility-tracker-ui": "*",
+    "@okr/mobility-tracker-util": "*",
+    "@okr/mobility-tracker-data-access": "*"
   }
 }

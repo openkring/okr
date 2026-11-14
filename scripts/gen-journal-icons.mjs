@@ -22,7 +22,9 @@ const NAMES = [
 ];
 
 // the section-type pictures «Sektion hinzufügen» (card-select) shows, set `section`: one per JOURNAL_SECTION_TYPES entry
-const SECTION_NAMES = ['album', 'article', 'hero', 'video'];
+const SECTION_NAMES = ['album', 'article', 'hero', 'map', 'track', 'video'];
+// a journal type without its own picture in the repository borrows one: 'track' (a recorded Strecke) shows the CMS 'tracker'
+const SECTION_SOURCE = { track: 'tracker' };
 
 const icons = {};
 const missing = [];
@@ -44,7 +46,7 @@ for (const name of NAMES) {
 }
 // shown by <img>, not ion-icon: percent-encoded, as a '#' (a colour) would end the URL there
 for (const name of SECTION_NAMES) {
-  const svg = await fetchSvg('section', name);
+  const svg = await fetchSvg('section', SECTION_SOURCE[name] ?? name);
   if (svg) icons[`section/${name}`] = `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 

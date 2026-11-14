@@ -203,7 +203,8 @@
     "layer_world": "World map",
     "layer_switch": "Choose map",
     "layer_icebergs": "Icebergs",
-    "iceberg_seen": "last seen on {date}"
+    "iceberg_seen": "last seen on {date}",
+    "no_position": "This footprint has no place yet."
   },
   "reactions": {
     "comment_write": "Write a comment",
@@ -492,5 +493,18 @@
     "video_alt": "Video of {date}",
     "photo": "Photo",
     "video": "Video"
+  },
+  "track": {
+    "pick_title": "Choose a track",
+    "pick_empty": "There are no tracks here yet. Record one with the tracker.",
+    "pick_offline": "Without a connection you only see the tracks that are already in the travel journal.",
+    "in_journal": "in the travel journal",
+    "attaching": "Adding the track …",
+    "photos_skipped": "{count} photos of the track are not on this device and are left out.",
+    "missing": "This track is not on this device yet.",
+    "untitled": "Track",
+    "elevation_title": "Elevation profile",
+    "elevation_gain": "ascent",
+    "elevation_loss": "descent"
   }
 }
