@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
+import { JournalChange } from '@okr/shared-models';
+import { formatHlc, reactionKey } from '@okr/travel-journal-util';
 
-import { applyManage, clipReadUrl, deliveryFor, GuestRequestError, guestSectionsOf, guestVideoClips, isGuestVisibleSection, memberName, parseGuestRequest, parseGuestEmail, peopleKeys } from './guest.logic';
+import {
+  applyManage, clipReadUrl, deliveryFor, feedbackIndex, feedbackTarget, GuestRequestError, GuestSection, guestReactionWrite, guestSectionFeedback, guestSectionsOf,
+  guestVideoClips, isGuestVisibleSection, isOneEmoji, mayDeleteComment, memberName, parseGuestRequest, parseGuestEmail, peopleKeys,
+} from './guest.logic';
 
 const CODE = '0123456789abcdef0123456789abcdef';
 const avatar = (key: string, name1: string, name2: string) => ({ key, name1, name2, modelType: 'person' as const, type: '', subType: '', label: '' });
@@ -93,6 +98,7 @@ describe('guestSectionsOf', () => {
     expect(sections[0]).toEqual({
       key: 'h1', type: 'hero', title: '', html: '', authorKey: 'anna',
       properties: { hero: { label: 'i3' }, overlay: { title: true } }, imageKeys: ['i3'], clipKeys: [],
+      feedback: { comments: false, reactions: false, imageComments: false, imageReactions: false },
     });
     expect(sections[1]).toMatchObject({ key: 'a1', type: 'album', title: 'Eis', imageKeys: ['i2', 'i1'], clipKeys: [] });
     expect(sections[2]).toMatchObject({ key: 'v1', type: 'video', html: '<p>Pinguine</p>', imageKeys: [], clipKeys: ['c1'] });
@@ -204,5 +210,186 @@ describe('peopleKeys', () => {
   it('drops malformed keys and a missing authorKeys', () => {
     expect(peopleKeys(undefined, [{ personKey: 'anna', linkCode: CODE }])).toEqual(['anna']);
     expect(peopleKeys(['', 'a/b', 42, 'bruno'], [{ personKey: '', linkCode: CODE }])).toEqual(['bruno']);
+  });
+});
+
+describe('guest comments and reactions on sections and images (1.154 phase 4)', () => {
+  const base = { journalKey: 'j1', code: CODE };
+
+  it('a comment with a parent: trimmed, the parent checked, the footprint not needed', () => {
+    expect(parseGuestRequest({ ...base, action: 'comment', parentKey: 'section.s1', text: ' Toll ', footprintKey: 'f9' }))
+      .toEqual({ ...base, action: 'comment', parentKey: 'section.s1', text: 'Toll' });
+    expect(parseGuestRequest({ ...base, action: 'comment', parentKey: 'image.i1', text: 'x' })).toMatchObject({ parentKey: 'image.i1' });
+    for (const parentKey of ['page.f1', 'section.', 'section.a/b', 'blog.x', 42, null]) {
+      expect(() => parseGuestRequest({ ...base, action: 'comment', parentKey, text: 'x' })).toThrow(GuestRequestError);
+    }
+  });
+
+  it('an old comment without a parent still needs its footprint (decision 10)', () => {
+    expect(parseGuestRequest({ ...base, action: 'comment', footprintKey: 'f1', text: 'x' })).toEqual({ ...base, action: 'comment', footprintKey: 'f1', text: 'x' });
+    expect(() => parseGuestRequest({ ...base, action: 'comment', text: 'x' })).toThrow(GuestRequestError);
+    expect(parseGuestRequest({ ...base, action: 'like', footprintKey: 'f1' })).toEqual({ ...base, action: 'like', footprintKey: 'f1' });
+  });
+
+  it('react and unreact need a parent and exactly one emoji', () => {
+    expect(parseGuestRequest({ ...base, action: 'react', parentKey: 'image.i1', emoji: '❤️', footprintKey: 'f9' }))
+      .toEqual({ ...base, action: 'react', parentKey: 'image.i1', emoji: '❤️' });
+    expect(parseGuestRequest({ ...base, action: 'unreact', parentKey: 'section.s1', emoji: '👨‍👩‍👧‍👦' })).toMatchObject({ action: 'unreact', emoji: '👨‍👩‍👧‍👦' });
+    expect(() => parseGuestRequest({ ...base, action: 'react', emoji: '👍' })).toThrow(GuestRequestError);
+    for (const emoji of ['', 'a', '1', '👍👍', '👍 ', '❤️x', '<b>', undefined, 42, '👍'.repeat(40)]) {
+      expect(() => parseGuestRequest({ ...base, action: 'react', parentKey: 'section.s1', emoji })).toThrow(GuestRequestError);
+    }
+  });
+
+  it('isOneEmoji: one grapheme that is an emoji', () => {
+    for (const ok of ['👍', '❤️', '🇨🇭', '👍🏽', '1️⃣', '🏳️‍🌈']) expect(isOneEmoji(ok)).toBe(true);
+    for (const bad of ['👍👎', '🇨🇭🇩🇪', 'x', ' ', '👍\u200b', '', 'ab']) expect(isOneEmoji(bad)).toBe(false);
+  });
+
+  const section = (key: string, type: GuestSection['type'], imageKeys: string[], feedback: Partial<GuestSection['feedback']> = {}): GuestSection => ({
+    key, type, title: '', html: '', properties: {}, authorKey: 'bruno', imageKeys, clipKeys: [],
+    feedback: { comments: true, reactions: true, imageComments: true, imageReactions: true, ...feedback },
+  });
+
+  describe('feedbackTarget (Review Focus 3)', () => {
+    const published = new Map<string, GuestSection[]>([
+      ['f1', [section('s1', 'article', ['i1', 'i2'], { imageReactions: false }), section('s2', 'album', ['i3'], { comments: false, reactions: false })]],
+      ['f2', [section('s3', 'album', ['i2'])]],
+    ]);
+
+    it('a section or image of a published footprint gives its footprint', () => {
+      expect(feedbackTarget('section.s1', 'reaction', published)).toBe('f1');
+      expect(feedbackTarget('section.s1', 'comment', published)).toBe('f1');
+      expect(feedbackTarget('image.i1', 'comment', published)).toBe('f1');
+      expect(feedbackTarget('image.i3', 'reaction', published)).toBe('f1');
+    });
+
+    it('refuses a parent with its switch off', () => {
+      expect(feedbackTarget('image.i1', 'reaction', published)).toBeUndefined();
+      expect(feedbackTarget('section.s2', 'comment', published)).toBeUndefined();
+      expect(feedbackTarget('section.s2', 'reaction', published)).toBeUndefined();
+    });
+
+    it('refuses a parent outside the published footprints (a draft, another journal, unknown)', () => {
+      expect(feedbackTarget('section.s9', 'comment', published)).toBeUndefined();
+      expect(feedbackTarget('image.i9', 'reaction', published)).toBeUndefined();
+      expect(feedbackTarget('page.f1', 'comment', published)).toBeUndefined();
+      expect(feedbackTarget('section.s1', 'comment', new Map())).toBeUndefined();
+    });
+
+    it('an image in several sections is allowed when any containing section allows it', () => {
+      // i2: image reactions off in s1 (f1), on in s3 (f2)
+      expect(feedbackTarget('image.i2', 'reaction', published)).toBe('f2');
+      expect(feedbackTarget('image.i2', 'comment', published)).toBe('f1');
+    });
+
+    it('a hero takes nothing, a video section no image feedback', () => {
+      const hero = new Map([['f1', [{ ...section('h1', 'hero', ['i5']), feedback: { comments: false, reactions: false, imageComments: false, imageReactions: false } }]]]);
+      expect(feedbackTarget('section.h1', 'comment', hero)).toBeUndefined();
+      expect(feedbackTarget('image.i5', 'reaction', hero)).toBeUndefined();
+    });
+  });
+
+  it('a guest deletes only their own live comment (Review Focus 4)', () => {
+    expect(mayDeleteComment({ authorKey: 'anna', isArchived: false }, 'anna')).toBe(true);
+    expect(mayDeleteComment({ authorKey: 'bruno', isArchived: false }, 'anna')).toBe(false);
+    expect(mayDeleteComment({ authorKey: 'anna', isArchived: true }, 'anna')).toBe(false);
+    expect(mayDeleteComment(undefined, 'anna')).toBe(false);
+    expect(mayDeleteComment({ authorKey: '' }, '')).toBe(false);
+  });
+
+  describe('guestReactionWrite', () => {
+    const parent = { kind: 'section' as const, id: 's1' };
+    const key = reactionKey(parent, 'anna', '👍') as string;
+    let seq = 0;
+    const record = (op: JournalChange['op'], active: boolean, createdAt: string, authorKey = 'anna'): JournalChange => {
+      seq += 1;
+      const deviceId = `guest-${authorKey}`;
+      return {
+        id: `r${seq}`, journalKey: 'j1', deviceId, seq, hlc: formatHlc({ wall: 1000 + seq, counter: 0, deviceId }), authorKey,
+        entity: 'reaction', entityKey: key, op, fields: { parentKey: 'section.s1', footprintKey: 'f1', emoji: '👍', active, createdAt },
+      };
+    };
+
+    it('the first reaction is a create', () => {
+      expect(guestReactionWrite([], parent, 'f1', 'anna', '👍', true, 'T2')).toEqual({
+        entityKey: key, op: 'create', fields: { parentKey: 'section.s1', footprintKey: 'f1', emoji: '👍', active: true, createdAt: 'T2' },
+      });
+    });
+
+    it('a known reaction is a set and keeps its first createdAt', () => {
+      expect(guestReactionWrite([record('create', true, 'T1')], parent, 'f1', 'anna', '👍', false, 'T2'))
+        .toEqual({ entityKey: key, op: 'set', fields: { parentKey: 'section.s1', footprintKey: 'f1', emoji: '👍', active: false, createdAt: 'T1' } });
+    });
+
+    it('removing a reaction that never existed writes nothing', () => {
+      expect(guestReactionWrite([], parent, 'f1', 'anna', '👍', false, 'T2')).toBeUndefined();
+      // another person's record on the key does not count as Anna's
+      expect(guestReactionWrite([record('create', true, 'T1', 'mallory')], parent, 'f1', 'anna', '👍', false, 'T2')).toBeUndefined();
+    });
+
+    it('refuses an emoji that gives no key', () => {
+      expect(guestReactionWrite([], parent, 'f1', 'anna', 'x', true, 'T2')).toBeUndefined();
+    });
+  });
+
+  describe('guest summaries from the materialised docs', () => {
+    const rk = (parentKey: string, personKey: string, emoji: string) => {
+      const [kind, id] = parentKey.split('.') as ['section' | 'image', string];
+      return reactionKey({ kind, id }, personKey, emoji) as string;
+    };
+    const reaction = (parentKey: string, personKey: string, emoji: string, createdAt: string, isArchived = false) =>
+      ({ id: rk(parentKey, personKey, emoji), data: { parentKey, personKey, emoji, createdAt, isArchived } });
+    const reactions = [
+      reaction('section.s1', 'anna', '👍', 'T2'),
+      reaction('section.s1', 'bruno', '👍', 'T3'),
+      reaction('section.s1', 'bruno', '❤️', 'T1'),
+      reaction('section.s1', 'carla', '😂', 'T4', true), // removed
+      reaction('image.i1', 'bruno', '❤️', 'T5'),
+      { id: 'f1_anna', data: { parentKey: 'page.f1', personKey: 'anna', type: 'like', createdAt: 'T0' } }, // old like
+      { ...reaction('section.s1', 'mallory', '🔥', 'T6'), data: { parentKey: 'section.s1', personKey: 'mallory', emoji: '👎', createdAt: 'T6' } }, // key disagrees
+    ];
+    const comment = (id: string, parentKey: string, authorKey: string, createdAt: string, isArchived = false) =>
+      ({ id, data: { parentKey, authorKey, authorName: `stored ${authorKey}`, description: `text ${id}`, creationDateTime: createdAt, isArchived } });
+    const comments = [
+      comment('c2', 'section.s1', 'bruno', 'T2'),
+      comment('c1', 'section.s1', 'anna', 'T1'),
+      comment('c3', 'section.s1', 'anna', 'T3', true),
+      comment('c4', 'image.i1', 'zoe', 'T4'),
+      comment('c0', 'page.f1', 'anna', 'T0'),
+    ];
+    const name = (personKey: string) => ({ anna: 'Anna Muster', bruno: 'Bruno Kaiser' } as Record<string, string>)[personKey] ?? '';
+    const index = feedbackIndex(comments, reactions, 'anna', name);
+
+    it('reaction summaries per parent: active only, mine for the guest, first use first, docs that disagree with their key left out', () => {
+      expect(index.get('section.s1')?.reactions).toEqual([{ emoji: '❤️', count: 1, mine: false }, { emoji: '👍', count: 2, mine: true }]);
+      expect(index.get('image.i1')?.reactions).toEqual([{ emoji: '❤️', count: 1, mine: false }]);
+      expect(index.has('page.f1')).toBe(false);
+    });
+
+    it('comments per parent, oldest first, names from the journal lists, no person keys', () => {
+      expect(index.get('section.s1')?.comments).toEqual([
+        { key: 'c1', authorName: 'Anna Muster', text: 'text c1', createdAt: 'T1', mine: true },
+        { key: 'c2', authorName: 'Bruno Kaiser', text: 'text c2', createdAt: 'T2', mine: false },
+      ]);
+      expect(index.get('image.i1')?.comments).toEqual([{ key: 'c4', authorName: 'stored zoe', text: 'text c4', createdAt: 'T4', mine: false }]);
+      expect(JSON.stringify([...index.values()])).not.toMatch(/personKey|authorKey/);
+    });
+
+    it('a section gets its own and its images\' feedback, each only while its switch is on', () => {
+      const s1 = section('s1', 'article', ['i1', 'i2']);
+      expect(guestSectionFeedback({ ...s1, key: 's1' }, index)).toEqual({
+        feedback: s1.feedback,
+        reactions: index.get('section.s1')?.reactions, comments: index.get('section.s1')?.comments,
+        images: { i1: { reactions: [{ emoji: '❤️', count: 1, mine: false }], comments: index.get('image.i1')?.comments }, i2: { reactions: [], comments: [] } },
+      });
+      const off = section('s1', 'article', ['i1'], { comments: false, imageReactions: false });
+      const feedbackOff = guestSectionFeedback(off, index);
+      expect(feedbackOff.comments).toEqual([]);
+      expect(feedbackOff.reactions).toHaveLength(2);
+      expect(feedbackOff.images).toEqual({ i1: { reactions: [], comments: index.get('image.i1')?.comments } });
+      const allOff = guestSectionFeedback(section('s1', 'article', ['i1'], { comments: false, reactions: false, imageComments: false, imageReactions: false }), index);
+      expect(allOff).toEqual({ feedback: { comments: false, reactions: false, imageComments: false, imageReactions: false }, reactions: [], comments: [], images: {} });
+    });
   });
 });

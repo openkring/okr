@@ -1,13 +1,13 @@
 import { Injectable } from '@angular/core';
-import { TransportMode } from '@okr/shared-models';
-import { JournalSectionType } from '@okr/travel-journal-util';
+import { SectionFeedback, TransportMode } from '@okr/shared-models';
+import { JournalSectionType, ReactionSummary } from '@okr/travel-journal-util';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 /**
  * The guest callables of the travel journal (spec 1.113 §7, plan 7): `manageJournalGuest` for the authors
  * (links: list, create, expiry, revoke; notices; people, hasEmail) and `journalGuest` for the guest page, where the link code is the
- * only credential (view, comment, like, unlike, settings, mute, unmute).
+ * only credential (view, comment, deleteComment, react, unreact, settings, mute, unmute; like/unlike for old pages only).
  */
 export interface GuestLinkView { personKey: string; url: string; expiresAt: string; revokedAt: string; mutedAt: string }
 
@@ -24,16 +24,21 @@ export interface NoticePreview {
 
 export interface GuestPhotoView { key: string; width: number; height: number; latitude?: number; longitude?: number; takenAt?: string; url: string; thumb: string }
 export interface GuestVideoView { key: string; width: number; height: number; durationSec: number; poster: string; url: string }
+export interface GuestCommentView { key: string; authorName: string; text: string; createdAt: string; mine: boolean }
+/** The comments and reaction chips of one section or image; empty while its switch is off. */
+export interface GuestFeedbackView { reactions: ReactionSummary[]; comments: GuestCommentView[] }
 /**
  * A section of a published footprint as a guest receives it (spec 1.154 phase 2): the CMS type, title, html and
  * properties (image references name journal images in `ImageConfig.label`, their `url` is empty) plus the signed
  * photos (`sectionImageKeys` order) and clips (`sectionClipKeys` order). No person data beyond the author's name.
+ * Phase 4: the switches in effect (`feedback`), the section's own reactions and comments, and per journal image key
+ * (`images`, only while an image switch is on) the image's. Absent from a server older than phase 4.
  */
-export interface GuestSectionView {
+export interface GuestSectionView extends Partial<GuestFeedbackView> {
   key: string; type: JournalSectionType; title: string; html: string; properties: Record<string, unknown>;
   authorName: string; photos: GuestPhotoView[]; videos: GuestVideoView[];
+  feedback?: SectionFeedback; images?: Record<string, GuestFeedbackView>;
 }
-export interface GuestCommentView { key: string; authorName: string; text: string; createdAt: string; mine: boolean }
 export interface GuestFootprintView {
   key: string; title: string; placeName: string; date: string; time: string; latitude?: number; longitude?: number;
   weather?: { code: number; min: number; max: number; precip: number; sunrise?: string; sunset?: string };
@@ -100,8 +105,13 @@ export class JournalGuestService {
     return this.call<GuestJournalView>('journalGuest', { journalKey, code, action: 'view' });
   }
 
-  public act(journalKey: string, code: string, action: 'comment' | 'deleteComment' | 'like' | 'unlike' | 'settings' | 'mute' | 'unmute',
-    extra: { footprintKey?: string; commentKey?: string; text?: string; channel?: GuestChannel } = {}): Promise<void> {
+  /**
+   * A guest action. `comment` takes `parentKey` (`section.<key>` / `image.<key>`) and `text`; `react`/`unreact` take
+   * `parentKey` and `emoji`; the server finds the footprint and refuses a parent whose switch is off. `footprintKey` only
+   * for the old `like`/`unlike`/footprint `comment`.
+   */
+  public act(journalKey: string, code: string, action: 'comment' | 'deleteComment' | 'react' | 'unreact' | 'like' | 'unlike' | 'settings' | 'mute' | 'unmute',
+    extra: { footprintKey?: string; parentKey?: string; emoji?: string; commentKey?: string; text?: string; channel?: GuestChannel } = {}): Promise<void> {
     return this.call<unknown>('journalGuest', { journalKey, code, action, ...extra }).then(() => undefined);
   }
 }

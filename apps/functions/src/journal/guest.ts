@@ -2,22 +2,25 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { logger } from 'firebase-functions/v2';
 import { defineSecret } from 'firebase-functions/params';
 import { CallableRequest, HttpsError, onCall } from 'firebase-functions/v2/https';
-import { FieldValue, Firestore, getFirestore } from 'firebase-admin/firestore';
+import { FieldValue, Firestore, getFirestore, Timestamp } from 'firebase-admin/firestore';
 
 import {
-  AddressCollection, AddressModel, AvatarInfo, JournalChangeCollection, JournalCollection, JournalCommentCollection, JournalFootprintCollection, JournalGuestLink,
+  AddressCollection, AddressModel, AvatarInfo, JournalChange, JournalChangeCollection, JournalCollection, JournalCommentCollection, JournalFootprintCollection, JournalGuestLink,
   JournalGuestLinksDoc, JournalGuestSeqDoc, JournalImageCollection, JournalPrivateCollection, JournalReactionCollection,
   JournalSectionCollection, PersonCollection,
 } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
-import { findGuestLink, guestChangeRecord, guestLinkState, likeKey } from '@okr/travel-journal-util';
+import { acceptRecord, findGuestLink, guestChangeRecord, guestLinkState, likeKey, parseParentKey, reactionKey } from '@okr/travel-journal-util';
 
 import { IMGIX_PRIVATE_HOST, signImgixUrl } from '../_storage/imgix-sign';
 import { privateBucket } from '../_storage/private-bucket';
 import { tenantLinks } from '../calendar/deliver';
 import { createFirestoreDeps } from '../workflow/firestore-deps';
 import { windowExpiry } from '../video/video-sign.util';
-import { applyManage, clipReadUrl, deliveryFor, guestSectionsOf, guestVideoClips, GuestRequest, GuestRequestError, ManageAction, memberName, newLinkCode, parseGuestRequest, parseGuestEmail, peopleKeys } from './guest.logic';
+import {
+  applyManage, clipReadUrl, deliveryFor, feedbackIndex, FeedbackKind, feedbackTarget, GuestSection, guestReactionWrite, guestSectionFeedback, guestSectionsOf,
+  guestVideoClips, GuestRequest, GuestRequestError, ManageAction, mayDeleteComment, memberName, newLinkCode, parseGuestRequest, parseGuestEmail, peopleKeys,
+} from './guest.logic';
 import { isJournalKey } from './apply-journal-change.logic';
 import { requireJournalAuthor } from './journal-auth';
 import { checkNotice } from './notify.logic';
@@ -74,6 +77,51 @@ async function appendGuestRecord(db: Firestore, jk: string, ctx: GuestContext, e
   });
 }
 
+/**
+ * The footprint of a guest's comment or reaction on a section or image (decision 5), or failed-precondition: the parent
+ * must be shown by a guest-visible section of a live, published footprint of this journal, with its switch on.
+ */
+async function requireFeedbackTarget(db: Firestore, jk: string, parentKey: string, kind: FeedbackKind): Promise<string> {
+  const [footprints, sections] = await Promise.all([
+    sub(db, jk, JournalFootprintCollection).where('publishState', '==', 'published').get(),
+    sub(db, jk, JournalSectionCollection).get(),
+  ]);
+  const sectionDocs = sections.docs.map((d) => ({ id: d.id, data: d.data() }));
+  const published = new Map<string, GuestSection[]>(footprints.docs.filter((f) => f.data()['isArchived'] !== true).map((f) => {
+    const order = Array.isArray(f.data()['sections']) ? (f.data()['sections'] as string[]) : [];
+    return [f.id, guestSectionsOf(sectionDocs, f.id, order)];
+  }));
+  const footprintKey = feedbackTarget(parentKey, kind, published);
+  if (!footprintKey) throw new HttpsError('failed-precondition', 'parent');
+  return footprintKey;
+}
+
+/**
+ * Switches the guest's emoji reaction on or off: one transaction reads the guest seq and every record of the reaction's key
+ * (the materialised doc may lag behind the trigger), then appends `create` while the reaction is unknown, else `set` with
+ * the first `createdAt` (`guestReactionWrite`). Removing a reaction the guest never made writes nothing.
+ */
+async function appendGuestReaction(db: Firestore, jk: string, ctx: GuestContext, parentKey: string, footprintKey: string, emoji: string, active: boolean): Promise<void> {
+  const parent = parseParentKey(parentKey);
+  const pk = ctx.link.personKey;
+  const key = parent && reactionKey(parent, pk, emoji);
+  if (!parent || !key) throw new HttpsError('invalid-argument', 'emoji');
+  const seqRef = privateDoc(db, jk, JournalGuestSeqDoc);
+  const ofKey = db.collection(JournalChangeCollection).where('journalKey', '==', jk).where('entity', '==', 'reaction').where('entityKey', '==', key);
+  await db.runTransaction(async (tx) => {
+    const [seqSnap, recordSnaps] = await Promise.all([tx.get(seqRef), tx.get(ofKey)]);
+    // as the trigger reads them: a clock more than 24 h ahead of its upload is dropped (a record still pending its timestamp counts as now)
+    const records = recordSnaps.docs.map((d) => d.data() as JournalChange)
+      .filter((r) => acceptRecord(r, (r.uploadedAt as unknown as Timestamp | undefined)?.toMillis?.() ?? Date.now()));
+    const write = guestReactionWrite(records, parent, footprintKey, pk, emoji, active, new Date().toISOString());
+    if (!write) return;
+    const seq = Number(seqSnap.data()?.[pk] ?? 0) + 1;
+    const record = guestChangeRecord({ id: randomUUID(), journalKey: jk, personKey: pk, entity: 'reaction', entityKey: write.entityKey, op: write.op, fields: write.fields, seq, nowMs: Date.now() });
+    tx.set(seqRef, { [pk]: seq }, { merge: true });
+    tx.create(db.collection(JournalChangeCollection).doc(record.id), { ...record, tenants: ctx.tenants, uploadedAt: FieldValue.serverTimestamp() });
+  });
+}
+
 async function requirePublished(db: Firestore, jk: string, footprintKey: string): Promise<void> {
   const fp = (await sub(db, jk, JournalFootprintCollection).doc(footprintKey).get()).data();
   if (!fp || fp['isArchived'] === true || fp['publishState'] !== 'published') throw new HttpsError('failed-precondition', 'footprint');
@@ -96,6 +144,8 @@ async function guestView(db: Firestore, jk: string, ctx: GuestContext): Promise<
   const name = (personKey: string) => memberName(personKey, ctx.authors, ctx.guests) || (personKey === ctx.link.personKey ? ctx.name : '');
   const pk = ctx.link.personKey;
   const sectionDocs = sectionSnaps.docs.map((d) => ({ id: d.id, data: d.data() }));
+  // per section and image (1.154 phase 4): from the materialised docs only; no person keys reach the guest
+  const feedback = feedbackIndex(comments.docs.map((d) => ({ id: d.id, data: d.data() })), reactions.docs.map((d) => ({ id: d.id, data: d.data() })), pk, name);
 
   const unsorted = await Promise.all(live(footprints.docs).map(async (f) => {
     const fp = f.data();
@@ -126,7 +176,7 @@ async function guestView(db: Firestore, jk: string, ctx: GuestContext): Promise<
       // GuestSectionView: no author key, no other person data — only the author's display name from the journal lists
       return {
         key: section.key, type: section.type, title: section.title, html: section.html, properties: section.properties,
-        authorName: name(section.authorKey), photos, videos,
+        authorName: name(section.authorKey), photos, videos, ...guestSectionFeedback(section, feedback),
       };
     });
     const sections = await Promise.all(signing);
@@ -159,7 +209,10 @@ async function guestView(db: Firestore, jk: string, ctx: GuestContext): Promise<
 
 /**
  * Everything a guest does (spec 1.113 §7, plans 7, 8): no account, the link code is the credential. Actions:
- * view, comment, deleteComment (own only), like, unlike, settings (delivery channel), mute, unmute. App Check enforced.
+ * view, comment (on a section or image; without `parentKey` an old footprint comment), deleteComment (own only), react and
+ * unreact (an emoji on a section or image), like and unlike (old footprint likes, decision 10), settings (delivery channel),
+ * mute, unmute. A comment or reaction is refused unless its parent is in a published footprint of this journal with its
+ * switch on (decision 5). App Check enforced.
  */
 export const journalGuest = onCall(
   { ...SMALL, enforceAppCheck: true, cors: true, secrets: [imgixPrivateToken] },
@@ -178,15 +231,29 @@ export const journalGuest = onCall(
     switch (req.action) {
       case 'view':
         return guestView(db, req.journalKey, ctx);
-      case 'comment':
+      case 'comment': {
+        if (req.parentKey) {
+          const footprintKey = await requireFeedbackTarget(db, req.journalKey, req.parentKey, 'comment');
+          await appendGuestRecord(db, req.journalKey, ctx, 'comment', randomUUID(), 'create',
+            { parentKey: req.parentKey, footprintKey, text: req.text, authorName: ctx.name, createdAt: new Date().toISOString() });
+          return { ok: true };
+        }
+        // an old footprint comment (decision 10: one more release for cached clients)
         await requirePublished(db, req.journalKey, req.footprintKey as string);
         await appendGuestRecord(db, req.journalKey, ctx, 'comment', randomUUID(), 'create',
           { footprintKey: req.footprintKey, text: req.text, authorName: ctx.name, createdAt: new Date().toISOString() });
         return { ok: true };
+      }
+      case 'react':
+      case 'unreact': {
+        const footprintKey = await requireFeedbackTarget(db, req.journalKey, req.parentKey as string, 'reaction');
+        await appendGuestReaction(db, req.journalKey, ctx, req.parentKey as string, footprintKey, req.emoji as string, req.action === 'react');
+        return { ok: true };
+      }
       case 'deleteComment': {
         // only the guest's own comment: its materialised document names the author
         const comment = (await sub(db, req.journalKey, JournalCommentCollection).doc(req.commentKey as string).get()).data();
-        if (!comment || comment['isArchived'] === true || comment['authorKey'] !== pk) throw new HttpsError('permission-denied', 'comment');
+        if (!mayDeleteComment(comment, pk)) throw new HttpsError('permission-denied', 'comment');
         await appendGuestRecord(db, req.journalKey, ctx, 'comment', req.commentKey as string, 'archive', {});
         return { ok: true };
       }

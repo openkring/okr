@@ -43,7 +43,7 @@ export function emojiCodepoints(emoji: string): string {
  * At least one pictographic, regional-indicator (flag) or keycap code point; no letters, no whitespace and no ASCII
  * but the keycap bases `0-9 # *`. Loose on purpose: the picker's emoji vary by Unicode version.
  */
-function isEmoji(value: string): boolean {
+export function isEmoji(value: string): boolean {
   return /[\p{Extended_Pictographic}\p{Regional_Indicator}⃣]/u.test(value)
     && !/[\p{L}\p{Z}\s]/u.test(value) && !/[\x00-\x22\x24-\x29\x2B-\x2F\x3A-\x7F]/.test(value); // eslint-disable-line no-control-regex
 }

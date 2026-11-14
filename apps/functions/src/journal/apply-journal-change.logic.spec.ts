@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { JournalChange } from '@okr/shared-models';
-import { conflictCopyKey, formatHlc } from '@okr/travel-journal-util';
+import { conflictCopyKey, formatHlc, reactionKey } from '@okr/travel-journal-util';
 
 import { isBookMapFileName, isJournalFileName, journalObjectPath, uploadHeadersFor, mayOverwrite, planEntityWrite, planFootprintSections, peerSecretTenants, planPeerSecret, planSectionWrites, StoredRecord } from './apply-journal-change.logic';
 
@@ -211,6 +211,20 @@ describe('applyJournalChange logic', () => {
     const unlike = rec({ entity: 'reaction', entityKey: 'f1_anna', op: 'archive' }, 'guest-anna', 'anna');
     expect(planEntityWrite([like], 'j1', 'reaction', 'f1_anna', ['bkg'])?.data).toMatchObject({ personKey: 'anna', parentKey: 'page.f1', type: 'like' });
     expect(planEntityWrite([like, unlike], 'j1', 'reaction', 'f1_anna', ['bkg'])?.data).toEqual({ isArchived: true });
+  });
+
+  it('a comment on a section and an emoji reaction toggled off are materialised (1.154 phase 4)', () => {
+    const comment = rec({ entity: 'comment', entityKey: 'c2', op: 'create', fields: { parentKey: 'section.s1', footprintKey: 'f1', text: 'Toll', authorName: 'Anna', createdAt: '2027-01-14T10:00:00Z' } }, 'guest-anna', 'anna');
+    expect(planEntityWrite([comment], 'j1', 'comment', 'c2', ['bkg'])).toMatchObject({ path: 'journals/j1/comments/c2', data: { parentKey: 'section.s1', authorKey: 'anna' } });
+    const key = reactionKey({ kind: 'section', id: 's1' }, 'anna', '👍') as string;
+    const fields = { parentKey: 'section.s1', footprintKey: 'f1', emoji: '👍', createdAt: '2027-01-14T10:00:00Z' };
+    const on = rec({ entity: 'reaction', entityKey: key, op: 'create', fields: { ...fields, active: true } }, 'guest-anna', 'anna');
+    const off = rec({ entity: 'reaction', entityKey: key, op: 'set', fields: { ...fields, active: false } }, 'guest-anna', 'anna');
+    expect(planEntityWrite([on], 'j1', 'reaction', key, ['bkg'])).toMatchObject({ path: `journals/j1/reactions/${key}`, data: { emoji: '👍', personKey: 'anna', isArchived: false } });
+    expect(planEntityWrite([on, off], 'j1', 'reaction', key, ['bkg'])?.data).toMatchObject({ emoji: '👍', parentKey: 'section.s1', isArchived: true });
+    // another person's record on Anna's key is not admitted: nothing is written
+    const foreign = rec({ entity: 'reaction', entityKey: key, op: 'create', fields: { ...fields, active: true } }, 'guest-mallory', 'mallory');
+    expect(planEntityWrite([foreign], 'j1', 'reaction', key, ['bkg'])).toBeUndefined();
   });
 
   it('sign rejects a path outside the journal', () => {

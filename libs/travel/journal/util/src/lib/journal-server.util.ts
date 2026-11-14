@@ -1,6 +1,7 @@
 import {
   FOOTPRINT_PAGE_TYPE, JournalChange, JournalEntity, JournalImageModel, JournalModel, PageModel, SectionModel,
 } from '@okr/shared-models';
+import { parseParentKey, reactionKey as emojiReactionKey } from './journal-feedback.util';
 import { isValidHlc, parseHlc } from './journal-hlc.util';
 import { entityStateKey, JournalState, viewOf } from './journal-merge.util';
 import { sectionModelOf } from './journal-section.util';
@@ -124,7 +125,10 @@ export function imageDocOf(state: JournalState, imageKey: string, journalKey: st
   });
 }
 
-/** A comment as `journals/{jk}/comments/{key}` (CommentModel shape, plan 7). */
+/**
+ * A comment as `journals/{jk}/comments/{key}` (CommentModel shape, plan 7). `parentKey` is the record's `section.<key>` /
+ * `image.<key>` (spec 1.154 phase 4); an old comment without one (or with a malformed one) stays on `page.<footprintKey>`.
+ */
 export function commentDocOf(state: JournalState, commentKey: string, tenants: string[]): Record<string, unknown> | undefined {
   const { entityState, view: v } = view(state, 'comment', commentKey);
   if (!v) return undefined;
@@ -132,18 +136,27 @@ export function commentDocOf(state: JournalState, commentKey: string, tenants: s
   return {
     okey: commentKey, tenants, isArchived: false, index: '', tags: '', attachmentKeys: [],
     authorKey: entityState?.ownerKey ?? '', authorName: str(v['authorName']), creationDateTime: createdAt,
-    parentKey: `page.${str(v['footprintKey'])}`, description: str(v['text']),
+    parentKey: parseParentKey(v['parentKey']) ? str(v['parentKey']) : `page.${str(v['footprintKey'])}`, description: str(v['text']),
   };
 }
 
-/** A like as `journals/{jk}/reactions/{key}` (ReactionModel shape, plan 7). */
+/**
+ * A reaction as `journals/{jk}/reactions/{key}` (ReactionModel shape). An emoji reaction (spec 1.154 phase 4) keeps its
+ * doc while switched off: `isArchived` is `!active` (plan decision 1), so re-adding it un-archives the same doc. Its
+ * fields must agree with its key (`reactionKey` of parent, owner and emoji), else no doc — as on the device. An old
+ * footprint like (`type: 'like'`) keeps its shape; anything else gives no doc.
+ */
 export function reactionDocOf(state: JournalState, reactionKey: string, tenants: string[]): Record<string, unknown> | undefined {
   const { entityState, view: v } = view(state, 'reaction', reactionKey);
-  if (!v || v['type'] !== 'like') return undefined;
-  return {
-    okey: reactionKey, tenants, isArchived: false, parentKey: `page.${str(v['footprintKey'])}`,
-    personKey: entityState?.ownerKey ?? '', type: 'like', createdAt: str(v['createdAt']),
-  };
+  if (!v) return undefined;
+  const personKey = entityState?.ownerKey ?? '';
+  if (v['type'] === 'like') {
+    return { okey: reactionKey, tenants, isArchived: false, parentKey: `page.${str(v['footprintKey'])}`, personKey, type: 'like', createdAt: str(v['createdAt']) };
+  }
+  const parent = parseParentKey(v['parentKey']);
+  const emoji = str(v['emoji']);
+  if (!parent || emoji === '' || emojiReactionKey(parent, personKey, emoji) !== reactionKey) return undefined;
+  return { okey: reactionKey, tenants, isArchived: v['active'] !== true, parentKey: str(v['parentKey']), personKey, emoji, createdAt: str(v['createdAt']) };
 }
 
 /**

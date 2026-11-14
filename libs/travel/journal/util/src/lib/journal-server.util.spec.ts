@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { JournalChange } from '@okr/shared-models';
 import { formatHlc } from './journal-hlc.util';
 import { entityStateKey, materialize } from './journal-merge.util';
-import { acceptRecord, conflictCopyDocOf, footprintPageOf, imageDocOf, journalDocOf, MAX_FUTURE_MS, sectionDocOf, storagePath } from './journal-server.util';
+import { reactionKey } from './journal-feedback.util';
+import { acceptRecord, commentDocOf, conflictCopyDocOf, footprintPageOf, imageDocOf, journalDocOf, MAX_FUTURE_MS, reactionDocOf, sectionDocOf, storagePath } from './journal-server.util';
 import { sectionModelOf } from './journal-section.util';
 import { footprintsOf, SectionView, sectionViewOf } from './journal-view.util';
 
@@ -195,5 +196,53 @@ describe('journal server util', () => {
   it("storagePath strips the device's journals/<jk>/ prefix", () => {
     expect(storagePath('bkg', 'j1', 'journals/j1/x-400.jpg')).toBe('tenant/bkg/journal/j1/x-400.jpg');
     expect(storagePath('bkg', 'j1', '')).toBe('');
+  });
+});
+
+describe('comment and reaction docs (spec 1.154 phase 4)', () => {
+  const comment = (fields: Record<string, unknown>) => materialize([rec({ entity: 'comment', entityKey: 'c1', op: 'create', fields }, 'guest-anna', 'anna')]);
+
+  it('a comment keeps its section or image parent', () => {
+    const fields = { footprintKey: 'f1', text: 'Schön', authorName: 'Anna', createdAt: '2027-01-14T10:00:00Z' };
+    expect(commentDocOf(comment({ ...fields, parentKey: 'section.s1' }), 'c1', ['bkg'])).toMatchObject({ parentKey: 'section.s1', authorKey: 'anna', description: 'Schön', isArchived: false });
+    expect(commentDocOf(comment({ ...fields, parentKey: 'image.i1' }), 'c1', ['bkg'])?.['parentKey']).toBe('image.i1');
+  });
+
+  it('an old comment or one with a malformed parent falls back to its footprint page', () => {
+    const fields = { footprintKey: 'f1', text: 'Schön', authorName: 'Anna', createdAt: '2027-01-14T10:00:00Z' };
+    expect(commentDocOf(comment(fields), 'c1', ['bkg'])?.['parentKey']).toBe('page.f1');
+    expect(commentDocOf(comment({ ...fields, parentKey: 'page.f2' }), 'c1', ['bkg'])?.['parentKey']).toBe('page.f1');
+    expect(commentDocOf(comment({ ...fields, parentKey: 'section.a/b' }), 'c1', ['bkg'])?.['parentKey']).toBe('page.f1');
+  });
+
+  const key = reactionKey({ kind: 'image', id: 'i1' }, 'anna', '❤️') as string;
+  const react = (active: boolean, extra: Record<string, unknown> = {}) =>
+    rec({ entity: 'reaction', entityKey: key, op: 'create', fields: { parentKey: 'image.i1', footprintKey: 'f1', emoji: '❤️', active, createdAt: '2027-01-14T10:00:00Z', ...extra } }, 'guest-anna', 'anna');
+
+  it('an emoji reaction becomes a reaction doc with its emoji, parent and person', () => {
+    expect(reactionDocOf(materialize([react(true)]), key, ['bkg'])).toEqual({
+      okey: key, tenants: ['bkg'], isArchived: false, parentKey: 'image.i1', personKey: 'anna', emoji: '❤️', createdAt: '2027-01-14T10:00:00Z',
+    });
+  });
+
+  it('an inactive reaction is archived, a re-added one live again', () => {
+    const create = react(true); // records are built in clock order
+    const off = rec({ entity: 'reaction', entityKey: key, op: 'set', fields: { parentKey: 'image.i1', footprintKey: 'f1', emoji: '❤️', active: false, createdAt: '2027-01-14T10:00:00Z' } }, 'guest-anna', 'anna');
+    expect(reactionDocOf(materialize([create, off]), key, ['bkg'])).toMatchObject({ isArchived: true, emoji: '❤️', parentKey: 'image.i1' });
+    const on = rec({ entity: 'reaction', entityKey: key, op: 'set', fields: { parentKey: 'image.i1', footprintKey: 'f1', emoji: '❤️', active: true, createdAt: '2027-01-14T10:00:00Z' } }, 'guest-anna', 'anna');
+    expect(reactionDocOf(materialize([create, off, on]), key, ['bkg'])?.['isArchived']).toBe(false);
+  });
+
+  it('a reaction whose fields disagree with its key gives no doc', () => {
+    expect(reactionDocOf(materialize([react(true, { emoji: '👍' })]), key, ['bkg'])).toBeUndefined();
+    expect(reactionDocOf(materialize([react(true, { parentKey: 'image.i2' })]), key, ['bkg'])).toBeUndefined();
+    expect(reactionDocOf(materialize([react(true, { parentKey: 'page.f1' })]), key, ['bkg'])).toBeUndefined();
+  });
+
+  it('an old footprint like keeps its shape', () => {
+    const like = rec({ entity: 'reaction', entityKey: 'f1_anna', op: 'create', fields: { footprintKey: 'f1', type: 'like', createdAt: 'x' } }, 'guest-anna', 'anna');
+    expect(reactionDocOf(materialize([like]), 'f1_anna', ['bkg'])).toEqual({
+      okey: 'f1_anna', tenants: ['bkg'], isArchived: false, parentKey: 'page.f1', personKey: 'anna', type: 'like', createdAt: 'x',
+    });
   });
 });

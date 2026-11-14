@@ -1,7 +1,10 @@
 import { HttpsError } from 'firebase-functions/v2/https';
 
-import { AvatarInfo, JournalGuestLink } from '@okr/shared-models';
-import { COMMENT_MAX, isJournalSectionType, JournalSectionType, sectionClipKeys, sectionImageKeys } from '@okr/travel-journal-util';
+import { AvatarInfo, JournalChange, JournalGuestLink, SectionFeedback, SectionModel } from '@okr/shared-models';
+import {
+  COMMENT_MAX, entityStateKey, FeedbackParent, feedbackOf, isEmoji, isJournalSectionType, JournalSectionType, materialize, parseParentKey,
+  reactionKey, ReactionSummary, reactionWrite, ReactionWrite, sectionClipKeys, sectionImageKeys, summarizeReactions, viewOf,
+} from '@okr/travel-journal-util';
 
 import { isJournalKey } from './apply-journal-change.logic';
 
@@ -11,7 +14,8 @@ import { isJournalKey } from './apply-journal-change.logic';
  * allow-listed inputs; names shown next to comments come from the journal's own author and guest lists.
  */
 
-export type GuestAction = 'view' | 'comment' | 'deleteComment' | 'like' | 'unlike' | 'settings' | 'mute' | 'unmute';
+/** `like`/`unlike` and a `comment` without `parentKey` are the footprint-level actions of clients older than 1.154 phase 4 (decision 10). */
+export type GuestAction = 'view' | 'comment' | 'deleteComment' | 'react' | 'unreact' | 'like' | 'unlike' | 'settings' | 'mute' | 'unmute';
 export type GuestChannel = 'email' | 'none';
 
 export interface GuestRequest {
@@ -19,12 +23,25 @@ export interface GuestRequest {
   code: string;
   action: GuestAction;
   footprintKey?: string;
+  parentKey?: string; // `section.<key>` / `image.<key>` of a comment or reaction (1.154 phase 4)
+  emoji?: string;
   commentKey?: string;
   text?: string;
   channel?: GuestChannel;
 }
 
-const ACTIONS: GuestAction[] = ['view', 'comment', 'deleteComment', 'like', 'unlike', 'settings', 'mute', 'unmute'];
+const ACTIONS: GuestAction[] = ['view', 'comment', 'deleteComment', 'react', 'unreact', 'like', 'unlike', 'settings', 'mute', 'unmute'];
+/** Longer than any single emoji (the longest ZWJ sequences have ~14 UTF-16 units): the segmenter never sees a long string. */
+const EMOJI_MAX = 32;
+/** `Intl.Segmenter` (Node 16+, the functions run on Node 22); the shared tsconfig's `lib: es2020` does not declare it. */
+type GraphemeSegmenterCtor = new (locale: undefined, options: { granularity: 'grapheme' }) => { segment(input: string): Iterable<unknown> };
+const graphemes = new (Intl as unknown as { Segmenter: GraphemeSegmenterCtor }).Segmenter(undefined, { granularity: 'grapheme' });
+
+/** Exactly one grapheme, and an emoji (`isEmoji` of @okr/travel-journal-util). */
+export function isOneEmoji(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0 && value.length <= EMOJI_MAX
+    && [...graphemes.segment(value)].length === 1 && isEmoji(value);
+}
 const CODE = /^[a-f0-9]{32}$/;
 
 export class GuestRequestError extends Error {}
@@ -39,9 +56,19 @@ export function parseGuestRequest(data: unknown): GuestRequest {
     throw new GuestRequestError('invalid request');
   }
   const req: GuestRequest = { journalKey, code, action: action as GuestAction };
-  if (action === 'comment' || action === 'like' || action === 'unlike') {
+  // a comment names its section or image; without `parentKey` it is an old footprint comment (decision 10)
+  const withParent = action === 'react' || action === 'unreact' || (action === 'comment' && d['parentKey'] !== undefined);
+  if (withParent) {
+    // the footprint is never taken from the guest: the server finds it from the parent (feedbackTarget)
+    if (!parseParentKey(d['parentKey'])) throw new GuestRequestError('invalid parent');
+    req.parentKey = d['parentKey'] as string;
+  } else if (action === 'comment' || action === 'like' || action === 'unlike') {
     if (!isJournalKey(d['footprintKey'])) throw new GuestRequestError('invalid footprint');
     req.footprintKey = d['footprintKey'] as string;
+  }
+  if (action === 'react' || action === 'unreact') {
+    if (!isOneEmoji(d['emoji'])) throw new GuestRequestError('invalid emoji');
+    req.emoji = d['emoji'];
   }
   if (action === 'deleteComment') {
     if (!isJournalKey(d['commentKey'])) throw new GuestRequestError('invalid comment');
@@ -158,6 +185,7 @@ export interface GuestSection {
   authorKey: string; // resolved to a name by the caller; never sent to the guest
   imageKeys: string[]; // the photos, in `sectionImageKeys` order (a hero's cover last)
   clipKeys: string[]; // the video clips, in pick order
+  feedback: SectionFeedback; // the switches in effect (`feedbackOf`): a hero none, image switches only for article and album
 }
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -178,6 +206,7 @@ export function guestSectionsOf(docs: { id: string; data: Record<string, unknown
         html: typeof content['htmlContent'] === 'string' ? content['htmlContent'] : '', properties,
         authorKey: typeof data['authorKey'] === 'string' ? data['authorKey'] : '',
         imageKeys: sectionImageKeys({ properties }), clipKeys: sectionClipKeys({ properties }),
+        feedback: feedbackOf({ type: data['type'] as SectionModel['type'], feedback: data['feedback'] as SectionFeedback | undefined }),
       };
     });
 }
@@ -209,4 +238,107 @@ export async function clipReadUrl(file: ClipObject, expiresMs: number): Promise<
   if (!exists) return '';
   const [url] = await file.getSignedUrl({ version: 'v4', action: 'read', expires: expiresMs });
   return url;
+}
+
+// ---- comments and emoji reactions on sections and images (spec 1.154 §7, phase-4 plan decision 5) ----
+
+export type FeedbackKind = 'comment' | 'reaction';
+
+/**
+ * The footprint a guest's comment or reaction belongs to, or `undefined` to refuse it. `published` holds the guest-visible
+ * sections (`guestSectionsOf`) of every live, published footprint of THIS journal, so a parent anywhere else — a draft,
+ * another journal, an archived or unknown section or image, an open conflict copy — is refused. The parent's switch must
+ * be on: a section's `comments`/`reactions`; an image's `imageComments`/`imageReactions` of a section that shows it.
+ * An image shown in several sections is allowed when any of them allows it; the footprint is that of the first allowing
+ * section in footprint-key, then section-key order (deterministic, so a guest's repeated writes agree).
+ */
+export function feedbackTarget(parentKey: string, kind: FeedbackKind, published: Map<string, GuestSection[]>): string | undefined {
+  const parent = parseParentKey(parentKey);
+  if (!parent) return undefined;
+  const candidates = [...published.entries()]
+    .flatMap(([footprintKey, sections]) => sections.map((section) => ({ footprintKey, section })))
+    .sort((a, b) => (a.footprintKey < b.footprintKey ? -1 : a.footprintKey > b.footprintKey ? 1 : a.section.key < b.section.key ? -1 : a.section.key > b.section.key ? 1 : 0));
+  const allowed = candidates.find(({ section }) => parent.kind === 'section'
+    ? section.key === parent.id && (kind === 'comment' ? section.feedback.comments : section.feedback.reactions)
+    : section.imageKeys.includes(parent.id) && (kind === 'comment' ? section.feedback.imageComments : section.feedback.imageReactions));
+  return allowed?.footprintKey;
+}
+
+/**
+ * The record that switches a guest's reaction on or off, from every stored record of its key (`records`): `reactionWrite`
+ * on their merged state — a `create` while the reaction is unknown, else a `set` keeping the first `createdAt`. Records of
+ * anyone but the person in the key are not admitted by the merge. `undefined`: nothing to write — removing a reaction the
+ * guest never made, or an emoji that gives no valid key (the caller refuses that case before).
+ */
+export function guestReactionWrite(
+  records: JournalChange[], parent: FeedbackParent, footprintKey: string, personKey: string, emoji: string, active: boolean, nowIso: string,
+): ReactionWrite | undefined {
+  const key = reactionKey(parent, personKey, emoji);
+  if (!key) return undefined;
+  const state = materialize(records.filter((r) => r.entity === 'reaction' && r.entityKey === key));
+  const known = viewOf(state[entityStateKey('reaction', key)]);
+  if (!known && !active) return undefined;
+  const createdAt = typeof known?.['createdAt'] === 'string' && known['createdAt'] !== '' ? known['createdAt'] : nowIso;
+  return reactionWrite(state, parent, footprintKey, personKey, emoji, active, createdAt);
+}
+
+/** Whether a guest may delete a comment: only their own live one, by the author its materialised doc names (Review Focus 4). */
+export function mayDeleteComment(comment: Record<string, unknown> | undefined, personKey: string): boolean {
+  return !!comment && comment['isArchived'] !== true && personKey !== '' && comment['authorKey'] === personKey;
+}
+
+/** A comment as a guest receives it: no person key, only the display name. */
+export interface GuestComment { key: string; authorName: string; text: string; createdAt: string; mine: boolean }
+export interface GuestFeedback { reactions: ReactionSummary[]; comments: GuestComment[] }
+type StoredDoc = { id: string; data: Record<string, unknown> };
+
+const strOf = (v: unknown): string => (typeof v === 'string' ? v : '');
+const byCreated = (a: GuestComment, b: GuestComment): number =>
+  a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : a.key < b.key ? -1 : a.key > b.key ? 1 : 0;
+
+/**
+ * Comments and reaction summaries per parent (`section.<key>` / `image.<key>`), built from the materialised
+ * `comments`/`reactions` docs — never from client data. Archived docs, old footprint likes and comments (`page.<key>`)
+ * and a reaction doc whose fields disagree with its id are left out. `me` is the guest's person key (for `mine`);
+ * `name` resolves an author's display name from the journal lists, else the comment's stored `authorName` is shown.
+ */
+export function feedbackIndex(comments: StoredDoc[], reactions: StoredDoc[], me: string, name: (personKey: string) => string): Map<string, GuestFeedback> {
+  const rows = new Map<string, { emoji: string; personKey: string; createdAt: string }[]>();
+  for (const { id, data } of reactions) {
+    const parent = parseParentKey(data['parentKey']);
+    const personKey = strOf(data['personKey']);
+    const emoji = strOf(data['emoji']);
+    if (data['isArchived'] === true || !parent || emoji === '' || reactionKey(parent, personKey, emoji) !== id) continue;
+    const parentKey = strOf(data['parentKey']);
+    rows.set(parentKey, [...(rows.get(parentKey) ?? []), { emoji, personKey, createdAt: strOf(data['createdAt']) }]);
+  }
+  const notes = new Map<string, GuestComment[]>();
+  for (const { id, data } of comments) {
+    if (data['isArchived'] === true || !parseParentKey(data['parentKey'])) continue;
+    const parentKey = strOf(data['parentKey']);
+    const authorKey = strOf(data['authorKey']);
+    const comment = { key: id, authorName: name(authorKey) || strOf(data['authorName']), text: strOf(data['description']), createdAt: strOf(data['creationDateTime']), mine: authorKey !== '' && authorKey === me };
+    notes.set(parentKey, [...(notes.get(parentKey) ?? []), comment]);
+  }
+  const index = new Map<string, GuestFeedback>();
+  for (const parentKey of new Set([...rows.keys(), ...notes.keys()])) {
+    index.set(parentKey, { reactions: summarizeReactions(rows.get(parentKey) ?? [], me), comments: (notes.get(parentKey) ?? []).sort(byCreated) });
+  }
+  return index;
+}
+
+/** What `guestView` adds to a section: its switches, its own feedback and its images' — each only while its switch is on. */
+export function guestSectionFeedback(section: GuestSection, index: Map<string, GuestFeedback>): GuestFeedback & {
+  feedback: SectionFeedback; images: Record<string, GuestFeedback>;
+} {
+  const { feedback } = section;
+  const own = index.get(`section.${section.key}`);
+  const images: Record<string, GuestFeedback> = {};
+  if (feedback.imageComments || feedback.imageReactions) {
+    for (const key of section.imageKeys) {
+      const image = index.get(`image.${key}`);
+      images[key] = { reactions: feedback.imageReactions ? image?.reactions ?? [] : [], comments: feedback.imageComments ? image?.comments ?? [] : [] };
+    }
+  }
+  return { feedback, reactions: feedback.reactions ? own?.reactions ?? [] : [], comments: feedback.comments ? own?.comments ?? [] : [], images };
 }
