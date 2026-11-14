@@ -371,6 +371,7 @@ export interface AlbumConfig {
   showDocs: boolean;
   showPdfs: boolean;
   effect: GalleryEffect;
+  images?: ImageConfig[];   // explicit image list (travel journal, spec 1.154); set => shown instead of the folder
 }
 
 // --------------------------------------- ARTICLE ----------------------------------------
@@ -517,7 +518,34 @@ export interface HeroConfig {
   kicker?: string;          // small line above the title
   kickerI18n?: I18nString;
   ctas?: SectionCta[];      // call-to-action buttons
+  overlay?: HeroOverlay;    // text overlay on the hero image (travel journal, spec 1.154); absent => none
+  height?: 'S' | 'M' | 'L' | 'full' | number; // number = px; absent => as today
+  focus?: 'center' | 'top' | 'bottom'; // vertical focus of the cropped hero image
 }
+
+export interface HeroOverlay {
+  title: boolean;
+  subtitle: boolean;
+  coords: boolean;
+  weather: boolean;
+  label: string;
+  position: 'bottom-left' | 'bottom-center' | 'center' | 'top-left';
+  color: string;      // css color of the overlay text
+  darkening: number;  // percent, darkening of the image behind the text
+  fontSize: 'S' | 'M' | 'L';
+}
+
+export const HERO_OVERLAY_DEFAULT: HeroOverlay = {
+  title: true,
+  subtitle: true,
+  coords: true,
+  weather: true,
+  label: '',
+  position: 'bottom-left',
+  color: '#ffffff',
+  darkening: 40,
+  fontSize: 'M',
+};
 
 // --------------------------------------- IFRAME ----------------------------------------
 export interface IframeSection extends BaseSection {
@@ -840,6 +868,7 @@ export interface VideoConfig {
   frameborder: string; // default 0
   baseUrl: string; // default is https://www.youtube.com/embed/
   documentKey: string; // album video (DocumentModel okey, spec 1.82 §7.3); set → card instead of the iframe
+  clips?: ImageConfig[]; // explicit clip list (travel journal, spec 1.154)
 }
 
 // --------------------------------------- FORM ----------------------------------------
