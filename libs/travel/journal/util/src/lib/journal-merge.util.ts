@@ -52,19 +52,26 @@ export function entityStateKey(entity: JournalEntity, entityKey: string): string
   return `${entity}:${entityKey}`;
 }
 
-const REACTION_KEY = /^r_(?:section|image)_[A-Za-z0-9_-]+_([A-Za-z0-9-]+)_([0-9a-f]+(?:-[0-9a-f]+)*)$/;
+const KEY_PART = /^[A-Za-z0-9-]+(?:_[A-Za-z0-9-]+)*$/; // single underscores only: `__` separates the parts
+const CODEPOINTS = /^[0-9a-f]+(?:-[0-9a-f]+)*$/;
 
 /**
- * The person an emoji reaction key (`r_<kind>_<parentId>_<personKey>_<codepoints>`, journal-feedback.util) names;
- * `undefined` when the key does not parse. Read from the right: the code points, then the person key, which therefore
- * never contains `_` (reactionKey refuses one); the parent id may.
+ * The person an emoji reaction key (`r__<kind>__<parentId>__<personKey>__<codepoints>`, journal-feedback.util) names;
+ * `undefined` when the key does not parse. `__` separates the parts and no part contains it (reactionKey refuses
+ * one), so a person key with single underscores (`p_schaller_darinka`) reads back unambiguously.
  */
 export function reactionKeyPerson(entityKey: string): string | undefined {
-  return REACTION_KEY.exec(entityKey)?.[1];
+  const parts = entityKey.split('__');
+  if (parts.length !== 5) return undefined;
+  const [r, kind, parentId, personKey, codepoints] = parts;
+  if (r !== 'r' || (kind !== 'section' && kind !== 'image') || !KEY_PART.test(parentId) || !KEY_PART.test(personKey) || !CODEPOINTS.test(codepoints)) {
+    return undefined;
+  }
+  return personKey;
 }
 
 /**
- * Whether a record may enter the state. An emoji reaction (key `r_…`) is bound to the person in its key: a record by
+ * Whether a record may enter the state. An emoji reaction (key `r_…`, see reactionKeyPerson) is bound to the person in its key: a record by
  * anyone else is dropped, so nobody can take over another person's reaction with an early create (the hlc wall time
  * is the writer's own). An `r_` key that does not parse takes no records at all. Old footprint likes (`<fp>_<person>`)
  * keep the plain owner rule.

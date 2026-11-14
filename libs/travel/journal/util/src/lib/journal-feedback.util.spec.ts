@@ -51,7 +51,7 @@ describe('journal feedback: reaction keys (Review Focus 2)', () => {
 
   it('a reaction key is one per parent, person and emoji, and passes the server key guard', () => {
     const key = reactionKey({ kind: 'section', id: UUID }, PERSON, '❤️');
-    expect(key).toBe(`r_section_${UUID}_${PERSON}_2764-fe0f`);
+    expect(key).toBe(`r__section__${UUID}__${PERSON}__2764-fe0f`);
     expect(key).toMatch(JOURNAL_KEY);
     expect(reactionKey({ kind: 'image', id: UUID }, PERSON, '❤️')).not.toBe(key);
     expect(reactionKey({ kind: 'section', id: UUID }, PERSON, '👍')).not.toBe(key);
@@ -69,7 +69,10 @@ describe('journal feedback: reaction keys (Review Focus 2)', () => {
     expect(reactionKey({ kind: 'section', id: UUID }, PERSON, '👍'.repeat(20))).toBeUndefined();
     expect(reactionKey({ kind: 'section', id: UUID }, 'a/b', '❤️')).toBeUndefined();
     expect(reactionKey({ kind: 'section', id: UUID }, '', '❤️')).toBeUndefined();
-    expect(reactionKey({ kind: 'section', id: UUID }, 'an_na', '❤️')).toBeUndefined(); // the merge reads the person back from the key
+    expect(reactionKey({ kind: 'section', id: UUID }, 'an__na', '❤️')).toBeUndefined(); // `__` separates the parts
+    expect(reactionKey({ kind: 'section', id: UUID }, 'anna_', '❤️')).toBeUndefined(); // would merge into the separator
+    expect(reactionKey({ kind: 'section', id: 's__1' }, PERSON, '❤️')).toBeUndefined();
+    expect(reactionKey({ kind: 'section', id: UUID }, 'p_schaller_darinka', '❤️')).toBe(`r__section__${UUID}__p_schaller_darinka__2764-fe0f`);
     expect(reactionKey({ kind: 'section', id: UUID }, PERSON, '')).toBeUndefined();
     expect(reactionKey({ kind: 'section', id: 'a.b' }, PERSON, '❤️')).toBeUndefined();
   });
@@ -79,7 +82,7 @@ describe('journal feedback: reaction keys (Review Focus 2)', () => {
     expect(reactionKey(S1, PERSON, ' ')).toBeUndefined();
     expect(reactionKey(S1, PERSON, '1')).toBeUndefined();
     expect(reactionKey(S1, PERSON, '👍<b>')).toBeUndefined();
-    expect(reactionKey(S1, PERSON, '1️⃣')).toBe(`r_section_s1_${PERSON}_31-fe0f-20e3`);
+    expect(reactionKey(S1, PERSON, '1️⃣')).toBe(`r__section__s1__${PERSON}__31-fe0f-20e3`);
   });
 });
 
@@ -148,7 +151,9 @@ describe('journal feedback: the owner is the person in the key', () => {
     expect(reactionKeyPerson(reactionKey(S1, 'anna', '❤️') ?? '')).toBe('anna');
     expect(reactionKeyPerson(reactionKey({ kind: 'section', id: 's1_c_000_x' }, PERSON, '👨‍👩‍👧‍👦') ?? '')).toBe(PERSON);
     expect(reactionKeyPerson('f1_anna')).toBeUndefined();
-    expect(reactionKeyPerson('r_page_f1_anna_2764')).toBeUndefined();
+    expect(reactionKeyPerson('r__page__f1__anna__2764')).toBeUndefined();
+    expect(reactionKeyPerson('r_section_s1_anna_2764')).toBeUndefined(); // the single-underscore format of the first draft
+    expect(reactionKeyPerson(reactionKey(S1, 'p_schaller_darinka', '👍') ?? '')).toBe('p_schaller_darinka');
   });
 
   it('a foreign create with an early clock on anna\'s key is ignored; anna\'s toggles keep working, in any order', () => {
@@ -169,6 +174,15 @@ describe('journal feedback: the owner is the person in the key', () => {
     }
     // before anna ever reacts, the foreign create alone shows nothing
     expect(reactionsOf(materialize([hijack]), 'section.s1', 'eva')).toEqual([]);
+  });
+
+  it('a person key with single underscores (a diary-import id) reacts, removes and re-adds', () => {
+    const P = 'p_schaller_darinka';
+    const records = [reaction(P, '❤️', true, 100), reaction(P, '❤️', false, 200, 'set'), reaction(P, '❤️', true, 300, 'set')];
+    expect(records[0].entityKey).toBe(`r__section__s1__${P}__2764-fe0f`);
+    expect(reactionsOf(materialize(records.slice(0, 2)), 'section.s1', P)).toEqual([]);
+    expect(reactionsOf(materialize(records), 'section.s1', P)).toEqual([{ emoji: '❤️', count: 1, mine: true }]);
+    expect(reactionsOf(materialize([...records].reverse()), 'section.s1', P)).toEqual([{ emoji: '❤️', count: 1, mine: true }]);
   });
 
   it('an r_ key that does not parse takes no records', () => {

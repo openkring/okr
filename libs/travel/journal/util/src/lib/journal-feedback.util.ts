@@ -1,5 +1,5 @@
 import { ImageConfig, SECTION_FEEDBACK_DEFAULT, SectionFeedback, SectionModel } from '@okr/shared-models';
-import { entityStateKey, JournalState, viewOf } from './journal-merge.util';
+import { entityStateKey, JournalState, reactionKeyPerson, viewOf } from './journal-merge.util';
 import { storedFeedback } from './journal-section.util';
 
 /**
@@ -49,16 +49,19 @@ function isEmoji(value: string): boolean {
 }
 
 /**
- * A reaction's entity key, `r_<kind>_<parentId>_<personKey>_<codepoints>` (plan decision 2): one reaction per parent,
- * person and emoji. `undefined` when the emoji is not one or the key would break the server's key guard (longer than
- * 128 characters, a character outside `[A-Za-z0-9_-]`): the caller refuses instead of writing a record the server
- * drops. With a uuid parent (36) and a Firestore auto-id person key (20) the code points have 60 characters.
+ * A reaction's entity key, `r__<kind>__<parentId>__<personKey>__<codepoints>` (plan decision 2, ruling R1): one reaction per parent,
+ * person and emoji. `undefined` when the emoji is not one, a part holds the `__` separator (or starts or ends with
+ * `_`, which would merge into it) or a character outside `[A-Za-z0-9_-]`, or the key is longer than 128 characters (the
+ * server's key guard): the caller refuses instead of writing a record the server drops. Single underscores in a person
+ * key (`p_schaller_darinka`) are fine. With a uuid parent (36) and a 20-character person key the code points have 56
+ * characters.
  */
 export function reactionKey(parent: FeedbackParent, personKey: string, emoji: string): string | undefined {
-  // no `_` in the person key: the merge reads the person back from the key (reactionKeyPerson) and drops anyone else's records
-  if (!isEmoji(emoji) || !/^[A-Za-z0-9-]+$/.test(personKey) || !parseParentKey(parentKeyOf(parent))) return undefined;
-  const key = `r_${parent.kind}_${parent.id}_${personKey}_${emojiCodepoints(emoji)}`;
-  return JOURNAL_KEY.test(key) ? key : undefined;
+  // the merge reads the person back from the key (reactionKeyPerson) and drops anyone else's records: no part may hold the `__` separator
+  if (!isEmoji(emoji) || !parseParentKey(parentKeyOf(parent))) return undefined;
+  if ([parent.id, personKey].some((part) => part === '' || part.includes('__') || !JOURNAL_KEY.test(part))) return undefined;
+  const key = `r__${parent.kind}__${parent.id}__${personKey}__${emojiCodepoints(emoji)}`;
+  return JOURNAL_KEY.test(key) && reactionKeyPerson(key) === personKey ? key : undefined;
 }
 
 /** Whether a reaction is on: created, its owner's latest `active` is true. */
