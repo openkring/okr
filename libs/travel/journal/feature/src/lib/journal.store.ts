@@ -1628,9 +1628,9 @@ export const JournalStore = signalStore(
         return tracksOf(store.journalState(), journalKey);
       },
 
-      /** One track of the journal; undefined before it reached this device. */
-      track(trackKey: string): TrackView | undefined {
-        return trackOf(store.journalState(), trackKey);
+      /** One track of the journal; undefined before it reached this device, or when the key is another journal's (R6). */
+      track(journalKey: string, trackKey: string): TrackView | undefined {
+        return trackOf(store.journalState(), journalKey, trackKey);
       },
 
       /**
@@ -1643,8 +1643,9 @@ export const JournalStore = signalStore(
        */
       async attachTrack(journalKey: string, trip: TripModel, sections: TrackCopyInput[]): Promise<{ trackKey: string; skipped: number; slow: boolean }> {
         if (!store.author()) throw new JournalWriteRefused('noAuthor');
-        const trackKey = trackKeyOf(trip.okey);
-        if (trackOf(store.journalState(), trackKey)) return { trackKey, skipped: 0, slow: false };
+        const trackKey = trackKeyOf(journalKey, trip.okey);
+        if (!trackKey) throw new Error(`journal: trip ${trip.okey} gives no valid track key`);
+        if (trackOf(store.journalState(), journalKey, trackKey)) return { trackKey, skipped: 0, slow: false };
         const plan = trackPhotoPlan(trip, imagesOf(store.journalState(), journalKey).values());
         const imported = await importTrackPhotos(journalKey, plan.toImport);
         const copy = trackCopyOf(trip, sections, { ...plan.keys, ...imported.keys });

@@ -888,7 +888,7 @@ export interface JournalTrackSection extends BaseSection {
 }
 
 export interface JournalTrackConfig {
-  track: { trackKey: string }; // key of the journal's `track` entity (`trk__<tripKey>`); '' = no track chosen yet
+  track: { trackKey: string }; // key of the journal's `track` entity (`trk__<journalKey>__<tripKey>`); '' = no track chosen yet
 }
 
 // --------------------------------------- VIDEO ----------------------------------------

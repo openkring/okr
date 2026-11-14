@@ -132,7 +132,7 @@ describe('map and track sections for guests (1.154 phase 5)', () => {
     { id: 'm1', data: { footprintKey: 'f1', type: 'map', properties: { zoom: 12, layer: 'world', showRoute: true } } },
     { id: 'a1', data: { footprintKey: 'f1', type: 'album', properties: { images: [{ label: 'p2' }, { label: 'p1' }, { label: 'v1' }] } } },
     { id: 'z1', data: { footprintKey: 'f1', type: 'album', isArchived: true, properties: { images: [{ label: 'z1' }] } } },
-    { id: 'k1', data: { footprintKey: 'f1', type: 'track', properties: { track: { trackKey: 'trk__trip1' } } } },
+    { id: 'k1', data: { footprintKey: 'f1', type: 'track', properties: { track: { trackKey: 'trk__j1__trip1' } } } },
     { id: 'a2', data: { footprintKey: 'f2', type: 'album', properties: { images: [{ label: 'd1' }] } } },
     { id: 'a3', data: { footprintKey: 'f3', type: 'album', properties: { images: [{ label: 'd1' }] } } },
   ];
@@ -146,7 +146,7 @@ describe('map and track sections for guests (1.154 phase 5)', () => {
 
   it('a track section names its track key; a key that is not one path segment is dropped', () => {
     const [track] = guestSectionsOf([sectionDocs[3]], 'f1', ['k1']);
-    expect(track).toMatchObject({ type: 'track', trackKey: 'trk__trip1', imageKeys: [] });
+    expect(track).toMatchObject({ type: 'track', trackKey: 'trk__j1__trip1', imageKeys: [] });
     const evil = guestSectionsOf([{ id: 'k2', data: { footprintKey: 'f1', type: 'track', properties: { track: { trackKey: '../../users/x' } } } }], 'f1', ['k2']);
     expect(evil[0].trackKey).toBeUndefined();
     expect('trackKey' in guestSectionsOf([sectionDocs[1]], 'f1', ['a1'])[0]).toBe(false);
@@ -185,7 +185,7 @@ describe('map and track sections for guests (1.154 phase 5)', () => {
   describe('guestTrackOf', () => {
     const sign = (path: string, w: number) => `signed:${w}:${path}`;
     const doc = {
-      okey: 'trk__trip1', tenants: ['bka'], isArchived: false, journalKey: 'j', authorKey: 'p_bruno', tripKey: 'trip1',
+      okey: 'trk__j__trip1', tenants: ['bka'], isArchived: false, journalKey: 'j', authorKey: 'p_bruno', tripKey: 'trip1',
       name: 'Uetliberg', startedAt: '2026-11-01T08:00:00Z', endedAt: '2026-11-01T14:00:00Z', distanceM: 14123, durationS: 21600, modes: ['foot'],
       sections: [{ mode: 'foot', distanceM: 14123, encoded: '_p~iF~ps|U', altitudes: 'xyz', heartRateAvg: 120, steps: 1000 }],
       photos: [

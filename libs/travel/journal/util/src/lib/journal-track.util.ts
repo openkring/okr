@@ -6,8 +6,9 @@ import type { SectionView } from './journal-view.util';
 
 /**
  * A recorded tracker trip as the journal holds it (spec 1.154 §6, §10; plan phase 5 decisions 1–3): the change-log
- * entity `track`, keyed `trk__<tripKey>` — one per trip and journal, so the same trip attached twice, or sent by the
- * iPhone and attached on the iPad, stays one entity that several track sections may refer to.
+ * entity `track`, keyed `trk__<journalKey>__<tripKey>` — one per trip and journal, so the same trip attached twice, or
+ * sent by the iPhone and attached on the iPad, stays one entity that several track sections may refer to, while the same
+ * trip in another journal is another entity (ruling R6: a device holds several journals in one state).
  *
  * The record is a read-only DERIVED COPY built by an allow-list (`trackCopyOf`): metadata, simplified points and the
  * photos' journal image keys. Never steps, strokes, split times, heart rate, crew or the trip's notes (activity-metrics
@@ -52,9 +53,15 @@ export const TRACK_KEY_PREFIX = 'trk__';
 export const TRACK_TOLERANCE_M = 5;
 export const TRACK_MAX_POINTS = 2000;
 
-/** The `track` entity key of a trip: one per trip and journal. */
-export function trackKeyOf(tripKey: string): string {
-  return `${TRACK_KEY_PREFIX}${tripKey}`;
+const TRACK_KEY = /^[A-Za-z0-9_-]{1,128}$/; // the server's key guard (isJournalKey)
+
+/**
+ * The `track` entity key of a trip in a journal (ruling R6): `trk__<journalKey>__<tripKey>`, one per trip and journal.
+ * `undefined` when the key would not pass the server's key guard (too long, or a character outside `[A-Za-z0-9_-]`).
+ */
+export function trackKeyOf(journalKey: string, tripKey: string): string | undefined {
+  const key = `${TRACK_KEY_PREFIX}${journalKey}__${tripKey}`;
+  return journalKey !== '' && tripKey !== '' && TRACK_KEY.test(key) ? key : undefined;
 }
 
 // ------------------------------------------------------------------ simplification (decision 3)
@@ -248,20 +255,23 @@ export function tracksOf(state: JournalState, journalKey: string): TrackView[] {
   return out.sort((a, b) => (a.startedAt < b.startedAt ? 1 : a.startedAt > b.startedAt ? -1 : a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
 }
 
-/** One track by its entity key; undefined before its create arrived, once archived, or for an unknown key. */
-export function trackOf(state: JournalState, key: string): TrackView | undefined {
+/**
+ * One track of a journal by its entity key; undefined before its create arrived, once archived, for an unknown key, and
+ * for a track of another journal (the state may hold several journals, ruling R6).
+ */
+export function trackOf(state: JournalState, journalKey: string, key: string): TrackView | undefined {
   const entity = state[entityStateKey('track', key)];
   const view = viewOf(entity);
-  return entity && view ? trackFrom(entity, view) : undefined;
+  return entity && view && view['journalKey'] === journalKey ? trackFrom(entity, view) : undefined;
 }
 
 /**
  * The journal photos a section shows, the photos of a track section's track included (they live in the `track`
  * entity, not in the section). Without the track (not received yet, archived) a track section shows none.
  */
-export function sectionImageKeysIn(state: JournalState, view: Pick<SectionView, 'type' | 'properties'>): string[] {
+export function sectionImageKeysIn(state: JournalState, journalKey: string, view: Pick<SectionView, 'type' | 'properties'>): string[] {
   const own = sectionImageKeys(view);
   if (view.type !== 'track') return own;
-  const track = trackOf(state, sectionTrackKey(view));
+  const track = trackOf(state, journalKey, sectionTrackKey(view));
   return [...new Set([...own, ...(track?.photos.map((p) => p.imageKey) ?? [])])];
 }

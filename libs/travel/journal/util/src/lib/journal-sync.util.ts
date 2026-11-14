@@ -74,7 +74,7 @@ export function publishedPhotoFiles(footprints: FootprintView[], images: Map<str
   for (const footprint of footprints) {
     if (footprint.publishState !== 'published') continue;
     for (const section of footprint.sections) {
-      for (const key of [...(state ? sectionImageKeysIn(state, section) : sectionImageKeys(section)), ...sectionClipKeys(section)]) {
+      for (const key of [...(state ? sectionImageKeysIn(state, footprint.journalKey, section) : sectionImageKeys(section)), ...sectionClipKeys(section)]) {
         const image = images.get(key);
         if (!image) continue;
         for (const path of [image.path2048, image.path400, image.videoPath ?? '']) {

@@ -115,7 +115,7 @@ export type TrackDoc = TrackCopy & { okey: string; tenants: string[]; isArchived
  * neither the stored doc nor the guest payload built from it can carry it. `journalKey` is the trusted argument.
  */
 export function trackDocOf(state: JournalState, trackKey: string, journalKey: string, tenants: string[]): TrackDoc | undefined {
-  const track = trackOf(state, trackKey);
+  const track = trackOf(state, journalKey, trackKey);
   if (!track) return undefined;
   const { key, authorKey, ...copy } = track;
   return { ...copy, okey: key, tenants, isArchived: false, journalKey, authorKey };

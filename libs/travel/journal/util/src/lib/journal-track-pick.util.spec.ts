@@ -26,7 +26,7 @@ function trip(okey: string, startedAt: string, over: Partial<TripModel> = {}): T
 }
 
 function track(key: string, startedAt: string): TrackView {
-  return { key, authorKey: 'p2', tripKey: key.replace('trk__', ''), name: `Track ${key}`, startedAt, endedAt: startedAt, distanceM: 42, durationS: 1,
+  return { key, authorKey: 'p2', tripKey: key.replace('trk__j1__', ''), name: `Track ${key}`, startedAt, endedAt: startedAt, distanceM: 42, durationS: 1,
     modes: ['bike'], sections: [], photos: [] };
 }
 
@@ -71,24 +71,33 @@ describe('trackPickItems', () => {
   it('puts the footprint day on top, then my other trips, then the journal’s other tracks — each newest first, each once', () => {
     const mine = [trip('t3', '2026-11-03T08:00:00Z'), trip('t2', '2026-11-02T09:00:00Z'), trip('t2b', '2026-11-02T15:00:00Z'), trip('t1', '2026-11-01T08:00:00Z')];
     const ofDay = [trip('t2', '2026-11-02T09:00:00Z'), trip('t2b', '2026-11-02T15:00:00Z')];
-    const journal = [track('trk__t1', '2026-11-01T08:00:00Z'), track('trk__other', '2026-10-30T08:00:00Z'), track('trk__newer', '2026-11-05T08:00:00Z')];
-    const items = trackPickItems(mine, ofDay, journal);
-    expect(items.map((i) => i.key)).toEqual(['trk__t2b', 'trk__t2', 'trk__t3', 'trk__t1', 'trk__newer', 'trk__other']);
-    expect(items.find((i) => i.key === 'trk__t1')?.inJournal).toBe(true);
-    expect(items.find((i) => i.key === 'trk__t3')?.inJournal).toBe(false);
-    expect(items.find((i) => i.key === 'trk__other')).toMatchObject({ inJournal: true, tripKey: 'other', name: 'Track trk__other', distanceM: 42 });
+    const journal = [track('trk__j1__t1', '2026-11-01T08:00:00Z'), track('trk__j1__other', '2026-10-30T08:00:00Z'), track('trk__j1__newer', '2026-11-05T08:00:00Z')];
+    const items = trackPickItems('j1', mine, ofDay, journal);
+    expect(items.map((i) => i.key)).toEqual(['trk__j1__t2b', 'trk__j1__t2', 'trk__j1__t3', 'trk__j1__t1', 'trk__j1__newer', 'trk__j1__other']);
+    expect(items.find((i) => i.key === 'trk__j1__t1')?.inJournal).toBe(true);
+    expect(items.find((i) => i.key === 'trk__j1__t3')?.inJournal).toBe(false);
+    expect(items.find((i) => i.key === 'trk__j1__other')).toMatchObject({ inJournal: true, tripKey: 'other', name: 'Track trk__j1__other', distanceM: 42 });
+  });
+
+  it('R6: a trip attached in journal A is not in journal B — B lists it as not in the journal, under B\'s key', () => {
+    const [item] = trackPickItems('jB', [trip('t1', '2026-11-01T08:00:00Z')], [], []); // B's tracks: none (A's are not passed)
+    expect(item).toMatchObject({ key: 'trk__jB__t1', inJournal: false });
+  });
+
+  it('leaves out a trip whose key the server would refuse', () => {
+    expect(trackPickItems('j1', [trip('a/b', '2026-11-01T08:00:00Z')], [], [])).toEqual([]);
   });
 
   it('sums the distance and lists the modes in order of first appearance', () => {
-    const [item] = trackPickItems([trip('t1', '2026-11-01T08:00:00Z')], [], []);
-    expect(item).toMatchObject({ key: 'trk__t1', tripKey: 't1', name: 'Trip t1', distanceM: 3500, modes: ['foot', 'train'] });
+    const [item] = trackPickItems('j1', [trip('t1', '2026-11-01T08:00:00Z')], [], []);
+    expect(item).toMatchObject({ key: 'trk__j1__t1', tripKey: 't1', name: 'Trip t1', distanceM: 3500, modes: ['foot', 'train'] });
   });
 
   it('leaves out trips without recorded sections; offline only the journal’s tracks are listed', () => {
     const empty = trip('t0', '2026-11-01T08:00:00Z');
     (empty.track as NonNullable<TripModel['track']>).sections = [];
-    expect(trackPickItems([empty, { ...empty, okey: 'nt', track: undefined } as TripModel], [], [])).toEqual([]);
-    expect(trackPickItems([], [], [track('trk__a', '2026-11-01T08:00:00Z')]).map((i) => i.key)).toEqual(['trk__a']);
+    expect(trackPickItems('j1', [empty, { ...empty, okey: 'nt', track: undefined } as TripModel], [], [])).toEqual([]);
+    expect(trackPickItems('j1', [], [], [track('trk__j1__a', '2026-11-01T08:00:00Z')]).map((i) => i.key)).toEqual(['trk__j1__a']);
   });
 });
 

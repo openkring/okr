@@ -15,7 +15,7 @@ import { showJournalError } from './journal-errors';
 import { JournalStore } from './journal.store';
 
 /**
- * The travel journal's `SECTION_TRACK_PICKER` (spec 1.154 phase 5, decisions 7 and 8). Online (the browser is online
+ * The travel journal's `SECTION_TRACK_PICKER` (spec 1.154 phase 5, decisions 7 and 8). Online (the store's `online()`
  * and somebody is signed in) it lists the author's tracker trips, the footprint's day on top, plus the tracks the journal
  * holds; offline only the journal's tracks. Choosing a trip the journal does not hold yet reads its points, imports
  * its visible photos and writes the derived `track` record — `pick` resolves only once the track is in the journal
@@ -32,13 +32,13 @@ export class JournalTrackPicker implements SectionTrackPicker {
   public constructor(private readonly journalKey: string, private readonly footprintKey: string) {}
 
   public label(trackKey: string): string | undefined {
-    const track = this.store.track(trackKey);
+    const track = this.store.track(this.journalKey, trackKey);
     return track ? trackSummary(track, this.store.i18n.track_untitled()) : undefined;
   }
 
   public async pick(current?: string): Promise<{ trackKey: string; label: string } | undefined> {
     const personKey = this.appStore.currentUser()?.personKey;
-    const online = typeof navigator !== 'undefined' && navigator.onLine && !!personKey;
+    const online = this.store.online() && !!personKey;
     let items: TrackPickItem[];
     try {
       items = await this.items(online ? personKey : undefined);
@@ -69,7 +69,7 @@ export class JournalTrackPicker implements SectionTrackPicker {
   /** Online: the day's trips, all my trips and the journal's tracks; offline: the journal's tracks only. */
   private async items(personKey: string | undefined): Promise<TrackPickItem[]> {
     const journalTracks = this.store.tracks(this.journalKey);
-    if (!personKey) return trackPickItems([], [], journalTracks);
+    if (!personKey) return trackPickItems(this.journalKey, [], [], journalTracks);
     const date = this.store.footprint(this.footprintKey)?.date ?? '';
     const tenantId = this.appStore.tenantId();
     const [mine, ofDay] = await Promise.all([
@@ -77,7 +77,7 @@ export class JournalTrackPicker implements SectionTrackPicker {
       date && tenantId ? firstValueFrom(this.trackService.listOfDay(personKey, tenantId, date)) : Promise.resolve<TripModel[]>([]),
     ]);
     this.trips = new Map([...mine, ...ofDay].map((t) => [t.okey, t]));
-    return trackPickItems(mine, ofDay, journalTracks);
+    return trackPickItems(this.journalKey, mine, ofDay, journalTracks);
   }
 
   /** The trips the list was built from, by key (the chosen one is attached from here). */

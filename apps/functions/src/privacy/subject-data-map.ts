@@ -1947,7 +1947,7 @@ export async function resolveArrayItemDocs(entry: SubjectDataEntry, ctx: Subject
 //   applyJournalChange; place, date, GPS of the authors' trip. Follows the journal-changes row.
 // gap: images — journals/{jk}/images, materialised photo metadata (authorKey, GPS, time, private-bucket
 //   paths); the files live in the private bucket under tenant/<t>/journal/<jk>/. Follows journal-changes.
-// gap: tracks — journals/{jk}/tracks/{trk__<tripKey>} (spec 1.154 phase 5): an author's recorded tracker trip as a
+// gap: tracks — journals/{jk}/tracks/{trk__<jk>__<tripKey>} (spec 1.154 phase 5): an author's recorded tracker trip as a
 //   derived copy — simplified GPS points with time and height, distance, duration, transport modes, photo positions,
 //   authorKey. Allow-listed: no heart rate, steps, strokes or crew. Materialised from journal-changes by
 //   applyJournalChange; guests see the copy of a track section on a published footprint. Follows journal-changes.

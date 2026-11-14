@@ -22,7 +22,7 @@ describe('decodeChangeRow', () => {
   });
 
   it('a track record (the derived copy of a trip, phase 5) is kept', () => {
-    expect(decodeChangeRow({ ...row, entity: 'track', entityKey: 'trk__t1', op: 'create' })?.entity).toBe('track');
+    expect(decodeChangeRow({ ...row, entity: 'track', entityKey: 'trk__j1__t1', op: 'create' })?.entity).toBe('track');
   });
 
   it('a row stored before phase 2 (no bases column value) decodes as a legacy record', () => {

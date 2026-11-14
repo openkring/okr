@@ -43,7 +43,7 @@ describe('applyJournalChange logic', () => {
   });
 
   describe('track entity (1.154 phase 5)', () => {
-    const key = 'trk__trip1';
+    const key = 'trk__j1__trip1';
     const fields = {
       journalKey: 'j1', tripKey: 'trip1', name: 'Uetliberg', startedAt: '2026-11-01T08:00:00Z', endedAt: '2026-11-01T14:00:00Z', distanceM: 14123,
       durationS: 21600, modes: ['foot'], sections: [{ mode: 'foot', distanceM: 14123, encoded: '_p~iF~ps|U', heartRateAvg: 120 }],
@@ -52,7 +52,7 @@ describe('applyJournalChange logic', () => {
 
     it('a track materialises to journals/{jk}/tracks/{key}, allow-listed', () => {
       const write = planEntityWrite([rec({ entity: 'track', entityKey: key, op: 'create', fields })], 'j1', 'track', key, ['bka']);
-      expect(write?.path).toBe('journals/j1/tracks/trk__trip1');
+      expect(write?.path).toBe('journals/j1/tracks/trk__j1__trip1');
       expect(write?.data).toMatchObject({ okey: key, tenants: ['bka'], isArchived: false, journalKey: 'j1', authorKey: 'bruno', name: 'Uetliberg', distanceM: 14123 });
       expect(write?.data['sections']).toEqual([{ mode: 'foot', distanceM: 14123, encoded: '_p~iF~ps|U' }]);
       expect(JSON.stringify(write?.data)).not.toMatch(/heart|steps|stroke|crew/);
@@ -63,11 +63,11 @@ describe('applyJournalChange logic', () => {
       expect(planEntityWrite([set], 'j1', 'track', key, ['bka'])).toBeUndefined();
       const create = rec({ entity: 'track', entityKey: key, op: 'create', fields });
       const archive = rec({ entity: 'track', entityKey: key, op: 'archive' });
-      expect(planEntityWrite([create, archive], 'j1', 'track', key, ['bka'])).toEqual({ path: 'journals/j1/tracks/trk__trip1', data: { isArchived: true } });
+      expect(planEntityWrite([create, archive], 'j1', 'track', key, ['bka'])).toEqual({ path: 'journals/j1/tracks/trk__j1__trip1', data: { isArchived: true } });
     });
 
     it('a key with a slash writes nothing', () => {
-      expect(planEntityWrite([rec({ entity: 'track', entityKey: 'trk__a/b', op: 'create', fields })], 'j1', 'track', 'trk__a/b', ['bka'])).toBeUndefined();
+      expect(planEntityWrite([rec({ entity: 'track', entityKey: 'trk__j1__a/b', op: 'create', fields })], 'j1', 'track', 'trk__j1__a/b', ['bka'])).toBeUndefined();
     });
   });
 

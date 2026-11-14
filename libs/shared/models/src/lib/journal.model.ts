@@ -91,7 +91,7 @@ export const JournalSectionCollection = 'sections';
 export const JournalImageCollection = 'images';
 export const JournalCommentCollection = 'comments'; // CommentModel shape, parentKey 'page.<footprintKey>'
 export const JournalReactionCollection = 'reactions'; // ReactionModel shape, id reactionKey(parentKey, personKey)
-export const JournalTrackCollection = 'tracks'; // the derived tracker copies, doc id trackKeyOf(tripKey) = 'trk__<tripKey>' (1.154 phase 5)
+export const JournalTrackCollection = 'tracks'; // the derived tracker copies, doc id trackKeyOf(journalKey, tripKey) = 'trk__<journalKey>__<tripKey>' (1.154 phase 5)
 export const JournalLockCollection = 'journal-locks'; // ephemeral edit locks, doc id `${journalKey}_${entityKey}` (1.126 §6.2)
 export const JournalPrivateCollection = 'private'; // subcollection, authors only: docs 'peer' and 'guestLinks'
 export const JournalGuestLinksDoc = 'guestLinks';

@@ -276,7 +276,7 @@ export class JournalStoryPage {
    * section says so.
    */
   private trackOf(view: SectionView, images: Map<string, ImageView>): JournalSectionTrack {
-    const track = this.store.track(sectionTrackKey(view));
+    const track = this.store.track(this.journalKey(), sectionTrackKey(view));
     if (!track) return { summary: '', photos: [] };
     const native = this.store.native();
     const photos: JournalTrackPhoto[] = track.photos.flatMap((p, i) => {

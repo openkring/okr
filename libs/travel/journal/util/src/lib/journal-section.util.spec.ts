@@ -188,7 +188,7 @@ describe('journal sections', () => {
     expect(sectionHasContent(view({ type: 'map' }))).toBe(true); // a map always shows the footprint
     expect(sectionHasContent(view({ type: 'track' }))).toBe(false);
     expect(sectionHasContent(view({ type: 'track', properties: { track: { trackKey: '' } } }))).toBe(false);
-    expect(sectionHasContent(view({ type: 'track', properties: { track: { trackKey: 'trk__t1' } } }))).toBe(true);
+    expect(sectionHasContent(view({ type: 'track', properties: { track: { trackKey: 'trk__j1__t1' } } }))).toBe(true);
   });
 
   it('sectionModelOf overlays the view on the type defaults; image labels stay the journal image keys', () => {
@@ -228,16 +228,16 @@ describe('journal sections', () => {
     const map = sectionModelOf(view({ type: 'map', properties: { zoom: 13, layer: 'osm', showRoute: true } }), 't');
     expect(map.type).toBe('map');
     expect(map.properties).toMatchObject({ zoom: 13, layer: 'osm', showRoute: true });
-    const track = sectionModelOf(view({ type: 'track', properties: { track: { trackKey: 'trk__t1' } } }), 't');
-    expect(track.properties).toEqual({ track: { trackKey: 'trk__t1' } });
+    const track = sectionModelOf(view({ type: 'track', properties: { track: { trackKey: 'trk__j1__t1' } } }), 't');
+    expect(track.properties).toEqual({ track: { trackKey: 'trk__j1__t1' } });
     const empty = sectionModelOf(view({ type: 'track' }), 't');
     expect(empty.properties).toEqual({ track: { trackKey: '' } });
     expect(empty.properties).not.toBe(JOURNAL_TRACK_CONFIG_SHAPE); // a clone, never the shared shape
   });
 
   it('sectionFieldsOf: a track section stores only its reference', () => {
-    expect(sectionFieldsOf({ type: 'track', title: '', content: ARTICLE_SECTION_SHAPE.content, properties: { track: { trackKey: 'trk__t1' } } }))
-      .toEqual({ type: 'track', title: '', htmlContent: '<p></p>', p_track: { trackKey: 'trk__t1' } });
+    expect(sectionFieldsOf({ type: 'track', title: '', content: ARTICLE_SECTION_SHAPE.content, properties: { track: { trackKey: 'trk__j1__t1' } } }))
+      .toEqual({ type: 'track', title: '', htmlContent: '<p></p>', p_track: { trackKey: 'trk__j1__t1' } });
   });
 
   it('newFootprintSections: a hero with the cover and the overlay, then an empty article', () => {

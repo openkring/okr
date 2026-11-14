@@ -19,7 +19,7 @@ describe('journalTrackSectionValidations', () => {
   });
 
   it('accepts a section that names a track', () => {
-    expect(journalTrackSectionValidations(withKey('trk__abc')).hasErrors('trackKey')).toBe(false);
+    expect(journalTrackSectionValidations(withKey('trk__j1__abc')).hasErrors('trackKey')).toBe(false);
   });
 
   it('is the suite the registry returns for a track section', () => {

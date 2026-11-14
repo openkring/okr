@@ -248,7 +248,7 @@ describe('comment and reaction docs (spec 1.154 phase 4)', () => {
 });
 
 describe('trackDocOf (1.154 phase 5)', () => {
-  const key = 'trk__trip1';
+  const key = 'trk__j1__trip1';
   const copy = {
     tripKey: 'trip1', name: 'Uetliberg', startedAt: '2026-11-01T08:00:00Z', endedAt: '2026-11-01T14:00:00Z', distanceM: 14123, durationS: 21600,
     modes: ['foot', 'row'], sections: [{ mode: 'foot', distanceM: 9123, encoded: '_p~iF~ps|U', altitudes: 'abc' }],
@@ -268,9 +268,9 @@ describe('trackDocOf (1.154 phase 5)', () => {
     expect(JSON.stringify(doc)).not.toMatch(/heart|steps|stroke|split|crew|notes|personKey|assetId|thumbPath|pointsPath|hidden/);
   });
 
-  it('the journalKey is the trusted argument; nothing before the create, nothing once archived', () => {
+  it('a record naming another journal gives no doc (R6); nothing before the create, nothing once archived', () => {
     const create = rec({ entity: 'track', entityKey: key, op: 'create', fields: { ...copy, journalKey: 'other' } });
-    expect(trackDocOf(materialize([create]), key, 'j1', ['bka'])?.journalKey).toBe('j1');
+    expect(trackDocOf(materialize([create]), key, 'j1', ['bka'])).toBeUndefined();
     expect(trackDocOf(materialize([]), key, 'j1', ['bka'])).toBeUndefined();
     const archive = rec({ entity: 'track', entityKey: key, op: 'archive' });
     expect(trackDocOf(materialize([create, archive]), key, 'j1', ['bka'])).toBeUndefined();

@@ -46,14 +46,15 @@ export function trackSummary(track: Pick<TrackPickItem, 'name' | 'startedAt' | '
     .filter((part) => part !== '').join(' · ');
 }
 
-function itemOfTrip(trip: TripModel, inJournal: Set<string>): TrackPickItem {
+function itemOfTrip(journalKey: string, trip: TripModel, inJournal: Set<string>): TrackPickItem[] {
   const sections = trip.track?.sections ?? [];
-  const key = trackKeyOf(trip.okey);
-  return {
+  const key = trackKeyOf(journalKey, trip.okey);
+  if (!key) return []; // a trip key the server's key guard would refuse
+  return [{
     key, tripKey: trip.okey, name: trip.name ?? '', startedAt: trip.track?.startedAt ?? '',
     distanceM: Math.round(sections.reduce((m, s) => m + (Number.isFinite(s.distanceM) ? s.distanceM : 0), 0)),
     modes: [...new Set(sections.map((s) => s.mode))], inJournal: inJournal.has(key),
-  };
+  }];
 }
 
 function itemOfTrack(track: TrackView): TrackPickItem {
@@ -66,12 +67,14 @@ const newestFirst = (a: TrackPickItem, b: TrackPickItem): number => (a.startedAt
  * The picker's rows (decision 7): the footprint day's trips on top, then the author's other trips, then the tracks the
  * journal holds that are not among them (another author's, one sent from the iPhone) — each group newest first, every
  * track once. Offline `mine` and `ofDay` are empty: the journal's tracks only. Trips without a recorded track are left out.
+ * `journalTracks` must be this journal's (`tracksOf(state, journalKey)`): a trip attached only to another journal is
+ * not in this one (ruling R6).
  */
-export function trackPickItems(mine: TripModel[], ofDay: TripModel[], journalTracks: TrackView[]): TrackPickItem[] {
+export function trackPickItems(journalKey: string, mine: TripModel[], ofDay: TripModel[], journalTracks: TrackView[]): TrackPickItem[] {
   const inJournal = new Set(journalTracks.map((t) => t.key));
   const seen = new Set<string>();
   const take = (items: TrackPickItem[]): TrackPickItem[] => items.filter((i) => !seen.has(i.key) && seen.add(i.key)).sort(newestFirst);
-  const recorded = (trips: TripModel[]) => trips.filter((t) => (t.track?.sections.length ?? 0) > 0).map((t) => itemOfTrip(t, inJournal));
+  const recorded = (trips: TripModel[]) => trips.filter((t) => (t.track?.sections.length ?? 0) > 0).flatMap((t) => itemOfTrip(journalKey, t, inJournal));
   return [...take(recorded(ofDay)), ...take(recorded(mine)), ...take(journalTracks.map(itemOfTrack))];
 }
 

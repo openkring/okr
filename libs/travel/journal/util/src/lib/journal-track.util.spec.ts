@@ -75,9 +75,19 @@ function keysDeep(value: unknown): string[] {
 }
 
 describe('trackKeyOf', () => {
-  it('is one key per trip, so the same trip attached twice is one entity', () => {
-    expect(trackKeyOf('trip1')).toBe('trk__trip1');
-    expect(trackKeyOf('trip1')).toBe(trackKeyOf('trip1'));
+  it('is one key per trip and journal, so the same trip attached twice is one entity, in another journal another one (R6)', () => {
+    expect(trackKeyOf('j1', 'trip1')).toBe('trk__j1__trip1');
+    expect(trackKeyOf('j1', 'trip1')).toBe(trackKeyOf('j1', 'trip1'));
+    expect(trackKeyOf('j2', 'trip1')).not.toBe(trackKeyOf('j1', 'trip1'));
+  });
+
+  it('refuses a key the server key guard would refuse', () => {
+    expect(trackKeyOf('j1', 'a/b')).toBeUndefined();
+    expect(trackKeyOf('j1', 'x'.repeat(120))).toBeUndefined();
+    expect(trackKeyOf('', 'trip1')).toBeUndefined();
+    expect(trackKeyOf('j1', '')).toBeUndefined();
+    const uuid = '0f8fad5b-d9cb-469f-a165-70867728950e';
+    expect(trackKeyOf(uuid, uuid)).toBe(`trk__${uuid}__${uuid}`); // two uuids fit
   });
 });
 
@@ -187,7 +197,7 @@ describe('trackCopyOf', () => {
 
 describe('track entity in the change log', () => {
   const copy = trackCopyOf(trip(), SECTIONS, PHOTO_KEYS);
-  const key = trackKeyOf('trip1');
+  const key = trackKeyOf('j1', 'trip1') as string;
   const create = (wall: number, author: string, device?: string) =>
     rec({ entity: 'track', entityKey: key, op: 'create', fields: trackRecordFields('j1', copy) }, wall, author, device);
 
@@ -196,9 +206,25 @@ describe('track entity in the change log', () => {
     const [view] = tracksOf(state, 'j1');
     expect(view).toMatchObject({ key, authorKey: 'bruno', tripKey: 'trip1', name: 'Uetliberg', modes: ['foot', 'row'], distanceM: 14123 });
     expect(view.photos.map((p) => p.imageKey)).toEqual(['img-a2', 'img-a1']);
-    expect(trackOf(state, key)).toEqual(view);
+    expect(trackOf(state, 'j1', key)).toEqual(view);
     expect(tracksOf(state, 'other')).toEqual([]);
-    expect(trackOf(state, 'trk__nope')).toBeUndefined();
+    expect(trackOf(state, 'j1', 'trk__nope')).toBeUndefined();
+    expect(trackOf(state, 'other', key)).toBeUndefined(); // the key of another journal's track
+  });
+
+  it('R6: the same trip attached in journals A and B is two entities; B never reads A\'s track', () => {
+    const keyA = trackKeyOf('jA', 'trip1') as string;
+    const keyB = trackKeyOf('jB', 'trip1') as string;
+    const inA = rec({ entity: 'track', entityKey: keyA, op: 'create', fields: trackRecordFields('jA', copy) }, 100);
+    const stateA = materialize([inA]);
+    expect(trackOf(stateA, 'jB', keyB)).toBeUndefined(); // not attached in B yet: B must write its own
+    expect(trackOf(stateA, 'jB', keyA)).toBeUndefined(); // A's key does not resolve in B
+    expect(tracksOf(stateA, 'jB')).toEqual([]);
+    const inB = rec({ entity: 'track', entityKey: keyB, op: 'create', fields: trackRecordFields('jB', { ...copy, name: 'in B' }) }, 200);
+    const both = materialize([inA, inB]);
+    expect(Object.values(both).filter((e) => e.entity === 'track')).toHaveLength(2);
+    expect(trackOf(both, 'jA', keyA)?.name).toBe('Uetliberg');
+    expect(trackOf(both, 'jB', keyB)?.name).toBe('in B');
   });
 
   it('Review Focus 3: sent by the iPhone and attached on the iPad — one entity, two sections may refer to it', () => {
@@ -219,14 +245,14 @@ describe('track entity in the change log', () => {
     const annaSet = rec({ entity: 'track', entityKey: key, op: 'set', fields: { name: 'Anna war hier' } }, 400, 'anna');
     const annaCreate = rec({ entity: 'track', entityKey: key, op: 'create', fields: trackRecordFields('j1', { ...copy, name: 'Annas Kopie' }) }, 500, 'anna');
     const state = materialize([create(100, 'bruno'), ownerSet, annaSet, annaCreate]);
-    expect(trackOf(state, key)?.name).toBe('Uetliberg, korrigiert');
-    expect(trackOf(state, key)?.authorKey).toBe('bruno');
+    expect(trackOf(state, 'j1', key)?.name).toBe('Uetliberg, korrigiert');
+    expect(trackOf(state, 'j1', key)?.authorKey).toBe('bruno');
   });
 
   it('an archived track is gone; a damaged record yields no view instead of throwing', () => {
     const archive = rec({ entity: 'track', entityKey: key, op: 'archive', fields: {} }, 200);
     expect(tracksOf(materialize([create(100, 'bruno'), archive]), 'j1')).toEqual([]);
-    const broken = rec({ entity: 'track', entityKey: 'trk__x', op: 'create', fields: { journalKey: 'j1', sections: 'nope', photos: [{ lat: 'x' }] } }, 100);
+    const broken = rec({ entity: 'track', entityKey: 'trk__j1__x', op: 'create', fields: { journalKey: 'j1', sections: 'nope', photos: [{ lat: 'x' }] } }, 100);
     const [view] = tracksOf(materialize([broken]), 'j1');
     expect(view.sections).toEqual([]);
     expect(view.photos).toEqual([]);
@@ -236,9 +262,10 @@ describe('track entity in the change log', () => {
   it('sectionImageKeysIn: a track section shows the photos of its track; without state, none', () => {
     const state = materialize([create(100, 'bruno')]);
     const section: Pick<SectionView, 'type' | 'properties'> = { type: 'track', properties: { track: { trackKey: key } } };
-    expect(sectionImageKeysIn(state, section)).toEqual(['img-a2', 'img-a1']);
+    expect(sectionImageKeysIn(state, 'j1', section)).toEqual(['img-a2', 'img-a1']);
+    expect(sectionImageKeysIn(state, 'j2', section)).toEqual([]); // another journal's track
     expect(sectionImageKeys(section)).toEqual([]);
-    expect(sectionImageKeysIn(state, { type: 'track', properties: { track: { trackKey: 'trk__missing' } } })).toEqual([]);
-    expect(sectionImageKeysIn(state, { type: 'album', properties: { images: [{ label: 'i1' }] } })).toEqual(['i1']);
+    expect(sectionImageKeysIn(state, 'j1', { type: 'track', properties: { track: { trackKey: 'trk__missing' } } })).toEqual([]);
+    expect(sectionImageKeysIn(state, 'j1', { type: 'album', properties: { images: [{ label: 'i1' }] } })).toEqual(['i1']);
   });
 });

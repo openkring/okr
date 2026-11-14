@@ -44,7 +44,7 @@ describe('journal peer util', () => {
   });
 
   it('a track record from a peer (the iPhone sending a trip, phase 5) is accepted', () => {
-    const track = { ...rec('phone', 1), entity: 'track' as const, entityKey: 'trk__t1', op: 'create' as const, fields: { journalKey: 'j1' } };
+    const track = { ...rec('phone', 1), entity: 'track' as const, entityKey: 'trk__j1__t1', op: 'create' as const, fields: { journalKey: 'j1' } };
     expect(acceptPeerRecords([track], 'j1', NOW).map((c) => c.entity)).toEqual(['track']);
   });
 

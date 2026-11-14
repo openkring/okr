@@ -53,12 +53,12 @@ describe('journal sync util', () => {
     const images = new Map([['t', image('t')]]);
     const state = materialize([{
       id: 'r1', journalKey: 'j1', deviceId: 'dev-b', seq: 1, hlc: formatHlc({ wall: 100, counter: 0, deviceId: 'dev-b' }), authorKey: 'bruno',
-      entity: 'track', entityKey: 'trk__t1', op: 'create',
+      entity: 'track', entityKey: 'trk__j1__t1', op: 'create',
       fields: { journalKey: 'j1', sections: [], photos: [{ imageKey: 't', lat: 47, lng: 8, takenAt: '2026-11-01T09:00:00Z' }] },
     }]);
     const fp: FootprintView = {
       ...footprint('f1', 'published', []),
-      sections: [{ key: 's1', type: 'track', title: '', htmlContent: '', properties: { track: { trackKey: 'trk__t1' } }, authorKey: 'bruno', order: 'V', hlcs: {}, conflict: false }],
+      sections: [{ key: 's1', type: 'track', title: '', htmlContent: '', properties: { track: { trackKey: 'trk__j1__t1' } }, authorKey: 'bruno', order: 'V', hlcs: {}, conflict: false }],
     };
     expect(publishedPhotoFiles([fp], images, state)).toEqual(['t-2048.jpg', 't-400.jpg']);
     expect(publishedPhotoFiles([fp], images)).toEqual([]);
