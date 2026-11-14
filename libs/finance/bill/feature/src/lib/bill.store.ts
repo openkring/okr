@@ -100,15 +100,21 @@ export const BillStore = signalStore(
       params: () => ({
         currentUser: store.appStore.currentUser(),
         accountingTenantId: store.accountingStore.accountingTenantId(),
+        listId: store.listId(),
         version: store.version(),
       }),
       stream: ({ params }) => {
         if (!params.currentUser || !params.accountingTenantId) return of([]);
+        // a vendor view ('my' or a person/org key, e.g. the person/org modal accordions) is narrowed
+        // server-side: the books can hold thousands of bills, the view needs a handful
+        const vendorKey = params.listId === 'my' ? params.currentUser.personKey : params.listId === 'all' ? undefined : params.listId;
+        if (params.listId !== 'all' && !vendorKey) return of([]);
         return store.firestoreService.searchData<BillModel>(
           BillCollection,
           [
             ...getSystemQuery(store.appStore.tenantId()),
             { key: 'accountingTenantId', operator: '==' as const, value: params.accountingTenantId },
+            ...(vendorKey ? [{ key: 'vendor.key', operator: '==' as const, value: vendorKey }] : []),
           ],
           'billDate',
           'desc'

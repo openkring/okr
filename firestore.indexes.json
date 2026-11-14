@@ -779,6 +779,36 @@
           "arrayConfig": "CONTAINS"
         },
         {
+          "fieldPath": "accountingTenantId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "vendor.key",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "billDate",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "bills",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
           "fieldPath": "isArchived",
           "order": "ASCENDING"
         },

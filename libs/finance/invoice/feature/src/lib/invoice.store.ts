@@ -129,15 +129,17 @@ export const InvoiceStore = signalStore(
         // the query, not the rows it happens to return. Without this where-clause the
         // whole query is denied for anyone below treasurer. Privileged screens keep
         // the unconstrained query (their read passes via the isPrivileged branch).
-        const personKey = params.currentUser.personKey;
-        if (params.listId === 'my' && !personKey) return of([]);
+        // A receiver view of somebody else (a person or org key, e.g. the person/org modal accordions)
+        // is narrowed server-side too: the books can hold thousands of invoices, the view needs a handful.
+        const receiverKey = params.listId === 'my' ? params.currentUser.personKey : params.listId === 'all' ? undefined : params.listId;
+        if (params.listId !== 'all' && !receiverKey) return of([]);
         return store.firestoreService.searchData<InvoiceModel>(
           InvoiceCollection,
           [
             ...getSystemQuery(store.appStore.tenantId()),
             { key: 'accountingTenantId', operator: '==' as const, value: params.accountingTenantId },
-            ...(params.listId === 'my'
-              ? [{ key: 'receiver.key', operator: '==' as const, value: personKey }]
+            ...(receiverKey
+              ? [{ key: 'receiver.key', operator: '==' as const, value: receiverKey }]
               : []),
           ],
           'invoiceDate',
