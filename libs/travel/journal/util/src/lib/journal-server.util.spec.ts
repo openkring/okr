@@ -77,21 +77,21 @@ describe('journal server util', () => {
   it("server view matches device view for another author's section edit", () => {
     const state = materialize([
       rec({ entity: 'footprint', entityKey: 'f1', op: 'create', fields: { journalKey: 'j1', title: 'Neko' } }),
-      rec({ entity: 'section', entityKey: 's1', op: 'create', fields: { footprintKey: 'f1', kind: 'text', html: '<p>mine</p>', order: 'V' } }),
-      rec({ entity: 'section', entityKey: 's1', op: 'set', fields: { html: '<p>hijack</p>' } }, 'dev-b', 'barbara'),
+      rec({ entity: 'section', entityKey: 's1', op: 'create', fields: { footprintKey: 'f1', type: 'article', htmlContent: '<p>mine</p>', order: 'V' } }),
+      rec({ entity: 'section', entityKey: 's1', op: 'set', fields: { htmlContent: '<p>hijack</p>' } }, 'dev-b', 'barbara'),
     ]);
-    const device = footprintsOf(state, 'j1')[0].blocks[0];
+    const device = footprintsOf(state, 'j1')[0].sections[0];
     const server = sectionDocOf(state, 's1', 'j1', ['bkg']);
-    expect(server?.content.htmlContent).toBe(device.html);
+    expect(server?.content.htmlContent).toBe(device.htmlContent);
     expect(server?.content.htmlContent).toBe('<p>hijack</p>');
     expect(server?.authorKey).toBe('bruno');
     expect(server?.footprintKey).toBe('f1');
     expect(server?.order).toBe('V');
   });
 
-  it('a photo block lists its image keys', () => {
+  it('an album section lists its image keys', () => {
     const state = materialize([
-      rec({ entity: 'section', entityKey: 's2', op: 'create', fields: { footprintKey: 'f1', kind: 'photos', imageKeys: ['i1', 'i2'], order: 'G' } }),
+      rec({ entity: 'section', entityKey: 's2', op: 'create', fields: { footprintKey: 'f1', type: 'album', p_images: [{ label: 'i1' }, { label: 'i2' }], order: 'G' } }),
     ]);
     const section = sectionDocOf(state, 's2', 'j1', ['bkg']);
     expect(section?.type).toBe('article');
@@ -99,9 +99,9 @@ describe('journal server util', () => {
     expect(section?.properties.images.map((i) => i.label)).toEqual(['i1', 'i2']);
   });
 
-  it('a video block keeps its caption and lists its clips', () => {
+  it('a video section keeps its caption and lists its clips', () => {
     const state = materialize([
-      rec({ entity: 'section', entityKey: 's3', op: 'create', fields: { footprintKey: 'f1', kind: 'video', html: '<p>Pinguine</p>', imageKeys: ['i1', 'i2'], order: 'H' } }),
+      rec({ entity: 'section', entityKey: 's3', op: 'create', fields: { footprintKey: 'f1', type: 'video', htmlContent: '<p>Pinguine</p>', p_clips: [{ label: 'i1' }, { label: 'i2' }], order: 'H' } }),
     ]);
     const section = sectionDocOf(state, 's3', 'j1', ['bkg']);
     expect(section?.blockKind).toBe('video');
@@ -109,11 +109,18 @@ describe('journal server util', () => {
     expect(section?.properties.images.map((i) => i.label)).toEqual(['i1', 'i2']);
   });
 
-  it('a photo block has no blockKind key', () => {
+  it('an album section has no blockKind key', () => {
     const state = materialize([
-      rec({ entity: 'section', entityKey: 's2', op: 'create', fields: { footprintKey: 'f1', kind: 'photos', imageKeys: ['i1'], order: 'G' } }),
+      rec({ entity: 'section', entityKey: 's2', op: 'create', fields: { footprintKey: 'f1', type: 'album', p_images: [{ label: 'i1' }], order: 'G' } }),
     ]);
     expect(sectionDocOf(state, 's2', 'j1', ['bkg'])).not.toHaveProperty('blockKind');
+  });
+
+  it('an old block record without a type gives no doc', () => {
+    const state = materialize([
+      rec({ entity: 'section', entityKey: 'b1', op: 'create', fields: { footprintKey: 'f1', kind: 'text', html: '<p>alt</p>', order: 'G' } }),
+    ]);
+    expect(sectionDocOf(state, 'b1', 'j1', ['bkg'])).toBeUndefined();
   });
 
   it('imageDocOf stores bucket paths', () => {

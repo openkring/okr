@@ -1,4 +1,5 @@
 import type { TransportMode } from '@okr/shared-models';
+import { sectionImageKeys } from './journal-section.util';
 import { isVideoImage } from './journal-video.util';
 import type { FootprintView, ImageView } from './journal-view.util';
 
@@ -59,14 +60,14 @@ export function stopTime(date: string, time: string): string {
 
 /**
  * The stops and photo points of a journal on the iPad (or the authors' web view): footprints with a position, in
- * travel order, thumbnail = the first photo of the first photo block (the same as its card).
+ * travel order, thumbnail = the first photo of its sections, the hero's cover first (the same as its card).
  */
 export function flyoverInputOf(footprints: FootprintView[], images: Map<string, ImageView>, thumbUrl: (path: string | undefined) => string):
   { stops: FlyStop[]; points: FlyPoint[] } {
   const stops = footprints
     .filter((f) => f.latitude !== undefined && f.longitude !== undefined)
     .map((f): FlyStop => {
-      const first = f.blocks.flatMap((b) => b.imageKeys ?? []).map((k) => images.get(k)).find((i) => i !== undefined && !isVideoImage(i));
+      const first = f.sections.flatMap((s) => sectionImageKeys(s)).map((k) => images.get(k)).find((i) => i !== undefined && !isVideoImage(i));
       return {
         key: f.key, lat: f.latitude as number, lng: f.longitude as number, at: stopTime(f.date, f.time), title: f.title,
         transport: f.transport, thumb: thumbUrl(first?.path400) || undefined,

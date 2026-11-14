@@ -22,7 +22,7 @@ const journal = () => rec('journal', 'j1', { title: 'Antarktis', subTitle: '', s
 const fp = (key: string, date: string, fields: Record<string, unknown> = {}) =>
   rec('footprint', key, { journalKey: 'j1', title: `Ort ${key}`, placeName: '', date, time: '10:00', publishState: 'published', ...fields });
 const photos = (key: string, footprintKey: string, order: string, imageKeys: string[]) =>
-  rec('section', key, { footprintKey, kind: 'photos', imageKeys, order });
+  rec('section', key, { footprintKey, type: 'album', p_images: imageKeys.map((label) => ({ label })), order });
 const img = (key: string, width = 4000, height = 3000, author = 'bruno') =>
   rec('image', key, { journalKey: 'j1', width, height, path2048: `${key}.jpg`, path400: `${key}-400.jpg`, localIdentifier: key }, author);
 

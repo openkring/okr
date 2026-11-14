@@ -6,7 +6,8 @@ import { flyoverInputOf, flyoverTimeline } from './journal-flyover.util';
 import { commentsOf, likesOf } from './journal-guest.util';
 import { routeLengthKm } from './journal-map.util';
 import { JournalState } from './journal-merge.util';
-import { BlockView, FootprintView, ImageView, imagesOf, journalsOf, publishedFootprintsOf, weatherLine } from './journal-view.util';
+import { sectionClipKeys, sectionImageKeys } from './journal-section.util';
+import { FootprintView, ImageView, imagesOf, journalsOf, publishedFootprintsOf, SectionView, weatherLine } from './journal-view.util';
 
 /**
  * Deep copy of a Firestore write payload without `undefined` values (Firestore rejects them). Plain objects and
@@ -40,7 +41,7 @@ export type BookFrame =
   | { kind: 'text'; box: Box; html: string; style: TextStyle; rotate?: 90 } // rotate: spine title only (cover)
   | { kind: 'map'; box: Box; file: string }; // 'book-map-<name>.jpg'
 export type PageRole = 'title' | 'overview' | 'opening' | 'hero' | 'text' | 'photos' | 'comments' | 'stats' | 'blank';
-export interface BookPage { role: PageRole; footprintKey?: string; blockKey?: string; template?: BookTemplate; frames: BookFrame[] }
+export interface BookPage { role: PageRole; footprintKey?: string; blockKey?: string; template?: BookTemplate; frames: BookFrame[] } // blockKey: the section key
 /** pageIndex: the page in BookLayout.pages, or COVER_PAGE_INDEX (-1) for the front photo of the cover sheet. */
 export interface BookWarning { pageIndex: number; imageKey: string; level: 'poor' | 'veryPoor' | 'missing'; dpi?: number }
 export const COVER_PAGE_INDEX = -1;
@@ -259,21 +260,21 @@ export function playSymbolOf(box: Box): { cx: number; cy: number; r: number; tri
   return { cx, cy, r, triangle: [[cx - t * 0.6, cy - t], [cx - t * 0.6, cy + t], [cx + t * 1.2, cy]] };
 }
 
-function photoPage(ctx: Ctx, fpKey: string, blockKey: string, template: BookTemplate, keys: string[]): BookPage {
+function photoPage(ctx: Ctx, fpKey: string, sectionKey: string, template: BookTemplate, keys: string[]): BookPage {
   const boxes = templateBoxes(template, ctx.bleed);
-  return { role: 'photos', footprintKey: fpKey, blockKey, template, frames: keys.map((k, i) => photoFrame(ctx, boxes[i], k)) };
+  return { role: 'photos', footprintKey: fpKey, blockKey: sectionKey, template, frames: keys.map((k, i) => photoFrame(ctx, boxes[i], k)) };
 }
 
 /**
- * The photo pages of an album block. A hand-set page keeps its template only when its photos fill it exactly:
+ * The photo pages of a section's photos (`book.albums` is keyed by the section key). A hand-set page keeps its template only when its photos fill it exactly:
  * photos beyond its slots are laid out automatically after it, and a page left short (hero or hidden photo taken
  * out) is re-picked by the auto-layout for its photos — never an empty slot (ruling R6).
  */
-function albumBlockPages(ctx: Ctx, fpKey: string, block: BlockView, exclude: string | undefined): BookPage[] {
-  const imgs = (block.imageKeys ?? []).map((k) => ctx.images.get(k)).filter((i): i is ImageView => i !== undefined && i.key !== exclude);
-  const override: BookPageOverride[] | undefined = ctx.input.book.albums?.[block.key]?.pages;
+function albumPagesOf(ctx: Ctx, fpKey: string, sectionKey: string, imageKeys: string[], exclude: string | undefined): BookPage[] {
+  const imgs = imageKeys.map((k) => ctx.images.get(k)).filter((i): i is ImageView => i !== undefined && i.key !== exclude);
+  const override: BookPageOverride[] | undefined = ctx.input.book.albums?.[sectionKey]?.pages;
   const viewsOf = (keys: string[]) => keys.map((k) => ctx.images.get(k)).filter((i): i is ImageView => i !== undefined);
-  const auto = (keys: string[]) => autoLayout(viewsOf(keys)).map((q) => photoPage(ctx, fpKey, block.key, q.template, q.imageKeys));
+  const auto = (keys: string[]) => autoLayout(viewsOf(keys)).map((q) => photoPage(ctx, fpKey, sectionKey, q.template, q.imageKeys));
   const pages: BookPage[] = [];
   for (const p of albumPages(imgs, override, ctx.hidden)) {
     const slots = templateBoxes(p.template, ctx.bleed).length;
@@ -281,7 +282,7 @@ function albumBlockPages(ctx: Ctx, fpKey: string, block: BlockView, exclude: str
       pages.push(...auto(p.imageKeys));
       continue;
     }
-    pages.push(photoPage(ctx, fpKey, block.key, p.template, p.imageKeys.slice(0, slots)));
+    pages.push(photoPage(ctx, fpKey, sectionKey, p.template, p.imageKeys.slice(0, slots)));
     pages.push(...auto(p.imageKeys.slice(slots)));
   }
   return pages;
@@ -290,7 +291,7 @@ function albumBlockPages(ctx: Ctx, fpKey: string, block: BlockView, exclude: str
 /**
  * The cover photo (design §5.1): the book's `coverImageKey` when it names an image of the journal, else the
  * journal's own `coverImageKey` (the journal record in the change-log state) when it names an image, else the first
- * visible photo of the first published footprint that has one.
+ * visible photo of the first article or album of the first published footprint that has one (a hero is skipped).
  */
 export function coverImageKeyOf(state: JournalState, journalKey: string, book: JournalBookModel): string | undefined {
   const images = imagesOf(state, journalKey);
@@ -299,8 +300,8 @@ export function coverImageKeyOf(state: JournalState, journalKey: string, book: J
   if (journalCover && images.has(journalCover)) return journalCover;
   const hidden = new Set(book.hiddenImageKeys ?? []);
   for (const fp of publishedFootprintsOf(state, journalKey)) {
-    for (const b of fp.blocks) {
-      const key = b.kind === 'photos' ? b.imageKeys?.find((k) => images.has(k) && !hidden.has(k)) : undefined;
+    for (const section of fp.sections) {
+      const key = isPhotoSection(section) ? sectionImageKeys(section).find((k) => images.has(k) && !hidden.has(k)) : undefined;
       if (key) return key;
     }
   }
@@ -322,7 +323,7 @@ export function bookPrintCandidates(state: JournalState, journalKey: string, boo
   const wanted: string[] = [];
   if (cover) wanted.push(cover);
   for (const fp of publishedFootprintsOf(state, journalKey)) {
-    for (const b of fp.blocks) if (b.kind === 'photos' || b.kind === 'video') for (const key of b.imageKeys ?? []) if (!hidden.has(key)) wanted.push(key);
+    for (const section of fp.sections) for (const key of bookPhotoKeys(section)) if (!hidden.has(key)) wanted.push(key);
   }
   const seen = new Set<string>();
   const result: ImageView[] = [];
@@ -335,35 +336,46 @@ export function bookPrintCandidates(state: JournalState, journalKey: string, boo
   return result;
 }
 
-/** A run of consecutive text blocks as one HTML flow; the author's name follows each change of author. */
-function runHtml(ctx: Ctx, run: BlockView[]): string {
+/** An article or an album: the sections whose photos are laid out as an album (a hero is skipped, ruling R4). */
+function isPhotoSection(section: SectionView): boolean {
+  return section.type === 'article' || section.type === 'album';
+}
+
+/** The photos a section puts in the book: an article's and an album's photos, a video's clips (as posters); a hero none. */
+function bookPhotoKeys(section: SectionView): string[] {
+  if (section.type === 'video') return sectionClipKeys(section);
+  return isPhotoSection(section) ? sectionImageKeys(section) : [];
+}
+
+type Run = { kind: 'text'; sections: SectionView[] } | { kind: 'photos'; section: SectionView; imageKeys: string[] };
+
+/** A run of consecutive texts as one HTML flow; the author's name follows each change of author. */
+function runHtml(ctx: Ctx, run: SectionView[]): string {
   let html = '';
-  run.forEach((b, i) => {
-    html += bookBlockHtml(b.html ?? '');
-    const name = run[i + 1]?.authorKey !== b.authorKey ? plain(ctx.input.authorName(b.authorKey)) : '';
+  run.forEach((s, i) => {
+    html += bookBlockHtml(s.htmlContent);
+    const name = run[i + 1]?.authorKey !== s.authorKey ? plain(ctx.input.authorName(s.authorKey)) : '';
     if (name) html += para(name, 'book-author'); // no name, no name line (ruling R13)
   });
   return html;
 }
 
-/** Blocks grouped into runs: consecutive text blocks together, each photo block alone, a video block as its caption (text) and its posters (photos); empty texts dropped. */
-function runsOf(blocks: BlockView[]): { kind: 'text' | 'photos'; blocks: BlockView[] }[] {
-  const runs: { kind: 'text' | 'photos'; blocks: BlockView[] }[] = [];
-  for (const b of blocks) {
-    if (b.kind === 'text') {
-      if (!bookBlockHtml(b.html ?? '')) continue;
+/**
+ * Sections grouped into runs: consecutive texts flow together; an article is its text followed by its photos as an
+ * album, an album its photos, a video its caption (text) followed by its posters; a hero is skipped (the book has its
+ * own hero page). Empty texts and empty photo lists are dropped.
+ */
+function runsOf(sections: SectionView[]): Run[] {
+  const runs: Run[] = [];
+  for (const section of sections) {
+    if (section.type === 'hero') continue;
+    if (bookBlockHtml(section.htmlContent)) {
       const last = runs[runs.length - 1];
-      if (last?.kind === 'text') last.blocks.push(b);
-      else runs.push({ kind: 'text', blocks: [b] });
-    } else {
-      // a video block: its caption is a text before its posters, which are laid out like an album
-      if (b.kind === 'video' && bookBlockHtml(b.html ?? '')) {
-        const last = runs[runs.length - 1];
-        if (last?.kind === 'text') last.blocks.push(b);
-        else runs.push({ kind: 'text', blocks: [b] });
-      }
-      runs.push({ kind: 'photos', blocks: [b] });
+      if (last?.kind === 'text') last.sections.push(section);
+      else runs.push({ kind: 'text', sections: [section] });
     }
+    const imageKeys = bookPhotoKeys(section);
+    if (imageKeys.length > 0) runs.push({ kind: 'photos', section, imageKeys });
   }
   return runs;
 }
@@ -412,21 +424,21 @@ function openingFrames(ctx: Ctx, fp: FootprintView, facts: FootprintFacts, photo
   ];
 }
 
-/** Opening page, hero, the blocks in their order, comments. */
+/** Opening page, hero, the sections in their order, comments. */
 function footprintPages(ctx: Ctx, fp: FootprintView, facts: FootprintFacts): BookPage[] {
-  const firstAlbum = fp.blocks.find((b) => b.kind === 'photos');
-  const heroKey = firstAlbum?.imageKeys?.find((k) => ctx.images.has(k) && !ctx.hidden.has(k)); // ruling R4
+  const firstAlbum = fp.sections.find((s) => isPhotoSection(s) && sectionImageKeys(s).length > 0);
+  const heroKey = firstAlbum ? sectionImageKeys(firstAlbum).find((k) => ctx.images.has(k) && !ctx.hidden.has(k)) : undefined; // ruling R4
   const body: BookPage[] = [];
   let openingText: string | undefined;
-  runsOf(fp.blocks).forEach((run, i) => {
+  runsOf(fp.sections).forEach((run, i) => {
     if (run.kind === 'photos') {
-      body.push(...albumBlockPages(ctx, fp.key, run.blocks[0], heroKey));
+      body.push(...albumPagesOf(ctx, fp.key, run.section.key, run.imageKeys, heroKey));
       return;
     }
-    const chunks = ctx.input.paginate(runHtml(ctx, run.blocks), 'body', i === 0 ? OPENING.body : TEXT_BOX, TEXT_BOX);
+    const chunks = ctx.input.paginate(runHtml(ctx, run.sections), 'body', i === 0 ? OPENING.body : TEXT_BOX, TEXT_BOX);
     chunks.forEach((chunk, c) => {
       if (i === 0 && c === 0) openingText = chunk; // a leading text starts on the opening page
-      else body.push({ role: 'text', footprintKey: fp.key, blockKey: run.blocks[0].key, frames: [text(TEXT_BOX, chunk, 'body')] });
+      else body.push({ role: 'text', footprintKey: fp.key, blockKey: run.sections[0].key, frames: [text(TEXT_BOX, chunk, 'body')] });
     });
   });
   const hero: BookPage[] = heroKey
@@ -486,7 +498,7 @@ export function layoutBook(input: BookInput): BookLayout {
   const start = isStoreDate(journal?.startDate) ? journal.startDate : footprints[0]?.date;
   const end = isStoreDate(journal?.endDate) ? journal.endDate : footprints[footprints.length - 1]?.date;
   const period = [bookDate(start), end !== start ? bookDate(end) : ''].filter((s) => s).join(' – ');
-  const authorKeys = [...new Set(footprints.flatMap((f) => f.blocks.map((b) => b.authorKey)).filter((k) => k))];
+  const authorKeys = [...new Set(footprints.flatMap((f) => f.sections.map((s) => s.authorKey)).filter((k) => k))];
   const authors = authorKeys.map((k) => plain(input.authorName(k))).filter((s) => s).join(' · ');
   const titleFrames: BookFrame[] = [text({ x: MARGIN, y: 60, w: CONTENT_W, h: 30 }, para(escapeHtml(title)), 'title')];
   if (subTitle) titleFrames.push(text({ x: MARGIN, y: 92, w: CONTENT_W, h: 14 }, para(escapeHtml(subTitle)), 'facts'));

@@ -63,7 +63,7 @@ describe('journal flyover timeline', () => {
   it('the journal gives stops with a position and its first photo as thumbnail', () => {
     const fp = (key: string, lat?: number, imageKeys: string[] = []): FootprintView => ({
       key, journalKey: 'j1', title: key, placeName: '', date: '20270114', time: '09:00', latitude: lat, longitude: lat, publishState: 'published',
-      transport: 'ship', hlcs: {}, lostValues: [], blocks: [{ key: `b${key}`, kind: 'photos', authorKey: 'bruno', order: 'V', imageKeys, hlcs: {}, conflict: false }],
+      transport: 'ship', hlcs: {}, lostValues: [], sections: [{ key: `b${key}`, type: 'album', title: '', htmlContent: '', properties: { images: imageKeys.map((label) => ({ label })) }, authorKey: 'bruno', order: 'V', hlcs: {}, conflict: false }],
     });
     const img = (key: string, lat?: number): ImageView => ({ key, authorKey: 'bruno', takenAt: '2027-01-14T08:00:00', latitude: lat, longitude: lat, width: 1, height: 1, path2048: `p/${key}-2048.jpg`, path400: `p/${key}-400.jpg`, localIdentifier: '' });
     const { stops, points } = flyoverInputOf([fp('a', -60, ['i1']), fp('nowhere'), fp('b', -61, ['missing'])], new Map([['i1', img('i1', -60.5)], ['i2', img('i2')]]), (p) => (p ? `url:${p}` : ''));
@@ -74,7 +74,7 @@ describe('journal flyover timeline', () => {
   it('video clips are neither points nor thumbnails', () => {
     const fp: FootprintView = {
       key: 'a', journalKey: 'j1', title: 'a', placeName: '', date: '20270114', time: '09:00', latitude: -60, longitude: -60, publishState: 'published',
-      transport: 'ship', hlcs: {}, lostValues: [], blocks: [{ key: 'b', kind: 'video', authorKey: 'bruno', order: 'V', imageKeys: ['v1'], hlcs: {}, conflict: false }],
+      transport: 'ship', hlcs: {}, lostValues: [], sections: [{ key: 'b', type: 'video', title: '', htmlContent: '', properties: { clips: [{ label: 'v1' }] }, authorKey: 'bruno', order: 'V', hlcs: {}, conflict: false }],
     };
     const clip: ImageView = { key: 'v1', authorKey: 'bruno', takenAt: '2027-01-14T08:00:00', latitude: -60.5, longitude: -60.5, width: 1, height: 1, path2048: 'p/v1-2048.jpg', path400: 'p/v1-400.jpg', localIdentifier: '', videoPath: 'p/v1-video.mp4' };
     const { stops, points } = flyoverInputOf([fp], new Map([['v1', clip]]), (p) => (p ? `url:${p}` : ''));

@@ -15,9 +15,9 @@ function rec(p: Pick<JournalChange, 'entity' | 'entityKey' | 'op'> & Partial<Jou
 }
 
 const FP = rec({ entity: 'footprint', entityKey: 'f1', op: 'create', fields: { journalKey: 'j1', title: 'Neko', date: '20270114' }, bases: {} }, 10);
-const C = rec({ entity: 'section', entityKey: 's1', op: 'create', fields: { footprintKey: 'f1', kind: 'text', html: '<p>C</p>', order: 'V' }, bases: {} }, 100);
-const ANNA = rec({ entity: 'section', entityKey: 's1', op: 'set', fields: { html: '<p>Anna</p>' }, bases: { html: C.hlc } }, 200, 'anna');
-const BRUNO = rec({ entity: 'section', entityKey: 's1', op: 'set', fields: { html: '<p>Bruno</p>' }, bases: { html: C.hlc } }, 300);
+const C = rec({ entity: 'section', entityKey: 's1', op: 'create', fields: { footprintKey: 'f1', type: 'article', htmlContent: '<p>C</p>', order: 'V' }, bases: {} }, 100);
+const ANNA = rec({ entity: 'section', entityKey: 's1', op: 'set', fields: { htmlContent: '<p>Anna</p>' }, bases: { htmlContent: C.hlc } }, 200, 'anna');
+const BRUNO = rec({ entity: 'section', entityKey: 's1', op: 'set', fields: { htmlContent: '<p>Bruno</p>' }, bases: { htmlContent: C.hlc } }, 300);
 const CONCURRENT = [FP, C, ANNA, BRUNO];
 
 function shuffled<T>(items: T[], seed: number): T[] {
@@ -66,81 +66,81 @@ describe('journal conflict copies', () => {
   it('concurrent edits keep both', () => {
     const [fp] = footprintsOf(materialize(CONCURRENT), 'j1');
     const copyKey = conflictCopyKey('s1', ANNA.hlc);
-    expect(fp.blocks.map((b) => b.key)).toEqual(['s1', copyKey]);
-    const [original, copy] = fp.blocks;
-    expect(original.html).toBe('<p>Bruno</p>');
+    expect(fp.sections.map((b) => b.key)).toEqual(['s1', copyKey]);
+    const [original, copy] = fp.sections;
+    expect(original.htmlContent).toBe('<p>Bruno</p>');
     expect(original.conflict).toBe(true);
     expect(original.conflictOf).toBeUndefined();
-    expect(original.hlcs['html']).toBe(BRUNO.hlc);
+    expect(original.hlcs['htmlContent']).toBe(BRUNO.hlc);
     expect(original.authorKey).toBe('bruno');
-    expect(copy.html).toBe('<p>Anna</p>');
+    expect(copy.htmlContent).toBe('<p>Anna</p>');
     expect(copy.conflictOf).toBe('s1');
     expect(copy.conflict).toBe(true);
     expect(copy.authorKey).toBe('anna');
     expect(copy.order).toBe('V');
-    expect(copy.hlcs['html']).toBe(ANNA.hlc);
+    expect(copy.hlcs['htmlContent']).toBe(ANNA.hlc);
   });
 
   it('edit based on the latest value: no copy', () => {
-    const bruno = rec({ entity: 'section', entityKey: 's1', op: 'set', fields: { html: '<p>Bruno</p>' }, bases: { html: ANNA.hlc } }, 300);
+    const bruno = rec({ entity: 'section', entityKey: 's1', op: 'set', fields: { htmlContent: '<p>Bruno</p>' }, bases: { htmlContent: ANNA.hlc } }, 300);
     const [fp] = footprintsOf(materialize([FP, C, ANNA, bruno]), 'j1');
-    expect(fp.blocks.map((b) => [b.key, b.html, b.conflict])).toEqual([['s1', '<p>Bruno</p>', false]]);
+    expect(fp.sections.map((b) => [b.key, b.htmlContent, b.conflict])).toEqual([['s1', '<p>Bruno</p>', false]]);
   });
 
   it('same author sequential edits: no copy', () => {
-    const first = rec({ entity: 'section', entityKey: 's1', op: 'set', fields: { html: '<p>1</p>' }, bases: { html: C.hlc } }, 200);
-    const second = rec({ entity: 'section', entityKey: 's1', op: 'set', fields: { html: '<p>2</p>' }, bases: { html: first.hlc } }, 300);
+    const first = rec({ entity: 'section', entityKey: 's1', op: 'set', fields: { htmlContent: '<p>1</p>' }, bases: { htmlContent: C.hlc } }, 200);
+    const second = rec({ entity: 'section', entityKey: 's1', op: 'set', fields: { htmlContent: '<p>2</p>' }, bases: { htmlContent: first.hlc } }, 300);
     const [fp] = footprintsOf(materialize([FP, C, first, second]), 'j1');
-    expect(fp.blocks.map((b) => [b.key, b.html])).toEqual([['s1', '<p>2</p>']]);
+    expect(fp.sections.map((b) => [b.key, b.htmlContent])).toEqual([['s1', '<p>2</p>']]);
   });
 
   it('record without bases supersedes older values', () => {
     const legacy = [
-      rec({ entity: 'section', entityKey: 's2', op: 'create', fields: { footprintKey: 'f1', kind: 'text', html: '<p>0</p>', order: 'V' } }, 100),
-      rec({ entity: 'section', entityKey: 's2', op: 'set', fields: { html: '<p>A</p>' } }, 200, 'anna'),
-      rec({ entity: 'section', entityKey: 's2', op: 'set', fields: { html: '<p>B</p>' } }, 300),
+      rec({ entity: 'section', entityKey: 's2', op: 'create', fields: { footprintKey: 'f1', type: 'article', htmlContent: '<p>0</p>', order: 'V' } }, 100),
+      rec({ entity: 'section', entityKey: 's2', op: 'set', fields: { htmlContent: '<p>A</p>' } }, 200, 'anna'),
+      rec({ entity: 'section', entityKey: 's2', op: 'set', fields: { htmlContent: '<p>B</p>' } }, 300),
       rec({ entity: 'footprint', entityKey: 'f1', op: 'set', fields: { title: 'Alt' } }, 50, 'anna'),
     ];
     for (const records of [legacy, [...legacy].reverse()]) {
       const [fp] = footprintsOf(materialize([FP, ...records]), 'j1');
-      expect(fp.blocks.map((b) => [b.key, b.html, b.conflict])).toEqual([['s2', '<p>B</p>', false]]);
+      expect(fp.sections.map((b) => [b.key, b.htmlContent, b.conflict])).toEqual([['s2', '<p>B</p>', false]]);
       expect(fp.lostValues).toEqual([]);
     }
   });
 
   it('copy order follows the original', () => {
-    const other = rec({ entity: 'section', entityKey: 's0', op: 'create', fields: { footprintKey: 'f1', kind: 'text', html: '<p>W</p>', order: 'W' } }, 110);
-    const before = rec({ entity: 'section', entityKey: 's9', op: 'create', fields: { footprintKey: 'f1', kind: 'text', html: '<p>U</p>', order: 'U' } }, 120);
+    const other = rec({ entity: 'section', entityKey: 's0', op: 'create', fields: { footprintKey: 'f1', type: 'article', htmlContent: '<p>W</p>', order: 'W' } }, 110);
+    const before = rec({ entity: 'section', entityKey: 's9', op: 'create', fields: { footprintKey: 'f1', type: 'article', htmlContent: '<p>U</p>', order: 'U' } }, 120);
     const [fp] = footprintsOf(materialize([...CONCURRENT, other, before]), 'j1');
-    expect(fp.blocks.map((b) => b.key)).toEqual(['s9', 's1', conflictCopyKey('s1', ANNA.hlc), 's0']);
-    expect(fp.blocks[2].order).toBe('V');
+    expect(fp.sections.map((b) => b.key)).toEqual(['s9', 's1', conflictCopyKey('s1', ANNA.hlc), 's0']);
+    expect(fp.sections[2].order).toBe('V');
   });
 
   it('editing a copy', () => {
     const copyKey = conflictCopyKey('s1', ANNA.hlc);
-    const edit = rec({ entity: 'section', entityKey: copyKey, op: 'set', fields: { html: '<p>Anna 2</p>' }, bases: { html: ANNA.hlc } }, 400, 'anna');
-    const edited = footprintsOf(materialize([...CONCURRENT, edit]), 'j1')[0].blocks;
-    expect(edited.map((b) => [b.key, b.html])).toEqual([['s1', '<p>Bruno</p>'], [copyKey, '<p>Anna 2</p>']]);
-    expect(edited[1].hlcs['html']).toBe(edit.hlc);
+    const edit = rec({ entity: 'section', entityKey: copyKey, op: 'set', fields: { htmlContent: '<p>Anna 2</p>' }, bases: { htmlContent: ANNA.hlc } }, 400, 'anna');
+    const edited = footprintsOf(materialize([...CONCURRENT, edit]), 'j1')[0].sections;
+    expect(edited.map((b) => [b.key, b.htmlContent])).toEqual([['s1', '<p>Bruno</p>'], [copyKey, '<p>Anna 2</p>']]);
+    expect(edited[1].hlcs['htmlContent']).toBe(edit.hlc);
 
     const archive = rec({ entity: 'section', entityKey: copyKey, op: 'archive' }, 500);
-    const after = footprintsOf(materialize([...CONCURRENT, edit, archive]), 'j1')[0].blocks;
-    expect(after.map((b) => [b.key, b.html, b.conflict])).toEqual([['s1', '<p>Bruno</p>', false]]);
+    const after = footprintsOf(materialize([...CONCURRENT, edit, archive]), 'j1')[0].sections;
+    expect(after.map((b) => [b.key, b.htmlContent, b.conflict])).toEqual([['s1', '<p>Bruno</p>', false]]);
   });
 
   it('copy survives the original\'s archive without conflict flag', () => {
     const archive = rec({ entity: 'section', entityKey: 's1', op: 'archive' }, 400);
-    const blocks = footprintsOf(materialize([...CONCURRENT, archive]), 'j1')[0].blocks;
-    expect(blocks.map((b) => [b.key, b.html, b.conflictOf, b.conflict])).toEqual([[conflictCopyKey('s1', ANNA.hlc), '<p>Anna</p>', 's1', false]]);
+    const sections = footprintsOf(materialize([...CONCURRENT, archive]), 'j1')[0].sections;
+    expect(sections.map((b) => [b.key, b.htmlContent, b.conflictOf, b.conflict])).toEqual([[conflictCopyKey('s1', ANNA.hlc), '<p>Anna</p>', 's1', false]]);
   });
 
   it('the published view hides an open copy but keeps one that outlived its original', () => {
     const published = rec({ entity: 'footprint', entityKey: 'f1', op: 'set', fields: { publishState: 'published' }, bases: { publishState: FP.hlc } }, 50);
     const open = publishedFootprintsOf(materialize([...CONCURRENT, published]), 'j1')[0];
-    expect(open.blocks.map((b) => [b.key, b.html])).toEqual([['s1', '<p>Bruno</p>']]);
+    expect(open.sections.map((b) => [b.key, b.htmlContent])).toEqual([['s1', '<p>Bruno</p>']]);
     const archive = rec({ entity: 'section', entityKey: 's1', op: 'archive' }, 400);
     const orphaned = publishedFootprintsOf(materialize([...CONCURRENT, published, archive]), 'j1')[0];
-    expect(orphaned.blocks.map((b) => [b.key, b.html, b.conflict])).toEqual([[conflictCopyKey('s1', ANNA.hlc), '<p>Anna</p>', false]]);
+    expect(orphaned.sections.map((b) => [b.key, b.htmlContent, b.conflict])).toEqual([[conflictCopyKey('s1', ANNA.hlc), '<p>Anna</p>', false]]);
   });
 
   it('footprint lost value is listed and can be dismissed', () => {
@@ -160,40 +160,51 @@ describe('journal conflict copies', () => {
     const copyKey = conflictCopyKey('s1', ANNA.hlc);
     const records = [
       ...CONCURRENT,
-      rec({ entity: 'section', entityKey: copyKey, op: 'set', fields: { html: '<p>Anna 2</p>' }, bases: { html: ANNA.hlc } }, 400, 'anna'),
+      rec({ entity: 'section', entityKey: copyKey, op: 'set', fields: { htmlContent: '<p>Anna 2</p>' }, bases: { htmlContent: ANNA.hlc } }, 400, 'anna'),
       rec({ entity: 'footprint', entityKey: 'f1', op: 'set', fields: { title: 'Neko Harbour' }, bases: { title: FP.hlc } }, 200, 'anna'),
       rec({ entity: 'footprint', entityKey: 'f1', op: 'set', fields: { title: 'Neko Bay' }, bases: { title: FP.hlc } }, 300),
     ];
     const expected = footprintsOf(materialize(records), 'j1');
-    expect(expected[0].blocks).toHaveLength(2);
+    expect(expected[0].sections).toHaveLength(2);
     expect(expected[0].lostValues).toHaveLength(1);
     for (let seed = 1; seed <= 20; seed++) {
       expect(footprintsOf(materialize(shuffled(records, seed)), 'j1')).toEqual(expected);
     }
   });
 
-  it('keeps kind video on a conflict copy', () => {
-    const V = rec({ entity: 'section', entityKey: 'v1', op: 'create', fields: { footprintKey: 'f1', kind: 'video', html: '<p>Cap</p>', imageKeys: ['i0'], order: 'V' }, bases: {} }, 100);
-    const A = rec({ entity: 'section', entityKey: 'v1', op: 'set', fields: { imageKeys: ['i0', 'i1'] }, bases: { imageKeys: V.hlc } }, 200, 'anna');
-    const B = rec({ entity: 'section', entityKey: 'v1', op: 'set', fields: { imageKeys: ['i0', 'i2'] }, bases: { imageKeys: V.hlc } }, 300);
+  it('keeps type video on a conflict copy of the clips', () => {
+    const V = rec({ entity: 'section', entityKey: 'v1', op: 'create', fields: { footprintKey: 'f1', type: 'video', htmlContent: '<p>Cap</p>', p_clips: ['i0'], order: 'V' }, bases: {} }, 100);
+    const A = rec({ entity: 'section', entityKey: 'v1', op: 'set', fields: { p_clips: ['i0', 'i1'] }, bases: { p_clips: V.hlc } }, 200, 'anna');
+    const B = rec({ entity: 'section', entityKey: 'v1', op: 'set', fields: { p_clips: ['i0', 'i2'] }, bases: { p_clips: V.hlc } }, 300);
     const [fp] = footprintsOf(materialize([FP, V, A, B]), 'j1');
-    expect(fp.blocks).toHaveLength(2);
-    const copy = fp.blocks[1];
+    expect(fp.sections).toHaveLength(2);
+    const copy = fp.sections[1];
     expect(copy.conflictOf).toBe('v1');
-    expect(copy.kind).toBe('video');
-    expect(copy.imageKeys).toEqual(['i0', 'i1']);
-    expect(copy.html).toBe('<p>Cap</p>');
+    expect(copy.type).toBe('video');
+    expect(copy.properties['clips']).toEqual(['i0', 'i1']);
+    expect(copy.htmlContent).toBe('<p>Cap</p>');
   });
 
-  it('concurrent caption edits on a video block keep the losing caption as a video copy', () => {
-    const V = rec({ entity: 'section', entityKey: 'v1', op: 'create', fields: { footprintKey: 'f1', kind: 'video', html: '<p>Cap</p>', imageKeys: ['i0'], order: 'V' }, bases: {} }, 100);
-    const A = rec({ entity: 'section', entityKey: 'v1', op: 'set', fields: { html: '<p>Anna</p>' }, bases: { html: V.hlc } }, 200, 'anna');
-    const B = rec({ entity: 'section', entityKey: 'v1', op: 'set', fields: { html: '<p>Bruno</p>' }, bases: { html: V.hlc } }, 300);
+  it('concurrent caption edits on a video section keep the losing caption as a video copy', () => {
+    const V = rec({ entity: 'section', entityKey: 'v1', op: 'create', fields: { footprintKey: 'f1', type: 'video', htmlContent: '<p>Cap</p>', p_clips: ['i0'], order: 'V' }, bases: {} }, 100);
+    const A = rec({ entity: 'section', entityKey: 'v1', op: 'set', fields: { htmlContent: '<p>Anna</p>' }, bases: { htmlContent: V.hlc } }, 200, 'anna');
+    const B = rec({ entity: 'section', entityKey: 'v1', op: 'set', fields: { htmlContent: '<p>Bruno</p>' }, bases: { htmlContent: V.hlc } }, 300);
     const [fp] = footprintsOf(materialize([FP, V, A, B]), 'j1');
-    expect(fp.blocks.map((b) => b.html)).toEqual(['<p>Bruno</p>', '<p>Anna</p>']);
-    const copy = fp.blocks[1];
+    expect(fp.sections.map((b) => b.htmlContent)).toEqual(['<p>Bruno</p>', '<p>Anna</p>']);
+    const copy = fp.sections[1];
     expect(copy.conflictOf).toBe('v1');
-    expect(copy.kind).toBe('video');
-    expect(copy.imageKeys).toEqual(['i0']);
+    expect(copy.type).toBe('video');
+    expect(copy.properties['clips']).toEqual(['i0']);
+  });
+
+  it('a concurrent title edit becomes a copy too; a settings key edited on a copy is laid over it', () => {
+    const A = rec({ entity: 'section', entityKey: 's1', op: 'set', fields: { title: 'Anna' }, bases: { title: '' } }, 200, 'anna');
+    const B = rec({ entity: 'section', entityKey: 's1', op: 'set', fields: { title: 'Bruno' }, bases: { title: '' } }, 300);
+    const copyKey = conflictCopyKey('s1', A.hlc);
+    const restyle = rec({ entity: 'section', entityKey: copyKey, op: 'set', fields: { p_imageStyle: { width: '50%' } } }, 400, 'anna');
+    const [fp] = footprintsOf(materialize([FP, C, A, B, restyle]), 'j1');
+    expect(fp.sections.map((s) => [s.key, s.title, s.htmlContent])).toEqual([['s1', 'Bruno', '<p>C</p>'], [copyKey, 'Anna', '<p>C</p>']]);
+    expect(fp.sections[1].properties['imageStyle']).toEqual({ width: '50%' });
+    expect(fp.sections[0].properties['imageStyle']).toBeUndefined();
   });
 });

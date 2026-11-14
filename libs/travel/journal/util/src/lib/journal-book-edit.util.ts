@@ -6,15 +6,15 @@ import { ImageView } from './journal-view.util';
 
 /**
  * Editing the book page by page (design 2026-10-24 §5.1): pure helpers that turn an edit into the new override list
- * of an album block (`albums[blockKey].pages`), plus the preview's spreads and the «Fotos fehlen» count.
- * Photos move only between the pages of the same album block (design §3).
+ * of a section's photos (`albums[sectionKey].pages`), plus the preview's spreads and the «Fotos fehlen» count.
+ * Photos move only between the pages of the same section (design §3).
  */
 export const BOOK_TEMPLATES: BookTemplate[] = ['full', 'two-portrait', 'two-landscape', 'hero-2', 'hero-3'];
 
 /** Number of photo slots of a template. */
 export const slotCount = (template: BookTemplate): number => templateBoxes(template, 0).length;
 
-/** The photo pages of an album block as they are laid out now (hero page excluded), as an override list. */
+/** The photo pages of a section (`blockKey` = section key) as they are laid out now (hero page excluded), as an override list. */
 export function blockPagesOf(layout: BookLayout, blockKey: string): BookPageOverride[] {
   return layout.pages
     .filter((p) => p.role === 'photos' && p.blockKey === blockKey && p.template)

@@ -4,6 +4,7 @@ export * from './lib/journal-order.util';
 export * from './lib/journal-position.util';
 export * from './lib/journal-change.util';
 export * from './lib/journal-view.util';
+export * from './lib/journal-section.util';
 export * from './lib/journal-conflict.util';
 export * from './lib/journal-identity.util';
 export * from './lib/journal-launch.util';

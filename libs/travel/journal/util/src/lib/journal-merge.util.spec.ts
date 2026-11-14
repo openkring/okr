@@ -37,8 +37,8 @@ describe('journal merge', () => {
       change({ entity: 'footprint', entityKey: 'f1', op: 'create', fields: { title: 'Neko' } }, 100),
       change({ entity: 'footprint', entityKey: 'f1', op: 'set', fields: { title: 'Neko Harbour' } }, 200),
       change({ entity: 'footprint', entityKey: 'f1', op: 'set', fields: { title: 'Neko Hbr' }, authorKey: 'barbara' }, 300, 'dev-b'),
-      change({ entity: 'section', entityKey: 's1', op: 'create', fields: { html: '<p>a</p>' } }, 110),
-      change({ entity: 'section', entityKey: 's1', op: 'set', fields: { html: '<p>b</p>' } }, 120),
+      change({ entity: 'section', entityKey: 's1', op: 'create', fields: { htmlContent: '<p>a</p>' } }, 110),
+      change({ entity: 'section', entityKey: 's1', op: 'set', fields: { htmlContent: '<p>b</p>' } }, 120),
       change({ entity: 'section', entityKey: 's1', op: 'archive' }, 400),
     ];
     const snapshot = (list: JournalChange[]) => {
@@ -63,17 +63,17 @@ describe('journal merge', () => {
   });
 
   it('set before create materialises after create', () => {
-    const set = change({ entity: 'section', entityKey: 's1', op: 'set', fields: { html: '<p>later</p>' } }, 200);
-    const create = change({ entity: 'section', entityKey: 's1', op: 'create', fields: { html: '<p>first</p>' } }, 100);
+    const set = change({ entity: 'section', entityKey: 's1', op: 'set', fields: { htmlContent: '<p>later</p>' } }, 200);
+    const create = change({ entity: 'section', entityKey: 's1', op: 'create', fields: { htmlContent: '<p>first</p>' } }, 100);
     const afterSet = applyChange({}, set);
     expect(viewOf(afterSet['section:s1'])).toBeUndefined();
-    expect(viewOf(applyChange(afterSet, create)['section:s1'])?.['html']).toBe('<p>later</p>');
+    expect(viewOf(applyChange(afterSet, create)['section:s1'])?.['htmlContent']).toBe('<p>later</p>');
   });
 
   it("another author's edit of a section wins by hlc", () => {
-    const create = change({ entity: 'section', entityKey: 's1', op: 'create', fields: { html: '<p>Bruno</p>' } }, 100);
-    const other = change({ entity: 'section', entityKey: 's1', op: 'set', authorKey: 'barbara', fields: { html: '<p>Barbara</p>' } }, 500, 'dev-b');
-    expect(viewOf(materialize([create, other])['section:s1'])?.['html']).toBe('<p>Barbara</p>');
+    const create = change({ entity: 'section', entityKey: 's1', op: 'create', fields: { htmlContent: '<p>Bruno</p>' } }, 100);
+    const other = change({ entity: 'section', entityKey: 's1', op: 'set', authorKey: 'barbara', fields: { htmlContent: '<p>Barbara</p>' } }, 500, 'dev-b');
+    expect(viewOf(materialize([create, other])['section:s1'])?.['htmlContent']).toBe('<p>Barbara</p>');
   });
 
   it('comments stay owned', () => {
@@ -89,17 +89,17 @@ describe('journal merge', () => {
   });
 
   it('archive hides the entity', () => {
-    const create = change({ entity: 'section', entityKey: 's1', op: 'create', fields: { html: '<p>x</p>' } }, 100);
+    const create = change({ entity: 'section', entityKey: 's1', op: 'create', fields: { htmlContent: '<p>x</p>' } }, 100);
     const archive = change({ entity: 'section', entityKey: 's1', op: 'archive' }, 200);
     expect(viewOf(materialize([create, archive])['section:s1'])).toBeUndefined();
   });
 
   it('a record whose hlc is malformed or names another device is ignored', () => {
-    const create = change({ entity: 'section', entityKey: 's1', op: 'create', fields: { html: '<p>Bruno</p>' } }, 100);
-    const forged = { ...change({ entity: 'section', entityKey: 's1', op: 'create', authorKey: 'barbara', fields: { html: '<p>stolen</p>' } }, 1, 'dev-b'), hlc: formatHlc({ wall: 1, counter: 0, deviceId: 'dev-a' }) };
-    const garbage = { ...change({ entity: 'section', entityKey: 's1', op: 'set', fields: { html: '<p>garbage</p>' } }, 900), hlc: '9999' };
+    const create = change({ entity: 'section', entityKey: 's1', op: 'create', fields: { htmlContent: '<p>Bruno</p>' } }, 100);
+    const forged = { ...change({ entity: 'section', entityKey: 's1', op: 'create', authorKey: 'barbara', fields: { htmlContent: '<p>stolen</p>' } }, 1, 'dev-b'), hlc: formatHlc({ wall: 1, counter: 0, deviceId: 'dev-a' }) };
+    const garbage = { ...change({ entity: 'section', entityKey: 's1', op: 'set', fields: { htmlContent: '<p>garbage</p>' } }, 900), hlc: '9999' };
     const state = materialize([create, forged, garbage]);
-    expect(viewOf(state['section:s1'])?.['html']).toBe('<p>Bruno</p>');
+    expect(viewOf(state['section:s1'])?.['htmlContent']).toBe('<p>Bruno</p>');
     expect(state['section:s1'].ownerKey).toBe('bruno');
   });
 
@@ -117,18 +117,26 @@ describe('journal merge', () => {
   });
 
   const historyRecords = () => [
-    change({ entity: 'section', entityKey: 's1', op: 'create', fields: { html: '<p>1</p>' }, bases: {} }, 100),
-    change({ entity: 'section', entityKey: 's1', op: 'set', fields: { html: '<p>2</p>' }, bases: { html: formatHlc({ wall: 100, counter: 0, deviceId: 'dev-a' }) } }, 200),
-    change({ entity: 'section', entityKey: 's1', op: 'set', authorKey: 'barbara', fields: { html: '<p>3</p>' }, bases: { html: formatHlc({ wall: 100, counter: 0, deviceId: 'dev-a' }) } }, 300, 'dev-b'),
+    change({ entity: 'section', entityKey: 's1', op: 'create', fields: { htmlContent: '<p>1</p>' }, bases: {} }, 100),
+    change({ entity: 'section', entityKey: 's1', op: 'set', fields: { htmlContent: '<p>2</p>' }, bases: { htmlContent: formatHlc({ wall: 100, counter: 0, deviceId: 'dev-a' }) } }, 200),
+    change({ entity: 'section', entityKey: 's1', op: 'set', authorKey: 'barbara', fields: { htmlContent: '<p>3</p>' }, bases: { htmlContent: formatHlc({ wall: 100, counter: 0, deviceId: 'dev-a' }) } }, 300, 'dev-b'),
   ];
 
   it('history keeps every value of a conflict field once', () => {
     const records = historyRecords();
     const shuffled = [records[2], records[0], records[1], records[1], records[2], records[0]];
-    const history = materialize(shuffled)['section:s1'].history?.['html'];
+    const history = materialize(shuffled)['section:s1'].history?.['htmlContent'];
     expect(history?.map((r) => r.value)).toEqual(['<p>1</p>', '<p>2</p>', '<p>3</p>']);
-    expect(history?.map((r) => r.base)).toEqual([undefined, records[1].bases?.['html'], records[2].bases?.['html']]);
+    expect(history?.map((r) => r.base)).toEqual([undefined, records[1].bases?.['htmlContent'], records[2].bases?.['htmlContent']]);
     expect(history?.[2].authorKey).toBe('barbara');
+  });
+
+  it('a section settings key keeps no history (last writer wins, spec 1.154 decision 3)', () => {
+    const state = materialize([
+      change({ entity: 'section', entityKey: 's1', op: 'create', fields: { type: 'article', p_imageStyle: { width: '30%' } }, bases: {} }, 100),
+      change({ entity: 'section', entityKey: 's1', op: 'set', fields: { p_imageStyle: { width: '70%' }, p_images: [] } }, 200),
+    ]);
+    expect(Object.keys(state['section:s1'].history ?? {}).sort()).toEqual(['p_images']);
   });
 
   it('history is order-independent', () => {

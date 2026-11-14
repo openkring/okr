@@ -1,5 +1,5 @@
 import { JOURNAL_I18N_KEYS } from './journal-i18n';
-import { BlockKind } from './journal-view.util';
+import { JournalSectionType } from './journal-section.util';
 
 /**
  * The context menus of the journal pages (spec 1.126 §3–§5). Code-defined, not `menuItems` rows: the
@@ -11,7 +11,7 @@ export type JournalMenuAction =
   | 'flyover' | 'newFootprint' | 'recordTrack' | 'offlineMaps' | 'photoBook'
   | 'toggleEditMode' | 'addBlock' | 'sortBlocks' | 'editFootprint' | 'deleteFootprint';
 
-export type JournalBlockAction = 'block.edit' | 'block.addphotos' | 'block.addvideos' | 'block.delete';
+export type JournalSectionAction = 'section.edit' | 'section.delete';
 
 export type JournalMenuItem =
   | { action: JournalMenuAction; label: keyof typeof JOURNAL_I18N_KEYS; icon: string; destructive?: boolean }
@@ -64,11 +64,12 @@ export function footprintMenu(ctx: { native: boolean; canWrite: boolean; editMod
   );
 }
 
-/** The block ActionSheet's actions; every author may edit every block (phase 2), `editable` = `canWrite`. */
-export function blockActions(ctx: { kind: BlockKind; editable: boolean }): JournalBlockAction[] {
-  if (!ctx.editable) return [];
-  if (ctx.kind === 'video') return ['block.edit', 'block.addvideos', 'block.delete']; // block.edit edits the caption
-  return [ctx.kind === 'text' ? 'block.edit' : 'block.addphotos', 'block.delete'];
+/**
+ * The section ActionSheet's actions; every author may edit every section, `editable` = `canWrite`. Photos and
+ * clips are picked inside the section editor, so every type offers the same two actions.
+ */
+export function sectionActions(ctx: { type: JournalSectionType; editable: boolean }): JournalSectionAction[] {
+  return ctx.editable ? ['section.edit', 'section.delete'] : [];
 }
 
 export type JournalListAction = 'journal.open' | 'journal.edit' | 'journal.delete' | 'journal.authors' | 'journal.guests' | 'journal.notice';

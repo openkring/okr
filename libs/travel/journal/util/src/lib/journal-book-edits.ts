@@ -75,11 +75,12 @@ export class JournalBookEdits {
     };
   }
 
-  public setAlbum(blockKey: string, pages: BookPageOverride[]): void {
-    this.change('albums', blockKey, pages);
+  /** `albums` is keyed by the section key (an article's or album's photos). */
+  public setAlbum(sectionKey: string, pages: BookPageOverride[]): void {
+    this.change('albums', sectionKey, pages);
   }
-  public resetAlbum(blockKey: string): void {
-    this.change('albums', blockKey, null);
+  public resetAlbum(sectionKey: string): void {
+    this.change('albums', sectionKey, null);
   }
   public setComments(footprintKey: string, value: BookComments): void {
     this.change('footprints', footprintKey, value);

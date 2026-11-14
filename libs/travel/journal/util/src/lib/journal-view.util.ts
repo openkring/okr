@@ -2,12 +2,13 @@ import { DiaryWeather, JournalEntity, TRANSPORT_MODES, TransportMode } from '@ok
 import { conflictCopyKey, dismissedField, isConflictCopyKey, lostValues, winningHlcs } from './journal-conflict.util';
 import { CONFLICT_FIELDS, EntityState, entityStateKey, JournalState, viewOf } from './journal-merge.util';
 import { sortByOrder } from './journal-order.util';
+import { isJournalSectionType, JournalSectionType, SECTION_CONTENT_FIELDS, SECTION_PROPERTY_PREFIX } from './journal-section.util';
 
 /**
  * The journal as the UI reads it, built from the merged change log (spec 1.113 §5.2). Field names in
  * the change records are the contract: journal { title, subTitle, startDate, endDate, coverImageKey, coverLabel, lastPageLabel }; footprint
  * { journalKey, title, placeName, date, time, latitude, longitude, publishState }; section
- * { footprintKey, kind, html, imageKeys, order }; image { journalKey, takenAt, latitude, longitude,
+ * { footprintKey, type, title, htmlContent, order, p_<property key> … } (journal-section.util); image { journalKey, takenAt, latitude, longitude,
  * width, height, path2048, path400, localIdentifier }.
  */
 export interface JournalView {
@@ -15,17 +16,20 @@ export interface JournalView {
   coverImageKey: string; coverLabel: string; lastPageLabel: string; // '' when absent
 }
 
-export type BlockKind = 'text' | 'photos' | 'video';
-
-export interface BlockView {
+/**
+ * A section of a footprint as the UI reads it (spec 1.154 §2): the record's `p_<key>` fields re-nested into
+ * `properties`. `sectionModelOf` turns it into a CMS `SectionModel`.
+ */
+export interface SectionView {
   key: string;
-  kind: BlockKind;
-  authorKey: string;
+  type: JournalSectionType;
+  title: string;
+  htmlContent: string;
+  properties: Record<string, unknown>; // only the stored keys; the type's defaults come from sectionModelOf
   order: string;
-  html?: string; // kind 'text'; the caption of kind 'video'
-  imageKeys?: string[]; // kind 'photos' and 'video' (the clips), in pick order — may name images not (yet) received; look them up in imagesOf
-  hlcs: Record<string, string>; // conflict field → hlc of the value shown (the `bases` of the next edit)
-  conflictOf?: string; // a conflict copy: the key of the block it was split from (spec 1.126 §6.3)
+  authorKey: string;
+  hlcs: Record<string, string>; // content field → hlc of the value shown (the `bases` of the next edit)
+  conflictOf?: string; // a conflict copy: the key of the section it was split from (spec 1.126 §6.3)
   conflict: boolean; // a live copy and its live original both carry the flag
 }
 
@@ -59,7 +63,7 @@ export interface FootprintView {
   publishState: 'draft' | 'published';
   weather?: DiaryWeather; // filled once online (spec §6.4, plan 8)
   transport?: TransportMode; // how the travellers got here (flyover)
-  blocks: BlockView[];
+  sections: SectionView[]; // hero first, then by order, conflict copies included
   hlcs: Record<string, string>; // conflict field → hlc of the value shown
   lostValues: LostValueView[]; // reminders; a `dismissed_<hlc>: true` field hides one
 }
@@ -118,54 +122,63 @@ function unarchived(entity: EntityState): EntityState {
   return { ...entity, fields: Object.fromEntries(Object.entries(entity.fields).filter(([field]) => field !== 'archived')) };
 }
 
-const imageKeysOf = (v: unknown): string[] => (Array.isArray(v) ? (v as unknown[]).filter((k): k is string => typeof k === 'string') : []);
+/** Lays record fields over a section view: `title`, `htmlContent`, `order` and the `p_<key>` properties. */
+function withFields(section: SectionView, fields: Record<string, unknown>): SectionView {
+  const out: SectionView = { ...section, properties: { ...section.properties } };
+  for (const [field, value] of Object.entries(fields)) {
+    if (field === 'title' || field === 'htmlContent' || field === 'order') out[field] = str(value);
+    else if (field.startsWith(SECTION_PROPERTY_PREFIX)) out.properties[field.slice(SECTION_PROPERTY_PREFIX.length)] = value;
+  }
+  return out;
+}
 
 /**
- * One derived block per lost value of the block's content field. A copy is the original with that
- * value, placed right after it (same order, key tie-break); records written against the copy key
- * (`set` and `archive` only) are laid over it.
+ * One derived section per lost value of a content field (SECTION_CONTENT_FIELDS). A copy is the original with
+ * that value, placed right after it (same order, key tie-break); records written against the copy key (`set`
+ * and `archive` only) are laid over it. Settings keys have no copies: last writer wins (plan decision 3).
  */
-function copiesOf(state: JournalState, original: BlockView, history: EntityState['history'], originalLive: boolean): BlockView[] {
-  // text: the text; photos: the pictures; video: the caption and the clips
-  const fields = original.kind === 'text' ? ['html'] : original.kind === 'photos' ? ['imageKeys'] : ['html', 'imageKeys'];
-  const copies: BlockView[] = [];
-  for (const field of fields) {
+function copiesOf(state: JournalState, original: SectionView, history: EntityState['history'], originalLive: boolean): SectionView[] {
+  const copies: SectionView[] = [];
+  for (const field of SECTION_CONTENT_FIELDS) {
     for (const lost of lostValues(history?.[field])) {
       const key = conflictCopyKey(original.key, lost.hlc);
       const own = state[entityStateKey('section', key)];
       const overlay = own ? viewOf({ ...own, created: true }) : {};
       if (!overlay) continue; // the copy was archived
-      const copy: BlockView = {
-        ...original, key, authorKey: lost.authorKey, conflictOf: original.key, conflict: originalLive,
+      const copy = withFields(original, { [field]: lost.value });
+      copies.push({
+        ...withFields(copy, overlay), key, authorKey: lost.authorKey, conflictOf: original.key, conflict: originalLive,
         hlcs: { ...original.hlcs, [field]: lost.hlc, ...(own ? winningHlcs(own) : {}) },
-      };
-      if (field === 'html') copy.html = str('html' in overlay ? overlay['html'] : lost.value);
-      else copy.imageKeys = imageKeysOf('imageKeys' in overlay ? overlay['imageKeys'] : lost.value);
-      if ('order' in overlay) copy.order = str(overlay['order']);
-      copies.push(copy);
+      });
     }
   }
   return copies;
 }
 
-/** The footprint's blocks in order, including the conflict copies derived from lost values. */
-export function blocksOf(state: JournalState, footprintKey: string): BlockView[] {
-  const blocks: BlockView[] = [];
-  for (const section of Object.values(state)) {
-    if (section.entity !== 'section' || isConflictCopyKey(section.entityKey)) continue;
-    const view = viewOf(unarchived(section));
+/**
+ * The footprint's sections, including the conflict copies derived from lost values: a hero first, then by
+ * `order`. A record without a known `type` — an old block (`kind`) from an older build — is ignored (decision 4).
+ */
+export function sectionsOf(state: JournalState, footprintKey: string): SectionView[] {
+  const sections: SectionView[] = [];
+  for (const entity of Object.values(state)) {
+    if (entity.entity !== 'section' || isConflictCopyKey(entity.entityKey)) continue;
+    const view = viewOf(unarchived(entity));
     if (!view || view['footprintKey'] !== footprintKey) continue;
-    const kind: BlockKind = view['kind'] === 'photos' || view['kind'] === 'video' ? view['kind'] : 'text';
-    const block: BlockView = { key: section.entityKey, kind, authorKey: section.ownerKey ?? '', order: str(view['order']), hlcs: winningHlcs(section), conflict: false };
-    if (kind === 'text' || kind === 'video') block.html = str(view['html']);
-    if (kind !== 'text') block.imageKeys = imageKeysOf(view['imageKeys']);
-    const live = viewOf(section) !== undefined;
-    const copies = copiesOf(state, block, section.history, live);
-    if (live) blocks.push({ ...block, conflict: copies.length > 0 });
-    blocks.push(...copies);
+    const type = view['type'];
+    if (!isJournalSectionType(type)) continue;
+    const section = withFields(
+      { key: entity.entityKey, type, title: '', htmlContent: '', properties: {}, order: '', authorKey: entity.ownerKey ?? '', hlcs: winningHlcs(entity), conflict: false },
+      view,
+    );
+    const live = viewOf(entity) !== undefined;
+    const copies = copiesOf(state, section, entity.history, live);
+    if (live) sections.push({ ...section, conflict: copies.length > 0 });
+    sections.push(...copies);
   }
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  return sortByOrder(blocks.map((block) => ({ ...block, okey: block.key }))).map(({ okey: _okey, ...block }) => block);
+  const ordered = sortByOrder(sections.map((s) => ({ ...s, okey: s.key }))).map(({ okey: _okey, ...s }) => s);
+  return [...ordered.filter((s) => s.type === 'hero'), ...ordered.filter((s) => s.type !== 'hero')];
 }
 
 /** The footprint's lost values that nobody dismissed, field by field in CONFLICT_FIELDS order. */
@@ -190,7 +203,7 @@ export function footprintsOf(state: JournalState, journalKey: string): Footprint
       publishState: view['publishState'] === 'published' ? ('published' as const) : ('draft' as const),
       weather: weatherOf(view['weather']),
       transport: transportOf(view['transport']),
-      blocks: blocksOf(state, entity.entityKey),
+      sections: sectionsOf(state, entity.entityKey),
       hlcs: winningHlcs(entity),
       lostValues: lostValuesOf(entity, view),
     }))
@@ -200,7 +213,7 @@ export function footprintsOf(state: JournalState, journalKey: string): Footprint
 /**
  * The published footprints as they are shown outside the editing app — the guest view, the guest digest
  * and the printed book: no open conflict copies and no conflict reminders, those are for the authors to
- * resolve (spec 1.126 §6.3). A copy whose original is deleted is no longer a conflict: it is a normal block.
+ * resolve (spec 1.126 §6.3). A copy whose original is deleted is no longer a conflict: it is a normal section.
  */
 export function publishedFootprintsOf(state: JournalState, journalKey: string): FootprintView[] {
   return footprintsOf(state, journalKey)
@@ -208,7 +221,7 @@ export function publishedFootprintsOf(state: JournalState, journalKey: string): 
     .map((f) => ({
       ...f,
       lostValues: [],
-      blocks: f.blocks.filter((b) => b.conflictOf === undefined || b.conflict === false).map((b) => ({ ...b, conflict: false })),
+      sections: f.sections.filter((s) => s.conflictOf === undefined || s.conflict === false).map((s) => ({ ...s, conflict: false })),
     }));
 }
 
@@ -234,15 +247,16 @@ export function imagesOf(state: JournalState, journalKey: string): Map<string, I
   return images;
 }
 
-export function lastBlockOrder(footprint: FootprintView): string | undefined {
-  return footprint.blocks.length > 0 ? footprint.blocks[footprint.blocks.length - 1].order : undefined;
+/** The order of the last section, to append a new one after it. */
+export function lastSectionOrder(footprint: FootprintView): string | undefined {
+  return footprint.sections.length > 0 ? footprint.sections[footprint.sections.length - 1].order : undefined;
 }
 
 /**
- * True when any of the footprints holds a block of another author. Deleting such a footprint (or the
+ * True when any of the footprints holds a section of another author. Deleting such a footprint (or the
  * journal around it) would delete the other person's work with it — spec 1.113 anti-goal «losing an
- * entry» — so the store refuses until only own blocks are left.
+ * entry» — so the store refuses until only own sections are left.
  */
-export function hasOthersBlocks(footprints: FootprintView[], personKey: string): boolean {
-  return footprints.some((fp) => fp.blocks.some((block) => block.authorKey !== personKey));
+export function hasOthersSections(footprints: FootprintView[], personKey: string): boolean {
+  return footprints.some((fp) => fp.sections.some((section) => section.authorKey !== personKey));
 }

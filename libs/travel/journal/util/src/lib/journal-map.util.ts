@@ -1,4 +1,5 @@
 import { routePoints } from './journal-position.util';
+import { sectionImageKeys } from './journal-section.util';
 import { isVideoImage } from './journal-video.util';
 import { FootprintView, ImageView } from './journal-view.util';
 
@@ -29,8 +30,8 @@ export function journalMapData(footprints: FootprintView[], images: Map<string, 
   const pins: JournalPin[] = [];
   for (const fp of footprints) {
     if (fp.latitude === undefined || fp.longitude === undefined) continue;
-    const firstPhotoBlock = fp.blocks.find((b) => b.kind === 'photos' && (b.imageKeys?.length ?? 0) > 0);
-    const firstImage = firstPhotoBlock?.imageKeys?.map((k) => images.get(k)).find((i) => i !== undefined);
+    // the first photo of the sections, the hero's cover first; a video clip is no pin photo
+    const firstImage = fp.sections.flatMap((s) => sectionImageKeys(s)).map((k) => images.get(k)).find((i) => i !== undefined && !isVideoImage(i));
     pins.push({ key: fp.key, lat: fp.latitude, lng: fp.longitude, imagePath: firstImage?.path400, label: fp.title });
   }
   const photos = [...images.values()].filter((i) => !isVideoImage(i)).map((i) => ({ takenAt: i.takenAt ?? '', latitude: i.latitude, longitude: i.longitude }));

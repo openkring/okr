@@ -1,6 +1,7 @@
 import { AvatarInfo, JournalChange, JournalChangeOp, JournalEntity, JournalGuestLink } from '@okr/shared-models';
 import { formatHlc } from './journal-hlc.util';
 import { entityStateKey, JournalState, viewOf } from './journal-merge.util';
+import { isJournalSectionType, sectionClipKeys, sectionImageKeys } from './journal-section.util';
 import { publishedFootprintsOf } from './journal-view.util';
 
 /**
@@ -88,14 +89,16 @@ export function likesOf(state: JournalState, footprintKey: string): string[] {
 export interface DigestItem { footprintKey: string; title: string; date: string; updated: boolean; newComments: number }
 
 /**
- * What changed since the last notification, per published footprint: a footprint, one of its blocks or images
+ * What changed since the last notification, per published footprint: a footprint, one of its sections or images
  * changed (`updated`), or comments were added. Drafts and archived footprints never appear.
  */
 export function digestOf(records: JournalChange[], state: JournalState, journalKey: string): DigestItem[] {
   const published = new Map(publishedFootprintsOf(state, journalKey).map((f) => [f.key, f]));
   const imageToFootprints = new Map<string, string[]>();
   for (const fp of published.values()) {
-    for (const block of fp.blocks) for (const key of block.imageKeys ?? []) imageToFootprints.set(key, [...(imageToFootprints.get(key) ?? []), fp.key]);
+    for (const section of fp.sections) {
+      for (const key of [...sectionImageKeys(section), ...sectionClipKeys(section)]) imageToFootprints.set(key, [...(imageToFootprints.get(key) ?? []), fp.key]);
+    }
   }
   const items = new Map<string, DigestItem>();
   const touch = (footprintKey: string, comment: boolean): void => {
@@ -112,8 +115,9 @@ export function digestOf(records: JournalChange[], state: JournalState, journalK
         touch(r.entityKey, false);
         break;
       case 'section': {
-        const fk = viewOf(state[entityStateKey('section', r.entityKey)])?.['footprintKey'];
-        if (typeof fk === 'string') touch(fk, false);
+        const section = viewOf(state[entityStateKey('section', r.entityKey)]);
+        // an old block record (no type) is ignored everywhere (spec 1.154 decision 4)
+        if (section !== undefined && isJournalSectionType(section['type']) && typeof section['footprintKey'] === 'string') touch(section['footprintKey'], false);
         break;
       }
       case 'image':

@@ -1,6 +1,7 @@
 import { JournalChange } from '@okr/shared-models';
 
 import { withCheckedBases } from './journal-change.util';
+import { sectionClipKeys, sectionImageKeys } from './journal-section.util';
 import { acceptRecord } from './journal-server.util';
 import { FootprintView, ImageView } from './journal-view.util';
 
@@ -69,8 +70,8 @@ export function publishedPhotoFiles(footprints: FootprintView[], images: Map<str
   const files = new Set<string>();
   for (const footprint of footprints) {
     if (footprint.publishState !== 'published') continue;
-    for (const block of footprint.blocks) {
-      for (const key of block.imageKeys ?? []) {
+    for (const section of footprint.sections) {
+      for (const key of [...sectionImageKeys(section), ...sectionClipKeys(section)]) {
         const image = images.get(key);
         if (!image) continue;
         for (const path of [image.path2048, image.path400, image.videoPath ?? '']) {

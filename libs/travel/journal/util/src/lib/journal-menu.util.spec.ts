@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { blockActions, footprintMenu, JournalMenuItem, journalListMenu, journalListSheet, journalOverviewMenu } from './journal-menu.util';
+import { footprintMenu, sectionActions, JournalMenuItem, journalListMenu, journalListSheet, journalOverviewMenu } from './journal-menu.util';
 
 const actions = (items: JournalMenuItem[]) => items.map((i) => i.action);
 
@@ -52,11 +52,11 @@ describe('journal menus (spec 1.126 phase 3: write entries follow canWrite)', ()
     expect(footprintMenu({ native: true, canWrite: false, editMode: false })).toEqual([]);
   });
 
-  it('block actions follow kind and editability', () => {
-    expect(blockActions({ kind: 'text', editable: true })).toEqual(['block.edit', 'block.delete']);
-    expect(blockActions({ kind: 'photos', editable: true })).toEqual(['block.addphotos', 'block.delete']);
-    expect(blockActions({ kind: 'text', editable: false })).toEqual([]);
-    expect(blockActions({ kind: 'video', editable: true })).toEqual(['block.edit', 'block.addvideos', 'block.delete']);
+  it('section actions follow editability, the same for every type', () => {
+    for (const type of ['hero', 'article', 'album', 'video'] as const) {
+      expect(sectionActions({ type, editable: true })).toEqual(['section.edit', 'section.delete']);
+      expect(sectionActions({ type, editable: false })).toEqual([]);
+    }
   });
 
   it('list sheet groups in spec order', () => {

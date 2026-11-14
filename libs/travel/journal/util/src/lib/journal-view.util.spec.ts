@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { JournalChange } from '@okr/shared-models';
 import { formatHlc } from './journal-hlc.util';
 import { materialize } from './journal-merge.util';
-import { blocksOf, footprintsOf, imagesOf, journalsOf, lastBlockOrder, transportOf, weatherLine, weatherOf } from './journal-view.util';
+import { footprintsOf, imagesOf, journalsOf, lastSectionOrder, sectionsOf, transportOf, weatherLine, weatherOf } from './journal-view.util';
 
 let n = 0;
 function rec(p: Pick<JournalChange, 'entity' | 'entityKey' | 'op'> & Partial<JournalChange>): JournalChange {
@@ -42,30 +42,30 @@ describe('journal view', () => {
     expect(footprintsOf(state, 'j1')[0].publishState).toBe('draft');
   });
 
-  it('blocks are ordered by order and skip archived ones', () => {
-    const sV = rec({ entity: 'section', entityKey: 'sV', op: 'create', fields: { footprintKey: 'f1', kind: 'text', html: '<p>v</p>', order: 'V' } });
-    const sG = rec({ entity: 'section', entityKey: 'sG', op: 'create', fields: { footprintKey: 'f1', kind: 'photos', imageKeys: ['i1'], order: 'G' } });
+  it('sections are ordered by order and skip archived ones', () => {
+    const sV = rec({ entity: 'section', entityKey: 'sV', op: 'create', fields: { footprintKey: 'f1', type: 'article', htmlContent: '<p>v</p>', order: 'V' } });
+    const sG = rec({ entity: 'section', entityKey: 'sG', op: 'create', fields: { footprintKey: 'f1', type: 'album', p_images: [{ label: 'i1' }], order: 'G' } });
     const state = materialize([
       rec({ entity: 'footprint', entityKey: 'f1', op: 'create', fields: { journalKey: 'j1', title: 'Neko' } }),
       sV,
       sG,
-      rec({ entity: 'section', entityKey: 'sX', op: 'create', fields: { footprintKey: 'f1', kind: 'text', html: '<p>x</p>', order: 'X' } }),
+      rec({ entity: 'section', entityKey: 'sX', op: 'create', fields: { footprintKey: 'f1', type: 'article', htmlContent: '<p>x</p>', order: 'X' } }),
       rec({ entity: 'section', entityKey: 'sX', op: 'archive' }),
     ]);
     const [footprint] = footprintsOf(state, 'j1');
-    expect(footprint.blocks.map((b) => b.key)).toEqual(['sG', 'sV']);
-    expect(footprint.blocks[0]).toEqual({ key: 'sG', kind: 'photos', authorKey: 'bruno', order: 'G', imageKeys: ['i1'], hlcs: { imageKeys: sG.hlc }, conflict: false });
-    expect(footprint.blocks[1]).toEqual({ key: 'sV', kind: 'text', authorKey: 'bruno', order: 'V', html: '<p>v</p>', hlcs: { html: sV.hlc }, conflict: false });
-    expect(lastBlockOrder(footprint)).toBe('V');
+    expect(footprint.sections.map((b) => b.key)).toEqual(['sG', 'sV']);
+    expect(footprint.sections[0]).toEqual({ key: 'sG', type: 'album', title: '', htmlContent: '', properties: { images: [{ label: 'i1' }] }, authorKey: 'bruno', order: 'G', hlcs: { p_images: sG.hlc }, conflict: false });
+    expect(footprint.sections[1]).toEqual({ key: 'sV', type: 'article', title: '', htmlContent: '<p>v</p>', properties: {}, authorKey: 'bruno', order: 'V', hlcs: { htmlContent: sV.hlc }, conflict: false });
+    expect(lastSectionOrder(footprint)).toBe('V');
   });
 
-  it('photo block lists only imported images', () => {
+  it('a photo section may name images not imported yet; imagesOf lists only imported ones', () => {
     const state = materialize([
       rec({ entity: 'footprint', entityKey: 'f1', op: 'create', fields: { journalKey: 'j1', title: 'Neko' } }),
       rec({ entity: 'image', entityKey: 'i1', op: 'create', fields: { journalKey: 'j1', takenAt: '2027-01-14T09:00:00', latitude: -64.83, longitude: -62.53, width: 2048, height: 1536, path2048: 'journals/j1/a-2048.jpg', path400: 'journals/j1/a-400.jpg', localIdentifier: 'L1' } }),
-      rec({ entity: 'section', entityKey: 's1', op: 'create', fields: { footprintKey: 'f1', kind: 'photos', imageKeys: ['i1', 'i2'], order: 'V' } }),
+      rec({ entity: 'section', entityKey: 's1', op: 'create', fields: { footprintKey: 'f1', type: 'album', p_images: [{ label: 'i1' }, { label: 'i2' }], order: 'V' } }),
     ]);
-    expect(footprintsOf(state, 'j1')[0].blocks[0].imageKeys).toEqual(['i1', 'i2']);
+    expect(footprintsOf(state, 'j1')[0].sections[0].properties['images']).toEqual([{ label: 'i1' }, { label: 'i2' }]);
     const images = imagesOf(state, 'j1');
     expect([...images.keys()]).toEqual(['i1']);
     expect(images.get('i1')?.path400).toBe('journals/j1/a-400.jpg');
@@ -79,24 +79,24 @@ describe('journal view', () => {
     const [footprint] = footprintsOf(state, 'j1');
     expect(footprint.latitude).toBeUndefined();
     expect(footprint.longitude).toBeUndefined();
-    expect(lastBlockOrder(footprint)).toBeUndefined();
+    expect(lastSectionOrder(footprint)).toBeUndefined();
   });
 });
 
-describe('hasOthersBlocks', () => {
-  const fp = (blocks: { authorKey: string }[]) =>
+describe('hasOthersSections', () => {
+  const fp = (sections: { authorKey: string }[]) =>
     ({ key: 'f', journalKey: 'j1', title: '', placeName: '', date: '', time: '', publishState: 'draft' as const, hlcs: {}, lostValues: [],
-      blocks: blocks.map((b, i) => ({ key: `b${i}`, kind: 'text' as const, order: 'V', hlcs: {}, conflict: false, ...b })) });
+      sections: sections.map((b, i) => ({ key: `b${i}`, type: 'article' as const, title: '', htmlContent: '', properties: {}, order: 'V', hlcs: {}, conflict: false, ...b })) });
 
-  it('a footprint with only own blocks may be deleted', async () => {
-    const { hasOthersBlocks } = await import('./journal-view.util');
-    expect(hasOthersBlocks([fp([{ authorKey: 'bruno' }, { authorKey: 'bruno' }])], 'bruno')).toBe(false);
-    expect(hasOthersBlocks([fp([])], 'bruno')).toBe(false);
+  it('a footprint with only own sections may be deleted', async () => {
+    const { hasOthersSections } = await import('./journal-view.util');
+    expect(hasOthersSections([fp([{ authorKey: 'bruno' }, { authorKey: 'bruno' }])], 'bruno')).toBe(false);
+    expect(hasOthersSections([fp([])], 'bruno')).toBe(false);
   });
 
-  it('a block of the other author blocks the deletion', async () => {
-    const { hasOthersBlocks } = await import('./journal-view.util');
-    expect(hasOthersBlocks([fp([{ authorKey: 'bruno' }]), fp([{ authorKey: 'barbara' }])], 'bruno')).toBe(true);
+  it('a section of the other author blocks the deletion', async () => {
+    const { hasOthersSections } = await import('./journal-view.util');
+    expect(hasOthersSections([fp([{ authorKey: 'bruno' }]), fp([{ authorKey: 'barbara' }])], 'bruno')).toBe(true);
   });
 });
 
@@ -124,11 +124,11 @@ describe('footprint transport', () => {
     expect(transportOf('')).toBeUndefined();
   });
 
-  it('reads a video block with caption and clips', () => {
+  it('reads a video section with caption and clips', () => {
     const state = materialize([
-      rec({ entity: 'section', entityKey: 'b1', op: 'create', fields: { footprintKey: 'f1', kind: 'video', html: '<p>Pinguine</p>', imageKeys: ['i1'], order: 'a' } }),
+      rec({ entity: 'section', entityKey: 'b1', op: 'create', fields: { footprintKey: 'f1', type: 'video', htmlContent: '<p>Pinguine</p>', p_clips: [{ label: 'i1' }], order: 'a' } }),
     ]);
-    expect(blocksOf(state, 'f1')[0]).toMatchObject({ kind: 'video', html: '<p>Pinguine</p>', imageKeys: ['i1'] });
+    expect(sectionsOf(state, 'f1')[0]).toMatchObject({ type: 'video', htmlContent: '<p>Pinguine</p>', properties: { clips: [{ label: 'i1' }] } });
   });
 
   it('imagesOf carries videoPath and durationSec', () => {

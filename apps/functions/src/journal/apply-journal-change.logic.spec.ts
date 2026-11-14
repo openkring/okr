@@ -32,10 +32,10 @@ describe('applyJournalChange logic', () => {
     expect(planEntityWrite(records, 'j1', 'footprint', 'f1', ['bkg'])).toEqual({ path: 'journals/j1/footprints/f1', data: { isArchived: true } });
   });
 
-  it('a second create of a block by another author keeps the first owner and the later html', () => {
+  it('a second create of a section by another author keeps the first owner and the later html', () => {
     const records = [
-      rec({ entity: 'section', entityKey: 's1', op: 'create', fields: { footprintKey: 'f1', kind: 'text', html: '<p>Bruno</p>', order: 'V' } }),
-      rec({ entity: 'section', entityKey: 's1', op: 'create', fields: { footprintKey: 'f1', kind: 'text', html: '<p>Barbara</p>', order: 'V' } }, 'dev-b', 'barbara'),
+      rec({ entity: 'section', entityKey: 's1', op: 'create', fields: { footprintKey: 'f1', type: 'article', htmlContent: '<p>Bruno</p>', order: 'V' } }),
+      rec({ entity: 'section', entityKey: 's1', op: 'create', fields: { footprintKey: 'f1', type: 'article', htmlContent: '<p>Barbara</p>', order: 'V' } }, 'dev-b', 'barbara'),
     ];
     const write = planEntityWrite(records, 'j1', 'section', 's1', ['bkg']);
     expect(write?.path).toBe('journals/j1/sections/s1');
@@ -43,11 +43,11 @@ describe('applyJournalChange logic', () => {
   });
 
   describe('conflict copies', () => {
-    const create = () => rec({ entity: 'section', entityKey: 's1', op: 'create', fields: { footprintKey: 'f1', kind: 'text', html: '<p>C</p>', order: 'V' }, bases: {} });
+    const create = () => rec({ entity: 'section', entityKey: 's1', op: 'create', fields: { footprintKey: 'f1', type: 'article', htmlContent: '<p>C</p>', order: 'V' }, bases: {} });
     const edit = (html: string, base: string, deviceId: string, authorKey: string, entityKey = 's1') =>
-      rec({ entity: 'section', entityKey, op: 'set', fields: { html }, bases: { html: base } }, deviceId, authorKey);
+      rec({ entity: 'section', entityKey, op: 'set', fields: { htmlContent: html }, bases: { htmlContent: base } }, deviceId, authorKey);
 
-    it('concurrent block edits produce a copy doc', () => {
+    it('concurrent section edits produce a copy doc', () => {
       const c = create();
       const anna = edit('<p>Anna</p>', c.change.hlc, 'dev-b', 'anna');
       const bruno = edit('<p>Bruno</p>', c.change.hlc, 'dev-a', 'bruno');
@@ -137,8 +137,14 @@ describe('applyJournalChange logic', () => {
       expect(planSectionWrites([anna], 'j1', 's1', ['bkg'], []).writes).toEqual([]);
     });
 
-    it('a block without concurrent edits writes only itself', () => {
+    it('a section without concurrent edits writes only itself', () => {
       expect(planSectionWrites([create()], 'j1', 's1', ['bkg'], []).writes.map((w) => w.path)).toEqual(['journals/j1/sections/s1']);
+    });
+
+    it('an old block record without a type writes nothing (spec 1.154 decision 4)', () => {
+      const block = rec({ entity: 'section', entityKey: 's1', op: 'create', fields: { footprintKey: 'f1', kind: 'text', html: '<p>alt</p>', order: 'V' }, bases: {} });
+      const later = rec({ entity: 'section', entityKey: 's1', op: 'set', fields: { html: '<p>neu</p>' }, bases: { html: block.change.hlc } });
+      expect(planSectionWrites([block, later], 'j1', 's1', ['bkg'], [])).toEqual({ writes: [] });
     });
   });
 
@@ -158,7 +164,7 @@ describe('applyJournalChange logic', () => {
   });
 
   it('a key with a path separator is never written', () => {
-    const create = rec({ entity: 'section', entityKey: 'x/../y', op: 'create', fields: { footprintKey: 'f1', kind: 'text' } });
+    const create = rec({ entity: 'section', entityKey: 'x/../y', op: 'create', fields: { footprintKey: 'f1', type: 'article' } });
     expect(planEntityWrite([create], 'j1', 'section', 'x/../y', ['bkg'])).toBeUndefined();
     expect(planEntityWrite([create], 'j1/other', 'section', 's1', ['bkg'])).toBeUndefined();
   });

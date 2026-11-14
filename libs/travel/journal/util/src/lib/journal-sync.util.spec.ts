@@ -11,7 +11,7 @@ const image = (key: string): ImageView => ({
 });
 const footprint = (key: string, publishState: 'draft' | 'published', imageKeys: string[]): FootprintView => ({
   key, journalKey: 'j1', title: '', placeName: '', date: '', time: '', publishState, hlcs: {}, lostValues: [],
-  blocks: [{ key: `b-${key}`, kind: 'photos', authorKey: 'bruno', order: 'V', imageKeys, hlcs: {}, conflict: false }],
+  sections: [{ key: `b-${key}`, type: 'album', title: '', htmlContent: '', properties: { images: imageKeys.map((label) => ({ label })) }, authorKey: 'bruno', order: 'V', hlcs: {}, conflict: false }],
 });
 
 describe('journal sync util', () => {

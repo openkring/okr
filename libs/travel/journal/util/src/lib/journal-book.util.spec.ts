@@ -40,16 +40,21 @@ const journal = (fields: Record<string, unknown> = {}) => rec('journal', 'j1', {
 const fp = (key: string, date: string, fields: Record<string, unknown> = {}) =>
   rec('footprint', key, { journalKey: 'j1', title: `Ort ${key}`, placeName: '', date, time: '10:00', publishState: 'published', ...fields });
 const text = (key: string, footprintKey: string, order: string, html: string, author = 'bruno') =>
-  rec('section', key, { footprintKey, kind: 'text', html, order }, author);
+  rec('section', key, { footprintKey, type: 'article', htmlContent: html, order }, author);
+const labels = (keys: string[]) => keys.map((label) => ({ label }));
 const photos = (key: string, footprintKey: string, order: string, imageKeys: string[]) =>
-  rec('section', key, { footprintKey, kind: 'photos', imageKeys, order });
+  rec('section', key, { footprintKey, type: 'album', p_images: labels(imageKeys), order });
+const article = (key: string, footprintKey: string, order: string, html: string, imageKeys: string[]) =>
+  rec('section', key, { footprintKey, type: 'article', htmlContent: html, p_images: labels(imageKeys), order });
+const hero = (key: string, footprintKey: string, order: string, cover: string) =>
+  rec('section', key, { footprintKey, type: 'hero', p_hero: { label: cover }, order });
 const img = (key: string, width = 4000, height = 3000) =>
   rec('image', key, { journalKey: 'j1', width, height, path2048: `${key}.jpg`, path400: `${key}-400.jpg`, localIdentifier: key });
 
 const clip = (key: string) =>
   rec('image', key, { journalKey: 'j1', width: 1920, height: 1080, path2048: `${key}.jpg`, path400: `${key}-400.jpg`, videoPath: `${key}.mp4`, durationSec: 5, localIdentifier: key });
 const video = (key: string, footprintKey: string, order: string, imageKeys: string[], html = '') =>
-  rec('section', key, { footprintKey, kind: 'video', imageKeys, html, order });
+  rec('section', key, { footprintKey, type: 'video', p_clips: labels(imageKeys), htmlContent: html, order });
 
 const LABELS: BookLabels = {
   day: 'Tag', stretch: 'Etappe', cumulative: 'Gesamt', km: 'km', photo: 'Foto', photos: 'Fotos', weather: 'Wetter',
@@ -104,17 +109,30 @@ describe('layoutBook', () => {
     expect(texts(own[4], 'body')).toContain('zwei');
   });
 
+  it('an article is its text followed by its photos; the journal hero section is skipped', () => {
+    const { pages } = layoutBook(input([
+      journal(), fp('f1', '20270102'), img('c'), img('i1'), img('i2'),
+      hero('h1', 'f1', 'a', 'c'), text('t0', 'f1', 'b', '<p>vorher</p><!--page--><p>mehr</p>'), article('a1', 'f1', 'c', '<p>Artikel</p>', ['i1', 'i2']),
+    ]));
+    const own = ofFootprint(pages, 'f1');
+    expect(own.map((p) => p.role)).toEqual(['opening', 'hero', 'text', 'photos']);
+    expect(own[1].frames.map((f) => (f.kind === 'photo' ? f.imageKey : ''))).toEqual(['i1']); // the hero page is the article's first photo, not the hero section's cover
+    expect(texts(own[2], 'body')).toContain('Artikel');
+    expect(own[3].blockKey).toBe('a1');
+    expect(photoKeys(own)).not.toContain('c');
+  });
+
   it('conflict copies do not reach the book', () => {
     const t1 = text('t1', 'f1', 'a', '<p>Original</p>');
     const p1 = photos('p1', 'f1', 'b', ['i1']);
     const set = (r: JournalChange, base: string): JournalChange => ({ ...r, op: 'set', bases: { [Object.keys(r.fields)[0]]: base } });
     const changes = [
       journal(), fp('f1', '20270102'), img('i1'), img('i2'), img('i3'), t1, p1,
-      set(rec('section', 't1', { html: '<p>Anna</p>' }, 'anna'), t1.hlc), set(rec('section', 't1', { html: '<p>Bruno</p>' }), t1.hlc),
-      set(rec('section', 'p1', { imageKeys: ['i2'] }, 'anna'), p1.hlc), set(rec('section', 'p1', { imageKeys: ['i3'] }), p1.hlc),
+      set(rec('section', 't1', { htmlContent: '<p>Anna</p>' }, 'anna'), t1.hlc), set(rec('section', 't1', { htmlContent: '<p>Bruno</p>' }), t1.hlc),
+      set(rec('section', 'p1', { p_images: labels(['i2']) }, 'anna'), p1.hlc), set(rec('section', 'p1', { p_images: labels(['i3']) }), p1.hlc),
     ];
     const book = input(changes);
-    expect(footprintsOf(book.state, 'j1')[0].blocks.filter((b) => b.conflictOf)).toHaveLength(2); // the authors see both copies
+    expect(footprintsOf(book.state, 'j1')[0].sections.filter((b) => b.conflictOf)).toHaveLength(2); // the authors see both copies
     const { pages } = layoutBook(book);
     const all = pages.map((p) => texts(p)).join('\n');
     expect(all).toContain('Bruno</p>');
@@ -374,7 +392,7 @@ describe('layoutBook', () => {
   });
 });
 
-describe('video blocks', () => {
+describe('video sections', () => {
   const photoFrames = (pages: BookPage[]) => pages.flatMap((p) => p.frames).flatMap((f) => (f.kind === 'photo' ? [f] : []));
 
   it('lays out the posters as photo frames with video: true, the caption as a text frame before them', () => {

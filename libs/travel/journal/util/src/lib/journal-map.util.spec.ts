@@ -5,7 +5,7 @@ import { journalMapData, routeLengthKm } from './journal-map.util';
 function footprint(key: string, lat?: number, lng?: number, imageKeys: string[] = []): FootprintView {
   return {
     key, journalKey: 'j1', title: key, placeName: '', date: '', time: '', latitude: lat, longitude: lng, publishState: 'draft', hlcs: {}, lostValues: [],
-    blocks: imageKeys.length ? [{ key: `b-${key}`, kind: 'photos', authorKey: 'bruno', order: 'V', imageKeys, hlcs: {}, conflict: false }] : [],
+    sections: imageKeys.length ? [{ key: `b-${key}`, type: 'album', title: '', htmlContent: '', properties: { images: imageKeys.map((label) => ({ label })) }, authorKey: 'bruno', order: 'V', hlcs: {}, conflict: false }] : [],
   };
 }
 function image(key: string, takenAt: string, lat?: number, lng?: number): ImageView {

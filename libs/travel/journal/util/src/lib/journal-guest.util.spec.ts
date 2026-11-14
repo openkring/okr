@@ -58,12 +58,12 @@ describe('journal guests', () => {
     const base = [
       rec({ entity: 'footprint', entityKey: 'f1', op: 'create', fields: { journalKey: 'j1', title: 'Neko', date: '20270114', publishState: 'published' } }),
       rec({ entity: 'footprint', entityKey: 'f2', op: 'create', fields: { journalKey: 'j1', title: 'Entwurf', date: '20270115', publishState: 'draft' } }),
-      rec({ entity: 'section', entityKey: 's1', op: 'create', fields: { footprintKey: 'f1', kind: 'photos', imageKeys: ['i1'], order: 'V' } }),
-      rec({ entity: 'section', entityKey: 's2', op: 'create', fields: { footprintKey: 'f2', kind: 'text', html: '<p>x</p>', order: 'V' } }),
+      rec({ entity: 'section', entityKey: 's1', op: 'create', fields: { footprintKey: 'f1', type: 'album', p_images: [{ label: 'i1' }], order: 'V' } }),
+      rec({ entity: 'section', entityKey: 's2', op: 'create', fields: { footprintKey: 'f2', type: 'article', htmlContent: '<p>x</p>', order: 'V' } }),
     ];
     const fresh = [
       rec({ entity: 'image', entityKey: 'i1', op: 'create', fields: { journalKey: 'j1' } }),
-      rec({ entity: 'section', entityKey: 's2', op: 'set', fields: { html: '<p>y</p>' } }),
+      rec({ entity: 'section', entityKey: 's2', op: 'set', fields: { htmlContent: '<p>y</p>' } }),
       rec({ entity: 'comment', entityKey: 'c1', op: 'create', fields: { footprintKey: 'f1', text: 'schön' } }, 'anna', 'guest-anna'),
       rec({ entity: 'comment', entityKey: 'c2', op: 'create', fields: { footprintKey: 'f1', text: 'wow' } }, 'eva', 'guest-eva'),
       rec({ entity: 'reaction', entityKey: likeKey('f1', 'eva'), op: 'create', fields: { footprintKey: 'f1', type: 'like' } }, 'eva', 'guest-eva'),
@@ -73,21 +73,27 @@ describe('journal guests', () => {
     expect(digestOf([fresh[4]], state, 'j1')).toEqual([]); // a like alone is no news
   });
 
+  it('an old block record (no type) is no news for the digest', () => {
+    const fp = rec({ entity: 'footprint', entityKey: 'f1', op: 'create', fields: { journalKey: 'j1', title: 'Neko', date: '20270114', publishState: 'published' } });
+    const block = rec({ entity: 'section', entityKey: 'b1', op: 'create', fields: { footprintKey: 'f1', kind: 'text', html: '<p>alt</p>', order: 'V' } });
+    expect(digestOf([block], materialize([fp, block]), 'j1')).toEqual([]);
+  });
+
   it('guest view hides conflict copies and reminders', () => {
     const fp = rec({ entity: 'footprint', entityKey: 'f1', op: 'create', fields: { journalKey: 'j1', title: 'Neko', date: '20270114', publishState: 'published' }, bases: {} });
     const draft = rec({ entity: 'footprint', entityKey: 'f2', op: 'create', fields: { journalKey: 'j1', title: 'Entwurf', date: '20270115' }, bases: {} });
-    const c = rec({ entity: 'section', entityKey: 's1', op: 'create', fields: { footprintKey: 'f1', kind: 'photos', imageKeys: ['i1'], order: 'V' }, bases: {} });
-    const anna = rec({ entity: 'section', entityKey: 's1', op: 'set', fields: { imageKeys: ['i2'] }, bases: { imageKeys: c.hlc } }, 'anna', 'dev-b');
-    const bruno = rec({ entity: 'section', entityKey: 's1', op: 'set', fields: { imageKeys: ['i3'] }, bases: { imageKeys: c.hlc } });
+    const c = rec({ entity: 'section', entityKey: 's1', op: 'create', fields: { footprintKey: 'f1', type: 'album', p_images: [{ label: 'i1' }], order: 'V' }, bases: {} });
+    const anna = rec({ entity: 'section', entityKey: 's1', op: 'set', fields: { p_images: [{ label: 'i2' }] }, bases: { p_images: c.hlc } }, 'anna', 'dev-b');
+    const bruno = rec({ entity: 'section', entityKey: 's1', op: 'set', fields: { p_images: [{ label: 'i3' }] }, bases: { p_images: c.hlc } });
     const titleA = rec({ entity: 'footprint', entityKey: 'f1', op: 'set', fields: { title: 'Neko Harbour' }, bases: { title: fp.hlc } }, 'anna', 'dev-b');
     const titleB = rec({ entity: 'footprint', entityKey: 'f1', op: 'set', fields: { title: 'Neko Bay' }, bases: { title: fp.hlc } });
     const state = materialize([fp, draft, c, anna, bruno, titleA, titleB]);
-    expect(footprintsOf(state, 'j1')[0].blocks).toHaveLength(2); // the authors see the copy and the reminder
+    expect(footprintsOf(state, 'j1')[0].sections).toHaveLength(2); // the authors see the copy and the reminder
     expect(footprintsOf(state, 'j1')[0].lostValues).toHaveLength(1);
 
     const guest = publishedFootprintsOf(state, 'j1');
     expect(guest.map((f) => f.key)).toEqual(['f1']);
-    expect(guest[0].blocks.map((b) => [b.key, b.imageKeys, b.conflict])).toEqual([['s1', ['i3'], false]]);
+    expect(guest[0].sections.map((b) => [b.key, b.properties['images'], b.conflict])).toEqual([['s1', [{ label: 'i3' }], false]]);
     expect(guest[0].lostValues).toEqual([]);
 
     const imageOfCopy = rec({ entity: 'image', entityKey: 'i2', op: 'create', fields: { journalKey: 'j1' } });
