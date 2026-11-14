@@ -89,6 +89,7 @@ export * from './lib/video';
 export * from './lib/video-card';
 export * from './lib/video-view.modal';
 export * from './lib/image-grid';
+export * from './lib/image-badge';
 export * from './lib/viewdate-input';
 export * from './lib/year-select';
 export * from './lib/quarter-select';

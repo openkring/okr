@@ -1,4 +1,4 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 
 import { ImageConfig, ImageStyle } from '@okr/shared-models';
 import { ImageLayoutId, imageLayoutTiles } from '@okr/cms-section-util';
@@ -52,7 +52,7 @@ import { Img } from '@okr/shared-ui';
       <div class="grid" [class.filmstrip]="layout() === 'filmstrip'">
         @for (tile of tiles(); track tile.index) {
           <div class="tile" [style.grid-column]="tile.column + ' / span ' + tile.colSpan" [style.grid-row]="tile.row + ' / span ' + tile.rowSpan">
-            <okr-img [image]="images()[tile.index]" [imageStyle]="tileStyle()" [editMode]="editMode()" [gallery]="images()" [captionFallbacks]="captionFallbacks()" [zoomTitle]="zoomTitle()" />
+            <okr-img [image]="images()[tile.index]" [imageStyle]="tileStyle()" [editMode]="editMode()" [gallery]="images()" [captionFallbacks]="captionFallbacks()" [zoomTitle]="zoomTitle()" [badge]="imageBadges()[images()[tile.index].label]" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
           </div>
         }
       </div>
@@ -68,6 +68,11 @@ export class ArticleImages {
   public editMode = input<boolean>(false);
   public captionFallbacks = input<string[]>([]);
   public zoomTitle = input<string>('Zoom');
+  /** small text per image, keyed by ImageConfig.label */
+  public imageBadges = input<Record<string, string>>({});
+  /** hand a tap on an image to the host (imageSelected) instead of running the image style's action */
+  public emitImageClicks = input(false);
+  public imageSelected = output<ImageConfig>();
 
   protected tiles = computed(() => imageLayoutTiles(this.layout(), this.images().length).tiles);
 

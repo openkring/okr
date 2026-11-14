@@ -1,5 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { CUSTOM_ELEMENTS_SCHEMA, Component, DestroyRef, ElementRef, afterRenderEffect, computed, effect, inject, input, viewChild } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, Component, DestroyRef, ElementRef, afterRenderEffect, computed, effect, inject, input, output, viewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonRow } from '@ionic/angular';
 
@@ -101,7 +101,7 @@ import { openSectionLink } from './section-link';
           <div class="carousel" #carousel (scroll)="onCarouselScroll()">
             @for(slide of loopSlides(); track $index) {
               <div class="carousel-slide" [class.clone]="slide.clone" [attr.aria-hidden]="slide.clone ? 'true' : null">
-                <okr-img [captionFallbacks]="captionFallbacks()" [image]="slide.image" [imageStyle]="carouselImageStyle()" [editMode]="editMode()" [gallery]="images()" [zoomTitle]="store.i18n.article_zoomed()" />
+                <okr-img [captionFallbacks]="captionFallbacks()" [image]="slide.image" [imageStyle]="carouselImageStyle()" [editMode]="editMode()" [gallery]="images()" [zoomTitle]="store.i18n.article_zoomed()" [badge]="imageBadges()[slide.image.label]" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
               </div>
             }
           </div>
@@ -124,7 +124,7 @@ import { openSectionLink } from './section-link';
                   <ion-row>
                     @if(image(); as image) {
                       <ion-col size="12" [sizeMd]="colSizeImage()">
-                        <okr-img [captionFallbacks]="captionFallbacks()" [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" [zoomTitle]="store.i18n.article_zoomed()" />
+                        <okr-img [captionFallbacks]="captionFallbacks()" [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" [zoomTitle]="store.i18n.article_zoomed()" [badge]="imageBadges()[image.label]" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
                       </ion-col>
                     }
                     <ion-col size="12" [sizeMd]="colSizeText()">
@@ -145,7 +145,7 @@ import { openSectionLink } from './section-link';
                     </ion-col>
                     @if(image(); as image) {
                       <ion-col size="12" [sizeMd]="colSizeImage()">
-                        <okr-img [captionFallbacks]="captionFallbacks()" [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" />
+                        <okr-img [captionFallbacks]="captionFallbacks()" [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" [badge]="imageBadges()[image.label]" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
                       </ion-col>
                     }
                   </ion-row>
@@ -156,7 +156,7 @@ import { openSectionLink } from './section-link';
                   @if(imageGridLayout(); as layout) {
                     <ion-row>
                       <ion-col size="12">
-                        <okr-article-images [images]="images()" [imageStyle]="imageStyle()" [layout]="layout" [editMode]="editMode()" [captionFallbacks]="captionFallbacks()" [zoomTitle]="store.i18n.article_zoomed()" />
+                        <okr-article-images [images]="images()" [imageStyle]="imageStyle()" [layout]="layout" [editMode]="editMode()" [captionFallbacks]="captionFallbacks()" [zoomTitle]="store.i18n.article_zoomed()" [imageBadges]="imageBadges()" [emitImageClicks]="emitImageClicks()" (imageSelected)="imageSelected.emit($event)" />
                       </ion-col>
                     </ion-row>
                   } @else if(images().length > 1) {
@@ -168,7 +168,7 @@ import { openSectionLink } from './section-link';
                   } @else if(image(); as image) {
                     <ion-row>
                       <ion-col size="12">
-                        <okr-img [captionFallbacks]="captionFallbacks()" [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" />
+                        <okr-img [captionFallbacks]="captionFallbacks()" [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" [badge]="imageBadges()[image.label]" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
                       </ion-col>
                     </ion-row>
                   }
@@ -201,7 +201,7 @@ import { openSectionLink } from './section-link';
                   @if(imageGridLayout(); as layout) {
                     <ion-row>
                       <ion-col size="12">
-                        <okr-article-images [images]="images()" [imageStyle]="imageStyle()" [layout]="layout" [editMode]="editMode()" [captionFallbacks]="captionFallbacks()" [zoomTitle]="store.i18n.article_zoomed()" />
+                        <okr-article-images [images]="images()" [imageStyle]="imageStyle()" [layout]="layout" [editMode]="editMode()" [captionFallbacks]="captionFallbacks()" [zoomTitle]="store.i18n.article_zoomed()" [imageBadges]="imageBadges()" [emitImageClicks]="emitImageClicks()" (imageSelected)="imageSelected.emit($event)" />
                       </ion-col>
                     </ion-row>
                   } @else if(images().length > 1) {
@@ -213,7 +213,7 @@ import { openSectionLink } from './section-link';
                   } @else if(image(); as image) {
                     <ion-row>
                       <ion-col size="12">
-                        <okr-img [captionFallbacks]="captionFallbacks()" [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" />
+                        <okr-img [captionFallbacks]="captionFallbacks()" [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" [badge]="imageBadges()[image.label]" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
                       </ion-col>
                     </ion-row>
                   }
@@ -245,6 +245,11 @@ export class ArticleSectionComponent {
   // inputs
   public section = input<ArticleSection>();
   public editMode = input<boolean>(false);
+  /** small text per image, keyed by ImageConfig.label (travel journal: «❤ 2 · 💬 1») */
+  public imageBadges = input<Record<string, string>>({});
+  /** hand a tap on an image to the host (imageSelected) instead of running the image style's action */
+  public emitImageClicks = input(false);
+  public imageSelected = output<ImageConfig>();
 
   // computed
   protected images = computed((): ImageConfig[] => this.store.images());

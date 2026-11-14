@@ -6,6 +6,7 @@ import { BackgroundStyle, ImageConfig, ImageStyle, ImageType } from '@okr/shared
 import { JpgUrlPipe, PdfUrlPipe, SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
 import { collageTiles, getBackgroundStyle, getPosterStyle, isDirectImageUrl } from '@okr/shared-util-core';
 
+import { ImageBadge } from './image-badge';
 import { Video } from './video';
 
 /**
@@ -18,7 +19,7 @@ import { Video } from './video';
   selector: 'okr-image-grid',
   standalone: true,
   imports: [
-    NgStyle, JpgUrlPipe, PdfUrlPipe, ThumbnailUrlPipe, SvgIconPipe, Video,
+    NgStyle, JpgUrlPipe, PdfUrlPipe, ThumbnailUrlPipe, SvgIconPipe, Video, ImageBadge,
     IonGrid, IonRow, IonCol, IonList, IonItem, IonLabel, IonThumbnail, IonIcon
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
@@ -41,6 +42,8 @@ import { Video } from './video';
     }
     /* collage (spec 1.113 §9.3): one large + two small on a 3-column grid, see collageTiles */
     .collage-album { display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 160px; gap: 4px; }
+    .collage-tile { position: relative; min-width: 0; min-height: 0; }
+    .pinterest-image, .video-tile, .image-container { position: relative; }
     .collage-album img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; cursor: pointer; display: block; }
   `],
   template: `
@@ -49,13 +52,14 @@ import { Video } from './video';
         <div class="collage-album">
           @for (tile of collage(); track tile.index) {
             @if (images()[tile.index]; as image) {
-              <img
-                [src]="isDirectImageUrl(image.url) ? image.url : (image.url | jpgUrl)"
-                [alt]="image.altText ?? ''"
-                [style.grid-column]="'span ' + tile.colSpan"
-                [style.grid-row]="'span ' + tile.rowSpan"
-                (click)="imageClicked.emit(image)"
-              />
+              <div class="collage-tile" [style.grid-column]="'span ' + tile.colSpan" [style.grid-row]="'span ' + tile.rowSpan">
+                <img
+                  [src]="isDirectImageUrl(image.url) ? image.url : (image.url | jpgUrl)"
+                  [alt]="image.altText ?? ''"
+                  (click)="imageClicked.emit(image)"
+                />
+                @if (badgeOf(image); as badge) { <okr-image-badge [text]="badge" /> }
+              </div>
             }
           }
         </div>
@@ -85,6 +89,7 @@ import { Video } from './video';
                 @case(IT.Pdf) { <img [src]="image.url | pdfUrl" [alt]="image.altText" (click)="imageClicked.emit(image)" /> }
                 @default { <img [src]="image.url | jpgUrl" [alt]="image.altText" (click)="imageClicked.emit(image)" /> }
               }
+              @if (badgeOf(image); as badge) { <okr-image-badge [text]="badge" /> }
             </div>
           }
         </div>
@@ -94,6 +99,7 @@ import { Video } from './video';
           @for(image of images(); track $index) {
             <ion-item button (click)="imageClicked.emit(image)">
               <ion-label>{{ image.label }}</ion-label>
+              @if (badgeOf(image); as badge) { <okr-image-badge slot="end" [inline]="true" [text]="badge" /> }
             </ion-item>
           }
         </ion-list>
@@ -111,6 +117,7 @@ import { Video } from './video';
                 }
               </ion-thumbnail>
               <ion-label>{{ image.label }}</ion-label>
+              @if (badgeOf(image); as badge) { <okr-image-badge slot="end" [inline]="true" [text]="badge" /> }
             </ion-item>
           }
         </ion-list>
@@ -139,7 +146,9 @@ import { Video } from './video';
                     }
                   }
                   @default {
-                    <div class="image-container" [ngStyle]="backgroundStyle(image)" (click)="imageClicked.emit(image)"></div>
+                    <div class="image-container" [ngStyle]="backgroundStyle(image)" (click)="imageClicked.emit(image)">
+                      @if (badgeOf(image); as badge) { <okr-image-badge [text]="badge" /> }
+                    </div>
                   }
                 }
               </ion-col>
@@ -160,6 +169,8 @@ export class ImageGrid {
   public pendingLabel = input('');
   /** Beschriftung für ein privates Video, das für die Person nicht verfügbar ist. */
   public unavailableLabel = input('');
+  /** optional small text per image, keyed by ImageConfig.label (travel journal: «❤ 2 · 💬 1») */
+  public imageBadges = input<Record<string, string>>({});
 
   // outputs
   public imageClicked = output<ImageConfig>();
@@ -172,6 +183,10 @@ export class ImageGrid {
   /** A private video's poster is a complete signed URL (spec 1.82) — never re-prefixed. */
   protected isSignedPoster(image: ImageConfig): boolean {
     return image.url.startsWith('https://');
+  }
+
+  protected badgeOf(image: ImageConfig): string | undefined {
+    return this.imageBadges()[image.label] || undefined;
   }
 
   protected posterStyle(image: ImageConfig): BackgroundStyle {

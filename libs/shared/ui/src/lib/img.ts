@@ -1,5 +1,5 @@
 import { IMAGE_LOADER, ImageLoaderConfig, NgOptimizedImage, NgStyle } from '@angular/common';
-import { Component, computed, ElementRef, inject, input, resource, viewChild } from '@angular/core';
+import { Component, computed, ElementRef, inject, input, output, resource, viewChild } from '@angular/core';
 import { IonThumbnail, ModalController, ToastController } from '@ionic/angular';
 import { Browser } from '@capacitor/browser';
 
@@ -8,6 +8,7 @@ import { ImageActionType, ImageConfig, ImageStyle } from '@okr/shared-models';
 import { appendImgixParams, buildImageCaption, getCaptionCss, getCaptionLuminanceUrl, getCaptionTone, getImageFrameCss, getImgixUrl, getSizedImgixParamsByExtension, getThumbnailUrl, isDirectImageUrl, toCssLength, toPixelNumber } from '@okr/shared-util-core';
 import { downloadToBrowser } from '@okr/shared-util-angular';
 
+import { ImageBadge } from './image-badge';
 import { findImageIndex, showImageSlider, showZoomedImage } from './ui.util';
 
 /**
@@ -63,7 +64,7 @@ See <a href="https://sandbox.imgix.com/view?url=https://assets.imgix.net/~text?f
   standalone: true,
   imports: [
     NgOptimizedImage, NgStyle,
-    IonThumbnail
+    IonThumbnail, ImageBadge
   ],
   providers: [
     {
@@ -193,6 +194,7 @@ See <a href="https://sandbox.imgix.com/view?url=https://assets.imgix.net/~text?f
                 <div class="image-caption overlay bottom" [class.light]="captionTone() === 'light'" [ngStyle]="captionStyles()"><span class="caption-text">{{ caption.text }}</span>@if(caption.source) {<span class="caption-source">{{ caption.source }}</span>}</div>
               }
             }
+            @if(badge(); as badge) { <okr-image-badge [text]="badge" /> }
           </div>
           @if(caption(); as caption) { @if(captionPosition() === 'bottom') {
             <div class="image-caption outside" [ngStyle]="captionStyles()"><span class="caption-text">{{ caption.text }}</span>@if(caption.source) {<span class="caption-source">{{ caption.source }}</span>}</div>
@@ -217,6 +219,12 @@ export class Img {
   public gallery = input<ImageConfig[]>([]);
   /** caption texts used when the image has neither an Untertitel nor a Quelle, in order (e.g. section subtitle, title) */
   public captionFallbacks = input<(string | undefined)[]>([]);
+
+  /** optional small text laid over the bottom-right corner of the image (travel journal: «❤ 2 · 💬 1») */
+  public badge = input<string | undefined>();
+  /** emit `clicked` instead of running the image style's action (not in edit mode) */
+  public emitClicks = input(false);
+  public clicked = output<ImageConfig>();
 
   protected imageContainer = viewChild('.image-container', { read: ElementRef });
 
@@ -354,6 +362,10 @@ export class Img {
 
   protected async onImageClicked(): Promise<void> {
     if (this.editMode()) return;
+    if (this.emitClicks()) {
+      this.clicked.emit(this.image());
+      return;
+    }
     switch(this.actionType()) {
       case ImageActionType.Zoom: {
         // not openImageGallery(): this caller overrides the caption with its own zoomTitle input
