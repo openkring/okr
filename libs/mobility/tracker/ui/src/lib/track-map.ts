@@ -7,6 +7,19 @@ import { fanOutOffsets, isTransitMode, TRACK_MODE_COLOR, type TrackPoint } from 
 export interface TrackMapSection { mode: TransportMode; points: TrackPoint[]; route?: { lat: number; lng: number }[] }
 /** A photo pin: `src` is a displayable URL (local file or data URL); without one a small camera dot is drawn. */
 export interface TrackMapPhoto { lat: number; lng: number; src?: string; hidden: boolean }
+/**
+ * A raster tile source for the base map; structurally the shared-ui `TileSource` (a journal base layer's sources can be
+ * passed as they are, without this lib depending on shared-ui). `kind: 'vector'` sources are not drawn here.
+ */
+export interface TrackMapTileSource {
+  urlTemplate: string;
+  maxNativeZoom: number;
+  attribution: string;
+  minZoom?: number;
+  minNativeZoom?: number;
+  kind?: 'raster' | 'vector';
+  bounds?: [west: number, south: number, east: number, north: number];
+}
 /** A point of the track: index into `sections` and into that section's points. */
 export interface TrackMapPoint { section: number; index: number }
 
@@ -52,7 +65,8 @@ type MapFit = { bounds: L.LatLngBounds } | { center: L.LatLngTuple };
  * going from 0 to a real size always re-fits once.
  * `detailBoost` draws the tiles of the next finer zoom level at half size: the same area, finer detail and smaller
  * labels (for the small diary card).
- * Photo pins at (nearly) the same place fan out on a small circle, recomputed per zoom level. With
+ * `tiles` replaces the swisstopo base map (the journal passes its selected base layer, offline areas included); absent
+ * = swisstopo as before. Photo pins at (nearly) the same place fan out on a small circle, recomputed per zoom level. With
  * `photosClickable` a pin is a button and emits `photoClicked` (index into `photos`); `wheelZoom` false leaves the
  * mouse wheel to the page that scrolls around the map (zoom stays on the buttons, double-click and pinch).
  * With `pickable` (spec 1.129 §5.1) a tap on the map emits `pointPicked`: the nearest track point within 40 px, or
@@ -102,6 +116,8 @@ export class TrackMap {
   public readonly highlight = input<{ lat: number; lng: number } | undefined>(undefined);
   /** a tap selects the nearest track point (`pointPicked`); read once at init */
   public readonly pickable = input(false);
+  /** raster base map sources (several are stacked); undefined or no raster source = swisstopo. Follows changes. */
+  public readonly tiles = input<TrackMapTileSource[] | undefined>(undefined);
 
   /** a tapped photo pin, as index into `photos` (only with `photosClickable`) */
   public readonly photoClicked = output<number>();
@@ -113,6 +129,7 @@ export class TrackMap {
   private map?: L.Map;
   private overlay?: L.LayerGroup;
   private photoLayer?: L.LayerGroup;
+  private tileLayers: L.TileLayer[] = [];
   private highlightMarker?: L.Marker;
   private resizeObserver?: ResizeObserver;
   private destroyed = false;
@@ -134,6 +151,10 @@ export class TrackMap {
       const sections = this.sections();
       const live = this.live();
       if (this.map) this.render(sections, live);
+    });
+    effect(() => {
+      const tiles = this.tiles();
+      if (this.map) this.renderTiles(tiles);
     });
     effect(() => {
       const photos = this.photos();
@@ -178,11 +199,7 @@ export class TrackMap {
     // the host may be gone (conditional block toggled) while Leaflet was loading
     if (this.destroyed || !container || !container.isConnected || this.map) return;
     this.map = this.leaflet.map(container, { zoomControl: true, attributionControl: true, scrollWheelZoom: this.wheelZoom() });
-    // boosted: map zoom z requests tiles of z + 1, so the native cap is one level lower
-    const tiles: L.TileLayerOptions = this.detailBoost()
-      ? { tileSize: 128, zoomOffset: 1, maxNativeZoom: SWISSTOPO_MAX_NATIVE_ZOOM - 1 }
-      : { maxNativeZoom: SWISSTOPO_MAX_NATIVE_ZOOM };
-    this.leaflet.tileLayer(TILE_URL, { ...tiles, maxZoom: MAX_ZOOM, opacity: TILE_OPACITY, attribution: '© swisstopo' }).addTo(this.map);
+    this.renderTiles(this.tiles());
     for (const type of USER_MOVE_EVENTS) container.addEventListener(type, this.onUserMove, USER_MOVE_OPTIONS);
     this.overlay = this.leaflet.layerGroup().addTo(this.map);
     this.photoLayer = this.leaflet.layerGroup().addTo(this.map); // above the track
@@ -196,6 +213,29 @@ export class TrackMap {
     this.renderHighlight(this.highlight());
     this.resizeObserver = new ResizeObserver(() => this.onResize(container));
     this.resizeObserver.observe(this.el.nativeElement);
+  }
+
+  /** The base map: the given raster sources, else swisstopo; replaces the layers already drawn. */
+  private renderTiles(sources: TrackMapTileSource[] | undefined): void {
+    const Lf = this.leaflet;
+    const map = this.map;
+    if (!Lf || !map || this.destroyed) return;
+    for (const layer of this.tileLayers) layer.remove();
+    const raster = (sources ?? []).filter((t) => t.kind !== 'vector');
+    if (raster.length > 0) {
+      this.tileLayers = raster.map((t) => Lf.tileLayer(t.urlTemplate, {
+        maxNativeZoom: t.maxNativeZoom, maxZoom: Math.max(MAX_ZOOM, t.maxNativeZoom), opacity: TILE_OPACITY, attribution: t.attribution,
+        ...(t.minZoom !== undefined ? { minZoom: t.minZoom } : {}),
+        ...(t.minNativeZoom !== undefined ? { minNativeZoom: t.minNativeZoom } : {}),
+        ...(t.bounds ? { bounds: Lf.latLngBounds([t.bounds[1], t.bounds[0]], [t.bounds[3], t.bounds[2]]) } : {}),
+      }).addTo(map));
+      return;
+    }
+    // boosted: map zoom z requests tiles of z + 1, so the native cap is one level lower
+    const options: L.TileLayerOptions = this.detailBoost()
+      ? { tileSize: 128, zoomOffset: 1, maxNativeZoom: SWISSTOPO_MAX_NATIVE_ZOOM - 1 }
+      : { maxNativeZoom: SWISSTOPO_MAX_NATIVE_ZOOM };
+    this.tileLayers = [Lf.tileLayer(TILE_URL, { ...options, maxZoom: MAX_ZOOM, opacity: TILE_OPACITY, attribution: '© swisstopo' }).addTo(map)];
   }
 
   private render(sections: TrackMapSection[], live: boolean): void {
@@ -355,6 +395,7 @@ export class TrackMap {
     this.map = undefined;
     this.overlay = undefined;
     this.photoLayer = undefined;
+    this.tileLayers = [];
     this.highlightMarker = undefined;
   }
 }

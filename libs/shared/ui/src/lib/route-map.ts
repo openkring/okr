@@ -22,6 +22,10 @@ import { googleMapsLogoUrl } from './google-maps-logo';
  * Google Maps logo (bottom left) and `googleAttribution` as the attribution prefix. Without `baseLayers`, `tiles` is
  * drawn as before. The OpenStreetMap sea is transparent (design §6), so satellite or background tiles show through.
  *
+ * `center` (with `zoom`, default 13) pins the view to one spot instead of fitting to route and pins (the journal's
+ * footprint map); route and pins still draw. The view is set again when `center` or `zoom` change and when the container
+ * is resized, not when the route or pins change, so the user's own pan survives data updates.
+ *
  * Overlays (spec 2.122, e.g. «Eisberge»): switchable marker layers on top of the base layer, offered as toggles in the
  * same ActionSheet. The map only reports a toggle (`overlayToggled`); the caller owns the `on` state and the markers.
  * Overlay markers never refit the map and carry their source's attribution while shown.
@@ -48,6 +52,7 @@ export interface RouteOverlay { id: string; label: string; on: boolean; markers:
 
 const FIT_PADDING: L.PointExpression = [40, 40];
 const SINGLE_POINT_ZOOM = 10;
+const DEFAULT_CENTER_ZOOM = 13;
 const PLACE_LABEL_ZOOM = 7; // below, the labels of a whole island group would overlap
 const MARKER_LABEL_ZOOM = 4; // overlay markers are sparse (icebergs around a continent): labels from the continent view on
 /** Raster and offline layers stop here (unchanged); Google layers follow their native levels up to GOOGLE_MAX_ZOOM. */
@@ -118,6 +123,10 @@ function escapeHtml(value: string): string {
 export class RouteMap {
   public readonly route = input<[number, number][]>([]);
   public readonly pins = input<RoutePin[]>([]);
+  /** [lat, lng] to centre on instead of fitting to the route and pins; undefined = fit (the default). */
+  public readonly center = input<[number, number] | undefined>(undefined);
+  /** The zoom used with `center` (default 13). */
+  public readonly zoom = input<number | undefined>(undefined);
   public readonly selectedKey = input<string | undefined>(undefined);
   /** One source or several stacked layers (e.g. an offline overview plus detail tiles from a higher zoom on). */
   public readonly tiles = input<TileSource | TileSource[] | undefined>(undefined);
@@ -189,6 +198,11 @@ export class RouteMap {
       if (this.map) this.render(state.route, state.pins, state.selected, state.tiles, state.places);
     });
     effect(() => {
+      const center = this.center();
+      const zoom = this.zoom();
+      if (this.map && center) this.map.setView(center, zoom ?? DEFAULT_CENTER_ZOOM, { animate: false });
+    });
+    effect(() => {
       const google = this.selectedBase()?.googleType !== undefined;
       const copyright = this.googleAttribution();
       if (this.map) this.updateAttribution(google, copyright);
@@ -225,6 +239,7 @@ export class RouteMap {
     this.updateAttribution(this.selectedBase()?.googleType !== undefined, this.googleAttribution());
     this.render(this.route(), this.pins(), this.selectedKey(), this.activeSources(), this.places());
     this.renderOverlays(this.overlays());
+    if (this.center()) this.fit();
     this.settleSnap(container);
     // the container may still be animating or change with the layout (A/B): keep Leaflet's size in sync
     // Ionic hides a page that stays in the stack (size 0) and shows it again on «back»: refit then,
@@ -341,7 +356,7 @@ export class RouteMap {
     if (pointsKey !== this.lastPointsKey) {
       this.lastPointsKey = pointsKey;
       this.lastPoints = points;
-      this.fit();
+      if (!this.center()) this.fit();
     }
   }
 
@@ -462,6 +477,11 @@ export class RouteMap {
   private fit(): void {
     const Lf = this.leaflet;
     if (!Lf || !this.map) return;
+    const center = this.center();
+    if (center) {
+      this.map.setView(center, this.zoom() ?? DEFAULT_CENTER_ZOOM, { animate: false });
+      return;
+    }
     const points = this.lastPoints;
     if (points.length > 1) this.map.fitBounds(Lf.latLngBounds(points), { padding: FIT_PADDING });
     else if (points.length === 1) this.map.setView(points[0], SINGLE_POINT_ZOOM);
