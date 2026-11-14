@@ -151,3 +151,23 @@ export function getUnrenderedFixedKeys(errors: SectionErrors | undefined, render
     .map((field) => field.slice(IMPLICIT_VALUES_PREFIX.length))
     .filter((key) => key !== '' && !renderedKeys.includes(key));
 }
+
+/**
+ * Field names the section form renders an inline `<okr-error-note>` for in journal mode (travel journal,
+ * spec 1.154): the title of section-configuration (not shown for a hero, whose title comes from the footprint)
+ * and the cards of `journalModeSectionFields`. Every other error falls back to the list at the end of the form,
+ * so a field the journal hides can never block saving without a message.
+ */
+export function getJournalInlineErrorFields(type: SectionType): string[] {
+  switch (type) {
+    case 'hero':
+      return ['overlay.darkening', 'overlay.label', 'overlay.color', 'overlay.position', 'overlay.fontSize', 'height', 'focus'];
+    case 'article':
+      // image-style without the advanced toggle shows width, height and fill
+      return ['title', IMAGES_PREFIX, 'width', 'height', 'fill'];
+    case 'album':
+      return ['title', IMAGES_PREFIX];
+    default:
+      return ['title'];
+  }
+}

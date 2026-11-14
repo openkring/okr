@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, Injector, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, effect, inject, Injector, input, linkedSignal, runInInjectionContext, signal, untracked } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { catchError, firstValueFrom, from, map, of, switchMap } from 'rxjs';
 import { IonContent, ModalController } from '@ionic/angular';
@@ -14,6 +14,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { FormDefinitionService } from '@okr/forms-data-access';
 import { ResponsibilityService } from '@okr/relationship-responsibility-data-access';
 import { FORM_I18N_KEYS, FormI18n } from '@okr/forms-util';
+import { SECTION_I18N_KEYS, SectionI18n } from '@okr/cms-section-util';
 
 import { SectionStore } from './section.store';
 import { AppStore } from '@okr/shared-feature';
@@ -24,6 +25,11 @@ import { AppStore } from '@okr/shared-feature';
  * `dirty` is derived from a deep comparison of initial vs current form data, while validity
  * comes from the per-type vest suite run inside SectionForm (emitted via its `valid` output).
  * The save action is only offered when the form is both dirty and valid.
+ *
+ * Journal mode (travel journal, spec 1.154 §2): the form shows only what the journal's change record carries and
+ * the modal reads nothing from Firestore — no SectionStore (it lists every section on construction), no
+ * locations, contracts, forms, courses or responsibilities. It still only dismisses with the form data; the
+ * journal turns that into change records. The journal provides SECTION_IMAGE_PICKER for its photos.
  */
 @Component({
     selector: 'okr-section-edit-modal',
@@ -38,11 +44,13 @@ import { AppStore } from '@okr/shared-feature';
       @if(formDirty() && formValid() && formData()) {
         <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
       }
-      <okr-error-banner [message]="store.errorMessage()" (dismiss)="store.clearError()" />
+      @if(store(); as store) {
+        <okr-error-banner [message]="store.errorMessage()" (dismiss)="store.clearError()" />
+      }
       <ion-content class="ion-no-padding">
         @if(formData(); as formData) {
           <okr-section-form
-            [i18n]="store.i18n"
+            [i18n]="i18n()"
             [formData]="formData"
             (formDataChange)="onFormDataChange($event)"
             [currentUser]="currentUser()"
@@ -60,8 +68,9 @@ import { AppStore } from '@okr/shared-feature';
             [formI18n]="formI18n"
             [allTags]="allTags()"
             [tenantId]="tenantId()"
-            [linkOrigins]="store.appStore.appLinkOrigins()"
+            [linkOrigins]="appStore.appLinkOrigins()"
             [readOnly]="isReadOnly()"
+            [journalMode]="journalMode()"
             (valid)="formValid.set($event)"
           />
         }
@@ -70,7 +79,9 @@ import { AppStore } from '@okr/shared-feature';
 })
 export class SectionEditModal {
   private readonly modalController = inject(ModalController);
-  protected readonly store = inject(SectionStore);
+  private readonly injector = inject(Injector);
+  private readonly i18nService = inject(I18nService);
+  protected readonly appStore = inject(AppStore);
 
   // inputs
   public section = input.required<SectionModel>();
@@ -78,21 +89,35 @@ export class SectionEditModal {
   public tags = input<string>('');
   /** When set, the tag vocabulary is read live, so a value added via «Werte bearbeiten» validates at once. */
   public tagModel = input<string>('');
-  private readonly appStore = inject(AppStore);
+  /** travel journal: only the change-record fields, no Firestore read (see the class comment) */
+  public journalMode = input(false);
   protected readonly allTags = computed(() => this.tagModel() ? this.appStore.getTags(this.tagModel()) : this.tags());
   public roles = input.required<CategoryListModel>();
   public states = input.required<CategoryListModel>();
   public readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
-  protected albumStyles = computed(() => this.store.appStore.getCategory('album_style'));
+  protected albumStyles = computed(() => this.appStore.getCategory('album_style'));
 
   /**
-   * Locations offered by the weather configuration. Subscribed unconditionally rather than
-   * only for weather sections: `FirestoreService` shares the query, so a second subscriber
-   * costs nothing, and gating it on the section type would need the type before the form
-   * exists.
+   * The CMS store, created on first use and never in journal mode: its sectionsResource lists every section of
+   * the tenant as soon as it exists (ruling P3). Created outside the reading reactive context (untracked), as a
+   * signal store must not be built inside a computed.
    */
-  private locations = toSignal(inject(LocationService).list(), { initialValue: [] as LocationModel[] });
+  protected readonly store = computed(() => this.journalMode() ? undefined : untracked(() => this.injector.get(SectionStore)));
+  private journalI18n: SectionI18n | undefined;
+  /** the section texts: the store's in the CMS, resolved here (same keys) in journal mode */
+  protected readonly i18n = computed<SectionI18n>(() => this.store()?.i18n ?? this.getJournalI18n());
+
+  /**
+   * Locations offered by the weather configuration. Subscribed for every CMS section rather
+   * than only for weather sections: `FirestoreService` shares the query, so a second subscriber
+   * costs nothing, and gating it on the section type would need the type before the form
+   * exists. Never in journal mode, which reads nothing from Firestore.
+   */
+  private readonly locationService = inject(LocationService);
+  private locations = toSignal(toObservable(this.journalMode).pipe(
+    switchMap((journal) => (journal ? of([] as LocationModel[]) : this.locationService.list())),
+  ), { initialValue: [] as LocationModel[] });
   protected weatherLocations = computed(() =>
     this.locations().map((l) => ({ okey: l.okey, name: l.name })));
   /** Municipalities offered by the energy configuration: `city` locations only (spec 2026-11-04 §6.2). */
@@ -105,7 +130,7 @@ export class SectionEditModal {
    * left out because they can never share a file.
    */
   private readonly canListContracts = computed(() =>
-    this.section().type === 'button' && (hasRole('admin', this.currentUser()) || hasRole('treasurer', this.currentUser())));
+    !this.journalMode() && this.section().type === 'button' && (hasRole('admin', this.currentUser()) || hasRole('treasurer', this.currentUser())));
   private readonly contractService = inject(ContractService);
   protected contracts = toSignal(toObservable(this.canListContracts).pipe(
     switchMap((ok) => (ok ? this.contractService.listStaff(false) : of([]))),
@@ -118,9 +143,7 @@ export class SectionEditModal {
    * The course data-access is imported lazily: it drags the finance booking service and has no business in this chunk's
    * static graph (same reasoning as the calevent store, spec 1.132).
    */
-  private readonly isFormSection = computed(() => this.section().type === 'form');
-  private readonly injector = inject(Injector);
-  private readonly i18nService = inject(I18nService);
+  private readonly isFormSection = computed(() => !this.journalMode() && this.section().type === 'form');
   private readonly formDefinitionService = inject(FormDefinitionService);
   private readonly courseService = lazyService(this.injector, () =>
     import('@okr/calendar-course-data-access').then(m => m.CourseService));
@@ -189,9 +212,13 @@ export class SectionEditModal {
   protected showForm = signal(true);
 
   // derived signals
-  protected headerTitle = computed(() => this.store.getTitleLabel(this.isReadOnly(), this.section().okey));
-  protected tenantId = computed(() => this.store.tenantId());
-  protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
+  protected headerTitle = computed(() => {
+    const i18n = this.i18n();
+    if (this.isReadOnly()) return i18n.view();
+    return this.section().okey ? i18n.edit() : i18n.create();
+  });
+  protected tenantId = computed(() => this.appStore.tenantId());
+  protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.i18n().cancel(), save: this.i18n().save()} as ChangeConfirmationI18n));
 
   constructor() {
     effect(() => {
@@ -207,6 +234,12 @@ export class SectionEditModal {
         this.formDirty.set(false);
       }
     });
+  }
+
+  /** translateAll needs an injection context and must not run inside the computed that asks for it */
+  private getJournalI18n(): SectionI18n {
+    this.journalI18n ??= untracked(() => runInInjectionContext(this.injector, () => this.i18nService.translateAll(SECTION_I18N_KEYS)));
+    return this.journalI18n;
   }
 
   /******************************* actions *************************************** */

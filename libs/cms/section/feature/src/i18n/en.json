@@ -1950,5 +1950,11 @@
       "primary": "Prominent",
       "secondary": "Subtle"
     }
+  },
+  "journal": {
+    "photos": "Photos",
+    "cover": "Cover photo",
+    "clips": "Videos",
+    "empty": "Nothing chosen yet."
   }
 }

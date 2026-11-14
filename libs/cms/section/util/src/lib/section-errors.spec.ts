@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getFieldErrors, getImageErrors, getInlineErrorFields, getRemainingErrors, getUnrenderedFixedKeys, isInlineErrorField } from './section-errors';
+import { getFieldErrors, getImageErrors, getInlineErrorFields, getJournalInlineErrorFields, getRemainingErrors, getUnrenderedFixedKeys, isInlineErrorField } from './section-errors';
 
 describe('getInlineErrorFields', () => {
   it('always offers the base fields of section-configuration', () => {
@@ -117,5 +117,24 @@ describe('tiles and call-to-action error fields (1.151)', () => {
   it('does not hide a tiles-like key of another section type', () => {
     const errors = { 'tiles.columns': ['invalidValue'] };
     expect(getRemainingErrors(errors, getInlineErrorFields('article'))).toHaveLength(1);
+  });
+});
+
+describe('getJournalInlineErrorFields (journal mode, 1.154)', () => {
+  it('falls back for every field the journal form hides, so a hidden invalid field never blocks saving silently', () => {
+    const errors = { subTitle: ['tooLong'], 'cta.label': ['required'], folder: ['notString'], url: ['notString'] };
+    for (const type of ['hero', 'article', 'album', 'video'] as const) {
+      expect(getRemainingErrors(errors, getJournalInlineErrorFields(type))).toHaveLength(4);
+    }
+  });
+
+  it('shows the title, the photos and the visible image style of an article inline', () => {
+    const errors = { title: ['tooLong'], 'images[0].url': ['required'], width: ['notString'] };
+    expect(getRemainingErrors(errors, getJournalInlineErrorFields('article'))).toEqual([]);
+  });
+
+  it('shows the overlay and layout of a hero inline, but not its hidden title or buttons', () => {
+    const errors = { 'overlay.darkening': ['invalidValue'], height: ['invalidValue'], focus: ['invalidValue'], title: ['tooLong'], 'ctas[0].label': ['required'] };
+    expect(getRemainingErrors(errors, getJournalInlineErrorFields('hero')).map((e) => e.field)).toEqual(['title', 'ctas[0].label']);
   });
 });

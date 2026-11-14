@@ -1950,5 +1950,11 @@
       "primary": "Mis en avant",
       "secondary": "Discret"
     }
+  },
+  "journal": {
+    "photos": "Photos",
+    "cover": "Photo de couverture",
+    "clips": "Vidéos",
+    "empty": "Rien de choisi pour le moment."
   }
 }

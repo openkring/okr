@@ -858,8 +858,13 @@ export const SECTION_I18N_KEYS = {
   emphasis_banner:                          PFX + 'emphasis.banner',
   emphasis_helper:                          PFX + 'emphasis.helper',
 
+  // journal mode of the section form (spec 1.154): the photo and clip lists
+  journal_photos:                             PFX + 'journal.photos',
+  journal_cover:                              PFX + 'journal.cover',
+  journal_clips:                              PFX + 'journal.clips',
+  journal_empty:                              PFX + 'journal.empty',
   // hero overlay, height and focus (spec 1.154)
-  hero_title:                                 PFX + 'hero.title',
+  hero_title:                               PFX + 'hero.title',
   hero_subtitle:                              PFX + 'hero.subtitle',
   hero_segment_image:                         PFX + 'hero.segment.image',
   hero_segment_overlay:                       PFX + 'hero.segment.overlay',

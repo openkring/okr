@@ -1950,5 +1950,11 @@
       "primary": "Hervorgehoben",
       "secondary": "Zurückhaltend"
     }
+  },
+  "journal": {
+    "photos": "Fotos",
+    "cover": "Titelbild",
+    "clips": "Videos",
+    "empty": "Noch nichts ausgewählt."
   }
 }

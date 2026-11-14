@@ -8,7 +8,7 @@ import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS, IMAGE_MIMETYPES } from '@ok
 import { UploadService } from '@okr/avatar-data-access';
 import { confirm, MODEL_SELECTOR, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { AlertController, IonItem, IonToggle } from '@ionic/angular';
-import { ChartOption, getPeopleResponsibilityIds, getInlineErrorFields, getRemainingErrors, SectionErrors, SectionI18n, validateSection } from '@okr/cms-section-util';
+import { ChartOption, getPeopleResponsibilityIds, getInlineErrorFields, getJournalInlineErrorFields, getRemainingErrors, isJournalModeField, SectionErrors, SectionI18n, validateSection } from '@okr/cms-section-util';
 import { FormI18n } from '@okr/forms-util';
 
 import { SectionConfiguration } from './section-configuration';
@@ -73,23 +73,122 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     @if (showForm()) {
-      <ion-item lines="none">
-        <ion-toggle [checked]="showAdvanced()" (ionChange)="showAdvanced.set($event.detail.checked)" [disabled]="isReadOnly()">
-          {{ i18n().form_advanced_label() }}
-        </ion-toggle>
-      </ion-item>
+      @if (!journalMode()) {
+        <ion-item lines="none">
+          <ion-toggle [checked]="showAdvanced()" (ionChange)="showAdvanced.set($event.detail.checked)" [disabled]="isReadOnly()">
+            {{ i18n().form_advanced_label() }}
+          </ion-toggle>
+        </ion-item>
+      }
 
-      <okr-section-config
-        [(formData)]="formData"
-        [currentUser]="currentUser()"
-        [roles]="roles()"
-        [states]="states()"
-        [readOnly]="isReadOnly()"
-        [i18n]="i18n()"
-        [showAdvanced]="showAdvanced()"
-        [errors]="errors()"
-      />
+      <!-- journal mode: a hero's title comes from the footprint (plan decision 9), so it has no title field -->
+      @if (!journalMode() || formData().type !== 'hero') {
+        <okr-section-config
+          [(formData)]="formData"
+          [currentUser]="currentUser()"
+          [roles]="roles()"
+          [states]="states()"
+          [readOnly]="isReadOnly()"
+          [i18n]="i18n()"
+          [showAdvanced]="showAdvanced()"
+          [journalMode]="journalMode()"
+          [errors]="errors()"
+        />
+      }
 
+      @if (journalMode()) {
+        <!--
+          Travel journal (spec 1.154 §2): only what the change record carries — the title above, the text and
+          the properties of journalModeSectionFields. Photos and clips come from the journal's picker
+          (SECTION_IMAGE_PICKER), never from a folder, an upload or a url.
+        -->
+        @switch (formData().type) {
+          @case('hero') {
+            @if(journalField('hero')) {
+              <okr-images-config
+                [images]="heroCover()" (imagesChange)="onHeroCoverChange($event)"
+                [multiple]="false"
+                [title]="i18n().journal_cover()"
+                [emptyText]="i18n().journal_empty()"
+                [storagePath]="storagePath()"
+                [currentUser]="currentUser()"
+                [readOnly]="isReadOnly()"
+                [i18n]="i18n()"
+              />
+            }
+            @if(heroProperties(); as heroProperties) {
+              <okr-hero-config
+                [formData]="heroProperties" (formDataChange)="onHeroPropertiesChange($event)"
+                [journalMode]="true"
+                [readOnly]="isReadOnly()"
+                [i18n]="i18n()"
+                [errors]="errors()"
+              />
+            }
+          }
+          @case('article') {
+            @if(content(); as content) {
+              <okr-editor-config
+                [formData]="content" (formDataChange)="onContentChange($event)"
+                [readOnly]="isReadOnly()"
+                [i18n]="i18n()"
+                [showAdvanced]="false"
+              />
+            }
+            @if(journalField('images')) {
+              <okr-images-config
+                [images]="images()" (imagesChange)="onImagesChange($event)"
+                [title]="i18n().journal_photos()"
+                [emptyText]="i18n().journal_empty()"
+                [storagePath]="storagePath()"
+                [currentUser]="currentUser()"
+                [readOnly]="isReadOnly()"
+                [i18n]="i18n()"
+                [errors]="errors()"
+              />
+            }
+            @if(journalField('imageStyle')) {
+              @if(imageStyle(); as imageStyle) {
+                <okr-image-style
+                  [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)"
+                  [readOnly]="isReadOnly()"
+                  [i18n]="i18n()"
+                  [showAdvanced]="false"
+                  [errors]="errors()"
+                />
+              }
+            }
+          }
+          @case('album') {
+            @if(journalField('images')) {
+              <okr-images-config
+                [images]="albumImages()" (imagesChange)="onAlbumImagesChange($event)"
+                [title]="i18n().journal_photos()"
+                [emptyText]="i18n().journal_empty()"
+                [storagePath]="storagePath()"
+                [currentUser]="currentUser()"
+                [readOnly]="isReadOnly()"
+                [i18n]="i18n()"
+                [errors]="errors()"
+              />
+            }
+          }
+          @case('video') {
+            @if(journalField('clips')) {
+              <okr-images-config
+                [images]="videoClips()" (imagesChange)="onVideoClipsChange($event)"
+                kind="video"
+                [title]="i18n().journal_clips()"
+                [emptyText]="i18n().journal_empty()"
+                [storagePath]="storagePath()"
+                [currentUser]="currentUser()"
+                [readOnly]="isReadOnly()"
+                [i18n]="i18n()"
+              />
+            }
+          }
+        }
+      } @else {
       @switch (formData().type) {
         @case('album') {
           @if(albumConfig(); as albumConfig) {
@@ -607,6 +706,7 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
           }
         }
       }
+      }
 
       <!--
         Fallback list: every field the configuration components render shows its own error
@@ -620,7 +720,7 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
         }
       }
 
-      @if(showAdvanced()) {
+      @if(showAdvanced() && !journalMode()) {
         @if(hasRole('privileged')) {
           <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [readOnly]="isReadOnly()" [allChips]="allTags()" />
         }
@@ -651,7 +751,9 @@ export class SectionForm {
   protected readonly errors = computed(() => this.validationResult().getErrors() as SectionErrors);
   /** errors of fields that no child renders — shown at the end of the form */
   protected readonly remainingErrors = computed(() =>
-    getRemainingErrors(this.errors(), getInlineErrorFields(this.formData().type, this.showAdvanced()))
+    getRemainingErrors(this.errors(), this.journalMode()
+      ? getJournalInlineErrorFields(this.formData().type)
+      : getInlineErrorFields(this.formData().type, this.showAdvanced()))
   );
 
   constructor() {
@@ -713,6 +815,11 @@ export class SectionForm {
   /** The forms keys, for the acceptance card of a form section. Unset for every other section type. */
   public readonly formI18n = input<FormI18n | undefined>(undefined);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  /**
+   * Travel journal (spec 1.154 §2): the form shows only what the journal's change record carries (the title,
+   * the text and the properties of journalModeSectionFields); photos and clips come from SECTION_IMAGE_PICKER.
+   */
+  public readonly journalMode = input(false);
 
   // The per-type suite is picked at runtime from formData().type (validateSection), so the
   // bridge calls the registry through a closure; validateSection takes no field argument.
@@ -764,6 +871,22 @@ export class SectionForm {
   protected heroProperties = computed<HeroConfig | undefined>(() => {
     const section = this.formData();
     return section.type === 'hero' ? section.properties : undefined;
+  });
+  /** journal mode: the hero's cover as a one-image list, empty while none is chosen */
+  protected heroCover = computed<ImageConfig[]>(() => {
+    const section = this.formData();
+    const hero = section.type === 'hero' ? section.properties?.hero : undefined;
+    return hero && (hero.label || hero.url) ? [hero] : [];
+  });
+  /** journal mode: the album's explicit photo list (plan decision 8) */
+  protected albumImages = computed<ImageConfig[]>(() => {
+    const section = this.formData();
+    return section.type === 'album' ? section.properties?.images ?? [] : [];
+  });
+  /** journal mode: the video's explicit clip list (plan decision 8) */
+  protected videoClips = computed<ImageConfig[]>(() => {
+    const section = this.formData();
+    return section.type === 'video' ? section.properties?.clips ?? [] : [];
   });
   protected heroCtas = computed<SectionCta[]>(() => {
     const section = this.formData();
@@ -818,6 +941,11 @@ export class SectionForm {
 
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.currentUser());
+  }
+
+  /** journal mode: whether the form offers property `key` of the current type */
+  protected journalField(key: string): boolean {
+    return isJournalModeField(this.formData().type, key);
   }
 
   /************************************** property getters (section type specific) *********************************************** */
@@ -1139,6 +1267,27 @@ export class SectionForm {
       credit: await this.uploadService.readImageCredit(fullPath),
     };
     if (field === 'logo') this.onLogoConfigChange(newImage); else this.onHeroConfigChange(newImage);
+  }
+
+  /** journal mode: the picked cover replaces the hero image; removing it leaves an empty image */
+  protected onHeroCoverChange(images: ImageConfig[]): void {
+    this.onHeroConfigChange(images[0] ?? IMAGE_CONFIG_SHAPE);
+  }
+
+  /** journal mode: the album shows this list instead of its folder */
+  protected onAlbumImagesChange(images: ImageConfig[]): void {
+    const section = this.formData();
+    if (section.type === 'album') {
+      this.formData.set({ ...section, properties: { ...section.properties, images } } as AlbumSection);
+    }
+  }
+
+  /** journal mode: the video plays these clips instead of its url */
+  protected onVideoClipsChange(clips: ImageConfig[]): void {
+    const section = this.formData();
+    if (section.type === 'video') {
+      this.formData.set({ ...section, properties: { ...section.properties, clips } } as VideoSection);
+    }
   }
 
   protected onLogoConfigChange(image: ImageConfig): void {

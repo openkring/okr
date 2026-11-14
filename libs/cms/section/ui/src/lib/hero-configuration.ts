@@ -90,8 +90,11 @@ interface HeroConfigI18n {
           <ion-row>
             <ion-col size="12">
               <ion-segment [value]="segment()" (ionChange)="onSegmentChange($event.detail.value)">
-                <ion-segment-button value="image"><ion-label>{{ i18n().hero_segment_image() }}</ion-label></ion-segment-button>
-                <ion-segment-button value="overlay"><ion-label>{{ i18n().hero_segment_overlay() }}</ion-label></ion-segment-button>
+                @if (journalMode()) {
+                  <ion-segment-button value="overlay"><ion-label>{{ i18n().hero_segment_overlay() }}</ion-label></ion-segment-button>
+                } @else {
+                  <ion-segment-button value="image"><ion-label>{{ i18n().hero_segment_image() }}</ion-label></ion-segment-button>
+                }
                 <ion-segment-button value="layout"><ion-label>{{ i18n().hero_segment_layout() }}</ion-label></ion-segment-button>
               </ion-segment>
             </ion-col>
@@ -198,6 +201,12 @@ export class HeroConfiguration {
   public readonly readOnly = input(true);
   public readonly i18n = input.required<HeroConfigI18n>();
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  /**
+   * Travel journal (spec 1.154): the text overlay is drawn only there, with the footprint's title,
+   * coordinates and weather, so only the journal offers it. Its photos are no imgix images, so the
+   * journal does not offer the Bild segment (extra imgix parameters).
+   */
+  public readonly journalMode = input(false);
 
   protected readonly positions = HERO_OVERLAY_POSITIONS;
   protected readonly fontSizes = HERO_OVERLAY_FONT_SIZES;
@@ -206,7 +215,12 @@ export class HeroConfiguration {
   protected readonly labelLength = HERO_OVERLAY_LABEL_LENGTH;
   protected readonly darkeningMax = HERO_OVERLAY_DARKENING_MAX;
 
-  protected readonly segment = signal<Segment>('image');
+  private readonly chosenSegment = signal<Segment | undefined>(undefined);
+  protected readonly segment = computed<Segment>(() => {
+    const chosen = this.chosenSegment();
+    const first: Segment = this.journalMode() ? 'overlay' : 'image';
+    return chosen === 'layout' || chosen === first ? chosen : first;
+  });
 
   // the form shows the defaults for an absent overlay; nothing is stored until the user changes a field
   protected readonly overlay = computed<HeroOverlay>(() => this.formData().overlay ?? HERO_OVERLAY_DEFAULT);
@@ -260,7 +274,7 @@ export class HeroConfiguration {
 
   /************************************** actions *********************************************** */
   protected onSegmentChange(value: string | number | undefined): void {
-    if (value === 'image' || value === 'overlay' || value === 'layout') this.segment.set(value);
+    if (value === 'image' || value === 'overlay' || value === 'layout') this.chosenSegment.set(value);
   }
 
   protected onOverlayChange<K extends keyof HeroOverlay>(field: K, value: HeroOverlay[K]): void {

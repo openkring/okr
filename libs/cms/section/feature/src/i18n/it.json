@@ -1950,5 +1950,11 @@
       "primary": "In evidenza",
       "secondary": "Discreto"
     }
+  },
+  "journal": {
+    "photos": "Foto",
+    "cover": "Foto di copertina",
+    "clips": "Video",
+    "empty": "Non hai ancora scelto niente."
   }
 }

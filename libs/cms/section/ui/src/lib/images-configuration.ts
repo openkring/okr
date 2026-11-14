@@ -16,7 +16,7 @@ import { createActionSheetButton, createActionSheetOptions, downloadToBrowser } 
 import { IMGIX_THUMBNAIL_PARAMS, sanitizeFileName } from '@okr/shared-util-core';
 import { UploadService } from '@okr/avatar-data-access';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { getImageErrors, SectionErrors, SectionI18n } from '@okr/cms-section-util';
+import { getImageErrors, SECTION_IMAGE_PICKER, SectionErrors, SectionI18n, SectionImagePicker } from '@okr/cms-section-util';
 
 import { ImageEditModal } from './image-edit.modal';
 
@@ -41,7 +41,7 @@ import { ImageEditModal } from './image-edit.modal';
     <ion-card>
       <ion-card-header>
         <div class="image-list-header">
-          <ion-card-title>{{ i18n().image_edit_title_modal() }}</ion-card-title>
+          <ion-card-title>{{ title() || i18n().image_edit_title_modal() }}</ion-card-title>
           @if(!readOnly()) {
             <ion-buttons>
               <ion-button (click)="addImages()">
@@ -55,7 +55,7 @@ import { ImageEditModal } from './image-edit.modal';
         <ion-list lines="inset">
           @if(images().length === 0) {
             <ion-item>
-              <ion-label color="medium">{{ i18n().image_empty() }}</ion-label>
+              <ion-label color="medium">{{ emptyText() || i18n().image_empty() }}</ion-label>
             </ion-item>
           } @else {
             <!-- Casting $event to $any is a temporary fix for https://github.com/ionic-team/ionic-framework/issues/24245 -->
@@ -69,8 +69,12 @@ import { ImageEditModal } from './image-edit.modal';
                     <img okrImg [src]="thumbnailUrl(img)" [alt]="img.altText || img.label" />
                   </ion-thumbnail>
                   <ion-label>
-                    <p>{{ img.label || img.url }}</p>
-                    <p class="image-meta">{{ typeName(img.type) }}{{ img.altText ? ' · ' + img.altText : '' }}</p>
+                    @if(picker) {
+                      <p>{{ img.altText || img.label }}</p>
+                    } @else {
+                      <p>{{ img.label || img.url }}</p>
+                      <p class="image-meta">{{ typeName(img.type) }}{{ img.altText ? ' · ' + img.altText : '' }}</p>
+                    }
                   </ion-label>
                 </ion-item>
               }
@@ -90,6 +94,11 @@ export class ImagesConfiguration {
   private readonly modalController = inject(ModalController);
   private readonly toastController = inject(ToastController);
   private readonly actionSheetController = inject(ActionSheetController);
+  /**
+   * Set by the travel journal: photos and clips come from the journal and are resolved by the picker
+   * (spec 1.154). Absent in the CMS, which keeps today's upload to the public bucket unchanged.
+   */
+  protected readonly picker = inject(SECTION_IMAGE_PICKER, { optional: true });
 
   // inputs
   public images = model.required<ImageConfig[]>();
@@ -99,6 +108,12 @@ export class ImagesConfiguration {
   public readonly i18n = input.required<SectionI18n>();
   /** vest field name -> messages of the running section suite (see section.form.ts) */
   public readonly errors = input<SectionErrors>({});
+  /** picker only: what the add button picks, and whether it adds several or replaces the one image */
+  public readonly kind = input<'image' | 'video'>('image');
+  public readonly multiple = input(true);
+  /** card title and empty-list text; the image texts when unset */
+  public readonly title = input('');
+  public readonly emptyText = input('');
 
   // computed
   protected readonly imageErrors = computed(() => getImageErrors(this.errors()));
@@ -111,6 +126,7 @@ export class ImagesConfiguration {
   }
 
   protected thumbnailUrl(img: ImageConfig): string {
+    if (this.picker) return this.picker.thumbnailUrl(img);
     const url = img.url ?? '';
     if (!url) return '';
     if (url.startsWith('http')) return url;
@@ -123,6 +139,10 @@ export class ImagesConfiguration {
 
   protected async addImages(): Promise<void> {
     if (this.readOnly()) return;
+    if (this.picker) {
+      await this.addPicked(this.picker);
+      return;
+    }
     const files = await this.uploadService.pickMultipleFiles(IMAGE_MIMETYPES);
     if (!files.length) return;
 
@@ -188,13 +208,23 @@ export class ImagesConfiguration {
     }
   }
 
+  /** picker: one image replaces the list, several are appended */
+  private async addPicked(picker: SectionImagePicker): Promise<void> {
+    const picked = await picker.pick(this.kind(), this.multiple());
+    if (!picked.length) return;
+    this.images.update(imgs => this.multiple() ? [...imgs, ...picked] : picked.slice(0, 1));
+  }
+
   protected async showActions(img: ImageConfig, index: number): Promise<void> {
     if (this.readOnly()) return;
     const i18n = this.i18n();
     const options: ActionSheetOptions = createActionSheetOptions(i18n.as_title());
-    options.buttons.push(createActionSheetButton('image.detail', i18n.image_detail(), this.imgixBaseUrl, 'eye-on'));
-    options.buttons.push(createActionSheetButton('image.download', i18n.image_download(), this.imgixBaseUrl, 'download'));
-    options.buttons.push(createActionSheetButton('image.edit', i18n.image_edit_title(), this.imgixBaseUrl, 'edit'));
+    // a picked image is a reference (its key in label, no storage url): no storage detail, download or label edit
+    if (!this.picker) {
+      options.buttons.push(createActionSheetButton('image.detail', i18n.image_detail(), this.imgixBaseUrl, 'eye-on'));
+      options.buttons.push(createActionSheetButton('image.download', i18n.image_download(), this.imgixBaseUrl, 'download'));
+      options.buttons.push(createActionSheetButton('image.edit', i18n.image_edit_title(), this.imgixBaseUrl, 'edit'));
+    }
     options.buttons.push(createActionSheetButton('image.delete', i18n.image_delete(), this.imgixBaseUrl, 'trash'));
     options.buttons.push(createActionSheetButton('cancel', i18n.cancel(), this.imgixBaseUrl, 'cancel-circle'));
 

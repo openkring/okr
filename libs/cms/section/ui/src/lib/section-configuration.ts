@@ -24,7 +24,7 @@ export const PFX = '@cms/section/feature.';
       </ion-card-header>
       <ion-card-content>
         <ion-grid>
-          @if (hasRole('admin')) {
+          @if (hasRole('admin') && !journalMode()) {
             <ion-row>
               <ion-col size="6">
                 <ion-item lines="none">
@@ -42,7 +42,7 @@ export const PFX = '@cms/section/feature.';
             </ion-row>
           }
         <ion-row>
-          @if(showAdvanced()) {
+          @if(showAdvanced() && !journalMode()) {
             <ion-col size="12">
               <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]="nameMaxLength" [readOnly]="isReadOnly()" />
               <okr-error-note [errors]="errorsFor('name')" />
@@ -52,31 +52,34 @@ export const PFX = '@cms/section/feature.';
             <okr-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)" [maxLength]="maxLength" [readOnly]="isReadOnly()" />
             <okr-error-note [errors]="errorsFor('title')" />
           </ion-col>
-          <ion-col size="12">
-            <okr-text-input [i18n]="subTitleI18n()" [value]="subTitle()" (valueChange)="onFieldChange('subTitle', $event)" [maxLength]="maxLength" [readOnly]="isReadOnly()" />
-            <okr-error-note [errors]="errorsFor('subTitle')" />
-          </ion-col>
-          @if(showAdvanced()) {
+          <!-- journal mode: the change record carries the title only -->
+          @if (!journalMode()) {
             <ion-col size="12">
-              <okr-text-input [i18n]="colSizeI18n()" [value]="colSize()" (valueChange)="onFieldChange('colSize', $event)" [readOnly]="isReadOnly()" [showHelper]="true" />
+              <okr-text-input [i18n]="subTitleI18n()" [value]="subTitle()" (valueChange)="onFieldChange('subTitle', $event)" [maxLength]="maxLength" [readOnly]="isReadOnly()" />
+              <okr-error-note [errors]="errorsFor('subTitle')" />
+            </ion-col>
+            @if(showAdvanced()) {
+              <ion-col size="12">
+                <okr-text-input [i18n]="colSizeI18n()" [value]="colSize()" (valueChange)="onFieldChange('colSize', $event)" [readOnly]="isReadOnly()" [showHelper]="true" />
+              </ion-col>
+            }
+            <ion-col size="6">
+              <ion-item lines="none">
+                <ion-label>{{ this.i18n().form_roleNeeded() }}</ion-label>
+              </ion-item>
+            </ion-col>
+            <ion-col size="6">
+              <okr-cat-select [category]="roles()!" [selectedItemName]="roleNeeded()" (selectedItemNameChange)="onFieldChange('roleNeeded', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+            </ion-col>
+            <ion-col size="6">
+              <ion-item lines="none">
+                <ion-label>{{ this.i18n().form_state() }}</ion-label>
+              </ion-item>
+            </ion-col>
+            <ion-col size="6">
+              <okr-cat-select [category]="states()!" [selectedItemName]="state()" (selectedItemNameChange)="onFieldChange('state', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
             </ion-col>
           }
-          <ion-col size="6">
-            <ion-item lines="none">
-              <ion-label>{{ this.i18n().form_roleNeeded() }}</ion-label>
-            </ion-item>
-          </ion-col>
-          <ion-col size="6">
-            <okr-cat-select [category]="roles()!" [selectedItemName]="roleNeeded()" (selectedItemNameChange)="onFieldChange('roleNeeded', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
-          </ion-col>
-          <ion-col size="6">
-            <ion-item lines="none">
-              <ion-label>{{ this.i18n().form_state() }}</ion-label>
-            </ion-item>
-          </ion-col>
-          <ion-col size="6">
-            <okr-cat-select [category]="states()!" [selectedItemName]="state()" (selectedItemNameChange)="onFieldChange('state', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
-          </ion-col>
         </ion-row>
         </ion-grid>
       </ion-card-content>
@@ -96,6 +99,8 @@ export class SectionConfiguration {
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   public readonly showAdvanced = input(false);
+  /** travel journal (spec 1.154): only the title, the one base field its change record carries */
+  public readonly journalMode = input(false);
   public readonly i18n = input.required<SectionI18n>();
 
   // fields

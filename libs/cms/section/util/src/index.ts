@@ -47,3 +47,5 @@ export * from './lib/list-reservation.util';
 export * from './lib/section-errors';
 export * from './lib/context-diagram-config.validations';
 export * from './lib/form-section.validations';
+export * from './lib/journal-mode.util';
+export * from './lib/section-image-picker';
