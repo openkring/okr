@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { AlbumConfig, HeroConfig, ViewPosition } from '@okr/shared-models';
-import { guestSectionItems, GuestSectionInput, guestSectionModelOf, guestTrackData, GuestTrackInput } from './journal-guest-section.util';
+import { guestSectionItems, GuestSectionInput, guestSectionModelOf, guestTrackData, GuestTrackInput, guestBaseLayers, guestBaseLayerId } from './journal-guest-section.util';
 
 const img = (label: string) => ({ label, url: '', altText: 'x' });
 const input = (p: Partial<GuestSectionInput>): GuestSectionInput =>
@@ -113,6 +113,23 @@ describe('journal guest sections', () => {
         { imageKey: 'b', lat: 1, lng: 2, takenAt: '', url: 'https://x/b', thumb: '' },
       ] }), 'Strecke', (n) => `${n}`);
       expect(data.photos.map((p) => [p.imageKey, p.thumb, p.alt])).toEqual([['b', 'https://x/b', '1']]);
+    });
+  });
+
+  describe('guest base layer', () => {
+    const zurich: [number, number, number, number] = [8.5, 47.3, 8.6, 47.4];
+    const tokyo: [number, number, number, number] = [139.6, 35.6, 139.8, 35.8];
+
+    it('starts on swisstopo-live in Switzerland and on the world map elsewhere', () => {
+      expect(guestBaseLayerId(guestBaseLayers(zurich), undefined)).toBe('swisstopo-live');
+      expect(guestBaseLayerId(guestBaseLayers(tokyo), undefined)).toBe('world');
+      expect(guestBaseLayerId(guestBaseLayers(undefined), undefined)).toBe('swisstopo-live');
+    });
+
+    it('keeps the section layer when offered, else falls back (a Google id is never offered)', () => {
+      expect(guestBaseLayerId(guestBaseLayers(zurich), 'world')).toBe('world');
+      expect(guestBaseLayerId(guestBaseLayers(zurich), 'google-satellite')).toBe('swisstopo-live');
+      expect(guestBaseLayerId(guestBaseLayers(tokyo), 'swisstopo-live')).toBe('world');
     });
   });
 });

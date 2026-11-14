@@ -1,6 +1,7 @@
 import { HeroConfig, ImageConfig, SectionModel } from '@okr/shared-models';
 import { htmlToPlainText } from './journal-forms.util';
 import { isJournalSectionType, JournalSectionType, sectionModelOf } from './journal-section.util';
+import { baseLayerOptions, BaseLayerOption } from './journal-base-layer.util';
 import { trackSummary } from './journal-track-pick.util';
 import { TrackCopy, TrackCopyPhoto } from './journal-track.util';
 
@@ -111,4 +112,19 @@ export function guestSectionItems(
     .filter((item) => guestShows(item.section, item.clips, item.track));
   const lead = items.find((item) => item.lead);
   return [...(lead ? [lead] : []), ...items.filter((item) => item !== lead)];
+}
+
+const NO_AREAS = { google: {}, areas: [], usable: new Set<string>(), tilesBaseUrl: '' };
+
+/** The public (online, non-Google) base layers around a view: the world map, plus swisstopo-live when the view meets Switzerland. */
+export function guestBaseLayers(view: [number, number, number, number] | undefined): BaseLayerOption[] {
+  return baseLayerOptions({ ...NO_AREAS, online: true, view });
+}
+
+/**
+ * The layer a guest starts on: the section's own when offered, else swisstopo-live (the detailed map, offered only
+ * in Switzerland), else the world map. `pickBaseLayer` would give the world map in Switzerland too (no Google here).
+ */
+export function guestBaseLayerId(options: BaseLayerOption[], preferred: string | undefined): BaseLayerOption['id'] {
+  return (options.find((o) => o.id === preferred) ?? options.find((o) => o.id === 'swisstopo-live') ?? options.find((o) => o.id === 'world'))?.id ?? 'world';
 }

@@ -10,7 +10,7 @@ import { MapView, RouteMap, RoutePin, showImageSlider } from '@okr/shared-ui';
 import { fill, registerBundledIcons, sunTimesLine } from '@okr/shared-util-core';
 import { GuestFeedbackView, GuestFootprintView, GuestJournalView, GuestSectionView, guestErrorOf, JournalGuestService } from '@okr/travel-journal-data-access';
 import {
-  baseLayerOptions, BaseLayerOption, Bbox, boundsOf, filledHero, guestTrackData, GuestTrackInput, trackPointsOf, trackTileSources, FlyPoint, FlyStop, flyoverTimeline, footprintOverlayText, GIBS_BLUE_MARBLE, guestSectionItems, JOURNAL_I18N_KEYS,
+  baseLayerOptions, BaseLayerOption, Bbox, boundsOf, filledHero, guestBaseLayerId, guestBaseLayers, guestTrackData, GuestTrackInput, trackPointsOf, trackTileSources, FlyPoint, FlyStop, flyoverTimeline, footprintOverlayText, GIBS_BLUE_MARBLE, guestSectionItems, JOURNAL_I18N_KEYS,
   imageTitle, JournalI18n, parentKeyOf, pickBaseLayer, stopTime, travelStartDate, weatherLine, weatherOf,
 } from '@okr/travel-journal-util';
 import { weatherCodeToIcon, WEATHER_ICON_SET } from '@okr/weather-util';
@@ -237,7 +237,7 @@ export class JournalGuestPage {
    * Switzerland (`baseLayerOptions` with online sources only, no areas).
    */
   private publicLayers(bbox: Bbox | undefined): BaseLayerOption[] {
-    return baseLayerOptions({ online: true, google: {}, areas: [], usable: new Set(), view: bbox, tilesBaseUrl: '' });
+    return guestBaseLayers(bbox);
   }
 
   /**
@@ -250,7 +250,7 @@ export class JournalGuestPage {
     const config = model.properties as unknown as MapConfig;
     const center: [number, number] | undefined = typeof fp.latitude === 'number' && typeof fp.longitude === 'number' ? [fp.latitude, fp.longitude] : undefined;
     const options = this.publicLayers(center ? [center[1], center[0], center[1], center[0]] : undefined);
-    const selectedBaseId = pickBaseLayer(options, config.layer);
+    const selectedBaseId = guestBaseLayerId(options, config.layer);
     const pins: RoutePin[] = center ? [{ key: fp.key, lat: center[0], lng: center[1], label: fp.title, thumbnailUrl: this.thumbOf(fp) }] : [];
     return {
       center, zoom: config.zoom, pins, route: config.showRoute ? (this.view()?.route ?? []) : [],
@@ -266,7 +266,7 @@ export class JournalGuestPage {
     const data = guestTrackData(track, this.i18n.track_untitled(), (n) => fill(this.i18n.image_photo(), { n }));
     const bbox = boundsOf(trackPointsOf(data.track).flatMap((s) => s.points));
     const options = this.publicLayers(bbox);
-    const tiles = trackTileSources(options, pickBaseLayer(options, undefined), true);
+    const tiles = trackTileSources(options, guestBaseLayerId(options, undefined), true);
     return { ...data, ...(tiles ? { tiles } : {}) };
   }
   protected readonly hasHero = computed(() => this.sections().some((s) => s.lead));
