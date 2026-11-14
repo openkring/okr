@@ -110,6 +110,7 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
                 [multiple]="false"
                 [title]="i18n().journal_cover()"
                 [emptyText]="i18n().journal_empty()"
+                [requirePicker]="true"
                 [storagePath]="storagePath()"
                 [currentUser]="currentUser()"
                 [readOnly]="isReadOnly()"
@@ -140,6 +141,7 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
                 [images]="images()" (imagesChange)="onImagesChange($event)"
                 [title]="i18n().journal_photos()"
                 [emptyText]="i18n().journal_empty()"
+                [requirePicker]="true"
                 [storagePath]="storagePath()"
                 [currentUser]="currentUser()"
                 [readOnly]="isReadOnly()"
@@ -165,6 +167,7 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
                 [images]="albumImages()" (imagesChange)="onAlbumImagesChange($event)"
                 [title]="i18n().journal_photos()"
                 [emptyText]="i18n().journal_empty()"
+                [requirePicker]="true"
                 [storagePath]="storagePath()"
                 [currentUser]="currentUser()"
                 [readOnly]="isReadOnly()"
@@ -180,6 +183,7 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
                 kind="video"
                 [title]="i18n().journal_clips()"
                 [emptyText]="i18n().journal_empty()"
+                [requirePicker]="true"
                 [storagePath]="storagePath()"
                 [currentUser]="currentUser()"
                 [readOnly]="isReadOnly()"
@@ -1243,6 +1247,11 @@ export class SectionForm {
 
   protected async onHeroImageUpload(field: 'logo' | 'hero'): Promise<void> {
     if (this.isReadOnly()) return;
+    // journal photos are private: the journal's cover comes from its picker, never from this public upload
+    if (this.journalMode()) {
+      console.error('SectionForm.onHeroImageUpload: no upload in journal mode');
+      return;
+    }
     const section = this.formData();
     if (section.type !== 'hero') return;
     const current = field === 'logo' ? section.properties.logo : section.properties.hero;

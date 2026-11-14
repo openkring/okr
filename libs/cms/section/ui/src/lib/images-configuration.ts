@@ -42,7 +42,7 @@ import { ImageEditModal } from './image-edit.modal';
       <ion-card-header>
         <div class="image-list-header">
           <ion-card-title>{{ title() || i18n().image_edit_title_modal() }}</ion-card-title>
-          @if(!readOnly()) {
+          @if(!readOnly() && canAdd()) {
             <ion-buttons>
               <ion-button (click)="addImages()">
                 <ion-icon slot="icon-only" src="{{'add-circle' | svgIcon }}" />
@@ -114,9 +114,15 @@ export class ImagesConfiguration {
   /** card title and empty-list text; the image texts when unset */
   public readonly title = input('');
   public readonly emptyText = input('');
+  /**
+   * Travel journal: photos must come from SECTION_IMAGE_PICKER. Without one the list refuses to add, rather
+   * than uploading private journal photos to the public bucket (and writing a document to Firestore).
+   */
+  public readonly requirePicker = input(false);
 
   // computed
   protected readonly imageErrors = computed(() => getImageErrors(this.errors()));
+  protected readonly canAdd = computed(() => !!this.picker || !this.requirePicker());
 
   // constants
   private imgixBaseUrl = this.env.services.imgixBaseUrl;
@@ -141,6 +147,10 @@ export class ImagesConfiguration {
     if (this.readOnly()) return;
     if (this.picker) {
       await this.addPicked(this.picker);
+      return;
+    }
+    if (this.requirePicker()) {
+      console.error('ImagesConfiguration.addImages: SECTION_IMAGE_PICKER is required here but not provided; nothing is uploaded');
       return;
     }
     const files = await this.uploadService.pickMultipleFiles(IMAGE_MIMETYPES);
