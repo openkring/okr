@@ -1,11 +1,11 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import {
-  IonButton, IonContent, IonFooter, IonInput, IonItem, IonLabel, IonList, IonListHeader,
-  IonNote, IonSpinner, IonText, IonToolbar, ModalController,
+  IonContent, IonInput, IonItem, IonLabel, IonList, IonListHeader,
+  IonNote, IonSpinner, IonText, ModalController,
 } from '@ionic/angular';
 
-import type { DataClass, ErasurePreview } from '@okr/shared-models';
-import { Header } from '@okr/shared-ui';
+import { ColorIonic, type DataClass, type ErasurePreview } from '@okr/shared-models';
+import { ChangeConfirmation, Header } from '@okr/shared-ui';
 import { PrivacyRightsService } from '@okr/profile-data-access';
 import { ProfileI18n } from '@okr/profile-util';
 import { dismissOverlay } from '@okr/shared-util-angular';
@@ -20,7 +20,7 @@ import { dismissOverlay } from '@okr/shared-util-angular';
  *
  * Three rules this template must keep (D-P5-2 and the plan):
  *
- * 1. **With a blocker present the confirm button is ABSENT, not disabled.** A greyed-out
+ * 1. **With a blocker present the confirm bar is ABSENT, not disabled.** A greyed-out
  *    "delete" button reads as "the system is refusing you"; a missing one plus the reason
  *    reads as "here is what to do first", which is what is actually true.
  * 2. **Blocker and processor texts are rendered verbatim** from the server. They state
@@ -34,8 +34,8 @@ import { dismissOverlay } from '@okr/shared-util-angular';
   selector: 'okr-data-erasure-modal',
   standalone: true,
   imports: [
-    Header, IonContent, IonList, IonListHeader, IonItem, IonLabel, IonNote, IonButton,
-    IonFooter, IonToolbar, IonInput, IonSpinner, IonText,
+    Header, ChangeConfirmation, IonContent, IonList, IonListHeader, IonItem, IonLabel, IonNote,
+    IonInput, IonSpinner, IonText,
   ],
   styles: [`
     .section-intro { padding: 0 16px 8px; }
@@ -44,6 +44,10 @@ import { dismissOverlay } from '@okr/shared-util-angular';
   `],
   template: `
     <okr-header [i18n]="{ title: i18n().erasure_title() }" [isModal]="true" />
+    @if (showConfirmation()) {
+      <okr-change-confirmation [i18n]="confirmationI18n()" [color]="dangerColor"
+        (saveClicked)="confirm()" (cancelClicked)="typed.set('')" />
+    }
     <ion-content class="ion-padding">
       @if (preview(); as report) {
         <p>{{ i18n().erasure_intro() }}</p>
@@ -153,6 +157,27 @@ import { dismissOverlay } from '@okr/shared-util-angular';
           <ion-item lines="none"><ion-label class="ion-text-wrap">{{ i18n().erasure_empty() }}</ion-label></ion-item>
         }
 
+        <!-- the type-to-confirm field; the erase action itself sits on the bar above -->
+        @if (canConfirm()) {
+          @if (isErasing()) {
+            <ion-item lines="none">
+              <ion-spinner slot="start" name="dots" />
+              <ion-label>{{ i18n().erasure_running() }}</ion-label>
+            </ion-item>
+          } @else {
+            <ion-item lines="none">
+              <ion-input
+                label="{{ i18n().erasure_confirm_label() }} «{{ i18n().erasure_confirm_phrase() }}»"
+                labelPlacement="stacked"
+                [value]="typed()"
+                (ionInput)="typed.set($any($event.target).value ?? '')"
+                autocapitalize="characters"
+              />
+            </ion-item>
+            <ion-item lines="none"><ion-note>{{ i18n().erasure_confirm_helper() }}</ion-note></ion-item>
+          }
+        }
+
         @if (errorMessage(); as message) {
           <ion-item lines="none"><ion-text color="danger"><p>{{ message }}</p></ion-text></ion-item>
         }
@@ -163,28 +188,6 @@ import { dismissOverlay } from '@okr/shared-util-angular';
         </ion-item>
       }
     </ion-content>
-
-    <ion-footer>
-      <ion-toolbar>
-        @if (canConfirm()) {
-          <ion-item lines="none">
-            <ion-input
-              label="{{ i18n().erasure_confirm_label() }} «{{ i18n().erasure_confirm_phrase() }}»"
-              labelPlacement="stacked"
-              [value]="typed()"
-              (ionInput)="typed.set($any($event.target).value ?? '')"
-              autocapitalize="characters"
-            />
-          </ion-item>
-          <ion-item lines="none"><ion-note>{{ i18n().erasure_confirm_helper() }}</ion-note></ion-item>
-          <ion-button slot="end" color="danger" [disabled]="!phraseMatches() || isErasing()" (click)="confirm()">
-            @if (isErasing()) { <ion-spinner slot="start" name="dots" /> }
-            {{ isErasing() ? i18n().erasure_running() : i18n().erasure_confirm_button() }}
-          </ion-button>
-        }
-        <ion-button slot="start" fill="clear" (click)="close()">{{ i18n().cancel() }}</ion-button>
-      </ion-toolbar>
-    </ion-footer>
   `,
 })
 export class DataErasureModal {
@@ -208,6 +211,14 @@ export class DataErasureModal {
     const report = this.preview();
     return !!report && report.blockers.length === 0 && !this.isEmptyReport();
   });
+
+  /** The erase bar shows only once the phrase matches, and hides while the erasure runs. */
+  protected readonly showConfirmation = computed(() => this.canConfirm() && this.phraseMatches() && !this.isErasing());
+  protected readonly confirmationI18n = computed(() => ({
+    cancel: this.i18n().cancel(),
+    save: this.i18n().erasure_confirm_button(),
+  }));
+  protected readonly dangerColor = ColorIonic.Danger;
 
   protected readonly isEmptyReport = computed(() => {
     const report = this.preview();
@@ -261,9 +272,5 @@ export class DataErasureModal {
       return;
     }
     await dismissOverlay(this.modalController, { erased: true, result: result.value }, 'confirm');
-  }
-
-  protected close(): void {
-    void dismissOverlay(this.modalController, undefined, 'cancel');
   }
 }

@@ -1,11 +1,11 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonRow, IonTitle, IonToolbar, ModalController } from '@ionic/angular';
+import { IonCol, IonContent, IonGrid, IonRow } from '@ionic/angular';
 
 import { SrvIndex, SrvMismatchKind } from '@okr/shared-models';
 import { DateFormat, expectedSrvStatus, getMismatches, getTodayStr } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { MEMBERSHIP_I18N_KEYS, MembershipI18n } from '@okr/relationship-membership-util';
-import { dismissOverlay } from '@okr/shared-util-angular';
+import { Header } from '@okr/shared-ui';
 
 interface SrvDisplayRow {
   attr:      string;
@@ -19,8 +19,7 @@ interface SrvDisplayRow {
   selector: 'okr-membership-srv-mismatch-modal',
   standalone: true,
   imports: [
-    IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
-    IonContent, IonGrid, IonRow, IonCol,
+    Header, IonContent, IonGrid, IonRow, IonCol,
   ],
   styles: [`
     .mismatch { color: var(--ion-color-danger); font-weight: 500; }
@@ -29,14 +28,7 @@ interface SrvDisplayRow {
     ion-row { border-bottom: 1px solid var(--ion-color-light); }
   `],
   template: `
-    <ion-header>
-      <ion-toolbar color="warning">
-        <ion-title>Vergleich: {{ item().firstName }} {{ item().lastName }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="close()">{{ i18n.close() }}</ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
+    <okr-header [i18n]="{ title: 'Vergleich: ' + item().firstName + ' ' + item().lastName }" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-grid>
         <ion-row>
@@ -62,8 +54,6 @@ interface SrvDisplayRow {
   `,
 })
 export class MembershipSrvMismatchModal {
-  private readonly modalController = inject(ModalController);
-
   public item = input.required<SrvIndex>();
 
   // Direct inject (no store): MembershipSrvStore opens this modal, importing it back would be circular.
@@ -105,8 +95,4 @@ export class MembershipSrvMismatchModal {
       { attr: 'licenseId',     person: '',            member: '',             regasoft: i.licenseId,    kind: null },
     ];
   });
-
-  protected async close(): Promise<void> {
-    await dismissOverlay(this.modalController, null, 'cancel');
-  }
 }

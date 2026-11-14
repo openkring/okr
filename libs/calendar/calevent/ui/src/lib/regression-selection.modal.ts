@@ -1,40 +1,32 @@
-import { Component, inject, input, signal } from '@angular/core';
-import { IonContent, IonItem, IonLabel, IonList, IonRadio, IonRadioGroup, ModalController } from '@ionic/angular';
+import { Component, inject, input } from '@angular/core';
+import { IonContent, IonItem, IonLabel, IonList, ModalController } from '@ionic/angular';
 
 import { Header } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
+/**
+ * Asks which part of a series a change applies to. A tap on an option chooses it and closes the
+ * modal (role 'confirm'); the header's close button dismisses without a choice.
+ */
 @Component({
   selector: 'okr-regression-selection-modal',
   standalone: true,
   imports: [
     Header,
-    IonContent, IonRadioGroup, IonRadio, IonLabel, IonItem, IonList
+    IonContent, IonLabel, IonItem, IonList
   ],
   template: `
-    <okr-header [i18n]="{ title: i18n().title }" [showOkButton]="true" (okClicked)="save()" [isModal]="true" />
+    <okr-header [i18n]="{ title: i18n().title }" [isModal]="true" />
     <ion-content class="ion-no-padding">
-      <ion-item>
+      <ion-item lines="none">
         <ion-label class="ion-text-wrap">{{ i18n().intro }}</ion-label>
       </ion-item>
       <ion-list>
-        <ion-radio-group [value]="selectedOption()" (ionChange)="selectedOption.set($event.detail.value)">
-          <ion-item>
-            <ion-radio value="current" labelPlacement="end" justify="start">
-              <span class="ion-text-wrap">{{ i18n().current }}</span>
-            </ion-radio>
+        @for (option of options; track option) {
+          <ion-item [button]="true" [detail]="true" (click)="select(option)">
+            <ion-label class="ion-text-wrap">{{ i18n()[option] }}</ion-label>
           </ion-item>
-          <ion-item>
-            <ion-radio value="future" labelPlacement="end" justify="start">
-              <span class="ion-text-wrap">{{ i18n().future }}</span>
-            </ion-radio>
-          </ion-item>
-          <ion-item>
-            <ion-radio value="all" labelPlacement="end" justify="start">
-              <span class="ion-text-wrap">{{ i18n().all }}</span>
-            </ion-radio>
-          </ion-item>
-        </ion-radio-group>
+        }
       </ion-list>
     </ion-content>
   `
@@ -45,12 +37,10 @@ export class RegressionSelectionModal {
   // inputs
   public readonly i18n = input.required<{ title: string, intro: string, current: string, future: string, all: string }>();
 
-  // state
-  protected selectedOption = signal('current');
+  protected readonly options = ['current', 'future', 'all'] as const;
 
-  
   /******************************* actions *************************************** */
-  public async save(): Promise<void> {
-    await dismissOverlay(this.modalController, this.selectedOption(), 'confirm');
+  public async select(option: 'current' | 'future' | 'all'): Promise<void> {
+    await dismissOverlay(this.modalController, option, 'confirm');
   }
 }

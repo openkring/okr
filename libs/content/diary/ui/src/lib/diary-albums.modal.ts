@@ -6,7 +6,7 @@ import {
 
 import { DiaryAlbumKind, DiaryAlbumModel, TRANSPORT_MODES, TransportMode, TripModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { EmptyList, Header } from '@okr/shared-ui';
+import { ChangeConfirmation, EmptyList, Header } from '@okr/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetOptions, dismissOverlay } from '@okr/shared-util-angular';
 
 import {
@@ -62,13 +62,16 @@ const TRACK_KEYS: DiaryTrackFilterKey[] = ['all', ...TRANSPORT_MODES];
   selector: 'okr-diary-albums-modal',
   standalone: true,
   imports: [
-    Header, EmptyList, DiaryDateRangeForm, SvgIconPipe,
+    Header, ChangeConfirmation, EmptyList, DiaryDateRangeForm, SvgIconPipe,
     IonToolbar, IonSegment, IonSegmentButton, IonLabel, IonSearchbar, IonButtons, IonButton, IonIcon,
     IonContent, IonList, IonItem, IonNote,
   ],
   styles: [`ion-segment { overflow-x: auto; }`],
   template: `
     <okr-header [i18n]="{ title: i18n().albums_title() }" [isModal]="true" />
+    @if (showRangeConfirmation()) {
+      <okr-change-confirmation [i18n]="rangeConfirmationI18n()" (saveClicked)="applyRange()" (cancelClicked)="resetRange()" />
+    }
     <ion-toolbar color="light">
       <ion-segment [value]="segment()" [scrollable]="true" (ionChange)="onSegmentChange($event)">
         @for (s of segments(); track s) {
@@ -77,7 +80,7 @@ const TRACK_KEYS: DiaryTrackFilterKey[] = ['all', ...TRANSPORT_MODES];
       </ion-segment>
     </ion-toolbar>
     @if (segment() !== 'date') {
-      <ion-toolbar>
+      <ion-toolbar color="light">
         <ion-searchbar [value]="searchTerm()" [placeholder]="i18n().albums_search()" [debounce]="200"
           (ionInput)="searchTerm.set($any($event).detail.value ?? '')" />
         @if (canAdd()) {
@@ -93,9 +96,6 @@ const TRACK_KEYS: DiaryTrackFilterKey[] = ['all', ...TRANSPORT_MODES];
           <ion-note class="ion-padding-start ion-padding-top" color="primary">{{ appliesTo }}</ion-note>
         }
         <okr-diary-date-range-form [i18n]="i18n()" [(formData)]="range" (valid)="rangeValid.set($event)" />
-        <ion-button class="ion-margin" expand="block" [disabled]="!canApplyRange()" (click)="applyRange()">
-          {{ i18n().albums_apply() }}
-        </ion-button>
       } @else if (rows().length === 0) {
         <okr-empty-list [message]="i18n().albums_empty()" />
       } @else {
@@ -146,8 +146,10 @@ export class DiaryAlbumsModal {
   protected readonly segments = computed(() => SEGMENTS.filter(s => s !== 'track' || this.tracksAvailable()
     || (this.tracksAvailable() === undefined && this.segment() === 'track')));
   protected readonly searchTerm = signal('');
-  /** starts at the active filter's range, so an applied narrowing can be seen and removed again */
-  protected readonly range = linkedSignal<DiaryDateRange>(() => ({ from: this.activeFilter()?.from ?? '', to: this.activeFilter()?.to ?? '' }));
+  /** the active filter's range, so an applied narrowing can be seen and removed again */
+  private readonly initialRange = computed<DiaryDateRange>(() => ({ from: this.activeFilter()?.from ?? '', to: this.activeFilter()?.to ?? '' }));
+  /** starts at the active filter's range */
+  protected readonly range = linkedSignal<DiaryDateRange>(() => this.initialRange());
   protected readonly rangeValid = signal(false);
 
   // the lists are refreshed by the edit callbacks, so they are local copies of the inputs
@@ -173,6 +175,15 @@ export class DiaryAlbumsModal {
   // a plain date filter needs both bounds; over an album one open end or an empty range is fine
   protected readonly canApplyRange = computed(() =>
     this.rangeValid() && canApplyDiaryDateRange(this.range().from, this.range().to, !!this.narrowable()));
+
+  /** the «Datum» apply bar: only on that segment, once the range differs from the active one and can be applied */
+  protected readonly showRangeConfirmation = computed(() => {
+    if (this.segment() !== 'date' || !this.canApplyRange()) return false;
+    const range = this.range();
+    const initial = this.initialRange();
+    return range.from !== initial.from || range.to !== initial.to;
+  });
+  protected readonly rangeConfirmationI18n = computed(() => ({ cancel: this.i18n().cancel(), save: this.i18n().albums_apply() }));
 
   /** the album keys whose newest date the visible segment shows */
   private readonly datedKeys = computed((): string[] => {
@@ -314,6 +325,10 @@ export class DiaryAlbumsModal {
     if (!this.canApplyRange()) return;
     const { from, to } = this.range();
     await dismissOverlay(this.modalController, mergeDiaryDateRange(this.activeFilter(), from, to), 'filter');
+  }
+
+  protected resetRange(): void {
+    this.range.set(this.initialRange());
   }
 
   protected async showActions(row: AlbumRow): Promise<void> {

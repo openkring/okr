@@ -1,17 +1,17 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { IonButton, IonContent, ModalController } from '@ionic/angular';
 
-import { Header } from '@okr/shared-ui';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
 /** A photo or clip of the journal the author may pick: its image key and a readable name. */
 export interface PickablePhoto { key: string; label: string }
 
-export interface JournalPhotoPickI18n { title: string; newItems: string; empty: string }
+export interface JournalPhotoPickI18n { title: string; newItems: string; empty: string; cancel: string; save: string }
 
 /**
  * Picks photos or clips of a journal for a section (spec 1.154 §2 «Photo picker»): a grid of the journal's photos,
- * a tap selects (several: toggles, one: dismisses at once), the header's OK button dismisses with the selected keys
+ * a tap selects (several: toggles, one: dismisses at once), the change-confirmation bar dismisses with the selected keys
  * in tap order and role 'confirm'. «Neue Fotos» runs `importItems` — called inside the tap, so the browser's file
  * dialog opens — and dismisses with the imported keys. Presentational: the journal resolves the thumbnails
  * (`thumbnailUrl`, read in the template so a url that arrives later still shows) and does the import.
@@ -19,7 +19,7 @@ export interface JournalPhotoPickI18n { title: string; newItems: string; empty: 
 @Component({
   selector: 'okr-journal-photo-pick-modal',
   standalone: true,
-  imports: [Header, IonContent, IonButton],
+  imports: [Header, ChangeConfirmation, IonContent, IonButton],
   styles: [`
     .actions { padding: 8px 12px 0; }
     .status, .empty { margin: 8px 12px; color: var(--ion-color-medium); font-size: 0.9rem; }
@@ -33,7 +33,10 @@ export interface JournalPhotoPickI18n { title: string; newItems: string; empty: 
       font-size: 0.8rem; background: var(--ion-color-primary); color: var(--ion-color-primary-contrast); text-align: center; }
   `],
   template: `
-    <okr-header [i18n]="{ title: i18n().title }" [isModal]="true" [showOkButton]="multiple() && selected().length > 0" (okClicked)="save()" />
+    <okr-header [i18n]="{ title: i18n().title }" [isModal]="true" />
+    @if (multiple() && selected().length > 0) {
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="selected.set([])" (saveClicked)="save()" />
+    }
     <ion-content>
       <div class="actions">
         <ion-button expand="block" fill="outline" [disabled]="importing()" (click)="importNew()">{{ i18n().newItems }}</ion-button>
@@ -79,6 +82,7 @@ export class JournalPhotoPickModal {
   protected readonly selected = signal<string[]>([]);
   protected readonly importing = signal(false);
   protected readonly status = computed(() => this.progress()());
+  protected readonly changeConfirmationI18n = computed<ChangeConfirmationI18n>(() => ({ cancel: this.i18n().cancel, save: this.i18n().save }));
 
   /** 1-based tap order of a selected key, 0 when not selected */
   protected position(key: string): number {

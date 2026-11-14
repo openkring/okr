@@ -1,8 +1,7 @@
 import { Component, inject, input } from '@angular/core';
-import {
-  IonButton, IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonList, IonNote, IonTitle, IonToolbar, ModalController,
-} from '@ionic/angular';
+import { IonContent, IonItem, IonLabel, IonList, IonNote, ModalController } from '@ionic/angular';
 
+import { Header } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { fill } from '@okr/shared-util-core';
 import { ActivePin, MatrixChatI18n } from '@okr/chat-util';
@@ -21,20 +20,13 @@ export interface PinnedMessageItem {
 @Component({
   selector: 'okr-pinned-messages-modal',
   standalone: true,
-  imports: [IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonContent, IonList, IonItem, IonLabel, IonNote],
+  imports: [Header, IonContent, IonList, IonItem, IonLabel, IonNote],
   styles: [`
     .pin-line { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
     .pin-sender { font-weight: 600; }
   `],
   template: `
-    <ion-header>
-      <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-button (click)="cancel()">{{ i18n().cancel() }}</ion-button>
-        </ion-buttons>
-        <ion-title>{{ title() }}</ion-title>
-      </ion-toolbar>
-    </ion-header>
+    <okr-header [i18n]="{ title: title() }" [isModal]="true" />
     <ion-content>
       <ion-list lines="full">
         @for (item of items(); track item.pin.scope + item.pin.eventId) {
@@ -65,9 +57,5 @@ export class PinnedMessagesModal {
 
   protected async select(item: PinnedMessageItem): Promise<void> {
     await dismissOverlay(this.modalController, item.pin.eventId, 'jump');
-  }
-
-  protected async cancel(): Promise<void> {
-    await dismissOverlay(this.modalController, undefined, 'cancel');
   }
 }

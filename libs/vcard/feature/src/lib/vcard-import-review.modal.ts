@@ -3,11 +3,8 @@ import {
   IonAccordion,
   IonAccordionGroup,
   IonBadge,
-  IonButton,
-  IonButtons,
   IonCheckbox,
   IonContent,
-  IonHeader,
   IonIcon,
   IonItem,
   IonLabel,
@@ -17,13 +14,12 @@ import {
   IonSegmentButton,
   IonSelect,
   IonSelectOption,
-  IonTitle,
-  IonToolbar,
   ModalController,
 } from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
+import { ChangeConfirmation, Header } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { fill, VcardImportDecision, VCARD_I18N_KEYS, VcardI18n } from '@okr/vcard-util';
 
@@ -45,20 +41,19 @@ type Relation = VcardImportDecision['relations'][number];
   selector: 'okr-vcard-import-review-modal',
   standalone: true,
   imports: [
-    IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent,
+    Header, ChangeConfirmation, IonContent,
     IonList, IonItem, IonLabel, IonNote, IonBadge, IonCheckbox,
     IonSelect, IonSelectOption, IonSegment, IonSegmentButton,
     IonAccordion, IonAccordionGroup, IonIcon, SvgIconPipe,
   ],
   template: `
-    <ion-header>
-      <ion-toolbar color="secondary">
-        <ion-title>{{ i18n.import_title() }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="cancel()">{{ i18n.cancel() }}</ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
+    <okr-header [i18n]="{ title: i18n.import_title() }" [isModal]="true" />
+    <!-- the matcher's decisions are a valid starting point, so the import is offered as soon as at
+         least one card is not skipped; the reset button returns to those decisions once edited. -->
+    @if (!allSkipped()) {
+      <okr-change-confirmation [i18n]="{ cancel: i18n.cancel(), save: i18n.import_start() }"
+        [showCancel]="isDirty()" (saveClicked)="confirm()" (cancelClicked)="reset()" />
+    }
 
     <ion-content class="ion-padding">
       <p>{{ i18n.import_intro() }}</p>
@@ -170,10 +165,7 @@ type Relation = VcardImportDecision['relations'][number];
         }
       </ion-accordion-group>
 
-      <ion-button expand="block" class="ion-margin-top" [disabled]="allSkipped()" (click)="confirm()">
-        {{ i18n.import_start() }}
-      </ion-button>
-      <ion-note class="ion-text-center ion-display-block">{{ summary() }}</ion-note>
+      <ion-note class="ion-text-center ion-display-block ion-margin-top">{{ summary() }}</ion-note>
     </ion-content>
   `,
 })
@@ -201,9 +193,20 @@ export class VcardImportReviewModal {
       if (this.seeded) return;
       this.seeded = true;
       untracked(() => {
-        this.state.set(decisions.map((d) => ({ ...d, relations: d.relations.map((r) => ({ ...r })) })));
+        this.initialState = decisions;
+        this.reset();
       });
     });
+  }
+
+  /** the matcher's decisions as seeded — reset() copies them back */
+  private initialState: VcardImportDecision[] = [];
+  /** set by every edit (updateAt), cleared by reset(); not a deep compare — drafts carry base64 photos */
+  protected readonly isDirty = signal(false);
+
+  protected reset(): void {
+    this.state.set(this.initialState.map((d) => ({ ...d, relations: d.relations.map((r) => ({ ...r })) })));
+    this.isDirty.set(false);
   }
 
   protected readonly allSkipped = computed(() => this.state().every((d) => d.action === 'skip'));
@@ -279,6 +282,7 @@ export class VcardImportReviewModal {
 
   private updateAt(index: number, patch: (d: VcardImportDecision) => VcardImportDecision): void {
     this.state.update((list) => list.map((d, i) => (i === index ? patch(d) : d)));
+    this.isDirty.set(true);
   }
 
   private updateRelationAt(index: number, relationIndex: number, patch: (r: Relation) => Relation): void {
@@ -290,9 +294,5 @@ export class VcardImportReviewModal {
 
   public async confirm(): Promise<void> {
     await dismissOverlay(this.modalController, this.state(), 'confirm');
-  }
-
-  public async cancel(): Promise<void> {
-    await dismissOverlay(this.modalController, undefined, 'cancel');
   }
 }

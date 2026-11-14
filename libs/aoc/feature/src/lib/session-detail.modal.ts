@@ -1,11 +1,11 @@
-import { Component, computed, inject, input } from '@angular/core';
-import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonRow, IonTitle, IonToolbar, ModalController } from '@ionic/angular';
+import { Component, computed, input } from '@angular/core';
+import { IonCol, IonContent, IonGrid, IonRow } from '@ionic/angular';
 
 import { SessionModel } from '@okr/shared-models';
 import { getSessionStatus } from '@okr/session-util';
 import { DateFormat, convertDateFormatToString } from '@okr/shared-util-core';
 import { AocI18n } from '@okr/aoc-util';
-import { dismissOverlay } from '@okr/shared-util-angular';
+import { Header } from '@okr/shared-ui';
 
 interface DetailRow { label: string; value: string; }
 
@@ -13,19 +13,11 @@ interface DetailRow { label: string; value: string; }
   selector: 'okr-session-detail-modal',
   standalone: true,
   imports: [
-    IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
-    IonContent, IonGrid, IonRow, IonCol,
+    Header, IonContent, IonGrid, IonRow, IonCol,
   ],
   styles: [`ion-row { border-bottom: 1px solid var(--ion-color-light); }`],
   template: `
-    <ion-header>
-      <ion-toolbar color="secondary">
-        <ion-title>{{ title() }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="close()">{{ closeLabel() }}</ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
+    <okr-header [i18n]="{ title: title() }" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-grid>
         @for (row of rows(); track row.label) {
@@ -39,12 +31,9 @@ interface DetailRow { label: string; value: string; }
   `,
 })
 export class SessionDetailModal {
-  private readonly modalController = inject(ModalController);
-
   public session = input.required<SessionModel>();
   public i18n = input.required<AocI18n>();
   public title = input('Session-Details');
-  public closeLabel = input('Schliessen');
 
   protected rows = computed<DetailRow[]>(() => {
     const s = this.session();
@@ -71,8 +60,4 @@ export class SessionDetailModal {
       { label: 'tenants', value: s.tenants.join(', ') },
     ];
   });
-
-  protected close(): void {
-    dismissOverlay(this.modalController, null, 'cancel');
-  }
 }

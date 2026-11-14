@@ -1,5 +1,5 @@
 import { Component, inject, input } from '@angular/core';
-import { IonButton, IonContent, IonFooter, IonItem, IonLabel, IonList, IonToolbar, ModalController } from '@ionic/angular';
+import { IonButton, IonContent, IonItem, IonLabel, IonList, ModalController } from '@ionic/angular';
 
 import { Header } from '@okr/shared-ui';
 import { PersonDuplicateCandidate, PersonI18n } from '@okr/subject-person-util';
@@ -8,7 +8,7 @@ import { dismissOverlay } from '@okr/shared-util-angular';
 @Component({
   selector: 'okr-person-duplicate-modal',
   standalone: true,
-  imports: [Header, IonContent, IonList, IonItem, IonLabel, IonButton, IonFooter, IonToolbar],
+  imports: [Header, IonContent, IonList, IonItem, IonLabel, IonButton],
   template: `
     <okr-header [i18n]="{ title: i18n().duplicate_title() }" [isModal]="true" />
     <ion-content class="ion-padding">
@@ -34,12 +34,8 @@ import { dismissOverlay } from '@okr/shared-util-angular';
           </ion-item>
         }
       </ion-list>
+      <ion-button expand="block" fill="outline" (click)="createNew()">{{ i18n().duplicate_create_new() }}</ion-button>
     </ion-content>
-    <ion-footer>
-      <ion-toolbar>
-        <ion-button slot="end" fill="clear" (click)="createNew()">{{ i18n().duplicate_create_new() }}</ion-button>
-      </ion-toolbar>
-    </ion-footer>
   `,
 })
 export class PersonDuplicateModal {

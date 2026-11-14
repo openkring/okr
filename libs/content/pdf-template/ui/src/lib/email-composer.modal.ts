@@ -132,7 +132,9 @@ interface AddressField {
       [actionIcon]="isVersand() ? 'info-circle' : ''" [actionTitle]="i18n.info_action()" (actionClicked)="showInfo()" />
 
     @if (showConfirmation()) {
-      <okr-change-confirmation [i18n]="changeConfirmationI18n()" [saveDisabled]="!canSend()" (saveClicked)="send()" (cancelClicked)="revert()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (saveClicked)="send()" (cancelClicked)="revert()" />
+    }
+    @if (showSendHints()) {
       @if (anyPost() && !postAllowsSend()) {
         <div class="reach-warnings" role="status">
           <div class="reach-warning">
@@ -539,11 +541,10 @@ export class EmailComposerModal {
       .map((row) => row.personKey);
     return groupReachWarnings(this.chosenEvents(), emailKeys, this.membersByGroup());
   });
-  /**
-   * The Senden toolbar appears with the first change, so a change in any segment shows how it is sent;
-   * «Senden» stays disabled until the mail can go out (canSend).
-   */
-  protected readonly showConfirmation = computed(() => this.isDirty() && !this.isSending() && !this.letters());
+  /** The Senden toolbar appears once something changed and the mail can go out (canSend). */
+  protected readonly showConfirmation = computed(() => this.showSendHints() && this.canSend());
+  /** After the first change the reach and post hints explain how (or why not yet) the mail is sent. */
+  protected readonly showSendHints = computed(() => this.isDirty() && !this.isSending() && !this.letters());
   /** A valid form; a Versand also needs its Zustellung loaded and at least one ticked recipient. */
   protected readonly canSend = computed(() =>
     this.composerForm().valid()

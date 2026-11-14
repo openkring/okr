@@ -48,6 +48,8 @@ export class JournalSectionPicker implements SectionImagePicker {
           title: kind === 'video' ? i18n.picker_videos() : i18n.picker_photos(),
           newItems: kind === 'video' ? i18n.picker_new_videos() : i18n.picker_new_photos(),
           empty: kind === 'video' ? i18n.picker_empty_videos() : i18n.picker_empty_photos(),
+          cancel: i18n.cancel(),
+          save: i18n.save(),
         },
         thumbnailUrl: (key: string) => this.fileUrl.url(this.images().get(key)?.path400),
         importItems: () => this.importItems(kind),

@@ -11,6 +11,11 @@
  *      no raw Ionic inputs or [(ngModel)] typed into the modal, and a modal that renders an
  *      okr-*-form shows okr-change-confirmation. Pickers, wizards and tools that are not
  *      edit dialogs are listed in MODAL_ALLOWLIST, each with its reason.
+ *   5. a modal's toolbars: the top bar is okr-header (its only button the round close icon), no
+ *      text button sits in any ion-toolbar / ion-footer, every ion-toolbar has a colour (an
+ *      uncoloured one reads as transparent), okr-change-confirmation sits between okr-header and
+ *      ion-content (that keeps it pinned) and is gated on valid && dirty, never [saveDisabled].
+ *      Full-screen media viewers are listed in TOOLBAR_ALLOWLIST, each with its reason.
  *
  * Usage: node scripts/check-forms.mjs   (exit 1 on any finding — CI friendly)
  */
@@ -159,7 +164,6 @@ const MODAL_ALLOWLIST = {
   'libs/auth/feature/src/lib/login.modal.ts': 'auth form with its own submit, nothing is edited',
   'libs/chat/feature/src/lib/forward-message.modal.ts': 'picker: choose target chats for forwarding',
   'libs/chat/feature/src/lib/pin-message.modal.ts': 'picker: pin duration and scope',
-  'libs/calendar/calevent/ui/src/lib/regression-selection.modal.ts': 'picker: scope of a series change (this / future / all)',
   'libs/calendar/calevent/ui/src/lib/organiser-contact.modal.ts': 'action picker: whom to contact and how',
   'libs/calendar/calevent/ui/src/lib/calendar-sync.modal.ts': 'tool: shows / copies / resets a subscription link',
   'libs/vcard/feature/src/lib/vcard-import-review.modal.ts': 'wizard step: review parsed cards before import',
@@ -169,7 +173,6 @@ const MODAL_ALLOWLIST = {
   'libs/forms/feature/src/lib/section-encryption-setup.modal.ts': 'confirmation: shows a generated password, acknowledge to activate',
   'libs/cms/section/feature/src/lib/message-center.modal.ts': 'tool: composes and sends messages',
   'libs/content/esign/feature/src/lib/esign-send-document.modal.ts': 'wizard: upload, assign signees, send',
-  'libs/content/diary/ui/src/lib/diary-albums.modal.ts': 'picker: choose an album, tag or date range to filter the diary list (spec 1.114)',
   'libs/calendar/course/ui/src/lib/course-invite.modal.ts': 'selection dialog, no stored form (spec 1.152 §8.1)',
 };
 
@@ -196,6 +199,41 @@ for (const [path, hits] of modalHits) {
 }
 for (const path of Object.keys(MODAL_ALLOWLIST)) {
   if (!modalHits.has(path)) report(path, 1, 'rule 4: stale MODAL_ALLOWLIST entry (file gone or now compliant) — remove it');
+}
+
+// ---------------------------------------------------------------- modal toolbars (rule 5)
+/** Modals whose own toolbar is deliberate. Every entry needs a reason; the list only shrinks. */
+const TOOLBAR_ALLOWLIST = {
+  'libs/shared/ui/src/lib/image-lightbox.modal.ts': 'full-screen media viewer: dark icon-only bar (prev / next / download / actions / close)',
+  'libs/shared/ui/src/lib/video-view.modal.ts': 'full-screen media viewer: dark title bar, icon-only footer (copy link / download / close)',
+};
+const lineOf = (src, index) => src.slice(0, index).split('\n').length;
+const isTextButton = (inner) => !/slot="icon-only"/.test(inner) && inner.replace(/<[^>]+>/g, '').replace(/@(if|else|for)[^{]*\{|\}/g, '').trim() !== '';
+const toolbarHits = new Map();
+for (const path of execSync(`find libs apps -name '*.modal.ts' -not -path '*/node_modules/*' -not -path 'apps/*/node_modules/*'`, { encoding: 'utf8' })
+  .split('\n').filter(Boolean).sort()) {
+  const src = readFileSync(path, 'utf8');
+  const hits = [];
+  for (const m of src.matchAll(/<ion-header\b/g))
+    hits.push([lineOf(src, m.index), 'hand-built <ion-header> — use <okr-header [isModal]="true"> (its only button is the close icon)']);
+  for (const m of src.matchAll(/<ion-toolbar\b[^>]*>/g))
+    if (!/\s\[?color\]?=/.test(m[0])) hits.push([lineOf(src, m.index), '<ion-toolbar> without a color renders see-through — give it an explicit color']);
+  for (const bar of src.matchAll(/<(ion-toolbar|ion-footer)\b[\s\S]*?<\/\1>/g))
+    for (const b of bar[0].matchAll(/<ion-button\b[^>]*>([\s\S]*?)<\/ion-button>/g))
+      if (isTextButton(b[1])) hits.push([lineOf(src, bar.index + b.index), `text button in a modal ${bar[1]} — the action belongs on okr-change-confirmation or in the content`]);
+  const cc = src.indexOf('<okr-change-confirmation'), header = src.indexOf('<okr-header'), content = src.indexOf('<ion-content');
+  if (cc >= 0 && content >= 0 && (cc > content || (header >= 0 && cc < header)))
+    hits.push([lineOf(src, cc), 'okr-change-confirmation must sit between okr-header and ion-content, or it scrolls away']);
+  for (const m of src.matchAll(/<okr-change-confirmation\b[^>]*\[saveDisabled\]/g))
+    hits.push([lineOf(src, m.index), '[saveDisabled] on the banner — show it only when valid && dirty instead']);
+  if (hits.length) toolbarHits.set(path, hits);
+}
+for (const [path, hits] of toolbarHits) {
+  if (path in TOOLBAR_ALLOWLIST) continue;
+  for (const [line, msg] of hits) report(path, line, `rule 5: ${msg}`);
+}
+for (const path of Object.keys(TOOLBAR_ALLOWLIST)) {
+  if (!toolbarHits.has(path)) report(path, 1, 'rule 5: stale TOOLBAR_ALLOWLIST entry (file gone or now compliant) — remove it');
 }
 
 if (findings.length) {

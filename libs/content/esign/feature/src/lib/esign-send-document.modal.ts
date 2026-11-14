@@ -2,12 +2,12 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, OnInit, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
 import {
-  IonButton, IonButtons, IonCard, IonCardContent, IonCol, IonContent, IonGrid, IonHeader,
-  IonItem, IonLabel, IonSelect, IonSelectOption, IonSpinner, IonTitle, IonToolbar, IonRow,
+  IonButton, IonCard, IonCardContent, IonCol, IonContent, IonGrid,
+  IonItem, IonLabel, IonSelect, IonSelectOption, IonSpinner, IonRow,
   ModalController, ToastController,
 } from '@ionic/angular';
 
-import { NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { ChangeConfirmation, Header, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { I18nService } from '@okr/shared-i18n';
 import { dismissOverlay, validateVestTree } from '@okr/shared-util-angular';
 import { ESIGN_I18N_KEYS, EsignI18n, EsignSendFormModel, esignSendValidations } from '@okr/content-esign-util';
@@ -20,21 +20,20 @@ type SendStatus = 'uploading' | 'scanning' | 'ready' | 'no-fields' | 'sending' |
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    TextInput, NotesInput,
-    IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent,
+    Header, ChangeConfirmation, TextInput, NotesInput,
+    IonButton, IonContent,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonLabel,
     IonSelect, IonSelectOption, IonSpinner,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
   template: `
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>{{ i18n.document_title() }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="close()">{{ i18n.close() }}</ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
+    <okr-header [i18n]="{ title: i18n.document_title() }" [isModal]="true" />
+    <!-- shown once the scan found signees and the form is valid (the initiator name must be typed);
+         the reset button returns the fields to what the scan prefilled. -->
+    @if (canSend()) {
+      <okr-change-confirmation [i18n]="{ cancel: i18n.cancel(), save: i18n.send() }"
+        [showCancel]="isDirty()" (saveClicked)="send()" (cancelClicked)="reset()" />
+    }
 
     <ion-content class="ion-padding">
       <ion-card>
@@ -133,10 +132,8 @@ type SendStatus = 'uploading' | 'scanning' | 'ready' | 'no-fields' | 'sending' |
         </ion-card-content>
       </ion-card>
 
-      @if (status() === 'ready' || status() === 'sending') {
-        <ion-button expand="block" [disabled]="!canSend()" (click)="send()">
-          @if (status() === 'sending') { <ion-spinner name="dots" /> } @else { {{ i18n.send() }} }
-        </ion-button>
+      @if (status() === 'sending') {
+        <div class="ion-text-center"><ion-spinner name="dots" /></div>
       }
       @if (status() === 'error') {
         <ion-button expand="block" fill="outline" (click)="retry()">{{ i18n.retry() }}</ion-button>
@@ -165,6 +162,10 @@ export class EsignSendDocumentModal implements OnInit {
     jurisdiction: 'zertes',
     sendMail: 'all',
   });
+  // the form as prefilled after the scan — reset() returns to it, isDirty() compares against it
+  private readonly initialFormData = signal<EsignSendFormModel>(this.formData());
+  protected readonly isDirty = computed(() =>
+    JSON.stringify(this.formData()) !== JSON.stringify(this.initialFormData()));
 
   // Signal Forms + Vest (project convention); validity gates the Send button.
   protected readonly sendForm = form(this.formData, (path) =>
@@ -213,6 +214,7 @@ export class EsignSendDocumentModal implements OnInit {
         jurisdiction: (['zertes', 'eidas'].includes(scan.jurisdiction)
           ? scan.jurisdiction : vm.jurisdiction) as EsignSendFormModel['jurisdiction'],
       }));
+      this.initialFormData.set(this.formData());
       this.status.set('ready');
     } catch (error) {
       this.errorMessage.set(this.toMessage(error));
@@ -222,6 +224,10 @@ export class EsignSendDocumentModal implements OnInit {
 
   protected retry(): void {
     void this.prepare();
+  }
+
+  protected reset(): void {
+    this.formData.set(this.initialFormData());
   }
 
   protected onFieldChange(field: keyof EsignSendFormModel, value: string): void {
@@ -249,10 +255,6 @@ export class EsignSendDocumentModal implements OnInit {
       await this.presentToast(`${this.i18n.send_failed()}: ${this.toMessage(error)}`, 'danger');
       this.status.set('ready');
     }
-  }
-
-  protected close(): void {
-    dismissOverlay(this.modalController, null, 'cancel');
   }
 
   private toMessage(error: unknown): string {

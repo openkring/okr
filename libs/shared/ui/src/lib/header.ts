@@ -57,11 +57,6 @@ export interface HeaderI18n {
                 <ion-icon slot="icon-only" src="{{'cancel' | svgIcon }}" />
               </ion-button>
             }
-            @if(shouldShowOkButton()) {
-              <ion-button (click)="okClicked.emit()">
-                <ion-icon slot="icon-only" src="{{'checkbox-circle' | svgIcon }}" />
-              </ion-button>
-            }
           </ion-buttons>
         }
       </ion-toolbar>
@@ -85,7 +80,6 @@ export interface HeaderI18n {
       .title-long { display: none; }
       .title-short { display: inline; }
     }
-    ion-button { background-color: primary !important; }
   `]
 })
 export class Header {
@@ -98,7 +92,6 @@ export class Header {
   public isModal = input(false);
   public isRoot = input(false);
   public isSearchable = input(false);
-  public showOkButton = input(false);
   public showCloseButton = input(true);
   public actionIcon = input('');        // '' hides the action button
   public actionTitle = input('');       // tooltip of the action button
@@ -107,7 +100,6 @@ export class Header {
   protected isModalDialog = computed(() => coerceBoolean(this.isModal()));
   protected isRootPage = computed(() => coerceBoolean(this.isRoot()));
   protected isSearchablePage = computed(() => coerceBoolean(this.isSearchable()));
-  protected shouldShowOkButton = computed(() => coerceBoolean(this.showOkButton()));
   protected shouldShowCloseButton = computed(() => coerceBoolean(this.showCloseButton()));
 
   /**
@@ -117,12 +109,11 @@ export class Header {
   protected titleInset = computed(() => {
     const start = this.isModalDialog() ? 0 : 1;
     const end = this.isRootPage() ? 0
-      : (this.actionIcon() ? 1 : 0) + (this.shouldShowCloseButton() ? 1 : 0) + (this.shouldShowOkButton() ? 1 : 0);
+      : (this.actionIcon() ? 1 : 0) + (this.shouldShowCloseButton() ? 1 : 0);
     return Math.max(start, end) * 48 + 8;
   });
 
   // outputs
-  public okClicked = output();
   public actionClicked = output();
 
   public back(): void {

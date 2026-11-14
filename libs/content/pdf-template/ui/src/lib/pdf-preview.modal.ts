@@ -2,13 +2,12 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import {
-  IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon,
-  IonContent, IonFooter, ModalController,
+  IonButton, IonCol, IonContent, IonGrid, IonIcon, IonRow, ModalController,
 } from '@ionic/angular';
 import { SvgIconPipe } from '@okr/shared-pipes';
+import { Header } from '@okr/shared-ui';
 import { I18nService } from '@okr/shared-i18n';
 import { PDF_PREVIEW_I18N_KEYS, PdfPreviewI18n } from '@okr/content-pdf-template-util';
-import { dismissOverlay } from '@okr/shared-util-angular';
 import { EmailComposerModal } from './email-composer.modal';
 
 @Component({
@@ -16,35 +15,36 @@ import { EmailComposerModal } from './email-composer.modal';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    SvgIconPipe,
-    IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon,
-    IonContent, IonFooter,
+    SvgIconPipe, Header,
+    IonButton, IonIcon, IonContent, IonGrid, IonRow, IonCol,
   ],
   styles: [`
-    .preview-frame { width: 100%; height: calc(100vh - 120px); border: none; }
+    .preview-frame { width: 100%; height: calc(100vh - 180px); border: none; }
     .no-preview { display: flex; align-items: center; justify-content: center; height: 200px; color: var(--ion-color-medium); }
   `],
   template: `
-    <ion-header>
-      <ion-toolbar color="secondary">
-        <ion-title>{{ titleText() }}</ion-title>
-        <ion-buttons slot="end">
-          @if(canSend()) {
-            <ion-button (click)="send()">
-              <ion-icon src="{{ 'send' | svgIcon }}" slot="icon-only" />
-            </ion-button>
-          }
-          <ion-button (click)="download()">
-            <ion-icon src="{{ 'download' | svgIcon }}" slot="icon-only" />
-          </ion-button>
-          <ion-button (click)="close()">
-            <ion-icon src="{{ 'cancel-circle' | svgIcon }}" slot="icon-only" />
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
+    <okr-header [i18n]="{ title: titleText() }" [isModal]="true" />
 
     <ion-content>
+      <!-- secondary actions as content buttons: a preview has nothing to save -->
+      <ion-grid>
+        <ion-row>
+          <ion-col [size]="canSend() ? 6 : 12">
+            <ion-button expand="block" fill="solid" color="primary" (click)="download()">
+              <ion-icon src="{{ 'download' | svgIcon }}" slot="start" />
+              {{ i18n.download() }}
+            </ion-button>
+          </ion-col>
+          @if(canSend()) {
+            <ion-col size="6">
+              <ion-button expand="block" fill="outline" color="primary" (click)="send()">
+                <ion-icon src="{{ 'send' | svgIcon }}" slot="start" />
+                {{ i18n.send() }}
+              </ion-button>
+            </ion-col>
+          }
+        </ion-row>
+      </ion-grid>
       @if(safeUrl(); as url) {
         @if(outputFormat() === 'pdf') {
           <iframe [src]="url" class="preview-frame" [title]="i18n.frame()"></iframe>
@@ -57,24 +57,6 @@ import { EmailComposerModal } from './email-composer.modal';
         <div class="no-preview"><p>{{ i18n.empty() }}</p></div>
       }
     </ion-content>
-
-    <ion-footer>
-      <ion-toolbar>
-        <ion-buttons slot="end">
-          <ion-button fill="outline" (click)="close()">{{ i18n.close() }}</ion-button>
-          @if(canSend()) {
-            <ion-button fill="outline" color="primary" (click)="send()">
-              <ion-icon src="{{ 'send' | svgIcon }}" slot="start" />
-              {{ i18n.send() }}
-            </ion-button>
-          }
-          <ion-button fill="solid" color="primary" (click)="download()">
-            <ion-icon src="{{ 'download' | svgIcon }}" slot="start" />
-            {{ i18n.download() }}
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-footer>
   `
 })
 export class PdfPreviewModal {
@@ -114,10 +96,6 @@ export class PdfPreviewModal {
       cssClass: ['wide-modal', 'auto-height-modal'],
     });
     await modal.present();
-  }
-
-  protected async close(): Promise<void> {
-    await dismissOverlay(this.modalController, null, 'cancel');
   }
 
   protected download(): void {
