@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ButtonAction, ButtonSection, ColorIonic, SECTION_TYPES, SectionType, WeatherSection, LearningSection, EnergySection, CounterSection, COUNTER_CONFIG_SHAPE, FooterSection, FOOTER_CONFIG_SHAPE } from '@okr/shared-models';
+import { ButtonAction, ButtonSection, ColorIonic, SECTION_TYPES, SectionType, WeatherSection, LearningSection, EnergySection, CounterSection, COUNTER_CONFIG_SHAPE, FooterSection, FOOTER_CONFIG_SHAPE, JOURNAL_TRACK_CONFIG_SHAPE, JournalTrackSection } from '@okr/shared-models';
 
 import { createSection, narrowSection } from './section.util';
 
@@ -126,6 +126,16 @@ describe('createSection — footer', () => {
     expect(a.properties.columns[0].items).not.toBe(a.properties.columns[1].items);
     expect(a.properties.columns[0].items).not.toBe(FOOTER_CONFIG_SHAPE.columns[0].items);
     expect(a.properties).toEqual(FOOTER_CONFIG_SHAPE);
+  });
+});
+
+describe('createSection — journal track', () => {
+  it('starts without a track and never shares the track reference between two sections', () => {
+    const a = createSection('track', tenantId) as JournalTrackSection;
+    const b = createSection('track', tenantId) as JournalTrackSection;
+    expect(a.properties).toEqual({ track: { trackKey: '' } });
+    expect(a.properties.track).not.toBe(b.properties.track);
+    expect(a.properties.track).not.toBe(JOURNAL_TRACK_CONFIG_SHAPE.track);
   });
 });
 

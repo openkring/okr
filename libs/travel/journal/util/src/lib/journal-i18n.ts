@@ -272,6 +272,8 @@ export const JOURNAL_I18N_KEYS = {
   section_type_article: PFX + 'section.type_article',
   section_type_album: PFX + 'section.type_album',
   section_type_video: PFX + 'section.type_video',
+  section_type_map: PFX + 'section.type_map',
+  section_type_track: PFX + 'section.type_track',
   section_photos_count: PFX + 'section.photos_count',
   photo_sync_title: PFX + 'photo_sync.title',
   photo_sync_all_info: PFX + 'photo_sync.all_info',

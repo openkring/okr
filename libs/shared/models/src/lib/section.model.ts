@@ -25,6 +25,7 @@ export const SECTION_TYPES = [
     'people', 'responsibility', 'slider', 'table', 'tracker', 'video', 'accordion', 'events', 'invitations', 'tasks',
     'news', 'activities', 'messages', 'rag', 'orgchart', 'context', 'member-age', 'member-cat', 'trip-stats', 'form',
     'sankey', 'spider', 'toc', 'testimonial', 'timeline', 'weather', 'learning', 'advent', 'connections', 'departures', 'energy', 'counter', 'footer', 'notices', 'tiles',
+    'track',
 ] as const;
 
 export type SectionType = (typeof SECTION_TYPES)[number];
@@ -34,7 +35,7 @@ export type SectionModel =
     AlbumSection | ArticleSection | ButtonSection | CalendarSection | ChartSection | ChatSection |
     HeroSection | IframeSection | MapSection | PeopleSection | ResponsibilitySection | SliderSection |
     TableSection | TrackerSection | VideoSection | AccordionSection | EventsSection | InvitationsSection | TasksSection |
-    NewsSection | ActivitiesSection | MessagesSection | RagSection | OrgchartSection | ContextDiagramSection | MemberAgeSection | MemberCatSection | TripStatsSection | FormSection | SankeySection | SpiderSection | TocSection | TestimonialSection | TimelineSection | WeatherSection | LearningSection | AdventSection | ConnectionsSection | DeparturesSection | EnergySection | CounterSection | FooterSection | NoticesSection | TilesSection;
+    NewsSection | ActivitiesSection | MessagesSection | RagSection | OrgchartSection | ContextDiagramSection | MemberAgeSection | MemberCatSection | TripStatsSection | FormSection | SankeySection | SpiderSection | TocSection | TestimonialSection | TimelineSection | WeatherSection | LearningSection | AdventSection | ConnectionsSection | DeparturesSection | EnergySection | CounterSection | FooterSection | NoticesSection | TilesSection | JournalTrackSection;
 
 // --------------------------------------- ABSTRACT BASE SECTION MODELS ----------------------------------------
 // --------------------------------------- ORGCHART ----------------------------------------
@@ -299,7 +300,7 @@ export interface BaseSection {
   content: EditorConfig; // content from rich text editor
   properties?: AccordionConfig | AlbumConfig | ArticleConfig | ButtonConfig | CalendarOptions | EChartsOption | ChatConfig | HeroConfig |
   IframeConfig | MapConfig | OrgchartConfig | ContextDiagramConfig | PeopleConfig | ResponsibilityConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig | EventsConfig | InvitationsConfig |
-  TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | RagConfig | MemberAgeConfig | MemberCatConfig | TripStatsConfig | FormSectionConfig | SankeyConfig | SpiderConfig | TocConfig | TestimonialConfig | TimelineConfig | WeatherConfig | LearningConfig | AdventConfig | ConnectionsConfig | DeparturesConfig | EnergyConfig | CounterConfig | FooterConfig | NoticesConfig | TilesConfig;
+  TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | RagConfig | MemberAgeConfig | MemberCatConfig | TripStatsConfig | FormSectionConfig | SankeyConfig | SpiderConfig | TocConfig | TestimonialConfig | TimelineConfig | WeatherConfig | LearningConfig | AdventConfig | ConnectionsConfig | DeparturesConfig | EnergyConfig | CounterConfig | FooterConfig | NoticesConfig | TilesConfig | JournalTrackConfig;
   notes: string;
   tags: string;
   tenants: string[]; // list of tenant ids
@@ -603,6 +604,10 @@ export interface MapConfig {
   centerLongitude: number;
   zoom: number;
   useCurrentLocationAsCenter: boolean;
+  // travel journal (spec 1.154 §3, plan phase 5 decision 4); absent on every other map. In the journal the map is
+  // centred on the footprint, so centerLatitude/centerLongitude/useCurrentLocationAsCenter are ignored there.
+  layer?: string; // id of the journal base layer (journal-base-layer.util); absent = the journal's selected layer
+  showRoute?: boolean; // also draw the journal route (photo positions in time order); absent = off
 }
 
 // --------------------------------------- MESSAGES ----------------------------------------
@@ -869,6 +874,21 @@ export interface TrackerConfig {
   enableHighAccuracy: boolean; // high accuracy (such as GPS, if available), default is true
   maximumAge: number; // the maximum wait time in milliseconds of a possible cached position that is acceptable to return, default is 0
   exportFormat: 'kmz' | 'json' | 'csv'; // the format for exporting the data, default is 'kmz'
+}
+
+// --------------------------------------- JOURNAL TRACK ----------------------------------------
+/**
+ * A recorded tracker track shown inside a travel-journal footprint (spec 1.154 §6, plan phase 5 decision 1). The
+ * section only refers to the journal's derived track copy (change-log entity `track`, `journals/{jk}/tracks/{trackKey}`);
+ * it holds no points itself. Named `Journal…` because `TrackSection` is a recorded trip's section (trip.model.ts).
+ */
+export interface JournalTrackSection extends BaseSection {
+  type: 'track';
+  properties: JournalTrackConfig;
+}
+
+export interface JournalTrackConfig {
+  track: { trackKey: string }; // key of the journal's `track` entity (`trk__<tripKey>`); '' = no track chosen yet
 }
 
 // --------------------------------------- VIDEO ----------------------------------------

@@ -43,6 +43,11 @@ describe('journal peer util', () => {
     expect(acceptPeerRecords(records, 'j1', NOW).map((c) => c.id)).toEqual(['a-1']);
   });
 
+  it('a track record from a peer (the iPhone sending a trip, phase 5) is accepted', () => {
+    const track = { ...rec('phone', 1), entity: 'track' as const, entityKey: 'trk__t1', op: 'create' as const, fields: { journalKey: 'j1' } };
+    expect(acceptPeerRecords([track], 'j1', NOW).map((c) => c.entity)).toEqual(['track']);
+  });
+
   it('a record 25 h in the future is dropped', () => {
     const future = rec('a', 1, 'j1', NOW + 25 * 60 * 60 * 1000);
     expect(acceptPeerRecords([future, rec('a', 2)], 'j1', NOW).map((c) => c.id)).toEqual(['a-2']);

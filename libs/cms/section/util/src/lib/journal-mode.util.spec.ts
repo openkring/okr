@@ -15,8 +15,16 @@ describe('journalModeSectionFields', () => {
   it('video: the explicit clip list instead of the url', () => {
     expect(journalModeSectionFields('video')).toEqual(['clips']);
   });
+  it('map: zoom, base layer and the route switch — never the centre (the footprint is the centre)', () => {
+    expect(journalModeSectionFields('map')).toEqual(['zoom', 'layer', 'showRoute']);
+    expect(isJournalModeField('map', 'centerLatitude')).toBe(false);
+    expect(isJournalModeField('map', 'useCurrentLocationAsCenter')).toBe(false);
+  });
+  it('track: only the reference to the journal track', () => {
+    expect(journalModeSectionFields('track')).toEqual(['track']);
+  });
   it('a type the journal does not edit: no property at all', () => {
-    expect(journalModeSectionFields('map')).toEqual([]);
+    expect(journalModeSectionFields('tracker')).toEqual([]);
     expect(journalModeSectionFields('form')).toEqual([]);
   });
   it('returns a copy, so a caller cannot change the list for everybody', () => {

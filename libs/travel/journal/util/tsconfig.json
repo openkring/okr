@@ -20,6 +20,9 @@
   ],
   "references": [
     {
+      "path": "../../../mobility/tracker/util/tsconfig.lib.json"
+    },
+    {
       "path": "../../../shared/models/tsconfig.lib.json"
     },
     {

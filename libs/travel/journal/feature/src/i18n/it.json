@@ -64,6 +64,8 @@
     "type_article": "Testo",
     "type_album": "Album",
     "type_video": "Video",
+    "type_map": "Mappa",
+    "type_track": "Percorso",
     "photos_count": "{count} foto"
   },
   "photos": {

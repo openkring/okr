@@ -10,6 +10,7 @@
     "@okr/shared-models": "*",
     "@okr/shared-util-core": "*",
     "@okr/shared-constants": "*",
+    "@okr/mobility-tracker-util": "*",
     "vest": "*"
   }
 }

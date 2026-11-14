@@ -11,7 +11,7 @@ export interface StoredChangeRow {
   bases?: string | null; // JSON; NULL on records without bases and on rows stored before spec 1.126 phase 2
 }
 
-const ENTITIES: JournalEntity[] = ['journal', 'footprint', 'section', 'image', 'comment', 'reaction'];
+const ENTITIES: JournalEntity[] = ['journal', 'footprint', 'section', 'image', 'comment', 'reaction', 'track'];
 const OPS: JournalChangeOp[] = ['create', 'set', 'archive'];
 
 /** The `bases` column value of a change: JSON, or NULL for a record without bases (legacy, latest wins). */

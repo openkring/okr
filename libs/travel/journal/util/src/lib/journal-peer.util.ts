@@ -17,7 +17,7 @@ export type PeerMessage =
 
 export const PEER_RECORD_PAGE = 200;
 
-const ENTITIES: JournalEntity[] = ['journal', 'footprint', 'section', 'image', 'comment', 'reaction'];
+const ENTITIES: JournalEntity[] = ['journal', 'footprint', 'section', 'image', 'comment', 'reaction', 'track'];
 const OPS: JournalChangeOp[] = ['create', 'set', 'archive'];
 /** Photo files and the web version of a video clip (`<name>-video.mp4`, same rule as the sync lists). */
 const FILE_NAME = /^[A-Za-z0-9_-]{1,100}\.jpg$|^[A-Za-z0-9_-]{1,94}-video\.mp4$/;

@@ -10,7 +10,7 @@ import type {
   HeroConfig, HeroSection, IconConfig, IframeConfig,
   IframeSection, InvitationsConfig, InvitationsSection, MapConfig, WeatherConfig, WeatherSection, ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, FooterColumn, FooterConfig, FooterItem, FooterSection, MapSection, MemberAgeConfig, MemberAgeSection, MemberCatConfig, MemberCatSection, OrgchartConfig, OrgchartSection, PeopleConfig,
   PeopleSection, RagConfig, RagSection, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TilesConfig, TilesSection, TimelineConfig, TimelineSection, AdventConfig, AdventSection, NewsConfig, NewsSection, TasksConfig, TasksSection, ActivitiesConfig, ActivitiesSection, MessagesConfig, MessagesSection, NoticesConfig, NoticesSection, TripStatsConfig, TripStatsSection, ResponsibilityConfig, ResponsibilitySection, SliderConfig, SliderSection, TableConfig, TableSection,
-  TrackerConfig, TrackerSection, VideoConfig, VideoSection
+  TrackerConfig, TrackerSection, VideoConfig, VideoSection, JournalTrackConfig, JournalTrackSection
 } from "./section.model";
 import { ButtonAction } from './enums/button-action.enum';
 import { ColorIonic } from './enums/color-ionic.enum';
@@ -223,6 +223,11 @@ export const TRACKER_CONFIG_SHAPE = {
     exportFormat: 'kmz'
 } as TrackerConfig;
 
+// --------------------------------------- JOURNAL TRACK ----------------------------------------
+export const JOURNAL_TRACK_CONFIG_SHAPE = {
+    track: { trackKey: '' }
+} as JournalTrackConfig;
+
 // --------------------------------------- VIDEO ----------------------------------------
 export const VIDEO_CONFIG_SHAPE = {
     url: DEFAULT_URL,
@@ -391,6 +396,12 @@ export const TRACKER_SECTION_SHAPE = {
   type: 'tracker',
   properties: TRACKER_CONFIG_SHAPE
 } as TrackerSection;
+
+export const JOURNAL_TRACK_SECTION_SHAPE = {
+  ...BASE_SECTION_SHAPE,
+  type: 'track',
+  properties: JOURNAL_TRACK_CONFIG_SHAPE
+} as JournalTrackSection;
 
 export const VIDEO_SECTION_SHAPE = {
   ...BASE_SECTION_SHAPE,

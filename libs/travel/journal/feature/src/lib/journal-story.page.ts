@@ -420,7 +420,10 @@ export class JournalStoryPage {
     const i18n = this.store.i18n;
     const text = view.title.trim() || htmlToPlainText(view.htmlContent).trim();
     if (text) return text.slice(0, 40);
-    const typeName = { hero: i18n.section_type_hero, article: i18n.section_type_article, album: i18n.section_type_album, video: i18n.section_type_video }[view.type]();
+    const typeName = {
+      hero: i18n.section_type_hero, article: i18n.section_type_article, album: i18n.section_type_album, video: i18n.section_type_video,
+      map: i18n.section_type_map, track: i18n.section_type_track,
+    }[view.type]();
     const model = sectionModelOf(view, '');
     const list = (model.properties as unknown as Record<string, unknown>)[view.type === 'video' ? 'clips' : 'images'];
     const count = Array.isArray(list) ? list.length : 0;

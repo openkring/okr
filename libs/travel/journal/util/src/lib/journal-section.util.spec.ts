@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { ARTICLE_SECTION_SHAPE, HERO_OVERLAY_DEFAULT, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, JournalChange, SECTION_FEEDBACK_DEFAULT, ViewPosition } from '@okr/shared-models';
+import { ARTICLE_SECTION_SHAPE, HERO_OVERLAY_DEFAULT, JOURNAL_TRACK_CONFIG_SHAPE, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, JournalChange, SECTION_FEEDBACK_DEFAULT, ViewPosition } from '@okr/shared-models';
 import { formatHlc } from './journal-hlc.util';
 import { materialize } from './journal-merge.util';
 import { SectionView, sectionsOf } from './journal-view.util';
 import {
   addableSectionTypes, changedSectionFields, JOURNAL_SECTION_TYPES, newFootprintSections, sectionClipKeys, sectionFieldsOf,
-  heroCoverPatch, sectionHasContent, sectionImageKeys, sectionModelOf,
+  heroCoverPatch, SECTION_CONTENT_FIELDS, sectionHasContent, sectionImageKeys, sectionModelOf,
 } from './journal-section.util';
 
 const DEVICE: Record<string, string> = { bruno: 'dev-b', anna: 'dev-a' };
@@ -26,8 +26,8 @@ function view(p: Partial<SectionView>): SectionView {
 }
 
 describe('journal sections', () => {
-  it('lists the four phase-2 types', () => {
-    expect([...JOURNAL_SECTION_TYPES]).toEqual(['hero', 'article', 'album', 'video']);
+  it('lists the six types of spec §3 (map and track since phase 5)', () => {
+    expect([...JOURNAL_SECTION_TYPES]).toEqual(['hero', 'article', 'album', 'video', 'map', 'track']);
   });
 
   it('sectionFieldsOf flattens properties to p_ fields and content to htmlContent', () => {
@@ -81,7 +81,7 @@ describe('journal sections', () => {
 
   it('an old block record without a type is ignored', () => {
     const block = rec({ entity: 'section', entityKey: 'b1', op: 'create', fields: { footprintKey: 'f1', kind: 'text', html: 'x', order: 'A' } }, 100);
-    const unknown = rec({ entity: 'section', entityKey: 'b2', op: 'create', fields: { footprintKey: 'f1', type: 'map', order: 'B' } }, 110);
+    const unknown = rec({ entity: 'section', entityKey: 'b2', op: 'create', fields: { footprintKey: 'f1', type: 'calendar', order: 'B' } }, 110);
     expect(sectionsOf(materialize([FP, block, unknown]), 'f1')).toEqual([]);
   });
 
@@ -92,8 +92,8 @@ describe('journal sections', () => {
   });
 
   it('addableSectionTypes drops the hero once one exists', () => {
-    expect(addableSectionTypes([view({ type: 'article' })])).toEqual(['hero', 'article', 'album', 'video']);
-    expect(addableSectionTypes([view({ type: 'hero' }), view({ key: 's2' })])).toEqual(['article', 'album', 'video']);
+    expect(addableSectionTypes([view({ type: 'article' })])).toEqual(['hero', 'article', 'album', 'video', 'map', 'track']);
+    expect(addableSectionTypes([view({ type: 'hero' }), view({ key: 's2' })])).toEqual(['article', 'album', 'video', 'map', 'track']);
   });
 
   it('changedSectionFields: nothing for an unchanged model, only the changed key otherwise', () => {
@@ -185,6 +185,10 @@ describe('journal sections', () => {
     expect(sectionHasContent(view({ type: 'video', properties: { clips: [img('v1')] } }))).toBe(true);
     expect(sectionHasContent(view({ type: 'hero', properties: { overlay: { ...HERO_OVERLAY_DEFAULT } } }))).toBe(false);
     expect(sectionHasContent(view({ type: 'hero', properties: { hero: img('c1') } }))).toBe(true);
+    expect(sectionHasContent(view({ type: 'map' }))).toBe(true); // a map always shows the footprint
+    expect(sectionHasContent(view({ type: 'track' }))).toBe(false);
+    expect(sectionHasContent(view({ type: 'track', properties: { track: { trackKey: '' } } }))).toBe(false);
+    expect(sectionHasContent(view({ type: 'track', properties: { track: { trackKey: 'trk__t1' } } }))).toBe(true);
   });
 
   it('sectionModelOf overlays the view on the type defaults; image labels stay the journal image keys', () => {
@@ -208,6 +212,32 @@ describe('journal sections', () => {
     expect(sectionImageKeys(view({ type: 'hero', properties: { hero: img('') } }))).toEqual([]);
     expect(sectionClipKeys(view({ type: 'video', properties: { clips: [img('v1')] } }))).toEqual(['v1']);
     expect(sectionClipKeys(view({ type: 'article' }))).toEqual([]);
+  });
+
+  it('map and track settings are last-writer-wins, never a conflict copy', () => {
+    for (const field of ['p_zoom', 'p_layer', 'p_showRoute', 'p_track']) expect(SECTION_CONTENT_FIELDS).not.toContain(field);
+    const map = rec({ entity: 'section', entityKey: 's9', op: 'create', fields: { footprintKey: 'f1', type: 'map', title: '', htmlContent: '', order: 'X' }, bases: {} }, 100);
+    const anna = rec({ entity: 'section', entityKey: 's9', op: 'set', fields: { p_layer: 'osm' } }, 200, 'anna');
+    const bruno = rec({ entity: 'section', entityKey: 's9', op: 'set', fields: { p_layer: 'swisstopo', p_showRoute: true } }, 300);
+    const sections = sectionsOf(materialize([FP, map, anna, bruno]), 'f1');
+    expect(sections).toHaveLength(1);
+    expect(sections[0].properties).toEqual({ layer: 'swisstopo', showRoute: true });
+  });
+
+  it('sectionModelOf: a map gets the CMS map defaults with the journal options; a track its reference', () => {
+    const map = sectionModelOf(view({ type: 'map', properties: { zoom: 13, layer: 'osm', showRoute: true } }), 't');
+    expect(map.type).toBe('map');
+    expect(map.properties).toMatchObject({ zoom: 13, layer: 'osm', showRoute: true });
+    const track = sectionModelOf(view({ type: 'track', properties: { track: { trackKey: 'trk__t1' } } }), 't');
+    expect(track.properties).toEqual({ track: { trackKey: 'trk__t1' } });
+    const empty = sectionModelOf(view({ type: 'track' }), 't');
+    expect(empty.properties).toEqual({ track: { trackKey: '' } });
+    expect(empty.properties).not.toBe(JOURNAL_TRACK_CONFIG_SHAPE); // a clone, never the shared shape
+  });
+
+  it('sectionFieldsOf: a track section stores only its reference', () => {
+    expect(sectionFieldsOf({ type: 'track', title: '', content: ARTICLE_SECTION_SHAPE.content, properties: { track: { trackKey: 'trk__t1' } } }))
+      .toEqual({ type: 'track', title: '', htmlContent: '<p></p>', p_track: { trackKey: 'trk__t1' } });
   });
 
   it('newFootprintSections: a hero with the cover and the overlay, then an empty article', () => {

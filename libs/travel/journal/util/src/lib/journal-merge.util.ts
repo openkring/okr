@@ -7,7 +7,7 @@ import { SECTION_CONTENT_FIELDS } from './journal-section.util';
  *
  * - Last writer wins per field, by HLC (the deviceId inside the HLC breaks ties).
  * - Commutative and idempotent: any order of the same records gives the same state.
- * - Owned entities (a comment, a like, a photo) take values only from their owner, the
+ * - Owned entities (a comment, a like, a photo, a track copy) take values only from their owner, the
  *   author of the create record. Records from anyone else stay in the state but never win.
  * - Delete is `op: 'archive'`, a tombstone field.
  *
@@ -18,7 +18,7 @@ import { SECTION_CONTENT_FIELDS } from './journal-section.util';
  * who owns a block, so it must at least be the writer's own. Authors are trusted (only they can write
  * change records); the server additionally checks the author and clamps clocks from the future (spec §5.3).
  */
-export const OWNED_ENTITIES: JournalEntity[] = ['comment', 'reaction', 'image'];
+export const OWNED_ENTITIES: JournalEntity[] = ['comment', 'reaction', 'image', 'track']; // track: who attached or sent it (journal-track.util)
 
 /**
  * Fields whose every written value is kept in `EntityState.history`, so a later step can offer the

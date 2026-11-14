@@ -282,6 +282,8 @@ describe('journal feedback: switches and image titles', () => {
 
   it('feedbackOf: only an article or album has images to comment on', () => {
     expect(feedbackOf({ type: 'video' })).toEqual({ comments: true, reactions: true, imageComments: false, imageReactions: false });
+    expect(feedbackOf({ type: 'map' })).toEqual({ comments: true, reactions: true, imageComments: false, imageReactions: false });
+    expect(feedbackOf({ type: 'track' })).toEqual({ comments: true, reactions: true, imageComments: false, imageReactions: false });
   });
 
   it('feedbackOf: a partial stored value keeps the missing switches on', () => {

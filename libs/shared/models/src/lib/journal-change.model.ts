@@ -5,7 +5,7 @@ import type { Timestamp } from 'firebase/firestore';
  * log; peers exchange them, and any online device uploads them to `journal-changes`, where a Cloud
  * Function merges them. The document id is `id`. Records are never updated or deleted.
  */
-export type JournalEntity = 'journal' | 'footprint' | 'section' | 'image' | 'comment' | 'reaction';
+export type JournalEntity = 'journal' | 'footprint' | 'section' | 'image' | 'comment' | 'reaction' | 'track'; // track: a trip's derived copy (spec 1.154 §10)
 export type JournalChangeOp = 'create' | 'set' | 'archive';
 
 export interface JournalChange {

@@ -1,6 +1,6 @@
 import {
   ALBUM_SECTION_SHAPE, ARTICLE_SECTION_SHAPE, HERO_OVERLAY_DEFAULT, HERO_SECTION_SHAPE, IMAGE_CONFIG_SHAPE, ImageConfig,
-  SECTION_FEEDBACK_DEFAULT, SectionFeedback, SectionModel, VIDEO_SECTION_SHAPE, ViewPosition,
+  JOURNAL_TRACK_SECTION_SHAPE, MAP_SECTION_SHAPE, SECTION_FEEDBACK_DEFAULT, SectionFeedback, SectionModel, VIDEO_SECTION_SHAPE, ViewPosition,
 } from '@okr/shared-models';
 import { htmlToPlainText } from './journal-forms.util';
 import type { SectionView } from './journal-view.util';
@@ -11,8 +11,10 @@ import type { SectionView } from './journal-view.util';
  * property key, so the field-level merge merges per property key. Only the content keys keep both versions of a
  * concurrent edit as a conflict copy; settings keys are last-writer-wins. `feedback` (phase 4, plan decision 4) is one
  * top-level settings field holding `BaseSection.feedback`.
+ * Phase 5 adds `map` (settings zoom, layer, showRoute) and `track` (settings `track = { trackKey }`, a reference to the
+ * journal's `track` entity, journal-track.util): all settings, so last writer wins.
  */
-export const JOURNAL_SECTION_TYPES = ['hero', 'article', 'album', 'video'] as const;
+export const JOURNAL_SECTION_TYPES = ['hero', 'article', 'album', 'video', 'map', 'track'] as const;
 export type JournalSectionType = (typeof JOURNAL_SECTION_TYPES)[number];
 
 /** The record fields whose concurrent edits keep both versions (decision 3). */
@@ -29,6 +31,8 @@ const SHAPES: Record<JournalSectionType, SectionModel> = {
   article: ARTICLE_SECTION_SHAPE,
   album: ALBUM_SECTION_SHAPE,
   video: VIDEO_SECTION_SHAPE,
+  map: MAP_SECTION_SHAPE,
+  track: JOURNAL_TRACK_SECTION_SHAPE,
 };
 
 export function isJournalSectionType(value: unknown): value is JournalSectionType {
@@ -136,7 +140,11 @@ export function sectionModelOf(view: SectionView, tenantId: string): SectionMode
 
 const labelsOf = (images: ImageConfig[]): string[] => images.map((i) => i.label).filter((k) => k !== '');
 
-/** The journal photos a section shows: its `images` list and a hero's cover. May name images not (yet) received. */
+/**
+ * The journal photos a section shows: its `images` list and a hero's cover. May name images not (yet) received.
+ * A track section's photos live in its `track` entity, not in the section: `sectionImageKeysIn` (journal-track.util)
+ * adds them for a caller that holds the journal state.
+ */
 export function sectionImageKeys(view: Pick<SectionView, 'properties'>): string[] {
   const hero = storedImage(view.properties[IMAGE_KEY]);
   return [...new Set([...labelsOf(storedImages(view.properties['images'])), ...labelsOf(hero ? [hero] : [])])];
@@ -147,12 +155,21 @@ export function sectionClipKeys(view: Pick<SectionView, 'properties'>): string[]
   return labelsOf(storedImages(view.properties['clips']));
 }
 
+/** The key of the journal `track` a track section refers to (`properties.track.trackKey`); '' when none is chosen. */
+export function sectionTrackKey(view: Pick<SectionView, 'properties'>): string {
+  const track = view.properties['track'];
+  return isRecord(track) && typeof track['trackKey'] === 'string' ? track['trackKey'] : '';
+}
+
 /**
  * Whether a section holds anything an author made: a title, text, photos or clips. A hero counts only with a cover —
- * the hero every new footprint starts with is empty until a photo is imported (spec 1.154 §3).
+ * the hero every new footprint starts with is empty until a photo is imported (spec 1.154 §3). A map always shows the
+ * footprint; a track counts once a track is chosen.
  */
 export function sectionHasContent(view: Pick<SectionView, 'type' | 'title' | 'htmlContent' | 'properties'>): boolean {
   if (view.type === 'hero') return sectionImageKeys(view).length > 0;
+  if (view.type === 'map') return true;
+  if (view.type === 'track') return sectionTrackKey(view) !== '';
   return view.title.trim() !== '' || htmlToPlainText(view.htmlContent) !== ''
     || sectionImageKeys(view).length > 0 || sectionClipKeys(view).length > 0;
 }

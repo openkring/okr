@@ -9,12 +9,17 @@ import { SectionType } from '@okr/shared-models';
  * - article: the photos, their style and their layout; title and text are not properties.
  * - album: an explicit photo list instead of a folder.
  * - video: an explicit clip list instead of a url.
+ * - map (phase 5): zoom, base layer and whether the journal route is drawn; the map is centred on the footprint, so the
+ *   centre and «current location» inputs stay hidden.
+ * - track (phase 5): the chosen track (`{ trackKey }`, a reference to the journal's `track` entity).
  */
 const JOURNAL_MODE_FIELDS: Partial<Record<SectionType, readonly string[]>> = {
   hero: ['hero', 'overlay', 'height', 'focus'],
   article: ['images', 'imageStyle', 'imageLayout'],
   album: ['images'],
   video: ['clips'],
+  map: ['zoom', 'layer', 'showRoute'],
+  track: ['track'],
 };
 
 /** The most clips a journal video section plays (spec 1.154 §10: 1–5); the picker stops there and the video suite enforces it. */

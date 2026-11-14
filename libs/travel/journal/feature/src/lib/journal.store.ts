@@ -482,7 +482,7 @@ export const JournalStore = signalStore(
         photoMode: store.photoMode(),
         photoFiles: (journalKey) => {
           const images = imagesOf(store.journalState(), journalKey);
-          return { published: publishedPhotoFiles(footprintsOf(store.journalState(), journalKey), images), all: allPhotoFiles(images) };
+          return { published: publishedPhotoFiles(footprintsOf(store.journalState(), journalKey), images, store.journalState()), all: allPhotoFiles(images) };
         },
         onRecordsStored: async () => {
           await reload();

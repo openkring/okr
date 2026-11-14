@@ -64,6 +64,8 @@
     "type_article": "Text",
     "type_album": "Album",
     "type_video": "Video",
+    "type_map": "Map",
+    "type_track": "Track",
     "photos_count": "{count} photos"
   },
   "photos": {

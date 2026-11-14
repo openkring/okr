@@ -1,8 +1,10 @@
 import { JournalChange } from '@okr/shared-models';
 
 import { withCheckedBases } from './journal-change.util';
+import type { JournalState } from './journal-merge.util';
 import { sectionClipKeys, sectionImageKeys } from './journal-section.util';
 import { acceptRecord } from './journal-server.util';
+import { sectionImageKeysIn } from './journal-track.util';
 import { FootprintView, ImageView } from './journal-view.util';
 
 /**
@@ -64,14 +66,15 @@ export function photoFileName(path: string): string {
 
 /**
  * Photo files that go to Firebase (spec §5.3): both sizes of every image shown in a published
- * footprint. Drafts and originals stay on the device.
+ * footprint. Drafts and originals stay on the device. With the journal `state`, a track section's photos (held by its
+ * `track` entity, spec 1.154 §6) count too.
  */
-export function publishedPhotoFiles(footprints: FootprintView[], images: Map<string, ImageView>): string[] {
+export function publishedPhotoFiles(footprints: FootprintView[], images: Map<string, ImageView>, state?: JournalState): string[] {
   const files = new Set<string>();
   for (const footprint of footprints) {
     if (footprint.publishState !== 'published') continue;
     for (const section of footprint.sections) {
-      for (const key of [...sectionImageKeys(section), ...sectionClipKeys(section)]) {
+      for (const key of [...(state ? sectionImageKeysIn(state, section) : sectionImageKeys(section)), ...sectionClipKeys(section)]) {
         const image = images.get(key);
         if (!image) continue;
         for (const path of [image.path2048, image.path400, image.videoPath ?? '']) {

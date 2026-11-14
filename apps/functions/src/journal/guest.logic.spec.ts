@@ -88,7 +88,7 @@ describe('guestSectionsOf', () => {
     { id: 'a1_c_x', data: { footprintKey: 'f1', type: 'album', conflictOf: 'a1', conflict: true, properties: { images: [{ label: 'i9' }] } } },
     { id: 'v1', data: { footprintKey: 'f1', type: 'video', content: { htmlContent: '<p>Pinguine</p>' }, properties: { clips: [{ label: 'c1' }] } } },
     { id: 'o1', data: { footprintKey: 'f2', type: 'article', content: { htmlContent: '<p>anderswo</p>' } } },
-    { id: 'x1', data: { footprintKey: 'f1', type: 'map' } },
+    { id: 'x1', data: { footprintKey: 'f1', type: 'tracker' } }, // a type the journal does not offer
     { id: 'z1', data: { footprintKey: 'f1', type: 'article', isArchived: true } },
   ];
 

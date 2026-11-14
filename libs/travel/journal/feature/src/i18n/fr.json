@@ -64,6 +64,8 @@
     "type_article": "Texte",
     "type_album": "Album",
     "type_video": "Vidéo",
+    "type_map": "Carte",
+    "type_track": "Parcours",
     "photos_count": "{count} photos"
   },
   "photos": {
