@@ -1,12 +1,13 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, input, signal } from '@angular/core';
 import {
-  IonButton, IonButtons, IonCheckbox, IonContent, IonHeader, IonItem, IonLabel, IonList, IonListHeader,
-  IonSearchbar, IonThumbnail, IonIcon, IonTitle, IonToolbar, ModalController,
+  IonCheckbox, IonContent, IonItem, IonLabel, IonList, IonListHeader,
+  IonSearchbar, IonThumbnail, IonIcon, IonToolbar, ModalController,
 } from '@ionic/angular';
 
 import { MatrixRoom } from '@okr/shared-models';
 import { MultiAvatarPipe, SvgIconPipe } from '@okr/shared-pipes';
+import { ChangeConfirmation, Header } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { fill } from '@okr/shared-util-core';
 import { filterRoomsByName, isMatrixPhotoUrl, MatrixChatI18n } from '@okr/chat-util';
@@ -23,27 +24,19 @@ const RECENT_COUNT = 5;
   selector: 'okr-forward-message-modal',
   standalone: true,
   imports: [
-    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonContent, IonSearchbar, IonList, IonListHeader,
+    Header, ChangeConfirmation, IonToolbar, IonContent, IonSearchbar, IonList, IonListHeader,
     IonItem, IonLabel, IonCheckbox, IonThumbnail, IonIcon, MultiAvatarPipe, SvgIconPipe,
     NgTemplateOutlet,
   ],
   template: `
-    <ion-header>
-      <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-button (click)="cancel()">{{ i18n().cancel() }}</ion-button>
-        </ion-buttons>
-        <ion-title>{{ i18n().forward_title() }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button [strong]="true" [disabled]="selected().size === 0" (click)="send()">
-            {{ sendLabel() }}
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-      <ion-toolbar>
-        <ion-searchbar [debounce]="150" (ionInput)="query.set($any($event).detail.value ?? '')" />
-      </ion-toolbar>
-    </ion-header>
+    <okr-header [i18n]="{ title: i18n().forward_title() }" [isModal]="true" />
+    @if (selected().size > 0) {
+      <okr-change-confirmation [i18n]="{ cancel: i18n().cancel(), save: sendLabel() }"
+        (saveClicked)="send()" (cancelClicked)="resetSelection()" />
+    }
+    <ion-toolbar color="light">
+      <ion-searchbar [debounce]="150" (ionInput)="query.set($any($event).detail.value ?? '')" />
+    </ion-toolbar>
     <ion-content>
       @if (recent().length > 0) {
         <ion-list lines="full">
@@ -102,8 +95,9 @@ export class ForwardMessageModal {
     this.selected.set(next);
   }
 
-  protected async cancel(): Promise<void> {
-    await dismissOverlay(this.modalController, undefined, 'cancel');
+  /** the change-confirmation's cancel: drop the chosen chats, stay in the picker */
+  protected resetSelection(): void {
+    this.selected.set(new Set<string>());
   }
 
   protected async send(): Promise<void> {

@@ -1,9 +1,14 @@
 import { Component, Injectable, OnInit, computed, inject, input } from '@angular/core';
-import { IonButton, IonContent, IonHeader, IonItem, IonTitle, IonToolbar, ModalController } from '@ionic/angular';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { IonContent, ModalController } from '@ionic/angular';
+import { map } from 'rxjs';
 import { COLOR_PICKER_CONFIG, ChromePickerComponent, ColorPickerControl, ColorType, IColorPickerConfig } from '@iplab/ngx-color-picker';
 
 import { I18nService } from '@okr/shared-i18n';
 import { dismissOverlay } from '@okr/shared-util-angular';
+
+import { ChangeConfirmation } from './change-confirmation';
+import { Header } from './header';
 
 
 const DEFAULT_COLOR = '#2196F3';
@@ -61,25 +66,20 @@ export interface ColorSelectI18n {
   selector: 'okr-color-select-modal',
   standalone: true,
   imports: [
-    
-    ChromePickerComponent,
-    IonHeader, IonToolbar, IonTitle, IonContent, IonItem, IonButton
+    ChromePickerComponent, Header, ChangeConfirmation,
+    IonContent
   ],
   providers: [
     { provide: COLOR_PICKER_CONFIG, useClass: ColorPickerConfiguration }
   ],
   template: `
-    <ion-header>
-      <ion-toolbar color="secondary">
-        <ion-title>{{ labels().select }}</ion-title>
-      </ion-toolbar>  
-    </ion-header>
+    <okr-header [i18n]="{ title: labels().select }" [isModal]="true" />
+    @if (isDirty()) {
+      <okr-change-confirmation [i18n]="{ cancel: labels().cancel, save: labels().ok }"
+        (saveClicked)="save()" (cancelClicked)="reset()" />
+    }
     <ion-content>
       <chrome-picker [control]="colorControl" [color]="hexColor()" />
-      <ion-item lines="none">
-        <ion-button fill="clear" (click)="cancel()">{{ labels().cancel }}</ion-button>
-        <ion-button fill="clear" (click)="save()">{{ labels().ok }}</ion-button>
-      </ion-item>
     </ion-content>
   `
 })
@@ -100,6 +100,13 @@ export class ColorSelectModal implements OnInit{
 
   public colorControl = new ColorPickerControl();
 
+  // the picked colour, as hex; dirty once it differs from the colour the modal opened with
+  private readonly pickedHex = toSignal(this.colorControl.valueChanges.pipe(map((c) => c.toHexString())));
+  protected readonly isDirty = computed(() => {
+    const picked = this.pickedHex();
+    return !!picked && picked.toLowerCase() !== this.hexColor().toLowerCase();
+  });
+
   ngOnInit() {
     this.colorControl.initType = ColorType.hex;
     // Must be set before ChromePickerComponent.ngOnInit runs (parent before child), otherwise the
@@ -111,7 +118,8 @@ export class ColorSelectModal implements OnInit{
     return dismissOverlay(this.modalController, this.colorControl.value.toHexString(), 'confirm');
   }
 
-  public cancel(): Promise<boolean> {
-    return dismissOverlay(this.modalController, null, 'cancel');
+  /** back to the colour the modal opened with (the header's close button cancels the modal) */
+  protected reset(): void {
+    this.colorControl.setValueFrom(this.hexColor());
   }
 }

@@ -1,10 +1,7 @@
-import { Component, inject, input } from '@angular/core';
-import {
-  IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList,
-  IonNote, IonSpinner, IonTitle, IonToolbar, ModalController
-} from '@ionic/angular';
+import { Component, computed, input, inject } from '@angular/core';
+import { IonButton, IonContent, IonItem, IonLabel, IonList, IonNote, IonSpinner } from '@ionic/angular';
 
-import { SvgIconPipe } from '@okr/shared-pipes';
+import { Header } from '@okr/shared-ui';
 import { ChatMaintenanceStore, RoomMessageInfo } from './chat-maintenance.store';
 
 /**
@@ -26,9 +23,8 @@ import { ChatMaintenanceStore, RoomMessageInfo } from './chat-maintenance.store'
   selector: 'okr-chat-history-modal',
   standalone: true,
   imports: [
-    SvgIconPipe,
-    IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon,
-    IonContent, IonList, IonItem, IonLabel, IonNote, IonSpinner,
+    Header,
+    IonButton, IonContent, IonList, IonItem, IonLabel, IonNote, IonSpinner,
   ],
   styles: [`
     .hint { display: block; padding: 0.5rem 1rem; font-size: 0.8rem; }
@@ -38,16 +34,7 @@ import { ChatMaintenanceStore, RoomMessageInfo } from './chat-maintenance.store'
     .empty-state { padding: 2rem 1rem; text-align: center; }
   `],
   template: `
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>{{ store.i18n.chat_history_header() }}{{ roomName() ? ' · ' + roomName() : '' }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="close()">
-            <ion-icon slot="icon-only" src="{{ 'close' | svgIcon }}" />
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     <ion-content>
       <ion-note class="hint" color="medium">{{ store.i18n.chat_history_hint() }}</ion-note>
       @if (store.historyLoading() && store.history().length === 0) {
@@ -85,10 +72,12 @@ import { ChatMaintenanceStore, RoomMessageInfo } from './chat-maintenance.store'
   `,
 })
 export class ChatHistoryModal {
-  private readonly modalController = inject(ModalController);
   protected readonly store = inject(ChatMaintenanceStore);
 
   public readonly roomName = input<string>('');
+
+  protected readonly headerTitle = computed(() =>
+    this.store.i18n.chat_history_header() + (this.roomName() ? ' · ' + this.roomName() : ''));
 
   protected formatTimestamp(ts: number): string {
     return new Date(ts).toLocaleString();
@@ -100,9 +89,5 @@ export class ChatHistoryModal {
       return message.body;
     }
     return `[${message.msgtype}] ${message.body}`.trim();
-  }
-
-  protected async close(): Promise<void> {
-    await this.modalController.dismiss();
   }
 }

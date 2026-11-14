@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angu
 import { DatePipe } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import {
-  IonHeader, IonFooter, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon,
+  IonButton, IonIcon,
   IonContent, IonGrid, IonRow, IonCol, IonLabel, IonChip,
   IonList, IonItem, IonNote, ModalController, ToastController,
 } from '@ionic/angular';
@@ -11,6 +11,7 @@ import { Browser } from '@capacitor/browser';
 
 import { EsignRecord, EsignSignee } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
+import { Header } from '@okr/shared-ui';
 import { EsignService } from '@okr/content-esign-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { ESIGN_I18N_KEYS, EsignI18n } from '@okr/content-esign-util';
@@ -22,8 +23,8 @@ import { dismissOverlay } from '@okr/shared-util-angular';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    SvgIconPipe,
-    IonHeader, IonFooter, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon,
+    SvgIconPipe, Header,
+    IonButton, IonIcon,
     IonContent, IonGrid, IonRow, IonCol, IonLabel, IonChip,
     IonList, IonItem, IonNote,
     DatePipe,
@@ -38,16 +39,7 @@ import { dismissOverlay } from '@okr/shared-util-angular';
     .events-toggle { font-size: 0.8rem; color: var(--ion-color-primary); cursor: pointer; margin-top: 8px; }
   `],
   template: `
-    <ion-header>
-      <ion-toolbar color="secondary">
-        <ion-title>{{ esign().documentName }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="close()">
-            <ion-icon src="{{ 'cancel' | svgIcon }}" slot="icon-only" />
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
+    <okr-header [i18n]="{ title: esign().documentName }" [isModal]="true" />
 
     <ion-content>
       <ion-grid>
@@ -133,29 +125,32 @@ import { dismissOverlay } from '@okr/shared-util-angular';
             }
           </ion-col>
         </ion-row>
+
+        <!-- Actions (content buttons; a view has nothing to save, so no change-confirmation) -->
+        <ion-row>
+          <ion-col size="12" size-md="4">
+            <ion-button expand="block" fill="outline" (click)="refresh()">
+              <ion-icon src="{{ 'reload' | svgIcon }}" slot="start" />
+              {{ i18n.view_refresh() }}
+            </ion-button>
+          </ion-col>
+          @if(esign().documentStatus === 'signed') {
+            <ion-col size="12" size-md="4">
+              <ion-button expand="block" fill="outline" (click)="downloadSigned()">
+                <ion-icon src="{{ 'download' | svgIcon }}" slot="start" />
+                {{ i18n.view_download() }}
+              </ion-button>
+            </ion-col>
+          }
+          <ion-col size="12" size-md="4">
+            <ion-button expand="block" fill="outline" color="danger" (click)="requestDelete()">
+              <ion-icon src="{{ 'trash' | svgIcon }}" slot="start" />
+              {{ i18n.view_delete() }}
+            </ion-button>
+          </ion-col>
+        </ion-row>
       </ion-grid>
     </ion-content>
-
-    <!-- Footer -->
-    <ion-footer>
-      <ion-toolbar color="light">
-        <ion-buttons slot="start">
-          <ion-button (click)="refresh()" [title]="i18n.view_refresh()">
-            <ion-icon src="{{ 'reload' | svgIcon }}" slot="icon-only" />
-          </ion-button>
-          @if(esign().documentStatus === 'signed') {
-            <ion-button (click)="downloadSigned()" [title]="i18n.view_download()">
-              <ion-icon src="{{ 'download' | svgIcon }}" slot="icon-only" />
-            </ion-button>
-          }
-        </ion-buttons>
-        <ion-buttons slot="end">
-          <ion-button color="danger" (click)="requestDelete()" [title]="i18n.view_delete()">
-            <ion-icon src="{{ 'trash' | svgIcon }}" slot="icon-only" />
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-footer>
   `
 })
 export class EsignViewModal {
@@ -172,10 +167,6 @@ export class EsignViewModal {
   protected readonly previewUrl     = signal<SafeResourceUrl | null>(null);
   protected readonly showEvents     = signal(false);
   protected readonly loading        = signal(false);
-
-  protected close(): void {
-    dismissOverlay(this.modalController, null, 'cancel');
-  }
 
   protected async refresh(): Promise<void> {
     this.loading.set(true);

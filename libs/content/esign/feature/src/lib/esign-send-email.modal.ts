@@ -1,12 +1,14 @@
 // libs/content/esign/feature/src/lib/esign-send-email.modal.ts
 import { ChangeDetectionStrategy, Component, computed, inject, input, OnInit, signal } from '@angular/core';
 import {
-  IonButton, IonButtons, IonCard, IonCardContent, IonCol, IonContent, IonGrid, IonHeader,
-  IonItem, IonLabel, IonRow, IonSpinner, IonTitle, IonToolbar,
+  IonCard, IonCardContent, IonCol, IonContent, IonGrid,
+  IonItem, IonLabel, IonRow, IonSpinner,
   ModalController, ToastController,
 } from '@ionic/angular';
 
-import { Checkbox, CheckboxI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import {
+  ChangeConfirmation, Checkbox, CheckboxI18n, Header, NotesInput, NotesInputI18n, TextInput, TextInputI18n,
+} from '@okr/shared-ui';
 import { EsignRecord } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';
 import { ESIGN_I18N_KEYS, EsignI18n } from '@okr/content-esign-util';
@@ -20,20 +22,18 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    TextInput, NotesInput, Checkbox,
-    IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent,
-    IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonSpinner,
+    Header, ChangeConfirmation, TextInput, NotesInput, Checkbox,
+    IonContent, IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonSpinner,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
   template: `
-    <ion-header>
-      <ion-toolbar color="secondary">
-        <ion-title>{{ i18n.email_title() }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="close()">{{ i18n.close() }}</ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
+    <okr-header [i18n]="{ title: i18n.email_title() }" [isModal]="true" />
+    <!-- recipients are prefilled from the signees, so sending is offered as soon as at least one
+         address is valid; the reset button appears once something was edited. -->
+    @if (canSend()) {
+      <okr-change-confirmation [i18n]="{ cancel: i18n.cancel(), save: i18n.send() }"
+        [showCancel]="isDirty()" (saveClicked)="send()" (cancelClicked)="reset()" />
+    }
 
     <ion-content class="ion-padding">
       <ion-card>
@@ -73,9 +73,9 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         </ion-card-content>
       </ion-card>
 
-      <ion-button expand="block" [disabled]="!canSend()" (click)="send()">
-        @if (status() === 'sending') { <ion-spinner name="dots" /> } @else { {{ i18n.send() }} }
-      </ion-button>
+      @if (status() === 'sending') {
+        <div class="ion-text-center"><ion-spinner name="dots" /></div>
+      }
     </ion-content>
   `,
 })
@@ -99,6 +99,14 @@ export class EsignSendEmailModal implements OnInit {
       .map((e) => e.trim())
       .filter((e) => EMAIL_RE.test(e)));
 
+  // the values the modal opened with — reset() returns to them, isDirty() compares against them
+  private readonly initial = signal({ recipients: '', subject: '', body: '', includePdf: true });
+  protected readonly isDirty = computed(() => {
+    const i = this.initial();
+    return this.recipients() !== i.recipients || this.subject() !== i.subject
+      || this.body() !== i.body || this.includePdf() !== i.includePdf;
+  });
+
   protected readonly canSend = computed(() => this.status() === 'ready' && this.parsedRecipients().length > 0);
 
   // adapted at the shared/ui boundary (the field primitives define their own minimal interface)
@@ -119,8 +127,16 @@ export class EsignSendEmailModal implements OnInit {
 
   public ngOnInit(): void {
     const emails = (this.esign().signees ?? []).map((s) => s.email).filter(Boolean);
-    this.recipients.set(emails.join(', '));
-    this.subject.set(this.esign().documentName);
+    this.initial.set({ recipients: emails.join(', '), subject: this.esign().documentName, body: '', includePdf: true });
+    this.reset();
+  }
+
+  protected reset(): void {
+    const i = this.initial();
+    this.recipients.set(i.recipients);
+    this.subject.set(i.subject);
+    this.body.set(i.body);
+    this.includePdf.set(i.includePdf);
   }
 
   protected async send(): Promise<void> {
@@ -141,10 +157,6 @@ export class EsignSendEmailModal implements OnInit {
       await this.presentToast(`${this.i18n.send_failed()}: ${message}`, 'danger');
       this.status.set('ready');
     }
-  }
-
-  protected close(): void {
-    dismissOverlay(this.modalController, null, 'cancel');
   }
 
   private async presentToast(message: string, color: 'success' | 'danger'): Promise<void> {

@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { IonButton, IonButtons, IonCheckbox, IonContent, IonHeader, IonInput, IonIcon, IonItem, IonList, IonSearchbar, IonSelect, IonSelectOption, IonTitle, IonToolbar, ModalController, IonLabel } from '@ionic/angular';
+import { IonCheckbox, IonContent, IonInput, IonIcon, IonItem, IonList, IonSearchbar, IonSelect, IonSelectOption, IonToolbar, ModalController, IonLabel } from '@ionic/angular';
 import { of } from 'rxjs';
 
 import { DeliveryChannels } from '@okr/shared-categories';
@@ -8,6 +8,7 @@ import { AppStore } from '@okr/shared-feature';
 import { isSyntheticLoginEmail } from '@okr/user-util';
 import { DeliveryChannel, EmailLayoutChoice, LAYOUT_CHOICES, UserModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
+import { ChangeConfirmation, Header } from '@okr/shared-ui';
 import { I18nService } from '@okr/shared-i18n';
 import { SECTION_I18N_KEYS, SectionI18n } from '@okr/cms-section-util';
 import { toDeliveryChannels } from '@okr/shared-util-core';
@@ -24,24 +25,23 @@ import { dismissOverlay } from '@okr/shared-util-angular';
   imports: [
     SvgIconPipe,
     OkrAvatar,
-    IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent, IonList, IonItem,
+    Header, ChangeConfirmation,
+    IonToolbar, IonContent, IonList, IonItem,
     IonCheckbox, IonIcon, IonSearchbar, IonSelect, IonSelectOption, IonInput, IonLabel
   ],
   template: `
-    <ion-header>
-      <!-- Title bar -->
-      <ion-toolbar color="secondary">
-        <ion-buttons slot="start">
-          <ion-button (click)="cancel()">{{ i18n.cancel() }}</ion-button>
-        </ion-buttons>
-        <ion-title>{{ i18n.mc_title() }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="showInputFields.set(!showInputFields())">
-            <ion-icon src="{{ (showInputFields() ? 'chevron-up' : 'chevron-down') | svgIcon }}" />
-          </ion-button>
-          <ion-button (click)="ok()"><strong>{{ i18n.ok() }}</strong></ion-button>
-        </ion-buttons>
-      </ion-toolbar>
+    <!-- Title bar; its action icon collapses/expands the input fields -->
+    <okr-header [i18n]="{ title: i18n.mc_title() }" [isModal]="true"
+      [actionIcon]="showInputFields() ? 'chevron-up' : 'chevron-down'" (actionClicked)="showInputFields.set(!showInputFields())" />
+    <!-- every recipient starts checked, so OK is offered while at least one is selected;
+         nothing to revert here (the header's close button cancels). -->
+    @if (hasSelection()) {
+      <okr-change-confirmation [i18n]="{ cancel: i18n.cancel(), save: i18n.ok() }"
+        [showCancel]="false" (saveClicked)="ok()" />
+    }
+
+    <!-- fixed (non-scrolling) input area above the recipient list -->
+    <div>
 
       <!-- Collapsible input fields -->
       @if (showInputFields()) {
@@ -127,7 +127,7 @@ import { dismissOverlay } from '@okr/shared-util-angular';
           (ionInput)="searchTerm.set($any($event).detail.value ?? '')"
           [placeholder]="i18n.mc_search_placeholder()" />
       </ion-toolbar>
-    </ion-header>
+    </div>
 
     <ion-content>
       <ion-list>
@@ -288,9 +288,7 @@ export class MessageCenterModal {
     return raw.split(',').map(e => e.trim()).filter(Boolean);
   }
 
-  public async cancel(): Promise<void> {
-    await dismissOverlay(this.modalController, null, 'cancel');
-  }
+  protected hasSelection = computed(() => this.checkedKeys().size > 0);
 
   public async ok(): Promise<void> {
     const allUsers = this.usersResource.value() ?? [];

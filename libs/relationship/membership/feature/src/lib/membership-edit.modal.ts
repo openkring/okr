@@ -27,7 +27,7 @@ import { dismissOverlay } from '@okr/shared-util-angular';
   template: `
     <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
-      <okr-change-confirmation [i18n]="changeConfirmationI18n()" [saveDisabled]="saveDisabled()" [showCancel]="false" (saveClicked)="save()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]="canRevert()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
 
@@ -50,6 +50,7 @@ import { dismissOverlay } from '@okr/shared-util-angular';
               [readOnly]="isReadOnly()"
               [priv]="priv()"
               [proposalNote]="proposalNote()"
+              [showForm]="showForm()"
               [i18n]="i18n"
               (dirty)="manualDirty.set($event)"
               (valid)="formValid.set($event)"
@@ -94,6 +95,7 @@ export class MembershipEditModal {
   protected formValid = signal(false);
   public formData = linkedSignal(() => safeStructuredClone(this.membership()));
   protected manualDirty = signal(false);
+  protected showForm = signal(true);
 
   // derived signals
   protected headerTitle = computed(() => this.isReadOnly() ? this.i18n.view_label() : this.i18n.update_label());
@@ -119,14 +121,27 @@ export class MembershipEditModal {
   // a group membership carries nothing the user could edit here — the member and the group
   // are both fixed, so the modal is a plain confirmation and the form stays hidden
   protected isGroupMembership = computed(() => (this.formData() ?? this.membership()).orgModelType === GroupModelName);
-  // toolbar is shown from the start in edit mode; the save button itself is gated on validity
-  protected showConfirmation = computed(() => !this.isReadOnly());
-  protected saveDisabled = computed(() => !this.isGroupMembership() && !this.formValid());
+  // a new membership arrives prefilled and a group membership is a plain confirmation: both may be
+  // saved as they are. An existing membership needs a change. Either way only a valid form saves.
+  protected showConfirmation = computed(() => {
+    if (this.isReadOnly()) return false;
+    if (this.isGroupMembership()) return true;
+    return this.formValid() && (this.isNew() || this.manualDirty());
+  });
+  // reverting makes no sense for a prefilled new membership or a group confirmation
+  protected canRevert = computed(() => !this.isNew() && !this.isGroupMembership());
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.i18n.cancel(), save: this.i18n.save()} as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
   public async save(): Promise<boolean> {
     return dismissOverlay(this.modalController, this.formData(), 'confirm');
+  }
+
+  public cancel(): void {
+    this.manualDirty.set(false);
+    this.formData.set(safeStructuredClone(this.membership()));
+    this.showForm.set(false);
+    setTimeout(() => this.showForm.set(true), 0);   // fresh form → clears stale Vest state
   }
 
   protected onFormDataChange(formData: MembershipModel): void {

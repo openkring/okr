@@ -1,7 +1,8 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
-import { ModalController, IonButton, IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonList, IonListHeader, IonTitle, IonToggle, IonToolbar } from '@ionic/angular';
+import { ModalController, IonContent, IonItem, IonLabel, IonList, IonListHeader, IonToggle } from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
+import { ChangeConfirmation, Header } from '@okr/shared-ui';
 import { ExportScope, ScopeAvailability, VcardChannelType, VcardI18n, VCARD_I18N_KEYS, VcardTargetKind } from '@okr/vcard-util';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
@@ -16,18 +17,15 @@ const CHANNEL_ORDER: VcardChannelType[] = ['phone', 'email', 'postal', 'web'];
   selector: 'okr-vcard-export-scope-modal',
   standalone: true,
   imports: [
-    IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent,
+    Header, ChangeConfirmation, IonContent,
     IonList, IonListHeader, IonItem, IonLabel, IonToggle,
   ],
   template: `
-    <ion-header>
-      <ion-toolbar color="secondary">
-        <ion-title>{{ i18n.modal_title() }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="cancel()">{{ i18n.cancel() }}</ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
+    <okr-header [i18n]="{ title: i18n.modal_title() }" [isModal]="true" />
+    <!-- every available toggle defaults on, so the export is possible from the start; the reset
+         button appears once a toggle was changed and turns them all back on. -->
+    <okr-change-confirmation [i18n]="{ cancel: i18n.cancel(), save: i18n.save() }"
+      [showCancel]="isDirty()" (saveClicked)="confirm()" (cancelClicked)="reset()" />
 
     <ion-content>
       <ion-list lines="full">
@@ -76,8 +74,6 @@ const CHANNEL_ORDER: VcardChannelType[] = ['phone', 'email', 'postal', 'web'];
           </ion-item>
         }
       </ion-list>
-
-      <ion-button expand="block" class="ion-margin" (click)="confirm()">{{ i18n.save() }}</ion-button>
     </ion-content>
   `,
 })
@@ -96,6 +92,15 @@ export class VcardExportScopeModal {
   protected readonly photo = signal(true);
   protected readonly workRels = signal(true);
   protected readonly personalRels = signal(true);
+
+  private readonly toggles = [
+    this.phone, this.email, this.postal, this.web, this.birthday, this.photo, this.workRels, this.personalRels,
+  ];
+  protected readonly isDirty = computed(() => this.toggles.some((t) => !t()));
+
+  protected reset(): void {
+    for (const t of this.toggles) t.set(true);
+  }
 
   protected showChannel(channel: VcardChannelType): boolean {
     return this.availability().addresses.includes(channel);
@@ -122,9 +127,5 @@ export class VcardExportScopeModal {
       orgLinks: false,
     };
     await dismissOverlay(this.modalController, scope, 'confirm');
-  }
-
-  public async cancel(): Promise<void> {
-    await dismissOverlay(this.modalController, undefined, 'cancel');
   }
 }

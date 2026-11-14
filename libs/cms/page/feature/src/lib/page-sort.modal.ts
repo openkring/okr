@@ -1,8 +1,8 @@
-import { Component, inject, input, output } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { IonContent, IonItem, IonReorder, IonReorderGroup, ItemReorderEventDetail, ModalController } from '@ionic/angular';
 
 import { SectionModel } from '@okr/shared-models';
-import { Header, Spinner } from '@okr/shared-ui';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header, Spinner } from '@okr/shared-ui';
 import { arrayMove } from '@okr/shared-util-core';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
@@ -15,12 +15,15 @@ import { PageStore } from './page.store';
   selector: 'okr-page-sort-modal',
   standalone: true,
   imports: [ 
-    Spinner, Header,
+    Spinner, Header, ChangeConfirmation,
     IonContent, IonReorderGroup, IonReorder, IonItem
   ],
   providers: [PageStore],
   template: `
-    <okr-header [i18n]="{ title: store.i18n.sort_label() }" [isModal]="true" [showOkButton]="true" (okClicked)="save()" />
+    <okr-header [i18n]="{ title: store.i18n.sort_label() }" [isModal]="true" />
+    @if (dirty()) {
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" [showCancel]="false" (saveClicked)="save()" />
+    }
     <ion-content>
       @if (sections(); as sections) {
         <!-- Casting $event to $any is a temporary fix for this bug https://github.com/ionic-team/ionic-framework/issues/24245 -->
@@ -48,6 +51,10 @@ export class PageSortModal {
   // outputs
   public sectionsChanged = output<SectionModel[]>();
 
+  // the order is moved in place (arrayMove), so there is nothing to revert to: no cancel on the bar
+  protected readonly dirty = signal(false);
+  protected readonly changeConfirmationI18n = computed<ChangeConfirmationI18n>(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save() }));
+
   /******************************** actions ******************************************* */
   public cancel(): Promise<boolean> {
     return dismissOverlay(this.modalController, null, 'cancel');
@@ -66,6 +73,7 @@ export class PageSortModal {
     // where the gesture ended. This method can also be called directly
     // by the reorder group
     ev.detail.complete();
+    this.dirty.set(true);
     this.sectionsChanged.emit(this.sections());
   }
 }

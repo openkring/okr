@@ -2,7 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import {
-  IonButton, IonContent, IonFooter, IonIcon, IonItem, IonLabel, IonList, IonNote, IonToolbar, ModalController
+  IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, ModalController
 } from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
@@ -10,6 +10,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { ReportAction, ReportFinding, ReportKind, ReportResult } from '@okr/shared-util-core';
 
+import { ChangeConfirmation } from './change-confirmation';
 import { Chips } from './chips';
 import { Header } from './header';
 import { PFX } from './scope';
@@ -17,7 +18,7 @@ import { PFX } from './scope';
 /**
  * Shared result modal of the domain checks (spec 1.101, phase 2): a kind badge, an explanation,
  * the findings (a tap on a finding with a `url` navigates there, an action button returns the
- * action to the caller), the time of the run and an optional «apply» footer button.
+ * action to the caller), the time of the run and an optional «apply» action on the change-confirmation bar.
  * A finding with `chips` shows an editable chip list; each change goes to `onChipsChange` while the
  * modal stays open. Has no form, so it is not a form modal.
  */
@@ -25,8 +26,8 @@ import { PFX } from './scope';
   selector: 'okr-report-modal',
   standalone: true,
   imports: [
-    DatePipe, SvgIconPipe, Header, Chips,
-    IonContent, IonList, IonItem, IonLabel, IonNote, IonButton, IonIcon, IonFooter, IonToolbar
+    DatePipe, SvgIconPipe, Header, Chips, ChangeConfirmation,
+    IonContent, IonList, IonItem, IonLabel, IonNote, IonButton, IonIcon
   ],
   styles: [`
     .badge { display: inline-block; margin: 0 0 8px 0; padding: 2px 10px; border-radius: 12px;
@@ -39,6 +40,9 @@ import { PFX } from './scope';
   `],
   template: `
     <okr-header [i18n]="{ title: title() }" [isModal]="true" />
+    @if (applyLabel(); as applyLabel) {
+      <okr-change-confirmation [i18n]="{ cancel: '', save: applyLabel }" [showCancel]="false" (saveClicked)="apply()" />
+    }
     <ion-content class="ion-padding">
       <span class="badge">{{ kindLabel() }}</span>
       <p class="explanation">{{ explanation() }}</p>
@@ -73,13 +77,6 @@ import { PFX } from './scope';
       }
       <ion-note class="ran-at">{{ labels.ranAt() }}: {{ ranAt() | date: 'dd.MM.yyyy HH:mm' }}</ion-note>
     </ion-content>
-    @if (applyLabel()) {
-      <ion-footer>
-        <ion-toolbar>
-          <ion-button slot="end" (click)="apply()">{{ applyLabel() }}</ion-button>
-        </ion-toolbar>
-      </ion-footer>
-    }
   `,
 })
 export class ReportModal {

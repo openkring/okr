@@ -1,10 +1,10 @@
-import { Component, computed, inject, input } from '@angular/core';
-import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonItem, IonLabel, IonList, IonListHeader, IonRow, IonTitle, IonToolbar, ModalController } from '@ionic/angular';
+import { Component, computed, input } from '@angular/core';
+import { IonCol, IonContent, IonGrid, IonItem, IonLabel, IonList, IonListHeader, IonRow } from '@ionic/angular';
 
 import { SessionModel } from '@okr/shared-models';
 import { getSessionStatus, SessionStatus } from '@okr/session-util';
 import { AocI18n } from '@okr/aoc-util';
-import { dismissOverlay } from '@okr/shared-util-angular';
+import { Header } from '@okr/shared-ui';
 
 interface CountRow { key: string; count: number; }
 
@@ -12,18 +12,10 @@ interface CountRow { key: string; count: number; }
   selector: 'okr-session-statistics-modal',
   standalone: true,
   imports: [
-    IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
-    IonContent, IonGrid, IonRow, IonCol, IonList, IonListHeader, IonItem, IonLabel,
+    Header, IonContent, IonGrid, IonRow, IonCol, IonList, IonListHeader, IonItem, IonLabel,
   ],
   template: `
-    <ion-header>
-      <ion-toolbar color="secondary">
-        <ion-title>{{ title() }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="close()">{{ closeLabel() }}</ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
+    <okr-header [i18n]="{ title: title() }" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-grid>
         <ion-row><ion-col size="8">{{ i18n().session_stats_total() }}</ion-col><ion-col size="4">{{ total() }}</ion-col></ion-row>
@@ -51,12 +43,9 @@ interface CountRow { key: string; count: number; }
   `,
 })
 export class SessionStatisticsModal {
-  private readonly modalController = inject(ModalController);
-
   public sessions = input.required<SessionModel[]>();
   public i18n = input.required<AocI18n>();
   public title = input('Session-Statistik');
-  public closeLabel = input('Schliessen');
 
   protected total = computed(() => this.sessions().length);
   protected uniqueUsers = computed(() => new Set(this.sessions().filter(s => s.userKey).map(s => s.userKey)).size);
@@ -96,9 +85,5 @@ export class SessionStatisticsModal {
     if (s < 60) return `${s}s`;
     if (s < 3600) return `${Math.floor(s / 60)}m`;
     return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
-  }
-
-  protected close(): void {
-    dismissOverlay(this.modalController, null, 'cancel');
   }
 }

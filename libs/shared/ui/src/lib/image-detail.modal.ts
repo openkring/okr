@@ -1,14 +1,14 @@
 import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
-import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonRow, IonSpinner, IonTitle, IonToolbar, ModalController } from '@ionic/angular';
+import { IonCol, IonContent, IonGrid, IonRow, IonSpinner, ModalController } from '@ionic/angular';
 import { getDownloadURL, getMetadata, ref } from 'firebase/storage';
 
 import { ENV, STORAGE } from '@okr/shared-config';
 import { fileSizeUnit } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
-import { SvgIconPipe } from '@okr/shared-pipes';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { ButtonCopy } from './button-copy';
+import { Header } from './header';
 
 export interface ImageDetailRow {
   label: string;
@@ -27,9 +27,9 @@ export interface ImageDetailRow {
   selector: 'okr-image-detail-modal',
   standalone: true,
   imports: [
-    IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonSpinner,
-    IonContent, IonGrid, IonRow, IonCol, IonIcon,
-    ButtonCopy, SvgIconPipe,
+    Header, IonSpinner,
+    IonContent, IonGrid, IonRow, IonCol,
+    ButtonCopy,
   ],
   styles: [`
     :host { border: 1px solid var(--ion-color-medium); border-radius: inherit; }
@@ -43,16 +43,7 @@ export interface ImageDetailRow {
     .hint { color: var(--ion-color-medium); font-style: italic; }
   `],
   template: `
-    <ion-header>
-      <ion-toolbar color="secondary">
-        <ion-title>{{ labels().title }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="close()" [attr.aria-label]="labels().close">
-            <ion-icon slot="icon-only" src="{{ 'cancel' | svgIcon }}" />
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
+    <okr-header [i18n]="{ title: labels().title }" [isModal]="true" />
     <ion-content class="ion-padding">
       <div class="preview">
         @if (downloadUrl(); as url) {

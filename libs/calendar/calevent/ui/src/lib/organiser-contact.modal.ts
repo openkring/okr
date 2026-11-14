@@ -1,8 +1,9 @@
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
-import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonSelect, IonSelectOption, IonToolbar, ModalController } from '@ionic/angular';
+import { IonContent, IonIcon, IonItem, IonLabel, IonList, IonSelect, IonSelectOption, ModalController } from '@ionic/angular';
 
 import { AvatarInfo } from '@okr/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@okr/shared-pipes';
+import { Header } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { AvatarDisplay } from '@okr/avatar-ui';
@@ -29,40 +30,19 @@ export type OrganiserContactResult = {
   selector: 'okr-organiser-contact-modal',
   standalone: true,
   imports: [
-    AvatarDisplay, SvgIconPipe, FullNamePipe,
-    IonHeader, IonToolbar, IonButtons, IonButton, IonIcon,
+    AvatarDisplay, SvgIconPipe, FullNamePipe, Header, IonIcon,
     IonContent, IonList, IonItem, IonLabel, IonSelect, IonSelectOption,
   ],
-  styles: [`
-    .title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding-inline-start: 16px;
-      min-height: 44px;
-    }
-    /* the prefix is the first thing to go when the toolbar gets narrow — the avatar and the
-       name carry the meaning on their own */
-    .title .prefix { font-size: 16px; font-weight: 500; white-space: nowrap; }
-  `],
   template: `
-    <ion-header>
-      <ion-toolbar color="secondary">
-        <div class="title">
-          <span class="prefix ion-hide-sm-down">{{ i18n().organiser_title() }}:</span>
-          @if(selected(); as organiser) {
-            <okr-avatar-display [avatars]="[organiser]" [showName]="true" />
-          }
-        </div>
-        <ion-buttons slot="end">
-          <ion-button (click)="close()">
-            <ion-icon slot="icon-only" src="{{ 'cancel' | svgIcon }}" />
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
+    <okr-header [i18n]="{ title: i18n().organiser_title() }" [isModal]="true" />
 
     <ion-content>
+      <!-- the selected organiser (avatar + name) — formerly in the title bar -->
+      @if(selected(); as organiser) {
+        <ion-item lines="full">
+          <okr-avatar-display [avatars]="[organiser]" [showName]="true" />
+        </ion-item>
+      }
       @if(hasChoice()) {
         <ion-item lines="full">
           <ion-select [value]="selectedKey()" (ionChange)="selectedKey.set($event.detail.value)"
@@ -120,11 +100,7 @@ export class OrganiserContactModal {
 
   protected choose(action: OrganiserContactAction): Promise<boolean> {
     const organiser = this.selected();
-    if (!organiser) return this.close();
+    if (!organiser) return dismissOverlay(this.modalController, undefined, 'cancel');
     return dismissOverlay(this.modalController, { action, organiser } as OrganiserContactResult, 'confirm');
-  }
-
-  protected close(): Promise<boolean> {
-    return dismissOverlay(this.modalController, undefined, 'cancel');
   }
 }

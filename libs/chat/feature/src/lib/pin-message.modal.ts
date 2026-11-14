@@ -1,9 +1,9 @@
-import { Component, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import {
-  IonButton, IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonList, IonRadio, IonRadioGroup, IonTitle,
-  IonToggle, IonToolbar, ModalController,
+  IonContent, IonItem, IonLabel, IonList, IonRadio, IonRadioGroup, IonToggle, ModalController,
 } from '@ionic/angular';
 
+import { ChangeConfirmation, Header } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { MatrixChatI18n, PIN_DURATIONS, PinDuration } from '@okr/chat-util';
 
@@ -12,6 +12,8 @@ export interface PinMessageChoice {
   duration: PinDuration;
   forAll: boolean;
 }
+
+const DEFAULT_DURATION: PinDuration = '7d';
 
 const DURATION_LABEL: Record<PinDuration, keyof MatrixChatI18n> = {
   '24h': 'pin_24h',
@@ -29,21 +31,15 @@ const DURATION_LABEL: Record<PinDuration, keyof MatrixChatI18n> = {
   selector: 'okr-pin-message-modal',
   standalone: true,
   imports: [
-    IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonContent, IonList, IonItem, IonLabel,
+    Header, ChangeConfirmation, IonContent, IonList, IonItem, IonLabel,
     IonRadioGroup, IonRadio, IonToggle,
   ],
   template: `
-    <ion-header>
-      <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-button (click)="cancel()">{{ i18n().cancel() }}</ion-button>
-        </ion-buttons>
-        <ion-title>{{ i18n().pin_title() }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button [strong]="true" (click)="confirm()">{{ i18n().pin_action() }}</ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
+    <okr-header [i18n]="{ title: i18n().pin_title() }" [isModal]="true" />
+    <!-- always shown: a duration is preselected, so pinning is possible from the start;
+         its cancel only appears once the choice differs from the defaults -->
+    <okr-change-confirmation [i18n]="{ cancel: i18n().cancel(), save: i18n().pin_action() }"
+      [showCancel]="isChanged()" (saveClicked)="confirm()" (cancelClicked)="reset()" />
     <ion-content>
       <ion-list lines="full">
         <ion-radio-group [value]="duration()" (ionChange)="duration.set($any($event).detail.value)">
@@ -75,15 +71,18 @@ export class PinMessageModal {
   public readonly canPinForAll = input(false);
 
   protected readonly durations = PIN_DURATIONS;
-  protected readonly duration = signal<PinDuration>('7d');
+  protected readonly duration = signal<PinDuration>(DEFAULT_DURATION);
   protected readonly forAll = signal(false);
+  protected readonly isChanged = computed(() => this.duration() !== DEFAULT_DURATION || this.forAll());
 
   protected label(d: PinDuration): string {
     return this.i18n()[DURATION_LABEL[d]]();
   }
 
-  protected async cancel(): Promise<void> {
-    await dismissOverlay(this.modalController, undefined, 'cancel');
+  /** the change-confirmation's cancel: back to the defaults, stay in the dialog */
+  protected reset(): void {
+    this.duration.set(DEFAULT_DURATION);
+    this.forAll.set(false);
   }
 
   protected async confirm(): Promise<void> {

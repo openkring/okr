@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal, untracked } from '@angular/core';
-import { IonAvatar, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonNote, IonProgressBar, IonRow, IonToolbar, ModalController } from '@ionic/angular';
+import { IonAvatar, IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonNote, IonProgressBar, IonRow, ModalController } from '@ionic/angular';
 import { Browser } from '@capacitor/browser';
 
 import { AvatarInfo, DiaryModel, IMAGE_STYLE_SHAPE, ImageType } from '@okr/shared-models';
@@ -39,7 +39,7 @@ export interface DiaryNeighbours {
 @Component({
   selector: 'okr-diary-view-modal',
   standalone: true,
-  imports: [Header, AvatarDisplay, AvatarPipe, ImgDirective, IonAvatar, DiaryMediaRow, DiaryJassCard, DiaryTrackCardView, SvgIconPipe, IonContent, IonGrid, IonRow, IonCol, IonProgressBar, IonItem, IonLabel, IonList, IonNote, IonChip, IonIcon, IonButton, IonButtons, IonToolbar],
+  imports: [Header, AvatarDisplay, AvatarPipe, ImgDirective, IonAvatar, DiaryMediaRow, DiaryJassCard, DiaryTrackCardView, SvgIconPipe, IonContent, IonGrid, IonRow, IonCol, IonProgressBar, IonItem, IonLabel, IonList, IonNote, IonChip, IonIcon, IonButton, IonButtons],
   styles: [`
     .body { padding: 16px; line-height: 1.5; }
     .meta ion-chip { margin-right: 4px; }
@@ -50,6 +50,9 @@ export interface DiaryNeighbours {
     .person, .location { cursor: pointer; }
     .tracks { padding: 0; }
     .tracks ion-col { padding: 0; }
+    /* prev / up / next as content buttons: prev at the start, up in the middle, next at the end */
+    .nav { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 4px 8px 0; }
+    .nav .next { justify-self: end; }
     .when { display: flex; flex-wrap: wrap; align-items: center; column-gap: 4px; }
     .when h2 { margin: 0 4px 0 0; }
     /* the same chip as a person's (okr-avatar-display with showName) */
@@ -72,29 +75,31 @@ export interface DiaryNeighbours {
       }
     </okr-header>
     <ion-content>
-      <ion-toolbar>
-        <ion-buttons slot="start">
-          @if (nav().prev) {
-            <ion-button (click)="go(nav().prev)">
-              <ion-icon slot="start" src="{{ 'chevron-back' | svgIcon }}" />{{ i18n().nav_prev() }}
-            </ion-button>
-          }
-        </ion-buttons>
-        @if (nav().up) {
-          <ion-buttons class="ion-justify-content-center">
-            <ion-button (click)="go(nav().up)">
-              <ion-icon slot="start" src="{{ 'chevron-up' | svgIcon }}" />{{ i18n().nav_up() }}
-            </ion-button>
-          </ion-buttons>
-        }
-        <ion-buttons slot="end">
-          @if (nav().next) {
-            <ion-button (click)="go(nav().next)">
-              {{ i18n().nav_next() }}<ion-icon slot="end" src="{{ 'chevron-forward' | svgIcon }}" />
-            </ion-button>
-          }
-        </ion-buttons>
-      </ion-toolbar>
+      @if (nav().prev || nav().up || nav().next) {
+        <div class="nav">
+          <div>
+            @if (nav().prev) {
+              <ion-button fill="outline" size="small" (click)="go(nav().prev)">
+                <ion-icon slot="start" src="{{ 'chevron-back' | svgIcon }}" />{{ i18n().nav_prev() }}
+              </ion-button>
+            }
+          </div>
+          <div>
+            @if (nav().up) {
+              <ion-button fill="outline" size="small" (click)="go(nav().up)">
+                <ion-icon slot="start" src="{{ 'chevron-up' | svgIcon }}" />{{ i18n().nav_up() }}
+              </ion-button>
+            }
+          </div>
+          <div class="next">
+            @if (nav().next) {
+              <ion-button fill="outline" size="small" (click)="go(nav().next)">
+                {{ i18n().nav_next() }}<ion-icon slot="end" src="{{ 'chevron-forward' | svgIcon }}" />
+              </ion-button>
+            }
+          </div>
+        </div>
+      }
 
       <ion-list lines="none" class="meta">
         <ion-item>

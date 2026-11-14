@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
-import { IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonTitle, IonToolbar, ModalController } from '@ionic/angular';
+import { IonAvatar, IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, ModalController } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
+import { Header } from '@okr/shared-ui';
 import { fill } from '@okr/shared-util-core';
 import { formatMatrixTime, hashUserIdToColor } from '@okr/chat-util';
 
@@ -20,7 +21,7 @@ export interface ReactionDetailRow {
   selector: 'okr-reaction-details-modal',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent, IonList, IonItem, IonLabel, IonAvatar, IonIcon, SvgIconPipe],
+  imports: [Header, IonButton, IonContent, IonList, IonItem, IonLabel, IonAvatar, IonIcon, SvgIconPipe],
   styles: [`
     .avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
     .avatar-initial {
@@ -28,17 +29,9 @@ export interface ReactionDetailRow {
       justify-content: center; font-weight: 600; color: #fff;
     }
     .row-time { font-size: 0.75rem; color: var(--ion-color-medium); }
-    .emoji { font-size: 1.3rem; }
   `],
   template: `
-    <ion-header>
-      <ion-toolbar>
-        <ion-title><span class="emoji">{{ emoji() }}</span> · {{ title() }}</ion-title>
-        <ion-buttons slot="end">
-          <ion-button [attr.aria-label]="closeLabel()" (click)="close()">{{ closeLabel() }}</ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     <ion-content>
       <ion-list lines="none">
         @for (r of sortedRows(); track r.userId) {
@@ -81,12 +74,14 @@ export class ReactionDetailsModal {
   public readonly peopleLabel = input.required<string>();
   /** «Auch so reagieren» */
   public readonly alsoLabel = input.required<string>();
-  public readonly closeLabel = input.required<string>();
+  /** no longer rendered (okr-header supplies the close icon); kept because the caller still passes it */
+  public readonly closeLabel = input<string>('');
   /** «du» — shown capitalised for the current user */
   public readonly youLabel = input.required<string>();
   public readonly removeLabel = input<string>('');
 
   protected readonly title = computed(() => fill(this.peopleLabel(), { n: this.rows().length }));
+  protected readonly headerTitle = computed(() => `${this.emoji()} · ${this.title()}`);
   protected readonly youText = computed(() => this.youLabel().charAt(0).toUpperCase() + this.youLabel().slice(1));
   protected readonly hasOwn = computed(() => this.rows().some((r) => r.userId === this.currentUserId()));
   /** newest first, the current user always on top */
@@ -102,10 +97,6 @@ export class ReactionDetailsModal {
 
   protected formatTime(ts: number): string {
     return `${new Date(ts).toLocaleDateString('de-CH')} ${formatMatrixTime(ts)}`;
-  }
-
-  protected close(): void {
-    void this.modalController.dismiss(undefined, 'cancel');
   }
 
   protected dismiss(role: 'remove' | 'add'): void {

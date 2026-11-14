@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonFooter, IonItem, IonLabel, IonList, IonNote, IonSegment, IonSegmentButton, IonToolbar, ModalController, ToastController } from '@ionic/angular';
+import { ActionSheetController, ActionSheetOptions, IonContent, IonItem, IonLabel, IonList, IonNote, IonSegment, IonSegmentButton, ModalController, ToastController } from '@ionic/angular';
 import { signalStore, withProps } from '@ngrx/signals';
 
 import { ENV } from '@okr/shared-config';
 import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetOptions, dismissOverlay, EmailEntry } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
+import { ChangeConfirmation } from './change-confirmation';
 import { Header } from './header';
 
 type Segment = 'main' | 'cc';
@@ -38,13 +39,16 @@ const EmailAddressStore = signalStore(
   providers: [EmailAddressStore],
   imports: [
     FormsModule,
-    Header,
-    IonContent, IonFooter, IonToolbar, IonButtons, IonButton,
+    Header, ChangeConfirmation,
+    IonContent,
     IonSegment, IonSegmentButton, IonLabel,
     IonList, IonItem, IonNote,
   ],
   template: `
     <okr-header [i18n]="{ title: title() }" [isModal]="true" />
+    @if (currentCount() > 0) {
+      <okr-change-confirmation [i18n]="copyI18n()" [showCancel]="false" (saveClicked)="copy()" />
+    }
     <ion-content>
       <ion-segment [(ngModel)]="activeSegment">
         <ion-segment-button value="main">
@@ -89,15 +93,6 @@ const EmailAddressStore = signalStore(
         }
       }
     </ion-content>
-    <ion-footer>
-      <ion-toolbar>
-        <ion-buttons slot="end">
-          <ion-button color="primary" [disabled]="currentCount() === 0" (click)="copy()">
-            {{ copy2() }} ({{ currentCount() }})
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-footer>
   `
 })
 export class EmailAddressesModal {
@@ -136,6 +131,7 @@ export class EmailAddressesModal {
   protected readonly currentCount = computed(() =>
     this.activeSegment() === 'main' ? this.visibleMainEmails().length : this.visibleCcEmails().length
   );
+  protected readonly copyI18n = computed(() => ({ cancel: '', save: `${this.copy2()} (${this.currentCount()})` }));
 
   // actions
   protected async showActions(entry: EmailEntry): Promise<void> {
