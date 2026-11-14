@@ -177,6 +177,25 @@ describe('applyJournalChange logic', () => {
     ])).toEqual({ path: 'journals/j1/footprints/f1', data: { sections: ['sG', 'sV'] } });
   });
 
+  it('the footprint lists its hero first, whatever its order', () => {
+    expect(planFootprintSections('j1', 'f1', [
+      { okey: 'sA', order: 'G', type: 'article' }, { okey: 'sH', order: 'V', type: 'hero' },
+    ])).toEqual({ path: 'journals/j1/footprints/f1', data: { sections: ['sH', 'sA'] } });
+  });
+
+  it('a hero record writes a CMS hero section doc', () => {
+    const hero = rec({ entity: 'section', entityKey: 'h1', op: 'create', fields: { footprintKey: 'f1', type: 'hero', title: '', htmlContent: '', p_hero: { label: 'i1' }, p_overlay: { title: true }, order: 'A' } });
+    const { writes, footprintKey } = planSectionWrites([hero], 'j1', 'h1', ['bkg'], []);
+    expect(footprintKey).toBe('f1');
+    expect(writes).toHaveLength(1);
+    expect(writes[0].path).toBe('journals/j1/sections/h1');
+    expect(writes[0].data).toMatchObject({
+      okey: 'h1', type: 'hero', journalKey: 'j1', footprintKey: 'f1', authorKey: 'bruno', order: 'A', isArchived: false,
+      properties: { hero: { label: 'i1', url: '' }, overlay: { title: true } },
+    });
+    expect(writes[0].data).not.toHaveProperty('blockKind');
+  });
+
   it('a key with a path separator is never written', () => {
     const create = rec({ entity: 'section', entityKey: 'x/../y', op: 'create', fields: { footprintKey: 'f1', type: 'article' } });
     expect(planEntityWrite([create], 'j1', 'section', 'x/../y', ['bkg'])).toBeUndefined();

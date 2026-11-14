@@ -162,6 +162,24 @@ function copiesOf(state: JournalState, original: SectionView, history: EntitySta
   return copies;
 }
 
+function sectionFromView(entity: EntityState, view: Record<string, unknown>): SectionView | undefined {
+  const type = view['type'];
+  if (!isJournalSectionType(type)) return undefined;
+  return withFields(
+    { key: entity.entityKey, type, title: '', htmlContent: '', properties: {}, order: '', authorKey: entity.ownerKey ?? '', hlcs: winningHlcs(entity), conflict: false },
+    view,
+  );
+}
+
+/**
+ * One section as the device and the server read it, without its conflict copies: the record's values as if it were
+ * not archived (the caller checks the archive). `undefined` before the create arrived or without a known `type`.
+ */
+export function sectionViewOf(entity: EntityState | undefined): SectionView | undefined {
+  const view = entity && viewOf(unarchived(entity));
+  return entity && view ? sectionFromView(entity, view) : undefined;
+}
+
 /**
  * The footprint's sections, including the conflict copies derived from lost values: a hero first, then by
  * `order`. A record without a known `type` — an old block (`kind`) from an older build — is ignored (decision 4).
@@ -172,12 +190,8 @@ export function sectionsOf(state: JournalState, footprintKey: string): SectionVi
     if (entity.entity !== 'section' || isConflictCopyKey(entity.entityKey)) continue;
     const view = viewOf(unarchived(entity));
     if (!view || view['footprintKey'] !== footprintKey) continue;
-    const type = view['type'];
-    if (!isJournalSectionType(type)) continue;
-    const section = withFields(
-      { key: entity.entityKey, type, title: '', htmlContent: '', properties: {}, order: '', authorKey: entity.ownerKey ?? '', hlcs: winningHlcs(entity), conflict: false },
-      view,
-    );
+    const section = sectionFromView(entity, view);
+    if (!section) continue;
     const live = viewOf(entity) !== undefined;
     const copies = copiesOf(state, section, entity.history, live);
     if (live) sections.push({ ...section, conflict: copies.length > 0 });

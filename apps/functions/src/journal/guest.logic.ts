@@ -1,7 +1,7 @@
 import { HttpsError } from 'firebase-functions/v2/https';
 
 import { AvatarInfo, JournalGuestLink } from '@okr/shared-models';
-import { COMMENT_MAX } from '@okr/travel-journal-util';
+import { COMMENT_MAX, isJournalSectionType, JournalSectionType, sectionClipKeys, sectionImageKeys } from '@okr/travel-journal-util';
 
 import { isJournalKey } from './apply-journal-change.logic';
 
@@ -140,21 +140,49 @@ export function deliveryFor(channel: GuestChannel): string[] {
 }
 
 /**
- * Open conflict copies of a block are for the authors to resolve: a guest never receives them. A copy that
- * outlived its original (`conflict: false`) is a normal block (spec 1.126 §6.3). Fails closed: a copy doc
+ * Open conflict copies of a section are for the authors to resolve: a guest never receives them. A copy that
+ * outlived its original (`conflict: false`) is a normal section (spec 1.126 §6.3). Fails closed: a copy doc
  * without an explicit `conflict: false` (e.g. from an older function revision) stays hidden.
  */
 export function isGuestVisibleSection(section: Record<string, unknown>): boolean {
   return section['isArchived'] !== true && (section['conflictOf'] === undefined || section['conflict'] === false);
 }
 
-/** How a block is shown to a guest: video blocks are marked by the author's device, the rest is guessed from content. */
-export function guestBlockKind(section: Record<string, unknown>, imageKeys: string[], html: string): 'text' | 'photos' | 'video' {
-  if (section['blockKind'] === 'video') return 'video';
-  return imageKeys.length > 0 && html === '' ? 'photos' : 'text';
+/** A section as a guest receives it, before its photos and clips are signed (`guestView`). */
+export interface GuestSection {
+  key: string;
+  type: JournalSectionType;
+  title: string;
+  html: string;
+  properties: Record<string, unknown>; // the CMS properties; image references name journal images in `label`, `url` empty
+  authorKey: string; // resolved to a name by the caller; never sent to the guest
+  imageKeys: string[]; // the photos, in `sectionImageKeys` order (a hero's cover last)
+  clipKeys: string[]; // the video clips, in pick order
 }
 
-/** The playable clips of a video block, in pick order: unknown keys and clips whose `videoPath` is not a `-video.mp4` of this journal are left out. */
+const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
+
+/**
+ * The sections a guest sees on one footprint, in the footprint's `sections` order (spec 1.154 phase 2): visible
+ * (`isGuestVisibleSection`) section docs of a phase-2 type; any other doc is left out.
+ */
+export function guestSectionsOf(docs: { id: string; data: Record<string, unknown> }[], footprintKey: string, order: string[]): GuestSection[] {
+  return docs
+    .filter((d) => d.data['footprintKey'] === footprintKey && isGuestVisibleSection(d.data) && isJournalSectionType(d.data['type']))
+    .sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id))
+    .map(({ id, data }) => {
+      const properties = isRecord(data['properties']) ? data['properties'] : {};
+      const content = isRecord(data['content']) ? data['content'] : {};
+      return {
+        key: id, type: data['type'] as JournalSectionType, title: typeof data['title'] === 'string' ? data['title'] : '',
+        html: typeof content['htmlContent'] === 'string' ? content['htmlContent'] : '', properties,
+        authorKey: typeof data['authorKey'] === 'string' ? data['authorKey'] : '',
+        imageKeys: sectionImageKeys({ properties }), clipKeys: sectionClipKeys({ properties }),
+      };
+    });
+}
+
+/** The playable clips of a video section, in pick order: unknown keys and clips whose `videoPath` is not a `-video.mp4` of this journal are left out. */
 export function guestVideoClips(imageKeys: string[], imageById: Map<string, Record<string, unknown>>, tenant: string, journalKey: string): {
   key: string; width?: unknown; height?: unknown; durationSec?: unknown; objectPath: string; posterPath: string;
 }[] {

@@ -57,22 +57,22 @@ export function planEntityWrite(records: StoredRecord[], journalKey: string, ent
  * A record without a known `type` — an old block from an older build — writes nothing (spec 1.154 decision 4).
  */
 export function planSectionWrites(
-  records: StoredRecord[], journalKey: string, blockKey: string, tenants: string[], existingCopyKeys: string[],
+  records: StoredRecord[], journalKey: string, sectionKey: string, tenants: string[], existingCopyKeys: string[],
 ): { writes: JournalWrite[]; footprintKey?: string } {
   const state = materialize(records.filter((r) => acceptRecord(r.change, r.uploadedAtMs)).map((r) => r.change));
-  const entity = state[entityStateKey('section', blockKey)];
+  const entity = state[entityStateKey('section', sectionKey)];
   const unarchived = entity && { ...entity, fields: Object.fromEntries(Object.entries(entity.fields).filter(([field]) => field !== 'archived')) };
   const unarchivedView = viewOf(unarchived);
   if (!isJournalSectionType(unarchivedView?.['type'])) return { writes: [] };
-  const original = planEntityWrite(records.filter((r) => r.change.entityKey === blockKey), journalKey, 'section', blockKey, tenants);
+  const original = planEntityWrite(records.filter((r) => r.change.entityKey === sectionKey), journalKey, 'section', sectionKey, tenants);
   if (!original) return { writes: [] };
   const writes: JournalWrite[] = [original];
   const footprint = unarchivedView?.['footprintKey'];
   if (typeof footprint !== 'string') return { writes };
   const live = new Set<string>();
-  for (const section of sectionsOf(state, footprint).filter((s) => s.conflictOf === blockKey)) {
+  for (const section of sectionsOf(state, footprint).filter((s) => s.conflictOf === sectionKey)) {
     if (!isJournalKey(section.key)) {
-      logger.warn('planSectionWrites: conflict copy with an invalid key skipped', { journalKey, blockKey });
+      logger.warn('planSectionWrites: conflict copy with an invalid key skipped', { journalKey, sectionKey });
       continue;
     }
     live.add(section.key);
@@ -80,17 +80,20 @@ export function planSectionWrites(
   }
   const stored = new Set([...existingCopyKeys, ...records.map((r) => r.change.entityKey)]);
   for (const key of [...stored].sort()) {
-    if (isConflictCopyKey(key) && originalOfCopy(key) === blockKey && isJournalKey(key) && !live.has(key)) {
+    if (isConflictCopyKey(key) && originalOfCopy(key) === sectionKey && isJournalKey(key) && !live.has(key)) {
       writes.push({ path: journalPath(journalKey, JournalSectionCollection, key), data: ARCHIVED });
     }
   }
   return { writes, footprintKey: footprint };
 }
 
-/** The footprint's `sections` list: its live blocks in their fractional order. */
-export function planFootprintSections(journalKey: string, footprintKey: string, sections: { okey: string; order?: string; isArchived?: boolean }[]): JournalWrite {
+/** The footprint's `sections` list: its live sections in their fractional order, a hero first (as `sectionsOf`). */
+export function planFootprintSections(
+  journalKey: string, footprintKey: string, sections: { okey: string; order?: string; isArchived?: boolean; type?: unknown }[],
+): JournalWrite {
   const live = sortByOrder(sections.filter((s) => s.isArchived !== true));
-  return { path: journalPath(journalKey, JournalFootprintCollection, footprintKey), data: { sections: live.map((s) => s.okey) } };
+  const ordered = [...live.filter((s) => s.type === 'hero'), ...live.filter((s) => s.type !== 'hero')];
+  return { path: journalPath(journalKey, JournalFootprintCollection, footprintKey), data: { sections: ordered.map((s) => s.okey) } };
 }
 
 /** A device-made key (a uuid): safe as one Firestore path segment. */

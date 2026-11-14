@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { JournalChange } from '@okr/shared-models';
 import { formatHlc } from './journal-hlc.util';
-import { materialize } from './journal-merge.util';
-import { acceptRecord, footprintPageOf, imageDocOf, journalDocOf, MAX_FUTURE_MS, sectionDocOf, storagePath } from './journal-server.util';
-import { footprintsOf } from './journal-view.util';
+import { entityStateKey, materialize } from './journal-merge.util';
+import { acceptRecord, conflictCopyDocOf, footprintPageOf, imageDocOf, journalDocOf, MAX_FUTURE_MS, sectionDocOf, storagePath } from './journal-server.util';
+import { sectionModelOf } from './journal-section.util';
+import { footprintsOf, SectionView, sectionViewOf } from './journal-view.util';
 
 let n = 0;
 function rec(p: Pick<JournalChange, 'entity' | 'entityKey' | 'op'> & Partial<JournalChange>, deviceId = 'dev-a', authorKey = 'bruno'): JournalChange {
@@ -89,31 +90,57 @@ describe('journal server util', () => {
     expect(server?.order).toBe('V');
   });
 
-  it('an album section lists its image keys', () => {
+  it('sectionDocOf of an article is its sectionModelOf plus the journal fields', () => {
+    const state = materialize([
+      rec({ entity: 'section', entityKey: 's1', op: 'create', fields: {
+        footprintKey: 'f1', type: 'article', title: 'Neko', htmlContent: '<p>Eis</p>', p_images: [{ label: 'i1' }], p_imageStyle: { width: '50%' }, order: 'G',
+      } }),
+    ]);
+    const view = sectionViewOf(state[entityStateKey('section', 's1')]);
+    expect(view).toBeDefined();
+    const doc = sectionDocOf(state, 's1', 'j1', ['bkg', 'scs']);
+    expect(doc).toEqual({
+      ...sectionModelOf(view as SectionView, 'bkg'), tenants: ['bkg', 'scs'], isArchived: false,
+      journalKey: 'j1', footprintKey: 'f1', authorKey: 'bruno', order: 'G',
+    });
+    expect(doc?.type).toBe('article');
+    expect((doc?.properties as { images: { label: string; url: string }[] }).images).toEqual([expect.objectContaining({ label: 'i1', url: '' })]);
+    expect(doc).not.toHaveProperty('conflictOf');
+    expect(doc).not.toHaveProperty('conflict');
+  });
+
+  it('an album and a video keep their CMS type and lists', () => {
     const state = materialize([
       rec({ entity: 'section', entityKey: 's2', op: 'create', fields: { footprintKey: 'f1', type: 'album', p_images: [{ label: 'i1' }, { label: 'i2' }], order: 'G' } }),
+      rec({ entity: 'section', entityKey: 's3', op: 'create', fields: { footprintKey: 'f1', type: 'video', htmlContent: '<p>Pinguine</p>', p_clips: [{ label: 'v1' }], order: 'H' } }),
     ]);
-    const section = sectionDocOf(state, 's2', 'j1', ['bkg']);
-    expect(section?.type).toBe('article');
-    expect(section?.content.htmlContent).toBe('');
-    expect(section?.properties.images.map((i) => i.label)).toEqual(['i1', 'i2']);
+    const album = sectionDocOf(state, 's2', 'j1', ['bkg']);
+    expect(album?.type).toBe('album');
+    expect((album?.properties as { images: { label: string }[] }).images.map((i) => i.label)).toEqual(['i1', 'i2']);
+    const video = sectionDocOf(state, 's3', 'j1', ['bkg']);
+    expect(video?.type).toBe('video');
+    expect(video?.content.htmlContent).toBe('<p>Pinguine</p>');
+    expect((video?.properties as { clips: { label: string }[] }).clips.map((i) => i.label)).toEqual(['v1']);
+    expect(video).not.toHaveProperty('blockKind');
   });
 
-  it('a video section keeps its caption and lists its clips', () => {
+  it('an archived section gives no doc', () => {
     const state = materialize([
-      rec({ entity: 'section', entityKey: 's3', op: 'create', fields: { footprintKey: 'f1', type: 'video', htmlContent: '<p>Pinguine</p>', p_clips: [{ label: 'i1' }, { label: 'i2' }], order: 'H' } }),
+      rec({ entity: 'section', entityKey: 's2', op: 'create', fields: { footprintKey: 'f1', type: 'album', order: 'G' } }),
+      rec({ entity: 'section', entityKey: 's2', op: 'archive' }),
     ]);
-    const section = sectionDocOf(state, 's3', 'j1', ['bkg']);
-    expect(section?.blockKind).toBe('video');
-    expect(section?.content.htmlContent).toBe('<p>Pinguine</p>');
-    expect(section?.properties.images.map((i) => i.label)).toEqual(['i1', 'i2']);
+    expect(sectionDocOf(state, 's2', 'j1', ['bkg'])).toBeUndefined();
   });
 
-  it('an album section has no blockKind key', () => {
+  it('conflictCopyDocOf names the original and the open conflict', () => {
     const state = materialize([
-      rec({ entity: 'section', entityKey: 's2', op: 'create', fields: { footprintKey: 'f1', type: 'album', p_images: [{ label: 'i1' }], order: 'G' } }),
+      rec({ entity: 'section', entityKey: 's1', op: 'create', fields: { footprintKey: 'f1', type: 'article', htmlContent: '<p>a</p>', order: 'G' } }),
     ]);
-    expect(sectionDocOf(state, 's2', 'j1', ['bkg'])).not.toHaveProperty('blockKind');
+    const original = sectionViewOf(state[entityStateKey('section', 's1')]) as SectionView;
+    const copy: SectionView = { ...original, key: 's1_c_x', htmlContent: '<p>b</p>', authorKey: 'barbara', conflictOf: 's1', conflict: true };
+    const doc = conflictCopyDocOf(copy, 'f1', 'j1', ['bkg']);
+    expect(doc).toMatchObject({ okey: 's1_c_x', type: 'article', authorKey: 'barbara', conflictOf: 's1', conflict: true, footprintKey: 'f1', journalKey: 'j1' });
+    expect(doc.content.htmlContent).toBe('<p>b</p>');
   });
 
   it('an old block record without a type gives no doc', () => {

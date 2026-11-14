@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { applyManage, clipReadUrl, deliveryFor, GuestRequestError, guestBlockKind, guestVideoClips, isGuestVisibleSection, memberName, parseGuestRequest, parseGuestEmail, peopleKeys } from './guest.logic';
+import { applyManage, clipReadUrl, deliveryFor, GuestRequestError, guestSectionsOf, guestVideoClips, isGuestVisibleSection, memberName, parseGuestRequest, parseGuestEmail, peopleKeys } from './guest.logic';
 
 const CODE = '0123456789abcdef0123456789abcdef';
 const avatar = (key: string, name1: string, name2: string) => ({ key, name1, name2, modelType: 'person' as const, type: '', subType: '', label: '' });
@@ -76,10 +76,32 @@ describe('journal guest logic', () => {
   });
 });
 
-describe('guestBlockKind', () => {
-  it('video block', () => expect(guestBlockKind({ blockKind: 'video' }, ['i1'], '<p>x</p>')).toBe('video'));
-  it('photos only', () => expect(guestBlockKind({}, ['i1'], '')).toBe('photos'));
-  it('text', () => expect(guestBlockKind({}, [], '<p>x</p>')).toBe('text'));
+describe('guestSectionsOf', () => {
+  const docs = [
+    { id: 'a1', data: { footprintKey: 'f1', type: 'album', title: 'Eis', content: { htmlContent: '' }, authorKey: 'bruno', properties: { images: [{ label: 'i2' }, { label: 'i1' }], imageStyle: { width: '100%' } } } },
+    { id: 'h1', data: { footprintKey: 'f1', type: 'hero', title: '', content: { htmlContent: '' }, authorKey: 'anna', properties: { hero: { label: 'i3' }, overlay: { title: true } } } },
+    { id: 'a1_c_x', data: { footprintKey: 'f1', type: 'album', conflictOf: 'a1', conflict: true, properties: { images: [{ label: 'i9' }] } } },
+    { id: 'v1', data: { footprintKey: 'f1', type: 'video', content: { htmlContent: '<p>Pinguine</p>' }, properties: { clips: [{ label: 'c1' }] } } },
+    { id: 'o1', data: { footprintKey: 'f2', type: 'article', content: { htmlContent: '<p>anderswo</p>' } } },
+    { id: 'x1', data: { footprintKey: 'f1', type: 'map' } },
+    { id: 'z1', data: { footprintKey: 'f1', type: 'article', isArchived: true } },
+  ];
+
+  it('maps a hero and an album in footprint order, open conflict copies hidden', () => {
+    const sections = guestSectionsOf(docs, 'f1', ['h1', 'a1', 'a1_c_x', 'v1']);
+    expect(sections.map((s) => s.key)).toEqual(['h1', 'a1', 'v1']);
+    expect(sections[0]).toEqual({
+      key: 'h1', type: 'hero', title: '', html: '', authorKey: 'anna',
+      properties: { hero: { label: 'i3' }, overlay: { title: true } }, imageKeys: ['i3'], clipKeys: [],
+    });
+    expect(sections[1]).toMatchObject({ key: 'a1', type: 'album', title: 'Eis', imageKeys: ['i2', 'i1'], clipKeys: [] });
+    expect(sections[2]).toMatchObject({ key: 'v1', type: 'video', html: '<p>Pinguine</p>', imageKeys: [], clipKeys: ['c1'] });
+  });
+
+  it('a copy that outlived its original is shown', () => {
+    const outlived = [{ id: 'a1_c_x', data: { footprintKey: 'f1', type: 'album', conflictOf: 'a1', conflict: false, properties: { images: [{ label: 'i9' }] } } }];
+    expect(guestSectionsOf(outlived, 'f1', ['a1_c_x']).map((s) => s.imageKeys)).toEqual([['i9']]);
+  });
 });
 
 describe('guestVideoClips', () => {

@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { TransportMode } from '@okr/shared-models';
+import { JournalSectionType } from '@okr/travel-journal-util';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
@@ -23,13 +24,21 @@ export interface NoticePreview {
 
 export interface GuestPhotoView { key: string; width: number; height: number; latitude?: number; longitude?: number; takenAt?: string; url: string; thumb: string }
 export interface GuestVideoView { key: string; width: number; height: number; durationSec: number; poster: string; url: string }
-export interface GuestBlockView { key: string; kind: 'text' | 'photos' | 'video'; authorName: string; html: string; photos: GuestPhotoView[]; videos: GuestVideoView[] }
+/**
+ * A section of a published footprint as a guest receives it (spec 1.154 phase 2): the CMS type, title, html and
+ * properties (image references name journal images in `ImageConfig.label`, their `url` is empty) plus the signed
+ * photos (`sectionImageKeys` order) and clips (`sectionClipKeys` order). No person data beyond the author's name.
+ */
+export interface GuestSectionView {
+  key: string; type: JournalSectionType; title: string; html: string; properties: Record<string, unknown>;
+  authorName: string; photos: GuestPhotoView[]; videos: GuestVideoView[];
+}
 export interface GuestCommentView { key: string; authorName: string; text: string; createdAt: string; mine: boolean }
 export interface GuestFootprintView {
   key: string; title: string; placeName: string; date: string; time: string; latitude?: number; longitude?: number;
   weather?: { code: number; min: number; max: number; precip: number; sunrise?: string; sunset?: string };
   transport?: TransportMode;
-  blocks: GuestBlockView[]; likes: number; liked: boolean; comments: GuestCommentView[];
+  sections: GuestSectionView[]; likes: number; liked: boolean; comments: GuestCommentView[];
 }
 export interface GuestJournalView {
   journal: { key: string; title: string; subTitle: string };

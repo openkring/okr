@@ -120,7 +120,7 @@ async function writeFootprintSections(journalKey: string, footprintKey: string, 
   const db = getFirestore();
   const snaps = await db.collection(`${JournalCollection}/${journalKey}/${JournalSectionCollection}`).where('footprintKey', '==', footprintKey).get();
   const plan = planFootprintSections(journalKey, footprintKey, snaps.docs.map((d) => ({
-    okey: d.id, order: d.data()['order'] as string | undefined, isArchived: d.data()['isArchived'] as boolean | undefined,
+    okey: d.id, order: d.data()['order'] as string | undefined, isArchived: d.data()['isArchived'] as boolean | undefined, type: d.data()['type'],
   })));
   // merge: the footprint doc may not exist yet when its first block arrives
   await db.doc(plan.path).set({ ...plan.data, tenants, journalKey }, { merge: true });

@@ -106,13 +106,13 @@ export function sectionModelOf(view: SectionView, tenantId: string): SectionMode
 const labelsOf = (images: ImageConfig[]): string[] => images.map((i) => i.label).filter((k) => k !== '');
 
 /** The journal photos a section shows: its `images` list and a hero's cover. May name images not (yet) received. */
-export function sectionImageKeys(view: SectionView): string[] {
+export function sectionImageKeys(view: Pick<SectionView, 'properties'>): string[] {
   const hero = storedImage(view.properties[IMAGE_KEY]);
   return [...new Set([...labelsOf(storedImages(view.properties['images'])), ...labelsOf(hero ? [hero] : [])])];
 }
 
 /** The journal video clips of a section (`clips`), in pick order. */
-export function sectionClipKeys(view: SectionView): string[] {
+export function sectionClipKeys(view: Pick<SectionView, 'properties'>): string[] {
   return labelsOf(storedImages(view.properties['clips']));
 }
 

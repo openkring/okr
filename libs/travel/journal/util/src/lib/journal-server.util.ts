@@ -1,22 +1,18 @@
 import {
-  ARTICLE_SECTION_SHAPE, ArticleSection, FOOTPRINT_PAGE_TYPE, IMAGE_CONFIG_SHAPE, JournalChange, JournalEntity, JournalImageModel, JournalModel,
-  PageModel,
+  FOOTPRINT_PAGE_TYPE, JournalChange, JournalEntity, JournalImageModel, JournalModel, PageModel, SectionModel,
 } from '@okr/shared-models';
 import { isValidHlc, parseHlc } from './journal-hlc.util';
 import { entityStateKey, JournalState, viewOf } from './journal-merge.util';
-import { isJournalSectionType, JournalSectionType, SECTION_PROPERTY_PREFIX, sectionClipKeys, sectionImageKeys } from './journal-section.util';
-import { SectionView, transportOf, weatherOf } from './journal-view.util';
+import { sectionModelOf } from './journal-section.util';
+import { SectionView, sectionViewOf, transportOf, weatherOf } from './journal-view.util';
 
 /**
  * What the applyJournalChange function writes to Firestore, built from the merged change log (spec
  * 1.113 §5.3). Pure, so the server and the tests share it with the device merge. `undefined` means
  * «not created yet or archived»; the function then writes `isArchived: true` and never deletes.
  *
- * Interim (spec 1.154 phase 2, Task 2 — Task 3 writes the CMS section itself): a section record is still written as
- * the phase-1 article doc. An article keeps its html and photos; an album or a hero becomes an article without html
- * whose `properties.images[]` name the journal images (`label` = image key, `url` stays empty — the file is in the
- * private bucket and is read through signed URLs). A video keeps its caption as html and lists its clips like
- * photos, marked `blockKind: 'video'`. A record without a known `type` (an old block) gives no doc (decision 4).
+ * A section record becomes the CMS section itself (spec 1.154 phase 2, `SectionDoc`); a record without a known `type`
+ * (an old block) gives no doc (decision 4).
  */
 export const MAX_FUTURE_MS = 24 * 60 * 60 * 1000;
 
@@ -76,56 +72,36 @@ export function footprintPageOf(state: JournalState, footprintKey: string, tenan
 }
 
 /**
- * A section doc; a conflict copy additionally names the block it was split from and whether the conflict
- * is open — `conflict: false` once the original is deleted: the copy is then a normal block (spec 1.126 §6.3).
+ * A section as `journals/{jk}/sections/{key}`: the CMS `SectionModel` of `sectionModelOf` (type defaults overlaid
+ * with the record; image references keep the journal image key in `label`, `url` stays empty — the file is in the
+ * private bucket and is read through signed URLs) plus the journal fields. A conflict copy additionally names the
+ * section it was split from and whether the conflict is open — `conflict: false` once the original is deleted:
+ * the copy is then a normal section (spec 1.126 §6.3).
  */
-export type SectionDoc = ArticleSection & { conflictOf?: string; conflict?: boolean; blockKind?: 'video' };
+export type SectionDoc = SectionModel & {
+  journalKey: string; footprintKey: string; authorKey: string; order: string; conflictOf?: string; conflict?: boolean;
+};
 
-interface SectionParts {
-  footprintKey: string; authorKey: string; order: string; type: JournalSectionType; html: string; imageKeys: string[]; conflictOf?: string; conflict?: boolean;
-}
-
-function sectionDocFrom(sectionKey: string, journalKey: string, tenants: string[], p: SectionParts): SectionDoc {
-  const isPhotos = p.type === 'album' || p.type === 'hero';
-  const isVideo = p.type === 'video';
+function sectionDocFrom(section: SectionView, footprintKey: string, journalKey: string, tenants: string[]): SectionDoc {
+  const copy = section.conflictOf !== undefined;
   return defined({
-    ...ARTICLE_SECTION_SHAPE, okey: sectionKey, name: sectionKey, title: '', subTitle: '', tenants, isArchived: false,
-    journalKey, footprintKey: p.footprintKey, authorKey: p.authorKey, order: p.order, conflictOf: p.conflictOf, conflict: p.conflict,
-    blockKind: isVideo ? 'video' as const : undefined,
-    content: { ...ARTICLE_SECTION_SHAPE.content, htmlContent: isPhotos ? '' : p.html },
-    properties: {
-      ...ARTICLE_SECTION_SHAPE.properties,
-      images: p.imageKeys.map((key) => ({ ...IMAGE_CONFIG_SHAPE, label: key, url: '', altText: '' })),
-    },
+    ...sectionModelOf(section, tenants[0] ?? ''), tenants, isArchived: false,
+    journalKey, footprintKey, authorKey: section.authorKey, order: section.order,
+    conflictOf: section.conflictOf, conflict: copy ? section.conflict : undefined,
   });
 }
 
-/** The photos (or a video's clips) a section doc lists. */
-function docImageKeys(section: SectionView): string[] {
-  return section.type === 'video' ? sectionClipKeys(section) : sectionImageKeys(section);
-}
-
+/** The doc of a section, `undefined` while it is archived or without a known `type` (an old block, decision 4). */
 export function sectionDocOf(state: JournalState, sectionKey: string, journalKey: string, tenants: string[]): SectionDoc | undefined {
   const { entityState, view: v } = view(state, 'section', sectionKey);
-  const type = v?.['type'];
-  if (!v || !isJournalSectionType(type)) return undefined;
-  const properties = Object.fromEntries(Object.entries(v).filter(([f]) => f.startsWith(SECTION_PROPERTY_PREFIX)).map(([f, x]) => [f.slice(SECTION_PROPERTY_PREFIX.length), x]));
-  const section: SectionView = {
-    key: sectionKey, type, title: str(v['title']), htmlContent: str(v['htmlContent']), properties, order: str(v['order']),
-    authorKey: entityState?.ownerKey ?? '', hlcs: {}, conflict: false,
-  };
-  return sectionDocFrom(sectionKey, journalKey, tenants, {
-    footprintKey: str(v['footprintKey']), authorKey: section.authorKey, order: section.order,
-    type, html: section.htmlContent, imageKeys: docImageKeys(section),
-  });
+  const section = sectionViewOf(entityState);
+  if (!v || !section) return undefined;
+  return sectionDocFrom(section, str(v['footprintKey']), journalKey, tenants);
 }
 
-/** The doc of a derived conflict copy: the original's section with the lost value, `conflictOf` and `conflict` set. */
+/** The doc of a derived conflict copy (a `sectionsOf` entry with `conflictOf`): the lost values, `conflictOf` and `conflict` set. */
 export function conflictCopyDocOf(section: SectionView, footprintKey: string, journalKey: string, tenants: string[]): SectionDoc {
-  return sectionDocFrom(section.key, journalKey, tenants, {
-    footprintKey, authorKey: section.authorKey, order: section.order, type: section.type, html: section.htmlContent,
-    imageKeys: docImageKeys(section), conflictOf: section.conflictOf, conflict: section.conflict,
-  });
+  return sectionDocFrom(section, footprintKey, journalKey, tenants);
 }
 
 const VIDEO_FILE = /^[A-Za-z0-9_-]{1,94}-video\.mp4$/;

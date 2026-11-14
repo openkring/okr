@@ -17,7 +17,7 @@ import { privateBucket } from '../_storage/private-bucket';
 import { tenantLinks } from '../calendar/deliver';
 import { createFirestoreDeps } from '../workflow/firestore-deps';
 import { windowExpiry } from '../video/video-sign.util';
-import { applyManage, clipReadUrl, deliveryFor, guestBlockKind, guestVideoClips, GuestRequest, GuestRequestError, isGuestVisibleSection, ManageAction, memberName, newLinkCode, parseGuestRequest, parseGuestEmail, peopleKeys } from './guest.logic';
+import { applyManage, clipReadUrl, deliveryFor, guestSectionsOf, guestVideoClips, GuestRequest, GuestRequestError, ManageAction, memberName, newLinkCode, parseGuestRequest, parseGuestEmail, peopleKeys } from './guest.logic';
 import { isJournalKey } from './apply-journal-change.logic';
 import { requireJournalAuthor } from './journal-auth';
 import { checkNotice } from './notify.logic';
@@ -79,9 +79,9 @@ async function requirePublished(db: Firestore, jk: string, footprintKey: string)
   if (!fp || fp['isArchived'] === true || fp['publishState'] !== 'published') throw new HttpsError('failed-precondition', 'footprint');
 }
 
-/** Everything a guest sees: published footprints with their blocks, photo URLs (signed, 6 h), likes, comments. */
+/** Everything a guest sees: published footprints with their CMS sections, photo and clip URLs (signed, 6 h), likes, comments. */
 async function guestView(db: Firestore, jk: string, ctx: GuestContext): Promise<Data> {
-  const [footprints, sections, images, comments, reactions, person] = await Promise.all([
+  const [footprints, sectionSnaps, images, comments, reactions, person] = await Promise.all([
     sub(db, jk, JournalFootprintCollection).where('publishState', '==', 'published').get(),
     sub(db, jk, JournalSectionCollection).get(),
     sub(db, jk, JournalImageCollection).get(),
@@ -95,46 +95,41 @@ async function guestView(db: Firestore, jk: string, ctx: GuestContext): Promise<
   const imageById = new Map(live(images.docs).map((d) => [d.id, d.data()]));
   const name = (personKey: string) => memberName(personKey, ctx.authors, ctx.guests) || (personKey === ctx.link.personKey ? ctx.name : '');
   const pk = ctx.link.personKey;
+  const sectionDocs = sectionSnaps.docs.map((d) => ({ id: d.id, data: d.data() }));
 
   const unsorted = await Promise.all(live(footprints.docs).map(async (f) => {
     const fp = f.data();
     const parentKey = `page.${f.id}`;
-    const order = (fp['sections'] as string[] | undefined) ?? [];
-    const blocksOf = live(sections.docs).filter((s) => isGuestVisibleSection(s.data()) && s.data()['footprintKey'] === f.id)
-      .sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id))
-      .map(async (s) => {
-        const section = s.data();
-        const imageKeys = ((section['properties'] as Data | undefined)?.['images'] as { label?: string }[] | undefined ?? []).map((i) => i.label ?? '');
-        const html = String((section['content'] as Data | undefined)?.['htmlContent'] ?? '');
-        const photos = imageKeys.map((key) => ({ key, image: imageById.get(key) })).filter((x) => x.image && x.image['path2048'])
-          .map(({ key, image }) => ({
-            key, width: image?.['width'], height: image?.['height'], latitude: image?.['latitude'], longitude: image?.['longitude'], takenAt: image?.['takenAt'],
-            url: signImgixUrl(IMGIX_PRIVATE_HOST, token, String(image?.['path2048']), { w: 1600, auto: 'format', expires }),
-            thumb: signImgixUrl(IMGIX_PRIVATE_HOST, token, String(image?.['path400']), { w: 400, auto: 'format', expires }),
-          }));
-        const kind = guestBlockKind(section, imageKeys, html);
-        const authorName = name(String(section['authorKey'] ?? ''));
-        if (kind === 'video') {
-          const clips = guestVideoClips(imageKeys, imageById, ctx.tenants[0] ?? '', jk);
-          const signed = await Promise.all(clips.map(async (clip) => {
-            try {
-              const url = await clipReadUrl(privateBucket().file(clip.objectPath), expires * 1000);
-              return {
-                key: clip.key, width: clip.width, height: clip.height, durationSec: clip.durationSec,
-                poster: clip.posterPath ? signImgixUrl(IMGIX_PRIVATE_HOST, token, clip.posterPath, { w: 1600, auto: 'format', expires }) : '',
-                url,
-              };
-            } catch (error) {
-              logger.warn('journalGuest: clip not signed', { journalKey: jk, imageKey: clip.key, error: error instanceof Error ? error.message : 'unknown' });
-              return undefined;
-            }
-          }));
-          const videos = signed.filter((v) => v !== undefined);
-          return { key: s.id, kind, authorName, html, photos: [], videos };
+    const order = Array.isArray(fp['sections']) ? (fp['sections'] as string[]) : [];
+    const signing = guestSectionsOf(sectionDocs, f.id, order).map(async (section) => {
+      const photos = section.imageKeys.map((key) => ({ key, image: imageById.get(key) })).filter((x) => x.image && x.image['path2048'])
+        .map(({ key, image }) => ({
+          key, width: image?.['width'], height: image?.['height'], latitude: image?.['latitude'], longitude: image?.['longitude'], takenAt: image?.['takenAt'],
+          url: signImgixUrl(IMGIX_PRIVATE_HOST, token, String(image?.['path2048']), { w: 1600, auto: 'format', expires }),
+          thumb: signImgixUrl(IMGIX_PRIVATE_HOST, token, String(image?.['path400']), { w: 400, auto: 'format', expires }),
+        }));
+      const clips = guestVideoClips(section.clipKeys, imageById, ctx.tenants[0] ?? '', jk);
+      const signed = await Promise.all(clips.map(async (clip) => {
+        try {
+          const url = await clipReadUrl(privateBucket().file(clip.objectPath), expires * 1000);
+          return {
+            key: clip.key, width: clip.width, height: clip.height, durationSec: clip.durationSec,
+            poster: clip.posterPath ? signImgixUrl(IMGIX_PRIVATE_HOST, token, clip.posterPath, { w: 1600, auto: 'format', expires }) : '',
+            url,
+          };
+        } catch (error) {
+          logger.warn('journalGuest: clip not signed', { journalKey: jk, imageKey: clip.key, error: error instanceof Error ? error.message : 'unknown' });
+          return undefined;
         }
-        return { key: s.id, kind, authorName, html, photos, videos: [] };
-      });
-    const blocks = await Promise.all(blocksOf);
+      }));
+      const videos = signed.filter((v) => v !== undefined);
+      // GuestSectionView: no author key, no other person data — only the author's display name from the journal lists
+      return {
+        key: section.key, type: section.type, title: section.title, html: section.html, properties: section.properties,
+        authorName: name(section.authorKey), photos, videos,
+      };
+    });
+    const sections = await Promise.all(signing);
     const likes = live(reactions.docs).filter((r) => r.data()['parentKey'] === parentKey).map((r) => String(r.data()['personKey']));
     const footprintComments = live(comments.docs).filter((c) => c.data()['parentKey'] === parentKey)
       .map((c) => ({
@@ -144,7 +139,7 @@ async function guestView(db: Firestore, jk: string, ctx: GuestContext): Promise<
       .sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
     return {
       key: f.id, title: fp['title'] ?? '', placeName: fp['placeName'] ?? '', date: fp['date'] ?? '', time: fp['time'] ?? '',
-      latitude: fp['latitude'], longitude: fp['longitude'], weather: fp['weather'], transport: fp['transport'], blocks, likes: likes.length, liked: likes.includes(pk), comments: footprintComments,
+      latitude: fp['latitude'], longitude: fp['longitude'], weather: fp['weather'], transport: fp['transport'], sections, likes: likes.length, liked: likes.includes(pk), comments: footprintComments,
     };
   }));
   const result = unsorted.sort((a, b) => (`${a.date}${a.time}` < `${b.date}${b.time}` ? -1 : 1));
