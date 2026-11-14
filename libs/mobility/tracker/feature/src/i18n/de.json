@@ -191,6 +191,11 @@
     "not_ready": "nicht bereit",
     "prepare_hint": "Ohne Internet kannst du Strecken an die bereiten Reisetagebücher senden, sobald ein iPad in der Nähe ist.",
     "waiting_count": "Noch nicht angekommen: {count}",
-    "ok": "OK"
+    "ok": "OK",
+    "photos_waiting": "Die Fotos werden hochgeladen, sobald du Internet hast: {count}",
+    "discard": "Wartende verwerfen …",
+    "discard_title": "Welche Sendungen verwerfen?",
+    "discard_button": "Verwerfen",
+    "refused": "Das Reisetagebuch hat {count} Sendungen nicht angenommen. Unter «Für unterwegs vorbereiten» kannst du sie verwerfen."
   }
 }

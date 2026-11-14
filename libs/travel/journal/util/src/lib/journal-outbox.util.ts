@@ -33,7 +33,12 @@ export interface OutboxDelivery {
   createdAt: number; // ms
   records: JournalChange[];
   files: string[]; // photo file names in Documents/journals/<journalKey>/
-  recordsUploaded: boolean; // the records are in Firestore; only the files may still be outstanding
+  /**
+   * The records have arrived: written to Firestore, or held by an iPad (its version vector covers them). Ruling R9: the
+   * delivery then stays as «files only» — its photo files are kept (and still handed to any iPad that asks) until an
+   * online round has uploaded them; only then is it dropped.
+   */
+  recordsDone: boolean;
 }
 
 export interface OutboxStamp {
@@ -108,7 +113,7 @@ export function stampDelivery(
     change = next.stamp;
   });
   return {
-    delivery: { deviceId, journalKey: input.journalKey, tripKey: input.tripKey, createdAt: now, records, files: [...input.files], recordsUploaded: false },
+    delivery: { deviceId, journalKey: input.journalKey, tripKey: input.tripKey, createdAt: now, records, files: [...input.files], recordsDone: false },
     stamp: { baseDeviceId: stamp.baseDeviceId, clock: change.clock ?? stamp.clock, deliveries: n },
   };
 }
@@ -124,12 +129,15 @@ export function isDeliveryCovered(delivery: OutboxDelivery, peerVv: Record<strin
   return (peerVv[delivery.deviceId] ?? 0) >= delivery.records.length;
 }
 
-/** For one peer's version vector: the records to send now (in seq order per delivery) and the deliveries it covers. */
+/**
+ * For one peer's version vector: the records to send now (in seq order per delivery) and the deliveries whose records it
+ * now covers. Deliveries whose records are done already (files only) are neither sent nor reported again.
+ */
 export function peerPlan(deliveries: OutboxDelivery[], journalKey: string, peerVv: Record<string, number>): { send: JournalChange[]; covered: string[] } {
   const send: JournalChange[] = [];
   const covered: string[] = [];
   for (const delivery of deliveries) {
-    if (delivery.journalKey !== journalKey) continue;
+    if (delivery.journalKey !== journalKey || delivery.recordsDone) continue;
     if (isDeliveryCovered(delivery, peerVv)) covered.push(delivery.deviceId);
     else send.push(...unsentRecords(delivery, peerVv));
   }
@@ -142,14 +150,59 @@ export function requestedOutboxFiles(deliveries: OutboxDelivery[], journalKey: s
   return requested.filter((f) => held.has(f));
 }
 
+/** The deliveries whose records still have to reach an iPad or Firestore (a P2P session runs while there are any). */
+export function recordsPending(deliveries: OutboxDelivery[], journalKey: string): OutboxDelivery[] {
+  return deliveries.filter((d) => d.journalKey === journalKey && !d.recordsDone);
+}
+
+/** The author who stamped a delivery ('' when it has no records). */
+export function deliveryAuthor(delivery: OutboxDelivery): string {
+  return delivery.records[0]?.authorKey ?? '';
+}
+
 /**
- * Photo files have no acknowledgement of their own. An iPad asks for every file its images name and it lacks right after
- * the version vector on each connection (and after storing records). So a delivery is done once a vector covering its
- * records arrived and no request for one of its files followed within `quietMs`. A request after the cover means a
- * file is still missing there: it is sent, and the next connection decides again.
+ * The deliveries the signed-in person may send. A delivery stamped for another person (somebody else used this phone
+ * before) stays INERT: never sent online or over P2P under the new person — it would be refused (the rules need the
+ * record's author to be an author of the journal) — and it can only be discarded.
  */
-export function isDeliverySettled(cover: { coveredAt: number; askedAfterCover: boolean } | undefined, nowMs: number, quietMs: number): boolean {
-  return !!cover && !cover.askedAfterCover && nowMs - cover.coveredAt >= quietMs;
+export function sendableDeliveries(deliveries: OutboxDelivery[], authorKey: string): OutboxDelivery[] {
+  return deliveries.filter((d) => d.records.length === 0 || deliveryAuthor(d) === authorKey);
+}
+
+/** The person's deliveries for journals the server no longer lists for them (removed as author, journal archived). */
+export function orphanedDeliveries(deliveries: OutboxDelivery[], authorKey: string, journalKeys: string[]): OutboxDelivery[] {
+  const live = new Set(journalKeys);
+  return sendableDeliveries(deliveries, authorKey).filter((d) => !live.has(d.journalKey));
+}
+
+export type DeliveryOutcome = 'delivered' | 'kept';
+
+/**
+ * One online round, delivery by delivery: a refused delivery (any error but offline) is counted and skipped, so it never
+ * blocks the deliveries behind it; offline stops the round (rethrown).
+ */
+export async function deliverEach<T>(
+  items: T[], deliverOne: (item: T) => Promise<DeliveryOutcome>, isOffline: (error: unknown) => boolean, onRefused: (item: T, error: unknown) => void,
+): Promise<{ delivered: number; kept: number; refused: number }> {
+  const result = { delivered: 0, kept: 0, refused: 0 };
+  for (const item of items) {
+    try {
+      result[await deliverOne(item)]++;
+    } catch (error) {
+      if (isOffline(error)) throw error;
+      onRefused(item, error);
+      result.refused++;
+    }
+  }
+  return result;
+}
+
+/** «Antarktis 2027 · Paradise Harbour» for the discard list; the track name comes from the delivery's own track record. */
+export function deliveryLabel(delivery: OutboxDelivery, journals: OutboxJournal[], untitled: string): string {
+  const track = delivery.records.find((r) => r.entity === 'track');
+  const name = typeof track?.fields['name'] === 'string' ? track.fields['name'] : '';
+  const journal = journals.find((j) => j.journalKey === delivery.journalKey)?.title ?? '';
+  return [journal || untitled, name || delivery.tripKey].join(' · ');
 }
 
 // ------------------------------------------------------------------ storage
@@ -189,21 +242,28 @@ export function parseOutboxDelivery(raw: unknown): OutboxDelivery | undefined {
   const records = acceptPeerRecords(raws, journalKey, Number.MAX_SAFE_INTEGER)
     .filter((r) => r.deviceId === deviceId && isValidHlc(r.hlc, deviceId));
   if (records.length !== raws.length) return undefined;
-  return { deviceId, journalKey, tripKey: d['tripKey'], createdAt: d['createdAt'], records, files, recordsUploaded: d['recordsUploaded'] === true };
+  return { deviceId, journalKey, tripKey: d['tripKey'], createdAt: d['createdAt'], records, files, recordsDone: d['recordsDone'] === true };
 }
 
-export function serializeOutboxJournals(journals: OutboxJournal[]): string {
-  return JSON.stringify(journals.map(({ journalKey, title, tenantId, secret, preparedAt }) => ({ journalKey, title, tenantId, secret, preparedAt })));
+/**
+ * The prepared journals are stored WITH the person they were fetched for: peer secrets are the person's access to the
+ * journals, and a phone may change hands (another person signs in). Read for another person, the list is empty.
+ */
+export function serializeOutboxJournals(personKey: string, journals: OutboxJournal[]): string {
+  return JSON.stringify({
+    personKey,
+    journals: journals.map(({ journalKey, title, tenantId, secret, preparedAt }) => ({ journalKey, title, tenantId, secret, preparedAt })),
+  });
 }
 
-export function parseOutboxJournals(raw: string | undefined): OutboxJournal[] {
-  if (!raw) return [];
+export function parseOutboxJournals(raw: string | undefined, personKey: string): OutboxJournal[] {
+  if (!raw || !personKey) return [];
   try {
-    const list = JSON.parse(raw) as unknown;
-    if (!Array.isArray(list)) return [];
-    return list.filter((j): j is OutboxJournal => typeof j === 'object' && j !== null
-      && typeof j.journalKey === 'string' && j.journalKey !== '' && typeof j.title === 'string' && typeof j.tenantId === 'string'
-      && typeof j.secret === 'string' && typeof j.preparedAt === 'number')
+    const stored = JSON.parse(raw) as { personKey?: unknown; journals?: unknown };
+    if (typeof stored !== 'object' || stored === null || stored.personKey !== personKey || !Array.isArray(stored.journals)) return [];
+    return (stored.journals as unknown[]).filter((j): j is OutboxJournal => typeof j === 'object' && j !== null
+      && typeof (j as OutboxJournal).journalKey === 'string' && (j as OutboxJournal).journalKey !== '' && typeof (j as OutboxJournal).title === 'string'
+      && typeof (j as OutboxJournal).tenantId === 'string' && typeof (j as OutboxJournal).secret === 'string' && typeof (j as OutboxJournal).preparedAt === 'number')
       .map((j) => ({ journalKey: j.journalKey, title: j.title, tenantId: j.tenantId, secret: j.secret, preparedAt: j.preparedAt }));
   } catch {
     return [];

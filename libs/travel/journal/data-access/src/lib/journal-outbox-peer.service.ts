@@ -2,7 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { PluginListenerHandle } from '@capacitor/core';
 
 import {
-  isDeliverySettled, pagesOf, parsePeerMessage, PEER_RECORD_PAGE, PeerMessage, peerPlan, requestedOutboxFiles,
+  OutboxDelivery, pagesOf, parsePeerMessage, PEER_RECORD_PAGE, PeerMessage, peerPlan, recordsPending, requestedOutboxFiles, sendableDeliveries,
 } from '@okr/travel-journal-util';
 
 import { JournalOutboxService } from './journal-outbox.service';
@@ -21,10 +21,13 @@ import { LocalPeer, PeerInfo } from './local-peer.plugin';
  * - `records` and `lock` from an iPad are ignored.
  *
  * An iPad sends its vector only when a connection starts, so after the phone has sent something and the line went quiet,
- * it restarts its side of the link once to get a fresh vector — the acknowledgement. A covered delivery is dropped once
- * no request for one of its files followed within QUIET_MS (isDeliverySettled). An iPad that disappears mid-transfer
- * leaves the delivery in the outbox; the next connection (now or on a later send) resends what is missing — the iPads
- * store peer records with INSERT OR IGNORE, so a resend is harmless.
+ * it restarts its side of the link to get a fresh vector — the acknowledgement. A covered delivery becomes «files only»
+ * (ruling R9): its records count as delivered, its photo files stay on the phone until an online round uploaded them —
+ * photo files have no acknowledgement of their own, so none is ever deleted on a guess. The session ends once no
+ * delivery's records wait any more and the line has been quiet (so late photo requests are still answered). An iPad that
+ * disappears mid-transfer leaves the records pending; the next connection (now or on a later send) resends what is
+ * missing — the iPads store peer records with INSERT OR IGNORE, so a resend is harmless. Only the signed-in person's
+ * deliveries are sent (sendableDeliveries), with that person's cached peer secret.
  */
 export type OutboxPeerState = 'off' | 'noSecret' | 'busy' | 'searching' | 'sending' | 'done' | 'stopped';
 
@@ -32,7 +35,8 @@ export interface OutboxPeerStatus {
   state: OutboxPeerState;
   journalKey: string;
   peers: string[]; // display names of connected iPads
-  pending: number; // deliveries of the journal still waiting
+  pending: number; // deliveries of the journal whose records still wait
+  filesOnly: number; // deliveries of the journal whose records arrived, photo files waiting for an online upload
 }
 
 const QUIET_MS = 6_000;
@@ -40,17 +44,14 @@ const TICK_MS = 1_000;
 const MAX_CONFIRM_ROUNDS = 6;
 const SESSION_MS = 15 * 60_000;
 
-interface Cover { coveredAt: number; askedAfterCover: boolean }
-
 @Injectable({ providedIn: 'root' })
 export class JournalOutboxPeer {
   private readonly outbox = inject(JournalOutboxService);
   private readonly journalPeer = inject(JournalPeerService);
-  private readonly statusSignal = signal<OutboxPeerStatus>({ state: 'off', journalKey: '', peers: [], pending: 0 });
+  private readonly statusSignal = signal<OutboxPeerStatus>({ state: 'off', journalKey: '', peers: [], pending: 0, filesOnly: 0 });
   private handles: PluginListenerHandle[] = [];
   private readonly peers = new Map<string, string>(); // peerId → name
-  private readonly covers = new Map<string, Cover>(); // delivery device id → last acknowledgement
-  private session?: { journalKey: string; deviceId: string; displayName: string; secret: string; startedAt: number };
+  private session?: { journalKey: string; authorKey: string; deviceId: string; displayName: string; secret: string; startedAt: number };
   private lastActivity = 0;
   private sentSinceConfirm = false;
   private confirmRounds = 0;
@@ -65,29 +66,31 @@ export class JournalOutboxPeer {
     return this.enqueue(async () => {
       await this.stopNow('off');
       await this.outbox.load();
-      const pending = this.pendingOf(journalKey);
-      if (pending === 0) {
-        this.statusSignal.set({ state: 'done', journalKey, peers: [], pending });
+      const authorKey = (await this.outbox.author())?.personKey ?? '';
+      const counts = this.countsOf(journalKey, authorKey);
+      if (counts.pending === 0) {
+        this.statusSignal.set({ state: 'done', journalKey, peers: [], ...counts });
         return;
       }
       // the same app on an iPad: its own journal sync owns the LocalPeer plugin
       if (['searching', 'connected'].includes(this.journalPeer.status().state)) {
-        this.statusSignal.set({ state: 'busy', journalKey, peers: [], pending });
+        this.statusSignal.set({ state: 'busy', journalKey, peers: [], ...counts });
         return;
       }
-      const secret = (await this.outbox.cachedJournals()).find((j) => j.journalKey === journalKey)?.secret ?? '';
+      const secret = authorKey ? (await this.outbox.cachedJournals(authorKey)).find((j) => j.journalKey === journalKey)?.secret ?? '' : '';
       if (!secret) {
-        this.statusSignal.set({ state: 'noSecret', journalKey, peers: [], pending });
+        this.statusSignal.set({ state: 'noSecret', journalKey, peers: [], ...counts });
         return;
       }
-      this.session = { journalKey, deviceId: await this.outbox.peerDeviceId(), displayName, secret, startedAt: Date.now() };
+      this.session = { journalKey, authorKey, deviceId: await this.outbox.peerDeviceId(), displayName, secret, startedAt: Date.now() };
       this.handles = await Promise.all([
         LocalPeer.addListener('peerConnected', (p) => void this.enqueue(() => this.onConnected(p))),
         LocalPeer.addListener('peerDisconnected', (p) => this.onDisconnected(p)),
         LocalPeer.addListener('message', (m) => void this.enqueue(() => this.onMessage(m.peerId, m.message))),
       ]);
       await this.startPlugin();
-      this.statusSignal.set({ state: 'searching', journalKey, peers: [], pending });
+      this.lastActivity = Date.now();
+      this.statusSignal.set({ state: 'searching', journalKey, peers: [], ...counts });
       this.timer = setInterval(() => {
         if (this.tickQueued) return; // a long file transfer must not pile up ticks behind it
         this.tickQueued = true;
@@ -109,8 +112,15 @@ export class JournalOutboxPeer {
     return run;
   }
 
-  private pendingOf(journalKey: string): number {
-    return this.outbox.pending().filter((d) => d.journalKey === journalKey).length;
+  /** The signed-in person's deliveries of the journal (another person's stay inert). */
+  private deliveriesOf(journalKey: string, authorKey: string): OutboxDelivery[] {
+    return sendableDeliveries(this.outbox.pending(), authorKey).filter((d) => d.journalKey === journalKey);
+  }
+
+  private countsOf(journalKey: string, authorKey: string): { pending: number; filesOnly: number } {
+    const mine = this.deliveriesOf(journalKey, authorKey);
+    const pending = recordsPending(mine, journalKey).length;
+    return { pending, filesOnly: mine.length - pending };
   }
 
   private async startPlugin(): Promise<void> {
@@ -126,20 +136,20 @@ export class JournalOutboxPeer {
     for (const h of this.handles) await h.remove();
     this.handles = [];
     this.peers.clear();
-    this.covers.clear();
     this.sentSinceConfirm = false;
     this.confirmRounds = 0;
     const journalKey = this.session?.journalKey ?? this.statusSignal().journalKey;
+    const authorKey = this.session?.authorKey ?? (await this.outbox.author())?.personKey ?? '';
     this.session = undefined;
     if (wasRunning) await LocalPeer.stop().catch(() => undefined);
-    this.statusSignal.set({ state, journalKey, peers: [], pending: journalKey ? this.pendingOf(journalKey) : 0 });
+    this.statusSignal.set({ state, journalKey, peers: [], ...(journalKey ? this.countsOf(journalKey, authorKey) : { pending: 0, filesOnly: 0 }) });
   }
 
   private publish(): void {
     const s = this.session;
     if (!s) return;
     const names = [...this.peers.values()];
-    this.statusSignal.set({ state: names.length > 0 ? 'sending' : 'searching', journalKey: s.journalKey, peers: names, pending: this.pendingOf(s.journalKey) });
+    this.statusSignal.set({ state: names.length > 0 ? 'sending' : 'searching', journalKey: s.journalKey, peers: names, ...this.countsOf(s.journalKey, s.authorKey) });
   }
 
   private async send(peerId: string, message: PeerMessage): Promise<void> {
@@ -165,10 +175,11 @@ export class JournalOutboxPeer {
     if (!message) return;
     const now = Date.now();
     this.lastActivity = now;
-    const deliveries = this.outbox.pending().filter((d) => d.journalKey === s.journalKey);
+    const deliveries = this.deliveriesOf(s.journalKey, s.authorKey);
     if (message.t === 'vv') {
       const plan = peerPlan(deliveries, s.journalKey, message.vv);
-      for (const deviceId of plan.covered) this.covers.set(deviceId, { coveredAt: now, askedAfterCover: false });
+      for (const deviceId of plan.covered) await this.outbox.markRecordsDone(deviceId); // R9: files stay until online
+      if (plan.covered.length > 0) this.publish();
       if (plan.send.length === 0) return;
       for (const page of pagesOf(plan.send, PEER_RECORD_PAGE)) await this.send(peerId, { t: 'records', journalKey: s.journalKey, records: page });
       this.sentSinceConfirm = true;
@@ -178,15 +189,10 @@ export class JournalOutboxPeer {
     if (message.t === 'photoReq') {
       const files = requestedOutboxFiles(deliveries, s.journalKey, message.files);
       if (files.length === 0) return;
-      for (const d of deliveries) {
-        const cover = this.covers.get(d.deviceId);
-        if (cover && d.files.some((f) => files.includes(f))) cover.askedAfterCover = true;
-      }
       for (const file of files) {
         await LocalPeer.sendFile({ peerId, file }).catch((error: unknown) => console.warn('journal outbox: a photo was not sent', file, error));
       }
-      this.sentSinceConfirm = true;
-      this.lastActivity = Date.now();
+      this.lastActivity = Date.now(); // files need no confirm round: they stay until an online upload anyway
     }
     // 'records' and 'lock': the phone holds no journal — ignored
   }
@@ -195,13 +201,8 @@ export class JournalOutboxPeer {
     const s = this.session;
     if (!s) return;
     const now = Date.now();
-    for (const d of this.outbox.pending().filter((x) => x.journalKey === s.journalKey)) {
-      if (isDeliverySettled(this.covers.get(d.deviceId), now, QUIET_MS)) {
-        await this.outbox.drop(d.deviceId);
-        this.covers.delete(d.deviceId);
-      }
-    }
-    if (this.pendingOf(s.journalKey) === 0) {
+    // every delivery's records arrived and the line is quiet (late photo requests were answered): done
+    if (this.countsOf(s.journalKey, s.authorKey).pending === 0 && now - this.lastActivity >= QUIET_MS) {
       await this.stopNow('done');
       return;
     }

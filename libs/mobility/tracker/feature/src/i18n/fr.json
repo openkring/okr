@@ -191,6 +191,11 @@
     "not_ready": "pas prêt",
     "prepare_hint": "Sans internet, tu peux envoyer des parcours aux carnets prêts dès qu’un iPad est à proximité.",
     "waiting_count": "Pas encore arrivés : {count}",
-    "ok": "OK"
+    "ok": "OK",
+    "photos_waiting": "Les photos seront envoyées dès que tu auras internet : {count}",
+    "discard": "Abandonner les envois en attente …",
+    "discard_title": "Quels envois abandonner ?",
+    "discard_button": "Abandonner",
+    "refused": "Le carnet de voyage n’a pas accepté {count} envois. Tu peux les abandonner sous «Préparer pour la route»."
   }
 }

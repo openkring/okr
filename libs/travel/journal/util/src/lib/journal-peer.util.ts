@@ -1,6 +1,7 @@
 import { JournalChange, JournalChangeOp, JournalEntity } from '@okr/shared-models';
 import { isBases } from './journal-change.util';
 import { isJournalLock, JournalLock } from './journal-lock.util';
+import { entityStateKey, JournalState, viewOf } from './journal-merge.util';
 import { acceptRecord } from './journal-server.util';
 
 /**
@@ -107,4 +108,38 @@ export function acceptPeerRecords(records: unknown[], journalKey: string, nowMs:
       return isBases(bases) ? { ...base, bases } : base;
     })
     .filter((c) => acceptRecord(c, nowMs));
+}
+
+/**
+ * The journal's authors as this device knows them: the creator (owner of the `journal` entity) plus its `authorKeys`.
+ * Undefined while the device does not hold the journal entity yet (nothing to check against).
+ */
+export function journalAuthorKeys(state: JournalState, journalKey: string): string[] | undefined {
+  const entity = state[entityStateKey('journal', journalKey)];
+  const view = viewOf(entity);
+  if (!entity || !view) return undefined;
+  const listed = Array.isArray(view['authorKeys']) ? (view['authorKeys'] as unknown[]).filter((k): k is string => typeof k === 'string' && k !== '') : [];
+  return [...new Set([entity.ownerKey ?? '', ...listed].filter((k) => k !== ''))];
+}
+
+/**
+ * Peer records whose author is an author of the journal (spec 1.154 phase 5, review fix). A record of anybody else would
+ * be refused by the server when this device uploads it (rules: authorKey ∈ authorKeys) — and a refused upload stops the
+ * whole journal's uploads every round. `authors` = journalAuthorKeys of this device's state; undefined = not known yet →
+ * everything passes (the device holds no journal to protect). `journal` records of an author may add authors (co-author
+ * added): their `authorKeys` count for the records after them in the same page, so the new author's first records,
+ * arriving together with the record that adds them, are kept. Authors are only ever added here, never removed: a removal
+ * is decided by the server at upload time.
+ */
+export function fromJournalAuthors(records: JournalChange[], authors: string[] | undefined): JournalChange[] {
+  if (!authors) return records;
+  const known = new Set(authors);
+  const kept: JournalChange[] = [];
+  for (const record of records) {
+    if (!known.has(record.authorKey)) continue;
+    kept.push(record);
+    const added = record.entity === 'journal' ? record.fields['authorKeys'] : undefined;
+    if (Array.isArray(added)) for (const key of added) if (typeof key === 'string' && key !== '') known.add(key);
+  }
+  return kept;
 }

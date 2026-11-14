@@ -2,7 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { PluginListenerHandle } from '@capacitor/core';
 
 import { JournalChange } from '@okr/shared-models';
-import { acceptPeerRecords, JournalLock, missingFor, pagesOf, parsePeerMessage, PEER_RECORD_PAGE, PeerMessage, versionVector } from '@okr/travel-journal-util';
+import { acceptPeerRecords, fromJournalAuthors, JournalLock, missingFor, pagesOf, parsePeerMessage, PEER_RECORD_PAGE, PeerMessage, versionVector } from '@okr/travel-journal-util';
 
 import { JournalDb } from './journal-db';
 import { JournalIdentityService } from './journal-identity.service';
@@ -27,6 +27,11 @@ export interface JournalPeerContext {
   onPhotosStored: () => void;
   /** A lock (or release, until 0) another iPad sent. */
   onLock: (lock: JournalLock) => void;
+  /**
+   * The journal's authors as this device knows them (journalAuthorKeys); undefined while unknown. Peer records of anybody
+   * else are not stored: the server would refuse their upload, and a refused upload stops the journal's uploads.
+   */
+  authorKeys?: () => string[] | undefined;
 }
 
 export type JournalPeerState = 'off' | 'noSecret' | 'searching' | 'connected';
@@ -163,7 +168,7 @@ export class JournalPeerService {
         await this.sendRecords(peerId, missingFor(ctx.changes(), ctx.journalKey, message.vv));
         return;
       case 'records': {
-        const accepted = acceptPeerRecords(message.records, ctx.journalKey, Date.now());
+        const accepted = fromJournalAuthors(acceptPeerRecords(message.records, ctx.journalKey, Date.now()), ctx.authorKeys?.());
         if (accepted.length === 0) return;
         await this.db.appendPeerChanges(accepted);
         await this.identity.receiveClocks(accepted.map((c) => c.hlc));

@@ -191,6 +191,11 @@
     "not_ready": "non pronto",
     "prepare_hint": "Senza internet puoi inviare percorsi ai diari pronti appena un iPad è vicino.",
     "waiting_count": "Non ancora arrivati: {count}",
-    "ok": "OK"
+    "ok": "OK",
+    "photos_waiting": "Le foto saranno caricate appena hai internet: {count}",
+    "discard": "Scarta gli invii in attesa …",
+    "discard_title": "Quali invii scartare?",
+    "discard_button": "Scarta",
+    "refused": "Il diario di viaggio non ha accettato {count} invii. Puoi scartarli in «Prepara per il viaggio»."
   }
 }

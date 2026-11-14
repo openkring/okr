@@ -8,7 +8,7 @@ import { pagesOf } from './journal-sync.util';
 import { trackCopyOf, trackKeyOf, trackOf, tracksOf } from './journal-track.util';
 import { imagesOf } from './journal-view.util';
 import {
-  deliveryDeviceId, isDeliverySettled, isDeliveryCovered, mergeOutboxJournals, OutboxDelivery, OutboxDraft, OutboxStamp, parseOutboxDelivery,
+  deliverEach, deliveryDeviceId, deliveryLabel, isDeliveryCovered, orphanedDeliveries, recordsPending, sendableDeliveries, mergeOutboxJournals, OutboxDelivery, OutboxDraft, OutboxStamp, parseOutboxDelivery,
   parseOutboxJournals, parseOutboxStamp, peerPlan, preparedJournalsMessage, requestedOutboxFiles, serializeOutboxJournals, serializeOutboxStamp, stampDelivery, trackDeliveryDrafts,
   trackPhotoFiles, trackPhotoImageFields, tripOfLocalTrack, unsentRecords,
 } from './journal-outbox.util';
@@ -91,7 +91,7 @@ describe('journal outbox (spec 1.154 phase 5, decision 9)', () => {
       const second = stamped(first.stamp, 'trip-b', T0);
       expect(second.delivery.deviceId).toBe(deliveryDeviceId(BASE, 2));
       expect(second.delivery.records.map((r) => r.seq)).toEqual([1, 2, 3]);
-      const lastOfFirst = first.delivery.records.at(-1)?.hlc ?? '';
+      const lastOfFirst = first.delivery.records[first.delivery.records.length - 1]?.hlc ?? '';
       expect(parseHlc(second.delivery.records[0].hlc).wall).toBeGreaterThanOrEqual(parseHlc(lastOfFirst).wall);
       expect(second.delivery.records.map((r) => r.hlc).every((h) => h.endsWith(second.delivery.deviceId))).toBe(true);
       expect(second.stamp.deliveries).toBe(2);
@@ -173,7 +173,7 @@ describe('journal outbox (spec 1.154 phase 5, decision 9)', () => {
     });
 
     it('an empty delivery counts as covered', () => {
-      const empty: OutboxDelivery = { deviceId: 'd-1', journalKey: JK, tripKey: 't', createdAt: 1, records: [], files: [], recordsUploaded: false };
+      const empty: OutboxDelivery = { deviceId: 'd-1', journalKey: JK, tripKey: 't', createdAt: 1, records: [], files: [], recordsDone: false };
       expect(isDeliveryCovered(empty, {})).toBe(true);
     });
   });
@@ -186,11 +186,15 @@ describe('journal outbox (spec 1.154 phase 5, decision 9)', () => {
       expect(requestedOutboxFiles([delivery], 'j2', ['name-1-400.jpg'])).toEqual([]);
     });
 
-    it('settles a covered delivery only after a quiet time without a request for its files', () => {
-      expect(isDeliverySettled({ coveredAt: 1000, askedAfterCover: false }, 1000 + 3999, 4000)).toBe(false);
-      expect(isDeliverySettled({ coveredAt: 1000, askedAfterCover: false }, 1000 + 4000, 4000)).toBe(true);
-      expect(isDeliverySettled({ coveredAt: 1000, askedAfterCover: true }, 1000 + 60_000, 4000)).toBe(false);
-      expect(isDeliverySettled(undefined, 1000 + 60_000, 4000)).toBe(false);
+    it('R9: after a P2P cover the delivery is files only — no records sent again, files still answered, no P2P wait', () => {
+      const { delivery } = stamped(FRESH);
+      const filesOnly = { ...delivery, recordsDone: true };
+      expect(peerPlan([filesOnly], JK, {})).toEqual({ send: [], covered: [] });
+      expect(recordsPending([filesOnly], JK)).toEqual([]);
+      expect(recordsPending([delivery], JK)).toEqual([delivery]);
+      expect(requestedOutboxFiles([filesOnly], JK, ['name-1-2048.jpg'])).toEqual(['name-1-2048.jpg']);
+      // the state survives storage (the files stay until an online round uploaded them)
+      expect(parseOutboxDelivery(JSON.parse(JSON.stringify(filesOnly)))?.recordsDone).toBe(true);
     });
   });
 
@@ -207,10 +211,10 @@ describe('journal outbox (spec 1.154 phase 5, decision 9)', () => {
 
   describe('journals prepared for the road', () => {
     it('keeps the server list authoritative and a cached secret when a fetch failed', () => {
-      const cached = parseOutboxJournals(JSON.stringify([
+      const cached = parseOutboxJournals(serializeOutboxJournals('bruno', [
         { journalKey: 'j1', title: 'Alt', tenantId: 'bkg', secret: 's1', preparedAt: 1 },
         { journalKey: 'j9', title: 'Removed', tenantId: 'bkg', secret: 's9', preparedAt: 1 },
-      ]));
+      ]), 'bruno');
       const merged = mergeOutboxJournals(cached, [
         { journalKey: 'j1', title: 'Antarktis 2027', tenantId: 'bkg' },
         { journalKey: 'j2', title: 'Patagonien', tenantId: 'bkg' },
@@ -223,7 +227,15 @@ describe('journal outbox (spec 1.154 phase 5, decision 9)', () => {
 
     it('round-trips through storage', () => {
       const list = [{ journalKey: 'j1', title: 'Antarktis', tenantId: 'bkg', secret: 's1', preparedAt: 5 }];
-      expect(parseOutboxJournals(serializeOutboxJournals(list))).toEqual(list);
+      expect(parseOutboxJournals(serializeOutboxJournals('bruno', list), 'bruno')).toEqual(list);
+    });
+
+    it('another person on the same phone gets none of the stored journals and secrets', () => {
+      const list = [{ journalKey: 'j1', title: 'Antarktis', tenantId: 'bkg', secret: 's1', preparedAt: 5 }];
+      expect(parseOutboxJournals(serializeOutboxJournals('bruno', list), 'anna')).toEqual([]);
+      expect(parseOutboxJournals(serializeOutboxJournals('bruno', list), '')).toEqual([]);
+      // the unbound list of the first draft of this outbox is never trusted
+      expect(parseOutboxJournals(JSON.stringify(list), 'bruno')).toEqual([]);
     });
 
     it('lists which journals are ready, escaped (titles are author text)', () => {
@@ -235,8 +247,48 @@ describe('journal outbox (spec 1.154 phase 5, decision 9)', () => {
     });
 
     it('reads damaged storage as an empty list', () => {
-      expect(parseOutboxJournals('nonsense')).toEqual([]);
-      expect(parseOutboxJournals(JSON.stringify([{ journalKey: 'j1' }]))).toEqual([]);
+      expect(parseOutboxJournals('nonsense', 'bruno')).toEqual([]);
+      expect(parseOutboxJournals(JSON.stringify({ personKey: 'bruno', journals: [{ journalKey: 'j1' }] }), 'bruno')).toEqual([]);
+    });
+  });
+
+  describe('whose deliveries, and refused ones', () => {
+    it('a delivery of a previous person on this phone stays inert (never sendable under the new person)', () => {
+      const brunos = stamped(FRESH).delivery;
+      const annas = { ...brunos, deviceId: 'other-device-1', records: brunos.records.map((r) => ({ ...r, authorKey: 'anna' })) };
+      expect(sendableDeliveries([brunos, annas], 'bruno')).toEqual([brunos]);
+      expect(sendableDeliveries([brunos, annas], 'anna')).toEqual([annas]);
+    });
+
+    it('the person\'s deliveries for a journal no longer listed for them are orphaned', () => {
+      const a = stamped(FRESH).delivery;
+      const b = { ...stamped(FRESH, 'trip-b').delivery, journalKey: 'j2' };
+      expect(orphanedDeliveries([a, b], 'bruno', ['j1'])).toEqual([b]);
+      expect(orphanedDeliveries([a, b], 'anna', [])).toEqual([]); // another person's are not touched
+    });
+
+    it('one refused delivery never blocks the ones behind it; offline stops the round', async () => {
+      const refusedOnes: string[] = [];
+      const outcome = await deliverEach(['refused', 'ok', 'kept'], async (item) => {
+        if (item === 'refused') throw Object.assign(new Error('denied'), { code: 'permission-denied' });
+        return item === 'ok' ? 'delivered' : 'kept';
+      }, (e) => (e as { code?: string }).code === 'unavailable', (item) => refusedOnes.push(item));
+      expect(outcome).toEqual({ delivered: 1, kept: 1, refused: 1 });
+      expect(refusedOnes).toEqual(['refused']);
+
+      const seen: string[] = [];
+      await expect(deliverEach(['a', 'b'], async (item) => {
+        seen.push(item);
+        throw Object.assign(new Error('offline'), { code: 'unavailable' });
+      }, (e) => (e as { code?: string }).code === 'unavailable', () => undefined)).rejects.toThrow('offline');
+      expect(seen).toEqual(['a']);
+    });
+
+    it('labels a delivery by journal title and track name for the discard list', () => {
+      const { delivery } = stamped(FRESH);
+      const journals = [{ journalKey: JK, title: 'Antarktis 2027', tenantId: 'bkg', secret: '', preparedAt: 0 }];
+      expect(deliveryLabel(delivery, journals, 'Ohne Titel')).toBe('Antarktis 2027 · Paradise Harbour');
+      expect(deliveryLabel(delivery, [], 'Ohne Titel')).toBe('Ohne Titel · Paradise Harbour');
     });
   });
 

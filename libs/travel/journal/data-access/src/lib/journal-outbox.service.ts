@@ -9,7 +9,8 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { ensureAppCheckToken, FIRESTORE } from '@okr/shared-config';
 import { JournalChange, JournalChangeCollection, JournalCollection, TripModel } from '@okr/shared-models';
 import {
-  BoundAuthor, classifyUploadError, mergeOutboxJournals, nextBoundAuthor, OutboxDelivery, OutboxJournal, OutboxStamp, pagesOf, parseBoundAuthor,
+  BoundAuthor, classifyUploadError, deliverEach, DeliveryOutcome, mergeOutboxJournals, nextBoundAuthor, orphanedDeliveries, OutboxDelivery, OutboxJournal,
+  OutboxStamp, pagesOf, parseBoundAuthor, sendableDeliveries,
   parseOutboxJournals, parseOutboxStamp, serializeBoundAuthor, serializeOutboxJournals, serializeOutboxStamp, stampDelivery, trackCopyOf, TrackCopyInput,
   trackDeliveryDrafts, trackKeyOf, trackPhotoPlan, UPLOAD_PAGE,
 } from '@okr/travel-journal-util';
@@ -104,14 +105,30 @@ export class JournalOutboxService {
     return parseBoundAuthor(await this.db.getMeta(META_AUTHOR));
   }
 
-  public async bindAuthor(author: BoundAuthor): Promise<void> {
-    const next = nextBoundAuthor(await this.author(), author);
-    if (next) await this.db.setMeta(META_AUTHOR, serializeBoundAuthor(next));
+  /**
+   * Binds the signed-in person. Another person than before (the phone changed hands): the previous person's journals and
+   * peer secrets are wiped at once — they are that person's access. Their waiting deliveries stay INERT (never sent under
+   * the new person, sendableDeliveries) until discarded. There is no sign-out hook the lazily loaded outbox could join;
+   * the next signed-in use of the tracker page binds the new person (the page binds before every action).
+   */
+  public bindAuthor(author: BoundAuthor): Promise<void> {
+    return this.enqueue(async () => {
+      const before = await this.author();
+      const next = nextBoundAuthor(before, author);
+      if (!next) return;
+      if (before && before.personKey !== next.personKey) await this.db.setMeta(META_JOURNALS, serializeOutboxJournals(next.personKey, []));
+      await this.db.setMeta(META_AUTHOR, serializeBoundAuthor(next));
+    });
   }
 
-  /** The journals as last fetched online (with their peer secret when prepared for the road). */
-  public async cachedJournals(): Promise<OutboxJournal[]> {
-    return parseOutboxJournals(await this.db.getMeta(META_JOURNALS));
+  /** The person's journals as last fetched online (with their peer secret when prepared); [] for anybody else. */
+  public async cachedJournals(personKey: string): Promise<OutboxJournal[]> {
+    return parseOutboxJournals(await this.db.getMeta(META_JOURNALS), personKey);
+  }
+
+  /** The person's own deliveries still waiting (records or files); deliveries of a previous person are not among them. */
+  public waitingFor(personKey: string): OutboxDelivery[] {
+    return sendableDeliveries(this.pendingSignal(), personKey);
   }
 
   /**
@@ -143,8 +160,13 @@ export class JournalOutboxService {
           }
         }
       }
-      const merged = mergeOutboxJournals(await this.cachedJournals(), fetched, secrets, Date.now());
-      await this.db.setMeta(META_JOURNALS, serializeOutboxJournals(merged));
+      const merged = mergeOutboxJournals(await this.cachedJournals(personKey), fetched, secrets, Date.now());
+      await this.db.setMeta(META_JOURNALS, serializeOutboxJournals(personKey, merged));
+      // deliveries for a journal the server no longer lists for this person (removed as author, archived) can never arrive
+      await this.load();
+      for (const orphan of orphanedDeliveries(this.pendingSignal(), personKey, fetched.map((j) => j.journalKey))) {
+        await this.enqueue(() => this.dropNow(orphan, false));
+      }
       return merged;
     } catch (error) {
       throw isOfflineError(error) ? new JournalOutboxOffline() : error;
@@ -171,17 +193,19 @@ export class JournalOutboxService {
 
       const plan = trackPhotoPlan(trip, []); // the phone holds no journal images: every visible photo is imported
       const imported = await importTrackPhotos(journalKey, plan.toImport);
-      const copy = trackCopyOf(trip, input.sections, imported.keys);
-      const drafts = trackDeliveryDrafts(journalKey, trackKey, copy, imported.drafts);
-      const stamp = await this.stamp();
-      const { delivery, stamp: next } = stampDelivery(
-        stamp, { journalKey, tripKey: trip.okey, authorKey: input.authorKey, drafts, files: imported.files },
-        drafts.map(() => crypto.randomUUID()), Date.now(),
-      );
+      let delivery: OutboxDelivery;
       try {
-        await this.db.addDelivery(delivery, { [META_STAMP]: serializeOutboxStamp(next) });
+        const copy = trackCopyOf(trip, input.sections, imported.keys);
+        const drafts = trackDeliveryDrafts(journalKey, trackKey, copy, imported.drafts);
+        const stamped = stampDelivery(
+          await this.stamp(), { journalKey, tripKey: trip.okey, authorKey: input.authorKey, drafts, files: imported.files },
+          drafts.map(() => crypto.randomUUID()), Date.now(),
+        );
+        delivery = stamped.delivery;
+        await this.db.addDelivery(delivery, { [META_STAMP]: serializeOutboxStamp(stamped.stamp) });
       } catch (error) {
-        for (const file of delivery.files) await JournalPhotos.deleteFile({ journalKey, file }).catch(() => undefined);
+        // nothing stored: the exported files belong to nobody
+        for (const file of imported.files) await JournalPhotos.deleteFile({ journalKey, file }).catch(() => undefined);
         throw error;
       }
       this.pendingSignal.update((list) => [...list, delivery]);
@@ -192,42 +216,50 @@ export class JournalOutboxService {
   // ---------------------------------------------------------------- online --------------------
 
   /**
-   * Writes every pending delivery (or those of `journalKey`) to Firestore like an iPad (records with tenants and the
-   * server's uploadedAt; a record already there counts as uploaded), then uploads its photo files through signed URLs
-   * (prepareJournalPhotoUploads). A delivery that is through is dropped. Returns how many arrived and how many remain;
-   * throws JournalOutboxOffline when the network is gone, other errors when the server refuses.
+   * Writes the person's waiting deliveries (or those of `journalKey`) to Firestore like an iPad (records with tenants and
+   * the server's uploadedAt; a record already there counts as uploaded), then uploads their photo files through signed
+   * URLs (prepareJournalPhotoUploads) — also those of «files only» deliveries whose records an iPad took over P2P
+   * (ruling R9). A delivery that is through is dropped. Delivery by delivery: a refused one (not an author any more, a
+   * rule) is counted and skipped, it never blocks the others. Throws JournalOutboxOffline when the network is gone.
    */
-  public deliverOnline(tenantId: string, journalKey?: string): Promise<{ delivered: number; remaining: number }> {
+  public deliverOnline(tenantId: string, personKey: string, journalKey?: string): Promise<{ delivered: number; refused: number; remaining: number }> {
     return this.enqueue(async () => {
       await this.load();
-      let delivered = 0;
+      const mine = () => this.waitingFor(personKey).filter((d) => !journalKey || d.journalKey === journalKey);
       try {
         await ensureAppCheckToken();
-        for (const delivery of this.pendingSignal().filter((d) => !journalKey || d.journalKey === journalKey)) {
-          let current = delivery;
-          if (!current.recordsUploaded) {
-            await this.writeRecords(current.records, tenantId);
-            current = { ...current, recordsUploaded: true };
-            await this.db.updateDelivery(current);
-            this.replace(current);
-          }
-          if (!(await this.uploadFiles(current))) continue; // a file failed: the next round tries again
-          await this.dropNow(current);
-          delivered++;
-        }
+        const { delivered, refused } = await deliverEach(mine(), (d) => this.deliverOne(d, tenantId), isOfflineError,
+          (d, error) => console.error('journal outbox: a delivery was refused', d.deviceId, error));
+        return { delivered, refused, remaining: mine().length };
       } catch (error) {
-        if (isOfflineError(error)) throw new JournalOutboxOffline();
-        throw error;
+        throw isOfflineError(error) ? new JournalOutboxOffline() : error;
       }
-      return { delivered, remaining: this.pendingSignal().filter((d) => !journalKey || d.journalKey === journalKey).length };
     });
   }
 
-  /** P2P: an iPad holds the delivery's records and asked for none of its files afterwards — it has arrived. */
-  public drop(deviceId: string): Promise<void> {
+  /**
+   * P2P (ruling R9): an iPad's version vector covers the delivery's records. Without photo files it has arrived; with
+   * files it becomes «files only» — the files stay (and are still handed to any iPad that asks) until an online round
+   * uploaded them.
+   */
+  public markRecordsDone(deviceId: string): Promise<void> {
     return this.enqueue(async () => {
       const delivery = this.pendingSignal().find((d) => d.deviceId === deviceId);
-      if (delivery) await this.dropNow(delivery);
+      if (!delivery || delivery.recordsDone) return;
+      if (delivery.files.length === 0) {
+        await this.dropNow(delivery);
+        return;
+      }
+      const next = { ...delivery, recordsDone: true };
+      await this.db.updateDelivery(next);
+      this.replace(next);
+    });
+  }
+
+  /** «Verwerfen»: removes deliveries and their photo files for good (a refused one, or one of a previous person). */
+  public discard(deviceIds: string[]): Promise<void> {
+    return this.enqueue(async () => {
+      for (const delivery of this.pendingSignal().filter((d) => deviceIds.includes(d.deviceId))) await this.dropNow(delivery, false);
     });
   }
 
@@ -243,10 +275,25 @@ export class JournalOutboxService {
     this.pendingSignal.update((list) => list.map((d) => (d.deviceId === delivery.deviceId ? delivery : d)));
   }
 
-  private async dropNow(delivery: OutboxDelivery): Promise<void> {
+  /** One delivery online: records unless done, then the files; 'kept' when a file upload failed (next round). */
+  private async deliverOne(delivery: OutboxDelivery, tenantId: string): Promise<DeliveryOutcome> {
+    let current = delivery;
+    if (!current.recordsDone) {
+      await this.writeRecords(current.records, tenantId);
+      current = { ...current, recordsDone: true };
+      await this.db.updateDelivery(current);
+      this.replace(current);
+    }
+    if (!(await this.uploadFiles(current))) return 'kept';
+    await this.dropNow(current);
+    return 'delivered';
+  }
+
+  /** `arrived` false = discarded or orphaned: the trip is not noted as sent (it may be sent again). */
+  private async dropNow(delivery: OutboxDelivery, arrived = true): Promise<void> {
     await this.db.removeDelivery(delivery.deviceId);
     this.pendingSignal.update((list) => list.filter((d) => d.deviceId !== delivery.deviceId));
-    await this.noteSent(delivery.journalKey, delivery.tripKey);
+    if (arrived) await this.noteSent(delivery.journalKey, delivery.tripKey);
     for (const file of delivery.files) {
       await JournalPhotos.deleteFile({ journalKey: delivery.journalKey, file }).catch(() => undefined); // best effort
     }

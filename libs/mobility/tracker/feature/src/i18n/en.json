@@ -191,6 +191,11 @@
     "not_ready": "not ready",
     "prepare_hint": "Without internet you can send tracks to the ready travel journals as soon as an iPad is nearby.",
     "waiting_count": "Not arrived yet: {count}",
-    "ok": "OK"
+    "ok": "OK",
+    "photos_waiting": "The photos will be uploaded once you have internet: {count}",
+    "discard": "Discard waiting items …",
+    "discard_title": "Which items should be discarded?",
+    "discard_button": "Discard",
+    "refused": "The travel journal did not accept {count} items. You can discard them under «Prepare for the road»."
   }
 }

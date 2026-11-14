@@ -24,7 +24,7 @@ import {
   JournalLock, LOCK_HEARTBEAT_MS, LOCK_TTL_MS, lockedBy, mergeLocks, BoundAuthor, JournalWriteSlow, mergePending,
   AreaLayer, areaForWrite, areaLayerTilePlan, BaseLayerOption, baseLayerOptions, Bbox, finishRun, isUsable, layerDetailLevels, layerKindsFor,
   layerTilesToFree, MapLayerKind, MapSource, migrateOfflineMap, NO_OFFLINE_LAYER, offlineAreaKey, OfflineLayerStatus, parseOfflineLayer, pickBaseLayer,
-  trackCopyOf, TrackCopyInput, trackKeyOf, trackOf, trackPhotoPlan, trackRecordFields, tracksOf, TrackView,
+  journalAuthorKeys, trackCopyOf, TrackCopyInput, trackKeyOf, trackOf, trackPhotoPlan, trackRecordFields, tracksOf, TrackView,
 } from '@okr/travel-journal-util';
 import type { IcebergSnapshot } from '@okr/travel-journal-util';
 
@@ -601,6 +601,7 @@ export const JournalStore = signalStore(
           void refreshPresentVideos();
         },
         onLock: receiveLock,
+        authorKeys: () => journalAuthorKeys(store.journalState(), journalKey),
       }).catch(() => undefined);
     }
 

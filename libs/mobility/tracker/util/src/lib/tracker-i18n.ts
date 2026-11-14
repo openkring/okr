@@ -156,6 +156,11 @@ export const TRACKER_I18N_KEYS = {
   journal_prepare_hint: PFX + 'journal.prepare_hint',
   journal_waiting_count: PFX + 'journal.waiting_count', // single braces: {count}
   journal_ok: PFX + 'journal.ok',
+  journal_photos_waiting: PFX + 'journal.photos_waiting', // single braces: {count}
+  journal_discard: PFX + 'journal.discard',
+  journal_discard_title: PFX + 'journal.discard_title',
+  journal_discard_button: PFX + 'journal.discard_button',
+  journal_refused: PFX + 'journal.refused', // single braces: {count}
   common_save: PFX + 'common.save',
   common_cancel: PFX + 'common.cancel',
 } satisfies Record<string, string>;

@@ -5,7 +5,7 @@ import { TripModel } from '@okr/shared-models';
 import { fill } from '@okr/shared-util-core';
 import { LocalSection, LocalTrack, TrackerI18n } from '@okr/mobility-tracker-util';
 import { JournalOutboxOffline, JournalOutboxPeer, JournalOutboxService, OutboxPeerStatus } from '@okr/travel-journal-data-access';
-import { OutboxJournal, preparedJournalsMessage, tripOfLocalTrack } from '@okr/travel-journal-util';
+import { deliveryLabel, OutboxJournal, preparedJournalsMessage, tripOfLocalTrack } from '@okr/travel-journal-util';
 
 /**
  * «An Reisetagebuch senden» and «Für unterwegs vorbereiten» on the track detail page (spec 1.154 phase 5, decision 9).
@@ -39,7 +39,9 @@ export async function isJournalAuthor(injector: Injector, author: TrackSendInput
   const outbox = injector.get(JournalOutboxService);
   try {
     if (author) await outbox.bindAuthor(author);
-    if ((await outbox.cachedJournals()).length > 0) return true;
+    const personKey = author?.personKey ?? (await outbox.author())?.personKey;
+    if (!personKey) return false;
+    if ((await outbox.cachedJournals(personKey)).length > 0) return true;
     if (!author || !(await outbox.maybeOnline())) return false;
     return (await outbox.refreshJournals(author.personKey, false)).length > 0;
   } catch {
@@ -74,11 +76,16 @@ export async function sendTrackToJournal(input: TrackSendInput): Promise<void> {
     try {
       journals = await outbox.refreshJournals(author.personKey, false);
     } catch (error) {
-      if (!(error instanceof JournalOutboxOffline)) console.error('track-journal-send: journals', error);
+      // only a lost network falls back to the prepared journals; a refusal must not be bypassed with a cached secret
+      if (!(error instanceof JournalOutboxOffline)) {
+        console.error('track-journal-send: journals', error);
+        await ui.toast(i18n.journal_error());
+        return;
+      }
       online = false;
     }
   }
-  if (!online) journals = (await outbox.cachedJournals()).filter((j) => j.secret !== '');
+  if (!online) journals = (await outbox.cachedJournals(author.personKey)).filter((j) => j.secret !== '');
   if (journals.length === 0) {
     await ui.toast(online ? i18n.journal_none() : i18n.journal_none_offline());
     return;
@@ -110,8 +117,12 @@ export async function sendTrackToJournal(input: TrackSendInput): Promise<void> {
 
   if (online) {
     try {
-      const { remaining } = await outbox.deliverOnline(input.tenantId, journal.journalKey);
+      const { remaining, refused } = await outbox.deliverOnline(input.tenantId, author.personKey, journal.journalKey);
       await loading.dismiss();
+      if (refused > 0) {
+        await ui.toast(fill(i18n.journal_refused(), { count: String(refused) }));
+        return;
+      }
       if (remaining === 0) {
         await ui.toast(withSkipped(i18n.journal_sent(), skipped, i18n));
         return;
@@ -138,36 +149,40 @@ export async function prepareJournalsForTravel(input: Pick<TrackSendInput, 'inje
   const { injector, i18n, author } = input;
   const outbox = injector.get(JournalOutboxService);
   const ui = uiOf(injector);
+  await outbox.load();
   if (!author || !(await outbox.maybeOnline())) {
-    await ui.toast(i18n.journal_prepare_offline());
+    // offline nothing can be prepared — but a stuck delivery can still be discarded
+    await showPrepared(input, ui, i18n.journal_prepare_offline(), []);
     return;
   }
   const loading = await ui.loading(i18n.journal_preparing_journals());
   let journals: OutboxJournal[];
+  let refused = 0;
   try {
     await outbox.bindAuthor(author);
     journals = await outbox.refreshJournals(author.personKey, true);
-    await outbox.deliverOnline(input.tenantId).catch((error: unknown) => console.warn('track-journal-send: waiting deliveries', error));
+    try {
+      refused = (await outbox.deliverOnline(input.tenantId, author.personKey)).refused;
+    } catch (error) {
+      console.warn('track-journal-send: waiting deliveries', error);
+    }
   } catch (error) {
     await loading.dismiss();
     await ui.toast(error instanceof JournalOutboxOffline ? i18n.journal_prepare_offline() : i18n.journal_error());
     return;
   }
   await loading.dismiss();
-  if (journals.length === 0) {
+  if (journals.length === 0 && outbox.pending().length === 0) {
     await ui.toast(i18n.journal_none());
     return;
   }
-  const waiting = outbox.pending().length;
-  const alert = await ui.alerts.create({
-    header: i18n.journal_prepare_title(),
-    message: preparedJournalsMessage(journals, {
-      untitled: i18n.journal_untitled(), ready: i18n.journal_ready(), notReady: i18n.journal_not_ready(), hint: i18n.journal_prepare_hint(),
-      waiting: waiting > 0 ? fill(i18n.journal_waiting_count(), { count: String(waiting) }) : '',
-    }),
-    buttons: [{ text: i18n.journal_ok(), role: 'cancel' }],
+  const waiting = outbox.waitingFor(author.personKey).length;
+  const message = preparedJournalsMessage(journals, {
+    untitled: i18n.journal_untitled(), ready: i18n.journal_ready(), notReady: i18n.journal_not_ready(), hint: i18n.journal_prepare_hint(),
+    waiting: [waiting > 0 ? fill(i18n.journal_waiting_count(), { count: String(waiting) }) : '',
+      refused > 0 ? fill(i18n.journal_refused(), { count: String(refused) }) : ''].filter((t) => t !== '').join(' '),
   });
-  await alert.present();
+  await showPrepared(input, ui, message, journals);
 }
 
 // ------------------------------------------------------------------ internals
@@ -193,6 +208,51 @@ function uiOf(injector: Injector): Ui {
       return loading;
     },
   };
+}
+
+/**
+ * The «Für unterwegs» alert (`message` is HTML, built escaped). When anything waits in the outbox — the person's own, or
+ * an inert delivery of somebody who used this phone before — it offers «Wartende verwerfen …».
+ */
+async function showPrepared(input: Pick<TrackSendInput, 'injector' | 'i18n'>, ui: Ui, message: string, journals: OutboxJournal[]): Promise<void> {
+  const { i18n } = input;
+  const outbox = input.injector.get(JournalOutboxService);
+  const waiting = outbox.pending();
+  if (waiting.length === 0 && journals.length === 0) {
+    await ui.toast(message);
+    return;
+  }
+  const alert = await ui.alerts.create({
+    header: i18n.journal_prepare_title(),
+    message,
+    buttons: [
+      ...(waiting.length > 0 ? [{ text: i18n.journal_discard(), role: 'discard' }] : []),
+      { text: i18n.journal_ok(), role: 'cancel' },
+    ],
+  });
+  await alert.present();
+  const { role } = await alert.onWillDismiss();
+  if (role === 'discard') await discardWaiting(input, ui, journals);
+}
+
+/** «Wartende verwerfen»: a checkbox per waiting delivery; the chosen ones and their photo files are removed. */
+async function discardWaiting(input: Pick<TrackSendInput, 'injector' | 'i18n'>, ui: Ui, journals: OutboxJournal[]): Promise<void> {
+  const { i18n } = input;
+  const outbox = input.injector.get(JournalOutboxService);
+  const waiting = outbox.pending();
+  if (waiting.length === 0) return;
+  const alert = await ui.alerts.create({
+    header: i18n.journal_discard_title(),
+    inputs: waiting.map((d) => ({ type: 'checkbox' as const, label: deliveryLabel(d, journals, i18n.journal_untitled()), value: d.deviceId })),
+    buttons: [
+      { text: i18n.common_cancel(), role: 'cancel' },
+      { text: i18n.journal_discard_button(), role: 'confirm' },
+    ],
+  });
+  await alert.present();
+  const { data, role } = await alert.onWillDismiss<{ values?: string[] }>();
+  const chosen = role === 'confirm' && Array.isArray(data?.values) ? data.values : [];
+  if (chosen.length > 0) await outbox.discard(chosen);
 }
 
 function withSkipped(message: string, skipped: number, i18n: TrackerI18n): string {

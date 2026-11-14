@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { JournalChange } from '@okr/shared-models';
 import { formatHlc } from './journal-hlc.util';
-import { acceptPeerRecords, missingFor, parsePeerMessage, versionVector } from './journal-peer.util';
+import { materialize } from './journal-merge.util';
+import { acceptPeerRecords, fromJournalAuthors, journalAuthorKeys, missingFor, parsePeerMessage, versionVector } from './journal-peer.util';
 
 const NOW = 1_800_000_000_000;
 function rec(deviceId: string, seq: number, journalKey = 'j1', wall = NOW - 1000): JournalChange {
@@ -69,5 +70,36 @@ describe('journal peer util', () => {
     expect(parsePeerMessage(JSON.stringify({ t: 'lock', journalKey: 'j1', lock: { ...lock, entityKey: '' } }), 'j1')).toBeUndefined();
     expect(parsePeerMessage(JSON.stringify({ t: 'lock', journalKey: 'j1', lock: { ...lock, journalKey: 'other' } }), 'j1')).toBeUndefined();
     expect(parsePeerMessage(JSON.stringify({ t: 'lock', journalKey: 'j1' }), 'j1')).toBeUndefined();
+  });
+});
+
+describe('peer records only from the journal\'s authors (upload wedge guard)', () => {
+  const journal = (authorKey: string, op: 'create' | 'set', authorKeys: string[], seq: number): JournalChange => ({
+    ...rec('d-' + authorKey, seq), authorKey, entity: 'journal', entityKey: 'j1', op, fields: { title: 'T', authorKeys },
+  });
+  const by = (authorKey: string, seq: number): JournalChange => ({ ...rec('d-' + authorKey, seq), authorKey });
+
+  it('knows the creator and the listed co-authors', () => {
+    const state = materialize([journal('bruno', 'create', [], 1), journal('bruno', 'set', ['anna'], 2)]);
+    expect(journalAuthorKeys(state, 'j1')?.sort()).toEqual(['anna', 'bruno']);
+    expect(journalAuthorKeys(state, 'j2')).toBeUndefined();
+  });
+
+  it('drops a record of somebody who is not an author (the server would refuse its upload and stop the journal)', () => {
+    expect(fromJournalAuthors([by('bruno', 1), by('mallory', 1)], ['bruno', 'anna']).map((r) => r.authorKey)).toEqual(['bruno']);
+  });
+
+  it('keeps a new co-author\'s records that arrive in the same page after the record adding them', () => {
+    const page = [by('anna', 1), journal('bruno', 'set', ['anna'], 5), by('anna', 2)];
+    expect(fromJournalAuthors(page, ['bruno']).map((r) => `${r.authorKey}${r.seq}`)).toEqual(['bruno5', 'anna2']);
+  });
+
+  it('a journal record of a non-author cannot add authors', () => {
+    const page = [journal('mallory', 'set', ['mallory'], 1), by('mallory', 2)];
+    expect(fromJournalAuthors(page, ['bruno'])).toEqual([]);
+  });
+
+  it('passes everything while the device does not know the journal yet', () => {
+    expect(fromJournalAuthors([by('mallory', 1)], undefined)).toHaveLength(1);
   });
 });

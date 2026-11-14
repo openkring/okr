@@ -191,6 +191,11 @@
     "not_ready": "no listo",
     "prepare_hint": "Sin internet puedes enviar recorridos a los diarios listos en cuanto haya un iPad cerca.",
     "waiting_count": "Aún no han llegado: {count}",
-    "ok": "OK"
+    "ok": "OK",
+    "photos_waiting": "Las fotos se subirán cuando tengas internet: {count}",
+    "discard": "Descartar envíos pendientes …",
+    "discard_title": "¿Qué envíos quieres descartar?",
+    "discard_button": "Descartar",
+    "refused": "El diario de viaje no ha aceptado {count} envíos. Puedes descartarlos en «Preparar para el camino»."
   }
 }

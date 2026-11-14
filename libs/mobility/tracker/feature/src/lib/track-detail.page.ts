@@ -289,7 +289,8 @@ export class TrackDetailPage {
     switch (status.state) {
       case 'searching': return this.i18n.journal_searching() + waiting;
       case 'sending': return fill(this.i18n.journal_sending(), { names: status.peers.join(', ') }) + waiting;
-      case 'done': return this.i18n.journal_delivered();
+      case 'done': return this.i18n.journal_delivered()
+        + (status.filesOnly > 0 ? ` ${fill(this.i18n.journal_photos_waiting(), { count: String(status.filesOnly) })}` : '');
       case 'stopped': return status.pending > 0 ? this.i18n.journal_stopped() : '';
       default: return '';
     }
