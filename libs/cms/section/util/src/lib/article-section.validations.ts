@@ -26,9 +26,10 @@ export const articleSectionValidations = staticSuite((model: ArticleSection) => 
   });
 
   // imageLayout: a known layout id (spec 1.154 §5); absent = the slider. Which ids suit the image count is resolved
-  // at render time (resolveImageLayout), so any known id is accepted here.
+  // at render time (resolveImageLayout), so any known id is accepted here. Below two images the layout is ignored,
+  // so an unknown id must not block saving.
   const imageLayout = model.properties?.imageLayout;
-  omitWhen(imageLayout === undefined, () => {
+  omitWhen(imageLayout === undefined || (model.properties?.images?.length ?? 0) < 2, () => {
     test('imageLayout', 'invalidValue', () => {
       enforce(isImageLayoutId(imageLayout)).isTruthy();
     });

@@ -96,7 +96,7 @@ const MULTI_IMAGE_POSITIONS = ViewPositions.filter((p) => p.id === ViewPosition.
                 @if (layout(); as layout) {
                   <ion-col size="12">
                     <div class="layout-current">
-                      <okr-image-layout-preview class="layout-preview" [layout]="layout" [count]="previewCount()" [label]="layoutName()" />
+                      <okr-image-layout-preview class="layout-preview" [layout]="layout" [count]="previewCount()" [label]="layoutName()" aria-hidden="true" />
                       <div>
                         <div class="layout-name">{{ layoutName() }}</div>
                         <ion-button fill="outline" size="small" [disabled]="isReadOnly()" (click)="chooseLayout()">
@@ -106,7 +106,7 @@ const MULTI_IMAGE_POSITIONS = ViewPositions.filter((p) => p.id === ViewPosition.
                     </div>
                   </ion-col>
                 }
-                <!-- shown with any image count, so a stored id this release does not know never blocks saving silently -->
+                <!-- shown with any image count, so an unknown stored id with two or more images never blocks saving silently (below two images the layout is ignored and not validated) -->
                 <ion-col size="12">
                   <okr-error-note [errors]="errorsFor('imageLayout')" />
                 </ion-col>

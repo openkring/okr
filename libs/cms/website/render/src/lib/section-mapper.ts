@@ -198,9 +198,10 @@ export type SanitizeFn = (html: string) => string;
 
 export type ArticleImagePosition = 'none' | 'top' | 'bottom' | 'left' | 'right';
 
-// Mirrors ViewPosition (shared-models) and the app's ArticleSectionComponent: several
-// images always render on top, a single one at content.position, and left/right use
-// content.colSize (of 12, default 6) as the image column width.
+// Mirrors ViewPosition (shared-models) and the app's ArticleSectionComponent only for articles without
+// `imageLayout` (spec 1.154 §5): several images render on top, a single one at content.position, and left/right use
+// content.colSize (of 12, default 6) as the image column width. An `imageLayout` (grid layouts, images below the
+// text) is not rendered on the published website yet.
 const VIEW_POSITIONS: ArticleImagePosition[] = ['none', 'top', 'bottom', 'left', 'right'];
 
 export function articleImageLayout(

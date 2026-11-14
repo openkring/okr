@@ -48,8 +48,15 @@ describe('articleSectionValidations cta', () => {
 });
 
 describe('articleSectionValidations imageLayout', () => {
-  const withLayout = (imageLayout: unknown) =>
-    ({ ...ARTICLE_SECTION_SHAPE, properties: { ...ARTICLE_SECTION_SHAPE.properties, imageLayout } }) as unknown as ArticleSection;
+  const withLayout = (imageLayout: unknown, imageCount = 3) =>
+    ({
+      ...ARTICLE_SECTION_SHAPE,
+      properties: {
+        ...ARTICLE_SECTION_SHAPE.properties,
+        imageLayout,
+        images: Array.from({ length: imageCount }, (_, i) => ({ url: `img${i}` })),
+      },
+    }) as unknown as ArticleSection;
 
   it('does not flag an article without a layout (the slider)', () => {
     expect(articleSectionValidations({ ...ARTICLE_SECTION_SHAPE }).hasErrors('imageLayout')).toBe(false);
@@ -62,5 +69,13 @@ describe('articleSectionValidations imageLayout', () => {
   it('refuses an unknown layout id', () => {
     expect(articleSectionValidations(withLayout('xyz')).hasErrors('imageLayout')).toBe(true);
     expect(articleSectionValidations(withLayout('')).hasErrors('imageLayout')).toBe(true);
+  });
+
+  it('ignores an unknown id below two images (the layout is not used)', () => {
+    expect(articleSectionValidations(withLayout('xyz', 1)).hasErrors('imageLayout')).toBe(false);
+  });
+
+  it('refuses an unknown id with three images', () => {
+    expect(articleSectionValidations(withLayout('xyz', 3)).hasErrors('imageLayout')).toBe(true);
   });
 });
