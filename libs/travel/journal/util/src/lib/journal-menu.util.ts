@@ -9,7 +9,7 @@ import { JournalSectionType } from './journal-section.util';
 export type JournalMenuAction =
   | 'newJournal' | 'photoSync'
   | 'flyover' | 'newFootprint' | 'recordTrack' | 'offlineMaps' | 'photoBook'
-  | 'toggleEditMode' | 'addBlock' | 'sortBlocks' | 'editFootprint' | 'deleteFootprint';
+  | 'toggleEditMode' | 'addSection' | 'sortSections' | 'editFootprint' | 'deleteFootprint';
 
 export type JournalSectionAction = 'section.edit' | 'section.delete';
 
@@ -54,8 +54,8 @@ export function footprintMenu(ctx: { native: boolean; canWrite: boolean; editMod
   return grouped(
     [
       { action: 'toggleEditMode', label: ctx.editMode ? 'menu_edit_off' : 'menu_edit_on', icon: 'edit' },
-      { action: 'addBlock', label: 'menu_add_block', icon: 'add' },
-      { action: 'sortBlocks', label: 'menu_sort_blocks', icon: 'sync-circle' },
+      { action: 'addSection', label: 'menu_add_section', icon: 'add' },
+      { action: 'sortSections', label: 'menu_sort_sections', icon: 'sync-circle' },
     ],
     [
       { action: 'editFootprint', label: 'menu_edit_footprint', icon: 'edit' },

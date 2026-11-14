@@ -15,6 +15,12 @@ describe('icon.util', () => {
       expect(getSvgIconUrl(base, 'bundled-y', 'section')).toBe('https://img.example/logo/section/bundled-y.svg');
     });
 
+    it('returns a bundled icon of another set when it is registered as <set>/<name>', () => {
+      registerBundledIcons({ 'section/bundled-z': 'data:image/svg+xml;utf8,%3Csvg%2F%3E' });
+      expect(getSvgIconUrl(base, 'bundled-z', 'section')).toBe('data:image/svg+xml;utf8,%3Csvg%2F%3E');
+      expect(getSvgIconUrl(base, 'bundled-z')).toBe('https://img.example/logo/icons/bundled-z.svg');
+    });
+
     it('keeps an empty name empty', () => {
       expect(getSvgIconUrl(base, '')).toBe('');
     });

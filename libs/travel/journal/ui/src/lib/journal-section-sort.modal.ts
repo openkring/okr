@@ -7,11 +7,11 @@ import { dismissOverlay } from '@okr/shared-util-angular';
 import { arrayMove } from '@okr/shared-util-core';
 import { JOURNAL_I18N_KEYS, JournalI18n } from '@okr/travel-journal-util';
 
-export interface SortableBlock { key: string; label: string }
+export interface SortableSection { key: string; label: string }
 
-/** Re-orders the blocks of a footprint; dismisses with the ordered keys and role 'confirm' (modelled on the CMS page-sort modal). */
+/** Re-orders the sections of a footprint; dismisses with the ordered keys and role 'confirm' (modelled on the CMS page-sort modal). */
 @Component({
-  selector: 'okr-journal-block-sort-modal',
+  selector: 'okr-journal-section-sort-modal',
   standalone: true,
   imports: [Header, IonContent, IonReorderGroup, IonReorder, IonItem],
   template: `
@@ -19,9 +19,9 @@ export interface SortableBlock { key: string; label: string }
     <ion-content>
       <!-- Casting $event to $any is a temporary fix for https://github.com/ionic-team/ionic-framework/issues/24245 -->
       <ion-reorder-group [disabled]="false" (ionItemReorder)="reorder($any($event))">
-        @for (block of ordered(); track block.key) {
+        @for (section of ordered(); track section.key) {
           <ion-item>
-            {{ block.label }}
+            {{ section.label }}
             <ion-reorder slot="start" />
           </ion-item>
         }
@@ -29,25 +29,25 @@ export interface SortableBlock { key: string; label: string }
     </ion-content>
   `,
 })
-export class JournalBlockSortModal {
+export class JournalSectionSortModal {
   private readonly modalController = inject(ModalController);
   protected readonly i18n = inject(I18nService).translateAll(JOURNAL_I18N_KEYS) as JournalI18n;
 
-  /** The blocks in their current order. */
-  public readonly blocks = input.required<SortableBlock[]>();
+  /** The sections in their current order. */
+  public readonly sections = input.required<SortableSection[]>();
 
-  /** The order being edited; starts as `blocks`. */
+  /** The order being edited; starts as `sections`. */
   protected readonly order = signal<string[] | undefined>(undefined);
-  protected readonly ordered = computed<SortableBlock[]>(() => {
-    const blocks = this.blocks();
+  protected readonly ordered = computed<SortableSection[]>(() => {
+    const sections = this.sections();
     const order = this.order();
-    if (!order) return blocks;
-    const byKey = new Map(blocks.map((b) => [b.key, b]));
-    return order.map((k) => byKey.get(k)).filter((b): b is SortableBlock => !!b);
+    if (!order) return sections;
+    const byKey = new Map(sections.map((s) => [s.key, s]));
+    return order.map((k) => byKey.get(k)).filter((s): s is SortableSection => !!s);
   });
 
   protected reorder(ev: CustomEvent<ItemReorderEventDetail>): void {
-    const keys = this.ordered().map((b) => b.key);
+    const keys = this.ordered().map((s) => s.key);
     arrayMove(keys, ev.detail.from, ev.detail.to);
     // completes the gesture in Ionic's DOM; the signal then re-renders in the same order
     ev.detail.complete();
@@ -55,6 +55,6 @@ export class JournalBlockSortModal {
   }
 
   public save(): Promise<boolean> {
-    return dismissOverlay(this.modalController, this.ordered().map((b) => b.key), 'confirm');
+    return dismissOverlay(this.modalController, this.ordered().map((s) => s.key), 'confirm');
   }
 }

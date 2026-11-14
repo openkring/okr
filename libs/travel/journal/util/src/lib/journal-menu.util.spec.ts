@@ -40,7 +40,7 @@ describe('journal menus (spec 1.126 phase 3: write entries follow canWrite)', ()
   it('footprint: author, edit mode off and on, on every device', () => {
     for (const native of [true, false]) {
       const off = footprintMenu({ native, canWrite: true, editMode: false });
-      expect(actions(off)).toEqual(['toggleEditMode', 'addBlock', 'sortBlocks', 'divider', 'editFootprint', 'deleteFootprint']);
+      expect(actions(off)).toEqual(['toggleEditMode', 'addSection', 'sortSections', 'divider', 'editFootprint', 'deleteFootprint']);
       expect(off[0]).toMatchObject({ label: 'menu_edit_on' });
       expect(footprintMenu({ native, canWrite: true, editMode: true })[0]).toMatchObject({ label: 'menu_edit_off' });
       expect(off[off.length - 1]).toMatchObject({ destructive: true });

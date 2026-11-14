@@ -42,8 +42,6 @@
     "empty": "Ancora nessuna tappa. Crea la prima."
   },
   "story": {
-    "add_text": "Aggiungi testo",
-    "add_photos": "Aggiungi foto",
     "edit_footprint": "Modifica tappa",
     "previous": "Precedente",
     "next": "Successiva",
@@ -53,21 +51,20 @@
     "published": "Pubblicato",
     "footprint_menu": "Tappa",
     "footprint_delete": "Elimina tappa",
-    "footprint_delete_confirm": "Eliminare questa tappa con tutti i suoi blocchi?",
-    "add_video": "Video"
+    "footprint_delete_confirm": "Eliminare questa tappa con tutte le sue sezioni?"
   },
-  "block": {
-    "actions": "Blocco",
-    "edit": "Modifica",
-    "delete": "Elimina",
-    "delete_confirm": "Eliminare questo blocco?",
-    "add_photos": "Aggiungi foto",
-    "edit_action": "Modifica blocco",
-    "delete_action": "Elimina blocco",
+  "section": {
+    "actions": "Sezione",
+    "edit_action": "Modifica sezione",
+    "delete_action": "Elimina sezione",
+    "delete_confirm": "Eliminare questa sezione?",
     "locked": "{name} sta modificando adesso",
     "conflict": "Due versioni – elimina una delle due.",
-    "photos_label": "{count} foto",
-    "add_videos": "Aggiungi video"
+    "type_hero": "Copertina",
+    "type_article": "Testo",
+    "type_album": "Album",
+    "type_video": "Video",
+    "photos_count": "{count} foto"
   },
   "photos": {
     "added": "{count} foto aggiunte",
@@ -408,13 +405,10 @@
     "photo_book": "Crea o modifica il fotolibro",
     "edit_on": "Modifica",
     "edit_off": "Termina la modifica",
-    "add_block": "Aggiungi blocco",
+    "add_section": "Aggiungi sezione",
     "edit_footprint": "Modifica footprint",
     "delete_footprint": "Elimina footprint",
-    "sort_blocks": "Ordina i blocchi"
-  },
-  "add_block": {
-    "title": "Cosa vuoi aggiungere?"
+    "sort_sections": "Ordina le sezioni"
   },
   "photo_sync": {
     "title": "Sincronizza le foto",
@@ -456,7 +450,7 @@
     "position": "Posizione"
   },
   "sort": {
-    "title": "Ordina i blocchi"
+    "title": "Ordina le sezioni"
   },
   "video": {
     "preparing": "Preparazione del video…",
@@ -476,5 +470,20 @@
     "email_prompt": "Gli ospiti hanno bisogno di un indirizzo e-mail. Qual è quello di {name}?",
     "email_placeholder": "Indirizzo e-mail",
     "email_invalid": "Questo non è un indirizzo e-mail valido."
+  },
+  "hero": {
+    "day": "Giorno {day}"
+  },
+  "picker": {
+    "photos": "Scegli foto",
+    "videos": "Scegli video",
+    "new_photos": "Nuove foto",
+    "new_videos": "Nuovi video",
+    "empty_photos": "Qui non ci sono ancora foto. Con «Nuove foto» ne aggiungi.",
+    "empty_videos": "Qui non ci sono ancora video. Con «Nuovi video» ne aggiungi.",
+    "photo_alt": "Foto del {date}",
+    "video_alt": "Video del {date}",
+    "photo": "Foto",
+    "video": "Video"
   }
 }

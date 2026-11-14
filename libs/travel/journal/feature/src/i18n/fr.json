@@ -42,8 +42,6 @@
     "empty": "Pas encore d'étape. Crée la première."
   },
   "story": {
-    "add_text": "Ajouter du texte",
-    "add_photos": "Ajouter des photos",
     "edit_footprint": "Modifier l'étape",
     "previous": "Précédente",
     "next": "Suivante",
@@ -53,21 +51,20 @@
     "published": "Publié",
     "footprint_menu": "Étape",
     "footprint_delete": "Supprimer l'étape",
-    "footprint_delete_confirm": "Supprimer cette étape avec tous ses blocs ?",
-    "add_video": "Vidéo"
+    "footprint_delete_confirm": "Supprimer cette étape avec toutes ses sections ?"
   },
-  "block": {
-    "actions": "Bloc",
-    "edit": "Modifier",
-    "delete": "Supprimer",
-    "delete_confirm": "Supprimer ce bloc ?",
-    "add_photos": "Ajouter des photos",
-    "edit_action": "Modifier le bloc",
-    "delete_action": "Supprimer le bloc",
+  "section": {
+    "actions": "Section",
+    "edit_action": "Modifier la section",
+    "delete_action": "Supprimer la section",
+    "delete_confirm": "Supprimer cette section ?",
     "locked": "{name} est en train de modifier",
     "conflict": "Deux versions – supprime-en une.",
-    "photos_label": "{count} photos",
-    "add_videos": "Ajouter des vidéos"
+    "type_hero": "Couverture",
+    "type_article": "Texte",
+    "type_album": "Album",
+    "type_video": "Vidéo",
+    "photos_count": "{count} photos"
   },
   "photos": {
     "added": "{count} photo(s) ajoutée(s)",
@@ -408,13 +405,10 @@
     "photo_book": "Créer ou modifier le livre photo",
     "edit_on": "Modifier",
     "edit_off": "Terminer la modification",
-    "add_block": "Ajouter un bloc",
+    "add_section": "Ajouter une section",
     "edit_footprint": "Modifier le footprint",
     "delete_footprint": "Supprimer le footprint",
-    "sort_blocks": "Trier les blocs"
-  },
-  "add_block": {
-    "title": "Que veux-tu ajouter ?"
+    "sort_sections": "Trier les sections"
   },
   "photo_sync": {
     "title": "Synchroniser les photos",
@@ -456,7 +450,7 @@
     "position": "Position"
   },
   "sort": {
-    "title": "Trier les blocs"
+    "title": "Trier les sections"
   },
   "video": {
     "preparing": "Préparation de la vidéo…",
@@ -476,5 +470,20 @@
     "email_prompt": "Les invités ont besoin d’une adresse e-mail. Quelle est celle de {name} ?",
     "email_placeholder": "Adresse e-mail",
     "email_invalid": "Ce n’est pas une adresse e-mail valide."
+  },
+  "hero": {
+    "day": "Jour {day}"
+  },
+  "picker": {
+    "photos": "Choisir des photos",
+    "videos": "Choisir des vidéos",
+    "new_photos": "Nouvelles photos",
+    "new_videos": "Nouvelles vidéos",
+    "empty_photos": "Il n’y a pas encore de photos ici. Avec « Nouvelles photos », tu en ajoutes.",
+    "empty_videos": "Il n’y a pas encore de vidéos ici. Avec « Nouvelles vidéos », tu en ajoutes.",
+    "photo_alt": "Photo du {date}",
+    "video_alt": "Vidéo du {date}",
+    "photo": "Photo",
+    "video": "Vidéo"
   }
 }

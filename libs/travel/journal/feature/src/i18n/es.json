@@ -42,8 +42,6 @@
     "empty": "Todavía no hay etapas. Crea la primera."
   },
   "story": {
-    "add_text": "Añadir texto",
-    "add_photos": "Añadir fotos",
     "edit_footprint": "Editar etapa",
     "previous": "Anterior",
     "next": "Siguiente",
@@ -53,21 +51,20 @@
     "published": "Publicado",
     "footprint_menu": "Etapa",
     "footprint_delete": "Eliminar etapa",
-    "footprint_delete_confirm": "¿Eliminar esta etapa con todos sus bloques?",
-    "add_video": "Vídeo"
+    "footprint_delete_confirm": "¿Eliminar esta etapa con todas sus secciones?"
   },
-  "block": {
-    "actions": "Bloque",
-    "edit": "Editar",
-    "delete": "Eliminar",
-    "delete_confirm": "¿Eliminar este bloque?",
-    "add_photos": "Añadir fotos",
-    "edit_action": "Editar bloque",
-    "delete_action": "Eliminar bloque",
+  "section": {
+    "actions": "Sección",
+    "edit_action": "Editar sección",
+    "delete_action": "Eliminar sección",
+    "delete_confirm": "¿Eliminar esta sección?",
     "locked": "{name} está editando ahora",
     "conflict": "Dos versiones – elimina una de ellas.",
-    "photos_label": "{count} fotos",
-    "add_videos": "Añadir vídeos"
+    "type_hero": "Portada",
+    "type_article": "Texto",
+    "type_album": "Álbum",
+    "type_video": "Vídeo",
+    "photos_count": "{count} fotos"
   },
   "photos": {
     "added": "{count} foto(s) añadida(s)",
@@ -408,13 +405,10 @@
     "photo_book": "Crear o cambiar el fotolibro",
     "edit_on": "Editar",
     "edit_off": "Terminar de editar",
-    "add_block": "Añadir bloque",
+    "add_section": "Añadir sección",
     "edit_footprint": "Editar footprint",
     "delete_footprint": "Eliminar footprint",
-    "sort_blocks": "Ordenar bloques"
-  },
-  "add_block": {
-    "title": "¿Qué quieres añadir?"
+    "sort_sections": "Ordenar secciones"
   },
   "photo_sync": {
     "title": "Sincronizar fotos",
@@ -456,7 +450,7 @@
     "position": "Posición"
   },
   "sort": {
-    "title": "Ordenar bloques"
+    "title": "Ordenar secciones"
   },
   "video": {
     "preparing": "Preparando el vídeo…",
@@ -476,5 +470,20 @@
     "email_prompt": "Los invitados necesitan una dirección de correo. ¿Cuál es la de {name}?",
     "email_placeholder": "Dirección de correo",
     "email_invalid": "Esa no es una dirección de correo válida."
+  },
+  "hero": {
+    "day": "Día {day}"
+  },
+  "picker": {
+    "photos": "Elegir fotos",
+    "videos": "Elegir vídeos",
+    "new_photos": "Fotos nuevas",
+    "new_videos": "Vídeos nuevos",
+    "empty_photos": "Aquí todavía no hay fotos. Con «Fotos nuevas» añades algunas.",
+    "empty_videos": "Aquí todavía no hay vídeos. Con «Vídeos nuevos» añades algunos.",
+    "photo_alt": "Foto del {date}",
+    "video_alt": "Vídeo del {date}",
+    "photo": "Foto",
+    "video": "Vídeo"
   }
 }

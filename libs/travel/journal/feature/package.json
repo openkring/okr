@@ -25,6 +25,7 @@
     "@ngrx/signals": "*",
     "rxjs": "*",
     "@okr/cms-section-feature": "*",
+    "@okr/cms-section-util": "*",
     "@okr/shared-ui": "*",
     "@okr/shared-i18n": "*",
     "@okr/shared-config": "*",

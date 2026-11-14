@@ -1,7 +1,5 @@
 export * from './lib/footprint.form';
 export * from './lib/footprint-edit.modal';
-export * from './lib/text-block.form';
-export * from './lib/text-block-edit.modal';
 export * from './lib/journal-info.modal';
 export * from './lib/journal-reactions';
 export * from './lib/notice.form';
@@ -14,7 +12,8 @@ export * from './lib/journal-book-editor';
 export * from './lib/journal-book-settings.form';
 export * from './lib/journal-book-settings.modal';
 export * from './lib/journal-context-menu';
-export * from './lib/journal-block-sort.modal';
+export * from './lib/journal-section-sort.modal';
+export * from './lib/journal-photo-pick.modal';
 export * from './lib/journal-world-map';
 export * from './lib/journal-video-block';
 export * from './lib/journal.form';

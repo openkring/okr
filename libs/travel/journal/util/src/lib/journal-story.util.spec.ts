@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { HeroConfig } from '@okr/shared-models';
 import { FootprintView, SectionView } from './journal-view.util';
 import { sectionModelOf } from './journal-section.util';
-import { filledHero, footprintChips, footprintHeroChips } from './journal-story.util';
+import { filledHero, footprintChips, footprintHeroChips, footprintOverlayText, travelDay, travelStartDate } from './journal-story.util';
 
 const section = (p: Partial<SectionView>): SectionView =>
   ({ key: 'h1', type: 'hero', title: '', htmlContent: '', properties: {}, order: 'A', authorKey: 'bruno', hlcs: {}, conflict: false, ...p });
@@ -39,5 +39,33 @@ describe('journal story', () => {
   it('the hero shows date, coordinates, weather and sun times, never the time', () => {
     const weather = { code: 3, min: -2.6, max: 4.4, precip: 1.6, sunrise: '04:10', sunset: '23:40' };
     expect(footprintHeroChips({ ...base, weather })).toEqual(['14.01.2027', '64°50′S 62°32′W', '-3–4 °C, 2 mm', '☀ 04:10–23:40']);
+  });
+
+  it('travelDay counts the start date as day 1 and knows nothing without both dates', () => {
+    expect(travelDay('20270114', '20270114')).toBe(1);
+    expect(travelDay('20270116', '20270114')).toBe(3);
+    expect(travelDay('20270301', '20270227')).toBe(3); // across a month end
+    expect(travelDay('20270113', '20270114')).toBe(0); // before the start
+    expect(travelDay('', '20270114')).toBe(0);
+    expect(travelDay('20270114', '')).toBe(0);
+  });
+
+  it('travelStartDate takes the journal start, else the earliest footprint date', () => {
+    expect(travelStartDate({ startDate: '20270110' }, [{ date: '20270105' }])).toBe('20270110');
+    expect(travelStartDate({ startDate: '' }, [{ date: '20270112' }, { date: '' }, { date: '20270105' }])).toBe('20270105');
+    expect(travelStartDate({}, [])).toBe('');
+  });
+
+  it('footprintOverlayText fills the hero lines: place · day N · date, coordinates and weather', () => {
+    const weather = { code: 3, min: -2.6, max: 4.4, precip: 1.6, sunrise: '04:10', sunset: '23:40' };
+    const day = (n: number) => `Tag ${n}`;
+    expect(footprintOverlayText({ ...base, weather }, '20270112', day)).toEqual({
+      title: 'Neko Harbour',
+      subtitle: 'Antarktische Halbinsel · Tag 3 · 14.01.2027',
+      coords: '64°50′S 62°32′W',
+      weather: '-3–4 °C, 2 mm',
+    });
+    expect(footprintOverlayText({ ...base, placeName: '', date: '', latitude: undefined, longitude: undefined }, '20270112', day))
+      .toEqual({ title: 'Neko Harbour', subtitle: '', coords: '', weather: '' });
   });
 });

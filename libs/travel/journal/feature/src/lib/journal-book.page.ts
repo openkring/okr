@@ -11,7 +11,7 @@ import { fill } from '@okr/shared-util-core';
 import { JournalBookService } from '@okr/travel-journal-data-access';
 import { BookCommentSetting, bookFontsReady, JournalBookEditor, JournalBookPreview, JournalBookSettingsModal } from '@okr/travel-journal-ui';
 import {
-  blockPagesOf, bookLabelsOf, COVER_PAGE_INDEX, JournalBookEdits, BookSettingsFormModel, bookSettingsOf, bookSettingsPatch, layoutBook, missingPrintsByAuthor, movePhotoTo, publishedFootprintsOf, spreadsOf, withTemplate,
+  blockPagesOf, bookLabelsOf, COVER_PAGE_INDEX, JournalBookEdits, BookSettingsFormModel, bookSettingsOf, bookSettingsPatch, layoutBook, missingPrintsByAuthor, movePhotoTo, publishedFootprintsOf, sectionImageKeys, spreadsOf, withTemplate,
 } from '@okr/travel-journal-util';
 
 import { JournalBookExport } from './journal-book-export';
@@ -208,9 +208,9 @@ export class JournalBookPage {
   protected readonly blockIndex = computed(() => this.blockPageIndexes().indexOf(this.selectedIndex() ?? -1));
   protected readonly hiddenInBlock = computed(() => {
     const key = this.blockKey();
-    const block = this.footprints().flatMap((f) => f.blocks).find((b) => b.key === key);
+    const section = this.footprints().flatMap((f) => f.sections).find((s) => s.key === key);
     const hidden = new Set(this.book().hiddenImageKeys);
-    return (block?.imageKeys ?? []).filter((k) => hidden.has(k));
+    return (section ? sectionImageKeys(section) : []).filter((k) => hidden.has(k));
   });
   protected readonly hasOverride = computed(() => {
     const key = this.blockKey();
@@ -313,7 +313,7 @@ export class JournalBookPage {
     if (!this.bookLoaded()) return;
     const images = this.images();
     const seen = new Set<string>();
-    const covers = this.footprints().flatMap((f) => f.blocks).filter((b) => b.kind !== 'video').flatMap((b) => b.imageKeys ?? []) // a video poster is no cover
+    const covers = this.footprints().flatMap((f) => f.sections).flatMap((s) => sectionImageKeys(s)) // clips are listed apart: a video poster is no cover
       .filter((k) => images.has(k) && !seen.has(k) && seen.add(k))
       .map((key) => ({ key, url: this.fileUrl.url(images.get(key)?.path400) }));
     const modal = await this.modalController.create({

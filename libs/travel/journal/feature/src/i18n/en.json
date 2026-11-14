@@ -42,8 +42,6 @@
     "empty": "No footprints yet. Create the first one."
   },
   "story": {
-    "add_text": "Add text",
-    "add_photos": "Add photos",
     "edit_footprint": "Edit footprint",
     "previous": "Previous",
     "next": "Next",
@@ -53,21 +51,20 @@
     "published": "Published",
     "footprint_menu": "Footprint",
     "footprint_delete": "Delete footprint",
-    "footprint_delete_confirm": "Delete this footprint with all its blocks?",
-    "add_video": "Video"
+    "footprint_delete_confirm": "Delete this footprint with all its sections?"
   },
-  "block": {
-    "actions": "Block",
-    "edit": "Edit",
-    "delete": "Delete",
-    "delete_confirm": "Delete this block?",
-    "add_photos": "Add photos",
-    "edit_action": "Edit block",
-    "delete_action": "Delete block",
+  "section": {
+    "actions": "Section",
+    "edit_action": "Edit section",
+    "delete_action": "Delete section",
+    "delete_confirm": "Delete this section?",
     "locked": "{name} is editing right now",
     "conflict": "Two versions – please delete one of them.",
-    "photos_label": "{count} photos",
-    "add_videos": "Add videos"
+    "type_hero": "Cover",
+    "type_article": "Text",
+    "type_album": "Album",
+    "type_video": "Video",
+    "photos_count": "{count} photos"
   },
   "photos": {
     "added": "{count} photo(s) added",
@@ -408,13 +405,10 @@
     "photo_book": "Create or change the photo book",
     "edit_on": "Edit",
     "edit_off": "Finish editing",
-    "add_block": "Add block",
+    "add_section": "Add section",
     "edit_footprint": "Edit footprint",
     "delete_footprint": "Delete footprint",
-    "sort_blocks": "Sort blocks"
-  },
-  "add_block": {
-    "title": "What would you like to add?"
+    "sort_sections": "Sort sections"
   },
   "photo_sync": {
     "title": "Sync photos",
@@ -456,7 +450,7 @@
     "position": "Position"
   },
   "sort": {
-    "title": "Sort blocks"
+    "title": "Sort sections"
   },
   "video": {
     "preparing": "Preparing video…",
@@ -476,5 +470,20 @@
     "email_prompt": "Guests need an email address. What is {name}'s?",
     "email_placeholder": "Email address",
     "email_invalid": "That is not a valid email address."
+  },
+  "hero": {
+    "day": "Day {day}"
+  },
+  "picker": {
+    "photos": "Choose photos",
+    "videos": "Choose videos",
+    "new_photos": "New photos",
+    "new_videos": "New videos",
+    "empty_photos": "There are no photos here yet. Use «New photos» to add some.",
+    "empty_videos": "There are no videos here yet. Use «New videos» to add some.",
+    "photo_alt": "Photo of {date}",
+    "video_alt": "Video of {date}",
+    "photo": "Photo",
+    "video": "Video"
   }
 }

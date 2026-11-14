@@ -1,51 +1,66 @@
-import { Component, computed, DestroyRef, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, Injector, input, signal, untracked } from '@angular/core';
 import { Router } from '@angular/router';
 import {
-  ActionSheetController, AlertController, IonBackButton, IonButton, IonButtons, IonContent, IonFooter, IonHeader, IonIcon, IonTitle, IonToolbar,
+  ActionSheetController, IonBackButton, IonButton, IonButtons, IonContent, IonFooter, IonHeader, IonIcon, IonTitle, IonToolbar,
   ModalController, PopoverController, ToastController,
 } from '@ionic/angular';
 
-import { AlbumSectionComponent, ArticleSectionComponent, HeroSectionComponent } from '@okr/cms-section-feature';
+import type { HeroOverlayText } from '@okr/cms-section-util';
 import { AppStore } from '@okr/shared-feature';
 import { fill, registerBundledIcons } from '@okr/shared-util-core';
-import { FootprintEditModal, JournalBlockSortModal, JournalReactions, JournalVideoBlock, ReactionComment, TextBlockEditModal } from '@okr/travel-journal-ui';
-import { createActionSheetButton, createActionSheetOptions, okrPrompt } from '@okr/shared-util-angular';
+import { FootprintEditModal, JournalSectionSortModal, SortableSection, VideoClip } from '@okr/travel-journal-ui';
+import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { AlbumSection, ArticleSection, IMAGE_STYLE_SHAPE, ImageConfig } from '@okr/shared-models';
-import { openImageGallery } from '@okr/shared-ui';
-import { blockActions, footprintMenu, FootprintFormModel, htmlToPlainText, lostValueText, photoFileName, StoryBlock, toStorySections, weatherLine } from '@okr/travel-journal-util';
+import { CategoryItemModel, CategoryListModel, ImageConfig, SectionModel, UserModel } from '@okr/shared-models';
+import {
+  addableSectionTypes, filledHero, footprintMenu, FootprintFormModel, FootprintView, footprintOverlayText, htmlToPlainText, ImageView,
+  isJournalSectionType, JournalSectionType, lostValueText, photoFileName, sectionActions, sectionModelOf, SectionView, sortByOrder,
+  travelStartDate, weatherLine,
+} from '@okr/travel-journal-util';
 import { weatherCodeToIcon, WEATHER_ICON_SET } from '@okr/weather-util';
 
-import type { VideoSkipReason } from '@okr/travel-journal-data-access';
 import { JournalFileUrlService } from './journal-file-url.service';
-import { JournalWebPhotos } from './journal-web-photos.service';
-import { JournalWebVideos } from './journal-web-videos.service';
 import { showJournalError } from './journal-errors';
 import { openJournalMenu } from './journal-menu-open';
 import { JOURNAL_ICONS } from './journal-icons';
+import { JournalSection } from './journal-section';
+import { journalSectionPickerInjector } from './journal-section-picker';
 import { JournalStore } from './journal.store';
 
+/** One section as the story renders it: the change-log view, the CMS model with resolved urls, and what the page adds. */
+interface StorySection {
+  view: SectionView;
+  section: SectionModel;
+  clips: VideoClip[];
+  overlayText: HeroOverlayText | undefined; // the leading hero only
+  missing: number; // browser: photos signed but not in the bucket yet (still drafts on the iPad)
+}
+
+/** The CMS i18n of the section types (card-select builds `<i18n>.<type>.label`). */
+const SECTION_TYPE_I18N = '@cms/section/feature.section_type';
+
 /**
- * A footprint's story page (spec 1.113 §9.2): hero cover, then the text and photo blocks rendered by
- * the standalone CMS section components (not the SectionDispatcher, whose SectionStore queries
- * Firestore). Edited like a CMS content page (spec 1.126 §5): ⋮ menu with an edit-mode toggle, blocks highlighted in
- * edit mode, a tap on a block opens its ActionSheet. Phase 2: every author edits every block; an edit takes a lock first (released in `finally`, and
- * on page destroy), conflict copies and overwritten footprint values are flagged until resolved.
+ * A footprint's story page (spec 1.154): its CMS sections — hero, article, album, video — rendered by
+ * `okr-journal-section` with the standalone CMS section components (not the SectionDispatcher, whose SectionStore
+ * queries Firestore). Edited like a CMS content page (spec 1.126 §5): ⋮ menu with an edit-mode toggle, «Sektion
+ * hinzufügen» through the CMS card-select, sections highlighted in edit mode, a tap opens the section's ActionSheet and
+ * «Bearbeiten» the CMS section editor in journal mode with the journal's photo picker. Every author edits every
+ * section; an edit takes a lock first (released in `finally`, and on page destroy); conflict copies and overwritten
+ * footprint values are flagged until resolved. The footprint reactions bar is on the guest page only (decision 7).
  */
 @Component({
   selector: 'okr-journal-story-page',
   imports: [
-    JournalReactions, JournalVideoBlock,
+    JournalSection,
     IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonFooter, IonButton, IonIcon, SvgIconPipe,
-    HeroSectionComponent, ArticleSectionComponent, AlbumSectionComponent,
   ],
   styles: [`
     .plain-title { padding: 16px; }
     .plain-title h1 { margin: 0; }
     .plain-title p { margin: 4px 0 0; color: var(--ion-color-medium); }
-    .block { position: relative; }
+    .section { position: relative; }
     /* the CMS edit-mode highlight (content.page .section-wrapper.editable) */
-    .block.editable { border: 3px solid var(--ion-color-primary); border-radius: 8px; margin: 8px; padding: 4px; cursor: pointer; }
+    .section.editable { border: 3px solid var(--ion-color-primary); border-radius: 8px; margin: 8px; padding: 4px; cursor: pointer; }
     .note { font-size: 0.8rem; margin: 4px 8px; color: var(--ion-color-warning-shade); }
     .banner { margin: 8px; padding: 8px 12px; border-radius: 8px; background: var(--ion-color-warning-tint); display: flex; align-items: center; gap: 8px; }
     .banner p { margin: 0; flex: 1; }
@@ -70,46 +85,36 @@ import { JournalStore } from './journal.store';
       } @else if (store.webUpload(); as upload) {
         <p class="note">{{ uploading(upload.done, upload.total) }}</p>
       }
-      @if (story(); as story) {
-        @if (story.hero; as hero) {
-          <okr-hero-section [section]="hero" [chipIcon]="weatherChipIcon()" />
-        } @else {
+      @if (footprint(); as fp) {
+        @if (sections()[0]?.view?.type !== 'hero') {
           <div class="plain-title">
-            <h1>{{ footprint()?.title || store.i18n.untitled() }}</h1>
-            <p>{{ footprint()?.placeName }}</p>
+            <h1>{{ fp.title || store.i18n.untitled() }}</h1>
+            <p>{{ fp.placeName }}</p>
           </div>
         }
         @if (canEdit()) {
-          @for (lost of footprint()?.lostValues ?? []; track lost.hlc + lost.field) {
+          @for (lost of fp.lostValues; track lost.hlc + lost.field) {
             <div class="banner">
               <p>{{ overwritten(lost.field, lost.value) }}</p>
               <ion-button size="small" fill="outline" (click)="act(store.dismissFootprintConflict(footprintKey(), lost.hlc))">{{ store.i18n.conflict_done() }}</ion-button>
             </div>
           }
         }
-        @for (item of story.blocks; track item.block.key) {
-          @if (canEdit() && item.block.conflict) {
-            <p class="note">{{ store.i18n.block_conflict() }}</p>
+        @for (item of sections(); track item.view.key) {
+          @if (canEdit() && item.view.conflict) {
+            <p class="note">{{ store.i18n.section_conflict() }}</p>
           }
-          @if (editMode() && lockedBy(item); as name) {
+          @if (editMode() && lockedBy(item.view); as name) {
             <p class="note">{{ fillName(name) }}</p>
           }
-          <div class="block" [class.editable]="editMode() && canEdit()" (click)="tapBlock(item)">
-            @if (item.clips; as clips) {
-              <okr-journal-video-block [clips]="clips" [caption]="item.block.html ?? ''" [i18n]="{ notLoaded: store.i18n.video_not_loaded() }" />
-            } @else if (asArticle(item); as article) {
-              <okr-article-section [section]="article" [editMode]="editMode()" />
-            } @else if (asAlbum(item); as album) {
-              <okr-album-section [section]="album" [explicitImages]="item.images" [showStyleSelect]="false" [editMode]="editMode()"
-                [emitImageClicks]="canEdit() && !editMode()" (imageSelected)="photoActions(item, $event)" />
-            }
+          <div class="section" [class.editable]="editMode() && canEdit()" (click)="tapSection(item.view)">
+            <okr-journal-section [section]="item.section" [clips]="item.clips" [overlayText]="item.overlayText" [chipIcon]="weatherChipIcon()"
+              [editMode]="editMode()" [notLoaded]="store.i18n.video_not_loaded()" />
           </div>
           @if (item.missing > 0) {
             <p class="note">{{ onIpad(item.missing) }}</p>
           }
         }
-        <okr-journal-reactions [likes]="likes().length" [liked]="liked()" [comments]="comments()" [i18n]="store.i18n" [readOnly]="!store.canWrite()"
-          (likeToggled)="act(store.toggleLike(footprintKey()))" (writeClicked)="writeComment()" (deleteClicked)="act(store.archiveComment($event))" />
       }
     </ion-content>
     <ion-footer>
@@ -126,13 +131,11 @@ export class JournalStoryPage {
   protected readonly store = inject(JournalStore);
   private readonly appStore = inject(AppStore);
   private readonly fileUrl = inject(JournalFileUrlService);
-  private readonly webPhotos = inject(JournalWebPhotos);
-  private readonly webVideos = inject(JournalWebVideos);
   private readonly router = inject(Router);
+  private readonly injector = inject(Injector);
   private readonly modalController = inject(ModalController);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly toastController = inject(ToastController);
-  private readonly alertController = inject(AlertController);
   private readonly popoverController = inject(PopoverController);
 
   public readonly journalKey = input.required<string>();
@@ -140,17 +143,6 @@ export class JournalStoryPage {
 
   protected readonly editMode = signal(false);
   protected readonly menuItems = computed(() => footprintMenu({ native: this.store.native(), canWrite: this.store.canWrite(), editMode: this.editMode() }));
-
-  protected readonly likes = computed(() => this.store.likes(this.footprintKey()));
-  protected readonly liked = computed(() => this.likes().includes(this.store.author()?.personKey ?? ''));
-  protected readonly comments = computed<ReactionComment[]>(() => this.store.comments(this.footprintKey())
-    .map((c) => ({ ...c, mine: c.authorKey === this.store.author()?.personKey })));
-
-  protected async writeComment(): Promise<void> {
-    const i18n = this.store.i18n;
-    const text = await okrPrompt(this.alertController, i18n.comment_write(), i18n.comment_prompt(), i18n.comment_send(), i18n.cancel());
-    if (text?.trim()) await this.act(this.store.addComment(this.footprintKey(), text));
-  }
 
   protected async act(action: Promise<unknown>): Promise<void> {
     try {
@@ -166,34 +158,31 @@ export class JournalStoryPage {
     const weather = this.footprint()?.weather;
     return weather ? { chip: weatherLine(weather), name: weatherCodeToIcon(weather.code), set: WEATHER_ICON_SET } : undefined;
   });
+  /** The trip's first day, for the hero's «Tag N». */
+  private readonly startDate = computed(() =>
+    travelStartDate(this.store.journals().find((j) => j.key === this.journalKey()) ?? {}, this.footprints()));
+
   /**
-   * The story as the CMS sections render it. In the browser, a photo that is signed but not in the bucket (still a draft
-   * photo on the iPad) is left out of the album and counted per block for a note; the block's `imageKeys` stay as they are.
+   * The story as the CMS sections render it. The footprint's first hero leads and carries the footprint's lines; any
+   * other hero (two added offline at the same time, a conflict copy) takes its place by `order` among the others.
+   * Image urls are resolved from the journal image keys; in the browser a photo that is signed but not in the bucket
+   * (still a draft photo on the iPad) is left out and counted for a note. The records keep their keys as they are.
    */
-  protected readonly story = computed(() => {
+  protected readonly sections = computed<StorySection[]>(() => {
     const fp = this.footprint();
-    if (!fp) return undefined;
+    if (!fp) return [];
     const images = this.store.images(this.journalKey());
-    const story = toStorySections(fp, images, (p) => this.fileUrl.url(p), this.appStore.tenantId());
-    const native = this.store.native();
-    const isMissing = (key: string | undefined) => !native && !!key && this.fileUrl.isMissing(images.get(key)?.path2048);
-    // iPad: a file URL is built whether the mp4 is here or not, so presence comes from the store (another author's clip
-    // in «Nur hochladen», download pending); browser: the signed value '' marks a clip not uploaded yet
-    const present = this.store.presentVideos();
-    const clipMissing = (videoPath: string | undefined) =>
-      native ? !present[photoFileName(videoPath ?? '')] : this.fileUrl.isMissing(videoPath);
-    return {
-      ...story,
-      blocks: story.blocks.map((item) => ({
-        ...item,
-        images: item.images?.filter((image) => !isMissing(image.label)),
-        clips: item.clips?.map((clip) => ({
-          ...clip, src: clip.src === '' || clipMissing(clip.videoPath) ? '' : clip.src,
-        })),
-        missing: item.clips ? 0 : (item.block.imageKeys ?? []).filter((key) => isMissing(key)).length,
-      })),
-    };
+    const tenantId = this.appStore.tenantId();
+    const lead = fp.sections.find((s) => s.type === 'hero');
+    const rest = sortByOrder(fp.sections.filter((s) => s !== lead).map((s) => ({ ...s, okey: s.key })));
+    const overlay = lead ? footprintOverlayText(fp, this.startDate(), (day) => fill(this.store.i18n.hero_day(), { day })) : undefined;
+    return [...(lead ? [lead] : []), ...rest].map((view) => {
+      const model = sectionModelOf(view, tenantId);
+      const isLead = view === lead;
+      return { ...this.resolved(isLead ? filledHero(model, fp) : model, images), view, overlayText: isLead ? overlay : undefined };
+    });
   });
+
   private readonly index = computed(() => this.footprints().findIndex((f) => f.key === this.footprintKey()));
   protected readonly previousKey = computed(() => (this.index() > 0 ? this.footprints()[this.index() - 1].key : undefined));
   protected readonly nextKey = computed(() => {
@@ -216,11 +205,45 @@ export class JournalStoryPage {
     });
   }
 
+  /**
+   * The section with its image urls resolved from the journal image keys (`label`): the hero cover, the article and
+   * album photos (left out when not shown here, see `sections`) and the video clips with poster and mp4.
+   */
+  private resolved(section: SectionModel, images: Map<string, ImageView>): { section: SectionModel; clips: VideoClip[]; missing: number } {
+    const native = this.store.native();
+    const isMissing = (key: string) => !native && this.fileUrl.isMissing(images.get(key)?.path2048);
+    const withUrl = (image: ImageConfig): ImageConfig => ({ ...image, url: this.fileUrl.url(images.get(image.label)?.path2048) });
+    const properties = { ...(section.properties as unknown as Record<string, unknown>) };
+    let missing = 0;
+    if (Array.isArray(properties['images'])) {
+      const listed = properties['images'] as ImageConfig[];
+      missing = listed.filter((image) => isMissing(image.label)).length;
+      // a photo without a url yet (Documents URI not known, not received, not uploaded) is left out, never a blank tile
+      properties['images'] = listed.map(withUrl).filter((image) => image.url !== '' && !isMissing(image.label));
+    }
+    const hero = properties['hero'] as ImageConfig | undefined;
+    if (section.type === 'hero' && hero?.label) properties['hero'] = withUrl(hero);
+    let clips: VideoClip[] = [];
+    if (section.type === 'video' && Array.isArray(properties['clips'])) {
+      // iPad: a file URL is built whether the mp4 is here or not, so presence comes from the store (another author's clip
+      // in «Nur hochladen», download pending); browser: the signed value '' marks a clip not uploaded yet
+      const present = this.store.presentVideos();
+      const clipMissing = (videoPath: string) => (native ? !present[photoFileName(videoPath)] : this.fileUrl.isMissing(videoPath));
+      clips = (properties['clips'] as ImageConfig[]).map((c) => images.get(c.label)).filter((i): i is ImageView => i?.videoPath !== undefined)
+        .map((i) => {
+          const videoPath = i.videoPath as string;
+          const src = this.fileUrl.url(videoPath);
+          return { key: i.key, poster: this.fileUrl.url(i.path2048), src: src === '' || clipMissing(videoPath) ? '' : src, videoPath, durationSec: i.durationSec };
+        });
+    }
+    return { section: { ...section, properties } as SectionModel, clips, missing };
+  }
+
   /** Entities this page holds a lock on right now. */
   private readonly heldLocks = new Set<string>();
 
   /**
-   * One block/footprint interaction at a time — sheet, editor and save. A fast double tap would otherwise
+   * One section/footprint interaction at a time — sheet, editor and save. A fast double tap would otherwise
    * stack two sheets, and two saves from the same opened state would make the first one a conflict copy.
    */
   private busy = false;
@@ -235,22 +258,14 @@ export class JournalStoryPage {
     }
   }
 
-  protected asArticle(item: StoryBlock): ArticleSection | undefined {
-    return item.section.type === 'article' ? item.section : undefined;
-  }
-
-  protected asAlbum(item: StoryBlock): AlbumSection | undefined {
-    return item.section.type === 'album' ? item.section : undefined;
-  }
-
-  /** Every author edits every block (spec 1.126 §5) — on the iPad with a bound author, in the browser when signed in as a person. */
+  /** Every author edits every section (spec 1.126 §5) — on the iPad with a bound author, in the browser when signed in as a person. */
   protected canEdit(): boolean {
     return this.store.canWrite();
   }
 
-  /** The name of the person editing this block right now, if somebody else is. */
-  protected lockedBy(item: StoryBlock): string | undefined {
-    return this.store.lockOf(item.block.key)?.name;
+  /** The name of the person editing this section right now, if somebody else is. */
+  protected lockedBy(view: SectionView): string | undefined {
+    return this.store.lockOf(view.key)?.name;
   }
 
   protected onIpad(count: number): string {
@@ -262,7 +277,7 @@ export class JournalStoryPage {
   }
 
   protected fillName(name: string): string {
-    return fill(this.store.i18n.block_locked(), { name });
+    return fill(this.store.i18n.section_locked(), { name });
   }
 
   protected overwritten(field: string, value: unknown): string {
@@ -296,145 +311,139 @@ export class JournalStoryPage {
   protected async menu(event: Event): Promise<void> {
     switch (await openJournalMenu(this.popoverController, event, this.menuItems(), this.store.i18n)) {
       case 'toggleEditMode': return this.editMode.update((on) => !on);
-      case 'addBlock': return this.addBlock();
-      case 'sortBlocks': return this.sortBlocks();
+      case 'addSection': return this.exclusive(() => this.addSection());
+      case 'sortSections': return this.exclusive(() => this.sortSections());
       case 'editFootprint': return this.editFootprint();
       case 'deleteFootprint': return this.confirmDeleteFootprint();
     }
   }
 
-  private async addBlock(): Promise<void> {
-    const i18n = this.store.i18n;
-    const imgix = this.appStore.services.imgixBaseUrl();
-    const options = createActionSheetOptions(i18n.add_block_title());
-    let files: Promise<File[]> | undefined;
-    const photos = createActionSheetButton('block.photos', i18n.story_add_photos(), imgix, 'images');
-    if (!this.store.native()) photos.handler = () => { files = this.pickWebFiles(this.webPhotos); };
-    const video = createActionSheetButton('block.video', i18n.story_add_video(), imgix, 'video');
-    if (!this.store.native()) video.handler = () => { files = this.pickWebFiles(this.webVideos); };
-    options.buttons.push(
-      createActionSheetButton('block.text', i18n.story_add_text(), imgix, 'text'),
-      photos,
-      video,
-      createActionSheetButton('cancel', i18n.cancel(), imgix, 'cancel'),
-    );
-    const sheet = await this.actionSheetController.create(options);
-    await sheet.present();
-    const { data } = await sheet.onDidDismiss<{ action: string }>();
-    if (data?.action === 'block.text') await this.addText();
-    else if (data?.action === 'block.photos') await this.addPhotos(files);
-    else if (data?.action === 'block.video') await this.addVideos(files);
-  }
-
   /**
-   * Browser only: opens the file dialog NOW. Call it from an action-sheet button `handler`, which runs inside the
-   * user's tap — WebKit may ignore a file dialog opened after the sheet has closed, and the pick would never end.
-   * Undefined on native (the store opens the Photos library itself), offline or without an author: the store
-   * then refuses with its own message before any dialog.
+   * «Sektion hinzufügen»: the CMS card-select with the types the footprint may still get (a hero only while there is
+   * none), built here rather than from the `section_type` category, which an offline iPad may not have (decision 5);
+   * then the section editor on the new section, and one create record when it is saved.
    */
-  private pickWebFiles(picker: { pickFiles(): Promise<File[]> }): Promise<File[]> | undefined {
-    if (this.store.native() || !navigator.onLine || !this.store.author()) return undefined;
-    return picker.pickFiles();
-  }
-
-  /** In edit mode a tap on a block opens its ActionSheet (unless somebody else is editing it); outside edit mode a tap does nothing. */
-  protected tapBlock(item: StoryBlock): void {
-    if (!this.editMode() || !this.canEdit()) return;
-    const name = this.lockedBy(item);
-    if (name) void this.toastText(this.fillName(name));
-    else void this.exclusive(() => this.blockSheet(item));
-  }
-
-  private async sortBlocks(): Promise<void> {
+  private async addSection(): Promise<void> {
     const fp = this.footprint();
-    if (!fp || fp.blocks.length < 2) return;
-    const blocks = fp.blocks.map((b) => ({
-      key: b.key,
-      label: b.kind === 'text'
-        ? htmlToPlainText(b.html ?? '').slice(0, 40)
-        : fill(this.store.i18n.block_photos_label(), { count: b.imageKeys?.length ?? 0 }),
-    }));
-    const modal = await this.modalController.create({ component: JournalBlockSortModal, componentProps: { blocks } });
+    if (!fp) return;
+    const tenantId = this.appStore.tenantId();
+    const category = new CategoryListModel(tenantId);
+    category.name = 'section_type';
+    category.i18n = SECTION_TYPE_I18N;
+    category.items = addableSectionTypes(fp.sections).map((type) => new CategoryItemModel(type, type));
+    const { CardSelectModal } = await import('@okr/cms-section-feature');
+    const modal = await this.modalController.create({ component: CardSelectModal, cssClass: 'full-modal', componentProps: { category, slug: 'section' } });
+    await modal.present();
+    const { data, role } = await modal.onWillDismiss<CategoryItemModel>();
+    const type = data?.name;
+    if (role !== 'confirm' || !isJournalSectionType(type)) return;
+    const edited = await this.openSectionEditor(sectionModelOf(emptySection(type), tenantId));
+    if (edited) await this.run(() => this.store.addSection(fp.key, type, edited));
+  }
+
+  /** In edit mode a tap on a section opens its ActionSheet (unless somebody else is editing it); outside edit mode a tap does nothing. */
+  protected tapSection(view: SectionView): void {
+    if (!this.editMode() || !this.canEdit()) return;
+    const name = this.lockedBy(view);
+    if (name) void this.toastText(this.fillName(name));
+    else void this.exclusive(() => this.sectionSheet(view));
+  }
+
+  /** The sections below the hero (a hero always stays first, so it is not offered), labelled by title, text or photos. */
+  private async sortSections(): Promise<void> {
+    const fp = this.footprint();
+    const movable = this.sections().map((s) => s.view).filter((s) => s.type !== 'hero');
+    if (!fp || movable.length < 2) return;
+    const sections: SortableSection[] = movable.map((s) => ({ key: s.key, label: this.sortLabel(s) }));
+    const modal = await this.modalController.create({ component: JournalSectionSortModal, componentProps: { sections } });
     await modal.present();
     const { data, role } = await modal.onWillDismiss<string[]>();
-    if (role === 'confirm' && data) await this.run(() => this.store.reorderBlocks(fp.key, data));
+    if (role === 'confirm' && data) await this.run(() => this.store.reorderSections(fp.key, data));
+  }
+
+  private sortLabel(view: SectionView): string {
+    const i18n = this.store.i18n;
+    const text = view.title.trim() || htmlToPlainText(view.htmlContent).trim();
+    if (text) return text.slice(0, 40);
+    const typeName = { hero: i18n.section_type_hero, article: i18n.section_type_article, album: i18n.section_type_album, video: i18n.section_type_video }[view.type]();
+    const model = sectionModelOf(view, '');
+    const list = (model.properties as unknown as Record<string, unknown>)[view.type === 'video' ? 'clips' : 'images'];
+    const count = Array.isArray(list) ? list.length : 0;
+    return count > 0 ? `${typeName} · ${fill(i18n.section_photos_count(), { count })}` : typeName;
   }
 
   protected go(footprintKey: string | undefined): void {
     if (footprintKey) void this.router.navigate(['/journal', this.journalKey(), footprintKey], { replaceUrl: true });
   }
 
-  private async blockSheet(item: StoryBlock): Promise<void> {
+  private async sectionSheet(view: SectionView): Promise<void> {
     // what the author sees now is what the edit builds on (spec 1.126 §6.1), not what the store holds at save time
-    const seen = { ...item.block.hlcs };
+    const opened = view;
     const i18n = this.store.i18n;
     const imgix = this.appStore.services.imgixBaseUrl();
     const texts: Record<string, [string, string]> = {
-      'block.edit': [i18n.block_edit_action(), 'edit'],
-      'block.addphotos': [i18n.story_add_photos(), 'images'],
-      'block.addvideos': [i18n.block_add_videos(), 'video'],
-      'block.delete': [i18n.block_delete_action(), 'trash'],
+      'section.edit': [i18n.section_edit_action(), 'edit'],
+      'section.delete': [i18n.section_delete_action(), 'trash'],
     };
-    const actions = blockActions({ kind: item.block.kind, editable: this.canEdit() });
+    const actions = sectionActions({ type: view.type, editable: this.canEdit() });
     if (actions.length === 0) return;
-    const options = createActionSheetOptions(i18n.block_edit_action());
-    let files: Promise<File[]> | undefined;
-    const button = (a: string) => {
-      const b = createActionSheetButton(a, texts[a][0], imgix, texts[a][1]);
-      if ((a === 'block.addphotos' || a === 'block.addvideos') && !this.store.native()) b.handler = () => { files = this.pickWebFiles(a === 'block.addvideos' ? this.webVideos : this.webPhotos); };
-      return b;
-    };
+    const options = createActionSheetOptions(i18n.section_actions());
     options.buttons.push(
-      ...actions.map(button),
+      ...actions.map((a) => createActionSheetButton(a, texts[a][0], imgix, texts[a][1])),
       createActionSheetButton('cancel', i18n.cancel(), imgix, 'cancel'),
     );
     const sheet = await this.actionSheetController.create(options);
     await sheet.present();
     const { data } = await sheet.onDidDismiss<{ action: string }>();
     switch (data?.action) {
-      case 'block.edit': return this.withLock(item.block.key, () => this.editText(item.block.key, item.block.html ?? '', seen));
-      case 'block.addphotos':
-        if (this.store.native()) return this.addPhotosToBlock(item.block.key, seen);
-        // browser: the page stays free while the file dialog is open; the lock is taken again once files are there
-        void this.addPickedPhotosToBlock(item.block.key, seen, files);
-        return;
-      case 'block.addvideos':
-        if (this.store.native()) return this.addVideosToBlock(item.block.key, seen);
-        void this.addPickedVideosToBlock(item.block.key, seen, files);
-        return;
-      case 'block.delete': return this.confirmDeleteBlock(item.block.key);
+      case 'section.edit': return this.withLock(view.key, () => this.editSection(opened));
+      case 'section.delete': return this.confirmDeleteSection(view.key);
     }
   }
 
-  private async confirmDeleteBlock(blockKey: string): Promise<void> {
+  /** Edits a section as it was shown when the sheet opened; only the fields the author changed are written. */
+  private async editSection(opened: SectionView): Promise<void> {
+    const edited = await this.openSectionEditor(sectionModelOf(opened, this.appStore.tenantId()));
+    if (edited) await this.run(() => this.store.updateSection(opened.key, edited, opened));
+  }
+
+  /**
+   * The CMS section editor in journal mode (spec 1.154 §2): only the fields of the change record, no Firestore read,
+   * photos and clips from the journal's picker (provided through the modal's injector, so `okr-images-config` in the
+   * modal finds it). Roles and states are not shown in journal mode; empty lists keep it offline. Resolves to the
+   * edited section, or undefined when the author closed the editor without saving.
+   */
+  private async openSectionEditor(section: SectionModel): Promise<SectionModel | undefined> {
+    const tenantId = this.appStore.tenantId();
+    const { SectionEditModal } = await import('@okr/cms-section-feature');
+    const modal = await this.modalController.create({
+      component: SectionEditModal,
+      cssClass: 'full-modal',
+      injector: journalSectionPickerInjector(this.injector, this.journalKey(), this.footprintKey()),
+      componentProps: {
+        section,
+        currentUser: this.appStore.currentUser() ?? new UserModel(tenantId),
+        roles: new CategoryListModel(tenantId),
+        states: new CategoryListModel(tenantId),
+        readOnly: false,
+        journalMode: true,
+      },
+    });
+    await modal.present();
+    const { data, role } = await modal.onWillDismiss<SectionModel>();
+    return role === 'confirm' && data ? data : undefined;
+  }
+
+  private async confirmDeleteSection(sectionKey: string): Promise<void> {
     const i18n = this.store.i18n;
     const sheet = await this.actionSheetController.create({
-      header: i18n.block_delete_confirm(),
+      header: i18n.section_delete_confirm(),
       buttons: [
-        { text: i18n.block_delete_action(), role: 'destructive', handler: () => void this.run(() => this.store.archiveBlock(blockKey)) },
+        { text: i18n.section_delete_action(), role: 'destructive', handler: () => void this.run(() => this.store.archiveSection(sectionKey)) },
         { text: i18n.cancel(), role: 'cancel' },
       ],
     });
     await sheet.present();
-  }
-
-  /** Own photo block: view the photo in the gallery, or remove it from the block. */
-  protected photoActions(item: StoryBlock, image: ImageConfig): Promise<void> {
-    return this.exclusive(async () => {
-      const seen = { ...item.block.hlcs };
-      const i18n = this.store.i18n;
-      const sheet = await this.actionSheetController.create({
-        header: i18n.photo_actions(),
-        buttons: [
-          { text: i18n.photo_view(), handler: () => void openImageGallery(this.modalController, item.images ?? [], image, IMAGE_STYLE_SHAPE) },
-          { text: i18n.photo_remove(), role: 'destructive', data: { action: 'remove' } },
-          { text: i18n.cancel(), role: 'cancel' },
-        ],
-      });
-      await sheet.present();
-      const { data } = await sheet.onDidDismiss<{ action: string }>();
-      if (data?.action === 'remove') await this.run(() => this.store.removePhotoFromBlock(item.block.key, image.label, seen));
-    });
   }
 
   private async confirmDeleteFootprint(): Promise<void> {
@@ -456,76 +465,10 @@ export class JournalStoryPage {
     await sheet.present();
   }
 
-  private async addPhotosToBlock(blockKey: string, seen: Record<string, string>): Promise<void> {
-    await this.run(async () => this.toastResult(await this.store.addPhotosToBlock(blockKey, seen)));
-  }
-
-  /** Browser: waits for the dialog outside the page lock, then uploads and writes under it (`seen` = when the sheet opened). */
-  private async addPickedPhotosToBlock(blockKey: string, seen: Record<string, string>, files: Promise<File[]> | undefined): Promise<void> {
-    const picked = files ? await files : undefined; // undefined: offline / no author — the store refuses with its message
-    if (picked?.length === 0) return;
-    await this.exclusive(() => this.run(async () => this.toastResult(await this.store.addPhotosToBlock(blockKey, seen, picked))));
-  }
-
-  private async addVideosToBlock(blockKey: string, seen: Record<string, string>): Promise<void> {
-    await this.run(async () => this.toastVideoResult(await this.store.addVideosToBlock(blockKey, seen)));
-  }
-
-  /** Browser: as addPickedPhotosToBlock. */
-  private async addPickedVideosToBlock(blockKey: string, seen: Record<string, string>, files: Promise<File[]> | undefined): Promise<void> {
-    const picked = files ? await files : undefined;
-    if (picked?.length === 0) return;
-    await this.exclusive(() => this.run(async () => this.toastVideoResult(await this.store.addVideosToBlock(blockKey, seen, picked))));
-  }
-
-  /** `files`: browser files picked inside the tap (see pickWebFiles); native leaves it undefined. */
-  protected async addVideos(files?: Promise<File[]>): Promise<void> {
-    await this.run(async () => {
-      await this.toastVideoResult(await this.store.addVideoBlock(this.journalKey(), this.footprintKey(), files));
-    });
-  }
-
-  /** Skipped clips, one line per reason (too long, too large, anything else counted as a skipped file). */
-  private async toastVideoResult({ skipped }: { added: number; skipped: { reason: VideoSkipReason }[] }): Promise<void> {
-    const i18n = this.store.i18n;
-    const parts: string[] = [];
-    if (skipped.some((s) => s.reason === 'tooLong')) parts.push(i18n.video_skipped_too_long());
-    if (skipped.some((s) => s.reason === 'tooLarge')) parts.push(i18n.video_skipped_too_large());
-    const other = skipped.filter((s) => s.reason !== 'tooLong' && s.reason !== 'tooLarge').length;
-    if (other > 0) parts.push(fill(i18n.photos_skipped(), { count: other }));
-    if (parts.length > 0) await this.toastText(parts.join(' · '));
-  }
-
-  protected async addText(): Promise<void> {
-    const html = await this.openTextModal('');
-    if (html !== undefined) await this.run(() => this.store.addTextBlock(this.footprintKey(), html));
-  }
-
-  private async editText(blockKey: string, current: string, seen: Record<string, string>): Promise<void> {
-    const html = await this.openTextModal(current);
-    if (html !== undefined) await this.run(() => this.store.updateTextBlock(blockKey, html, seen));
-  }
-
-  /** `files`: browser files picked inside the tap (see pickWebFiles); native leaves it undefined. */
-  protected async addPhotos(files?: Promise<File[]>): Promise<void> {
-    await this.run(async () => {
-      await this.toastResult(await this.store.addPhotoBlock(this.journalKey(), this.footprintKey(), files));
-    });
-  }
-
-  private async toastResult({ added, skipped }: { added: number; skipped: unknown[] }): Promise<void> {
-    const parts: string[] = [];
-    if (added > 0) parts.push(fill(this.store.i18n.photos_added(), { count: added }));
-    if (skipped.length > 0) parts.push(fill(this.store.i18n.photos_skipped(), { count: skipped.length }));
-    if (parts.length === 0) return;
-    const toast = await this.toastController.create({ message: parts.join(' · '), duration: 3000, position: 'bottom' });
-    await toast.present();
-  }
-
   protected editFootprint(): Promise<void> {
     return this.exclusive(async () => {
       // the footprint as the modal shows it: the baseline of the changed fields and of their bases
-      const fp = this.footprint();
+      const fp: FootprintView | undefined = this.footprint();
       if (!fp) return;
       const current: FootprintFormModel = {
         title: fp.title, placeName: fp.placeName, date: fp.date, time: fp.time, published: fp.publishState === 'published', transport: fp.transport ?? '',
@@ -539,13 +482,6 @@ export class JournalStoryPage {
     });
   }
 
-  private async openTextModal(html: string): Promise<string | undefined> {
-    const modal = await this.modalController.create({ component: TextBlockEditModal, componentProps: { html }, cssClass: 'auto-height-modal' });
-    await modal.present();
-    const { data, role } = await modal.onWillDismiss<{ html: string }>();
-    return role === 'confirm' && data ? data.html : undefined;
-  }
-
   private async run(action: () => Promise<unknown>): Promise<void> {
     try {
       await action();
@@ -553,4 +489,9 @@ export class JournalStoryPage {
       await showJournalError(this.toastController, this.store.i18n, error);
     }
   }
+}
+
+/** A section the author is about to add: nothing stored yet (`okey` '' makes the editor offer «save» at once). */
+function emptySection(type: JournalSectionType): SectionView {
+  return { key: '', type, title: '', htmlContent: '', properties: {}, order: '', authorKey: '', hlcs: {}, conflict: false };
 }

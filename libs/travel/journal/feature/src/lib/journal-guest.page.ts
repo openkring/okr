@@ -9,7 +9,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { MapView, RouteMap, RoutePin } from '@okr/shared-ui';
 import { okrPrompt } from '@okr/shared-util-angular';
 import { fill, sunTimesLine } from '@okr/shared-util-core';
-import { GuestBlockView, GuestFootprintView, GuestJournalView, guestErrorOf, JournalGuestService } from '@okr/travel-journal-data-access';
+import { GuestFootprintView, GuestSectionView, GuestJournalView, guestErrorOf, JournalGuestService } from '@okr/travel-journal-data-access';
 import { JournalReactions, JournalVideoBlock, ReactionComment, VideoClip } from '@okr/travel-journal-ui';
 import {
   baseLayerOptions, FlyPoint, FlyStop, flyoverTimeline, GIBS_BLUE_MARBLE, JOURNAL_I18N_KEYS, JournalI18n, pickBaseLayer, stopTime,
@@ -101,13 +101,14 @@ const browserOnline = (): boolean => typeof navigator === 'undefined' || navigat
         <div class="story">
           <h2>{{ fp.title || i18n.untitled() }}</h2>
           <div class="facts">{{ facts(fp) }}</div>
-          @for (block of fp.blocks; track block.key) {
+          <!-- interim (1.154 Task 6, mechanical): Task 7 renders the sections with okr-journal-section -->
+          @for (block of fp.sections; track block.key) {
             <div class="block">
               <div class="by">{{ block.authorName }}</div>
-              @if (block.kind === 'text') {
+              @if (block.type === 'article') {
                 <div [innerHTML]="block.html"></div>
-              } @else if (block.kind === 'video') {
-                <okr-journal-video-block [caption]="block.html ?? ''" [clips]="guestClips(block.videos)" [i18n]="{ notLoaded: i18n.video_not_loaded() }" />
+              } @else if (block.type === 'video') {
+                <okr-journal-video-block [caption]="block.html" [clips]="guestClips(block.videos)" [i18n]="{ notLoaded: i18n.video_not_loaded() }" />
               } @else {
                 <div class="photos">
                   @for (photo of block.photos; track photo.key) {
@@ -190,7 +191,7 @@ export class JournalGuestPage {
     .filter((f) => typeof f.latitude === 'number' && typeof f.longitude === 'number')
     .map((f) => ({ key: f.key, lat: f.latitude as number, lng: f.longitude as number, label: f.title, thumbnailUrl: this.thumbOf(f) })));
   protected readonly route = computed<[number, number][]>(() => (this.view()?.footprints ?? [])
-    .flatMap((f) => f.blocks.flatMap((b) => b.photos))
+    .flatMap((f) => f.sections.flatMap((b) => b.photos))
     .filter((p) => typeof p.latitude === 'number' && typeof p.longitude === 'number')
     .sort((a, b) => ((a.takenAt ?? '') < (b.takenAt ?? '') ? -1 : 1))
     .map((p) => [p.latitude as number, p.longitude as number] as [number, number]));
@@ -201,7 +202,7 @@ export class JournalGuestPage {
       key: f.key, lat: f.latitude as number, lng: f.longitude as number, at: stopTime(f.date, f.time), title: f.title,
       transport: f.transport, thumb: this.thumbOf(f),
     }));
-    const points = (this.view()?.footprints ?? []).flatMap((f) => f.blocks.flatMap((b) => b.photos))
+    const points = (this.view()?.footprints ?? []).flatMap((f) => f.sections.flatMap((b) => b.photos))
       .filter((p) => typeof p.latitude === 'number' && typeof p.longitude === 'number')
       .map((p): FlyPoint => ({ lat: p.latitude as number, lng: p.longitude as number, at: p.takenAt ?? '' }));
     return flyoverTimeline(stops, points);
@@ -266,10 +267,10 @@ export class JournalGuestPage {
   }
 
   protected thumbOf(fp: GuestFootprintView): string | undefined {
-    return fp.blocks.flatMap((b) => b.photos)[0]?.thumb;
+    return fp.sections.flatMap((b) => b.photos)[0]?.thumb;
   }
 
-  protected guestClips(videos: GuestBlockView['videos']): VideoClip[] {
+  protected guestClips(videos: GuestSectionView['videos']): VideoClip[] {
     return videos.map((v) => ({ key: v.key, poster: v.poster, src: v.url || undefined }));
   }
 

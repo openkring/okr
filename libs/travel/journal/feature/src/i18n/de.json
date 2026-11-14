@@ -42,8 +42,6 @@
     "empty": "Noch keine Footprints. Leg den ersten an."
   },
   "story": {
-    "add_text": "Text hinzufügen",
-    "add_photos": "Fotos hinzufügen",
     "edit_footprint": "Footprint bearbeiten",
     "previous": "Vorheriger",
     "next": "Nächster",
@@ -53,21 +51,20 @@
     "published": "Veröffentlicht",
     "footprint_menu": "Footprint",
     "footprint_delete": "Footprint löschen",
-    "footprint_delete_confirm": "Diesen Footprint mit allen Blöcken löschen?",
-    "add_video": "Video"
+    "footprint_delete_confirm": "Diesen Footprint mit allen Sektionen löschen?"
   },
-  "block": {
-    "actions": "Block",
-    "edit": "Bearbeiten",
-    "delete": "Löschen",
-    "delete_confirm": "Diesen Block löschen?",
-    "add_photos": "Fotos hinzufügen",
-    "edit_action": "Block bearbeiten",
-    "delete_action": "Block löschen",
+  "section": {
+    "actions": "Sektion",
+    "edit_action": "Sektion bearbeiten",
+    "delete_action": "Sektion löschen",
+    "delete_confirm": "Diese Sektion löschen?",
     "locked": "{name} bearbeitet gerade",
     "conflict": "Zwei Fassungen – bitte lösch eine davon.",
-    "photos_label": "{count} Fotos",
-    "add_videos": "Videos hinzufügen"
+    "type_hero": "Titelbild",
+    "type_article": "Text",
+    "type_album": "Album",
+    "type_video": "Video",
+    "photos_count": "{count} Fotos"
   },
   "photos": {
     "added": "{count} Foto(s) hinzugefügt",
@@ -408,13 +405,10 @@
     "photo_book": "Fotobuch erstellen oder ändern",
     "edit_on": "Bearbeiten",
     "edit_off": "Bearbeiten beenden",
-    "add_block": "Block hinzufügen",
+    "add_section": "Sektion hinzufügen",
     "edit_footprint": "Footprint bearbeiten",
     "delete_footprint": "Footprint löschen",
-    "sort_blocks": "Blöcke sortieren"
-  },
-  "add_block": {
-    "title": "Was möchtest du hinzufügen?"
+    "sort_sections": "Sektionen sortieren"
   },
   "photo_sync": {
     "title": "Fotos synchronisieren",
@@ -456,7 +450,7 @@
     "position": "Position"
   },
   "sort": {
-    "title": "Blöcke sortieren"
+    "title": "Sektionen sortieren"
   },
   "video": {
     "preparing": "Video wird vorbereitet…",
@@ -476,5 +470,20 @@
     "email_prompt": "Gäste brauchen eine E-Mail-Adresse. Welche hat {name}?",
     "email_placeholder": "E-Mail-Adresse",
     "email_invalid": "Das ist keine gültige E-Mail-Adresse."
+  },
+  "hero": {
+    "day": "Tag {day}"
+  },
+  "picker": {
+    "photos": "Fotos wählen",
+    "videos": "Videos wählen",
+    "new_photos": "Neue Fotos",
+    "new_videos": "Neue Videos",
+    "empty_photos": "Hier sind noch keine Fotos. Mit «Neue Fotos» holst du welche dazu.",
+    "empty_videos": "Hier sind noch keine Videos. Mit «Neue Videos» holst du welche dazu.",
+    "photo_alt": "Foto vom {date}",
+    "video_alt": "Video vom {date}",
+    "photo": "Foto",
+    "video": "Video"
   }
 }

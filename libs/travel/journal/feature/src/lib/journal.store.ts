@@ -6,7 +6,7 @@ import { Network } from '@capacitor/network';
 import { doc, getDoc } from 'firebase/firestore';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AvatarInfo, JournalBookModel, JournalChange, TRANSPORT_MODES, TransportMode } from '@okr/shared-models';
+import { AvatarInfo, JournalBookModel, JournalChange, SectionModel, TRANSPORT_MODES, TransportMode } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { FIRESTORE } from '@okr/shared-config';
 import { GoogleMapType, GoogleTiles } from '@okr/shared-data-access';
@@ -18,8 +18,9 @@ import {
   toBase64,
 } from '@okr/travel-journal-data-access';
 import {
-  BOOK_I18N_KEYS, BOOK_LABEL_MAX, journalPeriod, JournalFormModel, removableAuthorKeys, authorsWithout, bookLabelsOf, JournalBookI18n, bookPrintCandidates, entityStateKey, hasOthersBlocks, pagesOf, PRINT_FILL_LONG_PX, PRINT_FILL_SHORT_PX, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
-  allPhotoFiles, commentsOf, CommentView, likeKey, likesOf, JournalPhotoMode, JournalTileSource, journalsOf, journalTilePlan, MapArea, mapLayers, MapPlace, mapPlaces, parseMapAreas, parsePhotoMode, TileJob, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, reorderedOrders, CONFLICT_FIELDS, dismissedField, isConflictCopyKey, originalOfCopy, BlockView, publishedPhotoFiles, viewOf, MAX_VIDEOS_PER_BLOCK, isVideoFile,
+  BOOK_I18N_KEYS, BOOK_LABEL_MAX, journalPeriod, JournalFormModel, removableAuthorKeys, authorsWithout, bookLabelsOf, JournalBookI18n, bookPrintCandidates, entityStateKey, hasOthersSections, pagesOf, PRINT_FILL_LONG_PX, PRINT_FILL_SHORT_PX, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
+  allPhotoFiles, commentsOf, CommentView, likeKey, likesOf, JournalPhotoMode, JournalTileSource, journalsOf, journalTilePlan, MapArea, mapLayers, MapPlace, mapPlaces, parseMapAreas, parsePhotoMode, TileJob, JournalWriteRefused, lastSectionOrder, materialize, orderBetween, reorderedOrders, CONFLICT_FIELDS, dismissedField, isConflictCopyKey, originalOfCopy, SectionView, publishedPhotoFiles, viewOf, MAX_VIDEOS_PER_BLOCK, isVideoFile,
+  changedSectionFields, JournalSectionType, newFootprintSections, sectionImageKeys, stripUndefined,
   JournalLock, LOCK_HEARTBEAT_MS, LOCK_TTL_MS, lockedBy, mergeLocks, BoundAuthor, JournalWriteSlow, mergePending,
   AreaLayer, areaForWrite, areaLayerTilePlan, BaseLayerOption, baseLayerOptions, Bbox, finishRun, isUsable, layerDetailLevels, layerKindsFor,
   layerTilesToFree, MapLayerKind, MapSource, migrateOfflineMap, NO_OFFLINE_LAYER, offlineAreaKey, OfflineLayerStatus, parseOfflineLayer, pickBaseLayer,
@@ -275,7 +276,7 @@ export const JournalStore = signalStore(
 
     /**
      * Browser (spec 1.126 phase 5): picks clips, uploads each original and has the function convert it FIRST; only
-     * converted clips get an image record (phase-3 rule). More files than the block has room for are cut off.
+     * converted clips get an image record (phase-3 rule). More files than one pick takes are cut off.
      */
     async function pickWebVideos(journalKey: string, limit: number, picked?: File[] | Promise<File[]>): Promise<{ videos: PickedVideo[]; skipped: VideoSkip[] }> {
       if (isOffline()) throw new JournalWriteRefused('offline');
@@ -343,7 +344,7 @@ export const JournalStore = signalStore(
 
     /**
      * Browser (spec 1.126 phase 3, design §3): picks files and uploads all their files FIRST; only photos whose
-     * files are in the bucket get an image record, so an iPad never receives a block without its photos.
+     * files are in the bucket get an image record, so an iPad never receives a section without its photos.
      */
     async function pickWebImages(journalKey: string, picked?: File[] | Promise<File[]>): Promise<{ drafts: ChangeDraft[]; imageKeys: string[]; photos: WebPhoto[]; skipped: SkippedPhoto[] }> {
       // offline every upload would fail and each photo would count as «skipped»: say «offline» instead
@@ -376,7 +377,7 @@ export const JournalStore = signalStore(
     }
 
     /**
-     * Writes the image + block records of a photo pick; in the browser then records each photo's print size in the
+     * Writes the image records of a photo pick; in the browser then records each photo's print size in the
      * book (design §3). A slow commit keeps the records (they will land), so the prints are recorded then too; any
      * other failure records none. A failed print entry is logged only: the book falls back to the 2048 px file.
      */
@@ -408,20 +409,20 @@ export const JournalStore = signalStore(
     }
 
     /**
-     * Where a block (or a conflict copy of one) lives — existence check only: every author may edit any
-     * block (spec 1.126 §6); the merge, not the store, resolves a clash. A copy has no entity of its own,
+     * Where a section (or a conflict copy of one) lives — existence check only: every author may edit any
+     * section (spec 1.126 §6); the merge, not the store, resolves a clash. A copy has no entity of its own,
      * so its footprint comes from the original's raw fields (the original may be archived by now).
      */
-    function blockOf(blockKey: string): { footprint: FootprintView; journalKey: string; block: BlockView } {
-      const entityKey = isConflictCopyKey(blockKey) ? originalOfCopy(blockKey) : blockKey;
+    function sectionOf(sectionKey: string): { footprint: FootprintView; journalKey: string; section: SectionView } {
+      const entityKey = isConflictCopyKey(sectionKey) ? originalOfCopy(sectionKey) : sectionKey;
       const state = store.journalState()[entityStateKey('section', entityKey)];
-      const footprintKey = isConflictCopyKey(blockKey)
+      const footprintKey = isConflictCopyKey(sectionKey)
         ? Object.values(state?.fields['footprintKey'] ?? {})[0]?.value
         : viewOf(state)?.['footprintKey'];
       const fp = typeof footprintKey === 'string' ? footprint(footprintKey) : undefined;
-      const block = fp?.blocks.find((b) => b.key === blockKey);
-      if (!fp || !block) throw new Error(`unknown block ${blockKey}`);
-      return { footprint: fp, journalKey: fp.journalKey, block };
+      const section = fp?.sections.find((b) => b.key === sectionKey);
+      if (!fp || !section) throw new Error(`unknown section ${sectionKey}`);
+      return { footprint: fp, journalKey: fp.journalKey, section };
     }
 
     /**
@@ -904,8 +905,9 @@ export const JournalStore = signalStore(
     function coverChoices(journalKey: string): { key: string; url: string }[] {
       const images = imagesOf(store.journalState(), journalKey);
       const seen = new Set<string>();
-      return footprintsOf(store.journalState(), journalKey).flatMap((f) => f.blocks).filter((b) => b.kind !== 'video')
-        .flatMap((b) => b.imageKeys ?? []).filter((k) => images.has(k) && !seen.has(k) && seen.add(k))
+      // a video section lists its clips apart (`clips`): a poster is never a cover
+      return footprintsOf(store.journalState(), journalKey).flatMap((f) => f.sections).flatMap((s) => sectionImageKeys(s))
+        .filter((k) => images.has(k) && !seen.has(k) && seen.add(k))
         .map((key) => ({ key, url: store.fileUrl.url(images.get(key)?.path400) }));
     }
 
@@ -1273,7 +1275,7 @@ export const JournalStore = signalStore(
       },
 
       /**
-       * Takes the edit lock on a block or footprint. Returns the other person's live lock when refused,
+       * Takes the edit lock on a section or footprint. Returns the other person's live lock when refused,
        * otherwise locks it for this author and keeps renewing it until `releaseLock`.
        */
       async acquireLock(journalKey: string, entityKey: string): Promise<JournalLock | undefined> {
@@ -1358,12 +1360,18 @@ export const JournalStore = signalStore(
         return key;
       },
 
-      /** `key`: as in createJournal. */
+      /** `key`: as in createJournal. A new footprint starts with a hero and an empty article (spec 1.154 §3), in the same write. */
       async addFootprint(journalKey: string, title: string, key: string = crypto.randomUUID()): Promise<string> {
-        await write([{
+        const drafts: ChangeDraft[] = [{
           journalKey, entity: 'footprint', entityKey: key, op: 'create',
           fields: { journalKey, title, placeName: '', date: '', time: '', publishState: 'draft' },
-        }]);
+        }];
+        let order: string | undefined;
+        for (const { fields } of newFootprintSections('')) {
+          order = orderBetween(order, undefined);
+          drafts.push({ journalKey, entity: 'section', entityKey: crypto.randomUUID(), op: 'create', fields: { ...fields, footprintKey: key, order } });
+        }
+        await write(drafts);
         return key;
       },
 
@@ -1395,11 +1403,14 @@ export const JournalStore = signalStore(
         await write([{ journalKey: current.journalKey, entity: 'footprint', entityKey: footprintKey, op: 'set', fields: { ...fields }, bases: basesOf(fp.hlcs, fields, CONFLICT_FIELDS['footprint'] ?? []) }]);
       },
 
-      /** Puts the blocks of a footprint into the order of `keys`; only the blocks that must move get a new key. */
-      async reorderBlocks(footprintKey: string, keys: string[]): Promise<void> {
+      /**
+       * Puts the sections of a footprint into the order of `keys`; only the sections that must move get a new key. A hero
+       * is never moved: it is always shown first (spec 1.154 §3), so its key in `keys` is ignored.
+       */
+      async reorderSections(footprintKey: string, keys: string[]): Promise<void> {
         const fp = footprint(footprintKey);
         if (!fp) throw new Error(`unknown footprint ${footprintKey}`);
-        const changed = reorderedOrders(fp.blocks, keys);
+        const changed = reorderedOrders(fp.sections.filter((s) => s.type !== 'hero'), keys);
         const drafts: ChangeDraft[] = Object.entries(changed).map(([key, order]) => ({
           journalKey: fp.journalKey, entity: 'section', entityKey: key, op: 'set', fields: { order },
         }));
@@ -1416,43 +1427,63 @@ export const JournalStore = signalStore(
         }]);
       },
 
-      async addTextBlock(footprintKey: string, html: string): Promise<string> {
+      /**
+       * A new section at the end of the footprint (spec 1.154 §2): one `section` record with `type`, `title`, `htmlContent`
+       * and the `p_<key>` properties that differ from the type's defaults. Returns the section key.
+       */
+      async addSection(footprintKey: string, type: JournalSectionType, model: SectionModel): Promise<string> {
         const fp = footprint(footprintKey);
         if (!fp) throw new Error(`unknown footprint ${footprintKey}`);
         const key = crypto.randomUUID();
-        await write([{
-          journalKey: fp.journalKey, entity: 'section', entityKey: key, op: 'create',
-          fields: { footprintKey, kind: 'text', html, order: orderBetween(lastBlockOrder(fp), undefined) },
-        }]);
+        const empty: SectionView = { key, type, title: '', htmlContent: '', properties: {}, order: '', authorKey: '', hlcs: {}, conflict: false };
+        const fields = stripUndefined({
+          title: '', htmlContent: '', ...changedSectionFields(empty, model), type, footprintKey, order: orderBetween(lastSectionOrder(fp), undefined),
+        });
+        await write([{ journalKey: fp.journalKey, entity: 'section', entityKey: key, op: 'create', fields }]);
         return key;
       },
 
       /**
-       * `seen` (here and in the photo methods) = the block's hlcs when the editor or action sheet opened; a
-       * value delivered after that was not seen and must stay a conflict. Without it the current block counts.
+       * Saves an edited section: only the record fields the edit changed, against the section as the editor showed it
+       * (`opened`, captured when the editor OPENED — a value delivered meanwhile was never seen and must stay a
+       * conflict). The content keys carry their `bases`, so a concurrent edit of the same key becomes a conflict copy;
+       * settings keys are last-writer-wins. Without `opened` the current section is the baseline.
        */
-      async updateTextBlock(blockKey: string, html: string, seen?: Record<string, string>): Promise<void> {
-        const { journalKey, block } = blockOf(blockKey);
-        const fields = { html };
-        await write([{ journalKey, entity: 'section', entityKey: blockKey, op: 'set', fields, bases: basesOf(seen ?? block.hlcs, fields, CONFLICT_FIELDS['section'] ?? []) }]);
+      async updateSection(sectionKey: string, model: SectionModel, opened?: SectionView): Promise<void> {
+        const { journalKey, section } = sectionOf(sectionKey);
+        const base = opened ?? section;
+        const fields: Record<string, unknown> = stripUndefined(changedSectionFields(base, model));
+        delete fields['type']; // a section never changes its type
+        if (Object.keys(fields).length === 0) return;
+        await write([{ journalKey, entity: 'section', entityKey: sectionKey, op: 'set', fields, bases: basesOf(base.hlcs, fields, CONFLICT_FIELDS['section'] ?? []) }]);
       },
 
-      /** Adds photos to an existing photo block (any author's). */
-      async addPhotosToBlock(blockKey: string, seen?: Record<string, string>, files?: File[] | Promise<File[]>): Promise<{ added: number; skipped: SkippedPhoto[] }> {
-        const { journalKey, block } = blockOf(blockKey);
-        const { drafts, imageKeys, photos, skipped } = await pickImages(journalKey, files);
-        if (photos.length === 0) return { added: 0, skipped };
-        const fields = { imageKeys: [...(block.imageKeys ?? []), ...imageKeys] };
-        drafts.push({ journalKey, entity: 'section', entityKey: blockKey, op: 'set', fields, bases: basesOf(seen ?? block.hlcs, fields, CONFLICT_FIELDS['section'] ?? []) });
-        await writePhotos(journalKey, drafts, photos);
-        return { added: photos.length, skipped };
-      },
-
-      /** Removes one photo from a photo block; the image record stays (other blocks may not use it). */
-      async removePhotoFromBlock(blockKey: string, imageKey: string, seen?: Record<string, string>): Promise<void> {
-        const { journalKey, block } = blockOf(blockKey);
-        const fields = { imageKeys: (block.imageKeys ?? []).filter((k) => k !== imageKey) };
-        await write([{ journalKey, entity: 'section', entityKey: blockKey, op: 'set', fields, bases: basesOf(seen ?? block.hlcs, fields, CONFLICT_FIELDS['section'] ?? []) }]);
+      /**
+       * Imports new photos (`image`) or clips (`video`) into the journal for the section editor's picker: one image record
+       * per photo or clip, and the footprint's date and position from them when it has none — all in one transaction.
+       * Returns the new image keys; the section that uses them is written when the editor is saved. A slow browser
+       * write keeps its records (they will land), so it still returns the keys, with `slow` set.
+       * `files`: the browser's pick, opened inside the user's tap; native leaves it undefined.
+       */
+      async importImages(footprintKey: string, kind: 'image' | 'video', files?: File[] | Promise<File[]>): Promise<{ imageKeys: string[]; skipped: (SkippedPhoto | VideoSkip)[]; slow: boolean }> {
+        const fp = footprint(footprintKey);
+        if (!fp) throw new Error(`unknown footprint ${footprintKey}`);
+        const journalKey = fp.journalKey;
+        const picked = kind === 'video'
+          ? await pickVideoImages(journalKey, MAX_VIDEOS_PER_BLOCK, files).then((r) => ({ ...r, photos: r.videos }))
+          : await pickImages(journalKey, files);
+        if (picked.photos.length === 0) return { imageKeys: [], skipped: picked.skipped, slow: false };
+        const fillDraft = footprintFillDraft(journalKey, fp, picked.photos);
+        if (fillDraft) picked.drafts.push(fillDraft);
+        let slow = false;
+        try {
+          await writePhotos(journalKey, picked.drafts, picked.photos);
+        } catch (error) {
+          if (!(error instanceof JournalWriteSlow)) throw error;
+          slow = true;
+        }
+        if (kind === 'video') void refreshPresentVideos();
+        return { imageKeys: picked.imageKeys, skipped: picked.skipped, slow };
       },
 
       /** Deletes (archives) a footprint; footprints are shared, so either author may. */
@@ -1461,7 +1492,7 @@ export const JournalStore = signalStore(
         if (!fp) throw new Error(`unknown footprint ${footprintKey}`);
         const me = store.author()?.personKey;
         if (!me) throw new JournalWriteRefused('noAuthor');
-        if (hasOthersBlocks([fp], me)) throw new JournalWriteRefused('othersContent');
+        if (hasOthersSections([fp], me)) throw new JournalWriteRefused('othersContent');
         await write([{ journalKey: fp.journalKey, entity: 'footprint', entityKey: footprintKey, op: 'archive', fields: {} }]);
       },
 
@@ -1517,67 +1548,13 @@ export const JournalStore = signalStore(
       async archiveJournal(journalKey: string): Promise<void> {
         const me = store.author()?.personKey;
         if (!me) throw new JournalWriteRefused('noAuthor');
-        if (hasOthersBlocks(footprintsOf(store.journalState(), journalKey), me)) throw new JournalWriteRefused('othersContent');
+        if (hasOthersSections(footprintsOf(store.journalState(), journalKey), me)) throw new JournalWriteRefused('othersContent');
         await write([{ journalKey, entity: 'journal', entityKey: journalKey, op: 'archive', fields: {} }]);
       },
 
-      async archiveBlock(blockKey: string): Promise<void> {
-        const { journalKey } = blockOf(blockKey);
-        await write([{ journalKey, entity: 'section', entityKey: blockKey, op: 'archive', fields: {} }]);
-      },
-
-      /**
-       * Picks photos, stores one image record per imported photo plus one photo block — all in one
-       * transaction. A footprint without date or position takes them from the photos (ship time).
-       */
-      async addPhotoBlock(journalKey: string, footprintKey: string, files?: File[] | Promise<File[]>): Promise<{ added: number; skipped: SkippedPhoto[] }> {
-        const fp = footprint(footprintKey);
-        if (!fp) throw new Error(`unknown footprint ${footprintKey}`);
-        const { drafts, imageKeys, photos, skipped } = await pickImages(journalKey, files);
-        if (photos.length === 0) return { added: 0, skipped };
-        drafts.push({
-          journalKey, entity: 'section', entityKey: crypto.randomUUID(), op: 'create',
-          fields: { footprintKey, kind: 'photos', imageKeys, order: orderBetween(lastBlockOrder(fp), undefined) },
-        });
-
-        const fillDraft = footprintFillDraft(journalKey, fp, photos);
-        if (fillDraft) drafts.push(fillDraft);
-        await writePhotos(journalKey, drafts, photos);
-        return { added: photos.length, skipped };
-      },
-
-      /**
-       * Adds clips to an existing video block (any author's), at most 5 in all. Writes only `imageKeys`: the caption
-       * (`html`) is edited on its own, so a conflict copy never mixes the two.
-       */
-      async addVideosToBlock(blockKey: string, seen?: Record<string, string>, files?: File[] | Promise<File[]>): Promise<{ added: number; skipped: VideoSkip[] }> {
-        const { journalKey, block } = blockOf(blockKey);
-        const limit = MAX_VIDEOS_PER_BLOCK - (block.imageKeys ?? []).length;
-        if (limit <= 0) throw new JournalWriteRefused('videoLimit');
-        const { drafts, imageKeys, videos, skipped } = await pickVideoImages(journalKey, limit, files);
-        if (videos.length === 0) return { added: 0, skipped };
-        const fields = { imageKeys: [...(block.imageKeys ?? []), ...imageKeys] };
-        drafts.push({ journalKey, entity: 'section', entityKey: blockKey, op: 'set', fields, bases: basesOf(seen ?? block.hlcs, fields, CONFLICT_FIELDS['section'] ?? []) });
-        await writePhotos(journalKey, drafts, videos);
-        void refreshPresentVideos();
-        return { added: videos.length, skipped };
-      },
-
-      /** Picks clips and stores one image record per clip plus one video block in one transaction; the footprint fills as for photos. */
-      async addVideoBlock(journalKey: string, footprintKey: string, files?: File[] | Promise<File[]>): Promise<{ added: number; skipped: VideoSkip[] }> {
-        const fp = footprint(footprintKey);
-        if (!fp) throw new Error(`unknown footprint ${footprintKey}`);
-        const { drafts, imageKeys, videos, skipped } = await pickVideoImages(journalKey, MAX_VIDEOS_PER_BLOCK, files);
-        if (videos.length === 0) return { added: 0, skipped };
-        drafts.push({
-          journalKey, entity: 'section', entityKey: crypto.randomUUID(), op: 'create',
-          fields: { footprintKey, kind: 'video', html: '', imageKeys, order: orderBetween(lastBlockOrder(fp), undefined) },
-        });
-        const fillDraft = footprintFillDraft(journalKey, fp, videos);
-        if (fillDraft) drafts.push(fillDraft);
-        await writePhotos(journalKey, drafts, videos);
-        void refreshPresentVideos();
-        return { added: videos.length, skipped };
+      async archiveSection(sectionKey: string): Promise<void> {
+        const { journalKey } = sectionOf(sectionKey);
+        await write([{ journalKey, entity: 'section', entityKey: sectionKey, op: 'archive', fields: {} }]);
       },
     };
   }),

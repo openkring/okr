@@ -11,7 +11,7 @@ import { MapView, RouteMap, RouteOverlay, RoutePin } from '@okr/shared-ui';
 import { FootprintEditModal } from '@okr/travel-journal-ui';
 import {
   FootprintFormModel, flyoverInputOf, flyoverTimeline, footprintChips, journalMapData, journalOverviewMenu, JournalWriteSlow, newFootprintFormModel, routeLengthKm,
-  isVideoImage, BYU_ICEBERGS_ATTRIBUTION,
+  isVideoImage, BYU_ICEBERGS_ATTRIBUTION, sectionImageKeys,
 } from '@okr/travel-journal-util';
 
 import { googleAttributionOf, routeBaseLayers } from './journal-base-layers';
@@ -161,14 +161,14 @@ export class JournalOverviewPage {
     const images = this.images();
     const canWrite = this.store.canWrite();
     return this.footprints().map((f) => {
-      const firstKey = f.blocks.find((b) => b.kind === 'photos')?.imageKeys?.find((k) => images.has(k));
+      const firstKey = f.sections.flatMap((s) => sectionImageKeys(s)).find((k) => images.has(k)); // the hero's cover first
       return {
         key: f.key,
         title: f.title,
         facts: footprintChips(f).join(' · '),
         published: f.publishState === 'published',
-        // two versions of a block, or a footprint value that lost (spec 1.126 §6.3); only authors resolve them
-        check: canWrite && (f.lostValues.length > 0 || f.blocks.some((b) => b.conflict)),
+        // two versions of a section, or a footprint value that lost (spec 1.126 §6.3); only authors resolve them
+        check: canWrite && (f.lostValues.length > 0 || f.sections.some((s) => s.conflict)),
         thumbnail: this.fileUrl.url(firstKey ? images.get(firstKey)?.path400 : undefined),
       };
     });
