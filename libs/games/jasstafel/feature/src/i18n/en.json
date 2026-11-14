@@ -95,7 +95,7 @@
     "cancel": "Discard"
   },
   "diary": {
-    "to_diary": "Add to diary",
+    "auto": "The result goes into your diary as soon as you leave this game.",
     "in_diary": "In diary",
     "prefix": "Jass",
     "hands": "hands",

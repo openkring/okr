@@ -1,7 +1,7 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonListHeader, ModalController } from '@ionic/angular';
 
-import { JassGame, JassI18n, handValues, totals } from '@okr/games-jasstafel-util';
+import { JassGame, JassI18n, handValues, stats, totals } from '@okr/games-jasstafel-util';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Header } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
@@ -14,11 +14,36 @@ export type JassHistoryAction = { action: 'edit' | 'delete'; index: number } | {
 @Component({
   selector: 'okr-jass-history-modal',
   standalone: true,
+  styles: [`
+    /* per team: the Weis (Stöck and the tapped strokes included) and the running total */
+    table { width: 100%; border-collapse: collapse; margin: 8px 0; }
+    th, td { padding: 4px 16px; text-align: right; font-size: 1.1rem; }
+    th:first-child, td:first-child { text-align: left; }
+    th { font-weight: normal; }
+    .heads { display: inline-flex; gap: 4px; }
+    tr.total td { font-weight: 600; border-top: 1px solid var(--ion-color-medium); }
+  `],
   imports: [Header, IonContent, IonList, IonListHeader, IonItem, IonLabel, IonButton, IonIcon, SvgIconPipe, JassAvatar],
   template: `
     <okr-header [i18n]="{ title: i18n().history_title() }" [isModal]="true" />
     <ion-content>
       @if (game(); as g) {
+        @if (g.hands.length || g.chalks?.length) {
+          <table>
+            <thead>
+              <tr><th></th>
+                @for (side of g.sides; track side.id) {
+                  <th><span class="heads">@for (idx of side.playerIdx; track idx) { <okr-jass-avatar [avatar]="g.players[idx].avatar" /> }</span></th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>{{ i18n().stat_points() }}</td>@for (s of g.sides; track s.id) { <td>{{ sideStats()[s.id]?.pointsPlayed }}</td> }</tr>
+              <tr><td>{{ i18n().stat_weis() }}</td>@for (s of g.sides; track s.id) { <td>{{ sideStats()[s.id]?.weis }}</td> }</tr>
+              <tr class="total"><td>{{ i18n().sum() }}</td>@for (s of g.sides; track s.id) { <td>{{ sideTotals()[s.id] }}</td> }</tr>
+            </tbody>
+          </table>
+        }
         <ion-list>
           <ion-list-header>{{ i18n().history_hands() }}</ion-list-header>
           @for (h of g.hands; track $index; let i = $index) {
@@ -61,6 +86,9 @@ export class JassHistoryModal {
   public readonly game = input<JassGame | null>(null);
   public readonly archive = input<JassGame[]>([]);
   public readonly i18n = input.required<JassI18n>();
+
+  protected readonly sideStats = computed(() => { const g = this.game(); return g ? stats(g) : {}; });
+  protected readonly sideTotals = computed(() => { const g = this.game(); return g ? totals(g) : {}; });
 
   /** Coiffeur: the row's name; otherwise the multiplier of the hand */
   protected handLabel(g: JassGame, i: number): string {

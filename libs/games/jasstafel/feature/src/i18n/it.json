@@ -95,7 +95,7 @@
     "cancel": "Scarta"
   },
   "diary": {
-    "to_diary": "Nel diario",
+    "auto": "Il risultato entra nel tuo diario appena lasci la partita.",
     "in_diary": "Già nel diario",
     "prefix": "Jass",
     "hands": "mani",

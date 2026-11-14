@@ -31,7 +31,10 @@ export type JassChalkTap = { sideId: string; unit: JassChalkUnit };
     .total { text-align: center; }
     /* the padding keeps the «+» a thumb's width off the board's frame (rounded screen corners) */
     .foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 6px 6px; }
-    .avatars { display: flex; gap: 6px; }
+    .avatars { display: flex; gap: 8px; }
+    /* the team's faces, read from across the table */
+    .avatars okr-jass-avatar { --jass-avatar-size: 64px; font-size: 1.4rem; }
+    @media (min-width: 768px) { .avatars okr-jass-avatar { --jass-avatar-size: 88px; font-size: 1.8rem; } }
     .side-info { flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     /* as big as the Logbuch's «+»: hit from across the table */
     .enter { --border-radius: 50%; width: 72px; height: 72px; margin: 0; flex: none; }

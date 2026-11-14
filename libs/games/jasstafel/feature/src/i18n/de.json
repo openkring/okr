@@ -95,7 +95,7 @@
     "cancel": "Verwerfen"
   },
   "diary": {
-    "to_diary": "Ins Tagebuch",
+    "auto": "Das Resultat kommt in dein Tagebuch, sobald du die Partie verlässt.",
     "in_diary": "Im Tagebuch",
     "prefix": "Jass",
     "hands": "Runden",
