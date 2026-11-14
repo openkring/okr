@@ -95,7 +95,7 @@
     "cancel": "Descartar"
   },
   "diary": {
-    "to_diary": "Al diario",
+    "auto": "El resultado se añadirá a tu diario en cuanto salgas de la partida.",
     "in_diary": "En el diario",
     "prefix": "Jass",
     "hands": "manos",

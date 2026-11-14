@@ -11,6 +11,8 @@ import { JassHandForm } from './jass-hand.form';
 @Component({
   selector: 'okr-jass-hand-modal',
   standalone: true,
+  // opened from the upper half of the slate: turned by 180° so the team across the table reads it upright
+  host: { '[style.transform]': "flipped() ? 'rotate(180deg)' : null" },
   imports: [Header, ChangeConfirmation, JassHandForm, IonContent],
   template: `
     <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
@@ -35,6 +37,8 @@ export class JassHandModal {
   public readonly i18n = input.required<JassI18n>();
   /** the index of the hand being edited, so its own Coiffeur row stays selectable */
   public readonly editIndex = input<number | undefined>(undefined);
+  /** the team that pressed «+» sits at the top of the slate */
+  public readonly flipped = input(false);
 
   protected formDirty = signal(false);
   protected formValid = signal(false);

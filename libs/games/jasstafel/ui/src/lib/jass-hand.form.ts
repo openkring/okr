@@ -3,12 +3,13 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import {
-  JASS_MULTIPLIERS, JassGame, JassHandFormModel, JassI18n, handFromForm, handValues, jassHandValidations, withCounterPoints,
+  CARD_POINTS, JASS_MULTIPLIERS, JassGame, JassHandFormModel, JassI18n, handFromForm, handValues, jassHandValidations, withCounterPoints,
 } from '@okr/games-jasstafel-util';
 import { Checkbox, CheckboxI18n, ErrorNote, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
 import { JassAvatar } from './jass-avatar';
+import { JassKeypad } from './jass-keypad';
 
 /**
  * One hand: trump (or Coiffeur row and team), card points per side — with two sides the other side
@@ -19,7 +20,7 @@ import { JassAvatar } from './jass-avatar';
 @Component({
   selector: 'okr-jass-hand-form',
   standalone: true,
-  imports: [IonCard, IonCardContent, IonGrid, IonRow, IonCol, NumberInput, StringSelect, Checkbox, ErrorNote, JassAvatar],
+  imports: [IonCard, IonCardContent, IonGrid, IonRow, IonCol, NumberInput, StringSelect, Checkbox, ErrorNote, JassAvatar, JassKeypad],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } } .heads { display: flex; gap: 4px; }
     /* opened from a team's «+»: one team, read from across the table */
     .focused { font-size: 1.6rem; }
@@ -78,9 +79,15 @@ import { JassAvatar } from './jass-avatar';
                   }
                   @if (formData().phase !== 'announce') {
                     <ion-col size="12" size-md="6">
-                      <okr-number-input [i18n]="pointsI18n()" [value]="formData().points[i]"
-                        (valueChange)="onPoints(i, $event)" [integer]="true" [min]="0" [max]="157"
-                        [readOnly]="!!formData().match" />
+                      @if (formData().focusSideId) {
+                        <!-- opened from a team's «+»: digit buttons, so the phone keyboard never opens -->
+                        <okr-jass-keypad [value]="formData().points[i]" (valueChange)="onPoints(i, $event)"
+                          [label]="i18n().points_label()" [max]="cardPoints" [disabled]="!!formData().match" />
+                      } @else {
+                        <okr-number-input [i18n]="pointsI18n()" [value]="formData().points[i]"
+                          (valueChange)="onPoints(i, $event)" [integer]="true" [min]="0" [max]="cardPoints"
+                          [readOnly]="!!formData().match" />
+                      }
                     </ion-col>
                     <ion-col size="12" size-md="6">
                       <okr-checkbox [i18n]="matchI18n()" [checked]="formData().match === id"
@@ -141,6 +148,7 @@ export class JassHandForm {
   protected readonly trumpI18n = computed(() => ({ name: 'trump', label: this.i18n().trump_label() }) as StringSelectI18n);
   protected readonly multiplierI18n = computed(() => ({ name: 'multiplier', label: this.i18n().multiplier_label() }) as StringSelectI18n);
   protected readonly multiplierOptions = JASS_MULTIPLIERS.map(String);
+  protected readonly cardPoints = CARD_POINTS;
   protected readonly multiplierLabels = JASS_MULTIPLIERS.map(m => m + '×');
   protected readonly sideI18n = computed(() => ({ name: 'sideId', label: this.i18n().side_label() }) as StringSelectI18n);
   protected readonly matchI18n = computed(() => ({ name: 'match', label: this.i18n().match_label(), helper: '' }) as CheckboxI18n);

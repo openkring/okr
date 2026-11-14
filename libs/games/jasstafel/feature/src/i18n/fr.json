@@ -95,7 +95,7 @@
     "cancel": "Annuler"
   },
   "diary": {
-    "to_diary": "Dans le journal",
+    "auto": "Le résultat sera ajouté à ton journal dès que tu quittes la partie.",
     "in_diary": "Déjà dans le journal",
     "prefix": "Jass",
     "hands": "manches",

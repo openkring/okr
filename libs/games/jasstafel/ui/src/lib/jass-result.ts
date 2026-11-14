@@ -18,6 +18,7 @@ import { JASS_CHALK_STYLES } from './jass-chalk.scss';
     table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
     th, td { padding: 4px; text-align: right; } th:first-child, td:first-child { text-align: left; }
     .buttons { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+    .diary { text-align: center; margin-bottom: 12px; }
     .timing { display: flex; flex-wrap: wrap; gap: 4px 16px; justify-content: center; margin-bottom: 12px; }
   `],
   template: `
@@ -51,13 +52,12 @@ import { JASS_CHALK_STYLES } from './jass-chalk.scss';
           <tr><td>{{ i18n().stat_average() }}</td>@for (s of game().sides; track s.id) { <td>{{ stats()[s.id].average }}</td> }</tr>
         </tbody>
       </table>
+      @if (diaryState() !== 'hidden') {
+        <!-- no button: a player's result goes into the diary by itself when the result is left -->
+        <div class="diary jass-dim">{{ diaryState() === 'done' ? i18n().in_diary() : i18n().diary_auto() }}</div>
+      }
       <div class="buttons">
         <ion-button (click)="newGame.emit()">{{ i18n().new_game() }}</ion-button>
-        @if (diaryState() !== 'hidden') {
-          <ion-button fill="outline" [disabled]="diaryState() === 'done' || diaryBusy()" (click)="toDiary.emit()">
-            {{ diaryState() === 'done' ? i18n().in_diary() : i18n().to_diary() }}
-          </ion-button>
-        }
         <ion-button fill="outline" (click)="done.emit()">{{ i18n().done() }}</ion-button>
       </div>
     </div>
@@ -69,12 +69,10 @@ export class JassResult {
   public readonly stats = input.required<Record<string, JassSideStats>>();
   public readonly totals = input.required<Record<string, number>>();
   public readonly i18n = input.required<JassI18n>();
-  /** 'hidden' without a configured diary tenant (spec 1.67 §11) */
+  /** 'hidden' without a diary that collects the Jasstafel, or when the signed-in person did not play */
   public readonly diaryState = input<'hidden' | 'ready' | 'done'>('hidden');
-  public readonly diaryBusy = input(false);
   public readonly newGame = output<void>();
   public readonly done = output<void>();
-  public readonly toDiary = output<void>();
 
   protected readonly timing = computed(() => jassTiming(this.game()));
   protected readonly duration = computed(() => formatDuration(this.timing().minutes));

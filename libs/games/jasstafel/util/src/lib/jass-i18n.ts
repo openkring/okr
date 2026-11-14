@@ -77,7 +77,7 @@ export const JASS_I18N_KEYS = {
   stat_average:       PFX + 'result.stat_average',
 
   // diary transfer (spec 1.67 §11)
-  to_diary:           PFX + 'diary.to_diary',
+  diary_auto:         PFX + 'diary.auto',
   in_diary:           PFX + 'diary.in_diary',
   diary_prefix:       PFX + 'diary.prefix',
   diary_hands:        PFX + 'diary.hands',
