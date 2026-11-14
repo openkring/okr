@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, Injector, input, signal, untracked, viewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   AlertController, IonBackButton, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonLabel, IonListHeader, IonNote, IonSpinner, IonTitle,
@@ -23,6 +23,8 @@ import {
 } from '@okr/mobility-tracker-util';
 
 import { TrackerStore } from './tracker.store';
+// type-only: the journal sender is loaded on demand (import('./track-journal-send')), never in this page's static graph
+import type { TrackSendInput, TrackSendSession } from './track-journal-send';
 
 /**
  * One recorded track (spec 1.121, plan 2 task 9): map, sections with corrections (mode, split, merge), rename,
@@ -99,6 +101,22 @@ import { TrackerStore } from './tracker.store';
             <ion-icon slot="start" src="{{ 'link' | svgIcon }}" />{{ i18n.link_connect() }}
           </ion-button>
         }
+        @if (canSendToJournal()) {
+          <ion-button fill="clear" size="small" [disabled]="busy() || sending()" (click)="sendToJournal()">
+            <ion-icon slot="start" src="{{ 'send' | svgIcon }}" />{{ i18n.journal_send() }}
+          </ion-button>
+          <ion-button fill="clear" size="small" [disabled]="busy() || sending()" (click)="prepareJournals()">
+            <ion-icon slot="start" src="{{ 'download' | svgIcon }}" />{{ i18n.journal_prepare() }}
+          </ion-button>
+        }
+        @if (sendNote(); as note) {
+          <ion-note class="note">{{ note }}</ion-note>
+          @if (sendSearching()) {
+            <ion-button fill="clear" size="small" (click)="stopSending()">
+              <ion-icon slot="start" src="{{ 'cancel' | svgIcon }}" />{{ i18n.journal_stop() }}
+            </ion-button>
+          }
+        }
         @if (deleteNote(); as note) {
           <ion-note class="note">{{ note }}</ion-note>
         }
@@ -144,6 +162,7 @@ export class TrackDetailPage {
   private readonly terrainService = inject(TerrainElevationService);
   private readonly transitService = inject(TransitRouteService);
   private readonly content = viewChild(IonContent);
+  private readonly injector = inject(Injector);
 
   protected readonly loading = signal(true);
   protected readonly busy = signal(false);
@@ -242,6 +261,39 @@ export class TrackDetailPage {
   protected readonly mapMark = computed(() => this.highlight() ?? this.selected()?.point);
 
   protected readonly editable = computed(() => this.track()?.state === 'done' && !this.busy());
+
+  /**
+   * «An Reisetagebuch senden» (spec 1.154 phase 5, decision 9): the owner of a finished recording on the phone, who writes
+   * in at least one journal (checked after the page is shown, see checkJournalAuthor). Crew copies are not the person's
+   * own recording (their photos are on another phone).
+   */
+  private readonly journalAuthor = signal(false);
+  protected readonly canSendToJournal = computed(() => {
+    const t = this.track();
+    return Capacitor.isNativePlatform() && this.journalAuthor() && !!t && t.state === 'done' && this.isOwner() && !this.trip()?.track?.copyOf;
+  });
+  /** the recording is this person's: recorded on this device, or the uploaded trip names the signed-in person */
+  private readonly isOwner = computed(() => {
+    const personKey = this.appStore.currentUser()?.personKey;
+    return this.isLocal() || (!!personKey && this.trip()?.track?.personKey === personKey);
+  });
+  /** building a delivery or the online write is running */
+  protected readonly sending = signal(false);
+  /** the P2P session of the journal sender, once it was loaded */
+  private readonly sendSession = signal<TrackSendSession | undefined>(undefined);
+  protected readonly sendSearching = computed(() => ['searching', 'sending'].includes(this.sendSession()?.status().state ?? 'off'));
+  protected readonly sendNote = computed(() => {
+    const status = this.sendSession()?.status();
+    if (!status) return '';
+    const waiting = status.pending > 0 ? ` ${fill(this.i18n.journal_waiting_count(), { count: String(status.pending) })}` : '';
+    switch (status.state) {
+      case 'searching': return this.i18n.journal_searching() + waiting;
+      case 'sending': return fill(this.i18n.journal_sending(), { names: status.peers.join(', ') }) + waiting;
+      case 'done': return this.i18n.journal_delivered();
+      case 'stopped': return status.pending > 0 ? this.i18n.journal_stopped() : '';
+      default: return '';
+    }
+  });
   /** timetable lines of train/bus/ship sections (spec 1.129 §4.2) by `transitRouteKey`; empty points = none found */
   private readonly transit = signal<ReadonlyMap<string, StoredTransitRoute>>(new Map());
   /** keys looked up (or being looked up) in this page's life: one call per section */
@@ -293,6 +345,13 @@ export class TrackDetailPage {
       const loading = this.loading();
       untracked(() => {
         if (!loading) sections.forEach((s, n) => void this.ensureTransit(this.key(), n, s));
+      });
+    });
+    // the journal author check loads the sender lazily, after the page is shown, only for the owner on the phone
+    effect(() => {
+      const owner = !this.loading() && this.track()?.state === 'done' && this.isOwner();
+      untracked(() => {
+        if (owner && Capacitor.isNativePlatform() && !this.journalAuthor()) void this.checkJournalAuthor();
       });
     });
     effect(() => {
@@ -474,6 +533,67 @@ export class TrackDetailPage {
     } catch (error) {
       console.error('TrackDetailPage.loadLinkedTrip', error);
     }
+  }
+
+  /** «An Reisetagebuch senden»: journal choice, photos and copy, then online or over the local network (lazy module). */
+  protected async sendToJournal(): Promise<void> {
+    const input = this.sendInput();
+    if (!input || this.sending()) return;
+    this.sending.set(true);
+    try {
+      const sender = await import('./track-journal-send');
+      this.sendSession.set(sender.sendSession(this.injector));
+      await sender.sendTrackToJournal(input);
+    } catch (error) {
+      console.error('TrackDetailPage.sendToJournal', error);
+      await this.toast(this.i18n.journal_error());
+    } finally {
+      this.sending.set(false);
+    }
+  }
+
+  /** «Für unterwegs vorbereiten»: the peer secrets of all the person's journals, so offline sending works. */
+  protected async prepareJournals(): Promise<void> {
+    if (this.sending()) return;
+    this.sending.set(true);
+    try {
+      const sender = await import('./track-journal-send');
+      await sender.prepareJournalsForTravel({ injector: this.injector, i18n: this.i18n, author: this.author(), tenantId: this.appStore.tenantId() });
+    } catch (error) {
+      console.error('TrackDetailPage.prepareJournals', error);
+      await this.toast(this.i18n.journal_error());
+    } finally {
+      this.sending.set(false);
+    }
+  }
+
+  protected async stopSending(): Promise<void> {
+    await this.sendSession()?.stop();
+  }
+
+  private async checkJournalAuthor(): Promise<void> {
+    try {
+      const sender = await import('./track-journal-send');
+      this.journalAuthor.set(await sender.isJournalAuthor(this.injector, this.author()));
+    } catch (error) {
+      console.warn('TrackDetailPage.checkJournalAuthor', error);
+    }
+  }
+
+  private author(): { personKey: string; name: string } | undefined {
+    const personKey = this.appStore.currentUser()?.personKey;
+    if (!personKey) return undefined;
+    const person = this.appStore.currentPerson();
+    return { personKey, name: person ? `${person.firstName} ${person.lastName}`.trim() : '' };
+  }
+
+  private sendInput(): TrackSendInput | undefined {
+    const track = this.track();
+    if (!track || track.state !== 'done') return undefined;
+    return {
+      injector: this.injector, i18n: this.i18n, track, sections: this.sections(), distances: this.rows().map((r) => r.distanceM),
+      trip: this.trip(), isLocal: this.isLocal(), author: this.author(), tenantId: this.appStore.tenantId(),
+    };
   }
 
   /** «Fotos erneut suchen»: merges newly found photos into the local track (TrackerStore.reattachPhotos). */

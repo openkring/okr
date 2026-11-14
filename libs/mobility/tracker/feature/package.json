@@ -24,6 +24,8 @@
     "@ionic/angular": "*",
     "rxjs": "*",
     "@capacitor/push-notifications": "*",
-    "@okr/trip-feature": "*"
+    "@okr/trip-feature": "*",
+    "@okr/travel-journal-data-access": "*",
+    "@okr/travel-journal-util": "*"
   }
 }

@@ -60,6 +60,12 @@
     },
     {
       "path": "../../../shared/util-angular/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../travel/journal/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../travel/journal/util/tsconfig.lib.json"
     }
   ]
 }

@@ -15,6 +15,7 @@
     "@okr/travel-journal-util": "*",
     "@okr/shared-config": "*",
     "firebase": "*",
-    "pmtiles": "*"
+    "pmtiles": "*",
+    "@capacitor/network": "*"
   }
 }

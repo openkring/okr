@@ -15,7 +15,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { convertDateFormatToString, DateFormat, getTodayStr } from '@okr/shared-util-core';
 import {
   ChangeDraft, JournalBookService, JournalDb, JournalIcebergService, JournalIdentityService, JournalLockService, JournalPeerService, JournalPhotos, JournalSyncService, JournalWebWriter, OsmExtract, PickedPhoto, PickedVideo, SkippedPhoto, VideoSkipReason,
-  toBase64,
+  importTrackPhotos as importTrackPhotoFiles, toBase64,
 } from '@okr/travel-journal-data-access';
 import {
   BOOK_I18N_KEYS, BOOK_LABEL_MAX, journalPeriod, JournalFormModel, removableAuthorKeys, authorsWithout, bookLabelsOf, JournalBookI18n, bookPrintCandidates, entityStateKey, hasOthersSections, pagesOf, PRINT_FILL_LONG_PX, PRINT_FILL_SHORT_PX, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
@@ -24,7 +24,7 @@ import {
   JournalLock, LOCK_HEARTBEAT_MS, LOCK_TTL_MS, lockedBy, mergeLocks, BoundAuthor, JournalWriteSlow, mergePending,
   AreaLayer, areaForWrite, areaLayerTilePlan, BaseLayerOption, baseLayerOptions, Bbox, finishRun, isUsable, layerDetailLevels, layerKindsFor,
   layerTilesToFree, MapLayerKind, MapSource, migrateOfflineMap, NO_OFFLINE_LAYER, offlineAreaKey, OfflineLayerStatus, parseOfflineLayer, pickBaseLayer,
-  localWallClock, trackCopyOf, TrackCopyInput, trackKeyOf, trackOf, trackPhotoPlan, trackRecordFields, tracksOf, TrackView,
+  trackCopyOf, TrackCopyInput, trackKeyOf, trackOf, trackPhotoPlan, trackRecordFields, tracksOf, TrackView,
 } from '@okr/travel-journal-util';
 import type { IcebergSnapshot } from '@okr/travel-journal-util';
 
@@ -451,42 +451,9 @@ export const JournalStore = signalStore(
      * browser cannot reach a Photos library: every photo is skipped there.
      */
     async function importTrackPhotos(journalKey: string, photos: TrackPhoto[]): Promise<{ drafts: ChangeDraft[]; keys: Record<string, string>; skipped: number }> {
-      const drafts: ChangeDraft[] = [];
-      const keys: Record<string, string> = {};
-      if (!store.native()) return { drafts, keys, skipped: photos.length };
-      let skipped = 0;
-      for (const photo of photos) {
-        const name = crypto.randomUUID();
-        const file2048 = `${name}-2048.jpg`;
-        const file400 = `${name}-400.jpg`;
-        try {
-          const large = await JournalPhotos.exportOriginal({ journalKey, localIdentifier: photo.assetId, file: file2048, fillLongPx: 2048, fillShortPx: 1 });
-          if ('skipped' in large) {
-            skipped++;
-            continue;
-          }
-          const small = await JournalPhotos.exportOriginal({ journalKey, localIdentifier: photo.assetId, file: file400, fillLongPx: 400, fillShortPx: 1 });
-          if ('skipped' in small) {
-            await JournalPhotos.deleteFile({ journalKey, file: file2048 }).catch(() => undefined);
-            skipped++;
-            continue;
-          }
-          const key = crypto.randomUUID();
-          keys[photo.assetId] = key;
-          drafts.push({
-            journalKey, entity: 'image', entityKey: key, op: 'create',
-            fields: {
-              journalKey, takenAt: localWallClock(photo.takenAt) || undefined, latitude: photo.lat, longitude: photo.lng,
-              width: large.width, height: large.height, path2048: `journals/${journalKey}/${file2048}`, path400: `journals/${journalKey}/${file400}`,
-              localIdentifier: photo.assetId,
-            },
-          });
-        } catch (error) {
-          console.warn('journal: a track photo could not be imported', photo.assetId, error);
-          skipped++;
-        }
-      }
-      return { drafts: drafts.map((d) => ({ ...d, fields: stripUndefined(d.fields) })), keys, skipped };
+      if (!store.native()) return { drafts: [], keys: {}, skipped: photos.length };
+      const { drafts, keys, skipped } = await importTrackPhotoFiles(journalKey, photos); // shared with the iPhone's outbox
+      return { drafts, keys, skipped };
     }
 
     /** Re-reads the log after a download; keeps records a write added meanwhile. */

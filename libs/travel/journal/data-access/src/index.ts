@@ -10,3 +10,7 @@ export * from './lib/journal-book.service';
 export * from './lib/journal-lock.service';
 export * from './lib/journal-web-writer.service';
 export * from './lib/journal-iceberg.service';
+export * from './lib/journal-track-photos';
+export * from './lib/journal-outbox-db';
+export * from './lib/journal-outbox.service';
+export * from './lib/journal-outbox-peer.service';

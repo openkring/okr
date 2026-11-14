@@ -128,6 +128,34 @@ export const TRACKER_I18N_KEYS = {
   link_delete_date: PFX + 'link.delete_date', // single braces: {date}
   link_delete_open: PFX + 'link.delete_open',
   detail_delete_date: PFX + 'detail.delete_date', // single braces: {date}
+  journal_send: PFX + 'journal.send',
+  journal_prepare: PFX + 'journal.prepare',
+  journal_choose_title: PFX + 'journal.choose_title',
+  journal_choose_send: PFX + 'journal.choose_send',
+  journal_untitled: PFX + 'journal.untitled',
+  journal_none: PFX + 'journal.none',
+  journal_none_offline: PFX + 'journal.none_offline',
+  journal_preparing: PFX + 'journal.preparing',
+  journal_already: PFX + 'journal.already',
+  journal_waiting: PFX + 'journal.waiting',
+  journal_sent: PFX + 'journal.sent',
+  journal_photos_skipped: PFX + 'journal.photos_skipped', // single braces: {count}
+  journal_searching: PFX + 'journal.searching',
+  journal_sending: PFX + 'journal.sending', // single braces: {names}
+  journal_delivered: PFX + 'journal.delivered',
+  journal_stopped: PFX + 'journal.stopped',
+  journal_stop: PFX + 'journal.stop',
+  journal_no_secret: PFX + 'journal.no_secret',
+  journal_busy: PFX + 'journal.busy',
+  journal_error: PFX + 'journal.error',
+  journal_prepare_title: PFX + 'journal.prepare_title',
+  journal_prepare_offline: PFX + 'journal.prepare_offline',
+  journal_preparing_journals: PFX + 'journal.preparing_journals',
+  journal_ready: PFX + 'journal.ready',
+  journal_not_ready: PFX + 'journal.not_ready',
+  journal_prepare_hint: PFX + 'journal.prepare_hint',
+  journal_waiting_count: PFX + 'journal.waiting_count', // single braces: {count}
+  journal_ok: PFX + 'journal.ok',
   common_save: PFX + 'common.save',
   common_cancel: PFX + 'common.cancel',
 } satisfies Record<string, string>;
