@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, Signal } from '@angular/core';
-import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonContent, IonGrid, IonRow, ModalController } from '@ionic/angular';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonCol, IonContent, IonGrid, IonRow, ModalController } from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
+import { SvgIconPipe } from '@okr/shared-pipes';
 import { Header } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { ImageLayoutId, imageLayoutsFor, resolveImageLayout, SECTION_I18N_KEYS, SectionI18n } from '@okr/cms-section-util';
@@ -24,11 +25,14 @@ const keyOf = (id: ImageLayoutId): string => id.replace(/-(\w)/g, (_, c: string)
   selector: 'okr-image-layout-select-modal',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Header, ImageLayoutPreview, IonContent, IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCardSubtitle],
+  imports: [Header, ImageLayoutPreview, IonContent, IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, SvgIconPipe],
   styles: [`
     ion-card { margin: 0; }
     ion-card.current { outline: 2px solid var(--ion-color-primary); outline-offset: -2px; }
     ion-card-content { padding-top: 0; }
+    .pick { display: block; width: 100%; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: start; cursor: pointer; }
+    .description { margin: 0 0 8px; color: var(--ion-color-medium); font-size: 0.85rem; }
+    .check { vertical-align: middle; margin-inline-start: 6px; color: var(--ion-color-primary); }
   `],
   template: `
     <okr-header [i18n]="{ title: i18n.layout_title() }" [isModal]="true" />
@@ -37,14 +41,19 @@ const keyOf = (id: ImageLayoutId): string => id.replace(/-(\w)/g, (_, c: string)
         <ion-row>
           @for (id of layouts(); track id) {
             <ion-col size="6" size-md="3">
-              <ion-card button="true" [class.current]="id === resolved()" [attr.aria-current]="id === resolved() ? 'true' : null" (click)="select(id)">
-                <ion-card-header>
-                  <ion-card-title>{{ text(id, 'label')() }}</ion-card-title>
-                  <ion-card-subtitle>{{ text(id, 'description')() }}</ion-card-subtitle>
-                </ion-card-header>
-                <ion-card-content>
-                  <okr-image-layout-preview [layout]="id" [count]="previewCount()" [label]="text(id, 'label')()" />
-                </ion-card-content>
+              <ion-card [class.current]="id === resolved()">
+                <button type="button" class="pick" [attr.aria-pressed]="id === resolved()" (click)="select(id)">
+                  <ion-card-header>
+                    <ion-card-title>
+                      {{ text(id, 'label')() }}
+                      @if (id === resolved()) { <ion-icon class="check" src="{{ 'checkmark' | svgIcon }}" aria-hidden="true" /> }
+                    </ion-card-title>
+                  </ion-card-header>
+                  <ion-card-content>
+                    <p class="description">{{ text(id, 'description')() }}</p>
+                    <okr-image-layout-preview [layout]="id" [count]="previewCount()" aria-hidden="true" />
+                  </ion-card-content>
+                </button>
               </ion-card>
             </ion-col>
           }
