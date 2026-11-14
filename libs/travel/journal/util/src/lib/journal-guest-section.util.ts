@@ -1,6 +1,13 @@
 import { HeroConfig, ImageConfig, SectionModel } from '@okr/shared-models';
 import { htmlToPlainText } from './journal-forms.util';
 import { isJournalSectionType, JournalSectionType, sectionModelOf } from './journal-section.util';
+import { trackSummary } from './journal-track-pick.util';
+import { TrackCopy, TrackCopyPhoto } from './journal-track.util';
+
+/** A track photo with its signed urls (structurally `GuestTrackPhotoView` of the data-access lib). */
+export interface GuestTrackPhotoInput extends TrackCopyPhoto { url: string; thumb: string }
+/** The track of a track section as the callable returns it (structurally `GuestTrackView`): encoded sections, signed photos. */
+export type GuestTrackInput = Pick<TrackCopy, 'name' | 'startedAt' | 'distanceM' | 'sections'> & { photos: GuestTrackPhotoInput[] };
 
 /** A section as the `journalGuest` callable returns it (structurally `GuestSectionView` of the data-access lib). */
 export interface GuestSectionInput {
@@ -11,20 +18,26 @@ export interface GuestSectionInput {
   properties: Record<string, unknown>;
   photos: { key: string; url: string }[];
   videos: { key: string; poster: string; url: string }[];
+  /** a track section's track (phase 5); absent when the track is not there and from an older server */
+  track?: GuestTrackInput;
 }
 
 /** One clip of a video section: poster and mp4 are signed urls ('' = not uploaded yet). */
 export interface GuestClip { key: string; poster: string; src?: string }
 
 /** A guest section ready for `okr-journal-section`: the CMS model with display urls, its clips, and whether it leads. */
-export interface GuestSectionItem { section: SectionModel; clips: GuestClip[]; lead: boolean; authorName: string }
+export interface GuestSectionItem {
+  section: SectionModel; clips: GuestClip[]; lead: boolean; authorName: string;
+  /** track sections only: the track the section shows */
+  track?: GuestTrackInput;
+}
 
 /**
  * A guest section as a CMS `SectionModel` (spec 1.154 phase 2). The payload's image references name journal images in
  * `ImageConfig.label` with an empty url (by design); the display url comes from the signed `photos` of the same key.
  * An image without a signed photo is left out of a list (never a blank tile); a hero cover without one keeps ''.
  */
-export function guestSectionModelOf(input: GuestSectionInput, tenantId: string): { section: SectionModel; clips: GuestClip[] } {
+export function guestSectionModelOf(input: GuestSectionInput, tenantId: string): { section: SectionModel; clips: GuestClip[]; track?: GuestTrackInput } {
   const model = sectionModelOf({
     key: input.key, type: input.type, title: input.title, htmlContent: input.html, properties: input.properties,
     order: '', authorKey: '', hlcs: {}, conflict: false,
@@ -42,7 +55,22 @@ export function guestSectionModelOf(input: GuestSectionInput, tenantId: string):
     ? (properties['clips'] as ImageConfig[]).map((c) => videos.get(c.label)).filter((v): v is GuestClip & { url: string } => v !== undefined)
       .map((v) => ({ key: v.key, poster: v.poster, src: v.url || undefined }))
     : [];
-  return { section: { ...model, properties } as SectionModel, clips };
+  // a map's properties pass unchanged (layer, zoom, showRoute); a track section shows the track of the payload, never urls from properties
+  return { section: { ...model, properties } as SectionModel, clips, ...(input.type === 'track' && input.track ? { track: input.track } : {}) };
+}
+
+/** A track section as `okr-journal-section` takes it: the encoded sections, the summary line and the photos by their signed urls. */
+export function guestTrackData(track: GuestTrackInput, fallbackName: string, altOf: (n: number) => string): {
+  track: Pick<TrackCopy, 'sections'>; summary: string;
+  photos: { imageKey: string; lat: number; lng: number; thumb: string; url: string; alt: string }[];
+} {
+  return {
+    track: { sections: track.sections },
+    summary: trackSummary(track, fallbackName),
+    photos: track.photos.filter((p) => p.url !== '').map((p, i) => ({
+      imageKey: p.imageKey, lat: p.lat, lng: p.lng, thumb: p.thumb || p.url, url: p.url, alt: altOf(i + 1),
+    })),
+  };
 }
 
 /** A hero shows only with a cover the guest can load; without one the page shows the footprint's plain title and facts. */
@@ -52,9 +80,9 @@ export function heroHasCover(section: SectionModel): boolean {
 
 /**
  * Whether a guest section has anything to show: a hero its cover, an article text or a photo (or a title), an album
- * a photo, a video a clip. Empty sections — the empty article every footprint starts with — are left out.
+ * a photo, a video a clip, a map always (the footprint's position), a track its track data. Empty sections — the empty article every footprint starts with — are left out.
  */
-function guestShows(section: SectionModel, clips: GuestClip[]): boolean {
+function guestShows(section: SectionModel, clips: GuestClip[], track: GuestTrackInput | undefined): boolean {
   const images = (section.properties as unknown as { images?: unknown[] })?.images;
   switch (section.type) {
     case 'hero': return heroHasCover(section);
@@ -62,6 +90,8 @@ function guestShows(section: SectionModel, clips: GuestClip[]): boolean {
       return (section.title ?? '').trim() !== '' || htmlToPlainText(section.content?.htmlContent ?? '') !== '' || (Array.isArray(images) && images.length > 0);
     case 'album': return Array.isArray(images) && images.length > 0;
     case 'video': return clips.length > 0;
+    case 'map': return true; // it has the footprint's position
+    case 'track': return (track?.sections.length ?? 0) > 0; // an older server, or a track that is gone: nothing to show
     default: return false;
   }
 }
@@ -78,7 +108,7 @@ export function guestSectionItems(
   const known = sections.filter((s) => isJournalSectionType(s.type));
   const firstHero = known.find((s) => s.type === 'hero');
   const items = known.map((s) => ({ ...guestSectionModelOf(s, tenantId), lead: s === firstHero, authorName: s.authorName }))
-    .filter((item) => guestShows(item.section, item.clips));
+    .filter((item) => guestShows(item.section, item.clips, item.track));
   const lead = items.find((item) => item.lead);
   return [...(lead ? [lead] : []), ...items.filter((item) => item !== lead)];
 }

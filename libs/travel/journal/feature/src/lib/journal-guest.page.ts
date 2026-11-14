@@ -5,12 +5,12 @@ import { ActionSheetController, IonContent, IonHeader, IonSpinner, ModalControll
 import { COMMENT_LIST_I18N_KEYS, CommentListI18n } from '@okr/comment-util';
 import { GoogleMapType, GoogleTiles } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
-import { IMAGE_STYLE_SHAPE, ImageConfig, SectionFeedback, SectionModel } from '@okr/shared-models';
+import { IMAGE_STYLE_SHAPE, ImageConfig, MapConfig, SectionFeedback, SectionModel } from '@okr/shared-models';
 import { MapView, RouteMap, RoutePin, showImageSlider } from '@okr/shared-ui';
 import { fill, registerBundledIcons, sunTimesLine } from '@okr/shared-util-core';
 import { GuestFeedbackView, GuestFootprintView, GuestJournalView, GuestSectionView, guestErrorOf, JournalGuestService } from '@okr/travel-journal-data-access';
 import {
-  baseLayerOptions, filledHero, FlyPoint, FlyStop, flyoverTimeline, footprintOverlayText, GIBS_BLUE_MARBLE, guestSectionItems, JOURNAL_I18N_KEYS,
+  baseLayerOptions, BaseLayerOption, Bbox, boundsOf, filledHero, guestTrackData, GuestTrackInput, trackPointsOf, trackTileSources, FlyPoint, FlyStop, flyoverTimeline, footprintOverlayText, GIBS_BLUE_MARBLE, guestSectionItems, JOURNAL_I18N_KEYS,
   imageTitle, JournalI18n, parentKeyOf, pickBaseLayer, stopTime, travelStartDate, weatherLine, weatherOf,
 } from '@okr/travel-journal-util';
 import { weatherCodeToIcon, WEATHER_ICON_SET } from '@okr/weather-util';
@@ -23,7 +23,7 @@ import {
 import { JOURNAL_ICONS } from './journal-icons';
 import { openJournalFlyover } from './journal-flyover-open';
 import { GoogleTemplates, JournalGoogleSessions } from './journal-google-sessions';
-import { JournalSection } from './journal-section';
+import { JournalSection, JournalSectionMap, JournalSectionMapI18n, JournalSectionTrack } from './journal-section';
 
 const browserOnline = (): boolean => typeof navigator === 'undefined' || navigator.onLine !== false;
 
@@ -118,6 +118,7 @@ interface OpenImage { sectionKey: string; image: ImageConfig; index: number }
               @if (!item.lead && item.authorName) { <div class="by">{{ item.authorName }}</div> }
               <okr-journal-section [section]="item.section" [clips]="item.clips" [overlayText]="item.overlayText" [chipIcon]="item.chipIcon"
                 [notLoaded]="i18n.video_not_loaded()" [imageBadges]="item.badges"
+                [map]="item.map" [track]="item.track" [mapI18n]="mapI18n()"
                 [emitImageClicks]="item.feedback.imageComments || item.feedback.imageReactions" (imageSelected)="tapImage(item, $event)" />
               @if (item.feedback.comments || item.feedback.reactions || item.image) {
                 <okr-journal-feedback [section]="item.thread" [feedback]="item.feedback" [image]="item.image" [busy]="sending()"
@@ -211,14 +212,63 @@ export class JournalGuestPage {
     const byKey = new Map((fp.sections ?? []).map((s) => [s.key, s]));
     return guestSectionItems(fp.sections ?? [], '').map((item) => {
       const feedback = this.feedbackOf(item.section, byKey.get(item.section.okey));
+      const resolved = {
+        map: item.section.type === 'map' ? this.mapOf(item.section, fp) : undefined,
+        track: item.track ? this.trackOf(item.track) : undefined,
+      };
       return item.lead
         ? {
-          ...item, ...feedback, section: filledHero(item.section, facts), chipIcon,
+          ...item, ...feedback, ...resolved, section: filledHero(item.section, facts), chipIcon,
           overlayText: footprintOverlayText(facts, startDate, (day) => fill(this.i18n.hero_day(), { day })),
         }
-        : { ...item, ...feedback, chipIcon: undefined, overlayText: undefined };
+        : { ...item, ...feedback, ...resolved, chipIcon: undefined, overlayText: undefined };
     });
   });
+
+  /** The texts of the map and track sections. */
+  protected readonly mapI18n = computed<JournalSectionMapI18n>(() => ({
+    layerSwitch: this.i18n.layer_switch(), noPosition: this.i18n.map_no_position(), trackMissing: this.i18n.track_missing(),
+    elevation: { elevation_title: this.i18n.track_elevation_title, elevation_gain: this.i18n.track_elevation_gain, elevation_loss: this.i18n.track_elevation_loss },
+  }));
+
+  /**
+   * The base layers a guest's section maps offer: the public ones only (no Google: a guest has no Map Tiles session
+   * for these sections and downloads nothing). Without a Google option the list is the world map, plus swisstopo in
+   * Switzerland (`baseLayerOptions` with online sources only, no areas).
+   */
+  private publicLayers(bbox: Bbox | undefined): BaseLayerOption[] {
+    return baseLayerOptions({ online: true, google: {}, areas: [], usable: new Set(), view: bbox, tilesBaseUrl: '' });
+  }
+
+  /**
+   * A map section as a guest sees it (decision 5): centred on the footprint at the section's zoom, the footprint's pin,
+   * the route of the payload (`GuestJournalView.route`, published footprints only) when the section shows it. The
+   * section's own layer when it is a public one, else the world map. The page recomputes often; `okr-journal-section`
+   * compares the data by value.
+   */
+  private mapOf(model: SectionModel, fp: GuestFootprintView): JournalSectionMap {
+    const config = model.properties as unknown as MapConfig;
+    const center: [number, number] | undefined = typeof fp.latitude === 'number' && typeof fp.longitude === 'number' ? [fp.latitude, fp.longitude] : undefined;
+    const options = this.publicLayers(center ? [center[1], center[0], center[1], center[0]] : undefined);
+    const selectedBaseId = pickBaseLayer(options, config.layer);
+    const pins: RoutePin[] = center ? [{ key: fp.key, lat: center[0], lng: center[1], label: fp.title, thumbnailUrl: this.thumbOf(fp) }] : [];
+    return {
+      center, zoom: config.zoom, pins, route: config.showRoute ? (this.view()?.route ?? []) : [],
+      baseLayers: routeBaseLayers(options, this.i18n), selectedBaseId,
+    };
+  }
+
+  /**
+   * A track section as a guest sees it (decision 6): the payload's track (encoded sections, photos with signed urls
+   * by image key), and raster, non-Google tiles (R4) from the public layers around the track.
+   */
+  private trackOf(track: GuestTrackInput): JournalSectionTrack {
+    const data = guestTrackData(track, this.i18n.track_untitled(), (n) => fill(this.i18n.image_photo(), { n }));
+    const bbox = boundsOf(trackPointsOf(data.track).flatMap((s) => s.points));
+    const options = this.publicLayers(bbox);
+    const tiles = trackTileSources(options, pickBaseLayer(options, undefined), true);
+    return { ...data, ...(tiles ? { tiles } : {}) };
+  }
   protected readonly hasHero = computed(() => this.sections().some((s) => s.lead));
 
   /**

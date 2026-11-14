@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { AlbumConfig, HeroConfig, ViewPosition } from '@okr/shared-models';
-import { guestSectionItems, GuestSectionInput, guestSectionModelOf } from './journal-guest-section.util';
+import { guestSectionItems, GuestSectionInput, guestSectionModelOf, guestTrackData, GuestTrackInput } from './journal-guest-section.util';
 
 const img = (label: string) => ({ label, url: '', altText: 'x' });
 const input = (p: Partial<GuestSectionInput>): GuestSectionInput =>
@@ -47,7 +47,7 @@ describe('journal guest sections', () => {
       withAuthor(input({ key: 'a', type: 'article', html: '<p>Hallo</p>' })),
       withAuthor(input({ key: 'h1', type: 'hero', properties: { hero: img('c1') }, photos: [{ key: 'c1', url: 'https://x/c' }] })),
       withAuthor(input({ key: 'h2', type: 'hero', properties: { hero: img('c1') }, photos: [{ key: 'c1', url: 'https://x/c' }] })),
-      withAuthor({ ...input({ key: 'm' }), type: 'map' as never }),
+      withAuthor({ ...input({ key: 'm' }), type: 'gallery' as never }),
     ], 'bkg');
     expect(items.map((i) => [i.section.okey, i.lead])).toEqual([['h1', true], ['a', false], ['h2', false]]);
   });
@@ -71,5 +71,48 @@ describe('journal guest sections', () => {
       withAuthor(input({ key: 'v1', type: 'video', properties: { clips: [img('v1')] }, videos: [{ key: 'v1', poster: 'p1', url: 'u1' }] })),
     ], 'bkg');
     expect(items.map((i) => i.section.okey)).toEqual(['a1', 'b1', 'v1']);
+  });
+
+  describe('map and track sections (phase 5)', () => {
+    const track = (p: Partial<GuestTrackInput> = {}): GuestTrackInput => ({
+      name: 'Uetliberg', startedAt: '2026-08-04T08:00:00.000Z', distanceM: 12300,
+      sections: [{ mode: 'walk', distanceM: 12300, encoded: '_p~iF~ps|U' }],
+      photos: [{ imageKey: 'i1', lat: 47.3, lng: 8.5, takenAt: '2026-08-04T09:00:00.000Z', url: 'https://x/1', thumb: 'https://x/1t' }], ...p,
+    } as GuestTrackInput);
+
+    it('shows a map section always, with its properties unchanged', () => {
+      const items = guestSectionItems([withAuthor(input({ key: 'm', type: 'map', properties: { zoom: 11, layer: 'world', showRoute: true } }))], 'bkg');
+      expect(items.map((i) => i.section.okey)).toEqual(['m']);
+      expect(items[0].section.properties).toMatchObject({ zoom: 11, layer: 'world', showRoute: true });
+      expect(items[0].track).toBeUndefined();
+    });
+
+    it('shows a track section only with its track data and carries it on the item', () => {
+      const withTrack = guestSectionItems([withAuthor(input({ key: 't', type: 'track', track: track() }))], 'bkg');
+      expect(withTrack.map((i) => i.section.okey)).toEqual(['t']);
+      expect(withTrack[0].track?.name).toBe('Uetliberg');
+      expect(guestSectionItems([withAuthor(input({ key: 't', type: 'track' }))], 'bkg')).toEqual([]); // older server / track gone
+      expect(guestSectionItems([withAuthor(input({ key: 't', type: 'track', track: track({ sections: [] }) }))], 'bkg')).toEqual([]);
+    });
+
+    it('takes no photo urls from the properties of a track section', () => {
+      const [item] = guestSectionItems([withAuthor(input({ key: 't', type: 'track', track: track(), properties: { trackKey: 'trk__j__t', photos: ['https://evil/x'] } }))], 'bkg');
+      expect(item.track?.photos.map((p) => p.url)).toEqual(['https://x/1']);
+    });
+
+    it('builds the track data: encoded sections, summary, photos by their signed urls', () => {
+      const data = guestTrackData(track(), 'Strecke', (n) => `Foto ${n}`);
+      expect(data.track.sections).toHaveLength(1);
+      expect(data.summary).toBe('Uetliberg · 04.08.2026 · 12.3 km');
+      expect(data.photos).toEqual([{ imageKey: 'i1', lat: 47.3, lng: 8.5, thumb: 'https://x/1t', url: 'https://x/1', alt: 'Foto 1' }]);
+    });
+
+    it('leaves out a photo without a url and falls back to the full url for a missing thumb', () => {
+      const data = guestTrackData(track({ photos: [
+        { imageKey: 'a', lat: 1, lng: 2, takenAt: '', url: '', thumb: '' },
+        { imageKey: 'b', lat: 1, lng: 2, takenAt: '', url: 'https://x/b', thumb: '' },
+      ] }), 'Strecke', (n) => `${n}`);
+      expect(data.photos.map((p) => [p.imageKey, p.thumb, p.alt])).toEqual([['b', 'https://x/b', '1']]);
+    });
   });
 });
