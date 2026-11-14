@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
 
-import { ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, FooterConfig, FooterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FormSectionConfig, AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TilesConfig, TilesSection, NewsConfig, NewsSection, SectionCta, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
+import { ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, FooterConfig, FooterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FormSectionConfig, AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroConfig, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TilesConfig, TilesSection, NewsConfig, NewsSection, SectionCta, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
 import { Chips, ErrorNote, ImageConfigEdit, NotesInput, NotesInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole, sanitizeFileName } from '@okr/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS, IMAGE_MIMETYPES } from '@okr/shared-constants';
@@ -51,6 +51,7 @@ import { TilesConfiguration } from './tiles-configuration';
 import { NewsConfiguration } from './news-configuration';
 import { CtaConfiguration } from './cta-configuration';
 import { ArticleEmphasis, KickerConfiguration } from './kicker-configuration';
+import { HeroConfiguration } from './hero-configuration';
 import { TimelineConfiguration } from './timeline-configuration';
 import { AdventConfiguration } from './advent-configuration';
 import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOption } from './form-section-configuration';
@@ -67,7 +68,7 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
     MapConfiguration, TrackerConfiguration, TableGridConfiguration,  TableStyleConfiguration, TableHeader,
     TableBody, EventsConfiguration, InvitationsConfiguration, ImagesConfiguration, CalendarConfiguration, ChartConfiguration,
     MemberConfiguration, RagConfiguration, FormSectionConfiguration, SankeyConfiguration, SpiderConfiguration, TocConfiguration, TestimonialConfiguration, TimelineConfiguration, AdventConfiguration,
-    TilesConfiguration, NewsConfiguration, CtaConfiguration, KickerConfiguration
+    TilesConfiguration, NewsConfiguration, CtaConfiguration, KickerConfiguration, HeroConfiguration
 ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -283,6 +284,14 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
               [storagePath]="storagePath()"
               [showAdvanced]="showAdvanced()"
               (uploadRequested)="onHeroImageUpload('hero')"
+            />
+          }
+          @if(heroProperties(); as heroProperties) {
+            <okr-hero-config
+              [formData]="heroProperties" (formDataChange)="onHeroPropertiesChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+              [errors]="errors()"
             />
           }
           <okr-cta-config
@@ -750,6 +759,11 @@ export class SectionForm {
   protected articleEmphasis = computed<ArticleEmphasis>(() => {
     const section = this.formData();
     return section.type === 'article' ? section.properties?.emphasis ?? 'none' : 'none';
+  });
+  /** the whole hero config, for the overlay / height / focus card */
+  protected heroProperties = computed<HeroConfig | undefined>(() => {
+    const section = this.formData();
+    return section.type === 'hero' ? section.properties : undefined;
   });
   protected heroCtas = computed<SectionCta[]>(() => {
     const section = this.formData();
@@ -1312,6 +1326,13 @@ export class SectionForm {
     const section = this.formData();
     if (section.type === 'article') {
       this.formData.set({ ...section, properties: { ...section.properties, emphasis: emphasis ?? 'none' } } as ArticleSection);
+    }
+  }
+
+  protected onHeroPropertiesChange(properties: HeroConfig): void {
+    const section = this.formData();
+    if (section.type === 'hero') {
+      this.formData.set({ ...section, properties } as HeroSection);
     }
   }
 

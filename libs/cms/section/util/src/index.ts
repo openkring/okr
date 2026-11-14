@@ -20,6 +20,7 @@ export * from './lib/calendar-section.validations';
 export  * from './lib/chart-section.validations';
 export * from './lib/chat-section.validations';
 export * from './lib/hero-section.validations';
+export * from './lib/hero.util';
 export * from './lib/iframe-section.validations';
 export * from './lib/map-section.validations';
 export * from './lib/people-section.validations';

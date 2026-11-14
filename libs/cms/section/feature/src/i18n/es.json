@@ -443,7 +443,70 @@
     }
   },
   "hero": {
-    "label": "Hero"
+    "label": "Hero",
+    "title": "Hero",
+    "subtitle": "Imagen de portada con texto encima: aspecto, altura y encuadre",
+    "segment": {
+      "image": "Imagen",
+      "overlay": "Texto",
+      "layout": "Tamaño"
+    },
+    "imgix": {
+      "label": "Parámetros de imagen adicionales",
+      "placeholder": "p. ej. sat=-30",
+      "helper": "Para usuarios avanzados: instrucciones adicionales de procesamiento de imagen. La imagen de portada la eliges arriba."
+    },
+    "show": {
+      "title": "Mostrar el título",
+      "subtitle": "Mostrar el subtítulo",
+      "coords": "Mostrar las coordenadas",
+      "weather": "Mostrar el tiempo"
+    },
+    "text": {
+      "label": "Etiqueta propia",
+      "placeholder": "p. ej. Día 3",
+      "helper": "Un texto corto que aparece como etiqueta adicional sobre la imagen."
+    },
+    "position": {
+      "label": "Posición",
+      "bottomLeft": "Abajo a la izquierda",
+      "bottomCenter": "Abajo en el centro",
+      "center": "En el centro",
+      "topLeft": "Arriba a la izquierda"
+    },
+    "color": "Color del texto",
+    "darkening": {
+      "label": "Oscurecimiento",
+      "placeholder": "0 a 80",
+      "helper": "Cuánto se oscurece la imagen detrás del texto, en porcentaje (0 a 80)."
+    },
+    "fontSize": {
+      "label": "Tamaño del texto",
+      "s": "Pequeño",
+      "m": "Mediano",
+      "l": "Grande"
+    },
+    "height": {
+      "label": "Altura",
+      "default": "Como antes",
+      "s": "Baja",
+      "m": "Media",
+      "l": "Alta",
+      "full": "Pantalla completa",
+      "px": "Valor propio en píxeles"
+    },
+    "heightPx": {
+      "label": "Altura en píxeles",
+      "placeholder": "p. ej. 400",
+      "helper": "Un número entero mayor que 0."
+    },
+    "focus": {
+      "label": "Encuadre de la imagen",
+      "center": "Centro",
+      "top": "Arriba",
+      "bottom": "Abajo",
+      "helper": "Qué parte de la imagen sigue visible cuando se recorta."
+    }
   },
   "icon": {
     "label": "Símbolo",

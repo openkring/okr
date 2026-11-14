@@ -1,10 +1,11 @@
+import { NgStyle } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonButton, IonChip, IonCol, IonGrid, IonIcon, IonLabel, IonRow } from '@ionic/angular';
 
-import { HeroSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE } from '@okr/shared-models';
+import { HERO_OVERLAY_DEFAULT, HeroSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { validCtas } from '@okr/cms-section-util';
+import { HeroOverlayText, heroHeightCss, heroImgixParams, heroObjectPosition, heroOverlayCss, validCtas } from '@okr/cms-section-util';
 import { Img, Spinner } from '@okr/shared-ui';
 
 import { openSectionLink } from './section-link';
@@ -13,7 +14,7 @@ import { openSectionLink } from './section-link';
   selector: 'okr-hero-section',
   standalone: true,
   imports: [
-    Spinner, Img, SvgIconPipe,
+    NgStyle, Spinner, Img, SvgIconPipe,
     IonGrid, IonRow, IonCol, IonChip, IonLabel, IonIcon, IonButton
   ],
   styles: [`
@@ -22,7 +23,13 @@ import { openSectionLink } from './section-link';
     .hero-container { position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center; min-height: min(700px, 60vh); }
     .hero-image { position: absolute; inset: 0; display: block; padding: 0; z-index: 1; }
     :host ::ng-deep .hero-image .image-container,
-    :host ::ng-deep .hero-image img { width: 100% !important; height: 100% !important; object-fit: cover !important; opacity: 0.85; }
+    :host ::ng-deep .hero-image img { width: 100% !important; height: 100% !important; object-fit: cover !important; object-position: var(--hero-focus, 50% 50%) !important; opacity: 0.85; }
+    /* the journal's text over the cover photo: one layer over the image (gradient + aligned text) */
+    .hero-overlay { position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; padding: 16px 20px; box-sizing: border-box; }
+    .overlay-title { font-size: 1em; font-weight: 700; line-height: 1.2; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45); }
+    .overlay-subtitle { font-size: 0.55em; margin-top: 4px; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45); }
+    .overlay-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; font-size: 0.5em; }
+    .overlay-chips ion-chip { color: inherit; border: 1px solid currentColor; background: transparent; }
     .hero-form {background-color: rgba(255, 255, 255); padding: 20px; border-radius: 10px; width: 600px; max-width: 600px; width: 90%; text-align: center; z-index: 5;}
     .kicker { text-align: center; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ion-color-secondary); }
     .ctas { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
@@ -33,9 +40,26 @@ import { openSectionLink } from './section-link';
   `],
   template: `
     @if(section(); as section) {
-      <div class="hero-container">
-        <okr-img class="hero-image" [image]="heroImage()" [imageStyle]="imageStyle()" />
-        @if (hasCard()) {
+      <div class="hero-container" [style.min-height]="heightCss()" [style.--hero-focus]="objectPosition()">
+        <okr-img class="hero-image" [image]="heroImage()" [imageStyle]="heroImageStyle()" />
+        @if (overlayView(); as view) {
+          <div class="hero-overlay" [ngStyle]="view.css">
+            @if (view.title) { <div class="overlay-title">{{ view.title }}</div> }
+            @if (view.subtitle) { <div class="overlay-subtitle">{{ view.subtitle }}</div> }
+            @if (view.chips.length > 0) {
+              <div class="overlay-chips">
+                @for (chip of view.chips; track $index) {
+                  <ion-chip>
+                    @if (chipIcon(); as icon) {
+                      @if (icon.chip === chip) { <ion-icon src="{{ icon.name | svgIcon: icon.set }}" /> }
+                    }
+                    <ion-label>{{ chip }}</ion-label>
+                  </ion-chip>
+                }
+              </div>
+            }
+          </div>
+        } @else if (hasCard()) {
           <ion-grid class="hero-form">
             @if (hasLogo()) {
               <ion-row>
@@ -86,12 +110,45 @@ export class HeroSectionComponent {
   /** an icon in front of the chip with exactly this text (travel journal: the weather chip) */
   public chipIcon = input<{ chip: string; name: string; set: string } | undefined>();
 
+  /** the journal's footprint lines; present = they are drawn over the image instead of the white card */
+  public overlayText = input<HeroOverlayText | undefined>();
+
   // derived values
   protected heroImage = computed(() => this.section()?.properties.hero ?? IMAGE_CONFIG_SHAPE);
   // tbd on heroImage: hasPriority=true, ImageAction.None, isThumbnail=false, fill=true, altText='hero image'
   protected logoImage = computed(() => this.section()?.properties.logo ?? IMAGE_CONFIG_SHAPE);
   // tbd on logoImage: hasPriority=false, ImageAction.None, isThumbnail=false, fill=true, altText='logo image'
   protected imageStyle = computed(() => this.section()?.properties.imageStyle ?? IMAGE_STYLE_SHAPE);
+  /** height and image focus only act when set; absent they leave today's rendering untouched */
+  protected heightCss = computed(() => heroHeightCss(this.section()?.properties.height));
+  protected objectPosition = computed(() => {
+    const focus = this.section()?.properties.focus;
+    return focus ? heroObjectPosition(focus) : null;
+  });
+  /** the imgix crop of the focus is appended to the style's own parameters (the iPad's local file has no imgix) */
+  protected heroImageStyle = computed(() => {
+    const style = this.imageStyle();
+    const config = this.section()?.properties;
+    const extra = config ? heroImgixParams(config) : '';
+    return extra ? { ...style, imgIxParams: [style.imgIxParams, extra].filter(Boolean).join('&') } : style;
+  });
+  /** an overlay config is only applied together with overlayText; the defaults only fill a journal cover without one */
+  protected overlayView = computed(() => {
+    const text = this.overlayText();
+    if (!text) return undefined;
+    const overlay = this.section()?.properties.overlay ?? HERO_OVERLAY_DEFAULT;
+    const chips = [
+      overlay.coords ? text.coords : '',
+      overlay.weather ? text.weather : '',
+      overlay.label.trim(),
+    ].filter((chip) => !!chip);
+    return {
+      css: heroOverlayCss(overlay),
+      title: overlay.title ? text.title : '',
+      subtitle: overlay.subtitle ? text.subtitle : '',
+      chips,
+    };
+  });
   protected kicker = computed(() => this.section()?.properties.kicker?.trim());
   protected ctas = computed(() => validCtas(this.section()?.properties.ctas, 2));
   protected chips = computed(() => this.section()?.properties.chips ?? []);

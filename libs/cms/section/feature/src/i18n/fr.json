@@ -443,7 +443,70 @@
     }
   },
   "hero": {
-    "label": "Hero"
+    "label": "Hero",
+    "title": "Hero",
+    "subtitle": "Image de couverture avec du texte dessus : apparence, hauteur et cadrage",
+    "segment": {
+      "image": "Image",
+      "overlay": "Texte",
+      "layout": "Taille"
+    },
+    "imgix": {
+      "label": "Paramètres d'image supplémentaires",
+      "placeholder": "p. ex. sat=-30",
+      "helper": "Pour les utilisateurs avancés : instructions de traitement d'image supplémentaires. Tu choisis l'image de couverture plus haut."
+    },
+    "show": {
+      "title": "Afficher le titre",
+      "subtitle": "Afficher le sous-titre",
+      "coords": "Afficher les coordonnées",
+      "weather": "Afficher la météo"
+    },
+    "text": {
+      "label": "Étiquette personnalisée",
+      "placeholder": "p. ex. Jour 3",
+      "helper": "Un court texte qui apparaît comme étiquette supplémentaire sur l'image."
+    },
+    "position": {
+      "label": "Position",
+      "bottomLeft": "En bas à gauche",
+      "bottomCenter": "En bas au centre",
+      "center": "Au centre",
+      "topLeft": "En haut à gauche"
+    },
+    "color": "Couleur du texte",
+    "darkening": {
+      "label": "Assombrissement",
+      "placeholder": "0 à 80",
+      "helper": "Intensité de l'assombrissement de l'image derrière le texte, en pourcentage (0 à 80)."
+    },
+    "fontSize": {
+      "label": "Taille du texte",
+      "s": "Petite",
+      "m": "Moyenne",
+      "l": "Grande"
+    },
+    "height": {
+      "label": "Hauteur",
+      "default": "Comme avant",
+      "s": "Basse",
+      "m": "Moyenne",
+      "l": "Haute",
+      "full": "Plein écran",
+      "px": "Valeur personnalisée en pixels"
+    },
+    "heightPx": {
+      "label": "Hauteur en pixels",
+      "placeholder": "p. ex. 400",
+      "helper": "Un nombre entier supérieur à 0."
+    },
+    "focus": {
+      "label": "Cadrage de l'image",
+      "center": "Centre",
+      "top": "Haut",
+      "bottom": "Bas",
+      "helper": "La partie de l'image qui reste visible lorsqu'elle est recadrée."
+    }
   },
   "icon": {
     "label": "Symbole",

@@ -443,7 +443,70 @@
     }
   },
   "hero": {
-    "label": "Hero"
+    "label": "Hero",
+    "title": "Hero",
+    "subtitle": "Cover image with text on top: appearance, height and image crop",
+    "segment": {
+      "image": "Image",
+      "overlay": "Text",
+      "layout": "Size"
+    },
+    "imgix": {
+      "label": "Extra image parameters",
+      "placeholder": "e.g. sat=-30",
+      "helper": "For advanced users: additional image processing instructions. You choose the cover image above."
+    },
+    "show": {
+      "title": "Show title",
+      "subtitle": "Show subtitle",
+      "coords": "Show coordinates",
+      "weather": "Show weather"
+    },
+    "text": {
+      "label": "Custom label",
+      "placeholder": "e.g. Day 3",
+      "helper": "A short text that appears as an extra tag over the image."
+    },
+    "position": {
+      "label": "Position",
+      "bottomLeft": "Bottom left",
+      "bottomCenter": "Bottom centre",
+      "center": "Centre",
+      "topLeft": "Top left"
+    },
+    "color": "Text colour",
+    "darkening": {
+      "label": "Darkening",
+      "placeholder": "0 to 80",
+      "helper": "How much the image behind the text is darkened, in percent (0 to 80)."
+    },
+    "fontSize": {
+      "label": "Font size",
+      "s": "Small",
+      "m": "Medium",
+      "l": "Large"
+    },
+    "height": {
+      "label": "Height",
+      "default": "As before",
+      "s": "Low",
+      "m": "Medium",
+      "l": "High",
+      "full": "Full screen",
+      "px": "Custom value in pixels"
+    },
+    "heightPx": {
+      "label": "Height in pixels",
+      "placeholder": "e.g. 400",
+      "helper": "A whole number greater than 0."
+    },
+    "focus": {
+      "label": "Image focus",
+      "center": "Centre",
+      "top": "Top",
+      "bottom": "Bottom",
+      "helper": "Which part of the image stays visible when it is cropped."
+    }
   },
   "icon": {
     "label": "Icon",

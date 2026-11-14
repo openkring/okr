@@ -443,7 +443,70 @@
     }
   },
   "hero": {
-    "label": "Hero"
+    "label": "Hero",
+    "title": "Hero",
+    "subtitle": "Titelbild mit Text darüber: Darstellung, Höhe und Bildausschnitt",
+    "segment": {
+      "image": "Bild",
+      "overlay": "Text",
+      "layout": "Grösse"
+    },
+    "imgix": {
+      "label": "Weitere Bildparameter",
+      "placeholder": "z.B. sat=-30",
+      "helper": "Für Fortgeschrittene: zusätzliche Anweisungen für die Bildbearbeitung. Das Titelbild wählst du oben."
+    },
+    "show": {
+      "title": "Titel anzeigen",
+      "subtitle": "Untertitel anzeigen",
+      "coords": "Koordinaten anzeigen",
+      "weather": "Wetter anzeigen"
+    },
+    "text": {
+      "label": "Eigene Beschriftung",
+      "placeholder": "z.B. Tag 3",
+      "helper": "Ein kurzer Text, der als zusätzliche Marke über dem Bild erscheint."
+    },
+    "position": {
+      "label": "Position",
+      "bottomLeft": "Unten links",
+      "bottomCenter": "Unten mittig",
+      "center": "In der Mitte",
+      "topLeft": "Oben links"
+    },
+    "color": "Textfarbe",
+    "darkening": {
+      "label": "Abdunkeln",
+      "placeholder": "0 bis 80",
+      "helper": "So stark wird das Bild hinter dem Text abgedunkelt, in Prozent (0 bis 80)."
+    },
+    "fontSize": {
+      "label": "Schriftgrösse",
+      "s": "Klein",
+      "m": "Mittel",
+      "l": "Gross"
+    },
+    "height": {
+      "label": "Höhe",
+      "default": "Wie bisher",
+      "s": "Niedrig",
+      "m": "Mittel",
+      "l": "Hoch",
+      "full": "Ganzer Bildschirm",
+      "px": "Eigener Wert in Pixel"
+    },
+    "heightPx": {
+      "label": "Höhe in Pixel",
+      "placeholder": "z.B. 400",
+      "helper": "Eine ganze Zahl grösser als 0."
+    },
+    "focus": {
+      "label": "Bildausschnitt",
+      "center": "Mitte",
+      "top": "Oben",
+      "bottom": "Unten",
+      "helper": "Welcher Teil des Bildes sichtbar bleibt, wenn es zugeschnitten wird."
+    }
   },
   "icon": {
     "label": "Symbol",

@@ -443,7 +443,70 @@
     }
   },
   "hero": {
-    "label": "Hero"
+    "label": "Hero",
+    "title": "Hero",
+    "subtitle": "Immagine di copertina con testo sopra: aspetto, altezza e inquadratura",
+    "segment": {
+      "image": "Immagine",
+      "overlay": "Testo",
+      "layout": "Dimensione"
+    },
+    "imgix": {
+      "label": "Parametri immagine aggiuntivi",
+      "placeholder": "es. sat=-30",
+      "helper": "Per utenti esperti: istruzioni aggiuntive di elaborazione dell'immagine. L'immagine di copertina la scegli sopra."
+    },
+    "show": {
+      "title": "Mostra il titolo",
+      "subtitle": "Mostra il sottotitolo",
+      "coords": "Mostra le coordinate",
+      "weather": "Mostra il meteo"
+    },
+    "text": {
+      "label": "Etichetta personalizzata",
+      "placeholder": "es. Giorno 3",
+      "helper": "Un breve testo che appare come etichetta aggiuntiva sull'immagine."
+    },
+    "position": {
+      "label": "Posizione",
+      "bottomLeft": "In basso a sinistra",
+      "bottomCenter": "In basso al centro",
+      "center": "Al centro",
+      "topLeft": "In alto a sinistra"
+    },
+    "color": "Colore del testo",
+    "darkening": {
+      "label": "Oscuramento",
+      "placeholder": "da 0 a 80",
+      "helper": "Quanto viene oscurata l'immagine dietro il testo, in percentuale (da 0 a 80)."
+    },
+    "fontSize": {
+      "label": "Dimensione del testo",
+      "s": "Piccola",
+      "m": "Media",
+      "l": "Grande"
+    },
+    "height": {
+      "label": "Altezza",
+      "default": "Come prima",
+      "s": "Bassa",
+      "m": "Media",
+      "l": "Alta",
+      "full": "Schermo intero",
+      "px": "Valore personalizzato in pixel"
+    },
+    "heightPx": {
+      "label": "Altezza in pixel",
+      "placeholder": "es. 400",
+      "helper": "Un numero intero maggiore di 0."
+    },
+    "focus": {
+      "label": "Inquadratura dell'immagine",
+      "center": "Centro",
+      "top": "Alto",
+      "bottom": "Basso",
+      "helper": "Quale parte dell'immagine resta visibile quando viene ritagliata."
+    }
   },
   "icon": {
     "label": "Simbolo",
