@@ -17,7 +17,14 @@
     "custom_use": "als Gast verwenden",
     "label": "Person",
     "beyond_members": "Weitere Personen – keine Mitglieder",
-    "beyond_accounts": "Weitere Personen – ohne App-Zugang"
+    "beyond_accounts": "Weitere Personen – ohne App-Zugang",
+    "select_multi": "Personen wählen",
+    "group": "Gruppe",
+    "group_all": "Alle",
+    "select_all": "Alle auswählen",
+    "confirm": "Übernehmen",
+    "group_empty": "In dieser Gruppe gibt es keine aktiven Mitglieder.",
+    "clear": "Auswahl aufheben"
   },
   "resource": {
     "select": "Resource wählen",

@@ -17,7 +17,14 @@
     "custom_use": "utiliser comme invité",
     "label": "Personne",
     "beyond_members": "Autres personnes – non-membres",
-    "beyond_accounts": "Autres personnes – sans accès à l'app"
+    "beyond_accounts": "Autres personnes – sans accès à l'app",
+    "select_multi": "Choisir des personnes",
+    "group": "Groupe",
+    "group_all": "Tous",
+    "select_all": "Tout sélectionner",
+    "confirm": "Valider",
+    "group_empty": "Ce groupe n'a pas de membres actifs.",
+    "clear": "Annuler la sélection"
   },
   "resource": {
     "select": "Choisir la ressource",

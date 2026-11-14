@@ -17,6 +17,13 @@ export const SHARED_FEATURE_I18N_KEYS = {
   person_custom_use: PFX + 'person.custom_use',
   person_beyond_members: PFX + 'person.beyond_members',
   person_beyond_accounts: PFX + 'person.beyond_accounts',
+  person_select_multi: PFX + 'person.select_multi',
+  person_group: PFX + 'person.group',
+  person_group_all: PFX + 'person.group_all',
+  person_group_empty: PFX + 'person.group_empty',
+  person_select_all: PFX + 'person.select_all',
+  person_confirm: PFX + 'person.confirm',
+  person_clear: PFX + 'person.clear',
   person_label: '@select.label',
 
   resource_select: PFX + 'resource.select',

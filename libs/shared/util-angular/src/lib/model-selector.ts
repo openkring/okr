@@ -14,6 +14,13 @@ export type PersonSelectOptions = {
   accountsFirst?: string;
   /** okeys never offered, e.g. those the caller has already picked. */
   excludeKeys?: string[];
+  /** okey of a group to preselect: only ACTIVE person members of that group are listed. */
+  groupKey?: string;
+  /**
+   * Show the group selector above the list. Unset: shown for a multi-select or a preselected
+   * group, hidden for a plain single-select (the picker looks as before).
+   */
+  showGroupSelect?: boolean;
 };
 
 /**
@@ -24,6 +31,8 @@ export type PersonSelectOptions = {
  */
 export interface ModelSelector {
   selectPerson(selectedTag?: string): Promise<PersonModel | undefined>;
+  /** Multi-select person picker (checkboxes, select-all, group filter); undefined when cancelled. */
+  selectPersons(selectedTag?: string, options?: PersonSelectOptions): Promise<PersonModel[] | undefined>;
   selectPersonAvatar(selectedTag?: string, label?: string, allowCustom?: boolean, membersFirst?: boolean, options?: PersonSelectOptions): Promise<AvatarInfo | undefined>;
   selectOrg(selectedTag?: string): Promise<OrgModel | undefined>;
   selectGroup(selectedTag?: string): Promise<GroupModel | undefined>;

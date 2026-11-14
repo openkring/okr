@@ -174,6 +174,7 @@ const MODAL_ALLOWLIST = {
   'libs/cms/section/feature/src/lib/message-center.modal.ts': 'tool: composes and sends messages',
   'libs/content/esign/feature/src/lib/esign-send-document.modal.ts': 'wizard: upload, assign signees, send',
   'libs/calendar/course/ui/src/lib/course-invite.modal.ts': 'selection dialog, no stored form (spec 1.152 §8.1)',
+  'libs/shared/feature/src/lib/person-select.modal.ts': 'picker: one or several persons (checkboxes, select-all, group filter), nothing is stored',
 };
 
 const RAW_INPUT = /<ion-(input|textarea|select|checkbox|toggle|radio-group|range|datetime)\b/;

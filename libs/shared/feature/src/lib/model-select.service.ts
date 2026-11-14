@@ -25,7 +25,7 @@ export class ModelSelectService implements ModelSelector {
    * Opens the person-select modal. When allowCustom is true and the user types a name that
    * matches no existing person, the modal offers a custom entry (returned as kind: 'custom').
    */
-  private async openPersonSelect(selectedTag = DEFAULT_TAGS, allowCustom = false, membersFirst = false, options: PersonSelectOptions = {}): Promise<PersonSelectResult | undefined> {
+  private async openPersonSelect(selectedTag = DEFAULT_TAGS, allowCustom = false, membersFirst = false, options: PersonSelectOptions = {}, multiple = false): Promise<PersonSelectResult | undefined> {
     const modal = await this.modalController.create({
       component: PersonSelectModal,
       cssClass: 'list-modal',
@@ -36,6 +36,9 @@ export class ModelSelectService implements ModelSelector {
         membersFirst,
         accountsFirst: options.accountsFirst ?? '',
         excludeKeys: options.excludeKeys ?? [],
+        groupKey: options.groupKey ?? '',
+        showGroupSelect: options.showGroupSelect,
+        multiple,
       },
     });
     modal.present();
@@ -55,12 +58,25 @@ export class ModelSelectService implements ModelSelector {
   }
 
   /**
+   * Multi-select: opens the picker with checkboxes, a select-all for the filtered list and the
+   * group selector (options.groupKey preselects a group, options.showGroupSelect = false hides it).
+   * Resolves the checked persons (never empty: the confirm button needs at least one check),
+   * and undefined when the modal is cancelled.
+   */
+  public async selectPersons(selectedTag = DEFAULT_TAGS, options: PersonSelectOptions = {}): Promise<PersonModel[] | undefined> {
+    const result = await this.openPersonSelect(selectedTag, false, false, options, true);
+    if (result?.kind !== 'multi') return undefined;
+    const tenantId = this.appStore.env.tenantId;
+    return result.persons.filter(p => isPerson(p, tenantId));
+  }
+
+  /**
    * Returns an AvatarInfo for the selected person. When allowCustom is true and the user enters
    * a name that matches no existing person, a custom avatar (key '') with that name is returned.
    */
   public async selectPersonAvatar(selectedTag = DEFAULT_TAGS, label = DEFAULT_LABEL, allowCustom = false, membersFirst = false, options: PersonSelectOptions = {}): Promise<AvatarInfo | undefined> {
     const result = await this.openPersonSelect(selectedTag, allowCustom, membersFirst, options);
-    if (!result) return undefined;
+    if (!result || result.kind === 'multi') return undefined;
     if (result.kind === 'custom') {
       const parts = normalizeWhitespace(result.label).split(' ');
       const name1 = parts.length > 1 ? parts.slice(0, -1).join(' ') : '';

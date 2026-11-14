@@ -17,7 +17,14 @@
     "custom_use": "usare come ospite",
     "label": "Persona",
     "beyond_members": "Altre persone – non soci",
-    "beyond_accounts": "Altre persone – senza accesso all'app"
+    "beyond_accounts": "Altre persone – senza accesso all'app",
+    "select_multi": "Scegliere le persone",
+    "group": "Gruppo",
+    "group_all": "Tutti",
+    "select_all": "Seleziona tutto",
+    "confirm": "Conferma",
+    "group_empty": "Questo gruppo non ha membri attivi.",
+    "clear": "Annulla selezione"
   },
   "resource": {
     "select": "Scegliere la risorsa",

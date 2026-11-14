@@ -17,7 +17,14 @@
     "custom_use": "use as guest",
     "label": "Person",
     "beyond_members": "More persons – not members",
-    "beyond_accounts": "More persons – no app access"
+    "beyond_accounts": "More persons – no app access",
+    "select_multi": "Select persons",
+    "group": "Group",
+    "group_all": "All",
+    "select_all": "Select all",
+    "confirm": "Apply",
+    "group_empty": "This group has no active members.",
+    "clear": "Clear selection"
   },
   "resource": {
     "select": "Select resource",

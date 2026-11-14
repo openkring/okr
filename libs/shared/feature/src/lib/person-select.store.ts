@@ -6,7 +6,7 @@ import { of } from 'rxjs';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { MembershipCollection, MembershipModel, PersonModel, UserModel } from '@okr/shared-models';
-import { allTermsMatch, chipMatches, DateFormat, getSystemQuery, getTodayStr, isAfterDate } from '@okr/shared-util-core';
+import { allTermsMatch, chipMatches, DateFormat, getSystemQuery, getTodayStr, isActiveMembership, isAfterDate } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
 import { AppStore } from './app.store';
@@ -28,6 +28,13 @@ export type PersonSelectState = {
   accountsFirst: string;
   /** okeys never offered — e.g. people who are already on the list the caller is filling. */
   excludeKeys: string[];
+  /**
+   * okey of a group: only ACTIVE person members of it are offered (see groupMemberKeys).
+   * '' = no group filter («Alle»).
+   */
+  groupKey: string;
+  /** Multi-select: rows get a checkbox, nothing is dismissed on tap, and no custom entry is offered. */
+  multiple: boolean;
 };
 
 export const personInitialState: PersonSelectState = {
@@ -38,6 +45,8 @@ export const personInitialState: PersonSelectState = {
   membersFirst: false,
   accountsFirst: '',
   excludeKeys: [],
+  groupKey: '',
+  multiple: false,
 };
 
 export const PersonSelectStore = signalStore(
@@ -67,6 +76,22 @@ export const PersonSelectStore = signalStore(
         return store.firestoreService.searchData<MembershipModel>(MembershipCollection, query, 'memberName2', 'asc');
       },
     }),
+    // Person memberships of the selected group (Gruppenauswahl). Served by the composite index
+    // tenants + isArchived + memberModelType + orgKey + orgModelType + memberName2.
+    groupMembershipsResource: rxResource({
+      params: () => ({
+        groupKey: store.groupKey(),
+        tenantId: store.appStore.tenantId(),
+      }),
+      stream: ({ params }) => {
+        if (!params.groupKey) return of([] as MembershipModel[]);
+        const query = getSystemQuery(params.tenantId);
+        query.push({ key: 'memberModelType', operator: '==', value: 'person' });
+        query.push({ key: 'orgKey', operator: '==', value: params.groupKey });
+        query.push({ key: 'orgModelType', operator: '==', value: 'group' });
+        return store.firestoreService.searchData<MembershipModel>(MembershipCollection, query, 'memberName2', 'asc');
+      },
+    }),
   })),
 
   withComputed((store) => {
@@ -80,7 +105,18 @@ export const PersonSelectStore = signalStore(
         return store.appStore.allPersons().filter((p: PersonModel) =>
           !p.isDeceased && !(p.isSystem ?? false) && !excluded.has(p.okey));
       }),
-      isLoading: computed(() => store.appStore.isReferenceDataLoading()),
+      isLoading: computed(() => store.appStore.isReferenceDataLoading()
+        || (store.groupKey().length > 0 && store.groupMembershipsResource.isLoading())),
+      /** Persons holding an active membership in the selected group; undefined = no group filter. */
+      groupMemberKeys: computed(() => {
+        if (!store.groupKey()) return undefined;
+        const today = getTodayStr(DateFormat.StoreDate);
+        return new Set(
+          (store.groupMembershipsResource.value() ?? [])
+            .filter((m: MembershipModel) => isActiveMembership(m, today))
+            .map((m: MembershipModel) => m.memberKey)
+        );
+      }),
       // state === 'active' is not enough: scs has memberships left at 'active' with a dateOfExit
       // years in the past (e.g. exited 2016-12-31), so the exit date decides who is current.
       memberKeys: computed(() => {
@@ -93,6 +129,14 @@ export const PersonSelectStore = signalStore(
       }),
     }
   }),
+
+  withComputed((store) => ({
+    /** The offered persons narrowed to the selected group's active members (all of them without a group). */
+    scopedPersons: computed(() => {
+      const groupKeys = store.groupMemberKeys();
+      return groupKeys ? store.persons().filter(p => groupKeys.has(p.okey)) : store.persons();
+    }),
+  })),
 
   withComputed((store) => ({
     /**
@@ -115,9 +159,9 @@ export const PersonSelectStore = signalStore(
     return {
       personsCount: computed(() => store.persons()?.length ?? 0),
       /** Level 1: current members, or account holders (see firstLevelKeys). */
-      memberMatches: computed(() => store.persons().filter(p => store.firstLevelKeys().has(p.okey) && matches(p))),
-      /** Level 2: every living person, members or not. */
-      personMatches: computed(() => store.persons().filter(matches)),
+      memberMatches: computed(() => store.scopedPersons().filter(p => store.firstLevelKeys().has(p.okey) && matches(p))),
+      /** Level 2: every living person (of the selected group, if any), members or not. */
+      personMatches: computed(() => store.scopedPersons().filter(matches)),
       customLabel: computed(() => normalizeWhitespace(store.searchTerm())),
       hasExactMatch: computed(() => {
         const q = normalizeForCompare(store.searchTerm());
@@ -129,6 +173,7 @@ export const PersonSelectStore = signalStore(
   withComputed((store) => ({
     showCustomEntry: computed(() =>
       store.allowCustom()
+      && !store.multiple()
       && store.customLabel().length >= MIN_CUSTOM_SEARCH_LENGTH
       && !store.hasExactMatch()
     ),
@@ -184,6 +229,14 @@ export const PersonSelectStore = signalStore(
 
       setExcludeKeys(excludeKeys: string[]) {
         patchState(store, { excludeKeys });
+      },
+
+      setGroupKey(groupKey: string) {
+        patchState(store, { groupKey });
+      },
+
+      setMultiple(multiple: boolean) {
+        patchState(store, { multiple });
       }
     }
   }),
