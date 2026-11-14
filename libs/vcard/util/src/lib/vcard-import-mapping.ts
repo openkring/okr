@@ -150,6 +150,10 @@ export function toImportDraft(
     person = new PersonModel(tenantId);
     person.firstName = parsed.firstName ?? '';
     person.lastName = parsed.lastName ?? '';
+    // NICKNAME (comma-separated list): the first one becomes the person's nickname, which is only
+    // used to find the person; the full property also stays in the residual import notes
+    const nickname = parsed.residual.find((p) => p.name.toUpperCase() === 'NICKNAME')?.value.split(',')[0]?.trim();
+    if (nickname) person.nickname = nickname;
   }
 
   const addresses = parsed.channels.map((ch) => mapChannel(ch, isOrgCard, tenantId, availableUsages, warnings, texts));

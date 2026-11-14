@@ -528,6 +528,8 @@ export class VcardImportService {
     const person = await firstValueFrom(this.personService.read(existing.okey));
     if (person) {
       person.notes = appendImportNotes(person.notes ?? '', importNotesOf(draft, this.importDateViewDate, this.i18n.import_notes_header()));
+      // only fill an EMPTY nickname — never overwrite one entered in the app
+      if (!person.nickname && draft.person?.nickname) person.nickname = draft.person.nickname;
       await this.personService.update(person, currentUser);
     }
 

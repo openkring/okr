@@ -71,6 +71,12 @@ describe('toImportDraft', () => {
     expect(d.org).toBeUndefined();
   });
 
+  it('maps the first NICKNAME onto the person nickname', () => {
+    const nick = { name: 'NICKNAME', params: {}, value: 'Anni,Annerl', rawValue: 'Anni,Annerl' };
+    expect(toImportDraft(parsed({ residual: [nick] }), TENANT, USAGES, '09.09.2026').person?.nickname).toBe('Anni');
+    expect(toImportDraft(parsed(), TENANT, USAGES, '09.09.2026').person?.nickname).toBeUndefined();
+  });
+
   it('maps an org card onto an OrgModel', () => {
     const d = toImportDraft(parsed({ kind: 'org', orgName: 'Acme AG', displayName: 'Acme AG' }), TENANT, USAGES, '09.09.2026');
     expect(d.org?.name).toBe('Acme AG');

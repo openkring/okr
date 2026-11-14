@@ -13,6 +13,12 @@ export class PersonModel implements OkrModel, AddressableModel, SearchableModel,
   public firstName = DEFAULT_NAME;
   public lastName = DEFAULT_NAME;
   public gender = DEFAULT_GENDER;
+  /**
+   * Optional nickname («Übername»). Only used to find the person: it goes into the search index
+   * (`nn:`) and is copied into a new membership's `memberNickName`. Never shown in lists.
+   * Optional on read: every person written before this field existed lacks it — always `?? ''`.
+   */
+  public nickname?: string;
   // ssnId/dateOfBirth/dateOfDeath/favEmail/favPhone were stripped in privacy 1.19 Phase 4:
   // ssn + dob + dod live only in the addresses vault; contact data is served by the
   // address-directory projection.

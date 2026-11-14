@@ -4,8 +4,7 @@
   "details": "Angaben zur Person",
   "addresses": "Adressen",
   "misc": "Verschiedenes",
-
-   "okey": {
+  "okey": {
     "label": "ID",
     "placeholder": "ssssssss",
     "helper": "Der Schlüssel des Personeneintrags in der Datenbank."
@@ -19,6 +18,11 @@
     "label": "Nachname",
     "placeholder": "Nachname eingeben",
     "helper": "Der Familienname einer Person."
+  },
+  "nickname": {
+    "label": "Übername",
+    "placeholder": "Übername eingeben",
+    "helper": "Optional. Wird nur verwendet, um die Person in der Suche auch unter diesem Namen zu finden."
   },
   "ssnId": {
     "label": "AHV-Nummer",
@@ -100,14 +104,12 @@
     "placeholder": "https://...",
     "helper": "Eine Web Adresse (URL auf eine Website)"
   },
-
   "lookup": {
     "title": "Adresssuche (search.ch)",
     "empty": "Keine Treffer gefunden.",
     "error": "Suche fehlgeschlagen. Bitte erneut versuchen.",
     "attribution": "Daten: Swisscom Directories AG (search.ch)"
   },
-
   "add": {
     "membership": {
       "label": "Mitgliedschaft (optional)",
@@ -161,7 +163,6 @@
     "confirm": "Soll die Person wirklich gelöscht werden ?",
     "error": "Die Person konnte nicht gelöscht werden."
   },
-
   "account": {
     "open": "Konto eröffnen",
     "openConf": "Das Benutzerkonto wurde eröffnet.",
@@ -170,7 +171,6 @@
     "closeConf": "Das Benutzerkonto wurde geschlossen.",
     "error": "Das Benutzerkonto konnte nicht geändert werden."
   },
-
   "gender": {
     "label": "Geschlecht",
     "helper": "Das Geschlecht einer Person",
@@ -202,7 +202,6 @@
       "name": "Bezeichnung"
     }
   },
-
   "duplicate": {
     "title": "Mögliche Duplikate gefunden",
     "intro": "Es gibt bereits Personen, die zu den eingegebenen Daten passen. Wähle eine bestehende Person aus oder erstelle trotzdem eine neue.",

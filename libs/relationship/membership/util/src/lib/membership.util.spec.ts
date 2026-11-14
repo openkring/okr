@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { CategoryItemModel, CategoryListModel, MembershipModel } from '@okr/shared-models';
+import { CategoryItemModel, CategoryListModel, GroupModel, MembershipModel, PersonModel } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
-import { getMembershipIndex, getMembershipIndexInfo, matchCategoryItem } from './membership.util';
+import { addPersonInfoToMembership, createGroupMembership, getMembershipIndex, getMembershipIndexInfo, matchCategoryItem, newMembershipForPerson } from './membership.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -79,5 +79,26 @@ describe('matchCategoryItem', () => {
     expect(matchCategoryItem(undefined, 'junior')).toBeUndefined();
     expect(matchCategoryItem(mcat, undefined)).toBeUndefined();
     expect(matchCategoryItem(mcat, '')).toBeUndefined();
+  });
+});
+
+describe('person nickname copied into a new membership', () => {
+  const person = Object.assign(new PersonModel('scs'), { okey: 'p1', firstName: 'Anna', lastName: 'Muster', nickname: 'Anni' });
+  const category = { name: 'active', abbreviation: 'A' } as CategoryItemModel;
+
+  it('copies it in addPersonInfoToMembership', () => {
+    expect(addPersonInfoToMembership(new MembershipModel('scs'), person).memberNickName).toBe('Anni');
+  });
+
+  it('keeps a membership nickname when the person has none', () => {
+    const membership = Object.assign(new MembershipModel('scs'), { memberNickName: 'Muschtr' });
+    const plain = Object.assign(new PersonModel('scs'), { okey: 'p2' });
+    expect(addPersonInfoToMembership(membership, plain).memberNickName).toBe('Muschtr');
+  });
+
+  it('copies it in newMembershipForPerson and createGroupMembership', () => {
+    expect(newMembershipForPerson(person, 'scs', 'Seeclub', category).memberNickName).toBe('Anni');
+    const group = Object.assign(new GroupModel('scs'), { okey: 'g1', name: 'Vorstand' });
+    expect(createGroupMembership(group, person, 'scs').memberNickName).toBe('Anni');
   });
 });

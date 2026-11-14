@@ -22,6 +22,7 @@ export function createGroupMembership(group: GroupModel, person: PersonModel, te
   membership.memberDeathYear = person.deathYear ?? '';
   membership.memberZipCode = person.favZipCode;
   membership.memberBexioId = person.bexioId;
+  membership.memberNickName = person.nickname ?? '';
   membership.orgKey = group.okey ?? DEFAULT_KEY;
   membership.orgName = group.name ?? DEFAULT_NAME;
   membership.orgModelType = 'group';
@@ -49,6 +50,7 @@ export function newMembershipForPerson(person: PersonModel, orgKey: string, orgN
   membership.memberDeathYear = person.deathYear ?? '';
   membership.memberZipCode = person.favZipCode;
   membership.memberBexioId = person.bexioId;
+  membership.memberNickName = person.nickname ?? '';
 
   membership.orgKey = orgKey;
   membership.orgName = orgName;
@@ -161,6 +163,8 @@ export function addPersonInfoToMembership(membership: MembershipModel, person: P
   membership.memberDeathYear = person.deathYear ?? '';
   membership.memberZipCode = person.favZipCode ?? '';
   membership.memberBexioId = person.bexioId ?? '';
+  // the person's nickname is copied in; a nickname set on the membership by hand is kept when the person has none
+  if (person.nickname) membership.memberNickName = person.nickname;
   return membership;
 }
 

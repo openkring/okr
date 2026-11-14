@@ -4,8 +4,7 @@
   "details": "Person details",
   "addresses": "Addresses",
   "misc": "Miscellaneous",
-
-   "okey": {
+  "okey": {
     "label": "ID",
     "placeholder": "ssssssss",
     "helper": "The key of the person entry in the database."
@@ -19,6 +18,11 @@
     "label": "Last name",
     "placeholder": "Enter last name",
     "helper": "The family name of a person."
+  },
+  "nickname": {
+    "label": "Nickname",
+    "placeholder": "Enter a nickname",
+    "helper": "Optional. Only used so that a search also finds the person by this name."
   },
   "ssnId": {
     "label": "AHV number",
@@ -100,14 +104,12 @@
     "placeholder": "https://...",
     "helper": "A web address (URL to a website)"
   },
-
   "lookup": {
     "title": "Address lookup (search.ch)",
     "empty": "No matches found.",
     "error": "Search failed. Please try again.",
     "attribution": "Data: Swisscom Directories AG (search.ch)"
   },
-
   "add": {
     "membership": {
       "label": "Membership (optional)",
@@ -161,7 +163,6 @@
     "confirm": "Do you really want to delete the person ?",
     "error": "The person could not be deleted."
   },
-
   "account": {
     "open": "Open account",
     "openConf": "The user account was opened.",
@@ -170,7 +171,6 @@
     "closeConf": "The user account was closed.",
     "error": "The user account could not be changed."
   },
-
   "gender": {
     "label": "Gender",
     "helper": "The gender of a person",
@@ -202,7 +202,6 @@
       "name": "Label"
     }
   },
-
   "duplicate": {
     "title": "Possible duplicates found",
     "intro": "There are already persons that match the entered data. Select an existing person or create a new one anyway.",

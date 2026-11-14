@@ -18,6 +18,7 @@ export const personValidations = staticSuite((model: PersonFormModel, tenants: s
   stringValidations('index', model.index);
   stringValidations('firstName', model.firstName, SHORT_NAME_LENGTH);
   stringValidations('lastName', model.lastName, SHORT_NAME_LENGTH);
+  stringValidations('nickname', model.nickname ?? '', SHORT_NAME_LENGTH);
   stringValidations('gender', model.gender);
   ssnValidations('ssnId', model.ssnId ?? '');
   // dob/dod may be partial: year only ('19850000') or a birthday without a year ('00000415')

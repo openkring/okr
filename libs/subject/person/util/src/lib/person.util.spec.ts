@@ -41,11 +41,16 @@ describe('Person Utils', () => {
       person.bexioId = '';
       expect(getPersonIndex(person)).toBe('n:Doe fn:John');
     });
+
+    it('adds the nickname so the person is found by it', () => {
+      person.nickname = 'Johnny';
+      expect(getPersonIndex(person)).toBe('n:Doe z:8000 fn:John bx:42 nn:Johnny');
+    });
   });
 
   describe('getPersonIndexInfo', () => {
     it('describes the index structure', () => {
-      expect(getPersonIndexInfo()).toBe('n:name z:zipCode fn:firstName bx:bexioId');
+      expect(getPersonIndexInfo()).toBe('n:name z:zipCode fn:firstName bx:bexioId nn:nickName');
     });
   });
 });
