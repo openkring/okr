@@ -197,6 +197,20 @@ describe('journal conflict copies', () => {
     expect(copy.properties['clips']).toEqual(['i0']);
   });
 
+  it('a losing record that changed several content keys gives one copy carrying all its lost values', () => {
+    const A = rec({ entity: 'section', entityKey: 's1', op: 'set', fields: { htmlContent: '<p>Anna</p>', p_images: [{ label: 'a1' }] }, bases: { htmlContent: C.hlc, p_images: '' } }, 200, 'anna');
+    const B = rec({ entity: 'section', entityKey: 's1', op: 'set', fields: { htmlContent: '<p>Bruno</p>', p_images: [{ label: 'b1' }] }, bases: { htmlContent: C.hlc, p_images: '' } }, 300);
+    const copyKey = conflictCopyKey('s1', A.hlc);
+    for (const order of [[FP, C, A, B], [B, A, C, FP]]) {
+      const [fp] = footprintsOf(materialize(order), 'j1');
+      expect(fp.sections.map((s) => s.key)).toEqual(['s1', copyKey]);
+      const [original, copy] = fp.sections;
+      expect([original.htmlContent, original.properties['images']]).toEqual(['<p>Bruno</p>', [{ label: 'b1' }]]);
+      expect([copy.htmlContent, copy.properties['images'], copy.authorKey]).toEqual(['<p>Anna</p>', [{ label: 'a1' }], 'anna']);
+      expect(copy.hlcs).toMatchObject({ htmlContent: A.hlc, p_images: A.hlc });
+    }
+  });
+
   it('a concurrent title edit becomes a copy too; a settings key edited on a copy is laid over it', () => {
     const A = rec({ entity: 'section', entityKey: 's1', op: 'set', fields: { title: 'Anna' }, bases: { title: '' } }, 200, 'anna');
     const B = rec({ entity: 'section', entityKey: 's1', op: 'set', fields: { title: 'Bruno' }, bases: { title: '' } }, 300);

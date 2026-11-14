@@ -81,6 +81,20 @@ describe('applyJournalChange logic', () => {
       expect(writes.find((w) => w.path.endsWith(copyKey))?.data).toEqual({ isArchived: true });
     });
 
+    it('a losing record that changed several content keys writes one copy doc with all its lost values', () => {
+      const c = create();
+      const multi = (html: string, image: string, deviceId: string, authorKey: string) =>
+        rec({ entity: 'section', entityKey: 's1', op: 'set', fields: { htmlContent: html, p_images: [{ label: image }] }, bases: { htmlContent: c.change.hlc, p_images: '' } }, deviceId, authorKey);
+      const anna = multi('<p>Anna</p>', 'a1', 'dev-b', 'anna');
+      const bruno = multi('<p>Bruno</p>', 'b1', 'dev-a', 'bruno');
+      const copyKey = conflictCopyKey('s1', anna.change.hlc);
+      const writes = planSectionWrites([c, anna, bruno], 'j1', 's1', ['bkg'], []).writes;
+      expect(writes.map((w) => w.path)).toEqual(['journals/j1/sections/s1', `journals/j1/sections/${copyKey}`]);
+      const copy = writes[1].data as { content: { htmlContent: string }; properties: { images: { label: string }[] } };
+      expect(copy.content.htmlContent).toBe('<p>Anna</p>');
+      expect(copy.properties.images.map((i) => i.label)).toEqual(['a1']);
+    });
+
     it('a copy that stops being lost is archived (A1, B, then A2 based on A1)', () => {
       const c = create();
       const a1 = edit('<p>A1</p>', c.change.hlc, 'dev-b', 'anna');

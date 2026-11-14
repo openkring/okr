@@ -133,24 +133,31 @@ function withFields(section: SectionView, fields: Record<string, unknown>): Sect
 }
 
 /**
- * One derived section per lost value of a content field (SECTION_CONTENT_FIELDS). A copy is the original with
- * that value, placed right after it (same order, key tie-break); records written against the copy key (`set`
+ * One derived section per losing record of the content fields (SECTION_CONTENT_FIELDS). A copy is the original
+ * with every content value that record lost, placed right after it (same order, key tie-break); records written against the copy key (`set`
  * and `archive` only) are laid over it. Settings keys have no copies: last writer wins (plan decision 3).
  */
 function copiesOf(state: JournalState, original: SectionView, history: EntityState['history'], originalLive: boolean): SectionView[] {
-  const copies: SectionView[] = [];
+  // one copy per losing record: a record that changed several content keys loses them together, under one key
+  const byRecord = new Map<string, { authorKey: string; fields: Record<string, unknown> }>();
   for (const field of SECTION_CONTENT_FIELDS) {
     for (const lost of lostValues(history?.[field])) {
-      const key = conflictCopyKey(original.key, lost.hlc);
-      const own = state[entityStateKey('section', key)];
-      const overlay = own ? viewOf({ ...own, created: true }) : {};
-      if (!overlay) continue; // the copy was archived
-      const copy = withFields(original, { [field]: lost.value });
-      copies.push({
-        ...withFields(copy, overlay), key, authorKey: lost.authorKey, conflictOf: original.key, conflict: originalLive,
-        hlcs: { ...original.hlcs, [field]: lost.hlc, ...(own ? winningHlcs(own) : {}) },
-      });
+      const record = byRecord.get(lost.hlc) ?? { authorKey: lost.authorKey, fields: {} };
+      record.fields[field] = lost.value;
+      byRecord.set(lost.hlc, record);
     }
+  }
+  const copies: SectionView[] = [];
+  for (const [hlc, lost] of byRecord) {
+    const key = conflictCopyKey(original.key, hlc);
+    const own = state[entityStateKey('section', key)];
+    const overlay = own ? viewOf({ ...own, created: true }) : {};
+    if (!overlay) continue; // the copy was archived
+    const lostHlcs = Object.fromEntries(Object.keys(lost.fields).map((field) => [field, hlc]));
+    copies.push({
+      ...withFields(withFields(original, lost.fields), overlay), key, authorKey: lost.authorKey, conflictOf: original.key, conflict: originalLive,
+      hlcs: { ...original.hlcs, ...lostHlcs, ...(own ? winningHlcs(own) : {}) },
+    });
   }
   return copies;
 }
