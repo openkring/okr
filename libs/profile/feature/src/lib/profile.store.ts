@@ -6,9 +6,11 @@ import { from, of, take } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { DiarySourceModel, PersonCollection, PersonModel, PersonModelName, UserCollection, UserModel, withoutDiaryConsents } from '@okr/shared-models';
+import { DiarySourceModel, PersonCollection, PersonModel, PersonModelName, UserCollection, UserModel, withoutServerFields } from '@okr/shared-models';
 import { AhvFormat, AlertService, AppNavigationService, formatAhv, isBlankAhv } from '@okr/shared-util-angular';
-import { debugItemLoaded, fill } from '@okr/shared-util-core';
+import { debugItemLoaded, EMERGENCY_GROUP_KEY, fill, isDepartureEmergencyAvailable, isStartPageAvailable } from '@okr/shared-util-core';
+import { StartPages } from '@okr/shared-categories';
+import { FeatureStore } from '@okr/tenant-feature';
 import { FirestoreService } from '@okr/shared-data-access';
 
 import { AvatarService } from '@okr/avatar-data-access';
@@ -53,6 +55,7 @@ export const ProfileStore = signalStore(
     diaryLineService: inject(DiaryLineService),
     diarySourcesService: inject(DiarySourcesService),
     alertService: inject(AlertService),
+    featureStore: inject(FeatureStore),
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll(PROFILE_I18N_KEYS) as ProfileI18n,
@@ -100,6 +103,19 @@ export const ProfileStore = signalStore(
       currentUser: computed(() => state.appStore.currentUser()),
       tenantId: computed(() => state.appStore.env.tenantId),
       privacySettings: computed(() => state.appStore.privacySettings()),
+      /** The start pages this tenant offers: their feature block is on (Notfall also needs its group). */
+      startPages: computed(() => {
+        const ctx = {
+          isEnabled: state.featureStore.isEnabled(),
+          hasEmergencyGroup: state.appStore.groupsMap().has(EMERGENCY_GROUP_KEY),
+        };
+        return StartPages.filter(p => isStartPageAvailable(p.id, ctx));
+      }),
+      /** Spec 1.158: may this tenant offer «Notfall-Seite bei Ausfahrt anzeigen» (Logbuch + Notfall page)? */
+      showEmergencyOnDeparture: computed(() => isDepartureEmergencyAvailable({
+        isEnabled: state.featureStore.isEnabled(),
+        hasEmergencyGroup: state.appStore.groupsMap().has(EMERGENCY_GROUP_KEY),
+      })),
       isLoading: computed(() => state.personResource.isLoading()),
     };
   }),
@@ -200,7 +216,7 @@ export const ProfileStore = signalStore(
           store.appStore.reloadPersons();
         }
         if (user) {
-          await store.firestoreService.updateModel<UserModel>(UserCollection, withoutDiaryConsents(user), false, store.i18n.update_conf(), store.i18n.update_error(), user);
+          await store.firestoreService.updateModel<UserModel>(UserCollection, withoutServerFields(user), false, store.i18n.update_conf(), store.i18n.update_error(), user);
         }
       },
 

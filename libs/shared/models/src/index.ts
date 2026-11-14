@@ -140,6 +140,7 @@ export * from './lib/pdf-template.model';
 
 // enums
 export * from './lib/enums/avatar-usage.enum';
+export * from './lib/enums/start-page.enum';
 export * from './lib/enums/button-action.enum';
 export * from './lib/enums/color-ionic.enum';
 export * from './lib/enums/delivery-type.enum';

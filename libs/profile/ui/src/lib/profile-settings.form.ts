@@ -2,8 +2,8 @@ import { Component, computed, effect, inject, input, model, output, signal } fro
 import { form } from "@angular/forms/signals";
 import { IonAccordion, IonButton, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from "@ionic/angular";
 
-import { AvatarUsages, CalendarSmallScreenViews, LanguageCategory, Languages, NameDisplays, PersonSortCriterias } from "@okr/shared-categories";
-import { AvatarUsage, CalendarSmallScreenView, DefaultLanguage, NameDisplay, PersonSortCriteria, RoleName, UserModel } from "@okr/shared-models";
+import { AvatarUsages, CalendarSmallScreenViews, LanguageCategory, Languages, NameDisplays, PersonSortCriterias, StartPageCategory, StartPages } from "@okr/shared-categories";
+import { AvatarUsage, CalendarSmallScreenView, DefaultLanguage, StartPage, NameDisplay, PersonSortCriteria, RoleName, UserModel } from "@okr/shared-models";
 import { FcmService } from "@okr/shared-data-access";
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, DeliveryChannelsControl, DeliveryChannelsI18n, ErrorNote, TextInput, TextInputI18n } from "@okr/shared-ui";
 import { validateVestTree, vestErrors } from "@okr/shared-util-angular";
@@ -16,7 +16,7 @@ import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
 /** The user fields this accordion renders as editable — the ones its `valid` output may gate on. */
 const EDITED_FIELDS = [
   'userLanguage', 'showDebugInfo', 'showArchivedData', 'showHelpers',
-  'avatarUsage', 'gravatarEmail', 'nameDisplay', 'personSortCriteria', 'smallScreenCalendarView', 'newsDelivery', 'invoiceDelivery',
+  'avatarUsage', 'gravatarEmail', 'nameDisplay', 'personSortCriteria', 'smallScreenCalendarView', 'startPage', 'emergencyOnDeparture', 'newsDelivery', 'invoiceDelivery',
 ];
 
 @Component({
@@ -87,6 +87,18 @@ const EDITED_FIELDS = [
                 <okr-category-old [i18n]="smallScreenCalendarViewI18n()" [value]="smallScreenCalendarView()" (valueChange)="onFieldChange('smallScreenCalendarView', $event)" [categories]="smallScreenCalendarViews" [readOnly]="isReadOnly()" />
                 <okr-error-note [errors]="smallScreenCalendarViewErrors()" />
               </ion-col>
+              @if(hasRole('registered') && startPages().length > 1) {
+                <ion-col size="12" size-md="6">
+                  <okr-category-old [i18n]="startPageI18n()" [value]="startPage()" (valueChange)="onFieldChange('startPage', $event)" [categories]="startPages()" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="startPageErrors()" />
+                </ion-col>
+              }
+              @if(hasRole('registered') && showEmergencyOnDeparture()) {
+                <ion-col size="12" size-md="6">
+                  <okr-checkbox [i18n]="emergencyOnDepartureI18n()" [checked]="emergencyOnDeparture()" (checkedChange)="onFieldChange('emergencyOnDeparture', $event)" [showHelper]="showHelper()" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="emergencyOnDepartureErrors()" />
+                </ion-col>
+              }
               <ion-col size="12" size-md="6">
                 <okr-delivery-channels [i18n]="newsDeliveryI18n()" [value]="newsDelivery()" (valueChange)="onFieldChange('newsDelivery', $event)" [readOnly]="isReadOnly()" />
                 <okr-error-note [errors]="newsDeliveryErrors()" />
@@ -144,6 +156,12 @@ export class ProfileSettingsAccordion {
   protected smallScreenCalendarViewI18n = computed(() => ({
     name: 'smallScreenCalendarView', label: this.i18n().calendar_small_screen_label(), helper: this.i18n().calendar_small_screen_helper(),
   } as CategoryOldI18n));
+  protected startPageI18n = computed(() => ({
+    name: 'startPage', label: this.i18n().start_page_label(), helper: this.i18n().start_page_helper(),
+  } as CategoryOldI18n));
+  protected emergencyOnDepartureI18n = computed(() => ({
+    name: 'emergencyOnDeparture', label: this.i18n().emergency_on_departure_label(), helper: this.i18n().emergency_on_departure_helper(),
+  } as CheckboxI18n));
   protected channelLabels = computed(() => ({
     post:  this.i18n().deliveryChannel_post(),
     email: this.i18n().deliveryChannel_email(),
@@ -174,6 +192,10 @@ export class ProfileSettingsAccordion {
   public readonly readOnly = input<boolean>(true);
   public readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   public readonly languages = input<LanguageCategory[]>(Languages);
+  /** The start pages this tenant offers (the parent filters by feature); the field hides with only «Standard» left. */
+  public readonly startPages = input<StartPageCategory[]>(StartPages);
+  /** Spec 1.158: offer «Notfall-Seite bei Ausfahrt anzeigen» (Logbuch on, Notfall page available) — the parent decides. */
+  public readonly showEmergencyOnDeparture = input(false);
 
   // signals
   public dirty = output<boolean>();
@@ -206,6 +228,8 @@ export class ProfileSettingsAccordion {
   protected newsDeliveryErrors = computed(() => this.validationResult().getErrors('newsDelivery'));
   protected invoiceDeliveryErrors = computed(() => this.validationResult().getErrors('invoiceDelivery'));
   protected smallScreenCalendarViewErrors = computed(() => this.validationResult().getErrors('smallScreenCalendarView'));
+  protected startPageErrors = computed(() => this.validationResult().getErrors('startPage'));
+  protected emergencyOnDepartureErrors = computed(() => this.validationResult().getErrors('emergencyOnDeparture'));
   protected showHelper = computed(() => this.currentUser()?.showHelpers ?? true);
 
   // fields
@@ -220,6 +244,12 @@ export class ProfileSettingsAccordion {
   // picker disagree with the order the list actually used.
   protected readonly personSortCriteria = computed(() => this.formData().personSortCriteria ?? PersonSortCriteria.Lastname);
   protected readonly smallScreenCalendarView = computed(() => this.formData().smallScreenCalendarView ?? CalendarSmallScreenView.List);
+  // legacy docs lack the field; a page the tenant no longer offers shows as «Standard», which is where the user lands
+  protected readonly startPage = computed(() => {
+    const page = this.formData().startPage ?? StartPage.Default;
+    return this.startPages().some(p => p.id === page) ? page : StartPage.Default;
+  });
+  protected readonly emergencyOnDeparture = computed(() => this.formData().emergencyOnDeparture ?? false);
   protected readonly newsDelivery = computed(() => toEditableChannels(this.formData().newsDelivery));
   protected readonly invoiceDelivery = computed(() => toEditableChannels(this.formData().invoiceDelivery));
 

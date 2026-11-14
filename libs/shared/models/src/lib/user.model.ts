@@ -3,6 +3,7 @@ import { OkrModel, SearchableModel, TaggedModel } from './base.model';
 import { DiaryConsent } from './diary-target.model';
 import { AvatarUsage } from './enums/avatar-usage.enum';
 import { CalendarSmallScreenView } from './enums/calendar-small-screen-view.enum';
+import { StartPage } from './enums/start-page.enum';
 import { DEFAULT_DELIVERY_CHANNELS, DeliveryChannel } from './enums/delivery-type.enum';
 import { DefaultLanguage } from './enums/language.enum';
 import { NameDisplay } from './enums/name-display.enum';
@@ -33,6 +34,11 @@ export class UserModel implements OkrModel, TaggedModel, SearchableModel {
   public nameDisplay = NameDisplay.FirstLast; // FirstLast
   public personSortCriteria = PersonSortCriteria.Lastname; // Lastname
   public smallScreenCalendarView = CalendarSmallScreenView.List; // List; legacy docs lack it
+  public startPage = StartPage.Default; // Default = app-config.rootUrl; legacy docs lack it
+  // spec 1.158 — opt-in: a Logbuch trip start offers the Notfall page; legacy docs lack it (= false)
+  public emergencyOnDeparture = false;
+  // spec 1.158 — okey of the open Logbuch trip this user is crew on; '' = none. Only the trips trigger writes it
+  public activeTripKey = '';
   public newsDelivery: DeliveryChannel[] = [...DEFAULT_DELIVERY_CHANNELS];
   public invoiceDelivery: DeliveryChannel[] = [...DEFAULT_DELIVERY_CHANNELS];
   // spec 1.77 §12.3 — the diaries this user allowed to collect from this app; only `setDiaryConsent` writes it
@@ -62,12 +68,14 @@ export class UserModel implements OkrModel, TaggedModel, SearchableModel {
 }
 
 /**
- * The user without `diaryConsents`, for a client write: only `setDiaryConsent` writes the field and the rules deny it
- * (spec 1.77 D-R10). `updateModel` merges, so leaving it out keeps the stored value, whatever this copy holds.
+ * The user without the fields only Cloud Functions write, for a client write: `diaryConsents` (`setDiaryConsent`,
+ * spec 1.77 D-R10) and `activeTripKey` (the trips trigger, spec 1.158). The rules deny a self-update that changes
+ * either, and a form copy may be stale. `updateModel` merges, so leaving them out keeps the stored values.
  */
-export function withoutDiaryConsents(user: UserModel): UserModel {
+export function withoutServerFields(user: UserModel): UserModel {
   const copy = { ...user };
   delete (copy as Partial<UserModel>).diaryConsents;
+  delete (copy as Partial<UserModel>).activeTripKey;
   return copy;
 }
 

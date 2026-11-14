@@ -72,6 +72,7 @@ import { EmailSignatureAccordion } from './email-signature.accordion';
                 [tags]="tags()"
                 [tenantId]="tenantId()"
                 [languages]="availableLanguages()"
+                [startPages]="store.startPages()" [showEmergencyOnDeparture]="store.showEmergencyOnDeparture()"
                 [showForm]="showForm()"
                 [i18n]="store.i18n"
                 (valid)="formValid.set($event)"

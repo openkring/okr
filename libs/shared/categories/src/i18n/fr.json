@@ -589,5 +589,40 @@
         "description": "Vent"
       }
     }
+  },
+  "startPage": {
+    "name": "Page d'accueil",
+    "default": {
+      "label": "Par défaut",
+      "description": "La page d'accueil de ton club."
+    },
+    "welcome": {
+      "label": "Bienvenue",
+      "description": "La page de bienvenue."
+    },
+    "members": {
+      "label": "Membres",
+      "description": "La liste des membres."
+    },
+    "myCalendar": {
+      "label": "Mon calendrier",
+      "description": "Tes rendez-vous."
+    },
+    "myTasks": {
+      "label": "Mes tâches",
+      "description": "Tes tâches ouvertes."
+    },
+    "dashboard": {
+      "label": "Vue d'ensemble",
+      "description": "La vue d'ensemble avec les informations essentielles."
+    },
+    "emergency": {
+      "label": "Urgence",
+      "description": "Le bouton d'urgence pour obtenir de l'aide tout de suite."
+    },
+    "logbuch": {
+      "label": "Journal de bord",
+      "description": "Le journal des sorties."
+    }
   }
 }

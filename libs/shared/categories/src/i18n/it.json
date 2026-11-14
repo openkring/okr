@@ -589,5 +589,40 @@
         "description": "Vento"
       }
     }
+  },
+  "startPage": {
+    "name": "Pagina iniziale",
+    "default": {
+      "label": "Predefinita",
+      "description": "La pagina iniziale del tuo club."
+    },
+    "welcome": {
+      "label": "Benvenuto",
+      "description": "La pagina di benvenuto."
+    },
+    "members": {
+      "label": "Membri",
+      "description": "L'elenco dei membri."
+    },
+    "myCalendar": {
+      "label": "Il mio calendario",
+      "description": "I tuoi appuntamenti."
+    },
+    "myTasks": {
+      "label": "I miei compiti",
+      "description": "I tuoi compiti aperti."
+    },
+    "dashboard": {
+      "label": "Panoramica",
+      "description": "La panoramica con le informazioni principali."
+    },
+    "emergency": {
+      "label": "Emergenza",
+      "description": "Il pulsante di emergenza per chiedere aiuto subito."
+    },
+    "logbuch": {
+      "label": "Giornale di bordo",
+      "description": "Il registro delle uscite."
+    }
   }
 }

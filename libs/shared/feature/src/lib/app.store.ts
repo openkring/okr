@@ -19,6 +19,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { SessionService} from '@okr/session-data-access';
 import { OfflineNoticeService } from './offline-notice.service';
 import { WakeWatchdogService } from './wake-watchdog.service';
+import { DepartureNavigationService } from './departure-navigation.service';
 
 export type AppState = {
   tenantId: string;
@@ -787,6 +788,8 @@ export const AppStore = signalStore(
       inject(OfflineNoticeService).start();
       // Reloads the app when it is stuck after the device slept (see wake-watchdog.service.ts).
       inject(WakeWatchdogService).start();
+      // Spec 1.158: jumps to the Notfall page when the user's Logbuch trip opens (see departure-navigation.service.ts).
+      inject(DepartureNavigationService).start(store.currentUser);
 
       // Scroll-freeze instrumentation. Must be armed BEFORE a freeze: the decisive reading is a
       // capture-phase wheel counter on `window`, which a console snippet pasted afterwards cannot

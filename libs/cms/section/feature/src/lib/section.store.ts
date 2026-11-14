@@ -11,7 +11,7 @@ import { catchError, of } from 'rxjs';
 
 import { AppStore, withErrorState } from '@okr/shared-feature';
 import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, EmailLayoutChoice, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageActionType, ImageConfig, SectionModel, SectionType } from '@okr/shared-models';
-import { chipMatches, debugData, debugItemLoaded, debugMessage, fill, nameMatches, sanitizeFileName, chatBlockedAlertMessage, isChatBlockedError } from '@okr/shared-util-core';
+import { chipMatches, debugData, debugItemLoaded, debugMessage, fill, nameMatches, sanitizeFileName, chatBlockedAlertMessage, isChatBlockedError, EMERGENCY_GROUP_KEY } from '@okr/shared-util-core';
 import { DEFAULT_MIMETYPES, IMAGE_MIMETYPES } from '@okr/shared-constants';
 import { confirm, downloadTextFile, exportCsv, getExportFileName, lazyService, showToast, resourceParams, notify } from '@okr/shared-util-angular';
 import { FirestoreService, ChatStatusService } from '@okr/shared-data-access';
@@ -23,13 +23,6 @@ import { createSection, narrowSection, SECTION_I18N_KEYS } from '@okr/cms-sectio
 
 import { MessageCenterModal } from './message-center.modal';
 import { CardSelectModal } from './card-select.modal';
-
-/**
- * `groups/<okey>` of the group that answers the emergency button — the document id, not the
- * display name. The name is what the old lookup used, and names are neither unique across
- * tenants nor stable when an admin renames the group.
- */
-const NOTFALL_GROUP_KEY = 'notfall';
 
 export type Coordinates = {
   latitude: number;
@@ -459,7 +452,7 @@ export const _SectionStore = signalStore(
           // content page the user may have opened without ever touching the chat.
           const chat = await store.chatService();
           await chat.ensureInitialized();
-          const { roomId } = await chat.requestGroupRoomAccess(NOTFALL_GROUP_KEY);
+          const { roomId } = await chat.requestGroupRoomAccess(EMERGENCY_GROUP_KEY);
           const name = currentUser.firstName + ' ' + currentUser.lastName + ' ';
           // Own number, read from the address-directory projection rather than the `addresses`
           // vault: the projection is already streamed and is the registered-visible path, so
@@ -502,50 +495,37 @@ export const _SectionStore = signalStore(
       },
 
       /**
-       * This function asks the user for permission to access to current location (on iOS and Android, but not on web).
-       * It then returns either the current position of the user or the default position if the user did not agree or geolocation is not supported.
-       * @returns the current position of the user the default position
+       * The caller's current position for the emergency alarm, or `undefined` when there is none.
+       *
+       * NEVER throws: a denied permission, a missing Geolocation API or a fix that does not arrive
+       * within the timeout must still let `sendEmergencyMessage` raise the alarm — then without a
+       * location. Before, every one of these rejected and the alarm ended in an error toast.
+       * A fix up to a minute old is accepted, so a phone that just had one answers at once.
        */
       async getCurrentPosition(): Promise<Coordinates | undefined> {
-        if (Capacitor.isNativePlatform()) {
-          const permissionStatus = await Geolocation.requestPermissions();
-          if (permissionStatus.location !== 'granted') {
-            throw new Error('SectionStore.getCurrentPosition: Location permission denied');
-          }
-          const pos: Position =  await Geolocation.getCurrentPosition({
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0
-          });
-          return { 
-            latitude: pos.coords.latitude,
-            longitude: pos.coords.longitude
-          };
-        } else {
-          if (!navigator.geolocation) {
-            throw new Error('SectionStore.getCurrentPosition: Geolocation not supported in this browser');
-          }
-          // Check permission status before requesting
-          try {
-            const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
-            if (permissionStatus.state === 'denied') {
-              throw new Error('SectionStore.getCurrentPosition: User denied Geolocation');
+        const options = { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 };
+        try {
+          if (Capacitor.isNativePlatform()) {
+            const permissionStatus = await Geolocation.requestPermissions();
+            if (permissionStatus.location !== 'granted') {
+              console.warn('SectionStore.getCurrentPosition: location permission denied, alarm goes out without a location');
+              return undefined;
             }
-            debugMessage('SectionStore.getCurrentPosition: geolocation accepted.', store.currentUser());
-          } catch (error) {
-            console.warn('SectionStore: Permission query not supported or failed:', error);
+            const pos: Position = await Geolocation.getCurrentPosition(options);
+            return { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
+          }
+          if (!navigator.geolocation) {
+            console.warn('SectionStore.getCurrentPosition: geolocation not supported, alarm goes out without a location');
+            return undefined;
           }
           const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, {
-              enableHighAccuracy: true,
-              timeout: 10000,
-              maximumAge: 0
-            });
+            navigator.geolocation.getCurrentPosition(resolve, reject, options);
           });
-          return { 
-            latitude: pos.coords.latitude,
-            longitude: pos.coords.longitude
-          };
+          debugMessage('SectionStore.getCurrentPosition: position received.', store.currentUser());
+          return { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
+        } catch (error) {
+          console.warn('SectionStore.getCurrentPosition: no position, alarm goes out without a location:', error);
+          return undefined;
         }
       },
     }

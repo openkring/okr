@@ -21,6 +21,9 @@ const AUTOFILL_RENEW_MS = 4 * 60 * 1000;
 /** Stop renewing after this many rounds (~1 h) — a login page left open overnight costs nothing. */
 const AUTOFILL_MAX_ROUNDS = 15;
 
+/** Where a login without a deep link goes: '/' lets rootUrlGuard choose the user's start page or the tenant's rootUrl. */
+const START_URL = '/';
+
 @Component({
   selector: 'okr-login-page',
   standalone: true,
@@ -218,7 +221,7 @@ export class LoginPage implements ViewDidEnter, ViewWillLeave {
     // page that still remembers it, so a mistyped password does not cost the deep link.
     await this.authService.login(
       this.currentCredentials(),
-      returnUrl ?? this.store.config().rootUrl,
+      returnUrl ?? START_URL,
       this.retryUrl(returnUrl),
     );
   }
@@ -234,7 +237,7 @@ export class LoginPage implements ViewDidEnter, ViewWillLeave {
     this.stopAutofill();
     try {
       await this.authService.loginWithPasskey(
-        returnUrl ?? this.store.config().rootUrl,
+        returnUrl ?? START_URL,
         this.retryUrl(returnUrl),
       );
     } finally {
@@ -259,7 +262,7 @@ export class LoginPage implements ViewDidEnter, ViewWillLeave {
     const returnUrl = getSafeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl'));
     // a new ceremony aborts the previous one (WebAuthnAbortService), so no explicit cancel here
     await this.authService.loginWithPasskeyAutofill(
-      returnUrl ?? this.store.config().rootUrl,
+      returnUrl ?? START_URL,
       this.retryUrl(returnUrl),
     );
   }

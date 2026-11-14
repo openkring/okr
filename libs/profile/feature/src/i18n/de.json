@@ -313,5 +313,13 @@
       "label": "Kalenderdarstellung auf kleinen Bildschirmen",
       "helper": "Auf dem Handy zeigt der Kalender deine Termine standardmässig als Liste. Mit «Kalender» siehst du stattdessen die Monats- oder Wochenansicht."
     }
+  },
+  "startPage": {
+    "label": "Startseite",
+    "helper": "Die Seite, die sich öffnet, wenn du die App startest. «Standard» ist die Startseite deines Vereins."
+  },
+  "emergencyOnDeparture": {
+    "label": "Notfall-Seite bei Ausfahrt anzeigen",
+    "helper": "Wenn du im Logbuch für eine Ausfahrt eingetragen wirst, bekommst du eine Mitteilung mit dem Notfall-Knopf. Während der Ausfahrt öffnet sich die App auf der Notfall-Seite."
   }
 }

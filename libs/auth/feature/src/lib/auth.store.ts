@@ -51,7 +51,8 @@ export const AuthStore = signalStore(
 
         const signedIn = await store.authService.signInAfterPasswordSet(result.email, loginPassword);
         await store.alertService.showToast(fill(store.i18n.password_changed(), { email: result.email }));
-        await navigateByUrl(store.router, signedIn ? store.config().rootUrl : continueUrl);
+        // '/' → rootUrlGuard: the user's own start page, else the tenant's rootUrl
+        await navigateByUrl(store.router, signedIn ? '/' : continueUrl);
         return undefined;
       },
 

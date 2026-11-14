@@ -5,6 +5,7 @@ import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import type { TripModel } from '@okr/shared-models';
 
 import { handleCrewTrack } from './crew-track';
+import { handleDeparture } from './departure';
 import { handleRecordingAttach } from './recording-diary';
 
 const REGION = 'europe-west6';
@@ -102,6 +103,12 @@ export const onTripWrite = onDocumentWritten(
 
     // spec 1.123: crew-track pushes (diary copies are nightly only) — never throws, so the stats above are never affected
     await handleCrewTrack(
+      event.data?.before?.data() as TripModel | undefined,
+      event.data?.after?.data() as TripModel | undefined,
+      event.params['tripId'],
+    );
+    // spec 1.158: departure push + activeTripKey for opted-in crew members — never throws either
+    await handleDeparture(
       event.data?.before?.data() as TripModel | undefined,
       event.data?.after?.data() as TripModel | undefined,
       event.params['tripId'],

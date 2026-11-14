@@ -313,5 +313,13 @@
       "label": "Affichage du calendrier sur les petits écrans",
       "helper": "Sur un téléphone, le calendrier affiche tes événements sous forme de liste par défaut. Choisis «Calendrier» pour voir plutôt la vue mensuelle ou hebdomadaire."
     }
+  },
+  "startPage": {
+    "label": "Page d'accueil",
+    "helper": "La page qui s'ouvre quand tu lances l'app. «Par défaut» est la page d'accueil de ton club."
+  },
+  "emergencyOnDeparture": {
+    "label": "Afficher la page d'urgence lors d'une sortie",
+    "helper": "Quand tu es inscrit·e dans le journal de bord pour une sortie, tu reçois une notification avec le bouton d'urgence. Pendant la sortie, l'app s'ouvre sur la page d'urgence."
   }
 }

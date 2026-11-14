@@ -1,7 +1,7 @@
 import { staticSuite } from 'vest';
 
 import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
-import { AvatarUsage, CalendarSmallScreenView, Language, NameDisplay, PersonSortCriteria, PrivacyUsage, UserModel } from '@okr/shared-models';
+import { AvatarUsage, CalendarSmallScreenView, Language, StartPage, NameDisplay, PersonSortCriteria, PrivacyUsage, UserModel } from '@okr/shared-models';
 import { baseValidations, booleanValidations, categoryValidations, deliveryChannelsValidations, stringValidations } from '@okr/shared-util-core';
 
 export const userValidations = staticSuite((model: UserModel, tenants: string, tags: string) => {
@@ -17,11 +17,13 @@ export const userValidations = staticSuite((model: UserModel, tenants: string, t
   categoryValidations('personSortCriteria', model.personSortCriteria, PersonSortCriteria);
   // legacy docs lack the field (Firestore reads skip model defaults) — validate the effective default
   categoryValidations('smallScreenCalendarView', model.smallScreenCalendarView ?? CalendarSmallScreenView.List, CalendarSmallScreenView);
+  categoryValidations('startPage', model.startPage ?? StartPage.Default, StartPage);
   deliveryChannelsValidations('newsDelivery', model.newsDelivery);
   deliveryChannelsValidations('invoiceDelivery', model.invoiceDelivery);
   booleanValidations('showArchivedData', model.showArchivedData);
   booleanValidations('showDebugInfo', model.showDebugInfo);
   booleanValidations('showHelpers', model.showHelpers);
+  booleanValidations('emergencyOnDeparture', model.emergencyOnDeparture ?? false); // legacy docs lack it
 
   categoryValidations('usageImages', model.usageImages, PrivacyUsage);
   categoryValidations('usageDateOfBirth', model.usageDateOfBirth, PrivacyUsage);

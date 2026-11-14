@@ -5,6 +5,7 @@ import { runJobs, type NamedJob } from '../_fanout';
 import { matrixAdminToken } from '../matrix-simple/shared';
 import { runTripStatsReconcile, runTripEndOfDayClose } from '../trip';
 import { runCrewTrackCleanup } from '../trip/crew-track';
+import { runDepartureCleanup } from '../trip/departure';
 import { runTrackerExpiry } from '../trip/tracker-expiry';
 import { runRoomPostPolicySweep } from '../matrix-simple/post-policy-sync';
 import { runExpiredMembershipSweep } from '../auth/account-sync';
@@ -39,6 +40,7 @@ export const NIGHTLY_JOBS: NamedJob[] = [
   { name: 'tripStatsReconcile', run: runTripStatsReconcile },
   { name: 'crewTrackCleanup', run: runCrewTrackCleanup },
   { name: 'trackerExpiry', run: runTrackerExpiry }, // after crewTrackCleanup: it unlinks first
+  { name: 'departureCleanup', run: runDepartureCleanup }, // spec 1.158: stale activeTripKey safety net
   { name: 'roomPostPolicySweep', run: runRoomPostPolicySweep },
   { name: 'expiredMembershipSweep', run: runExpiredMembershipSweep },
   { name: 'pinboardSweep', run: runPinboardSweep },

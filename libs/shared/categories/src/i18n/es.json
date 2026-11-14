@@ -589,5 +589,40 @@
         "description": "Viento"
       }
     }
+  },
+  "startPage": {
+    "name": "Página de inicio",
+    "default": {
+      "label": "Predeterminada",
+      "description": "La página de inicio de tu club."
+    },
+    "welcome": {
+      "label": "Bienvenida",
+      "description": "La página de bienvenida."
+    },
+    "members": {
+      "label": "Miembros",
+      "description": "La lista de miembros."
+    },
+    "myCalendar": {
+      "label": "Mi calendario",
+      "description": "Tus citas."
+    },
+    "myTasks": {
+      "label": "Mis tareas",
+      "description": "Tus tareas pendientes."
+    },
+    "dashboard": {
+      "label": "Resumen",
+      "description": "El resumen con la información más importante."
+    },
+    "emergency": {
+      "label": "Emergencia",
+      "description": "El botón de emergencia para pedir ayuda al instante."
+    },
+    "logbuch": {
+      "label": "Cuaderno de bitácora",
+      "description": "El registro de las salidas."
+    }
   }
 }

@@ -35,6 +35,7 @@
     { "path": "../../subject/address/feature/tsconfig.lib.json" },
     { "path": "../../subject/person/data-access/tsconfig.lib.json" },
     { "path": "../../subject/person/util/tsconfig.lib.json" },
+    { "path": "../../tenant/feature/tsconfig.lib.json" },
     { "path": "../../user/util/tsconfig.lib.json" }
   ]
 }

@@ -65,3 +65,4 @@ export * from './lib/location-property.util';
 export * from './lib/map-pin.util';
 export * from './lib/course-choice.util';
 export * from './lib/editor-link.util';
+export * from './lib/start-page.util';

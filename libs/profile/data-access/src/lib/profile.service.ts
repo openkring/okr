@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
-import { AddressCollection, AddressModel, PersonCollection, PersonModel, UserCollection, UserModel } from '@okr/shared-models';
+import { AddressCollection, AddressModel, PersonCollection, PersonModel, UserCollection, UserModel, withoutServerFields } from '@okr/shared-models';
 import { getSystemQuery } from '@okr/shared-util-core';
 
 import { getPersonIndex } from '@okr/subject-person-util';
@@ -40,7 +40,7 @@ export class ProfileService {
     if (person && user) {
       person.index = getPersonIndex(person);
       uid = await this.firestoreService.updateModel<PersonModel>(PersonCollection, person, false, undefined, undefined, user);
-      await this.firestoreService.updateModel<UserModel>(UserCollection, user, false,
+      await this.firestoreService.updateModel<UserModel>(UserCollection, withoutServerFields(user), false,
         this.i18n.update_conf(), this.i18n.update_error(), user);
     }
     return uid;

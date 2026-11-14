@@ -9,6 +9,7 @@ export * from './lib/image-action';
 export * from './lib/image-type';
 export * from './lib/language';
 export * from './lib/calendar-small-screen-views';
+export * from './lib/start-pages';
 export * from './lib/name-displays';
 export * from './lib/person-sort-criteria';
 export * from './lib/privacy-usage';

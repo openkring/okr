@@ -364,6 +364,41 @@
       "description": "The name is not shown."
     }
   },
+  "startPage": {
+    "name": "Start page",
+    "default": {
+      "label": "Default",
+      "description": "Your club's start page."
+    },
+    "welcome": {
+      "label": "Welcome",
+      "description": "The welcome page."
+    },
+    "members": {
+      "label": "Members",
+      "description": "The list of members."
+    },
+    "myCalendar": {
+      "label": "My calendar",
+      "description": "Your events."
+    },
+    "myTasks": {
+      "label": "My tasks",
+      "description": "Your open tasks."
+    },
+    "dashboard": {
+      "label": "Dashboard",
+      "description": "The overview with the most important information."
+    },
+    "emergency": {
+      "label": "Emergency",
+      "description": "The emergency button to get help right away."
+    },
+    "logbuch": {
+      "label": "Logbook",
+      "description": "The logbook of outings."
+    }
+  },
   "calendarSmallScreenView": {
     "name": "Calendar view on small screens",
     "list": {

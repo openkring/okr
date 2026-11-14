@@ -364,6 +364,41 @@
       "description": "Der Name wird nicht angezeigt."
     }
   },
+  "startPage": {
+    "name": "Startseite",
+    "default": {
+      "label": "Standard",
+      "description": "Die Startseite deines Vereins."
+    },
+    "welcome": {
+      "label": "Willkommen",
+      "description": "Die Willkommensseite."
+    },
+    "members": {
+      "label": "Mitglieder",
+      "description": "Die Liste der Mitglieder."
+    },
+    "myCalendar": {
+      "label": "Mein Kalender",
+      "description": "Deine Termine."
+    },
+    "myTasks": {
+      "label": "Meine Aufgaben",
+      "description": "Deine offenen Aufgaben."
+    },
+    "dashboard": {
+      "label": "Übersicht",
+      "description": "Die Übersicht mit den wichtigsten Infos."
+    },
+    "emergency": {
+      "label": "Notfall",
+      "description": "Der Notfallknopf, mit dem du sofort Hilfe holst."
+    },
+    "logbuch": {
+      "label": "Logbuch",
+      "description": "Das Logbuch der Ausfahrten."
+    }
+  },
   "calendarSmallScreenView": {
     "name": "Kalenderdarstellung auf kleinen Bildschirmen",
     "list": {

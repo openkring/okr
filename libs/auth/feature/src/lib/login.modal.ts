@@ -45,7 +45,8 @@ export class LoginModal {
 
   public async login(): Promise<void> {
     await dismissOverlay(this.modalController, this.currentCredentials, 'cancel');
-    this.authService.login(this.currentCredentials(), this.store.config().rootUrl, this.store.config().loginUrl);
+    // '/' lets rootUrlGuard choose the user's start page (or the tenant's rootUrl) once the user doc is loaded
+    this.authService.login(this.currentCredentials(), '/', this.store.config().loginUrl);
   }
 
   public async cancel(): Promise<void> {
