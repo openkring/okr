@@ -8,7 +8,7 @@ import { ViewPositions } from '@okr/shared-categories';
 import { EDITOR_CONFIG_SHAPE, EditorConfig, ImageConfig, ImageStyle, UserModel, ViewPosition } from '@okr/shared-models';
 import { CategoryOld, CategoryOldI18n, ErrorNote, NumberInput, NumberInputI18n } from '@okr/shared-ui';
 import { coerceBoolean } from '@okr/shared-util-core';
-import { articleImagePosition, getFieldErrors, ImageLayoutId, resolveImageLayout, SectionErrors, SectionI18n } from '@okr/cms-section-util';
+import { ARTICLE_IMAGES_SEGMENT_FIELDS, articleImagePosition, getErrorSegments, getFieldErrors, ImageLayoutId, resolveImageLayout, SectionErrors, SectionI18n } from '@okr/cms-section-util';
 
 import { ImagesConfiguration } from './images-configuration';
 import { ImageStyleConfiguration } from './image-style-configuration';
@@ -49,6 +49,7 @@ const MULTI_IMAGE_POSITIONS = ViewPositions.filter((p) => p.id === ViewPosition.
     .layout-current { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
     .layout-preview { width: 160px; max-width: 100%; }
     .layout-name { font-weight: 600; margin-bottom: 4px; }
+    .error-dot { display: inline-block; width: 8px; height: 8px; margin-inline-start: 6px; border-radius: 50%; background: var(--ion-color-danger); vertical-align: middle; }
   `],
   template: `
     <ion-card>
@@ -57,10 +58,16 @@ const MULTI_IMAGE_POSITIONS = ViewPositions.filter((p) => p.id === ViewPosition.
       </ion-card-header>
       <ion-card-content>
         <ion-segment [value]="segment()" (ionChange)="onSegmentChange($event.detail.value)">
-          <ion-segment-button value="select"><ion-label>{{ i18n().article_images_segment_select() }}</ion-label></ion-segment-button>
-          <ion-segment-button value="layout"><ion-label>{{ i18n().article_images_segment_layout() }}</ion-label></ion-segment-button>
+          <ion-segment-button value="select">
+            <ion-label>{{ i18n().article_images_segment_select() }}@if (hasErrors('select')) {<span class="error-dot" role="img" [attr.aria-label]="i18n().segment_errors()"></span>}</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="layout">
+            <ion-label>{{ i18n().article_images_segment_layout() }}@if (hasErrors('layout')) {<span class="error-dot" role="img" [attr.aria-label]="i18n().segment_errors()"></span>}</ion-label>
+          </ion-segment-button>
           @if (stylesAvailable()) {
-            <ion-segment-button value="styles"><ion-label>{{ i18n().article_images_segment_styles() }}</ion-label></ion-segment-button>
+            <ion-segment-button value="styles">
+              <ion-label>{{ i18n().article_images_segment_styles() }}@if (hasErrors('styles')) {<span class="error-dot" role="img" [attr.aria-label]="i18n().segment_errors()"></span>}</ion-label>
+            </ion-segment-button>
           }
         </ion-segment>
 
@@ -177,11 +184,16 @@ export class ArticleImagesConfiguration {
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected readonly stylesAvailable = computed(() => !this.journalMode() && this.showAdvanced());
 
-  // segments: a chosen segment that is no longer offered (Styles after the advanced toggle went off) falls back
-  private readonly chosenSegment = signal<Segment>('select');
+  // segments: until the user picks one, the card opens on the first segment with errors (so an invalid stored
+  // value is never hidden behind a closed segment); a chosen segment that is no longer offered (Styles after the
+  // advanced toggle went off) falls back the same way
+  private readonly chosenSegment = signal<Segment | undefined>(undefined);
+  private readonly offeredSegments = computed<Segment[]>(() => this.stylesAvailable() ? ['select', 'layout', 'styles'] : ['select', 'layout']);
+  protected readonly errorSegments = computed(() => getErrorSegments(this.errors(), ARTICLE_IMAGES_SEGMENT_FIELDS, this.offeredSegments()));
   protected readonly segment = computed<Segment>(() => {
     const chosen = this.chosenSegment();
-    return chosen === 'styles' && !this.stylesAvailable() ? 'select' : chosen;
+    if (chosen && this.offeredSegments().includes(chosen)) return chosen;
+    return this.errorSegments()[0] ?? 'select';
   });
 
   // layout
@@ -234,6 +246,11 @@ export class ArticleImagesConfiguration {
 
   protected onColSizeChange(colSize: number): void {
     this.content.update((content) => ({ ...content, colSize }));
+  }
+
+  /** whether a segment holds an error: its button gets a marker */
+  protected hasErrors(segment: Segment): boolean {
+    return this.errorSegments().includes(segment);
   }
 
   /** messages of a single field, for the inline <okr-error-note> */

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getFieldErrors, getImageErrors, getInlineErrorFields, getJournalInlineErrorFields, getRemainingErrors, getUnrenderedFixedKeys, isInlineErrorField } from './section-errors';
+import { ARTICLE_IMAGES_SEGMENT_FIELDS, getErrorSegments, getFieldErrors, HERO_SEGMENT_FIELDS, getImageErrors, getInlineErrorFields, getJournalInlineErrorFields, getRemainingErrors, getUnrenderedFixedKeys, isInlineErrorField } from './section-errors';
 
 describe('getInlineErrorFields', () => {
   it('always offers the base fields of section-configuration', () => {
@@ -156,5 +156,37 @@ describe('getJournalInlineErrorFields (journal mode, 1.154)', () => {
 
   it('shows the clip limit of a video inline, under the clip list', () => {
     expect(getRemainingErrors({ clips: ['clipsTooMany'] }, getJournalInlineErrorFields('video'))).toEqual([]);
+  });
+});
+
+describe('getErrorSegments (segmented cards, 1.154)', () => {
+  const all = ['select', 'layout', 'styles'] as const;
+
+  it('returns no segment without errors', () => {
+    expect(getErrorSegments({}, ARTICLE_IMAGES_SEGMENT_FIELDS, all)).toEqual([]);
+    expect(getErrorSegments(undefined, ARTICLE_IMAGES_SEGMENT_FIELDS, all)).toEqual([]);
+  });
+
+  it('maps the article fields to their segment, in segment order', () => {
+    const errors = { width: ['notString'], action: ['invalidValue'], 'images[2].url': ['required'] };
+    expect(getErrorSegments(errors, ARTICLE_IMAGES_SEGMENT_FIELDS, all)).toEqual(['select', 'layout', 'styles']);
+    expect(getErrorSegments({ imageLayout: ['invalidValue'] }, ARTICLE_IMAGES_SEGMENT_FIELDS, all)).toEqual(['layout']);
+    expect(getErrorSegments({ zoomFactor: ['invalidValue'] }, ARTICLE_IMAGES_SEGMENT_FIELDS, all)).toEqual(['layout']);
+  });
+
+  it('leaves out segments that are not offered and errors of other fields', () => {
+    const errors = { width: ['notString'], title: ['tooLong'] };
+    expect(getErrorSegments(errors, ARTICLE_IMAGES_SEGMENT_FIELDS, ['select', 'layout'])).toEqual([]);
+  });
+
+  it('ignores a field with an empty message list', () => {
+    expect(getErrorSegments({ action: [] }, ARTICLE_IMAGES_SEGMENT_FIELDS, all)).toEqual([]);
+  });
+
+  it('maps the hero fields, overlay by prefix', () => {
+    const segments = ['image', 'overlay', 'layout'] as const;
+    expect(getErrorSegments({ 'overlay.darkening': ['invalidValue'] }, HERO_SEGMENT_FIELDS, segments)).toEqual(['overlay']);
+    expect(getErrorSegments({ focus: ['invalidValue'], imgIxParams: ['tooLong'] }, HERO_SEGMENT_FIELDS, segments)).toEqual(['image', 'layout']);
+    expect(getErrorSegments({ overlay: ['x'] }, HERO_SEGMENT_FIELDS, segments)).toEqual([]);
   });
 });

@@ -121,6 +121,37 @@ export function getRemainingErrors(errors: SectionErrors, inlineFields: string[]
     .map(([field, messages]) => ({ field, messages }));
 }
 
+/**
+ * Which fields each segment of a segmented configuration card shows. A field ending in `[` or `.` stands for every
+ * key starting with it (`images[0].url`).
+ */
+export type SegmentErrorFields<S extends string> = Record<S, string[]>;
+
+/** The article's «Bilder» card (spec 1.154 §5). */
+export const ARTICLE_IMAGES_SEGMENT_FIELDS: SegmentErrorFields<'select' | 'layout' | 'styles'> = {
+  select: [IMAGES_PREFIX],
+  layout: ['imageLayout', 'action', 'zoomFactor'],
+  styles: IMAGE_STYLE_FIELDS.filter((field) => field !== 'action' && field !== 'zoomFactor'),
+};
+
+/** The hero card (spec 1.154, phase 2). */
+export const HERO_SEGMENT_FIELDS: SegmentErrorFields<'image' | 'overlay' | 'layout'> = {
+  image: ['imgIxParams'],
+  overlay: ['overlay.'],
+  layout: ['height', 'focus'],
+};
+
+/**
+ * The segments of `offered` (in that order) that hold at least one error. A segmented card opens on the first of
+ * them and marks each, so an error in a closed segment never blocks saving without a visible message.
+ */
+export function getErrorSegments<S extends string>(errors: SectionErrors | undefined, fields: SegmentErrorFields<S>, offered: readonly S[]): S[] {
+  const keys = Object.entries(errors ?? {}).filter(([, messages]) => messages?.length > 0).map(([key]) => key);
+  const matches = (key: string, field: string) =>
+    field.endsWith('[') || field.endsWith('.') ? key.startsWith(field) : key === field;
+  return offered.filter((segment) => keys.some((key) => fields[segment].some((field) => matches(key, field))));
+}
+
 /** Messages of a single field, safe for a template call on a possibly missing key. */
 export function getFieldErrors(errors: SectionErrors | undefined, field: string): string[] {
   return errors?.[field] ?? [];

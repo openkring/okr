@@ -2020,5 +2020,8 @@
       "label": "Slider",
       "description": "The images are paged through one at a time."
     }
+  },
+  "segment": {
+    "errors": "Something here still needs fixing"
   }
 }

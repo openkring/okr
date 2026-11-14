@@ -1118,6 +1118,8 @@ export const SECTION_I18N_KEYS = {
   layout_bigGrid_description:               PFX + 'layout.big-grid.description',
   layout_slider_label:                      PFX + 'layout.slider.label',
   layout_slider_description:                PFX + 'layout.slider.description',
+  // marker on a segment button whose segment holds an error (segmented cards, 1.154)
+  segment_errors:                           PFX + 'segment.errors',
   // the article's «Bilder» card (spec 1.154 §5)
   article_images_title:                     PFX + 'article.images.title',
   article_images_segment_select:            PFX + 'article.images.segment.select',

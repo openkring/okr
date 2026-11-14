@@ -2020,5 +2020,8 @@
       "label": "Slider",
       "description": "Le immagini scorrono una alla volta."
     }
+  },
+  "segment": {
+    "errors": "Qui c'è ancora qualcosa da correggere"
   }
 }

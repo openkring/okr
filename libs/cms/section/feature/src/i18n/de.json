@@ -2020,5 +2020,8 @@
       "label": "Slider",
       "description": "Die Bilder werden einzeln nacheinander durchgeblättert."
     }
+  },
+  "segment": {
+    "errors": "Hier ist noch etwas zu korrigieren"
   }
 }

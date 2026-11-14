@@ -8,7 +8,7 @@ import { Checkbox, CheckboxI18n, Color, ErrorNote, NumberInput, NumberInputI18n,
 import { HERO_OVERLAY_DEFAULT, HeroConfig, HeroOverlay, IMAGE_STYLE_SHAPE } from '@okr/shared-models';
 import { coerceBoolean } from '@okr/shared-util-core';
 import {
-  getFieldErrors, HERO_FOCUSES, HERO_HEIGHTS, HERO_OVERLAY_DARKENING_MAX, HERO_OVERLAY_FONT_SIZES, HERO_OVERLAY_LABEL_LENGTH,
+  getErrorSegments, getFieldErrors, HERO_FOCUSES, HERO_SEGMENT_FIELDS, HERO_HEIGHTS, HERO_OVERLAY_DARKENING_MAX, HERO_OVERLAY_FONT_SIZES, HERO_OVERLAY_LABEL_LENGTH,
   HERO_OVERLAY_POSITIONS, SectionErrors
 } from '@okr/cms-section-util';
 
@@ -24,6 +24,7 @@ interface HeroConfigI18n {
   hero_segment_image:         Signal<string>;
   hero_segment_overlay:       Signal<string>;
   hero_segment_layout:        Signal<string>;
+  segment_errors:             Signal<string>;
   hero_imgix_label:           Signal<string>;
   hero_imgix_placeholder:     Signal<string>;
   hero_imgix_helper:          Signal<string>;
@@ -78,7 +79,10 @@ interface HeroConfigI18n {
     IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonGrid, IonRow, IonCol, IonLabel,
     IonSegment, IonSegmentButton, IonSelect, IonSelectOption
   ],
-  styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
+  styles: [`
+    @media (width <= 600px) { ion-card { margin: 5px; } }
+    .error-dot { display: inline-block; width: 8px; height: 8px; margin-inline-start: 6px; border-radius: 50%; background: var(--ion-color-danger); vertical-align: middle; }
+  `],
   template: `
     <ion-card>
       <ion-card-header>
@@ -91,11 +95,17 @@ interface HeroConfigI18n {
             <ion-col size="12">
               <ion-segment [value]="segment()" (ionChange)="onSegmentChange($event.detail.value)">
                 @if (journalMode()) {
-                  <ion-segment-button value="overlay"><ion-label>{{ i18n().hero_segment_overlay() }}</ion-label></ion-segment-button>
+                  <ion-segment-button value="overlay">
+                    <ion-label>{{ i18n().hero_segment_overlay() }}@if (hasErrors('overlay')) {<span class="error-dot" role="img" [attr.aria-label]="i18n().segment_errors()"></span>}</ion-label>
+                  </ion-segment-button>
                 } @else {
-                  <ion-segment-button value="image"><ion-label>{{ i18n().hero_segment_image() }}</ion-label></ion-segment-button>
+                  <ion-segment-button value="image">
+                    <ion-label>{{ i18n().hero_segment_image() }}@if (hasErrors('image')) {<span class="error-dot" role="img" [attr.aria-label]="i18n().segment_errors()"></span>}</ion-label>
+                  </ion-segment-button>
                 }
-                <ion-segment-button value="layout"><ion-label>{{ i18n().hero_segment_layout() }}</ion-label></ion-segment-button>
+                <ion-segment-button value="layout">
+                  <ion-label>{{ i18n().hero_segment_layout() }}@if (hasErrors('layout')) {<span class="error-dot" role="img" [attr.aria-label]="i18n().segment_errors()"></span>}</ion-label>
+                </ion-segment-button>
               </ion-segment>
             </ion-col>
           </ion-row>
@@ -215,11 +225,15 @@ export class HeroConfiguration {
   protected readonly labelLength = HERO_OVERLAY_LABEL_LENGTH;
   protected readonly darkeningMax = HERO_OVERLAY_DARKENING_MAX;
 
+  // until the user picks a segment, the card opens on the first one with errors (an invalid stored value is never
+  // hidden behind a closed segment); a chosen segment that is not offered in this mode falls back the same way
   private readonly chosenSegment = signal<Segment | undefined>(undefined);
+  private readonly offeredSegments = computed<Segment[]>(() => [this.journalMode() ? 'overlay' : 'image', 'layout']);
+  protected readonly errorSegments = computed(() => getErrorSegments(this.errors(), HERO_SEGMENT_FIELDS, this.offeredSegments()));
   protected readonly segment = computed<Segment>(() => {
     const chosen = this.chosenSegment();
-    const first: Segment = this.journalMode() ? 'overlay' : 'image';
-    return chosen === 'layout' || chosen === first ? chosen : first;
+    if (chosen && this.offeredSegments().includes(chosen)) return chosen;
+    return this.errorSegments()[0] ?? this.offeredSegments()[0];
   });
 
   // the form shows the defaults for an absent overlay; nothing is stored until the user changes a field
@@ -299,6 +313,11 @@ export class HeroConfiguration {
 
   protected onImgIxParamsChange(value: string): void {
     this.formData.update((config) => ({ ...config, imageStyle: { ...(config.imageStyle ?? IMAGE_STYLE_SHAPE), imgIxParams: value } }));
+  }
+
+  /** whether a segment holds an error: its button gets a marker */
+  protected hasErrors(segment: Segment): boolean {
+    return this.errorSegments().includes(segment);
   }
 
   /** messages of a single field, for the inline <okr-error-note> */
