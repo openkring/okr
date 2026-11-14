@@ -1,20 +1,20 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
-import { ActionSheetController, ActionSheetOptions, InfiniteScrollCustomEvent, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonInfiniteScroll, IonInfiniteScrollContent, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
+import { InfiniteScrollCustomEvent, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonInfiniteScroll, IonInfiniteScrollContent, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { NameDisplay, PersonModel, PersonModelName, RoleName } from '@okr/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner, ImgDirective } from '@okr/shared-ui';
-import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
+import { AlertService } from '@okr/shared-util-angular';
 import { getFullName, getPhotoUsageName, hasPhotoRestriction, hasRole, objectsToPhotos, contextMenuId } from '@okr/shared-util-core';
 import { getPhotoUsageCategory } from '@okr/shared-categories';
 import { SIZE_MD } from '@okr/shared-constants';
-import { I18nService, TranslatePipe } from '@okr/shared-i18n';
+import { TranslatePipe } from '@okr/shared-i18n';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
-import { resolveVcardCapability, VCARD_I18N_KEYS, VcardI18n } from '@okr/vcard-util';
 
+import { PersonActionsService } from './person-actions.service';
 import { PersonStore } from './person.store';
 
 type PersonSortField = 'name' | 'phone' | 'email';
@@ -30,7 +30,7 @@ type PersonSortField = 'name' | 'phone' | 'email';
     IonAvatar, IonList,
     IonInfiniteScroll, IonInfiniteScrollContent
   ],
-  providers: [PersonStore],
+  providers: [PersonStore, PersonActionsService],
   styles: [`
     ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
     ion-icon.photo-flag { color: var(--ion-color-medium); font-size: 18px; }
@@ -131,7 +131,7 @@ export class PersonList {
   protected readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly popupId = contextMenuId('c_persons');
   protected readonly store = inject(PersonStore);
-  private readonly actionSheetController = inject(ActionSheetController);
+  private readonly personActions = inject(PersonActionsService);
   private readonly alertService = inject(AlertService);
 
   // inputs
@@ -169,7 +169,6 @@ export class PersonList {
   protected readonly nameDisplay = computed(() => this.currentUser()?.nameDisplay ?? NameDisplay.FirstLast);
   private readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
 
-  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   // contact data from the address-directory projection (spec 1.19 Phase 4)
   protected favEmail(person: PersonModel): string {
@@ -180,7 +179,6 @@ export class PersonList {
     return this.store.appStore.getDirectoryEntry(`person.${person.okey}`)?.favPhone ?? '';
   }
   protected personModelName = PersonModelName;
-  protected readonly vcardI18n = inject(I18nService).translateAll(VCARD_I18N_KEYS) as VcardI18n;
 
   /********************* photo declaration (usageImages, D-P4-10) ****************************** */
   // usageImages is a declaration honoured organisationally, not a rule. It is shown to the roles
@@ -266,110 +264,7 @@ export class PersonList {
    * @param person 
    */
   protected async showActions(person: PersonModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
-    await this.addActionSheetButtons(actionSheetOptions, person);
-    await this.executeActions(actionSheetOptions, person);
-  }
-
-  /**
-   * Fills the ActionSheet with all possible actions, considering the user permissions.
-   * @param person 
-   */
-  private async addActionSheetButtons(actionSheetOptions: ActionSheetOptions, person: PersonModel): Promise<void> {
-    if (!this.readOnly()) {
-      actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
-      if (this.hasRole('admin')) {
-        actionSheetOptions.buttons.push(createActionSheetButton('person.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
-      }
-    } else {  // registered user
-      actionSheetOptions.buttons.push(createActionSheetButton('person.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
-    }
-    actionSheetOptions.buttons.push(createActionSheetDivider());
-
-    // all users
-    const isUser = await this.store.isPersonUser(person.okey);
-    // no direct chat to oneself
-    if (person.okey !== this.currentUser()?.personKey && isUser) {
-      actionSheetOptions.buttons.push(createActionSheetButton('person.chat', this.store.i18n.send_message(), this.imgixBaseUrl, 'chatbubbles'));
-    }
-    // open/close the user account — normally automatic on membership changes in the
-    // default org, this is the manual override (spec 2026-08-12-membership-account-sync)
-    if (this.hasRole('memberAdmin')) {
-      actionSheetOptions.buttons.push(isUser
-        ? createActionSheetButton('person.closeAccount', this.store.i18n.close_account(), this.imgixBaseUrl, 'lock-closed')
-        : createActionSheetButton('person.openAccount', this.store.i18n.open_account(), this.imgixBaseUrl, 'person-add'));
-    }
-    if (this.favEmail(person)) {
-      actionSheetOptions.buttons.push(createActionSheetButton('person.copyemail', this.store.i18n.copy_email(), this.imgixBaseUrl, 'copy'));
-      actionSheetOptions.buttons.push(createActionSheetButton('person.sendemail', this.store.i18n.send_email(), this.imgixBaseUrl, 'email'));
-    }
-    if (this.favPhone(person)) {
-      actionSheetOptions.buttons.push(createActionSheetButton('person.copyphone', this.store.i18n.copy_phone(), this.imgixBaseUrl, 'copy'));
-      //actionSheetOptions.buttons.push(createActionSheetButton('person.sendsms', this.imgixBaseUrl, 'chatbubble'));
-      actionSheetOptions.buttons.push(createActionSheetButton('person.call', this.store.i18n.call_phone(), this.imgixBaseUrl, 'tel'));
-    }
-    if (person.favZipCode) {
-      actionSheetOptions.buttons.push(createActionSheetButton('person.show', this.store.i18n.show_postal(), this.imgixBaseUrl, 'location'));
-    }
-    if (resolveVcardCapability(this.currentUser()?.roles, 1).allowed) {
-      actionSheetOptions.buttons.push(createActionSheetButton('person.vcard', this.vcardI18n.action_label(), this.imgixBaseUrl, 'download'));
-    }
-    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
-    if (actionSheetOptions.buttons.length === 1) { // only cancel button
-      actionSheetOptions.buttons = [];
-    }
-  }
-
-  /**
-   * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
-   * @param actionSheetOptions 
-   * @param person 
-   */
-  private async executeActions(actionSheetOptions: ActionSheetOptions, person: PersonModel): Promise<void> {
-    if (actionSheetOptions.buttons.length > 0) {
-      const actionSheet = await this.actionSheetController.create(actionSheetOptions);
-      await actionSheet.present();
-      const { data } = await actionSheet.onDidDismiss();
-      if (!data) return;
-      switch (data.action) {
-        case 'person.view':
-          await this.store.edit(person, true);
-          break;
-        case 'person.chat':
-          await this.store.chat(person);
-          break;
-        case 'person.copyemail':
-          await this.store.copy(this.favEmail(person), this.store.i18n.copy_email_conf());
-          break;
-        case 'person.copyphone':
-          await this.store.copy(this.favPhone(person), this.store.i18n.copy_phone_conf());
-          break;
-        case 'person.sendemail':
-          await this.store.sendEmail(this.favEmail(person));
-          break;
-        case 'person.call':
-          await this.store.call(this.favPhone(person));
-          break;
-        case 'person.delete':
-          await this.store.delete(person, this.readOnly());
-          break;
-        case 'person.show':
-          await this.store.showOnMap(person);
-          break;
-        case 'person.edit':
-          await this.store.edit(person, this.readOnly());
-          break;
-        case 'person.vcard':
-          await this.store.exportVcard(person);
-          break;
-        case 'person.openAccount':
-          await this.store.openUserAccount(person);
-          break;
-        case 'person.closeAccount':
-          await this.store.closeUserAccount(person);
-          break;
-      }
-    }
+    await this.personActions.show(person, 'full');
   }
 
   /******************************** helpers ******************************************* */

@@ -16,6 +16,9 @@ import { MembershipService } from '@okr/relationship-membership-data-access';
 import { AddressService } from '@okr/subject-address-data-access';
 import { PERSON_I18N_KEYS, PersonI18n } from '@okr/subject-person-util';
 
+import { PersonActionsService } from './person-actions.service';
+import { PersonStore } from './person.store';
+
 /** One person on a birthday. */
 interface BirthdayRow {
   person: PersonModel;
@@ -68,6 +71,8 @@ interface BirthdayGroup {
     Spinner, EmptyList, ListFilter,
     IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle,
     IonContent, IonList, IonItem, IonItemDivider, IonLabel, IonAvatar, ],
+  // the row ActionSheet is the person list's (view/edit, contact, map, vCard) — PersonActionsService
+  providers: [PersonStore, PersonActionsService],
   styles: [`
     ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
     ion-item-divider.date { --background: var(--ion-color-primary); --color: var(--ion-color-primary-contrast); min-height: 26px; }
@@ -95,7 +100,7 @@ interface BirthdayGroup {
             <ion-label>{{ (group.weekdayKey | translate | async) ?? '' }} {{ group.dayMonth }}</ion-label>
           </ion-item-divider>
           @for (row of group.rows; track row.person.okey) {
-            <ion-item>
+            <ion-item button [detail]="false" (click)="showActions(row.person)">
               <ion-avatar slot="start">
                 <img okrImg src="{{ personModelName + '.' + row.person.okey | avatar:personModelName }}" alt="Avatar" />
               </ion-avatar>
@@ -115,6 +120,7 @@ export class BirthdayList {
   private readonly appStore = inject(AppStore);
   private readonly addressService = inject(AddressService);
   private readonly membershipService = inject(MembershipService);
+  private readonly personActions = inject(PersonActionsService);
 
   /** `all` — every person of the tenant; `g:<groupKey>` — the members of one group. */
   public readonly listId = input.required<string>();
@@ -193,4 +199,9 @@ export class BirthdayList {
   });
 
   protected readonly rowCount = computed(() => this.groups().reduce((sum, group) => sum + group.rows.length, 0));
+
+  /** view (registered) or edit (memberAdmin), copy/send email, copy/call phone, map, vCard export */
+  protected async showActions(person: PersonModel): Promise<void> {
+    await this.personActions.show(person, 'contact');
+  }
 }
