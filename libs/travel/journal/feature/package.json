@@ -35,7 +35,6 @@
     "@capacitor/share": "*",
     "@sentry/angular": "*",
     "@okr/avatar-ui": "*",
-    "@okr/chat-util": "*",
     "@okr/chat-ui": "*",
     "@okr/comment-util": "*"
   }

@@ -3,7 +3,7 @@ import { IMAGE_CONFIG_SHAPE, JournalChange, SECTION_FEEDBACK_DEFAULT } from '@ok
 import { formatHlc } from './journal-hlc.util';
 import { materialize, reactionKeyPerson } from './journal-merge.util';
 import {
-  commentCountOf, commentsOfParent, emojiCodepoints, FeedbackParent, feedbackOf, footprintReactionCount, imageBadgeText, imageTitle, isReactionActive, parentKeyOf,
+  commentCountOf, commentsOfParent, emojiCodepoints, FeedbackParent, feedbackOf, footprintReactionCount, imageBadgeText, imageTitle, isEmoji, isReactionActive, JOURNAL_QUICK_REACTIONS, parentKeyOf,
   parseParentKey, reactionKey, reactionsOf, reactionWrite, summarizeReactions,
 } from './journal-feedback.util';
 
@@ -303,5 +303,15 @@ describe('journal feedback: image badge', () => {
     expect(imageBadgeText(3, 0)).toBe('❤ 3');
     expect(imageBadgeText(0, 2)).toBe('💬 2');
     expect(imageBadgeText(3, 2)).toBe('❤ 3 · 💬 2');
+  });
+});
+
+describe('journal feedback: quick reactions', () => {
+  it('are six emoji the reaction key accepts', () => {
+    expect(JOURNAL_QUICK_REACTIONS).toHaveLength(6);
+    for (const emoji of JOURNAL_QUICK_REACTIONS) {
+      expect(isEmoji(emoji)).toBe(true);
+      expect(reactionKey({ kind: 'section', id: UUID }, 'anna', emoji)).toBeDefined();
+    }
   });
 });

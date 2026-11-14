@@ -25,7 +25,7 @@ import { weatherCodeToIcon, WEATHER_ICON_SET } from '@okr/weather-util';
 
 import {
   FeedbackReaction, FeedbackText, FeedbackThread, IMAGE_ACTION, ImageThread, imageBadgesOf, imageParentKey, JournalFeedback, openImageSheet,
-  sectionImages,
+  sectionImages, toggledReaction,
 } from './journal-feedback';
 import { JournalFileUrlService } from './journal-file-url.service';
 import { showJournalError } from './journal-errors';
@@ -497,10 +497,9 @@ export class JournalStoryPage {
     };
     const extra: JournalFeedbackAction[] = sectionActions({ type: opened.type, editable: this.canEdit() })
       .map((a) => ({ id: a, label: texts[a][0], icon: texts[a][1], danger: a === 'section.delete' }));
-    const choice = await openImageSheet(this.modalController, i18n, {
-      image, index, feedback: item.feedback, thread: this.thread(imageParentKey(image)), extra,
-    });
-    if (choice?.kind === 'react') return this.react({ parentKey: imageParentKey(image), emoji: choice.emoji, active: true });
+    const thread = this.thread(imageParentKey(image));
+    const choice = await openImageSheet(this.modalController, this.toastController, i18n, { image, index, feedback: item.feedback, thread, extra });
+    if (choice?.kind === 'react') return this.react(toggledReaction(thread.parentKey, thread.reactions, choice.emoji));
     switch (choice?.id) {
       case IMAGE_ACTION.comment:
       case IMAGE_ACTION.comments: return this.openImage.set({ sectionKey: opened.key, image, index });

@@ -1,12 +1,11 @@
 import { Component, computed, effect, ElementRef, inject, input, output, viewChild } from '@angular/core';
-import { ModalController } from '@ionic/angular';
+import { ModalController, ToastController } from '@ionic/angular';
 
-import { QUICK_REACTIONS } from '@okr/chat-util';
 import { CommentListI18n } from '@okr/comment-util';
 import { ImageConfig, SectionFeedback, SectionModel } from '@okr/shared-models';
 import { fill } from '@okr/shared-util-core';
 import { JournalCommentItem, JournalComments, JournalFeedbackAction, JournalFeedbackSheet, JournalReactionChips } from '@okr/travel-journal-ui';
-import { imageBadgeText, imageTitle, JournalI18n, parentKeyOf, ReactionSummary } from '@okr/travel-journal-util';
+import { imageBadgeText, imageTitle, JOURNAL_QUICK_REACTIONS, JournalI18n, parentKeyOf, ReactionSummary } from '@okr/travel-journal-util';
 
 /** The reactions and comments of one parent (`section.<key>` / `image.<key>`), as the reader sees them. */
 export interface FeedbackThread { parentKey: string; reactions: ReactionSummary[]; comments: JournalCommentItem[] }
@@ -51,19 +50,19 @@ export function imageBadgesOf(images: ImageConfig[], feedback: SectionFeedback, 
 }
 
 /**
- * The reaction sheet: the quick row (the chat's QUICK_REACTIONS) with «mehr …», then `actions`. «mehr …» opens the
+ * The reaction sheet: the quick row (JOURNAL_QUICK_REACTIONS) with «mehr …», then `actions`. «mehr …» opens the
  * chat's emoji picker, imported on that tap only: `emoji-picker-element` must never enter an eager chunk (lazy-loading
  * skill, plan decision 8). Resolves to the chosen emoji or action, undefined when the reader closed it.
  */
 export async function openFeedbackSheet(
-  modalController: ModalController, i18n: JournalI18n,
+  modalController: ModalController, toastController: ToastController, i18n: JournalI18n,
   options: { header?: string; reactions: boolean; mine: string[]; actions: JournalFeedbackAction[] },
 ): Promise<FeedbackChoice | undefined> {
   if (!options.reactions && options.actions.length === 0) return undefined;
   const sheet = await modalController.create({
     component: JournalFeedbackSheet,
     componentProps: {
-      header: options.header ?? '', quickReactions: options.reactions ? QUICK_REACTIONS : [], mine: options.mine,
+      header: options.header ?? '', quickReactions: options.reactions ? JOURNAL_QUICK_REACTIONS : [], mine: options.mine,
       moreLabel: i18n.reaction_more(), actions: options.actions,
     },
     cssClass: 'auto-height-modal',
@@ -75,7 +74,15 @@ export async function openFeedbackSheet(
   if (role === 'react' && data) return { kind: 'react', emoji: data };
   if (role === 'action' && data) return { kind: 'action', id: data };
   if (role !== 'picker') return undefined;
-  const { EmojiPickerModal } = await import('@okr/chat-ui');
+  let EmojiPickerModal: typeof import('@okr/chat-ui').EmojiPickerModal;
+  try {
+    ({ EmojiPickerModal } = await import('@okr/chat-ui'));
+  } catch {
+    // offline before the picker's chunk was ever loaded (PWA): say so instead of failing silently
+    const toast = await toastController.create({ message: i18n.error_generic(), duration: 3000, position: 'bottom' });
+    await toast.present();
+    return undefined;
+  }
   const picker = await modalController.create({ component: EmojiPickerModal, componentProps: { title: i18n.reaction_picker() }, cssClass: 'auto-height-modal' });
   await picker.present();
   const picked = await picker.onWillDismiss<string>();
@@ -88,7 +95,7 @@ export async function openFeedbackSheet(
  * `extra` (the authors' section actions).
  */
 export function openImageSheet(
-  modalController: ModalController, i18n: JournalI18n,
+  modalController: ModalController, toastController: ToastController, i18n: JournalI18n,
   context: { image: ImageConfig; index: number; feedback: SectionFeedback; thread: FeedbackThread; extra?: JournalFeedbackAction[] },
 ): Promise<FeedbackChoice | undefined> {
   const { feedback, thread } = context;
@@ -99,7 +106,7 @@ export function openImageSheet(
     { id: IMAGE_ACTION.slider, label: i18n.image_slider(), icon: 'images' },
     ...(context.extra ?? []),
   ];
-  return openFeedbackSheet(modalController, i18n, {
+  return openFeedbackSheet(modalController, toastController, i18n, {
     header: imageTitle(context.image, context.index, (n) => fill(i18n.image_photo(), { n })),
     reactions: feedback.imageReactions,
     mine: thread.reactions.filter((r) => r.mine).map((r) => r.emoji),
@@ -146,6 +153,7 @@ export function openImageSheet(
 })
 export class JournalFeedback {
   private readonly modalController = inject(ModalController);
+  private readonly toastController = inject(ToastController);
 
   public readonly section = input.required<FeedbackThread>();
   public readonly feedback = input.required<SectionFeedback>();
@@ -180,7 +188,7 @@ export class JournalFeedback {
   }
 
   protected async add(thread: FeedbackThread): Promise<void> {
-    const choice = await openFeedbackSheet(this.modalController, this.i18n(), {
+    const choice = await openFeedbackSheet(this.modalController, this.toastController, this.i18n(), {
       reactions: true, mine: thread.reactions.filter((r) => r.mine).map((r) => r.emoji), actions: [],
     });
     if (choice?.kind === 'react') this.toggle(thread, choice.emoji);

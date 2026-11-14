@@ -18,7 +18,7 @@ import { weatherCodeToIcon, WEATHER_ICON_SET } from '@okr/weather-util';
 import { googleAttributionOf, routeBaseLayers } from './journal-base-layers';
 import {
   FeedbackReaction, FeedbackText, FeedbackThread, IMAGE_ACTION, imageBadgesOf, imageParentKey, ImageThread, JournalFeedback, openImageSheet,
-  sectionImages,
+  sectionImages, toggledReaction,
 } from './journal-feedback';
 import { JOURNAL_ICONS } from './journal-icons';
 import { openJournalFlyover } from './journal-flyover-open';
@@ -366,11 +366,8 @@ export class JournalGuestPage {
     const index = Math.max(0, item.images.findIndex((i) => i.label === image.label));
     const view = this.selected()?.sections?.find((s) => s.key === item.section.okey);
     const thread: FeedbackThread = { parentKey: imageParentKey(image), ...(view?.images?.[image.label] ?? NO_THREAD) };
-    const choice = await openImageSheet(this.modalController, this.i18n, { image, index, feedback: item.feedback, thread });
-    if (choice?.kind === 'react') {
-      const mine = thread.reactions.some((r) => r.emoji === choice.emoji && r.mine);
-      return this.react({ parentKey: thread.parentKey, emoji: choice.emoji, active: !mine });
-    }
+    const choice = await openImageSheet(this.modalController, this.toastController, this.i18n, { image, index, feedback: item.feedback, thread });
+    if (choice?.kind === 'react') return this.react(toggledReaction(thread.parentKey, thread.reactions, choice.emoji));
     switch (choice?.id) {
       case IMAGE_ACTION.comment:
       case IMAGE_ACTION.comments: return this.openImage.set({ sectionKey: item.section.okey, image, index });

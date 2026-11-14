@@ -185,3 +185,10 @@ export function imageTitle(image: ImageConfig, index: number, photoLabel: (n: nu
 export function imageBadgeText(reactions: number, comments: number): string {
   return [reactions > 0 ? `❤ ${reactions}` : '', comments > 0 ? `💬 ${comments}` : ''].filter((part) => part !== '').join(' · ');
 }
+
+/**
+ * The quick emoji row of the journal's reaction sheet. Mirrors the chat's `QUICK_REACTIONS` (@okr/chat-util,
+ * message-actions.util) on purpose: the journal must not import the chat-util barrel, whose matrix logger would join
+ * the static closure of the story and guest pages (the guest page is a public link). Keep both lists in step.
+ */
+export const JOURNAL_QUICK_REACTIONS: readonly string[] = ['👍', '❤️', '😂', '😮', '🙏', '🎉'];
