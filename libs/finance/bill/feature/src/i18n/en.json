@@ -45,7 +45,8 @@
     "label": "Status"
   },
   "download": {
-    "label": "Download invoice"
+    "label": "Download invoice",
+    "error": "The invoice could not be downloaded. Please try again later."
   },
   "view": {
     "label": "Show invoice"

@@ -54,6 +54,7 @@ export const BILL_I18N_KEYS = {
   delete:               PFX + 'delete.label',
   delete_confirm:       PFX + 'delete.confirm',
   download:             PFX + 'download.label',
+  download_error:       PFX + 'download.error',
   view:                 PFX + 'view.label',
 
   // read-only banner (Bexio-managed)

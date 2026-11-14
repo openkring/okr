@@ -595,20 +595,27 @@ export const BillStore = signalStore(
     async showPdf(bill: BillModel): Promise<void> {
       const attachmentId = bill.attachments[0];
       if (!attachmentId) return;
-      const fn = httpsCallable<{ attachmentId: string; op: string }, { content: string; mimeType?: string }>(
-        store.functions, 'bexio'
-      );
-      const result = await fn({ attachmentId, op: 'showBillPdf' });
-      const bytes = Uint8Array.from(atob(result.data.content), c => c.charCodeAt(0));
-      const mimeType = result.data.mimeType ?? 'application/pdf';
-      const blob = new Blob([bytes], { type: mimeType });
-      const extension = ({ 'application/pdf': 'pdf', 'image/jpeg': 'jpg', 'image/png': 'png', 'image/heic': 'heic', 'image/heif': 'heif' } as Record<string, string>)[mimeType] ?? 'pdf';
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${bill.billId}.${extension}`;
-      a.click();
-      URL.revokeObjectURL(url);
+      try {
+        const fn = httpsCallable<{ attachmentId: string; op: string }, { content: string; mimeType?: string }>(
+          store.functions, 'bexio'
+        );
+        const result = await fn({ attachmentId, op: 'showBillPdf' });
+        const bytes = Uint8Array.from(atob(result.data.content), c => c.charCodeAt(0));
+        const mimeType = result.data.mimeType ?? 'application/pdf';
+        const blob = new Blob([bytes], { type: mimeType });
+        const extension = ({ 'application/pdf': 'pdf', 'image/jpeg': 'jpg', 'image/png': 'png', 'image/heic': 'heic', 'image/heif': 'heif' } as Record<string, string>)[mimeType] ?? 'pdf';
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${bill.billId}.${extension}`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        // without this the callable's rejection escapes as an unhandled promise rejection and the
+        // user sees nothing (bexio unreachable, file missing, caller not treasurer) — as InvoiceStore.showPdf
+        console.error('BillStore.showPdf: failed to fetch the attachment', e);
+        await showToast(store.toastController, store.i18n.download_error());
+      }
     },
   })),
 );

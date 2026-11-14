@@ -19,6 +19,7 @@ import { DocumentsAccordion } from '@okr/content-document-feature';
 import { AvatarToolbar } from '@okr/avatar-feature';
 import { PersonForm } from '@okr/subject-person-ui';
 
+import { PersonFinanceAccordions } from './person-finance-accordions';
 import { PersonStore } from './person.store';
 
 @Component({
@@ -28,7 +29,7 @@ import { PersonStore } from './person.store';
     Header, ChangeConfirmation,
     PersonForm, AvatarToolbar, AddressesAccordion, CommentsAccordion, DocumentsAccordion,
     MembershipAccordion, OwnershipAccordion, ReservationsAccordion,
-    PersonalRelAccordion, WorkrelAccordion,
+    PersonalRelAccordion, WorkrelAccordion, PersonFinanceAccordions,
     IonContent, IonAccordionGroup, IonCard, IonCardContent
   ],
   providers: [PersonStore],
@@ -80,6 +81,7 @@ import { PersonStore } from './person.store';
                 <okr-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()"/>
                 <okr-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()"/>
               }
+              <okr-person-finance-accordions [personKey]="personKey()" [currentUser]="currentUser()" />
             </ion-accordion-group> 
           </ion-card-content>
         </ion-card>

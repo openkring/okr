@@ -41,6 +41,9 @@
     "@okr/content-pdf-template-feature": "*",
     "@okr/relationship-membership-data-access": "*",
     "@okr/subject-org-ui": "*",
-    "@okr/subject-org-data-access": "*"
+    "@okr/subject-org-data-access": "*",
+    "@okr/tenant-feature": "*",
+    "@okr/finance-invoice-feature": "*",
+    "@okr/finance-bill-feature": "*"
   }
 }

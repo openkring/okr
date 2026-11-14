@@ -76,7 +76,9 @@ module.exports = [
             // becomes a ratchet — a NEW cross-domain dependency fails lint and has to be added
             // here on purpose. Do not widen a list to silence an error without deciding that the
             // dependency belongs.
-            { sourceTag: 'scope:person', onlyDependOnLibsWithTags: [...SCOPE_BASE('person'), 'scope:address', 'scope:chat', 'scope:membership', 'scope:org', 'scope:ownership', 'scope:personal-rel', 'scope:reservation', 'scope:swisscities', 'scope:vcard', 'scope:workrel'] },
+            // scope:finance + scope:tenant — person finance accordions 2026-11-14: the person modal/page lists the person's invoices
+            // and bills (FeatureStore gate) and mounts both accordions through a DYNAMIC import, so finance stays out of this chunk's static graph.
+            { sourceTag: 'scope:person', onlyDependOnLibsWithTags: [...SCOPE_BASE('person'), 'scope:address', 'scope:chat', 'scope:finance', 'scope:membership', 'scope:org', 'scope:ownership', 'scope:personal-rel', 'scope:reservation', 'scope:swisscities', 'scope:tenant', 'scope:vcard', 'scope:workrel'] },
             // scope:social — webcam places 2026-11-09: the org modal lists an org's webcams (news-center data-access) and mounts
             // NewsWebcamPanel through a DYNAMIC import, so the news-center feature stays out of this chunk's static graph.
             { sourceTag: 'scope:org', onlyDependOnLibsWithTags: [...SCOPE_BASE('org'), 'scope:address', 'scope:finance', 'scope:membership', 'scope:ownership', 'scope:reservation', 'scope:social', 'scope:swisscities', 'scope:tenant', 'scope:vcard', 'scope:workrel'] },

@@ -22,6 +22,7 @@ import { PersonForm } from '@okr/subject-person-ui';
 import { PersonFormModel, withoutUnchangedExternalIds } from '@okr/subject-person-util';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
+import { PersonFinanceAccordions } from './person-finance-accordions';
 import { PersonStore } from './person.store';
 import { AppStore } from '@okr/shared-feature';
 
@@ -32,7 +33,7 @@ import { AppStore } from '@okr/shared-feature';
     Header, ChangeConfirmation, PersonForm,
     AvatarToolbar, AddressesAccordion, CommentsAccordion,
     OwnershipAccordion, MembershipAccordion, WorkrelAccordion,
-    ReservationsAccordion, DocumentsAccordion, PersonalRelAccordion,
+    ReservationsAccordion, DocumentsAccordion, PersonalRelAccordion, PersonFinanceAccordions,
     IonContent, IonAccordionGroup, IonCard, IonCardContent
   ],
   providers: [PersonStore],
@@ -84,6 +85,7 @@ import { AppStore } from '@okr/shared-feature';
                     <okr-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()"/>
                     <okr-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()"/>
                 }
+                <okr-person-finance-accordions [personKey]="personKey()" [currentUser]="currentUser()" />
               </ion-accordion-group>
             </ion-card-content>
           </ion-card>

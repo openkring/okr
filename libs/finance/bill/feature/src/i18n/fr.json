@@ -45,7 +45,8 @@
     "label": "Statut"
   },
   "download": {
-    "label": "Télécharger la facture"
+    "label": "Télécharger la facture",
+    "error": "La facture n'a pas pu être téléchargée. Réessaie plus tard."
   },
   "view": {
     "label": "Afficher la facture"

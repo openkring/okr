@@ -45,7 +45,8 @@
     "label": "Estado"
   },
   "download": {
-    "label": "Descargar factura"
+    "label": "Descargar factura",
+    "error": "No se ha podido descargar la factura. Vuelve a intentarlo más tarde."
   },
   "view": {
     "label": "Mostrar factura"

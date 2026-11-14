@@ -45,7 +45,8 @@
     "label": "Stato"
   },
   "download": {
-    "label": "Scarica fattura"
+    "label": "Scarica fattura",
+    "error": "Non è stato possibile scaricare la fattura. Riprova più tardi."
   },
   "view": {
     "label": "Mostra fattura"

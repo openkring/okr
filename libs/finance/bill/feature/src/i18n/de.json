@@ -45,7 +45,8 @@
     "label": "Status"
   },
   "download": {
-    "label": "Rechnung herunterladen"
+    "label": "Rechnung herunterladen",
+    "error": "Die Rechnung konnte nicht heruntergeladen werden. Bitte versuche es später noch einmal."
   },
   "view": {
     "label": "Rechnung anzeigen"
