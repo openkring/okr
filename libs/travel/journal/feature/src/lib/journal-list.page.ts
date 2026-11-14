@@ -9,7 +9,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, okrPrompt } from '@okr/shared-util-angular';
 import { registerBundledIcons } from '@okr/shared-util-core';
 import { JournalEditModal } from '@okr/travel-journal-ui';
-import { JournalFormModel, journalFormOf, journalPatch, JournalListAction, journalListMenu, journalPeriod, journalListSheet, JournalWriteSlow } from '@okr/travel-journal-util';
+import { JournalFormModel, journalFormOf, journalPatch, JournalListAction, journalListMenu, journalListSheet, JournalWriteSlow } from '@okr/travel-journal-util';
 import { continueWhenSlow, showJournalError } from './journal-errors';
 import { openJournalInfo } from './journal-info';
 import { JournalGuestsSheet } from './journal-guests';
@@ -55,7 +55,7 @@ import { JournalStore } from './journal.store';
               </div>
               <ion-label>
                 {{ journal.title || store.i18n.untitled() }}
-                @if (journalPeriod(journal); as period) { <p>{{ period }}</p> }
+                @if (store.periodOf(journal.key); as period) { <p>{{ period }}</p> }
               </ion-label>
             </ion-item>
           } @empty {
@@ -93,7 +93,6 @@ export class JournalListPage {
     }
   }
 
-  protected readonly journalPeriod = journalPeriod;
 
   protected open(journalKey: string): void {
     void this.router.navigate(['/journal', journalKey]);

@@ -156,11 +156,18 @@ export function bookDate(storeDate: string | undefined): string {
   return `${convertDateFormatToString(storeDate, DateFormat.StoreDate, DateFormat.DDMM, false)}.${storeDate.slice(0, 4)}`;
 }
 
-/** The travel period of a journal for its list row: «d.M.yyyy – d.M.yyyy», one date when start = end, '' when neither is set. */
-export function journalPeriod(journal: { startDate?: string; endDate?: string }): string {
-  const start = bookDate(journal.startDate);
-  const end = bookDate(journal.endDate);
-  if (!start || !end || journal.startDate === journal.endDate) return start || end;
+/**
+ * The travel period of a journal for its list row: «d.M.yyyy – d.M.yyyy», one date when start = end, '' when
+ * nothing is dated. The journal's own start/end date wins; each missing side falls back to the earliest / latest
+ * footprint date, like the photo book's title page.
+ */
+export function journalPeriod(journal: { startDate?: string; endDate?: string }, footprints: readonly { date: string }[] = []): string {
+  const dates = footprints.map((f) => f.date).filter(isStoreDate).sort();
+  const startDate = isStoreDate(journal.startDate) ? journal.startDate : dates[0];
+  const endDate = isStoreDate(journal.endDate) ? journal.endDate : dates[dates.length - 1];
+  const start = bookDate(startDate);
+  const end = bookDate(endDate);
+  if (!start || !end || startDate === endDate) return start || end;
   return `${start} – ${end}`;
 }
 

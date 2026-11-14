@@ -518,6 +518,24 @@ describe('bookPrintCandidates', () => {
   });
 });
 
+describe('journalPeriod with footprints', () => {
+  const fp = (date: string) => ({ date });
+  it('falls back to the earliest and latest footprint date', () => {
+    expect(journalPeriod({}, [fp('20260120'), fp('20260105'), fp('20260110')])).toBe('5.1.2026 – 20.1.2026');
+  });
+  it('shows one date when all footprints share it', () => {
+    expect(journalPeriod({}, [fp('20260105'), fp('20260105')])).toBe('5.1.2026');
+  });
+  it('skips undated footprints', () => {
+    expect(journalPeriod({}, [fp(''), fp('2026'), fp('20260105')])).toBe('5.1.2026');
+    expect(journalPeriod({}, [fp('')])).toBe('');
+  });
+  it('keeps the journal dates over the footprints, side by side', () => {
+    expect(journalPeriod({ startDate: '20260101', endDate: '20260131' }, [fp('20260105'), fp('20260120')])).toBe('1.1.2026 – 31.1.2026');
+    expect(journalPeriod({ startDate: '20260101' }, [fp('20260105'), fp('20260120')])).toBe('1.1.2026 – 20.1.2026');
+  });
+});
+
 describe('journalPeriod', () => {
   it('formats a range, one date when start = end, and nothing when both are empty', () => {
     expect(journalPeriod({ startDate: '20260105', endDate: '20260120' })).toBe('5.1.2026 – 20.1.2026');

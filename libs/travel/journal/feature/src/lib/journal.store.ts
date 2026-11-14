@@ -18,7 +18,7 @@ import {
   toBase64,
 } from '@okr/travel-journal-data-access';
 import {
-  BOOK_I18N_KEYS, BOOK_LABEL_MAX, JournalFormModel, removableAuthorKeys, authorsWithout, bookLabelsOf, JournalBookI18n, bookPrintCandidates, entityStateKey, hasOthersBlocks, pagesOf, PRINT_FILL_LONG_PX, PRINT_FILL_SHORT_PX, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
+  BOOK_I18N_KEYS, BOOK_LABEL_MAX, journalPeriod, JournalFormModel, removableAuthorKeys, authorsWithout, bookLabelsOf, JournalBookI18n, bookPrintCandidates, entityStateKey, hasOthersBlocks, pagesOf, PRINT_FILL_LONG_PX, PRINT_FILL_SHORT_PX, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
   allPhotoFiles, commentsOf, CommentView, likeKey, likesOf, JournalPhotoMode, JournalTileSource, journalsOf, journalTilePlan, MapArea, mapLayers, MapPlace, mapPlaces, parseMapAreas, parsePhotoMode, TileJob, JournalWriteRefused, lastBlockOrder, materialize, orderBetween, reorderedOrders, CONFLICT_FIELDS, dismissedField, isConflictCopyKey, originalOfCopy, BlockView, publishedPhotoFiles, viewOf, MAX_VIDEOS_PER_BLOCK, isVideoFile,
   JournalLock, LOCK_HEARTBEAT_MS, LOCK_TTL_MS, lockedBy, mergeLocks, BoundAuthor, JournalWriteSlow, mergePending,
   AreaLayer, areaForWrite, areaLayerTilePlan, BaseLayerOption, baseLayerOptions, Bbox, finishRun, isUsable, layerDetailLevels, layerKindsFor,
@@ -1505,6 +1505,12 @@ export const JournalStore = signalStore(
         const choices = coverChoices(journalKey);
         const chosen = journalsOf(store.journalState()).find((j) => j.key === journalKey)?.coverImageKey ?? '';
         return (choices.find((c) => c.key === chosen) ?? choices[0])?.url ?? '';
+      },
+
+      /** The list row's travel period: the journal's dates, else its first and last footprint date; '' when nothing is dated. */
+      periodOf(journalKey: string): string {
+        const journal = journalsOf(store.journalState()).find((j) => j.key === journalKey);
+        return journal ? journalPeriod(journal, footprintsOf(store.journalState(), journalKey)) : '';
       },
 
       /** Deletes (archives) a whole journal; its footprints disappear with it from every list. */
