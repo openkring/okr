@@ -215,10 +215,12 @@ function photosFrom(value: unknown): TrackCopyPhoto[] {
     .map((p) => ({ imageKey: p['imageKey'] as string, lat: p['lat'] as number, lng: p['lng'] as number, takenAt: str(p['takenAt']) }));
 }
 
-function trackFrom(entity: EntityState, view: Record<string, unknown>): TrackView {
+/**
+ * The copy in a record view or a stored `tracks/{key}` doc, by the allow-list of decision 2: any other field is dropped,
+ * a damaged field gives an empty value — never an exception. The server doc and the guest payload go through it.
+ */
+export function trackCopyFrom(view: Record<string, unknown>): TrackCopy {
   return {
-    key: entity.entityKey,
-    authorKey: entity.ownerKey ?? '',
     tripKey: str(view['tripKey']),
     name: str(view['name']),
     startedAt: str(view['startedAt']),
@@ -229,6 +231,10 @@ function trackFrom(entity: EntityState, view: Record<string, unknown>): TrackVie
     sections: sectionsFrom(view['sections']),
     photos: photosFrom(view['photos']),
   };
+}
+
+function trackFrom(entity: EntityState, view: Record<string, unknown>): TrackView {
+  return { key: entity.entityKey, authorKey: entity.ownerKey ?? '', ...trackCopyFrom(view) };
 }
 
 /** The journal's tracks, newest first. A damaged record gives empty lists, never an exception. */

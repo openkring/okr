@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { SectionFeedback, TransportMode } from '@okr/shared-models';
-import { JournalSectionType, ReactionSummary } from '@okr/travel-journal-util';
+import { JournalSectionType, ReactionSummary, TrackCopy, TrackCopyPhoto } from '@okr/travel-journal-util';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
@@ -27,6 +27,13 @@ export interface GuestVideoView { key: string; width: number; height: number; du
 export interface GuestCommentView { key: string; authorName: string; text: string; createdAt: string; mine: boolean }
 /** The comments and reaction chips of one section or image; empty while its switch is off. */
 export interface GuestFeedbackView { reactions: ReactionSummary[]; comments: GuestCommentView[] }
+/** A track photo as a guest receives it: its position and time from the track copy, signed URLs of the journal image. */
+export interface GuestTrackPhotoView extends TrackCopyPhoto { url: string; thumb: string }
+/**
+ * The track of a track section (spec 1.154 phase 5): the allow-listed copy without the trip key — sections with the
+ * encoded points (`trackPointsOf` decodes them) — and only photos of live journal images, signed. No activity metrics.
+ */
+export type GuestTrackView = Omit<TrackCopy, 'tripKey' | 'photos'> & { photos: GuestTrackPhotoView[] };
 /**
  * A section of a published footprint as a guest receives it (spec 1.154 phase 2): the CMS type, title, html and
  * properties (image references name journal images in `ImageConfig.label`, their `url` is empty) plus the signed
@@ -38,6 +45,8 @@ export interface GuestSectionView extends Partial<GuestFeedbackView> {
   key: string; type: JournalSectionType; title: string; html: string; properties: Record<string, unknown>;
   authorName: string; photos: GuestPhotoView[]; videos: GuestVideoView[];
   feedback?: SectionFeedback; images?: Record<string, GuestFeedbackView>;
+  /** a track section whose track is there and live (phase 5); absent otherwise and from an older server */
+  track?: GuestTrackView;
 }
 export interface GuestFootprintView {
   key: string; title: string; placeName: string; date: string; time: string; latitude?: number; longitude?: number;
@@ -51,6 +60,11 @@ export interface GuestJournalView {
   journal: { key: string; title: string; subTitle: string; startDate?: string };
   me: { personKey: string; name: string; channel: GuestChannel; muted: boolean; expiresAt: string };
   footprints: GuestFootprintView[];
+  /**
+   * The journal route as [lat, lng] in time order (phase 5, decision 5): photo positions of published footprints only,
+   * at most 2,000 points. Sent once, only when a map section has `properties.showRoute`; absent from an older server.
+   */
+  route?: [number, number][];
 }
 
 @Injectable({ providedIn: 'root' })

@@ -3,8 +3,8 @@ import { JournalChange } from '@okr/shared-models';
 import { formatHlc, reactionKey } from '@okr/travel-journal-util';
 
 import {
-  applyManage, clipReadUrl, deliveryFor, feedbackIndex, feedbackTarget, GuestRequestError, GuestSection, guestReactionWrite, guestSectionFeedback, guestSectionsOf,
-  guestVideoClips, isGuestVisibleSection, isOneEmoji, mayDeleteComment, memberName, parseGuestRequest, parseGuestEmail, peopleKeys,
+  applyManage, clipReadUrl, deliveryFor, feedbackIndex, feedbackTarget, GUEST_ROUTE_MAX_POINTS, GuestRequestError, GuestSection, guestReactionWrite, guestRoute,
+  guestSectionFeedback, guestSectionsOf, guestTrackOf, guestVideoClips, isGuestVisibleSection, publishedGuestFootprints, wantsRoute, isOneEmoji, mayDeleteComment, memberName, parseGuestRequest, parseGuestEmail, peopleKeys,
 } from './guest.logic';
 
 const CODE = '0123456789abcdef0123456789abcdef';
@@ -107,6 +107,117 @@ describe('guestSectionsOf', () => {
   it('a copy that outlived its original is shown', () => {
     const outlived = [{ id: 'a1_c_x', data: { footprintKey: 'f1', type: 'album', conflictOf: 'a1', conflict: false, properties: { images: [{ label: 'i9' }] } } }];
     expect(guestSectionsOf(outlived, 'f1', ['a1_c_x']).map((s) => s.imageKeys)).toEqual([['i9']]);
+  });
+});
+
+describe('map and track sections for guests (1.154 phase 5)', () => {
+  const img = (lat: number, lng: number, takenAt: string, extra: Record<string, unknown> = {}) => ({
+    latitude: lat, longitude: lng, takenAt, path2048: `tenant/t/journal/j/${takenAt}-2048.jpg`, path400: `tenant/t/journal/j/${takenAt}-400.jpg`, ...extra,
+  });
+  // imageById holds the LIVE images only (guestView filters archived ones out)
+  const images = new Map<string, Record<string, unknown>>([
+    ['p1', img(46.0, 7.0, '2026-11-01T09:00')],
+    ['p2', img(46.1, 7.1, '2026-11-01T10:00')],
+    ['d1', img(40.0, 1.0, '2026-11-01T09:30')], // only in a draft footprint
+    ['z1', img(41.0, 2.0, '2026-11-01T09:40')], // only in an archived section of a published footprint
+    ['v1', img(42.0, 3.0, '2026-11-01T09:50', { videoPath: 'tenant/t/journal/j/v1-video.mp4' })], // a clip
+    ['t1', img(46.05, 7.05, '2026-11-01T09:20')], // a track photo
+  ]);
+  const footprints = [
+    { id: 'f1', data: { publishState: 'published', sections: ['m1', 'a1', 'z1', 'k1'] } },
+    { id: 'f2', data: { publishState: 'draft', sections: ['a2'] } },
+    { id: 'f3', data: { publishState: 'published', isArchived: true, sections: ['a3'] } },
+  ];
+  const sectionDocs = [
+    { id: 'm1', data: { footprintKey: 'f1', type: 'map', properties: { zoom: 12, layer: 'world', showRoute: true } } },
+    { id: 'a1', data: { footprintKey: 'f1', type: 'album', properties: { images: [{ label: 'p2' }, { label: 'p1' }, { label: 'v1' }] } } },
+    { id: 'z1', data: { footprintKey: 'f1', type: 'album', isArchived: true, properties: { images: [{ label: 'z1' }] } } },
+    { id: 'k1', data: { footprintKey: 'f1', type: 'track', properties: { track: { trackKey: 'trk__trip1' } } } },
+    { id: 'a2', data: { footprintKey: 'f2', type: 'album', properties: { images: [{ label: 'd1' }] } } },
+    { id: 'a3', data: { footprintKey: 'f3', type: 'album', properties: { images: [{ label: 'd1' }] } } },
+  ];
+
+  it('publishedGuestFootprints keeps live, published footprints with their visible sections', () => {
+    const published = publishedGuestFootprints(footprints, sectionDocs);
+    expect(published.map((p) => p.footprint.id)).toEqual(['f1']);
+    expect(published[0].sections.map((s) => s.key)).toEqual(['m1', 'a1', 'k1']);
+    expect(published[0].sections[0].properties).toEqual({ zoom: 12, layer: 'world', showRoute: true }); // layer sent as is
+  });
+
+  it('a track section names its track key; a key that is not one path segment is dropped', () => {
+    const [track] = guestSectionsOf([sectionDocs[3]], 'f1', ['k1']);
+    expect(track).toMatchObject({ type: 'track', trackKey: 'trk__trip1', imageKeys: [] });
+    const evil = guestSectionsOf([{ id: 'k2', data: { footprintKey: 'f1', type: 'track', properties: { track: { trackKey: '../../users/x' } } } }], 'f1', ['k2']);
+    expect(evil[0].trackKey).toBeUndefined();
+    expect('trackKey' in guestSectionsOf([sectionDocs[1]], 'f1', ['a1'])[0]).toBe(false);
+  });
+
+  it('Review Focus 4: the route holds only photo positions of published footprints, in time order, no clips', () => {
+    const sections = publishedGuestFootprints(footprints, sectionDocs).flatMap((p) => p.sections);
+    expect(wantsRoute(sections)).toBe(true);
+    const route = guestRoute([...sections.flatMap((s) => s.imageKeys), 't1'], images);
+    expect(route).toEqual([[46.0, 7.0], [46.05, 7.05], [46.1, 7.1]]);
+    // the draft's, the archived section's and the clip's positions are nowhere
+    expect(route.flat()).not.toContain(40.0);
+    expect(route.flat()).not.toContain(41.0);
+    expect(route.flat()).not.toContain(42.0);
+    // an image that is not live (absent) adds nothing
+    expect(guestRoute(['gone', 'p1'], images)).toEqual([[46.0, 7.0]]);
+  });
+
+  it('no map with showRoute, no route', () => {
+    const sections = guestSectionsOf([{ id: 'm1', data: { footprintKey: 'f1', type: 'map', properties: { zoom: 12 } } }, sectionDocs[1]], 'f1', ['m1', 'a1']);
+    expect(wantsRoute(sections)).toBe(false);
+  });
+
+  it('a long route is thinned to the cap, first and last point kept', () => {
+    const many = new Map<string, Record<string, unknown>>();
+    for (let i = 0; i < 6000; i++) {
+      const takenAt = new Date(Date.UTC(2026, 10, 1) + i * 60_000).toISOString().slice(0, 19);
+      many.set(`k${i}`, { latitude: 46 + i * 0.001, longitude: 7 + Math.sin(i / 3) * 0.01, takenAt });
+    }
+    const route = guestRoute(many.keys(), many);
+    expect(route.length).toBeLessThanOrEqual(GUEST_ROUTE_MAX_POINTS);
+    expect(route[0]).toEqual([46, 7]);
+    expect(route[route.length - 1][0]).toBeCloseTo(46 + 5999 * 0.001, 9);
+  });
+
+  describe('guestTrackOf', () => {
+    const sign = (path: string, w: number) => `signed:${w}:${path}`;
+    const doc = {
+      okey: 'trk__trip1', tenants: ['bka'], isArchived: false, journalKey: 'j', authorKey: 'p_bruno', tripKey: 'trip1',
+      name: 'Uetliberg', startedAt: '2026-11-01T08:00:00Z', endedAt: '2026-11-01T14:00:00Z', distanceM: 14123, durationS: 21600, modes: ['foot'],
+      sections: [{ mode: 'foot', distanceM: 14123, encoded: '_p~iF~ps|U', altitudes: 'xyz', heartRateAvg: 120, steps: 1000 }],
+      photos: [
+        { imageKey: 't1', lat: 46.05, lng: 7.05, takenAt: '2026-11-01T09:20', assetId: 'A1' },
+        { imageKey: 'gone', lat: 46.2, lng: 7.2, takenAt: '2026-11-01T11:00' }, // its image is archived
+      ],
+      // a doc from a faulty writer that carries more than the allow-list
+      heartRateAvg: 120, heartRateMax: 160, steps: 12000, strokes: 900, strokeRateAvg: 22, crew: ['p_anna'], notes: 'privat', personKey: 'p_bruno',
+    };
+
+    it('Review Focus 1: the allow-listed copy without trip key, owner or any activity metric', () => {
+      const track = guestTrackOf(doc, images, sign);
+      expect(track).toEqual({
+        name: 'Uetliberg', startedAt: '2026-11-01T08:00:00Z', endedAt: '2026-11-01T14:00:00Z', distanceM: 14123, durationS: 21600, modes: ['foot'],
+        sections: [{ mode: 'foot', distanceM: 14123, encoded: '_p~iF~ps|U', altitudes: 'xyz' }],
+        photos: [{
+          imageKey: 't1', lat: 46.05, lng: 7.05, takenAt: '2026-11-01T09:20',
+          url: 'signed:1600:tenant/t/journal/j/2026-11-01T09:20-2048.jpg', thumb: 'signed:400:tenant/t/journal/j/2026-11-01T09:20-400.jpg',
+        }],
+      });
+      expect(JSON.stringify(track)).not.toMatch(/heart|steps|stroke|crew|notes|personKey|p_bruno|trip1|assetId|authorKey|tenants/);
+    });
+
+    it('track photos are signed only for live images with a file', () => {
+      const noFile = new Map<string, Record<string, unknown>>([['t1', { latitude: 1, longitude: 1 }]]);
+      expect(guestTrackOf(doc, noFile, sign)?.photos).toEqual([]);
+    });
+
+    it('a missing or archived track gives nothing', () => {
+      expect(guestTrackOf(undefined, images, sign)).toBeUndefined();
+      expect(guestTrackOf({ isArchived: true }, images, sign)).toBeUndefined();
+    });
   });
 });
 

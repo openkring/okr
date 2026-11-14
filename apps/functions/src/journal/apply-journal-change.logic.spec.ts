@@ -42,6 +42,35 @@ describe('applyJournalChange logic', () => {
     expect(write?.data).toMatchObject({ authorKey: 'bruno', content: { htmlContent: '<p>Barbara</p>' } });
   });
 
+  describe('track entity (1.154 phase 5)', () => {
+    const key = 'trk__trip1';
+    const fields = {
+      journalKey: 'j1', tripKey: 'trip1', name: 'Uetliberg', startedAt: '2026-11-01T08:00:00Z', endedAt: '2026-11-01T14:00:00Z', distanceM: 14123,
+      durationS: 21600, modes: ['foot'], sections: [{ mode: 'foot', distanceM: 14123, encoded: '_p~iF~ps|U', heartRateAvg: 120 }],
+      photos: [{ imageKey: 'img-a1', lat: 47.4, lng: 8.5, takenAt: '2026-11-01T09:00:00Z' }], steps: 12000, strokes: 900, crew: ['p_anna'],
+    };
+
+    it('a track materialises to journals/{jk}/tracks/{key}, allow-listed', () => {
+      const write = planEntityWrite([rec({ entity: 'track', entityKey: key, op: 'create', fields })], 'j1', 'track', key, ['bka']);
+      expect(write?.path).toBe('journals/j1/tracks/trk__trip1');
+      expect(write?.data).toMatchObject({ okey: key, tenants: ['bka'], isArchived: false, journalKey: 'j1', authorKey: 'bruno', name: 'Uetliberg', distanceM: 14123 });
+      expect(write?.data['sections']).toEqual([{ mode: 'foot', distanceM: 14123, encoded: '_p~iF~ps|U' }]);
+      expect(JSON.stringify(write?.data)).not.toMatch(/heart|steps|stroke|crew/);
+    });
+
+    it('a set waits for its create; an archive writes isArchived', () => {
+      const set = rec({ entity: 'track', entityKey: key, op: 'set', fields: { name: 'neu' } });
+      expect(planEntityWrite([set], 'j1', 'track', key, ['bka'])).toBeUndefined();
+      const create = rec({ entity: 'track', entityKey: key, op: 'create', fields });
+      const archive = rec({ entity: 'track', entityKey: key, op: 'archive' });
+      expect(planEntityWrite([create, archive], 'j1', 'track', key, ['bka'])).toEqual({ path: 'journals/j1/tracks/trk__trip1', data: { isArchived: true } });
+    });
+
+    it('a key with a slash writes nothing', () => {
+      expect(planEntityWrite([rec({ entity: 'track', entityKey: 'trk__a/b', op: 'create', fields })], 'j1', 'track', 'trk__a/b', ['bka'])).toBeUndefined();
+    });
+  });
+
   describe('conflict copies', () => {
     const create = () => rec({ entity: 'section', entityKey: 's1', op: 'create', fields: { footprintKey: 'f1', type: 'article', htmlContent: '<p>C</p>', order: 'V' }, bases: {} });
     const edit = (html: string, base: string, deviceId: string, authorKey: string, entityKey = 's1') =>

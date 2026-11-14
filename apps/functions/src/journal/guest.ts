@@ -7,7 +7,7 @@ import { FieldValue, Firestore, getFirestore, Timestamp } from 'firebase-admin/f
 import {
   AddressCollection, AddressModel, AvatarInfo, JournalChange, JournalChangeCollection, JournalCollection, JournalCommentCollection, JournalFootprintCollection, JournalGuestLink,
   JournalGuestLinksDoc, JournalGuestSeqDoc, JournalImageCollection, JournalPrivateCollection, JournalReactionCollection,
-  JournalSectionCollection, PersonCollection,
+  JournalSectionCollection, JournalTrackCollection, PersonCollection,
 } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 import { acceptRecord, findGuestLink, guestChangeRecord, guestLinkState, likeKey, parseParentKey, reactionKey } from '@okr/travel-journal-util';
@@ -18,8 +18,8 @@ import { tenantLinks } from '../calendar/deliver';
 import { createFirestoreDeps } from '../workflow/firestore-deps';
 import { windowExpiry } from '../video/video-sign.util';
 import {
-  applyManage, clipReadUrl, deliveryFor, feedbackIndex, FeedbackKind, feedbackTarget, GuestSection, guestReactionWrite, guestSectionFeedback, guestSectionsOf,
-  guestVideoClips, GuestRequest, GuestRequestError, ManageAction, mayDeleteComment, memberName, newLinkCode, parseGuestRequest, parseGuestEmail, peopleKeys,
+  applyManage, clipReadUrl, deliveryFor, feedbackIndex, FeedbackKind, feedbackTarget, GuestSection, guestReactionWrite, guestRoute, guestSectionFeedback, guestSectionsOf,
+  GuestTrack, guestTrackOf, guestVideoClips, publishedGuestFootprints, wantsRoute, GuestRequest, GuestRequestError, ManageAction, mayDeleteComment, memberName, newLinkCode, parseGuestRequest, parseGuestEmail, peopleKeys,
 } from './guest.logic';
 import { isJournalKey } from './apply-journal-change.logic';
 import { requireJournalAuthor } from './journal-auth';
@@ -127,7 +127,10 @@ async function requirePublished(db: Firestore, jk: string, footprintKey: string)
   if (!fp || fp['isArchived'] === true || fp['publishState'] !== 'published') throw new HttpsError('failed-precondition', 'footprint');
 }
 
-/** Everything a guest sees: published footprints with their CMS sections, photo and clip URLs (signed, 6 h), likes, comments. */
+/**
+ * Everything a guest sees: published footprints with their CMS sections, photo and clip URLs (signed, 6 h), likes, comments;
+ * a track section's track (allow-listed copy, photos signed) and, when a map section shows it, the journal route (phase 5).
+ */
 async function guestView(db: Firestore, jk: string, ctx: GuestContext): Promise<Data> {
   const [footprints, sectionSnaps, images, comments, reactions, person] = await Promise.all([
     sub(db, jk, JournalFootprintCollection).where('publishState', '==', 'published').get(),
@@ -147,16 +150,31 @@ async function guestView(db: Firestore, jk: string, ctx: GuestContext): Promise<
   // per section and image (1.154 phase 4): from the materialised docs only; no person keys reach the guest
   const feedback = feedbackIndex(comments.docs.map((d) => ({ id: d.id, data: d.data() })), reactions.docs.map((d) => ({ id: d.id, data: d.data() })), pk, name);
 
-  const unsorted = await Promise.all(live(footprints.docs).map(async (f) => {
-    const fp = f.data();
+  const sign = (path: string, w: number) => signImgixUrl(IMGIX_PRIVATE_HOST, token, path, { w, auto: 'format', expires });
+  const published = publishedGuestFootprints(footprints.docs.map((d) => ({ id: d.id, data: d.data() })), sectionDocs);
+  const allSections = published.flatMap((p) => p.sections);
+  // only the tracks a guest-visible section of a published footprint refers to (phase 5, decision 1)
+  const trackKeys = [...new Set(allSections.flatMap((s) => (s.trackKey ? [s.trackKey] : [])))];
+  const trackSnaps = await Promise.all(trackKeys.map((key) => sub(db, jk, JournalTrackCollection).doc(key).get()));
+  const tracks = new Map<string, GuestTrack>();
+  trackSnaps.forEach((snap, i) => {
+    const track = guestTrackOf(snap.data(), imageById, sign);
+    if (track) tracks.set(trackKeys[i], track);
+  });
+  // the journal route once per view (decision 5): photo positions of published footprints only (Review Focus 4)
+  const route = wantsRoute(allSections)
+    ? guestRoute([...allSections.flatMap((s) => s.imageKeys), ...[...tracks.values()].flatMap((t) => t.photos.map((p) => p.imageKey))], imageById)
+    : undefined;
+
+  const unsorted = await Promise.all(published.map(async ({ footprint: f, sections: guestSections }) => {
+    const fp = f.data;
     const parentKey = `page.${f.id}`;
-    const order = Array.isArray(fp['sections']) ? (fp['sections'] as string[]) : [];
-    const signing = guestSectionsOf(sectionDocs, f.id, order).map(async (section) => {
+    const signing = guestSections.map(async (section) => {
       const photos = section.imageKeys.map((key) => ({ key, image: imageById.get(key) })).filter((x) => x.image && x.image['path2048'])
         .map(({ key, image }) => ({
           key, width: image?.['width'], height: image?.['height'], latitude: image?.['latitude'], longitude: image?.['longitude'], takenAt: image?.['takenAt'],
-          url: signImgixUrl(IMGIX_PRIVATE_HOST, token, String(image?.['path2048']), { w: 1600, auto: 'format', expires }),
-          thumb: signImgixUrl(IMGIX_PRIVATE_HOST, token, String(image?.['path400']), { w: 400, auto: 'format', expires }),
+          url: sign(String(image?.['path2048']), 1600),
+          thumb: sign(String(image?.['path400']), 400),
         }));
       const clips = guestVideoClips(section.clipKeys, imageById, ctx.tenants[0] ?? '', jk);
       const signed = await Promise.all(clips.map(async (clip) => {
@@ -164,7 +182,7 @@ async function guestView(db: Firestore, jk: string, ctx: GuestContext): Promise<
           const url = await clipReadUrl(privateBucket().file(clip.objectPath), expires * 1000);
           return {
             key: clip.key, width: clip.width, height: clip.height, durationSec: clip.durationSec,
-            poster: clip.posterPath ? signImgixUrl(IMGIX_PRIVATE_HOST, token, clip.posterPath, { w: 1600, auto: 'format', expires }) : '',
+            poster: clip.posterPath ? sign(clip.posterPath, 1600) : '',
             url,
           };
         } catch (error) {
@@ -173,10 +191,11 @@ async function guestView(db: Firestore, jk: string, ctx: GuestContext): Promise<
         }
       }));
       const videos = signed.filter((v) => v !== undefined);
+      const track = section.trackKey ? tracks.get(section.trackKey) : undefined;
       // GuestSectionView: no author key, no other person data — only the author's display name from the journal lists
       return {
         key: section.key, type: section.type, title: section.title, html: section.html, properties: section.properties,
-        authorName: name(section.authorKey), photos, videos, ...guestSectionFeedback(section, feedback),
+        authorName: name(section.authorKey), photos, videos, ...guestSectionFeedback(section, feedback), ...(track ? { track } : {}),
       };
     });
     const sections = await Promise.all(signing);
@@ -204,6 +223,7 @@ async function guestView(db: Firestore, jk: string, ctx: GuestContext): Promise<
     journal: { key: jk, title: ctx.journal['title'] ?? '', subTitle: ctx.journal['subTitle'] ?? '', startDate: ctx.journal['startDate'] ?? '' },
     me: { personKey: pk, name: ctx.name, channel, muted: !!ctx.link.mutedAt, expiresAt: ctx.link.expiresAt ?? '' },
     footprints: result,
+    ...(route ? { route } : {}),
   };
 }
 

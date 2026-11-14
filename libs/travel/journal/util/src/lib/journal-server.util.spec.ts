@@ -3,7 +3,7 @@ import { JournalChange } from '@okr/shared-models';
 import { formatHlc } from './journal-hlc.util';
 import { entityStateKey, materialize } from './journal-merge.util';
 import { reactionKey } from './journal-feedback.util';
-import { acceptRecord, commentDocOf, conflictCopyDocOf, footprintPageOf, imageDocOf, journalDocOf, MAX_FUTURE_MS, reactionDocOf, sectionDocOf, storagePath } from './journal-server.util';
+import { acceptRecord, commentDocOf, conflictCopyDocOf, footprintPageOf, imageDocOf, journalDocOf, MAX_FUTURE_MS, reactionDocOf, sectionDocOf, storagePath, trackDocOf } from './journal-server.util';
 import { sectionModelOf } from './journal-section.util';
 import { footprintsOf, SectionView, sectionViewOf } from './journal-view.util';
 
@@ -244,5 +244,35 @@ describe('comment and reaction docs (spec 1.154 phase 4)', () => {
     expect(reactionDocOf(materialize([like]), 'f1_anna', ['bkg'])).toEqual({
       okey: 'f1_anna', tenants: ['bkg'], isArchived: false, parentKey: 'page.f1', personKey: 'anna', type: 'like', createdAt: 'x',
     });
+  });
+});
+
+describe('trackDocOf (1.154 phase 5)', () => {
+  const key = 'trk__trip1';
+  const copy = {
+    tripKey: 'trip1', name: 'Uetliberg', startedAt: '2026-11-01T08:00:00Z', endedAt: '2026-11-01T14:00:00Z', distanceM: 14123, durationS: 21600,
+    modes: ['foot', 'row'], sections: [{ mode: 'foot', distanceM: 9123, encoded: '_p~iF~ps|U', altitudes: 'abc' }],
+    photos: [{ imageKey: 'img-a1', lat: 47.4, lng: 8.5, takenAt: '2026-11-01T09:00:00Z' }],
+  };
+  // a record from a faulty or malicious device that carries more than the allow-list
+  const leaky = {
+    journalKey: 'j1', ...copy, heartRateAvg: 120, steps: 12000, strokes: 900, crew: ['p_anna'], notes: 'privat', personKey: 'p_bruno',
+    sections: [{ ...copy.sections[0], heartRateMax: 160, strokeRateAvg: 22, splitAvgS: 140, pointsPath: 'tracks/x/0' }],
+    photos: [{ ...copy.photos[0], assetId: 'A1', thumbPath: 'thumbs/a1.jpg', hidden: false }],
+  };
+
+  it('the doc is the allow-listed copy with okey, journal, tenants and owner — never metrics (Review Focus 1)', () => {
+    const create = rec({ entity: 'track', entityKey: key, op: 'create', fields: leaky });
+    const doc = trackDocOf(materialize([create]), key, 'j1', ['bka']);
+    expect(doc).toEqual({ ...copy, okey: key, tenants: ['bka'], isArchived: false, journalKey: 'j1', authorKey: 'bruno' });
+    expect(JSON.stringify(doc)).not.toMatch(/heart|steps|stroke|split|crew|notes|personKey|assetId|thumbPath|pointsPath|hidden/);
+  });
+
+  it('the journalKey is the trusted argument; nothing before the create, nothing once archived', () => {
+    const create = rec({ entity: 'track', entityKey: key, op: 'create', fields: { ...copy, journalKey: 'other' } });
+    expect(trackDocOf(materialize([create]), key, 'j1', ['bka'])?.journalKey).toBe('j1');
+    expect(trackDocOf(materialize([]), key, 'j1', ['bka'])).toBeUndefined();
+    const archive = rec({ entity: 'track', entityKey: key, op: 'archive' });
+    expect(trackDocOf(materialize([create, archive]), key, 'j1', ['bka'])).toBeUndefined();
   });
 });

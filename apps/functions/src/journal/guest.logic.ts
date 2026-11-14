@@ -3,7 +3,8 @@ import { HttpsError } from 'firebase-functions/v2/https';
 import { AvatarInfo, JournalChange, JournalGuestLink, SectionFeedback, SectionModel } from '@okr/shared-models';
 import {
   COMMENT_MAX, entityStateKey, FeedbackParent, feedbackOf, isEmoji, isJournalSectionType, JournalSectionType, materialize, parseParentKey,
-  reactionKey, ReactionSummary, reactionWrite, ReactionWrite, sectionClipKeys, sectionImageKeys, summarizeReactions, viewOf,
+  reactionKey, ReactionSummary, reactionWrite, ReactionWrite, routePoints, sectionClipKeys, sectionImageKeys, sectionTrackKey, simplifyTrack,
+  summarizeReactions, TRACK_MAX_POINTS, TRACK_TOLERANCE_M, TrackCopy, trackCopyFrom, TrackCopyPhoto, viewOf,
 } from '@okr/travel-journal-util';
 
 import { isJournalKey } from './apply-journal-change.logic';
@@ -186,6 +187,7 @@ export interface GuestSection {
   imageKeys: string[]; // the photos, in `sectionImageKeys` order (a hero's cover last)
   clipKeys: string[]; // the video clips, in pick order
   feedback: SectionFeedback; // the switches in effect (`feedbackOf`): a hero none, image switches only for article and album
+  trackKey?: string; // a track section: the `tracks/{key}` doc it shows (a valid key only); its photos are not in `imageKeys`
 }
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -207,8 +209,91 @@ export function guestSectionsOf(docs: { id: string; data: Record<string, unknown
         authorKey: typeof data['authorKey'] === 'string' ? data['authorKey'] : '',
         imageKeys: sectionImageKeys({ properties }), clipKeys: sectionClipKeys({ properties }),
         feedback: feedbackOf({ type: data['type'] as SectionModel['type'], feedback: data['feedback'] as SectionFeedback | undefined }),
+        ...trackKeyOfSection(data['type'], properties),
       };
     });
+}
+
+/** A track section's track key, only when it is one Firestore path segment: the key comes from an author's device. */
+function trackKeyOfSection(type: unknown, properties: Record<string, unknown>): { trackKey?: string } {
+  if (type !== 'track') return {};
+  const trackKey = sectionTrackKey({ properties });
+  return isJournalKey(trackKey) ? { trackKey } : {};
+}
+
+// ---- map and track sections (spec 1.154 phase 5, plan decisions 1, 2, 5; Review Focus 1, 4) ----
+
+/** A photo of a guest's track: the copy's position and time plus the signed URLs of the live journal image. */
+export interface GuestTrackPhoto extends TrackCopyPhoto { url: string; thumb: string }
+
+/**
+ * A track as a guest receives it: the allow-listed copy (decision 2) without the trip key, its photos signed. Never
+ * steps, strokes, heart rate, crew or notes — the doc is re-read through `trackCopyFrom`, so even a doc that carried
+ * more would not pass them on.
+ */
+export type GuestTrack = Omit<TrackCopy, 'tripKey' | 'photos'> & { photos: GuestTrackPhoto[] };
+
+/** Signs one private-bucket path for a width (imgix in `guestView`, a fake in the tests). */
+export type SignPath = (path: string, width: number) => string;
+
+/**
+ * The guest's track of a `tracks/{key}` doc, or `undefined` for a missing or archived doc. Photos only of live
+ * journal images with a file (`imageById` holds the live images only); others are left out, never an unsigned link.
+ */
+export function guestTrackOf(doc: Record<string, unknown> | undefined, imageById: Map<string, Record<string, unknown>>, sign: SignPath): GuestTrack | undefined {
+  if (!doc || doc['isArchived'] === true) return undefined;
+  const { name, startedAt, endedAt, distanceM, durationS, modes, sections, photos } = trackCopyFrom(doc);
+  return {
+    name, startedAt, endedAt, distanceM, durationS, modes, sections,
+    photos: photos.flatMap((p) => {
+      const image = imageById.get(p.imageKey);
+      const path2048 = image?.['path2048'];
+      if (typeof path2048 !== 'string' || path2048 === '') return [];
+      return [{ ...p, url: sign(path2048, 1600), thumb: sign(String(image?.['path400'] ?? ''), 400) }];
+    }),
+  };
+}
+
+/**
+ * The footprints a guest sees with their guest-visible sections (`guestSectionsOf`, in the footprint's `sections`
+ * order): live and published only — checked here again, not just in the query, because the route and the tracks are
+ * built from exactly this list (Review Focus 4).
+ */
+export function publishedGuestFootprints<T extends { id: string; data: Record<string, unknown> }>(
+  footprints: T[], sectionDocs: { id: string; data: Record<string, unknown> }[],
+): { footprint: T; sections: GuestSection[] }[] {
+  return footprints.filter((f) => f.data['isArchived'] !== true && f.data['publishState'] === 'published').map((footprint) => {
+    const order = Array.isArray(footprint.data['sections']) ? (footprint.data['sections'] as unknown[]).filter((k): k is string => typeof k === 'string') : [];
+    return { footprint, sections: guestSectionsOf(sectionDocs, footprint.id, order) };
+  });
+}
+
+/** Whether any of the guest's sections is a map that shows the journal route (`properties.showRoute`). */
+export function wantsRoute(sections: GuestSection[]): boolean {
+  return sections.some((s) => s.type === 'map' && s.properties['showRoute'] === true);
+}
+
+/** The most points a guest's route carries; a longer one is thinned by `simplifyTrack` (first and last kept). */
+export const GUEST_ROUTE_MAX_POINTS = TRACK_MAX_POINTS;
+
+/**
+ * The journal route for guests (decision 5, Review Focus 4): the positions of the photos guests are shown, in time
+ * order (`routePoints`, as `journalMapData` for the authors). `imageKeys` are the photos of the guest-visible sections of
+ * live, published footprints (and of their tracks) — so a draft's photo never adds a point; video clips and images that
+ * are not live (absent from `imageById`) neither. Thinned to `GUEST_ROUTE_MAX_POINTS` by Douglas–Peucker.
+ */
+export function guestRoute(imageKeys: Iterable<string>, imageById: Map<string, Record<string, unknown>>): [number, number][] {
+  const photos = [...new Set(imageKeys)].flatMap((key) => {
+    const image = imageById.get(key);
+    if (!image || (typeof image['videoPath'] === 'string' && image['videoPath'] !== '')) return [];
+    const takenAt = typeof image['takenAt'] === 'string' ? image['takenAt'] : undefined;
+    const latitude = typeof image['latitude'] === 'number' ? image['latitude'] : undefined;
+    const longitude = typeof image['longitude'] === 'number' ? image['longitude'] : undefined;
+    return [{ takenAt, latitude, longitude }];
+  });
+  const route = routePoints(photos);
+  if (route.length <= GUEST_ROUTE_MAX_POINTS) return route;
+  return simplifyTrack(route.map(([lat, lng]) => ({ lat, lng, t: 0 })), TRACK_TOLERANCE_M, GUEST_ROUTE_MAX_POINTS).map((p) => [p.lat, p.lng]);
 }
 
 /** The playable clips of a video section, in pick order: unknown keys and clips whose `videoPath` is not a `-video.mp4` of this journal are left out. */

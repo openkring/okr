@@ -5,6 +5,7 @@ import { parseParentKey, reactionKey as emojiReactionKey } from './journal-feedb
 import { isValidHlc, parseHlc } from './journal-hlc.util';
 import { entityStateKey, JournalState, viewOf } from './journal-merge.util';
 import { sectionModelOf } from './journal-section.util';
+import { TrackCopy, trackOf } from './journal-track.util';
 import { SectionView, sectionViewOf, transportOf, weatherOf } from './journal-view.util';
 
 /**
@@ -103,6 +104,21 @@ export function sectionDocOf(state: JournalState, sectionKey: string, journalKey
 /** The doc of a derived conflict copy (a `sectionsOf` entry with `conflictOf`): the lost values, `conflictOf` and `conflict` set. */
 export function conflictCopyDocOf(section: SectionView, footprintKey: string, journalKey: string, tenants: string[]): SectionDoc {
   return sectionDocFrom(section, footprintKey, journalKey, tenants);
+}
+
+/** A journal track as `journals/{jk}/tracks/{key}` (plan phase 5 decision 1): the allow-listed copy plus its owner. */
+export type TrackDoc = TrackCopy & { okey: string; tenants: string[]; isArchived: false; journalKey: string; authorKey: string };
+
+/**
+ * The doc of a `track` entity, `undefined` before its create or once archived. Only the copy's allow-list
+ * (`trackCopyFrom`) is written: a record carrying more (heart rate, steps, strokes, crew, notes) loses it here, so
+ * neither the stored doc nor the guest payload built from it can carry it. `journalKey` is the trusted argument.
+ */
+export function trackDocOf(state: JournalState, trackKey: string, journalKey: string, tenants: string[]): TrackDoc | undefined {
+  const track = trackOf(state, trackKey);
+  if (!track) return undefined;
+  const { key, authorKey, ...copy } = track;
+  return { ...copy, okey: key, tenants, isArchived: false, journalKey, authorKey };
 }
 
 const VIDEO_FILE = /^[A-Za-z0-9_-]{1,94}-video\.mp4$/;

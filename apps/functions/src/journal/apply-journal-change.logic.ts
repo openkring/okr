@@ -1,10 +1,10 @@
 import { logger } from 'firebase-functions/v2';
 import {
   JournalChange, JournalCollection, JournalCommentCollection, JournalEntity, JournalFootprintCollection, JournalImageCollection,
-  JournalReactionCollection, JournalSectionCollection,
+  JournalReactionCollection, JournalSectionCollection, JournalTrackCollection,
 } from '@okr/shared-models';
 import {
-  acceptRecord, commentDocOf, conflictCopyDocOf, isConflictCopyKey, isJournalSectionType, sectionsOf, originalOfCopy, entityStateKey, footprintPageOf, imageDocOf, journalDocOf, materialize, reactionDocOf, sectionDocOf, sortByOrder, viewOf,
+  acceptRecord, commentDocOf, conflictCopyDocOf, isConflictCopyKey, isJournalSectionType, sectionsOf, originalOfCopy, entityStateKey, footprintPageOf, imageDocOf, journalDocOf, materialize, reactionDocOf, sectionDocOf, sortByOrder, trackDocOf, viewOf,
 } from '@okr/travel-journal-util';
 
 /** A change record as stored in `journal-changes`, with its server upload time. */
@@ -43,6 +43,8 @@ export function planEntityWrite(records: StoredRecord[], journalKey: string, ent
       return { path: journalPath(journalKey, JournalCommentCollection, entityKey), data: commentDocOf(state, entityKey, tenants) ?? ARCHIVED };
     case 'reaction':
       return { path: journalPath(journalKey, JournalReactionCollection, entityKey), data: reactionDocOf(state, entityKey, tenants) ?? ARCHIVED };
+    case 'track':
+      return { path: journalPath(journalKey, JournalTrackCollection, entityKey), data: { ...(trackDocOf(state, entityKey, journalKey, tenants) ?? ARCHIVED) } };
     default:
       return undefined;
   }
