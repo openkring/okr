@@ -1,6 +1,6 @@
 import {
   ALBUM_SECTION_SHAPE, ARTICLE_SECTION_SHAPE, HERO_OVERLAY_DEFAULT, HERO_SECTION_SHAPE, IMAGE_CONFIG_SHAPE, ImageConfig,
-  SectionModel, VIDEO_SECTION_SHAPE,
+  SectionModel, VIDEO_SECTION_SHAPE, ViewPosition,
 } from '@okr/shared-models';
 import { htmlToPlainText } from './journal-forms.util';
 import type { SectionView } from './journal-view.util';
@@ -96,6 +96,8 @@ export function changedSectionFields(before: SectionView, after: SectionModel): 
 /**
  * The section as a CMS `SectionModel`: the type's shape defaults (shared-models `*_SECTION_SHAPE`) overlaid with
  * the view. Image references keep the journal image key in `ImageConfig.label`; their url is resolved by the renderer.
+ * The record carries no `content.position` (plan 1.154 phase 3, decision 8): an article always shows its images on top,
+ * set here explicitly rather than inherited from the shape, so a single photo is never hidden by a shape default.
  */
 export function sectionModelOf(view: SectionView, tenantId: string): SectionModel {
   const shape = SHAPES[view.type];
@@ -106,7 +108,7 @@ export function sectionModelOf(view: SectionView, tenantId: string): SectionMode
     ...shape,
     okey: view.key, name: view.key, type: view.type, title: view.title, subTitle: '', tenants: [tenantId],
     authorKey: view.authorKey, order: view.order,
-    content: { ...shape.content, htmlContent: view.htmlContent },
+    content: { ...shape.content, htmlContent: view.htmlContent, ...(view.type === 'article' ? { position: ViewPosition.Top } : {}) },
     properties,
   } as unknown as SectionModel;
 }

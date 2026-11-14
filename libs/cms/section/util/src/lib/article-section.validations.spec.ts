@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ARTICLE_SECTION_SHAPE, ArticleSection } from '@okr/shared-models';
 
 import { articleSectionValidations } from './article-section.validations';
+import { IMAGE_LAYOUT_IDS } from './image-layout.util';
 
 describe('articleSectionValidations', () => {
   it('does not flag a valid title', () => {
@@ -43,5 +44,23 @@ describe('articleSectionValidations cta', () => {
 
   it('flags an unsafe url', () => {
     expect(articleSectionValidations(withCta({ label: 'Los', url: 'javascript:x', style: 'primary' })).hasErrors('cta.url')).toBe(true);
+  });
+});
+
+describe('articleSectionValidations imageLayout', () => {
+  const withLayout = (imageLayout: unknown) =>
+    ({ ...ARTICLE_SECTION_SHAPE, properties: { ...ARTICLE_SECTION_SHAPE.properties, imageLayout } }) as unknown as ArticleSection;
+
+  it('does not flag an article without a layout (the slider)', () => {
+    expect(articleSectionValidations({ ...ARTICLE_SECTION_SHAPE }).hasErrors('imageLayout')).toBe(false);
+  });
+
+  it('accepts every known layout id', () => {
+    for (const id of IMAGE_LAYOUT_IDS) expect(articleSectionValidations(withLayout(id)).hasErrors('imageLayout')).toBe(false);
+  });
+
+  it('refuses an unknown layout id', () => {
+    expect(articleSectionValidations(withLayout('xyz')).hasErrors('imageLayout')).toBe(true);
+    expect(articleSectionValidations(withLayout('')).hasErrors('imageLayout')).toBe(true);
   });
 });

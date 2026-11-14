@@ -383,6 +383,8 @@ export interface ArticleSection extends BaseSection {
 export interface ArticleConfig {
   images: ImageConfig[];
   imageStyle: ImageStyle;
+  /** How 2+ images are laid out (spec 1.154 §5): an id of `IMAGE_LAYOUT_IDS` in `@okr/cms-section-util`. Absent = 'slider' (today's carousel). */
+  imageLayout?: string;
   titleI18n?: I18nString;
   subTitleI18n?: I18nString;
   excerptI18n?: I18nString;

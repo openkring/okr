@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ARTICLE_SECTION_SHAPE, HERO_OVERLAY_DEFAULT, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, JournalChange } from '@okr/shared-models';
+import { ARTICLE_SECTION_SHAPE, HERO_OVERLAY_DEFAULT, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, JournalChange, ViewPosition } from '@okr/shared-models';
 import { formatHlc } from './journal-hlc.util';
 import { materialize } from './journal-merge.util';
 import { SectionView, sectionsOf } from './journal-view.util';
@@ -153,6 +153,13 @@ describe('journal sections', () => {
     const props = model.properties as { images: { label: string }[]; albumStyle: string };
     expect(props.images.map((i) => i.label)).toEqual(['i1', 'i2']);
     expect(props.albumStyle).toBe('grid'); // the ALBUM_SECTION_SHAPE default
+  });
+
+  it('sectionModelOf shows an article\'s images on top: the record has no position, so a single photo is not hidden', () => {
+    const article = sectionModelOf(view({ type: 'article', properties: { images: [img('i1')] } }), 'scs');
+    expect(article.content?.position).toBe(ViewPosition.Top);
+    expect(article.content?.htmlContent).toBe('');
+    expect(sectionModelOf(view({ type: 'article', properties: { images: [img('i1'), img('i2')] } }), 'scs').content?.position).toBe(ViewPosition.Top);
   });
 
   it('sectionImageKeys and sectionClipKeys read the photo and clip lists', () => {

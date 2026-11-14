@@ -5,6 +5,7 @@ import { ArticleSection } from '@okr/shared-models';
 import { baseSectionValidations } from './base-section.validations';
 import { isSectionCtaUrl } from './section-cta.util';
 import { imageConfigValidations, imageStyleValidations } from './image.validations';
+import { isImageLayoutId } from './image-layout.util';
 
 export const articleSectionValidations = staticSuite((model: ArticleSection) => {
   baseSectionValidations(model);
@@ -22,6 +23,15 @@ export const articleSectionValidations = staticSuite((model: ArticleSection) => 
   // note: omitWhen always runs its callback, so guard every access with `?.`.
   omitWhen(!model.properties?.imageStyle, () => {
     imageStyleValidations(model.properties?.imageStyle);
+  });
+
+  // imageLayout: a known layout id (spec 1.154 §5); absent = the slider. Which ids suit the image count is resolved
+  // at render time (resolveImageLayout), so any known id is accepted here.
+  const imageLayout = model.properties?.imageLayout;
+  omitWhen(imageLayout === undefined, () => {
+    test('imageLayout', 'invalidValue', () => {
+      enforce(isImageLayoutId(imageLayout)).isTruthy();
+    });
   });
 
   // cta: label and url both or neither; a set url must be a safe target

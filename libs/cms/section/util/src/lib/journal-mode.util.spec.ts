@@ -7,7 +7,7 @@ describe('journalModeSectionFields', () => {
     expect(journalModeSectionFields('hero')).toEqual(['hero', 'overlay', 'height', 'focus']);
   });
   it('article: the photos and their style (title and text are not properties)', () => {
-    expect(journalModeSectionFields('article')).toEqual(['images', 'imageStyle']);
+    expect(journalModeSectionFields('article')).toEqual(['images', 'imageStyle', 'imageLayout']);
   });
   it('album: the explicit photo list instead of the folder', () => {
     expect(journalModeSectionFields('album')).toEqual(['images']);

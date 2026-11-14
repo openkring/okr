@@ -15,6 +15,7 @@ export * from './lib/events-section.validations';
 export * from './lib/section-validation-registry';
 export * from './lib/album-section.validations';
 export * from './lib/article-section.validations';
+export * from './lib/image-layout.util';
 export * from './lib/button-section.validations';
 export * from './lib/calendar-section.validations';
 export  * from './lib/chart-section.validations';

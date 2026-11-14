@@ -6,13 +6,13 @@ import { SectionType } from '@okr/shared-models';
  * property input, so no edit is made that the record would silently drop.
  * - hero: the cover photo, the text overlay and the layout (height, focus); title, subtitle, coordinates and
  *   weather are filled from the footprint at render time (decision 9).
- * - article: the photos and their style; title and text are not properties.
+ * - article: the photos, their style and their layout; title and text are not properties.
  * - album: an explicit photo list instead of a folder.
  * - video: an explicit clip list instead of a url.
  */
 const JOURNAL_MODE_FIELDS: Partial<Record<SectionType, readonly string[]>> = {
   hero: ['hero', 'overlay', 'height', 'focus'],
-  article: ['images', 'imageStyle'],
+  article: ['images', 'imageStyle', 'imageLayout'],
   album: ['images'],
   video: ['clips'],
 };
