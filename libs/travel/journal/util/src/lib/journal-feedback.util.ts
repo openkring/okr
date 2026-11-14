@@ -55,7 +55,8 @@ function isEmoji(value: string): boolean {
  * drops. With a uuid parent (36) and a Firestore auto-id person key (20) the code points have 60 characters.
  */
 export function reactionKey(parent: FeedbackParent, personKey: string, emoji: string): string | undefined {
-  if (!isEmoji(emoji) || personKey === '' || !parseParentKey(parentKeyOf(parent))) return undefined;
+  // no `_` in the person key: the merge reads the person back from the key (reactionKeyPerson) and drops anyone else's records
+  if (!isEmoji(emoji) || !/^[A-Za-z0-9-]+$/.test(personKey) || !parseParentKey(parentKeyOf(parent))) return undefined;
   const key = `r_${parent.kind}_${parent.id}_${personKey}_${emojiCodepoints(emoji)}`;
   return JOURNAL_KEY.test(key) ? key : undefined;
 }
@@ -71,7 +72,7 @@ export interface ReactionWrite { entityKey: string; op: 'create' | 'set'; fields
  * The record that switches a person's reaction on or off. The merge shows an entity only once a `create` arrived
  * (a `set` alone stays invisible, on the device and on the server), so the write is a `create` while this state does
  * not know the reaction, else a `set`. Two devices that both write a `create` are harmless: the key names the person,
- * the owner is the earliest create's author (that person) and their latest `active` wins either way.
+ * the merge admits only that person's records (reactionKeyPerson), and their latest `active` wins either way.
  */
 export function reactionWrite(
   state: JournalState, parent: FeedbackParent, footprintKey: string, personKey: string, emoji: string, active: boolean, createdAt: string,
@@ -111,6 +112,9 @@ function activeReactions(state: JournalState, match: (view: Record<string, unkno
     if (entity.entity !== 'reaction') continue;
     const v = viewOf(entity);
     if (!v || v['active'] !== true || str(v['emoji']) === '' || !match(v)) continue;
+    // the fields must agree with the key: a record cannot move a reaction to another parent or emoji
+    const parent = parseParentKey(v['parentKey']);
+    if (!parent || reactionKey(parent, entity.ownerKey ?? '', str(v['emoji'])) !== entity.entityKey) continue;
     rows.push({ emoji: str(v['emoji']), personKey: entity.ownerKey ?? '', createdAt: str(v['createdAt']) });
   }
   return rows;

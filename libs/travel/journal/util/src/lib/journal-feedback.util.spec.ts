@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { IMAGE_CONFIG_SHAPE, JournalChange, SECTION_FEEDBACK_DEFAULT } from '@okr/shared-models';
 import { formatHlc } from './journal-hlc.util';
-import { materialize } from './journal-merge.util';
+import { materialize, reactionKeyPerson } from './journal-merge.util';
 import {
   commentCountOf, commentsOfParent, emojiCodepoints, FeedbackParent, feedbackOf, footprintReactionCount, imageTitle, isReactionActive, parentKeyOf,
   parseParentKey, reactionKey, reactionsOf, reactionWrite, summarizeReactions,
@@ -69,6 +69,7 @@ describe('journal feedback: reaction keys (Review Focus 2)', () => {
     expect(reactionKey({ kind: 'section', id: UUID }, PERSON, '👍'.repeat(20))).toBeUndefined();
     expect(reactionKey({ kind: 'section', id: UUID }, 'a/b', '❤️')).toBeUndefined();
     expect(reactionKey({ kind: 'section', id: UUID }, '', '❤️')).toBeUndefined();
+    expect(reactionKey({ kind: 'section', id: UUID }, 'an_na', '❤️')).toBeUndefined(); // the merge reads the person back from the key
     expect(reactionKey({ kind: 'section', id: UUID }, PERSON, '')).toBeUndefined();
     expect(reactionKey({ kind: 'section', id: 'a.b' }, PERSON, '❤️')).toBeUndefined();
   });
@@ -139,6 +140,52 @@ describe('journal feedback: reactions toggle (Review Focus 1)', () => {
       rec({ entity: 'reaction', entityKey: key, op: 'archive' }, 300, 'eva', 'dev-eva'),
     ]);
     expect(reactionsOf(state, 'section.s1', 'eva')).toEqual([{ emoji: '❤️', count: 1, mine: false }]);
+  });
+});
+
+describe('journal feedback: the owner is the person in the key', () => {
+  it('reactionKeyPerson reads the person back, also behind a parent id with _', () => {
+    expect(reactionKeyPerson(reactionKey(S1, 'anna', '❤️') ?? '')).toBe('anna');
+    expect(reactionKeyPerson(reactionKey({ kind: 'section', id: 's1_c_000_x' }, PERSON, '👨‍👩‍👧‍👦') ?? '')).toBe(PERSON);
+    expect(reactionKeyPerson('f1_anna')).toBeUndefined();
+    expect(reactionKeyPerson('r_page_f1_anna_2764')).toBeUndefined();
+  });
+
+  it('a foreign create with an early clock on anna\'s key is ignored; anna\'s toggles keep working, in any order', () => {
+    const key = reactionKey(S1, 'anna', '❤️') ?? '';
+    const hijack = rec({
+      entity: 'reaction', entityKey: key, op: 'create',
+      fields: { parentKey: 'section.s1', footprintKey: 'f1', emoji: '❤️', active: true, createdAt: '1970-01-01T00:00:00.001Z' },
+    }, 1, 'eva', 'dev-eva');
+    const own = [reaction('anna', '❤️', true, 100), reaction('anna', '❤️', false, 200, 'set')];
+    for (const order of [[hijack, ...own], [...own, hijack]]) {
+      const state = materialize(order);
+      expect(state[`reaction:${key}`]?.ownerKey).toBe('anna');
+      expect(reactionsOf(state, 'section.s1', 'anna')).toEqual([]);
+      const readd = reactionWrite(state, S1, 'f1', 'anna', '❤️', true, '2027-01-01T00:00:00Z');
+      expect(readd?.op).toBe('set');
+      const after = materialize([...order, rec({ entity: 'reaction', entityKey: key, op: 'set', fields: { ...readd?.fields } }, 300, 'anna', 'dev-anna')]);
+      expect(reactionsOf(after, 'section.s1', 'eva')).toEqual([{ emoji: '❤️', count: 1, mine: false }]);
+    }
+    // before anna ever reacts, the foreign create alone shows nothing
+    expect(reactionsOf(materialize([hijack]), 'section.s1', 'eva')).toEqual([]);
+  });
+
+  it('an r_ key that does not parse takes no records', () => {
+    const state = materialize([rec({ entity: 'reaction', entityKey: 'r_bogus', op: 'create', fields: { active: true, emoji: '❤️', parentKey: 'section.s1' } }, 100, 'anna', 'dev-anna')]);
+    expect(state['reaction:r_bogus']).toBeUndefined();
+  });
+
+  it('a record whose fields disagree with its key is not counted', () => {
+    const key = reactionKey(S1, 'anna', '❤️') ?? '';
+    const wrong = (fields: Record<string, unknown>) => materialize([rec({
+      entity: 'reaction', entityKey: key, op: 'create',
+      fields: { parentKey: 'section.s1', footprintKey: 'f1', emoji: '❤️', active: true, createdAt: 'x', ...fields },
+    }, 100, 'anna', 'dev-anna')]);
+    expect(reactionsOf(wrong({ parentKey: 'section.s2' }), 'section.s2', 'anna')).toEqual([]);
+    expect(reactionsOf(wrong({ emoji: '👍' }), 'section.s1', 'anna')).toEqual([]);
+    expect(footprintReactionCount(wrong({ emoji: '👍' }), 'f1')).toBe(0);
+    expect(reactionsOf(wrong({}), 'section.s1', 'anna')).toEqual([{ emoji: '❤️', count: 1, mine: true }]);
   });
 });
 

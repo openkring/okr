@@ -52,8 +52,31 @@ export function entityStateKey(entity: JournalEntity, entityKey: string): string
   return `${entity}:${entityKey}`;
 }
 
+const REACTION_KEY = /^r_(?:section|image)_[A-Za-z0-9_-]+_([A-Za-z0-9-]+)_([0-9a-f]+(?:-[0-9a-f]+)*)$/;
+
+/**
+ * The person an emoji reaction key (`r_<kind>_<parentId>_<personKey>_<codepoints>`, journal-feedback.util) names;
+ * `undefined` when the key does not parse. Read from the right: the code points, then the person key, which therefore
+ * never contains `_` (reactionKey refuses one); the parent id may.
+ */
+export function reactionKeyPerson(entityKey: string): string | undefined {
+  return REACTION_KEY.exec(entityKey)?.[1];
+}
+
+/**
+ * Whether a record may enter the state. An emoji reaction (key `r_…`) is bound to the person in its key: a record by
+ * anyone else is dropped, so nobody can take over another person's reaction with an early create (the hlc wall time
+ * is the writer's own). An `r_` key that does not parse takes no records at all. Old footprint likes (`<fp>_<person>`)
+ * keep the plain owner rule.
+ */
+function admits(change: JournalChange): boolean {
+  if (!isValidHlc(change.hlc, change.deviceId)) return false;
+  if (change.entity === 'reaction' && change.entityKey.startsWith('r_')) return reactionKeyPerson(change.entityKey) === change.authorKey;
+  return true;
+}
+
 export function applyChange(state: JournalState, change: JournalChange): JournalState {
-  if (!isValidHlc(change.hlc, change.deviceId)) return state;
+  if (!admits(change)) return state;
   const key = entityStateKey(change.entity, change.entityKey);
   const current: EntityState = state[key] ?? { entity: change.entity, entityKey: change.entityKey, created: false, fields: {} };
   const next: EntityState = { ...current, fields: { ...current.fields } };
