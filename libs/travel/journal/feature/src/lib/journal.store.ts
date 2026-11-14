@@ -601,7 +601,7 @@ export const JournalStore = signalStore(
           void refreshPresentVideos();
         },
         onLock: receiveLock,
-        authorKeys: () => journalAuthorKeys(store.journalState(), journalKey),
+        authorKeys: () => journalAuthorKeys(store.journalState(), journalKey, store.changes()),
       }).catch(() => undefined);
     }
 

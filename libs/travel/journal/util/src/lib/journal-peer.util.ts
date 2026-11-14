@@ -2,6 +2,7 @@ import { JournalChange, JournalChangeOp, JournalEntity } from '@okr/shared-model
 import { isBases } from './journal-change.util';
 import { isJournalLock, JournalLock } from './journal-lock.util';
 import { entityStateKey, JournalState, viewOf } from './journal-merge.util';
+import { guestDeviceId } from './journal-guest.util';
 import { acceptRecord } from './journal-server.util';
 
 /**
@@ -111,35 +112,64 @@ export function acceptPeerRecords(records: unknown[], journalKey: string, nowMs:
 }
 
 /**
- * The journal's authors as this device knows them: the creator (owner of the `journal` entity) plus its `authorKeys`.
+ * The journal's authors as this device knows them: the creator (owner of the `journal` entity) plus every key ever listed in
+ * `authorKeys` by any `journal` record of the change log — not only the current view: a co-author removed later still wrote
+ * records while they were an author, and those records must keep travelling between iPads (the server accepted them then).
  * Undefined while the device does not hold the journal entity yet (nothing to check against).
  */
-export function journalAuthorKeys(state: JournalState, journalKey: string): string[] | undefined {
+export function journalAuthorKeys(state: JournalState, journalKey: string, changes: JournalChange[]): string[] | undefined {
   const entity = state[entityStateKey('journal', journalKey)];
   const view = viewOf(entity);
   if (!entity || !view) return undefined;
-  const listed = Array.isArray(view['authorKeys']) ? (view['authorKeys'] as unknown[]).filter((k): k is string => typeof k === 'string' && k !== '') : [];
-  return [...new Set([entity.ownerKey ?? '', ...listed].filter((k) => k !== ''))];
+  const keys = new Set<string>();
+  if (entity.ownerKey) keys.add(entity.ownerKey);
+  for (const key of authorKeysOf(view['authorKeys'])) keys.add(key);
+  for (const c of changes) {
+    if (c.journalKey === journalKey && c.entity === 'journal' && c.entityKey === journalKey) {
+      for (const key of authorKeysOf(c.fields['authorKeys'])) keys.add(key);
+    }
+  }
+  return [...keys];
+}
+
+function authorKeysOf(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((k): k is string => typeof k === 'string' && k !== '') : [];
+}
+
+const GUEST_ENTITIES: JournalEntity[] = ['comment', 'reaction'];
+
+/** A guest's comment or like: written by the server (guestChangeRecord) on the guest's own device id, never by an author. */
+function isGuestFeedback(record: JournalChange): boolean {
+  return GUEST_ENTITIES.includes(record.entity) && record.deviceId === guestDeviceId(record.authorKey);
 }
 
 /**
  * Peer records whose author is an author of the journal (spec 1.154 phase 5, review fix). A record of anybody else would
  * be refused by the server when this device uploads it (rules: authorKey ∈ authorKeys) — and a refused upload stops the
- * whole journal's uploads every round. `authors` = journalAuthorKeys of this device's state; undefined = not known yet →
- * everything passes (the device holds no journal to protect). `journal` records of an author may add authors (co-author
- * added): their `authorKeys` count for the records after them in the same page, so the new author's first records,
- * arriving together with the record that adds them, are kept. Authors are only ever added here, never removed: a removal
- * is decided by the server at upload time.
+ * whole journal's uploads every round. `authors` = journalAuthorKeys of this device; undefined = not known yet →
+ * everything passes (the device holds no journal to protect).
+ *
+ * - Guest comments and likes are always kept: the server wrote them (guest device id `guest-<personKey>`), the guest is
+ *   never in `authorKeys`, and dropping them would make the sending iPad offer them again on every connection.
+ * - `journal` records of an author may add authors (co-author added). Their `authorKeys` count for the whole page,
+ *   computed to a fixpoint first, so the result does not depend on the order of the page (missingFor sorts by device).
+ * - Authors are only ever added here, never removed: a removal is decided by the server at upload time.
  */
 export function fromJournalAuthors(records: JournalChange[], authors: string[] | undefined): JournalChange[] {
   if (!authors) return records;
   const known = new Set(authors);
-  const kept: JournalChange[] = [];
-  for (const record of records) {
-    if (!known.has(record.authorKey)) continue;
-    kept.push(record);
-    const added = record.entity === 'journal' ? record.fields['authorKeys'] : undefined;
-    if (Array.isArray(added)) for (const key of added) if (typeof key === 'string' && key !== '') known.add(key);
+  let grew = true;
+  while (grew) {
+    grew = false;
+    for (const record of records) {
+      if (record.entity !== 'journal' || !known.has(record.authorKey)) continue;
+      for (const key of authorKeysOf(record.fields['authorKeys'])) {
+        if (!known.has(key)) {
+          known.add(key);
+          grew = true;
+        }
+      }
+    }
   }
-  return kept;
+  return records.filter((record) => known.has(record.authorKey) || isGuestFeedback(record));
 }

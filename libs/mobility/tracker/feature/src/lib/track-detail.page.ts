@@ -8,6 +8,7 @@ import { Capacitor } from '@capacitor/core';
 import { firstValueFrom } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
+import { FeatureStore } from '@okr/tenant-feature';
 import { TRANSPORT_MODES, TrackPhoto, TransportMode, TripModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { confirm, downloadFile, okrPrompt } from '@okr/shared-util-angular';
@@ -156,6 +157,7 @@ export class TrackDetailPage {
   private readonly db = inject(TrackDb);
   private readonly trackService = inject(TrackService);
   private readonly appStore = inject(AppStore);
+  private readonly featureStore = inject(FeatureStore);
   private readonly router = inject(Router);
   private readonly alertController = inject(AlertController);
   private readonly toastController = inject(ToastController);
@@ -268,9 +270,15 @@ export class TrackDetailPage {
    * own recording (their photos are on another phone).
    */
   private readonly journalAuthor = signal(false);
+  private checkingJournalAuthor = false;
+  /**
+   * The tenant has the travel journal switched on (feature block `journal`, the gate of its menu row and routes). Without
+   * it the page never loads the sender, opens the outbox database or queries journals — the tracker stays as it was.
+   */
+  private readonly journalEnabled = computed(() => this.featureStore.settled() && this.featureStore.isEnabled()('journal'));
   protected readonly canSendToJournal = computed(() => {
     const t = this.track();
-    return Capacitor.isNativePlatform() && this.journalAuthor() && !!t && t.state === 'done' && this.isOwner() && !this.trip()?.track?.copyOf;
+    return Capacitor.isNativePlatform() && this.journalEnabled() && this.journalAuthor() && !!t && t.state === 'done' && this.isOwner() && !this.trip()?.track?.copyOf;
   });
   /** the recording is this person's: recorded on this device, or the uploaded trip names the signed-in person */
   private readonly isOwner = computed(() => {
@@ -348,9 +356,10 @@ export class TrackDetailPage {
         if (!loading) sections.forEach((s, n) => void this.ensureTransit(this.key(), n, s));
       });
     });
-    // the journal author check loads the sender lazily, after the page is shown, only for the owner on the phone
+    // the journal author check loads the sender lazily, after the page is shown, only for the owner on the phone, and
+    // only in a tenant with the journal switched on
     effect(() => {
-      const owner = !this.loading() && this.track()?.state === 'done' && this.isOwner();
+      const owner = this.journalEnabled() && !this.loading() && this.track()?.state === 'done' && this.isOwner();
       untracked(() => {
         if (owner && Capacitor.isNativePlatform() && !this.journalAuthor()) void this.checkJournalAuthor();
       });
@@ -573,11 +582,16 @@ export class TrackDetailPage {
   }
 
   private async checkJournalAuthor(): Promise<void> {
+    // no negative cache: isJournalAuthor also answers false when offline or on a LAN without Internet
+    if (this.checkingJournalAuthor) return;
+    this.checkingJournalAuthor = true;
     try {
       const sender = await import('./track-journal-send');
       this.journalAuthor.set(await sender.isJournalAuthor(this.injector, this.author()));
     } catch (error) {
       console.warn('TrackDetailPage.checkJournalAuthor', error);
+    } finally {
+      this.checkingJournalAuthor = false;
     }
   }
 

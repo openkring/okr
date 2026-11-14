@@ -26,6 +26,7 @@
     "@capacitor/push-notifications": "*",
     "@okr/trip-feature": "*",
     "@okr/travel-journal-data-access": "*",
-    "@okr/travel-journal-util": "*"
+    "@okr/travel-journal-util": "*",
+    "@okr/tenant-feature": "*"
   }
 }

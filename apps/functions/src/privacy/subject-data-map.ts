@@ -1951,6 +1951,9 @@ export async function resolveArrayItemDocs(entry: SubjectDataEntry, ctx: Subject
 //   derived copy — simplified GPS points with time and height, distance, duration, transport modes, photo positions,
 //   authorKey. Allow-listed: no heart rate, steps, strokes or crew. Materialised from journal-changes by
 //   applyJournalChange; guests see the copy of a track section on a published footprint. Follows journal-changes.
+//   Sensitivity: time-stamped positions form a movement profile (where the author was when, to the second); guests
+//   see point times and heights of a published track (ruling R2). An archived journal keeps the trace — in the
+//   track doc and in the never-deleted change log — until an erasure removes it (plan 6).
 // gap: private — journals/{jk}/private/{peer,guestLinks}: the P2P secret and the guests' link codes
 //   (personKey per link). Function-only access; erasure of a guest's link with plan 6.
 // gap: reactions — likes on a travel-journal footprint (spec 1.113 §3.4, plan 7), at

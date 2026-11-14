@@ -66,6 +66,9 @@
     },
     {
       "path": "../../../travel/journal/util/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../tenant/feature/tsconfig.lib.json"
     }
   ]
 }

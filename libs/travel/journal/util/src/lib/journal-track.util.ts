@@ -16,8 +16,11 @@ import type { SectionView } from './journal-view.util';
  *
  * Merge: an owned entity (OWNED_ENTITIES) — the owner is the author of the earliest create (who attached or sent it),
  * last writer wins among the owner's records, so re-deriving after a correction overwrites the copy. A second author
- * attaching the same trip later writes a create the merge ignores: the copy is identical (it is derived from the same
- * trip) and only the owner can correct it. A section referring to the key works for everybody.
+ * attaching the same trip later writes a create the merge ignores: the copy is identical in its points and metadata (it
+ * is derived from the same trip) and only the owner can correct it. A section referring to the key works for everybody.
+ * The photos are NOT identical: each attach imports the trip's photos as its own journal images. A concurrent iPad attach
+ * and iPhone send therefore import the photos twice; the losing record's image set stays in the journal as orphan
+ * images (not shown by the track, still in the album).
  */
 export interface TrackCopySection {
   mode: TransportMode;
@@ -164,9 +167,11 @@ function pathLengthM(points: TrackPoint[]): number {
  * journal image it was imported as: only visible photos with an image key are listed.
  */
 export function trackCopyOf(trip: TripModel, sections: TrackCopyInput[], photoKeys: Record<string, string>): TrackCopy {
-  const simplified = simplifySections(sections.map((s) => s.points), TRACK_TOLERANCE_M, TRACK_MAX_POINTS);
+  // a point without a position (a broken fix) is left out: simplification cannot measure a span of such points
+  const points = sections.map((s) => s.points.filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng)));
+  const simplified = simplifySections(points, TRACK_TOLERANCE_M, TRACK_MAX_POINTS);
   const copySections: TrackCopySection[] = sections.map((s, i) => {
-    const distanceM = Math.round(finite(s.distanceM ?? trip.track?.sections[i]?.distanceM ?? pathLengthM(s.points)));
+    const distanceM = Math.round(finite(s.distanceM ?? trip.track?.sections[i]?.distanceM ?? pathLengthM(points[i])));
     const altitudes = encodeAltitudes(simplified[i]);
     return { mode: s.mode, distanceM, encoded: encodeTrack(simplified[i]), ...(altitudes !== undefined ? { altitudes } : {}) };
   });

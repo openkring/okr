@@ -172,6 +172,19 @@ describe('journal outbox (spec 1.154 phase 5, decision 9)', () => {
       expect(isDeliveryCovered(delivery, ipad.vv())).toBe(false);
     });
 
+    it('a seq gap on the iPad (record 3 came from Firebase, 2 is missing): resend from 2, covered only once 2 arrived', () => {
+      const { delivery } = stamped(FRESH);
+      const ipad = new FakeIpad();
+      ipad.receive([delivery.records[0], delivery.records[2]], T0 + 7_300_000);
+      expect(ipad.vv()[delivery.deviceId]).toBe(1); // the contiguous prefix, not the max
+      const plan = peerPlan([delivery], JK, ipad.vv());
+      expect(plan.covered).toEqual([]);
+      expect(plan.send.map((r) => r.seq)).toEqual([2, 3]);
+      ipad.receive(plan.send, T0 + 7_300_000);
+      expect(ipad.stored).toHaveLength(3);
+      expect(peerPlan([delivery], JK, ipad.vv())).toEqual({ send: [], covered: [delivery.deviceId] });
+    });
+
     it('an empty delivery counts as covered', () => {
       const empty: OutboxDelivery = { deviceId: 'd-1', journalKey: JK, tripKey: 't', createdAt: 1, records: [], files: [], recordsDone: false };
       expect(isDeliveryCovered(empty, {})).toBe(true);
@@ -223,6 +236,16 @@ describe('journal outbox (spec 1.154 phase 5, decision 9)', () => {
         { journalKey: 'j1', title: 'Antarktis 2027', tenantId: 'bkg', secret: 's1', preparedAt: 1 },
         { journalKey: 'j2', title: 'Patagonien', tenantId: 'bkg', secret: 's2', preparedAt: 50 },
       ]);
+    });
+
+    it('a person change never carries the previous person\'s secrets into the merge', () => {
+      const stored = serializeOutboxJournals('bruno', [{ journalKey: 'j1', title: 'Antarktis', tenantId: 'bkg', secret: 's-bruno', preparedAt: 5 }]);
+      const cachedForAnna = parseOutboxJournals(stored, 'anna');
+      // anna writes in the same journal, but her secret fetch failed: she has no secret yet, not bruno's
+      expect(mergeOutboxJournals(cachedForAnna, [{ journalKey: 'j1', title: 'Antarktis', tenantId: 'bkg' }], {}, 60)).toEqual([
+        { journalKey: 'j1', title: 'Antarktis', tenantId: 'bkg', secret: '', preparedAt: 0 },
+      ]);
+      expect(mergeOutboxJournals(cachedForAnna, [{ journalKey: 'j1', title: 'Antarktis', tenantId: 'bkg' }], { j1: 's-anna' }, 60)[0].secret).toBe('s-anna');
     });
 
     it('round-trips through storage', () => {
@@ -282,6 +305,27 @@ describe('journal outbox (spec 1.154 phase 5, decision 9)', () => {
         throw Object.assign(new Error('offline'), { code: 'unavailable' });
       }, (e) => (e as { code?: string }).code === 'unavailable', () => undefined)).rejects.toThrow('offline');
       expect(seen).toEqual(['a']);
+    });
+
+    it('each refused delivery is refused on its own; offline after a refusal still stops the round', async () => {
+      const isOffline = (e: unknown) => (e as { code?: string }).code === 'unavailable';
+      const refused: string[] = [];
+      const tried: string[] = [];
+      const deliver = async (item: string) => {
+        tried.push(item);
+        if (item.startsWith('refused')) throw Object.assign(new Error(item), { code: 'permission-denied' });
+        if (item === 'offline') throw Object.assign(new Error('offline'), { code: 'unavailable' });
+        return 'delivered' as const;
+      };
+      expect(await deliverEach(['refused-1', 'ok', 'refused-2'], deliver, isOffline, (item) => refused.push(item)))
+        .toEqual({ delivered: 1, kept: 0, refused: 2 });
+      expect(refused).toEqual(['refused-1', 'refused-2']);
+
+      refused.length = 0;
+      tried.length = 0;
+      await expect(deliverEach(['refused-1', 'offline', 'ok'], deliver, isOffline, (item) => refused.push(item))).rejects.toThrow('offline');
+      expect(refused).toEqual(['refused-1']); // reported before the round stopped
+      expect(tried).toEqual(['refused-1', 'offline']); // nothing tried after offline
     });
 
     it('labels a delivery by journal title and track name for the discard list', () => {

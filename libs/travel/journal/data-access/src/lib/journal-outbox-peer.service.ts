@@ -206,7 +206,10 @@ export class JournalOutboxPeer {
       await this.stopNow('done');
       return;
     }
-    if (now - s.startedAt > SESSION_MS) {
+    // the session's time is up, or every acknowledgement round was used and the line is quiet again: stop searching
+    // (the deliveries stay pending, the next send or online round takes them)
+    const roundsUsed = this.confirmRounds >= MAX_CONFIRM_ROUNDS && now - this.lastActivity >= QUIET_MS;
+    if (now - s.startedAt > SESSION_MS || roundsUsed) {
       await this.stopNow('stopped');
       return;
     }

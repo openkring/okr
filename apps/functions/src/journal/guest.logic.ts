@@ -249,7 +249,9 @@ export function guestTrackOf(doc: Record<string, unknown> | undefined, imageById
       const image = imageById.get(p.imageKey);
       const path2048 = image?.['path2048'];
       if (typeof path2048 !== 'string' || path2048 === '') return [];
-      return [{ ...p, url: sign(path2048, 1600), thumb: sign(String(image?.['path400'] ?? ''), 400) }];
+      const path400 = image?.['path400'];
+      // an image without its small rendition gets no thumbnail (never a signed URL of an empty path)
+      return [{ ...p, url: sign(path2048, 1600), thumb: typeof path400 === 'string' && path400 !== '' ? sign(path400, 400) : '' }];
     }),
   };
 }

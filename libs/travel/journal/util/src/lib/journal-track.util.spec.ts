@@ -137,6 +137,15 @@ describe('trackCopyOf', () => {
     expect(JSON.stringify(copy)).not.toMatch(/private notes|p_crew|p_bruno|uid-1|thumbs\//);
   });
 
+  it('leaves out points without a finite position (an all-NaN span would crash the simplification)', () => {
+    const broken = line(30).map((p, i) => (i >= 5 && i < 20 ? { ...p, lat: Number.NaN, lng: Number.NaN } : p));
+    const copy = trackCopyOf(trip(), [{ mode: 'foot', points: broken }, { mode: 'row', points: [{ lat: Number.NaN, lng: Number.NaN, t: T0 }] }], {});
+    const [first, second] = trackPointsOf(copy);
+    expect(first.points.length).toBeGreaterThan(0);
+    expect(first.points.every((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng))).toBe(true);
+    expect(second.points).toEqual([]);
+  });
+
   it('copies the metadata the allow-list names', () => {
     const copy = trackCopyOf(trip(), SECTIONS, PHOTO_KEYS);
     expect(copy).toMatchObject({

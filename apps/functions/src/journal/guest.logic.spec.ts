@@ -214,6 +214,13 @@ describe('map and track sections for guests (1.154 phase 5)', () => {
       expect(guestTrackOf(doc, noFile, sign)?.photos).toEqual([]);
     });
 
+    it('a photo without a 400 rendition gets an empty thumb, not a signed empty path', () => {
+      const no400 = new Map<string, Record<string, unknown>>([['t1', { path2048: 'tenant/t/journal/j/a-2048.jpg' }]]);
+      expect(guestTrackOf(doc, no400, sign)?.photos.map((p) => [p.url, p.thumb])).toEqual([['signed:1600:tenant/t/journal/j/a-2048.jpg', '']]);
+      const blank400 = new Map<string, Record<string, unknown>>([['t1', { path2048: 'tenant/t/journal/j/a-2048.jpg', path400: '' }]]);
+      expect(guestTrackOf(doc, blank400, sign)?.photos[0].thumb).toBe('');
+    });
+
     it('a missing or archived track gives nothing', () => {
       expect(guestTrackOf(undefined, images, sign)).toBeUndefined();
       expect(guestTrackOf({ isArchived: true }, images, sign)).toBeUndefined();

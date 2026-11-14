@@ -92,7 +92,11 @@ export class JournalTrackPicker implements SectionTrackPicker {
   /** Reads the trip's points, imports its photos and writes the track (decision 8). False when it failed (shown). */
   private async attach(tripKey: string): Promise<boolean> {
     const trip = this.trips.get(tripKey);
-    if (!trip?.track) return false;
+    if (!trip?.track) {
+      // the list offered a trip that is gone or has no recording (any more): say so instead of closing silently
+      await showJournalError(this.toastController, this.store.i18n, new Error(`trip ${tripKey} has no track`));
+      return false;
+    }
     const loading = await this.loadingController.create({ message: this.store.i18n.track_attaching() });
     await loading.present();
     let result: { skipped: number; slow: boolean };

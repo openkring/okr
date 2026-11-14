@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { JournalChange } from '@okr/shared-models';
+import { guestDeviceId } from './journal-guest.util';
 import { formatHlc } from './journal-hlc.util';
 import { materialize } from './journal-merge.util';
 import { acceptPeerRecords, fromJournalAuthors, journalAuthorKeys, missingFor, parsePeerMessage, versionVector } from './journal-peer.util';
@@ -80,18 +81,44 @@ describe('peer records only from the journal\'s authors (upload wedge guard)', (
   const by = (authorKey: string, seq: number): JournalChange => ({ ...rec('d-' + authorKey, seq), authorKey });
 
   it('knows the creator and the listed co-authors', () => {
-    const state = materialize([journal('bruno', 'create', [], 1), journal('bruno', 'set', ['anna'], 2)]);
-    expect(journalAuthorKeys(state, 'j1')?.sort()).toEqual(['anna', 'bruno']);
-    expect(journalAuthorKeys(state, 'j2')).toBeUndefined();
+    const log = [journal('bruno', 'create', [], 1), journal('bruno', 'set', ['anna'], 2)];
+    expect(journalAuthorKeys(materialize(log), 'j1', log)?.sort()).toEqual(['anna', 'bruno']);
+    expect(journalAuthorKeys(materialize(log), 'j2', log)).toBeUndefined();
+  });
+
+  it('still knows a co-author who was removed later (their earlier records keep travelling)', () => {
+    const log = [journal('bruno', 'create', [], 1), journal('bruno', 'set', ['anna'], 2), journal('bruno', 'set', [], 3)];
+    expect(journalAuthorKeys(materialize(log), 'j1', log)?.sort()).toEqual(['anna', 'bruno']);
   });
 
   it('drops a record of somebody who is not an author (the server would refuse its upload and stop the journal)', () => {
     expect(fromJournalAuthors([by('bruno', 1), by('mallory', 1)], ['bruno', 'anna']).map((r) => r.authorKey)).toEqual(['bruno']);
   });
 
-  it('keeps a new co-author\'s records that arrive in the same page after the record adding them', () => {
+  it('keeps a new co-author\'s records of the same page wherever the record adding them sits (order-independent)', () => {
     const page = [by('anna', 1), journal('bruno', 'set', ['anna'], 5), by('anna', 2)];
-    expect(fromJournalAuthors(page, ['bruno']).map((r) => `${r.authorKey}${r.seq}`)).toEqual(['bruno5', 'anna2']);
+    expect(fromJournalAuthors(page, ['bruno']).map((r) => `${r.authorKey}${r.seq}`)).toEqual(['anna1', 'bruno5', 'anna2']);
+  });
+
+  it('follows a chain of added authors to the end (bruno adds anna, anna adds carl)', () => {
+    const page = [by('carl', 1), journal('anna', 'set', ['anna', 'carl'], 3), journal('bruno', 'set', ['anna'], 2)];
+    expect(fromJournalAuthors(page, ['bruno'])).toHaveLength(3);
+  });
+
+  it('keeps a removed co-author\'s old record (they are still among the known authors)', () => {
+    const log = [journal('bruno', 'create', [], 1), journal('bruno', 'set', ['anna'], 2), journal('bruno', 'set', [], 3)];
+    const authors = journalAuthorKeys(materialize(log), 'j1', log);
+    expect(fromJournalAuthors([by('anna', 1)], authors)).toHaveLength(1);
+  });
+
+  it('keeps a guest\'s comment and like (server-written on the guest device), but not a guest-looking footprint', () => {
+    const guest = (entity: 'comment' | 'reaction' | 'footprint'): JournalChange => ({
+      ...rec(guestDeviceId('gina'), 1), authorKey: 'gina', entity, entityKey: 'x1',
+    });
+    const kept = fromJournalAuthors([guest('comment'), guest('reaction'), guest('footprint')], ['bruno']);
+    expect(kept.map((r) => r.entity)).toEqual(['comment', 'reaction']);
+    // a comment of a non-author on another device id is still dropped
+    expect(fromJournalAuthors([{ ...rec('d-gina', 1), authorKey: 'gina', entity: 'comment' }], ['bruno'])).toEqual([]);
   });
 
   it('a journal record of a non-author cannot add authors', () => {

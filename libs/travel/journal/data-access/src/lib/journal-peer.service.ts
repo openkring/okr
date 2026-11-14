@@ -168,13 +168,20 @@ export class JournalPeerService {
         await this.sendRecords(peerId, missingFor(ctx.changes(), ctx.journalKey, message.vv));
         return;
       case 'records': {
-        const accepted = fromJournalAuthors(acceptPeerRecords(message.records, ctx.journalKey, Date.now()), ctx.authorKeys?.());
+        const wellFormed = acceptPeerRecords(message.records, ctx.journalKey, Date.now());
+        const accepted = fromJournalAuthors(wellFormed, ctx.authorKeys?.());
         if (accepted.length === 0) return;
         await this.db.appendPeerChanges(accepted);
         await this.identity.receiveClocks(accepted.map((c) => c.hlc));
         this.statusSignal.update((s) => ({ ...s, received: s.received + accepted.length }));
         await ctx.onRecordsStored();
         await this.requestPhotos(peerId); // new image records name files this iPad does not have yet
+        // records were dropped while this page changed the authors (an earlier page held a new co-author's records):
+        // a fresh vector makes the peer offer them again now, without waiting for the next connection
+        const authorsChanged = accepted.some((c) => c.entity === 'journal' && Array.isArray(c.fields['authorKeys']));
+        if (accepted.length < wellFormed.length && authorsChanged) {
+          await this.send(peerId, { t: 'vv', journalKey: ctx.journalKey, vv: versionVector(ctx.changes(), ctx.journalKey) });
+        }
         return;
       }
       case 'lock':
