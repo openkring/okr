@@ -498,7 +498,7 @@ export class JournalStoryPage {
     const extra: JournalFeedbackAction[] = sectionActions({ type: opened.type, editable: this.canEdit() })
       .map((a) => ({ id: a, label: texts[a][0], icon: texts[a][1], danger: a === 'section.delete' }));
     const thread = this.thread(imageParentKey(image));
-    const choice = await openImageSheet(this.modalController, this.toastController, i18n, { image, index, feedback: item.feedback, thread, extra });
+    const choice = await openImageSheet(this.modalController, this.toastController, i18n, { image, index, feedback: item.feedback, thread, canWrite: this.canEdit(), extra });
     if (choice?.kind === 'react') return this.react(toggledReaction(thread.parentKey, thread.reactions, choice.emoji));
     switch (choice?.id) {
       case IMAGE_ACTION.comment:

@@ -366,7 +366,7 @@ export class JournalGuestPage {
     const index = Math.max(0, item.images.findIndex((i) => i.label === image.label));
     const view = this.selected()?.sections?.find((s) => s.key === item.section.okey);
     const thread: FeedbackThread = { parentKey: imageParentKey(image), ...(view?.images?.[image.label] ?? NO_THREAD) };
-    const choice = await openImageSheet(this.modalController, this.toastController, this.i18n, { image, index, feedback: item.feedback, thread });
+    const choice = await openImageSheet(this.modalController, this.toastController, this.i18n, { image, index, feedback: item.feedback, thread, canWrite: true });
     if (choice?.kind === 'react') return this.react(toggledReaction(thread.parentKey, thread.reactions, choice.emoji));
     switch (choice?.id) {
       case IMAGE_ACTION.comment:

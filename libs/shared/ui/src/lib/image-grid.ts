@@ -6,7 +6,7 @@ import { BackgroundStyle, ImageConfig, ImageStyle, ImageType } from '@okr/shared
 import { JpgUrlPipe, PdfUrlPipe, SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
 import { collageTiles, getBackgroundStyle, getPosterStyle, isDirectImageUrl } from '@okr/shared-util-core';
 
-import { ImageBadge } from './image-badge';
+import { badgeFor, ImageBadge } from './image-badge';
 import { Video } from './video';
 
 /**
@@ -186,7 +186,7 @@ export class ImageGrid {
   }
 
   protected badgeOf(image: ImageConfig): string | undefined {
-    return this.imageBadges()[image.label] || undefined;
+    return badgeFor(this.imageBadges(), image.label);
   }
 
   protected posterStyle(image: ImageConfig): BackgroundStyle {

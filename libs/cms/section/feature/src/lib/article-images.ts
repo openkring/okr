@@ -2,7 +2,7 @@ import { Component, computed, input, output } from '@angular/core';
 
 import { ImageConfig, ImageStyle } from '@okr/shared-models';
 import { ImageLayoutId, imageLayoutTiles } from '@okr/cms-section-util';
-import { Img } from '@okr/shared-ui';
+import { badgeFor, Img } from '@okr/shared-ui';
 
 /**
  * The images of an article laid out as a grid (everything except the slider, which the article draws itself).
@@ -52,7 +52,7 @@ import { Img } from '@okr/shared-ui';
       <div class="grid" [class.filmstrip]="layout() === 'filmstrip'">
         @for (tile of tiles(); track tile.index) {
           <div class="tile" [style.grid-column]="tile.column + ' / span ' + tile.colSpan" [style.grid-row]="tile.row + ' / span ' + tile.rowSpan">
-            <okr-img [image]="images()[tile.index]" [imageStyle]="tileStyle()" [editMode]="editMode()" [gallery]="images()" [captionFallbacks]="captionFallbacks()" [zoomTitle]="zoomTitle()" [badge]="imageBadges()[images()[tile.index].label]" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
+            <okr-img [image]="images()[tile.index]" [imageStyle]="tileStyle()" [editMode]="editMode()" [gallery]="images()" [captionFallbacks]="captionFallbacks()" [zoomTitle]="zoomTitle()" [badge]="badgeOf(images()[tile.index].label)" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
           </div>
         }
       </div>
@@ -70,6 +70,7 @@ export class ArticleImages {
   public zoomTitle = input<string>('Zoom');
   /** small text per image, keyed by ImageConfig.label */
   public imageBadges = input<Record<string, string>>({});
+  protected badgeOf(label: string): string | undefined { return badgeFor(this.imageBadges(), label); }
   /** hand a tap on an image to the host (imageSelected) instead of running the image style's action */
   public emitImageClicks = input(false);
   public imageSelected = output<ImageConfig>();

@@ -1,5 +1,10 @@
 import { Component, input } from '@angular/core';
 
+/** The badge text of an image label, own keys only (a label like 'constructor' must not yield a function). */
+export function badgeFor(badges: Record<string, string>, label: string): string | undefined {
+  return Object.hasOwn(badges, label) ? badges[label] || undefined : undefined;
+}
+
 /**
  * A small rounded text badge laid over the bottom-right corner of an image (e.g. «❤ 2 · 💬 1»).
  * Defined once for `okr-img` and `okr-image-grid`; the host element must be positioned

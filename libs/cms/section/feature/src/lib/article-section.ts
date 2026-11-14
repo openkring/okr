@@ -6,7 +6,7 @@ import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, 
 import { ArticleSection, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ViewPosition } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ImageLayoutId, articleImagePosition, resolveImageLayout, validCtas } from '@okr/cms-section-util';
-import { Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
+import { badgeFor, Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
 
 import { ArticleImages } from './article-images';
 import { ArticleStore } from './article-section.store';
@@ -101,7 +101,7 @@ import { openSectionLink } from './section-link';
           <div class="carousel" #carousel (scroll)="onCarouselScroll()">
             @for(slide of loopSlides(); track $index) {
               <div class="carousel-slide" [class.clone]="slide.clone" [attr.aria-hidden]="slide.clone ? 'true' : null">
-                <okr-img [captionFallbacks]="captionFallbacks()" [image]="slide.image" [imageStyle]="carouselImageStyle()" [editMode]="editMode()" [gallery]="images()" [zoomTitle]="store.i18n.article_zoomed()" [badge]="imageBadges()[slide.image.label]" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
+                <okr-img [captionFallbacks]="captionFallbacks()" [image]="slide.image" [imageStyle]="carouselImageStyle()" [editMode]="editMode()" [gallery]="images()" [zoomTitle]="store.i18n.article_zoomed()" [badge]="badgeOf(slide.image.label)" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
               </div>
             }
           </div>
@@ -124,7 +124,7 @@ import { openSectionLink } from './section-link';
                   <ion-row>
                     @if(image(); as image) {
                       <ion-col size="12" [sizeMd]="colSizeImage()">
-                        <okr-img [captionFallbacks]="captionFallbacks()" [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" [zoomTitle]="store.i18n.article_zoomed()" [badge]="imageBadges()[image.label]" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
+                        <okr-img [captionFallbacks]="captionFallbacks()" [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" [zoomTitle]="store.i18n.article_zoomed()" [badge]="badgeOf(image.label)" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
                       </ion-col>
                     }
                     <ion-col size="12" [sizeMd]="colSizeText()">
@@ -145,7 +145,7 @@ import { openSectionLink } from './section-link';
                     </ion-col>
                     @if(image(); as image) {
                       <ion-col size="12" [sizeMd]="colSizeImage()">
-                        <okr-img [captionFallbacks]="captionFallbacks()" [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" [badge]="imageBadges()[image.label]" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
+                        <okr-img [captionFallbacks]="captionFallbacks()" [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" [badge]="badgeOf(image.label)" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
                       </ion-col>
                     }
                   </ion-row>
@@ -168,7 +168,7 @@ import { openSectionLink } from './section-link';
                   } @else if(image(); as image) {
                     <ion-row>
                       <ion-col size="12">
-                        <okr-img [captionFallbacks]="captionFallbacks()" [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" [badge]="imageBadges()[image.label]" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
+                        <okr-img [captionFallbacks]="captionFallbacks()" [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" [badge]="badgeOf(image.label)" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
                       </ion-col>
                     </ion-row>
                   }
@@ -213,7 +213,7 @@ import { openSectionLink } from './section-link';
                   } @else if(image(); as image) {
                     <ion-row>
                       <ion-col size="12">
-                        <okr-img [captionFallbacks]="captionFallbacks()" [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" [badge]="imageBadges()[image.label]" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
+                        <okr-img [captionFallbacks]="captionFallbacks()" [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" [badge]="badgeOf(image.label)" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
                       </ion-col>
                     </ion-row>
                   }
@@ -252,6 +252,7 @@ export class ArticleSectionComponent {
   public imageSelected = output<ImageConfig>();
 
   // computed
+  protected badgeOf(label: string): string | undefined { return badgeFor(this.imageBadges(), label); }
   protected images = computed((): ImageConfig[] => this.store.images());
   // Single image (only when exactly 1 image is configured)
   protected image = computed(() => this.store.image());

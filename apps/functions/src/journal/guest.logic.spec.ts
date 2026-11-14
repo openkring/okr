@@ -270,6 +270,13 @@ describe('guest comments and reactions on sections and images (1.154 phase 4)', 
       expect(feedbackTarget('section.s2', 'reaction', published)).toBeUndefined();
     });
 
+    it('withdrawing (checkSwitch false) resolves a parent whose switch is off, but never an unpublished one', () => {
+      expect(feedbackTarget('image.i1', 'reaction', published, false)).toBe('f1');
+      expect(feedbackTarget('section.s2', 'reaction', published, false)).toBe('f1');
+      expect(feedbackTarget('section.s9', 'reaction', published, false)).toBeUndefined();
+      expect(feedbackTarget('section.s1', 'reaction', new Map(), false)).toBeUndefined();
+    });
+
     it('refuses a parent outside the published footprints (a draft, another journal, unknown)', () => {
       expect(feedbackTarget('section.s9', 'comment', published)).toBeUndefined();
       expect(feedbackTarget('image.i9', 'reaction', published)).toBeUndefined();

@@ -251,16 +251,17 @@ export type FeedbackKind = 'comment' | 'reaction';
  * be on: a section's `comments`/`reactions`; an image's `imageComments`/`imageReactions` of a section that shows it.
  * An image shown in several sections is allowed when any of them allows it; the footprint is that of the first allowing
  * section in footprint-key, then section-key order (deterministic, so a guest's repeated writes agree).
+ * `checkSwitch` false (withdrawing a reaction) ignores the switches: a guest may always take back what they gave.
  */
-export function feedbackTarget(parentKey: string, kind: FeedbackKind, published: Map<string, GuestSection[]>): string | undefined {
+export function feedbackTarget(parentKey: string, kind: FeedbackKind, published: Map<string, GuestSection[]>, checkSwitch = true): string | undefined {
   const parent = parseParentKey(parentKey);
   if (!parent) return undefined;
   const candidates = [...published.entries()]
     .flatMap(([footprintKey, sections]) => sections.map((section) => ({ footprintKey, section })))
     .sort((a, b) => (a.footprintKey < b.footprintKey ? -1 : a.footprintKey > b.footprintKey ? 1 : a.section.key < b.section.key ? -1 : a.section.key > b.section.key ? 1 : 0));
   const allowed = candidates.find(({ section }) => parent.kind === 'section'
-    ? section.key === parent.id && (kind === 'comment' ? section.feedback.comments : section.feedback.reactions)
-    : section.imageKeys.includes(parent.id) && (kind === 'comment' ? section.feedback.imageComments : section.feedback.imageReactions));
+    ? section.key === parent.id && (!checkSwitch || (kind === 'comment' ? section.feedback.comments : section.feedback.reactions))
+    : section.imageKeys.includes(parent.id) && (!checkSwitch || (kind === 'comment' ? section.feedback.imageComments : section.feedback.imageReactions)));
   return allowed?.footprintKey;
 }
 

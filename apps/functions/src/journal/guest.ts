@@ -81,7 +81,7 @@ async function appendGuestRecord(db: Firestore, jk: string, ctx: GuestContext, e
  * The footprint of a guest's comment or reaction on a section or image (decision 5), or failed-precondition: the parent
  * must be shown by a guest-visible section of a live, published footprint of this journal, with its switch on.
  */
-async function requireFeedbackTarget(db: Firestore, jk: string, parentKey: string, kind: FeedbackKind): Promise<string> {
+async function requireFeedbackTarget(db: Firestore, jk: string, parentKey: string, kind: FeedbackKind, checkSwitch = true): Promise<string> {
   const [footprints, sections] = await Promise.all([
     sub(db, jk, JournalFootprintCollection).where('publishState', '==', 'published').get(),
     sub(db, jk, JournalSectionCollection).get(),
@@ -91,7 +91,7 @@ async function requireFeedbackTarget(db: Firestore, jk: string, parentKey: strin
     const order = Array.isArray(f.data()['sections']) ? (f.data()['sections'] as string[]) : [];
     return [f.id, guestSectionsOf(sectionDocs, f.id, order)];
   }));
-  const footprintKey = feedbackTarget(parentKey, kind, published);
+  const footprintKey = feedbackTarget(parentKey, kind, published, checkSwitch);
   if (!footprintKey) throw new HttpsError('failed-precondition', 'parent');
   return footprintKey;
 }
@@ -246,7 +246,7 @@ export const journalGuest = onCall(
       }
       case 'react':
       case 'unreact': {
-        const footprintKey = await requireFeedbackTarget(db, req.journalKey, req.parentKey as string, 'reaction');
+        const footprintKey = await requireFeedbackTarget(db, req.journalKey, req.parentKey as string, 'reaction', req.action === 'react');
         await appendGuestReaction(db, req.journalKey, ctx, req.parentKey as string, footprintKey, req.emoji as string, req.action === 'react');
         return { ok: true };
       }

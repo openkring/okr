@@ -91,24 +91,24 @@ export async function openFeedbackSheet(
 
 /**
  * The sheet of an image of an article or album (spec 1.154 §7): titled with the image's name, the emoji row (image
- * reactions on), «Kommentieren» and «Kommentare ansehen (n)» (image comments on), «Im Vollbild-Slider öffnen», then
+ * reactions on), «Kommentieren» (both only when the page can write) and «Kommentare ansehen (n)» (image comments on), «Im Vollbild-Slider öffnen», then
  * `extra` (the authors' section actions).
  */
 export function openImageSheet(
   modalController: ModalController, toastController: ToastController, i18n: JournalI18n,
-  context: { image: ImageConfig; index: number; feedback: SectionFeedback; thread: FeedbackThread; extra?: JournalFeedbackAction[] },
+  context: { image: ImageConfig; index: number; feedback: SectionFeedback; thread: FeedbackThread; canWrite: boolean; extra?: JournalFeedbackAction[] },
 ): Promise<FeedbackChoice | undefined> {
   const { feedback, thread } = context;
   const count = thread.comments.length;
   const actions: JournalFeedbackAction[] = [
-    ...(feedback.imageComments ? [{ id: IMAGE_ACTION.comment, label: i18n.image_comment(), icon: 'chatbubble' }] : []),
+    ...(context.canWrite && feedback.imageComments ? [{ id: IMAGE_ACTION.comment, label: i18n.image_comment(), icon: 'chatbubble' }] : []),
     ...(feedback.imageComments && count > 0 ? [{ id: IMAGE_ACTION.comments, label: fill(i18n.image_comments_view(), { count }), icon: 'eye-on' }] : []),
     { id: IMAGE_ACTION.slider, label: i18n.image_slider(), icon: 'images' },
     ...(context.extra ?? []),
   ];
   return openFeedbackSheet(modalController, toastController, i18n, {
     header: imageTitle(context.image, context.index, (n) => fill(i18n.image_photo(), { n })),
-    reactions: feedback.imageReactions,
+    reactions: context.canWrite && feedback.imageReactions,
     mine: thread.reactions.filter((r) => r.mine).map((r) => r.emoji),
     actions,
   });
