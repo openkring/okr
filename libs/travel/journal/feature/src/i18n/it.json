@@ -204,14 +204,19 @@
     "iceberg_seen": "visto l’ultima volta il {date}"
   },
   "reactions": {
-    "like": "Mi piace",
-    "likes_count": "Piace a {count}",
-    "comments_title": "Commenti",
-    "comments_empty": "Ancora nessun commento.",
     "comment_write": "Scrivi un commento",
-    "comment_prompt": "Il tuo commento",
-    "comment_send": "Invia",
-    "comment_delete": "Elimina"
+    "comment_delete": "Elimina",
+    "comments_one": "1 commento",
+    "comments_count": "{count} commenti",
+    "comments_close": "Chiudi",
+    "reaction_add": "Aggiungi una reazione",
+    "reaction_more": "Altro …",
+    "reaction_picker": "Scegli una reazione",
+    "image_comment": "Commenta",
+    "image_comments_view": "Vedi i commenti ({count})",
+    "image_comments_title": "Commenti su «{title}»",
+    "image_slider": "Apri nello slider a schermo intero",
+    "image_photo": "Foto {n}"
   },
   "guests": {
     "menu": "Ospiti",

@@ -19,7 +19,7 @@ import {
 } from '@okr/travel-journal-data-access';
 import {
   BOOK_I18N_KEYS, BOOK_LABEL_MAX, journalPeriod, JournalFormModel, removableAuthorKeys, authorsWithout, bookLabelsOf, JournalBookI18n, bookPrintCandidates, entityStateKey, hasOthersSections, pagesOf, PRINT_FILL_LONG_PX, PRINT_FILL_SHORT_PX, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
-  allPhotoFiles, commentsOf, CommentView, likeKey, likesOf, JournalPhotoMode, JournalTileSource, journalsOf, journalTilePlan, MapArea, mapLayers, MapPlace, mapPlaces, parseMapAreas, parsePhotoMode, TileJob, JournalWriteRefused, lastSectionOrder, materialize, orderBetween, reorderedOrders, CONFLICT_FIELDS, dismissedField, isConflictCopyKey, originalOfCopy, SectionView, publishedPhotoFiles, viewOf, MAX_VIDEOS_PER_BLOCK, isVideoFile,
+  allPhotoFiles, commentsOf, CommentView, COMMENT_MAX, commentsOfParent, FeedbackComment, isReactionActive, parseParentKey, reactionKey, reactionsOf, ReactionSummary, reactionWrite, JournalPhotoMode, JournalTileSource, journalsOf, journalTilePlan, MapArea, mapLayers, MapPlace, mapPlaces, parseMapAreas, parsePhotoMode, TileJob, JournalWriteRefused, lastSectionOrder, materialize, orderBetween, reorderedOrders, CONFLICT_FIELDS, dismissedField, isConflictCopyKey, originalOfCopy, SectionView, publishedPhotoFiles, viewOf, MAX_VIDEOS_PER_BLOCK, isVideoFile,
   changedSectionFields, heroCoverPatch, JournalSectionType, newFootprintSections, sectionImageKeys, stripUndefined,
   JournalLock, LOCK_HEARTBEAT_MS, LOCK_TTL_MS, lockedBy, mergeLocks, BoundAuthor, JournalWriteSlow, mergePending,
   AreaLayer, areaForWrite, areaLayerTilePlan, BaseLayerOption, baseLayerOptions, Bbox, finishRun, isUsable, layerDetailLevels, layerKindsFor,
@@ -1022,19 +1022,48 @@ export const JournalStore = signalStore(
         return commentsOf(store.journalState(), footprintKey);
       },
 
-      /** Who likes a footprint (person keys). */
-      likes(footprintKey: string): string[] {
-        return likesOf(store.journalState(), footprintKey);
+      /** The reaction chips of a section or image (`section.<key>` / `image.<key>`), own ones marked — from the log, offline too. */
+      feedbackReactions(parentKey: string): ReactionSummary[] {
+        return reactionsOf(store.journalState(), parentKey, store.author()?.personKey ?? '');
       },
 
-      async addComment(footprintKey: string, text: string): Promise<void> {
+      /** The comments of a section or image, oldest first, own ones marked — from the log, offline too. */
+      feedbackComments(parentKey: string): FeedbackComment[] {
+        return commentsOfParent(store.journalState(), parentKey, store.author()?.personKey ?? '');
+      },
+
+      /**
+       * Switches the author's `emoji` on a section or image on or off (spec 1.154 §7, plan decision 1): one record,
+       * a `create` the first time, a `set` with the other `active` after that. A re-added reaction keeps its first
+       * `createdAt`, so its chip stays where it was.
+       */
+      async toggleReaction(parentKey: string, footprintKey: string, emoji: string): Promise<void> {
         const fp = footprint(footprintKey);
         const me = store.author();
-        if (!fp) throw new Error(`unknown footprint ${footprintKey}`);
+        const parent = parseParentKey(parentKey);
+        if (!fp || !parent) throw new Error(`unknown feedback parent ${parentKey} in footprint ${footprintKey}`);
         if (!me) throw new JournalWriteRefused('noAuthor');
+        const state = store.journalState();
+        const key = reactionKey(parent, me.personKey, emoji);
+        if (!key) throw new Error(`journal: no reaction key for ${parentKey}`);
+        const previous = viewOf(state[entityStateKey('reaction', key)])?.['createdAt'];
+        const createdAt = typeof previous === 'string' && previous !== '' ? previous : new Date().toISOString();
+        const change = reactionWrite(state, parent, footprintKey, me.personKey, emoji, !isReactionActive(state, key), createdAt);
+        if (!change) return;
+        await write([{ journalKey: fp.journalKey, entity: 'reaction', entityKey: change.entityKey, op: change.op, fields: change.fields }]);
+      },
+
+      /** A comment on a section or image; it keeps the footprint, so the notifications and the book group by it. */
+      async addComment(parentKey: string, footprintKey: string, text: string): Promise<void> {
+        const fp = footprint(footprintKey);
+        const me = store.author();
+        if (!fp || !parseParentKey(parentKey)) throw new Error(`unknown feedback parent ${parentKey} in footprint ${footprintKey}`);
+        if (!me) throw new JournalWriteRefused('noAuthor');
+        const trimmed = text.trim().slice(0, COMMENT_MAX);
+        if (trimmed === '') return;
         await write([{
           journalKey: fp.journalKey, entity: 'comment', entityKey: crypto.randomUUID(), op: 'create',
-          fields: { footprintKey, text: text.trim(), authorName: me.name, createdAt: new Date().toISOString() },
+          fields: { parentKey, footprintKey, text: trimmed, authorName: me.name, createdAt: new Date().toISOString() },
         }]);
       },
 
@@ -1047,18 +1076,6 @@ export const JournalStore = signalStore(
           throw new JournalWriteRefused('notOwner');
         }
         await write([{ journalKey: fp.journalKey, entity: 'comment', entityKey: commentKey, op: 'archive', fields: {} }]);
-      },
-
-      async toggleLike(footprintKey: string): Promise<void> {
-        const fp = footprint(footprintKey);
-        const me = store.author();
-        if (!fp) throw new Error(`unknown footprint ${footprintKey}`);
-        if (!me) throw new JournalWriteRefused('noAuthor');
-        const liked = likesOf(store.journalState(), footprintKey).includes(me.personKey);
-        await write([liked
-          ? { journalKey: fp.journalKey, entity: 'reaction', entityKey: likeKey(footprintKey, me.personKey), op: 'archive', fields: {} }
-          : { journalKey: fp.journalKey, entity: 'reaction', entityKey: likeKey(footprintKey, me.personKey), op: 'create',
-            fields: { footprintKey, type: 'like', createdAt: new Date().toISOString() } }]);
       },
 
       /** The journal's guests as recorded on the journal (`guests: { person }[]`). */

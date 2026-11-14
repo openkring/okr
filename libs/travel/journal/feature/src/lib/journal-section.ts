@@ -1,4 +1,4 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 
 import { AlbumSectionComponent, ArticleSectionComponent, HeroSectionComponent } from '@okr/cms-section-feature';
 import type { HeroOverlayText } from '@okr/cms-section-util';
@@ -31,11 +31,13 @@ import { JournalVideoBlock, VideoClip } from '@okr/travel-journal-ui';
         <okr-hero-section [section]="hero()" [overlayText]="overlayText()" [chipIcon]="chipIcon()" />
       }
       @case ('article') {
-        <okr-article-section [section]="article()" [editMode]="editMode()" />
+        <okr-article-section [section]="article()" [editMode]="editMode()" [imageBadges]="imageBadges()" [emitImageClicks]="emitImageClicks()"
+          (imageSelected)="imageSelected.emit($event)" />
       }
       @case ('album') {
         @if (section().title) { <div class="title">{{ section().title }}</div> }
-        <okr-album-section [section]="album()" [explicitImages]="albumImages()" [showStyleSelect]="false" [editMode]="editMode()" />
+        <okr-album-section [section]="album()" [explicitImages]="albumImages()" [showStyleSelect]="false" [editMode]="editMode()"
+          [imageBadges]="imageBadges()" [emitImageClicks]="emitImageClicks()" (imageSelected)="imageSelected.emit($event)" />
       }
       @case ('video') {
         @if (section().title) { <div class="title">{{ section().title }}</div> }
@@ -56,6 +58,11 @@ export class JournalSection {
   public readonly editMode = input(false);
   /** video: the note on a clip whose mp4 is not on this device yet */
   public readonly notLoaded = input('');
+  /** article, album: the badge per image, by journal image key (`label`) — «❤ n · 💬 n» (spec 1.154 §7) */
+  public readonly imageBadges = input<Record<string, string>>({});
+  /** article, album: a tap on an image goes to `imageSelected` (its feedback sheet) instead of the image's own action */
+  public readonly emitImageClicks = input(false);
+  public readonly imageSelected = output<ImageConfig>();
 
   protected readonly hero = computed(() => this.section() as HeroSection);
   protected readonly article = computed(() => this.section() as ArticleSection);

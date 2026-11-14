@@ -177,3 +177,11 @@ export function feedbackOf(section: Pick<SectionModel, 'type' | 'feedback'>): Se
 export function imageTitle(image: ImageConfig, index: number, photoLabel: (n: number) => string): string {
   return image.overlay?.trim() || image.altText?.trim() || photoLabel(index + 1);
 }
+
+/**
+ * The badge on an image of an article or album (spec 1.154 §7): «❤ n · 💬 n» with only the parts above 0, '' when
+ * both are 0 (no badge). `reactions` counts every emoji on the image.
+ */
+export function imageBadgeText(reactions: number, comments: number): string {
+  return [reactions > 0 ? `❤ ${reactions}` : '', comments > 0 ? `💬 ${comments}` : ''].filter((part) => part !== '').join(' · ');
+}

@@ -17,7 +17,7 @@ const OUT = 'libs/travel/journal/feature/src/lib/journal-icons.ts';
 const NAMES = [
   'add', 'add-circle', 'airplane', 'arrow-up-circle', 'book', 'cancel', 'cancel-circle', 'chatbubble', 'checkbox-circle', 'checkmark',
   'chevron-back', 'chevron-forward', 'copy', 'download', 'edit', 'ellipsis-vertical', 'eye-off', 'eye-on', 'folder',
-  'images', 'info-circle', 'map', 'navigate', 'people', 'person-add', 'play', 'reload', 'send', 'settings', 'swap-horizontal',
+  'images', 'info-circle', 'map', 'navigate', 'people', 'person-add', 'play', 'reload', 'send', 'settings', 'smiley', 'swap-horizontal',
   'sync-circle', 'text', 'trash', 'video', 'warning',
 ];
 

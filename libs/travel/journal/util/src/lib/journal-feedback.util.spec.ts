@@ -3,7 +3,7 @@ import { IMAGE_CONFIG_SHAPE, JournalChange, SECTION_FEEDBACK_DEFAULT } from '@ok
 import { formatHlc } from './journal-hlc.util';
 import { materialize, reactionKeyPerson } from './journal-merge.util';
 import {
-  commentCountOf, commentsOfParent, emojiCodepoints, FeedbackParent, feedbackOf, footprintReactionCount, imageTitle, isReactionActive, parentKeyOf,
+  commentCountOf, commentsOfParent, emojiCodepoints, FeedbackParent, feedbackOf, footprintReactionCount, imageBadgeText, imageTitle, isReactionActive, parentKeyOf,
   parseParentKey, reactionKey, reactionsOf, reactionWrite, summarizeReactions,
 } from './journal-feedback.util';
 
@@ -294,5 +294,14 @@ describe('journal feedback: switches and image titles', () => {
     expect(imageTitle({ ...image, overlay: ' Am Hafen ', altText: 'Boote' }, 0, label)).toBe('Am Hafen');
     expect(imageTitle({ ...image, altText: 'Boote' }, 0, label)).toBe('Boote');
     expect(imageTitle({ ...image, overlay: '  ' }, 2, label)).toBe('Foto 3');
+  });
+});
+
+describe('journal feedback: image badge', () => {
+  it('shows only the parts above 0, nothing when both are 0', () => {
+    expect(imageBadgeText(0, 0)).toBe('');
+    expect(imageBadgeText(3, 0)).toBe('❤ 3');
+    expect(imageBadgeText(0, 2)).toBe('💬 2');
+    expect(imageBadgeText(3, 2)).toBe('❤ 3 · 💬 2');
   });
 });

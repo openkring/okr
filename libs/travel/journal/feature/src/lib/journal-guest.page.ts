@@ -1,23 +1,25 @@
 import { Component, computed, DestroyRef, effect, inject, input, signal, untracked } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import {
-  ActionSheetController, AlertController, IonContent, IonHeader, IonSpinner, ModalController, ToastController,
-} from '@ionic/angular';
+import { ActionSheetController, IonContent, IonHeader, IonSpinner, ModalController, ToastController } from '@ionic/angular';
 
+import { COMMENT_LIST_I18N_KEYS, CommentListI18n } from '@okr/comment-util';
 import { GoogleMapType, GoogleTiles } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
-import { MapView, RouteMap, RoutePin } from '@okr/shared-ui';
-import { okrPrompt } from '@okr/shared-util-angular';
+import { IMAGE_STYLE_SHAPE, ImageConfig, SectionFeedback, SectionModel } from '@okr/shared-models';
+import { MapView, RouteMap, RoutePin, showImageSlider } from '@okr/shared-ui';
 import { fill, registerBundledIcons, sunTimesLine } from '@okr/shared-util-core';
-import { GuestFootprintView, GuestJournalView, guestErrorOf, JournalGuestService } from '@okr/travel-journal-data-access';
-import { JournalReactions, ReactionComment } from '@okr/travel-journal-ui';
+import { GuestFeedbackView, GuestFootprintView, GuestJournalView, GuestSectionView, guestErrorOf, JournalGuestService } from '@okr/travel-journal-data-access';
 import {
   baseLayerOptions, filledHero, FlyPoint, FlyStop, flyoverTimeline, footprintOverlayText, GIBS_BLUE_MARBLE, guestSectionItems, JOURNAL_I18N_KEYS,
-  JournalI18n, pickBaseLayer, stopTime, travelStartDate, weatherLine, weatherOf,
+  imageTitle, JournalI18n, parentKeyOf, pickBaseLayer, stopTime, travelStartDate, weatherLine, weatherOf,
 } from '@okr/travel-journal-util';
 import { weatherCodeToIcon, WEATHER_ICON_SET } from '@okr/weather-util';
 
 import { googleAttributionOf, routeBaseLayers } from './journal-base-layers';
+import {
+  FeedbackReaction, FeedbackText, FeedbackThread, IMAGE_ACTION, imageBadgesOf, imageParentKey, ImageThread, JournalFeedback, openImageSheet,
+  sectionImages,
+} from './journal-feedback';
 import { JOURNAL_ICONS } from './journal-icons';
 import { openJournalFlyover } from './journal-flyover-open';
 import { GoogleTemplates, JournalGoogleSessions } from './journal-google-sessions';
@@ -25,10 +27,18 @@ import { JournalSection } from './journal-section';
 
 const browserOnline = (): boolean => typeof navigator === 'undefined' || navigator.onLine !== false;
 
+/** A server older than 1.154 phase 4 sends no switches and cannot take section feedback: nothing is offered then. */
+const NO_FEEDBACK: SectionFeedback = { comments: false, reactions: false, imageComments: false, imageReactions: false };
+const NO_THREAD: GuestFeedbackView = { reactions: [], comments: [] };
+
+/** The image whose comments the guest opened from its sheet. */
+interface OpenImage { sectionKey: string; image: ImageConfig; index: number }
+
 /**
  * The journal for a guest (spec 1.113 §7, plan 7): opened with the personal link, no sign-in. Everything comes
- * from the `journalGuest` callable with the link code — published footprints, photos, likes and comments —
- * and the guest likes, comments and chooses their notifications. `?mute=1` (the link in every message)
+ * from the `journalGuest` callable with the link code — published footprints, photos, and the reactions and
+ * comments of every section and image (spec 1.154 §7) — and the guest reacts, comments and chooses their
+ * notifications. Every write goes through `act` and reloads the view. `?mute=1` (the link in every message)
  * switches notifications off on opening.
  *
  * The map offers the online base layers (phase 4 design §2: Google when a Map Tiles session exists, swisstopo in
@@ -42,7 +52,7 @@ const browserOnline = (): boolean => typeof navigator === 'undefined' || navigat
  */
 @Component({
   selector: 'okr-journal-guest-page',
-  imports: [IonHeader, IonContent, IonSpinner, RouteMap, JournalReactions, JournalSection],
+  imports: [IonHeader, IonContent, IonSpinner, RouteMap, JournalFeedback, JournalSection],
   styles: [`
     :host {
       --site-font: var(--okr-site-font, var(--ion-font-family));
@@ -107,12 +117,16 @@ const browserOnline = (): boolean => typeof navigator === 'undefined' || navigat
             <div class="block">
               @if (!item.lead && item.authorName) { <div class="by">{{ item.authorName }}</div> }
               <okr-journal-section [section]="item.section" [clips]="item.clips" [overlayText]="item.overlayText" [chipIcon]="item.chipIcon"
-                [notLoaded]="i18n.video_not_loaded()" />
+                [notLoaded]="i18n.video_not_loaded()" [imageBadges]="item.badges"
+                [emitImageClicks]="item.feedback.imageComments || item.feedback.imageReactions" (imageSelected)="tapImage(item, $event)" />
+              @if (item.feedback.comments || item.feedback.reactions || item.image) {
+                <okr-journal-feedback [section]="item.thread" [feedback]="item.feedback" [image]="item.image" [busy]="sending()"
+                  [i18n]="i18n" [commentI18n]="commentI18n" (reacted)="react($event)" (commented)="comment($event)"
+                  (deleted)="deleteComment($event)" (imageClosed)="openImage.set(undefined)" />
+              }
             </div>
           }
         </div>
-        <okr-journal-reactions [likes]="fp.likes" [liked]="fp.liked" [comments]="comments(fp)" [i18n]="i18n"
-          (likeToggled)="toggleLike(fp)" (writeClicked)="writeComment(fp)" (deleteClicked)="deleteComment($event)" />
       } @else {
         <div class="map">
           <okr-route-map [route]="route()" [pins]="pins()" [baseLayers]="baseLayers()"
@@ -143,13 +157,15 @@ export class JournalGuestPage {
   private readonly guestService = inject(JournalGuestService);
   private readonly route$ = inject(ActivatedRoute);
   private readonly actionSheetController = inject(ActionSheetController);
-  private readonly alertController = inject(AlertController);
   private readonly toastController = inject(ToastController);
   private readonly modalController = inject(ModalController);
   private readonly googleTiles = inject(GoogleTiles);
   private readonly i18nService = inject(I18nService);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly i18n = inject(I18nService).translateAll(JOURNAL_I18N_KEYS) as JournalI18n;
+  protected readonly commentI18n = inject(I18nService).translateAll(COMMENT_LIST_I18N_KEYS) as CommentListI18n;
+  protected readonly openImage = signal<OpenImage | undefined>(undefined);
+  protected readonly sending = signal(false);
 
   public readonly journalKey = input.required<string>();
   public readonly code = input.required<string>();
@@ -192,14 +208,42 @@ export class JournalGuestPage {
     const startDate = travelStartDate({ startDate: view?.journal.startDate }, view?.footprints ?? []);
     const weather = facts.weather;
     const chipIcon = weather ? { chip: weatherLine(weather), name: weatherCodeToIcon(weather.code), set: WEATHER_ICON_SET } : undefined;
-    return guestSectionItems(fp.sections ?? [], '').map((item) => item.lead
-      ? {
-        ...item, section: filledHero(item.section, facts), chipIcon,
-        overlayText: footprintOverlayText(facts, startDate, (day) => fill(this.i18n.hero_day(), { day })),
-      }
-      : { ...item, chipIcon: undefined, overlayText: undefined });
+    const byKey = new Map((fp.sections ?? []).map((s) => [s.key, s]));
+    return guestSectionItems(fp.sections ?? [], '').map((item) => {
+      const feedback = this.feedbackOf(item.section, byKey.get(item.section.okey));
+      return item.lead
+        ? {
+          ...item, ...feedback, section: filledHero(item.section, facts), chipIcon,
+          overlayText: footprintOverlayText(facts, startDate, (day) => fill(this.i18n.hero_day(), { day })),
+        }
+        : { ...item, ...feedback, chipIcon: undefined, overlayText: undefined };
+    });
   });
   protected readonly hasHero = computed(() => this.sections().some((s) => s.lead));
+
+  /**
+   * A section's feedback from the payload (spec 1.154 §7): its switches, its own thread, the images of an article or
+   * album with their badges, and the image whose comments are open. The phase-4 fields are optional (an older server).
+   */
+  private feedbackOf(section: SectionModel, guest: GuestSectionView | undefined): {
+    feedback: SectionFeedback; thread: FeedbackThread; images: ImageConfig[]; badges: Record<string, string>; image: ImageThread | undefined;
+  } {
+    const feedback = guest?.feedback ?? NO_FEEDBACK;
+    const imageThread = (image: ImageConfig): FeedbackThread => ({ parentKey: imageParentKey(image), ...(guest?.images?.[image.label] ?? NO_THREAD) });
+    const sectionKey = section.okey;
+    const images = feedback.imageComments || feedback.imageReactions ? sectionImages(section) : [];
+    const open = this.openImage();
+    const image = open?.sectionKey === sectionKey && images.some((i) => i.label === open.image.label)
+      ? { ...imageThread(open.image), title: this.imageName(open.image, open.index) } : undefined;
+    return {
+      feedback, images, image, badges: imageBadgesOf(images, feedback, imageThread),
+      thread: { parentKey: parentKeyOf({ kind: 'section', id: sectionKey }), reactions: guest?.reactions ?? [], comments: guest?.comments ?? [] },
+    };
+  }
+
+  private imageName(image: ImageConfig, index: number): string {
+    return imageTitle(image, index, (n) => fill(this.i18n.image_photo(), { n }));
+  }
 
   protected readonly pins = computed<RoutePin[]>(() => (this.view()?.footprints ?? [])
     .filter((f) => typeof f.latitude === 'number' && typeof f.longitude === 'number')
@@ -290,25 +334,48 @@ export class JournalGuestPage {
     return [date, fp.time, fp.placeName, weatherLine(weatherOf(fp.weather)), sunTimesLine(weatherOf(fp.weather))].filter((x) => x).join(' · ');
   }
 
+  /** «❤ n  💬 n» on a footprint's card: every reaction and comment of its sections and images. */
   protected counts(fp: GuestFootprintView): string {
-    return [fp.likes > 0 ? `♥ ${fp.likes}` : '', fp.comments.length > 0 ? `💬 ${fp.comments.length}` : ''].filter((x) => x).join('  ');
+    const threads = (fp.sections ?? []).flatMap((s): GuestFeedbackView[] =>
+      [{ reactions: s.reactions ?? [], comments: s.comments ?? [] }, ...Object.values(s.images ?? {})]);
+    const reactions = threads.reduce((sum, t) => sum + t.reactions.reduce((n, r) => n + r.count, 0), 0);
+    const comments = threads.reduce((sum, t) => sum + t.comments.length, 0);
+    return [reactions > 0 ? `♥ ${reactions}` : '', comments > 0 ? `💬 ${comments}` : ''].filter((x) => x).join('  ');
   }
 
-  protected comments(fp: GuestFootprintView): ReactionComment[] {
-    return fp.comments; // `mine` from the server: guests delete their own comments (plan 8)
+  /** `mine` comes from the server: the guest's own reactions and comments (they delete only their own, plan 8). */
+  protected react(reaction: FeedbackReaction): Promise<void> {
+    return this.act(reaction.active ? 'react' : 'unreact', { parentKey: reaction.parentKey, emoji: reaction.emoji });
   }
 
-  protected async toggleLike(fp: GuestFootprintView): Promise<void> {
-    await this.act(fp.liked ? 'unlike' : 'like', { footprintKey: fp.key });
-  }
-
-  protected async writeComment(fp: GuestFootprintView): Promise<void> {
-    const text = await okrPrompt(this.alertController, this.i18n.comment_write(), this.i18n.comment_prompt(), this.i18n.comment_send(), this.i18n.cancel());
-    if (text?.trim()) await this.act('comment', { footprintKey: fp.key, text: text.trim() });
+  protected async comment(comment: FeedbackText): Promise<void> {
+    this.sending.set(true);
+    try {
+      await this.act('comment', { parentKey: comment.parentKey, text: comment.text });
+    } finally {
+      this.sending.set(false);
+    }
   }
 
   protected async deleteComment(commentKey: string): Promise<void> {
     await this.act('deleteComment', { commentKey });
+  }
+
+  /** A tap on an image of an article or album: its sheet (spec 1.154 §7). */
+  protected async tapImage(item: { section: { okey: string }; feedback: SectionFeedback; images: ImageConfig[] }, image: ImageConfig): Promise<void> {
+    const index = Math.max(0, item.images.findIndex((i) => i.label === image.label));
+    const view = this.selected()?.sections?.find((s) => s.key === item.section.okey);
+    const thread: FeedbackThread = { parentKey: imageParentKey(image), ...(view?.images?.[image.label] ?? NO_THREAD) };
+    const choice = await openImageSheet(this.modalController, this.i18n, { image, index, feedback: item.feedback, thread });
+    if (choice?.kind === 'react') {
+      const mine = thread.reactions.some((r) => r.emoji === choice.emoji && r.mine);
+      return this.react({ parentKey: thread.parentKey, emoji: choice.emoji, active: !mine });
+    }
+    switch (choice?.id) {
+      case IMAGE_ACTION.comment:
+      case IMAGE_ACTION.comments: return this.openImage.set({ sectionKey: item.section.okey, image, index });
+      case IMAGE_ACTION.slider: return showImageSlider(this.modalController, item.images, { ...IMAGE_STYLE_SHAPE }, index);
+    }
   }
 
   protected async settings(): Promise<void> {

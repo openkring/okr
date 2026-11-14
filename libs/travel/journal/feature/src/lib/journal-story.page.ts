@@ -6,19 +6,27 @@ import {
 } from '@ionic/angular';
 
 import type { HeroOverlayText } from '@okr/cms-section-util';
+import { COMMENT_LIST_I18N_KEYS, CommentListI18n } from '@okr/comment-util';
 import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { showImageSlider } from '@okr/shared-ui';
 import { fill, registerBundledIcons } from '@okr/shared-util-core';
-import { FootprintEditModal, JournalSectionSortModal, SortableSection, VideoClip } from '@okr/travel-journal-ui';
+import { FootprintEditModal, JournalFeedbackAction, JournalSectionSortModal, SortableSection, VideoClip } from '@okr/travel-journal-ui';
 import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { CategoryItemModel, CategoryListModel, ImageConfig, SectionModel, UserModel } from '@okr/shared-models';
+import { CategoryItemModel, CategoryListModel, IMAGE_STYLE_SHAPE, ImageConfig, SectionFeedback, SectionModel, UserModel } from '@okr/shared-models';
 import {
-  addableSectionTypes, filledHero, footprintMenu, FootprintFormModel, FootprintView, footprintOverlayText, heroHasCover, htmlToPlainText, ImageView,
+  addableSectionTypes, feedbackOf, filledHero, footprintMenu, FootprintFormModel, FootprintView, footprintOverlayText, heroHasCover, htmlToPlainText,
+  imageTitle, ImageView, parentKeyOf,
   isJournalSectionType, JournalSectionType, lostValueText, photoFileName, sectionActions, sectionModelOf, SectionView, sortByOrder,
   travelStartDate, weatherLine,
 } from '@okr/travel-journal-util';
 import { weatherCodeToIcon, WEATHER_ICON_SET } from '@okr/weather-util';
 
+import {
+  FeedbackReaction, FeedbackText, FeedbackThread, IMAGE_ACTION, ImageThread, imageBadgesOf, imageParentKey, JournalFeedback, openImageSheet,
+  sectionImages,
+} from './journal-feedback';
 import { JournalFileUrlService } from './journal-file-url.service';
 import { showJournalError } from './journal-errors';
 import { openJournalMenu } from './journal-menu-open';
@@ -35,7 +43,15 @@ interface StorySection {
   overlayText: HeroOverlayText | undefined; // the leading hero only
   lead: boolean; // the leading hero: it carries the footprint's lines, so the plain title is not shown
   missing: number; // browser: photos signed but not in the bucket yet (still drafts on the iPad)
+  feedback: SectionFeedback; // the switches in effect (a hero: all off)
+  thread: FeedbackThread; // the section's own reactions and comments
+  images: ImageConfig[]; // article, album: the images shown, urls resolved
+  badges: Record<string, string>; // per image label: «❤ n · 💬 n»
+  image: ImageThread | undefined; // the image whose comments are open under the section
 }
+
+/** The image whose comments the author opened from its sheet. */
+interface OpenImage { sectionKey: string; image: ImageConfig; index: number }
 
 /** The CMS i18n of the section types (card-select builds `<i18n>.<type>.label`). */
 const SECTION_TYPE_I18N = '@cms/section/feature.section_type';
@@ -47,12 +63,14 @@ const SECTION_TYPE_I18N = '@cms/section/feature.section_type';
  * hinzufügen» through the CMS card-select, sections highlighted in edit mode, a tap opens the section's ActionSheet and
  * «Bearbeiten» the CMS section editor in journal mode with the journal's photo picker. Every author edits every
  * section; an edit takes a lock first (released in `finally`, and on page destroy); conflict copies and overwritten
- * footprint values are flagged until resolved. The footprint reactions bar is on the guest page only (decision 7).
+ * footprint values are flagged until resolved. Under every section but the hero, and on each image of an article or
+ * album, its reactions and comments (spec 1.154 §7, `okr-journal-feedback`): written as change records through the
+ * store, offline on the iPad like every other record.
  */
 @Component({
   selector: 'okr-journal-story-page',
   imports: [
-    JournalSection,
+    JournalSection, JournalFeedback,
     IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonFooter, IonButton, IonIcon, SvgIconPipe,
   ],
   styles: [`
@@ -110,8 +128,14 @@ const SECTION_TYPE_I18N = '@cms/section/feature.section_type';
           }
           <div class="section" [class.editable]="editMode() && canEdit()" (click)="tapSection(item.view)">
             <okr-journal-section [section]="item.section" [clips]="item.clips" [overlayText]="item.overlayText" [chipIcon]="weatherChipIcon()"
-              [editMode]="editMode()" [notLoaded]="store.i18n.video_not_loaded()" />
+              [editMode]="editMode()" [notLoaded]="store.i18n.video_not_loaded()" [imageBadges]="item.badges"
+              [emitImageClicks]="item.feedback.imageComments || item.feedback.imageReactions" (imageSelected)="tapImage(item, $event)" />
           </div>
+          @if (item.feedback.comments || item.feedback.reactions || item.image) {
+            <okr-journal-feedback [section]="item.thread" [feedback]="item.feedback" [image]="item.image" [canWrite]="canEdit()" [busy]="sending()"
+              [i18n]="store.i18n" [commentI18n]="commentI18n" (reacted)="react($event)" (commented)="comment($event)"
+              (deleted)="deleteComment($event)" (imageClosed)="openImage.set(undefined)" />
+          }
           @if (item.missing > 0) {
             <p class="note">{{ onIpad(item.missing) }}</p>
           }
@@ -143,6 +167,9 @@ export class JournalStoryPage {
   public readonly footprintKey = input.required<string>();
 
   protected readonly editMode = signal(false);
+  protected readonly commentI18n = inject(I18nService).translateAll(COMMENT_LIST_I18N_KEYS) as CommentListI18n;
+  protected readonly openImage = signal<OpenImage | undefined>(undefined);
+  protected readonly sending = signal(false);
   protected readonly menuItems = computed(() => footprintMenu({ native: this.store.native(), canWrite: this.store.canWrite(), editMode: this.editMode() }));
 
   protected async act(action: Promise<unknown>): Promise<void> {
@@ -180,12 +207,31 @@ export class JournalStoryPage {
     const rest = sortByOrder(fp.sections.filter((s) => s !== lead).map((s) => ({ ...s, okey: s.key })));
     const overlay = lead ? footprintOverlayText(fp, this.startDate(), (day) => fill(this.store.i18n.hero_day(), { day })) : undefined;
     const editMode = this.editMode();
+    const open = this.openImage();
     return [...(lead ? [lead] : []), ...rest].map((view) => {
       const model = sectionModelOf(view, tenantId);
       const isLead = view === lead;
-      return { ...this.resolved(isLead ? filledHero(model, fp) : model, images), view, overlayText: isLead ? overlay : undefined, lead: isLead };
+      const resolved = this.resolved(isLead ? filledHero(model, fp) : model, images);
+      const feedback = feedbackOf(model);
+      const shown = feedback.imageComments || feedback.imageReactions ? sectionImages(resolved.section) : [];
+      const image = open?.sectionKey === view.key && shown.some((i) => i.label === open.image.label)
+        ? { ...this.thread(imageParentKey(open.image)), title: this.imageName(open.image, open.index) } : undefined;
+      return {
+        ...resolved, view, overlayText: isLead ? overlay : undefined, lead: isLead, feedback, images: shown, image,
+        thread: this.thread(parentKeyOf({ kind: 'section', id: view.key })),
+        badges: imageBadgesOf(shown, feedback, (i) => this.thread(imageParentKey(i))),
+      };
     }).filter((item) => !item.lead || editMode || heroHasCover(item.section));
   });
+
+  /** The reactions and comments of a section or image, from the journal's log (offline too). */
+  private thread(parentKey: string): FeedbackThread {
+    return { parentKey, reactions: this.store.feedbackReactions(parentKey), comments: this.store.feedbackComments(parentKey) };
+  }
+
+  private imageName(image: ImageConfig, index: number): string {
+    return imageTitle(image, index, (n) => fill(this.store.i18n.image_photo(), { n }));
+  }
 
   private readonly index = computed(() => this.footprints().findIndex((f) => f.key === this.footprintKey()));
   protected readonly previousKey = computed(() => (this.index() > 0 ? this.footprints()[this.index() - 1].key : undefined));
@@ -404,9 +450,67 @@ export class JournalStoryPage {
     const sheet = await this.actionSheetController.create(options);
     await sheet.present();
     const { data } = await sheet.onDidDismiss<{ action: string }>();
-    switch (data?.action) {
-      case 'section.edit': return this.withLock(view.key, () => this.editSection(opened));
-      case 'section.delete': return this.confirmDeleteSection(view.key);
+    return this.sectionAction(opened, data?.action);
+  }
+
+  private sectionAction(opened: SectionView, action: string | undefined): Promise<void> | undefined {
+    switch (action) {
+      case 'section.edit': return this.withLock(opened.key, () => this.editSection(opened));
+      case 'section.delete': return this.confirmDeleteSection(opened.key);
+    }
+    return undefined;
+  }
+
+  /** A reaction chip, «＋» or the quick row: the author's reaction on, or back off. */
+  protected react(reaction: FeedbackReaction): void {
+    void this.run(() => this.store.toggleReaction(reaction.parentKey, this.footprintKey(), reaction.emoji));
+  }
+
+  protected async comment(comment: FeedbackText): Promise<void> {
+    this.sending.set(true);
+    try {
+      await this.run(() => this.store.addComment(comment.parentKey, this.footprintKey(), comment.text));
+    } finally {
+      this.sending.set(false);
+    }
+  }
+
+  protected deleteComment(commentKey: string): void {
+    void this.run(() => this.store.archiveComment(commentKey));
+  }
+
+  /**
+   * A tap on an image of an article or album (outside edit mode; in edit mode the tap opens the section's sheet):
+   * the image's sheet, with the section's edit actions for authors (spec 1.154 §7).
+   */
+  protected tapImage(item: StorySection, image: ImageConfig): void {
+    void this.exclusive(() => this.imageSheet(item, image));
+  }
+
+  private async imageSheet(item: StorySection, image: ImageConfig): Promise<void> {
+    const opened = item.view;
+    const index = Math.max(0, item.images.findIndex((i) => i.label === image.label));
+    const i18n = this.store.i18n;
+    const texts: Record<string, [string, string]> = {
+      'section.edit': [i18n.section_edit_action(), 'edit'],
+      'section.delete': [i18n.section_delete_action(), 'trash'],
+    };
+    const extra: JournalFeedbackAction[] = sectionActions({ type: opened.type, editable: this.canEdit() })
+      .map((a) => ({ id: a, label: texts[a][0], icon: texts[a][1], danger: a === 'section.delete' }));
+    const choice = await openImageSheet(this.modalController, i18n, {
+      image, index, feedback: item.feedback, thread: this.thread(imageParentKey(image)), extra,
+    });
+    if (choice?.kind === 'react') return this.react({ parentKey: imageParentKey(image), emoji: choice.emoji, active: true });
+    switch (choice?.id) {
+      case IMAGE_ACTION.comment:
+      case IMAGE_ACTION.comments: return this.openImage.set({ sectionKey: opened.key, image, index });
+      case IMAGE_ACTION.slider: return showImageSlider(this.modalController, item.images, { ...IMAGE_STYLE_SHAPE }, index);
+      case 'section.edit':
+      case 'section.delete': {
+        const name = this.lockedBy(opened);
+        if (name) return this.toastText(this.fillName(name));
+        return this.sectionAction(opened, choice.id);
+      }
     }
   }
 

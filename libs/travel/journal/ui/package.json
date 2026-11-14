@@ -19,6 +19,8 @@
     "@okr/shared-pipes": "*",
     "maplibre-gl": "*",
     "@okr/shared-models": "*",
-    "@okr/cms-menu-ui": "*"
+    "@okr/cms-menu-ui": "*",
+    "@okr/comment-ui": "*",
+    "@okr/comment-util": "*"
   }
 }

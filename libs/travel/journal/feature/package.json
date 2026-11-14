@@ -34,6 +34,9 @@
     "@okr/shared-pipes": "*",
     "@capacitor/share": "*",
     "@sentry/angular": "*",
-    "@okr/avatar-ui": "*"
+    "@okr/avatar-ui": "*",
+    "@okr/chat-util": "*",
+    "@okr/chat-ui": "*",
+    "@okr/comment-util": "*"
   }
 }
