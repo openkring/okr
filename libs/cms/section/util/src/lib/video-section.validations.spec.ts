@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { VIDEO_SECTION_SHAPE, VideoSection } from '@okr/shared-models';
 
+import { JOURNAL_VIDEO_CLIPS_MAX } from './journal-mode.util';
 import { videoSectionValidations } from './video-section.validations';
 
 describe('videoSectionValidations', () => {
@@ -34,5 +35,12 @@ describe('videoSectionValidations', () => {
 
   it('accepts a legacy section without documentKey', () => {
     expect(videoSectionValidations(withProps({ documentKey: undefined })).hasErrors('documentKey')).toBe(false);
+  });
+
+  it('accepts up to JOURNAL_VIDEO_CLIPS_MAX journal clips and flags more', () => {
+    const clip = { label: 'v', url: '', altText: '' };
+    expect(videoSectionValidations(withProps({ clips: undefined })).hasErrors('clips')).toBe(false);
+    expect(videoSectionValidations(withProps({ clips: Array(JOURNAL_VIDEO_CLIPS_MAX).fill(clip) })).hasErrors('clips')).toBe(false);
+    expect(videoSectionValidations(withProps({ clips: Array(JOURNAL_VIDEO_CLIPS_MAX + 1).fill(clip) })).hasErrors('clips')).toBe(true);
   });
 });

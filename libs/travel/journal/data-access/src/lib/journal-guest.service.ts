@@ -38,10 +38,12 @@ export interface GuestFootprintView {
   key: string; title: string; placeName: string; date: string; time: string; latitude?: number; longitude?: number;
   weather?: { code: number; min: number; max: number; precip: number; sunrise?: string; sunset?: string };
   transport?: TransportMode;
-  sections: GuestSectionView[]; likes: number; liked: boolean; comments: GuestCommentView[];
+  /** absent from a server older than 1.154 (it sent `blocks`): read as `[]` */
+  sections?: GuestSectionView[]; likes: number; liked: boolean; comments: GuestCommentView[];
 }
 export interface GuestJournalView {
-  journal: { key: string; title: string; subTitle: string };
+  /** startDate: StoreDate or '' (absent from an older server) — the first day of the trip for «Tag N» */
+  journal: { key: string; title: string; subTitle: string; startDate?: string };
   me: { personKey: string; name: string; channel: GuestChannel; muted: boolean; expiresAt: string };
   footprints: GuestFootprintView[];
 }

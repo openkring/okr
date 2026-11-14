@@ -74,9 +74,9 @@
   },
   "error": {
     "no_author": "Apri il diario di viaggio una volta con internet, poi potrai scrivere.",
-    "not_owner": "Solo chi ha scritto questo blocco può modificarlo.",
+    "not_owner": "Solo chi ha scritto questa sezione può modificarla.",
     "generic": "Non ha funzionato. Riprova.",
-    "others_content": "Qui ci sono anche contributi dell'altra persona. Elimina prima solo i tuoi blocchi.",
+    "others_content": "Qui ci sono anche contributi dell'altra persona. Elimina prima solo le tue sezioni.",
     "outdated": "Aggiorna l'app prima di continuare a scrivere.",
     "offline": "Sei offline. Salva di nuovo quando hai Internet."
   },
@@ -324,7 +324,7 @@
     "fill": "Riempi",
     "hidden_title": "Foto nascoste",
     "reset": "Ripristina",
-    "reset_hint": "Hai distribuito a mano le foto di questo blocco. Con «Ripristina» il libro le distribuisce di nuovo da solo.",
+    "reset_hint": "Hai distribuito a mano le foto di questa sezione. Con «Ripristina» il libro le distribuisce di nuovo da solo.",
     "comments_switch": "Commenti nel libro",
     "comments_empty": "Non ci sono ancora commenti su questo footprint.",
     "map": "Mappa",
@@ -456,7 +456,7 @@
     "preparing": "Preparazione del video…",
     "skipped_too_long": "Il video dura più di 60 secondi. Accorcialo nell’app Foto.",
     "skipped_too_large": "Il video è diventato troppo grande e non è stato aggiunto.",
-    "limit": "Un blocco video può contenere 5 video.",
+    "limit": "Una sezione video può contenere 5 video.",
     "not_loaded": "Video non ancora caricato"
   },
   "people": {

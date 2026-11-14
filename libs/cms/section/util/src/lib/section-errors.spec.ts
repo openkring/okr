@@ -137,4 +137,8 @@ describe('getJournalInlineErrorFields (journal mode, 1.154)', () => {
     const errors = { 'overlay.darkening': ['invalidValue'], height: ['invalidValue'], focus: ['invalidValue'], title: ['tooLong'], 'ctas[0].label': ['required'] };
     expect(getRemainingErrors(errors, getJournalInlineErrorFields('hero')).map((e) => e.field)).toEqual(['title', 'ctas[0].label']);
   });
+
+  it('shows the clip limit of a video inline, under the clip list', () => {
+    expect(getRemainingErrors({ clips: ['clipsTooMany'] }, getJournalInlineErrorFields('video'))).toEqual([]);
+  });
 });

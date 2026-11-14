@@ -17,6 +17,9 @@ const JOURNAL_MODE_FIELDS: Partial<Record<SectionType, readonly string[]>> = {
   video: ['clips'],
 };
 
+/** The most clips a journal video section plays (spec 1.154 §10: 1–5); the picker stops there and the video suite enforces it. */
+export const JOURNAL_VIDEO_CLIPS_MAX = 5;
+
 /** The property keys the journal form edits for `type`; `[]` for a type the journal does not offer. */
 export function journalModeSectionFields(type: SectionType): string[] {
   return [...(JOURNAL_MODE_FIELDS[type] ?? [])];

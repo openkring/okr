@@ -1700,6 +1700,7 @@
   },
   "validation": {
     "documentKeyInvalid": "Wähle ein Video aus dem Album aus.",
+    "clipsTooMany": "Wähle höchstens 5 Videos aus.",
     "adventYearRange": "Gib ein Jahr zwischen 2020 und 2100 ein.",
     "adventDoorCount": "Der Kalender braucht genau 25 Türchen. Ordne die Türchen neu an.",
     "formEmailInvalid": "Mindestens eine E-Mail-Adresse ist ungültig. Prüfe die Schreibweise.",

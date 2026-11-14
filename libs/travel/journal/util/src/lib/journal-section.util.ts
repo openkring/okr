@@ -2,6 +2,7 @@ import {
   ALBUM_SECTION_SHAPE, ARTICLE_SECTION_SHAPE, HERO_OVERLAY_DEFAULT, HERO_SECTION_SHAPE, IMAGE_CONFIG_SHAPE, ImageConfig,
   SectionModel, VIDEO_SECTION_SHAPE,
 } from '@okr/shared-models';
+import { htmlToPlainText } from './journal-forms.util';
 import type { SectionView } from './journal-view.util';
 
 /**
@@ -79,11 +80,17 @@ function sameValue(a: unknown, b: unknown): boolean {
 /**
  * The record fields an edit has to write: only those whose value differs from the model the edit started from
  * (`sectionModelOf(before)`), so an unchanged default is never written and a concurrent edit of another key survives.
- * A property removed by the edit is not written: the change log has no unset.
+ * A stored property the edit removed (the hero height back to «Standard») is written as `null`: the change log has no
+ * unset, and a `null` property reads as absent, so the type's default applies again.
  */
 export function changedSectionFields(before: SectionView, after: SectionModel): Record<string, unknown> {
   const old = sectionFieldsOf(sectionModelOf(before, ''));
-  return Object.fromEntries(Object.entries(sectionFieldsOf(after)).filter(([field, value]) => !sameValue(old[field], value)));
+  const changed = Object.fromEntries(Object.entries(sectionFieldsOf(after)).filter(([field, value]) => !sameValue(old[field], value)));
+  const kept = (after.properties ?? {}) as Record<string, unknown>;
+  for (const [key, value] of Object.entries(before.properties)) {
+    if (value !== undefined && value !== null && kept[key] === undefined) changed[`${SECTION_PROPERTY_PREFIX}${key}`] = null;
+  }
+  return changed;
 }
 
 /**
@@ -93,7 +100,8 @@ export function changedSectionFields(before: SectionView, after: SectionModel): 
 export function sectionModelOf(view: SectionView, tenantId: string): SectionModel {
   const shape = SHAPES[view.type];
   const properties: Record<string, unknown> = structuredClone((shape.properties ?? {}) as Record<string, unknown>);
-  for (const [key, value] of Object.entries(view.properties)) properties[key] = storedProperty(key, value);
+  // a null property was removed by an edit (changedSectionFields): the shape's default applies
+  for (const [key, value] of Object.entries(view.properties)) if (value !== null && value !== undefined) properties[key] = storedProperty(key, value);
   return {
     ...shape,
     okey: view.key, name: view.key, type: view.type, title: view.title, subTitle: '', tenants: [tenantId],
@@ -116,10 +124,33 @@ export function sectionClipKeys(view: Pick<SectionView, 'properties'>): string[]
   return labelsOf(storedImages(view.properties['clips']));
 }
 
+/**
+ * Whether a section holds anything an author made: a title, text, photos or clips. A hero counts only with a cover —
+ * the hero every new footprint starts with is empty until a photo is imported (spec 1.154 §3).
+ */
+export function sectionHasContent(view: Pick<SectionView, 'type' | 'title' | 'htmlContent' | 'properties'>): boolean {
+  if (view.type === 'hero') return sectionImageKeys(view).length > 0;
+  return view.title.trim() !== '' || htmlToPlainText(view.htmlContent) !== ''
+    || sectionImageKeys(view).length > 0 || sectionClipKeys(view).length > 0;
+}
+
 /** The types the author may add: a footprint has at most one hero. */
 export function addableSectionTypes(sections: SectionView[]): JournalSectionType[] {
   const hasHero = sections.some((s) => s.type === 'hero');
   return JOURNAL_SECTION_TYPES.filter((t) => t !== 'hero' || !hasHero);
+}
+
+/**
+ * The hero cover a photo import sets (spec 1.154 §3: a new footprint starts with a hero, its cover is the first photo):
+ * the footprint's hero (not a conflict copy) gets `imageKey` as cover when it has none yet. `p_hero` is a settings
+ * key, so the record carries no bases. Undefined without a photo key, without a hero, or when the hero has a cover.
+ */
+export function heroCoverPatch(
+  sections: Pick<SectionView, 'key' | 'type' | 'properties' | 'conflictOf'>[], imageKey: string | undefined,
+): { sectionKey: string; fields: Record<string, unknown> } | undefined {
+  const hero = sections.find((s) => s.type === 'hero' && s.conflictOf === undefined);
+  if (!imageKey || !hero || sectionImageKeys(hero).length > 0) return undefined;
+  return { sectionKey: hero.key, fields: { [`${SECTION_PROPERTY_PREFIX}${IMAGE_KEY}`]: storedImage(imageKey) } };
 }
 
 /**

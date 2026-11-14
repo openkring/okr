@@ -5,7 +5,7 @@ import { materialize } from './journal-merge.util';
 import { SectionView, sectionsOf } from './journal-view.util';
 import {
   addableSectionTypes, changedSectionFields, JOURNAL_SECTION_TYPES, newFootprintSections, sectionClipKeys, sectionFieldsOf,
-  sectionImageKeys, sectionModelOf,
+  heroCoverPatch, sectionHasContent, sectionImageKeys, sectionModelOf,
 } from './journal-section.util';
 
 const DEVICE: Record<string, string> = { bruno: 'dev-b', anna: 'dev-a' };
@@ -102,6 +102,49 @@ describe('journal sections', () => {
     expect(changedSectionFields(before, model)).toEqual({});
     const restyled = { ...model, properties: { ...model.properties, imageStyle: { ...IMAGE_STYLE_SHAPE, width: '50%' } } } as typeof model;
     expect(changedSectionFields(before, restyled)).toEqual({ p_imageStyle: { ...IMAGE_STYLE_SHAPE, width: '50%' } });
+  });
+
+  it('changedSectionFields writes null for a stored property the edit removed; the view then falls back to the default', () => {
+    const before = view({ type: 'hero', properties: { height: 'S', hero: img('c1') } });
+    const model = sectionModelOf(before, 'scs');
+    const { height: _height, ...rest } = model.properties as unknown as Record<string, unknown>; // «Standard» in the hero form
+    const fields = changedSectionFields(before, { ...model, properties: rest } as unknown as typeof model);
+    expect(fields).toEqual({ p_height: null });
+    // the null record field reaches the view through the merge: the key is gone and the shape default applies
+    const state = materialize([
+      FP,
+      rec({ entity: 'section', entityKey: 'h1', op: 'create', fields: { footprintKey: 'f1', type: 'hero', title: '', htmlContent: '', order: 'V', p_height: 'S' } }, 100),
+      rec({ entity: 'section', entityKey: 'h1', op: 'set', fields }, 200),
+    ]);
+    const hero = sectionsOf(state, 'f1')[0];
+    expect('height' in hero.properties).toBe(false);
+    expect('height' in (sectionModelOf(hero, 'scs').properties as object)).toBe(false);
+  });
+
+  it('sectionModelOf treats a null property as absent', () => {
+    const props = sectionModelOf(view({ type: 'hero', properties: { height: null, hero: null } }), 'scs').properties as unknown as Record<string, unknown>;
+    expect('height' in props).toBe(false);
+    expect(props['hero']).toEqual(IMAGE_CONFIG_SHAPE);
+  });
+
+  it('heroCoverPatch: the first imported photo becomes the cover of a hero without one', () => {
+    const emptyHero = view({ key: 'h1', type: 'hero', properties: { overlay: { ...HERO_OVERLAY_DEFAULT } } });
+    expect(heroCoverPatch([emptyHero, view({ key: 'a1' })], 'i1')).toEqual({ sectionKey: 'h1', fields: { p_hero: img('i1') } });
+    expect(heroCoverPatch([emptyHero], undefined)).toBeUndefined();
+    expect(heroCoverPatch([view({ key: 'a1' })], 'i1')).toBeUndefined();
+    expect(heroCoverPatch([view({ key: 'h1', type: 'hero', properties: { hero: img('c1') } })], 'i1')).toBeUndefined();
+    expect(heroCoverPatch([view({ key: 'h1~x', type: 'hero', conflictOf: 'h1' })], 'i1')).toBeUndefined();
+  });
+
+  it('sectionHasContent: text, title, photos or clips count; a hero only with its cover', () => {
+    expect(sectionHasContent(view({}))).toBe(false);
+    expect(sectionHasContent(view({ htmlContent: '<p> </p>' }))).toBe(false);
+    expect(sectionHasContent(view({ htmlContent: '<p>Pinguine</p>' }))).toBe(true);
+    expect(sectionHasContent(view({ title: 'Neko' }))).toBe(true);
+    expect(sectionHasContent(view({ type: 'album', properties: { images: [img('i1')] } }))).toBe(true);
+    expect(sectionHasContent(view({ type: 'video', properties: { clips: [img('v1')] } }))).toBe(true);
+    expect(sectionHasContent(view({ type: 'hero', properties: { overlay: { ...HERO_OVERLAY_DEFAULT } } }))).toBe(false);
+    expect(sectionHasContent(view({ type: 'hero', properties: { hero: img('c1') } }))).toBe(true);
   });
 
   it('sectionModelOf overlays the view on the type defaults; image labels stay the journal image keys', () => {

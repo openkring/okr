@@ -84,7 +84,7 @@ describe('journal view', () => {
 });
 
 describe('hasOthersSections', () => {
-  const fp = (sections: { authorKey: string }[]) =>
+  const fp = (sections: { authorKey: string; type?: 'hero' | 'article'; htmlContent?: string }[]) =>
     ({ key: 'f', journalKey: 'j1', title: '', placeName: '', date: '', time: '', publishState: 'draft' as const, hlcs: {}, lostValues: [],
       sections: sections.map((b, i) => ({ key: `b${i}`, type: 'article' as const, title: '', htmlContent: '', properties: {}, order: 'V', hlcs: {}, conflict: false, ...b })) });
 
@@ -94,9 +94,14 @@ describe('hasOthersSections', () => {
     expect(hasOthersSections([fp([])], 'bruno')).toBe(false);
   });
 
-  it('a section of the other author blocks the deletion', async () => {
+  it('a section of the other author with content blocks the deletion', async () => {
     const { hasOthersSections } = await import('./journal-view.util');
-    expect(hasOthersSections([fp([{ authorKey: 'bruno' }]), fp([{ authorKey: 'barbara' }])], 'bruno')).toBe(true);
+    expect(hasOthersSections([fp([{ authorKey: 'bruno' }]), fp([{ authorKey: 'barbara', htmlContent: '<p>Pinguine</p>' }])], 'bruno')).toBe(true);
+  });
+
+  it('the empty hero and article a co-author\'s new footprint starts with do not block the deletion', async () => {
+    const { hasOthersSections } = await import('./journal-view.util');
+    expect(hasOthersSections([fp([{ authorKey: 'barbara', type: 'hero' }, { authorKey: 'barbara' }])], 'bruno')).toBe(false);
   });
 });
 

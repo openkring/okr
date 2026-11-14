@@ -5,7 +5,7 @@ import { SECTION_IMAGE_PICKER, SectionImagePicker } from '@okr/cms-section-util'
 import { IMAGE_CONFIG_SHAPE, ImageConfig } from '@okr/shared-models';
 import { convertDateFormatToString, DateFormat, fill } from '@okr/shared-util-core';
 import { JournalPhotoPickModal, PickablePhoto } from '@okr/travel-journal-ui';
-import { ImageView } from '@okr/travel-journal-util';
+import { ImageView, MAX_VIDEOS_PER_BLOCK } from '@okr/travel-journal-util';
 
 import { JournalFileUrlService } from './journal-file-url.service';
 import { JournalWebPhotos } from './journal-web-photos.service';
@@ -109,7 +109,9 @@ export class JournalSectionPicker implements SectionImagePicker {
       const picked = files ? await files : undefined;
       if (picked?.length === 0) return [];
       const { imageKeys, skipped, slow } = await this.store.importImages(this.footprintKey, kind, picked);
-      await this.toastSkipped(skipped.map((s) => ('reason' in s ? String(s.reason) : '')), slow);
+      // the browser dialog cannot cap the count: clips beyond the limit are not imported (the Photos picker caps it itself)
+      const limited = kind === 'video' && (picked?.length ?? 0) > MAX_VIDEOS_PER_BLOCK;
+      await this.toastSkipped(skipped.map((s) => ('reason' in s ? String(s.reason) : '')), slow, limited);
       return imageKeys;
     } catch (error) {
       await showJournalError(this.toastController, this.store.i18n, error);
@@ -117,10 +119,11 @@ export class JournalSectionPicker implements SectionImagePicker {
     }
   }
 
-  /** Skipped files, one line per reason (too long, too large, anything else counted), and the slow-write note. */
-  private async toastSkipped(reasons: string[], slow: boolean): Promise<void> {
+  /** The clip limit, skipped files (one line per reason: too long, too large, anything else counted), and the slow-write note. */
+  private async toastSkipped(reasons: string[], slow: boolean, limited = false): Promise<void> {
     const i18n = this.store.i18n;
     const parts: string[] = [];
+    if (limited) parts.push(i18n.video_limit());
     if (reasons.includes('tooLong')) parts.push(i18n.video_skipped_too_long());
     if (reasons.includes('tooLarge')) parts.push(i18n.video_skipped_too_large());
     const other = reasons.filter((r) => r !== 'tooLong' && r !== 'tooLarge').length;

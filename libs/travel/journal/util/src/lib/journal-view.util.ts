@@ -2,7 +2,7 @@ import { DiaryWeather, JournalEntity, TRANSPORT_MODES, TransportMode } from '@ok
 import { conflictCopyKey, dismissedField, isConflictCopyKey, lostValues, winningHlcs } from './journal-conflict.util';
 import { CONFLICT_FIELDS, EntityState, entityStateKey, JournalState, viewOf } from './journal-merge.util';
 import { sortByOrder } from './journal-order.util';
-import { isJournalSectionType, JournalSectionType, SECTION_CONTENT_FIELDS, SECTION_PROPERTY_PREFIX } from './journal-section.util';
+import { isJournalSectionType, JournalSectionType, SECTION_CONTENT_FIELDS, SECTION_PROPERTY_PREFIX, sectionHasContent } from './journal-section.util';
 
 /**
  * The journal as the UI reads it, built from the merged change log (spec 1.113 §5.2). Field names in
@@ -127,7 +127,12 @@ function withFields(section: SectionView, fields: Record<string, unknown>): Sect
   const out: SectionView = { ...section, properties: { ...section.properties } };
   for (const [field, value] of Object.entries(fields)) {
     if (field === 'title' || field === 'htmlContent' || field === 'order') out[field] = str(value);
-    else if (field.startsWith(SECTION_PROPERTY_PREFIX)) out.properties[field.slice(SECTION_PROPERTY_PREFIX.length)] = value;
+    else if (field.startsWith(SECTION_PROPERTY_PREFIX)) {
+      // null: an edit removed the property (changedSectionFields), so the type's default applies again
+      const key = field.slice(SECTION_PROPERTY_PREFIX.length);
+      if (value === null) delete out.properties[key];
+      else out.properties[key] = value;
+    }
   }
   return out;
 }
@@ -274,10 +279,11 @@ export function lastSectionOrder(footprint: FootprintView): string | undefined {
 }
 
 /**
- * True when any of the footprints holds a section of another author. Deleting such a footprint (or the
- * journal around it) would delete the other person's work with it — spec 1.113 anti-goal «losing an
- * entry» — so the store refuses until only own sections are left.
+ * True when any of the footprints holds a section of another author with content (`sectionHasContent`). Deleting
+ * such a footprint (or the journal around it) would delete the other person's work with it — spec 1.113 anti-goal
+ * «losing an entry» — so the store refuses until only own sections are left. The empty hero and article every new
+ * footprint starts with belong to its creator but hold nothing, so they do not count.
  */
 export function hasOthersSections(footprints: FootprintView[], personKey: string): boolean {
-  return footprints.some((fp) => fp.sections.some((section) => section.authorKey !== personKey));
+  return footprints.some((fp) => fp.sections.some((section) => section.authorKey !== personKey && sectionHasContent(section)));
 }

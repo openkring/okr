@@ -20,7 +20,7 @@ import {
 import {
   BOOK_I18N_KEYS, BOOK_LABEL_MAX, journalPeriod, JournalFormModel, removableAuthorKeys, authorsWithout, bookLabelsOf, JournalBookI18n, bookPrintCandidates, entityStateKey, hasOthersSections, pagesOf, PRINT_FILL_LONG_PX, PRINT_FILL_SHORT_PX, FootprintFormModel, JOURNAL_I18N_KEYS, JournalI18n, FootprintView, footprintPosition, footprintsOf, ImageView, imagesOf, JournalState,
   allPhotoFiles, commentsOf, CommentView, likeKey, likesOf, JournalPhotoMode, JournalTileSource, journalsOf, journalTilePlan, MapArea, mapLayers, MapPlace, mapPlaces, parseMapAreas, parsePhotoMode, TileJob, JournalWriteRefused, lastSectionOrder, materialize, orderBetween, reorderedOrders, CONFLICT_FIELDS, dismissedField, isConflictCopyKey, originalOfCopy, SectionView, publishedPhotoFiles, viewOf, MAX_VIDEOS_PER_BLOCK, isVideoFile,
-  changedSectionFields, JournalSectionType, newFootprintSections, sectionImageKeys, stripUndefined,
+  changedSectionFields, heroCoverPatch, JournalSectionType, newFootprintSections, sectionImageKeys, stripUndefined,
   JournalLock, LOCK_HEARTBEAT_MS, LOCK_TTL_MS, lockedBy, mergeLocks, BoundAuthor, JournalWriteSlow, mergePending,
   AreaLayer, areaForWrite, areaLayerTilePlan, BaseLayerOption, baseLayerOptions, Bbox, finishRun, isUsable, layerDetailLevels, layerKindsFor,
   layerTilesToFree, MapLayerKind, MapSource, migrateOfflineMap, NO_OFFLINE_LAYER, offlineAreaKey, OfflineLayerStatus, parseOfflineLayer, pickBaseLayer,
@@ -323,6 +323,12 @@ export const JournalStore = signalStore(
         });
       }
       return { drafts, imageKeys, videos, skipped };
+    }
+
+    /** The first photo imported into a footprint whose hero has no cover becomes the cover (`heroCoverPatch`). */
+    function heroCoverDraft(journalKey: string, fp: FootprintView, imageKey: string | undefined): ChangeDraft | undefined {
+      const patch = heroCoverPatch(fp.sections, imageKey);
+      return patch && { journalKey, entity: 'section', entityKey: patch.sectionKey, op: 'set', fields: patch.fields };
     }
 
     /** A footprint without date or position takes them from its first photos or clips (ship time); undefined when nothing is missing. */
@@ -1475,6 +1481,8 @@ export const JournalStore = signalStore(
         if (picked.photos.length === 0) return { imageKeys: [], skipped: picked.skipped, slow: false };
         const fillDraft = footprintFillDraft(journalKey, fp, picked.photos);
         if (fillDraft) picked.drafts.push(fillDraft);
+        const coverDraft = kind === 'image' ? heroCoverDraft(journalKey, fp, picked.imageKeys[0]) : undefined;
+        if (coverDraft) picked.drafts.push(coverDraft);
         let slow = false;
         try {
           await writePhotos(journalKey, picked.drafts, picked.photos);

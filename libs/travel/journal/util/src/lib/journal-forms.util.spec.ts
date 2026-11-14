@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { JournalBookModel } from '@okr/shared-models';
 import {
-  BookSettingsFormModel, bookSettingsOf, bookSettingsPatch, bookSettingsValidations, footprintValidations, htmlToPlainText, newFootprintFormModel, plainTextToHtml, textBlockValidations,
+  BookSettingsFormModel, bookSettingsOf, bookSettingsPatch, bookSettingsValidations, footprintValidations, htmlToPlainText, newFootprintFormModel, plainTextToHtml,
 } from './journal-forms.util';
 
 describe('footprint validations', () => {
@@ -24,13 +24,6 @@ describe('footprint validations', () => {
     expect(footprintValidations({ ...valid, date: '', time: '' }).isValid()).toBe(true);
     expect(footprintValidations({ ...valid, date: '20271345' }).hasErrors('date')).toBe(true);
     expect(footprintValidations({ ...valid, time: '25:99' }).hasErrors('time')).toBe(true);
-  });
-});
-
-describe('text block validations', () => {
-  it('the text must not be blank', () => {
-    expect(textBlockValidations({ text: '   ' }).hasErrors('text')).toBe(true);
-    expect(textBlockValidations({ text: 'Pinguine' }).isValid()).toBe(true);
   });
 });
 

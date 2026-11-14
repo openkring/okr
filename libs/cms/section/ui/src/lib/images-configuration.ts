@@ -42,7 +42,7 @@ import { ImageEditModal } from './image-edit.modal';
       <ion-card-header>
         <div class="image-list-header">
           <ion-card-title>{{ title() || i18n().image_edit_title_modal() }}</ion-card-title>
-          @if(!readOnly() && canAdd()) {
+          @if(!readOnly() && canAdd() && !atMax()) {
             <ion-buttons>
               <ion-button (click)="addImages()">
                 <ion-icon slot="icon-only" src="{{'add-circle' | svgIcon }}" />
@@ -119,10 +119,13 @@ export class ImagesConfiguration {
    * than uploading private journal photos to the public bucket (and writing a document to Firestore).
    */
   public readonly requirePicker = input(false);
+  /** picker only: the most images the list holds (a journal video's clips); the add button hides there. Unset = no cap. */
+  public readonly max = input<number | undefined>();
 
   // computed
   protected readonly imageErrors = computed(() => getImageErrors(this.errors()));
   protected readonly canAdd = computed(() => !!this.picker || !this.requirePicker());
+  protected readonly atMax = computed(() => { const max = this.max(); return max !== undefined && this.images().length >= max; });
 
   // constants
   private imgixBaseUrl = this.env.services.imgixBaseUrl;
@@ -218,11 +221,15 @@ export class ImagesConfiguration {
     }
   }
 
-  /** picker: one image replaces the list, several are appended */
+  /** picker: one image replaces the list, several are appended — never beyond `max` */
   private async addPicked(picker: SectionImagePicker): Promise<void> {
     const picked = await picker.pick(this.kind(), this.multiple());
     if (!picked.length) return;
-    this.images.update(imgs => this.multiple() ? [...imgs, ...picked] : picked.slice(0, 1));
+    const max = this.max();
+    this.images.update(imgs => {
+      const next = this.multiple() ? [...imgs, ...picked] : picked.slice(0, 1);
+      return max === undefined ? next : next.slice(0, max);
+    });
   }
 
   protected async showActions(img: ImageConfig, index: number): Promise<void> {

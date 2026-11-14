@@ -1700,6 +1700,7 @@
   },
   "validation": {
     "documentKeyInvalid": "Select a video from the album.",
+    "clipsTooMany": "Select at most 5 videos.",
     "adventYearRange": "Enter a year between 2020 and 2100.",
     "adventDoorCount": "The calendar needs exactly 25 doors. Rearrange the doors.",
     "formEmailInvalid": "At least one email address is not valid. Check the spelling.",

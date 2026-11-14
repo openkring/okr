@@ -1700,6 +1700,7 @@
   },
   "validation": {
     "documentKeyInvalid": "Scegli un video dall'album.",
+    "clipsTooMany": "Scegli al massimo 5 video.",
     "adventYearRange": "Inserisci un anno tra il 2020 e il 2100.",
     "adventDoorCount": "Il calendario ha bisogno di esattamente 25 finestrelle. Riordina le finestrelle.",
     "formEmailInvalid": "Almeno un indirizzo e-mail non è valido. Controlla come è scritto.",

@@ -5,6 +5,7 @@ import { stringValidations } from '@okr/shared-util-core';
 import { URL_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 
 import { baseSectionValidations } from './base-section.validations';
+import { JOURNAL_VIDEO_CLIPS_MAX } from './journal-mode.util';
 
 const DOCUMENT_KEY_PATTERN = /^[A-Za-z0-9_-]{1,64}$/;
 
@@ -24,5 +25,12 @@ export const videoSectionValidations = staticSuite((model: VideoSection) => {
     stringValidations('height', model.properties?.height, WORD_LENGTH);
     stringValidations('frameborder', model.properties?.frameborder, WORD_LENGTH);
     stringValidations('baseUrl', model.properties?.baseUrl, URL_LENGTH);
+    // travel journal (spec 1.154 §10): a video section plays at most JOURNAL_VIDEO_CLIPS_MAX clips
+    const clips = model.properties?.clips;
+    omitWhen(clips === undefined, () => {
+      test('clips', '@cms/section/feature.validation.clipsTooMany', () => {
+        enforce(Array.isArray(clips) && clips.length <= JOURNAL_VIDEO_CLIPS_MAX).isTruthy();
+      });
+    });
     // tbd: check for kmz, json, csv
 });

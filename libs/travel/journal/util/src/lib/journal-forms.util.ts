@@ -1,6 +1,6 @@
 import type { JournalBookModel, JournalBookPrint, TransportMode } from '@okr/shared-models';
 import { omitWhen, staticSuite } from 'vest';
-import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH } from '@okr/shared-constants';
+import { LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { dateValidations, numberValidations, stringsValidations, stringValidations, timeValidations } from '@okr/shared-util-core';
 
 /**
@@ -25,12 +25,6 @@ export const footprintValidations = staticSuite((model: FootprintFormModel) => {
   stringValidations('placeName', model.placeName, LONG_NAME_LENGTH);
   dateValidations('date', model.date);
   timeValidations('time', model.time);
-});
-
-export interface TextBlockFormModel { text: string }
-
-export const textBlockValidations = staticSuite((model: TextBlockFormModel) => {
-  stringValidations('text', model.text, DESCRIPTION_LENGTH, 0, true);
 });
 
 /** The author's message to the guests (plan 8): subject and text; links are added per guest when sending. */

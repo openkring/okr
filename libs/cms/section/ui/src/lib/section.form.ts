@@ -8,7 +8,7 @@ import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS, IMAGE_MIMETYPES } from '@ok
 import { UploadService } from '@okr/avatar-data-access';
 import { confirm, MODEL_SELECTOR, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { AlertController, IonItem, IonToggle } from '@ionic/angular';
-import { ChartOption, getPeopleResponsibilityIds, getInlineErrorFields, getJournalInlineErrorFields, getRemainingErrors, isJournalModeField, SectionErrors, SectionI18n, validateSection } from '@okr/cms-section-util';
+import { ChartOption, getPeopleResponsibilityIds, getInlineErrorFields, getJournalInlineErrorFields, getRemainingErrors, isJournalModeField, JOURNAL_VIDEO_CLIPS_MAX, SectionErrors, SectionI18n, validateSection } from '@okr/cms-section-util';
 import { FormI18n } from '@okr/forms-util';
 
 import { SectionConfiguration } from './section-configuration';
@@ -181,6 +181,7 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
               <okr-images-config
                 [images]="videoClips()" (imagesChange)="onVideoClipsChange($event)"
                 kind="video"
+                [max]="clipsMax"
                 [title]="i18n().journal_clips()"
                 [emptyText]="i18n().journal_empty()"
                 [requirePicker]="true"
@@ -189,6 +190,7 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
                 [readOnly]="isReadOnly()"
                 [i18n]="i18n()"
               />
+              <okr-error-note [errors]="errors()['clips'] ?? []" />
             }
           }
         }
@@ -887,6 +889,8 @@ export class SectionForm {
     const section = this.formData();
     return section.type === 'album' ? section.properties?.images ?? [] : [];
   });
+  /** journal mode: the most clips a video section plays (spec 1.154 §10), the same constant the video suite enforces */
+  protected readonly clipsMax = JOURNAL_VIDEO_CLIPS_MAX;
   /** journal mode: the video's explicit clip list (plan decision 8) */
   protected videoClips = computed<ImageConfig[]>(() => {
     const section = this.formData();

@@ -13,7 +13,7 @@ import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-u
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { CategoryItemModel, CategoryListModel, ImageConfig, SectionModel, UserModel } from '@okr/shared-models';
 import {
-  addableSectionTypes, filledHero, footprintMenu, FootprintFormModel, FootprintView, footprintOverlayText, htmlToPlainText, ImageView,
+  addableSectionTypes, filledHero, footprintMenu, FootprintFormModel, FootprintView, footprintOverlayText, heroHasCover, htmlToPlainText, ImageView,
   isJournalSectionType, JournalSectionType, lostValueText, photoFileName, sectionActions, sectionModelOf, SectionView, sortByOrder,
   travelStartDate, weatherLine,
 } from '@okr/travel-journal-util';
@@ -33,6 +33,7 @@ interface StorySection {
   section: SectionModel;
   clips: VideoClip[];
   overlayText: HeroOverlayText | undefined; // the leading hero only
+  lead: boolean; // the leading hero: it carries the footprint's lines, so the plain title is not shown
   missing: number; // browser: photos signed but not in the bucket yet (still drafts on the iPad)
 }
 
@@ -86,7 +87,7 @@ const SECTION_TYPE_I18N = '@cms/section/feature.section_type';
         <p class="note">{{ uploading(upload.done, upload.total) }}</p>
       }
       @if (footprint(); as fp) {
-        @if (sections()[0]?.view?.type !== 'hero') {
+        @if (!sections()[0]?.lead) {
           <div class="plain-title">
             <h1>{{ fp.title || store.i18n.untitled() }}</h1>
             <p>{{ fp.placeName }}</p>
@@ -166,7 +167,9 @@ export class JournalStoryPage {
    * The story as the CMS sections render it. The footprint's first hero leads and carries the footprint's lines; any
    * other hero (two added offline at the same time, a conflict copy) takes its place by `order` among the others.
    * Image urls are resolved from the journal image keys; in the browser a photo that is signed but not in the bucket
-   * (still a draft photo on the iPad) is left out and counted for a note. The records keep their keys as they are.
+   * (still a draft photo on the iPad) is left out and counted for a note. A leading hero without a cover to show (none
+   * chosen yet, or not loadable here) is not drawn outside edit mode: the plain title stands instead. In edit mode it
+   * stays, so the author can tap it and choose a cover. The records keep their keys as they are.
    */
   protected readonly sections = computed<StorySection[]>(() => {
     const fp = this.footprint();
@@ -176,11 +179,12 @@ export class JournalStoryPage {
     const lead = fp.sections.find((s) => s.type === 'hero');
     const rest = sortByOrder(fp.sections.filter((s) => s !== lead).map((s) => ({ ...s, okey: s.key })));
     const overlay = lead ? footprintOverlayText(fp, this.startDate(), (day) => fill(this.store.i18n.hero_day(), { day })) : undefined;
+    const editMode = this.editMode();
     return [...(lead ? [lead] : []), ...rest].map((view) => {
       const model = sectionModelOf(view, tenantId);
       const isLead = view === lead;
-      return { ...this.resolved(isLead ? filledHero(model, fp) : model, images), view, overlayText: isLead ? overlay : undefined };
-    });
+      return { ...this.resolved(isLead ? filledHero(model, fp) : model, images), view, overlayText: isLead ? overlay : undefined, lead: isLead };
+    }).filter((item) => !item.lead || editMode || heroHasCover(item.section));
   });
 
   private readonly index = computed(() => this.footprints().findIndex((f) => f.key === this.footprintKey()));
@@ -222,7 +226,12 @@ export class JournalStoryPage {
       properties['images'] = listed.map(withUrl).filter((image) => image.url !== '' && !isMissing(image.label));
     }
     const hero = properties['hero'] as ImageConfig | undefined;
-    if (section.type === 'hero' && hero?.label) properties['hero'] = withUrl(hero);
+    if (section.type === 'hero' && hero?.label) {
+      // browser: a cover signed but not in the bucket yet (a draft photo on the iPad) has no url, like the album photos
+      const heroMissing = isMissing(hero.label);
+      if (heroMissing) missing += 1;
+      properties['hero'] = heroMissing ? { ...hero, url: '' } : withUrl(hero);
+    }
     let clips: VideoClip[] = [];
     if (section.type === 'video' && Array.isArray(properties['clips'])) {
       // iPad: a file URL is built whether the mp4 is here or not, so presence comes from the store (another author's clip

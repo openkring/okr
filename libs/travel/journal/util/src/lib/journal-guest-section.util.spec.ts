@@ -13,7 +13,7 @@ describe('journal guest sections', () => {
       type: 'album', properties: { images: [img('i2'), img('i1'), img('i9')] },
       photos: [{ key: 'i1', url: 'https://x/1' }, { key: 'i2', url: 'https://x/2' }],
     }), 'bkg');
-    expect((section.properties as AlbumConfig).images.map((i) => [i.label, i.url])).toEqual([['i2', 'https://x/2'], ['i1', 'https://x/1']]);
+    expect((section.properties as AlbumConfig).images?.map((i) => [i.label, i.url])).toEqual([['i2', 'https://x/2'], ['i1', 'https://x/1']]);
   });
 
   it('gives the hero its cover url from the signed photo', () => {
@@ -36,11 +36,32 @@ describe('journal guest sections', () => {
 
   it('lets only the first hero lead and leaves unknown types out', () => {
     const items = guestSectionItems([
-      withAuthor(input({ key: 'a', type: 'article' })),
-      withAuthor(input({ key: 'h1', type: 'hero' })),
-      withAuthor(input({ key: 'h2', type: 'hero' })),
+      withAuthor(input({ key: 'a', type: 'article', html: '<p>Hallo</p>' })),
+      withAuthor(input({ key: 'h1', type: 'hero', properties: { hero: img('c1') }, photos: [{ key: 'c1', url: 'https://x/c' }] })),
+      withAuthor(input({ key: 'h2', type: 'hero', properties: { hero: img('c1') }, photos: [{ key: 'c1', url: 'https://x/c' }] })),
       withAuthor({ ...input({ key: 'm' }), type: 'map' as never }),
     ], 'bkg');
     expect(items.map((i) => [i.section.okey, i.lead])).toEqual([['h1', true], ['a', false], ['h2', false]]);
+  });
+
+  it('a first hero without a loadable cover does not lead and is not shown', () => {
+    const items = guestSectionItems([
+      withAuthor(input({ key: 'h1', type: 'hero', properties: { hero: img('c1') } })), // cover not signed
+      withAuthor(input({ key: 'a', type: 'article', html: '<p>Hallo</p>' })),
+    ], 'bkg');
+    expect(items.map((i) => [i.section.okey, i.lead])).toEqual([['a', false]]);
+    expect(guestSectionItems([withAuthor(input({ key: 'h1', type: 'hero' }))], 'bkg')).toEqual([]);
+  });
+
+  it('leaves out empty sections: an article without text or photos, an album without photos, a video without clips', () => {
+    const items = guestSectionItems([
+      withAuthor(input({ key: 'a0', type: 'article', html: '<p> </p>' })),
+      withAuthor(input({ key: 'a1', type: 'article', title: 'Neko' })),
+      withAuthor(input({ key: 'b0', type: 'album', properties: { images: [img('i9')] } })), // photo not signed
+      withAuthor(input({ key: 'b1', type: 'album', properties: { images: [img('i1')] }, photos: [{ key: 'i1', url: 'https://x/1' }] })),
+      withAuthor(input({ key: 'v0', type: 'video', properties: { clips: [img('v9')] } })), // clip not signed
+      withAuthor(input({ key: 'v1', type: 'video', properties: { clips: [img('v1')] }, videos: [{ key: 'v1', poster: 'p1', url: 'u1' }] })),
+    ], 'bkg');
+    expect(items.map((i) => i.section.okey)).toEqual(['a1', 'b1', 'v1']);
   });
 });

@@ -188,10 +188,11 @@ export class JournalGuestPage {
     const fp = this.selected();
     if (!fp) return [];
     const facts = { ...fp, weather: weatherOf(fp.weather) };
-    const startDate = travelStartDate({}, this.view()?.footprints ?? []);
+    const view = this.view();
+    const startDate = travelStartDate({ startDate: view?.journal.startDate }, view?.footprints ?? []);
     const weather = facts.weather;
     const chipIcon = weather ? { chip: weatherLine(weather), name: weatherCodeToIcon(weather.code), set: WEATHER_ICON_SET } : undefined;
-    return guestSectionItems(fp.sections, '').map((item) => item.lead
+    return guestSectionItems(fp.sections ?? [], '').map((item) => item.lead
       ? {
         ...item, section: filledHero(item.section, facts), chipIcon,
         overlayText: footprintOverlayText(facts, startDate, (day) => fill(this.i18n.hero_day(), { day })),
@@ -204,7 +205,7 @@ export class JournalGuestPage {
     .filter((f) => typeof f.latitude === 'number' && typeof f.longitude === 'number')
     .map((f) => ({ key: f.key, lat: f.latitude as number, lng: f.longitude as number, label: f.title, thumbnailUrl: this.thumbOf(f) })));
   protected readonly route = computed<[number, number][]>(() => (this.view()?.footprints ?? [])
-    .flatMap((f) => f.sections.flatMap((b) => b.photos))
+    .flatMap((f) => (f.sections ?? []).flatMap((b) => b.photos))
     .filter((p) => typeof p.latitude === 'number' && typeof p.longitude === 'number')
     .sort((a, b) => ((a.takenAt ?? '') < (b.takenAt ?? '') ? -1 : 1))
     .map((p) => [p.latitude as number, p.longitude as number] as [number, number]));
@@ -215,7 +216,7 @@ export class JournalGuestPage {
       key: f.key, lat: f.latitude as number, lng: f.longitude as number, at: stopTime(f.date, f.time), title: f.title,
       transport: f.transport, thumb: this.thumbOf(f),
     }));
-    const points = (this.view()?.footprints ?? []).flatMap((f) => f.sections.flatMap((b) => b.photos))
+    const points = (this.view()?.footprints ?? []).flatMap((f) => (f.sections ?? []).flatMap((b) => b.photos))
       .filter((p) => typeof p.latitude === 'number' && typeof p.longitude === 'number')
       .map((p): FlyPoint => ({ lat: p.latitude as number, lng: p.longitude as number, at: p.takenAt ?? '' }));
     return flyoverTimeline(stops, points);
@@ -281,7 +282,7 @@ export class JournalGuestPage {
   }
 
   protected thumbOf(fp: GuestFootprintView): string | undefined {
-    return fp.sections.flatMap((b) => b.photos)[0]?.thumb;
+    return (fp.sections ?? []).flatMap((b) => b.photos)[0]?.thumb;
   }
 
   protected facts(fp: GuestFootprintView): string {

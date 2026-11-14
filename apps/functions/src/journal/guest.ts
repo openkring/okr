@@ -140,6 +140,8 @@ async function guestView(db: Firestore, jk: string, ctx: GuestContext): Promise<
     return {
       key: f.id, title: fp['title'] ?? '', placeName: fp['placeName'] ?? '', date: fp['date'] ?? '', time: fp['time'] ?? '',
       latitude: fp['latitude'], longitude: fp['longitude'], weather: fp['weather'], transport: fp['transport'], sections, likes: likes.length, liked: likes.includes(pk), comments: footprintComments,
+      // backward compatibility for this release: a guest page cached from before 1.154 reads `fp.blocks.flatMap(…)`
+      blocks: [],
     };
   }));
   const result = unsorted.sort((a, b) => (`${a.date}${a.time}` < `${b.date}${b.time}` ? -1 : 1));
@@ -148,7 +150,8 @@ async function guestView(db: Firestore, jk: string, ctx: GuestContext): Promise<
   // a stored 'signal' from before the Signal channel was retired counts as email
   const channel = Array.isArray(delivery) ? (delivery.includes('email') || delivery.includes('signal') ? 'email' : 'none') : 'email';
   return {
-    journal: { key: jk, title: ctx.journal['title'] ?? '', subTitle: ctx.journal['subTitle'] ?? '' },
+    // startDate: the guest's «Tag N» counts from the same first day as the authors' (travelStartDate)
+    journal: { key: jk, title: ctx.journal['title'] ?? '', subTitle: ctx.journal['subTitle'] ?? '', startDate: ctx.journal['startDate'] ?? '' },
     me: { personKey: pk, name: ctx.name, channel, muted: !!ctx.link.mutedAt, expiresAt: ctx.link.expiresAt ?? '' },
     footprints: result,
   };

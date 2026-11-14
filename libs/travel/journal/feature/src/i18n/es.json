@@ -74,9 +74,9 @@
   },
   "error": {
     "no_author": "Abre el diario de viaje una vez con internet y luego podrás escribir.",
-    "not_owner": "Solo quien escribió este bloque puede cambiarlo.",
+    "not_owner": "Solo quien escribió esta sección puede cambiarla.",
     "generic": "No ha funcionado. Inténtalo de nuevo.",
-    "others_content": "Aquí también hay contribuciones de la otra persona. Elimina primero solo tus propios bloques.",
+    "others_content": "Aquí también hay contribuciones de la otra persona. Elimina primero solo tus propias secciones.",
     "outdated": "Actualiza la app antes de seguir escribiendo.",
     "offline": "Estás sin conexión. Guarda de nuevo cuando tengas internet."
   },
@@ -324,7 +324,7 @@
     "fill": "Rellenar",
     "hidden_title": "Fotos ocultas",
     "reset": "Restablecer",
-    "reset_hint": "Has repartido a mano las fotos de este bloque. Con «Restablecer» el libro las vuelve a repartir solo.",
+    "reset_hint": "Has repartido a mano las fotos de esta sección. Con «Restablecer» el libro las vuelve a repartir solo.",
     "comments_switch": "Comentarios en el libro",
     "comments_empty": "Aún no hay comentarios en este footprint.",
     "map": "Mapa",
@@ -456,7 +456,7 @@
     "preparing": "Preparando el vídeo…",
     "skipped_too_long": "El vídeo dura más de 60 segundos. Acórtalo en la app Fotos.",
     "skipped_too_large": "El vídeo ha quedado demasiado grande y no se ha añadido.",
-    "limit": "Un bloque de vídeo admite 5 vídeos.",
+    "limit": "Una sección de vídeo admite 5 vídeos.",
     "not_loaded": "Vídeo aún no cargado"
   },
   "people": {

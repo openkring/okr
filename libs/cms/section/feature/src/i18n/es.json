@@ -1700,6 +1700,7 @@
   },
   "validation": {
     "documentKeyInvalid": "Elige un vídeo del álbum.",
+    "clipsTooMany": "Elige como máximo 5 vídeos.",
     "adventYearRange": "Introduce un año entre 2020 y 2100.",
     "adventDoorCount": "El calendario necesita exactamente 25 ventanas. Reordena las ventanas.",
     "formEmailInvalid": "Al menos una dirección de correo no es válida. Revisa cómo está escrita.",

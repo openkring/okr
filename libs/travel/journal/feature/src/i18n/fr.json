@@ -74,9 +74,9 @@
   },
   "error": {
     "no_author": "Ouvre le carnet de voyage une fois avec internet, ensuite tu pourras écrire.",
-    "not_owner": "Seule la personne qui a écrit ce bloc peut le modifier.",
+    "not_owner": "Seule la personne qui a écrit cette section peut la modifier.",
     "generic": "Cela n'a pas fonctionné. Réessaie.",
-    "others_content": "Ceci contient aussi des contributions de l'autre personne. Supprime d'abord seulement tes propres blocs.",
+    "others_content": "Ceci contient aussi des contributions de l'autre personne. Supprime d'abord seulement tes propres sections.",
     "outdated": "Mets à jour l'application avant de continuer à écrire.",
     "offline": "Tu es hors ligne. Enregistre à nouveau quand tu as internet."
   },
@@ -324,7 +324,7 @@
     "fill": "Remplir",
     "hidden_title": "Photos masquées",
     "reset": "Réinitialiser",
-    "reset_hint": "Tu as réparti les photos de ce bloc à la main. « Réinitialiser » laisse le livre les répartir à nouveau.",
+    "reset_hint": "Tu as réparti les photos de cette section à la main. « Réinitialiser » laisse le livre les répartir à nouveau.",
     "comments_switch": "Commentaires dans le livre",
     "comments_empty": "Il n'y a pas encore de commentaires sur ce footprint.",
     "map": "Carte",
@@ -456,7 +456,7 @@
     "preparing": "Préparation de la vidéo…",
     "skipped_too_long": "La vidéo dure plus de 60 secondes. Raccourcis-la dans l’app Photos.",
     "skipped_too_large": "La vidéo est devenue trop volumineuse et n’a pas été ajoutée.",
-    "limit": "Un bloc vidéo peut contenir 5 vidéos.",
+    "limit": "Une section vidéo peut contenir 5 vidéos.",
     "not_loaded": "Vidéo pas encore chargée"
   },
   "people": {

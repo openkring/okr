@@ -167,6 +167,8 @@ export function getJournalInlineErrorFields(type: SectionType): string[] {
       return ['title', IMAGES_PREFIX, 'width', 'height', 'fill'];
     case 'album':
       return ['title', IMAGES_PREFIX];
+    case 'video':
+      return ['title', 'clips'];
     default:
       return ['title'];
   }

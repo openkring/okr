@@ -74,9 +74,9 @@
   },
   "error": {
     "no_author": "Öffne das Reisetagebuch einmal mit Internet, dann kannst du schreiben.",
-    "not_owner": "Nur wer den Block geschrieben hat, kann ihn ändern.",
+    "not_owner": "Nur wer die Sektion geschrieben hat, kann sie ändern.",
     "generic": "Das hat nicht geklappt. Versuch es nochmals.",
-    "others_content": "Hier stehen auch Beiträge der anderen Person. Lösche zuerst nur deine eigenen Blöcke.",
+    "others_content": "Hier stehen auch Beiträge der anderen Person. Lösche zuerst nur deine eigenen Sektionen.",
     "outdated": "Bitte aktualisiere die App, bevor du weiter schreibst.",
     "offline": "Du bist offline. Speichere wieder, wenn du Internet hast."
   },
@@ -324,7 +324,7 @@
     "fill": "Füllen",
     "hidden_title": "Ausgeblendete Fotos",
     "reset": "Zurücksetzen",
-    "reset_hint": "Du hast die Fotos dieses Blocks von Hand verteilt. Mit «Zurücksetzen» verteilt das Buch sie wieder selbst.",
+    "reset_hint": "Du hast die Fotos dieser Sektion von Hand verteilt. Mit «Zurücksetzen» verteilt das Buch sie wieder selbst.",
     "comments_switch": "Kommentare im Buch",
     "comments_empty": "Zu diesem Footprint gibt es noch keine Kommentare.",
     "map": "Karte",
@@ -456,7 +456,7 @@
     "preparing": "Video wird vorbereitet…",
     "skipped_too_long": "Das Video ist länger als 60 Sekunden. Kürze es in der Fotos-App.",
     "skipped_too_large": "Das Video ist zu gross geworden und wurde nicht übernommen.",
-    "limit": "Ein Videoblock hat Platz für 5 Videos.",
+    "limit": "Eine Videosektion hat Platz für 5 Videos.",
     "not_loaded": "Video noch nicht geladen"
   },
   "people": {
