@@ -41,3 +41,4 @@ export * from './lib/journal-offline-area.util';
 export * from './lib/journal-iceberg.util';
 export * from './lib/journal-edit.util';
 export * from './lib/journal.validations';
+export * from './lib/journal-schema.util';

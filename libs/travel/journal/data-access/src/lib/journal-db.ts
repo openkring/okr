@@ -1,7 +1,10 @@
 import { Injectable } from '@angular/core';
 import { CapacitorSQLite, capSQLiteSet, SQLiteConnection, SQLiteDBConnection } from '@capacitor-community/sqlite';
 import { JournalChange } from '@okr/shared-models';
-import { decodeChangeRow, encodeBases, StoredChangeRow } from '@okr/travel-journal-util';
+import {
+  decodeChangeRow, encodeBases, JOURNAL_RESET_META_PREFIX, JOURNAL_SCHEMA, JOURNAL_SCHEMA_META, needsJournalReset, StoredChangeRow,
+} from '@okr/travel-journal-util';
+import { JournalPhotos } from './journal-photos.plugin';
 
 /**
  * The travel journal's local store on the iPad (spec 1.113 §4): the append-only change log plus a
@@ -193,6 +196,7 @@ export class JournalDb {
       await db.open();
       await db.execute(SCHEMA);
       await addMissingColumns(db);
+      await resetToCurrentSchema(db); // before anything reads the change log
       return db;
     })().catch((error: unknown) => {
       this.connection = undefined; // allow a retry
@@ -208,4 +212,31 @@ async function addMissingColumns(db: SQLiteDBConnection): Promise<void> {
     const present = ((info.values ?? []) as { name?: string }[]).some((c) => c.name === column);
     if (!present) await db.execute(`ALTER TABLE ${table} ADD COLUMN ${column} ${type};`);
   }
+}
+
+/**
+ * Spec 1.154 §11: the block-format content of an iPad is test data and is reset once, not converted. Below schema 2 the
+ * change log, the photo registry, the photo files it names (Documents/journals/<jk>/) and the download cursors are
+ * cleared and the schema is set to 2. The cursors go with them: the server keeps the `journal` records (title, authors,
+ * cover), and without a cursor the next sync downloads them again. The device id, clock, seq, author and peer secrets
+ * stay. Runs while the connection is opened, so the store reads an empty log, never a half-reset one. A file that
+ * cannot be deleted (older plugin, already gone) is left; it is no longer referenced.
+ */
+async function resetToCurrentSchema(db: SQLiteDBConnection): Promise<void> {
+  const stored = await db.query('SELECT value FROM meta WHERE key = ?;', [JOURNAL_SCHEMA_META]);
+  if (!needsJournalReset((stored.values?.[0] as { value?: string } | undefined)?.value)) return;
+  const files = await db.query('SELECT file, journalKey FROM photo_files;');
+  for (const { file, journalKey } of (files.values ?? []) as { file: string; journalKey: string }[]) {
+    try {
+      await JournalPhotos.deleteFile({ journalKey, file });
+    } catch {
+      // best effort: the row goes either way
+    }
+  }
+  await db.executeSet([
+    { statement: 'DELETE FROM changes;', values: [] },
+    { statement: 'DELETE FROM photo_files;', values: [] },
+    { statement: 'DELETE FROM meta WHERE key LIKE ?;', values: [`${JOURNAL_RESET_META_PREFIX}%`] },
+    { statement: 'INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?);', values: [JOURNAL_SCHEMA_META, String(JOURNAL_SCHEMA)] },
+  ], true);
 }
