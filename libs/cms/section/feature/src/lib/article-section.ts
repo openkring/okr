@@ -4,9 +4,10 @@ import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, 
 
 import { ArticleSection, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ViewPosition } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { validCtas } from '@okr/cms-section-util';
+import { ImageLayoutId, articleImagePosition, resolveImageLayout, validCtas } from '@okr/cms-section-util';
 import { Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
 
+import { ArticleImages } from './article-images';
 import { ArticleStore } from './article-section.store';
 import { openSectionLink } from './section-link';
 
@@ -14,7 +15,7 @@ import { openSectionLink } from './section-link';
   selector: 'okr-article-section',
   standalone: true,
   imports: [
-    Spinner, Img, OptionalCardHeader, SvgIconPipe,
+    Spinner, Img, ArticleImages, OptionalCardHeader, SvgIconPipe,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonButton, IonIcon
   ],
   schemas: [
@@ -134,7 +135,13 @@ import { openSectionLink } from './section-link';
               }
               @case(VP.Top) {
                 <ion-grid>
-                  @if(images().length > 1) {
+                  @if(imageGridLayout(); as layout) {
+                    <ion-row>
+                      <ion-col size="12">
+                        <okr-article-images [images]="images()" [imageStyle]="imageStyle()" [layout]="layout" [editMode]="editMode()" [captionFallbacks]="captionFallbacks()" [zoomTitle]="store.i18n.article_zoomed()" />
+                      </ion-col>
+                    </ion-row>
+                  } @else if(images().length > 1) {
                     <ion-row>
                       <ion-col size="12">
                         <div class="carousel-container">
@@ -187,7 +194,33 @@ import { openSectionLink } from './section-link';
                       </ion-row>
                     }
                   }
-                  @if(image(); as image) {
+                  @if(imageGridLayout(); as layout) {
+                    <ion-row>
+                      <ion-col size="12">
+                        <okr-article-images [images]="images()" [imageStyle]="imageStyle()" [layout]="layout" [editMode]="editMode()" [captionFallbacks]="captionFallbacks()" [zoomTitle]="store.i18n.article_zoomed()" />
+                      </ion-col>
+                    </ion-row>
+                  } @else if(images().length > 1) {
+                    <ion-row>
+                      <ion-col size="12">
+                        <div class="carousel-container">
+                          <div class="carousel" #carousel (scroll)="onCarouselScroll()">
+                            @for(slide of loopSlides(); track $index) {
+                              <div class="carousel-slide" [class.clone]="slide.clone" [attr.aria-hidden]="slide.clone ? 'true' : null">
+                                <okr-img [captionFallbacks]="captionFallbacks()" [image]="slide.image" [imageStyle]="carouselImageStyle()" [editMode]="editMode()" [gallery]="images()" [zoomTitle]="store.i18n.article_zoomed()" />
+                              </div>
+                            }
+                          </div>
+                          <ion-button class="carousel-nav prev" fill="solid" color="light" (click)="step(-1)" aria-label="Previous image">
+                            <ion-icon slot="icon-only" src="{{ 'chevron-back' | svgIcon }}" />
+                          </ion-button>
+                          <ion-button class="carousel-nav next" fill="solid" color="light" (click)="step(1)" aria-label="Next image">
+                            <ion-icon slot="icon-only" src="{{ 'chevron-forward' | svgIcon }}" />
+                          </ion-button>
+                        </div>
+                      </ion-col>
+                    </ion-row>
+                  } @else if(image(); as image) {
                     <ion-row>
                       <ion-col size="12">
                         <okr-img [captionFallbacks]="captionFallbacks()" [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" />
@@ -228,11 +261,15 @@ export class ArticleSectionComponent {
   // Single image (only when exactly 1 image is configured)
   protected image = computed(() => this.store.image());
 
-  protected position = computed((): ViewPosition => {
-    const count = this.images().length;
-    if (count === 0) return ViewPosition.None;
-    if (count > 1) return ViewPosition.Top;
-    return this.section()?.content?.position ?? ViewPosition.None;
+  // several images: top (the carousel or the layout), or bottom when a layout is set; see articleImagePosition
+  protected position = computed((): ViewPosition =>
+    articleImagePosition(this.section()?.content?.position, this.images().length, this.section()?.properties.imageLayout));
+
+  // the layout of several images, resolved for the current count; undefined for the carousel (no layout, or
+  // slider) and for fewer than two images, so existing articles keep today's template branches
+  protected imageGridLayout = computed((): ImageLayoutId | undefined => {
+    const layout = resolveImageLayout(this.section()?.properties.imageLayout, this.images().length);
+    return layout && layout !== 'slider' ? layout : undefined;
   });
 
   protected imageStyle = computed(() => this.section()?.properties.imageStyle ?? IMAGE_STYLE_SHAPE);
