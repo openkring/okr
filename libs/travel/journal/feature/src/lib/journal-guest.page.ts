@@ -8,17 +8,20 @@ import { GoogleMapType, GoogleTiles } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { MapView, RouteMap, RoutePin } from '@okr/shared-ui';
 import { okrPrompt } from '@okr/shared-util-angular';
-import { fill, sunTimesLine } from '@okr/shared-util-core';
-import { GuestFootprintView, GuestSectionView, GuestJournalView, guestErrorOf, JournalGuestService } from '@okr/travel-journal-data-access';
-import { JournalReactions, JournalVideoBlock, ReactionComment, VideoClip } from '@okr/travel-journal-ui';
+import { fill, registerBundledIcons, sunTimesLine } from '@okr/shared-util-core';
+import { GuestFootprintView, GuestJournalView, guestErrorOf, JournalGuestService } from '@okr/travel-journal-data-access';
+import { JournalReactions, ReactionComment } from '@okr/travel-journal-ui';
 import {
-  baseLayerOptions, FlyPoint, FlyStop, flyoverTimeline, GIBS_BLUE_MARBLE, JOURNAL_I18N_KEYS, JournalI18n, pickBaseLayer, stopTime,
-  weatherLine, weatherOf,
+  baseLayerOptions, filledHero, FlyPoint, FlyStop, flyoverTimeline, footprintOverlayText, GIBS_BLUE_MARBLE, guestSectionItems, JOURNAL_I18N_KEYS,
+  JournalI18n, pickBaseLayer, stopTime, travelStartDate, weatherLine, weatherOf,
 } from '@okr/travel-journal-util';
+import { weatherCodeToIcon, WEATHER_ICON_SET } from '@okr/weather-util';
 
 import { googleAttributionOf, routeBaseLayers } from './journal-base-layers';
+import { JOURNAL_ICONS } from './journal-icons';
 import { openJournalFlyover } from './journal-flyover-open';
 import { GoogleTemplates, JournalGoogleSessions } from './journal-google-sessions';
+import { JournalSection } from './journal-section';
 
 const browserOnline = (): boolean => typeof navigator === 'undefined' || navigator.onLine !== false;
 
@@ -39,7 +42,7 @@ const browserOnline = (): boolean => typeof navigator === 'undefined' || navigat
  */
 @Component({
   selector: 'okr-journal-guest-page',
-  imports: [IonHeader, IonContent, IonSpinner, RouteMap, JournalReactions, JournalVideoBlock],
+  imports: [IonHeader, IonContent, IonSpinner, RouteMap, JournalReactions, JournalSection],
   styles: [`
     :host {
       --site-font: var(--okr-site-font, var(--ion-font-family));
@@ -77,9 +80,6 @@ const browserOnline = (): boolean => typeof navigator === 'undefined' || navigat
     .story .facts { color: var(--site-ink-soft); font-size: 0.9rem; margin-bottom: 16px; }
     .block { margin: 16px 0; }
     .block .by { font-size: 0.8rem; color: var(--site-ink-soft); }
-    .clip { display: block; width: 100%; max-height: 70vh; margin: 6px 0; border-radius: 6px; background: #000; }
-    .photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 6px; }
-    .photos img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 6px; cursor: zoom-in; }
   `],
   template: `
     <ion-header>
@@ -99,23 +99,15 @@ const browserOnline = (): boolean => typeof navigator === 'undefined' || navigat
         <div class="center"><ion-spinner /><p>{{ i18n.guest_loading() }}</p></div>
       } @else if (selected(); as fp) {
         <div class="story">
-          <h2>{{ fp.title || i18n.untitled() }}</h2>
-          <div class="facts">{{ facts(fp) }}</div>
-          <!-- interim (1.154 Task 6, mechanical): Task 7 renders the sections with okr-journal-section -->
-          @for (block of fp.sections; track block.key) {
+          @if (!hasHero()) {
+            <h2>{{ fp.title || i18n.untitled() }}</h2>
+            <div class="facts">{{ facts(fp) }}</div>
+          }
+          @for (item of sections(); track item.section.okey) {
             <div class="block">
-              <div class="by">{{ block.authorName }}</div>
-              @if (block.type === 'article') {
-                <div [innerHTML]="block.html"></div>
-              } @else if (block.type === 'video') {
-                <okr-journal-video-block [caption]="block.html" [clips]="guestClips(block.videos)" [i18n]="{ notLoaded: i18n.video_not_loaded() }" />
-              } @else {
-                <div class="photos">
-                  @for (photo of block.photos; track photo.key) {
-                    <img [src]="photo.thumb" alt="" (click)="openPhoto(photo.url)" />
-                  }
-                </div>
-              }
+              @if (!item.lead && item.authorName) { <div class="by">{{ item.authorName }}</div> }
+              <okr-journal-section [section]="item.section" [clips]="item.clips" [overlayText]="item.overlayText" [chipIcon]="item.chipIcon"
+                [notLoaded]="i18n.video_not_loaded()" />
             </div>
           }
         </div>
@@ -187,6 +179,27 @@ export class JournalGuestPage {
   protected readonly selectedKey = signal<string | undefined>(undefined);
   protected readonly selected = computed(() => this.view()?.footprints.find((f) => f.key === this.selectedKey()));
 
+  /**
+   * The selected footprint's sections as `okr-journal-section` draws them (spec 1.154 phase 2). Image urls come from the
+   * signed photos of the payload by journal key; the first hero leads and carries the footprint's lines (title, place ·
+   * day N · date, coordinates, weather), computed from the guest footprint with the author's helpers.
+   */
+  protected readonly sections = computed(() => {
+    const fp = this.selected();
+    if (!fp) return [];
+    const facts = { ...fp, weather: weatherOf(fp.weather) };
+    const startDate = travelStartDate({}, this.view()?.footprints ?? []);
+    const weather = facts.weather;
+    const chipIcon = weather ? { chip: weatherLine(weather), name: weatherCodeToIcon(weather.code), set: WEATHER_ICON_SET } : undefined;
+    return guestSectionItems(fp.sections, '').map((item) => item.lead
+      ? {
+        ...item, section: filledHero(item.section, facts), chipIcon,
+        overlayText: footprintOverlayText(facts, startDate, (day) => fill(this.i18n.hero_day(), { day })),
+      }
+      : { ...item, chipIcon: undefined, overlayText: undefined });
+  });
+  protected readonly hasHero = computed(() => this.sections().some((s) => s.lead));
+
   protected readonly pins = computed<RoutePin[]>(() => (this.view()?.footprints ?? [])
     .filter((f) => typeof f.latitude === 'number' && typeof f.longitude === 'number')
     .map((f) => ({ key: f.key, lat: f.latitude as number, lng: f.longitude as number, label: f.title, thumbnailUrl: this.thumbOf(f) })));
@@ -210,6 +223,7 @@ export class JournalGuestPage {
   protected readonly hello = computed(() => fill(this.i18n.guest_hello(), { name: this.view()?.me.name ?? '' }));
 
   public constructor() {
+    registerBundledIcons(JOURNAL_ICONS); // hero and section icons without the icon database (guests are not signed in)
     effect(() => {
       const journalKey = this.journalKey();
       const code = this.code();
@@ -270,10 +284,6 @@ export class JournalGuestPage {
     return fp.sections.flatMap((b) => b.photos)[0]?.thumb;
   }
 
-  protected guestClips(videos: GuestSectionView['videos']): VideoClip[] {
-    return videos.map((v) => ({ key: v.key, poster: v.poster, src: v.url || undefined }));
-  }
-
   protected facts(fp: GuestFootprintView): string {
     const date = /^\d{8}$/.test(fp.date) ? `${fp.date.slice(6, 8)}.${fp.date.slice(4, 6)}.${fp.date.slice(0, 4)}` : '';
     return [date, fp.time, fp.placeName, weatherLine(weatherOf(fp.weather)), sunTimesLine(weatherOf(fp.weather))].filter((x) => x).join(' · ');
@@ -285,10 +295,6 @@ export class JournalGuestPage {
 
   protected comments(fp: GuestFootprintView): ReactionComment[] {
     return fp.comments; // `mine` from the server: guests delete their own comments (plan 8)
-  }
-
-  protected openPhoto(url: string): void {
-    window.open(url, '_blank', 'noopener');
   }
 
   protected async toggleLike(fp: GuestFootprintView): Promise<void> {

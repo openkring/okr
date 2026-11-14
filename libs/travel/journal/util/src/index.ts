@@ -11,6 +11,7 @@ export * from './lib/journal-launch.util';
 export * from './lib/journal-row.util';
 export * from './lib/journal-map.util';
 export * from './lib/journal-story.util';
+export * from './lib/journal-guest-section.util';
 export * from './lib/journal-forms.util';
 export * from './lib/journal-i18n';
 export * from './lib/journal-menu.util';

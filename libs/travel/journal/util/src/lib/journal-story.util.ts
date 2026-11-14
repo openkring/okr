@@ -16,11 +16,14 @@ function coordinate(value: number, positive: string, negative: string): string {
   return `${degrees}°${minutes}′${value < 0 ? negative : positive}`;
 }
 
-function viewDate(footprint: FootprintView): string {
+/** The footprint values the hero text is made of (an author's FootprintView and a guest's footprint both fit). */
+export type FootprintFacts = Pick<FootprintView, 'title' | 'placeName' | 'date' | 'latitude' | 'longitude' | 'weather'>;
+
+function viewDate(footprint: FootprintFacts): string {
   return footprint.date ? convertDateFormatToString(footprint.date, DateFormat.StoreDate, DateFormat.ViewDate, false) : '';
 }
 
-function coordinates(footprint: FootprintView): string {
+function coordinates(footprint: FootprintFacts): string {
   if (footprint.latitude === undefined || footprint.longitude === undefined) return '';
   return `${coordinate(footprint.latitude, 'N', 'S')} ${coordinate(footprint.longitude, 'E', 'W')}`;
 }
@@ -31,12 +34,12 @@ export function footprintChips(footprint: FootprintView): string[] {
 }
 
 /** The hero's chips: date, coordinates, weather, sun times. */
-export function footprintHeroChips(footprint: FootprintView): string[] {
+export function footprintHeroChips(footprint: FootprintFacts): string[] {
   return [viewDate(footprint), coordinates(footprint), weatherLine(footprint.weather), sunTimesLine(footprint.weather)].filter((c) => c !== '');
 }
 
 /** A journal hero section with its title, subtitle and chips filled from the footprint; any other section unchanged. */
-export function filledHero(section: SectionModel, footprint: FootprintView): SectionModel {
+export function filledHero(section: SectionModel, footprint: FootprintFacts): SectionModel {
   if (section.type !== 'hero') return section;
   const properties: HeroConfig = { ...section.properties, chips: footprintHeroChips(footprint) };
   return { ...section, title: footprint.title, subTitle: footprint.placeName, properties };
@@ -67,7 +70,7 @@ export function travelDay(date: string, startDate: string): number {
  * `overlay` setting. `dayLabel` turns the day number into the translated text («Tag 3»).
  */
 export function footprintOverlayText(
-  footprint: FootprintView, startDate: string, dayLabel: (day: number) => string,
+  footprint: FootprintFacts, startDate: string, dayLabel: (day: number) => string,
 ): { title: string; subtitle: string; coords: string; weather: string } {
   const day = travelDay(footprint.date, startDate);
   return {
