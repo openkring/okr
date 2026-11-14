@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AlbumConfig, HeroConfig } from '@okr/shared-models';
+import { AlbumConfig, HeroConfig, ViewPosition } from '@okr/shared-models';
 import { guestSectionItems, GuestSectionInput, guestSectionModelOf } from './journal-guest-section.util';
 
 const img = (label: string) => ({ label, url: '', altText: 'x' });
@@ -19,6 +19,14 @@ describe('journal guest sections', () => {
   it('gives the hero its cover url from the signed photo', () => {
     const { section } = guestSectionModelOf(input({ type: 'hero', properties: { hero: img('c1') }, photos: [{ key: 'c1', url: 'https://x/c' }] }), 'bkg');
     expect((section.properties as HeroConfig).hero.url).toBe('https://x/c');
+  });
+
+  it('keeps the article imageLayout and shows the images on top', () => {
+    const { section } = guestSectionModelOf(input({
+      properties: { images: [img('i1')], imageLayout: 'mosaic' }, photos: [{ key: 'i1', url: 'https://x/1' }],
+    }), 'bkg');
+    expect((section.properties as { imageLayout?: string }).imageLayout).toBe('mosaic');
+    expect(section.content?.position).toBe(ViewPosition.Top);
   });
 
   it('keeps the article html as the section content', () => {

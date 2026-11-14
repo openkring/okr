@@ -15,7 +15,7 @@ const OUT = 'libs/travel/journal/feature/src/lib/journal-icons.ts';
 // every icon name the journal pages, its menus and ActionSheets use, and the section editor in journal mode with its
 // photo picker (header, image list, editor, article slider, album grid) — keep sorted
 const NAMES = [
-  'add', 'add-circle', 'airplane', 'arrow-up-circle', 'book', 'cancel', 'cancel-circle', 'chatbubble', 'checkbox-circle',
+  'add', 'add-circle', 'airplane', 'arrow-up-circle', 'book', 'cancel', 'cancel-circle', 'chatbubble', 'checkbox-circle', 'checkmark',
   'chevron-back', 'chevron-forward', 'copy', 'download', 'edit', 'ellipsis-vertical', 'eye-off', 'eye-on', 'folder',
   'images', 'info-circle', 'map', 'navigate', 'people', 'person-add', 'play', 'reload', 'send', 'settings', 'swap-horizontal',
   'sync-circle', 'text', 'trash', 'video', 'warning',
