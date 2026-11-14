@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ARTICLE_SECTION_SHAPE, HERO_OVERLAY_DEFAULT, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, JournalChange, ViewPosition } from '@okr/shared-models';
+import { ARTICLE_SECTION_SHAPE, HERO_OVERLAY_DEFAULT, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, JournalChange, SECTION_FEEDBACK_DEFAULT, ViewPosition } from '@okr/shared-models';
 import { formatHlc } from './journal-hlc.util';
 import { materialize } from './journal-merge.util';
 import { SectionView, sectionsOf } from './journal-view.util';
@@ -119,6 +119,46 @@ describe('journal sections', () => {
     const hero = sectionsOf(state, 'f1')[0];
     expect('height' in hero.properties).toBe(false);
     expect('height' in (sectionModelOf(hero, 'scs').properties as object)).toBe(false);
+  });
+
+  it('feedback round-trips: model → record field → view → model; absent stays absent', () => {
+    const off = { ...SECTION_FEEDBACK_DEFAULT, imageReactions: false };
+    const before = view({ htmlContent: '<p>C</p>' });
+    const model = sectionModelOf(before, 'scs');
+    expect(model.feedback).toBeUndefined();
+    expect('feedback' in sectionFieldsOf(model)).toBe(false);
+    const fields = changedSectionFields(before, { ...model, feedback: off });
+    expect(fields).toEqual({ feedback: off });
+    const state = materialize([FP, ARTICLE, rec({ entity: 'section', entityKey: 's1', op: 'set', fields }, 200)]);
+    const after = sectionsOf(state, 'f1')[0];
+    expect(after.feedback).toEqual(off);
+    expect(sectionModelOf(after, 'scs').feedback).toEqual(off);
+    expect(changedSectionFields(after, sectionModelOf(after, 'scs'))).toEqual({});
+  });
+
+  it('feedback is a settings key: concurrent changes give no copy, the higher hlc wins', () => {
+    const state = materialize([
+      FP, ARTICLE,
+      rec({ entity: 'section', entityKey: 's1', op: 'set', fields: { feedback: { ...SECTION_FEEDBACK_DEFAULT, comments: false } } }, 200, 'anna'),
+      rec({ entity: 'section', entityKey: 's1', op: 'set', fields: { feedback: { ...SECTION_FEEDBACK_DEFAULT, reactions: false } } }, 300),
+    ]);
+    const sections = sectionsOf(state, 'f1');
+    expect(sections).toHaveLength(1);
+    expect(sections[0].feedback).toEqual({ ...SECTION_FEEDBACK_DEFAULT, reactions: false });
+  });
+
+  it('feedback removed by an edit is written as null and reads as absent again', () => {
+    const before = view({ feedback: { ...SECTION_FEEDBACK_DEFAULT, comments: false } });
+    const model = sectionModelOf(before, 'scs');
+    const { feedback: _feedback, ...cleared } = model;
+    const fields = changedSectionFields(before, cleared as typeof model);
+    expect(fields).toEqual({ feedback: null });
+    const state = materialize([
+      FP, ARTICLE,
+      rec({ entity: 'section', entityKey: 's1', op: 'set', fields: { feedback: { ...SECTION_FEEDBACK_DEFAULT, comments: false } } }, 200),
+      rec({ entity: 'section', entityKey: 's1', op: 'set', fields }, 300),
+    ]);
+    expect(sectionsOf(state, 'f1')[0].feedback).toBeUndefined();
   });
 
   it('sectionModelOf treats a null property as absent', () => {

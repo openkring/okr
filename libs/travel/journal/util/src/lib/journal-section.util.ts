@@ -1,6 +1,6 @@
 import {
   ALBUM_SECTION_SHAPE, ARTICLE_SECTION_SHAPE, HERO_OVERLAY_DEFAULT, HERO_SECTION_SHAPE, IMAGE_CONFIG_SHAPE, ImageConfig,
-  SectionModel, VIDEO_SECTION_SHAPE, ViewPosition,
+  SECTION_FEEDBACK_DEFAULT, SectionFeedback, SectionModel, VIDEO_SECTION_SHAPE, ViewPosition,
 } from '@okr/shared-models';
 import { htmlToPlainText } from './journal-forms.util';
 import type { SectionView } from './journal-view.util';
@@ -9,7 +9,8 @@ import type { SectionView } from './journal-view.util';
  * A footprint's content as CMS sections in the change log (spec 1.154 §2, plan decisions 1–4, 8). A `section`
  * record carries `type`, `title`, `htmlContent`, `order`, `footprintKey` and one field `p_<key>` per top-level
  * property key, so the field-level merge merges per property key. Only the content keys keep both versions of a
- * concurrent edit as a conflict copy; settings keys are last-writer-wins.
+ * concurrent edit as a conflict copy; settings keys are last-writer-wins. `feedback` (phase 4, plan decision 4) is one
+ * top-level settings field holding `BaseSection.feedback`.
  */
 export const JOURNAL_SECTION_TYPES = ['hero', 'article', 'album', 'video'] as const;
 export type JournalSectionType = (typeof JOURNAL_SECTION_TYPES)[number];
@@ -57,9 +58,27 @@ function storedProperty(key: string, value: unknown): unknown {
   return value;
 }
 
-/** The record fields of a section: `type`, `title`, `htmlContent` and one `p_<key>` per property key. */
-export function sectionFieldsOf(section: Pick<SectionModel, 'type' | 'title' | 'content' | 'properties'>): Record<string, unknown> {
+/** The record field holding `BaseSection.feedback` (a settings key: last writer wins, never a conflict copy). */
+export const SECTION_FEEDBACK_FIELD = 'feedback';
+
+/**
+ * A stored `feedback` value as the four switches; a missing switch is on (SECTION_FEEDBACK_DEFAULT). `undefined` for
+ * anything that is not an object — `null` is how an edit removes it (changedSectionFields).
+ */
+export function storedFeedback(value: unknown): SectionFeedback | undefined {
+  if (!isRecord(value)) return undefined;
+  const on = (key: keyof SectionFeedback): boolean => (typeof value[key] === 'boolean' ? value[key] as boolean : SECTION_FEEDBACK_DEFAULT[key]);
+  return { comments: on('comments'), reactions: on('reactions'), imageComments: on('imageComments'), imageReactions: on('imageReactions') };
+}
+
+/**
+ * The record fields of a section: `type`, `title`, `htmlContent`, one `p_<key>` per property key and `feedback` when
+ * the section has one.
+ */
+export function sectionFieldsOf(section: Pick<SectionModel, 'type' | 'title' | 'content' | 'properties' | 'feedback'>): Record<string, unknown> {
   const fields: Record<string, unknown> = { type: section.type, title: section.title ?? '', htmlContent: section.content?.htmlContent ?? '' };
+  const feedback = storedFeedback(section.feedback);
+  if (feedback) fields[SECTION_FEEDBACK_FIELD] = feedback;
   for (const [key, value] of Object.entries((section.properties ?? {}) as Record<string, unknown>)) {
     if (value !== undefined) fields[`${SECTION_PROPERTY_PREFIX}${key}`] = storedProperty(key, value);
   }
@@ -81,7 +100,7 @@ function sameValue(a: unknown, b: unknown): boolean {
  * The record fields an edit has to write: only those whose value differs from the model the edit started from
  * (`sectionModelOf(before)`), so an unchanged default is never written and a concurrent edit of another key survives.
  * A stored property the edit removed (the hero height back to «Standard») is written as `null`: the change log has no
- * unset, and a `null` property reads as absent, so the type's default applies again.
+ * unset, and a `null` property reads as absent, so the type's default applies again. A removed `feedback` likewise.
  */
 export function changedSectionFields(before: SectionView, after: SectionModel): Record<string, unknown> {
   const old = sectionFieldsOf(sectionModelOf(before, ''));
@@ -90,6 +109,7 @@ export function changedSectionFields(before: SectionView, after: SectionModel): 
   for (const [key, value] of Object.entries(before.properties)) {
     if (value !== undefined && value !== null && kept[key] === undefined) changed[`${SECTION_PROPERTY_PREFIX}${key}`] = null;
   }
+  if (before.feedback !== undefined && after.feedback === undefined) changed[SECTION_FEEDBACK_FIELD] = null;
   return changed;
 }
 
@@ -110,6 +130,7 @@ export function sectionModelOf(view: SectionView, tenantId: string): SectionMode
     authorKey: view.authorKey, order: view.order,
     content: { ...shape.content, htmlContent: view.htmlContent, ...(view.type === 'article' ? { position: ViewPosition.Top } : {}) },
     properties,
+    ...(view.feedback ? { feedback: { ...view.feedback } } : {}),
   } as unknown as SectionModel;
 }
 

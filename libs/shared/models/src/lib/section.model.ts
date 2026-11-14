@@ -309,7 +309,21 @@ export interface BaseSection {
   footprintKey?: string; // FK -> pages (type 'footprint') the block belongs to
   updatedAt?: string; // ISO timestamp, display only
   order?: string; // fractional order within the footprint, see orderBetween in @okr/travel-journal-util
+  feedback?: SectionFeedback; // travel journal (spec 1.154 §7): comments and reactions; absent = SECTION_FEEDBACK_DEFAULT
 }
+
+/**
+ * Which comments and emoji reactions a travel-journal section accepts (spec 1.154 §7, §10): on the section itself and
+ * on each of its images (article and album only). Absent on a section = all on; a hero takes none.
+ */
+export interface SectionFeedback {
+  comments: boolean;
+  reactions: boolean;
+  imageComments: boolean;
+  imageReactions: boolean;
+}
+
+export const SECTION_FEEDBACK_DEFAULT: SectionFeedback = { comments: true, reactions: true, imageComments: true, imageReactions: true };
 
 export interface EditorConfig {
   htmlContent: string; // html content from editor, default is <p></p>

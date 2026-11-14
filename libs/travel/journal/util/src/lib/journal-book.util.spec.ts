@@ -8,6 +8,7 @@ import { templateBoxes } from './journal-book-layout.util';
 import { bookBlockHtml, BookFrame, BookInput, BookLabels, BookPage, bookPrintCandidates, coverImageKeyOf, COVER_PAGE_INDEX, layoutBook, playSymbolOf, PaginateText, stripEmoji, stripUndefined, journalPeriod } from './journal-book.util';
 import { localViewDateTime } from './journal-book-i18n';
 import { coverLayout } from './journal-book-cover.util';
+import { emojiCodepoints } from './journal-feedback.util';
 
 class Sentinel { constructor(public readonly tag: string) {} }
 
@@ -210,14 +211,17 @@ describe('layoutBook', () => {
     expect(ofFootprint(pages, 'f1').map((p) => p.role)).toEqual(['opening']);
   });
 
-  it('comments appear only when switched on, only the chosen ones, with the like count', () => {
+  it('comments appear only when switched on, only the chosen ones, with the footprint\'s reaction count', () => {
     const comment = (key: string, text: string, at: string) =>
-      rec('comment', key, { footprintKey: 'f1', text, authorName: `Gast ${key}`, createdAt: at }, `guest-${key}`);
-    const like = (person: string) => rec('reaction', `f1_${person}`, { footprintKey: 'f1', type: 'like' }, person);
+      rec('comment', key, { parentKey: 'section.t1', footprintKey: 'f1', text, authorName: `Gast ${key}`, createdAt: at }, `guest-${key}`);
+    // active reactions of any emoji on any parent within the footprint count; inactive ones and old likes do not
+    const react = (person: string, parentKey: string, emoji: string, active = true) =>
+      rec('reaction', `r_${parentKey.replace('.', '_')}_${person}_${emojiCodepoints(emoji)}`, { parentKey, footprintKey: 'f1', emoji, active, createdAt: '2027-01-02T10:00:00Z' }, person);
     const changes = [
       journal(), fp('f1', '20270102'), fp('f2', '20270103'), text('t1', 'f1', 'a', '<p>x</p>'),
       comment('c1', 'Schön', '2027-01-02T10:00:00Z'), comment('c2', 'Nicht gewählt', '2027-01-02T11:00:00Z'), comment('c3', 'Toll & gut', '2027-01-02T12:00:00Z'),
-      like('anna'), like('beat'),
+      react('anna', 'section.t1', '❤️'), react('beat', 'image.i1', '👍'), react('eva', 'section.t1', '😂', false),
+      rec('reaction', 'f1_carl', { footprintKey: 'f1', type: 'like' }, 'carl'),
     ];
     const off = layoutBook(input(changes, { footprints: { f1: { showComments: false, commentKeys: ['c1'] } } })).pages;
     expect(off.some((p) => p.role === 'comments')).toBe(false);

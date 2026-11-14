@@ -1,14 +1,16 @@
-import { DiaryWeather, JournalEntity, TRANSPORT_MODES, TransportMode } from '@okr/shared-models';
+import { DiaryWeather, JournalEntity, SectionFeedback, TRANSPORT_MODES, TransportMode } from '@okr/shared-models';
 import { conflictCopyKey, dismissedField, isConflictCopyKey, lostValues, winningHlcs } from './journal-conflict.util';
 import { CONFLICT_FIELDS, EntityState, entityStateKey, JournalState, viewOf } from './journal-merge.util';
 import { sortByOrder } from './journal-order.util';
-import { isJournalSectionType, JournalSectionType, SECTION_CONTENT_FIELDS, SECTION_PROPERTY_PREFIX, sectionHasContent } from './journal-section.util';
+import {
+  isJournalSectionType, JournalSectionType, SECTION_CONTENT_FIELDS, SECTION_FEEDBACK_FIELD, SECTION_PROPERTY_PREFIX, sectionHasContent, storedFeedback,
+} from './journal-section.util';
 
 /**
  * The journal as the UI reads it, built from the merged change log (spec 1.113 §5.2). Field names in
  * the change records are the contract: journal { title, subTitle, startDate, endDate, coverImageKey, coverLabel, lastPageLabel }; footprint
  * { journalKey, title, placeName, date, time, latitude, longitude, publishState }; section
- * { footprintKey, type, title, htmlContent, order, p_<property key> … } (journal-section.util); image { journalKey, takenAt, latitude, longitude,
+ * { footprintKey, type, title, htmlContent, order, feedback, p_<property key> … } (journal-section.util); image { journalKey, takenAt, latitude, longitude,
  * width, height, path2048, path400, localIdentifier }.
  */
 export interface JournalView {
@@ -31,6 +33,7 @@ export interface SectionView {
   hlcs: Record<string, string>; // content field → hlc of the value shown (the `bases` of the next edit)
   conflictOf?: string; // a conflict copy: the key of the section it was split from (spec 1.126 §6.3)
   conflict: boolean; // a live copy and its live original both carry the flag
+  feedback?: SectionFeedback; // the stored comment/reaction switches; absent = defaults (feedbackOf)
 }
 
 /** A concurrent footprint value that lost and was not dismissed yet (spec 1.126 §6.3). */
@@ -122,12 +125,17 @@ function unarchived(entity: EntityState): EntityState {
   return { ...entity, fields: Object.fromEntries(Object.entries(entity.fields).filter(([field]) => field !== 'archived')) };
 }
 
-/** Lays record fields over a section view: `title`, `htmlContent`, `order` and the `p_<key>` properties. */
+/** Lays record fields over a section view: `title`, `htmlContent`, `order`, `feedback` and the `p_<key>` properties. */
 function withFields(section: SectionView, fields: Record<string, unknown>): SectionView {
   const out: SectionView = { ...section, properties: { ...section.properties } };
   for (const [field, value] of Object.entries(fields)) {
     if (field === 'title' || field === 'htmlContent' || field === 'order') out[field] = str(value);
-    else if (field.startsWith(SECTION_PROPERTY_PREFIX)) {
+    else if (field === SECTION_FEEDBACK_FIELD) {
+      // null: an edit removed it, the defaults apply again
+      const feedback = storedFeedback(value);
+      if (feedback) out.feedback = feedback;
+      else delete out.feedback;
+    } else if (field.startsWith(SECTION_PROPERTY_PREFIX)) {
       // null: an edit removed the property (changedSectionFields), so the type's default applies again
       const key = field.slice(SECTION_PROPERTY_PREFIX.length);
       if (value === null) delete out.properties[key];

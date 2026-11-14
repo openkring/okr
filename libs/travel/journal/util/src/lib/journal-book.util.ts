@@ -3,7 +3,8 @@ import { convertDateFormatToString, DateFormat, getDayDiff, sunTimesLine } from 
 import { albumPages, autoLayout, Box, coverGeometry, DPI_OK, DPI_POOR, effectiveDpi, GAP, MARGIN, PAGE_H, PAGE_W, templateBoxes } from './journal-book-layout.util';
 import { isVideoImage } from './journal-video.util';
 import { flyoverInputOf, flyoverTimeline } from './journal-flyover.util';
-import { commentsOf, likesOf } from './journal-guest.util';
+import { commentsOf } from './journal-guest.util';
+import { footprintReactionCount } from './journal-feedback.util';
 import { routeLengthKm } from './journal-map.util';
 import { JournalState } from './journal-merge.util';
 import { sectionClipKeys, sectionImageKeys } from './journal-section.util';
@@ -387,7 +388,7 @@ function commentPages(ctx: Ctx, fp: FootprintView): BookPage[] {
   const chosen = new Set(setting.commentKeys ?? []);
   const comments = commentsOf(state, fp.key).filter((c) => chosen.has(c.key));
   if (comments.length === 0) return [];
-  const likes = likesOf(state, fp.key).length;
+  const likes = footprintReactionCount(state, fp.key); // active emoji reactions on any section or image of the footprint
   let html = para(escapeHtml(labels.comments), 'book-heading');
   if (likes > 0) html += para(`♥ ${likes}`, 'book-likes');
   for (const c of comments) {

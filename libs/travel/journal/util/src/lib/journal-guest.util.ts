@@ -1,4 +1,5 @@
 import { AvatarInfo, JournalChange, JournalChangeOp, JournalEntity, JournalGuestLink } from '@okr/shared-models';
+import type { CommentRecordFields, ReactionRecordFields } from './journal-feedback.util';
 import { formatHlc } from './journal-hlc.util';
 import { entityStateKey, JournalState, viewOf } from './journal-merge.util';
 import { isJournalSectionType, sectionClipKeys, sectionImageKeys } from './journal-section.util';
@@ -41,12 +42,16 @@ export interface GuestChangeInput {
   entity: Extract<JournalEntity, 'comment' | 'reaction'>;
   entityKey: string;
   op: JournalChangeOp;
-  fields: Record<string, unknown>;
+  fields: CommentRecordFields | ReactionRecordFields | Record<string, unknown>; // the last: an old footprint like
   seq: number;
   nowMs: number;
 }
 
-/** A change record written by the server for a guest: device `guest-<personKey>`, server clock. */
+/**
+ * A change record written by the server for a guest: device `guest-<personKey>`, server clock. `fields` follow the
+ * record contract of journal-feedback.util: `CommentRecordFields` for a comment create, `ReactionRecordFields` for a
+ * reaction (op from `reactionWrite`); an old footprint like (`{ footprintKey, type: 'like' }`) only for old clients.
+ */
 export function guestChangeRecord(input: GuestChangeInput): JournalChange {
   const deviceId = guestDeviceId(input.personKey);
   return {
