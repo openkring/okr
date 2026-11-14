@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, Component, DestroyRef, ElementRef, afterRenderEffect, computed, effect, inject, input, viewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonRow } from '@ionic/angular';
@@ -15,7 +16,7 @@ import { openSectionLink } from './section-link';
   selector: 'okr-article-section',
   standalone: true,
   imports: [
-    Spinner, Img, ArticleImages, OptionalCardHeader, SvgIconPipe,
+    Spinner, Img, ArticleImages, NgTemplateOutlet, OptionalCardHeader, SvgIconPipe,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonButton, IonIcon
   ],
   schemas: [
@@ -95,6 +96,23 @@ import { openSectionLink } from './section-link';
   providers: [ArticleStore],
   template: `
     @if(section()) {
+      <ng-template #carouselTpl>
+        <div class="carousel-container">
+          <div class="carousel" #carousel (scroll)="onCarouselScroll()">
+            @for(slide of loopSlides(); track $index) {
+              <div class="carousel-slide" [class.clone]="slide.clone" [attr.aria-hidden]="slide.clone ? 'true' : null">
+                <okr-img [captionFallbacks]="captionFallbacks()" [image]="slide.image" [imageStyle]="carouselImageStyle()" [editMode]="editMode()" [gallery]="images()" [zoomTitle]="store.i18n.article_zoomed()" />
+              </div>
+            }
+          </div>
+          <ion-button class="carousel-nav prev" fill="solid" color="light" (click)="step(-1)" aria-label="Previous image">
+            <ion-icon slot="icon-only" src="{{ 'chevron-back' | svgIcon }}" />
+          </ion-button>
+          <ion-button class="carousel-nav next" fill="solid" color="light" (click)="step(1)" aria-label="Next image">
+            <ion-icon slot="icon-only" src="{{ 'chevron-forward' | svgIcon }}" />
+          </ion-button>
+        </div>
+      </ng-template>
       <ion-card [class.banner]="isBanner()">
         @if (kicker()) { <p class="kicker">{{ kicker() }}</p> }
         <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
@@ -144,21 +162,7 @@ import { openSectionLink } from './section-link';
                   } @else if(images().length > 1) {
                     <ion-row>
                       <ion-col size="12">
-                        <div class="carousel-container">
-                          <div class="carousel" #carousel (scroll)="onCarouselScroll()">
-                            @for(slide of loopSlides(); track $index) {
-                              <div class="carousel-slide" [class.clone]="slide.clone" [attr.aria-hidden]="slide.clone ? 'true' : null">
-                                <okr-img [captionFallbacks]="captionFallbacks()" [image]="slide.image" [imageStyle]="carouselImageStyle()" [editMode]="editMode()" [gallery]="images()" [zoomTitle]="store.i18n.article_zoomed()" />
-                              </div>
-                            }
-                          </div>
-                          <ion-button class="carousel-nav prev" fill="solid" color="light" (click)="step(-1)" aria-label="Previous image">
-                            <ion-icon slot="icon-only" src="{{ 'chevron-back' | svgIcon }}" />
-                          </ion-button>
-                          <ion-button class="carousel-nav next" fill="solid" color="light" (click)="step(1)" aria-label="Next image">
-                            <ion-icon slot="icon-only" src="{{ 'chevron-forward' | svgIcon }}" />
-                          </ion-button>
-                        </div>
+                        <ng-container [ngTemplateOutlet]="carouselTpl" />
                       </ion-col>
                     </ion-row>
                   } @else if(image(); as image) {
@@ -203,21 +207,7 @@ import { openSectionLink } from './section-link';
                   } @else if(images().length > 1) {
                     <ion-row>
                       <ion-col size="12">
-                        <div class="carousel-container">
-                          <div class="carousel" #carousel (scroll)="onCarouselScroll()">
-                            @for(slide of loopSlides(); track $index) {
-                              <div class="carousel-slide" [class.clone]="slide.clone" [attr.aria-hidden]="slide.clone ? 'true' : null">
-                                <okr-img [captionFallbacks]="captionFallbacks()" [image]="slide.image" [imageStyle]="carouselImageStyle()" [editMode]="editMode()" [gallery]="images()" [zoomTitle]="store.i18n.article_zoomed()" />
-                              </div>
-                            }
-                          </div>
-                          <ion-button class="carousel-nav prev" fill="solid" color="light" (click)="step(-1)" aria-label="Previous image">
-                            <ion-icon slot="icon-only" src="{{ 'chevron-back' | svgIcon }}" />
-                          </ion-button>
-                          <ion-button class="carousel-nav next" fill="solid" color="light" (click)="step(1)" aria-label="Next image">
-                            <ion-icon slot="icon-only" src="{{ 'chevron-forward' | svgIcon }}" />
-                          </ion-button>
-                        </div>
+                        <ng-container [ngTemplateOutlet]="carouselTpl" />
                       </ion-col>
                     </ion-row>
                   } @else if(image(); as image) {
