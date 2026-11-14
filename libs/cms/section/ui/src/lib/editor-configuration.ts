@@ -39,7 +39,7 @@ interface EditorConfigI18n {
             <ion-col size="12">
               <div #editorHost></div>
             </ion-col>
-            @if(showAdvanced()) {
+            @if(showAdvanced() && showLayout()) {
               <ion-col size="12" size-md="6">
                 <okr-category-old [i18n]="positionI18n()" [value]="position()" (valueChange)="onFieldChange('position', $event)" [readOnly]="readOnly()" [categories]="positions" />
               </ion-col>
@@ -62,6 +62,8 @@ export class EditorConfiguration {
   public intro = input<string>();
   public readonly readOnly = input(true);
   public readonly showAdvanced = input(false);
+  /** position and column size of the images; the article edits them in its «Bilder» card instead (spec 1.154 §5) */
+  public readonly showLayout = input(true);
   public readonly i18n = input.required<EditorConfigI18n>();
 
   // derived

@@ -14,6 +14,7 @@ import { FormI18n } from '@okr/forms-util';
 import { SectionConfiguration } from './section-configuration';
 import { EditorConfiguration } from './editor-configuration';
 import { ImageStyleConfiguration } from './image-style-configuration';
+import { ArticleImagesConfiguration } from './article-images-configuration';
 import { AlbumConfiguration } from './album-configuration';
 import { IframeConfiguration } from './iframe-configuration';
 import { WeatherConfiguration, WeatherLocationOption } from './weather-configuration';
@@ -62,7 +63,7 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
   imports: [
     IonItem, IonToggle,
     Chips, ImageConfigEdit, NotesInput, ErrorNote,
-    SectionConfiguration, EditorConfiguration, ImageStyleConfiguration, AlbumConfiguration,
+    SectionConfiguration, EditorConfiguration, ImageStyleConfiguration, ArticleImagesConfiguration, AlbumConfiguration,
     IframeConfiguration, WeatherConfiguration, ConnectionsConfiguration, DeparturesConfiguration, EnergyConfiguration, CounterConfiguration, FooterConfiguration, PeopleConfiguration, ResponsibilityConfiguration, VideoConfiguration,
     ButtonStyleConfiguration, ButtonActionConfiguration, IconConfiguration, ChatConfiguration,
     MapConfiguration, TrackerConfiguration, TableGridConfiguration,  TableStyleConfiguration, TableHeader,
@@ -134,28 +135,22 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
                 [readOnly]="isReadOnly()"
                 [i18n]="i18n()"
                 [showAdvanced]="false"
+                [showLayout]="false"
               />
             }
+            <!-- the «Bilder» card: Auswahl (journal picker) and Layout (layout picker, caption); no Styles (decision 8) -->
             @if(journalField('images')) {
-              <okr-images-config
-                [images]="images()" (imagesChange)="onImagesChange($event)"
-                [title]="i18n().journal_photos()"
-                [emptyText]="i18n().journal_empty()"
-                [requirePicker]="true"
-                [storagePath]="storagePath()"
-                [currentUser]="currentUser()"
-                [readOnly]="isReadOnly()"
-                [i18n]="i18n()"
-                [errors]="errors()"
-              />
-            }
-            @if(journalField('imageStyle')) {
               @if(imageStyle(); as imageStyle) {
-                <okr-image-style
-                  [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)"
+                <okr-article-images-config
+                  [images]="images()" (imagesChange)="onImagesChange($event)"
+                  [imageStyle]="imageStyle" (imageStyleChange)="onImageStyleChange($event)"
+                  [imageLayout]="imageLayout()" (imageLayoutChange)="onImageLayoutChange($event)"
+                  [journalMode]="true"
+                  [emptyText]="i18n().journal_empty()"
+                  [storagePath]="storagePath()"
+                  [currentUser]="currentUser()"
                   [readOnly]="isReadOnly()"
                   [i18n]="i18n()"
-                  [showAdvanced]="false"
                   [errors]="errors()"
                 />
               }
@@ -217,21 +212,29 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
             [i18n]="i18n()"
           />
           @if(content(); as content) {
+            <!-- position and column size live in the «Bilder» card's Layout segment (spec 1.154 §5) -->
             <okr-editor-config
               [formData]="content" (formDataChange)="onContentChange($event)"
               [readOnly]="isReadOnly()"
               [i18n]="i18n()"
               [showAdvanced]="showAdvanced()"
+              [showLayout]="false"
             />
+            @if(imageStyle(); as imageStyle) {
+              <okr-article-images-config
+                [images]="images()" (imagesChange)="onImagesChange($event)"
+                [imageStyle]="imageStyle" (imageStyleChange)="onImageStyleChange($event)"
+                [imageLayout]="imageLayout()" (imageLayoutChange)="onImageLayoutChange($event)"
+                [content]="content" (contentChange)="onContentChange($event)"
+                [showAdvanced]="showAdvanced()"
+                [storagePath]="storagePath()"
+                [currentUser]="currentUser()"
+                [readOnly]="isReadOnly()"
+                [i18n]="i18n()"
+                [errors]="errors()"
+              />
+            }
           }
-          <okr-images-config
-            [images]="images()" (imagesChange)="onImagesChange($event)"
-            [storagePath]="storagePath()"
-            [currentUser]="currentUser()"
-            [readOnly]="isReadOnly()"
-            [i18n]="i18n()"
-            [errors]="errors()"
-          />
           <okr-cta-config
             [formData]="articleCtas()" (formDataChange)="onArticleCtasChange($event)"
             [max]="1"
@@ -240,17 +243,6 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
             [i18n]="i18n()"
             [errors]="errors()"
           />
-          @if(showAdvanced()) {
-            @if(imageStyle(); as imageStyle) {
-              <okr-image-style
-                [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)"
-                [readOnly]="isReadOnly()"
-                [i18n]="i18n()"
-                [showAdvanced]="showAdvanced()"
-                [errors]="errors()"
-              />
-            }
-          }
         }
 
         @case('button') {
@@ -851,6 +843,11 @@ export class SectionForm {
   protected images = computed(() => this.getImages());
   protected storagePath = computed(() => `tenant/${this.tenantId()}/section/${this.sectionKey()}`);
   protected imageStyle = computed(() => this.getImageStyle());
+  /** the article's image layout id; undefined = slider (spec 1.154 §5) */
+  protected imageLayout = computed(() => {
+    const section = this.formData();
+    return section.type === 'article' ? section.properties?.imageLayout : undefined;
+  });
   protected buttonActionConfig = computed(() => this.getButtonActionConfig());
   protected buttonStyle = computed(() => this.getButtonStyle());
   protected iconConfig = computed(() => this.getIconConfig());
@@ -1339,6 +1336,14 @@ export class SectionForm {
         this.formData.set({...section, properties: { ...section.properties, imageStyle }} as SliderSection);
         break;
     }
+  }
+
+  /** clearing the layout deletes the key (absent = slider); the article suite refuses null and '' */
+  protected onImageLayoutChange(imageLayout: string | undefined): void {
+    const section = this.formData();
+    if (section.type !== 'article') return;
+    const { imageLayout: _removed, ...properties } = section.properties ?? {};   // eslint-disable-line @typescript-eslint/no-unused-vars
+    this.formData.set({ ...section, properties: imageLayout ? { ...properties, imageLayout } : properties } as ArticleSection);
   }
 
   protected onAlbumConfigChange(config: AlbumConfig): void {

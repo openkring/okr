@@ -109,6 +109,17 @@ describe('tiles and call-to-action error fields (1.151)', () => {
     expect(getRemainingErrors(errors, getInlineErrorFields('hero'))).toEqual([]);
   });
 
+  it('shows the layout and the image action of an article inline without the advanced toggle (Layout segment)', () => {
+    const errors = { imageLayout: ['invalidValue'], action: ['invalidValue'], zoomFactor: ['invalidValue'] };
+    expect(getRemainingErrors(errors, getInlineErrorFields('article'))).toEqual([]);
+  });
+
+  it('shows the article image styles inline only with the advanced toggle (Styles segment)', () => {
+    const errors = { width: ['notString'] };
+    expect(getRemainingErrors(errors, getInlineErrorFields('article'))).toHaveLength(1);
+    expect(getRemainingErrors(errors, getInlineErrorFields('article', true))).toEqual([]);
+  });
+
   it('shows the article button inline', () => {
     const errors = { 'cta.label': ['required'], 'cta.url': ['invalidValue'] };
     expect(getRemainingErrors(errors, getInlineErrorFields('article'))).toEqual([]);
@@ -128,9 +139,14 @@ describe('getJournalInlineErrorFields (journal mode, 1.154)', () => {
     }
   });
 
-  it('shows the title, the photos and the visible image style of an article inline', () => {
-    const errors = { title: ['tooLong'], 'images[0].url': ['required'], width: ['notString'] };
+  it('shows the title, the photos and the layout of an article inline', () => {
+    const errors = { title: ['tooLong'], 'images[0].url': ['required'], imageLayout: ['invalidValue'] };
     expect(getRemainingErrors(errors, getJournalInlineErrorFields('article'))).toEqual([]);
+  });
+
+  it('falls back for the image style of an article, which the journal no longer shows (no Styles segment)', () => {
+    const errors = { width: ['notString'], action: ['invalidValue'] };
+    expect(getRemainingErrors(errors, getJournalInlineErrorFields('article')).map((e) => e.field)).toEqual(['width', 'action']);
   });
 
   it('shows the overlay and layout of a hero inline, but not its hidden title or buttons', () => {

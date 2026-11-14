@@ -120,7 +120,19 @@
   },
   "article": {
     "label": "Article",
-    "zoomed": "Enlarged image view"
+    "zoomed": "Enlarged image view",
+    "images": {
+      "title": "Images",
+      "segment": {
+        "select": "Selection",
+        "layout": "Layout",
+        "styles": "Styles"
+      },
+      "layout": {
+        "choose": "Choose layout …",
+        "empty": "Add images first. Then you can choose here how they are shown."
+      }
+    }
   },
   "contract": {
     "confirm": {

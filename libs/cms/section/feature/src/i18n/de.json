@@ -120,7 +120,19 @@
   },
   "article": {
     "label": "Artikel",
-    "zoomed": "Vergrösserte Bildansicht"
+    "zoomed": "Vergrösserte Bildansicht",
+    "images": {
+      "title": "Bilder",
+      "segment": {
+        "select": "Auswahl",
+        "layout": "Layout",
+        "styles": "Styles"
+      },
+      "layout": {
+        "choose": "Layout wählen …",
+        "empty": "Füge zuerst Bilder hinzu. Dann kannst du hier festlegen, wie sie angezeigt werden."
+      }
+    }
   },
   "contract": {
     "confirm": {

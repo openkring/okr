@@ -1,4 +1,5 @@
 import { Component, computed, inject, input, model } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ActionSheetController, ActionSheetOptions,
   IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle,
@@ -24,7 +25,7 @@ import { ImageEditModal } from './image-edit.modal';
   selector: 'okr-images-config',
   standalone: true,
   imports: [
-    ImgDirective, SvgIconPipe,
+    ImgDirective, SvgIconPipe, NgTemplateOutlet,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent,
     IonList, IonItem, IonLabel, IonButtons, IonButton, IonIcon,
     IonThumbnail, IonReorderGroup, IonReorder,
@@ -36,22 +37,42 @@ import { ImageEditModal } from './image-edit.modal';
     ion-item { --min-height: 52px; }
     .image-meta { font-size: 0.8rem; color: var(--ion-color-medium); }
     ion-thumbnail { --size: 44px; --border-radius: 4px; margin-inline-end: 8px; }
+    .embedded-actions { display: flex; justify-content: flex-end; }
   `],
   template: `
-    <ion-card>
-      <ion-card-header>
-        <div class="image-list-header">
-          <ion-card-title>{{ title() || i18n().image_edit_title_modal() }}</ion-card-title>
-          @if(!readOnly() && canAdd() && !atMax()) {
-            <ion-buttons>
-              <ion-button (click)="addImages()">
-                <ion-icon slot="icon-only" src="{{'add-circle' | svgIcon }}" />
-              </ion-button>
-            </ion-buttons>
-          }
+    @if(embedded()) {
+      <!-- inside a host card (the article's «Bilder» card): no own card or title, only the add button above the list -->
+      @if(!readOnly() && canAdd() && !atMax()) {
+        <div class="embedded-actions">
+          <ion-buttons>
+            <ion-button (click)="addImages()" [attr.aria-label]="i18n().image_add_label()">
+              <ion-icon slot="icon-only" src="{{'add-circle' | svgIcon }}" />
+            </ion-button>
+          </ion-buttons>
         </div>
-      </ion-card-header>
-      <ion-card-content class="ion-no-padding">
+      }
+      <ng-container *ngTemplateOutlet="imageList" />
+    } @else {
+      <ion-card>
+        <ion-card-header>
+          <div class="image-list-header">
+            <ion-card-title>{{ title() || i18n().image_edit_title_modal() }}</ion-card-title>
+            @if(!readOnly() && canAdd() && !atMax()) {
+              <ion-buttons>
+                <ion-button (click)="addImages()">
+                  <ion-icon slot="icon-only" src="{{'add-circle' | svgIcon }}" />
+                </ion-button>
+              </ion-buttons>
+            }
+          </div>
+        </ion-card-header>
+        <ion-card-content class="ion-no-padding">
+          <ng-container *ngTemplateOutlet="imageList" />
+        </ion-card-content>
+      </ion-card>
+    }
+
+    <ng-template #imageList>
         <ion-list lines="inset">
           @if(images().length === 0) {
             <ion-item>
@@ -83,8 +104,7 @@ import { ImageEditModal } from './image-edit.modal';
         </ion-list>
         <!-- image errors carry an images[i] index, so they are listed under the list they belong to -->
         <okr-error-note [errors]="imageErrors()" />
-      </ion-card-content>
-    </ion-card>
+    </ng-template>
   `
 })
 export class ImagesConfiguration {
@@ -121,6 +141,8 @@ export class ImagesConfiguration {
   public readonly requirePicker = input(false);
   /** picker only: the most images the list holds (a journal video's clips); the add button hides there. Unset = no cap. */
   public readonly max = input<number | undefined>();
+  /** inside a host card (the article's «Bilder» card): no own card and title, only the add button and the list */
+  public readonly embedded = input(false);
 
   // computed
   protected readonly imageErrors = computed(() => getImageErrors(this.errors()));

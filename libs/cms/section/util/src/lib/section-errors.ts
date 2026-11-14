@@ -46,7 +46,9 @@ export function getInlineErrorFields(type: SectionType, showAdvanced = false): s
       fields.push('folder', 'albumStyle', 'showVideos', 'showStreamingVideos', 'showDocs', 'showPdfs', 'effect');
       break;
     case 'article':
-      fields.push(IMAGES_PREFIX, 'cta.label', 'cta.url');
+      // the «Bilder» card (spec 1.154 §5): the layout and the action group are in its Layout segment (always),
+      // the rest of the image style in its Styles segment (advanced only)
+      fields.push(IMAGES_PREFIX, 'cta.label', 'cta.url', 'imageLayout', 'action', 'zoomFactor');
       if (showAdvanced) fields.push(...IMAGE_STYLE_FIELDS);
       break;
     case 'button':
@@ -163,8 +165,8 @@ export function getJournalInlineErrorFields(type: SectionType): string[] {
     case 'hero':
       return ['overlay.darkening', 'overlay.label', 'overlay.color', 'overlay.position', 'overlay.fontSize', 'height', 'focus'];
     case 'article':
-      // image-style without the advanced toggle shows width, height and fill
-      return ['title', IMAGES_PREFIX, 'width', 'height', 'fill'];
+      // the «Bilder» card shows the photos and the layout; no Styles, so width, height and fill fall back (decision 8)
+      return ['title', IMAGES_PREFIX, 'imageLayout'];
     case 'album':
       return ['title', IMAGES_PREFIX];
     case 'video':

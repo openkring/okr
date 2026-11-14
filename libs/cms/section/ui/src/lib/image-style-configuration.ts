@@ -1,4 +1,5 @@
 import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonNote, IonRow } from '@ionic/angular';
 
 import { ImageActions } from '@okr/shared-categories';
@@ -67,7 +68,7 @@ interface ImageStyleConfigI18n {
 @Component({
   selector: 'okr-image-style',
   standalone: true,
-  imports: [IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonNote, Checkbox, TextInput, StringSelect, CategoryOld, NumberInput,
+  imports: [NgTemplateOutlet, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonNote, Checkbox, TextInput, StringSelect, CategoryOld, NumberInput,
     ErrorNote
   ],
   styles: [
@@ -81,16 +82,26 @@ interface ImageStyleConfigI18n {
     `,
   ],
   template: `
-    <ion-card>
-      <ion-card-header>
-        <ion-card-title>{{ i18n().image_style_title() }}</ion-card-title>
-      </ion-card-header>
-      <ion-card-content>
-        @if(intro(); as intro) { @if(intro.length > 0) {
-        <ion-note>{{ intro }}</ion-note>
-        } }
+    @if(embedded()) {
+      <ng-container *ngTemplateOutlet="groups" />
+    } @else {
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>{{ i18n().image_style_title() }}</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          @if(intro(); as intro) { @if(intro.length > 0) {
+          <ion-note>{{ intro }}</ion-note>
+          } }
+          <ng-container *ngTemplateOutlet="groups" />
+        </ion-card-content>
+      </ion-card>
+    }
+
+    <ng-template #groups>
         <ion-grid>
           <ion-row>
+            @if(showImageGroup()) {
             <ion-col size="12"><div class="group-title">{{ i18n().image_style_group_image() }}</div></ion-col>
             <ion-col size="12" size-md="6">
               <okr-text-input [i18n]="widthI18n()" [value]="width()" (valueChange)="onFieldChange('width', $event)" [readOnly]="readOnly()" />
@@ -137,6 +148,8 @@ interface ImageStyleConfigI18n {
                 <okr-error-note [errors]="errorsFor('imgIxParams')" />
               </ion-col>
             }
+            }
+            @if(showCaption()) {
             <ion-col size="12"><div class="group-title">{{ i18n().image_style_group_caption() }}</div></ion-col>
             <ion-col size="12" size-md="6">
               <okr-string-select [i18n]="captionPositionI18n()" [selectedString]="captionPosition()" (selectedStringChange)="onFieldChange('captionPosition', $event)" [readOnly]="readOnly()" [stringList]="captionPositions" [labels]="captionPositionLabels()" />
@@ -152,7 +165,8 @@ interface ImageStyleConfigI18n {
                 <okr-text-input [i18n]="captionSizeI18n()" [value]="captionSize()" (valueChange)="onFieldChange('captionSize', $event)" [readOnly]="readOnly()" [showHelper]="true" />
               </ion-col>
             }
-            @if(showAdvanced()) {
+            }
+            @if(showAction() && showAdvanced()) {
               <ion-col size="12"><div class="group-title">{{ i18n().image_style_group_action() }}</div></ion-col>
               <ion-col size="12" size-md="6">
                 <okr-category-old [i18n]="imageActionI18n()" [value]="action()" (valueChange)="onFieldChange('action', $event)" [readOnly]="readOnly()" [categories]="imageActions" />
@@ -167,8 +181,7 @@ interface ImageStyleConfigI18n {
             }
           </ion-row>
         </ion-grid>
-      </ion-card-content>
-    </ion-card>
+    </ng-template>
   `,
 })
 export class ImageStyleConfiguration {
@@ -181,6 +194,16 @@ export class ImageStyleConfiguration {
   public readonly readOnly = input(true);
   public readonly showAdvanced = input(false);
   public readonly i18n = input.required<ImageStyleConfigI18n>();
+  /**
+   * Which groups to show. The article's «Bilder» card (spec 1.154 §5) shows the caption and action groups
+   * in its Layout segment and the image group in its Styles segment; every other section shows all three.
+   */
+  public readonly showImageGroup = input(true);
+  public readonly showCaption = input(true);
+  /** the action group additionally needs showAdvanced */
+  public readonly showAction = input(true);
+  /** inside a host card: no own card, title and intro */
+  public readonly embedded = input(false);
 
   // fields
   protected imgIxParams = linkedSignal(() => this.formData().imgIxParams ?? '');

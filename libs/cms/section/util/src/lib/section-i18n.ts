@@ -1118,6 +1118,13 @@ export const SECTION_I18N_KEYS = {
   layout_bigGrid_description:               PFX + 'layout.big-grid.description',
   layout_slider_label:                      PFX + 'layout.slider.label',
   layout_slider_description:                PFX + 'layout.slider.description',
+  // the article's «Bilder» card (spec 1.154 §5)
+  article_images_title:                     PFX + 'article.images.title',
+  article_images_segment_select:            PFX + 'article.images.segment.select',
+  article_images_segment_layout:            PFX + 'article.images.segment.layout',
+  article_images_segment_styles:            PFX + 'article.images.segment.styles',
+  article_images_layout_choose:             PFX + 'article.images.layout.choose',
+  article_images_layout_empty:              PFX + 'article.images.layout.empty',
 
   error_save:                               PFX + 'error.save',
   error_load:                               PFX + 'error.load',

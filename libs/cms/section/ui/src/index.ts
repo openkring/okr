@@ -42,3 +42,4 @@ export * from './lib/form-section-configuration';
 
 export * from './lib/image-layout-preview';
 export * from './lib/image-layout-select.modal';
+export * from './lib/article-images-configuration';
