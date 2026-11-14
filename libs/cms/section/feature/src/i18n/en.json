@@ -1718,7 +1718,10 @@
     "formEmailInvalid": "At least one email address is not valid. Check the spelling.",
     "formImplicitInvalid": "This value does not fit the field.",
     "formImplicitRequired": "Enter a value here, otherwise the field stays empty in the answers.",
-    "formImplicitSsn": "The AHV number cannot be preset."
+    "formImplicitSsn": "The AHV number cannot be preset.",
+    "zoomRange": "Enter a zoom level between 1 and 19.",
+    "layerUnknown": "Choose one of the offered map layers.",
+    "trackRequired": "Choose a track."
   },
   "advent": {
     "label": "Advent calendar",
@@ -1968,7 +1971,35 @@
     "photos": "Photos",
     "cover": "Cover photo",
     "clips": "Videos",
-    "empty": "Nothing chosen yet."
+    "empty": "Nothing chosen yet.",
+    "map": {
+      "title": "Map",
+      "zoomHelper": "How close the map zooms in, from 1 (far away) to 19 (very close).",
+      "layer": {
+        "label": "Map layer",
+        "helper": "Which map is shown. If a device does not have it, it shows its own default map instead.",
+        "default": "Default",
+        "googleRoadmap": "Google road map",
+        "googleSatellite": "Google satellite",
+        "swisstopoLive": "swisstopo",
+        "offlineOsm": "OpenStreetMap (offline)",
+        "offlineSatellite": "Satellite (offline)",
+        "offlineSwisstopo": "swisstopo (offline)",
+        "world": "World map"
+      },
+      "showRoute": {
+        "label": "Draw the journey route",
+        "helper": "Also shows the route of the travel journal, that is the places of the photos in time order."
+      }
+    },
+    "track": {
+      "title": "Track",
+      "none": "No track chosen yet.",
+      "pick": "Choose track …",
+      "change": "Choose another track …",
+      "unavailable": "You can't choose a track here. Open the travel journal to attach a recorded track.",
+      "chosen": "Chosen track"
+    }
   },
   "layout": {
     "title": "Choose image layout",

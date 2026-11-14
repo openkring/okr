@@ -1718,7 +1718,10 @@
     "formEmailInvalid": "Au moins une adresse e-mail n'est pas valide. Vérifie l'orthographe.",
     "formImplicitInvalid": "Cette valeur ne convient pas au champ.",
     "formImplicitRequired": "Indique une valeur ici, sinon le champ reste vide dans les réponses.",
-    "formImplicitSsn": "Le numéro AVS ne peut pas être prédéfini."
+    "formImplicitSsn": "Le numéro AVS ne peut pas être prédéfini.",
+    "zoomRange": "Saisis un niveau de zoom entre 1 et 19.",
+    "layerUnknown": "Choisis l'un des fonds de carte proposés.",
+    "trackRequired": "Choisis un parcours."
   },
   "advent": {
     "label": "Calendrier de l'Avent",
@@ -1968,7 +1971,35 @@
     "photos": "Photos",
     "cover": "Photo de couverture",
     "clips": "Vidéos",
-    "empty": "Rien de choisi pour le moment."
+    "empty": "Rien de choisi pour le moment.",
+    "map": {
+      "title": "Carte",
+      "zoomHelper": "Le niveau de zoom de la carte, de 1 (très loin) à 19 (très près).",
+      "layer": {
+        "label": "Fond de carte",
+        "helper": "La carte affichée. Si un appareil ne l'a pas, il affiche à la place sa carte par défaut.",
+        "default": "Par défaut",
+        "googleRoadmap": "Google plan routier",
+        "googleSatellite": "Google satellite",
+        "swisstopoLive": "swisstopo",
+        "offlineOsm": "OpenStreetMap (hors ligne)",
+        "offlineSatellite": "Satellite (hors ligne)",
+        "offlineSwisstopo": "swisstopo (hors ligne)",
+        "world": "Carte du monde"
+      },
+      "showRoute": {
+        "label": "Tracer l'itinéraire du voyage",
+        "helper": "Affiche en plus l'itinéraire du carnet de voyage, c'est-à-dire les lieux des photos dans l'ordre chronologique."
+      }
+    },
+    "track": {
+      "title": "Parcours",
+      "none": "Aucun parcours choisi pour l'instant.",
+      "pick": "Choisir un parcours …",
+      "change": "Choisir un autre parcours …",
+      "unavailable": "Tu ne peux pas choisir de parcours ici. Ouvre le carnet de voyage pour y associer un parcours enregistré.",
+      "chosen": "Parcours choisi"
+    }
   },
   "layout": {
     "title": "Choisir la mise en page",

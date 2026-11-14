@@ -1718,7 +1718,10 @@
     "formEmailInvalid": "Mindestens eine E-Mail-Adresse ist ungültig. Prüfe die Schreibweise.",
     "formImplicitInvalid": "Dieser Wert passt nicht zum Feld.",
     "formImplicitRequired": "Gib hier einen Wert an, sonst bleibt das Feld in den Antworten leer.",
-    "formImplicitSsn": "Die AHV-Nummer kann nicht fest vorgegeben werden."
+    "formImplicitSsn": "Die AHV-Nummer kann nicht fest vorgegeben werden.",
+    "zoomRange": "Gib einen Zoom-Faktor zwischen 1 und 19 ein.",
+    "layerUnknown": "Wähle eine der angebotenen Kartenebenen.",
+    "trackRequired": "Wähle eine Strecke aus."
   },
   "advent": {
     "label": "Adventskalender",
@@ -1968,7 +1971,35 @@
     "photos": "Fotos",
     "cover": "Titelbild",
     "clips": "Videos",
-    "empty": "Noch nichts ausgewählt."
+    "empty": "Noch nichts ausgewählt.",
+    "map": {
+      "title": "Karte",
+      "zoomHelper": "Wie nah die Karte heranzoomt, von 1 (weit weg) bis 19 (ganz nah).",
+      "layer": {
+        "label": "Kartenebene",
+        "helper": "Welche Karte gezeigt wird. Ist sie auf einem Gerät nicht verfügbar, zeigt es stattdessen seine Standardkarte.",
+        "default": "Standard",
+        "googleRoadmap": "Google Strassenkarte",
+        "googleSatellite": "Google Satellit",
+        "swisstopoLive": "swisstopo",
+        "offlineOsm": "OpenStreetMap (offline)",
+        "offlineSatellite": "Satellit (offline)",
+        "offlineSwisstopo": "swisstopo (offline)",
+        "world": "Weltkarte"
+      },
+      "showRoute": {
+        "label": "Reiseroute einzeichnen",
+        "helper": "Zeigt zusätzlich die Route des Reisetagebuchs, also die Orte der Fotos in zeitlicher Reihenfolge."
+      }
+    },
+    "track": {
+      "title": "Strecke",
+      "none": "Noch keine Strecke gewählt.",
+      "pick": "Strecke wählen …",
+      "change": "Andere Strecke wählen …",
+      "unavailable": "Hier kannst du keine Strecke wählen. Öffne das Reisetagebuch, um eine aufgezeichnete Strecke zuzuordnen.",
+      "chosen": "Gewählte Strecke"
+    }
   },
   "layout": {
     "title": "Bildlayout wählen",

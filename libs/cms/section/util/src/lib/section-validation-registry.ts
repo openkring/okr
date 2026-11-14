@@ -10,6 +10,7 @@ import { chatSectionValidations } from './chat-section.validations';
 import { heroSectionValidations } from './hero-section.validations';
 import { iframeSectionValidations } from './iframe-section.validations';
 import { mapSectionValidations } from './map-section.validations';
+import { journalTrackSectionValidations } from './journal-track-section.validations';
 import { peopleSectionValidations } from './people-section.validations';
 import { sliderSectionValidations } from './slider-section.validations';
 import { tableSectionValidations } from './table-section.validations';
@@ -56,6 +57,7 @@ export const SECTION_VALIDATION_SUITES: Partial<Record<SectionType, SectionSuite
   slider: sliderSectionValidations as SectionSuite,
   table: tableSectionValidations as SectionSuite,
   tracker: trackerSectionValidations as SectionSuite,
+  track: journalTrackSectionValidations as SectionSuite,
   video: videoSectionValidations as SectionSuite,
   weather: weatherSectionValidations as SectionSuite,
   advent: adventSectionValidations as SectionSuite,

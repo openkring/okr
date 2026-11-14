@@ -154,6 +154,15 @@ describe('getJournalInlineErrorFields (journal mode, 1.154)', () => {
     expect(getRemainingErrors(errors, getJournalInlineErrorFields('hero')).map((e) => e.field)).toEqual(['title', 'ctas[0].label']);
   });
 
+  it('shows the zoom and layer of a map and the track of a track section inline', () => {
+    expect(getRemainingErrors({ zoom: ['zoomRange'], layer: ['layerUnknown'] }, getJournalInlineErrorFields('map'))).toEqual([]);
+    expect(getRemainingErrors({ trackKey: ['trackRequired'] }, getJournalInlineErrorFields('track'))).toEqual([]);
+  });
+
+  it('falls back for the centre of a journal map, which the journal form hides', () => {
+    expect(getRemainingErrors({ centerLatitude: ['tooLarge'] }, getJournalInlineErrorFields('map')).map((e) => e.field)).toEqual(['centerLatitude']);
+  });
+
   it('shows the clip limit of a video inline, under the clip list', () => {
     expect(getRemainingErrors({ clips: ['clipsTooMany'] }, getJournalInlineErrorFields('video'))).toEqual([]);
   });

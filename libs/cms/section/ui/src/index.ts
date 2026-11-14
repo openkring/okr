@@ -5,6 +5,8 @@ export * from './lib/editor-configuration';
 export * from './lib/iframe-configuration';
 export * from './lib/image-style-configuration';
 export * from './lib/map-configuration';
+export * from './lib/journal-map-configuration';
+export * from './lib/journal-track-configuration';
 export * from './lib/people-configuration';
 export * from './lib/responsibility-configuration';
 export * from './lib/responsibility-section.validations';

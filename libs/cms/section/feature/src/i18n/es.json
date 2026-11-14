@@ -1718,7 +1718,10 @@
     "formEmailInvalid": "Al menos una dirección de correo no es válida. Revisa cómo está escrita.",
     "formImplicitInvalid": "Este valor no encaja con el campo.",
     "formImplicitRequired": "Indica aquí un valor; si no, el campo queda vacío en las respuestas.",
-    "formImplicitSsn": "El número AVS no se puede fijar de antemano."
+    "formImplicitSsn": "El número AVS no se puede fijar de antemano.",
+    "zoomRange": "Introduce un nivel de zoom entre 1 y 19.",
+    "layerUnknown": "Elige una de las capas de mapa ofrecidas.",
+    "trackRequired": "Elige un recorrido."
   },
   "advent": {
     "label": "Calendario de Adviento",
@@ -1968,7 +1971,35 @@
     "photos": "Fotos",
     "cover": "Foto de portada",
     "clips": "Vídeos",
-    "empty": "Todavía no has elegido nada."
+    "empty": "Todavía no has elegido nada.",
+    "map": {
+      "title": "Mapa",
+      "zoomHelper": "Cuánto se acerca el mapa, de 1 (lejos) a 19 (muy cerca).",
+      "layer": {
+        "label": "Capa del mapa",
+        "helper": "Qué mapa se muestra. Si un dispositivo no lo tiene, muestra en su lugar su mapa predeterminado.",
+        "default": "Predeterminada",
+        "googleRoadmap": "Google mapa de carreteras",
+        "googleSatellite": "Google satélite",
+        "swisstopoLive": "swisstopo",
+        "offlineOsm": "OpenStreetMap (sin conexión)",
+        "offlineSatellite": "Satélite (sin conexión)",
+        "offlineSwisstopo": "swisstopo (sin conexión)",
+        "world": "Mapa del mundo"
+      },
+      "showRoute": {
+        "label": "Dibujar la ruta del viaje",
+        "helper": "Muestra además la ruta del diario de viaje, es decir, los lugares de las fotos en orden cronológico."
+      }
+    },
+    "track": {
+      "title": "Recorrido",
+      "none": "Todavía no has elegido ningún recorrido.",
+      "pick": "Elegir recorrido …",
+      "change": "Elegir otro recorrido …",
+      "unavailable": "Aquí no puedes elegir un recorrido. Abre el diario de viaje para asociar un recorrido grabado.",
+      "chosen": "Recorrido elegido"
+    }
   },
   "layout": {
     "title": "Elige la disposición de las imágenes",

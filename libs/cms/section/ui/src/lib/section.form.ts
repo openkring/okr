@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
 
-import { ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, FooterConfig, FooterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FormSectionConfig, AlbumConfig, AlbumSection, SectionFeedback, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroConfig, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TilesConfig, TilesSection, NewsConfig, NewsSection, SectionCta, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
+import { ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, FooterConfig, FooterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FormSectionConfig, AlbumConfig, AlbumSection, SectionFeedback, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroConfig, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, JournalTrackConfig, JournalTrackSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TilesConfig, TilesSection, NewsConfig, NewsSection, SectionCta, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
 import { Chips, ErrorNote, ImageConfigEdit, NotesInput, NotesInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole, sanitizeFileName } from '@okr/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS, IMAGE_MIMETYPES } from '@okr/shared-constants';
@@ -17,6 +17,8 @@ import { ImageStyleConfiguration } from './image-style-configuration';
 import { ArticleImagesConfiguration } from './article-images-configuration';
 import { AlbumConfiguration } from './album-configuration';
 import { FeedbackConfiguration } from './feedback-configuration';
+import { JournalMapConfiguration } from './journal-map-configuration';
+import { JournalTrackConfiguration } from './journal-track-configuration';
 import { IframeConfiguration } from './iframe-configuration';
 import { WeatherConfiguration, WeatherLocationOption } from './weather-configuration';
 import { ConnectionsConfiguration } from './connections-configuration';
@@ -70,7 +72,7 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
     MapConfiguration, TrackerConfiguration, TableGridConfiguration,  TableStyleConfiguration, TableHeader,
     TableBody, EventsConfiguration, InvitationsConfiguration, ImagesConfiguration, CalendarConfiguration, ChartConfiguration,
     MemberConfiguration, RagConfiguration, FormSectionConfiguration, SankeyConfiguration, SpiderConfiguration, TocConfiguration, TestimonialConfiguration, TimelineConfiguration, AdventConfiguration,
-    TilesConfiguration, NewsConfiguration, CtaConfiguration, KickerConfiguration, HeroConfiguration, FeedbackConfiguration
+    TilesConfiguration, NewsConfiguration, CtaConfiguration, KickerConfiguration, HeroConfiguration, FeedbackConfiguration, JournalMapConfiguration, JournalTrackConfiguration
 ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -187,6 +189,26 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
                 [i18n]="i18n()"
               />
               <okr-error-note [errors]="errors()['clips'] ?? []" />
+            }
+          }
+          @case('map') {
+            @if(mapConfig(); as mapConfig) {
+              <okr-journal-map-config
+                [formData]="mapConfig" (formDataChange)="onMapConfigChange($event)"
+                [readOnly]="isReadOnly()"
+                [i18n]="i18n()"
+                [errors]="errors()"
+              />
+            }
+          }
+          @case('track') {
+            @if(trackConfig(); as trackConfig) {
+              <okr-journal-track-config
+                [formData]="trackConfig" (formDataChange)="onTrackConfigChange($event)"
+                [readOnly]="isReadOnly()"
+                [i18n]="i18n()"
+                [errors]="errors()"
+              />
             }
           }
         }
@@ -929,6 +951,11 @@ export class SectionForm {
   protected counterConfig = computed(() => this.getCounterConfig());
   protected footerConfig = computed(() => this.getFooterConfig());
   protected mapConfig = computed(() => this.getMapConfig());
+  /** journal mode: the chosen track of a track section */
+  protected trackConfig = computed<JournalTrackConfig | undefined>(() => {
+    const section = this.formData();
+    return section.type === 'track' ? section.properties : undefined;
+  });
   protected peopleConfig = computed(() => this.getPeopleConfig());
   protected responsibilityConfig = computed(() => this.getResponsibilityConfig());
   protected headerData = computed(() => this.getHeaderData());
@@ -1643,6 +1670,14 @@ export class SectionForm {
         ...section,
         properties: config
       } as IframeSection);
+    }
+  }
+
+  /** journal mode: the picker chose another track */
+  protected onTrackConfigChange(config: JournalTrackConfig): void {
+    const section = this.formData();
+    if (section.type === 'track') {
+      this.formData.set({ ...section, properties: config } as JournalTrackSection);
     }
   }
 

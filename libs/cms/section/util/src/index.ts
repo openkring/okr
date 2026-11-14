@@ -50,3 +50,5 @@ export * from './lib/context-diagram-config.validations';
 export * from './lib/form-section.validations';
 export * from './lib/journal-mode.util';
 export * from './lib/section-image-picker';
+export * from './lib/section-track-picker';
+export * from './lib/journal-track-section.validations';

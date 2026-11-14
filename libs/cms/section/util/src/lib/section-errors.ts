@@ -202,6 +202,10 @@ export function getJournalInlineErrorFields(type: SectionType): string[] {
       return ['title', IMAGES_PREFIX];
     case 'video':
       return ['title', 'clips'];
+    case 'map':
+      return ['title', 'zoom', 'layer'];
+    case 'track':
+      return ['title', 'trackKey'];
     default:
       return ['title'];
   }

@@ -34,3 +34,16 @@ export function journalModeSectionFields(type: SectionType): string[] {
 export function isJournalModeField(type: SectionType, key: string): boolean {
   return (JOURNAL_MODE_FIELDS[type] ?? []).includes(key);
 }
+
+/** The zoom range of a journal map (spec 1.154 phase 5): Leaflet levels the journal's base layers can draw. */
+export const JOURNAL_MAP_ZOOM_MIN = 1;
+export const JOURNAL_MAP_ZOOM_MAX = 19;
+
+/**
+ * The ids of the journal's base layers (`BaseLayerOption['id']` in the travel-journal util). The form cannot know which
+ * layers a device offers, so it offers all of them; the renderer falls back via `pickBaseLayer` when one is not offered.
+ * Kept in sync by hand (this lib must not depend on the journal).
+ */
+export const JOURNAL_MAP_LAYER_IDS: readonly string[] = [
+  'google-roadmap', 'google-satellite', 'swisstopo-live', 'offline-osm', 'offline-satellite', 'offline-swisstopo', 'world',
+];

@@ -1718,7 +1718,10 @@
     "formEmailInvalid": "Almeno un indirizzo e-mail non è valido. Controlla come è scritto.",
     "formImplicitInvalid": "Questo valore non si adatta al campo.",
     "formImplicitRequired": "Indica qui un valore, altrimenti il campo resta vuoto nelle risposte.",
-    "formImplicitSsn": "Il numero AVS non può essere preimpostato."
+    "formImplicitSsn": "Il numero AVS non può essere preimpostato.",
+    "zoomRange": "Inserisci un livello di zoom tra 1 e 19.",
+    "layerUnknown": "Scegli uno dei livelli di mappa proposti.",
+    "trackRequired": "Scegli un percorso."
   },
   "advent": {
     "label": "Calendario dell'Avvento",
@@ -1968,7 +1971,35 @@
     "photos": "Foto",
     "cover": "Foto di copertina",
     "clips": "Video",
-    "empty": "Non hai ancora scelto niente."
+    "empty": "Non hai ancora scelto niente.",
+    "map": {
+      "title": "Mappa",
+      "zoomHelper": "Quanto la mappa si avvicina, da 1 (lontano) a 19 (molto vicino).",
+      "layer": {
+        "label": "Livello della mappa",
+        "helper": "Quale mappa viene mostrata. Se un dispositivo non la ha, mostra invece la propria mappa predefinita.",
+        "default": "Predefinito",
+        "googleRoadmap": "Google mappa stradale",
+        "googleSatellite": "Google satellite",
+        "swisstopoLive": "swisstopo",
+        "offlineOsm": "OpenStreetMap (offline)",
+        "offlineSatellite": "Satellite (offline)",
+        "offlineSwisstopo": "swisstopo (offline)",
+        "world": "Mappa del mondo"
+      },
+      "showRoute": {
+        "label": "Disegna il percorso del viaggio",
+        "helper": "Mostra anche il percorso del diario di viaggio, cioè i luoghi delle foto in ordine cronologico."
+      }
+    },
+    "track": {
+      "title": "Percorso",
+      "none": "Nessun percorso scelto finora.",
+      "pick": "Scegli un percorso …",
+      "change": "Scegli un altro percorso …",
+      "unavailable": "Qui non puoi scegliere un percorso. Apri il diario di viaggio per associare un percorso registrato.",
+      "chosen": "Percorso scelto"
+    }
   },
   "layout": {
     "title": "Scegli il layout delle immagini",
