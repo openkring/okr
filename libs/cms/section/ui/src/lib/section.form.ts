@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
 
-import { ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, FooterConfig, FooterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FormSectionConfig, AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroConfig, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TilesConfig, TilesSection, NewsConfig, NewsSection, SectionCta, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
+import { ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, FooterConfig, FooterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FormSectionConfig, AlbumConfig, AlbumSection, SectionFeedback, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroConfig, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TilesConfig, TilesSection, NewsConfig, NewsSection, SectionCta, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
 import { Chips, ErrorNote, ImageConfigEdit, NotesInput, NotesInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole, sanitizeFileName } from '@okr/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS, IMAGE_MIMETYPES } from '@okr/shared-constants';
@@ -16,6 +16,7 @@ import { EditorConfiguration } from './editor-configuration';
 import { ImageStyleConfiguration } from './image-style-configuration';
 import { ArticleImagesConfiguration } from './article-images-configuration';
 import { AlbumConfiguration } from './album-configuration';
+import { FeedbackConfiguration } from './feedback-configuration';
 import { IframeConfiguration } from './iframe-configuration';
 import { WeatherConfiguration, WeatherLocationOption } from './weather-configuration';
 import { ConnectionsConfiguration } from './connections-configuration';
@@ -69,7 +70,7 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
     MapConfiguration, TrackerConfiguration, TableGridConfiguration,  TableStyleConfiguration, TableHeader,
     TableBody, EventsConfiguration, InvitationsConfiguration, ImagesConfiguration, CalendarConfiguration, ChartConfiguration,
     MemberConfiguration, RagConfiguration, FormSectionConfiguration, SankeyConfiguration, SpiderConfiguration, TocConfiguration, TestimonialConfiguration, TimelineConfiguration, AdventConfiguration,
-    TilesConfiguration, NewsConfiguration, CtaConfiguration, KickerConfiguration, HeroConfiguration
+    TilesConfiguration, NewsConfiguration, CtaConfiguration, KickerConfiguration, HeroConfiguration, FeedbackConfiguration
 ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -188,6 +189,16 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
               <okr-error-note [errors]="errors()['clips'] ?? []" />
             }
           }
+        }
+        <!-- «Kommentare & Reaktionen» (spec 1.154 §7): not on the hero; the image toggles only on article and album -->
+        @if (formData().type !== 'hero') {
+          <okr-feedback-config
+            [feedback]="formData().feedback"
+            (feedbackChange)="onFeedbackChange($event)"
+            [showImages]="formData().type === 'article' || formData().type === 'album'"
+            [readOnly]="isReadOnly()"
+            [i18n]="i18n()"
+          />
         }
       } @else {
       @switch (formData().type) {
@@ -1344,6 +1355,11 @@ export class SectionForm {
     if (section.type !== 'article') return;
     const { imageLayout: _removed, ...properties } = section.properties ?? {};   // eslint-disable-line @typescript-eslint/no-unused-vars
     this.formData.set({ ...section, properties: imageLayout ? { ...properties, imageLayout } : properties } as ArticleSection);
+  }
+
+  /** journal mode: writes the complete feedback object, only ever called by a user's toggle */
+  protected onFeedbackChange(feedback: SectionFeedback): void {
+    this.formData.set({ ...this.formData(), feedback });
   }
 
   protected onAlbumConfigChange(config: AlbumConfig): void {

@@ -2023,5 +2023,13 @@
   },
   "segment": {
     "errors": "Aquí todavía hay algo que corregir"
+  },
+  "feedback": {
+    "title": "Comentarios y reacciones",
+    "helper": "Elige dónde pueden comentar y reaccionar los invitados y los autores.",
+    "comments": "Comentarios sobre la sección",
+    "reactions": "Reacciones a la sección",
+    "imageComments": "Comentarios sobre las imágenes",
+    "imageReactions": "Reacciones a las imágenes"
   }
 }

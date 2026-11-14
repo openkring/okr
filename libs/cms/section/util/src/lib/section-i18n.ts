@@ -863,6 +863,13 @@ export const SECTION_I18N_KEYS = {
   journal_cover:                              PFX + 'journal.cover',
   journal_clips:                              PFX + 'journal.clips',
   journal_empty:                              PFX + 'journal.empty',
+  // comments and reactions card (spec 1.154 phase 4)
+  feedback_title:                             PFX + 'feedback.title',
+  feedback_helper:                            PFX + 'feedback.helper',
+  feedback_comments:                          PFX + 'feedback.comments',
+  feedback_reactions:                         PFX + 'feedback.reactions',
+  feedback_image_comments:                    PFX + 'feedback.imageComments',
+  feedback_image_reactions:                   PFX + 'feedback.imageReactions',
   // hero overlay, height and focus (spec 1.154)
   hero_title:                               PFX + 'hero.title',
   hero_subtitle:                              PFX + 'hero.subtitle',
