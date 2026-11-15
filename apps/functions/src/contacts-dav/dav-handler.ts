@@ -68,6 +68,10 @@ export interface DavResponse {
 const BOOK = '/books/main/';
 const WRITE_METHODS = new Set(['PUT', 'DELETE', 'MKCOL', 'PROPPATCH', 'MOVE', 'COPY', 'POST']);
 const PHOTO_CONCURRENCY = 8;
+/** Apple's bodies are a few hundred bytes; a multiget of the whole book is ~250 KB (§13). */
+const MAX_BODY_BYTES = 1_048_576;
+/** more than the whole book (4143 cards) — a first full sync must never hit it */
+const MAX_MULTIGET_HREFS = 5000;
 const XML = 'application/xml; charset=utf-8';
 const VCARD = 'text/vcard; charset=utf-8';
 const DAV_HEADERS = { DAV: '1, 3, addressbook' };
@@ -149,6 +153,8 @@ export async function handleDav(req: DavRequest, deps: DavDeps): Promise<DavResp
   if (req.path.replace(/\/+$/, '') === '/.well-known/carddav') return answer(301, '', { Location: '/' });
   if (method === 'OPTIONS') return answer(200, '', { Allow: 'OPTIONS, GET, HEAD, PROPFIND, REPORT' });
 
+  if (req.body.length > MAX_BODY_BYTES) return answer(413, 'request body too large');
+
   const auth = await deps.authorize(req.headers['authorization']);
   if (!auth) return answer(401, 'Unauthorized', { 'WWW-Authenticate': 'Basic realm="Kring Adressbuch"' });
   if (WRITE_METHODS.has(method)) return answer(403, 'read-only');
@@ -191,7 +197,8 @@ export async function handleDav(req: DavRequest, deps: DavDeps): Promise<DavResp
   if (res.kind !== 'book' || !/addressbook-multiget/.test(req.body)) {
     return answer(403, '<?xml version="1.0" encoding="utf-8"?><error xmlns="DAV:"><supported-report/></error>', { 'Content-Type': XML });
   }
-  const hrefs = readMultigetHrefs(req.body);
+  const hrefs = [...new Set(readMultigetHrefs(req.body))];
+  if (hrefs.length > MAX_MULTIGET_HREFS) return answer(507, 'too many cards in one request');
   const uids = hrefs.map(uidOfHref).filter((u): u is string => !!u && !!book?.index[u]);
   const cards = uids.length ? await deps.readCards(auth.tenantId, uids) : [];
   const wantsData = wanted.some((p) => p.ns === CARDDAV_NS && p.name === 'address-data');

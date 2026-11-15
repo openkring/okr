@@ -100,4 +100,24 @@ describe('handleDav', () => {
     expect(r.status).toBe(207);
     expect(r.body).not.toContain('.vcf');
   });
+
+  it('refuses a body over 1 MB with 413', async () => {
+    const r = await handleDav(req('PROPFIND', '/', 'x'.repeat(1_048_577)), deps());
+    expect(r.status).toBe(413);
+  });
+
+  it('answers a repeated href once', async () => {
+    const body = MULTIGET.replace('</B:addressbook-multiget>', '<A:href xmlns:A="DAV:">/books/main/person-spike1.vcf</A:href></B:addressbook-multiget>');
+    let asked: string[] = [];
+    const r = await handleDav(req('REPORT', '/books/main/', body), deps({ readCards: async (_t, uids) => { asked = uids; return CARDS.filter((c) => uids.includes(c.uid)); } }));
+    expect(asked).toEqual(['org-spike2', 'person-spike1']);
+    expect(r.body.match(/person-spike1\.vcf<\/href>/g)).toHaveLength(1);
+  });
+
+  it('refuses a multiget over 5000 hrefs with 507', async () => {
+    const hrefs = Array.from({ length: 5001 }, (_, i) => `<D:href>/books/main/person-${i}.vcf</D:href>`).join('');
+    const r = await handleDav(req('REPORT', '/books/main/', `<C:addressbook-multiget xmlns:C="urn:ietf:params:xml:ns:carddav" xmlns:D="DAV:"><D:prop><D:getetag/></D:prop>${hrefs}</C:addressbook-multiget>`), deps());
+    expect(r.status).toBe(507);
+  });
 });
+
