@@ -85,7 +85,9 @@ export type PostMode = 'pingen' | 'download';
             <ion-button class="topup" fill="clear" size="small" (click)="saveDefaults.emit(options())">{{ i18n().post_save_defaults() }}</ion-button>
           }
 
-          @if (loading()) {
+          @if (needsSubject()) {
+            <ion-note color="warning" class="note">{{ i18n().post_needs_subject() }}</ion-note>
+          } @else if (loading()) {
             <div class="note"><okr-spinner /><ion-note>{{ i18n().post_loading() }}</ion-note></div>
           } @else if (error(); as message) {
             <ion-note color="warning" class="note">{{ message }}</ion-note>
@@ -139,6 +141,8 @@ export class PostversandStep {
   public readonly pingenAvailable = input<boolean>(true);
   /** Only an administrator may change the tenant's default letter options. */
   public readonly canSaveDefaults = input<boolean>(false);
+  /** No subject yet: the price is not asked for, a hint says why. */
+  public readonly needsSubject = input<boolean>(false);
 
   public readonly optionsChange = output<PostOptions>();
   public readonly modeChange = output<PostMode>();

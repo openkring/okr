@@ -134,7 +134,8 @@
       "editor": "Editor",
       "preview": "Vorschau",
       "list": "Verteiler",
-      "delivery": "Zustellung"
+      "delivery": "Zustellung",
+      "post": "Postversand"
     },
     "preview": {
       "empty": "Noch kein Inhalt zum Anzeigen.",
@@ -221,7 +222,8 @@
       "price_changed": "Der Preis hat sich geändert. Bitte prüfe ihn nochmals.",
       "unavailable": "Der Briefversand über Pingen steht dir hier nicht zur Verfügung. Du kannst die Briefe als PDF herunterladen.",
       "none": "Niemand hat eine Postadresse, es entsteht kein Brief.",
-      "pending": "Bitte prüfe unter «Zustellung» den Preis für die Briefe und bestätige ihn, bevor du sendest."
+      "needs_subject": "Gib im Editor zuerst einen Betreff ein. Danach wird der Preis berechnet.",
+      "pending": "Bitte prüfe unter «Postversand» den Preis für die Briefe und bestätige ihn, bevor du sendest."
     }
   },
   "category": {

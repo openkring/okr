@@ -134,7 +134,8 @@
       "editor": "Editor",
       "preview": "Anteprima",
       "list": "Destinatari",
-      "delivery": "Consegna"
+      "delivery": "Consegna",
+      "post": "Invio postale"
     },
     "preview": {
       "empty": "Non c’è ancora nulla da mostrare.",
@@ -221,7 +222,8 @@
       "price_changed": "Il prezzo è cambiato. Controllalo ancora una volta.",
       "unavailable": "L’invio di lettere con Pingen non è disponibile per te qui. Puoi scaricare le lettere in PDF.",
       "none": "Nessuno ha un indirizzo postale, non viene creata alcuna lettera.",
-      "pending": "Controlla sotto «Recapito» il prezzo delle lettere e confermalo prima di inviare."
+      "needs_subject": "Inserisci prima un oggetto nell’editor. Il prezzo verrà calcolato dopo.",
+      "pending": "Controlla sotto «Invio postale» il prezzo delle lettere e confermalo prima di inviare."
     }
   },
   "category": {

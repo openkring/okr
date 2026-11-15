@@ -134,7 +134,8 @@
       "editor": "Editor",
       "preview": "Preview",
       "list": "Recipients",
-      "delivery": "Delivery"
+      "delivery": "Delivery",
+      "post": "Postal mail"
     },
     "preview": {
       "empty": "Nothing to preview yet.",
@@ -221,7 +222,8 @@
       "price_changed": "The price has changed. Please check it again.",
       "unavailable": "Sending letters via Pingen is not available to you here. You can download the letters as a PDF.",
       "none": "Nobody has a postal address, so no letter is created.",
-      "pending": "Please check the price of the letters under “Delivery” and confirm it before you send."
+      "needs_subject": "Please enter a subject in the editor first. The price is calculated after that.",
+      "pending": "Please check the price of the letters under “Postal mail” and confirm it before you send."
     }
   },
   "category": {

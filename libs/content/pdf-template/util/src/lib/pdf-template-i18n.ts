@@ -173,6 +173,7 @@ export const EMAIL_COMPOSER_I18N_KEYS = {
 
   // Versand (spec 1.145): the Zustellung table and the info modal
   segment_delivery:     PFX + 'composer.segment.delivery',
+  segment_post:         PFX + 'composer.segment.post',
   delivery_recipient:   PFX + 'composer.delivery.recipient',
   delivery_total:       PFX + 'composer.delivery.total',
   delivery_chat:        PFX + 'composer.delivery.chat',
@@ -237,6 +238,7 @@ export const EMAIL_COMPOSER_I18N_KEYS = {
   post_price_changed: PFX + 'composer.post.price_changed',
   post_unavailable: PFX + 'composer.post.unavailable',
   post_none: PFX + 'composer.post.none',
+  post_needs_subject: PFX + 'composer.post.needs_subject',
   post_pending: PFX + 'composer.post.pending',
 
   send:             PFX + 'doc.send.label',

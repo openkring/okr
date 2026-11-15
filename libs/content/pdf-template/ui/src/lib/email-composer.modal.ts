@@ -81,7 +81,7 @@ export interface VersandRecipient {
  * The views of the composer: write the mail, see it rendered, choose the delivery types per recipient
  * (a Versand only, spec 1.145 §4.3), and the email addresses.
  */
-type ComposerSegment = 'editor' | 'preview' | 'delivery' | 'list';
+type ComposerSegment = 'editor' | 'preview' | 'delivery' | 'post' | 'list';
 
 type AddressFieldKey = 'to' | 'cc' | 'bcc';
 
@@ -184,6 +184,9 @@ interface AddressField {
           <ion-segment-button value="preview"><ion-label>{{ i18n.segment_preview() }}</ion-label></ion-segment-button>
           @if (isVersand()) {
             <ion-segment-button value="delivery"><ion-label>{{ i18n.segment_delivery() }} ({{ versandRows().length }})</ion-label></ion-segment-button>
+            @if (anyPost()) {
+              <ion-segment-button value="post"><ion-label>{{ i18n.segment_post() }}</ion-label></ion-segment-button>
+            }
           }
           <ion-segment-button value="list"><ion-label>{{ i18n.segment_list() }} ({{ recipientCount() }})</ion-label></ion-segment-button>
         </ion-segment>
@@ -303,20 +306,22 @@ interface AddressField {
                   @if (postSkipped().length > 0) {
                     <ion-note color="warning" class="note">{{ i18n.post_skipped() }} {{ postSkipped().join(', ') }}</ion-note>
                   }
-                  @if (anyPost()) {
-                    <okr-postversand-step [i18n]="i18n" [quote]="postQuote()" [loading]="postLoading()" [error]="postError()"
-                      [options]="postOptions()" (optionsChange)="onPostOptionsChange($event)"
-                      [mode]="postMode()" (modeChange)="onPostModeChange($event)"
-                      [accepted]="postAccepted()" (acceptedChange)="onPostAcceptedChange($event)"
-                      [canTopUp]="canTopUp()" [canSaveDefaults]="canTopUp()" (saveDefaults)="saveDefaults($event)"
-                      [pingenAvailable]="pingenAvailable()" (topUp)="topUp()" />
-                    @if (postPriceChanged()) {
-                      <ion-note color="warning" class="note">{{ i18n.post_price_changed() }}</ion-note>
-                    }
-                  }
                 }
               </ion-card-content>
             </ion-card>
+          }
+
+          <!-- Postversand (Versand with at least one letter): Pingen or PDF, delivery, print, sides, price and consent. -->
+          @if (activeSegment() === 'post' && anyPost()) {
+            <okr-postversand-step [i18n]="i18n" [quote]="postQuote()" [loading]="postLoading()" [error]="postError()"
+              [options]="postOptions()" (optionsChange)="onPostOptionsChange($event)"
+              [mode]="postMode()" (modeChange)="onPostModeChange($event)"
+              [accepted]="postAccepted()" (acceptedChange)="onPostAcceptedChange($event)"
+              [canTopUp]="canTopUp()" [canSaveDefaults]="canTopUp()" (saveDefaults)="saveDefaults($event)"
+              [pingenAvailable]="pingenAvailable()" [needsSubject]="postNeedsSubject()" (topUp)="topUp()" />
+            @if (postPriceChanged()) {
+              <ion-note color="warning" class="note">{{ i18n.post_price_changed() }}</ion-note>
+            }
           }
 
           <!-- Verteiler: sender and addresses of the email part. -->
@@ -560,6 +565,8 @@ export class EmailComposerModal {
   // field accessors
   protected readonly from     = computed(() => this.formData().from);
   protected readonly subject  = computed(() => this.formData().subject);
+  /** The server refuses to price letters without a subject (it is printed in them): no request until there is one. */
+  protected readonly postNeedsSubject = computed(() => this.subject().trim().length === 0);
   protected readonly body     = computed(() => this.formData().body);
   protected readonly layout   = computed(() => this.formData().layout);
 
@@ -648,6 +655,10 @@ export class EmailComposerModal {
   } as ChangeConfirmationI18n));
 
   constructor() {
+    // The Postversand segment exists only while someone gets a letter: once the last one is unticked, go back to Zustellung.
+    effect(() => {
+      if (this.activeSegment() === 'post' && !this.anyPost()) this.activeSegment.set('delivery');
+    });
     // The subject prefix resolves asynchronously, so buildInitial() may have run before it arrived
     // (it reads the prefix untracked — a tracked read would let a late translation reset the whole
     // form, wiping user input). Patch the subject in once the prefix lands, and only while the form
@@ -730,13 +741,14 @@ export class EmailComposerModal {
       const wanted = this.anyPost() && this.postMode() === 'pingen' && this.pingenAvailable() && !this.letters();
       const keys = this.postKeys();
       const options = this.postOptions();
+      const needsSubject = this.postNeedsSubject();
       this.subject(); this.body(); this.caleventKeys(); this.letterQrCodes();
       this.filename(); this.storagePath(); this.extraAttachments();
       untracked(() => {
         clearTimeout(this.quoteTimer);
         this.quoteRequest++;                          // a response still in flight is stale
         this.postAccepted.set(false);
-        if (!wanted || keys.length === 0 || !isBrowser(this.platformId)) {
+        if (!wanted || needsSubject || keys.length === 0 || !isBrowser(this.platformId)) {
           this.postLoading.set(false);
           this.postQuote.set(undefined);
           return;
@@ -825,7 +837,7 @@ export class EmailComposerModal {
     const keys = this.postKeys();
     this.quoteRequest++;
     this.postAccepted.set(false);
-    if (keys.length === 0) return;
+    if (keys.length === 0 || this.postNeedsSubject()) return;
     this.postLoading.set(true);
     void this.loadQuote(keys, this.postOptions());
   }

@@ -134,7 +134,8 @@
       "editor": "Editor",
       "preview": "Vista previa",
       "list": "Destinatarios",
-      "delivery": "Entrega"
+      "delivery": "Entrega",
+      "post": "Envío postal"
     },
     "preview": {
       "empty": "Todavía no hay nada que mostrar.",
@@ -221,7 +222,8 @@
       "price_changed": "El precio ha cambiado. Compruébalo de nuevo.",
       "unavailable": "El envío de cartas con Pingen no está disponible para ti aquí. Puedes descargar las cartas en PDF.",
       "none": "Nadie tiene dirección postal, no se crea ninguna carta.",
-      "pending": "Comprueba en «Entrega» el precio de las cartas y confírmalo antes de enviar."
+      "needs_subject": "Introduce primero un asunto en el editor. Después se calculará el precio.",
+      "pending": "Comprueba en «Envío postal» el precio de las cartas y confírmalo antes de enviar."
     }
   },
   "category": {
