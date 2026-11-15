@@ -15,5 +15,43 @@
     },
     "photos": "Fotos importieren",
     "keepAwake": "Lass das Gerät wach und dieses Fenster offen, bis der Import fertig ist."
+  },
+  "dav": {
+    "title": "Adressbuch auf Mac und iPhone",
+    "intro": "Mit diesem Passwort zeigt dein iPhone die Namen deiner Kontakte bei Anrufen an. Es kann nur lesen.",
+    "server": "Server",
+    "username": "Benutzername",
+    "password": "Passwort",
+    "copy": "Kopieren",
+    "copied": "In die Zwischenablage kopiert.",
+    "create": "Passwort erstellen",
+    "regenerate": "Neues Passwort erstellen",
+    "regenerateConfirm": "Das alte Passwort hört sofort auf zu funktionieren. Du musst danach das neue Passwort auf dem Mac und dem iPhone eintragen.",
+    "shownOnce": "Notiere das Passwort jetzt oder kopiere es direkt in die Einstellungen. Es wird nur einmal angezeigt.",
+    "noPassword": "Noch kein Passwort erstellt.",
+    "revoke": "Passwort widerrufen",
+    "revokeConfirm": "Mac und iPhone können das Adressbuch danach nicht mehr laden. Die Kontakte verschwinden beim nächsten Abgleich.",
+    "lastUsed": "Zuletzt verwendet: {date}",
+    "neverUsed": "Noch nie verwendet.",
+    "steps": {
+      "title": "So richtest du es ein",
+      "mac": "Auf dem Mac: Systemeinstellungen → Internetaccounts → Account hinzufügen → Anderen Account hinzufügen → CardDAV-Account. Wähle «Manuell» und füge Benutzername, Passwort und die Serveradresse ein, vollständig mit https://.",
+      "iphone": "Auf dem iPhone: Einstellungen → Apps → Kontakte → Kontakte-Accounts → Account hinzufügen → Andere → CardDAV-Account hinzufügen. Füge den Server vollständig mit https:// ein, dazu Benutzername und Passwort."
+    },
+    "book": {
+      "title": "Stand des Adressbuchs",
+      "state": "{count} Kontakte, aktualisiert am {date}",
+      "empty": "Das Adressbuch wurde noch nicht erstellt."
+    },
+    "refresh": "Jetzt aktualisieren",
+    "refreshDone": "Das Adressbuch ist aktualisiert. Mac und iPhone holen die Änderungen beim nächsten Abgleich.",
+    "refreshTooSoon": "Das Adressbuch wurde gerade erst aktualisiert. Versuch es in ein paar Minuten nochmals.",
+    "interval": {
+      "label": "Automatisch aktualisieren",
+      "weekly": "wöchentlich",
+      "daily": "täglich",
+      "manual": "nie"
+    },
+    "error": "Das hat nicht geklappt. Versuch es bitte nochmals."
   }
 }

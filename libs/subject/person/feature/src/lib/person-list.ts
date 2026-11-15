@@ -253,6 +253,7 @@ export class PersonList {
       case 'sendEmailToList':
       case 'commCenter': await this.store.openCommCenter(); break;
       case 'importVcards': await this.store.importVcards(); break;
+      case 'openContactsDav': await this.store.openContactsDav(); break;
       case 'checkFavAddresses': await this.store.checkFavAddresses(); break;
       default: this.alertService.error(`PersonList.onPopoverDismiss: unknown method ${selectedMethod}`);
     }

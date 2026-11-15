@@ -15,5 +15,43 @@
     },
     "photos": "Importar fotos",
     "keepAwake": "Mantén el dispositivo activo y esta ventana abierta hasta que termine la importación."
+  },
+  "dav": {
+    "title": "Agenda en Mac y iPhone",
+    "intro": "Con esta contraseña tu iPhone muestra el nombre de tus contactos cuando llaman. Solo puede leer.",
+    "server": "Servidor",
+    "username": "Nombre de usuario",
+    "password": "Contraseña",
+    "copy": "Copiar",
+    "copied": "Copiado al portapapeles.",
+    "create": "Crear contraseña",
+    "regenerate": "Crear nueva contraseña",
+    "regenerateConfirm": "La contraseña antigua deja de funcionar de inmediato. Después introduce la nueva en el Mac y el iPhone.",
+    "shownOnce": "Apunta la contraseña ahora o cópiala directamente en los ajustes. Solo se muestra una vez.",
+    "noPassword": "Aún no hay contraseña.",
+    "revoke": "Revocar contraseña",
+    "revokeConfirm": "El Mac y el iPhone ya no podrán cargar la agenda. Los contactos desaparecen en la próxima sincronización.",
+    "lastUsed": "Último uso: {date}",
+    "neverUsed": "Aún no se ha usado.",
+    "steps": {
+      "title": "Cómo configurarlo",
+      "mac": "En el Mac: Ajustes del Sistema → Cuentas de internet → Añadir cuenta → Añadir otra cuenta → Cuenta CardDAV. Elige «Manual» y pega el nombre de usuario, la contraseña y la dirección completa del servidor con https://.",
+      "iphone": "En el iPhone: Ajustes → Apps → Contactos → Cuentas de contactos → Añadir cuenta → Otra → Añadir cuenta CardDAV. Pega la dirección completa del servidor con https://, luego el nombre de usuario y la contraseña."
+    },
+    "book": {
+      "title": "Estado de la agenda",
+      "state": "{count} contactos, actualizada el {date}",
+      "empty": "La agenda aún no se ha creado."
+    },
+    "refresh": "Actualizar ahora",
+    "refreshDone": "La agenda está al día. El Mac y el iPhone recogen los cambios en la próxima sincronización.",
+    "refreshTooSoon": "La agenda se acaba de actualizar. Vuelve a intentarlo en unos minutos.",
+    "interval": {
+      "label": "Actualizar automáticamente",
+      "weekly": "cada semana",
+      "daily": "cada día",
+      "manual": "nunca"
+    },
+    "error": "No ha funcionado. Inténtalo de nuevo, por favor."
   }
 }

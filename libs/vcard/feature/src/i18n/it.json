@@ -15,5 +15,43 @@
     },
     "photos": "Importa foto",
     "keepAwake": "Tieni il dispositivo acceso e questa finestra aperta finché l’importazione non è terminata."
+  },
+  "dav": {
+    "title": "Rubrica su Mac e iPhone",
+    "intro": "Con questa password il tuo iPhone mostra il nome dei tuoi contatti quando chiamano. Può solo leggere.",
+    "server": "Server",
+    "username": "Nome utente",
+    "password": "Password",
+    "copy": "Copia",
+    "copied": "Copiato negli appunti.",
+    "create": "Crea password",
+    "regenerate": "Crea nuova password",
+    "regenerateConfirm": "La vecchia password smette subito di funzionare. Poi inserisci quella nuova sul Mac e sull’iPhone.",
+    "shownOnce": "Annota la password adesso o copiala direttamente nelle impostazioni. Viene mostrata una sola volta.",
+    "noPassword": "Nessuna password creata.",
+    "revoke": "Revoca password",
+    "revokeConfirm": "Il Mac e l’iPhone non potranno più caricare la rubrica. I contatti spariscono alla prossima sincronizzazione.",
+    "lastUsed": "Ultimo utilizzo: {date}",
+    "neverUsed": "Mai utilizzata.",
+    "steps": {
+      "title": "Come configurarla",
+      "mac": "Sul Mac: Impostazioni di Sistema → Account internet → Aggiungi account → Aggiungi altro account → Account CardDAV. Scegli «Manuale» e incolla nome utente, password e l’indirizzo completo del server con https://.",
+      "iphone": "Sull’iPhone: Impostazioni → App → Contatti → Account contatti → Aggiungi account → Altro → Aggiungi account CardDAV. Incolla l’indirizzo completo del server con https://, poi nome utente e password."
+    },
+    "book": {
+      "title": "Stato della rubrica",
+      "state": "{count} contatti, aggiornata il {date}",
+      "empty": "La rubrica non è ancora stata creata."
+    },
+    "refresh": "Aggiorna ora",
+    "refreshDone": "La rubrica è aggiornata. Mac e iPhone recuperano le modifiche alla prossima sincronizzazione.",
+    "refreshTooSoon": "La rubrica è appena stata aggiornata. Riprova tra qualche minuto.",
+    "interval": {
+      "label": "Aggiorna automaticamente",
+      "weekly": "ogni settimana",
+      "daily": "ogni giorno",
+      "manual": "mai"
+    },
+    "error": "Non ha funzionato. Riprova, per favore."
   }
 }

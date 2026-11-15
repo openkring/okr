@@ -927,6 +927,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/vcard/feature/src/i18n",
+            "output": "./assets/i18n/vcard/feature"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/project/task/feature/src/i18n",
             "output": "./assets/i18n/task/feature"
           },

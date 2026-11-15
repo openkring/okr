@@ -3,3 +3,4 @@ export * from './lib/vcard-export-scope.modal';
 export * from './lib/vcard-import-review.modal';
 export * from './lib/download.util';
 export * from './lib/vcard-import.service';
+export * from './lib/contacts-dav.service';

@@ -23,7 +23,7 @@ import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewP
 import { browseUrl, getDirectoryPostalAddress, readsAddressVault, stringifyPostalAddress } from '@okr/subject-address-util';
 
 import { AvatarService } from '@okr/avatar-data-access';
-import { VcardExportService, VcardImportService } from '@okr/vcard-feature';
+import { ContactsDavService, VcardExportService, VcardImportService } from '@okr/vcard-feature';
 import { ActivityService } from '@okr/activity-data-access';
 
 
@@ -70,6 +70,7 @@ export const PersonStore = signalStore(
     activityService: inject(ActivityService),
     vcardExportService: inject(VcardExportService),
     vcardImportService: inject(VcardImportService),
+    contactsDavService: inject(ContactsDavService),
     i18nService: inject(I18nService),
   })),
 
@@ -347,6 +348,11 @@ export const PersonStore = signalStore(
         async importVcards(): Promise<void> {
           await store.vcardImportService.importVcards(
             store.currentUser()?.roles, store.tenantId(), store.currentUser());
+        },
+
+        /** «Adressbuch auf Mac und iPhone» (spec 1.159): admin, behind the `contactsDav` feature block. */
+        async openContactsDav(): Promise<void> {
+          await store.contactsDavService.open(store.tenantId());
         },
 
         /**
