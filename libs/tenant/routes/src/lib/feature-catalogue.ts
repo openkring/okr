@@ -720,6 +720,12 @@ const vcard: BlockRoutes = {
   routes: (): Route[] => [],
 };
 
+const contactsDav: BlockRoutes = {
+  // No route — the «Adressbuch auf Mac und iPhone» modal opens from the person list's context menu (spec 1.159).
+  id: 'contactsDav',
+  routes: (): Route[] => [],
+};
+
 const resource: BlockRoutes = {
   id: 'resource',
   routes: (): Route[] => [
@@ -1890,7 +1896,7 @@ const newsCenter: BlockRoutes = {
 export const FEATURE_ROUTES: BlockRoutes[] = [
   calevent, fileTransfer, learning, newsCenter, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, murdoku, memory, backgammon, klondike, mahjong, jasstafel, tetris, mampf, wordle, chess,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
-  subject, relationship, vcard,
+  subject, relationship, vcard, contactsDav,
   resource, mobility,
   finance, costAccounting, expense, asset, memberFee, esign, pdfTemplate,
   documentBlock, contracts, meeting, diary, journal,

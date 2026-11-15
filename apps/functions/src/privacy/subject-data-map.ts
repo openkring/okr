@@ -79,6 +79,17 @@ const PUSH_TOKEN_60D = {
  * Passkeys (spec 1.120): kept until the member removes one in their profile, an admin revokes it
  * (lost device), or the login is deleted.
  */
+/** Contacts mirror (spec 1.159): an app password lives until it is revoked or replaced. */
+const CARDDAV_UNTIL_REVOKED = {
+  months: 'indefinite',
+  legalBasis: 'Adressbuch auf Mac und iPhone — bis du das Passwort widerrufst oder ein neues erstellst',
+} as const;
+/** Contacts mirror (spec 1.159): a card is rewritten or removed at every rebuild (weekly by default). */
+const CARDDAV_BOOK = {
+  months: 'indefinite',
+  legalBasis: 'Anruferkennung im Adressbuch des Kontoinhabers — solange der Kontakt in der App geführt wird',
+} as const;
+
 const PASSKEY_UNTIL_REMOVED = {
   months: 'indefinite',
   legalBasis: 'Anmeldung mit Passkey — bis du den Passkey entfernst oder dein Konto gelöscht wird',
@@ -1731,6 +1742,35 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     // leaves an inert open request in the queue instead of personal data.
     anonymizeFields: ['requesterUid', 'requesterName', 'note'],
     retention: CLUB_RECORD,
+  },
+
+  // ─────────────────────────── contacts mirror (spec 1.159) ───────────────────────────
+  {
+    // the admin's app password for the CardDAV book: doc id = sha256(token), never the token
+    collection: 'carddavTokens',
+    dataClass: 'identity',
+    tier: 'T2',   // a convenience the admin switched on; revocable at any time
+    onTenantExit: 'delete',   // opens only this tenant's book
+    find: (c: SubjectCtx) => db().collection('carddavTokens').where('uid', '==', c.uid).where('tenantId', '==', c.tenantId),
+    tenantScope: 'inQuery',
+    matches: (doc, c) => doc.get('uid') === c.uid && doc.get('tenantId') === c.tenantId,
+    onExport: 'full',         // uid, tenant and dates — the doc id is a hash, the password itself is never stored
+    onErasure: 'delete',
+    retention: CARDDAV_UNTIL_REVOKED,
+  },
+  {
+    // the subject's rendered lookup card (name, nickname, employer, phones, emails) in the tenant's
+    // book: `contactsDavBooks/{tenantId}/cards/person-<okey>`; the root's `index` holds only the uid
+    collection: 'contactsDavBooks/cards',
+    dataClass: 'contact',
+    tier: 'T4',   // the account holder's caller lookup — a copy of contact data the tenant keeps
+    onTenantExit: 'delete',
+    find: (c: SubjectCtx) => db().collection('contactsDavBooks').doc(c.tenantId).collection('cards')
+      .where(FieldPath.documentId(), '==', `person-${c.personKey}`),
+    tenantScope: 'none',      // path is already pinned to the tenant and the subject's personKey
+    onExport: 'full',
+    onErasure: 'delete',      // the next rebuild would drop it anyway once the person is gone
+    retention: CARDDAV_BOOK,
   },
 ];
 

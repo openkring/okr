@@ -83,6 +83,9 @@
     "vcard": {
       "label": "Exportación vCard"
     },
+    "contactsDav": {
+      "label": "Agenda en Mac y iPhone"
+    },
     "resource": {
       "label": "Recursos"
     },

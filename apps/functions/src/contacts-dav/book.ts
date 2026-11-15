@@ -18,7 +18,7 @@ import {
   bookCtag, buildLookupVCard, cardEtag, DEFAULT_REBUILD_INTERVAL, LOOKUP_SCOPE, RebuildInterval, VcardRecord, VcardTargetKind,
 } from '@okr/vcard-util';
 
-import { FsData, toVcardRecord } from '../vcard/record';
+import { avatarDocIds, FsData, toVcardRecord } from '../vcard/record';
 import { CONTACTS_DAV_BLOCK } from './dav-auth';
 import type { BookCard, BookRoot } from './dav-handler';
 
@@ -120,7 +120,9 @@ export async function loadBookCards(db: Firestore, tenantId: string): Promise<Bo
     if (hasLookupChannel(record)) records.push(record);
   }
 
-  const avatarRefs: DocumentReference[] = records.map((r) => db.collection(AvatarCollection).doc(`${r.kind}.${r.uid!.slice(r.kind.length + 1)}`));
+  // both candidate avatar docs per record (the tenant's own picture wins), read by getAll in batches
+  const keyOf = (r: VcardRecord) => r.uid!.slice(r.kind.length + 1);
+  const avatarRefs: DocumentReference[] = records.flatMap((r) => avatarDocIds(tenantId, r.kind, keyOf(r)).map((id) => db.collection(AvatarCollection).doc(id)));
   const avatars = new Map<string, { path: string; version: string }>();
   for (let i = 0; i < avatarRefs.length; i += GETALL_BATCH) {
     const snaps = await db.getAll(...avatarRefs.slice(i, i + GETALL_BATCH));
@@ -131,7 +133,7 @@ export async function loadBookCards(db: Firestore, tenantId: string): Promise<Bo
   }
 
   return Promise.all(records.map((r) => {
-    const avatar = avatars.get(`${r.kind}.${r.uid!.slice(r.kind.length + 1)}`);
+    const avatar = avatarDocIds(tenantId, r.kind, keyOf(r)).map((id) => avatars.get(id)).find((a) => !!a);
     return renderBookCard(r, avatar?.path ?? '', avatar?.version ?? '');
   }));
 }

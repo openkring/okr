@@ -129,7 +129,7 @@ async function assembleRecord(
     };
   }
 
-  const photoBase64 = scope.photo ? await fetchAvatarBase64(db, subjectKey) : undefined;
+  const photoBase64 = scope.photo ? await fetchAvatarBase64(db, tenantId, kind, key) : undefined;
   return toVcardRecord({ kind, key, data: data!, addresses, workrels, personalRels, scope, favoritesOnly, photoBase64 });
 }
 

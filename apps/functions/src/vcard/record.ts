@@ -123,10 +123,19 @@ export async function fetchAvatarBase64ByPath(storagePath: string, signal?: Abor
   }
 }
 
-/** The avatar of `<modelType>.<okey>` (avatar doc id), fetched through imgix. */
-export async function fetchAvatarBase64(db: FirebaseFirestore.Firestore, subjectKey: string): Promise<string | undefined> {
-  const snap = await db.collection(AvatarCollection).doc(subjectKey).get();
-  const storagePath = snap.data()?.['storagePath'] as string | undefined;
+/**
+ * The avatar doc ids of a subject, preferred first: the tenant's own picture
+ * (`<tenant>.<modelType>.<okey>`, what `newAvatarModel` writes — the vCard import included),
+ * then the shared default (`<modelType>.<okey>`).
+ */
+export function avatarDocIds(tenantId: string, kind: string, key: string): [string, string] {
+  return [`${tenantId}.${kind}.${key}`, `${kind}.${key}`];
+}
+
+/** The subject's avatar, fetched through imgix — the tenant's own picture if there is one. */
+export async function fetchAvatarBase64(db: FirebaseFirestore.Firestore, tenantId: string, kind: string, key: string): Promise<string | undefined> {
+  const snaps = await db.getAll(...avatarDocIds(tenantId, kind, key).map((id) => db.collection(AvatarCollection).doc(id)));
+  const storagePath = snaps.map((s) => s.get('storagePath') as string | undefined).find((p) => !!p);
   return storagePath ? fetchAvatarBase64ByPath(storagePath) : undefined;
 }
 

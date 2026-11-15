@@ -1203,6 +1203,33 @@ const vcard: FeatureBlock = {
 };
 
 /**
+ * The contacts mirror (spec 1.159): the tenant's contacts as a read-only CardDAV address book
+ * for Apple Contacts on Mac and iPhone (caller lookup). `beta`: offered only through a
+ * `feature-rollout/contactsDav` doc whose `allowTenants` names the tenant (today `bka`), so no
+ * club tenant — legacy or not — ever gets it by default (D-9). The functions `contactsDav` and
+ * `contactsDavAdmin` check this block on every request, so switching it off ends access.
+ *
+ * Its one menu row lives in the person list's context menu. `c-persons` is CO-DECLARED here:
+ * own fields identical to the `subject` declaration, children only this block's row — the
+ * completeness spec compares own fields, not children, and `blockOwnersOfMenuKey` then gives
+ * `person-contacts-dav` this block as its only owner, so the row hides wherever the block is off.
+ */
+const contactsDav: FeatureBlock = {
+  id: 'contactsDav',
+  bundle: 'members',
+  label: '@tenant/util.feature.contactsDav.label',
+  icon: 'tel',
+  defaultAvailability: 'beta',
+  dependsOn: ['subject', 'vcard'],
+  collections: ['contactsDavBooks', 'carddavTokens'],
+  menu: [
+    { key: 'c-persons', name: 'c-persons', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'person-contacts-dav', name: 'person-contacts-dav', url: 'openContactsDav', action: 'call', roleNeeded: 'admin', icon: 'tel', label: '@item.person-contacts-dav' },
+    ] },
+  ],
+};
+
+/**
  * Container domain for `libs/resource/{data-access,feature,ui,util}` — a SINGLE Firestore
  * collection (`resources`) covers every resource `type` (`RESOURCE_TYPES` in
  * `resource.service.ts`: `boat`, `rboat`, `car`, `locker`, `key`, `realestate`, `pet`);
@@ -3458,7 +3485,7 @@ const newsCenter: FeatureBlock = {
 export const FEATURE_BLOCKS: FeatureBlock[] = [
   calevent, fileTransfer, learningBlock, newsCenter, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, murdoku, memory, backgammon, klondike, mahjong, jasstafel, tetris, mampf, wordle, chess,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
-  subject, relationship, vcard,
+  subject, relationship, vcard, contactsDav,
   resource, mobility,
   finance, costAccounting, expense, asset, memberFee, esign, pdfTemplate,
   documentBlock, contracts, meeting, diary, journal,

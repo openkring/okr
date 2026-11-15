@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ExportScope } from '@okr/vcard-util';
 
-import { toVcardRecord } from './record';
+import { avatarDocIds, toVcardRecord } from './record';
 
 const SCOPE: ExportScope = { identity: true, addresses: ['phone', 'email'], birthday: false, photo: false, workRels: true, personalRels: false, orgLinks: false };
 
@@ -43,5 +43,11 @@ describe('toVcardRecord', () => {
   it('builds an org card with uid org-<okey>', () => {
     const r = toVcardRecord({ kind: 'org', key: 'o1', data: { name: 'Acme AG' }, addresses: [], workrels: [], scope: SCOPE, favoritesOnly: false });
     expect(r).toMatchObject({ kind: 'org', uid: 'org-o1', displayName: 'Acme AG', orgName: 'Acme AG' });
+  });
+});
+
+describe('avatarDocIds', () => {
+  it('lists the tenant\'s own picture first, then the shared one', () => {
+    expect(avatarDocIds('bka', 'person', 'abc')).toEqual(['bka.person.abc', 'person.abc']);
   });
 });

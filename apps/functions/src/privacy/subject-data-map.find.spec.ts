@@ -286,6 +286,7 @@ describe('find() query shapes', () => {
       'courses/finance': 'courses', // finance/settings is reached through the tenant's courses
       esignAudit: 'deletions',
       'websites/publishes': 'publishes', // collection group of the websites publish log
+      'contactsDavBooks/cards': 'contactsDavBooks', // contactsDavBooks/{tenantId}/cards, reached through the tenant's book (spec 1.159)
     };
     for (const e of SUBJECT_DATA_MAP) {
       const expected = exceptions[e.collection] ?? e.collection;

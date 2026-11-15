@@ -54,6 +54,7 @@ import * as Esign from './esign';
 import * as Alias from './alias';
 import * as Forms from './forms';
 import * as Vcard from './vcard';
+import * as ContactsDav from './contacts-dav';
 import * as Person from './person';
 import * as Privacy from './privacy';
 import * as Tenant from './tenant';
@@ -418,6 +419,10 @@ export const getFormDefinition = Forms.getFormDefinition;
 
 // vCard export (spec 17)
 export const vcardExport = Vcard.vcardExport;
+
+// contacts mirror: read-only CardDAV for Apple Contacts (spec 1.159)
+export const contactsDav = ContactsDav.contactsDav;
+export const contactsDavAdmin = ContactsDav.contactsDavAdmin;
 
 // person duplicate detection + cross-tenant merge
 export const findPersonDuplicates = Person.findPersonDuplicates;

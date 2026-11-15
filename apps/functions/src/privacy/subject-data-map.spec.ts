@@ -259,7 +259,8 @@ describe('SUBJECT_DATA_MAP — tiers and tenant-exit disposition', () => {
     // copies made for them — owned via `track.personKey`, voluntary, not the club's Logbuch record.
     // `diarySources` joined 2026-11-04 (1.77 §12): one owner's pull settings, the same owner-locked shape as `diaries`.
     // `news-subscriptions` joined 2026-11-08 (NewsCenter): a member's own channel picks, doc id = uid — owner-locked and voluntary.
-    expect(SUBJECT_DATA_MAP.filter((e) => e.tier === 'T2').map((e) => e.collection)).toEqual(['avatars', 'prospects', 'trips/tracker', 'diaries', 'diaryAlbums', 'diarySources', 'diaryImports', 'hearingQuizResults', 'chatReminders', 'ratings', 'news-subscriptions']);
+    // `carddavTokens` joined 2026-11-15 (1.159): an admin's own app password for the CardDAV mirror — voluntary, revocable at any time.
+    expect(SUBJECT_DATA_MAP.filter((e) => e.tier === 'T2').map((e) => e.collection)).toEqual(['avatars', 'prospects', 'trips/tracker', 'diaries', 'diaryAlbums', 'diarySources', 'diaryImports', 'hearingQuizResults', 'chatReminders', 'ratings', 'news-subscriptions', 'carddavTokens']);
   });
 
   // Regression guard on the strictest-tier rule. `addresses` holds both the favorite
@@ -725,6 +726,8 @@ describe('subject-data-map — collection names are constants, not literals', ()
     'courses/finance', // courses/{key}/finance/settings, the compensation settings subdocument (CourseFinanceModel)
     'trips/tracker', // the tracker-type half of TripCollection, keyed by track.personKey (own row, other fate)
     'websites/publishes', // websites/{siteId}/publishes, the publish log subcollection (no model, Admin SDK only)
+    'carddavTokens', // contacts mirror app passwords (spec 1.159), Admin SDK only, no model class
+    'contactsDavBooks/cards', // contactsDavBooks/{tenantId}/cards/{uid}, the rendered CardDAV book (spec 1.159), no model class
   ]);
 
   it('every entry resolves to an exported collection constant', () => {

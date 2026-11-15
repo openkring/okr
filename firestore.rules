@@ -523,6 +523,15 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Contacts mirror (spec 1.159): app passwords stored as sha256 of the token, and the rendered
+    // CardDAV book. Admin SDK only — the modal goes through the contactsDavAdmin callable.
+    match /carddavTokens/{hash} {
+      allow read, write: if false;
+    }
+    match /contactsDavBooks/{tenantId=**} {
+      allow read, write: if false;
+    }
+
     // Server-only failure counters for the Benutzername login (spec 1.71 §5.1, plan D1).
     match /login-throttle/{id} {
       allow read, write: if false;
