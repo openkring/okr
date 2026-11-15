@@ -22,7 +22,8 @@ export class ContactsDavService {
 
   /** One op of the admin callable; the answer always carries the current status. */
   public async call(request: ContactsDavAdminRequest): Promise<ContactsDavStatus> {
-    const fn = httpsCallable<ContactsDavAdminRequest, ContactsDavStatus>(this.functions, 'contactsDavAdmin');
+    // the first rebuild of a few thousand contacts can take minutes; the SDK gives up after 70 s by default
+    const fn = httpsCallable<ContactsDavAdminRequest, ContactsDavStatus>(this.functions, 'contactsDavAdmin', { timeout: 300_000 });
     return (await fn(request)).data;
   }
 
