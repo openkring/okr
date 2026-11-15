@@ -184,8 +184,7 @@ export class ContactsDavModal {
     this.busy.set(true);
     try {
       const s = await this.service.call({ tenantId: this.tenantId(), op, interval });
-      const { token: _plain, ...rest } = s;
-      this.status.set(rest);
+      this.status.set({ ...s, token: undefined }); // the plain password lives only in `token()`
       return s;
     } catch (e) {
       const code = (e as { code?: string }).code ?? '';
