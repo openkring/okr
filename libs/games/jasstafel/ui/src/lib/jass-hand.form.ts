@@ -5,11 +5,10 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 import {
   CARD_POINTS, JASS_MULTIPLIERS, JassGame, JassHandFormModel, JassI18n, handFromForm, handValues, jassHandValidations, withCounterPoints,
 } from '@okr/games-jasstafel-util';
-import { Checkbox, CheckboxI18n, ErrorNote, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n } from '@okr/shared-ui';
+import { Checkbox, CheckboxI18n, DigitPad, ErrorNote, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
 import { JassAvatar } from './jass-avatar';
-import { JassKeypad } from './jass-keypad';
 
 /**
  * One hand: trump (or Coiffeur row and team), card points per side — with two sides the other side
@@ -20,7 +19,7 @@ import { JassKeypad } from './jass-keypad';
 @Component({
   selector: 'okr-jass-hand-form',
   standalone: true,
-  imports: [IonCard, IonCardContent, IonGrid, IonRow, IonCol, NumberInput, StringSelect, Checkbox, ErrorNote, JassAvatar, JassKeypad],
+  imports: [IonCard, IonCardContent, IonGrid, IonRow, IonCol, NumberInput, StringSelect, Checkbox, ErrorNote, JassAvatar, DigitPad],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } } .heads { display: flex; gap: 4px; }
     /* opened from a team's «+»: one team, read from across the table */
     .focused { font-size: 1.6rem; }
@@ -51,25 +50,26 @@ import { JassKeypad } from './jass-keypad';
                   </ion-col>
                 </ion-row>
               }
-              @if (formData().variant === 'schieber' || formData().variant === 'bueter') {
-                <ion-row>
-                  <ion-col size="12" size-md="6">
-                    <okr-string-select [i18n]="multiplierI18n()" [stringList]="multiplierOptions"
-                      [labels]="multiplierLabels" [selectedString]="'' + formData().multiplier"
-                      (selectedStringChange)="setMultiplier($event)" [readOnly]="false" />
-                    <okr-error-note [errors]="multiplierErrors()" />
-                  </ion-col>
-                </ion-row>
-              }
-              @for (id of formData().sideIds; track id; let i = $index) {
-                <!-- focused: only that team's row; the other side follows as 157 − x -->
+              <!-- one row, wrapping: avatars, Faktor, Match, Punkte — two per line from md, one below -->
+              <ion-row>
+              @for (id of formData().sideIds; track id; let i = $index, first = $first) {
+                <!-- focused: only that team's fields; the other side follows as 157 − x -->
                 @if (!formData().focusSideId || formData().focusSideId === id) {
-                <ion-row>
-                  <ion-col size="12"><div class="heads">
+                  <ion-col size="12" size-md="6"><div class="heads">
                     @for (p of playersOf(id); track p) {
                       <okr-jass-avatar [avatar]="game().players[p].avatar" [large]="!!formData().focusSideId" />
                     }
                   </div></ion-col>
+                  <!-- Faktor applies to the whole hand: shown once, after the first team's avatars -->
+                  @if ((formData().variant === 'schieber' || formData().variant === 'bueter')
+                    && (formData().focusSideId ? formData().focusSideId === id : first)) {
+                    <ion-col size="12" size-md="6">
+                      <okr-string-select [i18n]="multiplierI18n()" [stringList]="multiplierOptions"
+                        [labels]="multiplierLabels" [selectedString]="'' + formData().multiplier"
+                        (selectedStringChange)="setMultiplier($event)" [readOnly]="false" />
+                      <okr-error-note [errors]="multiplierErrors()" />
+                    </ion-col>
+                  }
                   @if (formData().variant === 'differenzler' && formData().phase !== 'points') {
                     <ion-col size="12" size-md="6">
                       <okr-number-input [i18n]="announcedI18n()" [value]="formData().announced[i]"
@@ -79,19 +79,19 @@ import { JassKeypad } from './jass-keypad';
                   }
                   @if (formData().phase !== 'announce') {
                     <ion-col size="12" size-md="6">
+                      <okr-checkbox [i18n]="matchI18n()" [checked]="formData().match === id"
+                        (checkedChange)="setMatch(id, $event)" [readOnly]="false" />
+                    </ion-col>
+                    <ion-col size="12" size-md="6">
                       @if (formData().focusSideId) {
                         <!-- opened from a team's «+»: digit buttons, so the phone keyboard never opens -->
-                        <okr-jass-keypad [value]="formData().points[i]" (valueChange)="onPoints(i, $event)"
+                        <okr-digit-pad [value]="formData().points[i]" (valueChange)="onPoints(i, $event)"
                           [label]="i18n().points_label()" [max]="cardPoints" [disabled]="!!formData().match" />
                       } @else {
                         <okr-number-input [i18n]="pointsI18n()" [value]="formData().points[i]"
                           (valueChange)="onPoints(i, $event)" [integer]="true" [min]="0" [max]="cardPoints"
                           [readOnly]="!!formData().match" />
                       }
-                    </ion-col>
-                    <ion-col size="12" size-md="6">
-                      <okr-checkbox [i18n]="matchI18n()" [checked]="formData().match === id"
-                        (checkedChange)="setMatch(id, $event)" [readOnly]="false" />
                     </ion-col>
                     @if (formData().variant === 'coiffeur') {
                       <ion-col size="12" size-md="6">
@@ -100,9 +100,9 @@ import { JassKeypad } from './jass-keypad';
                       </ion-col>
                     }
                   }
-                </ion-row>
                 }
               }
+              </ion-row>
               <ion-row>
                 <ion-col size="12">
                   <okr-error-note [errors]="pointsErrors()" />

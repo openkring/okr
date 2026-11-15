@@ -14,6 +14,8 @@ import { JassHandForm } from './jass-hand.form';
   // opened from the upper half of the slate: turned by 180° so the team across the table reads it upright
   host: { '[style.transform]': "flipped() ? 'rotate(180deg)' : null" },
   imports: [Header, ChangeConfirmation, JassHandForm, IonContent],
+  // at the Jass table the save bar must be easy to hit: 50% taller than the default 56px toolbar
+  styles: [`okr-change-confirmation ::ng-deep ion-toolbar { --min-height: 84px; }`],
   template: `
     <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if (showConfirmation()) {

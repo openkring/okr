@@ -4,17 +4,17 @@ import { IonButton, IonIcon } from '@ionic/angular';
 import { SvgIconPipe } from '@okr/shared-pipes';
 
 /**
- * A digit pad for the card points of a hand: the number shown large, ten digits, «C» and a
- * backspace. Used instead of a text field so the phone keyboard never opens — it pushed the
- * modal around and offered letters nobody needs at the Jass table. A digit that would go above
- * `max` is ignored.
+ * A digit pad for entering a non-negative integer: the number shown large, ten digits, «C» and a
+ * backspace, centred in its container. Use it instead of a text field where the phone keyboard
+ * must not open — it pushes a modal around and offers letters nobody needs (e.g. the Jass card
+ * points). A digit that would go above `max` is ignored.
  */
 @Component({
-  selector: 'okr-jass-keypad',
+  selector: 'okr-digit-pad',
   standalone: true,
   imports: [IonButton, IonIcon, SvgIconPipe],
   styles: [`
-    :host { display: block; }
+    :host { display: block; max-width: 360px; margin: 0 auto; } /* centred in its column */
     .label { font-size: 0.9rem; color: var(--ion-color-medium); }
     .display { font-size: 2.6rem; font-weight: 600; text-align: right; padding: 4px 12px; min-height: 56px;
       border-bottom: 2px solid var(--ion-color-medium); margin-bottom: 8px; font-variant-numeric: tabular-nums; }
@@ -38,10 +38,10 @@ import { SvgIconPipe } from '@okr/shared-pipes';
     </div>
   `,
 })
-export class JassKeypad {
+export class DigitPad {
   public readonly value = model(0);
   public readonly label = input('');
-  public readonly max = input(157);
+  public readonly max = input(Number.MAX_SAFE_INTEGER);
   public readonly disabled = input(false);
   public readonly clearLabel = input('C');
   public readonly backLabel = input('⌫');
