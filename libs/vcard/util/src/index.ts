@@ -9,3 +9,4 @@ export * from './lib/vcard-import-dates';
 export * from './lib/vcard-import-notes';
 export * from './lib/vcard-import-mapping';
 export * from './lib/vcard-import-matching';
+export * from './lib/vcard-lookup';

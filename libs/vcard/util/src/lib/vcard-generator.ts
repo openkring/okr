@@ -103,6 +103,7 @@ export function buildVCard(record: VcardRecord, scope: ExportScope): string {
 
   lines.push('BEGIN:VCARD');
   lines.push('VERSION:3.0');
+  if (record.uid) lines.push(`UID:${escapeVcardValue(record.uid)}`);
 
   if (record.kind === 'org') {
     // Apple renders a company card when N is empty and X-ABShowAs:COMPANY is present.
@@ -113,6 +114,7 @@ export function buildVCard(record: VcardRecord, scope: ExportScope): string {
   } else {
     lines.push(`N:${escapeVcardValue(record.lastName)};${escapeVcardValue(record.firstName)};;;`);
     lines.push(`FN:${escapeVcardValue(record.displayName)}`);
+    if (record.nickname) lines.push(`NICKNAME:${escapeVcardValue(record.nickname)}`);
     if (scope.workRels && record.employment) {
       const e = record.employment;
       lines.push(`ORG:${escapeVcardValue(e.org)}${e.department ? ';' + escapeVcardValue(e.department) : ''}`);

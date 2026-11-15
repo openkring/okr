@@ -99,6 +99,10 @@ export interface VcardRelatedName {
 /** The fully assembled, model-decoupled input to {@link buildVCard}. */
 export interface VcardRecord {
   kind: VcardTargetKind;
+  /** stable `<modelType>-<okey>`, emitted as `UID` when set (CardDAV mirror, spec 1.159 §5.1) */
+  uid?: string;
+  /** person cards: `PersonModel.nickname`, emitted as `NICKNAME` when set */
+  nickname?: string;
 
   // identity
   firstName?: string;
