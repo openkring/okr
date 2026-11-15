@@ -1,0 +1,19 @@
+{
+  "import": {
+    "reading": "Lecture des contacts …",
+    "filter": {
+      "all": "Tous",
+      "new": "Nouveaux",
+      "duplicates": "Doublons",
+      "warnings": "Avec remarques"
+    },
+    "bulk": {
+      "label": "Pour tous ceux affichés",
+      "import": "importer",
+      "merge": "fusionner",
+      "skip": "ignorer"
+    },
+    "photos": "Importer les photos",
+    "keepAwake": "Garde l’appareil allumé et cette fenêtre ouverte jusqu’à la fin de l’import."
+  }
+}

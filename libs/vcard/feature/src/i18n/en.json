@@ -1,0 +1,19 @@
+{
+  "import": {
+    "reading": "Reading contacts …",
+    "filter": {
+      "all": "All",
+      "new": "New",
+      "duplicates": "Duplicates",
+      "warnings": "With notes"
+    },
+    "bulk": {
+      "label": "For all shown",
+      "import": "import",
+      "merge": "merge",
+      "skip": "skip"
+    },
+    "photos": "Import photos",
+    "keepAwake": "Keep the device awake and this window open until the import has finished."
+  }
+}

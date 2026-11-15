@@ -1,0 +1,19 @@
+{
+  "import": {
+    "reading": "Lettura dei contatti …",
+    "filter": {
+      "all": "Tutti",
+      "new": "Nuovi",
+      "duplicates": "Doppioni",
+      "warnings": "Con avvisi"
+    },
+    "bulk": {
+      "label": "Per tutti quelli mostrati",
+      "import": "importa",
+      "merge": "unisci",
+      "skip": "salta"
+    },
+    "photos": "Importa foto",
+    "keepAwake": "Tieni il dispositivo acceso e questa finestra aperta finché l’importazione non è terminata."
+  }
+}

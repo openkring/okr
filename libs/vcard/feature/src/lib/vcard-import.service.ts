@@ -56,7 +56,7 @@ import {
   VcardI18n,
 } from '@okr/vcard-util';
 
-import { VcardImportReviewModal } from './vcard-import-review.modal';
+import { VcardImportReviewModal, VcardImportReviewResult } from './vcard-import-review.modal';
 
 /** The category whose items are the tenant's address usages (see addresses.store.getUsages). */
 const ADDRESS_USAGE_CATEGORY = 'address_usage';
@@ -201,11 +201,11 @@ export class VcardImportService {
     const confirmed = await this.openReviewModal(decisions, skippedCards, fileWarnings);
     if (!confirmed) return;
 
-    const loading = await this.loadingController.create({ message: this.progressMessage(0, confirmed.length) });
+    const loading = await this.loadingController.create({ message: this.progressMessage(0, confirmed.decisions.length) });
     await loading.present();
     let result: VcardImportResult;
     try {
-      result = await this.commit(confirmed, tenantId, currentUser, (done, total) => {
+      result = await this.commit(confirmed.decisions, tenantId, currentUser, confirmed.importPhotos, (done, total) => {
         loading.message = this.progressMessage(done, total);
       });
     } finally {
@@ -308,13 +308,13 @@ export class VcardImportService {
     return { persons, orgs, usages };
   }
 
-  private async openReviewModal(decisions: VcardImportDecision[], skippedCards: number, fileWarnings: string[]): Promise<VcardImportDecision[] | undefined> {
+  private async openReviewModal(decisions: VcardImportDecision[], skippedCards: number, fileWarnings: string[]): Promise<VcardImportReviewResult | undefined> {
     const modal = await this.modalController.create({
       component: VcardImportReviewModal,
       componentProps: { decisions, skippedCards, fileWarnings },
     });
     await modal.present();
-    const { data, role } = await modal.onWillDismiss<VcardImportDecision[]>();
+    const { data, role } = await modal.onWillDismiss<VcardImportReviewResult>();
     return role === 'confirm' ? data : undefined;
   }
 
@@ -351,8 +351,11 @@ export class VcardImportService {
     decisions: VcardImportDecision[],
     tenantId: string,
     currentUser: UserModel | undefined,
+    importPhotos: boolean,
     onProgress?: (done: number, total: number) => void,
   ): Promise<VcardImportResult> {
+    // «Fotos importieren» off (spec 1.159 §4.2): no card writes an avatar, neither created nor merged
+    if (!importPhotos) decisions = decisions.map((d) => ({ ...d, draft: { ...d.draft, photo: undefined } }));
     const result: VcardImportResult = { imported: 0, merged: 0, skipped: 0, failed: 0, failures: [] };
     // normalized name -> okey of the person/org this run created (or merged into).
     // buildDecisions leaves `relations[].personKey` empty for a name that only exists

@@ -1,11 +1,14 @@
-import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, input, signal, untracked } from '@angular/core';
 import {
   IonAccordion,
   IonAccordionGroup,
   IonBadge,
   IonCheckbox,
+  IonChip,
   IonContent,
   IonIcon,
+  IonInfiniteScroll,
+  IonInfiniteScrollContent,
   IonItem,
   IonLabel,
   IonList,
@@ -14,6 +17,8 @@ import {
   IonSegmentButton,
   IonSelect,
   IonSelectOption,
+  IonToggle,
+  InfiniteScrollCustomEvent,
   ModalController,
 } from '@ionic/angular';
 
@@ -21,7 +26,19 @@ import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ChangeConfirmation, Header } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
-import { fill, VcardImportDecision, VCARD_I18N_KEYS, VcardI18n } from '@okr/vcard-util';
+import {
+  applyBulkAction, fill, filterCounts, filterIndices, REVIEW_FILTERS, ReviewFilter,
+  VcardImportDecision, VCARD_I18N_KEYS, VcardI18n,
+} from '@okr/vcard-util';
+
+/** What the review hands back to `VcardImportService` on confirm. */
+export interface VcardImportReviewResult {
+  decisions: VcardImportDecision[];
+  importPhotos: boolean;
+}
+
+/** Rows rendered per page; more load on scroll (spec 1.159 §4.2 — 4143 rows must not render at once). */
+const PAGE = 100;
 
 /** One editable relation row, addressed by its index in `VcardImportDecision.relations`. */
 type Relation = VcardImportDecision['relations'][number];
@@ -45,6 +62,7 @@ type Relation = VcardImportDecision['relations'][number];
     IonList, IonItem, IonLabel, IonNote, IonBadge, IonCheckbox,
     IonSelect, IonSelectOption, IonSegment, IonSegmentButton,
     IonAccordion, IonAccordionGroup, IonIcon, SvgIconPipe,
+    IonChip, IonToggle, IonInfiniteScroll, IonInfiniteScrollContent,
   ],
   template: `
     <okr-header [i18n]="{ title: i18n.import_title() }" [isModal]="true" />
@@ -68,8 +86,24 @@ type Relation = VcardImportDecision['relations'][number];
         <ion-note color="warning" class="ion-display-block">{{ warning }}</ion-note>
       }
 
-      <ion-accordion-group [multiple]="true">
-        @for (decision of state(); track decision.draft.sourceFileName + $index; let i = $index) {
+      <div class="filters">
+        @for (f of filters; track f) {
+          <ion-chip [outline]="filter() !== f" (click)="setFilter(f)">{{ filterLabel(f) }} ({{ counts()[f] }})</ion-chip>
+        }
+      </div>
+      <ion-list lines="none">
+        <ion-item>
+          <ion-select [label]="i18n.import_bulk_label()" interface="popover" [value]="null" (ionChange)="bulk($event.detail.value)">
+            <ion-select-option value="import">{{ i18n.import_bulk_import() }}</ion-select-option>
+            <ion-select-option value="merge">{{ i18n.import_bulk_merge() }}</ion-select-option>
+            <ion-select-option value="skip">{{ i18n.import_bulk_skip() }}</ion-select-option>
+          </ion-select>
+        </ion-item>
+      </ion-list>
+
+      <ion-accordion-group [multiple]="true" (ionChange)="onExpanded($event.detail.value)">
+        @for (i of visibleRows(); track i) {
+          @let decision = state()[i];
           <ion-accordion [value]="'row-' + i">
             <ion-item slot="header" lines="full">
               <ion-icon src="{{ (decision.draft.kind === 'org' ? 'company' : 'person') | svgIcon }}" slot="start" />
@@ -84,6 +118,9 @@ type Relation = VcardImportDecision['relations'][number];
             </ion-item>
 
             <div slot="content" class="ion-padding-start ion-padding-end ion-padding-bottom">
+              @if (photoUrls()[i]; as url) {
+                <img class="photo" [src]="url" alt="" />
+              }
               @if (isDuplicate(decision)) {
                 <ion-segment [value]="decision.action" (ionChange)="setAction(i, $event.detail.value)">
                   <ion-segment-button value="merge">
@@ -164,10 +201,23 @@ type Relation = VcardImportDecision['relations'][number];
           </ion-accordion>
         }
       </ion-accordion-group>
+      <ion-infinite-scroll [disabled]="visibleRows().length >= shownRows().length" (ionInfinite)="loadMore($event)">
+        <ion-infinite-scroll-content />
+      </ion-infinite-scroll>
 
+      <ion-list lines="none">
+        <ion-item>
+          <ion-toggle [checked]="importPhotos()" (ionChange)="importPhotos.set($event.detail.checked)">{{ i18n.import_photos() }}</ion-toggle>
+        </ion-item>
+      </ion-list>
       <ion-note class="ion-text-center ion-display-block ion-margin-top">{{ summary() }}</ion-note>
+      <ion-note class="ion-text-center ion-display-block">{{ i18n.import_keepAwake() }}</ion-note>
     </ion-content>
   `,
+  styles: [`
+    .filters { display: flex; flex-wrap: wrap; gap: 4px; }
+    .photo { width: 96px; height: 96px; object-fit: cover; border-radius: 50%; margin: 8px 0; }
+  `],
 })
 export class VcardImportReviewModal {
   private readonly modalController = inject(ModalController);
@@ -182,9 +232,22 @@ export class VcardImportReviewModal {
   protected readonly state = signal<VcardImportDecision[]>([]);
   protected readonly notesExpanded = signal<Set<number>>(new Set());
 
+  // ---- large-file review (spec 1.159 §4.2) ----
+  protected readonly filters = REVIEW_FILTERS;
+  protected readonly filter = signal<ReviewFilter>('all');
+  protected readonly shown = signal(PAGE);
+  protected readonly importPhotos = signal(true);
+  protected readonly counts = computed(() => filterCounts(this.state()));
+  /** indices of the rows the current filter shows — fixed while the filter is unchanged */
+  protected readonly shownRows = computed(() => filterIndices(this.state(), this.filter()));
+  protected readonly visibleRows = computed(() => this.shownRows().slice(0, this.shown()));
+  /** object URLs of the photos of expanded rows; revoked on collapse and on destroy */
+  protected readonly photoUrls = signal<Record<number, string>>({});
+
   private seeded = false;
 
   public constructor() {
+    inject(DestroyRef).onDestroy(() => Object.values(this.photoUrls()).forEach((u) => URL.revokeObjectURL(u)));
     // Seed once from the input, never derive via computed: re-running the matcher
     // upstream (or any other re-emission of `decisions`) must not silently discard
     // the operator's edits (known repo bug class, see task-8 brief).
@@ -292,7 +355,50 @@ export class VcardImportReviewModal {
     }));
   }
 
+  protected filterLabel(f: ReviewFilter): string {
+    switch (f) {
+      case 'all': return this.i18n.import_filter_all();
+      case 'new': return this.i18n.import_filter_new();
+      case 'duplicates': return this.i18n.import_filter_duplicates();
+      case 'warnings': return this.i18n.import_filter_warnings();
+    }
+  }
+
+  protected setFilter(f: ReviewFilter): void {
+    this.filter.set(f);
+    this.shown.set(PAGE);
+  }
+
+  /** Apply one action to every row the current filter shows (not only the rendered page). */
+  protected bulk(value: unknown): void {
+    if (value !== 'import' && value !== 'merge' && value !== 'skip') return;
+    this.state.update((list) => applyBulkAction(list, this.shownRows(), value));
+    this.isDirty.set(true);
+  }
+
+  protected loadMore(event: InfiniteScrollCustomEvent): void {
+    this.shown.update((n) => n + PAGE);
+    void event.target.complete();
+  }
+
+  /** Keep an object URL only for expanded rows that carry a photo. */
+  protected onExpanded(value: unknown): void {
+    const open = new Set((Array.isArray(value) ? value : [value]).filter((v): v is string => typeof v === 'string')
+      .map((v) => Number(v.replace('row-', ''))));
+    const next: Record<number, string> = {};
+    for (const [key, url] of Object.entries(this.photoUrls())) {
+      if (open.has(Number(key))) next[Number(key)] = url;
+      else URL.revokeObjectURL(url);
+    }
+    for (const i of open) {
+      const photo = this.state()[i]?.draft.photo;
+      if (photo && !next[i]) next[i] = URL.createObjectURL(photo);
+    }
+    this.photoUrls.set(next);
+  }
+
   public async confirm(): Promise<void> {
-    await dismissOverlay(this.modalController, this.state(), 'confirm');
+    const result: VcardImportReviewResult = { decisions: this.state(), importPhotos: this.importPhotos() };
+    await dismissOverlay(this.modalController, result, 'confirm');
   }
 }

@@ -12,3 +12,4 @@ export * from './lib/vcard-import-matching';
 export * from './lib/vcard-lookup';
 export * from './lib/vcard-import-photo';
 export * from './lib/vcard-import-split';
+export * from './lib/vcard-import-review.util';
