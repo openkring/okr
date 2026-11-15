@@ -238,7 +238,7 @@ export class VcardImportReviewModal {
     const parts: string[] = [];
     if (decision.draft.addresses.length > 0) parts.push(`${decision.draft.addresses.length} ${this.i18n.scope_addresses()}`);
     if (decision.draft.dob) parts.push(this.i18n.scope_birthday());
-    if (decision.draft.photoBase64) parts.push(this.i18n.scope_photo());
+    if (decision.draft.photo) parts.push(this.i18n.scope_photo());
     if (decision.draft.employment) parts.push(this.i18n.scope_workRels());
     if (decision.draft.relatedNames.length > 0) parts.push(`${decision.draft.relatedNames.length} ${this.i18n.scope_personalRels()}`);
     return parts.join(' · ');

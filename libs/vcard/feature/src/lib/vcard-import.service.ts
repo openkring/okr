@@ -37,12 +37,14 @@ import {
   ImportNotes,
   appendImportNotes,
   buildDecisions,
+  detachPhoto,
   fill,
   importNotesHeader,
   isVcardFile,
   normalizeName,
   parseVcards,
   resolveVcardImportCapability,
+  splitVcardBlocks,
   toImportDraft,
   toPersonalRelType,
   vcardImportTexts,
@@ -120,20 +122,8 @@ function splitPersonName(name: string): { firstName: string; lastName: string } 
   return { firstName: parts.slice(0, -1).join(' '), lastName: parts[parts.length - 1] };
 }
 
-/** Guess the image mime type from the leading base64 characters; vCard PHOTO carries no TYPE we can trust. */
-function photoMime(base64: string): { mime: string; ext: string } {
-  if (base64.startsWith('iVBOR')) return { mime: 'image/png', ext: 'png' };
-  if (base64.startsWith('R0lGOD')) return { mime: 'image/gif', ext: 'gif' };
-  if (base64.startsWith('UklGR')) return { mime: 'image/webp', ext: 'webp' };
-  return { mime: 'image/jpeg', ext: 'jpg' };
-}
-
-function base64ToBlob(base64: string, mime: string): Blob {
-  const binary = atob(base64.replace(/\s+/g, ''));
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return new Blob([bytes], { type: mime });
-}
+/** Cards parsed between two UI yields while reading a large export (spec 1.159 §4.4). */
+const READ_CHUNK = 200;
 
 /**
  * Client orchestration of the vCard import (spec §7/§8): pick the files, parse them,
@@ -200,19 +190,12 @@ export class VcardImportService {
       return;
     }
 
-    const texts = this.importTexts();
-    const contents = await Promise.all(files.map((f) => f.text()));
-    const parsedFiles = contents.map((text, i) => parseVcards(text, files[i].name, texts));
-    const parsed = parsedFiles.flatMap((f) => f.cards);
-    const skippedCards = parsedFiles.reduce((sum, f) => sum + f.skippedCards, 0);
-    const fileWarnings = parsedFiles.flatMap((f) => f.warnings);
-    if (parsed.length === 0) {
+    const { persons, orgs, usages } = await this.gatherTenantData(tenantId);
+    const { drafts, skippedCards, fileWarnings } = await this.readFiles(files, tenantId, usages);
+    if (drafts.length === 0) {
       this.alertService.error(this.i18n.import_noCards());
       return;
     }
-
-    const { persons, orgs, usages } = await this.gatherTenantData(tenantId);
-    const drafts = parsed.map((p) => toImportDraft(p, tenantId, usages, this.importDateViewDate, texts));
     const decisions = buildDecisions(drafts, persons, orgs);
 
     const confirmed = await this.openReviewModal(decisions, skippedCards, fileWarnings);
@@ -233,6 +216,43 @@ export class VcardImportService {
     const summary = fill(this.i18n.import_summary(), { imported, merged, skipped, failed });
     const message = result.failures.length > 0 ? `${summary}\n\n${result.failures.join('\n')}` : summary;
     await this.alertService.confirm(message);
+  }
+
+  /**
+   * Parse the picked files into drafts without holding a 67 MB export twice (spec 1.159 §4.4):
+   * each file is cut into card blocks and its text released; blocks are parsed in chunks of
+   * `READ_CHUNK` with a macrotask in between, so the progress message moves and the tab is
+   * not flagged as hung; every card's photo leaves the JS heap as a Blob right after parsing.
+   */
+  private async readFiles(files: File[], tenantId: string, usages: string[]): Promise<{ drafts: VcardImportDraft[]; skippedCards: number; fileWarnings: string[] }> {
+    const texts = this.importTexts();
+    const drafts: VcardImportDraft[] = [];
+    const fileWarnings: string[] = [];
+    let skippedCards = 0;
+    const loading = await this.loadingController.create({ message: this.i18n.import_reading() });
+    await loading.present();
+    try {
+      for (const file of files) {
+        let blocks: string[] = splitVcardBlocks(await file.text());
+        const total = blocks.length;
+        for (let start = 0; start < total; start += READ_CHUNK) {
+          for (const block of blocks.slice(start, start + READ_CHUNK)) {
+            const parsed = parseVcards(block, file.name, texts);
+            skippedCards += parsed.skippedCards;
+            fileWarnings.push(...parsed.warnings);
+            for (const card of parsed.cards) {
+              drafts.push(detachPhoto(toImportDraft(card, tenantId, usages, this.importDateViewDate, texts)));
+            }
+          }
+          loading.message = `${this.i18n.import_reading()} ${Math.min(start + READ_CHUNK, total)} / ${total}`;
+          await new Promise((resolve) => setTimeout(resolve));
+        }
+        blocks = []; // release the file's card texts before the next file
+      }
+    } finally {
+      await loading.dismiss();
+    }
+    return { drafts, skippedCards, fileWarnings: [...new Set(fileWarnings)] };
   }
 
   /**
@@ -603,10 +623,11 @@ export class VcardImportService {
    * Returns the warning text, or undefined on success/no photo.
    */
   private async writeAvatar(draft: VcardImportDraft, key: string, tenantId: string): Promise<string | undefined> {
-    if (!draft.photoBase64) return undefined;
+    const blob = draft.photo;
+    if (!blob) return undefined;
     try {
-      const { mime, ext } = photoMime(draft.photoBase64);
-      const blob = base64ToBlob(draft.photoBase64, mime);
+      const mime = blob.type || 'image/jpeg';
+      const ext = mime.split('/')[1] === 'jpeg' ? 'jpg' : (mime.split('/')[1] ?? 'jpg');
       const avatar = newAvatarModel([tenantId], draft.kind, key, `vcard-import.${ext}`);
       const file = new File([blob], `vcard-import.${ext}`, { type: mime });
       const url = await this.uploadService.uploadFile(file, avatar.storagePath, AVATAR_UPLOAD_TITLE);

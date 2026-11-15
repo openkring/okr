@@ -38,7 +38,10 @@ export interface VcardImportDraft {
   addresses: AddressModel[]; // parentKey empty; filled at commit time
   dob: string; // StoreDate, '' when absent
   dod: string;
+  /** the parser's transient output; `detachPhoto` turns it into `photo` right after parsing */
   photoBase64?: string;
+  /** the card's photo, outside the JS heap (spec 1.159 §4.4) */
+  photo?: Blob;
   notes: string;
   employment?: { orgName: string; department: string; title: string; role: string };
   relatedNames: VcardRelatedName[];

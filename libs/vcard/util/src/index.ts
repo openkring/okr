@@ -10,3 +10,5 @@ export * from './lib/vcard-import-notes';
 export * from './lib/vcard-import-mapping';
 export * from './lib/vcard-import-matching';
 export * from './lib/vcard-lookup';
+export * from './lib/vcard-import-photo';
+export * from './lib/vcard-import-split';

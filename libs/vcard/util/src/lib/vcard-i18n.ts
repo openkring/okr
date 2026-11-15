@@ -2,6 +2,8 @@ import type { Signal } from '@angular/core';
 
 // Global translation keys (no scope prefix → resolved from the app's global de.json).
 const PFX = '@vcard.';
+// Lazy scope of @okr/vcard-feature (libs/vcard/feature/src/i18n) — every key added since spec 1.159.
+const SPFX = '@vcard/feature.';
 
 export const VCARD_I18N_KEYS = {
   action_label: PFX + 'action.label',
@@ -57,6 +59,19 @@ export const VCARD_I18N_KEYS = {
   import_warning_notesTruncated: PFX + 'import.warning.notesTruncated',
   import_warning_photoFormat: PFX + 'import.warning.photoFormat',
   import_warning_photoFailed: PFX + 'import.warning.photoFailed',
+
+  // spec 1.159 — new strings live in the lazy scope of vcard-feature
+  import_reading: SPFX + 'import.reading',
+  import_filter_all: SPFX + 'import.filter.all',
+  import_filter_new: SPFX + 'import.filter.new',
+  import_filter_duplicates: SPFX + 'import.filter.duplicates',
+  import_filter_warnings: SPFX + 'import.filter.warnings',
+  import_bulk_label: SPFX + 'import.bulk.label',
+  import_bulk_import: SPFX + 'import.bulk.import',
+  import_bulk_merge: SPFX + 'import.bulk.merge',
+  import_bulk_skip: SPFX + 'import.bulk.skip',
+  import_photos: SPFX + 'import.photos',
+  import_keepAwake: SPFX + 'import.keepAwake',
 
   cancel: '@cancel',
   ok: '@ok',
