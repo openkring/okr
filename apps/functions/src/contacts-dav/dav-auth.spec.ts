@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { carddavVerdict, hashToken, mintToken, parseBasicAuth } from './dav-auth';
+import { carddavVerdict, checkCarddavRequest, hashToken, mintToken, parseBasicAuth } from './dav-auth';
 
 const TOKEN = { uid: 'u1', tenantId: 'bka', createdAt: '20261115', lastUsedAt: '20261115' };
 const USER = { tenants: ['bka'], roles: { admin: true }, isArchived: false };
@@ -46,5 +46,56 @@ describe('mintToken and hashToken', () => {
   it('hashes to 64 hex characters, deterministically', () => {
     expect(hashToken('abc')).toMatch(/^[0-9a-f]{64}$/);
     expect(hashToken('abc')).toBe(hashToken('abc'));
+  });
+});
+
+describe('checkCarddavRequest', () => {
+  // a tiny in-memory Firestore: collection(name).doc(id).get()/update(), collection(name).get()
+  function fakeDb(docs: Record<string, Record<string, unknown>>) {
+    const reads: string[] = [];
+    const snap = (path: string) => ({ exists: path in docs, data: () => docs[path], get: (f: string) => docs[path]?.[f] });
+    return {
+      reads,
+      db: {
+        collection: (c: string) => ({
+          doc: (id: string) => ({
+            get: async () => { reads.push(`${c}/${id}`); return snap(`${c}/${id}`); },
+            update: async (patch: Record<string, unknown>) => { docs[`${c}/${id}`] = { ...docs[`${c}/${id}`], ...patch }; },
+          }),
+          get: async () => ({ docs: [] }),
+        }),
+      } as never,
+    };
+  }
+  const ON_LOOKUP = async () => new Set(['contactsDav']);
+  const auth = (pw: string) => `Basic ${Buffer.from(`anna:${pw}`).toString('base64')}`;
+  const seed = (pw: string) => ({
+    [`carddavTokens/${hashToken(pw)}`]: { uid: 'u1', tenantId: 'bka', createdAt: '20261115', lastUsedAt: '20261115' },
+    'users/u1': { tenants: ['bka'], roles: { admin: true } },
+    'app-config/bka': { enabledFeatures: ['contactsDav'] },
+  });
+
+  it('stops granting at once when the password doc is deleted', async () => {
+    const docs = seed('pw-revoke');
+    const { db } = fakeDb(docs);
+    expect(await checkCarddavRequest(db, ON_LOOKUP, auth('pw-revoke'), 1_000)).toBeDefined();
+    delete docs[`carddavTokens/${hashToken('pw-revoke')}`];
+    expect(await checkCarddavRequest(db, ON_LOOKUP, auth('pw-revoke'), 2_000)).toBeUndefined();
+  });
+
+  it('does not cache a rejected password', async () => {
+    const { db, reads } = fakeDb({});
+    await checkCarddavRequest(db, ON_LOOKUP, auth('wrong-1'), 1_000);
+    await checkCarddavRequest(db, ON_LOOKUP, auth('wrong-1'), 2_000);
+    expect(reads.filter((r) => r.startsWith('carddavTokens/'))).toHaveLength(2);
+  });
+
+  it('reuses the user and feature lookups of a granted password for a minute', async () => {
+    const { db, reads } = fakeDb(seed('pw-cache'));
+    await checkCarddavRequest(db, ON_LOOKUP, auth('pw-cache'), 1_000);
+    await checkCarddavRequest(db, ON_LOOKUP, auth('pw-cache'), 30_000);
+    expect(reads.filter((r) => r === 'users/u1')).toHaveLength(1);
+    await checkCarddavRequest(db, ON_LOOKUP, auth('pw-cache'), 70_000);
+    expect(reads.filter((r) => r === 'users/u1')).toHaveLength(2);
   });
 });

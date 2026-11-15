@@ -71,42 +71,53 @@ export async function tenantFeatures(db: Firestore, tenantId: string): Promise<S
   });
 }
 
-/** How long a positive or negative verdict is reused by this instance (§13: discovery is chatty). */
-const VERDICT_TTL_MS = 60_000;
-const verdicts = new Map<string, { at: number; token: (CarddavTokenDoc & { hash: string }) | undefined }>();
+/** How long the user and feature lookups of a GRANTED password are reused by this instance. */
+const LOOKUP_TTL_MS = 60_000;
+/** Granted passwords only, so the map is bounded by the number of real passwords, never by guesses. */
+const granted = new Map<string, number>();
 
 /**
  * Check one request's Basic credentials. Returns the token (with its hash) when access is
- * granted, else undefined. Verdicts are cached per hash for a minute, so Apple's repeated
- * discovery requests cost one set of reads.
+ * granted, else undefined. The password doc is read on EVERY request, so a revoked or
+ * regenerated password stops at once. The user and feature-block lookups of a granted password
+ * are reused for a minute (§13: Apple's discovery is chatty), so a removed `admin` role or a
+ * switched-off block takes effect within 60 s. Rejections are never cached.
  */
-export async function checkCarddavRequest(db: Firestore, authHeader: string | undefined, now = Date.now()): Promise<(CarddavTokenDoc & { hash: string }) | undefined> {
+export async function checkCarddavRequest(
+  db: Firestore,
+  features: (db: Firestore, tenantId: string) => Promise<Set<string>>,
+  authHeader: string | undefined,
+  now = Date.now(),
+): Promise<(CarddavTokenDoc & { hash: string }) | undefined> {
   const creds = parseBasicAuth(authHeader);
   if (!creds) return undefined;
   const hash = hashToken(creds.password);
-  const cached = verdicts.get(hash);
-  if (cached && now - cached.at < VERDICT_TTL_MS) return cached.token;
 
   const tokenSnap = await db.collection(CARDDAV_TOKENS).doc(hash).get();
-  const token = tokenSnap.exists ? (tokenSnap.data() as CarddavTokenDoc) : undefined;
-  let granted: (CarddavTokenDoc & { hash: string }) | undefined;
-  if (token) {
-    const [userSnap, features] = await Promise.all([
-      db.collection('users').doc(token.uid).get(),
-      tenantFeatures(db, token.tenantId),
-    ]);
-    if (carddavVerdict(token, userSnap.data(), features)) granted = { ...token, hash };
+  if (!tokenSnap.exists) {
+    granted.delete(hash);
+    return undefined;
   }
-  verdicts.set(hash, { at: now, token: granted });
+  const token = tokenSnap.data() as CarddavTokenDoc;
+
+  const at = granted.get(hash);
+  if (at === undefined || now - at >= LOOKUP_TTL_MS) {
+    const [userSnap, enabled] = await Promise.all([db.collection('users').doc(token.uid).get(), features(db, token.tenantId)]);
+    if (!carddavVerdict(token, userSnap.data(), enabled)) {
+      granted.delete(hash);
+      return undefined;
+    }
+    granted.set(hash, now);
+  }
 
   const today = getTodayStr(DateFormat.StoreDate);
-  if (granted && granted.lastUsedAt !== today) {
+  if (token.lastUsedAt !== today) {
     await db.collection(CARDDAV_TOKENS).doc(hash).update({ lastUsedAt: today }).catch(() => undefined);
   }
-  return granted;
+  return { ...token, hash };
 }
 
-/** Drop the cached verdict of a hash — after a revoke or a new password, access changes at once. */
+/** Forget a password's cached lookups (after a revoke or a new password). */
 export function forgetVerdict(hash: string): void {
-  verdicts.delete(hash);
+  granted.delete(hash);
 }
