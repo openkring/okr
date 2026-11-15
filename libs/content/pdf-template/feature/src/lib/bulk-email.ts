@@ -80,7 +80,7 @@ export async function openBulkEmailFlow(
       sendHandler,
       fromLocked: !!sendHandler,
     },
-    cssClass: ['wide-modal', 'auto-height-modal'],
+    cssClass: 'modal-wide',
   });
   await composer.present();
   await composer.onWillDismiss();

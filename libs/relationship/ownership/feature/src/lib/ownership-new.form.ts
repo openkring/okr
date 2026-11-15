@@ -136,7 +136,7 @@ export class OwnershipNewForm {
   protected async selectOwner(): Promise<void> {
     const modal = await this.modalController.create({
       component: MultiSelectModal,
-      cssClass: 'list-modal',
+      cssClass: ['modal-narrow', 'modal-fixed-height'],
       componentProps: { contents: 'person,org', selectedTag: '', currentUser: this.currentUser(), title: this.store.i18n.owner() },
     });
     await modal.present();
@@ -159,7 +159,7 @@ export class OwnershipNewForm {
   protected async selectResource(): Promise<void> {
     const modal = await this.modalController.create({
       component: ResourceSelectModal,
-      cssClass: 'list-modal',
+      cssClass: ['modal-narrow', 'modal-fixed-height'],
       componentProps: {
         selectedTag: '',
         currentUser: this.currentUser()

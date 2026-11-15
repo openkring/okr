@@ -131,7 +131,7 @@ export const OrgchartStore = signalStore(
       const GroupEditModal = await store.groupEditModal();
       const modal = await store.modalController.create({
         component: GroupEditModal,
-        cssClass: ['wide-modal', 'auto-height-modal'],
+        cssClass: 'modal-wide',
         componentProps: {
           group: newGroup,
           currentUser: store.appStore.currentUser(),
@@ -151,7 +151,7 @@ export const OrgchartStore = signalStore(
     async addExistingGroup(parentKey: string): Promise<void> {
       const modal = await store.modalController.create({
         component: GroupSelectModal,
-        cssClass: 'list-modal',
+        cssClass: ['modal-narrow', 'modal-fixed-height'],
         componentProps: {
           selectedTag: '',
           currentUser: store.appStore.currentUser(),
@@ -175,7 +175,7 @@ export const OrgchartStore = signalStore(
       const GroupEditModal = await store.groupEditModal();
       const modal = await store.modalController.create({
         component: GroupEditModal,
-        cssClass: ['wide-modal', 'auto-height-modal'],
+        cssClass: 'modal-wide',
         componentProps: {
           group,
           currentUser: store.appStore.currentUser(),
@@ -200,7 +200,7 @@ export const OrgchartStore = signalStore(
         const { OrgEditModal } = await import('@okr/subject-org-feature');
         const modal = await store.modalController.create({
           component: OrgEditModal,
-          cssClass: ['wide-modal', 'auto-height-modal'],
+          cssClass: 'modal-wide',
           componentProps: {
             org,
             currentUser: store.appStore.currentUser(),
@@ -219,7 +219,7 @@ export const OrgchartStore = signalStore(
         const GroupEditModal = await store.groupEditModal();
         const modal = await store.modalController.create({
           component: GroupEditModal,
-          cssClass: ['wide-modal', 'auto-height-modal'],
+          cssClass: 'modal-wide',
           componentProps: {
             group,
             currentUser: store.appStore.currentUser(),

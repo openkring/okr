@@ -232,7 +232,7 @@ export class JournalOverviewPage {
 
   protected async newFootprint(): Promise<void> {
     const modal = await this.modalController.create({
-      component: FootprintEditModal, componentProps: { footprint: newFootprintFormModel() }, cssClass: 'auto-height-modal',
+      component: FootprintEditModal, componentProps: { footprint: newFootprintFormModel() },
     });
     await modal.present();
     const { data, role } = await modal.onWillDismiss<FootprintFormModel>();

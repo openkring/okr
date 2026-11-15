@@ -486,7 +486,7 @@ export const _MembershipStore = signalStore(
         if (readOnly) { console.log('MembershipStore.addMemberToGroup: readOnly mode.'); return; }
         const modal = await store.modalController.create({
           component: PersonSelectModal,
-          cssClass: 'list-modal',
+          cssClass: ['modal-narrow', 'modal-fixed-height'],
           componentProps: {
             selectedTag: '',
             currentUser: store.currentUser(),
@@ -689,7 +689,6 @@ export const _MembershipStore = signalStore(
 
         const modal = await store.modalController.create({
           component: MembershipEditModal,
-          cssClass: 'auto-height-modal',
           componentProps: {
             membership,
             currentUser: store.currentUser(),

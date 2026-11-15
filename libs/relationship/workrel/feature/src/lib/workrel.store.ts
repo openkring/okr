@@ -268,7 +268,7 @@ export const WorkrelStore = signalStore(
       async selectPerson(): Promise<PersonModel | undefined> {
         const modal = await store.modalController.create({
           component: PersonSelectModal,
-          cssClass: 'list-modal',
+          cssClass: ['modal-narrow', 'modal-fixed-height'],
           componentProps: {
             selectedTag: '',
             currentUser: store.currentUser(),
@@ -289,7 +289,7 @@ export const WorkrelStore = signalStore(
       async selectOrg(): Promise<OrgModel | undefined> {
         const modal = await store.modalController.create({
           component: OrgSelectModal,
-          cssClass: 'list-modal',
+          cssClass: ['modal-narrow', 'modal-fixed-height'],
           componentProps: {
             selectedTag: '',
             currentUser: store.currentUser()

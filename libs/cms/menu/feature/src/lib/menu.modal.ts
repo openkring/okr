@@ -133,7 +133,7 @@ export class MenuModal {
       componentProps: {
         initialDir: 'icons'
       },
-      cssClass: 'list-modal'
+      cssClass: ['modal-narrow', 'modal-fixed-height']
     });
     modal.present();
     const { data, role } = await modal.onWillDismiss();

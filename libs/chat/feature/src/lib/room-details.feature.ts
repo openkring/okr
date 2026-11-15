@@ -176,7 +176,7 @@ export function roomDetailsMethods(store: RoomDetailsMethodDeps) {
       if (!store.currentRoomId() || !store.currentRoomDetails()) return;
       // Dynamic import: the modal injects this store back.
       const { ChatRoomDetailsModal } = await import('./chat-room-details.modal');
-      const modal = await store.modalController.create({ component: ChatRoomDetailsModal, cssClass: 'full-modal' });
+      const modal = await store.modalController.create({ component: ChatRoomDetailsModal, cssClass: 'modal-fullscreen' });
       await modal.present();
     },
 

@@ -16,6 +16,8 @@
  *      uncoloured one reads as transparent), okr-change-confirmation sits between okr-header and
  *      ion-content (that keeps it pinned) and is gated on valid && dirty, never [saveDisabled].
  *      Full-screen media viewers are listed in TOOLBAR_ALLOWLIST, each with its reason.
+ *   6. a modal's cssClass is one of the five box classes in libs/shared/ui/src/styles/modals.scss
+ *      (modal-narrow, modal-wide, modal-fit, modal-fixed-height, modal-fullscreen) or none.
  *
  * Usage: node scripts/check-forms.mjs   (exit 1 on any finding — CI friendly)
  */
@@ -237,10 +239,40 @@ for (const path of Object.keys(TOOLBAR_ALLOWLIST)) {
   if (!toolbarHits.has(path)) report(path, 1, 'rule 5: stale TOOLBAR_ALLOWLIST entry (file gone or now compliant) — remove it');
 }
 
+// ---------------------------------------------------------------- modal box classes (rule 6)
+/**
+ * Modal size and frame live in libs/shared/ui/src/styles/modals.scss only. A modal picks its box
+ * from these five classes (or none, the default) — any other cssClass is either a retired class
+ * that no longer exists (wide-modal, list-modal, auto-height-modal …) or a new one-off size.
+ */
+const MODAL_CLASSES = new Set(['modal-narrow', 'modal-wide', 'modal-fit', 'modal-fixed-height', 'modal-fullscreen']);
+for (const path of files('*.ts')) {
+  if (path.endsWith('.spec.ts')) continue;
+  const src = readFileSync(path, 'utf8');
+  if (!/modal/i.test(src)) continue;
+  const check = (literal, index) => {
+    for (const [, cls] of literal.matchAll(/'([^']*)'/g)) {
+      for (const c of cls.split(/\s+/).filter(Boolean)) {
+        if (!MODAL_CLASSES.has(c)) report(path, lineOf(src, index), `rule 6: modal cssClass '${c}' — use one of ${[...MODAL_CLASSES].join(', ')} or none (modals.scss)`);
+      }
+    }
+  };
+  // cssClass inside a modalController.create({...}) call
+  for (const m of src.matchAll(/[mM]odal[\w.]*\.create\(\s*\{/g)) {
+    let i = m.index + m[0].length, depth = 1;
+    while (i < src.length && depth) { if (src[i] === '{') depth++; else if (src[i] === '}') depth--; i++; }
+    const body = src.slice(m.index, i);
+    const css = body.match(/cssClass:\s*(\[[^\]]*\]|'[^']*')/);
+    if (css) check(css[1], m.index + body.indexOf(css[0]));
+  }
+  // default parameter of a helper that opens a modal: `cssClass = 'modal-…'`
+  for (const m of src.matchAll(/[(,]\s*cssClass\s*=\s*('[^']*')/g)) check(m[1], m.index);
+}
+
 if (findings.length) {
   console.error(`check-forms: ${findings.length} finding(s)\n`);
   for (const f of findings) console.error('  ' + f);
-  console.error('\nSee the `building-forms` skill: "The three length rules", "Per-field error notes are mandatory" and "The parent (edit modal or page)".');
+  console.error('\nSee the `building-forms` skill: "The three length rules", "Per-field error notes are mandatory" and "The parent (edit modal or page)" and "The modal box".');
   process.exit(1);
 }
 console.log('check-forms: ok');

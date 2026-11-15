@@ -190,7 +190,7 @@ export const PageIntegrityStore = signalStore(
         const states = store.appStore.getCategory('content_state');
         const modal = await store.modalController.create({
           component: await loadSectionEditModal(),
-          cssClass: 'full-modal',
+          cssClass: 'modal-fullscreen',
           componentProps: { 
             section, 
             currentUser, 
@@ -328,7 +328,7 @@ export const PageIntegrityStore = signalStore(
         const newSection = { okey: '', type: 'article', state: 'active', name: ref.resolvedKey, title: '', tenants: [store.appStore.env.tenantId] } as unknown as SectionModel;
         const modal = await store.modalController.create({
           component: await loadSectionEditModal(),
-          cssClass: 'full-modal',
+          cssClass: 'modal-fullscreen',
           componentProps: { section: newSection, currentUser, tagModel: 'section_default', roles, states, readOnly: false, isNew: true },
         });
         await modal.present();

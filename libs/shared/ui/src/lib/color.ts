@@ -50,7 +50,7 @@ export class Color {
       const { ColorSelectModal } = await import('./color-select.modal');
       const modal = await this.modalController.create({
         component: ColorSelectModal,
-        cssClass: 'color-modal',
+        cssClass: 'modal-fit',
         componentProps: {
           hexColor: this.hexColor()
         }

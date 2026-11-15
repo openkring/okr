@@ -30,7 +30,7 @@ export type MultiSelectSegment = 'org' | 'group' | 'person';
     ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
     ion-list { padding: 0px; }
     ion-segment { margin: 8px 0; }
-    /* list-modal sets --border-* on the modal; ion-segment-button reads the same variables */
+    /* the modal sets --border-* (modals.scss); ion-segment-button reads the same variables */
     ion-segment-button { --border-width: 0; --border-style: none; min-width: 0; }
   `],
   template: `

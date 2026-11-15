@@ -279,7 +279,7 @@ export async function showCalEventInfo(modalController: ModalController, tenantN
     component: CalEventInfoModal,
     componentProps: { tenantName },
     // 80% of the viewport: the calendar-type table needs the width to stay comparable
-    cssClass: ['wide-modal', 'auto-height-modal'],
+    cssClass: 'modal-wide',
   });
   await modal.present();
   await modal.onDidDismiss();

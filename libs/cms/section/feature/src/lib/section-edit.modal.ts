@@ -194,7 +194,7 @@ export class SectionEditModal {
     ));
     if (!form) return;
     const { FormBuilderEditor } = await import('@okr/forms-feature');
-    const modal = await this.modalController.create({ component: FormBuilderEditor, cssClass: 'wide-modal', componentProps: { form } });
+    const modal = await this.modalController.create({ component: FormBuilderEditor, cssClass: ['modal-wide', 'modal-fixed-height'], componentProps: { form } });
     await modal.present();
   }
 

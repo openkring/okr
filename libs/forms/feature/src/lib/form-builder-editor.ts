@@ -525,8 +525,7 @@ export class FormBuilderEditor {
   protected async editField(field: Field): Promise<void> {
     const modal = await this.modalController.create({
       component: FieldConfigModal,
-      // list-modal-wide draws the border that sets it apart from the editor behind it; auto-height shrinks it to its content
-      cssClass: 'list-modal-wide auto-height-modal',
+      // default box: bordered (sets it apart from the editor behind it) and as tall as its content
       componentProps: {
         field,
         i18n: this.i18n,

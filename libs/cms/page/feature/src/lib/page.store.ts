@@ -407,7 +407,7 @@ export const _PageStore = signalStore(
         if (!page) return;
         const modal = await store.modalController.create({
           component: SectionSelectModal,
-          cssClass: 'full-modal'
+          cssClass: 'modal-fullscreen'
         });
         modal.present();
         const { data, role } = await modal.onWillDismiss();

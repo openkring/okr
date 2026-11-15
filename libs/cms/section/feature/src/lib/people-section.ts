@@ -107,7 +107,7 @@ export class PeopleSectionComponent {
     if (!linkedSection) return;
     const modal = await this.modalController.create({
       component: SectionViewModal,
-      cssClass: 'wide-modal',
+      cssClass: ['modal-wide', 'modal-fixed-height'],
       componentProps: {
         section: linkedSection,
         title: this.listName()

@@ -166,7 +166,7 @@ export const ResponsibilityStore = signalStore(
     async selectPerson(): Promise<PersonModel | undefined> {
       const modal = await store.modalController.create({
         component: PersonSelectModal,
-        cssClass: 'list-modal',
+        cssClass: ['modal-narrow', 'modal-fixed-height'],
         componentProps: { 
           selectedTag: '', 
           currentUser: store.currentUser()
@@ -182,7 +182,7 @@ export const ResponsibilityStore = signalStore(
     async selectParent(): Promise<string | undefined> {
       const modal = await store.modalController.create({
         component: MultiSelectModal,
-        cssClass: 'list-modal',
+        cssClass: ['modal-narrow', 'modal-fixed-height'],
         componentProps: { 
           contents: 'org,group',
           selectedTag: '',

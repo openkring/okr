@@ -486,7 +486,7 @@ export const AddressStore = signalStore(
         if (!coordinates) return;
         const modal = await store.modalController.create({
           component: MapViewModal,
-          cssClass: 'map-modal',
+          cssClass: ['modal-wide', 'modal-fixed-height'],
           componentProps: {
             title: addressStr,
             center: { lat: coordinates.lat, lng: coordinates.lng, title: addressStr }

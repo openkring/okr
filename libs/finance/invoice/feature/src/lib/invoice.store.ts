@@ -287,7 +287,7 @@ export const InvoiceStore = signalStore(
       const invoice = newDraftInvoice(store.appStore.tenantId(), store.accountingStore.accountingTenantId(), getTodayStr());
       const modal = await store.modalController.create({
         component: InvoiceEditModal,
-        cssClass: ['wide-modal', 'auto-height-modal'],
+        cssClass: 'modal-wide',
         componentProps: {
           invoice,
           currentUser: store.appStore.currentUser(),
@@ -307,7 +307,7 @@ export const InvoiceStore = signalStore(
     async edit(invoice: InvoiceModel, readOnly = false): Promise<void> {
       const modal = await store.modalController.create({
         component: InvoiceEditModal,
-        cssClass: ['wide-modal', 'auto-height-modal'],
+        cssClass: 'modal-wide',
         componentProps: {
           invoice: { ...invoice },
           currentUser: store.appStore.currentUser(),
@@ -790,7 +790,7 @@ export const InvoiceStore = signalStore(
           filename: draft.filename || `${label}.pdf`,
           sendHandler,
         },
-        cssClass: ['wide-modal', 'auto-height-modal'],
+        cssClass: 'modal-wide',
       });
       await modal.present();
       await modal.onDidDismiss();

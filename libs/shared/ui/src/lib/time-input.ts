@@ -90,7 +90,7 @@ export class TimeInput {
     if (this.readOnly()) return;
     const modal = await this.modalController.create({
       component: TimeSelectModal,
-      cssClass: 'time-modal',
+      cssClass: 'modal-fit',
       componentProps: {
         time: _time,
         locale: this.locale()

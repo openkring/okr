@@ -379,7 +379,7 @@ export const TaskStore = signalStore(
     async selectPerson(): Promise<PersonModel | undefined> {
       const modal = await store.modalController.create({
         component: PersonSelectModal,
-        cssClass: 'list-modal',
+        cssClass: ['modal-narrow', 'modal-fixed-height'],
         componentProps: {
           selectedTag: '',
           currentUser: store.currentUser()
@@ -399,7 +399,7 @@ export const TaskStore = signalStore(
     async selectGroup(): Promise<GroupModel | undefined> {
       const modal = await store.modalController.create({
         component: GroupSelectModal,
-        cssClass: 'list-modal',
+        cssClass: ['modal-narrow', 'modal-fixed-height'],
         componentProps: {
           selectedTag: '',
           currentUser: store.currentUser()

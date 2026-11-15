@@ -139,7 +139,7 @@ export const DiaryImportStore = signalStore(
       if (!currentUser) return undefined;
       const modal = await store.modalController.create({
         component: LocationSelectModal,
-        cssClass: 'list-modal',
+        cssClass: ['modal-narrow', 'modal-fixed-height'],
         componentProps: { type: '', currentUser, allowCustom: false, showMap: false },
       });
       await modal.present();
@@ -152,7 +152,7 @@ export const DiaryImportStore = signalStore(
       if (!currentUser) return undefined;
       const modal = await store.modalController.create({
         component: PersonSelectModal,
-        cssClass: 'list-modal',
+        cssClass: ['modal-narrow', 'modal-fixed-height'],
         componentProps: { selectedTag: '', currentUser, allowCustom: false, membersFirst: false },
       });
       await modal.present();
@@ -219,7 +219,7 @@ export const DiaryImportStore = signalStore(
       while (reference) {
         const modal = await store.modalController.create({
           component: DiaryUsageListModal,
-          cssClass: 'list-modal',
+          cssClass: ['modal-narrow', 'modal-fixed-height'],
           componentProps: { reference, iconBaseUrl: iconBaseUrl() },
         });
         await modal.present();
@@ -282,7 +282,7 @@ export const DiaryImportStore = signalStore(
         for (;;) {
           const modal = await store.modalController.create({
             component: DiaryReferenceListModal,
-            cssClass: 'list-modal',
+            cssClass: ['modal-narrow', 'modal-fixed-height'],
             componentProps: { kind, references: referencesOf(kind), iconBaseUrl: iconBaseUrl() },
           });
           await modal.present();

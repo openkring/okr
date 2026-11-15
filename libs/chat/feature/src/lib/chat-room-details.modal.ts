@@ -338,7 +338,7 @@ export class ChatRoomDetailsModal {
     if (!group || !currentUser || this.busy()) return;
     const modal = await this.modalController.create({
       component: PersonSelectModal,
-      cssClass: 'list-modal',
+      cssClass: ['modal-narrow', 'modal-fixed-height'],
       componentProps: { selectedTag: '', currentUser },
     });
     await modal.present();

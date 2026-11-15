@@ -65,7 +65,6 @@ export async function openFeedbackSheet(
       header: options.header ?? '', quickReactions: options.reactions ? JOURNAL_QUICK_REACTIONS : [], mine: options.mine,
       moreLabel: i18n.reaction_more(), actions: options.actions,
     },
-    cssClass: 'auto-height-modal',
     breakpoints: [0, 1],
     initialBreakpoint: 1,
   });
@@ -83,7 +82,7 @@ export async function openFeedbackSheet(
     await toast.present();
     return undefined;
   }
-  const picker = await modalController.create({ component: EmojiPickerModal, componentProps: { title: i18n.reaction_picker() }, cssClass: 'auto-height-modal' });
+  const picker = await modalController.create({ component: EmojiPickerModal, componentProps: { title: i18n.reaction_picker() } });
   await picker.present();
   const picked = await picker.onWillDismiss<string>();
   return picked.role === 'confirm' && picked.data ? { kind: 'react', emoji: picked.data } : undefined;

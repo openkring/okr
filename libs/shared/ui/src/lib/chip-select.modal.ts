@@ -44,7 +44,7 @@ const ChipSelectStore = signalStore(
 /**
  * Picks one chip. For an admin, when the offered chips are the values of one tag definition
  * (TAG_EDITOR), «Werte bearbeiten» switches to editing that definition's values in place —
- * add and remove, saved at once, as in AOC › Tags. Opened with `auto-height-modal`, so the box
+ * add and remove, saved at once, as in AOC › Tags. Opened with `modal-narrow`; like every modal the box
  * is as tall as its chips.
  */
 @Component({

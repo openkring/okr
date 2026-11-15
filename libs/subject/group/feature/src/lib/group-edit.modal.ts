@@ -97,7 +97,7 @@ export class GroupEditModal {
     const modal = await this.modalController.create({
       component: IconSelectModal,
       componentProps: { initialDir: 'icons' },
-      cssClass: 'list-modal'
+      cssClass: ['modal-narrow', 'modal-fixed-height']
     });
     modal.present();
     const { data, role } = await modal.onWillDismiss();
@@ -131,7 +131,7 @@ export class GroupEditModal {
   async selectPersonModal(): Promise<PersonModel | undefined> {
     const modal = await this.modalController.create({
       component: PersonSelectModal,
-      cssClass: 'list-modal',
+      cssClass: ['modal-narrow', 'modal-fixed-height'],
       componentProps: {
         selectedTag: '',
         currentUser: this.currentUser()

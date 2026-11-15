@@ -507,7 +507,7 @@ export const MembershipSrvStore = signalStore(
     async showRegasoftDetail(item: SrvIndex): Promise<void> {
       const modal = await store.modalController.create({
         component: MembershipSrvMismatchModal,
-        cssClass: ['wide-modal', 'auto-height-modal'],
+        cssClass: 'modal-wide',
         componentProps: { item },
       });
       await modal.present();
@@ -575,7 +575,6 @@ export const MembershipSrvStore = signalStore(
       if (!membership || !mcat) return;
       const modal = await store.modalController.create({
         component: MembershipEditModal,
-        cssClass: 'auto-height-modal',
         componentProps: {
           membership: { ...membership },
           currentUser: store.appStore.currentUser(),
@@ -601,7 +600,6 @@ export const MembershipSrvStore = signalStore(
       if (!membership || !mcat) return;
       const modal = await store.modalController.create({
         component: MembershipEditModal,
-        cssClass: 'auto-height-modal',
         componentProps: {
           membership: { ...membership },
           currentUser: store.appStore.currentUser(),
@@ -752,7 +750,7 @@ export const MembershipSrvStore = signalStore(
 
         const modal = await store.modalController.create({
           component: MembershipSrvPreviewModal,
-          cssClass: ['wide-modal', 'auto-height-modal'],
+          cssClass: 'modal-wide',
           componentProps: { preview, i18n: store.i18n },
         });
         await modal.present();

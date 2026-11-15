@@ -1392,7 +1392,6 @@ export const _MatrixChatStore = signalStore(
         const modal = await store.modalController.create({
           component: EmojiPickerModal,
           componentProps: { title: store.i18n.msg_react_header() },
-          cssClass: 'auto-height-modal',
         });
         await modal.present();
         const { data, role } = await modal.onDidDismiss<string>();
@@ -1547,7 +1546,7 @@ export const _MatrixChatStore = signalStore(
           appOrigin: store.appStore.appOrigin(),
           i18n: store.i18n,
         });
-        const modal = await store.modalController.create({ component: MessageInfoModal, componentProps: props, cssClass: 'auto-height-modal' });
+        const modal = await store.modalController.create({ component: MessageInfoModal, componentProps: props });
         await modal.present();
         const { role, data } = await modal.onDidDismiss();
         return role === 'reaction' && typeof data === 'string' ? data : undefined;

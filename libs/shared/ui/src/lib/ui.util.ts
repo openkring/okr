@@ -46,7 +46,7 @@ export function findImageIndex(images: ImageConfig[], current: ImageConfig): num
  * `gallery` may be empty — the viewer then shows `current` alone.
  */
 export async function openImageGallery(modalController: ModalController, gallery: ImageConfig[],
-    current: ImageConfig, style: ImageStyle, cssClass = 'full-modal'): Promise<void> {
+    current: ImageConfig, style: ImageStyle, cssClass = 'modal-fullscreen'): Promise<void> {
   const images = gallery.length > 0 ? gallery : [current];
   await showZoomedImage(modalController, current.url, current.label, style, current.altText,
     cssClass, images, findImageIndex(images, current));
@@ -55,7 +55,7 @@ export async function openImageGallery(modalController: ModalController, gallery
 // show a zoomed version of the image in a modal.
 // When `gallery` holds more than one image, the modal shows prev/next buttons (and ArrowLeft/ArrowRight
 // keyboard support) to page through the list, starting at `startIndex`.
-export async function showZoomedImage(modalController: ModalController, url: string, title: string, style: ImageStyle, altText = '', cssClass = 'zoom-modal', gallery: ImageConfig[] = [], startIndex = 0): Promise<void> {
+export async function showZoomedImage(modalController: ModalController, url: string, title: string, style: ImageStyle, altText = '', cssClass = 'modal-fixed-height', gallery: ImageConfig[] = [], startIndex = 0): Promise<void> {
   const modal = await modalController.create({
     component: ImageViewModal,
     cssClass,
@@ -78,7 +78,7 @@ export async function showZoomedImage(modalController: ModalController, url: str
 export async function showImageSlider(modalController: ModalController, images: ImageConfig[], style: ImageStyle, startIndex = 0): Promise<void> {
   const modal = await modalController.create({
     component: ImageSliderModal,
-    cssClass: 'full-modal',
+    cssClass: 'modal-fullscreen',
     componentProps: {
       images,
       startIndex,
@@ -101,7 +101,7 @@ export async function showVideoView(
 ): Promise<void> {
   const modal = await modalController.create({
     component: VideoViewModal,
-    cssClass: 'full-modal',
+    cssClass: 'modal-fullscreen',
     componentProps: {
       storagePath: source.storagePath ?? '', playUrl: source.playUrl ?? '', actionUrl,
       title: labels.title, downloadLabel: labels.download, closeLabel: labels.close,
@@ -125,10 +125,9 @@ export async function browse(url?: string): Promise<void> {
  * @returns the selected date as a string in ISO format (yyyy-mm-dd)
  */
 export async function selectDate(modalController: ModalController, isoDate?: string, headerTitle?: string, intro?: string): Promise<string | undefined> {
-  const cssClass = (intro && intro?.length > 0) ? 'date-modal2' : 'date-modal';
   const modal = await modalController.create({
     component: DateSelectModal,
-    cssClass,
+    cssClass: 'modal-fit',
     componentProps: {
       isoDate,
       // labels: DateSelectModal resolves its own defaults; only an explicit title overrides them.

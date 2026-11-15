@@ -1431,7 +1431,6 @@ export class MatrixChat implements OnDestroy {
     const sheet = await this.modalController.create({
       component: MessageActionsSheet,
       componentProps: { actions, labels: buildMessageActionLabels(this.store.i18n) },
-      cssClass: 'auto-height-modal',
       breakpoints: [0, 1],
       initialBreakpoint: 1,
     });
@@ -1500,7 +1499,7 @@ export class MatrixChat implements OnDestroy {
     const modal = await this.modalController.create({
       component: ImageLightboxModal,
       componentProps: { images, initialIndex, actionsLabel: this.store.i18n.sheet_section_message() },
-      cssClass: 'fullscreen-modal',
+      cssClass: 'modal-fullscreen',
     });
     await modal.present();
     // «⋯» in the lightbox: the message sheet of the image that was shown
@@ -1582,7 +1581,6 @@ export class MatrixChat implements OnDestroy {
       const i18n = this.store.i18n;
       const modal = await this.modalController.create({
         component: ReactionDetailsModal,
-        cssClass: 'auto-height-modal',
         componentProps: {
           emoji: event.emoji,
           rows,
@@ -2052,7 +2050,7 @@ export class MatrixChat implements OnDestroy {
   private async openPollDetail(message: MatrixMessage): Promise<void> {
     const modal = await this.modalController.create({
       component: PollDetailModal,
-      cssClass: ['wide-modal', 'auto-height-modal'],
+      cssClass: 'modal-wide',
       componentProps: {
         pollAnswers: message.pollAnswers ?? [],
         pollVotes: message.pollVotes ?? {},

@@ -195,7 +195,7 @@ export const ContextDiagramStore = signalStore(
         const GroupEditModal = await store.groupEditModal();
         const modal = await store.modalController.create({
           component: GroupEditModal,
-          cssClass: ['wide-modal', 'auto-height-modal'],
+          cssClass: 'modal-wide',
           componentProps: {
             group,
             currentUser: store.appStore.currentUser(),
@@ -214,7 +214,7 @@ export const ContextDiagramStore = signalStore(
         const { OrgEditModal } = await import('@okr/subject-org-feature');
         const modal = await store.modalController.create({
           component: OrgEditModal,
-          cssClass: ['wide-modal', 'auto-height-modal'],
+          cssClass: 'modal-wide',
           componentProps: {
             org,
             currentUser: store.appStore.currentUser(),
@@ -232,7 +232,7 @@ export const ContextDiagramStore = signalStore(
         if (!person) return;
         const { PersonEditModal } = await import('@okr/subject-person-feature');
         const modal = await store.modalController.create({
-          cssClass: ['wide-modal', 'auto-height-modal'],
+          cssClass: 'modal-wide',
           component: PersonEditModal,
           componentProps: {
             person,

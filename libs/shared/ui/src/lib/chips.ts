@@ -88,8 +88,8 @@ export class Chips {
   public async addChip() {
     const modal = await this.modalController.create({
       component: ChipSelectModal,
-      // tag-modal: its width; auto-height-modal: as tall as the chips (overrides tag-modal's fixed height)
-      cssClass: ['tag-modal', 'auto-height-modal'],
+      // narrow box, as tall as the chips
+      cssClass: 'modal-narrow',
       componentProps: {
         chips: this.nonSelectedChips(),
         chipName: this.chipName(),

@@ -28,7 +28,7 @@ export class ModelSelectService implements ModelSelector {
   private async openPersonSelect(selectedTag = DEFAULT_TAGS, allowCustom = false, membersFirst = false, options: PersonSelectOptions = {}, multiple = false): Promise<PersonSelectResult | undefined> {
     const modal = await this.modalController.create({
       component: PersonSelectModal,
-      cssClass: 'list-modal',
+      cssClass: ['modal-narrow', 'modal-fixed-height'],
       componentProps: {
         selectedTag,
         currentUser: this.appStore.currentUser(),
@@ -107,7 +107,7 @@ export class ModelSelectService implements ModelSelector {
   public async selectOrg(selectedTag = DEFAULT_TAGS): Promise<OrgModel | undefined> {
     const modal = await this.modalController.create({
       component: OrgSelectModal,
-      cssClass: 'list-modal',
+      cssClass: ['modal-narrow', 'modal-fixed-height'],
       componentProps: {
         selectedTag,
         currentUser: this.appStore.currentUser(),
@@ -148,7 +148,7 @@ export class ModelSelectService implements ModelSelector {
   private async openResourceSelect(selectedTag: string, title: string | undefined, allowCustom: boolean): Promise<ResourceModel | ResourceSelectResult | undefined> {
     const modal = await this.modalController.create({
       component: ResourceSelectModal,
-      cssClass: 'list-modal',
+      cssClass: ['modal-narrow', 'modal-fixed-height'],
       componentProps: {
         selectedTag,
         title,
@@ -204,7 +204,7 @@ export class ModelSelectService implements ModelSelector {
   public async selectLocation(type = '', showMap = true, allowCustom = true, allowCurrent = false): Promise<LocationSelectResult | undefined> {
     const modal = await this.modalController.create({
       component: LocationSelectModal,
-      cssClass: 'map-modal',
+      cssClass: ['modal-wide', 'modal-fixed-height'],
       componentProps: {
         type,
         showMap,
@@ -225,7 +225,7 @@ export class ModelSelectService implements ModelSelector {
   public async selectGroup(selectedTag = DEFAULT_TAGS): Promise<GroupModel | undefined> {
     const modal = await this.modalController.create({
       component: GroupSelectModal,
-      cssClass: 'list-modal',
+      cssClass: ['modal-narrow', 'modal-fixed-height'],
       componentProps: {
         selectedTag,
         currentUser: this.appStore.currentUser(),
@@ -245,7 +245,7 @@ export class ModelSelectService implements ModelSelector {
     if (!currentUser) return undefined;
     const modal = await this.modalController.create({
       component: ResponsibilitySelectModal,
-      cssClass: 'list-modal',
+      cssClass: ['modal-narrow', 'modal-fixed-height'],
       componentProps: { currentUser },
     });
     modal.present();

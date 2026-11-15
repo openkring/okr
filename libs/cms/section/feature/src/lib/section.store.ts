@@ -190,7 +190,7 @@ export const _SectionStore = signalStore(
         const { CardSelectModal } = await import('./card-select.modal');
         const modal = await store.modalController.create({
           component: CardSelectModal,
-          cssClass: 'full-modal',
+          cssClass: 'modal-fullscreen',
           componentProps: { 
             category: store.sectionTypes(),
             slug: 'section',
@@ -214,7 +214,7 @@ export const _SectionStore = signalStore(
         const { SectionEditModal } = await import('./section-edit.modal');
         const modal = await store.modalController.create({
           component: SectionEditModal,
-          cssClass: 'full-modal',
+          cssClass: 'modal-fullscreen',
           componentProps: {
             section,
             currentUser: store.currentUser(),
@@ -365,7 +365,7 @@ export const _SectionStore = signalStore(
         const { MessageCenterModal } = await import('./message-center.modal');
         const modal = await store.modalController.create({
           component: MessageCenterModal,
-          cssClass: 'list-modal-wide',
+          cssClass: 'modal-fixed-height',
           componentProps: {
             initialSubject: section.title,
             initialFrom: 'kommunikation@seeclub.org',

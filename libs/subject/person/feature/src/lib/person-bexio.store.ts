@@ -585,7 +585,7 @@ export const PersonBexioStore = signalStore(
     async edit(bexioIndex: BexioIndex): Promise<void> {
       const modal = await store.modalController.create({
         component: PersonBexioContactModal,
-        cssClass: ['wide-modal', 'auto-height-modal'],
+        cssClass: 'modal-wide',
         componentProps: {
           bexioIndex,
           currentUser: store.currentUser(),
@@ -664,7 +664,6 @@ export const PersonBexioStore = signalStore(
       if (!membership) return;
       const modal = await store.modalController.create({
         component: MembershipEditModal,
-        cssClass: 'auto-height-modal',
         componentProps: {
           membership: { ...membership },
           currentUser: store.currentUser(),

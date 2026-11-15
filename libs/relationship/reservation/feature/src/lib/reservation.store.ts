@@ -497,7 +497,7 @@ export const ReservationStore = signalStore(
       async selectCalevent(readOnly: boolean, periodicities: CategoryListModel, calevent?: CalEventModel): Promise<CalEventModel | undefined> {
         const modal = await store.modalController.create({
           component: CalEventEditModal,
-          cssClass: ['wide-modal', 'auto-height-modal'],
+          cssClass: 'modal-wide',
           componentProps: {
                 calevent: calevent ?? new CalEventModel(store.tenantId()),
                 currentUser: store.currentUser(),
@@ -522,7 +522,7 @@ export const ReservationStore = signalStore(
       async selectResource(): Promise<ResourceModel | undefined> {
         const modal = await store.modalController.create({
           component: ResourceSelectModal,
-          cssClass: 'list-modal',
+          cssClass: ['modal-narrow', 'modal-fixed-height'],
           componentProps: {
             selectedTag: '',
             currentUser: store.currentUser()
@@ -541,7 +541,7 @@ export const ReservationStore = signalStore(
       async selectPerson(): Promise<PersonModel | undefined> {
         const modal = await store.modalController.create({
           component: PersonSelectModal,
-          cssClass: 'list-modal',
+          cssClass: ['modal-narrow', 'modal-fixed-height'],
           componentProps: {
             selectedTag: '',
             currentUser: store.currentUser()

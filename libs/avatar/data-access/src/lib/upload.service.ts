@@ -76,7 +76,6 @@ export class UploadService {
     const typedUploads = uploads.map(u => ({ ...u, file: withResolvedMimeType(u.file) }));
     const modal = await this.modalController.create({
       component: UploadTaskModal,
-      cssClass: 'upload-modal',
       componentProps: { uploads: typedUploads, title }
     });
     modal.present();
@@ -247,7 +246,7 @@ export class UploadService {
     }
   }
 
-  public async showZoomedImage(url: string, title = 'Zoom', style = IMAGE_STYLE_SHAPE, altText = '', cssClass = 'zoom-modal'): Promise<void> {
+  public async showZoomedImage(url: string, title = 'Zoom', style = IMAGE_STYLE_SHAPE, altText = '', cssClass = 'modal-fixed-height'): Promise<void> {
     await showZoomedImage(this.modalController, url, title, style, altText, cssClass);     
   }
 }

@@ -1309,8 +1309,7 @@ export class CalEventList implements OnInit {
     const modal = await this.modalController.create({
       component: OrganiserContactModal,
       // shrink-to-content: the body is one optional dropdown plus 2-4 action rows, and
-      // 'list-modal-wide' is on the fixed-size opt-out list (66% tall, mostly empty)
-      cssClass: 'auto-height-modal',
+      // 'modal-fixed-height' is on the fixed-size opt-out list (66% tall, mostly empty)
       componentProps: { organisers, i18n: this.store.i18n, phones, emails },
     });
     await modal.present();
@@ -1374,7 +1373,7 @@ export class CalEventList implements OnInit {
       component: ScheduleModal,
       // wide (the table needs the room) but shrink-to-content in height: a poll with three
       // members would otherwise sit in a box that is 80% of the viewport tall and mostly empty
-      cssClass: 'wide-modal auto-height-modal',
+      cssClass: 'modal-wide',
       componentProps: { seriesId },
       injector: this.injector,   // share CalEventList's CalEventStore instance with the root-injected modal
     });
@@ -1391,7 +1390,7 @@ export class CalEventList implements OnInit {
     const { SeriesAttendanceModal } = await import('./series-attendance.modal');
     const modal = await this.modalController.create({
       component: SeriesAttendanceModal,
-      cssClass: ['wide-modal', 'auto-height-modal'],
+      cssClass: 'modal-wide',
       componentProps: { seriesId: calevent.seriesId },
       injector: this.injector,   // share CalEventList's CalEventStore instance with the root-injected modal
     });

@@ -151,7 +151,7 @@ export class ButtonWidget {
           await Browser.open({ url: this.url() });
           break;
         case ButtonAction.Zoom:
-          await showZoomedImage(this.modalController, this.url(), this.i18n().button_image_zoomed(), this.imageStyle(), this.label(), 'full-modal'); 
+          await showZoomedImage(this.modalController, this.url(), this.i18n().button_image_zoomed(), this.imageStyle(), this.label(), 'modal-fullscreen'); 
           break;
         case ButtonAction.None:
           break;

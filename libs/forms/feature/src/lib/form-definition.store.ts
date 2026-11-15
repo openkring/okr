@@ -105,7 +105,7 @@ export const FormDefinitionStore = signalStore(
       if (!store.canWrite()) return;
       const modal = await store.modalController.create({
         component: FormBuilderEditor,
-        cssClass: 'wide-modal',
+        cssClass: ['modal-wide', 'modal-fixed-height'],
         componentProps: { 
           form 
         },

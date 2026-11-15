@@ -137,7 +137,7 @@ export class AdhocChatNewModal {
 
     const modal = await this.modalController.create({
       component: PersonSelectModal,
-      cssClass: 'list-modal',
+      cssClass: ['modal-narrow', 'modal-fixed-height'],
       componentProps: { selectedTag: '', currentUser },
     });
     await modal.present();
@@ -164,7 +164,7 @@ export class AdhocChatNewModal {
     if (!currentUser) return;
     const modal = await this.modalController.create({
       component: GroupSelectModal,
-      cssClass: 'list-modal',
+      cssClass: ['modal-narrow', 'modal-fixed-height'],
       componentProps: { selectedTag: '', currentUser },
     });
     await modal.present();

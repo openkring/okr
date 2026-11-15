@@ -156,7 +156,7 @@ export class InvoiceEditModal {
     if (this.isReadOnly()) return;
     const modal = await this.modalController.create({
       component: MultiSelectModal,
-      cssClass: 'list-modal',
+      cssClass: ['modal-narrow', 'modal-fixed-height'],
       componentProps: { contents: 'person,org', selectedTag: '', currentUser: this.currentUser(), title: this.i18n.receiver_select() },
     });
     await modal.present();
@@ -236,7 +236,7 @@ export class InvoiceEditModal {
 
     const modal = await this.modalController.create({
       component: FeePositionSelectModal,
-      cssClass: 'list-modal-wide',
+      cssClass: 'modal-fixed-height',
       componentProps: { options, i18n: this.i18n },
     });
     await modal.present();

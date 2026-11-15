@@ -191,7 +191,7 @@ export const TripStore = signalStore(
       const { TripEditModal } = await import('./trip-edit.modal');
       const modal = await store.modalController.create({
         component: TripEditModal,
-        cssClass: ['wide-modal', 'auto-height-modal'],
+        cssClass: 'modal-wide',
         componentProps: { 
           trip, 
           mode 
@@ -609,7 +609,7 @@ export const TripStore = signalStore(
       const { TripStatsModal } = await import('./trip-stats.modal');
       const modal = await store.modalController.create({
         component: TripStatsModal,
-        cssClass: ['wide-modal', 'auto-height-modal'],
+        cssClass: 'modal-wide',
         componentProps: { contentType },
       });
       await modal.present();

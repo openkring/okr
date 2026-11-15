@@ -371,7 +371,7 @@ export class Img {
         // not openImageGallery(): this caller overrides the caption with its own zoomTitle input
         const gallery = this.gallery();
         await showZoomedImage(this.modalController, this.url(), this.zoomTitle(), this.imageStyle(),
-          this.altText(), 'full-modal', gallery, findImageIndex(gallery, this.image()));
+          this.altText(), 'modal-fullscreen', gallery, findImageIndex(gallery, this.image()));
         break;
       }
       case ImageActionType.OpenSlider: {

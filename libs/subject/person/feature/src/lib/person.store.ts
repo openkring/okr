@@ -217,7 +217,7 @@ export const PersonStore = signalStore(
             const { PersonDuplicateModal } = await import('./person-duplicate.modal');
             const dupModal = await store.modalController.create({
                 component: PersonDuplicateModal,
-                cssClass: 'list-modal',
+                cssClass: ['modal-narrow', 'modal-fixed-height'],
                 componentProps: { candidates, i18n: store.i18n }
             });
             dupModal.present();
@@ -612,7 +612,7 @@ export const PersonStore = signalStore(
             }
             const modal = await store.modalController.create({
                 component: MapViewModal,
-                cssClass: 'map-modal',
+                cssClass: ['modal-wide', 'modal-fixed-height'],
                 componentProps: {
                 title: addressStr,
                 center: { lat: coordinates.lat, lng: coordinates.lng, title: addressStr }

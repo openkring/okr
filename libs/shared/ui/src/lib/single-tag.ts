@@ -44,7 +44,7 @@ export class SingleTag {
   public async add() {
     const modal = await this.modalController.create({
       component: ChipSelectModal,
-      cssClass: ['tag-modal', 'auto-height-modal'],
+      cssClass: 'modal-narrow',
       componentProps: {
         chips: string2stringArray(this.tags()),
         chipName: 'tag',

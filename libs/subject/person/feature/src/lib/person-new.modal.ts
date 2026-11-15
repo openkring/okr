@@ -94,7 +94,7 @@ export class PersonNewModal {
   protected async selectOrg(): Promise<void> {
     const modal = await this.modalController.create({
       component: OrgSelectModal,
-      cssClass: 'list-modal',
+      cssClass: ['modal-narrow', 'modal-fixed-height'],
       componentProps: {
         selectedTag: 'selectable',
         currentUser: this.currentUser()

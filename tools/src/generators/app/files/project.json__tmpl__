@@ -943,6 +943,7 @@
           "apps/<%= tenantId %>-app/src/theme/variables.scss",
           "node_modules/leaflet/dist/leaflet.css",
           "libs/shared/ui/src/styles/zoom-guard.css",
+          "libs/shared/ui/src/styles/modals.scss",
           "libs/shared/ui/src/styles/action-sheet-groups.css"
         ],
         "allowedCommonJsDependencies": [

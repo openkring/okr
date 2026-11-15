@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Claude Code PostToolUse hook: after a *.modal.ts, *.form.ts or *.validations.ts is written,
+ * Claude Code PostToolUse hook: after a .ts file under libs/ is written,
  * run scripts/check-forms.mjs and report the findings for THAT file (exit 2 → fed back to Claude).
  * Findings in other files are ignored here; `pnpm check-forms` still reports everything.
  * Wired in .claude/settings.json.
@@ -18,7 +18,8 @@ try {
 } catch {
   process.exit(0);
 }
-if (!/\.(modal|form|validations)\.ts$/.test(filePath) || filePath.endsWith('.spec.ts')) process.exit(0);
+// any lib .ts: rule 6 (modal cssClass) fires in the stores and pages that open the modals
+if (!/\/libs\/.+\.ts$/.test(filePath) || filePath.endsWith('.spec.ts')) process.exit(0);
 
 const root = new URL('..', import.meta.url).pathname;
 const rel = relative(root, filePath);

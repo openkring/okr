@@ -351,7 +351,6 @@ export const OwnershipStore = signalStore(
         const { OwnershipNewModal } = await import('./ownership-new.modal');
         const modal = await store.modalController.create({
           component: OwnershipNewModal,
-          cssClass: ['small-modal', 'auto-height-modal'],
           componentProps: {
             ownership,
             currentUser: store.appStore.currentUser()

@@ -148,7 +148,7 @@ export class BillEditModal {
     if (this.isReadOnly()) return;
     const modal = await this.modalController.create({
       component: MultiSelectModal,
-      cssClass: 'list-modal',
+      cssClass: ['modal-narrow', 'modal-fixed-height'],
       componentProps: { contents: 'org,person', selectedTag: '', currentUser: this.currentUser(), title: this.i18n.vendor_select() },
     });
     await modal.present();

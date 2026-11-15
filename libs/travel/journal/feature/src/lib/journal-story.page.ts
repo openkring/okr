@@ -451,7 +451,7 @@ export class JournalStoryPage {
     category.items = addableSectionTypes(fp.sections).map((type) => new CategoryItemModel(type, type));
     const { loadCardSelectModal } = await import('@okr/cms-section-feature');
     const CardSelectModal = await loadCardSelectModal();
-    const modal = await this.modalController.create({ component: CardSelectModal, cssClass: 'full-modal', componentProps: { category, slug: 'section' } });
+    const modal = await this.modalController.create({ component: CardSelectModal, cssClass: 'modal-fullscreen', componentProps: { category, slug: 'section' } });
     await modal.present();
     const { data, role } = await modal.onWillDismiss<CategoryItemModel>();
     const type = data?.name;
@@ -605,7 +605,7 @@ export class JournalStoryPage {
     const SectionEditModal = await loadSectionEditModal();
     const modal = await this.modalController.create({
       component: SectionEditModal,
-      cssClass: 'full-modal',
+      cssClass: 'modal-fullscreen',
       injector: journalSectionPickerInjector(this.injector, this.journalKey(), this.footprintKey()),
       componentProps: {
         section,
@@ -661,7 +661,7 @@ export class JournalStoryPage {
         title: fp.title, placeName: fp.placeName, date: fp.date, time: fp.time, published: fp.publishState === 'published', transport: fp.transport ?? '',
       };
       await this.withLock(fp.key, async () => {
-        const modal = await this.modalController.create({ component: FootprintEditModal, componentProps: { footprint: current }, cssClass: 'auto-height-modal' });
+        const modal = await this.modalController.create({ component: FootprintEditModal, componentProps: { footprint: current } });
         await modal.present();
         const { data, role } = await modal.onWillDismiss<FootprintFormModel>();
         if (role === 'confirm' && data) await this.run(() => this.store.saveFootprintForm(fp.key, data, fp));

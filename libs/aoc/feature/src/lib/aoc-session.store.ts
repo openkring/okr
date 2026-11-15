@@ -183,7 +183,7 @@ export const AocSessionStore = signalStore(
     async changeDuration(): Promise<void> {
       const modal = await store.modalController.create({
         component: DurationPickerModal,
-        cssClass: 'duration-picker-modal',
+        cssClass: 'modal-fit',
         componentProps: {
           fromDateTime: store.fromDateTime(),
           toDateTime: store.toDateTime() || getTodayStr(DateFormat.StoreDateTime),

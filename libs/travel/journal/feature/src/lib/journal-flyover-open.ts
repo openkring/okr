@@ -5,6 +5,6 @@ import { FlyTimeline, JournalI18n, JournalTileSource } from '@okr/travel-journal
 
 /** Opens the flyover full screen over the current page; it closes itself at the end (flyover design 2026-10-24). */
 export async function openJournalFlyover(modalController: ModalController, timeline: FlyTimeline, tiles: JournalTileSource[], i18n: JournalI18n): Promise<void> {
-  const modal = await modalController.create({ component: JournalFlyover, componentProps: { timeline, tiles, i18n }, cssClass: 'fullscreen-modal' });
+  const modal = await modalController.create({ component: JournalFlyover, componentProps: { timeline, tiles, i18n }, cssClass: 'modal-fullscreen' });
   await modal.present();
 }

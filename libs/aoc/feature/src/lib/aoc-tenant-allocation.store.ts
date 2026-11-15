@@ -166,7 +166,7 @@ export const AocTenantAllocationStore = signalStore(
         : ResourceSelectModal;
       const modal = await store.modalController.create({
         component,
-        cssClass: 'list-modal',
+        cssClass: ['modal-narrow', 'modal-fixed-height'],
         componentProps: { selectedTag: '', currentUser },
       });
       modal.present();

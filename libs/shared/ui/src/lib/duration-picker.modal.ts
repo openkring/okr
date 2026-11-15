@@ -26,8 +26,8 @@ export interface DurationPickerModalI18n {
 }
 
 /**
- * Generic from/to duration picker. Shows two calendars side by side (use the
- * `.duration-picker-modal` cssClass for the side-by-side layout). `showDate` / `showTime`
+ * Generic from/to duration picker. Shows two calendars side by side (open it with the
+ * `modal-fit` cssClass; the box then takes the width of the two calendars). `showDate` / `showTime`
  * decide whether the day selector and/or the time selector are shown.
  *
  * Inputs `fromDateTime` / `toDateTime` are optional store-format strings (StoreDate `yyyyMMdd`
@@ -45,6 +45,20 @@ export interface DurationPickerModalI18n {
     Header, ChangeConfirmation,
     IonContent, IonGrid, IonRow, IonCol, IonDatetime,
   ],
+  // moved here from the retired global `.duration-picker-modal` class (2026-11-15)
+  styles: [`
+    /* prominent «Von» / «Bis» headers above each calendar */
+    .duration-header {
+      background: var(--ion-color-light);
+      color: var(--ion-color-light-contrast);
+      font-weight: 600;
+      text-align: center;
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+    ion-datetime { margin-inline: auto; }
+  `],
   template: `
     <okr-header [i18n]="{ title: labels().title }" [isModal]="true" />
     @if (showConfirmation()) {

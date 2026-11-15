@@ -616,7 +616,7 @@ export const BookingStore = signalStore(
       const modal = await store.modalController.create({
         component: BookingEditModal,
         componentProps: this.modalProps(booking, lines, readOnly),
-        cssClass: ['wide-modal', 'auto-height-modal'],
+        cssClass: 'modal-wide',
       });
       await modal.present();
       const { data, role } = await modal.onDidDismiss<{ booking: BookingModel; lines: BookingLineModel[] }>();
@@ -715,7 +715,7 @@ export const BookingStore = signalStore(
       const modal = await store.modalController.create({
         component: BookingEditModal,
         componentProps: this.modalProps(booking, lines, false),
-        cssClass: ['wide-modal', 'auto-height-modal'],
+        cssClass: 'modal-wide',
       });
       await modal.present();
       const { data, role } = await modal.onDidDismiss<{ booking: BookingModel; lines: BookingLineModel[] }>();

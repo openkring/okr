@@ -282,7 +282,7 @@ export class AttendeesAccordion {
    if (!this.canEdit()) return;
    const modal = await this.modalController.create({
       component: PersonSelectModal,
-      cssClass: 'list-modal',
+      cssClass: ['modal-narrow', 'modal-fixed-height'],
       componentProps: {
         selectedTag: '',
         currentUser: this.currentUser()
