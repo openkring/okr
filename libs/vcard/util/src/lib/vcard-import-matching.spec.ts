@@ -167,3 +167,18 @@ describe('buildDecisions — phone rule (1.159 §4.1)', () => {
     expect(d.duplicates[0].okey).toBe('');
   });
 });
+
+describe('buildDecisions — intra-batch target (1.159 §4.1)', () => {
+  it('an intra-batch duplicate names the index of the earlier card', () => {
+    const a = draft({ displayName: 'Anna Muster', addresses: [tel('079 123 45 67')] });
+    const other = draft({ displayName: 'Bea Beispiel', person: { firstName: 'Bea', lastName: 'Beispiel' } as never });
+    const b = draft({ displayName: 'Anni', person: { firstName: 'Anni', lastName: '' } as never, addresses: [tel('+41 79 123 45 67')] });
+    const [, , d] = buildDecisions([a, other, b], [], []);
+    expect(d.duplicates[0].batchIndex).toBe(0);
+  });
+
+  it('an existing person carries no batchIndex', () => {
+    const [d] = buildDecisions([draft()], [person('p1', 'Anna', 'Muster')], []);
+    expect(d.duplicates[0].batchIndex).toBeUndefined();
+  });
+});

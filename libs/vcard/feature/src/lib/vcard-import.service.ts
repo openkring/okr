@@ -26,7 +26,7 @@ import {
   WorkrelCollection,
   WorkrelModel,
 } from '@okr/shared-models';
-import { convertDateFormatToString, DateFormat, getSystemQuery, getTodayStr } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, getSystemQuery, getTodayStr, mapWithConcurrency } from '@okr/shared-util-core';
 import { AlertService } from '@okr/shared-util-angular';
 import { AddressService } from '@okr/subject-address-data-access';
 import { OrgService } from '@okr/subject-org-data-access';
@@ -124,6 +124,9 @@ function splitPersonName(name: string): { firstName: string; lastName: string } 
 
 /** Cards parsed between two UI yields while reading a large export (spec 1.159 §4.4). */
 const READ_CHUNK = 200;
+
+/** Person cards written at the same time (spec 1.159 §4.3). */
+const COMMIT_CONCURRENCY = 4;
 
 /**
  * Client orchestration of the vCard import (spec §7/§8): pick the files, parse them,
@@ -373,23 +376,33 @@ export class VcardImportService {
     let done = 0;
 
     // ---- pass 1: subjects (create or merge), addresses, avatar ----
-    for (const decision of decisions) {
+    // Three phases (spec 1.159 §4.3). Orgs first and in order: later person cards resolve their
+    // employer through `batchOrgKeys`. Then new persons, 4 at a time — they read the shared maps
+    // but never depend on each other. Merges last and in order: a merge may target a person this
+    // same file created (`duplicates[0].batchIndex`), which must exist by then.
+    const keyOfCard = new Map<number, string>();
+    const runCard = async (decision: VcardImportDecision, index: number): Promise<void> => {
       const draft = decision.draft;
       try {
         if (decision.action === 'skip') {
           result.skipped++;
-          continue;
+          return;
         }
+        const target = decision.duplicates[0];
+        const batchKey = decision.action === 'merge' && target && !target.okey && target.batchIndex !== undefined
+          ? keyOfCard.get(target.batchIndex) : undefined;
+        const resolved = batchKey ? { ...decision, duplicates: [{ ...target, okey: batchKey }, ...decision.duplicates.slice(1)] } : decision;
 
-        if (this.isMerge(decision)) {
-          const merged = await this.mergeInto(decision, tenantId, currentUser);
+        if (this.isMerge(resolved)) {
+          const merged = await this.mergeInto(resolved, tenantId, currentUser);
           this.registerPerson(batchPersonKeys, merged.key, draft);
+          keyOfCard.set(index, merged.key);
           if (merged.warning) result.failures.push(merged.warning);
           result.merged++;
           // §6.1: a merge refreshes the edges too — that is usually the point of re-importing
           // a phone export. `writeEmployment`/`writeRelations` dedupe against `edges`.
-          edgeWork.push({ decision, key: merged.key, counted: 'merged' });
-          continue;
+          edgeWork.push({ decision: resolved, key: merged.key, counted: 'merged' });
+          return;
         }
 
         if (this.isOrgMerge(decision)) {
@@ -397,13 +410,16 @@ export class VcardImportService {
           batchOrgKeys.set(normalizeName(draft.org?.name ?? draft.displayName), merged.key);
           if (merged.warning) result.failures.push(merged.warning);
           result.merged++;
-          continue;
+          return;
         }
 
         const key = await this.createSubject(draft, currentUser, batchOrgKeys);
         if (!key) throw new Error('create returned no key');
         if (draft.kind === 'org') batchOrgKeys.set(normalizeName(draft.org?.name ?? draft.displayName), key);
-        else this.registerPerson(batchPersonKeys, key, draft);
+        else {
+          this.registerPerson(batchPersonKeys, key, draft);
+          keyOfCard.set(index, key);
+        }
 
         await this.writeAddresses(draft.addresses, `${draft.kind}.${key}`, currentUser);
         const warning = await this.writeAvatar(draft, key, tenantId);
@@ -417,7 +433,15 @@ export class VcardImportService {
       } finally {
         onProgress?.(++done, totalSteps);
       }
-    }
+    };
+
+    const indexed = decisions.map((decision, index) => ({ decision, index }));
+    const orgCards = indexed.filter(({ decision }) => decision.draft.kind === 'org');
+    const personMerges = indexed.filter(({ decision }) => decision.draft.kind === 'person' && decision.action === 'merge');
+    const newPersons = indexed.filter(({ decision }) => decision.draft.kind === 'person' && decision.action !== 'merge');
+    for (const { decision, index } of orgCards) await runCard(decision, index);
+    await mapWithConcurrency(newPersons, COMMIT_CONCURRENCY, ({ decision, index }) => runCard(decision, index));
+    for (const { decision, index } of personMerges) await runCard(decision, index);
 
     // ---- pass 2: edges, now that every subject of this file exists and is registered ----
     for (const { decision, key, counted } of edgeWork) {

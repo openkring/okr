@@ -10,6 +10,8 @@ export interface ExistingPerson {
   emails: string[];
   /** every phone of the person as stored (favorite + directory entries), unnormalized */
   phones: string[];
+  /** set on a card of the same file (okey ''): its index in `drafts`, so a merge can target it at commit time */
+  batchIndex?: number;
 }
 
 /** An org already in the tenant, as needed for employer matching. */
@@ -145,7 +147,7 @@ export function buildDecisions(drafts: VcardImportDraft[], persons: ExistingPers
   const orgPool = [...orgs];
   const decisions: VcardImportDecision[] = [];
 
-  for (const draft of drafts) {
+  for (const [batchIndex, draft] of drafts.entries()) {
     const duplicates = findDuplicates(draft, pool);
     const orgDuplicates = findOrgDuplicates(draft, orgPool);
     const action: VcardImportDecision['action'] = duplicates.length > 0 || orgDuplicates.length > 0 ? 'merge' : 'import';
@@ -158,7 +160,7 @@ export function buildDecisions(drafts: VcardImportDraft[], persons: ExistingPers
     // card can be recognized as duplicating it by name, while relation matching
     // against it (which requires an okey) still comes back unresolved.
     if (draft.kind === 'person' && draft.person) {
-      pool.push({ okey: '', firstName: draft.person.firstName ?? '', lastName: draft.person.lastName ?? '', emails: draftEmails(draft), phones: draftPhones(draft) });
+      pool.push({ okey: '', firstName: draft.person.firstName ?? '', lastName: draft.person.lastName ?? '', emails: draftEmails(draft), phones: draftPhones(draft), batchIndex });
     } else if (draft.kind === 'org' && draft.org) {
       // the same org twice in one file is recognised the same way (okey-less, so the commit
       // creates it once and the second card reuses the batch key rather than a merge target).
