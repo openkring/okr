@@ -9,7 +9,6 @@ import {
   AddressCollection,
   AddressModel,
   AppConfigCollection,
-  AvatarCollection,
   OrgCollection,
   PersonalRelCollection,
   PersonCollection,
@@ -19,30 +18,24 @@ import {
   Roles,
   WorkrelCollection,
 } from '@okr/shared-models';
-import { classifyStoreDate, convertDateFormatToString, DateFormat, getTodayStr } from '@okr/shared-util-core';
-// countries-list lives here rather than in shared-util-core: the browser has no caller for it,
-// and a re-export from that barrel pulled its 45 KB into every app bundle (spec 1.49, F1).
-// A Cloud Function has no bundle-size budget, so the dependency is free at this end.
-import { countries } from 'countries-list';
+import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication, projectAddressesForViewer } from '@okr/shared-util-functions';
 import {
   buildVCardFile,
   ExportScope,
   resolveVcardCapability,
-  toAppleRelationLabel,
   VCARD_INLINE_LIMIT_BYTES,
-  VcardChannel,
   VcardChannelType,
-  VcardEmployment,
   VcardExportRequest,
   VcardExportResponse,
   VcardRecord,
-  VcardRelatedName,
   VcardTargetKind,
 } from '@okr/vcard-util';
+import { fetchAvatarBase64, FsData, toVcardRecord } from './record';
+
+export { resolveBdayIso } from './record';
 
 const REGION = 'europe-west6';
-const IMGIX_BASE = 'https://bkaiser.imgix.net';
 const SIGNED_URL_TTL_MS = 15 * 60 * 1000;
 
 const ALL_CHANNELS: VcardChannelType[] = ['phone', 'email', 'postal', 'web'];
@@ -68,8 +61,6 @@ const FAVORITES_SCOPE: ExportScope = {
   orgLinks: false,
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type FsData = Record<string, any>;
 
 /** Never trust the client's scope: validate its shape and coerce booleans. */
 function clampScope(scope: ExportScope | undefined): ExportScope {
@@ -90,103 +81,6 @@ function clampScope(scope: ExportScope | undefined): ExportScope {
 
 function belongsToTenant(data: FsData | undefined, tenantId: string): boolean {
   return !!data && Array.isArray(data['tenants']) && data['tenants'].includes(tenantId) && data['isArchived'] !== true;
-}
-
-function mapAddressChannel(addressChannel: string | undefined): VcardChannelType | undefined {
-  switch (addressChannel) {
-    case 'email':
-    case 'phone':
-    case 'postal':
-    case 'web':
-      return addressChannel;
-    default:
-      return undefined; // 'custom' and unknowns are not vCard channels
-  }
-}
-
-/** Resolve a display country name (English, per spec example) from an ISO alpha-2 code. */
-function countryDisplayName(countryCode: string | undefined): string {
-  if (!countryCode) return '';
-  const data = countries[countryCode.toUpperCase() as keyof typeof countries];
-  return data?.name || countryCode;
-}
-
-function usageToType(channel: VcardChannelType, usage: string | undefined): string | undefined {
-  const u = (usage ?? '').toLowerCase();
-  if (channel === 'phone') {
-    if (u === 'mobile' || u === 'cell') return 'CELL';
-    if (u === 'fax') return 'FAX';
-  }
-  if (u === 'work') return 'WORK';
-  if (u === 'home' || u === 'private') return 'HOME';
-  return undefined;
-}
-
-function buildChannels(addresses: FsData[], scope: ExportScope, favoritesOnly: boolean): VcardChannel[] {
-  const channels: VcardChannel[] = [];
-  for (const a of addresses) {
-    if (favoritesOnly && a['isFavorite'] !== true) continue;
-    const channel = mapAddressChannel(a['addressChannel']);
-    if (!channel || !scope.addresses.includes(channel)) continue;
-    const type = usageToType(channel, a['addressUsage']);
-    const pref = a['isFavorite'] === true;
-    switch (channel) {
-      case 'email':
-        if (a['email']) channels.push({ channel, type, pref, value: a['email'] });
-        break;
-      case 'phone':
-        if (a['phone']) channels.push({ channel, type, pref, value: a['phone'] });
-        break;
-      case 'web':
-        if (a['url']) {
-          const label = a['addressChannelLabel'] && a['addressChannelLabel'] !== '' ? a['addressChannelLabel'] : undefined;
-          channels.push({ channel, type, pref, value: a['url'], label });
-        }
-        break;
-      case 'postal': {
-        const street = [a['streetName'], a['streetNumber']].filter((p) => !!p).join(' ').trim();
-        channels.push({ channel, type, pref, street, city: a['city'], zip: a['zipCode'], country: countryDisplayName(a['countryCode']) });
-        break;
-      }
-    }
-  }
-  return channels;
-}
-
-/**
- * Convert a dob StoreDate into the vCard BDAY ISO date, or undefined when there is nothing
- * renderable. Gated on classifyStoreDate === 'full': a partial dob (year-only '19850000', or a
- * birthday without a year '00000415' — the primary motivating case for this feature, imported
- * legacy member lists that carry only a year) reaches convertDateFormatToString's
- * isStrict=false escape hatch, but parseDate only returns null for the end-future sentinel —
- * a partial value parses to an Invalid Date, not null — so format() would throw
- * RangeError: Invalid time value and fail the whole vcardExport batch for one such person.
- *
- * A future vCard 4.0 `BDAY:--0415` form could represent a year-unknown birthday; that is a
- * product decision left to the human, so a non-full dob simply omits BDAY for now.
- */
-export function resolveBdayIso(dob: string | undefined): string | undefined {
-  if (!dob || classifyStoreDate(dob) !== 'full') return undefined;
-  const iso = convertDateFormatToString(dob, DateFormat.StoreDate, DateFormat.IsoDate, false);
-  return /^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso : undefined;
-}
-
-async function fetchAvatarBase64(db: FirebaseFirestore.Firestore, key: string): Promise<string | undefined> {
-  const snap = await db.collection(AvatarCollection).doc(key).get();
-  const storagePath = snap.data()?.['storagePath'] as string | undefined;
-  if (!storagePath) return undefined;
-  const url = `${IMGIX_BASE}/${storagePath}?fm=jpg&w=256&h=256&fit=crop&crop=faces&auto=compress`;
-  try {
-    const resp = await fetch(url);
-    if (!resp.ok) {
-      logger.warn(`vcardExport: avatar fetch returned ${resp.status} for ${key}`);
-      return undefined;
-    }
-    return Buffer.from(await resp.arrayBuffer()).toString('base64');
-  } catch (e) {
-    logger.warn(`vcardExport: avatar fetch failed for ${key}`, e as Error);
-    return undefined;
-  }
 }
 
 async function assembleRecord(
@@ -214,93 +108,29 @@ async function assembleRecord(
     kind === 'person' ? (data as Partial<PersonPrivacyPreferences>) : undefined,
     settings,
   ) as unknown as FsData[];
-  const channels = buildChannels(addresses, scope, favoritesOnly);
 
-  const relatedNames: VcardRelatedName[] = [];
-  let employment: VcardEmployment | undefined;
-  let bday: string | undefined;
-  let photoBase64: string | undefined;
+  let workrels: FsData[] = [];
+  if (scope.workRels) {
+    const wSnap = await db.collection(WorkrelCollection).where(kind === 'person' ? 'subjectKey' : 'objectKey', '==', key).get();
+    workrels = wSnap.docs.map((d) => d.data()).filter((w) => belongsToTenant(w, tenantId));
+  }
 
-  if (kind === 'person') {
-    const displayName = `${data!['firstName'] ?? ''} ${data!['lastName'] ?? ''}`.trim() || (data!['lastName'] ?? key);
-
-    if (scope.birthday) {
-      // ONLY the projected dob vault channel — `addresses` has already been privacy-filtered for
-      // this caller's tier. The former `?? data['dateOfBirth']` fallback read the person document
-      // directly, which bypasses the §A3 formula: it is dead post-strip (persons carry no
-      // dateOfBirth and the rules reject writes that reintroduce it), but on any legacy document
-      // that still had one it would now hand a Protected person's birthday to a plain member.
-      const dobAddr = addresses.find((a) => a['addressChannel'] === 'dob');
-      // defensive coercion: a legacy Firestore doc could hold a non-string dob value
-      bday = resolveBdayIso(String(dobAddr?.['dob'] ?? ''));
-    }
-
-    if (scope.workRels) {
-      const wSnap = await db.collection(WorkrelCollection).where('subjectKey', '==', key).get();
-      const workrels = wSnap.docs.map((d) => d.data()).filter((w) => belongsToTenant(w, tenantId));
-      // stable order: most recent startDate first, else array order
-      workrels.sort((a, b) => `${b['validFrom'] ?? ''}`.localeCompare(`${a['validFrom'] ?? ''}`));
-      workrels.forEach((w, i) => {
-        if (i === 0) {
-          employment = { org: w['objectName'], title: w['label'] || w['name'] || undefined, role: w['type'] || undefined };
-        } else {
-          relatedNames.push({ name: w['objectName'], label: w['label'] || 'Employer' });
-        }
-      });
-    }
-
-    if (scope.personalRels) {
-      const [subjSnap, objSnap] = await Promise.all([
-        db.collection(PersonalRelCollection).where('subjectKey', '==', key).get(),
-        db.collection(PersonalRelCollection).where('objectKey', '==', key).get(),
-      ]);
-      const seen = new Set<string>();
-      const collect = (docs: FirebaseFirestore.QueryDocumentSnapshot[], asSubject: boolean) => {
-        for (const d of docs) {
-          if (seen.has(d.id)) continue;
-          seen.add(d.id);
-          const r = d.data();
-          if (!belongsToTenant(r, tenantId)) continue;
-          const name = asSubject
-            ? `${r['objectFirstName'] ?? ''} ${r['objectLastName'] ?? ''}`.trim()
-            : `${r['subjectFirstName'] ?? ''} ${r['subjectLastName'] ?? ''}`.trim();
-          if (!name) continue;
-          relatedNames.push({ name, label: toAppleRelationLabel(r['type'], r['label']) });
-        }
-      };
-      collect(subjSnap.docs, true);
-      collect(objSnap.docs, false);
-    }
-
-    if (scope.photo) photoBase64 = await fetchAvatarBase64(db, subjectKey);
-
-    return {
-      kind,
-      firstName: data!['firstName'],
-      lastName: data!['lastName'],
-      displayName,
-      bday,
-      photoBase64,
-      channels,
-      employment,
-      relatedNames,
+  let personalRels: { subject: FsData[]; object: FsData[] } | undefined;
+  if (kind === 'person' && scope.personalRels) {
+    const [subjSnap, objSnap] = await Promise.all([
+      db.collection(PersonalRelCollection).where('subjectKey', '==', key).get(),
+      db.collection(PersonalRelCollection).where('objectKey', '==', key).get(),
+    ]);
+    const subjIds = new Set(subjSnap.docs.map((d) => d.id));
+    personalRels = {
+      subject: subjSnap.docs.map((d) => d.data()).filter((r) => belongsToTenant(r, tenantId)),
+      // a rel in which the person is both subject and object is listed once (subject side)
+      object: objSnap.docs.filter((d) => !subjIds.has(d.id)).map((d) => d.data()).filter((r) => belongsToTenant(r, tenantId)),
     };
   }
 
-  // organization
-  const orgName = data!['name'] ?? key;
-  if (scope.workRels) {
-    const wSnap = await db.collection(WorkrelCollection).where('objectKey', '==', key).get();
-    const workers = wSnap.docs.map((d) => d.data()).filter((w) => belongsToTenant(w, tenantId));
-    for (const w of workers) {
-      const name = `${w['subjectName2'] ?? ''} ${w['subjectName1'] ?? ''}`.trim();
-      if (!name) continue;
-      relatedNames.push({ name, label: w['label'] || 'Contact' });
-    }
-  }
-  if (scope.photo) photoBase64 = await fetchAvatarBase64(db, subjectKey);
-
-  return { kind, displayName: orgName, orgName, photoBase64, channels, relatedNames };
+  const photoBase64 = scope.photo ? await fetchAvatarBase64(db, subjectKey) : undefined;
+  return toVcardRecord({ kind, key, data: data!, addresses, workrels, personalRels, scope, favoritesOnly, photoBase64 });
 }
 
 function slugify(name: string): string {
