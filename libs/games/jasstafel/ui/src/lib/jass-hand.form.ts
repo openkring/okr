@@ -111,9 +111,10 @@ import { JassAvatar } from './jass-avatar';
                 </ion-col>
               </ion-row>
               @if (formData().phase !== 'announce') {
-                @if (preview(); as p) {
-                  <ion-row><ion-col size="12" class="preview">{{ i18n().preview() }}: {{ p }}</ion-col></ion-row>
-                }
+                <!-- the row is always there (blank until valid), so the content-sized modal keeps its height -->
+                <ion-row><ion-col size="12" class="preview">
+                  @if (preview(); as p) { {{ i18n().preview() }}: {{ p }} } @else { &nbsp; }
+                </ion-col></ion-row>
               }
             </ion-grid>
           </ion-card-content>

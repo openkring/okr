@@ -15,11 +15,16 @@ import { JassHandForm } from './jass-hand.form';
   host: { '[style.transform]': "flipped() ? 'rotate(180deg)' : null" },
   imports: [Header, ChangeConfirmation, JassHandForm, IonContent],
   // at the Jass table the save bar must be easy to hit: 50% taller than the default 56px toolbar
-  styles: [`okr-change-confirmation ::ng-deep ion-toolbar { --min-height: 84px; }`],
+  styles: [`okr-change-confirmation ::ng-deep ion-toolbar { --min-height: 84px; }
+    .confirmation-slot { height: 84px; }`],
   template: `
     <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+    <!-- the modal sizes to its content: an empty slot of the bar's height holds its place, so the
+         bar appearing mid-entry does not grow the modal and make the whole view jump -->
     @if (showConfirmation()) {
       <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
+    } @else {
+      <div class="confirmation-slot"></div>
     }
     <ion-content class="ion-no-padding">
       @if (formData(); as formData) {
@@ -55,8 +60,7 @@ export class JassHandModal {
     save: this.i18n().changeConfirmation_ok(),
   }) as ChangeConfirmationI18n);
 
-  public async save(): Promise<void> {
-    await dismissOverlay(this.modalController, this.formData(), 'confirm');
+  public async save(): Promise<void> {    await dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   public cancel(): void {
