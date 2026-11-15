@@ -49,7 +49,7 @@ function injectCss(html: string, css: string): string {
 
 /**
  * A draft keeps its version number while it is edited, so `${templateId}@${version}` alone would serve
- * the first compile of a draft for the lifetime of a warm instance (generateDocument has minInstances: 1).
+ * the first compile of a draft for the lifetime of a warm instance (generateDocument scales to zero, so a cold instance compiles again).
  * The content hash makes every edit a new key.
  *
  * `noEscape` (email text and subject) and `noLog` (email) compile the same source differently, so both flags

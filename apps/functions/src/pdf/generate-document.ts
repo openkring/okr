@@ -16,7 +16,7 @@ export const generateDocument = onCall<GenerateDocumentRequest, Promise<Generate
     enforceAppCheck: true,
     memory: '2GiB',
     timeoutSeconds: 120,
-    minInstances: 1,
+    minInstances: 0, // ~15 calls a month (2026-11): a 5–8 s Puppeteer cold start is cheaper than an always-on 2 GiB instance
     maxInstances: 10,
     concurrency: 1,
   },
