@@ -8,7 +8,7 @@
       "warnings": "With notes"
     },
     "bulk": {
-      "label": "For all shown",
+      "label": "For all in the filter",
       "import": "import",
       "merge": "merge",
       "skip": "skip"

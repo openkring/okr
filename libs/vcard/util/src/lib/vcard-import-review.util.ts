@@ -1,4 +1,4 @@
-import { VcardImportDecision } from './vcard-import-matching';
+import { normalizeName, VcardImportDecision } from './vcard-import-matching';
 
 /** The filter chips of the import review (spec 1.159 §4.2). */
 export type ReviewFilter = 'all' | 'new' | 'duplicates' | 'warnings';
@@ -44,4 +44,45 @@ export function applyBulkAction(decisions: VcardImportDecision[], indices: numbe
     if (action === 'import') return { ...d, action: dup ? 'createAnyway' : 'import' };
     return { ...d, action: 'skip' };
   });
+}
+
+// ---- letter index (spec 1.159 §4.2, owner request 2026-11-15) ----
+
+export const INDEX_LETTERS = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ', '#'];
+
+/** What a card is filed under: a person by last name (else first name), an org by its name. */
+function sortKey(d: VcardImportDecision): string {
+  const draft = d.draft;
+  if (draft.kind === 'org') return normalizeName(draft.org?.name || draft.displayName);
+  const last = draft.person?.lastName ?? '';
+  const first = draft.person?.firstName ?? '';
+  return normalizeName(last ? `${last} ${first}` : first || draft.displayName);
+}
+
+/** The index letter of a card: A–Z (umlauts under their base letter), else '#'. */
+export function letterOf(d: VcardImportDecision): string {
+  const c = sortKey(d).charAt(0).toUpperCase();
+  return c >= 'A' && c <= 'Z' ? c : '#';
+}
+
+/** Rows per letter among `indices` — every letter A–Z plus '#', in that order. */
+export function letterCounts(decisions: VcardImportDecision[], indices: number[]): { letter: string; count: number }[] {
+  const counts = new Map(INDEX_LETTERS.map((l) => [l, 0]));
+  for (const i of indices) {
+    const l = letterOf(decisions[i]);
+    counts.set(l, (counts.get(l) ?? 0) + 1);
+  }
+  return INDEX_LETTERS.map((letter) => ({ letter, count: counts.get(letter) ?? 0 }));
+}
+
+/** The rows of one letter among `indices`, sorted by name. */
+export function rowsOfLetter(decisions: VcardImportDecision[], indices: number[], letter: string): number[] {
+  return indices
+    .filter((i) => letterOf(decisions[i]) === letter)
+    .sort((a, b) => sortKey(decisions[a]).localeCompare(sortKey(decisions[b])));
+}
+
+/** The first letter with at least one row ('A' when there are none). */
+export function firstLetterWithRows(counts: { letter: string; count: number }[]): string {
+  return counts.find((c) => c.count > 0)?.letter ?? 'A';
 }

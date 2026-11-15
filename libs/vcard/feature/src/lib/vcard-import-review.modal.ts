@@ -7,8 +7,6 @@ import {
   IonChip,
   IonContent,
   IonIcon,
-  IonInfiniteScroll,
-  IonInfiniteScrollContent,
   IonItem,
   IonLabel,
   IonList,
@@ -18,7 +16,6 @@ import {
   IonSelect,
   IonSelectOption,
   IonToggle,
-  InfiniteScrollCustomEvent,
   ModalController,
 } from '@ionic/angular';
 
@@ -27,7 +24,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { ChangeConfirmation, Header } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import {
-  applyBulkAction, fill, filterCounts, filterIndices, REVIEW_FILTERS, ReviewFilter,
+  applyBulkAction, fill, filterCounts, filterIndices, firstLetterWithRows, letterCounts, REVIEW_FILTERS, ReviewFilter, rowsOfLetter,
   VcardImportDecision, VCARD_I18N_KEYS, VcardI18n,
 } from '@okr/vcard-util';
 
@@ -37,8 +34,6 @@ export interface VcardImportReviewResult {
   importPhotos: boolean;
 }
 
-/** Rows rendered per page; more load on scroll (spec 1.159 §4.2 — 4143 rows must not render at once). */
-const PAGE = 100;
 
 /** One editable relation row, addressed by its index in `VcardImportDecision.relations`. */
 type Relation = VcardImportDecision['relations'][number];
@@ -62,7 +57,7 @@ type Relation = VcardImportDecision['relations'][number];
     IonList, IonItem, IonLabel, IonNote, IonBadge, IonCheckbox,
     IonSelect, IonSelectOption, IonSegment, IonSegmentButton,
     IonAccordion, IonAccordionGroup, IonIcon, SvgIconPipe,
-    IonChip, IonToggle, IonInfiniteScroll, IonInfiniteScrollContent,
+    IonChip, IonToggle,
   ],
   template: `
     <okr-header [i18n]="{ title: i18n.import_title() }" [isModal]="true" />
@@ -101,7 +96,10 @@ type Relation = VcardImportDecision['relations'][number];
         </ion-item>
       </ion-list>
 
-      <ion-accordion-group [multiple]="true" (ionChange)="onExpanded($event.detail.value)">
+      <!-- one letter at a time (owner request 2026-11-15): 4143 rows never render at once, and the
+           letter bar on the side jumps like the index of Apple Contacts -->
+      <div class="body">
+      <ion-accordion-group class="rows" [multiple]="true" (ionChange)="onExpanded($event.detail.value)">
         @for (i of visibleRows(); track i) {
           @let decision = state()[i];
           <ion-accordion [value]="'row-' + i">
@@ -201,9 +199,13 @@ type Relation = VcardImportDecision['relations'][number];
           </ion-accordion>
         }
       </ion-accordion-group>
-      <ion-infinite-scroll [disabled]="visibleRows().length >= shownRows().length" (ionInfinite)="loadMore($event)">
-        <ion-infinite-scroll-content />
-      </ion-infinite-scroll>
+      <nav class="letters">
+        @for (l of letters(); track l.letter) {
+          <button type="button" class="letter" [class.active]="l.letter === letter()" [disabled]="l.count === 0"
+            [attr.aria-label]="l.letter + ' (' + l.count + ')'" (click)="setLetter(l.letter)">{{ l.letter }}</button>
+        }
+      </nav>
+      </div>
 
       <ion-list lines="none">
         <ion-item>
@@ -216,6 +218,12 @@ type Relation = VcardImportDecision['relations'][number];
   `,
   styles: [`
     .filters { display: flex; flex-wrap: wrap; gap: 4px; }
+    .body { display: flex; gap: 4px; align-items: flex-start; }
+    .rows { flex: 1; min-width: 0; }
+    .letters { position: sticky; top: 0; display: flex; flex-direction: column; align-items: center; }
+    .letter { background: none; border: 0; padding: 1px 6px; font-size: 12px; line-height: 1.3; color: var(--ion-color-primary); cursor: pointer; }
+    .letter.active { font-weight: 700; color: var(--ion-color-dark); }
+    .letter:disabled { color: var(--ion-color-medium); opacity: 0.4; cursor: default; }
     .photo { width: 96px; height: 96px; object-fit: cover; border-radius: 50%; margin: 8px 0; }
   `],
 })
@@ -235,12 +243,18 @@ export class VcardImportReviewModal {
   // ---- large-file review (spec 1.159 §4.2) ----
   protected readonly filters = REVIEW_FILTERS;
   protected readonly filter = signal<ReviewFilter>('all');
-  protected readonly shown = signal(PAGE);
+  /** the letter the operator picked; `letter()` falls back to the first letter with rows */
+  private readonly chosenLetter = signal('');
   protected readonly importPhotos = signal(true);
   protected readonly counts = computed(() => filterCounts(this.state()));
   /** indices of the rows the current filter shows — fixed while the filter is unchanged */
   protected readonly shownRows = computed(() => filterIndices(this.state(), this.filter()));
-  protected readonly visibleRows = computed(() => this.shownRows().slice(0, this.shown()));
+  protected readonly letters = computed(() => letterCounts(this.state(), this.shownRows()));
+  protected readonly letter = computed(() => {
+    const chosen = this.chosenLetter();
+    return this.letters().some((l) => l.letter === chosen && l.count > 0) ? chosen : firstLetterWithRows(this.letters());
+  });
+  protected readonly visibleRows = computed(() => rowsOfLetter(this.state(), this.shownRows(), this.letter()));
   /** object URLs of the photos of expanded rows; revoked on collapse and on destroy */
   protected readonly photoUrls = signal<Record<number, string>>({});
 
@@ -366,19 +380,17 @@ export class VcardImportReviewModal {
 
   protected setFilter(f: ReviewFilter): void {
     this.filter.set(f);
-    this.shown.set(PAGE);
   }
 
-  /** Apply one action to every row the current filter shows (not only the rendered page). */
+  protected setLetter(letter: string): void {
+    this.chosenLetter.set(letter);
+  }
+
+  /** Apply one action to every row of the current filter, across all letters. */
   protected bulk(value: unknown): void {
     if (value !== 'import' && value !== 'merge' && value !== 'skip') return;
     this.state.update((list) => applyBulkAction(list, this.shownRows(), value));
     this.isDirty.set(true);
-  }
-
-  protected loadMore(event: InfiniteScrollCustomEvent): void {
-    this.shown.update((n) => n + PAGE);
-    void event.target.complete();
   }
 
   /** Keep an object URL only for expanded rows that carry a photo. */

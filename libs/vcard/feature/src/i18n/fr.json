@@ -8,7 +8,7 @@
       "warnings": "Avec remarques"
     },
     "bulk": {
-      "label": "Pour tous ceux affichés",
+      "label": "Pour tous ceux du filtre",
       "import": "importer",
       "merge": "fusionner",
       "skip": "ignorer"
