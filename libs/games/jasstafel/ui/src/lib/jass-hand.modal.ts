@@ -16,7 +16,8 @@ import { JassHandForm } from './jass-hand.form';
   imports: [Header, ChangeConfirmation, JassHandForm, IonContent],
   // at the Jass table the save bar must be easy to hit: 50% taller than the default 56px toolbar
   styles: [`okr-change-confirmation ::ng-deep ion-toolbar { --min-height: 84px; }
-    .confirmation-slot { height: 84px; }`],
+    /* same slot as the bar, which modals.scss shows at the bottom of a modal (order: 1) */
+    .confirmation-slot { height: 84px; order: 1; }`],
   template: `
     <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     <!-- the modal sizes to its content: an empty slot of the bar's height holds its place, so the
