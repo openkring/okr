@@ -13,3 +13,4 @@ export * from './lib/vcard-lookup';
 export * from './lib/vcard-import-photo';
 export * from './lib/vcard-import-split';
 export * from './lib/vcard-import-review.util';
+export * from './lib/vcard-dav-types';
