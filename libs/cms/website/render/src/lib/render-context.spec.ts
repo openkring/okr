@@ -20,4 +20,16 @@ describe('navItems', () => {
       expect(navItems([menu('m', { url })], site, 'de', '')[0].url).toBe('');
     }
   });
+
+  it('marks https links to another site as external, own-site and page links not', () => {
+    const own = { homePageKey: 'scsw_home', domain: 'https://www.seeclub.org' } as unknown as WebsiteModel;
+    const nodes: WebsiteNode[] = [
+      { id: 'ig', type: 'link', label: 'Diamond Row', url: 'https://www.instagram.com/teamdiamondrow/' },
+      { id: 'cta', type: 'link', label: 'Mitgliederbereich', url: 'https://seeclub.org/', style: 'button' },
+      { id: 'n', type: 'link', label: 'News', url: '/news' },
+      { id: 'p', type: 'page', label: 'p', slug: 'p', pageKey: 'k' },
+    ];
+    expect(navItems(nodes, own, 'en', '').map((i) => i.external)).toEqual([true, false, false, false]);
+    expect(navItems(nodes, own, 'en', '')[0].url).toBe('https://www.instagram.com/teamdiamondrow/');
+  });
 });

@@ -2,7 +2,7 @@ import type { PageModel, WebsiteModel, WebsiteNode } from '@okr/shared-models';
 
 import { langPath } from './render-helpers';
 import { normalizeLang, pickText } from './section-mapper';
-import { isAllowedLinkUrl } from './website-link.util';
+import { isAllowedLinkUrl, isExternalLinkUrl } from './website-link.util';
 
 /** A nav or footer entry in one language. Archived nodes and their subtrees are left out. */
 export interface NavItem {
@@ -17,6 +17,8 @@ export interface NavItem {
   url: string;
   /** 'button' = the call-to-action link (e.g. Mitgliederbereich) */
   style: 'default' | 'button';
+  /** an https link to another site: rendered with target="_blank" rel="noopener" */
+  external: boolean;
   /** this entry (or, for a menu, one of its children) is the page being rendered */
   current: boolean;
   children: NavItem[];
@@ -119,6 +121,7 @@ export function navItems(nodes: WebsiteNode[], site: WebsiteModel, lang: string,
       label: pickText(n.label, n.labelI18n, lang),
       url,
       style: n.style === 'button' ? 'button' : 'default',
+      external: n.type !== 'page' && isExternalLinkUrl(url, siteOrigin(site)),
       current: (n.type === 'page' && !!currentKey && n.pageKey === currentKey) || children.some((c) => c.current),
       children,
     });
