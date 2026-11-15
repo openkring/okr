@@ -182,3 +182,45 @@ describe('buildDecisions — intra-batch target (1.159 §4.1)', () => {
     expect(d.duplicates[0].batchIndex).toBeUndefined();
   });
 });
+
+describe('buildDecisions — shared lines (final review)', () => {
+  const work = (phone: string) => ({ addressChannel: 'phone', phone, addressUsage: 'work' }) as never;
+
+  it('never merges two colleagues on a shared office line (TEL;TYPE=WORK)', () => {
+    const anna = draft({ displayName: 'Anna Beispiel', person: { firstName: 'Anna', lastName: 'Beispiel' } as never, addresses: [work('044 123 45 00')] });
+    const hans = draft({ displayName: 'Hans Muster', person: { firstName: 'Hans', lastName: 'Muster' } as never, addresses: [work('+41 44 123 45 00')] });
+    const [, d] = buildDecisions([anna, hans], [], []);
+    expect(d.action).toBe('import');
+    expect(d.duplicates).toEqual([]);
+  });
+
+  it('ignores a number two existing persons share', () => {
+    const card = draft({ displayName: 'Hans Muster', person: { firstName: 'Hans', lastName: 'Muster' } as never, addresses: [tel('044 123 45 00')] });
+    const [d] = buildDecisions([card], [
+      person('p1', 'Anna', 'Beispiel', [], ['044 123 45 00']),
+      person('p2', 'Bea', 'Beispiel', [], ['+41441234500']),
+    ], []);
+    expect(d.duplicates).toEqual([]);
+  });
+
+  it('matches 4000 cards against 4000 persons within a second', () => {
+    const persons = Array.from({ length: 4000 }, (_, i) => person(`p${i}`, `F${i}`, `L${i}`, [], [`079 ${String(1000000 + i)}`]));
+    const drafts = Array.from({ length: 4000 }, (_, i) => draft({ displayName: `X${i}`, person: { firstName: `X${i}`, lastName: 'Y' } as never, addresses: [tel(`+41 79 ${String(1000000 + i)}`)] }));
+    const t0 = Date.now();
+    const decisions = buildDecisions(drafts, persons, []);
+    expect(Date.now() - t0).toBeLessThan(1000);
+    expect(decisions[123].duplicates[0].okey).toBe('p123');
+  }, 30_000);
+});
+
+describe('buildDecisions — a shared line stays shared', () => {
+  it('a number two existing persons share never links two cards of the file', () => {
+    const a = draft({ displayName: 'Hans Muster', person: { firstName: 'Hans', lastName: 'Muster' } as never, addresses: [tel('044 123 45 00')] });
+    const b = draft({ displayName: 'Ida Muster', person: { firstName: 'Ida', lastName: 'Muster' } as never, addresses: [tel('044 123 45 00')] });
+    const [, d] = buildDecisions([a, b], [
+      person('p1', 'Anna', 'Beispiel', [], ['044 123 45 00']),
+      person('p2', 'Bea', 'Beispiel', [], ['044 123 45 00']),
+    ], []);
+    expect(d.duplicates).toEqual([]);
+  });
+});

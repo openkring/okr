@@ -1,4 +1,4 @@
-import { isEqualPhoneNumber } from '@okr/shared-util-core';
+import { parsePhoneNumberFromString } from '@okr/shared-util-core';
 
 import { VcardImportDraft } from './vcard-import-mapping';
 
@@ -58,28 +58,69 @@ function draftEmails(draft: VcardImportDraft): string[] {
 }
 
 /**
- * Two phone numbers are the same line (`079 123 45 67` = `+41791234567` = `0041 79 123 45 67`),
- * default country CH. `isEqualPhoneNumber` throws on a value it cannot parse (a label such as
- * "Zentrale", a truncated number) — such a value simply never matches.
+ * A phone number's E.164 form (`+41791234567`), default country CH, so `079 123 45 67`,
+ * `+41791234567` and `0041 79 123 45 67` share one key. Undefined for a value that is not a
+ * number: a label ("Zentrale"), a fragment ("+41 44" — two equal fragments would merge two
+ * people), or anything the parser rejects.
  */
-export function phoneMatch(a: string, b: string): boolean {
-  // a fragment such as "+41 44" parses, and two equal fragments would merge two people
-  const digits = (v: string) => (v.match(/\d/g) ?? []).length;
-  if (!a || !b || digits(a) < 7 || digits(b) < 7) return false;
+export function phoneKey(value: string | undefined): string | undefined {
+  if (!value || (value.match(/\d/g) ?? []).length < 7) return undefined;
   try {
-    return isEqualPhoneNumber(a, b, 'CH');
+    return parsePhoneNumberFromString(value, 'CH')?.number || undefined;
   } catch {
-    return false;
+    return undefined;
   }
+}
+
+/** Two phone numbers are the same line. */
+export function phoneMatch(a: string, b: string): boolean {
+  const ka = phoneKey(a);
+  return !!ka && ka === phoneKey(b);
+}
+
+/**
+ * The card's numbers that may identify a PERSON: every phone except an office line
+ * (`TEL;TYPE=WORK` → usage `work`), which colleagues share — matching on it would merge them.
+ */
+function draftPhoneKeys(draft: VcardImportDraft): string[] {
+  return draft.addresses
+    .filter((a) => a.addressChannel === 'phone' && !!a.phone && a.addressUsage !== 'work')
+    .map((a) => phoneKey(a.phone))
+    .filter((k): k is string => !!k);
 }
 
 function draftPhones(draft: VcardImportDraft): string[] {
   return draft.addresses
-    .filter((a) => a.addressChannel === 'phone' && !!a.phone)
+    .filter((a) => a.addressChannel === 'phone' && !!a.phone && a.addressUsage !== 'work')
     .map((a) => a.phone);
 }
 
-function findDuplicates(draft: VcardImportDraft, persons: ExistingPerson[]): ExistingPerson[] {
+/**
+ * E.164 → the persons carrying that number, built once (spec 1.159 §4.1). A number held by
+ * more than one existing person is a shared line and identifies nobody, so it is dropped.
+ */
+type PhoneIndex = Map<string, ExistingPerson[]> & { shared?: Set<string> };
+
+function buildPhoneIndex(persons: ExistingPerson[]): PhoneIndex {
+  const index: PhoneIndex = new Map();
+  index.shared = new Set();
+  for (const p of persons) {
+    for (const k of new Set(p.phones.map(phoneKey).filter((x): x is string => !!x))) {
+      const list = index.get(k);
+      if (list) list.push(p);
+      else index.set(k, [p]);
+    }
+  }
+  for (const [k, list] of index) {
+    if (list.length > 1) {
+      index.delete(k);
+      index.shared!.add(k);
+    }
+  }
+  return index;
+}
+
+function findDuplicates(draft: VcardImportDraft, persons: ExistingPerson[], phoneIndex: PhoneIndex): ExistingPerson[] {
   // An org card is never a duplicate OF A PERSON. Without this an org sharing a generic
   // address (info@acme.ch) with one of its people would match on email and be handed the
   // person merge path, which writes `person.<okey>` addresses and a dob vault doc for it.
@@ -91,11 +132,8 @@ function findDuplicates(draft: VcardImportDraft, persons: ExistingPerson[]): Exi
   }
   // phone rule (spec 1.159 §4.1): between email and name — a caller-lookup list holds many
   // cards with a phone and no email.
-  const phones = draftPhones(draft);
-  if (phones.length > 0) {
-    const byPhone = persons.filter((p) => p.phones.some((pp) => phones.some((dp) => phoneMatch(pp, dp))));
-    if (byPhone.length > 0) return byPhone;
-  }
+  const byPhone = [...new Set(draftPhoneKeys(draft).flatMap((k) => phoneIndex.get(k) ?? []))];
+  if (byPhone.length > 0) return byPhone;
   const draftName = normalizeName(`${draft.person?.firstName ?? ''} ${draft.person?.lastName ?? ''}`);
   return persons.filter((p) => normalizeName(`${p.firstName} ${p.lastName}`) === draftName);
 }
@@ -145,10 +183,11 @@ function resolveRelations(draft: VcardImportDraft, persons: ExistingPerson[]): V
 export function buildDecisions(drafts: VcardImportDraft[], persons: ExistingPerson[], orgs: ExistingOrg[]): VcardImportDecision[] {
   const pool = [...persons];
   const orgPool = [...orgs];
+  const phoneIndex = buildPhoneIndex(persons);
   const decisions: VcardImportDecision[] = [];
 
   for (const [batchIndex, draft] of drafts.entries()) {
-    const duplicates = findDuplicates(draft, pool);
+    const duplicates = findDuplicates(draft, pool, phoneIndex);
     const orgDuplicates = findOrgDuplicates(draft, orgPool);
     const action: VcardImportDecision['action'] = duplicates.length > 0 || orgDuplicates.length > 0 ? 'merge' : 'import';
     const { employerKey, createEmployer, employerCandidates } = resolveEmployer(draft, orgs);
@@ -160,7 +199,11 @@ export function buildDecisions(drafts: VcardImportDraft[], persons: ExistingPers
     // card can be recognized as duplicating it by name, while relation matching
     // against it (which requires an okey) still comes back unresolved.
     if (draft.kind === 'person' && draft.person) {
-      pool.push({ okey: '', firstName: draft.person.firstName ?? '', lastName: draft.person.lastName ?? '', emails: draftEmails(draft), phones: draftPhones(draft), batchIndex });
+      const entry: ExistingPerson = { okey: '', firstName: draft.person.firstName ?? '', lastName: draft.person.lastName ?? '', emails: draftEmails(draft), phones: draftPhones(draft), batchIndex };
+      pool.push(entry);
+      // a later card of the file with the same personal number is a duplicate of this one;
+      // the first card to carry a number keeps it (a merge target is one person)
+      for (const k of draftPhoneKeys(draft)) if (!phoneIndex.has(k) && !phoneIndex.shared?.has(k)) phoneIndex.set(k, [entry]);
     } else if (draft.kind === 'org' && draft.org) {
       // the same org twice in one file is recognised the same way (okey-less, so the commit
       // creates it once and the second card reuses the batch key rather than a merge target).
