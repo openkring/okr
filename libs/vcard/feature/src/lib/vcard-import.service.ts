@@ -266,9 +266,12 @@ export class VcardImportService {
     ]);
 
     const emailsByParent = new Map<string, string[]>();
+    const phonesByParent = new Map<string, string[]>();
     for (const entry of directory ?? []) {
       const emails = [entry.favEmail, ...(entry.entries ?? []).filter((e) => e.addressChannel === 'email').map((e) => e.email)];
       emailsByParent.set(entry.parentKey, [...new Set(emails.filter(Boolean))]);
+      const phones = [entry.favPhone, ...(entry.entries ?? []).filter((e) => e.addressChannel === 'phone').map((e) => e.phone)];
+      phonesByParent.set(entry.parentKey, [...new Set(phones.filter(Boolean))]);
     }
 
     const persons: ExistingPerson[] = (personModels ?? []).map((p) => ({
@@ -276,6 +279,7 @@ export class VcardImportService {
       firstName: p.firstName ?? '',
       lastName: p.lastName ?? '',
       emails: emailsByParent.get(`person.${p.okey}`) ?? [],
+      phones: phonesByParent.get(`person.${p.okey}`) ?? [],
     }));
     const orgs: ExistingOrg[] = (orgModels ?? []).map((o) => ({ okey: o.okey, name: o.name ?? '' }));
     const usageCategory = (categories ?? []).find((c) => c.name === ADDRESS_USAGE_CATEGORY);

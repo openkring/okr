@@ -1,3 +1,5 @@
+import { isEqualPhoneNumber } from '@okr/shared-util-core';
+
 import { VcardImportDraft } from './vcard-import-mapping';
 
 /** A person already in the tenant, as needed for duplicate/relation matching. */
@@ -6,6 +8,8 @@ export interface ExistingPerson {
   firstName: string;
   lastName: string;
   emails: string[];
+  /** every phone of the person as stored (favorite + directory entries), unnormalized */
+  phones: string[];
 }
 
 /** An org already in the tenant, as needed for employer matching. */
@@ -51,6 +55,28 @@ function draftEmails(draft: VcardImportDraft): string[] {
     .map((a) => a.email.toLowerCase().trim());
 }
 
+/**
+ * Two phone numbers are the same line (`079 123 45 67` = `+41791234567` = `0041 79 123 45 67`),
+ * default country CH. `isEqualPhoneNumber` throws on a value it cannot parse (a label such as
+ * "Zentrale", a truncated number) — such a value simply never matches.
+ */
+export function phoneMatch(a: string, b: string): boolean {
+  // a fragment such as "+41 44" parses, and two equal fragments would merge two people
+  const digits = (v: string) => (v.match(/\d/g) ?? []).length;
+  if (!a || !b || digits(a) < 7 || digits(b) < 7) return false;
+  try {
+    return isEqualPhoneNumber(a, b, 'CH');
+  } catch {
+    return false;
+  }
+}
+
+function draftPhones(draft: VcardImportDraft): string[] {
+  return draft.addresses
+    .filter((a) => a.addressChannel === 'phone' && !!a.phone)
+    .map((a) => a.phone);
+}
+
 function findDuplicates(draft: VcardImportDraft, persons: ExistingPerson[]): ExistingPerson[] {
   // An org card is never a duplicate OF A PERSON. Without this an org sharing a generic
   // address (info@acme.ch) with one of its people would match on email and be handed the
@@ -60,6 +86,13 @@ function findDuplicates(draft: VcardImportDraft, persons: ExistingPerson[]): Exi
   if (emails.length > 0) {
     const byEmail = persons.filter((p) => p.emails.some((e) => emails.includes(e.toLowerCase().trim())));
     if (byEmail.length > 0) return byEmail;
+  }
+  // phone rule (spec 1.159 §4.1): between email and name — a caller-lookup list holds many
+  // cards with a phone and no email.
+  const phones = draftPhones(draft);
+  if (phones.length > 0) {
+    const byPhone = persons.filter((p) => p.phones.some((pp) => phones.some((dp) => phoneMatch(pp, dp))));
+    if (byPhone.length > 0) return byPhone;
   }
   const draftName = normalizeName(`${draft.person?.firstName ?? ''} ${draft.person?.lastName ?? ''}`);
   return persons.filter((p) => normalizeName(`${p.firstName} ${p.lastName}`) === draftName);
@@ -125,7 +158,7 @@ export function buildDecisions(drafts: VcardImportDraft[], persons: ExistingPers
     // card can be recognized as duplicating it by name, while relation matching
     // against it (which requires an okey) still comes back unresolved.
     if (draft.kind === 'person' && draft.person) {
-      pool.push({ okey: '', firstName: draft.person.firstName ?? '', lastName: draft.person.lastName ?? '', emails: draftEmails(draft) });
+      pool.push({ okey: '', firstName: draft.person.firstName ?? '', lastName: draft.person.lastName ?? '', emails: draftEmails(draft), phones: draftPhones(draft) });
     } else if (draft.kind === 'org' && draft.org) {
       // the same org twice in one file is recognised the same way (okey-less, so the commit
       // creates it once and the second card reuses the batch key rather than a merge target).

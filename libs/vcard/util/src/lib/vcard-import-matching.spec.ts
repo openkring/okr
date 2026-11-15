@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildDecisions, ExistingOrg, ExistingPerson, normalizeName } from './vcard-import-matching';
+import { buildDecisions, ExistingOrg, ExistingPerson, normalizeName, phoneMatch } from './vcard-import-matching';
 import { VcardImportDraft } from './vcard-import-mapping';
 
 function draft(over: Partial<VcardImportDraft> = {}): VcardImportDraft {
@@ -10,8 +10,10 @@ function draft(over: Partial<VcardImportDraft> = {}): VcardImportDraft {
     person: { firstName: 'Anna', lastName: 'Muster' } as never, ...over,
   } as VcardImportDraft;
 }
-const person = (okey: string, firstName: string, lastName: string, emails: string[] = []): ExistingPerson =>
-  ({ okey, firstName, lastName, emails });
+const person = (okey: string, firstName: string, lastName: string, emails: string[] = [], phones: string[] = []): ExistingPerson =>
+  ({ okey, firstName, lastName, emails, phones });
+const tel = (phone: string) => ({ addressChannel: 'phone', phone }) as never;
+const mail = (email: string) => ({ addressChannel: 'email', email }) as never;
 const org = (okey: string, name: string): ExistingOrg => ({ okey, name });
 
 describe('normalizeName', () => {
@@ -117,5 +119,51 @@ describe('buildDecisions', () => {
     const d = draft({ relatedNames: [{ name: 'Beat Muster', label: 'spouse' }] });
     const [decision] = buildDecisions([d], [person('p9', 'Beat', 'Muster')], []);
     expect(decision.relations[0].personKey).toBe('p9');
+  });
+});
+
+describe('phoneMatch', () => {
+  it('folds CH formats', () => {
+    expect(phoneMatch('079 123 45 67', '+41791234567')).toBe(true);
+    expect(phoneMatch('0041 79 123 45 67', '079 123 45 67')).toBe(true);
+    expect(phoneMatch('079 123 45 67', '079 123 45 68')).toBe(false);
+  });
+
+  it('ignores unparseable numbers', () => {
+    expect(phoneMatch('Zentrale', '079 123 45 67')).toBe(false);
+    expect(phoneMatch('', '')).toBe(false);
+    expect(phoneMatch('+41 44', '+41 44')).toBe(false);
+  });
+});
+
+describe('buildDecisions — phone rule (1.159 §4.1)', () => {
+  it('matches on phone when no email matches', () => {
+    const card = draft({ displayName: 'A. M.', person: { firstName: 'A.', lastName: 'M.' } as never, addresses: [tel('079 123 45 67')] });
+    const [d] = buildDecisions([card], [person('p1', 'Anna', 'Muster', [], ['+41791234567'])], []);
+    expect(d.duplicates.map((p) => p.okey)).toEqual(['p1']);
+    expect(d.action).toBe('merge');
+  });
+
+  it('lets an email match win over a phone match', () => {
+    const card = draft({ addresses: [mail('anna@x.ch'), tel('079 123 45 67')] });
+    const [d] = buildDecisions([card], [
+      person('byPhone', 'Other', 'One', [], ['079 123 45 67']),
+      person('byMail', 'Third', 'Person', ['anna@x.ch']),
+    ], []);
+    expect(d.duplicates.map((p) => p.okey)).toEqual(['byMail']);
+  });
+
+  it('never matches an org card to a person by phone', () => {
+    const orgCard = draft({ kind: 'org', person: undefined, org: { name: 'Acme AG' } as never, displayName: 'Acme AG', addresses: [tel('044 000 00 00')] });
+    const [d] = buildDecisions([orgCard], [person('p1', 'Anna', 'Muster', [], ['044 000 00 00'])], []);
+    expect(d.duplicates).toEqual([]);
+  });
+
+  it('offers two cards of one file sharing a mobile as duplicates', () => {
+    const a = draft({ displayName: 'Anna Muster', addresses: [tel('079 123 45 67')] });
+    const b = draft({ displayName: 'Anni', person: { firstName: 'Anni', lastName: '' } as never, addresses: [tel('+41 79 123 45 67')] });
+    const [, d] = buildDecisions([a, b], [], []);
+    expect(d.action).toBe('merge');
+    expect(d.duplicates[0].okey).toBe('');
   });
 });
