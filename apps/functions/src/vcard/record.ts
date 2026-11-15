@@ -68,15 +68,15 @@ export function buildChannels(addresses: FsData[], scope: ExportScope, favorites
     const pref = a['isFavorite'] === true;
     switch (channel) {
       case 'email':
-        if (a['email']) channels.push({ channel, type, pref, value: a['email'] });
+        if (a['email']) channels.push({ channel, type, pref, value: String(a['email']) });
         break;
       case 'phone':
-        if (a['phone']) channels.push({ channel, type, pref, value: a['phone'] });
+        if (a['phone']) channels.push({ channel, type, pref, value: String(a['phone']) });
         break;
       case 'web':
         if (a['url']) {
           const label = a['addressChannelLabel'] && a['addressChannelLabel'] !== '' ? a['addressChannelLabel'] : undefined;
-          channels.push({ channel, type, pref, value: a['url'], label });
+          channels.push({ channel, type, pref, value: String(a['url']), label });
         }
         break;
       case 'postal': {

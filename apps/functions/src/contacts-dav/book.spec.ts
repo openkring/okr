@@ -20,6 +20,11 @@ describe('isRebuildDue', () => {
   ])('%s', (_l, builtAt, interval, due) => {
     expect(isRebuildDue(builtAt as string | undefined, interval as never, NOW)).toBe(due);
   });
+
+  it('rebuilds a book whose cards no longer match its index, whatever the interval', () => {
+    expect(isRebuildDue(ago(1), 'manual', NOW, true)).toBe(true);
+    expect(isRebuildDue(ago(1), 'weekly', NOW, true)).toBe(true);
+  });
 });
 
 const card = (uid: string, etag: string): BookCard => ({ uid, etag, vcardText: '', avatarPath: '', avatarVersion: '' });

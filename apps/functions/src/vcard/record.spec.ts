@@ -51,3 +51,10 @@ describe('avatarDocIds', () => {
     expect(avatarDocIds('bka', 'person', 'abc')).toEqual(['bka.person.abc', 'person.abc']);
   });
 });
+
+describe('toVcardRecord — stored values of the wrong type', () => {
+  it('turns a phone stored as a number into text', () => {
+    const r = toVcardRecord({ kind: 'person', key: 'a', data: { firstName: 'A', lastName: 'B' }, addresses: [{ addressChannel: 'phone', phone: 41791234567 }], workrels: [], scope: SCOPE, favoritesOnly: false });
+    expect(r.channels[0].value).toBe('41791234567');
+  });
+});

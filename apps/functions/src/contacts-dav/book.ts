@@ -40,7 +40,13 @@ const DUE_MS: Record<Exclude<RebuildInterval, 'manual'>, number> = { weekly: 7 *
 const WRITE_BATCH = 400;
 const GETALL_BATCH = 300;
 
-export function isRebuildDue(builtAt: string | undefined, interval: RebuildInterval | undefined, now: Date): boolean {
+/**
+ * Is the book due? `cardsMissing` (a card doc gone while the index still lists it — what an
+ * erasure leaves behind) makes it due whatever the interval, so the erased contact also leaves
+ * the devices within a night (final review, Important 4).
+ */
+export function isRebuildDue(builtAt: string | undefined, interval: RebuildInterval | undefined, now: Date, cardsMissing = false): boolean {
+  if (cardsMissing) return true;
   const effective = interval ?? DEFAULT_REBUILD_INTERVAL;
   if (effective === 'manual') return false;
   if (!builtAt) return true;
@@ -112,12 +118,17 @@ export async function loadBookCards(db: Firestore, tenantId: string): Promise<Bo
       kind === 'person' ? (data as Partial<PersonPrivacyPreferences>) : undefined,
       settings,
     ) as unknown as FsData[];
-    const record = toVcardRecord({
-      kind, key, data, addresses,
-      workrels: kind === 'person' ? workrelsBySubject.get(key) ?? [] : [],
-      scope: LOOKUP_SCOPE, favoritesOnly: false,
-    });
-    if (hasLookupChannel(record)) records.push(record);
+    try {
+      const record = toVcardRecord({
+        kind, key, data, addresses,
+        workrels: kind === 'person' ? workrelsBySubject.get(key) ?? [] : [],
+        scope: LOOKUP_SCOPE, favoritesOnly: false,
+      });
+      if (hasLookupChannel(record)) records.push(record);
+    } catch (e) {
+      // one malformed record must not stop the book; it is left out and named by key only
+      logger.warn('contactsDavRebuild: record skipped', { tenantId, uid: `${kind}-${key}`, error: (e as Error).message });
+    }
   }
 
   // both candidate avatar docs per record (the tenant's own picture wins), read by getAll in batches
@@ -132,10 +143,16 @@ export async function loadBookCards(db: Firestore, tenantId: string): Promise<Bo
     }
   }
 
-  return Promise.all(records.map((r) => {
+  const cards = await Promise.all(records.map(async (r) => {
     const avatar = avatarDocIds(tenantId, r.kind, keyOf(r)).map((id) => avatars.get(id)).find((a) => !!a);
-    return renderBookCard(r, avatar?.path ?? '', avatar?.version ?? '');
+    try {
+      return await renderBookCard(r, avatar?.path ?? '', avatar?.version ?? '');
+    } catch (e) {
+      logger.warn('contactsDavRebuild: card skipped', { tenantId, uid: r.uid, error: (e as Error).message });
+      return undefined;
+    }
   }));
+  return cards.filter((c): c is BookCard => !!c);
 }
 
 /**
@@ -185,8 +202,12 @@ export async function runContactsDavRebuild(): Promise<void> {
     const tenantId = cfg.id;
     const enabled = effectiveFeatures({ catalogue: FEATURE_BLOCKS, rollouts, tenantId, enabled: cfg.get('enabledFeatures') as string[] | undefined });
     if (!enabled.has(CONTACTS_DAV_BLOCK)) continue;
-    const root = (await db.collection(CONTACTS_DAV_BOOKS).doc(tenantId).get()).data() as BookRoot | undefined;
-    if (!isRebuildDue(root?.builtAt, root?.rebuildInterval, now)) continue;
+    const rootRef = db.collection(CONTACTS_DAV_BOOKS).doc(tenantId);
+    const root = (await rootRef.get()).data() as BookRoot | undefined;
+    // one aggregate read: fewer card docs than index entries = a card was erased (§8)
+    const stored = root?.index ? (await rootRef.collection(BOOK_CARDS).count().get()).data().count : 0;
+    const cardsMissing = !!root?.index && stored < Object.keys(root.index).length;
+    if (!isRebuildDue(root?.builtAt, root?.rebuildInterval, now, cardsMissing)) continue;
     try {
       const r = await rebuildContactsDavBook(db, tenantId, now);
       logger.info('contactsDavRebuild: rebuilt', { tenantId, ...r });
