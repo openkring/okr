@@ -49,6 +49,8 @@ export interface DavDeps {
   /** base64 JPEG, undefined when it cannot be fetched in time */
   fetchPhoto(avatarPath: string): Promise<string | undefined>;
   log?(message: string, data: Record<string, unknown>): void;
+  /** clock for the photo deadline (tests); defaults to Date.now */
+  now?(): number;
 }
 
 export interface DavRequest {
@@ -72,6 +74,10 @@ const PHOTO_CONCURRENCY = 8;
 const MAX_BODY_BYTES = 1_048_576;
 /** more than the whole book (4143 cards) — a first full sync must never hit it */
 const MAX_MULTIGET_HREFS = 5000;
+/** photos are fetched only within this budget of the 120 s function timeout; later cards go without */
+const PHOTO_DEADLINE_MS = 80_000;
+/** base64 photo bytes per response; keeps one large multiget well inside 512 MiB */
+const MAX_PHOTO_BYTES = 60_000_000;
 const XML = 'application/xml; charset=utf-8';
 const VCARD = 'text/vcard; charset=utf-8';
 const DAV_HEADERS = { DAV: '1, 3, addressbook' };
@@ -139,10 +145,31 @@ const ALLPROP: DavProp[] = [
   { ns: CS_NS, name: 'getctag' },
 ];
 
-async function cardsWithPhotos(cards: BookCard[], deps: DavDeps): Promise<Map<string, string>> {
-  const texts = await mapWithConcurrency(cards, PHOTO_CONCURRENCY, async (c) =>
-    withPhoto(c.vcardText, c.avatarPath ? await deps.fetchPhoto(c.avatarPath).catch(() => undefined) : undefined));
-  return new Map(cards.map((c, i) => [c.uid, texts[i]]));
+interface ServedCard {
+  text: string;
+  /** the ETag the device gets for THIS answer */
+  etag: string;
+}
+
+/**
+ * A card that has an avatar but goes out without it (fetch failed, deadline or byte budget
+ * reached) gets its own ETag. The book's listing keeps the real one, so the device sees a
+ * difference at its next sync and asks for the card again — the photo then arrives.
+ */
+const withoutPhotoEtag = (etag: string): string => `"${etag.replace(/^"|"$/g, '')}-nophoto"`;
+
+async function cardsWithPhotos(cards: BookCard[], deps: DavDeps, started: number): Promise<Map<string, ServedCard>> {
+  const now = () => (deps.now ? deps.now() : Date.now());
+  let photoBytes = 0;
+  const served = await mapWithConcurrency(cards, PHOTO_CONCURRENCY, async (c): Promise<ServedCard> => {
+    if (!c.avatarPath) return { text: c.vcardText, etag: c.etag };
+    const inBudget = now() - started < PHOTO_DEADLINE_MS && photoBytes < MAX_PHOTO_BYTES;
+    const photo = inBudget ? await deps.fetchPhoto(c.avatarPath).catch(() => undefined) : undefined;
+    if (!photo) return { text: c.vcardText, etag: withoutPhotoEtag(c.etag) };
+    photoBytes += photo.length;
+    return { text: withPhoto(c.vcardText, photo), etag: c.etag };
+  });
+  return new Map(cards.map((c, i) => [c.uid, served[i]]));
 }
 
 const answer = (status: number, body = '', headers: Record<string, string> = {}): DavResponse =>
@@ -150,6 +177,7 @@ const answer = (status: number, body = '', headers: Record<string, string> = {})
 
 export async function handleDav(req: DavRequest, deps: DavDeps): Promise<DavResponse> {
   const method = req.method.toUpperCase();
+  const started = deps.now ? deps.now() : Date.now();
   if (req.path.replace(/\/+$/, '') === '/.well-known/carddav') return answer(301, '', { Location: '/' });
   if (method === 'OPTIONS') return answer(200, '', { Allow: 'OPTIONS, GET, HEAD, PROPFIND, REPORT' });
 
@@ -168,8 +196,8 @@ export async function handleDav(req: DavRequest, deps: DavDeps): Promise<DavResp
     if (res.kind !== 'card') return answer(200, method === 'HEAD' ? '' : 'Kring Adressbuch', { 'Content-Type': 'text/plain; charset=utf-8' });
     const [card] = book?.index[res.uid] ? await deps.readCards(auth.tenantId, [res.uid]) : [];
     if (!card) return answer(404, 'not found');
-    const text = (await cardsWithPhotos([card], deps)).get(card.uid) ?? card.vcardText;
-    return answer(200, method === 'HEAD' ? '' : text, { 'Content-Type': VCARD, ETag: card.etag });
+    const one = (await cardsWithPhotos([card], deps, started)).get(card.uid) ?? { text: card.vcardText, etag: card.etag };
+    return answer(200, method === 'HEAD' ? '' : one.text, { 'Content-Type': VCARD, ETag: one.etag });
   }
 
   const wanted = readRequestedProps(req.body) ?? ALLPROP;
@@ -202,7 +230,7 @@ export async function handleDav(req: DavRequest, deps: DavDeps): Promise<DavResp
   const uids = hrefs.map(uidOfHref).filter((u): u is string => !!u && !!book?.index[u]);
   const cards = uids.length ? await deps.readCards(auth.tenantId, uids) : [];
   const wantsData = wanted.some((p) => p.ns === CARDDAV_NS && p.name === 'address-data');
-  const texts = wantsData ? await cardsWithPhotos(cards, deps) : new Map<string, string>();
+  const texts = wantsData ? await cardsWithPhotos(cards, deps, started) : new Map<string, ServedCard>();
   const byUid = new Map(cards.map((c) => [c.uid, c]));
   deps.log?.('contactsDav: multiget', { hrefs: hrefs.length, found: cards.length });
 
@@ -210,9 +238,9 @@ export async function handleDav(req: DavRequest, deps: DavDeps): Promise<DavResp
     const uid = uidOfHref(href);
     const card = uid ? byUid.get(uid) : undefined;
     if (!card) return notFoundResponse(href);
-    const values = propsOf('card', book, card.etag);
-    const text = texts.get(card.uid);
-    if (text !== undefined) values.set(propKey(CARDDAV_NS, 'address-data'), escapeXml(text));
+    const one = texts.get(card.uid);
+    const values = propsOf('card', book, one?.etag ?? card.etag);
+    if (one) values.set(propKey(CARDDAV_NS, 'address-data'), escapeXml(one.text));
     return propResponse(href, values, wanted);
   });
   return answer(207, multistatus(responses), { 'Content-Type': XML });

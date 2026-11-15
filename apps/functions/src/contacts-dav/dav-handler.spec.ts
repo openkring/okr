@@ -119,5 +119,26 @@ describe('handleDav', () => {
     const r = await handleDav(req('REPORT', '/books/main/', `<C:addressbook-multiget xmlns:C="urn:ietf:params:xml:ns:carddav" xmlns:D="DAV:"><D:prop><D:getetag/></D:prop>${hrefs}</C:addressbook-multiget>`), deps());
     expect(r.status).toBe(507);
   });
+
+  it('marks a card served without its photo with its own etag, so the device fetches it again', async () => {
+    const r = await handleDav(req('REPORT', '/books/main/', MULTIGET), deps({ fetchPhoto: async () => undefined }));
+    expect(r.body).toContain('<getetag xmlns="DAV:">"person-spike1-etag-nophoto"</getetag>');
+    // a card without an avatar keeps its real etag
+    expect(r.body).toContain('<getetag xmlns="DAV:">"org-spike2-etag"</getetag>');
+  });
+
+  it('stops fetching photos once the request deadline has passed', async () => {
+    let clock = 0;
+    let fetched = 0;
+    const r = await handleDav(req('REPORT', '/books/main/', MULTIGET), deps({
+      now: () => clock,
+      fetchPhoto: async () => { fetched++; clock += 100_000; return 'UEhPVE8='; },
+      readCards: async (_t, uids) => [CARD('person-spike1', 'a.jpg'), CARD('org-spike2', 'b.jpg')].filter((c) => uids.includes(c.uid)),
+    }));
+    expect(r.status).toBe(207);
+    expect(fetched).toBe(1);
+    expect(r.body).toContain('UID:org-spike2');
+    expect(r.body).toContain('UID:person-spike1');
+  });
 });
 
