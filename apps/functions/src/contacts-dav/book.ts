@@ -1,0 +1,195 @@
+import { logger } from 'firebase-functions/v2';
+import { getFirestore, type DocumentReference, type Firestore } from 'firebase-admin/firestore';
+import {
+  AddressCollection,
+  AddressModel,
+  AppConfigCollection,
+  AvatarCollection,
+  FeatureRolloutCollection,
+  OrgCollection,
+  PersonCollection,
+  PersonPrivacyPreferences,
+  PrivacySettings,
+  WorkrelCollection,
+} from '@okr/shared-models';
+import { projectAddressesForViewer } from '@okr/shared-util-functions';
+import { effectiveFeatures, FEATURE_BLOCKS, type FeatureRollout } from '@okr/tenant-util';
+import {
+  bookCtag, buildLookupVCard, cardEtag, DEFAULT_REBUILD_INTERVAL, LOOKUP_SCOPE, RebuildInterval, VcardRecord, VcardTargetKind,
+} from '@okr/vcard-util';
+
+import { FsData, toVcardRecord } from '../vcard/record';
+import { CONTACTS_DAV_BLOCK } from './dav-auth';
+import type { BookCard, BookRoot } from './dav-handler';
+
+/**
+ * The CardDAV book as a Firestore snapshot (spec 1.159 §5.3–§5.4). Assembling 4143 contacts
+ * reads ~14 000 documents, so it happens once per rebuild — weekly by default, on demand from
+ * the modal — and a device's poll reads only the root doc.
+ *
+ *   contactsDavBooks/{tenantId}              BookRoot (index uid → ETag, ctag, builtAt, rebuildInterval)
+ *   contactsDavBooks/{tenantId}/cards/{uid}  BookCard without uid (vcardText has no PHOTO)
+ */
+
+export const CONTACTS_DAV_BOOKS = 'contactsDavBooks';
+export const BOOK_CARDS = 'cards';
+
+const DAY_MS = 24 * 3600_000;
+/** due thresholds; daily is 20 h so a nightly slot running a few minutes early still counts */
+const DUE_MS: Record<Exclude<RebuildInterval, 'manual'>, number> = { weekly: 7 * DAY_MS, daily: 20 * 3600_000 };
+const WRITE_BATCH = 400;
+const GETALL_BATCH = 300;
+
+export function isRebuildDue(builtAt: string | undefined, interval: RebuildInterval | undefined, now: Date): boolean {
+  const effective = interval ?? DEFAULT_REBUILD_INTERVAL;
+  if (effective === 'manual') return false;
+  if (!builtAt) return true;
+  const built = Date.parse(builtAt);
+  return Number.isNaN(built) || now.getTime() - built >= DUE_MS[effective];
+}
+
+/** Which cards to write and which to delete, given the previous index. */
+export function planBookWrites(oldIndex: Record<string, string>, cards: BookCard[]): { upserts: BookCard[]; deletes: string[] } {
+  const keep = new Set(cards.map((c) => c.uid));
+  return {
+    upserts: cards.filter((c) => oldIndex[c.uid] !== c.etag),
+    deletes: Object.keys(oldIndex).filter((uid) => !keep.has(uid)),
+  };
+}
+
+/** A contact belongs in the book only with something to look up (§5.4). */
+export function hasLookupChannel(record: VcardRecord): boolean {
+  return record.channels.some((c) => (c.channel === 'phone' || c.channel === 'email') && !!c.value);
+}
+
+export async function renderBookCard(record: VcardRecord, avatarPath: string, avatarVersion: string): Promise<BookCard> {
+  const vcardText = buildLookupVCard(record);
+  return { uid: record.uid ?? '', vcardText, etag: await cardEtag(vcardText, avatarPath, avatarVersion), avatarPath, avatarVersion };
+}
+
+const active = (d: FsData): boolean => d['isArchived'] !== true;
+
+function groupBy(docs: FsData[], key: string): Map<string, FsData[]> {
+  const m = new Map<string, FsData[]>();
+  for (const d of docs) {
+    const k = d[key] as string | undefined;
+    if (!k) continue;
+    const list = m.get(k);
+    if (list) list.push(d);
+    else m.set(k, [d]);
+  }
+  return m;
+}
+
+/**
+ * Every card of the tenant's book, in bulk: one query per collection, addresses and workrels
+ * grouped in memory, avatar docs by `getAll`. The privacy projection runs at the `privileged`
+ * tier, as `vcardExport` does for an admin (D-6).
+ */
+export async function loadBookCards(db: Firestore, tenantId: string): Promise<BookCard[]> {
+  const tenantQuery = (collection: string) => db.collection(collection).where('tenants', 'array-contains', tenantId).get();
+  const [personSnap, orgSnap, addressSnap, workrelSnap, configSnap] = await Promise.all([
+    tenantQuery(PersonCollection),
+    tenantQuery(OrgCollection),
+    tenantQuery(AddressCollection),
+    tenantQuery(WorkrelCollection),
+    db.collection(AppConfigCollection).doc(tenantId).get(),
+  ]);
+  const settings = configSnap.exists ? (configSnap.data() as Partial<PrivacySettings>) : undefined;
+  const addressesByParent = groupBy(addressSnap.docs.map((d) => d.data()).filter(active), 'parentKey');
+  const workrelsBySubject = groupBy(workrelSnap.docs.map((d) => d.data()).filter(active), 'subjectKey');
+
+  const subjects: { kind: VcardTargetKind; key: string; data: FsData }[] = [
+    ...personSnap.docs.filter((d) => active(d.data())).map((d) => ({ kind: 'person' as const, key: d.id, data: d.data() })),
+    ...orgSnap.docs.filter((d) => active(d.data())).map((d) => ({ kind: 'org' as const, key: d.id, data: d.data() })),
+  ];
+
+  const records: VcardRecord[] = [];
+  for (const { kind, key, data } of subjects) {
+    const raw = addressesByParent.get(`${kind}.${key}`) ?? [];
+    const addresses = projectAddressesForViewer(
+      raw as unknown as AddressModel[], 'privileged', kind,
+      kind === 'person' ? (data as Partial<PersonPrivacyPreferences>) : undefined,
+      settings,
+    ) as unknown as FsData[];
+    const record = toVcardRecord({
+      kind, key, data, addresses,
+      workrels: kind === 'person' ? workrelsBySubject.get(key) ?? [] : [],
+      scope: LOOKUP_SCOPE, favoritesOnly: false,
+    });
+    if (hasLookupChannel(record)) records.push(record);
+  }
+
+  const avatarRefs: DocumentReference[] = records.map((r) => db.collection(AvatarCollection).doc(`${r.kind}.${r.uid!.slice(r.kind.length + 1)}`));
+  const avatars = new Map<string, { path: string; version: string }>();
+  for (let i = 0; i < avatarRefs.length; i += GETALL_BATCH) {
+    const snaps = await db.getAll(...avatarRefs.slice(i, i + GETALL_BATCH));
+    for (const s of snaps) {
+      const path = s.exists ? (s.get('storagePath') as string | undefined) : undefined;
+      if (path) avatars.set(s.id, { path, version: s.updateTime?.toDate().toISOString() ?? '' });
+    }
+  }
+
+  return Promise.all(records.map((r) => {
+    const avatar = avatars.get(`${r.kind}.${r.uid!.slice(r.kind.length + 1)}`);
+    return renderBookCard(r, avatar?.path ?? '', avatar?.version ?? '');
+  }));
+}
+
+/**
+ * Rebuild one tenant's book: write only changed cards, delete departed ones, then the root
+ * last — a client never sees an ETag whose card is not written yet (§5.3).
+ */
+export async function rebuildContactsDavBook(db: Firestore, tenantId: string, now = new Date()): Promise<{ cardCount: number; written: number; deleted: number }> {
+  const rootRef = db.collection(CONTACTS_DAV_BOOKS).doc(tenantId);
+  const rootSnap = await rootRef.get();
+  const old = rootSnap.exists ? (rootSnap.data() as BookRoot) : undefined;
+  const cards = await loadBookCards(db, tenantId);
+  const { upserts, deletes } = planBookWrites(old?.index ?? {}, cards);
+
+  const cardsRef = rootRef.collection(BOOK_CARDS);
+  const ops: ((b: FirebaseFirestore.WriteBatch) => void)[] = [
+    ...upserts.map((c) => (b: FirebaseFirestore.WriteBatch) => {
+      const { uid, ...doc } = c;
+      b.set(cardsRef.doc(uid), doc);
+    }),
+    ...deletes.map((uid) => (b: FirebaseFirestore.WriteBatch) => b.delete(cardsRef.doc(uid))),
+  ];
+  for (let i = 0; i < ops.length; i += WRITE_BATCH) {
+    const batch = db.batch();
+    ops.slice(i, i + WRITE_BATCH).forEach((op) => op(batch));
+    await batch.commit();
+  }
+
+  const index = Object.fromEntries(cards.map((c) => [c.uid, c.etag]));
+  const root: BookRoot = {
+    ctag: await bookCtag(index),
+    cardCount: cards.length,
+    builtAt: now.toISOString(),
+    rebuildInterval: old?.rebuildInterval ?? DEFAULT_REBUILD_INTERVAL,
+    index,
+  };
+  await rootRef.set(root);
+  return { cardCount: cards.length, written: upserts.length, deleted: deletes.length };
+}
+
+/** Nightly job: rebuild every book that is due, for tenants with the `contactsDav` block. */
+export async function runContactsDavRebuild(): Promise<void> {
+  const db = getFirestore();
+  const [configs, rolloutSnap] = await Promise.all([db.collection(AppConfigCollection).get(), db.collection(FeatureRolloutCollection).get()]);
+  const rollouts = rolloutSnap.docs.map((d) => ({ okey: d.id, ...d.data() }) as FeatureRollout);
+  const now = new Date();
+  for (const cfg of configs.docs) {
+    const tenantId = cfg.id;
+    const enabled = effectiveFeatures({ catalogue: FEATURE_BLOCKS, rollouts, tenantId, enabled: cfg.get('enabledFeatures') as string[] | undefined });
+    if (!enabled.has(CONTACTS_DAV_BLOCK)) continue;
+    const root = (await db.collection(CONTACTS_DAV_BOOKS).doc(tenantId).get()).data() as BookRoot | undefined;
+    if (!isRebuildDue(root?.builtAt, root?.rebuildInterval, now)) continue;
+    try {
+      const r = await rebuildContactsDavBook(db, tenantId, now);
+      logger.info('contactsDavRebuild: rebuilt', { tenantId, ...r });
+    } catch (e) {
+      logger.error('contactsDavRebuild: failed', { tenantId, error: (e as Error).message });
+    }
+  }
+}

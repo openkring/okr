@@ -31,6 +31,7 @@ import { isFirstOfMonthInZurich, runMonthlyBillingRequests } from '../billing/bi
 import { runBillingDailyJob } from '../billing/billing-daily';
 import { stripeSecretKey } from '../collection/stripe-port';
 import { runPostReconcile } from '../pingen/reconcile';
+import { runContactsDavRebuild } from '../contacts-dav/book';
 import { pingenClientId, pingenClientSecret, pingenOrganisationId } from '../pingen/pingen-client';
 
 const REGION = 'europe-west6';
@@ -50,6 +51,8 @@ export const NIGHTLY_JOBS: NamedJob[] = [
   { name: 'courseEndTasks', run: runCourseEndTasks },
   { name: 'energyFiguresFetch', run: runEnergyFiguresFetch },
   { name: 'webhookStuckCheck', run: runWebhookStuckCheck },
+  // spec 1.159: rebuilds a CardDAV book only when due (weekly by default) — one read per tenant otherwise
+  { name: 'contactsDavRebuild', run: runContactsDavRebuild },
   // last: the one job that calls an external API per item; it stops itself after RECONCILE_BUDGET_MS (120 s), so it
   // can neither starve the jobs above nor be cut off mid-letter by the slot's timeout
   { name: 'postVersandReconcile', run: runPostReconcile },
