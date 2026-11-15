@@ -2,7 +2,6 @@ export * from './lib/album-section';
 export * from './lib/article-section';
 export * from './lib/button-section';
 export * from './lib/calendar-section';
-export * from './lib/card-select.modal';
 export * from './lib/chart-section';
 export * from './lib/sankey-section';
 export * from './lib/spider-section';
@@ -12,7 +11,6 @@ export * from './lib/missing-section';
 export * from './lib/people-section';
 export * from './lib/people-section.store';
 export * from './lib/section-view.modal';
-export * from './lib/section-list';
 export * from './lib/section-view.modal';
 export * from './lib/section-dispatcher';
 export * from './lib/section-select.modal';
@@ -23,7 +21,7 @@ export * from './lib/video-section';
 
 
 export * from './lib/section.store';
-export * from './lib/section-edit.modal';
+export * from './lib/section-editor.loader';
 export * from './lib/news-section';
 export * from './lib/news-section.store';
 export * from './lib/orgchart-node';

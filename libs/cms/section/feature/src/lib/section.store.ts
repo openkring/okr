@@ -21,9 +21,6 @@ import { UploadService } from '@okr/avatar-data-access';
 import { SectionService } from '@okr/cms-section-data-access';
 import { createSection, narrowSection, SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
-import { MessageCenterModal } from './message-center.modal';
-import { CardSelectModal } from './card-select.modal';
-
 export type Coordinates = {
   latitude: number;
   longitude: number;
@@ -189,6 +186,8 @@ export const _SectionStore = signalStore(
       /******************************** actions ******************************************* */
       async add(readOnly = true): Promise<string | undefined> {
         if (readOnly) return;
+        // dynamic: a static import here puts the editor on the dashboard (see section-editor.loader.ts)
+        const { CardSelectModal } = await import('./card-select.modal');
         const modal = await store.modalController.create({
           component: CardSelectModal,
           cssClass: 'full-modal',
@@ -363,6 +362,7 @@ export const _SectionStore = signalStore(
       },
 
       async send(section: SectionModel): Promise<void> {
+        const { MessageCenterModal } = await import('./message-center.modal');
         const modal = await store.modalController.create({
           component: MessageCenterModal,
           cssClass: 'list-modal-wide',

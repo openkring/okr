@@ -372,7 +372,7 @@ const cms: BlockRoutes = {
         // ACCESS REDUCED by owner ruling R-6, 2026-08-05: matches the `section-all` menu doc's
         // `roleNeeded: contentAdmin`, and a `privileged`-only user loses access to the section
         // list. See the `page` fragment above for the full rationale.
-        { path: 'all', canActivate: [isContentAdminGuard()], loadComponent: () => import('@okr/cms-section-feature').then(m => m.SectionAllList) },
+        { path: 'all', canActivate: [isContentAdminGuard()], loadComponent: () => import('@okr/cms-section-feature').then(m => m.loadSectionAllList()) },
       ],
     },
     {

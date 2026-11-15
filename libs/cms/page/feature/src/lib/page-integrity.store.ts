@@ -21,7 +21,7 @@ import { MenuService } from '@okr/cms-menu-data-access';
 import { MenuModal } from '@okr/cms-menu-feature';
 import { PageService } from '@okr/cms-page-data-access';
 import { SectionService } from '@okr/cms-section-data-access';
-import { SectionEditModal } from '@okr/cms-section-feature';
+import { loadSectionEditModal } from '@okr/cms-section-feature';
 
 import { PAGE_I18N_KEYS } from '@okr/cms-page-util';
 
@@ -189,7 +189,7 @@ export const PageIntegrityStore = signalStore(
         const roles = store.appStore.getCategory('roles');
         const states = store.appStore.getCategory('content_state');
         const modal = await store.modalController.create({
-          component: SectionEditModal,
+          component: await loadSectionEditModal(),
           cssClass: 'full-modal',
           componentProps: { 
             section, 
@@ -327,7 +327,7 @@ export const PageIntegrityStore = signalStore(
         const states = store.appStore.getCategory('content_state');
         const newSection = { okey: '', type: 'article', state: 'active', name: ref.resolvedKey, title: '', tenants: [store.appStore.env.tenantId] } as unknown as SectionModel;
         const modal = await store.modalController.create({
-          component: SectionEditModal,
+          component: await loadSectionEditModal(),
           cssClass: 'full-modal',
           componentProps: { section: newSection, currentUser, tagModel: 'section_default', roles, states, readOnly: false, isNew: true },
         });

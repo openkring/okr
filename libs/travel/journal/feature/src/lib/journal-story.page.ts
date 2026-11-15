@@ -449,7 +449,8 @@ export class JournalStoryPage {
     category.name = 'section_type';
     category.i18n = SECTION_TYPE_I18N;
     category.items = addableSectionTypes(fp.sections).map((type) => new CategoryItemModel(type, type));
-    const { CardSelectModal } = await import('@okr/cms-section-feature');
+    const { loadCardSelectModal } = await import('@okr/cms-section-feature');
+    const CardSelectModal = await loadCardSelectModal();
     const modal = await this.modalController.create({ component: CardSelectModal, cssClass: 'full-modal', componentProps: { category, slug: 'section' } });
     await modal.present();
     const { data, role } = await modal.onWillDismiss<CategoryItemModel>();
@@ -600,7 +601,8 @@ export class JournalStoryPage {
    */
   private async openSectionEditor(section: SectionModel): Promise<SectionModel | undefined> {
     const tenantId = this.appStore.tenantId();
-    const { SectionEditModal } = await import('@okr/cms-section-feature');
+    const { loadSectionEditModal } = await import('@okr/cms-section-feature');
+    const SectionEditModal = await loadSectionEditModal();
     const modal = await this.modalController.create({
       component: SectionEditModal,
       cssClass: 'full-modal',
