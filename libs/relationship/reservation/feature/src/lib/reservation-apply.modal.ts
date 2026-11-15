@@ -141,7 +141,7 @@ export class ReservationApplyModal {
   async selectCalevent(): Promise<void> {
     const modal = await this.modalController.create({
       component: CalEventEditModal,
-      cssClass: 'wide-modal',
+      cssClass: ['wide-modal', 'auto-height-modal'],
       componentProps: {
             calevent: this.calevent() ?? new CalEventModel(this.tenantId()),
             currentUser: this.currentUser(),

@@ -313,7 +313,7 @@ export const DiaryStore = signalStore(
         : [];
       const modal = await store.modalController.create({
         component: DiaryEditModal,
-        cssClass: 'wide-modal',
+        cssClass: ['wide-modal', 'auto-height-modal'],
         componentProps: {
           diary, i18n: store.i18n, currentUser: store.currentUser(), tenantId: store.tenantId(),
           tagModel: DiaryModelName, travelTrips: store.travelTrips(), eventAlbums, readOnly: false, lockDate,
@@ -461,7 +461,7 @@ export const DiaryStore = signalStore(
       };
       const modal = await store.modalController.create({
         component: DiaryTrackModal,
-        cssClass: 'wide-modal',
+        cssClass: ['wide-modal', 'auto-height-modal'],
         componentProps: { card, i18n: store.i18n, lang: store.lang(), loadThumb: loadTrackThumb, renameTrack, removeTrack },
       });
       await modal.present();
@@ -683,7 +683,7 @@ export const DiaryStore = signalStore(
 
         const modal = await store.modalController.create({
           component: DiaryAlbumsModal,
-          cssClass: 'wide-modal',
+          cssClass: ['wide-modal', 'auto-height-modal'],
           componentProps: {
             i18n: store.i18n, albums, trips, tags: tagsOf(store.appStore.getTags('diary')),
             imgixBaseUrl: store.appStore.env.services.imgixBaseUrl,
@@ -701,7 +701,7 @@ export const DiaryStore = signalStore(
         const { DiaryViewModal } = await import('@okr/content-diary-ui');
         const modal = await store.modalController.create({
           component: DiaryViewModal,
-          cssClass: 'wide-modal',
+          cssClass: ['wide-modal', 'auto-height-modal'],
           componentProps: {
             diary, i18n: store.i18n, lang: store.lang(),
             neighbours: neighboursOf, openPerson: openPersonView, openLocation: openLocationView, loadMedia, loadImage, refreshWeather,

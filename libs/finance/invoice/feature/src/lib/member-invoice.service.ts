@@ -72,7 +72,7 @@ export class MemberInvoiceService {
     const { InvoiceNewModal } = await import('./invoice-new.modal');
     const modal = await this.modalController.create({
       component: InvoiceNewModal,
-      cssClass: 'wide-modal',
+      cssClass: ['wide-modal', 'auto-height-modal'],
       componentProps: { membership },
     });
     await modal.present();

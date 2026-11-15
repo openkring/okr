@@ -70,11 +70,17 @@ ion-modal ion-toolbar {
 }
 
 .upload-modal {
+  --border-color: black;
+  --border-style: solid;
+  --border-width: 1px;
   --height: 200px;
   z-index: 100;
 }
 
 .wide-modal {
+  --border-color: black;
+  --border-style: solid;
+  --border-width: 1px;
   --height: 80%;
   --width: 80%;
   --border-radius: 10px;
@@ -131,7 +137,7 @@ ion-modal ion-toolbar {
 
 /**
  * Auto-height is the DEFAULT for modals: the box shrinks to the height of its content
- * instead of Ionic's fixed 600px desktop default.
+ * instead of Ionic's fixed 600px desktop default, and carries a 1px solid border.
  *
  * Ionic gives both `.ion-page` (`contain: layout size style`) and `ion-content`
  * (`height: 100%; contain: size style`) a zero intrinsic height by design — neither can
@@ -144,13 +150,16 @@ ion-modal ion-toolbar {
  * Keep that list in sync with the classes defined in this file. `.auto-height-modal`
  * stays available for a modal that carries a fixed-size class but still wants to shrink.
  */
-$fixed-size-modals: '.color-modal, .date-modal, .date-modal2, .duration-picker-modal, .full-modal, .full-screen-modal, .fullscreen-modal, .list-modal, .list-modal-wide, .login-modal, .map-modal, .small-modal, .chip-modal, .tag-modal, .time-modal, .upload-modal, .wide-modal, .zoom-modal';
+$fixed-size-modals: '.color-modal, .date-modal, .date-modal2, .duration-picker-modal, .full-modal, .fullscreen-modal, .list-modal, .list-modal-wide, .login-modal, .map-modal, .small-modal, .chip-modal, .tag-modal, .time-modal, .upload-modal, .wide-modal, .zoom-modal';
 
 ion-modal:not(:is(#{$fixed-size-modals})),
 ion-modal.auto-height-modal {
   --height: auto;
   --max-height: 85vh;
   --border-radius: 10px;
+  --border-color: black;
+  --border-style: solid;
+  --border-width: 1px;
   --box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1),
     0 4px 6px -4px rgb(0 0 0 / 0.1);
 

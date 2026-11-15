@@ -1391,7 +1391,7 @@ export class CalEventList implements OnInit {
     const { SeriesAttendanceModal } = await import('./series-attendance.modal');
     const modal = await this.modalController.create({
       component: SeriesAttendanceModal,
-      cssClass: 'wide-modal',
+      cssClass: ['wide-modal', 'auto-height-modal'],
       componentProps: { seriesId: calevent.seriesId },
       injector: this.injector,   // share CalEventList's CalEventStore instance with the root-injected modal
     });

@@ -497,7 +497,7 @@ export const ReservationStore = signalStore(
       async selectCalevent(readOnly: boolean, periodicities: CategoryListModel, calevent?: CalEventModel): Promise<CalEventModel | undefined> {
         const modal = await store.modalController.create({
           component: CalEventEditModal,
-          cssClass: 'wide-modal',
+          cssClass: ['wide-modal', 'auto-height-modal'],
           componentProps: {
                 calevent: calevent ?? new CalEventModel(store.tenantId()),
                 currentUser: store.currentUser(),

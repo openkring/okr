@@ -177,7 +177,7 @@ export const TripStatsSectionStore = signalStore(
       const { TripStatsDetailModal } = await import('./trip-stats-detail.modal');
       const modal = await store.modalController.create({
         component: TripStatsDetailModal,
-        cssClass: 'wide-modal',
+        cssClass: ['wide-modal', 'auto-height-modal'],
         componentProps: { row, contentType: store.contentType(), defaultIcon },
       });
       await modal.present();

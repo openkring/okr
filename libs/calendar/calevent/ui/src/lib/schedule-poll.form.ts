@@ -39,7 +39,8 @@ import { bestScheduleColumn, CaleventI18n, DEFAULT_POLL_TIME, MAX_SCHEDULE_POLL_
     tr.mine td { font-weight: 600; box-shadow: inset 0 0 0 9999px rgba(56, 128, 255, 0.1); }
     tr.counts td { background: var(--ion-color-light-shade); font-weight: 600; }
     tr.counts td.best { color: var(--ion-color-success); }
-    ion-modal.picker { --width: fit-content; --min-width: 300px; --height: fit-content; --border-radius: 8px; }
+    ion-modal.picker { --width: fit-content; --min-width: 300px; --height: fit-content; --border-radius: 8px;
+      --border-color: black; --border-style: solid; --border-width: 1px; }
     .picker-wrapper { display: flex; flex-direction: column; padding: 8px; gap: 8px; }
     /* 'Zeit angeben' left, the time field right — one line, as in the spec */
     .time-row { display: flex; align-items: center; gap: 8px; }
