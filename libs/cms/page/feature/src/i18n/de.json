@@ -105,6 +105,10 @@
           "export": "Über das Menü oben rechts kannst du die Struktur als Tabelle (raw) oder als Sitemap-XML exportieren.",
           "roles": "Wichtig sind auch die angezeigten Rollen. Diese bestimmen, wer den jeweiligen Eintrag sehen kann. Du kannst die Rolle ändern, indem du auf das Stift-Symbol klickst."
         }
+      },
+      "view": {
+        "website": "Website",
+        "system": "System"
       }
     },
     "blog": {

@@ -64,10 +64,10 @@
     },
     "cms": {
       "title": "CMS - Content Management",
-      "pages": "Pages web",
+      "pages": "Toutes les pages web",
       "sections": "Sections",
-      "menus": "Menus",
-      "documents": "Documents",
+      "menus": "Tous les menus",
+      "documents": "Tous les documents",
       "testcms": "Tests CMS",
       "locations": "Lieux",
       "forms": "Form Builder"
@@ -224,7 +224,7 @@
   },
   "content": {
     "section": {
-      "plural": "Sections"
+      "plural": "Toutes les sections"
     }
   },
   "menu_action": {
@@ -343,8 +343,8 @@
     "aoc-menu": "AOC - Centre d’opérations",
     "aoc-statistics": "Statistiques",
     "beverage": "tbd: Boissons",
-    "cms-graph": "Plan du site",
-    "cms-website-sitemap": "Plan du site",
+    "cms-graph": "Plan du site @APP_DOMAIN@",
+    "cms-website-sitemap": "Plan du site @WEB_DOMAIN@",
     "bh_history": "Rétrospective du hangar à bateaux",
     "bh_org": "Organisation du projet",
     "account-import": "Importer le plan comptable",

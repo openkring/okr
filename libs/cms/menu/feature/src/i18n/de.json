@@ -64,10 +64,10 @@
     },
     "cms": {
       "title": "CMS - Content Management",
-      "pages": "Webseiten",
+      "pages": "Alle Webseiten",
       "sections": "Sektionen",
-      "menus": "Menüs",
-      "documents": "Dokumente",
+      "menus": "Alle Menüs",
+      "documents": "Alle Dokumente",
       "testcms": "CMS Tests",
       "locations": "Orte",
       "forms": "Form Builder"
@@ -224,7 +224,7 @@
   },
   "content": {
     "section": {
-      "plural": "Sektionen"
+      "plural": "Alle Sektionen"
     }
   },
   "menu_action": {
@@ -343,8 +343,8 @@
     "aoc-menu": "AOC - Operation Centre",
     "aoc-statistics": "Statistiken",
     "beverage": "tbd: Getränke",
-    "cms-graph": "Sitemap",
-    "cms-website-sitemap": "Sitemap",
+    "cms-graph": "Sitemap @APP_DOMAIN@",
+    "cms-website-sitemap": "Sitemap @WEB_DOMAIN@",
     "bh_history": "Bootshaus Rückblick",
     "bh_org": "Projektorganisation",
     "account-import": "Kontoplan importieren",

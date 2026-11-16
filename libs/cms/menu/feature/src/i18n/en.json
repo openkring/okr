@@ -64,10 +64,10 @@
     },
     "cms": {
       "title": "CMS - Content Management",
-      "pages": "Web pages",
+      "pages": "All web pages",
       "sections": "Sections",
-      "menus": "Menus",
-      "documents": "Documents",
+      "menus": "All menus",
+      "documents": "All documents",
       "testcms": "CMS tests",
       "locations": "Locations",
       "forms": "Form Builder"
@@ -224,7 +224,7 @@
   },
   "content": {
     "section": {
-      "plural": "Sections"
+      "plural": "All sections"
     }
   },
   "menu_action": {
@@ -343,8 +343,8 @@
     "aoc-menu": "AOC - Operation Centre",
     "aoc-statistics": "Statistics",
     "beverage": "tbd: Beverages",
-    "cms-graph": "Sitemap",
-    "cms-website-sitemap": "Sitemap",
+    "cms-graph": "Sitemap @APP_DOMAIN@",
+    "cms-website-sitemap": "Sitemap @WEB_DOMAIN@",
     "bh_history": "Boathouse retrospective",
     "bh_org": "Project organisation",
     "account-import": "Import chart of accounts",

@@ -45,7 +45,11 @@
     "empty": "Noch keine Menüs — füge das erste Menü hinzu",
     "noSite": "Für diese App gibt es noch keine Website.",
     "createSite": "Website anlegen",
-    "addTop": "Hinzufügen"
+    "addTop": "Hinzufügen",
+    "view": {
+      "website": "Website",
+      "system": "System"
+    }
   },
   "actionSheet": {
     "title": "Aktionen"

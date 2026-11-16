@@ -102,6 +102,8 @@ export const PAGE_I18N_KEYS = {
   upload_file:                  PFX + 'upload.file',
 
   graph_nomain:                 PFX + 'type.graph.nomain',
+  graph_view_website:           PFX + 'type.graph.view.website',
+  graph_view_system:            PFX + 'type.graph.view.system',
   graph_help_title:            PFX + 'type.graph.help.title',
   graph_help_intro:            PFX + 'type.graph.help.intro',
   graph_help_types_title:      PFX + 'type.graph.help.types.title',

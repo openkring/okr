@@ -64,10 +64,10 @@
     },
     "cms": {
       "title": "CMS - Content Management",
-      "pages": "Páginas web",
+      "pages": "Todas las páginas web",
       "sections": "Secciones",
-      "menus": "Menús",
-      "documents": "Documentos",
+      "menus": "Todos los menús",
+      "documents": "Todos los documentos",
       "testcms": "Pruebas CMS",
       "locations": "Lugares",
       "forms": "Form Builder"
@@ -224,7 +224,7 @@
   },
   "content": {
     "section": {
-      "plural": "Secciones"
+      "plural": "Todas las secciones"
     }
   },
   "menu_action": {
@@ -343,8 +343,8 @@
     "aoc-menu": "AOC - Centro de operaciones",
     "aoc-statistics": "Estadísticas",
     "beverage": "tbd: Bebidas",
-    "cms-graph": "Mapa del sitio",
-    "cms-website-sitemap": "Mapa del sitio",
+    "cms-graph": "Mapa del sitio @APP_DOMAIN@",
+    "cms-website-sitemap": "Mapa del sitio @WEB_DOMAIN@",
     "bh_history": "Retrospectiva del cobertizo",
     "bh_org": "Organización del proyecto",
     "account-import": "Importar plan contable",

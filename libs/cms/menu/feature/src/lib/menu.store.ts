@@ -187,18 +187,20 @@ export const _MenuStore = signalStore(
         // toggle items show labelAlt while active; base label otherwise
         const useAlt = item?.action === 'toggle' && store.toggleActive();
         const menuLabel = (useAlt ? (item?.labelAlt ?? item?.label) : item?.label) ?? '';
-        return resolveMenuLabelKey(menuLabel, {
+        const key = resolveMenuLabelKey(menuLabel, {
           version: store.versionService.getCurrentVersion(), releaseDate: store.versionService.getCurrentReleaseDate(),
         });
-      })).pipe(
-        switchMap(key => store.i18nService.translate(key)),
+        // read here so a label carrying '@APP_DOMAIN@' / '@WEB_DOMAIN@' re-renders once app-config lands
+        return { key, appDomain: store.appStore.appConfig()?.appDomain ?? '' };
+      }, { equal: (a, b) => a.key === b.key && a.appDomain === b.appDomain })).pipe(
+        switchMap(({ key, appDomain }) => store.i18nService.translate(key).pipe(map(text => ({ text, appDomain })))),
         // A translation VALUE may carry a token too (`item.accounting-menu` = "@TID_UPPER@
         // Buchhaltung"), so expand once more on the translated text. Token-free text passes
         // through unchanged.
-        map(text => expandMenuTokens(text, {
+        map(({ text, appDomain }) => expandMenuTokens(text, {
           version: store.versionService.getCurrentVersion(), releaseDate: store.versionService.getCurrentReleaseDate(),
-          tenantId: store.appStore.tenantId(), booksId: store.selectedBooks.current(),
-        })),
+          tenantId: store.appStore.tenantId(), booksId: store.selectedBooks.current(), appDomain,
+        }).trim()),
       ),
       { initialValue: '' }
     ),

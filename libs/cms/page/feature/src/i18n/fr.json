@@ -105,6 +105,10 @@
           "export": "Via le menu en haut à droite, il est possible d'exporter la structure sous forme de tableau (raw) ou de XML de plan du site.",
           "roles": "Les rôles affichés sont également importants. Ils déterminent qui peut voir l'entrée concernée. Il est possible de changer le rôle en cliquant sur le symbole du crayon."
         }
+      },
+      "view": {
+        "website": "Site web",
+        "system": "Système"
       }
     },
     "blog": {

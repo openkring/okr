@@ -105,6 +105,10 @@
           "export": "A través del menú en la parte superior derecha se puede exportar la estructura como tabla (raw) o como XML de mapa del sitio.",
           "roles": "Los roles mostrados también son importantes. Determinan quién puede ver la entrada correspondiente. Se puede cambiar el rol haciendo clic en el símbolo del lápiz."
         }
+      },
+      "view": {
+        "website": "Sitio web",
+        "system": "Sistema"
       }
     },
     "blog": {

@@ -1,23 +1,25 @@
-import { Component, effect, inject, input } from '@angular/core';
-import { IonButton, IonButtons, IonCheckbox, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonTitle, IonToolbar, ModalController } from '@ionic/angular';
-import { MenuItemModel, PageModel, RoleName, SectionModel } from '@okr/shared-models';
-import { Spinner } from '@okr/shared-ui';
+import { Component, inject, input, signal } from '@angular/core';
+import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonLabel, IonMenuButton, IonPopover, IonSegment, IonSegmentButton, IonTitle, IonToolbar, ModalController } from '@ionic/angular';
+import { RoleName } from '@okr/shared-models';
 import { hasRole, contextMenuId } from '@okr/shared-util-core';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { error } from '@okr/shared-util-angular';
 
-import { I18nService } from '@okr/shared-i18n';
-import { MENU_I18N_KEYS } from '@okr/cms-menu-util';
 import { Menu, MenuStore, MenuItemsStore } from '@okr/cms-menu-feature';
-import { SectionStore } from '@okr/cms-section-feature';
 
-import { DependencyNode, MenuGraphStore } from './menu-graph.store';
-import { MenuGraphNode } from './menu-graph-node';
+import { MenuGraph } from './menu-graph';
+import { MenuGraphStore } from './menu-graph.store';
+import { MenuTree } from './menu-tree';
 import { PageStore } from './page.store';
 
+/** The two views of a sitemap: the navigation as a visitor walks it, or the full dependency graph. */
+export type SitemapView = 'website' | 'system';
+
 /**
- * GraphPage renders the CMS dependency tree:
- *   Main Menu → Sub Menus → Navigate → Pages → Context Menus + Sections
+ * GraphPage renders the app sitemap in two views (segment, default «Website»):
+ *  - website: the main menu as a plain indented list (`MenuTree`)
+ *  - system:  the CMS dependency tree (`MenuGraph`, mode 'app'):
+ *             Main Menu → Sub Menus → Navigate → Pages → Context Menus + Sections
  *
  * Clicking any node opens its edit modal via the appropriate root store.
  * Page type: 'graph'
@@ -26,63 +28,13 @@ import { PageStore } from './page.store';
   selector: 'okr-graph-page',
   standalone: true,
   imports: [
-    SvgIconPipe,
-    Spinner, MenuGraphNode, Menu,
-    IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonItem, IonLabel,
-    IonButton, IonIcon, IonPopover, IonCheckbox
+    SvgIconPipe, MenuGraph, MenuTree, Menu,
+    IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonLabel,
+    IonButton, IonIcon, IonPopover, IonSegment, IonSegmentButton
   ],
   providers: [MenuGraphStore],
   styles: [`
     :host { display: flex; flex-direction: column; height: 100%; width: 100%; }
-    .graph-container {
-      padding: 16px;
-      font-family: var(--ion-font-family);
-    }
-    .expand-all {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 8px 16px 0;
-    }
-    .level-label {
-      font-size: 0.8rem;
-    }
-    .expand-all ion-button {
-      --padding-start: 10px;
-      --padding-end: 10px;
-      min-width: 56px;
-    }
-    .legend {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      padding: 8px 16px 0;
-      font-size: 0.8rem;
-    }
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .legend-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-    .legend-item ion-checkbox {
-      --size: 16px;
-      font-size: 0.8rem;
-    }
-    .legend-own {
-      font-size: 14px;
-    }
-    .dot-menu     { background: var(--ion-color-primary); }
-    .dot-navigate { background: var(--ion-color-secondary); }
-    .dot-browse   { background: var(--ion-color-tertiary); }
-    .dot-page     { background: var(--ion-color-success); }
-    .dot-context  { background: var(--ion-color-tertiary); }
-    .dot-section  { background: var(--ion-color-warning); }
   `],
   template: `
     @if(showMenu()) {
@@ -112,60 +64,24 @@ import { PageStore } from './page.store';
             </ion-buttons>
           }
         </ion-toolbar>
+        <ion-toolbar>
+          <ion-segment [value]="view()" (ionChange)="onViewChange($event.detail.value)">
+            <ion-segment-button value="website">
+              <ion-label>{{ store.i18n.graph_view_website() }}</ion-label>
+            </ion-segment-button>
+            <ion-segment-button value="system">
+              <ion-label>{{ store.i18n.graph_view_system() }}</ion-label>
+            </ion-segment-button>
+          </ion-segment>
+        </ion-toolbar>
       </ion-header>
     }
 
     <ion-content>
-      @if (graphStore.isLoading()) {
-        <okr-spinner />
-      } @else if (!graphStore.dependencyTree()) {
-        <ion-item lines="none">
-          <ion-label>{{ store.i18n.graph_nomain() }}</ion-label>
-        </ion-item>
+      @if (view() === 'website') {
+        <okr-menu-tree />
       } @else {
-
-        <!-- How many tree levels are expanded: click to step through all → 1 → 2 → 3 -->
-        <div class="expand-all">
-          <span class="level-label">Level</span>
-          <ion-button size="small" fill="outline" (click)="graphStore.cycleLevel()">{{ graphStore.level() }}</ion-button>
-        </div>
-
-        <!-- Legend: context and section are filters, the rest is always shown -->
-        <div class="legend">
-          <div class="legend-item"><div class="legend-dot dot-menu"></div> menu / sub</div>
-          <div class="legend-item"><div class="legend-dot dot-navigate"></div> navigate</div>
-          <div class="legend-item"><div class="legend-dot dot-browse"></div> browse</div>
-          <div class="legend-item"><div class="legend-dot dot-page"></div> page</div>
-          <div class="legend-item">
-            <div class="legend-dot dot-context"></div>
-            <ion-checkbox labelPlacement="end" [checked]="graphStore.showContext()" (ionChange)="graphStore.setShowContext($event.detail.checked)">
-              context
-            </ion-checkbox>
-          </div>
-          <div class="legend-item">
-            <div class="legend-dot dot-section"></div>
-            <ion-checkbox labelPlacement="end" [checked]="graphStore.showSection()" (ionChange)="graphStore.setShowSection($event.detail.checked)">
-              section
-            </ion-checkbox>
-          </div>
-          <!-- Ownership markers — who WRITES a menu row (see MenuGraphNode.ownership). -->
-          <div class="legend-item">
-            <ion-icon class="legend-own" color="medium" src="{{ 'lock-closed' | svgIcon }}" />
-            {{ i18nOwn.owner_catalogue() }}
-          </div>
-          <div class="legend-item">
-            <ion-icon class="legend-own" color="warning" src="{{ 'copy' | svgIcon }}" />
-            {{ i18nOwn.owner_forked() }}
-          </div>
-        </div>
-
-        <!-- Dependency tree -->
-        <div class="graph-container">
-          <okr-menu-graph-node
-            [node]="graphStore.dependencyTree()!"
-            (nodeEdit)="onNodeEdit($event)"
-          />
-        </div>
+        <okr-menu-graph mode="app" />
       }
     </ion-content>
   `
@@ -173,38 +89,24 @@ import { PageStore } from './page.store';
 export class GraphPage {
   protected readonly menuItemsStore = inject(MenuItemsStore);
   protected store  = inject(PageStore);
-  protected graphStore = inject(MenuGraphStore);
   private menuStore    = inject(MenuStore);
-  private sectionStore = inject(SectionStore);
   private readonly modalController = inject(ModalController);
-  private readonly i18nService = inject(I18nService);
-
-  /** Legend labels for the ownership markers rendered by `MenuGraphNode`. */
-  protected readonly i18nOwn = this.i18nService.translateAll({
-    owner_catalogue: MENU_I18N_KEYS.owner_catalogue,
-    owner_forked: MENU_I18N_KEYS.owner_forked,
-  });
 
   // inputs
   public contextMenuName = input<string>();
   public color = input('secondary');
   public showMenu = input(true);
 
+  // state
+  protected readonly view = signal<SitemapView>('website');
+
+  protected onViewChange(value: unknown): void {
+    this.view.set(value === 'system' ? 'system' : 'website');
+  }
+  private readonly graphStore = inject(MenuGraphStore);
+
   // derived signals
   protected readonly popupId = contextMenuId('c_graphpage');
-
-  /** Expand the sitemap to the default level once, as soon as the tree has loaded. */
-  private hasAutoExpanded = false;
-
-  constructor() {
-    effect(() => {
-      const expandableIds = this.graphStore.allExpandableIds();
-      if (!this.hasAutoExpanded && expandableIds.length > 0) {
-        this.hasAutoExpanded = true;
-        this.graphStore.setLevel(this.graphStore.level());
-      }
-    });
-  }
 
   /******************************* actions *************************************** */
   /** Open the help modal explaining the menu types and how to use the sitemap. */
@@ -223,28 +125,10 @@ export class GraphPage {
     const selectedMethod = $event.detail.data;
     if (!selectedMethod) return; // dismissed without choosing an item (backdrop/escape) — not an error
     switch(selectedMethod) {
-      case 'exportRaw': await this.store.export("raw"); break;
-      case 'exportXml': await this.store.export("xml"); break;
+      case 'exportRaw': await this.graphStore.export('raw'); break;
+      case 'exportXml': await this.graphStore.export('xml'); break;
       case 'add': await this.menuStore.edit(undefined, false); break;
       default: error(undefined, `GraphPage.onPopoverDismiss: unknown method ${selectedMethod}`);
-    }
-  }
-
-  /** Dispatch to the appropriate store's edit() method based on node type. */
-  protected async onNodeEdit(node: DependencyNode): Promise<void> {
-    if (!hasRole('contentAdmin', this.store.currentUser())) return;
-
-    switch (node.nodeType) {
-      case 'menu':
-        await this.menuStore.edit(node.model as MenuItemModel, false);
-        break;
-      case 'page':
-        await this.store.edit(node.model as PageModel, false);
-        break;
-      case 'section':
-        this.sectionStore.setSectionId((node.model as SectionModel).okey);
-        await this.sectionStore.edit(node.model as SectionModel, false);
-        break;
     }
   }
 

@@ -1,8 +1,8 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, computed, effect, inject, input } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import {
   ActionSheetController, ActionSheetOptions, IonButton, IonContent, IonItem, IonLabel, IonList, IonNote,
-  IonReorderGroup, ItemReorderEventDetail,
+  IonReorderGroup, IonSegment, IonSegmentButton, ItemReorderEventDetail,
 } from '@ionic/angular';
 
 import { WebsiteNode } from '@okr/shared-models';
@@ -11,6 +11,7 @@ import { createActionSheetButton, createActionSheetDivider, createActionSheetOpt
 import { fill } from '@okr/shared-util-core';
 import { WebsiteTreeItem } from '@okr/cms-website-ui';
 import { WebsiteI18n, WebsiteWarningCode, websiteUrl } from '@okr/cms-website-util';
+import { MenuGraph, MenuGraphStore, SitemapView } from '@okr/cms-page-feature';
 
 import { WebsiteSitemapStore } from './website-sitemap.store';
 
@@ -19,20 +20,24 @@ const WARNING_KEYS: Partial<Record<WebsiteWarningCode, keyof WebsiteI18n>> = {
 };
 
 /**
- * The website navigation of one site (`websites/{siteId}`) as a tree: reorder within a level by
- * drag & drop, everything else through the ActionSheet of a node (fixed order, design §6.2).
+ * The website navigation of one site (`websites/{siteId}`) in two views (segment, default «Website»):
+ *  - website: the editable tree — reorder within a level by drag & drop, everything else through
+ *             the ActionSheet of a node (fixed order, design §6.2), publish and rollback
+ *  - system:  the same navigation as a dependency graph with pages and sections (`MenuGraph`,
+ *             mode 'web'); a click on a navigation node opens the same ActionSheet
  */
 @Component({
   selector: 'okr-website-sitemap',
   standalone: true,
   imports: [
     NgTemplateOutlet, Header, Spinner, EmptyList, WebsiteTreeItem,
-    IonContent, IonList, IonReorderGroup, IonItem, IonLabel, IonNote, IonButton,
+    IonContent, IonList, IonReorderGroup, IonItem, IonLabel, IonNote, IonButton, IonSegment, IonSegmentButton,
+    MenuGraph,
   ],
-  providers: [WebsiteSitemapStore],
+  providers: [WebsiteSitemapStore, MenuGraphStore],
   template: `
     <okr-header [i18n]="{ title: title() }"
-      [actionIcon]="canAdd() ? 'add' : ''" [actionTitle]="store.i18n.sitemap_add_top()"
+      [actionIcon]="canAdd() && view() === 'website' ? 'add' : ''" [actionTitle]="store.i18n.sitemap_add_top()"
       (actionClicked)="showTopActions()" />
     <ion-content>
       @if (store.isLoading()) {
@@ -45,6 +50,17 @@ const WARNING_KEYS: Partial<Record<WebsiteWarningCode, keyof WebsiteI18n>> = {
           </div>
         }
       } @else {
+        <ion-segment [value]="view()" (ionChange)="onViewChange($event.detail.value)">
+          <ion-segment-button value="website">
+            <ion-label>{{ store.i18n.sitemap_view_website() }}</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="system">
+            <ion-label>{{ store.i18n.sitemap_view_system() }}</ion-label>
+          </ion-segment-button>
+        </ion-segment>
+        @if (view() === 'system') {
+          <okr-menu-graph mode="web" [website]="store.website() ?? null" (websiteNodeSelected)="showActions($event)" />
+        } @else {
         @if (store.canEdit()) {
           <ion-item lines="none">
             <ion-label><ion-note>{{ store.lastPublishedText() }}</ion-note></ion-label>
@@ -69,6 +85,7 @@ const WARNING_KEYS: Partial<Record<WebsiteWarningCode, keyof WebsiteI18n>> = {
           <ion-list>
             <ng-container *ngTemplateOutlet="level; context: { $implicit: store.nav(), parentId: null, depth: 0 }" />
           </ion-list>
+        }
         }
       }
     </ion-content>
@@ -98,6 +115,11 @@ export class WebsiteSitemap {
   /** route param `:siteId` (= tenant id for now, design §6.1) */
   public readonly siteId = input('');
 
+  protected readonly view = signal<SitemapView>('website');
+
+  protected onViewChange(value: unknown): void {
+    this.view.set(value === 'system' ? 'system' : 'website');
+  }
   protected readonly canAdd = computed(() => this.store.canEdit() && !!this.store.website());
   protected readonly title = computed(() => {
     const name = this.store.siteName() || this.store.i18n.sitemap_title();

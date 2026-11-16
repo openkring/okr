@@ -42,6 +42,8 @@ export const WEBSITE_I18N_KEYS = {
   sitemap_no_site:          PFX + 'sitemap.noSite',
   sitemap_create_site:      PFX + 'sitemap.createSite',
   sitemap_add_top:          PFX + 'sitemap.addTop',
+  sitemap_view_website:     PFX + 'sitemap.view.website',
+  sitemap_view_system:      PFX + 'sitemap.view.system',
   as_title:                 PFX + 'actionSheet.title',
   ok:                       PFX + 'ok',
   cancel:                   PFX + 'cancel',

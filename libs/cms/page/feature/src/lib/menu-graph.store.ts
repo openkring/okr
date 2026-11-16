@@ -6,7 +6,7 @@ import { AppStore } from '@okr/shared-feature';
 import { MenuService } from '@okr/cms-menu-data-access';
 import { PageService } from '@okr/cms-page-data-access';
 import { SectionService } from '@okr/cms-section-data-access';
-import { CategoryListModel, MenuItemModel, PageModel, SectionModel } from '@okr/shared-models';
+import { CategoryListModel, MenuItemModel, PageModel, SectionModel, WebsiteModel, WebsiteNode } from '@okr/shared-models';
 import { downloadTextFile, exportCsv, getExportFileName } from '@okr/shared-util-angular';
 import { getCategoryIcon } from '@okr/shared-util-core';
 
@@ -14,7 +14,8 @@ import { getCategoryIcon } from '@okr/shared-util-core';
 // Public types
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type DependencyNodeType = 'menu' | 'page' | 'section';
+/** 'website' = a node of a website's navigation (`websites/{siteId}.nav`) or the site itself. */
+export type DependencyNodeType = 'menu' | 'page' | 'section' | 'website';
 
 export interface DependencyNode {
   id: string;             // unique identifier within the tree
@@ -25,7 +26,7 @@ export interface DependencyNode {
   icon: string;           // SVG icon name (for svgIcon pipe)
   state: string;
   roleNeeded: string;
-  model: MenuItemModel | PageModel | SectionModel;
+  model: MenuItemModel | PageModel | SectionModel | WebsiteNode | WebsiteModel;
   children: DependencyNode[];
   isExpanded: boolean;
 }
@@ -227,6 +228,94 @@ function buildMenuNode(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Website tree (the «System» view of the web sitemap)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** What the web graph shows of a website node: color, icon and the text in the state column. */
+function websiteNodeLook(node: WebsiteNode): { color: string; icon: string; state: string } {
+  switch (node.type) {
+    case 'menu': return { color: 'primary', icon: 'chevron-forward', state: node.url ?? '' };
+    case 'page': return { color: 'secondary', icon: 'navigate', state: node.slug ? '/' + node.slug : '' };
+    case 'link': return { color: 'tertiary', icon: 'globe', state: node.url ?? '' };
+  }
+}
+
+function buildWebsiteNode(
+  node: WebsiteNode,
+  allPages: PageModel[],
+  allSections: SectionModel[],
+  sectionTypes: CategoryListModel,
+  filter: GraphFilter
+): DependencyNode {
+  const children: DependencyNode[] = [];
+  for (const child of node.children ?? []) {
+    children.push(buildWebsiteNode(child, allPages, allSections, sectionTypes, filter));
+  }
+  if (node.type === 'page' && node.pageKey) {
+    const page = allPages.find(p => p.okey === node.pageKey);
+    // a website page has no context menu: only sections can be switched on below it
+    if (page) children.push(buildPageNode(page, undefined, [], allSections, new Set(), sectionTypes, { ...filter, context: false }));
+  }
+  const look = websiteNodeLook(node);
+  return {
+    id: `website-${node.id}`,
+    nodeType: 'website',
+    name: node.label || node.id,
+    subType: node.type,
+    color: node.isArchived ? 'medium' : look.color,
+    icon: look.icon,
+    state: node.isArchived ? 'archived' : look.state,
+    roleNeeded: '',
+    model: node,
+    children,
+    isExpanded: false,
+  };
+}
+
+/**
+ * The navigation of one website as a dependency tree: site → menus / page entries / links →
+ * pages → sections. Same node shape as the app menu tree, so `MenuGraphNode` renders both.
+ * The footer columns hang under a «footer» node of their own, after the header navigation.
+ */
+export function buildWebsiteTree(
+  website: WebsiteModel,
+  allPages: PageModel[],
+  allSections: SectionModel[],
+  sectionTypes: CategoryListModel,
+  filter: GraphFilter
+): DependencyNode {
+  const children = (website.nav ?? []).map(n => buildWebsiteNode(n, allPages, allSections, sectionTypes, filter));
+  if (website.footer?.length) {
+    children.push({
+      id: 'website-footer',
+      nodeType: 'website',
+      name: 'footer',
+      subType: 'menu',
+      color: 'primary',
+      icon: 'chevron-forward',
+      state: '',
+      roleNeeded: '',
+      model: website,
+      children: website.footer.map(n => buildWebsiteNode(n, allPages, allSections, sectionTypes, filter)),
+      isExpanded: false,
+    });
+  }
+  return {
+    id: `website-root-${website.okey}`,
+    nodeType: 'website',
+    name: website.name || website.okey,
+    subType: 'website',
+    color: 'primary',
+    icon: 'globe',
+    state: website.domain ?? '',
+    roleNeeded: '',
+    model: website,
+    children,
+    isExpanded: true,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Export helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -255,11 +344,14 @@ export function collectIdsUpToLevel(node: DependencyNode, level: number, ids: st
   }
 }
 
-/** Walk the tree and collect all navigate menu items (they carry a page URL). */
+/** Walk the tree and collect all navigate menu items (they carry a page URL) and website page entries. */
 function collectNavigateUrls(node: DependencyNode, urls: string[]): void {
   if (node.nodeType === 'menu' && node.subType === 'navigate') {
     const item = node.model as MenuItemModel;
     if (item.url) urls.push(item.url);
+  }
+  if (node.nodeType === 'website' && node.subType === 'page' && node.state.startsWith('/')) {
+    urls.push(node.state);
   }
   for (const child of node.children) {
     collectNavigateUrls(child, urls);
@@ -281,6 +373,9 @@ function buildSitemap(tree: DependencyNode): string {
 // Store
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** 'app' = the tenant's app menu (`main_<tenantId>`); 'web' = the navigation of `websites/{siteId}`. */
+export type GraphMode = 'app' | 'web';
+
 /** How many tree levels are expanded (main menu = level 1); 'all' expands the whole tree. */
 export type GraphLevel = 'all' | 1 | 2 | 3;
 
@@ -288,6 +383,8 @@ export type GraphLevel = 'all' | 1 | 2 | 3;
 export const GRAPH_LEVELS: GraphLevel[] = ['all', 1, 2, 3];
 
 export type MenuGraphState = {
+  mode: GraphMode;
+  website: WebsiteModel | null;
   expandedIds: string[];
   level: GraphLevel;
   showContext: boolean;
@@ -295,7 +392,7 @@ export type MenuGraphState = {
 };
 
 export const MenuGraphStore = signalStore(
-  withState<MenuGraphState>({ expandedIds: [], level: 2, showContext: false, showSection: false }),
+  withState<MenuGraphState>({ mode: 'app', website: null, expandedIds: [], level: 2, showContext: false, showSection: false }),
   withProps(() => ({
     appStore: inject(AppStore),
     menuService: inject(MenuService),
@@ -334,6 +431,13 @@ export const MenuGraphStore = signalStore(
       const items    = state.allMenuItems();
       const pages    = state.allPages();
       const sections = state.allSections();
+      const sectionTypes = state.appStore.getCategory('section_type');
+      const filter = { context: state.showContext(), section: state.showSection() };
+
+      if (state.mode() === 'web') {
+        const website = state.website();
+        return website ? buildWebsiteTree(website, pages, sections, sectionTypes, filter) : null;
+      }
       if (!items.length) return null;
 
       // The main menu item has name == 'main' or name == 'main_<tenantId>'
@@ -342,8 +446,6 @@ export const MenuGraphStore = signalStore(
                        items.find(i => i.name === 'main' && i.action === 'main');
       if (!mainItem) return null;
 
-      const sectionTypes = state.appStore.getCategory('section_type');
-      const filter = { context: state.showContext(), section: state.showSection() };
       return buildMenuNode(mainItem, items, pages, sections, new Set(), new Set(), sectionTypes, filter);
     }),
   })),
@@ -369,6 +471,11 @@ export const MenuGraphStore = signalStore(
   })),
 
   withMethods(state => ({
+    /** Which tree the store builds: the app menu or the navigation of `website`. */
+    setSource(mode: GraphMode, website: WebsiteModel | null = null): void {
+      patchState(state, { mode, website });
+    },
+
     toggleExpanded(nodeId: string): void {
       const current = state.expandedIds();
       const next = current.includes(nodeId)

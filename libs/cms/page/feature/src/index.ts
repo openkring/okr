@@ -14,6 +14,8 @@ export * from './lib/blog-bento';
 export * from './lib/blog-stream';
 export * from './lib/menu-graph.store';
 export * from './lib/menu-graph-node';
+export * from './lib/menu-graph';
+export * from './lib/menu-tree';
 export * from './lib/graph.page';
 export * from './lib/album.page';
 export * from './lib/public-album.page';

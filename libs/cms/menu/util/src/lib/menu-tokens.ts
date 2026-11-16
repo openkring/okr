@@ -28,6 +28,23 @@ export interface MenuTokenContext {
    * and `gss`. Used by '@BOOKS@' / '@BOOKS_UPPER@'; '' = the app has no books (rows needing them are hidden).
    */
   booksId?: string;
+  /**
+   * The app's own host, `app-config.appDomain`, e.g. 'app.seeclub.org'. Used by '@APP_DOMAIN@'
+   * and, derived, by '@WEB_DOMAIN@' in a translated label («Sitemap app.seeclub.org»).
+   */
+  appDomain?: string;
+}
+
+/**
+ * The public website host of a tenant, derived from its app host: 'app.seeclub.org' →
+ * 'www.seeclub.org'. Apex and `www` belong to the website, `app.<domain>` to the app (dns skill).
+ * '' when the app has no domain configured.
+ */
+export function getWebDomain(appDomain?: string): string {
+  const host = (appDomain ?? '').trim().toLowerCase();
+  if (!host) return '';
+  const apex = host.replace(/^(app|www)\./, '');
+  return 'www.' + apex;
 }
 
 /** Registry of supported tokens → resolver. Keys are the literal tokens found in labels. */
@@ -51,7 +68,11 @@ export const MENU_TOKENS: Record<string, (ctx: MenuTokenContext) => string> = {
   '@TID_UPPER@': (ctx) => (ctx.tenantId ?? '').toUpperCase(),
   // The selected books (default: AppConfig.defaultAccountingTenantId) — spec 1.100. Never the tenant id.
   '@BOOKS@': (ctx) => ctx.booksId ?? '',
-  '@BOOKS_UPPER@': (ctx) => (ctx.booksId ?? '').toUpperCase()
+  '@BOOKS_UPPER@': (ctx) => (ctx.booksId ?? '').toUpperCase(),
+  // The two sitemap rows name the host they map: «Sitemap app.seeclub.org» / «Sitemap www.seeclub.org».
+  // Like '@TID_UPPER@' these sit inside the i18n VALUE, expanded after translating.
+  '@APP_DOMAIN@': (ctx) => ctx.appDomain ?? '',
+  '@WEB_DOMAIN@': (ctx) => getWebDomain(ctx.appDomain)
   // future: '@TENANT_NAME@', '@USER_NAME@', ...
 };
 

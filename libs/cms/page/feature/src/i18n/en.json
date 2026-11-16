@@ -105,6 +105,10 @@
           "export": "Via the menu at the top right you can export the structure as a table (raw) or as sitemap XML.",
           "roles": "The displayed roles are also important. They determine who can see the respective entry. You can change the role by clicking on the pencil symbol."
         }
+      },
+      "view": {
+        "website": "Website",
+        "system": "System"
       }
     },
     "blog": {

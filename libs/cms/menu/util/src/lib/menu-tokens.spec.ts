@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { expandMenuTokens, getRepoUrl, lacksBooks, resolveMenuLabelKey, resolveMenuUrl } from './menu-tokens';
+import { expandMenuTokens, getRepoUrl, getWebDomain, lacksBooks, resolveMenuLabelKey, resolveMenuUrl } from './menu-tokens';
 
 const ctx = { version: '4.2.0' };
 
@@ -118,5 +118,23 @@ describe('@BOOKS@ — the default books, never the app tenant', () => {
     expect(lacksBooks('@BOOKS_UPPER@ Buchhaltung', { ...ctx, tenantId: 'bkg' })).toBe(true);
     expect(lacksBooks('/accounting/@BOOKS@/journal', { ...ctx, booksId: 'scs' })).toBe(false);
     expect(lacksBooks('/album/@TID@-album', { ...ctx, booksId: '' })).toBe(false);
+  });
+});
+
+describe('@APP_DOMAIN@ / @WEB_DOMAIN@ — the two sitemap rows', () => {
+  it('expands the app host and the website host derived from it', () => {
+    const c = { ...ctx, appDomain: 'app.seeclub.org' };
+    expect(expandMenuTokens('Sitemap @APP_DOMAIN@', c)).toBe('Sitemap app.seeclub.org');
+    expect(expandMenuTokens('Sitemap @WEB_DOMAIN@', c)).toBe('Sitemap www.seeclub.org');
+  });
+  it('getWebDomain: apex and www both map to www, empty stays empty', () => {
+    expect(getWebDomain('seeclub.org')).toBe('www.seeclub.org');
+    expect(getWebDomain('www.seeclub.org')).toBe('www.seeclub.org');
+    expect(getWebDomain(' App.Kring.ch ')).toBe('www.kring.ch');
+    expect(getWebDomain('')).toBe('');
+    expect(getWebDomain(undefined)).toBe('');
+  });
+  it('expands to an empty host when the app has no domain', () => {
+    expect(expandMenuTokens('Sitemap @WEB_DOMAIN@', ctx).trim()).toBe('Sitemap');
   });
 });
