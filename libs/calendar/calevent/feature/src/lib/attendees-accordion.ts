@@ -134,7 +134,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
       </ion-avatar>
       <ion-label>{{ attendee.person.name1 | fullName: attendee.person.name2 }}</ion-label>
       @if(canEdit()) {
-        <ion-icon slot="end" color="danger" src="{{'cancel' | svgIcon }}" (click)="remove(attendee, $event)" />
+        <ion-icon slot="end" src="{{'cancel' | svgIcon }}" (click)="remove(attendee, $event)" />
       }
     </ion-item>
   </ng-template>

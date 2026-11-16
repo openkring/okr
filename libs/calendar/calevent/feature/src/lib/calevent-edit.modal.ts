@@ -46,7 +46,7 @@ import { AttendeesAccordion } from './attendees-accordion';
   template: `
     <!-- the advanced-settings toggle lives in the toolbar, left of the close button -->
     <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true"
-      [actionIcon]="canExpert() ? 'toggle' : ''" [actionTitle]="i18n.form_advanced_label()"
+      [actionIcon]="canExpert() ? (showAdvanced() ? 'toggle' : 'toggle-off') : ''" [actionTitle]="i18n.form_advanced_label()"
       (actionClicked)="showAdvanced.set(!showAdvanced())" />
     @if(showConfirmation()) {
       <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
