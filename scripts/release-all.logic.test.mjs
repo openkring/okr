@@ -10,8 +10,8 @@ test('bump keeps today\'s semantics', () => {
   assert.equal(bump('7.56.2', 'major'), '8.0.0');
 });
 
-test('APPS is exactly the eight tenant apps', () => {
-  assert.deepEqual([...APPS].sort(), ['bka-app', 'bkg-app', 'elab-app', 'kring-app', 'kwa-app', 'okr-app', 'p13-app', 'scs-app']);
+test('APPS is exactly the nine tenant apps', () => {
+  assert.deepEqual([...APPS].sort(), ['bka-app', 'bkg-app', 'elab-app', 'kring-app', 'kwa-app', 'okr-app', 'p13-app', 'sc7-app', 'scs-app']);
 });
 
 test('parseReleaseArgs: all with flags', () => {

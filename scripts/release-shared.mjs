@@ -21,11 +21,12 @@ export const SITES = {
   'bkg-app': 'bkg-app-54aef',
   'elab-app': 'elab-app-54aef',
   'kwa-app': 'kwa-app-54aef',
+  'sc7-app': 'sc7-app-54aef',
   'okr-website': 'okr-website-54aef',
   'kring-website': 'kring-website-54aef',
   'p13-website': 'p13-website-54aef',
 };
-// the eight tenant web apps, in SITES order
+// the nine tenant web apps, in SITES order
 export const APPS = Object.keys(SITES).filter((k) => k.endsWith('-app'));
 export const PROD_APP = 'scs-app'; // only this app's users see the in-app update prompt
 

@@ -112,6 +112,12 @@ const TARGETS = {
     serverDeps: true,
     out: 'dist/apps/kwa-app/browser/licenses.html',
   },
+  'sc7-app': {
+    label: 'Sil Crest 7',
+    bundle: 'dist/apps/sc7-app/3rdpartylicenses.txt',
+    serverDeps: true,
+    out: 'dist/apps/sc7-app/browser/licenses.html',
+  },
   'kring-website': {
     label: 'Kring',
     // self-hosted since 2026-08-04 (spec C6, defect W6) — the OFL text must travel with the files
