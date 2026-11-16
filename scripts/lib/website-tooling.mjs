@@ -58,6 +58,32 @@ export function loadRender() {
   return renderLib;
 }
 
+let peopleLib;
+/**
+ * apps/functions/src/website/group-people.ts (loadSectionPeople), bundled in memory like loadRender, so
+ * the local render resolves group / role people sections exactly as publishWebsite does (spec 1.153
+ * §13, §13.1). Without it every such section renders empty.
+ */
+function loadPeopleLib() {
+  if (peopleLib) return peopleLib;
+  const out = buildSync({
+    entryPoints: [join(ROOT, 'apps/functions/src/website/group-people.ts')],
+    bundle: true,
+    platform: 'node',
+    format: 'cjs',
+    target: 'node22',
+    external: ['handlebars', 'firebase-admin', 'firebase-admin/*'],
+    tsconfig: join(ROOT, 'tsconfig.base.json'),
+    absWorkingDir: ROOT,
+    write: false,
+    logLevel: 'silent',
+  });
+  const mod = { exports: {} };
+  new Function('module', 'exports', 'require', out.outputFiles[0].text)(mod, mod.exports, rootRequire);
+  peopleLib = mod.exports;
+  return peopleLib;
+}
+
 /** The rich-text sanitizer, built from sanitize-html as installed for the Cloud Functions. */
 export function getSanitizer() {
   const sanitizeHtml = functionsRequire('sanitize-html');
@@ -90,9 +116,9 @@ export function loadLocalTemplates(tenant) {
 }
 
 /** Renders a site; the sanitizer is injected here. */
-export function render({ site, pages, sections, templates }) {
+export function render({ site, pages, sections, people, templates }) {
   const lib = loadRender();
-  return lib.renderSite({ site, pages, sections, templates, imageUrl: lib.toImgixUrl, sanitize: getSanitizer() });
+  return lib.renderSite({ site, pages, sections, people, templates, imageUrl: lib.toImgixUrl, sanitize: getSanitizer() });
 }
 
 /** The seed of a tenant as a render input, or of `seedFile`; undefined without apps/<tenant>-website/content/seed.json. */
@@ -138,7 +164,8 @@ function collectPageKeys(nodes, out = []) {
 
 /**
  * Mirrors apps/functions/src/website/publish-website.ts loadSiteContent: the pages of the tree plus the
- * home page (owned by one of the site's tenants), their sections, then the accordion items.
+ * home page (owned by one of the site's tenants), their sections, the accordion items, then the people
+ * of the group / role people sections.
  */
 export async function loadLiveContent(firestore, site) {
   const { publishedPageSections } = loadRender();
@@ -160,15 +187,18 @@ export async function loadLiveContent(firestore, site) {
   };
   await loadSections([...pages.values()].flatMap((p) => (p.sections ?? []).flatMap(candidates)));
   const nested = [];
+  const peopleSections = [];
   for (const page of pages.values()) {
     for (const { section } of publishedPageSections(page, tenants, sections)) {
+      if (section.type === 'people') peopleSections.push(section);
       if (section.type !== 'accordion') continue;
       const items = section.properties?.items;
       for (const it of Array.isArray(items) ? items : []) if (typeof it?.key === 'string' && it.key) nested.push(...candidates(it.key));
     }
   }
   if (nested.length) await loadSections(nested);
-  return { pages, sections };
+  const people = await loadPeopleLib().loadSectionPeople(firestore, peopleSections, tenants);
+  return { pages, sections, people };
 }
 
 /**
@@ -188,6 +218,6 @@ export async function loadLiveSource(tenant) {
     site = { ...JSON.parse(readFileSync(fixture, 'utf8')), okey: manifest.siteId };
     synthetic = true;
   }
-  const { pages, sections } = await loadLiveContent(firestore, site);
-  return { site, pages, sections, origin: synthetic ? 'live content + SYNTHETIC site (websites/' + manifest.siteId + ' is missing; fixture used)' : 'live', synthetic };
+  const { pages, sections, people } = await loadLiveContent(firestore, site);
+  return { site, pages, sections, people, origin: synthetic ? 'live content + SYNTHETIC site (websites/' + manifest.siteId + ' is missing; fixture used)' : 'live', synthetic };
 }

@@ -9,6 +9,23 @@
         "**/node_modules/**",
         "**/*.map"
       ],
+      "redirects": [
+        {
+          "source": "/web",
+          "destination": "https://www.seeclub.org/",
+          "type": 301
+        },
+        {
+          "source": "/web/:path*",
+          "destination": "https://www.seeclub.org/:path",
+          "type": 301
+        },
+        {
+          "source": "/llms.txt",
+          "destination": "https://www.seeclub.org/llms.txt",
+          "type": 301
+        }
+      ],
       "rewrites": [
         {
           "source": "/_matrix/push/v1/notify",
@@ -16,50 +33,9 @@
           "region": "europe-west6"
         },
         {
-          "source": "/web/api/**",
-          "function": "publicApi",
-          "region": "europe-west6"
-        },
-        {
           "source": "/healthz",
           "function": "healthz",
           "region": "europe-west6"
-        },
-        {
-          "source": "/web/news",
-          "destination": "/web/news.html"
-        },
-        {
-          "source": "/web/bootshaus",
-          "destination": "/web/bootshaus.html"
-        },
-        {
-          "source": "/web/kontakt",
-          "destination": "/web/kontakt.html"
-        },
-        {
-          "source": "/web/news-artikel",
-          "destination": "/web/news-artikel.html"
-        },
-        {
-          "source": "/web/termine",
-          "destination": "/web/termine.html"
-        },
-        {
-          "source": "/web/impressum",
-          "destination": "/web/impressum.html"
-        },
-        {
-          "source": "/web/datenschutz",
-          "destination": "/web/datenschutz.html"
-        },
-        {
-          "source": "/web/app",
-          "destination": "/web/app.html"
-        },
-        {
-          "source": "/web",
-          "destination": "/web/index.html"
         },
         {
           "source": "/s/**",

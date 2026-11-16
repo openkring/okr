@@ -43,9 +43,10 @@ import { fileURLToPath } from 'node:url';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 /**
- * Each target composes from four collectors. `scs-website` has no target of its own —
- * it is embedded into `scs-app` at `./web`, so the scs-app page covers both. `p13-website`
- * IS standalone (it is not embedded into p13-app) and therefore has one.
+ * Each target composes from four collectors. `scs-website` has no target of its own: it is
+ * published to its own hosting site (spec 1.153), and its licenses page links to the scs-app
+ * list at https://seeclub.org/licenses.html, which therefore also lists the website's fonts.
+ * `p13-website` and the other `*-website` targets stand alone.
  */
 const TARGETS = {
   'scs-app': {
@@ -56,7 +57,7 @@ const TARGETS = {
     // NOTE the `browser/` segment: firebase.json serves `dist/apps/<app>/browser`, so anything
     // written one level up is built but never deployed — which is exactly why the Angular-emitted
     // `dist/apps/<app>/3rdpartylicenses.txt` has never actually reached a user.
-    out: 'dist/apps/scs-app/browser/web/licenses.html',
+    out: 'dist/apps/scs-app/browser/licenses.html',
   },
   'p13-app': {
     label: 'P13',
