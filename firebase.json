@@ -1457,6 +1457,64 @@
       ]
     },
     {
+      "site": "sc7-website-54aef",
+      "public": "dist/apps/sc7-website",
+      "cleanUrls": true,
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "headers": [
+        {
+          "source": "/",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=0, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/@(impressum|datenschutz|licenses)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=0, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "**/*.html",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=0, must-revalidate"
+            }
+          ]
+        },
+        {
+          "comment": "Vendored MapLibre is version-pinned by its file content; bump the ?v= on flyover.js / sc7.css after editing them.",
+          "source": "**/*.@(js|mjs|css|woff2|jpg|png|svg)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=31536000, immutable"
+            }
+          ]
+        },
+        {
+          "source": "**",
+          "headers": [
+            {
+              "key": "Content-Security-Policy",
+              "value": "default-src 'self'; script-src 'self'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://tiles.maps.eox.at https://wmts.geo.admin.ch; connect-src 'self' https://tiles.maps.eox.at https://wmts.geo.admin.ch; frame-ancestors 'none'; base-uri 'self'; form-action 'none'"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "comment": "Redirect-only site: glp-staefa.ch + www -> bezirkmeilen.glp.swiss/staefa/. No content of its own; see apps/glps-website/README.md.",
       "site": "glps-website-54aef",
       "public": "dist/apps/glps-website",
