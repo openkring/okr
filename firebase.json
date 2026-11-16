@@ -1498,23 +1498,54 @@
       "redirects": [
         {
           "source": "/private/:path*",
-          "destination": "https://seeclub.org/private/:path*",
+          "destination": "https://app.seeclub.org/private/:path*",
           "type": 301
         },
         {
           "source": "/public/:path*",
-          "destination": "https://seeclub.org/public/:path*",
+          "destination": "https://app.seeclub.org/public/:path*",
           "type": 301
         },
         {
           "source": "/auth/:path*",
-          "destination": "https://seeclub.org/auth/:path*",
+          "destination": "https://app.seeclub.org/auth/:path*",
           "type": 301
         },
         {
           "source": "/aoc/:path*",
-          "destination": "https://seeclub.org/aoc/:path*",
+          "destination": "https://app.seeclub.org/aoc/:path*",
           "type": 301
+        },
+        {
+          "source": "/tracker/:path*",
+          "destination": "https://app.seeclub.org/tracker/:path*",
+          "type": 301
+        },
+        {
+          "source": "/welcome",
+          "destination": "https://app.seeclub.org/welcome",
+          "type": 301
+        },
+        {
+          "source": "/web",
+          "destination": "/",
+          "type": 301
+        },
+        {
+          "source": "/web/:path*",
+          "destination": "/:path",
+          "type": 301
+        }
+      ],
+      "rewrites": [
+        {
+          "source": "/s/**",
+          "function": "publicApi",
+          "region": "europe-west6"
+        },
+        {
+          "source": "**",
+          "destination": "/assets/app-forward.html"
         }
       ],
       "headers": [

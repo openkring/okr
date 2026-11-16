@@ -82,7 +82,7 @@ export async function orgRouter(req: Request, res: Response): Promise<void> {
       social: {
         instagram: '',
       },
-      memberLoginUrl: 'https://seeclub.org/',
+      memberLoginUrl: 'https://app.seeclub.org/',
       logoUrl: '',
     });
   } catch (err) {
