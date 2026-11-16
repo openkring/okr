@@ -58,7 +58,7 @@ import {
   type TemplateContext,
 } from './render-context';
 import { compileTemplate, createTemplateEnv, escapeXml, langPath, type RenderData, type RenderFn } from './render-helpers';
-import { homeRowPlan, type HomeRow } from './home-layout';
+import { columnPairStarts, homeRowPlan, type HomeRow } from './home-layout';
 import { mapSection, pickText, type SanitizeFn, type SectionDoc } from './section-mapper';
 import type { PublicPerson } from './group-people';
 
@@ -117,6 +117,8 @@ interface Compiled {
   layout: RenderFn;
   sections: Map<string, RenderFn>;
   pages: Map<string, RenderFn>;
+  /** partials/section-pair.hbs ({ name, left, right }): the two-column row of a text article + form */
+  pair?: RenderFn;
 }
 
 function activePageNodes(nodes: WebsiteNode[], out: WebsiteNode[] = []): WebsiteNode[] {
@@ -191,6 +193,7 @@ function compileAll(templates: TemplateSet): Compiled {
     layout: compileTemplate(hbs, 'layout.hbs', templates.layout),
     sections: compileEach('sections', templates.sections),
     pages: compileEach('pages', templates.pages),
+    pair: templates.partials['section-pair'] === undefined ? undefined : compileTemplate(hbs, 'partials/section-pair.hbs', templates.partials['section-pair']),
   };
 }
 
@@ -373,6 +376,21 @@ export function renderSite(input: RenderInput): RenderResult {
         }
         continue;
       }
+      // The page banner (partials/page-banner.hbs, drawn when no section is a hero) already shows the
+      // page title: a first section with the same title would repeat it right below — drop that heading.
+      const firstShown = contexts.findIndex((_, i) => !failed.has(i));
+      if (firstShown >= 0 && !contexts.some((c) => c['type'] === 'hero')) {
+        const first = contexts[firstShown];
+        const same = (a: unknown, b: unknown): boolean =>
+          typeof a === 'string' && typeof b === 'string' && !!a.trim() && a.trim().toLowerCase() === b.trim().toLowerCase();
+        const bannerTitle = page?.title || (entry.node ? pickText(entry.node.label, entry.node.labelI18n, lang) : '');
+        if (same(first['title'], bannerTitle)) contexts[firstShown] = { ...first, title: '' };
+      }
+      // a text article followed by a form becomes one two-column row (partials/section-pair.hbs);
+      // both are rendered with `inColumn: true`, which drops their own section wrapper
+      const pairStarts = compiled.pair ? columnPairStarts(contexts.map((c, i) => (failed.has(i) ? {} : c))) : new Set<number>();
+      const blocks: string[] = [];
+      let pending: { name: string; left: string } | undefined;
       published.forEach(({ raw, sectionKey, section }, i) => {
         if (failed.has(i)) return;
         const type = section.type ?? 'article';
@@ -381,19 +399,30 @@ export function renderSite(input: RenderInput): RenderResult {
           problems.push({ code: 'templateMissing', pageKey: entry.key, sectionKey: raw, detail: type });
           return;
         }
+        const inColumn = pairStarts.has(i) || pairStarts.has(i - 1);
         try {
-          rendered.push({ type, key: sectionKey, html: template(contexts[i], data) });
+          const html = template(inColumn ? { ...contexts[i], inColumn: true } : contexts[i], data);
+          rendered.push({ type, key: sectionKey, html });
+          if (pairStarts.has(i)) {
+            pending = { name: String(contexts[i]['name'] ?? ''), left: html };
+          } else if (pending && pairStarts.has(i - 1)) {
+            blocks.push((compiled.pair as RenderFn)({ name: pending.name, left: pending.left, right: html }, data));
+            pending = undefined;
+          } else {
+            blocks.push(html);
+          }
         } catch (e) {
           problems.push({ code: 'renderFailed', pageKey: entry.key, sectionKey: raw, detail: message(e) });
         }
       });
+      if (pending) blocks.push(pending.left); // the form failed: the article stands alone
       const label = entry.node ? pickText(entry.node.label, entry.node.labelI18n, lang) : '';
       const slug = entry.file === 'index' ? '' : entry.file;
       const context: TemplateContext = {
         ...layoutContext(lang, entry.key, entry.path),
         page: pageContext(entry.key, slug, entry.path, page, label, lang, imageUrl),
         sections: rendered,
-        main: rendered.map((s) => s.html).join('\n'),
+        main: blocks.join('\n'),
       };
       renderLayout(entry.file, lang, context, data, entry.key);
     }

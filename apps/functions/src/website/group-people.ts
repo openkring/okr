@@ -2,7 +2,7 @@
 // resolveGroupPeople / resolveRolePeople, shared by publishWebsite and publicApi's page route so both
 // resolve a people section the same way.
 import type { Firestore } from 'firebase-admin/firestore';
-import { MembershipCollection, PersonCollection, ResponsibilityCollection } from '@okr/shared-models';
+import { AvatarCollection, MembershipCollection, PersonCollection, ResponsibilityCollection } from '@okr/shared-models';
 import {
   peopleSourceKey, peopleSourceOf, resolveGroupPeople, resolveRolePeople,
   type GroupMembershipDoc, type GroupPersonDoc, type PublicPerson, type RoleDoc, type SectionDoc,
@@ -118,6 +118,32 @@ export async function loadSectionPeople(
   for (const ids of roleLists.values()) {
     const persons = roles.get(ids.join(','));
     if (persons) out.set(peopleSourceKey({ kind: 'responsibility', ids }), persons);
+  }
+  return withAvatarImages(db, out, siteTenants[0]);
+}
+
+/**
+ * Adds each person's avatar storage path (`image`) — only where `showImage` is true (the person's
+ * `usageImages` is Public; both resolvers set it). Fails closed: a person without the flag gets no photo. The app's lookup: the tenant's own avatar `<tenant>.person.<key>`, else the
+ * shared `person.<key>`. Missing avatars leave `image` unset (the site shows initials).
+ */
+export async function withAvatarImages(
+  db: Firestore,
+  people: Map<string, PublicPerson[]>,
+  tenantId: string | undefined,
+): Promise<Map<string, PublicPerson[]>> {
+  const keys = [...new Set([...people.values()].flat().filter((p) => p.showImage === true && !!p.key).map((p) => p.key))];
+  if (keys.length === 0) return people;
+  const own = tenantId ? await readByKeys<{ storagePath?: string }>(db, AvatarCollection, keys.map((k) => `${tenantId}.person.${k}`)) : new Map();
+  const shared = await readByKeys<{ storagePath?: string }>(db, AvatarCollection, keys.map((k) => `person.${k}`));
+  const pathOf = (key: string): string | undefined =>
+    (tenantId ? own.get(`${tenantId}.person.${key}`)?.storagePath : undefined) || shared.get(`person.${key}`)?.storagePath || undefined;
+  const out = new Map<string, PublicPerson[]>();
+  for (const [source, persons] of people) {
+    out.set(source, persons.map((p) => {
+      const image = p.showImage === true ? pathOf(p.key) : undefined;
+      return image ? { ...p, image } : p;
+    }));
   }
   return out;
 }

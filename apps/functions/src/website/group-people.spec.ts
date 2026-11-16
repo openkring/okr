@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Firestore } from 'firebase-admin/firestore';
 
-import { loadGroupPeople, loadRolePeople, loadSectionPeople } from './group-people';
+import { loadGroupPeople, loadRolePeople, loadSectionPeople, withAvatarImages } from './group-people';
 
 type Doc = Record<string, unknown>;
 
@@ -114,5 +114,40 @@ describe('loadSectionPeople', () => {
     expect((await loadSectionPeople(f.db, [{ type: 'people', properties: { type: 'persons' } }], ['scs'])).size).toBe(0);
     expect(f.queries).toEqual([]);
     expect(f.reads).toEqual([]);
+  });
+});
+
+describe('withAvatarImages', () => {
+  function fakeAvatarDb(avatars: Record<string, Doc>) {
+    const reads: string[][] = [];
+    const db = {
+      collection: (c: string) => ({ doc: (id: string) => ({ path: `${c}/${id}`, id }) }),
+      getAll: async (...refs: { path: string; id: string }[]) => {
+        reads.push(refs.map((r) => r.path));
+        return refs.map((r) => ({ id: r.id, data: () => avatars[r.id] }));
+      },
+    };
+    return { db: db as unknown as Firestore, reads };
+  }
+
+  it('takes the tenant avatar first, then the shared one, only for persons whose images are public (no flag = no photo)', async () => {
+    const f = fakeAvatarDb({
+      'scs.person.p1': { storagePath: 'tenant/scs/person/p1/avatar/a.jpg' },
+      'person.p1': { storagePath: 'shared/a.jpg' },
+      'person.p2': { storagePath: 'shared/b.jpg' },
+      'person.p5': { storagePath: 'shared/e.jpg' },
+      'scs.person.p3': { storagePath: 'tenant/scs/person/p3/avatar/c.jpg' },
+    });
+    const people = new Map([['group.vorstand', [
+      { key: 'p1', firstName: 'A', lastName: '', label: '', showImage: true },
+      { key: 'p2', firstName: 'B', lastName: '', label: '', showImage: true },
+      { key: 'p5', firstName: 'E', lastName: '', label: '' },
+      { key: 'p3', firstName: 'C', lastName: '', label: '', showImage: false },
+      { key: 'p4', firstName: 'D', lastName: '', label: '', showImage: true },
+    ]]]);
+    const out = await withAvatarImages(f.db, people, 'scs');
+    expect(out.get('group.vorstand')?.map((p) => p.image)).toEqual(['tenant/scs/person/p1/avatar/a.jpg', 'shared/b.jpg', undefined, undefined, undefined]); // p5: no flag = no photo (fail closed)
+    expect(f.reads.flat()).not.toContain('avatars/scs.person.p3');
+    expect(f.reads.flat()).not.toContain('avatars/person.p5');
   });
 });

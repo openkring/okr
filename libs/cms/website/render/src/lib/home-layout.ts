@@ -56,3 +56,21 @@ export interface HomeRow extends HomeRowPlan {
   /** the section's rendered template ('' for a pair: the page template draws it from `sections`) */
   html: string;
 }
+
+/**
+ * The column pairs of a regular (non-home) page: an article without images and without the «banner»
+ * emphasis, followed directly by a `form` section, is drawn as one two-column row (text left, form
+ * right) — the old hand-written /kontakt layout. Returns the index of each pair's article; the form
+ * is the next section. Only applies when the templates bring `partials/section-pair.hbs`.
+ */
+export function columnPairStarts(sections: Record<string, unknown>[]): Set<number> {
+  const starts = new Set<number>();
+  for (let i = 0; i < sections.length - 1; i++) {
+    const s = sections[i];
+    if (isTextArticle(s) && s['emphasis'] !== 'banner' && sections[i + 1]?.['type'] === 'form') {
+      starts.add(i);
+      i++;
+    }
+  }
+  return starts;
+}

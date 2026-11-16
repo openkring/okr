@@ -15,6 +15,13 @@ export interface PublicPerson {
   /** Group members only: false when the person's `usageImages` is not Public — the site shows initials. */
   showImage?: boolean;
   /**
+   * The person's avatar, only when `showImage` is true (fails closed): the loader sets the storage path
+   * (`avatars/<tenant>.person.<key>`, else `person.<key>`), mapSection's output carries the imgix url.
+   */
+  image?: string;
+  /** mapSection output only: the fill behind a cut-out portrait — 'primary' | 'secondary' | '#rrggbb' */
+  bg?: string;
+  /**
    * Role sections only (§13.1): the role's public address (`ResponsibilityModel.email`), emitted by
    * mapSection only when the section's info shows email. Never a personal address.
    */

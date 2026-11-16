@@ -1,4 +1,4 @@
-import { homeRowPlan } from './home-layout';
+import { columnPairStarts, homeRowPlan } from './home-layout';
 
 const hero = { type: 'hero', name: 'top' };
 const text = { type: 'article', name: 'ueber-uns', images: [] };
@@ -34,5 +34,25 @@ describe('homeRowPlan', () => {
   it('copes with an empty list and non-records', () => {
     expect(homeRowPlan([])).toEqual([]);
     expect(homeRowPlan([{ type: 'article' }, stat]).map((r) => r.kind)).toEqual(['pair']);
+  });
+});
+
+describe('columnPairStarts', () => {
+  const form = { type: 'form', name: 'kontakt-form' };
+  const banner = { type: 'article', name: 'hinweis', images: [], emphasis: 'banner' };
+
+  it('pairs a text article with the form right after it', () => {
+    expect([...columnPairStarts([hero, text, form, events])]).toEqual([1]);
+  });
+
+  it('does not pair an article with images, a banner article, or a form that is not next', () => {
+    expect([...columnPairStarts([withImage, form])]).toEqual([]);
+    expect([...columnPairStarts([banner, form])]).toEqual([]);
+    expect([...columnPairStarts([text, events, form])]).toEqual([]);
+    expect([...columnPairStarts([form, text])]).toEqual([]);
+  });
+
+  it('starts a new pair only after the previous one', () => {
+    expect([...columnPairStarts([text, form, text, form])]).toEqual([0, 2]);
   });
 });

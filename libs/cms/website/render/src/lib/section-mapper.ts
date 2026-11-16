@@ -11,6 +11,52 @@ export function toImgixUrl(path: string): string {
   return `${IMGIX_BASE}/${path}?auto=compress,format=jpg`;
 }
 
+/** The image fields of a people section's `avatar` config the website reads (AvatarConfig, shared-models). */
+export interface PeoplePhotoConfig {
+  imgWidth?: number;
+  imgHeight?: number;
+  facePad?: number;
+  background?: 'original' | 'removed' | 'orgColor' | 'colors';
+  bgOrgColor?: 'primary' | 'secondary' | 'alternating';
+  bgColors?: string[];
+  grayscale?: boolean;
+}
+
+const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
+
+/**
+ * The fill behind the portrait at `index` (twin of getPeopleBgColor, @okr/cms-section-util): 'primary' /
+ * 'secondary' (the tenant colours; the template maps them to its own palette) or a #rrggbb of `bgColors`;
+ * undefined when the background is not filled.
+ */
+export function peoplePhotoBg(config: PeoplePhotoConfig, index: number): string | undefined {
+  if (config.background === 'orgColor') {
+    const org = config.bgOrgColor ?? 'primary';
+    return org === 'alternating' ? (index % 2 === 0 ? 'primary' : 'secondary') : org;
+  }
+  if (config.background === 'colors') {
+    const colors = (config.bgColors ?? []).filter((c) => HEX_COLOR.test(c));
+    return colors.length > 0 ? colors[index % colors.length] : undefined;
+  }
+  return undefined;
+}
+
+/**
+ * The imgix query of one portrait (twin of getPeopleImgixParams, @okr/cms-section-util): size at 2x,
+ * face crop, optional black and white, optional background removal. The fill is never baked in: the
+ * cut-out is transparent and the template paints `bg` behind it (so a grey portrait keeps a coloured fill).
+ */
+export function peoplePhotoParams(config: PeoplePhotoConfig): string {
+  const size = (v: unknown, d: number): number => (typeof v === 'number' && v >= 40 && v <= 1200 ? Math.round(v) : d);
+  const params = [`w=${size(config.imgWidth, 120)}`, `h=${size(config.imgHeight, 120)}`, 'dpr=2', 'auto=format,compress'];
+  const pad = typeof config.facePad === 'number' ? config.facePad : 0;
+  if (pad > 0) params.push('fit=facearea', `facepad=${pad}`);
+  else params.push('fit=crop', 'crop=faces');
+  if (config.grayscale === true) params.push('sat=-100');
+  if ((config.background ?? 'original') !== 'original') params.push('bg-remove=true');
+  return params.join('&');
+}
+
 export type I18nString = Record<string, string>;
 
 const LANGS = ['de', 'en', 'fr', 'es', 'it'];
@@ -422,13 +468,23 @@ export function mapSection(
           && Array.isArray(info) && (info.includes('email') || info.includes('emailLink'));
         // the template shows the address as a mailto: link when the info asks for one, else as text
         const emailLink = showEmail && Array.isArray(info) && info.includes('emailLink');
+        const avatarCfg = (props['avatar'] ?? {}) as PeoplePhotoConfig;
+        let photoIndex = 0;
         const persons = resolved.map((p): PublicPerson => {
           const out: PublicPerson = { key: p.key, firstName: p.firstName, lastName: p.lastName, label: p.label };
           if (p.showImage !== undefined) out.showImage = p.showImage;
+          // the avatar photo, styled as the app's people section — never when the person's images are not public
+          if (p.showImage === true && typeof p.image === 'string' && p.image) {
+            const bg = peoplePhotoBg(avatarCfg, photoIndex++);
+            out.image = `${IMGIX_BASE}/${p.image.replace(/^\/+/, '')}?${peoplePhotoParams(avatarCfg)}`;
+            if (bg) out.bg = bg;
+          }
           if (showEmail && isPlainEmail(p.email)) out.email = p.email;
           return out;
         });
-        return { type: 'people', name, title, subTitle, persons, ...(emailLink ? { emailLink: true } : {}) };
+        // photo cards as soon as one person has a photo (the others get an initials tile)
+        const withPhotos = persons.some((p) => !!p.image);
+        return { type: 'people', name, title, subTitle, persons, ...(withPhotos ? { withPhotos: true } : {}), ...(emailLink ? { emailLink: true } : {}) };
       }
       const persons = ((props['persons'] as { key?: string; name1?: string; name2?: string; label?: string }[] | undefined) ?? [])
         .map(p => ({

@@ -122,6 +122,28 @@ describe('mapSection people', () => {
     expect(JSON.stringify([group, persons])).not.toMatch(/email|@/i);
   });
 
+  it('turns a public avatar into a square imgix photo and switches the section to photo cards', () => {
+    const ben: PublicPerson = { key: 'p2', firstName: 'Ben', lastName: 'Bauer', label: '', showImage: true, image: 'tenant/scs/person/p2/avatar/ben.jpg' };
+    const out = mapSection('s1', people({ type: 'group', groupId: 'vorstand' }), new Map(), sanitize, 'de', new Map([['group.vorstand', [ben]]])) as { persons: PublicPerson[]; withPhotos?: boolean };
+    expect(out.persons[0].image).toBe('https://bkaiser.imgix.net/tenant/scs/person/p2/avatar/ben.jpg?w=120&h=120&dpr=2&auto=format,compress&fit=crop&crop=faces');
+    expect(out.withPhotos).toBe(true);
+  });
+
+  it('styles the portraits as the section config says: size, face pad, grayscale, cut-out on alternating club colours', () => {
+    const p = (key: string): PublicPerson => ({ key, firstName: key, lastName: '', label: '', showImage: true, image: `a/${key}.jpg` });
+    const avatar = { imgWidth: 250, imgHeight: 250, facePad: 1.5, grayscale: true, background: 'orgColor', bgOrgColor: 'alternating' };
+    const out = mapSection('s1', people({ type: 'group', groupId: 'vorstand', avatar }), new Map(), sanitize, 'de', new Map([['group.vorstand', [p('a'), p('b'), p('c')]]])) as { persons: PublicPerson[] };
+    expect(out.persons[0].image).toBe('https://bkaiser.imgix.net/a/a.jpg?w=250&h=250&dpr=2&auto=format,compress&fit=facearea&facepad=1.5&sat=-100&bg-remove=true');
+    expect(out.persons.map((x) => x.bg)).toEqual(['primary', 'secondary', 'primary']);
+  });
+
+  it('never emits a photo when the person\'s images are not public', () => {
+    const hidden: PublicPerson = { ...anna, image: 'tenant/scs/person/p1/avatar/anna.jpg' };
+    const out = mapSection('s1', people({ type: 'group', groupId: 'vorstand' }), new Map(), sanitize, 'de', new Map([['group.vorstand', [hidden]]])) as { persons: PublicPerson[]; withPhotos?: boolean };
+    expect(out.persons[0].image).toBeUndefined();
+    expect(out.withPhotos).toBeUndefined();
+  });
+
   it('leaves the output of an explicit persons section unchanged', () => {
     const out = mapSection('s2', people({ type: 'persons', persons: [{ key: 'p1', name1: 'Anna', name2: 'Muster', label: 'Präsidentin' }] }), new Map(), sanitize);
     expect(out).toEqual({
