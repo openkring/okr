@@ -1,11 +1,11 @@
 import { Component, computed, input, model, signal, Signal } from '@angular/core';
 import {
-  IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonLabel, IonRow,
+  IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonLabel, IonNote, IonRow,
   IonSegment, IonSegmentButton, IonSelect, IonSelectOption
 } from '@ionic/angular';
 
 import { Checkbox, CheckboxI18n, Color, ErrorNote, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { HERO_OVERLAY_DEFAULT, HeroConfig, HeroOverlay, IMAGE_STYLE_SHAPE } from '@okr/shared-models';
+import { HERO_OVERLAY_DEFAULT, HeroConfig, HeroGradient, HeroOverlay, IMAGE_STYLE_SHAPE } from '@okr/shared-models';
 import { coerceBoolean } from '@okr/shared-util-core';
 import {
   getErrorSegments, getFieldErrors, HERO_FOCUSES, HERO_SEGMENT_FIELDS, HERO_HEIGHTS, HERO_OVERLAY_DARKENING_MAX, HERO_OVERLAY_FONT_SIZES, HERO_OVERLAY_LABEL_LENGTH,
@@ -63,6 +63,16 @@ interface HeroConfigI18n {
   hero_focus_top:             Signal<string>;
   hero_focus_bottom:          Signal<string>;
   hero_focus_helper:          Signal<string>;
+  hero_gradient_from:         Signal<string>;
+  hero_gradient_to:           Signal<string>;
+  hero_gradient_helper:       Signal<string>;
+}
+
+/** the band colours shown while a hero stores none: the app's primary and secondary colour */
+function themeColor(name: 'primary' | 'secondary', fallback: string): string {
+  if (typeof document === 'undefined') return fallback;
+  const value = getComputedStyle(document.documentElement).getPropertyValue(`--ion-color-${name}`).trim();
+  return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value) ? value : fallback;
 }
 
 /**
@@ -76,7 +86,7 @@ interface HeroConfigI18n {
   standalone: true,
   imports: [
     Checkbox, Color, ErrorNote, NumberInput, TextInput,
-    IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonGrid, IonRow, IonCol, IonLabel,
+    IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonGrid, IonRow, IonCol, IonLabel, IonNote,
     IonSegment, IonSegmentButton, IonSelect, IonSelectOption
   ],
   styles: [`
@@ -117,6 +127,19 @@ interface HeroConfigI18n {
                   <okr-text-input [i18n]="imgixI18n()" [value]="imgIxParams()" (valueChange)="onImgIxParamsChange($event)"
                                   [maxLength]="200" [readOnly]="isReadOnly()" [showHelper]="true" />
                   <okr-error-note [errors]="errorsFor('imgIxParams')" />
+                </ion-col>
+                <ion-col size="12">
+                  <ion-note>{{ i18n().hero_gradient_helper() }}</ion-note>
+                </ion-col>
+                <ion-col size="12" size-md="6">
+                  <okr-color [hexColor]="gradient().from" (hexColorChange)="onGradientChange('from', $event)"
+                             [label]="i18n().hero_gradient_from()" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="errorsFor('gradient.from')" />
+                </ion-col>
+                <ion-col size="12" size-md="6">
+                  <okr-color [hexColor]="gradient().to" (hexColorChange)="onGradientChange('to', $event)"
+                             [label]="i18n().hero_gradient_to()" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="errorsFor('gradient.to')" />
                 </ion-col>
               </ion-row>
             }
@@ -239,6 +262,9 @@ export class HeroConfiguration {
   // the form shows the defaults for an absent overlay; nothing is stored until the user changes a field
   protected readonly overlay = computed<HeroOverlay>(() => this.formData().overlay ?? HERO_OVERLAY_DEFAULT);
   protected readonly focus = computed(() => this.formData().focus ?? 'center');
+  // an absent gradient shows primary / secondary (what the website draws then); stored once a colour is picked
+  private readonly defaultGradient: HeroGradient = { from: themeColor('primary', '#009d53'), to: themeColor('secondary', '#014da2') };
+  protected readonly gradient = computed<HeroGradient>(() => this.formData().gradient ?? this.defaultGradient);
   protected readonly imgIxParams = computed(() => this.formData().imageStyle?.imgIxParams ?? '');
   protected readonly heightMode = computed<HeightMode>(() => {
     const height = this.formData().height;
@@ -293,6 +319,10 @@ export class HeroConfiguration {
 
   protected onOverlayChange<K extends keyof HeroOverlay>(field: K, value: HeroOverlay[K]): void {
     this.formData.update((config) => ({ ...config, overlay: { ...(config.overlay ?? HERO_OVERLAY_DEFAULT), [field]: value } }));
+  }
+
+  protected onGradientChange(field: keyof HeroGradient, value: string): void {
+    this.formData.update((config) => ({ ...config, gradient: { ...(config.gradient ?? this.defaultGradient), [field]: value } }));
   }
 
   protected onHeightModeChange(mode: HeightMode): void {

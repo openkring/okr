@@ -536,6 +536,13 @@ export interface HeroConfig {
   overlay?: HeroOverlay;    // text overlay on the hero image (travel journal, spec 1.154); absent => none
   height?: 'S' | 'M' | 'L' | 'full' | number; // number = px; absent => as today
   focus?: 'center' | 'top' | 'bottom'; // vertical focus of the cropped hero image
+  gradient?: HeroGradient;  // colours of the band drawn when there is no hero image (website); absent => primary / secondary
+}
+
+/** The two colours (#rgb or #rrggbb) of the gradient band of a hero without image: left and right glow. */
+export interface HeroGradient {
+  from: string;
+  to: string;
 }
 
 export interface HeroOverlay {

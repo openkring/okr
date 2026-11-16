@@ -518,6 +518,11 @@
       "top": "Haut",
       "bottom": "Bas",
       "helper": "La partie de l'image qui reste visible lorsqu'elle est recadrée."
+    },
+    "gradient": {
+      "from": "Dégradé sans image : couleur à gauche",
+      "to": "Dégradé sans image : couleur à droite",
+      "helper": "Sans image de titre, le site affiche une bande claire dans ces deux couleurs. Avec une image, c’est l’image qui s’affiche."
     }
   },
   "icon": {

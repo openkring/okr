@@ -390,6 +390,20 @@ export function isPlainEmail(value: unknown): value is string {
  *   (`resolveGroupPeople`, §13) or the holders of the roles (`resolveRolePeople`, §13.1) of a people
  *   section of type 'group' / 'responsibility'; a source missing from the map renders no one.
  */
+const HERO_HEX = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i; // as the hero suite (overlay.color, gradient)
+
+/**
+ * The band colours of a hero without image (HeroConfig.gradient). Only two checked hex colours reach the
+ * page (they end up in a style attribute); undefined when not both are valid, and the website's default
+ * (primary / secondary) applies.
+ */
+export function mapHeroGradient(value: unknown): { from: string; to: string } | undefined {
+  const g = value as { from?: unknown; to?: unknown } | undefined;
+  if (!g || typeof g.from !== 'string' || typeof g.to !== 'string') return undefined;
+  if (!HERO_HEX.test(g.from) || !HERO_HEX.test(g.to)) return undefined;
+  return { from: g.from, to: g.to };
+}
+
 export function mapSection(
   id: string, s: SectionDoc, nestedSections: Map<string, SectionDoc>, sanitize: SanitizeFn, lang = 'de',
   people?: ReadonlyMap<string, PublicPerson[]>,
@@ -409,7 +423,7 @@ export function mapSection(
       const logoImg = mapImage(props['logo'] as StoredImage | undefined);
       const ctas = (Array.isArray(props['ctas']) ? props['ctas'] : [])
         .map(c => mapCta(c, lang)).filter((c): c is PublicCta => !!c).slice(0, 2);
-      return { type: 'hero', name, title, subTitle, kicker, content: articleHtml, background: heroImg, logo: logoImg, ctas };
+      return { type: 'hero', name, title, subTitle, kicker, content: articleHtml, background: heroImg, logo: logoImg, ctas, gradient: mapHeroGradient(props['gradient']) };
     }
 
     case 'table': {

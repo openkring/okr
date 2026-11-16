@@ -8,6 +8,8 @@ import { isSectionCtaUrl } from './section-cta.util';
 import { HERO_FOCUSES, HERO_HEIGHTS, HERO_OVERLAY_DARKENING_MAX, HERO_OVERLAY_FONT_SIZES, HERO_OVERLAY_LABEL_LENGTH, HERO_OVERLAY_POSITIONS } from './hero.util';
 import { imageStyleValidations, optionalImageSlotValidations } from './image.validations';
 
+const HEX_COLOR = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+
 export const heroSectionValidations = staticSuite((model: HeroSection) => {
   baseSectionValidations(model);
 
@@ -41,7 +43,7 @@ export const heroSectionValidations = staticSuite((model: HeroSection) => {
     numberValidations('overlay.darkening', overlay?.darkening, true, 0, HERO_OVERLAY_DARKENING_MAX);
     stringValidations('overlay.label', overlay?.label, HERO_OVERLAY_LABEL_LENGTH);
     test('overlay.color', 'invalidValue', () => {
-      enforce(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(overlay?.color ?? '')).isTruthy();
+      enforce(HEX_COLOR.test(overlay?.color ?? '')).isTruthy();
     });
     test('overlay.position', 'invalidValue', () => {
       enforce((HERO_OVERLAY_POSITIONS as readonly string[]).includes(overlay?.position as string)).isTruthy();
@@ -55,6 +57,15 @@ export const heroSectionValidations = staticSuite((model: HeroSection) => {
     test('height', 'invalidValue', () => {
       const named = (HERO_HEIGHTS as readonly unknown[]).includes(height);
       enforce(named || (typeof height === 'number' && Number.isInteger(height) && height > 0)).isTruthy();
+    });
+  });
+  omitWhen(!model.properties?.gradient, () => {
+    const gradient = model.properties.gradient;
+    test('gradient.from', 'invalidValue', () => {
+      enforce(HEX_COLOR.test(gradient?.from ?? '')).isTruthy();
+    });
+    test('gradient.to', 'invalidValue', () => {
+      enforce(HEX_COLOR.test(gradient?.to ?? '')).isTruthy();
     });
   });
   omitWhen(model.properties?.focus === undefined, () => {

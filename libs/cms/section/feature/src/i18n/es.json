@@ -518,6 +518,11 @@
       "top": "Arriba",
       "bottom": "Abajo",
       "helper": "Qué parte de la imagen sigue visible cuando se recorta."
+    },
+    "gradient": {
+      "from": "Degradado sin imagen: color izquierdo",
+      "to": "Degradado sin imagen: color derecho",
+      "helper": "Sin imagen de portada, el sitio web muestra una franja clara con estos dos colores. Con una imagen, se muestra la imagen."
     }
   },
   "icon": {

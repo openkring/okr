@@ -7,7 +7,7 @@ vi.mock('firebase-admin/firestore', () => ({ getFirestore: () => fakeDb.current 
 import type { Request, Response } from 'express';
 
 import {
-  articleImageHeight, articleImageLayout, captionCss, mapCta, mapImage, mapSection, normalizeLang, pickText, safeEmbedUrl, safeSiteUrl, slugName, mapFooter, mapFormSection,
+  articleImageHeight, articleImageLayout, captionCss, mapCta, mapHeroGradient, mapImage, mapSection, normalizeLang, pickText, safeEmbedUrl, safeSiteUrl, slugName, mapFooter, mapFormSection,
 } from '@okr/cms-website-render';
 import {
   buildLearningSection, isPublicPageRead, isPublishedPage, learningDefaultTab, loadLearningSection, pageCors, pageRouter,
@@ -656,6 +656,13 @@ describe('homepage sections (1.151)', () => {
     expect(map({ type: 'events', properties: { maxEvents: 4, moreUrl: 'termine.html', kicker: 'Agenda' } }))
       .toMatchObject({ type: 'events', maxItems: 4, moreUrl: 'termine.html', kicker: 'Agenda' });
     expect(map({ type: 'news', properties: { maxItems: 3, moreUrl: 'javascript:x' } })).toMatchObject({ type: 'news', maxItems: 3, moreUrl: '' });
+  });
+
+  it('hero passes a gradient of two hex colours, nothing else', () => {
+    expect(map({ type: 'hero', properties: { gradient: { from: '#009d53', to: '#fff' } } })['gradient']).toEqual({ from: '#009d53', to: '#fff' });
+    expect(map({ type: 'hero', properties: {} })['gradient']).toBeUndefined();
+    expect(mapHeroGradient({ from: 'red;background:url(x)', to: '#fff' })).toBeUndefined();
+    expect(mapHeroGradient({ from: '#fff' })).toBeUndefined();
   });
 
   it('hero gets kicker and at most two safe ctas; article gets cta and emphasis', () => {

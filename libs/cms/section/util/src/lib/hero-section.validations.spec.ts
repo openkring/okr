@@ -62,6 +62,10 @@ describe('heroSectionValidations overlay and layout', () => {
   it('rejects an unusable text colour', () => {
     expect(heroSectionValidations(withProps({ overlay: overlay({ color: 'red; x' }) })).hasErrors('overlay.color')).toBe(true);
     expect(heroSectionValidations(withProps({ overlay: overlay({ color: '#fff' }) })).hasErrors('overlay.color')).toBe(false);
+    expect(heroSectionValidations(withProps({ gradient: { from: '#009d53', to: '#014da2' } })).hasErrors('gradient.from')).toBe(false);
+    expect(heroSectionValidations(withProps({ gradient: { from: 'green', to: '#014da2' } })).hasErrors('gradient.from')).toBe(true);
+    expect(heroSectionValidations(withProps({ gradient: { from: '#fff', to: '#12345' } })).hasErrors('gradient.to')).toBe(true);
+    expect(heroSectionValidations(withProps({})).hasErrors('gradient.from')).toBe(false);
   });
 
   it('accepts the named heights and a positive px height', () => {

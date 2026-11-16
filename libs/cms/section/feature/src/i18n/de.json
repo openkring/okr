@@ -518,6 +518,11 @@
       "top": "Oben",
       "bottom": "Unten",
       "helper": "Welcher Teil des Bildes sichtbar bleibt, wenn es zugeschnitten wird."
+    },
+    "gradient": {
+      "from": "Verlauf ohne Bild: Farbe links",
+      "to": "Verlauf ohne Bild: Farbe rechts",
+      "helper": "Ohne Titelbild zeigt die Website ein helles Band mit diesen zwei Farben. Mit einem Titelbild gilt das Bild."
     }
   },
   "icon": {

@@ -376,15 +376,21 @@ export function renderSite(input: RenderInput): RenderResult {
         }
         continue;
       }
-      // The page banner (partials/page-banner.hbs, drawn when no section is a hero) already shows the
-      // page title: a first section with the same title would repeat it right below — drop that heading.
-      const firstShown = contexts.findIndex((_, i) => !failed.has(i));
-      if (firstShown >= 0 && !contexts.some((c) => c['type'] === 'hero')) {
-        const first = contexts[firstShown];
+      // The title band — the page banner (partials/page-banner.hbs, drawn when no section is a hero) or a
+      // leading hero section — already shows the title: the next section with the same title would repeat
+      // it right below — drop that heading.
+      const shown = contexts.map((_, i) => i).filter((i) => !failed.has(i));
+      const hasHero = contexts.some((c) => c['type'] === 'hero');
+      const leadHero = hasHero && contexts[shown[0]]?.['type'] === 'hero';
+      const nextShown = leadHero ? shown[1] : hasHero ? undefined : shown[0];
+      if (nextShown !== undefined) {
+        const next = contexts[nextShown];
         const same = (a: unknown, b: unknown): boolean =>
           typeof a === 'string' && typeof b === 'string' && !!a.trim() && a.trim().toLowerCase() === b.trim().toLowerCase();
-        const bannerTitle = page?.title || (entry.node ? pickText(entry.node.label, entry.node.labelI18n, lang) : '');
-        if (same(first['title'], bannerTitle)) contexts[firstShown] = { ...first, title: '' };
+        const bandTitle = leadHero
+          ? contexts[shown[0]]['title']
+          : page?.title || (entry.node ? pickText(entry.node.label, entry.node.labelI18n, lang) : '');
+        if (same(next['title'], bandTitle)) contexts[nextShown] = { ...next, title: '' };
       }
       // a text article followed by a form becomes one two-column row (partials/section-pair.hbs);
       // both are rendered with `inColumn: true`, which drops their own section wrapper

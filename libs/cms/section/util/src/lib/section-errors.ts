@@ -136,7 +136,7 @@ export const ARTICLE_IMAGES_SEGMENT_FIELDS: SegmentErrorFields<'select' | 'layou
 
 /** The hero card (spec 1.154, phase 2). */
 export const HERO_SEGMENT_FIELDS: SegmentErrorFields<'image' | 'overlay' | 'layout'> = {
-  image: ['imgIxParams'],
+  image: ['imgIxParams', 'gradient.'],
   overlay: ['overlay.'],
   layout: ['height', 'focus'],
 };

@@ -518,6 +518,11 @@
       "top": "Top",
       "bottom": "Bottom",
       "helper": "Which part of the image stays visible when it is cropped."
+    },
+    "gradient": {
+      "from": "Gradient without image: left colour",
+      "to": "Gradient without image: right colour",
+      "helper": "Without a cover image the website shows a light band in these two colours. With a cover image, the image is shown."
     }
   },
   "icon": {

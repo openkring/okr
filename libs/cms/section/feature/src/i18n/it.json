@@ -518,6 +518,11 @@
       "top": "Alto",
       "bottom": "Basso",
       "helper": "Quale parte dell'immagine resta visibile quando viene ritagliata."
+    },
+    "gradient": {
+      "from": "Sfumatura senza immagine: colore a sinistra",
+      "to": "Sfumatura senza immagine: colore a destra",
+      "helper": "Senza immagine di copertina il sito mostra una fascia chiara con questi due colori. Con un’immagine viene mostrata l’immagine."
     }
   },
   "icon": {

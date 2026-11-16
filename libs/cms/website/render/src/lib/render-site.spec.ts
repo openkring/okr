@@ -103,6 +103,18 @@ describe('renderSite', () => {
     expect(fileOf(files, 'vorstand.html')).toContain('href="/vorstand"');
   });
 
+  it('drops the heading of the section right after a leading hero when it repeats the hero title', () => {
+    const base = input();
+    const pages = new Map(base.pages);
+    pages.set('scsw_vorstand', pg(['s-lead', 's-same'], { title: 'Vorstand' }));
+    const sections = new Map(base.sections);
+    sections.set('s-lead', { type: 'hero', state: 'published', tenants: ['scs'], title: 'Organisation' });
+    sections.set('s-same', { type: 'article', state: 'published', tenants: ['scs'], title: 'Organisation' });
+    const de = fileOf(renderSite({ ...base, pages, sections }).files, 'vorstand.html') ?? '';
+    expect(de).toContain('<h1>Organisation</h1>');
+    expect(de).not.toContain('<h2>Organisation</h2>');
+  });
+
   it('skips archived nodes and draft sections', () => {
     const { files } = renderSite(input());
     expect(files.some((f) => f.path.includes('alt.html'))).toBe(false);

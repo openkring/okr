@@ -934,6 +934,9 @@ export const SECTION_I18N_KEYS = {
   hero_focus_top:                             PFX + 'hero.focus.top',
   hero_focus_bottom:                          PFX + 'hero.focus.bottom',
   hero_focus_helper:                          PFX + 'hero.focus.helper',
+  hero_gradient_from:                         PFX + 'hero.gradient.from',
+  hero_gradient_to:                           PFX + 'hero.gradient.to',
+  hero_gradient_helper:                       PFX + 'hero.gradient.helper',
 
   // calls to action (hero, article)
   cta_title:                                PFX + 'cta.title',
