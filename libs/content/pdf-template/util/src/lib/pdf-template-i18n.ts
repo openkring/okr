@@ -147,6 +147,8 @@ export const EMAIL_COMPOSER_I18N_KEYS = {
   layout_label:     PFX + 'composer.layout.label',
   layout_standard:  PFX + 'composer.layout.standard',
   layout_plain:     PFX + 'composer.layout.plain',
+  /** the sample text of the Vorlage thumbnails */
+  layout_sample:    PFX + 'composer.layout.sample',
 
   attachment_add:   PFX + 'composer.attachment.add',
 
@@ -160,6 +162,15 @@ export const EMAIL_COMPOSER_I18N_KEYS = {
   list_empty:       PFX + 'composer.list.empty',
   list_email_only:  PFX + 'composer.list.email_only',
   bcc_from_delivery: PFX + 'composer.bcc.from_delivery',
+  /** single braces: `{count}`, filled with `fill()` */
+  list_shared:      PFX + 'composer.list.shared',
+  list_copy:        PFX + 'composer.list.copy',
+  // the confirmation above 10 recipients; `confirm_message` and `confirm_addresses` use `{count}`, filled with `fill()`
+  confirm_header:    PFX + 'composer.confirm.header',
+  confirm_message:   PFX + 'composer.confirm.message',
+  confirm_addresses: PFX + 'composer.confirm.addresses',
+  confirm_cancel:    PFX + 'composer.confirm.cancel',
+  list_remove:      PFX + 'composer.list.remove',
   attachment_label: PFX + 'composer.attachment.label',
 
   // Versand with answer links: the «Anlässe» field and its notes
@@ -286,6 +297,30 @@ export const MAILING_I18N_KEYS = {
   attachments:       PFX + 'mailing.attachments',
   valid_until:       PFX + 'mailing.valid_until',
   // mail job
+  // Zustellung: what «Ausstehend» means, the In-App read status, the person actions and the send log
+  status_hint:       PFX + 'mailing.status.hint',
+  read_read:         PFX + 'mailing.read.read',
+  read_unread:       PFX + 'mailing.read.unread',
+  /** single braces: `{count}`, `{total}`, filled with `fill()` */
+  read_count:        PFX + 'mailing.read.count',
+  read_hint:         PFX + 'mailing.read.hint',
+  action_person:     PFX + 'mailing.action.person',
+  action_call:       PFX + 'mailing.action.call',
+  action_email:      PFX + 'mailing.action.email',
+  action_log:        PFX + 'mailing.action.log',
+  action_cancel:     PFX + 'mailing.action.cancel',
+  log_title:         PFX + 'mailing.log.title',
+  log_hint:          PFX + 'mailing.log.hint',
+  log_empty:         PFX + 'mailing.log.empty',
+  log_delivery:      PFX + 'mailing.log.delivery',
+  log_open:          PFX + 'mailing.log.open',
+  log_click:         PFX + 'mailing.log.click',
+  log_soft_bounce:   PFX + 'mailing.log.soft_bounce',
+  log_bounce:        PFX + 'mailing.log.bounce',
+  log_reject:        PFX + 'mailing.log.reject',
+  log_suspension:    PFX + 'mailing.log.suspension',
+  log_spam:          PFX + 'mailing.log.spam',
+  log_unsubscribe:   PFX + 'mailing.log.unsubscribe',
   job_title:         PFX + 'mailing.job.title',
   job_pending:       PFX + 'mailing.job.pending',
   job_sending:       PFX + 'mailing.job.sending',

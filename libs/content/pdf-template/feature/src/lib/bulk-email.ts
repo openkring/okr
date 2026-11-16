@@ -47,7 +47,7 @@ export function toOrgVersandRecipients(orgs: OrgModel[], getEmail: (org: OrgMode
  * The Versand flow shared by the person, membership and meeting lists (spec 1.145): one modal,
  * «Versand vorbereiten», with the segments Editor, Vorschau, Zustellung and Verteiler.
  *
- * `to` is the default org's favourite email address; the Bcc follows from the Zustellung table,
+ * `to` is the tenant's `mailFrom`, else the default org's favourite email address; the Bcc follows from the Zustellung table,
  * which the composer loads for `recipients` (persons without an email address included, they may
  * be reachable another way). Does nothing more if the user cancels.
  * @param attachment an already stored file (storage path + filename) to attach, e.g. a minutes PDF
@@ -63,6 +63,8 @@ export async function openBulkEmailFlow(
   groupKey?: string,
 ): Promise<void> {
   const { favOrgEmail } = await loadOrgEmails(ctx);
+  // The tenant's configured Versand address (`mailFrom`, e.g. kommunikation@seeclub.org) wins over the org's favourite.
+  const to = (ctx.appStore.appConfig().mailFrom ?? '').trim() || favOrgEmail;
   // A group admin's Versand never carries answer links (the server refuses them), and neither does one
   // to an org, which cannot answer: no events to load.
   const noEvents = !!groupKey || recipients.some((r) => isOrgRecipient(r.personKey));
@@ -70,7 +72,7 @@ export async function openBulkEmailFlow(
   const composer = await ctx.modalController.create({
     component: EmailComposerModal,
     componentProps: {
-      to: favOrgEmail,
+      to,
       versandRecipients: recipients,
       groupKey: groupKey ?? '',
       versandEvents: events,

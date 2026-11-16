@@ -1514,6 +1514,18 @@ service cloud.firestore {
       allow read:   if (callerPersonKey() != '' && callerPersonKey() in resource.data.get('recipients', []))
                        || ((isPrivileged() || hasRole('memberAdmin')) && tenantRead());
       allow write:  if false;
+      // who opened it (NoticeReadModel): the recipient writes their own row once; the Versand overview reads them
+      match /reads/{personKey} {
+        allow read:   if (callerPersonKey() != '' && personKey == callerPersonKey())
+                         || ((isPrivileged() || hasRole('memberAdmin')) && tenantRead());
+        allow create: if callerPersonKey() != '' && personKey == callerPersonKey()
+                         && callerPersonKey() in get(/databases/$(database)/documents/notices/$(id)).data.get('recipients', [])
+                         && request.resource.data.keys().hasOnly(['tenants', 'readAt'])
+                         && request.resource.data.readAt is string
+                         && request.resource.data.tenants == get(/databases/$(database)/documents/notices/$(id)).data.tenants
+                         && tenantCreate();
+        allow update, delete: if false;
+      }
     }
     // external-reports (spec 1.133 §8): marks that a case was reported to an external organisation
     // (SRV Sekretariat), so the next report only holds new cases. No names, only keys. Privileged or

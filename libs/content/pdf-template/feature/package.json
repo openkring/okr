@@ -18,6 +18,8 @@
     "@okr/shared-util-core": "*",
     "@okr/content-pdf-template-data-access": "*",
     "@okr/content-pdf-template-ui": "*",
-    "@okr/content-pdf-template-util": "*"
+    "@okr/content-pdf-template-util": "*",
+    "@okr/avatar-ui": "*",
+    "@okr/subject-address-util": "*"
   }
 }

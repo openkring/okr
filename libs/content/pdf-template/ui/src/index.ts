@@ -6,3 +6,5 @@ export * from './lib/template-publish.modal';
 export * from './lib/versand-delivery-table';
 export * from './lib/versand-info.modal';
 export * from './lib/postversand-step';
+export * from './lib/mailing-log.modal';
+export * from './lib/email-layout-picker';

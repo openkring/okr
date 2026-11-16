@@ -1,5 +1,5 @@
 // libs/content/notice/feature/src/lib/notice.page.ts
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import {
   IonBackButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle,
@@ -133,6 +133,22 @@ export class NoticePage {
   protected readonly events = computed(() => this.eventsResource.hasValue() ? this.eventsResource.value() : []);
   protected readonly sentAt = computed(() => prettyFormatDateTime(this.notice()?.sentAt));
   protected readonly attachmentFailed = signal(false);
+  /** the notice already marked as read in this view */
+  private markedRead = '';
+
+  constructor() {
+    // the reader opened it: note that once (the Versand overview shows who read it)
+    effect(() => {
+      const notice = this.notice();
+      const personKey = this.appStore.currentUser()?.personKey ?? '';
+      if (!notice || !personKey || !(notice.recipients ?? []).includes(personKey)) return;
+      untracked(() => {
+        if (this.markedRead === notice.okey) return;
+        this.markedRead = notice.okey;
+        void this.noticeService.markRead(notice, personKey);
+      });
+    });
+  }
 
   protected eventWhen(event: CalEventModel): string {
     const date = convertDateFormatToString(event.startDate, DateFormat.StoreDate, DateFormat.ViewDate, false);

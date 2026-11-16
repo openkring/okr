@@ -108,3 +108,14 @@ export function emailLayoutOptions(
   }
   return [...byKey.values()].sort((a, b) => a.name.localeCompare(b.name, 'de'));
 }
+
+/**
+ * The preview with every link opening in a new tab: inside the sandboxed iframe a plain link could not
+ * navigate at all. A `<base>` goes into the head (before the doctype it would switch to quirks mode).
+ */
+export function withLinksInNewTab(html: string): string {
+  const base = '<base target="_blank">';
+  const head = /<head[^>]*>/i.exec(html);
+  if (head) return html.slice(0, head.index + head[0].length) + base + html.slice(head.index + head[0].length);
+  return base + html;
+}

@@ -113,7 +113,8 @@
     "layout": {
       "label": "Plantilla",
       "standard": "Estándar",
-      "plain": "Sencilla"
+      "plain": "Sencilla",
+      "sample": "Así se ve tu mensaje con esta plantilla."
     },
     "attachment": {
       "add": "Añadir",
@@ -145,7 +146,10 @@
     "list": {
       "empty": "No hay destinatarios.",
       "email_only": "To:, Cc: y Bcc: solo valen para el envío por correo.",
-      "personal": "Cada persona recibe su propio correo con su enlace personal."
+      "personal": "Cada persona recibe su propio correo con su enlace personal.",
+      "shared": "{count} personas comparten su dirección de correo con otra persona (p. ej. parejas o familias). Por eso el envío cuenta más correos que direcciones aquí: cada dirección recibe el mensaje solo una vez.",
+      "copy": "Copiar dirección",
+      "remove": "Quitar dirección"
     },
     "delivery": {
       "recipient": "Destinatario",
@@ -224,6 +228,12 @@
       "none": "Nadie tiene dirección postal, no se crea ninguna carta.",
       "needs_subject": "Introduce primero un asunto en el editor. Después se calculará el precio.",
       "pending": "Comprueba en «Envío postal» el precio de las cartas y confírmalo antes de enviar."
+    },
+    "confirm": {
+      "header": "Confirmar el envío",
+      "message": "Este envío va a {count} destinatarios.",
+      "addresses": "{count} direcciones",
+      "cancel": "Cancelar"
     }
   },
   "category": {
@@ -362,7 +372,35 @@
       "error": "No se pudo cargar el estado de entrega.",
       "refresh": "Actualizar el estado de entrega",
       "unmatched": "{count} avisos más ya no corresponden a ningún destinatario, por ejemplo porque una dirección ha cambiado desde entonces.",
-      "addresses": "Para, Cc y remitente"
+      "addresses": "Para, Cc y remitente",
+      "hint": "«Pendiente» significa que el servidor de correo aún no ha informado nada sobre este correo. Normalmente todavía está en camino; en envíos de más de 30 días, los informes ya se han borrado. Las respuestas automáticas, como los avisos de ausencia, no aparecen aquí: llegan como correo normal a la dirección del remitente. Toca a una persona para ver el registro de envío."
+    },
+    "read": {
+      "read": "Leído",
+      "unread": "No leído",
+      "count": "{count} de {total} leídos",
+      "hint": "«Leído» muestra quién abrió el aviso en la app. Solo se registra desde el 15.11.2026."
+    },
+    "action": {
+      "person": "Ver persona",
+      "call": "Llamar",
+      "email": "Escribir correo",
+      "log": "Registro de envío",
+      "cancel": "Cancelar"
+    },
+    "log": {
+      "title": "Registro de envío",
+      "hint": "Lo que el servidor de correo informó sobre este correo, del más antiguo al más reciente. Los informes se guardan 30 días.",
+      "empty": "Aún no hay ningún informe para este correo.",
+      "delivery": "Entregado",
+      "open": "Abierto",
+      "click": "Enlace pulsado",
+      "soft_bounce": "Rechazado temporalmente, se reintentará",
+      "bounce": "Rechazado",
+      "reject": "No enviado (dirección bloqueada)",
+      "suspension": "No enviado (envío suspendido)",
+      "spam": "Marcado como spam",
+      "unsubscribe": "Baja"
     }
   },
   "sending": {

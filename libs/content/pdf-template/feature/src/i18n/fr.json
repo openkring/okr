@@ -113,7 +113,8 @@
     "layout": {
       "label": "Modèle",
       "standard": "Standard",
-      "plain": "Simple"
+      "plain": "Simple",
+      "sample": "Voici à quoi ressemble ton message avec ce modèle."
     },
     "attachment": {
       "add": "Ajouter",
@@ -145,7 +146,10 @@
     "list": {
       "empty": "Aucun destinataire saisi.",
       "email_only": "To:, Cc: et Bcc: ne valent que pour l’envoi par e-mail.",
-      "personal": "Chaque personne reçoit son propre e-mail avec son lien personnel."
+      "personal": "Chaque personne reçoit son propre e-mail avec son lien personnel.",
+      "shared": "{count} personnes partagent leur adresse e-mail avec une autre personne (p. ex. couples ou familles). C'est pourquoi l'envoi compte plus d'e-mails que d'adresses ici : chaque adresse ne reçoit le message qu'une fois.",
+      "copy": "Copier l'adresse",
+      "remove": "Retirer l'adresse"
     },
     "delivery": {
       "recipient": "Destinataire",
@@ -224,6 +228,12 @@
       "none": "Personne n’a d’adresse postale, aucune lettre n’est créée.",
       "needs_subject": "Saisis d’abord un objet dans l’éditeur. Le prix sera calculé ensuite.",
       "pending": "Vérifie sous « Courrier postal » le prix des lettres et confirme-le avant d’envoyer."
+    },
+    "confirm": {
+      "header": "Confirmer l'envoi",
+      "message": "Cet envoi part à {count} destinataires.",
+      "addresses": "{count} adresses",
+      "cancel": "Annuler"
     }
   },
   "category": {
@@ -362,7 +372,35 @@
       "error": "L'état de distribution n'a pas pu être chargé.",
       "refresh": "Actualiser l'état de distribution",
       "unmatched": "{count} autres retours ne correspondent plus à aucun destinataire, par exemple parce qu'une adresse a changé depuis.",
-      "addresses": "À, Cc et expéditeur"
+      "addresses": "À, Cc et expéditeur",
+      "hint": "«En attente» signifie que le serveur de messagerie n'a encore rien signalé pour cet e-mail. Le plus souvent, il est encore en route ; pour les envois de plus de 30 jours, les rapports sont déjà supprimés. Les réponses automatiques, comme les messages d'absence, n'apparaissent pas ici : elles arrivent comme e-mail normal à l'adresse de l'expéditeur. Touche une personne pour voir le journal d'envoi."
+    },
+    "read": {
+      "read": "Lu",
+      "unread": "Non lu",
+      "count": "{count} sur {total} lus",
+      "hint": "«Lu» montre qui a ouvert la communication dans l'app. Cela n'est enregistré que depuis le 15.11.2026."
+    },
+    "action": {
+      "person": "Afficher la personne",
+      "call": "Appeler",
+      "email": "Écrire un e-mail",
+      "log": "Journal d'envoi",
+      "cancel": "Annuler"
+    },
+    "log": {
+      "title": "Journal d'envoi",
+      "hint": "Ce que le serveur de messagerie a signalé pour cet e-mail, du plus ancien au plus récent. Les rapports sont conservés 30 jours.",
+      "empty": "Il n'y a encore aucun rapport pour cet e-mail.",
+      "delivery": "Distribué",
+      "open": "Ouvert",
+      "click": "Lien cliqué",
+      "soft_bounce": "Refusé temporairement, nouvel essai prévu",
+      "bounce": "Refusé",
+      "reject": "Non envoyé (adresse bloquée)",
+      "suspension": "Non envoyé (envoi suspendu)",
+      "spam": "Marqué comme spam",
+      "unsubscribe": "Désabonné"
     }
   },
   "sending": {

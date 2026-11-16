@@ -44,3 +44,19 @@ export class NoticeModel implements OkrModel {
 
 export const NoticeCollection = 'notices';
 export const NoticeModelName = 'notice';
+
+/**
+ * That a recipient opened a Mitteilung: `notices/{noticeKey}/reads/{personKey}`, written once by the
+ * recipient when the notice page opens (create only, never updated). Kept apart from the notice on
+ * purpose: every recipient may read the notice, but who read it, and when, only memberAdmin /
+ * privileged of the tenant (and each person their own row). Absent = not opened, or opened before
+ * read tracking existed (2026-11).
+ */
+export interface NoticeReadModel {
+  /** the notice's tenant, for the rules' tenant check */
+  tenants: string[];
+  /** StoreDateTime (yyyyMMddHHmmss) of the first opening */
+  readAt: string;
+}
+
+export const NoticeReadsSubcollection = 'reads';

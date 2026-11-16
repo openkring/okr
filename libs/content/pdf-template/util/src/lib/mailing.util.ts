@@ -123,9 +123,18 @@ export interface MailDelivery {
   at?: string;
 }
 
+/** One line of a recipient's send log (the Mailtrap events of their mail, oldest first, no addresses). */
+export interface MailEventLogEntry {
+  /** delivery, open, click, soft bounce, bounce, reject, suspension, spam, unsubscribe */
+  event: string;
+  /** ISO time */
+  at?: string;
+  reason?: string;
+}
+
 /** The answer of `getMailingDeliveries`. A recipient missing from `recipients` has no report yet. */
 export interface MailingDeliveries {
-  recipients: ({ personKey: string } & MailDelivery)[];
+  recipients: ({ personKey: string; log?: MailEventLogEntry[] } & MailDelivery)[];
   /** the Versand's own To/Cc/sender addresses, which the caller already sees on the mailings doc */
   addresses: ({ email: string } & MailDelivery)[];
   /** reports for addresses that match no recipient any more (e.g. changed since) */
@@ -138,8 +147,8 @@ export function hasDeliveryReports(deliveries: MailingDeliveries | undefined): b
   return !!deliveries && (deliveries.recipients.length > 0 || deliveries.addresses.length > 0 || deliveries.unmatched > 0);
 }
 
-/** personKey → its report. */
-export function deliveryByPerson(deliveries: MailingDeliveries | undefined): Map<string, MailDelivery> {
+/** personKey → its report (with its send log, when the server sent one). */
+export function deliveryByPerson(deliveries: MailingDeliveries | undefined): Map<string, MailDelivery & { log?: MailEventLogEntry[] }> {
   return new Map((deliveries?.recipients ?? []).map(({ personKey, ...delivery }) => [personKey, delivery]));
 }
 
@@ -159,4 +168,29 @@ export function deliveryStatusColor(status: MailDeliveryStatus | 'pending'): str
     case 'rejected': return 'danger';
     default: return 'medium';
   }
+}
+
+/** The send-log event names the overview translates; any other is shown as the provider wrote it. */
+export const MAIL_LOG_EVENTS = ['delivery', 'open', 'click', 'soft bounce', 'bounce', 'reject', 'suspension', 'spam', 'unsubscribe'] as const;
+export type MailLogEvent = typeof MAIL_LOG_EVENTS[number];
+
+/** A known event name (Mailtrap writes `soft bounce`, older payloads `soft_bounce`), or undefined. */
+export function mailLogEventOf(event: string): MailLogEvent | undefined {
+  const name = event.trim().toLowerCase().replace('_', ' ');
+  return (MAIL_LOG_EVENTS as readonly string[]).includes(name) ? name as MailLogEvent : undefined;
+}
+
+/** The Ionic color of a send-log line. */
+export function mailLogEventColor(event: string): string {
+  switch (mailLogEventOf(event)) {
+    case 'delivery': case 'open': case 'click': return 'success';
+    case 'soft bounce': case 'spam': case 'unsubscribe': return 'warning';
+    case 'bounce': case 'reject': case 'suspension': return 'danger';
+    default: return 'medium';
+  }
+}
+
+/** In-App: how many of these recipients opened the Mitteilung (`reads`: personKey → readAt). */
+export function noticeReadCount(personKeys: string[], reads: Map<string, string>): number {
+  return personKeys.filter((key) => reads.has(key)).length;
 }

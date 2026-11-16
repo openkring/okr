@@ -10,14 +10,14 @@ import {
   IonButton, IonContent,
   IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonIcon, IonChip, IonLabel, IonNote,
   IonSegment, IonSegmentButton, IonItem, IonAccordionGroup, IonAccordion,
-  ModalController, ToastController,
+  AlertController, ModalController, ToastController,
 } from '@ionic/angular';
 
 import { AppStore } from '@okr/shared-feature';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import {
   ButtonCopy, ButtonCopyI18n, ChangeConfirmation, ChangeConfirmationI18n, Checkbox, CheckboxI18n,
-  EmailInput, EmailInputI18n, ErrorNote, Header, Spinner, StringSelect, StringSelectI18n, TextInput, TextInputI18n,
+  EmailInput, EmailInputI18n, ErrorNote, Header, Spinner, TextInput, TextInputI18n,
 } from '@okr/shared-ui';
 import type { OkrEditor } from '@okr/shared-ui-editor';
 import { DEFAULT_POST_OPTIONS, DeliveryChannel, EmailLayoutChoice, LAYOUT_CHOICES, PostOptions } from '@okr/shared-models';
@@ -27,12 +27,13 @@ import { I18nService } from '@okr/shared-i18n';
 import {
   ACTIVE_MAILING_CHANNELS, buildVersandRows, EMAIL_ONLY_MAILING_CHANNELS, emailBodyHasContent, emailLayoutOptions, emailOnlyDeliveries,
   GROUP_ADMIN_MAILING_CHANNELS, groupReachWarnings, hasPostDelivery, isSenderDomainAllowed,
-  nonPdfAttachmentNames, parseEmails, toggleDelivery, versandBcc, versandDeliveries,
+  nonPdfAttachmentNames, parseEmails, sharedEmailCount, untickEmailAddress, withLinksInNewTab, toggleDelivery, versandBcc, versandDeliveries,
   EmailComposerFormModel, emailComposerValidations, VersandDeliveries, VersandEvent, VersandRow,
   EMAIL_COMPOSER_I18N_KEYS, EMAIL_COMPOSER_MSG_KEYS, EmailComposerI18n,
 } from '@okr/content-pdf-template-util';
 import { DocEmailService, InlineAttachment, MailingLetters, PostQuote, SendMailingRequest, TemplateService } from '@okr/content-pdf-template-data-access';
 
+import { EmailLayoutPicker } from './email-layout-picker';
 import { VersandAddressList } from './versand-address-list';
 import { VersandDeliveryTable } from './versand-delivery-table';
 import { VersandEventsSelect } from './versand-events-select';
@@ -48,6 +49,9 @@ function callableError(err: unknown): { code: string; message: string } {
   const code = typeof e?.code === 'string' ? e.code.replace(/^functions\//, '') : '';
   return { code, message: typeof e?.message === 'string' ? e.message : String(err) };
 }
+
+/** Above this many recipients the sender confirms the counts before anything goes out. */
+const CONFIRM_ABOVE = 10;
 
 /** Reject files larger than this client-side (the CF caps inline attachments at 8 MB). */
 const MAX_ATTACHMENT_BYTES = 7 * 1024 * 1024;
@@ -92,6 +96,8 @@ interface AddressField {
   label: string;
   addresses: string[];
   editable: boolean;
+  /** A Versand's Bcc cannot be typed into, but an address can be removed: that unticks E-Mail in the Zustellung. */
+  removable: boolean;
   placeholder: string;
   errors: string[];
 }
@@ -103,12 +109,12 @@ interface AddressField {
   imports: [
     FormsModule,
     SvgIconPipe,
-    Header, Spinner, ButtonCopy, ChangeConfirmation, Checkbox, EmailInput, ErrorNote, StringSelect, TextInput,
+    Header, Spinner, ButtonCopy, ChangeConfirmation, Checkbox, EmailInput, ErrorNote, TextInput,
     VersandDeliveryTable, VersandEventsSelect, PostversandStep,
     IonContent, IonButton,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonIcon, IonChip, IonLabel, IonNote,
     IonSegment, IonSegmentButton, IonItem, IonAccordionGroup, IonAccordion,
-    VersandAddressList,
+    VersandAddressList, EmailLayoutPicker,
   ],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px; } }
@@ -126,6 +132,8 @@ interface AddressField {
     .verteiler ion-accordion ion-item[slot='header'] { --background: var(--ion-color-light); font-weight: 600; }
     .verteiler [slot='content'] { padding: 4px 0 8px; }
     .preview-frame { width: 100%; min-height: 420px; border: 0; background: #ffffff; }
+    /* the same height whether the preview is empty, loading or shown: the segment does not jump */
+    .preview-card { min-height: 420px; }
   `],
   template: `
     <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true"
@@ -208,9 +216,9 @@ interface AddressField {
                     </ion-col>
                   </ion-row>
                   <ion-row>
-                    <ion-col size="12" size-md="6">
-                      <okr-string-select [i18n]="layoutI18n()" [stringList]="layoutChoices()" [labels]="layoutLabels()"
-                        [selectedString]="layout()" (selectedStringChange)="onLayoutChange($event)" [readOnly]="false" />
+                    <ion-col size="12">
+                      <okr-email-layout-picker [label]="i18n.layout_label()" [choices]="layoutChoices()" [labels]="layoutLabels()"
+                        [thumbnails]="layoutThumbnails()" [selected]="layout()" (selectedChange)="onLayoutChange($event)" />
                     </ion-col>
                   </ion-row>
                   @if (showEvents()) {
@@ -269,7 +277,7 @@ interface AddressField {
           <!-- Preview: the mail as the server renders it, i.e. exactly what the recipient receives. -->
           @if (activeSegment() === 'preview') {
             <ion-card>
-              <ion-card-content class="ion-no-padding">
+              <ion-card-content class="ion-no-padding preview-card">
                 @if (!hasContent()) {
                   <ion-note class="note">{{ i18n.preview_empty() }}</ion-note>
                 } @else if (previewLoading()) {
@@ -277,7 +285,8 @@ interface AddressField {
                 } @else if (previewFailed()) {
                   <ion-note color="danger" class="note">{{ i18n.preview_error() }}</ion-note>
                 } @else {
-                  <iframe class="preview-frame" [title]="i18n.preview_frame()" sandbox="" [srcdoc]="previewHtml()"></iframe>
+                  <!-- no scripts; links open in a new tab (allow-popups) outside the sandbox, so they can be tried out -->
+                  <iframe class="preview-frame" [title]="i18n.preview_frame()" sandbox="allow-popups allow-popups-to-escape-sandbox" [srcdoc]="previewHtml()"></iframe>
                 }
               </ion-card-content>
             </ion-card>
@@ -347,11 +356,15 @@ interface AddressField {
                       <div slot="content">
                         @if (field.key === 'bcc' && isVersand()) {
                           <ion-note class="note">{{ i18n.bcc_from_delivery() }}</ion-note>
+                          @if (sharedEmails() > 0) {
+                            <ion-note class="note">{{ sharedEmailsNote() }}</ion-note>
+                          }
                         }
-                        <okr-versand-address-list [addresses]="field.addresses" [editable]="field.editable"
+                        <okr-versand-address-list [addresses]="field.addresses" [editable]="field.editable" [removable]="field.removable"
                           [label]="field.label" [placeholder]="field.placeholder"
-                          [addLabel]="field.label" [removeLabel]="field.label"
-                          (added)="addAddresses(field.key, $event)" (removed)="removeAddress(field.key, $event)" />
+                          [addLabel]="field.label" [removeLabel]="i18n.list_remove()" [copyLabel]="i18n.list_copy()"
+                          (added)="addAddresses(field.key, $event)" (removed)="removeAddress(field.key, $event)"
+                          (copied)="showToast(i18n.copy_conf(), 'success')" />
                         <okr-error-note [errors]="field.errors" />
                       </div>
                     </ion-accordion>
@@ -384,6 +397,7 @@ export class EmailComposerModal {
   private readonly templateService = inject(TemplateService);
   private readonly modalController = inject(ModalController);
   private readonly toastController = inject(ToastController);
+  private readonly alertController = inject(AlertController);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly i18nService = inject(I18nService);
   private readonly router = inject(Router);
@@ -579,20 +593,30 @@ export class EmailComposerModal {
   ]);
 
   /**
+   * Miniatures of the layouts for the Vorlage cards: each rendered once per opened composer, with a sample
+   * text (not the draft, so they do not re-render while typing). Missing = still loading, '' = failed.
+   */
+  protected readonly layoutThumbnails = signal<Record<string, SafeHtml | ''>>({});
+  private readonly thumbnailsRequested = new Set<string>();
+
+  /**
    * The Verteiler accordions: To, CC (hidden while events are chosen: every person gets their own mail) and BCC,
    * each address on its own line. A Versand derives the BCC from the Zustellung, so it is read-only there.
    */
   protected readonly addressFields = computed<AddressField[]>(() => {
     const fd = this.formData();
     const fields: AddressField[] = [
-      { key: 'to', label: 'To:', addresses: parseEmails(fd.to), editable: true, placeholder: this.i18n.to_placeholder(), errors: this.toErrors() },
+      { key: 'to', label: 'To:', addresses: parseEmails(fd.to), editable: true, removable: true, placeholder: this.i18n.to_placeholder(), errors: this.toErrors() },
     ];
     if (!this.hasEvents()) {
-      fields.push({ key: 'cc', label: 'Cc:', addresses: parseEmails(fd.cc), editable: true, placeholder: this.i18n.to_placeholder(), errors: this.ccErrors() });
+      fields.push({ key: 'cc', label: 'Cc:', addresses: parseEmails(fd.cc), editable: true, removable: true, placeholder: this.i18n.to_placeholder(), errors: this.ccErrors() });
     }
-    fields.push({ key: 'bcc', label: 'Bcc:', addresses: parseEmails(fd.bcc), editable: !this.isVersand(), placeholder: this.i18n.to_placeholder(), errors: this.bccErrors() });
+    fields.push({ key: 'bcc', label: 'Bcc:', addresses: parseEmails(fd.bcc), editable: !this.isVersand(), removable: true, placeholder: this.i18n.to_placeholder(), errors: this.bccErrors() });
     return fields;
   });
+  /** E-Mail ticks whose address another ticked person already has: the E-Mail column counts them, the Bcc not. */
+  protected readonly sharedEmails = computed(() => sharedEmailCount(this.versandRows(), this.deliveries()));
+  protected readonly sharedEmailsNote = computed(() => fill(this.i18n.list_shared(), { count: this.sharedEmails() }));
   protected readonly recipientCount = computed(() => this.addressFields().reduce((n, f) => n + f.addresses.length, 0));
   /** To and From open by default; a long BCC list stays folded. */
   protected readonly openAccordions = signal<string[]>(['to', 'from']);
@@ -634,9 +658,6 @@ export class EmailComposerModal {
     // no visible label: the accordion header says From:, a second «Von» label only confused
     name: 'from', label: '', placeholder: this.i18n.from_placeholder(),
   } as EmailInputI18n));
-  protected readonly layoutI18n = computed(() => ({
-    name: 'layout', label: this.i18n.layout_label(),
-  } as StringSelectI18n));
   protected readonly subjectI18n = computed(() => ({
     name: 'subject', label: this.i18n.subject_label(), placeholder: '', helper: '',
   } as TextInputI18n));
@@ -755,6 +776,20 @@ export class EmailComposerModal {
         }
         this.postLoading.set(true);
         this.quoteTimer = setTimeout(() => void this.loadQuote(keys, options), QUOTE_DEBOUNCE_MS);
+      });
+    });
+    // The Vorlage thumbnails: every layout once, as soon as it is offered (tenant layouts arrive later).
+    effect(() => {
+      const choices = this.layoutChoices();
+      const sample = this.i18n.layout_sample();
+      if (sample.length === 0) return;
+      untracked(() => {
+        if (!isBrowser(this.platformId)) return;
+        for (const layout of choices) {
+          if (this.thumbnailsRequested.has(layout)) continue;
+          this.thumbnailsRequested.add(layout);
+          void this.loadThumbnail(layout, sample);
+        }
       });
     });
     // The Zustellung table: asked once per opened Versand. The request runs untracked.
@@ -955,6 +990,17 @@ export class EmailComposerModal {
     return prefix ? `${prefix} ${filename}` : filename;
   }
 
+  private async loadThumbnail(layout: EmailLayoutChoice, sample: string): Promise<void> {
+    let html: SafeHtml | '' = '';
+    try {
+      const rendered = await this.docEmailService.renderPreview({ body: `<p>${sample}</p>`.repeat(3), layout, attachmentName: '' });
+      html = this.sanitizer.bypassSecurityTrustHtml(rendered.html);
+    } catch (err) {
+      console.warn(`EmailComposerModal.loadThumbnail(${layout}) failed`, err);
+    }
+    if (!this.destroyed) this.layoutThumbnails.update((map) => ({ ...map, [layout]: html }));
+  }
+
   /**
    * Ask the server for the rendered mail. The user may switch layout or segment while a request runs, so
    * only the latest request may write its result: an older response is dropped.
@@ -969,7 +1015,7 @@ export class EmailComposerModal {
         ...(events.length > 0 ? { answerEvents: events.map((e) => ({ name: e.name, when: e.when })) } : {}),
       });
       if (request !== this.previewRequest) return;
-      this.previewHtml.set(this.sanitizer.bypassSecurityTrustHtml(rendered.html));
+      this.previewHtml.set(this.sanitizer.bypassSecurityTrustHtml(withLinksInNewTab(rendered.html)));
     } catch (err) {
       if (request !== this.previewRequest) return;
       console.error('EmailComposerModal.loadPreview: renderEmailPreview failed', err);
@@ -1007,6 +1053,14 @@ export class EmailComposerModal {
   }
 
   protected removeAddress(field: AddressFieldKey, address: string): void {
+    // a Versand's Bcc follows the Zustellung: untick E-Mail there (for everybody with that address), the Bcc follows
+    if (field === 'bcc' && this.isVersand()) {
+      const next = untickEmailAddress(this.versandRows(), this.deliveries(), address);
+      if (next === this.deliveries()) return;
+      this.isDirty.set(true);
+      this.applyDeliveries(next);
+      return;
+    }
     this.onFieldChange(field, parseEmails(this.formData()[field]).filter((a) => a !== address).join(', '));
   }
 
@@ -1073,9 +1127,54 @@ export class EmailComposerModal {
     await dismissOverlay(this.modalController, null, 'cancel');
   }
 
+  /**
+   * The recipients per delivery type: a Versand counts persons per ticked type (the E-Mail line also says how
+   * many distinct addresses that is), a plain mail its To, Cc and Bcc addresses.
+   */
+  private recipientSummary(): { total: number; lines: string[] } {
+    if (!this.isVersand()) {
+      const fd = this.formData();
+      const total = parseEmails(fd.to).length + parseEmails(fd.cc).length + parseEmails(fd.bcc).length;
+      return { total, lines: [`${this.i18n.delivery_email()}: ${total}`] };
+    }
+    const deliveries = versandDeliveries(this.versandRows(), this.deliveries());
+    const count = (channel: DeliveryChannel) => deliveries.filter((d) => d.channels.includes(channel)).length;
+    const lines: string[] = [];
+    const emails = count(DeliveryChannel.Email);
+    if (emails > 0) {
+      const addresses = versandBcc(this.versandRows(), this.deliveries()).length;
+      lines.push(`${this.i18n.delivery_email()}: ${emails}` + (addresses !== emails ? ` (${fill(this.i18n.confirm_addresses(), { count: addresses })})` : ''));
+    }
+    if (count(DeliveryChannel.Chat) > 0) lines.push(`${this.i18n.delivery_chat()}: ${count(DeliveryChannel.Chat)}`);
+    if (count(DeliveryChannel.Post) > 0) lines.push(`${this.i18n.delivery_post()}: ${count(DeliveryChannel.Post)}`);
+    return { total: deliveries.length, lines };
+  }
+
+  /** More than CONFIRM_ABOVE recipients: ask before sending, with the counts per delivery type. True = go. */
+  private async confirmRecipients(): Promise<boolean> {
+    const { total, lines } = this.recipientSummary();
+    if (total <= CONFIRM_ABOVE) return true;
+    const alert = await this.alertController.create({
+      header: this.i18n.confirm_header(),
+      subHeader: fill(this.i18n.confirm_message(), { count: total }),
+      message: lines.join(' · '),
+      buttons: [
+        { text: this.i18n.confirm_cancel(), role: 'cancel' },
+        { text: this.i18n.send(), role: 'confirm' },
+      ],
+    });
+    await alert.present();
+    const { role } = await alert.onDidDismiss();
+    return role === 'confirm';
+  }
+
   protected async send(): Promise<void> {
     if (!this.canSend() || this.isSending()) return;
     this.isSending.set(true);
+    if (!(await this.confirmRecipients())) {
+      this.isSending.set(false);
+      return;
+    }
     try {
       const fd = this.formData();
       const recipients = parseEmails(fd.to);
@@ -1224,7 +1323,7 @@ export class EmailComposerModal {
     if (job?.state === 'failed') throw new Error(job.error ?? '');
   }
 
-  private async showToast(message: string, color: string): Promise<void> {
+  protected async showToast(message: string, color: string): Promise<void> {
     const toast = await this.toastController.create({ message, duration: 3000, color, position: 'bottom' });
     await toast.present();
   }

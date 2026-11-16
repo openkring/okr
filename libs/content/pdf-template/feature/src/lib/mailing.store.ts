@@ -97,6 +97,11 @@ export const MailingStore = signalStore(
       },
       stream: ({ params }) => store.docEmailService.mailJob(params.key),
     }),
+    /** who opened the In-App Mitteilung, live (personKey → readAt) */
+    noticeReadsResource: rxResource({
+      params: () => store.mailingResource.value()?.noticeKey || undefined,
+      stream: ({ params }) => store.mailingService.noticeReads(params),
+    }),
     eventsResource: rxResource({
       params: () => {
         const keys = store.mailingResource.value()?.caleventKeys ?? [];
@@ -127,6 +132,7 @@ export const MailingStore = signalStore(
       mailing: computed(() => store.mailingResource.value()),
       isMailingLoading: computed(() => store.mailingResource.isLoading()),
       mailJob: computed(() => store.mailJobResource.value()),
+      noticeReads: computed(() => store.noticeReadsResource.value() ?? new Map<string, string>()),
       sendings: computed(() => store.sendingsResource.value() ?? []),
       sendingsLoading: computed(() => store.sendingsResource.isLoading()),
       /** a Versand sent through Pingen shows the «Briefe» card */

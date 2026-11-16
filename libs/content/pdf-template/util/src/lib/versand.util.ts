@@ -118,6 +118,32 @@ export function versandBcc(rows: VersandRow[], deliveries: VersandDeliveries): s
   return out;
 }
 
+/**
+ * Removes one address from the Bcc by unticking E-Mail for every person who has it (case-insensitive):
+ * the Bcc follows the Zustellung, so the table changes and the Bcc with it. Returns the same object when
+ * nobody had it ticked.
+ */
+export function untickEmailAddress(rows: VersandRow[], deliveries: VersandDeliveries, address: string): VersandDeliveries {
+  const key = address.trim().toLowerCase();
+  let next = deliveries;
+  for (const row of rows) {
+    const ticked = deliveries[row.personKey] ?? [];
+    if (row.email.toLowerCase() !== key || !ticked.includes(DeliveryChannel.Email)) continue;
+    if (next === deliveries) next = { ...deliveries };
+    next[row.personKey] = ticked.filter((c) => c !== DeliveryChannel.Email);
+  }
+  return next;
+}
+
+/**
+ * How many E-Mail ticks share their address with an earlier one: the E-Mail column counts persons, the Bcc
+ * addresses, and an address two persons share (a couple, a family) goes out once.
+ */
+export function sharedEmailCount(rows: VersandRow[], deliveries: VersandDeliveries): number {
+  const ticked = rows.filter((row) => !!row.email && (deliveries[row.personKey] ?? []).includes(DeliveryChannel.Email)).length;
+  return ticked - versandBcc(rows, deliveries).length;
+}
+
 /** An event a Versand can attach: its personal answer link goes into every mail. */
 export interface VersandEvent {
   caleventKey: string;

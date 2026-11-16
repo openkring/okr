@@ -17,7 +17,7 @@ import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functi
 import { bareAddress } from '../auth/email-templates';
 import { MailJobCollection } from './mail-job';
 import { directoryEmailsByKey, keysFor, MailingCollection, type MailingDelivery } from './mailing';
-import { deliveriesByAddress, joinDeliveries, mailingCategory, type EmailEventRow, type MailingDeliveriesResult } from './mailing-deliveries.logic';
+import { deliveriesByAddress, eventLogsByAddress, joinDeliveries, mailingCategory, withEventLogs, type EmailEventRow, type MailingDeliveriesResult } from './mailing-deliveries.logic';
 import { isElevated } from './mailing-recipients';
 
 const REGION = 'europe-west6';
@@ -74,7 +74,10 @@ export const getMailingDeliveries = onCall(
     // who is the To of every Bcc block after the first (mailJobBlocks)
     const visible = [...(mailing.to ?? []), ...(mailing.cc ?? []), ...(job?.to ?? []), ...(job?.cc ?? []),
       ...[mailing.from, job?.from].filter((f): f is string => !!f).map(bareAddress)];
-    const result = joinDeliveries(deliveriesByAddress(eventsSnap.docs.map((d) => d.data() as EmailEventRow)), emailByKey, visible);
+    const rows = eventsSnap.docs.map((d) => d.data() as EmailEventRow);
+    const joined = joinDeliveries(deliveriesByAddress(rows), emailByKey, visible);
+    // each recipient's send log (the person action «Versandprotokoll»), matched on the server like the status
+    const result = { ...joined, recipients: withEventLogs(joined.recipients, emailByKey, eventLogsByAddress(rows)) };
     // counts only: never an address in the log (privacy inventory §7.2)
     const truncated = eventsSnap.size >= MAX_EVENTS;
     if (truncated) logger.warn(`${CF_NAME}: Versand ${mailingKey} has more than ${MAX_EVENTS} events, the rest is left out`);

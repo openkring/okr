@@ -1,21 +1,27 @@
 // libs/content/pdf-template/feature/src/lib/mailing.page.ts
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { Router } from '@angular/router';
 import {
-  IonBackButton, IonBadge, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonChip,
+  ActionSheetController, IonAvatar, ModalController, IonBackButton, IonBadge, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonChip,
   IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonNote, IonSegment, IonSegmentButton, IonTitle, IonToolbar,
 } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { EmptyList, Spinner } from '@okr/shared-ui';
+import { EmptyList, ImgDirective, Spinner } from '@okr/shared-ui';
+import { AvatarPipe } from '@okr/avatar-ui';
+import { browseUrl } from '@okr/subject-address-util';
+import {
+  AppNavigationService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, navigateByUrl,
+} from '@okr/shared-util-angular';
 import {
   deliveryStatusColor, deliveryStatusCounts, hasDeliveryReports, MailDeliveryStatus, MailingAnswer, mailingAnswerColor,
   mailingRecipientsFor, mailingStateColor, mailJobProgress, formatChf, lastSendingAt, sendingDateLabel, sendingHasTask,
-  sendingStatusColor, sendingStatusLabelKey, sendingStatusOf, SendingStatus, summaryParts,
+  sendingStatusColor, sendingStatusLabelKey, sendingStatusOf, SendingStatus, summaryParts, noticeReadCount,
 } from '@okr/content-pdf-template-util';
 import { SendingModel } from '@okr/shared-models';
-import { fill, prettyFormatDate, prettyFormatDateTime } from '@okr/shared-util-core';
+import { fill, isOrgRecipient, prettyFormatDate, prettyFormatDateTime } from '@okr/shared-util-core';
 
-import { MailingStore } from './mailing.store';
+import { MailingRecipientRow, MailingStore } from './mailing.store';
 
 /** The download link of `getMailingLetters` lives 10 minutes; ask again a little before. */
 const LETTERS_URL_TTL_MS = 9 * 60 * 1000;
@@ -33,7 +39,7 @@ const LETTERS_URL_TTL_MS = 9 * 60 * 1000;
   standalone: true,
   providers: [MailingStore],
   imports: [
-    SvgIconPipe, Spinner, EmptyList,
+    SvgIconPipe, Spinner, EmptyList, ImgDirective, AvatarPipe, IonAvatar,
     IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonList, IonItem, IonLabel, IonNote, IonChip, IonBadge,
     IonButton, IonIcon, IonSegment, IonSegmentButton,
@@ -44,6 +50,7 @@ const LETTERS_URL_TTL_MS = 9 * 60 * 1000;
     ion-note { display: block; padding: 4px 16px; }
     ion-badge { font-weight: normal; }
     .counts ion-chip { font-size: 0.8rem; }
+    ion-avatar { width: 32px; height: 32px; background-color: var(--ion-color-light); }
   `],
   template: `
     <ion-header>
@@ -211,23 +218,44 @@ const LETTERS_URL_TTL_MS = 9 * 60 * 1000;
                 <ion-icon slot="start" src="{{ 'reload' | svgIcon }}" />
                 {{ store.i18n.status_refresh() }}
               </ion-button>
+              <ion-note>{{ store.i18n.status_hint() }}</ion-note>
+            }
+            @let showRead = channel() === 'chat' && !!m.noticeKey;
+            @if (showRead) {
+              <div class="counts">
+                <ion-chip [outline]="true" color="success">{{ readCountLabel() }}</ion-chip>
+              </div>
+              <ion-note>{{ store.i18n.read_hint() }}</ion-note>
             }
             @if (channelRows().length === 0) {
               <ion-note>{{ store.i18n.deliveries_empty() }}</ion-note>
             } @else {
               <ion-list lines="inset">
                 @for (row of channelRows(); track row.personKey) {
-                  <ion-item>
+                  <ion-item [button]="true" [detail]="false" (click)="showActions(row)">
+                    <ion-avatar slot="start">
+                      <img okrImg src="{{ avatarKey(row) | avatar }}" alt="" />
+                    </ion-avatar>
                     <ion-label>
                       {{ row.name }}
                       @if (showStatus && hasReports()) {
                         @let d = store.deliveryByPerson().get(row.personKey);
-                        @if (d?.reason) { <p>{{ d?.reason }}</p> }
+                        @if (d && d.status !== 'delivered') {
+                          <p>{{ isoTime(d.at) }}@if (d.reason) { · {{ d.reason }} }</p>
+                        }
+                      }
+                      @if (showRead) {
+                        @let readAt = store.noticeReads().get(row.personKey);
+                        @if (readAt) { <p>{{ dateTime(readAt) }}</p> }
                       }
                     </ion-label>
                     @if (showStatus && hasReports()) {
                       @let s = store.deliveryByPerson().get(row.personKey)?.status ?? 'pending';
                       <ion-badge slot="end" [color]="statusColor(s)">{{ statusLabel(s) }}</ion-badge>
+                    }
+                    @if (showRead) {
+                      @let read = store.noticeReads().has(row.personKey);
+                      <ion-badge slot="end" [color]="read ? 'success' : 'medium'">{{ read ? store.i18n.read_read() : store.i18n.read_unread() }}</ion-badge>
                     }
                   </ion-item>
                 }
@@ -287,6 +315,11 @@ const LETTERS_URL_TTL_MS = 9 * 60 * 1000;
 })
 export class MailingPage {
   protected readonly store = inject(MailingStore);
+  private readonly actionSheetController = inject(ActionSheetController);
+  private readonly modalController = inject(ModalController);
+  private readonly router = inject(Router);
+  private readonly appNavigationService = inject(AppNavigationService);
+  private readonly imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   /** route param `:mailingKey` */
   public readonly mailingKey = input.required<string>();
@@ -302,6 +335,10 @@ export class MailingPage {
   protected readonly hasReports = computed(() => hasDeliveryReports(this.store.deliveries()));
   protected readonly statusCounts = computed(() =>
     deliveryStatusCounts(mailingRecipientsFor(this.mailing()?.deliveries, 'email'), this.store.deliveryByPerson()));
+  protected readonly readCountLabel = computed(() => {
+    const keys = mailingRecipientsFor(this.mailing()?.deliveries, 'chat');
+    return fill(this.store.i18n.read_count(), { count: noticeReadCount(keys, this.store.noticeReads()), total: keys.length });
+  });
   protected readonly unmatchedNote = computed(() =>
     fill(this.store.i18n.status_unmatched(), { count: this.store.deliveries()?.unmatched ?? 0 }));
   protected readonly stateColor = computed(() => mailingStateColor(this.mailing()?.state, this.store.partlyFailed()));
@@ -402,6 +439,68 @@ export class MailingPage {
 
   protected hasTask(s: SendingModel): boolean {
     return sendingHasTask(s.state);
+  }
+
+  /** `person.<okey>` for the avatar; an org recipient's key is already `org.<okey>`. */
+  protected avatarKey(row: MailingRecipientRow): string {
+    return isOrgRecipient(row.personKey) ? row.personKey : `person.${row.personKey}`;
+  }
+
+  /** An ISO time of the mail server, in the reader's locale. */
+  protected isoTime(iso: string | undefined): string {
+    if (!iso) return '';
+    const date = new Date(iso);
+    return Number.isNaN(date.getTime()) ? iso : date.toLocaleString('de-CH');
+  }
+
+  /**
+   * The person actions of a recipient row: open the person (view, and edit for whoever may), call and
+   * email them via the directory's favourite phone / address, and the send log of their E-Mail.
+   */
+  protected async showActions(row: MailingRecipientRow): Promise<void> {
+    const i18n = this.store.i18n;
+    const isOrg = isOrgRecipient(row.personKey);
+    const entry = this.store.appStore.getDirectoryEntry(this.avatarKey(row));
+    const delivery = this.store.deliveryByPerson().get(row.personKey);
+    const options = createActionSheetOptions(row.name);
+    if (!isOrg) options.buttons.push(createActionSheetButton('person.view', i18n.action_person(), this.imgixBaseUrl, 'person'));
+    if (entry?.favPhone) options.buttons.push(createActionSheetButton('person.call', i18n.action_call(), this.imgixBaseUrl, 'tel'));
+    if (entry?.favEmail) options.buttons.push(createActionSheetButton('person.email', i18n.action_email(), this.imgixBaseUrl, 'email'));
+    if (this.channel() === 'email' && !!this.mailing()?.mailJobKey) {
+      options.buttons.push(createActionSheetButton('mailing.log', i18n.action_log(), this.imgixBaseUrl, 'list'));
+    }
+    options.buttons.push(createActionSheetDivider());
+    options.buttons.push(createActionSheetButton('cancel', i18n.action_cancel(), this.imgixBaseUrl, 'cancel'));
+    const sheet = await this.actionSheetController.create(options);
+    await sheet.present();
+    const { data } = await sheet.onDidDismiss();
+    switch (data?.action) {
+      case 'person.view': return this.showPerson(row.personKey);
+      case 'person.call': return browseUrl(`tel:${entry?.favPhone ?? ''}`);
+      case 'person.email': return browseUrl(`mailto:${entry?.favEmail ?? ''}`);
+      case 'mailing.log': return this.showLog(row.name, delivery?.log ?? []);
+    }
+  }
+
+  /**
+   * The person page: it shows the person and offers editing to whoever may. Navigation, not the person
+   * modal: @okr/subject-person-feature imports this lib (the Versand flow), the other way round is a cycle.
+   */
+  private async showPerson(personKey: string): Promise<void> {
+    // the person page's close button goes back through the link history: seed it with this Versand
+    this.appNavigationService.resetLinkHistory(this.router.url);
+    this.appNavigationService.pushLink(`/person/${personKey}`);
+    await navigateByUrl(this.router, `/person/${personKey}`);
+  }
+
+  private async showLog(name: string, log: { event: string; at?: string; reason?: string }[]): Promise<void> {
+    // dynamic: the ui lib is lazy-loaded elsewhere (template.store), a static import would make it eager
+    const { MailingLogModal } = await import('@okr/content-pdf-template-ui');
+    const modal = await this.modalController.create({
+      component: MailingLogModal,
+      componentProps: { name, log, i18n: this.store.i18n },
+    });
+    await modal.present();
   }
 
   protected chf(rappen: number): string {

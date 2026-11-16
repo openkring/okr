@@ -128,9 +128,53 @@ export function deliveriesByAddress(rows: EmailEventRow[]): Map<string, MailDeli
   return out;
 }
 
+/** One line of a recipient's send log: what the mail server reported, when, and why (without addresses). */
+export interface MailEventLogEntry {
+  /** the Mailtrap event name, lower case: delivery, open, click, soft bounce, bounce, reject, suspension, spam, unsubscribe */
+  event: string;
+  /** ISO time; absent when the event carries none */
+  at?: string;
+  reason?: string;
+}
+
+/** The events of one address, oldest first, as a send log. Events without a name are left out. */
+export function eventLogOf(rows: EmailEventRow[]): MailEventLogEntry[] {
+  return rows
+    .filter((row) => eventName(row).length > 0)
+    .sort((a, b) => eventSeconds(a) - eventSeconds(b))
+    .map((row) => {
+      const seconds = eventSeconds(row);
+      const reason = reasonOf(row);
+      return { event: eventName(row), ...(seconds > 0 ? { at: new Date(seconds * 1000).toISOString() } : {}), ...(reason ? { reason } : {}) };
+    });
+}
+
+/** The send log per lower-cased address. */
+export function eventLogsByAddress(rows: EmailEventRow[]): Map<string, MailEventLogEntry[]> {
+  const grouped = new Map<string, EmailEventRow[]>();
+  for (const row of rows) {
+    const address = eventAddress(row);
+    if (address) grouped.set(address, [...(grouped.get(address) ?? []), row]);
+  }
+  return new Map([...grouped].map(([address, list]) => [address, eventLogOf(list)]));
+}
+
+/**
+ * Adds each recipient's send log, looked up by the address the send used. The log goes back keyed by
+ * personKey only, like the status: the caller never sees the address it was matched on.
+ */
+export function withEventLogs<T extends { personKey: string }>(
+  recipients: T[], emailByKey: Map<string, string>, logs: Map<string, MailEventLogEntry[]>,
+): (T & { log?: MailEventLogEntry[] })[] {
+  return recipients.map((r) => {
+    const log = logs.get((emailByKey.get(r.personKey) ?? '').trim().toLowerCase());
+    return log && log.length > 0 ? { ...r, log } : r;
+  });
+}
+
 export interface MailingDeliveriesResult {
   /** per E-Mail recipient with a known status; a recipient missing here is still on its way */
-  recipients: ({ personKey: string } & MailDelivery)[];
+  recipients: ({ personKey: string; log?: MailEventLogEntry[] } & MailDelivery)[];
   /** the Versand's own To/Cc addresses (already on the mailings doc), with a known status */
   addresses: ({ email: string } & MailDelivery)[];
   /** events for addresses that are neither a recipient's current address nor To/Cc (e.g. changed since) */

@@ -113,7 +113,8 @@
     "layout": {
       "label": "Modello",
       "standard": "Standard",
-      "plain": "Semplice"
+      "plain": "Semplice",
+      "sample": "Ecco come appare il tuo messaggio con questo modello."
     },
     "attachment": {
       "add": "Aggiungi",
@@ -145,7 +146,10 @@
     "list": {
       "empty": "Nessun destinatario inserito.",
       "email_only": "To:, Cc: e Bcc: valgono solo per l’invio via e-mail.",
-      "personal": "Ogni persona riceve una propria e-mail con il suo link personale."
+      "personal": "Ogni persona riceve una propria e-mail con il suo link personale.",
+      "shared": "{count} persone condividono il loro indirizzo e-mail con un'altra persona (p. es. coppie o famiglie). Per questo l'invio conta più e-mail che indirizzi qui: ogni indirizzo riceve il messaggio una sola volta.",
+      "copy": "Copia indirizzo",
+      "remove": "Rimuovi indirizzo"
     },
     "delivery": {
       "recipient": "Destinatario",
@@ -224,6 +228,12 @@
       "none": "Nessuno ha un indirizzo postale, non viene creata alcuna lettera.",
       "needs_subject": "Inserisci prima un oggetto nell’editor. Il prezzo verrà calcolato dopo.",
       "pending": "Controlla sotto «Invio postale» il prezzo delle lettere e confermalo prima di inviare."
+    },
+    "confirm": {
+      "header": "Conferma l'invio",
+      "message": "Questo invio va a {count} destinatari.",
+      "addresses": "{count} indirizzi",
+      "cancel": "Annulla"
     }
   },
   "category": {
@@ -362,7 +372,35 @@
       "error": "Non è stato possibile caricare lo stato di consegna.",
       "refresh": "Aggiorna lo stato di consegna",
       "unmatched": "Altre {count} segnalazioni non corrispondono più a nessun destinatario, ad esempio perché un indirizzo è cambiato nel frattempo.",
-      "addresses": "A, Cc e mittente"
+      "addresses": "A, Cc e mittente",
+      "hint": "«In attesa» significa che il server di posta non ha ancora segnalato nulla per questa e-mail. Di solito è ancora in viaggio; per gli invii più vecchi di 30 giorni i rapporti sono già stati cancellati. Le risposte automatiche, come i messaggi di assenza, non compaiono qui: arrivano come e-mail normali all'indirizzo del mittente. Tocca una persona per il registro d'invio."
+    },
+    "read": {
+      "read": "Letto",
+      "unread": "Non letto",
+      "count": "{count} su {total} letti",
+      "hint": "«Letto» mostra chi ha aperto la comunicazione nell'app. Viene registrato solo dal 15.11.2026."
+    },
+    "action": {
+      "person": "Mostra persona",
+      "call": "Chiama",
+      "email": "Scrivi e-mail",
+      "log": "Registro d'invio",
+      "cancel": "Annulla"
+    },
+    "log": {
+      "title": "Registro d'invio",
+      "hint": "Ciò che il server di posta ha segnalato per questa e-mail, dal più vecchio. I rapporti restano disponibili 30 giorni.",
+      "empty": "Non ci sono ancora rapporti per questa e-mail.",
+      "delivery": "Consegnato",
+      "open": "Aperto",
+      "click": "Link cliccato",
+      "soft_bounce": "Respinto temporaneamente, verrà ritentato",
+      "bounce": "Respinto",
+      "reject": "Non inviato (indirizzo bloccato)",
+      "suspension": "Non inviato (invio sospeso)",
+      "spam": "Segnato come spam",
+      "unsubscribe": "Disiscritto"
     }
   },
   "sending": {

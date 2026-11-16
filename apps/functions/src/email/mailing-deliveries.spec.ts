@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  deliveriesByAddress, deliveryOf, joinDeliveries, mailingCategory, redactReason, type EmailEventRow, type MailDelivery,
+  deliveriesByAddress, deliveryOf, eventLogOf, eventLogsByAddress, joinDeliveries, withEventLogs, mailingCategory, redactReason, type EmailEventRow, type MailDelivery,
 } from './mailing-deliveries.logic';
 import { mayReadMailingDeliveries } from './mailing-deliveries';
 
@@ -91,5 +91,20 @@ describe('mayReadMailingDeliveries', () => {
     expect(mayReadMailingDeliveries(mailing, { tenants: ['p13'], roles: { admin: true } })).toBe(false);
     expect(mayReadMailingDeliveries({ tenants: ['scs', 'p13'] }, { tenants: ['scs'], roles: { admin: true } })).toBe(false);
     expect(mayReadMailingDeliveries({}, { tenants: ['scs'], roles: { admin: true } })).toBe(false);
+  });
+});
+
+describe('send log', () => {
+  it('lists the events oldest first, with time and a redacted reason', () => {
+    expect(eventLogOf([ev('delivery', 20), ev('soft bounce', 10, { response: '452 <anna@x.ch> full' }), { email: 'a@x.ch' }])).toEqual([
+      { event: 'soft bounce', at: new Date(10000).toISOString(), reason: '452 <…> full' },
+      { event: 'delivery', at: new Date(20000).toISOString() },
+    ]);
+  });
+
+  it('joins the log to the recipients by their address, without the address', () => {
+    const logs = eventLogsByAddress([{ event: 'open', email: 'Anna@x.ch', timestamp: 5 }]);
+    const out = withEventLogs([{ personKey: 'a' }, { personKey: 'b' }], new Map([['a', 'anna@x.ch'], ['b', 'bob@x.ch']]), logs);
+    expect(out).toEqual([{ personKey: 'a', log: [{ event: 'open', at: new Date(5000).toISOString() }] }, { personKey: 'b' }]);
   });
 });

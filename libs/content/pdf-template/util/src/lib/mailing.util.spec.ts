@@ -3,8 +3,7 @@ import { Attendee } from '@okr/shared-models';
 import {
   deliveryByPerson, deliveryStatusColor, deliveryStatusCounts, hasDeliveryReports,
   mailingAnswerColor, mailingAnswerCounts, mailingAnswerOf, mailingChannelCounts, mailingRecipientsFor, mailingStateColor,
-  mailJobProgress, sortMailingsNewestFirst,
-} from './mailing.util';
+  mailJobProgress, sortMailingsNewestFirst, mailLogEventColor, mailLogEventOf, noticeReadCount } from './mailing.util';
 
 const att = (key: string, state: Attendee['state']): Attendee => ({ person: { key, name1: '', name2: '', modelType: 'person', label: '' }, state } as Attendee);
 
@@ -91,5 +90,24 @@ describe('delivery reports', () => {
   it('colors the badges', () => {
     expect(['delivered', 'deferred', 'rejected', 'spam', 'pending'].map((s) => deliveryStatusColor(s as never)))
       .toEqual(['success', 'warning', 'danger', 'warning', 'medium']);
+  });
+});
+
+describe('send log helpers', () => {
+  it('knows the Mailtrap event names, old and new spelling', () => {
+    expect(mailLogEventOf('Soft_Bounce')).toBe('soft bounce');
+    expect(mailLogEventOf('delivery')).toBe('delivery');
+    expect(mailLogEventOf('something')).toBeUndefined();
+  });
+
+  it('colors a line by what it means', () => {
+    expect(mailLogEventColor('open')).toBe('success');
+    expect(mailLogEventColor('soft bounce')).toBe('warning');
+    expect(mailLogEventColor('bounce')).toBe('danger');
+    expect(mailLogEventColor('x')).toBe('medium');
+  });
+
+  it('counts the In-App recipients who opened the notice', () => {
+    expect(noticeReadCount(['a', 'b', 'c'], new Map([['a', '20261115120000'], ['x', '1']]))).toBe(1);
   });
 });

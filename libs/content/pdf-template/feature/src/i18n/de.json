@@ -113,7 +113,8 @@
     "layout": {
       "label": "Vorlage",
       "standard": "Standard",
-      "plain": "Einfach"
+      "plain": "Einfach",
+      "sample": "So sieht deine Nachricht mit dieser Vorlage aus."
     },
     "attachment": {
       "add": "Hinzufügen",
@@ -145,7 +146,10 @@
     "list": {
       "empty": "Keine Empfänger erfasst.",
       "email_only": "To:, Cc: und Bcc: gelten nur für den Versand per E-Mail.",
-      "personal": "Jede Person bekommt eine eigene Mail mit ihrem persönlichen Link."
+      "personal": "Jede Person bekommt eine eigene Mail mit ihrem persönlichen Link.",
+      "shared": "{count} Personen teilen ihre E-Mail-Adresse mit einer anderen Person (z. B. Paare oder Familien). Darum zählt die Zustellung mehr E-Mails als hier Adressen stehen: jede Adresse bekommt die Mail nur einmal.",
+      "copy": "Adresse kopieren",
+      "remove": "Adresse entfernen"
     },
     "delivery": {
       "recipient": "Empfänger",
@@ -224,6 +228,12 @@
       "none": "Niemand hat eine Postadresse, es entsteht kein Brief.",
       "needs_subject": "Gib im Editor zuerst einen Betreff ein. Danach wird der Preis berechnet.",
       "pending": "Bitte prüfe unter «Postversand» den Preis für die Briefe und bestätige ihn, bevor du sendest."
+    },
+    "confirm": {
+      "header": "Versand bestätigen",
+      "message": "Dieser Versand geht an {count} Empfänger.",
+      "addresses": "{count} Adressen",
+      "cancel": "Abbrechen"
     }
   },
   "category": {
@@ -362,7 +372,35 @@
       "error": "Der Zustellstand konnte nicht geladen werden.",
       "refresh": "Zustellstand aktualisieren",
       "unmatched": "{count} weitere Rückmeldungen passen zu keinem Empfänger mehr, etwa weil sich eine Adresse seither geändert hat.",
-      "addresses": "An, Cc und Absender"
+      "addresses": "An, Cc und Absender",
+      "hint": "«Ausstehend» heisst: Der Mailserver hat zu dieser E-Mail noch nichts gemeldet. Meist ist sie noch unterwegs; bei Versänden, die älter als 30 Tage sind, sind die Meldungen schon gelöscht. Automatische Antworten wie Abwesenheitsnotizen erscheinen hier nicht, sie kommen als normale E-Mail an die Absenderadresse. Tippe auf eine Person für das Versandprotokoll."
+    },
+    "read": {
+      "read": "Gelesen",
+      "unread": "Ungelesen",
+      "count": "{count} von {total} gelesen",
+      "hint": "«Gelesen» zeigt, wer die Mitteilung in der App geöffnet hat. Erfasst wird das erst seit dem 15.11.2026."
+    },
+    "action": {
+      "person": "Person anzeigen",
+      "call": "Anrufen",
+      "email": "E-Mail schreiben",
+      "log": "Versandprotokoll",
+      "cancel": "Abbrechen"
+    },
+    "log": {
+      "title": "Versandprotokoll",
+      "hint": "Was der Mailserver zu dieser E-Mail gemeldet hat, das Älteste zuerst. Die Meldungen bleiben 30 Tage lang erhalten.",
+      "empty": "Zu dieser E-Mail liegt noch keine Meldung vor.",
+      "delivery": "Zugestellt",
+      "open": "Geöffnet",
+      "click": "Link angeklickt",
+      "soft_bounce": "Vorübergehend abgewiesen, wird erneut versucht",
+      "bounce": "Abgewiesen",
+      "reject": "Nicht versendet (Adresse gesperrt)",
+      "suspension": "Nicht versendet (Versand ausgesetzt)",
+      "spam": "Als Spam markiert",
+      "unsubscribe": "Abgemeldet"
     }
   },
   "sending": {

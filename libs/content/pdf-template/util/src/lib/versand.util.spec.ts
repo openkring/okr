@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { CalEventModel, DeliveryChannel } from '@okr/shared-models';
 import {
   buildVersandRows, deliveryTotals, emailOnlyDeliveries, hasPostDelivery, GROUP_ADMIN_MAILING_CHANNELS, isDeliveryEditable, nonPdfAttachmentNames, toggleDelivery, unreachableCount,
-  versandBcc, versandDeliveries, groupReachWarnings, VersandEvent, versandEventsOf, versandEventWhen,
+  versandBcc, versandDeliveries, groupReachWarnings, sharedEmailCount, untickEmailAddress, VersandEvent, versandEventsOf, versandEventWhen,
 } from './versand.util';
 
 const anna = { personKey: 'a', name: 'Anna', email: 'anna@x.ch' };
@@ -174,5 +174,27 @@ describe('hasPostDelivery', () => {
   it('is true when anybody is ticked under Post', () => {
     expect(hasPostDelivery({ a: [DeliveryChannel.Email], b: [DeliveryChannel.Post] })).toBe(true);
     expect(hasPostDelivery({ a: [DeliveryChannel.Email] })).toBe(false);
+  });
+});
+
+describe('untickEmailAddress / sharedEmailCount', () => {
+  const rows = [
+    { personKey: 'a', name: 'Anna', email: 'fam@x.ch', possible: [DeliveryChannel.Email, DeliveryChannel.Post] },
+    { personKey: 'c', name: 'Carl', email: 'FAM@x.ch', possible: [DeliveryChannel.Email] },
+    { personKey: 'd', name: 'Dora', email: 'dora@x.ch', possible: [DeliveryChannel.Email] },
+  ];
+  const deliveries = { a: [DeliveryChannel.Email, DeliveryChannel.Post], c: [DeliveryChannel.Email], d: [DeliveryChannel.Email] };
+
+  it('counts the ticks that share an address with an earlier one', () => {
+    expect(sharedEmailCount(rows, deliveries)).toBe(1);
+    expect(versandBcc(rows, deliveries)).toEqual(['fam@x.ch', 'dora@x.ch']);
+  });
+
+  it('unticks E-Mail for every person with the address, keeping their other ticks', () => {
+    expect(untickEmailAddress(rows, deliveries, 'Fam@X.ch')).toEqual({ a: [DeliveryChannel.Post], c: [], d: [DeliveryChannel.Email] });
+  });
+
+  it('returns the same object when nobody had it ticked', () => {
+    expect(untickEmailAddress(rows, deliveries, 'nobody@x.ch')).toBe(deliveries);
   });
 });

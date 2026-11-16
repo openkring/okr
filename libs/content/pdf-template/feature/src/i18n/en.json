@@ -113,7 +113,8 @@
     "layout": {
       "label": "Layout",
       "standard": "Standard",
-      "plain": "Plain"
+      "plain": "Plain",
+      "sample": "This is how your message looks with this template."
     },
     "attachment": {
       "add": "Add",
@@ -145,7 +146,10 @@
     "list": {
       "empty": "No recipients entered.",
       "email_only": "To:, Cc: and Bcc: only apply to delivery by email.",
-      "personal": "Each person gets their own email with a personal link."
+      "personal": "Each person gets their own email with a personal link.",
+      "shared": "{count} people share their email address with someone else (e.g. couples or families). That is why the delivery count is higher than the number of addresses here: each address gets the mail only once.",
+      "copy": "Copy address",
+      "remove": "Remove address"
     },
     "delivery": {
       "recipient": "Recipient",
@@ -224,6 +228,12 @@
       "none": "Nobody has a postal address, so no letter is created.",
       "needs_subject": "Please enter a subject in the editor first. The price is calculated after that.",
       "pending": "Please check the price of the letters under “Postal mail” and confirm it before you send."
+    },
+    "confirm": {
+      "header": "Confirm sending",
+      "message": "This mailing goes to {count} recipients.",
+      "addresses": "{count} addresses",
+      "cancel": "Cancel"
     }
   },
   "category": {
@@ -362,7 +372,35 @@
       "error": "The delivery status could not be loaded.",
       "refresh": "Refresh delivery status",
       "unmatched": "{count} more reports match no recipient any more, for example because an address has changed since.",
-      "addresses": "To, Cc and sender"
+      "addresses": "To, Cc and sender",
+      "hint": "\"Pending\" means the mail server has not reported anything about this email yet. Usually it is still on its way; for mailings older than 30 days the reports have already been deleted. Automatic replies such as out-of-office notes do not appear here: they arrive as normal email at the sender address. Tap a person for the delivery log."
+    },
+    "read": {
+      "read": "Read",
+      "unread": "Unread",
+      "count": "{count} of {total} read",
+      "hint": "\"Read\" shows who opened the notice in the app. This is only recorded since 15 Nov 2026."
+    },
+    "action": {
+      "person": "Show person",
+      "call": "Call",
+      "email": "Write email",
+      "log": "Delivery log",
+      "cancel": "Cancel"
+    },
+    "log": {
+      "title": "Delivery log",
+      "hint": "What the mail server reported about this email, oldest first. Reports are kept for 30 days.",
+      "empty": "There is no report for this email yet.",
+      "delivery": "Delivered",
+      "open": "Opened",
+      "click": "Link clicked",
+      "soft_bounce": "Temporarily rejected, will be retried",
+      "bounce": "Rejected",
+      "reject": "Not sent (address blocked)",
+      "suspension": "Not sent (sending suspended)",
+      "spam": "Marked as spam",
+      "unsubscribe": "Unsubscribed"
     }
   },
   "sending": {

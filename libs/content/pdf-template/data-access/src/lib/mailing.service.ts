@@ -1,9 +1,12 @@
 // libs/content/pdf-template/data-access/src/lib/mailing.service.ts
 import { inject, Injectable } from '@angular/core';
-import { map, Observable } from 'rxjs';
+import { collection } from 'firebase/firestore';
+import { collectionData } from 'rxfire/firestore';
+import { catchError, map, Observable, of } from 'rxjs';
 
+import { FIRESTORE } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
-import { CalEventCollection, CalEventModel } from '@okr/shared-models';
+import { CalEventCollection, CalEventModel, NoticeCollection, NoticeReadModel, NoticeReadsSubcollection } from '@okr/shared-models';
 import { MailingView, sortMailingsNewestFirst } from '@okr/content-pdf-template-util';
 
 /** One doc per Versand (spec 1.145 §10), written only by `sendMailing` / `onMailing`. */
@@ -16,6 +19,7 @@ export const MailingCollection = 'mailings';
 @Injectable({ providedIn: 'root' })
 export class MailingService {
   private readonly firestoreService = inject(FirestoreService);
+  private readonly firestore = inject(FIRESTORE);
 
   /**
    * The tenant's Versände, newest first. A `mailings` doc has no `isArchived`, so the usual system
@@ -37,5 +41,19 @@ export class MailingService {
   /** An event the Versand asks about; undefined once it was deleted. */
   public readEvent(key: string): Observable<CalEventModel | undefined> {
     return this.firestoreService.readModel<CalEventModel>(CalEventCollection, key);
+  }
+
+  /**
+   * Who opened the Versand's Mitteilung, live: personKey → readAt (StoreDateTime). A denied or failed
+   * read comes back empty (nobody shown as having read it).
+   */
+  public noticeReads(noticeKey: string): Observable<Map<string, string>> {
+    return collectionData(collection(this.firestore, NoticeCollection, noticeKey, NoticeReadsSubcollection), { idField: 'personKey' }).pipe(
+      map((rows) => new Map((rows as (Partial<NoticeReadModel> & { personKey: string })[]).map((r) => [r.personKey, r.readAt ?? '']))),
+      catchError((err) => {
+        console.warn('MailingService.noticeReads failed', err);
+        return of(new Map<string, string>());
+      }),
+    );
   }
 }

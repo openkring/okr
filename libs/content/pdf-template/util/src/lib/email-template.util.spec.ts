@@ -2,7 +2,7 @@ import '@angular/compiler';
 import { describe, it, expect } from 'vitest';
 import { TemplateModel } from '@okr/shared-models';
 import {
-  canDeleteEmailTemplate, emailCopyKey, emailCopyPlan, emailLayoutOptions, emailPublishProblem, isEmailTemplate, templateKindOf,
+  canDeleteEmailTemplate, emailCopyKey, emailCopyPlan, emailLayoutOptions, emailPublishProblem, isEmailTemplate, templateKindOf, withLinksInNewTab,
 } from './email-template.util';
 
 describe('templateKindOf', () => {
@@ -129,5 +129,16 @@ describe('emailLayoutOptions', () => {
       layout('f_scs', ['scs'], 'Pdf', { kind: undefined as never }),
     ];
     expect(emailLayoutOptions(list, 'scs')).toEqual([]);
+  });
+});
+
+describe('withLinksInNewTab', () => {
+  it('puts the base right after the head tag, keeping the doctype first', () => {
+    expect(withLinksInNewTab('<!doctype html><html><head lang="de"><title>x</title></head></html>'))
+      .toBe('<!doctype html><html><head lang="de"><base target="_blank"><title>x</title></head></html>');
+  });
+
+  it('prepends it to a fragment without a head', () => {
+    expect(withLinksInNewTab('<p><a href="https://x.ch">x</a></p>')).toBe('<base target="_blank"><p><a href="https://x.ch">x</a></p>');
   });
 });
