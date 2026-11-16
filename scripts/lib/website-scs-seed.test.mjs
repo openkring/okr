@@ -16,9 +16,11 @@ test('the seed doc IS the parity fixture (nav, footer, tagline, labelI18n, homeP
   assert.equal('//' in doc, false);
 });
 
-test('the tree has the nested Anmeldeformulare menu, the Bootshaus page node and English labels', () => {
+test('the tree has the Anmeldung and Kontakt page nodes, the Bootshaus page node and English labels', () => {
   const nodes = walk(buildWebsiteDoc(fixture).nav).map((x) => x.node);
-  assert.ok(nodes.find((n) => n.id === 'm-anmeldeformulare')?.children.length);
+  // the «Anmeldeformulare» submenu was archived in the app (2026-11-16); its Anmeldung page sits under «Kontakt»
+  assert.equal(nodes.find((n) => n.pageKey === 'scsw_mitgliedschaft')?.slug, 'mitgliedschaft');
+  assert.equal(nodes.find((n) => n.pageKey === 'scsw_kontakt')?.slug, 'kontakt');
   const boot = nodes.find((n) => n.pageKey === 'scsw_bootshausprojekt');
   assert.equal(boot.slug, 'bootshaus');
   assert.ok(nodes.every((n) => n.labelI18n?.en));
