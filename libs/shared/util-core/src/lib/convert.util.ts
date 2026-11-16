@@ -188,18 +188,32 @@ export function uniqueElements(duplicates: string[]): string[] {
 export interface NameObject { name: string }
 
 /**
+ * True when `part` is a whole part of `name`, separated by spaces or hyphens, ignoring case:
+ * 'Wirth' is part of 'Krebs-Wirth' and 'von Allmen' of 'Muster-von Allmen', but 'Meier' is not
+ * part of 'Meierhans'.
+ */
+export function isNamePartOf(part: string, name?: string): boolean {
+  const p = part.trim().toLowerCase();
+  const n = name?.trim().toLowerCase() ?? '';
+  if (!p.length || !n.length) return false;
+  const escaped = p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(^|[\\s-])${escaped}($|[\\s-])`).test(n);
+}
+
+/**
  * Combines two name parts into a fullname considering the NameDisplay policy.
  * @param name1 
  * @param name2 
  * @param nameDisplay: FirstLast, LastFirst, FirstOnly, LastOnly
  * @param maidenName optional maiden name of a person, appended to the last name in parentheses
- *   (`Anna Meier (Muster)`); ignored when empty, equal to the last name or with FirstOnly
+ *   (`Anna Meier (Muster)`); ignored when empty, with FirstOnly, or when the last name already
+ *   contains it as a whole part (`Anna Meier-Muster`, `Anna Muster`)
  * @returns the trimmed combined full name
  */
 export function getFullName(name1?: string, name2?: string, nameDisplay = NameDisplay.FirstLast, maidenName?: string): string {
   if (nameDisplay === NameDisplay.None) return '';
   const maiden = maidenName?.trim() ?? '';
-  if (maiden.length && maiden !== name2?.trim()) {
+  if (maiden.length && !isNamePartOf(maiden, name2)) {
     name2 = name2?.trim().length ? `${name2.trim()} (${maiden})` : `(${maiden})`;
   }
   if (!name2?.trim().length) return name1?.trim() ?? ''; // name2 is optional

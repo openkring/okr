@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PlaceholderContext, getFullName, getPlaceholderHelp, replacePlaceholders, safeConvertBoolean, safeConvertNumber, safeConvertString, string2boolean, string2numberArray, stringArray2ObjectArray, stripHtml } from './convert.util';
+import { PlaceholderContext, getFullName, isNamePartOf, getPlaceholderHelp, replacePlaceholders, safeConvertBoolean, safeConvertNumber, safeConvertString, string2boolean, string2numberArray, stringArray2ObjectArray, stripHtml } from './convert.util';
 import { NameDisplay } from '@okr/shared-models';
 
 describe('convert.util', () => {
@@ -353,5 +353,23 @@ describe('getFullName with maidenName', () => {
     expect(getFullName('Anna', 'Meier', NameDisplay.FirstLast, 'Meier')).toBe('Anna Meier');
     expect(getFullName('Anna', 'Meier', NameDisplay.FirstOnly, 'Muster')).toBe('Anna');
     expect(getFullName('Anna', 'Meier')).toBe('Anna Meier');
+  });
+});
+
+describe('maiden name already in the last name', () => {
+  it('hides it when it is a whole part of the last name', () => {
+    expect(getFullName('Doris', 'Krebs-Wirth', NameDisplay.FirstLast, 'Wirth')).toBe('Doris Krebs-Wirth');
+    expect(getFullName('Anna', 'Muster Meier', NameDisplay.FirstLast, 'muster')).toBe('Anna Muster Meier');
+    expect(getFullName('Anna', 'Meier-von Allmen', NameDisplay.FirstLast, 'von Allmen')).toBe('Anna Meier-von Allmen');
+  });
+
+  it('keeps it when it only matches inside a longer name', () => {
+    expect(getFullName('Anna', 'Meierhans', NameDisplay.FirstLast, 'Meier')).toBe('Anna Meierhans (Meier)');
+  });
+
+  it('isNamePartOf handles empty input and regex characters', () => {
+    expect(isNamePartOf('', 'Meier')).toBe(false);
+    expect(isNamePartOf('Meier', undefined)).toBe(false);
+    expect(isNamePartOf('M.', 'Meier')).toBe(false);
   });
 });
