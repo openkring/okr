@@ -68,7 +68,7 @@ const LOGO_HEIGHTS: Record<FooterLogoHeight, number> = { small: 32, medium: 48, 
   template: `
     @if(section(); as section) {
       <ion-card>
-        <okr-optional-card-header [title]="section.title" [subTitle]="section.subTitle" />
+        <okr-optional-card-header [intro]="section.intro" [introPosition]="section.introPosition" [title]="section.title" [subTitle]="section.subTitle" />
         <ion-card-content>
           <footer [attr.aria-label]="section.title || store.i18n.footer_region()">
             <div class="grid" [class]="'cols-' + columnCount()">

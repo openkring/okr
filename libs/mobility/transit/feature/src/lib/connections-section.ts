@@ -32,7 +32,7 @@ function okeyOf(key: string): string {
   template: `
     @if (section(); as section) {
       <ion-card>
-        <okr-optional-card-header [title]="section.title || i18n.title()" [subTitle]="section.subTitle" />
+        <okr-optional-card-header [intro]="section.intro" [introPosition]="section.introPosition" [title]="section.title || i18n.title()" [subTitle]="section.subTitle" />
         <ion-card-content>
           @if (destination(); as destination) {
             <okr-transit-connections [destination]="destination" [source]="source()" anchor="departAt" />

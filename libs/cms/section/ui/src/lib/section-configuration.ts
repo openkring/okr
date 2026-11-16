@@ -1,7 +1,7 @@
 import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow, IonSelect, IonSelectOption } from '@ionic/angular';
 
-import { CategoryListModel, RoleName, SectionModel, UserModel } from '@okr/shared-models';
+import { ArticleConfig, CategoryListModel, RoleName, SECTION_INTRO_POSITIONS, SectionIntroPosition, SectionModel, UserModel } from '@okr/shared-models';
 import { ButtonCopy, ButtonCopyI18n, CategorySelect, ErrorNote, TextareaInput, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { COMMENT_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
@@ -9,11 +9,14 @@ import { getFieldErrors, SectionErrors, SectionI18n } from '@okr/cms-section-uti
 
 export const PFX = '@cms/section/feature.';
 
+export type ArticleEmphasis = NonNullable<ArticleConfig['emphasis']>;
+const EMPHASES: ArticleEmphasis[] = ['none', 'banner'];
+
 @Component({
   selector: 'okr-section-config',
   standalone: true,
   imports: [
-    IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonLabel, IonItem,
+    IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonLabel, IonItem, IonSelect, IonSelectOption, IonNote,
     TextInput, TextareaInput, CategorySelect, ButtonCopy,
     ErrorNote
   ],
@@ -58,10 +61,37 @@ export const PFX = '@cms/section/feature.';
               <okr-text-input [i18n]="subTitleI18n()" [value]="subTitle()" (valueChange)="onFieldChange('subTitle', $event)" [maxLength]="maxLength" [readOnly]="isReadOnly()" />
               <okr-error-note [errors]="errorsFor('subTitle')" />
             </ion-col>
-            <ion-col size="12">
-              <okr-textarea-input [i18n]="introI18n()" [value]="intro()" (valueChange)="onFieldChange('intro', $event)" [maxLength]="introMaxLength" [readOnly]="isReadOnly()" [showHelper]="true" />
-              <okr-error-note [errors]="errorsFor('intro')" />
-            </ion-col>
+            <!-- the intro: above the title (the former «Überzeile») or below title and subtitle -->
+            @if(showAdvanced()) {
+              <ion-col size="12">
+                <okr-textarea-input [i18n]="introI18n()" [value]="intro()" (valueChange)="onFieldChange('intro', $event)" [maxLength]="introMaxLength" [readOnly]="isReadOnly()" [showHelper]="true" />
+                <okr-error-note [errors]="errorsFor('intro')" />
+              </ion-col>
+              <ion-col size="12" [sizeMd]="isArticle() ? '6' : '12'">
+                <ion-select [label]="i18n().section_config_introPosition_label()" labelPlacement="stacked"
+                            [value]="introPosition()" [disabled]="isReadOnly()"
+                            (ionChange)="onFieldChange('introPosition', $event.detail.value)">
+                  @for (p of introPositions; track p) {
+                    <ion-select-option [value]="p">{{ introPositionLabels()[p] }}</ion-select-option>
+                  }
+                </ion-select>
+                <ion-note>{{ i18n().section_config_introPosition_helper() }}</ion-note>
+                <okr-error-note [errors]="errorsFor('introPosition')" />
+              </ion-col>
+            }
+            <!-- an article: a normal block or a full-width coloured band -->
+            @if(isArticle()) {
+              <ion-col size="12" [sizeMd]="showAdvanced() ? '6' : '12'">
+                <ion-select [label]="i18n().emphasis_label()" labelPlacement="stacked"
+                            [value]="emphasis()" [disabled]="isReadOnly()"
+                            (ionChange)="onEmphasisChange($event.detail.value)">
+                  @for (e of emphases; track e) {
+                    <ion-select-option [value]="e">{{ emphasisLabels()[e] }}</ion-select-option>
+                  }
+                </ion-select>
+                <ion-note>{{ i18n().emphasis_helper() }}</ion-note>
+              </ion-col>
+            }
             @if(showAdvanced()) {
               <ion-col size="12">
                 <okr-text-input [i18n]="colSizeI18n()" [value]="colSize()" (valueChange)="onFieldChange('colSize', $event)" [readOnly]="isReadOnly()" [showHelper]="true" />
@@ -113,6 +143,12 @@ export class SectionConfiguration {
   protected title = linkedSignal(() => this.formData().title ?? '');
   protected subTitle = linkedSignal(() => this.formData().subTitle ?? '');
   protected intro = linkedSignal(() => this.formData().intro ?? '');
+  protected introPosition = computed<SectionIntroPosition>(() => this.formData().introPosition ?? 'below');
+  protected isArticle = computed(() => this.formData().type === 'article');
+  protected emphasis = computed<ArticleEmphasis>(() => {
+    const section = this.formData();
+    return section.type === 'article' ? section.properties?.emphasis ?? 'none' : 'none';
+  });
   protected type = computed(() => this.formData().type);
   protected state = computed(() => this.formData().state);
   protected roleNeeded = linkedSignal(() => this.formData().roleNeeded ?? 'registered');
@@ -124,6 +160,8 @@ export class SectionConfiguration {
   protected maxLength = LONG_NAME_LENGTH;
   protected nameMaxLength = NAME_LENGTH;
   protected introMaxLength = COMMENT_LENGTH;
+  protected readonly introPositions = SECTION_INTRO_POSITIONS;
+  protected readonly emphases = EMPHASES;
   protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf() } as ButtonCopyI18n));
 
   protected nameI18n = computed(() => ({
@@ -154,6 +192,16 @@ export class SectionConfiguration {
     helper: this.i18n().section_config_intro_helper(),
   } as TextInputI18n));
 
+  protected introPositionLabels = computed<Record<SectionIntroPosition, string>>(() => ({
+    above: this.i18n().section_config_introPosition_above(),
+    below: this.i18n().section_config_introPosition_below(),
+  }));
+
+  protected emphasisLabels = computed<Record<ArticleEmphasis, string>>(() => ({
+    none: this.i18n().emphasis_none(),
+    banner: this.i18n().emphasis_banner(),
+  }));
+
   protected colSizeI18n = computed(() => ({
     name: 'colSize',
     label: this.i18n().section_config_colSize_label(),
@@ -161,8 +209,12 @@ export class SectionConfiguration {
     helper: this.i18n().section_config_colSize_helper(),
   } as TextInputI18n));
 
-  protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | RoleName): void {
+  protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | RoleName | SectionIntroPosition): void {
     this.formData.update(vm => ({ ...vm, [fieldName]: fieldValue }));
+  }
+
+  protected onEmphasisChange(emphasis: ArticleEmphasis): void {
+    this.formData.update(vm => vm.type === 'article' ? ({ ...vm, properties: { ...vm.properties, emphasis } } as SectionModel) : vm);
   }
 
   protected hasRole(role: RoleName): boolean {

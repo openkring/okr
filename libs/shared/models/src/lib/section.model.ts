@@ -282,6 +282,13 @@ export interface TripStatsConfig {
 }
 
 // --------------------------------------- ABSTRACT BASE SECTION MODELS ----------------------------------------
+/**
+ * Where a section shows its intro: 'above' = a small line over the title (the former «Überzeile» / kicker),
+ * 'below' = a short paragraph under the title and subtitle (the default).
+ */
+export type SectionIntroPosition = 'above' | 'below';
+export const SECTION_INTRO_POSITIONS: readonly SectionIntroPosition[] = ['above', 'below'];
+
 export interface BaseSection {
   okey: string;
   type: SectionType;
@@ -289,7 +296,8 @@ export interface BaseSection {
   name: string;
   title: string;
   subTitle: string;
-  intro?: string; // short introductory paragraph under the title; translations in properties.introI18n
+  intro?: string; // short intro text; translations in properties.introI18n
+  introPosition?: SectionIntroPosition; // where the intro is shown; absent = 'below'
   index: string;
   color: ColorIonic;
   colSize: string; // col size(s) of the section card itself, e.g. '12' or '12,6,4' (default, md, lg)
@@ -403,8 +411,6 @@ export interface ArticleConfig {
   excerptI18n?: I18nString;
   contentI18n?: I18nString;
   datePublished?: string;
-  kicker?: string;          // small line above the title
-  kickerI18n?: I18nString;
   cta?: SectionCta;         // optional call-to-action button
   /** 'banner' renders the article as a full-width emphasised band. Default 'none'. */
   emphasis?: 'none' | 'banner';
@@ -515,8 +521,6 @@ export interface EventsConfig {
   showUpcomingEvents: boolean; // if true, show upcoming events
   showEventTime: boolean; // if true, show event time
   showEventLocation: boolean; // if true, show event location
-  kicker?: string;          // small line above the title
-  kickerI18n?: I18nString;
 }
 
 // --------------------------------------- HERO ----------------------------------------
@@ -530,8 +534,6 @@ export interface HeroConfig {
   hero: ImageConfig; // the hero background image
   imageStyle: ImageStyle;
   chips?: string[]; // short facts under the title, e.g. date, coordinates, place (travel journal, spec 1.113)
-  kicker?: string;          // small line above the title
-  kickerI18n?: I18nString;
   ctas?: SectionCta[];      // call-to-action buttons
   overlay?: HeroOverlay;    // text overlay on the hero image (travel journal, spec 1.154); absent => none
   height?: 'S' | 'M' | 'L' | 'full' | number; // number = px; absent => as today
@@ -669,8 +671,6 @@ export interface NewsConfig {
   showMoreButton: boolean; 
   maxItems: number; // maximum number of news items to show
   blogPageKey: string; // the key of the blog page where the news articles are stored, used for navigation when clicking on a news item
-  kicker?: string;          // small line above the title
-  kickerI18n?: I18nString;
 }
 
 // --------------------------------------- PEOPLE ----------------------------------------

@@ -20,9 +20,6 @@ interface NewsConfigI18n {
   news_blogPage_label:        Signal<string>;
   news_blogPage_placeholder:  Signal<string>;
   news_blogPage_helper:       Signal<string>;
-  kicker_label:               Signal<string>;
-  kicker_placeholder:         Signal<string>;
-  kicker_helper:              Signal<string>;
 }
 
 /**
@@ -46,10 +43,6 @@ interface NewsConfigI18n {
       <ion-card-content>
         <ion-grid>
           <ion-row>
-            <ion-col size="12" size-md="6">
-              <okr-text-input [i18n]="kickerI18n()" [value]="config().kicker ?? ''" (valueChange)="patch({ kicker: $event })"
-                              [maxLength]="kickerLength" [readOnly]="readOnly()" [showHelper]="true" />
-            </ion-col>
             <ion-col size="12" size-md="6">
               <okr-number-input [i18n]="maxItemsI18n()" [value]="config().maxItems" (valueChange)="patch({ maxItems: $event })"
                                 [integer]="true" [min]="1" [readOnly]="readOnly()" [showHelper]="true" />
@@ -81,8 +74,6 @@ export class NewsConfiguration {
   public readonly i18n = input.required<NewsConfigI18n>();
   /** vest field name -> messages of the running section suite (see section.form.ts) */
   public readonly errors = input<SectionErrors>({});
-
-  protected readonly kickerLength = LONG_NAME_LENGTH;
   protected readonly blogPageKeyLength = LONG_NAME_LENGTH;
   protected readonly urlLength = URL_LENGTH;
 
@@ -97,11 +88,6 @@ export class NewsConfiguration {
       blogPageKey: c?.blogPageKey ?? NEWS_CONFIG_SHAPE.blogPageKey,
     };
   });
-
-  protected readonly kickerI18n = computed(() => ({
-    name: 'kicker', label: this.i18n().kicker_label(),
-    placeholder: this.i18n().kicker_placeholder(), helper: this.i18n().kicker_helper(),
-  } as TextInputI18n));
 
   protected readonly maxItemsI18n = computed(() => ({
     name: 'maxItems', label: this.i18n().news_max_label(),

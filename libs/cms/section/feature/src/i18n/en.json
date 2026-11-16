@@ -457,16 +457,17 @@
   "hero": {
     "label": "Hero",
     "title": "Hero",
-    "subtitle": "Cover image with text on top: appearance, height and image crop",
+    "subtitle": "Cover image: image, image parameters, height and crop",
     "segment": {
       "image": "Image",
       "overlay": "Text",
-      "layout": "Size"
+      "layout": "Size",
+      "style": "Style"
     },
     "imgix": {
       "label": "Extra image parameters",
       "placeholder": "e.g. sat=-30",
-      "helper": "For advanced users: additional image processing instructions. You choose the cover image above."
+      "helper": "For advanced users: extra image processing instructions for the cover image."
     },
     "show": {
       "title": "Show title",
@@ -518,6 +519,16 @@
       "top": "Top",
       "bottom": "Bottom",
       "helper": "Which part of the image stays visible when it is cropped."
+    },
+    "empty": "No cover image chosen yet",
+    "logo": {
+      "title": "Logo",
+      "subtitle": "Optional: a logo in the text box over the cover image",
+      "empty": "No logo",
+      "segment": {
+        "image": "Image",
+        "style": "Style"
+      }
     },
     "gradient": {
       "from": "Gradient without image: left colour",
@@ -1090,9 +1101,15 @@
         "error": "The column size must be a whole number of digits, between 0 and 12."
       },
       "intro": {
-        "label": "Introduction",
+        "label": "Intro",
         "placeholder": "e.g. Four ways into the boat – pick yours.",
-        "helper": "A short paragraph below the title"
+        "helper": "A short text about the title. Choose where it appears under «Display»."
+      },
+      "introPosition": {
+        "label": "Display",
+        "above": "As a line above the title",
+        "below": "As an introduction below the title",
+        "helper": "Above the title the intro is a small line; below it, a short paragraph."
       }
     }
   },
@@ -1945,13 +1962,6 @@
       "medium": "Medium",
       "large": "Large"
     }
-  },
-  "kicker": {
-    "title": "Kicker",
-    "subtitle": "A small line above the title",
-    "label": "Kicker",
-    "placeholder": "e.g. Welcome",
-    "helper": "Short text shown small above the title. Leave empty if no kicker should appear."
   },
   "emphasis": {
     "label": "Appearance",

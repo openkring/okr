@@ -31,7 +31,7 @@ import { NOTICE_I18N_KEYS, NoticeI18n } from '@okr/content-notice-util';
       <okr-spinner />
     } @else {
       <ion-card>
-        <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+        <okr-optional-card-header [intro]="section()?.intro" [introPosition]="section()?.introPosition" [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
           @if (notices().length === 0) {
             <okr-empty-list [message]="i18n.empty()" />

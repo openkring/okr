@@ -25,8 +25,14 @@ const TILES_PREFIX = 'tiles.';
 const CTAS_PREFIX = 'ctas[';
 /** Marks the `avatar.imgWidth`-style keys of a people section (see peopleSectionValidations). */
 const PEOPLE_PREFIX = 'avatar.';
+/** Marks the `hero.url`-style keys of a hero's background image slot (see optionalImageSlotValidations). */
+const HERO_IMAGE_PREFIX = 'hero.';
+/** Marks the `gradient.from` / `gradient.to` keys of a hero's band colours. */
+const HERO_GRADIENT_PREFIX = 'gradient.';
+/** Marks the `logo.url`-style keys of a hero's logo slot. */
+const LOGO_IMAGE_PREFIX = 'logo.';
 /** Inline fields that stand for every key starting with them. */
-const PREFIX_FIELDS = [IMAGES_PREFIX, IMPLICIT_VALUES_PREFIX, TILES_PREFIX, CTAS_PREFIX, PEOPLE_PREFIX];
+const PREFIX_FIELDS = [IMAGES_PREFIX, IMPLICIT_VALUES_PREFIX, TILES_PREFIX, CTAS_PREFIX, PEOPLE_PREFIX, HERO_IMAGE_PREFIX, HERO_GRADIENT_PREFIX, LOGO_IMAGE_PREFIX];
 
 /**
  * Field names the configuration components of a given section type render an inline
@@ -37,9 +43,9 @@ const PREFIX_FIELDS = [IMAGES_PREFIX, IMPLICIT_VALUES_PREFIX, TILES_PREFIX, CTAS
  * this lib (which field names they actually produce).
  */
 export function getInlineErrorFields(type: SectionType, showAdvanced = false): string[] {
-  // section-configuration is rendered for every type; `name` only in advanced mode
+  // section-configuration is rendered for every type; `name` and the intro only in advanced mode
   const fields = ['title', 'subTitle'];
-  if (showAdvanced) fields.push('name');
+  if (showAdvanced) fields.push('name', 'intro', 'introPosition');
 
   switch (type) {
     case 'album':
@@ -71,8 +77,9 @@ export function getInlineErrorFields(type: SectionType, showAdvanced = false): s
       fields.push('formKey', 'emailAddresses', IMPLICIT_VALUES_PREFIX, 'closesAt', 'maxResponses', 'closedMessage');
       break;
     case 'hero':
-      fields.push('ctas', CTAS_PREFIX);
-      if (showAdvanced) fields.push(...IMAGE_STYLE_FIELDS);
+      // the Hero card (image, imgix parameters, height, focus), the Logo card (image, width, border, radius), the Buttons
+      fields.push('ctas', CTAS_PREFIX, ...HERO_SEGMENT_FIELDS.image, ...HERO_SEGMENT_FIELDS.style, ...HERO_SEGMENT_FIELDS.layout,
+        ...LOGO_SEGMENT_FIELDS.image, ...LOGO_SEGMENT_FIELDS.style);
       break;
     case 'iframe':
       fields.push('url', 'style');
@@ -134,11 +141,21 @@ export const ARTICLE_IMAGES_SEGMENT_FIELDS: SegmentErrorFields<'select' | 'layou
   styles: IMAGE_STYLE_FIELDS.filter((field) => field !== 'action' && field !== 'zoomFactor'),
 };
 
-/** The hero card (spec 1.154, phase 2). */
-export const HERO_SEGMENT_FIELDS: SegmentErrorFields<'image' | 'overlay' | 'layout'> = {
-  image: ['imgIxParams', 'gradient.'],
+/**
+ * The hero card (spec 1.154, phase 2): the background image; its extra imgix parameters and the gradient colours of the
+ * band without image (Stil); the journal's text overlay; height and focus.
+ */
+export const HERO_SEGMENT_FIELDS: SegmentErrorFields<'image' | 'style' | 'overlay' | 'layout'> = {
+  image: [HERO_IMAGE_PREFIX],
+  style: ['imgIxParams', HERO_GRADIENT_PREFIX],
   overlay: ['overlay.'],
   layout: ['height', 'focus'],
+};
+
+/** The hero's optional logo card: the logo image and the parts of the image style that act on it. */
+export const LOGO_SEGMENT_FIELDS: SegmentErrorFields<'image' | 'style'> = {
+  image: [LOGO_IMAGE_PREFIX],
+  style: ['width', 'border', 'borderRadius'],
 };
 
 /**

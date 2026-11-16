@@ -27,7 +27,7 @@ import { PeopleSectionStore } from './people-section.store';
   template: `
     @if(section(); as section) {
       <ion-card>
-        <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+        <okr-optional-card-header [intro]="section.intro" [introPosition]="section.introPosition" [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
           <ion-grid class="ion-no-padding">
             <ion-row>

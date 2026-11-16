@@ -128,7 +128,7 @@ export class ImagesConfiguration {
   public readonly i18n = input.required<SectionI18n>();
   /** vest field name -> messages of the running section suite (see section.form.ts) */
   public readonly errors = input<SectionErrors>({});
-  /** picker only: what the add button picks, and whether it adds several or replaces the one image */
+  /** what the picker adds; and whether the add button adds several images or replaces the one image (picker and upload) */
   public readonly kind = input<'image' | 'video'>('image');
   public readonly multiple = input(true);
   /** card title and empty-list text; the image texts when unset */
@@ -178,7 +178,10 @@ export class ImagesConfiguration {
       console.error('ImagesConfiguration.addImages: SECTION_IMAGE_PICKER is required here but not provided; nothing is uploaded');
       return;
     }
-    const files = await this.uploadService.pickMultipleFiles(IMAGE_MIMETYPES);
+    // a single slot (the hero's cover or logo) takes one file, and that file replaces the image
+    const files = this.multiple()
+      ? await this.uploadService.pickMultipleFiles(IMAGE_MIMETYPES)
+      : [await this.uploadService.pickFile(IMAGE_MIMETYPES)].filter((f): f is File => !!f);
     if (!files.length) return;
 
     const basePath = this.storagePath();
@@ -204,7 +207,7 @@ export class ImagesConfiguration {
 
     // Adding the images to the section is the primary result and must not be lost
     // if the secondary DocumentModel bookkeeping fails. Update the model first.
-    this.images.update(imgs => [...imgs, ...newImages]);
+    this.images.update(imgs => this.multiple() ? [...imgs, ...newImages] : newImages.slice(0, 1));
 
     // Best-effort: persist a DocumentModel record per uploaded file. A failure
     // here (permission, offline, …) is logged but never discards the images above.

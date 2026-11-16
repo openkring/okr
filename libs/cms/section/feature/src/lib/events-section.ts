@@ -14,6 +14,7 @@ import { CALEVENT_I18N_KEYS, canAttendCalevent, isCaleventAttendee, mayJoinOpenC
 import { showCalEventInfo } from '@okr/calendar-calevent-ui';
 import { CalendarFeedService } from '@okr/calendar-calevent-data-access';
 import { isAdminMember } from '@okr/subject-group-util';
+import { getSectionIntro } from '@okr/cms-section-util';
 
 import { CalendarStore } from './calendar-section.store';
 import { reservedListHeight } from './list-reservation';
@@ -33,7 +34,6 @@ import { openMoreLink } from './section-link';
         border: 0px;
         box-shadow: none !important;
       }
-      .kicker { margin: 0px 0px 4px 0px; padding: 0px 16px; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ion-color-secondary); }
       ion-label { font-size: 1em; }
       ion-icon { font-size: 28px; width: 28px; height: 28px; margin-inline-end: 8px; }
       /* a called-off event: red + struck through, matching the calendar list view */
@@ -50,8 +50,7 @@ import { openMoreLink } from './section-link';
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <ion-card>
-      @if (kicker()) { <p class="kicker">{{ kicker() }}</p> }
-      <okr-optional-card-header [title]="title()" [subTitle]="subTitle()"
+      <okr-optional-card-header [intro]="sectionIntro().text" [introPosition]="sectionIntro().position" [title]="title()" [subTitle]="subTitle()"
         [showInfoButton]="true" [infoLabel]="caleventI18n.info_open()" (infoClicked)="showInfo()" />
       <ion-card-content>
         <div class="list-area" [style.min-height.px]="reservedHeight()">
@@ -92,7 +91,7 @@ export class EventsSectionComponent implements OnInit {
   // derived values
   protected readonly title = computed(() => this.section()?.title);
   protected readonly subTitle = computed(() => this.section()?.subTitle);
-  protected readonly kicker = computed(() => this.section()?.properties?.kicker?.trim());
+  protected readonly sectionIntro = computed(() => getSectionIntro(this.section()));
   protected readonly calendarName = computed(() => this.section()?.name);
   protected readonly config = computed(() => this.section()?.properties as EventsConfig | undefined);
   protected readonly moreUrl = computed(() => this.config()?.moreUrl ?? '');

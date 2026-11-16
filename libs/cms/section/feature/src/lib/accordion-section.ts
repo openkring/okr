@@ -26,7 +26,7 @@ import { AccordionItemContentComponent } from './accordion-item';
   template: `
     @if(section()) {
       <ion-card>
-        <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+        <okr-optional-card-header [intro]="section()?.intro" [introPosition]="section()?.introPosition" [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
           <ion-accordion-group [value]="value()">
             @for(item of items(); track item.value; let idx = $index) {

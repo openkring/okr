@@ -3,7 +3,7 @@
  * replacing the hand-written fixed page apps/scs-website/templates/pages/kontakt.hbs.
  *
  * Writes:
- *   1. sections/scsw_kontakt_hero  — hero without image (= the light band): kicker, title, lead (de + en)
+ *   1. sections/scsw_kontakt_hero  — hero without image (= the light band): intro above the title, title, lead (de + en)
  *   2. sections/scsw_kontakt_info  — text article: Adresse, E-Mail, Social, IBAN (de + en). Followed directly
  *                                    by the form, the website draws both as one two-column row
  *                                    (render lib columnPairStarts + partials/section-pair.hbs).
@@ -71,12 +71,12 @@ const INFO_DE = info({ address: 'Adresse', country: 'Schweiz', email: 'E-Mail' }
 const INFO_EN = info({ address: 'Address', country: 'Switzerland', email: 'Email' });
 
 export const NEW_SECTIONS = {
-  scsw_kontakt_hero: section('scsw_kontakt_hero', 'hero', 'Kontakt', 'kontakt', {
-    kicker: 'Kontakt', kickerI18n: { en: 'Contact' },
+  scsw_kontakt_hero: { ...section('scsw_kontakt_hero', 'hero', 'Kontakt', 'kontakt', {
+    introI18n: { en: 'Contact' },
     titleI18n: { en: 'Contact' },
     subTitleI18n: { en: 'Questions about the club, our courses or the boathouse project? We look forward to hearing from you.' },
     ctas: [],
-  }, ''),
+  }, ''), intro: 'Kontakt', introPosition: 'above' },
   scsw_kontakt_info: section('scsw_kontakt_info', 'article', '', 'kontakt adresse iban', {
     images: [], imageStyle: IMAGE_STYLE,
     contentI18n: { en: INFO_EN },

@@ -457,16 +457,17 @@
   "hero": {
     "label": "Hero",
     "title": "Hero",
-    "subtitle": "Imagen de portada con texto encima: aspecto, altura y encuadre",
+    "subtitle": "Imagen de portada: imagen, parámetros, altura y encuadre",
     "segment": {
       "image": "Imagen",
       "overlay": "Texto",
-      "layout": "Tamaño"
+      "layout": "Tamaño",
+      "style": "Estilo"
     },
     "imgix": {
       "label": "Parámetros de imagen adicionales",
       "placeholder": "p. ej. sat=-30",
-      "helper": "Para usuarios avanzados: instrucciones adicionales de procesamiento de imagen. La imagen de portada la eliges arriba."
+      "helper": "Para usuarios avanzados: instrucciones adicionales de procesamiento para la imagen de portada."
     },
     "show": {
       "title": "Mostrar el título",
@@ -518,6 +519,16 @@
       "top": "Arriba",
       "bottom": "Abajo",
       "helper": "Qué parte de la imagen sigue visible cuando se recorta."
+    },
+    "empty": "Aún no has elegido una imagen de portada",
+    "logo": {
+      "title": "Logo",
+      "subtitle": "Opcional: un logo en el recuadro sobre la imagen de portada",
+      "empty": "Sin logo",
+      "segment": {
+        "image": "Imagen",
+        "style": "Estilo"
+      }
     },
     "gradient": {
       "from": "Degradado sin imagen: color izquierdo",
@@ -1090,9 +1101,15 @@
         "error": "El tamaño de columna debe ser un número entero compuesto únicamente de cifras, entre 0 y 12."
       },
       "intro": {
-        "label": "Introducción",
-        "placeholder": "p. ej. Cuatro formas de subir al barco: elige la tuya.",
-        "helper": "Un párrafo breve bajo el título"
+        "label": "Intro",
+        "placeholder": "p. ej. Cuatro maneras de subir al bote: elige la tuya.",
+        "helper": "Un texto breve sobre el título. Eliges dónde aparece en «Visualización»."
+      },
+      "introPosition": {
+        "label": "Visualización",
+        "above": "Como antetítulo sobre el título",
+        "below": "Como introducción bajo el título",
+        "helper": "Como antetítulo, la intro aparece en pequeño sobre el título; como introducción, en un párrafo breve debajo."
       }
     }
   },
@@ -1945,13 +1962,6 @@
       "medium": "Mediano",
       "large": "Grande"
     }
-  },
-  "kicker": {
-    "title": "Antetítulo",
-    "subtitle": "Una línea pequeña encima del título",
-    "label": "Antetítulo",
-    "placeholder": "p. ej. Bienvenido",
-    "helper": "Texto corto que aparece en pequeño encima del título. Déjalo vacío si no debe aparecer ningún antetítulo."
   },
   "emphasis": {
     "label": "Presentación",

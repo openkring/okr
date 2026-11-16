@@ -27,7 +27,6 @@ export * from './lib/testimonial-configuration';
 export * from './lib/tiles-configuration';
 export * from './lib/news-configuration';
 export * from './lib/cta-configuration';
-export * from './lib/kicker-configuration';
 export * from './lib/hero-configuration';
 export * from './lib/timeline-configuration';
 export * from './lib/advent-configuration';

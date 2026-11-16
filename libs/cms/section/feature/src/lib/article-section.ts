@@ -5,7 +5,7 @@ import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, 
 
 import { ArticleSection, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ViewPosition } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { ImageLayoutId, articleImagePosition, resolveImageLayout, validCtas } from '@okr/cms-section-util';
+import { ImageLayoutId, articleImagePosition, resolveImageLayout, validCtas, getSectionIntro } from '@okr/cms-section-util';
 import { badgeFor, Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
 
 import { ArticleImages } from './article-images';
@@ -25,7 +25,6 @@ import { openSectionLink } from './section-link';
   styles: [`
     ion-card-content { padding: 5px; }
     ion-card.banner { background: color-mix(in srgb, var(--ion-color-secondary) 12%, transparent); border-radius: 8px; padding: 12px; }
-    .kicker { margin: 0px 0px 4px 0px; padding: 0px 5px; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ion-color-secondary); }
     .cta { padding: 8px 5px 0px 5px; }
     ion-card { padding: 0px; margin: 0px; border: 0px; box-shadow: none !important; }
 
@@ -114,8 +113,7 @@ import { openSectionLink } from './section-link';
         </div>
       </ng-template>
       <ion-card [class.banner]="isBanner()">
-        @if (kicker()) { <p class="kicker">{{ kicker() }}</p> }
-        <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+        <okr-optional-card-header [intro]="sectionIntro().text" [introPosition]="sectionIntro().position" [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
           @if (images().length > 0 || (content() && content()!.length > 7)) {
             @switch(position()) {
@@ -283,7 +281,10 @@ export class ArticleSectionComponent {
   // Shared texts (e.g. the privacy statement, one set of sections for every tenant) name the
   // tenant through placeholders such as @APPNAME@ and @DOMAIN@, like the title does.
   protected content = computed(() => this.store.appStore.replacePlaceholders(this.section()?.content?.htmlContent ?? '<p></p>'));
-  protected kicker = computed(() => this.store.appStore.replacePlaceholders(this.section()?.properties.kicker?.trim() ?? ''));
+  protected sectionIntro = computed(() => {
+    const intro = getSectionIntro(this.section());
+    return { ...intro, text: this.store.appStore.replacePlaceholders(intro.text) };
+  });
   protected isBanner = computed(() => this.section()?.properties.emphasis === 'banner');
   protected cta = computed(() => {
     const c = this.section()?.properties.cta;

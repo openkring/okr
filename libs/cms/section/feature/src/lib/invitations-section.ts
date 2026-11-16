@@ -48,7 +48,7 @@ import { reservedListHeight } from './list-reservation';
   template: `
     @if(isVisible()) {
     <ion-card>
-      <okr-optional-card-header [title]="title()" [subTitle]="subTitle()"
+      <okr-optional-card-header [intro]="section()?.intro" [introPosition]="section()?.introPosition" [title]="title()" [subTitle]="subTitle()"
         [showInfoButton]="true" [infoLabel]="caleventI18n.info_open()" (infoClicked)="showInfo()" />
       <ion-card-content>
         <div class="list-area" [style.min-height.px]="reservedHeight()">

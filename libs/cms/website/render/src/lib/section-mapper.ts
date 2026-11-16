@@ -186,6 +186,20 @@ function i18nOf(props: Record<string, unknown>, key: string, plainKey: string, l
   return pickText(str(props[plainKey]), props[key] as I18nString | undefined, lang);
 }
 
+/**
+ * The section's intro, split by where it is shown: `kicker` above the title (the former «Überzeile»), `intro` below
+ * title and subtitle (the default). A section stored before the intro took over the Überzeile still carries it as
+ * `properties.kicker` / `kickerI18n` (hero, article, events, news); until the migration has run that text is used,
+ * above the title.
+ */
+export function mapIntro(s: SectionDoc, props: Record<string, unknown>, lang: string): { kicker: string; intro: string } {
+  const intro = pickText(s.intro, props['introI18n'] as I18nString | undefined, lang);
+  if (intro.trim()) return s.introPosition === 'above' ? { kicker: intro, intro: '' } : { kicker: '', intro };
+  // a tiles kicker is not a legacy Überzeile: migrate-tiles-section-fields.mjs turns it into the subtitle
+  if (s.type === 'tiles') return { kicker: '', intro: '' };
+  return { kicker: i18nOf(props, 'kickerI18n', 'kicker', lang), intro: '' };
+}
+
 export interface StoredImage { url?: string; altText?: string; label?: string; overlay?: string; credit?: string }
 
 /** The caption and height settings of a section's `properties.imageStyle`. */
@@ -252,6 +266,7 @@ export interface SectionDoc {
   title?: string;
   subTitle?: string;
   intro?: string;
+  introPosition?: 'above' | 'below';
   color?: number;
   content?: { htmlContent?: string; position?: number; colSize?: number };
   properties?: Record<string, unknown> & {
@@ -414,16 +429,17 @@ export function mapSection(
   const title = pickText(s.title, props['titleI18n'] as I18nString | undefined, lang);
   const subTitle = pickText(s.subTitle, props['subTitleI18n'] as I18nString | undefined, lang);
   const articleHtml = sanitize(pickText(s.content?.htmlContent, props['contentI18n'] as I18nString | undefined, lang));
-  const kicker = i18nOf(props, 'kickerI18n', 'kicker', lang);
+  const { kicker, intro } = mapIntro(s, props, lang);
   const imageStyle = props['imageStyle'] as StoredImageStyle | undefined;
 
   switch (type) {
     case 'hero': {
-      const heroImg = mapImage(props['hero'] as StoredImage | undefined, imageStyle);
+      // the background never carries a caption (the app draws it without one, too)
+      const heroImg = mapImage(props['hero'] as StoredImage | undefined);
       const logoImg = mapImage(props['logo'] as StoredImage | undefined);
       const ctas = (Array.isArray(props['ctas']) ? props['ctas'] : [])
         .map(c => mapCta(c, lang)).filter((c): c is PublicCta => !!c).slice(0, 2);
-      return { type: 'hero', name, title, subTitle, kicker, content: articleHtml, background: heroImg, logo: logoImg, ctas, gradient: mapHeroGradient(props['gradient']) };
+      return { type: 'hero', name, title, subTitle, kicker, intro, content: articleHtml, background: heroImg, logo: logoImg, ctas, gradient: mapHeroGradient(props['gradient']) };
     }
 
     case 'table': {
@@ -534,8 +550,7 @@ export function mapSection(
       const items = mapTiles(props['items'], variant, lang);
       // the subtitle is drawn as the line above the title, in the section colour (`accent`)
       return {
-        type: 'tiles', name, title, subTitle,
-        intro: pickText(s.intro, props['introI18n'] as I18nString | undefined, lang),
+        type: 'tiles', name, title, subTitle, kicker, intro,
         accent: mapAccent(s.color),
         variant,
         columns: mapTilesColumns(props['columns']),
@@ -546,10 +561,10 @@ export function mapSection(
     }
 
     case 'events':
-      return { type: 'events', name, title, kicker, maxItems: clampCount(props['maxEvents']), moreUrl: safeSiteUrl(props['moreUrl']) };
+      return { type: 'events', name, title, kicker, intro, maxItems: clampCount(props['maxEvents']), moreUrl: safeSiteUrl(props['moreUrl']) };
 
     case 'news':
-      return { type: 'news', name, title, kicker, maxItems: clampCount(props['maxItems']), moreUrl: safeSiteUrl(props['moreUrl']) };
+      return { type: 'news', name, title, kicker, intro, maxItems: clampCount(props['maxItems']), moreUrl: safeSiteUrl(props['moreUrl']) };
 
     case 'article':
     default: {
@@ -558,7 +573,7 @@ export function mapSection(
       const layout = articleImageLayout(images.length, content?.position, content?.colSize);
       // A position of 'none' hides the images in the app as well.
       return {
-        type: 'article', name, title, subTitle, kicker, content: articleHtml,
+        type: 'article', name, title, subTitle, kicker, intro, content: articleHtml,
         cta: mapCta(props['cta'], lang),
         emphasis: props['emphasis'] === 'banner' ? 'banner' : 'none',
         images: layout.imagePosition === 'none' ? [] : images,

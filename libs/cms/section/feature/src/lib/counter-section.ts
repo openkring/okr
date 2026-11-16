@@ -70,7 +70,7 @@ import { SectionStore } from './section.store';
   template: `
     @if(section(); as section) {
       <ion-card>
-        <okr-optional-card-header [title]="section.title" [subTitle]="section.subTitle" />
+        <okr-optional-card-header [intro]="section.intro" [introPosition]="section.introPosition" [title]="section.title" [subTitle]="section.subTitle" />
         <ion-card-content>
           <div class="counter" [class]="config().uiType" role="group" [attr.aria-label]="ariaLabel()">
             @switch(config().uiType) {

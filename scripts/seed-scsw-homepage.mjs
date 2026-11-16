@@ -123,6 +123,11 @@ const IMAGE_STYLE = {
   showTitle: false, showSource: false, captionPosition: 'none', captionSize: '0.8rem', captionStyle: 'italic', captionAlign: 'left',
 };
 
+/** The small line above the title: the section's intro shown above it (introPosition 'above'). */
+function above(t, section) {
+  return { ...section, intro: t.de, introPosition: 'above', properties: { ...section.properties, introI18n: i18n(t) } };
+}
+
 function base(id, type, name, title, subTitle, index, properties, content = '<p></p>', contentPosition = 1) {
   return {
     type, state: 'published', name, title, subTitle,
@@ -157,12 +162,10 @@ function sections() {
   // The website renderer never appends an arrow to CTA / link labels, so the « →» of the strings stays in the label.
 
   return {
-    scsw_homepage_hero: base('scsw_homepage_hero', 'hero', 'top', hero.title.de, hero.sub.de, 0, {
+    scsw_homepage_hero: above(hero.kicker, base('scsw_homepage_hero', 'hero', 'top', hero.title.de, hero.sub.de, 0, {
       logo: { ...IMAGE_CONFIG },
       hero: { ...IMAGE_CONFIG, url: 'tenant/scs/web/hero-sunset.jpg', altText: 'Sonnenuntergang über dem Zürichsee' },
       imageStyle: { ...IMAGE_STYLE },
-      kicker: hero.kicker.de,
-      kickerI18n: i18n(hero.kicker),
       titleI18n: i18n(hero.title),
       subTitleI18n: i18n(hero.sub),
       contentI18n: { en: para(hero.lead.en) },
@@ -170,15 +173,14 @@ function sections() {
         { label: hero.c1.de, labelI18n: i18n(hero.c1), url: '#kurse', style: 'primary' },
         { label: hero.c2.de, labelI18n: i18n(hero.c2), url: '#ueber-uns', style: 'secondary' },
       ],
-    }, para(hero.lead.de)),
+    }, para(hero.lead.de))),
 
-    scsw_homepage_about: base('scsw_homepage_about', 'article', 'ueber-uns', about.title.de, '', 1, {
+    scsw_homepage_about: above(about.kicker, base('scsw_homepage_about', 'article', 'ueber-uns', about.title.de, '', 1, {
       images: [], imageStyle: { ...IMAGE_STYLE },
-      kicker: about.kicker.de, kickerI18n: i18n(about.kicker),
       titleI18n: i18n(about.title),
       contentI18n: { en: para(about.p1.en) + para(about.p2.en) },
       emphasis: 'none',
-    }, para(about.p1.de) + para(about.p2.de)),
+    }, para(about.p1.de) + para(about.p2.de))),
 
     scsw_homepage_figures: base('scsw_homepage_figures', 'tiles', 'zahlen', '', '', 2, {
       variant: 'stat', columns: 2,
@@ -205,30 +207,29 @@ function sections() {
       })),
     }), intro: offers.lead.de },
 
-    scsw_homepage_boathouse: base('scsw_homepage_boathouse', 'article', 'bootshaus', bh.title.de, '', 4, {
+    scsw_homepage_boathouse: above(bh.kicker, base('scsw_homepage_boathouse', 'article', 'bootshaus', bh.title.de, '', 4, {
       images: [{
         ...IMAGE_CONFIG, url: 'tenant/scs/web/bootshaus-neubau.png',
         altText: bh.caption.de, overlay: bh.caption.de,
       }],
       imageStyle: { ...IMAGE_STYLE, captionPosition: 'bottom-overlay' },
-      kicker: bh.kicker.de, kickerI18n: i18n(bh.kicker),
       titleI18n: i18n(bh.title),
       contentI18n: { en: para(bh.lead.en) },
       cta: { label: bh.cta.de, labelI18n: i18n(bh.cta), url: 'bootshaus.html', style: 'primary' },
       emphasis: 'banner',
-    }, para(bh.lead.de), POSITION_RIGHT),
+    }, para(bh.lead.de), POSITION_RIGHT)),
 
     // name = the calendar key the app's events section reads (R9): the website lists the 'public' calendar
-    scsw_homepage_events: base('scsw_homepage_events', 'events', 'public', ev.title.de, '', 5, {
+    scsw_homepage_events: above(ev.kicker, base('scsw_homepage_events', 'events', 'public', ev.title.de, '', 5, {
       moreUrl: 'termine.html', maxEvents: 4, showPastEvents: false, showUpcomingEvents: true,
       showEventTime: true, showEventLocation: false,
-      kicker: ev.kicker.de, kickerI18n: i18n(ev.kicker), titleI18n: i18n(ev.title),
-    }),
+      titleI18n: i18n(ev.title),
+    })),
 
-    scsw_homepage_news: base('scsw_homepage_news', 'news', 'news', news.title.de, '', 6, {
+    scsw_homepage_news: above(news.kicker, base('scsw_homepage_news', 'news', 'news', news.title.de, '', 6, {
       moreUrl: 'news.html', showMoreButton: true, maxItems: 3, blogPageKey: 'news_@TID@',
-      kicker: news.kicker.de, kickerI18n: i18n(news.kicker), titleI18n: i18n(news.title),
-    }),
+      titleI18n: i18n(news.title),
+    })),
   };
 }
 

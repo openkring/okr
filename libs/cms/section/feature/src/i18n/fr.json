@@ -457,16 +457,17 @@
   "hero": {
     "label": "Hero",
     "title": "Hero",
-    "subtitle": "Image de couverture avec du texte dessus : apparence, hauteur et cadrage",
+    "subtitle": "Image de couverture : image, paramètres, hauteur et cadrage",
     "segment": {
       "image": "Image",
       "overlay": "Texte",
-      "layout": "Taille"
+      "layout": "Taille",
+      "style": "Style"
     },
     "imgix": {
       "label": "Paramètres d'image supplémentaires",
       "placeholder": "p. ex. sat=-30",
-      "helper": "Pour les utilisateurs avancés : instructions de traitement d'image supplémentaires. Tu choisis l'image de couverture plus haut."
+      "helper": "Pour les utilisateurs avancés : instructions supplémentaires de traitement de l’image de couverture."
     },
     "show": {
       "title": "Afficher le titre",
@@ -518,6 +519,16 @@
       "top": "Haut",
       "bottom": "Bas",
       "helper": "La partie de l'image qui reste visible lorsqu'elle est recadrée."
+    },
+    "empty": "Aucune image de couverture choisie",
+    "logo": {
+      "title": "Logo",
+      "subtitle": "Optionnel : un logo dans l’encadré au-dessus de l’image de couverture",
+      "empty": "Pas de logo",
+      "segment": {
+        "image": "Image",
+        "style": "Style"
+      }
     },
     "gradient": {
       "from": "Dégradé sans image : couleur à gauche",
@@ -1090,9 +1101,15 @@
         "error": "La taille de colonne doit être un nombre entier composé uniquement de chiffres, entre 0 et 12."
       },
       "intro": {
-        "label": "Introduction",
-        "placeholder": "p.ex. Quatre façons de monter dans le bateau – choisis la tienne.",
-        "helper": "Un court paragraphe sous le titre"
+        "label": "Intro",
+        "placeholder": "p. ex. Quatre façons de monter à bord – choisis la tienne.",
+        "helper": "Un court texte sur le titre. Tu choisis où il apparaît sous «Affichage»."
+      },
+      "introPosition": {
+        "label": "Affichage",
+        "above": "Comme surtitre au-dessus du titre",
+        "below": "Comme introduction sous le titre",
+        "helper": "En surtitre, l’intro apparaît en petit au-dessus du titre ; en introduction, comme un court paragraphe en dessous."
       }
     }
   },
@@ -1945,13 +1962,6 @@
       "medium": "Moyen",
       "large": "Grand"
     }
-  },
-  "kicker": {
-    "title": "Surtitre",
-    "subtitle": "Une petite ligne au-dessus du titre",
-    "label": "Surtitre",
-    "placeholder": "p. ex. Bienvenue",
-    "helper": "Texte court affiché en petit au-dessus du titre. Laisse vide si aucun surtitre ne doit apparaître."
   },
   "emphasis": {
     "label": "Affichage",

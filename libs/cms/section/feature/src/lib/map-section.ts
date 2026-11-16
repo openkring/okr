@@ -67,7 +67,7 @@ if (typeof window !== 'undefined') {
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <ion-card>
-      <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+      <okr-optional-card-header [intro]="section()?.intro" [introPosition]="section()?.introPosition" [title]="title()" [subTitle]="subTitle()" />
       <ion-card-content>
         @if(locationError()) {
           <div class="error-message">

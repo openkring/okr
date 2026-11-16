@@ -457,16 +457,17 @@
   "hero": {
     "label": "Hero",
     "title": "Hero",
-    "subtitle": "Immagine di copertina con testo sopra: aspetto, altezza e inquadratura",
+    "subtitle": "Immagine di copertina: immagine, parametri, altezza e ritaglio",
     "segment": {
       "image": "Immagine",
       "overlay": "Testo",
-      "layout": "Dimensione"
+      "layout": "Dimensione",
+      "style": "Stile"
     },
     "imgix": {
       "label": "Parametri immagine aggiuntivi",
       "placeholder": "es. sat=-30",
-      "helper": "Per utenti esperti: istruzioni aggiuntive di elaborazione dell'immagine. L'immagine di copertina la scegli sopra."
+      "helper": "Per utenti esperti: istruzioni aggiuntive per l’elaborazione dell’immagine di copertina."
     },
     "show": {
       "title": "Mostra il titolo",
@@ -518,6 +519,16 @@
       "top": "Alto",
       "bottom": "Basso",
       "helper": "Quale parte dell'immagine resta visibile quando viene ritagliata."
+    },
+    "empty": "Nessuna immagine di copertina scelta",
+    "logo": {
+      "title": "Logo",
+      "subtitle": "Facoltativo: un logo nel riquadro sopra l’immagine di copertina",
+      "empty": "Nessun logo",
+      "segment": {
+        "image": "Immagine",
+        "style": "Stile"
+      }
     },
     "gradient": {
       "from": "Sfumatura senza immagine: colore a sinistra",
@@ -1090,9 +1101,15 @@
         "error": "La dimensione della colonna deve essere un numero intero composto solo da cifre, tra 0 e 12."
       },
       "intro": {
-        "label": "Introduzione",
-        "placeholder": "p.es. Quattro modi per salire in barca: scegli il tuo.",
-        "helper": "Un breve paragrafo sotto il titolo"
+        "label": "Intro",
+        "placeholder": "p. es. Quattro modi per salire in barca – scegli il tuo.",
+        "helper": "Un breve testo sul titolo. Scegli dove appare sotto «Visualizzazione»."
+      },
+      "introPosition": {
+        "label": "Visualizzazione",
+        "above": "Come occhiello sopra il titolo",
+        "below": "Come introduzione sotto il titolo",
+        "helper": "Come occhiello l’intro appare piccola sopra il titolo; come introduzione, un breve paragrafo sotto."
       }
     }
   },
@@ -1945,13 +1962,6 @@
       "medium": "Medio",
       "large": "Grande"
     }
-  },
-  "kicker": {
-    "title": "Occhiello",
-    "subtitle": "Una piccola riga sopra il titolo",
-    "label": "Occhiello",
-    "placeholder": "p. es. Benvenuto",
-    "helper": "Testo breve che appare in piccolo sopra il titolo. Lascialo vuoto se non deve apparire nessun occhiello."
   },
   "emphasis": {
     "label": "Aspetto",

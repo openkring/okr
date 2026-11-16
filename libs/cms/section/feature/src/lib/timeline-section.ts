@@ -58,7 +58,7 @@ import { CalendarStore } from './calendar-section.store';
   template: `
   @if(section(); as section) {
     <ion-card>
-      <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+      <okr-optional-card-header [intro]="section.intro" [introPosition]="section.introPosition" [title]="title()" [subTitle]="subTitle()" />
       <ion-card-content>
         @if(entries().length === 0) {
           <okr-empty-list [message]="store.i18n.timeline_empty()" />

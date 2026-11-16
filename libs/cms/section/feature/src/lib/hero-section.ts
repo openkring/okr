@@ -5,7 +5,7 @@ import { IonButton, IonChip, IonCol, IonGrid, IonIcon, IonLabel, IonRow } from '
 
 import { HERO_OVERLAY_DEFAULT, HeroSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { HeroOverlayText, heroHeightCss, heroImgixParams, heroObjectPosition, heroOverlayCss, validCtas } from '@okr/cms-section-util';
+import { getSectionIntro, heroBackgroundStyle, heroHeightCss, heroImgixParams, heroLogoStyle, heroObjectPosition, heroOverlayCss, HeroOverlayText, validCtas } from '@okr/cms-section-util';
 import { Img, Spinner } from '@okr/shared-ui';
 
 import { openSectionLink } from './section-link';
@@ -31,7 +31,8 @@ import { openSectionLink } from './section-link';
     .overlay-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; font-size: 0.5em; }
     .overlay-chips ion-chip { color: inherit; border: 1px solid currentColor; background: transparent; }
     .hero-form {background-color: rgba(255, 255, 255); padding: 20px; border-radius: 10px; width: 600px; max-width: 600px; width: 90%; text-align: center; z-index: 5;}
-    .kicker { text-align: center; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ion-color-secondary); }
+    .intro-above { text-align: center; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ion-color-secondary); }
+    .intro-below { text-align: center; font-size: 1rem; opacity: 0.8; white-space: pre-line; }
     .ctas { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
     .title { text-align: center; font-size: 2rem;}
     .subtitle { text-align: center; font-size: 1.2rem;}
@@ -64,13 +65,14 @@ import { openSectionLink } from './section-link';
             @if (hasLogo()) {
               <ion-row>
                 <ion-col>
-                  <okr-img class="logo" [image]="logoImage()" [imageStyle]="imageStyle()" />
+                  <okr-img class="logo" [image]="logoImage()" [imageStyle]="logoStyle()" />
                 </ion-col>
               </ion-row>
             }
-            @if (kicker()) { <ion-row><ion-col><div class="kicker">{{ kicker() }}</div></ion-col></ion-row> }
+            @if (intro().text && intro().position === 'above') { <ion-row><ion-col><div class="intro-above">{{ intro().text }}</div></ion-col></ion-row> }
             @if (section.title) { <ion-row><ion-col><div class="title">{{ section.title }}</div></ion-col></ion-row> }
             @if (section.subTitle) { <ion-row><ion-col><div class="subtitle">{{ section.subTitle }}</div></ion-col></ion-row> }
+            @if (intro().text && intro().position === 'below') { <ion-row><ion-col><div class="intro-below">{{ intro().text }}</div></ion-col></ion-row> }
             @if (chips().length > 0) {
               <ion-row>
                 <ion-col class="chips">
@@ -118,19 +120,22 @@ export class HeroSectionComponent {
   // tbd on heroImage: hasPriority=true, ImageAction.None, isThumbnail=false, fill=true, altText='hero image'
   protected logoImage = computed(() => this.section()?.properties.logo ?? IMAGE_CONFIG_SHAPE);
   // tbd on logoImage: hasPriority=false, ImageAction.None, isThumbnail=false, fill=true, altText='logo image'
+  /** the stored image style: its imgix parameters go to the cover, width, border and radius to the logo */
   protected imageStyle = computed(() => this.section()?.properties.imageStyle ?? IMAGE_STYLE_SHAPE);
+  protected logoStyle = computed(() => heroLogoStyle(this.imageStyle()));
   /** height and image focus only act when set; absent they leave today's rendering untouched */
   protected heightCss = computed(() => heroHeightCss(this.section()?.properties.height));
   protected objectPosition = computed(() => {
     const focus = this.section()?.properties.focus;
     return focus ? heroObjectPosition(focus) : null;
   });
-  /** the imgix crop of the focus is appended to the style's own parameters (the iPad's local file has no imgix) */
+  /**
+   * The cover always fills the hero (no frame, caption or click action, loaded first); the imgix crop of the focus is
+   * appended to the style's own parameters (the iPad's local file has no imgix)
+   */
   protected heroImageStyle = computed(() => {
-    const style = this.imageStyle();
     const config = this.section()?.properties;
-    const extra = config ? heroImgixParams(config) : '';
-    return extra ? { ...style, imgIxParams: [style.imgIxParams, extra].filter(Boolean).join('&') } : style;
+    return heroBackgroundStyle(this.imageStyle(), config ? heroImgixParams(config) : '');
   });
   /** an overlay config is only applied together with overlayText; the defaults only fill a journal cover without one */
   protected overlayView = computed(() => {
@@ -149,14 +154,15 @@ export class HeroSectionComponent {
       chips,
     };
   });
-  protected kicker = computed(() => this.section()?.properties.kicker?.trim());
+  /** above the title (the former «Überzeile») or below title and subtitle */
+  protected intro = computed(() => getSectionIntro(this.section()));
   protected ctas = computed(() => validCtas(this.section()?.properties.ctas, 2));
   protected chips = computed(() => this.section()?.properties.chips ?? []);
   // The card shows only when it has something: a logo (the classic hero), a title, a subtitle or chips.
   protected hasLogo = computed(() => !!this.logoImage().url);
   protected hasCard = computed(() => {
     const section = this.section();
-    return this.hasLogo() || !!this.kicker() || this.ctas().length > 0 || !!section?.title || !!section?.subTitle || this.chips().length > 0;
+    return this.hasLogo() || !!this.intro().text || this.ctas().length > 0 || !!section?.title || !!section?.subTitle || this.chips().length > 0;
   });
 
   protected open(url: string): void {

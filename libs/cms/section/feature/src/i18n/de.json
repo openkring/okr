@@ -457,16 +457,17 @@
   "hero": {
     "label": "Hero",
     "title": "Hero",
-    "subtitle": "Titelbild mit Text darüber: Darstellung, Höhe und Bildausschnitt",
+    "subtitle": "Titelbild: Bild, Bildparameter, Höhe und Bildausschnitt",
     "segment": {
       "image": "Bild",
       "overlay": "Text",
-      "layout": "Grösse"
+      "layout": "Grösse",
+      "style": "Stil"
     },
     "imgix": {
       "label": "Weitere Bildparameter",
       "placeholder": "z.B. sat=-30",
-      "helper": "Für Fortgeschrittene: zusätzliche Anweisungen für die Bildbearbeitung. Das Titelbild wählst du oben."
+      "helper": "Für Fortgeschrittene: zusätzliche Anweisungen für die Bildbearbeitung des Titelbilds."
     },
     "show": {
       "title": "Titel anzeigen",
@@ -518,6 +519,16 @@
       "top": "Oben",
       "bottom": "Unten",
       "helper": "Welcher Teil des Bildes sichtbar bleibt, wenn es zugeschnitten wird."
+    },
+    "empty": "Noch kein Titelbild gewählt",
+    "logo": {
+      "title": "Logo",
+      "subtitle": "Optional: ein Logo im Textfeld über dem Titelbild",
+      "empty": "Kein Logo",
+      "segment": {
+        "image": "Bild",
+        "style": "Stil"
+      }
     },
     "gradient": {
       "from": "Verlauf ohne Bild: Farbe links",
@@ -1090,9 +1101,15 @@
         "error": "Die Spaltengrösse muss eine Ganzzahl aus lauter Ziffern sein, zwischen 0 und 12."
       },
       "intro": {
-        "label": "Einleitung",
+        "label": "Intro",
         "placeholder": "z.B. Vier Wege ins Boot – wähle deinen.",
-        "helper": "Ein kurzer Absatz unter dem Titel"
+        "helper": "Ein kurzer Text zum Titel. Wo er erscheint, legst du unter «Darstellung» fest."
+      },
+      "introPosition": {
+        "label": "Darstellung",
+        "above": "Als Überzeile über dem Titel",
+        "below": "Als Einleitung unter dem Titel",
+        "helper": "Als Überzeile steht das Intro klein über dem Titel, als Einleitung als kurzer Absatz darunter."
       }
     }
   },
@@ -1945,13 +1962,6 @@
       "medium": "Mittel",
       "large": "Gross"
     }
-  },
-  "kicker": {
-    "title": "Überzeile",
-    "subtitle": "Eine kleine Zeile über dem Titel",
-    "label": "Überzeile",
-    "placeholder": "z.B. Willkommen",
-    "helper": "Kurzer Text, der klein über dem Titel steht. Leer lassen, wenn keine Überzeile erscheinen soll."
   },
   "emphasis": {
     "label": "Darstellung",

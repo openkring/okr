@@ -42,7 +42,7 @@ import { ContextDiagramConfigModal } from '@okr/cms-section-ui';
       <okr-spinner />
     } @else {
       <ion-card>
-        <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+        <okr-optional-card-header [intro]="section()?.intro" [introPosition]="section()?.introPosition" [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
           @if (echartsOption(); as opt) {
             <div echarts [options]="opt" class="chart"

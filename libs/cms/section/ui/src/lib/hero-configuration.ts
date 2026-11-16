@@ -1,72 +1,25 @@
-import { Component, computed, input, model, signal, Signal } from '@angular/core';
+import { Component, computed, input, model, signal } from '@angular/core';
 import {
   IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonLabel, IonNote, IonRow,
   IonSegment, IonSegmentButton, IonSelect, IonSelectOption
 } from '@ionic/angular';
 
 import { Checkbox, CheckboxI18n, Color, ErrorNote, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { HERO_OVERLAY_DEFAULT, HeroConfig, HeroGradient, HeroOverlay, IMAGE_STYLE_SHAPE } from '@okr/shared-models';
+import { HERO_OVERLAY_DEFAULT, HeroConfig, HeroGradient, HeroOverlay, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, UserModel } from '@okr/shared-models';
 import { coerceBoolean } from '@okr/shared-util-core';
 import {
   getErrorSegments, getFieldErrors, HERO_FOCUSES, HERO_SEGMENT_FIELDS, HERO_HEIGHTS, HERO_OVERLAY_DARKENING_MAX, HERO_OVERLAY_FONT_SIZES, HERO_OVERLAY_LABEL_LENGTH,
-  HERO_OVERLAY_POSITIONS, SectionErrors
+  HERO_OVERLAY_POSITIONS, SectionErrors, SectionI18n
 } from '@okr/cms-section-util';
 
-type Segment = 'image' | 'overlay' | 'layout';
+import { ImagesConfiguration } from './images-configuration';
+import { heroSlotImages, slotErrors } from './hero-image-slot';
+
+type Segment = 'image' | 'style' | 'overlay' | 'layout';
 type HeightMode = 'default' | 'px' | (typeof HERO_HEIGHTS)[number];
 
 /** the pixel height a switch to «own value» starts from */
 const DEFAULT_HEIGHT_PX = 400;
-
-interface HeroConfigI18n {
-  hero_title:                 Signal<string>;
-  hero_subtitle:              Signal<string>;
-  hero_segment_image:         Signal<string>;
-  hero_segment_overlay:       Signal<string>;
-  hero_segment_layout:        Signal<string>;
-  segment_errors:             Signal<string>;
-  hero_imgix_label:           Signal<string>;
-  hero_imgix_placeholder:     Signal<string>;
-  hero_imgix_helper:          Signal<string>;
-  hero_show_title:            Signal<string>;
-  hero_show_subtitle:         Signal<string>;
-  hero_show_coords:           Signal<string>;
-  hero_show_weather:          Signal<string>;
-  hero_text_label:            Signal<string>;
-  hero_text_placeholder:      Signal<string>;
-  hero_text_helper:           Signal<string>;
-  hero_position_label:        Signal<string>;
-  hero_position_bottomLeft:   Signal<string>;
-  hero_position_bottomCenter: Signal<string>;
-  hero_position_center:       Signal<string>;
-  hero_position_topLeft:      Signal<string>;
-  hero_color:                 Signal<string>;
-  hero_darkening_label:       Signal<string>;
-  hero_darkening_placeholder: Signal<string>;
-  hero_darkening_helper:      Signal<string>;
-  hero_fontSize_label:        Signal<string>;
-  hero_fontSize_s:            Signal<string>;
-  hero_fontSize_m:            Signal<string>;
-  hero_fontSize_l:            Signal<string>;
-  hero_height_label:          Signal<string>;
-  hero_height_default:        Signal<string>;
-  hero_height_s:              Signal<string>;
-  hero_height_m:              Signal<string>;
-  hero_height_l:              Signal<string>;
-  hero_height_full:           Signal<string>;
-  hero_height_px:             Signal<string>;
-  hero_heightPx_label:        Signal<string>;
-  hero_heightPx_placeholder:  Signal<string>;
-  hero_heightPx_helper:       Signal<string>;
-  hero_focus_label:           Signal<string>;
-  hero_focus_center:          Signal<string>;
-  hero_focus_top:             Signal<string>;
-  hero_focus_bottom:          Signal<string>;
-  hero_focus_helper:          Signal<string>;
-  hero_gradient_from:         Signal<string>;
-  hero_gradient_to:           Signal<string>;
-  hero_gradient_helper:       Signal<string>;
-}
 
 /** the band colours shown while a hero stores none: the app's primary and secondary colour */
 function themeColor(name: 'primary' | 'secondary', fallback: string): string {
@@ -76,16 +29,18 @@ function themeColor(name: 'primary' | 'secondary', fallback: string): string {
 }
 
 /**
- * The look of a hero: the text laid over the image (which lines, where, colour, darkening, size),
- * its height and the part of the image that stays visible. The cover image itself is the hero's
- * own image card; here only the extra image parameters of the Bild segment.
+ * The hero card: the cover image (Bild, a one-image list with its thumbnail), its extra imgix parameters and the
+ * gradient colours of the band the website draws without a cover (Stil),
+ * the text laid over it in the travel journal (Text) and its height and focus (Grösse).
+ * The cover always fills the hero: border, caption and click action of the image style do not apply to it.
  * Every setting is optional: a hero without them renders as it always did.
+ * In the travel journal the cover comes from the journal's own card, so there is no Bild segment.
  */
 @Component({
   selector: 'okr-hero-config',
   standalone: true,
   imports: [
-    Checkbox, Color, ErrorNote, NumberInput, TextInput,
+    Checkbox, Color, ErrorNote, NumberInput, TextInput, ImagesConfiguration,
     IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonGrid, IonRow, IonCol, IonLabel, IonNote,
     IonSegment, IonSegmentButton, IonSelect, IonSelectOption
   ],
@@ -112,6 +67,9 @@ function themeColor(name: 'primary' | 'secondary', fallback: string): string {
                   <ion-segment-button value="image">
                     <ion-label>{{ i18n().hero_segment_image() }}@if (hasErrors('image')) {<span class="error-dot" role="img" [attr.aria-label]="i18n().segment_errors()"></span>}</ion-label>
                   </ion-segment-button>
+                  <ion-segment-button value="style">
+                    <ion-label>{{ i18n().hero_segment_style() }}@if (hasErrors('style')) {<span class="error-dot" role="img" [attr.aria-label]="i18n().segment_errors()"></span>}</ion-label>
+                  </ion-segment-button>
                 }
                 <ion-segment-button value="layout">
                   <ion-label>{{ i18n().hero_segment_layout() }}@if (hasErrors('layout')) {<span class="error-dot" role="img" [attr.aria-label]="i18n().segment_errors()"></span>}</ion-label>
@@ -122,6 +80,19 @@ function themeColor(name: 'primary' | 'secondary', fallback: string): string {
 
           @switch (segment()) {
             @case ('image') {
+              <okr-images-config
+                [images]="heroImages()" (imagesChange)="onHeroImagesChange($event)"
+                [multiple]="false"
+                [embedded]="true"
+                [emptyText]="i18n().hero_empty()"
+                [storagePath]="storagePath()"
+                [currentUser]="currentUser()"
+                [readOnly]="isReadOnly()"
+                [i18n]="i18n()"
+              />
+              <okr-error-note [errors]="heroImageErrors()" />
+            }
+            @case ('style') {
               <ion-row>
                 <ion-col size="12">
                   <okr-text-input [i18n]="imgixI18n()" [value]="imgIxParams()" (valueChange)="onImgIxParamsChange($event)"
@@ -232,7 +203,9 @@ export class HeroConfiguration {
   public readonly errors = input<SectionErrors>({});
   public readonly formData = model.required<HeroConfig>();
   public readonly readOnly = input(true);
-  public readonly i18n = input.required<HeroConfigI18n>();
+  public readonly i18n = input.required<SectionI18n>();
+  public readonly storagePath = input('');
+  public readonly currentUser = input<UserModel | undefined>();
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   /**
    * Travel journal (spec 1.154): the text overlay is drawn only there, with the footprint's title,
@@ -251,7 +224,7 @@ export class HeroConfiguration {
   // until the user picks a segment, the card opens on the first one with errors (an invalid stored value is never
   // hidden behind a closed segment); a chosen segment that is not offered in this mode falls back the same way
   private readonly chosenSegment = signal<Segment | undefined>(undefined);
-  private readonly offeredSegments = computed<Segment[]>(() => [this.journalMode() ? 'overlay' : 'image', 'layout']);
+  private readonly offeredSegments = computed<Segment[]>(() => this.journalMode() ? ['overlay', 'layout'] : ['image', 'style', 'layout']);
   protected readonly errorSegments = computed(() => getErrorSegments(this.errors(), HERO_SEGMENT_FIELDS, this.offeredSegments()));
   protected readonly segment = computed<Segment>(() => {
     const chosen = this.chosenSegment();
@@ -260,6 +233,8 @@ export class HeroConfiguration {
   });
 
   // the form shows the defaults for an absent overlay; nothing is stored until the user changes a field
+  protected readonly heroImages = computed(() => heroSlotImages(this.formData().hero));
+  protected readonly heroImageErrors = computed(() => slotErrors(this.errors(), 'hero'));
   protected readonly overlay = computed<HeroOverlay>(() => this.formData().overlay ?? HERO_OVERLAY_DEFAULT);
   protected readonly focus = computed(() => this.formData().focus ?? 'center');
   // an absent gradient shows primary / secondary (what the website draws then); stored once a colour is picked
@@ -314,7 +289,12 @@ export class HeroConfiguration {
 
   /************************************** actions *********************************************** */
   protected onSegmentChange(value: string | number | undefined): void {
-    if (value === 'image' || value === 'overlay' || value === 'layout') this.chosenSegment.set(value);
+    if (value === 'image' || value === 'style' || value === 'overlay' || value === 'layout') this.chosenSegment.set(value);
+  }
+
+  /** one image at most: a new upload replaces the cover, removing it leaves an empty image */
+  protected onHeroImagesChange(images: ImageConfig[]): void {
+    this.formData.update((config) => ({ ...config, hero: images[images.length - 1] ?? IMAGE_CONFIG_SHAPE }));
   }
 
   protected onOverlayChange<K extends keyof HeroOverlay>(field: K, value: HeroOverlay[K]): void {

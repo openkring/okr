@@ -77,7 +77,7 @@ import { StatsRow, StatsSortField, TripStatsSectionStore } from './trip-stats-se
         @switch(store.viewType()) {
           @case('list') {
             <ion-card>
-              <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+              <okr-optional-card-header [intro]="section()?.intro" [introPosition]="section()?.introPosition" [title]="title()" [subTitle]="subTitle()" />
               <ion-card-content>
                 <ion-grid class="ion-no-padding">
                   <ion-row class="header-row">
@@ -118,7 +118,7 @@ import { StatsRow, StatsSortField, TripStatsSectionStore } from './trip-stats-se
           @case('graph') {
             @if(store.echartsOption(); as opt) {
               <ion-card>
-                <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+                <okr-optional-card-header [intro]="section()?.intro" [introPosition]="section()?.introPosition" [title]="title()" [subTitle]="subTitle()" />
                 <ion-card-content>
                   <div echarts [options]="opt" class="chart"></div>
                 </ion-card-content>

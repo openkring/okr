@@ -46,7 +46,7 @@ import type { WeatherRainRadar } from './weather-rain-radar';
   template: `
     @if (section(); as section) {
       <ion-card>
-        <okr-optional-card-header [title]="title()" [subTitle]="section.subTitle" />
+        <okr-optional-card-header [intro]="section.intro" [introPosition]="section.introPosition" [title]="title()" [subTitle]="section.subTitle" />
         <ion-card-content>
           <!-- one header for every widget: card title above, the place below it; a map has many -->
           @if (section.properties.variant !== 'map' && placeLabel()) {

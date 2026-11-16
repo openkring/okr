@@ -35,6 +35,13 @@ describe('baseSectionValidations', () => {
     expect(baseSectionValidations(model).hasErrors('name')).toBe(false);
   });
 
+  it('accepts an absent or known intro position and flags an unknown one', () => {
+    expect(baseSectionValidations({ ...MAP_SECTION_SHAPE } as SectionModel).hasErrors('introPosition')).toBe(false);
+    expect(baseSectionValidations({ ...MAP_SECTION_SHAPE, introPosition: 'above' } as SectionModel).hasErrors('introPosition')).toBe(false);
+    const model = { ...MAP_SECTION_SHAPE, introPosition: 'left' } as unknown as SectionModel;
+    expect(baseSectionValidations(model).hasErrors('introPosition')).toBe(true);
+  });
+
   it('flags a non-boolean isArchived', () => {
     const model = { ...MAP_SECTION_SHAPE, isArchived: 'yes' } as unknown as SectionModel;
     expect(baseSectionValidations(model).hasErrors('isArchived')).toBe(true);

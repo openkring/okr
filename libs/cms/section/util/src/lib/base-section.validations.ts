@@ -1,7 +1,7 @@
-import { staticSuite } from 'vest';
+import { enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { COMMENT_LENGTH, DESCRIPTION_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
-import { ColorIonic, SectionModel } from '@okr/shared-models';
+import { ColorIonic, SECTION_INTRO_POSITIONS, SectionModel } from '@okr/shared-models';
 import { booleanValidations, categoryValidations, stringValidations } from '@okr/shared-util-core';
 
 export const baseSectionValidations = staticSuite((model: SectionModel) => {
@@ -34,6 +34,12 @@ export const baseSectionValidations = staticSuite((model: SectionModel) => {
   stringValidations('subTitle', model.subTitle, LONG_NAME_LENGTH);
   // intro is optional and missing on older sections; rendered with [maxLength]=COMMENT_LENGTH
   stringValidations('intro', model.intro ?? '', COMMENT_LENGTH);
+  // where the intro is shown; absent = below the title
+  omitWhen(model.introPosition === undefined, () => {
+    test('introPosition', 'invalidValue', () => {
+      enforce((SECTION_INTRO_POSITIONS as readonly unknown[]).includes(model.introPosition)).isTruthy();
+    });
+  });
   // tbd: content: ContentConfig
 
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { ARTICLE_IMAGES_SEGMENT_FIELDS, getErrorSegments, getFieldErrors, HERO_SEGMENT_FIELDS, getImageErrors, getInlineErrorFields, getJournalInlineErrorFields, getRemainingErrors, getUnrenderedFixedKeys, isInlineErrorField } from './section-errors';
+import { ARTICLE_IMAGES_SEGMENT_FIELDS, getErrorSegments, getFieldErrors, HERO_SEGMENT_FIELDS, LOGO_SEGMENT_FIELDS, getImageErrors, getInlineErrorFields, getJournalInlineErrorFields, getRemainingErrors, getUnrenderedFixedKeys, isInlineErrorField } from './section-errors';
 
 describe('getInlineErrorFields', () => {
   it('always offers the base fields of section-configuration', () => {
@@ -109,6 +109,17 @@ describe('tiles and call-to-action error fields (1.151)', () => {
     expect(getRemainingErrors(errors, getInlineErrorFields('hero'))).toEqual([]);
   });
 
+  it('shows the hero and logo images and their styles inline without the advanced toggle', () => {
+    const errors = { 'hero.url': ['x'], 'logo.altText': ['x'], imgIxParams: ['x'], width: ['x'], border: ['x'], borderRadius: ['x'], focus: ['x'] };
+    expect(getRemainingErrors(errors, getInlineErrorFields('hero'))).toEqual([]);
+  });
+
+  it('shows the intro inline only with the advanced toggle', () => {
+    const errors = { intro: ['tooLong'], introPosition: ['invalidValue'] };
+    expect(getRemainingErrors(errors, getInlineErrorFields('news')).map((e) => e.field)).toEqual(['intro', 'introPosition']);
+    expect(getRemainingErrors(errors, getInlineErrorFields('news', true))).toEqual([]);
+  });
+
   it('shows the layout and the image action of an article inline without the advanced toggle (Layout segment)', () => {
     const errors = { imageLayout: ['invalidValue'], action: ['invalidValue'], zoomFactor: ['invalidValue'] };
     expect(getRemainingErrors(errors, getInlineErrorFields('article'))).toEqual([]);
@@ -193,9 +204,14 @@ describe('getErrorSegments (segmented cards, 1.154)', () => {
   });
 
   it('maps the hero fields, overlay by prefix', () => {
-    const segments = ['image', 'overlay', 'layout'] as const;
+    const segments = ['image', 'style', 'overlay', 'layout'] as const;
     expect(getErrorSegments({ 'overlay.darkening': ['invalidValue'] }, HERO_SEGMENT_FIELDS, segments)).toEqual(['overlay']);
-    expect(getErrorSegments({ focus: ['invalidValue'], imgIxParams: ['tooLong'] }, HERO_SEGMENT_FIELDS, segments)).toEqual(['image', 'layout']);
+    expect(getErrorSegments({ focus: ['invalidValue'], imgIxParams: ['tooLong'] }, HERO_SEGMENT_FIELDS, segments)).toEqual(['style', 'layout']);
+    expect(getErrorSegments({ 'hero.url': ['invalidValue'] }, HERO_SEGMENT_FIELDS, segments)).toEqual(['image']);
     expect(getErrorSegments({ overlay: ['x'] }, HERO_SEGMENT_FIELDS, segments)).toEqual([]);
+  });
+
+  it('maps the hero logo fields', () => {
+    expect(getErrorSegments({ 'logo.url': ['x'], borderRadius: ['y'] }, LOGO_SEGMENT_FIELDS, ['image', 'style'])).toEqual(['image', 'style']);
   });
 });

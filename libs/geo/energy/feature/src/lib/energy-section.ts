@@ -32,7 +32,7 @@ import { EnergySectionStore } from './energy-section.store';
   `],
   template: `
     <ion-card>
-      <okr-optional-card-header [title]="section().title" [subTitle]="section().subTitle" />
+      <okr-optional-card-header [intro]="section()?.intro" [introPosition]="section()?.introPosition" [title]="section().title" [subTitle]="section().subTitle" />
       <ion-card-content>
         @if (store.isLoading()) {
           <okr-spinner />

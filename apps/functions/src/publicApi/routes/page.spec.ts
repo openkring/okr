@@ -609,7 +609,7 @@ describe('homepage sections (1.151)', () => {
       },
     });
     expect(out).toMatchObject({ subTitle: 'So findest du den Einstieg', intro: 'Vier Wege ins Boot', accent: 'secondary' });
-    expect(out['kicker']).toBeUndefined();
+    expect(out['kicker']).toBe('');
     const items = out['items'] as { icon: string; iconSrc: string; linkLabel: string }[];
     expect(items[0]).toMatchObject({ icon: 'rowing_2x_side_front', iconSrc: 'https://bkaiser.imgix.net/logo/icons/rowing_2x_side_front.svg', linkLabel: 'Los geht\'s' });
     expect(items[1].linkLabel).toBe('');
@@ -663,6 +663,20 @@ describe('homepage sections (1.151)', () => {
     expect(map({ type: 'hero', properties: {} })['gradient']).toBeUndefined();
     expect(mapHeroGradient({ from: 'red;background:url(x)', to: '#fff' })).toBeUndefined();
     expect(mapHeroGradient({ from: '#fff' })).toBeUndefined();
+  });
+
+  it('splits the intro by its position: above = kicker, below (default) = intro', () => {
+    expect(map({ type: 'article', intro: 'Willkommen', introPosition: 'above' })).toMatchObject({ kicker: 'Willkommen', intro: '' });
+    expect(map({ type: 'hero', intro: 'Ein Absatz' })).toMatchObject({ kicker: '', intro: 'Ein Absatz' });
+    expect(map({ type: 'tiles', intro: 'Oben', introPosition: 'above', properties: { items: [] } })).toMatchObject({ kicker: 'Oben', intro: '' });
+    const en = map({ type: 'news', intro: 'Neu', introPosition: 'above', properties: { introI18n: { en: 'New' } } }, 'en');
+    expect(en).toMatchObject({ kicker: 'New', intro: '' });
+  });
+
+  it('falls back to a legacy properties.kicker above the title until the migration ran', () => {
+    expect(map({ type: 'hero', properties: { kicker: 'Seit 1917', kickerI18n: { en: 'Since 1917' } } }, 'en')).toMatchObject({ kicker: 'Since 1917', intro: '' });
+    expect(map({ type: 'hero', intro: 'Neu', properties: { kicker: 'Alt' } })).toMatchObject({ kicker: '', intro: 'Neu' });
+    expect(map({ type: 'tiles', properties: { kicker: 'Mitmachen', items: [] } })).toMatchObject({ kicker: '', intro: '' });
   });
 
   it('hero gets kicker and at most two safe ctas; article gets cta and emphasis', () => {

@@ -46,9 +46,10 @@ import { openSectionLink } from './section-link';
     button.tile:focus-visible { outline: 2px solid var(--ion-color-primary); outline-offset: 2px; }
   `],
   template: `
+    @if (section().intro && section().introPosition === 'above') { <p class="eyebrow" [style.--accent]="accent()">{{ section().intro }}</p> }
     @if (section().subTitle) { <p class="eyebrow" [style.--accent]="accent()">{{ section().subTitle }}</p> }
     @if (section().title) { <h2>{{ section().title }}</h2> }
-    @if (section().intro) { <p class="intro">{{ section().intro }}</p> }
+    @if (section().intro && section().introPosition !== 'above') { <p class="intro">{{ section().intro }}</p> }
     <div class="grid" [class.stat]="variant() === 'stat'" [style.--cols]="columns()">
       @for (item of items(); track $index) {
         @if (variant() === 'stat') {

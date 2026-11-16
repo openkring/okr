@@ -30,7 +30,7 @@ import { ActivitiesSectionStore } from './activities-section.store';
       <okr-spinner />
     } @else {
       <ion-card>
-        <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+        <okr-optional-card-header [intro]="section()?.intro" [introPosition]="section()?.introPosition" [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
           @if(store.activities().length === 0) {
             <okr-empty-list [message]="store.i18n.activity_empty()" />

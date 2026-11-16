@@ -8,6 +8,7 @@ import { debugMessage, hasRole, shortenText } from '@okr/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions, isBrowser } from '@okr/shared-util-angular';
 import { ArticleSection, IMAGE_STYLE_SHAPE, NewsConfig, SectionModel } from '@okr/shared-models';
 import { ThumbnailUrlPipe } from '@okr/shared-pipes';
+import { getSectionIntro } from '@okr/cms-section-util';
 
 import { NewsStore } from './news-section.store';
 import { isAppMoreUrl, openMoreLink } from './section-link';
@@ -19,7 +20,6 @@ import { isAppMoreUrl, openMoreLink } from './section-link';
     .title { font-size: 1rem; font-weight: 600; }
     .subtitle { font-size: 0.8rem }
     .excerpt { font-size: 0.9rem }
-    .kicker { margin: 0px 0px 4px 0px; padding: 0px 16px; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ion-color-secondary); }
     ion-card { padding: 0px; margin: 0px; border: 0px; box-shadow: none !important; }
   `],
   providers: [NewsStore],
@@ -33,8 +33,7 @@ import { isAppMoreUrl, openMoreLink } from './section-link';
       <okr-spinner />
     } @else {
       <ion-card>
-        @if (kicker()) { <p class="kicker">{{ kicker() }}</p> }
-        <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+        <okr-optional-card-header [intro]="sectionIntro().text" [introPosition]="sectionIntro().position" [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
           @if (news().length === 0) {
             <okr-empty-list [message]="store.i18n.news_empty()" />
@@ -83,7 +82,7 @@ export class NewsSectionComponent implements OnInit {
   protected readonly title = computed(() => this.section()?.title);
   protected readonly subTitle = computed(() => this.section()?.subTitle);
   protected readonly config = computed(() => this.section()?.properties as NewsConfig | undefined);
-  protected readonly kicker = computed(() => this.config()?.kicker?.trim());
+  protected readonly sectionIntro = computed(() => getSectionIntro(this.section()));
   protected readonly moreUrl = computed(() => this.config()?.moreUrl ?? '');
   protected readonly showMoreButton = computed(() => this.moreUrl().length > 0);
   protected readonly maxItems = computed(() => this.config()?.maxItems);

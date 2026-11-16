@@ -1,13 +1,12 @@
 import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
 
-import { ColorIonic, ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, FooterConfig, FooterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FormSectionConfig, AlbumConfig, AlbumSection, SectionFeedback, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroConfig, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, JournalTrackConfig, JournalTrackSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TilesConfig, TilesSection, NewsConfig, NewsSection, SectionCta, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
-import { Chips, ErrorNote, ImageConfigEdit, NotesInput, NotesInputI18n } from '@okr/shared-ui';
-import { coerceBoolean, debugFormModel, hasRole, sanitizeFileName } from '@okr/shared-util-core';
-import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS, IMAGE_MIMETYPES } from '@okr/shared-constants';
-import { UploadService } from '@okr/avatar-data-access';
-import { confirm, MODEL_SELECTOR, validateVestTree, vestErrors } from '@okr/shared-util-angular';
-import { AlertController, IonItem, IonToggle } from '@ionic/angular';
+import { ColorIonic, ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, FooterConfig, FooterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FormSectionConfig, AlbumConfig, AlbumSection, SectionFeedback, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroConfig, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, InvitationsConfig, InvitationsSection, JournalTrackConfig, JournalTrackSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TilesConfig, TilesSection, NewsConfig, NewsSection, SectionCta, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
+import { Chips, ErrorNote, NotesInput, NotesInputI18n } from '@okr/shared-ui';
+import { coerceBoolean, debugFormModel, hasRole } from '@okr/shared-util-core';
+import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
+import { MODEL_SELECTOR, validateVestTree, vestErrors } from '@okr/shared-util-angular';
+import { IonItem, IonToggle } from '@ionic/angular';
 import { ChartOption, getPeopleResponsibilityIds, getInlineErrorFields, getJournalInlineErrorFields, getRemainingErrors, isJournalModeField, JOURNAL_VIDEO_CLIPS_MAX, SectionErrors, SectionI18n, validateSection } from '@okr/cms-section-util';
 import { FormI18n } from '@okr/forms-util';
 
@@ -54,7 +53,7 @@ import { TestimonialConfiguration } from './testimonial-configuration';
 import { TilesConfiguration } from './tiles-configuration';
 import { NewsConfiguration } from './news-configuration';
 import { CtaConfiguration } from './cta-configuration';
-import { ArticleEmphasis, KickerConfiguration } from './kicker-configuration';
+import { HeroLogoConfiguration } from './hero-logo-configuration';
 import { HeroConfiguration } from './hero-configuration';
 import { TimelineConfiguration } from './timeline-configuration';
 import { AdventConfiguration } from './advent-configuration';
@@ -65,14 +64,14 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
   standalone: true,
   imports: [
     IonItem, IonToggle,
-    Chips, ImageConfigEdit, NotesInput, ErrorNote,
+    Chips, NotesInput, ErrorNote,
     SectionConfiguration, EditorConfiguration, ImageStyleConfiguration, ArticleImagesConfiguration, AlbumConfiguration,
     IframeConfiguration, WeatherConfiguration, ConnectionsConfiguration, DeparturesConfiguration, EnergyConfiguration, CounterConfiguration, FooterConfiguration, PeopleConfiguration, ResponsibilityConfiguration, VideoConfiguration,
     ButtonStyleConfiguration, ButtonActionConfiguration, IconConfiguration, ChatConfiguration,
     MapConfiguration, TrackerConfiguration, TableGridConfiguration,  TableStyleConfiguration, TableHeader,
     TableBody, EventsConfiguration, InvitationsConfiguration, ImagesConfiguration, CalendarConfiguration, ChartConfiguration,
     MemberConfiguration, RagConfiguration, FormSectionConfiguration, SankeyConfiguration, SpiderConfiguration, TocConfiguration, TestimonialConfiguration, TimelineConfiguration, AdventConfiguration,
-    TilesConfiguration, NewsConfiguration, CtaConfiguration, KickerConfiguration, HeroConfiguration, FeedbackConfiguration, JournalMapConfiguration, JournalTrackConfiguration
+    TilesConfiguration, NewsConfiguration, CtaConfiguration, HeroConfiguration, HeroLogoConfiguration, FeedbackConfiguration, JournalMapConfiguration, JournalTrackConfiguration
 ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -237,13 +236,6 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
         }
 
         @case('article') {
-          <okr-kicker-config
-            [kicker]="kicker()" (kickerChange)="onKickerChange($event)"
-            [emphasis]="articleEmphasis()" (emphasisChange)="onArticleEmphasisChange($event)"
-            [showEmphasis]="true"
-            [readOnly]="isReadOnly()"
-            [i18n]="i18n()"
-          />
           @if(content(); as content) {
             <!-- position and column size live in the «Bilder» card's Layout segment (spec 1.154 §5) -->
             <okr-editor-config
@@ -390,35 +382,20 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
           }
         }
         @case('hero') {
-          <okr-kicker-config
-            [kicker]="kicker()" (kickerChange)="onKickerChange($event)"
-            [showEmphasis]="false"
-            [readOnly]="isReadOnly()"
-            [i18n]="i18n()"
-          />
-          @if(logoConfig(); as logoConfig) {
-            <okr-image-config
-              [formData]="logoConfig" (formDataChange)="onLogoConfigChange($event)"
-              [readOnly]="isReadOnly()"
-              [i18n]="imageConfigI18n()"
-              [storagePath]="storagePath()"
-              [showAdvanced]="showAdvanced()"
-              (uploadRequested)="onHeroImageUpload('logo')"
-            />
-          }
-          @if(heroConfig(); as heroConfig) {
-            <okr-image-config
-              [formData]="heroConfig" (formDataChange)="onHeroConfigChange($event)"
-              [readOnly]="isReadOnly()"
-              [i18n]="imageConfigI18n()"
-              [storagePath]="storagePath()"
-              [showAdvanced]="showAdvanced()"
-              (uploadRequested)="onHeroImageUpload('hero')"
-            />
-          }
+          <!-- the Hero card (cover image, imgix parameters, height, focus), the optional Logo card and the Buttons -->
           @if(heroProperties(); as heroProperties) {
             <okr-hero-config
               [formData]="heroProperties" (formDataChange)="onHeroPropertiesChange($event)"
+              [storagePath]="storagePath()"
+              [currentUser]="currentUser()"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+              [errors]="errors()"
+            />
+            <okr-hero-logo-config
+              [formData]="heroProperties" (formDataChange)="onHeroPropertiesChange($event)"
+              [storagePath]="storagePath()"
+              [currentUser]="currentUser()"
               [readOnly]="isReadOnly()"
               [i18n]="i18n()"
               [errors]="errors()"
@@ -432,17 +409,6 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
             [i18n]="i18n()"
             [errors]="errors()"
           />
-          @if(showAdvanced()) {
-            @if(imageStyle(); as imageStyle) {
-              <okr-image-style
-                [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)"
-                [readOnly]="isReadOnly()"
-                [i18n]="i18n()"
-                [showAdvanced]="showAdvanced()"
-                [errors]="errors()"
-              />
-            }
-          }
         }
         @case('weather') {
           @if(weatherConfig(); as weatherConfig) {
@@ -770,8 +736,6 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
  */
 export class SectionForm {
   private readonly modelSelectService = inject(MODEL_SELECTOR);
-  private readonly uploadService = inject(UploadService);
-  private readonly alertController = inject(AlertController);
 
   // outputs
   public readonly valid = output<boolean>();
@@ -795,30 +759,6 @@ export class SectionForm {
   // i18n
   public readonly i18n = input.required<SectionI18n>();
   protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
-  protected imageConfigI18n = computed(() => ({
-    image_edit:               this.i18n().image_edit_title,
-    image_type_name:          this.i18n().image_edit_type_name,
-    image_type_label:         this.i18n().image_edit_type_label,
-    image_type_helper:        this.i18n().image_edit_type_helper,
-    label_label:              this.i18n().image_edit_label_label,
-    label_placeholder:        this.i18n().image_edit_label_placeholder,
-    label_helper:             this.i18n().image_edit_label_helper,
-    url_label:                this.i18n().image_edit_url_label,
-    url_placeholder:          this.i18n().image_edit_url_placeholder,
-    url_helper:               this.i18n().image_edit_url_helper,
-    actionUrl_label:          this.i18n().image_edit_action_label,
-    actionUrl_placeholder:    this.i18n().image_edit_action_placeholder,
-    actionUrl_helper:         this.i18n().image_edit_action_helper,
-    altText_label:            this.i18n().altText_label,
-    altText_placeholder:      this.i18n().altText_placeholder,
-    altText_helper:           this.i18n().altText_helper,
-    overlay_label:            this.i18n().image_edit_overlay_label,
-    overlay_placeholder:      this.i18n().image_edit_overlay_placeholder,
-    overlay_helper:           this.i18n().image_edit_overlay_helper,
-    credit_label:             this.i18n().image_edit_credit_label,
-    credit_placeholder:       this.i18n().image_edit_credit_placeholder,
-    credit_helper:            this.i18n().image_edit_credit_helper
-  }));
 
   // inputs
   public formData = model.required<SectionModel>();
@@ -895,15 +835,6 @@ export class SectionForm {
   protected testimonialConfig = computed(() => this.getTestimonialConfig());
   protected tilesConfig = computed(() => this.getTilesConfig());
   protected newsConfig = computed(() => this.getNewsConfig());
-  /** the small line above the title of a hero or an article */
-  protected kicker = computed(() => {
-    const section = this.formData();
-    return section.type === 'hero' || section.type === 'article' ? section.properties?.kicker ?? '' : '';
-  });
-  protected articleEmphasis = computed<ArticleEmphasis>(() => {
-    const section = this.formData();
-    return section.type === 'article' ? section.properties?.emphasis ?? 'none' : 'none';
-  });
   /** the whole hero config, for the overlay / height / focus card */
   protected heroProperties = computed<HeroConfig | undefined>(() => {
     const section = this.formData();
@@ -942,8 +873,6 @@ export class SectionForm {
   protected ragConfig = computed(() => this.getRagConfig());
   protected eventsConfig = computed(() => this.getEventsConfig());
   protected invitationsConfig = computed(() => this.getInvitationsConfig());
-  protected logoConfig = computed(() => this.getLogoConfig());
-  protected heroConfig = computed(() => this.getHeroConfig());
   protected iframeConfig = computed(() => this.getIframeConfig());
   protected weatherConfig = computed(() => this.getWeatherConfig());
   protected connectionsConfig = computed(() => this.getConnectionsConfig());
@@ -1147,20 +1076,6 @@ export class SectionForm {
     }
   }
 
-  private getLogoConfig(): ImageConfig | undefined {
-    switch (this.formData().type) {
-      case 'hero': return (this.formData() as HeroSection).properties.logo || IMAGE_CONFIG_SHAPE;
-      default: return undefined;
-    }
-  }
-
-  private getHeroConfig(): ImageConfig | undefined {
-    switch (this.formData().type) {
-      case 'hero': return (this.formData() as HeroSection).properties.hero || IMAGE_CONFIG_SHAPE;
-      default: return undefined;
-    }
-  }
-
   private getIframeConfig(): IframeConfig | undefined {
     if (this.formData().type === 'iframe') {
       return ((this.formData() as IframeSection).properties as IframeConfig);
@@ -1285,39 +1200,6 @@ export class SectionForm {
     }
   }
 
-  protected async onHeroImageUpload(field: 'logo' | 'hero'): Promise<void> {
-    if (this.isReadOnly()) return;
-    // journal photos are private: the journal's cover comes from its picker, never from this public upload
-    if (this.journalMode()) {
-      console.error('SectionForm.onHeroImageUpload: no upload in journal mode');
-      return;
-    }
-    const section = this.formData();
-    if (section.type !== 'hero') return;
-    const current = field === 'logo' ? section.properties.logo : section.properties.hero;
-    if (current?.url) {
-      const ok = await confirm(this.alertController, this.i18n().image_overwrite_message(), this.i18n().ok(), this.i18n().cancel(), true);
-      if (ok !== true) return;
-    }
-    const file = await this.uploadService.pickFile(IMAGE_MIMETYPES);
-    if (!file) return;
-    const fullPath = `${this.storagePath()}/${sanitizeFileName(file.name)}`;
-    const downloadUrl = await this.uploadService.uploadFile(file, fullPath, this.i18n().image_upload());
-    if (!downloadUrl) return;
-    const documentKey = await this.uploadService.createAndSaveDocument(file, this.tenantId(), fullPath, downloadUrl, this.currentUser());
-    const newImage: ImageConfig = {
-      ...(current ?? IMAGE_CONFIG_SHAPE),
-      url: fullPath,
-      label: file.name.replace(/\.[^.]+$/, ''),
-      altText: file.name.replace(/\.[^.]+$/, ''),
-      type: ImageType.Image,
-      documentKey: documentKey ?? '',
-      // seed the attribution from the file's own IPTC/EXIF metadata; '' for the many files that carry none
-      credit: await this.uploadService.readImageCredit(fullPath),
-    };
-    if (field === 'logo') this.onLogoConfigChange(newImage); else this.onHeroConfigChange(newImage);
-  }
-
   /** journal mode: the picked cover replaces the hero image; removing it leaves an empty image */
   protected onHeroCoverChange(images: ImageConfig[]): void {
     this.onHeroConfigChange(images[0] ?? IMAGE_CONFIG_SHAPE);
@@ -1336,16 +1218,6 @@ export class SectionForm {
     const section = this.formData();
     if (section.type === 'video') {
       this.formData.set({ ...section, properties: { ...section.properties, clips } } as VideoSection);
-    }
-  }
-
-  protected onLogoConfigChange(image: ImageConfig): void {
-    const section = this.formData();
-    if (section.type === 'hero') {
-      this.formData.set({
-        ...section,
-        properties: { ...section.properties, logo: image }
-      } as HeroSection);
     }
   }
 
@@ -1526,22 +1398,6 @@ export class SectionForm {
     const section = this.formData();
     if (section.type === 'news') {
       this.formData.set({ ...section, properties: config } as NewsSection);
-    }
-  }
-
-  protected onKickerChange(kicker: string | undefined): void {
-    const section = this.formData();
-    if (section.type === 'hero') {
-      this.formData.set({ ...section, properties: { ...section.properties, kicker: kicker ?? '' } } as HeroSection);
-    } else if (section.type === 'article') {
-      this.formData.set({ ...section, properties: { ...section.properties, kicker: kicker ?? '' } } as ArticleSection);
-    }
-  }
-
-  protected onArticleEmphasisChange(emphasis: ArticleEmphasis | undefined): void {
-    const section = this.formData();
-    if (section.type === 'article') {
-      this.formData.set({ ...section, properties: { ...section.properties, emphasis: emphasis ?? 'none' } } as ArticleSection);
     }
   }
 

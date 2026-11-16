@@ -50,7 +50,7 @@ type ViewMode = 'accordion' | 'chart';
       <okr-spinner />
     } @else {
       <ion-card>
-        <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+        <okr-optional-card-header [intro]="section()?.intro" [introPosition]="section()?.introPosition" [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
           <ion-segment [(ngModel)]="viewMode">
             <ion-segment-button value="accordion">

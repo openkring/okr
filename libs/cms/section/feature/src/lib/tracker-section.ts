@@ -39,7 +39,7 @@ import { TrackerSectionStore } from './tracker-section.store';
   template: `
     @if(section()) {
       <ion-card>
-        <okr-optional-card-header  [title]="title()" [subTitle]="subTitle()" />
+        <okr-optional-card-header [intro]="section()?.intro" [introPosition]="section()?.introPosition"  [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
           <ion-grid>
             <ion-row>

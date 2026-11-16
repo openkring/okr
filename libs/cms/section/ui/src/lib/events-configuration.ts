@@ -1,7 +1,6 @@
 import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
-import { LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { EventsConfig } from '@okr/shared-models';
 import { Checkbox, CheckboxI18n, ErrorNote, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { getFieldErrors, SectionErrors } from '@okr/cms-section-util';
@@ -23,9 +22,6 @@ interface EventsConfigI18n {
   event_show_time_helper:       Signal<string>;
   event_show_location_label:    Signal<string>;
   event_show_location_helper:   Signal<string>;
-  kicker_label:                 Signal<string>;
-  kicker_placeholder:           Signal<string>;
-  kicker_helper:                Signal<string>;
 }
 
 @Component({
@@ -52,10 +48,6 @@ interface EventsConfigI18n {
 
         <ion-grid>
           <ion-row>
-            <ion-col size="12">
-              <okr-text-input [i18n]="kickerI18n()" [value]="kicker()" (valueChange)="onFieldChange('kicker', $event)"
-                              [maxLength]="kickerLength" [readOnly]="readOnly()" [showHelper]="true" />
-            </ion-col>
             <ion-col size="12">
               <okr-text-input [i18n]="moreUrlI18n()" [value]="moreUrl()" (valueChange)="onFieldChange('moreUrl', $event)" [readOnly]="readOnly()" />
               <okr-error-note [errors]="errorsFor('moreUrl')" />
@@ -90,10 +82,7 @@ export class EventsConfiguration {
   /** vest field name -> messages of the running section suite (see section.form.ts) */
   public readonly errors = input<SectionErrors>({});
 
-  protected readonly kickerLength = LONG_NAME_LENGTH;
-
   // fields
-  protected kicker = linkedSignal(() => this.formData().kicker ?? '');
   protected moreUrl = linkedSignal(() => this.formData().moreUrl ?? '');
   protected maxEvents = linkedSignal(() => this.formData().maxEvents ?? undefined);
   protected showPastEvents = linkedSignal(() => this.formData().showPastEvents ?? false);
@@ -102,13 +91,6 @@ export class EventsConfiguration {
   protected showEventLocation = linkedSignal(() => this.formData().showEventLocation ?? true);
 
   protected maxEventsI18n = computed(() => ({ name: 'maxEvents', label: this.i18n().event_max_label(), placeholder: this.i18n().event_max_placeholder(), helper: this.i18n().event_max_helper() } as NumberInputI18n));
-
-  protected kickerI18n = computed(() => ({
-    name: 'kicker',
-    label: this.i18n().kicker_label(),
-    placeholder: this.i18n().kicker_placeholder(),
-    helper: this.i18n().kicker_helper(),
-  } as TextInputI18n));
 
   protected moreUrlI18n = computed(() => ({
     name: 'moreUrl',

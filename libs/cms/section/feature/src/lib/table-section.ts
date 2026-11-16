@@ -45,7 +45,7 @@ import { SectionStore } from './section.store';
   @if(section(); as section) {
     <ion-card>
       @if(showTitleAs() === 'title') {
-        <okr-optional-card-header  [title]="title()" [subTitle]="subTitle()" />
+        <okr-optional-card-header [intro]="section.intro" [introPosition]="section.introPosition"  [title]="title()" [subTitle]="subTitle()" />
       }
       <ion-card-content>
         @if(header()?.length === 0 && body()?.length === 0) {
