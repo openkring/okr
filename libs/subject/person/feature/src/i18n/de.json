@@ -24,6 +24,11 @@
     "placeholder": "Übername eingeben",
     "helper": "Optional. Wird nur verwendet, um die Person in der Suche auch unter diesem Namen zu finden."
   },
+  "maidenName": {
+    "label": "Ledigname",
+    "placeholder": "Ledigname eingeben",
+    "helper": "Optional. Wird nach dem Nachnamen angezeigt, z. B. «Anna Meier (Muster)», und in der Suche gefunden."
+  },
   "ssnId": {
     "label": "AHV-Nummer",
     "placeholder": "756.XXXX.XXXX.XX",

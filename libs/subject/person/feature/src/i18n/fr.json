@@ -24,6 +24,11 @@
     "placeholder": "Saisir un surnom",
     "helper": "Facultatif. Sert uniquement à retrouver la personne sous ce nom dans la recherche."
   },
+  "maidenName": {
+    "label": "Nom de jeune fille",
+    "placeholder": "Saisir le nom de jeune fille",
+    "helper": "Facultatif. Affiché après le nom, p. ex. « Anna Meier (Muster) », et trouvé par la recherche."
+  },
   "ssnId": {
     "label": "Numéro AVS",
     "placeholder": "756.XXXX.XXXX.XX",

@@ -24,6 +24,11 @@
     "placeholder": "Inserisci un soprannome",
     "helper": "Facoltativo. Serve solo a trovare la persona anche con questo nome nella ricerca."
   },
+  "maidenName": {
+    "label": "Cognome da nubile",
+    "placeholder": "Inserisci il cognome da nubile",
+    "helper": "Facoltativo. Viene mostrato dopo il cognome, ad es. «Anna Meier (Muster)», e trovato dalla ricerca."
+  },
   "ssnId": {
     "label": "Numero AVS",
     "placeholder": "756.XXXX.XXXX.XX",

@@ -24,6 +24,11 @@
     "placeholder": "Introduce un apodo",
     "helper": "Opcional. Solo sirve para que la búsqueda encuentre también a la persona por este nombre."
   },
+  "maidenName": {
+    "label": "Apellido de soltera",
+    "placeholder": "Introduce el apellido de soltera",
+    "helper": "Opcional. Se muestra después del apellido, p. ej. «Anna Meier (Muster)», y la búsqueda lo encuentra."
+  },
   "ssnId": {
     "label": "Número AVS",
     "placeholder": "756.XXXX.XXXX.XX",

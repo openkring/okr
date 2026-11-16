@@ -50,6 +50,11 @@ import { AhvFormat, formatAhv, validateVestTree, vestErrors } from '@okr/shared-
                 <okr-text-input [i18n]="nicknameI18n()" [value]="nickname()" (valueChange)="onFieldChange('nickname', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
                 <okr-error-note [errors]="nicknameErrors()" />
               </ion-col>
+
+              <ion-col size="12" size-md="6">
+                <okr-text-input [i18n]="maidenNameI18n()" [value]="maidenName()" (valueChange)="onFieldChange('maidenName', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="maidenNameErrors()" />
+              </ion-col>
             </ion-row>
 
             @if(isVaultFieldVisible('dob') || isVaultFieldVisible('dod')) {
@@ -129,6 +134,7 @@ export class PersonForm {
   protected firstNameI18n = computed(() => ({ name: 'firstName', label: this.i18n().firstName_label(), placeholder: this.i18n().firstName_placeholder(), helper: this.i18n().firstName_helper() } as TextInputI18n));
   protected lastNameI18n = computed(() => ({ name: 'lastName', label: this.i18n().lastName_label(), placeholder: this.i18n().lastName_placeholder(), helper: this.i18n().lastName_helper() } as TextInputI18n));
   protected nicknameI18n = computed(() => ({ name: 'nickname', label: this.i18n().nickname_label(), placeholder: this.i18n().nickname_placeholder(), helper: this.i18n().nickname_helper() } as TextInputI18n));
+  protected maidenNameI18n = computed(() => ({ name: 'maidenName', label: this.i18n().maidenName_label(), placeholder: this.i18n().maidenName_placeholder(), helper: this.i18n().maidenName_helper() } as TextInputI18n));
   protected ssnIdI18n = computed(() => ({ name: 'ssnId', label: this.i18n().ssnId_label(), placeholder: this.i18n().ssnId_placeholder(), helper: this.i18n().ssnId_helper() } as TextInputI18n));
   protected bexioIdI18n = computed(() => ({ name: 'bexioId', label: this.i18n().bexioId_label(), placeholder: this.i18n().bexioId_placeholder(), helper: this.i18n().bexioId_helper() } as TextInputI18n));
   protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
@@ -172,11 +178,13 @@ export class PersonForm {
   protected ssnIdErrors = computed(() => this.validationResult().getErrors('ssnId'));
   protected lastNameErrors = computed(() => this.validationResult().getErrors('lastName'));
   protected nicknameErrors = computed(() => this.validationResult().getErrors('nickname'));
+  protected maidenNameErrors = computed(() => this.validationResult().getErrors('maidenName'));
   protected externalIdsErrors = computed(() => this.validationResult().getErrors('externalIds'));
 
   // fields
   protected readonly firstName = computed(() => this.formData().firstName ?? DEFAULT_NAME);
   protected readonly nickname = computed(() => this.formData().nickname ?? '');
+  protected readonly maidenName = computed(() => this.formData().maidenName ?? '');
   protected readonly lastName = computed(() => this.formData().lastName ?? DEFAULT_NAME);
   protected readonly dateOfBirth = computed(() => this.formData().dateOfBirth ?? DEFAULT_DATE);
   protected readonly dateOfDeath = computed(() => this.formData().dateOfDeath ?? DEFAULT_DATE);
