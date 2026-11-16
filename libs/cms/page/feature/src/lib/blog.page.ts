@@ -2,9 +2,11 @@ import { Component, computed, effect, ElementRef, inject, input, signal, viewChi
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Meta } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
-import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
+import { AsyncPipe } from '@angular/common';
+import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
 import { ArticleSection, BlogLayoutType, ButtonSection, RoleName, SectionModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
+import { TranslatePipe } from '@okr/shared-i18n';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
 import { hasRole, replaceSubstring, contextMenuId } from '@okr/shared-util-core';
 import { fragmentScrollTop } from '@okr/cms-page-util';
@@ -24,14 +26,16 @@ import { BlogStream } from './blog-stream';
   selector: 'okr-blog-page',
   standalone: true,
   imports: [
-    SvgIconPipe,
+    SvgIconPipe, TranslatePipe, AsyncPipe,
     Menu,
     BlogMinimal, BlogGrid, BlogClassic, BlogMagazine, BlogBento, BlogStream,
     IonHeader, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle, IonMenuButton, IonContent,
-    IonItem, IonLabel, IonPopover
+    IonItem, IonLabel, IonPopover, IonChip
   ],
   styles: [`
     :host { display: flex; flex-direction: column; height: 100%; width: 100%; }
+    .filter-bar { position: sticky; top: 0; z-index: 10; background: var(--ion-background-color); }
+    .chips { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 8px 4px; }
 
     @media print {
       @page { size: A4; margin: 15mm; }
@@ -93,25 +97,40 @@ import { BlogStream } from './blog-stream';
           </ion-item>
         }
       } @else {
+        <!-- tag filter: only when at least one article carries a tag -->
+        @if (allTags().length > 0) {
+          <div class="filter-bar no-print">
+            <div class="chips">
+              <ion-chip [color]="selectedTag() === '' ? 'primary' : 'medium'" (click)="selectedTag.set('')">
+                <ion-label>{{ store.i18n.blog_filter_all() }}</ion-label>
+              </ion-chip>
+              @for (tag of allTags(); track tag) {
+                <ion-chip [color]="selectedTag() === tag ? 'primary' : 'medium'" (click)="selectedTag.set(tag)">
+                  <ion-label>{{ tag | translate | async }}</ion-label>
+                </ion-chip>
+              }
+            </div>
+          </div>
+        }
         <div class="print-content" #printRoot>
           @switch (blogType()) {
             @case ('grid') {
-              <okr-blog-grid [sections]="sections()" [currentUser]="store.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
+              <okr-blog-grid [sections]="filteredSections()" [currentUser]="store.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
             }
             @case ('classic') {
-              <okr-blog-classic [sections]="sections()" [currentUser]="store.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
+              <okr-blog-classic [sections]="filteredSections()" [currentUser]="store.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
             }
             @case ('magazine') {
-              <okr-blog-magazine [sections]="sections()" [currentUser]="store.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
+              <okr-blog-magazine [sections]="filteredSections()" [currentUser]="store.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
             }
             @case ('bento') {
-              <okr-blog-bento [sections]="sections()" [currentUser]="store.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
+              <okr-blog-bento [sections]="filteredSections()" [currentUser]="store.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
             }
             @case ('stream') {
-              <okr-blog-stream [sections]="sections()" [currentUser]="store.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
+              <okr-blog-stream [sections]="filteredSections()" [currentUser]="store.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
             }
             @default {
-              <okr-blog-minimal [sections]="sections()" [currentUser]="store.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
+              <okr-blog-minimal [sections]="filteredSections()" [currentUser]="store.currentUser()" [editMode]="editMode()" (sectionClick)="showActions($event)" />
             }
           }
         </div>
@@ -140,6 +159,18 @@ export class BlogPage {
   protected editMode = signal(false);
   protected sections = computed(() => this.store.pageSections().filter(s => s.state === 'published' || this.hasRole('contentAdmin')));
   protected isEmptyPage = computed(() => this.sections().length === 0);
+  protected selectedTag = signal('');
+  /** the tags the articles carry, in the order of the tenant's section tag definition */
+  protected allTags = computed(() => {
+    const present = new Set(this.sections().flatMap(s => splitTags(s.tags)));
+    const order = splitTags(this.store.appStore.getTags('section'));
+    const rank = (t: string) => order.includes(t) ? order.indexOf(t) : order.length;
+    return [...present].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+  });
+  protected filteredSections = computed(() => {
+    const tag = this.selectedTag();
+    return tag ? this.sections().filter(s => splitTags(s.tags).includes(tag)) : this.sections();
+  });
   protected blogType = computed(() => (this.store.page()?.blogType ?? 'minimal') as BlogLayoutType);
 
   constructor() {
@@ -237,4 +268,8 @@ export class BlogPage {
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.store.currentUser());
   }
+}
+
+function splitTags(tags?: string): string[] {
+  return (tags ?? '').split(',').map(t => t.trim()).filter(Boolean);
 }

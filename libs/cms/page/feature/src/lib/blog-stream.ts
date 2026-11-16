@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core';
-import { IonChip, IonInfiniteScroll, IonInfiniteScrollContent, IonLabel, IonSearchbar, IonToolbar } from '@ionic/angular';
+import { IonInfiniteScroll, IonInfiniteScrollContent, IonSearchbar, IonToolbar } from '@ionic/angular';
 
 import { SectionModel, UserModel } from '@okr/shared-models';
 
@@ -10,7 +10,7 @@ const PAGE_SIZE = 10;
 
 /**
  * Infinite Scroll + Filters layout.
- * Sticky filter bar (search + category chips) + endless loading of articles.
+ * Sticky search bar + endless loading of articles. The tag chips live in BlogPage (all layouts).
  */
 @Component({
   selector: 'okr-blog-stream',
@@ -18,11 +18,10 @@ const PAGE_SIZE = 10;
   providers: [PageStore],
   imports: [
     SectionDispatcher,
-    IonToolbar, IonChip, IonLabel, IonSearchbar, IonInfiniteScroll, IonInfiniteScrollContent,
+    IonToolbar, IonSearchbar, IonInfiniteScroll, IonInfiniteScrollContent,
   ],
   styles: [`
     .filter-bar { position: sticky; top: 0; z-index: 10; background: var(--ion-background-color); }
-    .chips { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px 8px 8px; }
     .article-list { padding: 8px; }
     .section-wrapper.editable {
       border: 3px solid yellow;
@@ -42,18 +41,6 @@ const PAGE_SIZE = 10;
           debounce="300"
         />
       </ion-toolbar>
-      @if (allTags().length > 0) {
-        <div class="chips">
-          <ion-chip [color]="selectedTag() === '' ? 'primary' : 'medium'" (click)="selectTag('')">
-            <ion-label>{{ store.i18n.blog_filter_all() }}</ion-label>
-          </ion-chip>
-          @for (tag of allTags(); track tag) {
-            <ion-chip [color]="selectedTag() === tag ? 'primary' : 'medium'" (click)="selectTag(tag)">
-              <ion-label>{{ tag }}</ion-label>
-            </ion-chip>
-          }
-        </div>
-      }
     </div>
 
     <!-- Article list -->
@@ -88,30 +75,17 @@ export class BlogStream {
   public sectionClick = output<string>();
 
   protected searchTerm = signal('');
-  protected selectedTag = signal('');
   protected pageLimit = signal(PAGE_SIZE);
-
-  protected allTags = computed(() => {
-    const tagSet = new Set<string>();
-    this.sections().forEach(s => {
-      if (s.tags) s.tags.split(',').map(t => t.trim()).filter(Boolean).forEach(t => tagSet.add(t));
-    });
-    return [...tagSet].sort();
-  });
 
   protected filteredSections = computed(() => {
     let result = this.sections();
     const term = this.searchTerm().toLowerCase();
-    const tag = this.selectedTag();
     if (term) {
       result = result.filter(s =>
         s.name.toLowerCase().includes(term) ||
         s.title?.toLowerCase().includes(term) ||
         s.content?.htmlContent?.toLowerCase().includes(term)
       );
-    }
-    if (tag) {
-      result = result.filter(s => s.tags?.split(',').map(t => t.trim()).includes(tag));
     }
     return result;
   });
@@ -123,11 +97,6 @@ export class BlogStream {
     const value = (event as CustomEvent).detail.value ?? '';
     this.searchTerm.set(value);
     this.pageLimit.set(PAGE_SIZE); // reset pagination on new search
-  }
-
-  protected selectTag(tag: string): void {
-    this.selectedTag.set(tag);
-    this.pageLimit.set(PAGE_SIZE);
   }
 
   protected loadMore(event: Event): void {
