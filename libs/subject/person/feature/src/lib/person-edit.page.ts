@@ -117,7 +117,7 @@ export class PersonEditPage implements ViewWillEnter   {
   // derived signals
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
   protected headerTitle = computed(() => this.getTitleLabel(this.isReadOnly(), this.person()?.okey ?? ''));
-  protected toolbarTitle = computed(() => getFullName(this.person()?.firstName, this.person()?.lastName, this.currentUser()?.nameDisplay));
+  protected toolbarTitle = computed(() => getFullName(this.person()?.firstName, this.person()?.lastName, this.currentUser()?.nameDisplay, this.person()?.maidenName));
   protected parentKey = computed(() => PersonModelName + '.' + this.personKey());
   protected priv = computed(() => this.store.privacySettings());
   protected currentUser = computed(() => this.store.currentUser());

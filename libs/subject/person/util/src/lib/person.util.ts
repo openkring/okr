@@ -106,6 +106,7 @@ export function getPersonIndex(person: PersonModel): string {
   _index = addIndexElement(_index, 'fn', person.firstName);
   _index = addIndexElement(_index, 'bx', person.bexioId);
   _index = addIndexElement(_index, 'nn', person.nickname ?? '');
+  _index = addIndexElement(_index, 'mn', person.maidenName ?? '');
   // dob dropped from the search index (spec 1.19 Phase 3): date of birth moves to the
   // privileged addresses vault and must not sit in the tenant-readable index string.
   return _index;
@@ -116,5 +117,5 @@ export function getPersonIndex(person: PersonModel): string {
  * This can be used in info boxes on the GUI.
  */
 export function getPersonIndexInfo(): string {
-  return 'n:name z:zipCode fn:firstName bx:bexioId nn:nickName';
+  return 'n:name z:zipCode fn:firstName bx:bexioId nn:nickName mn:maidenName';
 }

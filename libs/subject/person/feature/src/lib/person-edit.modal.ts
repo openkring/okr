@@ -120,7 +120,7 @@ export class PersonEditModal {
   // derived signals and fields
   protected personKey = computed(() => this.person()?.okey ?? '');
   protected headerTitle = computed(() => this.getTitleLabel(this.isReadOnly(), this.personKey()));
-  protected toolbarTitle = computed(() => getFullName(this.person()?.firstName, this.person()?.lastName, this.currentUser()?.nameDisplay));
+  protected toolbarTitle = computed(() => getFullName(this.person()?.firstName, this.person()?.lastName, this.currentUser()?.nameDisplay, this.person()?.maidenName));
   protected readonly parentKey = computed(() => PersonModelName + '.' + this.personKey());
   protected path = computed(() => getDocumentStoragePath(this.tenantId(), 'person', this.person()?.okey));
   protected listId = computed(() => 'p_' + this.personKey());

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { PlaceholderContext, getPlaceholderHelp, replacePlaceholders, safeConvertBoolean, safeConvertNumber, safeConvertString, string2boolean, string2numberArray, stringArray2ObjectArray, stripHtml } from './convert.util';
+import { PlaceholderContext, getFullName, getPlaceholderHelp, replacePlaceholders, safeConvertBoolean, safeConvertNumber, safeConvertString, string2boolean, string2numberArray, stringArray2ObjectArray, stripHtml } from './convert.util';
+import { NameDisplay } from '@okr/shared-models';
 
 describe('convert.util', () => {
 
@@ -339,4 +340,18 @@ describe('convert.util', () => {
             }
         });
     });
+});
+describe('getFullName with maidenName', () => {
+  it('appends the maiden name to the last name', () => {
+    expect(getFullName('Anna', 'Meier', NameDisplay.FirstLast, 'Muster')).toBe('Anna Meier (Muster)');
+    expect(getFullName('Anna', 'Meier', NameDisplay.LastFirst, 'Muster')).toBe('Meier (Muster) Anna');
+    expect(getFullName('Anna', 'Meier', NameDisplay.LastOnly, 'Muster')).toBe('Meier (Muster)');
+  });
+
+  it('ignores an empty or identical maiden name and FirstOnly', () => {
+    expect(getFullName('Anna', 'Meier', NameDisplay.FirstLast, ' ')).toBe('Anna Meier');
+    expect(getFullName('Anna', 'Meier', NameDisplay.FirstLast, 'Meier')).toBe('Anna Meier');
+    expect(getFullName('Anna', 'Meier', NameDisplay.FirstOnly, 'Muster')).toBe('Anna');
+    expect(getFullName('Anna', 'Meier')).toBe('Anna Meier');
+  });
 });

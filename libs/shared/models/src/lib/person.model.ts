@@ -19,6 +19,12 @@ export class PersonModel implements OkrModel, AddressableModel, SearchableModel,
    * Optional on read: every person written before this field existed lacks it — always `?? ''`.
    */
   public nickname?: string;
+  /**
+   * Optional maiden name / birth name («ledig»). Shown after the last name by getFullName
+   * (`Anna Meier (Muster)`) and indexed (`mn:`) so the person is found by it.
+   * Optional on read: every person written before this field existed lacks it — always `?? ''`.
+   */
+  public maidenName?: string;
   // ssnId/dateOfBirth/dateOfDeath/favEmail/favPhone were stripped in privacy 1.19 Phase 4:
   // ssn + dob + dod live only in the addresses vault; contact data is served by the
   // address-directory projection.

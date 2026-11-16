@@ -192,10 +192,16 @@ export interface NameObject { name: string }
  * @param name1 
  * @param name2 
  * @param nameDisplay: FirstLast, LastFirst, FirstOnly, LastOnly
+ * @param maidenName optional maiden name of a person, appended to the last name in parentheses
+ *   (`Anna Meier (Muster)`); ignored when empty, equal to the last name or with FirstOnly
  * @returns the trimmed combined full name
  */
-export function getFullName(name1?: string, name2?: string, nameDisplay = NameDisplay.FirstLast): string {
+export function getFullName(name1?: string, name2?: string, nameDisplay = NameDisplay.FirstLast, maidenName?: string): string {
   if (nameDisplay === NameDisplay.None) return '';
+  const maiden = maidenName?.trim() ?? '';
+  if (maiden.length && maiden !== name2?.trim()) {
+    name2 = name2?.trim().length ? `${name2.trim()} (${maiden})` : `(${maiden})`;
+  }
   if (!name2?.trim().length) return name1?.trim() ?? ''; // name2 is optional
   if (!name1?.trim().length) return name2?.trim() ?? ''; // name1 is optional
   switch (nameDisplay) {
@@ -217,7 +223,7 @@ export function getAvatarName(avatar?: AvatarInfo, nameDisplay = NameDisplay.Fir
 
 export function getModelName(model: any, tenantId: string, nameDisplay = NameDisplay.FirstLast): string {
   if (isPerson(model, tenantId)) {
-    return getFullName(model.firstName, model.lastName, nameDisplay);
+    return getFullName(model.firstName, model.lastName, nameDisplay, model.maidenName);
   }
   if (isUser(model, tenantId)) {
     return getFullName(model.firstName, model.lastName, nameDisplay);
