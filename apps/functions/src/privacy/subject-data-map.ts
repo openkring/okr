@@ -1942,7 +1942,7 @@ export async function resolveArrayItemDocs(entry: SubjectDataEntry, ctx: Subject
 // not personal data: tags — tag catalogue
 // not personal data: templates — PDF/document templates
 // not personal data: vat-codes — VAT rate definitions
-// not personal data: websiteContent — public marketing content
+// not personal data: websiteContent — public marketing content; retired 2026-11-16, docs archived
 // not personal data: workflow-rules — tenant policy ("on this event, notify whoever is
 //   responsible"). References a responsibility role, never a person; the tasks it opens
 //   are the personal-data side and are covered by the `tasks` row.

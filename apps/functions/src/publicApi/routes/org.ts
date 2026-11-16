@@ -59,25 +59,15 @@ export async function orgRouter(req: Request, res: Response): Promise<void> {
       countryCode = postal?.countryCode ?? '';
     }
 
-    const contentSnap = await db.collection('websiteContent')
-      .where('tenants', 'array-contains', tenantId)
-      .where('isArchived', '==', false)
-      .get();
-
-    const content: Record<string, { de: string; en: string }> = {};
-    for (const doc of contentSnap.docs) {
-      const d = doc.data();
-      if ((d['key'] as string).startsWith('org.')) {
-        content[d['key'] as string] = { de: d['de'] ?? '', en: d['en'] ?? '' };
-      }
-    }
-
+    // tagline, description, social.instagram and logoUrl came from `org.*` keys in the retired
+    // `websiteContent` collection (none were ever written). The fields stay in the response,
+    // empty, so the public contract does not change (spec 1.153 plan part 3, Task 11).
     setCacheHeaders(res);
     res.json({
-      name: org?.['name'] ?? content['org.name']?.de ?? '',
-      shortName: org?.['shortName'] ?? content['org.shortName']?.de ?? '',
-      tagline: content['org.tagline'] ?? { de: '', en: '' },
-      description: content['org.description'] ?? { de: '', en: '' },
+      name: org?.['name'] ?? '',
+      shortName: org?.['shortName'] ?? '',
+      tagline: { de: '', en: '' },
+      description: { de: '', en: '' },
       memberCount: org?.['memberCount'] ?? 0,
       address: {
         street,
@@ -90,10 +80,10 @@ export async function orgRouter(req: Request, res: Response): Promise<void> {
         phone: favPhone,
       },
       social: {
-        instagram: content['org.instagram']?.de ?? '',
+        instagram: '',
       },
       memberLoginUrl: 'https://seeclub.org/',
-      logoUrl: content['org.logoUrl']?.de ?? '',
+      logoUrl: '',
     });
   } catch (err) {
     logger.error('publicApi /org error', { tenantId, err });

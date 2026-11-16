@@ -108,38 +108,6 @@
       "empty": "Nessuna TagList selezionata"
     }
   },
-  "website": {
-    "title": "Testi del sito web",
-    "key": "ID",
-    "isHtml": "Il contenuto è HTML",
-    "list": {
-      "title": "Testi"
-    },
-    "create": {
-      "label": "Creare un testo del sito web",
-      "conf": "Il testo del sito web è stato creato",
-      "error": "Impossibile creare il testo del sito web."
-    },
-    "delete": {
-      "label": "Rimuovere il testo del sito web",
-      "confirm": "Eliminare davvero il testo del sito web ?",
-      "conf": "Il testo del sito web è stato rimosso.",
-      "error": "Impossibile eliminare il testo del sito web."
-    },
-    "update": {
-      "label": "Modificare il testo del sito web",
-      "conf": "Il testo del sito web è stato modificato.",
-      "error": "Impossibile salvare la modifica."
-    },
-    "de": {
-      "label": "Testo tedesco",
-      "placeholder": "Testo in tedesco"
-    },
-    "en": {
-      "label": "Testo inglese",
-      "placeholder": "Testo in inglese"
-    }
-  },
   "switcher": {
     "title": "Cambiare app",
     "tooltip": "Passare a un'altra app",

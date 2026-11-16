@@ -86,29 +86,6 @@ export const AOC_I18N_KEYS = {
   tag_strings_title:                        PFX + 'tag.strings.title',
   tag_strings_empty:                        PFX + 'tag.strings.empty',
 
-  // website
-  website_title:                      PFX + 'website.title',
-  website_key:                        PFX + 'website.key',
-  website_is_html:                    PFX + 'website.isHtml',
-  website_de_label:                   PFX + 'website.de.label',
-  website_de_placeholder:             PFX + 'website.de.placeholder',
-  website_en_label:                   PFX + 'website.en.label',
-  website_en_placeholder:             PFX + 'website.en.placeholder',
-  website_list_title:                 PFX + 'website.list.title',
-
-  website_create_label:               PFX + 'website.create.label',
-  website_create_conf:                PFX + 'website.create.conf',
-  website_create_error:               PFX + 'website.create.error',
-  
-  website_delete_label:               PFX + 'website.delete.label',
-  website_delete_confirm:             PFX + 'website.delete.confirm',
-  website_delete_conf:                PFX + 'website.delete.conf',
-  website_delete_error:               PFX + 'website.delete.error',
-
-  website_update_label:               PFX + 'website.update.label',
-  website_update_conf:                PFX + 'website.update.conf',
-  website_update_error:               PFX + 'website.update.error',
-
   as_title:                           '@actionsheet.title',
   name:                               '@name.label',
   membership:                         '@membership',

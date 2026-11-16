@@ -184,11 +184,8 @@ const aoc: BlockRoutes = {
       { path: 'email',      canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocEmail) },
       { path: 'sessions',   canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocSession) },
       { path: 'status',     canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocStatus) },
-      // SOFTENED by owner ruling R-5, 2026-08-05, to match the live `aoc-website` menu doc's
-      // `roleNeeded: contentAdmin`. This is the one place the live `app.routes.ts` guard is NOT
-      // reproduced verbatim: it writes `isPrivilegedGuard`, which was inert under the old admin
-      // parent and — per R-5 — is the wrong role for this screen either way.
-      { path: 'website',    canActivate: [isContentAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocWebsite) },
+      // `website` (`aoc-website`, «Website editieren») retired 2026-11-16 (spec 1.153 plan part 3, Task 11):
+      // the published website is edited in the CMS sitemap; `websiteContent` is archived.
     ],
   },
   // Workflow rules (spec 1.35). A TOP-LEVEL fragment, not an `/aoc` child, because the

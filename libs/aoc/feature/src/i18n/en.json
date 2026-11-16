@@ -108,38 +108,6 @@
       "empty": "No TagList selected"
     }
   },
-  "website": {
-    "title": "Website texts",
-    "key": "ID",
-    "isHtml": "Content is HTML",
-    "list": {
-      "title": "Texts"
-    },
-    "create": {
-      "label": "Create website text",
-      "conf": "The website text was created",
-      "error": "The website text could not be created."
-    },
-    "delete": {
-      "label": "Remove website text",
-      "confirm": "Do you really want to delete the website text ?",
-      "conf": "The website text was removed.",
-      "error": "The website text could not be deleted."
-    },
-    "update": {
-      "label": "Edit website text",
-      "conf": "The website text was changed.",
-      "error": "The change could not be saved."
-    },
-    "de": {
-      "label": "German text",
-      "placeholder": "Text in German"
-    },
-    "en": {
-      "label": "English text",
-      "placeholder": "Text in English"
-    }
-  },
   "switcher": {
     "title": "Switch app",
     "tooltip": "Switch to another app",

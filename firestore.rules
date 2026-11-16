@@ -1232,7 +1232,6 @@ service cloud.firestore {
                               && request.resource.data.tenants.hasAny(callerTenants());
       }
     }
-    match /websiteContent/{id}     { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     match /workrels/{id}           { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
 
     // Kiosk device telemetry (battery + heartbeat), document id = the kiosk user's uid.

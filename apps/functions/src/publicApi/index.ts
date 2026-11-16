@@ -14,7 +14,6 @@ const mailtrapApiKey = defineSecret('MAILTRAP_APIKEY');
 const aliasIpHashSecret = defineSecret('ALIAS_IP_HASH_SECRET');
 
 import { orgRouter } from './routes/org';
-import { contentRouter } from './routes/content';
 import { newsRouter } from './routes/news';
 import { calendarRouter } from './routes/calendar';
 import { contactRouter } from './routes/contact';
@@ -118,7 +117,6 @@ app.use((req, res, next) => {
 
 const BASE = '/public/api/v1';
 app.get(`${BASE}/org`,           orgRouter);
-app.get(`${BASE}/content`,       contentRouter);
 app.get(`${BASE}/news`,          newsRouter);
 app.get(`${BASE}/news/:slug`,    newsRouter);
 app.get(`${BASE}/calendar`,      calendarRouter);

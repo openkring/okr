@@ -4082,29 +4082,6 @@
       "density": "SPARSE_ALL"
     },
     {
-      "collectionGroup": "websiteContent",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "tenants",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "isArchived",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "key",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "ASCENDING"
-        }
-      ],
-      "density": "SPARSE_ALL"
-    },
-    {
       "collectionGroup": "workrels",
       "queryScope": "COLLECTION",
       "fields": [

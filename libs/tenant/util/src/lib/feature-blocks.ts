@@ -312,11 +312,10 @@ const aoc: FeatureBlock = {
   // left the catalogue in spec 1.101 phase 5) — a URL is not an edge either.
   dependsOn: [],
   // Was `[]` with no justification (task 5); researched and corrected in task 18, in step with
-  // the `tag`/`website` routes added to this block's route fragment. `tags` (`TagCollection`,
-  // `tag.model.ts:14`) and `websiteContent` (`WebsiteContentCollection`,
-  // `website-content.model.ts:18`) are written ONLY by this domain — `aoc-tag.store.ts`
-  // (create/update/delete) and `aoc-website.store.ts` (create/update/delete) are the sole
-  // writers anywhere in `libs/` or `apps/`. `app.store.ts:173` READS `tags` as global
+  // the `tag` route added to this block's route fragment. `tags` (`TagCollection`,
+  // `tag.model.ts:14`) is written ONLY by this domain — `aoc-tag.store.ts`
+  // (create/update/delete) is the sole writer anywhere in `libs/` or `apps/`. (`websiteContent`
+  // stood here too until «Website editieren» was retired on 2026-11-16, spec 1.153 Task 11.) `app.store.ts:173` READS `tags` as global
   // reference data, which does not make it shared: `collections` records OWNERSHIP (it feeds
   // the retention + audit pass), the same rule applied to `groups` on the `chat` block.
   //
@@ -324,7 +323,7 @@ const aoc: FeatureBlock = {
   // other one is another block's, read (and in the repair screens, rewritten) by the admin
   // console. Listing them here would claim ownership of data governed elsewhere and would
   // double-count it in the retention pass.
-  collections: ['tags', 'websiteContent'],
+  collections: ['tags'],
   // The task-12 TODO that stood here is fully RESOLVED — every live child of `aoc-menu` now
   // has a home. For the record, in the live doc's own child order as of BEFORE spec 1.101
   // phase 1 (pre-1.101 snapshot; `flighttracker` has since moved to the main menu) (`aoc-admin, aoc-auth,
@@ -382,8 +381,9 @@ const aoc: FeatureBlock = {
       // mirror-the-live-doc rule.
       { key: 'divider_empty',  name: 'divider_empty',  url: '',                action: 'divider',  roleNeeded: 'admin', icon: 'help-circle', label: '' },
     ]),
-    // TREE-SHAPE SURPRISE, verified rather than assumed (task 18): these two AOC screens hang
-    // off `cms-menu`, NOT `aoc-menu`. The live `cms-menu.menuItems` array reads `[cms-graph,
+    // TREE-SHAPE SURPRISE, verified rather than assumed (task 18): these AOC screens hang
+    // off `cms-menu`, NOT `aoc-menu` (`aoc-website` was the second one until its retirement on
+    // 2026-11-16, spec 1.153 Task 11; the quoted array below is the pre-retirement snapshot). The live `cms-menu.menuItems` array reads `[cms-graph,
     // menu-all, page-all, section-all, document-all, location-all, test-sections,
     // category-all, icon-all, tag-all, aoc-website, templates, forms-all, esign]` — content
     // administration, which is where an editor would look for them, even though both urls
@@ -394,16 +394,10 @@ const aoc: FeatureBlock = {
     // `document` and `forms`. (`aocMenuParent()` has one caller left, `aoc`: `user`, `security`,
     // `activity` and `business` stopped co-declaring it in spec 1.101 phase 5; `mobility` in phase 1.)
     //
-    // Neither name carries an `aoc-`/`tag-` prefix consistently: the doc for `/aoc/tag` is
-    // named `tag-all` and the one for `aoc/website` is named `aoc-website`. Both copied as
-    // found; `key`/`name` must equal the live `name`, never a tidier invention.
-    //
-    // `aoc-website`'s url has NO LEADING SLASH (`aoc/website`, not `/aoc/website`) — copied
-    // verbatim, same as `transfer-all`/`resource-all`/`rboat-all` on other blocks;
-    // `urlResolves` matches by path segment, so it still resolves against the route above.
+    // The doc for `/aoc/tag` is named `tag-all`, not `aoc-tag` — copied as found; `key`/`name`
+    // must equal the live `name`, never a tidier invention.
     cmsMenuParent([
       { key: 'tag-all',     name: 'tag-all',     url: '/aoc/tag',   action: 'navigate', roleNeeded: 'contentAdmin', icon: 'tag',   label: '@item.tag-all' },
-      { key: 'aoc-website', name: 'aoc-website', url: 'aoc/website', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'globe', label: '@item.aoc-website' },
     ]),
   ],
 };

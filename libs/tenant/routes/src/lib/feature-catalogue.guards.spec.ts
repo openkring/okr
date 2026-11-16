@@ -31,8 +31,9 @@ import { FEATURE_ROUTES } from './feature-catalogue';
  * is property 3, which is an identity check precisely because behaviour cannot express it.
  */
 
-/** The `/aoc` children ruled down to contentAdmin. Everything else under `/aoc` is admin-only. */
-const AOC_CONTENT_ADMIN = ['tag', 'website'] as const;
+/** The `/aoc` children ruled down to contentAdmin. Everything else under `/aoc` is admin-only.
+ * (`website` was the second one until «Website editieren» was retired on 2026-11-16.) */
+const AOC_CONTENT_ADMIN = ['tag'] as const;
 
 interface RuledRoute {
   menuDoc: string;
@@ -45,7 +46,6 @@ interface RuledRoute {
 const RULED_R5: RuledRoute[] = [
   { menuDoc: 'templates', blockId: 'pdf-template', path: 'templates' },
   { menuDoc: 'forms-all', blockId: 'forms', path: 'forms' },
-  { menuDoc: 'aoc-website', blockId: 'aoc', path: 'aoc', child: 'website' },
   { menuDoc: 'tag-all', blockId: 'aoc', path: 'aoc', child: 'tag' },
 ];
 
@@ -197,9 +197,10 @@ const blockedFor = (injector: Injector, routes: RuledRoute[]): string[] =>
 const reachableFor = (injector: Injector, routes: RuledRoute[]): string[] =>
   routes.filter(entry => activates(injector, ...chainOf(entry))).map(entry => entry.menuDoc);
 
-describe('the ten routes ruled to match their menu documents', () => {
+// Ten when ruled; nine since `aoc/website` was retired on 2026-11-16.
+describe('the nine routes ruled to match their menu documents', () => {
   it('covers every route the rulings name', () => {
-    expect(RULED_R5).toHaveLength(4);
+    expect(RULED_R5).toHaveLength(3);
     expect(REDUCED_R6).toHaveLength(6);
     expect(DEGRADED_R7).toHaveLength(1);
     expect(DEGRADED_R8).toHaveLength(1);
@@ -357,12 +358,12 @@ describe('/aoc guards after the 2026-08-05 rulings', () => {
 
   /**
    * The floor must not be the thing that decides: a contentAdmin has to clear the PARENT (so
-   * the two ruled children are reachable) and still be stopped by each admin-only child. Both
+   * the ruled child is reachable) and still be stopped by each admin-only child. Both
    * halves in one assertion, because getting either wrong reintroduces the defeat-by-ancestor
    * bug the restructuring exists to avoid. R-6 touched no `/aoc` route, so the floor is still
    * the union of these children: the admin-only children (`['admin']`) ∪ the ruled ones (`['contentAdmin', 'admin']`).
    */
-  it('a contentAdmin clears the floor but only reaches the two ruled screens', () => {
+  it('a contentAdmin clears the floor but only reaches the ruled screen', () => {
     const parent = fragmentOf('aoc', 'aoc');
     const reachable = (parent.children ?? [])
       .filter(c => activates(CONTENT_ADMIN, parent, c))

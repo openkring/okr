@@ -91,8 +91,8 @@ four hub areas exist there. The only kring-specific card is Eskalationen (`tenan
 | Sessions, E-Mail-Ereignisse | hub cards; the pages keep `/aoc/sessions` and `/aoc/email` | 5 |
 | Benutzer, Register, Privacy Audit, Aktivitäten, Eskalationen, Workflow, Features | hub cards, no longer `aoc-menu` rows | 5 |
 
-Tags (`/aoc/tag`) and Website (`/aoc/website`) are content tools (contentAdmin) under `cms-menu`, not
-hub content. There is no Storage page, no Debug Tools page and no Daten-Korrektur page any more.
+Tags (`/aoc/tag`) is a content tool (contentAdmin) under `cms-menu`, not hub content. «Website editieren»
+(`/aoc/website`, `websiteContent`) was retired on 2026-11-16 — the website is edited in the CMS sitemap. There is no Storage page, no Debug Tools page and no Daten-Korrektur page any more.
 Flight Tracker is a main-menu entry (block `mobility`).
 
 ## Operator only (bka)
@@ -114,7 +114,7 @@ alone (`loadTenantUser`, `isSoleTenantUserData`, `mayDeleteAuthUser`).
 ## Library path
 
 `@okr/aoc-feature` (`libs/aoc/feature/src/lib/`): `AocHub`, `AocSession`, `AocStatus`, `AocEmail`, `AocTag`,
-`AocWebsite`, `AocTenantAllocation` and the tenant switcher. `@okr/aoc-util` (`libs/aoc/util/src/lib/`):
+`AocTenantAllocation` and the tenant switcher. `@okr/aoc-util` (`libs/aoc/util/src/lib/`):
 `AOC_AREAS`, `AOC_AREA_ROUTES`, the hub i18n keys and the pure helpers.
 
 The list of external services is `AOC_STATUS_SERVICES` in `libs/aoc/util/src/lib/aoc-status-services.ts`,

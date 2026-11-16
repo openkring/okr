@@ -108,38 +108,6 @@
       "empty": "Keine TagList ausgewählt"
     }
   },
-  "website": {
-    "title": "Website Texte",
-    "key": "ID",
-    "isHtml": "Inhalt ist HTML",
-    "list": {
-      "title": "Texte"
-    },
-    "create": {
-      "label": "Website Text erstellen",
-      "conf": "Der Website Text wurde erstellt",
-      "error": "Der Website Text konnte nicht erstellt werden."
-    },
-    "delete": {
-      "label": "Website Text entfernen",
-      "confirm": "Soll der Website Text wirklich gelöscht werden ?",
-      "conf": "Der Website Text wurde entfernt.",
-      "error": "Der Website Text konnte nicht gelöscht werden."
-    },
-    "update": {
-      "label": "Website Text ändern",
-      "conf": "Der Website Text wurde geändert.",
-      "error": "Die Änderung konnte nicht gespeichert werden."
-    },
-    "de": {
-      "label": "Deutscher Text",
-      "placeholder": "Text auf Deutsch"
-    },
-    "en": {
-      "label": "Englischer Text",
-      "placeholder": "Text auf Englisch"
-    }
-  },
   "switcher": {
     "title": "App wechseln",
     "tooltip": "Zu einer anderen App wechseln",
