@@ -425,6 +425,18 @@
       "label": "Entrenamiento",
       "description": "p. ej. formación, curso, perfeccionamiento, entrenamiento deportivo"
     },
+    "regatta": {
+      "label": "Regata",
+      "description": "regata o carrera de remo"
+    },
+    "club": {
+      "label": "Evento del club",
+      "description": "evento del club, p. ej. fiesta, salida, asamblea"
+    },
+    "course": {
+      "label": "Curso",
+      "description": "curso de remo o formación"
+    },
     "competition": {
       "label": "Competición",
       "description": "p. ej. regata, carrera, torneo, campeonato"

@@ -425,6 +425,18 @@
       "label": "Entraînement",
       "description": "p. ex. formation, cours, perfectionnement, entraînement sportif"
     },
+    "regatta": {
+      "label": "Régate",
+      "description": "régate ou course d’aviron"
+    },
+    "club": {
+      "label": "Événement du club",
+      "description": "événement du club, p. ex. fête, sortie, assemblée"
+    },
+    "course": {
+      "label": "Cours",
+      "description": "cours d’aviron ou formation"
+    },
     "competition": {
       "label": "Compétition",
       "description": "p. ex. régate, course, tournoi, championnat"

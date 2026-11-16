@@ -425,6 +425,18 @@
       "label": "Allenamento",
       "description": "ad es. formazione, corso, aggiornamento, allenamento sportivo"
     },
+    "regatta": {
+      "label": "Regata",
+      "description": "regata o gara di canottaggio"
+    },
+    "club": {
+      "label": "Evento del club",
+      "description": "evento del club, ad es. festa, uscita, assemblea"
+    },
+    "course": {
+      "label": "Corso",
+      "description": "corso di canottaggio o formazione"
+    },
     "competition": {
       "label": "Competizione",
       "description": "ad es. regata, gara, torneo, campionato"

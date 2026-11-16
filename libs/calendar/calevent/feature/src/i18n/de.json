@@ -425,6 +425,18 @@
       "label": "Training",
       "description": "zB. Ausbildung, Kurs, Weiterbildung, sportliches Training"
     },
+    "regatta": {
+      "label": "Regatta",
+      "description": "Regatta oder Ruderrennen"
+    },
+    "club": {
+      "label": "Clubanlass",
+      "description": "Anlass des Clubs, zB. Fest, Ausfahrt, Versammlung"
+    },
+    "course": {
+      "label": "Kurs",
+      "description": "Ruderkurs oder Ausbildung"
+    },
     "competition": {
       "label": "Wettkampf",
       "description": "zB. Regatta, Rennen, Turnier, Meisterschaft"

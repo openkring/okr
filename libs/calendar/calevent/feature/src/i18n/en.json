@@ -425,6 +425,18 @@
       "label": "Training",
       "description": "e.g. education, course, further training, sports training"
     },
+    "regatta": {
+      "label": "Regatta",
+      "description": "regatta or rowing race"
+    },
+    "club": {
+      "label": "Club event",
+      "description": "club event, e.g. party, outing, meeting"
+    },
+    "course": {
+      "label": "Course",
+      "description": "rowing course or training programme"
+    },
     "competition": {
       "label": "Competition",
       "description": "e.g. regatta, race, tournament, championship"
