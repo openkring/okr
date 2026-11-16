@@ -88,7 +88,17 @@ export function mapCta(raw: unknown, lang: string): PublicCta | undefined {
   return { label, url, style: r['style'] === 'secondary' ? 'secondary' : 'primary' };
 }
 
-export interface PublicTile { value: string; icon: string; title: string; text: string; url: string; tone: 'primary' | 'secondary' }
+/**
+ * One tile as the website draws it. `icon` is the bare icon name, `iconSrc` its svg in the icon
+ * collection (`''` without a usable name); `linkLabel` is the text at the foot of a linked card.
+ */
+export interface PublicTile {
+  value: string; icon: string; iconSrc: string; title: string; text: string; url: string; linkLabel: string;
+  tone: 'primary' | 'secondary';
+}
+
+/** Icon names of the icon collection: letters, digits, `-` and `_` (e.g. `rowing_2x_side_front`). */
+const ICON_NAME = /^[a-z0-9_-]+$/i;
 
 export function mapTiles(items: unknown, variant: 'stat' | 'card', lang: string): PublicTile[] {
   if (!Array.isArray(items)) return [];
@@ -99,15 +109,25 @@ export function mapTiles(items: unknown, variant: 'stat' | 'card', lang: string)
     const title = pickText(str(raw['title']).trim(), raw['titleI18n'] as I18nString | undefined, lang).trim();
     if (variant === 'stat' ? !value : !title) continue;
     const text = pickText(str(raw['text']).trim(), raw['textI18n'] as I18nString | undefined, lang).trim();
-    const icon = str(raw['icon']).trim();
+    const rawIcon = str(raw['icon']).trim();
+    const icon = ICON_NAME.test(rawIcon) ? rawIcon : '';
+    const url = safeSiteUrl(raw['url']);
     out.push({
-      value, title, text,
-      icon: /^[a-z0-9-]+$/i.test(icon) ? icon : '',
-      url: safeSiteUrl(raw['url']),
+      value, title, text, icon, url,
+      iconSrc: icon ? `${IMGIX_BASE}/logo/icons/${icon}.svg` : '',
+      linkLabel: url ? pickText(str(raw['linkLabel']).trim(), raw['linkLabelI18n'] as I18nString | undefined, lang).trim() : '',
       tone: raw['tone'] === 'secondary' ? 'secondary' : 'primary',
     });
   }
   return out;
+}
+
+/** ColorIonic (shared-models) by index; the website templates colour primary and secondary, the rest stays neutral. */
+const IONIC_COLORS = ['primary', 'secondary', 'tertiary', 'success', 'warning', 'danger', 'light', 'medium', 'dark', 'white'] as const;
+
+/** The section colour (`SectionModel.color`, a ColorIonic index) as its name; default primary. */
+export function mapAccent(color: unknown): string {
+  return typeof color === 'number' && Number.isInteger(color) ? IONIC_COLORS[color] ?? 'primary' : 'primary';
 }
 
 /** Mirrors `tilesColumns` (cms-section-util): 1–4, default 3. */
@@ -185,6 +205,8 @@ export interface SectionDoc {
   tenants?: string[];
   title?: string;
   subTitle?: string;
+  intro?: string;
+  color?: number;
   content?: { htmlContent?: string; position?: number; colSize?: number };
   properties?: Record<string, unknown> & {
     titleI18n?: I18nString;
@@ -262,7 +284,7 @@ function mapFooterItem(raw: Record<string, unknown>): PublicFooterItem | undefin
       return label ? { type: 'link', label, url, src: '', height: 0 } : undefined;
     case 'icon': {
       const icon = typeof raw['icon'] === 'string' ? raw['icon'] : '';
-      if (!/^[a-z0-9-]+$/i.test(icon)) return undefined;
+      if (!ICON_NAME.test(icon)) return undefined;
       return { type: 'icon', label, url, src: `${IMGIX_BASE}/logo/icons/${icon}.svg`, height: 0 };
     }
     case 'logo': {
@@ -439,13 +461,17 @@ export function mapSection(
 
     case 'tiles': {
       const variant = props['variant'] === 'card' ? 'card' : 'stat';
+      const items = mapTiles(props['items'], variant, lang);
+      // the subtitle is drawn as the line above the title, in the section colour (`accent`)
       return {
-        type: 'tiles', name, title, subTitle, kicker,
-        lead: i18nOf(props, 'leadI18n', 'lead', lang),
+        type: 'tiles', name, title, subTitle,
+        intro: pickText(s.intro, props['introI18n'] as I18nString | undefined, lang),
+        accent: mapAccent(s.color),
         variant,
         columns: mapTilesColumns(props['columns']),
-        linkLabel: i18nOf(props, 'linkLabelI18n', 'linkLabel', lang),
-        items: mapTiles(props['items'], variant, lang),
+        items,
+        // once one card has an icon every card keeps the icon slot, so the titles of a row line up
+        hasIcons: variant === 'card' && items.some(i => !!i.iconSrc),
       };
     }
 

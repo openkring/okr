@@ -1083,6 +1083,11 @@
         "placeholder": "0..12",
         "helper": "La larghezza in numero di colonne di una griglia di max 12 colonne, ad es. 1, 2, 3 ecc.",
         "error": "La dimensione della colonna deve essere un numero intero composto solo da cifre, tra 0 e 12."
+      },
+      "intro": {
+        "label": "Introduzione",
+        "placeholder": "p.es. Quattro modi per salire in barca: scegli il tuo.",
+        "helper": "Un breve paragrafo sotto il titolo"
       }
     }
   },
@@ -1575,7 +1580,7 @@
   "tiles": {
     "label": "Riquadri",
     "title": "Configurazione dei riquadri",
-    "subtitle": "Cifre chiave o schede in griglia. Sul telefono i riquadri stanno uno sotto l'altro.",
+    "subtitle": "Cifre o schede in griglia. Tocca un riquadro per modificarlo.",
     "variant": {
       "label": "Tipo di riquadri",
       "stat": "Cifre chiave",
@@ -1585,24 +1590,15 @@
       "label": "Colonne",
       "helper": "Numero di colonne dalla larghezza tablet (1–4); sul telefono sempre una colonna."
     },
-    "lead": {
-      "label": "Introduzione",
-      "placeholder": "p. es. Cosa ci distingue",
-      "helper": "Una frase breve sotto il titolo"
-    },
     "linkLabel": {
       "label": "Testo del link",
       "placeholder": "p. es. Scopri di più",
-      "helper": "Appare su ogni scheda che ha un link. Lascialo vuoto se non deve apparire nessun testo."
+      "helper": "Appare in fondo alla scheda. Lascia vuoto se non deve apparire alcun testo."
     },
     "items": "Riquadri",
     "empty": "Ancora nessun riquadro",
     "add": "Aggiungi riquadro",
-    "actions": "Riquadro",
-    "edit": "Modifica",
-    "moveUp": "Sposta su",
-    "moveDown": "Sposta giù",
-    "remove": "Rimuovi",
+    "remove": "Rimuovi riquadro",
     "value": {
       "label": "Valore",
       "placeholder": "p. es. 120+",
@@ -1623,7 +1619,7 @@
     "icon": {
       "label": "Nome dell'icona",
       "placeholder": "p. es. people",
-      "helper": "Nome di un'icona della raccolta di icone"
+      "helper": "Tocca la lente per scegliere un'icona"
     },
     "url": {
       "label": "Link",
@@ -1634,6 +1630,16 @@
       "label": "Colore",
       "primary": "Colore principale",
       "secondary": "Colore secondario"
+    },
+    "editTitle": "Modifica riquadro",
+    "group": {
+      "tile": "Riquadro",
+      "icon": "Icona",
+      "link": "Link"
+    },
+    "color": {
+      "label": "Colore della sezione",
+      "helper": "Colora il sottotitolo sopra il titolo."
     }
   },
   "timeline": {

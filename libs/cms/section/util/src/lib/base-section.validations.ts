@@ -1,6 +1,6 @@
 import { staticSuite } from 'vest';
 
-import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
+import { COMMENT_LENGTH, DESCRIPTION_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
 import { ColorIonic, SectionModel } from '@okr/shared-models';
 import { booleanValidations, categoryValidations, stringValidations } from '@okr/shared-util-core';
 
@@ -32,6 +32,8 @@ export const baseSectionValidations = staticSuite((model: SectionModel) => {
   // title/subTitle are rendered with [maxLength]=LONG_NAME_LENGTH in section-configuration.
   stringValidations('title', model.title, LONG_NAME_LENGTH);
   stringValidations('subTitle', model.subTitle, LONG_NAME_LENGTH);
+  // intro is optional and missing on older sections; rendered with [maxLength]=COMMENT_LENGTH
+  stringValidations('intro', model.intro ?? '', COMMENT_LENGTH);
   // tbd: content: ContentConfig
 
 });

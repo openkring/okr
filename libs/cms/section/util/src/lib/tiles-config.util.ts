@@ -35,6 +35,7 @@ export function validTiles(items: TileItem[] | undefined, variant: TileVariant):
       title: trimmed(i.title),
       text: trimmed(i.text),
       url: trimmed(i.url),
+      linkLabel: trimmed(i.linkLabel),
       tone: i.tone ?? 'primary',
     }));
 }

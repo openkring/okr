@@ -1083,6 +1083,11 @@
         "placeholder": "0..12",
         "helper": "La largeur en nombre de colonnes d'une grille de max 12 colonnes, p. ex. 1, 2, 3 etc.",
         "error": "La taille de colonne doit être un nombre entier composé uniquement de chiffres, entre 0 et 12."
+      },
+      "intro": {
+        "label": "Introduction",
+        "placeholder": "p.ex. Quatre façons de monter dans le bateau – choisis la tienne.",
+        "helper": "Un court paragraphe sous le titre"
       }
     }
   },
@@ -1575,7 +1580,7 @@
   "tiles": {
     "label": "Tuiles",
     "title": "Configuration des tuiles",
-    "subtitle": "Chiffres clés ou cartes en grille. Sur le téléphone, les tuiles sont les unes sous les autres.",
+    "subtitle": "Chiffres clés ou cartes en grille. Touche une tuile pour la modifier.",
     "variant": {
       "label": "Type de tuiles",
       "stat": "Chiffres clés",
@@ -1585,24 +1590,15 @@
       "label": "Colonnes",
       "helper": "Nombre de colonnes à partir de la largeur tablette (1–4) ; toujours une colonne sur le téléphone."
     },
-    "lead": {
-      "label": "Introduction",
-      "placeholder": "p. ex. Ce qui nous distingue",
-      "helper": "Une courte phrase sous le titre"
-    },
     "linkLabel": {
       "label": "Texte du lien",
       "placeholder": "p. ex. En savoir plus",
-      "helper": "Affiché sur chaque carte qui a un lien. Laisse vide si aucun texte ne doit apparaître."
+      "helper": "Apparaît en bas de la carte. Laisse vide si aucun texte ne doit apparaître."
     },
     "items": "Tuiles",
     "empty": "Pas encore de tuiles",
     "add": "Ajouter une tuile",
-    "actions": "Tuile",
-    "edit": "Modifier",
-    "moveUp": "Vers le haut",
-    "moveDown": "Vers le bas",
-    "remove": "Supprimer",
+    "remove": "Supprimer la tuile",
     "value": {
       "label": "Valeur",
       "placeholder": "p. ex. 120+",
@@ -1623,7 +1619,7 @@
     "icon": {
       "label": "Nom de l'icône",
       "placeholder": "p. ex. people",
-      "helper": "Nom d'une icône de la collection d'icônes"
+      "helper": "Touche la loupe pour choisir une icône"
     },
     "url": {
       "label": "Lien",
@@ -1634,6 +1630,16 @@
       "label": "Couleur",
       "primary": "Couleur principale",
       "secondary": "Couleur secondaire"
+    },
+    "editTitle": "Modifier la tuile",
+    "group": {
+      "tile": "Tuile",
+      "icon": "Icône",
+      "link": "Lien"
+    },
+    "color": {
+      "label": "Couleur de la section",
+      "helper": "Colore le sous-titre au-dessus du titre."
     }
   },
   "timeline": {

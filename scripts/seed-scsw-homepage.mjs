@@ -187,12 +187,12 @@ function sections() {
       })),
     }),
 
-    scsw_homepage_offers: base('scsw_homepage_offers', 'tiles', 'kurse', offers.title.de, '', 3, {
+    // the «Mitmachen» line is the subtitle (drawn above the title in the section colour), the lead is the intro
+    scsw_homepage_offers: { ...base('scsw_homepage_offers', 'tiles', 'kurse', offers.title.de, offers.kicker.de, 3, {
       variant: 'card', columns: 3,
-      kicker: offers.kicker.de, kickerI18n: i18n(offers.kicker),
       titleI18n: i18n(offers.title),
-      lead: offers.lead.de, leadI18n: i18n(offers.lead),
-      linkLabel: offers.cta.de, linkLabelI18n: i18n(offers.cta),
+      subTitleI18n: i18n(offers.kicker),
+      introI18n: i18n(offers.lead),
       items: [
         ['add', 'seite.html?key=scsw_kurs_erwachsene', 'primary'],
         ['people', 'seite.html?key=scsw_kurs_jugendliche', 'primary'],
@@ -201,8 +201,9 @@ function sections() {
         icon, url, tone,
         title: offers.items[i].title.de, titleI18n: i18n(offers.items[i].title),
         text: offers.items[i].desc.de, textI18n: i18n(offers.items[i].desc),
+        linkLabel: offers.cta.de, linkLabelI18n: i18n(offers.cta),
       })),
-    }),
+    }), intro: offers.lead.de },
 
     scsw_homepage_boathouse: base('scsw_homepage_boathouse', 'article', 'bootshaus', bh.title.de, '', 4, {
       images: [{

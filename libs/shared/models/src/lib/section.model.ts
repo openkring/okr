@@ -189,6 +189,9 @@ export interface TileItem {
   titleI18n?: I18nString;
   textI18n?: I18nString;
   url?: string;
+  /** text of the link line at the foot of a card with a url; without it the card is still clickable */
+  linkLabel?: string;
+  linkLabelI18n?: I18nString;
   tone: TileTone;
 }
 
@@ -197,12 +200,6 @@ export interface TilesConfig {
   /** Columns from md up. Default 3. */
   columns: number;
   items: TileItem[];
-  kicker?: string;
-  lead?: string;
-  linkLabel?: string;
-  kickerI18n?: I18nString;
-  leadI18n?: I18nString;
-  linkLabelI18n?: I18nString;
 }
 
 // --------------------------------------- TIMELINE ----------------------------------------
@@ -292,6 +289,7 @@ export interface BaseSection {
   name: string;
   title: string;
   subTitle: string;
+  intro?: string; // short introductory paragraph under the title; translations in properties.introI18n
   index: string;
   color: ColorIonic;
   colSize: string; // col size(s) of the section card itself, e.g. '12' or '12,6,4' (default, md, lg)

@@ -1083,6 +1083,11 @@
         "placeholder": "0..12",
         "helper": "La anchura en número de columnas de una cuadrícula de máx. 12 columnas, p. ej. 1, 2, 3 etc.",
         "error": "El tamaño de columna debe ser un número entero compuesto únicamente de cifras, entre 0 y 12."
+      },
+      "intro": {
+        "label": "Introducción",
+        "placeholder": "p. ej. Cuatro formas de subir al barco: elige la tuya.",
+        "helper": "Un párrafo breve bajo el título"
       }
     }
   },
@@ -1575,7 +1580,7 @@
   "tiles": {
     "label": "Mosaicos",
     "title": "Configuración de los mosaicos",
-    "subtitle": "Cifras clave o tarjetas en cuadrícula. En el móvil los mosaicos van uno debajo de otro.",
+    "subtitle": "Cifras o tarjetas en cuadrícula. Toca un mosaico para editarlo.",
     "variant": {
       "label": "Tipo de mosaicos",
       "stat": "Cifras clave",
@@ -1585,24 +1590,15 @@
       "label": "Columnas",
       "helper": "Número de columnas a partir del ancho de tableta (1–4); en el móvil siempre una columna."
     },
-    "lead": {
-      "label": "Introducción",
-      "placeholder": "p. ej. Lo que nos distingue",
-      "helper": "Una frase corta debajo del título"
-    },
     "linkLabel": {
       "label": "Texto del enlace",
       "placeholder": "p. ej. Saber más",
-      "helper": "Aparece en cada tarjeta que tiene un enlace. Déjalo vacío si no debe aparecer ningún texto."
+      "helper": "Aparece al pie de la tarjeta. Déjalo vacío si no debe aparecer texto."
     },
     "items": "Mosaicos",
     "empty": "Todavía no hay mosaicos",
     "add": "Añadir mosaico",
-    "actions": "Mosaico",
-    "edit": "Editar",
-    "moveUp": "Subir",
-    "moveDown": "Bajar",
-    "remove": "Quitar",
+    "remove": "Quitar mosaico",
     "value": {
       "label": "Valor",
       "placeholder": "p. ej. 120+",
@@ -1623,7 +1619,7 @@
     "icon": {
       "label": "Nombre del icono",
       "placeholder": "p. ej. people",
-      "helper": "Nombre de un icono de la colección de iconos"
+      "helper": "Toca la lupa para elegir un icono"
     },
     "url": {
       "label": "Enlace",
@@ -1634,6 +1630,16 @@
       "label": "Color",
       "primary": "Color principal",
       "secondary": "Color secundario"
+    },
+    "editTitle": "Editar mosaico",
+    "group": {
+      "tile": "Mosaico",
+      "icon": "Icono",
+      "link": "Enlace"
+    },
+    "color": {
+      "label": "Color de la sección",
+      "helper": "Colorea el subtítulo encima del título."
     }
   },
   "timeline": {

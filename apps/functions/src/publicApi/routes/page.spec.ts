@@ -578,7 +578,7 @@ describe('homepage sections (1.151)', () => {
     const out = map({
       type: 'tiles', name: 'zahlen', title: 'Zahlen',
       properties: {
-        variant: 'stat', columns: 2, kicker: 'Fakten',
+        variant: 'stat', columns: 2,
         items: [
           { value: '120', title: 'Mitglieder', tone: 'secondary' },
           { value: '4', title: 'Boote', url: 'javascript:x', icon: 'a b' },
@@ -589,12 +589,33 @@ describe('homepage sections (1.151)', () => {
       },
     });
     const items = out['items'] as { tone: string; url: string; icon: string }[];
-    expect(out).toMatchObject({ type: 'tiles', name: 'zahlen', columns: 2, variant: 'stat', kicker: 'Fakten' });
+    expect(out).toMatchObject({ type: 'tiles', name: 'zahlen', columns: 2, variant: 'stat', accent: 'primary' });
     expect(items.length).toBe(4);
     expect(items.map(i => i.tone)).toEqual(['secondary', 'primary', 'primary', 'primary']);
     expect(items[1].url).toBe('');
     expect(items[1].icon).toBe('');
-    expect(items[2]).toMatchObject({ url: 'kurse.html', icon: 'boat' });
+    expect(items[2]).toMatchObject({ url: 'kurse.html', icon: 'boat', iconSrc: 'https://bkaiser.imgix.net/logo/icons/boat.svg' });
+  });
+
+  it('tiles: subTitle, intro and colour of the section; link text and any icon per card', () => {
+    const out = map({
+      type: 'tiles', title: 'Mitmachen', subTitle: 'So findest du den Einstieg', intro: 'Vier Wege ins Boot', color: 1,
+      properties: {
+        variant: 'card', introI18n: { en: 'Four ways' },
+        items: [
+          { title: 'Kurse', icon: 'rowing_2x_side_front', url: 'kurs.html', linkLabel: 'Los geht\'s', linkLabelI18n: { en: 'Go' } },
+          { title: 'Ohne Link', icon: 'rocket', linkLabel: 'verwaist' },
+        ],
+      },
+    });
+    expect(out).toMatchObject({ subTitle: 'So findest du den Einstieg', intro: 'Vier Wege ins Boot', accent: 'secondary' });
+    expect(out['kicker']).toBeUndefined();
+    const items = out['items'] as { icon: string; iconSrc: string; linkLabel: string }[];
+    expect(items[0]).toMatchObject({ icon: 'rowing_2x_side_front', iconSrc: 'https://bkaiser.imgix.net/logo/icons/rowing_2x_side_front.svg', linkLabel: 'Los geht\'s' });
+    expect(items[1].linkLabel).toBe('');
+    const en = map({ type: 'tiles', intro: 'Vier', properties: { variant: 'card', introI18n: { en: 'Four' }, items: [{ title: 'A', url: 'a.html', linkLabel: 'Los', linkLabelI18n: { en: 'Go' } }] } }, 'en');
+    expect(en['intro']).toBe('Four');
+    expect((en['items'] as { linkLabel: string }[])[0].linkLabel).toBe('Go');
   });
 
   it('card tiles need a title and columns are clamped, default 3', () => {

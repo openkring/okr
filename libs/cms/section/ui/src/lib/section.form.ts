@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
 
-import { ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, FooterConfig, FooterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FormSectionConfig, AlbumConfig, AlbumSection, SectionFeedback, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroConfig, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, JournalTrackConfig, JournalTrackSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TilesConfig, TilesSection, NewsConfig, NewsSection, SectionCta, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
+import { ColorIonic, ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, FooterConfig, FooterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FormSectionConfig, AlbumConfig, AlbumSection, SectionFeedback, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroConfig, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, JournalTrackConfig, JournalTrackSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TilesConfig, TilesSection, NewsConfig, NewsSection, SectionCta, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
 import { Chips, ErrorNote, ImageConfigEdit, NotesInput, NotesInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole, sanitizeFileName } from '@okr/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS, IMAGE_MIMETYPES } from '@okr/shared-constants';
@@ -680,6 +680,7 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
           @if(tilesConfig(); as tilesConfig) {
             <okr-tiles-config
               [formData]="tilesConfig" (formDataChange)="onTilesConfigChange($event)"
+              [color]="formData().color" (colorChange)="onSectionColorChange($event)"
               [readOnly]="isReadOnly()"
               [i18n]="i18n()"
               [errors]="errors()"
@@ -1507,6 +1508,11 @@ export class SectionForm {
         properties: config
       } as TestimonialSection);
     }
+  }
+
+  /** the section's own colour (BaseSection.color); today only the tiles configuration offers it */
+  protected onSectionColorChange(color: ColorIonic): void {
+    this.formData.update((section) => ({ ...section, color }) as SectionModel);
   }
 
   protected onTilesConfigChange(config: TilesConfig): void {

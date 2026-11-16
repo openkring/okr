@@ -1083,6 +1083,11 @@
         "placeholder": "0..12",
         "helper": "Die Breite in Anzahl Spalten aus einem Grid von max 12 Spalten, z.B. 1, 2, 3 etc.",
         "error": "Die Spaltengrösse muss eine Ganzzahl aus lauter Ziffern sein, zwischen 0 und 12."
+      },
+      "intro": {
+        "label": "Einleitung",
+        "placeholder": "z.B. Vier Wege ins Boot – wähle deinen.",
+        "helper": "Ein kurzer Absatz unter dem Titel"
       }
     }
   },
@@ -1575,7 +1580,7 @@
   "tiles": {
     "label": "Kacheln",
     "title": "Kacheln-Konfiguration",
-    "subtitle": "Kennzahlen oder Karten im Raster. Auf dem Handy stehen die Kacheln untereinander.",
+    "subtitle": "Kennzahlen oder Karten im Raster. Tippe auf eine Kachel, um sie zu bearbeiten.",
     "variant": {
       "label": "Art der Kacheln",
       "stat": "Kennzahlen",
@@ -1585,24 +1590,15 @@
       "label": "Spalten",
       "helper": "Anzahl Spalten ab Tablet-Breite (1–4); auf dem Handy immer einspaltig."
     },
-    "lead": {
-      "label": "Einleitung",
-      "placeholder": "z.B. Was uns ausmacht",
-      "helper": "Ein kurzer Satz unter dem Titel"
-    },
     "linkLabel": {
       "label": "Linktext",
       "placeholder": "z.B. Mehr erfahren",
-      "helper": "Steht auf jeder Karte, die einen Link hat. Leer lassen, wenn kein Text erscheinen soll."
+      "helper": "Steht unten auf der Karte. Leer lassen, wenn kein Text erscheinen soll."
     },
     "items": "Kacheln",
     "empty": "Noch keine Kacheln",
     "add": "Kachel hinzufügen",
-    "actions": "Kachel",
-    "edit": "Bearbeiten",
-    "moveUp": "Nach oben",
-    "moveDown": "Nach unten",
-    "remove": "Entfernen",
+    "remove": "Kachel entfernen",
     "value": {
       "label": "Wert",
       "placeholder": "z.B. 120+",
@@ -1623,7 +1619,7 @@
     "icon": {
       "label": "Icon-Name",
       "placeholder": "z.B. people",
-      "helper": "Name eines Icons aus der Icon-Sammlung"
+      "helper": "Tippe auf die Lupe, um ein Icon auszuwählen"
     },
     "url": {
       "label": "Link",
@@ -1634,6 +1630,16 @@
       "label": "Farbe",
       "primary": "Hauptfarbe",
       "secondary": "Zweitfarbe"
+    },
+    "editTitle": "Kachel bearbeiten",
+    "group": {
+      "tile": "Kachel",
+      "icon": "Icon",
+      "link": "Link"
+    },
+    "color": {
+      "label": "Farbe der Sektion",
+      "helper": "Färbt den Untertitel über dem Titel."
     }
   },
   "timeline": {

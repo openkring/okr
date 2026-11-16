@@ -2,9 +2,9 @@ import { Component, computed, input, linkedSignal, model, Signal } from '@angula
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular';
 
 import { CategoryListModel, RoleName, SectionModel, UserModel } from '@okr/shared-models';
-import { ButtonCopy, ButtonCopyI18n, CategorySelect, ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { ButtonCopy, ButtonCopyI18n, CategorySelect, ErrorNote, TextareaInput, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
-import { LONG_NAME_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
+import { COMMENT_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
 import { getFieldErrors, SectionErrors, SectionI18n } from '@okr/cms-section-util';
 
 export const PFX = '@cms/section/feature.';
@@ -14,7 +14,7 @@ export const PFX = '@cms/section/feature.';
   standalone: true,
   imports: [
     IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonLabel, IonItem,
-    TextInput, CategorySelect, ButtonCopy,
+    TextInput, TextareaInput, CategorySelect, ButtonCopy,
     ErrorNote
   ],
   template: `
@@ -57,6 +57,10 @@ export const PFX = '@cms/section/feature.';
             <ion-col size="12">
               <okr-text-input [i18n]="subTitleI18n()" [value]="subTitle()" (valueChange)="onFieldChange('subTitle', $event)" [maxLength]="maxLength" [readOnly]="isReadOnly()" />
               <okr-error-note [errors]="errorsFor('subTitle')" />
+            </ion-col>
+            <ion-col size="12">
+              <okr-textarea-input [i18n]="introI18n()" [value]="intro()" (valueChange)="onFieldChange('intro', $event)" [maxLength]="introMaxLength" [readOnly]="isReadOnly()" [showHelper]="true" />
+              <okr-error-note [errors]="errorsFor('intro')" />
             </ion-col>
             @if(showAdvanced()) {
               <ion-col size="12">
@@ -108,6 +112,7 @@ export class SectionConfiguration {
   protected name = linkedSignal(() => this.formData().name ?? '');
   protected title = linkedSignal(() => this.formData().title ?? '');
   protected subTitle = linkedSignal(() => this.formData().subTitle ?? '');
+  protected intro = linkedSignal(() => this.formData().intro ?? '');
   protected type = computed(() => this.formData().type);
   protected state = computed(() => this.formData().state);
   protected roleNeeded = linkedSignal(() => this.formData().roleNeeded ?? 'registered');
@@ -118,6 +123,7 @@ export class SectionConfiguration {
   // counter invites input that the vest suite then rejects as 'tooLong'
   protected maxLength = LONG_NAME_LENGTH;
   protected nameMaxLength = NAME_LENGTH;
+  protected introMaxLength = COMMENT_LENGTH;
   protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf() } as ButtonCopyI18n));
 
   protected nameI18n = computed(() => ({
@@ -139,6 +145,13 @@ export class SectionConfiguration {
     label: this.i18n().section_config_subTitle_label(),
     placeholder: this.i18n().section_config_subTitle_placeholder(),
     helper: this.i18n().section_config_subTitle_helper(),
+  } as TextInputI18n));
+
+  protected introI18n = computed(() => ({
+    name: 'intro',
+    label: this.i18n().section_config_intro_label(),
+    placeholder: this.i18n().section_config_intro_placeholder(),
+    helper: this.i18n().section_config_intro_helper(),
   } as TextInputI18n));
 
   protected colSizeI18n = computed(() => ({

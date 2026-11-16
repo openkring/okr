@@ -1083,6 +1083,11 @@
         "placeholder": "0..12",
         "helper": "The width in number of columns from a grid of max 12 columns, e.g. 1, 2, 3 etc.",
         "error": "The column size must be a whole number of digits, between 0 and 12."
+      },
+      "intro": {
+        "label": "Introduction",
+        "placeholder": "e.g. Four ways into the boat – pick yours.",
+        "helper": "A short paragraph below the title"
       }
     }
   },
@@ -1575,7 +1580,7 @@
   "tiles": {
     "label": "Tiles",
     "title": "Tiles configuration",
-    "subtitle": "Key figures or cards in a grid. On a phone the tiles stack below each other.",
+    "subtitle": "Figures or cards in a grid. Tap a tile to edit it.",
     "variant": {
       "label": "Kind of tiles",
       "stat": "Key figures",
@@ -1585,24 +1590,15 @@
       "label": "Columns",
       "helper": "Number of columns from tablet width (1–4); always one column on a phone."
     },
-    "lead": {
-      "label": "Introduction",
-      "placeholder": "e.g. What makes us special",
-      "helper": "A short sentence below the title"
-    },
     "linkLabel": {
       "label": "Link text",
       "placeholder": "e.g. Learn more",
-      "helper": "Shown on every card that has a link. Leave empty if no text should appear."
+      "helper": "Shown at the bottom of the card. Leave empty for no text."
     },
     "items": "Tiles",
     "empty": "No tiles yet",
     "add": "Add tile",
-    "actions": "Tile",
-    "edit": "Edit",
-    "moveUp": "Move up",
-    "moveDown": "Move down",
-    "remove": "Remove",
+    "remove": "Remove tile",
     "value": {
       "label": "Value",
       "placeholder": "e.g. 120+",
@@ -1623,7 +1619,7 @@
     "icon": {
       "label": "Icon name",
       "placeholder": "e.g. people",
-      "helper": "Name of an icon from the icon collection"
+      "helper": "Tap the magnifier to choose an icon"
     },
     "url": {
       "label": "Link",
@@ -1634,6 +1630,16 @@
       "label": "Colour",
       "primary": "Main colour",
       "secondary": "Second colour"
+    },
+    "editTitle": "Edit tile",
+    "group": {
+      "tile": "Tile",
+      "icon": "Icon",
+      "link": "Link"
+    },
+    "color": {
+      "label": "Section colour",
+      "helper": "Colours the subtitle above the title."
     }
   },
   "timeline": {

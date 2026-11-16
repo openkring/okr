@@ -39,6 +39,6 @@ describe('withTilesDefaults', () => {
   });
 
   it('keeps given values', () => {
-    expect(withTilesDefaults({ variant: 'stat', columns: 2, items: [], kicker: 'K' })).toMatchObject({ variant: 'stat', columns: 2, kicker: 'K' });
+    expect(withTilesDefaults({ variant: 'stat', columns: 2, items: [{ title: 'K', tone: 'primary' }] })).toMatchObject({ variant: 'stat', columns: 2, items: [{ title: 'K' }] });
   });
 });

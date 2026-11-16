@@ -14,7 +14,9 @@ import { I18nService } from '@okr/shared-i18n';
 import { FormDefinitionService } from '@okr/forms-data-access';
 import { ResponsibilityService } from '@okr/relationship-responsibility-data-access';
 import { FORM_I18N_KEYS, FormI18n } from '@okr/forms-util';
-import { SECTION_I18N_KEYS, SectionI18n } from '@okr/cms-section-util';
+import { SECTION_I18N_KEYS, SECTION_ICON_PICKER, SectionI18n } from '@okr/cms-section-util';
+
+import { CmsSectionIconPicker } from './section-icon-picker';
 
 import { SectionStore } from './section.store';
 import { AppStore } from '@okr/shared-feature';
@@ -38,7 +40,7 @@ import { AppStore } from '@okr/shared-feature';
       ChangeConfirmation, Header, ErrorBanner, SectionForm,
       IonContent
     ],
-    providers: [SectionStore],
+    providers: [SectionStore, { provide: SECTION_ICON_PICKER, useClass: CmsSectionIconPicker }],
     template: `
       <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
       @if(formDirty() && formValid() && formData()) {
