@@ -1508,7 +1508,7 @@
           "headers": [
             {
               "key": "Content-Security-Policy",
-              "value": "default-src 'self'; script-src 'self'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://tiles.maps.eox.at https://wmts.geo.admin.ch https://s3.amazonaws.com; connect-src 'self' https://tiles.maps.eox.at https://wmts.geo.admin.ch https://s3.amazonaws.com; frame-ancestors 'none'; base-uri 'self'; form-action 'none'"
+              "value": "default-src 'self'; script-src 'self'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://tiles.maps.eox.at https://wmts.geo.admin.ch; connect-src 'self' https://tiles.maps.eox.at https://wmts.geo.admin.ch; frame-ancestors 'none'; base-uri 'self'; form-action 'none'"
             }
           ]
         }
