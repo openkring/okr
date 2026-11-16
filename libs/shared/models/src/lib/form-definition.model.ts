@@ -58,7 +58,8 @@ export interface FieldBase {
   order: number;
 }
 
-export interface TextField extends FieldBase { type: 'text'; multiline?: boolean; minLength?: number; maxLength?: number; pattern?: string; }
+// `autoGrow` (default true when absent): the input starts as one line and grows with the text; false keeps a single line.
+export interface TextField extends FieldBase { type: 'text'; multiline?: boolean; autoGrow?: boolean; minLength?: number; maxLength?: number; pattern?: string; }
 export interface EmailField extends FieldBase { type: 'email'; }
 export interface NumberField extends FieldBase { type: 'number'; min?: number; max?: number; step?: number; integer?: boolean; }
 export interface PhoneField extends FieldBase { type: 'phone'; region?: string; }

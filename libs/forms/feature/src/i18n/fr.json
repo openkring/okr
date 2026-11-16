@@ -67,6 +67,8 @@
     "filter_helper": "Par exemple «club» pour les clubs ou «rboat» pour les bateaux d’aviron. Laisse vide pour tout afficher.",
     "allow_custom": "Autoriser la saisie libre",
     "allow_custom_helper": "Si tu ne trouves pas le nom dans la liste, tu peux l’écrire toi-même, comme dans le journal de bord.",
+    "auto_grow": "S’agrandit avec le texte",
+    "auto_grow_helper": "Le champ commence sur une ligne et s’agrandit à mesure que tu écris.",
     "pick": "Choisir",
     "pick_search": "Rechercher",
     "pick_custom": "Utiliser «{name}»",

@@ -67,6 +67,8 @@
     "filter_helper": "For example «club» for clubs or «rboat» for rowing boats. Leave empty to show all.",
     "allow_custom": "Allow free text",
     "allow_custom_helper": "Whoever cannot find the name in the list can type it themselves, as in the logbook.",
+    "auto_grow": "Grows with the text",
+    "auto_grow_helper": "The field starts as one line and gets taller as more text is entered.",
     "pick": "Select",
     "pick_search": "Search",
     "pick_custom": "Use «{name}»",

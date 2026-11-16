@@ -67,6 +67,8 @@
     "filter_helper": "Por ejemplo «club» para clubes o «rboat» para botes de remo. Déjalo vacío para mostrar todo.",
     "allow_custom": "Permitir texto libre",
     "allow_custom_helper": "Si no encuentras el nombre en la lista, puedes escribirlo tú, como en el cuaderno de bitácora.",
+    "auto_grow": "Crece con el texto",
+    "auto_grow_helper": "El campo empieza con una línea y se hace más alto a medida que escribes.",
     "pick": "Elegir",
     "pick_search": "Buscar",
     "pick_custom": "Usar «{name}»",

@@ -175,6 +175,8 @@ export const FORM_I18N_KEYS = {
   field_filter_helper:        PFX + 'field.filter_helper',
   field_allow_custom:         PFX + 'field.allow_custom',
   field_allow_custom_helper:  PFX + 'field.allow_custom_helper',
+  field_auto_grow:            PFX + 'field.auto_grow',
+  field_auto_grow_helper:     PFX + 'field.auto_grow_helper',
   field_pick:                 PFX + 'field.pick',
   field_pick_search:          PFX + 'field.pick_search',
   field_pick_custom:          PFX + 'field.pick_custom',

@@ -67,6 +67,8 @@
     "filter_helper": "Zum Beispiel «club» für Clubs oder «rboat» für Ruderboote. Leer lassen, um alle zu zeigen.",
     "allow_custom": "Freie Eingabe erlauben",
     "allow_custom_helper": "Wer niemanden in der Liste findet, kann den Namen selbst schreiben – wie im Logbuch.",
+    "auto_grow": "Mitwachsend",
+    "auto_grow_helper": "Das Feld beginnt einzeilig und wird höher, je mehr Text eingegeben wird.",
     "pick": "Auswählen",
     "pick_search": "Suchen",
     "pick_custom": "«{name}» übernehmen",

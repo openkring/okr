@@ -67,6 +67,8 @@
     "filter_helper": "Per esempio «club» per i club o «rboat» per le barche a remi. Lascia vuoto per mostrare tutto.",
     "allow_custom": "Consenti testo libero",
     "allow_custom_helper": "Se non trovi il nome nell’elenco, puoi scriverlo tu, come nel diario di bordo.",
+    "auto_grow": "Si allarga con il testo",
+    "auto_grow_helper": "Il campo inizia su una riga e si allunga man mano che scrivi.",
     "pick": "Scegli",
     "pick_search": "Cerca",
     "pick_custom": "Usa «{name}»",

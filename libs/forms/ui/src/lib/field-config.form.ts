@@ -136,6 +136,14 @@ const VALUE_TYPES: PropertyType[] = ['boolean', 'number', 'text'];
                   </ion-col>
                 </ion-row>
               }
+              @if (formData().type === 'text') {
+                <ion-row>
+                  <ion-col size="12" size-md="6">
+                    <okr-checkbox [i18n]="autoGrowI18n()" [checked]="autoGrow()" (checkedChange)="onFieldChange('autoGrow', $event)"
+                      [toggle]="true" justify="space-between" labelPlacement="start" [showHelper]="true" [readOnly]="isReadOnly()" />
+                  </ion-col>
+                </ion-row>
+              }
               @if (formData().type === 'category') {
                 <ion-row>
                   <ion-col size="12">
@@ -317,6 +325,11 @@ export class FieldConfigForm {
     const fd = this.formData();
     return isModelSelectField(fd) && fd.allowCustom === true;
   });
+  /** a text field grows with its content unless switched off */
+  protected readonly autoGrow = computed(() => {
+    const fd = this.formData();
+    return fd.type === 'text' && fd.autoGrow !== false;
+  });
   protected readonly audienceFrom = computed(() => {
     const fd = this.formData();
     return fd.type === 'course' ? fd.audienceFrom ?? '' : '';
@@ -388,6 +401,9 @@ export class FieldConfigForm {
   }));
   protected readonly allowCustomI18n = computed<CheckboxI18n>(() => ({
     name: 'allowCustom', label: this.i18n().field_allow_custom(), helper: this.i18n().field_allow_custom_helper(),
+  }));
+  protected readonly autoGrowI18n = computed<CheckboxI18n>(() => ({
+    name: 'autoGrow', label: this.i18n().field_auto_grow(), helper: this.i18n().field_auto_grow_helper(),
   }));
   protected readonly audienceFromI18n = computed<StringSelectI18n>(() => ({
     name: 'audienceFrom', label: this.i18n().field_audience_from(), helper: this.i18n().field_audience_from_helper(),
