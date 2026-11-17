@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { Firestore } from 'firebase-admin/firestore';
 
-import { loadGroupPeople, loadRolePeople, loadSectionPeople, withAvatarImages } from './group-people';
+import { loadGroupPeople, loadRolePeople, loadRolePortraits, loadSectionPeople, withAvatarImages } from './group-people';
 
 type Doc = Record<string, unknown>;
 
 /** A fake Firestore: memberships answer a where-chain (recorded), persons and responsibilities answer getAll. */
-function fakeGroupDb(memberships: Doc[], persons: Record<string, Doc>, roles: Record<string, Doc> = {}) {
+function fakeGroupDb(memberships: Doc[], persons: Record<string, Doc>, roles: Record<string, Doc> = {}, avatars: Record<string, Doc> = {}) {
   const queries: string[][] = [];
   const reads: string[][] = [];
   const query = (clauses: string[]) => ({
@@ -22,7 +22,7 @@ function fakeGroupDb(memberships: Doc[], persons: Record<string, Doc>, roles: Re
     collection: (c: string) => ({ ...query([c]), doc: (id: string) => ({ path: `${c}/${id}`, id }) }),
     getAll: async (...refs: { path: string; id: string }[]) => {
       reads.push(refs.map((r) => r.path));
-      return refs.map((r) => ({ id: r.id, data: () => (r.path.startsWith('persons/') ? persons[r.id] : r.path.startsWith('responsibilities/') ? roles[r.id] : undefined) }));
+      return refs.map((r) => ({ id: r.id, data: () => (r.path.startsWith('persons/') ? persons[r.id] : r.path.startsWith('responsibilities/') ? roles[r.id] : r.path.startsWith('avatars/') ? avatars[r.id] : undefined) }));
     },
   };
   return { db: db as unknown as Firestore, queries, reads };
@@ -77,11 +77,27 @@ describe('loadRolePeople', () => {
     const f = fakeGroupDb([], rolePersons, roles);
     const out = await loadRolePeople(f.db, [['praesident', 'kassier'], ['kassier']], ['scs']);
     expect(f.queries).toEqual([]);
-    expect(f.reads).toEqual([['responsibilities/praesident', 'responsibilities/kassier'], ['persons/p1', 'persons/p2']]);
+    expect(f.reads).toEqual([
+      ['responsibilities/praesident', 'responsibilities/kassier'],
+      ['persons/p1', 'persons/p2'],
+      ['avatars/scs.responsibility.praesident', 'avatars/scs.responsibility.kassier'],
+      ['avatars/responsibility.praesident', 'avatars/responsibility.kassier'],
+    ]);
     expect(out.get('praesident,kassier')).toEqual([
       { key: 'p1', firstName: 'Anna', lastName: 'Muster', label: 'Präsident, Kassier', showImage: true, email: 'praesident@seeclub.org' },
     ]);
     expect(out.get('kassier')?.map((p) => [p.key, p.email])).toEqual([['p1', undefined]]);
+  });
+
+  it("shows a role's own portrait for its responsible instead of the person's avatar", async () => {
+    const f = fakeGroupDb([], { p1: { tenants: ['scs'], usageName: 0 }, p2: { tenants: ['scs'], usageName: 0 } }, roles, {
+      'scs.responsibility.praesident': { storagePath: 'tenant/scs/responsibility/praesident/avatar/x.jpg' },
+    });
+    const out = await loadRolePeople(f.db, [['praesident']], ['scs']);
+    expect(out.get('praesident')?.map((p) => [p.key, p.image])).toEqual([
+      ['p1', 'tenant/scs/responsibility/praesident/avatar/x.jpg'],
+      ['p2', undefined], // the delegate never takes the role's portrait
+    ]);
   });
 
   it('reads nothing without roles or tenants', async () => {
@@ -117,6 +133,18 @@ describe('loadSectionPeople', () => {
   });
 });
 
+describe('loadRolePortraits', () => {
+  it("prefers the tenant's portrait, falls back to the shared one and leaves roles without one out", async () => {
+    const f = fakeGroupDb([], {}, {}, {
+      'scs.responsibility.a': { storagePath: 'own/a.jpg' },
+      'responsibility.a': { storagePath: 'shared/a.jpg' },
+      'responsibility.b': { storagePath: 'shared/b.jpg' },
+    });
+    const out = await loadRolePortraits(f.db, ['a', 'b', 'c'], 'scs');
+    expect([...out.entries()]).toEqual([['a', 'own/a.jpg'], ['b', 'shared/b.jpg']]);
+  });
+});
+
 describe('withAvatarImages', () => {
   function fakeAvatarDb(avatars: Record<string, Doc>) {
     const reads: string[][] = [];
@@ -149,5 +177,13 @@ describe('withAvatarImages', () => {
     expect(out.get('group.vorstand')?.map((p) => p.image)).toEqual(['tenant/scs/person/p1/avatar/a.jpg', 'shared/b.jpg', undefined, undefined, undefined]); // p5: no flag = no photo (fail closed)
     expect(f.reads.flat()).not.toContain('avatars/scs.person.p3');
     expect(f.reads.flat()).not.toContain('avatars/person.p5');
+  });
+
+  it('keeps an image that is already set (a role portrait) and does not read its avatar', async () => {
+    const f = fakeAvatarDb({ 'person.p1': { storagePath: 'shared/a.jpg' } });
+    const people = new Map([['responsibility.r', [{ key: 'p1', firstName: 'A', lastName: '', label: '', showImage: true, image: 'portrait.jpg' }]]]);
+    const out = await withAvatarImages(f.db, people, 'scs');
+    expect(out.get('responsibility.r')?.[0].image).toBe('portrait.jpg');
+    expect(f.reads).toEqual([]);
   });
 });

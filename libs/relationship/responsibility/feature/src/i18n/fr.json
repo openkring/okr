@@ -100,5 +100,9 @@
     "label": "E-mail de la fonction",
     "placeholder": "president@tonclub.ch",
     "helper": "Adresse publique de cette fonction, idéalement un alias de ton club. Elle peut être affichée sur le site."
+  },
+  "portrait": {
+    "own": "Portrait propre à cette responsabilité – touche l’image pour le remplacer",
+    "fallback": "Image de la personne responsable – touche l’image pour téléverser un portrait propre"
   }
 }

@@ -168,6 +168,8 @@ export class PersonsWidget {
   public emails = input<Record<string, string>>({});
   /** person key → function to show instead of the person's label (e.g. the responsibility's name) */
   public functions = input<Record<string, string>>({});
+  /** person key → avatar key to show instead of the person's own (e.g. a responsibility's portrait `responsibility.<okey>`) */
+  public imageKeys = input<Record<string, string>>({});
   public editMode = input(false);
   public readonly i18n = input.required<PersonsWidgetI18n>();
 
@@ -198,10 +200,11 @@ export class PersonsWidget {
     const info = config.info ?? [];
     const emails = this.emails();
     const functions = this.functions();
+    const imageKeys = this.imageKeys();
     const orgColorHex = this.orgColorHex();
     return this.persons().map((person, index) => {
       const bgColor = getPeopleBgColor(config, index, orgColorHex);
-      const key = `${person.modelType}.${person.key}`;
+      const key = imageKeys[person.key] ?? `${person.modelType}.${person.key}`;
       return {
         person,
         url: this.avatarService.getAvatarUrlWithParams(key, person.modelType, getPeopleImgixParams(config, bgColor)),

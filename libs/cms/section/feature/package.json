@@ -59,6 +59,7 @@
     "@okr/mobility-transit-feature": "*",
     "@okr/content-notice-data-access": "*",
     "@okr/content-notice-util": "*",
-    "@okr/cms-icon-feature": "*"
+    "@okr/cms-icon-feature": "*",
+    "@okr/relationship-responsibility-util": "*"
   }
 }

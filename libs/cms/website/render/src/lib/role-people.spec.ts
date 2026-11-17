@@ -83,6 +83,15 @@ describe('resolveRolePeople', () => {
     expect(out.map((p) => [p.key, p.email])).toEqual([['p1', 'kasse@seeclub.org'], ['p2', 'kasse@seeclub.org']]);
   });
 
+  it("gives the responsible the role's own portrait, never the delegate, and only when images are public", () => {
+    const portraits = new Map([['a', 'portrait-a.jpg'], ['b', 'portrait-b.jpg']]);
+    const out = resolveRolePeople(['a', 'b'], new Map(Object.entries({
+      a: role('A', anna, beat),
+      b: role('B', av('p3', 'C', 'C')),
+    })), new Map(Object.entries({ p1: pub(), p2: pub(), p3: pub({ usageImages: PrivacyUsage.Restricted }) })), TENANTS, portraits);
+    expect(out.map((p) => [p.key, p.image])).toEqual([['p1', 'portrait-a.jpg'], ['p2', undefined], ['p3', undefined]]);
+  });
+
   it('ignores validity dates, as the app', () => {
     const out = resolve(['r'], { r: { ...role('R', anna, beat), delegateValidTo: '20200101', validTo: '20200101' } as RoleDoc }, { p1: pub(), p2: pub() });
     expect(out.map((p) => p.key)).toEqual(['p1', 'p2']);

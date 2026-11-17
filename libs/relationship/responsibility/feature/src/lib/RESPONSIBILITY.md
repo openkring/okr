@@ -31,6 +31,22 @@ When a `delegateAvatar` is set and the current date falls within `[delegateValid
 
 `getResponsibleFor()` resolves the effective responsible for a given responsibility key, returning the delegate (if active) or the primary responsible otherwise.
 
+## Portrait
+
+A responsibility can have its own portrait photo, which overrides the avatar of the responsible person
+(e.g. an official photo for the website). It is not a field on `ResponsibilityModel`: the portrait is an
+ordinary avatar in the `avatars` collection with the subject key `responsibility.<okey>` (doc id
+`<tenant>.responsibility.<okey>`, storage path `tenant/<tenant>/responsibility/<okey>/avatar/…`).
+
+- **Upload:** the avatar toolbar at the top of `ResponsibilityEditModal` (existing responsibilities only,
+  since the okey must be fixed). Like every avatar it is saved immediately, not via the change-confirmation.
+- **Resolution:** `getResponsibilityImageKey()` returns the portrait key when a portrait exists, else
+  `<modelType>.<key>` of `responsibleAvatar`.
+- **Where it shows:** the responsibility section, people sections of type `responsibility` (app:
+  `PeopleSectionStore.imageKeys`; website: `loadRolePortraits` + `resolveRolePeople`). Only the
+  responsible gets the portrait, never the delegate; a person holding several roles gets the portrait of
+  the first listed role that has one. The person's `usageImages` privacy gate still applies on the website.
+
 ## Well-Known Responsibility Keys
 
 Examples of user-defined `okey` values used in the SCS context:

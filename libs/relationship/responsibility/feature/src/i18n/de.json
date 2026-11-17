@@ -91,6 +91,10 @@
     "person": "Verantwortliche Person",
     "delegate": "Stellvertretung"
   },
+  "portrait": {
+    "own": "Eigenes Porträt der Verantwortlichkeit – tippe auf das Bild, um es zu ersetzen",
+    "fallback": "Bild der verantwortlichen Person – tippe auf das Bild, um ein eigenes Porträt hochzuladen"
+  },
   "remove": "Entfernen",
   "no_parent": "Kein Elternelement",
   "responsible_unset": "Verantwortlicher unbestimmt",

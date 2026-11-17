@@ -2,7 +2,7 @@
 // resolveGroupPeople / resolveRolePeople, shared by publishWebsite and publicApi's page route so both
 // resolve a people section the same way.
 import type { Firestore } from 'firebase-admin/firestore';
-import { AvatarCollection, MembershipCollection, PersonCollection, ResponsibilityCollection } from '@okr/shared-models';
+import { AvatarCollection, MembershipCollection, PersonCollection, ResponsibilityCollection, ResponsibilityModelName } from '@okr/shared-models';
 import {
   peopleSourceKey, peopleSourceOf, resolveGroupPeople, resolveRolePeople,
   type GroupMembershipDoc, type GroupPersonDoc, type PublicPerson, type RoleDoc, type SectionDoc,
@@ -67,8 +67,9 @@ export async function loadGroupPeople(
 
 /**
  * The public holders of each role list (`ids.join(',')` → resolveRolePeople): the roles by key, then
- * the persons of their responsible / delegate avatars by key, in getAll batches. Tenant, archive and
- * privacy filters are the resolver's.
+ * the persons of their responsible / delegate avatars by key, and the roles' own portraits (avatar
+ * `<tenant>.responsibility.<key>`, else the shared `responsibility.<key>`), in getAll batches. Tenant,
+ * archive and privacy filters are the resolver's.
  */
 export async function loadRolePeople(
   db: Firestore,
@@ -88,7 +89,26 @@ export async function loadRolePeople(
     }
   }
   const persons = await readByKeys<GroupPersonDoc>(db, PersonCollection, personKeys);
-  for (const ids of lists) out.set(ids.join(','), resolveRolePeople(ids, roles, persons, tenants));
+  const portraits = await loadRolePortraits(db, [...roles.keys()], tenants[0]);
+  for (const ids of lists) out.set(ids.join(','), resolveRolePeople(ids, roles, persons, tenants, portraits));
+  return out;
+}
+
+/**
+ * role key → storage path of the role's own portrait (the avatar the responsibility edit modal uploads):
+ * the tenant's `<tenant>.responsibility.<key>` first, else the shared `responsibility.<key>`.
+ * Roles without a portrait are left out.
+ */
+export async function loadRolePortraits(db: Firestore, roleKeys: string[], tenantId: string | undefined): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  if (roleKeys.length === 0) return out;
+  const subject = (k: string) => `${ResponsibilityModelName}.${k}`;
+  const own = tenantId ? await readByKeys<{ storagePath?: string }>(db, AvatarCollection, roleKeys.map((k) => `${tenantId}.${subject(k)}`)) : new Map();
+  const shared = await readByKeys<{ storagePath?: string }>(db, AvatarCollection, roleKeys.map(subject));
+  for (const k of roleKeys) {
+    const path = (tenantId ? own.get(`${tenantId}.${subject(k)}`)?.storagePath : undefined) || shared.get(subject(k))?.storagePath;
+    if (path) out.set(k, path);
+  }
   return out;
 }
 
@@ -132,7 +152,8 @@ export async function withAvatarImages(
   people: Map<string, PublicPerson[]>,
   tenantId: string | undefined,
 ): Promise<Map<string, PublicPerson[]>> {
-  const keys = [...new Set([...people.values()].flat().filter((p) => p.showImage === true && !!p.key).map((p) => p.key))];
+  // a person who already has an image (a role's own portrait, resolveRolePeople) keeps it
+  const keys = [...new Set([...people.values()].flat().filter((p) => p.showImage === true && !!p.key && !p.image).map((p) => p.key))];
   if (keys.length === 0) return people;
   const own = tenantId ? await readByKeys<{ storagePath?: string }>(db, AvatarCollection, keys.map((k) => `${tenantId}.person.${k}`)) : new Map();
   const shared = await readByKeys<{ storagePath?: string }>(db, AvatarCollection, keys.map((k) => `person.${k}`));
@@ -141,6 +162,7 @@ export async function withAvatarImages(
   const out = new Map<string, PublicPerson[]>();
   for (const [source, persons] of people) {
     out.set(source, persons.map((p) => {
+      if (p.image) return p;
       const image = p.showImage === true ? pathOf(p.key) : undefined;
       return image ? { ...p, image } : p;
     }));

@@ -30,16 +30,21 @@ export interface RoleDoc {
  *   holds, joined with ', ' (the app's function label),
  * - `email` = the address of the first such role that has one (the role alias, never a personal
  *   address); mapSection emits it only when the section's info shows email,
- * - `showImage` only when `usageImages` is Public (missing = the model default, Public).
+ * - `showImage` only when `usageImages` is Public (missing = the model default, Public),
+ * - `image` = the role's own portrait (avatar `responsibility.<roleId>`, from `portraits`) for the
+ *   responsible of a role — never the delegate — and only when `showImage`; the first listed role with a
+ *   portrait wins. Without one the loader fills in the person's own avatar (withAvatarImages).
  * Validity dates (validFrom/To, delegateValidFrom/To) are ignored, as in the app.
  * @param roles role key → role doc (missing = skipped)
  * @param persons person key → person doc (missing = left out)
+ * @param portraits role key → storage path of the role's own portrait (missing = none)
  */
 export function resolveRolePeople(
   roleIds: string[],
   roles: ReadonlyMap<string, RoleDoc>,
   persons: ReadonlyMap<string, GroupPersonDoc>,
   siteTenants: string[],
+  portraits: ReadonlyMap<string, string> = new Map(),
 ): PublicPerson[] {
   const out: PublicPerson[] = [];
   const byKey = new Map<string, PublicPerson>();
@@ -49,6 +54,7 @@ export function resolveRolePeople(
     if (!role || role.isArchived === true || !sharesTenant(role.tenants, siteTenants)) continue;
     const roleName = role.name?.trim() ?? '';
     const roleEmail = role.email?.trim() ?? '';
+    const portrait = portraits.get(roleId);
     for (const avatar of [role.responsibleAvatar, role.delegateAvatar]) {
       const key = avatar?.key;
       if (!avatar || !key || avatar.modelType !== 'person') continue;
@@ -71,6 +77,7 @@ export function resolveRolePeople(
       const list = names.get(key) as string[];
       if (roleName && !list.includes(roleName)) list.push(roleName);
       if (roleEmail && !entry.email) entry.email = roleEmail;
+      if (portrait && avatar === role.responsibleAvatar && entry.showImage === true && !entry.image) entry.image = portrait;
     }
   }
   for (const p of out) p.label = (names.get(p.key) ?? []).join(', ');

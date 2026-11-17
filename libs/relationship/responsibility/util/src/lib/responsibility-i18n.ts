@@ -81,6 +81,8 @@ export const RESPONSIBILITY_I18N_KEYS = {
   // section/card titles and inline labels
   card_main:                         PFX + 'card.main',
   card_person:                       PFX + 'card.person',
+  portrait_own:                      PFX + 'portrait.own',
+  portrait_fallback:                 PFX + 'portrait.fallback',
   card_delegate:                     PFX + 'card.delegate',
   select_action:                     PFX + 'select.action',
   remove:                            PFX + 'remove',

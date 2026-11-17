@@ -1,11 +1,15 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { Photo } from '@capacitor/camera';
 import { IonContent, ModalController } from '@ionic/angular';
 
-import { AvatarInfo, PersonModel, ResponsibilityModel, RoleName, UserModel } from '@okr/shared-models';
+import { AvatarInfo, PersonModel, ResponsibilityModel, ResponsibilityModelName, RoleName, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { hasRole, safeStructuredClone } from '@okr/shared-util-core';
 
+import { AvatarService } from '@okr/avatar-data-access';
+import { AvatarToolbar } from '@okr/avatar-feature';
 import { ResponsibilityForm } from '@okr/relationship-responsibility-ui';
+import { getResponsibilityImageKey } from '@okr/relationship-responsibility-util';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { ResponsibilityStore } from './responsibility.store';
 
@@ -13,7 +17,7 @@ import { ResponsibilityStore } from './responsibility.store';
   selector: 'okr-responsibility-edit-modal',
   standalone: true,
   imports: [
-    Header, ChangeConfirmation, ResponsibilityForm,
+    Header, ChangeConfirmation, ResponsibilityForm, AvatarToolbar,
     IonContent
   ],
   providers: [ResponsibilityStore],
@@ -24,6 +28,9 @@ import { ResponsibilityStore } from './responsibility.store';
       <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content>
+      @if(!isNew()) {
+        <okr-avatar-toolbar [key]="portraitKey()" modelType="person" [readOnly]="false" [title]="formData().name" [subTitle]="portraitHint()" (imageSelected)="onImageSelected($event)" />
+      }
       @if(formData(); as formData) {
         <okr-responsibility-form
           [i18n]="store.i18n"
@@ -47,6 +54,7 @@ import { ResponsibilityStore } from './responsibility.store';
 })
 export class ResponsibilityEditModal {
   private readonly modalController = inject(ModalController);
+  private readonly avatarService = inject(AvatarService);
   protected readonly store = inject(ResponsibilityStore);
 
   // inputs
@@ -65,6 +73,12 @@ export class ResponsibilityEditModal {
   protected showConfirmation = computed(() => this.formDirty() && this.formValid());
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
   protected readonly tenantId = computed(() => this.store.tenantId());
+  /** the responsibility's own portrait (`responsibility.<okey>`), else the responsible person's avatar */
+  protected readonly portraitKey = computed(() =>
+    getResponsibilityImageKey(this.formData(), key => !!this.avatarService.getCachedStoragePath(key)));
+  protected readonly portraitHint = computed(() => this.portraitKey().startsWith(`${ResponsibilityModelName}.`)
+    ? this.store.i18n.portrait_own()
+    : this.store.i18n.portrait_fallback());
   protected readonly parentName = computed(() => {
     const parentKey = this.formData()?.parentKey;
     if (!parentKey) return '';
@@ -84,6 +98,13 @@ export class ResponsibilityEditModal {
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
     this.formData.set(safeStructuredClone(this.responsibility()));
+  }
+
+  /** Uploads the portrait right away (like every avatar); it overrides the person's avatar for this responsibility. */
+  protected async onImageSelected(photo: Photo): Promise<void> {
+    const okey = this.responsibility().okey;
+    if (!okey) return;
+    await this.avatarService.saveAvatarPhoto(photo, okey, this.tenantId(), ResponsibilityModelName);
   }
 
   protected onFormDataChange(formData: ResponsibilityModel): void {

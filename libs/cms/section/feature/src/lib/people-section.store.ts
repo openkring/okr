@@ -7,6 +7,8 @@ import { AvatarConfig, AvatarInfo, PeopleSection, ResponsibilityModel } from '@o
 import { AppStore } from '@okr/shared-feature';
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import { ResponsibilityService } from '@okr/relationship-responsibility-data-access';
+import { getResponsibilityPortraitKey } from '@okr/relationship-responsibility-util';
+import { AvatarService } from '@okr/avatar-data-access';
 import { I18nService } from '@okr/shared-i18n';
 
 import { getPeopleResponsibilityIds, normalizeAvatarConfig, SECTION_I18N_KEYS, SectionI18n } from '@okr/cms-section-util';
@@ -25,6 +27,7 @@ export const PeopleSectionStore = signalStore(
     appStore: inject(AppStore),
     membershipService: inject(MembershipService),
     responsibilityService: inject(ResponsibilityService),
+    avatarService: inject(AvatarService),
     i18n: inject(I18nService).translateAll(SECTION_I18N_KEYS) as SectionI18n
   })),
 
@@ -92,6 +95,22 @@ export const PeopleSectionStore = signalStore(
         }
       }
       return Object.fromEntries(Object.entries(names).map(([key, list]) => [key, list.join(', ')]));
+    }),
+    /**
+     * person key → avatar key of a responsibility's own portrait (`responsibility.<okey>`), which then
+     * replaces the responsible person's avatar; the first responsibility with a portrait wins.
+     * Only the responsible is affected, not the delegate. Without a portrait the person's avatar stays.
+     */
+    imageKeys: computed<Record<string, string>>(() => {
+      if ((state.section()?.properties.type ?? 'persons') !== 'responsibility') return {};
+      const keys: Record<string, string> = {};
+      for (const r of state.responsibilitiesResource.value() ?? []) {
+        const personKey = r.responsibleAvatar?.key;
+        const portraitKey = getResponsibilityPortraitKey(r.okey);
+        if (!personKey || keys[personKey] || !portraitKey) continue;
+        if (state.avatarService.getCachedStoragePath(portraitKey)) keys[personKey] = portraitKey;
+      }
+      return keys;
     }),
     /**
      * person key → email of the person (only when info contains 'email' or 'emailLink'):
