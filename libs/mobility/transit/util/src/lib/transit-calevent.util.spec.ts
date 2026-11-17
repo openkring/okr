@@ -32,7 +32,11 @@ describe('tripDescription', () => {
 });
 
 describe.each(['UTC', 'America/New_York'])('connectionToCalevent in device zone %s', (tz) => {
-  beforeEach(() => vi.stubEnv('TZ', tz));
+  beforeEach(() => {
+    vi.stubEnv('TZ', tz);
+    // the stub must really change the device zone, or these tests prove nothing on a CET machine
+    expect(new Date(Date.UTC(2026, 10, 15, 15, 18)).getHours()).not.toBe(16);
+  });
   afterEach(() => vi.unstubAllEnvs());
 
   it('uses the Zurich wall clock', () => {
@@ -47,6 +51,11 @@ describe.each(['UTC', 'America/New_York'])('connectionToCalevent in device zone 
     expect(e.startDate).toBe('20261115');
     expect(e.startTime).toBe('23:41');
     expect(e.durationMinutes).toBe(56);
+  });
+  it('rolls over to the next Zurich day after UTC midnight', () => {
+    const e = make({ connection: conn('2026-11-15T23:10:00Z', '2026-11-16T00:00:00Z') });
+    expect(e.startDate).toBe('20261116');
+    expect(e.startTime).toBe('00:10');
   });
 });
 
