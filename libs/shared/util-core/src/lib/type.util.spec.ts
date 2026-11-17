@@ -164,6 +164,11 @@ describe('type.util', () => {
         const result = extractFirstPartOfOptionalTupel('user@domain', '@');
         expect(result).toBe('user');
       });
+
+      it('should return an empty string for undefined or null (SCS-F1)', () => {
+        expect(extractFirstPartOfOptionalTupel(undefined, '@')).toBe('');
+        expect(extractFirstPartOfOptionalTupel(null)).toBe('');
+      });
     });
 
     describe('extractSecondPartOfOptionalTupel', () => {
@@ -180,6 +185,11 @@ describe('type.util', () => {
       it('should work with custom separator', () => {
         const result = extractSecondPartOfOptionalTupel('user@domain', '@');
         expect(result).toBe('domain');
+      });
+
+      it('should return an empty string for undefined or null', () => {
+        expect(extractSecondPartOfOptionalTupel(undefined, '@')).toBe('');
+        expect(extractSecondPartOfOptionalTupel(null)).toBe('');
       });
     });
 

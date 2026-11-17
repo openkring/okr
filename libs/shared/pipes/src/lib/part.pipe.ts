@@ -2,7 +2,7 @@ import { Pipe, PipeTransform } from '@angular/core';
 import { extractFirstPartOfOptionalTupel, extractSecondPartOfOptionalTupel } from '@okr/shared-util-core';
 
 /**
- * returns a part of a given label [key]@[label]
+ * returns a part of a given label [key]@[label]; '' when the label is missing (null/undefined)
  * Can be used for:
  * - Avatars (modeltype.name)
  * - Locations (locationKey@name)
@@ -17,7 +17,7 @@ import { extractFirstPartOfOptionalTupel, extractSecondPartOfOptionalTupel } fro
   standalone: true
 })
 export class PartPipe implements PipeTransform {
-  transform(label: string, returnFirstPart = false, separator = '@'): string {
+  transform(label: string | null | undefined, returnFirstPart = false, separator = '@'): string {
     return returnFirstPart ? extractFirstPartOfOptionalTupel(label, separator) : extractSecondPartOfOptionalTupel(label, separator);
   }
 }

@@ -20,20 +20,24 @@ export function getModelAndKey(tupel: string): [string, string] {
   return getPartsOfTupel(tupel);
 }
 
-export function extractFirstPartOfOptionalTupel(composite: string, separator = '.'): string {
+/**
+ * Takes a string that optionally contains a separator (e.g. . or @).
+ * Returns the full string if no separator is present, '' for a missing (null/undefined) value.
+ * Otherwise, it returns the first part of the string.
+ */
+export function extractFirstPartOfOptionalTupel(composite: string | null | undefined, separator = '.'): string {
+  if (composite == null) return '';
   if (composite.indexOf(separator) === -1) return composite;
   return getPartsOfTupel(composite, separator)[0];
 }
 
 /**
  * Takes a string that optionally contains a separator (e.g. . or @).
- * Returns the full string if no separator is present.
+ * Returns the full string if no separator is present, '' for a missing (null/undefined) value.
  * Otherwise, it returns the second part of the string.
- * @param composite 
- * @param separator 
- * @returns 
  */
-export function extractSecondPartOfOptionalTupel(composite: string, separator = '.'): string {
+export function extractSecondPartOfOptionalTupel(composite: string | null | undefined, separator = '.'): string {
+  if (composite == null) return '';
   if (composite.indexOf(separator) === -1) return composite;
   return getPartsOfTupel(composite, separator)[1];
 }
