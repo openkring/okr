@@ -1,5 +1,5 @@
 {
-  "title": "Collegamenti",
+  "title": "Orario",
   "mode": {
     "transit": "TP",
     "walk": "A piedi",
@@ -82,5 +82,21 @@
   "later": "Collegamenti successivi",
   "choose": "Scegli un collegamento.",
   "addCalendar": "Aggiungi al calendario",
-  "buyTicket": "Biglietto su sbb.ch"
+  "buyTicket": "Biglietto su sbb.ch",
+  "date": "Data del viaggio",
+  "anchorDepShort": "Part.",
+  "anchorArrShort": "Arr.",
+  "swap": "Inverti partenza e arrivo",
+  "pickFrom": "Scegli da dove parti",
+  "pickTo": "Scegli la tua destinazione",
+  "favorites": "Preferiti",
+  "home": "Il mio indirizzo",
+  "locations": "Luoghi salvati",
+  "tripTitle": "Viaggio {from} → {to}",
+  "tripTitleLabel": "Titolo",
+  "added": "Il viaggio ora è nel tuo calendario",
+  "addError": "Non è stato possibile aggiungere il viaggio",
+  "geocodeFailed": "Questo indirizzo non è stato trovato",
+  "legChange": "cambio",
+  "chooseBoth": "Scegli partenza e arrivo, poi vedi i collegamenti"
 }

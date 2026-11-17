@@ -23,6 +23,8 @@
     "@okr/location-data-access": "*",
     "@okr/mobility-transit-data-access": "*",
     "@okr/mobility-transit-ui": "*",
-    "@okr/mobility-transit-util": "*"
+    "@okr/mobility-transit-util": "*",
+    "@okr/calendar-calevent-data-access": "*",
+    "@okr/relationship-membership-data-access": "*"
   }
 }

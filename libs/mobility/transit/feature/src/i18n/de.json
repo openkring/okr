@@ -1,5 +1,5 @@
 {
-  "title": "Verbindungen",
+  "title": "Fahrplan",
   "mode": {
     "transit": "ÖV",
     "walk": "zu Fuss",
@@ -82,5 +82,21 @@
   "later": "Spätere Verbindungen",
   "choose": "Verbindung wählen.",
   "addCalendar": "In Kalender eintragen",
-  "buyTicket": "Billett auf sbb.ch"
+  "buyTicket": "Billett auf sbb.ch",
+  "date": "Reisedatum",
+  "anchorDepShort": "Ab",
+  "anchorArrShort": "An",
+  "swap": "Von und Nach tauschen",
+  "pickFrom": "Wähle, von wo du losfährst",
+  "pickTo": "Wähle dein Ziel",
+  "favorites": "Favoriten",
+  "home": "Meine Adresse",
+  "locations": "Gespeicherte Orte",
+  "tripTitle": "Reise {from} → {to}",
+  "tripTitleLabel": "Titel",
+  "added": "Die Reise steht jetzt in deinem Kalender",
+  "addError": "Die Reise konnte nicht eingetragen werden",
+  "geocodeFailed": "Diese Adresse konnte nicht gefunden werden",
+  "legChange": "umsteigen",
+  "chooseBoth": "Wähle Von und Nach, dann siehst du die Verbindungen"
 }

@@ -1,5 +1,5 @@
 {
-  "title": "Correspondances",
+  "title": "Horaire",
   "mode": {
     "transit": "TP",
     "walk": "À pied",
@@ -82,5 +82,21 @@
   "later": "Correspondances suivantes",
   "choose": "Choisis une correspondance.",
   "addCalendar": "Ajouter au calendrier",
-  "buyTicket": "Billet sur sbb.ch"
+  "buyTicket": "Billet sur sbb.ch",
+  "date": "Date du voyage",
+  "anchorDepShort": "Dép.",
+  "anchorArrShort": "Arr.",
+  "swap": "Inverser départ et arrivée",
+  "pickFrom": "Choisis d'où tu pars",
+  "pickTo": "Choisis ta destination",
+  "favorites": "Favoris",
+  "home": "Mon adresse",
+  "locations": "Lieux enregistrés",
+  "tripTitle": "Voyage {from} → {to}",
+  "tripTitleLabel": "Titre",
+  "added": "Le voyage est maintenant dans ton calendrier",
+  "addError": "Le voyage n'a pas pu être ajouté",
+  "geocodeFailed": "Cette adresse est introuvable",
+  "legChange": "changement",
+  "chooseBoth": "Choisis le départ et l'arrivée, puis tu vois les correspondances"
 }

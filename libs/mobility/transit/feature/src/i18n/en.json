@@ -1,5 +1,5 @@
 {
-  "title": "Connections",
+  "title": "Timetable",
   "mode": {
     "transit": "Public transport",
     "walk": "Walk",
@@ -82,5 +82,21 @@
   "later": "Later connections",
   "choose": "Choose a connection.",
   "addCalendar": "Add to calendar",
-  "buyTicket": "Ticket on sbb.ch"
+  "buyTicket": "Ticket on sbb.ch",
+  "date": "Travel date",
+  "anchorDepShort": "Dep",
+  "anchorArrShort": "Arr",
+  "swap": "Swap from and to",
+  "pickFrom": "Choose where you start from",
+  "pickTo": "Choose your destination",
+  "favorites": "Favourites",
+  "home": "My address",
+  "locations": "Saved places",
+  "tripTitle": "Trip {from} → {to}",
+  "tripTitleLabel": "Title",
+  "added": "The trip is now in your calendar",
+  "addError": "The trip could not be added",
+  "geocodeFailed": "This address could not be found",
+  "legChange": "change",
+  "chooseBoth": "Choose from and to, then you see the connections"
 }
