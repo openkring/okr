@@ -1816,7 +1816,7 @@
   "connections": {
     "title": "Horaire",
     "label": "Horaire",
-    "edit": "Modifier la configuration des correspondances",
+    "edit": "Modifier la configuration de l’horaire",
     "description": "Horaire comme sur sbb.ch : chercher des correspondances, les ajouter au calendrier et acheter le billet sur sbb.ch",
     "destination": {
       "label": "Destination",

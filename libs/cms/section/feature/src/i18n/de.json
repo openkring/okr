@@ -1816,7 +1816,7 @@
   "connections": {
     "title": "Fahrplan",
     "label": "Fahrplan",
-    "edit": "Verbindungen-Konfiguration ändern",
+    "edit": "Fahrplan-Konfiguration ändern",
     "description": "Fahrplan wie auf sbb.ch: Verbindungen suchen, in den Kalender eintragen und das Billett auf sbb.ch lösen",
     "destination": {
       "label": "Ziel",

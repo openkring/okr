@@ -1816,7 +1816,7 @@
   "connections": {
     "title": "Horario",
     "label": "Horario",
-    "edit": "Cambiar la configuración de conexiones",
+    "edit": "Cambiar la configuración del horario",
     "description": "Horario como en sbb.ch: busca conexiones, añádelas al calendario y compra el billete en sbb.ch",
     "destination": {
       "label": "Destino",

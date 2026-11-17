@@ -1816,7 +1816,7 @@
   "connections": {
     "title": "Timetable",
     "label": "Timetable",
-    "edit": "Change connections settings",
+    "edit": "Change timetable settings",
     "description": "Timetable like on sbb.ch: search connections, add them to the calendar and buy the ticket on sbb.ch",
     "destination": {
       "label": "Destination",
