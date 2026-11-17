@@ -40,6 +40,9 @@ ordinary avatar in the `avatars` collection with the subject key `responsibility
 
 - **Upload:** the avatar toolbar at the top of `ResponsibilityEditModal` (existing responsibilities only,
   since the okey must be fixed). Like every avatar it is saved immediately, not via the change-confirmation.
+- **Who may change it:** privileged only, like `/responsibilities` itself — `canWriteAvatar` in
+  `firestore.rules` (ids `…responsibility.…`) and the `tenant/<t>/responsibility/` gate in `storage.rules`.
+  The website loader also accepts only a storage path under `tenant/<t>/responsibility/<okey>/`.
 - **Resolution:** `getResponsibilityImageKey()` returns the portrait key when a portrait exists, else
   `<modelType>.<key>` of `responsibleAvatar`.
 - **Where it shows:** the responsibility section, people sections of type `responsibility` (app:

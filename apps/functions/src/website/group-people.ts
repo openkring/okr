@@ -68,7 +68,7 @@ export async function loadGroupPeople(
 /**
  * The public holders of each role list (`ids.join(',')` → resolveRolePeople): the roles by key, then
  * the persons of their responsible / delegate avatars by key, and the roles' own portraits (avatar
- * `<tenant>.responsibility.<key>`, else the shared `responsibility.<key>`), in getAll batches. Tenant,
+ * `<tenant>.responsibility.<key>`), in getAll batches. Tenant,
  * archive and privacy filters are the resolver's.
  */
 export async function loadRolePeople(
@@ -96,18 +96,18 @@ export async function loadRolePeople(
 
 /**
  * role key → storage path of the role's own portrait (the avatar the responsibility edit modal uploads):
- * the tenant's `<tenant>.responsibility.<key>` first, else the shared `responsibility.<key>`.
- * Roles without a portrait are left out.
+ * the tenant's avatar doc `<tenant>.responsibility.<key>`. Only a storage path under that role's own
+ * upload folder (`tenant/<tenant>/responsibility/<key>/`) is trusted — both are writable by the
+ * privileged only (firestore.rules canWriteAvatar, storage.rules). Roles without a portrait are left out.
  */
 export async function loadRolePortraits(db: Firestore, roleKeys: string[], tenantId: string | undefined): Promise<Map<string, string>> {
   const out = new Map<string, string>();
-  if (roleKeys.length === 0) return out;
-  const subject = (k: string) => `${ResponsibilityModelName}.${k}`;
-  const own = tenantId ? await readByKeys<{ storagePath?: string }>(db, AvatarCollection, roleKeys.map((k) => `${tenantId}.${subject(k)}`)) : new Map();
-  const shared = await readByKeys<{ storagePath?: string }>(db, AvatarCollection, roleKeys.map(subject));
+  if (roleKeys.length === 0 || !tenantId) return out;
+  const docId = (k: string) => `${tenantId}.${ResponsibilityModelName}.${k}`;
+  const avatars = await readByKeys<{ storagePath?: string }>(db, AvatarCollection, roleKeys.map(docId));
   for (const k of roleKeys) {
-    const path = (tenantId ? own.get(`${tenantId}.${subject(k)}`)?.storagePath : undefined) || shared.get(subject(k))?.storagePath;
-    if (path) out.set(k, path);
+    const path = avatars.get(docId(k))?.storagePath;
+    if (path && path.startsWith(`tenant/${tenantId}/${ResponsibilityModelName}/${k}/`)) out.set(k, path);
   }
   return out;
 }

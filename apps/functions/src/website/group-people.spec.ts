@@ -81,7 +81,6 @@ describe('loadRolePeople', () => {
       ['responsibilities/praesident', 'responsibilities/kassier'],
       ['persons/p1', 'persons/p2'],
       ['avatars/scs.responsibility.praesident', 'avatars/scs.responsibility.kassier'],
-      ['avatars/responsibility.praesident', 'avatars/responsibility.kassier'],
     ]);
     expect(out.get('praesident,kassier')).toEqual([
       { key: 'p1', firstName: 'Anna', lastName: 'Muster', label: 'Präsident, Kassier', showImage: true, email: 'praesident@seeclub.org' },
@@ -134,14 +133,21 @@ describe('loadSectionPeople', () => {
 });
 
 describe('loadRolePortraits', () => {
-  it("prefers the tenant's portrait, falls back to the shared one and leaves roles without one out", async () => {
+  it("takes the tenant's portrait only when its path is the role's own upload folder", async () => {
     const f = fakeGroupDb([], {}, {}, {
-      'scs.responsibility.a': { storagePath: 'own/a.jpg' },
-      'responsibility.a': { storagePath: 'shared/a.jpg' },
-      'responsibility.b': { storagePath: 'shared/b.jpg' },
+      'scs.responsibility.a': { storagePath: 'tenant/scs/responsibility/a/avatar/x.jpg' },
+      'scs.responsibility.b': { storagePath: 'tenant/scs/person/p1/avatar/y.jpg' }, // foreign path: ignored
+      'responsibility.c': { storagePath: 'tenant/scs/responsibility/c/avatar/z.jpg' }, // bare doc: not read
     });
     const out = await loadRolePortraits(f.db, ['a', 'b', 'c'], 'scs');
-    expect([...out.entries()]).toEqual([['a', 'own/a.jpg'], ['b', 'shared/b.jpg']]);
+    expect([...out.entries()]).toEqual([['a', 'tenant/scs/responsibility/a/avatar/x.jpg']]);
+    expect(f.reads.flat()).not.toContain('avatars/responsibility.c');
+  });
+
+  it('reads nothing without a tenant', async () => {
+    const f = fakeGroupDb([], {}, {}, {});
+    expect((await loadRolePortraits(f.db, ['a'], undefined)).size).toBe(0);
+    expect(f.reads).toEqual([]);
   });
 });
 
