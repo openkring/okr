@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
-import { CapacitorSQLite, capSQLiteSet, SQLiteConnection, SQLiteDBConnection } from '@capacitor-community/sqlite';
+import { capSQLiteSet, SQLiteDBConnection } from '@capacitor-community/sqlite';
+import { createSqliteConnection } from './sqlite-connection';
 import { groupPointsBySection, LocalTrack, PointRow, TrackPoint } from '@okr/mobility-tracker-util';
 
 /**
@@ -179,11 +180,7 @@ export class TrackDb {
 
   private db(): Promise<SQLiteDBConnection> {
     this.connection ??= (async () => {
-      const sqlite = new SQLiteConnection(CapacitorSQLite);
-      const exists = (await sqlite.isConnection(DB_NAME, false)).result;
-      const db = exists
-        ? await sqlite.retrieveConnection(DB_NAME, false)
-        : await sqlite.createConnection(DB_NAME, false, 'no-encryption', DB_VERSION, false);
+      const db = await createSqliteConnection(DB_NAME, DB_VERSION);
       await db.open();
       await db.execute(SCHEMA);
       await addAltColumn(db);
