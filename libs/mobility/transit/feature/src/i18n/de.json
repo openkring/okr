@@ -49,7 +49,7 @@
   "offline": "Verbindungen kannst du nur mit Internetverbindung suchen.",
   "positionUnavailable": "Dein Standort ist nicht verfügbar. Wähle mit «ändern», von wo du losfährst.",
   "noCoordinates": "Für diesen Ort ist keine genaue Lage hinterlegt, darum können wir keine Verbindungen suchen.",
-  "currentAsDestination": "Als Ziel brauchst du einen gespeicherten Ort",
+  "currentAsDestination": "Als Ziel brauchst du einen gespeicherten Ort.",
   "abroad": "Verbindungen gibt es nur für Orte in der Schweiz.",
   "departures": {
     "title": "Abfahrten",

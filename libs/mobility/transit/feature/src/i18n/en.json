@@ -49,7 +49,7 @@
   "offline": "You can only search connections with an internet connection.",
   "positionUnavailable": "Your location is not available. Use «change» to choose where you start.",
   "noCoordinates": "This place has no exact position, so we cannot search connections.",
-  "currentAsDestination": "As a destination you need a saved place",
+  "currentAsDestination": "As a destination you need a saved place.",
   "abroad": "Connections are only available for places in Switzerland.",
   "departures": {
     "title": "Departures",

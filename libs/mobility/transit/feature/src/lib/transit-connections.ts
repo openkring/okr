@@ -14,7 +14,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Spinner } from '@okr/shared-ui';
 import { okrPrompt, showToast } from '@okr/shared-util-angular';
-import { fill, getAvatarInfoForCurrentUser, isOngoing } from '@okr/shared-util-core';
+import { DateFormat, fill, getAvatarInfoForCurrentUser, getTodayStr, isActiveMembership } from '@okr/shared-util-core';
 import { CalEventService } from '@okr/calendar-calevent-data-access';
 import { LocationService } from '@okr/location-data-access';
 import { MembershipService } from '@okr/relationship-membership-data-access';
@@ -533,8 +533,9 @@ export class TransitConnections {
     const memberships = await firstValueFrom(
       this.membershipService.listMembershipsOfMember(user.personKey, 'person', 'group').pipe(take(1), catchError(() => of([]))),
     );
-    // only current memberships: a former member is not offered the group's calendar
-    const memberGroupKeys = [...new Set(memberships.filter((m) => isOngoing(m.dateOfExit)).map((m) => m.orgKey).filter(Boolean))];
+    // only active memberships (no exit, or exit still ahead): a former member is not offered the group's calendar
+    const today = getTodayStr(DateFormat.StoreDate);
+    const memberGroupKeys = [...new Set(memberships.filter((m) => isActiveMembership(m, today)).map((m) => m.orgKey).filter(Boolean))];
     const modal = await this.modalController.create({
       component: CalendarSelectModal,
       componentProps: { currentUser: user, allowPersonal: true, memberGroupKeys },
