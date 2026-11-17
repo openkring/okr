@@ -21,8 +21,15 @@ const NETWORK_WAIT_MS = 3 * 60_000;
 const PROBE_INTERVAL_MS = 5_000;
 const PROBE_TIMEOUT_MS = 5_000;
 const HEALTH_TIMEOUT_MS = 10_000;
-/** A health check's timeouts add up to 40 s; one that takes longer than this was interrupted by sleep. */
-const CHECK_BUDGET_MS = 60_000;
+/**
+ * How long Firestore may take to reconnect after the network is back before the first health read
+ * counts. Right after an `online` event Firestore still reports itself offline and rejects a server
+ * read at once with `unavailable`, although it reconnects within seconds on its own (BKA-4: a
+ * flapping network, reloaded 0.5 s after the probe answered). A frozen stack stays stuck past this.
+ */
+const SETTLE_MS = 30_000;
+/** A health check's waits add up to about 70 s; one that takes longer than this was interrupted by sleep. */
+const CHECK_BUDGET_MS = 120_000;
 /** Never auto-reload twice within this window — a reload that does not heal must not loop. */
 const RELOAD_GUARD_MS = 5 * 60_000;
 const RELOAD_GUARD_KEY = 'okr.wakeWatchdog.lastReload';
@@ -39,8 +46,9 @@ const RELOAD_GUARD_KEY = 'okr.wakeWatchdog.lastReload';
  * After a wake (heartbeat gap, or visibility/online/focus after a long pause) this service:
  * 1. waits until the network is really reachable — a same-origin request that bypasses the
  *    Angular service worker (`ngsw-bypass`), independent of `navigator.onLine`;
- * 2. asks Firestore for one document from the server (bounded); if that fails it resets the
- *    Firestore network once and asks again;
+ * 2. asks Firestore for one document from the server (bounded), repeating for up to SETTLE_MS so
+ *    Firestore can reconnect on its own; if that fails it resets the Firestore network once and
+ *    asks again;
  * 3. if the app is still stuck, reloads it — or, with a modal open (possible unsaved input),
  *    offers the reload in a toast instead.
  *
@@ -90,7 +98,7 @@ export class WakeWatchdogService {
       this.offlineNotice.sync();
 
       const checkStartedAt = Date.now();
-      if (await this.firestoreHealthy()) {
+      if (await this.firestoreHealthyWithin(SETTLE_MS)) {
         this.wakePending = false;
         return;
       }
@@ -131,6 +139,16 @@ export class WakeWatchdogService {
       return false;
     } finally {
       clearTimeout(timer);
+    }
+  }
+
+  /** Repeat the health read every PROBE_INTERVAL_MS until one succeeds or `windowMs` has passed. */
+  private async firestoreHealthyWithin(windowMs: number): Promise<boolean> {
+    const deadline = Date.now() + windowMs;
+    for (;;) {
+      if (await this.firestoreHealthy()) return true;
+      if (Date.now() >= deadline) return false;
+      await new Promise(resolve => setTimeout(resolve, PROBE_INTERVAL_MS));
     }
   }
 
