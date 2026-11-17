@@ -50,7 +50,8 @@ export function isTripCalevent(e: Pick<CalEventModel, 'type'>): boolean {
  * A personal CalEvent belongs to no calendar: it is created by a plain registered user, shown only
  * to its organiser (responsiblePersons) and its invitees, and never appears in a shared calendar.
  * Personal events support a reduced feature set (no series, no fullDay, no location,
- * no tags, no description, no documents) — see CalEventForm. A link (url/urlLabel) is
+ * no tags, no description, no documents) — see CalEventForm. Exception: a trip event
+ * (type 'travel', spec 1.162) keeps its location and leg list even when personal. A link (url/urlLabel) is
  * still offered, since it needs no calendar to be meaningful.
  * @param calevent
  */
