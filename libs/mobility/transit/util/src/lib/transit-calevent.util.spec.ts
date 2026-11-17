@@ -78,6 +78,16 @@ describe('connectionToCalevent mapping', () => {
     expect(e.urlLabel).toBe('');
     expect(e.description).toContain('Meine Adresse');
   });
+  it('never writes the home address as destination, even into a group calendar', () => {
+    const e = make({ to: home, calendarKey: 'group.g1' });
+    const json = JSON.stringify(e);
+    expect(e.calendars).toEqual(['group.g1']);
+    expect(e.locations[0].label).toBe('Meine Adresse');
+    expect(e.locations[0].key).toBe('');
+    expect(json).not.toContain('Seestrasse');
+    expect(json).not.toContain('8712');
+    expect(e.url).toBe('');
+  });
   it('never writes the device position and sets no location for it', () => {
     const cur: TransitPlace = { kind: 'current', label: '47.1,8.6', point: { lat: 47.1, lng: 8.6 } };
     const e = make({ to: cur });
