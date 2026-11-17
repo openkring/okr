@@ -1602,6 +1602,10 @@
           "region": "europe-west6"
         },
         {
+          "source": "/ngsw.json",
+          "destination": "/ngsw-retired.json"
+        },
+        {
           "source": "**",
           "destination": "/assets/app-forward.html"
         }
@@ -1613,6 +1617,19 @@
             {
               "key": "Cache-Control",
               "value": "public, max-age=0, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/ngsw.json",
+          "headers": [
+            {
+              "key": "Access-Control-Allow-Origin",
+              "value": "*"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "no-store"
             }
           ]
         },
