@@ -11,7 +11,7 @@ import { coerceBoolean, convertDateFormatToString, DateFormat, fill, freeTextLoc
 import { SvgIconPipe } from '@okr/shared-pipes';
 
 import { Avatars } from '@okr/avatar-ui';
-import { CaleventI18n, calEventValidations, formatDurationLabel, getWeekdayIndex, isPersonalCalevent, previewSeries } from '@okr/calendar-calevent-util';
+import { CaleventI18n, calEventValidations, formatDurationLabel, getWeekdayIndex, isPersonalCalevent, isTripCalevent, previewSeries } from '@okr/calendar-calevent-util';
 
 const MAX_LOCATION_SUGGESTIONS = 8;
 /** the periodicity a freshly switched-on series starts with; the user picks another one right below */
@@ -96,7 +96,7 @@ const DEFAULT_RECURRING_PERIODICITY = 'weekly';
               <okr-error-note [errors]="nameErrors()" />
             </ion-col>
           </ion-row>
-          @if(hasRole('admin') && !isPersonal()) {
+          @if((hasRole('admin') && !isPersonal()) || isTrip()) {
             <ion-row>
               <ion-col size="12">
                 <!-- the description is part of what the event IS: same card, no card of its own -->
@@ -199,7 +199,7 @@ const DEFAULT_RECURRING_PERIODICITY = 'weekly';
               </div>
             </ion-col>
             </ion-row>
-            @if(canExpert() && !isPersonal()) {
+            @if((canExpert() && !isPersonal()) || isTrip()) {
               <ion-row>
                 <ion-col size="12">
                   <!-- typing filters the known locations; picking one stores its avatar,
@@ -533,6 +533,8 @@ export class CalEventForm {
   protected expertMode = computed(() => this.canExpert() && this.showAdvanced());
   /** A personal event (no calendar) supports a reduced feature set — see isPersonalCalevent(). */
   protected isPersonal = computed(() => isPersonalCalevent(this.formData()));
+  /** A trip saved from the timetable keeps its legs (description) and destination (locations[0]) editable, whoever edits and whether personal or not. */
+  protected isTrip = computed(() => isTripCalevent(this.formData()));
 
   // passing constants to template
   protected chFutureDate = ChFutureDate;
