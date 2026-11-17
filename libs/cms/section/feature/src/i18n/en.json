@@ -8,7 +8,9 @@
     "label": "Select section",
     "section": "Select section",
     "group": "Select group",
-    "responsibility": "Select responsibility"
+    "responsibility": "Select responsibility",
+    "responsibilityParent": "All responsibilities of a group",
+    "responsibilityParentChip": "All from {name}"
   },
   "view": "Show section configuration",
   "edit": "Edit section",

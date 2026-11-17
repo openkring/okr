@@ -14,6 +14,10 @@ function fakeGroupDb(memberships: Doc[], persons: Record<string, Doc>, roles: Re
     orderBy: (f: string, dir: string) => query([...clauses, `orderBy ${f} ${dir}`]),
     get: async () => {
       queries.push(clauses);
+      if (clauses[0] === 'responsibilities') {
+        const parentKey = clauses.find((c) => c.startsWith('parentKey =='))?.split(' == ')[1];
+        return { docs: Object.entries(roles).filter(([, r]) => JSON.stringify(r['parentKey']) === parentKey).map(([id, r]) => ({ id, data: () => r })) };
+      }
       const orgKey = clauses.find((c) => c.startsWith('orgKey =='))?.split(' == ')[1];
       return { docs: memberships.filter((m) => JSON.stringify(m['orgKey']) === orgKey).map((m) => ({ data: () => m })) };
     },
@@ -75,25 +79,45 @@ const rolePersons: Record<string, Doc> = { p1: { tenants: ['scs'], usageName: 0 
 describe('loadRolePeople', () => {
   it('reads the roles, then the persons of their person avatars, by key, and resolves each list', async () => {
     const f = fakeGroupDb([], rolePersons, roles);
-    const out = await loadRolePeople(f.db, [['praesident', 'kassier'], ['kassier']], ['scs']);
+    const out = await loadRolePeople(f.db, [{ ids: ['praesident', 'kassier'] }, { ids: ['kassier'] }], ['scs']);
     expect(f.queries).toEqual([]);
     expect(f.reads).toEqual([
       ['responsibilities/praesident', 'responsibilities/kassier'],
       ['persons/p1', 'persons/p2'],
       ['avatars/scs.responsibility.praesident', 'avatars/scs.responsibility.kassier'],
     ]);
-    expect(out.get('praesident,kassier')).toEqual([
+    expect(out.get('responsibility.praesident,kassier')).toEqual([
       { key: 'p1', firstName: 'Anna', lastName: 'Muster', label: 'Präsident, Kassier', showImage: true, email: 'praesident@seeclub.org' },
     ]);
-    expect(out.get('kassier')?.map((p) => [p.key, p.email])).toEqual([['p1', undefined]]);
+    expect(out.get('responsibility.kassier')?.map((p) => [p.key, p.email])).toEqual([['p1', undefined]]);
+  });
+
+  it('follows the chosen roles with the active roles of the parent, by name, each person once', async () => {
+    const team = (name: string, avatar: Doc, extra: Doc = {}): Doc => ({ name, parentKey: 'group.team', tenants: ['scs'], responsibleAvatar: avatar, ...extra });
+    const cyril = { key: 'p3', name1: 'Cyril', name2: 'Coach', modelType: 'person' };
+    const teamRoles: Record<string, Doc> = {
+      ...roles,
+      t1: team('Trainer', cyril),
+      js: team('J+S Leiter', beat),
+      head: team('Cheftrainer', anna),
+      gone: team('Trainer', beat, { validTo: '20260101' }),
+      foreign: team('Trainer', beat, { tenants: ['other'] }),
+    };
+    const persons = { ...rolePersons, p2: { tenants: ['scs'], usageName: 0 }, p3: { tenants: ['scs'], usageName: 0 } };
+    const f = fakeGroupDb([], persons, teamRoles);
+    const out = await loadRolePeople(f.db, [{ ids: ['head'], parentKey: 'group.team' }], ['scs'], '20261117');
+    expect(f.queries).toEqual([['responsibilities', 'parentKey == "group.team"']]);
+    expect(out.get('responsibility.head|group.team')?.map((p) => [p.key, p.label])).toEqual([
+      ['p1', 'Cheftrainer'], ['p2', 'J+S Leiter'], ['p3', 'Trainer'],
+    ]);
   });
 
   it("shows a role's own portrait for its responsible instead of the person's avatar", async () => {
     const f = fakeGroupDb([], { p1: { tenants: ['scs'], usageName: 0 }, p2: { tenants: ['scs'], usageName: 0 } }, roles, {
       'scs.responsibility.praesident': { storagePath: 'tenant/scs/responsibility/praesident/avatar/x.jpg' },
     });
-    const out = await loadRolePeople(f.db, [['praesident']], ['scs']);
-    expect(out.get('praesident')?.map((p) => [p.key, p.image])).toEqual([
+    const out = await loadRolePeople(f.db, [{ ids: ['praesident'] }], ['scs']);
+    expect(out.get('responsibility.praesident')?.map((p) => [p.key, p.image])).toEqual([
       ['p1', 'tenant/scs/responsibility/praesident/avatar/x.jpg'],
       ['p2', undefined], // the delegate never takes the role's portrait
     ]);
@@ -102,7 +126,7 @@ describe('loadRolePeople', () => {
   it('reads nothing without roles or tenants', async () => {
     const f = fakeGroupDb([], rolePersons, roles);
     expect((await loadRolePeople(f.db, [], ['scs'])).size).toBe(0);
-    expect((await loadRolePeople(f.db, [['praesident']], [])).size).toBe(0);
+    expect((await loadRolePeople(f.db, [{ ids: ['praesident'] }], [])).size).toBe(0);
     expect(f.reads).toEqual([]);
   });
 });

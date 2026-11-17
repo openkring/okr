@@ -11,7 +11,11 @@ import { getResponsibilityPortraitKey } from '@okr/relationship-responsibility-u
 import { AvatarService } from '@okr/avatar-data-access';
 import { I18nService } from '@okr/shared-i18n';
 
-import { getPeopleResponsibilityIds, normalizeAvatarConfig, SECTION_I18N_KEYS, SectionI18n } from '@okr/cms-section-util';
+import { DateFormat, getTodayStr } from '@okr/shared-util-core';
+import {
+  getPeopleResponsibilityIds, getPeopleResponsibilityParentKey, getResponsibilityKeysUnderParent, mergeResponsibilityKeys,
+  normalizeAvatarConfig, SECTION_I18N_KEYS, SectionI18n,
+} from '@okr/cms-section-util';
 
 export type PeopleSectionState = {
   section: PeopleSection | undefined;
@@ -41,14 +45,34 @@ export const PeopleSectionStore = signalStore(
         return store.membershipService.listMembersOfOrg(params.groupId, 'group');
       },
     }),
-    // the chosen responsibilities in their order; a legacy single responsibilityId is a list of one.
-    // The ids are joined into one string so that an equal list does not re-read (params are compared by reference).
+    // the chosen responsibilities in their order (a legacy single responsibilityId is a list of one), then
+    // the active ones under responsibilityParentKey. The ids are joined into one string so that an equal
+    // list does not re-read (params are compared by reference).
     responsibilitiesResource: rxResource({
-      params: () => ({ ids: getPeopleResponsibilityIds(store.section()?.properties).join(','), currentUser: store.appStore.currentUser() }),
+      params: () => ({
+        ids: getPeopleResponsibilityIds(store.section()?.properties).join(','),
+        parentKey: getPeopleResponsibilityParentKey(store.section()?.properties),
+        currentUser: store.appStore.currentUser(),
+      }),
       stream: ({ params }) => {
-        if (!params.currentUser || !params.ids) return of([] as ResponsibilityModel[]);
-        return combineLatest(params.ids.split(',').map(id => store.responsibilityService.read(id))).pipe(
-          map(list => list.filter((r): r is ResponsibilityModel => !!r))
+        if (!params.currentUser || (!params.ids && !params.parentKey)) return of([] as ResponsibilityModel[]);
+        const chosen$ = params.ids
+          ? combineLatest(params.ids.split(',').map(id => store.responsibilityService.read(id)))
+          : of([] as (ResponsibilityModel | undefined)[]);
+        const underParent$ = params.parentKey
+          ? store.responsibilityService.listForParent(params.parentKey)
+          : of([] as ResponsibilityModel[]);
+        return combineLatest([chosen$, underParent$]).pipe(
+          map(([chosen, underParent]) => {
+            const byKey = new Map<string, ResponsibilityModel>();
+            for (const r of [...chosen, ...underParent]) if (r?.okey) byKey.set(r.okey, r);
+            const today = getTodayStr(DateFormat.StoreDate);
+            const keys = mergeResponsibilityKeys(
+              chosen.filter((r): r is ResponsibilityModel => !!r).map(r => r.okey),
+              getResponsibilityKeysUnderParent(underParent, params.parentKey, today),
+            );
+            return keys.map(k => byKey.get(k)).filter((r): r is ResponsibilityModel => !!r);
+          })
         );
       },
     }),

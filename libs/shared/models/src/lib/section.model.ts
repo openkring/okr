@@ -690,6 +690,14 @@ export interface PeopleConfig {
   persons: AvatarInfo[]; // explicit list of persons to be shown
   groupId?: string; // members of this group are shown 
   responsibilityIds?: string[]; // persons with these responsibilities are shown (responsible and delegate of each)
+  /**
+   * 'group.<okey>': after the chosen `responsibilityIds`, every responsibility with this `parentKey` that is
+   * not archived and valid today is shown too (by name, then the responsible's name) — a team such as
+   * «Trainerteam» follows its responsibilities without editing the section.
+   */
+  responsibilityParentKey?: string;
+  /** display name of `responsibilityParentKey` (the group's name when it was chosen), for the form only */
+  responsibilityParentName?: string;
   /** @deprecated replaced by responsibilityIds; still read from sections saved before 2026-11-13 */
   responsibilityId?: string;
 }

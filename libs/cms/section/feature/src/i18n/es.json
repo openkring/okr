@@ -8,7 +8,9 @@
     "label": "Elegir sección",
     "section": "Elegir sección",
     "group": "Elegir grupo",
-    "responsibility": "Elegir responsabilidad"
+    "responsibility": "Elegir responsabilidad",
+    "responsibilityParent": "Todas las responsabilidades de un grupo",
+    "responsibilityParentChip": "Todas de {name}"
   },
   "view": "Mostrar la configuración de la sección",
   "edit": "Editar sección",

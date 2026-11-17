@@ -7,7 +7,7 @@ import type { GroupPersonDoc, PublicPerson } from './group-people';
 import { peopleSourceKey, peopleSourceOf } from './people-source';
 import { renderSite, type RenderInput, type TemplateSet } from './render-site';
 import type { TemplateManifest } from './publish-validation';
-import { resolveRolePeople, type RoleAvatarDoc, type RoleDoc } from './role-people';
+import { resolveRolePeople, roleIdsUnderParent, type RoleAvatarDoc, type RoleDoc } from './role-people';
 import { isPlainEmail, mapSection, type SectionDoc } from './section-mapper';
 
 const TENANTS = ['scs'];
@@ -119,6 +119,40 @@ describe('peopleSourceOf', () => {
   it('keys group and role sources apart', () => {
     expect(peopleSourceKey({ kind: 'group', groupId: 'x' })).toBe('group.x');
     expect(peopleSourceKey({ kind: 'responsibility', ids: ['a', 'b'] })).toBe('responsibility.a,b');
+    expect(peopleSourceKey({ kind: 'responsibility', ids: ['a'], parentKey: 'group.team' })).toBe('responsibility.a|group.team');
+    expect(peopleSourceKey({ kind: 'responsibility', ids: [], parentKey: 'group.team' })).toBe('responsibility.|group.team');
+  });
+
+  it('reads the parent of a role section, alone or after the chosen roles', () => {
+    expect(peopleSourceOf(people({ type: 'responsibility', responsibilityParentKey: ' group.team ' })))
+      .toEqual({ kind: 'responsibility', ids: [], parentKey: 'group.team' });
+    expect(peopleSourceOf(people({ type: 'responsibility', responsibilityIds: ['head'], responsibilityParentKey: 'group.team' })))
+      .toEqual({ kind: 'responsibility', ids: ['head'], parentKey: 'group.team' });
+    expect(peopleSourceOf(people({ type: 'responsibility', responsibilityParentKey: 'group/x' }))).toBeUndefined();
+  });
+});
+
+describe('roleIdsUnderParent', () => {
+  const role = (name: string, last: string, extra: Partial<RoleDoc> = {}): RoleDoc =>
+    ({ name, parentKey: 'group.team', tenants: ['scs'], responsibleAvatar: { name1: 'X', name2: last }, ...extra });
+
+  it('lists the active roles of the parent of a site tenant, by name, then the responsible\'s last name', () => {
+    const roles = new Map<string, RoleDoc>([
+      ['t2', role('Trainer', 'Zahn')],
+      ['js', role('J+S Leiter', 'Meier')],
+      ['t1', role('Trainer', 'Amrein')],
+      ['head', role('Cheftrainer', 'Jucker')],
+      ['other', role('A', 'A', { parentKey: 'group.other' })],
+      ['archived', role('A', 'A', { isArchived: true })],
+      ['ended', role('A', 'A', { validTo: '20261116' })],
+      ['future', role('A', 'A', { validFrom: '20261118' })],
+      ['foreign', role('A', 'A', { tenants: ['other'] })],
+    ]);
+    expect(roleIdsUnderParent(roles, 'group.team', ['scs'], '20261117')).toEqual(['head', 'js', 't1', 't2']);
+  });
+
+  it('is empty without a parent', () => {
+    expect(roleIdsUnderParent(new Map([['a', role('A', 'A')]]), '', ['scs'], '20261117')).toEqual([]);
   });
 });
 

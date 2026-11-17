@@ -7,7 +7,7 @@ import type { SectionDoc } from './section-mapper';
  */
 export type PeopleSource =
   | { kind: 'group'; groupId: string }
-  | { kind: 'responsibility'; ids: string[] };
+  | { kind: 'responsibility'; ids: string[]; parentKey?: string };
 
 /** A Firestore document id that can be read by key (no path separator). */
 function isDocId(id: unknown): id is string {
@@ -17,7 +17,8 @@ function isDocId(id: unknown): id is string {
 /**
  * The source of a people section, or undefined for every other section and for explicit persons lists.
  * Roles: `responsibilityIds` in order (deduped); a legacy single `responsibilityId` is a list of one
- * (as the app's `getPeopleResponsibilityIds`).
+ * (as the app's `getPeopleResponsibilityIds`), plus `responsibilityParentKey` ('group.<okey>'), whose
+ * active roles follow the listed ones (resolved by the loader, see `roleIdsUnderParent`).
  */
 export function peopleSourceOf(section: SectionDoc | undefined): PeopleSource | undefined {
   if (section?.type !== 'people') return undefined;
@@ -33,12 +34,20 @@ export function peopleSourceOf(section: SectionDoc | undefined): PeopleSource | 
     const legacy = typeof props['responsibilityId'] === 'string' ? props['responsibilityId'].trim() : '';
     const raw = listed.length > 0 ? listed.map((id) => id.trim()) : (legacy ? [legacy] : []);
     const ids = [...new Set(raw)].filter(isDocId);
-    return ids.length > 0 ? { kind: 'responsibility', ids } : undefined;
+    const parent = typeof props['responsibilityParentKey'] === 'string' ? props['responsibilityParentKey'].trim() : '';
+    const parentKey = isDocId(parent) ? parent : '';
+    if (ids.length === 0 && !parentKey) return undefined;
+    return parentKey ? { kind: 'responsibility', ids, parentKey } : { kind: 'responsibility', ids };
   }
   return undefined;
 }
 
-/** The key of a source in the people map that `mapSection` / `renderSite` read: `group.<id>` or `responsibility.<id>,<id>`. */
+/**
+ * The key of a source in the people map that `mapSection` / `renderSite` read: `group.<id>`,
+ * `responsibility.<id>,<id>` or, with a parent, `responsibility.<id>,<id>|<parentKey>`.
+ */
 export function peopleSourceKey(source: PeopleSource): string {
-  return source.kind === 'group' ? `group.${source.groupId}` : `responsibility.${source.ids.join(',')}`;
+  if (source.kind === 'group') return `group.${source.groupId}`;
+  const ids = `responsibility.${source.ids.join(',')}`;
+  return source.parentKey ? `${ids}|${source.parentKey}` : ids;
 }

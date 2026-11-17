@@ -8,7 +8,9 @@
     "label": "Sektion wählen",
     "section": "Sektion wählen",
     "group": "Gruppe wählen",
-    "responsibility": "Verantwortlichkeit wählen"
+    "responsibility": "Verantwortlichkeit wählen",
+    "responsibilityParent": "Alle Verantwortlichkeiten einer Gruppe",
+    "responsibilityParentChip": "Alle aus {name}"
   },
   "view": "Sektionskonfiguration anzeigen",
   "edit": "Sektion bearbeiten",

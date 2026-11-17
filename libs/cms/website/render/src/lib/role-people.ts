@@ -17,6 +17,40 @@ export interface RoleDoc {
   isArchived?: boolean;
   responsibleAvatar?: RoleAvatarDoc | null;
   delegateAvatar?: RoleAvatarDoc | null;
+  /** "modelType.okey" of the org/group the role belongs to */
+  parentKey?: string;
+  validFrom?: string;
+  validTo?: string;
+}
+
+/**
+ * The keys of the roles listed under `parentKey` for a people section's `responsibilityParentKey`, as the
+ * app's `getResponsibilityKeysUnderParent`: same parent, of a site tenant, not archived and valid on `today`
+ * (StoreDate yyyyMMdd; an empty validFrom / validTo is open), ordered by name, then the responsible's last
+ * and first name.
+ * @param roles role key → role doc
+ */
+export function roleIdsUnderParent(
+  roles: ReadonlyMap<string, RoleDoc>,
+  parentKey: string,
+  siteTenants: string[],
+  today: string,
+): string[] {
+  if (!parentKey) return [];
+  const sortName = (r: RoleDoc) =>
+    [r.name ?? '', r.responsibleAvatar?.name2 ?? '', r.responsibleAvatar?.name1 ?? ''].map((s) => s.trim().toLocaleLowerCase('de'));
+  return [...roles.entries()]
+    .filter(([, r]) => r.parentKey === parentKey && r.isArchived !== true && sharesTenant(r.tenants, siteTenants))
+    .filter(([, r]) => (!r.validFrom || r.validFrom <= today) && (!r.validTo || r.validTo >= today))
+    .sort(([, a], [, b]) => {
+      const [x, y] = [sortName(a), sortName(b)];
+      for (let i = 0; i < x.length; i++) {
+        const diff = x[i].localeCompare(y[i], 'de');
+        if (diff !== 0) return diff;
+      }
+      return 0;
+    })
+    .map(([key]) => key);
 }
 
 /**

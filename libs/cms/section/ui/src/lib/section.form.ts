@@ -505,6 +505,7 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
                 (selectClicked)="selectPerson()"
                 (groupSelectClicked)="selectGroup()"
                 (responsibilitySelectClicked)="selectResponsibility()"
+                (responsibilityParentSelectClicked)="selectResponsibilityParent()"
               />
           }
         }
@@ -1679,5 +1680,14 @@ export class SectionForm {
     const next = { ...current, responsibilityIds: [...ids, responsibility.okey] } as PeopleConfig;
     delete next.responsibilityId;
     this.onPeopleConfigChange(next);
+  }
+
+  /** the group whose active responsibilities are shown after the chosen ones (its name is kept for the chip) */
+  public async selectResponsibilityParent(): Promise<void> {
+    const group = await this.modelSelectService.selectGroup();
+    if (!group?.okey) return;
+    this.onPeopleConfigChange({
+      ...this.peopleConfig(), responsibilityParentKey: `group.${group.okey}`, responsibilityParentName: group.name,
+    } as PeopleConfig);
   }
 }
