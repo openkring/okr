@@ -14,7 +14,7 @@ import { DocumentsAccordion } from '@okr/content-document-feature';
 import { CommentsAccordion } from '@okr/comment-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
 
-import { CALEVENT_I18N_KEYS, CaleventI18n } from '@okr/calendar-calevent-util';
+import { CALEVENT_I18N_KEYS, CaleventI18n, isTripCalevent } from '@okr/calendar-calevent-util';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { LocationService } from '@okr/location-data-access';
@@ -223,10 +223,12 @@ export class CalEventViewModal {
   );
   /**
    * Connections to the event: only for an upcoming event that takes place, at a location with coordinates. The
-   * occurrence being viewed supplies the date, so a series shows the right day.
+   * occurrence being viewed supplies the date, so a series shows the right day. A trip event is the journey
+   * itself, so it gets no «Anreise» block (spec 1.162).
    */
   protected readonly transit = computed(() => {
     const e = this.calevent();
+    if (isTripCalevent(e)) return undefined;
     const destination = this.location();
     if (e.state === 'cancelled' || !destination || !locationPoint(destination)) return undefined;
     const times = eventTransitTimes(e);
