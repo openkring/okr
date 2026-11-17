@@ -151,24 +151,31 @@ export class FlightTrackerSearch implements AfterViewInit, OnDestroy {
   private planeMarkerId: string | null = null;
   private polylineIds: string[] = [];
   private resizeObserver?: ResizeObserver;
+  /** Set on destroy: a map whose create() resolves afterwards must be torn down, not used (BKA-9). */
+  private destroyed = false;
 
   constructor() {
     effect(() => {
       const data = this.store.flightData();
       if (this.map) {
-        void this.onFlightDataChanged(data);
+        // a native call on a map that is gone rejects with "Map not found for provided id."
+        this.onFlightDataChanged(data).catch(err => console.warn('FlightTrackerSearch: map update failed', err));
       }
     });
   }
 
   async ngAfterViewInit(): Promise<void> {
     if (isBrowser(this.platformId)) {
-      await this.loadMap();
+      await this.loadMap().catch(err => console.warn('FlightTrackerSearch: map init failed', err));
     }
   }
 
   ngOnDestroy(): void {
-    this.map?.destroy();
+    this.destroyed = true;
+    const map = this.map;
+    this.map = undefined;
+    // fire-and-forget: the native map may already be gone, which would surface as an unhandled rejection
+    map?.destroy().catch(() => undefined);
     this.resizeObserver?.disconnect();
   }
 
@@ -202,14 +209,23 @@ export class FlightTrackerSearch implements AfterViewInit, OnDestroy {
     const mapRef = document.getElementById(this.mapId);
     if (!mapRef) return;
     await this.waitForMapDimensions(mapRef);
+    if (this.destroyed) return;
     const { GoogleMap, MapType } = await import('@capacitor/google-maps');
     ensureNativeMapTransparency(); // Android draws the map beneath the WebView
-    this.map = await GoogleMap.create({
+    const map = await GoogleMap.create({
       id: this.mapId,
       element: mapRef,
       apiKey: this.env.services.gmapKey,
       config: { center: { lat: 47.5, lng: 8.7 }, zoom: 4 },
+      // the id is fixed: without forceCreate, iOS silently keeps a stale native map under the same id
+      forceCreate: true,
     });
+    if (this.destroyed) {
+      // the page was left while create() was pending (it waits ≥200ms) — do not leak the native map
+      await map.destroy().catch(() => undefined);
+      return;
+    }
+    this.map = map;
     await this.map.setMapType(MapType.Normal);
     await this.map.setOnMarkerClickListener(async (event: any) => {
       if (event.markerId === this.planeMarkerId) {
@@ -223,6 +239,7 @@ export class FlightTrackerSearch implements AfterViewInit, OnDestroy {
   }
 
   private async onFlightDataChanged(data: FlightInfoResponse | null): Promise<void> {
+    if (!this.map) return;
     await this.clearMarkers();
     if (!data) return;
     await this.addAirportMarker(data.departure.lat, data.departure.lng, data.departure.iata, data.departure.airport);

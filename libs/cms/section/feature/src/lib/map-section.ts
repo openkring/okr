@@ -140,7 +140,8 @@ export class MapSectionComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.map?.destroy();
+    // the native map may already be gone ("Map not found for provided id.") — never an unhandled rejection
+    this.map?.destroy().catch(() => undefined);
     this.resizeObserver?.disconnect();
   }
 
