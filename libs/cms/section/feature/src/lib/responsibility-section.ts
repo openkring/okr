@@ -8,6 +8,8 @@ import { AppStore } from '@okr/shared-feature';
 
 import { ResponsibilitySectionStore } from './responsibility-section.store';
 import { AvatarLabel } from '@okr/avatar-ui';
+import { AvatarService } from '@okr/avatar-data-access';
+import { getResponsibilityImageKey } from '@okr/relationship-responsibility-util';
 
 @Component({
   selector: 'okr-responsibility-section',
@@ -57,6 +59,7 @@ export class ResponsibilitySectionComponent {
   private readonly alertController = inject(AlertController);
   private readonly appStore = inject(AppStore);
   private readonly modalController = inject(ModalController);
+  private readonly avatarService = inject(AvatarService);
 
   public section = input<ResponsibilitySection>();
   public editMode = input(false);
@@ -69,7 +72,9 @@ export class ResponsibilitySectionComponent {
   protected readonly avatar = computed(() => this.responsibility()?.responsibleAvatar);
   protected readonly modelType = computed(() => this.avatar()?.modelType ?? '');
   protected readonly key = computed(() => this.avatar()?.key ?? '');
-  protected readonly avatarKey = computed(() => `${this.modelType()}.${this.key()}`);
+  /** the responsibility's own portrait, else the responsible's avatar */
+  protected readonly avatarKey = computed(() =>
+    getResponsibilityImageKey(this.responsibility(), key => !!this.avatarService.getCachedStoragePath(key)) || `${this.modelType()}.${this.key()}`);
   protected readonly name = computed(() => {
     const avatar = this.avatar();
     if (!avatar) return '';

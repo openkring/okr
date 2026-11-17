@@ -2,9 +2,9 @@
 // resolveGroupPeople / resolveRolePeople, shared by publishWebsite and publicApi's page route so both
 // resolve a people section the same way.
 import type { Firestore } from 'firebase-admin/firestore';
-import { AvatarCollection, MembershipCollection, PersonCollection, ResponsibilityCollection } from '@okr/shared-models';
+import { AvatarCollection, MembershipCollection, PersonCollection, ResponsibilityCollection, ResponsibilityModelName } from '@okr/shared-models';
 import {
-  peopleSourceKey, peopleSourceOf, resolveGroupPeople, resolveRolePeople,
+  peopleSourceKey, peopleSourceOf, resolveGroupPeople, resolveRolePeople, roleIdsUnderParent,
   type GroupMembershipDoc, type GroupPersonDoc, type PublicPerson, type RoleDoc, type SectionDoc,
 } from '@okr/cms-website-render';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
@@ -65,30 +65,77 @@ export async function loadGroupPeople(
   return out;
 }
 
+/** One role people section: its chosen role ids and, optionally, the parent whose active roles follow them. */
+export interface RoleSource {
+  ids: string[];
+  parentKey?: string;
+}
+
 /**
- * The public holders of each role list (`ids.join(',')` → resolveRolePeople): the roles by key, then
- * the persons of their responsible / delegate avatars by key, in getAll batches. Tenant, archive and
- * privacy filters are the resolver's.
+ * The public holders of each role source (`peopleSourceKey` → resolveRolePeople): the chosen roles by key and
+ * the roles of each parent (one `parentKey ==` query per parent — a single-field index, the tenant filter is
+ * the resolver's), then the persons of their responsible / delegate avatars by key and the roles' own
+ * portraits (avatar `<tenant>.responsibility.<key>`), in getAll batches. The parent's roles follow the chosen
+ * ones (`roleIdsUnderParent`: active today, by name). Tenant, archive and privacy filters are the resolver's.
  */
 export async function loadRolePeople(
   db: Firestore,
-  roleLists: string[][],
+  sources: RoleSource[],
   siteTenants: string[],
+  today = getTodayStr(DateFormat.StoreDate),
 ): Promise<Map<string, PublicPerson[]>> {
   const out = new Map<string, PublicPerson[]>();
   const tenants = siteTenants.filter(Boolean);
-  const lists = roleLists.filter((ids) => ids.length > 0);
-  if (lists.length === 0 || tenants.length === 0) return out;
+  const list = sources.filter((s) => s.ids.length > 0 || !!s.parentKey);
+  if (list.length === 0 || tenants.length === 0) return out;
 
-  const roles = await readByKeys<RoleDoc>(db, ResponsibilityCollection, lists.flat());
+  const roles = await readByKeys<RoleDoc>(db, ResponsibilityCollection, list.flatMap((s) => s.ids));
+  const parentKeys = [...new Set(list.map((s) => s.parentKey).filter((k): k is string => !!k && !k.includes('/')))];
+  const byParent = new Map<string, Map<string, RoleDoc>>();
+  await Promise.all(parentKeys.map(async (parentKey) => {
+    const snap = await db.collection(ResponsibilityCollection).where('parentKey', '==', parentKey).get();
+    const docs = new Map<string, RoleDoc>();
+    for (const d of snap.docs) {
+      const role = d.data() as RoleDoc;
+      docs.set(d.id, role);
+      roles.set(d.id, role);
+    }
+    byParent.set(parentKey, docs);
+  }));
+
+  const idsOf = (s: RoleSource): string[] => s.parentKey
+    ? [...new Set([...s.ids, ...roleIdsUnderParent(byParent.get(s.parentKey) ?? new Map(), s.parentKey, tenants, today)])]
+    : s.ids;
   const personKeys: string[] = [];
-  for (const role of roles.values()) {
-    for (const avatar of [role.responsibleAvatar, role.delegateAvatar]) {
+  for (const id of list.flatMap(idsOf)) {
+    const role = roles.get(id);
+    for (const avatar of [role?.responsibleAvatar, role?.delegateAvatar]) {
       if (avatar?.modelType === 'person' && typeof avatar.key === 'string') personKeys.push(avatar.key);
     }
   }
   const persons = await readByKeys<GroupPersonDoc>(db, PersonCollection, personKeys);
-  for (const ids of lists) out.set(ids.join(','), resolveRolePeople(ids, roles, persons, tenants));
+  const portraits = await loadRolePortraits(db, [...roles.keys()], tenants[0]);
+  for (const s of list) {
+    out.set(peopleSourceKey({ kind: 'responsibility', ids: s.ids, parentKey: s.parentKey }), resolveRolePeople(idsOf(s), roles, persons, tenants, portraits));
+  }
+  return out;
+}
+
+/**
+ * role key → storage path of the role's own portrait (the avatar the responsibility edit modal uploads):
+ * the tenant's avatar doc `<tenant>.responsibility.<key>`. Only a storage path under that role's own
+ * upload folder (`tenant/<tenant>/responsibility/<key>/`) is trusted — both are writable by the
+ * privileged only (firestore.rules canWriteAvatar, storage.rules). Roles without a portrait are left out.
+ */
+export async function loadRolePortraits(db: Firestore, roleKeys: string[], tenantId: string | undefined): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  if (roleKeys.length === 0 || !tenantId) return out;
+  const docId = (k: string) => `${tenantId}.${ResponsibilityModelName}.${k}`;
+  const avatars = await readByKeys<{ storagePath?: string }>(db, AvatarCollection, roleKeys.map(docId));
+  for (const k of roleKeys) {
+    const path = avatars.get(docId(k))?.storagePath;
+    if (path && path.startsWith(`tenant/${tenantId}/${ResponsibilityModelName}/${k}/`)) out.set(k, path);
+  }
   return out;
 }
 
@@ -103,22 +150,18 @@ export async function loadSectionPeople(
   today = getTodayStr(DateFormat.StoreDate),
 ): Promise<Map<string, PublicPerson[]>> {
   const groupIds = new Set<string>();
-  const roleLists = new Map<string, string[]>();
+  const roleSources = new Map<string, RoleSource>();
   for (const section of sections) {
     const source = peopleSourceOf(section);
     if (source?.kind === 'group') groupIds.add(source.groupId);
-    if (source?.kind === 'responsibility') roleLists.set(source.ids.join(','), source.ids);
+    if (source?.kind === 'responsibility') roleSources.set(peopleSourceKey(source), { ids: source.ids, parentKey: source.parentKey });
   }
   const [groups, roles] = await Promise.all([
     loadGroupPeople(db, [...groupIds], siteTenants, today),
-    loadRolePeople(db, [...roleLists.values()], siteTenants),
+    loadRolePeople(db, [...roleSources.values()], siteTenants, today),
   ]);
-  const out = new Map<string, PublicPerson[]>();
+  const out = new Map<string, PublicPerson[]>(roles);
   for (const [groupId, persons] of groups) out.set(peopleSourceKey({ kind: 'group', groupId }), persons);
-  for (const ids of roleLists.values()) {
-    const persons = roles.get(ids.join(','));
-    if (persons) out.set(peopleSourceKey({ kind: 'responsibility', ids }), persons);
-  }
   return withAvatarImages(db, out, siteTenants[0]);
 }
 
@@ -132,7 +175,8 @@ export async function withAvatarImages(
   people: Map<string, PublicPerson[]>,
   tenantId: string | undefined,
 ): Promise<Map<string, PublicPerson[]>> {
-  const keys = [...new Set([...people.values()].flat().filter((p) => p.showImage === true && !!p.key).map((p) => p.key))];
+  // a person who already has an image (a role's own portrait, resolveRolePeople) keeps it
+  const keys = [...new Set([...people.values()].flat().filter((p) => p.showImage === true && !!p.key && !p.image).map((p) => p.key))];
   if (keys.length === 0) return people;
   const own = tenantId ? await readByKeys<{ storagePath?: string }>(db, AvatarCollection, keys.map((k) => `${tenantId}.person.${k}`)) : new Map();
   const shared = await readByKeys<{ storagePath?: string }>(db, AvatarCollection, keys.map((k) => `person.${k}`));
@@ -141,6 +185,7 @@ export async function withAvatarImages(
   const out = new Map<string, PublicPerson[]>();
   for (const [source, persons] of people) {
     out.set(source, persons.map((p) => {
+      if (p.image) return p;
       const image = p.showImage === true ? pathOf(p.key) : undefined;
       return image ? { ...p, image } : p;
     }));

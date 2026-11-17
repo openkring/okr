@@ -266,6 +266,16 @@ export function buildSentryOptions(
       // onunhandledrejection carrying a bare DOMException (no stack). The message is
       // WebKit-internal and unique to the purge path, so no first-party failure can hide in it.
       /Database deleted by request of the user/i,
+      // Same IndexedDB teardown, one step later (BKG-2): the Firebase heartbeat writer
+      // (@firebase/app writeHeartbeatsToIndexedDB) hits the closing connection, catches that
+      // and logs a warning — but the transaction then aborts, and idb's `tx.done` promise,
+      // which the SDK no longer awaits, rejects with idb's synthetic
+      // `new DOMException('AbortError', 'AbortError')`. Arrives as an onunhandledrejection with
+      // no stack, milliseconds after the "Error thrown when writing to IndexedDB" warning. The
+      // heartbeat is non-essential and rewritten on the next call. Anchored to the literal
+      // message-equals-name shape, which only that fallback produces: a real abort (fetch,
+      // our resumable upload) carries a descriptive message and still reports.
+      /^(Error: )?AbortError: AbortError$/,
     ],
 
     // Crashes inside third-party scripts we load but don't own. reCAPTCHA (pulled in by

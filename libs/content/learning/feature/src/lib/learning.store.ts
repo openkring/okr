@@ -55,7 +55,7 @@ export type LearningStoreState = {
   commentTexts: Record<string, string>;
   /** room whose comment texts are loaded (or loading) */
   commentTextsRoom: string;
-  upload: LearningUploadState | undefined;
+  uploading: LearningUploadState | undefined;
 };
 
 const initialState: LearningStoreState = {
@@ -64,7 +64,7 @@ const initialState: LearningStoreState = {
   filterRoomKey: '',
   commentTexts: {},
   commentTextsRoom: '',
-  upload: undefined,
+  uploading: undefined,
 };
 
 const TABS: LearningTab[] = ['files', 'videos', 'images'];
@@ -414,17 +414,17 @@ export const LearningStore = signalStore(
        */
       async upload(topic: string, files: File[]): Promise<void> {
         const config = store.config();
-        if (!config || files.length === 0 || store.upload()) return;
+        if (!config || files.length === 0 || store.uploading()) return;
         if (!methods.curatableFor().includes(topic)) return;
         const pageKey = store.pageKey();
         const controller = new AbortController();
         uploadAbort = controller;
         try {
           for (const file of files) {
-            patchState(store, { upload: { name: file.name, progress: 0 } });
+            patchState(store, { uploading: { name: file.name, progress: 0 } });
             try {
               await store.learningService.upload(pageKey, topic, file,
-                progress => patchState(store, { upload: { name: file.name, progress } }), controller.signal);
+                progress => patchState(store, { uploading: { name: file.name, progress } }), controller.signal);
               await toast(fill(store.i18n.room_uploaded(), { name: file.name }));
             } catch {
               // cancelled by the user: no error toast (the service removed the half-created doc)
@@ -434,7 +434,7 @@ export const LearningStore = signalStore(
           }
         } finally {
           if (uploadAbort === controller) uploadAbort = undefined;
-          patchState(store, { upload: undefined });
+          patchState(store, { uploading: undefined });
         }
       },
 

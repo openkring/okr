@@ -22,6 +22,8 @@
     "@okr/relationship-responsibility-data-access": "*",
     "@okr/comment-feature": "*",
     "@okr/avatar-ui": "*",
-    "@okr/cms-menu-feature": "*"
+    "@okr/cms-menu-feature": "*",
+    "@okr/avatar-feature": "*",
+    "@okr/avatar-data-access": "*"
   }
 }

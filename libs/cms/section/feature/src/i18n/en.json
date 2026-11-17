@@ -8,7 +8,9 @@
     "label": "Select section",
     "section": "Select section",
     "group": "Select group",
-    "responsibility": "Select responsibility"
+    "responsibility": "Select responsibility",
+    "responsibilityParent": "All responsibilities of a group",
+    "responsibilityParentChip": "All from {name}"
   },
   "view": "Show section configuration",
   "edit": "Edit section",
@@ -1793,6 +1795,9 @@
   "messages": {
     "label": "Messages"
   },
+  "notices": {
+    "label": "Notices"
+  },
   "tasks": {
     "label": "Tasks"
   },
@@ -2087,5 +2092,11 @@
     "reactions": "Reactions to the section",
     "imageComments": "Comments on images",
     "imageReactions": "Reactions to images"
+  },
+  "learning": {
+    "label": "Learning room"
+  },
+  "track": {
+    "label": "Track"
   }
 }

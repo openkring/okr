@@ -12,11 +12,11 @@ import {
   CategoryOld, CategoryOldI18n, Checkbox, CheckboxGroup, CheckboxGroupI18n, CheckboxI18n, Color, ErrorNote, NumberInput, NumberInputI18n,
   StringSelect, StringSelectI18n, TextInput, TextInputI18n
 } from '@okr/shared-ui';
-import { coerceBoolean, getAvatarName } from '@okr/shared-util-core';
+import { coerceBoolean, fill, getAvatarName } from '@okr/shared-util-core';
 import { SvgIconPipe } from '@okr/shared-pipes';
 
 import { ResponsibilityService } from '@okr/relationship-responsibility-data-access';
-import { getFieldAndItemErrors, getPeopleResponsibilityIds, normalizeAvatarConfig, peopleField, PEOPLE_MAX_BG_COLORS, SectionErrors, SectionI18n } from '@okr/cms-section-util';
+import { getFieldAndItemErrors, getPeopleResponsibilityIds, getPeopleResponsibilityParentKey, normalizeAvatarConfig, peopleField, PEOPLE_MAX_BG_COLORS, SectionErrors, SectionI18n } from '@okr/cms-section-util';
 
 type PeopleSegment = 'content' | 'view' | 'image' | 'info';
 const PEOPLE_SEGMENTS: PeopleSegment[] = ['content', 'view', 'image', 'info'];
@@ -132,9 +132,29 @@ const SEGMENT_FIELDS: Record<PeopleSegment, (keyof AvatarConfig)[]> = {
                               }
                             </ion-chip>
                           }
+                          @if(responsibilityParentKey()) {
+                            <ion-chip color="secondary">
+                              @if(isReadOnly()) {
+                                <ion-label>{{ responsibilityParentLabel() }}</ion-label>
+                              } @else {
+                                <ion-button fill="clear" (click)="onResponsibilityParentRemove()">
+                                  <ion-icon slot="start" src="{{ 'cancel' | svgIcon }}" />
+                                  <ion-label>{{ responsibilityParentLabel() }}</ion-label>
+                                </ion-button>
+                              }
+                            </ion-chip>
+                          }
                         </div>
                       </ion-item>
                     </ion-col>
+                    @if(!isReadOnly() && !responsibilityParentKey()) {
+                      <ion-col size="12" size-md="6">
+                        <ion-button fill="outline" (click)="responsibilityParentSelectClicked.emit()">
+                          <ion-icon slot="start" src="{{ 'search' | svgIcon }}" />
+                          {{ i18n().select_responsibility_parent() }}
+                        </ion-button>
+                      </ion-col>
+                    }
                   }
                   <ion-col size="12" size-md="6">
                     <okr-text-input [i18n]="titleI18n()" [value]="config().title" (valueChange)="onFieldChange('title', $event)" [readOnly]="isReadOnly()" [showHelper]="true" />
@@ -273,6 +293,7 @@ export class PeopleConfiguration {
   public selectClicked = output<void>();
   public groupSelectClicked = output<void>();
   public responsibilitySelectClicked = output<void>();
+  public responsibilityParentSelectClicked = output<void>();
 
   // state
   protected readonly segment = signal<PeopleSegment>('content');
@@ -283,6 +304,11 @@ export class PeopleConfiguration {
   protected readonly groupId = computed(() => this.formData()?.groupId ?? '');
   /** the chosen responsibilities; a legacy single `responsibilityId` is read as a list of one */
   protected readonly responsibilityIds = computed(() => getPeopleResponsibilityIds(this.formData()));
+  /** the group whose active responsibilities follow the chosen ones ('group.<okey>'), or '' */
+  protected readonly responsibilityParentKey = computed(() => getPeopleResponsibilityParentKey(this.formData()));
+  protected readonly responsibilityParentLabel = computed(() => fill(this.i18n().select_responsibility_parent_chip(), {
+    name: this.formData()?.responsibilityParentName?.trim() || this.responsibilityParentKey(),
+  }));
   protected readonly type = computed(() => this.formData()?.type ?? 'persons');
 
   // passing constants to template
@@ -407,6 +433,15 @@ export class PeopleConfiguration {
     this.formData.update(vm => {
       const next: PeopleConfig = { ...vm, responsibilityIds: getPeopleResponsibilityIds(vm).filter(r => r !== id) };
       delete next.responsibilityId;
+      return next;
+    });
+  }
+
+  protected onResponsibilityParentRemove(): void {
+    this.formData.update(vm => {
+      const next: PeopleConfig = { ...vm };
+      delete next.responsibilityParentKey;
+      delete next.responsibilityParentName;
       return next;
     });
   }

@@ -124,10 +124,16 @@ service cloud.firestore {
     function isPersonAvatar(id) {
       return id.matches('^([^.]+[.])?person[.].*');
     }
+    // A responsibility portrait (`<tenant>.responsibility.<okey>`) replaces the office holder's photo on
+    // the public website, so it takes the same gate as /responsibilities itself: privileged only.
+    function isResponsibilityAvatar(id) {
+      return id.matches('^([^.]+[.])?responsibility[.].*');
+    }
     function canWriteAvatar(id) {
-      return !isPersonAvatar(id)
-             || id.matches('^([^.]+[.])?person[.]' + callerPersonKey() + '$')
-             || isPrivileged() || hasRole('memberAdmin');
+      return isResponsibilityAvatar(id) ? isPrivileged()
+             : (!isPersonAvatar(id)
+                || id.matches('^([^.]+[.])?person[.]' + callerPersonKey() + '$')
+                || isPrivileged() || hasRole('memberAdmin'));
     }
     // A document belongs to the caller's tenant when their tenant is listed on the
     // document, or when the document is shared via the 'system' tenant.

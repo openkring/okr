@@ -49,6 +49,51 @@ export function getPeopleResponsibilityIds(config?: Partial<PeopleConfig>): stri
   return legacy ? [legacy] : [];
 }
 
+/** The parent ('group.<okey>') whose responsibilities a people section shows after the chosen ones, or ''. */
+export function getPeopleResponsibilityParentKey(config?: Partial<PeopleConfig>): string {
+  const key = config?.responsibilityParentKey?.trim() ?? '';
+  return key && !key.includes('/') ? key : '';
+}
+
+/** The fields of a responsibility that decide whether and where it is listed under its parent. */
+export interface ParentRoleCandidate {
+  okey?: string;
+  name?: string;
+  parentKey?: string;
+  isArchived?: boolean;
+  validFrom?: string;
+  validTo?: string;
+  responsibleAvatar?: { name1?: string; name2?: string } | null;
+}
+
+/**
+ * The keys of the responsibilities listed under `parentKey`: same parent, not archived and valid on `today`
+ * (StoreDate yyyyMMdd; an empty validFrom / validTo is open), ordered by name, then the responsible's last
+ * and first name. Mirrored for the website by `rolesUnderParent` in `@okr/cms-website-render`.
+ */
+export function getResponsibilityKeysUnderParent(candidates: ParentRoleCandidate[], parentKey: string, today: string): string[] {
+  if (!parentKey) return [];
+  const sortName = (r: ParentRoleCandidate) =>
+    [r.name ?? '', r.responsibleAvatar?.name2 ?? '', r.responsibleAvatar?.name1 ?? ''].map(s => s.trim().toLocaleLowerCase('de'));
+  return candidates
+    .filter(r => !!r.okey && r.parentKey === parentKey && r.isArchived !== true)
+    .filter(r => (!r.validFrom || r.validFrom <= today) && (!r.validTo || r.validTo >= today))
+    .sort((a, b) => {
+      const [x, y] = [sortName(a), sortName(b)];
+      for (let i = 0; i < x.length; i++) {
+        const diff = x[i].localeCompare(y[i], 'de');
+        if (diff !== 0) return diff;
+      }
+      return 0;
+    })
+    .map(r => r.okey as string);
+}
+
+/** The chosen responsibilities first (in their order), then those under the parent; each once. */
+export function mergeResponsibilityKeys(chosen: string[], underParent: string[]): string[] {
+  return [...new Set([...chosen, ...underParent])];
+}
+
 /**
  * The background colour of the person at `index`, as #rrggbb, or undefined when the
  * background is not filled. `orgColorHex` is the tenant colour resolved by the caller;

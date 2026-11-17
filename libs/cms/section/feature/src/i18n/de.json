@@ -8,7 +8,9 @@
     "label": "Sektion wählen",
     "section": "Sektion wählen",
     "group": "Gruppe wählen",
-    "responsibility": "Verantwortlichkeit wählen"
+    "responsibility": "Verantwortlichkeit wählen",
+    "responsibilityParent": "Alle Verantwortlichkeiten einer Gruppe",
+    "responsibilityParentChip": "Alle aus {name}"
   },
   "view": "Sektionskonfiguration anzeigen",
   "edit": "Sektion bearbeiten",
@@ -1793,6 +1795,9 @@
   "messages": {
     "label": "Nachrichten"
   },
+  "notices": {
+    "label": "Mitteilungen"
+  },
   "tasks": {
     "label": "Aufgaben"
   },
@@ -2087,5 +2092,11 @@
     "reactions": "Reaktionen zur Sektion",
     "imageComments": "Kommentare zu Bildern",
     "imageReactions": "Reaktionen zu Bildern"
+  },
+  "learning": {
+    "label": "Lernraum"
+  },
+  "track": {
+    "label": "Strecke"
   }
 }

@@ -100,5 +100,9 @@
     "label": "Email of the role",
     "placeholder": "president@yourclub.org",
     "helper": "Public address for this role, ideally an alias of your club. It may be shown on the website."
+  },
+  "portrait": {
+    "own": "Own portrait of this responsibility – tap the picture to replace it",
+    "fallback": "Picture of the responsible person – tap the picture to upload an own portrait"
   }
 }

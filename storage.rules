@@ -125,10 +125,12 @@ service firebase.storage {
     match /tenant/{tenantId} {
       allow read: if inTenant(tenantId);
     }
+    // `responsibility/` holds the responsibility portraits, published on the tenant website in place of
+    // the office holder's photo: written by the privileged only, like /responsibilities in Firestore.
     match /tenant/{tenantId}/{sub}/{path=**} {
       allow read:           if inTenant(tenantId) && sub != 'private';
-      allow create, update: if inTenant(tenantId) && sub != 'private' && sizeOk() && contentTypeOk();
-      allow delete:         if inTenant(tenantId) && sub != 'private';
+      allow create, update: if inTenant(tenantId) && sub != 'private' && (sub != 'responsibility' || isPrivileged()) && sizeOk() && contentTypeOk();
+      allow delete:         if inTenant(tenantId) && sub != 'private' && (sub != 'responsibility' || isPrivileged());
     }
 
     // ---- album video uploads: the one place the 25 MB cap is lifted ----

@@ -8,7 +8,9 @@
     "label": "Choisir la section",
     "section": "Choisir la section",
     "group": "Choisir le groupe",
-    "responsibility": "Choisir la responsabilité"
+    "responsibility": "Choisir la responsabilité",
+    "responsibilityParent": "Toutes les responsabilités d'un groupe",
+    "responsibilityParentChip": "Toutes de {name}"
   },
   "view": "Afficher la configuration de la section",
   "edit": "Modifier la section",
@@ -1793,6 +1795,9 @@
   "messages": {
     "label": "Messages"
   },
+  "notices": {
+    "label": "Communications"
+  },
   "tasks": {
     "label": "Tâches"
   },
@@ -2087,5 +2092,11 @@
     "reactions": "Réactions à la section",
     "imageComments": "Commentaires sur les images",
     "imageReactions": "Réactions aux images"
+  },
+  "learning": {
+    "label": "Espace d'apprentissage"
+  },
+  "track": {
+    "label": "Parcours"
   }
 }

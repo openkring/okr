@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AvatarInfo, AvatarModelTypes, ResponsibilityModel } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
 
-import { getResponsibilityIndex, getResponsibilityIndexInfo, isDelegateActive, isResponsibility } from './responsibility.util';
+import { getResponsibilityImageKey, getResponsibilityIndex, getResponsibilityIndexInfo, getResponsibilityPortraitKey, isDelegateActive, isResponsibility } from './responsibility.util';
 
 vi.mock('@okr/shared-util-core', async importOriginal => {
   const actual = await importOriginal<typeof coreUtils>();
@@ -76,5 +76,32 @@ describe('isDelegateActive', () => {
     const r = makeResp({ delegateAvatar: makeAvatar('del-1', 'Bob', 'Smith', 'person') });
     vi.mocked(coreUtils.isValidAt).mockReturnValue(false);
     expect(isDelegateActive(r)).toBe(false);
+  });
+});
+
+describe('getResponsibilityPortraitKey', () => {
+  it('builds responsibility.<okey>', () => {
+    expect(getResponsibilityPortraitKey('president')).toBe('responsibility.president');
+  });
+  it('returns empty for an empty okey', () => {
+    expect(getResponsibilityPortraitKey('')).toBe('');
+  });
+});
+
+describe('getResponsibilityImageKey', () => {
+  const avatar = { key: 'p1', modelType: 'person' } as AvatarInfo;
+  const r = { okey: 'president', responsibleAvatar: avatar };
+
+  it('prefers the own portrait when it exists', () => {
+    expect(getResponsibilityImageKey(r, key => key === 'responsibility.president')).toBe('responsibility.president');
+  });
+  it('falls back to the responsible avatar when there is no portrait', () => {
+    expect(getResponsibilityImageKey(r, () => false)).toBe('person.p1');
+  });
+  it('returns empty without a portrait and without a responsible', () => {
+    expect(getResponsibilityImageKey({ okey: 'x', responsibleAvatar: undefined }, () => false)).toBe('');
+  });
+  it('returns empty for an undefined responsibility', () => {
+    expect(getResponsibilityImageKey(undefined, () => true)).toBe('');
   });
 });

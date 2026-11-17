@@ -20,6 +20,8 @@ export const SECTION_I18N_KEYS = {
   select_section:             PFX + 'select.section',
   select_group:               PFX + 'select.group',
   select_responsibility:      PFX + 'select.responsibility',
+  select_responsibility_parent:      PFX + 'select.responsibilityParent',
+  select_responsibility_parent_chip: PFX + 'select.responsibilityParentChip',
 
   view:                       PFX + 'view',
   edit:                       PFX + 'edit',

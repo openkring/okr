@@ -242,6 +242,7 @@
     "cancelled": "Cancelled",
     "carriage": "Carriage",
     "cgig": "CGIG",
+    "club": "Club",
     "comment": "Comment",
     "culture": "Culture",
     "document": "Document",
@@ -299,6 +300,7 @@
     "sport": "Sport",
     "srv": "SRV",
     "stuerbord": "Stüürbord",
+    "tenant": "<%= tenantId %>",
     "tent20": "Tent sponsor 2020",
     "tenu": "Kit",
     "test": "Test",
@@ -309,7 +311,8 @@
     "unpaid": "Unpaid",
     "valid": "Valid",
     "vs": "VS",
-    "tenant": "<%= tenantId %>"
+    "weather": "Weather",
+    "werkstatt": "Workshop"
   },
   "validation": {
     "addressValueMandatoryForNonPostal": "The address value is mandatory for non-postal addresses.",

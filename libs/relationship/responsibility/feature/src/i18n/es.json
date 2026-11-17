@@ -100,5 +100,9 @@
     "label": "Correo del cargo",
     "placeholder": "presidente@tuclub.org",
     "helper": "Dirección pública de este cargo, idealmente un alias de tu club. Puede mostrarse en el sitio web."
+  },
+  "portrait": {
+    "own": "Retrato propio de esta responsabilidad – toca la imagen para reemplazarlo",
+    "fallback": "Imagen de la persona responsable – toca la imagen para subir un retrato propio"
   }
 }

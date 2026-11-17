@@ -186,6 +186,19 @@ for (const file of sources) {
   }
 }
 
+// ---------------------------------------------------------------- 4. section types
+// The section-type picker lists the DB category `section_type` and labels each item with
+// '@cms/section/feature.<type>.label'. That key is built from data, so no literal names it and
+// section 2 never sees it: a new section type shipped without its label (SCS-ER, 'notices').
+// Every type createSection() knows must carry one.
+const SECTION_UTIL = 'libs/cms/section/util/src/lib/section.util.ts';
+const sectionUtilSrc = readFileSync(SECTION_UTIL, 'utf8');
+const createSectionMatch = sectionUtilSrc.match(/export function createSection\([\s\S]*?\n}\n/);
+if (!createSectionMatch) report(SECTION_UTIL, 'section types: createSection() not found — update scripts/check-i18n.mjs');
+for (const m of (createSectionMatch?.[0] ?? '').matchAll(/case\s+'([\w-]+)'\s*:/g)) {
+  checkKey(`${SECTION_UTIL}:${lineOf(sectionUtilSrc, createSectionMatch.index + m.index)}`, `@cms/section/feature.${m[1]}.label`);
+}
+
 // ---------------------------------------------------------------- result
 if (mainBundles.length === 0) console.log('check-i18n: no app main bundles found (submodules not checked out) — main-bundle checks skipped');
 if (findings.length) {

@@ -115,16 +115,16 @@ function publicItemAsDoc(item: PublicLearningItem): DocumentModel {
             @for (topic of store.curatableTopics(); track topic) {
               <!-- a real <label> around the input: the file dialog opens from the user's own tap (Safari) -->
               <label>
-                <ion-chip color="primary" [disabled]="!!store.upload()">
+                <ion-chip color="primary" [disabled]="!!store.uploading()">
                   <ion-icon src="{{ 'upload' | svgIcon }}" />
                   <ion-label>{{ store.i18n.room_upload() }}: {{ topic }}</ion-label>
                 </ion-chip>
-                <input type="file" multiple [disabled]="!!store.upload()" (change)="onFiles(topic, $event)" />
+                <input type="file" multiple [disabled]="!!store.uploading()" (change)="onFiles(topic, $event)" />
               </label>
             }
           </div>
         }
-        @if (store.upload(); as up) {
+        @if (store.uploading(); as up) {
           <ion-progress-bar [value]="up.progress" />
           <div class="upload-status">
             <span>{{ uploading(up.name) }}</span>

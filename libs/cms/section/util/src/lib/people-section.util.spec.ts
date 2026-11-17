@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { AVATAR_CONFIG_SHAPE, AvatarConfig, NameDisplay } from '@okr/shared-models';
 
 import {
-  getPeopleAltText, getPeopleBgColor, getPeopleImgixParams, getPeopleImgRadius, getPeopleResponsibilityIds, normalizeAvatarConfig, splitIntoRows, toHexColor
+  getPeopleAltText, getPeopleBgColor, getPeopleImgixParams, getPeopleImgRadius, getPeopleResponsibilityIds, getPeopleResponsibilityParentKey, getResponsibilityKeysUnderParent, mergeResponsibilityKeys, normalizeAvatarConfig, splitIntoRows, toHexColor
 } from './people-section.util';
 
 const config = (patch: Partial<AvatarConfig> = {}): AvatarConfig => ({ ...AVATAR_CONFIG_SHAPE, ...patch });
@@ -151,5 +151,53 @@ describe('toHexColor', () => {
   it('is undefined for anything else', () => {
     expect(toHexColor('var(--x)')).toBeUndefined();
     expect(toHexColor(undefined)).toBeUndefined();
+  });
+});
+
+describe('getPeopleResponsibilityParentKey', () => {
+  it('reads the trimmed key', () => {
+    expect(getPeopleResponsibilityParentKey({ responsibilityParentKey: ' group.g1 ' })).toBe('group.g1');
+  });
+
+  it('is empty when missing or not a plain key', () => {
+    expect(getPeopleResponsibilityParentKey(undefined)).toBe('');
+    expect(getPeopleResponsibilityParentKey({ responsibilityParentKey: 'group/g1' })).toBe('');
+  });
+});
+
+describe('getResponsibilityKeysUnderParent', () => {
+  const role = (okey: string, name: string, last: string, patch: Record<string, unknown> = {}) =>
+    ({ okey, name, parentKey: 'group.team', responsibleAvatar: { name1: 'X', name2: last }, ...patch });
+
+  it('lists the roles of the parent by name, then the responsible\'s last name', () => {
+    const roles = [
+      role('t2', 'Trainer', 'Zahn'),
+      role('js', 'J+S Leiter', 'Meier'),
+      role('t1', 'Trainer', 'Amrein'),
+      role('head', 'Cheftrainer', 'Jucker'),
+    ];
+    expect(getResponsibilityKeysUnderParent(roles, 'group.team', '20261117')).toEqual(['head', 'js', 't1', 't2']);
+  });
+
+  it('leaves out other parents, archived roles and roles not valid today', () => {
+    const roles = [
+      role('a', 'A', 'A'),
+      role('other', 'B', 'B', { parentKey: 'group.other' }),
+      role('archived', 'C', 'C', { isArchived: true }),
+      role('ended', 'D', 'D', { validTo: '20261116' }),
+      role('future', 'E', 'E', { validFrom: '20261118' }),
+      role('today', 'F', 'F', { validFrom: '20261117', validTo: '20261117' }),
+    ];
+    expect(getResponsibilityKeysUnderParent(roles, 'group.team', '20261117')).toEqual(['a', 'today']);
+  });
+
+  it('is empty without a parent', () => {
+    expect(getResponsibilityKeysUnderParent([role('a', 'A', 'A')], '', '20261117')).toEqual([]);
+  });
+});
+
+describe('mergeResponsibilityKeys', () => {
+  it('keeps the chosen first and lists each key once', () => {
+    expect(mergeResponsibilityKeys(['head', 'x'], ['js', 'head', 't1'])).toEqual(['head', 'x', 'js', 't1']);
   });
 });
