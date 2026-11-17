@@ -1,7 +1,7 @@
 import { CalendarModel, Roles, UserModel } from '@okr/shared-models';
 import { describe, expect, it } from 'vitest';
 
-import { canWriteCalendar, isCalendarPublic, isOrgCalendar } from './calendar.util';
+import { canPostTripToCalendar, canWriteCalendar, isCalendarPublic, isOrgCalendar } from './calendar.util';
 
 const calendar = (owner: string): CalendarModel => ({ ...new CalendarModel('scs'), okey: 'x', owner });
 const user = (roles: Partial<Roles>): UserModel => ({ ...new UserModel('scs'), roles: roles as Roles });
@@ -39,6 +39,25 @@ describe('calendar.util', () => {
       expect(canWriteCalendar(calendar('person.kaiser'), undefined)).toBe(true);
       expect(canWriteCalendar(undefined, undefined)).toBe(true);
     });
+  });
+});
+
+describe('canPostTripToCalendar', () => {
+  it('allows a group calendar only for a member of that group', () => {
+    expect(canPostTripToCalendar(calendar('group.vorstand'), user({ registered: true }), ['vorstand'])).toBe(true);
+    expect(canPostTripToCalendar(calendar('group.vorstand'), user({ registered: true }), ['segeln'])).toBe(false);
+    expect(canPostTripToCalendar(calendar('group.vorstand'), user({ registered: true }), [])).toBe(false);
+  });
+
+  it('reserves org calendars for contentAdmin', () => {
+    expect(canPostTripToCalendar(calendar('org.scs'), user({ registered: true }), ['scs'])).toBe(false);
+    expect(canPostTripToCalendar(calendar('org.scs'), user({ contentAdmin: true }), [])).toBe(true);
+  });
+
+  it('denies any other owner and an undefined calendar', () => {
+    expect(canPostTripToCalendar(calendar('person.x'), user({ contentAdmin: true }), ['x'])).toBe(false);
+    expect(canPostTripToCalendar(calendar(''), user({ contentAdmin: true }), [])).toBe(false);
+    expect(canPostTripToCalendar(undefined, user({ contentAdmin: true }), ['x'])).toBe(false);
   });
 });
 

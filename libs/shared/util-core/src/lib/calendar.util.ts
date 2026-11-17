@@ -25,6 +25,26 @@ export function canWriteCalendar(calendar: CalendarModel | undefined, currentUse
 }
 
 /**
+ * Whether the user may post a trip (a saved connection) into the given calendar: an org calendar
+ * only as contentAdmin, a group calendar ('group.<key>') only as a member of that group.
+ * Any other owner (person, empty) is never offered.
+ * @param calendar
+ * @param currentUser
+ * @param memberGroupKeys group keys (the part after 'group.') of the groups the user belongs to
+ */
+export function canPostTripToCalendar(
+  calendar: CalendarModel | undefined,
+  currentUser: UserModel | undefined,
+  memberGroupKeys: readonly string[],
+): boolean {
+  const owner = calendar?.owner;
+  if (!owner) return false;
+  if (owner.startsWith('org.')) return hasRole('contentAdmin', currentUser);
+  if (owner.startsWith('group.')) return memberGroupKeys.includes(owner.slice('group.'.length));
+  return false;
+}
+
+/**
  * Whether a calendar is public: visible and subscribable for every user of the tenant, rather than
  * only for the members of the group that owns it.
  *

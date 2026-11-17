@@ -1,7 +1,9 @@
 import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
-import { IonCol, IonContent, IonGrid, IonItem, IonLabel, IonList, IonRow, ModalController } from '@ionic/angular';
+import { IonCol, IonContent, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonRow, ModalController } from '@ionic/angular';
 
+import { PERSONAL_CALENDAR_KEY } from '@okr/shared-constants';
 import { CalendarModel, UserModel } from '@okr/shared-models';
+import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Header, Spinner } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
@@ -12,6 +14,7 @@ import { CalendarSelectStore } from './calendar-select.store';
   standalone: true,
   imports: [
     Header, Spinner, EmptyList,
+    SvgIconPipe, IonIcon,
     IonContent, IonList, IonItem, IonLabel, IonGrid, IonRow, IonCol,
   ],
   providers: [CalendarSelectStore],
@@ -30,10 +33,16 @@ import { CalendarSelectStore } from './calendar-select.store';
     <ion-content>
       @if (isLoading()) {
         <okr-spinner />
-      } @else if (filteredCount() === 0) {
+      } @else if (filteredCount() === 0 && !allowPersonal()) {
         <okr-empty-list [message]="store.i18n.calendar_empty()" />
       } @else {
         <ion-list lines="full">
+          @if (allowPersonal()) {
+            <ion-item (click)="selectPersonal()">
+              <ion-icon slot="start" src="{{ 'person' | svgIcon }}" />
+              <ion-label>{{ store.i18n.calendar_personal() }}</ion-label>
+            </ion-item>
+          }
           @for (calendar of filteredCalendars(); track calendar.okey) {
             <ion-item (click)="select(calendar)">
               <ion-grid>
@@ -61,6 +70,10 @@ export class CalendarSelectModal {
   private readonly modalController = inject(ModalController);
 
   public currentUser = input.required<UserModel>();
+  // opt-in: a first row «Nur für mich» that dismisses with PERSONAL_CALENDAR_KEY
+  public allowPersonal = input(false);
+  // undefined keeps the canWriteCalendar filter; an array switches to the trip filter
+  public memberGroupKeys = input<string[] | undefined>();
 
   protected searchTerm = linkedSignal(() => this.store.searchTerm());
   protected filteredCalendars = computed(() => this.store.filteredCalendars());
@@ -69,7 +82,12 @@ export class CalendarSelectModal {
 
   constructor() {
     effect(() => this.store.setCurrentUser(this.currentUser()));
+    effect(() => this.store.setMemberGroupKeys(this.memberGroupKeys()));
     effect(() => this.store.setSearchTerm(this.searchTerm()));
+  }
+
+  public selectPersonal(): Promise<boolean> {
+    return dismissOverlay(this.modalController, PERSONAL_CALENDAR_KEY, 'confirm');
   }
 
   public select(calendar: CalendarModel): Promise<boolean> {

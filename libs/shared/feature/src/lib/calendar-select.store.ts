@@ -4,7 +4,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { CalendarCollection, CalendarModel, UserModel } from '@okr/shared-models';
-import { canWriteCalendar, debugListLoaded, getSystemQuery, nameMatches } from '@okr/shared-util-core';
+import { canPostTripToCalendar, canWriteCalendar, debugListLoaded, getSystemQuery, nameMatches } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
 import { AppStore } from './app.store';
@@ -13,11 +13,14 @@ import { SHARED_FEATURE_I18N_KEYS, SharedFeatureI18n } from './select-i18n';
 export type CalendarSelectState = {
   searchTerm: string;
   currentUser: UserModel | undefined;
+  // undefined = today's canWriteCalendar filter; an array = trip filter (canPostTripToCalendar)
+  memberGroupKeys: string[] | undefined;
 };
 
 const calendarSelectInitialState: CalendarSelectState = {
   searchTerm: '',
   currentUser: undefined,
+  memberGroupKeys: undefined,
 };
 
 export const CalendarSelectStore = signalStore(
@@ -44,7 +47,11 @@ export const CalendarSelectStore = signalStore(
     // contentAdmin may assign a calevent to them, so they are not even offered to anybody else.
     filteredCalendars: computed(() =>
       (store.calendarsResource.value() ?? []).filter((c: CalendarModel) =>
-        nameMatches(c.index, store.searchTerm()) && canWriteCalendar(c, store.currentUser())
+        nameMatches(c.index, store.searchTerm()) && (
+          store.memberGroupKeys() === undefined
+            ? canWriteCalendar(c, store.currentUser())
+            : canPostTripToCalendar(c, store.currentUser(), store.memberGroupKeys() ?? [])
+        )
       )
     ),
     isLoading: computed(() => store.calendarsResource.isLoading()),
@@ -55,6 +62,9 @@ export const CalendarSelectStore = signalStore(
     },
     setCurrentUser(currentUser: UserModel | undefined) {
       patchState(store, { currentUser });
+    },
+    setMemberGroupKeys(memberGroupKeys: string[] | undefined) {
+      patchState(store, { memberGroupKeys });
     },
   })),
 );

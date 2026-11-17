@@ -1,7 +1,8 @@
 {
   "calendar": {
     "select": "Select calendar",
-    "empty": "No calendar entries found."
+    "empty": "No calendar entries found.",
+    "personal": "Only for me"
   },
   "group": {
     "select": "Select group",

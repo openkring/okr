@@ -5,6 +5,7 @@ const PFX = '@shared/feature.';
 export const SHARED_FEATURE_I18N_KEYS = {
   calendar_select: PFX + 'calendar.select',
   calendar_empty:  PFX + 'calendar.empty',
+  calendar_personal: PFX + 'calendar.personal',
 
   group_select: PFX + 'group.select',
   group_empty:  PFX + 'group.empty',
