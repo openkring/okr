@@ -65,6 +65,15 @@ describe('stripUrlQueriesInText', () => {
       .toBe('GET /assets/i18n/de.json and https://a/b');
   });
 
+  it('strips an address with an apostrophe completely', () => {
+    expect(stripUrlQueriesInText("GET https://h/geocode/json?address=Chemin%20de%20l'%C3%89glise%204,%201006%20Lausanne&key=k"))
+      .toBe('GET https://h/geocode/json');
+  });
+
+  it('leaves a sentence with a path and no query unchanged', () => {
+    expect(stripUrlQueriesInText("Loaded /assets/i18n/de.json, it's fine.")).toBe("Loaded /assets/i18n/de.json, it's fine.");
+  });
+
   it('leaves text without a URL query alone', () => {
     expect(stripUrlQueriesInText('pageload /private/home')).toBe('pageload /private/home');
     expect(stripUrlQueriesInText('Really? yes')).toBe('Really? yes');

@@ -405,4 +405,31 @@ describe('URL query stripping (spec 1.162, home address in the geocoder query)',
     expect(span?.data?.['http.url']).toBe(BARE);
     expect(span?.data?.['url.full']).toBe(BARE);
   });
+
+  it('drops query/fragment keys and scrubs every string in span and trace data', () => {
+    const APOS = "https://h/geocode/json?address=Chemin%20de%20l'%C3%89glise%204&key=k";
+    const event = {
+      type: 'transaction', transaction: '/private/home',
+      contexts: { trace: { data: { 'url.query': '?address=Seestrasse', 'http.fragment': '#x', other: `see ${GEOCODE}` } } },
+      spans: [{
+        op: 'http.client', description: `GET ${APOS}`,
+        data: {
+          url: APOS, 'http.query': 'address=Seestrasse', 'http.fragment': 'f', 'url.query': "address=l'%C3%89glise",
+          'url.fragment': 'f', 'server.address': 'h', 'http.response.status_code': 200,
+        },
+      }],
+    } as unknown as Parameters<typeof beforeSendTransaction>[0];
+    const out = beforeSendTransaction(event);
+    const json = JSON.stringify(out);
+    expect(json).not.toContain('Seestrasse');
+    expect(json).not.toContain('glise');
+    const data = out.spans?.[0]?.data as Record<string, unknown>;
+    for (const key of ['http.query', 'http.fragment', 'url.query', 'url.fragment']) expect(key in data).toBe(false);
+    expect(data['server.address']).toBe('h');
+    expect(data['http.response.status_code']).toBe(200);
+    expect(out.spans?.[0]?.description).toBe('GET https://h/geocode/json');
+    const trace = out.contexts?.trace?.data as Record<string, unknown>;
+    expect('url.query' in trace).toBe(false);
+    expect(trace['other']).toBe(`see ${BARE}`);
+  });
 });

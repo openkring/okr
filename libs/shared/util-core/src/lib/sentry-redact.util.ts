@@ -36,8 +36,12 @@ export function stripUrlQuery(url: string): string {
   return cut === -1 ? url : url.slice(0, cut);
 }
 
-/** Every absolute URL or path inside a text — up to, not including, its `?` or `#`. */
-const URL_WITH_QUERY_RE = /((?:https?:\/\/|\/)[^\s?#"'<>]*)[?#][^\s"'<>]*/g;
+/**
+ * Every absolute URL or path inside a text — up to, not including, its `?` or `#`. The query runs to
+ * the next whitespace: fetch does not encode `'`, so stopping at a quote would leak the rest of an
+ * address like «Chemin de l'Église».
+ */
+const URL_WITH_QUERY_RE = /((?:https?:\/\/|\/)[^\s?#]*)[?#]\S*/g;
 
 /** Strip query and fragment from every URL inside a free text (e.g. a span description `GET <url>`). */
 export function stripUrlQueriesInText<T extends string | undefined>(text: T): T {

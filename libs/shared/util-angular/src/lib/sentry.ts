@@ -60,20 +60,49 @@ function scrubEventUrls(event: ErrorEvent | TransactionEvent): void {
   event.breadcrumbs?.forEach(scrubBreadcrumb);
 }
 
+/** Span/trace data keys that hold nothing but a URL's query string or fragment. */
+const QUERY_DATA_KEYS = ['http.query', 'http.fragment', 'url.query', 'url.fragment'];
+/** Span/trace data keys that hold a whole URL. */
+const URL_DATA_KEYS = ['url', 'http.url', 'url.full'];
+
+/**
+ * Drops the query/fragment keys and strips query and fragment from every other string value — the
+ * URL keys as a whole, any other value wherever it contains a URL (spec 1.162).
+ */
+function scrubSpanData(data: Record<string, unknown> | undefined): void {
+  if (!data) return;
+  for (const key of QUERY_DATA_KEYS) delete data[key];
+  for (const [key, value] of Object.entries(data)) {
+    if (typeof value !== 'string') continue;
+    const redacted = redactFileTransferTokens(value);
+    data[key] = URL_DATA_KEYS.includes(key) ? stripUrlQuery(redacted) : stripUrlQueriesInText(redacted);
+  }
+}
+
+/**
+ * A span description without its URL query: an http span (`GET <url>`) is rebuilt as method + bare
+ * URL, so nothing after the `?` survives whatever characters it holds; other spans get the text scrub.
+ */
+function scrubSpanDescription(op: string | undefined, description: string | undefined): string | undefined {
+  const redacted = redactFileTransferTokens(description);
+  if (typeof redacted !== 'string') return redacted;
+  const space = redacted.indexOf(' ');
+  if (op?.startsWith('http') && space > 0) {
+    return `${redacted.slice(0, space)} ${stripUrlQuery(redacted.slice(space + 1))}`;
+  }
+  return stripUrlQueriesInText(redacted);
+}
+
 /**
  * Transactions (tracing) carry the page URL as name and the fetched URLs in their spans. Span URLs
  * also lose their query string and fragment (the geocoder's `?address=…`, spec 1.162).
  */
 export function beforeSendTransaction(event: TransactionEvent): TransactionEvent {
   scrubEventUrls(event);
+  scrubSpanData(event.contexts?.trace?.data as Record<string, unknown> | undefined);
   event.spans?.forEach((span) => {
-    span.description = stripUrlQueriesInText(redactFileTransferTokens(span.description));
-    const data = span.data as Record<string, unknown> | undefined;
-    if (data) {
-      for (const key of ['url', 'http.url', 'url.full']) {
-        if (typeof data[key] === 'string') data[key] = stripUrlQuery(redactFileTransferTokens(data[key] as string));
-      }
-    }
+    span.description = scrubSpanDescription(span.op, span.description);
+    scrubSpanData(span.data as Record<string, unknown> | undefined);
   });
   return event;
 }
