@@ -429,6 +429,35 @@ export function addImgixParams(path: string, size: number, withFaceReco = true):
   return getImgixUrl(path, params);
 }
 
+/**
+ * Map what an image reference may hold onto something Firebase Storage's `ref()` accepts.
+ * `ref()` throws `storage/invalid-url` for any other http(s) URL, so callers must map first:
+ * - a relative storage path (the normal case) is returned as is,
+ * - gs:// and firebasestorage download URLs are understood by ref() directly,
+ * - an imgix URL (https://<x>.imgix.net/tenant%2Fscs%2F...) mirrors the default bucket,
+ *   so its decoded pathname (query string dropped) is the storage path,
+ * - anything else (empty, external URL) has no storage object: undefined.
+ * @param url the stored image/file reference
+ * @param imgixBaseUrl the tenant's imgix base url (for imgix sources on a custom domain)
+ */
+export function toStoragePath(url: string | undefined, imgixBaseUrl?: string): string | undefined {
+  const value = (url ?? '').trim();
+  if (!value) return undefined;
+  if (value.startsWith('gs://')) return value;
+  if (!/^https?:\/\//.test(value)) return value;
+  try {
+    const parsed = new URL(value);
+    if (parsed.hostname === 'firebasestorage.googleapis.com') return value;
+    const isImgix = parsed.hostname.endsWith('.imgix.net')
+      || (!!imgixBaseUrl && value.startsWith(imgixBaseUrl));
+    if (!isImgix) return undefined;
+    const path = decodeURIComponent(parsed.pathname).replace(/^\/+/, '');
+    return path || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export const IMGIX_PDF_PARAMS = 'page=1';
 export const IMGIX_JPG_PARAMS = 'fm=jpg&auto=format,compress,enhance&fit=crop';
 export const IMGIX_THUMBNAIL_PARAMS = `fm=jpg&width=${THUMBNAIL_SIZE}&height=${THUMBNAIL_SIZE}&auto=format,compress,enhance&fit=crop`;

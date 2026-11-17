@@ -1,4 +1,3 @@
-import { Inject } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
@@ -7,10 +6,9 @@ import { Share } from '@capacitor/share';
 import { ToastController } from '@ionic/angular/lazy';
 import { captureException } from '@sentry/angular';
 import { saveAs } from 'file-saver';
-import { deleteObject, getDownloadURL, ref } from "firebase/storage";
+import { FirebaseStorage, deleteObject, getDownloadURL, ref } from "firebase/storage";
 
-import { STORAGE } from '@okr/shared-config';
-import { DateFormat, getTodayStr } from '@okr/shared-util-core';
+import { DateFormat, getTodayStr, toStoragePath } from '@okr/shared-util-core';
 
 import { error, showToast } from './alert.util';
 // import * as papa from 'papaparse'; // for csv conversions
@@ -347,15 +345,20 @@ export function downloadFileAndStore(file: File) {
 
  
   /**
- * Downloads a file from Firebase Storage and returns its download URL.
+ * Returns the download URL of a file in Firebase Storage.
+ * The reference may be a storage path, a gs:// or firebasestorage URL, or an imgix URL (mapped back
+ * to its storage path) — any other URL would make ref() throw storage/invalid-url.
  * @param toastController The ToastController to use for error messages.
- * @param path The path to the file in Firebase Storage.
+ * @param storage the FirebaseStorage instance (inject(STORAGE) in the caller's injection context)
+ * @param path The storage path or URL of the file.
+ * @param imgixBaseUrl the tenant's imgix base url, to recognise imgix URLs on a custom domain
  * @returns A promise that resolves with the download URL, or an empty string if there was an error.
  */
-  export async function downloadFileFromStorage(toastController: ToastController, path: string): Promise<string> {
+  export async function downloadFileFromStorage(toastController: ToastController, storage: FirebaseStorage, path: string, imgixBaseUrl?: string): Promise<string> {
     try {
-      const _storage = Inject(STORAGE);
-      return await getDownloadURL(ref(_storage, path));
+      const storagePath = toStoragePath(path, imgixBaseUrl);
+      if (!storagePath) throw new Error('not a storage path');
+      return await getDownloadURL(ref(storage, storagePath));
     }
     catch(ex) {
       error(toastController, 'download.util/downloadFileFromStorage(' + path + ') -> ERROR: ' + JSON.stringify(ex));  
@@ -363,11 +366,14 @@ export function downloadFileAndStore(file: File) {
     }
   }
 
-  export async function deleteFileFromStorage(toastController: ToastController, path: string): Promise<void> {
+  /**
+   * Deletes a file from Firebase Storage. Accepts the same references as downloadFileFromStorage.
+   */
+  export async function deleteFileFromStorage(toastController: ToastController, storage: FirebaseStorage, path: string, imgixBaseUrl?: string): Promise<void> {
     try {
-      const _storage = Inject(STORAGE);
-      const _ref = ref(_storage, path);
-      deleteObject(_ref);
+      const storagePath = toStoragePath(path, imgixBaseUrl);
+      if (!storagePath) throw new Error('not a storage path');
+      await deleteObject(ref(storage, storagePath));
       showToast(toastController, '@content/document/data-access.delete.conf');
     }
     catch(ex) {

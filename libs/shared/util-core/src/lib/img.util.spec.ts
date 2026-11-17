@@ -13,6 +13,7 @@ import {
     getImgixJsonUrl,
     getImgixParamsByExtension,
     getImgixPdfUrl,
+    toStoragePath,
     getImgixThumbnailUrl,
     getImgixUrl,
     getPosterStyle,
@@ -870,6 +871,35 @@ describe('collageTiles', () => {
     it('is empty for a style without frame settings', () => {
       expect(getImageFrameCss(undefined)).toEqual({});
       expect(getImageFrameCss({ border: '', borderRadius: '' } as ImageStyle)).toEqual({});
+    });
+  });
+
+  describe('toStoragePath', () => {
+    it('returns undefined for empty input', () => {
+      expect(toStoragePath(undefined)).toBeUndefined();
+      expect(toStoragePath('  ')).toBeUndefined();
+    });
+    it('keeps a relative storage path', () => {
+      expect(toStoragePath('tenant/scs/section/x/image/a.png')).toBe('tenant/scs/section/x/image/a.png');
+    });
+    it('keeps gs:// and firebasestorage URLs', () => {
+      expect(toStoragePath('gs://bucket/a.png')).toBe('gs://bucket/a.png');
+      const fs = 'https://firebasestorage.googleapis.com/v0/b/bucket/o/a.png?alt=media';
+      expect(toStoragePath(fs)).toBe(fs);
+    });
+    it('maps an imgix URL back to its storage path (SCS-EK)', () => {
+      expect(toStoragePath('https://bkaiser.imgix.net/tenant/scs/section/09rk/image/Screenshot-2022-07-03-at-12.55.08.png'))
+        .toBe('tenant/scs/section/09rk/image/Screenshot-2022-07-03-at-12.55.08.png');
+    });
+    it('decodes an encoded imgix path and drops the query', () => {
+      expect(toStoragePath('https://bkaiser.imgix.net/tenant%2Fscs%2Fa%20b.png?w=100')).toBe('tenant/scs/a b.png');
+    });
+    it('recognises an imgix source on a custom base url', () => {
+      expect(toStoragePath('https://img.example.org/tenant/scs/a.png', 'https://img.example.org')).toBe('tenant/scs/a.png');
+    });
+    it('returns undefined for external URLs and a bare imgix host', () => {
+      expect(toStoragePath('https://example.org/a.png')).toBeUndefined();
+      expect(toStoragePath('https://bkaiser.imgix.net/')).toBeUndefined();
     });
   });
 });

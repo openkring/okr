@@ -3,7 +3,7 @@ import { IonCol, IonContent, IonGrid, IonRow, IonSpinner, ModalController } from
 import { getDownloadURL, getMetadata, ref } from 'firebase/storage';
 
 import { ENV, STORAGE } from '@okr/shared-config';
-import { fileSizeUnit } from '@okr/shared-util-core';
+import { fileSizeUnit, toStoragePath } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
@@ -129,7 +129,7 @@ export class ImageDetailModal implements OnInit {
 
   public async ngOnInit(): Promise<void> {
     const fullPath = this.fullPath() ?? '';
-    const storagePath = this.toStoragePath(fullPath);
+    const storagePath = toStoragePath(fullPath, this.imgixBaseUrl);
 
     // storage metadata + download URL. Everything that can throw — ref() included, which rejects
     // a non-storage URL synchronously — stays inside the try, so a failure ends the loading state.
@@ -176,32 +176,6 @@ export class ImageDetailModal implements OnInit {
       this.exifRows.set([]);
     } finally {
       this.exifLoading.set(false);
-    }
-  }
-
-  /**
-   * Map what an image reference may hold onto a Firebase Storage path:
-   * - a relative storage path (the normal case) is returned as is,
-   * - gs:// and firebasestorage download URLs are understood by ref() directly,
-   * - a legacy imgix URL (https://<x>.imgix.net/tenant%2Fscs%2F...) mirrors the default bucket,
-   *   so its decoded pathname is the storage path,
-   * - anything else (empty, external URL) has no storage object: undefined.
-   */
-  private toStoragePath(url: string): string | undefined {
-    const value = url.trim();
-    if (!value) return undefined;
-    if (value.startsWith('gs://')) return value;
-    if (!/^https?:\/\//.test(value)) return value;
-    try {
-      const parsed = new URL(value);
-      if (parsed.hostname === 'firebasestorage.googleapis.com') return value;
-      const isImgix = parsed.hostname.endsWith('.imgix.net')
-        || (!!this.imgixBaseUrl && value.startsWith(this.imgixBaseUrl));
-      if (!isImgix) return undefined;
-      const path = decodeURIComponent(parsed.pathname).replace(/^\/+/, '');
-      return path || undefined;
-    } catch {
-      return undefined;
     }
   }
 
