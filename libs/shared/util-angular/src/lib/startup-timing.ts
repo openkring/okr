@@ -133,6 +133,17 @@ export const STARTUP_STALL_OVERSHOOT_FACTOR = 2;
 export const STARTUP_STALL_MAX_REARMS = 3;
 
 /**
+ * A stall window in which the page's own clock (`performance.now()`) advanced by less than this
+ * share of STARTUP_STALL_MS was not measured by a browser a person is looking at. A real browser
+ * cannot fire a 12 s timer after 2 s of page time; a headless renderer running on virtual time
+ * can, because it fast-forwards timers. SCS-AZ collected exactly those: signed-out Chromium
+ * "visitors" with no stored session, LA timezone on a Zurich IP, three in a minute, and an
+ * `elapsedMs` of ~6.7 s for a timer armed at ~4.4 s. Not reported, so the real stalls stay
+ * readable.
+ */
+export const STARTUP_STALL_MIN_PAGE_CLOCK_SHARE = 0.9;
+
+/**
  * Arm the stall check: after STARTUP_STALL_MS, report the open gate unless the app is ready.
  *
  * The window belongs to a GATE, not to the page load. Two things therefore re-arm it instead
@@ -153,17 +164,26 @@ export const STARTUP_STALL_MAX_REARMS = 3;
  * @param isReady the readiness signal, read at fire time
  * @param openGate names the gate still holding navigation; read when arming and when firing
  * @param now injectable clock for tests; defaults to Date.now
+ * @param pageClock injectable page clock for tests; defaults to performance.now
  */
 export function armStartupStallCheck(
   isReady: () => boolean,
   openGate: () => string,
   now: () => number = Date.now,
+  pageClock: () => number = () => performance.now(),
 ): void {
   let rearms = 0;
   const arm = (gateAtArm: string): void => {
     const armedAt = now();
+    const armedAtPage = pageClock();
     setTimeout(() => {
       if (isReady()) return;
+      // Virtual time (headless renderer): the timer ran, the page clock barely moved. Not a
+      // stall anybody saw — and not worth a re-arm either, the next window would be the same.
+      if (pageClock() - armedAtPage < STARTUP_STALL_MS * STARTUP_STALL_MIN_PAGE_CLOCK_SHARE) {
+        markStartup('stall-check:virtual-time');
+        return;
+      }
       const gate = openGate();
       const overshot = now() - armedAt > STARTUP_STALL_MS * STARTUP_STALL_OVERSHOOT_FACTOR;
       const progressed = gate !== gateAtArm;

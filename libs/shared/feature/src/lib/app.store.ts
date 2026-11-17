@@ -7,7 +7,7 @@ import { authState } from 'rxfire/auth';
 import { combineLatest, from, map, of, takeUntil, timer } from 'rxjs';
 import { App } from '@capacitor/app';
 
-import { AUTH, ENV, FIRESTORE, usesLocalStorageOnlySession } from '@okr/shared-config';
+import { AUTH, clearStalledRestoreNote, ENV, FIRESTORE, noteStalledExpiredRestore, usesLocalStorageOnlySession, wasStalledSessionDropped } from '@okr/shared-config';
 import { AppConfigService, FirestoreService } from '@okr/shared-data-access';
 import { AddressDirectoryCollection, AddressDirectoryModel, AppConfig, getAddressDirectoryKey, AvailableLanguages, CalEventCollection, CalEventModel, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, DefaultLanguageCode, GroupCollection, GroupModel, InvitationCollection, InvitationModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, TaskCollection, TaskModel, UserCollection, UserModel } from '@okr/shared-models';
 import { appLinkOrigins, countableInvitationsOf, die, getSystemQuery, hasRole, isBadgeSourceLoaded, indexBy, openInvitationsOf, pickForTenant, publicAppOrigin, replacePlaceholders, resolveAppOrigin, sortPersons, withOfflineSnapshot } from '@okr/shared-util-core';
@@ -807,7 +807,9 @@ export const AppStore = signalStore(
       // cannot show because it only fires on a truthy user. A stall with `session:stored` but no
       // `session:ready` is an SDK/network hang; one with neither is the storage read itself.
       // Labels avoid the word "auth" on purpose: Sentry's scrubber nulls any extra containing it.
-      markStartup(`session:stored:${probeStoredSession(store.env.firebase.apiKey)}`);
+      const storedSession = probeStoredSession(store.env.firebase.apiKey);
+      markStartup(`session:stored:${storedSession}`);
+      if (wasStalledSessionDropped()) markStartup('session:dropped-after-stall');
       // On the IndexedDB-first path (Chromium) the session lives in IndexedDB, so the localStorage
       // reading above is `none` for every signed-in user. `session:idb:*` is the real reading
       // there; its absence in a stall report means the IndexedDB read itself hung.
@@ -925,12 +927,19 @@ export const AppStore = signalStore(
       effect((onCleanup) => {
         if (store.fbUser() !== undefined) {
           patchState(store, { authRestoreTimedOut: false });
+          clearStalledRestoreNote();
           return;
         }
         const handle = setTimeout(
           // Label deliberately avoids "auth": Sentry's server-side scrubber nulls any extra whose
           // key or value contains it, which is how this mark arrived as null on SCS-AQ.
-          () => { markStartup('restore-watchdog:fired'); patchState(store, { authRestoreTimedOut: true }); },
+          () => {
+            markStartup('restore-watchdog:fired');
+            // Hung renewing an expired localStorage session: the next boot (the panel's "try
+            // again") starts signed out instead of hanging the same way (SCS-AZ, BKA-8).
+            if (storedSession === 'expired' && usesLocalStorageOnlySession()) noteStalledExpiredRestore();
+            patchState(store, { authRestoreTimedOut: true });
+          },
           READINESS_TIMEOUT_MS);
         onCleanup(() => clearTimeout(handle));
       });

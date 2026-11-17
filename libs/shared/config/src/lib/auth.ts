@@ -3,6 +3,7 @@ import { browserLocalPersistence, connectAuthEmulator, indexedDBLocalPersistence
 import { getApp } from "firebase/app";
 import { ENV } from "./env";
 import { isFirefox, isIos, isSafari } from "./firestore";
+import { dropExpiredSessionAfterStall } from "./stalled-restore";
 
 export const AUTH_EMULATOR_PORT = 9099;
 
@@ -18,6 +19,13 @@ export const AUTH_EMULATOR_PORT = 9099;
  */
 export function usesLocalStorageOnlySession(): boolean {
   return isSafari() || isFirefox() || isIos();
+}
+
+let droppedStalledSession = false;
+
+/** Whether this boot dropped an expired session left behind by a stalled restore (for the startup marks). */
+export function wasStalledSessionDropped(): boolean {
+  return droppedStalledSession;
 }
 
 export function authFactory() {
@@ -38,6 +46,14 @@ export function authFactory() {
   // - The app uses email/password only (no OAuth popup/redirect flows)
   // - Omitting popupRedirectResolver prevents the Firebase auth cross-domain iframe
   //   (authIframe.js) from being created, which avoids its reCAPTCHA load on every page.
+  // The user's "try again" after a restore that hung on an expired session: start signed out
+  // instead of hanging on the same renewal again (SCS-AZ, see stalled-restore.ts). Only where
+  // the session lives in localStorage, which is the only store that can be cleared before Auth
+  // reads it — and the only path the expired-session stall was seen on.
+  if (usesLocalStorageOnlySession()) {
+    droppedStalledSession = dropExpiredSessionAfterStall(getApp().options.apiKey ?? '');
+  }
+
   const auth = initializeAuth(getApp(), { persistence });
   const _env = inject(ENV);
 

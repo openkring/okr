@@ -39,27 +39,27 @@ describe('armStartupStallCheck', () => {
   };
 
   it('does nothing when the app became ready in time', async () => {
-    mod.armStartupStallCheck(() => true, () => 'user-doc', clock);
+    mod.armStartupStallCheck(() => true, () => 'user-doc', clock, clock);
     await fire(mod.STARTUP_STALL_MS);
     expect(captureMessage).not.toHaveBeenCalled();
   });
 
   it('reports the open gate when the timer fired on schedule and the app is not ready', async () => {
-    mod.armStartupStallCheck(() => false, () => 'user-doc', clock);
+    mod.armStartupStallCheck(() => false, () => 'user-doc', clock, clock);
     await fire(mod.STARTUP_STALL_MS);
     expect(captureMessage).toHaveBeenCalledTimes(1);
     expect(captureMessage.mock.calls[0][0]).toBe('startup stalled at user-doc');
   });
 
   it('re-arms instead of reporting when the timer overshot (a suspend, SCS-AR)', async () => {
-    mod.armStartupStallCheck(() => false, () => 'user-doc', clock);
+    mod.armStartupStallCheck(() => false, () => 'user-doc', clock, clock);
     await fire(41 * 60_000); // the timer ran 41 minutes late
     expect(captureMessage).not.toHaveBeenCalled();
     expect(vi.getTimerCount()).toBe(1); // a fresh window is pending
   });
 
   it('reports on the re-armed window if the boot is still not ready after a real wait', async () => {
-    mod.armStartupStallCheck(() => false, () => 'session-restore', clock);
+    mod.armStartupStallCheck(() => false, () => 'session-restore', clock, clock);
     await fire(41 * 60_000);
     await fire(mod.STARTUP_STALL_MS);
     expect(captureMessage).toHaveBeenCalledTimes(1);
@@ -68,7 +68,7 @@ describe('armStartupStallCheck', () => {
 
   it('stays silent when the boot finished during the re-armed window', async () => {
     let ready = false;
-    mod.armStartupStallCheck(() => ready, () => 'user-doc', clock);
+    mod.armStartupStallCheck(() => ready, () => 'user-doc', clock, clock);
     await fire(41 * 60_000);
     ready = true;
     await fire(mod.STARTUP_STALL_MS);
@@ -77,7 +77,7 @@ describe('armStartupStallCheck', () => {
 
   it('re-arms instead of reporting when the open gate moved on (progress, SCS-AW)', async () => {
     let gate = 'session-restore';
-    mod.armStartupStallCheck(() => false, () => gate, clock);
+    mod.armStartupStallCheck(() => false, () => gate, clock, clock);
     gate = 'categories'; // auth restored + user doc read while the window was running
     await fire(mod.STARTUP_STALL_MS);
     expect(captureMessage).not.toHaveBeenCalled();
@@ -86,7 +86,7 @@ describe('armStartupStallCheck', () => {
 
   it('reports the gate that stayed open for a full window of its own', async () => {
     let gate = 'session-restore';
-    mod.armStartupStallCheck(() => false, () => gate, clock);
+    mod.armStartupStallCheck(() => false, () => gate, clock, clock);
     gate = 'categories';
     await fire(mod.STARTUP_STALL_MS);
     await fire(mod.STARTUP_STALL_MS);
@@ -94,8 +94,17 @@ describe('armStartupStallCheck', () => {
     expect(captureMessage.mock.calls[0][0]).toBe('startup stalled at categories');
   });
 
+  it('stays silent when the page clock did not advance with the timer (virtual time, SCS-AZ)', async () => {
+    let page = 4_400;
+    mod.armStartupStallCheck(() => false, () => 'session-restore', clock, () => page);
+    page = 6_700; // a 12 s timer fired after 2.3 s of page time
+    await fire(mod.STARTUP_STALL_MS);
+    expect(captureMessage).not.toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(0); // and no re-arm
+  });
+
   it('gives up re-arming after the cap so a throttled tab cannot hide a stall forever', async () => {
-    mod.armStartupStallCheck(() => false, () => 'categories', clock);
+    mod.armStartupStallCheck(() => false, () => 'categories', clock, clock);
     for (let i = 0; i <= mod.STARTUP_STALL_MAX_REARMS; i++) await fire(10 * mod.STARTUP_STALL_MS);
     expect(captureMessage).toHaveBeenCalledTimes(1);
     expect(vi.getTimerCount()).toBe(0);
