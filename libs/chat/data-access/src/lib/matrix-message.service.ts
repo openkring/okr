@@ -8,7 +8,7 @@ import { MatrixMessage, MatrixReadReceipt } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { debugData, debugMessage } from '@okr/shared-util-core';
 import {
-  EvictedRooms, evictedRoomsStorageKey, evictionAction, isMessageGoneError, isAbortError, isRenderableChatEvent, isRoomGoneError, threadRootOf,
+  EvictedRooms, evictedRoomsStorageKey, evictionAction, isMessageGoneError, isAbortError, isTransportFailure, isRenderableChatEvent, isRoomGoneError, threadRootOf,
   mediaRetryDelayMs, parseEvictedRooms, parsePollContent, recordEvictedRoom,
 } from '@okr/chat-util';
 import { AvatarService } from '@okr/avatar-data-access';
@@ -594,6 +594,9 @@ export class MatrixMessageService {
   private reportPaginationFailure(error: unknown): void {
     if (isAbortError(error)) return; // the page is reloading/unloading — not a failure (SCS-DJ)
     const message = (error as Error | null)?.message ?? 'unknown';
+    // The request never reached the homeserver: a backgrounded iOS tab or a network switch
+    // (Safari "Load failed"). The next open retries; nothing actionable (SCS-EP, SCS-EQ).
+    if (isTransportFailure(message)) return;
     const errcode = (error as MatrixError | null)?.errcode;
     const reason = errcode ? `${errcode}: ${message}` : message;
     if (this.reportedPaginationFailures.has(reason)) return;

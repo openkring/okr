@@ -3,7 +3,7 @@ import { captureMessage } from '@sentry/angular';
 import type { MatrixClient } from 'matrix-js-sdk';
 import { Observable, Subject } from 'rxjs';
 
-import { IMAGE_PREVIEW_EDGE_PX, shouldUseImagePreview } from '@okr/chat-util';
+import { IMAGE_PREVIEW_EDGE_PX, isTransportFailure, shouldUseImagePreview } from '@okr/chat-util';
 
 /** P-1: upper bound for the mxc→blob-URL cache (LRU eviction). */
 const MEDIA_CACHE_MAX = 200;
@@ -15,33 +15,6 @@ const MEDIA_CACHE_MAX = 200;
 const RETRYABLE_STATUS = new Set([502, 503, 504]);
 /** Delay before the single retry of a gateway failure or a thrown fetch. */
 const RETRY_DELAY_MS = 500;
-
-/**
- * SCS-A4: messages of a fetch that died in transport rather than at the homeserver.
- *
- * Every engine words this differently and none of the wordings carry information: Safari
- * raises "Load failed", wraps it as "FetchEvent.respondWith received an error: …" when the
- * request passed through the service worker, and reports "The network connection was lost"
- * when the radio switches; Chrome says "Failed to fetch", Firefox "NetworkError …". They all
- * mean the same thing — the request never produced a response — and they fire routinely when
- * an iOS tab is backgrounded mid-download or the device changes network. `navigator.onLine`
- * does NOT distinguish them (Safari keeps reporting `true` through exactly these aborts),
- * which is why the SCS-9Q offline guard let SCS-A4 through.
- *
- * The trade-off is deliberate: a CORS or CSP regression on the media host surfaces with these
- * same messages and is now silent here. That class of failure breaks the Matrix sync and API
- * calls too, so it is reported by those paths — whereas a single backgrounded phone is only
- * ever visible here, and only as noise. Everything that says something about the requested
- * file (HTTP status, missing URL, unexpected error type) is still reported.
- */
-function isTransportFailure(message: string): boolean {
-  const m = message.toLowerCase();
-  return m.includes('load failed')
-    || m.includes('failed to fetch')
-    || m.includes('networkerror')
-    || m.includes('network connection was lost')
-    || m.includes('fetchevent.respondwith');
-}
 
 /**
  * The homeserver answered and declined THIS request for good — e.g. Synapse's 400 "Cannot find

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildReceiptAriaLabel, buildReceiptRows, filterRoomsOfTenant, isDirectRoomOfTenant, isBridgedRoom, isForeignRoom, serverNameOf, isRoomClassifiable, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, isRenderableChatEvent, linkifyText, resolveMatrixDisplayName, canPostWithPower, groupRoomAliasLocalpart, groupKeyFromRoomAlias, isRoomGoneError, isAbortError, askRoomAliasLocalpart, shouldDeferAskRoom, findGroupOfRoom, fileTransferKeyOf, isFileTransferCardBody, fileTransferCardOf, isFileTransferBot, fileTransferRoomPreset, isFileReadable, fileTransferCardStatusOf } from './chat.util';
+import { buildReceiptAriaLabel, buildReceiptRows, filterRoomsOfTenant, isDirectRoomOfTenant, isBridgedRoom, isForeignRoom, serverNameOf, isRoomClassifiable, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, isRenderableChatEvent, linkifyText, resolveMatrixDisplayName, canPostWithPower, groupRoomAliasLocalpart, groupKeyFromRoomAlias, isRoomGoneError, isAbortError, isTransportFailure, askRoomAliasLocalpart, shouldDeferAskRoom, findGroupOfRoom, fileTransferKeyOf, isFileTransferCardBody, fileTransferCardOf, isFileTransferBot, fileTransferRoomPreset, isFileReadable, fileTransferCardStatusOf } from './chat.util';
 
 describe('buildReceiptAriaLabel', () => {
   it('returns empty string for no receipts', () => {
@@ -747,5 +747,25 @@ describe('isDirectRoomOfTenant', () => {
   it('reuses an unmarked DM, and every DM without a tenant', () => {
     expect(isDirectRoomOfTenant(undefined, 'kwa')).toBe(true);
     expect(isDirectRoomOfTenant(['scs'], undefined)).toBe(true);
+  });
+});
+
+describe('isTransportFailure', () => {
+  it('matches the bare engine wordings', () => {
+    expect(isTransportFailure('Load failed')).toBe(true);
+    expect(isTransportFailure('Failed to fetch')).toBe(true);
+    expect(isTransportFailure('NetworkError when attempting to fetch resource.')).toBe(true);
+    expect(isTransportFailure('The network connection was lost.')).toBe(true);
+    expect(isTransportFailure('FetchEvent.respondWith received an error: Load failed')).toBe(true);
+  });
+
+  it('matches the matrix-js-sdk ConnectionError wrapping (SCS-EP)', () => {
+    expect(isTransportFailure('fetch failed: Load failed (matrix.bkchat.etke.host)')).toBe(true);
+  });
+
+  it('does not match homeserver answers or unknown errors', () => {
+    expect(isTransportFailure('M_FORBIDDEN: You are not in this room')).toBe(false);
+    expect(isTransportFailure('M_LIMIT_EXCEEDED: Too Many Requests')).toBe(false);
+    expect(isTransportFailure('unknown')).toBe(false);
   });
 });
