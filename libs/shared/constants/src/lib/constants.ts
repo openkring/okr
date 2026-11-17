@@ -58,6 +58,10 @@ export const MAX_DATES_PER_SERIES = 100;
 //-----------------------------------------------
 export const DEFAULT_ACCOUNT_NAME = 'bank';
 export const DEFAULT_CALEVENT_TYPE = 'training';
+/** calevent type of an event created from a public-transport connection (spec 1.162) */
+export const TRIP_CALEVENT_TYPE = 'travel';
+/** the calendar key of «Nur für mich»: a personal event with `calendars: []` */
+export const PERSONAL_CALENDAR_KEY = 'personal';
 export const DEFAULT_CAR_TYPE = 'hatchback';
 export const DEFAULT_COMPETITION_LEVEL = 'masters';
 export const DEFAULT_CONTENT_STATE = 'draft';

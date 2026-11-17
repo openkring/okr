@@ -1,4 +1,5 @@
 export * from './lib/timetable-config.util';
+export * from './lib/transit-calevent.util';
 export * from './lib/transit-connection.model';
 export * from './lib/transit-connection.util';
 export * from './lib/transit-departure.model';

@@ -1,5 +1,6 @@
 import type { EventInput } from '@fullcalendar/core';
 
+import { PERSONAL_CALENDAR_KEY, TRIP_CALEVENT_TYPE } from '@okr/shared-constants';
 import { Attendee, AvatarInfo, CalendarModel, CalEventModel, InvitationState } from '@okr/shared-models';
 import { addTime, applyInvitationAnswer, convertDateFormatToString, DateFormat, getAttendee, getEventLocationName, getIsoDateTime, isCaleventAttendanceClosed, isPastDate, isType, toAttendeeState } from '@okr/shared-util-core';
 
@@ -38,6 +39,11 @@ export function isPastCalevent(calevent: CalEventModel): boolean {
  */
 export function isAttendanceClosed(calevent: CalEventModel): boolean {
   return isCaleventAttendanceClosed(calevent);
+}
+
+/** An event created from a public-transport connection (spec 1.162). */
+export function isTripCalevent(e: Pick<CalEventModel, 'type'>): boolean {
+  return e.type === TRIP_CALEVENT_TYPE;
 }
 
 /**
@@ -143,7 +149,7 @@ export function mergeAttendee(
  * @param calendarName the CalEventStore's current calendar name
  */
 export function isPersonalCalendarName(calendarName: string): boolean {
-  return calendarName === 'personal' || calendarName === 'my';
+  return calendarName === PERSONAL_CALENDAR_KEY || calendarName === 'my';
 }
 
 /**
