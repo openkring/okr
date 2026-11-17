@@ -30,3 +30,17 @@ const LEGACY_COMMENT_KEYS: Record<string, string> = {
 export function resolveLegacyCommentKey(key: string): string {
   return LEGACY_COMMENT_KEYS[key] ?? key;
 }
+
+/**
+ * Whether the leading token of a comment description is an i18n key the app wrote, e.g.
+ * '@comment/ui.legacy.created' or the legacy '@comment.operation.initial.conf'.
+ *
+ * A person may start a comment with an @-mention ('@René: bringe das Dessert'), and a bare
+ * `startsWith('@')` sent that text to the translator: every reader opened a `missing-key` ticket
+ * (SCS-EZ). An app-written key is ASCII only — an optional `/`-separated scope path, then at least one
+ * `.`-separated segment — so a name, punctuation or umlauts mark the token as plain text.
+ * @param token the first whitespace-separated token of a comment description
+ */
+export function isCommentI18nKey(token: string): boolean {
+  return /^@[A-Za-z][\w-]*(?:\/[\w-]+)*(?:\.[\w-]+)+$/.test(token);
+}

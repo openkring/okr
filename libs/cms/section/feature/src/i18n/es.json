@@ -1793,6 +1793,9 @@
   "messages": {
     "label": "Mensajes"
   },
+  "notices": {
+    "label": "Comunicados"
+  },
   "tasks": {
     "label": "Tareas"
   },
@@ -2087,5 +2090,11 @@
     "reactions": "Reacciones a la sección",
     "imageComments": "Comentarios sobre las imágenes",
     "imageReactions": "Reacciones a las imágenes"
+  },
+  "learning": {
+    "label": "Espacio de aprendizaje"
+  },
+  "track": {
+    "label": "Recorrido"
   }
 }
