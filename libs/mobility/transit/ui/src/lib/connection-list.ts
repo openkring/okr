@@ -12,8 +12,8 @@ import { ConnectionDetail } from './connection-detail';
 
 /**
  * «Verbindung wählen.» (spec 1.162 §5.2): SBB-style rows with the first ride's line badge and direction, departure →
- * arrival around a timeline bar with one dot per change, platform, duration and the realtime delay. Day headers when the
- * results cross midnight. Tapping a row expands its legs; paging and the calendar action are opt-in.
+ * arrival around a timeline bar with one dot per change, platform, duration and the realtime delay. Day headers always
+ * with paging, else when the results cross midnight. Tapping a row expands its legs; paging and the calendar action are opt-in.
  * With `arriveBy`, a connection arriving after `at` is marked.
  */
 @Component({
@@ -96,7 +96,7 @@ import { ConnectionDetail } from './connection-detail';
               </ion-button>
             }
             <ion-button size="small" fill="outline" (click)="openSbb.emit(row.connection)">
-              <ion-icon slot="start" src="{{ 'open' | svgIcon }}" />{{ i18n().buy_ticket() }}
+              <ion-icon slot="start" src="{{ 'link' | svgIcon }}" />{{ i18n().buy_ticket() }}
             </ion-button>
           </div>
         }
@@ -130,7 +130,8 @@ export class ConnectionList {
   public readonly addToCalendar = output<TransitConnection>();
   public readonly openSbb = output<TransitConnection>();
 
-  protected readonly showDays = computed(() => this.groups().length > 1);
+  /** always with paging (the timetable), else only when the results cross midnight (the event view's return list) */
+  protected readonly showDays = computed(() => this.paging() || this.groups().length > 1);
 
   protected readonly groups = computed(() => {
     const i18n = this.i18n();
