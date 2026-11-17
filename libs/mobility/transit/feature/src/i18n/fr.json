@@ -98,5 +98,7 @@
   "addError": "Le voyage n'a pas pu être ajouté",
   "geocodeFailed": "Cette adresse est introuvable",
   "legChange": "changement",
-  "chooseBoth": "Choisis le départ et l'arrivée, puis tu vois les correspondances"
+  "chooseBoth": "Choisis le départ et l'arrivée, puis tu vois les correspondances",
+  "sbbStart": "Départ",
+  "sbbEnd": "Destination"
 }

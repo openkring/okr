@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { CONNECTIONS_CONFIG_SHAPE, ConnectionsConfig, LocationModel } from '@okr/shared-models';
 
 import type { TransitPlace } from './transit-place.model';
-import { eventPlaceLabel, favoritePlaces, isPrivatePlace, placeFromLocation, postalLine } from './transit-place.util';
+import { eventPlaceLabel, favoritePlaces, isPrivatePlace, placeFromLocation, postalLine, sbbPlaceLabel } from './transit-place.util';
 
 function loc(okey: string, name: string, latitude = 47.2, longitude = 8.7): LocationModel {
   return Object.assign(new LocationModel('scs'), { okey, name, latitude, longitude });
@@ -85,5 +85,21 @@ describe('eventPlaceLabel', () => {
     expect(eventPlaceLabel({ kind: 'current', label: '47.1,8.6' }, labels)).toBe('Aktueller Standort');
     expect(eventPlaceLabel({ kind: 'org', label: 'SCS' }, labels)).toBe('SCS');
     expect(eventPlaceLabel({ kind: 'location', label: 'Bahnhof' }, labels)).toBe('Bahnhof');
+  });
+});
+
+describe('sbbPlaceLabel', () => {
+  const labels = { start: 'Start', end: 'Ziel' };
+  it('names private places neutrally by role', () => {
+    const home: TransitPlace = { kind: 'home', label: 'Meine Adresse', address: 'Weg 2, 8000 Zürich, CH' };
+    const current: TransitPlace = { kind: 'current', label: 'Aktueller Standort' };
+    expect(sbbPlaceLabel(home, 'from', labels)).toBe('Start');
+    expect(sbbPlaceLabel(home, 'to', labels)).toBe('Ziel');
+    expect(sbbPlaceLabel(current, 'from', labels)).toBe('Start');
+    expect(sbbPlaceLabel(current, 'to', labels)).toBe('Ziel');
+  });
+  it('passes public places through', () => {
+    expect(sbbPlaceLabel({ kind: 'org', label: 'SCS' }, 'from', labels)).toBe('SCS');
+    expect(sbbPlaceLabel({ kind: 'location', label: 'Bahnhof' }, 'to', labels)).toBe('Bahnhof');
   });
 });

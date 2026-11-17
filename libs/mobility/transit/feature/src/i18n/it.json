@@ -98,5 +98,7 @@
   "addError": "Non è stato possibile aggiungere il viaggio",
   "geocodeFailed": "Questo indirizzo non è stato trovato",
   "legChange": "cambio",
-  "chooseBoth": "Scegli partenza e arrivo, poi vedi i collegamenti"
+  "chooseBoth": "Scegli partenza e arrivo, poi vedi i collegamenti",
+  "sbbStart": "Partenza",
+  "sbbEnd": "Destinazione"
 }

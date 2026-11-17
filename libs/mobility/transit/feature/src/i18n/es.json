@@ -98,5 +98,7 @@
   "addError": "No se pudo añadir el viaje",
   "geocodeFailed": "No se pudo encontrar esta dirección",
   "legChange": "transbordo",
-  "chooseBoth": "Elige origen y destino y verás las conexiones"
+  "chooseBoth": "Elige origen y destino y verás las conexiones",
+  "sbbStart": "Salida",
+  "sbbEnd": "Destino"
 }

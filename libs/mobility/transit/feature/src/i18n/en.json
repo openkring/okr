@@ -98,5 +98,7 @@
   "addError": "The trip could not be added",
   "geocodeFailed": "This address could not be found",
   "legChange": "change",
-  "chooseBoth": "Choose from and to, then you see the connections"
+  "chooseBoth": "Choose from and to, then you see the connections",
+  "sbbStart": "Start",
+  "sbbEnd": "Destination"
 }

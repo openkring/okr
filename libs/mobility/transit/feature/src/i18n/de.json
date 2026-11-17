@@ -98,5 +98,7 @@
   "addError": "Die Reise konnte nicht eingetragen werden",
   "geocodeFailed": "Diese Adresse konnte nicht gefunden werden",
   "legChange": "umsteigen",
-  "chooseBoth": "Wähle Von und Nach, dann siehst du die Verbindungen"
+  "chooseBoth": "Wähle Von und Nach, dann siehst du die Verbindungen",
+  "sbbStart": "Start",
+  "sbbEnd": "Ziel"
 }

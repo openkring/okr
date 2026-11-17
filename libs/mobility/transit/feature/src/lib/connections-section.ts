@@ -1,16 +1,14 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { distinctUntilChanged, map, of, switchMap } from 'rxjs';
+import { map, of, switchMap } from 'rxjs';
 import { IonCard, IonCardContent, IonIcon, IonItem, IonLabel } from '@ionic/angular';
 
-import { ConnectionsConfig, ConnectionsSection, LocationModel } from '@okr/shared-models';
-import { AppStore } from '@okr/shared-feature';
+import { ConnectionsSection, LocationModel } from '@okr/shared-models';
 import { OptionalCardHeader, Spinner } from '@okr/shared-ui';
 import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { LocationService } from '@okr/location-data-access';
-import { TransitPlaceService } from '@okr/mobility-transit-data-access';
-import { TRANSIT_I18N_KEYS, TransitPlace, timetableConfigOf } from '@okr/mobility-transit-util';
+import { TRANSIT_I18N_KEYS, timetableConfigOf } from '@okr/mobility-transit-util';
 
 import { TransitConnections } from './transit-connections';
 
@@ -21,9 +19,9 @@ function okeyOf(key: string): string {
 
 /**
  * CMS section `connections` (spec 1.162 §5.6): the «Fahrplan». Resolves the configured Nach (empty ⇒ the page's
- * location, else the viewer picks it) and the optional Von (empty ⇒ the viewer's current position), builds the picker's
- * favourites and renders the timetable behind `@defer (on interaction)`, so a page view costs no API call and no
- * position prompt.
+ * location, else the viewer picks it) and the optional Von (empty ⇒ the viewer's current position) and renders the
+ * timetable behind `@defer (on interaction)`, so a page view costs no API call, no position prompt and no address
+ * read: the timetable reads the picker's favourites (incl. the viewer's home address) only when the picker opens.
  */
 @Component({
   selector: 'okr-connections-section',
@@ -41,7 +39,7 @@ function okeyOf(key: string): string {
           @if (destination() !== undefined) {
             @defer (on interaction) {
               <okr-transit-connections [destination]="destination() ?? undefined" [source]="source()" [anchor]="cfg().anchor"
-                [favorites]="favorites()" [allowAddToCalendar]="cfg().allowAddToCalendar" />
+                [favoritesConfig]="cfg()" [allowAddToCalendar]="cfg().allowAddToCalendar" />
             } @placeholder {
               <ion-item lines="none" button="true" [detail]="true">
                 <ion-icon slot="start" src="{{ 'map' | svgIcon }}" />
@@ -58,8 +56,6 @@ function okeyOf(key: string): string {
 })
 export class ConnectionsSectionComponent {
   private readonly locationService = inject(LocationService);
-  private readonly placeService = inject(TransitPlaceService);
-  private readonly appStore = inject(AppStore);
   protected readonly i18n = inject(I18nService).translateAll(TRANSIT_I18N_KEYS);
 
   public readonly section = input<ConnectionsSection>();
@@ -81,28 +77,5 @@ export class ConnectionsSectionComponent {
   protected readonly source = toSignal(
     toObservable(this.sourceKey).pipe(switchMap((key) => (key ? this.locationService.read(key) : of(undefined)))),
     { initialValue: undefined as LocationModel | undefined },
-  );
-
-  /** what the favourites depend on; compared by value so a new AppStore object does not re-read them */
-  private readonly favoritesArgs = computed(() => {
-    const org = this.appStore.defaultOrg();
-    const personKey = this.appStore.currentUser()?.personKey;
-    const args: { cfg: ConnectionsConfig; defaultOrg?: { okey: string; name: string }; personKey?: string } = { cfg: this.cfg() };
-    if (org) args.defaultOrg = { okey: org.okey, name: org.name };
-    if (personKey) args.personKey = personKey;
-    return args;
-  });
-
-  private readonly rawFavorites = toSignal(
-    toObservable(this.favoritesArgs).pipe(
-      distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b)),
-      switchMap((args) => this.placeService.favorites({ ...args, homeLabel: this.i18n.home() })),
-    ),
-    { initialValue: [] as TransitPlace[] },
-  );
-
-  /** «Meine Adresse» follows the language, whenever the favourites were read */
-  protected readonly favorites = computed(() =>
-    this.rawFavorites().map((p) => (p.kind === 'home' ? { ...p, label: this.i18n.home() } : p)),
   );
 }

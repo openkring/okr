@@ -52,3 +52,12 @@ export function eventPlaceLabel(p: TransitPlace, labels: { current: string; home
   if (p.kind === 'home') return labels.home;
   return p.label;
 }
+
+/**
+ * The label of a place in the sbb.ch link (spec 1.162 §5.5): a private place (position, home address) goes out only as
+ * the neutral «Start» (Von) or «Ziel» (Nach), never as «Meine Adresse» / «Aktueller Standort» or its address.
+ */
+export function sbbPlaceLabel(p: TransitPlace, role: 'from' | 'to', labels: { start: string; end: string }): string {
+  if (isPrivatePlace(p)) return role === 'from' ? labels.start : labels.end;
+  return p.label;
+}

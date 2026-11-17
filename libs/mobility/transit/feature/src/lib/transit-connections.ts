@@ -8,7 +8,7 @@ import {
 } from '@ionic/angular';
 import { catchError, firstValueFrom, of, take } from 'rxjs';
 
-import { LocationModel } from '@okr/shared-models';
+import { ConnectionsConfig, LocationModel } from '@okr/shared-models';
 import { AppStore, CalendarSelectModal } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -22,7 +22,7 @@ import { TransitPlaceService, TransitService } from '@okr/mobility-transit-data-
 import {
   LatLng, TIMETABLE_PAGE_SIZE, TRANSIT_I18N_KEYS, TRAVEL_MODES, TransitAnchor, TransitConnection, TransitPlace,
   TravelMode, clockTime, connectionToCalevent, earlierAt, eventPlaceLabel, inSwitzerland, isPrivatePlace, laterAt,
-  mapsDirectionsUrl, mergeConnections, placeFromLocation, sbbTimetableUrl, zurichLocalInput, zurichLocalToIso,
+  mapsDirectionsUrl, mergeConnections, placeFromLocation, sbbPlaceLabel, sbbTimetableUrl, zurichLocalInput, zurichLocalToIso,
 } from '@okr/mobility-transit-util';
 import { ConnectionList } from '@okr/mobility-transit-ui';
 
@@ -31,8 +31,11 @@ import { TransitPlaceSelectModal } from './transit-place-select.modal';
 type SearchState =
   | { kind: 'idle' }
   | { kind: 'loading' }
-  | { kind: 'done'; connections: TransitConnection[]; at: string; anchor: TransitAnchor }
+  | { kind: 'done'; at: string; anchor: TransitAnchor }
   | { kind: 'error'; message: string };
+
+/** the way back keeps its own (unpaged) result list */
+type ReturnState = Exclude<SearchState, { kind: 'done' }> | { kind: 'done'; connections: TransitConnection[]; at: string; anchor: TransitAnchor };
 
 /** debounce of the automatic search after Von, Nach, time or anchor changed */
 const SEARCH_DELAY_MS = 400;
@@ -162,7 +165,7 @@ let datetimeSeq = 0;
                 @case ('loading') { <okr-spinner /> }
                 @case ('error') { <p class="note warn">{{ errorOf(inbound()) }}</p> }
                 @case ('done') {
-                  @if (doneOf(inbound()); as r) {
+                  @if (returnDoneOf(inbound()); as r) {
                     @if (r.connections.length) {
                       <okr-connection-list [connections]="r.connections" [i18n]="i18n" [at]="r.at" [anchor]="r.anchor" [lang]="lang"
                         (openSbb)="openSbbReturn($event)" />
@@ -224,8 +227,11 @@ export class TransitConnections {
   public readonly allowReturn = input(false);
   /** earliest departure of the way back (Nach → Von), e.g. an event's end */
   public readonly returnAt = input('');
-  /** the favourites at the top of the Von/Nach picker, resolved by the host */
-  public readonly favorites = input<TransitPlace[]>([]);
+  /**
+   * the section's favourites config; the favourites (default org, the viewer's home address, pinned locations) are read
+   * only when the viewer opens the Von/Nach picker. undefined ⇒ no favourites (the event view).
+   */
+  public readonly favoritesConfig = input<ConnectionsConfig | undefined>(undefined);
   /** offers «In Kalender eintragen» on an expanded connection (signed-in viewers only) */
   public readonly allowAddToCalendar = input(false);
 
@@ -252,7 +258,7 @@ export class TransitConnections {
   protected readonly loadingLater = signal(false);
   /** the points of the last search, for paging and the sbb.ch link; held here only, never stored */
   private readonly points = signal<{ from: LatLng; to: LatLng } | undefined>(undefined);
-  protected readonly inbound = signal<SearchState>({ kind: 'idle' });
+  protected readonly inbound = signal<ReturnState>({ kind: 'idle' });
   protected readonly showReturn = signal(false);
   protected readonly attribution = signal<{ provider: string; url: string } | undefined>(undefined);
 
@@ -310,7 +316,7 @@ export class TransitConnections {
     this.toSel.set(from);
   }
 
-  protected errorOf(s: SearchState): string {
+  protected errorOf(s: SearchState | ReturnState): string {
     return s.kind === 'error' ? s.message : '';
   }
 
@@ -318,15 +324,20 @@ export class TransitConnections {
     return s.kind === 'done' ? s : undefined;
   }
 
+  protected returnDoneOf(s: ReturnState): Extract<ReturnState, { kind: 'done' }> | undefined {
+    return s.kind === 'done' ? s : undefined;
+  }
+
   /** Von/Nach picker (§5.3). A postal favourite is geocoded on this tap only; a failed geocode keeps the old choice. */
   protected async pick(which: 'from' | 'to'): Promise<void> {
-    const locations = await firstValueFrom(
-      this.locationService.list(undefined, 'name').pipe(take(1), catchError(() => of([] as LocationModel[]))),
-    );
+    const [locations, favorites] = await Promise.all([
+      firstValueFrom(this.locationService.list(undefined, 'name').pipe(take(1), catchError(() => of([] as LocationModel[])))),
+      this.readFavorites(),
+    ]);
     const modal = await this.modalController.create({
       component: TransitPlaceSelectModal,
       componentProps: {
-        favorites: this.favorites(),
+        favorites,
         locations,
         title: which === 'from' ? this.i18n.pick_from() : this.i18n.pick_to(),
         i18n: { current: this.i18n.my_position, favorites: this.i18n.favorites, locations: this.i18n.locations },
@@ -336,10 +347,14 @@ export class TransitConnections {
     const { data, role } = await modal.onDidDismiss<TransitPlace>();
     if (role !== 'confirm' || !data) return;
 
+    const slot = which === 'from' ? this.fromSel : this.toSel;
+    const before = slot();
     let place = data;
     if ((place.kind === 'org' || place.kind === 'home') && !place.point) {
       const cacheKey = `${place.kind}|${place.label}`;
       const point = this.geocoded.get(cacheKey) ?? (await this.placeService.resolvePoint(place));
+      // a swap or another pick while geocoding wins: this answer is no longer wanted
+      if (slot() !== before) return;
       if (!point) {
         await showToast(this.toastController, this.i18n.geocode_failed());
         return;
@@ -347,7 +362,19 @@ export class TransitConnections {
       this.geocoded.set(cacheKey, point);
       place = { ...place, point };
     }
-    (which === 'from' ? this.fromSel : this.toSel).set(place);
+    slot.set(place);
+  }
+
+  /** The picker's favourites; read on each picker open only, never before the viewer interacts. */
+  private async readFavorites(): Promise<TransitPlace[]> {
+    const cfg = this.favoritesConfig();
+    if (!cfg) return [];
+    const org = this.appStore.defaultOrg();
+    const personKey = this.appStore.currentUser()?.personKey;
+    const args: Parameters<TransitPlaceService['favorites']>[0] = { cfg, homeLabel: this.i18n.home() };
+    if (org) args.defaultOrg = { okey: org.okey, name: org.name };
+    if (personKey) args.personKey = personKey;
+    return firstValueFrom(this.placeService.favorites(args).pipe(take(1), catchError(() => of([] as TransitPlace[]))));
   }
 
   /** Starts a new search generation: clears results, paging and the expanded row; returns the new request id. */
@@ -406,7 +433,7 @@ export class TransitConnections {
       this.attribution.set(res.attribution);
       this.points.set({ from: fromPt, to: toPt });
       this.connections.set(mergeConnections([], res.connections));
-      this.outbound.set({ kind: 'done', connections: res.connections, at, anchor });
+      this.outbound.set({ kind: 'done', at, anchor });
     } catch {
       if (id !== this.requestId) return;
       this.outbound.set({ kind: 'error', message: this.failure() });
@@ -437,7 +464,9 @@ export class TransitConnections {
   protected async toggleReturn(): Promise<void> {
     const show = !this.showReturn();
     this.showReturn.set(show);
-    if (show && this.inbound().kind !== 'done') await this.searchReturn(this.requestId);
+    // while the outbound search is pending or running, it starts the way back itself once its points are known
+    if (show && this.points()) await this.searchReturn(this.requestId);
+    else if (show && this.outbound().kind === 'error') await this.searchReturn(this.requestId);
   }
 
   /** The way back: Nach → Von, leaving from `returnAt`. */
@@ -445,6 +474,9 @@ export class TransitConnections {
     const from = this.fromSel();
     const to = this.toSel();
     if (!from || !to || !this.returnAt()) return;
+    // one way-back search at a time
+    const state = this.inbound().kind;
+    if (state === 'loading' || state === 'done') return;
     if (this.offline()) {
       this.inbound.set({ kind: 'error', message: this.i18n.offline() });
       return;
@@ -461,7 +493,7 @@ export class TransitConnections {
     await this.run(id, this.inbound, back, home, this.returnAt(), 'departAt');
   }
 
-  private async run(id: number, target: WritableSignal<SearchState>, from: LatLng, to: LatLng, at: string, anchor: TransitAnchor): Promise<void> {
+  private async run(id: number, target: WritableSignal<ReturnState>, from: LatLng, to: LatLng, at: string, anchor: TransitAnchor): Promise<void> {
     target.set({ kind: 'loading' });
     try {
       const res = await this.transitService.planTrip({ from, to, at, anchor, limit: TIMETABLE_PAGE_SIZE });
@@ -550,10 +582,10 @@ export class TransitConnections {
     const from = this.fromSel();
     const to = this.toSel();
     if (!pts || !from || !to) return;
-    const labels = this.placeLabels();
+    const labels = this.sbbLabels();
     this.openExternal(sbbTimetableUrl(
-      { label: eventPlaceLabel(from, labels), point: pts.from },
-      { label: eventPlaceLabel(to, labels), point: pts.to },
+      { label: sbbPlaceLabel(from, 'from', labels), point: pts.from },
+      { label: sbbPlaceLabel(to, 'to', labels), point: pts.to },
       connection.departure, 'departAt',
     ));
   }
@@ -564,12 +596,17 @@ export class TransitConnections {
     const from = this.fromSel();
     const to = this.toSel();
     if (!pts || !from || !to) return;
-    const labels = this.placeLabels();
+    const labels = this.sbbLabels();
+    // the way back starts at Nach and ends at Von
     this.openExternal(sbbTimetableUrl(
-      { label: eventPlaceLabel(to, labels), point: pts.to },
-      { label: eventPlaceLabel(from, labels), point: pts.from },
+      { label: sbbPlaceLabel(to, 'from', labels), point: pts.to },
+      { label: sbbPlaceLabel(from, 'to', labels), point: pts.from },
       connection.departure, 'departAt',
     ));
+  }
+
+  private sbbLabels(): { start: string; end: string } {
+    return { start: this.i18n.sbb_start(), end: this.i18n.sbb_end() };
   }
 
   private openExternal(url: string): void {

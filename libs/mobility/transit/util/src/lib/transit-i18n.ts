@@ -55,6 +55,8 @@ export const TRANSIT_I18N_KEYS = {
   geocode_failed: PFX + 'geocodeFailed',
   leg_change: PFX + 'legChange',
   choose_both: PFX + 'chooseBoth',
+  sbb_start: PFX + 'sbbStart',
+  sbb_end: PFX + 'sbbEnd',
   ok: '@ok',
   cancel: '@cancel',
   source: PFX + 'source',
