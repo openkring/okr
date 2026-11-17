@@ -77,5 +77,10 @@
     "noCoordinates": "Aucune position précise n’est enregistrée pour ce lieu, nous ne pouvons donc pas afficher de départs.",
     "abroad": "Les départs ne sont disponibles que pour des lieux en Suisse.",
     "back": "Retour au journal de bord"
-  }
+  },
+  "earlier": "Correspondances précédentes",
+  "later": "Correspondances suivantes",
+  "choose": "Choisis une correspondance.",
+  "addCalendar": "Ajouter au calendrier",
+  "buyTicket": "Billet sur sbb.ch"
 }

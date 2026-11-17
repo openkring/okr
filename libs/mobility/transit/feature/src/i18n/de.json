@@ -77,5 +77,10 @@
     "noCoordinates": "Für diesen Ort ist keine genaue Lage hinterlegt, darum können wir keine Abfahrten zeigen.",
     "abroad": "Abfahrten gibt es nur für Orte in der Schweiz.",
     "back": "Zurück zum Logbuch"
-  }
+  },
+  "earlier": "Frühere Verbindungen",
+  "later": "Spätere Verbindungen",
+  "choose": "Verbindung wählen.",
+  "addCalendar": "In Kalender eintragen",
+  "buyTicket": "Billett auf sbb.ch"
 }

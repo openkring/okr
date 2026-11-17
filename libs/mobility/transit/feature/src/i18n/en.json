@@ -77,5 +77,10 @@
     "noCoordinates": "This place has no exact position on record, so we cannot show departures.",
     "abroad": "Departures are only available for places in Switzerland.",
     "back": "Back to the logbook"
-  }
+  },
+  "earlier": "Earlier connections",
+  "later": "Later connections",
+  "choose": "Choose a connection.",
+  "addCalendar": "Add to calendar",
+  "buyTicket": "Ticket on sbb.ch"
 }

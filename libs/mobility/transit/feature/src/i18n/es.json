@@ -77,5 +77,10 @@
     "noCoordinates": "Este lugar no tiene una posición exacta guardada, por eso no podemos mostrar salidas.",
     "abroad": "Las salidas solo están disponibles para lugares en Suiza.",
     "back": "Volver al diario de a bordo"
-  }
+  },
+  "earlier": "Conexiones anteriores",
+  "later": "Conexiones posteriores",
+  "choose": "Elige una conexión.",
+  "addCalendar": "Añadir al calendario",
+  "buyTicket": "Billete en sbb.ch"
 }
