@@ -44,6 +44,8 @@ import { error, showToast } from './alert.util';
     export async function exportCsv(
         data: string[][],
         fileName: string,
+        // CSV has no sheets; ~14 callers still pass one, so the parameter stays.
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         _sheetName?: string): Promise<void> {
       // Leading BOM (U+FEFF) makes Excel read it as UTF-8 (correct umlauts).
       const bom = String.fromCharCode(0xfeff);
