@@ -10,6 +10,10 @@
     "@angular/core": "*",
     "firebase": "*",
     "@okr/shared-config": "*",
-    "@okr/mobility-transit-util": "*"
+    "@okr/mobility-transit-util": "*",
+    "@okr/shared-models": "*",
+    "@okr/subject-address-data-access": "*",
+    "@okr/location-data-access": "*",
+    "rxjs": "*"
   }
 }
