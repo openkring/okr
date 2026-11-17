@@ -1,7 +1,7 @@
 import type { HttpInterceptorFn } from '@angular/common/http';
 import { addBreadcrumb, captureMessage, flush, getClient, isEnabled, setTag, setUser } from '@sentry/angular';
 import type { Breadcrumb, BrowserOptions, ErrorEvent, EventHint } from '@sentry/angular';
-import { redactSensitive, stripPii } from '@okr/shared-util-core';
+import { redactSensitive, stripPii, stripUrlQueriesInText, stripUrlQuery } from '@okr/shared-util-core';
 import { catchError } from 'rxjs';
 import { isStaleChunkRecoveryInFlight } from './chunk-load-error-handler';
 import { FIRESTORE_QUEUE_FAILURE_TAG, isFirestoreQueueRecoveryInFlight } from './firestore-queue-recovery';
@@ -32,13 +32,20 @@ export function redactFileTransferTokens<T extends string | undefined>(text: T):
 /** Sentry's transaction event type (not re-exported by @sentry/angular). */
 type TransactionEvent = Parameters<NonNullable<BrowserOptions['beforeSendTransaction']>>[0];
 
-/** Scrubs a breadcrumb's message and the URL-bearing data fields (navigation from/to, fetch/xhr url). */
+/**
+ * Scrubs a breadcrumb's message and the URL-bearing data fields (navigation from/to, fetch/xhr url).
+ * A fetch/xhr url also loses its query string and fragment: a request such as the geocoder's
+ * `?address=<street, zip, city>` would otherwise carry a home address into Sentry (spec 1.162).
+ */
 export function scrubBreadcrumb(breadcrumb: Breadcrumb): Breadcrumb {
   breadcrumb.message = redactFileTransferTokens(breadcrumb.message);
   const data = breadcrumb.data;
   if (data) {
     for (const key of ['url', 'from', 'to']) {
       if (typeof data[key] === 'string') data[key] = redactFileTransferTokens(data[key] as string);
+    }
+    if ((breadcrumb.category === 'xhr' || breadcrumb.category === 'fetch') && typeof data['url'] === 'string') {
+      data['url'] = stripUrlQuery(data['url'] as string);
     }
   }
   return breadcrumb;
@@ -53,15 +60,18 @@ function scrubEventUrls(event: ErrorEvent | TransactionEvent): void {
   event.breadcrumbs?.forEach(scrubBreadcrumb);
 }
 
-/** Transactions (tracing) carry the page URL as name and the fetched URLs in their spans. */
+/**
+ * Transactions (tracing) carry the page URL as name and the fetched URLs in their spans. Span URLs
+ * also lose their query string and fragment (the geocoder's `?address=…`, spec 1.162).
+ */
 export function beforeSendTransaction(event: TransactionEvent): TransactionEvent {
   scrubEventUrls(event);
   event.spans?.forEach((span) => {
-    span.description = redactFileTransferTokens(span.description);
+    span.description = stripUrlQueriesInText(redactFileTransferTokens(span.description));
     const data = span.data as Record<string, unknown> | undefined;
     if (data) {
       for (const key of ['url', 'http.url', 'url.full']) {
-        if (typeof data[key] === 'string') data[key] = redactFileTransferTokens(data[key] as string);
+        if (typeof data[key] === 'string') data[key] = stripUrlQuery(redactFileTransferTokens(data[key] as string));
       }
     }
   });

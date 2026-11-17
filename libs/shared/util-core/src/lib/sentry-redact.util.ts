@@ -24,3 +24,22 @@ export function stripPii(url: string): string {
   const q = url.indexOf('?');
   return q === -1 ? url : url.slice(0, q);
 }
+
+/**
+ * Drop the query string AND the fragment from a URL. Used on the URL fields Sentry records for
+ * fetch/xhr breadcrumbs and http.client spans: a request like the geocoder's `?address=<street>`
+ * would otherwise carry a home address into Sentry (spec 1.162).
+ */
+export function stripUrlQuery(url: string): string {
+  if (!url) return url;
+  const cut = url.search(/[?#]/);
+  return cut === -1 ? url : url.slice(0, cut);
+}
+
+/** Every absolute URL or path inside a text — up to, not including, its `?` or `#`. */
+const URL_WITH_QUERY_RE = /((?:https?:\/\/|\/)[^\s?#"'<>]*)[?#][^\s"'<>]*/g;
+
+/** Strip query and fragment from every URL inside a free text (e.g. a span description `GET <url>`). */
+export function stripUrlQueriesInText<T extends string | undefined>(text: T): T {
+  return (typeof text === 'string' ? text.replace(URL_WITH_QUERY_RE, '$1') : text) as T;
+}

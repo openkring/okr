@@ -371,3 +371,38 @@ describe('file-transfer token scrubbing (spec 1.115)', () => {
     expect(o.beforeSendTransaction).toBe(beforeSendTransaction);
   });
 });
+
+describe('URL query stripping (spec 1.162, home address in the geocoder query)', () => {
+  const GEOCODE = 'https://maps.googleapis.com/maps/api/geocode/json?address=Seestrasse%201,%208000%20Z%C3%BCrich&key=k';
+  const BARE = 'https://maps.googleapis.com/maps/api/geocode/json';
+
+  it('strips query and fragment from fetch and xhr breadcrumb urls', () => {
+    for (const category of ['fetch', 'xhr']) {
+      const b = scrubBreadcrumb({ category, data: { method: 'GET', url: `${GEOCODE}#f`, status_code: 200 } });
+      expect(b.data?.['url']).toBe(BARE);
+      expect(JSON.stringify(b)).not.toContain('Seestrasse');
+    }
+  });
+
+  it('leaves navigation breadcrumbs alone', () => {
+    const b = scrubBreadcrumb({ category: 'navigation', data: { from: '/a?x=1', to: '/b' } });
+    expect(b.data?.['from']).toBe('/a?x=1');
+  });
+
+  it('beforeSendTransaction strips span url keys and URLs in the description', () => {
+    const event = {
+      type: 'transaction', transaction: '/private/home',
+      spans: [{
+        op: 'http.client', description: `GET ${GEOCODE}`,
+        data: { url: GEOCODE, 'http.url': GEOCODE, 'url.full': GEOCODE, 'http.method': 'GET' },
+      }],
+    } as unknown as Parameters<typeof beforeSendTransaction>[0];
+    const out = beforeSendTransaction(event);
+    expect(JSON.stringify(out)).not.toContain('Seestrasse');
+    const span = out.spans?.[0];
+    expect(span?.description).toBe(`GET ${BARE}`);
+    expect(span?.data?.['url']).toBe(BARE);
+    expect(span?.data?.['http.url']).toBe(BARE);
+    expect(span?.data?.['url.full']).toBe(BARE);
+  });
+});
