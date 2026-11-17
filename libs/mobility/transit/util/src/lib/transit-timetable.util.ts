@@ -58,3 +58,27 @@ export function groupByZurichDay(cs: TransitConnection[]): { day: string; connec
   }
   return groups;
 }
+
+/** `yyyy-MM-ddTHH:mm` of an instant on the Swiss wall clock, the value of the date/time control; '' ⇒ now. */
+export function zurichLocalInput(iso: string): string {
+  const ms = Date.parse(iso);
+  const p = zurichDateParts(Number.isFinite(ms) ? ms : Date.now());
+  return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
+}
+
+/**
+ * The instant (ISO) of a Swiss wall-clock value `yyyy-MM-ddTHH:mm[:ss]`, whatever the device zone; any trailing
+ * offset is ignored. '' when the value cannot be read.
+ */
+export function zurichLocalToIso(local: string | null | undefined): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(local ?? '');
+  if (!m) return '';
+  const wanted = Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]);
+  let ms = wanted;
+  // two corrections settle the Zurich offset, including the days the clocks change
+  for (let i = 0; i < 2; i++) {
+    const p = zurichDateParts(ms);
+    ms += wanted - Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute);
+  }
+  return new Date(ms).toISOString();
+}

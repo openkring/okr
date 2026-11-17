@@ -9,6 +9,8 @@ import {
   groupByZurichDay,
   laterAt,
   mergeConnections,
+  zurichLocalInput,
+  zurichLocalToIso,
 } from './transit-timetable.util';
 import { zurichDateParts } from './transit-links.util';
 
@@ -82,5 +84,27 @@ describe('transit-timetable.util', () => {
 
   it('zurichDateParts is zero-padded h23 on the Zurich clock', () => {
     expect(zurichDateParts(Date.parse('2026-11-15T23:05:00Z'))).toEqual({ year: '2026', month: '11', day: '16', hour: '00', minute: '05' });
+  });
+});
+
+describe('zurich wall clock of the date/time control', () => {
+  it('shows an instant on the Swiss clock (winter, summer)', () => {
+    expect(zurichLocalInput('2026-11-15T14:56:00Z')).toBe('2026-11-15T15:56');
+    expect(zurichLocalInput('2026-07-01T10:00:00Z')).toBe('2026-07-01T12:00');
+  });
+  it('reads a Swiss wall-clock value back as an instant', () => {
+    expect(zurichLocalToIso('2026-11-15T15:56')).toBe('2026-11-15T14:56:00.000Z');
+    expect(zurichLocalToIso('2026-07-01T12:00:00')).toBe('2026-07-01T10:00:00.000Z');
+    expect(zurichLocalToIso('2026-03-29T03:30')).toBe('2026-03-29T01:30:00.000Z');
+  });
+  it('ignores a trailing offset and rejects garbage', () => {
+    expect(zurichLocalToIso('2026-11-15T15:56:00+05:00')).toBe('2026-11-15T14:56:00.000Z');
+    expect(zurichLocalToIso('')).toBe('');
+    expect(zurichLocalToIso(undefined)).toBe('');
+    expect(zurichLocalToIso('15:56')).toBe('');
+  });
+  it('round-trips', () => {
+    const iso = '2026-10-25T12:00:00.000Z';
+    expect(zurichLocalToIso(zurichLocalInput(iso))).toBe(iso);
   });
 });

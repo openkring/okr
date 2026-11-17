@@ -7,12 +7,17 @@ import { sbbTimetableUrl, zurichDateParts } from './transit-links.util';
 import type { TransitPlace } from './transit-place.model';
 import { eventPlaceLabel, isPrivatePlace } from './transit-place.util';
 
+/** `Gleis/Kante {platform}` filled, or a bare prefix like `Gl.` followed by the platform. */
+function platformLabel(label: string, platform: string): string {
+  return label.includes('{platform}') ? label.replace('{platform}', platform) : `${label} ${platform}`;
+}
+
 /** One line per leg, e.g. `16:18 R45 Gl. 1 Dieni → 17:02 Chur`; walks and changes as `10' zu Fuss`. Times on the Zurich clock. */
 export function tripDescription(c: TransitConnection, labels: { change: string; walk: string; platform: string }): string {
   return c.legs
     .map((leg) => {
       if (leg.kind !== 'ride') return `${leg.durationMinutes}' ${labels.walk}`;
-      const platform = leg.platform ? ` ${labels.platform} ${leg.platform}` : '';
+      const platform = leg.platform ? ` ${platformLabel(labels.platform, leg.platform)}` : '';
       return `${clockTime(leg.departure)} ${leg.line}${platform} ${leg.from} → ${clockTime(leg.arrival)} ${leg.to}`;
     })
     .join('\n');

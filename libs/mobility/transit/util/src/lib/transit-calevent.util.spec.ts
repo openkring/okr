@@ -29,6 +29,11 @@ describe('tripDescription', () => {
     expect(text).toContain('16:18 R45 Gl. 1 Dieni → 17:02 Chur');
     expect(text).toContain("10' zu Fuss");
   });
+  it('fills a platform label with a {platform} placeholder', () => {
+    const text = tripDescription(base, { ...labels, platform: 'Gleis/Kante {platform}' });
+    expect(text).toContain('16:18 R45 Gleis/Kante 1 Dieni → 17:02 Chur');
+    expect(text).not.toContain('{platform}');
+  });
 });
 
 describe.each(['UTC', 'America/New_York'])('connectionToCalevent in device zone %s', (tz) => {
