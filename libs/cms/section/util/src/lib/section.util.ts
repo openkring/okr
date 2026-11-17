@@ -72,8 +72,8 @@ export function createSection(type: SectionType, tenantId: string): SectionModel
       } as WeatherSection;
       break;
     case 'connections':
-      // properties cloned like 'weather': the shapes are shared module constants
-      section = { ...CONNECTIONS_SECTION_SHAPE, properties: { ...CONNECTIONS_CONFIG_SHAPE } } as ConnectionsSection;
+      // properties cloned like 'weather': the shapes are shared module constants (favoriteLocationKeys is an ARRAY)
+      section = { ...CONNECTIONS_SECTION_SHAPE, properties: { ...CONNECTIONS_CONFIG_SHAPE, favoriteLocationKeys: [...CONNECTIONS_CONFIG_SHAPE.favoriteLocationKeys] } } as ConnectionsSection;
       break;
     case 'departures':
       section = { ...DEPARTURES_SECTION_SHAPE, properties: { ...DEPARTURES_CONFIG_SHAPE } } as DeparturesSection;
