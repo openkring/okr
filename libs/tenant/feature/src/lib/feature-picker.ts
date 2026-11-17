@@ -52,7 +52,9 @@ type PickerSegment = 'blocks' | 'rows';
  * only hides them (`disableBlock`'s own doc comment); the confirmation before that write says
  * so explicitly.
  *
- * A block row shows ONE of five states (`blockState`): `core` (never switchable), `withheld`
+ * A block row shows ONE of five states (`blockState`): `core` (never switchable, but offers
+ * «Menü ergänzen» when rows are missing — a tenant whose `enabledFeatures` was seeded by hand
+ * has no login/profile/legal rows, and without that button no screen could write them), `withheld`
  * (rollout does not offer it), `required` (another RUNNING block depends on it — see
  * `holdersOf`, no «Ausschalten»), `on` and `off`. `required` exists because enablement is
  * stored flat but read dependency-closed: without it, `subject` under a running `calevent`
@@ -162,6 +164,13 @@ type PickerSegment = 'blocks' | 'rows';
                       }
                     </ion-label>
                     @switch (blockState(block)) {
+                      @case ('core') {
+                        @if (missingRowCount(block) > 0) {
+                          <ion-button slot="end" fill="outline" (click)="onEnable(block)">
+                            {{ i18n.complete_menu_button() }}
+                          </ion-button>
+                        }
+                      }
                       @case ('off') {
                         <ion-button slot="end" fill="outline" (click)="onEnable(block)">
                           {{ i18n.enable_button() }}
@@ -766,7 +775,7 @@ export class FeaturePicker {
   /** The button reads «Menü ergänzen»: the block already runs in its own right and only rows are missing. */
   private isCompleting(block: FeatureBlock): boolean {
     const state = this.blockState(block);
-    return state === 'on' || (state === 'required' && this.isStored(block));
+    return state === 'on' || state === 'core' || (state === 'required' && this.isStored(block));
   }
 
   private async showBlockToast(key: string, block: FeatureBlock): Promise<void> {
