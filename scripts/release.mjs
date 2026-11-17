@@ -7,7 +7,7 @@
 //   node scripts/release.mjs <app> none               # repair: re-deploy ONE app at the current,
 //                                                     #   already tagged version (no bump/commit/tag)
 //   node scripts/release.mjs <website> [kind]         # release one website (gates, bump, deploy)
-//   node scripts/release.mjs functions               # deploy Cloud Functions (all, or prompted subset)
+//   node scripts/release.mjs functions               # deploy Cloud Functions (changed ones, or prompted subset)
 //   node scripts/release.mjs rules                   # deploy firestore + storage rules
 // `all` flags: --native --yes --accept-drift --accept-menu-labels --dry-run --concurrency=N
 //   --min-version=x.y.z --force-update. `<app> patch` takes the same flags except the last two, which
@@ -229,12 +229,14 @@ async function releaseApp(app, kindArg = null) {
 }
 
 // ---- functions -----------------------------------------------------------
-// Delegates to scripts/deploy-functions.mjs (build + pin + prune + pnpm-pin canary).
+// Delegates to scripts/deploy-functions.mjs (build + pin + prune + canary + changed-only deploy).
 async function releaseFunctions() {
   console.log('\n=== Deploy Cloud Functions ===  (no version bump, no tag)');
-  const names = (await ask('Function names (space/comma-separated), or blank for ALL: ')).trim();
-  if (!(await confirm(`Deploy ${names || 'ALL functions'}?`, true))) abort('Aborted.');
-  run('node', ['scripts/deploy-functions.mjs', ...(names ? names.split(/[\s,]+/) : [])]);
+  const names = (await ask('Function names (space/comma-separated), or blank for the CHANGED ones: ')).trim();
+  const args = names ? names.split(/[\s,]+/) : [];
+  if (!names) run('node', ['scripts/deploy-functions.mjs', '--dry-run']);
+  if (!(await confirm(`Deploy ${names || 'the changed functions listed above'}?`, true))) abort('Aborted.');
+  run('node', ['scripts/deploy-functions.mjs', ...args]);
   console.log('\n✔ Functions deployed. Commit any pending source changes separately.');
 }
 
