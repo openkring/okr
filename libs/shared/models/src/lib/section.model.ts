@@ -996,6 +996,16 @@ export interface ConnectionsConfig {
   destinationKey: string;
   /** Empty ⇒ the viewer's current position. */
   sourceKey: string;
+  /** Favourites offered at the top of the Von/Nach picker: the tenant's default org. Default true. */
+  favoriteDefaultOrg: boolean;
+  /** Favourites offered at the top of the Von/Nach picker: the viewer's home address. Default true. */
+  favoriteHomeAddress: boolean;
+  /** Saved locations pinned as favourites, in this order. Default []. */
+  favoriteLocationKeys: string[];
+  /** Initial anchor of the date/time row (same values as `TransitAnchor`). Default 'departAt'. */
+  anchor: 'departAt' | 'arriveBy';
+  /** Show «In Kalender eintragen» on a chosen connection. Default true. */
+  allowAddToCalendar: boolean;
 }
 
 // --------------------------------------- DEPARTURES ----------------------------------------

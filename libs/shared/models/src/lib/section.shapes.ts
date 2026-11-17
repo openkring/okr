@@ -323,7 +323,12 @@ export const WEATHER_SECTION_SHAPE = {
 // --------------------------------------- CONNECTIONS ----------------------------------------
 export const CONNECTIONS_CONFIG_SHAPE = {
   destinationKey: '',
-  sourceKey: ''
+  sourceKey: '',
+  favoriteDefaultOrg: true,
+  favoriteHomeAddress: true,
+  favoriteLocationKeys: [],
+  anchor: 'departAt',
+  allowAddToCalendar: true
 } as ConnectionsConfig;
 
 export const CONNECTIONS_SECTION_SHAPE = {
