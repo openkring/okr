@@ -187,7 +187,7 @@ const DEFAULT_RECURRING_PERIODICITY = 'weekly';
     <!-- WO: location stays gated on the editor roles and is unavailable on a personal event
          (no calendar to place it in); the link pair is always offered, personal events included,
          and only earns its rows once a url is set or the advanced toggle is on. -->
-    @if((!isPersonal() && canExpert()) || isPersonal()) {
+    @if((!isPersonal() && canExpert()) || isPersonal() || isTrip()) {
       <ion-card>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
