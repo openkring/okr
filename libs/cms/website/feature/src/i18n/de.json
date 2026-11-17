@@ -11,9 +11,11 @@
     "edit": "Bearbeiten",
     "move": "Verschieben nach…",
     "archive": "Archivieren",
-    "editPage": "Seite bearbeiten",
-    "editEntry": "Eintrag bearbeiten",
-    "copyUrl": "URL kopieren"
+    "editPage": "Seitenkonfiguration ändern",
+    "editEntry": "Menü ändern",
+    "copyUrl": "URL kopieren",
+    "archiveEntry": "Menü archivieren",
+    "viewPage": "Seite anzeigen"
   },
   "warning": {
     "pageMissing": "Seite fehlt",

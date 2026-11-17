@@ -175,17 +175,21 @@ export class WebsiteSitemap {
         push('node.addMenu', i18n.action_add_menu(), 'menu');
         push('node.addPage', i18n.action_add_page(), 'page');
         push('node.addLink', i18n.action_add_link(), 'link');
-        push('node.edit', i18n.action_edit(), 'edit');
+        push('node.edit', i18n.action_edit_entry(), 'edit');
         if (websiteUrl(node)) push('node.copyUrl', i18n.action_copy_url(), 'copy');
         push('node.move', i18n.action_move(), 'swap-vertical');
-        push('node.archive', i18n.action_archive(), 'archive');
+        push('node.archive', i18n.action_archive_entry(), 'archive');
         break;
       case 'page':
+        // group «Seite»: the page document behind the entry
+        push('node.viewPage', i18n.action_view_page(), 'eye-on');
         push('node.editPage', i18n.action_edit_page(), 'edit');
+        options.buttons.push(createActionSheetDivider());
+        // group «Menü»: the entry in the navigation
         push('node.edit', i18n.action_edit_entry(), 'edit');
         push('node.copyUrl', i18n.action_copy_url(), 'copy');
         push('node.move', i18n.action_move(), 'swap-vertical');
-        push('node.archive', i18n.action_archive(), 'archive');
+        push('node.archive', i18n.action_archive_entry(), 'archive');
         break;
       case 'link':
         push('node.edit', i18n.action_edit(), 'edit');
@@ -212,6 +216,7 @@ export class WebsiteSitemap {
       case 'node.addLink':  await this.store.addLink(parentId); break;
       case 'node.edit':     if (node) await this.store.edit(node); break;
       case 'node.editPage': if (node) await this.store.editPage(node); break;
+      case 'node.viewPage': if (node) await this.store.viewPage(node); break;
       case 'node.copyUrl':  if (node) await this.store.copyUrl(node); break;
       case 'node.move':     if (node) await this.store.move(node); break;
       case 'node.archive':  if (node) await this.store.archive(node); break;

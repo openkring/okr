@@ -11,9 +11,11 @@
     "edit": "Editar",
     "move": "Mover a…",
     "archive": "Archivar",
-    "editPage": "Editar página",
-    "editEntry": "Editar entrada",
-    "copyUrl": "Copiar URL"
+    "editPage": "Cambiar la configuración de la página",
+    "editEntry": "Cambiar el menú",
+    "copyUrl": "Copiar URL",
+    "archiveEntry": "Archivar el menú",
+    "viewPage": "Ver página"
   },
   "warning": {
     "pageMissing": "Falta la página",

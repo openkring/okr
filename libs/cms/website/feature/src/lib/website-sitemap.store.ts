@@ -405,6 +405,16 @@ export const _WebsiteSitemapStore = signalStore(
         }
         await store.pageStore.edit(page, false, websiteUrl(node));
       },
+
+      /** Shows the page in the app (the same view «Webseite anzeigen» in the page list opens). */
+      async viewPage(node: WebsiteNode): Promise<void> {
+        const page = node.pageKey ? store.pagesByKey().get(node.pageKey) : undefined;
+        if (!page) {
+          await toast(store.i18n.page_not_found());
+          return;
+        }
+        await store.pageStore.show(page, false);
+      },
     };
   }),
 );
