@@ -1454,8 +1454,8 @@
       "description": "25 Türchen auf einem Hintergrundbild, jeden Tag im Dezember geht eines auf."
     },
     "connections": {
-      "label": "Verbindungen",
-      "description": "ÖV-Verbindungen zu einem Ort, mit Weg zu Fuss, mit dem Velo oder dem Auto über die Karten-App"
+      "label": "Fahrplan",
+      "description": "Fahrplan wie auf sbb.ch: Verbindungen suchen, in den Kalender eintragen und das Billett auf sbb.ch lösen"
     },
     "departures": {
       "label": "Abfahrten",
@@ -1814,10 +1814,10 @@
     "label": "Fahrtenstatistik"
   },
   "connections": {
-    "title": "Verbindungen",
-    "label": "Verbindungen",
+    "title": "Fahrplan",
+    "label": "Fahrplan",
     "edit": "Verbindungen-Konfiguration ändern",
-    "description": "ÖV-Verbindungen zu einem Ort, mit Weg zu Fuss, mit dem Velo oder dem Auto über die Karten-App",
+    "description": "Fahrplan wie auf sbb.ch: Verbindungen suchen, in den Kalender eintragen und das Billett auf sbb.ch lösen",
     "destination": {
       "label": "Ziel",
       "helper": "Leer lassen, um den Ort der Seite zu übernehmen"

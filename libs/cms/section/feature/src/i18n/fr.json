@@ -1454,8 +1454,8 @@
       "description": "25 fenêtres sur une image de fond, une s'ouvre chaque jour de décembre."
     },
     "connections": {
-      "label": "Correspondances",
-      "description": "Correspondances en transports publics vers un lieu, ainsi qu’à pied, à vélo ou en voiture via l’app de cartes"
+      "label": "Horaire",
+      "description": "Horaire comme sur sbb.ch : chercher des correspondances, les ajouter au calendrier et acheter le billet sur sbb.ch"
     },
     "departures": {
       "label": "Départs",
@@ -1814,10 +1814,10 @@
     "label": "Statistiques des sorties"
   },
   "connections": {
-    "title": "Correspondances",
-    "label": "Correspondances",
+    "title": "Horaire",
+    "label": "Horaire",
     "edit": "Modifier la configuration des correspondances",
-    "description": "Correspondances en transports publics vers un lieu, ainsi qu’à pied, à vélo ou en voiture via l’app de cartes",
+    "description": "Horaire comme sur sbb.ch : chercher des correspondances, les ajouter au calendrier et acheter le billet sur sbb.ch",
     "destination": {
       "label": "Destination",
       "helper": "Laisse vide pour reprendre le lieu de la page"

@@ -1454,8 +1454,8 @@
       "description": "25 finestrelle su un'immagine di sfondo, ogni giorno di dicembre se ne apre una."
     },
     "connections": {
-      "label": "Collegamenti",
-      "description": "Collegamenti con i mezzi pubblici verso un luogo, oltre a piedi, in bici o in auto con l’app delle mappe"
+      "label": "Orario",
+      "description": "Orario come su sbb.ch: cerca collegamenti, inseriscili nel calendario e acquista il biglietto su sbb.ch"
     },
     "departures": {
       "label": "Partenze",
@@ -1814,10 +1814,10 @@
     "label": "Statistiche delle uscite"
   },
   "connections": {
-    "title": "Collegamenti",
-    "label": "Collegamenti",
+    "title": "Orario",
+    "label": "Orario",
     "edit": "Modifica la configurazione dei collegamenti",
-    "description": "Collegamenti con i mezzi pubblici verso un luogo, oltre a piedi, in bici o in auto con l’app delle mappe",
+    "description": "Orario come su sbb.ch: cerca collegamenti, inseriscili nel calendario e acquista il biglietto su sbb.ch",
     "destination": {
       "label": "Destinazione",
       "helper": "Lascia vuoto per usare il luogo della pagina"

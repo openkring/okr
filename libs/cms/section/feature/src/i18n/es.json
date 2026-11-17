@@ -1454,8 +1454,8 @@
       "description": "25 ventanas sobre una imagen de fondo, cada día de diciembre se abre una."
     },
     "connections": {
-      "label": "Conexiones",
-      "description": "Conexiones en transporte público a un lugar, y a pie, en bici o en coche con la app de mapas"
+      "label": "Horario",
+      "description": "Horario como en sbb.ch: busca conexiones, añádelas al calendario y compra el billete en sbb.ch"
     },
     "departures": {
       "label": "Salidas",
@@ -1814,10 +1814,10 @@
     "label": "Estadísticas de salidas"
   },
   "connections": {
-    "title": "Conexiones",
-    "label": "Conexiones",
+    "title": "Horario",
+    "label": "Horario",
     "edit": "Cambiar la configuración de conexiones",
-    "description": "Conexiones en transporte público a un lugar, y a pie, en bici o en coche con la app de mapas",
+    "description": "Horario como en sbb.ch: busca conexiones, añádelas al calendario y compra el billete en sbb.ch",
     "destination": {
       "label": "Destino",
       "helper": "Déjalo vacío para usar el lugar de la página"

@@ -1454,8 +1454,8 @@
       "description": "25 doors on a background image, one opens every day in December."
     },
     "connections": {
-      "label": "Connections",
-      "description": "Public transport connections to a place, plus walking, cycling or driving via the maps app"
+      "label": "Timetable",
+      "description": "Timetable like on sbb.ch: search connections, add them to the calendar and buy the ticket on sbb.ch"
     },
     "departures": {
       "label": "Departures",
@@ -1814,10 +1814,10 @@
     "label": "Trip statistics"
   },
   "connections": {
-    "title": "Connections",
-    "label": "Connections",
+    "title": "Timetable",
+    "label": "Timetable",
     "edit": "Change connections settings",
-    "description": "Public transport connections to a place, plus walking, cycling or driving via the maps app",
+    "description": "Timetable like on sbb.ch: search connections, add them to the calendar and buy the ticket on sbb.ch",
     "destination": {
       "label": "Destination",
       "helper": "Leave empty to use the page's location"
