@@ -429,6 +429,10 @@
       "label": "Regata",
       "description": "regata o carrera de remo"
     },
+    "travel": {
+      "label": "Viaje",
+      "description": "Una conexión del horario, con salida, transbordos y llegada"
+    },
     "club": {
       "label": "Evento del club",
       "description": "evento del club, p. ej. fiesta, salida, asamblea"

@@ -429,6 +429,10 @@
       "label": "Regata",
       "description": "regata o gara di canottaggio"
     },
+    "travel": {
+      "label": "Viaggio",
+      "description": "Un collegamento dall’orario, con partenza, cambi e arrivo"
+    },
     "club": {
       "label": "Evento del club",
       "description": "evento del club, ad es. festa, uscita, assemblea"

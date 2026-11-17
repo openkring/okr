@@ -429,6 +429,10 @@
       "label": "Regatta",
       "description": "regatta or rowing race"
     },
+    "travel": {
+      "label": "Trip",
+      "description": "A connection from the timetable, with departure, transfers and arrival"
+    },
     "club": {
       "label": "Club event",
       "description": "club event, e.g. party, outing, meeting"

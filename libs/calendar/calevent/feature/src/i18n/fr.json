@@ -429,6 +429,10 @@
       "label": "Régate",
       "description": "régate ou course d’aviron"
     },
+    "travel": {
+      "label": "Voyage",
+      "description": "Une correspondance de l’horaire, avec départ, changements et arrivée"
+    },
     "club": {
       "label": "Événement du club",
       "description": "événement du club, p. ex. fête, sortie, assemblée"

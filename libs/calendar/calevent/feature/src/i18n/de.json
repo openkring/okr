@@ -429,6 +429,10 @@
       "label": "Regatta",
       "description": "Regatta oder Ruderrennen"
     },
+    "travel": {
+      "label": "Reise",
+      "description": "Eine Verbindung aus dem Fahrplan, mit Abfahrt, Umsteigen und Ankunft"
+    },
     "club": {
       "label": "Clubanlass",
       "description": "Anlass des Clubs, zB. Fest, Ausfahrt, Versammlung"
