@@ -37,21 +37,29 @@ export class GeocodingService {
       addressStr = stringifyAddress(address);
     }
 
-    const params = { address: addressStr, key: this.env.services.gmapKey }; 
+    const result = await this.geocodeQuiet(addressStr);
+    if (!result) this.alertService.error('Address not found');
+    return result;
+  }
+
+  /**
+   * Quiet variant of geocodeAddress: no alert and no console output (the address is personal data
+   * and an HttpErrorResponse carries it in its URL). Callers show their own message.
+   * @param address stringified address
+   * @returns coordinates, or undefined on zero results or any failure
+   */
+  public async geocodeQuiet(address: string): Promise<GeoCoordinates | undefined> {
+    if (!address) return undefined;
+    const params = { address, key: this.env.services.gmapKey };
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result = await firstValueFrom(this.http.get<any>(this.apiUrl, { params: params }));
-      if (result.results && result.results.length > 0) {
-        const location = result.results[0].geometry.location;
+      const result = await firstValueFrom(this.http.get<any>(this.apiUrl, { params }));
+      const location = result?.results?.[0]?.geometry?.location;
+      if (location && typeof location.lat === 'number' && typeof location.lng === 'number') {
         return { lat: location.lat, lng: location.lng };
-      } else {
-        this.alertService.error('Address not found');
-        return undefined;
-      }  
-    }
-    catch (ex) {
-      this.alertService.error('Error geocoding address');
-      console.error('GeocodingService.geocodeAddress -> ERROR: ', ex);
+      }
+      return undefined;
+    } catch {
       return undefined;
     }
   }
