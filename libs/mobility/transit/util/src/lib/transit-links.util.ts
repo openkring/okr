@@ -29,14 +29,20 @@ function sbbStop(label: string, p: LatLng): string {
   return `${label.replace(/[~_]/g, ' ').trim() || '-'}_I${id}`;
 }
 
-/** `HH_MM` and `yyyy-MM-dd` of an instant on the Swiss wall clock. */
-function zurichParts(ms: number): { day: string; time: string } {
+/** Zero-padded wall-clock parts of an instant on the Swiss clock (hour in h23). */
+export function zurichDateParts(ms: number): { year: string; month: string; day: string; hour: string; minute: string } {
   const parts: Record<string, string> = {};
   const fmt = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Europe/Zurich', hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
   });
   for (const p of fmt.formatToParts(new Date(ms))) parts[p.type] = p.value;
-  return { day: `${parts['year']}-${parts['month']}-${parts['day']}`, time: `${parts['hour']}_${parts['minute']}` };
+  return { year: parts['year'], month: parts['month'], day: parts['day'], hour: parts['hour'], minute: parts['minute'] };
+}
+
+/** `HH_MM` and `yyyy-MM-dd` of an instant on the Swiss wall clock. */
+function zurichParts(ms: number): { day: string; time: string } {
+  const p = zurichDateParts(ms);
+  return { day: `${p.year}-${p.month}-${p.day}`, time: `${p.hour}_${p.minute}` };
 }
 
 /**

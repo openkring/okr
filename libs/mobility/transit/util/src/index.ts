@@ -6,3 +6,4 @@ export * from './lib/transit-departure.util';
 export * from './lib/transit-event.util';
 export * from './lib/transit-i18n';
 export * from './lib/transit-links.util';
+export * from './lib/transit-timetable.util';
