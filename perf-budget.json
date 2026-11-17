@@ -38,5 +38,10 @@
     "dashboardClosureGzipBytes": 1426635,
     "chunks": 220,
     "updated": "2026-09-10"
+  },
+  "sc7-app": {
+    "dashboardClosureGzipBytes": 1426562,
+    "chunks": 202,
+    "updated": "2026-11-17"
   }
 }
