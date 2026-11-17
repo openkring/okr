@@ -260,7 +260,8 @@ if (ADOPT) {
   const adopted = {};
   plan.deploy = plan.deploy.filter(({ name, reasons }) => {
     if (named.length || ALL || !reasons.every((r) => SOFT.has(r))) return true;
-    const files = [...closures[name]].filter((f) => f !== MAIN).concat(['scripts/functions-pnpm-verified.json']);
+    // Files that emit no code (types, tree-shaken) cannot make a deployed revision stale.
+    const files = [...closures[name]].filter((f) => f !== MAIN && fileHash(f) !== 'no-runtime-code').concat(['scripts/functions-pnpm-verified.json']);
     if (!adoptable({ updateTime: live[name]?.updateTime, files, lastChange, dirty: new Set([...dirtyFiles].filter((f) => f !== MAIN)) })) return true;
     adopted[name] = record(name, live[name], { adopted: true });
     plan.adopted.push(name);
