@@ -34,11 +34,14 @@ export class CalEventService {
    * Create a new CalEvent in the database.
    * @param calEvent the CalEventModel to store in the database
    * @param currentUser the current user who performs the operation
+   * @param messages optional toast texts replacing the generic «Termin hinzugefügt» ones (e.g. a trip from the timetable)
    * @returns the document id of the newly created CalEvent or undefined if the operation failed
    */
-  public async create(calEvent: CalEventModel, currentUser?: UserModel): Promise<string | undefined> {
+  public async create(calEvent: CalEventModel, currentUser?: UserModel, messages?: { conf: string; error: string }): Promise<string | undefined> {
     calEvent.index = getCaleventIndex(calEvent);
-    const key = await this.firestoreService.createModel<CalEventModel>(CalEventCollection, calEvent, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
+    const conf = messages?.conf || this.i18n.create_conf();
+    const error = messages?.error || this.i18n.create_error();
+    const key = await this.firestoreService.createModel<CalEventModel>(CalEventCollection, calEvent, conf, error, currentUser);
     const payload = `${calEvent.startDate} ${calEvent.startTime}: ${calEvent.name}`;
     void this.activityService.log('calevent', 'create', currentUser, payload);
     return key;
