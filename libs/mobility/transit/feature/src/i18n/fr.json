@@ -49,6 +49,7 @@
   "offline": "Tu ne peux chercher des correspondances qu’avec une connexion Internet.",
   "positionUnavailable": "Ta position n’est pas disponible. Choisis avec « modifier » d’où tu pars.",
   "noCoordinates": "Ce lieu n’a pas de position exacte, nous ne pouvons donc pas chercher de correspondances.",
+  "currentAsDestination": "Comme destination, il te faut un lieu enregistré",
   "abroad": "Les correspondances ne sont disponibles que pour des lieux en Suisse.",
   "departures": {
     "title": "Départs",
@@ -94,7 +95,7 @@
   "locations": "Lieux enregistrés",
   "tripTitle": "Voyage {from} → {to}",
   "tripTitleLabel": "Titre",
-  "added": "Le voyage est maintenant dans ton calendrier",
+  "added": "Le voyage est enregistré",
   "addError": "Le voyage n'a pas pu être ajouté",
   "geocodeFailed": "Cette adresse est introuvable",
   "legChange": "changement",

@@ -46,9 +46,9 @@ describe('transit-timetable.util', () => {
     expect(r.map((x) => x.departure)).toEqual([A.departure, B.departure, C.departure]);
   });
 
-  it('earlierAt / laterAt step one minute', () => {
+  it('earlierAt is the first arrival minus one minute (arriveBy, R21); laterAt the last departure plus one', () => {
     const cs = [conn('2026-11-15T15:18:00Z', '2026-11-15T16:00:00Z', ['S8']), conn('2026-11-15T15:48:00Z', '2026-11-15T16:30:00Z', ['S8'])];
-    expect(earlierAt(cs)).toBe('2026-11-15T15:17:00.000Z');
+    expect(earlierAt(cs)).toBe('2026-11-15T15:59:00.000Z');
     expect(laterAt(cs)).toBe('2026-11-15T15:49:00.000Z');
     expect(earlierAt([])).toBe('');
     expect(laterAt([])).toBe('');

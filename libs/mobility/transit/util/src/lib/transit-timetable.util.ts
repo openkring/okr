@@ -19,13 +19,19 @@ export function mergeConnections(a: TransitConnection[], b: TransitConnection[])
   return [...byKey.values()].sort((x, y) => Date.parse(x.departure) - Date.parse(y.departure));
 }
 
-/** Search instant for the page before the list: first departure minus one minute; '' for none. */
+/**
+ * Search instant for the page before the list: the FIRST connection's ARRIVAL minus one minute, used
+ * with `anchor: 'arriveBy'` (ruling R21). A `departAt` search at the first departure returns trips at
+ * or after it plus one before it, so it added about one row per tap; `arriveBy` returns up to a full
+ * page of connections that arrive before the first one, and `mergeConnections` drops any overlap.
+ * '' for none.
+ */
 export function earlierAt(cs: TransitConnection[]): string {
   if (cs.length === 0) return '';
-  return new Date(Date.parse(cs[0].departure) - MINUTE_MS).toISOString();
+  return new Date(Date.parse(cs[0].arrival) - MINUTE_MS).toISOString();
 }
 
-/** Search instant for the page after the list: last departure plus one minute; '' for none. */
+/** Search instant for the page after the list (`anchor: 'departAt'`): last departure plus one minute; '' for none. */
 export function laterAt(cs: TransitConnection[]): string {
   if (cs.length === 0) return '';
   return new Date(Date.parse(cs[cs.length - 1].departure) + MINUTE_MS).toISOString();

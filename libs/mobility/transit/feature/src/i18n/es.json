@@ -49,6 +49,7 @@
   "offline": "Solo puedes buscar conexiones con conexión a Internet.",
   "positionUnavailable": "Tu ubicación no está disponible. Elige con «cambiar» desde dónde sales.",
   "noCoordinates": "Este lugar no tiene una posición exacta, así que no podemos buscar conexiones.",
+  "currentAsDestination": "Como destino necesitas un lugar guardado",
   "abroad": "Solo hay conexiones para lugares en Suiza.",
   "departures": {
     "title": "Salidas",
@@ -94,7 +95,7 @@
   "locations": "Lugares guardados",
   "tripTitle": "Viaje {from} → {to}",
   "tripTitleLabel": "Título",
-  "added": "El viaje ya está en tu calendario",
+  "added": "El viaje está registrado",
   "addError": "No se pudo añadir el viaje",
   "geocodeFailed": "No se pudo encontrar esta dirección",
   "legChange": "transbordo",

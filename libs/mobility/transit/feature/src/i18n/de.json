@@ -49,6 +49,7 @@
   "offline": "Verbindungen kannst du nur mit Internetverbindung suchen.",
   "positionUnavailable": "Dein Standort ist nicht verfügbar. Wähle mit «ändern», von wo du losfährst.",
   "noCoordinates": "Für diesen Ort ist keine genaue Lage hinterlegt, darum können wir keine Verbindungen suchen.",
+  "currentAsDestination": "Als Ziel brauchst du einen gespeicherten Ort",
   "abroad": "Verbindungen gibt es nur für Orte in der Schweiz.",
   "departures": {
     "title": "Abfahrten",
@@ -94,7 +95,7 @@
   "locations": "Gespeicherte Orte",
   "tripTitle": "Reise {from} → {to}",
   "tripTitleLabel": "Titel",
-  "added": "Die Reise steht jetzt in deinem Kalender",
+  "added": "Die Reise ist eingetragen",
   "addError": "Die Reise konnte nicht eingetragen werden",
   "geocodeFailed": "Diese Adresse konnte nicht gefunden werden",
   "legChange": "umsteigen",

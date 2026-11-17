@@ -65,6 +65,7 @@ export const TRANSIT_I18N_KEYS = {
   offline: PFX + 'offline',
   position_unavailable: PFX + 'positionUnavailable',
   no_coordinates: PFX + 'noCoordinates',
+  current_as_destination: PFX + 'currentAsDestination',
   abroad: PFX + 'abroad',
 } satisfies Record<string, string>;
 

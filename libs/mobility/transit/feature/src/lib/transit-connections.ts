@@ -14,7 +14,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Spinner } from '@okr/shared-ui';
 import { okrPrompt, showToast } from '@okr/shared-util-angular';
-import { fill, getAvatarInfoForCurrentUser } from '@okr/shared-util-core';
+import { fill, getAvatarInfoForCurrentUser, isOngoing } from '@okr/shared-util-core';
 import { CalEventService } from '@okr/calendar-calevent-data-access';
 import { LocationService } from '@okr/location-data-access';
 import { MembershipService } from '@okr/relationship-membership-data-access';
@@ -186,6 +186,8 @@ let datetimeSeq = 0;
     } @else {
       @if (!toSel()) {
         <p class="note">{{ i18n.pick_to() }}</p>
+      } @else if (toSel()?.kind === 'current') {
+        <p class="note">{{ i18n.current_as_destination() }}</p>
       } @else if (!toSel()?.point) {
         <p class="note">{{ i18n.no_coordinates() }}</p>
       } @else {
@@ -442,16 +444,21 @@ export class TransitConnections {
     if (this.showReturn()) await this.searchReturn(id);
   }
 
-  /** «Frühere / Spätere Verbindungen»: one more page, anchored on the first / last departure (departAt). */
+  /**
+   * «Frühere / Spätere Verbindungen»: one more page. Earlier arrives by the first arrival − 1 min
+   * (arriveBy, ruling R21); later departs at the last departure + 1 min (departAt).
+   */
   protected async page(dir: 'earlier' | 'later'): Promise<void> {
     const pts = this.points();
-    const at = dir === 'earlier' ? earlierAt(this.connections()) : laterAt(this.connections());
-    const busy = dir === 'earlier' ? this.loadingEarlier : this.loadingLater;
+    const earlier = dir === 'earlier';
+    const at = earlier ? earlierAt(this.connections()) : laterAt(this.connections());
+    const busy = earlier ? this.loadingEarlier : this.loadingLater;
     if (!pts || !at || busy()) return;
     const id = this.requestId;
     busy.set(true);
     try {
-      const res = await this.transitService.planTrip({ from: pts.from, to: pts.to, at, anchor: 'departAt', limit: TIMETABLE_PAGE_SIZE });
+      const anchor = earlier ? 'arriveBy' : 'departAt';
+      const res = await this.transitService.planTrip({ from: pts.from, to: pts.to, at, anchor, limit: TIMETABLE_PAGE_SIZE });
       if (id !== this.requestId) return;
       this.connections.update((cs) => mergeConnections(cs, res.connections));
     } catch {
@@ -526,7 +533,8 @@ export class TransitConnections {
     const memberships = await firstValueFrom(
       this.membershipService.listMembershipsOfMember(user.personKey, 'person', 'group').pipe(take(1), catchError(() => of([]))),
     );
-    const memberGroupKeys = [...new Set(memberships.map((m) => m.orgKey).filter(Boolean))];
+    // only current memberships: a former member is not offered the group's calendar
+    const memberGroupKeys = [...new Set(memberships.filter((m) => isOngoing(m.dateOfExit)).map((m) => m.orgKey).filter(Boolean))];
     const modal = await this.modalController.create({
       component: CalendarSelectModal,
       componentProps: { currentUser: user, allowPersonal: true, memberGroupKeys },
