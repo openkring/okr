@@ -29,7 +29,7 @@ import { ResponsibilityStore } from './responsibility.store';
     }
     <ion-content>
       @if(!isNew()) {
-        <okr-avatar-toolbar [key]="portraitKey()" modelType="person" [readOnly]="!hasRole('privileged')" [title]="formData().name" [subTitle]="portraitHint()" (imageSelected)="onImageSelected($event)" />
+        <okr-avatar-toolbar [key]="portraitKey()" modelType="person" [readOnly]="!hasRole('privileged')" [title]="formData()?.name ?? ''" [subTitle]="portraitHint()" (imageSelected)="onImageSelected($event)" />
       }
       @if(formData(); as formData) {
         <okr-responsibility-form
