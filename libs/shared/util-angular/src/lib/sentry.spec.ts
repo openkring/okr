@@ -84,6 +84,17 @@ describe('buildSentryOptions', () => {
     expect(matches('FirebaseError: Missing or insufficient permissions.')).toBe(false);
   });
 
+  it('suppresses the idb transaction-abort rejection the Firebase heartbeat leaves unawaited (BKG-2)', () => {
+    const patterns = (buildSentryOptions(cfg, []).ignoreErrors ?? []) as RegExp[];
+    const matches = (msg: string) => patterns.some((p) => p instanceof RegExp && p.test(msg));
+    expect(matches('AbortError: AbortError')).toBe(true);
+    expect(matches('Error: AbortError: AbortError')).toBe(true);
+    // Must NOT swallow aborts that carry a real message — ours (resumable upload) or a fetch.
+    expect(matches('AbortError: Upload aborted')).toBe(false);
+    expect(matches('AbortError: The operation was aborted.')).toBe(false);
+    expect(matches('Error: AbortError: AbortError in my handler')).toBe(false);
+  });
+
   it('drops events originating inside the Google reCAPTCHA script (SCS-1Q)', () => {
     const patterns = (buildSentryOptions(cfg, []).denyUrls ?? []) as RegExp[];
     const matches = (url: string) => patterns.some((p) => p instanceof RegExp && p.test(url));
