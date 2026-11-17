@@ -12,7 +12,7 @@ import {
   PrivacySettings,
   WorkrelCollection,
 } from '@okr/shared-models';
-import { projectAddressesForViewer } from '@okr/shared-util-functions';
+import { projectAddressesForViewer, reduceToFavoriteAddresses } from '@okr/shared-util-functions';
 import { effectiveFeatures, FEATURE_BLOCKS, type FeatureRollout } from '@okr/tenant-util';
 import {
   bookCtag, buildLookupVCard, cardEtag, DEFAULT_REBUILD_INTERVAL, LOOKUP_SCOPE, RebuildInterval, VcardRecord, VcardTargetKind,
@@ -68,6 +68,21 @@ export function hasLookupChannel(record: VcardRecord): boolean {
   return record.channels.some((c) => (c.channel === 'phone' || c.channel === 'email') && !!c.value);
 }
 
+/**
+ * One address per channel — the favourite, else the first non-CC one (the members' directory
+ * rule, `reduceToFavoriteAddresses`) — for persons AND orgs (owner, 2026-11-17: «just the
+ * favourite addresses»). The favourite bank account has no vCard field and becomes the note.
+ */
+export function lookupAddresses(addresses: FsData[]): { addresses: FsData[]; note?: string } {
+  const picked = reduceToFavoriteAddresses(addresses as unknown as AddressModel[]) as unknown as FsData[];
+  const bank = picked.find((a) => a['addressChannel'] === 'bankaccount' && a['iban']);
+  const label = bank ? String(bank['addressChannelLabel'] || bank['addressUsageLabel'] || '').trim() : '';
+  return {
+    addresses: picked.filter((a) => a['addressChannel'] !== 'bankaccount'),
+    ...(bank ? { note: `IBAN${label ? ` ${label}` : ''}: ${String(bank['iban'])}` } : {}),
+  };
+}
+
 export async function renderBookCard(record: VcardRecord, avatarPath: string, avatarVersion: string): Promise<BookCard> {
   const vcardText = buildLookupVCard(record);
   return { uid: record.uid ?? '', vcardText, etag: await cardEtag(vcardText, avatarPath, avatarVersion), avatarPath, avatarVersion };
@@ -113,17 +128,19 @@ export async function loadBookCards(db: Firestore, tenantId: string): Promise<Bo
   const records: VcardRecord[] = [];
   for (const { kind, key, data } of subjects) {
     const raw = addressesByParent.get(`${kind}.${key}`) ?? [];
-    const addresses = projectAddressesForViewer(
+    const projected = projectAddressesForViewer(
       raw as unknown as AddressModel[], 'privileged', kind,
       kind === 'person' ? (data as Partial<PersonPrivacyPreferences>) : undefined,
       settings,
     ) as unknown as FsData[];
+    const { addresses, note } = lookupAddresses(projected);
     try {
       const record = toVcardRecord({
         kind, key, data, addresses,
         workrels: kind === 'person' ? workrelsBySubject.get(key) ?? [] : [],
         scope: LOOKUP_SCOPE, favoritesOnly: false,
       });
+      if (note) record.note = note;
       if (hasLookupChannel(record)) records.push(record);
     } catch (e) {
       // one malformed record must not stop the book; it is left out and named by key only
