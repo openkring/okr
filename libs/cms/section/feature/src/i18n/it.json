@@ -1825,6 +1825,27 @@
     "source": {
       "label": "Partenza",
       "helper": "Lascia vuoto per partire dalla posizione di chi guarda la pagina"
+    },
+    "fav_org": {
+      "label": "Organizzazione come preferita",
+      "helper": "L'indirizzo della tua organizzazione compare in cima alla selezione"
+    },
+    "fav_home": {
+      "label": "Il mio indirizzo come preferito",
+      "helper": "Ogni persona vede lì il proprio indirizzo, nessun altro"
+    },
+    "fav_locations": {
+      "label": "Altri preferiti",
+      "helper": "Questi luoghi compaiono in cima alla selezione"
+    },
+    "anchor": {
+      "label": "L'ora vale per",
+      "dep": "Part.",
+      "arr": "Arr."
+    },
+    "add_calendar": {
+      "label": "Offri l'inserimento nel calendario",
+      "helper": "Se hai un calendario, puoi inserirvi un collegamento"
     }
   },
   "departures": {

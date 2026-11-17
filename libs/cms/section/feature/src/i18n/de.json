@@ -1825,6 +1825,27 @@
     "source": {
       "label": "Start",
       "helper": "Leer lassen, dann startet die Suche beim Standort der Person, die die Seite ansieht"
+    },
+    "fav_org": {
+      "label": "Organisation als Favorit",
+      "helper": "Die Adresse deiner Organisation steht oben in der Auswahl"
+    },
+    "fav_home": {
+      "label": "Meine Adresse als Favorit",
+      "helper": "Jede Person sieht dort ihre eigene Adresse, sonst niemand"
+    },
+    "fav_locations": {
+      "label": "Weitere Favoriten",
+      "helper": "Diese Orte stehen oben in der Auswahl"
+    },
+    "anchor": {
+      "label": "Zeit gilt für",
+      "dep": "Ab",
+      "arr": "An"
+    },
+    "add_calendar": {
+      "label": "In Kalender eintragen anbieten",
+      "helper": "Wer einen Kalender hat, kann eine Verbindung dort eintragen"
     }
   },
   "departures": {

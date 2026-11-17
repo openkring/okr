@@ -1825,6 +1825,27 @@
     "source": {
       "label": "Start",
       "helper": "Leave empty to start from the viewer's current location"
+    },
+    "fav_org": {
+      "label": "Organisation as favourite",
+      "helper": "Your organisation's address is listed first in the selection"
+    },
+    "fav_home": {
+      "label": "My address as favourite",
+      "helper": "Everyone sees their own address there, nobody else"
+    },
+    "fav_locations": {
+      "label": "More favourites",
+      "helper": "These places are listed first in the selection"
+    },
+    "anchor": {
+      "label": "Time applies to",
+      "dep": "Dep.",
+      "arr": "Arr."
+    },
+    "add_calendar": {
+      "label": "Offer adding to calendar",
+      "helper": "Anyone with a calendar can add a connection to it"
     }
   },
   "departures": {

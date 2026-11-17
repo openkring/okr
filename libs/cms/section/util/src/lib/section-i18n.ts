@@ -410,6 +410,17 @@ export const SECTION_I18N_KEYS = {
   connections_destination_helper:           PFX + 'connections.destination.helper',
   connections_source_label:                 PFX + 'connections.source.label',
   connections_source_helper:                PFX + 'connections.source.helper',
+  connections_fav_org:                      PFX + 'connections.fav_org.label',
+  connections_fav_org_helper:               PFX + 'connections.fav_org.helper',
+  connections_fav_home:                     PFX + 'connections.fav_home.label',
+  connections_fav_home_helper:              PFX + 'connections.fav_home.helper',
+  connections_fav_locations:                PFX + 'connections.fav_locations.label',
+  connections_fav_locations_helper:         PFX + 'connections.fav_locations.helper',
+  connections_anchor:                       PFX + 'connections.anchor.label',
+  connections_anchor_dep:                   PFX + 'connections.anchor.dep',
+  connections_anchor_arr:                   PFX + 'connections.anchor.arr',
+  connections_add_calendar:                 PFX + 'connections.add_calendar.label',
+  connections_add_calendar_helper:          PFX + 'connections.add_calendar.helper',
 
   // departures (spec 1.130)
   departures_title:                         PFX + 'departures.title',
