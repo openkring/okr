@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, model, output, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { map, of } from 'rxjs';
-import { IonBadge, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonChip, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow, IonSegment, IonSegmentButton } from '@ionic/angular';
+import { IonBadge, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonChip, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonNote, IonRow, IonSegment, IonSegmentButton } from '@ionic/angular';
 
 import { ColorsIonic, PeopleNameDisplays } from '@okr/shared-categories';
 import {
@@ -41,7 +41,7 @@ const SEGMENT_FIELDS: Record<PeopleSegment, (keyof AvatarConfig)[]> = {
   imports: [
     SvgIconPipe,
     IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonButton, IonIcon,
-    IonSegment, IonSegmentButton, IonLabel, IonBadge, IonItem, IonChip,
+    IonSegment, IonSegmentButton, IonLabel, IonBadge, IonItem, IonChip, IonNote,
     CategoryOld, StringSelect, Checkbox, CheckboxGroup, TextInput, NumberInput, Color, ErrorNote
   ],
   styles: [`
@@ -86,6 +86,36 @@ const SEGMENT_FIELDS: Record<PeopleSegment, (keyof AvatarConfig)[]> = {
                       </ion-button>
                     }
                   </ion-col>
+                  @if(type() === 'group' && groupId()) {
+                    <!-- members of the group this section does not show -->
+                    <ion-col size="12">
+                      <ion-item lines="none">
+                        <div class="chips">
+                          @if(!isReadOnly()) {
+                            <ion-button fill="outline" (click)="excludeSelectClicked.emit()">
+                              <ion-icon slot="start" src="{{ 'eye-off' | svgIcon }}" />
+                              {{ i18n().select_exclude_member() }}
+                            </ion-button>
+                          }
+                          @for(person of excludedPersons(); track person.key) {
+                            <ion-chip color="medium">
+                              @if(isReadOnly()) {
+                                <ion-label>{{ personName(person) }}</ion-label>
+                              } @else {
+                                <ion-button fill="clear" (click)="onExcludedRemove(person.key)">
+                                  <ion-icon slot="start" src="{{ 'cancel' | svgIcon }}" />
+                                  <ion-label>{{ personName(person) }}</ion-label>
+                                </ion-button>
+                              }
+                            </ion-chip>
+                          }
+                        </div>
+                      </ion-item>
+                      @if(excludedPersons().length > 0) {
+                        <ion-item lines="none"><ion-note>{{ i18n().select_excluded_hint() }}</ion-note></ion-item>
+                      }
+                    </ion-col>
+                  }
                   @if(type() === 'persons') {
                     <ion-col size="12">
                       <ion-item lines="none">
@@ -292,6 +322,8 @@ export class PeopleConfiguration {
 
   public selectClicked = output<void>();
   public groupSelectClicked = output<void>();
+  /** pick a member of the group that this section should not show */
+  public excludeSelectClicked = output<void>();
   public responsibilitySelectClicked = output<void>();
   public responsibilityParentSelectClicked = output<void>();
 
@@ -302,6 +334,8 @@ export class PeopleConfiguration {
   protected readonly config = computed(() => normalizeAvatarConfig(this.formData()?.avatar));
   protected readonly persons = computed(() => this.formData()?.persons ?? []);
   protected readonly groupId = computed(() => this.formData()?.groupId ?? '');
+  /** members of the group this section hides (type 'group' only) */
+  protected readonly excludedPersons = computed(() => this.formData()?.excludedPersons ?? []);
   /** the chosen responsibilities; a legacy single `responsibilityId` is read as a list of one */
   protected readonly responsibilityIds = computed(() => getPeopleResponsibilityIds(this.formData()));
   /** the group whose active responsibilities follow the chosen ones ('group.<okey>'), or '' */
@@ -422,6 +456,10 @@ export class PeopleConfiguration {
 
   protected responsibilityName(id: string): string {
     return this.responsibilityNamesResource.value()?.[id] || id;
+  }
+
+  protected onExcludedRemove(key: string): void {
+    this.formData.update(vm => ({ ...vm, excludedPersons: (vm.excludedPersons ?? []).filter(p => p.key !== key) }));
   }
 
   protected onPersonRemove(index: number): void {

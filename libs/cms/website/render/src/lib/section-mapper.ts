@@ -1,7 +1,7 @@
 import type { ImageStyle } from '@okr/shared-models';
 import { imageCaption } from './image-caption';
 import type { PublicPerson } from './group-people';
-import { peopleSourceKey, peopleSourceOf } from './people-source';
+import { peopleExcludedKeys, peopleSourceKey, peopleSourceOf } from './people-source';
 
 export const IMGIX_BASE = 'https://bkaiser.imgix.net';
 
@@ -492,7 +492,9 @@ export function mapSection(
       // is a role's public alias (resolveRolePeople), and only when the section's info shows email.
       if (props['type'] === 'group' || props['type'] === 'responsibility') {
         const source = peopleSourceOf(s);
-        const resolved = (source ? people?.get(peopleSourceKey(source)) : undefined) ?? [];
+        const excluded = new Set(peopleExcludedKeys(s));
+        // members the section hides (group only) are dropped here: the group's list is shared by its sections
+        const resolved = ((source ? people?.get(peopleSourceKey(source)) : undefined) ?? []).filter((p) => !excluded.has(p.key));
         const info = (props['avatar'] as { info?: unknown } | undefined)?.info;
         const showEmail = props['type'] === 'responsibility'
           && Array.isArray(info) && (info.includes('email') || info.includes('emailLink'));

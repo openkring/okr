@@ -43,6 +43,22 @@ export function peopleSourceOf(section: SectionDoc | undefined): PeopleSource | 
 }
 
 /**
+ * The person keys a group people section hides (`excludedPersons`, the app's getPeopleExcludedKeys):
+ * only for type 'group'; trimmed, deduped, non-string and empty keys dropped. The group's members are
+ * resolved once per group and shared by every section of that group, so the filter is per section.
+ */
+export function peopleExcludedKeys(section: SectionDoc | undefined): string[] {
+  if (section?.type !== 'people') return [];
+  const props = (section.properties ?? {}) as Record<string, unknown>;
+  if (props['type'] !== 'group' || !Array.isArray(props['excludedPersons'])) return [];
+  const keys = (props['excludedPersons'] as unknown[])
+    .map((p) => (p && typeof p === 'object' ? (p as { key?: unknown }).key : undefined))
+    .filter((k): k is string => typeof k === 'string' && !!k.trim())
+    .map((k) => k.trim());
+  return [...new Set(keys)];
+}
+
+/**
  * The key of a source in the people map that `mapSection` / `renderSite` read: `group.<id>`,
  * `responsibility.<id>,<id>` or, with a parent, `responsibility.<id>,<id>|<parentKey>`.
  */

@@ -109,6 +109,21 @@ describe('mapSection people', () => {
     expect(out.persons).toEqual([anna]);
   });
 
+  it('a group section leaves out the members it excludes, per section', () => {
+    const ben: PublicPerson = { key: 'p2', firstName: 'Ben', lastName: 'Beispiel', label: '', showImage: false };
+    const members = new Map([['group.vorstand', [anna, ben]]]);
+    const hiding = people({ type: 'group', groupId: 'vorstand', excludedPersons: [{ key: ' p2 ' }, { key: '' }, 'junk'] });
+    expect((mapSection('s1', hiding, new Map(), sanitize, 'de', members) as { persons: PublicPerson[] }).persons).toEqual([anna]);
+    // another section of the same group still shows everybody
+    expect((mapSection('s2', people({ type: 'group', groupId: 'vorstand' }), new Map(), sanitize, 'de', members) as { persons: PublicPerson[] }).persons).toEqual([anna, ben]);
+  });
+
+  it('excludedPersons only applies to a group section', () => {
+    const s = people({ type: 'responsibility', responsibilityIds: ['r1'], excludedPersons: [{ key: 'p1' }] });
+    const out = mapSection('s1', s, new Map(), sanitize, 'de', new Map([['responsibility.r1', [anna]]])) as { persons: PublicPerson[] };
+    expect(out.persons).toEqual([anna]);
+  });
+
   it('a group section without resolved members renders no one', () => {
     const s = people({ type: 'group', groupId: 'vorstand', persons: [{ key: 'old', name1: 'Alt' }] });
     expect((mapSection('s1', s, new Map(), sanitize) as { persons: unknown[] }).persons).toEqual([]);

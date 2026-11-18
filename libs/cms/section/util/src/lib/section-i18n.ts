@@ -22,6 +22,8 @@ export const SECTION_I18N_KEYS = {
   select_responsibility:      PFX + 'select.responsibility',
   select_responsibility_parent:      PFX + 'select.responsibilityParent',
   select_responsibility_parent_chip: PFX + 'select.responsibilityParentChip',
+  select_exclude_member:      PFX + 'select.excludeMember',
+  select_excluded_hint:       PFX + 'select.excludedHint',
 
   view:                       PFX + 'view',
   edit:                       PFX + 'edit',

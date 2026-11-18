@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { AVATAR_CONFIG_SHAPE, AvatarConfig, NameDisplay } from '@okr/shared-models';
+import { AVATAR_CONFIG_SHAPE, AvatarConfig, AvatarInfo, NameDisplay } from '@okr/shared-models';
 
 import {
-  getPeopleAltText, getPeopleBgColor, getPeopleImgixParams, getPeopleImgRadius, getPeopleResponsibilityIds, getPeopleResponsibilityParentKey, getResponsibilityKeysUnderParent, mergeResponsibilityKeys, normalizeAvatarConfig, splitIntoRows, toHexColor
+  getPeopleAltText, getPeopleBgColor, getPeopleImgixParams, getPeopleExcludedKeys, getPeopleImgRadius, getPeopleResponsibilityIds, getPeopleResponsibilityParentKey, getResponsibilityKeysUnderParent, mergeResponsibilityKeys, normalizeAvatarConfig, splitIntoRows, toHexColor
 } from './people-section.util';
 
 const config = (patch: Partial<AvatarConfig> = {}): AvatarConfig => ({ ...AVATAR_CONFIG_SHAPE, ...patch });
@@ -199,5 +199,20 @@ describe('getResponsibilityKeysUnderParent', () => {
 describe('mergeResponsibilityKeys', () => {
   it('keeps the chosen first and lists each key once', () => {
     expect(mergeResponsibilityKeys(['head', 'x'], ['js', 'head', 't1'])).toEqual(['head', 'x', 'js', 't1']);
+  });
+});
+
+describe('getPeopleExcludedKeys', () => {
+  const avatar = (key: string): AvatarInfo => ({ key, name1: '', name2: '', label: '', modelType: 'person', type: '', subType: '' });
+
+  it('reads the trimmed, deduped keys of a group section', () => {
+    expect(getPeopleExcludedKeys({ type: 'group', excludedPersons: [avatar(' p1 '), avatar('p2'), avatar('p1'), avatar('')] })).toEqual(['p1', 'p2']);
+  });
+
+  it('hides nobody for another type or without a list', () => {
+    expect(getPeopleExcludedKeys({ type: 'responsibility', excludedPersons: [avatar('p1')] })).toEqual([]);
+    expect(getPeopleExcludedKeys({ excludedPersons: [avatar('p1')] })).toEqual([]);
+    expect(getPeopleExcludedKeys({ type: 'group' })).toEqual([]);
+    expect(getPeopleExcludedKeys(undefined)).toEqual([]);
   });
 });
