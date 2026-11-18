@@ -33,4 +33,5 @@ export * from './lib/lazy-service';
 export * from './lib/scroll-diagnostics';
 export * from './lib/model-selector';
 export * from './lib/tag-editor';
+export * from './lib/upload-presenter';
 export * from './lib/helper-visibility.service';

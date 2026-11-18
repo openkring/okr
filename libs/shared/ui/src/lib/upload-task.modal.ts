@@ -7,19 +7,15 @@ import { UploadTask, getDownloadURL } from 'firebase/storage';
 
 import { captureMessage } from '@sentry/angular';
 
-import { StorageBucket, attestAppCheck, uploadToFirebaseStorage } from '@okr/shared-config';
-import { dismissOverlay } from '@okr/shared-util-angular';
+import { attestAppCheck, uploadToFirebaseStorage } from '@okr/shared-config';
+import { dismissOverlay, type UploadEntry } from '@okr/shared-util-angular';
 import { describeUploadError, isRetryableUploadError } from '@okr/shared-util-core';
 
 import { Header } from './header';
 import { SvgIconPipe } from '@okr/shared-pipes';
 
-export interface UploadEntry {
-  file: File;
-  fullPath: string;
-  /** Target bucket; 'private' = write-only for clients, result is the fullPath (spec 1.82). */
-  bucket?: StorageBucket;
-}
+/** Re-exported for existing callers; the type lives with UPLOAD_PRESENTER in shared-util-angular. */
+export type { UploadEntry };
 
 /** One retry after a retryable failure (dropped connection, stale App Check token). */
 const MAX_UPLOAD_ATTEMPTS = 2;

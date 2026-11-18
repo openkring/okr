@@ -12,6 +12,7 @@
     "@okr/shared-categories": "*",
     "@okr/shared-config": "*",
     "@okr/shared-data-access": "*",
-    "@okr/shared-util-core": "*"
+    "@okr/shared-util-core": "*",
+    "@okr/shared-util-angular": "*"
   }
 }

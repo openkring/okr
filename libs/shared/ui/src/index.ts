@@ -85,6 +85,7 @@ export * from './lib/time-select.modal';
 export * from './lib/ui.util';
 export * from './lib/image-lightbox.modal';
 export * from './lib/upload-task.modal';
+export * from './lib/upload-presenter.service';
 export * from './lib/url-input';
 export * from './lib/video';
 export * from './lib/video-card';

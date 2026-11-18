@@ -3,24 +3,21 @@ import { inject, Injectable } from "@angular/core";
 import { Camera, CameraResultType, CameraSource, Photo } from "@capacitor/camera";
 import { Capacitor } from "@capacitor/core";
 import { FilePicker } from "@capawesome/capacitor-file-picker";
-import { ModalController } from "@ionic/angular";
 import { firstValueFrom } from "rxjs";
 
 import { attestAppCheck, ENV, isAttested, StorageBucket } from "@okr/shared-config";
 import { DocumentModel, DocumentModelName, IMAGE_STYLE_SHAPE, UserModel } from "@okr/shared-models";
-import { error } from "@okr/shared-util-angular";
+import { UPLOAD_PRESENTER, UploadEntry } from "@okr/shared-util-angular";
 import { extractCredit, getImgixJsonUrl, ImageCreditMetaData, isPhotoCancellation, sanitizeFileName, warn, withResolvedMimeType } from "@okr/shared-util-core";
 import { buildDocumentModel } from "@okr/content-document-util";
 import { DocumentService } from "@okr/content-document-data-access";
 import { DEFAULT_MIMETYPES } from "@okr/shared-constants";
-// eslint-disable-next-line @nx/enforce-module-boundaries -- known layering debt (2026-11-18): data-access opens ui modals; move the presentation to a feature/ui caller
-import { UploadEntry, UploadTaskModal, showZoomedImage } from "@okr/shared-ui";
 
 @Injectable({
     providedIn: 'root'
 })
 export class UploadService {
-  private readonly modalController = inject(ModalController);
+  private readonly presenter = inject(UPLOAD_PRESENTER);
   private readonly documentService = inject(DocumentService);
   private readonly httpClient = inject(HttpClient);
   private readonly env = inject(ENV);
@@ -75,20 +72,7 @@ export class UploadService {
     await this.attestBeforeUpload();
     // a HEIC photo picked in Chrome/Firefox has no type; Storage would store it without contentType
     const typedUploads = uploads.map(u => ({ ...u, file: withResolvedMimeType(u.file) }));
-    const modal = await this.modalController.create({
-      component: UploadTaskModal,
-      componentProps: { uploads: typedUploads, title }
-    });
-    modal.present();
-    try {
-      const { data, role } = await modal.onWillDismiss();
-      if (role === 'confirm') {
-        return data as (string | undefined)[];
-      }
-    } catch (ex) {
-      error(undefined, 'UploadService.uploadFiles -> ERROR: ' + JSON.stringify(ex));
-    }
-    return undefined;
+    return this.presenter.runUploads(typedUploads, title);
   }
 
   /**
@@ -248,6 +232,6 @@ export class UploadService {
   }
 
   public async showZoomedImage(url: string, title = 'Zoom', style = IMAGE_STYLE_SHAPE, altText = '', cssClass = 'modal-fixed-height'): Promise<void> {
-    await showZoomedImage(this.modalController, url, title, style, altText, cssClass);     
+    await this.presenter.showZoomedImage(url, title, style, altText, cssClass);     
   }
 }
