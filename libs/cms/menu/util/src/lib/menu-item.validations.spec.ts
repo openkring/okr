@@ -24,8 +24,8 @@ function menuItem(overrides: Partial<MenuItemModel> = {}): MenuItemModel {
 }
 
 /** The suite is static and takes the context the form passes it: tenants, tags and the child actions. */
-function menuItemValidations(model: MenuItemModel, childActions: Record<string, string> = {}) {
-  return suite(model, 'scs', '', childActions);
+function menuItemValidations(model: MenuItemModel, childActions: Record<string, string> = {}, childMenus: Record<string, string[]> = {}) {
+  return suite(model, 'scs', '', childActions, childMenus);
 }
 
 describe('menuItemValidations messages', () => {
@@ -133,6 +133,59 @@ describe('menuItemValidations: main menu layout', () => {
     expect(menuItemValidations(main({ submenuOffset: undefined })).hasErrors('submenuOffset')).toBe(false);
     for (const ok of [0, 5, 40]) {
       expect(menuItemValidations(main({ submenuOffset: ok })).hasErrors('submenuOffset'), String(ok)).toBe(false);
+    }
+  });
+});
+
+describe('menuItemValidations: static menu', () => {
+  const rows = (n: number) => Array.from({ length: n }, (_, i) => `row${i}`);
+  const root = (menuItems: string[], extra: Partial<MenuItemModel> = {}) => menuItem({ action: 'main', menuType: 'static', menuItems, ...extra });
+  const itemErrors = (model: MenuItemModel, childActions?: Record<string, string>, childMenus?: Record<string, string[]>) =>
+    menuItemValidations(model, childActions, childMenus).getErrors('menuItems');
+
+  it('accepts 8 rows, refuses 9', () => {
+    expect(itemErrors(root(rows(8)))).toEqual([]);
+    expect(itemErrors(root(rows(9)))).toContain('menuStaticTooManyItems');
+  });
+
+  it('refuses a sub with 3 children', () => {
+    const errors = itemErrors(root(['s']), { s: 'sub', a: 'navigate', b: 'navigate', c: 'navigate' }, { s: ['a', 'b', 'c'] });
+    expect(errors).toContain('menuStaticTooManyChildren');
+  });
+
+  it('does not count a divider child', () => {
+    expect(itemErrors(root(['s']), { s: 'sub', a: 'navigate', b: 'navigate', d: 'divider' }, { s: ['a', 'd', 'b'] })).toEqual([]);
+  });
+
+  it('refuses a nested sub', () => {
+    expect(itemErrors(root(['s']), { s: 'sub', t: 'sub' }, { s: ['t'] })).toContain('menuStaticNestedSubmenu');
+  });
+
+  it('refuses bullet size 40 and an unknown colour', () => {
+    const r = menuItemValidations(root(rows(2), { staticMenu: { bulletSize: 40, bulletColor: 'yellowish' } }));
+    expect(r.hasErrors('staticMenu.bulletSize')).toBe(true);
+    expect(r.getErrors('staticMenu.bulletColor')).toContain('menuStaticBulletColor');
+  });
+
+  it('accepts a name, a hex colour and size 6 to 32; absent fields never fail', () => {
+    for (const bulletColor of ['primary', '#ffeb3b', '#fb3']) {
+      expect(menuItemValidations(root(rows(2), { staticMenu: { bulletColor } })).hasErrors('staticMenu.bulletColor'), bulletColor).toBe(false);
+    }
+    for (const bulletSize of [6, 12, 32]) {
+      expect(menuItemValidations(root(rows(2), { staticMenu: { bulletSize } })).hasErrors('staticMenu.bulletSize'), String(bulletSize)).toBe(false);
+    }
+    expect(menuItemValidations(root(rows(2), { staticMenu: {} })).getErrors()).toEqual({});
+    expect(menuItemValidations(root(rows(2))).getErrors()).toEqual({});
+  });
+
+  it('leaves a left menu with 30 rows and a 3-child sub alone', () => {
+    const model = menuItem({ action: 'main', menuType: 'left', menuItems: [...rows(29), 's'] });
+    expect(itemErrors(model, { s: 'sub' }, { s: ['a', 'b', 'c'] })).toEqual([]);
+  });
+
+  it('has a German text for every static key', () => {
+    for (const key of ['menuStaticTooManyItems', 'menuStaticTooManyChildren', 'menuStaticNestedSubmenu', 'menuStaticBulletColor']) {
+      expect(validation[key], key).toBeTypeOf('string');
     }
   });
 });

@@ -6,18 +6,23 @@ import { enforce, omitWhen, staticSuite, test } from 'vest';
 // strings live. An '@'-prefixed message is instead looked up as a TOP-LEVEL bundle key
 // and silently misses — that is what rendered these four as empty error notes.
 
-import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, MAX_MENU_BAR_ITEMS, MAX_SUBMENU_OFFSET, SHORT_NAME_LENGTH } from '@okr/shared-constants';
+import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, MAX_MENU_BAR_ITEMS, MAX_STATIC_BULLET_SIZE, MAX_STATIC_MENU_ITEMS, MAX_STATIC_SUB_ITEMS, MAX_SUBMENU_OFFSET, MIN_STATIC_BULLET_SIZE, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { MenuItemModel } from '@okr/shared-models';
 import { booleanValidations, isArrayOfBaseProperties, isArrayOfStrings, numberValidations, stringValidations, urlValidations } from '@okr/shared-util-core';
 
 import { countBarItems } from './menu-bar.util';
+import { isStaticBulletColor } from './menu-static.util';
 
 /**
  * `childActions` maps the `name` of each child row of a root menu to its `action`. The suite cannot
  * look the documents up, so the form passes them in; a child that is missing from it is not checked
- * for a submenu and counts as a row.
+ * for a submenu and counts as a row. `childMenus` maps the `name` of a submenu to its own `menuItems`;
+ * the static menu checks need it to look one level down.
  */
-export const menuItemValidations = staticSuite((model: MenuItemModel, tenants: string, tags: string, childActions: Record<string, string> = {}) => {
+export const menuItemValidations = staticSuite((
+  model: MenuItemModel, tenants: string, tags: string,
+  childActions: Record<string, string> = {}, childMenus: Record<string, string[]> = {},
+) => {
   stringValidations('okey', model.okey);
   stringValidations('name', model.name, SHORT_NAME_LENGTH);
 //  tenantValidations(model.tenants);
@@ -82,6 +87,33 @@ export const menuItemValidations = staticSuite((model: MenuItemModel, tenants: s
     // a segment says «one of these peers is selected»; it has no dropdown for a `sub` row
     test('menuItems', 'menuSegmentedNoSubmenus', () => {
       enforce(children.some(name => childActions[name] === 'sub')).isFalsy();
+    });
+  });
+
+  // the static menu: one level of submenus, at most 8 rows and 2 children per submenu
+  omitWhen(model.action !== 'main' || model.menuType !== 'static', () => {
+    const submenus = children.filter(name => childActions[name] === 'sub');
+    const grandchildren = (name: string): string[] => (Array.isArray(childMenus[name]) ? childMenus[name] : []);
+    test('menuItems', 'menuStaticTooManyItems', () => {
+      enforce(countBarItems(children, childActions)).lessThanOrEquals(MAX_STATIC_MENU_ITEMS);
+    });
+    // dividers, call/toggle/workflow rows and account keys take no slot; only pages count
+    test('menuItems', 'menuStaticTooManyChildren', () => {
+      enforce(submenus.every(name => grandchildren(name).filter(c => childActions[c] === 'navigate' || childActions[c] === 'browse').length <= MAX_STATIC_SUB_ITEMS)).isTruthy();
+    });
+    test('menuItems', 'menuStaticNestedSubmenu', () => {
+      enforce(submenus.some(name => grandchildren(name).some(c => childActions[c] === 'sub'))).isFalsy();
+    });
+  });
+
+  // optional, and absent on every existing doc — only checked once it is set. The enum fields are
+  // selector values and take no length cap (see the building-forms skill).
+  omitWhen(model.staticMenu?.bulletSize === undefined, () => {
+    numberValidations('staticMenu.bulletSize', model.staticMenu?.bulletSize, true, MIN_STATIC_BULLET_SIZE, MAX_STATIC_BULLET_SIZE);
+  });
+  omitWhen(model.staticMenu?.bulletColor === undefined, () => {
+    test('staticMenu.bulletColor', 'menuStaticBulletColor', () => {
+      enforce(typeof model.staticMenu?.bulletColor === 'string' && isStaticBulletColor(model.staticMenu.bulletColor)).isTruthy();
     });
   });
 
