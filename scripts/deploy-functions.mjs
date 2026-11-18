@@ -88,13 +88,39 @@ function upgradeFailedHelp(stage) {
 }
 
 // ---- Google APIs (REST with the gcloud user token) ---------------------------------------------
+// A gcloud user token lives ~60 min, a full deploy runs longer: fetch a new one after 45 min and
+// after a 401. A dropped connection (fetch failed) is retried too. All calls are reads or a commit
+// of whole record documents, so a repeat is harmless.
+const TOKEN_TTL_MS = 45 * 60 * 1000;
+const GAPI_ATTEMPTS = 3;
 let token;
-const auth = () => (token ??= capture('gcloud', ['auth', 'print-access-token']).trim());
+let tokenAt = 0;
+function auth(fresh = false) {
+  if (fresh || !token || Date.now() - tokenAt > TOKEN_TTL_MS) {
+    token = capture('gcloud', ['auth', 'print-access-token']).trim();
+    tokenAt = Date.now();
+  }
+  return token;
+}
 async function gapi(url, init = {}) {
-  const res = await fetch(url, { ...init, headers: { Authorization: `Bearer ${auth()}`, 'x-goog-user-project': PROJECT, 'Content-Type': 'application/json', ...init.headers } });
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(`${init.method ?? 'GET'} ${url.split('?')[0]} → ${res.status} ${body.error?.message ?? ''}`);
-  return body;
+  const what = `${init.method ?? 'GET'} ${url.split('?')[0]}`;
+  let fresh = false;
+  for (let attempt = 1; ; attempt++) {
+    let res;
+    try {
+      res = await fetch(url, { ...init, headers: { Authorization: `Bearer ${auth(fresh)}`, 'x-goog-user-project': PROJECT, 'Content-Type': 'application/json', ...init.headers } });
+    } catch (e) {
+      if (attempt >= GAPI_ATTEMPTS) throw e;
+      console.warn(`  ${what}: ${e.message} — retrying (${attempt}/${GAPI_ATTEMPTS - 1})`);
+      await sleep(10 * attempt);
+      continue;
+    }
+    fresh = res.status === 401;
+    if (fresh && attempt < GAPI_ATTEMPTS) continue;
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(`${what} → ${res.status} ${body.error?.message ?? ''}`);
+    return body;
+  }
 }
 
 /** Live functions in all regions: { name: GCF v2 function }. */
