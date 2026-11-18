@@ -2,11 +2,11 @@ import { computed, effect, inject, Injectable, Injector, PLATFORM_ID, signal, un
 import { isPlatformBrowser } from '@angular/common';
 
 import { AppStore } from '@okr/shared-feature';
-import { MenuType } from '@okr/shared-models';
+import { MenuType, StaticMenuConfig } from '@okr/shared-models';
 import { DEFAULT_SUBMENU_OFFSET } from '@okr/shared-constants';
 import { persistedSignal } from '@okr/shared-util-angular';
 
-import { isBarActive } from '@okr/cms-menu-util';
+import { isBarActive, isStaticActive, resolveStaticMenu } from '@okr/cms-menu-util';
 
 import { MenuItemsStore } from './menu-items.store';
 
@@ -63,20 +63,46 @@ export class MenuLayout {
   public readonly barActive = computed(() => isBarActive(this.menuType(), this.isWide()));
   /** Indent of submenu rows and gap below a dropdown, in px. */
   public readonly submenuOffset = computed(() => this.root()?.submenuOffset ?? DEFAULT_SUBMENU_OFFSET);
-  /** Value for the outlet's `top` while the bar is shown; null while there is no bar. */
-  public readonly barTop = computed<string | null>(() => this.barActive() ? BAR_TOP : null);
+  /** Whether the static layout (fixed top block, no sidebar) is shown on the current width. */
+  public readonly staticActive = computed(() => isStaticActive(this.menuType(), this.isWide()));
+  /** Whether the shell's sidebar is replaced by a bar or by the static block. */
+  public readonly sidebarReplaced = computed(() => this.barActive() || this.staticActive());
+  /** The static layout's settings with defaults filled in. */
+  public readonly staticMenu = computed<Required<StaticMenuConfig>>(() => resolveStaticMenu(this.root()));
+
+  /** Measured height of the static block in px; reported by the block, reset to 0 when it ends. */
+  private readonly staticHeight = signal(0);
+
+  /**
+   * Value for the outlet's `top` while a bar or the static block is shown; null otherwise.
+   * Gated on `staticActive()`, so a stored height never leaks into another layout.
+   */
+  public readonly barTop = computed<string | null>(() => {
+    if (this.barActive()) return BAR_TOP;
+    if (this.staticActive()) return `calc(${this.staticHeight()}px + var(--ion-safe-area-top, 0px))`;
+    return null;
+  });
 
   constructor() {
     if (this.isBrowser && typeof window.matchMedia === 'function') {
       // The service lives as long as the app, so the listener is never removed.
       window.matchMedia(MENU_WIDE_QUERY).addEventListener('change', event => this.isWide.set(event.matches));
     }
+    // A height measured in an earlier static phase must not show when static returns.
+    effect(() => {
+      if (!this.staticActive()) this.staticHeight.set(0);
+    });
     // Only a real document value updates the hint: while the list loads, root() is undefined and
     // the hint must keep what the last visit stored, not be overwritten with the `left` default.
     effect(() => {
       const root = this.root();
       if (root) this.hint.set(root.menuType ?? 'left');
     });
+  }
+
+  /** Called by the static block with its measured height (0 when it is destroyed). */
+  public setStaticHeight(px: number): void {
+    this.staticHeight.set(px);
   }
 
   /** Connects to the menu list. Idempotent; the shell calls it once the menu tree is mounted. */

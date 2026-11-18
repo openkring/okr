@@ -3,7 +3,7 @@ import { Injector, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
 import { AppStore } from '@okr/shared-feature';
-import { MenuItemModel, MenuType } from '@okr/shared-models';
+import { MenuItemModel, MenuType, StaticMenuConfig } from '@okr/shared-models';
 
 import { MenuItemsStore } from './menu-items.store';
 import { MenuLayout } from './menu-layout.service';
@@ -22,17 +22,31 @@ function storedHint(): unknown {
   return raw === null ? undefined : JSON.parse(raw).v;
 }
 
-function rootDoc(menuType?: MenuType): MenuItemModel {
+function rootDoc(menuType?: MenuType, staticMenu?: StaticMenuConfig): MenuItemModel {
   const root = new MenuItemModel(tenantId);
   root.name = `main_${tenantId}`;
   root.action = 'main';
   root.menuType = menuType;
+  root.staticMenu = staticMenu;
   return root;
 }
 
 describe('MenuLayout', () => {
   const menuItems = signal<MenuItemModel[] | undefined>(undefined);
   const createStore = vi.fn(() => ({ menuItems }));
+  let onWidthChange: (event: { matches: boolean }) => void = () => undefined;
+
+  /** jsdom has no matchMedia: define it (configurable) so the service reads this width; call before createLayout(). */
+  function stubWidth(wide: boolean): void {
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      writable: true,
+      value: vi.fn(() => ({
+        matches: wide,
+        addEventListener: (_: string, cb: (event: { matches: boolean }) => void) => { onWidthChange = cb; },
+      })),
+    });
+  }
 
   /** Builds the service the way the shell does; the store exists only once `start()` asks for it. */
   function createLayout(): MenuLayout {
@@ -62,6 +76,8 @@ describe('MenuLayout', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.restoreAllMocks();
+    delete (window as { matchMedia?: unknown }).matchMedia;
   });
 
   it('uses the stored hint until the root document has arrived', () => {
@@ -135,5 +151,49 @@ describe('MenuLayout', () => {
 
     expect(get.mock.calls.filter(([token]) => token === MenuItemsStore)).toHaveLength(1);
     expect(createStore).toHaveBeenCalledTimes(1);
+  });
+
+  it('static on a wide screen replaces the sidebar but is no bar', () => {
+    stubWidth(true); const layout = createLayout(); layout.start();
+    menuItems.set([rootDoc('static')]); TestBed.tick();
+    expect(layout.staticActive()).toBe(true);
+    expect(layout.barActive()).toBe(false);
+    expect(layout.sidebarReplaced()).toBe(true);
+  });
+
+  it('static on a narrow screen is the sidebar', () => {
+    stubWidth(false); const layout = createLayout(); layout.start();
+    menuItems.set([rootDoc('static')]); TestBed.tick();
+    expect(layout.sidebarReplaced()).toBe(false);
+    expect(layout.barTop()).toBeNull();
+  });
+
+  it('barTop follows the measured static height', () => {
+    stubWidth(true); const layout = createLayout(); layout.start();
+    menuItems.set([rootDoc('static')]); layout.setStaticHeight(212); TestBed.tick();
+    expect(layout.barTop()).toBe('calc(212px + var(--ion-safe-area-top, 0px))');
+  });
+
+  it('drops the offset at once when the type leaves static or the screen narrows', () => {
+    stubWidth(true); const layout = createLayout(); layout.start();
+    menuItems.set([rootDoc('static')]); layout.setStaticHeight(212); TestBed.tick();
+    onWidthChange({ matches: false }); TestBed.tick();
+    expect(layout.barTop()).toBeNull();
+    onWidthChange({ matches: true }); menuItems.set([rootDoc('left')]); TestBed.tick();
+    expect(layout.barTop()).toBeNull();
+  });
+
+  it('forgets the measured height when static ends, so re-entering shows no stale offset', () => {
+    stubWidth(true); const layout = createLayout(); layout.start();
+    menuItems.set([rootDoc('static')]); layout.setStaticHeight(212); TestBed.tick();
+    menuItems.set([rootDoc('left')]); TestBed.tick();
+    menuItems.set([rootDoc('static')]); TestBed.tick();
+    expect(layout.barTop()).toBe('calc(0px + var(--ion-safe-area-top, 0px))');
+  });
+
+  it('resolves the static config with defaults', () => {
+    stubWidth(true); const layout = createLayout(); layout.start();
+    menuItems.set([rootDoc('static', { bulletShape: 'round' })]); TestBed.tick();
+    expect(layout.staticMenu()).toMatchObject({ bulletShape: 'round', bulletSize: 12 });
   });
 });
