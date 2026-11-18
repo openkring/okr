@@ -7,7 +7,7 @@ describe('log.util', () => {
 
   beforeEach(() => {
     // Create a fresh spy for each test
-    mockConsoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    mockConsoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     vi.clearAllMocks();
   });
 

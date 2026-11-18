@@ -55,7 +55,7 @@ describe('alert.util', () => {
 
   describe('error', () => {
     beforeEach(() => {
-      vi.spyOn(console, 'error').mockImplementation(() => {});
+      vi.spyOn(console, 'error').mockImplementation(() => undefined);
     });
 
     it('should log the raw message in debug mode', () => {

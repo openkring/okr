@@ -1,3 +1,5 @@
+import { Injector, runInInjectionContext } from '@angular/core';
+import { TranslocoService } from '@jsverse/transloco';
 import { BehaviorSubject, Observable, Subject, of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -19,7 +21,8 @@ vi.mock('@okr/shared-models', async (importOriginal) => ({
   I18nTenantOverrideCollection: 'i18nTenantOverride',
 }));
 
-import { I18nOverrideService } from './i18n-override.service';
+import { FirestoreService } from './firestore.service';
+import { APP_STORE_MIN, I18nOverrideService } from './i18n-override.service';
 
 function makeService(overrides: unknown[] = [], langChanges$: Observable<string> = mockLangChanges$) {
   const translocoService = {
@@ -39,11 +42,14 @@ function makeService(overrides: unknown[] = [], langChanges$: Observable<string>
     currentUser: vi.fn(() => ({ okey: 'u1' })),
     env: { tenantId: 'scs' },
   };
-  const svc = new I18nOverrideService(
-    translocoService as any,
-    firestoreService as any,
-    appStore as any,
-  );
+  const injector = Injector.create({
+    providers: [
+      { provide: TranslocoService, useValue: translocoService },
+      { provide: FirestoreService, useValue: firestoreService },
+      { provide: APP_STORE_MIN, useValue: appStore },
+    ],
+  });
+  const svc = runInInjectionContext(injector, () => new I18nOverrideService());
   return { svc, translocoService, firestoreService };
 }
 

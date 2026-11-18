@@ -4,6 +4,7 @@ import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 import { MatrixMessage, MatrixRoom, TypingNotification } from '@okr/shared-models';
+// eslint-disable-next-line @nx/enforce-module-boundaries -- known layering debt (2026-11-18): reaches up to AppStore; replace with an injection token like APP_STORE_MIN
 import { AppStore } from '@okr/shared-feature';
 import { debugMessage } from '@okr/shared-util-core';
 import { effectiveUnreadCount, flaggedUnreadFrom, isRoomClassifiable, MATRIX_FAVOURITE_TAG, MARKED_UNREAD_EVENT, OKR_TENANT_EVENT, UNREAD_FROM_EVENT } from '@okr/chat-util';

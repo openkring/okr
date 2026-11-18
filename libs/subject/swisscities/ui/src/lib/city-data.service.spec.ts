@@ -7,7 +7,7 @@ describe('CityDataService', () => {
   // Vitest 4 returns the existing spy on a re-spied method, so calls would carry over.
   afterEach(() => vi.restoreAllMocks());
 
-  function make(platform: string = 'browser') {
+  function make(platform = 'browser') {
     TestBed.configureTestingModule({
       providers: [CityDataService, { provide: PLATFORM_ID, useValue: platform }],
     });

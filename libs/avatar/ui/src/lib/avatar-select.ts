@@ -7,7 +7,7 @@ import { AvatarInfo, ColorIonic } from '@okr/shared-models';
 import { CategoryPlainNamePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { coerceBoolean } from '@okr/shared-util-core';
 
-import { AvatarPipe } from '@okr/avatar-ui';
+import { AvatarPipe } from './avatar.pipe';
 
 @Component({
   selector: 'okr-avatar-select',

@@ -104,6 +104,7 @@ export function isRetryableHere(err: PingenError): boolean {
 
 /** A safe file name; on staging the recipient's name, so Pingen's simulation names work with test persons. */
 export function sendingFileName(env: 'staging' | 'production', id: string, recipientName: string): string {
+  // eslint-disable-next-line no-control-regex -- intentionally strips control characters from file names
   const clean = (s: string) => s.replace(/[\\/:*?"<>|\u0000-\u001f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
   const base = env === 'staging' ? clean(recipientName) : '';
   return `${base || id.replace(/[^A-Za-z0-9_.-]+/g, '_') || 'brief'}.pdf`;

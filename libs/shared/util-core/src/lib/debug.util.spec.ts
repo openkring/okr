@@ -38,7 +38,7 @@ describe('debug.util', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockConsoleLog = vi.spyOn(console, 'log').mockImplementation(() => {});
+    mockConsoleLog = vi.spyOn(console, 'log').mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -85,7 +85,7 @@ describe('debug.util', () => {
     });
 
     it('should debug function basic test', () => {
-        const mockConsoleLog = vi.spyOn(console, 'log').mockImplementation(() => {});
+        const mockConsoleLog = vi.spyOn(console, 'log').mockImplementation(() => undefined);
         
         const user = {
             showDebugInfo: true

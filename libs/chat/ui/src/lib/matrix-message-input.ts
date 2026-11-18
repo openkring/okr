@@ -5,6 +5,7 @@ import {  IonTextarea, IonButton, IonIcon, ActionSheetController, ActionSheetOpt
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, QuickEntryService } from '@okr/shared-util-angular';
+// eslint-disable-next-line @nx/enforce-module-boundaries -- known layering debt (2026-11-18): a ui component injecting AppStore/ModelSelectService; move the calls to the feature store
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { ButtonCopy, DateTimeSelectModal } from '@okr/shared-ui';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';

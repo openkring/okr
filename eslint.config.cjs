@@ -56,6 +56,19 @@ module.exports = [
         {
           enforceBuildableLibDependency: true,
           allow: [],
+          // Nx flags a static import of a lib that the SAME project also import()s anywhere. This repo
+          // decides lazy loading per FILE (a store import()s a modal or matrix-js-sdk's barrel; another
+          // file of the project imports the lib statically on a page that needs it), so for these
+          // libs the check fired on deliberate patterns (2026-11-18, 26 errors). The bundle guard is
+          // the perf-budget gate + scripts/bundle-closure.mjs (lazy-loading skill), not this check.
+          // Do not add a lib here to silence a NEW error: first check whether its import() buys
+          // anything — an import() of a lib the chunk already binds statically is dead weight.
+          checkDynamicDependenciesExceptions: [
+            '@okr/auth-feature', '@okr/calendar-calevent-feature', '@okr/calendar-course-ui', '@okr/chat-data-access',
+            '@okr/cms-section-feature', '@okr/content-pdf-template-ui', '@okr/finance-payment-ui', '@okr/forms-ui',
+            '@okr/forms-util', '@okr/games-jasstafel-ui', '@okr/project-task-ui', '@okr/shared-config',
+            '@okr/tenant-feature', '@okr/trip-ui',
+          ],
           depConstraints: [
             // Type-based layering (existing)
             { sourceTag: 'type:app', onlyDependOnLibsWithTags: ['type:feature', 'type:ui', 'type:data-access', 'type:util', 'type:model', 'type:constants', 'type:config'] },
@@ -87,7 +100,9 @@ module.exports = [
             { sourceTag: 'scope:membership', onlyDependOnLibsWithTags: [...SCOPE_BASE('membership'), 'scope:address', 'scope:chat', 'scope:finance', 'scope:ownership', 'scope:person', 'scope:swisscities', 'scope:vcard'] },
             // scope:course — spec 1.132: the «Kurse» chip of a group calendar asks CourseService (data-access only), through a
             // DYNAMIC import (lazyService), so the course libs stay out of this chunk's static graph.
-            { sourceTag: 'scope:calevent', onlyDependOnLibsWithTags: [...SCOPE_BASE('calevent'), 'scope:alias', 'scope:chat', 'scope:course', 'scope:invitation', 'scope:location', 'scope:membership', 'scope:mobility'] },
+            // scope:user — the calevent store marks an event's activity as seen through SeenService
+            // (user data-access), the per-user ledger behind the unread-activity badge.
+            { sourceTag: 'scope:calevent', onlyDependOnLibsWithTags: [...SCOPE_BASE('calevent'), 'scope:alias', 'scope:chat', 'scope:course', 'scope:invitation', 'scope:location', 'scope:membership', 'scope:mobility', 'scope:user'] },
             // Shared scope for cross-domain utilities/models. Deliberately NOT given the
             // cross-cutting set: shared sits below the domains, so what it reaches upward is
             // the interesting part and stays enumerated.
@@ -143,6 +158,8 @@ module.exports = [
   },
 
   {
-    ignores: ['node_modules/', 'dist/', 'coverage/', 'apps/*/node_modules/', 'libs/*/dist/', '.angular', '.github', '.idx', '.nx', '.vscode', 'tmp', '**/android', '**/ios', '**/web', '**/test-setup.ts', '**/vite.config.*.timestamp*', '**/vitest.config.*.timestamp*'],
+    // apps/functions/**/*.html are Handlebars templates and **/fixtures/** are test inputs — neither
+    // is an Angular template, so the angular-template parser would only misreport them.
+    ignores: ['apps/functions/src/**/*.html', '**/fixtures/**', 'node_modules/', 'dist/','coverage/', 'apps/*/node_modules/', 'libs/*/dist/', '.angular', '.github', '.idx', '.nx', '.vscode', 'tmp', '**/android', '**/ios', '**/web', '**/test-setup.ts', '**/vite.config.*.timestamp*', '**/vitest.config.*.timestamp*'],
   },
 ];

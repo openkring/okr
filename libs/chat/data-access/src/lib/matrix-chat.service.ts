@@ -9,6 +9,7 @@ import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, TypingNotification, UserModel } from '@okr/shared-models';
+// eslint-disable-next-line @nx/enforce-module-boundaries -- known layering debt (2026-11-18): reaches up to AppStore; replace with an injection token like APP_STORE_MIN
 import { AppStore } from '@okr/shared-feature';
 import { ChatStatusService } from '@okr/shared-data-access';
 import { checkVideoLimits, debugData, debugMessage, MAX_CHAT_VIDEO_BYTES } from '@okr/shared-util-core';
@@ -852,7 +853,7 @@ export class MatrixChatService {
    * @param size the desired size of the avatar (default: 96) - Matrix can generate different sizes from the original
    * @returns the avatar url of the user, or undefined if not available
    */
-  public getAvatarUrl(user?: User, size: number = 96): string | undefined {
+  public getAvatarUrl(user?: User, size = 96): string | undefined {
     return mxcAvatarHttpUrl(this.client, user, size);
   }
 
@@ -1392,7 +1393,7 @@ export class MatrixChatService {
   /**
    * Send typing notification
    */
-  async sendTyping(roomId: string, isTyping: boolean, timeoutMs: number = 30000): Promise<void> {
+  async sendTyping(roomId: string, isTyping: boolean, timeoutMs = 30000): Promise<void> {
     if (!this.client) return;
     await this.client.sendTyping(roomId, isTyping, timeoutMs);
   }
@@ -1688,7 +1689,7 @@ export class MatrixChatService {
   /**
    * Search for users (if supported by homeserver)
    */
-  async searchUsers(searchTerm: string, limit: number = 10): Promise<any[]> {
+  async searchUsers(searchTerm: string, limit = 10): Promise<any[]> {
     if (!this.client) throw new Error('Client not initialized');
 
     try {
@@ -1888,7 +1889,7 @@ export class MatrixChatService {
   /**
    * Get the current user's avatar URL
    */
-  getUserAvatarUrl(width: number = 96, height: number = 96): string | undefined {
+  getUserAvatarUrl(width = 96, height = 96): string | undefined {
     if (!this.client) return undefined;
 
     const userId = this.client.getUserId();

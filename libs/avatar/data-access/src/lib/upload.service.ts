@@ -13,6 +13,7 @@ import { extractCredit, getImgixJsonUrl, ImageCreditMetaData, isPhotoCancellatio
 import { buildDocumentModel } from "@okr/content-document-util";
 import { DocumentService } from "@okr/content-document-data-access";
 import { DEFAULT_MIMETYPES } from "@okr/shared-constants";
+// eslint-disable-next-line @nx/enforce-module-boundaries -- known layering debt (2026-11-18): data-access opens ui modals; move the presentation to a feature/ui caller
 import { UploadEntry, UploadTaskModal, showZoomedImage } from "@okr/shared-ui";
 
 @Injectable({

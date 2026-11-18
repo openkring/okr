@@ -209,9 +209,11 @@ export const ResourceStore = signalStore(
         const { data, role } = await modal.onDidDismiss();
         if (role === 'confirm' && data && !readOnly) {
           if (isResource(data, store.tenantId())) {
-            resource.okey === '' ?
-              await store.resourceService.create(data, store.currentUser()) :
+            if (resource.okey === '') {
+              await store.resourceService.create(data, store.currentUser());
+            } else {
               await store.resourceService.update(data, store.currentUser());
+            }
             store.appStore.reloadResources();
           }
         }

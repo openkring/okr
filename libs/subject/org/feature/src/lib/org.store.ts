@@ -210,9 +210,11 @@ export const OrgStore = signalStore(
       const { data, role } = await modal.onDidDismiss();
       if (role === 'confirm' && data && !readOnly) {
         if (isOrg(data, store.tenantId())) {
-          data.okey?.length === 0 ? 
-            await store.orgService.create(data, store.currentUser()) : 
+          if (data.okey?.length === 0) {
+            await store.orgService.create(data, store.currentUser());
+          } else {
             await store.orgService.update(data, store.currentUser());
+          }
           this.reload();
         }
       }

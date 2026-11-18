@@ -128,9 +128,11 @@ export const LocationStore = signalStore(
               console.warn('LocationStore.edit: location conversion failed, saving without enrichment', error);
               await store.alertService.showToast(store.i18n.convert_error());
             }
-            data.okey?.length > 0 ?
-              await store.locationService.update(data, store.currentUser()) :
+            if (data.okey?.length > 0) {
+              await store.locationService.update(data, store.currentUser());
+            } else {
               await store.locationService.create(data, store.currentUser());
+            }
           }
         }
         store.locationsResource.reload();

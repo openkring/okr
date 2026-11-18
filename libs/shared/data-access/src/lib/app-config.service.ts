@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { FirestoreService } from '@okr/shared-data-access';
+import { FirestoreService } from './firestore.service';
 import { AppConfig, AppConfigCollection, FileTransferLimits } from '@okr/shared-models';
 import { I18nService } from "@okr/shared-i18n";
 

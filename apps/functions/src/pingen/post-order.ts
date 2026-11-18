@@ -345,12 +345,11 @@ export async function withPostOrder<T>(env: QuoteEnv, args: PostOrderArgs, work:
   let entryId: string | undefined;
   let deducting = false;
   try {
-    let post: MailingPost | undefined;
     // insufficient credit surfaces as the port's failed-precondition
     deducting = true;
     const entry = await port.deduct(args.tenantId, { letters: computed.letters, pages: computed.pages, reference, actor: args.actor });
     entryId = entry.entryId;
-    post = {
+    const post: MailingPost = {
       via: 'pingen', options: args.post.options, recipients: [...new Set(computed.payload.recipients)].sort(),
       letters: computed.letters, abroad: computed.abroad, pages: computed.pages, total: computed.total,
       creditEntryId: entry.entryId, acceptedBy: args.actor, acceptedAt: args.nowIso,

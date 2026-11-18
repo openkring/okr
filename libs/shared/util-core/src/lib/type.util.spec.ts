@@ -686,8 +686,8 @@ describe('type.util', () => {
       });
 
       it('should identify functions', () => {
-        expect(isFunction(() => {})).toBe(true);
-        expect(isFunction(function() {})).toBe(true);
+        expect(isFunction(() => undefined)).toBe(true);
+        expect(isFunction(function() { /* intentionally empty */ })).toBe(true);
         expect(isFunction('not function')).toBe(false);
       });
 

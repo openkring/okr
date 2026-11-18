@@ -63,7 +63,7 @@ describe('phone.util', () => {
 
     it('should handle other errors and call console.warn', () => {
       const error = new Error('Other error');
-      const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const spy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
       (parsePhoneNumberWithError as any).mockImplementation(() => { throw error; });
 
       const result = parsePhoneNumber('invalid', 'CH');

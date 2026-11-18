@@ -7,7 +7,7 @@ import { OptionalCardHeader, Spinner } from "@okr/shared-ui";
 import { AppStore } from '@okr/shared-feature';
 
 import { PersonsWidget } from '@okr/cms-section-ui';
-import { SectionViewModal } from '@okr/cms-section-feature';
+import { SectionViewModal } from './section-view.modal';
 import { SectionService } from '@okr/cms-section-data-access';
 
 import { PeopleSectionStore } from './people-section.store';

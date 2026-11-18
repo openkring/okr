@@ -53,7 +53,7 @@ export const FolderStore = signalStore(
       params: () => ({ folderKey: store.folderKey(), currentUser: store.appStore.currentUser() }),
       stream: ({ params }) => {
         const key = params.folderKey;
-        if (!key) return new Observable<FolderModel>(() => {});
+        if (!key) return new Observable<FolderModel>(() => { /* no-op: never emits while no key is set */ });
         return store.folderService.read(key).pipe(
           debugItemLoaded('FolderStore.folder', params.currentUser)
         );
@@ -103,9 +103,11 @@ export const FolderStore = signalStore(
       modal.present();
       const { data, role } = await modal.onDidDismiss();
       if (role === 'confirm' && data && !readOnly) {
-        data.okey?.length === 0
-          ? await store.folderService.create(data, store.currentUser())
-          : await store.folderService.update(data, store.currentUser());
+        if (data.okey?.length === 0) {
+          await store.folderService.create(data, store.currentUser());
+        } else {
+          await store.folderService.update(data, store.currentUser());
+        }
         this.reload();
       }
     },

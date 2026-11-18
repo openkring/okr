@@ -301,30 +301,38 @@ export function newAvatarInfo(key: string, name1: string, name2: string, modelTy
 export function getAvatarInfo(model?: PersonModel | OrgModel | ResourceModel | UserModel | GroupModel | AccountModel | MembershipModel, modelType?: 'person' | 'org' | 'resource' | 'user' | 'user-person' | 'group' | 'account' | 'membership'): AvatarInfo | undefined {
   if (!model || !modelType) return undefined;
   switch (modelType) {
-    case 'person':
+    case 'person': {
       const person = model as PersonModel;
       return newAvatarInfo(person.okey, person.firstName, person.lastName, 'person', person.gender, '', person.firstName + ' ' + person.lastName);
-    case 'org':
+    }
+    case 'org': {
       const org = model as OrgModel;
       return newAvatarInfo(org.okey, '', org.name, 'org', org.type, '', org.name);
-    case 'group':
+    }
+    case 'group': {
       const group = model as GroupModel;
       return newAvatarInfo(group.okey, '', group.name, 'group', 'group', '', group.name);
-    case 'resource':
+    }
+    case 'resource': {
       const resource = model as ResourceModel;
       return newAvatarInfo(resource.okey, '', resource.name, 'resource', resource.type, resource.subType, resource.name);
-    case 'membership':
+    }
+    case 'membership': {
       const member = model as MembershipModel;
       return newAvatarInfo(member.memberKey, member.memberName1, member.memberName2, member.memberModelType, member.memberType, '', '');
-    case 'user':
+    }
+    case 'user': {
       const user = model as UserModel;
       return newAvatarInfo(user.okey, user.firstName, user.lastName, 'user', '', '', user.firstName + ' ' + user.lastName);
-    case 'user-person':
+    }
+    case 'user-person': {
       const u_p = model as UserModel;
       return newAvatarInfo(u_p.personKey, u_p.firstName, u_p.lastName, 'person', '', '', u_p.firstName + ' ' + u_p.lastName);
-    case 'account':
+    }
+    case 'account': {
       const account = model as AccountModel;
       return newAvatarInfo(account.okey, '', account.name, 'account', account.type, '', account.name);
+    }
   }
 }
 

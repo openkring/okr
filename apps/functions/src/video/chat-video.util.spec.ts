@@ -48,6 +48,7 @@ describe('safeVideoFileName', () => {
 
   it('replaces backslashes and control characters', () => {
     const name = safeVideoFileName('a\\b\u0000c\nd.mp4');
+    // eslint-disable-next-line no-control-regex -- asserts that control characters are stripped
     expect(name).not.toMatch(/[\\\u0000-\u001f]/);
     expect(name.endsWith('.mp4')).toBe(true);
   });

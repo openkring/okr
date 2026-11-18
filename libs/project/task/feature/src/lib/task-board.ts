@@ -122,7 +122,11 @@ export class TaskBoard {
 
   protected toggleColumn(name: string): void {
     const next = new Set(this.collapsed());
-    next.has(name) ? next.delete(name) : next.add(name);
+    if (next.has(name)) {
+      next.delete(name);
+    } else {
+      next.add(name);
+    }
     this.collapsed.set(next);
   }
 

@@ -53,7 +53,7 @@ export const WhiteboardStore = signalStore(
       params: () => ({ whiteboardKey: store.whiteboardKey(), currentUser: store.appStore.currentUser() }),
       stream: ({ params }) => {
         const key = params.whiteboardKey;
-        if (!key) return new Observable<WhiteboardModel>(() => {});
+        if (!key) return new Observable<WhiteboardModel>(() => { /* no-op: never emits while no key is set */ });
         return store.whiteboardService.read(key).pipe(
           debugItemLoaded('WhiteboardStore.whiteboard', params.currentUser),
         );
@@ -102,9 +102,11 @@ export const WhiteboardStore = signalStore(
       modal.present();
       const { data, role } = await modal.onDidDismiss();
       if (role === 'confirm' && data && !readOnly) {
-        data.okey?.length === 0
-          ? await store.whiteboardService.create(data, store.currentUser())
-          : await store.whiteboardService.update(data, store.currentUser());
+        if (data.okey?.length === 0) {
+          await store.whiteboardService.create(data, store.currentUser());
+        } else {
+          await store.whiteboardService.update(data, store.currentUser());
+        }
         this.reload();
       }
     },

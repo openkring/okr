@@ -75,8 +75,8 @@ export class TripModel implements OkrModel, NamedModel, SearchableModel, TaggedM
   public endTime = DEFAULT_TIME; // time when the trip ends
   public resource?: AvatarInfo; // resource.okey: the resource used for the trip
   public locations: AvatarInfo[] = []; // location.okey: the locations visited during the trip, ordered by visit
-  public customLocationLabel: string = '';
-  public distance: number = 0; // calculated or manual with other locaiton
+  public customLocationLabel = '';
+  public distance = 0; // calculated or manual with other locaiton
   public participants: AvatarInfo[] = []; // person.okey: the persons participating in the trip
   public state = 'draft';
   public track?: TripTrack; // recorded track metadata (type 'tracker'); not initialised — legacy trips lack it

@@ -139,9 +139,11 @@ export const InstrumentStore = signalStore(
       modal.present();
       const { data, role } = await modal.onDidDismiss();
       if (role === 'confirm' && data && !readOnly && isInstrument(data, store.tenantId())) {
-        data.okey.length === 0
-          ? await store.instrumentService.create(data, store.currentUser())
-          : await store.instrumentService.update(data, store.currentUser());
+        if (data.okey.length === 0) {
+          await store.instrumentService.create(data, store.currentUser());
+        } else {
+          await store.instrumentService.update(data, store.currentUser());
+        }
         this.reload();
       }
     },

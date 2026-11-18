@@ -1,4 +1,4 @@
-import { Injectable, Signal, isDevMode } from '@angular/core';
+import { Injectable, Signal, inject, isDevMode } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { HashMap, TranslocoService, getBrowserLang } from '@jsverse/transloco';
 import { Observable, firstValueFrom, of } from 'rxjs';
@@ -21,8 +21,7 @@ const SCOPE_LOAD_RETRY_DELAY_MS = 400;
   providedIn: 'root'
 })
 export class I18nService {
-  // classic DI so that mocks can be passed in tests
-  constructor(private readonly translocoService: TranslocoService) {}
+  private readonly translocoService = inject(TranslocoService);
 
   public getBrowserLang(): string | undefined {
   return getBrowserLang();

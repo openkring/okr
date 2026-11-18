@@ -589,9 +589,10 @@ export class ReservationList {
     switch (this.listId().substring(0,2)) {
       case 't_': // resource type 
         return this.listId().substring(2) + ' ' + this.store.i18n.reservations();
-      case 'r_': // resource key
+      case 'r_': { // resource key
         const resourceName = this.resourceName() ?? '';
         return `${resourceName} ${this.store.i18n.reservations()}`;
+      }
       case 'my': // my reservations = p_[currentUser.personKey]
       case 'p_': // reserver key (person)
         return `${reserverName} ${this.store.i18n.reservations()}`;

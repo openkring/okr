@@ -146,12 +146,13 @@ export class DocumentsAccordion {
         case 'document.edit':
           await this.store.edit(document, this.readOnly());
           break;
-        case 'document.showRevisions':
+        case 'document.showRevisions': {
           const revisions = await this.store.getRevisions(document);
           for (const rev of revisions) {
             console.log(` - revision: ${rev.okey} / version: ${rev.version} / last update: ${rev.dateOfDocLastUpdate}`);
           }
           break;
+        }
       }
     }
   }

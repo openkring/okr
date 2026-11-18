@@ -1,13 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { matchActions, buildReceiptPayload, collectReceiptPayments, ReceiptPayment } from './booking-action.util';
 import { BookingAction } from './booking-action.model';
-import { AddressModel } from '../../../../../shared/models/src/lib/address.model';
-import { OrgModel } from '../../../../../shared/models/src/lib/org.model';
-import { PersonModel } from '../../../../../shared/models/src/lib/person.model';
-import { BookingModel } from '../../../../../shared/models/src/lib/booking.model';
-import { BookingLineModel } from '../../../../../shared/models/src/lib/booking-line.model';
-import { AvatarInfo } from '../../../../../shared/models/src/lib/avatar-info';
 import * as utilCore from '@okr/shared-util-core';
+import { AddressModel, OrgModel, PersonModel, BookingModel, BookingLineModel, AvatarInfo } from '@okr/shared-models';
 
 // @okr/shared-util-core re-exports platform.util which imports @angular/common (isPlatformBrowser).
 // Vite loads the whole barrel, triggering Angular JIT errors in a non-Angular test env.

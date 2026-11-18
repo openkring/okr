@@ -1,4 +1,4 @@
-import { Component, DestroyRef, ElementRef, PLATFORM_ID, computed, effect, inject, input, OnDestroy, signal, untracked, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, PLATFORM_ID, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, IonSearchbar, IonText, IonList, IonListHeader, IonItem, IonLabel, IonNote, ActionSheetController, ModalController } from '@ionic/angular';
@@ -730,7 +730,7 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
     }
   `
 })
-export class MatrixChat implements OnDestroy {
+export class MatrixChat {
   protected readonly store = inject(MatrixChatStore);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly hostRef = inject(ElementRef<HTMLElement>);
@@ -1290,13 +1290,6 @@ export class MatrixChat implements OnDestroy {
       vv.removeEventListener('resize', update);
       vv.removeEventListener('scroll', update);
     });
-  }
-
-  ngOnDestroy() {
-    // Don't disconnect the Matrix service here. MatrixChatService is a root singleton
-    // that should stay connected for the app session. Disconnecting on component destroy
-    // forces a full re-initialization (up to 30 s on iOS) every time the component is
-    // recreated (e.g. switching segments in the group view).
   }
 
   // Event handlers

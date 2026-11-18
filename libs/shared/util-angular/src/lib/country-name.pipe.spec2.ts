@@ -1,3 +1,4 @@
+import { Injector, runInInjectionContext } from '@angular/core';
 import { I18nService } from '@okr/shared-i18n';
 import { getCountryName } from '@okr/shared-util-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -13,12 +14,17 @@ vi.mock('@okr/shared-util-core', () => ({
   getCountryName: vi.fn()
 }));
 
+function makePipe(): CountryNamePipe {
+  const injector = Injector.create({ providers: [{ provide: I18nService, useValue: mockI18nService }] });
+  return runInInjectionContext(injector, () => new CountryNamePipe());
+}
+
 describe('CountryNamePipe', () => {
   let pipe: CountryNamePipe;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    pipe = new CountryNamePipe(mockI18nService as unknown as I18nService);
+    pipe = makePipe();
   });
 
   it('should create the pipe', () => {
@@ -31,7 +37,7 @@ describe('CountryNamePipe', () => {
     mockI18nService.getActiveLang.mockReturnValue(lang);
     (getCountryName as any).mockReturnValue('Deutschland');
 
-    pipe = new CountryNamePipe();
+    pipe = makePipe();
     (pipe as any).i18nService = mockI18nService as unknown as I18nService;
 
     const result = pipe.transform(countryCode);
@@ -46,7 +52,7 @@ describe('CountryNamePipe', () => {
     mockI18nService.getActiveLang.mockReturnValue('en');
     (getCountryName as any).mockReturnValue('');
 
-    pipe = new CountryNamePipe();
+    pipe = makePipe();
     (pipe as any).i18nService = mockI18nService as unknown as I18nService;
 
     const result = pipe.transform(countryCode);
@@ -58,7 +64,7 @@ describe('CountryNamePipe', () => {
     mockI18nService.getActiveLang.mockReturnValue('en');
     (getCountryName as any).mockReturnValue('');
 
-    pipe = new CountryNamePipe();
+    pipe = makePipe();
     (pipe as any).i18nService = mockI18nService as unknown as I18nService;
 
     const result = pipe.transform(undefined as any);
@@ -71,7 +77,7 @@ describe('CountryNamePipe', () => {
     mockI18nService.getActiveLang.mockReturnValue('en');
     (getCountryName as any).mockReturnValue('');
 
-    pipe = new CountryNamePipe();
+    pipe = makePipe();
     (pipe as any).i18nService = mockI18nService as unknown as I18nService;
 
     const result = pipe.transform(null as any);
@@ -84,7 +90,7 @@ describe('CountryNamePipe', () => {
     mockI18nService.getActiveLang.mockReturnValue('en');
     (getCountryName as any).mockReturnValue('Unknown');
 
-    pipe = new CountryNamePipe();
+    pipe = makePipe();
     (pipe as any).i18nService = mockI18nService as unknown as I18nService;
 
     const result = pipe.transform(123 as any);

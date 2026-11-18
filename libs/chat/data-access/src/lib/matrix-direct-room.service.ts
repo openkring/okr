@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { EventTimeline, MatrixClient, MatrixEvent, Room } from 'matrix-js-sdk';
 
+// eslint-disable-next-line @nx/enforce-module-boundaries -- known layering debt (2026-11-18): reaches up to AppStore; replace with an injection token like APP_STORE_MIN
 import { AppStore } from '@okr/shared-feature';
 import { isDirectRoomOfTenant, OKR_TENANT_EVENT } from '@okr/chat-util';
 import { debugMessage } from '@okr/shared-util-core';

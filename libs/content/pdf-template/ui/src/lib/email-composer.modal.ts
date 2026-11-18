@@ -13,6 +13,7 @@ import {
   AlertController, ModalController, ToastController,
 } from '@ionic/angular';
 
+// eslint-disable-next-line @nx/enforce-module-boundaries -- known layering debt (2026-11-18): reaches up to AppStore; replace with an injection token like APP_STORE_MIN
 import { AppStore } from '@okr/shared-feature';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import {

@@ -40,7 +40,7 @@ import { FlightTrackerStore } from './flighttracker.store';
           <ion-col size="6"><ion-item lines="none"><ion-label>{{ store.i18n.gate() }}: {{ data().departure.gate ?? '—' }}</ion-label></ion-item></ion-col>
         </ion-row>
         <ion-row>
-          <ion-col size="6"><ion-item lines="none"><ion-label>{{ store.i18n.delay() }}: {{ data().departure.delay != null ? (data().departure.delay + ' min') : '—' }}</ion-label></ion-item></ion-col>
+          <ion-col size="6"><ion-item lines="none"><ion-label>{{ store.i18n.delay() }}: {{ data().departure.delay !== null && data().departure.delay !== undefined ? (data().departure.delay + ' min') : '—' }}</ion-label></ion-item></ion-col>
           <ion-col size="6"><ion-item lines="none"><ion-label>{{ store.i18n.scheduled() }}: {{ departureScheduled() }}</ion-label></ion-item></ion-col>
         </ion-row>
         <ion-row>
@@ -64,7 +64,7 @@ import { FlightTrackerStore } from './flighttracker.store';
           <ion-col size="6"><ion-item lines="none"><ion-label>{{ store.i18n.gate() }}: {{ data().arrival.gate ?? '—' }}</ion-label></ion-item></ion-col>
         </ion-row>
         <ion-row>
-          <ion-col size="6"><ion-item lines="none"><ion-label>{{ store.i18n.delay() }}: {{ data().arrival.delay != null ? (data().arrival.delay + ' min') : '—' }}</ion-label></ion-item></ion-col>
+          <ion-col size="6"><ion-item lines="none"><ion-label>{{ store.i18n.delay() }}: {{ data().arrival.delay !== null && data().arrival.delay !== undefined ? (data().arrival.delay + ' min') : '—' }}</ion-label></ion-item></ion-col>
           <ion-col size="6"><ion-item lines="none"><ion-label>{{ store.i18n.scheduled() }}: {{ arrivalScheduled() }}</ion-label></ion-item></ion-col>
         </ion-row>
         <ion-row>

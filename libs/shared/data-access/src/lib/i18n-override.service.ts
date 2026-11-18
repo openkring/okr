@@ -1,4 +1,4 @@
-import { Inject, Injectable, InjectionToken } from '@angular/core';
+import { Injectable, InjectionToken, inject } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
 import { distinctUntilChanged } from 'rxjs/operators';
 
@@ -18,19 +18,9 @@ export const APP_STORE_MIN = new InjectionToken<AppStoreMin>('APP_STORE_MIN');
 
 @Injectable({ providedIn: 'root' })
 export class I18nOverrideService {
-  private readonly translocoService: TranslocoService;
-  private readonly firestoreService: FirestoreService;
-  private readonly appStore: AppStoreMin;
-
-  constructor(
-    translocoService: TranslocoService,
-    firestoreService: FirestoreService,
-    @Inject(APP_STORE_MIN) appStore: AppStoreMin,
-  ) {
-    this.translocoService = translocoService;
-    this.firestoreService = firestoreService;
-    this.appStore = appStore;
-  }
+  private readonly translocoService = inject(TranslocoService);
+  private readonly firestoreService = inject(FirestoreService);
+  private readonly appStore = inject(APP_STORE_MIN);
 
   public init(): void {
     const lang = this.translocoService.getActiveLang();
@@ -86,7 +76,6 @@ export class I18nOverrideService {
         const isScoped = override.module.includes('/');
         if (isScoped) {
           // The options cast is intentional — `scope` is a runtime extension point.
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           this.translocoService.setTranslation(
             { [override.key]: value },
             lang,

@@ -1,5 +1,5 @@
 import { DEFAULT_DATE, DEFAULT_KEY, DEFAULT_TENANTS } from '@okr/shared-constants';
-import { CurrencyCode } from '@okr/shared-models';
+import { CurrencyCode } from './money.model';
 
 import { OkrModel } from './base.model';
 

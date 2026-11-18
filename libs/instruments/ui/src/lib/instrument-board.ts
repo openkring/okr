@@ -158,7 +158,11 @@ export class InstrumentBoard {
 
   protected toggleCell(cellId: string): void {
     const next = new Set(this.collapsed());
-    next.has(cellId) ? next.delete(cellId) : next.add(cellId);
+    if (next.has(cellId)) {
+      next.delete(cellId);
+    } else {
+      next.add(cellId);
+    }
     this.collapsed.set(next);
   }
 

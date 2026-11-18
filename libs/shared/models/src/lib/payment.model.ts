@@ -1,5 +1,5 @@
 import { DEFAULT_KEY, DEFAULT_TENANTS } from '@okr/shared-constants';
-import { MoneyModel } from '@okr/shared-models';
+import { MoneyModel } from './money.model';
 
 import { OkrModel } from './base.model';
 

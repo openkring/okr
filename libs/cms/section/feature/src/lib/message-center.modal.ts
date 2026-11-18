@@ -243,7 +243,11 @@ export class MessageCenterModal {
     this.checkedKeys.update(keys => {
       const updated = new Set(keys);
       for (const user of this.filteredUsers()) {
-        checked ? updated.add(user.okey) : updated.delete(user.okey);
+        if (checked) {
+          updated.add(user.okey);
+        } else {
+          updated.delete(user.okey);
+        }
       }
       return updated;
     });
@@ -252,7 +256,11 @@ export class MessageCenterModal {
   protected toggle(userKey: string, checked: boolean): void {
     this.checkedKeys.update(keys => {
       const updated = new Set(keys);
-      checked ? updated.add(userKey) : updated.delete(userKey);
+      if (checked) {
+        updated.add(userKey);
+      } else {
+        updated.delete(userKey);
+      }
       return updated;
     });
   }

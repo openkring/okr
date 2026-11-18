@@ -1,3 +1,5 @@
+import { Injector, runInInjectionContext } from '@angular/core';
+import { TranslocoService } from '@jsverse/transloco';
 import { defer, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -53,7 +55,8 @@ describe('I18nService', () => {
       selectTranslate: vi.fn((key, arg) => of(`translated:${key}${arg ? ':' + JSON.stringify(arg) : ''}`)),
       load: vi.fn(() => of({})),
     };
-    service = new I18nService(transloco as any);
+    const injector = Injector.create({ providers: [{ provide: TranslocoService, useValue: transloco }] });
+    service = runInInjectionContext(injector, () => new I18nService());
   });
 
   it('should be defined', () => {

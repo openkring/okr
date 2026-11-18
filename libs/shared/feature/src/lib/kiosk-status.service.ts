@@ -4,7 +4,7 @@ import { AlertController } from '@ionic/angular';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { Observable } from 'rxjs';
 
-import packageJson from '../../../../../package.json';
+import { CURRENT_APP_VERSION } from '@okr/shared-util-angular';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { isBrowser, isKioskOnly } from '@okr/shared-util-core';
@@ -254,7 +254,7 @@ export class KioskStatusService {
         Device.getBatteryInfo().catch(() => ({})),
       ]);
       const status = toKioskStatus(
-        uid, currentUser.tenants, info, battery, new Date().toISOString(), packageJson.version, this.locked()
+        uid, currentUser.tenants, info, battery, new Date().toISOString(), CURRENT_APP_VERSION, this.locked()
       );
       await this.firestoreService.createObject(KioskStatusCollection, uid, status);
     } catch (ex) {

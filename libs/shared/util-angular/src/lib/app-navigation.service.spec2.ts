@@ -159,7 +159,7 @@ describe('AppNavigationService', () => {
     let consoleSpy: any;
 
     beforeEach(() => {
-      consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
     });
 
     afterEach(() => {

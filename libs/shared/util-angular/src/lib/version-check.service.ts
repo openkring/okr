@@ -8,6 +8,8 @@ import { ENV, FIRESTORE } from '@okr/shared-config';
 import { I18nService } from '@okr/shared-i18n';
 import { convertDateFormatToString, DateFormat, fill } from '@okr/shared-util-core';
 
+// The one place that reads the monorepo version; everything else imports CURRENT_APP_VERSION.
+// eslint-disable-next-line @nx/enforce-module-boundaries -- root package.json is data, not the root project's code
 import packageJson from '../../../../../package.json';
 import { compareAppVersions } from './app-version.util';
 

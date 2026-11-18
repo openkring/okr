@@ -108,7 +108,7 @@ class Ecc {
  * -------------------------------------------------------------------------------------- */
 
 const NUMERIC_REGEX = /^[0-9]*$/;
-const ALPHANUMERIC_REGEX = /^[A-Z0-9 $%*+.\/:-]*$/;
+const ALPHANUMERIC_REGEX = /^[A-Z0-9 $%*+./:-]*$/;
 const ALPHANUMERIC_CHARSET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:';
 
 class QrSegment {

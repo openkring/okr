@@ -221,12 +221,13 @@ export class FilesPage {
     if (!selectedMethod) return; // dismissed without choosing an item (backdrop/escape) — not an error
     switch(selectedMethod) {
       case 'toggleEditMode':  this.editMode.update(value => !value); break;
-      case 'editPage': 
+      case 'editPage': {
         const page = this.store.page();
         if (page) {
           await this.store.edit(page, false);
         }
         break;
+      }
       case 'sortSections':  await this.store.sortSections(); break;
       case 'selectSection': await this.store.selectSection(); break;
       case 'addSection':    await this.addSection(); break;

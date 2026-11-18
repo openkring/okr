@@ -75,7 +75,7 @@ export class MembershipAccordion {
 
   constructor() {
     effect(() => { 
-      this.store.setMember(this.member(), this.modelType()),
+      this.store.setMember(this.member(), this.modelType());
       this.store.setOrgId();
       this.store.setShowMode(!this.maySeeOldMemberships());
     });

@@ -1,7 +1,12 @@
 import { inject, Injectable, Provider } from "@angular/core";
 import { ModalController } from "@ionic/angular";
 
-import { AppStore, GroupSelectModal, OrgSelectModal, PersonSelectModal, ResourceSelectModal, ResponsibilitySelectModal } from "@okr/shared-feature";
+import { AppStore } from './app.store';
+import { GroupSelectModal } from './group-select.modal';
+import { OrgSelectModal } from './org-select.modal';
+import { PersonSelectModal } from './person-select.modal';
+import { ResourceSelectModal } from './resource-select.modal';
+import { ResponsibilitySelectModal } from './responsibility-select.modal';
 import { isLocation, isOrg, isPerson, isResource } from "@okr/shared-util-core";
 import { AvatarInfo, GroupModel, LocationModel, OrgModel, PersonModel, ResourceModel, ResponsibilityModel } from "@okr/shared-models";
 import { DEFAULT_LABEL, DEFAULT_TAGS } from "@okr/shared-constants";

@@ -39,9 +39,8 @@ import { SwUpdate } from '@angular/service-worker';
 import { ENV, FIRESTORE } from '@okr/shared-config';
 import { I18nService } from '@okr/shared-i18n';
 
-import packageJson from '../../../../../package.json';
 import type { AppVersionConfig } from './version-check.service';
-import { UNRECOVERABLE_RELOAD_KEY, VersionCheckService } from './version-check.service';
+import { CURRENT_APP_VERSION, UNRECOVERABLE_RELOAD_KEY, VersionCheckService } from './version-check.service';
 
 describe('VersionCheckService unrecoverable-state handling', () => {
   const mockAlertController = { create: vi.fn() };
@@ -155,7 +154,7 @@ describe('VersionCheckService unrecoverable-state handling', () => {
       };
 
       it('does not quote a configured version that is not newer than the running one', async () => {
-        expect(await promptMessage(packageJson.version)).toBe('message');
+        expect(await promptMessage(CURRENT_APP_VERSION)).toBe('message');
       });
 
       it('quotes the configured version when it really is newer', async () => {
@@ -163,7 +162,7 @@ describe('VersionCheckService unrecoverable-state handling', () => {
       });
 
       it('prefers the incoming build version from the ngsw manifest over the lagging doc', async () => {
-        expect(await promptMessage(packageJson.version, { version: '99.0.0' })).toBe('messageWithVersion');
+        expect(await promptMessage(CURRENT_APP_VERSION, { version: '99.0.0' })).toBe('messageWithVersion');
       });
     });
   });

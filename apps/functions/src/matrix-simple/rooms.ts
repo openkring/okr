@@ -886,7 +886,7 @@ export async function handleAddMatrixRoomAlias(request: CallableRequest<any>): P
 
   const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
   // Sanitise: lowercase, replace spaces with hyphens, strip disallowed chars
-  const sanitised = aliasName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_.\-]/g, '');
+  const sanitised = aliasName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9_.-]/g, '');
   const fullAlias = `#${sanitised}:${hostname}`;
   const adminToken = matrixAdminToken.value();
 

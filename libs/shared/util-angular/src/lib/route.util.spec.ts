@@ -57,7 +57,7 @@ describe('route.util', () => {
 
     it('should catch and log errors', async () => {
       const router = { url: '/current', navigateByUrl: vi.fn().mockRejectedValue(new Error('fail')) };
-      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
       await navigateByUrl(router as any, '/fail');
 /*       expect(spy).toHaveBeenCalledWith(
         expect.stringContaining('route.util.navigateByUrl(/fail, null) -> FAILED'),

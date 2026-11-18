@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference -- pulls in the ambient `declare module` for pdfjs-dist's untyped worker entry; an import would not declare it
 /// <reference path="./pdfjs-worker-module.ts" />
 import { groupTextItemsIntoLines } from '@okr/finance-bank-import-util';
 

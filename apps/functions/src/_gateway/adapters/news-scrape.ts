@@ -30,6 +30,7 @@ export function isValidScrapeConfig(scrape: unknown): scrape is NewsScrapeConfig
 
 // C0 controls other than tab/LF/CR, lone surrogates and U+FFFE/U+FFFF are not allowed in XML 1.0;
 // one of them in a scraped title would make the client's DOMParser reject the whole channel.
+// eslint-disable-next-line no-control-regex -- intentionally matches XML-invalid control characters to strip them
 const XML_INVALID = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g;
 
 /** XML text escape (element content and attribute values); characters XML cannot carry are dropped. */

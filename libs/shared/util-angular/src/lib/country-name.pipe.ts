@@ -7,12 +7,7 @@ import { getCountryName } from '@okr/shared-util-core';
   standalone: true
 })
 export class CountryNamePipe implements PipeTransform {
-  private readonly i18nService;
-
-  constructor(i18nService?: I18nService) {
-    // Only call inject if no argument is provided
-    this.i18nService = i18nService ?? inject(I18nService);
-  }
+  private readonly i18nService = inject(I18nService);
 
   transform(countryCode: string): string {
       return getCountryName(countryCode, this.i18nService.getActiveLang());

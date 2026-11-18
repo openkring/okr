@@ -290,9 +290,11 @@ export const _PageStore = signalStore(
           if (isPage(data, store.tenantId())) {
             store.clearError();
             try {
-              page.okey === '' ?
-                await store.pageService.create(data, store.currentUser()) :
+              if (page.okey === '') {
+                await store.pageService.create(data, store.currentUser());
+              } else {
                 await store.pageService.update(data, store.currentUser());
+              }
               this.reload();
             } catch (error) {
               store.setError(store.i18n.error_save());

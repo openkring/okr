@@ -1772,7 +1772,7 @@ export const _MatrixChatStore = signalStore(
       /**
        * Get current user's avatar URL
        */
-      getUserAvatarUrl(width: number = 96, height: number = 96): string | undefined {
+      getUserAvatarUrl(width = 96, height = 96): string | undefined {
         return store.matrixService.getUserAvatarUrl(width, height);
       },
 

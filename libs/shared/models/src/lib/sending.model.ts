@@ -41,7 +41,7 @@ export class SendingModel implements OkrModel {
   public tenants = DEFAULT_TENANTS;
   public isArchived = false;
 
-  public channel: 'post' = 'post';
+  public channel = 'post' as const;
   /** '<modelType>.<okey>' of what produced the letter, e.g. an invoice or a mailing. */
   public source = '';
   /** '<modelType>.<okey>' of the recipient (person or org). */
@@ -53,7 +53,7 @@ export class SendingModel implements OkrModel {
   public pages = 0;
   /** Rappen */
   public price = 0;
-  public provider: 'pingen' = 'pingen';
+  public provider = 'pingen' as const;
   public providerId = '';
   public state: SendingState = 'queued';
   public history: SendingHistoryEntry[] = [];

@@ -12,7 +12,7 @@ const HEADER = splitLines(text)[0];
 
 /** One synthetic record with the fixture's column layout, for the cases the real export does not contain. */
 function lineWith(patch: Record<string, string>): string {
-  const header = HEADER.replace(/^﻿/, '').split(',');
+  const header = HEADER.replace(/^\uFEFF/, '').split(',');
   const base = splitLines(text)[1].split(',');
   Object.entries(patch).forEach(([name, value]) => { base[header.indexOf(name)] = value; });
   return base.join(',');
@@ -107,7 +107,7 @@ describe('parseRaisenow', () => {
   });
 
   it('resolves columns by name, not by position', () => {
-    const header = HEADER.replace(/^﻿/, '').split(',');
+    const header = HEADER.replace(/^\uFEFF/, '').split(',');
     const moved = [...header.slice(0, 5), 'Neue Spalte', ...header.slice(5)].join(',');
     const row = splitLines(text)[1].split(',');
     const movedRow = [...row.slice(0, 5), 'x', ...row.slice(5)].join(',');

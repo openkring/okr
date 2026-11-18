@@ -15,4 +15,5 @@ export function newContextDiagramConfigFormModel(config: ContextDiagramConfig, s
  * The suite exists so the form follows the standard Signal Forms + Vest wiring.
  */
 export const contextDiagramConfigValidations = staticSuite((_model: ContextDiagramConfigFormModel) => {
+  /* no-op: intentionally empty suite, see doc comment */
 });

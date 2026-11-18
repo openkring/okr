@@ -86,7 +86,7 @@ export const DocumentStore = signalStore(
       }),
       stream: ({params}) => {
         const key = params.documentKey;
-        if (!key || key.length === 0) return new Observable<DocumentModel>(() => {});
+        if (!key || key.length === 0) return new Observable<DocumentModel>(() => { /* no-op: never emits while no key is set */ });
         return store.documentService.read(params.documentKey).pipe(
           debugItemLoaded('DocumentStore.document', params.currentUser)
         );

@@ -259,9 +259,9 @@ export class MatrixInitializationService {
         clearAppBadge?: () => Promise<void>;
       };
       if (count > 0) {
-        nav.setAppBadge?.(count).catch(() => {});
+        nav.setAppBadge?.(count).catch(() => { /* no-op: badge API failure is non-critical */ });
       } else {
-        nav.clearAppBadge?.().catch(() => {});
+        nav.clearAppBadge?.().catch(() => { /* no-op: badge API failure is non-critical */ });
       }
     };
 

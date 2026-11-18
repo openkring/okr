@@ -5,6 +5,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { createNewMatrixCall, CallEvent, MsgType, type MatrixCall, type MatrixClient } from 'matrix-js-sdk';
 
 import { UserModel } from '@okr/shared-models';
+// eslint-disable-next-line @nx/enforce-module-boundaries -- known layering debt (2026-11-18): reaches up to AppStore; replace with an injection token like APP_STORE_MIN
 import { AppStore } from '@okr/shared-feature';
 import { ActivityService } from '@okr/activity-data-access';
 

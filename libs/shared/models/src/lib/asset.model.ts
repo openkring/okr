@@ -1,5 +1,5 @@
 import { DEFAULT_DATE, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_TENANTS } from '@okr/shared-constants';
-import { MoneyModel } from '@okr/shared-models';
+import { MoneyModel } from './money.model';
 
 import { OkrModel, NamedModel } from './base.model';
 import { DepreciationMethod } from './asset-category.model';

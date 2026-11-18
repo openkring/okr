@@ -31,7 +31,7 @@ export const ENERGY_REPORTER_COLUMNS: readonly string[] = [
 
 /** The header line as column names; a leading byte order mark is dropped, so the first column still matches. */
 export function parseHeader(line: string): string[] {
-  return parseCsvLine(line.replace(/^﻿/, '')).map((name) => name.trim());
+  return parseCsvLine(line.replace(/^\uFEFF/, '')).map((name) => name.trim());
 }
 
 /** Throws naming the first expected column that the header lacks. */
