@@ -7,7 +7,6 @@ import { OptionalCardHeader, Spinner } from "@okr/shared-ui";
 import { AppStore } from '@okr/shared-feature';
 
 import { PersonsWidget } from '@okr/cms-section-ui';
-import { SectionViewModal } from './section-view.modal';
 import { SectionService } from '@okr/cms-section-data-access';
 
 import { PeopleSectionStore } from './people-section.store';
@@ -106,6 +105,9 @@ export class PeopleSectionComponent {
     if (!linkedSectionId || linkedSectionId.length === 0) return;
     const linkedSection = await firstValueFrom(this.sectionService.read(linkedSectionId));
     if (!linkedSection) return;
+    // Lazy: section-view.modal imports SectionDispatcher, which imports this component.
+    // A static import closes that cycle and leaves a component undefined in the dispatcher (NG0919).
+    const { SectionViewModal } = await import('./section-view.modal');
     const modal = await this.modalController.create({
       component: SectionViewModal,
       cssClass: ['modal-wide', 'modal-fixed-height'],
