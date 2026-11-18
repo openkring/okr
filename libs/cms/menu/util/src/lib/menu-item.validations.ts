@@ -97,9 +97,10 @@ export const menuItemValidations = staticSuite((
     test('menuItems', 'menuStaticTooManyItems', () => {
       enforce(countBarItems(children, childActions)).lessThanOrEquals(MAX_STATIC_MENU_ITEMS);
     });
-    // dividers, call/toggle/workflow rows and account keys take no slot; only pages count
+    // every child counts except dividers and account keys; a child missing from childActions counts
+    // too (same rule as the root). A nested `sub` counts as well, besides raising the nested error.
     test('menuItems', 'menuStaticTooManyChildren', () => {
-      enforce(submenus.every(name => grandchildren(name).filter(c => childActions[c] === 'navigate' || childActions[c] === 'browse').length <= MAX_STATIC_SUB_ITEMS)).isTruthy();
+      enforce(submenus.every(name => countBarItems(grandchildren(name), childActions) <= MAX_STATIC_SUB_ITEMS)).isTruthy();
     });
     test('menuItems', 'menuStaticNestedSubmenu', () => {
       enforce(submenus.some(name => grandchildren(name).some(c => childActions[c] === 'sub'))).isFalsy();

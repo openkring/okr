@@ -157,6 +157,15 @@ describe('menuItemValidations: static menu', () => {
     expect(itemErrors(root(['s']), { s: 'sub', a: 'navigate', b: 'navigate', d: 'divider' }, { s: ['a', 'd', 'b'] })).toEqual([]);
   });
 
+  it('counts call children and children missing from childActions', () => {
+    expect(itemErrors(root(['s']), { s: 'sub', a: 'call', b: 'call', c: 'call' }, { s: ['a', 'b', 'c'] })).toContain('menuStaticTooManyChildren');
+    expect(itemErrors(root(['s']), { s: 'sub' }, { s: ['a', 'b', 'c'] })).toContain('menuStaticTooManyChildren');
+  });
+
+  it('does not count an account key child', () => {
+    expect(itemErrors(root(['s']), { s: 'sub', a: 'navigate', b: 'navigate' }, { s: ['a', 'b', 'login'] })).toEqual([]);
+  });
+
   it('refuses a nested sub', () => {
     expect(itemErrors(root(['s']), { s: 'sub', t: 'sub' }, { s: ['t'] })).toContain('menuStaticNestedSubmenu');
   });
@@ -167,8 +176,12 @@ describe('menuItemValidations: static menu', () => {
     expect(r.getErrors('staticMenu.bulletColor')).toContain('menuStaticBulletColor');
   });
 
+  it('refuses an empty bullet colour', () => {
+    expect(menuItemValidations(root(rows(2), { staticMenu: { bulletColor: '' } })).getErrors('staticMenu.bulletColor')).toContain('menuStaticBulletColor');
+  });
+
   it('accepts a name, a hex colour and size 6 to 32; absent fields never fail', () => {
-    for (const bulletColor of ['primary', '#ffeb3b', '#fb3']) {
+    for (const bulletColor of ['primary', '#ffeb3b', '#fb3', '#FFF']) {
       expect(menuItemValidations(root(rows(2), { staticMenu: { bulletColor } })).hasErrors('staticMenu.bulletColor'), bulletColor).toBe(false);
     }
     for (const bulletSize of [6, 12, 32]) {
