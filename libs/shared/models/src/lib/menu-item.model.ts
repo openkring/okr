@@ -4,7 +4,22 @@ import { BaseProperty, OkrModel, NamedModel, SearchableModel, TaggedModel } from
 export type RoleName = 'none' | 'anonymous' | 'registered' | 'privileged' | 'contentAdmin' | 'resourceAdmin' | 'memberAdmin' | 'eventAdmin' | 'treasurer' | 'admin' | 'public' | 'groupAdmin' | 'kiosk' | 'tripAdmin' | 'auditor' | 'tester';
 
 /** How a tenant's main menu is laid out; absent on the root document means 'left'. */
-export type MenuType = 'left' | 'right' | 'top' | 'segmented';
+export type MenuType = 'left' | 'right' | 'top' | 'segmented' | 'static';
+
+export type StaticMenuBulletShape = 'square' | 'round' | 'none';
+export type StaticMenuActiveStyle = 'bold' | 'color' | 'underline';
+export type StaticMenuChildrenVisibility = 'always' | 'active';
+export type StaticMenuChildrenDirection = 'horizontal' | 'vertical';
+
+/** Look of the `static` main menu (spec 1.163). Absent fields mean the defaults. */
+export interface StaticMenuConfig {
+  bulletColor?: string; // Ionic colour name or #rgb / #rrggbb; default 'primary'
+  bulletShape?: StaticMenuBulletShape; // default 'square'
+  bulletSize?: number; // px, default 12
+  activeStyle?: StaticMenuActiveStyle; // default 'bold'
+  childrenVisibility?: StaticMenuChildrenVisibility; // default 'active'
+  childrenDirection?: StaticMenuChildrenDirection; // default 'horizontal'
+}
 
 export class MenuItemModel implements OkrModel, NamedModel, SearchableModel, TaggedModel {
   public okey = DEFAULT_KEY; // unique key of the model in the database
@@ -46,6 +61,8 @@ export class MenuItemModel implements OkrModel, NamedModel, SearchableModel, Tag
   public menuType?: MenuType;
   /** action 'main' only: indent of submenu rows and gap below a dropdown, in px. Absent means DEFAULT_SUBMENU_OFFSET. */
   public submenuOffset?: number;
+  /** action 'main' + menuType 'static' only: look of the static menu. Absent fields mean defaults. */
+  public staticMenu?: StaticMenuConfig;
   public roleNeeded?: RoleName = 'contentAdmin'; // the role that is needed to see the menu item
   public tenants: string[] = DEFAULT_TENANTS; // the tenants that the menu item is available for
   public description = DEFAULT_NOTES; // a description of the menu item

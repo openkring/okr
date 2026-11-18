@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { MenuItemModel } from '@okr/shared-models';
 
-import { barAccountKeys, barRenderableRows, countBarItems, exceedsBarLimit, isBarActive, isBarMenuType, isHiddenOnNarrowScreen, splitBarRows, visibleBarRows } from './menu-bar.util';
+import { barAccountKeys, barRenderableRows, countBarItems, exceedsBarLimit, isBarActive, isBarMenuType, isHiddenOnNarrowScreen, menuItemLimit, splitBarRows, visibleBarRows } from './menu-bar.util';
 
 describe('isBarMenuType', () => {
   it('is true for top and segmented, false for the vertical types and for absent', () => {
@@ -197,5 +197,19 @@ describe('isHiddenOnNarrowScreen', () => {
     expect(isHiddenOnNarrowScreen({ action: 'call', url: 'exportRaw' }, false)).toBe(false);
     expect(isHiddenOnNarrowScreen({ action: 'navigate', url: 'commCenter' }, false)).toBe(false);
     expect(isHiddenOnNarrowScreen(undefined, false)).toBe(false);
+  });
+});
+
+describe('menuItemLimit', () => {
+  it('limits static at 8', () => {
+    const eight = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+    expect(menuItemLimit('static')).toBe(8);
+    expect(menuItemLimit('top')).toBe(6);
+    expect(menuItemLimit('segmented')).toBe(6);
+    expect(menuItemLimit('left')).toBeUndefined();
+    expect(exceedsBarLimit('static', eight, 0)).toBe(false);
+    expect(exceedsBarLimit('static', eight, 1)).toBe(true);
+    expect(isBarMenuType('static')).toBe(false);
+    expect(isBarActive('static', true)).toBe(false);
   });
 });

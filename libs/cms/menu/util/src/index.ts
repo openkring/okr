@@ -9,3 +9,4 @@ export * from './lib/menu-active.util';
 export * from './lib/menu-bar.util';
 export * from './lib/menu-visibility.util';
 export * from './lib/menu-popover-fit.util';
+export * from './lib/menu-static.util';

@@ -78,6 +78,13 @@ export const DEFAULT_MSTATE = 'active';
 export const DEFAULT_MENU_ACTION = 'browse';
 /** Most rows a `top` or `segmented` main menu shows (the reserved account rows do not count). */
 export const MAX_MENU_BAR_ITEMS = 6;
+/** Most rows a `static` main menu shows (account and divider rows do not count). */
+export const MAX_STATIC_MENU_ITEMS = 8;
+/** Most children a `sub` row of a `static` main menu shows. */
+export const MAX_STATIC_SUB_ITEMS = 2;
+export const DEFAULT_STATIC_BULLET_SIZE = 12;
+export const MIN_STATIC_BULLET_SIZE = 6;
+export const MAX_STATIC_BULLET_SIZE = 32;
 /** Indent of submenu rows and gap below a dropdown, in px, when `submenuOffset` is absent. */
 export const DEFAULT_SUBMENU_OFFSET = 5;
 /** Upper bound of `submenuOffset`, in px. */

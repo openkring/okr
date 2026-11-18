@@ -1,4 +1,4 @@
-import { MAX_MENU_BAR_ITEMS, MENU_BAR_ACCOUNT_KEYS } from '@okr/shared-constants';
+import { MAX_MENU_BAR_ITEMS, MAX_STATIC_MENU_ITEMS, MENU_BAR_ACCOUNT_KEYS } from '@okr/shared-constants';
 import { MenuItemModel, MenuType } from '@okr/shared-models';
 
 /** `top` and `segmented` lay the main menu out as a bar; `left`, `right` and absent as a sidebar. */
@@ -67,6 +67,12 @@ export function splitBarRows<T>(rows: T[]): { shown: T[]; more: T[] } {
   return { shown: rows.slice(0, MAX_MENU_BAR_ITEMS - 1), more: rows.slice(MAX_MENU_BAR_ITEMS - 1) };
 }
 
+/** The most rows a root menu of this type shows: 6 for `top`/`segmented`, 8 for `static`, none otherwise. */
+export function menuItemLimit(type: MenuType | undefined): number | undefined {
+  if (type === 'static') return MAX_STATIC_MENU_ITEMS;
+  return isBarMenuType(type) ? MAX_MENU_BAR_ITEMS : undefined;
+}
+
 /**
  * Whether adding `added` rows to a root menu of this type takes its bar past the limit, which makes
  * the extra rows land under «Mehr». Only a bar type can exceed it; the reserved account rows and, with
@@ -78,7 +84,8 @@ export function exceedsBarLimit(
   added: number,
   childActions: Record<string, string> = {},
 ): boolean {
-  return isBarMenuType(type) && countBarItems(menuItems, childActions) + added > MAX_MENU_BAR_ITEMS;
+  const limit = menuItemLimit(type);
+  return limit !== undefined && countBarItems(menuItems, childActions) + added > limit;
 }
 
 /**
