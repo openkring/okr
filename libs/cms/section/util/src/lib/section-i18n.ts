@@ -49,6 +49,7 @@ export const SECTION_I18N_KEYS = {
   mc_search_placeholder:      PFX + 'message_center.search_placeholder',
   group_singular:             '@subject/group/feature.group',
   default_type:               PFX + 'default.type',
+  default_id:                 PFX + 'default.id',
 
   // activity
   activity_empty:                           PFX + 'activity.empty',
@@ -144,6 +145,11 @@ export const SECTION_I18N_KEYS = {
   contract_document_cancel:                 PFX + 'contractDocument.chooser.cancel',
   contract_document_unavailable:            PFX + 'contractDocument.unavailable',
   button_action_label:                      PFX + 'button.action.label',
+  button_title:                             PFX + 'button.title',
+  button_segment_button:                    PFX + 'button.segment.button',
+  button_segment_icon:                      PFX + 'button.segment.icon',
+  button_segment_action:                    PFX + 'button.segment.action',
+  button_altText_helper:                    PFX + 'button.altText.helper',
   button_style_title:                       PFX + 'button.style.title',
   button_style_subtitle:                    PFX + 'button.style.subtitle',
   button_style_width_label:                 PFX + 'button.style.width.label',
@@ -241,6 +247,15 @@ export const SECTION_I18N_KEYS = {
   editor_colSize_placeholder:               PFX + 'editor.colSize.placeholder',
   editor_colSize_helper:                    PFX + 'editor.colSize.helper',
   editor_position_label:                    PFX + 'editor.position.label',
+  editor_segment_editor:                    PFX + 'editor.segment.editor',
+  editor_segment_layout:                    PFX + 'editor.segment.layout',
+  button_position_label:                    PFX + 'button.position.label',
+  button_position_helper:                   PFX + 'button.position.helper',
+  button_position_none:                     PFX + 'button.position.none',
+  button_position_top:                      PFX + 'button.position.top',
+  button_position_bottom:                   PFX + 'button.position.bottom',
+  button_position_left:                     PFX + 'button.position.left',
+  button_position_right:                    PFX + 'button.position.right',
 
   // emergency
   emergency_needs_help:                     PFX + 'emergency.needs.help.atLocation',
@@ -1025,6 +1040,7 @@ export const SECTION_I18N_KEYS = {
   section_config_intro_placeholder:         PFX + 'section.config.intro.placeholder',
   section_config_intro_helper:              PFX + 'section.config.intro.helper',
   section_config_introPosition_label:       PFX + 'section.config.introPosition.label',
+  section_config_titleCard:                 PFX + 'section.config.titleCard',
   section_config_introPosition_above:       PFX + 'section.config.introPosition.above',
   section_config_introPosition_below:       PFX + 'section.config.introPosition.below',
   section_config_introPosition_helper:      PFX + 'section.config.introPosition.helper',

@@ -58,14 +58,8 @@ export function getInlineErrorFields(type: SectionType, showAdvanced = false): s
       if (showAdvanced) fields.push(...IMAGE_STYLE_FIELDS);
       break;
     case 'button':
-      if (showAdvanced) {
-        fields.push(
-          'icon.name', 'icon.size', 'icon.slot',
-          'style.label', 'style.shape', 'style.fill', 'style.width', 'style.height', 'style.color',
-          'action.type', 'action.url', 'action.altText',
-          ...IMAGE_STYLE_FIELDS
-        );
-      }
+      // the button card with its Button / Icon / Aktion segments is always shown (no advanced toggle)
+      fields.push(...BUTTON_SEGMENT_FIELDS.button, ...BUTTON_SEGMENT_FIELDS.icon, ...BUTTON_SEGMENT_FIELDS.action);
       break;
     case 'chat':
       fields.push('chat.id', 'chat.name', 'chat.type', 'chat.url', 'chat.description');
@@ -139,6 +133,13 @@ export const ARTICLE_IMAGES_SEGMENT_FIELDS: SegmentErrorFields<'select' | 'layou
   select: [IMAGES_PREFIX],
   layout: ['imageLayout', 'action', 'zoomFactor'],
   styles: IMAGE_STYLE_FIELDS.filter((field) => field !== 'action' && field !== 'zoomFactor'),
+};
+
+/** The button card (no advanced toggle): its Button, Icon and Aktion segments. */
+export const BUTTON_SEGMENT_FIELDS: SegmentErrorFields<'button' | 'icon' | 'action'> = {
+  button: ['style.label', 'style.shape', 'style.fill', 'style.width', 'style.height', 'style.color'],
+  icon: ['icon.name', 'icon.size', 'icon.slot'],
+  action: ['action.type', 'action.url', 'action.altText'],
 };
 
 /**

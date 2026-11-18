@@ -1,15 +1,18 @@
-import { NgStyle } from '@angular/common';
+import { AsyncPipe, NgStyle } from '@angular/common';
 import { Component, computed, inject, input, output, Signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Browser } from '@capacitor/browser';
 import { IonButton, IonIcon, ModalController, ToastController } from '@ionic/angular';
 
-import { ColorsIonic, getCategoryStringField } from '@okr/shared-categories';
+import { ButtonActions, ColorsIonic, getCategoryStringField } from '@okr/shared-categories';
 import { ENV } from '@okr/shared-config';
-import { BUTTON_HEIGHT, BUTTON_WIDTH, ICON_SIZE } from '@okr/shared-constants';
+import { BUTTON_HEIGHT, BUTTON_WIDTH } from '@okr/shared-constants';
 import { ButtonAction, ButtonSection, ColorIonic } from '@okr/shared-models';
 import { showZoomedImage } from '@okr/shared-ui';
+import { DEFAULT_BUTTON_ICON_SIZE, toCssLength } from '@okr/cms-section-util';
+import { TranslatePipe } from '@okr/shared-i18n';
 import { downloadToBrowser, navigateByUrl } from '@okr/shared-util-angular';
+import { getSvgIconUrl } from '@okr/shared-util-core';
 import { IMAGE_STYLE_SHAPE } from '@okr/shared-models';
 
 interface ButtonWidgetI18n {
@@ -20,7 +23,7 @@ interface ButtonWidgetI18n {
   selector: 'okr-button-widget',
   standalone: true,
   imports: [
-    NgStyle,
+    NgStyle, AsyncPipe, TranslatePipe,
     IonButton, IonIcon
   ],
   styles: [`
@@ -40,8 +43,11 @@ interface ButtonWidgetI18n {
         fill="{{ fill() }}"
         color="{{ colorName() }}"
         size="large"
+        [attr.aria-label]="ariaLabel() || ((actionI18nBase() + '.label') | translate | async)"
       >
-        <ion-icon [ngStyle]="iconStyle()" src="{{ iconSrc() }}" slot="{{ iconSlot() }}" />
+        @if(iconName()) {
+          <ion-icon [ngStyle]="iconStyle()" src="{{ iconSrc() }}" slot="{{ iconSlot() }}" aria-hidden="true" />
+        }
         @if(label(); as label) { {{ label }} }
       </ion-button>
     </div>
@@ -70,24 +76,16 @@ export class ButtonWidget {
   private readonly imgixBaseUrl = this.env.services.imgixBaseUrl;
 
   // derived values
-  protected iconName = computed(() => this.section().properties?.icon?.name ?? 'help');
-  protected iconSize = computed(() => this.section().properties?.icon?.size ?? ICON_SIZE);
+  /** no icon name = a text-only button */
+  protected iconName = computed(() => this.section().properties?.icon?.name ?? '');
   protected iconSlot = computed(() => this.section().properties?.icon?.slot ?? 'start');
   protected label = computed(() => this.section().properties?.style?.label ?? '');
   protected shape = computed(() => this.section().properties?.style?.shape ?? 'default');
   protected fill = computed(() => this.section().properties?.style?.fill ?? 'solid');
-  protected width = computed(() => this.section().properties?.style?.width ?? BUTTON_WIDTH);
-  protected height = computed(() => this.section().properties?.style?.height ?? BUTTON_HEIGHT);
-  protected iconStyle = computed(() => {
-    // Parse button dimensions (handle strings like "60px" or numbers)
-    const width = parseInt(this.width().toString());
-    const height = parseInt(this.height().toString());
-    const buttonSize = Math.min(width, height);
-    // Use explicit icon size if provided, otherwise scale to 60% of button size
-    const explicitIconSize = this.section().properties?.icon?.size;
-    const iconSize = explicitIconSize ?? Math.floor(buttonSize * 0.6);
-    return {'font-size': iconSize + 'px' };
-  });
+  /** stored as digits ("60") — a unit-less custom property made `width: var(--button-width)` invalid, so it was ignored */
+  protected width = computed(() => toCssLength(this.section().properties?.style?.width, BUTTON_WIDTH));
+  protected height = computed(() => toCssLength(this.section().properties?.style?.height, BUTTON_HEIGHT));
+  protected iconStyle = computed(() => ({ 'font-size': (this.section().properties?.icon?.size ?? DEFAULT_BUTTON_ICON_SIZE) + 'px' }));
   protected actionType = computed(() => this.section().properties?.action?.type ?? ButtonAction.None);
   protected url = computed(() => this.section().properties?.action?.url ?? '');
   protected buttonStyle = computed(() => {
@@ -98,27 +96,17 @@ export class ButtonWidget {
     };
   });
 
-  // icons are part of an icon set (e.g. icons, filetypes, weather, models, general)
-  // icon names consist of setName:iconName
-  // setName is optional and defaults to 'icons'
-  // the setName is needed to determine the folder where the icon is stored
-  // all icon sets need to be stored in imgix under /logo/icons/ or /logo/filetypes/ etc.
-  // ButtonWidget: tbd: logo directory should be configurable
-  // ButtonWidget: tbd: make icon sets configurable by user
-  protected iconSrc = computed(() => {
-    let iconName = this.iconName();
-    let iconSetName = 'icons';
-    if (this.iconName().includes(':')) {
-      const parts = this.iconName().split(':');
-      iconSetName = parts[0];
-      iconName = parts[1];
-    }
-    return `${this.imgixBaseUrl}/logo/${iconSetName}/${iconName}.svg`;
-  });
+  // an icon name is bare for the default set (`download`) or `<set>:<name>` for any other (`filetypes:pdf`)
+  protected iconSrc = computed(() => getSvgIconUrl(this.imgixBaseUrl, this.iconName()));
   protected color = computed(() => this.section().properties?.style?.color ?? ColorIonic.Primary);
   protected colorName = computed(() => getCategoryStringField(ColorsIonic, this.color(), 'name'));
  
-  protected imageStyle = computed(() => this.section()?.properties.imageStyle ?? IMAGE_STYLE_SHAPE);
+  /** the alt text, else the label; empty → the template falls back to the translated name of the action */
+  protected ariaLabel = computed(() => this.section().properties?.action?.altText || this.label());
+  protected actionI18nBase = computed(() =>
+    ButtonActions.find((a) => a.id === this.actionType())?.i18nBase ?? '@shared/categories.buttonAction.none');
+
+  protected imageStyle = computed(() => this.section()?.properties?.imageStyle ?? IMAGE_STYLE_SHAPE);
 
   protected async action(): Promise<void> {
     if (this.editMode()) return;

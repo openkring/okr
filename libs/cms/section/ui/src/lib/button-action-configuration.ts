@@ -1,24 +1,22 @@
 import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
-  IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonNote, IonRow, IonSelect, IonSelectOption,
+  IonCol, IonGrid, IonNote, IonRow, IonSelect, IonSelectOption,
 } from '@ionic/angular';
 
 import { ButtonAction, ButtonActionConfig } from '@okr/shared-models';
 import { CategoryOld, CategoryOldI18n, ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { SectionErrors, getFieldErrors } from '@okr/cms-section-util';
-import { DEFAULT_LABEL, DEFAULT_URL, URL_LENGTH } from '@okr/shared-constants';
+import { COMMENT_LENGTH, DEFAULT_URL, URL_LENGTH } from '@okr/shared-constants';
 import { ButtonActions } from '@okr/shared-categories';
 
 interface ButtonActionI18n {
-  button_action_title:                  Signal<string>;
-  button_action_subtitle:               Signal<string>;
   url_label:                            Signal<string>;
   url_placeholder:                      Signal<string>;
   url_helper:                           Signal<string>;
   altText_label:                        Signal<string>;
   altText_placeholder:                  Signal<string>;
-  altText_helper:                       Signal<string>;
+  button_altText_helper:                Signal<string>;
   button_action_label:                  Signal<string>;
   button_action_intro:                  Signal<string>;
   contract_document_label:              Signal<string>;
@@ -34,17 +32,10 @@ export interface ContractOption { okey: string; name: string; }
   imports: [
     FormsModule,
     TextInput, CategoryOld,
-    IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, IonCardSubtitle, IonSelect, IonSelectOption, IonNote,
+    IonGrid, IonRow, IonCol, IonSelect, IonSelectOption, IonNote,
     ErrorNote
   ],
-  styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
-    <ion-card>
-      <ion-card-header>
-        <ion-card-title>{{ i18n().button_action_title() }}</ion-card-title>
-        <ion-card-subtitle>{{ i18n().button_action_subtitle() }}</ion-card-subtitle>
-      </ion-card-header>
-      <ion-card-content>
         @if(introHtml(); as intro) {
           @if(intro.length > 0) {
             <small><div [innerHTML]="intro"></div></small>
@@ -76,13 +67,11 @@ export interface ContractOption { okey: string; name: string; }
               </ion-col>
             }
             <ion-col size="12" size-md="6">
-              <okr-text-input [i18n]="altTextI18n()" [value]="altText()" (valueChange)="onFieldChange('altText', $event)" [readOnly]="readOnly()" [maxLength]=400 />
+              <okr-text-input [i18n]="altTextI18n()" [value]="altText()" (valueChange)="onFieldChange('altText', $event)" [readOnly]="readOnly()" [maxLength]="altTextLength" />
               <okr-error-note [errors]="errorsFor('action.altText')" />
             </ion-col>
           </ion-row>
         </ion-grid>
-      </ion-card-content>
-    </ion-card>
   `
 })
 export class ButtonActionConfiguration {
@@ -104,12 +93,15 @@ export class ButtonActionConfiguration {
   // fields
   protected type = linkedSignal(() => this.formData().type ?? ButtonAction.Download);
   protected url = linkedSignal(() => this.formData().url ?? DEFAULT_URL);
-  protected altText = linkedSignal(() => this.formData().altText ?? DEFAULT_LABEL);
+  /** optional: empty falls back to the label, then to the name of the action (ButtonWidget) */
+  protected altText = linkedSignal(() => this.formData().altText ?? '');
 
   // passing constants to template
   protected BA = ButtonAction;
   /** kept in step with the cap the Vest suite enforces on action.url */
   protected readonly urlLength = URL_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on action.altText */
+  protected readonly altTextLength = COMMENT_LENGTH;
   protected buttonActions = ButtonActions;
 
 
@@ -125,7 +117,7 @@ export class ButtonActionConfiguration {
     name: 'altText',
     label: this.i18n().altText_label(),
     placeholder: this.i18n().altText_placeholder(),
-    helper: this.i18n().altText_helper(),
+    helper: this.i18n().button_altText_helper(),
   } as TextInputI18n));
   protected buttonActionI18n = computed(() => ({ name: 'buttonAction', label: this.i18n().button_action_label() } as CategoryOldI18n));
 

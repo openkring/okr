@@ -33,7 +33,8 @@
     "delete": "La section n'a pas pu être supprimée. Veuillez réessayer."
   },
   "default": {
-    "type": "Type par défaut"
+    "type": "Type de section",
+    "id": "ID"
   },
   "activity": {
     "empty": "Aucune activité disponible."
@@ -212,6 +213,23 @@
         "label": "Couleur",
         "select": "Choix de la couleur"
       }
+    },
+    "segment": {
+      "button": "Bouton",
+      "icon": "Icône",
+      "action": "Action"
+    },
+    "altText": {
+      "helper": "Si tu n'en saisis aucun, le libellé du bouton ou le nom de l'action est utilisé."
+    },
+    "position": {
+      "label": "Disposition du bouton et du texte",
+      "none": "Seulement le bouton (sans texte)",
+      "top": "Bouton au-dessus du texte",
+      "bottom": "Bouton sous le texte",
+      "left": "Bouton à gauche, texte à droite",
+      "right": "Texte à gauche, bouton à droite",
+      "helper": "Définit où se trouve le bouton par rapport au texte. Avec «Seulement le bouton», le texte n'est pas affiché. À gauche et à droite, le bouton et le texte sont côte à côte ; la taille de colonne fixe alors la largeur du bouton."
     }
   },
   "calendar": {
@@ -332,7 +350,7 @@
     "displayConfig": "Paramètres d'affichage"
   },
   "editor": {
-    "title": "Éditeur",
+    "title": "Texte",
     "colSize": {
       "label": "Taille de colonne",
       "placeholder": "0..12",
@@ -341,6 +359,10 @@
     },
     "position": {
       "label": "Position"
+    },
+    "segment": {
+      "editor": "Éditeur",
+      "layout": "Mise en page"
     }
   },
   "emergency": {
@@ -546,8 +568,8 @@
     "subtitle": "Choisir une icône et son apparence",
     "size": {
       "label": "Taille",
-      "placeholder": "nnn",
-      "helper": "Taille en kB."
+      "placeholder": "20",
+      "helper": "Taille de l'icône en pixels. Si aucune n'est indiquée, 20 est utilisé."
     },
     "slot": {
       "label": "Slot",
@@ -1108,11 +1130,12 @@
         "helper": "Un court texte sur le titre. Tu choisis où il apparaît sous «Affichage»."
       },
       "introPosition": {
-        "label": "Affichage",
+        "label": "Affichage du texte d'introduction",
         "above": "Comme surtitre au-dessus du titre",
         "below": "Comme introduction sous le titre",
         "helper": "En surtitre, l’intro apparaît en petit au-dessus du titre ; en introduction, comme un court paragraphe en dessous."
-      }
+      },
+      "titleCard": "Titre de la section"
     }
   },
   "slider": {

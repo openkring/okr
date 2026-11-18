@@ -33,7 +33,8 @@
     "delete": "Die Sektion konnte nicht gelöscht werden. Bitte versuche es erneut."
   },
   "default": {
-    "type": "Default Typ"
+    "type": "Sektionstyp",
+    "id": "ID"
   },
   "activity": {
     "empty": "Keine Aktivitäten vorhanden."
@@ -212,6 +213,23 @@
         "label": "Farbe",
         "select": "Farbwahl"
       }
+    },
+    "segment": {
+      "button": "Button",
+      "icon": "Icon",
+      "action": "Aktion"
+    },
+    "altText": {
+      "helper": "Ist keiner eingetragen, wird die Bezeichnung des Buttons oder der Name der Aktion verwendet."
+    },
+    "position": {
+      "label": "Anordnung von Button und Text",
+      "none": "Nur der Button (ohne Text)",
+      "top": "Button über dem Text",
+      "bottom": "Button unter dem Text",
+      "left": "Button links, Text rechts",
+      "right": "Text links, Button rechts",
+      "helper": "Legt fest, wo der Button im Verhältnis zum Text steht. Bei «Nur der Button» wird der Text nicht angezeigt. Links und rechts stehen Button und Text nebeneinander, die Spaltengrösse bestimmt dann die Breite des Buttons."
     }
   },
   "calendar": {
@@ -332,7 +350,7 @@
     "displayConfig": "Anzeigeeinstellungen"
   },
   "editor": {
-    "title": "Editor",
+    "title": "Text",
     "colSize": {
       "label": "Spaltengrösse",
       "placeholder": "0..12",
@@ -341,6 +359,10 @@
     },
     "position": {
       "label": "Position"
+    },
+    "segment": {
+      "editor": "Editor",
+      "layout": "Layout"
     }
   },
   "emergency": {
@@ -546,8 +568,8 @@
     "subtitle": "Wähle ein Icon und seine Darstellung",
     "size": {
       "label": "Grösse",
-      "placeholder": "nnn",
-      "helper": "Grösse in kB."
+      "placeholder": "20",
+      "helper": "Grösse des Icons in Pixel. Ist keine angegeben, wird 20 verwendet."
     },
     "slot": {
       "label": "Slot",
@@ -1108,11 +1130,12 @@
         "helper": "Ein kurzer Text zum Titel. Wo er erscheint, legst du unter «Darstellung» fest."
       },
       "introPosition": {
-        "label": "Darstellung",
+        "label": "Darstellung des Intro-Textes",
         "above": "Als Überzeile über dem Titel",
         "below": "Als Einleitung unter dem Titel",
         "helper": "Als Überzeile steht das Intro klein über dem Titel, als Einleitung als kurzer Absatz darunter."
-      }
+      },
+      "titleCard": "Sektions-Titel"
     }
   },
   "slider": {

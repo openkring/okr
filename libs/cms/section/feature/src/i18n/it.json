@@ -33,7 +33,8 @@
     "delete": "Non è stato possibile eliminare la sezione. Riprovare."
   },
   "default": {
-    "type": "Tipo predefinito"
+    "type": "Tipo di sezione",
+    "id": "ID"
   },
   "activity": {
     "empty": "Nessuna attività disponibile."
@@ -212,6 +213,23 @@
         "label": "Colore",
         "select": "Scelta del colore"
       }
+    },
+    "segment": {
+      "button": "Pulsante",
+      "icon": "Icona",
+      "action": "Azione"
+    },
+    "altText": {
+      "helper": "Se non ne inserisci nessuno, si usa l'etichetta del pulsante o il nome dell'azione."
+    },
+    "position": {
+      "label": "Disposizione di pulsante e testo",
+      "none": "Solo il pulsante (senza testo)",
+      "top": "Pulsante sopra il testo",
+      "bottom": "Pulsante sotto il testo",
+      "left": "Pulsante a sinistra, testo a destra",
+      "right": "Testo a sinistra, pulsante a destra",
+      "helper": "Stabilisce dove si trova il pulsante rispetto al testo. Con «Solo il pulsante» il testo non viene mostrato. A sinistra e a destra pulsante e testo stanno affiancati; la dimensione della colonna fissa allora la larghezza del pulsante."
     }
   },
   "calendar": {
@@ -332,7 +350,7 @@
     "displayConfig": "Impostazioni di visualizzazione"
   },
   "editor": {
-    "title": "Editor",
+    "title": "Testo",
     "colSize": {
       "label": "Dimensione della colonna",
       "placeholder": "0..12",
@@ -341,6 +359,10 @@
     },
     "position": {
       "label": "Posizione"
+    },
+    "segment": {
+      "editor": "Editor",
+      "layout": "Layout"
     }
   },
   "emergency": {
@@ -546,8 +568,8 @@
     "subtitle": "Scegliere un'icona e il suo aspetto",
     "size": {
       "label": "Dimensione",
-      "placeholder": "nnn",
-      "helper": "Dimensione in kB."
+      "placeholder": "20",
+      "helper": "Dimensione dell'icona in pixel. Se non è indicata, si usa 20."
     },
     "slot": {
       "label": "Slot",
@@ -1108,11 +1130,12 @@
         "helper": "Un breve testo sul titolo. Scegli dove appare sotto «Visualizzazione»."
       },
       "introPosition": {
-        "label": "Visualizzazione",
+        "label": "Visualizzazione del testo introduttivo",
         "above": "Come occhiello sopra il titolo",
         "below": "Come introduzione sotto il titolo",
         "helper": "Come occhiello l’intro appare piccola sopra il titolo; come introduzione, un breve paragrafo sotto."
-      }
+      },
+      "titleCard": "Titolo della sezione"
     }
   },
   "slider": {

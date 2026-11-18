@@ -29,9 +29,7 @@ import { ContractOption } from './button-action-configuration';
 import { PeopleConfiguration } from './people-configuration';
 import { ResponsibilityConfiguration } from './responsibility-configuration';
 import { VideoConfiguration } from './video-configuration';
-import { ButtonStyleConfiguration } from './button-style-configuration';
-import { ButtonActionConfiguration } from './button-action-configuration';
-import { IconConfiguration } from './icon-configuration';
+import { ButtonConfiguration } from './button-configuration';
 import { ChatConfiguration } from './chat-configuration';
 import { CalendarConfiguration, CalendarDisplayOptions } from './calendar-configuration';
 import { ChartConfiguration } from './chart-configuration';
@@ -67,7 +65,7 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
     Chips, NotesInput, ErrorNote,
     SectionConfiguration, EditorConfiguration, ImageStyleConfiguration, ArticleImagesConfiguration, AlbumConfiguration,
     IframeConfiguration, WeatherConfiguration, ConnectionsConfiguration, DeparturesConfiguration, EnergyConfiguration, CounterConfiguration, FooterConfiguration, PeopleConfiguration, ResponsibilityConfiguration, VideoConfiguration,
-    ButtonStyleConfiguration, ButtonActionConfiguration, IconConfiguration, ChatConfiguration,
+    ButtonConfiguration, ChatConfiguration,
     MapConfiguration, TrackerConfiguration, TableGridConfiguration,  TableStyleConfiguration, TableHeader,
     TableBody, EventsConfiguration, InvitationsConfiguration, ImagesConfiguration, CalendarConfiguration, ChartConfiguration,
     MemberConfiguration, RagConfiguration, FormSectionConfiguration, SankeyConfiguration, SpiderConfiguration, TocConfiguration, TestimonialConfiguration, TimelineConfiguration, AdventConfiguration,
@@ -76,9 +74,10 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     @if (showForm()) {
-      @if (!journalMode()) {
+      <!-- a button section has no advanced toggle: all its settings are always shown -->
+      @if (!journalMode() && formData().type !== 'button') {
         <ion-item lines="none">
-          <ion-toggle [checked]="showAdvanced()" (ionChange)="showAdvanced.set($event.detail.checked)" [disabled]="isReadOnly()">
+          <ion-toggle [checked]="advancedToggle()" (ionChange)="advancedToggle.set($event.detail.checked)" [disabled]="isReadOnly()">
             {{ i18n().form_advanced_label() }}
           </ion-toggle>
         </ion-item>
@@ -278,43 +277,17 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
               [i18n]="i18n()"
               [showAdvanced]="showAdvanced()"
             />
-          } 
-          @if(showAdvanced()) {
-            @if(buttonActionConfig(); as buttonActionConfig) {
-              <okr-button-action
-                [formData]="buttonActionConfig" (formDataChange)="onButtonActionChange($event)"
-                [readOnly]="isReadOnly()"
-                [i18n]="i18n()"
-                [errors]="errors()"
-                [contracts]="contracts()"
-              />
-            }
-            @if(iconConfig(); as iconConfig) {
-              <okr-icon-config
-                [formData]="iconConfig" (formDataChange)="onIconConfigChange($event)"
-                [readOnly]="isReadOnly()"
-                [i18n]="i18n()"
-                [errors]="errors()"
-              />
-            }
-            @if(buttonStyle(); as buttonStyle) {
-              <okr-button-style
-                [formData]="buttonStyle" (formDataChange)="onButtonStyleChange($event)"
-                [readOnly]="isReadOnly()"
-                [i18n]="i18n()"
-                [errors]="errors()"
-              />
-            }
-            @if(imageStyle(); as imageStyle) {
-              <okr-image-style
-                [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)"
-                [readOnly]="isReadOnly()"
-                [i18n]="i18n()"
-                [showAdvanced]="showAdvanced()"
-                [errors]="errors()"
-              />
-            }
           }
+          <!-- one card with the Button / Icon / Aktion segments, always shown (no advanced toggle) -->
+          <okr-button-config
+            [style]="buttonStyle()" (styleChange)="onButtonStyleChange($event)"
+            [icon]="iconConfig()" (iconChange)="onIconConfigChange($event)"
+            [action]="buttonActionConfig()" (actionChange)="onButtonActionChange($event)"
+            [contracts]="contracts()"
+            [readOnly]="isReadOnly()"
+            [i18n]="i18n()"
+            [errors]="errors()"
+          />
         }
         @case('cal') {
           @if(calendarConfig(); as calendarConfig) {
@@ -899,7 +872,10 @@ export class SectionForm {
   protected videoConfig = computed(() => this.getVideoConfig());
   protected tags = computed(() => this.formData().tags ?? DEFAULT_TAGS);
   protected notes = computed(() => this.formData().notes ?? DEFAULT_NOTES);
-  protected showAdvanced = signal(false);
+  /** the user's advanced toggle */
+  protected advancedToggle = signal(false);
+  /** a button section has no toggle: its name (e.g. emergency-button), intro, tags and notes are always offered */
+  protected showAdvanced = computed(() => this.advancedToggle() || this.formData().type === 'button');
 
   /************************************** actions *********************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean | AvatarInfo[]): void {
@@ -952,7 +928,6 @@ export class SectionForm {
   private getImageStyle(): ImageStyle | undefined {
     switch (this.formData().type) {
       case 'article': return (this.formData() as ArticleSection).properties.imageStyle || IMAGE_STYLE_SHAPE;
-      case 'button': return (this.formData() as ButtonSection).properties.imageStyle || IMAGE_STYLE_SHAPE;
       case 'hero': return (this.formData() as HeroSection).properties.imageStyle || IMAGE_STYLE_SHAPE;
       case 'slider': return (this.formData() as SliderSection).properties.imageStyle || IMAGE_STYLE_SHAPE;
       default: return undefined;
@@ -961,19 +936,19 @@ export class SectionForm {
 
   private getButtonActionConfig(): ButtonActionConfig | undefined {
     if (this.formData().type === 'button') {
-      return ((this.formData() as ButtonSection).properties.action);
+      return ((this.formData() as ButtonSection).properties?.action);
     }
   }
 
   private getIconConfig(): IconConfig | undefined {
     if (this.formData().type === 'button') {
-      return ((this.formData() as ButtonSection).properties.icon);
+      return ((this.formData() as ButtonSection).properties?.icon);
     }
   }
 
   private getButtonStyle(): ButtonStyle | undefined {
     if (this.formData().type === 'button') {
-      return ((this.formData() as ButtonSection).properties.style);
+      return ((this.formData() as ButtonSection).properties?.style);
     }
   }
 
@@ -1237,9 +1212,6 @@ export class SectionForm {
     switch (section.type) {
       case 'article':
         this.formData.set({...section, properties: { ...section.properties, imageStyle }} as ArticleSection);
-        break;
-      case 'button':
-        this.formData.set({...section, properties: { ...section.properties, imageStyle }} as ButtonSection);
         break;
       case 'hero':
         this.formData.set({...section, properties: { ...section.properties, imageStyle }} as HeroSection);

@@ -10,8 +10,29 @@ export function registerBundledIcons(icons: Record<string, string>): void {
   for (const [name, dataUrl] of Object.entries(icons)) bundledIcons.set(name, dataUrl);
 }
 
-export function getSvgIconUrl(imgixBaseUrl: string, iconName: string, dir = 'icons'): string {
+/** The default icon set: its names are stored without a prefix. */
+export const DEFAULT_ICON_SET = 'icons';
+
+/**
+ * An icon name as it is stored: bare for the default set (`download`), `<set>:<name>` for any other set
+ * (`filetypes:pdf`, `weather:sun`). This is what the icon selector returns, so an icon from any set can be stored.
+ */
+export function qualifyIconName(name: string, set = DEFAULT_ICON_SET): string {
+  if (!name || name.includes(':') || !set || set === DEFAULT_ICON_SET) return name;
+  return `${set}:${name}`;
+}
+
+/** The set and the bare name of a stored icon name (`filetypes:pdf` → filetypes / pdf, `download` → icons / download). */
+export function splitIconName(iconName: string): { set: string; name: string } {
+  const i = iconName.indexOf(':');
+  if (i <= 0 || i === iconName.length - 1) return { set: DEFAULT_ICON_SET, name: iconName };
+  return { set: iconName.slice(0, i), name: iconName.slice(i + 1) };
+}
+
+export function getSvgIconUrl(imgixBaseUrl: string, iconName: string, dir = DEFAULT_ICON_SET): string {
   if (iconName.length === 0) return '';
+  // a qualified name (`filetypes:pdf`) carries its own set
+  if (dir === DEFAULT_ICON_SET && iconName.includes(':')) ({ set: dir, name: iconName } = splitIconName(iconName));
   const bundled = bundledIcons.get(dir === 'icons' ? iconName : `${dir}/${iconName}`);
   if (bundled) return bundled;
   return `${imgixBaseUrl}/logo/${dir}/${iconName}.svg`;

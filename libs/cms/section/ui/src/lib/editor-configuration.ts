@@ -1,9 +1,8 @@
 import { Component, ComponentRef, computed, DestroyRef, effect, inject, input, linkedSignal, model, PLATFORM_ID, Signal, signal, untracked, viewChild, ViewContainerRef } from '@angular/core';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonNote, IonRow } from '@ionic/angular';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonLabel, IonNote, IonRow, IonSegment, IonSegmentButton, IonSelect, IonSelectOption } from '@ionic/angular';
 
-import { ViewPositions } from '@okr/shared-categories';
 import { EditorConfig, ViewPosition } from '@okr/shared-models';
-import { ButtonCopyI18n, CategoryOld, CategoryOldI18n, NumberInput, NumberInputI18n } from '@okr/shared-ui';
+import { ButtonCopyI18n, NumberInput, NumberInputI18n } from '@okr/shared-ui';
 import { isBrowser } from '@okr/shared-util-angular';
 import type { OkrEditor } from '@okr/shared-ui-editor';
 
@@ -12,7 +11,15 @@ interface EditorConfigI18n {
   editor_colSize_label:       Signal<string>;
   editor_colSize_placeholder: Signal<string>;
   editor_colSize_helper:      Signal<string>;
-  editor_position_label:      Signal<string>;
+  editor_segment_editor:      Signal<string>;
+  editor_segment_layout:      Signal<string>;
+  button_position_label:      Signal<string>;
+  button_position_helper:     Signal<string>;
+  button_position_none:       Signal<string>;
+  button_position_top:        Signal<string>;
+  button_position_bottom:     Signal<string>;
+  button_position_left:       Signal<string>;
+  button_position_right:      Signal<string>;
   copy_conf:                  Signal<string>;
 }
 
@@ -20,8 +27,9 @@ interface EditorConfigI18n {
   selector: 'okr-editor-config',
   standalone: true,
   imports: [
-    IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonNote,
-    NumberInput, CategoryOld
+    IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonNote, IonLabel,
+    IonSegment, IonSegmentButton, IonSelect, IonSelectOption,
+    NumberInput
   ],
   template: `
     <ion-card>
@@ -29,6 +37,17 @@ interface EditorConfigI18n {
         <ion-card-title>{{ i18n().editor_title() }}</ion-card-title>
       </ion-card-header>
       <ion-card-content>
+        <!-- the Layout segment exists only where this card positions the text (the button section) -->
+        @if (hasLayout()) {
+          <ion-segment [value]="segment()" (ionChange)="onSegmentChange($event.detail.value)">
+            <ion-segment-button value="editor">
+              <ion-label>{{ i18n().editor_segment_editor() }}</ion-label>
+            </ion-segment-button>
+            <ion-segment-button value="layout">
+              <ion-label>{{ i18n().editor_segment_layout() }}</ion-label>
+            </ion-segment-button>
+          </ion-segment>
+        }
         @if(intro(); as intro) {
           @if(intro.length > 0) {
             <ion-note>{{ intro }}</ion-note>
@@ -36,16 +55,27 @@ interface EditorConfigI18n {
         }
         <ion-grid>
           <ion-row>
-            <ion-col size="12">
-              <div #editorHost></div>
-            </ion-col>
-            @if(showAdvanced() && showLayout()) {
-              <ion-col size="12" size-md="6">
-                <okr-category-old [i18n]="positionI18n()" [value]="position()" (valueChange)="onFieldChange('position', $event)" [readOnly]="readOnly()" [categories]="positions" />
+            @if (segment() === 'editor' || !hasLayout()) {
+              <ion-col size="12">
+                <div #editorHost></div>
               </ion-col>
-              <ion-col size="12" size-md="6">
-                <okr-number-input [i18n]="colSizeI18n()" [value]="colSize()" (valueChange)="onFieldChange('colSize', $event)" [readOnly]="readOnly()" [showHelper]="true" />
+            } @else {
+              <ion-col size="12">
+                <ion-select [label]="i18n().button_position_label()" labelPlacement="stacked" interface="popover"
+                            [value]="position()" [disabled]="readOnly()"
+                            (ionChange)="onFieldChange('position', $event.detail.value)">
+                  @for (p of positions; track p) {
+                    <ion-select-option [value]="p">{{ positionLabels()[p] }}</ion-select-option>
+                  }
+                </ion-select>
+                <ion-note>{{ i18n().button_position_helper() }}</ion-note>
               </ion-col>
+              <!-- the column size only applies when button and text stand side by side -->
+              @if (position() === VP.Left || position() === VP.Right) {
+                <ion-col size="12" size-md="6">
+                  <okr-number-input [i18n]="colSizeI18n()" [value]="colSize()" (valueChange)="onFieldChange('colSize', $event)" [readOnly]="readOnly()" [showHelper]="true" />
+                </ion-col>
+              }
             }
           </ion-row>
         </ion-grid>
@@ -69,15 +99,25 @@ export class EditorConfiguration {
   // derived
   protected buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf() } as ButtonCopyI18n));
   protected colSizeI18n = computed(() => ({ name: 'colSize', label: this.i18n().editor_colSize_label(), placeholder: this.i18n().editor_colSize_placeholder(), helper: this.i18n().editor_colSize_helper() } as NumberInputI18n));
-  protected positionI18n = computed(() => ({ name: 'position', label: this.i18n().editor_position_label() } as CategoryOldI18n));
+  /** where the button stands relative to the text (button-section.ts renders exactly these five) */
+  protected positionLabels = computed<Record<ViewPosition, string>>(() => ({
+    [ViewPosition.None]: this.i18n().button_position_none(),
+    [ViewPosition.Top]: this.i18n().button_position_top(),
+    [ViewPosition.Bottom]: this.i18n().button_position_bottom(),
+    [ViewPosition.Left]: this.i18n().button_position_left(),
+    [ViewPosition.Right]: this.i18n().button_position_right(),
+  }));
+  protected readonly hasLayout = computed(() => this.showAdvanced() && this.showLayout());
+  protected readonly segment = signal<'editor' | 'layout'>('editor');
 
   // fields
   protected htmlContent = linkedSignal(() => this.formData().htmlContent ?? '<p></p>');
-  protected colSize = linkedSignal(() => this.formData().colSize ?? 4);
+  protected colSize = linkedSignal(() => this.formData().colSize ?? 6)   // button-section.ts renders 6 when unset;
   protected position = linkedSignal(() => this.formData().position ?? ViewPosition.None);
 
   // passing constants to template
-  protected positions = ViewPositions;
+  protected readonly positions = [ViewPosition.None, ViewPosition.Top, ViewPosition.Bottom, ViewPosition.Left, ViewPosition.Right];
+  protected readonly VP = ViewPosition;
 
   // Lazy: a static import of @okr/shared-ui-editor drags ngx-editor/ProseMirror into every
   // page that reaches this component (spec 1.49, F1) — the same shape as calendar-section.ts's
@@ -130,6 +170,10 @@ export class EditorConfiguration {
   }
 
     /******************************* actions *************************************** */
+  protected onSegmentChange(value: unknown): void {
+    if (value === 'editor' || value === 'layout') this.segment.set(value);
+  }
+
   protected onFieldChange(fieldName: string, $event: string | number | ViewPosition): void {
     this.formData.update((vm) => ({ ...vm, [fieldName]: $event }));
   }

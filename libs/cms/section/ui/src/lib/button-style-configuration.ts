@@ -1,16 +1,14 @@
 import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular';
+import { IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { ButtonStyle, ColorIonic } from '@okr/shared-models';
 import { CategoryOld, CategoryOldI18n, ErrorNote, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { SectionErrors, getFieldErrors } from '@okr/cms-section-util';
-import { DEFAULT_LABEL, ICON_SIZE } from '@okr/shared-constants';
+import { BUTTON_HEIGHT, BUTTON_WIDTH, DEFAULT_LABEL } from '@okr/shared-constants';
 import { ColorsIonic } from '@okr/shared-categories';
 
 interface ButtonStyleI18n {
-  button_style_title:             Signal<string>;
-  button_style_subtitle:          Signal<string>;
   button_label_label:             Signal<string>;
   button_label_placeholder:       Signal<string>;
   button_label_helper:            Signal<string>;
@@ -32,17 +30,10 @@ interface ButtonStyleI18n {
     FormsModule,
     TextInput, CategoryOld,
     StringSelect,
-    IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, IonCardSubtitle,
+    IonGrid, IonRow, IonCol,
     ErrorNote
   ],
-  styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
-      <ion-card>
-        <ion-card-header>
-          <ion-card-title>{{ i18n().button_style_title() }}</ion-card-title>
-          <ion-card-subtitle>{{ i18n().button_style_subtitle() }}</ion-card-subtitle>
-        </ion-card-header>
-      <ion-card-content>
         @if(intro(); as intro) {
           @if(intro.length > 0) {
             <small><div [innerHTML]="intro"></div></small>
@@ -62,11 +53,11 @@ interface ButtonStyleI18n {
                   <okr-string-select [i18n]="fillI18n()" [selectedString]="fill()" (selectedStringChange)="onFieldChange('fill', $event)" [readOnly]="readOnly()" [stringList]="['clear', 'outline', 'solid']" />
                   <okr-error-note [errors]="errorsFor('style.fill')" />
               </ion-col>
-              <ion-col size="12">
+              <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="widthI18n()" [value]="width()" (valueChange)="onFieldChange('width', $event)" [readOnly]="readOnly()" />
                   <okr-error-note [errors]="errorsFor('style.width')" />
               </ion-col>
-              <ion-col size="12">
+              <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="heightI18n()" [value]="height()" (valueChange)="onFieldChange('height', $event)" [readOnly]="readOnly()" />
                   <okr-error-note [errors]="errorsFor('style.height')" />
               </ion-col>
@@ -75,8 +66,6 @@ interface ButtonStyleI18n {
               </ion-col>
           </ion-row>
         </ion-grid>
-      </ion-card-content>
-    </ion-card>
   `
 })
 export class ButtonStyleConfiguration {
@@ -93,8 +82,8 @@ export class ButtonStyleConfiguration {
   protected label = linkedSignal(() => this.formData().label ?? DEFAULT_LABEL);
   protected shape = linkedSignal(() => this.formData().shape ?? 'default');
   protected fill = linkedSignal(() => this.formData().fill ?? 'clear');
-  protected width = linkedSignal(() => this.formData().width ?? ICON_SIZE);
-  protected height = linkedSignal(() => this.formData().height ?? ICON_SIZE);
+  protected width = linkedSignal(() => this.formData().width ?? BUTTON_WIDTH);
+  protected height = linkedSignal(() => this.formData().height ?? BUTTON_HEIGHT);
   protected color = linkedSignal(() => this.formData().color ?? ColorIonic.Primary);
 
   // passing constants to template

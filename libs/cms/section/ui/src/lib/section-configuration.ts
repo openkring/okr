@@ -21,29 +21,60 @@ const EMPHASES: ArticleEmphasis[] = ['none', 'banner'];
     ErrorNote
   ],
   template: `
-    <ion-card>
-      <ion-card-header>
-        <ion-card-title>{{ headerTitle() }}</ion-card-title>
-      </ion-card-header>
-      <ion-card-content>
-        <ion-grid>
-          @if (hasRole('admin') && !journalMode()) {
+    <!-- what the section is and who sees it: at the top, apart from its content -->
+    @if (!journalMode()) {
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>{{ headerTitle() }}</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-grid>
+            @if (hasRole('admin')) {
+              <ion-row>
+                <ion-col size="12" size-md="6">
+                  <ion-item lines="none">
+                    <ion-label>{{ i18n().default_type() }}: {{ type() }}</ion-label>
+                  </ion-item>
+                </ion-col>
+                @if(okey(); as okey) {
+                  <ion-col size="12" size-md="6">
+                    <ion-item lines="none">
+                      <ion-label>{{ i18n().default_id() }}: {{ okey }}</ion-label>
+                      <okr-button-copy [i18n]="buttonCopyI18n()" [value]="okey" />
+                    </ion-item>
+                  </ion-col>
+                }
+              </ion-row>
+            }
             <ion-row>
               <ion-col size="6">
                 <ion-item lines="none">
-                  <ion-label>{{ this.i18n().default_type() }}: {{ type() }}</ion-label>
+                  <ion-label>{{ i18n().form_roleNeeded() }}</ion-label>
                 </ion-item>
               </ion-col>
-              @if(okey(); as okey) {
-                <ion-col size="6">
-                  <ion-item lines="none">
-                    <ion-label>Section Key: {{ okey }}</ion-label>
-                    <okr-button-copy [i18n]="buttonCopyI18n()" [value]="okey" />
-                  </ion-item>
-                </ion-col>
-              }
+              <ion-col size="6">
+                <okr-cat-select [category]="roles()!" [selectedItemName]="roleNeeded()" (selectedItemNameChange)="onFieldChange('roleNeeded', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+              </ion-col>
+              <ion-col size="6">
+                <ion-item lines="none">
+                  <ion-label>{{ i18n().form_state() }}</ion-label>
+                </ion-item>
+              </ion-col>
+              <ion-col size="6">
+                <okr-cat-select [category]="states()!" [selectedItemName]="state()" (selectedItemNameChange)="onFieldChange('state', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+              </ion-col>
             </ion-row>
-          }
+          </ion-grid>
+        </ion-card-content>
+      </ion-card>
+    }
+
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>{{ i18n().section_config_titleCard() }}</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-grid>
         <ion-row>
           @if(showAdvanced() && !journalMode()) {
             <ion-col size="12">
@@ -67,21 +98,27 @@ const EMPHASES: ArticleEmphasis[] = ['none', 'banner'];
                 <okr-textarea-input [i18n]="introI18n()" [value]="intro()" (valueChange)="onFieldChange('intro', $event)" [maxLength]="introMaxLength" [readOnly]="isReadOnly()" [showHelper]="true" />
                 <okr-error-note [errors]="errorsFor('intro')" />
               </ion-col>
-              <ion-col size="12" [sizeMd]="isArticle() ? '6' : '12'">
-                <ion-select [label]="i18n().section_config_introPosition_label()" labelPlacement="stacked"
-                            [value]="introPosition()" [disabled]="isReadOnly()"
-                            (ionChange)="onFieldChange('introPosition', $event.detail.value)">
-                  @for (p of introPositions; track p) {
-                    <ion-select-option [value]="p">{{ introPositionLabels()[p] }}</ion-select-option>
-                  }
-                </ion-select>
-                <ion-note>{{ i18n().section_config_introPosition_helper() }}</ion-note>
+              <!-- how the intro is shown only matters once there is an intro -->
+              @if (hasIntro()) {
+                <ion-col size="12" [sizeMd]="isArticle() ? '6' : '12'">
+                  <ion-select [label]="i18n().section_config_introPosition_label()" labelPlacement="stacked"
+                              [value]="introPosition()" [disabled]="isReadOnly()"
+                              (ionChange)="onFieldChange('introPosition', $event.detail.value)">
+                    @for (p of introPositions; track p) {
+                      <ion-select-option [value]="p">{{ introPositionLabels()[p] }}</ion-select-option>
+                    }
+                  </ion-select>
+                  <ion-note>{{ i18n().section_config_introPosition_helper() }}</ion-note>
+                </ion-col>
+              }
+              <!-- kept outside the condition: a stored value that fails must still show its error -->
+              <ion-col size="12">
                 <okr-error-note [errors]="errorsFor('introPosition')" />
               </ion-col>
             }
             <!-- an article: a normal block or a full-width coloured band -->
             @if(isArticle()) {
-              <ion-col size="12" [sizeMd]="showAdvanced() ? '6' : '12'">
+              <ion-col size="12" [sizeMd]="showAdvanced() && hasIntro() ? '6' : '12'">
                 <ion-select [label]="i18n().emphasis_label()" labelPlacement="stacked"
                             [value]="emphasis()" [disabled]="isReadOnly()"
                             (ionChange)="onEmphasisChange($event.detail.value)">
@@ -92,27 +129,12 @@ const EMPHASES: ArticleEmphasis[] = ['none', 'banner'];
                 <ion-note>{{ i18n().emphasis_helper() }}</ion-note>
               </ion-col>
             }
-            @if(showAdvanced()) {
+            <!-- the column size of the heading only matters once there is a heading -->
+            @if(showAdvanced() && hasHeading()) {
               <ion-col size="12">
                 <okr-text-input [i18n]="colSizeI18n()" [value]="colSize()" (valueChange)="onFieldChange('colSize', $event)" [readOnly]="isReadOnly()" [showHelper]="true" />
               </ion-col>
             }
-            <ion-col size="6">
-              <ion-item lines="none">
-                <ion-label>{{ this.i18n().form_roleNeeded() }}</ion-label>
-              </ion-item>
-            </ion-col>
-            <ion-col size="6">
-              <okr-cat-select [category]="roles()!" [selectedItemName]="roleNeeded()" (selectedItemNameChange)="onFieldChange('roleNeeded', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
-            </ion-col>
-            <ion-col size="6">
-              <ion-item lines="none">
-                <ion-label>{{ this.i18n().form_state() }}</ion-label>
-              </ion-item>
-            </ion-col>
-            <ion-col size="6">
-              <okr-cat-select [category]="states()!" [selectedItemName]="state()" (selectedItemNameChange)="onFieldChange('state', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
-            </ion-col>
           }
         </ion-row>
         </ion-grid>
@@ -143,6 +165,9 @@ export class SectionConfiguration {
   protected title = linkedSignal(() => this.formData().title ?? '');
   protected subTitle = linkedSignal(() => this.formData().subTitle ?? '');
   protected intro = linkedSignal(() => this.formData().intro ?? '');
+  protected hasIntro = computed(() => this.intro().trim().length > 0);
+  /** title, subtitle or intro: something the column size applies to */
+  protected hasHeading = computed(() => this.hasIntro() || this.title().trim().length > 0 || this.subTitle().trim().length > 0);
   protected introPosition = computed<SectionIntroPosition>(() => this.formData().introPosition ?? 'below');
   protected isArticle = computed(() => this.formData().type === 'article');
   protected emphasis = computed<ArticleEmphasis>(() => {

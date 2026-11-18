@@ -23,6 +23,35 @@ describe('buttonSectionValidations', () => {
     expect(() => buttonSectionValidations(model)).not.toThrow();
   });
 
+  describe('relaxed defaults', () => {
+    const withProps = (props: Record<string, unknown>) =>
+      ({ ...BUTTON_SECTION_SHAPE, properties: { ...BUTTON_SECTION_SHAPE.properties, ...props } }) as unknown as ButtonSection;
+
+    it('accepts a button without alt text', () => {
+      const model = withProps({ action: { type: ButtonAction.None, url: '' } });
+      expect(buttonSectionValidations(model).hasErrors('action.altText')).toBe(false);
+    });
+    it('still caps a typed alt text', () => {
+      const model = withProps({ action: { type: ButtonAction.None, url: '', altText: 'x'.repeat(2000) } });
+      expect(buttonSectionValidations(model).hasErrors('action.altText')).toBe(true);
+    });
+    it('accepts a button without an icon, whatever its size', () => {
+      const model = withProps({ icon: { name: '', size: undefined, slot: undefined } });
+      const result = buttonSectionValidations(model);
+      expect(result.hasErrors('icon.name')).toBe(false);
+      expect(result.hasErrors('icon.size')).toBe(false);
+      expect(result.hasErrors('icon.slot')).toBe(false);
+    });
+    it('accepts an icon without a size', () => {
+      const model = withProps({ icon: { name: 'download', slot: 'start' } });
+      expect(buttonSectionValidations(model).hasErrors('icon.size')).toBe(false);
+    });
+    it('flags a negative icon size', () => {
+      const model = withProps({ icon: { name: 'download', size: -1, slot: 'start' } });
+      expect(buttonSectionValidations(model).hasErrors('icon.size')).toBe(true);
+    });
+  });
+
   describe('ContractDocument action (spec 1.97)', () => {
     const withAction = (type: ButtonAction, url: string) =>
       ({ ...BUTTON_SECTION_SHAPE, properties: { ...BUTTON_SECTION_SHAPE.properties, action: { type, url, altText: '' } } }) as ButtonSection;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getAvatarKey, getIconColor, getSvgIconUrl, registerBundledIcons } from './icon.util';
+import { getAvatarKey, getIconColor, getSvgIconUrl, qualifyIconName, registerBundledIcons, splitIconName } from './icon.util';
 
 describe('icon.util', () => {
   describe('getSvgIconUrl with bundled icons', () => {
@@ -340,5 +340,28 @@ describe('icon.util', () => {
       expect(avatarConfigs[2].avatarKey).toBe('org.company-abc');
       expect(avatarConfigs[2].color).toBe('gold');
     });
+  });
+});
+describe('icon set qualification', () => {
+  it('keeps a name of the default set bare', () => {
+    expect(qualifyIconName('download')).toBe('download');
+    expect(qualifyIconName('download', 'icons')).toBe('download');
+  });
+  it('prefixes a name of another set', () => {
+    expect(qualifyIconName('pdf', 'filetypes')).toBe('filetypes:pdf');
+  });
+  it('does not prefix twice or an empty name', () => {
+    expect(qualifyIconName('filetypes:pdf', 'filetypes')).toBe('filetypes:pdf');
+    expect(qualifyIconName('', 'filetypes')).toBe('');
+  });
+  it('splits a qualified name', () => {
+    expect(splitIconName('filetypes:pdf')).toEqual({ set: 'filetypes', name: 'pdf' });
+    expect(splitIconName('download')).toEqual({ set: 'icons', name: 'download' });
+    expect(splitIconName(':odd')).toEqual({ set: 'icons', name: ':odd' });
+  });
+  it('builds the url of a qualified name from its set', () => {
+    expect(getSvgIconUrl('https://img', 'weather:sun')).toBe('https://img/logo/weather/sun.svg');
+    expect(getSvgIconUrl('https://img', 'download')).toBe('https://img/logo/icons/download.svg');
+    expect(getSvgIconUrl('https://img', 'sun', 'weather')).toBe('https://img/logo/weather/sun.svg');
   });
 });

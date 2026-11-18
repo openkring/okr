@@ -33,7 +33,8 @@
     "delete": "The section could not be deleted. Please try again."
   },
   "default": {
-    "type": "Default type"
+    "type": "Section type",
+    "id": "ID"
   },
   "activity": {
     "empty": "No activities available."
@@ -212,6 +213,23 @@
         "label": "Color",
         "select": "Color selection"
       }
+    },
+    "segment": {
+      "button": "Button",
+      "icon": "Icon",
+      "action": "Action"
+    },
+    "altText": {
+      "helper": "If none is entered, the button label or the name of the action is used."
+    },
+    "position": {
+      "label": "Arrangement of button and text",
+      "none": "Button only (no text)",
+      "top": "Button above the text",
+      "bottom": "Button below the text",
+      "left": "Button left, text right",
+      "right": "Text left, button right",
+      "helper": "Defines where the button sits relative to the text. With «Button only» the text is not shown. Left and right place button and text side by side; the column size then sets the width of the button."
     }
   },
   "calendar": {
@@ -332,7 +350,7 @@
     "displayConfig": "Display settings"
   },
   "editor": {
-    "title": "Editor",
+    "title": "Text",
     "colSize": {
       "label": "Column size",
       "placeholder": "0..12",
@@ -341,6 +359,10 @@
     },
     "position": {
       "label": "Position"
+    },
+    "segment": {
+      "editor": "Editor",
+      "layout": "Layout"
     }
   },
   "emergency": {
@@ -546,8 +568,8 @@
     "subtitle": "Choose an icon and its appearance",
     "size": {
       "label": "Size",
-      "placeholder": "nnn",
-      "helper": "Size in kB."
+      "placeholder": "20",
+      "helper": "Size of the icon in pixels. If none is given, 20 is used."
     },
     "slot": {
       "label": "Slot",
@@ -1108,11 +1130,12 @@
         "helper": "A short text about the title. Choose where it appears under «Display»."
       },
       "introPosition": {
-        "label": "Display",
+        "label": "Display of the intro text",
         "above": "As a line above the title",
         "below": "As an introduction below the title",
         "helper": "Above the title the intro is a small line; below it, a short paragraph."
-      }
+      },
+      "titleCard": "Section title"
     }
   },
   "slider": {

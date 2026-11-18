@@ -33,7 +33,8 @@
     "delete": "La sección no se ha podido eliminar. Inténtelo de nuevo."
   },
   "default": {
-    "type": "Tipo predeterminado"
+    "type": "Tipo de sección",
+    "id": "ID"
   },
   "activity": {
     "empty": "No hay actividades disponibles."
@@ -212,6 +213,23 @@
         "label": "Color",
         "select": "Selección de color"
       }
+    },
+    "segment": {
+      "button": "Botón",
+      "icon": "Icono",
+      "action": "Acción"
+    },
+    "altText": {
+      "helper": "Si no introduces ninguno, se usa la etiqueta del botón o el nombre de la acción."
+    },
+    "position": {
+      "label": "Disposición del botón y el texto",
+      "none": "Solo el botón (sin texto)",
+      "top": "Botón encima del texto",
+      "bottom": "Botón debajo del texto",
+      "left": "Botón a la izquierda, texto a la derecha",
+      "right": "Texto a la izquierda, botón a la derecha",
+      "helper": "Define dónde se sitúa el botón respecto al texto. Con «Solo el botón» el texto no se muestra. A la izquierda y a la derecha, botón y texto quedan uno al lado del otro; el tamaño de columna fija entonces el ancho del botón."
     }
   },
   "calendar": {
@@ -332,7 +350,7 @@
     "displayConfig": "Ajustes de visualización"
   },
   "editor": {
-    "title": "Editor",
+    "title": "Texto",
     "colSize": {
       "label": "Tamaño de columna",
       "placeholder": "0..12",
@@ -341,6 +359,10 @@
     },
     "position": {
       "label": "Posición"
+    },
+    "segment": {
+      "editor": "Editor",
+      "layout": "Diseño"
     }
   },
   "emergency": {
@@ -546,8 +568,8 @@
     "subtitle": "Elegir un icono y su apariencia",
     "size": {
       "label": "Tamaño",
-      "placeholder": "nnn",
-      "helper": "Tamaño en kB."
+      "placeholder": "20",
+      "helper": "Tamaño del icono en píxeles. Si no se indica ninguno, se usa 20."
     },
     "slot": {
       "label": "Slot",
@@ -1108,11 +1130,12 @@
         "helper": "Un texto breve sobre el título. Eliges dónde aparece en «Visualización»."
       },
       "introPosition": {
-        "label": "Visualización",
+        "label": "Visualización del texto de introducción",
         "above": "Como antetítulo sobre el título",
         "below": "Como introducción bajo el título",
         "helper": "Como antetítulo, la intro aparece en pequeño sobre el título; como introducción, en un párrafo breve debajo."
-      }
+      },
+      "titleCard": "Título de la sección"
     }
   },
   "slider": {

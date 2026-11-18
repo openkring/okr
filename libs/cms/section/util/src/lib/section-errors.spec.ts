@@ -16,9 +16,9 @@ describe('getInlineErrorFields', () => {
     expect(getInlineErrorFields('chat')).toEqual(expect.arrayContaining(['chat.id', 'chat.name', 'chat.url']));
   });
 
-  it('offers the button sub-configs only in advanced mode', () => {
-    expect(getInlineErrorFields('button')).not.toContain('action.url');
-    expect(getInlineErrorFields('button', true)).toContain('action.url');
+  it('offers the button segments without the advanced toggle', () => {
+    expect(getInlineErrorFields('button')).toEqual(expect.arrayContaining(['style.width', 'icon.size', 'action.url', 'action.altText']));
+    expect(getInlineErrorFields('button')).not.toContain('zoomFactor');
   });
 });
 
