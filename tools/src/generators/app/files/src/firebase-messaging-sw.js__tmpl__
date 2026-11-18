@@ -102,7 +102,7 @@ function handlePush(payload, { updateBadge }) {
       self.registration.showNotification('Gelesen', { tag, silent: true, data: payload.data })
         .then(() => self.registration.getNotifications({ tag }))
         .then(list => list.forEach(n => n.close()))
-        .catch(() => {}),
+        .catch(() => { /* best effort: a leftover silent notification is harmless */ }),
     ]);
   }
 
@@ -171,7 +171,7 @@ async function focusOrOpen(url) {
   if (!client) {
     return clients.openWindow ? clients.openWindow(url) : undefined;
   }
-  await client.focus().catch(() => {});
+  await client.focus().catch(() => { /* best effort: navigate below still runs unfocused */ });
   try {
     await client.navigate(url);
   } catch {
