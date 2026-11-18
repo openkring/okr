@@ -41,14 +41,27 @@ describe('buildVCard UID and NICKNAME', () => {
 });
 
 describe('buildLookupVCard', () => {
-  it('drops TITLE, ROLE, relatedNames, BDAY, postal, web and the photo', () => {
+  it('drops TITLE, ROLE, relatedNames, BDAY and the photo', () => {
     const vcf = buildLookupVCard(FULL);
     expect(vcf).toContain('ORG:Acme AG\r\n');
-    for (const absent of ['TITLE', 'ROLE', 'X-ABRELATEDNAMES', 'BDAY', 'ADR', 'URL', 'PHOTO']) {
+    for (const absent of ['TITLE', 'ROLE', 'X-ABRELATEDNAMES', 'BDAY', 'PHOTO']) {
       expect(vcf).not.toContain(absent);
     }
     expect(vcf).toContain('TEL;TYPE=CELL');
     expect(vcf).toContain('spike@example.invalid');
+  });
+
+  it('keeps the postal address and the website (owner, 2026-11-17)', () => {
+    const vcf = buildLookupVCard(FULL);
+    expect(vcf).toContain('ADR');
+    expect(vcf).toContain('Seestrasse 1');
+    expect(vcf).toContain('https://example.invalid');
+  });
+
+  it('writes the bank account as a NOTE line', () => {
+    const vcf = buildLookupVCard({ ...FULL, note: 'IBAN ZKB priv: CH98 0070 0112 9000 6934 5' });
+    expect(vcf).toContain('NOTE:IBAN ZKB priv: CH98 0070 0112 9000 6934 5\r\n');
+    expect(buildLookupVCard(FULL)).not.toContain('NOTE');
   });
 
   it('omits ORG when the employer has no name', () => {

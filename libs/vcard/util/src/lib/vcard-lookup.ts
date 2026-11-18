@@ -2,12 +2,14 @@ import { buildVCard, foldVcardLine } from './vcard-generator';
 import { ExportScope, VcardRecord } from './vcard-types';
 
 /**
- * The «lookup» profile of the CardDAV mirror (spec 1.159 §6): only what an incoming-call lookup
- * needs — name, nickname, first employer, phones, emails and (inserted at serve time) the photo.
+ * The «lookup» profile of the CardDAV mirror (spec 1.159 §6): name, nickname, first employer,
+ * the FAVOURITE address of each channel — phone, email, postal, web, and the bank account as a
+ * note (owner, 2026-11-17) — and, inserted at serve time, the photo. The reduction to one address
+ * per channel happens where the addresses are read (`lookupAddresses` in the functions).
  */
 export const LOOKUP_SCOPE: ExportScope = {
   identity: true,
-  addresses: ['phone', 'email'],
+  addresses: ['phone', 'email', 'postal', 'web'],
   birthday: false,
   photo: true, // PHOTO is inserted at serve time (`withPhoto`), never stored in the snapshot
   workRels: true,

@@ -140,6 +140,10 @@ export function buildVCard(record: VcardRecord, scope: ExportScope): string {
     lines.push(`${item}.X-ABLabel:${escapeVcardValue(rel.label)}`);
   }
 
+  if (record.note) {
+    lines.push(`NOTE:${escapeVcardValue(record.note)}`);
+  }
+
   if (scope.photo && record.photoBase64) {
     lines.push(`PHOTO;ENCODING=b;TYPE=JPEG:${record.photoBase64}`);
   }

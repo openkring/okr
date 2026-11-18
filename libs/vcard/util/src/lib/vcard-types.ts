@@ -103,6 +103,8 @@ export interface VcardRecord {
   uid?: string;
   /** person cards: `PersonModel.nickname`, emitted as `NICKNAME` when set */
   nickname?: string;
+  /** free text emitted as `NOTE` when set — the CardDAV mirror puts the favourite bank account here */
+  note?: string;
 
   // identity
   firstName?: string;

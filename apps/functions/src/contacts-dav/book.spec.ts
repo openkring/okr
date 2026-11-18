@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { VcardRecord } from '@okr/vcard-util';
 
-import { hasLookupChannel, isRebuildDue, planBookWrites, renderBookCard } from './book';
+import { hasLookupChannel, isRebuildDue, lookupAddresses, planBookWrites, renderBookCard } from './book';
 import type { BookCard } from './dav-handler';
 
 const NOW = new Date('2026-11-15T03:15:00Z');
@@ -64,5 +64,33 @@ describe('hasLookupChannel', () => {
     expect(hasLookupChannel(PERSON)).toBe(true);
     expect(hasLookupChannel({ ...PERSON, channels: [{ channel: 'postal', pref: false }] })).toBe(false);
     expect(hasLookupChannel({ ...PERSON, channels: [] })).toBe(false);
+  });
+});
+
+describe('lookupAddresses — favourites only (owner, 2026-11-17)', () => {
+  const a = (addressChannel: string, value: Record<string, unknown>, isFavorite = false, isCc = false) => ({ addressChannel, isFavorite, isCc, ...value });
+
+  it('keeps the favourite of each channel and drops the rest', () => {
+    const { addresses } = lookupAddresses([
+      a('email', { email: 'elab@x.ch' }), a('email', { email: 'fav@x.ch' }, true), a('email', { email: 'other@x.ch' }),
+      a('phone', { phone: '+41 79 000 00 01' }, true), a('phone', { phone: '+41 79 000 00 02' }),
+      a('postal', { streetName: 'Rainstrasse' }, true), a('web', { url: 'https://x.ch' }, true),
+    ]);
+    expect(addresses.map((x) => x['email'] ?? x['phone'] ?? x['streetName'] ?? x['url'])).toEqual(['fav@x.ch', '+41 79 000 00 01', 'Rainstrasse', 'https://x.ch']);
+  });
+
+  it('falls back to the first non-CC address of a channel with no favourite', () => {
+    const { addresses } = lookupAddresses([a('phone', { phone: 'cc' }, false, true), a('phone', { phone: 'first' }), a('phone', { phone: 'second' })]);
+    expect(addresses.map((x) => x['phone'])).toEqual(['first']);
+  });
+
+  it('turns the favourite bank account into a note with its label', () => {
+    const { addresses, note } = lookupAddresses([a('bankaccount', { iban: 'CH98 0070 0112 9000 6934 5', addressChannelLabel: 'ZKB priv' }, true)]);
+    expect(note).toBe('IBAN ZKB priv: CH98 0070 0112 9000 6934 5');
+    expect(addresses).toEqual([]);
+  });
+
+  it('writes a bare IBAN when the account has no label', () => {
+    expect(lookupAddresses([a('bankaccount', { iban: 'CH12' })]).note).toBe('IBAN: CH12');
   });
 });
