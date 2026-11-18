@@ -5,6 +5,7 @@ import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { Badge } from '@capawesome/capacitor-badge';
+import { captureMessage } from '@sentry/angular';
 import { BehaviorSubject, combineLatest, debounceTime, map, of, switchMap, tap } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
@@ -135,6 +136,8 @@ export class MatrixInitializationService {
       PUSH_PROMPT_I18N_KEYS.header, PUSH_PROMPT_I18N_KEYS.message, PUSH_PROMPT_I18N_KEYS.later, PUSH_PROMPT_I18N_KEYS.allow,
     ].map(key => this.i18nService.translateOnce(key)));
     if (!header || !allow) return; // scope failed to load: ask on the next login instead
+    let registration: Promise<string | null> | undefined;
+    let allowTappedAt = 0;
     const alert = await this.alertController.create({
       header,
       message,
@@ -146,8 +149,11 @@ export class MatrixInitializationService {
           // Not awaited: enablePush runs synchronously up to Notification.requestPermission(),
           // so the prompt is reached inside the click (1.127).
           handler: () => {
-            void this.registerPush(uid, true).catch(err =>
-              console.warn('MatrixInitializationService: push registration after prompt failed:', err));
+            allowTappedAt = Date.now();
+            registration = this.registerPush(uid, true).catch(err => {
+              console.warn('MatrixInitializationService: push registration after prompt failed:', err);
+              return null;
+            });
           },
         },
       ],
@@ -157,6 +163,34 @@ export class MatrixInitializationService {
     if (role !== 'confirm') {
       try { localStorage.setItem(snoozeKey, String(Date.now() + PUSH_PROMPT_SNOOZE_MS)); } catch { /* best effort */ }
     }
+    await this.reportPushPromptOutcome(role, isStandalone, registration, allowTappedAt);
+  }
+
+  /**
+   * One Sentry info event per push decision on a device, so «did the dialog appear, and what was
+   * answered?» can be answered afterwards (iOS shows its system dialog only once). Reports the
+   * in-app answer and, after «Erlauben», the system result: `granted`, `denied`, or still `prompt`
+   * (the system dialog did not appear or was dismissed). `systemMs` is the time from the tap to
+   * the result — a denial within a few hundred ms means no dialog was shown.
+   */
+  private async reportPushPromptOutcome(
+    role: string | undefined,
+    isStandalone: boolean,
+    registration: Promise<string | null> | undefined,
+    allowTappedAt: number,
+  ): Promise<void> {
+    try {
+      const answer = role === 'confirm' ? 'allow' : role === 'cancel' ? 'later' : (role ?? 'none');
+      const token = registration ? await registration : null;
+      const system = answer === 'allow' ? await this.fcmService.getPermissionState() : 'not-asked';
+      const systemMs = answer === 'allow' && allowTappedAt ? Date.now() - allowTappedAt : undefined;
+      const platform = Capacitor.isNativePlatform() ? Capacitor.getPlatform() : isStandalone ? 'pwa' : 'web';
+      captureMessage(`Push prompt: ${answer} → ${system}`, {
+        level: 'info',
+        tags: { pushPromptAnswer: answer, pushPromptSystem: system, pushPromptPlatform: platform, pushPromptToken: token ? 'saved' : 'none' },
+        extra: { systemMs },
+      });
+    } catch { /* telemetry only */ }
   }
 
   /**
