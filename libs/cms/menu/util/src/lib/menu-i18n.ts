@@ -95,6 +95,8 @@ export const MENU_I18N_KEYS = {
   static_preview_active:          PFX + 'static.preview.active',
   // shown to admins in place of a row the static menu cannot draw (read by the layout, not the form)
   static_cut_warning:             PFX + 'static.cut_warning',
+  // landmark name of the static block (screen readers)
+  static_nav_label:               PFX + 'static.nav_label',
 
   // shown to admins in place of a `sub` row that reached a segmented bar
   bar_segment_sub:                PFX + 'bar.segment_sub',

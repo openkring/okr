@@ -363,7 +363,8 @@
       "page": "Página",
       "active": "Página activa"
     },
-    "cut_warning": "No se muestra (límite del menú estático)"
+    "cut_warning": "No se muestra (límite del menú estático)",
+    "nav_label": "Menú principal"
   },
   "item": {
     "task-my": "Mis tareas",

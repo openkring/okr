@@ -6,3 +6,4 @@ export * from './lib/menu.store';
 export * from './lib/menu-layout.service';
 export * from './lib/menu-bar';
 export * from './lib/menu-bar-label';
+export * from './lib/menu-static';

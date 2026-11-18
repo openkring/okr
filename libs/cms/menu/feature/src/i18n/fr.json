@@ -363,7 +363,8 @@
       "page": "Page",
       "active": "Page active"
     },
-    "cut_warning": "Non affiché (limite du menu statique)"
+    "cut_warning": "Non affiché (limite du menu statique)",
+    "nav_label": "Menu principal"
   },
   "item": {
     "task-my": "Mes tâches",

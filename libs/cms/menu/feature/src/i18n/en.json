@@ -363,7 +363,8 @@
       "page": "Page",
       "active": "Active page"
     },
-    "cut_warning": "Not shown (limit of the static menu)"
+    "cut_warning": "Not shown (limit of the static menu)",
+    "nav_label": "Main menu"
   },
   "item": {
     "task-my": "My tasks",
