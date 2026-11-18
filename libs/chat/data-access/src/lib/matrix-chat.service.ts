@@ -9,9 +9,7 @@ import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, TypingNotification, UserModel } from '@okr/shared-models';
-// eslint-disable-next-line @nx/enforce-module-boundaries -- known layering debt (2026-11-18): reaches up to AppStore; replace with an injection token like APP_STORE_MIN
-import { AppStore } from '@okr/shared-feature';
-import { ChatStatusService } from '@okr/shared-data-access';
+import { APP_STORE_MIN, ChatStatusService } from '@okr/shared-data-access';
 import { checkVideoLimits, debugData, debugMessage, MAX_CHAT_VIDEO_BYTES } from '@okr/shared-util-core';
 import { OKR_VIDEO_FIELD, videoLink } from '@okr/content-document-util';
 import { convertHeicToJpeg, isHeicFile, materializeFile, resolveFileMimeType, extractVideoPoster, UploadTooLargeError, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower, VideoLimitError, VideoUploadError, buildPollContent, PollAnswerDef, POLL_START_EVENT, PinboardInput, AvailablePinboard, UNREAD_FROM_EVENT, MARKED_UNREAD_EVENT, flaggedUnreadFrom, countUnmutedUnread, filterRoomsOfTenant, serverNameOf, indexBookmarkEntries, bookmarkedMessageIds, PinPreview, pinPreviewOf } from '@okr/chat-util';
@@ -74,7 +72,7 @@ function msgTypeForMimeType(mimetype: string): MsgType {
   providedIn: 'root'
 })
 export class MatrixChatService {
-  private appStore = inject(AppStore);
+  private appStore = inject(APP_STORE_MIN);
   private readonly chatStatus = inject(ChatStatusService);
 
   private client: MatrixClient | null = null;

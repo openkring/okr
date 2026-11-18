@@ -1,19 +1,36 @@
-import { Injectable, InjectionToken, inject } from '@angular/core';
+import { Injectable, InjectionToken, Signal, inject } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
+import type { User } from 'firebase/auth';
 import { distinctUntilChanged } from 'rxjs/operators';
 
-import { I18nTenantOverrideCollection, I18nTenantOverrideModel } from '@okr/shared-models';
+import type { OkrEnvironment } from '@okr/shared-config';
+import { AppConfig, GroupModel, I18nTenantOverrideCollection, I18nTenantOverrideModel, PersonModel, UserModel } from '@okr/shared-models';
 import { deepEqual, getSystemQuery } from '@okr/shared-util-core';
 
 import { FirestoreService } from './firestore.service';
 
-/** Minimal shape of AppStore used by this service (avoids circular dep with shared-feature). */
+/**
+ * The slice of AppStore that libs BELOW the feature layer may read (data-access services, ui
+ * components). AppStore lives in shared-feature, so importing it from there breaks the layering
+ * (`@nx/enforce-module-boundaries`); they inject APP_STORE_MIN instead. Every app provides it as
+ * `{ provide: APP_STORE_MIN, useExisting: AppStore }`, and shared-feature asserts at compile time
+ * that AppStore still satisfies this interface (`asAppStoreMin` in app.store.ts). Add a member here only
+ * when such a lib needs it — the interface is the contract, not a mirror of AppStore.
+ */
 export interface AppStoreMin {
-  currentUser: () => { okey: string } | undefined;
-  env: { tenantId: string };
+  readonly currentUser: Signal<UserModel | undefined>;
+  readonly currentPerson: Signal<PersonModel | undefined>;
+  readonly allPersons: Signal<PersonModel[]>;
+  /** Groups AND ad-hoc chats — chat only (see AppStore.allGroupsAndChats). */
+  readonly allGroupsAndChats: Signal<GroupModel[]>;
+  readonly appConfig: Signal<AppConfig>;
+  readonly appOrigin: Signal<string>;
+  readonly tenantId: Signal<string>;
+  readonly fbUser: Signal<User | null | undefined>;
+  readonly env: OkrEnvironment;
 }
 
-/** Injection token for AppStoreMin — callers provide AppStore which satisfies this interface. */
+/** Injection token for AppStoreMin — every app provides it with `useExisting: AppStore`. */
 export const APP_STORE_MIN = new InjectionToken<AppStoreMin>('APP_STORE_MIN');
 
 @Injectable({ providedIn: 'root' })

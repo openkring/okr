@@ -1,23 +1,21 @@
 import { Injectable, inject } from '@angular/core';
-// eslint-disable-next-line @nx/enforce-module-boundaries -- known layering debt (2026-11-18): reaches up to AppStore; replace with an injection token like APP_STORE_MIN
-import { AppStore } from '@okr/shared-feature';
 import { type RegisterView, buildRegisterView } from './processing-register.view';
+import { APP_STORE_MIN } from '@okr/shared-data-access';
 
 /**
  * The tenant's Bearbeitungsverzeichnis (spec 1.19 Phase 5C).
  *
  * A DI shell around `buildRegisterView`, which holds all the logic and is unit-tested on
- * its own. The split is not ceremony: `AppStore` pulls in `@ionic/angular`, whose
- * directory-style exports break Vitest's ESM resolution, so anything importing this file
- * cannot be tested. Keeping the derivation in a separate, Ionic-free module is what makes
- * it testable at all.
+ * its own. The split predates APP_STORE_MIN: importing `AppStore` pulled in `@ionic/angular`,
+ * whose directory-style exports break Vitest's ESM resolution. The token lifts that, but the
+ * pure module stays the cheaper thing to test.
  *
  * Reads `appConfig` and nothing else — no Firestore access. The catalogue is code, and the
- * tenant's own entries ride on `app-config`, which the AppStore already streams.
+ * tenant's own entries ride on `app-config`, which AppStore already streams (read here through APP_STORE_MIN).
  */
 @Injectable({ providedIn: 'root' })
 export class ProcessingRegisterService implements RegisterView {
-  private readonly appStore = inject(AppStore);
+  private readonly appStore = inject(APP_STORE_MIN);
   private readonly view = buildRegisterView(this.appStore.appConfig);
 
   public readonly entries = this.view.entries;

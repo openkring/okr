@@ -17,7 +17,7 @@
     "@okr/avatar-data-access": "*",
     "@okr/shared-util-angular": "*",
     "@okr/shared-pipes": "*",
-    "@okr/shared-feature": "*",
+    "@okr/shared-data-access": "*",
     "@okr/avatar-ui": "*",
     "@okr/content-file-transfer-ui": "*",
     "@okr/content-file-transfer-util": "*"

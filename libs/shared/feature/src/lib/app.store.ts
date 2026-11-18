@@ -8,7 +8,7 @@ import { combineLatest, from, map, of, takeUntil, timer } from 'rxjs';
 import { App } from '@capacitor/app';
 
 import { AUTH, clearStalledRestoreNote, ENV, FIRESTORE, noteStalledExpiredRestore, usesLocalStorageOnlySession, wasStalledSessionDropped } from '@okr/shared-config';
-import { AppConfigService, FirestoreService } from '@okr/shared-data-access';
+import { AppConfigService, AppStoreMin, FirestoreService } from '@okr/shared-data-access';
 import { AddressDirectoryCollection, AddressDirectoryModel, AppConfig, getAddressDirectoryKey, AvailableLanguages, CalEventCollection, CalEventModel, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, DefaultLanguageCode, GroupCollection, GroupModel, InvitationCollection, InvitationModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, TaskCollection, TaskModel, UserCollection, UserModel } from '@okr/shared-models';
 import { appLinkOrigins, countableInvitationsOf, die, getSystemQuery, hasRole, isBadgeSourceLoaded, indexBy, openInvitationsOf, pickForTenant, publicAppOrigin, replacePlaceholders, resolveAppOrigin, sortPersons, withOfflineSnapshot } from '@okr/shared-util-core';
 import { AppNavigationService, armStartupStallCheck, HelperVisibility, installScrollDiagnostics, isBrowser, markStartup, probeStoredSession, probeStoredSessionIdb, reportStartupTiming, VersionCheckService, resourceParams } from '@okr/shared-util-angular';
@@ -985,3 +985,12 @@ export const AppStore = signalStore(
     }
   })
 );
+
+/**
+ * Compile-time contract: libs below the feature layer read AppStore through APP_STORE_MIN, which
+ * every app provides with `useExisting: AppStore` — and `useExisting` is not type-checked. This
+ * assignment is: if AppStore drops or retypes a member of AppStoreMin, shared-feature stops building.
+ */
+export function asAppStoreMin(store: InstanceType<typeof AppStore>): AppStoreMin {
+  return store;
+}

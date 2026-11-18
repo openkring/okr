@@ -13,7 +13,7 @@
     "@okr/shared-pipes": "*",
     "@okr/shared-ui": "*",
     "@okr/shared-ui-editor": "*",
-    "@okr/shared-feature": "*",
+    "@okr/shared-data-access": "*",
     "@okr/shared-util-core": "*",
     "@okr/shared-util-angular": "*",
     "@okr/shared-i18n": "*",

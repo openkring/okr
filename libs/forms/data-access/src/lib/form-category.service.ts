@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 
 import { FirestoreService } from '@okr/shared-data-access';
+import { categoryNamesOf } from '@okr/forms-util';
 import { CategoryCollection, CategoryListModel, FormDefinitionModel } from '@okr/shared-models';
 import { getSystemQuery } from '@okr/shared-util-core';
 
@@ -18,8 +19,6 @@ export class FormCategoryService {
     tenantId: string,
     known: CategoryListModel[] = [],
   ): Promise<CategoryListModel[]> {
-    // dynamic: forms-util is lazy-loaded in this lib (form-submit.service), a static import is forbidden
-    const { categoryNamesOf } = await import('@okr/forms-util');
     const names = categoryNamesOf(def?.fields ?? []);
     if (names.length === 0 || !tenantId) return [];
     const fromKnown = known.filter(c => names.includes(c.name));

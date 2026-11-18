@@ -5,8 +5,6 @@ import { ClientEvent, EventTimeline, EventType, MatrixClient, MatrixError, Matri
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 
 import { MatrixMessage, MatrixReadReceipt } from '@okr/shared-models';
-// eslint-disable-next-line @nx/enforce-module-boundaries -- known layering debt (2026-11-18): reaches up to AppStore; replace with an injection token like APP_STORE_MIN
-import { AppStore } from '@okr/shared-feature';
 import { debugData, debugMessage } from '@okr/shared-util-core';
 import {
   EvictedRooms, evictedRoomsStorageKey, evictionAction, isMessageGoneError, isAbortError, isTransportFailure, isRenderableChatEvent, isRoomGoneError, threadRootOf,
@@ -17,6 +15,7 @@ import { AvatarService } from '@okr/avatar-data-access';
 import { hasResolvableMedia, isServiceAccount, mediaMimeHint, personAvatarUrl } from './matrix-helpers';
 import { MatrixMediaService } from './matrix-media.service';
 import { MatrixRoomListService } from './matrix-room-list.service';
+import { APP_STORE_MIN } from '@okr/shared-data-access';
 
 /** A room that shows a jumped (non-live) timeline, and how many new messages arrived meanwhile. */
 export interface MatrixJumpState {
@@ -52,7 +51,7 @@ const MAX_LINKED_TIMELINES = 100;
   providedIn: 'root'
 })
 export class MatrixMessageService {
-  private readonly appStore = inject(AppStore);
+  private readonly appStore = inject(APP_STORE_MIN);
   private readonly avatarService = inject(AvatarService);
   private readonly media = inject(MatrixMediaService);
   private readonly roomList = inject(MatrixRoomListService);

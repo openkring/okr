@@ -4,8 +4,6 @@ import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 import { MatrixMessage, MatrixRoom, TypingNotification } from '@okr/shared-models';
-// eslint-disable-next-line @nx/enforce-module-boundaries -- known layering debt (2026-11-18): reaches up to AppStore; replace with an injection token like APP_STORE_MIN
-import { AppStore } from '@okr/shared-feature';
 import { debugMessage } from '@okr/shared-util-core';
 import { effectiveUnreadCount, flaggedUnreadFrom, isRoomClassifiable, MATRIX_FAVOURITE_TAG, MARKED_UNREAD_EVENT, OKR_TENANT_EVENT, UNREAD_FROM_EVENT } from '@okr/chat-util';
 import { AvatarService } from '@okr/avatar-data-access';
@@ -13,6 +11,7 @@ import { AvatarService } from '@okr/avatar-data-access';
 import { isServiceAccount, mxcAvatarHttpUrl, personAvatarUrl } from './matrix-helpers';
 import { MatrixMediaService } from './matrix-media.service';
 import { MatrixDirectRoomService } from './matrix-direct-room.service';
+import { APP_STORE_MIN } from '@okr/shared-data-access';
 
 /**
  * The chat room list: builds the `MatrixRoom[]` snapshot the sidebar renders, keeps it
@@ -31,7 +30,7 @@ import { MatrixDirectRoomService } from './matrix-direct-room.service';
   providedIn: 'root'
 })
 export class MatrixRoomListService {
-  private readonly appStore = inject(AppStore);
+  private readonly appStore = inject(APP_STORE_MIN);
   private readonly avatarService = inject(AvatarService);
   private readonly media = inject(MatrixMediaService);
   private readonly dm = inject(MatrixDirectRoomService);

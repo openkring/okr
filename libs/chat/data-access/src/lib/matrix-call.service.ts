@@ -5,8 +5,6 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { createNewMatrixCall, CallEvent, MsgType, type MatrixCall, type MatrixClient } from 'matrix-js-sdk';
 
 import { UserModel } from '@okr/shared-models';
-// eslint-disable-next-line @nx/enforce-module-boundaries -- known layering debt (2026-11-18): reaches up to AppStore; replace with an injection token like APP_STORE_MIN
-import { AppStore } from '@okr/shared-feature';
 import { ActivityService } from '@okr/activity-data-access';
 
 import { isKioskOnly } from '@okr/shared-util-core';
@@ -14,6 +12,7 @@ import { isKioskOnly } from '@okr/shared-util-core';
 import { findGroupOfRoom } from '@okr/chat-util';
 
 import { isServiceAccount } from './matrix-helpers';
+import { APP_STORE_MIN } from '@okr/shared-data-access';
 
 /**
  * Power level a caller must hold in the call room before an unattended kiosk device
@@ -32,7 +31,7 @@ export const KIOSK_CALLER_MIN_POWER_LEVEL = 100;
   providedIn: 'root'
 })
 export class MatrixCallService {
-  private readonly appStore = inject(AppStore);
+  private readonly appStore = inject(APP_STORE_MIN);
   private readonly activityService = inject(ActivityService);
 
   private client: MatrixClient | null = null;

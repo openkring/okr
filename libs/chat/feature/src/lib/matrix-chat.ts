@@ -15,11 +15,12 @@ import { ChatStatusService } from '@okr/shared-data-access';
 import { VideoUrlService } from '@okr/content-document-data-access';
 import { videoDocKeyOf, videoLink } from '@okr/content-document-util';
 
-import { MatrixMessageInput, MatrixMessageList, MatrixRoomList, MessageActionsSheet, PinBanner, PollDetailModal, ReactionDetailsModal, ReminderPicker } from '@okr/chat-ui';
+import { CHAT_LOCATION_PICKER, MatrixMessageInput, MatrixMessageList, MatrixRoomList, MessageActionsSheet, PinBanner, PollDetailModal, ReactionDetailsModal, ReminderPicker } from '@okr/chat-ui';
 import { MatrixPollData } from '@okr/chat-data-access';
 import { buildMessageActionLabels, buildMessageActionsCtx } from './message-actions.feature';
 import { fileTransferCardOf, isFileReadable, isOversizeChatVideo, buildEditedPollAnswers, canEditPoll, parsePollContent, convertHeicToJpeg, groupRoomAliasLocalpart, shouldDeferAskRoom, isSupportedImageFile, isUploadTooLargeError, filterRoomsByName, resolveInitialRoomId, readBookmark, isTrustedBookmarkEntry, ChatBookmark, resolvePermalinkTarget, shouldSendReceipt, MessageDraft, UploadTooLargeError, availablePresets, reminderDueAt, ReminderPreset, getMessageActions, MessageActionId, verifiedForwardedNames } from '@okr/chat-util';
 
+import { ModelSelectService } from '@okr/shared-feature';
 import { MatrixChatStore } from './matrix-chat.store';
 import { PollCreateModal } from './poll-create.modal';
 import { ChatHelpModal } from './chat-help.modal';
@@ -32,6 +33,17 @@ function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
 @Component({
   selector: 'okr-matrix-chat-overview',
   standalone: true,
+  // The message input's `!!` quick entry: the picker is a shared-feature modal, so it is wired here.
+  providers: [{
+    provide: CHAT_LOCATION_PICKER,
+    useFactory: () => {
+      const modelSelectService = inject(ModelSelectService);
+      return async () => {
+        const result = await modelSelectService.selectLocation('', true, false);
+        return result?.kind === 'predefined' ? result.location.name : undefined;
+      };
+    },
+  }],
   imports: [
     SvgIconPipe, RouterLink,
     Spinner, MatrixRoomList, MatrixMessageList, MatrixMessageInput, PinBanner,

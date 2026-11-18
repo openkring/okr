@@ -1,12 +1,11 @@
-import { Component, DestroyRef, afterNextRender, computed, effect, inject, input, output, signal, viewChild, ElementRef, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, DestroyRef, InjectionToken, afterNextRender, computed, effect, inject, input, output, signal, viewChild, ElementRef, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
 import {  IonTextarea, IonButton, IonIcon, ActionSheetController, ActionSheetOptions, ModalController, Platform } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, QuickEntryService } from '@okr/shared-util-angular';
-// eslint-disable-next-line @nx/enforce-module-boundaries -- known layering debt (2026-11-18): a ui component injecting AppStore/ModelSelectService; move the calls to the feature store
-import { AppStore, ModelSelectService } from '@okr/shared-feature';
+import { APP_STORE_MIN } from '@okr/shared-data-access';
 import { ButtonCopy, DateTimeSelectModal } from '@okr/shared-ui';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 import { PersonModel } from '@okr/shared-models';
@@ -14,6 +13,14 @@ import { PersonModel } from '@okr/shared-models';
 import { isAlbumVideoFile, isFileReadable, isOversizeChatVideo, isSupportedImageFile, materializeFile,MatrixChatI18n, MessageDraft, MentionRef, findMentionQuery, filterActiveMentions } from '@okr/chat-util';
 import { MentionAutocomplete, MentionPick, MENTION_ROOM, mentionListboxId, mentionOptionId } from './mention-autocomplete';
 import 'emoji-picker-element';
+
+/**
+ * Opens the location picker for the `!!` quick entry and resolves to the chosen location's NAME
+ * (undefined on cancel or a non-predefined pick). The picker lives in shared-feature, which a ui lib
+ * must not import, so the chat feature provides this on the component that hosts the input. Without
+ * a provider the `!!` token is simply stripped.
+ */
+export const CHAT_LOCATION_PICKER = new InjectionToken<() => Promise<string | undefined>>('CHAT_LOCATION_PICKER');
 
 @Component({
   selector: 'okr-matrix-message-input',
@@ -368,11 +375,11 @@ import 'emoji-picker-element';
 })
 export class MatrixMessageInput {
   private actionSheetController = inject(ActionSheetController);
-  private appStore = inject(AppStore);
+  private appStore = inject(APP_STORE_MIN);
   private modalController = inject(ModalController);
   private quickEntryService = inject(QuickEntryService);
   private platform = inject(Platform);
-  private modelSelectService = inject(ModelSelectService);
+  private readonly pickLocationName = inject(CHAT_LOCATION_PICKER, { optional: true });
   private isSettingQuickEntryValue = false;
   private mentions = signal<MentionRef[]>([]);
 
@@ -848,11 +855,11 @@ export class MatrixMessageInput {
           this.setTextAndDraft(value.slice(0, -2));
         }
       } else if (trigger === 'location') {
-        const result = await this.modelSelectService.selectLocation('', true, false);
-        if (result?.kind === 'predefined') {
+        const locationName = await this.pickLocationName?.();
+        if (locationName) {
           // Write the location NAME into the message text (like '//' writes the date), rather
           // than sending it as a separate position message.
-          this.setTextAndDraft(this.quickEntryService.replaceToken(value, '!!', result.location.name));
+          this.setTextAndDraft(this.quickEntryService.replaceToken(value, '!!', locationName));
         } else {
           this.setTextAndDraft(value.slice(0, -2));
         }

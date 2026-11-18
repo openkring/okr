@@ -13,8 +13,6 @@ import {
   AlertController, ModalController, ToastController,
 } from '@ionic/angular';
 
-// eslint-disable-next-line @nx/enforce-module-boundaries -- known layering debt (2026-11-18): reaches up to AppStore; replace with an injection token like APP_STORE_MIN
-import { AppStore } from '@okr/shared-feature';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import {
   ButtonCopy, ButtonCopyI18n, ChangeConfirmation, ChangeConfirmationI18n, Checkbox, CheckboxI18n,
@@ -40,6 +38,7 @@ import { VersandDeliveryTable } from './versand-delivery-table';
 import { VersandEventsSelect } from './versand-events-select';
 import { PostMode, PostversandStep } from './postversand-step';
 import { VersandInfoModal } from './versand-info.modal';
+import { APP_STORE_MIN } from '@okr/shared-data-access';
 
 /** Debounce of the price request while the sender changes options or the draft. */
 const QUOTE_DEBOUNCE_MS = 400;
@@ -393,7 +392,7 @@ interface AddressField {
   `,
 })
 export class EmailComposerModal {
-  private readonly appStore = inject(AppStore);
+  private readonly appStore = inject(APP_STORE_MIN);
   private readonly docEmailService = inject(DocEmailService);
   private readonly templateService = inject(TemplateService);
   private readonly modalController = inject(ModalController);
