@@ -22,7 +22,7 @@ interface PersonView {
   name: string;
   function: string;
   email: string;
-  /** set when the whole card is a mailto link (info 'emailLink') */
+  /** set when the whole card is a mailto link (info 'email' or 'emailLink') */
   mailto: string;
   bgColor: string | undefined;
 }
@@ -31,7 +31,8 @@ interface PersonView {
  * Renders the persons of a people section as cards (sized by their content), a responsive
  * ion-grid, or 1–4 horizontal slider lines. Portraits are imgix crops (size, face area,
  * black and white, background removal + fill); name, function and email sit above, below,
- * beside or on top of the picture. With info 'emailLink' the whole card is a mailto link.
+ * beside or on top of the picture. When the person has an email and info shows it ('email') or
+ * asks for it ('emailLink'), the whole card (avatar, name, email) is a mailto link.
  */
 @Component({
   selector: 'okr-persons-widget',
@@ -212,7 +213,8 @@ export class PersonsWidget {
         name: getFullName(person.name1, person.name2, config.nameDisplay),
         function: info.includes('function') ? (functions[person.key] ?? person.label ?? '') : '',
         email: info.includes('email') ? (emails[person.key] ?? '') : '',
-        mailto: info.includes('emailLink') ? (emails[person.key] ?? '') : '',
+        // a visible email (or 'emailLink') turns the whole card into a mailto link
+        mailto: info.includes('email') || info.includes('emailLink') ? (emails[person.key] ?? '') : '',
         bgColor,
       };
     });
