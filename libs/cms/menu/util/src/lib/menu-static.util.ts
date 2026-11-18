@@ -86,11 +86,7 @@ export function buildStaticRows(
   const candidates: StaticMenuRow[] = [];
 
   for (const item of visibleBarRows(rootItems, items, canSee)) {
-    if (item.action === 'divider') {
-      candidates.push({ item, children: [] });
-      continue;
-    }
-    if (item.action === 'navigate' || item.action === 'browse') {
+    if (item.action === 'divider' || item.action === 'navigate' || item.action === 'browse') {
       candidates.push({ item, children: [] });
       continue;
     }
@@ -102,8 +98,10 @@ export function buildStaticRows(
       .filter((c): c is MenuItemModel => !!c && canSee(c) && c.action !== 'divider' && !isMenuBlocked(visited, c.name, 0));
     const children: MenuItemModel[] = [];
     for (const kid of kids) {
-      if (kid.action === 'sub' || children.length >= MAX_STATIC_SUB_ITEMS) cut.push(kid.name);
-      else if (kid.action === 'navigate' || kid.action === 'browse') children.push(kid);
+      if (kid.action === 'sub') cut.push(kid.name);
+      else if (kid.action !== 'navigate' && kid.action !== 'browse') continue;
+      else if (children.length >= MAX_STATIC_SUB_ITEMS) cut.push(kid.name);
+      else children.push(kid);
     }
     if (children.length > 0) candidates.push({ item, children });
   }
@@ -112,7 +110,7 @@ export function buildStaticRows(
   let counted = 0;
   for (const row of candidates) {
     if (row.item.action === 'divider') {
-      if (rows.length > 0) rows.push(row);
+      if (rows.length > 0 && rows[rows.length - 1].item.action !== 'divider') rows.push(row);
       continue;
     }
     if (counted >= MAX_STATIC_MENU_ITEMS) {

@@ -75,7 +75,7 @@ export function menuItemLimit(type: MenuType | undefined): number | undefined {
 
 /**
  * Whether adding `added` rows to a root menu of this type takes its bar past the limit, which makes
- * the extra rows land under «Mehr». Only a bar type can exceed it; the reserved account rows and, with
+ * the extra rows land under «Mehr» (bar types) or are cut (`static`). Only a type with a limit can exceed it; the reserved account rows and, with
  * `childActions`, the divider rows do not count.
  */
 export function exceedsBarLimit(

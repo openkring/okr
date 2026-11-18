@@ -83,7 +83,7 @@ describe('buildStaticRows', () => {
     const r = buildStaticRows([...ns.slice(0, 4), 'd1', ...ns.slice(4), 'd2', 'login'], items, canSee);
     expect(r.rows.filter(x => x.item.action !== 'divider')).toHaveLength(8);
     expect(r.cut).toEqual([]);
-    expect(r.rows[r.rows.length - 1]?.item.action).not.toBe('divider');
+    expect(r.rows.map(x => x.item.name)).toEqual(['n1', 'n2', 'n3', 'n4', 'd1', 'n5', 'n6', 'n7', 'n8']);
   });
   it('keeps the first 2 children and cuts the third', () => {
     const items = [item('s', 'sub', ['a', 'b', 'c']), item('a'), item('b'), item('c')];
@@ -124,5 +124,16 @@ describe('buildStaticRows', () => {
     const items = [item('d', 'divider'), item('a'), item('e', 'divider')];
     const r = buildStaticRows(['d', 'a', 'e'], items, canSee);
     expect(r.rows.map(x => x.item.name)).toEqual(['a']);
+  });
+  it('does not cut an unrenderable child after two kept ones', () => {
+    const items = [item('s', 'sub', ['a', 'b', 'k']), item('a'), item('b'), item('k', 'call')];
+    const r = buildStaticRows(['s'], items, canSee);
+    expect(r.rows[0].children.map(c => c.name)).toEqual(['a', 'b']);
+    expect(r.cut).toEqual([]);
+  });
+  it('collapses consecutive dividers', () => {
+    const items = [item('a'), item('d1', 'divider'), item('s', 'sub', ['hidden']), item('hidden', 'navigate', [], 'admin'), item('d2', 'divider'), item('b')];
+    const r = buildStaticRows(['a', 'd1', 's', 'd2', 'b'], items, canSee);
+    expect(r.rows.map(x => x.item.name)).toEqual(['a', 'd1', 'b']);
   });
 });
