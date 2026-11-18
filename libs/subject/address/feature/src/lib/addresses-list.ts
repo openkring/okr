@@ -257,7 +257,11 @@ export class AddressesList {
     options.buttons.push(createActionSheetDivider());
 
     // with address (usage)
-    options.buttons.push(createActionSheetButton('copy', this.store.i18n.copy_label(), this.imgixBaseUrl, 'copy'));
+    // Copy from the synchronous tap handler (not the post-dismiss switch) so the user gesture
+    // survives — iOS Safari rejects every clipboard write once the ActionSheet has dismissed (SCS-J9).
+    const copyButton = createActionSheetButton('copy', this.store.i18n.copy_label(), this.imgixBaseUrl, 'copy');
+    copyButton.handler = () => { void this.store.copy(address); };
+    options.buttons.push(copyButton);
     switch(address.addressChannel) {
       case 'bankaccount':
         if (address.url) {
@@ -326,9 +330,6 @@ export class AddressesList {
       switch (data.action) {
         case 'delete':
           await this.store.delete(address, false);
-          break;
-        case 'copy':
-          await this.store.copy(address);
           break;
         case 'edit':
           await this.store.edit(address, false);

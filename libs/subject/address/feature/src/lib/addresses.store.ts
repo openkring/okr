@@ -312,7 +312,13 @@ export const AddressStore = signalStore(
       * @param address 
       */
       async copy(address: AddressModel): Promise<void> {
-        await copyAddress(store.toastController, address, Languages[DefaultLanguage].abbreviation ?? 'de', store.i18n.copy_conf());
+        // Called fire-and-forget from the ActionSheet tap handler: the clipboard write must start
+        // synchronously inside the gesture, so nothing may be awaited before copyAddress.
+        try {
+          await copyAddress(store.toastController, address, Languages[DefaultLanguage].abbreviation ?? 'de', store.i18n.copy_conf());
+        } catch (ex) {
+          warn(`AddressesStore.copy: clipboard write failed: ${ex}`);
+        }
       },
 
       async sendEmail(email: string): Promise<void> {
