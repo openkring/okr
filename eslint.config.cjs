@@ -42,11 +42,12 @@ module.exports = [
   ...nx.configs['flat/angular'],
   {
     files: ['**/*.ts', '**/*.tsx'],
-    languageOptions: {
-      parserOptions: {
-        project: ['apps/*/tsconfig.app.json', 'apps/*/tsconfig.spec.json', 'libs/**/tsconfig*.json'],
-      },
-    },
+    // No `parserOptions.project` / `projectService`: no enabled rule needs type information
+    // (none sets `requiresTypeChecking`), so a TypeScript program would be pure cost. The old
+    // `project` glob matched ~850 tsconfigs, each pulling the @okr/* sources in through the path
+    // map — that is what made one lib lint take a minute and 8 GB before running out of heap.
+    // If a type-aware rule is ever added, use `projectService: true` (nearest tsconfig per file),
+    // never a tsconfig glob. Type errors are caught by `nx build` / `tsc --noEmit`, not ESLint.
     rules: {
       //   ...prettierConfig.rules, // Disable conflicting ESLint rules
       //   'prettier/prettier': ['error', {}, { usePrettierrc: true }], // Run Prettier as ESLint rule
@@ -100,6 +101,12 @@ module.exports = [
         { paths: [{ name: '@ionic/angular', importNames: ['IonImg'], message: 'Use <img okrImg> (ImgDirective from @okr/shared-ui) instead of the deprecated ion-img.' }] },
       ],
     },
+  },
+  // Build/test tooling configs are not library code: every lib's vite.config.ts imports the root
+  // `vitest.shared` by relative path, which the boundary rule would flag as importing the root project.
+  {
+    files: ['**/vite.config.ts', '**/vitest.config.ts', '**/vitest.config.mts'],
+    rules: { '@nx/enforce-module-boundaries': 'off' },
   },
   // JS/JSX files (replaces compat for @nx/javascript)
   ...nx.configs['flat/javascript'],

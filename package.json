@@ -19,7 +19,7 @@
     "test": "nx test",
     "test:affected": "nx affected -t test --parallel=3 --outputStyle=static",
     "testlibs": "NODE_OPTIONS='--max-old-space-size=8192' pnpm nx run-many --target=test --all --exclude=okr,scs-app",
-    "lint": "NODE_OPTIONS='--max-old-space-size=8192' nx lint",
+    "lint": "nx lint",
     "attribution": "node scripts/gen-attribution.mjs",
     "attribution:check": "node scripts/gen-attribution.mjs --check",
     "catalogue:check": "node scripts/check-feature-catalogue.mjs",

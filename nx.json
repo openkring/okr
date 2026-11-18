@@ -21,6 +21,10 @@
     ],
     "sharedGlobals": [
       "{workspaceRoot}/.github/workflows/ci.yml"
+    ],
+    "projectConfig": [
+      "{projectRoot}/project.json",
+      "{projectRoot}/package.json"
     ]
   },
   "nxCloudId": "677b9abe91601cc3535f4585",
@@ -39,7 +43,7 @@
       "cache": true,
       "inputs": [
         "default",
-        "^default",
+        "^projectConfig",
         "{workspaceRoot}/.eslintrc.json",
         "{workspaceRoot}/.eslintignore",
         "{workspaceRoot}/eslint.config.cjs",
