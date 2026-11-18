@@ -688,7 +688,13 @@ export interface PeopleConfig {
   avatar: AvatarConfig;
   type: 'persons' | 'group' | 'responsibility';
   persons: AvatarInfo[]; // explicit list of persons to be shown
-  groupId?: string; // members of this group are shown 
+  groupId?: string; // members of this group are shown
+  /**
+   * type 'group' only: members of `groupId` that are NOT shown in this section (app and website), e.g. a
+   * group admin who is not a coach. AvatarInfo (not just the key) so the form can label its chips; only
+   * `key` is read for the filter. Cleared when another group is chosen.
+   */
+  excludedPersons?: AvatarInfo[];
   responsibilityIds?: string[]; // persons with these responsibilities are shown (responsible and delegate of each)
   /**
    * 'group.<okey>': after the chosen `responsibilityIds`, every responsibility with this `parentKey` that is

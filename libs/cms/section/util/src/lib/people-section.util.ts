@@ -55,6 +55,16 @@ export function getPeopleResponsibilityParentKey(config?: Partial<PeopleConfig>)
   return key && !key.includes('/') ? key : '';
 }
 
+/**
+ * The person keys a group people section hides (`excludedPersons`, type 'group' only): trimmed, deduped,
+ * empty keys dropped. Every other type hides nobody, so a stale list left behind by a type change is inert.
+ */
+export function getPeopleExcludedKeys(config?: Partial<PeopleConfig>): string[] {
+  if ((config?.type ?? 'persons') !== 'group') return [];
+  const keys = (config?.excludedPersons ?? []).map(p => (typeof p?.key === 'string' ? p.key.trim() : '')).filter(k => !!k);
+  return [...new Set(keys)];
+}
+
 /** The fields of a responsibility that decide whether and where it is listed under its parent. */
 export interface ParentRoleCandidate {
   okey?: string;

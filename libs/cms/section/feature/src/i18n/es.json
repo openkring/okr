@@ -10,7 +10,9 @@
     "group": "Elegir grupo",
     "responsibility": "Elegir responsabilidad",
     "responsibilityParent": "Todas las responsabilidades de un grupo",
-    "responsibilityParentChip": "Todas de {name}"
+    "responsibilityParentChip": "Todas de {name}",
+    "excludeMember": "Ocultar miembro",
+    "excludedHint": "Esta sección no muestra estos miembros del grupo."
   },
   "view": "Mostrar la configuración de la sección",
   "edit": "Editar sección",

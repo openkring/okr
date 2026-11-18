@@ -13,7 +13,7 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 import {
-  getPeopleResponsibilityIds, getPeopleResponsibilityParentKey, getResponsibilityKeysUnderParent, mergeResponsibilityKeys,
+  getPeopleExcludedKeys, getPeopleResponsibilityIds, getPeopleResponsibilityParentKey, getResponsibilityKeysUnderParent, mergeResponsibilityKeys,
   normalizeAvatarConfig, SECTION_I18N_KEYS, SectionI18n,
 } from '@okr/cms-section-util';
 
@@ -84,7 +84,9 @@ export const PeopleSectionStore = signalStore(
       switch (type) {
         case 'group': {
           const memberships = state.groupMembersResource.value() ?? [];
-          return state.membershipService.getMemberAvatars(memberships);
+          // members the section hides (excludedPersons) are left out here, so emails / images follow
+          const excluded = new Set(getPeopleExcludedKeys(state.section()?.properties));
+          return state.membershipService.getMemberAvatars(memberships).filter(p => !excluded.has(p.key));
         }
         case 'responsibility': {
           // responsible and delegate of each responsibility; a person holding several is shown once

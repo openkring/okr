@@ -504,6 +504,7 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
                 [errors]="errors()"
                 (selectClicked)="selectPerson()"
                 (groupSelectClicked)="selectGroup()"
+                (excludeSelectClicked)="selectExcludedPerson()"
                 (responsibilitySelectClicked)="selectResponsibility()"
                 (responsibilityParentSelectClicked)="selectResponsibilityParent()"
               />
@@ -1657,8 +1658,25 @@ export class SectionForm {
   public async selectGroup(): Promise<void> {
     const group = await this.modelSelectService.selectGroup();
     if (group) {
-      this.onPeopleConfigChange({ ...this.peopleConfig(), groupId: group.okey } as PeopleConfig);
+      const current = this.peopleConfig();
+      const next = { ...current, groupId: group.okey } as PeopleConfig;
+      // hidden members belong to the previous group
+      if (current?.groupId !== group.okey) delete next.excludedPersons;
+      this.onPeopleConfigChange(next);
     }
+  }
+
+  /** a member of the section's group that the section should not show (picker limited to that group) */
+  public async selectExcludedPerson(): Promise<void> {
+    const current = this.peopleConfig();
+    const groupKey = current?.groupId ?? '';
+    if (!groupKey) return;
+    const excluded = current?.excludedPersons ?? [];
+    const avatar = await this.modelSelectService.selectPersonAvatar('', DEFAULT_LABEL, false, false, {
+      groupKey, showGroupSelect: false, excludeKeys: excluded.map(p => p.key),
+    });
+    if (!avatar?.key || excluded.some(p => p.key === avatar.key)) return;
+    this.onPeopleConfigChange({ ...current, excludedPersons: [...excluded, avatar] } as PeopleConfig);
   }
 
   /** the responsibility that gets a task for every answer to a form section */
