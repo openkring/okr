@@ -281,7 +281,7 @@
   },
   "menu_type": {
     "label": "Layout del menu",
-    "helper": "Dove compare il menu principale: come barra laterale a sinistra o a destra, come barra in alto o come segmenti.",
+    "helper": "Dove compare il menu principale: come barra laterale a sinistra o a destra, come barra in alto, come segmenti o come elenco fisso sopra la pagina (statico).",
     "left": {
       "label": "Sinistra",
       "description": "Barra laterale sul bordo sinistro."
@@ -297,6 +297,10 @@
     "segmented": {
       "label": "Segmenti",
       "description": "Barra di segmenti dello stesso livello, senza sotto-menu."
+    },
+    "static": {
+      "label": "Statico",
+      "description": "Elenco fisso sopra la pagina, al massimo 8 voci con fino a 2 sottovoci ciascuna."
     }
   },
   "submenu_offset": {
@@ -309,6 +313,57 @@
     "account_menu": "Account e impostazioni",
     "cookie_settings": "Impostazioni dei cookie",
     "more": "Altro"
+  },
+  "static": {
+    "group": "Menu statico",
+    "bullet_color": {
+      "label": "Colore dei punti elenco",
+      "custom": "Colore personalizzato"
+    },
+    "color": {
+      "primary": "Primario",
+      "secondary": "Secondario",
+      "tertiary": "Terziario",
+      "success": "Successo",
+      "warning": "Avviso",
+      "danger": "Pericolo",
+      "light": "Chiaro",
+      "medium": "Medio",
+      "dark": "Scuro"
+    },
+    "bullet_shape": {
+      "label": "Forma dei punti elenco",
+      "square": "Quadrato",
+      "round": "Tondo",
+      "none": "Nessuno"
+    },
+    "bullet_size": {
+      "label": "Dimensione dei punti elenco",
+      "placeholder": "12",
+      "helper": "Dimensione in pixel, da 6 a 32."
+    },
+    "active_style": {
+      "label": "Evidenziazione della voce scelta",
+      "bold": "Grassetto",
+      "color": "Colore",
+      "underline": "Sottolineato"
+    },
+    "children_visibility": {
+      "label": "Mostra le sottovoci",
+      "always": "Sempre",
+      "active": "Solo per la voce scelta"
+    },
+    "children_direction": {
+      "label": "Disposizione delle sottovoci",
+      "horizontal": "Accanto",
+      "vertical": "Sotto"
+    },
+    "preview": {
+      "label": "Anteprima",
+      "page": "Pagina",
+      "active": "Pagina attiva"
+    },
+    "cut_warning": "Non mostrato (limite del menu statico)"
   },
   "item": {
     "task-my": "Le mie attività",

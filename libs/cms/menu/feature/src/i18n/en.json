@@ -281,7 +281,7 @@
   },
   "menu_type": {
     "label": "Menu layout",
-    "helper": "Where the main menu appears: as a sidebar on the left or right, as a bar at the top, or as segments.",
+    "helper": "Where the main menu appears: as a sidebar on the left or right, as a bar at the top, as segments, or as a fixed list above the page (static).",
     "left": {
       "label": "Left",
       "description": "Sidebar on the left edge."
@@ -297,6 +297,10 @@
     "segmented": {
       "label": "Segments",
       "description": "Bar of equal segments, without submenus."
+    },
+    "static": {
+      "label": "Static",
+      "description": "Fixed list above the page, at most 8 entries with up to 2 sub-entries each."
     }
   },
   "submenu_offset": {
@@ -309,6 +313,57 @@
     "account_menu": "Account and settings",
     "cookie_settings": "Cookie settings",
     "more": "More"
+  },
+  "static": {
+    "group": "Static menu",
+    "bullet_color": {
+      "label": "Bullet colour",
+      "custom": "Custom colour"
+    },
+    "color": {
+      "primary": "Primary",
+      "secondary": "Secondary",
+      "tertiary": "Tertiary",
+      "success": "Success",
+      "warning": "Warning",
+      "danger": "Danger",
+      "light": "Light",
+      "medium": "Medium",
+      "dark": "Dark"
+    },
+    "bullet_shape": {
+      "label": "Bullet shape",
+      "square": "Square",
+      "round": "Round",
+      "none": "None"
+    },
+    "bullet_size": {
+      "label": "Bullet size",
+      "placeholder": "12",
+      "helper": "Size in pixels, from 6 to 32."
+    },
+    "active_style": {
+      "label": "Highlight of the selected entry",
+      "bold": "Bold",
+      "color": "Colour",
+      "underline": "Underlined"
+    },
+    "children_visibility": {
+      "label": "Show sub-entries",
+      "always": "Always",
+      "active": "Only for the selected entry"
+    },
+    "children_direction": {
+      "label": "Layout of sub-entries",
+      "horizontal": "Beside",
+      "vertical": "Below"
+    },
+    "preview": {
+      "label": "Preview",
+      "page": "Page",
+      "active": "Active page"
+    },
+    "cut_warning": "Not shown (limit of the static menu)"
   },
   "item": {
     "task-my": "My tasks",

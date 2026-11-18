@@ -50,6 +50,7 @@ function withFormDefaults(item: MenuItemModel): MenuItemModel | undefined {
           [types]="types()"
           [menuTypes]="menuTypes()"
           [childActions]="childActions()"
+          [childMenus]="childMenus()"
           [tenantId]="tenantId"
           [readOnly]="isReadOnly()"
           [allTags]="allTags()"
@@ -103,6 +104,13 @@ export class MenuModal {
    */
   protected readonly childActions = computed(() =>
     Object.fromEntries((this.store.menuItems() ?? []).map(item => [item.name, item.action])) as Record<string, string>);
+  /**
+   * `name` -> `menuItems` (the child names) of every menu document the tenant has. The static menu
+   * allows one level of submenus, so the suite must see a child's own children, which the root's
+   * names cannot show. The whole map goes in for the same reason as `childActions`.
+   */
+  protected readonly childMenus = computed(() =>
+    Object.fromEntries((this.store.menuItems() ?? []).map(item => [item.name, item.menuItems ?? []])) as Record<string, string[]>);
   protected headerTitle = computed(() => {
     if (this.isReadOnly()) return this.i18n.view();
     return this.menuItem().okey?.length > 0 ? this.i18n.edit() : this.i18n.create();

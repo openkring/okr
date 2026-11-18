@@ -281,7 +281,7 @@
   },
   "menu_type": {
     "label": "Diseño del menú",
-    "helper": "Dónde aparece el menú principal: como barra lateral a la izquierda o a la derecha, como barra superior o como segmentos.",
+    "helper": "Dónde aparece el menú principal: como barra lateral a la izquierda o a la derecha, como barra superior, como segmentos o como lista fija sobre la página (estático).",
     "left": {
       "label": "Izquierda",
       "description": "Barra lateral en el borde izquierdo."
@@ -297,6 +297,10 @@
     "segmented": {
       "label": "Segmentos",
       "description": "Barra de segmentos del mismo rango, sin submenús."
+    },
+    "static": {
+      "label": "Estático",
+      "description": "Lista fija sobre la página, como máximo 8 entradas con hasta 2 subentradas cada una."
     }
   },
   "submenu_offset": {
@@ -309,6 +313,57 @@
     "account_menu": "Cuenta y ajustes",
     "cookie_settings": "Ajustes de cookies",
     "more": "Más"
+  },
+  "static": {
+    "group": "Menú estático",
+    "bullet_color": {
+      "label": "Color de las viñetas",
+      "custom": "Color personalizado"
+    },
+    "color": {
+      "primary": "Primario",
+      "secondary": "Secundario",
+      "tertiary": "Terciario",
+      "success": "Éxito",
+      "warning": "Advertencia",
+      "danger": "Peligro",
+      "light": "Claro",
+      "medium": "Medio",
+      "dark": "Oscuro"
+    },
+    "bullet_shape": {
+      "label": "Forma de las viñetas",
+      "square": "Cuadrada",
+      "round": "Redonda",
+      "none": "Ninguna"
+    },
+    "bullet_size": {
+      "label": "Tamaño de las viñetas",
+      "placeholder": "12",
+      "helper": "Tamaño en píxeles, de 6 a 32."
+    },
+    "active_style": {
+      "label": "Resaltado de la entrada elegida",
+      "bold": "Negrita",
+      "color": "Color",
+      "underline": "Subrayado"
+    },
+    "children_visibility": {
+      "label": "Mostrar las subentradas",
+      "always": "Siempre",
+      "active": "Solo en la entrada elegida"
+    },
+    "children_direction": {
+      "label": "Disposición de las subentradas",
+      "horizontal": "Al lado",
+      "vertical": "Debajo"
+    },
+    "preview": {
+      "label": "Vista previa",
+      "page": "Página",
+      "active": "Página activa"
+    },
+    "cut_warning": "No se muestra (límite del menú estático)"
   },
   "item": {
     "task-my": "Mis tareas",

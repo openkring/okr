@@ -281,7 +281,7 @@
   },
   "menu_type": {
     "label": "Menü-Layout",
-    "helper": "Wo das Hauptmenü erscheint: als Seitenleiste links oder rechts, als Leiste oben oder als Segmente.",
+    "helper": "Wo das Hauptmenü erscheint: als Seitenleiste links oder rechts, als Leiste oben, als Segmente oder als feste Liste über der Seite (statisch).",
     "left": {
       "label": "Links",
       "description": "Seitenleiste am linken Rand."
@@ -297,6 +297,10 @@
     "segmented": {
       "label": "Segmente",
       "description": "Leiste mit gleichrangigen Segmenten, ohne Untermenüs."
+    },
+    "static": {
+      "label": "Statisch",
+      "description": "Feste Liste über der Seite, höchstens 8 Einträge mit je bis zu 2 Untereinträgen."
     }
   },
   "submenu_offset": {
@@ -309,6 +313,57 @@
     "account_menu": "Konto und Einstellungen",
     "cookie_settings": "Cookie-Einstellungen",
     "more": "Mehr"
+  },
+  "static": {
+    "group": "Statisches Menü",
+    "bullet_color": {
+      "label": "Farbe der Aufzählungszeichen",
+      "custom": "Eigene Farbe"
+    },
+    "color": {
+      "primary": "Primär",
+      "secondary": "Sekundär",
+      "tertiary": "Tertiär",
+      "success": "Erfolg",
+      "warning": "Warnung",
+      "danger": "Gefahr",
+      "light": "Hell",
+      "medium": "Mittel",
+      "dark": "Dunkel"
+    },
+    "bullet_shape": {
+      "label": "Form der Aufzählungszeichen",
+      "square": "Quadrat",
+      "round": "Rund",
+      "none": "Keine"
+    },
+    "bullet_size": {
+      "label": "Grösse der Aufzählungszeichen",
+      "placeholder": "12",
+      "helper": "Grösse in Pixel, von 6 bis 32."
+    },
+    "active_style": {
+      "label": "Hervorhebung des gewählten Eintrags",
+      "bold": "Fett",
+      "color": "Farbe",
+      "underline": "Unterstrichen"
+    },
+    "children_visibility": {
+      "label": "Untereinträge zeigen",
+      "always": "Immer",
+      "active": "Nur beim gewählten Eintrag"
+    },
+    "children_direction": {
+      "label": "Anordnung der Untereinträge",
+      "horizontal": "Daneben",
+      "vertical": "Darunter"
+    },
+    "preview": {
+      "label": "Vorschau",
+      "page": "Seite",
+      "active": "Aktive Seite"
+    },
+    "cut_warning": "Nicht angezeigt (Grenze des statischen Menüs)"
   },
   "item": {
     "task-my": "Meine Aufgaben",

@@ -281,7 +281,7 @@
   },
   "menu_type": {
     "label": "Disposition du menu",
-    "helper": "Où apparaît le menu principal : en barre latérale à gauche ou à droite, en barre en haut ou en segments.",
+    "helper": "Où apparaît le menu principal : en barre latérale à gauche ou à droite, en barre en haut, en segments ou en liste fixe au-dessus de la page (statique).",
     "left": {
       "label": "Gauche",
       "description": "Barre latérale au bord gauche."
@@ -297,6 +297,10 @@
     "segmented": {
       "label": "Segments",
       "description": "Barre de segments de même rang, sans sous-menus."
+    },
+    "static": {
+      "label": "Statique",
+      "description": "Liste fixe au-dessus de la page, au plus 8 entrées avec chacune jusqu'à 2 sous-entrées."
     }
   },
   "submenu_offset": {
@@ -309,6 +313,57 @@
     "account_menu": "Compte et paramètres",
     "cookie_settings": "Paramètres des cookies",
     "more": "Plus"
+  },
+  "static": {
+    "group": "Menu statique",
+    "bullet_color": {
+      "label": "Couleur des puces",
+      "custom": "Couleur personnalisée"
+    },
+    "color": {
+      "primary": "Primaire",
+      "secondary": "Secondaire",
+      "tertiary": "Tertiaire",
+      "success": "Succès",
+      "warning": "Avertissement",
+      "danger": "Danger",
+      "light": "Clair",
+      "medium": "Moyen",
+      "dark": "Sombre"
+    },
+    "bullet_shape": {
+      "label": "Forme des puces",
+      "square": "Carré",
+      "round": "Rond",
+      "none": "Aucune"
+    },
+    "bullet_size": {
+      "label": "Taille des puces",
+      "placeholder": "12",
+      "helper": "Taille en pixels, de 6 à 32."
+    },
+    "active_style": {
+      "label": "Mise en valeur de l'entrée choisie",
+      "bold": "Gras",
+      "color": "Couleur",
+      "underline": "Souligné"
+    },
+    "children_visibility": {
+      "label": "Afficher les sous-entrées",
+      "always": "Toujours",
+      "active": "Seulement pour l'entrée choisie"
+    },
+    "children_direction": {
+      "label": "Disposition des sous-entrées",
+      "horizontal": "À côté",
+      "vertical": "Dessous"
+    },
+    "preview": {
+      "label": "Aperçu",
+      "page": "Page",
+      "active": "Page active"
+    },
+    "cut_warning": "Non affiché (limite du menu statique)"
   },
   "item": {
     "task-my": "Mes tâches",
