@@ -80,9 +80,9 @@ const SEGMENTS: readonly Segment[] = ['button', 'icon', 'action'];
 })
 export class ButtonConfiguration {
   // inputs
-  public readonly style = input<ButtonStyle | undefined, ButtonStyle | undefined>(BUTTON_STYLE_SHAPE, { transform: (v) => v ?? BUTTON_STYLE_SHAPE });
-  public readonly icon = input<IconConfig | undefined, IconConfig | undefined>(ICON_CONFIG_SHAPE, { transform: (v) => v ?? ICON_CONFIG_SHAPE });
-  public readonly action = input<ButtonActionConfig | undefined, ButtonActionConfig | undefined>(
+  public readonly style = input<ButtonStyle, ButtonStyle | undefined>(BUTTON_STYLE_SHAPE, { transform: (v) => v ?? BUTTON_STYLE_SHAPE });
+  public readonly icon = input<IconConfig, IconConfig | undefined>(ICON_CONFIG_SHAPE, { transform: (v) => v ?? ICON_CONFIG_SHAPE });
+  public readonly action = input<ButtonActionConfig, ButtonActionConfig | undefined>(
     { type: ButtonAction.None, url: '' } as ButtonActionConfig,
     { transform: (v) => v ?? ({ type: ButtonAction.None, url: '' } as ButtonActionConfig) });
   public readonly contracts = input<ContractOption[]>([]);
