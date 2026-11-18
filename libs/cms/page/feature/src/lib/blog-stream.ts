@@ -21,7 +21,8 @@ const PAGE_SIZE = 10;
     IonToolbar, IonSearchbar, IonInfiniteScroll, IonInfiniteScrollContent,
   ],
   styles: [`
-    .filter-bar { position: sticky; top: 0; z-index: 10; background: var(--ion-background-color); }
+    /* opaque and on its own layer, as the tag bar in BlogPage (the theme does not set --ion-background-color) */
+    .filter-bar { position: sticky; top: 0; z-index: 100; transform: translateZ(0); background: var(--ion-background-color, #fff); }
     .article-list { padding: 8px; }
     .section-wrapper.editable {
       border: 3px solid yellow;

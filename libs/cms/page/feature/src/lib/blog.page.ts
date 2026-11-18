@@ -34,8 +34,16 @@ import { BlogStream } from './blog-stream';
   ],
   styles: [`
     :host { display: flex; flex-direction: column; height: 100%; width: 100%; }
-    .filter-bar { position: sticky; top: 0; z-index: 10; background: var(--ion-background-color); }
-    .chips { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 8px 4px; }
+    /* opaque (the theme does not set --ion-background-color) and on its own layer: WebKit paints the
+       article image carousel (a scroll container) over a sticky bar otherwise */
+    .filter-bar {
+      position: sticky; top: 0; z-index: 100; transform: translateZ(0);
+      background: var(--ion-background-color, #fff);
+      border-bottom: 1px solid var(--ion-color-step-150, #e5e7eb);
+    }
+    /* compact chips: four short tags fit one row on a phone, more wrap */
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; }
+    .chips ion-chip { margin: 0; height: 28px; font-size: 0.875rem; --padding-start: 10px; --padding-end: 10px; }
 
     @media print {
       @page { size: A4; margin: 15mm; }
