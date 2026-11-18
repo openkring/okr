@@ -1,4 +1,4 @@
-import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
+import { Component, computed, input, linkedSignal, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow, IonSelect, IonSelectOption } from '@ionic/angular';
 
 import { ArticleConfig, CategoryListModel, RoleName, SECTION_INTRO_POSITIONS, SectionIntroPosition, SectionModel, UserModel } from '@okr/shared-models';
