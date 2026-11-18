@@ -2,7 +2,7 @@
   "name": "<%= tenantId %>-app",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
-  "prefix": "bk",
+  "prefix": "okr",
   "sourceRoot": "apps/<%= tenantId %>-app/src",
   "tags": [
     "type:app",
