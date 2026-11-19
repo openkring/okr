@@ -2497,6 +2497,28 @@ tenant_add_cases = [
      lambda: req("PATCH", "persons/pTOwn", token=A, data=TEN(["t1", "t1"]), mask=["tenants"])),
     ("tenant-add: userA(member t1) edits a field of a t1 org -> ALLOW", True,
      lambda: req("PATCH", "orgs/oTA1", token=A, data=body({"name": "Org TA renamed"}), mask=["name"])),
+    # create: a new person/org may carry only the caller's own tenants (operator excepted)
+    ("tenant-add: userA(member t1) CREATE person [t1,t2] -> DENY", False,
+     lambda: req("POST", "persons?documentId=pTNew1", token=A,
+                 data=body({"tenants": ["t1", "t2"], "isArchived": False, "lastName": "N"}))),
+    ("tenant-add: userA(member t1) CREATE person [t1] -> ALLOW", True,
+     lambda: req("POST", "persons?documentId=pTNew2", token=A,
+                 data=body({"tenants": ["t1"], "isArchived": False, "lastName": "N"}))),
+    ("tenant-add: userA(member t1) CREATE org [t1,t2] -> DENY", False,
+     lambda: req("POST", "orgs?documentId=oTNew1", token=A,
+                 data=body({"tenants": ["t1", "t2"], "isArchived": False, "name": "N"}))),
+    ("tenant-add: userA(member t1) CREATE org [t1] -> ALLOW", True,
+     lambda: req("POST", "orgs?documentId=oTNew2", token=A,
+                 data=body({"tenants": ["t1"], "isArchived": False, "name": "N"}))),
+    ("tenant-add: userP(privileged t1) CREATE person [t1,t2] -> DENY", False,
+     lambda: req("POST", "persons?documentId=pTNew3", token=P,
+                 data=body({"tenants": ["t1", "t2"], "isArchived": False, "lastName": "N"}))),
+    ("tenant-add: userO(operator) CREATE person [bka,t2] -> ALLOW", True,
+     lambda: req("POST", "persons?documentId=pTNew4", token=O,
+                 data=body({"tenants": ["bka", "t2"], "isArchived": False, "lastName": "N"}))),
+    ("tenant-add: userO(operator) CREATE org [bka,t2] -> ALLOW", True,
+     lambda: req("POST", "orgs?documentId=oTNew4", token=O,
+                 data=body({"tenants": ["bka", "t2"], "isArchived": False, "name": "N"}))),
 ]
 for label, expect, run in tenant_add_cases:
     code = run()

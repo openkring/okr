@@ -224,6 +224,14 @@ service cloud.firestore {
              && (request.resource.data.tenants.toSet().difference(resource.data.tenants.toSet()).hasOnly(ts)
                  || isOperator());
     }
+    // persons/orgs create: same reason as above — a new record may carry only the caller's own
+    // tenants (operator excepted), else its postal rows would be widened to a foreign tenant.
+    function tenantCreateOwnOnly() {
+      let ts = callerTenants();
+      return userExists()
+             && canWriteTenantFor(request.resource.data, ts)
+             && (request.resource.data.tenants.hasOnly(ts) || isOperator());
+    }
     // For the `allow create, update: if tenantCreateOrDetach()` one-liners: a create
     // (resource == null) is tenantCreate(), an update is the full tenantUpdate() — the
     // caller's tenant must be on the STORED doc, not only on the new one. Until 2026-11-02
@@ -450,7 +458,7 @@ service cloud.firestore {
     // must never reappear on the doc.
     match /orgs/{id} {
       allow read:   if tenantRead();
-      allow create: if tenantCreate() && !request.resource.data.keys().hasAny(['favEmail', 'favPhone']);
+      allow create: if tenantCreateOwnOnly() && !request.resource.data.keys().hasAny(['favEmail', 'favPhone']);
       allow update: if tenantUpdateNoForeignAdd() && !request.resource.data.keys().hasAny(['favEmail', 'favPhone']);
       allow delete: if tenantDelete();
     }
@@ -1183,7 +1191,7 @@ service cloud.firestore {
     // dateOfDeath moved to the 'dod' vault channel; persons keep only the isDeceased flag.
     match /persons/{id} {
       allow read:   if tenantRead();  // C-2: no longer public
-      allow create: if tenantCreate()
+      allow create: if tenantCreateOwnOnly()
                      && !request.resource.data.keys().hasAny(['ssnId', 'dateOfBirth', 'dateOfDeath', 'favEmail', 'favPhone'])
                      && indexHasNoSensitivePii();
       allow update: if tenantUpdateNoForeignAdd()
