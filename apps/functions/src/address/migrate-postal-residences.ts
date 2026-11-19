@@ -346,8 +346,10 @@ export async function runPostalResidenceMigration(db: Firestore, opts: Migration
     const r = byOkey.get(okey) as MigrationRow;
     const p = patchOf(okey);
     p['locationKey'] = location.get(okey);
-    p['validFrom'] = '';
-    p['validTo'] = '';
+    // a missing date becomes '' (open); an existing one is kept — a row closed by a move recorded
+    // before the migration must stay closed
+    if (r.row.validFrom === undefined) p['validFrom'] = '';
+    if (r.row.validTo === undefined) p['validTo'] = '';
     const s = snapshots.get(okey) as AddressSnapshot;
     for (const f of SNAPSHOT_FIELDS) if (str(r.row[f]) !== s[f]) p[f] = s[f];
   }

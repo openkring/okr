@@ -329,6 +329,38 @@ describe('runPostalResidenceMigration', () => {
     expect(writes).toEqual([]);
   });
 
+  it('a closed unlinked row next to a linked successor keeps its dates, also on a re-run', async () => {
+    const data = {
+      persons: { p1: { firstName: 'Anna', lastName: 'Muster', tenants: ['scs'] } },
+      users: {},
+      addresses: {
+        closed: addr({ parentKey: 'person.p1', streetName: 'Seestrasse', streetNumber: '12', validTo: '20261231', isFavorite: true }),
+        next: addr({ parentKey: 'person.p1', streetName: 'Bergweg', streetNumber: '3', locationKey: 'L2', validFrom: '20270101' }),
+      },
+    };
+    const { db, store, writes } = fakeDb(data, { closed: at(5), next: at(1) });
+    const a = (id: string) => store.get('addresses')?.get(id)?.data as Record<string, unknown>;
+
+    const first = await runPostalResidenceMigration(db, { write: true, reportPath: join(reportDir, '1.json'), fetchFn: fakeFetch, log: () => undefined });
+    expect(a('closed')['locationKey']).toBeTruthy();
+    expect(a('closed')['validTo']).toBe('20261231');
+    expect(a('closed')['validFrom']).toBe('');
+    expect(a('closed')['isArchived']).toBe(false);
+    expect(a('closed')['isFavorite']).toBe(true);
+    expect(a('next')['validFrom']).toBe('20270101');
+    expect(a('next')['isArchived']).toBe(false);
+    expect(first.conflicts).toEqual([]);
+    expect(first.favorites).toEqual([]);
+
+    const afterFirst = writes.length;
+    resetSwisstopoState();
+    const second = await runPostalResidenceMigration(db, { write: true, reportPath: join(reportDir, '2.json'), fetchFn: fakeFetch, log: () => undefined });
+    expect(writes.length).toBe(afterFirst);
+    expect(second.conflicts).toEqual([]);
+    expect(second.favorites).toEqual([]);
+    expect(a('closed')['validTo']).toBe('20261231');
+  });
+
   it('a foreign favorite newer than the in-tenant favorite: the in-tenant one stays, the foreign row is untouched', async () => {
     const data = {
       persons: { p1: { firstName: 'Anna', lastName: 'Muster', tenants: ['scs'] } },
