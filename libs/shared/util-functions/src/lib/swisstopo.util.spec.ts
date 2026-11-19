@@ -34,6 +34,7 @@ const FIXTURE = {
         featureId: '201025958_0',
         label: 'Seestrasse 120 <b>8712 Stäfa</b>',
         lat: 47.236907958984375,
+        links: [{ href: '/rest/services/ech/MapServer/ch.swisstopo.amtliches-gebaeudeadressverzeichnis/101551003', rel: 'related', title: 'ch.swisstopo.amtliches-gebaeudeadressverzeichnis' }],
         lon: 8.728658676147461,
         num: 120,
         origin: 'address',
@@ -47,6 +48,7 @@ const FIXTURE = {
         featureId: '78464_0',
         label: 'Seestrasse 122 <b>8712 Stäfa</b>',
         lat: 47.2364616394043,
+        links: [{ href: '/rest/services/ech/MapServer/ch.swisstopo.amtliches-gebaeudeadressverzeichnis/100071958', rel: 'related', title: 'ch.swisstopo.amtliches-gebaeudeadressverzeichnis' }],
         lon: 8.728910446166992,
         num: 122,
         origin: 'address',
@@ -75,7 +77,7 @@ describe('swisstopo util', () => {
     const hits = parseSearchResponse(FIXTURE);
     expect(hits).toHaveLength(3);
     expect(hits[0]).toEqual({
-      egaid: '210198894_0',
+      egaid: '101880576',
       streetName: 'Seestrasse',
       streetNumber: '12',
       zipCode: '8712',
@@ -84,6 +86,11 @@ describe('swisstopo util', () => {
       longitude: 8.715611457824707,
       label: 'Seestrasse 12 8712 Stäfa',
     });
+  });
+
+  it('drops a hit that has a featureId but no EGAID link', () => {
+    const attrs = { featureId: '1_0', label: 'X 1 8000 Zürich', lat: 1, lon: 2, links: [{ href: '/rest/services/ech/MapServer/ch.bfs.gebaeude_wohnungs_register/1_0' }] };
+    expect(parseSearchResponse({ results: [{ attrs }] })).toEqual([]);
   });
 
   it('drops hits without featureId and tolerates garbage', () => {
@@ -136,7 +143,7 @@ describe('swisstopo util', () => {
     it('is exact for a matching snapshot (case/diacritics-insensitive)', async () => {
       const out = await geocodeSnapshot({ streetName: 'SEESTRASSE', streetNumber: '12', zipCode: '8712', city: 'Staefa' }, okFetch(FIXTURE));
       expect(out.kind).toBe('exact');
-      if (out.kind === 'exact') expect(out.hit.egaid).toBe('210198894_0');
+      if (out.kind === 'exact') expect(out.hit.egaid).toBe('101880576');
     });
 
     it('is ambiguous when no hit matches the number', async () => {

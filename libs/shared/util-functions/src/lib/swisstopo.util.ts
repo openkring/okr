@@ -47,7 +47,19 @@ function splitLabel(label: string): { streetName: string; streetNumber: string; 
   return { streetName: n ? n[1] : streetPart, streetNumber: n ? n[2] : '', zipCode, city };
 }
 
-/** Maps a swisstopo SearchServer response; hits without a featureId are dropped. Never throws. */
+/** The official EGAID is the last path segment of the link into the federal address directory. */
+function egaidFromLinks(links: unknown): string {
+  if (!Array.isArray(links)) return '';
+  for (const l of links) {
+    const href = (l as { href?: unknown })?.href;
+    if (typeof href !== 'string') continue;
+    const m = /ch\.swisstopo\.amtliches-gebaeudeadressverzeichnis\/(\d+)/.exec(href);
+    if (m) return m[1];
+  }
+  return '';
+}
+
+/** Maps a swisstopo SearchServer response; hits without a featureId or without an EGAID link are dropped. Never throws. */
 export function parseSearchResponse(json: unknown): SwissAddressHit[] {
   const results = (json as { results?: unknown })?.results;
   if (!Array.isArray(results)) return [];
@@ -55,11 +67,13 @@ export function parseSearchResponse(json: unknown): SwissAddressHit[] {
   for (const r of results) {
     const attrs = (r as { attrs?: Record<string, unknown> })?.attrs;
     if (!attrs || attrs['featureId'] === undefined || attrs['featureId'] === null || attrs['featureId'] === '') continue;
+    const egaid = egaidFromLinks(attrs['links']);
+    if (!egaid) continue;
     const label = String(attrs['label'] ?? '')
       .replace(/<\/?b>/gi, '')
       .trim();
     hits.push({
-      egaid: String(attrs['featureId']),
+      egaid,
       ...splitLabel(label),
       latitude: Number(attrs['lat']),
       longitude: Number(attrs['lon']),
