@@ -702,5 +702,9 @@
     "count_mismatch": "The recurrence rule gives {expected} events, {actual} are stored.",
     "stale_index": "{count} events carry a foreign date in the search index. Sign-ups may have been copied by mistake: {okeys}",
     "read_error": "The data could not be read. Please try again later."
+  },
+  "onWebsite": {
+    "label": "Show on the website",
+    "helper": "The event appears in the public calendar of the website and on the group's page."
   }
 }

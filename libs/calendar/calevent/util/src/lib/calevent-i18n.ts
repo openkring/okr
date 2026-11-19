@@ -375,6 +375,8 @@ export const CALEVENT_I18N_KEYS = {
   maxAttendees:                   PFX + 'maxAttendees.label',
   maxAttendees_placeholder:       PFX + 'maxAttendees.placeholder',
   maxAttendees_helper:            PFX + 'maxAttendees.helper',
+  onWebsite_label:                PFX + 'onWebsite.label',
+  onWebsite_helper:               PFX + 'onWebsite.helper',
   notifyOnAnswer_label:           PFX + 'notifyOnAnswer.label',
   notifyOnAnswer_helper:          PFX + 'notifyOnAnswer.helper',
   // spec 1.147: who is notified about a new comment or document

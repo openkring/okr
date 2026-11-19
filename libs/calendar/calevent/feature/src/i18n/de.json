@@ -702,5 +702,9 @@
     "count_mismatch": "Die Wiederholungsregel ergibt {expected} Termine, gespeichert sind {actual}.",
     "stale_index": "{count} Termine tragen ein fremdes Datum im Suchindex. Möglicherweise wurden Anmeldungen falsch kopiert: {okeys}",
     "read_error": "Die Daten konnten nicht gelesen werden. Bitte versuche es später noch einmal."
+  },
+  "onWebsite": {
+    "label": "Auf der Website zeigen",
+    "helper": "Der Termin erscheint im öffentlichen Kalender der Website und auf der Seite der Gruppe."
   }
 }

@@ -11,7 +11,7 @@ import { coerceBoolean, convertDateFormatToString, DateFormat, fill, freeTextLoc
 import { SvgIconPipe } from '@okr/shared-pipes';
 
 import { Avatars } from '@okr/avatar-ui';
-import { CaleventI18n, calEventValidations, formatDurationLabel, getWeekdayIndex, isPersonalCalevent, isTripCalevent, previewSeries } from '@okr/calendar-calevent-util';
+import { CaleventI18n, calEventValidations, formatDurationLabel, getWeekdayIndex, isPersonalCalevent, isPublicCalendar, isTripCalevent, previewSeries, setPublicCalendar } from '@okr/calendar-calevent-util';
 
 const MAX_LOCATION_SUGGESTIONS = 8;
 /** the periodicity a freshly switched-on series starts with; the user picks another one right below */
@@ -274,6 +274,14 @@ const DEFAULT_RECURRING_PERIODICITY = 'weekly';
               </ion-col>
             </ion-row>
           }
+          @if(!isPersonal()) {
+            <ion-row>
+              <ion-col size="12">
+                <!-- spec 1.165 EV5: the website shows the events of the public calendar -->
+                <okr-checkbox [i18n]="onWebsiteI18n()" [checked]="onWebsite()" (checkedChange)="onWebsiteChange($event)" [toggle]="true" iconName="globe" labelPlacement="start" justify="space-between" [showHelper]="true" [readOnly]="isReadOnly()" />
+              </ion-col>
+            </ion-row>
+          }
           <ion-row>
             <ion-col size="12">
               <okr-checkbox [i18n]="notifyOnAnswerI18n()" [checked]="notifyOnAnswer()" (checkedChange)="onFieldChange('notifyOnAnswer', $event)" [toggle]="true" iconName="email" labelPlacement="start" justify="space-between" [showHelper]="true" [readOnly]="isReadOnly()" />
@@ -491,6 +499,7 @@ export class CalEventForm {
   protected startWeekday = computed(() => this.weekdayLabel(this.startDate()));
   protected isPollSeries = computed(() => this.formData().pollMultiSelect === true);
   protected notifyOnAnswer = computed(() => this.formData().notifyOnAnswer ?? false);
+  protected onWebsite = computed(() => isPublicCalendar(this.formData().calendars));
   /** spec 1.147 — legacy events lack the field, which reads as 'default' («Automatisch») */
   protected commentNotify = computed(() => this.formData().commentNotify ?? 'default');
   protected readonly commentNotifyValues: string[] = COMMENT_NOTIFY_VALUES;
@@ -640,6 +649,11 @@ export class CalEventForm {
     label: this.i18n().commentNotify_label(),
     helper: this.i18n().commentNotify_helper(),
   } as StringSelectI18n));
+  protected onWebsiteI18n = computed(() => ({
+    name: 'onWebsite',
+    label: this.i18n().onWebsite_label(),
+    helper: this.i18n().onWebsite_helper(),
+  } as CheckboxI18n));
   protected notifyOnAnswerI18n = computed(() => ({
     name: 'notifyOnAnswer',
     label: this.i18n().notifyOnAnswer_label(),
@@ -717,6 +731,11 @@ export class CalEventForm {
   protected selectLocation(location: LocationModel): void {
     this.locationSuggestOpen.set(false);
     this.onFieldChange('locations', [locationToAvatar(location)]);
+  }
+
+  /** spec 1.165 EV5: toggles the public calendar, the other calendars stay */
+  protected onWebsiteChange(on: boolean): void {
+    this.onFieldChange('calendars', setPublicCalendar(this.formData().calendars, on));
   }
 
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean | AvatarInfo[]): void {
