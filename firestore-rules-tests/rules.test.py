@@ -2296,6 +2296,8 @@ REG_LIST = [("tenants", "ARRAY_CONTAINS", REG)]
 REG_SYSQ = [("isArchived", "EQUAL", False), ("tenants", "ARRAY_CONTAINS_ANY", [REG, "system"])]
 EGAID_Q = [("properties", "ARRAY_CONTAINS", REG_PROPS[0])]
 T1_LIST = [("isArchived", "EQUAL", False), ("tenants", "ARRAY_CONTAINS", "t1")]
+MIXED = [("tenants", "ARRAY_CONTAINS_ANY", ["t1", REG])]
+MIXED_SYS = [("isArchived", "EQUAL", False), ("tenants", "ARRAY_CONTAINS_ANY", ["t1", REG])]
 location_cases = [
     # register: get by key for any signed-in user
     ("register: userA(plain t1) GET locations/regL1 -> ALLOW", True,
@@ -2318,6 +2320,18 @@ location_cases = [
      lambda: field_query("locations", REG_SYSQ, token=D)),
     ("register: userAR(users doc tenants [address-register]) LIST register -> DENY", False,
      lambda: field_query("locations", REG_LIST, token=AR)),
+    ("register: userA(plain t1) LIST array-contains-any [t1, address-register] -> DENY", False,
+     lambda: field_query("locations", MIXED, token=A)),
+    ("register: userA(plain t1) LIST isArchived + array-contains-any [t1, address-register] -> DENY", False,
+     lambda: field_query("locations", MIXED_SYS, token=A)),
+    ("register: userP(privileged) LIST array-contains-any [t1, address-register] -> DENY", False,
+     lambda: field_query("locations", MIXED, token=P)),
+    ("register: userP(privileged) LIST isArchived + array-contains-any [t1, address-register] -> DENY", False,
+     lambda: field_query("locations", MIXED_SYS, token=P)),
+    ("register: userD(admin t1) LIST array-contains-any [t1, address-register] -> DENY", False,
+     lambda: field_query("locations", MIXED, token=D)),
+    ("register: userD(admin t1) LIST isArchived + array-contains-any [t1, address-register] -> DENY", False,
+     lambda: field_query("locations", MIXED_SYS, token=D)),
     ("register: userP(privileged) LIST by egaid property -> DENY (lookup is server-side)", False,
      lambda: field_query("locations", EGAID_Q, token=P)),
     ("register: userD(admin t1) LIST locations without tenant filter -> DENY", False,
