@@ -391,5 +391,15 @@
       "city_required": "Indica la localidad.",
       "zip_ch": "Un código postal suizo tiene cuatro cifras."
     }
+  },
+  "history": {
+    "title": "Todas las direcciones",
+    "empty": "Todavía no se ha registrado ninguna dirección postal.",
+    "status": {
+      "current": "Actual",
+      "future": "Anunciada",
+      "past": "Dirección anterior",
+      "archived": "Eliminada"
+    }
   }
 }

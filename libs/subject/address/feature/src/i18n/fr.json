@@ -391,5 +391,15 @@
       "city_required": "Indique la localité.",
       "zip_ch": "Un code postal suisse a quatre chiffres."
     }
+  },
+  "history": {
+    "title": "Toutes les adresses",
+    "empty": "Aucune adresse postale n'a encore été saisie.",
+    "status": {
+      "current": "Actuelle",
+      "future": "Annoncée",
+      "past": "Ancienne adresse",
+      "archived": "Supprimée"
+    }
   }
 }

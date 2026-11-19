@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 
 import { AddressModel, UserModel } from '@okr/shared-models';
 import {
-  canWritePostal, checkEditMove, checkMove, hiddenInAccordion, moveActionKind, postalMoveErrorKind, postalTarget, predecessorOf, residenceDateLabel, usageOf,
+  canWritePostal, checkEditMove, checkMove, hiddenInAccordion, moveActionKind, postalHistoryStatus, postalMoveErrorKind, postalTarget, predecessorOf, residenceDateLabel, sortPostalHistory, usageOf,
 } from './postal-move.util';
 import { newPostalMoveFormModel } from './postal-move.validations';
 
@@ -209,5 +209,40 @@ describe('checkEditMove (cancel, then record)', () => {
     const work = postal('w', '20200101', '', 'work');
     const announced = postal('b', '20270301');
     expect(checkEditMove(announced, [work, announced], '20270401')).toEqual({ ok: false, reason: 'from' });
+  });
+});
+
+describe('sortPostalHistory', () => {
+  it('sorts by validFrom descending, rows without a start last, ties by okey', () => {
+    const rows = [postal('d'), postal('b', '20240101'), postal('a', '20240101'), postal('c', '20260301'), postal('e')];
+    expect(sortPostalHistory(rows).map((r) => r.okey)).toEqual(['c', 'a', 'b', 'd', 'e']);
+  });
+
+  it('drops other channels and keeps archived and past rows', () => {
+    const mail = postal('m');
+    mail.addressChannel = 'email';
+    const gone = postal('g', '20200101', '20221231');
+    gone.isArchived = true;
+    expect(sortPostalHistory([mail, gone]).map((r) => r.okey)).toEqual(['g']);
+  });
+
+  it('does not touch the input order', () => {
+    const rows = [postal('a', '20200101'), postal('b', '20250101')];
+    sortPostalHistory(rows);
+    expect(rows.map((r) => r.okey)).toEqual(['a', 'b']);
+  });
+});
+
+describe('postalHistoryStatus', () => {
+  it('names the stand of a row against today', () => {
+    expect(postalHistoryStatus(postal('a', '20200101'), TODAY)).toBe('current');
+    expect(postalHistoryStatus(postal('a', '20200101', '20201231'), TODAY)).toBe('past');
+    expect(postalHistoryStatus(postal('a', '20270101'), TODAY)).toBe('future');
+  });
+
+  it('is archived whatever the dates say', () => {
+    const row = postal('a', '20200101');
+    row.isArchived = true;
+    expect(postalHistoryStatus(row, TODAY)).toBe('archived');
   });
 });

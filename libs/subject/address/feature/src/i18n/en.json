@@ -391,5 +391,15 @@
       "city_required": "Please enter the town.",
       "zip_ch": "A Swiss postcode has four digits."
     }
+  },
+  "history": {
+    "title": "All addresses",
+    "empty": "No postal address has been recorded yet.",
+    "status": {
+      "current": "Current",
+      "future": "Announced",
+      "past": "Former address",
+      "archived": "Removed"
+    }
   }
 }

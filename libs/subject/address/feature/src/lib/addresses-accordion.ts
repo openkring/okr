@@ -5,7 +5,7 @@ import { AddressModel, PrivacySettings } from "@okr/shared-models";
 import { PrettyDatePipe, SvgIconPipe } from "@okr/shared-pipes";
 import { EmptyList } from "@okr/shared-ui";
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from "@okr/shared-util-angular";
-import { coerceBoolean, DateFormat, getCategoryIcon, getTodayStr, isVisibleToUser, residenceStatus } from "@okr/shared-util-core";
+import { coerceBoolean, DateFormat, getCategoryIcon, getTodayStr, hasRole, isVisibleToUser, residenceStatus } from "@okr/shared-util-core";
 
 import { FavoriteColorPipe, FormatAddressPipe, moveActionKind, residenceDateLabel } from "@okr/subject-address-util";
 
@@ -29,6 +29,11 @@ import { AddressStore } from "./addresses.store";
   <ion-accordion toggle-icon-slot="start" value="addresses">
     <ion-item slot="header" [color]="color()">
         <ion-label>{{ title() }}</ion-label>
+        @if(canSeeHistory()) {
+          <ion-button fill="clear" size="default" [attr.aria-label]="store.i18n.history_title()" (click)="showHistory($event)">
+            <ion-icon color="secondary" slot="icon-only" src="{{ 'archive' | svgIcon }}" />
+          </ion-button>
+        }
         @if(!isReadOnly()) {
           <ion-button fill="clear" (click)="add()" size="default">
             <ion-icon color="secondary" slot="icon-only" src="{{ 'add-circle' | svgIcon }}" />
@@ -115,6 +120,9 @@ export class AddressesAccordion {
    * owner, privileged and memberAdmin (canWritePostal), the same gate as the rules and the callables.
    */
   protected canModifyPostal = computed(() => this.canModify() && this.store.canWritePostal());
+
+  /** «Alle Adressen» (spec 1.164 §6.6): privileged — an admin counts as privileged, as in the rules' isPrivileged */
+  protected canSeeHistory = computed(() => hasRole('privileged', this.currentUser()));
 
   // signals
   protected addresses = computed(() => this.store.accordionAddresses());
@@ -310,6 +318,11 @@ export class AddressesAccordion {
         // handlers (Safari popup blocker).
       }
     }
+  }
+
+  protected async showHistory(event: Event): Promise<void> {
+    event.stopPropagation();   // the header toggles the accordion
+    await this.store.showPostalHistory();
   }
 
   public async add(): Promise<void> {

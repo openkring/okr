@@ -5,7 +5,6 @@
   "currency": "CHF",
   "qrinvoice": "QR-Rechnung",
   "description": "Kontaktinformation zu einer Person oder Organisation",
-
   "browse": {
     "label": "Ansehen",
     "description": "Die Adresse als Webpage im Browser in einem externen Tab öffnen."
@@ -114,8 +113,6 @@
     "iban": "QR EZS anzeigen",
     "postal": "Auf Karte anzeigen"
   },
-
-
   "address_usage": {
     "name": "Verwendung",
     "helper": "Eine Bezeichnung dafür, wie die Adresse verwendet wird, z.B. Privat, Geschäft.",
@@ -270,7 +267,6 @@
       "description": "Twint QRCode"
     }
   },
-
   "okey": {
     "label": "ID",
     "placeholder": "ssssssssss",
@@ -394,6 +390,16 @@
       "zip_required": "Gib bitte die Postleitzahl an.",
       "city_required": "Gib bitte den Ort an.",
       "zip_ch": "Eine Schweizer Postleitzahl hat vier Ziffern."
+    }
+  },
+  "history": {
+    "title": "Alle Adressen",
+    "empty": "Für diese Adresse ist noch nichts erfasst.",
+    "status": {
+      "current": "Aktuell",
+      "future": "Angekündigt",
+      "past": "Frühere Adresse",
+      "archived": "Entfernt"
     }
   }
 }

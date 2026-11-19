@@ -205,6 +205,12 @@ export const ADDRESSES_I18N_KEYS = {
   move_error_date:                 PFX + 'move.error.date',
   move_error_from:                 PFX + 'move.error.from',
   move_edit_removed:               PFX + 'move.edit_removed',
+  history_title:                   PFX + 'history.title',
+  history_empty:                   PFX + 'history.empty',
+  history_status_current:          PFX + 'history.status.current',
+  history_status_future:           PFX + 'history.status.future',
+  history_status_past:             PFX + 'history.status.past',
+  history_status_archived:         PFX + 'history.status.archived',
 
   as_title:                        '@actionsheet.title',
   cancel:                          '@cancel',

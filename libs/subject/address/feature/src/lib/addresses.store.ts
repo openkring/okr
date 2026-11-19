@@ -13,7 +13,7 @@ import { STORAGE } from '@okr/shared-config';
 import { AppStore } from '@okr/shared-feature';
 import { AddressCollection, AddressDirectoryCollection, AddressDirectoryModel, AddressModel, AddressModelName, CategoryListModel, DbQuery, DefaultLanguage, DocumentModel, getAddressDirectoryKey, isSensitiveScalarChannel, OrgModel, PersonModel, TaskModel } from '@okr/shared-models';
 import { AlertService, downloadToBrowser, showToast } from '@okr/shared-util-angular';
-import { chipMatches, DateFormat, getAvatarInfoForCurrentUser, getModelAndKey, getSystemQuery, getTodayStr, nameMatches, pickCurrentFavoritePostal, residenceStatus, warn } from '@okr/shared-util-core';
+import { chipMatches, DateFormat, getAvatarInfoForCurrentUser, getModelAndKey, getSystemQuery, getTodayStr, hasRole, nameMatches, pickCurrentFavoritePostal, residenceStatus, warn } from '@okr/shared-util-core';
 import { Languages } from '@okr/shared-categories';
 import { MapViewModal } from '@okr/shared-ui';
 
@@ -357,6 +357,19 @@ export const AddressStore = signalStore(
         }
         this.reload();
         store.appStore.watchDirectoryEntry(address.parentKey);
+      },
+
+      /** «Alle Adressen»: every postal row of the parent incl. past and archived ones; privileged only (spec 1.164 §6.6). */
+      async showPostalHistory(): Promise<void> {
+        if (!hasRole('privileged', store.appStore.currentUser()) || !store.parentKey()) return;
+        const { PostalHistoryModal } = await import('./postal-history.modal');
+        const modal = await store.modalController.create({
+          component: PostalHistoryModal,
+          cssClass: 'modal-wide',
+          componentProps: { parentKey: store.parentKey() },
+        });
+        await modal.present();
+        await modal.onWillDismiss();
       },
 
       async openMoveModal(mode: PostalMoveMode, residence: AddressModel): Promise<void> {

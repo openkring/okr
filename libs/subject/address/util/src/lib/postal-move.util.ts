@@ -133,3 +133,25 @@ export const POSTAL_MOVE_ERROR_I18N: Record<PostalMoveErrorKind, keyof typeof AD
   from: 'move_error_from',
   unknown: 'move_error_unknown',
 };
+
+/** Where a row stands in the privileged history: an archived row is «archived» whatever its dates say. */
+export type PostalHistoryStatus = 'archived' | 'future' | 'current' | 'past';
+
+export function postalHistoryStatus(row: AddressModel, today: string): PostalHistoryStatus {
+  return row.isArchived ? 'archived' : residenceStatus(row, today);
+}
+
+/**
+ * Every postal row of a parent for «Alle Adressen» (spec 1.164 §6.6): newest start first, rows without
+ * a start last, ties by okey. Other channels are dropped; archived and past rows stay.
+ */
+export function sortPostalHistory(rows: AddressModel[]): AddressModel[] {
+  return rows
+    .filter((r) => r.addressChannel === 'postal')   // filter copies, so the sort leaves the input alone
+    .sort((a, b) => {
+      const af = a.validFrom ?? '';
+      const bf = b.validFrom ?? '';
+      if (af !== bf) return !af ? 1 : !bf ? -1 : bf.localeCompare(af);
+      return a.okey.localeCompare(b.okey);
+    });
+}
