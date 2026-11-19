@@ -899,6 +899,11 @@
       "label": "Blog page",
       "placeholder": "e.g. news_@TID@",
       "helper": "The page the articles come from. @TID@ stands for your club."
+    },
+    "tag": {
+      "label": "Tag",
+      "placeholder": "e.g. reparatur",
+      "helper": "Shows only news with this tag. On a group's page this is the group's key. Empty shows all."
     }
   },
   "orgchart": {

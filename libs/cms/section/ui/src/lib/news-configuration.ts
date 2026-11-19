@@ -20,6 +20,9 @@ interface NewsConfigI18n {
   news_blogPage_label:        Signal<string>;
   news_blogPage_placeholder:  Signal<string>;
   news_blogPage_helper:       Signal<string>;
+  news_tag_label:             Signal<string>;
+  news_tag_placeholder:       Signal<string>;
+  news_tag_helper:            Signal<string>;
 }
 
 /**
@@ -52,6 +55,10 @@ interface NewsConfigI18n {
                               [maxLength]="blogPageKeyLength" [readOnly]="readOnly()" [showHelper]="true" />
             </ion-col>
             <ion-col size="12" size-md="6">
+              <okr-text-input [i18n]="tagI18n()" [value]="config().tag ?? ''" (valueChange)="patch({ tag: $event })"
+                              [maxLength]="tagLength" [readOnly]="readOnly()" [showHelper]="true" />
+            </ion-col>
+            <ion-col size="12" size-md="6">
               <okr-checkbox [i18n]="showMoreButtonI18n()" [checked]="config().showMoreButton"
                             (checkedChange)="patch({ showMoreButton: $event })" [showHelper]="true" [readOnly]="readOnly()" />
             </ion-col>
@@ -75,6 +82,7 @@ export class NewsConfiguration {
   /** vest field name -> messages of the running section suite (see section.form.ts) */
   public readonly errors = input<SectionErrors>({});
   protected readonly blogPageKeyLength = LONG_NAME_LENGTH;
+  protected readonly tagLength = LONG_NAME_LENGTH;
   protected readonly urlLength = URL_LENGTH;
 
   /** older news sections lack fields: fall back to the shape's defaults */
@@ -97,6 +105,11 @@ export class NewsConfiguration {
   protected readonly blogPageKeyI18n = computed(() => ({
     name: 'blogPageKey', label: this.i18n().news_blogPage_label(),
     placeholder: this.i18n().news_blogPage_placeholder(), helper: this.i18n().news_blogPage_helper(),
+  } as TextInputI18n));
+
+  protected readonly tagI18n = computed(() => ({
+    name: 'tag', label: this.i18n().news_tag_label(),
+    placeholder: this.i18n().news_tag_placeholder(), helper: this.i18n().news_tag_helper(),
   } as TextInputI18n));
 
   protected readonly showMoreButtonI18n = computed(() => ({

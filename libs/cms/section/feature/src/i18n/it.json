@@ -899,6 +899,11 @@
       "label": "Pagina del blog",
       "placeholder": "p. es. news_@TID@",
       "helper": "La pagina da cui provengono gli articoli. @TID@ sta per il tuo club."
+    },
+    "tag": {
+      "label": "Tag",
+      "placeholder": "p. es. reparatur",
+      "helper": "Mostra solo le notizie con questo tag. Sulla pagina di un gruppo è la chiave del gruppo. Vuoto mostra tutte."
     }
   },
   "orgchart": {

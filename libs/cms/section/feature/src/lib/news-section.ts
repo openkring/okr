@@ -87,6 +87,7 @@ export class NewsSectionComponent implements OnInit {
   protected readonly showMoreButton = computed(() => this.moreUrl().length > 0);
   protected readonly maxItems = computed(() => this.config()?.maxItems);
   protected readonly blogPageKey = computed(() => this.config()?.blogPageKey);
+  protected readonly tag = computed(() => this.config()?.tag);
   protected readonly news = computed(() => this.store.news());
   protected currentUser = computed(() => this.store.currentUser());
   protected isLoading = computed(() => this.store.isLoading());
@@ -97,7 +98,7 @@ export class NewsSectionComponent implements OnInit {
 
   constructor() {
     effect(() => {
-      this.store.setConfig(this.blogPageKey(), this.maxItems());
+      this.store.setConfig(this.blogPageKey(), this.maxItems(), this.tag());
       debugMessage(`NewsSection: blogPageKey=${this.blogPageKey()}, maxItems=${this.maxItems()}`, this.currentUser());
     });
   }

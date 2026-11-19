@@ -671,6 +671,7 @@ export interface NewsConfig {
   showMoreButton: boolean; 
   maxItems: number; // maximum number of news items to show
   blogPageKey: string; // the key of the blog page where the news articles are stored, used for navigation when clicking on a news item
+  tag?: string; // only news with this tag; on a group page the group key (spec 1.165 NW2). Absent = all news.
 }
 
 // --------------------------------------- PEOPLE ----------------------------------------

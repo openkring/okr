@@ -672,6 +672,9 @@ export const SECTION_I18N_KEYS = {
   news_blogPage_label:                      PFX + 'news.blogPage.label',
   news_blogPage_placeholder:                PFX + 'news.blogPage.placeholder',
   news_blogPage_helper:                     PFX + 'news.blogPage.helper',
+  news_tag_label:                           PFX + 'news.tag.label',
+  news_tag_placeholder:                     PFX + 'news.tag.placeholder',
+  news_tag_helper:                          PFX + 'news.tag.helper',
 
   // orgchart
   orgchart_accordion:                       PFX + 'orgchart.accordion',

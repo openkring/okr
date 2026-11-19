@@ -899,6 +899,11 @@
       "label": "Blog-Seite",
       "placeholder": "z.B. news_@TID@",
       "helper": "Die Seite, aus der die Artikel stammen. @TID@ steht für deinen Verein."
+    },
+    "tag": {
+      "label": "Tag",
+      "placeholder": "z.B. reparatur",
+      "helper": "Zeigt nur Neuigkeiten mit diesem Tag. Auf der Seite einer Projektgruppe ist das der Schlüssel der Gruppe. Leer zeigt alle."
     }
   },
   "orgchart": {

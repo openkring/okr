@@ -56,3 +56,4 @@ export * from './lib/section-image-picker';
 export * from './lib/section-icon-picker';
 export * from './lib/section-track-picker';
 export * from './lib/journal-track-section.validations';
+export * from './lib/news-tag.util';

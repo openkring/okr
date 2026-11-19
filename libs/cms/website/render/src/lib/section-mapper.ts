@@ -563,10 +563,10 @@ export function mapSection(
     }
 
     case 'events':
-      return { type: 'events', name, title, kicker, intro, maxItems: clampCount(props['maxEvents']), moreUrl: safeSiteUrl(props['moreUrl']) };
+      return { type: 'events', name, title, kicker, intro, maxItems: clampCount(props['maxEvents']), moreUrl: safeSiteUrl(props['moreUrl']), calendar: mapCalendarKey(s.name) };
 
     case 'news':
-      return { type: 'news', name, title, kicker, intro, maxItems: clampCount(props['maxItems']), moreUrl: safeSiteUrl(props['moreUrl']) };
+      return { type: 'news', name, title, kicker, intro, maxItems: clampCount(props['maxItems']), moreUrl: safeSiteUrl(props['moreUrl']), tag: str(props['tag']).trim().slice(0, 80) };
 
     case 'article':
     default: {
@@ -584,6 +584,18 @@ export function mapSection(
       };
     }
   }
+}
+
+/**
+ * The calendar an events section lists on the website. The app keeps an events section's calendar
+ * in its `name` ('all', 'my' or a calendar key such as a group okey); the website only knows public
+ * events, so 'all'/'my'/'public'/'' mean «every public event» (''). Anything that is not a plain key
+ * is dropped rather than passed to the browser (spec 1.165 EV3).
+ */
+export function mapCalendarKey(raw: unknown): string {
+  const key = typeof raw === 'string' ? raw.trim() : '';
+  if (['', 'all', 'my', 'public'].includes(key)) return '';
+  return /^[A-Za-z0-9_.-]{1,80}$/.test(key) ? key : '';
 }
 
 export function str(v: unknown): string {

@@ -10,16 +10,18 @@ import { AppStore } from '@okr/shared-feature';
 import { ArticleSection, PageCollection, PageModel, SectionModel } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';
 import { belongsToTenant, replaceSubstring } from '@okr/shared-util-core';
-import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
+import { filterNewsByTag, SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
 export type NewsState = {
   blogPageKey: string | undefined;
   maxItems: number | undefined; // max items to show, undefined means all
+  tag: string | undefined; // only news with this tag (spec 1.165 NW2), undefined/'' = all
 };
 
 const initialNewsState: NewsState = {
   blogPageKey: undefined,
   maxItems: undefined,
+  tag: undefined,
 };
 
 export const NewsStore = signalStore(
@@ -35,10 +37,11 @@ export const NewsStore = signalStore(
       params: () => ({
         blogPageKey: store.blogPageKey(),
         maxItems: store.maxItems(),
+        tag: store.tag(),
         tenantId: store.appStore.env.tenantId,
       }),
       stream: ({ params }) => {
-        const { blogPageKey, maxItems, tenantId } = params;
+        const { blogPageKey, maxItems, tag, tenantId } = params;
         if (!blogPageKey) return of([] as ArticleSection[]);
 
         // 1. Load the blog page to get its ordered sections list. The key may carry the
@@ -81,7 +84,8 @@ export const NewsStore = signalStore(
               (s): s is ArticleSection =>
                 !!s && s.type === 'article' && !s.isArchived && s.state === 'published' && belongsToTenant(s, tenantId)
             );
-            return maxItems !== undefined ? articles.slice(0, maxItems) : articles;
+            const tagged = filterNewsByTag(articles, tag);
+            return maxItems !== undefined ? tagged.slice(0, maxItems) : tagged;
           })
         );
       }
@@ -96,8 +100,8 @@ export const NewsStore = signalStore(
   })),
 
   withMethods((store) => ({
-    setConfig(blogPageKey?: string, maxItems?: number): void {
-      patchState(store, { blogPageKey, maxItems });
+    setConfig(blogPageKey?: string, maxItems?: number, tag?: string): void {
+      patchState(store, { blogPageKey, maxItems, tag });
     },
 
     reload(): void {
