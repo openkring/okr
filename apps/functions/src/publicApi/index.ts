@@ -57,6 +57,11 @@ const DEFAULT_ALLOWED_ORIGINS = [
   'https://bka-website-54aef.web.app',
   'https://kwa.ch',
   'https://silcrest7.ch',
+  // LA21 Stäfa (spec 1.165): the website on its web.app host until the domain moves, then the real one.
+  'https://la21staefa-website-54aef.web.app',
+  'https://la21staefa-website-54aef.firebaseapp.com',
+  'https://www.la21staefa.ch',
+  'https://la21staefa.ch',
   // Die APPS selbst. Der öffentliche Album-Screen (/public/album/<slug>) läuft im App-Bundle
   // und ruft /gallery aus dem Browser auf — anders als die statischen Sites, die schon oben
   // stehen. Ohne den passenden Origin schlägt genau dieser eine Screen mit einem
@@ -65,6 +70,8 @@ const DEFAULT_ALLOWED_ORIGINS = [
   'https://p13-app-54aef.firebaseapp.com',
   'https://app.p13.ch',
   'https://app.seeclub.org',
+  'https://la21staefa-app-54aef.web.app',
+  'https://app.la21staefa.ch',
 ];
 const EXTRA_ALLOWED_ORIGINS = (process.env['PUBLIC_API_ALLOWED_ORIGINS'] ?? '')
   .split(',')

@@ -64,3 +64,6 @@
 [submodule "apps/la21staefa-app"]
 	path = apps/la21staefa-app
 	url = git@github.com:bkaiser-org/la21staefa-app.git
+[submodule "apps/la21staefa-website"]
+	path = apps/la21staefa-website
+	url = git@github.com:bkaiser-org/la21staefa-website.git
