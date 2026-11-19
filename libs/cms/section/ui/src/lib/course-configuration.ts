@@ -1,8 +1,8 @@
 import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
-import { ApplicationKind, CourseConfig } from '@okr/shared-models';
-import { Checkbox, CheckboxI18n, ErrorNote, TextareaInput, TextInputI18n } from '@okr/shared-ui';
+import { APPLICATION_KIND_VALUES, ApplicationKind, CourseConfig } from '@okr/shared-models';
+import { CheckboxGroup, CheckboxGroupI18n, ErrorNote, TextareaInput, TextInputI18n } from '@okr/shared-ui';
 import { COURSE_EMPTY_TEXT_MAX_LENGTH, getFieldErrors, SectionErrors } from '@okr/cms-section-util';
 
 interface CourseConfigI18n {
@@ -20,7 +20,7 @@ interface CourseConfigI18n {
   selector: 'okr-course-config',
   standalone: true,
   imports: [
-    Checkbox, TextareaInput, ErrorNote,
+    CheckboxGroup, TextareaInput, ErrorNote,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, IonCardSubtitle
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -34,16 +34,8 @@ interface CourseConfigI18n {
         <ion-grid>
           <ion-row>
             <ion-col size="12">
-              <strong>{{ i18n().course_audience_label() }}</strong>
-            </ion-col>
-            <ion-col size="12" size-md="4">
-              <okr-checkbox [i18n]="youthI18n()" [checked]="isSelected('youth')" (checkedChange)="onAudienceChange('youth', $event)" [readOnly]="readOnly()" />
-            </ion-col>
-            <ion-col size="12" size-md="4">
-              <okr-checkbox [i18n]="adultI18n()" [checked]="isSelected('adult')" (checkedChange)="onAudienceChange('adult', $event)" [readOnly]="readOnly()" />
-            </ion-col>
-            <ion-col size="12" size-md="4">
-              <okr-checkbox [i18n]="transferI18n()" [checked]="isSelected('transfer')" (checkedChange)="onAudienceChange('transfer', $event)" [readOnly]="readOnly()" />
+              <okr-checkbox-group [i18n]="audienceI18n()" [stringList]="audienceKinds" [labels]="audienceLabels()"
+                [selectedStrings]="audience()" (selectedStringsChange)="onAudienceChange($event)" [readOnly]="readOnly()" />
             </ion-col>
             <ion-col size="12">
               <okr-error-note [errors]="errorsFor('audience')" />
@@ -71,12 +63,12 @@ export class CourseConfiguration {
   protected readonly emptyTextMaxLength = COURSE_EMPTY_TEXT_MAX_LENGTH;
 
   // fields
-  protected audience = linkedSignal(() => this.formData().audience ?? []);
+  protected readonly audienceKinds: string[] = APPLICATION_KIND_VALUES;
+  protected audience = linkedSignal<string[]>(() => this.formData().audience ?? []);
   protected emptyText = linkedSignal(() => this.formData().emptyText ?? '');
 
-  protected youthI18n = computed(() => this.kindI18n('youth', this.i18n().course_audience_youth()));
-  protected adultI18n = computed(() => this.kindI18n('adult', this.i18n().course_audience_adult()));
-  protected transferI18n = computed(() => this.kindI18n('transfer', this.i18n().course_audience_transfer()));
+  protected audienceI18n = computed(() => ({ name: 'audience', label: this.i18n().course_audience_label() } as CheckboxGroupI18n));
+  protected audienceLabels = computed(() => [this.i18n().course_audience_youth(), this.i18n().course_audience_adult(), this.i18n().course_audience_transfer()]);
 
   protected emptyTextI18n = computed(() => ({
     name: 'emptyText',
@@ -85,22 +77,12 @@ export class CourseConfiguration {
     helper: this.i18n().course_empty_text_helper(),
   } as TextInputI18n));
 
-  private kindI18n(kind: ApplicationKind, label: string): CheckboxI18n {
-    return { name: `audience_${kind}`, label, helper: '' };
-  }
-
-  protected isSelected(kind: ApplicationKind): boolean {
-    return this.audience().includes(kind);
-  }
-
   protected errorsFor(field: string): string[] {
     return getFieldErrors(this.errors(), field);
   }
 
-  protected onAudienceChange(kind: ApplicationKind, selected: boolean): void {
-    const without = this.audience().filter((k) => k !== kind);
-    const audience = selected ? [...without, kind] : without;
-    this.formData.update((vm) => ({ ...vm, audience }));
+  protected onAudienceChange(audience: string[]): void {
+    this.formData.update((vm) => ({ ...vm, audience: audience as ApplicationKind[] }));
   }
 
   protected onEmptyTextChange(emptyText: string): void {
