@@ -112,6 +112,10 @@ export const COLLECTION_LABELS: Record<string, string> = {
   // did not move them). The reader must not see two different names for one thing.
   [LegacyMemberFeeCollection]: 'Mitgliedergebühren (frühere Ablage)',
   bills: 'Kreditoren-Rechnungen', // libs/finance/bill/feature/src/i18n/de.json: list.title
+  'trainer-agreements': 'Trainervereinbarungen', // spec 1.167
+  'trainer-profiles': 'Rechnungsprofil als Trainer', // spec 1.167
+  'work-entries': 'Trainer-Einsätze', // spec 1.167
+  'trainer-invoices': 'Trainerrechnungen', // spec 1.167
   expenses: 'Spesen',
   'payment-orders': 'Zahlungsaufträge',
   paymentOrders: 'Zahlungsaufträge',

@@ -97,6 +97,8 @@ describe('find() query shapes', () => {
   it('finds persons and users and avatars by document id', () => {
     expect(valueOf(record('persons'), '__name__')).toBe(CTX.personKey);
     expect(valueOf(record('users'), '__name__')).toBe(CTX.uid);
+    // trainer profile: doc id = personKey (spec 1.167)
+    expect(valueOf(record('trainer-profiles'), '__name__')).toBe(CTX.personKey);
     // the avatar doc id is the PREFIXED key, bare (shared default) or tenant-scoped
     expect(valueOf(record('avatars'), '__name__')).toEqual([CTX.parentKey, `${CTX.tenantId}.${CTX.parentKey}`]);
   });
@@ -122,6 +124,9 @@ describe('find() query shapes', () => {
       ['workrels', 'subjectKey'],
       ['competition-levels', 'personKey'],
       ['invoice-positions', 'personKey'],
+      ['trainer-agreements', 'personKey'],
+      ['work-entries', 'personKey'],
+      ['trainer-invoices', 'personKey'],
       ['docs', 'authorKey'],
       ['folders', 'ownerKey'],
       ['assets', 'responsiblePersonKey'],

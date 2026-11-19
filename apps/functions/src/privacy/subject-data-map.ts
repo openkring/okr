@@ -876,6 +876,66 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     anonymizeFields: ['vendor.key', 'vendor.name1', 'vendor.name2'],
     retention: RETAIN_10Y,
   },
+  // ───────────── Trainer-Abrechnung (spec 1.167 §10) ─────────────
+  // The executor has no "archive" action (only delete / anonymize / retain), and an anonymize
+  // patch writes '' into a flat field, which cannot set `isArchived: true`. So agreements and work
+  // entries are cut loose from the person (key + names cleared) and kept as the books' record,
+  // like `bills`; the invoice facts (amounts, dates, document reference) stay.
+  {
+    collection: 'trainer-agreements',
+    dataClass: 'financial',
+    tier: 'T3',
+    onTenantExit: 'anonymize',
+    // `personKey` mirrors `person.key`; queryable by equality, tenant post-filtered.
+    find: (c: SubjectCtx) => db().collection('trainer-agreements').where('personKey', '==', c.personKey),
+    tenantScope: 'tenantsArray',
+    onExport: 'full',
+    onErasure: 'anonymize',
+    anonymizeFields: ['person.key', 'person.name1', 'person.name2', 'personKey'],
+    retention: RETAIN_10Y,
+  },
+  {
+    // Doc id = personKey, one profile per person for all clubs (shared across tenants).
+    // Erasure clears the personal letterhead data; `nextNumber` and `tenants` stay.
+    collection: 'trainer-profiles',
+    dataClass: 'financial',
+    tier: 'T3',
+    onTenantExit: 'anonymize',   // the tenant-exit check forbids detach on accounting rows; clears the letterhead data
+    find: (c: SubjectCtx) => db().collection('trainer-profiles').where(FieldPath.documentId(), '==', c.personKey),
+    tenantScope: 'tenantsArray',
+    onExport: 'full',
+    onErasure: 'anonymize',
+    anonymizeFields: [
+      'companyName', 'contactName', 'logoUrl', 'vatNumber',
+      'postalAddressKey', 'bankAddressKey', 'closingText', 'vatNote',
+    ],
+    retention: RETAIN_10Y,
+  },
+  {
+    collection: 'work-entries',
+    dataClass: 'financial',
+    tier: 'T3',
+    onTenantExit: 'anonymize',
+    find: (c: SubjectCtx) => db().collection('work-entries').where('personKey', '==', c.personKey),
+    tenantScope: 'tenantsArray',
+    onExport: 'full',
+    onErasure: 'anonymize',
+    anonymizeFields: ['personKey'],   // the entry underlies a retained invoice line
+    retention: RETAIN_10Y,
+  },
+  {
+    // Kept for retention like `bills`; only the person is cut loose.
+    collection: 'trainer-invoices',
+    dataClass: 'financial',
+    tier: 'T3',
+    onTenantExit: 'anonymize',
+    find: (c: SubjectCtx) => db().collection('trainer-invoices').where('personKey', '==', c.personKey),
+    tenantScope: 'tenantsArray',
+    onExport: 'full',
+    onErasure: 'anonymize',
+    anonymizeFields: ['personKey', 'rejectedBy.key', 'rejectedBy.name1', 'rejectedBy.name2'],
+    retention: RETAIN_10Y,
+  },
   {
     collection: 'expenses',
     dataClass: 'financial',
