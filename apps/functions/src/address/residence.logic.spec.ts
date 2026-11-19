@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { AddressModel } from '@okr/shared-models';
 
 import {
-  CallerFacts, matchServerHit, mayRecordPostal, parseTarget, planCancel, planMove, postalIndex, recorderTenantId,
-  requireAddressValue2, requireDocKey, requireParentKey, requireQuery, requireStoreDate, snapshotText,
+  CallerFacts, commitError, matchServerHit, mayRecordPostal, newResidenceId, parseTarget, planCancel, planMove, postalIndex, recorderTenantId,
+  requireAddressUsage, requireAddressValue2, requireDocKey, requireParentKey, requireQuery, requireStoreDate, snapshotText,
 } from './residence.logic';
 
 const TODAY = '20270215';
@@ -29,28 +29,32 @@ function code(fn: () => unknown): string | undefined {
 describe('planMove', () => {
   it('future move: closes the current favorite the day before, new row not favorite yet', () => {
     const rows = [postal('cur', { isFavorite: true })];
-    expect(planMove(rows, '20270301', TODAY)).toEqual({ close: { okey: 'cur', validTo: '20270228' }, newIsFavorite: false, demote: [] });
+    expect(planMove(rows, '20270301', TODAY, 'cur')).toEqual({ close: { okey: 'cur', validTo: '20270228' }, newIsFavorite: false, demote: [], addressUsage: 'home' });
   });
 
   it('late report: closes the current favorite, new row takes the favorite, old is demoted', () => {
     const rows = [postal('cur', { isFavorite: true })];
-    expect(planMove(rows, '20270210', TODAY)).toEqual({ close: { okey: 'cur', validTo: '20270209' }, newIsFavorite: true, demote: ['cur'] });
+    expect(planMove(rows, '20270210', TODAY, 'cur')).toEqual({ close: { okey: 'cur', validTo: '20270209' }, newIsFavorite: true, demote: ['cur'], addressUsage: 'home' });
   });
 
   it('move today: new row is favorite at once', () => {
     const rows = [postal('cur', { isFavorite: true })];
-    expect(planMove(rows, TODAY, TODAY)).toEqual({ close: { okey: 'cur', validTo: '20270214' }, newIsFavorite: true, demote: ['cur'] });
+    expect(planMove(rows, TODAY, TODAY, 'cur')).toEqual({ close: { okey: 'cur', validTo: '20270214' }, newIsFavorite: true, demote: ['cur'], addressUsage: 'home' });
   });
 
   it('no postal row (Review Focus 1): nothing to close, new row favorite when the date is not in the future', () => {
-    expect(planMove([], '20270210', TODAY)).toEqual({ close: undefined, newIsFavorite: true, demote: [] });
-    expect(planMove([], '20270301', TODAY)).toEqual({ close: undefined, newIsFavorite: false, demote: [] });
+    expect(planMove([], '20270210', TODAY)).toEqual({ close: undefined, newIsFavorite: true, demote: [], addressUsage: 'home' });
+    expect(planMove([], '20270301', TODAY)).toEqual({ close: undefined, newIsFavorite: false, demote: [], addressUsage: 'home' });
+  });
+
+  it('no postal row: the requested usage starts the chain', () => {
+    expect(planMove([], '20270210', TODAY, '', 'work').addressUsage).toBe('work');
   });
 
   it('ignores non-postal and archived rows', () => {
     const email = postal('mail', { addressChannel: 'email', isFavorite: true });
     const archived = postal('old', { isArchived: true, isFavorite: true });
-    expect(planMove([email, archived], '20270210', TODAY)).toEqual({ close: undefined, newIsFavorite: true, demote: [] });
+    expect(planMove([email, archived], '20270210', TODAY)).toEqual({ close: undefined, newIsFavorite: true, demote: [], addressUsage: 'home' });
   });
 
   it('current + future row, second move after the future date (Review Focus 2): closes the FUTURE row', () => {
@@ -58,7 +62,9 @@ describe('planMove', () => {
       postal('cur', { isFavorite: true, validTo: '20270228' }),
       postal('fut', { validFrom: '20270301' }),
     ];
-    expect(planMove(rows, '20270401', TODAY)).toEqual({ close: { okey: 'fut', validTo: '20270331' }, newIsFavorite: false, demote: [] });
+    expect(planMove(rows, '20270401', TODAY, 'fut')).toEqual({ close: { okey: 'fut', validTo: '20270331' }, newIsFavorite: false, demote: [], addressUsage: 'home' });
+    // the user started from the current row: the chain still ends at the announced row
+    expect(planMove(rows, '20270401', TODAY, 'cur').close).toEqual({ okey: 'fut', validTo: '20270331' });
   });
 
   it('rejects a move date before an announced future move (edit or cancel it first)', () => {
@@ -66,56 +72,114 @@ describe('planMove', () => {
       postal('cur', { isFavorite: true, validTo: '20270228' }),
       postal('fut', { validFrom: '20270301' }),
     ];
-    expect(code(() => planMove(rows, '20270220', TODAY))).toBe('invalid-argument');
-    expect(code(() => planMove(rows, '20270301', TODAY))).toBe('invalid-argument');
+    expect(code(() => planMove(rows, '20270220', TODAY, 'cur'))).toBe('invalid-argument');
+    expect(code(() => planMove(rows, '20270301', TODAY, 'fut'))).toBe('invalid-argument');
   });
 
   it('rejects a move date on or before the start of the open row (would end it before it began)', () => {
     const rows = [postal('cur', { isFavorite: true, validFrom: '20270101' })];
-    expect(code(() => planMove(rows, '20270101', TODAY))).toBe('invalid-argument');
-    expect(code(() => planMove(rows, '20261201', TODAY))).toBe('invalid-argument');
+    expect(code(() => planMove(rows, '20270101', TODAY, 'cur'))).toBe('invalid-argument');
+    expect(code(() => planMove(rows, '20261201', TODAY, 'cur'))).toBe('invalid-argument');
   });
 
-  it('closed row not favorite but another favorite exists: new row stays non-favorite', () => {
-    const rows = [
-      postal('work', { addressUsage: 'work', isFavorite: true, validFrom: '20200101' }),
-      postal('home', { validFrom: '20250101' }),
-    ];
-    expect(planMove(rows, '20270210', TODAY)).toEqual({ close: { okey: 'home', validTo: '20270209' }, newIsFavorite: false, demote: [] });
+  it('requires fromOkey when an open row exists, and it must be an active postal row', () => {
+    const rows = [postal('cur', { isFavorite: true }), postal('gone', { isArchived: true })];
+    expect(code(() => planMove(rows, '20270301', TODAY))).toBe('invalid-argument');
+    expect(code(() => planMove(rows, '20270301', TODAY, 'nope'))).toBe('invalid-argument');
+    expect(code(() => planMove(rows, '20270301', TODAY, 'gone'))).toBe('invalid-argument');
+  });
+
+  it('only past rows: fromOkey optional, nothing is closed', () => {
+    const rows = [postal('past', { validFrom: '20200101', validTo: '20211231' })];
+    expect(planMove(rows, '20270210', TODAY)).toEqual({ close: undefined, newIsFavorite: true, demote: [], addressUsage: 'home' });
+    expect(planMove(rows, '20270210', TODAY, 'past').close).toBeUndefined();
+  });
+
+  describe('mixed home and work rows', () => {
+    it('both open with unknown dates: a home move closes home, keeps work and its usage', () => {
+      const rows = [
+        postal('home', { isFavorite: true }),
+        postal('work', { addressUsage: 'work' }),
+      ];
+      expect(planMove(rows, '20270210', TODAY, 'home')).toEqual({ close: { okey: 'home', validTo: '20270209' }, newIsFavorite: true, demote: ['home'], addressUsage: 'home' });
+    });
+
+    it('work row with a later start: a home move still closes home (not refused by the work start)', () => {
+      const rows = [
+        postal('home', { isFavorite: true, validFrom: '20200101' }),
+        postal('work', { addressUsage: 'work', validFrom: '20270301' }),
+      ];
+      expect(planMove(rows, '20270210', TODAY, 'home')).toEqual({ close: { okey: 'home', validTo: '20270209' }, newIsFavorite: true, demote: ['home'], addressUsage: 'home' });
+    });
+
+    it('a work move closes work and the new row is work; the home favorite stays', () => {
+      const rows = [
+        postal('home', { isFavorite: true }),
+        postal('work', { addressUsage: 'work', validFrom: '20250101' }),
+      ];
+      expect(planMove(rows, '20270210', TODAY, 'work')).toEqual({ close: { okey: 'work', validTo: '20270209' }, newIsFavorite: false, demote: [], addressUsage: 'work' });
+    });
   });
 
   it('no favorite at all: the new row takes it (late report)', () => {
     const rows = [postal('cur')];
-    expect(planMove(rows, '20270210', TODAY)).toEqual({ close: { okey: 'cur', validTo: '20270209' }, newIsFavorite: true, demote: [] });
-  });
-
-  it('never closes a row that is already closed (past)', () => {
-    const rows = [postal('past', { validFrom: '20200101', validTo: '20211231' })];
-    expect(planMove(rows, '20270210', TODAY)).toEqual({ close: undefined, newIsFavorite: true, demote: [] });
+    expect(planMove(rows, '20270210', TODAY, 'cur')).toEqual({ close: { okey: 'cur', validTo: '20270209' }, newIsFavorite: true, demote: [], addressUsage: 'home' });
   });
 });
 
 describe('planCancel', () => {
-  it('reopens the predecessor that ends the day before the future row', () => {
+  it('two rows: the predecessor is reopened (the cancelled row was open)', () => {
     const rows = [
       postal('cur', { isFavorite: true, validTo: '20270228' }),
       postal('fut', { validFrom: '20270301' }),
     ];
-    expect(planCancel(rows, 'fut')).toEqual({ reopen: 'cur' });
+    expect(planCancel(rows, 'fut')).toEqual({ reopen: { okey: 'cur', validTo: '' } });
   });
 
-  it('a future row without predecessor reopens nothing', () => {
+  it('three rows C → F1 → F2: cancelling F1 extends C to the day before F2, never two open rows', () => {
+    const rows = [
+      postal('c', { isFavorite: true, validTo: '20270228' }),
+      postal('f1', { validFrom: '20270301', validTo: '20270331' }),
+      postal('f2', { validFrom: '20270401' }),
+    ];
+    expect(planCancel(rows, 'f1')).toEqual({ reopen: { okey: 'c', validTo: '20270331' } });
+  });
+
+  it('a future row with no predecessor reopens nothing', () => {
     const rows = [postal('fut', { validFrom: '20270301' })];
     expect(planCancel(rows, 'fut')).toEqual({ reopen: undefined });
   });
 
-  it('ignores archived predecessors and unknown rows', () => {
+  it('ignores archived predecessors, other usages and unknown rows', () => {
     const rows = [
       postal('cur', { validTo: '20270228', isArchived: true }),
+      postal('work', { addressUsage: 'work', validTo: '20270228' }),
       postal('fut', { validFrom: '20270301' }),
     ];
     expect(planCancel(rows, 'fut')).toEqual({ reopen: undefined });
     expect(planCancel(rows, 'nope')).toEqual({ reopen: undefined });
+  });
+});
+
+describe('newResidenceId', () => {
+  it('is stable per parent, date and location and differs otherwise', () => {
+    const id = newResidenceId('person.p1', '20270301', 'loc1');
+    expect(id).toMatch(/^res-[0-9a-f]{32}$/);
+    expect(newResidenceId('person.p1', '20270301', 'loc1')).toBe(id);
+    expect(newResidenceId('person.p1', '20270302', 'loc1')).not.toBe(id);
+    expect(newResidenceId('person.p1', '20270301', 'loc2')).not.toBe(id);
+    expect(newResidenceId('person.p2', '20270301', 'loc1')).not.toBe(id);
+  });
+});
+
+describe('commitError', () => {
+  it('maps a broken precondition to aborted and a duplicate create to already-exists', () => {
+    expect((commitError({ code: 9 }) as { code: string }).code).toBe('aborted');
+    expect((commitError({ code: 6 }) as { code: string }).code).toBe('already-exists');
+  });
+  it('rethrows anything else unchanged', () => {
+    const err = { code: 14 };
+    expect(commitError(err)).toBe(err);
   });
 });
 
@@ -195,6 +259,13 @@ describe('input validation', () => {
     expect(requireDocKey('abc123', 'residenceKey')).toBe('abc123');
     expect(code(() => requireDocKey('a/b', 'residenceKey'))).toBe('invalid-argument');
     expect(code(() => requireDocKey('', 'residenceKey'))).toBe('invalid-argument');
+  });
+
+  it('addressUsage: optional key, default home', () => {
+    expect(requireAddressUsage(undefined)).toBe('home');
+    expect(requireAddressUsage('work')).toBe('work');
+    expect(code(() => requireAddressUsage('a b'))).toBe('invalid-argument');
+    expect(code(() => requireAddressUsage(3))).toBe('invalid-argument');
   });
 
   it('addressValue2: optional, at most 200 characters', () => {

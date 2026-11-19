@@ -3,7 +3,10 @@
  * permission predicate and input validation. No Firestore here; `residence.callables.ts` loads the
  * data, asks these functions and writes.
  */
+import { createHash } from 'node:crypto';
 import { HttpsError } from 'firebase-functions/v2/https';
+
+import { DEFAULT_ADDRESS_USAGE } from '@okr/shared-constants';
 
 import { AddressModel } from '@okr/shared-models';
 import { dayBefore, isAfterDate, isPostalResidence, isRenderableStoreDate } from '@okr/shared-util-core';
@@ -19,12 +22,14 @@ const KEY_PATTERN = /^[A-Za-z0-9_-]+$/;
 // ---------------------------------------------------------------------------------------------
 
 export interface MovePlan {
-  /** the open row the new residence follows; it ends the day before the move */
+  /** the open row of the chain the new residence follows; it ends the day before the move */
   close: { okey: string; validTo: string } | undefined;
   /** the new row is the favorite postal row at once (only when the move is not in the future) */
   newIsFavorite: boolean;
-  /** rows that lose the favorite flag in the same batch */
+  /** rows that lose the favorite flag in the same write (only ever the closed row) */
   demote: string[];
+  /** the addressUsage of the new row: the chain's usage, else the requested one */
+  addressUsage: string;
 }
 
 /** '' (unknown start) sorts first: a row with a known start is the later one. */
@@ -32,22 +37,37 @@ function byValidFrom(a: AddressModel, b: AddressModel): number {
   return (a.validFrom ?? '').localeCompare(b.validFrom ?? '');
 }
 
+const usageOf = (r: AddressModel): string => r.addressUsage || DEFAULT_ADDRESS_USAGE;
+
 /**
- * Plans a move to `validFrom`. The row to close is the latest open postal row (`validTo` empty):
- * an announced future row if there is one, else the current one. A move that does not start after
- * that row's start is refused (`invalid-argument`) — it would end the row before it began, and for
- * an announced move it means the user must edit or cancel that move first.
+ * Plans a move to `validFrom` away from the residence `fromOkey`. The chain is every active postal
+ * row with the same addressUsage as `fromOkey` (a home move never touches the work address); the
+ * row to close is the chain's latest open row (`validTo` empty): an announced future row if there is
+ * one, else the current one. `fromOkey` is required as soon as the parent has any open postal row;
+ * without one, the new row starts a chain of `addressUsage` (default 'home').
+ * Refused with `invalid-argument`: a missing or unknown `fromOkey`, and a move that does not start
+ * after the start of the row it closes (it would end that row before it began; for an announced
+ * move, the user must edit or cancel it first).
  */
-export function planMove(rows: AddressModel[], validFrom: string, today: string): MovePlan {
+export function planMove(rows: AddressModel[], validFrom: string, today: string, fromOkey = '', addressUsage = DEFAULT_ADDRESS_USAGE): MovePlan {
   const postal = rows.filter(isPostalResidence);
-  const open = postal.filter((r) => !r.validTo).sort(byValidFrom);
-  const latest = open[open.length - 1] as AddressModel | undefined;
-  if (latest?.validFrom && !isAfterDate(validFrom, latest.validFrom)) {
-    throw new HttpsError('invalid-argument', `move date ${validFrom} is not after the start ${latest.validFrom} of the open residence ${latest.okey}`);
+  let usage = addressUsage || DEFAULT_ADDRESS_USAGE;
+  let toClose: AddressModel | undefined;
+  if (fromOkey) {
+    const from = postal.find((r) => r.okey === fromOkey);
+    if (!from) throw new HttpsError('invalid-argument', `fromResidenceKey ${fromOkey} is not an active postal address of this parent`);
+    usage = usageOf(from);
+    const open = postal.filter((r) => usageOf(r) === usage && !r.validTo).sort(byValidFrom);
+    const latest = open[open.length - 1] as AddressModel | undefined;
+    if (latest?.validFrom && !isAfterDate(validFrom, latest.validFrom)) {
+      throw new HttpsError('invalid-argument', `move date ${validFrom} is not after the start ${latest.validFrom} of the open residence ${latest.okey}`);
+    }
+    // several open rows of one usage with the same start: prefer the one the user chose, then the favorite, then the lowest okey
+    const sameStart = open.filter((r) => (r.validFrom ?? '') === (latest?.validFrom ?? ''));
+    toClose = sameStart.find((r) => r.okey === fromOkey) ?? sameStart.find((r) => r.isFavorite) ?? [...sameStart].sort((a, b) => a.okey.localeCompare(b.okey))[0];
+  } else if (postal.some((r) => !r.validTo)) {
+    throw new HttpsError('invalid-argument', 'fromResidenceKey is required: choose the address you move away from');
   }
-  // several open rows with the same start (home + work): prefer the favorite, then the lowest okey
-  const sameStart = open.filter((r) => (r.validFrom ?? '') === (latest?.validFrom ?? ''));
-  const toClose = sameStart.find((r) => r.isFavorite) ?? [...sameStart].sort((a, b) => a.okey.localeCompare(b.okey))[0];
 
   const notInFuture = !isAfterDate(validFrom, today);
   const hasFavorite = postal.some((r) => r.isFavorite);
@@ -56,18 +76,44 @@ export function planMove(rows: AddressModel[], validFrom: string, today: string)
     close: toClose ? { okey: toClose.okey, validTo: dayBefore(validFrom) } : undefined,
     newIsFavorite,
     demote: newIsFavorite && toClose?.isFavorite ? [toClose.okey] : [],
+    addressUsage: usage,
   };
 }
 
-/** Cancelling an announced move: the row that ends the day before it starts is reopened (`validTo = ''`). */
-export function planCancel(rows: AddressModel[], futureOkey: string): { reopen: string | undefined } {
+/**
+ * Cancelling an announced move: its predecessor (the row that ends the day before it starts) takes
+ * over the cancelled row's own `validTo` — `''` only when the cancelled row was open. In a chain
+ * C → F1 → F2, cancelling F1 extends C to the day before F2, so no two rows stay open.
+ */
+export function planCancel(rows: AddressModel[], futureOkey: string): { reopen: { okey: string; validTo: string } | undefined } {
   const postal = rows.filter(isPostalResidence);
   const future = postal.find((r) => r.okey === futureOkey);
   if (!future?.validFrom) return { reopen: undefined };
   const end = dayBefore(future.validFrom);
-  const candidates = postal.filter((r) => r.okey !== futureOkey && r.validTo === end);
+  const candidates = postal.filter((r) => r.okey !== futureOkey && r.validTo === end && usageOf(r) === usageOf(future));
   const pick = candidates.find((r) => r.isFavorite) ?? [...candidates].sort((a, b) => a.okey.localeCompare(b.okey))[0];
-  return { reopen: pick?.okey };
+  return { reopen: pick ? { okey: pick.okey, validTo: future.validTo ?? '' } : undefined };
+}
+
+/** Deterministic id of a new residence without predecessor: a concurrent double submit collides on `create`. */
+export function newResidenceId(parentKey: string, validFrom: string, locationKey: string): string {
+  return 'res-' + createHash('sha256').update([parentKey, validFrom, locationKey].join('|')).digest('hex').substring(0, 32);
+}
+
+/**
+ * Maps a failed batch commit: a broken `lastUpdateTime` precondition (gRPC 9, a row changed since it
+ * was read) → `aborted`; a `create` on an existing id (gRPC 6, the same move submitted twice) →
+ * `already-exists`; anything else is rethrown unchanged.
+ */
+export function commitError(err: unknown): unknown {
+  const code = (err as { code?: unknown })?.code;
+  if (code === 9 || code === 'failed-precondition') {
+    return new HttpsError('aborted', 'Die Adresse wurde inzwischen geändert. Lade sie neu und versuche es nochmals.');
+  }
+  if (code === 6 || code === 'already-exists') {
+    return new HttpsError('already-exists', 'Dieser Umzug ist schon erfasst.');
+  }
+  return err;
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -133,6 +179,13 @@ export function requireParentKey(value: unknown): string {
 
 export function requireDocKey(value: unknown, field: string): string {
   if (typeof value !== 'string' || value.length === 0 || value.length > MAX_KEY_LENGTH || !KEY_PATTERN.test(value)) throw invalid(`${field} is not a valid key`);
+  return value;
+}
+
+/** Optional addressUsage of a first residence (a category key). */
+export function requireAddressUsage(value: unknown): string {
+  if (value === undefined || value === null || value === '') return DEFAULT_ADDRESS_USAGE;
+  if (typeof value !== 'string' || value.length > 50 || !KEY_PATTERN.test(value)) throw invalid('addressUsage is not a valid usage');
   return value;
 }
 

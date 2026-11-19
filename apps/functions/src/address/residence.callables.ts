@@ -2,27 +2,29 @@
  * Spec 1.164 §6.1–§6.5: the only write path for moves. The app calls these; each one checks App
  * Check, auth and the recorder permission (owner, or privileged / admin / memberAdmin of a tenant
  * of the parent — read from users/{uid}, never from claims), writes every row change in ONE batch
- * and then sends the notices (§6.4), which never fail the call.
+ * and then sends the notices (§6.4), which never fail the call. Writes to rows that were read carry
+ * their read `updateTime` as `lastUpdateTime` (a concurrent change → `aborted`); a first residence
+ * gets a deterministic id and is `create`d (a double submit → `already-exists`).
  *
  * Every postal write sets `locationKey` and the snapshot together, so `onAddressChange` does not
  * re-heal it (it relinks only a snapshot change under an unchanged `locationKey`).
  */
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
-import { Firestore, getFirestore } from 'firebase-admin/firestore';
+import { Firestore, getFirestore, Timestamp, WriteBatch } from 'firebase-admin/firestore';
 
 import { AddressCollection, AddressModel, UserCollection } from '@okr/shared-models';
 import { getFullName, isPostalResidence, residenceStatus } from '@okr/shared-util-core';
 import {
   AddressSnapshot, buildRegisterLocation, checkAppCheckToken, checkAuthentication, findOrCreateRegisterLocation,
-  getActiveAddresses, ManualAddressInput, parseParentKey, RegisterAddressInput, searchSwissAddresses, snapshotFromLocation, SwissAddressHit,
+  ManualAddressInput, parseParentKey, RegisterAddressInput, searchSwissAddresses, snapshotFromLocation, SwissAddressHit,
 } from '@okr/shared-util-functions';
 
 import { zurichStoreDate } from '../video/chat-video.util';
 import { MoveNotice, MoveNoticeKind, sendMoveNotices } from './residence-notices';
 import {
-  CallerFacts, isOwnerOf, matchServerHit, mayRecordPostal, parseTarget, ParsedTarget, planCancel, planMove, postalIndex,
-  recorderTenantId, requireAddressValue2, requireDocKey, requireParentKey, requireQuery, requireStoreDate, snapshotText,
+  CallerFacts, commitError, isOwnerOf, matchServerHit, mayRecordPostal, parseTarget, ParsedTarget, newResidenceId, planCancel, planMove, postalIndex,
+  recorderTenantId, requireAddressUsage, requireAddressValue2, requireDocKey, requireParentKey, requireQuery, requireStoreDate, snapshotText,
 } from './residence.logic';
 
 const REGION = 'europe-west6';
@@ -34,7 +36,16 @@ export interface PostalTarget {
 }
 
 export interface SearchSwissAddressRequest { query: string }
-export interface RecordPostalMoveRequest { parentKey: string; target: PostalTarget; addressValue2: string; validFrom: string }
+export interface RecordPostalMoveRequest {
+  parentKey: string;
+  /** the residence moved away from; required when the parent has an open (current or future) postal row */
+  fromResidenceKey?: string;
+  /** usage of a first residence (no open row); default 'home'. Otherwise the usage of fromResidenceKey */
+  addressUsage?: string;
+  target: PostalTarget;
+  addressValue2: string;
+  validFrom: string;
+}
 export interface CorrectPostalAddressRequest { residenceKey: string; target: PostalTarget; addressValue2: string }
 export interface CancelPostalMoveRequest { residenceKey: string }
 
@@ -77,19 +88,47 @@ async function authorize(db: Firestore, uid: string, parentKey: string, fn: stri
   return { caller, parent };
 }
 
-async function loadPostalRows(db: Firestore, parentKey: string): Promise<AddressModel[]> {
-  return (await getActiveAddresses(db, parentKey)).filter(isPostalResidence);
+/**
+ * The parent's active postal rows, with the update time each was read at: every write to a row read
+ * here carries it as `lastUpdateTime`, so a concurrent change makes the whole batch fail.
+ */
+async function loadPostalRows(db: Firestore, parentKey: string): Promise<{ rows: AddressModel[]; readAt: Map<string, Timestamp> }> {
+  const snap = await db.collection(AddressCollection).where('parentKey', '==', parentKey).get();
+  const rows: AddressModel[] = [];
+  const readAt = new Map<string, Timestamp>();
+  for (const d of snap.docs) {
+    const row = { ...d.data(), okey: d.id } as AddressModel;
+    if (!isPostalResidence(row)) continue;
+    rows.push(row);
+    readAt.set(d.id, d.updateTime);
+  }
+  return { rows, readAt };
 }
 
 /** Loads a residence row by key; it must be an active postal row of a person or org. */
-async function loadResidence(db: Firestore, residenceKey: string): Promise<AddressModel> {
+async function loadResidence(db: Firestore, residenceKey: string): Promise<{ row: AddressModel; readAt: Timestamp }> {
   const snap = await db.collection(AddressCollection).doc(residenceKey).get();
   const data = snap.data();
-  if (!snap.exists || !data) throw new HttpsError('not-found', `residence ${residenceKey} not found`);
+  if (!snap.exists || !data || !snap.updateTime) throw new HttpsError('not-found', `residence ${residenceKey} not found`);
   const row = { ...data, okey: snap.id } as AddressModel;
   if (!isPostalResidence(row)) throw new HttpsError('failed-precondition', `address ${residenceKey} is not an active postal address`);
   requireParentKey(row.parentKey);
-  return row;
+  return { row, readAt: snap.updateTime };
+}
+
+/** `lastUpdateTime` of a row read by loadPostalRows; a row not read there is a programming error. */
+function readTime(readAt: Map<string, Timestamp>, okey: string): { lastUpdateTime: Timestamp } {
+  const t = readAt.get(okey);
+  if (!t) throw new HttpsError('internal', `residence ${okey} was not read before writing`);
+  return { lastUpdateTime: t };
+}
+
+async function commit(batch: WriteBatch): Promise<void> {
+  try {
+    await batch.commit();
+  } catch (err) {
+    throw commitError(err);
+  }
 }
 
 interface ResolvedTarget { locationKey: string; snapshot: AddressSnapshot; isValidated: boolean }
@@ -164,23 +203,32 @@ export const recordPostalMove = onCall<RecordPostalMoveRequest, Promise<{ reside
     const target = parseTarget(request.data?.target);
     const addressValue2 = requireAddressValue2(request.data?.addressValue2);
     const validFrom = requireStoreDate(request.data?.validFrom, 'validFrom');
+    const fromKey = request.data?.fromResidenceKey === undefined || request.data?.fromResidenceKey === '' ? '' : requireDocKey(request.data.fromResidenceKey, 'fromResidenceKey');
+    const addressUsage = requireAddressUsage(request.data?.addressUsage);
 
     const db = getFirestore();
     const { caller, parent } = await authorize(db, uid, parentKey, fn);
-    const rows = await loadPostalRows(db, parentKey);
-    const plan = planMove(rows, validFrom, zurichStoreDate(new Date()));   // refuses before a location is created
+    const { rows, readAt } = await loadPostalRows(db, parentKey);
+    if (fromKey && !rows.some((r) => r.okey === fromKey)) {
+      // a row of another parent: the caller was authorized for this parent only
+      const other = (await db.collection(AddressCollection).doc(fromKey).get()).data();
+      if (other && other['parentKey'] !== parentKey) throw new HttpsError('permission-denied', 'Diese Adresse darfst du nicht ändern.');
+    }
+    const plan = planMove(rows, validFrom, zurichStoreDate(new Date()), fromKey, addressUsage);   // refuses before a location is created
     const resolved = await resolveTarget(db, target);
 
     const col = db.collection(AddressCollection);
     const closed = plan.close ? rows.find((r) => r.okey === plan.close?.okey) : undefined;
-    const ref = col.doc();
+    const chainRow = closed ?? rows.find((r) => r.okey === fromKey);
+    // without a predecessor nothing carries a precondition: a deterministic id makes a double submit collide
+    const ref = plan.close ? col.doc() : col.doc(newResidenceId(parentKey, validFrom, resolved.locationKey));
     const { okey, ...base } = { ...new AddressModel(parent.tenants[0] ?? '') };   // okey is the document id, never a field
     void okey;
     const doc: Record<string, unknown> = {
       ...base,
       addressChannel: 'postal',
-      addressUsage: closed?.addressUsage || 'home',
-      addressUsageLabel: closed?.addressUsage ? (closed.addressUsageLabel ?? '') : '',
+      addressUsage: plan.addressUsage,
+      addressUsageLabel: chainRow ? (chainRow.addressUsageLabel ?? '') : '',
       ...linkPatch(parentKey, resolved, addressValue2),
       validFrom,
       validTo: '',
@@ -190,10 +238,14 @@ export const recordPostalMove = onCall<RecordPostalMoveRequest, Promise<{ reside
     };
 
     const batch = db.batch();
-    if (plan.close) batch.update(col.doc(plan.close.okey), { validTo: plan.close.validTo });
-    for (const okey of plan.demote) batch.update(col.doc(okey), { isFavorite: false });
-    batch.set(ref, Object.fromEntries(Object.entries(doc).filter(([, v]) => v !== undefined)));
-    await batch.commit();
+    if (plan.close) {
+      const patch: Record<string, unknown> = { validTo: plan.close.validTo };
+      if (plan.demote.includes(plan.close.okey)) patch['isFavorite'] = false;
+      batch.update(col.doc(plan.close.okey), patch, readTime(readAt, plan.close.okey));
+    }
+    for (const okey of plan.demote.filter((k) => k !== plan.close?.okey)) batch.update(col.doc(okey), { isFavorite: false }, readTime(readAt, okey));
+    batch.create(ref, Object.fromEntries(Object.entries(doc).filter(([, v]) => v !== undefined)));
+    await commit(batch);
     logger.info(`${fn}: ${parentKey} moves to ${resolved.locationKey} from ${validFrom}`, { residenceKey: ref.id, closed: plan.close?.okey ?? '' });
 
     await sendMoveNotices(db, notice('move', parentKey, parent, caller, {
@@ -217,13 +269,13 @@ export const correctPostalAddress = onCall<CorrectPostalAddressRequest, Promise<
     const addressValue2 = requireAddressValue2(request.data?.addressValue2);
 
     const db = getFirestore();
-    const row = await loadResidence(db, residenceKey);
+    const { row, readAt } = await loadResidence(db, residenceKey);
     const { caller, parent } = await authorize(db, uid, row.parentKey, fn);
     const resolved = await resolveTarget(db, target);
 
     const batch = db.batch();
-    batch.update(db.collection(AddressCollection).doc(residenceKey), linkPatch(row.parentKey, resolved, addressValue2));
-    await batch.commit();
+    batch.update(db.collection(AddressCollection).doc(residenceKey), linkPatch(row.parentKey, resolved, addressValue2), { lastUpdateTime: readAt });
+    await commit(batch);
     logger.info(`${fn}: residence ${residenceKey} relinked to ${resolved.locationKey}`);
 
     await sendMoveNotices(db, notice('correction', row.parentKey, parent, caller, {
@@ -245,22 +297,22 @@ export const cancelPostalMove = onCall<CancelPostalMoveRequest, Promise<void>>(
     const residenceKey = requireDocKey(request.data?.residenceKey, 'residenceKey');
 
     const db = getFirestore();
-    const row = await loadResidence(db, residenceKey);
+    const { row } = await loadResidence(db, residenceKey);
     const { caller, parent } = await authorize(db, uid, row.parentKey, fn);
     if (residenceStatus(row, zurichStoreDate(new Date())) !== 'future') {
       throw new HttpsError('failed-precondition', 'only an announced move (a future address) can be cancelled');
     }
-    const rows = await loadPostalRows(db, row.parentKey);
+    const { rows, readAt } = await loadPostalRows(db, row.parentKey);
     const { reopen } = planCancel(rows, residenceKey);
 
     const col = db.collection(AddressCollection);
     const batch = db.batch();
-    batch.update(col.doc(residenceKey), { isArchived: true, isFavorite: false });
-    if (reopen) batch.update(col.doc(reopen), { validTo: '' });
-    await batch.commit();
-    logger.info(`${fn}: residence ${residenceKey} cancelled`, { reopened: reopen ?? '' });
+    batch.update(col.doc(residenceKey), { isArchived: true, isFavorite: false }, readTime(readAt, residenceKey));
+    if (reopen) batch.update(col.doc(reopen.okey), { validTo: reopen.validTo }, readTime(readAt, reopen.okey));
+    await commit(batch);
+    logger.info(`${fn}: residence ${residenceKey} cancelled`, { reopened: reopen?.okey ?? '', validTo: reopen?.validTo ?? '' });
 
-    const reopened = reopen ? rows.find((r) => r.okey === reopen) : undefined;
+    const reopened = reopen ? rows.find((r) => r.okey === reopen.okey) : undefined;
     await sendMoveNotices(db, notice('cancel', row.parentKey, parent, caller, {
       oldText: snapshotText(row),
       newText: reopened ? snapshotText(reopened) : '',
