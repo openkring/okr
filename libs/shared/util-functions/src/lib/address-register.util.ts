@@ -60,6 +60,11 @@ export function buildRegisterLocation(input: RegisterAddressInput): LocationMode
     ...(swiss ? [egaidProperty(input.egaid)] : []),
     { key: 'countryCode', value: countryCode },
     { key: 'validated', value: swiss ? 'swisstopo' : 'manual' },
+    // the address parts, so snapshotFromLocation never has to parse the display text
+    { key: 'streetName', value: String(input.streetName ?? '').trim() },
+    { key: 'streetNumber', value: String(input.streetNumber ?? '').trim() },
+    { key: 'zipCode', value: String(input.zipCode ?? '').trim() },
+    { key: 'city', value: String(input.city ?? '').trim() },
   ];
   return loc;
 }
@@ -98,23 +103,13 @@ function propertyValue(loc: LocationModel, key: string): string {
   return p ? String(p.value) : '';
 }
 
-/**
- * The inline address fields of a postal row, read back from the register location text
- * («Seestrasse 12, 8712 Stäfa»). The street number is the last word of the street part when it
- * starts with a digit; the zip code is the first word of the place part when it contains a digit.
- */
+/** The inline address fields of a postal row, read from the register location's properties. */
 export function snapshotFromLocation(loc: LocationModel): AddressSnapshot {
-  const text = loc.address || loc.name || '';
-  const cut = text.lastIndexOf(', ');
-  const streetPart = cut >= 0 ? text.slice(0, cut) : text;
-  const placePart = cut >= 0 ? text.slice(cut + 2) : '';
-  const street = /^(.*?)\s+(\d\S*)$/.exec(streetPart.trim());
-  const place = /^(\S*\d\S*)(?:\s+(.*))?$/.exec(placePart.trim());
   return {
-    streetName: street ? street[1] : streetPart.trim(),
-    streetNumber: street ? street[2] : '',
-    zipCode: place ? place[1] : '',
-    city: place ? (place[2] ?? '') : placePart.trim(),
+    streetName: propertyValue(loc, 'streetName'),
+    streetNumber: propertyValue(loc, 'streetNumber'),
+    zipCode: propertyValue(loc, 'zipCode'),
+    city: propertyValue(loc, 'city'),
     countryCode: propertyValue(loc, 'countryCode'),
   };
 }

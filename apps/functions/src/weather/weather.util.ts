@@ -3,6 +3,8 @@
 // Europe/Zurich explicitly rather than inherit it from the host. Without that, `fetchedAt`
 // would mis-stamp (the widgets show "last updated" two hours out) and the interval gate would
 // read yesterday's document between 22:00 and midnight UTC.
+import { isRegisterLocation } from '@okr/shared-util-functions';
+
 import { toStoreDate, toStoreDateTime } from '../srv/zurich-time';
 
 /**
@@ -18,6 +20,14 @@ export const WEATHER_TAG = '@tag.weather';
 /** True when a record's comma-separated `tags` field carries the weather tag. */
 export function hasWeatherTag(tags: string | undefined): boolean {
   return (tags ?? '').split(',').map((t) => t.trim()).includes(WEATHER_TAG);
+}
+
+/**
+ * A location the forecast is fetched for: weather-tagged and NOT an address-register location
+ * (spec 1.164) — a home's coordinates must never reach the weather provider, whatever its tags.
+ */
+export function isWeatherLocation(loc: Pick<LocationDoc, 'tags' | 'tenants'>): boolean {
+  return hasWeatherTag(loc.tags) && !isRegisterLocation(loc);
 }
 
 /** Identifies which service produced a document — stored so a provider swap stays traceable. */

@@ -46,7 +46,12 @@ describe('buildRegisterLocation', () => {
       { key: 'egaid', value: '101880576' },
       { key: 'countryCode', value: 'CH' },
       { key: 'validated', value: 'swisstopo' },
+      { key: 'streetName', value: 'Seestrasse' },
+      { key: 'streetNumber', value: '12' },
+      { key: 'zipCode', value: '8712' },
+      { key: 'city', value: 'Stäfa' },
     ]);
+    expect(loc.properties.every((p) => typeof p.value === 'string' && Object.keys(p).length === 2)).toBe(true);
     // the egaid map must hold exactly key + value so the array-contains lookup matches
     expect(Object.keys(loc.properties[0])).toEqual(['key', 'value']);
     expect(typeof loc.properties[0].value).toBe('string');
@@ -63,6 +68,10 @@ describe('buildRegisterLocation', () => {
     expect(loc.properties).toEqual([
       { key: 'countryCode', value: 'DE' },
       { key: 'validated', value: 'manual' },
+      { key: 'streetName', value: 'Hauptstrasse' },
+      { key: 'streetNumber', value: '5a' },
+      { key: 'zipCode', value: '78462' },
+      { key: 'city', value: 'Konstanz' },
     ]);
   });
 
@@ -94,6 +103,22 @@ describe('snapshotFromLocation', () => {
   it('round-trips multi-word streets and cities and a missing number', () => {
     const input: ManualAddressInput = { streetName: 'Rue du Lac', streetNumber: '', zipCode: '1800', city: 'Vevey La Tour', countryCode: 'CH' };
     expect(snapshotFromLocation(buildRegisterLocation(input))).toEqual(input);
+  });
+
+  it('round-trips a UK postcode with a space', () => {
+    const input: ManualAddressInput = { streetName: 'Downing Street', streetNumber: '10', zipCode: 'SW1A 1AA', city: 'London', countryCode: 'GB' };
+    expect(snapshotFromLocation(buildRegisterLocation(input))).toEqual(input);
+  });
+
+  it('round-trips a number without a leading digit and a street with a comma', () => {
+    const input: ManualAddressInput = { streetName: 'Hof, Hinterhaus', streetNumber: 'B12', zipCode: '8000', city: 'Zürich', countryCode: 'CH' };
+    expect(snapshotFromLocation(buildRegisterLocation(input))).toEqual(input);
+  });
+
+  it('reads empty strings from a location without address properties', () => {
+    const loc = buildRegisterLocation(HIT);
+    loc.properties = [];
+    expect(snapshotFromLocation(loc)).toEqual({ streetName: '', streetNumber: '', zipCode: '', city: '', countryCode: '' });
   });
 
   it('round-trips a missing zip code', () => {

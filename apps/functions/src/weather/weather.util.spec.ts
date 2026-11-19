@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { WEATHER_TAG, buildWeatherDocs, hasWeatherTag, hoursSince } from './weather.util';
+import { WEATHER_TAG, buildWeatherDocs, hasWeatherTag, hoursSince, isWeatherLocation } from './weather.util';
 import fixture from './open-meteo.fixture.json';
 
 /**
@@ -114,6 +114,20 @@ describe('hoursSince', () => {
   it('returns Infinity for an unparsable stamp rather than a NaN that compares false', () => {
     // NaN < interval is false, which would silently skip the location on every run.
     expect(hoursSince('xxxxxxxxxxxxxx', now)).toBe(Number.POSITIVE_INFINITY);
+  });
+});
+
+describe('isWeatherLocation', () => {
+  it('takes a weather-tagged club location', () => {
+    expect(isWeatherLocation({ tags: '@tag.weather', tenants: ['scs'] })).toBe(true);
+  });
+
+  it('never takes an address-register location, even when tagged (spec 1.164)', () => {
+    expect(isWeatherLocation({ tags: '@tag.weather', tenants: ['address-register'] })).toBe(false);
+  });
+
+  it('skips an untagged location', () => {
+    expect(isWeatherLocation({ tags: '', tenants: ['scs'] })).toBe(false);
   });
 });
 

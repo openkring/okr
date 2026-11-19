@@ -2,7 +2,7 @@ import { logger } from 'firebase-functions/v2';
 import axios from 'axios';
 import * as admin from 'firebase-admin';
 
-import { LocationDoc, OpenMeteoResponse, WEATHER_TAG, buildWeatherDocs, hasWeatherTag, hoursSince } from './weather.util';
+import { LocationDoc, OpenMeteoResponse, WEATHER_TAG, buildWeatherDocs, hoursSince, isWeatherLocation } from './weather.util';
 import { toStoreDate } from '../srv/zurich-time';
 
 const OPEN_METEO_URL = 'https://api.open-meteo.com/v1/forecast';
@@ -48,7 +48,7 @@ export async function runWeatherFetch(): Promise<void> {
     .where('isArchived', '==', false).get();
   const locations = locationsSnap.docs
     .map((d) => ({ ...(d.data() as LocationDoc), okey: d.id }))
-    .filter((l) => hasWeatherTag(l.tags))
+    .filter((l) => isWeatherLocation(l))
     .filter((l) => Number.isFinite(l.latitude) && Number.isFinite(l.longitude));
 
   if (!locations.length) {
