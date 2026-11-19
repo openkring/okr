@@ -417,6 +417,21 @@
     "label": "Ereignisse",
     "empty": "Keine Ereignisse gefunden."
   },
+  "course": {
+    "label": "Kurs",
+    "title": "Konfiguration des Kursabschnitts",
+    "subtitle": "Lege hier fest, für wen der angekündigte Kurs angezeigt wird.",
+    "audience": {
+      "label": "Zielgruppe",
+      "youth": "Jugendliche",
+      "adult": "Erwachsene",
+      "transfer": "Quereinstieg"
+    },
+    "empty_text": {
+      "label": "Text, wenn kein Kurs angekündigt ist",
+      "helper": "Bleibt das Feld leer, wird der Abschnitt ausgeblendet, solange kein Kurs angekündigt ist."
+    }
+  },
   "form": {
     "title": "Sektion",
     "label": "Form",
@@ -1392,6 +1407,13 @@
       "subtitle": "Passe hier die Einstellungen der Eventliste an deine Bedürfnisse an.",
       "edit": "Eventliste Konfiguration ändern",
       "description": "Darstellung von Events, z.B. Regatten, Anlässe, Trainings"
+    },
+    "course": {
+      "label": "Kurs",
+      "title": "Konfiguration des Kursabschnitts",
+      "subtitle": "Lege hier fest, für wen der angekündigte Kurs angezeigt wird.",
+      "edit": "Kursabschnitt Konfiguration ändern",
+      "description": "Zeigt den auf der Website angekündigten Kurs mit freien Plätzen"
     },
     "form": {
       "label": "Form",

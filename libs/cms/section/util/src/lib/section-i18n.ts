@@ -287,6 +287,15 @@ export const SECTION_I18N_KEYS = {
   event_show_location_label:                PFX + 'event.show.location.label',
   event_show_location_helper:               PFX + 'event.show.location.helper',
 
+  course_title:                             PFX + 'course.title',
+  course_subtitle:                          PFX + 'course.subtitle',
+  course_audience_label:                    PFX + 'course.audience.label',
+  course_audience_youth:                    PFX + 'course.audience.youth',
+  course_audience_adult:                    PFX + 'course.audience.adult',
+  course_audience_transfer:                 PFX + 'course.audience.transfer',
+  course_empty_text_label:                  PFX + 'course.empty_text.label',
+  course_empty_text_helper:                 PFX + 'course.empty_text.helper',
+
   events_label:                             PFX + 'events.label',
   events_empty:                             PFX + 'events.empty',
 

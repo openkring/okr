@@ -13,6 +13,7 @@ export * from './lib/tiles-section.validations';
 export * from './lib/tile.validations';
 export * from './lib/news-section.validations';
 export * from './lib/events-section.validations';
+export * from './lib/course-section.validations';
 export * from './lib/section-validation-registry';
 export * from './lib/album-section.validations';
 export * from './lib/article-section.validations';

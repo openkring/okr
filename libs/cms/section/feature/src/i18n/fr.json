@@ -417,6 +417,21 @@
     "label": "Événements",
     "empty": "Aucun événement trouvé."
   },
+  "course": {
+    "label": "Cours",
+    "title": "Configuration de la section de cours",
+    "subtitle": "Définis ici à qui le cours annoncé est présenté.",
+    "audience": {
+      "label": "Groupe cible",
+      "youth": "Jeunes",
+      "adult": "Adultes",
+      "transfer": "Entrée en cours de route"
+    },
+    "empty_text": {
+      "label": "Texte lorsqu'aucun cours n'est annoncé",
+      "helper": "Si tu laisses le champ vide, la section est masquée tant qu'aucun cours n'est annoncé."
+    }
+  },
   "form": {
     "title": "Section",
     "label": "Formulaire",
@@ -1392,6 +1407,13 @@
       "subtitle": "Adapter ici les paramètres de la liste des événements selon les besoins.",
       "edit": "Modifier la configuration de la liste des événements",
       "description": "Présentation d'événements, p. ex. régates, manifestations, entraînements"
+    },
+    "course": {
+      "label": "Cours",
+      "title": "Configuration de la section de cours",
+      "subtitle": "Définis ici à qui le cours annoncé est présenté.",
+      "edit": "Modifier la configuration de la section de cours",
+      "description": "Présente le cours annoncé sur le site web avec ses places libres"
     },
     "form": {
       "label": "Formulaire",

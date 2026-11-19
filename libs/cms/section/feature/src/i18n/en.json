@@ -417,6 +417,21 @@
     "label": "Events",
     "empty": "No events found."
   },
+  "course": {
+    "label": "Course",
+    "title": "Course section configuration",
+    "subtitle": "Choose here for whom the announced course is shown.",
+    "audience": {
+      "label": "Target group",
+      "youth": "Youth",
+      "adult": "Adults",
+      "transfer": "Lateral entry"
+    },
+    "empty_text": {
+      "label": "Text when no course is announced",
+      "helper": "If this field is left empty, the section is hidden as long as no course is announced."
+    }
+  },
   "form": {
     "title": "Section",
     "label": "Form",
@@ -1392,6 +1407,13 @@
       "subtitle": "Adjust the event list settings to your needs here.",
       "edit": "Change event list configuration",
       "description": "Presentation of events, e.g. regattas, occasions, trainings"
+    },
+    "course": {
+      "label": "Course",
+      "title": "Course section configuration",
+      "subtitle": "Choose here for whom the announced course is shown.",
+      "edit": "Change course section configuration",
+      "description": "Shows the course announced on the website with its free places"
     },
     "form": {
       "label": "Form",

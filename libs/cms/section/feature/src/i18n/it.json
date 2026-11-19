@@ -417,6 +417,21 @@
     "label": "Eventi",
     "empty": "Nessun evento trovato."
   },
+  "course": {
+    "label": "Corso",
+    "title": "Configurazione della sezione corso",
+    "subtitle": "Definisci qui a chi viene mostrato il corso annunciato.",
+    "audience": {
+      "label": "Gruppo target",
+      "youth": "Giovani",
+      "adult": "Adulti",
+      "transfer": "Ingresso successivo"
+    },
+    "empty_text": {
+      "label": "Testo quando non è annunciato alcun corso",
+      "helper": "Se lasci il campo vuoto, la sezione viene nascosta finché non è annunciato alcun corso."
+    }
+  },
   "form": {
     "title": "Sezione",
     "label": "Modulo",
@@ -1392,6 +1407,13 @@
       "subtitle": "Adattare qui le impostazioni dell'elenco degli eventi secondo le proprie esigenze.",
       "edit": "Modificare la configurazione dell'elenco degli eventi",
       "description": "Presentazione di eventi, ad es. regate, manifestazioni, allenamenti"
+    },
+    "course": {
+      "label": "Corso",
+      "title": "Configurazione della sezione corso",
+      "subtitle": "Definisci qui a chi viene mostrato il corso annunciato.",
+      "edit": "Modificare la configurazione della sezione corso",
+      "description": "Mostra il corso annunciato sul sito web con i posti liberi"
     },
     "form": {
       "label": "Modulo",

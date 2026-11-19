@@ -417,6 +417,21 @@
     "label": "Eventos",
     "empty": "No se han encontrado eventos."
   },
+  "course": {
+    "label": "Curso",
+    "title": "Configuración de la sección de curso",
+    "subtitle": "Define aquí para quién se muestra el curso anunciado.",
+    "audience": {
+      "label": "Grupo destinatario",
+      "youth": "Jóvenes",
+      "adult": "Adultos",
+      "transfer": "Incorporación tardía"
+    },
+    "empty_text": {
+      "label": "Texto cuando no hay ningún curso anunciado",
+      "helper": "Si dejas el campo vacío, la sección se oculta mientras no haya ningún curso anunciado."
+    }
+  },
   "form": {
     "title": "Sección",
     "label": "Formulario",
@@ -1392,6 +1407,13 @@
       "subtitle": "Ajustar aquí la configuración de la lista de eventos según las necesidades.",
       "edit": "Modificar la configuración de la lista de eventos",
       "description": "Presentación de eventos, p. ej. regatas, actos, entrenamientos"
+    },
+    "course": {
+      "label": "Curso",
+      "title": "Configuración de la sección de curso",
+      "subtitle": "Define aquí para quién se muestra el curso anunciado.",
+      "edit": "Modificar la configuración de la sección de curso",
+      "description": "Muestra el curso anunciado en el sitio web con sus plazas libres"
     },
     "form": {
       "label": "Formulario",

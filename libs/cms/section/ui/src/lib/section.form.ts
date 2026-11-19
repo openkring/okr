@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
 
-import { ColorIonic, ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, FooterConfig, FooterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FormSectionConfig, AlbumConfig, AlbumSection, SectionFeedback, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroConfig, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, InvitationsConfig, InvitationsSection, JournalTrackConfig, JournalTrackSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TilesConfig, TilesSection, NewsConfig, NewsSection, SectionCta, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
+import { ColorIonic, ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, FooterConfig, FooterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FormSectionConfig, AlbumConfig, AlbumSection, SectionFeedback, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, CourseConfig, CourseSection, EventsConfig, EventsSection, HeroConfig, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, InvitationsConfig, InvitationsSection, JournalTrackConfig, JournalTrackSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TilesConfig, TilesSection, NewsConfig, NewsSection, SectionCta, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
 import { Chips, ErrorNote, NotesInput, NotesInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
@@ -40,6 +40,7 @@ import { TableGridConfiguration } from './table-grid-configuration';
 import { TableStyleConfiguration } from './table-style-configuration';
 import { TableBody } from './table-body';
 import { EventsConfiguration } from './events-configuration';
+import { CourseConfiguration } from './course-configuration';
 import { InvitationsConfiguration } from './invitations-configuration';
 import { ImagesConfiguration } from './images-configuration';
 import { TableHeader } from './table-header';
@@ -67,7 +68,7 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
     IframeConfiguration, WeatherConfiguration, ConnectionsConfiguration, DeparturesConfiguration, EnergyConfiguration, CounterConfiguration, FooterConfiguration, PeopleConfiguration, ResponsibilityConfiguration, VideoConfiguration,
     ButtonConfiguration, ChatConfiguration,
     MapConfiguration, TrackerConfiguration, TableGridConfiguration,  TableStyleConfiguration, TableHeader,
-    TableBody, EventsConfiguration, InvitationsConfiguration, ImagesConfiguration, CalendarConfiguration, ChartConfiguration,
+    TableBody, EventsConfiguration, CourseConfiguration, InvitationsConfiguration, ImagesConfiguration, CalendarConfiguration, ChartConfiguration,
     MemberConfiguration, RagConfiguration, FormSectionConfiguration, SankeyConfiguration, SpiderConfiguration, TocConfiguration, TestimonialConfiguration, TimelineConfiguration, AdventConfiguration,
     TilesConfiguration, NewsConfiguration, CtaConfiguration, HeroConfiguration, HeroLogoConfiguration, FeedbackConfiguration, JournalMapConfiguration, JournalTrackConfiguration
 ],
@@ -339,6 +340,16 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
           @if(eventsConfig(); as eventsConfig) {
             <okr-events-config
               [formData]="eventsConfig" (formDataChange)="onEventsConfigChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+              [errors]="errors()"
+            />
+          }
+        }
+        @case('course') {
+          @if(courseConfig(); as courseConfig) {
+            <okr-course-config
+              [formData]="courseConfig" (formDataChange)="onCourseConfigChange($event)"
               [readOnly]="isReadOnly()"
               [i18n]="i18n()"
               [errors]="errors()"
@@ -847,6 +858,7 @@ export class SectionForm {
   protected memberConfig = computed(() => this.getMemberConfig());
   protected ragConfig = computed(() => this.getRagConfig());
   protected eventsConfig = computed(() => this.getEventsConfig());
+  protected courseConfig = computed(() => this.getCourseConfig());
   protected invitationsConfig = computed(() => this.getInvitationsConfig());
   protected iframeConfig = computed(() => this.getIframeConfig());
   protected weatherConfig = computed(() => this.getWeatherConfig());
@@ -1044,6 +1056,12 @@ export class SectionForm {
   private getEventsConfig(): EventsConfig | undefined {
     if (this.formData().type === 'events') {
       return ((this.formData() as any).properties as EventsConfig);
+    }
+  }
+
+  private getCourseConfig(): CourseConfig | undefined {
+    if (this.formData().type === 'course') {
+      return ((this.formData() as CourseSection).properties as CourseConfig);
     }
   }
 
@@ -1293,6 +1311,16 @@ export class SectionForm {
         ...section,
         properties: config
       } as EventsSection);
+    }
+  }
+
+  protected onCourseConfigChange(config: CourseConfig): void {
+    const section = this.formData();
+    if (section.type === 'course') {
+      this.formData.set({
+        ...section,
+        properties: config
+      } as CourseSection);
     }
   }
 
