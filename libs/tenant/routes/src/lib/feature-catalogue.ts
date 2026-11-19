@@ -75,9 +75,15 @@ const calevent: BlockRoutes = {
       // `roleNeeded` decides who sees the row; the parent's `isAuthenticatedGuard` stays.
       children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/calendar-calevent-feature').then(m => m.YearlyEvents) }],
     },
-    // Training courses (spec 1.132). Inside the `calevent` block on purpose — no feature block of its own: a course
-    // is a group-calendar concept, reached from `c-calevents` (row `calevent-courses`, group calendars only). A
-    // separate block would hide that row's menu with it (memory «feature block hides menu»).
+  ],
+};
+
+const course: BlockRoutes = {
+  id: 'course',
+  routes: () => [
+    // Training courses (spec 1.132), a block of its own since 2026-11-19 (it used to sit inside `calevent`, so every
+    // calendar tenant got «Kurse»). Reached from `c-calevents` (row `calevent-courses`, group calendars only) and
+    // `courses-all` under Buchhaltung, both co-declared by the `course` block.
     // Any authenticated member may open the list: courses are readable tenant-wide (firestore.rules), and the list
     // gates create / edit / archive / the yearly totals itself (`course-access.util`, `CourseStore`).
     // `course/table/:courseKey` is the course table page (attendance, lock, exports, request). The route only needs a
@@ -1891,7 +1897,7 @@ const newsCenter: BlockRoutes = {
 };
 
 export const FEATURE_ROUTES: BlockRoutes[] = [
-  calevent, fileTransfer, learning, newsCenter, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, murdoku, memory, backgammon, klondike, mahjong, jasstafel, tetris, mampf, wordle, chess,
+  calevent, course, fileTransfer, learning, newsCenter, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, murdoku, memory, backgammon, klondike, mahjong, jasstafel, tetris, mampf, wordle, chess,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard, contactsDav,
   resource, mobility,

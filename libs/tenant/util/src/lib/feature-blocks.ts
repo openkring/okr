@@ -232,9 +232,6 @@ const calevent: FeatureBlock = {
       { key: 'calevent-exportics', name: 'calevent-exportics', url: 'exportIcs', action: 'call', roleNeeded: 'registered', icon: 'calendar', label: '@item.calevent-exportics' },
       { key: 'calevent-sync', name: 'calevent-sync', url: 'sync', action: 'call', roleNeeded: 'registered', icon: 'calendar-number', label: '@item.calevent-sync' },
       { key: 'calevent-schedule', name: 'calevent-schedule', url: 'schedule', action: 'call', roleNeeded: 'privileged', icon: 'calendar-number', label: '@main.schedule' },
-      // Training courses (spec 1.132): opens `/course/<groupKey>/all/c-courses`. Group calendars only —
-      // `CalEventList.excludedMenuNames` hides the row everywhere else. `registered`: courses are readable tenant-wide.
-      { key: 'calevent-courses', name: 'calevent-courses', url: 'courses', action: 'call', roleNeeded: 'registered', icon: 'school', label: '@item.calevent-courses' },
       // Live-data quirk: TWO `menuItems` docs share `name: 'filter-toggle'` — an
       // `isArchived: true` one (`action: call`, `url: toggleFilter`, `roleNeeded:
       // registered`, icon `search`) and a live, non-archived one (autoid doc, `action:
@@ -264,6 +261,37 @@ const calevent: FeatureBlock = {
       { key: 'yearlyevent-add', name: 'yearlyevent-add', url: 'add', action: 'call', roleNeeded: 'eventAdmin', icon: 'add-circle', label: '@item.yearlyevent-add' },
       { key: 'yearlyevent-export', name: 'yearlyevent-export', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: '@item.yearlyevent-export' },
     ] },
+  ],
+};
+
+/**
+ * Training courses (spec 1.132) as a block of its own (owner decision 2026-11-19): a tenant that runs
+ * no courses — la21staefa — must be able to leave «Kurse» and «Alle Kurse» out. Until then the rows
+ * and the `/course/**` routes sat inside `calevent` (the calendar's context row) and `finance` (the
+ * treasurer's overview under Buchhaltung), so every calendar tenant got them.
+ *
+ * Three CO-DECLARED parents carry the rows (same pattern as `cms-menu`/`aoc-menu`): `c-calevents`
+ * (owned by `calevent`; this block adds only `calevent-courses`), `c-courses` (the course list's own
+ * context menu) and `accounting-menu` (owned by `finance`; this block adds `courses-all`). A tenant
+ * with courses but without `finance` therefore sees «Buchhaltung» holding only «Alle Kurse» — the
+ * treasurer's overview, which needs no books. `dependsOn: ['calevent']`: a course is a series of
+ * events in a group calendar. Existing course tenants get the block from
+ * `scripts/migrate-course-block.mjs` BEFORE the release that carries this split, or their rows vanish.
+ */
+const course: FeatureBlock = {
+  id: 'course',
+  bundle: 'events',
+  label: '@tenant/util.feature.course.label',
+  icon: 'school',
+  defaultAvailability: 'ga',
+  dependsOn: ['calevent'],
+  collections: ['courses'],
+  menu: [
+    { key: 'c-calevents', name: 'c-calevents', url: '', action: 'context', roleNeeded: 'privileged', icon: 'help-circle', label: '', children: [
+      // Training courses (spec 1.132): opens `/course/<groupKey>/all/c-courses`. Group calendars only —
+      // `CalEventList.excludedMenuNames` hides the row everywhere else. `registered`: courses are readable tenant-wide.
+      { key: 'calevent-courses', name: 'calevent-courses', url: 'courses', action: 'call', roleNeeded: 'registered', icon: 'school', label: '@item.calevent-courses' },
+    ] },
     // The course list's context menu (spec 1.132): route `/course/:groupKey/:listId/c-courses`. The wrapper and the
     // rows are `registered`; WHO sees the «…» button and the `add` row is decided in code (`CourseStore.canOpenMenu`,
     // `canAdd`: group admin / privileged), because that depends on the group, not on a role.
@@ -271,6 +299,12 @@ const calevent: FeatureBlock = {
       { key: 'course-add', name: 'course-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: '@item.course-add' },
       { key: 'course-export-generic', name: 'course-export-generic', url: 'exportGeneric', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.course-export-generic' },
     ] },
+    accountingMenuParent([
+      // Training courses of ALL groups plus the yearly compensation totals (spec 1.132 §7.7): the treasurer's entry,
+      // `groupKey = all` of the course list. The row sits under Buchhaltung because the overview is a
+      // treasurer's view; it needs no books (`@BOOKS@`-free url), so it shows without them.
+      { key: 'courses-all', name: 'courses-all', url: '/course/all/all/c-courses', action: 'navigate', roleNeeded: 'treasurer', icon: 'school', label: '@item.courses-all' },
+    ]),
   ],
 };
 
@@ -1572,11 +1606,6 @@ const finance: FeatureBlock = {
       { key: 'accounting-reports', name: 'accounting-reports', url: '/accounting/@BOOKS@/balance/c-report', action: 'navigate', roleNeeded: 'treasurer', icon: 'chart', label: '@item.accounting-reports' },
       { key: 'accounting-closing', name: 'accounting-closing', url: '/accounting/@BOOKS@/periods/c-period', action: 'navigate', roleNeeded: 'treasurer', icon: 'calendar', label: '@item.accounting-closing' },
       { key: 'accounting-master-data', name: 'accounting-master-data', url: '/accounting/@BOOKS@/account/c-account', action: 'navigate', roleNeeded: 'treasurer', icon: 'settings', label: '@item.accounting-master-data' },
-      // Training courses of ALL groups plus the yearly compensation totals (spec 1.132 §7.7): the treasurer's entry,
-      // `groupKey = all` of the course list. The ROUTE belongs to the `calevent` block (no block of its own for
-      // courses); the row sits here because the overview is a treasurer's view and `calevent` has no treasurer menu.
-      // A tenant with `finance` but without `calevent` would get a dead row: enabling `calevent` is the fix.
-      { key: 'courses-all', name: 'courses-all', url: '/course/all/all/c-courses', action: 'navigate', roleNeeded: 'treasurer', icon: 'school', label: '@item.courses-all' },
     ]),
   ],
 };
@@ -3478,7 +3507,7 @@ const newsCenter: FeatureBlock = {
 };
 
 export const FEATURE_BLOCKS: FeatureBlock[] = [
-  calevent, fileTransfer, learningBlock, newsCenter, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, murdoku, memory, backgammon, klondike, mahjong, jasstafel, tetris, mampf, wordle, chess,
+  calevent, course, fileTransfer, learningBlock, newsCenter, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, murdoku, memory, backgammon, klondike, mahjong, jasstafel, tetris, mampf, wordle, chess,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard, contactsDav,
   resource, mobility,

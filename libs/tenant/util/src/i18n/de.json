@@ -224,6 +224,9 @@
     },
     "news-center": {
       "label": "Nachrichten (Videos, Podcasts, Artikel, Webcams)"
+    },
+    "course": {
+      "label": "Kurse"
     }
   },
   "picker": {
