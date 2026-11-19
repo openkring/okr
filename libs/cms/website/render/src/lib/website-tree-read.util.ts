@@ -30,6 +30,29 @@ export function pageKeysInTree(nodes: WebsiteNode[]): string[] {
     .map((n) => n.pageKey as string);
 }
 
+/** A group content page in the website tree (spec 1.165 §7): its group key, nav label and slug. */
+export interface GroupPageLink { key: string; label: string; slug: string }
+
+const GROUP_PAGE_SUFFIX = '_content';
+
+/**
+ * The group pages a website shows — live page nodes whose page is a group's content page
+ * (`<groupKey>_content`), in tree order, each group once. The Termine page filters by them (EV4).
+ */
+export function groupPagesInTree(nodes: WebsiteNode[]): GroupPageLink[] {
+  const out: GroupPageLink[] = [];
+  const walk = (list: WebsiteNode[]): void => {
+    for (const n of list) {
+      if (n.isArchived) continue;
+      const key = n.type === 'page' && n.pageKey?.endsWith(GROUP_PAGE_SUFFIX) ? n.pageKey.slice(0, -GROUP_PAGE_SUFFIX.length) : '';
+      if (key && !out.some((g) => g.key === key)) out.push({ key, label: n.label, slug: n.slug ?? '' });
+      walk(n.children ?? []);
+    }
+  };
+  walk(nodes);
+  return out;
+}
+
 export function websiteUrl(node: WebsiteNode): string {
   if (node.type === 'page') return `/${node.slug ?? ''}`;
   if (node.type === 'link') return node.url ?? '';

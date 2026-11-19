@@ -86,6 +86,8 @@ export interface TemplateContext {
   alternates: AlternateLink[];
   /** true on the home page when `main` comes from the manifest's homeLayout page template */
   home?: boolean;
+  /** fixed pages only: the group pages of the tree, for the Termine filter (spec 1.165 EV4) */
+  groups?: { key: string; label: string; slug: string }[];
 }
 
 /** German first (the source, rendered at the root), then the site's other known languages. */

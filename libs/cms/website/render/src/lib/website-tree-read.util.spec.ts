@@ -1,6 +1,6 @@
 import type { PageModel, WebsiteModel, WebsiteNode } from '@okr/shared-models';
 
-import { pageKeysInTree, siteWarnings, websiteUrl } from './website-tree-read.util';
+import { groupPagesInTree, pageKeysInTree, siteWarnings, websiteUrl } from './website-tree-read.util';
 
 const page = (id: string, slug: string, pageKey = `p-${id}`): WebsiteNode => ({ id, type: 'page', label: id, slug, pageKey });
 const menu = (id: string, children: WebsiteNode[] = []): WebsiteNode => ({ id, type: 'menu', label: id, children });
@@ -69,5 +69,37 @@ describe('siteWarnings', () => {
   it('ignores archived nodes', () => {
     const n: WebsiteNode = { ...page('a', 'a'), isArchived: true };
     expect(siteWarnings(site([n]), pages({}))).toEqual([]);
+  });
+});
+
+describe('groupPagesInTree (Termine filter, spec 1.165 EV4)', () => {
+  const page = (id: string, pageKey: string, label: string, over: Partial<WebsiteNode> = {}): WebsiteNode =>
+    ({ id, type: 'page', label, pageKey, slug: id, ...over });
+
+  it('lists the pages that are a group content page', () => {
+    const nodes: WebsiteNode[] = [
+      page('verein', 'verein', 'Verein'),
+      { id: 'm', type: 'menu', label: 'Projektgruppen', children: [page('reparatur-cafe', 'reparatur_content', 'Reparatur Café'), page('kiss', 'kiss_content', 'KISS')] },
+    ];
+    expect(groupPagesInTree(nodes)).toEqual([
+      { key: 'reparatur', label: 'Reparatur Café', slug: 'reparatur-cafe' },
+      { key: 'kiss', label: 'KISS', slug: 'kiss' },
+    ]);
+  });
+
+  it('skips archived nodes and pages below an archived menu', () => {
+    const nodes: WebsiteNode[] = [
+      page('a', 'a_content', 'A', { isArchived: true }),
+      { id: 'm', type: 'menu', label: 'Alt', isArchived: true, children: [page('b', 'b_content', 'B')] },
+    ];
+    expect(groupPagesInTree(nodes)).toEqual([]);
+  });
+
+  it('lists a group once even when two nodes show it', () => {
+    expect(groupPagesInTree([page('x', 'x_content', 'X'), page('y', 'x_content', 'X2')]).map(g => g.key)).toEqual(['x']);
+  });
+
+  it('is empty for a site without group pages (scs)', () => {
+    expect(groupPagesInTree([page('home', 'scsw_home', 'Home')])).toEqual([]);
   });
 });

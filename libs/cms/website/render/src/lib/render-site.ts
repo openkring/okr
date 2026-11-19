@@ -60,6 +60,7 @@ import {
 import { compileTemplate, createTemplateEnv, escapeXml, langPath, type RenderData, type RenderFn } from './render-helpers';
 import { columnPairStarts, homeRowPlan, type HomeRow } from './home-layout';
 import { mapSection, pickText, type SanitizeFn, type SectionDoc } from './section-mapper';
+import { groupPagesInTree } from './website-tree-read.util';
 import type { PublicPerson } from './group-people';
 
 export interface TemplateSet {
@@ -441,6 +442,7 @@ export function renderSite(input: RenderInput): RenderResult {
         page,
         sections: [],
         main: '',
+        groups: groupPagesInTree(site.nav ?? []),
       };
       try {
         const main = (compiled.pages.get(name) as RenderFn)(base, data);
