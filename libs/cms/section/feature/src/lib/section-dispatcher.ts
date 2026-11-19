@@ -46,7 +46,7 @@ import { CounterSectionComponent } from './counter-section';
 import { FooterSectionComponent } from './footer-section';
 import { WeatherSectionComponent } from '@okr/weather-feature';
 import { EnergySectionComponent } from '@okr/energy-feature';
-import { ConnectionsSectionComponent, DeparturesSectionComponent } from '@okr/mobility-transit-feature';
+import { TransitSectionHost } from './transit-section-host';
 import { SectionStore } from './section.store';
 
 /**
@@ -73,8 +73,7 @@ import { SectionStore } from './section.store';
     FooterSectionComponent,
     WeatherSectionComponent,
     EnergySectionComponent,
-    ConnectionsSectionComponent,
-    DeparturesSectionComponent,
+    TransitSectionHost,
   ],
   template: `
     @if (section(); as section) {
@@ -196,10 +195,10 @@ import { SectionStore } from './section.store';
             <okr-energy-section [section]="section" />
           }
           @case('connections') {
-            <okr-connections-section [section]="section" [pageLocationKey]="pageLocationKey()" />
+            <okr-transit-section-host kind="connections" [section]="section" [pageLocationKey]="pageLocationKey()" />
           }
           @case('departures') {
-            <okr-departures-section [section]="section" [pageLocationKey]="pageLocationKey()" />
+            <okr-transit-section-host kind="departures" [section]="section" [pageLocationKey]="pageLocationKey()" />
           }
           @case('member-age') {
             @defer (on viewport) {
