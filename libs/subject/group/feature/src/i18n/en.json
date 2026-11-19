@@ -239,5 +239,20 @@
     "result": "{title}: {count} synced",
     "result_failed": "{title}: {count} synced, {failed} failed",
     "audit_running": "Running … this can take a few minutes."
+  },
+  "website": {
+    "show": "Show on the website",
+    "hide": "Remove from the website",
+    "shownConf": "The group page is now public. A content admin adds it to the website menu; the new sections stay drafts until you publish them.",
+    "hiddenConf": "The group page is no longer public. The next website publish will show a note.",
+    "error": "The group page could not be changed.",
+    "title": {
+      "when": "When and where",
+      "events": "Upcoming events",
+      "details": "About the project",
+      "contact": "Contact",
+      "sdg": "Sustainability goals",
+      "news": "News"
+    }
   }
 }

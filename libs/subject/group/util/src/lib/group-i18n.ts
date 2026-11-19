@@ -17,6 +17,17 @@ export const GROUP_I18N_KEYS = {
   view_denied:                      PFX + 'view.denied',
 
   add_page:                         PFX + 'add.page',
+  website_show:                      PFX + 'website.show',
+  website_hide:                      PFX + 'website.hide',
+  website_shown_conf:                PFX + 'website.shownConf',
+  website_hidden_conf:               PFX + 'website.hiddenConf',
+  website_error:                     PFX + 'website.error',
+  website_title_when:                PFX + 'website.title.when',
+  website_title_events:              PFX + 'website.title.events',
+  website_title_details:             PFX + 'website.title.details',
+  website_title_contact:             PFX + 'website.title.contact',
+  website_title_sdg:                 PFX + 'website.title.sdg',
+  website_title_news:                PFX + 'website.title.news',
 
   info_title:                       PFX + 'info.title',
   info_intro:                       PFX + 'info.intro',

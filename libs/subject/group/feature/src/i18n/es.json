@@ -239,5 +239,20 @@
     "result": "{title}: {count} sincronizados",
     "result_failed": "{title}: {count} sincronizados, {failed} fallidos",
     "audit_running": "En curso … esto puede tardar unos minutos."
+  },
+  "website": {
+    "show": "Mostrar en el sitio web",
+    "hide": "Quitar del sitio web",
+    "shownConf": "La página del grupo ahora es pública. Un admin de contenidos la añade al menú del sitio; las secciones nuevas siguen como borradores hasta que las publiques.",
+    "hiddenConf": "La página del grupo ya no es pública. La próxima publicación del sitio mostrará un aviso.",
+    "error": "No se pudo cambiar la página del grupo.",
+    "title": {
+      "when": "Cuándo y dónde",
+      "events": "Próximas citas",
+      "details": "Detalles del proyecto",
+      "contact": "Contacto",
+      "sdg": "Objetivos de sostenibilidad",
+      "news": "Noticias"
+    }
   }
 }

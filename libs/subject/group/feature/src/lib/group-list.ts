@@ -165,6 +165,13 @@ export class GroupList {
       if (isAdmin && await this.store.doesGroupContentPageExist(group.okey) === false) {
         actionSheetOptions.buttons.push(createActionSheetButton('as_addPage', this.store.i18n.add_page(), this.imgixBaseUrl, 'add'));
       }
+      // spec 1.165 §7.4: a group admin or content admin decides whether the group page is the group's website page
+      const contentPage = group.hasContent ? await this.store.readContentPage(group.okey) : undefined;
+      if (contentPage && (isAdmin || hasRole('contentAdmin', this.store.appStore.currentUser()) || this.isGroupAdmin(group))) {
+        actionSheetOptions.buttons.push(contentPage.isPrivate === false
+          ? createActionSheetButton('as_hideWebsite', this.store.i18n.website_hide(), this.imgixBaseUrl, 'eye-off')
+          : createActionSheetButton('as_showWebsite', this.store.i18n.website_show(), this.imgixBaseUrl, 'globe'));
+      }
       actionSheetOptions.buttons.push(createActionSheetButton('as_delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
@@ -191,6 +198,12 @@ export class GroupList {
           break;
         case 'as_edit':
           await this.store.edit(group, readOnly);
+          break;
+        case 'as_showWebsite':
+          await this.store.showOnWebsite(group);
+          break;
+        case 'as_hideWebsite':
+          await this.store.hideFromWebsite(group);
           break;
         case 'as_view':
           await this.store.edit(group, true);

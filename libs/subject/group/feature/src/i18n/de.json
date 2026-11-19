@@ -239,5 +239,20 @@
     "result": "{title}: {count} abgeglichen",
     "result_failed": "{title}: {count} abgeglichen, {failed} fehlgeschlagen",
     "audit_running": "Läuft … das kann einige Minuten dauern."
+  },
+  "website": {
+    "show": "Auf der Website zeigen",
+    "hide": "Von der Website nehmen",
+    "shownConf": "Die Gruppenseite ist jetzt öffentlich. Ein Inhalts-Admin nimmt sie ins Menü der Website auf; die neuen Abschnitte sind Entwürfe, bis du sie veröffentlichst.",
+    "hiddenConf": "Die Gruppenseite ist nicht mehr öffentlich. Beim nächsten Veröffentlichen der Website erscheint ein Hinweis.",
+    "error": "Die Gruppenseite konnte nicht geändert werden.",
+    "title": {
+      "when": "Wann und wo",
+      "events": "Nächste Termine",
+      "details": "Details zum Projekt",
+      "contact": "Kontakt",
+      "sdg": "Nachhaltigkeitsziele",
+      "news": "Neuigkeiten"
+    }
   }
 }

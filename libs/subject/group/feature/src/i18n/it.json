@@ -239,5 +239,20 @@
     "result": "{title}: {count} sincronizzati",
     "result_failed": "{title}: {count} sincronizzati, {failed} non riusciti",
     "audit_running": "In corso … può richiedere alcuni minuti."
+  },
+  "website": {
+    "show": "Mostra sul sito web",
+    "hide": "Togli dal sito web",
+    "shownConf": "La pagina del gruppo ora è pubblica. Un admin dei contenuti la aggiunge al menu del sito; le nuove sezioni restano bozze finché non le pubblichi.",
+    "hiddenConf": "La pagina del gruppo non è più pubblica. La prossima pubblicazione del sito mostrerà un avviso.",
+    "error": "Non è stato possibile modificare la pagina del gruppo.",
+    "title": {
+      "when": "Quando e dove",
+      "events": "Prossimi appuntamenti",
+      "details": "Dettagli del progetto",
+      "contact": "Contatto",
+      "sdg": "Obiettivi di sostenibilità",
+      "news": "Notizie"
+    }
   }
 }

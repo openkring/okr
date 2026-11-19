@@ -8,7 +8,7 @@ import { Photo } from '@capacitor/camera';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
-import { ArticleSection, AvatarInfo, CalendarCollection, CalendarModel, ChatSection, ColorIonic, GroupCollection, GroupModel, GroupModelName, ImageActionType, MembershipModel, PageCollection, PageModel, PersonModel, SectionCollection, ViewPosition } from '@okr/shared-models';
+import { ArticleSection, AvatarInfo, CalendarCollection, CalendarModel, ChatSection, ColorIonic, GroupCollection, GroupModel, GroupModelName, ImageActionType, MembershipModel, PageCollection, PageModel, PersonModel, SectionCollection, SectionModel, ViewPosition } from '@okr/shared-models';
 import { AlertService, AppNavigationService, navigateByUrl, showToast } from '@okr/shared-util-angular';
 import { chipMatches, hasRole, debugData, debugItemLoaded, debugListLoaded, fill, generateRandomString, getAvatarInfo, getAvatarInfoForCurrentUser, getSystemQuery, isGroup, isPerson, nameMatches } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
@@ -18,7 +18,8 @@ import { GroupService } from '@okr/subject-group-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import { createGroupMembership } from '@okr/relationship-membership-util';
-import { filterAccessibleGroups, findConflictingGroups, getUniqueGroupKey, groupChatRoomParam, groupHygieneFindings, getVisibleGroupKeys, GROUP_I18N_KEYS, withCreatorAsAdmin } from '@okr/subject-group-util';
+import { filterAccessibleGroups, findConflictingGroups, getUniqueGroupKey, groupChatRoomParam, groupHygieneFindings, getVisibleGroupKeys, GROUP_I18N_KEYS, groupWebsiteStarterSections, hasOnlyDefaultSection, withCreatorAsAdmin } from '@okr/subject-group-util';
+import { createSection } from '@okr/cms-section-util';
 
 import { GroupEditModal } from './group-edit.modal';
 
@@ -403,6 +404,52 @@ export const GroupStore = signalStore(
     async doesGroupContentPageExist(groupId: string): Promise<boolean> {
       const page = await firstValueFrom(store.firestoreService.readModel<PageModel>(PageCollection, `${groupId}_content`));
       return !!page;
+    },
+
+    /** The group's content page, or undefined when the group has none (spec 1.165 §7). */
+    async readContentPage(groupKey: string): Promise<PageModel | undefined> {
+      return firstValueFrom(store.firestoreService.readModel<PageModel>(PageCollection, `${groupKey}_content`));
+    },
+
+    /**
+     * «Auf der Website zeigen» (spec 1.165 §7.4): the group's content page becomes public. A page that
+     * still holds only its default article gets the starter sections of §7.3, all as drafts. The website
+     * tree is not touched — a content admin places the page in the website menu.
+     */
+    async showOnWebsite(group: GroupModel): Promise<void> {
+      const page = await this.readContentPage(group.okey);
+      if (!page) {
+        await showToast(store.toastController, store.i18n.website_error());
+        return;
+      }
+      const added: string[] = [];
+      if (hasOnlyDefaultSection(page.sections, group.okey)) {
+        const titles = {
+          when: store.i18n.website_title_when(), events: store.i18n.website_title_events(),
+          details: store.i18n.website_title_details(), contact: store.i18n.website_title_contact(),
+          sdg: store.i18n.website_title_sdg(), news: store.i18n.website_title_news(),
+        };
+        const sections = groupWebsiteStarterSections(group, titles).map((spec) => {
+          const base = createSection(spec.type, store.tenantId());
+          return {
+            ...base, okey: spec.key, name: spec.name, title: spec.title, state: spec.state,
+            properties: { ...(base.properties ?? {}), ...spec.properties },
+          } as SectionModel;
+        });
+        if (!await store.firestoreService.createModels<SectionModel>(SectionCollection, sections, store.i18n.website_error())) return;
+        added.push(...sections.map((s) => s.okey));
+      }
+      await store.firestoreService.updateModel<PageModel>(PageCollection,
+        { ...page, isPrivate: false, sections: [...(page.sections ?? []), ...added] },
+        false, store.i18n.website_shown_conf(), store.i18n.website_error(), store.currentUser());
+    },
+
+    /** «Von der Website nehmen»: the page becomes private again; the tree's pagePrivate warning tells the content admin. */
+    async hideFromWebsite(group: GroupModel): Promise<void> {
+      const page = await this.readContentPage(group.okey);
+      if (!page) return;
+      await store.firestoreService.updateModel<PageModel>(PageCollection, { ...page, isPrivate: true },
+        false, store.i18n.website_hidden_conf(), store.i18n.website_error(), store.currentUser());
     },
 
     async createGroupPage(group: GroupModel, postfix: string, name: string, sectionId?: string): Promise<void> {
