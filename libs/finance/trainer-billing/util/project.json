@@ -1,0 +1,31 @@
+{
+  "name": "finance-trainer-billing-util",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/finance/trainer-billing/util/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:util", "scope:finance", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/finance/trainer-billing/util",
+        "main": "libs/finance/trainer-billing/util/src/index.ts",
+        "tsConfig": "libs/finance/trainer-billing/util/tsconfig.lib.json",
+        "assets": ["libs/finance/trainer-billing/util/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "configFile": "libs/finance/trainer-billing/util/vite.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}
