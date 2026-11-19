@@ -30,7 +30,7 @@ import { todayStoreDate } from '../calendar/recipients';
 import type { AnswerableEvent } from '../calendar/invitation';
 import { eventWhen } from '../calendar/mail';
 import { privateBucket } from '../_storage/private-bucket';
-import { getAppEmailConfig } from '../auth/email-templates';
+import { effectiveSender, getAppEmailConfig } from '../auth/email-templates';
 import { assertCallerIsGroupAdmin } from '../content/group-content.util';
 import { sanitizeEmailBody } from '../pdf/sanitize';
 import { pushToPersons, selectUserDocs } from '../srv/push';
@@ -524,8 +524,9 @@ export const onMailing = onDocumentCreated(
           attachments: mailing.attachments,
           recipients: noticeKeys,
           senderKey: mailing.senderKey,
-          // the From address the Versand left under, not the person who sent it
-          senderName: noticeSenderOf(mailing.from || (await getAppEmailConfig(tenantId)).from),
+          // the From address the Versand left under, not the person who sent it; checked like the mail
+          // job checks it (mail-job.ts), so an off-domain From shows the tenant's sender the mail really used
+          senderName: noticeSenderOf(effectiveSender(mailing.from, await getAppEmailConfig(tenantId))),
           mailingKey: snap.id,
           caleventKeys: mailing.caleventKeys ?? [],
           sentAt: getTodayStr(DateFormat.StoreDateTime),
