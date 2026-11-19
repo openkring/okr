@@ -4,14 +4,15 @@
  * of the parent — read from users/{uid}, never from claims), writes every row change in ONE batch
  * and then sends the notices (§6.4), which never fail the call. Writes to rows that were read carry
  * their read `updateTime` as `lastUpdateTime` (a concurrent change → `aborted`); a first residence
- * gets a deterministic id and is `create`d (a double submit → `already-exists`).
+ * gets a deterministic id and is `create`d (a double submit → `already-exists`), or overwrites an
+ * archived (cancelled) row at that id under its read time.
  *
  * Every postal write sets `locationKey` and the snapshot together, so `onAddressChange` does not
  * re-heal it (it relinks only a snapshot change under an unchanged `locationKey`).
  */
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
-import { Firestore, getFirestore, Timestamp, WriteBatch } from 'firebase-admin/firestore';
+import { FieldValue, Firestore, getFirestore, Timestamp, WriteBatch } from 'firebase-admin/firestore';
 
 import { AddressCollection, AddressModel, UserCollection } from '@okr/shared-models';
 import { getFullName, isPostalResidence, residenceStatus } from '@okr/shared-util-core';
@@ -23,8 +24,8 @@ import {
 import { zurichStoreDate } from '../video/chat-video.util';
 import { MoveNotice, MoveNoticeKind, sendMoveNotices } from './residence-notices';
 import {
-  CallerFacts, commitError, isOwnerOf, matchServerHit, mayRecordPostal, parseTarget, ParsedTarget, newResidenceId, planCancel, planMove, postalIndex,
-  recorderTenantId, requireAddressUsage, requireAddressValue2, requireDocKey, requireParentKey, requireQuery, requireStoreDate, snapshotText,
+  CallerFacts, commitError, firstResidenceWrite, isOwnerOf, matchServerHit, mayRecordPostal, parseTarget, ParsedTarget, newResidenceId, planCancel, planMove, postalIndex,
+  recorderTenantId, requireAddressUsage, requireAddressValue2, requireDocKey, requireParentKey, requireQuery, requireStoreDate, snapshotText, strayFields,
 } from './residence.logic';
 
 const REGION = 'europe-west6';
@@ -244,7 +245,23 @@ export const recordPostalMove = onCall<RecordPostalMoveRequest, Promise<{ reside
       batch.update(col.doc(plan.close.okey), patch, readTime(readAt, plan.close.okey));
     }
     for (const okey of plan.demote.filter((k) => k !== plan.close?.okey)) batch.update(col.doc(okey), { isFavorite: false }, readTime(readAt, okey));
-    batch.create(ref, Object.fromEntries(Object.entries(doc).filter(([, v]) => v !== undefined)));
+    const data = Object.fromEntries(Object.entries(doc).filter(([, v]) => v !== undefined));
+    if (plan.close) {
+      batch.create(ref, data);
+    } else {
+      // a first residence: its deterministic id may hold a cancelled (archived) move, which is reused
+      const existing = await ref.get();
+      const write = firstResidenceWrite(existing.data());
+      if (write === 'exists') throw new HttpsError('already-exists', 'Dieser Umzug ist schon erfasst.');
+      if (write === 'create' || !existing.updateTime) {
+        batch.create(ref, data);
+      } else {
+        // set() takes no precondition: a full update plus deleting stray fields is the same overwrite
+        const patch: Record<string, unknown> = { ...data };
+        for (const k of strayFields(existing.data() ?? {}, data)) patch[k] = FieldValue.delete();
+        batch.update(ref, patch, { lastUpdateTime: existing.updateTime });
+      }
+    }
     await commit(batch);
     logger.info(`${fn}: ${parentKey} moves to ${resolved.locationKey} from ${validFrom}`, { residenceKey: ref.id, closed: plan.close?.okey ?? '' });
 

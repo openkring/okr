@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { AddressModel } from '@okr/shared-models';
 
 import {
-  CallerFacts, commitError, matchServerHit, mayRecordPostal, newResidenceId, parseTarget, planCancel, planMove, postalIndex, recorderTenantId,
-  requireAddressUsage, requireAddressValue2, requireDocKey, requireParentKey, requireQuery, requireStoreDate, snapshotText,
+  CallerFacts, commitError, firstResidenceWrite, matchServerHit, mayRecordPostal, newResidenceId, parseTarget, planCancel, planMove, postalIndex, recorderTenantId,
+  requireAddressUsage, requireAddressValue2, requireDocKey, requireParentKey, requireQuery, requireStoreDate, snapshotText, strayFields,
 } from './residence.logic';
 
 const TODAY = '20270215';
@@ -169,6 +169,26 @@ describe('newResidenceId', () => {
     expect(newResidenceId('person.p1', '20270302', 'loc1')).not.toBe(id);
     expect(newResidenceId('person.p1', '20270301', 'loc2')).not.toBe(id);
     expect(newResidenceId('person.p2', '20270301', 'loc1')).not.toBe(id);
+  });
+});
+
+describe('firstResidenceWrite', () => {
+  it('creates when the id is free', () => {
+    expect(firstResidenceWrite(undefined)).toBe('create');
+  });
+  it('overwrites an archived row (a cancelled move recorded again)', () => {
+    expect(firstResidenceWrite({ isArchived: true, validFrom: '20270301' })).toBe('overwrite');
+  });
+  it('refuses a live row (the same move submitted twice)', () => {
+    expect(firstResidenceWrite({ isArchived: false })).toBe('exists');
+    expect(firstResidenceWrite({ validFrom: '20270301' })).toBe('exists');
+  });
+});
+
+describe('strayFields', () => {
+  it('lists the archived doc fields the new row lacks', () => {
+    expect(strayFields({ a: 1, b: 2, legacy: 'x' }, { a: 3, b: 4, c: 5 })).toEqual(['legacy']);
+    expect(strayFields({ a: 1 }, { a: 2 })).toEqual([]);
   });
 });
 

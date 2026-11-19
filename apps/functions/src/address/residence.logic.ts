@@ -101,6 +101,22 @@ export function newResidenceId(parentKey: string, validFrom: string, locationKey
 }
 
 /**
+ * How a first residence is written at its deterministic id: `create` when no doc is there,
+ * `overwrite` when the doc there is archived (a cancelled move recorded again, e.g. «Umzug
+ * bearbeiten» = cancel + record with only the c/o line changed), `exists` when a live residence is
+ * already there (the same move submitted twice).
+ */
+export function firstResidenceWrite(existing: Record<string, unknown> | undefined): 'create' | 'overwrite' | 'exists' {
+  if (!existing) return 'create';
+  return existing['isArchived'] === true ? 'overwrite' : 'exists';
+}
+
+/** Fields of the archived doc the new row does not have: deleted, so the overwrite is complete. */
+export function strayFields(existing: Record<string, unknown>, next: Record<string, unknown>): string[] {
+  return Object.keys(existing).filter((k) => !(k in next));
+}
+
+/**
  * Maps a failed batch commit: a broken `lastUpdateTime` precondition (gRPC 9, a row changed since it
  * was read) → `aborted`; a `create` on an existing id (gRPC 6, the same move submitted twice) →
  * `already-exists`; anything else is rethrown unchanged.
