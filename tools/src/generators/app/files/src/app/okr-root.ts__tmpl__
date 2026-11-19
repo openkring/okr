@@ -12,14 +12,14 @@ import { BootError, Spinner, ConnectionStatusButton, AvatarUser } from '@okr/sha
 import { coerceBoolean, getImgixUrlWithAutoParams, hasRole } from '@okr/shared-util-core';
 
 import { AuthInfo } from '@okr/auth-ui';
-import { Menu, MENU_WIDE_QUERY, MenuBar, MenuLayout } from '@okr/cms-menu-feature';
+import { Menu, MENU_WIDE_QUERY, MenuBar, MenuLayout, MenuStatic } from '@okr/cms-menu-feature';
 import { ProfileEditModal } from '@okr/profile-feature';
 import { CookieBanner } from '@okr/consent-ui';
 import { ConsentService } from '@okr/consent-data-access';
 
 @Component({
   imports: [
-    Menu, MenuBar, AuthInfo, BootError, Spinner, ConnectionStatusButton, AvatarUser, CookieBanner,
+    Menu, MenuBar, MenuStatic, AuthInfo, BootError, Spinner, ConnectionStatusButton, AvatarUser, CookieBanner,
     IonApp, IonSplitPane, IonMenu, IonHeader, IonContent, IonToolbar, IonRouterOutlet, IonButton, IonButtons,
     IonLabel, IonItem
 ],
@@ -115,12 +115,12 @@ import { ConsentService } from '@okr/consent-data-access';
       -->
     <ion-app>
       <okr-cookie-banner [enabled]="appStore.appConfig().cookieBannerEnabled" [texts]="appStore.appConfig().cookieBannerText" [privacyPageKey]="appStore.appConfig().privacyPolicyPageKey" />
-      <ion-split-pane contentId="main" [disabled]="!showMenu() || menuLayout.barActive()" (ionSplitPaneVisible)="onSplitPaneVisible($event)">
+      <ion-split-pane contentId="main" [disabled]="!showMenu() || menuLayout.sidebarReplaced()" (ionSplitPaneVisible)="onSplitPaneVisible($event)">
         <!-- Known drift from the apps: they keep <ion-menu> mounted and gate it only through its
              [disabled] binding (unmounting it leaves dead hamburgers, see okr-root.ts there). This
              template still unmounts it as well; align it when the generator is next touched. -->
         @if(showMenu()) {
-        <ion-menu [side]="menuLayout.side()" [disabled]="!showMenu() || menuLayout.barActive()" menuId="main" contentId="main" type="overlay" (ionWillOpen)="menuOpened.set(true)">
+        <ion-menu [side]="menuLayout.side()" [disabled]="!showMenu() || menuLayout.sidebarReplaced()" menuId="main" contentId="main" type="overlay" (ionWillOpen)="menuOpened.set(true)">
           <ion-header>
             <ion-toolbar color="secondary">
               <ion-buttons slot="start">
@@ -134,7 +134,7 @@ import { ConsentService } from '@okr/consent-data-access';
                    already lazy) and the switcher created into it — keeps the library and its
                    per-tenant app-config listeners out of every single-tenant boot (spec 1.49, T1.7). -->
               <ion-buttons slot="end">
-                @if (!menuLayout.barActive()) {
+                @if (!menuLayout.sidebarReplaced()) {
                   <ng-container #tenantSwitcherHost />
                 }
               </ion-buttons>
@@ -199,17 +199,31 @@ import { ConsentService } from '@okr/consent-data-access';
             --ion-safe-area-top for its pages, which would zero the bar's own share as well.
           -->
           @if (barShown() && isUserSessionReady()) {
-            <okr-menu-bar (profileClicked)="openProfile()" [showCookieSettings]="appStore.appConfig().cookieBannerEnabled" (cookieSettingsClicked)="openCookieSettings()">
-              <ng-container ngProjectAs="[okrMenuBarEnd]">
-                <!-- the one tenant switcher host while the bar is shown; the sidebar has none then -->
-                @if (menuLayout.barActive()) {
-                  <ng-container #tenantSwitcherHost />
-                }
-                @if (showDebugInfo()) {
-                  <okr-auth-info [currentUser]="appStore.currentUser()" [fbUser]="appStore.fbUser()" [isAuthenticated]="appStore.isAuthenticated()" [isAdmin]="hasRole('admin')" />
-                }
-              </ng-container>
-            </okr-menu-bar>
+            @if (menuLayout.barActive()) {
+              <okr-menu-bar (profileClicked)="openProfile()" [showCookieSettings]="appStore.appConfig().cookieBannerEnabled" (cookieSettingsClicked)="openCookieSettings()">
+                <ng-container ngProjectAs="[okrMenuBarEnd]">
+                  <!-- the one tenant switcher host while the bar is shown; the sidebar has none then -->
+                  @if (menuLayout.sidebarReplaced()) {
+                    <ng-container #tenantSwitcherHost />
+                  }
+                  @if (showDebugInfo()) {
+                    <okr-auth-info [currentUser]="appStore.currentUser()" [fbUser]="appStore.fbUser()" [isAuthenticated]="appStore.isAuthenticated()" [isAdmin]="hasRole('admin')" />
+                  }
+                </ng-container>
+              </okr-menu-bar>
+            } @else {
+              <okr-menu-static (profileClicked)="openProfile()" [showCookieSettings]="appStore.appConfig().cookieBannerEnabled" (cookieSettingsClicked)="openCookieSettings()">
+                <ng-container ngProjectAs="[okrMenuBarEnd]">
+                  <!-- the one tenant switcher host while the bar is shown; the sidebar has none then -->
+                  @if (menuLayout.sidebarReplaced()) {
+                    <ng-container #tenantSwitcherHost />
+                  }
+                  @if (showDebugInfo()) {
+                    <okr-auth-info [currentUser]="appStore.currentUser()" [fbUser]="appStore.fbUser()" [isAuthenticated]="appStore.isAuthenticated()" [isAdmin]="hasRole('admin')" />
+                  }
+                </ng-container>
+              </okr-menu-static>
+            }
           }
           <ion-router-outlet [style.top]="barShown() ? 'var(--okr-menu-bar-top)' : null" [style.--ion-safe-area-top]="barShown() ? '0px' : null" />
           @if (isDegradedSession()) {
@@ -292,7 +306,7 @@ export class OkrRoot {
   /** Where the menu sits (left or right) and, later, whether a bar replaces it; see the menu-layouts spec. */
   protected readonly menuLayout = inject(MenuLayout);
   /** Whether the menu bar is on screen: a bar layout, on a route that wants a menu. */
-  protected readonly barShown = computed(() => this.showMenu() && this.menuLayout.barActive());
+  protected readonly barShown = computed(() => this.showMenu() && this.menuLayout.sidebarReplaced());
   /**
    * Connects the layout to the menu list once the tree is mounted, so it never joins the boot path,
    * and once the session is ready, so the tenant-wide query does not run as a visitor and again on sign-in.
