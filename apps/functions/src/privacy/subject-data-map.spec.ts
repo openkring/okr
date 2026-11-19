@@ -39,9 +39,10 @@ describe('SUBJECT_DATA_MAP', () => {
 
   it('never exports a financial row as index-only (they are full records)', () => {
     for (const e of SUBJECT_DATA_MAP.filter((x) => x.dataClass === 'financial')) {
-      // 'none' is allowed only for `courses/finance`, which lists everybody's rate (its own pay is exported via bookings)
+      // 'none' is allowed only for `courses/finance`, which lists everybody's rate (its own pay is exported via bookings),
+      // and `trainer-invoices/rejectedBy` (the treasurer as rejector of somebody else's invoice)
       expect(e.onExport).not.toBe('index');
-      if (e.collection !== 'courses/finance') expect(e.onExport).toBe('full');
+      if (!['courses/finance', 'trainer-invoices/rejectedBy'].includes(e.collection)) expect(e.onExport).toBe('full');
     }
   });
 
@@ -723,6 +724,7 @@ describe('subject-data-map — collection names are constants, not literals', ()
   const NON_MODEL_COLLECTIONS = new Set([
     'users/fcmTokens', // subcollection path, not a top-level collection
     'stats_members', // derived stats, written by a scheduled function, no model
+    'trainer-invoices/rejectedBy', // second row on the trainer-invoices collection: the rejector
     'courses/finance', // courses/{key}/finance/settings, the compensation settings subdocument (CourseFinanceModel)
     'trips/tracker', // the tracker-type half of TripCollection, keyed by track.personKey (own row, other fate)
     'websites/publishes', // websites/{siteId}/publishes, the publish log subcollection (no model, Admin SDK only)

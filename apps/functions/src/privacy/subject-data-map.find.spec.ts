@@ -288,6 +288,7 @@ describe('find() query shapes', () => {
       badge: 'users',
       stats_members: 'stats_members',
       'trips/tracker': 'trips',
+      'trainer-invoices/rejectedBy': 'trainer-invoices', // second row on the same collection (the rejector)
       'courses/finance': 'courses', // finance/settings is reached through the tenant's courses
       esignAudit: 'deletions',
       'websites/publishes': 'publishes', // collection group of the websites publish log

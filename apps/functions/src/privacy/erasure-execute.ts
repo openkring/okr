@@ -169,6 +169,9 @@ function pseudonymiseElementAvatars(
   return changed ? next : undefined;
 }
 
+/** The tenant-shared documents steps 3–5 handle by hand; every other `detach` row goes through step 1b. */
+const PARENT_OWNED = new Set(['persons', 'users', 'addresses', 'avatars']);
+
 /**
  * The Firestore update patch that anonymizes ONE document for ONE subject.
  *
@@ -409,6 +412,15 @@ export async function executeErasure(
     const docs = await ops.resolve(entry, ctx);
     if (docs.length === 0) continue;
     counts[entry.collection] = await ops.deleteAll(docs);
+  }
+
+  // 1b — shared documents of other rows (`onTenantExit: 'detach'`, e.g. trainer-profiles): the
+  //      tenant is stripped, and the document goes only when `tenants[]` empties (detachTenant).
+  //      The four parent-owned documents have their own, ordered steps 3–5 below.
+  for (const entry of entries.filter((e) => e.onTenantExit === 'detach' && !PARENT_OWNED.has(e.collection))) {
+    const docs = await ops.resolve(entry, ctx);
+    if (docs.length === 0) continue;
+    counts[entry.collection] = (await ops.detachTenant(docs, ctx.tenantId)).detached;
   }
 
   // 2 — anonymizations (patch only; amounts, dates and document references survive).

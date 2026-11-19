@@ -891,25 +891,25 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     tenantScope: 'tenantsArray',
     onExport: 'full',
     onErasure: 'anonymize',
-    anonymizeFields: ['person.key', 'person.name1', 'person.name2', 'personKey'],
+    // `index` is the search string built from the trainer's name; `payablesNote` is free text
+    anonymizeFields: ['person.key', 'person.name1', 'person.name2', 'personKey', 'index', 'payablesNote'],
     retention: RETAIN_10Y,
   },
   {
-    // Doc id = personKey, one profile per person for all clubs (shared across tenants).
-    // Erasure clears the personal letterhead data; `nextNumber` and `tenants` stay.
+    // Doc id = personKey, one profile per person for ALL the clubs he bills (`tenants[]`). Holds
+    // no amounts (letterhead data and a counter), so it is classified as identity, not as an
+    // accounting row: a tenant exit only strips this tenant (detach), and the document is hard
+    // deleted when `tenants[]` empties, like `persons`. The other clubs' invoices keep their
+    // letterhead until then. `executeErasure` step 1b performs the detach for rows like this one.
     collection: 'trainer-profiles',
-    dataClass: 'financial',
-    tier: 'T3',
-    onTenantExit: 'anonymize',   // the tenant-exit check forbids detach on accounting rows; clears the letterhead data
+    dataClass: 'identity',
+    tier: 'T1',
+    onTenantExit: 'detach',
     find: (c: SubjectCtx) => db().collection('trainer-profiles').where(FieldPath.documentId(), '==', c.personKey),
     tenantScope: 'tenantsArray',
     onExport: 'full',
-    onErasure: 'anonymize',
-    anonymizeFields: [
-      'companyName', 'contactName', 'logoUrl', 'vatNumber',
-      'postalAddressKey', 'bankAddressKey', 'closingText', 'vatNote',
-    ],
-    retention: RETAIN_10Y,
+    onErasure: 'delete',
+    retention: KEEP_WHILE_MEMBER,
   },
   {
     collection: 'work-entries',
@@ -920,7 +920,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     tenantScope: 'tenantsArray',
     onExport: 'full',
     onErasure: 'anonymize',
-    anonymizeFields: ['personKey'],   // the entry underlies a retained invoice line
+    anonymizeFields: ['personKey', 'label'],   // the entry underlies a retained invoice line; `label` is free text
     retention: RETAIN_10Y,
   },
   {
@@ -933,7 +933,26 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     tenantScope: 'tenantsArray',
     onExport: 'full',
     onErasure: 'anonymize',
-    anonymizeFields: ['personKey', 'rejectedBy.key', 'rejectedBy.name1', 'rejectedBy.name2'],
+    // `rejectedBy` is the treasurer, not the trainer: the rejector is covered by the next row.
+    anonymizeFields: ['personKey'],
+    retention: RETAIN_10Y,
+  },
+  {
+    // The subject as the REJECTOR (treasurer) of somebody else's trainer invoice: the invoice is
+    // another person's record, so only `rejectedBy` is cut loose. Label-only collection name (cf.
+    // `courses/finance`); the documents live in `trainer-invoices`. Equality on one field is
+    // auto-indexed. Not exported: the invoice is the trainer's record.
+    collection: 'trainer-invoices/rejectedBy',
+    dataClass: 'financial',
+    tier: 'T3',
+    onTenantExit: 'anonymize',
+    find: (c: SubjectCtx) => db().collection('trainer-invoices')
+      .where('rejectedBy.key', '==', c.personKey)
+      .where('rejectedBy.modelType', '==', 'person'),
+    tenantScope: 'tenantsArray',
+    onExport: 'none',
+    onErasure: 'anonymize',
+    anonymizeFields: ['rejectedBy.key', 'rejectedBy.name1', 'rejectedBy.name2'],
     retention: RETAIN_10Y,
   },
   {

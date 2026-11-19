@@ -773,3 +773,46 @@ describe('executeErasure', () => {
     expect(calls.find((c) => c.op === 'rebuildAddressDirectory')?.detail).toBe('person.p1');
   });
 });
+
+describe('anonymizePatch — trainer billing rows (spec 1.167)', () => {
+  const pseudonym = 'Gelöschtes Mitglied #abc12345';
+
+  it('clears the identity, index and free text of a trainer agreement', () => {
+    const doc = snap('a1', {
+      personKey: 'p1', person: { key: 'p1', modelType: 'person', name1: 'Anna', name2: 'Muster' },
+      index: 'p:Muster Anna', payablesNote: 'Anna Muster, Konto bei X', services: [{ key: 'training' }],
+    });
+    const p = anonymizePatch(mapRow('trainer-agreements'), doc, ctx, pseudonym, '20260729');
+    expect(p['personKey']).toBe('');
+    expect(p['person.key']).toBe('');
+    expect(p['person.name1']).toBe('');
+    expect(p['person.name2']).toBe(pseudonym);
+    expect(p['index']).toBe('');
+    expect(p['payablesNote']).toBe('');
+    expect(p['services']).toBeUndefined();
+  });
+
+  it('clears the rejector of somebody else\'s trainer invoice and leaves the invoice', () => {
+    const doc = snap('i1', {
+      personKey: 'trainer9', total: 12000, rejectedReason: 'falsch',
+      rejectedBy: { key: 'p1', modelType: 'person', name1: 'Tina', name2: 'Kassier' },
+    });
+    const p = anonymizePatch(mapRow('trainer-invoices/rejectedBy'), doc, ctx, pseudonym, '20260729');
+    expect(p['rejectedBy.key']).toBe('');
+    expect(p['rejectedBy.name1']).toBe('');
+    expect(p['rejectedBy.name2']).toBe(pseudonym);
+    expect(p['personKey']).toBeUndefined();
+    expect(p['total']).toBeUndefined();
+  });
+
+  it('detaches the tenant from a trainer profile instead of anonymizing or deleting it outright (detachTenant deletes only when tenants[] empties)', async () => {
+    const shared = snap('p1', { tenants: ['scs', 'other'], companyName: 'Muster GmbH' });
+    const only = snap('p1', { tenants: ['scs'], companyName: 'Muster GmbH' });
+    for (const doc of [shared, only]) {
+      const { ops, calls } = fakeOps({ resolve: async (e: SubjectDataEntry) => (e.collection === 'trainer-profiles' ? [doc] : []) });
+      await executeErasure(ctx, cleanPreview, [mapRow('trainer-profiles')], ops, { salt: SALT });
+      expect(calls.filter((c) => c.op === 'detachTenant' && JSON.stringify(c.detail) === '["p1"]').length).toBe(1);
+    }
+  });
+});
+
