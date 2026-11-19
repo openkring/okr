@@ -26,6 +26,7 @@ export class WebsiteModel implements OkrModel {
   public domain = ''; // public origin, e.g. 'https://seeclub.org'
   public languages: string[] = ['de']; // rendered languages; de is the source
   public templateVersion = ''; // set by the developer deploy, read by publish
+  public sectionTypes?: string[]; // section types the uploaded templates can draw; set by website:deploy, read by the app's section guard (spec 1.165 §7.5)
   public tagline = ''; // footer tagline (German)
   public taglineI18n?: I18nString;
   public nav: WebsiteNode[] = []; // header navigation, ordered

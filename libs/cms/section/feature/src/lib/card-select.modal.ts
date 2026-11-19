@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonContent, IonGrid, IonRow, ModalController } from '@ionic/angular';
+import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonContent, IonGrid, IonNote, IonRow, ModalController } from '@ionic/angular';
 import { filter, switchMap } from 'rxjs/operators';
 
 import { CategoryItemModel, CategoryListModel } from '@okr/shared-models';
@@ -45,11 +45,13 @@ const CardSelectStore = signalStore(
   imports: [
     ImgDirective, SvgIconPipe, TranslatePipe, AsyncPipe,
     Header,
-    IonContent, IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCardSubtitle
+    IonContent, IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCardSubtitle, IonNote
   ],
   styles: [`
     ion-card-content { padding: 0px; }
     ion-card { padding: 0px; margin: 0px; }
+    ion-card.disabled { opacity: 0.45; cursor: not-allowed; }
+    .hint { display: block; padding: 0px 16px 8px 16px; font-size: 0.8rem; }
   `],
   template: `
     @if(slug()) {
@@ -59,11 +61,12 @@ const CardSelectStore = signalStore(
           <ion-row>
             @for(item of items(); track $index) {
               <ion-col size="6" size-md="3">
-                <ion-card (click)="select(item)">
+                <ion-card (click)="select(item)" [class.disabled]="isDisabled(item)" [attr.aria-disabled]="isDisabled(item)">
                   <ion-card-header>
                     <ion-card-title>{{ getName(item) | translate | async }}</ion-card-title>
                     <ion-card-subtitle>{{ item.name }}</ion-card-subtitle>
                   </ion-card-header>
+                  @if (isDisabled(item)) { <ion-note class="hint">{{ notOnWebsite() }}</ion-note> }
                   <ion-card-content>
                     <img okrImg src="{{ item.name | svgIcon:'section' }}" alt="{{ item.name }}" />
                   </ion-card-content>
@@ -84,9 +87,12 @@ export class CardSelectModal {
   // inputs
   public category = input.required<CategoryListModel>();
   public slug = input.required<string>();
+  /** item names shown but not selectable, e.g. section types a website page cannot show (spec 1.165 §7.5) */
+  public disabledNames = input<string[]>([]);
 
   // computed
   protected items = computed(() => this.category().items);
+  protected readonly notOnWebsite = toSignal(this.store.i18nService.translate(PFX + 'select.notOnWebsite'), { initialValue: '' });
   protected path = computed(() => `${this.env.services.imgixBaseUrl}/logo/${this.slug()}/`);
 
   constructor() {
@@ -97,7 +103,12 @@ export class CardSelectModal {
     return this.category().i18n + '.' + item.name + '.label';
   }
 
+  protected isDisabled(item: CategoryItemModel): boolean {
+    return this.disabledNames().includes(item.name);
+  }
+
   public async select(item: CategoryItemModel): Promise<boolean> {
+    if (this.isDisabled(item)) return false;
     return await dismissOverlay(this.modalController, item, 'confirm');
   }
 }

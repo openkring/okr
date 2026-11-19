@@ -398,7 +398,8 @@ export class ContentPage {
   }
 
   protected async addSection(): Promise<void> {
-    const sectionId = await this.sectionStore.add(false);
+    const allowedTypes = await this.sectionStore.allowedTypesForPage(this.page()?.okey);
+    const sectionId = await this.sectionStore.add(false, allowedTypes);
     if (sectionId) {
       this.store.addSectionById(sectionId);
     }

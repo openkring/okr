@@ -12,7 +12,8 @@
     "responsibilityParent": "Alle Verantwortlichkeiten einer Gruppe",
     "responsibilityParentChip": "Alle aus {name}",
     "excludeMember": "Mitglied ausblenden",
-    "excludedHint": "Diese Mitglieder der Gruppe zeigt die Sektion nicht an."
+    "excludedHint": "Diese Mitglieder der Gruppe zeigt die Sektion nicht an.",
+    "notOnWebsite": "Auf der Website nicht verfügbar"
   },
   "view": "Sektionskonfiguration anzeigen",
   "edit": "Sektion bearbeiten",

@@ -11,3 +11,4 @@ export * from './lib/home-layout';
 export * from './lib/group-people';
 export * from './lib/people-source';
 export * from './lib/role-people';
+export * from './lib/allowed-section-types.util';

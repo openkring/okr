@@ -90,7 +90,7 @@ async function main() {
   }
   if (exists === false) fail(`\nRefusing: no websites/${siteId} document. Create the website in the app first.`);
   if (dryRun) {
-    console.log(`\nWould set websites/${siteId}.templateVersion = ${version}. Nothing written.`);
+    console.log(`\nWould set websites/${siteId}.templateVersion = ${version} and sectionTypes = ${JSON.stringify(manifest.sectionTypes ?? [])}. Nothing written.`);
     return;
   }
 
@@ -102,8 +102,10 @@ async function main() {
       contentType: u.target.endsWith('.json') ? 'application/json' : 'text/plain; charset=utf-8',
     });
   }
-  await getFirestore().collection('websites').doc(siteId).update({ templateVersion: version });
-  console.log(`\nUploaded ${uploads.length} files; websites/${siteId}.templateVersion = ${version}`);
+  // sectionTypes: the app's section picker offers only these on a page the site shows (spec 1.165 §7.5)
+  const sectionTypes = Array.isArray(manifest.sectionTypes) ? manifest.sectionTypes.filter((t) => typeof t === 'string') : [];
+  await getFirestore().collection('websites').doc(siteId).update({ templateVersion: version, sectionTypes });
+  console.log(`\nUploaded ${uploads.length} files; websites/${siteId}.templateVersion = ${version}, sectionTypes = ${sectionTypes.length}`);
 }
 
 main().catch((e) => fail(e.stack ?? String(e)));

@@ -12,7 +12,8 @@
     "responsibilityParent": "Toutes les responsabilités d'un groupe",
     "responsibilityParentChip": "Toutes de {name}",
     "excludeMember": "Masquer un membre",
-    "excludedHint": "Cette section n'affiche pas ces membres du groupe."
+    "excludedHint": "Cette section n'affiche pas ces membres du groupe.",
+    "notOnWebsite": "Pas disponible sur le site web"
   },
   "view": "Afficher la configuration de la section",
   "edit": "Modifier la section",

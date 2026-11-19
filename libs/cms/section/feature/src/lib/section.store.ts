@@ -7,11 +7,11 @@ import { getApp } from 'firebase/app';
 import { Capacitor } from '@capacitor/core';
 import { Geolocation, Position } from '@capacitor/geolocation';
 
-import { catchError, of } from 'rxjs';
+import { catchError, firstValueFrom, of } from 'rxjs';
 
 import { AppStore, withErrorState } from '@okr/shared-feature';
-import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, EmailLayoutChoice, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageActionType, ImageConfig, SectionModel, SectionType } from '@okr/shared-models';
-import { chipMatches, debugData, debugItemLoaded, debugMessage, fill, nameMatches, sanitizeFileName, chatBlockedAlertMessage, isChatBlockedError, EMERGENCY_GROUP_KEY } from '@okr/shared-util-core';
+import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, EmailLayoutChoice, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageActionType, ImageConfig, SectionModel, SectionType, WebsiteCollection, WebsiteModel } from '@okr/shared-models';
+import { getSystemQuery, chipMatches, debugData, debugItemLoaded, debugMessage, fill, nameMatches, sanitizeFileName, chatBlockedAlertMessage, isChatBlockedError, EMERGENCY_GROUP_KEY } from '@okr/shared-util-core';
 import { DEFAULT_MIMETYPES, IMAGE_MIMETYPES } from '@okr/shared-constants';
 import { confirm, downloadTextFile, exportCsv, getExportFileName, lazyService, showToast, resourceParams, notify } from '@okr/shared-util-angular';
 import { FirestoreService, ChatStatusService } from '@okr/shared-data-access';
@@ -20,6 +20,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { UploadService } from '@okr/avatar-data-access';
 import { SectionService } from '@okr/cms-section-data-access';
 import { createSection, narrowSection, SECTION_I18N_KEYS } from '@okr/cms-section-util';
+import { allowedSectionTypesForPage } from '@okr/cms-website-render';
 
 export type Coordinates = {
   latitude: number;
@@ -184,7 +185,11 @@ export const _SectionStore = signalStore(
       },
 
       /******************************** actions ******************************************* */
-      async add(readOnly = true): Promise<string | undefined> {
+      /**
+       * Adds a new section. `allowedTypes` (spec 1.165 §7.5): on a page that is shown on a website only these
+       * types are selectable, the others are shown disabled; undefined = all types.
+       */
+      async add(readOnly = true, allowedTypes?: string[]): Promise<string | undefined> {
         if (readOnly) return;
         // dynamic: a static import here puts the editor on the dashboard (see section-editor.loader.ts)
         const { CardSelectModal } = await import('./card-select.modal');
@@ -194,6 +199,7 @@ export const _SectionStore = signalStore(
           componentProps: { 
             category: store.sectionTypes(),
             slug: 'section',
+            disabledNames: allowedTypes ? store.sectionTypes().items.map(i => i.name).filter(n => !allowedTypes.includes(n)) : [],
           }
         });
         modal.present();
@@ -205,6 +211,14 @@ export const _SectionStore = signalStore(
           this.reload();
           return sectionId;
         }
+      },
+
+      /** The section types a page on a website may get (allowedSectionTypesForPage); undefined = no website shows it. */
+      async allowedTypesForPage(pageKey: string | undefined): Promise<string[] | undefined> {
+        if (!pageKey) return undefined;
+        const sites = await firstValueFrom(store.appStore.firestoreService.searchData<WebsiteModel>(
+          WebsiteCollection, getSystemQuery(store.tenantId()), 'name', 'asc'));
+        return allowedSectionTypesForPage(pageKey, sites ?? []);
       },
 
       async edit(section?: SectionModel, readOnly = true): Promise<string | undefined> {

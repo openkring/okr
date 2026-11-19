@@ -218,7 +218,11 @@ export const _WebsiteSitemapStore = signalStore(
       const lines = problems.map((p) => {
         const key = PROBLEM_KEYS[p.code];
         const text = key ? store.i18n[key]() : p.code;
-        const where = (p.nodeId && nodes.get(p.nodeId)) || (p.pageKey && store.pagesByKey().get(p.pageKey)?.name) || '';
+        const page = (p.nodeId && nodes.get(p.nodeId)) || p.pageTitle || (p.pageKey && store.pagesByKey().get(p.pageKey)?.name) || '';
+        // templateMissing: name the section and its type, so the content admin can tell the group what to change
+        const section = p.code === 'templateMissing' && (p.sectionTitle || p.detail)
+          ? `${p.sectionTitle ?? ''}${p.detail ? ` (${p.detail})` : ''}`.trim() : '';
+        const where = [page, section].filter(Boolean).join(' › ');
         return escapeHtml(where ? `${where}: ${text}` : text);
       });
       const shown = lines.slice(0, MAX_PROBLEM_LINES);

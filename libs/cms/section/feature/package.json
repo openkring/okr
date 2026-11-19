@@ -19,6 +19,7 @@
     "@okr/cms-section-data-access": "*",
     "@okr/cms-page-data-access": "*",
     "@okr/cms-section-util": "*",
+    "@okr/cms-website-render": "*",
     "@okr/cms-section-ui": "*",
     "@okr/calendar-calevent-data-access": "*",
     "@okr/calendar-course-data-access": "*",

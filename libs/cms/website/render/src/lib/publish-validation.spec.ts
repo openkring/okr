@@ -36,6 +36,13 @@ describe('validateForPublish', () => {
       { code: 'templateMissing', pageKey: 'p-a', sectionKey: 's1', detail: 'weird' },
     ]);
   });
+  it('names the page and the section of a missing template in words (spec 1.165 §7.5)', () => {
+    const pages = new Map([['p-a', pg(['s1'], { name: 'Reparatur Café' })]]);
+    const sections = new Map<string, SectionDoc>([['s1', { type: 'tasks', title: 'Unsere Aufgaben', state: 'published', tenants: ['scs'] }]]);
+    expect(validateForPublish(site([page('a', 'a')]), pages, sections, manifest)).toEqual([
+      { code: 'templateMissing', pageKey: 'p-a', sectionKey: 's1', detail: 'tasks', pageTitle: 'Reparatur Café', sectionTitle: 'Unsere Aufgaben' },
+    ]);
+  });
   it('ignores a draft section of an unknown type', () => {
     const pages = new Map([['p-a', pg(['s1'])]]);
     const sections = new Map<string, SectionDoc>([['s1', { type: 'weird', state: 'draft' }]]);

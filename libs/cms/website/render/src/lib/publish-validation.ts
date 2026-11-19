@@ -16,6 +16,9 @@ export interface PublishProblem {
   pageKey?: string;
   sectionKey?: string;
   detail?: string;
+  /** templateMissing: the page's and the section's titles, so the app can say where in words (spec 1.165 §7.5) */
+  pageTitle?: string;
+  sectionTitle?: string;
 }
 
 export interface TemplateManifest {
@@ -131,7 +134,9 @@ export function validateForPublish(
     for (const { raw, section } of publishedPageSections(pages.get(pageKey), tenants, sections)) {
       const type = section.type ?? 'article';
       if (!manifest.sectionTypes.includes(type)) {
-        problems.push({ code: 'templateMissing', pageKey, sectionKey: raw, detail: type });
+        const pageTitle = (pages.get(pageKey)?.name ?? '').trim();
+        const sectionTitle = (section.title ?? '').trim();
+        problems.push({ code: 'templateMissing', pageKey, sectionKey: raw, detail: type, ...(pageTitle ? { pageTitle } : {}), ...(sectionTitle ? { sectionTitle } : {}) });
       }
     }
   }
