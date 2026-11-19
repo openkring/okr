@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { movePushText, moveTaskName, moveTaskNotes, MoveNotice, noticeRecipients } from './residence-notices';
+import { movePushText, moveTaskId, moveTaskName, moveTaskNotes, MoveNotice, noticeRecipients } from './residence-notices';
 
 const base: MoveNotice = {
   kind: 'move', parentKey: 'person.p1', parentName: 'Anna Muster', parentTenants: ['A', 'B'],
@@ -44,5 +44,15 @@ describe('texts', () => {
     expect(t.title).toBe('Adresse geändert');
     expect(t.body).toBe('Bruno Kaiser hat deinen Umzug erfasst, gültig ab 01.12.2026.');
     expect(t.body).not.toContain('Neue 2');
+  });
+});
+
+describe('moveTaskId', () => {
+  it('is stable and differs per admin, tenant and kind', () => {
+    const id = moveTaskId(base, 'A', 'adm1');
+    expect(moveTaskId(base, 'A', 'adm1')).toBe(id);
+    expect(moveTaskId(base, 'A', 'adm2')).not.toBe(id);
+    expect(moveTaskId(base, 'B', 'adm1')).not.toBe(id);
+    expect(moveTaskId({ ...base, kind: 'cancel' }, 'A', 'adm1')).not.toBe(id);
   });
 });

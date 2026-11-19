@@ -11,7 +11,7 @@ export function personAvatarInfo(personKey: string, data: Record<string, unknown
   return { key: personKey, name1, name2, modelType: 'person', type: '', subType: '', label: getFullName(name1, name2) };
 }
 
-/** The distinct, non-empty `personKey`s of user docs; users without one are skipped. */
+/** The distinct, non-empty `personKey`s of user docs; users without one are skipped. Archived users are the caller's to filter out. */
 export function distinctPersonKeys(users: Record<string, unknown>[]): string[] {
   const keys = users.map((u) => (typeof u['personKey'] === 'string' ? u['personKey'] : '')).filter((k) => k !== '');
   return [...new Set(keys)];
@@ -27,7 +27,8 @@ export async function getMemberAdminPersons(db: Firestore, tenantId: string): Pr
     .where('tenants', 'array-contains', tenantId)
     .where('roles.memberAdmin', '==', true)
     .get();
-  const keys = distinctPersonKeys(snap.docs.map((d) => d.data()));
+  // archived (deactivated) users are filtered here: no new composite index
+  const keys = distinctPersonKeys(snap.docs.map((d) => d.data()).filter((u) => u['isArchived'] !== true));
   const persons = await Promise.all(keys.map(async (key) => personAvatarInfo(key, (await db.collection(PersonCollection).doc(key).get()).data())));
   return persons.filter((p): p is AvatarInfo => p !== undefined);
 }

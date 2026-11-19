@@ -2,6 +2,7 @@
  * Spec 1.164 §6.4: who is told about a move. memberAdmins get a task (it stays until handled), the
  * person gets a push. The push text carries no address: it shows on lock screens.
  */
+import { createHash } from 'node:crypto';
 import { logger } from 'firebase-functions/v2';
 import type { Firestore } from 'firebase-admin/firestore';
 import { AvatarInfo, PersonCollection, TaskCollection, TaskModel } from '@okr/shared-models';
@@ -36,6 +37,11 @@ export function noticeRecipients(n: MoveNotice): { taskTenants: string[]; pushPe
   const taskTenants = all.filter((t) => t !== n.recorder.tenantId);
   const isPerson = n.parentKey.startsWith('person.');
   return { taskTenants, pushPerson: isPerson ? n.parentKey.substring('person.'.length) : undefined };
+}
+
+/** Deterministic task id: a retried callable writes the same ids, so `create()` cannot duplicate. */
+export function moveTaskId(n: Pick<MoveNotice, 'kind' | 'parentKey' | 'validFrom'>, tenantId: string, adminKey: string): string {
+  return 'umzug-' + createHash('sha256').update([n.parentKey, n.kind, n.validFrom, tenantId, adminKey].join('|')).digest('hex').substring(0, 32);
 }
 
 const TASK_NAME_PREFIX: Record<MoveNoticeKind, string> = { move: 'Umzug', correction: 'Adresse korrigiert', cancel: 'Umzug abgesagt' };
@@ -101,7 +107,12 @@ export async function sendMoveNotices(db: Firestore, n: MoveNotice): Promise<voi
         }
         for (const admin of admins) {
           const doc = await newTask(n, tenantId, admin, recorder, recorderName);
-          await db.collection(TaskCollection).add(Object.fromEntries(Object.entries(doc).filter(([, v]) => v !== undefined)));
+          const clean = Object.fromEntries(Object.entries(doc).filter(([, v]) => v !== undefined));
+          try {
+            await db.collection(TaskCollection).doc(moveTaskId(n, tenantId, admin.key)).create(clean);
+          } catch (err) {
+            if ((err as { code?: number }).code !== 6) throw err;   // 6 = ALREADY_EXISTS: a retry, already written
+          }
         }
       } catch (err) {
         logger.error(`residence-notices: tasks for tenant ${tenantId} failed`, err);
