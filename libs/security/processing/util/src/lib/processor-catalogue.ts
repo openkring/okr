@@ -487,6 +487,49 @@ export const PROCESSOR_CATALOGUE: readonly CatalogueEntry[] = [
     memberNoticeDe:
       'Wenn der Verein dir einen Brief per Post schickt, wurden dein Name und deine Postadresse zusammen mit dem Brief an den Druck- und Versanddienst übermittelt. Ein bereits versandter Brief lässt sich nicht zurückholen. Der Dienst löscht seine Daten nach eigener Frist, spätestens 18 Monate nach Abschluss des Auftrags.',
   },
+  {
+    key: 'swisstopo',
+    name: 'swisstopo (amtliches Gebäudeadressverzeichnis, Adresssuche)',
+    // Adresse und Datenschutzkontakt: Seite «Rechtliches» von swisstopo, geprüft am 2026-11-19.
+    legalEntity: 'Bundesamt für Landestopografie swisstopo, Seftigenstrasse 264, 3084 Wabern, CH',
+    // Ein Bundesamt, das den Dienst auf eigener gesetzlicher Grundlage betreibt (GeoIV), nicht in
+    // unserem Auftrag: Es bestimmt über seine Protokolle selbst. Das Modell kennt keine Rolle
+    // «eigenständig Verantwortlicher»; `jointController` ist die nächste («eigene Zwecke»).
+    role: 'jointController',
+    category: 'externalParty',
+    country: 'CH',
+    transferMechanism: 'domestic',
+    purposes: [
+      'Suchen und Prüfen von Schweizer Wohnadressen beim Erfassen eines Umzugs',
+      'Zuordnen bestehender Postadressen zum amtlichen Gebäudeadressverzeichnis (einmalige Übernahme und Prüfung bei jeder Änderung)',
+    ],
+    // Übermittelt wird nur Text einer Adresse (Strasse, Nummer, PLZ, Ort) als Suchbegriff — nie ein
+    // Name, nie eine Personen-ID. Die Anfrage geht von unseren Cloud Functions aus, nicht vom Gerät.
+    dataClasses: ['contact'],
+    retentionText:
+      'Gemäss swisstopo werden Verbindungsdaten (IP-Adresse, Zeitpunkt, Anfrage) aufgrund der gesetzlichen Pflicht (BÜPF) sechs Monate aufbewahrt; ob dies für den Geodienst gleich gilt, ist dort nicht ausdrücklich festgehalten',
+    securityMeasures: [
+      'Verschlüsselte Übertragung',
+      'Nur der Adresstext wird gesendet, ohne Namen oder Kennung der Person',
+      'Anfragen laufen über unsere Cloud Functions, die IP-Adresse des Mitglieds erreicht swisstopo nicht',
+      'Antworten werden nur im Speicher der Function kurz zwischengespeichert',
+    ],
+    // swisstopo veröffentlicht keinen Auftragsverarbeitungsvertrag (kein Auftragsverhältnis, offene
+    // Behördendaten mit Nutzungsbedingungen der BGDI). Bewusst leer.
+    dpaUrl: '',
+    privacyUrl: 'https://www.swisstopo.admin.ch/de/rechtliches',
+    contact: 'datenschutz@swisstopo.ch',
+    // Kein Mandanten-Schalter: die Adressen gehören zum Block «subject», wie bei Pingen.
+    enabledWhen: byFeatureBlock('subject'),
+    cloudFunctions: [
+      'address/searchSwissAddress',
+      'address/recordPostalMove',
+      'replication/onAddressChange',
+      'address/migratePostalResidences',
+    ],
+    memberNoticeDe:
+      'Beim Erfassen oder Prüfen deiner Postadresse wurde der Adresstext (Strasse, Nummer, PLZ, Ort) ohne deinen Namen an das Adressverzeichnis des Bundes gesendet. Dort bleibt nur das Verbindungsprotokoll nach den Fristen des Bundes.',
+  },
 ] as const;
 
 /**

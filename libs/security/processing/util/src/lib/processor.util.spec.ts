@@ -65,6 +65,16 @@ describe('PROCESSOR_CATALOGUE', () => {
     expect(activeProcessors(config({ enabledFeatures: [] })).map((p) => p.key)).not.toContain('pingen');
   });
 
+  it('records swisstopo as the federal address register, active with the subject block, with no invented DPA link', () => {
+    const swisstopo = PROCESSOR_CATALOGUE.find((p) => p.key === 'swisstopo');
+    expect(swisstopo).toMatchObject({ legalEntity: expect.stringContaining('Bundesamt für Landestopografie swisstopo'), country: 'CH', transferMechanism: 'domestic', dpaUrl: '' });
+    expect(swisstopo?.privacyUrl).toBe('https://www.swisstopo.admin.ch/de/rechtliches');
+    expect(swisstopo?.dataClasses).toEqual(['contact']);
+    expect(swisstopo?.cloudFunctions).toEqual(expect.arrayContaining(['address/searchSwissAddress', 'address/recordPostalMove', 'replication/onAddressChange', 'address/migratePostalResidences']));
+    expect(activeProcessors(config({ enabledFeatures: ['subject'] })).map((p) => p.key)).toContain('swisstopo');
+    expect(activeProcessors(config({ enabledFeatures: [] })).map((p) => p.key)).not.toContain('swisstopo');
+  });
+
   it('never ships a fabricated link — a url is either empty or absolute https', () => {
     for (const p of PROCESSOR_CATALOGUE) {
       for (const [field, url] of [['dpaUrl', p.dpaUrl], ['privacyUrl', p.privacyUrl]] as const) {

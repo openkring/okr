@@ -142,7 +142,7 @@ export const AOC_STATUS_SERVICES: readonly StatusService[] = [
   linkOnly('stripe', 'Stripe', 'https://status.stripe.com', ['auth']),
   linkOnly('googleAnalytics', 'Google Analytics', '', ['consent']),
   linkOnly('gemini', 'Gemini', 'https://aistudio.google.com/status', ['cms', 'finance', 'contracts']),
-  linkOnly('swisstopo', 'swisstopo', 'https://docs.geo.admin.ch/page/status-page.html', ['geo']),
+  linkOnly('swisstopo', 'swisstopo', 'https://docs.geo.admin.ch/page/status-page.html', ['geo', 'subject']),
   linkOnly('openStreetMap', 'OpenStreetMap', '', ['geo']),
   linkOnly('what3words', 'what3words', '', ['geo']),
   linkOnly('searchCh', 'search.ch', '', ['subject']),
