@@ -45,6 +45,7 @@ def _val(v):
     if isinstance(v, bool):  return {"booleanValue": v}
     # bool is a subclass of int — this branch must stay BELOW the bool one.
     if isinstance(v, int):   return {"integerValue": str(v)}
+    if isinstance(v, float): return {"doubleValue": v}
     if isinstance(v, str):   return {"stringValue": v}
     if isinstance(v, list):  return {"arrayValue": {"values": [_val(x) for x in v]}}
     if isinstance(v, dict):  return {"mapValue": {"fields": {k: _val(x) for k, x in v.items()}}}
@@ -316,6 +317,44 @@ seed("bank-rules/ruleA",           {"tenants": ["t1"], "isArchived": False, "acc
 seed("cost-allocations/allocA", {"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "fiscalYear": 2026, "title": "Umlage Clubhaus"})
 seed("cost-centers/ccA", {"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "name": "Clubhaus", "id": "4"})
 
+# Trainer-Abrechnung (spec 1.167 §6): rates and amounts are salary-like personal data — the trainer
+# (own), treasurer, admin and privileged of the tenant read; only the trainer writes open entries.
+# Trainer Tr (pTr, no role) has agreement taA (books t1); Tr2 (pTr2) has no profile yet.
+seed("users/uidTr",  {"tenants": ["t1"], "roles": {}, "firstName": "Tr", "personKey": "pTr"})
+seed("users/uidTr2", {"tenants": ["t1"], "roles": {}, "firstName": "Tr2", "personKey": "pTr2"})
+def tr_service(key, archived=False):
+    return {"key": key, "name": key.capitalize(), "unit": "hour", "accountKey": "", "costCenterKey": "",
+            "vatCodeKey": "", "isArchived": archived,
+            "rates": [{"validFrom": "20260101", "amount": {"amount": 6000, "currency": "CHF", "periodicity": "one-time"}}]}
+def tr_agreement(person="pTr", **extra):
+    d = {"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "personKey": person,
+         "validFrom": "20260101", "validTo": "", "selfEmployedConfirmed": True, "payablesNote": "",
+         # index 2 proves the service lookup is not limited to the first entry
+         "services": [tr_service("training"), tr_service("old", archived=True), tr_service("regatta")]}
+    d.update(extra)
+    return d
+seed("trainer-agreements/taA",        tr_agreement())
+seed("trainer-agreements/taEnded",    tr_agreement(validTo="20260331"))
+seed("trainer-agreements/taInactive", tr_agreement(selfEmployedConfirmed=False))
+seed("trainer-agreements/taArchived", tr_agreement(isArchived=True))
+seed("trainer-agreements/taOther",    tr_agreement(person="pA"))
+def work_entry(**extra):
+    d = {"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "personKey": "pTr",
+         "agreementKey": "taA", "date": "20260615", "calEventKey": "", "label": "Bootshaus",
+         "serviceKey": "training", "quantity": 1.5, "state": "open", "invoiceKey": ""}
+    d.update(extra)
+    return d
+seed("work-entries/weOpen", work_entry())
+seed("work-entries/weEdit", work_entry())
+seed("work-entries/weKeep", work_entry())
+seed("work-entries/weInv",  work_entry(state="invoiced", invoiceKey="tiA"))
+seed("trainer-profiles/pTr", {"tenants": ["t1"], "isArchived": False, "companyName": "Jucker Sport",
+                              "contactName": "Tr", "numberTemplate": "{yy}{mm}", "nextNumber": 3,
+                              "paymentTermDays": 30, "showQrSlip": True})
+seed("trainer-invoices/tiA", {"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1",
+                              "personKey": "pTr", "agreementKey": "taA", "month": "2026-05",
+                              "invoiceNo": "2605", "total": 9000, "state": "sent"})
+
 # login-id (spec 1.71): a same-tenant user WITH a Benutzername already set, so an admin
 # editing something else on the doc can be checked for leaving loginId untouched.
 seed("users/uidL", {"tenants": ["t1"], "roles": {}, "firstName": "L", "personKey": "pL", "loginId": "max_mueller"})
@@ -420,6 +459,7 @@ seed("expenses/exForeign", {"tenants": ["t1"], "isArchived": False, "userId": "u
 A, B, C, D = jwt("uidA"), jwt("uidB"), jwt("uidC"), jwt("uidD")
 E, M, P = jwt("uidE"), jwt("uidM"), jwt("uidP")
 T = jwt("uidT")
+TR, TR2 = jwt("uidTr"), jwt("uidTr2")  # trainers pTr / pTr2 (spec 1.167)
 seed("users/uidW", {"tenants": ["t1", "t2"], "roles": {}, "firstName": "W", "personKey": "pW"})
 seed("users/uidX", {"tenants": ["t1", "t2"], "roles": {"admin": True}, "firstName": "X", "personKey": "pX"})
 X = jwt("uidX")
@@ -1237,6 +1277,99 @@ single_cases = [
     ("privileged P GET cost-centers/ccA -> ALLOW (D26)", True, GET, "cost-centers/ccA", P, None, None),
     ("member A GET cost-centers/ccA -> DENY", False, GET, "cost-centers/ccA", A, None, None),
     ("privileged P PATCH cost-centers/ccA -> DENY", False, PATCH, "cost-centers/ccA", P, body({"name": "X"}), ["name"]),
+    # Trainer-Abrechnung (spec 1.167 §6) — agreements: trainer (own), privileged, treasurer, admin read
+    ("trainer GET trainer-agreements/taA -> ALLOW", True, GET, "trainer-agreements/taA", TR, None, None),
+    ("member A GET trainer-agreements/taA -> DENY", False, GET, "trainer-agreements/taA", A, None, None),
+    ("privileged P GET trainer-agreements/taA -> ALLOW", True, GET, "trainer-agreements/taA", P, None, None),
+    ("treasurer T GET trainer-agreements/taA -> ALLOW", True, GET, "trainer-agreements/taA", T, None, None),
+    ("admin D GET trainer-agreements/taA -> ALLOW", True, GET, "trainer-agreements/taA", D, None, None),
+    ("admin B (t2) GET trainer-agreements/taA -> DENY (foreign tenant)", False, GET, "trainer-agreements/taA", B, None, None),
+    ("trainer Tr2 GET trainer-agreements/taA -> DENY (not his)", False, GET, "trainer-agreements/taA", TR2, None, None),
+    ("trainer PATCH trainer-agreements/taA services -> DENY", False, PATCH, "trainer-agreements/taA", TR, body({"services": []}), ["services"]),
+    ("privileged P PATCH trainer-agreements/taA -> DENY", False, PATCH, "trainer-agreements/taA", P, body({"payablesNote": "x"}), ["payablesNote"]),
+    ("treasurer T PATCH trainer-agreements/taA -> ALLOW", True, PATCH, "trainer-agreements/taA", T, body({"payablesNote": "Bitte bis zum 5."}), ["payablesNote"]),
+    ("trainer CREATE trainer-agreements for himself -> DENY", False, POST, "trainer-agreements?documentId=taNew1", TR, body(tr_agreement()), None),
+    ("treasurer T CREATE trainer-agreements -> ALLOW", True, POST, "trainer-agreements?documentId=taNew2", T, body(tr_agreement()), None),
+    ("treasurer T CREATE trainer-agreements tenants=[t2] -> DENY", False, POST, "trainer-agreements?documentId=taNew3", T, body(tr_agreement(tenants=["t2"])), None),
+    ("treasurer T DELETE trainer-agreements/taA -> DENY (archive)", False, DELETE, "trainer-agreements/taA", T, None, None),
+    # work entries: read like agreements
+    ("trainer GET work-entries/weOpen -> ALLOW", True, GET, "work-entries/weOpen", TR, None, None),
+    ("member A GET work-entries/weOpen -> DENY", False, GET, "work-entries/weOpen", A, None, None),
+    ("treasurer T GET work-entries/weOpen -> ALLOW", True, GET, "work-entries/weOpen", T, None, None),
+    ("privileged P GET work-entries/weOpen -> ALLOW", True, GET, "work-entries/weOpen", P, None, None),
+    # work entries: create — owner, against an active agreement valid on the date, with a live service
+    ("trainer POST work-entries open, valid service -> ALLOW", True, POST, "work-entries?documentId=weN1", TR, body(work_entry()), None),
+    ("trainer POST work-entries service at index 2 -> ALLOW", True, POST, "work-entries?documentId=weN2", TR, body(work_entry(serviceKey="regatta")), None),
+    ("trainer POST work-entries on validFrom day -> ALLOW", True, POST, "work-entries?documentId=weN3", TR, body(work_entry(date="20260101")), None),
+    ("trainer POST work-entries on validTo day -> ALLOW", True, POST, "work-entries?documentId=weN4", TR, body(work_entry(agreementKey="taEnded", date="20260331")), None),
+    ("trainer POST work-entries unknown serviceKey -> DENY", False, POST, "work-entries?documentId=weX1", TR, body(work_entry(serviceKey="nope")), None),
+    ("trainer POST work-entries archived service -> DENY", False, POST, "work-entries?documentId=weX2", TR, body(work_entry(serviceKey="old")), None),
+    ("trainer POST work-entries date before validFrom -> DENY", False, POST, "work-entries?documentId=weX3", TR, body(work_entry(date="20251231")), None),
+    ("trainer POST work-entries date after validTo -> DENY", False, POST, "work-entries?documentId=weX4", TR, body(work_entry(agreementKey="taEnded", date="20260401")), None),
+    ("trainer POST work-entries agreement not self-employed-confirmed -> DENY", False, POST, "work-entries?documentId=weX5", TR, body(work_entry(agreementKey="taInactive")), None),
+    ("trainer POST work-entries archived agreement -> DENY", False, POST, "work-entries?documentId=weX6", TR, body(work_entry(agreementKey="taArchived")), None),
+    ("trainer POST work-entries missing agreement -> DENY", False, POST, "work-entries?documentId=weX7", TR, body(work_entry(agreementKey="taNone")), None),
+    ("trainer POST work-entries state invoiced -> DENY", False, POST, "work-entries?documentId=weX8", TR, body(work_entry(state="invoiced")), None),
+    ("trainer POST work-entries invoiceKey set -> DENY", False, POST, "work-entries?documentId=weX9", TR, body(work_entry(invoiceKey="tiA")), None),
+    ("trainer POST work-entries for pA -> DENY", False, POST, "work-entries?documentId=weX10", TR, body(work_entry(personKey="pA")), None),
+    ("trainer POST work-entries on pA's agreement -> DENY", False, POST, "work-entries?documentId=weX11", TR, body(work_entry(agreementKey="taOther")), None),
+    ("trainer POST work-entries tenants=[t2] -> DENY (not the agreement's)", False, POST, "work-entries?documentId=weX12", TR, body(work_entry(tenants=["t2"])), None),
+    ("trainer POST work-entries other books -> DENY (not the agreement's)", False, POST, "work-entries?documentId=weX13", TR, body(work_entry(accountingTenantId="gss")), None),
+    ("member A POST work-entries on taA -> DENY", False, POST, "work-entries?documentId=weX14", A, body(work_entry(personKey="pA")), None),
+    ("treasurer T POST work-entries for pTr -> DENY", False, POST, "work-entries?documentId=weX15", T, body(work_entry()), None),
+    # work entries: update — owner, stored and new state open, same agreement checks
+    ("trainer PATCH weEdit quantity -> ALLOW", True, PATCH, "work-entries/weEdit", TR, body({"quantity": 2}), ["quantity"]),
+    ("trainer PATCH weEdit state invoiced -> DENY", False, PATCH, "work-entries/weEdit", TR, body({"state": "invoiced"}), ["state"]),
+    ("trainer PATCH weEdit invoiceKey -> DENY", False, PATCH, "work-entries/weEdit", TR, body({"invoiceKey": "tiA"}), ["invoiceKey"]),
+    ("trainer PATCH weEdit personKey pA -> DENY", False, PATCH, "work-entries/weEdit", TR, body({"personKey": "pA"}), ["personKey"]),
+    ("trainer PATCH weEdit date before validFrom -> DENY", False, PATCH, "work-entries/weEdit", TR, body({"date": "20251231"}), ["date"]),
+    ("trainer PATCH weEdit unknown serviceKey -> DENY", False, PATCH, "work-entries/weEdit", TR, body({"serviceKey": "nope"}), ["serviceKey"]),
+    ("trainer PATCH weEdit tenants=[t2] -> DENY", False, PATCH, "work-entries/weEdit", TR, body({"tenants": ["t2"]}), ["tenants"]),
+    ("member A PATCH weEdit quantity -> DENY", False, PATCH, "work-entries/weEdit", A, body({"quantity": 3}), ["quantity"]),
+    ("treasurer T PATCH weEdit quantity -> DENY", False, PATCH, "work-entries/weEdit", T, body({"quantity": 3}), ["quantity"]),
+    ("trainer PATCH weInv quantity -> DENY", False, PATCH, "work-entries/weInv", TR, body({"quantity": 9}), ["quantity"]),
+    ("trainer PATCH weInv state open -> DENY", False, PATCH, "work-entries/weInv", TR, body({"state": "open"}), ["state"]),
+    ("trainer PATCH weInv state open + invoiceKey '' -> DENY (stored state)", False, PATCH, "work-entries/weInv", TR, body({"state": "open", "invoiceKey": ""}), ["state", "invoiceKey"]),
+    # work entries: delete — owner, stored state open
+    ("trainer DELETE weInv -> DENY", False, DELETE, "work-entries/weInv", TR, None, None),
+    ("member A DELETE weKeep -> DENY", False, DELETE, "work-entries/weKeep", A, None, None),
+    ("treasurer T DELETE weKeep -> DENY", False, DELETE, "work-entries/weKeep", T, None, None),
+    ("trainer DELETE weOpen -> ALLOW", True, DELETE, "work-entries/weOpen", TR, None, None),
+    # profiles: doc id = personKey; the trainer writes everything but nextNumber and tenants
+    ("trainer GET trainer-profiles/pTr -> ALLOW", True, GET, "trainer-profiles/pTr", TR, None, None),
+    ("member A GET trainer-profiles/pTr -> DENY", False, GET, "trainer-profiles/pTr", A, None, None),
+    ("treasurer T GET trainer-profiles/pTr -> ALLOW", True, GET, "trainer-profiles/pTr", T, None, None),
+    ("privileged P GET trainer-profiles/pTr -> ALLOW", True, GET, "trainer-profiles/pTr", P, None, None),
+    ("admin B (t2) GET trainer-profiles/pTr -> DENY (foreign tenant)", False, GET, "trainer-profiles/pTr", B, None, None),
+    ("trainer PATCH trainer-profiles/pTr nextNumber -> DENY", False, PATCH, "trainer-profiles/pTr", TR, body({"nextNumber": 1}), ["nextNumber"]),
+    ("trainer PATCH trainer-profiles/pTr tenants -> DENY", False, PATCH, "trainer-profiles/pTr", TR, body({"tenants": ["t1", "t2"]}), ["tenants"]),
+    ("trainer PATCH trainer-profiles/pTr removes nextNumber -> DENY", False, PATCH, "trainer-profiles/pTr", TR, body({}), ["nextNumber"]),
+    ("trainer PATCH trainer-profiles/pTr companyName -> ALLOW", True, PATCH, "trainer-profiles/pTr", TR, body({"companyName": "Jucker Sport GmbH"}), ["companyName"]),
+    ("trainer Tr2 PATCH trainer-profiles/pTr companyName -> DENY", False, PATCH, "trainer-profiles/pTr", TR2, body({"companyName": "X"}), ["companyName"]),
+    ("treasurer T PATCH trainer-profiles/pTr companyName -> DENY", False, PATCH, "trainer-profiles/pTr", T, body({"companyName": "X"}), ["companyName"]),
+    ("trainer DELETE trainer-profiles/pTr -> DENY", False, DELETE, "trainer-profiles/pTr", TR, None, None),
+    # profile create (deny cases first: after the allowed create a POST answers 409, a false DENY)
+    ("trainer Tr2 GET own missing trainer-profiles/pTr2 -> ALLOW (404)", True, GET, "trainer-profiles/pTr2", TR2, None, None),
+    ("trainer Tr2 CREATE trainer-profiles/pTr2 tenants=[t1] -> DENY", False, POST, "trainer-profiles?documentId=pTr2", TR2,
+     body({"tenants": ["t1"], "isArchived": False, "companyName": "", "nextNumber": 1}), None),
+    ("trainer Tr2 CREATE trainer-profiles/pTr2 nextNumber=5 -> DENY", False, POST, "trainer-profiles?documentId=pTr2", TR2,
+     body({"tenants": [], "isArchived": False, "companyName": "", "nextNumber": 5}), None),
+    ("member A CREATE trainer-profiles/pTr2 -> DENY", False, POST, "trainer-profiles?documentId=pTr2", A,
+     body({"tenants": [], "isArchived": False, "companyName": "", "nextNumber": 1}), None),
+    ("trainer Tr2 CREATE trainer-profiles/pTr2 -> ALLOW", True, POST, "trainer-profiles?documentId=pTr2", TR2,
+     body({"tenants": [], "isArchived": False, "companyName": "", "nextNumber": 1}), None),
+    # trainer invoices: read like agreements, written by the server only
+    ("trainer POST trainer-invoices -> DENY", False, POST, "trainer-invoices?documentId=tiNew", TR,
+     body({"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "personKey": "pTr", "state": "sent"}), None),
+    ("treasurer T POST trainer-invoices -> DENY", False, POST, "trainer-invoices?documentId=tiNew2", T,
+     body({"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "personKey": "pTr", "state": "sent"}), None),
+    ("trainer GET trainer-invoices/tiA -> ALLOW", True, GET, "trainer-invoices/tiA", TR, None, None),
+    ("member A GET trainer-invoices/tiA -> DENY", False, GET, "trainer-invoices/tiA", A, None, None),
+    ("treasurer T GET trainer-invoices/tiA -> ALLOW", True, GET, "trainer-invoices/tiA", T, None, None),
+    ("privileged P GET trainer-invoices/tiA -> ALLOW", True, GET, "trainer-invoices/tiA", P, None, None),
+    ("trainer PATCH trainer-invoices/tiA total -> DENY", False, PATCH, "trainer-invoices/tiA", TR, body({"total": 1}), ["total"]),
+    ("treasurer T PATCH trainer-invoices/tiA state -> DENY (callable only)", False, PATCH, "trainer-invoices/tiA", T, body({"state": "rejected"}), ["state"]),
+    ("admin D DELETE trainer-invoices/tiA -> DENY", False, DELETE, "trainer-invoices/tiA", D, None, None),
     ("member A CREATE cost-allocations -> DENY", False, POST, "cost-allocations?documentId=allocX", A, body({"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "fiscalYear": 2026, "title": "X"}), None),
     ("treasurer T CREATE cost-allocations -> ALLOW", True, POST, "cost-allocations?documentId=allocY", T, body({"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "fiscalYear": 2026, "title": "Y"}), None),
     ("treasurer T PATCH cost-allocations/allocA.title -> ALLOW", True, PATCH, "cost-allocations/allocA", T, body({"title": "Y"}), ["title"]),
@@ -1495,6 +1628,26 @@ field_cases = [
     ("userP(privileged) LIST tasks shareKey gClosed -> ALLOW", True, "tasks", SHARED("gClosed"), P),
     ("userA LIST tasks shareKey meeting.m1 -> ALLOW (meeting key)", True, "tasks", SHARED("meeting.m1"), A),
     ("userA LIST tasks shareKey gNone -> ALLOW (no such group)", True, "tasks", SHARED("gNone"), A),
+    # Trainer-Abrechnung (spec 1.167): list queries need the tenants filter (tenantRead) and, for the
+    # trainer, the personKey filter (own records only)
+    ("trainer LIST work-entries tenants t1 + personKey pTr -> ALLOW", True, "work-entries",
+     [("tenants", "ARRAY_CONTAINS", "t1"), ("personKey", "EQUAL", "pTr")], TR),
+    ("trainer LIST work-entries tenants t1 + personKey pA -> DENY", False, "work-entries",
+     [("tenants", "ARRAY_CONTAINS", "t1"), ("personKey", "EQUAL", "pA")], TR),
+    ("trainer LIST work-entries tenants t1 only -> DENY", False, "work-entries",
+     [("tenants", "ARRAY_CONTAINS", "t1")], TR),
+    ("treasurer T LIST work-entries tenants t1 + agreementKey taA -> ALLOW", True, "work-entries",
+     [("tenants", "ARRAY_CONTAINS", "t1"), ("agreementKey", "EQUAL", "taA")], T),
+    ("member A LIST work-entries tenants t1 + agreementKey taA -> DENY", False, "work-entries",
+     [("tenants", "ARRAY_CONTAINS", "t1"), ("agreementKey", "EQUAL", "taA")], A),
+    ("trainer LIST trainer-agreements tenants t1 + personKey pTr -> ALLOW", True, "trainer-agreements",
+     [("tenants", "ARRAY_CONTAINS", "t1"), ("personKey", "EQUAL", "pTr")], TR),
+    ("treasurer T LIST trainer-agreements tenants t1 + accountingTenantId t1 -> ALLOW", True, "trainer-agreements",
+     [("tenants", "ARRAY_CONTAINS", "t1"), ("accountingTenantId", "EQUAL", "t1")], T),
+    ("trainer LIST trainer-invoices tenants t1 + personKey pTr -> ALLOW", True, "trainer-invoices",
+     [("tenants", "ARRAY_CONTAINS", "t1"), ("personKey", "EQUAL", "pTr")], TR),
+    ("member A LIST trainer-invoices tenants t1 -> DENY", False, "trainer-invoices",
+     [("tenants", "ARRAY_CONTAINS", "t1")], A),
 ]
 
 
@@ -1839,6 +1992,7 @@ TAKEOVER_COLLECTIONS = [
     "projects", "transfers", "websiteContent", "workrels", "ocr-rules", "bank-profiles",
     "bank-rules", "assets", "asset-categories", "competition-levels", "formDefinitions", "periods",
     "responsibilities", "vat-codes", "workflow-rules", "aliasSpaces", "activities",
+    "trainer-agreements",
 ]
 takeover_cases = []
 for coll in TAKEOVER_COLLECTIONS:

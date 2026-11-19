@@ -638,6 +638,85 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/budget-versions/$(resource.data.versionKey)).data.status == 'draft'
         && get(/databases/$(database)/documents/budget-versions/$(resource.data.versionKey)).data.get('isArchived', false) == false;
     }
+    // Trainer-Abrechnung (spec 1.167 §6): rates, amounts and invoices are salary-like personal data.
+    // Read: the trainer (own records, via personKey), privileged, treasurer and admin of the tenant —
+    // nobody else. Write: agreements treasurer/admin (archived, never deleted); work entries only the
+    // trainer, only while open; a profile only its person. Trainer invoices, a profile's `nextNumber`
+    // and `tenants`, and an entry's `state`/`invoiceKey` change only through the Admin SDK
+    // (sendTrainerInvoice and its triggers).
+    function trainerBillingRead() {
+      let pk = callerPersonKey();
+      return tenantRead()
+             && ((pk != '' && resource.data.personKey == pk) || isPrivileged() || hasRole('treasurer'));
+    }
+    // An entry's serviceKey must name a live (not archived) service of its agreement. Rules have no
+    // loops, so the lookup is unrolled over the first 10 services — the agreement editor must cap an
+    // agreement at 10 services, an 11th would be unbookable.
+    function trainerServiceAt(s, i, k) {
+      return s.size() > i && s[i].key == k && s[i].get('isArchived', false) == false;
+    }
+    function trainerServiceLive(s, k) {
+      return trainerServiceAt(s, 0, k) || trainerServiceAt(s, 1, k) || trainerServiceAt(s, 2, k)
+             || trainerServiceAt(s, 3, k) || trainerServiceAt(s, 4, k) || trainerServiceAt(s, 5, k)
+             || trainerServiceAt(s, 6, k) || trainerServiceAt(s, 7, k) || trainerServiceAt(s, 8, k)
+             || trainerServiceAt(s, 9, k);
+    }
+    // The new entry `d` of trainer `pk`: own, open, not invoiced, on an agreement of `pk` that is
+    // active (selfEmployedConfirmed, not archived) and valid on `d.date` (StoreDate strings compare
+    // lexically), and in the agreement's tenants and books. The agreement get() is bound once
+    // (rules-1000-expression-limit); a missing agreement makes it error, i.e. deny.
+    function workEntryWriteOk(d, pk) {
+      let a = get(/databases/$(database)/documents/trainer-agreements/$(d.agreementKey)).data;
+      return pk != ''
+             && d.personKey == pk
+             && a.personKey == pk
+             && a.selfEmployedConfirmed == true
+             && a.get('isArchived', false) == false
+             && d.date is string && d.date.matches('[0-9]{8}')
+             && a.validFrom <= d.date
+             && (a.get('validTo', '') == '' || d.date <= a.validTo)
+             && trainerServiceLive(a.services, d.serviceKey)
+             && d.state == 'open'
+             && d.invoiceKey == ''
+             && d.tenants == a.tenants
+             && d.accountingTenantId == a.accountingTenantId;
+    }
+    // Update and delete need the STORED entry to be the caller's and still open: an invoiced entry
+    // is frozen, even a write that sets it back to open.
+    function workEntryStoredOpenOwn(pk) {
+      return pk != '' && resource.data.personKey == pk && resource.data.state == 'open';
+    }
+    function workEntryUpdateOk() {
+      let pk = callerPersonKey();
+      return workEntryStoredOpenOwn(pk) && workEntryWriteOk(request.resource.data, pk);
+    }
+    match /trainer-agreements/{id} {
+      allow read: if trainerBillingRead();
+      allow create, update: if isTreasurerOrAdmin() && tenantCreateOrDetach();
+      allow delete: if false;
+    }
+    // Doc id = personKey: one profile per person across all clubs; `tenants` (the clubs with an
+    // agreement) and `nextNumber` are maintained by the server, so a new profile starts empty.
+    match /trainer-profiles/{personKey} {
+      allow read: if personKey == callerPersonKey()
+                  || (tenantRead() && (isPrivileged() || hasRole('treasurer')));
+      allow create: if personKey == callerPersonKey()
+                    && request.resource.data.tenants == []
+                    && request.resource.data.nextNumber == 1;
+      allow update: if personKey == callerPersonKey()
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['nextNumber', 'tenants']);
+      allow delete: if false;
+    }
+    match /work-entries/{id} {
+      allow read: if trainerBillingRead();
+      allow create: if workEntryWriteOk(request.resource.data, callerPersonKey());
+      allow update: if workEntryUpdateOk();
+      allow delete: if workEntryStoredOpenOwn(callerPersonKey());
+    }
+    match /trainer-invoices/{id} {
+      allow read: if trainerBillingRead();
+      allow write: if false;
+    }
     // Activities are the audit log. Authenticated tenant members write normal activities.
     // Auth-scope events (login/logout) are logged by ActivityService.logAuth pre-auth or
     // during the post-signIn token-propagation race, i.e. with request.auth == null. Allow
