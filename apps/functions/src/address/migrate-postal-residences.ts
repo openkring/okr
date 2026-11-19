@@ -99,24 +99,26 @@ export function addressLine(a: Pick<AddressModel, 'streetName' | 'streetNumber' 
 }
 
 /**
- * Pure. One entry per tenant that lost a row: its lines «<name>: alt → neu», sorted and without
- * duplicates. `nameOf` gives the parent's display name (default: the parentKey).
+ * Pure. One entry per tenant that lost a row: one line per parent — its display name only, sorted.
+ * No address: the task reaches every memberAdmin of the tenant (and stays after the person left);
+ * the admin opens the person to see the address. `nameOf` gives the parent's display name (default:
+ * the parentKey).
  */
 export function summaryTasks(
   losers: ConflictPair[],
   tenantOf: (row: MigrationRow) => string[],
   nameOf: (row: MigrationRow) => string = (r) => str(r.row.parentKey),
 ): Map<string, string[]> {
-  const lines = new Map<string, Set<string>>();
-  for (const { loser, winner } of losers) {
-    const line = `${nameOf(loser)}: ${addressLine(loser.row) || '–'} → ${addressLine(winner.row) || '–'}`;
+  // per tenant: parentKey → name, so two parents of the same name stay two lines
+  const lines = new Map<string, Map<string, string>>();
+  for (const { loser } of losers) {
     for (const tenantId of tenantOf(loser)) {
-      const set = lines.get(tenantId) ?? new Set<string>();
-      set.add(line);
-      lines.set(tenantId, set);
+      const byParent = lines.get(tenantId) ?? new Map<string, string>();
+      byParent.set(str(loser.row.parentKey), nameOf(loser));
+      lines.set(tenantId, byParent);
     }
   }
-  return new Map([...lines].sort(([a], [b]) => a.localeCompare(b)).map(([t, set]) => [t, [...set].sort()]));
+  return new Map([...lines].sort(([a], [b]) => a.localeCompare(b)).map(([t, byParent]) => [t, [...byParent.values()].sort()]));
 }
 
 /**

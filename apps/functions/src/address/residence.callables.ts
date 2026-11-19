@@ -24,7 +24,7 @@ import {
 import { MoveNotice, MoveNoticeKind, sendMoveNotices } from './residence-notices';
 import {
   CallerFacts, commitError, firstResidenceWrite, isOwnerOf, matchServerHit, mayRecordPostal, parseTarget, ParsedTarget, newResidenceId, planCancel, planMove, postalIndex,
-  recorderTenantId, requireAddressUsage, requireAddressValue2, requireDocKey, requireParentKey, requireQuery, requireStoreDate, snapshotText, strayFields,
+  recorderTenantId, requireAddressUsage, requireAddressValue2, requireDocKey, requireParentKey, requireQuery, requireStoreDate, strayFields,
 } from './residence.logic';
 
 const REGION = 'europe-west6';
@@ -162,7 +162,7 @@ function linkPatch(parentKey: string, resolved: ResolvedTarget, addressValue2: s
   };
 }
 
-function notice(kind: MoveNoticeKind, parentKey: string, parent: Parent, caller: CallerFacts, texts: { oldText: string; newText: string; validFrom: string; noticeKey: string }): MoveNotice {
+function notice(kind: MoveNoticeKind, parentKey: string, parent: Parent, caller: CallerFacts, texts: { validFrom: string; noticeKey: string }): MoveNotice {
   return {
     kind,
     parentKey,
@@ -267,8 +267,6 @@ export const recordPostalMove = onCall<RecordPostalMoveRequest, Promise<{ reside
     logger.info(`${fn}: ${parentKey} moves to ${resolved.locationKey} from ${validFrom}`, { residenceKey: ref.id, closed: plan.close.map((c) => c.okey).join(',') });
 
     await sendMoveNotices(db, notice('move', parentKey, parent, caller, {
-      oldText: closed ? snapshotText(closed) : '',
-      newText: snapshotText(resolved.snapshot),
       validFrom,
       noticeKey: resolved.locationKey,
     }));
@@ -276,7 +274,10 @@ export const recordPostalMove = onCall<RecordPostalMoveRequest, Promise<{ reside
   },
 );
 
-/** «Adresse korrigieren» / «Umzug bearbeiten» (address): relink and rewrite the snapshot, dates unchanged. Never a move. */
+/**
+ * «Adresse korrigieren»: relink and rewrite the snapshot, dates unchanged. Never a move. («Umzug
+ * bearbeiten» does not come here: the client runs cancelPostalMove + recordPostalMove, see checkEditMove.)
+ */
 export const correctPostalAddress = onCall<CorrectPostalAddressRequest, Promise<{ locationKey: string }>>(
   { region: REGION, enforceAppCheck: true },
   async (request) => {
@@ -297,8 +298,6 @@ export const correctPostalAddress = onCall<CorrectPostalAddressRequest, Promise<
     logger.info(`${fn}: residence ${residenceKey} relinked to ${resolved.locationKey}`);
 
     await sendMoveNotices(db, notice('correction', row.parentKey, parent, caller, {
-      oldText: snapshotText(row),
-      newText: snapshotText(resolved.snapshot),
       validFrom: row.validFrom ?? '',
       noticeKey: `${residenceKey}|${resolved.locationKey}`,
     }));
@@ -330,10 +329,7 @@ export const cancelPostalMove = onCall<CancelPostalMoveRequest, Promise<void>>(
     await commit(batch);
     logger.info(`${fn}: residence ${residenceKey} cancelled`, { reopened: reopen?.okey ?? '', validTo: reopen?.validTo ?? '' });
 
-    const reopened = reopen ? rows.find((r) => r.okey === reopen.okey) : undefined;
     await sendMoveNotices(db, notice('cancel', row.parentKey, parent, caller, {
-      oldText: snapshotText(row),
-      newText: reopened ? snapshotText(reopened) : '',
       validFrom: row.validFrom ?? '',
       noticeKey: residenceKey,
     }));

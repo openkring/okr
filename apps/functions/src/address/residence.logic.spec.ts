@@ -4,7 +4,7 @@ import { AddressModel } from '@okr/shared-models';
 
 import {
   CallerFacts, commitError, firstResidenceWrite, matchServerHit, mayRecordPostal, newResidenceId, parseTarget, planCancel, planMove, postalIndex, recorderTenantId,
-  requireAddressUsage, requireAddressValue2, requireDocKey, requireParentKey, requireQuery, requireStoreDate, snapshotText, strayFields,
+  requireAddressUsage, requireAddressValue2, requireDocKey, requireParentKey, requireQuery, requireStoreDate, strayFields,
 } from './residence.logic';
 
 const TODAY = '20270215';
@@ -380,12 +380,7 @@ describe('matchServerHit', () => {
   });
 });
 
-describe('texts and index', () => {
-  it('snapshotText leaves out empty parts', () => {
-    expect(snapshotText({ streetName: 'Seestrasse', streetNumber: '12', zipCode: '8712', city: 'Stäfa' })).toBe('Seestrasse 12, 8712 Stäfa');
-    expect(snapshotText({ streetName: '', streetNumber: '', zipCode: '', city: '' })).toBe('');
-  });
-
+describe('index', () => {
   it('postalIndex mirrors the client getAddressIndex for postal rows (owner segment filled by onAddressChange)', () => {
     expect(postalIndex({ streetName: 'Seestrasse', streetNumber: '12', countryCode: 'CH', zipCode: '8712', city: 'Stäfa', parentKey: 'person.p1' }))
       .toBe('n:Seestrasse12CH8712Stäfa p:person.p1 o:');

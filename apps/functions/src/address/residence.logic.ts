@@ -287,15 +287,6 @@ export function matchServerHit(hits: SwissAddressHit[], egaid: string): SwissAdd
 // texts
 // ---------------------------------------------------------------------------------------------
 
-type SnapshotParts = Pick<AddressModel, 'streetName' | 'streetNumber' | 'zipCode' | 'city'>;
-
-/** «Seestrasse 12, 8712 Stäfa» for the notices; empty parts are left out. */
-export function snapshotText(a: SnapshotParts): string {
-  const street = [a.streetName, a.streetNumber].map((s) => (s ?? '').trim()).filter(Boolean).join(' ');
-  const place = [a.zipCode, a.city].map((s) => (s ?? '').trim()).filter(Boolean).join(' ');
-  return [street, place].filter(Boolean).join(', ');
-}
-
 /**
  * The search index of a postal row, as the client's `getAddressIndex` builds it (that one lives in
  * `@okr/subject-address-util`, which reaches Angular). The owner segment stays empty here:

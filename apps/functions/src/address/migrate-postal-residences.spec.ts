@@ -92,7 +92,18 @@ describe('summaryTasks', () => {
     const result = summaryTasks(losers, (r) => r.row.tenants, (r) => r.row.parentKey.substring(7).toUpperCase());
     expect([...result.keys()]).toEqual(['kring', 'scs']);
     expect(result.get('scs')).toHaveLength(3);
-    expect(result.get('kring')).toEqual(['D: Altweg 2, 8712 Stäfa → Neuweg 1, 8000 Zürich']);
+    expect(result.get('kring')).toEqual(['D']);
+  });
+
+  it('carries no address, and two parents of the same name stay two lines', () => {
+    const winner = postal('w', { streetName: 'Neuweg', zipCode: '8000', city: 'Zürich' });
+    const lose = (okey: string): ConflictPair => ({
+      loser: postal(okey, { tenants: ['scs'], streetName: 'Altweg', zipCode: '8712', city: 'Stäfa', parentKey: `person.${okey}` }),
+      winner,
+    });
+    const result = summaryTasks([lose('a'), lose('b'), lose('a')], (r) => r.row.tenants, () => 'Anna Muster');
+    expect(result.get('scs')).toEqual(['Anna Muster', 'Anna Muster']);
+    expect(result.get('scs')?.join('\n')).not.toMatch(/Altweg|Neuweg|8712|8000/);
   });
 });
 
@@ -306,7 +317,7 @@ describe('runPostalResidenceMigration', () => {
 
     // one summary task per losing tenant per memberAdmin
     const tasks = store.get('tasks');
-    expect(tasks?.get(migrationTaskId('kring', 'admin'))?.data['notes']).toBe('Anna Muster: Seestrasse 12, 8712 Stäfa → Seestrasse 12, 8712 Stäfa');
+    expect(tasks?.get(migrationTaskId('kring', 'admin'))?.data['notes']).toBe('Anna Muster');
     expect(tasks?.get(migrationTaskId('scs', 'admin'))?.data['name']).toBe('Adressen ersetzt (Migration)');
     expect(tasks?.get(migrationTaskId('scs', 'admin'))?.data['tags']).toBe('umzug');
   });
