@@ -3,7 +3,7 @@
  * person gets a push. The push text carries no address: it shows on lock screens.
  */
 import { logger } from 'firebase-functions/v2';
-import { Firestore, getFirestore } from 'firebase-admin/firestore';
+import type { Firestore } from 'firebase-admin/firestore';
 import { AvatarInfo, PersonCollection, TaskCollection, TaskModel } from '@okr/shared-models';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 import { getTaskIndex } from '@okr/project-task-util';
@@ -85,7 +85,7 @@ async function newTask(n: MoveNotice, tenantId: string, assignee: AvatarInfo, re
 }
 
 /** Never throws: a notice is an extra, the move itself is already saved. */
-export async function sendMoveNotices(db: Firestore = getFirestore(), n: MoveNotice): Promise<void> {
+export async function sendMoveNotices(db: Firestore, n: MoveNotice): Promise<void> {
   try {
     const recorderData = n.recorder.personKey ? (await db.collection(PersonCollection).doc(n.recorder.personKey).get()).data() : undefined;
     const recorder = personAvatarInfo(n.recorder.personKey, recorderData);
