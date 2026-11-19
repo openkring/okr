@@ -1,4 +1,4 @@
-import type { ImageStyle } from '@okr/shared-models';
+import { APPLICATION_KIND_VALUES, type ImageStyle } from '@okr/shared-models';
 import { imageCaption } from './image-caption';
 import type { PublicPerson } from './group-people';
 import { peopleExcludedKeys, peopleSourceKey, peopleSourceOf } from './people-source';
@@ -597,6 +597,14 @@ export function mapSection(
 
     case 'events':
       return { type: 'events', name, title, kicker, intro, maxItems: clampCount(props['maxEvents']), moreUrl: safeSiteUrl(props['moreUrl']), calendar: mapCalendarKey(s.name) };
+
+    case 'course': {
+      // the audience is the comma list the course widget reads (data-audience); unknown kinds are dropped
+      const audience = (Array.isArray(props['audience']) ? props['audience'] : [])
+        .filter((k): k is (typeof APPLICATION_KIND_VALUES)[number] => APPLICATION_KIND_VALUES.includes(k));
+      const emptyText = pickText(str(props['emptyText']), props['emptyTextI18n'] as I18nString | undefined, lang);
+      return { type: 'course', name, title, subTitle, audience: audience.join(','), emptyText };
+    }
 
     case 'news':
       return { type: 'news', name, title, kicker, intro, maxItems: clampCount(props['maxItems']), moreUrl: safeSiteUrl(props['moreUrl']), tag: str(props['tag']).trim().slice(0, 80) };
