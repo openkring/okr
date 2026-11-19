@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input } from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, input } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCardSubtitle } from '@ionic/angular';
 
 import { OptionalCardHeader } from '@okr/shared-ui';
@@ -91,6 +91,11 @@ export class CourseSection {
 
   constructor() {
     effect(() => this.store.setAudience(this.config()?.audience ?? []));
+    // a request made here must not outlive the section (the service is root-scoped)
+    inject(DestroyRef).onDestroy(() => {
+      const requested = this.preselect.requested();
+      if (requested && this.courses().some((c) => c.key === requested)) this.preselect.clear();
+    });
   }
 
   /** «12.03.–30.04.2027»; the formatter reads StoreDates, the endpoint sends ISO. */
@@ -107,9 +112,10 @@ export class CourseSection {
     return isPastCourseDate(d, todayIso());
   }
 
-  /** '' when the course has no place limit; the full state is shown on the button instead. */
+  /** '' when the course has no place limit; «ausgebucht» when full. */
   protected placesText(course: PublicCourse): string {
-    if (course.remaining < 0 || course.isFull) return '';
+    if (course.isFull) return this.store.i18n.course_full();
+    if (course.remaining < 0) return '';
     return course.remaining === 1
       ? this.store.i18n.course_places_one()
       : fill(this.store.i18n.course_places(), { n: course.remaining });

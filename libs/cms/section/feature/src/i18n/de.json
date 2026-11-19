@@ -433,8 +433,8 @@
     },
     "register": "Jetzt anmelden",
     "full": "ausgebucht",
-    "places": "{n} Plätze frei",
-    "places_one": "1 Platz frei",
+    "places": "noch {n} Plätze",
+    "places_one": "noch 1 Platz",
     "cancelled": "abgesagt"
   },
   "form": {
