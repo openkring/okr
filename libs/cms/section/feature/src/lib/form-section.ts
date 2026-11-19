@@ -40,7 +40,8 @@ const FormSectionStore = signalStore(
   standalone: true,
   imports: [Spinner, FormRenderer, SvgIconPipe, IonButton, IonButtons, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonIcon, IonNote],
   providers: [FormSectionStore],
-  host: { id: 'okr-course-form' },
+  // the scroll target of a course section's button; only a form with a course field carries the id
+  host: { '[attr.id]': 'hasCourseField() ? "okr-course-form" : null' },
   styles: [`
     .title-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     /* author-written texts (thank-you, closed) keep their line breaks; interpolated, never innerHTML */
@@ -242,9 +243,11 @@ export class FormSectionComponent {
   });
 
   /** the form has a course field, so a course section on the page can ask it to tick one */
-  private readonly hasCourseField = computed(() => (this.definition()?.fields ?? []).some((f) => f.type === 'course'));
+  protected readonly hasCourseField = computed(() => (this.definition()?.fields ?? []).some((f) => f.type === 'course'));
 
   constructor() {
+    // Only one course form per page is supported (one host id, one request). A request for a course
+    // not (yet) offered waits until it is offered or replaced by a later one (spec 1.166 §8).
     // registers while mounted with a course field; the cleanup also runs when the component is destroyed
     effect((onCleanup) => {
       if (this.hasCourseField()) onCleanup(this.preselect.registerCourseForm());
