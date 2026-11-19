@@ -166,7 +166,7 @@ export const requestCourseCompensation = Course.requestCourseCompensation;
 // Trainer-Abrechnung (spec 1.167 §7.4): previewTrainerInvoice renders the draft PDF; sendTrainerInvoice prices the month,
 // writes the trainer invoice + draft bill (native books) and tasks the treasurer; downloadTrainerInvoice serves the sent PDF;
 // rejectTrainerInvoice sends it back (treasurer), markTrainerInvoicePaid closes it in bexio books
-export { previewTrainerInvoice, sendTrainerInvoice, downloadTrainerInvoice, rejectTrainerInvoice, markTrainerInvoicePaid } from './trainer-billing';
+export { previewTrainerInvoice, sendTrainerInvoice, downloadTrainerInvoice, rejectTrainerInvoice, markTrainerInvoicePaid, onBillWrittenTrainerMirror, onTrainerAgreementWritten } from './trainer-billing';
 // courseAnswer: the page behind the personal course invitation link — an invited applicant answers without login (spec 1.152 §8.3)
 export const courseAnswer = Course.courseAnswer;
 // listCourseApplicants: the applicants a course manager may invite, filtered by D7 (name, type, age, course, state only) (spec 1.152 §8.1, §11)
