@@ -1638,7 +1638,8 @@
     "variant": {
       "label": "Tipo di riquadri",
       "stat": "Cifre chiave",
-      "card": "Schede"
+      "card": "Schede",
+      "image": "Schede con immagine"
     },
     "columns": {
       "label": "Colonne",
@@ -1689,11 +1690,22 @@
     "group": {
       "tile": "Riquadro",
       "icon": "Icona",
-      "link": "Link"
+      "link": "Link",
+      "image": "Immagine"
     },
     "color": {
       "label": "Colore della sezione",
       "helper": "Colora il sottotitolo sopra il titolo."
+    },
+    "image": {
+      "label": "Immagine",
+      "placeholder": "p. es. tenant/la21staefa/gruppen/reparatur.jpg",
+      "helper": "Dove si trova l'immagine o un indirizzo https. Lascia vuoto se la scheda non ha un'immagine."
+    },
+    "imageFit": {
+      "label": "Visualizzazione",
+      "cover": "L'immagine riempie la scheda",
+      "contain": "Mostra tutta l'immagine (logo)"
     }
   },
   "timeline": {

@@ -1638,7 +1638,8 @@
     "variant": {
       "label": "Kind of tiles",
       "stat": "Key figures",
-      "card": "Cards"
+      "card": "Cards",
+      "image": "Image cards"
     },
     "columns": {
       "label": "Columns",
@@ -1689,11 +1690,22 @@
     "group": {
       "tile": "Tile",
       "icon": "Icon",
-      "link": "Link"
+      "link": "Link",
+      "image": "Image"
     },
     "color": {
       "label": "Section colour",
       "helper": "Colours the subtitle above the title."
+    },
+    "image": {
+      "label": "Image",
+      "placeholder": "e.g. tenant/la21staefa/gruppen/reparatur.jpg",
+      "helper": "Where the image is stored, or an https address. Leave empty if the card has no image."
+    },
+    "imageFit": {
+      "label": "Display",
+      "cover": "Image fills the card",
+      "contain": "Show the whole image (logo)"
     }
   },
   "timeline": {

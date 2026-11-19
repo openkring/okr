@@ -142,7 +142,7 @@ export class TilesConfiguration {
   protected readonly config = computed(() => withTilesDefaults(this.formData()));
 
   protected readonly variantLabels = computed<Record<TileVariant, string>>(() => ({
-    stat: this.i18n().tiles_variant_stat(), card: this.i18n().tiles_variant_card(),
+    stat: this.i18n().tiles_variant_stat(), card: this.i18n().tiles_variant_card(), image: this.i18n().tiles_variant_image(),
   }));
 
   protected readonly colorI18n = computed(() => ({

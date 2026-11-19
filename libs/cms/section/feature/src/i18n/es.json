@@ -1638,7 +1638,8 @@
     "variant": {
       "label": "Tipo de mosaicos",
       "stat": "Cifras clave",
-      "card": "Tarjetas"
+      "card": "Tarjetas",
+      "image": "Tarjetas con imagen"
     },
     "columns": {
       "label": "Columnas",
@@ -1689,11 +1690,22 @@
     "group": {
       "tile": "Mosaico",
       "icon": "Icono",
-      "link": "Enlace"
+      "link": "Enlace",
+      "image": "Imagen"
     },
     "color": {
       "label": "Color de la sección",
       "helper": "Colorea el subtítulo encima del título."
+    },
+    "image": {
+      "label": "Imagen",
+      "placeholder": "p. ej. tenant/la21staefa/gruppen/reparatur.jpg",
+      "helper": "Dónde está guardada la imagen o una dirección https. Déjalo vacío si la tarjeta no tiene imagen."
+    },
+    "imageFit": {
+      "label": "Presentación",
+      "cover": "La imagen llena la tarjeta",
+      "contain": "Mostrar toda la imagen (logo)"
     }
   },
   "timeline": {

@@ -1638,7 +1638,8 @@
     "variant": {
       "label": "Art der Kacheln",
       "stat": "Kennzahlen",
-      "card": "Karten"
+      "card": "Karten",
+      "image": "Bildkarten"
     },
     "columns": {
       "label": "Spalten",
@@ -1689,11 +1690,22 @@
     "group": {
       "tile": "Kachel",
       "icon": "Icon",
-      "link": "Link"
+      "link": "Link",
+      "image": "Bild"
     },
     "color": {
       "label": "Farbe der Sektion",
       "helper": "Färbt den Untertitel über dem Titel."
+    },
+    "image": {
+      "label": "Bild",
+      "placeholder": "z.B. tenant/la21staefa/gruppen/reparatur.jpg",
+      "helper": "Der Speicherort des Bildes oder eine https-Adresse. Leer lassen, wenn die Karte kein Bild hat."
+    },
+    "imageFit": {
+      "label": "Darstellung",
+      "cover": "Bild füllt die Karte",
+      "contain": "Ganzes Bild zeigen (Logo)"
     }
   },
   "timeline": {

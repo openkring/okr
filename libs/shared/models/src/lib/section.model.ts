@@ -170,7 +170,10 @@ export interface SectionCta {
 }
 
 // --------------------------------------- TILES ----------------------------------------
-export const TILE_VARIANTS = ['stat', 'card'] as const;
+export const TILE_VARIANTS = ['stat', 'card', 'image'] as const;
+/** How an image tile shows its picture: 'cover' fills the card (photo), 'contain' shows all of it (logo). */
+export const TILE_IMAGE_FITS = ['cover', 'contain'] as const;
+export type TileImageFit = (typeof TILE_IMAGE_FITS)[number];
 export type TileVariant = (typeof TILE_VARIANTS)[number];
 export const TILE_TONES = ['primary', 'secondary'] as const;
 export type TileTone = (typeof TILE_TONES)[number];
@@ -180,7 +183,7 @@ export interface TilesSection extends BaseSection {
   properties: TilesConfig;
 }
 
-/** One tile: a stat (value + text) or a card (icon + title + text), optionally linked. */
+/** One tile: a stat (value + text), a card (icon + title + text) or an image card (picture + title + text), optionally linked. */
 export interface TileItem {
   value?: string;
   icon?: string;
@@ -193,6 +196,10 @@ export interface TileItem {
   linkLabel?: string;
   linkLabelI18n?: I18nString;
   tone: TileTone;
+  /** variant 'image' only: storage path or https url of the picture (spec 1.165 §10.1) */
+  imageUrl?: string;
+  /** variant 'image' only; absent = 'cover' */
+  imageFit?: TileImageFit;
 }
 
 export interface TilesConfig {

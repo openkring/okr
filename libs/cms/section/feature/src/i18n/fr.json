@@ -1638,7 +1638,8 @@
     "variant": {
       "label": "Type de tuiles",
       "stat": "Chiffres clés",
-      "card": "Cartes"
+      "card": "Cartes",
+      "image": "Cartes avec image"
     },
     "columns": {
       "label": "Colonnes",
@@ -1689,11 +1690,22 @@
     "group": {
       "tile": "Tuile",
       "icon": "Icône",
-      "link": "Lien"
+      "link": "Lien",
+      "image": "Image"
     },
     "color": {
       "label": "Couleur de la section",
       "helper": "Colore le sous-titre au-dessus du titre."
+    },
+    "image": {
+      "label": "Image",
+      "placeholder": "p. ex. tenant/la21staefa/gruppen/reparatur.jpg",
+      "helper": "L'emplacement de l'image ou une adresse https. Laisse vide si la carte n'a pas d'image."
+    },
+    "imageFit": {
+      "label": "Affichage",
+      "cover": "L'image remplit la carte",
+      "contain": "Montrer toute l'image (logo)"
     }
   },
   "timeline": {

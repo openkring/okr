@@ -4,21 +4,24 @@ import { NgTemplateOutlet } from '@angular/common';
 import { IonIcon } from '@ionic/angular';
 
 import { TilesSection } from '@okr/shared-models';
-import { tilesColumns, validTiles, withTilesDefaults } from '@okr/cms-section-util';
+import { tileImageUrl, tilesColumns, validTiles, withTilesDefaults } from '@okr/cms-section-util';
+import { ENV } from '@okr/shared-config';
+import { ImgDirective } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ColorsIonic } from '@okr/shared-categories';
 
 import { openSectionLink } from './section-link';
 
 /**
- * A grid of tiles: stat tiles (big value + caption) or cards (icon, title, text, optional link).
+ * A grid of tiles: stat tiles (big value + caption), cards (icon, title, text, optional link) or image
+ * cards (a picture on top, spec 1.165 §10.1).
  * The items live inline in the section config. Above the grid: the subtitle as a line in the section
  * colour, the title and the intro. Only the plain German fields are shown here.
  */
 @Component({
   selector: 'okr-tiles-section',
   standalone: true,
-  imports: [NgTemplateOutlet, IonIcon, SvgIconPipe],
+  imports: [NgTemplateOutlet, IonIcon, SvgIconPipe, ImgDirective],
   styles: [`
     :host { display: block; }
     .eyebrow { margin: 0px 0px 4px 0px; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
@@ -37,6 +40,8 @@ import { openSectionLink } from './section-link';
     .tone-secondary { color: var(--ion-color-secondary); }
     /* a card is a column: icon on top, link pinned to the foot, so icons and links of a row line up */
     .card-tile { display: flex; flex-direction: column; align-items: flex-start; height: 100%; }
+    .tile-image { display: block; width: 100%; aspect-ratio: 4 / 3; border-radius: 8px; margin-bottom: 12px; object-fit: cover; }
+    .tile-image.contain { object-fit: contain; padding: 16px; background: var(--ion-color-light); }
     .icon-slot { display: block; width: 32px; height: 32px; margin-bottom: 8px; }
     .icon-slot ion-icon { width: 32px; height: 32px; }
     .tile h3 { margin: 0px 0px 4px 0px; font-size: 1.1rem; }
@@ -69,6 +74,7 @@ import { openSectionLink } from './section-link';
       }
     </div>
     <ng-template #cardBody let-item>
+      @if (item.imageSrc) { <img okrImg class="tile-image" [class.contain]="item.imageFit === 'contain'" [src]="item.imageSrc" alt="" /> }
       <!-- the icon slot is kept on every card once one card has an icon, so the titles line up too -->
       @if (hasIcons()) {
         <span class="icon-slot">
@@ -83,6 +89,7 @@ import { openSectionLink } from './section-link';
 })
 export class TilesSectionComponent {
   private readonly router = inject(Router);
+  private readonly imgixBaseUrl = inject(ENV).services.imgixBaseUrl;
 
   // inputs
   public section = input.required<TilesSection>();
@@ -91,7 +98,10 @@ export class TilesSectionComponent {
   protected readonly config = computed(() => withTilesDefaults(this.section().properties));
   protected readonly variant = computed(() => this.config().variant);
   protected readonly columns = computed(() => tilesColumns(this.config().columns));
-  protected readonly items = computed(() => validTiles(this.config().items, this.variant()));
+  protected readonly items = computed(() => validTiles(this.config().items, this.variant()).map((i) => ({
+    ...i,
+    imageSrc: this.variant() === 'image' ? tileImageUrl(i.imageUrl, i.imageFit, this.imgixBaseUrl) : '',
+  })));
   protected readonly hasIcons = computed(() => this.items().some((i) => !!i.icon));
   /** the section colour as a css colour, for the subtitle line above the title */
   protected readonly accent = computed(() => `var(--ion-color-${ColorsIonic[this.section().color ?? 0]?.name ?? 'primary'})`);

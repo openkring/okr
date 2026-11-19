@@ -12,6 +12,7 @@ export const TILE_TITLE_LENGTH = LONG_NAME_LENGTH;
 export const TILE_TEXT_LENGTH = COMMENT_LENGTH;
 export const TILE_LINK_LABEL_LENGTH = NAME_LENGTH;
 export const TILE_URL_LENGTH = URL_LENGTH;
+export const TILE_IMAGE_URL_LENGTH = URL_LENGTH;
 
 /**
  * Validates one tile in the tile edit modal. Field names are the bare TileItem keys the form binds to.
@@ -24,6 +25,7 @@ export const tileValidations = staticSuite((model: TileItem, variant: TileVarian
   stringValidations('text', model.text ?? '', TILE_TEXT_LENGTH);
   stringValidations('linkLabel', model.linkLabel ?? '', TILE_LINK_LABEL_LENGTH);
   stringValidations('url', model.url ?? '', TILE_URL_LENGTH);
+  stringValidations('imageUrl', model.imageUrl ?? '', TILE_IMAGE_URL_LENGTH);
 
   omitWhen(variant !== 'stat', () => {
     test('value', 'required', () => {

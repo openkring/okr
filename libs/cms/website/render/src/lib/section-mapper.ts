@@ -141,12 +141,31 @@ export function mapCta(raw: unknown, lang: string): PublicCta | undefined {
 export interface PublicTile {
   value: string; icon: string; iconSrc: string; title: string; text: string; url: string; linkLabel: string;
   tone: 'primary' | 'secondary';
+  /** variant 'image': the picture on imgix ('' without one) and how it fits the card */
+  imageSrc: string; imageFit: 'cover' | 'contain';
+}
+
+export type PublicTileVariant = 'stat' | 'card' | 'image';
+
+/** The tiles variant as the website knows it; anything unknown is 'stat' (the historical default). */
+export function mapTileVariant(raw: unknown): PublicTileVariant {
+  return raw === 'card' || raw === 'image' ? raw : 'stat';
+}
+
+/** A stored image path (or https url) as the imgix url of an image tile; '' for anything else. */
+export function tileImageSrc(raw: unknown, fit: 'cover' | 'contain'): string {
+  const path = str(raw).trim();
+  if (!path) return '';
+  const params = fit === 'contain' ? 'w=640&h=480&fit=max&auto=format,compress' : 'w=640&h=480&fit=crop&auto=format,compress';
+  if (/^https:\/\//.test(path)) return `${path}${path.includes('?') ? '&' : '?'}${params}`;
+  if (!/^[A-Za-z0-9][A-Za-z0-9/_. -]*$/.test(path) || path.includes('..')) return '';
+  return `${IMGIX_BASE}/${path.split('/').map(encodeURIComponent).join('/')}?${params}`;
 }
 
 /** Icon names of the icon collection: letters, digits, `-` and `_` (e.g. `rowing_2x_side_front`). */
 const ICON_NAME = /^[a-z0-9_-]+$/i;
 
-export function mapTiles(items: unknown, variant: 'stat' | 'card', lang: string): PublicTile[] {
+export function mapTiles(items: unknown, variant: PublicTileVariant, lang: string): PublicTile[] {
   if (!Array.isArray(items)) return [];
   const out: PublicTile[] = [];
   for (const raw of items as Record<string, unknown>[]) {
@@ -158,11 +177,14 @@ export function mapTiles(items: unknown, variant: 'stat' | 'card', lang: string)
     const rawIcon = str(raw['icon']).trim();
     const icon = ICON_NAME.test(rawIcon) ? rawIcon : '';
     const url = safeSiteUrl(raw['url']);
+    const imageFit = raw['imageFit'] === 'contain' ? 'contain' : 'cover';
     out.push({
       value, title, text, icon, url,
       iconSrc: icon ? `${IMGIX_BASE}/logo/icons/${icon}.svg` : '',
       linkLabel: url ? pickText(str(raw['linkLabel']).trim(), raw['linkLabelI18n'] as I18nString | undefined, lang).trim() : '',
       tone: raw['tone'] === 'secondary' ? 'secondary' : 'primary',
+      imageSrc: variant === 'image' ? tileImageSrc(raw['imageUrl'], imageFit) : '',
+      imageFit,
     });
   }
   return out;
@@ -548,7 +570,7 @@ export function mapSection(
       return { name, ...mapFormSection(id, title, props) };
 
     case 'tiles': {
-      const variant = props['variant'] === 'card' ? 'card' : 'stat';
+      const variant = mapTileVariant(props['variant']);
       const items = mapTiles(props['items'], variant, lang);
       // the subtitle is drawn as the line above the title, in the section colour (`accent`)
       return {

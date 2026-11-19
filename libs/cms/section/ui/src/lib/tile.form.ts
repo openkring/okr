@@ -4,13 +4,13 @@ import {
   IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonRow, IonSelect, IonSelectOption
 } from '@ionic/angular';
 
-import { TILE_TONES, TileItem, TileTone, TileVariant } from '@okr/shared-models';
-import { ErrorNote, IconInput, TextareaInput, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { TILE_IMAGE_FITS, TILE_TONES, TileImageFit, TileItem, TileTone, TileVariant } from '@okr/shared-models';
+import { ErrorNote, IconInput, ImageUrlInput, ImageUrlInputI18n, TextareaInput, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 import {
-  SectionI18n, TILE_LINK_LABEL_LENGTH, TILE_TEXT_LENGTH, TILE_TITLE_LENGTH, TILE_URL_LENGTH, TILE_VALUE_LENGTH, tileValidations
+  SectionI18n, TILE_IMAGE_URL_LENGTH, TILE_LINK_LABEL_LENGTH, TILE_TEXT_LENGTH, TILE_TITLE_LENGTH, TILE_URL_LENGTH, TILE_VALUE_LENGTH, tileValidations
 } from '@okr/cms-section-util';
 
 /**
@@ -23,7 +23,7 @@ import {
   selector: 'okr-tile-form',
   standalone: true,
   imports: [
-    TextInput, TextareaInput, IconInput, ErrorNote, SvgIconPipe,
+    TextInput, TextareaInput, IconInput, ImageUrlInput, ErrorNote, SvgIconPipe,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, IonSelect, IonSelectOption, IonIcon,
   ],
   styles: [`
@@ -108,7 +108,36 @@ import {
               </ion-grid>
             </ion-card-content>
           </ion-card>
+        }
 
+        @if (variant() === 'image') {
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>{{ i18n().tiles_group_image() }}</ion-card-title>
+            </ion-card-header>
+            <ion-card-content class="ion-no-padding">
+              <ion-grid>
+                <ion-row>
+                  <ion-col size="12" size-md="8">
+                    <okr-image-url-input [i18n]="imageUrlI18n()" [value]="imageUrl()" (valueChange)="onFieldChange('imageUrl', $event)"
+                                         [maxLength]="imageUrlLength" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="imageUrlErrors()" />
+                  </ion-col>
+                  <ion-col size="12" size-md="4">
+                    <ion-select [label]="i18n().tiles_imageFit_label()" labelPlacement="stacked" interface="popover"
+                                [value]="imageFit()" [disabled]="isReadOnly()" (ionChange)="onFieldChange('imageFit', $event.detail.value)">
+                      @for (f of imageFits; track f) {
+                        <ion-select-option [value]="f">{{ imageFitLabels()[f] }}</ion-select-option>
+                      }
+                    </ion-select>
+                  </ion-col>
+                </ion-row>
+              </ion-grid>
+            </ion-card-content>
+          </ion-card>
+        }
+
+        @if (variant() !== 'stat') {
           <ion-card>
             <ion-card-header>
               <ion-card-title>{{ i18n().tiles_group_link() }}</ion-card-title>
@@ -165,7 +194,9 @@ export class TileForm {
   protected readonly textLength = TILE_TEXT_LENGTH;
   protected readonly linkLabelLength = TILE_LINK_LABEL_LENGTH;
   protected readonly urlLength = TILE_URL_LENGTH;
+  protected readonly imageUrlLength = TILE_IMAGE_URL_LENGTH;
   protected readonly tones = TILE_TONES;
+  protected readonly imageFits = TILE_IMAGE_FITS;
 
   // fields
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
@@ -176,6 +207,8 @@ export class TileForm {
   protected readonly tone = computed<TileTone>(() => this.formData()?.tone ?? 'primary');
   protected readonly linkLabel = computed(() => this.formData()?.linkLabel ?? '');
   protected readonly url = computed(() => this.formData()?.url ?? '');
+  protected readonly imageUrl = computed(() => this.formData()?.imageUrl ?? '');
+  protected readonly imageFit = computed<TileImageFit>(() => this.formData()?.imageFit ?? 'cover');
 
   // errors
   protected readonly valueErrors = computed(() => this.validationResult().getErrors('value'));
@@ -184,11 +217,16 @@ export class TileForm {
   protected readonly toneErrors = computed(() => this.validationResult().getErrors('tone'));
   protected readonly linkLabelErrors = computed(() => this.validationResult().getErrors('linkLabel'));
   protected readonly urlErrors = computed(() => this.validationResult().getErrors('url'));
+  protected readonly imageUrlErrors = computed(() => this.validationResult().getErrors('imageUrl'));
 
   // i18n
   protected readonly toneLabels = computed<Record<TileTone, string>>(() => ({
     primary: this.i18n().tiles_tone_primary(), secondary: this.i18n().tiles_tone_secondary(),
   }));
+  protected readonly imageFitLabels = computed<Record<TileImageFit, string>>(() => ({
+    cover: this.i18n().tiles_imageFit_cover(), contain: this.i18n().tiles_imageFit_contain(),
+  }));
+  protected readonly imageUrlI18n = computed(() => this.textI18nOf('imageUrl', 'tiles_image_label', 'tiles_image_placeholder', 'tiles_image_helper') as ImageUrlInputI18n);
   protected readonly valueI18n = computed(() => this.textI18nOf('value', 'tiles_value_label', 'tiles_value_placeholder', 'tiles_value_helper'));
   protected readonly captionI18n = computed(() => this.textI18nOf('title', 'tiles_caption_label', 'tiles_caption_placeholder'));
   protected readonly itemTitleI18n = computed(() => this.textI18nOf('title', 'tiles_itemTitle_label', 'tiles_itemTitle_placeholder'));
