@@ -1243,7 +1243,8 @@ service cloud.firestore {
       // only privileged may create a task in someone else's name (spec §2)
       // spec 1.105: no client may create an exit-* id (predictable settlement task id exit-<tenantId>-<membershipKey>); Admin SDK only
       // spec 1.132: the same for the course tasks course-<courseKey>-end / course-<courseKey>-compensation
-      allow create: if tenantCreate() && !id.matches('exit-.*')
+      // spec 1.164: and for the move-notice tasks umzug-<hash> (deterministic id, so a pre-created doc would swallow the notice)
+      allow create: if tenantCreate() && !id.matches('exit-.*') && !id.matches('umzug-.*')
         && !id.matches('course-.*-end') && !id.matches('course-.*-compensation')
         && (isPrivileged() || taskAuthor(request.resource.data));
       // tenantUpdate(): the caller's tenant must be on the stored doc, not just on the new one

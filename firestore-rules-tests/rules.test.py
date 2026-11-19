@@ -1329,6 +1329,13 @@ single_cases = [
      body({"tenants": ["t1"], "isArchived": False, "shareKey": "", "name": "N", "author": {"key": "pE", "name1": "E"}, "state": "planned", "completionDate": ""}), None),
     ("privileged P create tasks/exit-t1-m1 -> DENY (server-only id)", False, POST, "tasks?documentId=exit-t1-m1", P,
      body({"tenants": ["t1"], "isArchived": False, "shareKey": "", "name": "N", "author": {"key": "pE", "name1": "E"}, "state": "planned", "completionDate": ""}), None),
+    # move-notice task ids (spec 1.164): umzug-<hash> is server-only, other ids stay open
+    ("author E create tasks/umzug-abc -> DENY (server-only id)", False, POST, "tasks?documentId=umzug-abc", E,
+     body({"tenants": ["t1"], "isArchived": False, "shareKey": "", "name": "N", "author": {"key": "pE", "name1": "E"}, "state": "planned", "completionDate": ""}), None),
+    ("privileged P create tasks/umzug-abc -> DENY (server-only id)", False, POST, "tasks?documentId=umzug-abc", P,
+     body({"tenants": ["t1"], "isArchived": False, "shareKey": "", "name": "N", "author": {"key": "pE", "name1": "E"}, "state": "planned", "completionDate": ""}), None),
+    ("author E create tasks/plain-random-id -> ALLOW (normal task)", True, POST, "tasks?documentId=plain-random-id", E,
+     body({"tenants": ["t1"], "isArchived": False, "shareKey": "", "name": "N", "author": {"key": "pE", "name1": "E"}, "state": "planned", "completionDate": ""}), None),
     # course task ids (spec 1.132): course-<key>-end / course-<key>-compensation are server-only, too
     ("author E create tasks/course-c1-end -> DENY (server-only id)", False, POST, "tasks?documentId=course-c1-end", E,
      body({"tenants": ["t1"], "isArchived": False, "shareKey": "", "name": "N", "author": {"key": "pE", "name1": "E"}, "state": "planned", "completionDate": ""}), None),
