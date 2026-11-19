@@ -9,6 +9,7 @@ export * from './lib/chip.util';
 export * from './lib/convert.util';
 export * from './lib/country.util';
 export * from './lib/date.util';
+export * from './lib/residence.util';
 export * from './lib/debug.util';
 export * from './lib/dencrypt.util';
 export * from './lib/email.util';

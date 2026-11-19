@@ -24,6 +24,10 @@ export class AddressModel implements OkrModel, TaggedModel {
   public zipCode = '';
   public city = '';
   public countryCode = '';
+  // spec 1.164: a postal row points at a shared register location and carries its residence period (StoreDate, '' = open)
+  public locationKey = DEFAULT_KEY; // → locations (type 'address', tenants ['address-register']); '' = legacy inline address
+  public validFrom = DEFAULT_DATE;  // first day of the residence, '' = since ever
+  public validTo = DEFAULT_DATE;    // last day of the residence, '' = still current
   public url = DEFAULT_URL; // for BankAccount: ezs url; url is also used for all website addresses including social media links or ids
 
   public isFavorite = false;

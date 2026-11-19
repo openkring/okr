@@ -130,6 +130,8 @@ export const DEFAULT_TITLE = '';
 export const DEFAULT_LOCALE = 'de-ch';
 export const DEFAULT_SECTIONS: string[] = [];
 export const DEFAULT_TENANTS: string[] = [];
+/** tenants[] of the shared postal-address register locations (spec 1.164): visible across all tenants, never a deployment */
+export const ADDRESS_REGISTER_TENANT = 'address-register';
 export const DEFAULT_DATE = '';
 export const DEFAULT_DATETIME = '';
 export const DEFAULT_TIME = '';
