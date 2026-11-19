@@ -1,0 +1,91 @@
+import { describe, expect, it } from 'vitest';
+
+import { AddressModel } from '@okr/shared-models';
+
+import { planSwitch } from './residence-switch';
+
+const TODAY = '20270215';
+
+function postal(okey: string, patch: Partial<AddressModel> = {}): AddressModel {
+  const row = new AddressModel('A');
+  row.okey = okey;
+  row.addressChannel = 'postal';
+  row.parentKey = 'person.p1';
+  return Object.assign(row, patch);
+}
+
+describe('planSwitch', () => {
+  it('switch day: promotes the new row, demotes the old', () => {
+    const old = postal('old', { isFavorite: true, validTo: '20270214' });
+    const next = postal('new', { validFrom: '20270215' });
+    expect(planSwitch([old, next], TODAY)).toEqual({ promote: 'new', demote: ['old'] });
+  });
+
+  it('missed night: the new row started days ago, the old favorite is long past', () => {
+    const old = postal('old', { isFavorite: true, validTo: '20270209' });
+    const next = postal('new', { validFrom: '20270210' });
+    expect(planSwitch([old, next], TODAY)).toEqual({ promote: 'new', demote: ['old'] });
+  });
+
+  it('late-reported move: the successor wins over an older current row', () => {
+    const old = postal('old', { isFavorite: true, validTo: '20270209' });
+    const older = postal('older', { validFrom: '20260101' });
+    const next = postal('new', { validFrom: '20270210' });
+    expect(planSwitch([old, older, next], TODAY).promote).toBe('new');
+  });
+
+  it('only a future new row: nothing', () => {
+    const cur = postal('cur', { isFavorite: true, validTo: '20270228' });
+    const next = postal('new', { validFrom: '20270301' });
+    expect(planSwitch([cur, next], TODAY)).toEqual({ promote: undefined, demote: [] });
+  });
+
+  it('move recorded for today and already favorite: nothing', () => {
+    const old = postal('old', { validTo: '20270214' });
+    const next = postal('new', { validFrom: '20270215', isFavorite: true });
+    expect(planSwitch([old, next], TODAY)).toEqual({ promote: undefined, demote: [] });
+  });
+
+  it('no favorite: nothing is invented', () => {
+    expect(planSwitch([postal('a'), postal('b', { validFrom: '20270101' })], TODAY)).toEqual({ promote: undefined, demote: [] });
+  });
+
+  it('past favorite without a current successor: nothing', () => {
+    expect(planSwitch([postal('old', { isFavorite: true, validTo: '20270214' })], TODAY)).toEqual({ promote: undefined, demote: [] });
+  });
+
+  it('two favorites: the current one stays, the other is demoted', () => {
+    const a = postal('a', { isFavorite: true });
+    const b = postal('b', { isFavorite: true, addressUsage: 'work' });
+    expect(planSwitch([a, b], TODAY)).toEqual({ promote: undefined, demote: ['b'] });
+  });
+
+  it('a future favorite is demoted only while a current favorite exists', () => {
+    const cur = postal('cur', { isFavorite: true });
+    const fut = postal('fut', { isFavorite: true, validFrom: '20270301' });
+    expect(planSwitch([cur, fut], TODAY)).toEqual({ promote: undefined, demote: ['fut'] });
+    const past = postal('past', { isFavorite: true, validTo: '20270101' });
+    expect(planSwitch([past, fut], TODAY)).toEqual({ promote: undefined, demote: [] });
+  });
+
+  it('chains per usage: a work move never touches a current home favorite', () => {
+    const home = postal('home', { isFavorite: true, addressUsage: 'home' });
+    const workOld = postal('workOld', { addressUsage: 'work', validTo: '20270214' });
+    const workNew = postal('workNew', { addressUsage: 'work', validFrom: '20270215' });
+    expect(planSwitch([home, workOld, workNew], TODAY)).toEqual({ promote: undefined, demote: [] });
+  });
+
+  it('only same-usage rows take over: a past home favorite ignores the current work row', () => {
+    const old = postal('old', { isFavorite: true, addressUsage: 'home', validTo: '20270214' });
+    const work = postal('work', { addressUsage: 'work' });
+    const home = postal('home', { addressUsage: 'home', validFrom: '20270215' });
+    expect(planSwitch([old, work, home], TODAY).promote).toBe('home');
+    expect(planSwitch([old, work], TODAY).promote).toBeUndefined();
+  });
+
+  it('ignores archived rows', () => {
+    const old = postal('old', { isFavorite: true, validTo: '20270214' });
+    const next = postal('new', { validFrom: '20270215', isArchived: true });
+    expect(planSwitch([old, next], TODAY).promote).toBeUndefined();
+  });
+});

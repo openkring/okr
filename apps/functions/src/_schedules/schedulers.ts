@@ -32,6 +32,7 @@ import { runBillingDailyJob } from '../billing/billing-daily';
 import { stripeSecretKey } from '../collection/stripe-port';
 import { runPostReconcile } from '../pingen/reconcile';
 import { runContactsDavRebuild } from '../contacts-dav/book';
+import { runResidenceSwitch } from '../address/residence-switch';
 import { pingenClientId, pingenClientSecret, pingenOrganisationId } from '../pingen/pingen-client';
 
 const REGION = 'europe-west6';
@@ -51,6 +52,8 @@ export const NIGHTLY_JOBS: NamedJob[] = [
   { name: 'courseEndTasks', run: runCourseEndTasks },
   { name: 'energyFiguresFetch', run: runEnergyFiguresFetch },
   { name: 'webhookStuckCheck', run: runWebhookStuckCheck },
+  // spec 1.164: the new address becomes the favorite on its moving date — before the CardDAV rebuild
+  { name: 'residenceSwitch', run: runResidenceSwitch },
   // spec 1.159: rebuilds a CardDAV book only when due (weekly by default) — one read per tenant otherwise
   { name: 'contactsDavRebuild', run: runContactsDavRebuild },
   // last: the one job that calls an external API per item; it stops itself after RECONCILE_BUDGET_MS (120 s), so it
