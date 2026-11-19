@@ -61,3 +61,6 @@
 [submodule "apps/sc7-website"]
 	path = apps/sc7-website
 	url = git@github.com:bkaiser-org/sc7-website.git
+[submodule "apps/la21staefa-app"]
+	path = apps/la21staefa-app
+	url = git@github.com:bkaiser-org/la21staefa-app.git
