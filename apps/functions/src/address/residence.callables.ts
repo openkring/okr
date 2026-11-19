@@ -218,10 +218,11 @@ export const recordPostalMove = onCall<RecordPostalMoveRequest, Promise<{ reside
     const resolved = await resolveTarget(db, target);
 
     const col = db.collection(AddressCollection);
-    const closed = plan.close ? rows.find((r) => r.okey === plan.close?.okey) : undefined;
+    const closed = plan.from ? rows.find((r) => r.okey === plan.from) : undefined;
     const chainRow = closed ?? rows.find((r) => r.okey === fromKey);
+    const hasPredecessor = plan.close.length > 0;
     // without a predecessor nothing carries a precondition: a deterministic id makes a double submit collide
-    const ref = plan.close ? col.doc() : col.doc(newResidenceId(parentKey, validFrom, resolved.locationKey));
+    const ref = hasPredecessor ? col.doc() : col.doc(newResidenceId(parentKey, validFrom, resolved.locationKey));
     const { okey, ...base } = { ...new AddressModel(parent.tenants[0] ?? '') };   // okey is the document id, never a field
     void okey;
     const doc: Record<string, unknown> = {
@@ -238,14 +239,15 @@ export const recordPostalMove = onCall<RecordPostalMoveRequest, Promise<{ reside
     };
 
     const batch = db.batch();
-    if (plan.close) {
-      const patch: Record<string, unknown> = { validTo: plan.close.validTo };
-      if (plan.demote.includes(plan.close.okey)) patch['isFavorite'] = false;
-      batch.update(col.doc(plan.close.okey), patch, readTime(readAt, plan.close.okey));
+    const closing = new Set(plan.close.map((c) => c.okey));
+    for (const c of plan.close) {
+      const patch: Record<string, unknown> = { validTo: c.validTo };
+      if (plan.demote.includes(c.okey)) patch['isFavorite'] = false;
+      batch.update(col.doc(c.okey), patch, readTime(readAt, c.okey));
     }
-    for (const okey of plan.demote.filter((k) => k !== plan.close?.okey)) batch.update(col.doc(okey), { isFavorite: false }, readTime(readAt, okey));
+    for (const okey of plan.demote.filter((k) => !closing.has(k))) batch.update(col.doc(okey), { isFavorite: false }, readTime(readAt, okey));
     const data = Object.fromEntries(Object.entries(doc).filter(([, v]) => v !== undefined));
-    if (plan.close) {
+    if (hasPredecessor) {
       batch.create(ref, data);
     } else {
       // a first residence: its deterministic id may hold a cancelled (archived) move, which is reused
@@ -262,7 +264,7 @@ export const recordPostalMove = onCall<RecordPostalMoveRequest, Promise<{ reside
       }
     }
     await commit(batch);
-    logger.info(`${fn}: ${parentKey} moves to ${resolved.locationKey} from ${validFrom}`, { residenceKey: ref.id, closed: plan.close?.okey ?? '' });
+    logger.info(`${fn}: ${parentKey} moves to ${resolved.locationKey} from ${validFrom}`, { residenceKey: ref.id, closed: plan.close.map((c) => c.okey).join(',') });
 
     await sendMoveNotices(db, notice('move', parentKey, parent, caller, {
       oldText: closed ? snapshotText(closed) : '',

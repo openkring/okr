@@ -45,12 +45,17 @@ export function usageOf(row: Pick<AddressModel, 'addressUsage'>): string {
   return row.addressUsage || DEFAULT_ADDRESS_USAGE;
 }
 
-/** The active postal row of the same usage that ends the day before `row` starts (the row a move closed). */
+/**
+ * The active postal row of the same usage that ends the day before `row` starts (the row a move closed).
+ * A move closes every open row of its usage, so there can be several: like the server's planCancel,
+ * the favorite wins, then the lowest okey.
+ */
 export function predecessorOf(row: AddressModel, rows: AddressModel[]): AddressModel | undefined {
   if (!row.validFrom) return undefined;
   const end = dayBefore(row.validFrom);
-  return rows.find((r) => r.okey !== row.okey && r.addressChannel === 'postal' && !r.isArchived
+  const candidates = rows.filter((r) => r.okey !== row.okey && r.addressChannel === 'postal' && !r.isArchived
     && usageOf(r) === usageOf(row) && r.validTo === end);
+  return candidates.find((r) => r.isFavorite) ?? [...candidates].sort((a, b) => a.okey.localeCompare(b.okey))[0];
 }
 
 /** What recordPostalMove gets, or why the server would refuse it ('date': not after the open row's start; 'from': a row to move away from is missing). */
@@ -60,8 +65,9 @@ export type MoveCheck =
 
 /**
  * Mirrors the refusals of the server's planMove before anything is written: with a row to move away
- * from, the new date must be after the start of the latest open row of that usage; without one, the
- * parent must have no open postal row at all.
+ * from, the new date must be after the start of the latest open row of that usage (the server closes
+ * every open row of that usage, duplicates included); without one, the parent must have no open
+ * postal row at all.
  */
 export function checkMove(rows: AddressModel[], from: AddressModel | undefined, validFrom: string, addressUsage = DEFAULT_ADDRESS_USAGE): MoveCheck {
   const postal = rows.filter((r) => r.addressChannel === 'postal' && !r.isArchived);

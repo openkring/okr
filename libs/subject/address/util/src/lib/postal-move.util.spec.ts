@@ -123,6 +123,14 @@ describe('predecessorOf', () => {
     const old = { ...postal('a', '', '20270228'), isArchived: true } as AddressModel;
     expect(predecessorOf(postal('b', '20270301'), [old])).toBeUndefined();
   });
+
+  it('several rows closed by one move (duplicates): the favorite, else the lowest okey, like planCancel', () => {
+    const next = postal('n', '20270301');
+    const z = postal('z', '', '20270228');
+    const fav = { ...postal('y', '', '20270228'), isFavorite: true } as AddressModel;
+    expect(predecessorOf(next, [z, fav, next])?.okey).toBe('y');
+    expect(predecessorOf(next, [z, postal('c', '', '20270228'), next])?.okey).toBe('c');
+  });
 });
 
 describe('postalTarget', () => {
@@ -170,6 +178,13 @@ describe('checkMove (mirrors the server planMove refusals)', () => {
   it('takes the usage of the row moved away from, a legacy row being home', () => {
     const legacy = postal('a', '', '', undefined as unknown as string);
     expect(checkMove([legacy], legacy, '20270301')).toEqual({ ok: true, fromResidenceKey: 'a', addressUsage: 'home' });
+  });
+
+  it('two open rows of one usage (duplicates): the date must be after the later start, whichever row was chosen', () => {
+    const mine = postal('a', '20200101');
+    const club = postal('b', '20270301');
+    expect(checkMove([mine, club], mine, '20270301')).toEqual({ ok: false, reason: 'date' });
+    expect(checkMove([mine, club], mine, '20270302')).toEqual({ ok: true, fromResidenceKey: 'a', addressUsage: 'home' });
   });
 
   it('refuses a move without a row to move away from while any postal row is open', () => {

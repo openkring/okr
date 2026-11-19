@@ -22,11 +22,16 @@ const KEY_PATTERN = /^[A-Za-z0-9_-]+$/;
 // ---------------------------------------------------------------------------------------------
 
 export interface MovePlan {
-  /** the open row of the chain the new residence follows; it ends the day before the move */
-  close: { okey: string; validTo: string } | undefined;
+  /**
+   * the row the new residence follows (the old address in the notices, the usage label): the
+   * chosen `fromOkey`, else a favorite, else the latest open row of the chain
+   */
+  from: string | undefined;
+  /** every open row of the chain; each ends the day before the move (`from` among them) */
+  close: { okey: string; validTo: string }[];
   /** the new row is the favorite postal row at once (only when the move is not in the future) */
   newIsFavorite: boolean;
-  /** rows that lose the favorite flag in the same write (only ever the closed row) */
+  /** rows that lose the favorite flag in the same write (only ever closed rows) */
   demote: string[];
   /** the addressUsage of the new row: the chain's usage, else the requested one */
   addressUsage: string;
@@ -41,18 +46,22 @@ const usageOf = (r: AddressModel): string => r.addressUsage || DEFAULT_ADDRESS_U
 
 /**
  * Plans a move to `validFrom` away from the residence `fromOkey`. The chain is every active postal
- * row with the same addressUsage as `fromOkey` (a home move never touches the work address); the
- * row to close is the chain's latest open row (`validTo` empty): an announced future row if there is
- * one, else the current one. `fromOkey` is required as soon as the parent has any open postal row;
- * without one, the new row starts a chain of `addressUsage` (default 'home').
+ * row with the same addressUsage as `fromOkey` (a home move never touches the work address); EVERY
+ * open row of the chain (`validTo` empty, current or announced) is closed the day before the move —
+ * duplicates (e.g. two clubs each recorded a home address) must not survive a move and keep the
+ * favorite. `fromOkey` is required as soon as the parent has any open postal row; without one, the
+ * new row starts a chain of `addressUsage` (default 'home').
+ * The new row becomes the favorite (when the move is not in the future) if any closed row held the
+ * favorite or the parent has none; every closed favorite is then demoted.
  * Refused with `invalid-argument`: a missing or unknown `fromOkey`, and a move that does not start
- * after the start of the row it closes (it would end that row before it began; for an announced
- * move, the user must edit or cancel it first).
+ * after the latest start of an open row of the chain (it would end that row before it began; for an
+ * announced move, the user must edit or cancel it first).
  */
 export function planMove(rows: AddressModel[], validFrom: string, today: string, fromOkey = '', addressUsage = DEFAULT_ADDRESS_USAGE): MovePlan {
   const postal = rows.filter(isPostalResidence);
   let usage = addressUsage || DEFAULT_ADDRESS_USAGE;
-  let toClose: AddressModel | undefined;
+  let toClose: AddressModel[] = [];
+  let follows: AddressModel | undefined;
   if (fromOkey) {
     const from = postal.find((r) => r.okey === fromOkey);
     if (!from) throw new HttpsError('invalid-argument', `fromResidenceKey ${fromOkey} is not an active postal address of this parent`);
@@ -62,20 +71,24 @@ export function planMove(rows: AddressModel[], validFrom: string, today: string,
     if (latest?.validFrom && !isAfterDate(validFrom, latest.validFrom)) {
       throw new HttpsError('invalid-argument', `move date ${validFrom} is not after the start ${latest.validFrom} of the open residence ${latest.okey}`);
     }
-    // several open rows of one usage with the same start: prefer the one the user chose, then the favorite, then the lowest okey
-    const sameStart = open.filter((r) => (r.validFrom ?? '') === (latest?.validFrom ?? ''));
-    toClose = sameStart.find((r) => r.okey === fromOkey) ?? sameStart.find((r) => r.isFavorite) ?? [...sameStart].sort((a, b) => a.okey.localeCompare(b.okey))[0];
+    // the refusal above guarantees every open row of the chain starts before the move (or has no start)
+    toClose = open.filter((r) => !r.validFrom || !isAfterDate(r.validFrom, validFrom));
+    // the row the move follows: the one the user chose, then the favorite, then the latest start, then the lowest okey
+    const latestFirst = [...toClose].sort((a, b) => byValidFrom(b, a) || a.okey.localeCompare(b.okey));
+    follows = toClose.find((r) => r.okey === fromOkey) ?? toClose.find((r) => r.isFavorite) ?? latestFirst[0];
   } else if (postal.some((r) => !r.validTo)) {
     throw new HttpsError('invalid-argument', 'fromResidenceKey is required: choose the address you move away from');
   }
 
   const notInFuture = !isAfterDate(validFrom, today);
   const hasFavorite = postal.some((r) => r.isFavorite);
-  const newIsFavorite = notInFuture && (!!toClose?.isFavorite || !hasFavorite);
+  const closedFavorites = toClose.filter((r) => r.isFavorite).map((r) => r.okey);
+  const newIsFavorite = notInFuture && (closedFavorites.length > 0 || !hasFavorite);
   return {
-    close: toClose ? { okey: toClose.okey, validTo: dayBefore(validFrom) } : undefined,
+    from: follows?.okey,
+    close: toClose.map((r) => ({ okey: r.okey, validTo: dayBefore(validFrom) })),
     newIsFavorite,
-    demote: newIsFavorite && toClose?.isFavorite ? [toClose.okey] : [],
+    demote: newIsFavorite ? closedFavorites : [],
     addressUsage: usage,
   };
 }
