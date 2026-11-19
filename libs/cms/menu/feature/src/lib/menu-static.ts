@@ -1,4 +1,4 @@
-import { afterNextRender, Component, computed, DestroyRef, effect, ElementRef, inject, output, signal, viewChild } from '@angular/core';
+import { afterNextRender, Component, computed, DestroyRef, effect, ElementRef, inject, input, output, signal, viewChild } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonPopover } from '@ionic/angular';
 
@@ -34,7 +34,7 @@ import { MenuStore } from './menu.store';
  * itself. `div.static` has no padding of its own, so its content box is the whole visible block.
  *
  * The account area (connection status, the projection slot, avatar and the «…» popover with
- * `okr-bar-account` and Cookie-Einstellungen) sits at the inline end of the first line, as in
+ * `okr-bar-account` and, when the tenant shows the cookie notice, Cookie-Einstellungen) sits at the inline end of the first line, as in
  * `MenuBar`; that popover has no `dismissOnSelect` for the same reason (see `MenuBar`).
  */
 @Component({
@@ -167,9 +167,11 @@ import { MenuStore } from './menu.store';
             <ion-content>
               <ion-list>
                 <okr-bar-account [rootItems]="store.menu()?.menuItems" />
-                <ion-item lines="none" button detail="false" (click)="openCookieSettings(accountPopover)">
-                  <ion-label color="medium" style="font-size: 13px;">{{ store.i18n.bar_cookie_settings() }}</ion-label>
-                </ion-item>
+                @if (showCookieSettings()) {
+                  <ion-item lines="none" button detail="false" (click)="openCookieSettings(accountPopover)">
+                    <ion-label color="medium" style="font-size: 13px;">{{ store.i18n.bar_cookie_settings() }}</ion-label>
+                  </ion-item>
+                }
               </ion-list>
             </ion-content>
           </ng-template>
@@ -204,6 +206,8 @@ export class MenuStatic {
 
   /** The avatar was tapped: the shell opens the profile. */
   public readonly profileClicked = output<void>();
+  /** Show Cookie-Einstellungen — only when the tenant shows the cookie notice (`app-config.cookieBannerEnabled`). */
+  public readonly showCookieSettings = input(false);
   /** The Cookie-Einstellungen entry was tapped: the shell reopens the consent banner. */
   public readonly cookieSettingsClicked = output<void>();
 
