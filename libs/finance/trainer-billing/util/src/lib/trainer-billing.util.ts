@@ -180,11 +180,9 @@ function sum(values: number[]): number {
 /** Fills `{yyyy}`, `{yy}`, `{mm}` (two digits) and `{n}` (unpadded) of the template for `month` (YYYY-MM). */
 export function formatInvoiceNo(template: string, month: string, n: number): string {
   const [yyyy, mm] = month.split('-');
-  return template
-    .replaceAll('{yyyy}', yyyy)
-    .replaceAll('{yy}', yyyy.slice(-2))
-    .replaceAll('{mm}', mm.padStart(2, '0'))
-    .replaceAll('{n}', String(n));
+  // split/join, not replaceAll: the functions program compiles against a pre-ES2021 lib
+  const fill = (text: string, token: string, value: string): string => text.split(token).join(value);
+  return fill(fill(fill(fill(template, '{yyyy}', yyyy), '{yy}', yyyy.slice(-2)), '{mm}', mm.padStart(2, '0')), '{n}', String(n));
 }
 
 /** True when the template consumes the per-trainer counter `nextNumber`. */
@@ -302,7 +300,7 @@ function longDateDe(storeDate: string): string {
 }
 
 /** `2026-07` → `Juli 2026`. */
-function monthTitleDe(month: string): string {
+export function monthTitleDe(month: string): string {
   const [yyyy, mm] = month.split('-');
   return `${MONTH_NAMES_DE[Number(mm) - 1]} ${yyyy}`;
 }

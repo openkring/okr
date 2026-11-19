@@ -9,7 +9,8 @@
     invoiceNo, invoiceDateText, dueDateText, ourRef, monthTitle,
     rows[{ dateText, service, quantityText, rateText, amountText }],
     subtotalText, totalText, vatLine?{ label, amountText, vatNumber } | vatNote?,
-    bankName, iban, ibanText, closingText, amount + qrMessage (QR slip only).
+    bankName ('' = IBAN only), iban, ibanText, closingText, amount + qrMessage (QR slip only),
+    draft (preview only: the «Entwurf» watermark).
   The page is laid out on the bare sheet (@page margin 0): render with options.margin all '0'.
   The recipient sits in the right window of a C5 window envelope (37 mm from the top, 7 mm from the right).
 --}}
@@ -20,6 +21,7 @@
 </head>
 <body>
 <div class="page">
+  {{#if draft}}<div class="watermark">Entwurf</div>{{/if}}
   <header class="sender">
     {{#if logoUrl}}
       <img class="logo" src="{{logoUrl}}" alt="{{senderName}}">
@@ -80,7 +82,7 @@
     {{else}}
       <div>{{vatNote}}</div>
     {{/if}}
-    <div class="bank"><span>{{bankName}}</span><span>IBAN {{ibanText}}</span></div>
+    <div class="bank">{{#if bankName}}<span class="bank-name">{{bankName}}</span>{{/if}}<span>IBAN {{ibanText}}</span></div>
     {{#if closingText}}<p class="closing">{{closingText}}</p>{{/if}}
   </footer>
 </div>

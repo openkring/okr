@@ -3,7 +3,7 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 
 import { BillCollection } from '@okr/shared-models';
-import { resolvePaymentAccountKey } from '@okr/finance-bill-util';
+import { isBillVoucherKey, resolvePaymentAccountKey } from '@okr/finance-bill-util';
 import { projectKeyForLine } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, isBalanced } from '@okr/shared-util-functions';
 
@@ -108,7 +108,7 @@ export const bookBill = onCall(
         tenants, accountingTenantId, isArchived: false,
         title, date: billDate, notes: '', tags: 'bill', index: billBookingIndex(billDate, bookingNo, title),
         bookingNo, status: 'posted', periodKey: periodKeyFor(accountingTenantId, billDate, fiscalYearStart),
-        documentKeys: ((bill['attachments'] as string[] | undefined) ?? []).filter((a) => a.startsWith('bexio-file-') || a.startsWith('bill-')),
+        documentKeys: ((bill['attachments'] as string[] | undefined) ?? []).filter(isBillVoucherKey),
         counterparty: bill['vendor'] ?? null,
       }));
       bookingLines.forEach((line, i) => {

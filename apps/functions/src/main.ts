@@ -163,6 +163,9 @@ export const onGroupDocWritten = Group.onGroupDocWritten;
 export const onCourseDocWritten = Course.onCourseDocWritten;
 // requestCourseCompensation: a responsible person asks for the trainers' compensation of a locked course → forReview bookings + treasurer task (spec 1.132 §7.6)
 export const requestCourseCompensation = Course.requestCourseCompensation;
+// Trainer-Abrechnung (spec 1.167 §7.4): previewTrainerInvoice renders the draft PDF; sendTrainerInvoice prices the month,
+// writes the trainer invoice + draft bill (native books) and tasks the treasurer; downloadTrainerInvoice serves the sent PDF
+export { previewTrainerInvoice, sendTrainerInvoice, downloadTrainerInvoice } from './trainer-billing';
 // courseAnswer: the page behind the personal course invitation link — an invited applicant answers without login (spec 1.152 §8.3)
 export const courseAnswer = Course.courseAnswer;
 // listCourseApplicants: the applicants a course manager may invite, filtered by D7 (name, type, age, course, state only) (spec 1.152 §8.1, §11)

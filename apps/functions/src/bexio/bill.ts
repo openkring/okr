@@ -5,6 +5,7 @@ import axios from 'axios';
 import * as admin from 'firebase-admin';
 
 import { FinanceDocumentCollection } from '@okr/shared-models';
+import { isBillVoucherKey } from '@okr/finance-bill-util';
 import { addDuration, getTodayStr, DateFormat } from '@okr/shared-util-core';
 
 import { bexioApiKey, bexioTenantId, BEXIO_BASE_V4 } from './shared';
@@ -131,7 +132,7 @@ export async function handleShowBillPdf(request: CallableRequest<{ attachmentId:
   await checkRoles(request as never, CF_NAME, ['treasurer', 'privileged']);
 
   // migrated from bexio (spec 1.68): bill.attachments now hold finance-documents okeys
-  if (attachmentId.startsWith('bexio-file-') || attachmentId.startsWith('bill-')) {
+  if (isBillVoucherKey(attachmentId)) {
     const tenantId = await getCallerTenantId(request as never, CF_NAME);
     const doc = (await admin.firestore().collection(FinanceDocumentCollection).doc(attachmentId).get()).data();
     const local = await readFinanceDocument(admin.firestore(), privateBucket(), attachmentId, [tenantId]);

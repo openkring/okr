@@ -101,6 +101,11 @@ describe('billVoucherKeys', () => {
     expect(billVoucherKeys(b)).toEqual(['bill-b1', 'bexio-file-1']);
   });
 
+  it('keeps the PDF of a trainer invoice (trainer-invoice-<key>, spec 1.167)', () => {
+    const b = Object.assign(newBill('scs'), { attachments: ['trainer-invoice-a1_202607', '3f2a-uuid'] });
+    expect(billVoucherKeys(b)).toEqual(['trainer-invoice-a1_202607']);
+  });
+
   it('is empty without attachments or without a bill', () => {
     expect(billVoucherKeys(Object.assign(newBill('scs'), { attachments: undefined }))).toEqual([]);
     expect(billVoucherKeys(undefined)).toEqual([]);

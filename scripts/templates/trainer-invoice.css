@@ -159,11 +159,27 @@ body {
   break-inside: avoid;
 }
 
-.bank span:first-child {
+.bank .bank-name {
   display: inline-block;
   min-width: 70mm;
 }
 
 .closing {
   margin: 6mm 0 0 0;
+}
+
+/* ---- Preview only: «Entwurf» across the page (payload.draft) ---- */
+.watermark {
+  position: absolute;
+  top: 120mm;
+  left: 0;
+  width: 210mm;
+  text-align: center;
+  font-size: 96pt;
+  font-weight: 700;
+  letter-spacing: 4mm;
+  color: rgba(200, 0, 0, 0.12);
+  transform: rotate(-30deg);
+  pointer-events: none;
+  z-index: 10;
 }
