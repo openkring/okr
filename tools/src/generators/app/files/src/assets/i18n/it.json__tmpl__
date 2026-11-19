@@ -23,6 +23,51 @@
       "conf": "La vCard è stata esportata.",
       "error": "Esportazione fallita.",
       "notAllowed": "Nessuna autorizzazione per l'esportazione."
+    },
+    "import": {
+      "label": "Importa vCard",
+      "title": "Importazione vCard",
+      "intro": "Controlla le schede trovate e scegli che cosa acquisire.",
+      "status": {
+        "new": "Nuovo",
+        "duplicate": "Già presente"
+      },
+      "action": {
+        "import": "Acquisisci",
+        "merge": "Unisci",
+        "skip": "Salta",
+        "createAnyway": "Crea comunque"
+      },
+      "create": {
+        "org": "Crea «{name}»",
+        "person": "Crea «{name}»"
+      },
+      "link": {
+        "none": "Non collegare"
+      },
+      "notes": {
+        "label": "Note",
+        "header": "--- Importazione vCard {date} · {file} ---",
+        "truncated": "… (accorciato)",
+        "notImported": "({size} kB, non acquisito)"
+      },
+      "summary": "{imported} acquisiti, {merged} uniti, {skipped} saltati, {failed} non riusciti.",
+      "noCards": "In questo file non abbiamo trovato nessuna scheda.",
+      "notAllowed": "Nessuna autorizzazione per l’importazione.",
+      "running": "Importazione in corso … ({done}/{total})",
+      "start": "Avvia importazione",
+      "skippedCards": "{count} schede non sono state lette e verranno saltate.",
+      "warning": {
+        "unknownUsage": "Il tipo «{type}» in «{channel}» è sconosciuto — la voce viene acquisita come «{usage}».",
+        "unknownCountry": "Non conosciamo il paese «{name}» — l’indirizzo riceve per ora «{fallback}».",
+        "badDate": "«{value}» in {property} non è una data valida — il valore resta solo nelle note.",
+        "noName": "Una scheda senza nome è stata saltata.",
+        "unterminated": "Una scheda incompleta alla fine del file è stata saltata.",
+        "sensitiveDropped": "{property} non è stato acquisito perché contiene probabilmente dati particolarmente sensibili.",
+        "notesTruncated": "La nota era troppo lunga ed è stata accorciata dopo {limit} caratteri.",
+        "photoFormat": "L’immagine in {property} non è stata letta e non è stata acquisita.",
+        "photoFailed": "La foto di {name} non è stata salvata."
+      }
     }
   },
   "account": "Conto",
@@ -242,10 +287,10 @@
     "cancelled": "Annullato",
     "carriage": "Carrozza",
     "cgig": "CGIG",
-    "club": "Club",
     "club": "Eventi del club",
     "comment": "Commento",
     "culture": "Cultura",
+    "diary": "Diario",
     "document": "Documento",
     "draft": "Bozza",
     "edurebate": "Sconto formazione",
@@ -474,7 +519,38 @@
     "amountRequired": "L'importo deve essere maggiore di 0.",
     "amountMax": "L'importo è troppo grande.",
     "currencyRequired": "La valuta è obbligatoria.",
-    "currencyInvalid": "Valuta non valida."
+    "currencyInvalid": "Valuta non valida.",
+    "weatherVariant": "Scegli quale widget meteo vuoi mostrare.",
+    "weatherLocationRequired": "Scegli un luogo — oppure indicane uno sulla pagina e il widget lo userà.",
+    "energyLocationRequired": "Scegli un comune.",
+    "energyCompareCount": "Confronta al massimo 4 altri comuni. Il comune principale non può essere confrontato con se stesso.",
+    "weatherLocationCount": "Questo numero di luoghi non va bene per la mappa — la nota accanto al campo ti indica l’intervallo consentito.",
+    "weatherDaysRange": "Il numero di giorni è fuori dall’intervallo consentito.",
+    "departuresLimitRange": "Mostra tra 1 e 20 partenze.",
+    "departuresWalkRange": "Il tragitto a piedi deve essere tra 0 e 60 minuti.",
+    "avatarFormat": "Il formato dell'immagine non è valido.",
+    "duplicate": "Il valore non deve contenere voci duplicate.",
+    "empty": "Il valore deve contenere almeno una voce.",
+    "invalidDate": "La data non è valida.",
+    "invalidDateTime": "La data e l'ora non sono valide.",
+    "invalidTime": "L'ora non è valida.",
+    "moneyFormat": "L'importo non è valido.",
+    "notBoolean": "Il valore deve essere sì o no.",
+    "notInteger": "Il valore deve essere un numero intero.",
+    "tooLarge": "Il valore è troppo grande.",
+    "bankRule": {
+      "condition": {
+        "invalid": "La condizione non è valida."
+      },
+      "term": {
+        "regexInvalid": "L'espressione regolare non è valida."
+      }
+    },
+    "bankProfile": {
+      "format": {
+        "invalid": "Il formato bancario non è valido."
+      }
+    }
   },
   "appUpdate": {
     "header": "Aggiornamento disponibile",

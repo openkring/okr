@@ -23,6 +23,51 @@
       "conf": "vCard wurde exportiert.",
       "error": "Export fehlgeschlagen.",
       "notAllowed": "Keine Berechtigung zum Export."
+    },
+    "import": {
+      "label": "vCard importieren",
+      "title": "vCard-Import",
+      "intro": "Prüfe die gefundenen Karten und wähle, was übernommen werden soll.",
+      "status": {
+        "new": "Neu",
+        "duplicate": "Bereits vorhanden"
+      },
+      "action": {
+        "import": "Übernehmen",
+        "merge": "Zusammenführen",
+        "skip": "Überspringen",
+        "createAnyway": "Trotzdem neu anlegen"
+      },
+      "create": {
+        "org": "«{name}» neu anlegen",
+        "person": "«{name}» neu anlegen"
+      },
+      "link": {
+        "none": "Nicht verknüpfen"
+      },
+      "notes": {
+        "label": "Notizen",
+        "header": "--- vCard-Import {date} · {file} ---",
+        "truncated": "… (gekürzt)",
+        "notImported": "({size} kB, nicht übernommen)"
+      },
+      "summary": "{imported} übernommen, {merged} zusammengeführt, {skipped} übersprungen, {failed} fehlgeschlagen.",
+      "noCards": "In dieser Datei haben wir keine Karten gefunden.",
+      "notAllowed": "Keine Berechtigung zum Import.",
+      "running": "Import läuft … ({done}/{total})",
+      "start": "Import starten",
+      "skippedCards": "{count} Karten konnten nicht gelesen werden und werden übersprungen.",
+      "warning": {
+        "unknownUsage": "Der Typ «{type}» bei «{channel}» ist unbekannt — der Eintrag wird als «{usage}» übernommen.",
+        "unknownCountry": "Das Land «{name}» kennen wir nicht — die Adresse bekommt vorerst «{fallback}».",
+        "badDate": "«{value}» bei {property} ist kein gültiges Datum — der Wert steht nur in den Notizen.",
+        "noName": "Eine Karte ohne Namen wurde übersprungen.",
+        "unterminated": "Eine unvollständige Karte am Dateiende wurde übersprungen.",
+        "sensitiveDropped": "{property} wurde nicht übernommen, weil darin vermutlich besonders schützenswerte Daten stehen.",
+        "notesTruncated": "Die Notiz war zu lang und wurde nach {limit} Zeichen gekürzt.",
+        "photoFormat": "Das Bild in {property} konnte nicht gelesen werden und wurde nicht übernommen.",
+        "photoFailed": "Das Foto von {name} konnte nicht gespeichert werden."
+      }
     }
   },
   "account": "Konto",
@@ -242,10 +287,10 @@
     "cancelled": "Abgesagt",
     "carriage": "Kutsche",
     "cgig": "CGIG",
-    "club": "Club",
     "club": "Anlässe",
     "comment": "Kommentar",
     "culture": "Kultur",
+    "diary": "Tagebuch",
     "document": "Dokument",
     "draft": "Entwurf",
     "edurebate": "Ausbildungsrabatt",
@@ -474,7 +519,38 @@
     "amountRequired": "Betrag muss grösser als 0 sein.",
     "amountMax": "Betrag ist zu gross.",
     "currencyRequired": "Währung ist erforderlich.",
-    "currencyInvalid": "Ungültige Währung."
+    "currencyInvalid": "Ungültige Währung.",
+    "weatherVariant": "Wähle aus, welches Wetter-Widget angezeigt werden soll.",
+    "weatherLocationRequired": "Wähle einen Ort aus — oder hinterlege einen Ort auf der Seite, dann übernimmt ihn das Widget.",
+    "energyLocationRequired": "Wähle eine Gemeinde aus.",
+    "energyCompareCount": "Vergleiche höchstens 4 weitere Gemeinden. Die Gemeinde oben kannst du nicht mit sich selbst vergleichen.",
+    "weatherLocationCount": "Die Anzahl der gewählten Orte passt nicht für die Karte — der Hinweis beim Feld nennt dir die erlaubte Spanne.",
+    "weatherDaysRange": "Die Anzahl der Tage liegt ausserhalb des erlaubten Bereichs.",
+    "departuresLimitRange": "Zeige zwischen 1 und 20 Abfahrten.",
+    "departuresWalkRange": "Der Fussweg liegt zwischen 0 und 60 Minuten.",
+    "avatarFormat": "Das Bildformat ist ungültig.",
+    "duplicate": "Der Wert darf keine doppelten Einträge enthalten.",
+    "empty": "Der Wert muss mindestens einen Eintrag enthalten.",
+    "invalidDate": "Das Datum ist ungültig.",
+    "invalidDateTime": "Datum und Zeit sind ungültig.",
+    "invalidTime": "Die Zeit ist ungültig.",
+    "moneyFormat": "Der Betrag ist ungültig.",
+    "notBoolean": "Der Wert muss Ja oder Nein sein.",
+    "notInteger": "Der Wert muss eine ganze Zahl sein.",
+    "tooLarge": "Der Wert ist zu gross.",
+    "bankRule": {
+      "condition": {
+        "invalid": "Die Bedingung ist ungültig."
+      },
+      "term": {
+        "regexInvalid": "Der reguläre Ausdruck ist ungültig."
+      }
+    },
+    "bankProfile": {
+      "format": {
+        "invalid": "Das Bankformat ist ungültig."
+      }
+    }
   },
   "appUpdate": {
     "header": "Update verfügbar",

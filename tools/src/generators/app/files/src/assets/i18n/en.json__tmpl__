@@ -23,6 +23,51 @@
       "conf": "vCard was exported.",
       "error": "Export failed.",
       "notAllowed": "No permission to export."
+    },
+    "import": {
+      "label": "Import vCard",
+      "title": "vCard Import",
+      "intro": "Check the cards we found and choose what to take over.",
+      "status": {
+        "new": "New",
+        "duplicate": "Already there"
+      },
+      "action": {
+        "import": "Take over",
+        "merge": "Merge",
+        "skip": "Skip",
+        "createAnyway": "Create anyway"
+      },
+      "create": {
+        "org": "Create «{name}»",
+        "person": "Create «{name}»"
+      },
+      "link": {
+        "none": "Do not link"
+      },
+      "notes": {
+        "label": "Notes",
+        "header": "--- vCard import {date} · {file} ---",
+        "truncated": "… (shortened)",
+        "notImported": "({size} kB, not imported)"
+      },
+      "summary": "{imported} imported, {merged} merged, {skipped} skipped, {failed} failed.",
+      "noCards": "We did not find any cards in this file.",
+      "notAllowed": "No permission to import.",
+      "running": "Import running … ({done}/{total})",
+      "start": "Start import",
+      "skippedCards": "{count} cards could not be read and will be skipped.",
+      "warning": {
+        "unknownUsage": "The type «{type}» on «{channel}» is unknown — the entry is taken over as «{usage}».",
+        "unknownCountry": "We do not know the country «{name}» — the address gets «{fallback}» for now.",
+        "badDate": "«{value}» on {property} is not a valid date — the value is only kept in the notes.",
+        "noName": "A card without a name was skipped.",
+        "unterminated": "An incomplete card at the end of the file was skipped.",
+        "sensitiveDropped": "{property} was not taken over because it probably holds particularly sensitive data.",
+        "notesTruncated": "The note was too long and was shortened after {limit} characters.",
+        "photoFormat": "The image in {property} could not be read and was not taken over.",
+        "photoFailed": "The photo of {name} could not be saved."
+      }
     }
   },
   "account": "Account",
@@ -242,10 +287,10 @@
     "cancelled": "Cancelled",
     "carriage": "Carriage",
     "cgig": "CGIG",
-    "club": "Club",
     "club": "Club events",
     "comment": "Comment",
     "culture": "Culture",
+    "diary": "Diary",
     "document": "Document",
     "draft": "Draft",
     "edurebate": "Education discount",
@@ -474,7 +519,38 @@
     "amountRequired": "Amount must be greater than 0.",
     "amountMax": "Amount is too large.",
     "currencyRequired": "Currency is required.",
-    "currencyInvalid": "Invalid currency."
+    "currencyInvalid": "Invalid currency.",
+    "weatherVariant": "Choose which weather widget you want to show.",
+    "weatherLocationRequired": "Pick a location — or set one on the page and the widget will use that.",
+    "energyLocationRequired": "Pick a municipality.",
+    "energyCompareCount": "Compare at most 4 other municipalities. The main municipality cannot be compared with itself.",
+    "weatherLocationCount": "That number of locations does not work for the map — the hint next to the field tells you the allowed range.",
+    "weatherDaysRange": "The number of days is outside the allowed range.",
+    "departuresLimitRange": "Show between 1 and 20 departures.",
+    "departuresWalkRange": "The walk must be between 0 and 60 minutes.",
+    "avatarFormat": "The image format is invalid.",
+    "duplicate": "The value must not contain duplicate entries.",
+    "empty": "The value must contain at least one entry.",
+    "invalidDate": "The date is invalid.",
+    "invalidDateTime": "The date and time are invalid.",
+    "invalidTime": "The time is invalid.",
+    "moneyFormat": "The amount is invalid.",
+    "notBoolean": "The value must be yes or no.",
+    "notInteger": "The value must be a whole number.",
+    "tooLarge": "The value is too large.",
+    "bankRule": {
+      "condition": {
+        "invalid": "The condition is invalid."
+      },
+      "term": {
+        "regexInvalid": "The regular expression is invalid."
+      }
+    },
+    "bankProfile": {
+      "format": {
+        "invalid": "The bank format is invalid."
+      }
+    }
   },
   "appUpdate": {
     "header": "Update available",

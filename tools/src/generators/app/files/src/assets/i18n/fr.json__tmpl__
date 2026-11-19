@@ -23,6 +23,51 @@
       "conf": "La vCard a été exportée.",
       "error": "L'export a échoué.",
       "notAllowed": "Aucune autorisation pour l'export."
+    },
+    "import": {
+      "label": "Importer une vCard",
+      "title": "Import vCard",
+      "intro": "Vérifie les cartes trouvées et choisis ce qui doit être repris.",
+      "status": {
+        "new": "Nouveau",
+        "duplicate": "Déjà présent"
+      },
+      "action": {
+        "import": "Reprendre",
+        "merge": "Fusionner",
+        "skip": "Ignorer",
+        "createAnyway": "Créer quand même"
+      },
+      "create": {
+        "org": "Créer «{name}»",
+        "person": "Créer «{name}»"
+      },
+      "link": {
+        "none": "Ne pas lier"
+      },
+      "notes": {
+        "label": "Notes",
+        "header": "--- Import vCard {date} · {file} ---",
+        "truncated": "… (raccourci)",
+        "notImported": "({size} kB, non repris)"
+      },
+      "summary": "{imported} repris, {merged} fusionnés, {skipped} ignorés, {failed} échoués.",
+      "noCards": "Nous n’avons trouvé aucune carte dans ce fichier.",
+      "notAllowed": "Aucune autorisation pour l’import.",
+      "running": "Import en cours … ({done}/{total})",
+      "start": "Démarrer l’import",
+      "skippedCards": "{count} cartes n’ont pas pu être lues et seront ignorées.",
+      "warning": {
+        "unknownUsage": "Le type «{type}» sur «{channel}» est inconnu — l’entrée est reprise comme «{usage}».",
+        "unknownCountry": "Nous ne connaissons pas le pays «{name}» — l’adresse reçoit «{fallback}» pour l’instant.",
+        "badDate": "«{value}» sur {property} n’est pas une date valable — la valeur reste uniquement dans les notes.",
+        "noName": "Une carte sans nom a été ignorée.",
+        "unterminated": "Une carte incomplète en fin de fichier a été ignorée.",
+        "sensitiveDropped": "{property} n’a pas été repris, car il contient probablement des données particulièrement sensibles.",
+        "notesTruncated": "La note était trop longue et a été raccourcie après {limit} caractères.",
+        "photoFormat": "L’image dans {property} n’a pas pu être lue et n’a pas été reprise.",
+        "photoFailed": "La photo de {name} n’a pas pu être enregistrée."
+      }
     }
   },
   "account": "Compte",
@@ -242,10 +287,10 @@
     "cancelled": "Annulé",
     "carriage": "Attelage",
     "cgig": "CGIG",
-    "club": "Club",
     "club": "Événements du club",
     "comment": "Commentaire",
     "culture": "Culture",
+    "diary": "Journal",
     "document": "Document",
     "draft": "Brouillon",
     "edurebate": "Rabais de formation",
@@ -474,7 +519,38 @@
     "amountRequired": "Le montant doit être supérieur à 0.",
     "amountMax": "Le montant est trop grand.",
     "currencyRequired": "La devise est obligatoire.",
-    "currencyInvalid": "Devise invalide."
+    "currencyInvalid": "Devise invalide.",
+    "weatherVariant": "Choisis le widget météo que tu veux afficher.",
+    "weatherLocationRequired": "Choisis un lieu — ou indique un lieu sur la page, le widget le reprendra.",
+    "energyLocationRequired": "Choisis une commune.",
+    "energyCompareCount": "Compare au maximum 4 autres communes. La commune principale ne peut pas être comparée avec elle-même.",
+    "weatherLocationCount": "Ce nombre de lieux ne convient pas à la carte — l’indication à côté du champ te donne la plage autorisée.",
+    "weatherDaysRange": "Le nombre de jours est en dehors de la plage autorisée.",
+    "departuresLimitRange": "Affiche entre 1 et 20 départs.",
+    "departuresWalkRange": "Le trajet à pied doit être compris entre 0 et 60 minutes.",
+    "avatarFormat": "Le format de l'image n'est pas valide.",
+    "duplicate": "La valeur ne doit pas contenir d'entrées en double.",
+    "empty": "La valeur doit contenir au moins une entrée.",
+    "invalidDate": "La date n'est pas valide.",
+    "invalidDateTime": "La date et l'heure ne sont pas valides.",
+    "invalidTime": "L'heure n'est pas valide.",
+    "moneyFormat": "Le montant n'est pas valide.",
+    "notBoolean": "La valeur doit être oui ou non.",
+    "notInteger": "La valeur doit être un nombre entier.",
+    "tooLarge": "La valeur est trop grande.",
+    "bankRule": {
+      "condition": {
+        "invalid": "La condition est invalide."
+      },
+      "term": {
+        "regexInvalid": "L'expression régulière est invalide."
+      }
+    },
+    "bankProfile": {
+      "format": {
+        "invalid": "Le format bancaire est invalide."
+      }
+    }
   },
   "appUpdate": {
     "header": "Mise à jour disponible",
