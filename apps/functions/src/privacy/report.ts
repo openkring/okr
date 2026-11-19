@@ -73,6 +73,7 @@ export const COLLECTION_LABELS: Record<string, string> = {
   passkeys: 'Passkeys', // libs/auth/util auth-i18n: the profile accordion title
   avatars: 'Avatare', // libs/avatar/ui/src/i18n/de.json: avatars.title
   addresses: 'Adressen', // libs/subject/address/feature/src/i18n/de.json: addresses
+  locations: 'Wohnorte (Adressregister)', // spec 1.164: register locations linked from the postal address rows
   carddavTokens: 'Passwort für das Adressbuch auf Mac und iPhone', // spec 1.159
   'contactsDavBooks/cards': 'Adressbuch auf Mac und iPhone', // spec 1.159: the rendered lookup card
   memberships: 'Mitgliedschaften',

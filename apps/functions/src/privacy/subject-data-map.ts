@@ -1,5 +1,6 @@
 import { FieldPath, Filter, getFirestore } from 'firebase-admin/firestore';
 import type { DocumentSnapshot, QueryDocumentSnapshot } from 'firebase-admin/firestore';
+import { ADDRESS_REGISTER_TENANT } from '@okr/shared-constants';
 import { ContractModel, CourseFinanceSubcollection, CourseModel, LegacyMemberFeeCollection, MemberFeeCollection, PROSPECT_PARENT_PREFIX } from '@okr/shared-models';
 import type { AvatarInfo } from '@okr/shared-models';
 import { getContractIndex } from '@okr/business-contract-util';
@@ -385,6 +386,33 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     tenantScope: 'tenantsArray',
     onExport: 'none',
     onErasure: 'delete',
+    retention: KEEP_WHILE_MEMBER,
+  },
+
+  {
+    // Spec 1.164: a postal address of a person is a register location (`tenants: ['address-register']`,
+    // keyed by EGAID, coordinates). It is a HOME address, reachable only through the subject's own
+    // vault rows (`addresses.locationKey`). Club venues (any other `tenants`) are not personal data
+    // and are filtered out by `matches`. The document is shared by every household at that address
+    // and carries no name, so erasure retains it: the person-to-place link is the vault row, which
+    // the `addresses` row erases. An orphaned register location is public geographic data.
+    collection: 'locations',
+    dataClass: 'contact',
+    tier: 'T1',
+    onTenantExit: 'retain',   // shared register document; the link (vault row) is detached/erased by the addresses row
+    find: (c: SubjectCtx) => db().collection('locations').where('tenants', 'array-contains', ADDRESS_REGISTER_TENANT),   // over-fetches: use resolve
+    resolve: async (c: SubjectCtx) => {
+      const own = await db().collection('addresses').where('parentKey', '==', c.parentKey).get();
+      const keys = [...new Set(own.docs
+        .filter((d) => d.get('addressChannel') === 'postal')
+        .map((d) => (d.get('locationKey') as string | undefined) ?? '')
+        .filter((k) => k !== ''))];
+      return keys.length === 0 ? [] : docsByIds('locations', keys);
+    },
+    tenantScope: 'none',
+    matches: (d: DocumentSnapshot) => ((d.get('tenants') as string[] | undefined) ?? []).includes(ADDRESS_REGISTER_TENANT),
+    onExport: 'full',
+    onErasure: 'retain',
     retention: KEEP_WHILE_MEMBER,
   },
 
@@ -1930,7 +1958,6 @@ export async function resolveArrayItemDocs(entry: SubjectDataEntry, ctx: Subject
 // not personal data: i18nDefault — translation keys and default texts
 // not personal data: i18nTenantOverride — per-tenant translation overrides
 // not personal data: icons — icon catalogue
-// not personal data: locations — geographic places (name, coordinates, address of a venue)
 // not personal data: menuItems — navigation configuration
 // not personal data: ocr-rules — vendor→account mapping rules
 // not personal data: orgs — legal entities, not natural persons. A sole proprietorship
