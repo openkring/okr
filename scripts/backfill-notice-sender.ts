@@ -9,8 +9,11 @@
  * checked by `effectiveSender` against the tenant's sending domain (falling back to the tenant's
  * sender), then reduced to the bare address by `noticeSenderOf`.
  *
+ * NOTICES WITHOUT A VERSAND (imported mails, ids `scs-mail-*`): skipped, unless `--orphans=<address>` names
+ * the From address to give them (run 2026-11-19 with `--orphans=kommunikation@seeclub.org` for scs).
+ *
  * SAFETY: `senderName` is the ONLY field written. A notice without a readable Versand is reported and
- * skipped. A notice that already has the right value is skipped. Batches of 400.
+ * skipped (see above). A notice that already has the right value is skipped. Batches of 400.
  * The old values are printed per notice, so the run log is the undo record.
  *
  * Usage (bundled first: the repo runs .ts scripts as ESM, where extension-less imports fail):
@@ -18,6 +21,7 @@
  *     --format=cjs --outfile=dist/scripts/backfill-notice-sender.cjs
  *   node dist/scripts/backfill-notice-sender.cjs            # dry run
  *   node dist/scripts/backfill-notice-sender.cjs --apply
+ *   node dist/scripts/backfill-notice-sender.cjs --orphans=kommunikation@seeclub.org --apply
  *
  * Requires: gcloud auth application-default login (or GOOGLE_APPLICATION_CREDENTIALS).
  */
@@ -29,6 +33,7 @@ import { noticeSenderOf } from '../apps/functions/src/email/notice-sender.logic'
 
 const apply = process.argv.includes('--apply');
 const BATCH_SIZE = 400;
+const orphans = noticeSenderOf(process.argv.find((arg) => arg.startsWith('--orphans='))?.slice('--orphans='.length));
 
 async function main(): Promise<void> {
   if (!getApps().length) initializeApp();
@@ -49,6 +54,15 @@ async function main(): Promise<void> {
     const mailingKey = String(notice['mailingKey'] ?? '');
     const mailing = mailingKey ? (await db.collection('mailings').doc(mailingKey).get()).data() : undefined;
     if (!tenantId || !mailing) {
+      const old = String(notice['senderName'] ?? '');
+      if (tenantId && orphans) {
+        if (old === orphans) { same++; continue; }
+        console.log(`  ${tenantId} ${doc.id} (no Versand): "${old}" → "${orphans}"`);
+        const label = `${tenantId} (no Versand): "${old}" → "${orphans}"`;
+        changes.set(label, (changes.get(label) ?? 0) + 1);
+        todo.push({ ref: doc.ref, value: orphans });
+        continue;
+      }
       console.log(`  SKIP ${doc.id}: ${!tenantId ? 'no single tenant' : `Versand ${mailingKey || '(none)'} not found`}`);
       skipped++;
       continue;
