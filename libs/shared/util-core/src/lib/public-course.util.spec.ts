@@ -3,6 +3,7 @@ import type { ApplicationKind } from '@okr/shared-models';
 import {
   filterCoursesByAudience,
   parseAudienceParam,
+  resolveCoursePreselect,
   toPublicCourse,
   toPublicCourseDates,
   type PublicCourseDate,
@@ -134,5 +135,26 @@ describe('toPublicCourse', () => {
     expect(c.endDate).toBe('2027-04-10');
     expect(c.remaining).toBe(-1);
     expect(c.dates).toHaveLength(1);
+  });
+});
+
+describe('resolveCoursePreselect', () => {
+  const offered = [
+    { key: 'a', name: 'A', startDate: '', endDate: '', audience: ['youth'] as ApplicationKind[], remaining: 3, isFull: false },
+    { key: 'full', name: 'F', startDate: '', endDate: '', audience: ['youth'] as ApplicationKind[], remaining: 0, isFull: true },
+  ];
+
+  it('drops an empty request', () => {
+    expect(resolveCoursePreselect('', offered)).toBe('drop');
+  });
+  it('ticks an offered course with places', () => {
+    expect(resolveCoursePreselect('a', offered)).toBe('tick');
+  });
+  it('drops an offered course that is full', () => {
+    expect(resolveCoursePreselect('full', offered)).toBe('drop');
+  });
+  it('waits for a course not (yet) offered', () => {
+    expect(resolveCoursePreselect('other', offered)).toBe('wait');
+    expect(resolveCoursePreselect('a', [])).toBe('wait');
   });
 });

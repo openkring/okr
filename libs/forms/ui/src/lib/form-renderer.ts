@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { IonButton } from '@ionic/angular';
 import { BaseType, CategoryListModel, DerivedValue, Field, FormDefinitionModel, OTHER_OPTION_VALUE } from '@okr/shared-models';
-import { FORM_OTHER_TEXT_MAX, ModelSelectChoice, PublicCourseOption, choiceByName, computeDerivedValues, coursesForAudience, getTodayStr, isModelSelect, modelSelectKeyOf, shouldClearCourseChoice, getVisibleFieldIds, resolveFixedValues, resolveImplicitValues } from '@okr/shared-util-core';
+import { FORM_OTHER_TEXT_MAX, ModelSelectChoice, PublicCourseOption, choiceByName, computeDerivedValues, coursesForAudience, getTodayStr, isModelSelect, resolveCoursePreselect, modelSelectKeyOf, shouldClearCourseChoice, getVisibleFieldIds, resolveFixedValues, resolveImplicitValues } from '@okr/shared-util-core';
 import { validatorsFor, defaultFor, isInputField } from '@okr/forms-util';
 import { DEFAULT_FIELD_COURSE_I18N, DEFAULT_FIELD_OTHER_I18N, DEFAULT_FIELD_PICK_I18N, FieldCourseI18n, FieldOtherI18n, FieldPickI18n, FieldRenderer } from './field-renderer';
 
@@ -113,6 +113,11 @@ export class FormRenderer implements OnInit {
   /** every answer, hidden ones included (`getRawValue()`), after each change — for the builder preview */
   public readonly valueChange = output<Record<string, unknown>>();
 
+  /** a course another section asked to tick (spec 1.166 §8); '' = none */
+  public readonly preselectCourse = input<string>('');
+  /** the request was applied or dropped — the owner clears it */
+  public readonly coursePreselected = output<void>();
+
   protected readonly sortedFields = computed(() =>
     [...this.definition().fields].sort((a, b) => a.order - b.order)
   );
@@ -210,6 +215,20 @@ export class FormRenderer implements OnInit {
       const control = this._form.get(field.key);
       const value = control?.value;
       if (control && typeof value === 'string' && shouldClearCourseChoice(value, list)) control.setValue('');
+    });
+  });
+
+  /** ticks the course another section asked for, once it is offered; a full or empty one is dropped */
+  private readonly applyPreselect = effect(() => {
+    const requested = this.preselectCourse();
+    const list = this.courseList();
+    const field = this.courseField();
+    if (!field || requested === '') return;
+    untracked(() => {
+      const outcome = resolveCoursePreselect(requested, list);
+      if (outcome === 'wait') return;
+      if (outcome === 'tick') this._form.get(field.key)?.setValue(requested);
+      this.coursePreselected.emit();
     });
   });
 

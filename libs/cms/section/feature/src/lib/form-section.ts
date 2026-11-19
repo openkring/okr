@@ -16,6 +16,7 @@ import { FormCategoryService, FormSubmitService, isCourseUnavailableError, isFor
 import { FORM_I18N_KEYS, FormI18n, hasVisibilityRules } from '@okr/forms-util';
 import { FieldCourseI18n, FieldOtherI18n, FieldPickI18n, FormFillerHelpModal, FormRenderer } from '@okr/forms-ui';
 import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
+import { CoursePreselectService } from './course-preselect.service';
 
 
 // The submit path itself is NOT here any more: it lives in FormSubmitService
@@ -39,6 +40,7 @@ const FormSectionStore = signalStore(
   standalone: true,
   imports: [Spinner, FormRenderer, SvgIconPipe, IonButton, IonButtons, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonIcon, IonNote],
   providers: [FormSectionStore],
+  host: { id: 'okr-course-form' },
   styles: [`
     .title-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     /* author-written texts (thank-you, closed) keep their line breaks; interpolated, never innerHTML */
@@ -95,6 +97,8 @@ const FormSectionStore = signalStore(
               [fixedValues]="def.fixedValues ?? {}"
               [choices]="choices()"
               [pickI18n]="pickI18n()"
+              [preselectCourse]="preselect.requested()"
+              (coursePreselected)="preselect.clear()"
               (submitted)="onSubmit($event)"
             />
           }
@@ -112,6 +116,7 @@ export class FormSectionComponent {
   private readonly formSubmitService = inject(FormSubmitService);
   private readonly formCategoryService = inject(FormCategoryService);
   private readonly route = inject(ActivatedRoute, { optional: true });
+  protected readonly preselect = inject(CoursePreselectService);
 
   public readonly section = input.required<FormSection>();
   public readonly editMode = input(false);
@@ -236,7 +241,14 @@ export class FormSectionComponent {
       from(this.formCategoryService.fetchCategories(params.def, this.store.appStore.tenantId(), params.known)),
   });
 
+  /** the form has a course field, so a course section on the page can ask it to tick one */
+  private readonly hasCourseField = computed(() => (this.definition()?.fields ?? []).some((f) => f.type === 'course'));
+
   constructor() {
+    // registers while mounted with a course field; the cleanup also runs when the component is destroyed
+    effect((onCleanup) => {
+      if (this.hasCourseField()) onCleanup(this.preselect.registerCourseForm());
+    });
     // Fetch JS token whenever the form definition becomes available
     effect(async () => {
       const def = this.definition();

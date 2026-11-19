@@ -84,3 +84,15 @@ export function filterCoursesByAudience<T extends { audience: ApplicationKind[] 
   if (audience.length === 0) return courses;
   return courses.filter((c) => c.audience.some((a) => audience.includes(a)));
 }
+
+/**
+ * What a form does with a course another section asked it to tick (spec 1.166 §8): tick it when it
+ * is offered and has a place, drop the request when it is empty or full, wait when it is not
+ * offered (yet) — the applicant type that decides the list may still be unknown.
+ */
+export function resolveCoursePreselect(requested: string, offered: PublicCourseOption[]): 'tick' | 'wait' | 'drop' {
+  if (requested === '') return 'drop';
+  const course = offered.find((c) => c.key === requested);
+  if (!course) return 'wait';
+  return course.isFull ? 'drop' : 'tick';
+}
