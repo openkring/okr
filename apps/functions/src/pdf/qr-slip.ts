@@ -55,6 +55,52 @@ export async function resolvePayee(db: Firestore, tenantId: string, payeeOrgId?:
   };
 }
 
+/**
+ * The payee of a person (spec 1.167 §8: a trainer invoices in his own name): `name` as given, IBAN from
+ * `bank`, postal parts from `postal`. Pure — an address of the wrong channel, an archived bank address or a
+ * missing one yields empty strings, so the caller can refuse a slip without an IBAN.
+ */
+export function payeeFromAddresses(name: string, bank: AddressModel | undefined, postal: AddressModel | undefined): QrPayee {
+  const bankOk = bank?.addressChannel === 'bankaccount' && !bank.isArchived ? bank : undefined;
+  const postalOk = postal?.addressChannel === 'postal' ? postal : undefined;
+  const { qrIban, regularIban } = pickBankIbans(bankOk ? [bankOk] : []);
+  return {
+    name,
+    iban: bankOk?.iban ?? '',
+    qrIban, regularIban,
+    street: postalOk?.streetName ?? '',
+    buildingNumber: postalOk?.streetNumber ?? '',
+    zip: postalOk?.zipCode ?? '',
+    city: postalOk?.city ?? '',
+    country: postalOk?.countryCode || 'CH',
+  };
+}
+
+/**
+ * Resolve a person's payee from the two addresses the person picked (trainer profile: `bankAddressKey`,
+ * `postalAddressKey`). Server-side guard: an address counts only when its `parentKey` is
+ * `person.<personKey>` — a profile cannot point the slip at someone else's IBAN. Anything else (missing doc,
+ * foreign owner, wrong channel) yields empty strings for that part.
+ */
+export async function resolvePersonPayee(
+  db: Firestore,
+  name: string,
+  bankAddressKey: string,
+  postalAddressKey: string,
+  personKey: string,
+): Promise<QrPayee> {
+  const owner = personKey ? `person.${personKey}` : '';
+  const readOwn = async (key: string): Promise<AddressModel | undefined> => {
+    if (!key || !owner) return undefined;
+    const snap = await db.collection(AddressCollection).doc(key).get();
+    if (!snap.exists) return undefined;
+    const address = { ...snap.data(), okey: snap.id } as AddressModel;
+    return address.parentKey === owner ? address : undefined;
+  };
+  const [bank, postal] = await Promise.all([readOwn(bankAddressKey), readOwn(postalAddressKey)]);
+  return payeeFromAddresses(name, bank, postal);
+}
+
 /** Render the QR-bill payment slip as an SVG string. */
 export function renderQrSlipSvg(data: QrSlipData): string {
   return new SwissQRBill(data as unknown as Data, { language: 'DE' }).toString();

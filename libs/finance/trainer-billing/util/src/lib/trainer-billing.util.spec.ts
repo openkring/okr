@@ -2,6 +2,7 @@ import { MoneyModel, TrainerAgreementModel, TrainerProfileModel, TrainerService,
 import { describe, expect, it } from 'vitest';
 import {
   agreementsOverlap,
+  buildTrainerInvoicePayload,
   defaultQuantity,
   formatInvoiceNo,
   isAgreementActiveOn,
@@ -365,5 +366,115 @@ describe('trainerInvoiceStateForBill', () => {
     expect(trainerInvoiceStateForBill('overdue')).toBe('booked');
     expect(trainerInvoiceStateForBill('paid')).toBe('paid');
     expect(trainerInvoiceStateForBill('deleted')).toBeUndefined();
+  });
+});
+
+describe('buildTrainerInvoicePayload', () => {
+  const hours = [3, 3, 4, 4, 4, 2, 2, 2, 2, 2, 2, 2, 2];
+  const days = [1, 2, 3, 4, 5, 8, 10, 11, 12, 15, 17, 18, 19];
+  function july(vat = noVat, svcPatch: Partial<TrainerService> = {}): PricedInvoice {
+    const entries = hours.map((h, i) => entry(`202607${String(days[i]).padStart(2, '0')}`, h, 'training', i < 2 ? 'Rotsee' : ''));
+    return priceEntries(entries, agreement([svc({ name: 'Trainingsbetreuung', ...svcPatch })]), vat, 'acc') as PricedInvoice;
+  }
+  function profile(patch: Partial<TrainerProfileModel> = {}): TrainerProfileModel {
+    const p = new TrainerProfileModel('scs');
+    p.okey = 'p1';
+    p.companyName = 'Muster Sport';
+    p.contactName = 'Hans Muster';
+    return Object.assign(p, patch);
+  }
+  const base = (patch: Partial<Parameters<typeof buildTrainerInvoicePayload>[0]> = {}) => ({
+    invoiceNo: '2607',
+    invoiceDate: '20260830',
+    dueDate: '20260929',
+    month: '2026-07',
+    profile: profile(),
+    trainerName: 'Hans Muster',
+    trainerAddress: ['Seestrasse 12', '8712 Stäfa'],
+    recipientName: 'Ruderclub Beispiel',
+    recipientAddress: ['Kassier', 'Seeweg 1', '8000 Zürich'],
+    priced: july(),
+    iban: 'CH9300762011623852957',
+    ...patch,
+  });
+
+  it('formats the July 2026 example in de-CH', () => {
+    const p = buildTrainerInvoicePayload(base());
+    expect(p['totalText']).toBe("1'700.00");
+    expect(p['monthTitle']).toBe('Juli 2026');
+    expect(p['invoiceDateText']).toBe('30. August 2026');
+    expect(p['dueDateText']).toBe('29. September 2026');
+    expect(p['invoiceNo']).toBe('2607');
+    expect(p['ibanText']).toBe('CH93 0076 2011 6238 5295 7');
+  });
+
+  it('has one row per line, with date, service, quantity, rate and amount texts', () => {
+    const rows = buildTrainerInvoicePayload(base())['rows'] as Record<string, string>[];
+    expect(rows.length).toBe(13);
+    expect(rows[0]).toEqual({ dateText: '1. Juli 2026', service: 'Trainingsbetreuung Rotsee', quantityText: '3 Std.', rateText: '50.00', amountText: '150.00' });
+    expect(rows[12]).toEqual({ dateText: '19. Juli 2026', service: 'Trainingsbetreuung', quantityText: '2 Std.', rateText: '50.00', amountText: '100.00' });
+  });
+
+  it('prints fractional quantities and day units', () => {
+    const r = priceEntries(
+      [entry('20260710', 1.5), entry('20260711', 1, 'regatta'), entry('20260712', 0.5, 'regatta')],
+      agreement([svc(), svc({ key: 'regatta', name: 'Regatta', unit: 'day', rates: [{ validFrom: '20260101', amount: chf(30000) }] })]),
+      noVat,
+      'acc',
+    ) as PricedInvoice;
+    const rows = buildTrainerInvoicePayload(base({ priced: r }))['rows'] as Record<string, string>[];
+    expect(rows.map((x) => x.quantityText)).toEqual(['1.5 Std.', '1 Tag', '0.5 Tage']);
+    expect(rows[1].rateText).toBe('300.00');
+  });
+
+  it('prints the VAT note and no VAT line when the trainer is not VAT-registered', () => {
+    const p = buildTrainerInvoicePayload(base({ profile: profile({ vatNote: 'Rechnungsbetrag netto. Nicht mehrwertsteuerpflichtig.' }) }));
+    expect(p['vatLine']).toBeUndefined();
+    expect(p['vatNote']).toBe('Rechnungsbetrag netto. Nicht mehrwertsteuerpflichtig.');
+  });
+
+  it('falls back to a default VAT note when the profile has none', () => {
+    const p = buildTrainerInvoicePayload(base({ profile: profile({ vatNote: '' }) }));
+    expect(p['vatLine']).toBeUndefined();
+    expect(p['vatNote']).toBeTruthy();
+  });
+
+  it('prints subtotal and the VAT line, not the note, when the trainer is VAT-registered', () => {
+    const priced = july(vat81, { vatCodeKey: 'MWST-8.1' });
+    const p = buildTrainerInvoicePayload(base({
+      priced,
+      profile: profile({ vatRegistered: true, vatNumber: 'CHE-123.456.789 MWST', vatNote: 'ignored' }),
+      vatRatePercent: 8.1,
+    }));
+    expect(p['vatNote']).toBeUndefined();
+    expect(p['subtotalText']).toBe("1'700.00");
+    expect(p['vatLine']).toEqual({ label: 'MWST 8.1 %', amountText: '137.70', vatNumber: 'CHE-123.456.789 MWST' });
+    expect(p['totalText']).toBe("1'837.70");
+  });
+
+  it('uses the company name as sender, else the trainer name; contact name as our reference', () => {
+    expect(buildTrainerInvoicePayload(base())).toMatchObject({ senderName: 'Muster Sport', ourRef: 'Hans Muster' });
+    expect(buildTrainerInvoicePayload(base({ profile: profile({ companyName: '', contactName: '' }) })))
+      .toMatchObject({ senderName: 'Hans Muster', ourRef: 'Hans Muster' });
+  });
+
+  it('carries sender, recipient, closing text, logo and the QR slip fields', () => {
+    const p = buildTrainerInvoicePayload(base({ logoUrl: 'https://example.imgix.net/logo.png?fm=png', bankName: 'Testbank' }));
+    expect(p).toMatchObject({
+      senderAddress: ['Seestrasse 12', '8712 Stäfa'],
+      recipientName: 'Ruderclub Beispiel',
+      recipientAddress: ['Kassier', 'Seeweg 1', '8000 Zürich'],
+      closingText: 'Herzlichen Dank für deinen Auftrag.',
+      logoUrl: 'https://example.imgix.net/logo.png?fm=png',
+      bankName: 'Testbank',
+      amount: '1700.00',
+      qrMessage: 'Rechnung 2607',
+    });
+    expect(buildTrainerInvoicePayload(base())['logoUrl']).toBe('');
+  });
+
+  it('never carries the profile logo storage path as the logo URL', () => {
+    const p = buildTrainerInvoicePayload(base({ profile: profile({ logoUrl: 'trainer/p1/logo.svg' }) }));
+    expect(p['logoUrl']).toBe('');
   });
 });

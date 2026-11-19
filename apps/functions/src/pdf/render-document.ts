@@ -25,7 +25,7 @@ import { registerHelpers } from './handlebars-helpers';
 import { getBrowser } from './browser-pool';
 import { compileTemplate } from './template-cache';
 import { resolvePayee, renderQrSlipSvg, buildQrSlipPageHtml } from './qr-slip';
-import { buildQrSlipData, selectSlipAccount, SlipAccountError } from '@okr/shared-util-functions';
+import { buildQrSlipData, type QrPayee, selectSlipAccount, SlipAccountError } from '@okr/shared-util-functions';
 import { resolveAssetUrls } from './asset-resolver';
 import { sanitizeHtml } from './sanitize';
 import { drawAddressGuide, toAddressGuideSide } from './address-guide';
@@ -90,6 +90,16 @@ export interface RenderSink {
 }
 
 /**
+ * Server-side render overrides (never derived from a client request). `payee` replaces the org payee
+ * resolved from the template (a trainer invoices in his own name, spec 1.167 §8); `attachQrSlip` replaces
+ * the template's flag (the trainer's profile decides whether his invoice carries a slip).
+ */
+export interface RenderOverrides {
+  payee?: QrPayee;
+  attachQrSlip?: boolean;
+}
+
+/**
  * The rendering core of `generateDocument`, callable in-process (the workflow engine
  * must not call its own HTTPS endpoint). Authentication, the raw-HTML admin check and
  * the rate limit stay in the callable wrapper; this function assumes them done.
@@ -100,6 +110,7 @@ export async function renderDocument(
   tenantId: string,
   sink?: RenderSink,
   slipReference?: string,
+  overrides?: RenderOverrides,
 ): Promise<GenerateDocumentResponse> {
   const { templateId, html: rawHtml, payload = {}, options = {} } = req;
   const userId = uid;
@@ -162,7 +173,8 @@ export async function renderDocument(
     // Resolve the payee org once; exposed to the template as {{payee.*}} and
     // used to build the QR slip. tmpl.payeeOrgId lets a template name a specific
     // org (e.g. a sub-entity); empty falls back to the tenant's default org.
-    const payee = await resolvePayee(db, tenantId, tmpl.payeeOrgId);
+    // A server-side override (person payee) skips the org lookup.
+    const payee = overrides?.payee ?? await resolvePayee(db, tenantId, tmpl.payeeOrgId);
 
     // Compile template (cached)
     const cacheKey = `${templateId}@${resolvedVersion}`;
@@ -172,7 +184,8 @@ export async function renderDocument(
 
     // Append the QR payment slip as a second page (PDF output only). With payload.invoiceKey the
     // slip carries that invoice's QR reference on the QR-IBAN (spec 1.2 §3.3); else NON as before.
-    if (tmpl.attachQrSlip && outputFormat === 'pdf') {
+    const attachQrSlip = overrides?.attachQrSlip ?? tmpl.attachQrSlip;
+    if (attachQrSlip && outputFormat === 'pdf') {
       // slipReference is a server-side override (the draft preview's placeholder); it is not part of
       // the request, so a generateDocument caller cannot put an arbitrary reference on a slip.
       const reference = slipReference ?? await readInvoiceReference(db, tenantId, payload['invoiceKey']);

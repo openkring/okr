@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+{{!--
+  Trainer-Rechnung (trainer-invoice, spec 1.167 §8) — one global layout for every trainer and club.
+  The letterhead is the trainer's, not the club's; tenants do not edit this template.
+  Seeded by scripts/seed-trainer-invoice-template.mjs; the CSS lives in trainer-invoice.css (version.css).
+
+  Context (buildTrainerInvoicePayload in @okr/finance-trainer-billing-util, all texts formatted de-CH):
+    logoUrl ('' = company name only), senderName, senderAddress[], recipientName, recipientAddress[],
+    invoiceNo, invoiceDateText, dueDateText, ourRef, monthTitle,
+    rows[{ dateText, service, quantityText, rateText, amountText }],
+    subtotalText, totalText, vatLine?{ label, amountText, vatNumber } | vatNote?,
+    bankName, iban, ibanText, closingText, amount + qrMessage (QR slip only).
+  The page is laid out on the bare sheet (@page margin 0): render with options.margin all '0'.
+  The recipient sits in the right window of a C5 window envelope (37 mm from the top, 7 mm from the right).
+--}}
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Rechnung {{invoiceNo}}</title>
+</head>
+<body>
+<div class="page">
+  <header class="sender">
+    {{#if logoUrl}}
+      <img class="logo" src="{{logoUrl}}" alt="{{senderName}}">
+    {{else}}
+      <div class="company">{{senderName}}</div>
+    {{/if}}
+    {{#each senderAddress}}<div>{{this}}</div>{{/each}}
+  </header>
+
+  <section class="recipient">
+    <div>{{recipientName}}</div>
+    {{#each recipientAddress}}<div>{{this}}</div>{{/each}}
+  </section>
+
+  <table class="meta">
+    <tr><td>Rechnungs-Nr.</td><td>{{invoiceNo}}</td></tr>
+    <tr><td>Rechnungsdatum</td><td>{{invoiceDateText}}</td></tr>
+    <tr><td>Zahlbar bis</td><td>{{dueDateText}}</td></tr>
+    {{#if ourRef}}<tr><td>Unsere Ref.</td><td>{{ourRef}}</td></tr>{{/if}}
+  </table>
+
+  <h1 class="title"><span>Rechnung</span><span>{{monthTitle}}</span></h1>
+
+  <table class="lines">
+    <thead>
+      <tr>
+        <th class="date">Datum</th>
+        <th class="service">Leistung</th>
+        <th class="qty">Anzahl Einheit</th>
+        <th class="num">à</th>
+        <th class="num">Betrag CHF</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each rows}}
+      <tr>
+        <td class="date">{{dateText}}</td>
+        <td class="service">{{service}}</td>
+        <td class="qty">{{quantityText}}</td>
+        <td class="num">{{rateText}}</td>
+        <td class="num">{{amountText}}</td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+
+  <table class="totals">
+    {{#if vatLine}}
+    <tr class="subtotal"><td>Total netto CHF</td><td class="num">{{subtotalText}}</td></tr>
+    <tr class="vat"><td>{{vatLine.label}}</td><td class="num">{{vatLine.amountText}}</td></tr>
+    {{/if}}
+    <tr class="total"><td>Total CHF</td><td class="num">{{totalText}}</td></tr>
+  </table>
+
+  <footer class="footer">
+    {{#if vatLine}}
+      {{#if vatLine.vatNumber}}<div>MWST-Nr. {{vatLine.vatNumber}}</div>{{/if}}
+    {{else}}
+      <div>{{vatNote}}</div>
+    {{/if}}
+    <div class="bank"><span>{{bankName}}</span><span>IBAN {{ibanText}}</span></div>
+    {{#if closingText}}<p class="closing">{{closingText}}</p>{{/if}}
+  </footer>
+</div>
+</body>
+</html>

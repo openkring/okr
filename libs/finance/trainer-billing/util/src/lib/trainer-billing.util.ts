@@ -11,7 +11,7 @@ import {
   TrainerServiceUnit,
   WorkEntryModel,
 } from '@okr/shared-models';
-import { addDuration, subDuration } from '@okr/shared-util-core';
+import { addDuration, convertDateFormatToString, DateFormat, subDuration } from '@okr/shared-util-core';
 
 /**
  * Trainer-Abrechnung (spec 1.167): pure rules shared by the Cloud Functions (pricing, numbering, send checks)
@@ -275,4 +275,110 @@ export function trainerInvoiceStateForBill(billState: BillModel['state'] | 'dele
     default:
       return undefined;
   }
+}
+
+/* ---------------------------------------------------------------- invoice PDF payload (§8) */
+
+const MONTH_NAMES_DE = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+const DEFAULT_VAT_NOTE = 'Rechnungsbetrag netto, nicht mehrwertsteuerpflichtig.';
+
+/**
+ * CHF of a Rappen amount, Swiss-grouped with two decimals: 170000 → `1'700.00`. Grouped by hand, not by
+ * toLocaleString, whose de-CH separator differs between ICU builds (same rule as formatChfAmount in
+ * finance-collection-util, which this util lib cannot import: that lib depends on Angular).
+ */
+function chfText(rappen: number): string {
+  const abs = Math.abs(Math.round(rappen || 0));
+  const francs = String(Math.floor(abs / 100)).replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+  const text = `${francs}.${String(abs % 100).padStart(2, '0')}`;
+  return rappen < 0 && abs > 0 ? `-${text}` : text;
+}
+
+/** `20260830` → `30. August 2026` (de-CH long date). */
+function longDateDe(storeDate: string): string {
+  const iso = convertDateFormatToString(storeDate, DateFormat.StoreDate, DateFormat.IsoDate);
+  const [yyyy, mm, dd] = iso.split('-');
+  return `${Number(dd)}. ${MONTH_NAMES_DE[Number(mm) - 1]} ${yyyy}`;
+}
+
+/** `2026-07` → `Juli 2026`. */
+function monthTitleDe(month: string): string {
+  const [yyyy, mm] = month.split('-');
+  return `${MONTH_NAMES_DE[Number(mm) - 1]} ${yyyy}`;
+}
+
+/** `3 Std.`, `1.5 Std.`, `1 Tag`, `0.5 Tage`. */
+function quantityText(quantity: number, unit: TrainerServiceUnit): string {
+  const q = String(quantity);
+  if (unit === 'day') return `${q} ${quantity === 1 ? 'Tag' : 'Tage'}`;
+  return `${q} Std.`;
+}
+
+/** IBAN in groups of four: `CH93 0076 2011 6238 5295 7`. */
+function ibanText(iban: string): string {
+  return iban.replace(/\s/g, '').replace(/(.{4})/g, '$1 ').trim();
+}
+
+/**
+ * The Handlebars payload of the `trainer-invoice` template (§8), all texts formatted de-CH. `logoUrl` is an
+ * already resolved image URL (imgix, PNG) or '' — the profile's logo storage path is never printed. The
+ * `amount` and `qrMessage` fields feed the QR slip (`buildQrSlipData`); the payer is not filled in.
+ * A VAT-registered trainer gets `subtotalText` + `vatLine`, an unregistered one `vatNote` (D10).
+ */
+export function buildTrainerInvoicePayload(p: {
+  invoiceNo: string;
+  invoiceDate: string;
+  dueDate: string;
+  month: string;
+  profile: TrainerProfileModel;
+  trainerName: string;
+  trainerAddress: string[];
+  recipientName: string;
+  recipientAddress: string[];
+  priced: PricedInvoice;
+  iban: string;
+  vatRatePercent?: number;
+  bankName?: string;
+  logoUrl?: string;
+}): Record<string, unknown> {
+  const { profile, priced } = p;
+  const registered = !!profile.vatRegistered;
+  const payload: Record<string, unknown> = {
+    logoUrl: p.logoUrl ?? '',
+    senderName: profile.companyName || p.trainerName,
+    senderAddress: p.trainerAddress,
+    recipientName: p.recipientName,
+    recipientAddress: p.recipientAddress,
+    invoiceNo: p.invoiceNo,
+    invoiceDateText: longDateDe(p.invoiceDate),
+    dueDateText: longDateDe(p.dueDate),
+    ourRef: profile.contactName || p.trainerName,
+    monthTitle: monthTitleDe(p.month),
+    rows: priced.lines.map((l) => ({
+      dateText: longDateDe(l.date),
+      service: [l.serviceName, l.label].filter((x) => !!x).join(' '),
+      quantityText: quantityText(l.quantity, l.unit),
+      rateText: chfText(l.rate),
+      amountText: chfText(l.amount),
+    })),
+    subtotalText: chfText(priced.subtotal),
+    totalText: chfText(priced.total),
+    bankName: p.bankName ?? '',
+    iban: p.iban,
+    ibanText: ibanText(p.iban),
+    closingText: profile.closingText ?? '',
+    amount: (priced.total / 100).toFixed(2),
+    qrMessage: `Rechnung ${p.invoiceNo}`,
+  };
+  if (registered) {
+    const rate = p.vatRatePercent;
+    payload['vatLine'] = {
+      label: rate === undefined ? 'MWST' : `MWST ${rate} %`,
+      amountText: chfText(priced.vatAmount),
+      vatNumber: profile.vatNumber ?? '',
+    };
+  } else {
+    payload['vatNote'] = profile.vatNote || DEFAULT_VAT_NOTE;
+  }
+  return payload;
 }
