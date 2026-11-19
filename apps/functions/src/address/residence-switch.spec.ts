@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { AddressModel } from '@okr/shared-models';
 
-import { planSwitch } from './residence-switch';
+import { packGroups, planSwitch } from './residence-switch';
 
 const TODAY = '20270215';
 
@@ -88,4 +88,17 @@ describe('planSwitch', () => {
     const next = postal('new', { validFrom: '20270215', isArchived: true });
     expect(planSwitch([old, next], TODAY).promote).toBeUndefined();
   });
+});
+
+describe('packGroups', () => {
+  it('never splits a group and keeps chunks within max', () => {
+    expect(packGroups([['a', 'b'], ['c', 'd'], ['e']], 3)).toEqual([['a', 'b'], ['c', 'd', 'e']]);
+  });
+  it('packs whole groups up to max', () => {
+    expect(packGroups([['a'], ['b', 'c'], ['d']], 4)).toEqual([['a', 'b', 'c', 'd']]);
+  });
+  it('an oversized single group gets a chunk of its own', () => {
+    expect(packGroups([['a'], ['b', 'c', 'd'], ['e']], 2)).toEqual([['a'], ['b', 'c', 'd'], ['e']]);
+  });
+  it('no groups, no chunks', () => expect(packGroups([], 400)).toEqual([]));
 });

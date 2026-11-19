@@ -56,6 +56,25 @@ export function planSwitch(rows: AddressModel[], today: string): SwitchPlan {
   return { promote: next.okey, demote: favs.map((r) => r.okey) };
 }
 
+/**
+ * Packs per-parent write groups into batches of at most `max` writes. A group is never split: a
+ * parent's promote and demote commit together or not at all, so a failed batch cannot leave a
+ * parent without a favorite. A single group larger than `max` gets a batch of its own.
+ */
+export function packGroups<T>(groups: T[][], max: number): T[][] {
+  const chunks: T[][] = [];
+  let cur: T[] = [];
+  for (const g of groups) {
+    if (cur.length > 0 && cur.length + g.length > max) {
+      chunks.push(cur);
+      cur = [];
+    }
+    cur = cur.concat(g);
+  }
+  if (cur.length > 0) chunks.push(cur);
+  return chunks;
+}
+
 interface Write { ref: FirebaseFirestore.DocumentReference; patch: { isFavorite: boolean }; readAt: Timestamp }
 
 /** The nightly job: favorites whose residence ended before today → planSwitch per parent. */
@@ -73,29 +92,28 @@ export async function runResidenceSwitch(now: Date): Promise<void> {
     .get();
   const parents = [...new Set(stale.docs.filter((d) => !d.data()['isArchived']).map((d) => d.data()['parentKey'] as string).filter(Boolean))];
 
-  const writes: Write[] = [];
+  const groups: Write[][] = [];
   for (const parentKey of parents) {
     const snap = await col.where('parentKey', '==', parentKey).get();
     const rows = snap.docs.map((d) => ({ ...d.data(), okey: d.id }) as AddressModel);
     const times = new Map(snap.docs.map((d) => [d.id, d.updateTime]));
     const plan = planSwitch(rows, today);
-    if (!plan.promote) {
-      if (plan.demote.length === 0) logger.warn(`residenceSwitch: ${parentKey} has a past favorite but no current row to take over`);
-    }
-    if (plan.promote) writes.push({ ref: col.doc(plan.promote), patch: { isFavorite: true }, readAt: times.get(plan.promote) as Timestamp });
-    for (const okey of plan.demote) writes.push({ ref: col.doc(okey), patch: { isFavorite: false }, readAt: times.get(okey) as Timestamp });
+    if (!plan.promote && plan.demote.length === 0) logger.warn(`residenceSwitch: ${parentKey} has a past favorite but no current row to take over`);
+    const group: Write[] = [];
+    if (plan.promote) group.push({ ref: col.doc(plan.promote), patch: { isFavorite: true }, readAt: times.get(plan.promote) as Timestamp });
+    for (const okey of plan.demote) group.push({ ref: col.doc(okey), patch: { isFavorite: false }, readAt: times.get(okey) as Timestamp });
+    if (group.length > 0) groups.push(group);
   }
 
   let switched = 0;
-  for (let i = 0; i < writes.length; i += MAX_BATCH_WRITES) {
-    const chunk = writes.slice(i, i + MAX_BATCH_WRITES);
+  for (const chunk of packGroups(groups, MAX_BATCH_WRITES)) {
     const batch: WriteBatch = db.batch();
     for (const w of chunk) batch.update(w.ref, w.patch, { lastUpdateTime: w.readAt });
     try {
       await batch.commit();
       switched += chunk.length;
     } catch (err) {
-      // a row changed since it was read (or a transient error): tonight's chunk is skipped, tomorrow's run plans again
+      // a row changed since it was read (or a transient error): tonight's chunk is skipped as a whole, tomorrow's run plans again
       logger.error('residenceSwitch: batch failed', err);
     }
   }
