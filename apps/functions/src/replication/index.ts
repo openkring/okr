@@ -12,13 +12,17 @@ import {
   getAllReservationsOfReserver, getAllReservationsOfResource,
   getAllWorkrelsOfObject, getAllWorkrelsOfSubject,
   hasChanged,
+  healDecision,
+  healResidence,
   isIndexOnlyChange,
+  parseParentKey,
   reapDeletedPerson,
   rebuildDirectoryForTenant,
   syncAddressOwnerName,
   syncBirthYearReplicas,
   syncDateOfDeathReplicas,
   syncOwnerNameOnAddresses,
+  syncResidenceTenants,
   updateFavoriteZipCode,
   writeAddressDirectory
 } from "@okr/shared-util-functions";
@@ -27,6 +31,24 @@ import { getStoreDateYear } from "@okr/shared-util-core";
 import type { GroupWrittenEvent } from "../group/group-written-event";
 
 const db = () => getFirestore();
+
+/**
+ * The tenants of an address parent (`persons/<key>.tenants` / `orgs/<key>.tenants`), or
+ * undefined when the parent doc or its tenants are missing (spec 1.164: then the residence's
+ * tenants are left as they are).
+ */
+async function getParentTenants(parentKey: string): Promise<string[] | undefined> {
+  const parsed = parseParentKey(parentKey);
+  if (!parsed) return undefined;
+  const snap = await db().collection(parsed.parentCollection).doc(parsed.parentId).get();
+  const tenants = snap.exists ? snap.data()?.['tenants'] : undefined;
+  return Array.isArray(tenants) ? tenants as string[] : undefined;
+}
+
+/** True when the `tenants` field differs between two versions of a parent doc (order-sensitive, like the projection diff). */
+function tenantsChanged(before: Record<string, unknown> | undefined, after: Record<string, unknown> | undefined): boolean {
+  return JSON.stringify(before?.['tenants'] ?? null) !== JSON.stringify(after?.['tenants'] ?? null);
+}
 
 /**
  * Synchronizes a set of related documents with new (denormalized) data.
@@ -129,6 +151,22 @@ export const onAddressChange = onDocumentWritten(
       if (before && after && isIndexOnlyChange(before, after)) {
         logger.debug(`address ${addressId}: index-only change, skipping replication`);
         return;
+      }
+
+      // spec 1.164 §7.4: heal a postal row written by an old client (link it to the address
+      // register, or relink a corrected snapshot) and keep its tenants equal to the parent's.
+      // Runs before the replica derivation so getActiveAddresses below reads the healed row.
+      // The heal write re-triggers this function; healDecision then answers 'none'.
+      // A failure is logged and must not stop the replication below.
+      if (after?.addressChannel === 'postal' && event.data?.after) {
+        try {
+          const parentTenants = await getParentTenants(after.parentKey) ?? after.tenants ?? [];
+          const row = { ...after, okey: addressId } as AddressModel;
+          const action = healDecision(before, row, parentTenants);
+          await healResidence(db(), event.data.after.ref, row, action, parentTenants);
+        } catch (error) {
+          logger.error(`Error healing residence ${addressId}:`, { error });
+        }
       }
 
       for (const parentKey of parentKeys) {
@@ -282,6 +320,17 @@ export const onPersonChange = onDocumentWritten(
       }
     }
 
+    // spec 1.164 G5: postal residences carry the person's tenants — a gained club sees them,
+    // a removed club loses them (history included). Each residence write re-triggers
+    // onAddressChange, which rebuilds the projection.
+    if (before && person && tenantsChanged(before, person) && Array.isArray(person['tenants'])) {
+      try {
+        await syncResidenceTenants(db(), `person.${personId}`, person['tenants']);
+      } catch (error) {
+        logger.error(`Error syncing residence tenants of person ${personId}:`, { error });
+      }
+    }
+
     if (!person) {
       logger.warn(`Person ${personId} does not exist or has been deleted.`);
       // the projection was already cleaned above; the vault itself has no other reaper.
@@ -388,13 +437,21 @@ export const onOrgChange = onDocumentWritten(
     // so no per-org preference inputs exist).
     const beforeOrg = event.data?.before.data();
     const afterOrg = event.data?.after.data();
-    const orgTenantsChanged = !beforeOrg || !afterOrg
-      || JSON.stringify(beforeOrg['tenants'] ?? null) !== JSON.stringify(afterOrg['tenants'] ?? null);
+    const orgTenantsChanged = !beforeOrg || !afterOrg || tenantsChanged(beforeOrg, afterOrg);
     if (orgTenantsChanged) {
       try {
         await writeAddressDirectory(db(), `org.${orgId}`);
       } catch (error) {
         logger.error(`Error rebuilding address directory for org ${orgId}:`, { error });
+      }
+    }
+
+    // spec 1.164 G5: same as onPersonChange — postal residences carry the org's tenants.
+    if (beforeOrg && afterOrg && tenantsChanged(beforeOrg, afterOrg) && Array.isArray(afterOrg['tenants'])) {
+      try {
+        await syncResidenceTenants(db(), `org.${orgId}`, afterOrg['tenants']);
+      } catch (error) {
+        logger.error(`Error syncing residence tenants of org ${orgId}:`, { error });
       }
     }
 

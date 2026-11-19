@@ -74,6 +74,15 @@ describe('scopeToTenant (D-L1, finding F1)', () => {
     expect(scopeToTenant([shared], 'tenant2').map(a => a.okey)).toEqual(['s1']);
   });
 
+  it('admits a postal residence carrying the parent\'s tenants in every club of the person (spec 1.164 G5)', () => {
+    const residence = makeAddress({ okey: 'r1', addressChannel: 'postal', streetName: 'Seestrasse', streetNumber: '12', zipCode: '8712', city: 'Stäfa', isFavorite: true, tenants: ['tenant1', 'tenant2'] });
+    for (const tenantId of ['tenant1', 'tenant2']) {
+      const doc = buildDirectoryDoc(tenantId, 'person.p1', 'person', [residence], makePerson());
+      expect(doc.entries.map(e => e.addressOkey)).toEqual(['r1']);
+      expect(doc.favZipCode).toBe('8712');
+    }
+  });
+
   it('drops an address with no tenancy at all — it is invisible on the raw surface too', () => {
     const orphan = makeAddress({ okey: 'x1', addressChannel: 'email', tenants: [] });
     expect(scopeToTenant([orphan], 'tenant1')).toEqual([]);

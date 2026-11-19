@@ -121,6 +121,12 @@ export function reduceToFavoriteAddresses(addresses: AddressModel[]): AddressMod
  * empty directory entry there and supplies their contact data again. An address carrying
  * no tenant at all is invisible on the raw surface too, so it is dropped here as well —
  * consistency with S2 is the whole point.
+ *
+ * Postal rows are the exception to the provenance reading (spec 1.164 G5): a residence
+ * belongs to the person, not to a club, and Cloud Functions keep its `tenants[]` equal to
+ * the parent's tenants (`healResidence` / `syncResidenceTenants`). The same filter therefore
+ * admits a postal row in every club of the person, and drops it from a club the person left.
+ * D-L1 still applies unchanged to every other channel.
  */
 export function scopeToTenant(addresses: AddressModel[], tenantId: string): AddressModel[] {
   return addresses.filter((address) => (address.tenants ?? []).includes(tenantId));

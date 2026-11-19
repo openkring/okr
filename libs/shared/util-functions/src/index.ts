@@ -19,3 +19,4 @@ export * from './lib/qr-slip.util';
 export * from './lib/swisstopo.util';
 export * from './lib/address-register.util';
 export * from './lib/member-admins.util';
+export * from './lib/residence-heal.util';
