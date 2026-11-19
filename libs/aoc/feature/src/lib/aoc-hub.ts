@@ -114,7 +114,10 @@ export class AocHub {
    */
   protected actionsOf(card: AocCard): OperationCardAction[] {
     if (!('operation' in card.target)) return [];
-    const label = card.target.operation === 'reindex' ? this.store.i18n.action_preview() : this.store.i18n.action_run();
+    const operation = card.target.operation;
+    const label = operation === 'reindex' ? this.store.i18n.action_preview()
+      : operation === 'privacy' ? this.store.i18n.action_edit()
+      : this.store.i18n.action_run();
     return [{ id: 'run', label }];
   }
 

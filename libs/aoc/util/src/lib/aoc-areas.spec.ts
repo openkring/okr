@@ -27,6 +27,7 @@ const EXPECTED_ROUTES: Record<string, string> = {
   workflow: '/workflow/all/workflow-context',
 };
 const EXPECTED_OPERATIONS: Record<string, string> = {
+  privacy: 'privacy',
   iban: 'iban',
   validate: 'validate',
   reindex: 'reindex',
@@ -68,7 +69,7 @@ describe('visibleAocCards', () => {
     expect(ids('ops', ctx('scs'))).not.toContain('chatMaintenance');
     expect(ids('access', ctx('scs'))).not.toContain('allocation');
     expect(ids('ops', ctx('bka'))).toEqual(['status', 'activity', 'emailEvents', 'chatMaintenance']);
-    expect(ids('access', ctx('bka'))).toEqual(['users', 'sessions', 'register', 'privacyAudit', 'iban', 'allocation']);
+    expect(ids('access', ctx('bka'))).toEqual(['users', 'sessions', 'register', 'privacyAudit', 'privacy', 'iban', 'allocation']);
     expect(ids('data', ctx('scs'))).toEqual(['validate', 'reindex']);
     expect(ids('data', ctx('bka'))).toEqual(['validate', 'reindex']);
   });
@@ -81,7 +82,7 @@ describe('visibleAocCards', () => {
   });
 
   it('shows all four areas on kring, like on every catalogue-composed app', () => {
-    expect(ids('access', ctx('kring'))).toEqual(['users', 'sessions', 'register', 'privacyAudit', 'iban']);
+    expect(ids('access', ctx('kring'))).toEqual(['users', 'sessions', 'register', 'privacyAudit', 'privacy', 'iban']);
     expect(ids('ops', ctx('kring'))).toEqual(['status', 'activity', 'escalations']);
     expect(ids('config', ctx('kring'))).toEqual(['features', 'workflow']);
     expect(ids('data', ctx('kring'))).toEqual(['validate', 'reindex']);
@@ -113,6 +114,8 @@ describe('isOperationVisible', () => {
     expect(isOperationVisible(AOC_AREAS, 'validate', ctx('scs'))).toBe(true);
     expect(isOperationVisible(AOC_AREAS, 'iban', ctx('scs'))).toBe(true);
     expect(isOperationVisible(AOC_AREAS, 'iban', ctx('kring'))).toBe(true);
+    expect(isOperationVisible(AOC_AREAS, 'privacy', ctx('scs'))).toBe(true);
+    expect(isOperationVisible(AOC_AREAS, 'privacy', ctx('scs', { roles: ['privileged'] }))).toBe(false);
     expect(isOperationVisible(AOC_AREAS, 'validate', ctx('scs', { roles: ['registered'] }))).toBe(false);
     expect(isOperationVisible(AOC_AREAS, 'reindex', ctx('scs', { enabled: ['user'] }))).toBe(false);
     expect(isOperationVisible(AOC_AREAS, 'unknown', ctx('bka'))).toBe(false);

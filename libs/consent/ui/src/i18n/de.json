@@ -1,24 +1,10 @@
 {
   "consent": {
     "banner": {
-      "aria": "Cookie-Einstellungen",
-      "text": "Wir verwenden Cookies und ähnliche Technologien. Notwendige Cookies sind immer aktiv. Analytische Cookies helfen uns, die App zu verbessern — nur mit deiner Zustimmung.",
-      "acceptAll": "Alle akzeptieren",
-      "rejectAll": "Nur notwendige",
-      "customize": "Anpassen",
-      "save": "Einstellungen speichern"
-    },
-    "necessary": {
-      "title": "Notwendig",
-      "description": "Authentifizierung, Sitzung, Sicherheit"
-    },
-    "analytics": {
-      "title": "Analyse",
-      "description": "Firebase Analytics — hilft uns, die App zu verbessern"
-    },
-    "marketing": {
-      "title": "Marketing",
-      "description": "Aktuell keine Marketing-Dienste aktiv"
+      "aria": "Cookie-Hinweis",
+      "text": "Wir verwenden Cookies und ähnliche Technologien, die für den Betrieb der App notwendig sind.",
+      "ok": "Verstanden",
+      "privacy": "Datenschutzerklärung"
     }
   }
 }

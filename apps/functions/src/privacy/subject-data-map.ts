@@ -267,7 +267,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'users',
     // Classified as `consent` because this doc is the only place the consent evidence
-    // lives (policyAcceptedVersion/At, cookieConsent/At, plus the usage* privacy flags).
+    // lives (policyAcceptedVersion/At, plus the usage* privacy flags).
     // It also carries loginEmail, names, roles and UI preferences, all exported in full.
     dataClass: 'consent',
     tier: 'T1',

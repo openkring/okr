@@ -88,6 +88,21 @@ export class AppConfigService {
   }
 
   /**
+   * Patch the cookie notice only (same single-field pattern as {@link setTaskSettings}): whether
+   * the banner shows, and its text per language. `cookieBannerText` is replaced as a whole map.
+   * Client-writable by an admin of the tenant under the existing `app-config` update rule.
+   *
+   * @param tenantId the tenant whose config to patch — the doc id IS the tenantId
+   * @param settings `{ cookieBannerEnabled, cookieBannerText }`
+   */
+  public async setCookieBanner(tenantId: string, settings: Pick<AppConfig, 'cookieBannerEnabled' | 'cookieBannerText'>): Promise<string | undefined> {
+    return await this.firestoreService.updateObject<Partial<AppConfig>>(
+      AppConfigCollection, tenantId,
+      { cookieBannerEnabled: settings.cookieBannerEnabled, cookieBannerText: { ...settings.cookieBannerText } },
+      false, this.i18n.update_conf());
+  }
+
+  /**
    * Patch the quick file-transfer limits only (spec 1.115 §4.4); same single-field pattern as
    * {@link setTaskSettings}. The whole `fileTransferLimits` map is replaced, overrides included.
    * The server re-reads these limits on every prepare/send, so nothing else needs to change.

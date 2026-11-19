@@ -310,6 +310,10 @@
       "reindex": {
         "label": "Suchindex neu aufbauen",
         "effect": "Baut die Suche neu auf, wenn Treffer fehlen oder veraltet sind."
+      },
+      "privacy": {
+        "label": "Cookie-Hinweis",
+        "effect": "Legt fest, ob die App einen Cookie-Hinweis zeigt und was darin steht."
       }
     },
     "title": "Administration",
@@ -318,7 +322,8 @@
     "neverRun": "Noch nie ausgeführt",
     "action": {
       "run": "Ausführen",
-      "preview": "Vorschau"
+      "preview": "Vorschau",
+      "edit": "Bearbeiten"
     },
     "pickType": "Welche Daten?",
     "validate": {
@@ -361,6 +366,25 @@
       "responsibility": "Zuständigkeiten",
       "session": "Sessions",
       "icon": "Icons"
+    },
+    "privacy": {
+      "title": "Cookie-Hinweis",
+      "enabled": {
+        "label": "Cookie-Hinweis anzeigen",
+        "helper": "Die App selbst speichert nur, was sie zum Funktionieren braucht. Schalte den Hinweis ein, wenn du deine Mitglieder trotzdem darauf hinweisen willst, zum Beispiel weil du Videos oder Karten einbindest."
+      },
+      "text": {
+        "de": "Text Deutsch",
+        "en": "Text Englisch",
+        "fr": "Text Französisch",
+        "es": "Text Spanisch",
+        "it": "Text Italienisch",
+        "placeholder": "Standardtext verwenden",
+        "helper": "Leer lassen, um den Standardtext zu zeigen. Fehlt eine Sprache, gilt der deutsche Text."
+      },
+      "validations": {
+        "textLength": "Der Text ist zu lang."
+      }
     }
   }
 }

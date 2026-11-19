@@ -18,8 +18,9 @@ import { ActivityCollection, ActivityModel, AddressCollection, AddressModel, Okr
 import { fill, getCategoryIndex, getFullName, getSystemQuery, hasRole, logToFindings, ReportFinding } from '@okr/shared-util-core';
 import { resourceParams, showToast } from '@okr/shared-util-angular';
 import { openReport } from '@okr/shared-ui';
+import { CookieBannerSettingsModal } from '@okr/aoc-ui';
 import { FeatureStore } from '@okr/tenant-feature';
-import { AOC_AREAS, AOC_HUB_I18N_KEYS, AocCardContext, formatValidationErrors, indexDiffs, IndexDiff, isOperationVisible, lastRunsByOperation } from '@okr/aoc-util';
+import { AOC_AREAS, AOC_HUB_I18N_KEYS, AocCardContext, CookieBannerSettings, fromCookieBannerSettings, toCookieBannerSettings, formatValidationErrors, indexDiffs, IndexDiff, isOperationVisible, lastRunsByOperation } from '@okr/aoc-util';
 
 import { addressValidations, getAddressIndex } from '@okr/subject-address-util';
 import { commentValidations, getCommentIndex } from '@okr/comment-util';
@@ -277,6 +278,7 @@ export const AocHubStore = signalStore(
             case 'validate': return await this.validate();
             case 'reindex': return await this.reindex();
             case 'iban': return await this.listIban();
+            case 'privacy': return await this.editCookieBanner();
             default:
               console.warn(`AocHubStore.run: unknown operation ${operationId}`);
           }
@@ -356,6 +358,29 @@ export const AocHubStore = signalStore(
         await showToast(store.toastController, failed > 0
           ? fill(store.i18n.reindex_partial(), { count: written, failed })
           : fill(store.i18n.reindex_done(), { count: written }));
+      },
+
+      /**
+       * Datenschutz → Cookie-Hinweis: whether this tenant's app shows the cookie notice and its
+       * text per language (`app-config.cookieBannerEnabled` / `cookieBannerText`). The modal only
+       * returns the edited settings; the single-field patch is written here.
+       */
+      async editCookieBanner(): Promise<void> {
+        if (!hasRole('admin', store.appStore.currentUser())) return;
+        const settings = toCookieBannerSettings(store.appStore.appConfig());
+        const modal = await store.modalController.create({
+          component: CookieBannerSettingsModal,
+          componentProps: { settings },
+        });
+        await modal.present();
+        const { data, role } = await modal.onDidDismiss();
+        if (role !== 'confirm' || !data) return;
+        try {
+          await store.appStore.appConfigService.setCookieBanner(store.appStore.tenantId(), fromCookieBannerSettings(data as CookieBannerSettings));
+          await logRun('privacy', (data as CookieBannerSettings).cookieBannerEnabled ? 'on' : 'off');
+        } catch (e) {
+          await fail(e);
+        }
       },
 
       /**

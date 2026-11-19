@@ -192,6 +192,7 @@ export const AOC_HUB_I18N_KEYS = {
   never_run: PFX + 'hub.neverRun',
   action_run: PFX + 'hub.action.run',
   action_preview: PFX + 'hub.action.preview',
+  action_edit: PFX + 'hub.action.edit',
   pick_type: PFX + 'hub.pickType',
   busy: PFX + 'hub.busy',
   type_address: PFX + 'hub.type.address',
@@ -247,6 +248,8 @@ export const AOC_HUB_I18N_KEYS = {
   card_register_effect: PFX + 'hub.card.register.effect',
   card_privacyAudit_label: PFX + 'hub.card.privacyAudit.label',
   card_privacyAudit_effect: PFX + 'hub.card.privacyAudit.effect',
+  card_privacy_label: PFX + 'hub.card.privacy.label',
+  card_privacy_effect: PFX + 'hub.card.privacy.effect',
   card_iban_label: PFX + 'hub.card.iban.label',
   card_iban_effect: PFX + 'hub.card.iban.effect',
   card_allocation_label: PFX + 'hub.card.allocation.label',
@@ -269,7 +272,25 @@ export const AOC_HUB_I18N_KEYS = {
   card_reindex_effect: PFX + 'hub.card.reindex.effect',
 } satisfies Record<string, string>;
 
+// ─── AOC «Datenschutz»: the cookie notice (plan 2026-11-18-remove-google-analytics) ─────
+export const AOC_COOKIE_BANNER_I18N_KEYS = {
+  title: PFX + 'hub.privacy.title',
+  enabled_label: PFX + 'hub.privacy.enabled.label',
+  enabled_helper: PFX + 'hub.privacy.enabled.helper',
+  text_de_label: PFX + 'hub.privacy.text.de',
+  text_en_label: PFX + 'hub.privacy.text.en',
+  text_fr_label: PFX + 'hub.privacy.text.fr',
+  text_es_label: PFX + 'hub.privacy.text.es',
+  text_it_label: PFX + 'hub.privacy.text.it',
+  text_placeholder: PFX + 'hub.privacy.text.placeholder',
+  text_helper: PFX + 'hub.privacy.text.helper',
+  validations_textLength: PFX + 'hub.privacy.validations.textLength',
+  cancel: '@cancel',
+  save: '@save.label',
+} satisfies Record<string, string>;
+
 export type AocI18n = { [K in keyof typeof AOC_I18N_KEYS]: Signal<string> };
+export type AocCookieBannerI18n = { [K in keyof typeof AOC_COOKIE_BANNER_I18N_KEYS]: Signal<string> };
 export type AocHubI18n = { [K in keyof typeof AOC_HUB_I18N_KEYS]: Signal<string> };
 
 // `fill` now lives in @okr/shared-util-core so every domain can use it; re-exported

@@ -2273,13 +2273,14 @@ const forms: FeatureBlock = {
   ],
 };
 
-// consent: judged CORE, not `members`. The cookie/analytics-consent banner
-// (`@okr/consent-ui`'s CookieBanner + `@okr/consent-data-access`) is wired into every
-// tenant app's root (`okr-root.ts`/`app.config.ts`), shown to every visitor — including
-// anonymous, pre-login — and is a legal/compliance surface, not a togglable business
-// feature a tenant would ever want off. That is the definition of `core: true`, not a
-// `members`-bundle pick. It owns no Firestore collection (state lives in `localStorage`
-// via CONSENT_KEY) and no route (it is a banner component, not a routable screen).
+// consent: judged CORE, not `members`. The cookie notice (`@okr/consent-ui`'s CookieBanner +
+// `@okr/consent-data-access`) is wired into every tenant app's root (`okr-root.ts`) and can reach
+// every visitor — including anonymous, pre-login. Whether it shows, and what it says, is NOT this
+// block's switch: since Google Analytics was removed (2026-11-19) the banner is a notice the
+// tenant admin turns on and words in AOC «Datenschutz» (`app-config.cookieBannerEnabled`,
+// `cookieBannerText`; default off). The block stays core so that setting is always reachable.
+// It owns no Firestore collection (the acknowledgement lives in `localStorage` via CONSENT_KEY)
+// and no route (a banner component plus the AOC card's operation, not a routable screen).
 const consent: FeatureBlock = {
   id: 'consent',
   bundle: 'core',

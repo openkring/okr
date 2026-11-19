@@ -56,11 +56,9 @@ export class UserModel implements OkrModel, TaggedModel, SearchableModel {
   public usageName = PrivacyUsage.Restricted;
   public srvEmail = true;
 
-  // privacy-policy acceptance / cookie consent
+  // privacy-policy acceptance
   public policyAcceptedVersion = ''; // AppConfig.privacyPolicyVersion the user accepted
   public policyAcceptedAt = '';      // store date (yyyymmdd)
-  public cookieConsent = '';         // 'all' | 'essential' | ''
-  public cookieConsentAt = '';       // store date (yyyymmdd)
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

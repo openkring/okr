@@ -73,6 +73,8 @@ export const AOC_AREAS: readonly AocCard[] = [
   card('sessions', 'access', 'report', { route: '/aoc/sessions' }, 'aoc'),
   card('register', 'access', 'report', { route: '/security/register' }, 'security'),
   card('privacyAudit', 'access', 'check', { route: '/security/privacy-audit' }, 'security'),
+  // the cookie notice (app-config.cookieBannerEnabled/Text) — an edit dialog, run as an operation
+  card('privacy', 'access', 'operation', { operation: 'privacy' }, 'consent'),
   card('iban', 'access', 'report', { operation: 'iban' }, 'aoc'),
   card('allocation', 'access', 'operation', { route: '/operator/allocation' }, 'aoc', { tenants: [OPERATOR_TENANT_ID] }),
   card('status', 'ops', 'report', { route: '/aoc/status' }, 'aoc'),

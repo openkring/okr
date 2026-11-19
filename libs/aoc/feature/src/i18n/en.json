@@ -310,6 +310,10 @@
       "reindex": {
         "label": "Rebuild search index",
         "effect": "Rebuilds search when results are missing or outdated."
+      },
+      "privacy": {
+        "label": "Cookie notice",
+        "effect": "Decides whether the app shows a cookie notice and what it says."
       }
     },
     "title": "Administration",
@@ -318,7 +322,8 @@
     "neverRun": "Not run yet",
     "action": {
       "run": "Run",
-      "preview": "Preview"
+      "preview": "Preview",
+      "edit": "Edit"
     },
     "pickType": "Which data?",
     "validate": {
@@ -361,6 +366,25 @@
       "responsibility": "Responsibilities",
       "session": "Sessions",
       "icon": "Icons"
+    },
+    "privacy": {
+      "title": "Cookie notice",
+      "enabled": {
+        "label": "Show cookie notice",
+        "helper": "The app itself only stores what it needs to work. Turn the notice on if you still want to point it out to your members, for example because you embed videos or maps."
+      },
+      "text": {
+        "de": "Text German",
+        "en": "Text English",
+        "fr": "Text French",
+        "es": "Text Spanish",
+        "it": "Text Italian",
+        "placeholder": "Use the default text",
+        "helper": "Leave empty to show the default text. If a language is missing, the German text is used."
+      },
+      "validations": {
+        "textLength": "The text is too long."
+      }
     }
   }
 }

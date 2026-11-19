@@ -310,6 +310,10 @@
       "reindex": {
         "label": "Reconstruire l'index de recherche",
         "effect": "Reconstruit la recherche quand des résultats manquent ou sont périmés."
+      },
+      "privacy": {
+        "label": "Avis sur les cookies",
+        "effect": "Détermine si l'application affiche un avis sur les cookies et ce qu'il contient."
       }
     },
     "title": "Administration",
@@ -318,7 +322,8 @@
     "neverRun": "Jamais exécuté",
     "action": {
       "run": "Exécuter",
-      "preview": "Aperçu"
+      "preview": "Aperçu",
+      "edit": "Modifier"
     },
     "pickType": "Quelles données ?",
     "validate": {
@@ -361,6 +366,25 @@
       "responsibility": "Responsabilités",
       "session": "Sessions",
       "icon": "Icônes"
+    },
+    "privacy": {
+      "title": "Avis sur les cookies",
+      "enabled": {
+        "label": "Afficher l'avis sur les cookies",
+        "helper": "L'application ne stocke que ce dont elle a besoin pour fonctionner. Active l'avis si tu veux tout de même en informer tes membres, par exemple parce que tu intègres des vidéos ou des cartes."
+      },
+      "text": {
+        "de": "Texte allemand",
+        "en": "Texte anglais",
+        "fr": "Texte français",
+        "es": "Texte espagnol",
+        "it": "Texte italien",
+        "placeholder": "Utiliser le texte standard",
+        "helper": "Laisse vide pour afficher le texte standard. S'il manque une langue, le texte allemand s'applique."
+      },
+      "validations": {
+        "textLength": "Le texte est trop long."
+      }
     }
   }
 }

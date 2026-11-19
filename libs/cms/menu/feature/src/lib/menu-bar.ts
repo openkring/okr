@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonPopover, IonSegment, IonSegmentButton, IonToolbar } from '@ionic/angular';
 
 import { MenuItemModel } from '@okr/shared-models';
@@ -24,7 +24,8 @@ import { MenuStore } from './menu.store';
  * `segmented` and `top` are both drawn here (`top` through `MenuBarItem`). The end of the
  * toolbar is the account area (spec §6.4): the connection status, the projection slot
  * `[okrMenuBarEnd]` (the shell puts the tenant switcher and the debug info there), the avatar, and a
- * «…» button whose popover holds login, logout and profile plus Cookie-Einstellungen. That popover is
+ * «…» button whose popover holds login, logout and profile plus, when the tenant shows the cookie
+ * notice, Cookie-Einstellungen. That popover is
  * a dropdown (`okr-menu-dropdown`, see `Menu.select`) and has no `dismissOnSelect`, which Ionic
  * puts on the whole wrapper: it would close on every click inside, an accordion header included.
  *
@@ -133,9 +134,11 @@ import { MenuStore } from './menu.store';
               <ion-content>
                 <ion-list>
                   <okr-bar-account [rootItems]="store.menu()?.menuItems" />
-                  <ion-item lines="none" button detail="false" (click)="openCookieSettings(accountPopover)">
-                    <ion-label color="medium" style="font-size: 13px;">{{ store.i18n.bar_cookie_settings() }}</ion-label>
-                  </ion-item>
+                  @if (showCookieSettings()) {
+                    <ion-item lines="none" button detail="false" (click)="openCookieSettings(accountPopover)">
+                      <ion-label color="medium" style="font-size: 13px;">{{ store.i18n.bar_cookie_settings() }}</ion-label>
+                    </ion-item>
+                  }
                 </ion-list>
               </ion-content>
             </ng-template>
@@ -152,7 +155,9 @@ export class MenuBar {
 
   /** The avatar was tapped: the shell opens the profile. */
   public readonly profileClicked = output<void>();
-  /** The Cookie-Einstellungen entry was tapped: the shell reopens the consent banner. */
+  /** Show Cookie-Einstellungen — only when the tenant shows the cookie notice (`app-config.cookieBannerEnabled`). */
+  public readonly showCookieSettings = input(false);
+  /** The Cookie-Einstellungen entry was tapped: the shell reopens the cookie notice. */
   public readonly cookieSettingsClicked = output<void>();
 
   protected readonly popupId = contextMenuId('c_menubar');

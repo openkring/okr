@@ -4,20 +4,37 @@ import { isBrowser } from '@okr/shared-util-core';
 
 export const CONSENT_KEY = 'cookie_consent_v1';
 
+/**
+ * What the visitor did with the cookie notice. Since Google Analytics was removed (2026-11-19)
+ * the app stores only what it needs to work, so the banner is a notice, not a choice: the only
+ * state is whether this visitor has acknowledged it, and for which text.
+ *
+ * Older entries under the same key also carry `necessary`/`analytics`/`marketing` from the
+ * consent banner of 2026-05 — they are ignored on read and dropped on the next write.
+ */
 export interface ConsentState {
-  necessary: boolean;
-  analytics: boolean;
-  marketing: boolean;
   decided: boolean;
+  /** {@link cookieNoticeHash} of the text that was acknowledged; a changed text shows the banner again. */
+  textHash?: string;
   timestamp?: number;
 }
 
 export const DEFAULT_CONSENT: ConsentState = {
-  necessary: true,
-  analytics: false,
-  marketing: false,
   decided: false,
 };
+
+/**
+ * Short, stable fingerprint of a banner text (FNV-1a, 32 bit, hex). Not a security measure —
+ * it only tells whether the tenant changed the wording since the visitor acknowledged it.
+ */
+export function cookieNoticeHash(text: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0');
+}
 
 @Injectable({ providedIn: 'root' })
 export class ConsentService {
@@ -30,30 +47,24 @@ export class ConsentService {
     return this.subject.getValue();
   }
 
-  public needsBanner(): boolean {
-    return !this.subject.getValue().decided;
+  /**
+   * True until the visitor acknowledged the notice. With `textHash`, also true when they
+   * acknowledged a different text (or acknowledged before hashes were stored).
+   */
+  public needsBanner(textHash?: string): boolean {
+    const state = this.subject.getValue();
+    if (!state.decided) return true;
+    return textHash !== undefined && state.textHash !== textHash;
   }
 
-  public hasAnalyticsConsent(): boolean {
-    return this.subject.getValue().analytics;
+  /** The visitor acknowledged the notice showing the text with this hash. */
+  public acknowledge(textHash?: string): void {
+    const next: ConsentState = { decided: true, textHash, timestamp: Date.now() };
+    this.subject.next(next);
+    this.persist(next);
   }
 
-  public hasMarketingConsent(): boolean {
-    return this.subject.getValue().marketing;
-  }
-
-  public acceptAll(): void {
-    this.apply({ analytics: true, marketing: true, decided: true });
-  }
-
-  public rejectAll(): void {
-    this.apply({ analytics: false, marketing: false, decided: true });
-  }
-
-  public setCustom(partial: Partial<Omit<ConsentState, 'necessary' | 'decided' | 'timestamp'>>): void {
-    this.apply({ ...partial, decided: true });
-  }
-
+  /** «Cookie-Einstellungen»: forget the acknowledgement so the banner shows again. */
   public reset(): void {
     this.subject.next(DEFAULT_CONSENT);
     if (!isBrowser(this.platformId)) return;
@@ -64,24 +75,17 @@ export class ConsentService {
     }
   }
 
-  private apply(patch: Partial<ConsentState>): void {
-    const next: ConsentState = {
-      ...this.subject.getValue(),
-      ...patch,
-      necessary: true,
-      timestamp: Date.now(),
-    };
-    this.subject.next(next);
-    this.persist(next);
-  }
-
   private load(): ConsentState {
     if (!isBrowser(this.platformId)) return DEFAULT_CONSENT;
     try {
       const raw = localStorage.getItem(CONSENT_KEY);
       if (!raw) return DEFAULT_CONSENT;
       const parsed = JSON.parse(raw) as Partial<ConsentState>;
-      return { ...DEFAULT_CONSENT, ...parsed, necessary: true };
+      return {
+        decided: parsed.decided === true,
+        textHash: typeof parsed.textHash === 'string' ? parsed.textHash : undefined,
+        timestamp: typeof parsed.timestamp === 'number' ? parsed.timestamp : undefined,
+      };
     } catch {
       return DEFAULT_CONSENT;
     }
@@ -93,7 +97,7 @@ export class ConsentService {
       localStorage.setItem(CONSENT_KEY, JSON.stringify(state));
     } catch {
       // Safari private mode / blocked storage (SecurityError, DOMException 18) —
-      // in-memory consent state still applies for this session; ignore.
+      // in-memory state still applies for this session; ignore.
     }
   }
 }

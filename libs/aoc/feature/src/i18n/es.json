@@ -310,6 +310,10 @@
       "reindex": {
         "label": "Reconstruir el índice de búsqueda",
         "effect": "Reconstruye la búsqueda cuando faltan resultados o están desactualizados."
+      },
+      "privacy": {
+        "label": "Aviso de cookies",
+        "effect": "Determina si la aplicación muestra un aviso de cookies y qué dice."
       }
     },
     "title": "Administración",
@@ -318,7 +322,8 @@
     "neverRun": "Nunca ejecutado",
     "action": {
       "run": "Ejecutar",
-      "preview": "Vista previa"
+      "preview": "Vista previa",
+      "edit": "Editar"
     },
     "pickType": "¿Qué datos?",
     "validate": {
@@ -361,6 +366,25 @@
       "responsibility": "Responsabilidades",
       "session": "Sesiones",
       "icon": "Iconos"
+    },
+    "privacy": {
+      "title": "Aviso de cookies",
+      "enabled": {
+        "label": "Mostrar aviso de cookies",
+        "helper": "La aplicación solo guarda lo que necesita para funcionar. Activa el aviso si aun así quieres informar a tus miembros, por ejemplo porque insertas vídeos o mapas."
+      },
+      "text": {
+        "de": "Texto alemán",
+        "en": "Texto inglés",
+        "fr": "Texto francés",
+        "es": "Texto español",
+        "it": "Texto italiano",
+        "placeholder": "Usar el texto estándar",
+        "helper": "Déjalo vacío para mostrar el texto estándar. Si falta un idioma, se usa el texto alemán."
+      },
+      "validations": {
+        "textLength": "El texto es demasiado largo."
+      }
     }
   }
 }

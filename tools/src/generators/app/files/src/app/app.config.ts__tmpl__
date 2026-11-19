@@ -12,7 +12,6 @@ import { AppStore, provideModelSelector, SentryContextService } from '@okr/share
 import { GROUP_EDIT_MODAL } from '@okr/subject-group-ui';
 import { ORG_EDIT_MODAL } from '@okr/subject-org-ui';
 import { PERSON_EDIT_MODAL } from '@okr/subject-person-ui';
-import { AnalyticsLoaderService } from '@okr/consent-data-access';
 import { environment } from '../environments/environment';
 
 import { appRoutes } from './app.routes';
@@ -64,7 +63,7 @@ export const appConfig: ApplicationConfig = {
 
     // Register the Angular service worker (ngsw) to cache the app shell + static assets.
     // Deferred until the app is stable (or 30 s) so it stays off the critical path with
-    // Matrix init (deferred until app-ready + idle) and Analytics. The SSR guard keeps the registrar's
+    // Matrix init (deferred until app-ready + idle). The SSR guard keeps the registrar's
     // lifecycle code off the server render path. See docs/16_spec-pwa-caching.md §4.
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode() && typeof window !== 'undefined',
@@ -156,20 +155,6 @@ export const appConfig: ApplicationConfig = {
       multi: true,
     },
 
-    // Initialize Analytics only after consent is granted.
-    // firebase/analytics is NOT in the initial bundle — lazily imported by AnalyticsLoaderService.
-    {
-      provide: APP_BOOTSTRAP_LISTENER,
-      useFactory: (platformId: object, injector: Injector) => {
-        return () => {
-          if (isBrowser(platformId)) {
-            injector.get(AnalyticsLoaderService).init();
-          }
-        };
-      },
-      deps: [PLATFORM_ID, Injector],
-      multi: true,
-    },
 
     // Sentry: start pushing pseudonymous user/tenant/role context after bootstrap (browser only).
     {

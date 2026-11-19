@@ -1,20 +1,31 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs/operators';
-import { FormsModule } from '@angular/forms';
-import {
-  IonButton, IonItem, IonLabel, IonList, IonToggle,
-} from '@ionic/angular';
+import { RouterLink } from '@angular/router';
+import { IonButton } from '@ionic/angular';
+import { TranslocoService } from '@jsverse/transloco';
 
-import { ConsentService } from '@okr/consent-data-access';
+import { ConsentService, cookieNoticeHash } from '@okr/consent-data-access';
 import { I18nService } from '@okr/shared-i18n';
 
 import { CONSENT_I18N_KEYS, ConsentI18n } from './consent-i18n';
 
+/**
+ * The cookie notice. Since Google Analytics was removed (2026-11-19) the app stores only what it
+ * needs to work, so this is a notice with one «Verstanden» button, not a consent choice.
+ *
+ * Whether it shows at all is the tenant's decision: `app-config.cookieBannerEnabled` (default
+ * false), edited by the tenant admin in AOC «Datenschutz». The text is the tenant's
+ * `cookieBannerText[lang]`, falling back to its German text and then to the shipped default.
+ * When the admin changes the text, visitors who acknowledged the old one see the banner once more.
+ *
+ * The app root passes the three `app-config` values in (a ui lib may not reach `AppStore`); they
+ * live on `app-config` because the banner shows before login, when that is the only tenant
+ * document a visitor can read.
+ */
 @Component({
   selector: 'okr-cookie-banner',
   standalone: true,
-  imports: [FormsModule, IonButton, IonItem, IonLabel, IonList, IonToggle],
+  imports: [IonButton, RouterLink],
   styles: [`
     .cookie-banner {
       position: fixed;
@@ -33,114 +44,73 @@ import { CONSENT_I18N_KEYS, ConsentI18n } from './consent-i18n';
       margin: 0 0 12px;
       font-size: 14px;
       line-height: 1.5;
+      white-space: pre-line;
     }
-    .banner-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
+    .banner-text a {
+      margin-left: 4px;
     }
     .banner-actions ion-button {
-      flex: 1 1 auto;
       min-width: 140px;
-    }
-    .preferences-section {
-      margin-top: 12px;
-      border-top: 1px solid var(--ion-border-color, #e0e0e0);
-      padding-top: 8px;
     }
   `],
   template: `
-    @if (needsBanner()) {
+    @if (showBanner()) {
       <div class="cookie-banner" role="dialog" [attr.aria-label]="i18n.banner_aria()" aria-live="polite">
-        <p class="banner-text">{{ i18n.banner_text() }}</p>
-
+        <p class="banner-text">{{ text() }}
+          @if (privacyHref(); as href) {
+            <a [routerLink]="href">{{ i18n.banner_privacy() }}</a>
+          }
+        </p>
         <div class="banner-actions">
-          <ion-button expand="block" color="primary" (click)="acceptAll()">
-            {{ i18n.banner_acceptAll() }}
-          </ion-button>
-          <ion-button expand="block" color="primary" fill="outline" (click)="rejectAll()">
-            {{ i18n.banner_rejectAll() }}
-          </ion-button>
-          <ion-button expand="block" color="medium" fill="outline" (click)="toggleCustomize()">
-            {{ i18n.banner_customize() }}
-          </ion-button>
+          <ion-button color="primary" (click)="acknowledge()">{{ i18n.banner_ok() }}</ion-button>
         </div>
-
-        @if (showCustomize()) {
-          <div class="preferences-section">
-            <ion-list lines="none">
-              <ion-item>
-                <ion-toggle [checked]="true" [disabled]="true" justify="space-between">
-                  <ion-label class="ion-text-wrap">
-                    <h3>{{ i18n.necessary_title() }}</h3>
-                    <p>{{ i18n.necessary_description() }}</p>
-                  </ion-label>
-                </ion-toggle>
-              </ion-item>
-              <ion-item>
-                <ion-toggle [checked]="analyticsToggle()" (ionChange)="analyticsToggle.set($event.detail.checked)" justify="space-between">
-                  <ion-label class="ion-text-wrap">
-                    <h3>{{ i18n.analytics_title() }}</h3>
-                    <p>{{ i18n.analytics_description() }}</p>
-                  </ion-label>
-                </ion-toggle>
-              </ion-item>
-              <ion-item>
-                <ion-toggle [checked]="marketingToggle()" (ionChange)="marketingToggle.set($event.detail.checked)" justify="space-between">
-                  <ion-label class="ion-text-wrap">
-                    <h3>{{ i18n.marketing_title() }}</h3>
-                    <p>{{ i18n.marketing_description() }}</p>
-                  </ion-label>
-                </ion-toggle>
-              </ion-item>
-            </ion-list>
-            <ion-button expand="block" color="primary" (click)="saveCustom()">
-              {{ i18n.banner_save() }}
-            </ion-button>
-          </div>
-        }
       </div>
     }
   `,
 })
 export class CookieBanner {
   private readonly consentService = inject(ConsentService);
+  private readonly transloco = inject(TranslocoService);
 
   protected readonly i18n = inject(I18nService).translateAll(CONSENT_I18N_KEYS) as ConsentI18n;
 
-  protected readonly needsBanner = toSignal(
-    this.consentService.consent$.pipe(map(s => !s.decided)),
-    { initialValue: true },
-  );
-  protected readonly showCustomize = signal(false);
-  protected readonly analyticsToggle = signal(false);
-  protected readonly marketingToggle = signal(false);
+  private readonly lang = toSignal(this.transloco.langChanges$, { initialValue: this.transloco.getActiveLang() });
+  private readonly consent = toSignal(this.consentService.consent$, { initialValue: this.consentService.getState() });
 
-  protected acceptAll(): void {
-    this.consentService.acceptAll();
-    this.showCustomize.set(false);
-  }
+  // inputs — `app-config.cookieBannerEnabled` / `cookieBannerText` / `privacyPolicyPageKey`
+  public readonly enabled = input<boolean | undefined>(false);
+  public readonly texts = input<Record<string, string> | undefined>({});
+  public readonly privacyPageKey = input<string | undefined>('');
 
-  protected rejectAll(): void {
-    this.consentService.rejectAll();
-    this.showCustomize.set(false);
-  }
+  protected readonly text = computed(() => {
+    const texts = this.texts() ?? {};
+    const own = (texts[this.lang()] ?? '').trim() || (texts['de'] ?? '').trim();
+    return own || this.i18n.banner_text();
+  });
 
-  protected toggleCustomize(): void {
-    const opening = !this.showCustomize();
-    if (opening) {
-      const state = this.consentService.getState();
-      this.analyticsToggle.set(state.analytics);
-      this.marketingToggle.set(state.marketing);
-    }
-    this.showCustomize.set(opening);
-  }
+  /**
+   * Fingerprint of the tenant's wording in ALL languages, not of the text on screen: switching the
+   * language, or the shipped default still loading, must not show the banner again — only an
+   * edit by the tenant admin does.
+   */
+  private readonly textHash = computed(() => {
+    const texts = this.texts() ?? {};
+    const own = Object.keys(texts).sort().map(lang => `${lang}=${(texts[lang] ?? '').trim()}`).join('\n');
+    return cookieNoticeHash(own);
+  });
 
-  protected saveCustom(): void {
-    this.consentService.setCustom({
-      analytics: this.analyticsToggle(),
-      marketing: this.marketingToggle(),
-    });
-    this.showCustomize.set(false);
+  protected readonly privacyHref = computed(() => {
+    const key = this.privacyPageKey() ?? '';
+    return key ? `/page/${key}` : '';
+  });
+
+  protected readonly showBanner = computed(() => {
+    if (this.enabled() !== true || !this.text()) return false;
+    const state = this.consent();
+    return !state.decided || state.textHash !== this.textHash();
+  });
+
+  protected acknowledge(): void {
+    this.consentService.acknowledge(this.textHash());
   }
 }

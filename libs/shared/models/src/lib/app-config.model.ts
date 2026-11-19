@@ -239,6 +239,17 @@ export class AppConfig {
   public privacyPolicyPageKey = ''; // CMS page key of the Datenschutzerklärung
 
   /**
+   * Cookie notice (plan 2026-11-18-remove-google-analytics). The app itself stores only what it
+   * needs to work, so the banner is the tenant's own choice — off by default, switched on and
+   * worded by the tenant admin in AOC «Datenschutz». Lives here, not in `i18nTenantOverride`,
+   * because the banner shows before login and only `app-config` is readable then.
+   * Legacy docs lack both fields — coalesce on read.
+   */
+  public cookieBannerEnabled = false;
+  /** Banner text per language code (de/en/fr/es/it); missing or '' = the shipped default text. */
+  public cookieBannerText: Record<string, string> = {};
+
+  /**
    * Which third-party integrations actually receive this tenant's data, keyed by the
    * `ProcessorEntry.key` of the matching PROCESSOR_CATALOGUE entry ('bexio', 'deepsign',
    * 'matrix', …). Absent or `false` means the integration is off and the processor is

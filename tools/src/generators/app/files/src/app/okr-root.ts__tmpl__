@@ -114,7 +114,7 @@ import { ConsentService } from '@okr/consent-data-access';
         switch a menu through its [disabled] binding, see the <ion-menu> below
       -->
     <ion-app>
-      <okr-cookie-banner />
+      <okr-cookie-banner [enabled]="appStore.appConfig().cookieBannerEnabled" [texts]="appStore.appConfig().cookieBannerText" [privacyPageKey]="appStore.appConfig().privacyPolicyPageKey" />
       <ion-split-pane contentId="main" [disabled]="!showMenu() || menuLayout.barActive()" (ionSplitPaneVisible)="onSplitPaneVisible($event)">
         <!-- Known drift from the apps: they keep <ion-menu> mounted and gate it only through its
              [disabled] binding (unmounting it leaves dead hamburgers, see okr-root.ts there). This
@@ -159,9 +159,12 @@ import { ConsentService } from '@okr/consent-data-access';
             @if(showDebugInfo()) {
               <okr-auth-info [currentUser]="appStore.currentUser()" [fbUser]="appStore.fbUser()" [isAuthenticated]="appStore.isAuthenticated()" [isAdmin]="hasRole('admin')" />
             }
-          <ion-item lines="none" button detail="false" (click)="openCookieSettings()">
-            <ion-label color="medium" style="font-size: 13px;">Cookie-Einstellungen</ion-label>
-          </ion-item>
+          <!-- only when the tenant shows the cookie notice (app-config.cookieBannerEnabled) -->
+          @if (appStore.appConfig().cookieBannerEnabled) {
+            <ion-item lines="none" button detail="false" (click)="openCookieSettings()">
+              <ion-label color="medium" style="font-size: 13px;">Cookie-Einstellungen</ion-label>
+            </ion-item>
+          }
           </ion-content>
         </ion-menu>
         }
@@ -196,7 +199,7 @@ import { ConsentService } from '@okr/consent-data-access';
             --ion-safe-area-top for its pages, which would zero the bar's own share as well.
           -->
           @if (barShown() && isUserSessionReady()) {
-            <okr-menu-bar (profileClicked)="openProfile()" (cookieSettingsClicked)="openCookieSettings()">
+            <okr-menu-bar (profileClicked)="openProfile()" [showCookieSettings]="appStore.appConfig().cookieBannerEnabled" (cookieSettingsClicked)="openCookieSettings()">
               <ng-container ngProjectAs="[okrMenuBarEnd]">
                 <!-- the one tenant switcher host while the bar is shown; the sidebar has none then -->
                 @if (menuLayout.barActive()) {

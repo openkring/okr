@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ErrorEvent } from '@sentry/angular';
 import { beforeSend, beforeSendTransaction, buildSentryOptions, redactFileTransferTokens, scrubBreadcrumb, SentryConfig } from './sentry';
-import { closeAnalyticsInitWindow, markAnalyticsInitStarted } from './analytics-init-window';
 import { clearRecentFailedRequests, installFailedRequestRecorder } from './failed-request-recorder';
 
 const cfg: SentryConfig = {
@@ -224,16 +223,10 @@ describe('beforeSend and unowned object rejections (SCS-A8)', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
-    closeAnalyticsInitWindow();
     clearRecentFailedRequests();
   });
 
-  it('drops an anonymous rejection while an analytics init could still be in flight', () => {
-    markAnalyticsInitStarted();
-    expect(beforeSend(objectRejection({ status: 504, message: 'Gateway Timeout' }), {} as never)).toBeNull();
-  });
-
-  it('keeps the same rejection once the analytics window has closed', () => {
+  it('keeps an anonymous rejection outside Edge on iOS', () => {
     const sent = beforeSend(objectRejection({ status: 504, message: 'Gateway Timeout' }), {} as never);
     expect(sent).not.toBeNull();
   });
@@ -248,8 +241,7 @@ describe('beforeSend and unowned object rejections (SCS-A8)', () => {
     expect(sent?.exception?.values?.[0].value).toBe('Object captured as promise rejection with keys: details, message, status');
   });
 
-  it('never drops an error that carries a stacktrace, analytics window or not', () => {
-    markAnalyticsInitStarted();
+  it('never drops an error that carries a stacktrace', () => {
     const event = objectRejection({ status: 504 });
     event.exception!.values![0].stacktrace = { frames: [{ function: 'confirm' }] };
     expect(beforeSend(event, {} as never)).not.toBeNull();

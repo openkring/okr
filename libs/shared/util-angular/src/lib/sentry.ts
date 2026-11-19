@@ -5,7 +5,6 @@ import { redactSensitive, stripPii, stripUrlQueriesInText, stripUrlQuery } from 
 import { catchError } from 'rxjs';
 import { isStaleChunkRecoveryInFlight } from './chunk-load-error-handler';
 import { FIRESTORE_QUEUE_FAILURE_TAG, isFirestoreQueueRecoveryInFlight } from './firestore-queue-recovery';
-import { isAnalyticsInitInFlight } from './analytics-init-window';
 import { getRecentFailedRequests, hasRecentFailedRequest } from './failed-request-recorder';
 import { getDeviceSupportTags } from './device-support';
 
@@ -146,12 +145,6 @@ export function beforeSend(event: ErrorEvent, _hint: EventHint): ErrorEvent | nu
     v.stacktrace?.frames?.some((f) => injectedScanner.test(f.function ?? '')),
   );
   if (fromInjectedScanner) return null;
-
-  // Analytics is non-essential and initialises through a promise chain the Firebase SDK
-  // never hands back, so its failures arrive as anonymous object rejections (SCS-A8).
-  // Drop exactly that shape while an analytics init could still be in flight — a real
-  // error carries a stacktrace or is a proper Error, and still reports.
-  if (isUnownedObjectRejection(event) && isAnalyticsInitInFlight()) return null;
 
   // Edge on iOS injects its own scripts (translator, Copilot, read-aloud …) that reject with a
   // bare `{ status: 504, message: 'Gateway Timeout', details: {} }` when their Microsoft backend
