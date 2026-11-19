@@ -1,6 +1,7 @@
 /**
  * Seeds the `menu_type` category — the layouts a main menu can have: left, right, top, segmented
- * (spec planning/specs/2026-11-06-menu-layouts-spec.md §4 and §9).
+ * (spec planning/specs/2026-11-06-menu-layouts-spec.md §4 and §9) and static (spec 1.163,
+ * planning/specs/2026-11-18-menu-static-layout-spec.md). `static` is added to an existing category by a re-run.
  *
  * `MenuForm` offers `menuType` on a root menu (action 'main') through `okr-cat-select`, fed from
  * this category. Without it the select has no items, so no layout can be chosen in the editor.
@@ -43,6 +44,7 @@ const ITEMS = [
   { name: 'right', icon: 'chevron-forward' },
   { name: 'top', icon: 'chevron-up' },
   { name: 'segmented', icon: 'apps' },
+  { name: 'static', icon: 'list' },
 ];
 
 if (!getApps().length) initializeApp({ projectId: PROJECT_ID });

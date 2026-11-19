@@ -28,8 +28,9 @@ Collection name: `menuItems`
 | `roleNeeded` | RoleName | Minimum role required to see this item (default: `contentAdmin`) |
 | `description` | string | Human-readable notes about the menu item |
 | `tags` | string | Comma-separated tags for filtering |
-| `menuType` | MenuType | Layout of the main menu: `left` (default), `right`, `top` or `segmented`. Read on the root document `main_<tenantId>` only |
+| `menuType` | MenuType | Layout of the main menu: `left` (default), `right`, `top`, `segmented` or `static`. Read on the root document `main_<tenantId>` only |
 | `submenuOffset` | number | Indent of submenu rows and gap below a dropdown, in px (default `DEFAULT_SUBMENU_OFFSET`). Root document only |
+| `staticMenu` | StaticMenuConfig | Look of the `static` layout (spec 1.163), root document only; every field optional, an invalid or missing value falls back to its default (`resolveStaticMenu`): `bulletColor` (Ionic colour name or `#rgb`/`#rrggbb`, default `primary`), `bulletShape` (`square` default, `round`, `none`), `bulletSize` (integer px 6–32, default 12), `activeStyle` (`bold` default, `color`, `underline`), `childrenVisibility` (`always` or `active` default), `childrenDirection` (`horizontal` default or `vertical`) |
 
 ## Action Types
 
@@ -91,7 +92,8 @@ hoisting the list, → 1 expected after dropping `menuResource`.
 | `Menu` | `okr-menu` | Recursive renderer; switches on `action` type |
 | `MenuList` | `okr-menu-list` | Admin list with search/filter and CRUD action sheet |
 | `MenuBar` | `okr-menu-bar` | The main menu as a bar (`menuType` `top` or `segmented`); see the `menu` skill, section 5 |
-| `MenuLayout` | (service) | `menuType`, `side`, `barActive`, `submenuOffset` for the shell |
+| `MenuStatic` | `okr-menu-static` | The main menu as a fixed block above the page (`menuType` `static`, wide screens); at most 8 rows, one level, 2 children per submenu |
+| `MenuLayout` | (service) | `menuType`, `side`, `barActive`, `staticActive`, `sidebarReplaced`, `staticMenu`, `submenuOffset` for the shell |
 | `MenuItemModal` | (modal) | Edit/view modal for a single menu item |
 
 ## Data Access
