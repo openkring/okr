@@ -3,9 +3,5 @@
     "title": "Find a place",
     "placeholder": "Search city or postcode"
   },
-  "empty": "No matches found.",
-  "attribution": {
-    "swisstopo": "Place data: swisstopo",
-    "geonames": "Place data: GeoNames (CC BY 4.0)"
-  }
+  "empty": "No matches found."
 }

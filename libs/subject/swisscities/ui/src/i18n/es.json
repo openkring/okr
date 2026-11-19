@@ -3,9 +3,5 @@
     "title": "Buscar localidad",
     "placeholder": "Buscar ciudad o código postal"
   },
-  "empty": "No se han encontrado coincidencias.",
-  "attribution": {
-    "swisstopo": "Datos de localidades: swisstopo",
-    "geonames": "Datos de localidades: GeoNames (CC BY 4.0)"
-  }
+  "empty": "No se han encontrado coincidencias."
 }

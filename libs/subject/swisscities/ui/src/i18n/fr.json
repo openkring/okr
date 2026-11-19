@@ -3,9 +3,5 @@
     "title": "Rechercher une localité",
     "placeholder": "Rechercher une ville ou un NPA"
   },
-  "empty": "Aucune correspondance trouvée.",
-  "attribution": {
-    "swisstopo": "Données des localités : swisstopo",
-    "geonames": "Données des localités : GeoNames (CC BY 4.0)"
-  }
+  "empty": "Aucune correspondance trouvée."
 }

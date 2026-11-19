@@ -3,9 +3,5 @@
     "title": "Ort suchen",
     "placeholder": "Stadt oder PLZ suchen"
   },
-  "empty": "Keine Übereinstimmungen gefunden.",
-  "attribution": {
-    "swisstopo": "Ortsdaten: swisstopo",
-    "geonames": "Ortsdaten: GeoNames (CC BY 4.0)"
-  }
+  "empty": "Keine Übereinstimmungen gefunden."
 }

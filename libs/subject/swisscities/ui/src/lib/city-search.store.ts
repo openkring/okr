@@ -19,11 +19,8 @@ export const CitySearchStore = signalStore(
     filteredCities: computed(() => {
       const term = state.searchTerm();
       if (!term) return [];
-      // a municipality also finds its localities: "blenio" -> Olivone, Aquila, Torre …
       return state.cities().filter((c: City) =>
-        c.name.toLowerCase().includes(term) ||
-        c.zipCode.toLowerCase().startsWith(term) ||
-        (c.municipality?.toLowerCase().includes(term) ?? false));
+        c.name.toLowerCase().includes(term) || c.zipCode.toLowerCase().startsWith(term));
     }),
   })),
   withMethods((store) => ({

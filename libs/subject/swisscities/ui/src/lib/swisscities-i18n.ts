@@ -11,8 +11,6 @@ export const SWISSCITIES_I18N_KEYS = {
   search_title:       PFX + 'search.title',
   search_placeholder: PFX + 'search.placeholder',
   empty:              PFX + 'empty',
-  attribution_swisstopo: PFX + 'attribution.swisstopo',
-  attribution_geonames:  PFX + 'attribution.geonames',
 } satisfies Record<string, string>;
 
 export type SwissCitiesI18n = { [K in keyof typeof SWISSCITIES_I18N_KEYS]: Signal<string> };
