@@ -27,7 +27,7 @@ export class NoticeModel implements OkrModel {
   public attachments: NoticeAttachment[] = [];
   /** personKeys of the persons the notice was sent to. */
   public recipients: string[] = [];
-  /** personKey and display name of the sender. */
+  /** senderKey: personKey of who sent the Versand. senderName: the From address it left under (since 2026-11-19; before: the sender's display name). */
   public senderKey = '';
   public senderName = '';
   /** FK -> mailings (the Versand this notice belongs to). */

@@ -43,6 +43,7 @@ import { MAX_PERSONAL_RECIPIENTS, parseCaleventKeys, personalEntries, refusedEve
 import { asLayoutChoice } from './render-email.logic';
 import { buildMailingLetters, countLetterPages, LetterEvent } from './mailing-letters';
 import { mailingCategory } from './mailing-deliveries.logic';
+import { noticeSenderOf } from './notice-sender.logic';
 import { lettersResult, makePostFanOut, postFanOutDeps } from './mailing-sendings';
 import { getCreditPort } from '../pingen/credit-port';
 import { answerEventsOf, type MailingPost, type PostLock, type PostOrderDoc, PostOrderCollection, parsePostRequest, postMailingKey, quoteTokenSecret, readCountryCodes, type QuoteEnv, withPostOrder } from '../pingen/post-order';
@@ -523,7 +524,8 @@ export const onMailing = onDocumentCreated(
           attachments: mailing.attachments,
           recipients: noticeKeys,
           senderKey: mailing.senderKey,
-          senderName: mailing.senderName,
+          // the From address the Versand left under, not the person who sent it
+          senderName: noticeSenderOf(mailing.from || (await getAppEmailConfig(tenantId)).from),
           mailingKey: snap.id,
           caleventKeys: mailing.caleventKeys ?? [],
           sentAt: getTodayStr(DateFormat.StoreDateTime),
