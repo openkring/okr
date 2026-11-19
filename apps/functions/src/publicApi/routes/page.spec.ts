@@ -546,7 +546,7 @@ describe('homepage sections (1.151)', () => {
       expect(map({ type: 'iframe', properties: { url } })['url']).toBe('');
       // a video value without a scheme is an id: it can only land under the default embed base
       const video = map({ type: 'video', properties: { url } })['url'] as string;
-      expect(video === '' || video.startsWith('https://www.youtube.com/embed/')).toBe(true);
+      expect(video === '' || video.startsWith('https://www.youtube-nocookie.com/embed/')).toBe(true);
     }
     for (const url of ['http://evil.com', 'https://x.ch/\\evil', 'https://']) expect(map({ type: 'video', properties: { url } })['url']).toBe('');
     expect(map({ type: 'iframe', properties: { url: 'https://' } })['url']).toBe('');
@@ -561,7 +561,7 @@ describe('homepage sections (1.151)', () => {
     const iframe = map({ type: 'iframe', properties: { url: 'https://maps.example.ch/e', style: 'x" onload="alert(1)' } });
     expect(iframe['url']).toBe('https://maps.example.ch/e');
     expect(iframe).not.toHaveProperty('style');
-    expect(map({ type: 'video', properties: { url: 'abc123' } })['url']).toBe('https://www.youtube.com/embed/abc123');
+    expect(map({ type: 'video', properties: { url: 'abc123' } })['url']).toBe('https://www.youtube-nocookie.com/embed/abc123');
     expect(map({ type: 'video', properties: { url: 'https://player.vimeo.com/video/1' } })['url']).toBe('https://player.vimeo.com/video/1');
     expect(safeEmbedUrl(undefined)).toBe('');
   });
