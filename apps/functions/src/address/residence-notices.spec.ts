@@ -55,4 +55,16 @@ describe('moveTaskId', () => {
     expect(moveTaskId(base, 'B', 'adm1')).not.toBe(id);
     expect(moveTaskId({ ...base, kind: 'cancel' }, 'A', 'adm1')).not.toBe(id);
   });
+
+  it('noticeKey tells two corrections of the same row apart, and is stable per key', () => {
+    const first = moveTaskId({ ...base, kind: 'correction', noticeKey: 'r1|loc1' }, 'A', 'adm1');
+    const second = moveTaskId({ ...base, kind: 'correction', noticeKey: 'r1|loc2' }, 'A', 'adm1');
+    expect(second).not.toBe(first);
+    expect(moveTaskId({ ...base, kind: 'correction', noticeKey: 'r1|loc1' }, 'A', 'adm1')).toBe(first);
+    expect(moveTaskId({ ...base, kind: 'correction' }, 'A', 'adm1')).not.toBe(first);
+  });
+
+  it('without noticeKey the id is unchanged from the earlier version', () => {
+    expect(moveTaskId({ ...base, noticeKey: '' }, 'A', 'adm1')).toBe(moveTaskId(base, 'A', 'adm1'));
+  });
 });

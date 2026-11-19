@@ -491,6 +491,12 @@ export { rebuildAddressDirectory } from './address/rebuild-address-directory';
 // tiered on-demand vault read (privacy 1.19 Phase 4, D9/D-P4-1)
 export { getAddressView } from './address/get-address-view';
 
+// postal moves (spec 1.164 §6): swisstopo search and the only write path for move / correction / cancel
+export { searchSwissAddress } from './address/residence.callables';
+export { recordPostalMove } from './address/residence.callables';
+export { correctPostalAddress } from './address/residence.callables';
+export { cancelPostalMove } from './address/residence.callables';
+
 // tenant allocation (spec 1.47): move a person between tenants, with an audit entry
 export { allocateTenant, getAllocationEmails } from './tenant-allocation';
 

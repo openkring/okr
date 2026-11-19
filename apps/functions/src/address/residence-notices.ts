@@ -26,6 +26,12 @@ export interface MoveNotice {
   /** StoreDate; '' = unknown */
   validFrom: string;
   recorder: { personKey: string; isOwner: boolean; tenantId: string };
+  /**
+   * Tells two notices of the same parent, kind and date apart (two corrections of one row): the new
+   * locationKey for a move, `<residenceKey>|<locationKey>` for a correction, the residence key for a
+   * cancel. Part of the task id; absent = the id of the earlier version.
+   */
+  noticeKey?: string;
 }
 
 export const MOVE_NOTICE_TAG = 'umzug';
@@ -40,8 +46,10 @@ export function noticeRecipients(n: MoveNotice): { taskTenants: string[]; pushPe
 }
 
 /** Deterministic task id: a retried callable writes the same ids, so `create()` cannot duplicate. */
-export function moveTaskId(n: Pick<MoveNotice, 'kind' | 'parentKey' | 'validFrom'>, tenantId: string, adminKey: string): string {
-  return 'umzug-' + createHash('sha256').update([n.parentKey, n.kind, n.validFrom, tenantId, adminKey].join('|')).digest('hex').substring(0, 32);
+export function moveTaskId(n: Pick<MoveNotice, 'kind' | 'parentKey' | 'validFrom' | 'noticeKey'>, tenantId: string, adminKey: string): string {
+  const parts = [n.parentKey, n.kind, n.validFrom, tenantId, adminKey];
+  if (n.noticeKey) parts.push(n.noticeKey);
+  return 'umzug-' + createHash('sha256').update(parts.join('|')).digest('hex').substring(0, 32);
 }
 
 const TASK_NAME_PREFIX: Record<MoveNoticeKind, string> = { move: 'Umzug', correction: 'Adresse korrigiert', cancel: 'Umzug abgesagt' };
