@@ -25,6 +25,7 @@ import { departuresSectionValidations } from './departures-section.validations';
 import { tilesSectionValidations } from './tiles-section.validations';
 import { formSectionValidations } from './form-section.validations';
 import { newsSectionValidations } from './news-section.validations';
+import { courseSectionValidations } from './course-section.validations';
 import { eventsSectionValidations } from './events-section.validations';
 
 /**
@@ -68,6 +69,7 @@ export const SECTION_VALIDATION_SUITES: Partial<Record<SectionType, SectionSuite
   tiles: tilesSectionValidations as SectionSuite,
   news: newsSectionValidations as SectionSuite,
   events: eventsSectionValidations as SectionSuite,
+  course: courseSectionValidations as SectionSuite,
   form: ((model: SectionModel, context?: SectionValidationContext) =>
     formSectionValidations(model as FormSection, context?.formImplicitFields)) as SectionSuite
 };

@@ -11,6 +11,7 @@ import type { BaseType } from './base.model';
 import { AvatarInfo } from './avatar-info';
 import { ImageStyle, ImageConfig, Slot } from './image.model';
 import type { I18nString } from './i18n.model';
+import type { ApplicationKind } from './application.model';
 
 export const SectionCollection = 'sections';
 export const SectionModelName = 'section';
@@ -25,7 +26,7 @@ export const SECTION_TYPES = [
     'people', 'responsibility', 'slider', 'table', 'tracker', 'video', 'accordion', 'events', 'invitations', 'tasks',
     'news', 'activities', 'messages', 'rag', 'orgchart', 'context', 'member-age', 'member-cat', 'trip-stats', 'form',
     'sankey', 'spider', 'toc', 'testimonial', 'timeline', 'weather', 'learning', 'advent', 'connections', 'departures', 'energy', 'counter', 'footer', 'notices', 'tiles',
-    'track',
+    'track', 'course',
 ] as const;
 
 export type SectionType = (typeof SECTION_TYPES)[number];
@@ -35,7 +36,7 @@ export type SectionModel =
     AlbumSection | ArticleSection | ButtonSection | CalendarSection | ChartSection | ChatSection |
     HeroSection | IframeSection | MapSection | PeopleSection | ResponsibilitySection | SliderSection |
     TableSection | TrackerSection | VideoSection | AccordionSection | EventsSection | InvitationsSection | TasksSection |
-    NewsSection | ActivitiesSection | MessagesSection | RagSection | OrgchartSection | ContextDiagramSection | MemberAgeSection | MemberCatSection | TripStatsSection | FormSection | SankeySection | SpiderSection | TocSection | TestimonialSection | TimelineSection | WeatherSection | LearningSection | AdventSection | ConnectionsSection | DeparturesSection | EnergySection | CounterSection | FooterSection | NoticesSection | TilesSection | JournalTrackSection;
+    NewsSection | ActivitiesSection | MessagesSection | RagSection | OrgchartSection | ContextDiagramSection | MemberAgeSection | MemberCatSection | TripStatsSection | FormSection | SankeySection | SpiderSection | TocSection | TestimonialSection | TimelineSection | WeatherSection | LearningSection | AdventSection | ConnectionsSection | DeparturesSection | EnergySection | CounterSection | FooterSection | NoticesSection | TilesSection | JournalTrackSection | CourseSection;
 
 // --------------------------------------- ABSTRACT BASE SECTION MODELS ----------------------------------------
 // --------------------------------------- ORGCHART ----------------------------------------
@@ -313,7 +314,7 @@ export interface BaseSection {
   content: EditorConfig; // content from rich text editor
   properties?: AccordionConfig | AlbumConfig | ArticleConfig | ButtonConfig | CalendarOptions | EChartsOption | ChatConfig | HeroConfig |
   IframeConfig | MapConfig | OrgchartConfig | ContextDiagramConfig | PeopleConfig | ResponsibilityConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig | EventsConfig | InvitationsConfig |
-  TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | RagConfig | MemberAgeConfig | MemberCatConfig | TripStatsConfig | FormSectionConfig | SankeyConfig | SpiderConfig | TocConfig | TestimonialConfig | TimelineConfig | WeatherConfig | LearningConfig | AdventConfig | ConnectionsConfig | DeparturesConfig | EnergyConfig | CounterConfig | FooterConfig | NoticesConfig | TilesConfig | JournalTrackConfig;
+  TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | RagConfig | MemberAgeConfig | MemberCatConfig | TripStatsConfig | FormSectionConfig | SankeyConfig | SpiderConfig | TocConfig | TestimonialConfig | TimelineConfig | WeatherConfig | LearningConfig | AdventConfig | ConnectionsConfig | DeparturesConfig | EnergyConfig | CounterConfig | FooterConfig | NoticesConfig | TilesConfig | JournalTrackConfig | CourseConfig;
   notes: string;
   tags: string;
   tenants: string[]; // list of tenant ids
@@ -528,6 +529,19 @@ export interface EventsConfig {
   showUpcomingEvents: boolean; // if true, show upcoming events
   showEventTime: boolean; // if true, show event time
   showEventLocation: boolean; // if true, show event location
+}
+
+// --------------------------------------- COURSE ----------------------------------------
+/** The announced courses of the tenant (spec 1.166). The list itself is read from the public course projection. */
+export interface CourseSection extends BaseSection {
+  type: 'course';
+  properties: CourseConfig;
+}
+
+export interface CourseConfig {
+  audience: ApplicationKind[]; // which application kinds the section shows courses for; [] = all
+  emptyText: string; // shown when no course is announced; '' = the standard text; translations in emptyTextI18n
+  emptyTextI18n?: I18nString;
 }
 
 // --------------------------------------- HERO ----------------------------------------

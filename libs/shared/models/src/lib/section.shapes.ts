@@ -5,7 +5,7 @@ import { BUTTON_HEIGHT, BUTTON_WIDTH, DEFAULT_CONTENT_STATE, DEFAULT_INDEX, DEFA
 import type {
   AccordionSection, LearningConfig, LearningSection, AlbumConfig, AlbumSection, ArticleConfig, ArticleSection,
   AvatarConfig, ButtonConfig, ButtonSection, ButtonStyle, CalendarSection,
-  ChartSection, ChatConfig, ChatSection, ContextDiagramConfig, ContextDiagramSection, EditorConfig, EventsConfig, EventsSection,
+  ChartSection, ChatConfig, ChatSection, ContextDiagramConfig, ContextDiagramSection, CourseConfig, CourseSection, EditorConfig, EventsConfig, EventsSection,
   FormSection, FormSectionConfig,
   HeroConfig, HeroSection, IconConfig, IframeConfig,
   IframeSection, InvitationsConfig, InvitationsSection, MapConfig, WeatherConfig, WeatherSection, ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, FooterColumn, FooterConfig, FooterItem, FooterSection, MapSection, MemberAgeConfig, MemberAgeSection, MemberCatConfig, MemberCatSection, OrgchartConfig, OrgchartSection, PeopleConfig,
@@ -122,6 +122,12 @@ export const EVENTS_CONFIG_SHAPE = {
   showEventTime: true,
   showEventLocation: false,
 } as EventsConfig;
+
+// --------------------------------------- COURSE ----------------------------------------
+export const COURSE_CONFIG_SHAPE = {
+  audience: [],
+  emptyText: '',
+} as CourseConfig;
 
 // --------------------------------------- HERO ----------------------------------------
 export const HERO_CONFIG_SHAPE = {
@@ -419,6 +425,12 @@ export const EVENTS_SECTION_SHAPE = {
   type: 'events',
   properties: EVENTS_CONFIG_SHAPE
 } as EventsSection;
+
+export const COURSE_SECTION_SHAPE = {
+  ...BASE_SECTION_SHAPE,
+  type: 'course',
+  properties: COURSE_CONFIG_SHAPE
+} as CourseSection;
 
 export const INVITATIONS_SECTION_SHAPE = {
   ...BASE_SECTION_SHAPE,
