@@ -54,7 +54,6 @@ describe('User Utils', () => {
     user.showArchivedData = false;
     user.avatarUsage = AvatarUsage.PhotoFirst;
     user.nameDisplay = NameDisplay.LastFirst;
-    user.useDisplayName = true;
     user.personSortCriteria = PersonSortCriteria.Firstname;
     user.newsDelivery = [DeliveryChannel.Email];
     user.invoiceDelivery = [DeliveryChannel.Email];
@@ -120,7 +119,6 @@ describe('User Utils', () => {
         personSortCriteria: PersonSortCriteria.Firstname,
         userLanguage: Language.GE,
         nameDisplay: NameDisplay.FirstLast,
-        useDisplayName: true,
         showArchivedData: false,
         showDebugInfo: true,
         showHelpers: false,
