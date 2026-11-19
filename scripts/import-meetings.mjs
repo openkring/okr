@@ -152,15 +152,19 @@ function firstPerson(cell) {
 
 /* ------------------------------------------------------------ locations */
 
-/** Venue text as written in the "Ort:" row → { name, id } of a locations document. */
+/**
+ * Venue text as written in the "Ort:" row → { name, id, type } of a locations document.
+ * `type` is a `location_type` category item: restaurants and club houses are `business`; only a
+ * real postal address (a private home) is `address`, which is reserved for postal addresses.
+ */
 const VENUES = [
-  [/sunneschy/i,                  { id: 'villa-sunneschy', name: 'Villa Sunneschy' }],
-  [/frohberg/i,                   { id: 'restaurant-frohberg', name: 'Restaurant Frohberg' }],
-  [/obstgarten/i,                 { id: 'restaurant-obstgarten', name: 'Restaurant Obstgarten Männedorf' }],
-  [/salzwaag/i,                   { id: 'wirtschaft-salzwaag', name: 'Wirtschaft zur Salzwaag Stäfa' }],
-  [/segelclub/i,                  { id: 'segelclub-staefa', name: 'Segelclub Stäfa' }],
-  [/sonnenwies/i,                 { id: 'sonnenwiessaal', name: 'Sonnenwiessaal Stäfa' }],
-  [/panoramaweg|uerikon/i,        { id: 'panoramaweg-uerikon', name: 'Panoramaweg 1, Uerikon' }],
+  [/sunneschy/i,                  { id: 'villa-sunneschy', name: 'Villa Sunneschy', type: 'business' }],
+  [/frohberg/i,                   { id: 'restaurant-frohberg', name: 'Restaurant Frohberg', type: 'business' }],
+  [/obstgarten/i,                 { id: 'restaurant-obstgarten', name: 'Restaurant Obstgarten Männedorf', type: 'business' }],
+  [/salzwaag/i,                   { id: 'wirtschaft-salzwaag', name: 'Wirtschaft zur Salzwaag Stäfa', type: 'business' }],
+  [/segelclub/i,                  { id: 'segelclub-staefa', name: 'Segelclub Stäfa', type: 'business' }],
+  [/sonnenwies/i,                 { id: 'sonnenwiessaal', name: 'Sonnenwiessaal Stäfa', type: 'business' }],
+  [/panoramaweg|uerikon/i,        { id: 'panoramaweg-uerikon', name: 'Panoramaweg 1, Uerikon', type: 'address' }],
   [/seeclub/i,                    { id: 'scs', name: 'Seeclub Stäfa' }],   // already exists
 ];
 
@@ -465,7 +469,7 @@ const put = async (ref, data) => { batch.set(ref, data); if (++n >= 400) await f
 for (const v of venues.values()) {
   await put(db.collection('locations').doc(v.id), {
     tenants: [TENANT], isArchived: false, index: `n:${v.name}`, name: v.name,
-    address: '', tags: '', type: 'address', latitude: 0, longitude: 0, placeId: '',
+    address: '', tags: '', type: v.type ?? 'business', latitude: 0, longitude: 0, placeId: '',
     what3words: '', seaLevel: 0, speed: 0, direction: 0, distance: 0,
     notes: 'Sitzungsort Vorstand (Import Traktanden-Archiv)',
   });

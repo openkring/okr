@@ -71,7 +71,8 @@ export const DEFAULT_GENDER = 'male';
 export const DEFAULT_IMPORTANCE = 'medium';
 export const DEFAULT_INVOICE_POSITION_TYPE = 'fix';
 export const DEFAULT_INVOICE_POSITION_USAGE = 'membershipFee';
-export const DEFAULT_LOCATION_TYPE = 'address';
+/** `address` is reserved for real postal addresses; an unclassified place is a geomarker. */
+export const DEFAULT_LOCATION_TYPE = 'geomarker';
 export const DEFAULT_MCAT = 'active';
 export const DEFAULT_MSTATE = 'active';
 export const DEFAULT_MENU_ACTION = 'browse';

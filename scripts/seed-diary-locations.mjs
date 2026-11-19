@@ -79,10 +79,12 @@ if (!configSnap.exists) {
 }
 
 /**
- * DEFAULT_LOCATION_TYPE, read off libs/shared/constants/src/lib/constants.ts:70. Inlined rather
- * than imported for the same reason as the collection names above.
+ * A `location_type` category item. Diary places are towns and villages, so `city` — NOT
+ * DEFAULT_LOCATION_TYPE: `address` is reserved for real postal addresses, and the default
+ * (`geomarker`) is a fallback for an unclassified point. Peaks, lakes and regions seeded as `city`
+ * are corrected by scripts/migrate-location-types.mjs (it classifies by GeoNames feature code).
  */
-const LOCATION_TYPE = 'address';
+const LOCATION_TYPE = 'city';
 
 /**
  * Matches the file name of a diary entry in a day folder. Copied from
