@@ -11,8 +11,8 @@
 import { getFirestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 
-import { ApprovalCollection, ApprovalModel, ApprovalModelName, AvatarInfo, ContractCollection, ContractKindCollection, DeliveryChannel, EsignCollection, TaskModel, WorkflowRuleCollection } from '@okr/shared-models';
-import { DateFormat, getTodayStr, toDeliveryChannels } from '@okr/shared-util-core';
+import { AddressModel, ApprovalCollection, ApprovalModel, ApprovalModelName, AvatarInfo, ContractCollection, ContractKindCollection, DeliveryChannel, EsignCollection, TaskModel, WorkflowRuleCollection } from '@okr/shared-models';
+import { DateFormat, getTodayStr, pickCurrentFavoritePostal, toDeliveryChannels } from '@okr/shared-util-core';
 import { getTaskIndex } from '@okr/project-task-util';
 
 import { fileSignedContract } from '../contract/file-contract';
@@ -137,9 +137,10 @@ export function createFirestoreDeps(): WorkflowDeps {
 
     async postalAddressFor(personKey, tenantId): Promise<PostalAddress | undefined> {
       const snap = await db.collection('addresses').where('parentKey', '==', `person.${personKey}`).get();
-      const postal = snap.docs.map((d) => d.data())
-        .filter((a) => !a['isArchived'] && a['addressChannel'] === 'postal' && ((a['tenants'] as string[]) ?? []).includes(tenantId));
-      return formatPostalAddress(postal.find((a) => a['isFavorite'] === true) ?? postal[0]);
+      // the CURRENT favorite only — never a past or future residence (spec 1.164 §7.3)
+      const postal = snap.docs.map((d) => ({ ...d.data(), okey: d.id }) as AddressModel)
+        .filter((a) => (a.tenants ?? []).includes(tenantId));
+      return formatPostalAddress(pickCurrentFavoritePostal(postal) as unknown as Record<string, unknown> | undefined);
     },
 
     async hasEsignRun(sourceRef): Promise<boolean> {

@@ -4,7 +4,7 @@ import { Observable, map, of } from "rxjs";
 import { ENV } from "@okr/shared-config";
 import { FirestoreService } from "@okr/shared-data-access";
 import { AddressCollection, AddressModel, UserModel } from "@okr/shared-models";
-import { die, getSystemQuery } from "@okr/shared-util-core";
+import { die, getSystemQuery, pickCurrentFavoritePostal } from "@okr/shared-util-core";
 import { I18nService } from "@okr/shared-i18n";
 
 import { getAddressIndex, getAddressValueByChannel, normalizeAddressValue } from "@okr/subject-address-util";
@@ -210,7 +210,8 @@ export class AddressService {
   }
 
   /**
-   * Returns the favourite postal address for a subject (person or org), or undefined.
+   * Returns the CURRENT favourite postal address for a subject (person or org), or undefined — never a
+   * past or future residence (spec 1.164 §7.3).
    * @param parentKey the subject's okey (AddressModel.parentKey)
    */
   public getFavoritePostalAddress(parentKey: string): Observable<AddressModel | undefined> {
@@ -219,6 +220,6 @@ export class AddressService {
     query.push({ key: 'addressChannel', operator: '==', value: 'postal' });
     return this.firestoreService
       .searchData<AddressModel>(AddressCollection, query, 'isFavorite', 'desc')
-      .pipe(map((addresses) => addresses[0]));
+      .pipe(map((addresses) => pickCurrentFavoritePostal(addresses)));
   }
 }

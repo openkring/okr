@@ -19,6 +19,8 @@ import {
   PrivacySettings,
 } from '@okr/shared-models';
 
+import { currentPostalRows, isPostalResidence, residenceStatus } from '@okr/shared-util-core';
+
 import { parseParentKey } from './address.util';
 
 /**
@@ -89,6 +91,14 @@ function toSanitizedAddress(address: AddressModel): AddressModel {
  * Orgs are deliberately NOT reduced — org contact data is intentionally public and
  * its multiple channels (Sekretariat, Bootshaus, Kasse) are all meant to be found.
  */
+/**
+ * Spec 1.164 §7.3: a past or future (announced) postal row is history / not yet true and must not
+ * reach any member-facing projection as an extra postal entry. Non-postal rows pass untouched.
+ */
+export function dropNonCurrentPostal(addresses: AddressModel[]): AddressModel[] {
+  return addresses.filter((a) => !isPostalResidence(a) || residenceStatus(a) === 'current');
+}
+
 export function reduceToFavoriteAddresses(addresses: AddressModel[]): AddressModel[] {
   const byChannel = new Map<string, AddressModel[]>();
   for (const address of addresses) {
@@ -96,9 +106,11 @@ export function reduceToFavoriteAddresses(addresses: AddressModel[]): AddressMod
     byChannel.set(channel, [...(byChannel.get(channel) ?? []), address]);
   }
   const reduced: AddressModel[] = [];
-  for (const candidates of byChannel.values()) {
+  for (const [channel, candidates] of byChannel) {
     const shareable = candidates.filter((a) => !a.isCc);
-    const picked = shareable.find((a) => a.isFavorite) ?? shareable[0];
+    // postal: only current rows qualify (a past favorite not yet switched falls back to the current row)
+    const pool = channel === 'postal' ? currentPostalRows(shareable) : shareable;
+    const picked = pool.find((a) => a.isFavorite) ?? pool[0];
     if (picked) reduced.push(picked);
   }
   return reduced;
@@ -160,7 +172,8 @@ export function buildDirectoryDoc(
     !address.isArchived
     && !isSensitiveScalarChannel(address.addressChannel ?? '')
     && accessorAllows('registered', getEffectiveAccessorForAddress(address, parentType, person, settings)));
-  const projected = parentType === 'person' ? reduceToFavoriteAddresses(visible) : visible;
+  const current = dropNonCurrentPostal(visible);
+  const projected = parentType === 'person' ? reduceToFavoriteAddresses(current) : current;
   doc.entries = projected.map(toDirectoryEntry);
   // for persons `projected` holds at most one address per channel (the favorite or
   // its fallback), so the channel lookup already IS the favorite
@@ -200,10 +213,13 @@ export function projectAddressesForViewer(
   person?: Partial<PersonPrivacyPreferences>,
   settings?: Partial<PrivacySettings>,
 ): AddressModel[] {
+  const privilegedViewer = accessorAllows(viewerAccessor, 'privileged');
+  // privileged viewers see the residence history; everybody else only the current postal row
   const visible = addresses.filter((address) =>
     !address.isArchived
+    && (privilegedViewer || !isPostalResidence(address) || residenceStatus(address) === 'current')
     && accessorAllows(viewerAccessor, getEffectiveAccessorForAddress(address, parentType, person, settings)));
-  const projected = parentType === 'person' && !accessorAllows(viewerAccessor, 'privileged')
+  const projected = parentType === 'person' && !privilegedViewer
     ? reduceToFavoriteAddresses(visible)
     : visible;
   return projected.map(toSanitizedAddress);

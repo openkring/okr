@@ -1,5 +1,5 @@
 import { AddressModel } from '@okr/shared-models';
-import { isQrIban, normalizeQrReference } from '@okr/shared-util-core';
+import { isQrIban, normalizeQrReference, pickCurrentFavoritePostal } from '@okr/shared-util-core';
 
 /** Parse a (possibly Swiss-formatted) amount string into a number, or undefined. */
 export function parseSwissAmount(value: unknown): number | undefined {
@@ -10,11 +10,15 @@ export function parseSwissAmount(value: unknown): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
-/** Pick the favorite (else first) non-archived address of the given channel. */
+/**
+ * Pick the favorite (else first) non-archived address of the given channel. Postal rows are dated
+ * (spec 1.164 §7.3): only the CURRENT favorite counts, never a past or future one.
+ */
 export function pickFavoriteByChannel(
   addresses: AddressModel[],
   channel: string,
 ): AddressModel | undefined {
+  if (channel === 'postal') return pickCurrentFavoritePostal(addresses);
   const matching = addresses.filter(a => a.addressChannel === channel && !a.isArchived);
   return matching.find(a => a.isFavorite) ?? matching[0];
 }

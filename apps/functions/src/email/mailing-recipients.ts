@@ -11,7 +11,7 @@
 import { CallableRequest, HttpsError, onCall } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
-import { DateFormat, getTodayStr, isOrgRecipient, MailingRecipientChannels, MailingRecipientFacts, mailingChannels, recipientParentKey } from '@okr/shared-util-core';
+import { DateFormat, getTodayStr, isOrgRecipient, residenceStatus, MailingRecipientChannels, MailingRecipientFacts, mailingChannels, recipientParentKey } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
 import { assertCallerIsGroupAdmin } from '../content/group-content.util';
@@ -75,6 +75,8 @@ async function readFacts(db: Firestore, tenantId: string, recipientKeys: string[
     for (const doc of addresses.docs) {
       const data = doc.data();
       if (data['isArchived'] === true || !((data['tenants'] ?? []) as string[]).includes(tenantId)) continue;
+      // a past or future residence is not a postal address to write to today (spec 1.164 §7.3)
+      if (residenceStatus({ validFrom: String(data['validFrom'] ?? ''), validTo: String(data['validTo'] ?? '') }) !== 'current') continue;
       postal.add(String(data['parentKey'] ?? ''));
     }
   }

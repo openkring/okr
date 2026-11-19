@@ -11,7 +11,7 @@ import { FirestoreService, ChatStatusService } from '@okr/shared-data-access';
 import { AppStore, SelectedBooks } from '@okr/shared-feature';
 import { AddressCollection, AddressModel, CategoryListModel, DefaultLanguage, MembershipCollection, MembershipModel, OrgModel, PersonCollection, PersonModel, PersonModelName, ResourceModel } from '@okr/shared-models';
 import { AlertService, copyToClipboardWithConfirmation, getCcEmailAddresses, getMainEmailAddresses, lazyService, navigateByUrl, showToast } from '@okr/shared-util-angular';
-import { chipMatches, debugItemLoaded, getSystemQuery, hasRole, isPerson, nameMatches, PHOTO_USAGE_ALL, photoUsageMatches, chatBlockedAlertMessage, isChatBlockedError } from '@okr/shared-util-core';
+import { chipMatches, debugItemLoaded, pickCurrentFavoritePostal, getSystemQuery, hasRole, isPerson, nameMatches, PHOTO_USAGE_ALL, photoUsageMatches, chatBlockedAlertMessage, isChatBlockedError } from '@okr/shared-util-core';
 import { EmailAddressesModal, MapViewModal, openReport } from '@okr/shared-ui';
 import { openBulkEmailFlow, toVersandRecipients } from '@okr/content-pdf-template-feature';
 import { Languages } from '@okr/shared-categories';
@@ -601,11 +601,10 @@ export const PersonStore = signalStore(
             if (!person) return;
             const parentKey = 'person.' + person.okey;
             const postalAddress = readsAddressVault(store.currentUser(), parentKey)
-              ? (await store.firestoreService.getDataOnce<AddressModel>(AddressCollection, [
+              ? pickCurrentFavoritePostal(await store.firestoreService.getDataOnce<AddressModel>(AddressCollection, [
                   { key: 'parentKey', operator: '==', value: parentKey },
-                  { key: 'addressChannel', operator: '==', value: 'postal' },
-                  { key: 'isFavorite', operator: '==', value: true }
-                ], 'none'))[0]
+                  { key: 'addressChannel', operator: '==', value: 'postal' }
+                ], 'none'))
               : getDirectoryPostalAddress(store.appStore.getDirectoryEntry(parentKey)?.entries, store.tenantId(), parentKey);
             if (!postalAddress) {
               await showToast(store.toastController, store.i18n.show_no_postal());

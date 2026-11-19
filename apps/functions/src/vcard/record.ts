@@ -1,7 +1,7 @@
 /// <reference lib="dom" />
 import { logger } from 'firebase-functions/v2';
 import { AvatarCollection } from '@okr/shared-models';
-import { classifyStoreDate, convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
+import { classifyStoreDate, convertDateFormatToString, DateFormat, residenceStatus } from '@okr/shared-util-core';
 // countries-list lives here rather than in shared-util-core: the browser has no caller for it,
 // and a re-export from that barrel pulled its 45 KB into every app bundle (spec 1.49, F1).
 import { countries } from 'countries-list';
@@ -60,8 +60,17 @@ function usageToType(channel: VcardChannelType, usage: string | undefined): stri
 
 export function buildChannels(addresses: FsData[], scope: ExportScope, favoritesOnly: boolean): VcardChannel[] {
   const channels: VcardChannel[] = [];
+  // Spec 1.164 §7.3: only the CURRENT residence is exported — a past or future postal row is history
+  // / not yet true. A favorite flag on a past row (before the nightly switch) must not hide the current one.
+  const isCurrentPostal = (a: FsData): boolean =>
+    a['addressChannel'] === 'postal' && !a['isArchived'] && residenceStatus({ validFrom: a['validFrom'] ?? '', validTo: a['validTo'] ?? '' }) === 'current';
+  const currentPostal = addresses.filter(isCurrentPostal);
+  const currentPostalFavorite = currentPostal.find((a) => a['isFavorite'] === true) ?? currentPostal[0];
   for (const a of addresses) {
-    if (favoritesOnly && a['isFavorite'] !== true) continue;
+    if (a['addressChannel'] === 'postal') {
+      if (!isCurrentPostal(a)) continue;
+      if (favoritesOnly && a !== currentPostalFavorite) continue;
+    } else if (favoritesOnly && a['isFavorite'] !== true) continue;
     const channel = mapAddressChannel(a['addressChannel']);
     if (!channel || !scope.addresses.includes(channel)) continue;
     const type = usageToType(channel, a['addressUsage']);

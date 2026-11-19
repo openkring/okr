@@ -2,6 +2,7 @@ import { Firestore } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 
 import { AddressCollection, AddressModel, OrgCollection, PersonCollection } from '@okr/shared-models';
+import { pickCurrentFavoritePostal } from '@okr/shared-util-core';
 
 /** The parsed halves of an address `parentKey` (`person.<okey>` / `org.<okey>`). */
 export interface ParsedParentKey {
@@ -136,7 +137,10 @@ export async function demoteFavorites(firestore: Firestore, addresses: AddressMo
  * `favZipCode` is a declared preference feeding the search index and the QR slip.
  */
 export function getFavoriteZipCode(addresses: AddressModel[]): string {
-  return addresses.find((address) => address.addressChannel === 'postal' && address.isFavorite)?.zipCode ?? '';
+  // spec 1.164 §7.3: the favorite flag picks the parent's residence; a past/future favorite (before the
+  // nightly switch) resolves to the current row
+  const flagged = addresses.some((address) => address.addressChannel === 'postal' && !address.isArchived && address.isFavorite);
+  return flagged ? pickCurrentFavoritePostal(addresses)?.zipCode ?? '' : '';
 }
 
 /**

@@ -11,7 +11,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AddressCollection, AddressModel, MembershipCollection, MembershipModel, OwnershipModel, PersonModel, SrvChanges, SrvContact, SrvCountry, SrvIndex, SrvMemberLicenseDetail, SrvMembersAllResult, SrvPreview, SrvUpdateResult } from '@okr/shared-models';
-import { classifyPhone, composeSekretariatMail, countryIdOf, DateFormat, debugListLoaded, expectedSrvStatus, fill, getBirthYear, getFullName, getMismatches, getSekretariatCases, getSrvChanges, getSystemQuery, getTodayStr, getYear, isMembership, isPerson, mailtoUrl, makeSrvPairer, pickSrvMemberships, regasoftDateToStoreDate, srvCategoryOf, srvCreateBlocker, SrvMembershipPick } from '@okr/shared-util-core';
+import { pickCurrentFavoritePostal, classifyPhone, composeSekretariatMail, countryIdOf, DateFormat, debugListLoaded, expectedSrvStatus, fill, getBirthYear, getFullName, getMismatches, getSekretariatCases, getSrvChanges, getSystemQuery, getTodayStr, getYear, isMembership, isPerson, mailtoUrl, makeSrvPairer, pickSrvMemberships, regasoftDateToStoreDate, srvCategoryOf, srvCreateBlocker, SrvMembershipPick } from '@okr/shared-util-core';
 
 import { copyToClipboardDeferred, showToast } from '@okr/shared-util-angular';
 import { OwnershipService } from '@okr/relationship-ownership-data-access';
@@ -404,13 +404,19 @@ export const MembershipSrvStore = signalStore(
       // Batch-load all favorite postal addresses once for the whole index build
       const postalQuery = getSystemQuery(store.tenantId());
       postalQuery.push({ key: 'addressChannel', operator: '==', value: 'postal' });
-      postalQuery.push({ key: 'isFavorite', operator: '==', value: true });
       const allPostalAddresses = await store.firestoreService.getDataOnce<AddressModel>(AddressCollection, postalQuery, 'none');
-      const postalByPersonKey = new Map<string, AddressModel>();
+      // one row per person: the CURRENT favorite, never a past or future residence (spec 1.164 §7.3)
+      const postalRowsByPersonKey = new Map<string, AddressModel[]>();
       for (const a of allPostalAddresses) {
         if (a.parentKey?.startsWith('person.')) {
-          postalByPersonKey.set(a.parentKey.substring('person.'.length), a);
+          const personKey = a.parentKey.substring('person.'.length);
+          postalRowsByPersonKey.set(personKey, [...(postalRowsByPersonKey.get(personKey) ?? []), a]);
         }
+      }
+      const postalByPersonKey = new Map<string, AddressModel>();
+      for (const [personKey, rows] of postalRowsByPersonKey) {
+        const current = pickCurrentFavoritePostal(rows);
+        if (current) postalByPersonKey.set(personKey, current);
       }
 
       // Batch-load all dob vault addresses once (spec 1.19 Phase 4: dob lives only in

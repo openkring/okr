@@ -81,6 +81,17 @@ describe('Address Utils', () => {
       ])).toBe('8712');
     });
 
+    it('a past favorite not yet switched resolves to the current row; a future favorite never wins', () => {
+      expect(getFavoriteZipCode([
+        address({ okey: 'a', addressChannel: 'postal', zipCode: '8000', isFavorite: true, validTo: '20200101' }),
+        address({ okey: 'b', addressChannel: 'postal', zipCode: '8712', validFrom: '20200102' }),
+      ])).toBe('8712');
+      expect(getFavoriteZipCode([
+        address({ okey: 'a', addressChannel: 'postal', zipCode: '8000' }),
+        address({ okey: 'b', addressChannel: 'postal', zipCode: '8712', isFavorite: true, validFrom: '29991231' }),
+      ])).toBe('8000');
+    });
+
     it('ignores favorites of other channels', () => {
       expect(getFavoriteZipCode([
         address({ addressChannel: 'email', email: 'a@b.ch', isFavorite: true }),

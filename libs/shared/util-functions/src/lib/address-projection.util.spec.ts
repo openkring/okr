@@ -60,6 +60,35 @@ describe('reduceToFavoriteAddresses', () => {
   });
 });
 
+describe('postal residence history (spec 1.164 §7.3)', () => {
+  const past = makeAddress({ okey: 'p1', addressChannel: 'postal', streetName: 'Alt', zipCode: '8000', city: 'Zürich', isFavorite: true, validTo: '20200101' });
+  const current = makeAddress({ okey: 'p2', addressChannel: 'postal', streetName: 'Neu', zipCode: '8712', city: 'Stäfa', validFrom: '20200102' });
+  const future = makeAddress({ okey: 'p3', addressChannel: 'postal', streetName: 'Bald', zipCode: '9000', city: 'St. Gallen', isFavorite: true, validFrom: '29991231' });
+
+  it('reduceToFavoriteAddresses picks the current row, not a past or future favorite', () => {
+    expect(reduceToFavoriteAddresses([past, current, future]).map(a => a.okey)).toEqual(['p2']);
+    expect(reduceToFavoriteAddresses([past, future])).toEqual([]);
+  });
+
+  it('buildDirectoryDoc (person) emits one postal entry: the current one', () => {
+    const doc = buildDirectoryDoc('tenant1', 'person.x', 'person', [past, current, future]);
+    expect(doc.entries.filter(e => e.addressChannel === 'postal').map(e => e.addressOkey)).toEqual(['p2']);
+    expect(doc.favZipCode).toBe('8712');
+  });
+
+  it('buildDirectoryDoc (org, not reduced) still drops past and future postal rows', () => {
+    const doc = buildDirectoryDoc('tenant1', 'org.x', 'org', [past, current, future]);
+    expect(doc.entries.filter(e => e.addressChannel === 'postal').map(e => e.addressOkey)).toEqual(['p2']);
+  });
+
+  it('projectAddressesForViewer: members see only the current row, privileged viewers the history', () => {
+    const member = projectAddressesForViewer([past, current, future], 'registered', 'org');
+    expect(member.map(a => a.okey)).toEqual(['p2']);
+    const privileged = projectAddressesForViewer([past, current, future], 'privileged', 'person');
+    expect(privileged.map(a => a.okey).sort()).toEqual(['p1', 'p2', 'p3']);
+  });
+});
+
 describe('scopeToTenant (D-L1, finding F1)', () => {
   const foreignEmail = makeAddress({ okey: 'f1', addressChannel: 'email', email: 'club-b@example.com', isFavorite: true, tenants: ['tenant2'] });
 

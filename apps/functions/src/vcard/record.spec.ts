@@ -5,6 +5,27 @@ import { avatarDocIds, toVcardRecord } from './record';
 
 const SCOPE: ExportScope = { identity: true, addresses: ['phone', 'email'], birthday: false, photo: false, workRels: true, personalRels: false, orgLinks: false };
 
+describe('toVcardRecord — postal history (spec 1.164 §7.3)', () => {
+  const POSTAL_SCOPE: ExportScope = { ...SCOPE, addresses: ['postal'] };
+  const rows = [
+    { addressChannel: 'postal', streetName: 'Alt', city: 'Zürich', isFavorite: true, validTo: '20200101' },
+    { addressChannel: 'postal', streetName: 'Neu', city: 'Stäfa', validFrom: '20200102' },
+    { addressChannel: 'postal', streetName: 'Bald', city: 'Bern', validFrom: '29991231' },
+    { addressChannel: 'postal', streetName: 'Weg', city: 'Basel', isArchived: true },
+  ];
+  const streets = (favoritesOnly: boolean): (string | undefined)[] =>
+    toVcardRecord({ kind: 'person', key: 'k', data: { firstName: 'A', lastName: 'B' }, addresses: rows, workrels: [], scope: POSTAL_SCOPE, favoritesOnly })
+      .channels.map((c) => c.street);
+
+  it('exports only the current postal row, never a past, future or archived one', () => {
+    expect(streets(false)).toEqual(['Neu']);
+  });
+
+  it('favorites-only exports the current row even when the favorite flag sits on a past row', () => {
+    expect(streets(true)).toEqual(['Neu']);
+  });
+});
+
 describe('toVcardRecord', () => {
   it('sets uid person-<okey> and the nickname', () => {
     const r = toVcardRecord({ kind: 'person', key: 'abc', data: { firstName: 'Anna', lastName: 'Muster', nickname: 'Anni' }, addresses: [], workrels: [], scope: SCOPE, favoritesOnly: false });

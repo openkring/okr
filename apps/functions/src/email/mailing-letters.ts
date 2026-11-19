@@ -19,10 +19,10 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { PDFDocument } from 'pdf-lib';
 import QRCode from 'qrcode';
-import { TemplateCollection, TemplateVersionSubcollection, type NoticeAttachment, type TemplateAssetRef } from '@okr/shared-models';
+import { AddressModel, TemplateCollection, TemplateVersionSubcollection, type NoticeAttachment, type TemplateAssetRef } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 import { SENDING_FINAL } from '@okr/content-pdf-template-util';
-import { isOrgRecipient, ORG_RECIPIENT_PREFIX, recipientParentKey } from '@okr/shared-util-core';
+import { isOrgRecipient, ORG_RECIPIENT_PREFIX, pickCurrentFavoritePostal, recipientParentKey } from '@okr/shared-util-core';
 
 import { privateBucket } from '../_storage/private-bucket';
 import { formatPostalAddress } from '../contract/contract-request.util';
@@ -168,9 +168,10 @@ export interface PostalFields {
 /** The favourite (else the first) postal address of a parent (`person.<okey>` / `org.<okey>`) in the tenant. */
 export async function postalOf(db: Firestore, parentKey: string, tenantId: string): Promise<PostalFields | undefined> {
   const snap = await db.collection('addresses').where('parentKey', '==', parentKey).where('addressChannel', '==', 'postal').get();
-  const postal = snap.docs.map((d) => d.data())
-    .filter((a) => !a['isArchived'] && ((a['tenants'] as string[]) ?? []).includes(tenantId));
-  const chosen = postal.find((a) => a['isFavorite'] === true) ?? postal[0];
+  // the CURRENT favorite only — never a past or future residence (spec 1.164 §7.3)
+  const postal = snap.docs.map((d) => ({ ...d.data(), okey: d.id }) as AddressModel)
+    .filter((a) => (a.tenants ?? []).includes(tenantId));
+  const chosen = pickCurrentFavoritePostal(postal) as unknown as FirebaseFirestore.DocumentData | undefined;
   const formatted = formatPostalAddress(chosen);
   if (!formatted || !chosen) return undefined;
   const field = (name: string): string => String(chosen[name] ?? '').trim();

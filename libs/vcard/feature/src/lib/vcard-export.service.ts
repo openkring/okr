@@ -18,7 +18,7 @@ import {
   WorkrelCollection,
   WorkrelModel,
 } from '@okr/shared-models';
-import { getSystemQuery } from '@okr/shared-util-core';
+import { getSystemQuery, residenceStatus } from '@okr/shared-util-core';
 import {
   ExportScope,
   resolveVcardCapability,
@@ -131,6 +131,8 @@ export class VcardExportService {
     const channelSet = new Set<VcardChannelType>();
     for (const a of addresses ?? []) {
       const c = mapChannel(a.addressChannel);
+      // a past or future residence is not exported (spec 1.164 §7.3), so it is no data to offer either
+      if (c === 'postal' && residenceStatus(a) !== 'current') continue;
       if (c && channelHasValue(a, c)) channelSet.add(c);
     }
 

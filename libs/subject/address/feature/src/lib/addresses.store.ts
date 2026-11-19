@@ -13,7 +13,7 @@ import { STORAGE } from '@okr/shared-config';
 import { AppStore } from '@okr/shared-feature';
 import { AddressCollection, AddressDirectoryCollection, AddressDirectoryModel, AddressModel, AddressModelName, CategoryListModel, DbQuery, DefaultLanguage, DocumentModel, getAddressDirectoryKey, isSensitiveScalarChannel, OrgModel, PersonModel, TaskModel } from '@okr/shared-models';
 import { AlertService, downloadToBrowser } from '@okr/shared-util-angular';
-import { chipMatches, getAvatarInfoForCurrentUser, getModelAndKey, getSystemQuery, nameMatches, warn } from '@okr/shared-util-core';
+import { chipMatches, getAvatarInfoForCurrentUser, getModelAndKey, getSystemQuery, nameMatches, pickCurrentFavoritePostal, warn } from '@okr/shared-util-core';
 import { Languages } from '@okr/shared-categories';
 import { MapViewModal } from '@okr/shared-ui';
 
@@ -347,9 +347,8 @@ export const AddressStore = signalStore(
           const dbQuery = getSystemQuery(tenantId);
           dbQuery.push({ key: 'parentKey', operator: '==', value: pk });
           dbQuery.push({ key: 'addressChannel', operator: '==', value: 'postal' });
-          dbQuery.push({ key: 'isFavorite', operator: '==', value: true });
           const addrs = await store.firestoreService.getDataOnce<AddressModel>(AddressCollection, dbQuery, 'none');
-          return addrs[0];
+          return pickCurrentFavoritePostal(addrs);  // the current residence, never a past/future row (spec 1.164 §7.3)
         };
 
         // Resolve creditor from parent

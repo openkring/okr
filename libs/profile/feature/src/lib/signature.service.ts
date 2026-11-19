@@ -6,7 +6,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { AlertService } from '@okr/shared-util-angular';
 import { AddressCollection, AddressModel, DirectoryEntry, OrgModelName, PersonModelName } from '@okr/shared-models';
-import { getSystemQuery } from '@okr/shared-util-core';
+import { getSystemQuery, residenceStatus } from '@okr/shared-util-core';
 import { AvatarService } from '@okr/avatar-data-access';
 import {
   adaptForClient,
@@ -198,7 +198,9 @@ function pickAddress<T extends { addressChannel: string; isFavorite: boolean; is
   addresses: T[],
   channel: 'postal' | 'web' | 'phone' | 'email',
 ): T | undefined {
-  const ofChannel = addresses.filter((a) => a.addressChannel === channel && !a.isArchived);
+  // a postal row is a dated residence: only the current one counts (spec 1.164 §7.3); directory entries carry no dates
+  const ofChannel = addresses.filter((a) => a.addressChannel === channel && !a.isArchived
+    && (channel !== 'postal' || residenceStatus({ validFrom: (a as { validFrom?: string }).validFrom ?? '', validTo: (a as { validTo?: string }).validTo ?? '' }) === 'current'));
   return ofChannel.find((a) => a.isFavorite) ?? ofChannel[0];
 }
 

@@ -5,9 +5,9 @@
 import { HttpsError } from 'firebase-functions/v2/https';
 import { Firestore } from 'firebase-admin/firestore';
 import {
-  ApprovalCollection, ButtonAction, ContractCollection, ContractKindCollection, EsignCollection, SectionCollection,
+  AddressModel, ApprovalCollection, ButtonAction, ContractCollection, ContractKindCollection, EsignCollection, SectionCollection,
 } from '@okr/shared-models';
-import { DateFormat, convertDateFormatToString, getTodayStr } from '@okr/shared-util-core';
+import { DateFormat, convertDateFormatToString, getTodayStr, pickCurrentFavoritePostal } from '@okr/shared-util-core';
 import { DocData, EligibilityInput, StatusApproval, formatPostalAddress } from './contract-request.util';
 
 export interface RequestContext {
@@ -63,10 +63,11 @@ export async function loadRequestContext(
       : Promise.resolve(undefined),
   ]);
   const inTenant = (d: DocData) => ((d['tenants'] as string[]) ?? []).includes(tenantId);
-  const postal = (addresses?.docs ?? []).map((d) => d.data())
-    .filter((a) => !a['isArchived'] && a['addressChannel'] === 'postal' && inTenant(a));
+  // the CURRENT favorite only — never a past or future residence (spec 1.164 §7.3)
+  const postal = (addresses?.docs ?? []).map((d) => ({ ...d.data(), okey: d.id }) as AddressModel)
+    .filter((a) => (a.tenants ?? []).includes(tenantId));
   const postalAddress = requiresAddress
-    ? formatPostalAddress(postal.find((a) => a['isFavorite'] === true) ?? postal[0])
+    ? formatPostalAddress(pickCurrentFavoritePostal(postal) as unknown as DocData | undefined)
     : undefined;
 
   const ownerships = eligibilityList.includes('noActiveOwnership') && resourceType

@@ -5,7 +5,7 @@ import { ToastController } from '@ionic/angular/lazy';
 import { AddressModel, DirectoryEntry, isSensitiveScalarChannel, UserModel } from '@okr/shared-models';
 import { copyToClipboard, formatIban, formatPhoneNumber, IbanFormat, showToast } from '@okr/shared-util-angular';
 import { isSyntheticLoginEmail } from '@okr/user-util';
-import { die, getCountryName, isType, replaceEndingSlash, replaceSubstring } from '@okr/shared-util-core';
+import { die, getCountryName, isType, pickCurrentFavoritePostal, replaceEndingSlash, replaceSubstring } from '@okr/shared-util-core';
 
 /*-------------------------- address visibility ------------------------------*/
 
@@ -388,9 +388,11 @@ export function computeFavoriteAddressInfo(addresses: AddressModel[]): {
     switch (a.addressChannel) {
       case 'email':  info.favEmail = a.email ?? ''; break;
       case 'phone':  info.favPhone = a.phone ?? ''; break;
-      case 'postal': info.favZipCode = a.zipCode ?? ''; break;
     }
   }
+  // spec 1.164 §7.3: the favorite flag marks the residence; a past/future favorite resolves to the current row
+  const postalFlagged = addresses.some(a => a.addressChannel === 'postal' && !a.isArchived && a.isFavorite);
+  if (postalFlagged) info.favZipCode = pickCurrentFavoritePostal(addresses)?.zipCode ?? '';
   return info;
 }
 

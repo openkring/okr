@@ -11,7 +11,7 @@ import { ExportFormats, memberTypeMatches, yearMatches } from '@okr/shared-categ
 import { FirestoreService, ChatStatusService } from '@okr/shared-data-access';
 import { AppStore, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
 import { AddressCollection, AddressModel, CategoryListModel, ExportFormat, GroupModel, GroupModelName, MembershipCollection, MembershipModel, OrgModel, OrgModelName, OwnershipCollection, OwnershipModel, PersonModel, PersonModelName } from '@okr/shared-models';
-import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, fill, generateRandomString, getAvatarInfo, getBirthYear, getCatAbbreviation, getDataRow, getFullName, getSystemQuery, getTodayStr, getYear, hasRole, isAfterDate, isAfterOrEqualDate, isChatOnlyMembership, isMembership, isOngoing, isPerson, nameMatches, warn, chatBlockedAlertMessage, isChatBlockedError, ReportFinding } from '@okr/shared-util-core';
+import { chipMatches, convertDateFormatToString, pickCurrentFavoritePostal, DateFormat, debugListLoaded, fill, generateRandomString, getAvatarInfo, getBirthYear, getCatAbbreviation, getDataRow, getFullName, getSystemQuery, getTodayStr, getYear, hasRole, isAfterDate, isAfterOrEqualDate, isChatOnlyMembership, isMembership, isOngoing, isPerson, nameMatches, warn, chatBlockedAlertMessage, isChatBlockedError, ReportFinding } from '@okr/shared-util-core';
 import { confirm, copyToClipboardWithConfirmation, exportCsv, getCcEmailAddresses, getMainEmailAddresses, lazyService, navigateByUrl, showToast, notify } from '@okr/shared-util-angular';
 import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
@@ -861,13 +861,19 @@ export const _MembershipStore = signalStore(
         // Batch-load all favorite postal addresses once for all export types
         const postalQuery = getSystemQuery(store.tenantId());
         postalQuery.push({ key: 'addressChannel', operator: '==', value: 'postal' });
-        postalQuery.push({ key: 'isFavorite', operator: '==', value: true });
         const allPostal = await store.firestoreService.getDataOnce<AddressModel>(AddressCollection, postalQuery, 'none');
-        const postalByPersonKey = new Map<string, AddressModel>();
+        // one row per person: the CURRENT favorite, never a past or future residence (spec 1.164 §7.3)
+        const postalRowsByPersonKey = new Map<string, AddressModel[]>();
         for (const a of allPostal) {
           if (a.parentKey?.startsWith('person.')) {
-            postalByPersonKey.set(a.parentKey.substring('person.'.length), a);
+            const personKey = a.parentKey.substring('person.'.length);
+            postalRowsByPersonKey.set(personKey, [...(postalRowsByPersonKey.get(personKey) ?? []), a]);
           }
+        }
+        const postalByPersonKey = new Map<string, AddressModel>();
+        for (const [personKey, rows] of postalRowsByPersonKey) {
+          const current = pickCurrentFavoritePostal(rows);
+          if (current) postalByPersonKey.set(personKey, current);
         }
 
         switch(type) {

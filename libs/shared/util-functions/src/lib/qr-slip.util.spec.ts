@@ -38,6 +38,27 @@ describe('pickFavoriteByChannel', () => {
     const list = [addr({ addressChannel: 'bankaccount', iban: 'A' })];
     expect(pickFavoriteByChannel(list, 'bankaccount')?.iban).toBe('A');
   });
+  it('postal: a past favorite (not yet switched) yields the current row', () => {
+    const list = [
+      addr({ okey: 'old', addressChannel: 'postal', zipCode: '8000', isFavorite: true, validTo: '20200101' }),
+      addr({ okey: 'new', addressChannel: 'postal', zipCode: '8712', isFavorite: false, validFrom: '20200102' }),
+    ];
+    expect(pickFavoriteByChannel(list, 'postal')?.zipCode).toBe('8712');
+  });
+  it('postal: a future row flagged favorite never wins over the current row', () => {
+    const list = [
+      addr({ okey: 'cur', addressChannel: 'postal', zipCode: '8000', isFavorite: false }),
+      addr({ okey: 'fut', addressChannel: 'postal', zipCode: '8712', isFavorite: true, validFrom: '29991231' }),
+    ];
+    expect(pickFavoriteByChannel(list, 'postal')?.zipCode).toBe('8000');
+  });
+  it('postal: only past and future rows yield undefined', () => {
+    const list = [
+      addr({ addressChannel: 'postal', validTo: '20200101' }),
+      addr({ addressChannel: 'postal', validFrom: '29991231' }),
+    ];
+    expect(pickFavoriteByChannel(list, 'postal')).toBeUndefined();
+  });
   it('skips archived and returns undefined when none match', () => {
     const list = [addr({ addressChannel: 'postal', isArchived: true })];
     expect(pickFavoriteByChannel(list, 'postal')).toBeUndefined();

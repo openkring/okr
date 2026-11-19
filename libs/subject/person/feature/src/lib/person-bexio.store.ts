@@ -9,7 +9,7 @@ import { isFirestoreInitializedCheck } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { AddressCollection, AddressModel, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@okr/shared-models';
-import { getCatAbbreviation, getFullName, getSystemQuery, isMembership, isOrg, isPerson } from '@okr/shared-util-core';
+import { getCatAbbreviation, getFullName, pickCurrentFavoritePostal, getSystemQuery, isMembership, isOrg, isPerson } from '@okr/shared-util-core';
 import { ModalController, ToastController } from '@ionic/angular';
 import { showToast } from '@okr/shared-util-angular';
 import { PersonBexioContactModal } from '@okr/subject-person-ui';
@@ -91,13 +91,21 @@ export const PersonBexioStore = signalStore(
       //     they live in the separate address collection). Map them by parentKey (person.{okey} / org.{okey}).
       const allAddresses = await store.firestoreService.getDataOnce<AddressModel>(AddressCollection, getSystemQuery(store.tenantId()), 'none');
       const favPostalByParent = new Map<string, AddressModel>();
+      // CURRENT favorite postal per parent, never a past or future residence (spec 1.164 §7.3)
+      const postalRowsByParent = new Map<string, AddressModel[]>();
+      for (const address of allAddresses) {
+        if (address.addressChannel === 'postal') postalRowsByParent.set(address.parentKey, [...(postalRowsByParent.get(address.parentKey) ?? []), address]);
+      }
+      for (const [parentKey, rows] of postalRowsByParent) {
+        const current = pickCurrentFavoritePostal(rows);
+        if (current) favPostalByParent.set(parentKey, current);
+      }
       // favEmail/favPhone were stripped from persons/orgs (spec 1.19 Phase 4) —
       // resolve the favorites from the already-loaded addresses instead.
       const favEmailByParent = new Map<string, string>();
       const favPhoneByParent = new Map<string, string>();
       for (const address of allAddresses) {
         if (!address.isFavorite) continue;
-        if (address.addressChannel === 'postal') favPostalByParent.set(address.parentKey, address);
         if (address.addressChannel === 'email') favEmailByParent.set(address.parentKey, address.email ?? '');
         if (address.addressChannel === 'phone') favPhoneByParent.set(address.parentKey, address.phone ?? '');
       }
@@ -527,7 +535,7 @@ export const PersonBexioStore = signalStore(
       const addresses = await store.firestoreService.getDataOnce<AddressModel>(AddressCollection, query, 'none');
 
       // postal: update the favorite postal address, or create one if none exists yet
-      const postal = addresses.find(a => a.addressChannel === 'postal' && a.isFavorite);
+      const postal = pickCurrentFavoritePostal(addresses);
       if (postal) {
         await store.firestoreService.updateModel<AddressModel>(AddressCollection, {
           ...postal,
