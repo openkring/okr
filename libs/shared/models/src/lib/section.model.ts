@@ -540,7 +540,7 @@ export interface CourseSection extends BaseSection {
 
 export interface CourseConfig {
   audience: ApplicationKind[]; // which application kinds the section shows courses for; [] = all
-  emptyText: string; // shown when no course is announced; '' = the standard text; translations in emptyTextI18n
+  emptyText: string; // shown when no course is announced; '' = the section is hidden; translations in emptyTextI18n
   emptyTextI18n?: I18nString;
 }
 
