@@ -16,3 +16,4 @@ export * from './lib/personal-rel.util';
 export * from './lib/reservation.util';
 export * from './lib/working-rel.util';
 export * from './lib/qr-slip.util';
+export * from './lib/swisstopo.util';
