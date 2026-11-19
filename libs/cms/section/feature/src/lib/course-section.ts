@@ -88,7 +88,6 @@ export class CourseSection {
     const cfg = this.config();
     return cfg?.emptyTextI18n?.[this.i18nService.getActiveLang()] || cfg?.emptyText || '';
   });
-  private readonly today = todayIso();
 
   constructor() {
     effect(() => this.store.setAudience(this.config()?.audience ?? []));
@@ -105,7 +104,7 @@ export class CourseSection {
   }
 
   protected isPast(d: PublicCourse['dates'][number]): boolean {
-    return isPastCourseDate(d, this.today);
+    return isPastCourseDate(d, todayIso());
   }
 
   /** '' when the course has no place limit; the full state is shown on the button instead. */
@@ -122,6 +121,10 @@ export class CourseSection {
     const host = document.getElementById(COURSE_FORM_ID);
     if (!host) return;
     host.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    host.querySelector<HTMLElement>('input, select, textarea')?.focus({ preventScroll: true });
+    // the form's fields are Ionic controls (ion-input / ion-select …): setFocus() reaches the native element
+    const field = host.querySelector<HTMLElement & { setFocus?: () => Promise<void> }>(
+      'ion-input, ion-select, ion-textarea, input:not([type=hidden]), select, textarea');
+    if (field?.setFocus) void field.setFocus();
+    else field?.focus({ preventScroll: true });
   }
 }

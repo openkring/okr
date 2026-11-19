@@ -24,11 +24,13 @@ export function isPastCourseDate(d: PublicCourseDate, today: string): boolean {
  */
 export function formatCourseDateLine(d: PublicCourseDate, lang: string): string {
   const wd = new Intl.DateTimeFormat(lang, { weekday: 'short' });
+  // some ICU versions print «Sa.» for de; the format is «Sa»
+  const weekday = (date: Date) => (lang === 'de' ? wd.format(date).replace(/\.$/, '') : wd.format(date));
   const day = (iso: string, withYear: boolean) => {
     const date = localDay(iso);
     const dd = String(date.getDate()).padStart(2, '0');
     const mm = String(date.getMonth() + 1).padStart(2, '0');
-    return `${wd.format(date)}, ${dd}.${mm}.${withYear ? date.getFullYear() : ''}`;
+    return `${weekday(date)}, ${dd}.${mm}.${withYear ? date.getFullYear() : ''}`;
   };
   let line: string;
   if (d.endDate && d.endDate > d.date) line = `${day(d.date, false)} – ${day(d.endDate, true)}`;
