@@ -116,10 +116,51 @@ describe('healDecision', () => {
     expect(healDecision(withoutOkey as AddressModel, postal({ tenants: ['scs', 'kring'] }), ['scs', 'kring'])).toBe('none');
   });
 
+  it('is none when an old client only changed case, diacritics or spacing of a linked row', () => {
+    expect(healDecision(LINKED, postal({ locationKey: 'loc1', streetName: 'seestrasse', city: 'Stafa', countryCode: 'ch' }), ['scs'])).toBe('none');
+    expect(healDecision(LINKED, postal({ locationKey: 'loc1', streetName: ' Seestrasse ' }), ['scs'])).toBe('none');
+  });
+
   it('yields none when the healed row is fed back (no trigger loop)', () => {
     const before = postal({ streetName: 'seestrasse', tenants: ['scs'] });
     const healed = postal({ locationKey: 'new-loc', tenants: ['scs', 'kring'] });
     expect(healDecision(before, healed, ['scs', 'kring'])).toBe('none');
+  });
+});
+
+describe('heal feed-back (R-d)', () => {
+  beforeEach(() => {
+    resetSwisstopoState();
+  });
+
+  /** Applies the heal's patch to the row, as the re-triggered onAddressChange would see it. */
+  async function healOnce(before: AddressModel | undefined, after: AddressModel, parentTenants: string[], fetchFn: typeof fetch) {
+    const { db } = fakeDb();
+    const ref = fakeRef();
+    await healResidence(db, ref, after, healDecision(before, after, parentTenants), parentTenants, fetchFn);
+    const patch = ref.update.mock.calls[0]?.[0] ?? {};
+    return { ref, healed: postal({ ...after, ...patch }) };
+  }
+
+  it('a relink to the same location that normalises the snapshot ends in none', async () => {
+    // linked to new-loc; an old client rewrote the street to a different-case spelling plus a number change
+    const before = postal({ locationKey: 'new-loc', streetNumber: '14' });
+    const after = postal({ locationKey: 'new-loc', streetName: 'seestrasse', streetNumber: '12' });
+    expect(healDecision(before, after, ['scs'])).toBe('relink');
+    const { ref, healed } = await healOnce(before, after, ['scs'], fetchReturning(200, SWISSTOPO_HIT));
+    expect(ref.update).toHaveBeenCalledWith({ streetName: 'Seestrasse' });
+    expect(healDecision(after, healed, ['scs'])).toBe('none');
+  });
+
+  it('a relink miss clears the link; the one extra link pass writes nothing', async () => {
+    const miss = fetchReturning(200, { results: [] });
+    const before = postal({ locationKey: 'loc1' });
+    const after = postal({ locationKey: 'loc1', streetName: 'Nirgendweg' });
+    const first = await healOnce(before, after, ['scs'], miss);
+    expect(first.ref.update).toHaveBeenCalledWith({ locationKey: '' });
+    expect(healDecision(after, first.healed, ['scs'])).toBe('link');
+    const second = await healOnce(after, first.healed, ['scs'], miss);
+    expect(second.ref.update).not.toHaveBeenCalled();
   });
 });
 
@@ -171,6 +212,18 @@ describe('healResidence', () => {
     expect(patch).not.toHaveProperty('validTo');
   });
 
+  it('leaves a row sharing no tenant with its parent completely unchanged (cross-tenant guard)', async () => {
+    const { db, runTransaction, newRef } = fakeDb();
+    const ref = fakeRef();
+    const fetchFn = fetchReturning(200, SWISSTOPO_HIT);
+    const foreign = postal({ tenants: ['x'] });
+    await healResidence(db, ref, foreign, healDecision(undefined, foreign, ['z']), ['z'], fetchFn);
+    expect(fetchFn).not.toHaveBeenCalled();
+    expect(runTransaction).not.toHaveBeenCalled();
+    expect(newRef.set).not.toHaveBeenCalled();
+    expect(ref.update).not.toHaveBeenCalled();
+  });
+
   it('writes nothing when nothing differs', async () => {
     const { db } = fakeDb();
     const ref = fakeRef();
@@ -201,5 +254,15 @@ describe('syncResidenceTenants', () => {
     expect(docs[1].ref.update).toHaveBeenCalledWith({ tenants: ['scs'] });
     expect(docs[2].ref.update).not.toHaveBeenCalled();
     expect(docs[3].ref.update).not.toHaveBeenCalled();
+  });
+
+  it('skips a row sharing no tenant with the parent (cross-tenant guard)', async () => {
+    const { db, docs } = dbWith([
+      { addressChannel: 'postal', tenants: ['x'] },
+      { addressChannel: 'postal', tenants: ['z', 'x'] },
+    ]);
+    expect(await syncResidenceTenants(db, 'person.p1', ['z'])).toBe(1);
+    expect(docs[0].ref.update).not.toHaveBeenCalled();
+    expect(docs[1].ref.update).toHaveBeenCalledWith({ tenants: ['z'] });
   });
 });

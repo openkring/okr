@@ -4,7 +4,7 @@ import * as logger from 'firebase-functions/logger';
 import { AddressCollection, AddressModel } from '@okr/shared-models';
 
 import { AddressSnapshot, buildRegisterLocation, findOrCreateRegisterLocation, ManualAddressInput, RegisterAddressInput, snapshotFromLocation } from './address-register.util';
-import { geocodeSnapshot } from './swisstopo.util';
+import { foldAddressPart, geocodeSnapshot } from './swisstopo.util';
 
 /**
  * Spec 1.164 §5.2 / §7.4: postal residences are linked to a register location and carry their
@@ -21,8 +21,17 @@ function str(value: unknown): string {
   return String(value ?? '');
 }
 
+/**
+ * True when the snapshot changed beyond case / diacritics / whitespace — the geocoder's own match
+ * rule. A pure normalisation (our heal writing `Seestrasse` over `seestrasse`) is no correction,
+ * so its re-trigger must not answer `relink` again.
+ */
 function snapshotChanged(before: AddressModel, after: AddressModel): boolean {
-  return SNAPSHOT_FIELDS.some((f) => str(before[f]) !== str(after[f]));
+  return SNAPSHOT_FIELDS.some((f) => foldAddressPart(str(before[f])) !== foldAddressPart(str(after[f])));
+}
+
+function intersects(a: string[] | undefined, b: string[] | undefined): boolean {
+  return (a ?? []).some((t) => (b ?? []).includes(t));
 }
 
 /** Order-insensitive equality of two tenant lists. */
@@ -101,7 +110,8 @@ async function resolveLocation(db: Firestore, row: AddressModel, fetchFn?: typeo
  * Applies a heal decision to the row at `ref`. `link` / `relink`: exact swisstopo hit → find or
  * create the register location and write `locationKey` + snapshot; a Swiss address without an exact
  * hit stays (or becomes) unlinked; a foreign address gets a manual location. `tenants` is always set
- * to `parentTenants`. Never touches `validFrom` / `validTo`. Writes only the fields that differ,
+ * to `parentTenants` — but only when the row already shares a tenant with the parent; a row that
+ * shares none is left completely unchanged (cross-tenant injection guard). Never touches `validFrom` / `validTo`. Writes only the fields that differ,
  * and nothing at all when none do. Never throws on a swisstopo failure.
  */
 export async function healResidence(
@@ -113,6 +123,12 @@ export async function healResidence(
   fetchFn?: typeof fetch,
 ): Promise<void> {
   if (action === 'none') return;
+  // A row may only be widened into its parent's tenants when it already shares one with the parent:
+  // otherwise a writer of tenant X could plant a row on a foreign parent and have it spread.
+  if (!intersects(row.tenants, parentTenants)) {
+    logger.warn(`residence ${ref.id}: tenants share none with parent ${row.parentKey}, left unchanged`, { tenants: row.tenants, parentTenants });
+    return;
+  }
   const patch: Record<string, unknown> = {};
   if (action === 'link' || action === 'relink') {
     const resolved = await resolveLocation(db, row, fetchFn);
@@ -122,7 +138,8 @@ export async function healResidence(
         if (str(row[f]) !== resolved.snapshot[f]) patch[f] = resolved.snapshot[f];
       }
     } else if (str(row.locationKey)) {
-      // a corrected address that no longer matches its old location: drop the stale link
+      // A corrected address that no longer matches its old location: drop the stale link. The
+      // re-trigger answers `link` once more, misses again (cached) and writes nothing — accepted.
       patch['locationKey'] = '';
     }
   }
@@ -134,7 +151,8 @@ export async function healResidence(
 
 /**
  * Sets `tenants` of every postal row of `parentKey` (archived ones included, so a removed tenant
- * also loses sight of the history) to the parent's tenants. Returns the number of rows written.
+ * also loses sight of the history) to the parent's tenants. Rows sharing no tenant with the parent
+ * are skipped and logged (same guard as healResidence). Returns the number of rows written.
  */
 export async function syncResidenceTenants(db: Firestore, parentKey: string, tenants: string[]): Promise<number> {
   const snapshot = await db.collection(AddressCollection).where('parentKey', '==', parentKey).get();
@@ -142,6 +160,10 @@ export async function syncResidenceTenants(db: Firestore, parentKey: string, ten
   for (const doc of snapshot.docs) {
     const row = doc.data() as AddressModel;
     if (row.addressChannel !== 'postal' || sameTenants(row.tenants, tenants)) continue;
+    if (!intersects(row.tenants, tenants)) {
+      logger.warn(`residence ${doc.id}: tenants share none with parent ${parentKey}, left unchanged`, { tenants: row.tenants, parentTenants: tenants });
+      continue;
+    }
     await doc.ref.update({ tenants: [...tenants] });
     written++;
   }

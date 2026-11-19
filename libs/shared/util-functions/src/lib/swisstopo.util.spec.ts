@@ -122,6 +122,29 @@ describe('swisstopo util', () => {
     expect(await searchSwissAddresses('d 1 x', f)).toHaveLength(3);
   });
 
+  it('gives up on a hanging request after 5 s: aborts it, returns [] and does not cache', async () => {
+    vi.useFakeTimers();
+    try {
+      let signal: AbortSignal | undefined;
+      const hanging = vi.fn((_url: string, init?: RequestInit) => {
+        signal = init?.signal ?? undefined;
+        return new Promise<Response>(() => undefined); // never settles, ignores the signal
+      }) as unknown as typeof fetch;
+      const pending = searchSwissAddresses('seestrasse 12 stäfa', hanging);
+      await vi.advanceTimersByTimeAsync(4999);
+      expect(signal?.aborted).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(await pending).toEqual([]);
+      expect(signal?.aborted).toBe(true);
+      const ok = okFetch(FIXTURE);
+      await vi.advanceTimersByTimeAsync(200);
+      expect(await searchSwissAddresses('seestrasse 12 stäfa', ok)).toHaveLength(3);
+      expect(ok).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('serves a second identical (normalised) query from the cache', async () => {
     const f = okFetch(FIXTURE);
     await searchSwissAddresses('seestrasse 12 stäfa', f);

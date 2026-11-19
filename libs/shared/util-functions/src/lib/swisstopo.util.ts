@@ -17,6 +17,8 @@ export type GeocodeOutcome = { kind: 'exact'; hit: SwissAddressHit } | { kind: '
 
 const SEARCH_URL = 'https://api3.geo.admin.ch/rest/services/api/SearchServer?type=locations&origins=address&sr=4326&limit=10&searchText=';
 const THROTTLE_MS = 200;
+/** A hanging swisstopo request must not block the caller (a trigger has 60 s) or the throttle chain behind it. */
+const FETCH_TIMEOUT_MS = 5000;
 const CACHE_MAX = 500;
 
 const cache = new Map<string, SwissAddressHit[]>();
@@ -28,7 +30,8 @@ export function normaliseQuery(q: string): string {
   return q.trim().replace(/\s+/g, ' ').toLowerCase();
 }
 
-function fold(s: string): string {
+/** Case-, diacritics- and whitespace-insensitive form of an address part (the geocoder's match rule). */
+export function foldAddressPart(s: string): string {
   return s
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
@@ -106,6 +109,27 @@ function throttled<T>(task: () => Promise<T>): Promise<T> {
   return run;
 }
 
+/**
+ * Fetches with an abort signal after FETCH_TIMEOUT_MS, and also stops waiting at that point when
+ * the fetch implementation ignores the signal. A timeout rejects like a network error.
+ */
+async function fetchWithTimeout(fetchFn: typeof fetch, url: string): Promise<Response> {
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      const error = new Error(`timeout after ${FETCH_TIMEOUT_MS} ms`);
+      controller.abort(error);
+      reject(error);
+    }, FETCH_TIMEOUT_MS);
+  });
+  try {
+    return await Promise.race([fetchFn(url, { signal: controller.signal }), timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /** Throttled (<= 5 req/s), cached search. Returns [] on network error, non-2xx or 429; never throws. */
 export async function searchSwissAddresses(q: string, fetchFn: typeof fetch = fetch): Promise<SwissAddressHit[]> {
   const key = normaliseQuery(q);
@@ -114,7 +138,7 @@ export async function searchSwissAddresses(q: string, fetchFn: typeof fetch = fe
   if (cached) return cached;
   try {
     const hits = await throttled(async () => {
-      const res = await fetchFn(SEARCH_URL + encodeURIComponent(key));
+      const res = await fetchWithTimeout(fetchFn, SEARCH_URL + encodeURIComponent(key));
       if (!res.ok) {
         logger.warn(`swisstopo search answered ${res.status}`);
         return null;
@@ -134,7 +158,7 @@ export async function searchSwissAddresses(q: string, fetchFn: typeof fetch = fe
 export async function geocodeSnapshot(row: Pick<AddressModel, 'streetName' | 'streetNumber' | 'zipCode' | 'city'>, fetchFn: typeof fetch = fetch): Promise<GeocodeOutcome> {
   const hits = await searchSwissAddresses(`${row.streetName} ${row.streetNumber} ${row.zipCode} ${row.city}`, fetchFn);
   if (hits.length === 0) return { kind: 'none' };
-  const exact = hits.filter((h) => fold(h.streetName) === fold(row.streetName) && fold(h.streetNumber) === fold(row.streetNumber) && h.zipCode === row.zipCode.trim());
+  const exact = hits.filter((h) => foldAddressPart(h.streetName) === foldAddressPart(row.streetName) && foldAddressPart(h.streetNumber) === foldAddressPart(row.streetNumber) && h.zipCode === row.zipCode.trim());
   if (exact.length === 1) return { kind: 'exact', hit: exact[0] };
   return { kind: 'ambiguous', hits };
 }
