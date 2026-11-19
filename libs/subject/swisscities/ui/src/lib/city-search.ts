@@ -15,6 +15,11 @@ import { CitySearchStore } from './city-search.store';
     IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonSpinner,
   ],
   providers: [CitySearchStore],
+  styles: [`
+    .municipality { color: var(--ion-color-medium); }
+    .attribution ion-label { font-size: 0.75rem; color: var(--ion-color-medium); }
+    .attribution a { color: inherit; }
+  `],
   template: `
     @if (hasDataset()) {
       <ion-row>
@@ -37,11 +42,19 @@ import { CitySearchStore } from './city-search.store';
               <ion-list>
                 @for (city of store.filteredCities(); track $index) {
                   <ion-item (click)="citySelected.emit(city)" button="true" detail="false">
-                    <ion-label>{{ city.zipCode }} {{ city.name }}</ion-label>
+                    <ion-label>
+                      {{ city.zipCode }} {{ city.name }}
+                      @if (city.municipality && !city.name.includes(city.municipality)) { <span class="municipality">({{ city.municipality }})</span> }
+                    </ion-label>
                   </ion-item>
                 } @empty {
                   <ion-item><ion-label>{{ i18n.empty() }}</ion-label></ion-item>
                 }
+                <ion-item lines="none" class="attribution">
+                  <ion-label>
+                    <a [href]="attribution().url" target="_blank" rel="noopener">{{ attribution().label }}</a>
+                  </ion-label>
+                </ion-item>
               </ion-list>
             </ng-template>
           </ion-popover>
@@ -71,6 +84,11 @@ export class CitySearch implements OnInit {
   protected hasDataset = computed(() =>
     SUPPORTED_CITY_COUNTRIES.includes(this.countryCode().toUpperCase() as SupportedCityCountry));
   protected okrSearchCity = viewChild<IonSearchbar>('okrSearchCity');
+
+  /** source credit required by the data licence: swisstopo for CH/LI, GeoNames (CC BY 4.0) elsewhere */
+  protected readonly attribution = computed(() => ['CH', 'LI'].includes(this.countryCode().toUpperCase())
+    ? { label: this.i18n.attribution_swisstopo(), url: 'https://www.swisstopo.admin.ch/de/amtliches-ortschaftenverzeichnis' }
+    : { label: this.i18n.attribution_geonames(), url: 'https://www.geonames.org' });
 
   constructor() {
     effect(() => { this.store.setCountry(this.countryCode()); });

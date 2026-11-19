@@ -14,12 +14,12 @@ describe('CityDataService', () => {
     return TestBed.inject(CityDataService);
   }
 
-  it('returns the in-bundle Swiss array for CH without fetching', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch');
-    const cities = await make().load('CH');
-    expect(cities.length).toBeGreaterThan(1000);
-    expect(cities.every(c => c.countryCode === 'CH')).toBe(true);
-    expect(fetchSpy).not.toHaveBeenCalled();
+  it('fetches CH from the assets like every other country', async () => {
+    const payload = [{ zipCode: '6718', name: 'Olivone', stateCode: 'TI', countryCode: 'CH', municipality: 'Blenio', municipalityCode: '5049' }];
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(payload), { status: 200 }));
+    expect(await make().load('ch')).toEqual(payload);
+    expect(fetchSpy).toHaveBeenCalledWith('/assets/cities/CH.json');
   });
 
   it('returns [] for an unsupported country', async () => {
@@ -42,5 +42,15 @@ describe('CityDataService', () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
     expect(await make('server').load('DE')).toEqual([]);
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('does not cache a failed fetch, so the next call retries', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch')
+      .mockRejectedValueOnce(new TypeError('offline'))
+      .mockResolvedValueOnce(new Response(JSON.stringify([{ zipCode: '9490', name: 'Vaduz', stateCode: '', countryCode: 'LI' }]), { status: 200 }));
+    const svc = make();
+    expect(await svc.load('LI')).toEqual([]);
+    expect((await svc.load('LI')).length).toBe(1);
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
   });
 });
