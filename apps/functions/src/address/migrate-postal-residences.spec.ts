@@ -57,6 +57,23 @@ describe('resolveConflicts', () => {
     expect(losers).toEqual([]);
   });
 
+  it('a recorded move (closed row + open successor of the same usage) is no conflict', () => {
+    const closed = postal('closed', { validTo: '20261231' }, at(5));
+    const next = postal('next', { validFrom: '20270101' }, at(1));
+    const legacy = postal('legacy', {}, at(2));
+    const { winners, losers } = resolveConflicts([closed, next, legacy], () => 'L1');
+    expect(losers).toEqual([]);
+    expect(winners.map((w) => w.okey)).toEqual(['legacy']);
+  });
+
+  it('a legacy row without addressUsage counts as home', () => {
+    const legacy = postal('legacy', { addressUsage: undefined as unknown as string }, at(1));
+    const home = postal('home', {}, at(2));
+    const loc = { legacy: 'L1', home: 'L2' } as Record<string, string>;
+    const { losers } = resolveConflicts([legacy, home], (k) => loc[k]);
+    expect(losers.map((p) => [p.loser.okey, p.winner.okey])).toEqual([['legacy', 'home']]);
+  });
+
   it('different parents never conflict', () => {
     const a = postal('a');
     const b = postal('b', { parentKey: 'person.p2' });
@@ -292,6 +309,61 @@ describe('runPostalResidenceMigration', () => {
     expect(tasks?.get(migrationTaskId('kring', 'admin'))?.data['notes']).toBe('Anna Muster: Seestrasse 12, 8712 Stäfa → Seestrasse 12, 8712 Stäfa');
     expect(tasks?.get(migrationTaskId('scs', 'admin'))?.data['name']).toBe('Adressen ersetzt (Migration)');
     expect(tasks?.get(migrationTaskId('scs', 'admin'))?.data['tags']).toBe('umzug');
+  });
+
+  it('dated rows of a recorded move are neither archived nor stripped of the favorite, also on a re-run', async () => {
+    const data = {
+      persons: { p1: { firstName: 'Anna', lastName: 'Muster', tenants: ['scs'] } },
+      users: {},
+      addresses: {
+        closed: addr({ parentKey: 'person.p1', streetName: 'Seestrasse', streetNumber: '12', locationKey: 'L1', validTo: '20261231', isFavorite: true }),
+        next: addr({ parentKey: 'person.p1', streetName: 'Bergweg', streetNumber: '3', locationKey: 'L2', validFrom: '20270101' }),
+      },
+    };
+    const { db, writes } = fakeDb(data, { closed: at(5), next: at(1) });
+    for (const run of ['1', '2']) {
+      const report = await runPostalResidenceMigration(db, { write: true, reportPath: join(reportDir, `${run}.json`), fetchFn: fakeFetch, log: () => undefined });
+      expect(report.conflicts).toEqual([]);
+      expect(report.favorites).toEqual([]);
+    }
+    expect(writes).toEqual([]);
+  });
+
+  it('a foreign favorite newer than the in-tenant favorite: the in-tenant one stays, the foreign row is untouched', async () => {
+    const data = {
+      persons: { p1: { firstName: 'Anna', lastName: 'Muster', tenants: ['scs'] } },
+      users: {},
+      addresses: {
+        own: addr({ parentKey: 'person.p1', streetName: 'Seestrasse', streetNumber: '12', isFavorite: true }),
+        planted: addr({ parentKey: 'person.p1', streetName: 'Bergweg', streetNumber: '3', tenants: ['evil'], isFavorite: true, addressUsage: 'work' }),
+      },
+    };
+    const { db, store, writes } = fakeDb(data, { own: at(1), planted: at(5) });
+    const report = await runPostalResidenceMigration(db, { write: true, reportPath: join(reportDir, 'f.json'), fetchFn: fakeFetch, log: () => undefined });
+    const a = (id: string) => store.get('addresses')?.get(id)?.data as Record<string, unknown>;
+    expect(a('own')['isFavorite']).toBe(true);
+    expect(a('planted')).toEqual(data.addresses.planted);
+    expect(writes.filter((w) => w.includes('planted'))).toEqual([]);
+    expect(report.foreignTenants.map((r) => r.okey)).toEqual(['planted']);
+  });
+
+  it('summary tasks go only to tenants the parent belongs to', async () => {
+    const data = {
+      persons: {
+        p1: { firstName: 'Anna', lastName: 'Muster', tenants: ['scs'] },
+        admin: { firstName: 'Ada', lastName: 'Admin', tenants: ['scs', 'other'] },
+      },
+      users: { u1: { personKey: 'admin', tenants: ['scs', 'other'], roles: { memberAdmin: true } } },
+      addresses: {
+        newer: addr({ parentKey: 'person.p1', streetName: 'Bergweg', streetNumber: '3' }),
+        older: addr({ parentKey: 'person.p1', streetName: 'Seestrasse', streetNumber: '12', tenants: ['scs', 'other'] }),
+      },
+    };
+    const { db, store } = fakeDb(data, { newer: at(5), older: at(1) });
+    const report = await runPostalResidenceMigration(db, { write: true, reportPath: join(reportDir, 't.json'), fetchFn: fakeFetch, log: () => undefined });
+    expect(report.tasks.map((t) => t.tenantId)).toEqual(['scs']);
+    expect(store.get('tasks')?.has(migrationTaskId('other', 'admin'))).toBe(false);
+    expect(store.get('tasks')?.has(migrationTaskId('scs', 'admin'))).toBe(true);
   });
 
   it('a second run is idempotent: nothing is geocoded, written or duplicated', async () => {

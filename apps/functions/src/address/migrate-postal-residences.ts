@@ -8,7 +8,7 @@ import { createHash } from 'node:crypto';
 import { writeFileSync } from 'node:fs';
 import type { Firestore, Timestamp } from 'firebase-admin/firestore';
 
-import { ADDRESS_REGISTER_TENANT } from '@okr/shared-constants';
+import { ADDRESS_REGISTER_TENANT, DEFAULT_ADDRESS_USAGE } from '@okr/shared-constants';
 import { AddressCollection, AddressModel, AvatarInfo, LocationCollection, TaskCollection, TaskModel } from '@okr/shared-models';
 import { getFullName } from '@okr/shared-util-core';
 import { getTaskIndex } from '@okr/project-task-util';
@@ -46,6 +46,19 @@ function str(value: unknown): string {
   return String(value ?? '');
 }
 
+/** A legacy row without `addressUsage` counts as the default usage (as in residence.logic.ts). */
+function usageOf(r: MigrationRow): string {
+  return str(r.row.addressUsage) || DEFAULT_ADDRESS_USAGE;
+}
+
+/**
+ * True when the row carries no residence period. Only undated rows are legacy duplicates; a dated
+ * row belongs to a recorded move (closed predecessor, successor) and is history, never a conflict.
+ */
+export function isUndated(r: MigrationRow): boolean {
+  return str(r.row.validFrom) === '' && str(r.row.validTo) === '';
+}
+
 /** Newest first; equal times fall back to the okey so the outcome never depends on read order. */
 function newestFirst(a: MigrationRow, b: MigrationRow): number {
   if (a.updateTime !== b.updateTime) return a.updateTime < b.updateTime ? 1 : -1;
@@ -56,13 +69,14 @@ function newestFirst(a: MigrationRow, b: MigrationRow): number {
  * Pure. Groups the linked rows by `parentKey` + `addressUsage` (home vs work never conflict) and keeps
  * the most recently updated row of each group; every other row of the group loses — whether it
  * points at a different location (a conflict) or at the same one (a duplicate from another tenant).
- * Rows without a location (ambiguous or no swisstopo hit) take no part: neither winner nor loser.
+ * Rows without a location (ambiguous or no swisstopo hit) and dated rows (a recorded move) take no
+ * part: neither winner nor loser.
  */
 export function resolveConflicts(rows: MigrationRow[], locationOf: (okey: string) => string | undefined): { winners: MigrationRow[]; losers: ConflictPair[] } {
   const groups = new Map<string, MigrationRow[]>();
   for (const r of rows) {
-    if (!locationOf(r.okey)) continue;
-    const key = `${str(r.row.parentKey)}|${str(r.row.addressUsage)}`;
+    if (!locationOf(r.okey) || !isUndated(r)) continue;
+    const key = `${str(r.row.parentKey)}|${usageOf(r)}`;
     const group = groups.get(key) ?? [];
     group.push(r);
     groups.set(key, group);
@@ -223,6 +237,7 @@ export async function runPostalResidenceMigration(db: Firestore, opts: Migration
       ? { tenants: (data['tenants'] as string[] | undefined) ?? [], name: parentName(parsed.parentType, data) || parentKey, exists: true }
       : { tenants: [], name: parentKey, exists: false });
   }
+  const foreign = new Set<string>();                           // rows sharing no tenant with their parent: listed only
   const parentOf = (r: MigrationRow): Parent => parents.get(str(r.row.parentKey)) ?? { tenants: [], name: str(r.row.parentKey), exists: false };
   const ref = (r: MigrationRow): RowRef => ({ okey: r.okey, parentKey: str(r.row.parentKey), text: addressLine(r.row) });
 
@@ -261,6 +276,7 @@ export async function runPostalResidenceMigration(db: Firestore, opts: Migration
     // (heal rule, injection guard): it is only listed
     if (residenceTenants(r.row.tenants, parent.tenants).length === 0) {
       count('foreign/empty tenants (untouched)');
+      foreign.add(r.okey);
       report.foreignTenants.push({
         ...ref(r), rowTenants: r.row.tenants ?? [], parentTenants: parent.tenants,
         reason: !parent.exists ? 'parent missing' : (r.row.tenants ?? []).length === 0 ? 'row has no tenants' : 'no tenant shared with parent',
@@ -308,9 +324,11 @@ export async function runPostalResidenceMigration(db: Firestore, opts: Migration
     const sameLocation = location.get(loser.okey) === location.get(winner.okey);
     count(sameLocation ? 'duplicates archived (same location)' : 'conflicts archived (different location)');
     const side = (m: MigrationRow) => ({ ...ref(m), tenants: m.row.tenants ?? [], updateTime: m.updateTime });
-    report.conflicts.push({ parentKey: str(winner.row.parentKey), addressUsage: str(winner.row.addressUsage), kind: sameLocation ? 'same-location' : 'different-location', winner: side(winner), loser: side(loser) });
+    report.conflicts.push({ parentKey: str(winner.row.parentKey), addressUsage: usageOf(winner), kind: sameLocation ? 'same-location' : 'different-location', winner: side(winner), loser: side(loser) });
   }
-  const favoriteChanges = repairFavorites(rows, losers);
+  // favorites: only undated rows of the parent's own tenants are candidates; dated rows belong to
+  // the move switch, foreign rows are never patched
+  const favoriteChanges = repairFavorites(rows.filter((r) => isUndated(r) && !foreign.has(r.okey)), losers);
   const byOkey = new Map(rows.map((r) => [r.okey, r]));
   for (const [okey, isFavorite] of favoriteChanges) {
     report.favorites.push({ okey, parentKey: str(byOkey.get(okey)?.row.parentKey), isFavorite });
@@ -405,7 +423,8 @@ export async function runPostalResidenceMigration(db: Firestore, opts: Migration
   const archived = losers.filter((p) => !failedParents.has(str(p.loser.row.parentKey)));
   const summaries = summaryTasks(
     archived.map((p) => ({ loser: asLinked(p.loser), winner: asLinked(p.winner) })),
-    (r) => (r.row.tenants ?? []).filter((t) => t !== ADDRESS_REGISTER_TENANT),
+    // only tenants the parent still belongs to: a foreign tenant never learns the name or the new address
+    (r) => (r.row.tenants ?? []).filter((t) => t !== ADDRESS_REGISTER_TENANT && parentOf(r).tenants.includes(t)),
     (r) => parentOf(r).name,
   );
   for (const [tenantId, lines] of summaries) {
