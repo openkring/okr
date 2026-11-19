@@ -42,6 +42,11 @@ async function main(): Promise<void> {
   let pending = 0;
 
   for (const doc of locations.docs) {
+    // Address-register locations (spec 1.164, ADDRESS_REGISTER_TENANT) get no avatar — see onLocationWritten.
+    if (((doc.data()['tenants'] ?? []) as string[]).includes('address-register')) {
+      count('skip (address register)');
+      continue;
+    }
     const id = locationAvatarDocId(doc.id);
     const action = planLocationAvatar(doc.data() as LocationLike, existing.get(id), catalog);
     if (action.kind === 'set') {

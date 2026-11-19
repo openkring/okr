@@ -3,6 +3,7 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 
 import { AvatarCollection, LocationCollection } from '@okr/shared-models';
+import { isRegisterLocation } from '@okr/shared-util-functions';
 
 import { getLocationAvatarCatalog } from './location-avatar.catalog';
 import { ExistingAvatar, LocationLike, locationAvatarDocId, planLocationAvatar } from './location-avatar.util';
@@ -12,12 +13,16 @@ import { ExistingAvatar, LocationLike, locationAvatarDocId, planLocationAvatar }
  * of arms, else the canton's / Bundesland's, else the country's flag (see location-avatar.util).
  * The doc is tenant-less (`tenants: ['system']`), so every tenant shows it; a hand-uploaded picture
  * is never replaced. Existing locations: scripts/backfill-location-avatars.ts.
+ * Address-register locations (spec 1.164) get no avatar: a `system` avatar per home would be
+ * streamed to every client and its doc id would list every register okey, defeating the
+ * register's no-list rule.
  */
 export const onLocationWritten = onDocumentWritten(
   { document: `${LocationCollection}/{id}`, region: 'europe-west6' },
   async (event) => {
-    const before = event.data?.before.data() as LocationLike | undefined;
-    const after = event.data?.after.data() as LocationLike | undefined;
+    const before = event.data?.before.data() as (LocationLike & { tenants?: string[] }) | undefined;
+    const after = event.data?.after.data() as (LocationLike & { tenants?: string[] }) | undefined;
+    if (isRegisterLocation(before) || isRegisterLocation(after)) return;
     if (before && after && before.name === after.name && before.address === after.address) return;
 
     const db = getFirestore();

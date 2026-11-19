@@ -2273,5 +2273,161 @@ for label, expect, run in application_cases:
     passed += ok; failed += not ok
     print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
 
+# ------------------------------------------- postal addresses as locations (1.164) ---
+# Register locations (tenants ['address-register']) hold one shared doc per postal address. Any
+# signed-in user may GET one by key (to render an own address or a map); NO client may list them,
+# privileged and admin included — the register has no tenant, so a list would expose every home of
+# every tenant. Only Cloud Functions (Admin SDK) write them. Club locations are unchanged.
+REG = "address-register"
+REG_PROPS = [{"key": "egaid", "value": "101880576"}, {"key": "countryCode", "value": "CH"},
+             {"key": "validated", "value": "swisstopo"}]
+def reg_loc(**extra):
+    return {"tenants": [REG], "isArchived": False, "type": "address", "name": "Seestrasse 12, 8712 Stäfa",
+            "address": "Seestrasse 12, 8712 Stäfa", "properties": REG_PROPS, **extra}
+seed("locations/regL1", reg_loc())
+seed("locations/regL2", reg_loc())
+seed("locations/clubL1", {"tenants": ["t1"], "isArchived": False, "type": "geomarker", "name": "Bootshaus"})
+seed("locations/clubDel", {"tenants": ["t1"], "isArchived": False, "type": "geomarker", "name": "Del"})
+seed("locations/clubShared", {"tenants": ["t1", "t2"], "isArchived": False, "type": "geomarker", "name": "Shared"})
+# a (mis)configured users doc carrying the register marker as its tenant must not unlock a list either
+seed("users/uidAR", {"tenants": [REG], "roles": {"admin": True}, "firstName": "AR", "personKey": "pAR"})
+AR = jwt("uidAR")
+REG_LIST = [("tenants", "ARRAY_CONTAINS", REG)]
+REG_SYSQ = [("isArchived", "EQUAL", False), ("tenants", "ARRAY_CONTAINS_ANY", [REG, "system"])]
+EGAID_Q = [("properties", "ARRAY_CONTAINS", REG_PROPS[0])]
+T1_LIST = [("isArchived", "EQUAL", False), ("tenants", "ARRAY_CONTAINS", "t1")]
+location_cases = [
+    # register: get by key for any signed-in user
+    ("register: userA(plain t1) GET locations/regL1 -> ALLOW", True,
+     lambda: req("GET", "locations/regL1", token=A)),
+    ("register: userB(admin t2) GET locations/regL1 -> ALLOW", True,
+     lambda: req("GET", "locations/regL1", token=B)),
+    ("register: anon GET locations/regL1 -> DENY", False, lambda: req("GET", "locations/regL1")),
+    ("register: signed-in without users doc GET locations/regL1 -> DENY", False,
+     lambda: req("GET", "locations/regL1", token=NODOC)),
+    ("register: userA GET a missing location -> ALLOW (clean not-found)", True,
+     lambda: req("GET", "locations/missingLoc", token=A)),
+    # register: no list, for anyone
+    ("register: userA LIST tenants array-contains address-register -> DENY", False,
+     lambda: field_query("locations", REG_LIST, token=A)),
+    ("register: userP(privileged) LIST tenants array-contains address-register -> DENY", False,
+     lambda: field_query("locations", REG_LIST, token=P)),
+    ("register: userD(admin t1) LIST tenants array-contains address-register -> DENY", False,
+     lambda: field_query("locations", REG_LIST, token=D)),
+    ("register: userD(admin t1) LIST getSystemQuery(address-register) -> DENY", False,
+     lambda: field_query("locations", REG_SYSQ, token=D)),
+    ("register: userAR(users doc tenants [address-register]) LIST register -> DENY", False,
+     lambda: field_query("locations", REG_LIST, token=AR)),
+    ("register: userP(privileged) LIST by egaid property -> DENY (lookup is server-side)", False,
+     lambda: field_query("locations", EGAID_Q, token=P)),
+    ("register: userD(admin t1) LIST locations without tenant filter -> DENY", False,
+     lambda: field_query("locations", [("isArchived", "EQUAL", False)], token=D)),
+    # register: no client write, admin included
+    ("register: userD(admin) PATCH regL1 name -> DENY", False,
+     lambda: req("PATCH", "locations/regL1", token=D, data=body({"name": "x"}), mask=["name"])),
+    ("register: userD(admin) PATCH regL1 tenants=[t1] (pull into a club) -> DENY", False,
+     lambda: req("PATCH", "locations/regL1", token=D, data=body({"tenants": ["t1"]}), mask=["tenants"])),
+    ("register: userA PATCH regL1 tenants=[t1, address-register] -> DENY", False,
+     lambda: req("PATCH", "locations/regL1", token=A, data=body({"tenants": ["t1", REG]}), mask=["tenants"])),
+    ("register: userD(admin) DELETE regL2 -> DENY", False, lambda: req("DELETE", "locations/regL2", token=D)),
+    ("register: userD(admin) CREATE tenants=[address-register] -> DENY", False,
+     lambda: req("POST", "locations?documentId=regNew1", token=D, data=body(reg_loc()))),
+    ("register: userD(admin) CREATE tenants=[t1, address-register] -> DENY", False,
+     lambda: req("POST", "locations?documentId=regNew2", token=D, data=body(reg_loc(tenants=["t1", REG])))),
+    ("register: userD(admin) PATCH club clubL1 tenants=[t1, address-register] -> DENY", False,
+     lambda: req("PATCH", "locations/clubL1", token=D, data=body({"tenants": ["t1", REG]}), mask=["tenants"])),
+    # club locations: unchanged
+    ("club: userA GET clubL1 -> ALLOW", True, lambda: req("GET", "locations/clubL1", token=A)),
+    ("club: userB(admin t2) GET clubL1 -> DENY", False, lambda: req("GET", "locations/clubL1", token=B)),
+    ("club: userA LIST getSystemQuery(t1) -> ALLOW", True, lambda: field_query("locations", SYSQ, token=A)),
+    ("club: userP(privileged) LIST getSystemQuery(t1) -> ALLOW", True, lambda: field_query("locations", SYSQ, token=P)),
+    ("club: userD(admin) LIST array-contains t1 (AOC planIndex shape) -> ALLOW", True,
+     lambda: field_query("locations", [("tenants", "ARRAY_CONTAINS", "t1")], token=D)),
+    ("club: userA LIST isArchived + array-contains t1 + type -> ALLOW", True,
+     lambda: field_query("locations", T1_LIST + [("type", "EQUAL", "geomarker")], token=A)),
+    ("club: userA LIST array-contains t2 -> DENY", False,
+     lambda: field_query("locations", [("tenants", "ARRAY_CONTAINS", "t2")], token=A)),
+    ("club: userA CREATE tenants=[t1] -> ALLOW", True,
+     lambda: req("POST", "locations?documentId=clubNew", token=A,
+                 data=body({"tenants": ["t1"], "isArchived": False, "type": "geomarker", "name": "N"}))),
+    ("club: userB(admin t2) CREATE tenants=[t1] -> DENY", False,
+     lambda: req("POST", "locations?documentId=clubNew2", token=B,
+                 data=body({"tenants": ["t1"], "isArchived": False, "type": "geomarker", "name": "N"}))),
+    ("club: userA PATCH clubL1 name -> ALLOW", True,
+     lambda: req("PATCH", "locations/clubL1", token=A, data=body({"name": "Bootshaus 2"}), mask=["name"])),
+    ("club: userD(admin t1) self-detach clubShared -> ALLOW", True,
+     lambda: req("PATCH", "locations/clubShared", token=D, data=body({"tenants": ["t2"]}), mask=["tenants"])),
+    ("club: userB(admin t2) DELETE clubDel -> DENY", False, lambda: req("DELETE", "locations/clubDel", token=B)),
+    ("club: userA DELETE clubDel -> ALLOW", True, lambda: req("DELETE", "locations/clubDel", token=A)),
+]
+for label, expect, run in location_cases:
+    code = run()
+    ok = (code in (200, 201) or (label.find(" GET ") >= 0 and code == 404)) == expect
+    passed += ok; failed += not ok
+    print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
+
+# Postal rows (spec 1.164 §6.5): once a residence carries every club of the person, a plain member
+# of any of those clubs could rewrite a home address. Postal create / update / delete therefore
+# need owner ∨ privileged ∨ memberAdmin (canWriteSensitive); other channels are unchanged.
+def postal(parent, **extra):
+    return {"tenants": ["t1"], "isArchived": False, "isFavorite": True, "parentKey": parent,
+            "addressChannel": "postal", "addressUsage": "home", "streetName": "Seestrasse",
+            "streetNumber": "12", "zipCode": "8712", "city": "Stäfa", "countryCode": "CH",
+            "locationKey": "regL1", "validFrom": "", "validTo": "", **extra}
+seed("addresses/adrO_postal", postal("person.pO"))
+seed("addresses/adrO_postal_del", postal("person.pO"))
+seed("addresses/adrO_postal_del2", postal("person.pO"))
+seed("addresses/adrA_postal", postal("person.pA"))
+seed("addresses/adrE_email", {"tenants": ["t1"], "isArchived": False, "isFavorite": True,
+                              "parentKey": "person.pE", "addressChannel": "email", "email": "e@t1.ch"})
+STREET = lambda v: body({"streetName": v})
+postal_cases = [
+    ("postal: userE(plain) PATCH another's postal row -> DENY", False,
+     lambda: req("PATCH", "addresses/adrO_postal", token=E, data=STREET("Bahnhofstrasse"), mask=["streetName"])),
+    ("postal: userA(owner) PATCH own postal row -> ALLOW", True,
+     lambda: req("PATCH", "addresses/adrA_postal", token=A, data=STREET("Bahnhofstrasse"), mask=["streetName"])),
+    ("postal: userM(memberAdmin) PATCH another's postal row -> ALLOW", True,
+     lambda: req("PATCH", "addresses/adrO_postal", token=M, data=STREET("Dorfstrasse"), mask=["streetName"])),
+    ("postal: userP(privileged) PATCH another's postal row -> ALLOW", True,
+     lambda: req("PATCH", "addresses/adrO_postal", token=P, data=STREET("Kirchgasse"), mask=["streetName"])),
+    ("postal: userD(admin t1) PATCH another's postal row -> ALLOW", True,
+     lambda: req("PATCH", "addresses/adrO_postal", token=D, data=STREET("Seestrasse"), mask=["streetName"])),
+    ("postal: userB(admin t2) PATCH a t1 postal row -> DENY (tenant)", False,
+     lambda: req("PATCH", "addresses/adrO_postal", token=B, data=STREET("x"), mask=["streetName"])),
+    ("postal: userE(plain) PATCH another's email row -> ALLOW (unchanged)", True,
+     lambda: req("PATCH", "addresses/adrO_email", token=E, data=body({"email": "o2@t1.ch"}), mask=["email"])),
+    ("postal: userE(plain) turns another's email row into postal -> DENY", False,
+     lambda: req("PATCH", "addresses/adrO_email", token=E, data=body({"addressChannel": "postal"}), mask=["addressChannel"])),
+    ("postal: userE(plain) turns another's postal row into email -> DENY", False,
+     lambda: req("PATCH", "addresses/adrO_postal", token=E, data=body({"addressChannel": "email"}), mask=["addressChannel"])),
+    ("postal: userE(plain) repoints own email row to another's postal row -> DENY", False,
+     lambda: req("PATCH", "addresses/adrE_email", token=E,
+                 data=body({"addressChannel": "postal", "parentKey": "person.pO"}), mask=["addressChannel", "parentKey"])),
+    ("postal: userA(owner) repoints own postal row to another person -> DENY", False,
+     lambda: req("PATCH", "addresses/adrA_postal", token=A, data=body({"parentKey": "person.pO"}), mask=["parentKey"])),
+    ("postal: userE(plain) CREATE postal for another person -> DENY", False,
+     lambda: req("POST", "addresses?documentId=adrPostNew1", token=E, data=body(postal("person.pO")))),
+    ("postal: userE(plain) CREATE own postal row -> ALLOW", True,
+     lambda: req("POST", "addresses?documentId=adrPostNew2", token=E, data=body(postal("person.pE")))),
+    ("postal: userM(memberAdmin) CREATE postal for another person -> ALLOW", True,
+     lambda: req("POST", "addresses?documentId=adrPostNew3", token=M, data=body(postal("person.pO")))),
+    ("postal: userP(privileged) CREATE postal for another person -> ALLOW", True,
+     lambda: req("POST", "addresses?documentId=adrPostNew4", token=P, data=body(postal("person.pO")))),
+    ("postal: userE(plain) DELETE another's postal row -> DENY", False,
+     lambda: req("DELETE", "addresses/adrO_postal_del", token=E)),
+    ("postal: userM(memberAdmin) DELETE another's postal row -> ALLOW", True,
+     lambda: req("DELETE", "addresses/adrO_postal_del", token=M)),
+    ("postal: userP(privileged) DELETE another's postal row -> ALLOW", True,
+     lambda: req("DELETE", "addresses/adrO_postal_del2", token=P)),
+    ("postal: userE(plain) GET another's postal row -> DENY (vault read unchanged)", False,
+     lambda: req("GET", "addresses/adrO_postal", token=E)),
+    ("postal: userA(owner) GET own postal row -> ALLOW", True, lambda: req("GET", "addresses/adrA_postal", token=A)),
+]
+for label, expect, run in postal_cases:
+    code = run()
+    ok = (code in (200, 201)) == expect
+    passed += ok; failed += not ok
+    print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
+
 print(f"\n{passed} passed, {failed} failed")
 raise SystemExit(1 if failed else 0)

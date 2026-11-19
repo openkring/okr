@@ -101,6 +101,20 @@ service cloud.firestore {
     function canWriteSensitive(data) {
       return ownsParent(data) || isPrivileged() || hasRole('memberAdmin');
     }
+    // Postal rows (spec 1.164 §6.5) carry every club of their person, so any member of any of those
+    // clubs could otherwise rewrite a home address: postal writes take the same gate as the
+    // sensitive channels. Reads keep the normal vault rule (canReadVault).
+    function isPostal(data) {
+      return data.addressChannel == 'postal';
+    }
+    function isGuardedChannel(data) {
+      return isSensitiveChannel(data) || isPostal(data);
+    }
+    // Update of a guarded row: an owner must own the row before AND after, so neither repointing
+    // parentKey to another person nor turning an own row into another person's postal row passes.
+    function canWriteSensitiveUpdate(before, after) {
+      return (ownsParent(before) && ownsParent(after)) || isPrivileged() || hasRole('memberAdmin');
+    }
     // Who may read the vault at all (D-P4-1, amended 2026-07-27): owner,
     // privileged, or memberAdmin. memberAdmin is the authorized ssn/dob editor
     // (D9) and could already obtain every value through the getAddressView
@@ -619,18 +633,19 @@ service cloud.firestore {
     // addresses = PII vault (spec 1.19 Phase 4 lock): raw read only for the owner,
     // privileged, or memberAdmin (D-P4-1 as amended); plain members read the
     // address-directory projection or the getAddressView callable. Sensitive
-    // channels (ssn/dob/bankaccount) are writable only by owner/privileged/memberAdmin.
+    // channels (ssn/dob/dod/bankaccount) and, since spec 1.164, postal rows are writable only by
+    // owner/privileged/memberAdmin.
     match /addresses/{id} {
       // resource == null: a get() on a missing doc — allow the clean not-found
       // (same rationale as tenantRead(); list results always have a concrete resource).
       allow read:   if userExists() && (resource == null || canReadVault(resource.data));
       allow create: if tenantCreate()
-                     && (!isSensitiveChannel(request.resource.data) || canWriteSensitive(request.resource.data));
+                     && (!isGuardedChannel(request.resource.data) || canWriteSensitive(request.resource.data));
       allow update: if tenantUpdate()
-                     && (!(isSensitiveChannel(resource.data) || isSensitiveChannel(request.resource.data))
-                         || canWriteSensitive(resource.data));
+                     && (!(isGuardedChannel(resource.data) || isGuardedChannel(request.resource.data))
+                         || canWriteSensitiveUpdate(resource.data, request.resource.data));
       allow delete: if tenantDelete()
-                     && (!isSensitiveChannel(resource.data) || canWriteSensitive(resource.data));
+                     && (!isGuardedChannel(resource.data) || canWriteSensitive(resource.data));
     }
     // Person avatars follow the person, not the uploading tenant. Persons are shared
     // across tenants (persons/kaiser lives in 6) but newAvatarModel stamps the avatar
@@ -1102,7 +1117,37 @@ service cloud.firestore {
                       && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['tenants', 'caleventKey']);
       allow delete: if tenantDelete();
     }
-    match /locations/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
+    // ── address register (spec 1.164 §5.1) ─────────────────────────────────────────
+    // A postal address is one shared `locations` doc whose only tenant is the register marker
+    // 'address-register' (ADDRESS_REGISTER_TENANT). Any signed-in user may GET one by key (to render
+    // an own address or a map). NO client may LIST them, privileged and admin included: the register
+    // has no tenant, so a list would expose every home of every tenant; lookups (by EGAID, search) go
+    // through the server. Only Cloud Functions (Admin SDK) write register docs — EGAID dedupe needs a
+    // transaction — so no client may create, change, delete or convert one, nor tag a club doc with
+    // the marker. Club locations keep the plain tenant rules.
+    // The list exclusion is caller-side on purpose. A list rule is checked against the query's
+    // filters, not against each stored doc, so a doc-side `!tenants.hasAny([marker])` would filter
+    // nothing (the emulator lets a `tenants array-contains 't1'` query pass it). What holds instead:
+    // register docs carry only the marker (no club, no 'system'), no client can put the marker on
+    // any doc, and a caller whose own tenants include the marker is refused — so the tenant match
+    // below can never select a register doc.
+    function isRegisterLocation(data) {
+      return data.tenants.hasAny(['address-register']);
+    }
+    function canListLocation(data) {
+      let ts = callerTenants();
+      return userExists() && !ts.hasAny(['address-register'])
+             && (data.tenants.hasAny(ts) || data.tenants.hasAny(['system']));
+    }
+    match /locations/{id} {
+      allow get: if userExists()
+                    && (resource == null || isRegisterLocation(resource.data) || belongsToTenant(resource.data));
+      allow list: if canListLocation(resource.data);
+      allow create, update: if (resource == null || !isRegisterLocation(resource.data))
+                               && !isRegisterLocation(request.resource.data)
+                               && tenantCreateOrDetach();
+      allow delete: if !isRegisterLocation(resource.data) && tenantDelete();
+    }
     // weather: written ONLY by the scheduled Cloud Function, which uses the Admin SDK and
     // bypasses these rules. No client may write — a forged forecast is not worth the attack
     // surface, and nothing in the app has a reason to.
