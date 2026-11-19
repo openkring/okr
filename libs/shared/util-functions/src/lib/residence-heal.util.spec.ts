@@ -3,7 +3,7 @@ import type { DocumentReference, Firestore } from 'firebase-admin/firestore';
 
 import { AddressModel } from '@okr/shared-models';
 
-import { healDecision, healResidence, syncResidenceTenants } from './residence-heal.util';
+import { healDecision, healResidence, residenceTenants, syncResidenceTenants } from './residence-heal.util';
 import { resetSwisstopoState } from './swisstopo.util';
 
 vi.mock('firebase-functions/logger', () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }));
@@ -128,7 +128,24 @@ describe('healDecision', () => {
   });
 });
 
+describe('residenceTenants', () => {
+  it('takes the parent tenants when the row shares one, else []', () => {
+    expect(residenceTenants(['scs'], ['scs', 'kring'])).toEqual(['scs', 'kring']);
+    expect(residenceTenants(['scs', 'kring'], ['scs'])).toEqual(['scs']);
+    expect(residenceTenants(['kring'], ['scs'])).toEqual([]);
+    expect(residenceTenants([], ['scs'])).toEqual([]);
+    expect(residenceTenants(undefined, ['scs'])).toEqual([]);
+  });
+});
+
 describe('heal feed-back (R-d)', () => {
+  it('a row narrowed to [] fed back is none (fixed point, no loop)', () => {
+    expect(healDecision(postal({ locationKey: 'loc1', tenants: ['kring'] }), postal({ locationKey: 'loc1', tenants: [] }), ['scs'])).toBe('none');
+    expect(healDecision(postal({ tenants: ['x'] }), postal({ tenants: [] }), ['z'])).toBe('none');
+    expect(healDecision(undefined, postal({ locationKey: 'loc1', tenants: [] }), ['scs'])).toBe('none');
+  });
+
+
   beforeEach(() => {
     resetSwisstopoState();
   });
@@ -212,7 +229,7 @@ describe('healResidence', () => {
     expect(patch).not.toHaveProperty('validTo');
   });
 
-  it('leaves a row sharing no tenant with its parent completely unchanged (cross-tenant guard)', async () => {
+  it('narrows a row planted on a foreign parent to [] without linking it (injection guard)', async () => {
     const { db, runTransaction, newRef } = fakeDb();
     const ref = fakeRef();
     const fetchFn = fetchReturning(200, SWISSTOPO_HIT);
@@ -221,7 +238,26 @@ describe('healResidence', () => {
     expect(fetchFn).not.toHaveBeenCalled();
     expect(runTransaction).not.toHaveBeenCalled();
     expect(newRef.set).not.toHaveBeenCalled();
-    expect(ref.update).not.toHaveBeenCalled();
+    expect(ref.update).toHaveBeenCalledWith({ tenants: [] });
+  });
+
+  it('narrows a linked row of a club the parent left entirely to []', async () => {
+    const { db } = fakeDb();
+    const ref = fakeRef();
+    const row = postal({ locationKey: 'loc1', tenants: ['kring'] });
+    expect(healDecision(row, row, ['scs'])).toBe('tenants-only');
+    await healResidence(db, ref, row, 'tenants-only', ['scs']);
+    expect(ref.update).toHaveBeenCalledWith({ tenants: [] });
+  });
+
+  it('narrows [scs, kring] to [scs] and widens [scs] to [scs, kring]', async () => {
+    const { db } = fakeDb();
+    const narrow = fakeRef();
+    await healResidence(db, narrow, postal({ locationKey: 'loc1', tenants: ['scs', 'kring'] }), 'tenants-only', ['scs']);
+    expect(narrow.update).toHaveBeenCalledWith({ tenants: ['scs'] });
+    const widen = fakeRef();
+    await healResidence(db, widen, postal({ locationKey: 'loc1', tenants: ['scs'] }), 'tenants-only', ['scs', 'kring']);
+    expect(widen.update).toHaveBeenCalledWith({ tenants: ['scs', 'kring'] });
   });
 
   it('writes nothing when nothing differs', async () => {
@@ -256,13 +292,21 @@ describe('syncResidenceTenants', () => {
     expect(docs[3].ref.update).not.toHaveBeenCalled();
   });
 
-  it('skips a row sharing no tenant with the parent (cross-tenant guard)', async () => {
+  it('narrows a row sharing no tenant with the parent to [] (revocation and injection)', async () => {
     const { db, docs } = dbWith([
-      { addressChannel: 'postal', tenants: ['x'] },
-      { addressChannel: 'postal', tenants: ['z', 'x'] },
+      { addressChannel: 'postal', tenants: ['kring'] },
+      { addressChannel: 'postal', tenants: ['scs', 'x'] },
+      { addressChannel: 'postal', tenants: [] },
     ]);
-    expect(await syncResidenceTenants(db, 'person.p1', ['z'])).toBe(1);
-    expect(docs[0].ref.update).not.toHaveBeenCalled();
-    expect(docs[1].ref.update).toHaveBeenCalledWith({ tenants: ['z'] });
+    expect(await syncResidenceTenants(db, 'person.p1', ['scs'])).toBe(2);
+    expect(docs[0].ref.update).toHaveBeenCalledWith({ tenants: [] });
+    expect(docs[1].ref.update).toHaveBeenCalledWith({ tenants: ['scs'] });
+    expect(docs[2].ref.update).not.toHaveBeenCalled();
+  });
+
+  it('widens [scs] to the parent\'s [scs, kring]', async () => {
+    const { db, docs } = dbWith([{ addressChannel: 'postal', tenants: ['scs'] }]);
+    expect(await syncResidenceTenants(db, 'person.p1', ['scs', 'kring'])).toBe(1);
+    expect(docs[0].ref.update).toHaveBeenCalledWith({ tenants: ['scs', 'kring'] });
   });
 });

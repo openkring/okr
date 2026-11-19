@@ -34,6 +34,18 @@ function intersects(a: string[] | undefined, b: string[] | undefined): boolean {
   return (a ?? []).some((t) => (b ?? []).includes(t));
 }
 
+/**
+ * The tenants a residence must carry, given its current tenants and its parent's. Narrowing always
+ * applies, widening only with consent:
+ * - the row shares a tenant with the parent → exactly the parent's tenants (gains and losses);
+ * - it shares none → `[]`: a club the parent left loses the row, and a row planted on a foreign
+ *   parent by another tenant's writer is never widened into the parent's clubs (injection guard).
+ *   A row with `[]` is visible only to its owner and stays at `[]` — a fixed point, so no loop.
+ */
+export function residenceTenants(rowTenants: string[] | undefined, parentTenants: string[]): string[] {
+  return intersects(rowTenants, parentTenants) ? [...parentTenants] : [];
+}
+
 /** Order-insensitive equality of two tenant lists. */
 function sameTenants(a: string[] | undefined, b: string[] | undefined): boolean {
   const x = [...new Set(a ?? [])].sort();
@@ -59,13 +71,13 @@ function onlyTenantsOrIndexChanged(before: AddressModel, after: AddressModel): b
  * - `relink`: a linked row whose snapshot changed while `locationKey` stayed the same — an old
  *   client corrected the address (never a move). If `locationKey` changed in the same write, the
  *   writer already linked it.
- * - `tenants-only`: the row's `tenants` differ from the parent's.
+ * - `tenants-only`: the row's `tenants` differ from `residenceTenants(row.tenants, parentTenants)`.
  * - `none`: anything else, including a change of `addressValue2` alone, non-postal and archived rows.
  */
 export function healDecision(before: AddressModel | undefined, after: AddressModel, parentTenants: string[]): HealAction {
   if (after.addressChannel !== 'postal' || after.isArchived) return 'none';
   const locationKey = str(after.locationKey);
-  const tenantsDiffer = !sameTenants(after.tenants, parentTenants);
+  const tenantsDiffer = !sameTenants(after.tenants, residenceTenants(after.tenants, parentTenants));
   if (!locationKey) {
     if (before && onlyTenantsOrIndexChanged(before, after)) return tenantsDiffer ? 'tenants-only' : 'none';
     return 'link';
@@ -110,8 +122,8 @@ async function resolveLocation(db: Firestore, row: AddressModel, fetchFn?: typeo
  * Applies a heal decision to the row at `ref`. `link` / `relink`: exact swisstopo hit → find or
  * create the register location and write `locationKey` + snapshot; a Swiss address without an exact
  * hit stays (or becomes) unlinked; a foreign address gets a manual location. `tenants` is always set
- * to `parentTenants` — but only when the row already shares a tenant with the parent; a row that
- * shares none is left completely unchanged (cross-tenant injection guard). Never touches `validFrom` / `validTo`. Writes only the fields that differ,
+ * to `residenceTenants(row.tenants, parentTenants)`: the parent's tenants when the row shares one
+ * with the parent, else `[]` — and a row sharing none is never linked. Never touches `validFrom` / `validTo`. Writes only the fields that differ,
  * and nothing at all when none do. Never throws on a swisstopo failure.
  */
 export async function healResidence(
@@ -123,14 +135,14 @@ export async function healResidence(
   fetchFn?: typeof fetch,
 ): Promise<void> {
   if (action === 'none') return;
-  // A row may only be widened into its parent's tenants when it already shares one with the parent:
-  // otherwise a writer of tenant X could plant a row on a foreign parent and have it spread.
-  if (!intersects(row.tenants, parentTenants)) {
-    logger.warn(`residence ${ref.id}: tenants share none with parent ${row.parentKey}, left unchanged`, { tenants: row.tenants, parentTenants });
-    return;
-  }
   const patch: Record<string, unknown> = {};
-  if (action === 'link' || action === 'relink') {
+  const shared = intersects(row.tenants, parentTenants);
+  if (!shared) {
+    // no link for a row sharing no tenant with its parent (no swisstopo call); it is only narrowed
+    if ((row.tenants ?? []).length > 0) {
+      logger.warn(`residence ${ref.id}: tenants share none with parent ${row.parentKey}, narrowed to []`, { tenants: row.tenants, parentTenants });
+    }
+  } else if (action === 'link' || action === 'relink') {
     const resolved = await resolveLocation(db, row, fetchFn);
     if (resolved) {
       if (str(row.locationKey) !== resolved.key) patch['locationKey'] = resolved.key;
@@ -143,7 +155,8 @@ export async function healResidence(
       patch['locationKey'] = '';
     }
   }
-  if (!sameTenants(row.tenants, parentTenants)) patch['tenants'] = [...parentTenants];
+  const tenants = residenceTenants(row.tenants, parentTenants);
+  if (!sameTenants(row.tenants, tenants)) patch['tenants'] = tenants;
   if (Object.keys(patch).length === 0) return;
   await ref.update(patch);
   logger.info(`residence ${ref.id}: healed (${action})`, { fields: Object.keys(patch) });
@@ -151,20 +164,21 @@ export async function healResidence(
 
 /**
  * Sets `tenants` of every postal row of `parentKey` (archived ones included, so a removed tenant
- * also loses sight of the history) to the parent's tenants. Rows sharing no tenant with the parent
- * are skipped and logged (same guard as healResidence). Returns the number of rows written.
+ * also loses sight of the history) to `residenceTenants(row.tenants, tenants)`: rows sharing no
+ * tenant with the parent are narrowed to `[]` and logged (same rule as healResidence). Returns the number of rows written.
  */
 export async function syncResidenceTenants(db: Firestore, parentKey: string, tenants: string[]): Promise<number> {
   const snapshot = await db.collection(AddressCollection).where('parentKey', '==', parentKey).get();
   let written = 0;
   for (const doc of snapshot.docs) {
     const row = doc.data() as AddressModel;
-    if (row.addressChannel !== 'postal' || sameTenants(row.tenants, tenants)) continue;
-    if (!intersects(row.tenants, tenants)) {
-      logger.warn(`residence ${doc.id}: tenants share none with parent ${parentKey}, left unchanged`, { tenants: row.tenants, parentTenants: tenants });
-      continue;
+    if (row.addressChannel !== 'postal') continue;
+    const next = residenceTenants(row.tenants, tenants);
+    if (sameTenants(row.tenants, next)) continue;
+    if (next.length === 0) {
+      logger.warn(`residence ${doc.id}: tenants share none with parent ${parentKey}, narrowed to []`, { tenants: row.tenants, parentTenants: tenants });
     }
-    await doc.ref.update({ tenants: [...tenants] });
+    await doc.ref.update({ tenants: next });
     written++;
   }
   if (written > 0) logger.info(`synced tenants of ${written} residence(s) of ${parentKey}`);
