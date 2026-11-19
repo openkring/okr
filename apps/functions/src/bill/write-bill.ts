@@ -2,24 +2,19 @@ import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 
-import { AvatarInfo, BillCollection, BillModel, OcrResultCollection } from '@okr/shared-models';
-import { getBillIndex } from '@okr/finance-bill-util';
-import { generateRandomString, normalizeQrReference, removeKeyFromOkrModel } from '@okr/shared-util-core';
+import { AvatarInfo, BillCollection, OcrResultCollection } from '@okr/shared-models';
+import { generateRandomString } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId } from '@okr/shared-util-functions';
 
 import { refuse } from '../invoice/invoice-context';
-import { withoutUndefined } from '../invoice/invoice.logic';
 import { billTotal, cleanBillLines, draftWriteRefusal } from './bill.logic';
 import { loadBillConfig } from './bill-context';
+import { writeDraftBillTx } from './bill-draft';
 import { attachBillScan, billScanRefusal } from './bill-voucher';
 import { chfText, writeFinanceHistory } from '../finance-history/finance-history';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'writeBill';
-const MAX_ID_LENGTH = 50;
-const MAX_TITLE_LENGTH = 200;
-const MAX_NOTES_LENGTH = 2000;
-const MAX_IBAN_LENGTH = 34;
 const STORE_DATE = /^\d{8}$/;
 
 type WriteMode = 'create' | 'update' | 'delete';
@@ -62,8 +57,6 @@ function cleanVendor(v: unknown): AvatarInfo | undefined {
     type: s(o['type']), subType: s(o['subType']), label: s(o['label']),
   };
 }
-
-const text = (v: unknown, max: number): string => (typeof v === 'string' ? v.trim().slice(0, max) : '');
 
 /**
  * Create / update / delete a DRAFT bill with its lines (spec 1.85 phase 3).
@@ -122,34 +115,21 @@ export const writeBill = onCall(
       if (existing && !((existing['tenants'] as string[] | undefined) ?? []).includes(tenantId)) {
         throw new HttpsError('permission-denied', 'bill belongs to another tenant');
       }
-      const reason = draftWriteRefusal(existing as { state?: string; bookingKeys?: string[] } | undefined, mode);
+      const reason = draftWriteRefusal(existing as { state?: string; bookingKeys?: string[]; trainerInvoiceKey?: string } | undefined, mode);
       if (reason) throw refuse(reason, `bill ${billKey}: ${reason}`);
 
       if (mode === 'delete') {
         tx.delete(billRef);
         return;
       }
-      const bill = new BillModel(tenantId);
-      if (existing) Object.assign(bill, existing);
-      bill.tenants = (existing?.['tenants'] as string[] | undefined) ?? [tenantId];
-      bill.accountingTenantId = accountingTenantId;
-      if (h.billId !== undefined) bill.billId = text(h.billId, MAX_ID_LENGTH);
-      if (h.title !== undefined) bill.title = text(h.title, MAX_TITLE_LENGTH);
-      if (billDate !== undefined) bill.billDate = billDate;
-      if (dueDate !== undefined) bill.dueDate = dueDate;
-      if (h.vendor !== undefined) bill.vendor = cleanVendor(h.vendor);
-      if (h.notes !== undefined) bill.notes = h.notes.slice(0, MAX_NOTES_LENGTH);
-      if (h.paymentReference !== undefined) bill.paymentReference = normalizeQrReference(text(h.paymentReference, 40));
-      if (h.creditorIban !== undefined) bill.creditorIban = text(h.creditorIban, MAX_IBAN_LENGTH).replace(/\s+/g, '').toUpperCase();
-      bill.state = 'draft';
-      bill.lines = lines;
-      bill.bookingKeys = [];
-      bill.payments = [];
-      bill.paymentDate = '';
-      bill.bookingAccount = [...new Set(lines.map((l) => l.accountKey).filter((k) => !!k))].join(',');
-      bill.totalAmount = { amount: billTotal(lines), currency: 'CHF', periodicity: 'one-time' };
-      bill.index = getBillIndex(bill);
-      tx.set(billRef, withoutUndefined(removeKeyFromOkrModel(bill)));
+      writeDraftBillTx(tx, db, {
+        billKey, tenantId, accountingTenantId, lines,
+        header: {
+          billId: h.billId, title: h.title, billDate, dueDate, notes: h.notes,
+          paymentReference: h.paymentReference, creditorIban: h.creditorIban,
+          vendor: h.vendor === undefined ? undefined : (cleanVendor(h.vendor) ?? null),
+        },
+      }, existing);
     });
 
     if (mode === 'create') {

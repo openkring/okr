@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { buildDraftBill } from './bill-draft';
 import { billBookingLines, billTotal, bookBlockers, cleanBillLines, draftWriteRefusal, MAX_BILL_LINES } from './bill.logic';
 
 const line = (o: Record<string, unknown> = {}) => ({ title: 'Internet', accountKey: 'scs0238', amount: 3900, vatCodeKey: '', costCenterKey: '', projectKey: '', ...o });
@@ -60,5 +61,40 @@ describe('bill logic', () => {
     expect(draftWriteRefusal({ state: 'todo', bookingKeys: [] }, 'update')).toBe('not-a-draft');
     expect(draftWriteRefusal({ state: 'draft', bookingKeys: ['bill-k'] }, 'delete')).toBe('not-a-draft');
     expect(draftWriteRefusal({ state: 'draft' }, 'delete')).toBeUndefined();
+  });
+  it("a trainer invoice's bill may be corrected but not deleted", () => {
+    expect(draftWriteRefusal({ state: 'draft', trainerInvoiceKey: 'ta_202607' }, 'delete')).toBe('trainer-invoice');
+    expect(draftWriteRefusal({ state: 'draft', trainerInvoiceKey: 'ta_202607' }, 'update')).toBeUndefined();
+    expect(draftWriteRefusal({ state: 'draft', trainerInvoiceKey: '' }, 'delete')).toBeUndefined();
+  });
+
+  describe('buildDraftBill', () => {
+    const input = {
+      billKey: 'b1', tenantId: 'scs', accountingTenantId: 'scs',
+      header: { billId: 'T-1', title: 'Training Juli', billDate: '20260731', dueDate: '20260830', creditorIban: 'ch93 0076 2011 6238 5295 7' },
+      lines: [line({ amount: 3900 }), line({ amount: 1100, accountKey: 'scs0300' })],
+      attachments: ['doc-1'], trainerInvoiceKey: 'ta_202607',
+    };
+    it('builds a draft with total, accounts, attachments, trainer link and index', () => {
+      const b = buildDraftBill(input);
+      expect(b.state).toBe('draft');
+      expect(b.totalAmount).toEqual({ amount: 5000, currency: 'CHF', periodicity: 'one-time' });
+      expect(b.bookingAccount).toBe('scs0238,scs0300');
+      expect(b.attachments).toEqual(['doc-1']);
+      expect(b.trainerInvoiceKey).toBe('ta_202607');
+      expect(b.tenants).toEqual(['scs']);
+      expect(b.accountingTenantId).toBe('scs');
+      expect(b.creditorIban).toBe('CH9300762011623852957');
+      expect(b.bookingKeys).toEqual([]);
+      expect(b.index).toContain('T-1');
+    });
+    it('on update keeps the stored trainerInvoiceKey and attachments when the input has none', () => {
+      const existing = { state: 'draft', tenants: ['scs'], trainerInvoiceKey: 'ta_202607', attachments: ['doc-1'], title: 'old', billId: 'T-1' };
+      const b = buildDraftBill({ ...input, attachments: undefined, trainerInvoiceKey: undefined, header: { title: 'new' }, lines: [line()] }, existing);
+      expect(b.trainerInvoiceKey).toBe('ta_202607');
+      expect(b.attachments).toEqual(['doc-1']);
+      expect(b.title).toBe('new');
+      expect(b.billId).toBe('T-1');
+    });
   });
 });

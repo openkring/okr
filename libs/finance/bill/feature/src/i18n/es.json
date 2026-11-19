@@ -199,6 +199,7 @@
     "not-found": "La factura del proveedor ya no existe.",
     "book-blocked": "La factura del proveedor aún no se puede contabilizar.",
     "not-draft": "Solo un borrador se puede modificar o contabilizar. Elimina primero su asiento en el diario.",
+    "trainer-invoice": "Esta factura procede de un entrenador. Recházala como factura de entrenador.",
     "already-booked": "La factura del proveedor ya está contabilizada.",
     "no-lines": "La factura del proveedor aún no tiene líneas.",
     "zero-amount": "Cada línea necesita un importe mayor que 0.",

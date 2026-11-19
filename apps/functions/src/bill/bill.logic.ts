@@ -99,12 +99,16 @@ export function bookBlockers(
   return blockers;
 }
 
-/** Why `writeBill` refuses: only a draft without a booking may be updated or deleted. */
+/**
+ * Why `writeBill` refuses: only a draft without a booking may be updated or deleted, and a trainer
+ * invoice's bill (`trainerInvoiceKey`) may be corrected but not deleted — it is rejected on the invoice.
+ */
 export function draftWriteRefusal(
-  existing: { state?: string; bookingKeys?: string[] } | undefined, mode: 'create' | 'update' | 'delete',
+  existing: { state?: string; bookingKeys?: string[]; trainerInvoiceKey?: string } | undefined, mode: 'create' | 'update' | 'delete',
 ): string | undefined {
   if (mode === 'create') return undefined;
   if (!existing) return 'not-found';
   if (existing.state !== 'draft' || (existing.bookingKeys ?? []).length > 0) return 'not-a-draft';
+  if (mode === 'delete' && (existing.trainerInvoiceKey ?? '') !== '') return 'trainer-invoice';
   return undefined;
 }

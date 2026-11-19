@@ -199,6 +199,7 @@
     "not-found": "Die Lieferantenrechnung gibt es nicht mehr.",
     "book-blocked": "Die Lieferantenrechnung kann noch nicht verbucht werden.",
     "not-draft": "Nur ein Entwurf kann geändert oder verbucht werden. Lösche zuerst die Buchung im Journal.",
+    "trainer-invoice": "Diese Rechnung stammt von einem Trainer. Bitte weise sie als Trainerrechnung zurück.",
     "already-booked": "Die Lieferantenrechnung ist schon verbucht.",
     "no-lines": "Die Lieferantenrechnung hat noch keine Zeilen.",
     "zero-amount": "Jede Zeile braucht einen Betrag grösser als 0.",
