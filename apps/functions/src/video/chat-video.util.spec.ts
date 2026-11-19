@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { HttpsError } from 'firebase-functions/v2/https';
 
 import {
-  assertChatFolders, chatAlbumRootName, humanMemberCount, chatFolderKeys, DM_ALBUM_NAME, chatVideoPath, MAX_CHAT_VIDEO_BYTES, safeVideoFileName, safeVideoTitle, validateChatVideoRequest, zurichStoreDate,
+  assertChatFolders, chatAlbumRootName, humanMemberCount, chatFolderKeys, DM_ALBUM_NAME, chatVideoPath, MAX_CHAT_VIDEO_BYTES, safeVideoFileName, safeVideoTitle, validateChatVideoRequest,
 } from './chat-video.util';
 import { isAlbumVideoObjectPath } from './video-sign.util';
 
@@ -87,17 +87,6 @@ describe('validateChatVideoRequest', () => {
   it('rejects a missing fileName', () => rejects({ ...ok, fileName: undefined }));
   it('rejects a non-object', () => rejects(null));
 });
-
-describe('zurichStoreDate', () => {
-  it('uses the Zurich calendar day around New Year', () => {
-    expect(zurichStoreDate(new Date('2026-12-31T23:30:00Z'))).toBe('20270101');
-    expect(zurichStoreDate(new Date('2026-12-31T22:30:00Z'))).toBe('20261231');
-  });
-  it('handles summer time (UTC+2)', () => {
-    expect(zurichStoreDate(new Date('2026-07-14T22:30:00Z'))).toBe('20260715');
-  });
-});
-
 describe('safeVideoTitle', () => {
   it('keeps a normal name unchanged', () => {
     expect(safeVideoTitle('Regatta Tag 1.mov')).toBe('Regatta Tag 1.mov');

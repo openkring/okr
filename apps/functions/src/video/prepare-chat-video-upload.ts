@@ -4,13 +4,13 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
 
 import { DocumentCollection, DocumentModel, FolderCollection, FolderModel } from '@okr/shared-models';
-import { addIndexElement, getMimeType } from '@okr/shared-util-core';
+import { addIndexElement, getMimeType, zurichStoreDate } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication, getCallerTenantId } from '@okr/shared-util-functions';
 
 import { privateBucket } from '../_storage/private-bucket';
 import { getJoinedMemberIds, getRoomSummary, matrixAdminToken, requireRoomInTenant, requireUserPersonKey, serverHostname } from '../matrix-simple/shared';
 import {
-  assertChatFolders, chatAlbumRootName, humanMemberCount, chatFolderKeys, chatVideoPath, MAX_CHAT_VIDEO_BYTES, safeVideoTitle, validateChatVideoRequest, zurichStoreDate,
+  assertChatFolders, chatAlbumRootName, humanMemberCount, chatFolderKeys, chatVideoPath, MAX_CHAT_VIDEO_BYTES, safeVideoTitle, validateChatVideoRequest,
 } from './chat-video.util';
 
 const CF_NAME = 'prepareChatVideoUpload';

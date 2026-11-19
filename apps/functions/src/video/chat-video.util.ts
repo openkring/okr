@@ -84,16 +84,6 @@ export function validateChatVideoRequest(data: unknown): ChatVideoRequest {
   return { roomId, fileName, size, mimeType, roomName };
 }
 
-const ZURICH_DAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Zurich', year: 'numeric', month: '2-digit', day: '2-digit' });
-
-/**
- * The calendar day of `now` in Europe/Zurich as StoreDate (`yyyyMMdd`). Functions run in UTC; a
- * video sent at 00:30 on New Year's Day in Zurich belongs in the NEW year's folder.
- */
-export function zurichStoreDate(now: Date): string {
-  return ZURICH_DAY.format(now).replace(/-/g, '');
-}
-
 /**
  * The visible document title: the original file name minus control characters and bidi overrides
  * (U+202A–U+202E, U+2066–U+2069 — they make `evil‮vom.mov` read as `evilmov.mov`), capped at 120.

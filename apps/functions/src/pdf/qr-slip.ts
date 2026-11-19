@@ -4,6 +4,7 @@ import { SwissQRBill } from 'swissqrbill/svg';
 import type { Data } from 'swissqrbill/types';
 
 import { AppConfigCollection, OrgCollection, AddressCollection, AddressModel } from '@okr/shared-models';
+import { zurichStoreDate } from '@okr/shared-util-core';
 import { pickBankIbans, pickFavoriteByChannel, QrPayee, QrSlipData, scopeToTenant } from '@okr/shared-util-functions';
 
 /**
@@ -40,7 +41,7 @@ export async function resolvePayee(db: Firestore, tenantId: string, payeeOrgId?:
 
   const bank = pickFavoriteByChannel(addresses, 'bankaccount');
   const { qrIban, regularIban } = pickBankIbans(addresses);
-  const postal = pickFavoriteByChannel(addresses, 'postal');
+  const postal = pickFavoriteByChannel(addresses, 'postal', zurichStoreDate());
 
   return {
     name: orgName,

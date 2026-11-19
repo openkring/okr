@@ -15,13 +15,12 @@ import { logger } from 'firebase-functions/v2';
 import { FieldValue, Firestore, getFirestore, Timestamp, WriteBatch } from 'firebase-admin/firestore';
 
 import { AddressCollection, AddressModel, UserCollection } from '@okr/shared-models';
-import { getFullName, isPostalResidence, residenceStatus } from '@okr/shared-util-core';
+import { getFullName, isPostalResidence, residenceStatus, zurichStoreDate } from '@okr/shared-util-core';
 import {
   AddressSnapshot, buildRegisterLocation, checkAppCheckToken, checkAuthentication, findOrCreateRegisterLocation,
   ManualAddressInput, parseParentKey, RegisterAddressInput, searchSwissAddresses, snapshotFromLocation, SwissAddressHit,
 } from '@okr/shared-util-functions';
 
-import { zurichStoreDate } from '../video/chat-video.util';
 import { MoveNotice, MoveNoticeKind, sendMoveNotices } from './residence-notices';
 import {
   CallerFacts, commitError, firstResidenceWrite, isOwnerOf, matchServerHit, mayRecordPostal, parseTarget, ParsedTarget, newResidenceId, planCancel, planMove, postalIndex,

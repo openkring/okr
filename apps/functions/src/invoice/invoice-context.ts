@@ -2,6 +2,7 @@ import { HttpsError } from 'firebase-functions/v2/https';
 import type { Firestore, Transaction } from 'firebase-admin/firestore';
 
 import { AddressCollection, AddressModel, PersonCollection, ResponsibilityCollection } from '@okr/shared-models';
+import { zurichStoreDate } from '@okr/shared-util-core';
 import { getProjectedAddresses, pickFavoriteByChannel, scopeToTenant } from '@okr/shared-util-functions';
 
 import type { PostalAddress } from './invoice.logic';
@@ -82,7 +83,7 @@ export async function receiverAddress(db: Firestore, receiver: ReceiverRef, tena
   if (!receiver?.key || !receiver.modelType) return undefined;
   const snap = await db.collection(AddressCollection).where('parentKey', '==', `${receiver.modelType}.${receiver.key}`).get();
   const addresses = scopeToTenant(snap.docs.map((d) => ({ ...d.data(), okey: d.id }) as AddressModel), tenantId);
-  const postal = pickFavoriteByChannel(addresses, 'postal');
+  const postal = pickFavoriteByChannel(addresses, 'postal', zurichStoreDate());
   if (!postal) return undefined;
   return {
     streetName: postal.streetName ?? '',

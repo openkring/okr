@@ -7,7 +7,7 @@ import { Firestore } from 'firebase-admin/firestore';
 import {
   AddressModel, ApprovalCollection, ButtonAction, ContractCollection, ContractKindCollection, EsignCollection, SectionCollection,
 } from '@okr/shared-models';
-import { DateFormat, convertDateFormatToString, getTodayStr, pickCurrentFavoritePostal } from '@okr/shared-util-core';
+import { DateFormat, convertDateFormatToString, getTodayStr, pickCurrentFavoritePostal, zurichStoreDate } from '@okr/shared-util-core';
 import { DocData, EligibilityInput, StatusApproval, formatPostalAddress } from './contract-request.util';
 
 export interface RequestContext {
@@ -67,7 +67,7 @@ export async function loadRequestContext(
   const postal = (addresses?.docs ?? []).map((d) => ({ ...d.data(), okey: d.id }) as AddressModel)
     .filter((a) => (a.tenants ?? []).includes(tenantId));
   const postalAddress = requiresAddress
-    ? formatPostalAddress(pickCurrentFavoritePostal(postal) as unknown as DocData | undefined)
+    ? formatPostalAddress(pickCurrentFavoritePostal(postal, zurichStoreDate()) as unknown as DocData | undefined)
     : undefined;
 
   const ownerships = eligibilityList.includes('noActiveOwnership') && resourceType

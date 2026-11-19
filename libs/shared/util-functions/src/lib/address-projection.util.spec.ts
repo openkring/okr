@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import { AddressModel, PersonModel, PrivacyUsage } from '@okr/shared-models';
 
+import { zurichStoreDate } from '@okr/shared-util-core';
+
+import { getFavoriteZipCode } from './address.util';
 import { buildDirectoryDoc, projectAddressesForViewer, reduceToFavoriteAddresses, scopeToTenant, toDirectoryEntry } from './address-projection.util';
+import { pickFavoriteByChannel } from './qr-slip.util';
 
 function makeAddress(overrides: Partial<AddressModel>): AddressModel {
   const address = new AddressModel('tenant1');
@@ -86,6 +90,15 @@ describe('postal residence history (spec 1.164 §7.3)', () => {
     expect(member.map(a => a.okey)).toEqual(['p2']);
     const privileged = projectAddressesForViewer([past, current, future], 'privileged', 'person');
     expect(privileged.map(a => a.okey).sort()).toEqual(['p1', 'p2', 'p3']);
+  });
+
+  it('the moving day starts at Zurich midnight: 00:30 Zurich (23:30 UTC the day before) projects the new row', () => {
+    const today = zurichStoreDate(new Date('2027-02-14T23:30:00Z'));
+    const old = makeAddress({ okey: 'o', addressChannel: 'postal', zipCode: '8000', isFavorite: true, validTo: '20270214' });
+    const next = makeAddress({ okey: 'n', addressChannel: 'postal', zipCode: '8712', validFrom: '20270215' });
+    expect(buildDirectoryDoc('tenant1', 'person.x', 'person', [old, next], undefined, undefined, today).favZipCode).toBe('8712');
+    expect(getFavoriteZipCode([old, next], today)).toBe('8712');
+    expect(pickFavoriteByChannel([old, next], 'postal', today)?.okey).toBe('n');
   });
 });
 

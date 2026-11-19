@@ -5,7 +5,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { DocumentCollection, DocumentModel } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
-import { zurichStoreDate } from '../video/chat-video.util';
+import { zurichStoreDate } from '@okr/shared-util-core';
 import { assertDocInRoom, decideDelete, learningActor, loadCaller, loadRoom, parseDeleteRequest } from './learning-auth';
 
 const CF_NAME = 'deleteLearningItem';

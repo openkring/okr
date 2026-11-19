@@ -2,7 +2,7 @@ import { Firestore } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 
 import { AddressCollection, AddressModel, OrgCollection, PersonCollection } from '@okr/shared-models';
-import { pickCurrentFavoritePostal } from '@okr/shared-util-core';
+import { pickCurrentFavoritePostal, zurichStoreDate } from '@okr/shared-util-core';
 
 /** The parsed halves of an address `parentKey` (`person.<okey>` / `org.<okey>`). */
 export interface ParsedParentKey {
@@ -136,11 +136,11 @@ export async function demoteFavorites(firestore: Firestore, addresses: AddressMo
  * first non-CC address so a person who never set a favorite still stays reachable —
  * `favZipCode` is a declared preference feeding the search index and the QR slip.
  */
-export function getFavoriteZipCode(addresses: AddressModel[]): string {
+export function getFavoriteZipCode(addresses: AddressModel[], today = zurichStoreDate()): string {
   // spec 1.164 §7.3: the favorite flag picks the parent's residence; a past/future favorite (before the
   // nightly switch) resolves to the current row
   const flagged = addresses.some((address) => address.addressChannel === 'postal' && !address.isArchived && address.isFavorite);
-  return flagged ? pickCurrentFavoritePostal(addresses)?.zipCode ?? '' : '';
+  return flagged ? pickCurrentFavoritePostal(addresses, today)?.zipCode ?? '' : '';
 }
 
 /**
@@ -162,7 +162,7 @@ export async function updateFavoriteZipCode(firestore: Firestore, parentKey: str
   const { parentCollection, parentId } = parsed;
 
   try {
-    const favZipCode = getFavoriteZipCode(addresses);
+    const favZipCode = getFavoriteZipCode(addresses, zurichStoreDate());
     const ref = firestore.doc(`${parentCollection}/${parentId}`);
     const snapshot = await ref.get();
     if (!snapshot.exists) {

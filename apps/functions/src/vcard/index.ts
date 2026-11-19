@@ -18,7 +18,7 @@ import {
   Roles,
   WorkrelCollection,
 } from '@okr/shared-models';
-import { DateFormat, getTodayStr } from '@okr/shared-util-core';
+import { DateFormat, getTodayStr, zurichStoreDate } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication, projectAddressesForViewer } from '@okr/shared-util-functions';
 import {
   buildVCardFile,
@@ -103,10 +103,12 @@ async function assembleRecord(
   // tenant floors apply per the caller's tier (spec 1.19 Phase 4).
   const addrSnap = await db.collection(AddressCollection).where('parentKey', '==', subjectKey).get();
   const rawAddresses = addrSnap.docs.map((d) => d.data()).filter((a) => belongsToTenant(a, tenantId));
+  const today = zurichStoreDate();
   const addresses: FsData[] = projectAddressesForViewer(
     rawAddresses as unknown as AddressModel[], viewerAccessor, kind,
     kind === 'person' ? (data as Partial<PersonPrivacyPreferences>) : undefined,
     settings,
+    today,
   ) as unknown as FsData[];
 
   let workrels: FsData[] = [];
@@ -130,7 +132,7 @@ async function assembleRecord(
   }
 
   const photoBase64 = scope.photo ? await fetchAvatarBase64(db, tenantId, kind, key) : undefined;
-  return toVcardRecord({ kind, key, data: data!, addresses, workrels, personalRels, scope, favoritesOnly, photoBase64 });
+  return toVcardRecord({ kind, key, data: data!, addresses, workrels, personalRels, scope, favoritesOnly, photoBase64, today });
 }
 
 function slugify(name: string): string {

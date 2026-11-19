@@ -6,9 +6,10 @@ import { getStorage } from 'firebase-admin/storage';
 
 import { DocumentCollection, DocumentModel, FolderCollection, FolderModel } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
+import { zurichStoreDate } from '@okr/shared-util-core';
 
 import { privateBucket } from '../_storage/private-bucket';
-import { safeVideoTitle, zurichStoreDate } from '../video/chat-video.util';
+import { safeVideoTitle } from '../video/chat-video.util';
 import {
   assertUploadPath, decideUpload, learningActor, learningDocumentIndex, learningUploadHeaders, learningUploadPath, loadCaller, loadRoom,
   parseUploadRequest,

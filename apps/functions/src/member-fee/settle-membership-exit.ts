@@ -22,7 +22,7 @@ import {
   AddressCollection, AddressModel, InvoiceCollection, InvoiceModel, InvoicePositionCollection,
   InvoicePositionModel, MembershipCollection, PaymentCollection, PaymentOrderCollection, TaskCollection,
 } from '@okr/shared-models';
-import { addDuration, convertDateFormatToString, DateFormat, getTodayStr, removeKeyFromOkrModel } from '@okr/shared-util-core';
+import { addDuration, convertDateFormatToString, DateFormat, getTodayStr, removeKeyFromOkrModel, zurichStoreDate } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId, pickFavoriteByChannel, scopeToTenant } from '@okr/shared-util-functions';
 import { getInvoiceIndex, INVOICE_NOTES_LENGTH } from '@okr/finance-invoice-util';
 import { SYSTEM_CREATOR } from '@okr/finance-payment-util';
@@ -218,7 +218,7 @@ async function refund(
     : [];
   const iban = pickMemberIban(addresses, tenantId);
   const needsReview = iban === '';
-  const recipientAddress = postalAddressText(pickFavoriteByChannel(scopeToTenant(addresses, tenantId), 'postal'));
+  const recipientAddress = postalAddressText(pickFavoriteByChannel(scopeToTenant(addresses, tenantId), 'postal', zurichStoreDate()));
   const decision = refundDecision(note, needsReview);
 
   // The oldest open collecting order of these books wins; only when none exists does today's id decide.

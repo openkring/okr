@@ -8,9 +8,7 @@ import { logger } from 'firebase-functions/v2';
 
 import { DEFAULT_ADDRESS_USAGE } from '@okr/shared-constants';
 import { AddressCollection, AddressModel } from '@okr/shared-models';
-import { addDuration, isPostalResidence, residenceStatus } from '@okr/shared-util-core';
-
-import { zurichStoreDate } from '../video/chat-video.util';
+import { addDuration, isPostalResidence, residenceStatus, zurichStoreDate } from '@okr/shared-util-core';
 
 const MAX_BATCH_WRITES = 400;
 

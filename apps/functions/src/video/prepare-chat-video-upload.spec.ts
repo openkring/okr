@@ -63,7 +63,8 @@ vi.mock('../_storage/private-bucket', () => ({
 }));
 
 import { DocumentCollection, FolderCollection } from '@okr/shared-models';
-import { chatFolderKeys, MAX_CHAT_VIDEO_BYTES, zurichStoreDate } from './chat-video.util';
+import { zurichStoreDate } from '@okr/shared-util-core';
+import { chatFolderKeys, MAX_CHAT_VIDEO_BYTES } from './chat-video.util';
 import { prepareChatVideoUpload } from './prepare-chat-video-upload';
 
 const ROOM = '!room:hs';

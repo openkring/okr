@@ -19,7 +19,7 @@ import {
   PrivacySettings,
 } from '@okr/shared-models';
 
-import { currentPostalRows, isPostalResidence, residenceStatus } from '@okr/shared-util-core';
+import { currentPostalRows, isPostalResidence, residenceStatus, zurichStoreDate } from '@okr/shared-util-core';
 
 import { parseParentKey } from './address.util';
 
@@ -94,12 +94,13 @@ function toSanitizedAddress(address: AddressModel): AddressModel {
 /**
  * Spec 1.164 §7.3: a past or future (announced) postal row is history / not yet true and must not
  * reach any member-facing projection as an extra postal entry. Non-postal rows pass untouched.
+ * `today` is the Zurich calendar day (functions run in UTC; see zurichStoreDate).
  */
-export function dropNonCurrentPostal(addresses: AddressModel[]): AddressModel[] {
-  return addresses.filter((a) => !isPostalResidence(a) || residenceStatus(a) === 'current');
+export function dropNonCurrentPostal(addresses: AddressModel[], today = zurichStoreDate()): AddressModel[] {
+  return addresses.filter((a) => !isPostalResidence(a) || residenceStatus(a, today) === 'current');
 }
 
-export function reduceToFavoriteAddresses(addresses: AddressModel[]): AddressModel[] {
+export function reduceToFavoriteAddresses(addresses: AddressModel[], today = zurichStoreDate()): AddressModel[] {
   const byChannel = new Map<string, AddressModel[]>();
   for (const address of addresses) {
     const channel = address.addressChannel ?? '';
@@ -109,7 +110,7 @@ export function reduceToFavoriteAddresses(addresses: AddressModel[]): AddressMod
   for (const [channel, candidates] of byChannel) {
     const shareable = candidates.filter((a) => !a.isCc);
     // postal: only current rows qualify (a past favorite not yet switched falls back to the current row)
-    const pool = channel === 'postal' ? currentPostalRows(shareable) : shareable;
+    const pool = channel === 'postal' ? currentPostalRows(shareable, today) : shareable;
     const picked = pool.find((a) => a.isFavorite) ?? pool[0];
     if (picked) reduced.push(picked);
   }
@@ -158,6 +159,7 @@ export function buildDirectoryDoc(
   addresses: AddressModel[],
   person?: Partial<PersonPrivacyPreferences>,
   settings?: Partial<PrivacySettings>,
+  today = zurichStoreDate(),
 ): AddressDirectoryModel {
   const doc = new AddressDirectoryModel(tenantId);
   doc.okey = getAddressDirectoryKey(tenantId, parentKey);
@@ -172,8 +174,8 @@ export function buildDirectoryDoc(
     !address.isArchived
     && !isSensitiveScalarChannel(address.addressChannel ?? '')
     && accessorAllows('registered', getEffectiveAccessorForAddress(address, parentType, person, settings)));
-  const current = dropNonCurrentPostal(visible);
-  const projected = parentType === 'person' ? reduceToFavoriteAddresses(current) : current;
+  const current = dropNonCurrentPostal(visible, today);
+  const projected = parentType === 'person' ? reduceToFavoriteAddresses(current, today) : current;
   doc.entries = projected.map(toDirectoryEntry);
   // for persons `projected` holds at most one address per channel (the favorite or
   // its fallback), so the channel lookup already IS the favorite
@@ -212,15 +214,16 @@ export function projectAddressesForViewer(
   parentType: 'person' | 'org',
   person?: Partial<PersonPrivacyPreferences>,
   settings?: Partial<PrivacySettings>,
+  today = zurichStoreDate(),
 ): AddressModel[] {
   const privilegedViewer = accessorAllows(viewerAccessor, 'privileged');
   // privileged viewers see the residence history; everybody else only the current postal row
   const visible = addresses.filter((address) =>
     !address.isArchived
-    && (privilegedViewer || !isPostalResidence(address) || residenceStatus(address) === 'current')
+    && (privilegedViewer || !isPostalResidence(address) || residenceStatus(address, today) === 'current')
     && accessorAllows(viewerAccessor, getEffectiveAccessorForAddress(address, parentType, person, settings)));
   const projected = parentType === 'person' && !privilegedViewer
-    ? reduceToFavoriteAddresses(visible)
+    ? reduceToFavoriteAddresses(visible, today)
     : visible;
   return projected.map(toSanitizedAddress);
 }
@@ -289,6 +292,7 @@ export async function writeAddressDirectory(firestore: Firestore, parentKey: str
   if (!parent) return empty;
 
   let crossTenant = 0;
+  const today = zurichStoreDate();
   for (const tenantId of tenants) {
     crossTenant += addresses.filter((a) => !a.isArchived && !(a.tenants ?? []).includes(tenantId)).length;
     const settings = await loadPrivacySettings(firestore, tenantId);
@@ -296,6 +300,7 @@ export async function writeAddressDirectory(firestore: Firestore, parentKey: str
       tenantId, parentKey, parentType, addresses,
       parentType === 'person' ? (parent as Partial<PersonModel>) : undefined,
       settings,
+      today,
     );
     // strip okey before write (Firestore convention: okey is the doc id)
     const { okey, ...data } = dirDoc as AddressDirectoryModel & { okey: string };
@@ -377,5 +382,6 @@ export async function getProjectedAddresses(
     scoped, viewerAccessor, parentType,
     parentType === 'person' ? (parent as Partial<PersonPrivacyPreferences>) : undefined,
     settings,
+    zurichStoreDate(),
   );
 }

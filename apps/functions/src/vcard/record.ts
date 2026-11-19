@@ -1,7 +1,7 @@
 /// <reference lib="dom" />
 import { logger } from 'firebase-functions/v2';
 import { AvatarCollection } from '@okr/shared-models';
-import { classifyStoreDate, convertDateFormatToString, DateFormat, residenceStatus } from '@okr/shared-util-core';
+import { classifyStoreDate, convertDateFormatToString, DateFormat, residenceStatus, zurichStoreDate } from '@okr/shared-util-core';
 // countries-list lives here rather than in shared-util-core: the browser has no caller for it,
 // and a re-export from that barrel pulled its 45 KB into every app bundle (spec 1.49, F1).
 import { countries } from 'countries-list';
@@ -58,12 +58,12 @@ function usageToType(channel: VcardChannelType, usage: string | undefined): stri
   return undefined;
 }
 
-export function buildChannels(addresses: FsData[], scope: ExportScope, favoritesOnly: boolean): VcardChannel[] {
+export function buildChannels(addresses: FsData[], scope: ExportScope, favoritesOnly: boolean, today = zurichStoreDate()): VcardChannel[] {
   const channels: VcardChannel[] = [];
   // Spec 1.164 §7.3: only the CURRENT residence is exported — a past or future postal row is history
   // / not yet true. A favorite flag on a past row (before the nightly switch) must not hide the current one.
   const isCurrentPostal = (a: FsData): boolean =>
-    a['addressChannel'] === 'postal' && !a['isArchived'] && residenceStatus({ validFrom: a['validFrom'] ?? '', validTo: a['validTo'] ?? '' }) === 'current';
+    a['addressChannel'] === 'postal' && !a['isArchived'] && residenceStatus({ validFrom: a['validFrom'] ?? '', validTo: a['validTo'] ?? '' }, today) === 'current';
   const currentPostal = addresses.filter(isCurrentPostal);
   const currentPostalFavorite = currentPostal.find((a) => a['isFavorite'] === true) ?? currentPostal[0];
   for (const a of addresses) {
@@ -162,12 +162,14 @@ export interface VcardRecordInput {
   scope: ExportScope;
   favoritesOnly: boolean;
   photoBase64?: string;
+  /** the Zurich calendar day (zurichStoreDate) that decides which postal row is current */
+  today?: string;
 }
 
 /** Shape an already-read person or org into a `VcardRecord` (no I/O). */
 export function toVcardRecord(input: VcardRecordInput): VcardRecord {
-  const { kind, key, data, addresses, scope, favoritesOnly, photoBase64 } = input;
-  const channels = buildChannels(addresses, scope, favoritesOnly);
+  const { kind, key, data, addresses, scope, favoritesOnly, photoBase64, today } = input;
+  const channels = buildChannels(addresses, scope, favoritesOnly, today ?? zurichStoreDate());
   const relatedNames: VcardRelatedName[] = [];
   const uid = `${kind}-${key}`;
 

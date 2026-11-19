@@ -12,6 +12,7 @@ import {
   PrivacySettings,
   WorkrelCollection,
 } from '@okr/shared-models';
+import { zurichStoreDate } from '@okr/shared-util-core';
 import { projectAddressesForViewer, reduceToFavoriteAddresses } from '@okr/shared-util-functions';
 import { effectiveFeatures, FEATURE_BLOCKS, type FeatureRollout } from '@okr/tenant-util';
 import {
@@ -73,8 +74,8 @@ export function hasLookupChannel(record: VcardRecord): boolean {
  * rule, `reduceToFavoriteAddresses`) — for persons AND orgs (owner, 2026-11-17: «just the
  * favourite addresses»). The favourite bank account has no vCard field and becomes the note.
  */
-export function lookupAddresses(addresses: FsData[]): { addresses: FsData[]; note?: string } {
-  const picked = reduceToFavoriteAddresses(addresses as unknown as AddressModel[]) as unknown as FsData[];
+export function lookupAddresses(addresses: FsData[], today = zurichStoreDate()): { addresses: FsData[]; note?: string } {
+  const picked = reduceToFavoriteAddresses(addresses as unknown as AddressModel[], today) as unknown as FsData[];
   const bank = picked.find((a) => a['addressChannel'] === 'bankaccount' && a['iban']);
   const label = bank ? String(bank['addressChannelLabel'] || bank['addressUsageLabel'] || '').trim() : '';
   return {
@@ -126,19 +127,21 @@ export async function loadBookCards(db: Firestore, tenantId: string): Promise<Bo
   ];
 
   const records: VcardRecord[] = [];
+  const today = zurichStoreDate();
   for (const { kind, key, data } of subjects) {
     const raw = addressesByParent.get(`${kind}.${key}`) ?? [];
     const projected = projectAddressesForViewer(
       raw as unknown as AddressModel[], 'privileged', kind,
       kind === 'person' ? (data as Partial<PersonPrivacyPreferences>) : undefined,
       settings,
+      today,
     ) as unknown as FsData[];
-    const { addresses, note } = lookupAddresses(projected);
+    const { addresses, note } = lookupAddresses(projected, today);
     try {
       const record = toVcardRecord({
         kind, key, data, addresses,
         workrels: kind === 'person' ? workrelsBySubject.get(key) ?? [] : [],
-        scope: LOOKUP_SCOPE, favoritesOnly: false,
+        scope: LOOKUP_SCOPE, favoritesOnly: false, today,
       });
       if (note) record.note = note;
       if (hasLookupChannel(record)) records.push(record);

@@ -22,7 +22,7 @@ import QRCode from 'qrcode';
 import { AddressModel, TemplateCollection, TemplateVersionSubcollection, type NoticeAttachment, type TemplateAssetRef } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 import { SENDING_FINAL } from '@okr/content-pdf-template-util';
-import { isOrgRecipient, ORG_RECIPIENT_PREFIX, pickCurrentFavoritePostal, recipientParentKey } from '@okr/shared-util-core';
+import { isOrgRecipient, ORG_RECIPIENT_PREFIX, pickCurrentFavoritePostal, recipientParentKey, zurichStoreDate } from '@okr/shared-util-core';
 
 import { privateBucket } from '../_storage/private-bucket';
 import { formatPostalAddress } from '../contract/contract-request.util';
@@ -171,7 +171,7 @@ export async function postalOf(db: Firestore, parentKey: string, tenantId: strin
   // the CURRENT favorite only — never a past or future residence (spec 1.164 §7.3)
   const postal = snap.docs.map((d) => ({ ...d.data(), okey: d.id }) as AddressModel)
     .filter((a) => (a.tenants ?? []).includes(tenantId));
-  const chosen = pickCurrentFavoritePostal(postal) as unknown as FirebaseFirestore.DocumentData | undefined;
+  const chosen = pickCurrentFavoritePostal(postal, zurichStoreDate()) as unknown as FirebaseFirestore.DocumentData | undefined;
   const formatted = formatPostalAddress(chosen);
   if (!formatted || !chosen) return undefined;
   const field = (name: string): string => String(chosen[name] ?? '').trim();

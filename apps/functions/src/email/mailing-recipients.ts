@@ -11,7 +11,7 @@
 import { CallableRequest, HttpsError, onCall } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
-import { DateFormat, getTodayStr, isOrgRecipient, residenceStatus, MailingRecipientChannels, MailingRecipientFacts, mailingChannels, recipientParentKey } from '@okr/shared-util-core';
+import { DateFormat, getTodayStr, isOrgRecipient, residenceStatus, MailingRecipientChannels, MailingRecipientFacts, mailingChannels, recipientParentKey, zurichStoreDate } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
 import { assertCallerIsGroupAdmin } from '../content/group-content.util';
@@ -59,6 +59,7 @@ export function admissibleKeys(requested: string[], members?: string[]): string[
 async function readFacts(db: Firestore, tenantId: string, recipientKeys: string[]): Promise<MailingRecipientFacts[]> {
   const accounts = new Map<string, { uid: string; tenants?: string[]; isArchived?: boolean; newsDelivery?: unknown }[]>();
   const postal = new Set<string>();      // parentKeys with a postal address in the tenant
+  const today = zurichStoreDate();
   for (const keys of chunk(recipientKeys, IN_CHUNK)) {
     const personKeys = keys.filter((key) => !isOrgRecipient(key));
     const [users, addresses] = await Promise.all([
@@ -76,7 +77,7 @@ async function readFacts(db: Firestore, tenantId: string, recipientKeys: string[
       const data = doc.data();
       if (data['isArchived'] === true || !((data['tenants'] ?? []) as string[]).includes(tenantId)) continue;
       // a past or future residence is not a postal address to write to today (spec 1.164 §7.3)
-      if (residenceStatus({ validFrom: String(data['validFrom'] ?? ''), validTo: String(data['validTo'] ?? '') }) !== 'current') continue;
+      if (residenceStatus({ validFrom: String(data['validFrom'] ?? ''), validTo: String(data['validTo'] ?? '') }, today) !== 'current') continue;
       postal.add(String(data['parentKey'] ?? ''));
     }
   }

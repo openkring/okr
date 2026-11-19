@@ -3,6 +3,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 
 import { AppConfigCollection, OrgCollection } from '@okr/shared-models';
+import { zurichStoreDate } from '@okr/shared-util-core';
 import { getProjectedAddresses, pickFavoriteByChannel } from '@okr/shared-util-functions';
 
 import { setCacheHeaders } from '../utils';
@@ -52,7 +53,7 @@ export async function orgRouter(req: Request, res: Response): Promise<void> {
       const addresses = await getProjectedAddresses(db, `org.${orgDoc.id}`, 'public', tenantId);
       favEmail = pickFavoriteByChannel(addresses, 'email')?.email ?? '';
       favPhone = pickFavoriteByChannel(addresses, 'phone')?.phone ?? '';
-      const postal = pickFavoriteByChannel(addresses, 'postal');
+      const postal = pickFavoriteByChannel(addresses, 'postal', zurichStoreDate());
       street = [postal?.streetName ?? '', postal?.streetNumber ?? ''].filter((p) => p.length > 0).join(' ');
       postalCode = postal?.zipCode ?? '';
       city = postal?.city ?? '';

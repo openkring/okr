@@ -6,7 +6,7 @@ import { DocumentCollection, DocumentModel } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
 import { getHtmlSanitizer } from '../publicApi/sanitize';
-import { zurichStoreDate } from '../video/chat-video.util';
+import { zurichStoreDate } from '@okr/shared-util-core';
 import { assertDocInRoom, decideSave, learningActor, loadCaller, loadRoom, parseSaveRequest } from './learning-auth';
 
 const CF_NAME = 'saveLearningItem';

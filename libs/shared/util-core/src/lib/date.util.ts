@@ -531,6 +531,17 @@ export function addWorkDays(storeDate: string, days = 1, dateFormat = DateFormat
   return format(dateAfterDuration, dateFormat);
 }
 
+const ZURICH_DAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Zurich', year: 'numeric', month: '2-digit', day: '2-digit' });
+
+/**
+ * The calendar day of `now` in Europe/Zurich as StoreDate (`yyyyMMdd`). Cloud Functions run in UTC,
+ * where getTodayStr() still returns yesterday between 00:00 and 01:00/02:00 Zurich time; every
+ * function-side "today" that decides what is current (residences, a video's year folder) uses this.
+ */
+export function zurichStoreDate(now: Date = new Date()): string {
+  return ZURICH_DAY.format(now).replace(/-/g, '');
+}
+
 export function getTodayStr(dateFormat = DateFormat.StoreDate, yearDiff = 0): string {
     const date = new Date();
     date.setFullYear(getYear(yearDiff));
