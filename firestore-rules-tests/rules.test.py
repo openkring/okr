@@ -2450,5 +2450,59 @@ for label, expect, run in postal_cases:
     passed += ok; failed += not ok
     print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
 
+# Tenant add on persons/orgs (1.164 follow-up): syncResidenceTenants widens every postal row to the
+# parent's tenants, so a client that appends a foreign tenant to a person/org hands that tenant's
+# privileged/memberAdmin the home address. A client may add only its own tenants; operator excepted.
+for d in ("pTA1", "pTA2", "pTA3", "pTA4", "pTOwn"):
+    seed(f"persons/{d}", {"tenants": ["t1"], "isArchived": False, "lastName": "TA"})
+seed("persons/pTShared", {"tenants": ["t1", "t2"], "isArchived": False, "lastName": "TS"})
+seed("persons/pTDetach", {"tenants": ["t1", "t2"], "isArchived": False, "lastName": "TD"})
+seed("persons/pTOp", {"tenants": ["bka"], "isArchived": False, "lastName": "OP"})
+seed("orgs/oTA1", {"tenants": ["t1"], "isArchived": False, "name": "Org TA"})
+seed("orgs/oTA2", {"tenants": ["t1"], "isArchived": False, "name": "Org TA2"})
+seed("orgs/oTOp", {"tenants": ["bka"], "isArchived": False, "name": "Org OP"})
+TEN = lambda ts: body({"tenants": ts})
+tenant_add_cases = [
+    ("tenant-add: userA(member t1) adds t2 to a t1 person -> DENY", False,
+     lambda: req("PATCH", "persons/pTA1", token=A, data=TEN(["t1", "t2"]), mask=["tenants"])),
+    ("tenant-add: userA(member t1) adds t2 to a t1 person with a name edit -> DENY", False,
+     lambda: req("PATCH", "persons/pTA1", token=A, data=body({"tenants": ["t1", "t2"], "lastName": "X"}),
+                 mask=["tenants", "lastName"])),
+    ("tenant-add: userA(member t1) adds t2 to a t1 org -> DENY", False,
+     lambda: req("PATCH", "orgs/oTA1", token=A, data=TEN(["t1", "t2"]), mask=["tenants"])),
+    ("tenant-add: userM(memberAdmin t1) adds t2 to a t1 person -> DENY", False,
+     lambda: req("PATCH", "persons/pTA2", token=M, data=TEN(["t1", "t2"]), mask=["tenants"])),
+    ("tenant-add: userP(privileged t1) adds t2 to a t1 person -> DENY", False,
+     lambda: req("PATCH", "persons/pTA3", token=P, data=TEN(["t1", "t2"]), mask=["tenants"])),
+    ("tenant-add: userD(admin t1) adds t2 to a t1 person -> DENY", False,
+     lambda: req("PATCH", "persons/pTA4", token=D, data=TEN(["t1", "t2"]), mask=["tenants"])),
+    ("tenant-add: userP(privileged t1) adds t2 to a t1 org -> DENY", False,
+     lambda: req("PATCH", "orgs/oTA2", token=P, data=TEN(["t1", "t2"]), mask=["tenants"])),
+    ("tenant-add: userO3(admin bka+t1, not operator) adds t2 to a t1 person -> DENY", False,
+     lambda: req("PATCH", "persons/pTA4", token=O3, data=TEN(["t1", "t2"]), mask=["tenants"])),
+    ("tenant-add: userA(member t1) rewrites shared person tenants t2 -> t3 -> DENY", False,
+     lambda: req("PATCH", "persons/pTShared", token=A, data=TEN(["t1", "t3"]), mask=["tenants"])),
+    ("tenant-add: userO(operator) adds t2 to a bka person -> ALLOW", True,
+     lambda: req("PATCH", "persons/pTOp", token=O, data=TEN(["bka", "t2"]), mask=["tenants"])),
+    ("tenant-add: userO(operator) adds t2 to a bka org -> ALLOW", True,
+     lambda: req("PATCH", "orgs/oTOp", token=O, data=TEN(["bka", "t2"]), mask=["tenants"])),
+    ("tenant-add: userA(member t1) self-detaches t1 from shared person -> ALLOW", True,
+     lambda: req("PATCH", "persons/pTDetach", token=A, data=TEN(["t2"]), mask=["tenants"])),
+    ("tenant-add: userA(member t1) edits a field of shared person [t1,t2] -> ALLOW", True,
+     lambda: req("PATCH", "persons/pTShared", token=A, data=body({"lastName": "TS2"}), mask=["lastName"])),
+    ("tenant-add: userA(member t1) full write of shared person, tenants unchanged -> ALLOW", True,
+     lambda: req("PATCH", "persons/pTShared", token=A,
+                 data=body({"tenants": ["t1", "t2"], "isArchived": False, "lastName": "TS3"}))),
+    ("tenant-add: userA(member t1) re-adds own t1 to a t1 person (no-op) -> ALLOW", True,
+     lambda: req("PATCH", "persons/pTOwn", token=A, data=TEN(["t1", "t1"]), mask=["tenants"])),
+    ("tenant-add: userA(member t1) edits a field of a t1 org -> ALLOW", True,
+     lambda: req("PATCH", "orgs/oTA1", token=A, data=body({"name": "Org TA renamed"}), mask=["name"])),
+]
+for label, expect, run in tenant_add_cases:
+    code = run()
+    ok = (code in (200, 201)) == expect
+    passed += ok; failed += not ok
+    print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
+
 print(f"\n{passed} passed, {failed} failed")
 raise SystemExit(1 if failed else 0)

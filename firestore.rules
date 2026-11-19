@@ -210,6 +210,20 @@ service cloud.firestore {
       return canWriteTenantFor(resource.data, ts)
              && (canWriteTenantFor(request.resource.data, ts) || selfDetach());
     }
+    // persons/orgs update (1.164 follow-up): a client may not ADD a foreign tenant. Since
+    // syncResidenceTenants (onPersonChange/onOrgChange) widens every postal `addresses` row to the
+    // parent's tenants, a member of t1 who appended t2 to a t1 person handed t2's privileged /
+    // memberAdmin the home address. Every tenant added in this write must be one of the caller's
+    // own; legitimate grants run server-side (allocateTenant, mergePersonIntoTenant, mergeOrg…,
+    // Admin SDK), and the operator keeps the client path. Removal (selfDetach) is untouched.
+    // Same body as tenantUpdate() with `ts` bound once (1000-expression limit, see above).
+    function tenantUpdateNoForeignAdd() {
+      let ts = callerTenants();
+      return canWriteTenantFor(resource.data, ts)
+             && (canWriteTenantFor(request.resource.data, ts) || selfDetach())
+             && (request.resource.data.tenants.toSet().difference(resource.data.tenants.toSet()).hasOnly(ts)
+                 || isOperator());
+    }
     // For the `allow create, update: if tenantCreateOrDetach()` one-liners: a create
     // (resource == null) is tenantCreate(), an update is the full tenantUpdate() — the
     // caller's tenant must be on the STORED doc, not only on the new one. Until 2026-11-02
@@ -437,7 +451,7 @@ service cloud.firestore {
     match /orgs/{id} {
       allow read:   if tenantRead();
       allow create: if tenantCreate() && !request.resource.data.keys().hasAny(['favEmail', 'favPhone']);
-      allow update: if tenantUpdate() && !request.resource.data.keys().hasAny(['favEmail', 'favPhone']);
+      allow update: if tenantUpdateNoForeignAdd() && !request.resource.data.keys().hasAny(['favEmail', 'favPhone']);
       allow delete: if tenantDelete();
     }
     match /resources/{id}       { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
@@ -1172,7 +1186,7 @@ service cloud.firestore {
       allow create: if tenantCreate()
                      && !request.resource.data.keys().hasAny(['ssnId', 'dateOfBirth', 'dateOfDeath', 'favEmail', 'favPhone'])
                      && indexHasNoSensitivePii();
-      allow update: if tenantUpdate()
+      allow update: if tenantUpdateNoForeignAdd()
                      && !request.resource.data.keys().hasAny(['ssnId', 'dateOfBirth', 'dateOfDeath', 'favEmail', 'favPhone'])
                      && indexHasNoSensitivePii();
       allow delete: if tenantDelete();
