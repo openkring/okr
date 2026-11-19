@@ -14,9 +14,9 @@ import {
   AvatarInfo, BillCollection, TrainerAgreementCollection, TrainerInvoiceCollection, TrainerInvoiceState, WorkEntryCollection,
 } from '@okr/shared-models';
 import { monthTitleDe } from '@okr/finance-trainer-billing-util';
-import { zurichStoreDate } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
+import { zurichStoreDateTime } from '../finance-history/finance-history.logic';
 import { loadBooksInvoice } from './treasurer-caller';
 
 const REGION = 'europe-west6';
@@ -36,13 +36,6 @@ export function rejectRefusal(
     if (bill.state !== 'draft' || (bill.bookingKeys?.length ?? 0) > 0 || (bill.payments?.length ?? 0) > 0) return 'bill-booked';
   }
   return '';
-}
-
-const ZURICH_CLOCK = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Zurich', hourCycle: 'h23', hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-/** StoreDateTime (`yyyyMMddHHmmss`) of `now` on the Europe/Zurich wall clock. */
-function zurichStoreDateTime(now: Date): string {
-  return zurichStoreDate(now) + ZURICH_CLOCK.format(now).replace(/:/g, '');
 }
 
 export async function rejectInvoice(db: Firestore, uid: string, data: { invoiceKey?: unknown; reason?: unknown }, now = new Date()): Promise<void> {
