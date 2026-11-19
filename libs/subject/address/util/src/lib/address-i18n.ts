@@ -202,6 +202,9 @@ export const ADDRESSES_I18N_KEYS = {
   move_error_conflict:             PFX + 'move.error.conflict',
   move_error_exists:               PFX + 'move.error.exists',
   move_error_unknown:              PFX + 'move.error.unknown',
+  move_error_date:                 PFX + 'move.error.date',
+  move_error_from:                 PFX + 'move.error.from',
+  move_edit_removed:               PFX + 'move.edit_removed',
 
   as_title:                        '@actionsheet.title',
   cancel:                          '@cancel',

@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 
 import { AddressModel, UserModel } from '@okr/shared-models';
 import {
-  canWritePostal, hiddenInAccordion, moveActionKind, postalMoveErrorKind, postalTarget, predecessorOf, residenceDateLabel,
+  canWritePostal, checkEditMove, checkMove, hiddenInAccordion, moveActionKind, postalMoveErrorKind, postalTarget, predecessorOf, residenceDateLabel, usageOf,
 } from './postal-move.util';
 import { newPostalMoveFormModel } from './postal-move.validations';
 
@@ -110,6 +110,15 @@ describe('predecessorOf', () => {
     expect(predecessorOf(postal('c'), [postal('a')])).toBeUndefined();
   });
 
+  it('treats a missing or empty usage as home, like the server', () => {
+    const legacy = postal('a', '', '20270228', undefined as unknown as string);
+    const empty = postal('e', '', '20270228', '');
+    expect(predecessorOf(postal('b', '20270301', '', 'home'), [legacy])?.okey).toBe('a');
+    expect(predecessorOf(postal('b', '20270301', '', 'home'), [empty])?.okey).toBe('e');
+    expect(predecessorOf(postal('b', '20270301', '', ''), [postal('h', '', '20270228', 'home')])?.okey).toBe('h');
+    expect(usageOf({ addressUsage: '' })).toBe('home');
+  });
+
   it('ignores archived rows', () => {
     const old = { ...postal('a', '', '20270228'), isArchived: true } as AddressModel;
     expect(predecessorOf(postal('b', '20270301'), [old])).toBeUndefined();
@@ -143,5 +152,62 @@ describe('postalMoveErrorKind', () => {
   it('falls back to unknown', () => {
     expect(postalMoveErrorKind(new Error('boom'))).toBe('unknown');
     expect(postalMoveErrorKind(undefined)).toBe('unknown');
+  });
+});
+
+describe('checkMove (mirrors the server planMove refusals)', () => {
+  it('moves away from the open row when the date is after its start', () => {
+    const current = postal('a', '20200101');
+    expect(checkMove([current], current, '20270301')).toEqual({ ok: true, fromResidenceKey: 'a', addressUsage: 'home' });
+  });
+
+  it('refuses a date on or before the start of the open row', () => {
+    const current = postal('a', '20270301');
+    expect(checkMove([current], current, '20270301')).toEqual({ ok: false, reason: 'date' });
+    expect(checkMove([current], current, '20260101')).toEqual({ ok: false, reason: 'date' });
+  });
+
+  it('takes the usage of the row moved away from, a legacy row being home', () => {
+    const legacy = postal('a', '', '', undefined as unknown as string);
+    expect(checkMove([legacy], legacy, '20270301')).toEqual({ ok: true, fromResidenceKey: 'a', addressUsage: 'home' });
+  });
+
+  it('refuses a move without a row to move away from while any postal row is open', () => {
+    expect(checkMove([postal('w', '', '', 'work')], undefined, '20270301')).toEqual({ ok: false, reason: 'from' });
+  });
+
+  it('records a first residence when nothing is open', () => {
+    expect(checkMove([postal('a', '', '20200101')], undefined, '20270301', 'work')).toEqual({ ok: true, fromResidenceKey: '', addressUsage: 'work' });
+  });
+});
+
+describe('checkEditMove (cancel, then record)', () => {
+  it('records from the predecessor, which the cancel reopens', () => {
+    const old = postal('a', '20200101', '20270228');
+    const announced = postal('b', '20270301');
+    expect(checkEditMove(announced, [old, announced], '20270401')).toEqual({ ok: true, fromResidenceKey: 'a', addressUsage: 'home' });
+  });
+
+  it('finds the predecessor of a legacy row without usage (would otherwise lose the move)', () => {
+    const legacy = postal('a', '', '20270228', undefined as unknown as string);
+    const announced = postal('b', '20270301', '', 'home');
+    expect(checkEditMove(announced, [legacy, announced], '20270315')).toEqual({ ok: true, fromResidenceKey: 'a', addressUsage: 'home' });
+  });
+
+  it('refuses a new date that is not after the predecessor start, before anything is cancelled', () => {
+    const old = postal('a', '20270101', '20270228');
+    const announced = postal('b', '20270301');
+    expect(checkEditMove(announced, [old, announced], '20270101')).toEqual({ ok: false, reason: 'date' });
+  });
+
+  it('records without predecessor in the row usage when nothing else is open', () => {
+    const announced = postal('b', '20270301', '', 'work');
+    expect(checkEditMove(announced, [announced], '20270401')).toEqual({ ok: true, fromResidenceKey: '', addressUsage: 'work' });
+  });
+
+  it('refuses without predecessor when another postal row is open', () => {
+    const work = postal('w', '20200101', '', 'work');
+    const announced = postal('b', '20270301');
+    expect(checkEditMove(announced, [work, announced], '20270401')).toEqual({ ok: false, reason: 'from' });
   });
 });

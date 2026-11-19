@@ -375,6 +375,7 @@
     },
     "saved": "Der Umzug ist erfasst.",
     "corrected": "Die Adresse ist korrigiert.",
+    "edit_removed": "Der angekündigte Umzug ist entfernt, der neue konnte aber nicht gespeichert werden. Du kannst ihn hier noch einmal speichern oder später neu erfassen.",
     "cancelled": "Der Umzug ist abgesagt.",
     "error": {
       "invalid": "Die Angaben sind nicht vollständig. Prüf sie bitte noch einmal.",
@@ -382,7 +383,9 @@
       "notFound": "Diese Adresse wurde nicht gefunden. Wähle sie bitte noch einmal aus oder gib sie von Hand ein.",
       "conflict": "Die Adresse wurde gerade an einem anderen Ort geändert. Lade die Ansicht neu und versuche es noch einmal.",
       "exists": "Dieser Umzug ist schon erfasst.",
-      "unknown": "Das hat nicht geklappt. Versuche es bitte später noch einmal."
+      "unknown": "Das hat nicht geklappt. Versuche es bitte später noch einmal.",
+      "date": "Der Umzug muss nach dem Beginn der bisherigen Adresse liegen. Wähle bitte ein späteres Datum.",
+      "from": "Es gibt schon eine aktuelle Adresse. Erfasse den Umzug bitte bei dieser Adresse."
     },
     "validation": {
       "validFrom_required": "Gib bitte an, ab wann die neue Adresse gilt.",

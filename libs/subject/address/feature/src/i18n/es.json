@@ -371,6 +371,7 @@
     },
     "saved": "La mudanza está registrada.",
     "corrected": "La dirección está corregida.",
+    "edit_removed": "La mudanza anunciada se ha eliminado, pero la nueva no se pudo guardar. Puedes guardarla aquí otra vez o registrarla más tarde.",
     "cancelled": "La mudanza está anulada.",
     "error": {
       "invalid": "Los datos están incompletos. Revísalos otra vez.",
@@ -378,7 +379,9 @@
       "notFound": "No se encontró esta dirección. Elígela otra vez o introdúcela a mano.",
       "conflict": "La dirección se acaba de cambiar en otro sitio. Recarga la vista e inténtalo de nuevo.",
       "exists": "Esta mudanza ya está registrada.",
-      "unknown": "No ha funcionado. Inténtalo más tarde."
+      "unknown": "No ha funcionado. Inténtalo más tarde.",
+      "date": "La mudanza tiene que ser posterior al inicio de la dirección anterior. Elige una fecha más tardía.",
+      "from": "Ya hay una dirección actual. Registra la mudanza en esa dirección."
     },
     "validation": {
       "validFrom_required": "Indica desde cuándo vale la nueva dirección.",

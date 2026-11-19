@@ -23,7 +23,7 @@ import { FolderService } from '@okr/content-folder-data-access';
 
 import { AddressService, GeocodingService } from '@okr/subject-address-data-access';
 import { TaskService } from '@okr/project-task-data-access';
-import { ADDRESSES_I18N_KEYS, browseUrl, canWritePostal, copyAddress, directoryEntryToAddress, getWebUrl, hiddenInAccordion, isAddress, loginEmailDivergence, openExternalUrl, POSTAL_MOVE_ERROR_I18N, PostalMoveMode, postalMoveErrorKind, predecessorOf, readsAddressVault, shouldBecomeFavorite, stringifyPostalAddress } from '@okr/subject-address-util';
+import { ADDRESSES_I18N_KEYS, browseUrl, canWritePostal, copyAddress, directoryEntryToAddress, getWebUrl, hiddenInAccordion, isAddress, loginEmailDivergence, openExternalUrl, POSTAL_MOVE_ERROR_I18N, PostalMoveMode, postalMoveErrorKind, readsAddressVault, shouldBecomeFavorite, stringifyPostalAddress } from '@okr/subject-address-util';
 
 import { AddressEditModal } from './address-edit.modal';
 import { DEFAULT_MIMETYPES } from '@okr/shared-constants';
@@ -231,7 +231,8 @@ export const AddressStore = signalStore(
        * @param readOnly 
        */
        async edit(address: AddressModel, readOnly = true, channels?: CategoryListModel): Promise<void> {
-        const addressChannels = channels ?? this.getChannels();
+        // without postal rights a non-postal row cannot be switched to postal either (spec 1.164 §6.5)
+        const addressChannels = channels ?? (readOnly || address.addressChannel === 'postal' ? this.getChannels() : this.getWritableChannels());
         const modal = await store.modalController.create({
         component: AddressEditModal,
         componentProps: {
@@ -339,8 +340,7 @@ export const AddressStore = signalStore(
 
       /** «Umzug bearbeiten» on an announced row: cancelled and recorded again from the row it closes. */
       async editMove(address: AddressModel): Promise<void> {
-        const predecessor = predecessorOf(address, store.addresses() ?? []);
-        await this.openMoveModal('edit-move', address, predecessor?.okey ?? '');
+        await this.openMoveModal('edit-move', address);
       },
 
       /** «Umzug absagen»: archives the announced row and reopens the one it would have closed. */
@@ -359,20 +359,19 @@ export const AddressStore = signalStore(
         store.appStore.watchDirectoryEntry(address.parentKey);
       },
 
-      async openMoveModal(mode: PostalMoveMode, residence: AddressModel, predecessorKey = ''): Promise<void> {
+      async openMoveModal(mode: PostalMoveMode, residence: AddressModel): Promise<void> {
         if (!store.canWritePostal()) return;
         // dynamic: the modal pulls in the move form; most address views never open it
         const { PostalMoveModal } = await import('./postal-move.modal');
         const modal = await store.modalController.create({
           component: PostalMoveModal,
-          componentProps: { mode, parentKey: residence.parentKey, residence, predecessorKey },
+          componentProps: { mode, parentKey: residence.parentKey, residence, rows: store.addresses() ?? [] },
         });
         await modal.present();
-        const { role } = await modal.onWillDismiss();
-        if (role === 'confirm') {
-          this.reload();
-          store.appStore.watchDirectoryEntry(residence.parentKey);
-        }
+        await modal.onWillDismiss();
+        // on every close, not only after a save: a failed «Umzug bearbeiten» may have cancelled the announced row
+        this.reload();
+        store.appStore.watchDirectoryEntry(residence.parentKey);
       },
 
      /**

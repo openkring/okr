@@ -230,7 +230,10 @@ export class AddressesAccordion {
       actionSheetOptions.buttons.push(createActionSheetButton('postal.cancelMove', this.store.i18n.move_cancel(), this.imgixBaseUrl, 'cancel'));
       return;
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('postal.move', this.getMoveLabel(), this.imgixBaseUrl, 'home'));
+    // a row that already ends (its successor is announced) is not moved again: the successor is edited on its own row
+    if (!address.validTo) {
+      actionSheetOptions.buttons.push(createActionSheetButton('postal.move', this.getMoveLabel(), this.imgixBaseUrl, 'home'));
+    }
     actionSheetOptions.buttons.push(createActionSheetButton('postal.correct', this.store.i18n.move_correct(), this.imgixBaseUrl, 'edit'));
     actionSheetOptions.buttons.push(createActionSheetButton('delete', this.store.i18n.move_remove(), this.imgixBaseUrl, 'trash'));
   }

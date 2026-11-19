@@ -371,6 +371,7 @@
     },
     "saved": "The move is recorded.",
     "corrected": "The address is corrected.",
+    "edit_removed": "The announced move is removed, but the new one could not be saved. You can save it here again or record it later.",
     "cancelled": "The move is cancelled.",
     "error": {
       "invalid": "The details are incomplete. Please check them again.",
@@ -378,7 +379,9 @@
       "notFound": "This address was not found. Please choose it again or enter it by hand.",
       "conflict": "The address was just changed elsewhere. Reload the view and try again.",
       "exists": "This move is already recorded.",
-      "unknown": "That did not work. Please try again later."
+      "unknown": "That did not work. Please try again later.",
+      "date": "The move must be after the start of the previous address. Please choose a later date.",
+      "from": "There is already a current address. Please record the move on that address."
     },
     "validation": {
       "validFrom_required": "Please say from when the new address applies.",

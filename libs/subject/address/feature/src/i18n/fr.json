@@ -371,6 +371,7 @@
     },
     "saved": "Le déménagement est saisi.",
     "corrected": "L'adresse est corrigée.",
+    "edit_removed": "Le déménagement annoncé est supprimé, mais le nouveau n'a pas pu être enregistré. Tu peux l'enregistrer ici encore une fois ou le saisir plus tard.",
     "cancelled": "Le déménagement est annulé.",
     "error": {
       "invalid": "Les indications sont incomplètes. Vérifie-les encore une fois.",
@@ -378,7 +379,9 @@
       "notFound": "Cette adresse est introuvable. Choisis-la à nouveau ou saisis-la à la main.",
       "conflict": "L'adresse vient d'être modifiée ailleurs. Recharge la vue et réessaie.",
       "exists": "Ce déménagement est déjà saisi.",
-      "unknown": "Cela n'a pas marché. Réessaie plus tard."
+      "unknown": "Cela n'a pas marché. Réessaie plus tard.",
+      "date": "Le déménagement doit avoir lieu après le début de l'adresse précédente. Choisis une date plus tardive.",
+      "from": "Il y a déjà une adresse actuelle. Saisis le déménagement sur cette adresse."
     },
     "validation": {
       "validFrom_required": "Indique dès quand la nouvelle adresse s'applique.",

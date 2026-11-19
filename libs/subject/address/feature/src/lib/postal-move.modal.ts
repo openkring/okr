@@ -11,7 +11,7 @@ import { DateFormat, getTodayStr, warn } from '@okr/shared-util-core';
 import { AddressService } from '@okr/subject-address-data-access';
 import { PostalMoveForm, PostalSearchState } from '@okr/subject-address-ui';
 import {
-  ADDRESSES_I18N_KEYS, AddressesI18n, moveActionKind, newPostalMoveFormModel, POSTAL_MOVE_ERROR_I18N, postalMoveErrorKind, PostalMoveFormModel,
+  ADDRESSES_I18N_KEYS, AddressesI18n, checkEditMove, checkMove, moveActionKind, newPostalMoveFormModel, POSTAL_MOVE_ERROR_I18N, postalMoveErrorKind, PostalMoveFormModel,
   PostalMoveMode, postalTarget, SwissAddressHit,
 } from '@okr/subject-address-util';
 
@@ -63,8 +63,8 @@ export class PostalMoveModal implements OnInit {
   public readonly parentKey = input.required<string>();
   /** the row the action sheet was opened on: the current row (move, correct) or the announced one (edit-move) */
   public readonly residence = input<AddressModel>();
-  /** edit-move only: the row the announced move closes (validTo = the day before it starts); '' if none */
-  public readonly predecessorKey = input('');
+  /** the parent's postal rows as the accordion read them: the client-side checks mirror the server's refusals */
+  public readonly rows = input<AddressModel[]>([]);
 
   // signals
   protected readonly formDirty = signal(false);
@@ -73,6 +73,8 @@ export class PostalMoveModal implements OnInit {
   protected readonly hits = signal<SwissAddressHit[]>([]);
   protected readonly searchState = signal<PostalSearchState>('idle');
   private readonly saving = signal(false);
+  /** edit-move: the announced row is already cancelled (the record after it failed); a retry only records */
+  private readonly announcedCancelled = signal(false);
   private readonly initialModel = computed(() => this.buildInitialModel());
   protected readonly formData = linkedSignal(() => this.initialModel());
 
@@ -151,43 +153,44 @@ export class PostalMoveModal implements OnInit {
   public async save(): Promise<void> {
     const model = this.formData();
     const row = this.residence();
+    if (this.mode() !== 'move' && !row) return;
+    // refuse on the client what the server would refuse — above all before «Umzug bearbeiten» cancels anything
+    const check = this.mode() === 'correct' ? undefined
+      : this.mode() === 'edit-move' && row ? checkEditMove(row, this.rows(), model.validFrom)
+      : checkMove(this.rows(), row, model.validFrom);
+    if (check && !check.ok) {
+      await showToast(this.toastController, this.i18n[POSTAL_MOVE_ERROR_I18N[check.reason]]());
+      return;
+    }
     this.saving.set(true);
     try {
-      switch (this.mode()) {
-        case 'correct':
-          if (!row) return;
-          await this.addressService.correctAddress(row.okey, postalTarget(model), model.addressValue2);
-          await showToast(this.toastController, this.i18n.move_corrected());
-          break;
-        case 'edit-move':
-          if (!row) return;
-          // no own callable: cancel the announced move, then record it again from the row it closed
+      if (this.mode() === 'correct' && row) {
+        await this.addressService.correctAddress(row.okey, postalTarget(model), model.addressValue2);
+        await showToast(this.toastController, this.i18n.move_corrected());
+      } else if (check?.ok) {
+        // «Umzug bearbeiten» has no own callable: cancel the announced move once, then record it again.
+        // A retry after a failed record only records — the announced row is archived by then.
+        if (this.mode() === 'edit-move' && row && !this.announcedCancelled()) {
           await this.addressService.cancelMove(row.okey);
-          await this.addressService.recordMove({
-            parentKey: this.parentKey(),
-            fromResidenceKey: this.predecessorKey(),
-            addressUsage: this.predecessorKey() ? undefined : row.addressUsage,
-            target: postalTarget(model),
-            addressValue2: model.addressValue2,
-            validFrom: model.validFrom,
-          });
-          await showToast(this.toastController, this.i18n.move_saved());
-          break;
-        default:
-          await this.addressService.recordMove({
-            parentKey: this.parentKey(),
-            fromResidenceKey: row?.okey,
-            addressUsage: row ? undefined : 'home',
-            target: postalTarget(model),
-            addressValue2: model.addressValue2,
-            validFrom: model.validFrom,
-          });
-          await showToast(this.toastController, this.i18n.move_saved());
+          this.announcedCancelled.set(true);
+        }
+        await this.addressService.recordMove({
+          parentKey: this.parentKey(),
+          fromResidenceKey: check.fromResidenceKey,
+          addressUsage: check.fromResidenceKey ? undefined : check.addressUsage,
+          target: postalTarget(model),
+          addressValue2: model.addressValue2,
+          validFrom: model.validFrom,
+        });
+        await showToast(this.toastController, this.i18n.move_saved());
       }
       await dismissOverlay(this.modalController, model, 'confirm');
     } catch (error) {
       warn(`PostalMoveModal.save(${this.mode()}): ${(error as Error)?.message ?? error}`);
-      await showToast(this.toastController, this.i18n[POSTAL_MOVE_ERROR_I18N[postalMoveErrorKind(error)]]());
+      const message = this.announcedCancelled()
+        ? this.i18n.move_edit_removed()
+        : this.i18n[POSTAL_MOVE_ERROR_I18N[postalMoveErrorKind(error)]]();
+      await showToast(this.toastController, message);
     } finally {
       this.saving.set(false);
     }

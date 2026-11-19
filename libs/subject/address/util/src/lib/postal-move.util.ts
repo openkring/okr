@@ -1,5 +1,6 @@
+import { DEFAULT_ADDRESS_USAGE } from '@okr/shared-constants';
 import { AddressModel, UserModel } from '@okr/shared-models';
-import { dayBefore, residenceStatus } from '@okr/shared-util-core';
+import { dayBefore, isAfterDate, residenceStatus } from '@okr/shared-util-core';
 
 import { ADDRESSES_I18N_KEYS } from './address-i18n';
 import { ManualAddressInput, PostalMoveFormModel, SwissAddressHit } from './postal-move.validations';
@@ -39,12 +40,54 @@ export function residenceDateLabel(address: AddressModel, today: string): { kind
   return undefined;
 }
 
+/** A row's usage as the server reads it: a legacy row without one is a home address. */
+export function usageOf(row: Pick<AddressModel, 'addressUsage'>): string {
+  return row.addressUsage || DEFAULT_ADDRESS_USAGE;
+}
+
 /** The active postal row of the same usage that ends the day before `row` starts (the row a move closed). */
 export function predecessorOf(row: AddressModel, rows: AddressModel[]): AddressModel | undefined {
   if (!row.validFrom) return undefined;
   const end = dayBefore(row.validFrom);
   return rows.find((r) => r.okey !== row.okey && r.addressChannel === 'postal' && !r.isArchived
-    && r.addressUsage === row.addressUsage && r.validTo === end);
+    && usageOf(r) === usageOf(row) && r.validTo === end);
+}
+
+/** What recordPostalMove gets, or why the server would refuse it ('date': not after the open row's start; 'from': a row to move away from is missing). */
+export type MoveCheck =
+  | { ok: true; fromResidenceKey: string; addressUsage: string }
+  | { ok: false; reason: 'date' | 'from' };
+
+/**
+ * Mirrors the refusals of the server's planMove before anything is written: with a row to move away
+ * from, the new date must be after the start of the latest open row of that usage; without one, the
+ * parent must have no open postal row at all.
+ */
+export function checkMove(rows: AddressModel[], from: AddressModel | undefined, validFrom: string, addressUsage = DEFAULT_ADDRESS_USAGE): MoveCheck {
+  const postal = rows.filter((r) => r.addressChannel === 'postal' && !r.isArchived);
+  if (!from) {
+    if (postal.some((r) => !r.validTo)) return { ok: false, reason: 'from' };
+    return { ok: true, fromResidenceKey: '', addressUsage: addressUsage || DEFAULT_ADDRESS_USAGE };
+  }
+  const usage = usageOf(from);
+  const starts = postal.filter((r) => usageOf(r) === usage && !r.validTo).map((r) => r.validFrom ?? '').sort();
+  const latestStart = starts[starts.length - 1];
+  if (latestStart && !isAfterDate(validFrom, latestStart)) return { ok: false, reason: 'date' };
+  return { ok: true, fromResidenceKey: from.okey, addressUsage: usage };
+}
+
+/**
+ * «Umzug bearbeiten» = cancelPostalMove(row) + recordPostalMove. Checks the record step against the
+ * rows as they are AFTER the cancel (row archived, its predecessor taking over row.validTo — planCancel),
+ * so a move the server would refuse is never cancelled first.
+ */
+export function checkEditMove(row: AddressModel, rows: AddressModel[], validFrom: string): MoveCheck {
+  const predecessor = predecessorOf(row, rows);
+  const afterCancel = rows
+    .filter((r) => r.okey !== row.okey)
+    .map((r) => (r.okey === predecessor?.okey ? { ...r, validTo: row.validTo ?? '' } as AddressModel : r));
+  const from = predecessor ? afterCancel.find((r) => r.okey === predecessor.okey) : undefined;
+  return checkMove(afterCancel, from, validFrom, usageOf(row));
 }
 
 /** The callable's `target`: the chosen hit, else the manual fields in the form's country. */
@@ -62,7 +105,7 @@ export function postalTarget(model: PostalMoveFormModel): { hit: SwissAddressHit
   };
 }
 
-export type PostalMoveErrorKind = 'invalid' | 'permission' | 'notFound' | 'conflict' | 'exists' | 'unknown';
+export type PostalMoveErrorKind = 'invalid' | 'permission' | 'notFound' | 'conflict' | 'exists' | 'date' | 'from' | 'unknown';
 
 /** Maps a callable error (`functions/<code>`) to the toast that explains it. */
 export function postalMoveErrorKind(error: unknown): PostalMoveErrorKind {
@@ -86,5 +129,7 @@ export const POSTAL_MOVE_ERROR_I18N: Record<PostalMoveErrorKind, keyof typeof AD
   notFound: 'move_error_notFound',
   conflict: 'move_error_conflict',
   exists: 'move_error_exists',
+  date: 'move_error_date',
+  from: 'move_error_from',
   unknown: 'move_error_unknown',
 };

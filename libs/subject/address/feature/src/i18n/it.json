@@ -371,6 +371,7 @@
     },
     "saved": "Il trasloco è registrato.",
     "corrected": "L'indirizzo è corretto.",
+    "edit_removed": "Il trasloco annunciato è stato rimosso, ma quello nuovo non è stato salvato. Puoi salvarlo qui ancora una volta o registrarlo più tardi.",
     "cancelled": "Il trasloco è annullato.",
     "error": {
       "invalid": "I dati sono incompleti. Controllali ancora una volta.",
@@ -378,7 +379,9 @@
       "notFound": "Questo indirizzo non è stato trovato. Sceglilo di nuovo o inseriscilo a mano.",
       "conflict": "L'indirizzo è appena stato modificato altrove. Ricarica la vista e riprova.",
       "exists": "Questo trasloco è già registrato.",
-      "unknown": "Non ha funzionato. Riprova più tardi."
+      "unknown": "Non ha funzionato. Riprova più tardi.",
+      "date": "Il trasloco deve essere dopo l'inizio dell'indirizzo precedente. Scegli una data successiva.",
+      "from": "C'è già un indirizzo attuale. Registra il trasloco su questo indirizzo."
     },
     "validation": {
       "validFrom_required": "Indica da quando vale il nuovo indirizzo.",
