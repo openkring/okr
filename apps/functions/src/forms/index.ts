@@ -296,7 +296,9 @@ export const getFormToken = onCall(
 // the fields the renderer/submit need; never the encryption key hash or audit data.
 // ──────────────────────────────────────────
 export const getFormDefinition = onCall(
-  { region: REGION },
+  // One warm instance: the website cannot draw a form before this call returns, and a cold start
+  // of the shared functions bundle took 1–5 s on ~31 % of form loads (7 days to 2026-11-19).
+  { region: REGION, minInstances: 1 },
   async (request: CallableRequest<{ formKey: string; tenantId: string; sectionId?: string; withCategories?: boolean }>) => {
     const formKey = request.data?.formKey;
     const tenantId = request.data?.tenantId;
