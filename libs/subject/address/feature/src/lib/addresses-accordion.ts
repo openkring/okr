@@ -2,12 +2,12 @@ import { Component, computed, effect, inject, input } from "@angular/core";
 import { ActionSheetButton, ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonItem, IonLabel, IonList } from "@ionic/angular";
 
 import { AddressModel, PrivacySettings } from "@okr/shared-models";
-import { SvgIconPipe } from "@okr/shared-pipes";
+import { PrettyDatePipe, SvgIconPipe } from "@okr/shared-pipes";
 import { EmptyList } from "@okr/shared-ui";
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from "@okr/shared-util-angular";
-import { coerceBoolean, getCategoryIcon, isVisibleToUser } from "@okr/shared-util-core";
+import { coerceBoolean, DateFormat, getCategoryIcon, getTodayStr, isVisibleToUser, residenceStatus } from "@okr/shared-util-core";
 
-import { FavoriteColorPipe, FormatAddressPipe } from "@okr/subject-address-util";
+import { FavoriteColorPipe, FormatAddressPipe, moveActionKind, residenceDateLabel } from "@okr/subject-address-util";
 
 import { AddressStore } from "./addresses.store";
 
@@ -15,7 +15,7 @@ import { AddressStore } from "./addresses.store";
   selector: 'okr-addresses-accordion',
   standalone: true,
   imports: [ 
-    FavoriteColorPipe, FormatAddressPipe, SvgIconPipe,
+    FavoriteColorPipe, FormatAddressPipe, PrettyDatePipe, SvgIconPipe,
     EmptyList,
     IonAccordion, IonItem, IonLabel, IonButton, IonIcon, IonList
   ],
@@ -61,6 +61,9 @@ import { AddressStore } from "./addresses.store";
                   <ion-icon [src]="getChannelIcon(address.addressChannel) | svgIcon" />
                   <span class="ion-hide-md-down"> {{ getAddressUsage(address) }}</span>
                   {{ address | formatAddress }}
+                  @if(dateLabel(address); as label) {
+                    — {{ label.kind === 'from' ? store.i18n.move_from() : store.i18n.move_until() }} {{ label.date | prettyDate }}
+                  }
                 </ion-label>
                 @if((address.addressChannel === 'bankaccount' || address.addressChannel === 'twint') && address.url) {
                   <ion-icon slot="end" src="{{ 'qrcode' | svgIcon }}" />
@@ -107,8 +110,14 @@ export class AddressesAccordion {
    */
   protected canModify = computed(() => !this.isReadOnly() && this.store.readsVault());
 
+  /**
+   * Postal rows take the move actions instead of edit/delete (spec 1.164 §6.1) — and only for the
+   * owner, privileged and memberAdmin (canWritePostal), the same gate as the rules and the callables.
+   */
+  protected canModifyPostal = computed(() => this.canModify() && this.store.canWritePostal());
+
   // signals
-  protected addresses = computed(() => this.store.addresses() ?? []);
+  protected addresses = computed(() => this.store.accordionAddresses());
   private currentUser = computed(() => this.store.currentUser());
 
   // derived
@@ -155,7 +164,9 @@ export class AddressesAccordion {
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, address: AddressModel): void {
     // on address
     actionSheetOptions.buttons.push(createActionSheetDivider());
-    if (this.canModify()) {
+    if (address.addressChannel === 'postal') {
+      this.addPostalButtons(actionSheetOptions, address);
+    } else if (this.canModify()) {
       actionSheetOptions.buttons.push(createActionSheetButton('edit', this.store.i18n.update_label(), this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('delete', this.store.i18n.delete_label(), this.imgixBaseUrl, 'trash'));
     } else {
@@ -208,6 +219,31 @@ export class AddressesAccordion {
     }
   }
 
+  /** current row: move, correct, remove; announced row: edit or cancel the move; otherwise view only */
+  private addPostalButtons(actionSheetOptions: ActionSheetOptions, address: AddressModel): void {
+    if (!this.canModifyPostal()) {
+      actionSheetOptions.buttons.push(createActionSheetButton('view', this.store.i18n.view_label(), this.imgixBaseUrl, 'eye-on'));
+      return;
+    }
+    if (residenceStatus(address) === 'future') {
+      actionSheetOptions.buttons.push(createActionSheetButton('postal.editMove', this.store.i18n.move_edit(), this.imgixBaseUrl, 'calendar'));
+      actionSheetOptions.buttons.push(createActionSheetButton('postal.cancelMove', this.store.i18n.move_cancel(), this.imgixBaseUrl, 'cancel'));
+      return;
+    }
+    actionSheetOptions.buttons.push(createActionSheetButton('postal.move', this.getMoveLabel(), this.imgixBaseUrl, 'home'));
+    actionSheetOptions.buttons.push(createActionSheetButton('postal.correct', this.store.i18n.move_correct(), this.imgixBaseUrl, 'edit'));
+    actionSheetOptions.buttons.push(createActionSheetButton('delete', this.store.i18n.move_remove(), this.imgixBaseUrl, 'trash'));
+  }
+
+  /** «Ich ziehe um» on the own address, «Wir ziehen um» on an org, «Umzug erfassen» on someone else's */
+  private getMoveLabel(): string {
+    switch (moveActionKind(this.currentUser(), this.parentKey())) {
+      case 'own': return this.store.i18n.move_own();
+      case 'org': return this.store.i18n.move_org();
+      default: return this.store.i18n.move_other();
+    }
+  }
+
   /**
    * Button that opens the file stored on the address (QR-bill PDF, TWINT image). The URL is opened
    * from the synchronous tap handler (not the post-dismiss switch) so the user gesture survives —
@@ -252,6 +288,18 @@ export class AddressesAccordion {
         case 'postal.view':
           await this.store.showPostalAddress(address);
           break;
+        case 'postal.move':
+          await this.store.move(address);
+          break;
+        case 'postal.correct':
+          await this.store.correct(address);
+          break;
+        case 'postal.editMove':
+          await this.store.editMove(address);
+          break;
+        case 'postal.cancelMove':
+          await this.store.cancelMove(address);
+          break;
         case 'file.upload':
           await this.store.uploadFile(address);
           break;
@@ -266,6 +314,11 @@ export class AddressesAccordion {
   }
 
   /******************************** helpers ******************************************* */
+  /** «ab 01.03.2027» on an announced address, «bis 28.02.2027» on the address it replaces */
+  protected dateLabel(address: AddressModel): { kind: 'from' | 'until'; date: string } | undefined {
+    return residenceDateLabel(address, getTodayStr(DateFormat.StoreDate));
+  }
+
   protected isVisibleToUser(address: AddressModel): boolean {
     switch(address.addressChannel) {
       case 'phone': 

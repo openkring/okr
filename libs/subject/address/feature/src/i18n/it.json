@@ -333,5 +333,60 @@
   "isCc": {
     "label": "CC",
     "helper": "Indirizzo CC (ad es. genitori)"
+  },
+  "move": {
+    "own": "Mi trasferisco",
+    "org": "Ci trasferiamo",
+    "other": "Registra un trasloco",
+    "correct": "Correggi l'indirizzo",
+    "remove": "Rimuovi l'indirizzo",
+    "remove_confirm": "Vuoi rimuovere questo indirizzo?",
+    "edit": "Modifica il trasloco",
+    "cancel": "Annulla il trasloco",
+    "cancel_confirm": "Vuoi annullare questo trasloco? L'indirizzo attuale resta allora valido.",
+    "from": "dal",
+    "until": "fino al",
+    "search": {
+      "label": "Cerca indirizzo",
+      "placeholder": "p. es. Bahnhofstrasse 3 Stäfa",
+      "helper": "Via, numero e località, almeno tre caratteri.",
+      "attribution": "© swisstopo",
+      "searching": "Ricerca in corso …",
+      "empty": "Nessun indirizzo corrispondente.",
+      "error": "La ricerca non funziona al momento. Inserisci l'indirizzo a mano.",
+      "choose": "Scegli l'indirizzo dalla lista.",
+      "change": "Scegli un altro indirizzo"
+    },
+    "not_found": "Indirizzo non trovato",
+    "back_to_search": "Torna alla ricerca",
+    "validFrom": {
+      "label": "Valido dal",
+      "placeholder": "GG.MM.AAAA",
+      "helper": "Il nuovo indirizzo vale da questo giorno. Va bene anche un giorno passato."
+    },
+    "addressValue2": {
+      "label": "c/o, appartamento, piano",
+      "placeholder": "p. es. c/o Rossi, 2° piano",
+      "helper": "Facoltativo"
+    },
+    "saved": "Il trasloco è registrato.",
+    "corrected": "L'indirizzo è corretto.",
+    "cancelled": "Il trasloco è annullato.",
+    "error": {
+      "invalid": "I dati sono incompleti. Controllali ancora una volta.",
+      "permission": "Non puoi modificare questo indirizzo.",
+      "notFound": "Questo indirizzo non è stato trovato. Sceglilo di nuovo o inseriscilo a mano.",
+      "conflict": "L'indirizzo è appena stato modificato altrove. Ricarica la vista e riprova.",
+      "exists": "Questo trasloco è già registrato.",
+      "unknown": "Non ha funzionato. Riprova più tardi."
+    },
+    "validation": {
+      "validFrom_required": "Indica da quando vale il nuovo indirizzo.",
+      "validFrom_invalid": "Questa non è una data valida.",
+      "street_required": "Indica la via.",
+      "zip_required": "Indica il codice postale.",
+      "city_required": "Indica la località.",
+      "zip_ch": "Un codice postale svizzero ha quattro cifre."
+    }
   }
 }

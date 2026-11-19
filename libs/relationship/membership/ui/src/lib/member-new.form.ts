@@ -76,6 +76,7 @@ import { MembershipI18n, MemberNewFormModel, memberNewFormValidations } from '@o
           </ion-card-header>
           <ion-card-content class="ion-no-padding">
             <ion-grid>
+              @if(showPostalInputs()) {
               <ion-row>
                 <ion-col size="9">
                   <okr-text-input [i18n]="streetNameI18n()" [value]="streetName()" (valueChange)="onFieldChange('streetName', $event)" autocomplete="street-address" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
@@ -105,6 +106,7 @@ import { MembershipI18n, MemberNewFormModel, memberNewFormValidations } from '@o
                   <okr-error-note [errors]="cityErrors()" />
                 </ion-col>
               </ion-row>
+              }
 
               <ion-row>
                 <ion-col size="12" size-md="6"> 
@@ -208,6 +210,8 @@ export class MemberNewForm {
   public readonly formData = model.required<MemberNewFormModel>();
   public readonly currentUser = input<UserModel | undefined>();
   public readonly showAddressInputs = input(true);
+  /** false for a user who may not write postal rows (spec 1.164 §6.5, e.g. a group admin): email/phone/web stay */
+  public readonly showPostalInputs = input(true);
   public readonly allTags = input.required<string>();
   public readonly tenantId = input.required<string>();
   public readonly genders = input.required<CategoryListModel>();

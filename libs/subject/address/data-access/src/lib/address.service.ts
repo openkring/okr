@@ -7,11 +7,24 @@ import { AddressCollection, AddressModel, UserModel } from "@okr/shared-models";
 import { die, getSystemQuery, pickCurrentFavoritePostal } from "@okr/shared-util-core";
 import { I18nService } from "@okr/shared-i18n";
 
-import { getAddressIndex, getAddressValueByChannel, normalizeAddressValue } from "@okr/subject-address-util";
+import { getAddressIndex, getAddressValueByChannel, ManualAddressInput, normalizeAddressValue, SwissAddressHit } from "@okr/subject-address-util";
 import { ActivityService } from '@okr/activity-data-access';
 
 import { PFX } from "./scope";
 
+/** The `target` of the move callables: a chosen swisstopo hit or a hand-typed address (spec 1.164 §6.2). */
+export type PostalTarget = { hit: SwissAddressHit } | { manual: ManualAddressInput };
+
+export interface RecordPostalMoveRequest {
+  parentKey: string;
+  /** the open (current or future) row moved away from; required when the parent has one */
+  fromResidenceKey?: string;
+  /** usage of a first residence (no open row); otherwise the server takes the usage of fromResidenceKey */
+  addressUsage?: string;
+  target: PostalTarget;
+  addressValue2: string;
+  validFrom: string;
+}
 
 @Injectable({
     providedIn: 'root'
@@ -93,8 +106,16 @@ export class AddressService {
    * @returns a Promise that resolves when the operation is complete
    */
   public async delete(address: AddressModel, currentUser?: UserModel): Promise<void> {
-    await this.firestoreService.deleteModel<AddressModel>(AddressCollection, address, 
-      this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
+    if (address.addressChannel === 'postal') {
+      // A postal row is archived for every tenant, never detached from one (spec 1.164): it carries
+      // all clubs of its person, and a detach would leave the address live in the other clubs.
+      const archived = { ...address, isArchived: true, isFavorite: false };
+      await this.firestoreService.updateModel<AddressModel>(AddressCollection, archived, false,
+        this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
+    } else {
+      await this.firestoreService.deleteModel<AddressModel>(AddressCollection, address,
+        this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
+    }
     const payload = `${address.okey}: ${address.addressChannel}/${getAddressValueByChannel(address)}`;
     void this.activityService.log('address', 'delete', currentUser, payload);
   }
@@ -221,5 +242,43 @@ export class AddressService {
     return this.firestoreService
       .searchData<AddressModel>(AddressCollection, query, 'isFavorite', 'desc')
       .pipe(map((addresses) => pickCurrentFavoritePostal(addresses)));
+  }
+
+  /***************************  postal moves (spec 1.164)  *************************** */
+  // The four callables are the only write path for moves and corrections. Errors are not caught:
+  // the caller maps the error code to a toast (postalMoveErrorKind).
+
+  /** swisstopo address search; the query needs at least 3 characters. Only the query leaves the app. */
+  public async searchSwissAddress(query: string): Promise<SwissAddressHit[]> {
+    const result = await this.callPostal<{ query: string }, { hits: SwissAddressHit[] }>('searchSwissAddress', { query });
+    return result.hits ?? [];
+  }
+
+  /** A new residence from `validFrom`; the open row of the same usage ends the day before. */
+  public async recordMove(request: RecordPostalMoveRequest): Promise<string> {
+    const data: RecordPostalMoveRequest = { ...request };
+    if (!data.fromResidenceKey) delete data.fromResidenceKey;
+    if (!data.addressUsage) delete data.addressUsage;
+    const result = await this.callPostal<RecordPostalMoveRequest, { residenceKey: string }>('recordPostalMove', data);
+    return result.residenceKey;
+  }
+
+  /** «Adresse korrigieren»: relinks the residence to the right address, dates unchanged. */
+  public async correctAddress(residenceKey: string, target: PostalTarget, addressValue2: string): Promise<string> {
+    const result = await this.callPostal<{ residenceKey: string; target: PostalTarget; addressValue2: string }, { locationKey: string }>(
+      'correctPostalAddress', { residenceKey, target, addressValue2 });
+    return result.locationKey;
+  }
+
+  /** «Umzug absagen»: archives an announced residence and reopens the row it would have closed. */
+  public async cancelMove(residenceKey: string): Promise<void> {
+    await this.callPostal<{ residenceKey: string }, void>('cancelPostalMove', { residenceKey });
+  }
+
+  private async callPostal<Req, Res>(name: string, data: Req): Promise<Res> {
+    // dynamic: keeps firebase/functions out of the eager bundle of every page that shows an address
+    const { getFunctions, httpsCallable } = await import('firebase/functions');
+    const fn = httpsCallable<Req, Res>(getFunctions(undefined, 'europe-west6'), name);
+    return (await fn(data)).data;
   }
 }

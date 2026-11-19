@@ -333,5 +333,60 @@
   "isCc": {
     "label": "CC",
     "helper": "Dirección CC (p. ej. padres)"
+  },
+  "move": {
+    "own": "Me mudo",
+    "org": "Nos mudamos",
+    "other": "Registrar una mudanza",
+    "correct": "Corregir la dirección",
+    "remove": "Eliminar la dirección",
+    "remove_confirm": "¿Quieres eliminar esta dirección?",
+    "edit": "Editar la mudanza",
+    "cancel": "Anular la mudanza",
+    "cancel_confirm": "¿Quieres anular esta mudanza? La dirección actual sigue vigente.",
+    "from": "desde el",
+    "until": "hasta el",
+    "search": {
+      "label": "Buscar dirección",
+      "placeholder": "p. ej. Bahnhofstrasse 3 Stäfa",
+      "helper": "Calle, número y localidad, al menos tres caracteres.",
+      "attribution": "© swisstopo",
+      "searching": "Buscando …",
+      "empty": "No se encontró ninguna dirección.",
+      "error": "La búsqueda no funciona ahora. Introduce la dirección a mano.",
+      "choose": "Elige la dirección de la lista.",
+      "change": "Elegir otra dirección"
+    },
+    "not_found": "Dirección no encontrada",
+    "back_to_search": "Volver a la búsqueda",
+    "validFrom": {
+      "label": "Válida desde",
+      "placeholder": "DD.MM.AAAA",
+      "helper": "La nueva dirección vale desde este día. También sirve un día pasado."
+    },
+    "addressValue2": {
+      "label": "c/o, piso, planta",
+      "placeholder": "p. ej. c/o García, 2.ª planta",
+      "helper": "Opcional"
+    },
+    "saved": "La mudanza está registrada.",
+    "corrected": "La dirección está corregida.",
+    "cancelled": "La mudanza está anulada.",
+    "error": {
+      "invalid": "Los datos están incompletos. Revísalos otra vez.",
+      "permission": "No puedes cambiar esta dirección.",
+      "notFound": "No se encontró esta dirección. Elígela otra vez o introdúcela a mano.",
+      "conflict": "La dirección se acaba de cambiar en otro sitio. Recarga la vista e inténtalo de nuevo.",
+      "exists": "Esta mudanza ya está registrada.",
+      "unknown": "No ha funcionado. Inténtalo más tarde."
+    },
+    "validation": {
+      "validFrom_required": "Indica desde cuándo vale la nueva dirección.",
+      "validFrom_invalid": "No es una fecha válida.",
+      "street_required": "Indica la calle.",
+      "zip_required": "Indica el código postal.",
+      "city_required": "Indica la localidad.",
+      "zip_ch": "Un código postal suizo tiene cuatro cifras."
+    }
   }
 }

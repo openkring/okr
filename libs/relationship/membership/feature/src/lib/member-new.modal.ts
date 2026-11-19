@@ -32,6 +32,7 @@ import { dismissOverlay } from '@okr/shared-util-angular';
           [allTags]="allTags()"
           [tenantId]="tenantId()"
           [readOnly]="false"
+          [showPostalInputs]="canWritePostal()"
           [membershipCategories]="selectedMembershipCategory()"
           [i18n]="i18n"
           (selectClicked)="selectOrg()"
@@ -59,6 +60,8 @@ export class MemberNewModal {
   public tenantId = input.required<string>();
   public genders = input.required<CategoryListModel>();
   public org = input.required<OrgModel>();
+  /** whether the postal fields are offered (owner ∨ privileged ∨ memberAdmin, spec 1.164 §6.5) */
+  public canWritePostal = input(true);
 
   // signals
   protected formDirty = signal(false);

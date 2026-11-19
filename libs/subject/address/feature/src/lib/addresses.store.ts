@@ -12,8 +12,8 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { STORAGE } from '@okr/shared-config';
 import { AppStore } from '@okr/shared-feature';
 import { AddressCollection, AddressDirectoryCollection, AddressDirectoryModel, AddressModel, AddressModelName, CategoryListModel, DbQuery, DefaultLanguage, DocumentModel, getAddressDirectoryKey, isSensitiveScalarChannel, OrgModel, PersonModel, TaskModel } from '@okr/shared-models';
-import { AlertService, downloadToBrowser } from '@okr/shared-util-angular';
-import { chipMatches, getAvatarInfoForCurrentUser, getModelAndKey, getSystemQuery, nameMatches, pickCurrentFavoritePostal, warn } from '@okr/shared-util-core';
+import { AlertService, downloadToBrowser, showToast } from '@okr/shared-util-angular';
+import { chipMatches, DateFormat, getAvatarInfoForCurrentUser, getModelAndKey, getSystemQuery, getTodayStr, nameMatches, pickCurrentFavoritePostal, residenceStatus, warn } from '@okr/shared-util-core';
 import { Languages } from '@okr/shared-categories';
 import { MapViewModal } from '@okr/shared-ui';
 
@@ -23,7 +23,7 @@ import { FolderService } from '@okr/content-folder-data-access';
 
 import { AddressService, GeocodingService } from '@okr/subject-address-data-access';
 import { TaskService } from '@okr/project-task-data-access';
-import { ADDRESSES_I18N_KEYS, browseUrl, copyAddress, directoryEntryToAddress, getWebUrl, isAddress, loginEmailDivergence, openExternalUrl, readsAddressVault, shouldBecomeFavorite, stringifyPostalAddress } from '@okr/subject-address-util';
+import { ADDRESSES_I18N_KEYS, browseUrl, canWritePostal, copyAddress, directoryEntryToAddress, getWebUrl, hiddenInAccordion, isAddress, loginEmailDivergence, openExternalUrl, POSTAL_MOVE_ERROR_I18N, PostalMoveMode, postalMoveErrorKind, predecessorOf, readsAddressVault, shouldBecomeFavorite, stringifyPostalAddress } from '@okr/subject-address-util';
 
 import { AddressEditModal } from './address-edit.modal';
 import { DEFAULT_MIMETYPES } from '@okr/shared-constants';
@@ -125,8 +125,17 @@ export const AddressStore = signalStore(
     const contactAddresses = computed(() =>
       store.addressesResource.value()?.filter((a: AddressModel) => !isSensitiveScalarChannel(a.addressChannel))
     );
+    // spec 1.164 §6.1: the accordion shows current and announced postal rows; past and archived ones
+    // (cancelled moves, removed addresses) belong to the privileged history, not to the member view
+    const accordionAddresses = computed(() =>
+      contactAddresses()?.filter((a: AddressModel) => !hiddenInAccordion(a, getTodayStr(DateFormat.StoreDate))) ?? []
+    );
     return {
       addresses: contactAddresses,
+      accordionAddresses,
+      postalRows: computed(() => accordionAddresses().filter((a: AddressModel) => a.addressChannel === 'postal')),
+      /** owner, privileged or memberAdmin: the only ones the rules and the move callables let write postal rows */
+      canWritePostal: computed(() => canWritePostal(store.appStore.currentUser(), store.parentKey())),
       filteredAddresses: computed(() =>
         contactAddresses()?.filter((address: AddressModel) =>
           nameMatches(address.index, store.searchTerm()) &&
@@ -163,6 +172,13 @@ export const AddressStore = signalStore(
 
       getChannels(): CategoryListModel {
         return store.appStore.getCategory('address_channel');
+      },
+
+      /** The channels a new address may have: without postal rights, postal is not offered at all. */
+      getWritableChannels(): CategoryListModel {
+        const channels = this.getChannels();
+        if (store.canWritePostal()) return channels;
+        return { ...channels, items: channels.items.filter((item) => item.name !== 'postal') } as CategoryListModel;
       },
 
       getUsages(): CategoryListModel {
@@ -206,7 +222,7 @@ export const AddressStore = signalStore(
         const newAddress = new AddressModel(store.tenantId());
         newAddress.parentKey = store.parentKey();
         newAddress.addressUsage = store.parentKey().startsWith('org') ? 'work' : 'home';
-        await this.edit(newAddress, readOnly);
+        await this.edit(newAddress, readOnly, this.getWritableChannels());
       },
 
       /**
@@ -214,14 +230,15 @@ export const AddressStore = signalStore(
        * @param address 
        * @param readOnly 
        */
-       async edit(address: AddressModel, readOnly = true): Promise<void> {
+       async edit(address: AddressModel, readOnly = true, channels?: CategoryListModel): Promise<void> {
+        const addressChannels = channels ?? this.getChannels();
         const modal = await store.modalController.create({
         component: AddressEditModal,
         componentProps: {
             address,
             currentUser: store.currentUser(),
             tagModel: 'address',
-            addressChannels: this.getChannels(),
+            addressChannels,
             addressUsages: this.getUsages(),
             tenantId: store.tenantId(),
             readOnly
@@ -299,11 +316,62 @@ export const AddressStore = signalStore(
 
       async delete(address?: AddressModel, readOnly = true): Promise<void> {
         if (!address || readOnly) return;
-        const result = await store.alertService.confirm(store.i18n.delete_confirm(), true);
+        if (address.addressChannel === 'postal' && !store.canWritePostal()) return;
+        const message = address.addressChannel === 'postal' ? store.i18n.move_remove_confirm() : store.i18n.delete_confirm();
+        const result = await store.alertService.confirm(message, true);
         if (result === true) {
           await store.addressService.delete(address, store.currentUser());
           this.reload();
           store.appStore.watchDirectoryEntry(address.parentKey);
+        }
+      },
+
+      /******************************* postal moves (spec 1.164) *************************************** */
+      /** «Ich ziehe um» / «Wir ziehen um» / «Umzug erfassen» on the current row. */
+      async move(address: AddressModel): Promise<void> {
+        await this.openMoveModal('move', address);
+      },
+
+      /** «Adresse korrigieren»: relink the same row, dates unchanged. */
+      async correct(address: AddressModel): Promise<void> {
+        await this.openMoveModal('correct', address);
+      },
+
+      /** «Umzug bearbeiten» on an announced row: cancelled and recorded again from the row it closes. */
+      async editMove(address: AddressModel): Promise<void> {
+        const predecessor = predecessorOf(address, store.addresses() ?? []);
+        await this.openMoveModal('edit-move', address, predecessor?.okey ?? '');
+      },
+
+      /** «Umzug absagen»: archives the announced row and reopens the one it would have closed. */
+      async cancelMove(address: AddressModel): Promise<void> {
+        if (!store.canWritePostal() || residenceStatus(address) !== 'future') return;
+        const confirmed = await store.alertService.confirm(store.i18n.move_cancel_confirm(), true);
+        if (confirmed !== true) return;
+        try {
+          await store.addressService.cancelMove(address.okey);
+          await showToast(store.toastController, store.i18n.move_cancelled());
+        } catch (error) {
+          warn(`AddressStore.cancelMove: ${(error as Error)?.message ?? error}`);
+          await showToast(store.toastController, store.i18n[POSTAL_MOVE_ERROR_I18N[postalMoveErrorKind(error)]]());
+        }
+        this.reload();
+        store.appStore.watchDirectoryEntry(address.parentKey);
+      },
+
+      async openMoveModal(mode: PostalMoveMode, residence: AddressModel, predecessorKey = ''): Promise<void> {
+        if (!store.canWritePostal()) return;
+        // dynamic: the modal pulls in the move form; most address views never open it
+        const { PostalMoveModal } = await import('./postal-move.modal');
+        const modal = await store.modalController.create({
+          component: PostalMoveModal,
+          componentProps: { mode, parentKey: residence.parentKey, residence, predecessorKey },
+        });
+        await modal.present();
+        const { role } = await modal.onWillDismiss();
+        if (role === 'confirm') {
+          this.reload();
+          store.appStore.watchDirectoryEntry(residence.parentKey);
         }
       },
 

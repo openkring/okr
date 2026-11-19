@@ -7,3 +7,5 @@ export * from './lib/favorite-icon.pipe';
 export * from './lib/format-address.pipe';
 export * from './lib/iban.validations';
 export * from './lib/phone.validations';
+export * from './lib/postal-move.util';
+export * from './lib/postal-move.validations';

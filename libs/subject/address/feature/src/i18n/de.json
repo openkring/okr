@@ -337,5 +337,60 @@
   "isCc": {
     "label": "CC",
     "helper": "CC-Adresse (z.B. Eltern)"
+  },
+  "move": {
+    "own": "Ich ziehe um",
+    "org": "Wir ziehen um",
+    "other": "Umzug erfassen",
+    "correct": "Adresse korrigieren",
+    "remove": "Adresse entfernen",
+    "remove_confirm": "Möchtest du diese Adresse entfernen?",
+    "edit": "Umzug bearbeiten",
+    "cancel": "Umzug absagen",
+    "cancel_confirm": "Möchtest du diesen Umzug absagen? Die bisherige Adresse bleibt dann bestehen.",
+    "from": "ab",
+    "until": "bis",
+    "search": {
+      "label": "Adresse suchen",
+      "placeholder": "z.B. Bahnhofstrasse 3 Stäfa",
+      "helper": "Strasse, Hausnummer und Ort, mindestens drei Zeichen.",
+      "attribution": "© swisstopo",
+      "searching": "Suche läuft …",
+      "empty": "Keine passende Adresse gefunden.",
+      "error": "Die Suche geht gerade nicht. Gib die Adresse bitte von Hand ein.",
+      "choose": "Wähle die Adresse aus der Liste.",
+      "change": "Andere Adresse wählen"
+    },
+    "not_found": "Adresse nicht gefunden",
+    "back_to_search": "Zurück zur Suche",
+    "validFrom": {
+      "label": "Gültig ab",
+      "placeholder": "TT.MM.JJJJ",
+      "helper": "Ab diesem Tag gilt die neue Adresse. Ein vergangener Tag geht auch."
+    },
+    "addressValue2": {
+      "label": "c/o, Wohnung, Stockwerk",
+      "placeholder": "z.B. c/o Muster, 2. Stock",
+      "helper": "Freiwillig"
+    },
+    "saved": "Der Umzug ist erfasst.",
+    "corrected": "Die Adresse ist korrigiert.",
+    "cancelled": "Der Umzug ist abgesagt.",
+    "error": {
+      "invalid": "Die Angaben sind nicht vollständig. Prüf sie bitte noch einmal.",
+      "permission": "Diese Adresse darfst du nicht ändern.",
+      "notFound": "Diese Adresse wurde nicht gefunden. Wähle sie bitte noch einmal aus oder gib sie von Hand ein.",
+      "conflict": "Die Adresse wurde gerade an einem anderen Ort geändert. Lade die Ansicht neu und versuche es noch einmal.",
+      "exists": "Dieser Umzug ist schon erfasst.",
+      "unknown": "Das hat nicht geklappt. Versuche es bitte später noch einmal."
+    },
+    "validation": {
+      "validFrom_required": "Gib bitte an, ab wann die neue Adresse gilt.",
+      "validFrom_invalid": "Das ist kein gültiges Datum.",
+      "street_required": "Gib bitte die Strasse an.",
+      "zip_required": "Gib bitte die Postleitzahl an.",
+      "city_required": "Gib bitte den Ort an.",
+      "zip_ch": "Eine Schweizer Postleitzahl hat vier Ziffern."
+    }
   }
 }

@@ -333,5 +333,60 @@
   "isCc": {
     "label": "CC",
     "helper": "Adresse CC (par ex. parents)"
+  },
+  "move": {
+    "own": "Je déménage",
+    "org": "Nous déménageons",
+    "other": "Saisir un déménagement",
+    "correct": "Corriger l'adresse",
+    "remove": "Supprimer l'adresse",
+    "remove_confirm": "Veux-tu supprimer cette adresse ?",
+    "edit": "Modifier le déménagement",
+    "cancel": "Annuler le déménagement",
+    "cancel_confirm": "Veux-tu annuler ce déménagement ? L'adresse actuelle reste alors valable.",
+    "from": "dès le",
+    "until": "jusqu'au",
+    "search": {
+      "label": "Chercher une adresse",
+      "placeholder": "p. ex. Bahnhofstrasse 3 Stäfa",
+      "helper": "Rue, numéro et localité, au moins trois caractères.",
+      "attribution": "© swisstopo",
+      "searching": "Recherche en cours …",
+      "empty": "Aucune adresse correspondante.",
+      "error": "La recherche ne fonctionne pas pour le moment. Saisis l'adresse à la main.",
+      "choose": "Choisis l'adresse dans la liste.",
+      "change": "Choisir une autre adresse"
+    },
+    "not_found": "Adresse introuvable",
+    "back_to_search": "Retour à la recherche",
+    "validFrom": {
+      "label": "Valable dès",
+      "placeholder": "JJ.MM.AAAA",
+      "helper": "La nouvelle adresse s'applique dès ce jour. Un jour passé est aussi possible."
+    },
+    "addressValue2": {
+      "label": "c/o, appartement, étage",
+      "placeholder": "p. ex. c/o Dupont, 2e étage",
+      "helper": "Facultatif"
+    },
+    "saved": "Le déménagement est saisi.",
+    "corrected": "L'adresse est corrigée.",
+    "cancelled": "Le déménagement est annulé.",
+    "error": {
+      "invalid": "Les indications sont incomplètes. Vérifie-les encore une fois.",
+      "permission": "Tu ne peux pas modifier cette adresse.",
+      "notFound": "Cette adresse est introuvable. Choisis-la à nouveau ou saisis-la à la main.",
+      "conflict": "L'adresse vient d'être modifiée ailleurs. Recharge la vue et réessaie.",
+      "exists": "Ce déménagement est déjà saisi.",
+      "unknown": "Cela n'a pas marché. Réessaie plus tard."
+    },
+    "validation": {
+      "validFrom_required": "Indique dès quand la nouvelle adresse s'applique.",
+      "validFrom_invalid": "Ce n'est pas une date valable.",
+      "street_required": "Indique la rue.",
+      "zip_required": "Indique le code postal.",
+      "city_required": "Indique la localité.",
+      "zip_ch": "Un code postal suisse a quatre chiffres."
+    }
   }
 }

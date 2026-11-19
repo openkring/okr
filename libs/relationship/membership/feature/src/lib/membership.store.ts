@@ -24,7 +24,7 @@ import { convertFormToNewPerson, convertMemberAndOrgToMembership, convertNewMemb
 import { AddressService } from '@okr/subject-address-data-access';
 import { PersonService } from '@okr/subject-person-data-access';
 import { PERSON_EDIT_MODAL } from '@okr/subject-person-ui';
-import { browseUrl } from '@okr/subject-address-util';
+import { browseUrl, canWritePostal } from '@okr/subject-address-util';
 import type { MemberInvoiceService } from '@okr/finance-invoice-feature';
 import { VcardExportService, VcardExportTarget } from '@okr/vcard-feature';
 
@@ -616,7 +616,9 @@ export const _MembershipStore = signalStore(
             tagModel: 'membership',
             tenantId,
             genders: store.genders(),
-            org: store.org() 
+            org: store.org(),
+            // a group admin may create the person, but not write a postal row for it (spec 1.164 §6.5)
+            canWritePostal: canWritePostal(store.currentUser(), '')
           }
         });
         modal.present();
@@ -646,7 +648,7 @@ export const _MembershipStore = signalStore(
           if (newMember.web.length > 0) {
             this.saveAddress(convertNewMemberFormToWebAddress(newMember, tenantId), avatarKey);
           }
-          if (newMember.city.length > 0) {
+          if (newMember.city.length > 0 && canWritePostal(store.currentUser(), avatarKey)) {
             this.saveAddress(convertNewMemberFormToPostalAddress(newMember, tenantId), avatarKey);
           }
           if (newMember.orgKey.length > 0 && newMember.category.length > 0) {
