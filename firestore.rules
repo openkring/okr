@@ -668,6 +668,9 @@ service cloud.firestore {
     function workEntryWriteOk(d, pk) {
       let a = get(/databases/$(database)/documents/trainer-agreements/$(d.agreementKey)).data;
       return pk != ''
+             && d.keys().hasOnly(['tenants', 'accountingTenantId', 'personKey', 'agreementKey', 'date',
+                                  'calEventKey', 'label', 'serviceKey', 'quantity', 'state', 'invoiceKey',
+                                  'isArchived'])
              && d.personKey == pk
              && a.personKey == pk
              && a.selfEmployedConfirmed == true
@@ -682,17 +685,24 @@ service cloud.firestore {
              && d.accountingTenantId == a.accountingTenantId;
     }
     // Update and delete need the STORED entry to be the caller's and still open: an invoiced entry
-    // is frozen, even a write that sets it back to open.
+    // is frozen, even a write that sets it back to open. An update keeps the entry on its agreement,
+    // tenants and books.
     function workEntryStoredOpenOwn(pk) {
       return pk != '' && resource.data.personKey == pk && resource.data.state == 'open';
     }
     function workEntryUpdateOk() {
       let pk = callerPersonKey();
-      return workEntryStoredOpenOwn(pk) && workEntryWriteOk(request.resource.data, pk);
+      return workEntryStoredOpenOwn(pk)
+             && !request.resource.data.diff(resource.data).affectedKeys()
+                   .hasAny(['agreementKey', 'tenants', 'accountingTenantId'])
+             && workEntryWriteOk(request.resource.data, pk);
     }
+    // Own tenants only: an agreement's tenants become its entries' tenants, so a treasurer may not
+    // widen one to a foreign tenant (self-detach stays possible).
     match /trainer-agreements/{id} {
       allow read: if trainerBillingRead();
-      allow create, update: if isTreasurerOrAdmin() && tenantCreateOrDetach();
+      allow create: if isTreasurerOrAdmin() && tenantCreateOwnOnly();
+      allow update: if isTreasurerOrAdmin() && tenantUpdateNoForeignAdd();
       allow delete: if false;
     }
     // Doc id = personKey: one profile per person across all clubs; `tenants` (the clubs with an

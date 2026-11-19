@@ -338,6 +338,7 @@ seed("trainer-agreements/taEnded",    tr_agreement(validTo="20260331"))
 seed("trainer-agreements/taInactive", tr_agreement(selfEmployedConfirmed=False))
 seed("trainer-agreements/taArchived", tr_agreement(isArchived=True))
 seed("trainer-agreements/taOther",    tr_agreement(person="pA"))
+seed("trainer-agreements/taA2",       tr_agreement())  # a second valid agreement of pTr
 def work_entry(**extra):
     d = {"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1", "personKey": "pTr",
          "agreementKey": "taA", "date": "20260615", "calEventKey": "", "label": "Bootshaus",
@@ -351,6 +352,8 @@ seed("work-entries/weInv",  work_entry(state="invoiced", invoiceKey="tiA"))
 seed("trainer-profiles/pTr", {"tenants": ["t1"], "isArchived": False, "companyName": "Jucker Sport",
                               "contactName": "Tr", "numberTemplate": "{yy}{mm}", "nextNumber": 3,
                               "paymentTermDays": 30, "showQrSlip": True})
+# a profile the server has not yet attached to any tenant
+seed("trainer-profiles/pTrNew", {"tenants": [], "isArchived": False, "companyName": "", "nextNumber": 1})
 seed("trainer-invoices/tiA", {"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1",
                               "personKey": "pTr", "agreementKey": "taA", "month": "2026-05",
                               "invoiceNo": "2605", "total": 9000, "state": "sent"})
@@ -1291,6 +1294,8 @@ single_cases = [
     ("trainer CREATE trainer-agreements for himself -> DENY", False, POST, "trainer-agreements?documentId=taNew1", TR, body(tr_agreement()), None),
     ("treasurer T CREATE trainer-agreements -> ALLOW", True, POST, "trainer-agreements?documentId=taNew2", T, body(tr_agreement()), None),
     ("treasurer T CREATE trainer-agreements tenants=[t2] -> DENY", False, POST, "trainer-agreements?documentId=taNew3", T, body(tr_agreement(tenants=["t2"])), None),
+    ("treasurer T PATCH trainer-agreements/taA tenants=[t1,t2] -> DENY (foreign tenant added)", False, PATCH, "trainer-agreements/taA", T, body({"tenants": ["t1", "t2"]}), ["tenants"]),
+    ("treasurer T CREATE trainer-agreements tenants=[t1,t2] -> DENY (foreign tenant)", False, POST, "trainer-agreements?documentId=taNew4", T, body(tr_agreement(tenants=["t1", "t2"])), None),
     ("treasurer T DELETE trainer-agreements/taA -> DENY (archive)", False, DELETE, "trainer-agreements/taA", T, None, None),
     # work entries: read like agreements
     ("trainer GET work-entries/weOpen -> ALLOW", True, GET, "work-entries/weOpen", TR, None, None),
@@ -1315,6 +1320,7 @@ single_cases = [
     ("trainer POST work-entries on pA's agreement -> DENY", False, POST, "work-entries?documentId=weX11", TR, body(work_entry(agreementKey="taOther")), None),
     ("trainer POST work-entries tenants=[t2] -> DENY (not the agreement's)", False, POST, "work-entries?documentId=weX12", TR, body(work_entry(tenants=["t2"])), None),
     ("trainer POST work-entries other books -> DENY (not the agreement's)", False, POST, "work-entries?documentId=weX13", TR, body(work_entry(accountingTenantId="gss")), None),
+    ("trainer POST work-entries extra key amount -> DENY", False, POST, "work-entries?documentId=weX16", TR, body(work_entry(amount=9000)), None),
     ("member A POST work-entries on taA -> DENY", False, POST, "work-entries?documentId=weX14", A, body(work_entry(personKey="pA")), None),
     ("treasurer T POST work-entries for pTr -> DENY", False, POST, "work-entries?documentId=weX15", T, body(work_entry()), None),
     # work entries: update — owner, stored and new state open, same agreement checks
@@ -1325,6 +1331,8 @@ single_cases = [
     ("trainer PATCH weEdit date before validFrom -> DENY", False, PATCH, "work-entries/weEdit", TR, body({"date": "20251231"}), ["date"]),
     ("trainer PATCH weEdit unknown serviceKey -> DENY", False, PATCH, "work-entries/weEdit", TR, body({"serviceKey": "nope"}), ["serviceKey"]),
     ("trainer PATCH weEdit tenants=[t2] -> DENY", False, PATCH, "work-entries/weEdit", TR, body({"tenants": ["t2"]}), ["tenants"]),
+    ("trainer PATCH weEdit agreementKey taA2 -> DENY (moved to another agreement)", False, PATCH, "work-entries/weEdit", TR, body({"agreementKey": "taA2"}), ["agreementKey"]),
+    ("trainer PATCH weEdit extra key amount -> DENY", False, PATCH, "work-entries/weEdit", TR, body({"amount": 9000}), ["amount"]),
     ("member A PATCH weEdit quantity -> DENY", False, PATCH, "work-entries/weEdit", A, body({"quantity": 3}), ["quantity"]),
     ("treasurer T PATCH weEdit quantity -> DENY", False, PATCH, "work-entries/weEdit", T, body({"quantity": 3}), ["quantity"]),
     ("trainer PATCH weInv quantity -> DENY", False, PATCH, "work-entries/weInv", TR, body({"quantity": 9}), ["quantity"]),
@@ -1340,6 +1348,8 @@ single_cases = [
     ("member A GET trainer-profiles/pTr -> DENY", False, GET, "trainer-profiles/pTr", A, None, None),
     ("treasurer T GET trainer-profiles/pTr -> ALLOW", True, GET, "trainer-profiles/pTr", T, None, None),
     ("privileged P GET trainer-profiles/pTr -> ALLOW", True, GET, "trainer-profiles/pTr", P, None, None),
+    ("treasurer T GET trainer-profiles/pTrNew (tenants []) -> DENY", False, GET, "trainer-profiles/pTrNew", T, None, None),
+    ("privileged P GET trainer-profiles/pTrNew (tenants []) -> DENY", False, GET, "trainer-profiles/pTrNew", P, None, None),
     ("admin B (t2) GET trainer-profiles/pTr -> DENY (foreign tenant)", False, GET, "trainer-profiles/pTr", B, None, None),
     ("trainer PATCH trainer-profiles/pTr nextNumber -> DENY", False, PATCH, "trainer-profiles/pTr", TR, body({"nextNumber": 1}), ["nextNumber"]),
     ("trainer PATCH trainer-profiles/pTr tenants -> DENY", False, PATCH, "trainer-profiles/pTr", TR, body({"tenants": ["t1", "t2"]}), ["tenants"]),
