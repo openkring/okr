@@ -74,7 +74,7 @@
       "transfer": "Lateral entrants",
       "audienceHelper": "Only applicants of these groups can choose the course when they apply.",
       "isAnnounced": "Announced on the website",
-      "isAnnouncedHelper": "The course then appears in the application form. You need at least one group for this.",
+      "isAnnouncedHelper": "The course then appears in the application form and on the course pages of the website. The names of its dates are publicly visible there. You need at least one group for this.",
       "places": {
         "label": "Places (0 = unlimited)",
         "placeholder": "0",

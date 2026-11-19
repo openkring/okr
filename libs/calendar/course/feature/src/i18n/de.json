@@ -74,7 +74,7 @@
       "transfer": "Quereinsteiger",
       "audienceHelper": "Nur Bewerbende dieser Gruppen können den Kurs bei der Anmeldung wählen.",
       "isAnnounced": "Auf der Website angekündigt",
-      "isAnnouncedHelper": "Der Kurs erscheint dann in der Anmeldung. Du brauchst dafür mindestens eine Gruppe.",
+      "isAnnouncedHelper": "Der Kurs erscheint dann in der Anmeldung und auf den Kursseiten der Website. Die Namen seiner Termine sind dort öffentlich sichtbar. Du brauchst dafür mindestens eine Gruppe.",
       "places": {
         "label": "Plätze (0 = unbeschränkt)",
         "placeholder": "0",

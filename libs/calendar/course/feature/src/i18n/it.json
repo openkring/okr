@@ -74,7 +74,7 @@
       "transfer": "Ingressi laterali",
       "audienceHelper": "Solo le persone di questi gruppi possono scegliere il corso durante l’iscrizione.",
       "isAnnounced": "Annunciato sul sito web",
-      "isAnnouncedHelper": "Il corso appare quindi nel modulo di iscrizione. Ti serve almeno un gruppo.",
+      "isAnnouncedHelper": "Il corso appare quindi nel modulo di iscrizione e nelle pagine dei corsi del sito web. I nomi delle sue date vi sono visibili pubblicamente. Ti serve almeno un gruppo.",
       "places": {
         "label": "Posti (0 = illimitati)",
         "placeholder": "0",
