@@ -430,7 +430,12 @@
     "empty_text": {
       "label": "Text when no course is announced",
       "helper": "If this field is left empty, the section is hidden as long as no course is announced."
-    }
+    },
+    "register": "Register now",
+    "full": "fully booked",
+    "places": "{n} places left",
+    "places_one": "1 place left",
+    "cancelled": "cancelled"
   },
   "form": {
     "title": "Section",

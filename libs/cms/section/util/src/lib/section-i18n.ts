@@ -295,6 +295,11 @@ export const SECTION_I18N_KEYS = {
   course_audience_transfer:                 PFX + 'course.audience.transfer',
   course_empty_text_label:                  PFX + 'course.empty_text.label',
   course_empty_text_helper:                 PFX + 'course.empty_text.helper',
+  course_register:                          PFX + 'course.register',
+  course_full:                              PFX + 'course.full',
+  course_places:                            PFX + 'course.places',
+  course_places_one:                        PFX + 'course.places_one',
+  course_cancelled:                         PFX + 'course.cancelled',
 
   events_label:                             PFX + 'events.label',
   events_empty:                             PFX + 'events.empty',

@@ -430,7 +430,12 @@
     "empty_text": {
       "label": "Testo quando non è annunciato alcun corso",
       "helper": "Se lasci il campo vuoto, la sezione viene nascosta finché non è annunciato alcun corso."
-    }
+    },
+    "register": "Iscriviti ora",
+    "full": "al completo",
+    "places": "{n} posti liberi",
+    "places_one": "1 posto libero",
+    "cancelled": "annullato"
   },
   "form": {
     "title": "Sezione",

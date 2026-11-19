@@ -21,6 +21,7 @@ import { TableSectionComponent } from './table-section';
 import { TrackerSectionComponent } from './tracker-section';
 import { VideoSectionComponent } from './video-section';
 import { EventsSectionComponent } from './events-section';
+import { CourseSection } from './course-section';
 import { InvitationsSectionComponent } from './invitations-section';
 import { TasksSectionComponent } from './tasks-section';
 import { ActivitiesSectionComponent } from './activities-section';
@@ -61,7 +62,7 @@ import { SectionStore } from './section.store';
   imports: [
     // Eagerly loaded — lightweight sections, needed immediately
     AccordionSectionComponent,
-    ArticleSectionComponent, MissingSectionComponent, TableSectionComponent, VideoSectionComponent, EventsSectionComponent,
+    ArticleSectionComponent, MissingSectionComponent, TableSectionComponent, VideoSectionComponent, EventsSectionComponent, CourseSection,
     IframeSectionComponent, MapSectionComponent, AlbumSectionComponent, ButtonSectionComponent,
     PeopleSectionComponent, ResponsibilitySectionComponent, TrackerSectionComponent, HeroSectionComponent,
     InvitationsSectionComponent, TasksSectionComponent, ActivitiesSectionComponent, MessagesSectionComponent, NoticesSectionComponent, NewsSectionComponent, OrgchartSectionComponent, RagSectionComponent, ContextDiagramSectionComponent, MemberAgeSectionComponent, MemberCatSectionComponent, SankeySectionComponent, SpiderSectionComponent, TocSectionComponent, TestimonialSectionComponent, TilesSectionComponent, TimelineSectionComponent, AdventSectionComponent,
@@ -108,6 +109,9 @@ import { SectionStore } from './section.store';
             } @error {
               <okr-defer-error />
             }
+          }
+          @case('course') {
+            <okr-course-section [section]="section" [editMode]="editMode()" />
           }
           @case('events') {
             <okr-events-section [section]="section" [editMode]="editMode()" />
