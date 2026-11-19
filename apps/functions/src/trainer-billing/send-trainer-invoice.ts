@@ -18,7 +18,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import type { Firestore } from 'firebase-admin/firestore';
 
 import {
-  AppConfigCollection, BillCollection, FinanceDocumentCollection, TrainerInvoiceCollection, TrainerInvoiceState, TrainerProfileCollection, TrainerProfileModel,
+  AppConfigCollection, BillCollection, TrainerAgreementCollection, TrainerAgreementModel, FinanceDocumentCollection, TrainerInvoiceCollection, TrainerInvoiceState, TrainerProfileCollection, TrainerProfileModel,
   WorkEntryCollection, WorkEntryModel,
 } from '@okr/shared-models';
 import {
@@ -217,6 +217,7 @@ export async function sendInvoice(db: Firestore, uid: string, data: { agreementK
   const documentKey = `trainer-invoice-${invoiceKey}`;
   const docRef = db.collection(FinanceDocumentCollection).doc(documentKey);
   const profileRef = db.collection(TrainerProfileCollection).doc(ctx.callerPersonKey);
+  const agreementRef = db.collection(TrainerAgreementCollection).doc(agreementKey);
   const billRef = pre.billKey ? db.collection(BillCollection).doc(pre.billKey) : undefined;
   let previousPath = '';
   try {
@@ -224,6 +225,7 @@ export async function sendInvoice(db: Firestore, uid: string, data: { agreementK
       // reads (all before the first write)
       const invoiceSnap = await tx.get(invoiceRef);
       const profileSnap = await tx.get(profileRef);
+      const agreementSnap = await tx.get(agreementRef);
       const entrySnap = await tx.get(db.collection(WorkEntryCollection).where('agreementKey', '==', agreementKey));
       const ownSnap = await tx.get(ownInvoices);
       const docSnap = await tx.get(docRef);
@@ -231,11 +233,15 @@ export async function sendInvoice(db: Firestore, uid: string, data: { agreementK
 
       const profile = profileSnap.exists ? ({ ...profileSnap.data(), okey: profileSnap.id } as TrainerProfileModel) : undefined;
       if (counterOf(profile) !== counterOf(ctx.profile)) throw refuse({ refusal: 'concurrent-send' });
-      const txCtx: InvoiceContext = { ...ctx, profile, entries: entrySnap.docs.map((d) => ({ ...d.data(), okey: d.id }) as WorkEntryModel) };
+      // priced from the agreement as it is now: a rate, service or validity change since pricing alters the fingerprint
+      const agreement = agreementSnap.exists ? ({ ...agreementSnap.data(), okey: agreementSnap.id } as TrainerAgreementModel) : undefined;
+      const txCtx: InvoiceContext = { ...ctx, agreement, profile, entries: entrySnap.docs.map((d) => ({ ...d.data(), okey: d.id }) as WorkEntryModel) };
       const existing = invoiceSnap.data() as ExistingInvoice;
       const plan = planSend(txCtx, existing, numberTakenIn(ownSnap.docs, invoiceKey, candidateInvoiceNo(profile, month, existing)));
       if ('refusal' in plan) throw refuse(plan);
       if (planFingerprint(plan) !== planFingerprint(pre)) throw refuse({ refusal: 'concurrent-send' });
+      // the books were checked and the PDF addressed for the books read before rendering
+      if (String(agreement?.accountingTenantId ?? '') !== books) throw refuse({ refusal: 'concurrent-send' });
       // a bill under this key that has left draft is live in the books: never reset it to a draft
       const bill = billSnap?.data();
       if (bill && bill['state'] !== 'draft') throw refuse({ refusal: 'already-sent' });
@@ -258,14 +264,16 @@ export async function sendInvoice(db: Firestore, uid: string, data: { agreementK
         documentKey, billKey: plan.billKey, state: 'sent', rejectedReason: '', rejectedAt: '', isArchived: false,
       }));
       for (const key of plan.entryKeys) tx.update(db.collection(WorkEntryCollection).doc(key), { state: 'invoiced', invoiceKey });
-      if (plan.usesCounter) tx.update(profileRef, { nextNumber: plan.nextNumber });
+      // always written (unchanged without {n}): two sends of the same trainer then conflict on the profile and
+      // serialise, so the duplicate-number check of the second one sees the first one's invoice
+      tx.update(profileRef, { nextNumber: plan.nextNumber });
       if (billRef) {
         const senderName = profile?.companyName || ctx.trainerName;
         writeDraftBillTx(tx, db, {
           billKey: plan.billKey, tenantId: ctx.tenantId, accountingTenantId: books,
           header: {
             billId: plan.invoiceNo, title: `Rechnung ${monthTitleDe(month)} ${senderName}`, billDate: plan.invoiceDate, dueDate: plan.dueDate,
-            vendor: ctx.agreement?.person ?? null, notes: '', paymentReference: '', creditorIban: ctx.payee.iban,
+            vendor: txCtx.agreement?.person ?? null, notes: '', paymentReference: '', creditorIban: ctx.payee.iban,
           },
           lines: plan.billLines,
           attachments: [documentKey],

@@ -665,6 +665,12 @@ service cloud.firestore {
     // active (selfEmployedConfirmed, not archived) and valid on `d.date` (StoreDate strings compare
     // lexically), and in the agreement's tenants and books. The agreement get() is bound once
     // (rules-1000-expression-limit); a missing agreement makes it error, i.e. deny.
+    // The month of an entry is still open: no trainer invoice for agreement × month, or a rejected one
+    // (key = trainerInvoiceKey: `<agreementKey>_<YYYYMM>`). A sent month takes no new or changed entries (D5).
+    function workEntryMonthOpen(d) {
+      let inv = /databases/$(database)/documents/trainer-invoices/$(d.agreementKey + '_' + d.date[0:6]);
+      return !exists(inv) || get(inv).data.state == 'rejected';
+    }
     function workEntryWriteOk(d, pk) {
       let a = get(/databases/$(database)/documents/trainer-agreements/$(d.agreementKey)).data;
       return pk != ''
@@ -678,6 +684,7 @@ service cloud.firestore {
              && d.date is string && d.date.matches('[0-9]{8}')
              && a.validFrom <= d.date
              && (a.get('validTo', '') == '' || d.date <= a.validTo)
+             && workEntryMonthOpen(d)
              && trainerServiceLive(a.services, d.serviceKey)
              && d.state == 'open'
              && d.invoiceKey == ''

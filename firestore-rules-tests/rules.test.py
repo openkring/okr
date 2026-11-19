@@ -354,6 +354,13 @@ seed("trainer-profiles/pTr", {"tenants": ["t1"], "isArchived": False, "companyNa
                               "paymentTermDays": 30, "showQrSlip": True})
 # a profile the server has not yet attached to any tenant
 seed("trainer-profiles/pTrNew", {"tenants": [], "isArchived": False, "companyName": "", "nextNumber": 1})
+# trainer invoices under the trainerInvoiceKey format (<agreementKey>_<YYYYMM>): July sent, August rejected
+seed("trainer-invoices/taA_202607", {"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1",
+                                     "personKey": "pTr", "agreementKey": "taA", "month": "2026-07",
+                                     "invoiceNo": "2607", "total": 9000, "state": "sent"})
+seed("trainer-invoices/taA_202608", {"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1",
+                                     "personKey": "pTr", "agreementKey": "taA", "month": "2026-08",
+                                     "invoiceNo": "2608", "total": 9000, "state": "rejected"})
 seed("trainer-invoices/tiA", {"tenants": ["t1"], "isArchived": False, "accountingTenantId": "t1",
                               "personKey": "pTr", "agreementKey": "taA", "month": "2026-05",
                               "invoiceNo": "2605", "total": 9000, "state": "sent"})
@@ -1316,6 +1323,8 @@ single_cases = [
     ("trainer POST work-entries missing agreement -> DENY", False, POST, "work-entries?documentId=weX7", TR, body(work_entry(agreementKey="taNone")), None),
     ("trainer POST work-entries state invoiced -> DENY", False, POST, "work-entries?documentId=weX8", TR, body(work_entry(state="invoiced")), None),
     ("trainer POST work-entries invoiceKey set -> DENY", False, POST, "work-entries?documentId=weX9", TR, body(work_entry(invoiceKey="tiA")), None),
+    ("trainer POST work-entries in a sent month -> DENY", False, POST, "work-entries?documentId=weX17", TR, body(work_entry(date="20260710")), None),
+    ("trainer POST work-entries in a rejected month -> ALLOW", True, POST, "work-entries?documentId=weN5", TR, body(work_entry(date="20260810")), None),
     ("trainer POST work-entries for pA -> DENY", False, POST, "work-entries?documentId=weX10", TR, body(work_entry(personKey="pA")), None),
     ("trainer POST work-entries on pA's agreement -> DENY", False, POST, "work-entries?documentId=weX11", TR, body(work_entry(agreementKey="taOther")), None),
     ("trainer POST work-entries tenants=[t2] -> DENY (not the agreement's)", False, POST, "work-entries?documentId=weX12", TR, body(work_entry(tenants=["t2"])), None),
@@ -1329,6 +1338,7 @@ single_cases = [
     ("trainer PATCH weEdit invoiceKey -> DENY", False, PATCH, "work-entries/weEdit", TR, body({"invoiceKey": "tiA"}), ["invoiceKey"]),
     ("trainer PATCH weEdit personKey pA -> DENY", False, PATCH, "work-entries/weEdit", TR, body({"personKey": "pA"}), ["personKey"]),
     ("trainer PATCH weEdit date before validFrom -> DENY", False, PATCH, "work-entries/weEdit", TR, body({"date": "20251231"}), ["date"]),
+    ("trainer PATCH weEdit date into a sent month -> DENY", False, PATCH, "work-entries/weEdit", TR, body({"date": "20260715"}), ["date"]),
     ("trainer PATCH weEdit unknown serviceKey -> DENY", False, PATCH, "work-entries/weEdit", TR, body({"serviceKey": "nope"}), ["serviceKey"]),
     ("trainer PATCH weEdit tenants=[t2] -> DENY", False, PATCH, "work-entries/weEdit", TR, body({"tenants": ["t2"]}), ["tenants"]),
     ("trainer PATCH weEdit agreementKey taA2 -> DENY (moved to another agreement)", False, PATCH, "work-entries/weEdit", TR, body({"agreementKey": "taA2"}), ["agreementKey"]),
