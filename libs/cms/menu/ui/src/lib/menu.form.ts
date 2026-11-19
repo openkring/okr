@@ -8,7 +8,7 @@ import { CategorySelect, Chips, ErrorNote, Color, NotesInput, NotesInputI18n, Nu
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
-import { MenuI18n, menuItemValidations, normalizeMenuInfo, resolveStaticMenu, STATIC_MENU_COLORS, staticBulletColorCss } from '@okr/cms-menu-util';
+import { isStaticBulletColor, MenuI18n, menuItemValidations, normalizeMenuInfo, resolveStaticMenu, STATIC_MENU_COLORS, staticBulletColorCss } from '@okr/cms-menu-util';
 import type { OkrEditor } from '@okr/shared-ui-editor';
 
 @Component({
@@ -22,6 +22,7 @@ import type { OkrEditor } from '@okr/shared-ui-editor';
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px;} }
     .static-preview { display: flex; flex-direction: column; gap: 8px; padding: 0 16px 8px; }
+    .static-preview-hint { margin: 0; padding: 0 16px 8px; font-size: 13px; color: var(--ion-color-medium); }
     .strip { display: flex; flex-wrap: wrap; gap: 24px; align-items: center; padding: 12px 16px; border: 1px solid #ccc; border-radius: 4px; background: #fff; color: #222; }
     .strip.dark { background: #222; color: #fff; border-color: #222; }
     .entry { display: inline-flex; align-items: center; gap: 8px; }
@@ -172,6 +173,7 @@ import type { OkrEditor } from '@okr/shared-ui-editor';
                       </div>
                     }
                   </div>
+                  <p class="static-preview-hint">{{ i18n().static_preview_hint() }}</p>
                 </ion-col>
               </ion-row>
             }
@@ -438,7 +440,9 @@ export class MenuForm {
 
   /** A name is stored as it is; «custom» keeps a stored hex, or seeds a valid one so the value never goes stale. */
   protected onBulletColorChoice(choice: string): void {
-    if (choice === this.bulletColorChoice()) return;
+    const stored = this.formData().staticMenu?.bulletColor;
+    // Compare with what is stored, not with the resolved default: picking the shown option must clear a malformed value.
+    if (choice === 'custom' ? this.bulletColorChoice() === 'custom' && typeof stored === 'string' && isStaticBulletColor(stored) : choice === stored) return;
     this.onStaticChange('bulletColor', choice === 'custom' ? '#000000' : choice);
   }
 

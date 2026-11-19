@@ -364,6 +364,8 @@
       "active": "Active page"
     },
     "cut_warning": "Not shown (limit of the static menu)",
+    "dropped_warning": "These entries do not appear in the static menu:",
+    "preview_hint": "The preview uses the colours of the light or dark mode you have currently set.",
     "nav_label": "Main menu"
   },
   "item": {

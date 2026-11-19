@@ -364,6 +364,8 @@
       "active": "Página activa"
     },
     "cut_warning": "No se muestra (límite del menú estático)",
+    "dropped_warning": "Estas entradas no aparecen en el menú estático:",
+    "preview_hint": "La vista previa usa los colores del modo claro u oscuro que tienes configurado ahora.",
     "nav_label": "Menú principal"
   },
   "item": {

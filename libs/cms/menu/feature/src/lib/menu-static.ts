@@ -25,8 +25,8 @@ import { MenuStore } from './menu.store';
  * A three-column grid: bullet, label, and (with `horizontal` children) the children of a `sub` row.
  * Column 3 therefore starts at one x for every row. Every cell names its column and leaves the row to
  * auto-placement, so a cell whose column lies before the previous one starts a new line; `vertical`
- * children rely on this: each takes columns 2–3 of its own line, column 1 stays empty. With `bulletShape: 'none'` the bullet column is
- * not rendered and the grid has two columns. A `divider` is an empty line of half a row.
+ * children rely on this: each takes columns 2–3 of its own line, column 1 stays empty. With
+ * `bulletShape: 'none'` the bullet column is not rendered and the grid has two columns. A `divider` is an empty line of half a row.
  *
  * The block's height varies with its rows, so a `ResizeObserver` on the inner `div.static` reports it
  * to `MenuLayout.setStaticHeight`, which offsets the outlet by it plus the safe area. It observes the
@@ -34,8 +34,9 @@ import { MenuStore } from './menu.store';
  * itself. `div.static` has no padding of its own, so its content box is the whole visible block.
  *
  * The account area (connection status, the projection slot, avatar and the «…» popover with
- * `okr-bar-account` and, when the tenant shows the cookie notice, Cookie-Einstellungen) sits at the inline end of the first line, as in
- * `MenuBar`; that popover has no `dismissOnSelect` for the same reason (see `MenuBar`).
+ * `okr-bar-account` and, when the tenant shows the cookie notice, Cookie-Einstellungen) sits at the
+ * inline end of the first line, as in `MenuBar`; that popover has no `dismissOnSelect` for the
+ * same reason (see `MenuBar`).
  */
 @Component({
   selector: 'okr-menu-static',
@@ -118,7 +119,7 @@ import { MenuStore } from './menu.store';
                   <button type="button"
                     [class]="isCurrentPath(row.item) ? activeClass() : ''"
                     [attr.aria-current]="isCurrentPath(row.item) ? 'true' : null"
-                    [attr.aria-expanded]="isExpanded(row)"
+                    [attr.aria-expanded]="ariaExpanded(row)"
                     (click)="toggle(row.item)">
                     <okr-menu-bar-label [name]="row.item.name" />
                   </button>
@@ -150,7 +151,10 @@ import { MenuStore } from './menu.store';
           }
         </div>
         @if (isContentAdmin() && cut().length > 0) {
-          <div class="warn">{{ store.i18n.static_cut_warning() }}: {{ cut().join(', ') }}</div>
+          <div class="warn">{{ store.i18n.static_cut_warning() }}: @for (name of cut(); track name; let last = $last) {<okr-menu-bar-label [name]="name" />{{ last ? '' : ', ' }}}</div>
+        }
+        @if (isContentAdmin() && dropped().length > 0) {
+          <div class="warn">{{ store.i18n.static_dropped_warning() }} @for (name of dropped(); track name; let last = $last) {<okr-menu-bar-label [name]="name" />{{ last ? '' : ', ' }}}</div>
         }
       </nav>
       <div class="account">
@@ -233,6 +237,7 @@ export class MenuStatic {
   });
   protected readonly rows = computed(() => this.built().rows);
   protected readonly cut = computed(() => this.built().cut);
+  protected readonly dropped = computed(() => this.built().dropped);
 
   protected readonly showBullet = computed(() => this.layout.staticMenu().bulletShape !== 'none');
   protected readonly bulletColor = computed(() => staticBulletColorCss(this.layout.staticMenu().bulletColor));
@@ -277,6 +282,11 @@ export class MenuStatic {
     if (row.item.action !== 'sub') return false;
     if (this.layout.staticMenu().childrenVisibility === 'always') return true;
     return this.isCurrentPath(row.item) || this.openSub() === row.item.name;
+  }
+
+  /** `aria-expanded` for a `sub` row; absent when the children are always shown, as nothing toggles. */
+  protected ariaExpanded(row: StaticMenuRow): boolean | null {
+    return this.layout.staticMenu().childrenVisibility === 'always' ? null : this.isExpanded(row);
   }
 
   /** A `sub` row has no url: in `active` mode a click opens or closes its children, in `always` mode it does nothing. */

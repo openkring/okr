@@ -70,6 +70,12 @@ export class MenuLayout {
   /** The static layout's settings with defaults filled in. */
   public readonly staticMenu = computed<Required<StaticMenuConfig>>(() => resolveStaticMenu(this.root()));
 
+  /**
+   * The last measured static height on this device, so the first paint after a reload already
+   * reserves the right space. Only positive measurements are stored.
+   */
+  private readonly heightHint = persistedSignal<number>(`okr.menuStaticHeight.${this.appStore.tenantId()}`, 0);
+
   /** Measured height of the static block in px; reported by the block, reset to 0 when it ends. */
   private readonly staticHeight = signal(0);
 
@@ -79,7 +85,7 @@ export class MenuLayout {
    */
   public readonly barTop = computed<string | null>(() => {
     if (this.barActive()) return BAR_TOP;
-    if (this.staticActive()) return `calc(${this.staticHeight()}px + var(--ion-safe-area-top, 0px))`;
+    if (this.staticActive()) return `calc(${this.staticHeight() || this.heightHint()}px + var(--ion-safe-area-top, 0px))`;
     return null;
   });
 
@@ -88,7 +94,7 @@ export class MenuLayout {
       // The service lives as long as the app, so the listener is never removed.
       window.matchMedia(MENU_WIDE_QUERY).addEventListener('change', event => this.isWide.set(event.matches));
     }
-    // A height measured in an earlier static phase must not show when static returns.
+    // A height measured in an earlier static phase must not show when static returns (the stored hint stands in until the next measurement).
     effect(() => {
       if (!this.staticActive()) this.staticHeight.set(0);
     });
@@ -103,6 +109,7 @@ export class MenuLayout {
   /** Called by the static block with its measured height (0 when it is destroyed). */
   public setStaticHeight(px: number): void {
     this.staticHeight.set(px);
+    if (px > 0) this.heightHint.set(px);
   }
 
   /** Connects to the menu list. Idempotent; the shell calls it once the menu tree is mounted. */

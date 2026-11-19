@@ -10,6 +10,7 @@ import { MenuLayout } from './menu-layout.service';
 
 const tenantId = 'scs';
 const HINT_KEY = `okr.menuType.${tenantId}`;
+const HEIGHT_KEY = `okr.menuStaticHeight.${tenantId}`;
 /** Longer than the debounce of `persistedSignal`, so a pending write has happened. */
 const AFTER_DEBOUNCE_MS = 1000;
 
@@ -19,6 +20,11 @@ function storeHint(type: MenuType): void {
 
 function storedHint(): unknown {
   const raw = localStorage.getItem(HINT_KEY);
+  return raw === null ? undefined : JSON.parse(raw).v;
+}
+
+function storedHeight(): unknown {
+  const raw = localStorage.getItem(HEIGHT_KEY);
   return raw === null ? undefined : JSON.parse(raw).v;
 }
 
@@ -183,12 +189,27 @@ describe('MenuLayout', () => {
     expect(layout.barTop()).toBeNull();
   });
 
-  it('forgets the measured height when static ends, so re-entering shows no stale offset', () => {
+  it('forgets the measured height when static ends; re-entering shows the stored one, not 0', () => {
     stubWidth(true); const layout = createLayout(); layout.start();
-    menuItems.set([rootDoc('static')]); layout.setStaticHeight(212); TestBed.tick();
+    menuItems.set([rootDoc('static')]); layout.setStaticHeight(212); settle();
     menuItems.set([rootDoc('left')]); TestBed.tick();
     menuItems.set([rootDoc('static')]); TestBed.tick();
-    expect(layout.barTop()).toBe('calc(0px + var(--ion-safe-area-top, 0px))');
+    expect(layout.barTop()).toBe('calc(212px + var(--ion-safe-area-top, 0px))');
+  });
+
+  it('uses the stored height as barTop before any measurement', () => {
+    localStorage.setItem(HEIGHT_KEY, JSON.stringify({ v: 188, t: Date.now() }));
+    storeHint('static');
+    stubWidth(true); const layout = createLayout(); layout.start();
+    expect(layout.barTop()).toBe('calc(188px + var(--ion-safe-area-top, 0px))');
+  });
+
+  it('writes a measurement after the debounce, and never stores 0 when static ends', () => {
+    stubWidth(true); const layout = createLayout(); layout.start();
+    menuItems.set([rootDoc('static')]); layout.setStaticHeight(150); settle();
+    expect(storedHeight()).toBe(150);
+    layout.setStaticHeight(0); menuItems.set([rootDoc('left')]); settle();
+    expect(storedHeight()).toBe(150);
   });
 
   it('resolves the static config with defaults', () => {

@@ -364,6 +364,8 @@
       "active": "Aktive Seite"
     },
     "cut_warning": "Nicht angezeigt (Grenze des statischen Menüs)",
+    "dropped_warning": "Diese Einträge erscheinen im statischen Menü nicht:",
+    "preview_hint": "Die Vorschau verwendet die Farben des Hell- oder Dunkelmodus, den du gerade eingestellt hast.",
     "nav_label": "Hauptmenü"
   },
   "item": {

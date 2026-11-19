@@ -364,6 +364,8 @@
       "active": "Page active"
     },
     "cut_warning": "Non affiché (limite du menu statique)",
+    "dropped_warning": "Ces entrées n'apparaissent pas dans le menu statique :",
+    "preview_hint": "L'aperçu utilise les couleurs du mode clair ou sombre que tu as réglé actuellement.",
     "nav_label": "Menu principal"
   },
   "item": {

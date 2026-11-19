@@ -72,6 +72,8 @@ export interface StaticMenuRows {
   rows: StaticMenuRow[];
   /** Names of rows and children that do not fit the static limits (spec 1.163 §6.6). */
   cut: string[];
+  /** Names of root rows with action `call`, `toggle` or `workflow`, which the static menu cannot draw. */
+  dropped: string[];
 }
 
 /** Rows and children the static menu can draw, within its limits; what does not fit is named in `cut`. */
@@ -83,6 +85,7 @@ export function buildStaticRows(
 ): StaticMenuRows {
   const byName = new Map(items.map(item => [item.name, item]));
   const cut: string[] = [];
+  const dropped: string[] = [];
   const candidates: StaticMenuRow[] = [];
 
   for (const item of visibleBarRows(rootItems, items, canSee)) {
@@ -90,7 +93,10 @@ export function buildStaticRows(
       candidates.push({ item, children: [] });
       continue;
     }
-    if (item.action !== 'sub') continue;
+    if (item.action !== 'sub') {
+      if (item.action === 'call' || item.action === 'toggle' || item.action === 'workflow') dropped.push(item.name);
+      continue;
+    }
 
     const visited = new Set([rootName, item.name].filter(n => n !== ''));
     const kids = (item.menuItems ?? [])
@@ -121,5 +127,5 @@ export function buildStaticRows(
     rows.push(row);
   }
   while (rows.length > 0 && rows[rows.length - 1].item.action === 'divider') rows.pop();
-  return { rows, cut };
+  return { rows, cut, dropped };
 }

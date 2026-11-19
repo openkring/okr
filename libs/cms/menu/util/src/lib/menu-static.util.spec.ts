@@ -102,6 +102,7 @@ describe('buildStaticRows', () => {
     const r = buildStaticRows(['s'], items, canSee);
     expect(r.rows[0].children.map(c => c.name)).toEqual(['a', 'b']);
     expect(r.cut).toEqual([]);
+    expect(r.dropped).toEqual([]);
   });
   it('drops a sub whose children are all hidden', () => {
     const items = [item('s', 'sub', ['hidden']), item('hidden', 'navigate', [], 'admin')];
@@ -109,11 +110,16 @@ describe('buildStaticRows', () => {
     expect(r.rows).toEqual([]);
     expect(r.cut).toEqual([]);
   });
-  it('drops call/toggle/workflow rows silently', () => {
+  it('drops call/toggle/workflow root rows and names them in dropped, not in cut', () => {
     const items = [item('a'), item('c', 'call'), item('t', 'toggle'), item('w', 'workflow')];
     const r = buildStaticRows(['a', 'c', 't', 'w'], items, canSee);
     expect(r.rows.map(x => x.item.name)).toEqual(['a']);
     expect(r.cut).toEqual([]);
+    expect(r.dropped).toEqual(['c', 't', 'w']);
+  });
+  it('does not name a role-hidden action root row in dropped', () => {
+    const items = [item('a'), item('c', 'call', [], 'admin')];
+    expect(buildStaticRows(['a', 'c'], items, canSee).dropped).toEqual([]);
   });
   it('skips a child that names its own parent', () => {
     const items = [item('x', 'sub', ['x', 'a']), item('a')];

@@ -364,6 +364,8 @@
       "active": "Pagina attiva"
     },
     "cut_warning": "Non mostrato (limite del menu statico)",
+    "dropped_warning": "Queste voci non compaiono nel menu statico:",
+    "preview_hint": "L'anteprima usa i colori della modalità chiara o scura che hai impostato in questo momento.",
     "nav_label": "Menu principale"
   },
   "item": {
