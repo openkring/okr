@@ -43,5 +43,10 @@
     "dashboardClosureGzipBytes": 1426562,
     "chunks": 202,
     "updated": "2026-11-17"
+  },
+  "la21staefa-app": {
+    "dashboardClosureGzipBytes": 1436501,
+    "chunks": 207,
+    "updated": "2026-11-19"
   }
 }
