@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { AddressModel } from '@okr/shared-models';
 
-import { packGroups, planSwitch } from './residence-switch';
+import { packGroups, planSwitch, projectionRefreshParents } from './residence-switch';
 
 const TODAY = '20270215';
 
@@ -101,4 +101,38 @@ describe('packGroups', () => {
     expect(packGroups([['a'], ['b', 'c', 'd'], ['e']], 2)).toEqual([['a'], ['b', 'c', 'd'], ['e']]);
   });
   it('no groups, no chunks', () => expect(packGroups([], 400)).toEqual([]));
+});
+
+describe('projectionRefreshParents', () => {
+  const at = (parentKey: string, patch: Partial<AddressModel>): AddressModel => Object.assign(postal(parentKey), { parentKey }, patch);
+
+  it('a row starting today or one that ended yesterday marks its parent', () => {
+    const rows = [at('org.o1', { validFrom: '20270215' }), at('person.p2', { validTo: '20270214' })];
+    expect(projectionRefreshParents(rows, TODAY)).toEqual(['org.o1', 'person.p2']);
+  });
+
+  it('a parent without any favorite is refreshed too (no switch write will reach it)', () => {
+    const rows = [at('person.p1', { validTo: '20270214' }), at('person.p1', { validFrom: '20270215' })];
+    expect(projectionRefreshParents(rows, TODAY)).toEqual(['person.p1']);
+  });
+
+  it('skips parents whose favorite flip committed (that write re-triggers onAddressChange)', () => {
+    const rows = [at('person.p1', { validFrom: '20270215' }), at('org.o1', { validFrom: '20270215' })];
+    expect(projectionRefreshParents(rows, TODAY, new Set(['person.p1']))).toEqual(['org.o1']);
+  });
+
+  it('ignores other dates, archived rows, other channels and rows without a parent', () => {
+    const rows = [
+      at('person.a', { validFrom: '20270214' }),
+      at('person.b', { validTo: '20270215' }),
+      at('person.c', { validFrom: '20270215', isArchived: true }),
+      at('person.d', { validFrom: '20270215', addressChannel: 'email' }),
+      at('', { validFrom: '20270215' }),
+    ];
+    expect(projectionRefreshParents(rows, TODAY)).toEqual([]);
+  });
+
+  it('crosses a month boundary for yesterday', () => {
+    expect(projectionRefreshParents([at('person.p1', { validTo: '20270228' })], '20270301')).toEqual(['person.p1']);
+  });
 });

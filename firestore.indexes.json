@@ -298,6 +298,44 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "addressChannel",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "validFrom",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "addresses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "addressChannel",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "validTo",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "addresses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
           "fieldPath": "isFavorite",
           "order": "ASCENDING"
         },

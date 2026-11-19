@@ -2,13 +2,18 @@
  * Spec 1.164 §5.2 / §6.3: the nightly job that makes an announced move's new address the favorite
  * on its moving date. Letters, invoices and the vCard read the favorite postal row, so the switch
  * has to follow the dates. `planSwitch` is the pure decision; `runResidenceSwitch` loads and writes.
+ * The materialized replicas (address-directory, favZipCode) are rebuilt only on an address write, so
+ * the job also refreshes every parent whose residence starts or ends at today's midnight and whose
+ * favorite did not flip (`projectionRefreshParents`): an org lists every current postal row, and a
+ * parent may have no favorite at all.
  */
 import { Firestore, getFirestore, Timestamp, WriteBatch } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 
 import { DEFAULT_ADDRESS_USAGE } from '@okr/shared-constants';
 import { AddressCollection, AddressModel } from '@okr/shared-models';
-import { addDuration, isPostalResidence, residenceStatus, zurichStoreDate } from '@okr/shared-util-core';
+import { addDuration, dayBefore, isPostalResidence, residenceStatus, zurichStoreDate } from '@okr/shared-util-core';
+import { getActiveAddresses, updateFavoriteZipCode, writeAddressDirectory } from '@okr/shared-util-functions';
 
 const MAX_BATCH_WRITES = 400;
 
@@ -73,6 +78,26 @@ export function packGroups<T>(groups: T[][], max: number): T[][] {
   return chunks;
 }
 
+/**
+ * The parents whose current postal set changed at today's midnight — a row starting today or one
+ * that ended yesterday — and that no switch write will refresh (`written`: parents whose favorite
+ * flip committed; that write re-triggers onAddressChange). Archived rows and rows without a parent
+ * are left out; each parent once, sorted.
+ */
+export function projectionRefreshParents(
+  rows: Pick<AddressModel, 'parentKey' | 'addressChannel' | 'isArchived' | 'validFrom' | 'validTo'>[],
+  today: string,
+  written: ReadonlySet<string> = new Set(),
+): string[] {
+  const yesterday = dayBefore(today);
+  const parents = rows
+    .filter((r) => r.addressChannel === 'postal' && !r.isArchived && !!r.parentKey)
+    .filter((r) => r.validFrom === today || r.validTo === yesterday)
+    .map((r) => r.parentKey)
+    .filter((key) => !written.has(key));
+  return [...new Set(parents)].sort();
+}
+
 interface Write { ref: FirebaseFirestore.DocumentReference; patch: { isFavorite: boolean }; readAt: Timestamp }
 
 /** The nightly job: favorites whose residence ended before today → planSwitch per parent. */
@@ -90,7 +115,7 @@ export async function runResidenceSwitch(now: Date): Promise<void> {
     .get();
   const parents = [...new Set(stale.docs.filter((d) => !d.data()['isArchived']).map((d) => d.data()['parentKey'] as string).filter(Boolean))];
 
-  const groups: Write[][] = [];
+  const groups: { parentKey: string; writes: Write[] }[] = [];
   for (const parentKey of parents) {
     const snap = await col.where('parentKey', '==', parentKey).get();
     const rows = snap.docs.map((d) => ({ ...d.data(), okey: d.id }) as AddressModel);
@@ -100,20 +125,44 @@ export async function runResidenceSwitch(now: Date): Promise<void> {
     const group: Write[] = [];
     if (plan.promote) group.push({ ref: col.doc(plan.promote), patch: { isFavorite: true }, readAt: times.get(plan.promote) as Timestamp });
     for (const okey of plan.demote) group.push({ ref: col.doc(okey), patch: { isFavorite: false }, readAt: times.get(okey) as Timestamp });
-    if (group.length > 0) groups.push(group);
+    if (group.length > 0) groups.push({ parentKey, writes: group });
   }
 
   let switched = 0;
-  for (const chunk of packGroups(groups, MAX_BATCH_WRITES)) {
+  const written = new Set<string>();
+  const parentOf = new Map(groups.flatMap((g) => g.writes.map((w) => [w, g.parentKey] as const)));
+  for (const chunk of packGroups(groups.map((g) => g.writes), MAX_BATCH_WRITES)) {
     const batch: WriteBatch = db.batch();
     for (const w of chunk) batch.update(w.ref, w.patch, { lastUpdateTime: w.readAt });
     try {
       await batch.commit();
       switched += chunk.length;
+      // each committed write re-triggers onAddressChange, which rebuilds that parent's replicas
+      for (const w of chunk) written.add(parentOf.get(w) as string);
     } catch (err) {
       // a row changed since it was read (or a transient error): tonight's chunk is skipped as a whole, tomorrow's run plans again
       logger.error('residenceSwitch: batch failed', err);
     }
   }
   logger.info(`residenceSwitch: ${parents.length} parent(s), ${switched} write(s)`);
+
+  // a residence that starts today or ended yesterday changes the current postal set even when no
+  // favorite flips (an org lists every current row; a parent may have no favorite): rebuild the replicas
+  const [starting, ended] = await Promise.all([
+    col.where('addressChannel', '==', 'postal').where('validFrom', '==', today).get(),
+    col.where('addressChannel', '==', 'postal').where('validTo', '==', dayBefore(today)).get(),
+  ]);
+  const refresh = projectionRefreshParents([...starting.docs, ...ended.docs].map((d) => d.data() as AddressModel), today, written);
+  let refreshed = 0;
+  for (const parentKey of refresh) {
+    try {
+      const addresses = await getActiveAddresses(db, parentKey);
+      await updateFavoriteZipCode(db, parentKey, addresses);
+      await writeAddressDirectory(db, parentKey);
+      refreshed++;
+    } catch (err) {
+      logger.error(`residenceSwitch: could not refresh the projection of ${parentKey}`, err);
+    }
+  }
+  logger.info(`residenceSwitch: ${refreshed}/${refresh.length} projection(s) refreshed`);
 }
