@@ -12,6 +12,8 @@ export interface UserAccountRow {
   name: string;
   user?: UserModel;
   roles: RoleName[];
+  /** Firebase Auth `metadata.lastSignInTime` (UTC string), only on rows with a login */
+  lastLogin?: string;
 }
 
 /** The roles a user holds (the true keys of UserModel.roles). */
@@ -30,7 +32,7 @@ function rolesOf(user: UserModel): RoleName[] {
  */
 export function buildUserAccountRows(
   users: UserModel[],
-  logins: { uid: string; email?: string }[],
+  logins: { uid: string; email?: string; lastSignInTime?: string }[],
   activeMembers: { personKey: string; name: string }[],
   tenantId: string,
   isOperator: boolean,
@@ -48,13 +50,14 @@ export function buildUserAccountRows(
     if (!user) {
       if (!isOperator) continue;
       const loginEmail = login.email ?? '';
-      rows.push({ kind: 'loginWithoutUser', uid: login.uid, loginEmail, name: loginEmail, roles: [] });
+      rows.push({ kind: 'loginWithoutUser', uid: login.uid, loginEmail, name: loginEmail, roles: [], lastLogin: login.lastSignInTime });
       continue;
     }
     if (!inTenant(user)) continue;
     rows.push({
       kind: 'normal', uid: login.uid, personKey: user.personKey, loginEmail: user.loginEmail || login.email || '',
       loginId: user.loginId ?? '', name: getFullName(user.firstName, user.lastName), user, roles: rolesOf(user),
+      lastLogin: login.lastSignInTime,
     });
   }
 
@@ -75,6 +78,18 @@ export function buildUserAccountRows(
     rows.push({ kind: 'memberWithoutAccount', personKey: member.personKey, name: member.name, roles: [] });
   }
   return sourcesComplete ? rows : rows.filter(r => r.kind === 'normal');
+}
+
+/**
+ * The last login as local 'dd.MM.yyyy HH:mm' (e.g. '05.09.2026 14:07'), '' when there is none.
+ * Firebase Auth reports `lastSignInTime` as a UTC string ('Sat, 05 Sep 2026 12:07:00 GMT').
+ */
+export function formatLastLogin(lastSignInTime?: string): string {
+  if (!lastSignInTime) return '';
+  const date = new Date(lastSignInTime);
+  if (Number.isNaN(date.getTime())) return '';
+  const pad = (n: number): string => String(n).padStart(2, '0');
+  return `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
 /**

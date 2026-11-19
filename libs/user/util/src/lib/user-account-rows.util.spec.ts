@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { UserModel } from '@okr/shared-models';
 
-import { buildUserAccountRows, filterUserAccountRows, searchUserAccountRows, UserAccountRow } from './user-account-rows.util';
+import { buildUserAccountRows, filterUserAccountRows, formatLastLogin, searchUserAccountRows, UserAccountRow } from './user-account-rows.util';
 
 function user(okey: string, tenant: string, extra: Partial<UserModel> = {}): UserModel {
   const u = new UserModel(tenant);
@@ -129,5 +129,22 @@ describe('filterUserAccountRows', () => {
     const withRole = { ...row('userWithoutLogin', ['treasurer']) };
     const out = filterUserAccountRows([...rows, withRole], { problems: true, extendedRoles: true });
     expect(out).toEqual([withRole]);
+  });
+});
+
+describe('last login', () => {
+  it('carries lastSignInTime onto the row of a login', () => {
+    const rows = buildUserAccountRows([user('u1', 'scs')], [{ uid: 'u1', lastSignInTime: 'Sat, 05 Sep 2026 12:07:00 GMT' }], [], 'scs', false);
+    expect(rows[0].lastLogin).toBe('Sat, 05 Sep 2026 12:07:00 GMT');
+  });
+
+  it('formats a sign-in time as local dd.MM.yyyy HH:mm', () => {
+    const local = new Date(2026, 8, 5, 14, 7);
+    expect(formatLastLogin(local.toUTCString())).toBe('05.09.2026 14:07');
+  });
+
+  it('returns an empty string without a (valid) sign-in time', () => {
+    expect(formatLastLogin(undefined)).toBe('');
+    expect(formatLastLogin('not a date')).toBe('');
   });
 });

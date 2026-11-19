@@ -11,6 +11,7 @@ export const USER_I18N_KEYS = {
   filter_problems:                 PFX + 'filter.problems',
   filter_extended_roles:           PFX + 'filter.extended_roles',
   column_state:                    PFX + 'column.state',
+  column_last_login:               PFX + 'column.last_login',
   kind_no_login:                   PFX + 'kind.no_login',
   kind_no_account:                 PFX + 'kind.no_account',
   kind_login_no_user:              PFX + 'kind.login_no_user',

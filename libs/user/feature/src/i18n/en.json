@@ -8,7 +8,8 @@
     "extended_roles": "Extended roles"
   },
   "column": {
-    "state": "Note"
+    "state": "Note",
+    "last_login": "Last login"
   },
   "kind": {
     "no_login": "no login",

@@ -8,7 +8,8 @@
     "extended_roles": "Rôles étendus"
   },
   "column": {
-    "state": "Remarque"
+    "state": "Remarque",
+    "last_login": "Dernière connexion"
   },
   "kind": {
     "no_login": "pas de login",

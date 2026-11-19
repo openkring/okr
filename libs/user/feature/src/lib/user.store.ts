@@ -22,7 +22,7 @@ import { buildUserAccountRows, filterUserAccountRows, searchUserAccountRows, USE
 export type { UserI18n };
 
 /** What listFirebaseUsers returns per login (the server scopes it to the caller's tenant, bka sees all). */
-type FirebaseLogin = { uid: string; email: string | undefined };
+type FirebaseLogin = { uid: string; email: string | undefined; lastSignInTime: string | undefined };
 
 export type UserState = {
   searchTerm: string;
@@ -146,7 +146,7 @@ export const UserStore = signalStore(
       /** logins + users + active members merged into rows (all kinds, unfiltered) */
       accountRows: computed((): UserAccountRow[] => buildUserAccountRows(
         store.usersResource.value() ?? [],
-        (store.firebaseUsersResource.value() ?? []).map(f => ({ uid: f.uid, email: f.email })),
+        (store.firebaseUsersResource.value() ?? []).map(f => ({ uid: f.uid, email: f.email, lastSignInTime: f.lastSignInTime })),
         store.activeMembers().map(m => ({ personKey: m.memberKey, name: getFullName(m.memberName1, m.memberName2) })),
         store.appStore.tenantId(),
         store.isOperator(),

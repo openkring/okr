@@ -10,7 +10,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
 import { error, showToast } from '@okr/shared-util-angular';
 import { hasRole, contextMenuId } from '@okr/shared-util-core';
 
-import { UserAccountKind, UserAccountRow, UserEditRequest, userEditRequest } from '@okr/user-util';
+import { formatLastLogin, UserAccountKind, UserAccountRow, UserEditRequest, userEditRequest } from '@okr/user-util';
 
 import { UserAccountActions } from './user-account-actions';
 import { UserStore } from './user.store';
@@ -28,9 +28,10 @@ import { UserStore } from './user.store';
     styles: [`
       ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
       ion-avatar ion-icon { width: 100%; height: 100%; color: var(--ion-color-medium); }
-      .col-name { flex: 1 1 35%; }
-      .col-email { flex: 1 1 35%; }
-      .col-state { flex: 0 1 30%; text-align: right; }
+      .col-name { flex: 1 1 30%; }
+      .col-email { flex: 1 1 30%; }
+      .col-last-login { flex: 0 1 20%; }
+      .col-state { flex: 0 1 20%; text-align: right; }
       .col-state ion-badge { margin-left: 4px; }
     `],
     template: `
@@ -78,6 +79,7 @@ import { UserStore } from './user.store';
       <ion-item lines="none" color="primary">
         <ion-label class="col-name"><strong>{{ store.i18n.name() }}</strong></ion-label>
         <ion-label class="col-email ion-hide-sm-down"><strong>{{ store.i18n.loginEmail_label() }}</strong></ion-label>
+        <ion-label class="col-last-login ion-hide-sm-down"><strong>{{ store.i18n.column_last_login() }}</strong></ion-label>
         <ion-label class="col-state"><strong>{{ store.i18n.column_state() }}</strong></ion-label>
       </ion-item>
     </ion-toolbar>
@@ -103,6 +105,7 @@ import { UserStore } from './user.store';
                 </ion-avatar>
                 <ion-label class="col-name">{{ row.name }}</ion-label>
                 <ion-label class="col-email ion-hide-sm-down">{{ row.loginEmail }}</ion-label>
+                <ion-label class="col-last-login ion-hide-sm-down">{{ lastLogin(row) }}</ion-label>
                 <ion-label class="col-state">
                   @if(kindLabel(row.kind); as label) {
                     <ion-badge color="warning">{{ label }}</ion-badge>
@@ -219,7 +222,12 @@ export class UserList {
     }
   }
 
-  /** the roles beyond `registered`, for the third column of a row without a problem */
+  /** when this login last signed in ('' without a login or before the first sign-in) */
+  protected lastLogin(row: UserAccountRow): string {
+    return formatLastLogin(row.lastLogin);
+  }
+
+  /** the roles beyond `registered`, for the state column of a row without a problem */
   protected extendedRolesOf(row: UserAccountRow): RoleName[] {
     return row.roles.filter(role => role !== 'registered');
   }
