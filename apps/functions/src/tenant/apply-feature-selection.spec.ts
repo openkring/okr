@@ -508,6 +508,38 @@ const TEST_CATALOGUE: FeatureBlock[] = [
 const run = (fdb: FakeFirestore): Firestore => fdb as unknown as Firestore;
 
 describe('planEnableBlock', () => {
+  // spec 1.165 follow-up: core blocks have no picker switch, so a new tenant's first save seeds them.
+  const CORE_CATALOGUE: FeatureBlock[] = [
+    ...TEST_CATALOGUE,
+    block('auth', { core: true, menu: [menuSpec({ key: 'login' }), menuSpec({ key: 'logout' })] }),
+    block('profile', { core: true, menu: [menuSpec({ key: 'profile' })] }),
+  ];
+
+  it('seeds every core block, its full menu first in the root, on a new tenant\'s first enable', async () => {
+    const db = fakeDb({ menuItems: [], 'app-config': [{ id: 'la21', enabledFeatures: [] }] });
+    const { writes, preview } = await planEnableBlock(
+      run(db), CORE_CATALOGUE, [], 'la21', 'uid1', 'calevent', ['calevent-all']);
+
+    const config = writes.find(w => w.ref.parent.id === 'app-config');
+    expect(config?.data['enabledFeatures']).toEqual(expect.arrayContaining(['calevent', 'person', 'auth', 'profile']));
+    const ids = writes.filter(w => w.ref.parent.id === 'menuItems').map(w => w.ref.id);
+    expect(ids).toEqual(expect.arrayContaining(['login', 'logout', 'profile', 'calevent-all']));
+    const root = writes.find(w => w.ref.id === 'main_la21');
+    expect((root?.data['menuItems'] as string[]).slice(0, 3)).toEqual(['login', 'logout', 'profile']);
+    expect(preview.alsoEnabled).toContainEqual({ id: 'auth', because: 'calevent' });
+  });
+
+  it('leaves an established tenant\'s core alone even when one core block is not stored', async () => {
+    const db = fakeDb({ menuItems: [], 'app-config': [{ id: 'scs', enabledFeatures: ['auth', 'person'] }] });
+    const { writes } = await planEnableBlock(
+      run(db), CORE_CATALOGUE, [], 'scs', 'uid1', 'calevent', ['calevent-all']);
+
+    const ids = writes.filter(w => w.ref.parent.id === 'menuItems').map(w => w.ref.id);
+    expect(ids).not.toContain('profile');
+    const config = writes.find(w => w.ref.parent.id === 'app-config');
+    expect(config?.data['enabledFeatures']).not.toContain('profile');
+  });
+
   it('writes only the ticked rows', async () => {
     const db = fakeDb({ menuItems: [], 'app-config': [{ id: 'scs', enabledFeatures: [] }] });
     const { writes, preview } = await planEnableBlock(

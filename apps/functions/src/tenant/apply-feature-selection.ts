@@ -10,7 +10,7 @@ import {
   type FeatureEvent, type MenuItemModel,
 } from '@okr/shared-models';
 import {
-  blockOwnersOfMenuKey, holdersOf, indexMenuDocsByName, isFieldPinned, menuSpecNames, planMenuOps,
+  blockOwnersOfMenuKey, coreBootstrapBlocks, holdersOf, indexMenuDocsByName, isFieldPinned, menuSpecNames, planMenuOps,
   planRootMenuOp, resolveAvailability, resolveWithDeps, STRUCTURAL_FIELDS, withoutPin, withPin,
   type ApplyFeatureResponse, type ApplyPlanPreview, type FeatureBlock, type FeatureIntent,
   type FeatureRollout,
@@ -459,15 +459,33 @@ export async function planEnableBlock(
   const blocks = [...(granted ? [requested] : []), ...alsoEnabled.map(a => catalogue.find(b => b.id === a.id))]
     .filter((b): b is FeatureBlock => !!b);
 
+  // A tenant's FIRST enable also seeds the core blocks (login, profile, AOC, CMS, …), which have
+  // no picker switch and were therefore never seeded for a tenant provisioned after the catalogue
+  // (la21staefa, sc7). Only a tenant that stores no core block at all qualifies; see
+  // `coreBootstrapBlocks`. Their FULL menus are written, and they come first in the root menu.
+  const storedEnabled = configSnap.data()?.['enabledFeatures'] as string[] | undefined;
+  const corePlan = planSelection(catalogue, rollouts, coreBootstrapBlocks(catalogue, storedEnabled).map(b => b.id), tenantId);
+  const coreBlocks = coreBootstrapBlocks(catalogue, storedEnabled)
+    .filter(b => corePlan.enabled.includes(b.id) && !blocks.some(x => x.id === b.id));
+  for (const b of coreBlocks) {
+    if (!nextEnabled.includes(b.id)) nextEnabled.push(b.id);
+    if (b.id !== blockId && !alsoEnabled.some(a => a.id === b.id)) alsoEnabled.push({ id: b.id, because: blockId });
+  }
+
   const { existing, ambiguous } = await readMenuSnapshot(db, tenantId);
   assertResolvable(ambiguous,
-    new Set([...blocks.flatMap(b => menuSpecNames(b.menu)), `main_${tenantId}`]));
+    new Set([...[...coreBlocks, ...blocks].flatMap(b => menuSpecNames(b.menu)), `main_${tenantId}`]));
   // Snapshot BEFORE planning: `planRowsOfBlock` folds each op back into `existing`.
   const before = new Map(existing);
 
   const wanted = new Set(menuKeys);
   const ops: MenuOp[] = [];
   const attached: string[] = [];
+  for (const block of coreBlocks) {
+    const result = planRowsOfBlock(block, tenantId, new Set(menuSpecNames(block.menu)), existing);
+    ops.push(...result.ops);
+    attached.push(...result.attached);
+  }
   for (const block of blocks) {
     const result = planRowsOfBlock(block, tenantId, wanted, existing);
     ops.push(...result.ops);
@@ -476,7 +494,7 @@ export async function planEnableBlock(
   const rootOp = planRootMenuOp(tenantId, existing, attached);
 
   const at = getTodayStr(DateFormat.StoreDateTime);
-  const seedWrites = await planSeedWrites(db, blocks);
+  const seedWrites = await planSeedWrites(db, [...coreBlocks, ...blocks]);
   const writes: PendingWrite[] = [
     { ref: configRef, data: { enabledFeatures: nextEnabled }, merge: true },
     ...eventWrites(db, tenantId, uid, at, [

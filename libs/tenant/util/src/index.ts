@@ -15,3 +15,4 @@ export * from './lib/menu-ownership.util';
 export * from './lib/menu-seed.util';
 export * from './lib/root-menu.util';
 export * from './lib/tenant-scope.util';
+export * from './lib/core-bootstrap.util';
