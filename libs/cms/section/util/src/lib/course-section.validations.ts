@@ -1,6 +1,7 @@
 import { enforce, staticSuite, test } from 'vest';
 
 import { APPLICATION_KIND_VALUES, CourseSection } from '@okr/shared-models';
+import { stringValidations } from '@okr/shared-util-core';
 
 import { baseSectionValidations } from './base-section.validations';
 
@@ -17,7 +18,5 @@ export const courseSectionValidations = staticSuite((model: CourseSection) => {
     enforce(audience.every((kind) => APPLICATION_KIND_VALUES.includes(kind))).isTruthy();
   });
 
-  test('emptyText', 'maxLength', () => {
-    enforce(emptyText.length).lessThanOrEquals(COURSE_EMPTY_TEXT_MAX_LENGTH);
-  });
+  stringValidations('emptyText', emptyText, COURSE_EMPTY_TEXT_MAX_LENGTH);
 });

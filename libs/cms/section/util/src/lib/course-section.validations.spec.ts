@@ -23,7 +23,7 @@ describe('courseSectionValidations (1.166)', () => {
     expect(courseSectionValidations(model({ emptyText: '' })).hasErrors('emptyText')).toBe(false);
     expect(courseSectionValidations(model({ emptyText: 'x'.repeat(COURSE_EMPTY_TEXT_MAX_LENGTH) })).hasErrors('emptyText')).toBe(false);
     const result = courseSectionValidations(model({ emptyText: 'x'.repeat(COURSE_EMPTY_TEXT_MAX_LENGTH + 1) }));
-    expect(result.getErrors('emptyText')).toContain('maxLength');
+    expect(result.getErrors('emptyText')).toContain('tooLong');
   });
 
   it('is the registered suite for course', () => {
