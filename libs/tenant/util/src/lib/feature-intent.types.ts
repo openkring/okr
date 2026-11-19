@@ -1,5 +1,6 @@
 import type { StructuralField } from './menu-ownership.util';
 import type { ApplyPlanPreview } from './apply-preview.types';
+import type { BooksSetupInput } from './books-setup.util';
 
 /**
  * ONE act per call (spec §19). The picker used to send a desired state — the set of ticked
@@ -13,7 +14,9 @@ export type FeatureIntent =
   | { verb: 'addMenuRows'; keys: string[] }
   | { verb: 'applyCatalogueValue'; docId: string; field: StructuralField }
   | { verb: 'pinField'; docId: string; field: StructuralField }
-  | { verb: 'unpinField'; docId: string; field: StructuralField };
+  | { verb: 'unpinField'; docId: string; field: StructuralField }
+  /** Create the books the Buchhaltung needs (`accounting-configs`, the owning org, the default books). */
+  | { verb: 'setupBooks'; books: BooksSetupInput };
 
 export interface ApplyFeatureRequest {
   tenantId: string;

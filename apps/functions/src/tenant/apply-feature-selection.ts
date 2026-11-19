@@ -17,6 +17,7 @@ import {
   type MenuNameCollision, type MenuOp, type MenuSpec, type PlanEntry, type StructuralField,
 } from '@okr/tenant-util';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
+import { planSetupBooks } from './setup-books';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
 import { ADD_ON_BLOCKS } from '@okr/business-metering-util';
@@ -1076,6 +1077,9 @@ export function createApplyFeatureSelection(
           break;
         case 'unpinField':
           result = await planPinField(db, catalogue, tenantId, uid, intent.docId, requireField(intent.field), false);
+          break;
+        case 'setupBooks':
+          result = await planSetupBooks(db, tenantId, intent.books);
           break;
         default:
           throw new HttpsError('invalid-argument', `${CF_NAME}: unknown verb.`);

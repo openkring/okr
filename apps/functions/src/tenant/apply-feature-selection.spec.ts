@@ -5,6 +5,7 @@ import {
   planAddMenuRows, planApplyCatalogueValue, planDisableBlock, planEnableBlock, planPinField,
   planRootMenuOp, planSelection, rootNavKeys,
 } from './apply-feature-selection';
+import { planSetupBooks } from './setup-books';
 import type { PendingWrite, SelectionPlan } from './apply-feature-selection';
 import type { FeatureBlock, FeatureRollout, MenuSpec } from '@okr/tenant-util';
 import { AppConfigCollection, FeatureEventCollection, MenuItemCollection, UserCollection } from '@okr/shared-models';
@@ -1197,5 +1198,58 @@ describe('planEnableBlock — enabledFeatures is only ever extended', () => {
     expect(enabledFeaturesOf(writes)).toEqual(['calevent']);
     expect(writes.filter(w => w.ref.parent.id === 'menuItems')).toHaveLength(0);
     expect(preview.withheld.map(w => w.id)).toContain('labs');
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────────────
+// VERB `setupBooks` (2026-11-19): enabling Buchhaltung must ask for the books, not leave an empty menu.
+// ─────────────────────────────────────────────────────────────────────────────────────
+describe('planSetupBooks', () => {
+  const answers = {
+    booksId: 'la21staefa', name: 'LA21 Stäfa', backend: 'native', fiscalYearStart: 1, vatMethod: 'exempt', vatPeriod: 'quarterly',
+  };
+
+  it('creates the org, the books and the default books on a tenant without any', async () => {
+    const db = fakeDb({ 'app-config': [{ id: 'la21staefa', defaultAccountingTenantId: '' }] });
+    const { writes, preview } = await planSetupBooks(run(db), 'la21staefa', answers);
+    await commitChunked(run(db), writes);
+
+    const config = db.dump('accounting-configs')['la21staefa'];
+    expect(config).toMatchObject({
+      tenants: ['la21staefa'], accountingTenantId: 'la21staefa', accountingBackend: 'native', fiscalYearStart: 1,
+      vatMethod: 'exempt', vatPeriod: 'quarterly', ownerKey: 'org.la21staefa', functionalCurrency: 'CHF',
+    });
+    expect(config).not.toHaveProperty('okey');
+    expect(Object.values(config).includes(undefined)).toBe(false);
+    expect(db.dump('orgs')['la21staefa']).toMatchObject({ name: 'LA21 Stäfa', tenants: ['la21staefa'] });
+    expect(db.dump('app-config')['la21staefa']['defaultAccountingTenantId']).toBe('la21staefa');
+    expect(preview.entries.map(e => e.subject)).toEqual(['orgs/la21staefa', 'accounting-configs/la21staefa']);
+  });
+
+  it('keeps an existing org of the tenant untouched', async () => {
+    const db = fakeDb({ orgs: [{ id: 'la21staefa', name: 'Lokale Agenda 21', tenants: ['la21staefa'] }], 'app-config': [{ id: 'la21staefa' }] });
+    const { writes } = await planSetupBooks(run(db), 'la21staefa', answers);
+    expect(writes.some(w => w.ref.parent.id === 'orgs')).toBe(false);
+  });
+
+  it('leaves an existing default books in place (second books)', async () => {
+    const db = fakeDb({ 'app-config': [{ id: 'scs', defaultAccountingTenantId: 'scs' }] });
+    const { writes } = await planSetupBooks(run(db), 'scs', { ...answers, booksId: 'gss2' });
+    expect(writes.some(w => w.ref.parent.id === 'app-config')).toBe(false);
+  });
+
+  it('refuses books that already exist', async () => {
+    const db = fakeDb({ 'accounting-configs': [{ id: 'la21staefa', tenants: ['la21staefa'] }] });
+    await expect(planSetupBooks(run(db), 'la21staefa', answers)).rejects.toMatchObject({ details: { reason: 'books-exist' } });
+  });
+
+  it('refuses an id whose org belongs to another tenant', async () => {
+    const db = fakeDb({ orgs: [{ id: 'la21staefa', tenants: ['scs'] }] });
+    await expect(planSetupBooks(run(db), 'la21staefa', answers)).rejects.toMatchObject({ details: { reason: 'books-id-taken' } });
+  });
+
+  it('refuses invalid answers before reading anything', async () => {
+    await expect(planSetupBooks(run(fakeDb({})), 'la21staefa', { ...answers, booksId: 'LA 21' }))
+      .rejects.toMatchObject({ code: 'invalid-argument' });
   });
 });

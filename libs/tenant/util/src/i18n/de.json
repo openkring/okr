@@ -350,5 +350,41 @@
       "label": "Alles",
       "description": "Dazu Finanzen, Vorlagen, Unterschriften, Logbuch, Mobilität, Instrumente und Kurzlinks."
     }
+  },
+  "books": {
+    "title": "Buchhaltung einrichten",
+    "intro": "Damit die Buchhaltung etwas anzeigt, braucht sie eine Buchhaltung, der sie gehört. Diese Angaben kannst du später in den Einstellungen der Buchhaltung ändern. Der Kontenplan bleibt vorerst leer.",
+    "save": "Einrichten",
+    "setup_button": "Buchhaltung einrichten",
+    "missing_note": "Die Buchhaltung ist eingeschaltet, aber noch nicht eingerichtet. Bis dahin bleibt ihr Menü leer.",
+    "id_label": "Kürzel der Buchhaltung",
+    "id_helper": "Kleinbuchstaben, Ziffern, - oder _. Meist das Kürzel des Vereins. Es lässt sich später nicht mehr ändern.",
+    "name_label": "Name der Organisation",
+    "name_helper": "Die Organisation, der die Buchhaltung gehört. Gibt es sie schon, bleibt ihr Name unverändert.",
+    "backend_label": "Wo wird gebucht?",
+    "backend_native": "Hier in der App",
+    "backend_bexio": "In bexio (nur lesen)",
+    "fiscal_label": "Erster Monat des Geschäftsjahres",
+    "fiscal_helper": "1 = Januar, 7 = Juli",
+    "vat_method_label": "Mehrwertsteuer",
+    "vat_exempt": "nicht mehrwertsteuerpflichtig",
+    "vat_effective": "effektive Methode",
+    "vat_net_tax_rate": "Saldosteuersatz",
+    "vat_flat_rate": "Pauschalsteuersatz",
+    "vat_period_label": "Abrechnungsperiode",
+    "period_quarterly": "vierteljährlich",
+    "period_semi_annual": "halbjährlich",
+    "period_monthly": "monatlich",
+    "done_toast": "Die Buchhaltung «{books}» ist eingerichtet.",
+    "exist_error": "Diese Buchhaltung gibt es schon.",
+    "taken_error": "Dieses Kürzel gehört schon einer anderen Organisation. Bitte wähle ein anderes.",
+    "validation": {
+      "booksId": "Bitte nur Kleinbuchstaben, Ziffern, - oder _ (2 bis 32 Zeichen, zuerst ein Buchstabe).",
+      "name": "Bitte gib einen Namen an.",
+      "fiscalYearStart": "Bitte eine Zahl von 1 bis 12.",
+      "backend": "Bitte wähle einen Eintrag.",
+      "vatMethod": "Bitte wähle einen Eintrag.",
+      "vatPeriod": "Bitte wähle einen Eintrag."
+    }
   }
 }

@@ -11,6 +11,7 @@
     "@okr/shared-models": "*",
     "@okr/shared-util-angular": "*",
     "@okr/shared-ui": "*",
-    "@okr/tenant-util": "*"
+    "@okr/tenant-util": "*",
+    "@okr/shared-util-core": "*"
   }
 }

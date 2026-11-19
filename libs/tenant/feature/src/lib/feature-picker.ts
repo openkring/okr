@@ -12,22 +12,23 @@ import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ListFilter } from '@okr/shared-ui';
 import { AlertService, copyToClipboard } from '@okr/shared-util-angular';
+import { fill } from '@okr/shared-util-core';
 import type { CategoryListModel, FeatureRolloutModel, MenuItemModel } from '@okr/shared-models';
 import {
   FEATURE_BLOCKS, FEATURE_BUNDLES, FEATURE_PICKER_I18N_KEYS, FEATURE_PROFILES, effectiveFeatures,
-  addsMenuRows, entriesOfKind, findStructuralDrift, hiddenKeySet, holdersOf, indexMenuDocsByName, isEmptyPlan, menuOutlineOf,
+  addsMenuRows, entriesOfKind, needsBooksSetup, findStructuralDrift, hiddenKeySet, holdersOf, indexMenuDocsByName, isEmptyPlan, menuOutlineOf,
   pinnedFieldsOf, resolveAvailability, resolveWithDeps, summarizePlanConsequences, withHiddenKey,
   withoutHiddenKey,
 } from '@okr/tenant-util';
 import type {
-  ApplyFeatureResponse, ApplyPlanPreview, AvailabilityVerdict, FeatureBlock, FeatureProfile,
+  ApplyFeatureResponse, ApplyPlanPreview, BooksSetupInput, AvailabilityVerdict, FeatureBlock, FeatureProfile,
   MenuSpec, PlanEntry, StructuralField,
 } from '@okr/tenant-util';
 import { FeatureRolloutService, FeatureSelectionService } from '@okr/tenant-data-access';
 import { MenuService } from '@okr/cms-menu-data-access';
 import { exceedsBarLimit } from '@okr/cms-menu-util';
 import type { BlockEnableResult } from '@okr/tenant-ui';
-import { BlockEnableModal, MenuCompareModal, PickerHelpModal } from '@okr/tenant-ui';
+import { BlockEnableModal, BooksSetupModal, MenuCompareModal, PickerHelpModal } from '@okr/tenant-ui';
 
 import { buildMenuTree, filterMenuRows, foldMenuRows, foldableMenuRows } from './menu-tree.util';
 import type { MenuTreeRow } from './menu-tree.util';
@@ -162,6 +163,9 @@ type PickerSegment = 'blocks' | 'rows';
                       } @else if (detailOf(block); as detail) {
                         <p>{{ detail }}</p>
                       }
+                      @if (block.id === 'finance' && booksMissing() && blockState(block) === 'on') {
+                        <p>{{ i18n.books_missing_note() }}</p>
+                      }
                     </ion-label>
                     @switch (blockState(block)) {
                       @case ('core') {
@@ -177,6 +181,11 @@ type PickerSegment = 'blocks' | 'rows';
                         </ion-button>
                       }
                       @case ('on') {
+                        @if (block.id === 'finance' && booksMissing()) {
+                          <ion-button slot="end" fill="solid" (click)="onSetupBooks()">
+                            {{ i18n.books_setup_button() }}
+                          </ion-button>
+                        }
                         @if (missingRowCount(block) > 0) {
                           <ion-button slot="end" fill="outline" (click)="onEnable(block)">
                             {{ i18n.complete_menu_button() }}
@@ -428,6 +437,10 @@ export class FeaturePicker {
 
   private readonly rollouts = toSignal(this.rolloutService.list(), { initialValue: [] as FeatureRolloutModel[] });
   private readonly tenantId = computed(() => this.appStore.tenantId());
+
+  /** `finance` runs but no default books exist — every «Buchhaltung» row stays hidden until they do. */
+  protected readonly booksMissing = computed(() =>
+    needsBooksSetup(this.liveBlocks().has('finance'), this.appStore.appConfig()?.defaultAccountingTenantId));
 
   /** Tenant-scoped (`MenuService.list()` filters by `tenantId`) — used only to tell whether
    *  a block's menu row is already reachable in THIS tenant's menu. */
@@ -761,6 +774,10 @@ export class FeaturePicker {
         await this.alertService.showToast(message);
       } else if (!completing) {
         await this.showBlockToast(FEATURE_PICKER_I18N_KEYS.enabled_toast, block);
+        // the menu is empty until the books exist: ask for them now instead of leaving the admin with nothing
+        if (block.id === 'finance' && needsBooksSetup(true, this.appStore.appConfig()?.defaultAccountingTenantId)) {
+          await this.onSetupBooks();
+        }
       } else {
         // the admin may have unticked every row: only claim a change the run actually made
         await this.showBlockToast(addsMenuRows(result.preview)
@@ -769,6 +786,30 @@ export class FeaturePicker {
       }
     } catch (error) {
       this.alertService.error(`FeaturePicker.onEnable: ${error}`);
+    }
+  }
+
+  /**
+   * «Buchhaltung einrichten» — ask for the books (`BooksSetupModal`) and create them with the `setupBooks`
+   * verb: the org if missing, `accounting-configs/{id}`, and the tenant's default books.
+   */
+  protected async onSetupBooks(): Promise<void> {
+    const tenantId = this.tenantId();
+    const modal = await this.modalController.create({
+      component: BooksSetupModal,
+      componentProps: { i18n: this.i18n, tenantId, tenantName: this.appStore.appConfig()?.appName ?? '' },
+    });
+    await modal.present();
+    const { data, role } = await modal.onDidDismiss<BooksSetupInput>();
+    if (role !== 'confirm' || !data) return;
+    try {
+      await this.featureSelectionService.setupBooks(tenantId, data);
+      await this.alertService.showToast(fill(this.i18n.books_done_toast(), { books: data.booksId }));
+    } catch (error) {
+      const reason = (error as { details?: { reason?: string } })?.details?.reason;
+      if (reason === 'books-exist') await this.alertService.showToast(this.i18n.books_exist_error());
+      else if (reason === 'books-id-taken') await this.alertService.showToast(this.i18n.books_taken_error());
+      else this.alertService.error(`FeaturePicker.onSetupBooks: ${error}`);
     }
   }
 

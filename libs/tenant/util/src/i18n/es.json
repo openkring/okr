@@ -350,5 +350,41 @@
       "label": "Todo",
       "description": "Además finanzas, plantillas, firmas, cuaderno de bitácora, movilidad, instrumentos y enlaces cortos."
     }
+  },
+  "books": {
+    "title": "Configurar la contabilidad",
+    "intro": "La contabilidad necesita unos libros para mostrar algo. Podrás cambiar estos datos más tarde en los ajustes de la contabilidad. El plan de cuentas queda vacío por ahora.",
+    "save": "Configurar",
+    "setup_button": "Configurar la contabilidad",
+    "missing_note": "La contabilidad está activada pero aún no configurada. Hasta entonces su menú queda vacío.",
+    "id_label": "Código de la contabilidad",
+    "id_helper": "Minúsculas, cifras, - o _. Normalmente la abreviatura de la asociación. No se podrá cambiar después.",
+    "name_label": "Nombre de la organización",
+    "name_helper": "La organización a la que pertenece la contabilidad. Si ya existe, su nombre no cambia.",
+    "backend_label": "¿Dónde se contabiliza?",
+    "backend_native": "Aquí en la app",
+    "backend_bexio": "En bexio (solo lectura)",
+    "fiscal_label": "Primer mes del ejercicio",
+    "fiscal_helper": "1 = enero, 7 = julio",
+    "vat_method_label": "IVA",
+    "vat_exempt": "no sujeto al IVA",
+    "vat_effective": "método efectivo",
+    "vat_net_tax_rate": "tipo impositivo neto",
+    "vat_flat_rate": "tipo a tanto alzado",
+    "vat_period_label": "Período de declaración",
+    "period_quarterly": "trimestral",
+    "period_semi_annual": "semestral",
+    "period_monthly": "mensual",
+    "done_toast": "La contabilidad «{books}» está configurada.",
+    "exist_error": "Esta contabilidad ya existe.",
+    "taken_error": "Este código ya pertenece a otra organización. Elige otro.",
+    "validation": {
+      "booksId": "Solo minúsculas, cifras, - o _ (de 2 a 32 caracteres, primero una letra).",
+      "name": "Indica un nombre.",
+      "fiscalYearStart": "Indica un número del 1 al 12.",
+      "backend": "Elige una opción.",
+      "vatMethod": "Elige una opción.",
+      "vatPeriod": "Elige una opción."
+    }
   }
 }

@@ -350,5 +350,41 @@
       "label": "Tout",
       "description": "Plus les finances, les modèles, les signatures, le carnet de bord, la mobilité, les instruments et les liens courts."
     }
+  },
+  "books": {
+    "title": "Configurer la comptabilité",
+    "intro": "La comptabilité a besoin d'un jeu de livres pour afficher quelque chose. Tu pourras modifier ces informations plus tard dans les paramètres de la comptabilité. Le plan comptable reste vide pour l'instant.",
+    "save": "Configurer",
+    "setup_button": "Configurer la comptabilité",
+    "missing_note": "La comptabilité est activée mais pas encore configurée. Son menu reste vide jusque-là.",
+    "id_label": "Identifiant de la comptabilité",
+    "id_helper": "Minuscules, chiffres, - ou _. En général l'abréviation de l'association. Il ne pourra plus être modifié.",
+    "name_label": "Nom de l'organisation",
+    "name_helper": "L'organisation à laquelle appartient la comptabilité. Si elle existe déjà, son nom reste inchangé.",
+    "backend_label": "Où comptabiliser ?",
+    "backend_native": "Ici dans l'app",
+    "backend_bexio": "Dans bexio (lecture seule)",
+    "fiscal_label": "Premier mois de l'exercice",
+    "fiscal_helper": "1 = janvier, 7 = juillet",
+    "vat_method_label": "TVA",
+    "vat_exempt": "non assujetti à la TVA",
+    "vat_effective": "méthode effective",
+    "vat_net_tax_rate": "taux de la dette fiscale nette",
+    "vat_flat_rate": "taux forfaitaire",
+    "vat_period_label": "Période de décompte",
+    "period_quarterly": "trimestrielle",
+    "period_semi_annual": "semestrielle",
+    "period_monthly": "mensuelle",
+    "done_toast": "La comptabilité «{books}» est configurée.",
+    "exist_error": "Cette comptabilité existe déjà.",
+    "taken_error": "Cet identifiant appartient déjà à une autre organisation. Choisis-en un autre.",
+    "validation": {
+      "booksId": "Uniquement minuscules, chiffres, - ou _ (2 à 32 caractères, d'abord une lettre).",
+      "name": "Indique un nom.",
+      "fiscalYearStart": "Indique un nombre de 1 à 12.",
+      "backend": "Choisis une entrée.",
+      "vatMethod": "Choisis une entrée.",
+      "vatPeriod": "Choisis une entrée."
+    }
   }
 }

@@ -350,5 +350,41 @@
       "label": "Tutto",
       "description": "In più finanze, modelli, firme, diario di bordo, mobilità, strumenti e link brevi."
     }
+  },
+  "books": {
+    "title": "Configura la contabilità",
+    "intro": "La contabilità ha bisogno di un libro contabile per mostrare qualcosa. Potrai modificare questi dati più tardi nelle impostazioni della contabilità. Il piano dei conti resta vuoto per ora.",
+    "save": "Configura",
+    "setup_button": "Configura la contabilità",
+    "missing_note": "La contabilità è attiva ma non ancora configurata. Fino ad allora il suo menu resta vuoto.",
+    "id_label": "Sigla della contabilità",
+    "id_helper": "Lettere minuscole, cifre, - o _. Di solito la sigla dell'associazione. Non si potrà più cambiare.",
+    "name_label": "Nome dell'organizzazione",
+    "name_helper": "L'organizzazione a cui appartiene la contabilità. Se esiste già, il suo nome resta invariato.",
+    "backend_label": "Dove si registra?",
+    "backend_native": "Qui nell'app",
+    "backend_bexio": "In bexio (sola lettura)",
+    "fiscal_label": "Primo mese dell'esercizio",
+    "fiscal_helper": "1 = gennaio, 7 = luglio",
+    "vat_method_label": "IVA",
+    "vat_exempt": "non assoggettato all'IVA",
+    "vat_effective": "metodo effettivo",
+    "vat_net_tax_rate": "aliquota saldo",
+    "vat_flat_rate": "aliquota forfettaria",
+    "vat_period_label": "Periodo di rendiconto",
+    "period_quarterly": "trimestrale",
+    "period_semi_annual": "semestrale",
+    "period_monthly": "mensile",
+    "done_toast": "La contabilità «{books}» è configurata.",
+    "exist_error": "Questa contabilità esiste già.",
+    "taken_error": "Questa sigla appartiene già a un'altra organizzazione. Scegline un'altra.",
+    "validation": {
+      "booksId": "Solo lettere minuscole, cifre, - o _ (da 2 a 32 caratteri, prima una lettera).",
+      "name": "Inserisci un nome.",
+      "fiscalYearStart": "Inserisci un numero da 1 a 12.",
+      "backend": "Scegli una voce.",
+      "vatMethod": "Scegli una voce.",
+      "vatPeriod": "Scegli una voce."
+    }
   }
 }

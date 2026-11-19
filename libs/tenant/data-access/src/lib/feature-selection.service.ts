@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 
-import type { ApplyFeatureRequest, ApplyFeatureResponse, FeatureIntent, StructuralField } from '@okr/tenant-util';
+import type { ApplyFeatureRequest, ApplyFeatureResponse, BooksSetupInput, FeatureIntent, StructuralField } from '@okr/tenant-util';
 
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
@@ -59,5 +59,10 @@ export class FeatureSelectionService {
   /** «Lösen» — release the field back to the catalogue. */
   public unpinField(tenantId: string, docId: string, field: StructuralField, options: { dryRun?: boolean } = {}): Promise<ApplyFeatureResponse> {
     return this.send(tenantId, { verb: 'unpinField', docId, field }, options);
+  }
+
+  /** «Buchhaltung einrichten» — create the books the accounting menu needs (org, accounting config, default books). */
+  public setupBooks(tenantId: string, books: BooksSetupInput, options: { dryRun?: boolean } = {}): Promise<ApplyFeatureResponse> {
+    return this.send(tenantId, { verb: 'setupBooks', books }, options);
   }
 }

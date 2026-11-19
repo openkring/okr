@@ -350,5 +350,41 @@
       "label": "Everything",
       "description": "Plus finances, templates, signatures, logbook, mobility, instruments and short links."
     }
+  },
+  "books": {
+    "title": "Set up the books",
+    "intro": "The accounting needs a set of books to show anything. You can change these details later in the accounting settings. The chart of accounts stays empty for now.",
+    "save": "Set up",
+    "setup_button": "Set up the books",
+    "missing_note": "Accounting is switched on but not set up yet. Its menu stays empty until then.",
+    "id_label": "Books id",
+    "id_helper": "Lowercase letters, digits, - or _. Usually the club's short name. It cannot be changed later.",
+    "name_label": "Organisation name",
+    "name_helper": "The organisation the books belong to. If it already exists, its name stays unchanged.",
+    "backend_label": "Where is it booked?",
+    "backend_native": "Here in the app",
+    "backend_bexio": "In bexio (read only)",
+    "fiscal_label": "First month of the fiscal year",
+    "fiscal_helper": "1 = January, 7 = July",
+    "vat_method_label": "VAT",
+    "vat_exempt": "not liable for VAT",
+    "vat_effective": "effective method",
+    "vat_net_tax_rate": "net tax rate",
+    "vat_flat_rate": "flat tax rate",
+    "vat_period_label": "Reporting period",
+    "period_quarterly": "quarterly",
+    "period_semi_annual": "semi-annually",
+    "period_monthly": "monthly",
+    "done_toast": "The books «{books}» are set up.",
+    "exist_error": "These books already exist.",
+    "taken_error": "This id already belongs to another organisation. Please choose a different one.",
+    "validation": {
+      "booksId": "Only lowercase letters, digits, - or _ (2 to 32 characters, starting with a letter).",
+      "name": "Please enter a name.",
+      "fiscalYearStart": "Please enter a number from 1 to 12.",
+      "backend": "Please choose an entry.",
+      "vatMethod": "Please choose an entry.",
+      "vatPeriod": "Please choose an entry."
+    }
   }
 }
