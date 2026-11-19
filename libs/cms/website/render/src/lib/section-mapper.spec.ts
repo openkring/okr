@@ -82,3 +82,41 @@ describe('mapSection tiles, image variant (spec 1.165 §10.1)', () => {
     expect(t['imageSrc']).toBe('');
   });
 });
+
+describe('mapSection map (spec 1.165 §10.2)', () => {
+  it('maps the centre, zoom and the subtitle as label', () => {
+    const out = map({ type: 'map', name: 'ort', title: 'So findest du uns', subTitle: 'Goethestrasse 14, 8712 Stäfa',
+      properties: { centerLatitude: 47.2412, centerLongitude: 8.7236, zoom: 17, useCurrentLocationAsCenter: false } });
+    expect(out).toMatchObject({ type: 'map', title: 'So findest du uns', lat: 47.2412, lng: 8.7236, zoom: 17, label: 'Goethestrasse 14, 8712 Stäfa' });
+  });
+
+  it('clamps the zoom to 1–19 and defaults it to 16', () => {
+    const base = { type: 'map', name: 'ort', properties: { centerLatitude: 47, centerLongitude: 8 } };
+    expect(map({ ...base, properties: { ...base.properties, zoom: 25 } })['zoom']).toBe(19);
+    expect(map(base)['zoom']).toBe(16);
+  });
+
+  it('marks a map without usable coordinates, so the template draws nothing', () => {
+    expect(map({ type: 'map', name: 'x', properties: { centerLatitude: 'abc', centerLongitude: 8 } })['hasPosition']).toBe(false);
+    expect(map({ type: 'map', name: 'x', properties: { centerLatitude: 95, centerLongitude: 8 } })['hasPosition']).toBe(false);
+  });
+
+  it('marks a usable map', () => {
+    expect(map({ type: 'map', name: 'x', properties: { centerLatitude: 47.2, centerLongitude: 8.7 } })['hasPosition']).toBe(true);
+  });
+});
+
+describe('mapSection video embeds without cookies (spec 1.165 §12)', () => {
+  it('serves a youtube id from youtube-nocookie', () => {
+    expect(map({ type: 'video', name: 'v', properties: { url: 'XSu0f8rh2w4' } })['url']).toBe('https://www.youtube-nocookie.com/embed/XSu0f8rh2w4');
+  });
+
+  it('rewrites a full youtube embed url to youtube-nocookie', () => {
+    expect(map({ type: 'video', name: 'v', properties: { url: 'https://www.youtube.com/embed/XSu0f8rh2w4?feature=oembed' } })['url'])
+      .toBe('https://www.youtube-nocookie.com/embed/XSu0f8rh2w4?feature=oembed');
+  });
+
+  it('leaves another provider alone', () => {
+    expect(map({ type: 'video', name: 'v', properties: { url: 'https://player.vimeo.com/video/1' } })['url']).toBe('https://player.vimeo.com/video/1');
+  });
+});

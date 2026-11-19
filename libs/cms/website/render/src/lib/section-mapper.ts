@@ -504,8 +504,19 @@ export function mapSection(
     case 'video': {
       const raw = (props['url'] as string | undefined) ?? '';
       const base = (props['baseUrl'] as string | undefined) ?? 'https://www.youtube.com/embed/';
-      const url = safeEmbedUrl(/^https?:\/\//.test(raw) ? raw : (raw ? base + raw : ''));
+      const url = safeEmbedUrl(youtubeNoCookie(/^https?:\/\//.test(raw) ? raw : (raw ? base + raw : '')));
       return { type: 'video', name, title, url };
+    }
+
+    case 'map': {
+      // one marker at the centre, loaded only after a click (spec 1.165 §10.2, §12)
+      const lat = Number(props['centerLatitude']);
+      const lng = Number(props['centerLongitude']);
+      const hasPosition = Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180
+        && typeof props['centerLatitude'] !== 'string' && typeof props['centerLongitude'] !== 'string';
+      const z = Math.round(Number(props['zoom']));
+      const zoom = Number.isFinite(z) && z > 0 ? Math.min(19, Math.max(1, z)) : 16;
+      return { type: 'map', name, title, kicker, intro, label: subTitle, hasPosition, lat: hasPosition ? lat : 0, lng: hasPosition ? lng : 0, zoom };
     }
 
     case 'people': {
@@ -618,6 +629,11 @@ export function mapCalendarKey(raw: unknown): string {
   const key = typeof raw === 'string' ? raw.trim() : '';
   if (['', 'all', 'my', 'public'].includes(key)) return '';
   return /^[A-Za-z0-9_.-]{1,80}$/.test(key) ? key : '';
+}
+
+/** A YouTube embed url served from youtube-nocookie.com (no tracking cookies before play, spec 1.165 §12). */
+export function youtubeNoCookie(url: string): string {
+  return url.replace(/^https?:\/\/(www\.)?youtube\.com\/embed\//, 'https://www.youtube-nocookie.com/embed/');
 }
 
 export function str(v: unknown): string {
