@@ -785,8 +785,9 @@ export class FeaturePicker {
 
   /**
    * Informs, without stopping the flow, when the rows this dry run would attach to the root menu take
-   * a `top` or `segmented` bar past `MAX_MENU_BAR_ITEMS`: `planRootMenuOp` appends them on the server
-   * without validation, and the bar then shows the rest under «Mehr» (menu-layouts spec §6.5).
+   * a `top` or `segmented` bar past `MAX_MENU_BAR_ITEMS`, or a `static` menu past its 8 rows: `planRootMenuOp`
+   * appends them on the server without validation, and the bar then shows the rest under «Mehr» (menu-layouts
+   * spec §6.5). A `static` menu has no «Mehr», so its warning says the extra rows do not appear at all.
    */
   private async warnIfBarOverflows(preview: ApplyPlanPreview): Promise<void> {
     const added = entriesOfKind(preview, 'menu-attached').length;
@@ -794,7 +795,10 @@ export class FeaturePicker {
     const root = docs.get(`main_${this.tenantId()}`);
     const childActions = Object.fromEntries([...docs.values()].map(doc => [doc.name, doc.action]));
     if (added === 0 || !exceedsBarLimit(root?.menuType, root?.menuItems, added, childActions)) return;
-    await this.alertService.confirm(this.i18n.bar_overflow_warning());
+    const message = root?.menuType === 'static'
+      ? this.i18n.static_overflow_warning()
+      : this.i18n.bar_overflow_warning();
+    await this.alertService.confirm(message);
   }
 
   /**

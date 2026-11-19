@@ -281,6 +281,7 @@
     "rows_adjust_catalogue_toast": "Nota copiada — pásala al equipo de desarrollo para que se adapte el catálogo",
     "rows_nothing_planned": "No hay nada que aplicar — el valor ya está actualizado o fijado",
     "bar_overflow_warning": "Tu menú mostrará entonces más de 6 entradas, el resto aparece en «Más».",
+    "static_overflow_warning": "El menú estático muestra como máximo 8 entradas. Las demás entradas no aparecen hasta que rehagas el menú.",
     "compare_title": "Comparación de campos",
     "compare_col_field": "Campo",
     "compare_col_database": "Base de datos",

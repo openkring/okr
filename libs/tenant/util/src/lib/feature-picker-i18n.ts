@@ -142,6 +142,8 @@ export const FEATURE_PICKER_I18N_KEYS = {
   rows_nothing_planned: PFX + 'picker.rows_nothing_planned',
   /** Shown before enabling a block or adding a row when that takes a bar menu past six entries. */
   bar_overflow_warning: PFX + 'picker.bar_overflow_warning',
+  /** Shown instead when the root menu is `static`: its cap is 8 rows and it has no «Mehr» to fall back on. */
+  static_overflow_warning: PFX + 'picker.static_overflow_warning',
   // `MenuCompareModal` (the (i) icon on each table row).
   compare_title: PFX + 'picker.compare_title',
   compare_col_field: PFX + 'picker.compare_col_field',

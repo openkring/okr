@@ -281,6 +281,7 @@
     "rows_adjust_catalogue_toast": "Note copied — pass it on to the development team so the catalogue gets adjusted",
     "rows_nothing_planned": "There is nothing to apply — the value is already up to date or pinned",
     "bar_overflow_warning": "Your menu will then show more than 6 entries, the rest appears under «More».",
+    "static_overflow_warning": "The static menu shows at most 8 entries. Further entries do not appear until you rebuild the menu.",
     "compare_title": "Field comparison",
     "compare_col_field": "Field",
     "compare_col_database": "Database",
