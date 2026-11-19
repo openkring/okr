@@ -62,6 +62,27 @@ describe('toPublicCourseDates', () => {
     expect(d.endDate).toBe('2027-04-05');
   });
 
+  it('full-day with an end date earlier than the start falls back to the start date', () => {
+    const [d] = toPublicCourseDates([{ startDate: '20270405', endDate: '20270403', fullDay: true }], 'Kurs');
+    expect(d.endDate).toBe('2027-04-05');
+  });
+
+  it('a non-full-day event ignores its end date', () => {
+    const [d] = toPublicCourseDates([{ startDate: '20270403', endDate: '20270405', startTime: '10:00' }], 'Kurs');
+    expect(d.endDate).toBe('2027-04-03');
+  });
+
+  it('sorts a full-day event with a stale startTime as if it had no time', () => {
+    const out = toPublicCourseDates(
+      [
+        { startDate: '20270403', startTime: '09:00', name: 'timed' },
+        { startDate: '20270403', fullDay: true, startTime: '18:00', name: 'fullday' },
+      ],
+      'Kurs',
+    );
+    expect(out.map((d) => d.title)).toEqual(['fullday', 'timed']);
+  });
+
   it('empty startTime yields empty times', () => {
     const [d] = toPublicCourseDates([{ startDate: '20270403', startTime: '' }], 'Kurs');
     expect(d.startTime).toBe('');

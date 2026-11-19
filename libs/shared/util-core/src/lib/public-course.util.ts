@@ -1,4 +1,4 @@
-import type { ApplicationKind, CalEventModel } from '@okr/shared-models';
+import { APPLICATION_KIND_VALUES, type ApplicationKind, type CalEventModel } from '@okr/shared-models';
 import type { PublicCourseOption } from './course-choice.util';
 import { addTime, convertDateFormatToString, DateFormat } from './date.util';
 
@@ -23,11 +23,15 @@ export type PublicCourse = Omit<PublicCourseOption, 'startDate' | 'endDate'> & {
   dates: PublicCourseDate[];
 };
 
-const AUDIENCE_KINDS: readonly ApplicationKind[] = ['youth', 'adult', 'transfer'];
 const DEFAULT_DURATION_MINUTES = 60;
 
 function toIso(storeDate: string | undefined): string {
   return convertDateFormatToString(storeDate, DateFormat.StoreDate, DateFormat.IsoDate, false);
+}
+
+/** Date plus effective start time: a full-day event has no time, whatever `startTime` holds. */
+function sortKey(e: Partial<CalEventModel>): string {
+  return `${e.startDate ?? ''}${e.fullDay === true ? '' : (e.startTime ?? '')}`;
 }
 
 /** Visible, sorted public dates of a course's calendar events. */
@@ -36,7 +40,7 @@ export function toPublicCourseDates(events: Partial<CalEventModel>[], courseName
   return events
     .filter((e) => e.isArchived !== true && e.state !== 'proposed' && e.state !== 'provisional')
     .slice()
-    .sort((a, b) => `${a.startDate ?? ''}${a.startTime ?? ''}`.localeCompare(`${b.startDate ?? ''}${b.startTime ?? ''}`))
+    .sort((a, b) => sortKey(a).localeCompare(sortKey(b)))
     .map((e) => {
       const fullDay = e.fullDay === true;
       const startTime = fullDay ? '' : (e.startTime ?? '');
@@ -44,7 +48,7 @@ export function toPublicCourseDates(events: Partial<CalEventModel>[], courseName
       const date = toIso(e.startDate);
       const result: PublicCourseDate = {
         date,
-        endDate: fullDay && e.endDate ? toIso(e.endDate) : date,
+        endDate: fullDay && e.endDate && e.endDate > (e.startDate ?? '') ? toIso(e.endDate) : date,
         startTime,
         endTime,
         isCancelled: e.state === 'cancelled',
@@ -70,7 +74,7 @@ export function parseAudienceParam(raw: unknown): ApplicationKind[] {
   const result: ApplicationKind[] = [];
   for (const part of raw.split(',')) {
     const kind = part.trim() as ApplicationKind;
-    if (AUDIENCE_KINDS.includes(kind) && !result.includes(kind)) result.push(kind);
+    if (APPLICATION_KIND_VALUES.includes(kind) && !result.includes(kind)) result.push(kind);
   }
   return result;
 }
