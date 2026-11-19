@@ -315,7 +315,7 @@ export type InputType = 'date' | 'datetime-local' | 'email' | 'month' | 'number'
  * as well as guide the browser as to the type of information expected in a given field.
  *  * see: https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/autocomplete
 ---------------------------------------------------------------------------*/
-export type AutoComplete = 'name' | 'email' | 'tel' | 'url' | 'off' | 'given-name' | 'family-name' | 'new-password' | 'current-password' | 'organization' | 'street-address' | 'country' | 'country-name' | 'postal-code' | 'bday' | 'address-level2';
+export type AutoComplete = 'name' | 'email' | 'tel' | 'url' | 'off' | 'given-name' | 'family-name' | 'new-password' | 'current-password' | 'organization' | 'street-address' | 'country' | 'country-name' | 'postal-code' | 'bday' | 'address-level2' | 'address-line1';
 
 /**
  * Android notification channel for every push the native (Capacitor) app shows (spec 1.10).
