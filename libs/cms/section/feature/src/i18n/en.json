@@ -2205,6 +2205,10 @@
       "label": "Row",
       "description": "All images of equal size in one row."
     },
+    "side-by-side": {
+      "label": "Side by side with caption",
+      "description": "The whole images side by side, each caption below – e.g. for QR codes."
+    },
     "grid": {
       "label": "Grid",
       "description": "All images of equal size in a grid."

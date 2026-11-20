@@ -143,3 +143,41 @@ describe('mapSlideshow', () => {
     expect(show?.slides).toHaveLength(2);
   });
 });
+
+describe('article layout side-by-side (whole images in a row, caption below)', () => {
+  const qr = (n: string) => ({ url: `tenant/la21staefa/page/p/${n}.webp`, altText: n, overlay: `QR-Code ${n}`, label: '' });
+  const article = (images: unknown[], position = 1, extra: Record<string, unknown> = {}): SectionDoc => ({
+    type: 'article', title: 'Spende', content: { htmlContent: '', position },
+    properties: { images, imageLayout: 'side-by-side', imageStyle: { captionPosition: 'none' }, ...extra },
+  });
+
+  it('renders a row with every image and its own caption below, centred, even when the style hides captions', () => {
+    const out = map(article([qr('TWINT'), qr('PostFinance')]));
+    expect(out['imageRow']).toBe(true);
+    expect(out['imagePosition']).toBe('top');
+    const imgs = out['images'] as { caption: string; captionPosition: string; captionCss: { textAlign: string } }[];
+    expect(imgs.map(i => i.caption)).toEqual(['QR-Code TWINT', 'QR-Code PostFinance']);
+    expect(imgs.every(i => i.captionPosition === 'bottom' && i.captionCss.textAlign === 'center')).toBe(true);
+    expect(out['slideshow']).toBeUndefined();
+  });
+
+  it('applies to a single image and ignores left/right', () => {
+    const out = map(article([qr('TWINT')], 4));
+    expect(out['imageRow']).toBe(true);
+    expect(out['imagePosition']).toBe('top');
+  });
+
+  it('puts the row below the text when position is bottom', () => {
+    expect(map(article([qr('a'), qr('b')], 2))['imagePosition']).toBe('bottom');
+  });
+
+  it('never falls back to the section title as caption', () => {
+    const out = map(article([{ url: 'x/a.webp', altText: 'a' }]));
+    expect((out['images'] as { caption: string }[])[0].caption).toBe('');
+  });
+
+  it('other layouts keep the old rendering', () => {
+    const out = map(article([qr('a'), qr('b')], 1, { imageLayout: 'pair' }));
+    expect(out['imageRow']).toBeUndefined();
+  });
+});

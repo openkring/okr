@@ -52,6 +52,7 @@ function mountainPath(x: number, y: number, width: number, height: number): stri
         @for (r of rects(); track $index) {
           <rect class="tile" [attr.x]="r.x" [attr.y]="r.y" [attr.width]="r.width" [attr.height]="r.height" rx="2" />
           @if (r.mountain) { <path class="mountain" [attr.d]="r.mountain" /> }
+          @if (captioned()) { <rect class="ui" [attr.x]="r.x + r.width * 0.2" [attr.y]="r.y + r.height + 3" [attr.width]="r.width * 0.6" height="2.5" rx="1.2" /> }
         }
       }
     </svg>
@@ -74,10 +75,12 @@ export class ImageLayoutPreview {
       const height = t.rowSpan * CELL - 2 * GAP;
       return { x, y, width, height, mountain: mountainPath(x, y, width, height) };
     }));
+  /** side-by-side: a caption line under every image */
+  protected readonly captioned = computed(() => this.layout() === 'side-by-side');
   protected readonly width = computed(() => this.layout() === 'slider' ? 120 : this.grid().columns * CELL);
   protected readonly height = computed(() => {
     if (this.layout() === 'slider') return 80;
     const rows = this.grid().tiles.reduce((max, t) => Math.max(max, t.row - 1 + t.rowSpan), 0);
-    return Math.max(rows, 1) * CELL;
+    return (Math.max(rows, 1) + (this.captioned() ? 1 : 0)) * CELL;
   });
 }

@@ -327,8 +327,8 @@ export type ArticleImagePosition = 'none' | 'top' | 'bottom' | 'left' | 'right';
 
 // Mirrors ViewPosition (shared-models) and the app's ArticleSectionComponent only for articles without
 // `imageLayout` (spec 1.154 §5): several images render on top, a single one at content.position, and left/right use
-// content.colSize (of 12, default 6) as the image column width. An `imageLayout` (grid layouts, images below the
-// text) is not rendered on the published website yet.
+// content.colSize (of 12, default 6) as the image column width. Of the `imageLayout`s only `side-by-side` is rendered
+// on the published website (see articleSideBySide); the grid layouts are not yet.
 const VIEW_POSITIONS: ArticleImagePosition[] = ['none', 'top', 'bottom', 'left', 'right'];
 
 export function articleImageLayout(
@@ -340,6 +340,24 @@ export function articleImageLayout(
   if (imageCount === 0) return { imagePosition: 'none', imageColSize: size };
   if (imageCount > 1) return { imagePosition: 'top', imageColSize: size };
   return { imagePosition: VIEW_POSITIONS[position ?? 0] ?? 'none', imageColSize: size };
+}
+
+/** Mirrors SIDE_BY_SIDE_LAYOUT of `@okr/cms-section-util` (render must not import the Angular-side libs). */
+export const SIDE_BY_SIDE = 'side-by-side';
+
+/**
+ * An article in the `side-by-side` layout (mirrors the app's ArticleImages): one or more whole images in a centred
+ * row, each caption below and centred, the row on top of the text — or below it when position is Bottom (2). The
+ * caption comes from the image's own text (overlay, then credit), never from the section title.
+ */
+export function articleSideBySide(
+  rawImages: unknown, imageLayout: unknown, position: number | undefined, style: StoredImageStyle | undefined,
+): { images: PublicImage[]; imagePosition: ArticleImagePosition } | undefined {
+  if (imageLayout !== SIDE_BY_SIDE) return undefined;
+  const rowStyle: StoredImageStyle = { ...(style ?? { height: 'auto' }), captionPosition: 'bottom', captionAlign: 'center' };
+  const images = mapImages(rawImages, rowStyle, []);
+  if (images.length === 0) return undefined;
+  return { images, imagePosition: position === 2 ? 'bottom' : 'top' };
 }
 
 export interface WebSlideshow {
@@ -743,6 +761,15 @@ export function mapSection(
     default: {
       const images = mapImages(props['images'], imageStyle, [subTitle, title]);
       const content = s.content as { position?: number; colSize?: number } | undefined;
+      const sideBySide = articleSideBySide(props['images'], props['imageLayout'], content?.position, imageStyle);
+      if (sideBySide) {
+        return {
+          type: 'article', name, title, subTitle, kicker, intro, content: articleHtml,
+          cta: mapCta(props['cta'], lang),
+          emphasis: props['emphasis'] === 'banner' ? 'banner' : 'none',
+          ...sideBySide, imageColSize: 6, imageHeight: 0, imageRow: true,
+        };
+      }
       const layout = articleImageLayout(images.length, content?.position, content?.colSize);
       // A position of 'none' hides the images in the app as well.
       return {

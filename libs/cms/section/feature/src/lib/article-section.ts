@@ -266,7 +266,7 @@ export class ArticleSectionComponent {
     articleImagePosition(this.section()?.content?.position, this.images().length, this.section()?.properties.imageLayout));
 
   // the layout of several images, resolved for the current count; undefined for the carousel (no layout, or
-  // slider) and for fewer than two images, so existing articles keep today's template branches
+  // slider) and for fewer than two images (except side-by-side), so existing articles keep today's template branches
   protected imageGridLayout = computed((): ImageLayoutId | undefined => {
     const layout = resolveImageLayout(this.section()?.properties.imageLayout, this.images().length);
     return layout && layout !== 'slider' ? layout : undefined;

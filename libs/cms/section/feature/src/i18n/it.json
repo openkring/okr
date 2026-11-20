@@ -2205,6 +2205,10 @@
       "label": "Riga",
       "description": "Tutte le immagini della stessa dimensione in una riga."
     },
+    "side-by-side": {
+      "label": "Affiancate con didascalia",
+      "description": "Le immagini intere affiancate, la didascalia sotto – ad es. per codici QR."
+    },
     "grid": {
       "label": "Griglia",
       "description": "Tutte le immagini della stessa dimensione in una griglia."

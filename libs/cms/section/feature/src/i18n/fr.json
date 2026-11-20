@@ -2205,6 +2205,10 @@
       "label": "Rangée",
       "description": "Toutes les images de même taille sur une rangée."
     },
+    "side-by-side": {
+      "label": "Côte à côte avec légende",
+      "description": "Les images entières côte à côte, la légende en dessous – p. ex. pour des codes QR."
+    },
     "grid": {
       "label": "Grille",
       "description": "Toutes les images de même taille dans une grille."

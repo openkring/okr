@@ -2205,6 +2205,10 @@
       "label": "Reihe",
       "description": "Alle Bilder gleich gross in einer Reihe."
     },
+    "side-by-side": {
+      "label": "Nebeneinander mit Bildtext",
+      "description": "Die Bilder in voller Grösse nebeneinander, der Bildtext darunter – etwa für QR-Codes."
+    },
     "grid": {
       "label": "Raster",
       "description": "Alle Bilder gleich gross in einem Raster."

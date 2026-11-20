@@ -138,7 +138,7 @@ const MULTI_IMAGE_POSITIONS = ViewPositions.filter((p) => p.id === ViewPosition.
                     <okr-category-old [i18n]="positionI18n()" [value]="position()" (valueChange)="onPositionChange($event)"
                                       [readOnly]="isReadOnly()" [categories]="positions()" />
                   </ion-col>
-                  @if (count() === 1) {
+                  @if (!placedLikeSeveral()) {
                     <ion-col size="12" size-md="6">
                       <okr-number-input [i18n]="colSizeI18n()" [value]="colSize()" (valueChange)="onColSizeChange($event)"
                                         [readOnly]="isReadOnly()" [showHelper]="true" />
@@ -232,10 +232,12 @@ export class ArticleImagesConfiguration {
   });
 
   // position: the one the article renders with (several images: top, or bottom only with a layout)
-  protected readonly position = computed(() => this.count() > 1
+  // a single image in the side-by-side layout is placed like several (top or bottom)
+  protected readonly placedLikeSeveral = computed(() => this.count() > 1 || this.layout() === 'side-by-side');
+  protected readonly position = computed(() => this.placedLikeSeveral()
     ? articleImagePosition(this.content().position, this.count(), this.imageLayout())
     : this.content().position ?? ViewPosition.None);
-  protected readonly positions = computed(() => this.count() > 1 ? MULTI_IMAGE_POSITIONS : ViewPositions);
+  protected readonly positions = computed(() => this.placedLikeSeveral() ? MULTI_IMAGE_POSITIONS : ViewPositions);
   protected readonly colSize = computed(() => this.content().colSize ?? 4);
 
   // slideshow
