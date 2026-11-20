@@ -4,12 +4,18 @@ import { invoiceMatchesBill, mirrorUpdate } from './on-bill-written';
 import { profileTenants } from './on-trainer-agreement-written';
 
 describe('profileTenants', () => {
-  it('excludes archived, unions and sorts', () => {
+  it('includes archived agreements, unions and sorts', () => {
     expect(profileTenants([
       { tenants: ['scs', 'gss'], isArchived: false },
       { tenants: ['scs', 'zzz'], isArchived: true },
       { tenants: ['abc', 'scs'], isArchived: false },
-    ])).toEqual(['abc', 'gss', 'scs']);
+    ])).toEqual(['abc', 'gss', 'scs', 'zzz']);
+  });
+  it('keeps the tenants when all agreements are archived (erasure/export still find the profile)', () => {
+    expect(profileTenants([
+      { tenants: ['scs'], isArchived: true },
+      { tenants: ['gss', ''], isArchived: true },
+    ])).toEqual(['gss', 'scs']);
   });
   it('is empty without agreements', () => expect(profileTenants([])).toEqual([]));
 });

@@ -96,6 +96,7 @@
       "no-postal": "Please choose a postal address in your invoice details.",
       "no-iban": "Please choose a bank account in your invoice details.",
       "future-month": "You can bill a month only once it has started.",
+      "month-not-over": "You can bill a month only after its last day.",
       "already-sent": "You have already sent an invoice for this month.",
       "no-entries": "There are no open work entries in this month.",
       "duplicate-number": "You have already used this invoice number. Please adjust the invoice number in your invoice details, e.g. with {n}.",

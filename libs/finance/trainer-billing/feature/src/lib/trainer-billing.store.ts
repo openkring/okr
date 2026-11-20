@@ -84,6 +84,8 @@ export const TrainerBillingStore = signalStore(
     invoices: computed(() => store.invoicesResource.value() ?? []),
     isLoading: computed(() => store.agreementsResource.isLoading() || store.entriesResource.isLoading()),
     canGoNext: computed(() => store.month() < monthOf(store.today)),
+    /** Ruling R9: a month is sent only after its last day — the current month can be previewed, not sent */
+    isCurrentMonth: computed(() => store.month() === monthOf(store.today)),
     monthTitle: computed(() => monthTitleDe(store.month())),
   })),
 

@@ -96,6 +96,7 @@
       "no-postal": "Bitte wähle in deinen Rechnungsangaben eine Postadresse.",
       "no-iban": "Bitte wähle in deinen Rechnungsangaben eine Bankverbindung.",
       "future-month": "Einen Monat kannst du erst abrechnen, wenn er begonnen hat.",
+      "month-not-over": "Du kannst einen Monat erst nach seinem letzten Tag abrechnen.",
       "already-sent": "Für diesen Monat hast du bereits eine Rechnung gesendet.",
       "no-entries": "In diesem Monat gibt es keine offenen Einsätze.",
       "duplicate-number": "Diese Rechnungsnummer hast du schon verwendet. Bitte passe in deinen Rechnungsangaben die Rechnungsnummer an, z. B. mit {n}.",

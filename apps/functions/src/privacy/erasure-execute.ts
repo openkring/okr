@@ -380,11 +380,15 @@ async function deleteAvatarObject(avatar: DocumentSnapshot, ops: ErasureOps): Pr
 }
 
 /**
- * Runs the erasure in the pinned order: deletes → anonymizations → tenant detach of the
- * shared documents → D-L2 address/avatar detach → the conditional hard delete → the
- * projection rebuild → the log. Reordering any of it breaks a property:
+ * Runs the erasure in the pinned order: deletes → tenant detach of the other shared rows
+ * (step 1b: `onTenantExit: 'detach'` rows that are not parent-owned, e.g. trainer-profiles;
+ * the document goes only when its `tenants[]` empties) → anonymizations → tenant detach of
+ * the shared parent documents → D-L2 address/avatar detach → the conditional hard delete →
+ * the projection rebuild → the log. Reordering any of it breaks a property:
  *
  * - deletes before anonymizations, so a document that is both is gone before it is patched;
+ * - step 1b right after the deletes and before the anonymizations: its rows are never
+ *   anonymized, and it reads them while the tenant filter in `resolveDocs` still matches;
  * - the detach after both, so the tenant filter in `resolveDocs` still matches while the
  *   rows are being read;
  * - `rebuildAddressDirectory` LAST, because a *delete* of the last address may not fire

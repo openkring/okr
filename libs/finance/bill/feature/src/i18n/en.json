@@ -199,7 +199,7 @@
     "not-found": "The supplier bill no longer exists.",
     "book-blocked": "The supplier bill cannot be booked yet.",
     "not-draft": "Only a draft can be changed or booked. Delete its booking in the journal first.",
-    "trainer-invoice": "This bill comes from a trainer. Please reject it as a trainer invoice instead.",
+    "trainer-invoice": "This bill comes from a trainer. Please reject it under Accounting → Coaches.",
     "already-booked": "The supplier bill is already booked.",
     "no-lines": "The supplier bill has no lines yet.",
     "zero-amount": "Every line needs an amount greater than 0.",

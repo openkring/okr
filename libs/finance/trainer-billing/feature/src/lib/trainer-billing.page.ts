@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import {
   ActionSheetController, IonButton, IonButtons, IonChip, IonCol, IonContent, IonFooter, IonGrid, IonHeader, IonIcon, IonItem,
-  IonLabel, IonList, IonListHeader, IonMenuButton, IonRow, IonSegment, IonSegmentButton, IonTitle, IonToolbar,
+  IonLabel, IonList, IonListHeader, IonMenuButton, IonNote, IonRow, IonSegment, IonSegmentButton, IonTitle, IonToolbar,
 } from '@ionic/angular';
 
 import { monthTitleDe, trainerInvoiceStateColor } from '@okr/finance-trainer-billing-util';
@@ -25,7 +25,7 @@ import { TrainerBillingStore } from './trainer-billing.store';
   imports: [
     SvgIconPipe, Spinner, EmptyList,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonSegment, IonSegmentButton, IonContent,
-    IonFooter, IonLabel, IonGrid, IonRow, IonCol, IonChip, IonList, IonListHeader, IonItem,
+    IonFooter, IonLabel, IonGrid, IonRow, IonCol, IonChip, IonList, IonListHeader, IonItem, IonNote,
   ],
   styles: [`
     .month { text-align: center; font-weight: 600; }
@@ -33,6 +33,7 @@ import { TrainerBillingStore } from './trainer-billing.store';
     ion-chip { font-size: 0.8rem; padding-top: 0px; padding-bottom: 0px; height: 12px; }
     ion-row.entry { cursor: pointer; }
     .reason { white-space: normal; }
+    .send-hint { display: block; padding: 4px 16px 0; font-size: 0.85rem; white-space: normal; }
   `],
   template: `
     <ion-header>
@@ -150,6 +151,9 @@ import { TrainerBillingStore } from './trainer-billing.store';
 
     @if (store.agreement()) {
       <ion-footer>
+        @if (store.isCurrentMonth() && store.openEntries().length > 0) {
+          <ion-note class="send-hint">{{ store.i18n.send_refusal_month_not_over() }}</ion-note>
+        }
         <ion-toolbar>
           <ion-buttons slot="start">
             <ion-button (click)="store.preview()" [disabled]="store.busy() || store.openEntries().length === 0">
@@ -158,7 +162,7 @@ import { TrainerBillingStore } from './trainer-billing.store';
             </ion-button>
           </ion-buttons>
           <ion-buttons slot="end">
-            <ion-button fill="solid" color="primary" (click)="store.send()" [disabled]="store.busy() || store.openEntries().length === 0">
+            <ion-button fill="solid" color="primary" (click)="store.send()" [disabled]="store.busy() || store.openEntries().length === 0 || store.isCurrentMonth()">
               <ion-icon slot="start" src="{{ 'send' | svgIcon }}" />
               {{ store.i18n.me_send() }}
             </ion-button>

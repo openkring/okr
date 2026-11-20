@@ -219,11 +219,17 @@ describe('priceEntries', () => {
     expect(res).toEqual({ error: 'no-vat-code', serviceKey: 'training' });
   });
 
-  it('refuses an entry without a rate on its date, or with a missing or archived service', () => {
+  it('refuses an entry without a rate on its date, or with a missing service', () => {
     const late = agreement([svc({ rates: [{ validFrom: '20260801', amount: chf(5000) }] })]);
     expect(priceEntries([entry('20260710', 2)], late, noVat, 'acc')).toEqual({ error: 'no-rate', serviceKey: 'training' });
     expect(priceEntries([entry('20260710', 2, 'ghost')], agreement([svc()]), noVat, 'acc')).toEqual({ error: 'no-rate', serviceKey: 'ghost' });
-    expect(priceEntries([entry('20260710', 2)], agreement([svc({ isArchived: true })]), noVat, 'acc')).toEqual({ error: 'no-rate', serviceKey: 'training' });
+  });
+
+  it('prices an open entry of an archived service (§5.1: old entries stay valid)', () => {
+    const r = priceEntries([entry('20260710', 2)], agreement([svc({ isArchived: true })]), noVat, 'acc') as PricedInvoice;
+    expect(r.lines).toHaveLength(1);
+    expect(r.lines[0].serviceKey).toBe('training');
+    expect(r.subtotal).toBeGreaterThan(0);
   });
 
   it('falls back to the default account, and refuses when neither is set', () => {
@@ -313,7 +319,8 @@ describe('sendRefusal', () => {
     expect(sendRefusal(ok({ iban: '' }))).toBe('no-iban'); // Review Focus 5
     expect(sendRefusal(ok({ postalOk: false }))).toBe('no-postal');
     expect(sendRefusal(ok({ month: '2026-12', todayMonth: '2026-11' }))).toBe('future-month');
-    expect(sendRefusal(ok({ month: '2026-11', todayMonth: '2026-11' }))).toBe('');
+    expect(sendRefusal(ok({ month: '2026-11', todayMonth: '2026-11' }))).toBe('month-not-over'); // Ruling R9
+    expect(sendRefusal(ok({ month: '2026-10', todayMonth: '2026-11' }))).toBe('');
     expect(sendRefusal(ok({ openEntryCount: 0 }))).toBe('no-entries');
   });
 
@@ -354,6 +361,7 @@ describe('sendRefusal', () => {
     expect(sendRefusal({ ...base, profile: profile() })).toBe('no-postal');
     expect(sendRefusal({ ...base, profile: profile(), postalOk: true })).toBe('no-iban');
     expect(sendRefusal({ ...base, profile: profile(), postalOk: true, iban: 'CH93' })).toBe('future-month');
+    expect(sendRefusal({ ...base, profile: profile(), postalOk: true, iban: 'CH93', month: '2026-11' })).toBe('month-not-over');
     expect(sendRefusal({ ...base, profile: profile(), postalOk: true, iban: 'CH93', month: '2026-07' })).toBe('already-sent');
     expect(sendRefusal({ ...base, profile: profile(), postalOk: true, iban: 'CH93', month: '2026-07', existingState: undefined })).toBe('no-entries');
   });

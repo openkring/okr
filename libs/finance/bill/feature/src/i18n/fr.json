@@ -199,7 +199,7 @@
     "not-found": "La facture fournisseur n'existe plus.",
     "book-blocked": "La facture fournisseur ne peut pas encore être comptabilisée.",
     "not-draft": "Seul un brouillon peut être modifié ou comptabilisé. Supprime d'abord son écriture dans le journal.",
-    "trainer-invoice": "Cette facture provient d'un entraîneur. Rejette-la plutôt comme facture d'entraîneur.",
+    "trainer-invoice": "Cette facture provient d'un entraîneur. Rejette-la sous Comptabilité → Entraîneurs.",
     "already-booked": "La facture fournisseur est déjà comptabilisée.",
     "no-lines": "La facture fournisseur n'a pas encore de lignes.",
     "zero-amount": "Chaque ligne a besoin d’un montant supérieur à 0.",

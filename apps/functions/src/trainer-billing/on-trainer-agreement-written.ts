@@ -1,8 +1,9 @@
 /**
  * Trigger `onTrainerAgreementWritten` (spec 1.167 §5.2): `trainer-profiles/{personKey}.tenants` is the union of the tenants
- * of all non-archived agreements of the person (the rules let the treasurer of a tenant read the profile through it).
- * It is recomputed from a query, never from the written document alone, so an exited or anonymised agreement
- * (personKey '') cannot re-add a tenant. A changed personKey recomputes both persons. The profile is created with the
+ * of all agreements of the person, archived ones included (the rules let the treasurer of a tenant read the profile
+ * through it, and erasure/export find the profile through it: an archived agreement must not drop the profile to
+ * `tenants: []`). It is recomputed from a query, never from the written document alone, so an exited or anonymised
+ * agreement (personKey '') cannot re-add a tenant. A changed personKey recomputes both persons. The profile is created with the
  * model defaults only when there is at least one tenant; an existing profile gets only `tenants` and is never deleted
  * (erasure does that).
  */
@@ -13,11 +14,13 @@ import type { Firestore } from 'firebase-admin/firestore';
 
 import { TrainerAgreementCollection, TrainerProfileCollection, TrainerProfileModel } from '@okr/shared-models';
 
-/** Pure: sorted unique union of the tenants of the non-archived agreements. */
-export function profileTenants(agreements: { tenants: string[]; isArchived: boolean }[]): string[] {
+/**
+ * Pure: sorted unique union of the tenants of the agreements, archived ones included — the profile stays visible to
+ * erasure/export (`tenantScope: 'tenantsArray'`) as long as any agreement of the person exists.
+ */
+export function profileTenants(agreements: { tenants: string[]; isArchived?: boolean }[]): string[] {
   const set = new Set<string>();
   for (const a of agreements) {
-    if (a.isArchived) continue;
     for (const t of a.tenants ?? []) if (t) set.add(t);
   }
   return [...set].sort();
@@ -31,7 +34,6 @@ export async function syncProfileTenants(db: Firestore, personKey: string): Prom
     const profileSnap = await tx.get(profileRef);
     const tenants = profileTenants(agreements.docs.map((d) => ({
       tenants: Array.isArray(d.get('tenants')) ? (d.get('tenants') as string[]) : [],
-      isArchived: d.get('isArchived') === true,
     })));
     if (profileSnap.exists) {
       const stored = profileSnap.get('tenants');

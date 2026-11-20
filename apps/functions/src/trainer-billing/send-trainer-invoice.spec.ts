@@ -119,6 +119,12 @@ describe('planSend', () => {
     expect(planSend(ctx({ entries: [entry('e1'), entry('bad', { quantity })] }), undefined, false)).toEqual({ refusal: 'invalid-entry', entryKey: 'bad' });
   });
 
+  it('refuses an entry whose quantity rounds to 0 (0.1 h, 0.2 days): no CHF 0 line', () => {
+    expect(planSend(ctx({ entries: [entry('e1'), entry('tiny', { quantity: 0.1 })] }), undefined, false)).toEqual({ refusal: 'invalid-entry', entryKey: 'tiny' });
+    expect(planSend(ctx({ entries: [entry('d', { serviceKey: 'regatta', quantity: 0.2 })] }), undefined, false)).toEqual({ refusal: 'invalid-entry', entryKey: 'd' });
+    expect(plan(planSend(ctx({ entries: [entry('q', { quantity: 0.2 })] }), undefined, false)).priced.lines[0].quantity).toBe(0.25);
+  });
+
   it('refuses more than one day per day entry', () => {
     const entries = [entry('d1', { serviceKey: 'regatta', quantity: 1.5 })];
     expect(planSend(ctx({ entries }), undefined, false)).toEqual({ refusal: 'invalid-entry', entryKey: 'd1' });
@@ -142,6 +148,8 @@ describe('planSend', () => {
 
   it('refuses a month in the future and an incomplete payee', () => {
     expect(planSend(ctx({ today: '20260615' }), undefined, false)).toEqual({ refusal: 'future-month' });
+    expect(planSend(ctx({ today: '20260731' }), undefined, false)).toEqual({ refusal: 'month-not-over' }); // Ruling R9
+    expect(plan(planSend(ctx({ today: '20260801' }), undefined, false)).invoiceDate).toBe('20260801');
     expect(planSend(ctx({ postalOk: false }), undefined, false)).toEqual({ refusal: 'no-postal' });
     expect(planSend(ctx({ payee: { ...ctx().payee, iban: '' } }), undefined, false)).toEqual({ refusal: 'no-iban' });
   });

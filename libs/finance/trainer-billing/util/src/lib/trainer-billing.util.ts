@@ -53,8 +53,8 @@ function roundToStep(value: number, step: number): number {
   return Math.round(value / step) * step;
 }
 
-/** Quantity of a unit, rounded: hours to quarter hours, days to half days. */
-function roundQuantity(quantity: number, unit: TrainerServiceUnit): number {
+/** Quantity of a unit, rounded: hours to quarter hours, days to half days (the quantity an invoice line prints). */
+export function roundQuantity(quantity: number, unit: TrainerServiceUnit): number {
   return unit === 'day' ? roundToStep(quantity, 0.5) : roundToStep(quantity, 0.25);
 }
 
@@ -98,7 +98,8 @@ export function priceEntries(
   vat: { registered: boolean; ratePercentByCode: Record<string, number> },
   defaultAccountKey: string,
 ): PricedInvoice | PricingError {
-  const services = new Map((agreement.services ?? []).filter((s) => !s.isArchived).map((s) => [s.key, s]));
+  // All services, archived ones included (§5.1): archiving stops new entries (rules), old entries stay billable.
+  const services = new Map((agreement.services ?? []).map((s) => [s.key, s]));
   const lines: TrainerInvoiceLine[] = [];
   const netByService = new Map<string, number>();
 
@@ -214,6 +215,7 @@ export type SendRefusal =
   | 'no-iban'
   | 'no-postal'
   | 'future-month'
+  | 'month-not-over'
   | 'already-sent'
   | 'no-entries'
   | 'books-mismatch'
@@ -222,7 +224,8 @@ export type SendRefusal =
 /**
  * Why `sendTrainerInvoice` must refuse, or '' when it may send. Checked in this order: not-owner → books-mismatch →
  * agreement-inactive (active on neither the first nor the last day of the month) → profile-incomplete → no-postal →
- * no-iban → future-month → already-sent (any state but `rejected`) → no-entries. `duplicate-number` is decided
+ * no-iban → future-month → month-not-over (Ruling R9: the current month is sent only after its last day) →
+ * already-sent (any state but `rejected`) → no-entries. `duplicate-number` is decided
  * by the function after numbering, not here.
  */
 export function sendRefusal(c: {
@@ -246,6 +249,7 @@ export function sendRefusal(c: {
   if (!c.postalOk) return 'no-postal';
   if (!c.iban) return 'no-iban';
   if (c.month > c.todayMonth) return 'future-month';
+  if (c.month === c.todayMonth) return 'month-not-over';
   if (c.existingState !== undefined && c.existingState !== 'rejected') return 'already-sent';
   if (c.openEntryCount <= 0) return 'no-entries';
   return '';

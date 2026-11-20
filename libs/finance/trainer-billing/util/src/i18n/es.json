@@ -96,6 +96,7 @@
       "no-postal": "Elige una dirección postal en tus datos de facturación.",
       "no-iban": "Elige una cuenta bancaria en tus datos de facturación.",
       "future-month": "Solo puedes facturar un mes cuando ya ha empezado.",
+      "month-not-over": "Solo puedes facturar un mes después de su último día.",
       "already-sent": "Ya has enviado una factura para este mes.",
       "no-entries": "En este mes no hay intervenciones abiertas.",
       "duplicate-number": "Ya has usado este número de factura. Ajusta el número de factura en tus datos de facturación, p. ej. con {n}.",

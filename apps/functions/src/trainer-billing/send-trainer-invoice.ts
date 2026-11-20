@@ -22,7 +22,7 @@ import {
   WorkEntryCollection, WorkEntryModel,
 } from '@okr/shared-models';
 import {
-  formatInvoiceNo, lastDayOfMonth, monthTitleDe, priceEntries, PricedInvoice, sendRefusal, SendRefusal, templateUsesCounter, trainerInvoiceKey,
+  formatInvoiceNo, lastDayOfMonth, monthTitleDe, priceEntries, PricedInvoice, roundQuantity, sendRefusal, SendRefusal, templateUsesCounter, trainerInvoiceKey,
 } from '@okr/finance-trainer-billing-util';
 import { addDuration, generateRandomString, publicAppOrigin } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
@@ -98,13 +98,18 @@ function openEntriesOfMonth(ctx: InvoiceContext): WorkEntryModel[] {
     && e.isArchived !== true && typeof e.date === 'string' && e.date >= first && e.date <= last);
 }
 
-/** The first entry whose quantity is not a plausible amount of its unit (finite, > 0; ≤ 24 h, ≤ 1 day). */
+/**
+ * The first entry whose quantity is not a plausible amount of its unit: finite, ≤ 24 h / ≤ 1 day, and > 0 AFTER
+ * rounding (hours to 0.25, days to 0.5) — 0.1 h would otherwise print a CHF 0 line.
+ */
 function invalidEntry(ctx: InvoiceContext, entries: WorkEntryModel[]): WorkEntryModel | undefined {
   const units = new Map((ctx.agreement?.services ?? []).map((s) => [s.key, s.unit]));
   return entries.find((e) => {
     const q = e.quantity as unknown;
-    if (typeof q !== 'number' || !Number.isFinite(q) || q <= 0) return true;
-    return q > (units.get(e.serviceKey) === 'day' ? MAX_DAYS_PER_ENTRY : MAX_HOURS_PER_ENTRY);
+    if (typeof q !== 'number' || !Number.isFinite(q)) return true;
+    const unit = units.get(e.serviceKey) === 'day' ? 'day' : 'hour';
+    if (roundQuantity(q, unit) <= 0) return true;
+    return q > (unit === 'day' ? MAX_DAYS_PER_ENTRY : MAX_HOURS_PER_ENTRY);
   });
 }
 

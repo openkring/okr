@@ -196,6 +196,7 @@ export const TRAINER_BILLING_I18N_KEYS = {
   send_refusal_no_postal:          PFX + 'send.refusal.no-postal',
   send_refusal_no_iban:            PFX + 'send.refusal.no-iban',
   send_refusal_future_month:       PFX + 'send.refusal.future-month',
+  send_refusal_month_not_over:     PFX + 'send.refusal.month-not-over',
   send_refusal_already_sent:       PFX + 'send.refusal.already-sent',
   send_refusal_no_entries:         PFX + 'send.refusal.no-entries',
   send_refusal_duplicate_number:   PFX + 'send.refusal.duplicate-number',
@@ -218,7 +219,7 @@ export type TrainerBillingI18n = { [K in TrainerBillingI18nKey]: Signal<string> 
 /** The refusal reasons the trainer-billing callables send in `HttpsError.details.reason`. */
 export const TRAINER_BILLING_REFUSALS = [
   'not-owner', 'books-mismatch', 'agreement-inactive', 'profile-incomplete', 'no-postal', 'no-iban', 'future-month',
-  'already-sent', 'no-entries', 'duplicate-number', 'concurrent-send', 'invalid-entry', 'qr-iban-only', 'no-rate',
+  'month-not-over', 'already-sent', 'no-entries', 'duplicate-number', 'concurrent-send', 'invalid-entry', 'qr-iban-only', 'no-rate',
   'no-vat-code', 'no-account', 'not-sent', 'bill-booked', 'invalid-reason', 'native-books',
 ] as const;
 export type TrainerBillingRefusal = (typeof TRAINER_BILLING_REFUSALS)[number];
