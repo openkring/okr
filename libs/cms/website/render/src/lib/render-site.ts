@@ -62,7 +62,7 @@ import { columnPairStarts, homeRowPlan, type HomeRow } from './home-layout';
 import { mapFooter, mapSection, pickText, type PublicFooter, type SanitizeFn, type SectionDoc } from './section-mapper';
 import { groupPagesInTree } from './website-tree-read.util';
 import type { PublicPerson } from './group-people';
-import { groupTileItems, type PublicGroup } from './group-tiles';
+import { groupTileItems, safeHexColor, type PublicGroup } from './group-tiles';
 
 export interface TemplateSet {
   manifest: TemplateManifest;
@@ -458,7 +458,8 @@ export function renderSite(input: RenderInput): RenderResult {
         page,
         sections: [],
         main: '',
-        groups: groupPagesInTree(site.nav ?? []),
+        // the group's card colour rides along (the Termine page colours an event's group label with it)
+        groups: groupPagesInTree(site.nav ?? []).map((g) => ({ ...g, color: safeHexColor(input.groups?.get(g.key)?.color) })),
       };
       try {
         const main = (compiled.pages.get(name) as RenderFn)(base, data);
