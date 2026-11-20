@@ -89,7 +89,7 @@ async function main() {
     for (const startDate of dates) {
       const ref = db.collection('calevents').doc();
       batch.set(ref, {
-        ...model, startDate, seriesId, tenants: [tenant], isArchived: false, type: 'other', tags: '',
+        ...model, startDate, seriesId, tenants: [tenant], isArchived: false, type: model.type || 'other', tags: '',
         index: `n:${model.name.toLowerCase()}`, attendees: [], responsiblePersons: [], maxAttendees: 0, notifyOnAnswer: false,
         commentNotify: 'default', cancelMessage: '', isLocked: false, columnLabel: '', pollMultiSelect: false,
         activityCount: 0, lastActivityAt: '', courseKey: '', attendance: {},

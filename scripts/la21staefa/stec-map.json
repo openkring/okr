@@ -1,0 +1,39 @@
+{
+  "_comment": "WordPress (Stachethemes) taxonomy ids → la21staefa calendars / types / locations; names read from /wp-json/stec/v5/events/embed/<id> on 2026-11-20. Category 38 «Nettswerk-Träff» belongs to Begegnung & Integration; 56 «Verein LA21» is the association's own calendar.",
+  "groups": {
+    "36": "la21staefa_btvzbauteilezur",
+    "37": "la21staefa_kissstafa",
+    "38": "la21staefa_begegnungintegr",
+    "39": "la21staefa_oasekirchbuhl",
+    "40": "la21staefa_qatira",
+    "41": "la21staefa_reparaturcafest",
+    "42": "la21staefa_smart",
+    "43": "la21staefa_stafnet",
+    "53": "la21staefa_lokalfair",
+    "56": "la21staefa"
+  },
+  "types": {
+    "36": "BTVZ Bauteile Zürichsee",
+    "37": "KISS Stäfa",
+    "38": "Begegnung & Integration",
+    "39": "Oase Kirchbühl",
+    "40": "Qatira",
+    "41": "Reparatur Café Stäfa",
+    "42": "SMäRT",
+    "43": "StäfNet",
+    "53": "Lokal + Fair",
+    "56": "Verein LA21"
+  },
+  "locations": {
+    "46": "Alte Krone, Goethestrasse 14, 8712 Stäfa",
+    "47": "Alte Krone, Goethestrasse 14, 8712 Stäfa",
+    "48": "Nord-Süd-Platz Kirchbühl, Stäfa",
+    "52": "Stäfa",
+    "55": "Pfarreisaal St. Verena, Stäfa",
+    "57": "Rössli Stäfa",
+    "58": "Nord-Süd-Platz Kirchbühl, Stäfa",
+    "59": "Alte Turnhalle Kirchbühl Süd, Stäfa",
+    "60": "Forum Kirchbühl, Stäfa",
+    "62": "Bibliothek Stäfa"
+  }
+}

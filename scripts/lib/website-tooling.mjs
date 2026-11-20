@@ -195,7 +195,7 @@ export async function loadLiveContent(firestore, site) {
   for (const page of pages.values()) {
     for (const { section } of publishedPageSections(page, tenants, sections)) {
       if (section.type === 'people') peopleSections.push(section);
-      if (section.type === 'tiles' && section.properties?.source === 'groups') needsGroups = true;
+      if ((section.type === 'tiles' && section.properties?.source === 'groups') || section.type === 'events') needsGroups = true;
       if (section.type !== 'accordion') continue;
       const items = section.properties?.items;
       for (const it of Array.isArray(items) ? items : []) if (typeof it?.key === 'string' && it.key) nested.push(...candidates(it.key));

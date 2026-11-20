@@ -95,3 +95,11 @@ test('occurrenceDates of a single event is its date', () => {
   const { model, exdates } = mapStecEvent(stec(), MAP);
   assert.deepEqual(occurrenceDates(model, exdates, () => { throw new Error('not called'); }), ['20261205']);
 });
+
+test('the type is the first category that has one (group name as calevent category)', () => {
+  const map = { groups: { 40: 'la21staefa_qatira', 56: 'la21staefa' }, types: { 40: 'Qatira', 56: 'Verein LA21' } };
+  assert.equal(mapStecEvent(stec({ stec_cat: [99, 40] }), map).model.type, 'Qatira');
+  assert.equal(mapStecEvent(stec({ stec_cat: [56] }), map).model.type, 'Verein LA21');
+  assert.deepEqual(mapStecEvent(stec({ stec_cat: [56] }), map).model.calendars, ['public', 'la21staefa']);
+  assert.equal(mapStecEvent(stec({ stec_cat: [] }), map).model.type, '');
+});

@@ -145,9 +145,9 @@ export function plan() {
       tenants: [T], isArchived: false, index: `n:${g.name}`, tags: '', notes: '',
     });
     docs.set(`avatars/${T}.group.${key}`, { storagePath: logoPath(key, g.logo), tenants: [T], isArchived: false });
-    docs.set(`sections/g-${key}`, section(`group-intro-${key}`, 'article', g.name, { images: [], imageStyle: IMAGE_STYLE }, {
-      subTitle: g.teaser,
-      content: { htmlContent: `<p>${g.teaser}</p>`, colSize: 3, position: 0 },
+    // the page header already shows name and teaser: the intro section starts empty, for the group's own text
+    docs.set(`sections/g-${key}`, section(`group-intro-${key}`, 'article', '', { images: [], imageStyle: IMAGE_STYLE }, {
+      content: { htmlContent: '<p></p>', colSize: 3, position: 0 },
     }));
     docs.set(`pages/${key}_content`, {
       name: g.name, title: g.name, subTitle: g.teaser, type: 'content', state: 'published', isPrivate: false,
@@ -155,8 +155,24 @@ export function plan() {
       abstract: '', notes: 'LA21 Gruppenseite (1.165)', tags: '', meta: [],
     });
   }
+  // the groups as categories (owner, 2026-11-20): calevent types and news tags of this tenant. Own documents of
+  // la21staefa win over the shared 'system' ones (AppStore pickForTenant). Item name = label (no i18n scope).
+  docs.set(`categories/${T}_calevent_type`, {
+    name: 'calevent_type', i18n: '', translateItems: false, hasAbbreviation: false, notes: 'LA21 Projektgruppen als Termin-Kategorien (1.165)',
+    tags: '', isArchived: false, tenants: [T], index: 'n:calevent_type',
+    items: [...GROUPS.map((g) => ({ name: g.name, icon: 'people-group', color: g.color })), { name: VEREIN_TYPE, icon: 'people-group', color: '#723973' }],
+  });
+  docs.set(`tags/${T}_section`, {
+    tagModel: 'section', isArchived: false, tenants: [T],
+    tags: [...SYSTEM_SECTION_TAGS, ...GROUPS.map((g) => g.name), VEREIN_TYPE].join(', '),
+  });
   return { docs, uploads };
 }
+
+/** the calevent type (category) of an event of the association itself, not of a group */
+export const VEREIN_TYPE = 'Verein LA21';
+/** the shared section tags (tags/<system doc>, tagModel 'section') that the own document must keep */
+const SYSTEM_SECTION_TAGS = ['@tag.important', '@tag.review', '@tag.selectable', '@tag.test', '@tag.comment', '@tag.pending'];
 
 /** The seeded home page sections (seed-website.mjs) → the new order. */
 export const SEEDED_HOME = [`${HOME}_hero`, `${HOME}_verein`, `${HOME}_events`, `${HOME}_news`];

@@ -250,7 +250,7 @@ export async function loadSiteContent(db: Firestore, site: WebsiteModel): Promis
   for (const page of pages.values()) {
     for (const { section } of publishedPageSections(page, tenants, sections)) {
       if (section.type === 'people') peopleSections.push(section);
-      if (section.type === 'tiles' && section.properties?.['source'] === 'groups') needsGroups = true;
+      if ((section.type === 'tiles' && section.properties?.['source'] === 'groups') || section.type === 'events') needsGroups = true;
       if (section.type !== 'accordion') continue;
       const items = section.properties?.['items'];
       for (const it of Array.isArray(items) ? (items as { key?: unknown }[]) : []) {

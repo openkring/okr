@@ -42,3 +42,11 @@ describe('mapSection tiles from groups', () => {
     expect(mapped.items).toEqual([expect.objectContaining({ title: 'KISS', linkLabel: 'mehr …' })]);
   });
 });
+
+describe('mapSection events with group labels', () => {
+  it('passes the public groups as labels for the event list', () => {
+    const tiles = groupTileItems([{ key: 'kiss', label: 'KISS', slug: 'kiss' }], new Map([['kiss', group('kiss')]]), new Map([['kiss_content', page(false)]]));
+    const mapped = mapSection('e', { type: 'events', name: 'all', properties: { maxEvents: 5 } } as unknown as SectionDoc, new Map(), (h) => h, 'de', undefined, tiles) as { groupLabels: unknown[] };
+    expect(mapped.groupLabels).toEqual([{ name: 'KISS', color: '#59A3BF', url: '/kiss' }]);
+  });
+});

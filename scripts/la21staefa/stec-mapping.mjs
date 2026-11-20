@@ -4,7 +4,9 @@
  * (import-events.mjs) fetches, maps, expands series and writes.
  *
  * The plugin does not expose its taxonomy names, so a mapping file names them:
- *   { "groups": { "<stec_cat id>": "<group key>" }, "locations": { "<stec_loc id>": "<address text>" } }
+ *   { "groups": { "<stec_cat id>": "<calendar key>" }, "types": { "<stec_cat id>": "<calevent type>" },
+ *     "locations": { "<stec_loc id>": "<address text>" } }
+ * The type (category) is the one of the event's first category that has one; '' when none has.
  *
  * Dates follow the StoreDate/StoreTime local-wall-clock contract (calendar skill): the plugin
  * stores local Zurich time, which is what a calevent stores too — no time-zone shift.
@@ -75,6 +77,7 @@ export function mapStecEvent(e, map) {
     if (!key) warnings.push(`Kategorie ${id} hat keine Gruppe in der Zuordnung`);
     return key;
   }).filter(Boolean);
+  const type = (e.stec_cat ?? []).map((id) => map.types?.[id] ?? map.types?.[String(id)]).find(Boolean) ?? '';
   const location = (e.stec_loc ?? []).map((id) => map.locations?.[id] ?? map.locations?.[String(id)]).find(Boolean) ?? '';
   if ((e.stec_loc ?? []).length > 0 && !location) warnings.push(`Ort ${e.stec_loc.join(',')} hat keinen Text in der Zuordnung`);
   if (e.featured_media) warnings.push(`Bild ${e.featured_media} nicht übernommen (Terminbild noch nicht freigegeben, EV7)`);
@@ -97,6 +100,7 @@ export function mapStecEvent(e, map) {
     url: link?.url ?? '',
     urlLabel: link?.label ?? '',
     state: meta.event_status === 'EventCancelled' ? 'cancelled' : 'definitive',
+    type,
   };
   const exdates = Array.isArray(meta.exdate) ? [...new Set(meta.exdate.filter((d) => /^\d{8}$/.test(d)))] : [];
   return { model, exdates, warnings };

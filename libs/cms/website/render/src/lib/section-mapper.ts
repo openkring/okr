@@ -707,7 +707,11 @@ export function mapSection(
     }
 
     case 'events':
-      return { type: 'events', name, title, kicker, intro, maxItems: clampCount(props['maxEvents']), moreUrl: safeSiteUrl(props['moreUrl']), calendar: mapCalendarKey(s.name) };
+      return {
+        type: 'events', name, title, kicker, intro, maxItems: clampCount(props['maxEvents']), moreUrl: safeSiteUrl(props['moreUrl']), calendar: mapCalendarKey(s.name),
+        // the public groups (name, colour, page): the list labels an event whose category is a group's name (la21staefa)
+        groupLabels: groupTiles.map((t) => ({ name: t.title, color: t.color, url: t.url })),
+      };
 
     case 'course': {
       // the audience is the comma list the course widget reads (data-audience); unknown kinds are dropped

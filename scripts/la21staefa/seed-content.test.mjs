@@ -34,3 +34,11 @@ test('the nav menu is added once', () => {
   assert.equal(nav[0].children.length, 12);
   assert.equal(navWithGroups(nav), nav);
 });
+
+test('the groups become the calevent types and news tags of the tenant', () => {
+  const { docs } = plan();
+  const types = docs.get('categories/la21staefa_calevent_type');
+  assert.equal(types.items.length, 13);
+  assert.deepEqual(types.items[0], { name: 'Zukunftsbüro Stäfa', icon: 'people-group', color: '#723973' });
+  assert.match(docs.get('tags/la21staefa_section').tags, /^@tag\.important, .*, KISS Stäfa, .*Verein LA21$/);
+});
