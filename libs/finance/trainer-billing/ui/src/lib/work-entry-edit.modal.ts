@@ -31,6 +31,7 @@ import { WorkEntryForm } from './work-entry.form';
           [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
           [agreements]="agreements()"
+          [booksLabels]="booksLabels()"
           [readOnly]="isReadOnly()"
           [showForm]="showForm()"
           [i18n]="i18n"
@@ -48,6 +49,8 @@ export class WorkEntryEditModal {
 
   public readonly entry = input.required<WorkEntryModel>();
   public readonly agreements = input<TrainerAgreementModel[]>([]);
+  /** display names of the books by `accountingTenantId`, for the agreement choice */
+  public readonly booksLabels = input<Record<string, string>>({});
   public readonly readOnly = input(false);
   /** an invoiced entry is frozen (the rules deny any change), whatever the caller asked for */
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()) || (this.entry().state ?? 'open') !== 'open');

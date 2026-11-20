@@ -1,4 +1,4 @@
-import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
+import { END_FUTURE_DATE_STR, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import {
   BillModel,
   CalEventModel,
@@ -452,4 +452,44 @@ export function workEntryCreatePayload(
 /** The update patch of an open entry: only the editable fields. */
 export function workEntryUpdateFields(e: WorkEntryModel): Pick<WorkEntryModel, (typeof WORK_ENTRY_EDITABLE_FIELDS)[number]> {
   return { date: e.date ?? '', calEventKey: e.calEventKey ?? '', label: e.label ?? '', serviceKey: e.serviceKey ?? '', quantity: e.quantity ?? 0 };
+}
+
+/* ---------------------------------------------------------------- agreement editor rows */
+
+/**
+ * The stable key of a new service, derived from its name: `Regattabetreuung` → `regattabetreuung`,
+ * `Training Ü30` → `training-ue30`. Work entries point at it, so it never changes once the service is stored.
+ */
+export function serviceKeyOf(name: string): string {
+  return (name ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, SHORT_NAME_LENGTH);
+}
+
+
+/**
+ * The agreement editor keeps the stored services as the first `storedCount` rows (they are archived, never removed)
+ * and appends new ones. A row is stored by POSITION, never by key: a new service whose name passes through a stored
+ * key on the way (`Training` → `Training Ü30`) must not turn into the stored one.
+ */
+export function isStoredServiceRow(index: number, storedCount: number): boolean {
+  return index >= 0 && index < storedCount;
+}
+
+/** The number of stored rates of a row (the first rates of a stored row are its fixed history); 0 for a new row. */
+export function storedRateCount(index: number, storedServices: TrainerService[]): number {
+  return isStoredServiceRow(index, (storedServices ?? []).length) ? (storedServices[index]?.rates ?? []).length : 0;
+}
+
+/** Renames a row: a new row's key follows its name (`serviceKeyOf`), a stored row keeps its key. */
+export function renameServiceRow(services: TrainerService[], index: number, name: string, storedCount: number): TrainerService[] {
+  return (services ?? []).map((s, i) => {
+    if (i !== index) return s;
+    return isStoredServiceRow(i, storedCount) ? { ...s, name } : { ...s, name, key: serviceKeyOf(name) };
+  });
 }

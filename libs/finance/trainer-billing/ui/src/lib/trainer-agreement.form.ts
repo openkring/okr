@@ -6,7 +6,7 @@ import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
 import { CostCenterSelect, CostCenterSelectI18n } from '@okr/finance-cost-center-ui';
 import {
-  serviceKeyOf, TRAINER_MAX_SERVICES, TRAINER_SERVICE_NAME_LENGTH, trainerAgreementValidations, TrainerBillingI18n
+  isStoredServiceRow, renameServiceRow, storedRateCount, TRAINER_MAX_SERVICES, TRAINER_SERVICE_NAME_LENGTH, trainerAgreementValidations, TrainerBillingI18n
 } from '@okr/finance-trainer-billing-util';
 import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
 import {
@@ -115,7 +115,7 @@ const RATE_CURRENCY = 'CHF';
                   </ion-col>
                   <ion-col size="12" size-md="6">
                     <okr-string-select [i18n]="unitI18n()" [stringList]="units" [labels]="unitLabels()"
-                      [selectedString]="service.unit" (selectedStringChange)="onServiceChange(i, 'unit', $event)" [readOnly]="isReadOnly() || isStored(service)" />
+                      [selectedString]="service.unit" (selectedStringChange)="onServiceChange(i, 'unit', $event)" [readOnly]="isReadOnly() || isStored(i)" />
                     <okr-error-note [errors]="serviceErrors(i, 'unit')" />
                   </ion-col>
                   <ion-col size="12" size-md="6">
@@ -132,7 +132,7 @@ const RATE_CURRENCY = 'CHF';
                       [selectedString]="service.vatCodeKey" (selectedStringChange)="onServiceChange(i, 'vatCodeKey', $event)" [readOnly]="isReadOnly()" />
                   </ion-col>
                   <ion-col size="12" size-md="6">
-                    @if (isStored(service)) {
+                    @if (isStored(i)) {
                       <okr-checkbox [i18n]="archivedI18n()" [checked]="!!service.isArchived" (checkedChange)="onServiceChange(i, 'isArchived', $event)"
                         [showHelper]="true" [readOnly]="isReadOnly()" />
                     } @else if (!isReadOnly()) {
@@ -150,7 +150,7 @@ const RATE_CURRENCY = 'CHF';
                       </ion-label>
                     </ion-item>
                     @for (rate of service.rates; track $index; let r = $index) {
-                      @if (isStoredRate(service, r)) {
+                      @if (isStoredRate(i, r)) {
                         <div class="rate">{{ rateFrom(rate) }}: CHF {{ rate.amount.amount / 100 | number:'1.2-2' }}</div>
                       } @else {
                         <ion-row class="ion-align-items-center">
@@ -261,7 +261,7 @@ export class TrainerAgreementForm {
   protected readonly payablesNote = computed(() => this.formData().payablesNote ?? '');
   protected readonly notes = computed(() => this.formData().notes ?? '');
   protected readonly services = computed(() => this.formData().services ?? []);
-  private readonly storedByKey = computed(() => new Map((this.storedServices() ?? []).map(s => [s.key, s])));
+  private readonly storedCount = computed(() => (this.storedServices() ?? []).length);
 
   protected readonly vatCodeKeys = computed(() => ['', ...this.vatCodes().map(v => v.okey)]);
   protected readonly vatCodeLabels = computed(() => [this.i18n().service_vatCode_none(), ...this.vatCodes().map(v => `${v.code} — ${v.name}`)]);
@@ -307,14 +307,18 @@ export class TrainerAgreementForm {
     return hasRole(role, this.currentUser());
   }
 
-  /** A service that is stored under its key: key and unit are fixed, it is archived instead of removed. */
-  protected isStored(service: TrainerService): boolean {
-    return this.storedByKey().has(service.key);
+  /**
+   * A stored service row: the stored services are the first rows (never removed, new ones are appended). Decided by
+   * position, never by key — a new service whose name passes through a stored key must stay new. Its key and unit are
+   * fixed, it is archived instead of removed.
+   */
+  protected isStored(index: number): boolean {
+    return isStoredServiceRow(index, this.storedCount());
   }
 
-  /** The first rates of a stored service are its stored history (new rates are appended): read-only. */
-  protected isStoredRate(service: TrainerService, rateIndex: number): boolean {
-    return rateIndex < (this.storedByKey().get(service.key)?.rates?.length ?? 0);
+  /** The first rates of a stored row are its stored history (new rates are appended): read-only. */
+  protected isStoredRate(index: number, rateIndex: number): boolean {
+    return rateIndex < storedRateCount(index, this.storedServices() ?? []);
   }
 
   protected rateFrom(rate: TrainerRate): string {
@@ -338,7 +342,8 @@ export class TrainerAgreementForm {
 
   /** The name of a new service also sets its key; a stored service keeps its key. */
   protected onServiceNameChange(index: number, name: string): void {
-    this.updateService(index, s => this.isStored(s) ? { ...s, name } : { ...s, name, key: serviceKeyOf(name) });
+    this.dirty.emit(true);
+    this.formData.update(vm => ({ ...vm, services: renameServiceRow(vm.services ?? [], index, name, this.storedCount()) }));
   }
 
   protected onServiceChange(index: number, field: 'unit' | 'accountKey' | 'costCenterKey' | 'vatCodeKey' | 'isArchived', value: string | boolean): void {
@@ -355,7 +360,7 @@ export class TrainerAgreementForm {
   }
 
   protected removeService(index: number): void {
-    if (this.isStored(this.services()[index])) return;   // stored services are archived, never removed
+    if (this.isStored(index)) return;   // stored services are archived, never removed
     this.dirty.emit(true);
     this.formData.update(vm => ({ ...vm, services: (vm.services ?? []).filter((_, i) => i !== index) }));
   }
@@ -365,12 +370,12 @@ export class TrainerAgreementForm {
   }
 
   protected removeRate(index: number, rateIndex: number): void {
-    this.updateService(index, s => this.isStoredRate(s, rateIndex) ? s : { ...s, rates: (s.rates ?? []).filter((_, r) => r !== rateIndex) });
+    this.updateService(index, s => this.isStoredRate(index, rateIndex) ? s : { ...s, rates: (s.rates ?? []).filter((_, r) => r !== rateIndex) });
   }
 
   protected onRateChange(index: number, rateIndex: number, field: 'validFrom' | 'amount', value: string | number): void {
     this.updateService(index, s => {
-      if (this.isStoredRate(s, rateIndex)) return s;
+      if (this.isStoredRate(index, rateIndex)) return s;
       const rates = (s.rates ?? []).map((rate, r) => {
         if (r !== rateIndex) return rate;
         return field === 'amount'

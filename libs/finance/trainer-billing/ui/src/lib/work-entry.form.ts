@@ -74,6 +74,8 @@ export class WorkEntryForm {
   public readonly formData = model.required<WorkEntryModel>();
   /** the caller's agreements the entry may be booked on (active, valid on the date) */
   public readonly agreements = input<TrainerAgreementModel[]>([]);
+  /** display names of the books by `accountingTenantId` (for the agreement choice); a missing one shows the id */
+  public readonly booksLabels = input<Record<string, string>>({});
   public readonly readOnly = input(true);
   public readonly showForm = input(true);   // toggled by the parent to reset the Vest state on cancel
 
@@ -111,7 +113,7 @@ export class WorkEntryForm {
   /** a stored entry keeps its agreement (the rules deny moving it); a new one may choose among several */
   protected readonly canChooseAgreement = computed(() => !this.formData().okey && this.agreements().length > 1);
   protected readonly agreementKeys = computed(() => this.agreements().map(a => a.okey));
-  protected readonly agreementLabels = computed(() => this.agreements().map(a => a.accountingTenantId));
+  protected readonly agreementLabels = computed(() => this.agreements().map(a => this.booksLabels()[a.accountingTenantId] || a.accountingTenantId));
 
   /** live services, plus the entry's own service when it was archived meanwhile (so the value stays visible) */
   private readonly offeredServices = computed(() =>

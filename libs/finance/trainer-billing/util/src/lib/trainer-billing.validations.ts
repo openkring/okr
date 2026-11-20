@@ -51,21 +51,6 @@ export function overlapsOtherAgreement(model: TrainerAgreementModel, others: Tra
     ));
 }
 
-/**
- * The stable key of a new service, derived from its name: `Regattabetreuung` → `regattabetreuung`,
- * `Training Ü30` → `training-ue30`. Work entries point at it, so it never changes once the service is stored.
- */
-export function serviceKeyOf(name: string): string {
-  return (name ?? '')
-    .trim()
-    .toLowerCase()
-    .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, SHORT_NAME_LENGTH);
-}
-
 function isStoreDate(value: unknown): boolean {
   return typeof value === 'string' && /^[0-9]{8}$/.test(value);
 }
@@ -179,7 +164,8 @@ function isOnStep(quantity: number, unit: TrainerServiceUnit): boolean {
 
 /**
  * A work entry (spec 1.167 §7.3). `services` are the services of the entry's agreement: the unit of the chosen one
- * decides the quantity range (one entry = one day), and an archived or unknown service cannot be chosen.
+ * decides the quantity range (one entry = one day; hours when the service is not known), and an archived or unknown
+ * service cannot be chosen.
  * `state` and `invoiceKey` are server-maintained and never judged.
  */
 export const workEntryValidations = staticSuite((model: WorkEntryModel, services?: TrainerService[]) => {
@@ -199,7 +185,8 @@ export const workEntryValidations = staticSuite((model: WorkEntryModel, services
   test('quantity', PFX + 'quantityPositive', () => {
     enforce(typeof quantity === 'number' && Number.isFinite(quantity) && quantity > 0).isTruthy();
   });
-  omitWhen(!service || !(quantity > 0), () => {
+  // an unknown service (agreement not passed, or not offered) gets the hour limits: never skip the range check
+  omitWhen(!(quantity > 0), () => {
     const unit = service?.unit ?? 'hour';
     test('quantity', unit === 'day' ? PFX + 'quantityMaxDay' : PFX + 'quantityMaxHours', () => {
       enforce(quantity).lessThanOrEquals(unit === 'day' ? WORK_ENTRY_MAX_DAYS : WORK_ENTRY_MAX_HOURS);

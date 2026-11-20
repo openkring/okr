@@ -4,13 +4,13 @@ import { AvatarInfo, MoneyModel, TrainerAgreementModel, TrainerProfileModel, Tra
 
 import {
   overlapsOtherAgreement,
-  serviceKeyOf,
   TRAINER_MAX_SERVICES,
   trainerAgreementValidations,
   trainerProfileValidations,
   WORK_ENTRY_LABEL_LENGTH,
   workEntryValidations,
 } from './trainer-billing.validations';
+import { isStoredServiceRow, renameServiceRow, serviceKeyOf, storedRateCount } from './trainer-billing.util';
 
 const V = '@finance/trainer-billing/util.validation.';
 const PERSON = { key: 'p1', name1: 'Anna', name2: 'Jucker', modelType: 'person', type: '', subType: '', label: '' } as AvatarInfo;
@@ -218,8 +218,43 @@ describe('workEntryValidations', () => {
     expect(workEntryValidations(entry({ serviceKey: 'regatta', quantity: 0.25 }), SERVICES).getErrors('quantity')).toContain(V + 'quantityStepDay');
   });
 
+  it('applies the hour limits when the agreement and its services are not known', () => {
+    expect(workEntryValidations(entry({ quantity: 8 })).isValid()).toBe(true);
+    expect(workEntryValidations(entry({ quantity: 30 })).getErrors('quantity')).toContain(V + 'quantityMaxHours');
+    expect(workEntryValidations(entry({ quantity: 1.1 })).getErrors('quantity')).toContain(V + 'quantityStepHours');
+    expect(workEntryValidations(entry({ serviceKey: 'nope', quantity: 30 }), SERVICES).getErrors('quantity')).toContain(V + 'quantityMaxHours');
+  });
+
   it('caps the label at 200 characters', () => {
     expect(workEntryValidations(entry({ label: 'x'.repeat(WORK_ENTRY_LABEL_LENGTH) }), SERVICES).isValid()).toBe(true);
     expect(workEntryValidations(entry({ label: 'x'.repeat(WORK_ENTRY_LABEL_LENGTH + 1) }), SERVICES).hasErrors('label')).toBe(true);
+  });
+});
+
+describe('agreement editor rows', () => {
+  const stored = [service()];   // stored 'Training', key 'training'
+
+  it('identifies stored rows by position, not by key', () => {
+    expect(isStoredServiceRow(0, 1)).toBe(true);
+    expect(isStoredServiceRow(1, 1)).toBe(false);
+  });
+
+  it('keeps a new row new when its name passes through a stored key', () => {
+    let rows = [...stored, service({ key: '', name: '', rates: [] })];
+    for (const name of ['T', 'Training', 'Training Ü30']) rows = renameServiceRow(rows, 1, name, stored.length);
+    expect(rows[1].key).toBe('training-ue30');
+    expect(isStoredServiceRow(1, stored.length)).toBe(false);
+    expect(storedRateCount(1, stored)).toBe(0);
+    expect(rows[0]).toBe(stored[0]);
+  });
+
+  it('keeps the key of a stored row on rename', () => {
+    const rows = renameServiceRow(stored, 0, 'Training Jugend', stored.length);
+    expect(rows[0]).toMatchObject({ key: 'training', name: 'Training Jugend' });
+  });
+
+  it('counts the stored rates of a stored row only', () => {
+    expect(storedRateCount(0, stored)).toBe(1);
+    expect(storedRateCount(3, stored)).toBe(0);
   });
 });
