@@ -44,6 +44,7 @@ import { injectExpenseCostCenters, injectExpenseView } from './expense-view';
           [expense]="expense()"
           [readOnly]="false"
           [i18n]="view.formI18n"
+          [showOcrError]="view.canSeeOcrError()"
           [lockedFields]="formLockedFields()"
           [statuses]="statuses()"
           [authorKey]="view.authorKey()"

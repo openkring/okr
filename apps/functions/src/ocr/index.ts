@@ -19,6 +19,7 @@ import { qrFieldsOf, pickVatCodeKey, type VatCodeLite } from './bill-scan.util';
 import { sanitizeCreditor } from './creditor.util';
 import { costCenterKeyForLine, loadCostCenterContext } from '../cost-center/cost-center-context';
 import { resolveTreasurer } from './resolve-treasurer';
+import { ocrFailureNotes, ocrFailureTaskId, type OcrFailureTrigger } from './ocr-failure.util';
 import { emitEvent } from '../workflow/emit';
 import { SYSTEM_AUTHOR } from '../workflow/activity';
 import { getTodayStr, DateFormat } from '@okr/shared-util-core';
@@ -48,7 +49,7 @@ const VAT_CODE_COLLECTION = 'vat-codes';
  * runWorkflow never throws — so it cannot fail the OCR pipeline that produced it.
  */
 async function reportExpenseOcrFailure(
-  tenantId: string, expenseKey: string, message: string, storagePath: string,
+  tenantId: string, expenseKey: string, message: string, storagePath: string, trigger: OcrFailureTrigger,
 ): Promise<void> {
   if (!expenseKey) return;
   const db = getFirestore();
@@ -74,6 +75,63 @@ async function reportExpenseOcrFailure(
       notes: `${message}\nOCR-Beleg: ${storagePath}`,
     },
   });
+  await notifyAdminsOfOcrFailure(tenantId, expenseKey, expense, message, storagePath, trigger);
+}
+
+/**
+ * The upload succeeded; an OCR failure is an operator problem (provider credits, quota,
+ * configuration), so the submitter is not told — the tenant admins are, with the raw error and the
+ * trigger. One task per (receipt, admin) under a deterministic id, so a redelivered event does not
+ * duplicate it. A direct write, not a workflow rule: the engine's open-task dedup on
+ * (relatedKey, assignee) would swallow it whenever the admin also holds the `expense.created` task.
+ * Best effort: it must never fail the OCR pipeline.
+ */
+async function notifyAdminsOfOcrFailure(
+  tenantId: string, expenseKey: string, expense: FirebaseFirestore.DocumentData,
+  message: string, storagePath: string, trigger: OcrFailureTrigger,
+): Promise<void> {
+  try {
+    const db = getFirestore();
+    const adminSnap = await db.collection(USERS_COLLECTION)
+      .where('tenants', 'array-contains', tenantId)
+      .where('roles.admin', '==', true)
+      .get();
+    const admins = adminSnap.docs.map(d => d.data()).filter(u => !!u['personKey']);
+    if (admins.length === 0) {
+      logger.warn(`notifyAdminsOfOcrFailure: tenant ${tenantId} has no admin — OCR failure of ${expenseKey} not announced`);
+      return;
+    }
+    const notes = ocrFailureNotes({
+      trigger, message: message.slice(0, 2000), storagePath, expenseKey,
+      submitterName: (expense['userName'] as string) ?? '',
+      amount: (Number(expense['amountTotal'] ?? 0) / 100).toFixed(2),
+      currency: (expense['currency'] as string) ?? 'CHF',
+    });
+    const fileName = storagePath.split('/').pop() ?? storagePath;
+    await Promise.all(admins.map(u => {
+      const key = u['personKey'] as string;
+      const name1 = (u['firstName'] as string) ?? '';
+      const name2 = (u['lastName'] as string) ?? '';
+      return db.collection(TASK_COLLECTION).doc(ocrFailureTaskId(storagePath, key)).set({
+        tenants: [tenantId], isArchived: false,
+        name: `OCR-Fehler bei Spesen: ${fileName}`.slice(0, 200), index: '', tags: '',
+        notes,
+        author: SYSTEM_AUTHOR,
+        assignee: { key, name1, name2, modelType: 'person', type: '', subType: '', label: `${name1} ${name2}`.trim() },
+        state: 'initial',
+        dueDate: '', completionDate: '',
+        priority: 'high', importance: 'medium',
+        calendars: [], rank: '',
+        // Deliberately NOT linkKey/relatedKey 'expense.<key>': onTaskDocWritten would then mark the
+        // expense done when the admin closes this task. The expense is reachable via links[].
+        relatedModelType: '', relatedKey: '', linkModelType: '', linkKey: '',
+        links: [{ key: `expense.${expenseKey}`, label: 'Spesen' }],
+      });
+    }));
+    logger.info(`notifyAdminsOfOcrFailure: ${admins.length} admin task(s) for ${storagePath}`);
+  } catch (err) {
+    logger.warn(`notifyAdminsOfOcrFailure: failed for ${expenseKey}`, err);
+  }
 }
 
 /** Resolve an account NUMBER (id) to its account doc key for the tenant, or '' if not found. */
@@ -195,7 +253,7 @@ async function extractReceipt(opts: {
       await reportExpenseOcrFailure(
         tenantId, correlationKey,
         error instanceof Error ? error.message : String(error),
-        objectName,
+        objectName, 'extract',
       );
     }
   } finally {
@@ -290,7 +348,7 @@ export const onOcrResultWritten = onDocumentWritten(
         await reportExpenseOcrFailure(
           tenantId, after.correlationKey,
           'Die Buchhaltung ist für diesen Mandanten noch nicht konfiguriert.',
-          after.storagePath,
+          after.storagePath, 'no-accounting-config',
         );
       } else {
         await createReviewTask(tenantId, cfg?.['reviewAssigneePersonKey'] ?? '', 'OCR: keine Buchhaltungs-Konfiguration', after);
@@ -491,7 +549,7 @@ async function handleExpenseResult(
     await reportExpenseOcrFailure(
       tenantId, correlationKey,
       'Beleg konnte nicht automatisch verarbeitet werden — bitte manuell erfassen.',
-      after.storagePath,
+      after.storagePath, 'unresolved-booking',
     );
     return;
   }

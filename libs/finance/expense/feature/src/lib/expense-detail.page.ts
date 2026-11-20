@@ -68,6 +68,7 @@ import { ExpenseStore } from './expense.store';
           [expense]="expense()!"
           [readOnly]="true"
           [i18n]="view.formI18n"
+          [showOcrError]="view.canSeeOcrError()"
           [statuses]="view.stateCategory()"
           [authorKey]="view.authorKey()"
           [authorName]="view.authorName()"

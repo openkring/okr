@@ -9,7 +9,7 @@ import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AccountingConfigModel, AccountModel, CostCenterModel, ExpenseModel, OcrResultCollection, OcrResultModel, PersonModelName } from '@okr/shared-models';
 import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
-import { convertDateFormatToString, DateFormat, parseSwissQrBill } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, hasRole, parseSwissQrBill } from '@okr/shared-util-core';
 
 import { AccountService } from '@okr/finance-account-data-access';
 import { AccountingConfigService } from '@okr/finance-accounting-data-access';
@@ -100,6 +100,9 @@ export function injectExpenseView(expense: Signal<ExpenseModel>) {
 
   /** The DB-owned status category (labels, icons, colours); the item names are fixed. */
   const stateCategory = computed(() => appStore.getCategory(EXPENSE_STATE_CATEGORY_NAME));
+  /** OCR pipeline errors are for the treasurer/admin; the submitter's upload succeeded and stays quiet. */
+  const canSeeOcrError = computed(() =>
+    hasRole('treasurer', appStore.currentUser()) || hasRole('admin', appStore.currentUser()));
 
   /**
    * The Swiss QR payment code for the reimbursement, or '' when a banking app would refuse it.
@@ -189,7 +192,7 @@ export function injectExpenseView(expense: Signal<ExpenseModel>) {
     if (!result) {
       lines.push(i18n.ocr_none());
     } else if (result.status === 'failed') {
-      lines.push(`${i18n.ocr_failed()}: ${result.error ?? ''}`);
+      lines.push(canSeeOcrError() ? `${i18n.ocr_failed()}: ${result.error ?? ''}` : i18n.ocr_none());
     } else {
       const vat = (result.vatLines ?? []).map(v => `${v.rate} %: ${centsToCHF(v.amount ?? 0).toFixed(2)}`).join(', ');
       lines.push(
@@ -210,7 +213,7 @@ export function injectExpenseView(expense: Signal<ExpenseModel>) {
   }
 
   return {
-    i18n, formI18n, imgixBaseUrl, authorKey, authorName, payeeKey, payeeName, receipts, accounts, stateCategory, qrCode, qrBills, ocrResultKeyOf,
+    i18n, formI18n, imgixBaseUrl, canSeeOcrError, authorKey, authorName, payeeKey, payeeName, receipts, accounts, stateCategory, qrCode, qrBills, ocrResultKeyOf,
     reloadReceipts: () => { receiptsResource.reload(); ocrResultsResource.reload(); },
     showReceiptActions,
   };

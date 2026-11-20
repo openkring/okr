@@ -87,8 +87,9 @@ export interface ExpenseEditFormI18n {
   template: `
     @if (showForm()) {
       <form novalidate>
-        <!-- a failed OCR is a flag on a 'processing' expense, not a status of its own -->
-        @if (ocrError()) {
+        <!-- a failed OCR is a flag on a 'processing' expense, not a status of its own. Only the
+             treasurer/admin sees it: the upload succeeded, the failure is an operator problem. -->
+        @if (showOcrError() && ocrError()) {
           <ion-card color="danger">
             <ion-card-header>
               <ion-card-title>{{ i18n().ocr_error() }}</ion-card-title>
@@ -345,6 +346,8 @@ export class ExpenseEditForm {
   public readonly imgixBaseUrl = input.required<string>();
   /** toggled by the parent on cancel to recreate the form and clear the Vest state */
   public readonly showForm = input(true);
+  /** Show the OCR failure banner — treasurer/admin only; the submitter is never shown a pipeline error. */
+  public readonly showOcrError = input(false);
 
   // outputs
   public readonly valid = output<boolean>();
