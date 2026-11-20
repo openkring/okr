@@ -195,5 +195,62 @@
       "error": "Non è stato possibile caricare il PDF."
     },
     "ok": "OK"
+  },
+  "me": {
+    "title": "Il mio conteggio",
+    "profile": "Dati di fatturazione",
+    "month": {
+      "prev": "Mese precedente",
+      "next": "Mese successivo"
+    },
+    "entries": {
+      "title": "Interventi"
+    },
+    "col": {
+      "date": "Data",
+      "text": "Appuntamento o testo",
+      "service": "Prestazione",
+      "quantity": "Quantità",
+      "state": "Stato"
+    },
+    "entry": {
+      "open": "aperto",
+      "invoiced": "fatturato",
+      "add": "Aggiungi intervento"
+    },
+    "unit": {
+      "hours": "ore",
+      "days": "giorni"
+    },
+    "empty": {
+      "agreement": "Non hai nessun accordo attivo come allenatrice o allenatore. Rivolgiti alla cassiera o al cassiere.",
+      "month": "In questo mese non vale nessun accordo con questo club.",
+      "entries": "In questo mese non hai ancora registrato interventi.",
+      "invoices": "Non hai ancora inviato nessuna fattura."
+    },
+    "preview": "Anteprima",
+    "send": {
+      "action": "Invia al cassiere",
+      "confirm": "Vuoi inviare la fattura di {month} con {count} interventi alla cassiera o al cassiere? Dopo non potrai più modificare questi interventi.",
+      "conf": "La tua fattura {invoiceNo} è stata inviata."
+    },
+    "invoices": {
+      "title": "Le mie fatture"
+    },
+    "rejected": {
+      "reason": "Respinta: {reason}"
+    },
+    "as": {
+      "entry": "Intervento"
+    },
+    "action": {
+      "delete": "Elimina"
+    },
+    "delete": {
+      "confirm": "Vuoi eliminare l'intervento del {date}?"
+    },
+    "address": {
+      "hint": "Registra l'indirizzo nel tuo profilo. I tuoi dati di fatturazione restano conservati finché torni."
+    }
   }
 }

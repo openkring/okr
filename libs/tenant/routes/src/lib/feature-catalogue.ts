@@ -1044,9 +1044,17 @@ const memberFee: BlockRoutes = {
 
 const trainerBilling: BlockRoutes = {
   // The treasurer's page `accounting/:accountingTenantId/trainers/:listId/:contextMenuName` is a child of `finance`'s
-  // accounting shell, gated by `data.featureBlock: 'trainer-billing'`. The trainer's own page follows (Task 12).
+  // accounting shell, gated by `data.featureBlock: 'trainer-billing'`.
   id: 'trainer-billing',
-  routes: (): Route[] => [],
+  routes: (): Route[] => [
+    {
+      // «Meine Abrechnung» (spec 1.167 §7.2–§7.4): any member; the page lists only the caller's own agreements,
+      // entries and invoices (the rules allow no more) and shows an empty state without an active agreement.
+      path: 'trainer-billing/me',
+      canActivate: [isAuthenticatedGuard],
+      loadComponent: () => import('@okr/finance-trainer-billing-feature').then(m => m.TrainerBillingPage),
+    },
+  ],
 };
 
 const esign: BlockRoutes = {

@@ -195,5 +195,62 @@
       "error": "Le PDF n'a pas pu être chargé."
     },
     "ok": "OK"
+  },
+  "me": {
+    "title": "Mon décompte",
+    "profile": "Données de facturation",
+    "month": {
+      "prev": "Mois précédent",
+      "next": "Mois suivant"
+    },
+    "entries": {
+      "title": "Interventions"
+    },
+    "col": {
+      "date": "Date",
+      "text": "Rendez-vous ou texte",
+      "service": "Prestation",
+      "quantity": "Quantité",
+      "state": "Statut"
+    },
+    "entry": {
+      "open": "ouverte",
+      "invoiced": "facturée",
+      "add": "Ajouter une intervention"
+    },
+    "unit": {
+      "hours": "h",
+      "days": "jours"
+    },
+    "empty": {
+      "agreement": "Tu n'as aucune convention active comme entraîneuse ou entraîneur. Adresse-toi à la caissière ou au caissier.",
+      "month": "Aucune convention avec ce club ne s'applique ce mois-ci.",
+      "entries": "Tu n'as encore saisi aucune intervention ce mois-ci.",
+      "invoices": "Tu n'as encore envoyé aucune facture."
+    },
+    "preview": "Aperçu",
+    "send": {
+      "action": "Envoyer au caissier",
+      "confirm": "Veux-tu envoyer la facture de {month} avec {count} interventions à la caissière ou au caissier ? Ensuite, tu ne pourras plus modifier ces interventions.",
+      "conf": "Ta facture {invoiceNo} est envoyée."
+    },
+    "invoices": {
+      "title": "Mes factures"
+    },
+    "rejected": {
+      "reason": "Refusée : {reason}"
+    },
+    "as": {
+      "entry": "Intervention"
+    },
+    "action": {
+      "delete": "Supprimer"
+    },
+    "delete": {
+      "confirm": "Veux-tu supprimer l'intervention du {date} ?"
+    },
+    "address": {
+      "hint": "Saisis l'adresse dans ton profil. Tes données de facturation sont conservées jusqu'à ton retour."
+    }
   }
 }

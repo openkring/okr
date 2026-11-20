@@ -195,5 +195,62 @@
       "error": "The PDF could not be loaded."
     },
     "ok": "OK"
+  },
+  "me": {
+    "title": "My billing",
+    "profile": "Invoice details",
+    "month": {
+      "prev": "Previous month",
+      "next": "Next month"
+    },
+    "entries": {
+      "title": "Work entries"
+    },
+    "col": {
+      "date": "Date",
+      "text": "Event or text",
+      "service": "Service",
+      "quantity": "Quantity",
+      "state": "Status"
+    },
+    "entry": {
+      "open": "open",
+      "invoiced": "invoiced",
+      "add": "Add work entry"
+    },
+    "unit": {
+      "hours": "h",
+      "days": "days"
+    },
+    "empty": {
+      "agreement": "You have no active coaching agreement. Please contact the treasurer.",
+      "month": "No agreement with this club applies in this month.",
+      "entries": "You have not recorded any work in this month yet.",
+      "invoices": "You have not sent an invoice yet."
+    },
+    "preview": "Preview",
+    "send": {
+      "action": "Send to treasurer",
+      "confirm": "Do you want to send the invoice for {month} with {count} work entries to the treasurer? You can no longer change these entries afterwards.",
+      "conf": "Your invoice {invoiceNo} has been sent."
+    },
+    "invoices": {
+      "title": "My invoices"
+    },
+    "rejected": {
+      "reason": "Rejected: {reason}"
+    },
+    "as": {
+      "entry": "Work entry"
+    },
+    "action": {
+      "delete": "Delete"
+    },
+    "delete": {
+      "confirm": "Do you want to delete the work entry of {date}?"
+    },
+    "address": {
+      "hint": "Add the address in your profile. Your invoice details are kept until you come back."
+    }
   }
 }

@@ -1,5 +1,6 @@
 import { inject, Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { combineLatest, Observable, of } from 'rxjs';
+import { map, take } from 'rxjs/operators';
 
 import {
   lastDayOfMonth, TRAINER_BILLING_I18N_KEYS, trainerAgreementPayload, trainerProfileCreatePayload, trainerProfileUpdateFields,
@@ -9,7 +10,7 @@ import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import {
-  TrainerAgreementCollection, TrainerAgreementModel, TrainerInvoiceCollection, TrainerInvoiceModel, TrainerProfileCollection,
+  AddressCollection, AddressModel, CalEventCollection, CalEventModel, TrainerAgreementCollection, TrainerAgreementModel, TrainerInvoiceCollection, TrainerInvoiceModel, TrainerProfileCollection,
   TrainerProfileModel, UserModel, WorkEntryCollection, WorkEntryModel
 } from '@okr/shared-models';
 import { die, getSystemQuery } from '@okr/shared-util-core';
@@ -147,6 +148,24 @@ export class TrainerBillingService {
     }
   }
 
+  /**
+   * The caller's own live addresses of one channel (`postal` or `bankaccount`), read once — for the choice in the
+   * profile modal. A raw vault read: the owner may read his own addresses (address-model skill). The IBAN stays in the
+   * address; the profile keeps only its key (§5.2).
+   */
+  public async ownAddresses(personKey: string, channel: 'postal' | 'bankaccount'): Promise<AddressModel[]> {
+    if (!personKey) return [];
+    return this.firestoreService.getDataOnce<AddressModel>(
+      AddressCollection,
+      [
+        ...getSystemQuery(this.env.tenantId),
+        { key: 'parentKey', operator: '==', value: `person.${personKey}` },
+        { key: 'addressChannel', operator: '==', value: channel },
+      ],
+      'none',
+    );
+  }
+
   /*-------------------------- WORK ENTRIES --------------------------------*/
   /**
    * The entries of one person in one month (`YYYY-MM`), oldest first.
@@ -211,6 +230,15 @@ export class TrainerBillingService {
   public async deleteEntry(key: string): Promise<void> {
     if (!key) die('TrainerBillingService.deleteEntry: key is mandatory.');
     await this.firestoreService.deleteObject(WorkEntryCollection, key, this.i18n.entry_delete_conf());
+  }
+
+  /** The names of calendar events by key (the event an entry was recorded at); an unreadable event is left out. */
+  public eventNames(calEventKeys: string[]): Observable<Record<string, string>> {
+    const keys = [...new Set(calEventKeys.filter(k => !!k))];
+    if (keys.length === 0) return of({});
+    return combineLatest(keys.map(key =>
+      this.firestoreService.readModel<CalEventModel>(CalEventCollection, key).pipe(take(1), map(event => [key, event?.name ?? ''] as const)),
+    )).pipe(map(pairs => Object.fromEntries(pairs.filter(([, name]) => !!name))));
   }
 
   /*-------------------------- TRAINER INVOICES (written by the server only) --------------------------------*/

@@ -1721,7 +1721,7 @@ const asset: FeatureBlock = {
  * `trainer-billing` — Trainer-Abrechnung (spec 1.167): `libs/finance/trainer-billing` — agreements with self-employed
  * trainers, their work entries, the monthly trainer invoice (PDF) and its Kreditor. The treasurer's page «Trainer»
  * is a child of `finance`'s accounting shell (`accounting/:accountingTenantId/trainers/…`, gated by
- * `data.featureBlock: 'trainer-billing'`); the trainer's «Meine Abrechnung» (`/trainer-billing/me`) will be this
+ * `data.featureBlock: 'trainer-billing'`); the trainer's «Meine Abrechnung» (`/trainer-billing/me`) is this
  * block's own top-level route. Its collections are written through the rules and the trainer-billing callables; the
  * catalogue change needs a functions deploy (`FEATURE_BLOCKS` is baked into `applyFeatureSelection`).
  */
@@ -1734,8 +1734,10 @@ const trainerBilling: FeatureBlock = {
   dependsOn: ['finance'],
   collections: ['trainer-agreements', 'trainer-invoices', 'trainer-profiles', 'work-entries'],
   menu: [
-    // «Meine Abrechnung» (`my-trainer-billing`, url `/trainer-billing/me`, registered, under `financeMenuParent`) joins
-    // with its route in Task 12: the route-coverage specs refuse a catalogued url that resolves to no route.
+    // «Meine Abrechnung» (spec 1.167 §7.2–§7.4): every member; the page shows an empty state without an agreement.
+    financeMenuParent([
+      { key: 'my-trainer-billing', name: 'my-trainer-billing', url: '/trainer-billing/me', action: 'navigate', roleNeeded: 'registered', icon: 'invoice', label: '@item.my-trainer-billing' },
+    ]),
     // The treasurer's page «Trainer»: agreements and trainer invoices of the selected books.
     accountingMenuParent([
       { key: 'accounting-trainers', name: 'accounting-trainers', url: '/accounting/@BOOKS@/trainers/all/c-trainers', action: 'navigate', roleNeeded: 'treasurer', icon: 'people', label: '@item.accounting-trainers' },

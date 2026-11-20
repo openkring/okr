@@ -195,5 +195,62 @@
       "error": "No se ha podido cargar el PDF."
     },
     "ok": "OK"
+  },
+  "me": {
+    "title": "Mi liquidación",
+    "profile": "Datos de facturación",
+    "month": {
+      "prev": "Mes anterior",
+      "next": "Mes siguiente"
+    },
+    "entries": {
+      "title": "Intervenciones"
+    },
+    "col": {
+      "date": "Fecha",
+      "text": "Cita o texto",
+      "service": "Prestación",
+      "quantity": "Cantidad",
+      "state": "Estado"
+    },
+    "entry": {
+      "open": "abierta",
+      "invoiced": "facturada",
+      "add": "Añadir intervención"
+    },
+    "unit": {
+      "hours": "h",
+      "days": "días"
+    },
+    "empty": {
+      "agreement": "No tienes ningún acuerdo activo como entrenadora o entrenador. Dirígete a la tesorera o al tesorero.",
+      "month": "En este mes no rige ningún acuerdo con este club.",
+      "entries": "En este mes todavía no has registrado intervenciones.",
+      "invoices": "Todavía no has enviado ninguna factura."
+    },
+    "preview": "Vista previa",
+    "send": {
+      "action": "Enviar al tesorero",
+      "confirm": "¿Quieres enviar la factura de {month} con {count} intervenciones a la tesorera o al tesorero? Después ya no podrás modificar estas intervenciones.",
+      "conf": "Tu factura {invoiceNo} se ha enviado."
+    },
+    "invoices": {
+      "title": "Mis facturas"
+    },
+    "rejected": {
+      "reason": "Rechazada: {reason}"
+    },
+    "as": {
+      "entry": "Intervención"
+    },
+    "action": {
+      "delete": "Eliminar"
+    },
+    "delete": {
+      "confirm": "¿Quieres eliminar la intervención del {date}?"
+    },
+    "address": {
+      "hint": "Registra la dirección en tu perfil. Tus datos de facturación se conservan hasta que vuelvas."
+    }
   }
 }

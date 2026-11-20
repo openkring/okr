@@ -195,5 +195,62 @@
       "error": "Das PDF konnte nicht geladen werden."
     },
     "ok": "OK"
+  },
+  "me": {
+    "title": "Meine Abrechnung",
+    "profile": "Rechnungsangaben",
+    "month": {
+      "prev": "Vorheriger Monat",
+      "next": "Nächster Monat"
+    },
+    "entries": {
+      "title": "Einsätze"
+    },
+    "col": {
+      "date": "Datum",
+      "text": "Termin oder Text",
+      "service": "Leistung",
+      "quantity": "Menge",
+      "state": "Status"
+    },
+    "entry": {
+      "open": "offen",
+      "invoiced": "abgerechnet",
+      "add": "Einsatz hinzufügen"
+    },
+    "unit": {
+      "hours": "Std.",
+      "days": "Tage"
+    },
+    "empty": {
+      "agreement": "Du hast keine aktive Vereinbarung als Trainerin oder Trainer. Bitte wende dich an die Kassierin oder den Kassier.",
+      "month": "In diesem Monat gilt keine Vereinbarung mit diesem Verein.",
+      "entries": "In diesem Monat hast du noch keine Einsätze erfasst.",
+      "invoices": "Du hast noch keine Rechnung gesendet."
+    },
+    "preview": "Vorschau",
+    "send": {
+      "action": "An Kassier senden",
+      "confirm": "Möchtest du die Rechnung für {month} mit {count} Einsätzen an die Kassierin oder den Kassier senden? Danach kannst du diese Einsätze nicht mehr ändern.",
+      "conf": "Deine Rechnung {invoiceNo} ist gesendet."
+    },
+    "invoices": {
+      "title": "Meine Rechnungen"
+    },
+    "rejected": {
+      "reason": "Zurückgewiesen: {reason}"
+    },
+    "as": {
+      "entry": "Einsatz"
+    },
+    "action": {
+      "delete": "Löschen"
+    },
+    "delete": {
+      "confirm": "Möchtest du den Einsatz vom {date} löschen?"
+    },
+    "address": {
+      "hint": "Erfasse die Adresse in deinem Profil. Deine Rechnungsangaben bleiben erhalten, bis du zurückkommst."
+    }
   }
 }
