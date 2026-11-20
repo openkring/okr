@@ -2125,7 +2125,18 @@
     "label": "Aspetto",
     "none": "Normale",
     "banner": "Come fascia colorata",
-    "helper": "Come fascia colorata l'articolo occupa tutta la larghezza e si fa notare."
+    "helper": "Come fascia colorata l'articolo occupa tutta la larghezza e si fa notare.",
+    "background": {
+      "label": "Colore di sfondo",
+      "helper": "Un colore come #59A4BF. L'articolo appare allora come una fascia di questo colore. Lascia vuoto per nessuno sfondo proprio."
+    },
+    "textColor": {
+      "label": "Colore del testo",
+      "auto": "Automatico",
+      "light": "Chiaro (bianco)",
+      "dark": "Scuro",
+      "helper": "In automatico il colore del testo si adatta al colore di sfondo."
+    }
   },
   "cta": {
     "title": "Pulsanti",

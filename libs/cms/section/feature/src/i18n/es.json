@@ -2125,7 +2125,18 @@
     "label": "Presentación",
     "none": "Normal",
     "banner": "Como banda de color",
-    "helper": "Como banda de color, el artículo ocupa todo el ancho y llama la atención."
+    "helper": "Como banda de color, el artículo ocupa todo el ancho y llama la atención.",
+    "background": {
+      "label": "Color de fondo",
+      "helper": "Un color como #59A4BF. El artículo se muestra entonces como una banda de este color. Déjalo vacío para no tener fondo propio."
+    },
+    "textColor": {
+      "label": "Color del texto",
+      "auto": "Automático",
+      "light": "Claro (blanco)",
+      "dark": "Oscuro",
+      "helper": "En automático, el color del texto se adapta al color de fondo."
+    }
   },
   "cta": {
     "title": "Botones",

@@ -2125,7 +2125,18 @@
     "label": "Appearance",
     "none": "Normal",
     "banner": "As a coloured band",
-    "helper": "As a coloured band the article spans the full width and stands out."
+    "helper": "As a coloured band the article spans the full width and stands out.",
+    "background": {
+      "label": "Background colour",
+      "helper": "A colour such as #59A4BF. The article is then shown as a band in this colour. Leave empty for no background of its own."
+    },
+    "textColor": {
+      "label": "Text colour",
+      "auto": "Automatic",
+      "light": "Light (white)",
+      "dark": "Dark",
+      "helper": "Automatic picks the text colour to suit the background colour."
+    }
   },
   "cta": {
     "title": "Buttons",

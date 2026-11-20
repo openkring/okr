@@ -2125,7 +2125,18 @@
     "label": "Darstellung",
     "none": "Normal",
     "banner": "Als farbiges Band",
-    "helper": "Als farbiges Band zieht sich der Artikel über die ganze Breite und fällt auf."
+    "helper": "Als farbiges Band zieht sich der Artikel über die ganze Breite und fällt auf.",
+    "background": {
+      "label": "Hintergrundfarbe",
+      "helper": "Eine Farbe wie #59A4BF. Der Artikel erscheint dann als Band in dieser Farbe. Leer lassen für keinen eigenen Hintergrund."
+    },
+    "textColor": {
+      "label": "Textfarbe",
+      "auto": "Automatisch",
+      "light": "Hell (weiss)",
+      "dark": "Dunkel",
+      "helper": "Automatisch wählt die Textfarbe passend zur Hintergrundfarbe."
+    }
   },
   "cta": {
     "title": "Buttons",

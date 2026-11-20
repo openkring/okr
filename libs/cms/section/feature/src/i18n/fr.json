@@ -2125,7 +2125,18 @@
     "label": "Affichage",
     "none": "Normal",
     "banner": "En bandeau coloré",
-    "helper": "En bandeau coloré, l'article s'étend sur toute la largeur et attire l'attention."
+    "helper": "En bandeau coloré, l'article s'étend sur toute la largeur et attire l'attention.",
+    "background": {
+      "label": "Couleur de fond",
+      "helper": "Une couleur comme #59A4BF. L'article s'affiche alors comme un bandeau de cette couleur. Laisse vide pour aucun fond propre."
+    },
+    "textColor": {
+      "label": "Couleur du texte",
+      "auto": "Automatique",
+      "light": "Claire (blanc)",
+      "dark": "Foncée",
+      "helper": "En mode automatique, la couleur du texte s'adapte à la couleur de fond."
+    }
   },
   "cta": {
     "title": "Boutons",

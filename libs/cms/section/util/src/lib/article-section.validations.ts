@@ -1,6 +1,6 @@
 import { each, enforce, omitWhen, staticSuite, test } from 'vest';
 
-import { ArticleSection, SLIDESHOW_EFFECTS } from '@okr/shared-models';
+import { ARTICLE_TEXT_COLORS, ArticleSection, SLIDESHOW_EFFECTS } from '@okr/shared-models';
 
 import { baseSectionValidations } from './base-section.validations';
 import { isSectionCtaUrl } from './section-cta.util';
@@ -47,6 +47,22 @@ export const articleSectionValidations = staticSuite((model: ArticleSection) => 
     });
     test('slideshow.duration', 'invalidValue', () => {
       enforce(slideshow?.duration).isNumber().greaterThanOrEquals(SLIDESHOW_DURATION_MIN).lessThanOrEquals(SLIDESHOW_DURATION_MAX);
+    });
+  });
+
+  // background: a css hex value (it goes into a style attribute); absent or '' = no own background
+  const background = model.properties?.background;
+  omitWhen(!background?.trim(), () => {
+    test('background', 'invalidValue', () => {
+      enforce(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(background?.trim() ?? '')).isTruthy();
+    });
+  });
+
+  // textColor: absent = automatic, otherwise a known value
+  const textColor = model.properties?.textColor;
+  omitWhen(textColor === undefined, () => {
+    test('textColor', 'invalidValue', () => {
+      enforce((ARTICLE_TEXT_COLORS as readonly string[]).includes(textColor ?? '')).isTruthy();
     });
   });
 

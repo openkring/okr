@@ -1032,6 +1032,13 @@ export const SECTION_I18N_KEYS = {
   emphasis_none:                            PFX + 'emphasis.none',
   emphasis_banner:                          PFX + 'emphasis.banner',
   emphasis_helper:                          PFX + 'emphasis.helper',
+  emphasis_background_label:                PFX + 'emphasis.background.label',
+  emphasis_background_helper:               PFX + 'emphasis.background.helper',
+  emphasis_textColor_label:                 PFX + 'emphasis.textColor.label',
+  emphasis_textColor_auto:                  PFX + 'emphasis.textColor.auto',
+  emphasis_textColor_light:                 PFX + 'emphasis.textColor.light',
+  emphasis_textColor_dark:                  PFX + 'emphasis.textColor.dark',
+  emphasis_textColor_helper:                PFX + 'emphasis.textColor.helper',
 
   // journal mode of the section form (spec 1.154): the photo and clip lists
   journal_photos:                             PFX + 'journal.photos',

@@ -54,7 +54,7 @@ export function getInlineErrorFields(type: SectionType, showAdvanced = false): s
     case 'article':
       // the «Bilder» card (spec 1.154 §5): the layout and the action group are in its Layout segment (always),
       // the rest of the image style in its Styles segment (advanced only)
-      fields.push(IMAGES_PREFIX, 'cta.label', 'cta.url', 'imageLayout', 'action', 'zoomFactor');
+      fields.push(IMAGES_PREFIX, 'cta.label', 'cta.url', 'imageLayout', 'action', 'zoomFactor', 'background', 'textColor');
       if (showAdvanced) fields.push(...IMAGE_STYLE_FIELDS);
       break;
     case 'button':

@@ -491,7 +491,17 @@ export interface ArticleConfig {
   emphasis?: 'none' | 'banner';
   /** How the carousel of 2+ images (imageLayout 'slider') moves; absent = swipe only, as before. */
   slideshow?: ArticleSlideshow;
+  /**
+   * Solid background of the article as a css hex value (#rgb or #rrggbb), drawn as a coloured band
+   * (e.g. the KISS block of la21staefa). Absent or '' = no own background (`emphasis` decides).
+   */
+  background?: string;
+  /** Text colour on `background`: 'light' (white), 'dark', or 'auto' = chosen from the background's brightness. Absent = 'auto'. */
+  textColor?: ArticleTextColor;
 }
+
+export const ARTICLE_TEXT_COLORS = ['auto', 'light', 'dark'] as const;
+export type ArticleTextColor = (typeof ARTICLE_TEXT_COLORS)[number];
 
 /** Transition between two images of an article carousel. 'none' = swipe/arrows only. */
 export const SLIDESHOW_EFFECTS = ['none', 'fade', 'slide', 'zoom', 'kenburns'] as const;

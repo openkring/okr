@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { mapCalendarKey, mapSection, type SectionDoc, mapSlideshow } from './section-mapper';
+import { mapArticleColors, mapCalendarKey, mapSection, type SectionDoc, mapSlideshow, toImgixUrl } from './section-mapper';
 
 const sanitize = (html: string) => html;
 const map = (s: SectionDoc) => mapSection('sec1', s, new Map(), sanitize) as Record<string, unknown>;
@@ -179,5 +179,43 @@ describe('article layout side-by-side (whole images in a row, caption below)', (
   it('other layouts keep the old rendering', () => {
     const out = map(article([qr('a'), qr('b')], 1, { imageLayout: 'pair' }));
     expect(out['imageRow']).toBeUndefined();
+  });
+});
+
+describe('toImgixUrl', () => {
+  it('keeps transparency for png/webp/gif/avif sources', () => {
+    expect(toImgixUrl('a/logo.webp')).toBe('https://bkaiser.imgix.net/a/logo.webp?auto=format,compress');
+    expect(toImgixUrl('a/logo.PNG')).toBe('https://bkaiser.imgix.net/a/logo.PNG?auto=format,compress');
+  });
+
+  it('serves photos as jpg', () => {
+    expect(toImgixUrl('a/photo.jpeg')).toBe('https://bkaiser.imgix.net/a/photo.jpeg?auto=compress,format=jpg');
+  });
+
+  it('passes urls through and empty stays empty', () => {
+    expect(toImgixUrl('https://x.y/z.png')).toBe('https://x.y/z.png');
+    expect(toImgixUrl('')).toBe('');
+  });
+});
+
+describe('mapArticleColors', () => {
+  it('has no background without a valid hex value', () => {
+    expect(mapArticleColors({})).toEqual({ background: '', lightText: false });
+    expect(mapArticleColors({ background: 'red;x:y', textColor: 'light' })).toEqual({ background: '', lightText: false });
+  });
+
+  it('chooses the text colour from the brightness when auto or absent', () => {
+    expect(mapArticleColors({ background: '#3c163c' })).toEqual({ background: '#3c163c', lightText: true });
+    expect(mapArticleColors({ background: '#59A4BF', textColor: 'auto' })).toEqual({ background: '#59A4BF', lightText: false });
+  });
+
+  it('lets an explicit text colour win', () => {
+    expect(mapArticleColors({ background: '#59A4BF', textColor: 'light' })).toEqual({ background: '#59A4BF', lightText: true });
+    expect(mapArticleColors({ background: '#3c163c', textColor: 'dark' })).toEqual({ background: '#3c163c', lightText: false });
+  });
+
+  it('reaches the public article', () => {
+    const doc = { type: 'article', name: 'kiss', title: 'T', properties: { background: '#59A4BF', textColor: 'light', images: [] } } as unknown as SectionDoc;
+    expect(map(doc)).toMatchObject({ type: 'article', background: '#59A4BF', lightText: true });
   });
 });

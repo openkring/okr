@@ -1,7 +1,7 @@
 import { Component, computed, input, linkedSignal, model } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow, IonSelect, IonSelectOption } from '@ionic/angular';
 
-import { ArticleConfig, CategoryListModel, RoleName, SECTION_INTRO_POSITIONS, SectionIntroPosition, SectionModel, UserModel } from '@okr/shared-models';
+import { ARTICLE_TEXT_COLORS, ArticleConfig, ArticleTextColor, CategoryListModel, RoleName, SECTION_INTRO_POSITIONS, SectionIntroPosition, SectionModel, UserModel } from '@okr/shared-models';
 import { ButtonCopy, ButtonCopyI18n, CategorySelect, ErrorNote, TextareaInput, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { COMMENT_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
@@ -145,6 +145,28 @@ const EMPHASES: ArticleEmphasis[] = ['none', 'banner'];
                 </ion-select>
                 <ion-note>{{ i18n().emphasis_helper() }}</ion-note>
               </ion-col>
+              <!-- an own background colour (e.g. the KISS band of la21staefa) and the text colour on it -->
+              <ion-col size="12" [sizeMd]="hasBackground() ? '6' : '12'">
+                <okr-text-input [i18n]="backgroundI18n()" [value]="background()" (valueChange)="onArticleChange({ background: $event.trim() })"
+                                [maxLength]="backgroundLength" [readOnly]="isReadOnly()" [showHelper]="true" />
+                <okr-error-note [errors]="errorsFor('background')" />
+              </ion-col>
+              @if (hasBackground()) {
+                <ion-col size="12" size-md="6">
+                  <ion-select [label]="i18n().emphasis_textColor_label()" labelPlacement="stacked"
+                              [value]="textColor()" [disabled]="isReadOnly()"
+                              (ionChange)="onArticleChange({ textColor: $event.detail.value })">
+                    @for (c of textColors; track c) {
+                      <ion-select-option [value]="c">{{ textColorLabels()[c] }}</ion-select-option>
+                    }
+                  </ion-select>
+                  <ion-note>{{ i18n().emphasis_textColor_helper() }}</ion-note>
+                </ion-col>
+              }
+              <!-- kept outside the condition: a stored value that fails must still show its error -->
+              <ion-col size="12">
+                <okr-error-note [errors]="errorsFor('textColor')" />
+              </ion-col>
             }
           }
         </ion-row>
@@ -183,6 +205,15 @@ export class SectionConfiguration {
     const section = this.formData();
     return section.type === 'article' ? section.properties?.emphasis ?? 'none' : 'none';
   });
+  protected background = computed(() => {
+    const section = this.formData();
+    return section.type === 'article' ? section.properties?.background ?? '' : '';
+  });
+  protected hasBackground = computed(() => this.background().trim().length > 0);
+  protected textColor = computed<ArticleTextColor>(() => {
+    const section = this.formData();
+    return section.type === 'article' ? section.properties?.textColor ?? 'auto' : 'auto';
+  });
   protected type = computed(() => this.formData().type);
   protected state = computed(() => this.formData().state);
   protected roleNeeded = linkedSignal(() => this.formData().roleNeeded ?? 'registered');
@@ -200,6 +231,15 @@ export class SectionConfiguration {
   protected introMaxLength = COMMENT_LENGTH;
   protected readonly introPositions = SECTION_INTRO_POSITIONS;
   protected readonly emphases = EMPHASES;
+  protected readonly textColors = ARTICLE_TEXT_COLORS;
+  // the longest value the suite accepts is #rrggbb
+  protected readonly backgroundLength = 7;
+  protected backgroundI18n = computed((): TextInputI18n => ({
+    name: 'articleBackground',
+    label: this.i18n().emphasis_background_label(),
+    placeholder: '#59A4BF',
+    helper: this.i18n().emphasis_background_helper(),
+  }));
   protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf() } as ButtonCopyI18n));
 
   protected nameI18n = computed(() => ({
@@ -240,6 +280,12 @@ export class SectionConfiguration {
     banner: this.i18n().emphasis_banner(),
   }));
 
+  protected textColorLabels = computed<Record<ArticleTextColor, string>>(() => ({
+    auto: this.i18n().emphasis_textColor_auto(),
+    light: this.i18n().emphasis_textColor_light(),
+    dark: this.i18n().emphasis_textColor_dark(),
+  }));
+
   protected readonly screens = SECTION_SCREENS;
   protected widthLabels = computed<Record<SectionScreen, string>>(() => ({
     sm: this.i18n().section_config_width_sm(),
@@ -272,6 +318,11 @@ export class SectionConfiguration {
   protected onEmphasisChange(emphasis: ArticleEmphasis): void {
     this.formData.update(vm => vm.type === 'article' ? ({ ...vm, properties: { ...vm.properties, emphasis } } as SectionModel) : vm);
   }
+
+  protected onArticleChange(patch: Partial<ArticleConfig>): void {
+    this.formData.update(vm => vm.type === 'article' ? ({ ...vm, properties: { ...vm.properties, ...patch } } as SectionModel) : vm);
+  }
+
 
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.currentUser());

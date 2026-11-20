@@ -96,3 +96,24 @@ describe('articleSectionValidations slideshow', () => {
     expect(result.hasErrors('slideshow.duration')).toBe(true);
   });
 });
+
+describe('articleSectionValidations background', () => {
+  const withProps = (props: Record<string, unknown>) =>
+    ({ ...ARTICLE_SECTION_SHAPE, properties: { ...ARTICLE_SECTION_SHAPE.properties, ...props } }) as unknown as ArticleSection;
+
+  it('accepts no background, an empty one and a hex value', () => {
+    expect(articleSectionValidations(withProps({})).hasErrors('background')).toBe(false);
+    expect(articleSectionValidations(withProps({ background: '' })).hasErrors('background')).toBe(false);
+    expect(articleSectionValidations(withProps({ background: '#59A4BF' })).hasErrors('background')).toBe(false);
+  });
+
+  it('flags a background that is not a hex value', () => {
+    expect(articleSectionValidations(withProps({ background: 'blue' })).hasErrors('background')).toBe(true);
+  });
+
+  it('accepts a known text colour and flags an unknown one', () => {
+    expect(articleSectionValidations(withProps({ textColor: 'light' })).hasErrors('textColor')).toBe(false);
+    expect(articleSectionValidations(withProps({ textColor: 'auto' })).hasErrors('textColor')).toBe(false);
+    expect(articleSectionValidations(withProps({ textColor: 'pink' })).hasErrors('textColor')).toBe(true);
+  });
+});

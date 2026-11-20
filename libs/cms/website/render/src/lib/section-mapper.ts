@@ -6,10 +6,13 @@ import { peopleExcludedKeys, peopleSourceKey, peopleSourceOf } from './people-so
 
 export const IMGIX_BASE = 'https://bkaiser.imgix.net';
 
+/** Sources that may carry transparency (a white logo on a coloured band): served without format=jpg, which would flatten it. */
+const ALPHA_SOURCE = /\.(png|webp|gif|avif)$/i;
+
 export function toImgixUrl(path: string): string {
   if (!path) return '';
   if (/^https?:\/\//.test(path)) return path;
-  return `${IMGIX_BASE}/${path}?auto=compress,format=jpg`;
+  return ALPHA_SOURCE.test(path) ? `${IMGIX_BASE}/${path}?auto=format,compress` : `${IMGIX_BASE}/${path}?auto=compress,format=jpg`;
 }
 
 /** The image fields of a people section's `avatar` config the website reads (AvatarConfig, shared-models). */
@@ -563,6 +566,20 @@ export function isPlainEmail(value: unknown): value is string {
  *   (`resolveGroupPeople`, §13) or the holders of the roles (`resolveRolePeople`, §13.1) of a people
  *   section of type 'group' / 'responsibility'; a source missing from the map renders no one.
  */
+/**
+ * The own background of an article (ArticleConfig.background, a checked hex value; '' = none) and whether its text is
+ * white: textColor 'light' / 'dark' wins, otherwise ('auto' or absent) the brightness decides (twin of
+ * articleHasLightText, @okr/cms-section-util).
+ */
+export function mapArticleColors(props: Record<string, unknown>): { background: string; lightText: boolean } {
+  const raw = typeof props['background'] === 'string' ? props['background'].trim() : '';
+  const background = FOOTER_HEX.test(raw) ? raw : '';
+  if (!background) return { background: '', lightText: false };
+  const textColor = props['textColor'];
+  const lightText = textColor === 'light' ? true : textColor === 'dark' ? false : isDarkHex(background);
+  return { background, lightText };
+}
+
 const HERO_HEX = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i; // as the hero suite (overlay.color, gradient)
 
 /**
@@ -769,6 +786,7 @@ export function mapSection(
           type: 'article', name, title, subTitle, kicker, intro, content: articleHtml,
           cta: mapCta(props['cta'], lang),
           emphasis: props['emphasis'] === 'banner' ? 'banner' : 'none',
+          ...mapArticleColors(props),
           ...sideBySide, imageColSize: 6, imageHeight: 0, imageRow: true,
         };
       }
@@ -778,6 +796,7 @@ export function mapSection(
         type: 'article', name, title, subTitle, kicker, intro, content: articleHtml,
         cta: mapCta(props['cta'], lang),
         emphasis: props['emphasis'] === 'banner' ? 'banner' : 'none',
+        ...mapArticleColors(props),
         images: layout.imagePosition === 'none' ? [] : images,
         ...layout,
         imageHeight: articleImageHeight(imageStyle),

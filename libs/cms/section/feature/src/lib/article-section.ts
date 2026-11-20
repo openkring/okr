@@ -5,7 +5,7 @@ import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, 
 
 import { ArticleSection, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ViewPosition } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { ImageLayoutId, articleImagePosition, resolveImageLayout, resolveSlideshow, validCtas, getSectionIntro } from '@okr/cms-section-util';
+import { ImageLayoutId, articleBackground, articleHasLightText, articleImagePosition, resolveImageLayout, resolveSlideshow, validCtas, getSectionIntro } from '@okr/cms-section-util';
 import { badgeFor, Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
 
 import { ArticleImages } from './article-images';
@@ -26,6 +26,13 @@ import { openSectionLink } from './section-link';
   styles: [`
     ion-card-content { padding: 5px; }
     ion-card.banner { background: color-mix(in srgb, var(--ion-color-secondary) 12%, transparent); border-radius: 8px; padding: 12px; }
+    /* an own background colour (ArticleConfig.background): a solid band; text inherits the chosen colour */
+    ion-card.colored { --background: var(--article-bg); background: var(--article-bg); --color: var(--article-fg); color: var(--article-fg); border-radius: 8px; padding: 12px; }
+    ion-card.colored ::ng-deep ion-card-title, ion-card.colored ::ng-deep ion-card-subtitle { --color: inherit; color: inherit; }
+    ion-card.colored ::ng-deep ion-item { --background: transparent; --color: inherit; color: inherit; }
+    ion-card.colored ::ng-deep a { color: inherit; }
+    ion-card.colored ion-row { align-items: center; }
+    .header-col okr-optional-card-header ::ng-deep ion-card-subtitle { font-size: 1.25rem; font-weight: 600; text-transform: none; }
     .cta { padding: 8px 5px 0px 5px; }
     ion-card { padding: 0px; margin: 0px; border: 0px; box-shadow: none !important; }
 
@@ -117,9 +124,12 @@ import { openSectionLink } from './section-link';
         </div>
         }
       </ng-template>
-      <ion-card [class.banner]="isBanner()">
+      <ion-card [class.banner]="isBanner() && !background()" [class.colored]="!!background()"
+                [style.--article-bg]="background() || null" [style.--article-fg]="background() ? (lightText() ? '#ffffff' : '#1e293b') : null">
         <!-- a slideshow carries the title and subtitle on its images, like the header of la21staefa.ch -->
-        <okr-optional-card-header [intro]="sectionIntro().text" [introPosition]="sectionIntro().position" [title]="slideshow() ? '' : title()" [subTitle]="slideshow() ? '' : subTitle()" />
+        @if (!headerInColumn()) {
+          <okr-optional-card-header [intro]="sectionIntro().text" [introPosition]="sectionIntro().position" [title]="slideshow() ? '' : title()" [subTitle]="slideshow() ? '' : subTitle()" />
+        }
         <ion-card-content>
           @if (images().length > 0 || (content() && content()!.length > 7)) {
             @switch(position()) {
@@ -131,7 +141,10 @@ import { openSectionLink } from './section-link';
                         <okr-img [captionFallbacks]="captionFallbacks()" [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" [zoomTitle]="store.i18n.article_zoomed()" [badge]="badgeOf(image.label)" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
                       </ion-col>
                     }
-                    <ion-col size="12" [sizeMd]="colSizeText()">
+                    <ion-col size="12" [sizeMd]="colSizeText()" [class.header-col]="headerInColumn()">
+                      @if (headerInColumn()) {
+                        <okr-optional-card-header [intro]="sectionIntro().text" [introPosition]="sectionIntro().position" [title]="title()" [subTitle]="subTitle()" />
+                      }
                       <ion-item lines="none" class="ion-no-padding">
                         <div [innerHTML]="content()"></div>
                       </ion-item>
@@ -142,7 +155,10 @@ import { openSectionLink } from './section-link';
               @case(VP.Right) {
                 <ion-grid>
                   <ion-row>
-                    <ion-col size="12" [sizeMd]="colSizeText()">
+                    <ion-col size="12" [sizeMd]="colSizeText()" [class.header-col]="headerInColumn()">
+                      @if (headerInColumn()) {
+                        <okr-optional-card-header [intro]="sectionIntro().text" [introPosition]="sectionIntro().position" [title]="title()" [subTitle]="subTitle()" />
+                      }
                       <ion-item lines="none" class="ion-no-padding">
                         <div [innerHTML]="content()"></div>
                       </ion-item>
@@ -296,6 +312,12 @@ export class ArticleSectionComponent {
     return { ...intro, text: this.store.appStore.replacePlaceholders(intro.text) };
   });
   protected isBanner = computed(() => this.section()?.properties.emphasis === 'banner');
+  /** the article's own background colour ('' = none) and whether its text is white */
+  protected background = computed(() => articleBackground(this.section()?.properties));
+  protected lightText = computed(() => articleHasLightText(this.section()?.properties));
+  /** a coloured article with one image beside the text carries its heading in the text column (the KISS block) */
+  protected headerInColumn = computed(() => !!this.background() && this.images().length === 1
+    && (this.position() === ViewPosition.Left || this.position() === ViewPosition.Right));
   protected cta = computed(() => {
     const c = this.section()?.properties.cta;
     return c ? validCtas([c], 1)[0] : undefined;
