@@ -40,6 +40,21 @@ export function foldAddressPart(s: string): string {
     .toLowerCase();
 }
 
+/** A street name as the register spells it: folded, «ß» as «ss», «str.»/«str» spelled out («Seestr.» = «Seestrasse»). */
+export function foldStreetName(s: string): string {
+  return foldAddressPart(expandStreetName(s));
+}
+
+/** «Seestr.» / «Seestr» / «Seestraße» -> «Seestrasse», spelling otherwise untouched (umlauts stay for the search). */
+function expandStreetName(s: string): string {
+  return s.replace(/ß/g, 'ss').replace(/str\.?(?=\s|$)/gi, 'strasse');
+}
+
+/** A Swiss zip without a legacy country prefix: «CH-8712», «CH 8712» -> «8712». */
+export function normaliseZip(s: string): string {
+  return s.trim().replace(/^[a-z]{2}\s*-?\s*(?=\d)/i, '');
+}
+
 /** "Seestrasse 12 <b>8712 Stäfa</b>" -> street, number, zip, city. */
 function splitLabel(label: string): { streetName: string; streetNumber: string; zipCode: string; city: string } {
   const m = /^(.*?)\s+(\d{4})\s+(.+)$/.exec(label);
@@ -154,11 +169,13 @@ export async function searchSwissAddresses(q: string, fetchFn: typeof fetch = fe
   }
 }
 
-/** exact = exactly one hit whose street, number and zip all match the snapshot (case/diacritics-insensitive). */
+/** exact = exactly one hit whose street, number and zip all match the snapshot (case/diacritics-insensitive, «str.» and «CH-» tolerated). */
 export async function geocodeSnapshot(row: Pick<AddressModel, 'streetName' | 'streetNumber' | 'zipCode' | 'city'>, fetchFn: typeof fetch = fetch): Promise<GeocodeOutcome> {
-  const hits = await searchSwissAddresses(`${row.streetName} ${row.streetNumber} ${row.zipCode} ${row.city}`, fetchFn);
+  const street = foldStreetName(row.streetName);
+  const zip = normaliseZip(row.zipCode);
+  const hits = await searchSwissAddresses(`${expandStreetName(row.streetName)} ${row.streetNumber} ${zip} ${row.city}`, fetchFn);
   if (hits.length === 0) return { kind: 'none' };
-  const exact = hits.filter((h) => foldAddressPart(h.streetName) === foldAddressPart(row.streetName) && foldAddressPart(h.streetNumber) === foldAddressPart(row.streetNumber) && h.zipCode === row.zipCode.trim());
+  const exact = hits.filter((h) => foldStreetName(h.streetName) === street && foldAddressPart(h.streetNumber) === foldAddressPart(row.streetNumber) && h.zipCode === zip);
   if (exact.length === 1) return { kind: 'exact', hit: exact[0] };
   return { kind: 'ambiguous', hits };
 }

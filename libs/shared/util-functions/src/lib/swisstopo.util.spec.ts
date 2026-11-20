@@ -175,6 +175,28 @@ describe('swisstopo util', () => {
       if (out.kind === 'ambiguous') expect(out.hits).toHaveLength(3);
     });
 
+    it('is exact for a zip with a country prefix (legacy «CH-8712»)', async () => {
+      for (const zipCode of ['CH-8712', 'CH 8712', 'ch-8712']) {
+        resetSwisstopoState();
+        const out = await geocodeSnapshot({ streetName: 'Seestrasse', streetNumber: '12', zipCode, city: 'Stäfa' }, okFetch(FIXTURE));
+        expect(out.kind, zipCode).toBe('exact');
+      }
+    });
+
+    it('is exact for an abbreviated or ß-spelled street («Seestr.», «Seestr», «Seestraße»)', async () => {
+      for (const streetName of ['Seestr.', 'Seestr', 'Seestraße']) {
+        resetSwisstopoState();
+        const out = await geocodeSnapshot({ streetName, streetNumber: '12', zipCode: '8712', city: 'Stäfa' }, okFetch(FIXTURE));
+        expect(out.kind, streetName).toBe('exact');
+      }
+    });
+
+    it('searches with the normalised street and zip', async () => {
+      const f = okFetch(FIXTURE);
+      await geocodeSnapshot({ streetName: 'Seestr.', streetNumber: '12', zipCode: 'CH-8712', city: 'Stäfa' }, f);
+      expect(decodeURIComponent(String(vi.mocked(f).mock.calls[0][0]))).toContain('seestrasse 12 8712 stäfa');
+    });
+
     it('is none for an empty result', async () => {
       const out = await geocodeSnapshot({ streetName: 'Nirgends', streetNumber: '1', zipCode: '0000', city: 'X' }, okFetch({ results: [] }));
       expect(out).toEqual({ kind: 'none' });
