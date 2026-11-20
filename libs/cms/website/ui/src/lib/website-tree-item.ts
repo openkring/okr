@@ -59,13 +59,14 @@ export class WebsiteTreeItem {
   public readonly warnings = input<WebsiteWarningCode[]>([]);
   public readonly draftCount = input(0);
   public readonly readOnly = input(true);
+  public readonly iconName = input(''); // overrides the icon of the node type, e.g. 'home' for the home page
 
   // outputs
   public readonly selected = output<WebsiteNode>();
 
   protected readonly isArchived = computed(() => !!this.node().isArchived);
   protected readonly indent = computed(() => `${16 + this.depth() * 24}px`);
-  protected readonly icon = computed(() => this.node().type);   // icon names 'menu', 'page', 'link'
+  protected readonly icon = computed(() => this.iconName() || this.node().type);   // icon names 'menu', 'page', 'link'
   protected readonly url = computed(() => websiteUrl(this.node()));
   protected readonly warningTexts = computed(() => this.warnings().map((code) => this.i18n()[WARNING_KEYS[code]]()));
   protected readonly draftHint = computed(() => {

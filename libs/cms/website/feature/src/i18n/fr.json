@@ -51,7 +51,8 @@
     "view": {
       "website": "Site web",
       "system": "Système"
-    }
+    },
+    "home": "Page d'accueil"
   },
   "actionSheet": {
     "title": "Actions"

@@ -42,6 +42,13 @@ const PROBLEM_KEYS: Record<PublishProblemCode, keyof WebsiteI18n> = {
 };
 const MAX_PROBLEM_LINES = 10;
 
+/**
+ * Id of the synthetic «Startseite» row. The home page (`homePageKey`) is not part of `nav` (design 1.153
+ * §5.1: the logo links to '/'), so the sitemap draws it as a fixed first row. The web graph of
+ * `MenuGraphStore` emits a node with the same id.
+ */
+export const HOME_NODE_ID = '__home';
+
 const escapeHtml = (text: string): string =>
   text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -91,10 +98,19 @@ export const _WebsiteSitemapStore = signalStore(
     const website = computed(() => store.websiteResource.value());
     const nav = computed(() => website()?.nav ?? []);
     const pagesByKey = computed(() => new Map((store.pagesResource.value() ?? []).map((p) => [p.okey, p])));
+    /** The home page as a read-only row, unless it is already a page entry of the navigation. */
+    const homeNode = computed((): WebsiteNode | undefined => {
+      const pageKey = website()?.homePageKey;
+      if (!pageKey || pageKeysInTree(nav()).includes(pageKey)) return undefined;
+      const home = store.i18n.sitemap_home();
+      const name = pagesByKey().get(pageKey)?.name;
+      return { id: HOME_NODE_ID, type: 'page', label: name ? `${home} · ${name}` : home, pageKey, slug: '' };
+    });
     return {
       website,
       nav,
       pagesByKey,
+      homeNode,
       isLoading: computed(() => store.websiteResource.isLoading()),
       siteName: computed(() => website()?.name ?? ''),
       nodeCount: computed(() => flatten(nav()).filter((n) => !n.isArchived).length),
@@ -106,7 +122,8 @@ export const _WebsiteSitemapStore = signalStore(
       }),
       /** section keys of the pages in the tree, for the «n Sektionen im Entwurf» hint */
       treeSectionKeys: computed(() => {
-        const keys = pageKeysInTree(nav()).flatMap((k) => pagesByKey().get(k)?.sections ?? []);
+        const pageKeys = [...pageKeysInTree(nav()), homeNode()?.pageKey ?? ''].filter(Boolean);
+        const keys = pageKeys.flatMap((k) => pagesByKey().get(k)?.sections ?? []);
         return [...new Set(keys)].sort();
       }),
     };

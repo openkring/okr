@@ -13,7 +13,7 @@ import { WebsiteTreeItem } from '@okr/cms-website-ui';
 import { WebsiteI18n, WebsiteWarningCode, websiteUrl } from '@okr/cms-website-util';
 import { HostingDomains, MenuGraph, MenuGraphStore, SitemapView } from '@okr/cms-page-feature';
 
-import { WebsiteSitemapStore } from './website-sitemap.store';
+import { HOME_NODE_ID, WebsiteSitemapStore } from './website-sitemap.store';
 
 const WARNING_KEYS: Partial<Record<WebsiteWarningCode, keyof WebsiteI18n>> = {
   homeMissing: 'warning_home_missing',
@@ -80,12 +80,18 @@ const WARNING_KEYS: Partial<Record<WebsiteWarningCode, keyof WebsiteI18n>> = {
             <ion-label><ion-note color="warning">{{ siteWarningText(code) }}</ion-note></ion-label>
           </ion-item>
         }
+        <ion-list>
+          @if (store.homeNode(); as home) {
+            <okr-website-tree-item [node]="home" [depth]="0" [i18n]="store.i18n" [readOnly]="true" iconName="home"
+              [draftCount]="store.draftsByPage().get(home.pageKey ?? '') ?? 0"
+              (selected)="showActions($event)" />
+          }
+          @if (store.nav().length > 0) {
+            <ng-container *ngTemplateOutlet="level; context: { $implicit: store.nav(), parentId: null, depth: 0 }" />
+          }
+        </ion-list>
         @if (store.nav().length === 0) {
           <okr-empty-list [message]="store.i18n.sitemap_empty()" />
-        } @else {
-          <ion-list>
-            <ng-container *ngTemplateOutlet="level; context: { $implicit: store.nav(), parentId: null, depth: 0 }" />
-          </ion-list>
         }
         }
       }
@@ -171,6 +177,15 @@ export class WebsiteSitemap {
     const i18n = this.store.i18n;
     const base = this.store.imgixBaseUrl();
     const push = (name: string, text: string, icon: string) => options.buttons.push(createActionSheetButton(name, text, base, icon));
+    if (node.id === HOME_NODE_ID) {
+      // the home page is not a navigation entry: only the page behind it and its URL '/'
+      push('node.viewPage', i18n.action_view_page(), 'eye-on');
+      push('node.editPage', i18n.action_edit_page(), 'edit');
+      push('node.copyUrl', i18n.action_copy_url(), 'copy');
+      options.buttons.push(createActionSheetDivider());
+      options.buttons.push(createActionSheetButton('cancel', i18n.cancel(), base, 'cancel'));
+      return;
+    }
     switch (node.type) {
       case 'menu':
         push('node.addMenu', i18n.action_add_menu(), 'menu');

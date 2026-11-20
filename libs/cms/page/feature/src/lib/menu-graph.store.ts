@@ -272,6 +272,10 @@ function buildWebsiteNode(
   };
 }
 
+function navHasPage(nodes: WebsiteNode[], pageKey: string): boolean {
+  return nodes.some(n => (n.type === 'page' && n.pageKey === pageKey) || navHasPage(n.children ?? [], pageKey));
+}
+
 /**
  * The navigation of one website as a dependency tree: site → menus / page entries / links →
  * pages → sections. Same node shape as the app menu tree, so `MenuGraphNode` renders both.
@@ -285,6 +289,15 @@ export function buildWebsiteTree(
   filter: GraphFilter
 ): DependencyNode {
   const children = (website.nav ?? []).map(n => buildWebsiteNode(n, allPages, allSections, sectionTypes, filter));
+  // the home page is not part of nav (the logo links to '/'): a first entry of its own, unless nav carries it
+  const homePageKey = website.homePageKey;
+  if (homePageKey && !navHasPage(website.nav ?? [], homePageKey)) {
+    const name = allPages.find(p => p.okey === homePageKey)?.name;
+    // id '__home' = HOME_NODE_ID of the website sitemap, which owns the actions of this entry
+    const home: WebsiteNode = { id: '__home', type: 'page', label: name || 'home', pageKey: homePageKey, slug: '' };
+    const node = buildWebsiteNode(home, allPages, allSections, sectionTypes, filter);
+    children.unshift({ ...node, icon: 'home', state: '/' });
+  }
   if (website.footer?.length) {
     children.push({
       id: 'website-footer',
