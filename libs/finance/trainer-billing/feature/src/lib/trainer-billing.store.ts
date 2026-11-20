@@ -8,7 +8,7 @@ import { of } from 'rxjs';
 import { TrainerBillingService } from '@okr/finance-trainer-billing-data-access';
 import {
   agreementOfMonth, agreementsInMonth, defaultMonth, entryDefaultDate, isAgreementActiveOn, monthOf, monthTitleDe, openEntriesOf,
-  shiftMonth, TRAINER_BILLING_I18N_KEYS, TrainerBillingI18n, trainerBillingRefusal, trainerBillingRefusalKey,
+  sendConfirmKey, shiftMonth, TRAINER_BILLING_I18N_KEYS, TrainerBillingI18n, trainerBillingRefusal, trainerBillingRefusalKey,
 } from '@okr/finance-trainer-billing-util';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
@@ -239,10 +239,12 @@ export const TrainerBillingStore = signalStore(
     /** Delete an open entry after a confirmation. */
     async deleteEntry(entry: WorkEntryModel): Promise<void> {
       if ((entry.state ?? 'open') !== 'open') return;
-      const ok = await confirm(store.alertController, fill(store.i18n.me_delete_confirm(), { date: this.viewDate(entry.date) }),
-        store.i18n.me_action_delete(), store.i18n.trainers_action_cancel(), true);
-      if (!ok) return;
-      await store.trainerBillingService.deleteEntry(entry.okey);
+      await this.whileBusy(async () => {
+        const ok = await confirm(store.alertController, fill(store.i18n.me_delete_confirm(), { date: this.viewDate(entry.date) }),
+          store.i18n.me_action_delete(), store.i18n.trainers_action_cancel(), true);
+        if (!ok) return;
+        await store.trainerBillingService.deleteEntry(entry.okey);
+      });
     },
 
     /** The agreements an entry may be booked on: those of the month, plus its own when it is not among them. */
@@ -271,7 +273,7 @@ export const TrainerBillingStore = signalStore(
       if (!agreement || count === 0) return;
       const month = store.month();
       await this.whileBusy(async () => {
-        const ok = await confirm(store.alertController, fill(store.i18n.me_send_confirm(), { month: monthTitleDe(month), count }),
+        const ok = await confirm(store.alertController, fill(store.i18n[sendConfirmKey(count)](), { month: monthTitleDe(month), count }),
           store.i18n.me_send(), store.i18n.trainers_action_cancel(), true);
         if (!ok) return;
         const { invoiceNo } = await store.trainerBillingService.send(agreement.okey, month);

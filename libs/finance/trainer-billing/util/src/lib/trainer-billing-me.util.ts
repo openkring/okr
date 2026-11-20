@@ -54,3 +54,8 @@ export function openEntriesOf(entries: WorkEntryModel[], agreementKey: string): 
 export function entryDefaultDate(month: string, today: string): string {
   return monthOf(today) === month ? today : `${month.replace('-', '')}01`;
 }
+
+/** The confirm text of a send: singular for one entry (no «1 Einsätzen»), plural otherwise. */
+export function sendConfirmKey(count: number): 'me_send_confirm_one' | 'me_send_confirm_other' {
+  return count === 1 ? 'me_send_confirm_one' : 'me_send_confirm_other';
+}

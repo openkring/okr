@@ -231,7 +231,10 @@
     "preview": "Vorschau",
     "send": {
       "action": "An Kassier senden",
-      "confirm": "Möchtest du die Rechnung für {month} mit {count} Einsätzen an die Kassierin oder den Kassier senden? Danach kannst du diese Einsätze nicht mehr ändern.",
+      "confirm": {
+        "one": "Möchtest du die Rechnung für {month} mit einem Einsatz an die Kassierin oder den Kassier senden? Danach kannst du diesen Einsatz nicht mehr ändern.",
+        "other": "Möchtest du die Rechnung für {month} mit {count} Einsätzen an die Kassierin oder den Kassier senden? Danach kannst du diese Einsätze nicht mehr ändern."
+      },
       "conf": "Deine Rechnung {invoiceNo} ist gesendet."
     },
     "invoices": {

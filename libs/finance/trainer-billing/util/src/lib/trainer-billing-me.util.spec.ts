@@ -2,7 +2,7 @@ import { TrainerAgreementModel, WorkEntryModel } from '@okr/shared-models';
 import { describe, expect, it } from 'vitest';
 
 import {
-  agreementOfMonth, agreementsInMonth, defaultMonth, entryDefaultDate, monthOf, openEntriesOf, shiftMonth,
+  agreementOfMonth, agreementsInMonth, defaultMonth, entryDefaultDate, monthOf, openEntriesOf, sendConfirmKey, shiftMonth,
 } from './trainer-billing-me.util';
 
 function agreement(patch: Partial<TrainerAgreementModel> = {}): TrainerAgreementModel {
@@ -82,5 +82,13 @@ describe('entryDefaultDate', () => {
   it('is today inside the month, else the first day of the month', () => {
     expect(entryDefaultDate('2026-11', '20261120')).toBe('20261120');
     expect(entryDefaultDate('2026-10', '20261120')).toBe('20261001');
+  });
+});
+
+describe('sendConfirmKey', () => {
+  it('uses the singular text for one entry only', () => {
+    expect(sendConfirmKey(1)).toBe('me_send_confirm_one');
+    expect(sendConfirmKey(2)).toBe('me_send_confirm_other');
+    expect(sendConfirmKey(12)).toBe('me_send_confirm_other');
   });
 });

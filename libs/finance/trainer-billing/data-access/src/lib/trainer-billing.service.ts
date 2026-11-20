@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { combineLatest, Observable, of } from 'rxjs';
-import { map, take } from 'rxjs/operators';
+import { catchError, map, take } from 'rxjs/operators';
 
 import {
   lastDayOfMonth, TRAINER_BILLING_I18N_KEYS, trainerAgreementPayload, trainerProfileCreatePayload, trainerProfileUpdateFields,
@@ -232,13 +232,20 @@ export class TrainerBillingService {
     await this.firestoreService.deleteObject(WorkEntryCollection, key, this.i18n.entry_delete_conf());
   }
 
-  /** The names of calendar events by key (the event an entry was recorded at); an unreadable event is left out. */
+  /** The names of calendar events by key (the event an entry was recorded at); an unreadable event is left out, never an error. */
   public eventNames(calEventKeys: string[]): Observable<Record<string, string>> {
     const keys = [...new Set(calEventKeys.filter(k => !!k))];
     if (keys.length === 0) return of({});
     return combineLatest(keys.map(key =>
-      this.firestoreService.readModel<CalEventModel>(CalEventCollection, key).pipe(take(1), map(event => [key, event?.name ?? ''] as const)),
-    )).pipe(map(pairs => Object.fromEntries(pairs.filter(([, name]) => !!name))));
+      this.firestoreService.readModel<CalEventModel>(CalEventCollection, key).pipe(
+        take(1),
+        map(event => [key, event?.name ?? ''] as const),
+        catchError(() => of([key, ''] as const)),   // an unreadable event shows the entry's text instead
+      ),
+    )).pipe(
+      map(pairs => Object.fromEntries(pairs.filter(([, name]) => !!name))),
+      catchError(() => of({} as Record<string, string>)),
+    );
   }
 
   /*-------------------------- TRAINER INVOICES (written by the server only) --------------------------------*/

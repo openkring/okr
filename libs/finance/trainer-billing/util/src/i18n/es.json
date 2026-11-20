@@ -231,7 +231,10 @@
     "preview": "Vista previa",
     "send": {
       "action": "Enviar al tesorero",
-      "confirm": "¿Quieres enviar la factura de {month} con {count} intervenciones a la tesorera o al tesorero? Después ya no podrás modificar estas intervenciones.",
+      "confirm": {
+        "one": "¿Quieres enviar la factura de {month} con una intervención a la tesorera o al tesorero? Después ya no podrás modificar esta intervención.",
+        "other": "¿Quieres enviar la factura de {month} con {count} intervenciones a la tesorera o al tesorero? Después ya no podrás modificar estas intervenciones."
+      },
       "conf": "Tu factura {invoiceNo} se ha enviado."
     },
     "invoices": {

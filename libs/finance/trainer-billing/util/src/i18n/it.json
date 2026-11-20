@@ -231,7 +231,10 @@
     "preview": "Anteprima",
     "send": {
       "action": "Invia al cassiere",
-      "confirm": "Vuoi inviare la fattura di {month} con {count} interventi alla cassiera o al cassiere? Dopo non potrai più modificare questi interventi.",
+      "confirm": {
+        "one": "Vuoi inviare la fattura di {month} con un intervento alla cassiera o al cassiere? Dopo non potrai più modificare questo intervento.",
+        "other": "Vuoi inviare la fattura di {month} con {count} interventi alla cassiera o al cassiere? Dopo non potrai più modificare questi interventi."
+      },
       "conf": "La tua fattura {invoiceNo} è stata inviata."
     },
     "invoices": {

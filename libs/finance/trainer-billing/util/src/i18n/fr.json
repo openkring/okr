@@ -231,7 +231,10 @@
     "preview": "Aperçu",
     "send": {
       "action": "Envoyer au caissier",
-      "confirm": "Veux-tu envoyer la facture de {month} avec {count} interventions à la caissière ou au caissier ? Ensuite, tu ne pourras plus modifier ces interventions.",
+      "confirm": {
+        "one": "Veux-tu envoyer la facture de {month} avec une intervention à la caissière ou au caissier ? Ensuite, tu ne pourras plus modifier cette intervention.",
+        "other": "Veux-tu envoyer la facture de {month} avec {count} interventions à la caissière ou au caissier ? Ensuite, tu ne pourras plus modifier ces interventions."
+      },
       "conf": "Ta facture {invoiceNo} est envoyée."
     },
     "invoices": {

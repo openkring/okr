@@ -231,7 +231,10 @@
     "preview": "Preview",
     "send": {
       "action": "Send to treasurer",
-      "confirm": "Do you want to send the invoice for {month} with {count} work entries to the treasurer? You can no longer change these entries afterwards.",
+      "confirm": {
+        "one": "Do you want to send the invoice for {month} with one work entry to the treasurer? You can no longer change this entry afterwards.",
+        "other": "Do you want to send the invoice for {month} with {count} work entries to the treasurer? You can no longer change these entries afterwards."
+      },
       "conf": "Your invoice {invoiceNo} has been sent."
     },
     "invoices": {
