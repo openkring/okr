@@ -2,7 +2,8 @@
 /**
  * The SDG goals of each la21staefa project as a tiles section (layout 'logos', 2026-11-20): the title
  * «Folgende Nachhaltigkeitsziele (SDGs) sind mit diesem Projekt verbunden» linked to unric.org, the goal squares
- * (storage tenant/la21staefa/sdg/sdgNN.svg) side by side, each linked to its UN page, on mauve (#976C8B).
+ * (storage tenant/la21staefa/sdg/sdgNN.svg) side by side, each linked to its UN page, on a full-width light lilac
+ * band (#E2D6E2) right above the site footer.
  *
  *   node scripts/la21staefa/sdg-sections.mjs           # dry run: prints what it would write
  *   node scripts/la21staefa/sdg-sections.mjs --write
@@ -23,7 +24,8 @@ const rootRequire = createRequire(join(ROOT, 'package.json'));
 const T = 'la21staefa';
 const TITLE = 'Folgende Nachhaltigkeitsziele (SDGs) sind mit diesem Projekt verbunden';
 const TITLE_URL = 'https://unric.org/de/17ziele';
-const BACKGROUND = '#976C8B';
+/** light lilac, as the SDG row on la21staefa.ch (was mauve #976C8B until 2026-11-21); the title then turns aubergine */
+const BACKGROUND = '#E2D6E2';
 const UN = 'https://www.un.org/sustainabledevelopment/';
 
 /** the 17 goals: German name (as on the homepage) and the slug of the UN detail page */

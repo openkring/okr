@@ -307,6 +307,8 @@ export function renderSite(input: RenderInput): RenderResult {
   }
   const homeVariant = (type: string): RenderFn | undefined => compiled.sections.get(`home/${type}`);
   const groupTiles = groupTileItems(groupPagesInTree(site.nav ?? []), input.groups, pages);
+  // the content pages of the groups (a la21staefa project page): the layout styles their content (groupPage)
+  const groupPageKeys = new Set(groupPagesInTree(site.nav ?? []).map((g) => `${g.key}_content`));
   const languages = renderLanguages(site);
   const tenants = site.tenants ?? [];
   const footerSection = siteFooterSection(site, sections, tenants);
@@ -474,6 +476,7 @@ export function renderSite(input: RenderInput): RenderResult {
         sections: rendered,
         main: blocks.join('\n'),
         ownBanner: leadBand,
+        groupPage: groupPageKeys.has(entry.key),
       };
       renderLayout(entry.file, lang, context, data, entry.key);
     }

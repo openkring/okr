@@ -89,6 +89,8 @@ export interface TemplateContext {
   alternates: AlternateLink[];
   /** the page's first section is a colour band (isColorBand), its banner: page-banner.hbs is left out */
   ownBanner?: boolean;
+  /** the page is a group's content page (`<groupKey>_content`, a la21staefa project page) */
+  groupPage?: boolean;
   /** true on the home page when `main` comes from the manifest's homeLayout page template */
   home?: boolean;
   /** fixed pages only: the group pages of the tree, for the Termine filter (spec 1.165 EV4) */

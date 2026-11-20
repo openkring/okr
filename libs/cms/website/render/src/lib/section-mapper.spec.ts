@@ -101,6 +101,12 @@ describe('mapSection tiles, logos layout with linked title and background (SDG g
     const out = sdg({ titleUrl: 'https://unric.org/de/17ziele', background: ' #976C8B ' });
     expect(out['titleUrl']).toBe('https://unric.org/de/17ziele');
     expect(out['background']).toBe('#976C8B');
+    expect(out['lightText']).toBe(true);
+  });
+
+  it('draws aubergine text on a light background (the lilac SDG band)', () => {
+    expect(sdg({ background: '#E2D6E2' })['lightText']).toBe(false);
+    expect(sdg({})['lightText']).toBe(false);
   });
 
   it('drops an unsafe title link and a background that is no hex colour', () => {
@@ -204,6 +210,13 @@ describe('article layout side-by-side (whole images in a row, caption below)', (
     expect(imgs.map(i => i.caption)).toEqual(['QR-Code TWINT', 'QR-Code PostFinance']);
     expect(imgs.every(i => i.captionPosition === 'bottom' && i.captionCss.textAlign === 'center')).toBe(true);
     expect(out['slideshow']).toBeUndefined();
+  });
+
+  it('keeps the natural size, or a fixed px height as a square (the 150 px QR codes)', () => {
+    expect(map(article([qr('TWINT')]))['imageHeight']).toBe(0);
+    const out = map(article([qr('TWINT'), qr('PostFinance')], 1, { imageStyle: { width: '150px', height: '150px' } }));
+    expect(out['imageRow']).toBe(true);
+    expect(out['imageHeight']).toBe(150);
   });
 
   it('applies to a single image and ignores left/right', () => {

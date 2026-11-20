@@ -767,6 +767,8 @@ export function mapSection(
         // a linked title and the whole section on a colour (the SDG goals of a la21staefa project)
         titleUrl: safeSiteUrl(props['titleUrl']),
         background: tileColor(props['background']),
+        // white text on a dark background, aubergine on a light one (the lilac SDG band)
+        lightText: !!tileColor(props['background']) && isDarkHex(tileColor(props['background'])),
         items,
         // once one card has an icon every card keeps the icon slot, so the titles of a row line up
         hasIcons: variant === 'card' && items.some(i => !!i.iconSrc),
@@ -802,7 +804,8 @@ export function mapSection(
           cta: mapCta(props['cta'], lang),
           emphasis: props['emphasis'] === 'banner' ? 'banner' : 'none',
           ...mapArticleColors(props),
-          ...sideBySide, imageColSize: 6, imageHeight: 0, imageRow: true,
+          // a fixed px height (imageStyle.height, e.g. the 150 px QR codes) draws each picture as a square of that size
+          ...sideBySide, imageColSize: 6, imageHeight: articleImageHeight(imageStyle), imageRow: true,
         };
       }
       const layout = articleImageLayout(images.length, content?.position, content?.colSize);
