@@ -60,11 +60,18 @@ function columnCount(raw: unknown, fallback: number): number {
   return Number.isFinite(n) ? Math.min(MAX_COLUMNS, Math.max(1, n)) : fallback;
 }
 
-/** column-major split: the first ceil(n/columns) items go into the first column, and so on */
+/** column-major split into (nearly) equal columns, the later columns take the remainder (11 in 2: 5 + 6); = splitIntoColumns of the app */
 export function splitAccordionColumns<T>(items: readonly T[], columns: number): T[][] {
   const count = Math.max(1, Math.min(columns, items.length || 1));
-  const perColumn = Math.ceil(items.length / count) || 1;
-  return Array.from({ length: count }, (_, c) => items.slice(c * perColumn, (c + 1) * perColumn)).filter((col, i) => col.length > 0 || i === 0);
+  const base = Math.floor(items.length / count);
+  const extra = items.length % count;
+  let start = 0;
+  return Array.from({ length: count }, (_, c) => {
+    const size = base + (c >= count - extra ? 1 : 0);
+    const col = items.slice(start, start + size);
+    start += size;
+    return col;
+  });
 }
 
 /** one layout per distinct column count over sm / md / lg, so each screen size shows exactly one */

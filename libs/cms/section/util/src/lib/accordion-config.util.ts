@@ -61,17 +61,23 @@ export function withAccordionDefaults(config: AccordionConfig | undefined): Reso
 }
 
 /**
- * Splits items column-major into `columns` stacks: the first ceil(n/columns) go into the first column, and so on.
+ * Splits items column-major into `columns` stacks of (nearly) equal length; when they do not divide evenly the
+ * later columns take one more (11 items in 2 columns: 5 + 6, as on www.la21staefa.ch).
  * Each column stacks on its own, so opening an item never pushes the items of a neighbouring column down.
+ * Mirrored by `splitAccordionColumns` in @okr/cms-website-render.
  */
 export function splitIntoColumns<T>(items: readonly T[], columns: number): T[][] {
   const count = Math.max(1, Math.min(columns, items.length || 1));
-  const perColumn = Math.ceil(items.length / count);
+  const base = Math.floor(items.length / count);
+  const extra = items.length % count;
   const result: T[][] = [];
+  let start = 0;
   for (let c = 0; c < count; c++) {
-    result.push(items.slice(c * perColumn, (c + 1) * perColumn));
+    const size = base + (c >= count - extra ? 1 : 0);
+    result.push(items.slice(start, start + size));
+    start += size;
   }
-  return result.filter((col, i) => col.length > 0 || i === 0);
+  return result;
 }
 
 /** The opened value(s) of an accordion as a list: ion-accordion's `value` is a single key, or keys separated by commas. */

@@ -55,7 +55,9 @@ describe('accordionColumnCount / accordionSize', () => {
 
 describe('splitIntoColumns', () => {
   it('splits column-major', () => {
-    expect(splitIntoColumns([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], 2)).toEqual([[1, 2, 3, 4, 5, 6], [7, 8, 9, 10, 11]]);
+    expect(splitIntoColumns([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], 2)).toEqual([[1, 2, 3, 4, 5], [6, 7, 8, 9, 10, 11]]);
+    expect(splitIntoColumns([1, 2, 3, 4, 5], 4)).toEqual([[1], [2], [3], [4, 5]]);
+    expect(splitIntoColumns([1, 2, 3, 4, 5, 6, 7], 3)).toEqual([[1, 2], [3, 4], [5, 6, 7]]);
     expect(splitIntoColumns([1, 2, 3], 1)).toEqual([[1, 2, 3]]);
   });
 

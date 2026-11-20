@@ -31,7 +31,7 @@ describe('mapAccordionFormat', () => {
     expect(f.style).toContain('/logo/icons/add.svg');
     expect(f.style).toContain('/logo/icons/remove.svg');
     expect(f.layouts.map((l) => l.cls)).toEqual(['acc-sm', 'acc-md acc-lg']);
-    expect(f.layouts[1].columns.map((c) => c.items.length)).toEqual([6, 5]);
+    expect(f.layouts[1].columns.map((c) => c.items.length)).toEqual([5, 6]);
   });
 
   it('drops unsafe values', () => {
@@ -55,7 +55,8 @@ describe('helpers', () => {
   });
 
   it('splits column-major and never into more columns than items', () => {
-    expect(splitAccordionColumns([1, 2, 3, 4, 5], 2)).toEqual([[1, 2, 3], [4, 5]]);
+    expect(splitAccordionColumns([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4, 5]]);
+    expect(splitAccordionColumns([1, 2, 3, 4, 5], 4)).toEqual([[1], [2], [3], [4, 5]]);
     expect(splitAccordionColumns([1], 3)).toEqual([[1]]);
     expect(accordionLayouts(items(2), { sm: 1, md: 3, lg: 4 }).map((l) => l.cls)).toEqual(['acc-sm', 'acc-md acc-lg']);
     expect(accordionLayouts(items(5), { sm: 1, md: 1, lg: 1 }).map((l) => l.cls)).toEqual(['acc-sm acc-md acc-lg']);
