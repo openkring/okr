@@ -63,6 +63,19 @@ describe('trainerNameOf', () => {
     expect(trainerNameOf(invoice({ agreementKey: 'gone', personKey: 'p9' }), [agreement()])).toBe('');
   });
 
+  it('names the trainer of an archived agreement (not in the list) through the person resolver', () => {
+    const names: Record<string, string> = { p1: 'Anna Jucker' };
+    const resolver = (key: string): string => names[key] ?? '';
+    expect(trainerNameOf(invoice({ agreementKey: 'archived' }), [], resolver)).toBe('Anna Jucker');
+    expect(trainerNameOf(invoice({ agreementKey: 'archived', personKey: 'p9' }), [], resolver)).toBe('');
+  });
+
+  it('never asks the resolver for an empty personKey (anonymised invoice)', () => {
+    const asked: string[] = [];
+    expect(trainerNameOf(invoice({ agreementKey: 'gone', personKey: '' }), [], k => { asked.push(k); return 'X'; })).toBe('');
+    expect(asked).toEqual([]);
+  });
+
   it('never matches an anonymised agreement by its empty personKey', () => {
     const anonymised = agreement({ okey: 'a3', personKey: '', person: undefined });
     expect(trainerNameOf(invoice({ agreementKey: 'gone', personKey: '' }), [anonymised, agreement({ okey: 'a4' })])).toBe('');

@@ -40,14 +40,21 @@ export function trainerInvoiceStateColor(state: TrainerInvoiceState): string {
 }
 
 /**
- * The trainer's name of an invoice: from its agreement, else from another agreement of the same person, else ''.
- * An anonymised agreement (empty personKey, §10) never matches by person.
+ * The trainer's name of an invoice: from its agreement, else from another live agreement of the same person, else
+ * from `personName(personKey)` (an archived agreement is not in the list, but its invoices stay), else ''.
+ * An anonymised agreement or invoice (empty personKey, §10) never matches by person.
  */
-export function trainerNameOf(invoice: TrainerInvoiceModel, agreements: TrainerAgreementModel[]): string {
+export function trainerNameOf(
+  invoice: TrainerInvoiceModel,
+  agreements: TrainerAgreementModel[],
+  personName: (personKey: string) => string = () => '',
+): string {
   const personKey = invoice.personKey ?? '';
   const agreement = agreements.find(a => a.okey === invoice.agreementKey)
     ?? (personKey ? agreements.find(a => (a.personKey ?? '') === personKey) : undefined);
-  return `${agreement?.person?.name1 ?? ''} ${agreement?.person?.name2 ?? ''}`.trim();
+  const fromAgreement = `${agreement?.person?.name1 ?? ''} ${agreement?.person?.name2 ?? ''}`.trim();
+  if (fromAgreement) return fromAgreement;
+  return personKey ? (personName(personKey) ?? '').trim() : '';
 }
 
 /** The longest reason `rejectTrainerInvoice` accepts (it refuses longer ones with `invalid-reason`). */

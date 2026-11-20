@@ -59,6 +59,11 @@ export const TrainerAgreementStore = signalStore(
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll(TRAINER_BILLING_I18N_KEYS) as TrainerBillingI18n,
+    /** the name of a person of this tenant (AppStore), for invoices whose agreement is archived and so not listed */
+    personName: (personKey: string): string => {
+      const person = store.appStore.getPerson(personKey);
+      return person ? `${person.firstName ?? ''} ${person.lastName ?? ''}`.trim() : '';
+    },
     // keyed by the user's identity, not the live user object (a new reference on every snapshot would restart the read)
     agreementsResource: rxResource({
       params: resourceParams(() => ({ userKey: store.appStore.currentUser()?.okey ?? '', books: store.accountingStore.accountingTenantId() })),
@@ -93,7 +98,7 @@ export const TrainerAgreementStore = signalStore(
       const agreements = store.agreements();
       return store.invoices()
         .filter(i => listId === 'all' || (i.personKey ?? '') === listId)
-        .filter(i => !term || `${trainerNameOf(i, agreements)} ${i.invoiceNo ?? ''} ${i.month ?? ''}`.toLowerCase().includes(term));
+        .filter(i => !term || `${trainerNameOf(i, agreements, store.personName)} ${i.invoiceNo ?? ''} ${i.month ?? ''}`.toLowerCase().includes(term));
     }),
   })),
 
@@ -114,7 +119,7 @@ export const TrainerAgreementStore = signalStore(
       return isAgreementActiveOn(agreement, getTodayStr());
     },
     trainerName(invoice: TrainerInvoiceModel): string {
-      return trainerNameOf(invoice, store.agreements());
+      return trainerNameOf(invoice, store.agreements(), store.personName);
     },
 
     /******************************** agreements ******************************************* */
@@ -134,6 +139,11 @@ export const TrainerAgreementStore = signalStore(
      * person). Saves on `confirm`.
      */
     async edit(agreement: TrainerAgreementModel): Promise<void> {
+      // busy while the lists load and the modal is open: a double tap must not open two editors
+      await this.whileBusy(() => this.openEditor(agreement));
+    },
+
+    async openEditor(agreement: TrainerAgreementModel): Promise<void> {
       const books = agreement.accountingTenantId || store.books();
       if (!books) return;
       const [accounts, costCenters, vatCodes] = await Promise.all([
