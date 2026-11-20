@@ -180,10 +180,10 @@ export class AttendeesAccordion {
    * `maxAttendees` in sign-up order — so an unsubscription promotes the next person by itself.
    */
   protected split = computed(() => splitAttendees(this.attendees(), this.calevent().maxAttendees));
-  /** '3/12 bestätigt' on a capped event, the plain '3/5 Teilnahmen' count on an uncapped one. */
+  /** '3 von max 12 Plätzen vergeben' on a capped event, '3 Teilnehmende' on an uncapped one. */
   protected countLabel = computed(() => {
     const max = this.calevent().maxAttendees ?? 0;
-    if (max <= 0) return `${this.acceptedCount()}/${this.attendees().length} ${this.i18n.attendance_accepted()}`;
+    if (max <= 0) return fill(this.i18n.attendance_accepted_count(), { count: this.acceptedCount() });
     return fill(this.i18n.attendance_confirmed_count(), { confirmed: this.split().confirmed.length, max });
   });
   /** The current user's entry; undefined until they answered (or were invited). */

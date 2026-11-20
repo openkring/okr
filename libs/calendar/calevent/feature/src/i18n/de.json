@@ -3,7 +3,7 @@
   "calevents": "Termine",
   "empty": "Es sind noch keine Termine erstellt worden. Erstelle einen mit Klicken des + Buttons.",
   "attendance": {
-    "accepted": "Teilnahmen",
+    "accepted_count": "{count} Teilnehmende",
     "attendees": "Teilnehmende",
     "helper": "Personen, die am Termin teilnehmen.",
     "add": "Teilnehmende hinzufügen",
@@ -14,7 +14,7 @@
     "not_possible": "An-/Abmeldung ist für diesen Termin nicht möglich",
     "waitlist": "Warteliste",
     "waitlist_hint": "Die maximale Teilnehmerzahl ist erreicht, du kommst auf die Warteliste.",
-    "confirmed_count": "{confirmed}/{max} bestätigt",
+    "confirmed_count": "{confirmed} von max {max} Plätzen vergeben",
     "waiting_count": "{count} auf der Warteliste"
   },
   "create": {

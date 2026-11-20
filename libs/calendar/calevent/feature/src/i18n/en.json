@@ -3,7 +3,7 @@
   "calevents": "Events",
   "empty": "No events have been created yet. Create one by clicking the + button.",
   "attendance": {
-    "accepted": "Attendances",
+    "accepted_count": "{count} attendees",
     "attendees": "Attendees",
     "helper": "People attending the event.",
     "add": "Add attendees",
@@ -14,7 +14,7 @@
     "not_possible": "Registration is not possible for this event",
     "waitlist": "Waiting list",
     "waitlist_hint": "The event is full, so you have been put on the waiting list.",
-    "confirmed_count": "{confirmed}/{max} confirmed",
+    "confirmed_count": "{confirmed} of max {max} places taken",
     "waiting_count": "{count} on the waiting list"
   },
   "create": {

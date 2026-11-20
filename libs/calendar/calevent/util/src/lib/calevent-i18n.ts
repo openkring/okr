@@ -7,7 +7,8 @@ export const CALEVENT_I18N_KEYS = {
   calevents:                  PFX + 'calevents',
   empty:                      PFX + 'empty',
 
-  attendance_accepted:        PFX + 'attendance.accepted',
+  // footer count of an uncapped event: '20 Teilnehmende'
+  attendance_accepted_count:  PFX + 'attendance.accepted_count',
   attendance_attendees:       PFX + 'attendance.attendees',
   attendance_helper:          PFX + 'attendance.helper',
   attendance_add:             PFX + 'attendance.add',

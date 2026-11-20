@@ -3,7 +3,7 @@
   "calevents": "Eventos",
   "empty": "Todavía no se ha creado ningún evento. Crear uno haciendo clic en el botón +.",
   "attendance": {
-    "accepted": "Asistencias",
+    "accepted_count": "{count} asistentes",
     "attendees": "Asistentes",
     "helper": "Personas que asisten al evento.",
     "add": "Añadir asistentes",
@@ -14,7 +14,7 @@
     "not_possible": "La inscripción no es posible para este evento",
     "waitlist": "Lista de espera",
     "waitlist_hint": "Se ha alcanzado el número máximo de participantes, pasas a la lista de espera.",
-    "confirmed_count": "{confirmed}/{max} confirmados",
+    "confirmed_count": "{confirmed} plazas ocupadas de un máximo de {max}",
     "waiting_count": "{count} en la lista de espera"
   },
   "create": {
