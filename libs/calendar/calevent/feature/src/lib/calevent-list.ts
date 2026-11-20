@@ -26,6 +26,9 @@ import type { OrganiserContactAction, OrganiserContactResult } from '@okr/calend
 import { browseUrl } from '@okr/subject-address-util';
 import { CalEventStore, RecordWorkContext } from './calevent.store';
 
+/** How long the event ActionSheet waits for «Einsatz erfassen» before it opens without it. */
+const RECORD_WORK_WAIT_MS = 800;
+
 
 /** Swipe navigation (touch only): a gesture must travel this far before it counts as prev/next. */
 const SWIPE_MIN_DISTANCE_PX = 60;
@@ -1038,8 +1041,13 @@ export class CalEventList implements OnInit {
     if (!this.showMenu()) return;
     const label = formatDateTimeLabel(calEvent.startDate, calEvent.startTime, calEvent.durationMinutes);
     const actionSheetOptions = createActionSheetOptions(`${label} · ${calEvent.name}`);
-    // «Einsatz erfassen» (spec 1.167 §7.3): the caller's agreements are read on the first sheet only, never with the list
-    const work = await this.store.recordWorkContext(calEvent);
+    // «Einsatz erfassen» (spec 1.167 §7.3): the caller's agreements are read on the first sheet only, never with the list.
+    // The sheet waits at most RECORD_WORK_WAIT_MS: on a slow or offline network it opens without the action, while the
+    // read goes on in the background so the next sheet has it.
+    const work = await Promise.race([
+      this.store.recordWorkContext(calEvent),
+      new Promise<undefined>(resolve => setTimeout(() => resolve(undefined), RECORD_WORK_WAIT_MS)),
+    ]);
     this.addActionSheetButtons(actionSheetOptions, calEvent, work);
     await this.executeActions(actionSheetOptions, calEvent, work);
   }

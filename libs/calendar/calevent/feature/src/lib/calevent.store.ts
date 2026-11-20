@@ -1514,8 +1514,10 @@ export const CalEventStore = signalStore(
 
       /*------------------------- trainer work (spec 1.167 §7.3) ---------------------------------*/
       /**
-       * The caller's trainer agreements, read once per store and person. A failed read is not kept, so the next
-       * ActionSheet asks again.
+       * The caller's trainer agreements, read once per store and person. A failed QUERY (denied, offline) arrives as
+       * `[]` — `searchData` turns errors into an empty list and the service cannot tell them apart — so it is cached as
+       * «no agreements» for the store's lifetime (the action reappears when the calendar page is rebuilt). Only a
+       * rejected load, e.g. a lazy chunk that could not be fetched, is dropped so the next ActionSheet asks again.
        */
       loadTrainerAgreements(personKey: string): Promise<TrainerAgreementModel[]> {
         const cache = store.trainerAgreements;
@@ -1525,6 +1527,7 @@ export const CalEventStore = signalStore(
             const service = await store.trainerBillingService();
             return firstValueFrom(service.myAgreements(personKey));
           })();
+          // only a rejected load (e.g. the lazy chunk could not be fetched) is dropped for a retry
           cache.load.catch(() => { if (cache.personKey === personKey) cache.load = undefined; });
         }
         return cache.load;
@@ -1590,7 +1593,13 @@ export const CalEventStore = signalStore(
           const { data, role } = await modal.onDidDismiss<WorkEntryModel>();
           if (role !== 'confirm' || !data) return;
           const key = await service.saveEntry(data, agreements.find(a => a.okey === data.agreementKey));
-          if (key && !stored) await this.recordCourseLeader(calevent, personKey);
+          if (!key || stored) return;
+          // the entry is saved: a failed attendance write only warns, it must not report the entry as unsaved
+          try {
+            await this.recordCourseLeader(calevent, personKey);
+          } catch (ex) {
+            warn(`CalEventStore.recordWork: attendance of ${personKey} on ${calevent.okey} not written: ${ex}`);
+          }
         } catch (ex) {
           warn(`CalEventStore.recordWork: ${ex}`);
           error(store.toastController, store.i18n.work_error());
