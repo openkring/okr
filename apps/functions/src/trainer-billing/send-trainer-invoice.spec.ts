@@ -149,6 +149,9 @@ describe('planSend', () => {
   it('refuses a month in the future and an incomplete payee', () => {
     expect(planSend(ctx({ today: '20260615' }), undefined, false)).toEqual({ refusal: 'future-month' });
     expect(planSend(ctx({ today: '20260731' }), undefined, false)).toEqual({ refusal: 'month-not-over' }); // Ruling R9
+    // the preview may show the running month, but not a future one
+    expect(plan(planSend(ctx({ today: '20260731' }), undefined, false, true)).invoiceDate).toBe('20260731');
+    expect(planSend(ctx({ today: '20260615' }), undefined, false, true)).toEqual({ refusal: 'future-month' });
     expect(plan(planSend(ctx({ today: '20260801' }), undefined, false)).invoiceDate).toBe('20260801');
     expect(planSend(ctx({ postalOk: false }), undefined, false)).toEqual({ refusal: 'no-postal' });
     expect(planSend(ctx({ payee: { ...ctx().payee, iban: '' } }), undefined, false)).toEqual({ refusal: 'no-iban' });

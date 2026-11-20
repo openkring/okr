@@ -226,7 +226,8 @@ export type SendRefusal =
  * agreement-inactive (active on neither the first nor the last day of the month) → profile-incomplete → no-postal →
  * no-iban → future-month → month-not-over (Ruling R9: the current month is sent only after its last day) →
  * already-sent (any state but `rejected`) → no-entries. `duplicate-number` is decided
- * by the function after numbering, not here.
+ * by the function after numbering, not here. `allowCurrentMonth` (the preview only) skips month-not-over:
+ * the trainer may look at the running month's draft, but not send it.
  */
 export function sendRefusal(c: {
   callerPersonKey: string;
@@ -240,6 +241,7 @@ export function sendRefusal(c: {
   openEntryCount: number;
   booksTenants: string[];
   callerTenantId: string;
+  allowCurrentMonth?: boolean;
 }): SendRefusal {
   const a = c.agreement;
   if (!a || !c.callerPersonKey || a.personKey !== c.callerPersonKey) return 'not-owner';
@@ -249,7 +251,7 @@ export function sendRefusal(c: {
   if (!c.postalOk) return 'no-postal';
   if (!c.iban) return 'no-iban';
   if (c.month > c.todayMonth) return 'future-month';
-  if (c.month === c.todayMonth) return 'month-not-over';
+  if (c.month === c.todayMonth && !c.allowCurrentMonth) return 'month-not-over';
   if (c.existingState !== undefined && c.existingState !== 'rejected') return 'already-sent';
   if (c.openEntryCount <= 0) return 'no-entries';
   return '';

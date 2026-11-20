@@ -1,7 +1,8 @@
 /**
  * Callable `previewTrainerInvoice({ agreementKey, month })` (spec 1.167 §7.4): the PDF the trainer would send,
  * with the «Entwurf» watermark and the number the template gives with the current counter (not incremented).
- * Nothing is stored: the same refusals as a send except `already-sent` and `duplicate-number`.
+ * Nothing is stored: the same refusals as a send except `already-sent`, `duplicate-number` and `month-not-over`
+ * (the running month may be previewed, Ruling R9).
  *
  * Ruling R2: `renderDocument` has no in-memory mode, so the PDF is rendered `ephemeral` into the PRIVATE
  * bucket (it carries the trainer's IBAN; the default bucket is readable through imgix), read back, returned
@@ -34,7 +35,7 @@ export async function previewInvoice(db: Firestore, uid: string, data: { agreeme
   const invoiceKey = trainerInvoiceKey(agreementKey, month);
   // only a rejected invoice matters to the preview (it keeps its number); a sent one is no refusal here
   const stored = ctx.agreement ? (await db.collection(TrainerInvoiceCollection).doc(invoiceKey).get()).data() as ExistingInvoice : undefined;
-  const plan = planSend(ctx, stored?.state === 'rejected' ? stored : undefined, false);
+  const plan = planSend(ctx, stored?.state === 'rejected' ? stored : undefined, false, true);
   if ('refusal' in plan) {
     const { refusal, ...extra } = plan;
     throw new HttpsError('failed-precondition', `${CF_NAME}: ${refusal}`, { reason: refusal, ...extra });

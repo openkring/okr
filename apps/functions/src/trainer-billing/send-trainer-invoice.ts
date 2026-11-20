@@ -117,8 +117,9 @@ function invalidEntry(ctx: InvoiceContext, entries: WorkEntryModel[]): WorkEntry
  * Pure: what a send of `ctx` writes, or why it must refuse. `existing` is the stored invoice of agreement ×
  * month (`already-sent` unless rejected), `numberTaken` whether another invoice of the trainer already has
  * `candidateInvoiceNo`. Order: the send rules (`sendRefusal`) → QR-IBAN only → entry quantities → prices → number.
+ * `preview` lets the running month through (Ruling R9 binds the send only, spec §16).
  */
-export function planSend(ctx: InvoiceContext, existing: ExistingInvoice, numberTaken: boolean): SendPlan | PlanRefusal {
+export function planSend(ctx: InvoiceContext, existing: ExistingInvoice, numberTaken: boolean, preview = false): SendPlan | PlanRefusal {
   const entries = ctx.agreement ? openEntriesOfMonth(ctx) : [];
   const refusal = sendRefusal({
     callerPersonKey: ctx.callerPersonKey,
@@ -132,6 +133,7 @@ export function planSend(ctx: InvoiceContext, existing: ExistingInvoice, numberT
     openEntryCount: entries.length,
     booksTenants: ctx.booksTenants,
     callerTenantId: ctx.tenantId,
+    allowCurrentMonth: preview,
   });
   if (refusal) return { refusal };
   // a QR-IBAN takes payments only with a QR reference, and a trainer invoice has none (slip and bill alike)

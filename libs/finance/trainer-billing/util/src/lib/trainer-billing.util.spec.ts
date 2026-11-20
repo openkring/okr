@@ -320,6 +320,7 @@ describe('sendRefusal', () => {
     expect(sendRefusal(ok({ postalOk: false }))).toBe('no-postal');
     expect(sendRefusal(ok({ month: '2026-12', todayMonth: '2026-11' }))).toBe('future-month');
     expect(sendRefusal(ok({ month: '2026-11', todayMonth: '2026-11' }))).toBe('month-not-over'); // Ruling R9
+    expect(sendRefusal(ok({ month: '2026-11', todayMonth: '2026-11', allowCurrentMonth: true }))).toBe('');
     expect(sendRefusal(ok({ month: '2026-10', todayMonth: '2026-11' }))).toBe('');
     expect(sendRefusal(ok({ openEntryCount: 0 }))).toBe('no-entries');
   });
