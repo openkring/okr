@@ -739,7 +739,9 @@ export function mapSection(
     case 'tiles': {
       // source 'groups': one image card per public group, the section's link label on every card
       const fromGroups = props['source'] === 'groups';
-      const variant = fromGroups ? 'image' : mapTileVariant(props['variant']);
+      const layout = props['layout'] === 'list' ? 'list' : props['layout'] === 'logos' && !fromGroups ? 'logos' : 'grid';
+      // layout 'logos' shows the pictures only, whatever variant is stored
+      const variant = fromGroups || layout === 'logos' ? 'image' : mapTileVariant(props['variant']);
       const groupLinkLabel = str(props['linkLabel']).trim().slice(0, 40);
       const items = fromGroups
         ? groupTiles.map((t) => ({ ...t, linkLabel: groupLinkLabel }))
@@ -750,8 +752,11 @@ export function mapSection(
         accent: mapAccent(s.color),
         variant,
         columns: mapTilesColumns(props['columns']),
-        layout: props['layout'] === 'list' ? 'list' : 'grid',
+        layout,
         collapse: mapTilesCollapse(props['collapse']),
+        // a linked title and the whole section on a colour (the SDG goals of a la21staefa project)
+        titleUrl: safeSiteUrl(props['titleUrl']),
+        background: tileColor(props['background']),
         items,
         // once one card has an icon every card keeps the icon slot, so the titles of a row line up
         hasIcons: variant === 'card' && items.some(i => !!i.iconSrc),

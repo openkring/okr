@@ -6,7 +6,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { IonIcon } from '@ionic/angular';
 
 import { PageCollection, PageModel, TilesSection } from '@okr/shared-models';
-import { groupTiles, tileColor, tileImageUrl, tilesColumns, validTiles, withTilesDefaults } from '@okr/cms-section-util';
+import { groupTiles, isSectionCtaUrl, tileColor, tileImageUrl, tilesColumns, validTiles, withTilesDefaults } from '@okr/cms-section-util';
 import { AppStore } from '@okr/shared-feature';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AvatarPipe } from '@okr/avatar-ui';
@@ -30,6 +30,15 @@ import { openSectionLink } from './section-link';
   imports: [NgTemplateOutlet, IonIcon, SvgIconPipe, ImgDirective, AvatarPipe],
   styles: [`
     :host { display: block; }
+    /* TilesConfig.background: the whole section on a colour, the text white */
+    :host(.on-bg) { background: var(--section-bg); color: #fff; padding: 16px; border-radius: 8px; }
+    :host(.on-bg) .eyebrow, :host(.on-bg) .intro { color: #fff; opacity: 1; }
+    h2 button.title-link { padding: 0px; border: 0px; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+    h2 button.title-link:hover { text-decoration-thickness: 2px; }
+    /* layout 'logos': the pictures only, small and side by side */
+    .grid.logos { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .grid.logos .tile { width: 96px; padding: 0px; background: transparent; height: auto; }
+    .grid.logos .tile-image { aspect-ratio: 1; margin: 0px; border-radius: 4px; object-fit: cover; padding: 0px; background: transparent; }
     .eyebrow { margin: 0px 0px 4px 0px; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
     h2 { margin: 0px 0px 8px 0px; }
     .intro { margin: 0px 0px 16px 0px; opacity: 0.8; }
@@ -75,10 +84,14 @@ import { openSectionLink } from './section-link';
     @media (width <= 480px) { .grid.list .card-tile { flex-direction: column; align-items: flex-start; } .grid.list .tile-image { width: 100%; flex-basis: auto; } }
     button.tile:focus-visible { outline: 2px solid var(--ion-color-primary); outline-offset: 2px; }
   `],
+  host: { '[class.on-bg]': '!!background()', '[style.--section-bg]': 'background() || null' },
   template: `
     @if (section().intro && section().introPosition === 'above') { <p class="eyebrow" [style.--accent]="accent()">{{ section().intro }}</p> }
     @if (section().subTitle) { <p class="eyebrow" [style.--accent]="accent()">{{ section().subTitle }}</p> }
-    @if (section().title) { <h2>{{ section().title }}</h2> }
+    @if (section().title) {
+      @if (titleUrl(); as url) { <h2><button type="button" class="title-link" (click)="open(url)">{{ section().title }}</button></h2> }
+      @else { <h2>{{ section().title }}</h2> }
+    }
     @if (section().intro && section().introPosition !== 'above') { <p class="intro">{{ section().intro }}</p> }
     @if (collapse(); as c) {
       <div class="collapse-head">
@@ -91,7 +104,7 @@ import { openSectionLink } from './section-link';
       </div>
     }
     @if (!collapse() || expanded()) {
-    <div class="grid" [class.stat]="variant() === 'stat'" [class.list]="layout() === 'list'" [class.icons]="!!collapse()" [style.--cols]="columns()">
+    <div class="grid" [class.stat]="variant() === 'stat'" [class.list]="layout() === 'list'" [class.icons]="!!collapse()" [class.logos]="logos()" [style.--cols]="columns()">
       @for (item of items(); track $index) {
         @if (variant() === 'stat') {
           <div class="tile stat-tile">
@@ -113,8 +126,8 @@ import { openSectionLink } from './section-link';
     <ng-template #cardBody let-item>
       @if (item.avatarKey) {
         <img okrImg class="tile-image contain" [src]="item.avatarKey | avatar:'group'" alt="" />
-      } @else if (item.imageSrc) { <img okrImg class="tile-image" [class.contain]="item.imageFit === 'contain'" [src]="item.imageSrc" [alt]="collapse() ? item.title ?? '' : ''" [attr.title]="collapse() ? item.title : null" /> }
-      @if (collapse()) { <!-- a logo strip tile shows its picture only --> } @else {
+      } @else if (item.imageSrc) { <img okrImg class="tile-image" [class.contain]="item.imageFit === 'contain'" [src]="item.imageSrc" [alt]="pictureOnly() ? item.title ?? '' : ''" [attr.title]="pictureOnly() ? item.title : null" /> }
+      @if (pictureOnly()) { <!-- a logo strip tile shows its picture only --> } @else {
       <!-- the icon slot is kept on every card once one card has an icon, so the titles line up too -->
       @if (hasIcons()) {
         <span class="icon-slot">
@@ -147,8 +160,19 @@ export class TilesSectionComponent {
     return c && imageSrc ? { ...c, imageSrc } : undefined;
   });
   protected readonly expanded = signal(false);
-  protected readonly variant = computed(() => this.fromGroups() ? 'image' : this.config().variant);
   protected readonly layout = computed(() => this.config().layout ?? 'grid');
+  /** layout 'logos': picture-only tiles side by side, whatever variant is stored */
+  protected readonly logos = computed(() => this.layout() === 'logos' && !this.fromGroups());
+  protected readonly variant = computed(() => this.fromGroups() || this.logos() ? 'image' : this.config().variant);
+  /** a tile shows its picture only (title as alt text and tooltip): the collapsed strip and the logos layout */
+  protected readonly pictureOnly = computed(() => !!this.collapse() || this.logos());
+  /** the link of the section title; '' = not linked */
+  protected readonly titleUrl = computed(() => {
+    const url = this.config().titleUrl?.trim() ?? '';
+    return isSectionCtaUrl(url) ? url : '';
+  });
+  /** the section background (checked hex); '' = none */
+  protected readonly background = computed(() => tileColor(this.config().background));
 
   /** source 'groups': the keys of the groups whose content page is public — one cached read per group page */
   private readonly groupKeys = computed(() => this.fromGroups()

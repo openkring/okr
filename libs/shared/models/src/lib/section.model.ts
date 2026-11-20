@@ -181,8 +181,11 @@ export type TileTone = (typeof TILE_TONES)[number];
 /** Where the tiles come from: typed into the section, or built from the tenant's public groups. */
 export const TILE_SOURCES = ['inline', 'groups'] as const;
 export type TileSource = (typeof TILE_SOURCES)[number];
-/** 'grid' = cards in columns; 'list' = one row per tile, picture left and text right. */
-export const TILE_LAYOUTS = ['grid', 'list'] as const;
+/**
+ * 'grid' = cards in columns; 'list' = one row per tile, picture left and text right;
+ * 'logos' = the pictures only, small and side by side, each linked (the SDG goals of a la21staefa project).
+ */
+export const TILE_LAYOUTS = ['grid', 'list', 'logos'] as const;
 export type TileLayout = (typeof TILE_LAYOUTS)[number];
 
 export interface TilesSection extends BaseSection {
@@ -232,6 +235,10 @@ export interface TilesConfig {
    * only, the title is its alt text and tooltip. Absent = the tiles show as always.
    */
   collapse?: TilesCollapse;
+  /** where a click on the section title leads (https or a site path); absent or '' = the title is not linked */
+  titleUrl?: string;
+  /** background of the whole section as a css hex value, the text then white; absent or '' = no background */
+  background?: string;
 }
 
 export interface TilesCollapse {

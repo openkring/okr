@@ -6,7 +6,7 @@ import {
 } from '@ionic/angular';
 
 import { ColorsIonic } from '@okr/shared-categories';
-import { ColorIonic, TILE_LAYOUTS, TILE_SOURCES, TILE_VARIANTS, TileItem, TileVariant, TilesConfig } from '@okr/shared-models';
+import { ColorIonic, TILE_LAYOUTS, TILE_SOURCES, TILE_VARIANTS, TileItem, TileLayout, TileVariant, TilesConfig } from '@okr/shared-models';
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { getFieldErrors, SECTION_ICON_PICKER, TILE_URL_LENGTH, TILES_LINK_LABEL_LENGTH, TILES_MAX_COLUMNS, SectionErrors, SectionI18n, tilesItemField, withTilesDefaults } from '@okr/cms-section-util';
@@ -60,10 +60,21 @@ import { TileEditModal } from './tile-edit.modal';
                           [value]="config().layout ?? 'grid'" [disabled]="readOnly()"
                           (ionChange)="patch({ layout: $event.detail.value })">
                 @for (v of layouts; track v) {
-                  <ion-select-option [value]="v">{{ v === 'list' ? i18n().tiles_layout_list() : i18n().tiles_layout_grid() }}</ion-select-option>
+                  <ion-select-option [value]="v">{{ layoutLabels()[v] }}</ion-select-option>
                 }
               </ion-select>
               <okr-error-note [errors]="errorsFor('tiles.layout')" />
+            </ion-col>
+            <!-- a linked title and a coloured section (the SDG goals of a project) -->
+            <ion-col size="12" size-md="6">
+              <okr-text-input [i18n]="titleUrlI18n()" [value]="config().titleUrl ?? ''" (valueChange)="patch({ titleUrl: $event })"
+                [maxLength]="urlLength" [showHelper]="true" [readOnly]="readOnly()" />
+              <okr-error-note [errors]="errorsFor('tiles.titleUrl')" />
+            </ion-col>
+            <ion-col size="12" size-md="6">
+              <okr-text-input [i18n]="backgroundI18n()" [value]="config().background ?? ''" (valueChange)="patch({ background: $event })"
+                [maxLength]="hexLength" [showHelper]="true" [readOnly]="readOnly()" />
+              <okr-error-note [errors]="errorsFor('tiles.background')" />
             </ion-col>
             <!-- a collapsed logo strip (the SDG block): a linked picture and an arrow that opens the tiles -->
             <ion-col size="12">
@@ -220,6 +231,17 @@ export class TilesConfiguration {
     const current = this.config().collapse ?? { imageUrl: '', url: '', label: '' };
     this.patch({ collapse: { ...current, ...changes } });
   }
+  protected readonly layoutLabels = computed<Record<TileLayout, string>>(() => ({
+    grid: this.i18n().tiles_layout_grid(), list: this.i18n().tiles_layout_list(), logos: this.i18n().tiles_layout_logos(),
+  }));
+  /** a css hex colour is at most 7 characters (#rrggbb) */
+  protected readonly hexLength = 7;
+  protected readonly titleUrlI18n = computed((): TextInputI18n => ({
+    name: 'titleUrl', label: this.i18n().tiles_titleUrl_label(), placeholder: 'https://', helper: this.i18n().tiles_titleUrl_helper(),
+  }));
+  protected readonly backgroundI18n = computed((): TextInputI18n => ({
+    name: 'background', label: this.i18n().tiles_background_label(), placeholder: '#976C8B', helper: this.i18n().tiles_background_helper(),
+  }));
   protected readonly linkLabelI18n = computed((): TextInputI18n => ({
     name: 'linkLabel', label: this.i18n().tiles_groupLinkLabel_label(), placeholder: '', helper: this.i18n().tiles_groupLinkLabel_helper(),
   }));

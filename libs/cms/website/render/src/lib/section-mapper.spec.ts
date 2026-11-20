@@ -83,6 +83,37 @@ describe('mapSection tiles, image variant (spec 1.165 §10.1)', () => {
   });
 });
 
+describe('mapSection tiles, logos layout with linked title and background (SDG goals of a project)', () => {
+  const sdg = (props: Record<string, unknown>) => map({ type: 'tiles', name: 'sdg', title: 'Ziele', properties: {
+    variant: 'card', columns: 6, layout: 'logos',
+    items: [{ title: '4 Hochwertige Bildung', url: 'https://www.un.org/sustainabledevelopment/education/', imageUrl: 'tenant/la21staefa/sdg/sdg04.svg', tone: 'primary' }],
+    ...props,
+  } });
+
+  it('shows the pictures of a logos layout whatever variant is stored', () => {
+    const out = sdg({});
+    expect(out['layout']).toBe('logos');
+    expect(out['variant']).toBe('image');
+    expect((out['items'] as Record<string, unknown>[])[0]['imageSrc']).toContain('/tenant/la21staefa/sdg/sdg04.svg?');
+  });
+
+  it('maps a safe title link and a hex background', () => {
+    const out = sdg({ titleUrl: 'https://unric.org/de/17ziele', background: ' #976C8B ' });
+    expect(out['titleUrl']).toBe('https://unric.org/de/17ziele');
+    expect(out['background']).toBe('#976C8B');
+  });
+
+  it('drops an unsafe title link and a background that is no hex colour', () => {
+    const out = sdg({ titleUrl: 'javascript:alert(1)', background: 'red;position:fixed' });
+    expect(out['titleUrl']).toBe('');
+    expect(out['background']).toBe('');
+  });
+
+  it('keeps group cards in the grid even when logos is stored', () => {
+    expect(sdg({ source: 'groups' })['layout']).toBe('grid');
+  });
+});
+
 describe('mapSection map (spec 1.165 §10.2)', () => {
   it('maps the centre, zoom and the subtitle as label', () => {
     const out = map({ type: 'map', name: 'ort', title: 'So findest du uns', subTitle: 'Goethestrasse 14, 8712 Stäfa',

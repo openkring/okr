@@ -43,6 +43,17 @@ export const tilesSectionValidations = staticSuite((model: TilesSection) => {
       });
     });
   });
+  // the linked title and the section background
+  omitWhen(!config?.titleUrl?.trim(), () => {
+    test('tiles.titleUrl', 'invalidValue', () => {
+      enforce(isSectionCtaUrl(config?.titleUrl ?? '')).isTruthy();
+    });
+  });
+  omitWhen(!config?.background?.trim(), () => {
+    test('tiles.background', 'invalidValue', () => {
+      enforce(HEX.test(config?.background?.trim() ?? '')).isTruthy();
+    });
+  });
   omitWhen(!config?.linkLabel, () => {
     test('tiles.linkLabel', 'tooLong', () => {
       enforce((config?.linkLabel ?? '').length).lessThanOrEquals(TILES_LINK_LABEL_LENGTH);
