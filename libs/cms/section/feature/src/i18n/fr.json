@@ -1759,7 +1759,15 @@
     "groupLinkLabel_label": "Texte du lien",
     "groupLinkLabel_helper": "Affiché en bas de chaque carte, par exemple «plus …». Vide : pas de texte, la carte reste liée.",
     "tileColor_label": "Couleur de la tuile",
-    "tileColor_helper": "En code couleur, par exemple #59A3BF. Vide : la tuile normale."
+    "tileColor_helper": "En code couleur, par exemple #59A3BF. Vide : la tuile normale.",
+    "collapse_label": "Replié derrière un logo",
+    "collapse_helper": "N'affiche qu'une image avec une flèche ; la flèche ouvre les tuiles. Les tuiles n'affichent alors que leur image.",
+    "collapse_image_label": "Image (logo)",
+    "collapse_image_helper": "Chemin dans le stockage ou adresse https.",
+    "collapse_url_label": "Lien de l'image",
+    "collapse_alt_label": "Description de l'image",
+    "collapse_open": "Tout afficher",
+    "collapse_close": "Afficher moins"
   },
   "timeline": {
     "label": "Frise chronologique",

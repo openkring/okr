@@ -1,4 +1,4 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { combineLatest, map, of } from 'rxjs';
 import { Router } from '@angular/router';
@@ -59,6 +59,16 @@ import { openSectionLink } from './section-link';
     .tile.colored .tone-primary, .tile.colored .tone-secondary { color: #fff; }
     .tile.colored .tile-image.contain { background: transparent; }
     /* list layout: one row per tile, the picture left */
+    /* collapsed logo strip (TilesConfig.collapse): the linked logo, an arrow, the picture-only tiles below */
+    .collapse-head { display: flex; align-items: center; gap: 12px; }
+    .collapse-head img { display: block; width: 320px; max-width: calc(100vw - 112px); height: auto; }
+    .collapse-head button { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--ion-color-medium); background: transparent; cursor: pointer; }
+    .collapse-head ion-icon { width: 22px; height: 22px; }
+    .collapse-head button.logo-link { width: auto; height: auto; border: 0px; border-radius: 0px; padding: 0px; }
+    .grid.icons { gap: 8px; margin-top: 12px; grid-template-columns: repeat(3, 1fr); }
+    @media (width >= 768px) { .grid.icons { grid-template-columns: repeat(var(--cols, 6), 1fr); } }
+    .grid.icons .tile { padding: 0px; background: transparent; }
+    .grid.icons .tile-image { aspect-ratio: 1; margin: 0px; border-radius: 4px; }
     .grid.list { grid-template-columns: 1fr !important; }
     .grid.list .card-tile { flex-direction: row; align-items: center; gap: 16px; }
     .grid.list .tile-image { width: 144px; flex: 0 0 144px; margin-bottom: 0; }
@@ -70,7 +80,18 @@ import { openSectionLink } from './section-link';
     @if (section().subTitle) { <p class="eyebrow" [style.--accent]="accent()">{{ section().subTitle }}</p> }
     @if (section().title) { <h2>{{ section().title }}</h2> }
     @if (section().intro && section().introPosition !== 'above') { <p class="intro">{{ section().intro }}</p> }
-    <div class="grid" [class.stat]="variant() === 'stat'" [class.list]="layout() === 'list'" [style.--cols]="columns()">
+    @if (collapse(); as c) {
+      <div class="collapse-head">
+        @if (c.url) {
+          <button type="button" class="logo-link" (click)="open(c.url)"><img okrImg [src]="c.imageSrc" [alt]="c.label" /></button>
+        } @else { <img okrImg [src]="c.imageSrc" [alt]="c.label" /> }
+        <button type="button" [attr.aria-expanded]="expanded()" [attr.aria-label]="c.label" (click)="expanded.set(!expanded())">
+          <ion-icon src="{{ (expanded() ? 'arrow-up' : 'arrow-down') | svgIcon }}" />
+        </button>
+      </div>
+    }
+    @if (!collapse() || expanded()) {
+    <div class="grid" [class.stat]="variant() === 'stat'" [class.list]="layout() === 'list'" [class.icons]="!!collapse()" [style.--cols]="columns()">
       @for (item of items(); track $index) {
         @if (variant() === 'stat') {
           <div class="tile stat-tile">
@@ -88,10 +109,12 @@ import { openSectionLink } from './section-link';
         }
       }
     </div>
+    }
     <ng-template #cardBody let-item>
       @if (item.avatarKey) {
         <img okrImg class="tile-image contain" [src]="item.avatarKey | avatar:'group'" alt="" />
-      } @else if (item.imageSrc) { <img okrImg class="tile-image" [class.contain]="item.imageFit === 'contain'" [src]="item.imageSrc" alt="" /> }
+      } @else if (item.imageSrc) { <img okrImg class="tile-image" [class.contain]="item.imageFit === 'contain'" [src]="item.imageSrc" [alt]="collapse() ? item.title ?? '' : ''" [attr.title]="collapse() ? item.title : null" /> }
+      @if (collapse()) { <!-- a logo strip tile shows its picture only --> } @else {
       <!-- the icon slot is kept on every card once one card has an icon, so the titles line up too -->
       @if (hasIcons()) {
         <span class="icon-slot">
@@ -101,6 +124,7 @@ import { openSectionLink } from './section-link';
       @if (item.title) { <h3>{{ item.title }}</h3> }
       @if (item.text) { <p>{{ item.text }}</p> }
       @if (item.url && item.linkLabel) { <span class="link" [class]="'tone-' + item.tone">{{ item.linkLabel }}</span> }
+      }
     </ng-template>
   `
 })
@@ -116,6 +140,13 @@ export class TilesSectionComponent {
   // derived values
   protected readonly config = computed(() => withTilesDefaults(this.section().properties));
   protected readonly fromGroups = computed(() => this.config().source === 'groups');
+  /** the collapsed logo strip (TilesConfig.collapse) with its picture resolved; undefined = none */
+  protected readonly collapse = computed(() => {
+    const c = this.config().collapse;
+    const imageSrc = c ? tileImageUrl(c.imageUrl, 'contain', this.imgixBaseUrl) : '';
+    return c && imageSrc ? { ...c, imageSrc } : undefined;
+  });
+  protected readonly expanded = signal(false);
   protected readonly variant = computed(() => this.fromGroups() ? 'image' : this.config().variant);
   protected readonly layout = computed(() => this.config().layout ?? 'grid');
 

@@ -64,6 +64,37 @@ export const GROUPS = [
   { name: 'Qatira', teaser: 'Und wo treffen sich Junge ab 16 in Stäfa zum Fussballspielen?', color: '#AA444E', logo: '2023/03/logo-qatira-invers-1.webp' },
 ];
 
+// The 17 UN Sustainable Development Goals (owner, 2026-11-20): the logo (SVG) from Wikimedia Commons, the goal icons
+// from un.org (Commons throttled the goal files with HTTP 429), each goal linked to its page on un.org.
+// Title = German name (alt text and tooltip of the icon).
+const COMMONS = 'https://commons.wikimedia.org/wiki/Special:FilePath';
+const UN_ICONS = 'https://www.un.org/sustainabledevelopment/wp-content/uploads/2018/05/E_SDG-goals_icons-individual-rgb-';
+export const SDG_LOGO = 'Sustainable_Development_Goals.svg';
+export const SDGS = [
+  ['01NoPoverty', 'Keine Armut', 'poverty'], ['02ZeroHunger', 'Kein Hunger', 'hunger'],
+  ['03GoodHealth', 'Gesundheit und Wohlergehen', 'health'], ['04QualityEducation', 'Hochwertige Bildung', 'education'],
+  ['05GenderEquality', 'Geschlechtergleichheit', 'gender-equality'], ['06CleanWaterSanitation', 'Sauberes Wasser und Sanitäreinrichtungen', 'water-and-sanitation'],
+  ['07CleanEnergy', 'Bezahlbare und saubere Energie', 'energy'], ['08DecentWork', 'Menschenwürdige Arbeit und Wirtschaftswachstum', 'economic-growth'],
+  ['09Industry', 'Industrie, Innovation und Infrastruktur', 'infrastructure-industrialization'], ['10ReducedInequalities', 'Weniger Ungleichheiten', 'inequality'],
+  ['11SustainableCities', 'Nachhaltige Städte und Gemeinden', 'cities'], ['12ResponsibleConsumption', 'Nachhaltige/r Konsum und Produktion', 'sustainable-consumption-production'],
+  ['13Climate', 'Massnahmen zum Klimaschutz', 'climate-change'], ['14LifeBelowWater', 'Leben unter Wasser', 'oceans'],
+  ['15LifeOnLand', 'Leben an Land', 'biodiversity'], ['16PeaceJusticeInstitutions', 'Frieden, Gerechtigkeit und starke Institutionen', 'peace-justice'],
+  ['17Partnerships', 'Partnerschaften zur Erreichung der Ziele', 'globalpartnerships'],
+].map(([, title, slug], i) => {
+  const nn = String(i + 1).padStart(2, '0');
+  return { file: `goal-${nn}.png`, source: `${UN_ICONS}${nn}.png`, title: `${i + 1} ${title}`, url: `https://www.un.org/sustainabledevelopment/${slug}/` };
+});
+const sdgPath = (file) => `tenant/${T}/sdg/${file}`;
+
+/** The SDG block of the home page: the logo linked to un.org, the arrow opens the 17 goal icons (6 per row). */
+export function sdgSection() {
+  return section('sdg', 'tiles', '', {
+    variant: 'image', columns: 6, layout: 'grid',
+    collapse: { imageUrl: sdgPath(SDG_LOGO), url: 'https://www.un.org/sustainabledevelopment/', label: 'Ziele für nachhaltige Entwicklung (UNO)' },
+    items: SDGS.map((g) => ({ title: g.title, url: g.url, imageUrl: sdgPath(g.file), imageFit: 'contain', tone: 'primary' })),
+  }, { intro: 'Die 17 globalen Nachhaltigkeitsziele der UNO dienen der LA21 Stäfa als Orientierung zur Erreichung der Ziele.', introPosition: 'below' });
+}
+
 const IMAGE = { actionUrl: '', altText: '', credit: '', documentKey: '', label: '', overlay: '', type: 0, url: '' };
 const IMAGE_STYLE = { imgIxParams: '', width: '100%', height: 'auto', sizes: '(max-width: 786px) 50vw, 100vw', border: '', borderRadius: '', fill: true, hasPriority: false, action: 0, zoomFactor: 2 };
 
@@ -93,14 +124,17 @@ export function plan() {
   docs.set(`sections/${HOME}_groups`, section('projektgruppen', 'tiles', '', {
     variant: 'image', columns: 3, items: [], source: 'groups', layout: 'grid', linkLabel: 'mehr …',
   }));
-  docs.set(`sections/${HOME}_sdg`, section('sdg', 'article', '', {
+  uploads.set(`${COMMONS}/${SDG_LOGO}`, sdgPath(SDG_LOGO));
+  for (const g of SDGS) uploads.set(g.source, sdgPath(g.file));
+  docs.set(`sections/${HOME}_sdg`, sdgSection());
+  docs.set(`unused/${HOME}_sdg_article`, section('sdg', 'article', '', {
     images: [{ ...IMAGE, url: `tenant/${T}/section/${HOME}_sdg/Schriftzug-SDG-klein.jpg`, altText: 'Die 17 Ziele für nachhaltige Entwicklung' }],
     imageStyle: IMAGE_STYLE,
     cta: { label: 'Die 17 Ziele der UNO', url: 'https://unric.org/de/17ziele/', style: 'secondary' },
   }, {
     content: { htmlContent: '<p>Die 17 globalen Nachhaltigkeitsziele der UNO dienen der LA21 Stäfa als Orientierung zur Erreichung der Ziele.</p>', colSize: 3, position: 1 },
   }));
-  uploads.set(`${WP}/2026/02/Schriftzug-SDG-klein.jpg`, `tenant/${T}/section/${HOME}_sdg/Schriftzug-SDG-klein.jpg`);
+  docs.delete(`unused/${HOME}_sdg_article`); // the first version (a picture article), replaced by sdgSection()
 
   docs.set(`sections/${T}_footer`, section('footer', 'footer', '', {
     columnCount: 3, showBottomLine: true, bottomLine: `© ${new Date().getFullYear()} Lokale Agenda 21 Stäfa`, background: '#3c163c',
@@ -188,6 +222,19 @@ export function navWithGroups(nav) {
   return [menu, ...nav];
 }
 
+const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/** GET/HEAD with a client name; Wikimedia answers 429 to bursts, so it is paced and retried with a growing pause. */
+async function fetchPolitely(url, method) {
+  const commons = url.startsWith(COMMONS);
+  for (let attempt = 0; ; attempt++) {
+    if (commons) await pause(1500);
+    const res = await fetch(url, { method, headers: { 'User-Agent': 'okr-website-import/1.0' } });
+    if (res.status !== 429 || attempt >= 5) return res;
+    await pause(5000 * (attempt + 1));
+  }
+}
+
 async function main() {
   const write = process.argv.includes('--write');
   const { getApps, initializeApp } = rootRequire('firebase-admin/app');
@@ -204,7 +251,7 @@ async function main() {
   for (const [url, path] of uploads) {
     const [exists] = await bucket.file(path).exists();
     if (exists) { console.log(`exists, kept  ${path}`); continue; }
-    const res = await fetch(url, { method: write ? 'GET' : 'HEAD' });
+    const res = await fetchPolitely(url, write ? 'GET' : 'HEAD');
     if (!res.ok) { missing.add(path); console.log(`MISSING       ${url} (HTTP ${res.status}) — skipped`); continue; }
     console.log(`${write ? 'uploading    ' : 'would upload '} ${path}`);
     if (!write) continue;
@@ -216,6 +263,15 @@ async function main() {
     const exists = (await db.doc(path).get()).exists;
     console.log(`${exists ? 'exists, kept ' : write ? 'creating     ' : 'would create '} ${path}`);
     if (!exists && write) await db.doc(path).create(data);
+  }
+
+  const sdg = db.doc(`sections/${HOME}_sdg`);
+  const sdgNow = (await sdg.get()).data();
+  const sdgMissing = [...missing].some((p) => p.startsWith(`tenant/${T}/sdg/`));
+  if (sdgMissing) console.log(`kept         sections/${HOME}_sdg (SDG pictures missing — run again)`);
+  else if (sdgNow?.type === 'article' && sdgNow?.properties?.images?.[0]?.url?.endsWith('Schriftzug-SDG-klein.jpg')) {
+    console.log(`${write ? 'replacing    ' : 'would replace'} sections/${HOME}_sdg (picture article → SDG logo strip)`);
+    if (write) await sdg.set(sdgSection());
   }
 
   const home = db.doc(`pages/${HOME}`);

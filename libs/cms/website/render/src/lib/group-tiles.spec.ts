@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { PageModel } from '@okr/shared-models';
 
 import { groupTileItems, safeHexColor, type PublicGroup } from './group-tiles';
-import { mapSection, type SectionDoc } from './section-mapper';
+import { mapSection, mapTilesCollapse, type SectionDoc } from './section-mapper';
 
 const group = (key: string, over: Partial<PublicGroup> = {}): PublicGroup =>
   ({ key, name: key.toUpperCase(), subTitle: `Teaser ${key}`, color: '#59A3BF', image: `tenant/la21staefa/group/${key}/logo.png`, ...over });
@@ -48,5 +48,14 @@ describe('mapSection events with group labels', () => {
     const tiles = groupTileItems([{ key: 'kiss', label: 'KISS', slug: 'kiss' }], new Map([['kiss', group('kiss')]]), new Map([['kiss_content', page(false)]]));
     const mapped = mapSection('e', { type: 'events', name: 'all', properties: { maxEvents: 5 } } as unknown as SectionDoc, new Map(), (h) => h, 'de', undefined, tiles) as { groupLabels: unknown[] };
     expect(mapped.groupLabels).toEqual([{ name: 'KISS', color: '#59A3BF', url: '/kiss' }]);
+  });
+});
+
+describe('mapTilesCollapse', () => {
+  it('maps the SDG logo strip and drops an unusable picture or link', () => {
+    expect(mapTilesCollapse({ imageUrl: 'tenant/la21staefa/sdg/logo.svg', url: 'https://www.un.org/sustainabledevelopment/', label: 'SDG' }))
+      .toEqual({ imageSrc: 'https://bkaiser.imgix.net/tenant/la21staefa/sdg/logo.svg?w=640&h=480&fit=max&auto=format,compress', url: 'https://www.un.org/sustainabledevelopment/', label: 'SDG' });
+    expect(mapTilesCollapse({ imageUrl: '', url: 'https://x', label: '' })).toBeUndefined();
+    expect(mapTilesCollapse({ imageUrl: 'a.svg', url: 'javascript:x', label: '' })?.url).toBe('');
   });
 });

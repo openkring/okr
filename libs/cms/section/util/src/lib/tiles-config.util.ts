@@ -10,10 +10,11 @@ export function withTilesDefaults(config: TilesConfig | undefined): TilesConfig 
   };
 }
 
-/** Column count from md up, clamped to 1–4 (mobile collapses to one column in CSS). */
+/** Column count from md up, clamped to 1–6 (mobile collapses to one column in CSS). */
+export const TILES_MAX_COLUMNS = 6;
 export function tilesColumns(columns: number | undefined): number {
   const cols = Math.round(columns ?? TILES_CONFIG_SHAPE.columns);
-  return Number.isFinite(cols) ? Math.min(4, Math.max(1, cols)) : TILES_CONFIG_SHAPE.columns;
+  return Number.isFinite(cols) ? Math.min(TILES_MAX_COLUMNS, Math.max(1, cols)) : TILES_CONFIG_SHAPE.columns;
 }
 
 const trimmed = (s: string | undefined): string | undefined => {

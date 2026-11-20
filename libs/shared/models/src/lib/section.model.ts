@@ -213,7 +213,7 @@ export interface TileItem {
 
 export interface TilesConfig {
   variant: TileVariant;
-  /** Columns from md up. Default 3. */
+  /** Columns from md up, 1–6. Default 3. */
   columns: number;
   items: TileItem[];
   /**
@@ -226,6 +226,21 @@ export interface TilesConfig {
   layout?: TileLayout;
   /** source 'groups': the label of the link line, e.g. «mehr …»; '' = no link line (the tile still links) */
   linkLabel?: string;
+  /**
+   * A collapsed logo strip (owner, 2026-11-20 — the SDG block of la21staefa): only `collapse.imageUrl` (linked to
+   * `collapse.url`) and an arrow button show; the button opens the tiles below. The tiles then show their picture
+   * only, the title is its alt text and tooltip. Absent = the tiles show as always.
+   */
+  collapse?: TilesCollapse;
+}
+
+export interface TilesCollapse {
+  /** storage path or https url of the header picture (the logo) */
+  imageUrl: string;
+  /** where a click on the picture leads; '' = not linked */
+  url: string;
+  /** alt text of the picture */
+  label: string;
 }
 
 // --------------------------------------- TIMELINE ----------------------------------------

@@ -3,7 +3,7 @@ import { each, enforce, omitWhen, staticSuite, test } from 'vest';
 import { TILE_LAYOUTS, TILE_SOURCES, TilesSection } from '@okr/shared-models';
 
 import { baseSectionValidations } from './base-section.validations';
-import { tilesColumns } from './tiles-config.util';
+import { tilesColumns, TILES_MAX_COLUMNS } from './tiles-config.util';
 import { isSectionCtaUrl } from './section-cta.util';
 
 /** Field name of a tile field, so the error note shows under the very tile that is wrong. */
@@ -31,6 +31,18 @@ export const tilesSectionValidations = staticSuite((model: TilesSection) => {
       enforce((TILE_LAYOUTS as readonly string[]).includes(config?.layout ?? '')).isTruthy();
     });
   });
+  // the collapsed logo strip: a picture is required, its link must be a safe target
+  const collapse = config?.collapse;
+  omitWhen(!collapse, () => {
+    test('tiles.collapse.imageUrl', 'required', () => {
+      enforce(collapse?.imageUrl?.trim()).isNotEmpty();
+    });
+    omitWhen(!collapse?.url?.trim(), () => {
+      test('tiles.collapse.url', 'invalidValue', () => {
+        enforce(isSectionCtaUrl(collapse?.url ?? '')).isTruthy();
+      });
+    });
+  });
   omitWhen(!config?.linkLabel, () => {
     test('tiles.linkLabel', 'maxLength', () => {
       enforce((config?.linkLabel ?? '').length).lessThanOrEquals(TILES_LINK_LABEL_LENGTH);
@@ -40,7 +52,7 @@ export const tilesSectionValidations = staticSuite((model: TilesSection) => {
   test('tiles.columns', 'invalidValue', () => {
     // legacy docs lack `columns`: undefined falls back to the default, a set value must be 1-4
     const cols = config?.columns ?? tilesColumns(undefined);
-    enforce(Number.isInteger(cols) && cols >= 1 && cols <= 4).isTruthy();
+    enforce(Number.isInteger(cols) && cols >= 1 && cols <= TILES_MAX_COLUMNS).isTruthy();
   });
 
   // with source 'groups' the stored items are not shown, so they never block saving

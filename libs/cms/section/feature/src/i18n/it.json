@@ -1759,7 +1759,15 @@
     "groupLinkLabel_label": "Testo del link",
     "groupLinkLabel_helper": "In fondo a ogni scheda, per esempio «altro …». Vuoto: nessun testo, la scheda resta collegata.",
     "tileColor_label": "Colore del riquadro",
-    "tileColor_helper": "Come codice colore, per esempio #59A3BF. Vuoto: il riquadro normale."
+    "tileColor_helper": "Come codice colore, per esempio #59A3BF. Vuoto: il riquadro normale.",
+    "collapse_label": "Chiuso dietro un logo",
+    "collapse_helper": "Mostra solo un'immagine con una freccia; la freccia apre i riquadri. I riquadri mostrano allora solo la loro immagine.",
+    "collapse_image_label": "Immagine (logo)",
+    "collapse_image_helper": "Percorso nello spazio di archiviazione o indirizzo https.",
+    "collapse_url_label": "Link dell'immagine",
+    "collapse_alt_label": "Descrizione dell'immagine",
+    "collapse_open": "Mostra tutto",
+    "collapse_close": "Mostra meno"
   },
   "timeline": {
     "label": "Cronologia",

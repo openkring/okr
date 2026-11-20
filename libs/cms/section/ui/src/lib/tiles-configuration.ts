@@ -7,9 +7,9 @@ import {
 
 import { ColorsIonic } from '@okr/shared-categories';
 import { ColorIonic, TILE_LAYOUTS, TILE_SOURCES, TILE_VARIANTS, TileItem, TileVariant, TilesConfig } from '@okr/shared-models';
-import { CategoryOld, CategoryOldI18n, ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { getFieldErrors, SECTION_ICON_PICKER, TILES_LINK_LABEL_LENGTH, SectionErrors, SectionI18n, tilesItemField, withTilesDefaults } from '@okr/cms-section-util';
+import { getFieldErrors, SECTION_ICON_PICKER, TILE_URL_LENGTH, TILES_LINK_LABEL_LENGTH, TILES_MAX_COLUMNS, SectionErrors, SectionI18n, tilesItemField, withTilesDefaults } from '@okr/cms-section-util';
 
 import { TileEditModal } from './tile-edit.modal';
 
@@ -22,7 +22,7 @@ import { TileEditModal } from './tile-edit.modal';
   selector: 'okr-tiles-config',
   standalone: true,
   imports: [
-    CategoryOld, ErrorNote, TextInput, SvgIconPipe,
+    CategoryOld, Checkbox, ErrorNote, TextInput, SvgIconPipe,
     IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonGrid, IonRow, IonCol,
     IonSelect, IonSelectOption, IonList, IonItem, IonLabel, IonNote, IonButtons, IonButton, IonIcon,
     IonReorderGroup, IonReorder
@@ -65,6 +65,27 @@ import { TileEditModal } from './tile-edit.modal';
               </ion-select>
               <okr-error-note [errors]="errorsFor('tiles.layout')" />
             </ion-col>
+            <!-- a collapsed logo strip (the SDG block): a linked picture and an arrow that opens the tiles -->
+            <ion-col size="12">
+              <okr-checkbox [i18n]="collapseI18n()" [checked]="!!config().collapse" (checkedChange)="onCollapseToggle($event)"
+                            [showHelper]="true" [readOnly]="readOnly()" />
+            </ion-col>
+            @if (config().collapse; as collapse) {
+              <ion-col size="12" size-md="6">
+                <okr-text-input [i18n]="collapseImageI18n()" [value]="collapse.imageUrl" (valueChange)="patchCollapse({ imageUrl: $event })"
+                  [maxLength]="urlLength" [showHelper]="true" [readOnly]="readOnly()" />
+                <okr-error-note [errors]="errorsFor('tiles.collapse.imageUrl')" />
+              </ion-col>
+              <ion-col size="12" size-md="6">
+                <okr-text-input [i18n]="collapseUrlI18n()" [value]="collapse.url" (valueChange)="patchCollapse({ url: $event })"
+                  [maxLength]="urlLength" [readOnly]="readOnly()" />
+                <okr-error-note [errors]="errorsFor('tiles.collapse.url')" />
+              </ion-col>
+              <ion-col size="12" size-md="6">
+                <okr-text-input [i18n]="collapseAltI18n()" [value]="collapse.label" (valueChange)="patchCollapse({ label: $event })"
+                  [maxLength]="linkLabelLength" [readOnly]="readOnly()" />
+              </ion-col>
+            }
             @if (fromGroups()) {
               <ion-col size="12" size-md="6">
                 <okr-text-input [i18n]="linkLabelI18n()" [value]="config().linkLabel ?? ''" (valueChange)="patch({ linkLabel: $event })"
@@ -173,10 +194,36 @@ export class TilesConfiguration {
   /** kept in step with the cap the Vest suite enforces on this field */
   protected readonly linkLabelLength = TILES_LINK_LABEL_LENGTH;
   protected readonly fromGroups = computed(() => this.config().source === 'groups');
+  /** kept in step with the url cap of the tile suite */
+  protected readonly urlLength = TILE_URL_LENGTH;
+  protected readonly collapseI18n = computed((): CheckboxI18n => ({
+    name: 'collapse', label: this.i18n().tiles_collapse_label(), helper: this.i18n().tiles_collapse_helper(),
+  }));
+  protected readonly collapseImageI18n = computed((): TextInputI18n => ({
+    name: 'collapseImage', label: this.i18n().tiles_collapse_image_label(), placeholder: '', helper: this.i18n().tiles_collapse_image_helper(),
+  }));
+  protected readonly collapseUrlI18n = computed((): TextInputI18n => ({
+    name: 'collapseUrl', label: this.i18n().tiles_collapse_url_label(), placeholder: 'https://', helper: '',
+  }));
+  protected readonly collapseAltI18n = computed((): TextInputI18n => ({
+    name: 'collapseAlt', label: this.i18n().tiles_collapse_alt_label(), placeholder: '', helper: '',
+  }));
+
+  /** on: an empty strip to fill in; off: the key is removed, the tiles show as always */
+  protected onCollapseToggle(on: boolean): void {
+    if (on) { this.patch({ collapse: this.config().collapse ?? { imageUrl: '', url: '', label: '' } }); return; }
+    const { collapse: _removed, ...rest } = this.config();   // eslint-disable-line @typescript-eslint/no-unused-vars
+    this.formData.set(rest as TilesConfig);
+  }
+
+  protected patchCollapse(changes: Partial<NonNullable<TilesConfig['collapse']>>): void {
+    const current = this.config().collapse ?? { imageUrl: '', url: '', label: '' };
+    this.patch({ collapse: { ...current, ...changes } });
+  }
   protected readonly linkLabelI18n = computed((): TextInputI18n => ({
     name: 'linkLabel', label: this.i18n().tiles_groupLinkLabel_label(), placeholder: '', helper: this.i18n().tiles_groupLinkLabel_helper(),
   }));
-  protected readonly columnNumbers = [1, 2, 3, 4];
+  protected readonly columnNumbers = Array.from({ length: TILES_MAX_COLUMNS }, (_, i) => i + 1);
   protected readonly colors = ColorsIonic;
 
   /** older documents lack variant/columns/items: fall back to the defaults */

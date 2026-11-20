@@ -42,3 +42,14 @@ test('the groups become the calevent types and news tags of the tenant', () => {
   assert.deepEqual(types.items[0], { name: 'Zukunftsbüro Stäfa', icon: 'people-group', color: '#723973' });
   assert.match(docs.get('tags/la21staefa_section').tags, /^@tag\.important, .*, KISS Stäfa, .*Verein LA21$/);
 });
+
+test('the SDG block: the logo linked to un.org, 17 goals linked to their pages', async () => {
+  const { sdgSection, SDGS } = await import('./seed-content.mjs');
+  const s = sdgSection();
+  assert.equal(s.type, 'tiles');
+  assert.equal(s.properties.collapse.url, 'https://www.un.org/sustainabledevelopment/');
+  assert.equal(SDGS.length, 17);
+  assert.equal(s.properties.items[0].url, 'https://www.un.org/sustainabledevelopment/poverty/');
+  assert.equal(s.properties.items[0].title, '1 Keine Armut');
+  for (const i of s.properties.items) assert.ok(i.title.length <= 100);
+});

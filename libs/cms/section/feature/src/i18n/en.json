@@ -1759,7 +1759,15 @@
     "groupLinkLabel_label": "Link text",
     "groupLinkLabel_helper": "Shown at the foot of every card, for example «more …». Empty: no text, the card is still linked.",
     "tileColor_label": "Tile colour",
-    "tileColor_helper": "As a colour code, for example #59A3BF. Empty: the normal tile."
+    "tileColor_helper": "As a colour code, for example #59A3BF. Empty: the normal tile.",
+    "collapse_label": "Collapsed behind a logo",
+    "collapse_helper": "Shows only a picture with an arrow; the arrow opens the tiles. The tiles then show their picture only.",
+    "collapse_image_label": "Picture (logo)",
+    "collapse_image_helper": "Storage path or https address.",
+    "collapse_url_label": "Link of the picture",
+    "collapse_alt_label": "Description of the picture",
+    "collapse_open": "Show all",
+    "collapse_close": "Show less"
   },
   "timeline": {
     "label": "Timeline",

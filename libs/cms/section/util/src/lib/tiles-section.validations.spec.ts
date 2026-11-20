@@ -11,10 +11,10 @@ describe('tilesSectionValidations', () => {
     expect(tilesSectionValidations(model({})).hasErrors('tiles.columns')).toBe(false);
   });
 
-  it('flags columns outside 1-4', () => {
+  it('flags columns outside 1-6', () => {
     expect(tilesSectionValidations(model({ columns: 0 })).hasErrors('tiles.columns')).toBe(true);
-    expect(tilesSectionValidations(model({ columns: 5 })).hasErrors('tiles.columns')).toBe(true);
-    expect(tilesSectionValidations(model({ columns: 4 })).hasErrors('tiles.columns')).toBe(false);
+    expect(tilesSectionValidations(model({ columns: 7 })).hasErrors('tiles.columns')).toBe(true);
+    expect(tilesSectionValidations(model({ columns: 6 })).hasErrors('tiles.columns')).toBe(false);
   });
 
   it('requires value on a stat tile', () => {
@@ -62,5 +62,15 @@ describe('tilesSectionValidations groups source', () => {
     expect(result.hasErrors('tiles.source')).toBe(true);
     expect(result.hasErrors('tiles.layout')).toBe(true);
     expect(result.hasErrors(tilesItemField(0, 'color'))).toBe(true);
+  });
+});
+
+describe('tilesSectionValidations collapse', () => {
+  it('needs a picture and a safe link', () => {
+    const bad = tilesSectionValidations(model({ collapse: { imageUrl: '', url: 'javascript:x', label: '' } }));
+    expect(bad.hasErrors('tiles.collapse.imageUrl')).toBe(true);
+    expect(bad.hasErrors('tiles.collapse.url')).toBe(true);
+    const ok = tilesSectionValidations(model({ collapse: { imageUrl: 'tenant/la21staefa/sdg/logo.svg', url: 'https://www.un.org/sustainabledevelopment/', label: 'SDG' } }));
+    expect(ok.hasErrors('tiles.collapse.imageUrl') || ok.hasErrors('tiles.collapse.url')).toBe(false);
   });
 });

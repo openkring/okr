@@ -1759,7 +1759,15 @@
     "groupLinkLabel_label": "Text des Links",
     "groupLinkLabel_helper": "Steht unten auf jeder Karte, zum Beispiel «mehr …». Leer: kein Text, die Karte ist trotzdem verlinkt.",
     "tileColor_label": "Farbe der Kachel",
-    "tileColor_helper": "Als Farbcode, zum Beispiel #59A3BF. Leer: die normale Kachel."
+    "tileColor_helper": "Als Farbcode, zum Beispiel #59A3BF. Leer: die normale Kachel.",
+    "collapse_label": "Zugeklappt mit Logo",
+    "collapse_helper": "Zeigt nur ein Bild mit einem Pfeil; der Pfeil klappt die Kacheln auf. Die Kacheln zeigen dann nur ihr Bild.",
+    "collapse_image_label": "Bild (Logo)",
+    "collapse_image_helper": "Pfad im Speicher oder https-Adresse.",
+    "collapse_url_label": "Link des Bildes",
+    "collapse_alt_label": "Beschreibung des Bildes",
+    "collapse_open": "Alle anzeigen",
+    "collapse_close": "Weniger anzeigen"
   },
   "timeline": {
     "label": "Zeitstrahl",

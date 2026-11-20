@@ -6,7 +6,7 @@ import { groupTiles, tileColor, tilesColumns, validTiles, withTilesDefaults } fr
 describe('tilesColumns', () => {
   it('clamps to 1-4 and defaults to 3', () => {
     expect(tilesColumns(0)).toBe(1);
-    expect(tilesColumns(9)).toBe(4);
+    expect(tilesColumns(9)).toBe(6);
     expect(tilesColumns(2)).toBe(2);
     expect(tilesColumns(undefined)).toBe(3);
     expect(tilesColumns(NaN)).toBe(3);

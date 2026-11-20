@@ -210,7 +210,19 @@ export function mapAccent(color: unknown): string {
 /** Mirrors `tilesColumns` (cms-section-util): 1–4, default 3. */
 function mapTilesColumns(columns: unknown): number {
   const cols = Math.round(typeof columns === 'number' ? columns : 3);
-  return Number.isFinite(cols) ? Math.min(4, Math.max(1, cols)) : 3;
+  return Number.isFinite(cols) ? Math.min(6, Math.max(1, cols)) : 3;
+}
+
+/**
+ * The collapsed logo strip of a tiles section (TilesConfig.collapse): the picture (shown whole), its safe link and
+ * alt text; undefined when there is none or its picture is unusable — the tiles then show as always.
+ */
+export function mapTilesCollapse(raw: unknown): { imageSrc: string; url: string; label: string } | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const c = raw as Record<string, unknown>;
+  const imageSrc = tileImageSrc(c['imageUrl'], 'contain');
+  if (!imageSrc) return undefined;
+  return { imageSrc, url: safeSiteUrl(c['url']), label: str(c['label']).trim().slice(0, 100) };
 }
 
 function i18nOf(props: Record<string, unknown>, key: string, plainKey: string, lang: string): string {
@@ -700,6 +712,7 @@ export function mapSection(
         variant,
         columns: mapTilesColumns(props['columns']),
         layout: props['layout'] === 'list' ? 'list' : 'grid',
+        collapse: mapTilesCollapse(props['collapse']),
         items,
         // once one card has an icon every card keeps the icon slot, so the titles of a row line up
         hasIcons: variant === 'card' && items.some(i => !!i.iconSrc),

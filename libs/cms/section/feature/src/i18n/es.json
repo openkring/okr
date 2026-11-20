@@ -1759,7 +1759,15 @@
     "groupLinkLabel_label": "Texto del enlace",
     "groupLinkLabel_helper": "Aparece al pie de cada tarjeta, por ejemplo «más …». Vacío: sin texto, la tarjeta sigue enlazada.",
     "tileColor_label": "Color del mosaico",
-    "tileColor_helper": "Como código de color, por ejemplo #59A3BF. Vacío: el mosaico normal."
+    "tileColor_helper": "Como código de color, por ejemplo #59A3BF. Vacío: el mosaico normal.",
+    "collapse_label": "Plegado tras un logo",
+    "collapse_helper": "Solo muestra una imagen con una flecha; la flecha abre los mosaicos. Los mosaicos muestran entonces solo su imagen.",
+    "collapse_image_label": "Imagen (logo)",
+    "collapse_image_helper": "Ruta en el almacenamiento o dirección https.",
+    "collapse_url_label": "Enlace de la imagen",
+    "collapse_alt_label": "Descripción de la imagen",
+    "collapse_open": "Mostrar todo",
+    "collapse_close": "Mostrar menos"
   },
   "timeline": {
     "label": "Línea de tiempo",
