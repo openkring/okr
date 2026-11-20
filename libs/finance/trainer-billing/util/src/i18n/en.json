@@ -133,7 +133,8 @@
     "quantityMaxHours": "A work entry has at most 24 hours.",
     "quantityMaxDay": "A work entry has at most one day.",
     "quantityStepHours": "Please enter the hours in quarter hours, e.g. 1.25.",
-    "quantityStepDay": "Please enter a whole or a half day."
+    "quantityStepDay": "Please enter a whole or a half day.",
+    "dateOutsideEvent": "Choose a date between the start and the end of the event."
   },
   "trainers": {
     "title": "Coaches",

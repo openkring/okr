@@ -133,7 +133,8 @@
     "quantityMaxHours": "Una intervención tiene como máximo 24 horas.",
     "quantityMaxDay": "Una intervención tiene como máximo un día.",
     "quantityStepHours": "Introduce las horas en cuartos de hora, p. ej. 1.25.",
-    "quantityStepDay": "Introduce un día entero o medio día."
+    "quantityStepDay": "Introduce un día entero o medio día.",
+    "dateOutsideEvent": "Elige una fecha entre el inicio y el final del evento."
   },
   "trainers": {
     "title": "Entrenadores",

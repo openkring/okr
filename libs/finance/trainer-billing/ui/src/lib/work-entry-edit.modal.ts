@@ -32,6 +32,8 @@ import { WorkEntryForm } from './work-entry.form';
           (formDataChange)="onFormDataChange($event)"
           [agreements]="agreements()"
           [booksLabels]="booksLabels()"
+          [minDate]="minDate()"
+          [maxDate]="maxDate()"
           [readOnly]="isReadOnly()"
           [showForm]="showForm()"
           [i18n]="i18n"
@@ -52,6 +54,9 @@ export class WorkEntryEditModal {
   /** display names of the books by `accountingTenantId`, for the agreement choice */
   public readonly booksLabels = input<Record<string, string>>({});
   public readonly readOnly = input(false);
+  /** an entry at a calendar event: its first and last day (StoreDate) limit the date; '' = any day */
+  public readonly minDate = input('');
+  public readonly maxDate = input('');
   /** an invoiced entry is frozen (the rules deny any change), whatever the caller asked for */
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()) || (this.entry().state ?? 'open') !== 'open');
 

@@ -38,7 +38,7 @@ export interface DatePickerModalI18n {
       <ng-template>
         <ion-content class="ion-padding">
           <ion-datetime
-            min="1900-01-01" max="2100-12-31"
+            [min]="min()" [max]="max()"
             presentation="date"
             [value]="isoDate()"
             [locale]="locale()"
@@ -70,6 +70,9 @@ export class DatePickerModal {
     cancel: this.i18n().cancel ?? this.defaults.cancel(),
   }));
   public locale = input('de-ch'); // locale for the calendar, used for formatting
+  /** earliest and latest selectable day (yyyy-MM-dd) */
+  public min = input('1900-01-01');
+  public max = input('2100-12-31');
 
   // outputs
   dateSelected = output<string>();  // yyyy-MM-dd

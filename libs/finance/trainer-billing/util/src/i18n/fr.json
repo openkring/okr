@@ -133,7 +133,8 @@
     "quantityMaxHours": "Une intervention compte au maximum 24 heures.",
     "quantityMaxDay": "Une intervention compte au maximum un jour.",
     "quantityStepHours": "Saisis les heures en quarts d'heure, p. ex. 1.25.",
-    "quantityStepDay": "Saisis un jour entier ou un demi-jour."
+    "quantityStepDay": "Saisis un jour entier ou un demi-jour.",
+    "dateOutsideEvent": "Choisis une date entre le début et la fin de l'événement."
   },
   "trainers": {
     "title": "Entraîneurs",

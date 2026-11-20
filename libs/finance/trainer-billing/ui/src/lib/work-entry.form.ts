@@ -40,7 +40,7 @@ import { coerceBoolean } from '@okr/shared-util-core';
               <ion-row>
                 <ion-col size="12" size-md="6">
                   <okr-date-input [i18n]="dateI18n()" [storeDate]="date()" (storeDateChange)="onFieldChange('date', $event)"
-                    [showHelper]="true" [readOnly]="isReadOnly()" />
+                    [minDate]="minDate()" [maxDate]="maxDate()" [showHelper]="true" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="dateErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
@@ -78,6 +78,9 @@ export class WorkEntryForm {
   public readonly booksLabels = input<Record<string, string>>({});
   public readonly readOnly = input(true);
   public readonly showForm = input(true);   // toggled by the parent to reset the Vest state on cancel
+  /** an entry at a calendar event lies on one of its days: first and last day (StoreDate), '' = any day */
+  public readonly minDate = input('');
+  public readonly maxDate = input('');
 
   // outputs
   public readonly dirty = output<boolean>();
@@ -88,8 +91,9 @@ export class WorkEntryForm {
   /** the services of the agreement; undefined (no service check) when the agreement is not known here */
   private readonly allServices = computed(() => this.agreement()?.services);
 
-  // the suite needs the services of the entry's agreement: a closure adds them
-  private readonly suiteWithContext = (m: WorkEntryModel) => workEntryValidations(m, this.allServices());
+  // the suite needs the services of the entry's agreement and the event's days: a closure adds them
+  private readonly suiteWithContext = (m: WorkEntryModel) =>
+    workEntryValidations(m, this.allServices(), this.minDate() ? { from: this.minDate(), to: this.maxDate() } : undefined);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected readonly entryForm = form(this.formData, (path) => validateVestTree(path, this.suiteWithContext as any));
   private readonly validationResult = vestErrors(this.entryForm);

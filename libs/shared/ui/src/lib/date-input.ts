@@ -51,6 +51,8 @@ export interface DateInputI18n {
     <okr-date-picker-modal #datePicker
       [isoDate]="isoDate()"
       [locale]="locale()"
+      [min]="pickerMin()"
+      [max]="pickerMax()"
       (dateSelected)="updateStoreDate($event, isoFormat)"
     />
 
@@ -109,6 +111,14 @@ export class DateInput {
   });
   public locale = input('de-ch'); // mandatory locale for the input field, used for formatting
   public mask = input<MaskitoOptions>(ChAnyDate);
+  /**
+   * Earliest / latest day the picker offers (StoreDate, '' = no limit). Typing is not limited: the form's validation
+   * reports a date outside the range.
+   */
+  public minDate = input('');
+  public maxDate = input('');
+  protected pickerMin = computed(() => this.toIsoOr(this.minDate(), '1900-01-01'));
+  protected pickerMax = computed(() => this.toIsoOr(this.maxDate(), '2100-12-31'));
 
   /**
    * Accept a partial date: a year without a day ('19850000') or a birthday without a
@@ -139,6 +149,11 @@ export class DateInput {
 
   // passing constants to the template
   protected isoFormat = DateFormat.IsoDate;
+
+  private toIsoOr(storeDate: string, fallback: string): string {
+    if (!isRenderableStoreDate(storeDate)) return fallback;
+    return convertDateFormatToString(storeDate, DateFormat.StoreDate, DateFormat.IsoDate, false) || fallback;
+  }
 
   protected updateStoreDate(date: string, format: DateFormat): void {
     this.storeDate.set(convertDateFormatToString(date, format, DateFormat.StoreDate, false));

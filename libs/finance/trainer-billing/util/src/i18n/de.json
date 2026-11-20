@@ -133,7 +133,8 @@
     "quantityMaxHours": "Ein Einsatz hat höchstens 24 Stunden.",
     "quantityMaxDay": "Ein Einsatz hat höchstens einen Tag.",
     "quantityStepHours": "Bitte gib die Stunden in Viertelstunden ein, z. B. 1.25.",
-    "quantityStepDay": "Bitte gib einen ganzen oder einen halben Tag ein."
+    "quantityStepDay": "Bitte gib einen ganzen oder einen halben Tag ein.",
+    "dateOutsideEvent": "Bitte wähle ein Datum zwischen Beginn und Ende des Termins."
   },
   "trainers": {
     "title": "Trainer",

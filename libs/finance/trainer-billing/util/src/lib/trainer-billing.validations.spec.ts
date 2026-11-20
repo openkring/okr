@@ -188,6 +188,15 @@ describe('workEntryValidations', () => {
     expect(workEntryValidations(entry(), SERVICES).isValid()).toBe(true);
   });
 
+  it('keeps the date within the days of its event', () => {
+    const range = { from: '20260309', to: '20260311' };
+    expect(workEntryValidations(entry({ date: '20260309' }), SERVICES, range).isValid()).toBe(true);
+    expect(workEntryValidations(entry({ date: '20260311' }), SERVICES, range).isValid()).toBe(true);
+    expect(workEntryValidations(entry({ date: '20260308' }), SERVICES, range).getErrors('date')).toContain(V + 'dateOutsideEvent');
+    expect(workEntryValidations(entry({ date: '20260312' }), SERVICES, range).getErrors('date')).toContain(V + 'dateOutsideEvent');
+    expect(workEntryValidations(entry({ date: '20260401' }), SERVICES).isValid()).toBe(true);   // no event: any day
+  });
+
   it('requires date and service', () => {
     expect(workEntryValidations(entry({ date: '' }), SERVICES).hasErrors('date')).toBe(true);
     expect(workEntryValidations(entry({ serviceKey: '' }), SERVICES).hasErrors('serviceKey')).toBe(true);

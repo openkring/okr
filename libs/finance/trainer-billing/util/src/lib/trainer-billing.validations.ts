@@ -166,12 +166,19 @@ function isOnStep(quantity: number, unit: TrainerServiceUnit): boolean {
  * A work entry (spec 1.167 §7.3). `services` are the services of the entry's agreement: the unit of the chosen one
  * decides the quantity range (one entry = one day; hours when the service is not known), and an archived or unknown
  * service cannot be chosen.
+ * `dateRange` (an entry at a calendar event) limits the date to the event's days.
  * `state` and `invoiceKey` are server-maintained and never judged.
  */
-export const workEntryValidations = staticSuite((model: WorkEntryModel, services?: TrainerService[]) => {
+export const workEntryValidations = staticSuite((model: WorkEntryModel, services?: TrainerService[], dateRange?: { from: string; to: string }) => {
   stringValidations('agreementKey', model.agreementKey ?? '', undefined, 0, true);
   stringValidations('date', model.date, undefined, 0, true);
   dateValidations('date', model.date);
+  // an entry at a calendar event lies on one of its days (a multi-day event: start…end, §7.3)
+  omitWhen(!dateRange?.from || !model.date, () => {
+    test('date', PFX + 'dateOutsideEvent', () => {
+      enforce(model.date >= (dateRange?.from ?? '') && model.date <= (dateRange?.to || dateRange?.from || '')).isTruthy();
+    });
+  });
 
   stringValidations('serviceKey', model.serviceKey ?? '', undefined, 0, true);
   const service = (services ?? []).find(s => s.key === model.serviceKey);
