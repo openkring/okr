@@ -60,8 +60,8 @@ import { openSectionLink } from './section-link';
     .tile.colored .tile-image.contain { background: transparent; }
     /* list layout: one row per tile, the picture left */
     /* collapsed logo strip (TilesConfig.collapse): the linked logo, an arrow, the picture-only tiles below */
-    .collapse-head { display: flex; align-items: center; gap: 12px; }
-    .collapse-head img { display: block; width: 320px; max-width: calc(100vw - 112px); height: auto; }
+    .collapse-head { display: flex; align-items: center; justify-content: center; gap: 12px; }
+    .collapse-head img { display: block; width: 480px; max-width: calc(100vw - 112px); height: auto; }
     .collapse-head button { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--ion-color-medium); background: transparent; cursor: pointer; }
     .collapse-head ion-icon { width: 22px; height: 22px; }
     .collapse-head button.logo-link { width: auto; height: auto; border: 0px; border-radius: 0px; padding: 0px; }

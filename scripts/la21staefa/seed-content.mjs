@@ -90,7 +90,9 @@ const sdgPath = (file) => `tenant/${T}/sdg/${file}`;
 export function sdgSection() {
   return section('sdg', 'tiles', '', {
     variant: 'image', columns: 6, layout: 'grid',
-    collapse: { imageUrl: sdgPath(SDG_LOGO), url: 'https://www.un.org/sustainabledevelopment/', label: 'Ziele für nachhaltige Entwicklung (UNO)' },
+    // the header of the Commons file only (its viewBox cut to the UN emblem + «Sustainable Development Goals»,
+    // without the 17 goal tiles below it) — uploaded as sdg-logo.svg, 2026-11-20
+    collapse: { imageUrl: sdgPath('sdg-logo.svg'), url: 'https://www.un.org/sustainabledevelopment/', label: 'Ziele für nachhaltige Entwicklung (UNO)' },
     items: SDGS.map((g) => ({ title: g.title, url: g.url, imageUrl: sdgPath(g.file), imageFit: 'contain', tone: 'primary' })),
   }, { intro: 'Die 17 globalen Nachhaltigkeitsziele der UNO dienen der LA21 Stäfa als Orientierung zur Erreichung der Ziele.', introPosition: 'below' });
 }
