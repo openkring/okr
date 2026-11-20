@@ -14,7 +14,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { FormDefinitionService } from '@okr/forms-data-access';
 import { ResponsibilityService } from '@okr/relationship-responsibility-data-access';
 import { FORM_I18N_KEYS, FormI18n } from '@okr/forms-util';
-import { SECTION_I18N_KEYS, SECTION_ICON_PICKER, SectionI18n } from '@okr/cms-section-util';
+import { SECTION_I18N_KEYS, SECTION_ICON_PICKER, SectionI18n, withImageStyleDefaults } from '@okr/cms-section-util';
 
 import { CmsSectionIconPicker } from './section-icon-picker';
 
@@ -209,7 +209,8 @@ export class SectionEditModal {
     const fd = this.formData();
     return fd ? !fd.okey || fd.okey.length === 0 : false;
   });
-  protected formData = linkedSignal(() => safeStructuredClone(this.section()));
+  // missing imageStyle fields get their defaults, else the suite reports them undefined and saving is blocked
+  protected formData = linkedSignal(() => withImageStyleDefaults(safeStructuredClone(this.section())));
   protected formValid = signal(true);
   protected showForm = signal(true);
 
@@ -225,7 +226,7 @@ export class SectionEditModal {
   constructor() {
     effect(() => {
       const orig = this.section();
-      this.initialData.set(safeStructuredClone(orig));
+      this.initialData.set(withImageStyleDefaults(safeStructuredClone(orig)));
     });
     effect(() => {
       const current = this.formData();
@@ -250,7 +251,7 @@ export class SectionEditModal {
   }
 
   public async cancel(): Promise<void> {
-    this.formData.set(safeStructuredClone(this.section()));  // reset the form
+    this.formData.set(withImageStyleDefaults(safeStructuredClone(this.section())));  // reset the form
     // re-mount the form so its field state (touched, error notes) starts fresh
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);
