@@ -44,7 +44,7 @@ export const tilesSectionValidations = staticSuite((model: TilesSection) => {
     });
   });
   omitWhen(!config?.linkLabel, () => {
-    test('tiles.linkLabel', 'maxLength', () => {
+    test('tiles.linkLabel', 'tooLong', () => {
       enforce((config?.linkLabel ?? '').length).lessThanOrEquals(TILES_LINK_LABEL_LENGTH);
     });
   });
