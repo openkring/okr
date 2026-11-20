@@ -1,5 +1,6 @@
 import { APPLICATION_KIND_VALUES, SLIDESHOW_EFFECTS, type ImageStyle } from '@okr/shared-models';
 import { imageCaption } from './image-caption';
+import { mapAccordionFormat } from './accordion-format';
 import type { PublicPerson } from './group-people';
 import { peopleExcludedKeys, peopleSourceKey, peopleSourceOf } from './people-source';
 
@@ -688,7 +689,8 @@ export function mapSection(
             : '';
           return { label: it.label ?? '', content };
         });
-      return { type: 'accordion', name, title, subTitle, items };
+      // view 'cards' and the formatting fields (title, icons, text) of the app's accordion
+      return { type: 'accordion', name, title, subTitle, items, ...mapAccordionFormat(props, items) };
     }
 
     case 'footer':

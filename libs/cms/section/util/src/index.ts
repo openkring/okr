@@ -5,6 +5,7 @@ export * from './lib/chart-config.util';
 export * from './lib/sankey-config.util';
 export * from './lib/spider-config.util';
 export * from './lib/toc-config.util';
+export * from './lib/accordion-config.util';
 export * from './lib/testimonial-config.util';
 export * from './lib/timeline-config.util';
 export * from './lib/tiles-config.util';

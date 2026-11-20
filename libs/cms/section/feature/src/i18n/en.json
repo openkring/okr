@@ -2242,5 +2242,36 @@
   },
   "track": {
     "label": "Track"
+  },
+  "accordionConfig": {
+    "title": "Accordion configuration",
+    "subtitle": "How the collapsible entries, their titles, icons and texts look.",
+    "viewType_label": "Display",
+    "viewType_helper": "List: one entry below the other. Cards: entries as cards in columns.",
+    "viewType_list": "List",
+    "viewType_cards": "Cards in columns",
+    "multiple_label": "Several open",
+    "multiple_helper": "When on, open entries stay open when you open another one.",
+    "columns_sm": "Columns on phones",
+    "columns_md": "Columns on tablets",
+    "columns_lg": "Columns on large screens",
+    "columns_helper": "The entries fill the columns top to bottom, the first column first.",
+    "titleStyle_label": "Title font",
+    "titleStyle_regular": "Regular",
+    "titleStyle_bold": "Bold",
+    "titleStyle_italic": "Italic",
+    "titleStyle_underline": "Underlined",
+    "titleSize_label": "Title font size",
+    "textSize_label": "Text font size",
+    "size_helper": "In rem, 1 is the normal font size (allowed: 0.5 to 3).",
+    "iconClosed_label": "Icon when closed",
+    "iconOpen_label": "Icon when open",
+    "icon_helper": "Name of the icon, e.g. add, remove, chevron-down. Leave empty for the default icon.",
+    "iconPosition_label": "Icon position",
+    "iconPosition_start": "Before the title",
+    "iconPosition_end": "After the title",
+    "iconColor_label": "Icon colour",
+    "textBackground_label": "Text background",
+    "color_reset": "Default"
   }
 }

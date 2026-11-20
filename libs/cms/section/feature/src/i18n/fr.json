@@ -2242,5 +2242,36 @@
   },
   "track": {
     "label": "Parcours"
+  },
+  "accordionConfig": {
+    "title": "Configuration de l'accordéon",
+    "subtitle": "Apparence des entrées dépliables, de leurs titres, icônes et textes.",
+    "viewType_label": "Affichage",
+    "viewType_helper": "Liste : une entrée sous l'autre. Cartes : les entrées en cartes sur plusieurs colonnes.",
+    "viewType_list": "Liste",
+    "viewType_cards": "Cartes en colonnes",
+    "multiple_label": "Plusieurs ouvertes",
+    "multiple_helper": "Si activé, les entrées ouvertes le restent quand tu en ouvres une autre.",
+    "columns_sm": "Colonnes sur téléphone",
+    "columns_md": "Colonnes sur tablette",
+    "columns_lg": "Colonnes sur grand écran",
+    "columns_helper": "Les entrées remplissent les colonnes de haut en bas, la première colonne d'abord.",
+    "titleStyle_label": "Police des titres",
+    "titleStyle_regular": "Normal",
+    "titleStyle_bold": "Gras",
+    "titleStyle_italic": "Italique",
+    "titleStyle_underline": "Souligné",
+    "titleSize_label": "Taille des titres",
+    "textSize_label": "Taille du texte",
+    "size_helper": "En rem, 1 correspond à la taille normale (autorisé : 0.5 à 3).",
+    "iconClosed_label": "Icône fermée",
+    "iconOpen_label": "Icône ouverte",
+    "icon_helper": "Nom de l'icône, p. ex. add, remove, chevron-down. Laisse vide pour l'icône par défaut.",
+    "iconPosition_label": "Position de l'icône",
+    "iconPosition_start": "Avant le titre",
+    "iconPosition_end": "Après le titre",
+    "iconColor_label": "Couleur de l'icône",
+    "textBackground_label": "Fond du texte",
+    "color_reset": "Par défaut"
   }
 }

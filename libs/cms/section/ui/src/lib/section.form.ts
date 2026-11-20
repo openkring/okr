@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
 
-import { ColorIonic, ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, FooterConfig, FooterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FormSectionConfig, AlbumConfig, AlbumSection, SectionFeedback, ArticleSection, ArticleSlideshow, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, CourseConfig, CourseSection, EventsConfig, EventsSection, HeroConfig, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, InvitationsConfig, InvitationsSection, JournalTrackConfig, JournalTrackSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TilesConfig, TilesSection, NewsConfig, NewsSection, SectionCta, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
+import { AccordionConfig, AccordionSection, ColorIonic, ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, FooterConfig, FooterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FormSectionConfig, AlbumConfig, AlbumSection, SectionFeedback, ArticleSection, ArticleSlideshow, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, CourseConfig, CourseSection, EventsConfig, EventsSection, HeroConfig, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, InvitationsConfig, InvitationsSection, JournalTrackConfig, JournalTrackSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TilesConfig, TilesSection, NewsConfig, NewsSection, SectionCta, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
 import { Chips, ErrorNote, NotesInput, NotesInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
@@ -48,6 +48,7 @@ import { TrackerConfiguration } from './tracker-configuration';
 import { SankeyConfiguration } from './sankey-configuration';
 import { SpiderConfiguration } from './spider-configuration';
 import { TocConfiguration } from './toc-configuration';
+import { AccordionConfiguration } from './accordion-configuration';
 import { TestimonialConfiguration } from './testimonial-configuration';
 import { TilesConfiguration } from './tiles-configuration';
 import { NewsConfiguration } from './news-configuration';
@@ -70,7 +71,7 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
     MapConfiguration, TrackerConfiguration, TableGridConfiguration,  TableStyleConfiguration, TableHeader,
     TableBody, EventsConfiguration, CourseConfiguration, InvitationsConfiguration, ImagesConfiguration, CalendarConfiguration, ChartConfiguration,
     MemberConfiguration, RagConfiguration, FormSectionConfiguration, SankeyConfiguration, SpiderConfiguration, TocConfiguration, TestimonialConfiguration, TimelineConfiguration, AdventConfiguration,
-    TilesConfiguration, NewsConfiguration, CtaConfiguration, HeroConfiguration, HeroLogoConfiguration, FeedbackConfiguration, JournalMapConfiguration, JournalTrackConfiguration
+    AccordionConfiguration, TilesConfiguration, NewsConfiguration, CtaConfiguration, HeroConfiguration, HeroLogoConfiguration, FeedbackConfiguration, JournalMapConfiguration, JournalTrackConfiguration
 ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -672,6 +673,15 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
             />
           }
         }
+        @case('accordion') {
+          @if(accordionConfig(); as accordionConfig) {
+            <okr-accordion-config
+              [formData]="accordionConfig" (formDataChange)="onAccordionConfigChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+            />
+          }
+        }
         @case('toc') {
           @if(tocConfig(); as tocConfig) {
             <okr-toc-config
@@ -824,6 +834,7 @@ export class SectionForm {
   protected sankeyConfig = computed(() => this.getSankeyConfig());
   protected spiderConfig = computed(() => this.getSpiderConfig());
   protected tocConfig = computed(() => this.getTocConfig());
+  protected accordionConfig = computed(() => this.getAccordionConfig());
   protected testimonialConfig = computed(() => this.getTestimonialConfig());
   protected tilesConfig = computed(() => this.getTilesConfig());
   protected newsConfig = computed(() => this.getNewsConfig());
@@ -1005,6 +1016,13 @@ export class SectionForm {
     if (this.formData().type === 'spider') {
       return ((this.formData() as SpiderSection).properties as SpiderConfig);
     }
+  }
+
+  private getAccordionConfig(): AccordionConfig | undefined {
+    if (this.formData().type === 'accordion') {
+      return ((this.formData() as AccordionSection).properties as AccordionConfig);
+    }
+    return undefined;
   }
 
   private getTocConfig(): TocConfig | undefined {
@@ -1375,6 +1393,16 @@ export class SectionForm {
         ...section,
         properties: config
       } as SpiderSection);
+    }
+  }
+
+  protected onAccordionConfigChange(config: AccordionConfig): void {
+    const section = this.formData();
+    if (section.type === 'accordion') {
+      this.formData.set({
+        ...section,
+        properties: config
+      } as AccordionSection);
     }
   }
 

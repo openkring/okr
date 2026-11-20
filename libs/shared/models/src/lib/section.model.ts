@@ -391,6 +391,40 @@ export interface AccordionConfig {
   readonly: boolean;
   value: string;
   items: AccordionItem[];
+  /** Absent = 'list' (the classic ion-accordion list). 'cards': white cards in columns, open text on a tinted panel. */
+  viewType?: AccordionViewType;
+  /** viewType 'cards' only: columns per screen size, each 1–4. Absent = { sm: 1, md: 2, lg: 2 }. */
+  columns?: AccordionColumns;
+  /** Absent = 'regular'. */
+  titleStyle?: AccordionTitleStyle;
+  /** Title font size in rem. Absent = 1. */
+  titleSize?: number;
+  /** Icon name (svgIcon) of a closed item. Absent = 'chevron-down' (list) or 'add' (cards). */
+  iconClosed?: string;
+  /** Icon name (svgIcon) of an open item. Absent = 'chevron-up' (list) or 'remove' (cards). */
+  iconOpen?: string;
+  /** Icon colour as css hex value; absent or '' = medium grey. */
+  iconColor?: string;
+  /** Absent = 'start' (list) or 'end' (cards). */
+  iconPosition?: AccordionIconPosition;
+  /** Background of the opened text as css hex value; absent or '' = no background (list) or a light tint (cards). */
+  textBackground?: string;
+  /** Text font size in rem. Absent = 1. */
+  textSize?: number;
+}
+
+export const ACCORDION_VIEW_TYPES = ['list', 'cards'] as const;
+export type AccordionViewType = typeof ACCORDION_VIEW_TYPES[number];
+export const ACCORDION_TITLE_STYLES = ['regular', 'bold', 'italic', 'underline'] as const;
+export type AccordionTitleStyle = typeof ACCORDION_TITLE_STYLES[number];
+export const ACCORDION_ICON_POSITIONS = ['start', 'end'] as const;
+export type AccordionIconPosition = typeof ACCORDION_ICON_POSITIONS[number];
+
+/** Columns on small (< 768px), medium (768–991px) and large (≥ 992px) screens. */
+export interface AccordionColumns {
+  sm: number;
+  md: number;
+  lg: number;
 }
 
 export interface AccordionItem {

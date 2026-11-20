@@ -2242,5 +2242,36 @@
   },
   "track": {
     "label": "Percorso"
+  },
+  "accordionConfig": {
+    "title": "Configurazione della fisarmonica",
+    "subtitle": "Aspetto delle voci espandibili, dei loro titoli, icone e testi.",
+    "viewType_label": "Visualizzazione",
+    "viewType_helper": "Elenco: una voce sotto l'altra. Schede: le voci come schede in colonne.",
+    "viewType_list": "Elenco",
+    "viewType_cards": "Schede in colonne",
+    "multiple_label": "Più voci aperte",
+    "multiple_helper": "Se attivo, le voci aperte restano aperte quando ne apri un'altra.",
+    "columns_sm": "Colonne sul telefono",
+    "columns_md": "Colonne sul tablet",
+    "columns_lg": "Colonne su schermi grandi",
+    "columns_helper": "Le voci riempiono le colonne dall'alto verso il basso, prima la prima colonna.",
+    "titleStyle_label": "Carattere dei titoli",
+    "titleStyle_regular": "Normale",
+    "titleStyle_bold": "Grassetto",
+    "titleStyle_italic": "Corsivo",
+    "titleStyle_underline": "Sottolineato",
+    "titleSize_label": "Dimensione dei titoli",
+    "textSize_label": "Dimensione del testo",
+    "size_helper": "In rem, 1 corrisponde alla dimensione normale (consentito: da 0.5 a 3).",
+    "iconClosed_label": "Icona chiusa",
+    "iconOpen_label": "Icona aperta",
+    "icon_helper": "Nome dell'icona, ad es. add, remove, chevron-down. Lascia vuoto per l'icona predefinita.",
+    "iconPosition_label": "Posizione dell'icona",
+    "iconPosition_start": "Prima del titolo",
+    "iconPosition_end": "Dopo il titolo",
+    "iconColor_label": "Colore dell'icona",
+    "textBackground_label": "Sfondo del testo",
+    "color_reset": "Predefinito"
   }
 }

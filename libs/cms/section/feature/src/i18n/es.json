@@ -2242,5 +2242,36 @@
   },
   "track": {
     "label": "Recorrido"
+  },
+  "accordionConfig": {
+    "title": "Configuración del acordeón",
+    "subtitle": "Aspecto de las entradas desplegables, sus títulos, iconos y textos.",
+    "viewType_label": "Visualización",
+    "viewType_helper": "Lista: una entrada debajo de otra. Tarjetas: las entradas como tarjetas en columnas.",
+    "viewType_list": "Lista",
+    "viewType_cards": "Tarjetas en columnas",
+    "multiple_label": "Varias abiertas",
+    "multiple_helper": "Si está activo, las entradas abiertas siguen abiertas cuando abres otra.",
+    "columns_sm": "Columnas en el móvil",
+    "columns_md": "Columnas en la tableta",
+    "columns_lg": "Columnas en pantallas grandes",
+    "columns_helper": "Las entradas llenan las columnas de arriba abajo, primero la primera columna.",
+    "titleStyle_label": "Fuente de los títulos",
+    "titleStyle_regular": "Normal",
+    "titleStyle_bold": "Negrita",
+    "titleStyle_italic": "Cursiva",
+    "titleStyle_underline": "Subrayado",
+    "titleSize_label": "Tamaño de los títulos",
+    "textSize_label": "Tamaño del texto",
+    "size_helper": "En rem, 1 es el tamaño normal (permitido: de 0.5 a 3).",
+    "iconClosed_label": "Icono cerrado",
+    "iconOpen_label": "Icono abierto",
+    "icon_helper": "Nombre del icono, p. ej. add, remove, chevron-down. Déjalo vacío para el icono predeterminado.",
+    "iconPosition_label": "Posición del icono",
+    "iconPosition_start": "Antes del título",
+    "iconPosition_end": "Después del título",
+    "iconColor_label": "Color del icono",
+    "textBackground_label": "Fondo del texto",
+    "color_reset": "Predeterminado"
   }
 }

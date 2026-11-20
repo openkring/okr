@@ -2242,5 +2242,36 @@
   },
   "track": {
     "label": "Strecke"
+  },
+  "accordionConfig": {
+    "title": "Akkordeon-Konfiguration",
+    "subtitle": "Darstellung der aufklappbaren Einträge, ihrer Titel, Symbole und Texte.",
+    "viewType_label": "Darstellung",
+    "viewType_helper": "Liste: ein Eintrag unter dem anderen. Karten: Einträge als Karten in Spalten.",
+    "viewType_list": "Liste",
+    "viewType_cards": "Karten in Spalten",
+    "multiple_label": "Mehrere offen",
+    "multiple_helper": "Wenn aktiv, bleiben geöffnete Einträge offen, wenn du einen weiteren öffnest.",
+    "columns_sm": "Spalten auf dem Handy",
+    "columns_md": "Spalten auf dem Tablet",
+    "columns_lg": "Spalten auf grossen Bildschirmen",
+    "columns_helper": "Die Einträge füllen die Spalten von oben nach unten, zuerst die erste Spalte.",
+    "titleStyle_label": "Schrift der Titel",
+    "titleStyle_regular": "Normal",
+    "titleStyle_bold": "Fett",
+    "titleStyle_italic": "Kursiv",
+    "titleStyle_underline": "Unterstrichen",
+    "titleSize_label": "Schriftgrösse der Titel",
+    "textSize_label": "Schriftgrösse des Textes",
+    "size_helper": "In rem, 1 entspricht der normalen Schriftgrösse (erlaubt: 0.5 bis 3).",
+    "iconClosed_label": "Symbol geschlossen",
+    "iconOpen_label": "Symbol geöffnet",
+    "icon_helper": "Name des Symbols, z.B. add, remove, chevron-down. Leer lassen für das Standardsymbol.",
+    "iconPosition_label": "Position des Symbols",
+    "iconPosition_start": "Vor dem Titel",
+    "iconPosition_end": "Nach dem Titel",
+    "iconColor_label": "Farbe des Symbols",
+    "textBackground_label": "Hintergrund des Textes",
+    "color_reset": "Standard"
   }
 }
