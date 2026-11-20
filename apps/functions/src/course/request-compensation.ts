@@ -39,7 +39,8 @@ import { FieldPath, getFirestore, type DocumentReference, type Firestore, type T
 
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 import { convertDateFormatToString, DateFormat, isProfitAndLossAccountId, publicAppOrigin } from '@okr/shared-util-core';
-import { CourseFinanceDocId, CourseFinanceSubcollection, MoneyModel, type AvatarInfo, type BookingStatus, type CalEventModel, type CourseEligible, type CourseFinanceModel } from '@okr/shared-models';
+import { CourseFinanceDocId, CourseFinanceSubcollection, MoneyModel, type AvatarInfo, type BookingStatus, type CalEventModel, type CourseEligible, type CourseFinanceModel, type TrainerAgreementModel } from '@okr/shared-models';
+import { isAgreementActiveOn } from '@okr/finance-trainer-billing-util';
 import { computeCompensation, unlistedLeaders, type CompensationLine } from '@okr/calendar-course-util';
 
 import { assertExplicitCostCenter, costCenterKeyForLine, loadCostCenterContext } from '../cost-center/cost-center-context';
@@ -55,6 +56,7 @@ const GROUP_COLLECTION = 'groups';
 const CALEVENT_COLLECTION = 'calevents';
 const ACCOUNTING_CONFIG_COLLECTION = 'accounting-configs';
 const APP_CONFIG_COLLECTION = 'app-config';
+const TRAINER_AGREEMENT_COLLECTION = 'trainer-agreements';
 const BOOKING_COLLECTION = 'bookings';
 const BOOKING_LINE_COLLECTION = 'booking-lines';
 const TASK_COLLECTION = 'tasks';
@@ -242,6 +244,12 @@ function settlementRow(l: CompensationLine): string {
   return `- ${personLabel(l.person)}: ${l.ledCount} × ${formatMoney(l.rate.amount, l.rate.currency)} = ${formatMoney(l.amount, l.rate.currency)}`;
 }
 
+/** Trainers whose led trainings were left out because they bill them themselves (trainer-billing D8). */
+function selfBilledRows(lines: CompensationLine[]): string[] {
+  return lines.filter(l => l.skippedSelfBilled > 0)
+    .map(l => `- ${personLabel(l.person)}: ${l.skippedSelfBilled} ${l.skippedSelfBilled === 1 ? 'Training' : 'Trainings'}`);
+}
+
 /**
  * The review task's notes — the settlement only (who asked is the task's author), so that an unchanged
  * re-request yields the same text and leaves the task alone. Native books: drafts in the journal, posted and
@@ -281,6 +289,10 @@ export function compensationTaskNotes(input: {
   if (input.unlisted.length > 0) {
     out.push('', `Geleitet, aber nicht als berechtigt erfasst: ${input.unlisted.map(personLabel).join(', ')}`);
   }
+  const selfBilled = selfBilledRows(input.lines);
+  if (selfBilled.length > 0) {
+    out.push('', 'Nicht entschädigt, weil die Trainer sie selbst abrechnen (Trainer-Abrechnung):', ...selfBilled);
+  }
   out.push('', `Kurstabelle: ${input.courseUrl}`);
   return out.join('\n');
 }
@@ -300,6 +312,8 @@ export interface RequestCourseCompensationResult {
   taskKey: string;
   /** persons who led a counted training but are not in `eligible` (§7.6 marker) */
   unlistedKeys: string[];
+  /** trainings left out because the trainer bills them via a trainer agreement (D8), per person */
+  skippedSelfBilled: { personKey: string; count: number }[];
 }
 
 type FailCode = 'failed-precondition' | 'invalid-argument' | 'permission-denied' | 'not-found';
@@ -427,7 +441,18 @@ export async function requestCompensation(db: Firestore, uid: string, data: Requ
     const events = eventSnap.docs
       .map(d => ({ ...(d.data() as CalEventModel), okey: d.id }))
       .filter(e => (e.tenants ?? []).includes(tenantId));
-    const lines = computeCompensation(events, finance);
+    // Trainers with an active trainer agreement in these books bill their own work (D8): reads before any write.
+    const eligibleKeys = finance.eligible.map(e => e.person.key);
+    const agreements: TrainerAgreementModel[] = [];
+    for (let i = 0; i < eligibleKeys.length; i += 30) {   // `in` takes at most 30 values
+      // equality + `in` is served by the (accountingTenantId, personKey) index; archived ones fail isAgreementActiveOn
+      const snap = await tx.get(db.collection(TRAINER_AGREEMENT_COLLECTION)
+        .where('accountingTenantId', '==', accountingTenantId)
+        .where('personKey', 'in', eligibleKeys.slice(i, i + 30)));
+      agreements.push(...snap.docs.map(d => ({ ...(d.data() as TrainerAgreementModel), okey: d.id })));
+    }
+    const billsOwnWork = (pk: string, date: string) => agreements.some(a => a.personKey === pk && isAgreementActiveOn(a, date));
+    const lines = computeCompensation(events, finance, billsOwnWork);
     const unlisted = unlistedLeaders(events, finance);
 
     let plan: CompensationPlan | undefined;
@@ -577,6 +602,7 @@ export async function requestCompensation(db: Firestore, uid: string, data: Requ
     cancelled: (plan?.cancelled ?? []).map(c => ({ personKey: c.line.person.key, amount: c.amount, computed: c.line.amount })),
     taskKey: result.taskKey,
     unlistedKeys: result.unlisted.map(p => p.key),
+    skippedSelfBilled: result.lines.filter(l => l.skippedSelfBilled > 0).map(l => ({ personKey: l.person.key, count: l.skippedSelfBilled })),
   };
 }
 

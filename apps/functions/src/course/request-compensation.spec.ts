@@ -12,6 +12,7 @@ import {
   coalesceFinance,
   compensationBookingKey,
   compensationBookingTitle,
+  compensationTaskNotes,
   duplicateEligibleKeys,
   finalBookingsInOtherBooks,
   foreignBookingReason,
@@ -26,7 +27,7 @@ import {
 
 const person = (key: string): AvatarInfo => ({ key, name1: `F${key}`, name2: `L${key}`, modelType: 'person', type: '', subType: '', label: `F${key} L${key}` });
 const line = (key: string, amount: number, ledCount = amount / 1000): CompensationLine =>
-  ({ person: person(key), ledCount, rate: new MoneyModel(1000, 'CHF', 'one-time'), amount });
+  ({ person: person(key), ledCount, rate: new MoneyModel(1000, 'CHF', 'one-time'), amount, skippedSelfBilled: 0 });
 
 describe('planCompensationBookings', () => {
   it('replaces forReview drafts, keeps posted bookings and skips zero amounts (brief)', () => {
@@ -198,6 +199,7 @@ function fakeDb(initial: Record<string, Data>) {
           switch (f.op) {
             case '==': return v === f.value;
             case 'array-contains': return Array.isArray(v) && v.includes(f.value);
+            case 'in': return (f.value as unknown[]).includes(v);
             case '>=': return (v as string) >= (f.value as string);
             case '<': return (v as string) < (f.value as string);
             default: throw new Error(`fake: op ${f.op}`);
@@ -288,6 +290,30 @@ async function rejection(p: Promise<unknown>): Promise<{ code: string; details?:
 
 describe('requestCompensation', () => {
   beforeEach(() => vi.clearAllMocks());
+
+  it('does not compensate trainings a self-billing trainer invoices (D8)', async () => {
+    const agreement = { tenants: ['scs'], accountingTenantId: 'scs', personKey: 'p1', isArchived: false, selfEmployedConfirmed: true, validFrom: '20260415', validTo: '' };
+    const { db, store } = fakeDb(world({ 'trainer-agreements/a1': agreement }));
+    const result = await call(db);
+
+    // p1 led e1 (20260410, compensated) and e2 (20260417, self-billed); p2 led e1
+    expect(result.skippedSelfBilled).toEqual([{ personKey: 'p1', count: 1 }]);
+    const debit = store.get('booking-lines/course-c1-p1-d') as { debitAmount: { amount: number } };
+    expect(debit.debitAmount.amount).toBe(5000);
+  });
+
+  it('lists the skipped trainings per person in the task notes', () => {
+    const l = { ...line('p1', 5000), skippedSelfBilled: 2 };
+    const notes = compensationTaskNotes({ courseName: 'U14', lines: [l], plan: undefined, unlisted: [], courseUrl: 'u', currency: 'CHF' });
+    expect(notes).toContain('selbst abrechnen');
+    expect(notes).toContain('- Fp1 Lp1: 2 Trainings');
+  });
+
+  it('ignores the agreements of other books', async () => {
+    const agreement = { tenants: ['scs'], accountingTenantId: 'gss', personKey: 'p1', isArchived: false, selfEmployedConfirmed: true, validFrom: '20260101', validTo: '' };
+    const { db } = fakeDb(world({ 'trainer-agreements/a1': agreement }));
+    expect((await call(db)).skippedSelfBilled).toEqual([]);
+  });
 
   it('writes one forReview booking with two lines per owed trainer, the task and the request stamp', async () => {
     const { db, store } = fakeDb(world());

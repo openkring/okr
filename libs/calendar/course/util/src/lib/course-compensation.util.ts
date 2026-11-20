@@ -3,7 +3,9 @@ import { AvatarInfo, CalEventModel, CourseFinanceModel, MoneyModel } from '@okr/
 import { courseEvents } from './course-table.util';
 
 /** One line of the compensation: a person, the trainings they led, the rate per led training and the amount in minor units (Rappen). */
-export type CompensationLine = { person: AvatarInfo; ledCount: number; rate: MoneyModel; amount: number };
+export type CompensationLine = { person: AvatarInfo; ledCount: number; rate: MoneyModel; amount: number;
+  /** led trainings left out because the person bills their own work for that day (trainer-billing D8); 0 without the predicate */
+  skippedSelfBilled: number };
 
 function ledPersonKeys(e: CalEventModel): string[] {
   return Object.entries(e.attendance ?? {})
@@ -16,16 +18,25 @@ export function countLedTrainings(events: CalEventModel[], personKey: string): n
   return courseEvents(events).filter(e => ledPersonKeys(e).includes(personKey)).length;
 }
 
+/** Led trainings split into those to compensate and those the person bills themselves (`billsOwnWork` on the event's `startDate`). */
+function splitLedTrainings(events: CalEventModel[], personKey: string, billsOwnWork?: (personKey: string, date: string) => boolean): { ledCount: number; skippedSelfBilled: number } {
+  const led = courseEvents(events).filter(e => ledPersonKeys(e).includes(personKey));
+  const skipped = billsOwnWork ? led.filter(e => billsOwnWork(personKey, e.startDate)).length : 0;
+  return { ledCount: led.length - skipped, skippedSelfBilled: skipped };
+}
+
 /**
  * The compensation per eligible person, in the order of `finance.eligible`: led trainings x rate (own rate, else the
  * default rate). The rate is always per led training; `MoneyModel.periodicity` is never read. An eligible person
- * without a led training still gets a line with amount 0. Amounts are integers in minor units.
+ * without a led training still gets a line with amount 0.
+ * A training on a day for which `billsOwnWork(personKey, startDate)` is true is not counted but reported in
+ * `skippedSelfBilled` (the trainer invoices it themselves; no double payment, trainer-billing D8). Amounts are integers in minor units.
  */
-export function computeCompensation(events: CalEventModel[], finance: CourseFinanceModel): CompensationLine[] {
+export function computeCompensation(events: CalEventModel[], finance: CourseFinanceModel, billsOwnWork?: (personKey: string, date: string) => boolean): CompensationLine[] {
   return (finance.eligible ?? []).map(({ person, rate }) => {
     const effective = rate ?? finance.defaultRate;
-    const ledCount = countLedTrainings(events, person.key);
-    return { person, ledCount, rate: effective, amount: ledCount * effective.amount };
+    const { ledCount, skippedSelfBilled } = splitLedTrainings(events, person.key, billsOwnWork);
+    return { person, ledCount, rate: effective, amount: ledCount * effective.amount, skippedSelfBilled };
   });
 }
 

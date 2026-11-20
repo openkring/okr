@@ -63,6 +63,18 @@ describe('computeCompensation', () => {
     expect(lines[0].person.key).toBe('p1');
   });
 
+  it('does not count trainings of a person who bills their own work (D8)', () => {
+    const evs = [led('p1', 'present', { startDate: '20260710' }), led('p1', 'present', { startDate: '20260720' })];
+    const billsOwnWork = (pk: string, d: string) => pk === 'p1' && d >= '20260715';
+    const lines = computeCompensation(evs, financeOf(), billsOwnWork);
+    expect(lines[0]).toMatchObject({ ledCount: 1, skippedSelfBilled: 1, amount: 5000 });
+  });
+
+  it('without the predicate nothing is skipped', () => {
+    const lines = computeCompensation([led('p1', 'present')], financeOf());
+    expect(lines[0]).toMatchObject({ ledCount: 1, skippedSelfBilled: 0 });
+  });
+
   it('ignores cancelled and archived events', () => {
     const lines = computeCompensation([led('p1', 'present'), led('p1', 'present', { state: 'cancelled' })], financeOf());
     expect(lines[0].amount).toBe(5000);
