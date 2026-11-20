@@ -2205,6 +2205,10 @@
       "label": "Fila",
       "description": "Todas las imágenes del mismo tamaño en una fila."
     },
+    "side-by-side": {
+      "label": "Lado a lado con pie de foto",
+      "description": "Las imágenes enteras una al lado de otra, el pie debajo – p. ej. para códigos QR."
+    },
     "grid": {
       "label": "Cuadrícula",
       "description": "Todas las imágenes del mismo tamaño en una cuadrícula."

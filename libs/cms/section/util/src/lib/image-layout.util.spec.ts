@@ -28,9 +28,9 @@ function expectValidTiling(columns: number, tiles: ImageTile[], count: number): 
 
 describe('image layout groups', () => {
   it('lists the layouts per image count; the first is the default, every group ends with the slider', () => {
-    expect(IMAGE_LAYOUT_GROUPS[2]).toEqual(['pair', 'big-small', 'stacked', 'slider']);
-    expect(IMAGE_LAYOUT_GROUPS[3]).toEqual(['big-left', 'big-top', 'big-right', 'row', 'slider']);
-    expect(IMAGE_LAYOUT_GROUPS[4]).toEqual(['grid', 'big-left', 'big-top', 'filmstrip', 'slider']);
+    expect(IMAGE_LAYOUT_GROUPS[2]).toEqual(['pair', 'big-small', 'stacked', 'side-by-side', 'slider']);
+    expect(IMAGE_LAYOUT_GROUPS[3]).toEqual(['big-left', 'big-top', 'big-right', 'row', 'side-by-side', 'slider']);
+    expect(IMAGE_LAYOUT_GROUPS[4]).toEqual(['grid', 'big-left', 'big-top', 'filmstrip', 'side-by-side', 'slider']);
     expect(IMAGE_LAYOUT_GROUPS[5]).toEqual(['mosaic', 'big-grid', 'grid', 'slider']);
   });
 
@@ -208,5 +208,33 @@ describe('articleImagePosition', () => {
     expect(articleImagePosition(ViewPosition.Right, 3, 'row')).toBe(ViewPosition.Top);
     expect(articleImagePosition(ViewPosition.None, 3, 'row')).toBe(ViewPosition.Top);
     expect(articleImagePosition(undefined, 3, 'row')).toBe(ViewPosition.Top);
+  });
+});
+
+describe('side-by-side', () => {
+  it('is offered for two, three and four images, before the slider', () => {
+    for (const count of [2, 3, 4]) expect(imageLayoutsFor(count)).toContain('side-by-side');
+    expect(imageLayoutsFor(5)).not.toContain('side-by-side');
+    expect(imageLayoutsFor(1)).toEqual([]);
+  });
+
+  it('is kept for a single image (the one layout that applies to one image)', () => {
+    expect(resolveImageLayout('side-by-side', 1)).toBe('side-by-side');
+    expect(resolveImageLayout('pair', 1)).toBeUndefined();
+    expect(resolveImageLayout('side-by-side', 0)).toBeUndefined();
+    expect(resolveImageLayout('side-by-side', 3)).toBe('side-by-side');
+    expect(resolveImageLayout('side-by-side', 6)).toBe('side-by-side');
+  });
+
+  it('places a single image like several: top, or bottom when stored', () => {
+    expect(articleImagePosition(ViewPosition.Right, 1, 'side-by-side')).toBe(ViewPosition.Top);
+    expect(articleImagePosition(ViewPosition.Bottom, 1, 'side-by-side')).toBe(ViewPosition.Bottom);
+  });
+
+  it('has preview tiles for every count', () => {
+    for (const count of [1, 2, 3, 4, 7]) {
+      const { columns, tiles } = imageLayoutTiles('side-by-side', count);
+      expectValidTiling(columns, tiles, count);
+    }
   });
 });

@@ -14,6 +14,9 @@ import { badgeFor, Img } from '@okr/shared-ui';
  *
  * Narrow screens (below 576 px): every layout except the filmstrip becomes two columns of equal tiles,
  * below 360 px one column.
+ *
+ * `side-by-side` is no grid: the whole images (not cropped, natural aspect) stand next to each other in a centred
+ * row, each with its caption below, centred (e.g. the TWINT and PostFinance QR codes of a donation article).
  */
 @Component({
   selector: 'okr-article-images',
@@ -40,6 +43,8 @@ import { badgeFor, Img } from '@okr/shared-ui';
       }
       .grid:not(.filmstrip) .tile { grid-column: auto !important; grid-row: auto !important; }
     }
+    .side-by-side { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.5rem 2rem; }
+    .side-by-side .item { flex: 1 1 0; min-width: 120px; max-width: 260px; }
     @media (max-width: 359.98px) {
       .grid:not(.filmstrip) {
         grid-template-columns: minmax(0, 1fr);
@@ -49,6 +54,15 @@ import { badgeFor, Img } from '@okr/shared-ui';
   `],
   template: `
     <div class="images">
+      @if (layout() === 'side-by-side') {
+      <div class="side-by-side">
+        @for (image of images(); track $index) {
+          <div class="item">
+            <okr-img [image]="image" [imageStyle]="sideBySideStyle()" [editMode]="editMode()" [gallery]="images()" [captionFallbacks]="[]" [zoomTitle]="zoomTitle()" [badge]="badgeOf(image.label)" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
+          </div>
+        }
+      </div>
+      } @else {
       <div class="grid" [class.filmstrip]="layout() === 'filmstrip'">
         @for (tile of tiles(); track tile.index) {
           <div class="tile" [style.grid-column]="tile.column + ' / span ' + tile.colSpan" [style.grid-row]="tile.row + ' / span ' + tile.rowSpan">
@@ -56,6 +70,7 @@ import { badgeFor, Img } from '@okr/shared-ui';
           </div>
         }
       </div>
+      }
     </div>
   `
 })
@@ -84,5 +99,15 @@ export class ArticleImages {
     width: '100%',
     height: '100%',
     fill: true,
+  }));
+
+  // side-by-side: the whole image at its natural aspect, the caption always below and centred
+  protected sideBySideStyle = computed((): ImageStyle => ({
+    ...this.imageStyle(),
+    width: '100%',
+    height: 'auto',
+    fill: false,
+    captionPosition: 'bottom',
+    captionAlign: 'center',
   }));
 }

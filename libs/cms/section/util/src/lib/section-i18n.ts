@@ -1263,6 +1263,8 @@ export const SECTION_I18N_KEYS = {
   layout_bigRight_description:              PFX + 'layout.big-right.description',
   layout_row_label:                         PFX + 'layout.row.label',
   layout_row_description:                   PFX + 'layout.row.description',
+  layout_sideBySide_label:                  PFX + 'layout.side-by-side.label',
+  layout_sideBySide_description:            PFX + 'layout.side-by-side.description',
   layout_grid_label:                        PFX + 'layout.grid.label',
   layout_grid_description:                  PFX + 'layout.grid.description',
   layout_filmstrip_label:                   PFX + 'layout.filmstrip.label',

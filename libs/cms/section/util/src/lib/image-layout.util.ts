@@ -10,17 +10,25 @@ export const IMAGE_LAYOUT_IDS = [
   'big-left', 'big-top', 'big-right', 'row',
   'grid', 'filmstrip',
   'mosaic', 'big-grid',
+  'side-by-side',
   'slider',
 ] as const;
 export type ImageLayoutId = (typeof IMAGE_LAYOUT_IDS)[number];
 
 export type ImageLayoutGroup = 2 | 3 | 4 | 5;
 
+/**
+ * `side-by-side`: the whole images (not cropped) next to each other in one centred row, each with its caption below
+ * — e.g. the TWINT and PostFinance QR codes of a donation article. It is the one layout that also applies to a single
+ * image (see `resolveImageLayout`), so a one-QR-code article looks like its two-code siblings.
+ */
+export const SIDE_BY_SIDE_LAYOUT: ImageLayoutId = 'side-by-side';
+
 /** The layouts offered per image count (group 5 = five or more); the first id of a group is its default. */
 export const IMAGE_LAYOUT_GROUPS: Record<ImageLayoutGroup, ImageLayoutId[]> = {
-  2: ['pair', 'big-small', 'stacked', 'slider'],
-  3: ['big-left', 'big-top', 'big-right', 'row', 'slider'],
-  4: ['grid', 'big-left', 'big-top', 'filmstrip', 'slider'],
+  2: ['pair', 'big-small', 'stacked', 'side-by-side', 'slider'],
+  3: ['big-left', 'big-top', 'big-right', 'row', 'side-by-side', 'slider'],
+  4: ['grid', 'big-left', 'big-top', 'filmstrip', 'side-by-side', 'slider'],
   5: ['mosaic', 'big-grid', 'grid', 'slider'],
 };
 
@@ -42,13 +50,13 @@ export function imageLayoutsFor(count: number): ImageLayoutId[] {
 
 /**
  * The layout to render for a stored id and the current image count (decision 2):
- * fewer than 2 images → undefined; absent → `slider`; valid for the count → used; defined only for a smaller group →
+ * fewer than 2 images → undefined, except a stored `side-by-side` with one image (kept); absent → `slider`; valid for the count → used; defined only for a smaller group →
  * kept (its pattern repeats, see `imageLayoutTiles`); otherwise (too large for the count, or an unknown id) → the
  * default of the count's group.
  */
 export function resolveImageLayout(stored: string | undefined, count: number): ImageLayoutId | undefined {
   const group = imageLayoutGroup(count);
-  if (!group) return undefined;
+  if (!group) return count === 1 && stored === SIDE_BY_SIDE_LAYOUT ? SIDE_BY_SIDE_LAYOUT : undefined;
   if (!stored) return 'slider';
   if (isImageLayoutId(stored)) {
     for (let g = group; g >= 2; g--) {
@@ -60,13 +68,14 @@ export function resolveImageLayout(stored: string | undefined, count: number): I
 
 /**
  * Where the images of an article stand relative to its text (decision 6, spec §5):
- * 0 images → none; 1 image → the stored position (or none), any layout ignored but kept;
+ * 0 images → none; 1 image → the stored position (or none), any layout ignored but kept — except `side-by-side`, which
+ * places a single image like several (top, or bottom when stored);
  * more images → top, or bottom when stored — but bottom only with a layout set, so an existing multi-image article
  * (always drawn on top today, whatever its stored position) does not move.
  */
 export function articleImagePosition(position: ViewPosition | undefined, count: number, imageLayout: string | undefined): ViewPosition {
   if (count === 0) return ViewPosition.None;
-  if (count === 1) return position ?? ViewPosition.None;
+  if (count === 1 && imageLayout !== SIDE_BY_SIDE_LAYOUT) return position ?? ViewPosition.None;
   return imageLayout && position === ViewPosition.Bottom ? ViewPosition.Bottom : ViewPosition.Top;
 }
 
@@ -106,6 +115,12 @@ const PATTERNS: Partial<Record<ImageLayoutId, Partial<Record<2 | 3 | 4, PatternT
   'row': { 3: [t(0, 0, 4, 4), t(4, 0, 4, 4), t(8, 0, 4, 4)] },
   'grid': { 4: [t(0, 0, 6, 4), t(6, 0, 6, 4), t(0, 4, 6, 4), t(6, 4, 6, 4)] },
   'filmstrip': { 4: [t(0, 0, 3, 3), t(3, 0, 3, 3), t(6, 0, 3, 3), t(9, 0, 3, 3)] },
+  // only the schematic preview reads these tiles: the renderers draw side-by-side as a flex row of uncropped images
+  'side-by-side': {
+    2: [t(1, 0, 4, 4), t(7, 0, 4, 4)],
+    3: [t(0, 0, 4, 4), t(4, 0, 4, 4), t(8, 0, 4, 4)],
+    4: [t(0, 0, 3, 3), t(3, 0, 3, 3), t(6, 0, 3, 3), t(9, 0, 3, 3)],
+  },
 };
 
 /** Row heights of a row of `n` equal tiles: one wide tile is 2:1, two are 3:2, three or four are square. */
