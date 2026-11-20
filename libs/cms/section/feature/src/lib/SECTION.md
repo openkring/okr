@@ -51,6 +51,7 @@ Collection name: `sections`
 | `cal` | `CalendarOptions` | Full-calendar view (FullCalendar options) |
 | `chart` | `EChartsOption` | Apache ECharts chart |
 | `chat` | `ChatConfig` | Matrix chat channel |
+| `contact` | `ContactConfig` | «So findest du uns»: one organization + one contact person (logo/avatar, name, address, email, phone read live from the `address-directory` projection), optional Google map of the org address and contact form (opens a prefilled mail, stores nothing); title, subtitle and every block are placed by drag and drop into 1–6 rows of 1–3 columns (fr widths), presets classic/split/cards/formFocus/stacked; rows stack below 640px section width (container query) |
 | `counter` | `CounterConfig` | Number counted up/down by hand or automatically; four looks (display, stepper, flip, ring); local to the viewer, not persisted |
 | `footer` | `FooterConfig` | Page footer: 1–3 columns of titles, texts, links, icons and logos, plus an optional bottom line; columns sit side by side on wide sections and stack below 576px (container queries); also rendered on the public website |
 | `emergency` | — | Emergency notice section |

@@ -1580,6 +1580,10 @@
     "notices": {
       "label": "Communications",
       "description": "Les dernières communications adressées à la personne qui lit, issues d’un envoi"
+    },
+    "contact": {
+      "label": "Contact",
+      "description": "Organisation et personne de contact avec carte et formulaire"
     }
   },
   "message_center": {
@@ -2282,5 +2286,92 @@
     "iconColor_label": "Couleur de l'icône",
     "textBackground_label": "Fond du texte",
     "color_reset": "Par défaut"
+  },
+  "contact": {
+    "label": "Contact",
+    "title": "Contact",
+    "subtitle": "Qui on joint et à quoi ressemble la section. Tu peux aussi glisser le titre et le sous-titre de la section dans la mise en page.",
+    "region": "Contact",
+    "org": {
+      "label": "Organisation",
+      "select": "Choisir l'organisation",
+      "empty": "Aucune organisation choisie"
+    },
+    "person": {
+      "label": "Personne de contact",
+      "select": "Choisir la personne de contact",
+      "empty": "Aucune personne de contact choisie"
+    },
+    "privacyHint": "L'adresse, l'e-mail et le téléphone viennent du carnet d'adresses. Chacun ne voit que ce qu'il a le droit de voir.",
+    "showMap": {
+      "label": "Afficher la carte",
+      "helper": "Affiche l'adresse de l'organisation sur une carte"
+    },
+    "showForm": {
+      "label": "Afficher le formulaire de contact",
+      "helper": "Les visiteurs peuvent t'écrire directement"
+    },
+    "form": {
+      "title": "Formulaire de contact",
+      "subtitle": "Les champs affichés et ceux à remplir obligatoirement. Le message s'ouvre dans la messagerie du visiteur et part à la personne de contact.",
+      "visible": "afficher",
+      "required": "obligatoire",
+      "send": "Envoyer le message",
+      "sent": "Ta messagerie s'est ouverte avec le message. Envoie-le depuis là.",
+      "subject": "Demande de contact",
+      "noRecipient": "Aucune adresse e-mail n'est enregistrée pour ce contact.",
+      "error": {
+        "required": "Remplis ce champ, s'il te plaît.",
+        "email": "Saisis une adresse e-mail valide, s'il te plaît."
+      }
+    },
+    "field": {
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "email": "E-mail",
+      "phone": "Téléphone",
+      "message": "Message"
+    },
+    "layout": {
+      "title": "Mise en page",
+      "subtitle": "Glisse les blocs à leur place. Sur un petit écran, les colonnes s'empilent.",
+      "presets": "Modèle",
+      "classic": "Trois colonnes",
+      "split": "Détails et carte",
+      "cards": "Deux cartes",
+      "formFocus": "Formulaire au centre",
+      "stacked": "Empilé",
+      "custom": "Mise en page libre",
+      "palette": "Blocs non utilisés",
+      "paletteEmpty": "Tous les blocs sont placés.",
+      "dropHere": "Glisse un bloc ici",
+      "addRow": "Ajouter une ligne",
+      "removeRow": "Supprimer la ligne",
+      "addColumn": "Ajouter une colonne",
+      "removeColumn": "Supprimer la colonne",
+      "width": "Changer la largeur",
+      "removeElement": "Retirer de la mise en page",
+      "hidden": "non affiché",
+      "narrow": "Aperçu sur téléphone"
+    },
+    "element": {
+      "title": "Titre",
+      "subTitle": "Sous-titre",
+      "orgLogo": "Logo",
+      "orgName": "Nom de l'organisation",
+      "orgAddress": "Adresse de l'organisation",
+      "orgEmail": "E-mail de l'organisation",
+      "orgPhone": "Téléphone de l'organisation",
+      "personAvatar": "Photo",
+      "personName": "Nom du contact",
+      "personAddress": "Adresse du contact",
+      "personEmail": "E-mail du contact",
+      "personPhone": "Téléphone du contact",
+      "map": "Carte",
+      "form": "Formulaire de contact"
+    },
+    "map": {
+      "open": "Ouvrir dans Plans"
+    }
   }
 }

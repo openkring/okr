@@ -1580,6 +1580,10 @@
     "notices": {
       "label": "Notices",
       "description": "The latest notices to the reader, from a mailing"
+    },
+    "contact": {
+      "label": "Contact",
+      "description": "Organization and contact person with map and contact form"
     }
   },
   "message_center": {
@@ -2282,5 +2286,92 @@
     "iconColor_label": "Icon colour",
     "textBackground_label": "Text background",
     "color_reset": "Default"
+  },
+  "contact": {
+    "label": "Contact",
+    "title": "Contact",
+    "subtitle": "Who people reach and how the section looks. The section title and subtitle can be dragged into the layout as well.",
+    "region": "Contact",
+    "org": {
+      "label": "Organization",
+      "select": "Choose organization",
+      "empty": "No organization chosen yet"
+    },
+    "person": {
+      "label": "Contact person",
+      "select": "Choose contact person",
+      "empty": "No contact person chosen yet"
+    },
+    "privacyHint": "Address, email and phone come from the address book. Everyone sees only what they are allowed to see.",
+    "showMap": {
+      "label": "Show map",
+      "helper": "Shows the organization's address on a map"
+    },
+    "showForm": {
+      "label": "Show contact form",
+      "helper": "Visitors can write you a message directly"
+    },
+    "form": {
+      "title": "Contact form",
+      "subtitle": "Which fields the form shows and which must be filled in. The message opens in the visitor's own mail program and goes to the contact person.",
+      "visible": "show",
+      "required": "required",
+      "send": "Send message",
+      "sent": "Your mail program has opened with the message. Please send it from there.",
+      "subject": "Contact request",
+      "noRecipient": "There is no email address for this contact.",
+      "error": {
+        "required": "Please fill in this field.",
+        "email": "Please enter a valid email address."
+      }
+    },
+    "field": {
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Email",
+      "phone": "Phone",
+      "message": "Message"
+    },
+    "layout": {
+      "title": "Layout",
+      "subtitle": "Drag the blocks into place. On narrow screens the columns stack.",
+      "presets": "Template",
+      "classic": "Three columns",
+      "split": "Details and map",
+      "cards": "Two cards",
+      "formFocus": "Form first",
+      "stacked": "Stacked",
+      "custom": "Custom layout",
+      "palette": "Unused blocks",
+      "paletteEmpty": "All blocks are in the layout.",
+      "dropHere": "Drag a block here",
+      "addRow": "Add row",
+      "removeRow": "Remove row",
+      "addColumn": "Add column",
+      "removeColumn": "Remove column",
+      "width": "Change width",
+      "removeElement": "Remove from layout",
+      "hidden": "not shown",
+      "narrow": "How it looks on a phone"
+    },
+    "element": {
+      "title": "Title",
+      "subTitle": "Subtitle",
+      "orgLogo": "Logo",
+      "orgName": "Organization name",
+      "orgAddress": "Organization address",
+      "orgEmail": "Organization email",
+      "orgPhone": "Organization phone",
+      "personAvatar": "Photo",
+      "personName": "Contact name",
+      "personAddress": "Contact address",
+      "personEmail": "Contact email",
+      "personPhone": "Contact phone",
+      "map": "Map",
+      "form": "Contact form"
+    },
+    "map": {
+      "open": "Open in maps"
+    }
   }
 }

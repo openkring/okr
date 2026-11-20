@@ -1580,6 +1580,10 @@
     "notices": {
       "label": "Comunicazioni",
       "description": "Le ultime comunicazioni a chi legge, provenienti da un invio"
+    },
+    "contact": {
+      "label": "Contatto",
+      "description": "Organizzazione e persona di contatto con mappa e modulo"
     }
   },
   "message_center": {
@@ -2282,5 +2286,92 @@
     "iconColor_label": "Colore dell'icona",
     "textBackground_label": "Sfondo del testo",
     "color_reset": "Predefinito"
+  },
+  "contact": {
+    "label": "Contatto",
+    "title": "Contatto",
+    "subtitle": "Chi si contatta e come appare la sezione. Puoi trascinare nel layout anche il titolo e il sottotitolo della sezione.",
+    "region": "Contatto",
+    "org": {
+      "label": "Organizzazione",
+      "select": "Scegli organizzazione",
+      "empty": "Nessuna organizzazione scelta"
+    },
+    "person": {
+      "label": "Persona di contatto",
+      "select": "Scegli persona di contatto",
+      "empty": "Nessuna persona di contatto scelta"
+    },
+    "privacyHint": "Indirizzo, e-mail e telefono vengono dalla rubrica. Ognuno vede solo ciò che può vedere.",
+    "showMap": {
+      "label": "Mostra mappa",
+      "helper": "Mostra l'indirizzo dell'organizzazione su una mappa"
+    },
+    "showForm": {
+      "label": "Mostra modulo di contatto",
+      "helper": "I visitatori possono scriverti direttamente"
+    },
+    "form": {
+      "title": "Modulo di contatto",
+      "subtitle": "Quali campi mostra il modulo e quali sono obbligatori. Il messaggio si apre nel programma di posta del visitatore e va alla persona di contatto.",
+      "visible": "mostra",
+      "required": "obbligatorio",
+      "send": "Invia messaggio",
+      "sent": "Il tuo programma di posta si è aperto con il messaggio. Invialo da lì.",
+      "subject": "Richiesta di contatto",
+      "noRecipient": "Per questo contatto non c'è un indirizzo e-mail.",
+      "error": {
+        "required": "Compila questo campo, per favore.",
+        "email": "Inserisci un indirizzo e-mail valido, per favore."
+      }
+    },
+    "field": {
+      "firstName": "Nome",
+      "lastName": "Cognome",
+      "email": "E-mail",
+      "phone": "Telefono",
+      "message": "Messaggio"
+    },
+    "layout": {
+      "title": "Layout",
+      "subtitle": "Trascina i blocchi al loro posto. Sugli schermi stretti le colonne si impilano.",
+      "presets": "Modello",
+      "classic": "Tre colonne",
+      "split": "Dati e mappa",
+      "cards": "Due schede",
+      "formFocus": "Modulo al centro",
+      "stacked": "Impilato",
+      "custom": "Layout personale",
+      "palette": "Blocchi non usati",
+      "paletteEmpty": "Tutti i blocchi sono nel layout.",
+      "dropHere": "Trascina un blocco qui",
+      "addRow": "Aggiungi riga",
+      "removeRow": "Rimuovi riga",
+      "addColumn": "Aggiungi colonna",
+      "removeColumn": "Rimuovi colonna",
+      "width": "Cambia larghezza",
+      "removeElement": "Rimuovi dal layout",
+      "hidden": "non mostrato",
+      "narrow": "Così appare sul telefono"
+    },
+    "element": {
+      "title": "Titolo",
+      "subTitle": "Sottotitolo",
+      "orgLogo": "Logo",
+      "orgName": "Nome dell'organizzazione",
+      "orgAddress": "Indirizzo dell'organizzazione",
+      "orgEmail": "E-mail dell'organizzazione",
+      "orgPhone": "Telefono dell'organizzazione",
+      "personAvatar": "Foto",
+      "personName": "Nome del contatto",
+      "personAddress": "Indirizzo del contatto",
+      "personEmail": "E-mail del contatto",
+      "personPhone": "Telefono del contatto",
+      "map": "Mappa",
+      "form": "Modulo di contatto"
+    },
+    "map": {
+      "open": "Apri nelle mappe"
+    }
   }
 }

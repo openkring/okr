@@ -26,7 +26,7 @@ export const SECTION_TYPES = [
     'people', 'responsibility', 'slider', 'table', 'tracker', 'video', 'accordion', 'events', 'invitations', 'tasks',
     'news', 'activities', 'messages', 'rag', 'orgchart', 'context', 'member-age', 'member-cat', 'trip-stats', 'form',
     'sankey', 'spider', 'toc', 'testimonial', 'timeline', 'weather', 'learning', 'advent', 'connections', 'departures', 'energy', 'counter', 'footer', 'notices', 'tiles',
-    'track', 'course',
+    'track', 'course', 'contact',
 ] as const;
 
 export type SectionType = (typeof SECTION_TYPES)[number];
@@ -36,7 +36,7 @@ export type SectionModel =
     AlbumSection | ArticleSection | ButtonSection | CalendarSection | ChartSection | ChatSection |
     HeroSection | IframeSection | MapSection | PeopleSection | ResponsibilitySection | SliderSection |
     TableSection | TrackerSection | VideoSection | AccordionSection | EventsSection | InvitationsSection | TasksSection |
-    NewsSection | ActivitiesSection | MessagesSection | RagSection | OrgchartSection | ContextDiagramSection | MemberAgeSection | MemberCatSection | TripStatsSection | FormSection | SankeySection | SpiderSection | TocSection | TestimonialSection | TimelineSection | WeatherSection | LearningSection | AdventSection | ConnectionsSection | DeparturesSection | EnergySection | CounterSection | FooterSection | NoticesSection | TilesSection | JournalTrackSection | CourseSection;
+    NewsSection | ActivitiesSection | MessagesSection | RagSection | OrgchartSection | ContextDiagramSection | MemberAgeSection | MemberCatSection | TripStatsSection | FormSection | SankeySection | SpiderSection | TocSection | TestimonialSection | TimelineSection | WeatherSection | LearningSection | AdventSection | ConnectionsSection | DeparturesSection | EnergySection | CounterSection | FooterSection | NoticesSection | TilesSection | JournalTrackSection | CourseSection | ContactSection;
 
 // --------------------------------------- ABSTRACT BASE SECTION MODELS ----------------------------------------
 // --------------------------------------- ORGCHART ----------------------------------------
@@ -347,7 +347,7 @@ export interface BaseSection {
   content: EditorConfig; // content from rich text editor
   properties?: AccordionConfig | AlbumConfig | ArticleConfig | ButtonConfig | CalendarOptions | EChartsOption | ChatConfig | HeroConfig |
   IframeConfig | MapConfig | OrgchartConfig | ContextDiagramConfig | PeopleConfig | ResponsibilityConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig | EventsConfig | InvitationsConfig |
-  TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | RagConfig | MemberAgeConfig | MemberCatConfig | TripStatsConfig | FormSectionConfig | SankeyConfig | SpiderConfig | TocConfig | TestimonialConfig | TimelineConfig | WeatherConfig | LearningConfig | AdventConfig | ConnectionsConfig | DeparturesConfig | EnergyConfig | CounterConfig | FooterConfig | NoticesConfig | TilesConfig | JournalTrackConfig | CourseConfig;
+  TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | RagConfig | MemberAgeConfig | MemberCatConfig | TripStatsConfig | FormSectionConfig | SankeyConfig | SpiderConfig | TocConfig | TestimonialConfig | TimelineConfig | WeatherConfig | LearningConfig | AdventConfig | ConnectionsConfig | DeparturesConfig | EnergyConfig | CounterConfig | FooterConfig | NoticesConfig | TilesConfig | JournalTrackConfig | CourseConfig | ContactConfig;
   notes: string;
   tags: string;
   tenants: string[]; // list of tenant ids
@@ -1161,6 +1161,64 @@ export interface EnergyConfig {
   locationKey: string;
   /** Up to four further municipalities for the comparison table. Always present, may be empty. */
   compareKeys: string[];
+}
+
+// --------------------------------------- CONTACT ----------------------------------------
+/**
+ * «So findest du uns»: one organization and one contact person, optionally a map of the
+ * organization's postal address and a contact form, arranged by a drag-and-drop layout.
+ * Contact data (address, email, phone) is never copied into the section: the renderer reads it
+ * live from the address-directory projection, so it follows the privacy floors of each viewer.
+ */
+export interface ContactSection extends BaseSection {
+  type: 'contact';
+  properties: ContactConfig;
+}
+
+/** Every block a contact layout can place. `title`/`subTitle` are the base section's fields. */
+export const CONTACT_ELEMENTS = [
+  'title', 'subTitle',
+  'orgLogo', 'orgName', 'orgAddress', 'orgEmail', 'orgPhone',
+  'personAvatar', 'personName', 'personAddress', 'personEmail', 'personPhone',
+  'map', 'form',
+] as const;
+export type ContactElement = (typeof CONTACT_ELEMENTS)[number];
+
+/** The fields of the contact form, in display order. */
+export const CONTACT_FORM_FIELDS = ['firstName', 'lastName', 'email', 'phone', 'message'] as const;
+export type ContactFormFieldName = (typeof CONTACT_FORM_FIELDS)[number];
+
+export interface ContactFormField {
+  name: ContactFormFieldName;
+  isVisible: boolean;
+  isRequired: boolean;
+}
+
+/** One column of a layout row; `width` is its share of the row (1–3, like CSS fr units). */
+export interface ContactColumn {
+  width: number;
+  elements: ContactElement[];
+}
+
+/** A row of 1–3 columns. Rows hold objects, not nested arrays: Firestore rejects arrays of arrays. */
+export interface ContactRow {
+  columns: ContactColumn[];
+}
+
+/** The named starting layouts; 'custom' once the user has moved anything. */
+export const CONTACT_LAYOUTS = ['classic', 'split', 'cards', 'formFocus', 'stacked', 'custom'] as const;
+export type ContactLayout = (typeof CONTACT_LAYOUTS)[number];
+
+export interface ContactConfig {
+  /** okey of the organization ('' = none) */
+  orgKey: string;
+  /** okey of the contact person ('' = none) */
+  personKey: string;
+  showMap: boolean;
+  showForm: boolean;
+  formFields: ContactFormField[];
+  layout: ContactLayout;
+  rows: ContactRow[];
 }
 
 // --------------------------------------- COUNTER ----------------------------------------

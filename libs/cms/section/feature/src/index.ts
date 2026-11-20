@@ -41,6 +41,8 @@ export * from './lib/toc-section';
 export * from './lib/testimonial-section';
 export * from './lib/timeline-section';
 export * from './lib/counter-section';
+export * from './lib/contact-section';
+export * from './lib/contact-details.service';
 export * from './lib/footer-section';
 export * from './lib/advent-section';
 export * from './lib/hero-section';

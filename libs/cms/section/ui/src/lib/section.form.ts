@@ -1,13 +1,13 @@
 import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
 
-import { AccordionConfig, AccordionSection, ColorIonic, ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, FooterConfig, FooterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FormSectionConfig, AlbumConfig, AlbumSection, SectionFeedback, ArticleSection, ArticleSlideshow, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, CourseConfig, CourseSection, EventsConfig, EventsSection, HeroConfig, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, InvitationsConfig, InvitationsSection, JournalTrackConfig, JournalTrackSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TilesConfig, TilesSection, NewsConfig, NewsSection, SectionCta, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
+import { AccordionConfig, AccordionSection, ColorIonic, ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, ContactConfig, ContactSection, FooterConfig, FooterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FormSectionConfig, AlbumConfig, AlbumSection, SectionFeedback, ArticleSection, ArticleSlideshow, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, CourseConfig, CourseSection, EventsConfig, EventsSection, HeroConfig, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, InvitationsConfig, InvitationsSection, JournalTrackConfig, JournalTrackSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TilesConfig, TilesSection, NewsConfig, NewsSection, SectionCta, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
 import { Chips, ErrorNote, NotesInput, NotesInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
 import { MODEL_SELECTOR, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { IonItem, IonToggle } from '@ionic/angular';
-import { ChartOption, getPeopleResponsibilityIds, getInlineErrorFields, getJournalInlineErrorFields, getRemainingErrors, isJournalModeField, JOURNAL_VIDEO_CLIPS_MAX, SectionErrors, SectionI18n, validateSection } from '@okr/cms-section-util';
+import { ChartOption, ContactDetails, getPeopleResponsibilityIds, getInlineErrorFields, getJournalInlineErrorFields, getRemainingErrors, isJournalModeField, JOURNAL_VIDEO_CLIPS_MAX, SectionErrors, SectionI18n, validateSection } from '@okr/cms-section-util';
 import { FormI18n } from '@okr/forms-util';
 
 import { SectionConfiguration } from './section-configuration';
@@ -24,6 +24,7 @@ import { ConnectionsConfiguration } from './connections-configuration';
 import { DeparturesConfiguration } from './departures-configuration';
 import { EnergyConfiguration } from './energy-configuration';
 import { CounterConfiguration } from './counter-configuration';
+import { ContactConfiguration } from './contact-configuration';
 import { FooterConfiguration } from './footer-configuration';
 import { ContractOption } from './button-action-configuration';
 import { PeopleConfiguration } from './people-configuration';
@@ -66,7 +67,7 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
     IonItem, IonToggle,
     Chips, NotesInput, ErrorNote,
     SectionConfiguration, EditorConfiguration, ImageStyleConfiguration, ArticleImagesConfiguration, AlbumConfiguration,
-    IframeConfiguration, WeatherConfiguration, ConnectionsConfiguration, DeparturesConfiguration, EnergyConfiguration, CounterConfiguration, FooterConfiguration, PeopleConfiguration, ResponsibilityConfiguration, VideoConfiguration,
+    IframeConfiguration, WeatherConfiguration, ConnectionsConfiguration, DeparturesConfiguration, EnergyConfiguration, CounterConfiguration, ContactConfiguration, FooterConfiguration, PeopleConfiguration, ResponsibilityConfiguration, VideoConfiguration,
     ButtonConfiguration, ChatConfiguration,
     MapConfiguration, TrackerConfiguration, TableGridConfiguration,  TableStyleConfiguration, TableHeader,
     TableBody, EventsConfiguration, CourseConfiguration, InvitationsConfiguration, ImagesConfiguration, CalendarConfiguration, ChartConfiguration,
@@ -437,6 +438,21 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
             />
           }
         }
+        @case('contact') {
+          @if(contactConfig(); as contactConfig) {
+            <okr-contact-config
+              [formData]="contactConfig" (formDataChange)="onContactConfigChange($event)"
+              [details]="contactDetails()"
+              [title]="formData().title ?? ''"
+              [subTitle]="formData().subTitle ?? ''"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+              [errors]="errors()"
+              (orgSelectClicked)="selectContactOrg()"
+              (personSelectClicked)="selectContactPerson()"
+            />
+          }
+        }
         @case('counter') {
           @if(counterConfig(); as counterConfig) {
             <okr-counter-config
@@ -789,6 +805,8 @@ export class SectionForm {
    * the text and the properties of journalModeSectionFields); photos and clips come from SECTION_IMAGE_PICKER.
    */
   public readonly journalMode = input(false);
+  /** contact section: the chosen organization and person, resolved from the address book by the feature layer */
+  public readonly contactDetails = input<ContactDetails>({});
 
   // The per-type suite is picked at runtime from formData().type (validateSection), so the
   // bridge calls the registry through a closure; validateSection takes no field argument.
@@ -883,6 +901,7 @@ export class SectionForm {
   protected departuresConfig = computed(() => this.getDeparturesConfig());
   protected energyConfig = computed(() => this.getEnergyConfig());
   protected counterConfig = computed(() => this.getCounterConfig());
+  protected contactConfig = computed(() => this.formData().type === 'contact' ? (this.formData() as ContactSection).properties : undefined);
   protected footerConfig = computed(() => this.getFooterConfig());
   protected mapConfig = computed(() => this.getMapConfig());
   /** journal mode: the chosen track of a track section */
@@ -1548,6 +1567,13 @@ export class SectionForm {
     }
   }
 
+  protected onContactConfigChange(config: ContactConfig): void {
+    const section = this.formData();
+    if (section.type === 'contact') {
+      this.formData.set({ ...section, properties: config } as ContactSection);
+    }
+  }
+
   protected onCounterConfigChange(config: CounterConfig): void {
     const section = this.formData();
     if (section.type === 'counter') {
@@ -1681,6 +1707,19 @@ export class SectionForm {
         properties: config
       } as VideoSection);
     }
+  }
+
+  /************************************** contact section *********************************************** */
+  public async selectContactOrg(): Promise<void> {
+    const org = await this.modelSelectService.selectOrg();
+    const config = this.contactConfig();
+    if (org?.okey && config) this.onContactConfigChange({ ...config, orgKey: org.okey });
+  }
+
+  public async selectContactPerson(): Promise<void> {
+    const person = await this.modelSelectService.selectPerson();
+    const config = this.contactConfig();
+    if (person?.okey && config) this.onContactConfigChange({ ...config, personKey: person.okey });
   }
 
   /************************************** select person *********************************************** */

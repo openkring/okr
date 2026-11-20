@@ -1,17 +1,17 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { combineLatest, of } from 'rxjs';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonContent, IonGrid, IonNote, IonRow, ModalController } from '@ionic/angular';
-import { filter, switchMap } from 'rxjs/operators';
+import { filter, map, switchMap } from 'rxjs/operators';
 
 import { CategoryItemModel, CategoryListModel } from '@okr/shared-models';
 import { ENV } from '@okr/shared-config';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { I18nService, TranslatePipe } from '@okr/shared-i18n';
+import { I18nService } from '@okr/shared-i18n';
 import { Header, ImgDirective } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
+import { sortByLabel } from '@okr/cms-section-util';
 import { patchState, signalStore, withMethods, withProps, withState } from '@ngrx/signals';
-
-import { AsyncPipe } from '@angular/common';
 
 const PFX = '@cms/section/feature.';
 
@@ -43,7 +43,7 @@ const CardSelectStore = signalStore(
   standalone: true,
   providers: [CardSelectStore],
   imports: [
-    ImgDirective, SvgIconPipe, TranslatePipe, AsyncPipe,
+    ImgDirective, SvgIconPipe,
     Header,
     IonContent, IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCardSubtitle, IonNote
   ],
@@ -59,11 +59,12 @@ const CardSelectStore = signalStore(
       <ion-content>
         <ion-grid>
           <ion-row>
-            @for(item of items(); track $index) {
+            @for(entry of sortedItems(); track entry.item.name) {
+              @let item = entry.item;
               <ion-col size="6" size-md="3">
                 <ion-card (click)="select(item)" [class.disabled]="isDisabled(item)" [attr.aria-disabled]="isDisabled(item)">
                   <ion-card-header>
-                    <ion-card-title>{{ getName(item) | translate | async }}</ion-card-title>
+                    <ion-card-title>{{ entry.label }}</ion-card-title>
                     <ion-card-subtitle>{{ item.name }}</ion-card-subtitle>
                   </ion-card-header>
                   @if (isDisabled(item)) { <ion-note class="hint">{{ notOnWebsite() }}</ion-note> }
@@ -91,7 +92,20 @@ export class CardSelectModal {
   public disabledNames = input<string[]>([]);
 
   // computed
-  protected items = computed(() => this.category().items);
+  protected items = computed(() => this.category()?.items ?? []);
+  /** item name → translated label; follows the active language */
+  private readonly labels = toSignal(
+    toObservable(this.items).pipe(
+      switchMap(items => items.length === 0
+        ? of({} as Record<string, string>)
+        : combineLatest(items.map(item => this.store.i18nService.translate(this.getName(item)).pipe(map(label => [item.name, label] as const))))
+            .pipe(map(pairs => Object.fromEntries(pairs) as Record<string, string>))
+      )
+    ),
+    { initialValue: {} as Record<string, string> }
+  );
+  /** the entries sorted by their translated name */
+  protected readonly sortedItems = computed(() => sortByLabel(this.items(), this.labels(), this.store.i18nService.getActiveLang()));
   protected readonly notOnWebsite = toSignal(this.store.i18nService.translate(PFX + 'select.notOnWebsite'), { initialValue: '' });
   protected path = computed(() => `${this.env.services.imgixBaseUrl}/logo/${this.slug()}/`);
 

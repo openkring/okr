@@ -1580,6 +1580,10 @@
     "notices": {
       "label": "Mitteilungen",
       "description": "Die neusten Mitteilungen an die lesende Person, aus dem Versand"
+    },
+    "contact": {
+      "label": "Kontakt",
+      "description": "Organisation und Kontaktperson mit Karte und Kontakt-Formular"
     }
   },
   "message_center": {
@@ -2282,5 +2286,92 @@
     "iconColor_label": "Farbe des Symbols",
     "textBackground_label": "Hintergrund des Textes",
     "color_reset": "Standard"
+  },
+  "contact": {
+    "label": "Kontakt",
+    "title": "Kontakt",
+    "subtitle": "Wen man erreicht und wie die Sektion aussieht. Titel und Untertitel der Sektion lassen sich ebenfalls ins Layout ziehen.",
+    "region": "Kontakt",
+    "org": {
+      "label": "Organisation",
+      "select": "Organisation wählen",
+      "empty": "Noch keine Organisation gewählt"
+    },
+    "person": {
+      "label": "Kontaktperson",
+      "select": "Kontaktperson wählen",
+      "empty": "Noch keine Kontaktperson gewählt"
+    },
+    "privacyHint": "Adresse, E-Mail und Telefon kommen aus dem Adressbuch. Jede Person sieht davon nur, was sie sehen darf.",
+    "showMap": {
+      "label": "Karte anzeigen",
+      "helper": "Zeigt die Adresse der Organisation auf einer Karte"
+    },
+    "showForm": {
+      "label": "Kontakt-Formular anzeigen",
+      "helper": "Besucherinnen und Besucher können dir direkt eine Nachricht schreiben"
+    },
+    "form": {
+      "title": "Kontakt-Formular",
+      "subtitle": "Welche Felder das Formular zeigt und welche ausgefüllt sein müssen. Die Nachricht öffnet sich im eigenen Mailprogramm und geht an die Kontaktperson.",
+      "visible": "anzeigen",
+      "required": "Pflichtfeld",
+      "send": "Nachricht senden",
+      "sent": "Dein Mailprogramm hat sich mit der Nachricht geöffnet. Bitte schick sie dort ab.",
+      "subject": "Kontaktanfrage",
+      "noRecipient": "Für diesen Kontakt ist keine E-Mail-Adresse hinterlegt.",
+      "error": {
+        "required": "Bitte fülle dieses Feld aus.",
+        "email": "Bitte gib eine gültige E-Mail-Adresse ein."
+      }
+    },
+    "field": {
+      "firstName": "Vorname",
+      "lastName": "Nachname",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "message": "Nachricht"
+    },
+    "layout": {
+      "title": "Layout",
+      "subtitle": "Zieh die Bausteine an ihren Platz. Auf schmalen Bildschirmen stehen die Spalten untereinander.",
+      "presets": "Vorlage",
+      "classic": "Drei Spalten",
+      "split": "Angaben und Karte",
+      "cards": "Zwei Karten",
+      "formFocus": "Formular im Zentrum",
+      "stacked": "Untereinander",
+      "custom": "Eigenes Layout",
+      "palette": "Nicht verwendete Bausteine",
+      "paletteEmpty": "Alle Bausteine sind im Layout.",
+      "dropHere": "Baustein hierher ziehen",
+      "addRow": "Zeile hinzufügen",
+      "removeRow": "Zeile entfernen",
+      "addColumn": "Spalte hinzufügen",
+      "removeColumn": "Spalte entfernen",
+      "width": "Breite ändern",
+      "removeElement": "Aus dem Layout entfernen",
+      "hidden": "wird nicht angezeigt",
+      "narrow": "So sieht es auf dem Handy aus"
+    },
+    "element": {
+      "title": "Titel",
+      "subTitle": "Untertitel",
+      "orgLogo": "Logo",
+      "orgName": "Name der Organisation",
+      "orgAddress": "Adresse der Organisation",
+      "orgEmail": "E-Mail der Organisation",
+      "orgPhone": "Telefon der Organisation",
+      "personAvatar": "Foto",
+      "personName": "Name der Kontaktperson",
+      "personAddress": "Adresse der Kontaktperson",
+      "personEmail": "E-Mail der Kontaktperson",
+      "personPhone": "Telefon der Kontaktperson",
+      "map": "Karte",
+      "form": "Kontakt-Formular"
+    },
+    "map": {
+      "open": "In Karten öffnen"
+    }
   }
 }

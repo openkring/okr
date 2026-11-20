@@ -8,7 +8,7 @@ import type {
   ChartSection, ChatConfig, ChatSection, ContextDiagramConfig, ContextDiagramSection, CourseConfig, CourseSection, EditorConfig, EventsConfig, EventsSection,
   FormSection, FormSectionConfig,
   HeroConfig, HeroSection, IconConfig, IframeConfig,
-  IframeSection, InvitationsConfig, InvitationsSection, MapConfig, WeatherConfig, WeatherSection, ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, FooterColumn, FooterConfig, FooterItem, FooterSection, MapSection, MemberAgeConfig, MemberAgeSection, MemberCatConfig, MemberCatSection, OrgchartConfig, OrgchartSection, PeopleConfig,
+  IframeSection, InvitationsConfig, InvitationsSection, MapConfig, WeatherConfig, WeatherSection, ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, ContactConfig, ContactSection, FooterColumn, FooterConfig, FooterItem, FooterSection, MapSection, MemberAgeConfig, MemberAgeSection, MemberCatConfig, MemberCatSection, OrgchartConfig, OrgchartSection, PeopleConfig,
   PeopleSection, RagConfig, RagSection, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TilesConfig, TilesSection, TimelineConfig, TimelineSection, AdventConfig, AdventSection, NewsConfig, NewsSection, TasksConfig, TasksSection, ActivitiesConfig, ActivitiesSection, MessagesConfig, MessagesSection, NoticesConfig, NoticesSection, TripStatsConfig, TripStatsSection, ResponsibilityConfig, ResponsibilitySection, SliderConfig, SliderSection, TableConfig, TableSection,
   TrackerConfig, TrackerSection, VideoConfig, VideoSection, JournalTrackConfig, JournalTrackSection
 } from "./section.model";
@@ -649,6 +649,33 @@ export const FORM_SECTION_SHAPE = {
   type: 'form' as const,
   properties: FORM_SECTION_CONFIG_SHAPE,
 } as FormSection;
+// --------------------------------------- CONTACT ----------------------------------------
+export const CONTACT_CONFIG_SHAPE: ContactConfig = {
+  orgKey: '',
+  personKey: '',
+  showMap: true,
+  showForm: false,
+  formFields: [
+    { name: 'firstName', isVisible: true, isRequired: true },
+    { name: 'lastName', isVisible: true, isRequired: true },
+    { name: 'email', isVisible: true, isRequired: true },
+    { name: 'phone', isVisible: true, isRequired: false },
+    { name: 'message', isVisible: true, isRequired: true },
+  ],
+  layout: 'classic',
+  rows: [{ columns: [
+    { width: 1, elements: ['title', 'orgName', 'orgAddress', 'orgEmail', 'orgPhone'] },
+    { width: 1, elements: ['map'] },
+    { width: 1, elements: ['subTitle', 'personName', 'personEmail', 'personPhone', 'personAvatar'] },
+  ] }],
+};
+
+export const CONTACT_SECTION_SHAPE = {
+  ...BASE_SECTION_SHAPE,
+  type: 'contact' as const,
+  properties: CONTACT_CONFIG_SHAPE,
+} as ContactSection;
+
 // --------------------------------------- COUNTER ----------------------------------------
 export const COUNTER_CONFIG_SHAPE: CounterConfig = {
   uiType: 'display',

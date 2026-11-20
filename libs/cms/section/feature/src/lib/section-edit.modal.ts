@@ -3,7 +3,7 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { catchError, firstValueFrom, from, map, of, switchMap } from 'rxjs';
 import { IonContent, ModalController } from '@ionic/angular';
 
-import { CategoryListModel, LocationModel, SectionModel, UserModel } from '@okr/shared-models';
+import { CategoryListModel, ContactSection, LocationModel, SectionModel, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, ErrorBanner, Header} from '@okr/shared-ui';
 import { coerceBoolean, deepEqual, hasRole, safeStructuredClone } from '@okr/shared-util-core';
 import { ChoiceFieldOption, CourseOption, FormOption, ResponsibilityOption, SectionForm } from '@okr/cms-section-ui';
@@ -19,6 +19,7 @@ import { SECTION_I18N_KEYS, SECTION_ICON_PICKER, SectionI18n, withImageStyleDefa
 import { CmsSectionIconPicker } from './section-icon-picker';
 
 import { SectionStore } from './section.store';
+import { ContactDetailsService } from './contact-details.service';
 import { AppStore } from '@okr/shared-feature';
 
 
@@ -73,6 +74,7 @@ import { AppStore } from '@okr/shared-feature';
             [linkOrigins]="appStore.appLinkOrigins()"
             [readOnly]="isReadOnly()"
             [journalMode]="journalMode()"
+            [contactDetails]="contactDetails()"
             (valid)="formValid.set($event)"
           />
         }
@@ -211,6 +213,14 @@ export class SectionEditModal {
   });
   // missing imageStyle fields get their defaults, else the suite reports them undefined and saving is blocked
   protected formData = linkedSignal(() => withImageStyleDefaults(safeStructuredClone(this.section())));
+  /** contact section: the chosen organization and person, resolved live from the address book */
+  private readonly contactDetailsService = inject(ContactDetailsService);
+  protected readonly contactDetails = computed(() => {
+    const section = this.formData();
+    if (section?.type !== 'contact') return {};
+    const config = (section as ContactSection).properties;
+    return this.contactDetailsService.resolve(config?.orgKey, config?.personKey);
+  });
   protected formValid = signal(true);
   protected showForm = signal(true);
 

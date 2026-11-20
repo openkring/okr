@@ -78,6 +78,9 @@ export function getInlineErrorFields(type: SectionType, showAdvanced = false): s
     case 'iframe':
       fields.push('url', 'style');
       break;
+    case 'contact':
+      fields.push('contact.layout', 'contact.rows', 'contact.formFields');
+      break;
     case 'map':
       fields.push('centerLatitude', 'centerLongitude', 'zoom', 'useCurrentLocationAsCenter');
       break;

@@ -1580,6 +1580,10 @@
     "notices": {
       "label": "Comunicados",
       "description": "Los últimos comunicados para quien lee, procedentes de un envío"
+    },
+    "contact": {
+      "label": "Contacto",
+      "description": "Organización y persona de contacto con mapa y formulario"
     }
   },
   "message_center": {
@@ -2282,5 +2286,92 @@
     "iconColor_label": "Color del icono",
     "textBackground_label": "Fondo del texto",
     "color_reset": "Predeterminado"
+  },
+  "contact": {
+    "label": "Contacto",
+    "title": "Contacto",
+    "subtitle": "A quién se contacta y cómo se ve la sección. También puedes arrastrar el título y el subtítulo de la sección al diseño.",
+    "region": "Contacto",
+    "org": {
+      "label": "Organización",
+      "select": "Elegir organización",
+      "empty": "Aún no hay organización"
+    },
+    "person": {
+      "label": "Persona de contacto",
+      "select": "Elegir persona de contacto",
+      "empty": "Aún no hay persona de contacto"
+    },
+    "privacyHint": "La dirección, el correo y el teléfono vienen de la libreta de direcciones. Cada persona ve solo lo que puede ver.",
+    "showMap": {
+      "label": "Mostrar mapa",
+      "helper": "Muestra la dirección de la organización en un mapa"
+    },
+    "showForm": {
+      "label": "Mostrar formulario de contacto",
+      "helper": "Los visitantes pueden escribirte directamente"
+    },
+    "form": {
+      "title": "Formulario de contacto",
+      "subtitle": "Qué campos muestra el formulario y cuáles son obligatorios. El mensaje se abre en el programa de correo del visitante y va a la persona de contacto.",
+      "visible": "mostrar",
+      "required": "obligatorio",
+      "send": "Enviar mensaje",
+      "sent": "Tu programa de correo se ha abierto con el mensaje. Envíalo desde allí.",
+      "subject": "Solicitud de contacto",
+      "noRecipient": "No hay correo electrónico para este contacto.",
+      "error": {
+        "required": "Rellena este campo, por favor.",
+        "email": "Introduce un correo electrónico válido, por favor."
+      }
+    },
+    "field": {
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "email": "Correo",
+      "phone": "Teléfono",
+      "message": "Mensaje"
+    },
+    "layout": {
+      "title": "Diseño",
+      "subtitle": "Arrastra los bloques a su sitio. En pantallas estrechas las columnas se apilan.",
+      "presets": "Plantilla",
+      "classic": "Tres columnas",
+      "split": "Datos y mapa",
+      "cards": "Dos tarjetas",
+      "formFocus": "Formulario primero",
+      "stacked": "Apilado",
+      "custom": "Diseño propio",
+      "palette": "Bloques sin usar",
+      "paletteEmpty": "Todos los bloques están en el diseño.",
+      "dropHere": "Arrastra un bloque aquí",
+      "addRow": "Añadir fila",
+      "removeRow": "Quitar fila",
+      "addColumn": "Añadir columna",
+      "removeColumn": "Quitar columna",
+      "width": "Cambiar ancho",
+      "removeElement": "Quitar del diseño",
+      "hidden": "no se muestra",
+      "narrow": "Así se ve en el móvil"
+    },
+    "element": {
+      "title": "Título",
+      "subTitle": "Subtítulo",
+      "orgLogo": "Logo",
+      "orgName": "Nombre de la organización",
+      "orgAddress": "Dirección de la organización",
+      "orgEmail": "Correo de la organización",
+      "orgPhone": "Teléfono de la organización",
+      "personAvatar": "Foto",
+      "personName": "Nombre del contacto",
+      "personAddress": "Dirección del contacto",
+      "personEmail": "Correo del contacto",
+      "personPhone": "Teléfono del contacto",
+      "map": "Mapa",
+      "form": "Formulario de contacto"
+    },
+    "map": {
+      "open": "Abrir en mapas"
+    }
   }
 }
