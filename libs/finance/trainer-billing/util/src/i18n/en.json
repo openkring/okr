@@ -1,0 +1,138 @@
+{
+  "agreement": {
+    "edit": { "create": "New agreement", "update": "Edit agreement", "view": "Agreement" },
+    "person": { "label": "Coach", "choose": "Choose a person" },
+    "validFrom": { "label": "Valid from" },
+    "validTo": { "label": "Valid until", "helper": "Leave empty if the agreement has no end." },
+    "selfEmployed": {
+      "label": "Self-employment confirmed",
+      "helper": "Only with this tick can the person record and bill their work."
+    },
+    "payablesNote": { "label": "Note for the coach", "placeholder": "e.g. when payments are made" },
+    "services": {
+      "title": "Services",
+      "intro": "For each service you set the unit, the rate and the account. A new rate applies from its date, earlier rates are kept.",
+      "max": "An agreement has at most 10 services."
+    },
+    "service": { "add": "Add service", "remove": "Remove service" },
+    "notes": { "label": "Notes", "placeholder": "Internal notes" },
+    "save": { "conf": "The agreement has been saved.", "error": "The agreement could not be saved." }
+  },
+  "service": {
+    "name": { "label": "Service", "placeholder": "e.g. Training", "helper": "This is how the service appears on the invoice." },
+    "unit": { "label": "Unit", "hour": "Hours", "day": "Days" },
+    "account": { "label": "Expense account", "helper": "Leave empty to use the default account of the books." },
+    "costCenter": { "label": "Cost centre", "helper": "Leave empty to use the default of the account." },
+    "vatCode": { "label": "VAT", "helper": "Only needed if the person is registered for VAT.", "none": "none" },
+    "archived": { "label": "No longer selectable", "helper": "Existing entries stay valid." },
+    "rates": { "title": "Rates", "helper": "Saved rates stay unchanged. To change a rate, add a new rate from a date." }
+  },
+  "rate": {
+    "validFrom": { "label": "Valid from" },
+    "amount": { "label": "Rate in CHF" },
+    "from": "from {date}",
+    "add": "New rate",
+    "remove": "Remove rate"
+  },
+  "profile": {
+    "edit": { "title": "Invoice details" },
+    "companyName": { "label": "Company", "placeholder": "e.g. Jucker Sport", "helper": "Leave empty to use your name." },
+    "contactName": { "label": "Our reference", "placeholder": "e.g. Anna Jucker", "helper": "Leave empty to use your name." },
+    "postal": {
+      "label": "Postal address",
+      "helper": "Appears in the letterhead of your invoice.",
+      "none": "You have not added a postal address yet."
+    },
+    "bank": {
+      "label": "Bank account",
+      "helper": "The club transfers the amount to this account.",
+      "none": "You have not added a bank account yet. Without one you cannot send an invoice."
+    },
+    "address": { "add": "Add addresses in your profile" },
+    "logo": {
+      "label": "Logo",
+      "helper": "Appears at the top of your invoice.",
+      "upload": "Upload logo",
+      "remove": "Remove logo",
+      "uploadTitle": "Uploading logo"
+    },
+    "vatRegistered": { "label": "Registered for VAT", "helper": "The invoice then shows the VAT." },
+    "vatNumber": { "label": "VAT number", "placeholder": "CHE-123.456.789 MWST" },
+    "vatNote": {
+      "label": "VAT note",
+      "placeholder": "Net invoice amount, not registered for VAT."
+    },
+    "numberTemplate": {
+      "label": "Invoice number",
+      "placeholder": "{yy}{mm}",
+      "helper": "Placeholders: {yyyy} or {yy} for the year, {mm} for the month, {n} for a running number. {mm} or {n} must be included.",
+      "example": "Example: {example}"
+    },
+    "paymentTerm": { "label": "Payment term in days", "placeholder": "30", "helper": "Between 0 and 120 days." },
+    "closingText": { "label": "Closing text", "placeholder": "Thank you very much for your order." },
+    "showQrSlip": { "label": "Attach QR payment slip", "helper": "The club can then pay the invoice directly in e-banking." },
+    "save": { "conf": "Your invoice details have been saved.", "error": "Your invoice details could not be saved." }
+  },
+  "entry": {
+    "edit": { "create": "Record work", "update": "Edit work entry", "view": "Work entry" },
+    "agreement": { "label": "Club" },
+    "date": { "label": "Date", "helper": "One entry covers one day." },
+    "service": { "label": "Service", "helper": "The services come from your agreement." },
+    "quantity": {
+      "hours": { "label": "Hours", "helper": "In quarter hours, e.g. 1.5 or 1.75." },
+      "days": { "label": "Days", "helper": "A whole or a half day." }
+    },
+    "label": { "label": "Text on the invoice", "placeholder": "e.g. place or occasion", "helper": "Appears next to the service on the invoice." },
+    "save": { "conf": "The work entry has been saved.", "error": "The work entry could not be saved." },
+    "delete": { "conf": "The work entry has been deleted.", "error": "The work entry could not be deleted." }
+  },
+  "changeConfirmation": { "cancel": "Cancel", "ok": "Save" },
+  "send": {
+    "refusal": {
+      "not-owner": "This billing does not belong to you.",
+      "books-mismatch": "This agreement belongs to books this club does not keep.",
+      "agreement-inactive": "Your agreement is not active in this month. Please contact the treasurer.",
+      "profile-incomplete": "Please complete your invoice details first.",
+      "no-postal": "Please choose a postal address in your invoice details.",
+      "no-iban": "Please choose a bank account in your invoice details.",
+      "future-month": "You can bill a month only once it has started.",
+      "already-sent": "You have already sent an invoice for this month.",
+      "no-entries": "There are no open work entries in this month.",
+      "duplicate-number": "You have already used this invoice number. Please adjust the invoice number in your invoice details, e.g. with {n}.",
+      "concurrent-send": "An invoice was just sent. Please try again.",
+      "invalid-entry": "A work entry in this month is incomplete. Please check your entries.",
+      "qr-iban-only": "The QR payment slip does not work with this bank account. Please choose another bank account or switch off the QR payment slip.",
+      "no-rate": "There is no rate on the date of a work entry. Please contact the treasurer.",
+      "no-vat-code": "The VAT of a service is missing. Please contact the treasurer.",
+      "no-account": "The account of a service is missing. Please contact the treasurer.",
+      "not-sent": "This invoice is no longer open.",
+      "bill-booked": "This invoice has already been booked and can no longer be rejected.",
+      "invalid-reason": "Please give a reason.",
+      "native-books": "In these books the status follows the payable.",
+      "unknown": "Unfortunately that did not work. Please try again later."
+    }
+  },
+  "validation": {
+    "personRequired": "Please choose a person.",
+    "validToBeforeFrom": "The end is before the start.",
+    "agreementOverlap": "This person already has an agreement in these books for this period.",
+    "serviceRequired": "Please add at least one service.",
+    "tooManyServices": "An agreement has at most 10 services.",
+    "serviceKeyRequired": "Please give the service a name.",
+    "serviceKeyDuplicate": "Two services must not have the same name.",
+    "unitInvalid": "Please choose a unit.",
+    "rateRequired": "Please add at least one rate.",
+    "rateDateInvalid": "Every rate needs a date.",
+    "rateAmountInvalid": "Every rate must be greater than 0.",
+    "rateDateDuplicate": "Two rates must not start on the same day.",
+    "accountRequired": "Please choose an account. The books have no default account.",
+    "templateNeedsVariable": "The invoice number needs {mm} or {n}, otherwise it repeats.",
+    "paymentTermInvalid": "Please enter a number between 0 and 120.",
+    "serviceUnavailable": "You can no longer choose this service.",
+    "quantityPositive": "Please enter a quantity greater than 0.",
+    "quantityMaxHours": "A work entry has at most 24 hours.",
+    "quantityMaxDay": "A work entry has at most one day.",
+    "quantityStepHours": "Please enter the hours in quarter hours, e.g. 1.25.",
+    "quantityStepDay": "Please enter a whole or a half day."
+  }
+}

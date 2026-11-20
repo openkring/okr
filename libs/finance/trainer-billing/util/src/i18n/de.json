@@ -1,0 +1,138 @@
+{
+  "agreement": {
+    "edit": { "create": "Neue Vereinbarung", "update": "Vereinbarung bearbeiten", "view": "Vereinbarung" },
+    "person": { "label": "Trainerin oder Trainer", "choose": "Person wählen" },
+    "validFrom": { "label": "Gültig ab" },
+    "validTo": { "label": "Gültig bis", "helper": "Leer lassen, wenn die Vereinbarung kein Ende hat." },
+    "selfEmployed": {
+      "label": "Selbständige Tätigkeit bestätigt",
+      "helper": "Erst mit diesem Häkchen kann die Person Einsätze erfassen und abrechnen."
+    },
+    "payablesNote": { "label": "Hinweis für die Trainerin oder den Trainer", "placeholder": "z. B. wann die Zahlungen erfolgen" },
+    "services": {
+      "title": "Leistungsarten",
+      "intro": "Für jede Leistungsart legst du die Einheit, den Ansatz und das Konto fest. Ein neuer Ansatz gilt ab seinem Datum, frühere Ansätze bleiben erhalten.",
+      "max": "Eine Vereinbarung hat höchstens 10 Leistungsarten."
+    },
+    "service": { "add": "Leistungsart hinzufügen", "remove": "Leistungsart entfernen" },
+    "notes": { "label": "Notizen", "placeholder": "Interne Notizen" },
+    "save": { "conf": "Die Vereinbarung ist gespeichert.", "error": "Die Vereinbarung konnte nicht gespeichert werden." }
+  },
+  "service": {
+    "name": { "label": "Leistung", "placeholder": "z. B. Training", "helper": "So erscheint die Leistung auf der Rechnung." },
+    "unit": { "label": "Einheit", "hour": "Stunden", "day": "Tage" },
+    "account": { "label": "Aufwandkonto", "helper": "Leer lassen, um das Vorgabekonto der Buchhaltung zu verwenden." },
+    "costCenter": { "label": "Kostenstelle", "helper": "Leer lassen, um die Vorgabe des Kontos zu verwenden." },
+    "vatCode": { "label": "Mehrwertsteuer", "helper": "Nur nötig, wenn die Person mehrwertsteuerpflichtig ist.", "none": "keine" },
+    "archived": { "label": "Nicht mehr wählbar", "helper": "Bisherige Einsätze bleiben gültig." },
+    "rates": { "title": "Ansätze", "helper": "Gespeicherte Ansätze bleiben unverändert. Für eine Änderung erfasst du einen neuen Ansatz ab einem Datum." }
+  },
+  "rate": {
+    "validFrom": { "label": "Gültig ab" },
+    "amount": { "label": "Ansatz in CHF" },
+    "from": "ab {date}",
+    "add": "Neuer Ansatz",
+    "remove": "Ansatz entfernen"
+  },
+  "profile": {
+    "edit": { "title": "Rechnungsangaben" },
+    "companyName": { "label": "Firma", "placeholder": "z. B. Jucker Sport", "helper": "Leer lassen, um deinen Namen zu verwenden." },
+    "contactName": { "label": "Unsere Referenz", "placeholder": "z. B. Anna Jucker", "helper": "Leer lassen, um deinen Namen zu verwenden." },
+    "postal": {
+      "label": "Postadresse",
+      "helper": "Erscheint im Briefkopf deiner Rechnung.",
+      "none": "Du hast noch keine Postadresse erfasst."
+    },
+    "bank": {
+      "label": "Bankverbindung",
+      "helper": "Auf dieses Konto überweist der Verein den Betrag.",
+      "none": "Du hast noch keine Bankverbindung erfasst. Ohne sie kannst du keine Rechnung senden."
+    },
+    "address": { "add": "Adressen in deinem Profil erfassen" },
+    "logo": {
+      "label": "Logo",
+      "helper": "Erscheint oben auf deiner Rechnung.",
+      "upload": "Logo hochladen",
+      "remove": "Logo entfernen",
+      "uploadTitle": "Logo wird hochgeladen"
+    },
+    "vatRegistered": { "label": "Mehrwertsteuerpflichtig", "helper": "Die Rechnung weist dann die Mehrwertsteuer aus." },
+    "vatNumber": { "label": "Mehrwertsteuernummer", "placeholder": "CHE-123.456.789 MWST" },
+    "vatNote": {
+      "label": "Hinweis zur Mehrwertsteuer",
+      "placeholder": "Rechnungsbetrag netto, nicht mehrwertsteuerpflichtig."
+    },
+    "numberTemplate": {
+      "label": "Rechnungsnummer",
+      "placeholder": "{yy}{mm}",
+      "helper": "Platzhalter: {yyyy} oder {yy} für das Jahr, {mm} für den Monat, {n} für eine laufende Nummer. {mm} oder {n} muss vorkommen.",
+      "example": "Beispiel: {example}"
+    },
+    "paymentTerm": { "label": "Zahlungsfrist in Tagen", "placeholder": "30", "helper": "Zwischen 0 und 120 Tagen." },
+    "closingText": { "label": "Schlusstext", "placeholder": "Herzlichen Dank für deinen Auftrag." },
+    "showQrSlip": { "label": "QR-Zahlteil anhängen", "helper": "Damit kann der Verein die Rechnung direkt mit dem E-Banking bezahlen." },
+    "save": { "conf": "Deine Rechnungsangaben sind gespeichert.", "error": "Deine Rechnungsangaben konnten nicht gespeichert werden." }
+  },
+  "entry": {
+    "edit": { "create": "Einsatz erfassen", "update": "Einsatz bearbeiten", "view": "Einsatz" },
+    "agreement": { "label": "Verein" },
+    "date": { "label": "Datum", "helper": "Ein Einsatz gilt für einen Tag." },
+    "service": { "label": "Leistung", "helper": "Die Leistungsarten stammen aus deiner Vereinbarung." },
+    "quantity": {
+      "hours": { "label": "Stunden", "helper": "In Viertelstunden, z. B. 1.5 oder 1.75." },
+      "days": { "label": "Tage", "helper": "Ein ganzer oder ein halber Tag." }
+    },
+    "label": { "label": "Text auf der Rechnung", "placeholder": "z. B. Ort oder Anlass", "helper": "Erscheint neben der Leistung auf der Rechnung." },
+    "save": { "conf": "Der Einsatz ist gespeichert.", "error": "Der Einsatz konnte nicht gespeichert werden." },
+    "delete": { "conf": "Der Einsatz ist gelöscht.", "error": "Der Einsatz konnte nicht gelöscht werden." }
+  },
+  "changeConfirmation": { "cancel": "Abbrechen", "ok": "Speichern" },
+  "send": {
+    "refusal": {
+      "not-owner": "Diese Abrechnung gehört nicht dir.",
+      "books-mismatch": "Diese Vereinbarung gehört zu einer Buchhaltung, die dieser Verein nicht führt.",
+      "agreement-inactive": "Deine Vereinbarung ist in diesem Monat nicht aktiv. Bitte wende dich an die Kassierin oder den Kassier.",
+      "profile-incomplete": "Bitte ergänze zuerst deine Rechnungsangaben.",
+      "no-postal": "Bitte wähle in deinen Rechnungsangaben eine Postadresse.",
+      "no-iban": "Bitte wähle in deinen Rechnungsangaben eine Bankverbindung.",
+      "future-month": "Einen Monat kannst du erst abrechnen, wenn er begonnen hat.",
+      "already-sent": "Für diesen Monat hast du bereits eine Rechnung gesendet.",
+      "no-entries": "In diesem Monat gibt es keine offenen Einsätze.",
+      "duplicate-number": "Diese Rechnungsnummer hast du schon verwendet. Bitte passe in deinen Rechnungsangaben die Rechnungsnummer an, z. B. mit {n}.",
+      "concurrent-send": "Gerade wurde schon eine Rechnung gesendet. Bitte versuche es nochmals.",
+      "invalid-entry": "Ein Einsatz in diesem Monat ist unvollständig. Bitte prüfe deine Einsätze.",
+      "qr-iban-only": "Mit dieser Bankverbindung geht der QR-Zahlteil nicht. Bitte wähle eine andere Bankverbindung oder schalte den QR-Zahlteil aus.",
+      "no-rate": "Für einen Einsatz gibt es an diesem Datum keinen Ansatz. Bitte wende dich an die Kassierin oder den Kassier.",
+      "no-vat-code": "Für eine Leistungsart fehlt die Mehrwertsteuer. Bitte wende dich an die Kassierin oder den Kassier.",
+      "no-account": "Für eine Leistungsart fehlt das Konto. Bitte wende dich an die Kassierin oder den Kassier.",
+      "not-sent": "Diese Rechnung ist nicht mehr offen.",
+      "bill-booked": "Diese Rechnung ist schon verbucht und kann nicht mehr zurückgewiesen werden.",
+      "invalid-reason": "Bitte gib einen Grund an.",
+      "native-books": "In dieser Buchhaltung folgt der Status dem Kreditor.",
+      "unknown": "Das hat leider nicht geklappt. Bitte versuche es später nochmals."
+    }
+  },
+  "validation": {
+    "personRequired": "Bitte wähle eine Person.",
+    "validToBeforeFrom": "Das Ende liegt vor dem Beginn.",
+    "agreementOverlap": "Für diese Person gibt es in dieser Buchhaltung schon eine Vereinbarung in diesem Zeitraum.",
+    "serviceRequired": "Bitte erfasse mindestens eine Leistungsart.",
+    "tooManyServices": "Eine Vereinbarung hat höchstens 10 Leistungsarten.",
+    "serviceKeyRequired": "Bitte gib der Leistungsart einen Namen.",
+    "serviceKeyDuplicate": "Zwei Leistungsarten dürfen nicht gleich heissen.",
+    "unitInvalid": "Bitte wähle eine Einheit.",
+    "rateRequired": "Bitte erfasse mindestens einen Ansatz.",
+    "rateDateInvalid": "Jeder Ansatz braucht ein Datum.",
+    "rateAmountInvalid": "Jeder Ansatz muss grösser als 0 sein.",
+    "rateDateDuplicate": "Zwei Ansätze dürfen nicht am selben Tag beginnen.",
+    "accountRequired": "Bitte wähle ein Konto. Die Buchhaltung hat kein Vorgabekonto.",
+    "templateNeedsVariable": "Die Rechnungsnummer braucht {mm} oder {n}, sonst wiederholt sie sich.",
+    "paymentTermInvalid": "Bitte gib eine Zahl zwischen 0 und 120 ein.",
+    "serviceUnavailable": "Diese Leistungsart kannst du nicht mehr wählen.",
+    "quantityPositive": "Bitte gib eine Menge grösser als 0 ein.",
+    "quantityMaxHours": "Ein Einsatz hat höchstens 24 Stunden.",
+    "quantityMaxDay": "Ein Einsatz hat höchstens einen Tag.",
+    "quantityStepHours": "Bitte gib die Stunden in Viertelstunden ein, z. B. 1.25.",
+    "quantityStepDay": "Bitte gib einen ganzen oder einen halben Tag ein."
+  }
+}

@@ -477,6 +477,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/finance/trainer-billing/util/src/i18n",
+            "output": "./assets/i18n/finance/trainer-billing/util"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/finance/vat-code/data-access/src/i18n",
             "output": "./assets/i18n/finance/vat-code/data-access"
           },

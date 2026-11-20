@@ -158,9 +158,71 @@
       "density": "SPARSE_ALL"
     },
     {
+      "collectionGroup": "trainer-agreements",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "accountingTenantId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "validFrom",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "trainer-agreements",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "personKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "validFrom",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
       "collectionGroup": "trainer-invoices",
       "queryScope": "COLLECTION",
       "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
         {
           "fieldPath": "personKey",
           "order": "ASCENDING"
@@ -180,6 +242,14 @@
       "collectionGroup": "trainer-invoices",
       "queryScope": "COLLECTION",
       "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
         {
           "fieldPath": "accountingTenantId",
           "order": "ASCENDING"
@@ -200,6 +270,14 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "personKey",
           "order": "ASCENDING"
         },
@@ -219,11 +297,19 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "agreementKey",
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "isArchived",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "state",
+          "fieldPath": "personKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "calEventKey",
           "order": "ASCENDING"
         },
         {

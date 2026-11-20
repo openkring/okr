@@ -380,3 +380,76 @@ export function buildTrainerInvoicePayload(p: {
   }
   return payload;
 }
+
+/* ---------------------------------------------------------------- client write payloads (§6, firestore.rules) */
+
+/** Search index of an agreement: the trainer's name and the service names (the privacy erasure clears it). */
+export function trainerAgreementIndex(a: Pick<TrainerAgreementModel, 'person' | 'services'>): string {
+  const name = `${a.person?.name1 ?? ''} ${a.person?.name2 ?? ''}`.trim();
+  const services = (a.services ?? []).map((s) => s.name ?? '').filter((n) => !!n).join(',');
+  return `n:${name} s:${services}`;
+}
+
+/** An agreement as it is written: `personKey` mirrors `person.key`, the index is rebuilt, rates ascending by date. */
+export function trainerAgreementPayload(a: TrainerAgreementModel): TrainerAgreementModel {
+  const services = (a.services ?? []).map((s) => ({ ...s, rates: [...(s.rates ?? [])].sort((x, y) => x.validFrom.localeCompare(y.validFrom)) }));
+  return { ...a, personKey: a.person?.key ?? a.personKey ?? '', services, index: trainerAgreementIndex({ person: a.person, services }) };
+}
+
+/** The profile fields the trainer may change; `tenants` and `nextNumber` belong to the server (the rules deny any change). */
+export const TRAINER_PROFILE_EDITABLE_FIELDS = [
+  'companyName', 'contactName', 'postalAddressKey', 'bankAddressKey', 'logoUrl', 'vatRegistered', 'vatNumber', 'vatNote',
+  'numberTemplate', 'paymentTermDays', 'closingText', 'showQrSlip',
+] as const;
+export type TrainerProfileEditableField = (typeof TRAINER_PROFILE_EDITABLE_FIELDS)[number];
+
+/** The update patch of a profile: only the editable fields, never `nextNumber` or `tenants`. */
+export function trainerProfileUpdateFields(p: TrainerProfileModel): Pick<TrainerProfileModel, TrainerProfileEditableField> {
+  const defaults = new TrainerProfileModel('');
+  const fields = {} as Record<TrainerProfileEditableField, unknown>;
+  for (const field of TRAINER_PROFILE_EDITABLE_FIELDS) fields[field] = p[field] ?? defaults[field];
+  return fields as Pick<TrainerProfileModel, TrainerProfileEditableField>;
+}
+
+/** A new profile: the editable fields plus `tenants: []` and `nextNumber: 1` — the only values the create rule accepts. */
+export function trainerProfileCreatePayload(p: TrainerProfileModel): Omit<TrainerProfileModel, 'okey'> {
+  return { ...trainerProfileUpdateFields(p), tenants: [], nextNumber: 1, isArchived: false };
+}
+
+/** The keys a work-entry write may carry (the rules' key allowlist). */
+export const WORK_ENTRY_WRITE_FIELDS = [
+  'tenants', 'accountingTenantId', 'personKey', 'agreementKey', 'date', 'calEventKey', 'label', 'serviceKey', 'quantity', 'state',
+  'invoiceKey', 'isArchived',
+] as const;
+
+/** The fields of a stored entry the trainer may change; agreement, tenants, books, state and invoice stay. */
+export const WORK_ENTRY_EDITABLE_FIELDS = ['date', 'calEventKey', 'label', 'serviceKey', 'quantity'] as const;
+
+/**
+ * A new work entry as it is written: exactly the twelve allowed keys, tenants and books copied from the agreement,
+ * open and not invoiced.
+ */
+export function workEntryCreatePayload(
+  e: Pick<WorkEntryModel, 'date' | 'calEventKey' | 'label' | 'serviceKey' | 'quantity'>,
+  agreement: Pick<TrainerAgreementModel, 'okey' | 'tenants' | 'accountingTenantId' | 'personKey'>,
+): Omit<WorkEntryModel, 'okey'> {
+  return {
+    tenants: [...(agreement.tenants ?? [])],
+    accountingTenantId: agreement.accountingTenantId ?? '',
+    personKey: agreement.personKey ?? '',
+    agreementKey: agreement.okey,
+    date: e.date ?? '',
+    calEventKey: e.calEventKey ?? '',
+    label: e.label ?? '',
+    serviceKey: e.serviceKey ?? '',
+    quantity: e.quantity ?? 0,
+    state: 'open',
+    invoiceKey: '',
+    isArchived: false,
+  };
+}
+
+/** The update patch of an open entry: only the editable fields. */
+export function workEntryUpdateFields(e: WorkEntryModel): Pick<WorkEntryModel, (typeof WORK_ENTRY_EDITABLE_FIELDS)[number]> {
+  return { date: e.date ?? '', calEventKey: e.calEventKey ?? '', label: e.label ?? '', serviceKey: e.serviceKey ?? '', quantity: e.quantity ?? 0 };
+}

@@ -1,0 +1,165 @@
+import type { Signal } from '@angular/core';
+
+const PFX = '@finance/trainer-billing/util.';
+
+/** Translation keys of the Trainer-Abrechnung (spec 1.167); the scope is this lib (`src/i18n/*.json`). */
+export const TRAINER_BILLING_I18N_KEYS = {
+  // edit modals
+  agreement_edit_create: PFX + 'agreement.edit.create',
+  agreement_edit_update: PFX + 'agreement.edit.update',
+  agreement_edit_view:   PFX + 'agreement.edit.view',
+  profile_edit_title:    PFX + 'profile.edit.title',
+  entry_edit_create:     PFX + 'entry.edit.create',
+  entry_edit_update:     PFX + 'entry.edit.update',
+  entry_edit_view:       PFX + 'entry.edit.view',
+  changeConfirmation_cancel: PFX + 'changeConfirmation.cancel',
+  changeConfirmation_ok:     PFX + 'changeConfirmation.ok',
+
+  // agreement form (§7.1)
+  agreement_person_label:       PFX + 'agreement.person.label',
+  agreement_person_choose:      PFX + 'agreement.person.choose',
+  agreement_validFrom_label:    PFX + 'agreement.validFrom.label',
+  agreement_validTo_label:      PFX + 'agreement.validTo.label',
+  agreement_validTo_helper:     PFX + 'agreement.validTo.helper',
+  agreement_selfEmployed_label:  PFX + 'agreement.selfEmployed.label',
+  agreement_selfEmployed_helper: PFX + 'agreement.selfEmployed.helper',
+  agreement_payablesNote_label:       PFX + 'agreement.payablesNote.label',
+  agreement_payablesNote_placeholder: PFX + 'agreement.payablesNote.placeholder',
+  agreement_services_title:  PFX + 'agreement.services.title',
+  agreement_services_intro:  PFX + 'agreement.services.intro',
+  agreement_services_max:    PFX + 'agreement.services.max',
+  agreement_service_add:     PFX + 'agreement.service.add',
+  agreement_service_remove:  PFX + 'agreement.service.remove',
+  agreement_notes_label:       PFX + 'agreement.notes.label',
+  agreement_notes_placeholder: PFX + 'agreement.notes.placeholder',
+
+  service_name_label:        PFX + 'service.name.label',
+  service_name_placeholder:  PFX + 'service.name.placeholder',
+  service_name_helper:       PFX + 'service.name.helper',
+  service_unit_label:        PFX + 'service.unit.label',
+  service_unit_hour:         PFX + 'service.unit.hour',
+  service_unit_day:          PFX + 'service.unit.day',
+  service_account_label:     PFX + 'service.account.label',
+  service_account_helper:    PFX + 'service.account.helper',
+  service_costCenter_label:  PFX + 'service.costCenter.label',
+  service_costCenter_helper: PFX + 'service.costCenter.helper',
+  service_vatCode_label:     PFX + 'service.vatCode.label',
+  service_vatCode_helper:    PFX + 'service.vatCode.helper',
+  service_vatCode_none:      PFX + 'service.vatCode.none',
+  service_archived_label:    PFX + 'service.archived.label',
+  service_archived_helper:   PFX + 'service.archived.helper',
+  service_rates_title:       PFX + 'service.rates.title',
+  service_rates_helper:      PFX + 'service.rates.helper',
+  rate_validFrom_label:      PFX + 'rate.validFrom.label',
+  rate_amount_label:         PFX + 'rate.amount.label',
+  rate_from:                 PFX + 'rate.from',
+  rate_add:                  PFX + 'rate.add',
+  rate_remove:               PFX + 'rate.remove',
+
+  // profile form (§7.2)
+  profile_companyName_label:       PFX + 'profile.companyName.label',
+  profile_companyName_placeholder: PFX + 'profile.companyName.placeholder',
+  profile_companyName_helper:      PFX + 'profile.companyName.helper',
+  profile_contactName_label:       PFX + 'profile.contactName.label',
+  profile_contactName_placeholder: PFX + 'profile.contactName.placeholder',
+  profile_contactName_helper:      PFX + 'profile.contactName.helper',
+  profile_postal_label:   PFX + 'profile.postal.label',
+  profile_postal_helper:  PFX + 'profile.postal.helper',
+  profile_postal_none:    PFX + 'profile.postal.none',
+  profile_bank_label:     PFX + 'profile.bank.label',
+  profile_bank_helper:    PFX + 'profile.bank.helper',
+  profile_bank_none:      PFX + 'profile.bank.none',
+  profile_address_add:    PFX + 'profile.address.add',
+  profile_logo_label:       PFX + 'profile.logo.label',
+  profile_logo_helper:      PFX + 'profile.logo.helper',
+  profile_logo_upload:      PFX + 'profile.logo.upload',
+  profile_logo_remove:      PFX + 'profile.logo.remove',
+  profile_logo_uploadTitle: PFX + 'profile.logo.uploadTitle',
+  profile_vatRegistered_label:  PFX + 'profile.vatRegistered.label',
+  profile_vatRegistered_helper: PFX + 'profile.vatRegistered.helper',
+  profile_vatNumber_label:       PFX + 'profile.vatNumber.label',
+  profile_vatNumber_placeholder: PFX + 'profile.vatNumber.placeholder',
+  profile_vatNote_label:       PFX + 'profile.vatNote.label',
+  profile_vatNote_placeholder: PFX + 'profile.vatNote.placeholder',
+  profile_numberTemplate_label:       PFX + 'profile.numberTemplate.label',
+  profile_numberTemplate_placeholder: PFX + 'profile.numberTemplate.placeholder',
+  profile_numberTemplate_helper:      PFX + 'profile.numberTemplate.helper',
+  profile_numberTemplate_example:     PFX + 'profile.numberTemplate.example',
+  profile_paymentTerm_label:       PFX + 'profile.paymentTerm.label',
+  profile_paymentTerm_placeholder: PFX + 'profile.paymentTerm.placeholder',
+  profile_paymentTerm_helper:      PFX + 'profile.paymentTerm.helper',
+  profile_closingText_label:       PFX + 'profile.closingText.label',
+  profile_closingText_placeholder: PFX + 'profile.closingText.placeholder',
+  profile_showQrSlip_label:  PFX + 'profile.showQrSlip.label',
+  profile_showQrSlip_helper: PFX + 'profile.showQrSlip.helper',
+
+  // work entry form (§7.3)
+  entry_agreement_label:   PFX + 'entry.agreement.label',
+  entry_date_label:        PFX + 'entry.date.label',
+  entry_date_helper:       PFX + 'entry.date.helper',
+  entry_service_label:     PFX + 'entry.service.label',
+  entry_service_helper:    PFX + 'entry.service.helper',
+  entry_quantity_hours_label:  PFX + 'entry.quantity.hours.label',
+  entry_quantity_hours_helper: PFX + 'entry.quantity.hours.helper',
+  entry_quantity_days_label:   PFX + 'entry.quantity.days.label',
+  entry_quantity_days_helper:  PFX + 'entry.quantity.days.helper',
+  entry_label_label:       PFX + 'entry.label.label',
+  entry_label_placeholder: PFX + 'entry.label.placeholder',
+  entry_label_helper:      PFX + 'entry.label.helper',
+
+  // service toasts
+  agreement_save_conf:  PFX + 'agreement.save.conf',
+  agreement_save_error: PFX + 'agreement.save.error',
+  profile_save_conf:    PFX + 'profile.save.conf',
+  profile_save_error:   PFX + 'profile.save.error',
+  entry_save_conf:      PFX + 'entry.save.conf',
+  entry_save_error:     PFX + 'entry.save.error',
+  entry_delete_conf:    PFX + 'entry.delete.conf',
+  entry_delete_error:   PFX + 'entry.delete.error',
+
+  // refusals of the callables (`details.reason`), see trainerBillingRefusalKey
+  send_refusal_not_owner:          PFX + 'send.refusal.not-owner',
+  send_refusal_books_mismatch:     PFX + 'send.refusal.books-mismatch',
+  send_refusal_agreement_inactive: PFX + 'send.refusal.agreement-inactive',
+  send_refusal_profile_incomplete: PFX + 'send.refusal.profile-incomplete',
+  send_refusal_no_postal:          PFX + 'send.refusal.no-postal',
+  send_refusal_no_iban:            PFX + 'send.refusal.no-iban',
+  send_refusal_future_month:       PFX + 'send.refusal.future-month',
+  send_refusal_already_sent:       PFX + 'send.refusal.already-sent',
+  send_refusal_no_entries:         PFX + 'send.refusal.no-entries',
+  send_refusal_duplicate_number:   PFX + 'send.refusal.duplicate-number',
+  send_refusal_concurrent_send:    PFX + 'send.refusal.concurrent-send',
+  send_refusal_invalid_entry:      PFX + 'send.refusal.invalid-entry',
+  send_refusal_qr_iban_only:       PFX + 'send.refusal.qr-iban-only',
+  send_refusal_no_rate:            PFX + 'send.refusal.no-rate',
+  send_refusal_no_vat_code:        PFX + 'send.refusal.no-vat-code',
+  send_refusal_no_account:         PFX + 'send.refusal.no-account',
+  send_refusal_not_sent:           PFX + 'send.refusal.not-sent',
+  send_refusal_bill_booked:        PFX + 'send.refusal.bill-booked',
+  send_refusal_invalid_reason:     PFX + 'send.refusal.invalid-reason',
+  send_refusal_native_books:       PFX + 'send.refusal.native-books',
+  send_refusal_unknown:            PFX + 'send.refusal.unknown',
+} satisfies Record<string, string>;
+
+export type TrainerBillingI18nKey = keyof typeof TRAINER_BILLING_I18N_KEYS;
+export type TrainerBillingI18n = { [K in TrainerBillingI18nKey]: Signal<string> };
+
+/** The refusal reasons the trainer-billing callables send in `HttpsError.details.reason`. */
+export const TRAINER_BILLING_REFUSALS = [
+  'not-owner', 'books-mismatch', 'agreement-inactive', 'profile-incomplete', 'no-postal', 'no-iban', 'future-month',
+  'already-sent', 'no-entries', 'duplicate-number', 'concurrent-send', 'invalid-entry', 'qr-iban-only', 'no-rate',
+  'no-vat-code', 'no-account', 'not-sent', 'bill-booked', 'invalid-reason', 'native-books',
+] as const;
+export type TrainerBillingRefusal = (typeof TRAINER_BILLING_REFUSALS)[number];
+
+/** The `details.reason` of a callable error, or '' when the error carries none we know. */
+export function trainerBillingRefusal(error: unknown): TrainerBillingRefusal | '' {
+  const reason = (error as { details?: { reason?: unknown } } | undefined)?.details?.reason;
+  return (TRAINER_BILLING_REFUSALS as readonly unknown[]).includes(reason) ? (reason as TrainerBillingRefusal) : '';
+}
+
+/** The i18n key (of {@link TRAINER_BILLING_I18N_KEYS}) that explains a callable error to the user; unknown → a generic one. */
+export function trainerBillingRefusalKey(error: unknown): TrainerBillingI18nKey {
+  const reason = trainerBillingRefusal(error);
+  return reason ? (`send_refusal_${reason.split('-').join('_')}` as TrainerBillingI18nKey) : 'send_refusal_unknown';
+}

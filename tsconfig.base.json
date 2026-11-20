@@ -97,6 +97,8 @@
       "@okr/finance-cost-center-feature": ["libs/finance/cost-center/feature/src/index.ts"],
       "@okr/finance-cost-center-ui": ["libs/finance/cost-center/ui/src/index.ts"],
       "@okr/finance-cost-center-util": ["libs/finance/cost-center/util/src/index.ts"],
+      "@okr/finance-trainer-billing-data-access": ["libs/finance/trainer-billing/data-access/src/index.ts"],
+      "@okr/finance-trainer-billing-ui": ["libs/finance/trainer-billing/ui/src/index.ts"],
       "@okr/finance-trainer-billing-util": ["libs/finance/trainer-billing/util/src/index.ts"],
       "@okr/finance-budget-data-access": ["libs/finance/budget/data-access/src/index.ts"],
       "@okr/finance-budget-feature": ["libs/finance/budget/feature/src/index.ts"],

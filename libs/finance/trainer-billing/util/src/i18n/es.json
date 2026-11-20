@@ -1,0 +1,138 @@
+{
+  "agreement": {
+    "edit": { "create": "Nuevo acuerdo", "update": "Editar acuerdo", "view": "Acuerdo" },
+    "person": { "label": "Entrenadora o entrenador", "choose": "Elegir una persona" },
+    "validFrom": { "label": "Válido desde" },
+    "validTo": { "label": "Válido hasta", "helper": "Déjalo vacío si el acuerdo no tiene fin." },
+    "selfEmployed": {
+      "label": "Actividad autónoma confirmada",
+      "helper": "Solo con esta marca la persona puede registrar y facturar sus intervenciones."
+    },
+    "payablesNote": { "label": "Nota para la entrenadora o el entrenador", "placeholder": "p. ej. cuándo se realizan los pagos" },
+    "services": {
+      "title": "Servicios",
+      "intro": "Para cada servicio fijas la unidad, la tarifa y la cuenta. Una tarifa nueva vale desde su fecha, las tarifas anteriores se conservan.",
+      "max": "Un acuerdo tiene como máximo 10 servicios."
+    },
+    "service": { "add": "Añadir servicio", "remove": "Quitar servicio" },
+    "notes": { "label": "Notas", "placeholder": "Notas internas" },
+    "save": { "conf": "El acuerdo está guardado.", "error": "No se pudo guardar el acuerdo." }
+  },
+  "service": {
+    "name": { "label": "Servicio", "placeholder": "p. ej. Entrenamiento", "helper": "Así aparece el servicio en la factura." },
+    "unit": { "label": "Unidad", "hour": "Horas", "day": "Días" },
+    "account": { "label": "Cuenta de gastos", "helper": "Déjalo vacío para usar la cuenta predeterminada de la contabilidad." },
+    "costCenter": { "label": "Centro de costes", "helper": "Déjalo vacío para usar el valor predeterminado de la cuenta." },
+    "vatCode": { "label": "IVA", "helper": "Solo es necesario si la persona está sujeta al IVA.", "none": "ninguno" },
+    "archived": { "label": "Ya no seleccionable", "helper": "Las intervenciones existentes siguen siendo válidas." },
+    "rates": { "title": "Tarifas", "helper": "Las tarifas guardadas no cambian. Para un cambio registras una tarifa nueva desde una fecha." }
+  },
+  "rate": {
+    "validFrom": { "label": "Válida desde" },
+    "amount": { "label": "Tarifa en CHF" },
+    "from": "desde el {date}",
+    "add": "Nueva tarifa",
+    "remove": "Quitar tarifa"
+  },
+  "profile": {
+    "edit": { "title": "Datos de facturación" },
+    "companyName": { "label": "Empresa", "placeholder": "p. ej. Jucker Sport", "helper": "Déjalo vacío para usar tu nombre." },
+    "contactName": { "label": "Nuestra referencia", "placeholder": "p. ej. Anna Jucker", "helper": "Déjalo vacío para usar tu nombre." },
+    "postal": {
+      "label": "Dirección postal",
+      "helper": "Aparece en el encabezado de tu factura.",
+      "none": "Aún no has registrado una dirección postal."
+    },
+    "bank": {
+      "label": "Cuenta bancaria",
+      "helper": "El club transfiere el importe a esta cuenta.",
+      "none": "Aún no has registrado una cuenta bancaria. Sin ella no puedes enviar una factura."
+    },
+    "address": { "add": "Registrar direcciones en tu perfil" },
+    "logo": {
+      "label": "Logotipo",
+      "helper": "Aparece arriba en tu factura.",
+      "upload": "Subir logotipo",
+      "remove": "Quitar logotipo",
+      "uploadTitle": "Subiendo el logotipo"
+    },
+    "vatRegistered": { "label": "Sujeto al IVA", "helper": "La factura muestra entonces el IVA." },
+    "vatNumber": { "label": "Número de IVA", "placeholder": "CHE-123.456.789 MWST" },
+    "vatNote": {
+      "label": "Nota sobre el IVA",
+      "placeholder": "Importe neto, no sujeto al IVA."
+    },
+    "numberTemplate": {
+      "label": "Número de factura",
+      "placeholder": "{yy}{mm}",
+      "helper": "Marcadores: {yyyy} o {yy} para el año, {mm} para el mes, {n} para un número correlativo. Debe contener {mm} o {n}.",
+      "example": "Ejemplo: {example}"
+    },
+    "paymentTerm": { "label": "Plazo de pago en días", "placeholder": "30", "helper": "Entre 0 y 120 días." },
+    "closingText": { "label": "Texto final", "placeholder": "Muchas gracias por tu encargo." },
+    "showQrSlip": { "label": "Adjuntar la sección de pago QR", "helper": "Así el club puede pagar la factura directamente por banca electrónica." },
+    "save": { "conf": "Tus datos de facturación están guardados.", "error": "No se pudieron guardar tus datos de facturación." }
+  },
+  "entry": {
+    "edit": { "create": "Registrar intervención", "update": "Editar intervención", "view": "Intervención" },
+    "agreement": { "label": "Club" },
+    "date": { "label": "Fecha", "helper": "Una intervención vale para un día." },
+    "service": { "label": "Servicio", "helper": "Los servicios provienen de tu acuerdo." },
+    "quantity": {
+      "hours": { "label": "Horas", "helper": "En cuartos de hora, p. ej. 1.5 o 1.75." },
+      "days": { "label": "Días", "helper": "Un día entero o medio día." }
+    },
+    "label": { "label": "Texto en la factura", "placeholder": "p. ej. lugar u ocasión", "helper": "Aparece junto al servicio en la factura." },
+    "save": { "conf": "La intervención está guardada.", "error": "No se pudo guardar la intervención." },
+    "delete": { "conf": "La intervención está eliminada.", "error": "No se pudo eliminar la intervención." }
+  },
+  "changeConfirmation": { "cancel": "Cancelar", "ok": "Guardar" },
+  "send": {
+    "refusal": {
+      "not-owner": "Esta liquidación no es tuya.",
+      "books-mismatch": "Este acuerdo pertenece a una contabilidad que este club no lleva.",
+      "agreement-inactive": "Tu acuerdo no está activo en este mes. Dirígete a la tesorera o al tesorero.",
+      "profile-incomplete": "Primero completa tus datos de facturación.",
+      "no-postal": "Elige una dirección postal en tus datos de facturación.",
+      "no-iban": "Elige una cuenta bancaria en tus datos de facturación.",
+      "future-month": "Solo puedes facturar un mes cuando ya ha empezado.",
+      "already-sent": "Ya has enviado una factura para este mes.",
+      "no-entries": "En este mes no hay intervenciones abiertas.",
+      "duplicate-number": "Ya has usado este número de factura. Ajusta el número de factura en tus datos de facturación, p. ej. con {n}.",
+      "concurrent-send": "Se acaba de enviar una factura. Inténtalo de nuevo.",
+      "invalid-entry": "Una intervención de este mes está incompleta. Revisa tus intervenciones.",
+      "qr-iban-only": "Con esta cuenta bancaria la sección de pago QR no funciona. Elige otra cuenta o desactiva la sección de pago QR.",
+      "no-rate": "No hay tarifa en la fecha de una intervención. Dirígete a la tesorera o al tesorero.",
+      "no-vat-code": "Falta el IVA de un servicio. Dirígete a la tesorera o al tesorero.",
+      "no-account": "Falta la cuenta de un servicio. Dirígete a la tesorera o al tesorero.",
+      "not-sent": "Esta factura ya no está abierta.",
+      "bill-booked": "Esta factura ya está contabilizada y ya no se puede rechazar.",
+      "invalid-reason": "Indica un motivo.",
+      "native-books": "En esta contabilidad el estado sigue al acreedor.",
+      "unknown": "Lamentablemente no ha funcionado. Inténtalo más tarde."
+    }
+  },
+  "validation": {
+    "personRequired": "Elige una persona.",
+    "validToBeforeFrom": "El fin es anterior al inicio.",
+    "agreementOverlap": "Esta persona ya tiene un acuerdo en esta contabilidad para este periodo.",
+    "serviceRequired": "Registra al menos un servicio.",
+    "tooManyServices": "Un acuerdo tiene como máximo 10 servicios.",
+    "serviceKeyRequired": "Ponle un nombre al servicio.",
+    "serviceKeyDuplicate": "Dos servicios no pueden tener el mismo nombre.",
+    "unitInvalid": "Elige una unidad.",
+    "rateRequired": "Registra al menos una tarifa.",
+    "rateDateInvalid": "Cada tarifa necesita una fecha.",
+    "rateAmountInvalid": "Cada tarifa debe ser mayor que 0.",
+    "rateDateDuplicate": "Dos tarifas no pueden empezar el mismo día.",
+    "accountRequired": "Elige una cuenta. La contabilidad no tiene cuenta predeterminada.",
+    "templateNeedsVariable": "El número de factura necesita {mm} o {n}, si no se repite.",
+    "paymentTermInvalid": "Introduce un número entre 0 y 120.",
+    "serviceUnavailable": "Ya no puedes elegir este servicio.",
+    "quantityPositive": "Introduce una cantidad mayor que 0.",
+    "quantityMaxHours": "Una intervención tiene como máximo 24 horas.",
+    "quantityMaxDay": "Una intervención tiene como máximo un día.",
+    "quantityStepHours": "Introduce las horas en cuartos de hora, p. ej. 1.25.",
+    "quantityStepDay": "Introduce un día entero o medio día."
+  }
+}
