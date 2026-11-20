@@ -11,7 +11,8 @@
  *   untouched (an accordion renders its items' text).
  * - Sets the page's section list to [s01, accordion, s13, s14] — only while it still is the imported s01…s14
  *   list; an edited page is reported and left alone.
- * - Repairs the address block s13 (the import lost the line breaks between street, place and e-mail).
+ * - Repairs the address block s13 (the import lost the line breaks between street, place and e-mail) and sets it
+ *   in two columns: address | Postkonto.
  */
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
@@ -27,9 +28,12 @@ const IMPORTED = Array.from({ length: 14 }, (_, i) => sid(i + 1));
 const ITEMS = Array.from({ length: 11 }, (_, i) => sid(i + 2));
 const NEW_SECTIONS = [sid(1), ACCORDION, sid(13), sid(14)];
 
-const ADDRESS_HTML = '<p><strong>Verein Lokale Agenda 21<br>Rütihofstrasse 23<br>8712 Stäfa</strong><br>'
-  + '<a href="mailto:info@la21staefa.ch">info@la21staefa.ch</a></p>'
-  + '<p><strong>Postkonto:</strong><br>IBAN:  CH06 0900 0000 8763 3140 6<br>Verein Lokale Agenda 21 Stäfa</p>';
+// two columns from 640px (address | Postkonto), stacked below; the classes are in the site's tailwind.css
+const ADDRESS_HTML = '<div class="grid sm:grid-cols-2 gap-8">'
+  + '<div><p><strong>Verein Lokale Agenda 21<br>Rütihofstrasse 23<br>8712 Stäfa</strong><br>'
+  + '<a href="mailto:info@la21staefa.ch">info@la21staefa.ch</a></p></div>'
+  + '<div><p><strong>Postkonto:</strong><br>IBAN:  CH06 0900 0000 8763 3140 6<br>Verein Lokale Agenda 21 Stäfa</p></div>'
+  + '</div>';
 
 export function accordionSection(items) {
   return {
