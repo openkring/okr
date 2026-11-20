@@ -1,4 +1,4 @@
-import { Component, computed, effect, ElementRef, inject, input, signal, viewChild, viewChildren } from '@angular/core';
+import { Component, computed, DestroyRef, effect, ElementRef, inject, input, signal, viewChild, viewChildren } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Meta } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
@@ -8,13 +8,13 @@ import { DEFAULT_ACCEPT_ATTRIBUTE } from '@okr/shared-constants';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, error, getColSizes } from '@okr/shared-util-angular';
 import { hasRole, contextMenuId } from '@okr/shared-util-core';
-import { fragmentScrollTop } from '@okr/cms-page-util';
 import { parseSectionWidths } from '@okr/cms-section-util';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { SectionDispatcher, SectionStore } from '@okr/cms-section-feature';
 
 import { PageStore } from './page.store';
+import { scrollToFragment } from './fragment-scroll';
 
 @Component({
   selector: 'okr-content-page',
@@ -240,6 +240,8 @@ export class ContentPage {
   private printRoot = viewChild('printRoot', { read: ElementRef });
   private sectionDispatchers = viewChildren(SectionDispatcher);
   private routeFragment = toSignal(this.route.fragment);
+  private scrolledFragment = '';
+  private cancelFragmentScroll?: () => void;
 
   // inputs
   public contextMenuName = input<string>();
@@ -350,20 +352,15 @@ export class ContentPage {
         this.meta.addTags(meta);
       }
     });
+    // Jump to the section named in the url fragment, once per fragment (see BlogPage).
     effect(() => {
       const fragment = this.routeFragment();
-      const sections = this.visibleSections();
-      if (!fragment || sections.length === 0) return;
-      setTimeout(async () => {
-        // Scoped to this page: ion-router-outlet keeps hidden previous pages in the DOM.
-        const el = this.host.nativeElement.querySelector<HTMLElement>(`#${CSS.escape(fragment)}`);
-        const content = this.ionContent();
-        if (!el || !content) return;
-        const scrollEl = await content.getScrollElement();
-        const top = fragmentScrollTop(el.getBoundingClientRect().top, scrollEl.getBoundingClientRect().top, scrollEl.scrollTop);
-        content.scrollToPoint(0, top, 400);
-      }, 100);
+      if (!fragment || this.visibleSections().length === 0 || fragment === this.scrolledFragment) return;
+      this.scrolledFragment = fragment;
+      this.cancelFragmentScroll?.();
+      this.cancelFragmentScroll = scrollToFragment(this.host.nativeElement, () => this.ionContent(), fragment);
     });
+    inject(DestroyRef).onDestroy(() => this.cancelFragmentScroll?.());
   }
 
   /******************************* actions *************************************** */

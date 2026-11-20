@@ -1,4 +1,4 @@
-import { Component, computed, effect, ElementRef, inject, input, signal, viewChild } from '@angular/core';
+import { Component, computed, DestroyRef, effect, ElementRef, inject, input, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Meta } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
@@ -9,12 +9,12 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { TranslatePipe } from '@okr/shared-i18n';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
 import { hasRole, replaceSubstring, contextMenuId } from '@okr/shared-util-core';
-import { fragmentScrollTop } from '@okr/cms-page-util';
 
 import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { SectionStore } from '@okr/cms-section-feature';
 
 import { PageStore } from './page.store';
+import { scrollToFragment } from './fragment-scroll';
 import { BlogMinimal } from './blog-minimal';
 import { BlogGrid } from './blog-grid';
 import { BlogClassic } from './blog-classic';
@@ -157,6 +157,8 @@ export class BlogPage {
   private ionContent = viewChild(IonContent);
   private printRoot = viewChild('printRoot', { read: ElementRef });
   private routeFragment = toSignal(this.route.fragment);
+  private scrolledFragment = '';
+  private cancelFragmentScroll?: () => void;
 
   public contextMenuName = input<string>();
   public color = input('secondary');
@@ -186,25 +188,22 @@ export class BlogPage {
       const meta = this.store.meta();
       if (meta) this.meta.addTags(meta);
     });
+    // Jump to the article named in the url fragment (dashboard news → «#<articleKey>»), once per
+    // fragment: a live update of the sections must not yank the reader back afterwards.
     effect(() => {
       const fragment = this.routeFragment();
-      const sections = this.sections();
-      if (!fragment || sections.length === 0) return;
-      setTimeout(async () => {
-        // Look up inside THIS page only: ion-router-outlet keeps the previous (hidden) pages in
-        // the DOM, and a global getElementById would match a same-keyed section there first.
-        const pageEl = this.host.nativeElement;
-        const el = pageEl.querySelector<HTMLElement>(`#${CSS.escape(fragment)}`);
-        const content = this.ionContent();
-        if (!el || !content) return;
-        const scrollEl = await content.getScrollElement();
-        const filterBar = pageEl.querySelector<HTMLElement>('.filter-bar');
-        const stickyOffset = filterBar ? filterBar.offsetHeight + 70 : 0;
-        const top = fragmentScrollTop(
-          el.getBoundingClientRect().top, scrollEl.getBoundingClientRect().top, scrollEl.scrollTop, stickyOffset);
-        content.scrollToPoint(0, top, 400);
-      }, 100);
+      if (!fragment || this.sections().length === 0 || fragment === this.scrolledFragment) return;
+      this.scrolledFragment = fragment;
+      this.cancelFragmentScroll?.();
+      const host = this.host.nativeElement;
+      this.cancelFragmentScroll = scrollToFragment(host, () => this.ionContent(), fragment, {
+        stickyOffset: () => {
+          const filterBar = host.querySelector<HTMLElement>('.filter-bar');
+          return filterBar ? filterBar.offsetHeight + 70 : 0;
+        }
+      });
     });
+    inject(DestroyRef).onDestroy(() => this.cancelFragmentScroll?.());
   }
 
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
