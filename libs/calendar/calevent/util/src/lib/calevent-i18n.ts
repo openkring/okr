@@ -223,6 +223,11 @@ export const CALEVENT_I18N_KEYS = {
   // the periodicity of a poll-born series is locked — its dates are irregular
   poll_series_helper:         PFX + 'pollSeries.helper',
 
+  // «Einsatz erfassen» of a trainer (spec 1.167 §7.3)
+  work_record:                PFX + 'work.record',
+  work_edit:                  PFX + 'work.edit',
+  work_error:                 PFX + 'work.error',
+
   // tabular attendance view of a whole calevent series (subscribe/unsubscribe per occurrence)
   series_view:                PFX + 'series.view',
   series_title:               PFX + 'series.title',

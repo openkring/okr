@@ -24,7 +24,7 @@ import { OrganiserContactModal, showCalendarSync } from '@okr/calendar-calevent-
 import { CalendarFeedService } from '@okr/calendar-calevent-data-access';
 import type { OrganiserContactAction, OrganiserContactResult } from '@okr/calendar-calevent-ui';
 import { browseUrl } from '@okr/subject-address-util';
-import { CalEventStore } from './calevent.store';
+import { CalEventStore, RecordWorkContext } from './calevent.store';
 
 
 /** Swipe navigation (touch only): a gesture must travel this far before it counts as prev/next. */
@@ -1038,15 +1038,17 @@ export class CalEventList implements OnInit {
     if (!this.showMenu()) return;
     const label = formatDateTimeLabel(calEvent.startDate, calEvent.startTime, calEvent.durationMinutes);
     const actionSheetOptions = createActionSheetOptions(`${label} · ${calEvent.name}`);
-    this.addActionSheetButtons(actionSheetOptions, calEvent);
-    await this.executeActions(actionSheetOptions, calEvent);
+    // «Einsatz erfassen» (spec 1.167 §7.3): the caller's agreements are read on the first sheet only, never with the list
+    const work = await this.store.recordWorkContext(calEvent);
+    this.addActionSheetButtons(actionSheetOptions, calEvent, work);
+    await this.executeActions(actionSheetOptions, calEvent, work);
   }
 
   /**
    * Fills the ActionSheet with all possible actions, considering the user permissions.
    * @param calEvent 
    */
-  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, calevent: CalEventModel): void {
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, calevent: CalEventModel, work?: RecordWorkContext): void {
     // attendance actions (subscribe/unsubscribe) make no sense for past or cancelled events, nor
     // while the event itself is locked
     const showAttendance = !isAttendanceClosed(calevent);
@@ -1063,6 +1065,12 @@ export class CalEventList implements OnInit {
       if (state !== 'declined') {
         actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.store.i18n.invitation_unsubscribe(), this.imgixBaseUrl, 'cancel'));
       }
+    }
+
+    // a trainer with an agreement active on the event's date records his work here (spec 1.167 §7.3)
+    if (work) {
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.recordWork',
+        work.entries.length > 0 ? this.store.i18n.work_edit() : this.store.i18n.work_record(), this.imgixBaseUrl, 'timer'));
     }
 
     // Einladen: eine Aktion. «Gruppenmitglieder einladen» ist entfallen — Mitglieder sehen den
@@ -1143,7 +1151,7 @@ export class CalEventList implements OnInit {
    * @param actionSheetOptions 
    * @param calEvent 
    */
-  private async executeActions(actionSheetOptions: ActionSheetOptions, calEvent: CalEventModel): Promise<void> {
+  private async executeActions(actionSheetOptions: ActionSheetOptions, calEvent: CalEventModel, work?: RecordWorkContext): Promise<void> {
     if (actionSheetOptions.buttons.length > 0) {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
@@ -1155,6 +1163,9 @@ export class CalEventList implements OnInit {
           break;
         case 'calevent.unsubscribe':
           await this.store.unsubscribe(calEvent);
+          break;
+        case 'calevent.recordWork':
+          if (work) await this.store.recordWork(calEvent, work);
           break;
         case 'calevent.downloadIcs':
           await this.calendarFeedService.addEventToCalendar(calEvent, !!this.currentUser());

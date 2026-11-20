@@ -144,6 +144,11 @@
       "label": "Hora"
     }
   },
+  "work": {
+    "record": "Registrar la actividad",
+    "edit": "Editar la actividad",
+    "error": "No se ha podido guardar tu actividad. Inténtalo de nuevo, por favor."
+  },
   "series": {
     "view": "Mostrar la serie",
     "title": "Serie de citas",

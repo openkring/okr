@@ -4,7 +4,7 @@
   "sourceRoot": "libs/finance/trainer-billing/data-access/src",
   "prefix": "okr",
   "projectType": "library",
-  "tags": ["type:data-access", "scope:finance", "platform:mobile", "platform:web"],
+  "tags": ["type:data-access", "scope:finance", "scope:trainer-billing", "platform:mobile", "platform:web"],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",

@@ -144,6 +144,11 @@
       "label": "Orario"
     }
   },
+  "work": {
+    "record": "Registra l'intervento",
+    "edit": "Modifica l'intervento",
+    "error": "Non è stato possibile salvare il tuo intervento. Riprova, per favore."
+  },
   "series": {
     "view": "Mostra la serie",
     "title": "Serie di appuntamenti",

@@ -4,7 +4,7 @@
   "sourceRoot": "libs/finance/trainer-billing/util/src",
   "prefix": "okr",
   "projectType": "library",
-  "tags": ["type:util", "scope:finance", "platform:mobile", "platform:web"],
+  "tags": ["type:util", "scope:finance", "scope:trainer-billing", "platform:mobile", "platform:web"],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",

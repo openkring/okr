@@ -144,6 +144,11 @@
       "label": "Time"
     }
   },
+  "work": {
+    "record": "Record work",
+    "edit": "Edit work",
+    "error": "Your work could not be saved. Please try again."
+  },
   "series": {
     "view": "Show event series",
     "title": "Event series",

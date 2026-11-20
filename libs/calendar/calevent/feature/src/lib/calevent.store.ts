@@ -11,7 +11,7 @@ import { from, firstValueFrom, map, of } from 'rxjs';
 
 import { FirestoreService, ChatStatusService } from '@okr/shared-data-access';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
-import { Attendee, AvatarInfo, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CalEventModelName, CategoryListModel, CourseModel, GroupModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
+import { Attendee, AvatarInfo, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CalEventModelName, CategoryListModel, CourseModel, GroupModel, InvitationCollection, InvitationModel, TrainerAgreementModel, WorkEntryModel } from '@okr/shared-models';
 import { addDuration, calculateRecurringDates, chipMatches, compareDate, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getDayDiff, getArchiveInclusiveQuery, getFullName, getSystemQuery, getTodayStr, fill, isCalendarPublic, isAfterDate, isAfterOrEqualDate, isInRollingWindow, nameMatches, pad, prettyFormatDate, publicAppOrigin, removeKeyFromOkrModel, warn, YEAR_ROLLING_WINDOW, chatBlockedAlertMessage, isChatBlockedError, hasRole } from '@okr/shared-util-core';
 import { canOpenGroupChat, groupChatRoomParam } from '@okr/subject-group-util';
 import { confirm, copyToClipboardDeferred, error, lazyService, navigateByUrl, notify, okrPrompt, showToast } from '@okr/shared-util-angular';
@@ -77,6 +77,16 @@ export const initialState: CalEventState = {
   selectedYear: YEAR_ROLLING_WINDOW   // default: last month + next three months, so the turn of the year never hides upcoming events
 };
 
+/**
+ * What «Einsatz erfassen» offers at one event (spec 1.167 §7.3): the agreements the caller may record work under there,
+ * all his agreements (a stored entry keeps its own), and his entries at the event.
+ */
+export type RecordWorkContext = {
+  agreements: TrainerAgreementModel[];
+  allAgreements: TrainerAgreementModel[];
+  entries: WorkEntryModel[];
+};
+
 export const CalEventStore = signalStore(
   withState(initialState),
   withProps(() => ({
@@ -99,6 +109,12 @@ export const CalEventStore = signalStore(
     // stay out of this chunk's static import graph. Only the lock check of an event that belongs to a course asks.
     courseService: lazyService(inject(Injector), () =>
       import('@okr/calendar-course-data-access').then(m => m.CourseService)),
+    // Lazy (spec 1.167 §7.3): «Einsatz erfassen» needs the trainer-billing libs only once an ActionSheet opens, so they
+    // stay out of the calendar's static import graph.
+    trainerBillingService: lazyService(inject(Injector), () =>
+      import('@okr/finance-trainer-billing-data-access').then(m => m.TrainerBillingService)),
+    /** the caller's trainer agreements, read once per store on the first ActionSheet (`recordWorkContext`) */
+    trainerAgreements: { personKey: '', load: undefined as Promise<TrainerAgreementModel[]> | undefined },
     invitationService: inject(InvitationService),
     aliasMintService: inject(AliasMintService),
     seenService: inject(SeenService)
@@ -1494,6 +1510,120 @@ export const CalEventStore = signalStore(
         if (!confirmed) return;
         const key = await store.appStore.firestoreService.updateFields(CalEventCollection, calevent.okey, { isLocked }, store.i18n.update_error());
         if (key) await showToast(store.toastController, isLocked ? store.i18n.lock_conf() : store.i18n.unlock_conf());
+      },
+
+      /*------------------------- trainer work (spec 1.167 §7.3) ---------------------------------*/
+      /**
+       * The caller's trainer agreements, read once per store and person. A failed read is not kept, so the next
+       * ActionSheet asks again.
+       */
+      loadTrainerAgreements(personKey: string): Promise<TrainerAgreementModel[]> {
+        const cache = store.trainerAgreements;
+        if (!cache.load || cache.personKey !== personKey) {
+          cache.personKey = personKey;
+          cache.load = (async () => {
+            const service = await store.trainerBillingService();
+            return firstValueFrom(service.myAgreements(personKey));
+          })();
+          cache.load.catch(() => { if (cache.personKey === personKey) cache.load = undefined; });
+        }
+        return cache.load;
+      },
+
+      /**
+       * What «Einsatz erfassen» offers at `calevent`, or undefined (no action): the caller has no agreement active on
+       * the event's date in a tenant of the event. Asked when the ActionSheet opens — never with the list — and the
+       * agreements are read only on the first one; the entries of the event only when an agreement fits.
+       */
+      async recordWorkContext(calevent: CalEventModel): Promise<RecordWorkContext | undefined> {
+        const personKey = store.currentUser()?.personKey;
+        if (!personKey || !calevent.okey || calevent.state === 'proposed') return undefined;
+        try {
+          const allAgreements = await this.loadTrainerAgreements(personKey);
+          if (allAgreements.length === 0) return undefined;
+          const { recordableAgreements } = await import('@okr/finance-trainer-billing-util');
+          const agreements = recordableAgreements(allAgreements, calevent);
+          if (agreements.length === 0) return undefined;
+          const service = await store.trainerBillingService();
+          const entries = await firstValueFrom(service.entriesOfEvent(personKey, calevent.okey));
+          return { agreements, allAgreements, entries };
+        } catch (ex) {
+          warn(`CalEventStore.recordWorkContext: no work action offered: ${ex}`);
+          return undefined;
+        }
+      },
+
+      /**
+       * «Einsatz erfassen / bearbeiten»: opens the work entry modal prefilled from the event (a stored entry as it is),
+       * its date limited to the event's days, and saves on `confirm`. With several entries at the event, the trainer
+       * page opens instead. Saving a new entry on a course event also records the trainer as present leader.
+       */
+      async recordWork(calevent: CalEventModel, context: RecordWorkContext): Promise<void> {
+        const personKey = store.currentUser()?.personKey;
+        if (!personKey) return;
+        if (context.entries.length > 1) {
+          await navigateByUrl(store.router, '/trainer-billing/me');
+          return;
+        }
+        try {
+          const util = await import('@okr/finance-trainer-billing-util');
+          const service = await store.trainerBillingService();
+          const stored = context.entries[0];
+          let entry: WorkEntryModel;
+          let agreements: TrainerAgreementModel[];
+          if (stored) {
+            entry = stored;
+            agreements = context.allAgreements.filter(a => a.okey === stored.agreementKey);   // a stored entry keeps its agreement
+          } else {
+            const agreement = context.agreements[0];
+            const monthEntries = await firstValueFrom(service.myEntries(personKey, util.monthOf(calevent.startDate)));
+            entry = util.workEntryForEvent(calevent, agreement, util.lastServiceKeyOf(monthEntries, agreement.okey), personKey);
+            agreements = context.agreements;
+          }
+          const range = util.eventDateRange(calevent);
+          const { WorkEntryEditModal } = await import('@okr/finance-trainer-billing-ui');
+          const modal = await store.modalController.create({
+            component: WorkEntryEditModal,
+            componentProps: { entry, agreements, booksLabels: this.booksLabels(agreements), minDate: range.from, maxDate: range.to },
+          });
+          await modal.present();
+          const { data, role } = await modal.onDidDismiss<WorkEntryModel>();
+          if (role !== 'confirm' || !data) return;
+          const key = await service.saveEntry(data, agreements.find(a => a.okey === data.agreementKey));
+          if (key && !stored) await this.recordCourseLeader(calevent, personKey);
+        } catch (ex) {
+          warn(`CalEventStore.recordWork: ${ex}`);
+          error(store.toastController, store.i18n.work_error());
+        }
+      },
+
+      /** Display names of the books of `agreements`: the org of the books, else the id (as on the trainer page). */
+      booksLabels(agreements: TrainerAgreementModel[]): Record<string, string> {
+        const labels: Record<string, string> = {};
+        for (const a of agreements) {
+          if (a.accountingTenantId) labels[a.accountingTenantId] = store.appStore.getOrg(a.accountingTenantId)?.name || a.accountingTenantId.toUpperCase();
+        }
+        return labels;
+      },
+
+      /**
+       * A trainer of the event's course who recorded his work there was there: his own `attendance.<personKey>` becomes
+       * present leader (course attendance write path, one field path). Never the confirmation; nothing when the event
+       * has no course, the course is locked, the caller is not one of its trainers or is already recorded so.
+       */
+      async recordCourseLeader(calevent: CalEventModel, personKey: string): Promise<void> {
+        if (!calevent.courseKey) return;
+        const current = calevent.attendance?.[personKey];
+        if (current?.presence === 'present' && current.function === 'leader') return;
+        const user = store.currentUser();
+        const person = user ? getAvatarInfoForCurrentUser(user) : undefined;
+        if (!person) return;
+        const courseService = await store.courseService();
+        const course = await firstValueFrom(courseService.read(calevent.courseKey));
+        if (!course || course.isLocked || !(course.trainerKeys ?? []).includes(personKey)) return;
+        await courseService.writeAttendance(calevent.okey, [{
+          person, presence: 'present', function: 'leader', by: personKey, at: getTodayStr(DateFormat.StoreDateTime),
+        }]);
       },
 
       /*------------------------- invitation lock ---------------------------------*/

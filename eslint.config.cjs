@@ -102,7 +102,9 @@ module.exports = [
             // DYNAMIC import (lazyService), so the course libs stay out of this chunk's static graph.
             // scope:user — the calevent store marks an event's activity as seen through SeenService
             // (user data-access), the per-user ledger behind the unread-activity badge.
-            { sourceTag: 'scope:calevent', onlyDependOnLibsWithTags: [...SCOPE_BASE('calevent'), 'scope:alias', 'scope:chat', 'scope:course', 'scope:invitation', 'scope:location', 'scope:membership', 'scope:mobility', 'scope:user'] },
+            // scope:trainer-billing — spec 1.167 §7.3: a calendar event records a trainer's work (TrainerBillingService + WorkEntryEditModal through a
+            // DYNAMIC import); only the trainer-billing libs carry this tag, never the ledger/bill libs (scope:finance stays out).
+            { sourceTag: 'scope:calevent', onlyDependOnLibsWithTags: [...SCOPE_BASE('calevent'), 'scope:alias', 'scope:chat', 'scope:course', 'scope:invitation', 'scope:location', 'scope:membership', 'scope:mobility', 'scope:trainer-billing', 'scope:user'] },
             // Shared scope for cross-domain utilities/models. Deliberately NOT given the
             // cross-cutting set: shared sits below the domains, so what it reaches upward is
             // the interesting part and stays enumerated.

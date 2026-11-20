@@ -144,6 +144,11 @@
       "label": "Heure"
     }
   },
+  "work": {
+    "record": "Saisir l'intervention",
+    "edit": "Modifier l'intervention",
+    "error": "Ton intervention n'a pas pu être enregistrée. Réessaie, s'il te plaît."
+  },
   "series": {
     "view": "Afficher la série",
     "title": "Série de rendez-vous",

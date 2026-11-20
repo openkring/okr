@@ -144,6 +144,11 @@
       "label": "Zeit"
     }
   },
+  "work": {
+    "record": "Einsatz erfassen",
+    "edit": "Einsatz bearbeiten",
+    "error": "Dein Einsatz konnte nicht gespeichert werden. Versuche es bitte noch einmal."
+  },
   "series": {
     "view": "Terminserie anzeigen",
     "title": "Terminserie",
