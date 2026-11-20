@@ -10,7 +10,8 @@
  * - Creates `sections/<page>_sdg` per project page.
  * - Places it as the page's last section, directly above the site footer. Where the page still ends with the
  *   imported text-only SDG article («Folgende Nachhaltigkeitsziele (SDG's) …»), the new section takes its place
- *   in the list; the old article document stays untouched (not shown anymore).
+ *   in the list; an imported SDG article further up the page (btvz, smart, stafnet) is taken off the page too.
+ *   The old article documents stay untouched (not shown anymore).
  * - Idempotent: a page that already lists its `_sdg` section is left alone (the section document is rewritten).
  */
 import { createRequire } from 'node:module';
@@ -103,11 +104,11 @@ export function sdgSection(pageKey, goals) {
 /** the imported text-only SDG article: an article whose title starts like the new section's */
 const isOldSdgArticle = (s) => s?.type === 'article' && /^Folgende Nachhaltigkeitsziele/.test(s.title ?? '');
 
-/** The new section list: the old SDG article replaced in place, else the new section appended. */
-export function placeSdg(sections, sdgKey, oldKey) {
-  if (sections.includes(sdgKey)) return sections;
-  if (oldKey && sections[sections.length - 1] === oldKey) return [...sections.slice(0, -1), sdgKey];
-  return [...sections, sdgKey];
+/** The new section list: every old SDG article taken off, the new section last (directly above the footer). */
+export function placeSdg(sections, sdgKey, oldKeys) {
+  const rest = sections.filter((k) => k !== sdgKey && !oldKeys.includes(k));
+  const next = [...rest, sdgKey];
+  return next.length === sections.length && next.every((k, i) => k === sections[i]) ? sections : next;
 }
 
 async function main() {
@@ -122,13 +123,15 @@ async function main() {
     const page = (await db.doc(`pages/${pageKey}`).get()).data();
     if (!page) throw new Error(`pages/${pageKey} missing`);
     const sections = page.sections ?? [];
-    const lastKey = sections[sections.length - 1];
-    const last = lastKey ? (await db.doc(`sections/${lastKey}`).get()).data() : undefined;
-    const oldKey = isOldSdgArticle(last) ? lastKey : undefined;
+    const oldKeys = [];
+    for (const key of sections) {
+      if (isOldSdgArticle((await db.doc(`sections/${key}`).get()).data())) oldKeys.push(key);
+    }
     const section = sdgSection(pageKey, goals);
-    const next = placeSdg(sections, section.name, oldKey);
+    const next = placeSdg(sections, section.name, oldKeys);
     const changed = next !== sections;
-    console.log(`${pageKey}: goals ${goals.join(',')} → ${!changed ? 'already placed' : oldKey ? `replaces ${oldKey.split('_').pop()}` : 'appended'}`);
+    const removed = oldKeys.filter((k) => sections.includes(k)).map((k) => k.split('_').pop());
+    console.log(`${pageKey}: goals ${goals.join(',')} → ${!changed ? 'already placed' : `last${removed.length ? `, removes ${removed.join(',')}` : ''}`}`);
     batch.set(db.doc(`sections/${section.name}`), section);
     if (changed) batch.update(db.doc(`pages/${pageKey}`), { sections: next });
   }
