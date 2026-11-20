@@ -134,5 +134,66 @@
     "quantityMaxDay": "A work entry has at most one day.",
     "quantityStepHours": "Please enter the hours in quarter hours, e.g. 1.25.",
     "quantityStepDay": "Please enter a whole or a half day."
+  },
+  "trainers": {
+    "title": "Coaches",
+    "segment": {
+      "agreements": "Agreements",
+      "invoices": "Invoices"
+    },
+    "col": {
+      "person": "Coach",
+      "validity": "Validity",
+      "services": "Services",
+      "state": "Status",
+      "month": "Month",
+      "number": "Number",
+      "total": "Amount CHF"
+    },
+    "validity": {
+      "open": "open"
+    },
+    "active": "active",
+    "inactive": "inactive",
+    "empty": {
+      "agreements": "There is no agreement for these books yet.",
+      "invoices": "No coach invoices have arrived yet."
+    },
+    "state": {
+      "sent": "received",
+      "booked": "booked",
+      "paid": "paid",
+      "rejected": "rejected"
+    },
+    "as": {
+      "agreement": "Agreement",
+      "invoice": "Coach invoice"
+    },
+    "action": {
+      "edit": "Edit",
+      "archive": "Archive",
+      "download": "Download PDF",
+      "toBill": "Go to payables",
+      "reject": "Reject",
+      "markPaid": "Mark as paid",
+      "cancel": "Cancel"
+    },
+    "archive": {
+      "confirm": "Do you want to archive the agreement with {name}? Past work entries and invoices are kept.",
+      "conf": "The agreement is archived."
+    },
+    "reject": {
+      "title": "Reject invoice",
+      "placeholder": "Why are you rejecting the invoice? The coach will see this reason.",
+      "conf": "The invoice is rejected. Its work entries are open again."
+    },
+    "markPaid": {
+      "confirm": "Has invoice {invoiceNo} been paid?",
+      "conf": "The invoice is marked as paid."
+    },
+    "download": {
+      "error": "The PDF could not be loaded."
+    },
+    "ok": "OK"
   }
 }

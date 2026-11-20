@@ -98,6 +98,9 @@
     "cost-accounting": {
       "label": "Contabilidad de costes"
     },
+    "trainer-billing": {
+      "label": "Facturación de entrenadores"
+    },
     "expense": {
       "label": "Gastos & reconocimiento de recibos"
     },

@@ -98,6 +98,9 @@
     "cost-accounting": {
       "label": "Kostenrechnung"
     },
+    "trainer-billing": {
+      "label": "Trainer-Abrechnung"
+    },
     "expense": {
       "label": "Spesen & Belegerkennung"
     },

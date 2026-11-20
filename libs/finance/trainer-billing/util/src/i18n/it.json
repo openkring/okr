@@ -134,5 +134,66 @@
     "quantityMaxDay": "Un intervento ha al massimo un giorno.",
     "quantityStepHours": "Inserisci le ore in quarti d'ora, p. es. 1.25.",
     "quantityStepDay": "Inserisci un giorno intero o mezzo giorno."
+  },
+  "trainers": {
+    "title": "Allenatori",
+    "segment": {
+      "agreements": "Accordi",
+      "invoices": "Fatture"
+    },
+    "col": {
+      "person": "Allenatrice o allenatore",
+      "validity": "Validità",
+      "services": "Prestazioni",
+      "state": "Stato",
+      "month": "Mese",
+      "number": "Numero",
+      "total": "Importo CHF"
+    },
+    "validity": {
+      "open": "aperta"
+    },
+    "active": "attivo",
+    "inactive": "inattivo",
+    "empty": {
+      "agreements": "Per questa contabilità non c'è ancora nessun accordo.",
+      "invoices": "Non è ancora arrivata nessuna fattura di allenatori."
+    },
+    "state": {
+      "sent": "ricevuta",
+      "booked": "contabilizzata",
+      "paid": "pagata",
+      "rejected": "respinta"
+    },
+    "as": {
+      "agreement": "Accordo",
+      "invoice": "Fattura allenatore"
+    },
+    "action": {
+      "edit": "Modifica",
+      "archive": "Archivia",
+      "download": "Scarica PDF",
+      "toBill": "Al creditore",
+      "reject": "Respingi",
+      "markPaid": "Segna come pagata",
+      "cancel": "Annulla"
+    },
+    "archive": {
+      "confirm": "Vuoi archiviare l'accordo con {name}? Gli interventi e le fatture precedenti restano.",
+      "conf": "L'accordo è archiviato."
+    },
+    "reject": {
+      "title": "Respingi la fattura",
+      "placeholder": "Perché respingi la fattura? L'allenatrice o l'allenatore vedrà questo motivo.",
+      "conf": "La fattura è respinta. Gli interventi sono di nuovo aperti."
+    },
+    "markPaid": {
+      "confirm": "La fattura {invoiceNo} è pagata?",
+      "conf": "La fattura è segnata come pagata."
+    },
+    "download": {
+      "error": "Non è stato possibile caricare il PDF."
+    },
+    "ok": "OK"
   }
 }

@@ -134,5 +134,66 @@
     "quantityMaxDay": "Una intervención tiene como máximo un día.",
     "quantityStepHours": "Introduce las horas en cuartos de hora, p. ej. 1.25.",
     "quantityStepDay": "Introduce un día entero o medio día."
+  },
+  "trainers": {
+    "title": "Entrenadores",
+    "segment": {
+      "agreements": "Acuerdos",
+      "invoices": "Facturas"
+    },
+    "col": {
+      "person": "Entrenadora o entrenador",
+      "validity": "Validez",
+      "services": "Servicios",
+      "state": "Estado",
+      "month": "Mes",
+      "number": "Número",
+      "total": "Importe CHF"
+    },
+    "validity": {
+      "open": "abierta"
+    },
+    "active": "activo",
+    "inactive": "inactivo",
+    "empty": {
+      "agreements": "Todavía no hay ningún acuerdo para esta contabilidad.",
+      "invoices": "Todavía no ha llegado ninguna factura de entrenadores."
+    },
+    "state": {
+      "sent": "recibida",
+      "booked": "contabilizada",
+      "paid": "pagada",
+      "rejected": "rechazada"
+    },
+    "as": {
+      "agreement": "Acuerdo",
+      "invoice": "Factura de entrenador"
+    },
+    "action": {
+      "edit": "Editar",
+      "archive": "Archivar",
+      "download": "Descargar PDF",
+      "toBill": "Ir al acreedor",
+      "reject": "Rechazar",
+      "markPaid": "Marcar como pagada",
+      "cancel": "Cancelar"
+    },
+    "archive": {
+      "confirm": "¿Quieres archivar el acuerdo con {name}? Las intervenciones y facturas anteriores se conservan.",
+      "conf": "El acuerdo está archivado."
+    },
+    "reject": {
+      "title": "Rechazar la factura",
+      "placeholder": "¿Por qué rechazas la factura? La entrenadora o el entrenador verá este motivo.",
+      "conf": "La factura está rechazada. Las intervenciones vuelven a estar abiertas."
+    },
+    "markPaid": {
+      "confirm": "¿Está pagada la factura {invoiceNo}?",
+      "conf": "La factura está marcada como pagada."
+    },
+    "download": {
+      "error": "No se ha podido cargar el PDF."
+    },
+    "ok": "OK"
   }
 }

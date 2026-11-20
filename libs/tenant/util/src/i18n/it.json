@@ -98,6 +98,9 @@
     "cost-accounting": {
       "label": "Contabilità analitica"
     },
+    "trainer-billing": {
+      "label": "Fatturazione allenatori"
+    },
     "expense": {
       "label": "Note spese & riconoscimento ricevute"
     },

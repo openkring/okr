@@ -867,6 +867,12 @@ const finance: BlockRoutes = {
           children: [{ path: ':contextMenuName', loadComponent: () => import('@okr/finance-account-feature').then(m => m.AccountList) }],
         },
         {
+          data: { featureBlock: 'trainer-billing' },
+          // Trainer-Abrechnung (spec 1.167 §7.1): agreements and trainer invoices of these books; treasurer via the shell's guard.
+          path: 'trainers',
+          children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/finance-trainer-billing-feature').then(m => m.TrainerAgreementList) }],
+        },
+        {
           data: { featureBlock: 'cost-accounting' },
           // Kostenstellen (spec 1.65): tree list like the Kontoplan; treasurer via the shell's guard.
           path: 'cost-center',
@@ -1033,6 +1039,13 @@ const memberFee: BlockRoutes = {
   // reads memberships. This entry exists only so `feature-catalogue.sync.spec.ts` finds a
   // route-side id matching the `member-fee` metadata block (see `feature-blocks.ts`).
   id: 'member-fee',
+  routes: (): Route[] => [],
+};
+
+const trainerBilling: BlockRoutes = {
+  // The treasurer's page `accounting/:accountingTenantId/trainers/:listId/:contextMenuName` is a child of `finance`'s
+  // accounting shell, gated by `data.featureBlock: 'trainer-billing'`. The trainer's own page follows (Task 12).
+  id: 'trainer-billing',
   routes: (): Route[] => [],
 };
 
@@ -1901,7 +1914,7 @@ export const FEATURE_ROUTES: BlockRoutes[] = [
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard, contactsDav,
   resource, mobility,
-  finance, costAccounting, expense, asset, memberFee, esign, pdfTemplate,
+  finance, costAccounting, expense, asset, memberFee, trainerBilling, esign, pdfTemplate,
   documentBlock, contracts, meeting, diary, journal,
   chat, socialFeed, forms,
   business, alias, weather, energy,

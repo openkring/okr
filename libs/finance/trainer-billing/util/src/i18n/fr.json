@@ -134,5 +134,66 @@
     "quantityMaxDay": "Une intervention compte au maximum un jour.",
     "quantityStepHours": "Saisis les heures en quarts d'heure, p. ex. 1.25.",
     "quantityStepDay": "Saisis un jour entier ou un demi-jour."
+  },
+  "trainers": {
+    "title": "Entraîneurs",
+    "segment": {
+      "agreements": "Conventions",
+      "invoices": "Factures"
+    },
+    "col": {
+      "person": "Entraîneuse ou entraîneur",
+      "validity": "Validité",
+      "services": "Prestations",
+      "state": "Statut",
+      "month": "Mois",
+      "number": "Numéro",
+      "total": "Montant CHF"
+    },
+    "validity": {
+      "open": "ouverte"
+    },
+    "active": "active",
+    "inactive": "inactive",
+    "empty": {
+      "agreements": "Il n'y a pas encore de convention pour cette comptabilité.",
+      "invoices": "Aucune facture d'entraîneur n'est encore arrivée."
+    },
+    "state": {
+      "sent": "reçue",
+      "booked": "comptabilisée",
+      "paid": "payée",
+      "rejected": "refusée"
+    },
+    "as": {
+      "agreement": "Convention",
+      "invoice": "Facture d'entraîneur"
+    },
+    "action": {
+      "edit": "Modifier",
+      "archive": "Archiver",
+      "download": "Télécharger le PDF",
+      "toBill": "Vers le créancier",
+      "reject": "Refuser",
+      "markPaid": "Marquer comme payée",
+      "cancel": "Annuler"
+    },
+    "archive": {
+      "confirm": "Veux-tu archiver la convention avec {name} ? Les interventions et factures passées sont conservées.",
+      "conf": "La convention est archivée."
+    },
+    "reject": {
+      "title": "Refuser la facture",
+      "placeholder": "Pourquoi refuses-tu la facture ? L'entraîneuse ou l'entraîneur verra ce motif.",
+      "conf": "La facture est refusée. Les interventions sont de nouveau ouvertes."
+    },
+    "markPaid": {
+      "confirm": "La facture {invoiceNo} est-elle payée ?",
+      "conf": "La facture est marquée comme payée."
+    },
+    "download": {
+      "error": "Le PDF n'a pas pu être chargé."
+    },
+    "ok": "OK"
   }
 }

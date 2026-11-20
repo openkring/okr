@@ -134,5 +134,66 @@
     "quantityMaxDay": "Ein Einsatz hat höchstens einen Tag.",
     "quantityStepHours": "Bitte gib die Stunden in Viertelstunden ein, z. B. 1.25.",
     "quantityStepDay": "Bitte gib einen ganzen oder einen halben Tag ein."
+  },
+  "trainers": {
+    "title": "Trainer",
+    "segment": {
+      "agreements": "Vereinbarungen",
+      "invoices": "Rechnungen"
+    },
+    "col": {
+      "person": "Trainerin oder Trainer",
+      "validity": "Gültigkeit",
+      "services": "Leistungsarten",
+      "state": "Status",
+      "month": "Monat",
+      "number": "Nummer",
+      "total": "Betrag CHF"
+    },
+    "validity": {
+      "open": "offen"
+    },
+    "active": "aktiv",
+    "inactive": "inaktiv",
+    "empty": {
+      "agreements": "Für diese Buchhaltung gibt es noch keine Vereinbarung.",
+      "invoices": "Es sind noch keine Trainerrechnungen eingegangen."
+    },
+    "state": {
+      "sent": "eingegangen",
+      "booked": "verbucht",
+      "paid": "bezahlt",
+      "rejected": "zurückgewiesen"
+    },
+    "as": {
+      "agreement": "Vereinbarung",
+      "invoice": "Trainerrechnung"
+    },
+    "action": {
+      "edit": "Bearbeiten",
+      "archive": "Archivieren",
+      "download": "PDF herunterladen",
+      "toBill": "Zum Kreditor",
+      "reject": "Zurückweisen",
+      "markPaid": "Als bezahlt markieren",
+      "cancel": "Abbrechen"
+    },
+    "archive": {
+      "confirm": "Möchtest du die Vereinbarung mit {name} archivieren? Bisherige Einsätze und Rechnungen bleiben erhalten.",
+      "conf": "Die Vereinbarung ist archiviert."
+    },
+    "reject": {
+      "title": "Rechnung zurückweisen",
+      "placeholder": "Warum weist du die Rechnung zurück? Die Trainerin oder der Trainer sieht diese Begründung.",
+      "conf": "Die Rechnung ist zurückgewiesen. Die Einsätze sind wieder offen."
+    },
+    "markPaid": {
+      "confirm": "Ist die Rechnung {invoiceNo} bezahlt?",
+      "conf": "Die Rechnung ist als bezahlt markiert."
+    },
+    "download": {
+      "error": "Das PDF konnte nicht geladen werden."
+    },
+    "ok": "OK"
   }
 }

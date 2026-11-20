@@ -98,6 +98,9 @@
     "cost-accounting": {
       "label": "Cost accounting"
     },
+    "trainer-billing": {
+      "label": "Coach billing"
+    },
     "expense": {
       "label": "Expenses & receipt scanning"
     },

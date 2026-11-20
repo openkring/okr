@@ -59,6 +59,7 @@
     { "path": "../../finance/payment/feature/tsconfig.lib.json" },
     { "path": "../../finance/period/feature/tsconfig.lib.json" },
     { "path": "../../finance/reporting/feature/tsconfig.lib.json" },
+    { "path": "../../finance/trainer-billing/feature/tsconfig.lib.json" },
     { "path": "../../finance/vat-code/feature/tsconfig.lib.json" },
     { "path": "../../forms/feature/tsconfig.lib.json" },
     { "path": "../../games/backgammon/feature/tsconfig.lib.json" },

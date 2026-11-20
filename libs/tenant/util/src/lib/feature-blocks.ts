@@ -1718,6 +1718,35 @@ const asset: FeatureBlock = {
 };
 
 /**
+ * `trainer-billing` — Trainer-Abrechnung (spec 1.167): `libs/finance/trainer-billing` — agreements with self-employed
+ * trainers, their work entries, the monthly trainer invoice (PDF) and its Kreditor. The treasurer's page «Trainer»
+ * is a child of `finance`'s accounting shell (`accounting/:accountingTenantId/trainers/…`, gated by
+ * `data.featureBlock: 'trainer-billing'`); the trainer's «Meine Abrechnung» (`/trainer-billing/me`) will be this
+ * block's own top-level route. Its collections are written through the rules and the trainer-billing callables; the
+ * catalogue change needs a functions deploy (`FEATURE_BLOCKS` is baked into `applyFeatureSelection`).
+ */
+const trainerBilling: FeatureBlock = {
+  id: 'trainer-billing',
+  bundle: 'finance',
+  label: '@tenant/util.feature.trainer-billing.label',
+  icon: 'invoice',
+  defaultAvailability: 'ga',
+  dependsOn: ['finance'],
+  collections: ['trainer-agreements', 'trainer-invoices', 'trainer-profiles', 'work-entries'],
+  menu: [
+    // «Meine Abrechnung» (`my-trainer-billing`, url `/trainer-billing/me`, registered, under `financeMenuParent`) joins
+    // with its route in Task 12: the route-coverage specs refuse a catalogued url that resolves to no route.
+    // The treasurer's page «Trainer»: agreements and trainer invoices of the selected books.
+    accountingMenuParent([
+      { key: 'accounting-trainers', name: 'accounting-trainers', url: '/accounting/@BOOKS@/trainers/all/c-trainers', action: 'navigate', roleNeeded: 'treasurer', icon: 'people', label: '@item.accounting-trainers' },
+    ]),
+    { key: 'c-trainers', name: 'c-trainers', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
+      { key: 'trainer-agreement-add', name: 'trainer-agreement-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add-circle', label: '@item.trainer-agreement-add' },
+    ] },
+  ],
+};
+
+/**
  * `libs/relationship/membership/{data-access,feature,ui,util}` — the generalized member-fee
  * screen (`MemberFees`, `/accounting/{books}/member-fees/:contextMenuName`), reworked from the
  * scs-only `scsf_memberfees`/`c-scsfees` original per
@@ -3511,7 +3540,7 @@ export const FEATURE_BLOCKS: FeatureBlock[] = [
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard, contactsDav,
   resource, mobility,
-  finance, costAccounting, expense, asset, memberFee, esign, pdfTemplate,
+  finance, costAccounting, expense, asset, memberFee, trainerBilling, esign, pdfTemplate,
   documentBlock, contracts, meeting, diary, journal,
   chat, socialFeed, forms,
   business, alias, weather, energy,

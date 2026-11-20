@@ -52,6 +52,7 @@ export class TrainerBillingService {
   private readonly i18n = inject(I18nService).translateAll({
     agreement_save_conf:  TRAINER_BILLING_I18N_KEYS.agreement_save_conf,
     agreement_save_error: TRAINER_BILLING_I18N_KEYS.agreement_save_error,
+    agreement_archive_conf: TRAINER_BILLING_I18N_KEYS.trainers_archive_conf,
     profile_save_conf:    TRAINER_BILLING_I18N_KEYS.profile_save_conf,
     profile_save_error:   TRAINER_BILLING_I18N_KEYS.profile_save_error,
     entry_save_conf:      TRAINER_BILLING_I18N_KEYS.entry_save_conf,
@@ -101,6 +102,18 @@ export class TrainerBillingService {
           TrainerAgreementCollection, payload, false, this.i18n.agreement_save_conf(), this.i18n.agreement_save_error(), currentUser)
       : await this.firestoreService.createModel<TrainerAgreementModel>(
           TrainerAgreementCollection, payload, this.i18n.agreement_save_conf(), this.i18n.agreement_save_error(), currentUser);
+    return key ?? '';
+  }
+
+  /**
+   * Archive an agreement (treasurer / admin): through `FirestoreService.deleteModel`, which detaches this tenant or,
+   * as the last one, sets `isArchived` (deleting-models). Its entries and invoices stay; the list no longer shows it.
+   * @returns the key of the agreement, or '' when the write failed (a toast has told the user)
+   */
+  public async archiveAgreement(agreement: TrainerAgreementModel, currentUser?: UserModel): Promise<string> {
+    if (!agreement.okey) die('TrainerBillingService.archiveAgreement: okey is mandatory.');
+    const key = await this.firestoreService.deleteModel<TrainerAgreementModel>(
+      TrainerAgreementCollection, trainerAgreementPayload(agreement), this.i18n.agreement_archive_conf(), this.i18n.agreement_save_error(), currentUser);
     return key ?? '';
   }
 
