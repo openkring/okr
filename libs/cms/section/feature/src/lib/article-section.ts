@@ -5,10 +5,11 @@ import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, 
 
 import { ArticleSection, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ViewPosition } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { ImageLayoutId, articleImagePosition, resolveImageLayout, validCtas, getSectionIntro } from '@okr/cms-section-util';
+import { ImageLayoutId, articleImagePosition, resolveImageLayout, resolveSlideshow, validCtas, getSectionIntro } from '@okr/cms-section-util';
 import { badgeFor, Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
 
 import { ArticleImages } from './article-images';
+import { ArticleSlideshowComponent } from './article-slideshow';
 import { ArticleStore } from './article-section.store';
 import { openSectionLink } from './section-link';
 
@@ -16,7 +17,7 @@ import { openSectionLink } from './section-link';
   selector: 'okr-article-section',
   standalone: true,
   imports: [
-    Spinner, Img, ArticleImages, NgTemplateOutlet, OptionalCardHeader, SvgIconPipe,
+    Spinner, Img, ArticleImages, ArticleSlideshowComponent, NgTemplateOutlet, OptionalCardHeader, SvgIconPipe,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonButton, IonIcon
   ],
   schemas: [
@@ -96,6 +97,9 @@ import { openSectionLink } from './section-link';
   template: `
     @if(section()) {
       <ng-template #carouselTpl>
+        @if (slideshow(); as settings) {
+          <okr-article-slideshow [images]="images()" [settings]="settings" [title]="title()" [subTitle]="subTitle()" />
+        } @else {
         <div class="carousel-container">
           <div class="carousel" #carousel (scroll)="onCarouselScroll()">
             @for(slide of loopSlides(); track $index) {
@@ -111,9 +115,11 @@ import { openSectionLink } from './section-link';
             <ion-icon slot="icon-only" src="{{ 'chevron-forward' | svgIcon }}" />
           </ion-button>
         </div>
+        }
       </ng-template>
       <ion-card [class.banner]="isBanner()">
-        <okr-optional-card-header [intro]="sectionIntro().text" [introPosition]="sectionIntro().position" [title]="title()" [subTitle]="subTitle()" />
+        <!-- a slideshow carries the title and subtitle on its images, like the header of la21staefa.ch -->
+        <okr-optional-card-header [intro]="sectionIntro().text" [introPosition]="sectionIntro().position" [title]="slideshow() ? '' : title()" [subTitle]="slideshow() ? '' : subTitle()" />
         <ion-card-content>
           @if (images().length > 0 || (content() && content()!.length > 7)) {
             @switch(position()) {
@@ -265,6 +271,10 @@ export class ArticleSectionComponent {
     const layout = resolveImageLayout(this.section()?.properties.imageLayout, this.images().length);
     return layout && layout !== 'slider' ? layout : undefined;
   });
+
+  /** the self-running slideshow instead of the swipe carousel; undefined = carousel (spec: la21staefa header) */
+  protected slideshow = computed(() =>
+    this.imageGridLayout() ? undefined : resolveSlideshow(this.section()?.properties.slideshow, this.images().length));
 
   protected imageStyle = computed(() => this.section()?.properties.imageStyle ?? IMAGE_STYLE_SHAPE);
   // the carousel: one fixed box for all slides; the image is shown whole at its own proportions

@@ -76,3 +76,29 @@ describe('footerSectionValidations', () => {
     expect(itemHasErrors({ type: 'logo', image: 'a.png', height: 'huge' as FooterItem['height'] }, 'height')).toBe(true);
   });
 });
+
+describe('footerSectionValidations la21staefa footer', () => {
+  const footer = (props: Record<string, unknown>) =>
+    ({ ...FOOTER_SECTION_SHAPE, properties: { ...FOOTER_SECTION_SHAPE.properties, columns: [], ...props } }) as unknown as FooterSection;
+
+  it('accepts a background, a social row, bottom links and a button', () => {
+    const result = footerSectionValidations(footer({
+      background: '#3c163c',
+      social: [{ label: 'Instagram', url: 'https://www.instagram.com/la21staefa/', icon: 'instagram' }],
+      bottomLinks: [{ label: 'Impressum', url: '/impressum' }],
+      columns: [{ items: [{ type: 'button', label: 'Mitglied werden', url: '/mitglied-werden', icon: '', image: '', height: 'medium' }] }],
+    }));
+    expect(result.hasErrors()).toBe(false);
+  });
+
+  it('flags a bad background, an unsafe link and a button without a target', () => {
+    const result = footerSectionValidations(footer({
+      background: 'red',
+      bottomLinks: [{ label: 'X', url: 'javascript:alert(1)' }],
+      columns: [{ items: [{ type: 'button', label: 'Los', url: '', icon: '', image: '', height: 'medium' }] }],
+    }));
+    expect(result.hasErrors('footer.background')).toBe(true);
+    expect(result.hasErrors('footer.bottomLinks.i0.url')).toBe(true);
+    expect(result.hasErrors('footer.c0.i0.url')).toBe(true);
+  });
+});

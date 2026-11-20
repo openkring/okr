@@ -13,6 +13,8 @@ export const TILE_TEXT_LENGTH = COMMENT_LENGTH;
 export const TILE_LINK_LABEL_LENGTH = NAME_LENGTH;
 export const TILE_URL_LENGTH = URL_LENGTH;
 export const TILE_IMAGE_URL_LENGTH = URL_LENGTH;
+/** `#RRGGBB` */
+export const TILE_COLOR_LENGTH = 7;
 
 /**
  * Validates one tile in the tile edit modal. Field names are the bare TileItem keys the form binds to.
@@ -40,6 +42,12 @@ export const tileValidations = staticSuite((model: TileItem, variant: TileVarian
   omitWhen(!model.url?.trim(), () => {
     test('url', 'invalidValue', () => {
       enforce(isSectionCtaUrl(model.url ?? '')).isTruthy();
+    });
+  });
+  stringValidations('color', model.color ?? '', TILE_COLOR_LENGTH);
+  omitWhen(!model.color?.trim(), () => {
+    test('color', 'invalidValue', () => {
+      enforce(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(model.color?.trim() ?? '')).isTruthy();
     });
   });
   test('tone', 'invalidValue', () => {

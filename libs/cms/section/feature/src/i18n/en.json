@@ -138,6 +138,20 @@
         "choose": "Choose layout …",
         "empty": "Add images first. Then you can choose here how they are shown."
       }
+    },
+    "slideshow": {
+      "title": "Slideshow",
+      "effect_label": "Transition",
+      "effect_none": "none (swipe)",
+      "effect_fade": "fade",
+      "effect_slide": "slide",
+      "effect_zoom": "zoom",
+      "effect_kenburns": "Ken Burns (slow pan)",
+      "autoplay_label": "advance automatically",
+      "interval_label": "Seconds per image",
+      "interval_helper": "How long one image stays (1 to 30).",
+      "duration_label": "Seconds for the transition",
+      "duration_helper": "How long the change takes (0.2 to 5)."
     }
   },
   "contract": {
@@ -1734,7 +1748,18 @@
       "label": "Display",
       "cover": "Image fills the card",
       "contain": "Show the whole image (logo)"
-    }
+    },
+    "source_label": "Tiles from",
+    "source_inline": "entered by hand",
+    "source_groups": "the groups",
+    "source_helper": "«the groups»: one card for each group whose content page is on the website, with the group's logo, name, subtitle and colour.",
+    "layout_label": "Layout",
+    "layout_grid": "grid",
+    "layout_list": "list",
+    "groupLinkLabel_label": "Link text",
+    "groupLinkLabel_helper": "Shown at the foot of every card, for example «more …». Empty: no text, the card is still linked.",
+    "tileColor_label": "Tile colour",
+    "tileColor_helper": "As a colour code, for example #59A3BF. Empty: the normal tile."
   },
   "timeline": {
     "label": "Timeline",
@@ -2028,7 +2053,8 @@
       "text": "Text",
       "link": "Link",
       "icon": "Icon",
-      "logo": "Logo"
+      "logo": "Logo",
+      "button": "Button"
     },
     "itemLabel": {
       "title": "Title",
@@ -2036,7 +2062,8 @@
       "link": "Link text",
       "icon": "Caption",
       "logo": "Alternative text",
-      "logoHelper": "Describes the logo for people who cannot see it"
+      "logoHelper": "Describes the logo for people who cannot see it",
+      "button": "Button text"
     },
     "url": {
       "label": "Link",
@@ -2057,6 +2084,24 @@
       "small": "Small",
       "medium": "Medium",
       "large": "Large"
+    },
+    "background": {
+      "label": "Background colour",
+      "helper": "As a colour code like #3c163c. On a dark background the text turns white. Empty: the normal footer."
+    },
+    "social": {
+      "title": "Social media",
+      "helper": "A row of links to Instagram, Facebook etc. above the bottom line."
+    },
+    "bottomLinks": {
+      "title": "Links in the bottom line"
+    },
+    "link": {
+      "label": "Text",
+      "url": "Target",
+      "icon": "Icon (optional)",
+      "add": "Add link",
+      "remove": "Remove link"
     }
   },
   "emphasis": {

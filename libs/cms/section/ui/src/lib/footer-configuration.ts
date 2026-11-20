@@ -8,7 +8,7 @@ import {
 import { ENV } from '@okr/shared-config';
 import { IMAGE_MIMETYPES } from '@okr/shared-constants';
 import {
-  FOOTER_ITEM_TYPES, FOOTER_LOGO_HEIGHTS, FOOTER_MAX_COLUMNS, FooterConfig, FooterItem, FooterItemType, FooterLogoHeight, UserModel
+  FOOTER_ITEM_TYPES, FOOTER_LOGO_HEIGHTS, FOOTER_MAX_COLUMNS, FooterConfig, FooterItem, FooterItemType, FooterLink, FooterLogoHeight, UserModel
 } from '@okr/shared-models';
 import { Checkbox, CheckboxI18n, ErrorNote, ImgDirective, TextareaInput, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { confirm, createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
@@ -16,8 +16,8 @@ import { fill, IMGIX_THUMBNAIL_PARAMS, sanitizeFileName } from '@okr/shared-util
 import { UploadService } from '@okr/avatar-data-access';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import {
-  FOOTER_BOTTOM_LINE_LENGTH, FOOTER_LABEL_LENGTH, FOOTER_URL_LENGTH, footerColumnCount, footerItemField, footerLabelLength,
-  getFieldErrors, newFooterItem, normalizeFooterConfig, SectionErrors
+  FOOTER_BOTTOM_LINE_LENGTH, FOOTER_LABEL_LENGTH, FOOTER_URL_LENGTH, footerColumnCount, footerItemField, footerLabelLength, footerLinkField,
+  getFieldErrors, newFooterItem, newFooterLink, normalizeFooterConfig, SectionErrors
 } from '@okr/cms-section-util';
 
 interface FooterConfigI18n {
@@ -44,6 +44,18 @@ interface FooterConfigI18n {
   footer_type_link:               Signal<string>;
   footer_type_icon:               Signal<string>;
   footer_type_logo:               Signal<string>;
+  footer_type_button:             Signal<string>;
+  footer_itemLabel_button:        Signal<string>;
+  footer_background_label:        Signal<string>;
+  footer_background_helper:       Signal<string>;
+  footer_social_title:            Signal<string>;
+  footer_social_helper:           Signal<string>;
+  footer_bottomLinks_title:       Signal<string>;
+  footer_link_label:              Signal<string>;
+  footer_link_url:                Signal<string>;
+  footer_link_icon:               Signal<string>;
+  footer_link_add:                Signal<string>;
+  footer_link_remove:             Signal<string>;
   footer_itemLabel_title:         Signal<string>;
   footer_itemLabel_text:          Signal<string>;
   footer_itemLabel_link:          Signal<string>;
@@ -125,6 +137,55 @@ interface FooterConfigI18n {
               </ion-col>
             </ion-row>
           }
+          <ion-row>
+            <ion-col size="12" size-md="6">
+              <okr-text-input [i18n]="backgroundI18n()" [value]="config().background ?? ''" (valueChange)="patch({ background: $event })"
+                              [maxLength]="backgroundLength" [readOnly]="readOnly()" [showHelper]="true" />
+              <okr-error-note [errors]="errorsFor('footer.background')" />
+            </ion-col>
+          </ion-row>
+          <!-- the social row and the links of the bottom line (la21staefa: Instagram, Facebook; Impressum) -->
+          @for (list of linkLists; track list) {
+            <ion-row>
+              <ion-col size="12">
+                <ion-note><strong>{{ list === 'social' ? i18n().footer_social_title() : i18n().footer_bottomLinks_title() }}</strong>
+                  @if (list === 'social') { · {{ i18n().footer_social_helper() }} }</ion-note>
+              </ion-col>
+            </ion-row>
+            @for (link of linksOf(list); track $index; let i = $index) {
+              <ion-row>
+                <ion-col size="12" size-md="4">
+                  <okr-text-input [i18n]="linkI18n('label')" [value]="link.label" (valueChange)="patchLink(list, i, { label: $event })"
+                                  [maxLength]="labelMax" [readOnly]="readOnly()" />
+                  <okr-error-note [errors]="errorsFor(linkField(list, i, 'label'))" />
+                </ion-col>
+                <ion-col size="12" size-md="4">
+                  <okr-text-input [i18n]="linkI18n('url')" [value]="link.url" (valueChange)="patchLink(list, i, { url: $event })"
+                                  [maxLength]="urlLength" [readOnly]="readOnly()" inputMode="url" />
+                  <okr-error-note [errors]="errorsFor(linkField(list, i, 'url'))" />
+                </ion-col>
+                <ion-col size="10" size-md="3">
+                  <okr-text-input [i18n]="linkI18n('icon')" [value]="link.icon ?? ''" (valueChange)="patchLink(list, i, { icon: $event })"
+                                  [maxLength]="iconLength" [readOnly]="readOnly()" />
+                  <okr-error-note [errors]="errorsFor(linkField(list, i, 'icon'))" />
+                </ion-col>
+                <ion-col size="2" size-md="1" class="ion-align-self-center">
+                  @if (!readOnly()) {
+                    <ion-button fill="clear" color="medium" [attr.aria-label]="i18n().footer_link_remove()" (click)="removeLink(list, i)">
+                      <ion-icon slot="icon-only" src="{{ 'cancel-circle' | svgIcon }}" />
+                    </ion-button>
+                  }
+                </ion-col>
+              </ion-row>
+            }
+            @if (!readOnly()) {
+              <ion-row><ion-col size="12">
+                <ion-button size="small" fill="clear" (click)="addLink(list)">
+                  <ion-icon slot="start" src="{{ 'add' | svgIcon }}" />{{ i18n().footer_link_add() }}
+                </ion-button>
+              </ion-col></ion-row>
+            }
+          }
         </ion-grid>
       </ion-card-content>
     </ion-card>
@@ -198,7 +259,7 @@ interface FooterConfigI18n {
                           <okr-error-note [errors]="errorsFor(field(c, i, 'height'))" />
                         }
 
-                        @if (item.type === 'link' || item.type === 'icon' || item.type === 'logo') {
+                        @if (item.type === 'link' || item.type === 'button' || item.type === 'icon' || item.type === 'logo') {
                           <okr-text-input [i18n]="urlI18n()" [value]="item.url" (valueChange)="patchItem(c, i, { url: $event })"
                                           [maxLength]="urlLength" [readOnly]="readOnly()" [showHelper]="true" inputMode="url" />
                           <okr-error-note [errors]="errorsFor(field(c, i, 'url'))" />
@@ -246,6 +307,13 @@ export class FooterConfiguration {
   protected readonly bottomLineLength = FOOTER_BOTTOM_LINE_LENGTH;
   protected readonly iconLength = FOOTER_LABEL_LENGTH;
   protected readonly urlLength = FOOTER_URL_LENGTH;
+  protected readonly labelMax = FOOTER_LABEL_LENGTH;
+  /** `#RRGGBB` */
+  protected readonly backgroundLength = 7;
+  protected readonly linkLists = ['social', 'bottomLinks'] as const;
+  protected readonly backgroundI18n = computed((): TextInputI18n => ({
+    name: 'footerBackground', label: this.i18n().footer_background_label(), placeholder: '#3c163c', helper: this.i18n().footer_background_helper(),
+  }));
 
   /** the item whose fields are open, as 'column:index' */
   private readonly openItem = signal<string | undefined>(undefined);
@@ -258,7 +326,7 @@ export class FooterConfiguration {
     const i = this.i18n();
     return {
       title: i.footer_type_title(), text: i.footer_type_text(), link: i.footer_type_link(),
-      icon: i.footer_type_icon(), logo: i.footer_type_logo(),
+      icon: i.footer_type_icon(), logo: i.footer_type_logo(), button: i.footer_type_button(),
     };
   });
 
@@ -290,7 +358,7 @@ export class FooterConfiguration {
     const i = this.i18n();
     return {
       title: i.footer_itemLabel_title(), text: i.footer_itemLabel_text(), link: i.footer_itemLabel_link(),
-      icon: i.footer_itemLabel_icon(), logo: i.footer_itemLabel_logo(),
+      icon: i.footer_itemLabel_icon(), logo: i.footer_itemLabel_logo(), button: i.footer_itemLabel_button(),
     };
   });
 
@@ -338,6 +406,32 @@ export class FooterConfiguration {
   protected toggle(column: number, index: number): void {
     const key = `${column}:${index}`;
     this.openItem.update(open => (open === key ? undefined : key));
+  }
+
+  protected linkI18n(field: 'label' | 'url' | 'icon'): TextInputI18n {
+    const i = this.i18n();
+    const label = field === 'label' ? i.footer_link_label() : field === 'url' ? i.footer_link_url() : i.footer_link_icon();
+    return { name: `link-${field}`, label, placeholder: '', helper: '' };
+  }
+
+  protected linksOf(list: 'social' | 'bottomLinks'): FooterLink[] {
+    return this.config()[list] ?? [];
+  }
+
+  protected linkField(list: 'social' | 'bottomLinks', index: number, field: keyof FooterLink): string {
+    return footerLinkField(list, index, field);
+  }
+
+  protected addLink(list: 'social' | 'bottomLinks'): void {
+    this.patch({ [list]: [...this.linksOf(list), newFooterLink()] });
+  }
+
+  protected removeLink(list: 'social' | 'bottomLinks', index: number): void {
+    this.patch({ [list]: this.linksOf(list).filter((_, i) => i !== index) });
+  }
+
+  protected patchLink(list: 'social' | 'bottomLinks', index: number, changes: Partial<FooterLink>): void {
+    this.patch({ [list]: this.linksOf(list).map((l, i) => (i === index ? { ...l, ...changes } : l)) });
   }
 
   /*-------------------------- changes --------------------------------*/

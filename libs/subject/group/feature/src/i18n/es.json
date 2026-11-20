@@ -116,6 +116,15 @@
     "placeholder": "sssssssss",
     "helper": "Un nombre legible para el grupo, para que pueda encontrarse más fácilmente en las listas."
   },
+  "subTitle": {
+    "label": "Subtítulo",
+    "placeholder": "p. ej. ¿Y adónde llevas tus cosas favoritas rotas?",
+    "helper": "Una línea bajo el nombre, en la tarjeta del grupo en la web."
+  },
+  "color": {
+    "label": "Color",
+    "helper": "Fondo de la tarjeta en la web, como código de color tipo #59A3BF. Vacío: la tarjeta normal."
+  },
   "icon": {
     "label": "Icono",
     "placeholder": "Nombre",

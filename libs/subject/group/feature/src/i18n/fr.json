@@ -116,6 +116,15 @@
     "placeholder": "sssssssss",
     "helper": "Un nom lisible pour le groupe, afin qu'il puisse être trouvé plus facilement dans les listes."
   },
+  "subTitle": {
+    "label": "Sous-titre",
+    "placeholder": "p. ex. Et où apportes-tu tes objets préférés cassés ?",
+    "helper": "Une ligne sous le nom, sur la carte du groupe sur le site."
+  },
+  "color": {
+    "label": "Couleur",
+    "helper": "Fond de la carte sur le site, en code couleur comme #59A3BF. Vide : la carte normale."
+  },
   "icon": {
     "label": "Icône",
     "placeholder": "Nom",

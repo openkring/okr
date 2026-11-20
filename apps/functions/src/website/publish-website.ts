@@ -10,9 +10,11 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore, type DocumentSnapshot, type Firestore } from 'firebase-admin/firestore';
 import { PageCollection, WebsiteCollection, type PageModel, type WebsiteModel, type WebsiteNode } from '@okr/shared-models';
 import {
+  groupPagesInTree,
   publishedPageSections,
   renderSite,
   toImgixUrl,
+  type PublicGroup,
   type PublicPerson,
   type PublishProblem,
   type RenderInput,
@@ -24,7 +26,7 @@ import {
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId } from '@okr/shared-util-functions';
 
 import { getHtmlSanitizer } from '../publicApi/sanitize';
-import { loadSectionPeople } from './group-people';
+import { loadPublicGroups, loadSectionPeople } from './group-people';
 import { cloneStaticAssets, finalizeAndRelease, getLiveVersion, uploadFiles } from './hosting-client';
 import { acquireLock, closeLock, type PublishLock, type PublishState } from './publish-lock';
 import { loadTemplates, TemplateMissingError } from './template-store';
@@ -66,6 +68,8 @@ export interface SiteContent {
    * from roles (spec 1.153 §13, §13.1)
    */
   people?: Map<string, PublicPerson[]>;
+  /** group key → its card, for tiles sections with source 'groups' (loaded only when such a section is published) */
+  groups?: Map<string, PublicGroup>;
 }
 
 export type SitePublishedFields = Partial<Pick<WebsiteModel, 'lastPublishedAt' | 'lastPublishedBy' | 'lastPublishedVersion'>>;
@@ -140,7 +144,7 @@ export async function runPublish(deps: PublishDeps, req: PublishRequest): Promis
       logger.error(`publishWebsite: ${siteId} refused, hostingSite ${JSON.stringify(site.hostingSite)} is not a website Hosting site`);
       return await refuse([{ code: 'hostingSiteInvalid' }]);
     }
-    const { pages: pageMap, sections, people } = await deps.loadContent(site);
+    const { pages: pageMap, sections, people, groups } = await deps.loadContent(site);
     stage = 'templates';
     let templates: TemplateSet;
     try {
@@ -151,7 +155,7 @@ export async function runPublish(deps: PublishDeps, req: PublishRequest): Promis
     }
     stage = 'render';
     const sanitize = await deps.getSanitizer();
-    const rendered = deps.renderSite({ site, pages: pageMap, sections, templates, imageUrl: toImgixUrl, sanitize, people });
+    const rendered = deps.renderSite({ site, pages: pageMap, sections, templates, imageUrl: toImgixUrl, sanitize, people, groups });
     if (rendered.problems.length > 0) return await refuse(rendered.problems);
     const files = rendered.files.length;
 
@@ -234,13 +238,19 @@ export async function loadSiteContent(db: Firestore, site: WebsiteModel): Promis
       if (data) sections.set(snap.id, data as SectionDoc);
     }
   };
-  await loadSections([...pages.values()].flatMap((p) => (p.sections ?? []).flatMap((raw) => sectionCandidates(raw, tenants))));
+  await loadSections([
+    ...[...pages.values()].flatMap((p) => (p.sections ?? []).flatMap((raw) => sectionCandidates(raw, tenants))),
+    // the footer section the site draws instead of the template footer (WebsiteModel.footerSectionKey)
+    ...(site.footerSectionKey?.trim() ? [site.footerSectionKey.trim()] : []),
+  ]);
 
   const nested: string[] = [];
   const peopleSections: SectionDoc[] = [];
+  let needsGroups = false;
   for (const page of pages.values()) {
     for (const { section } of publishedPageSections(page, tenants, sections)) {
       if (section.type === 'people') peopleSections.push(section);
+      if (section.type === 'tiles' && section.properties?.['source'] === 'groups') needsGroups = true;
       if (section.type !== 'accordion') continue;
       const items = section.properties?.['items'];
       for (const it of Array.isArray(items) ? (items as { key?: unknown }[]) : []) {
@@ -250,8 +260,10 @@ export async function loadSiteContent(db: Firestore, site: WebsiteModel): Promis
   }
   if (nested.length > 0) await loadSections(nested);
   const people = await loadSectionPeople(db, peopleSections, tenants);
-  return { pages, sections, people };
+  const groups = needsGroups ? await loadPublicGroups(db, groupPagesInTree(site.nav ?? []).map((g) => g.key), tenants) : undefined;
+  return { pages, sections, people, groups };
 }
+
 
 function collectPageKeys(nodes: WebsiteNode[], out: string[] = []): string[] {
   for (const n of nodes) {

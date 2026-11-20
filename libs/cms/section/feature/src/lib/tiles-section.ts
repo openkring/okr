@@ -1,10 +1,16 @@
 import { Component, computed, inject, input } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { combineLatest, map, of } from 'rxjs';
 import { Router } from '@angular/router';
 import { NgTemplateOutlet } from '@angular/common';
 import { IonIcon } from '@ionic/angular';
 
-import { TilesSection } from '@okr/shared-models';
-import { tileImageUrl, tilesColumns, validTiles, withTilesDefaults } from '@okr/cms-section-util';
+import { PageCollection, PageModel, TilesSection } from '@okr/shared-models';
+import { groupTiles, tileColor, tileImageUrl, tilesColumns, validTiles, withTilesDefaults } from '@okr/cms-section-util';
+import { AppStore } from '@okr/shared-feature';
+import { FirestoreService } from '@okr/shared-data-access';
+import { AvatarPipe } from '@okr/avatar-ui';
+import { resourceParams } from '@okr/shared-util-angular';
 import { ENV } from '@okr/shared-config';
 import { ImgDirective } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -21,7 +27,7 @@ import { openSectionLink } from './section-link';
 @Component({
   selector: 'okr-tiles-section',
   standalone: true,
-  imports: [NgTemplateOutlet, IonIcon, SvgIconPipe, ImgDirective],
+  imports: [NgTemplateOutlet, IonIcon, SvgIconPipe, ImgDirective, AvatarPipe],
   styles: [`
     :host { display: block; }
     .eyebrow { margin: 0px 0px 4px 0px; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
@@ -48,6 +54,15 @@ import { openSectionLink } from './section-link';
     .tile p { margin: 0px; }
     .link { display: inline-block; margin-top: auto; padding-top: 8px; font-weight: 600; }
     button.tile { cursor: pointer; width: 100%; }
+    /* a group card in its own colour (TileItem.color): white text, the logo on the colour */
+    .tile.colored { background: var(--tile-bg); color: #fff; }
+    .tile.colored .tone-primary, .tile.colored .tone-secondary { color: #fff; }
+    .tile.colored .tile-image.contain { background: transparent; }
+    /* list layout: one row per tile, the picture left */
+    .grid.list { grid-template-columns: 1fr !important; }
+    .grid.list .card-tile { flex-direction: row; align-items: center; gap: 16px; }
+    .grid.list .tile-image { width: 144px; flex: 0 0 144px; margin-bottom: 0; }
+    @media (width <= 480px) { .grid.list .card-tile { flex-direction: column; align-items: flex-start; } .grid.list .tile-image { width: 100%; flex-basis: auto; } }
     button.tile:focus-visible { outline: 2px solid var(--ion-color-primary); outline-offset: 2px; }
   `],
   template: `
@@ -55,7 +70,7 @@ import { openSectionLink } from './section-link';
     @if (section().subTitle) { <p class="eyebrow" [style.--accent]="accent()">{{ section().subTitle }}</p> }
     @if (section().title) { <h2>{{ section().title }}</h2> }
     @if (section().intro && section().introPosition !== 'above') { <p class="intro">{{ section().intro }}</p> }
-    <div class="grid" [class.stat]="variant() === 'stat'" [style.--cols]="columns()">
+    <div class="grid" [class.stat]="variant() === 'stat'" [class.list]="layout() === 'list'" [style.--cols]="columns()">
       @for (item of items(); track $index) {
         @if (variant() === 'stat') {
           <div class="tile stat-tile">
@@ -63,18 +78,20 @@ import { openSectionLink } from './section-link';
             <span class="caption">{{ item.title }}</span>
           </div>
         } @else if (item.url) {
-          <button type="button" class="tile card-tile" (click)="open(item.url)">
+          <button type="button" class="tile card-tile" [class.colored]="!!item.color" [style.--tile-bg]="item.color || null" (click)="open(item.url)">
             <ng-container *ngTemplateOutlet="cardBody; context: { $implicit: item }" />
           </button>
         } @else {
-          <div class="tile card-tile">
+          <div class="tile card-tile" [class.colored]="!!item.color" [style.--tile-bg]="item.color || null">
             <ng-container *ngTemplateOutlet="cardBody; context: { $implicit: item }" />
           </div>
         }
       }
     </div>
     <ng-template #cardBody let-item>
-      @if (item.imageSrc) { <img okrImg class="tile-image" [class.contain]="item.imageFit === 'contain'" [src]="item.imageSrc" alt="" /> }
+      @if (item.avatarKey) {
+        <img okrImg class="tile-image contain" [src]="item.avatarKey | avatar:'group'" alt="" />
+      } @else if (item.imageSrc) { <img okrImg class="tile-image" [class.contain]="item.imageFit === 'contain'" [src]="item.imageSrc" alt="" /> }
       <!-- the icon slot is kept on every card once one card has an icon, so the titles line up too -->
       @if (hasIcons()) {
         <span class="icon-slot">
@@ -90,18 +107,40 @@ import { openSectionLink } from './section-link';
 export class TilesSectionComponent {
   private readonly router = inject(Router);
   private readonly imgixBaseUrl = inject(ENV).services.imgixBaseUrl;
+  private readonly appStore = inject(AppStore);
+  private readonly firestoreService = inject(FirestoreService);
 
   // inputs
   public section = input.required<TilesSection>();
 
   // derived values
   protected readonly config = computed(() => withTilesDefaults(this.section().properties));
-  protected readonly variant = computed(() => this.config().variant);
+  protected readonly fromGroups = computed(() => this.config().source === 'groups');
+  protected readonly variant = computed(() => this.fromGroups() ? 'image' : this.config().variant);
+  protected readonly layout = computed(() => this.config().layout ?? 'grid');
+
+  /** source 'groups': the keys of the groups whose content page is public — one cached read per group page */
+  private readonly groupKeys = computed(() => this.fromGroups()
+    ? this.appStore.allGroups().filter((g) => !g.isArchived).map((g) => g.okey).sort()
+    : []);
+  private readonly publicGroupKeys = rxResource({
+    params: resourceParams(() => ({ keys: this.groupKeys() })),
+    stream: ({ params }) => params.keys.length === 0 ? of(new Set<string>()) : combineLatest(params.keys.map((key) =>
+      this.firestoreService.readModel<PageModel>(PageCollection, `${key}_content`).pipe(
+        map((page) => (page && page.isPrivate === false ? key : ''))))).pipe(map((keys) => new Set(keys.filter(Boolean)))),
+  });
   protected readonly columns = computed(() => tilesColumns(this.config().columns));
-  protected readonly items = computed(() => validTiles(this.config().items, this.variant()).map((i) => ({
-    ...i,
-    imageSrc: this.variant() === 'image' ? tileImageUrl(i.imageUrl, i.imageFit, this.imgixBaseUrl) : '',
-  })));
+  protected readonly items = computed((): (ReturnType<typeof validTiles>[number] & { imageSrc: string; avatarKey?: string })[] => {
+    if (this.fromGroups()) {
+      const publicKeys = this.publicGroupKeys.value() ?? new Set<string>();
+      return groupTiles(this.appStore.allGroups(), publicKeys, this.config().linkLabel).map((t) => ({ ...t, imageSrc: '' }));
+    }
+    return validTiles(this.config().items, this.variant()).map((i) => ({
+      ...i,
+      color: this.variant() === 'stat' ? '' : tileColor(i.color),
+      imageSrc: this.variant() === 'image' ? tileImageUrl(i.imageUrl, i.imageFit, this.imgixBaseUrl) : '',
+    }));
+  });
   protected readonly hasIcons = computed(() => this.items().some((i) => !!i.icon));
   /** the section colour as a css colour, for the subtitle line above the title */
   protected readonly accent = computed(() => `var(--ion-color-${ColorsIonic[this.section().color ?? 0]?.name ?? 'primary'})`);

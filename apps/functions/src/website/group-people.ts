@@ -2,10 +2,10 @@
 // resolveGroupPeople / resolveRolePeople, shared by publishWebsite and publicApi's page route so both
 // resolve a people section the same way.
 import type { Firestore } from 'firebase-admin/firestore';
-import { AvatarCollection, MembershipCollection, PersonCollection, ResponsibilityCollection, ResponsibilityModelName } from '@okr/shared-models';
+import { AvatarCollection, GroupCollection, MembershipCollection, PersonCollection, ResponsibilityCollection, ResponsibilityModelName } from '@okr/shared-models';
 import {
   peopleSourceKey, peopleSourceOf, resolveGroupPeople, resolveRolePeople, roleIdsUnderParent,
-  type GroupMembershipDoc, type GroupPersonDoc, type PublicPerson, type RoleDoc, type SectionDoc,
+  type GroupMembershipDoc, type GroupPersonDoc, type PublicGroup, type PublicPerson, type RoleDoc, type SectionDoc,
 } from '@okr/cms-website-render';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
@@ -189,6 +189,47 @@ export async function withAvatarImages(
       const image = p.showImage === true ? pathOf(p.key) : undefined;
       return image ? { ...p, image } : p;
     }));
+  }
+  return out;
+}
+
+/** Raw snapshots by id, in getAll batches (missing documents come back with exists = false). */
+async function readSnaps(db: Firestore, collection: string, ids: string[]): Promise<FirebaseFirestore.DocumentSnapshot[]> {
+  const out: FirebaseFirestore.DocumentSnapshot[] = [];
+  const unique = [...new Set(ids)];
+  for (let i = 0; i < unique.length; i += GET_ALL_CHUNK) {
+    out.push(...await db.getAll(...unique.slice(i, i + GET_ALL_CHUNK).map((k) => db.collection(collection).doc(k))));
+  }
+  return out;
+}
+
+/**
+ * The cards of the groups whose pages are in the tree (TilesConfig source 'groups'): name, subtitle, colour and
+ * the group's avatar as its logo — the tenant's own avatar first, then the shared one. Groups of another tenant
+ * and archived groups are left out. Which of them is public is decided by the renderer (`groupTileItems`).
+ */
+export async function loadPublicGroups(db: Firestore, keys: string[], tenants: string[]): Promise<Map<string, PublicGroup>> {
+  const out = new Map<string, PublicGroup>();
+  if (keys.length === 0) return out;
+  const tenantId = tenants[0] ?? '';
+  const avatarIds = keys.flatMap((k) => [`${tenantId}.group.${k}`, `group.${k}`]);
+  const avatars = new Map<string, string>();
+  for (const snap of await readSnaps(db, AvatarCollection, avatarIds)) {
+    const path = snap.data()?.['storagePath'];
+    if (typeof path === 'string' && path) avatars.set(snap.id, path);
+  }
+  for (const snap of await readSnaps(db, GroupCollection, keys)) {
+    const data = snap.data();
+    if (!data || data['isArchived'] === true) continue;
+    const owners = Array.isArray(data['tenants']) ? (data['tenants'] as string[]) : [];
+    if (!owners.some((t) => tenants.includes(t))) continue;
+    out.set(snap.id, {
+      key: snap.id,
+      name: typeof data['name'] === 'string' ? data['name'] : '',
+      subTitle: typeof data['subTitle'] === 'string' ? data['subTitle'] : '',
+      color: typeof data['color'] === 'string' ? data['color'] : '',
+      image: avatars.get(`${tenantId}.group.${snap.id}`) ?? avatars.get(`group.${snap.id}`) ?? '',
+    });
   }
   return out;
 }

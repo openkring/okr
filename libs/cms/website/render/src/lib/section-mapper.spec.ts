@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { mapCalendarKey, mapSection, type SectionDoc } from './section-mapper';
+import { mapCalendarKey, mapSection, type SectionDoc, mapSlideshow } from './section-mapper';
 
 const sanitize = (html: string) => html;
 const map = (s: SectionDoc) => mapSection('sec1', s, new Map(), sanitize) as Record<string, unknown>;
@@ -118,5 +118,28 @@ describe('mapSection video embeds without cookies (spec 1.165 §12)', () => {
 
   it('leaves another provider alone', () => {
     expect(map({ type: 'video', name: 'v', properties: { url: 'https://player.vimeo.com/video/1' } })['url']).toBe('https://player.vimeo.com/video/1');
+  });
+});
+
+describe('mapSlideshow', () => {
+  const imgs = [{ url: 'tenant/la21staefa/hero/a.jpg', altText: 'A' }, { url: 'tenant/la21staefa/hero/b.jpg' }];
+
+  it('maps the la21staefa header with wide imgix crops', () => {
+    const show = mapSlideshow({ effect: 'fade', autoplay: true, interval: 3, duration: 1 }, undefined, imgs);
+    expect(show).toMatchObject({ effect: 'fade', autoplay: true, interval: 3, duration: 1 });
+    expect(show?.slides[0]).toEqual({ url: 'https://bkaiser.imgix.net/tenant/la21staefa/hero/a.jpg?w=1600&h=600&fit=crop&auto=format,compress', alt: 'A' });
+  });
+
+  it('keeps the swipe slider for none, a grid layout or a single image', () => {
+    expect(mapSlideshow({ effect: 'none' }, undefined, imgs)).toBeUndefined();
+    expect(mapSlideshow({ effect: 'fade' }, 'mosaic', imgs)).toBeUndefined();
+    expect(mapSlideshow({ effect: 'fade' }, undefined, imgs.slice(0, 1))).toBeUndefined();
+    expect(mapSlideshow(undefined, undefined, imgs)).toBeUndefined();
+  });
+
+  it('clamps times and drops unsafe image paths', () => {
+    const show = mapSlideshow({ effect: 'zoom', interval: 99, duration: 0 }, 'slider', [...imgs, { url: '../x' }]);
+    expect(show).toMatchObject({ interval: 30, duration: 0.2 });
+    expect(show?.slides).toHaveLength(2);
   });
 });

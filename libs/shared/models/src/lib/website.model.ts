@@ -31,6 +31,11 @@ export class WebsiteModel implements OkrModel {
   public taglineI18n?: I18nString;
   public nav: WebsiteNode[] = []; // header navigation, ordered
   public footer: WebsiteNode[] = []; // footer link columns, ordered
+  /**
+   * A footer section (`sections/{key}`, type 'footer') the website draws as its footer instead of the
+   * template's own (columns, buttons, social row, bottom links, background). Absent or '' = the template footer.
+   */
+  public footerSectionKey?: string;
   public homePageKey = ''; // page rendered at '/'
   public lastPublishedAt?: string; // ISO, written by publish
   public lastPublishedBy?: string; // personKey

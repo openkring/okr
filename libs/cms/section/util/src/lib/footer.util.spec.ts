@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { FOOTER_CONFIG_SHAPE, FOOTER_ITEM_SHAPE, FooterConfig } from '@okr/shared-models';
 
-import { footerBlocks, footerColumnCount, footerVisibleColumns, isExternalFooterUrl, isFooterUrl, newFooterItem, normalizeFooterConfig } from './footer.util';
+import { footerBackground, footerBlocks, footerColumnCount, footerVisibleColumns, isDarkColor, isExternalFooterUrl, isFooterUrl, newFooterItem, normalizeFooterConfig } from './footer.util';
 
 describe('normalizeFooterConfig', () => {
   it('fills a missing config with three empty columns', () => {
@@ -66,5 +66,22 @@ describe('footerBlocks', () => {
 
   it('drops logos without an image', () => {
     expect(footerBlocks([logo(''), newFooterItem('text')]).map(b => b.kind)).toEqual(['item']);
+  });
+});
+
+describe('footer colours and links', () => {
+  it('passes only hex backgrounds and tells dark from light', () => {
+    expect(footerBackground('#3c163c')).toBe('#3c163c');
+    expect(footerBackground('red')).toBe('');
+    expect(isDarkColor('#3c163c')).toBe(true);
+    expect(isDarkColor('#f5f5f5')).toBe(false);
+    expect(isDarkColor('#fff')).toBe(false);
+  });
+
+  it('normalizes missing social and bottom links to empty lists', () => {
+    const config = normalizeFooterConfig({ social: [{ label: 'Instagram', url: 'https://i' } as never] });
+    expect(config.social).toEqual([{ label: 'Instagram', url: 'https://i', icon: '' }]);
+    expect(config.bottomLinks).toEqual([]);
+    expect(config.background).toBe('');
   });
 });

@@ -59,9 +59,10 @@ import {
 } from './render-context';
 import { compileTemplate, createTemplateEnv, escapeXml, langPath, type RenderData, type RenderFn } from './render-helpers';
 import { columnPairStarts, homeRowPlan, type HomeRow } from './home-layout';
-import { mapSection, pickText, type SanitizeFn, type SectionDoc } from './section-mapper';
+import { mapFooter, mapSection, pickText, type PublicFooter, type SanitizeFn, type SectionDoc } from './section-mapper';
 import { groupPagesInTree } from './website-tree-read.util';
 import type { PublicPerson } from './group-people';
+import { groupTileItems, type PublicGroup } from './group-tiles';
 
 export interface TemplateSet {
   manifest: TemplateManifest;
@@ -88,6 +89,8 @@ export interface RenderInput {
    * (resolveGroupPeople) and 'responsibility' (resolveRolePeople)
    */
   people?: ReadonlyMap<string, PublicPerson[]>;
+  /** group key → what its card shows, for tiles sections with source 'groups' (loaded only when one exists) */
+  groups?: ReadonlyMap<string, PublicGroup>;
 }
 
 export interface RenderedFile {
@@ -256,6 +259,17 @@ function robots(site: WebsiteModel): string {
   return `User-agent: *\nAllow: /\n\nSitemap: ${siteOrigin(site)}/sitemap.xml\n`;
 }
 
+/**
+ * The footer section the site names (`footerSectionKey`), mapped for the layout's footer partial — only a
+ * published footer section of one of the site's tenants; anything else keeps the template footer.
+ */
+export function siteFooterSection(site: WebsiteModel, sections: ReadonlyMap<string, SectionDoc>, tenants: string[]): PublicFooter | undefined {
+  const key = site.footerSectionKey?.trim();
+  const found = key ? resolveServableSection(key, tenants, sections as Map<string, SectionDoc>) : undefined;
+  if (!found || found.section.type !== 'footer') return undefined;
+  return mapFooter((found.section.properties ?? {}) as Record<string, unknown>);
+}
+
 export function renderSite(input: RenderInput): RenderResult {
   const { site, pages, sections, templates, imageUrl, sanitize } = input;
   const validation = validateForPublish(site, pages, sections, templates.manifest);
@@ -288,8 +302,10 @@ export function renderSite(input: RenderInput): RenderResult {
     else if (!homePage) problems.push({ code: 'templateMissing', detail: `pages/${name}.hbs` });
   }
   const homeVariant = (type: string): RenderFn | undefined => compiled.sections.get(`home/${type}`);
+  const groupTiles = groupTileItems(groupPagesInTree(site.nav ?? []), input.groups, pages);
   const languages = renderLanguages(site);
   const tenants = site.tenants ?? [];
+  const footerSection = siteFooterSection(site, sections, tenants);
   const year = new Date().getFullYear();
   const files: RenderedFile[] = [];
 
@@ -298,7 +314,7 @@ export function renderSite(input: RenderInput): RenderResult {
     languages,
     site: { name: site.name ?? '', domain: siteOrigin(site), tagline: pickText(site.tagline, site.taglineI18n, lang) },
     nav: navItems(site.nav ?? [], site, lang, key),
-    footer: { tagline: pickText(site.tagline, site.taglineI18n, lang), items: navItems(site.footer ?? [], site, lang, key) },
+    footer: { tagline: pickText(site.tagline, site.taglineI18n, lang), items: navItems(site.footer ?? [], site, lang, key), section: footerSection },
     alternates: alternates(path, languages, siteOrigin(site)),
   });
 
@@ -321,7 +337,7 @@ export function renderSite(input: RenderInput): RenderResult {
       const contexts = sectionContexts(
         published.map(({ raw, sectionKey, section }, i) => {
           try {
-            return mapSection(sectionKey, section, nestedSectionsOf(section, tenants, sections), sanitize, lang, input.people);
+            return mapSection(sectionKey, section, nestedSectionsOf(section, tenants, sections), sanitize, lang, input.people, groupTiles);
           } catch (e) {
             failed.add(i);
             problems.push({ code: 'renderFailed', pageKey: entry.key, sectionKey: raw, detail: message(e) });

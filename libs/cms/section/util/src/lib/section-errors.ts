@@ -131,7 +131,7 @@ export type SegmentErrorFields<S extends string> = Record<S, string[]>;
 /** The article's «Bilder» card (spec 1.154 §5). */
 export const ARTICLE_IMAGES_SEGMENT_FIELDS: SegmentErrorFields<'select' | 'layout' | 'styles'> = {
   select: [IMAGES_PREFIX],
-  layout: ['imageLayout', 'action', 'zoomFactor'],
+  layout: ['imageLayout', 'action', 'zoomFactor', 'slideshow.effect', 'slideshow.interval', 'slideshow.duration'],
   styles: IMAGE_STYLE_FIELDS.filter((field) => field !== 'action' && field !== 'zoomFactor'),
 };
 

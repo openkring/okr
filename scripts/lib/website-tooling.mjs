@@ -116,9 +116,9 @@ export function loadLocalTemplates(tenant) {
 }
 
 /** Renders a site; the sanitizer is injected here. */
-export function render({ site, pages, sections, people, templates }) {
+export function render({ site, pages, sections, people, groups, templates }) {
   const lib = loadRender();
-  return lib.renderSite({ site, pages, sections, people, templates, imageUrl: lib.toImgixUrl, sanitize: getSanitizer() });
+  return lib.renderSite({ site, pages, sections, people, groups, templates, imageUrl: lib.toImgixUrl, sanitize: getSanitizer() });
 }
 
 /** The seed of a tenant as a render input, or of `seedFile`; undefined without apps/<tenant>-website/content/seed.json. */
@@ -185,12 +185,17 @@ export async function loadLiveContent(firestore, site) {
       if (snap.data()) sections.set(snap.id, snap.data());
     }
   };
-  await loadSections([...pages.values()].flatMap((p) => (p.sections ?? []).flatMap(candidates)));
+  await loadSections([
+    ...[...pages.values()].flatMap((p) => (p.sections ?? []).flatMap(candidates)),
+    ...(site.footerSectionKey?.trim() ? [site.footerSectionKey.trim()] : []),
+  ]);
   const nested = [];
   const peopleSections = [];
+  let needsGroups = false;
   for (const page of pages.values()) {
     for (const { section } of publishedPageSections(page, tenants, sections)) {
       if (section.type === 'people') peopleSections.push(section);
+      if (section.type === 'tiles' && section.properties?.source === 'groups') needsGroups = true;
       if (section.type !== 'accordion') continue;
       const items = section.properties?.items;
       for (const it of Array.isArray(items) ? items : []) if (typeof it?.key === 'string' && it.key) nested.push(...candidates(it.key));
@@ -198,7 +203,10 @@ export async function loadLiveContent(firestore, site) {
   }
   if (nested.length) await loadSections(nested);
   const people = await loadPeopleLib().loadSectionPeople(firestore, peopleSections, tenants);
-  return { pages, sections, people };
+  const groups = needsGroups
+    ? await loadPeopleLib().loadPublicGroups(firestore, loadRender().groupPagesInTree(site.nav ?? []).map((g) => g.key), tenants)
+    : undefined;
+  return { pages, sections, people, groups };
 }
 
 /**
@@ -218,6 +226,6 @@ export async function loadLiveSource(tenant) {
     site = { ...JSON.parse(readFileSync(fixture, 'utf8')), okey: manifest.siteId };
     synthetic = true;
   }
-  const { pages, sections, people } = await loadLiveContent(firestore, site);
-  return { site, pages, sections, people, origin: synthetic ? 'live content + SYNTHETIC site (websites/' + manifest.siteId + ' is missing; fixture used)' : 'live', synthetic };
+  const { pages, sections, people, groups } = await loadLiveContent(firestore, site);
+  return { site, pages, sections, people, groups, origin: synthetic ? 'live content + SYNTHETIC site (websites/' + manifest.siteId + ' is missing; fixture used)' : 'live', synthetic };
 }

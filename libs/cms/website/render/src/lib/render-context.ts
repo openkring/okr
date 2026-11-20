@@ -1,3 +1,4 @@
+import type { PublicFooter } from './section-mapper';
 import type { PageModel, WebsiteModel, WebsiteNode } from '@okr/shared-models';
 
 import { langPath } from './render-helpers';
@@ -36,6 +37,8 @@ export interface FooterContext {
   tagline: string;
   /** the footer columns: usually menus whose children are the links */
   items: NavItem[];
+  /** the footer section the site names (`WebsiteModel.footerSectionKey`), mapped; absent = the template's own footer */
+  section?: PublicFooter;
 }
 
 export interface PageContext {

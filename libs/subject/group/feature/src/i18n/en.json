@@ -116,6 +116,15 @@
     "placeholder": "sssssssss",
     "helper": "A readable name for the group, so that it can be found more easily in lists."
   },
+  "subTitle": {
+    "label": "Subtitle",
+    "placeholder": "e.g. And where do you take your broken favourite things?",
+    "helper": "One line under the name, on the group's card on the website."
+  },
+  "color": {
+    "label": "Colour",
+    "helper": "Background of the card on the website, as a colour code like #59A3BF. Empty: the normal card."
+  },
   "icon": {
     "label": "Icon",
     "placeholder": "Name",

@@ -5,10 +5,10 @@ import {
 } from '@ionic/angular';
 
 import { ViewPositions } from '@okr/shared-categories';
-import { EDITOR_CONFIG_SHAPE, EditorConfig, ImageConfig, ImageStyle, UserModel, ViewPosition } from '@okr/shared-models';
-import { CategoryOld, CategoryOldI18n, ErrorNote, NumberInput, NumberInputI18n } from '@okr/shared-ui';
+import { ArticleSlideshow, EDITOR_CONFIG_SHAPE, EditorConfig, ImageConfig, ImageStyle, SLIDESHOW_EFFECTS, SlideshowEffect, UserModel, ViewPosition } from '@okr/shared-models';
+import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, ErrorNote, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n } from '@okr/shared-ui';
 import { coerceBoolean } from '@okr/shared-util-core';
-import { ARTICLE_IMAGES_SEGMENT_FIELDS, articleImagePosition, getErrorSegments, getFieldErrors, ImageLayoutId, resolveImageLayout, SectionErrors, SectionI18n } from '@okr/cms-section-util';
+import { ARTICLE_IMAGES_SEGMENT_FIELDS, DEFAULT_SLIDESHOW, SLIDESHOW_DURATION_MAX, SLIDESHOW_INTERVAL_MAX, articleImagePosition, getErrorSegments, getFieldErrors, ImageLayoutId, resolveImageLayout, SectionErrors, SectionI18n } from '@okr/cms-section-util';
 
 import { ImagesConfiguration } from './images-configuration';
 import { ImageStyleConfiguration } from './image-style-configuration';
@@ -40,7 +40,7 @@ const MULTI_IMAGE_POSITIONS = ViewPositions.filter((p) => p.id === ViewPosition.
   selector: 'okr-article-images-config',
   standalone: true,
   imports: [
-    CategoryOld, ErrorNote, NumberInput, ImagesConfiguration, ImageStyleConfiguration, ImageLayoutPreview,
+    CategoryOld, Checkbox, StringSelect, ErrorNote, NumberInput, ImagesConfiguration, ImageStyleConfiguration, ImageLayoutPreview,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, IonLabel, IonNote, IonButton,
     IonSegment, IonSegmentButton
   ],
@@ -106,6 +106,29 @@ const MULTI_IMAGE_POSITIONS = ViewPositions.filter((p) => p.id === ViewPosition.
                     </div>
                   </ion-col>
                 }
+                <!-- the slideshow (la21staefa header): only for the carousel layout with two or more images -->
+                @if (!journalMode() && layout() === 'slider') {
+                  <ion-col size="12" size-md="6">
+                    <okr-string-select [i18n]="effectI18n()" [selectedString]="slideshowEffect()" (selectedStringChange)="onEffectChange($event)"
+                      [stringList]="effects" [labels]="effectLabels()" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="errorsFor('slideshow.effect')" />
+                  </ion-col>
+                  @if (slideshow(); as show) {
+                    <ion-col size="12" size-md="6">
+                      <okr-checkbox [i18n]="autoplayI18n()" [checked]="show.autoplay" (checkedChange)="onSlideshowField('autoplay', $event)" [readOnly]="isReadOnly()" />
+                    </ion-col>
+                    <ion-col size="12" size-md="6">
+                      <okr-number-input [i18n]="intervalI18n()" [value]="show.interval" (valueChange)="onSlideshowField('interval', $event)"
+                        [min]="1" [max]="intervalMax" [maxLength]="4" [showHelper]="true" [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="errorsFor('slideshow.interval')" />
+                    </ion-col>
+                    <ion-col size="12" size-md="6">
+                      <okr-number-input [i18n]="durationI18n()" [value]="show.duration" (valueChange)="onSlideshowField('duration', $event)"
+                        [min]="0.2" [max]="durationMax" [maxLength]="4" [showHelper]="true" [readOnly]="isReadOnly()" />
+                      <okr-error-note [errors]="errorsFor('slideshow.duration')" />
+                    </ion-col>
+                  }
+                }
                 <!-- shown with any image count, so an unknown stored id with two or more images never blocks saving silently (below two images the layout is ignored and not validated) -->
                 <ion-col size="12">
                   <okr-error-note [errors]="errorsFor('imageLayout')" />
@@ -169,6 +192,8 @@ export class ArticleImagesConfiguration {
   public readonly imageLayout = model<string | undefined>(undefined);
   /** position and column size of the images (CMS only; the journal record has none) */
   public readonly content = model<EditorConfig>(EDITOR_CONFIG_SHAPE);
+  /** the self-running slideshow of the carousel; undefined = swipe only */
+  public readonly slideshow = model<ArticleSlideshow | undefined>(undefined);
   public readonly storagePath = input.required<string>();
   public readonly currentUser = input<UserModel | undefined>();
   public readonly readOnly = input(true);
@@ -213,6 +238,24 @@ export class ArticleImagesConfiguration {
   protected readonly positions = computed(() => this.count() > 1 ? MULTI_IMAGE_POSITIONS : ViewPositions);
   protected readonly colSize = computed(() => this.content().colSize ?? 4);
 
+  // slideshow
+  protected readonly effects = [...SLIDESHOW_EFFECTS] as string[];
+  protected readonly intervalMax = SLIDESHOW_INTERVAL_MAX;
+  protected readonly durationMax = SLIDESHOW_DURATION_MAX;
+  protected readonly slideshowEffect = computed(() => this.slideshow()?.effect ?? 'none');
+  protected readonly effectLabels = computed(() => [
+    this.i18n().article_slideshow_effect_none(), this.i18n().article_slideshow_effect_fade(), this.i18n().article_slideshow_effect_slide(),
+    this.i18n().article_slideshow_effect_zoom(), this.i18n().article_slideshow_effect_kenburns(),
+  ]);
+  protected readonly effectI18n = computed((): StringSelectI18n => ({ name: 'slideshowEffect', label: this.i18n().article_slideshow_effect_label() }));
+  protected readonly autoplayI18n = computed((): CheckboxI18n => ({ name: 'slideshowAutoplay', label: this.i18n().article_slideshow_autoplay_label(), helper: '' }));
+  protected readonly intervalI18n = computed((): NumberInputI18n => ({
+    name: 'slideshowInterval', label: this.i18n().article_slideshow_interval_label(), placeholder: '', helper: this.i18n().article_slideshow_interval_helper(),
+  }));
+  protected readonly durationI18n = computed((): NumberInputI18n => ({
+    name: 'slideshowDuration', label: this.i18n().article_slideshow_duration_label(), placeholder: '', helper: this.i18n().article_slideshow_duration_helper(),
+  }));
+
   // labels
   protected readonly positionI18n = computed(() => ({ name: 'position', label: this.i18n().editor_position_label() } as CategoryOldI18n));
   protected readonly colSizeI18n = computed(() => ({
@@ -242,6 +285,16 @@ export class ArticleImagesConfiguration {
     if (this.count() > 1 && position === ViewPosition.Bottom && this.imageLayout() === undefined) {
       this.imageLayout.set(this.layout());
     }
+  }
+
+  /** 'none' removes the setting (absent = swipe only); switching one on starts from the la21staefa defaults */
+  protected onEffectChange(effect: string): void {
+    if (effect === 'none') { this.slideshow.set(undefined); return; }
+    this.slideshow.update((show) => ({ ...(show ?? DEFAULT_SLIDESHOW), effect: effect as SlideshowEffect }));
+  }
+
+  protected onSlideshowField(field: 'autoplay' | 'interval' | 'duration', value: boolean | number): void {
+    this.slideshow.update((show) => ({ ...(show ?? DEFAULT_SLIDESHOW), [field]: value }));
   }
 
   protected onColSizeChange(colSize: number): void {

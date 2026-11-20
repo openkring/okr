@@ -138,6 +138,20 @@
         "choose": "Elegir diseño …",
         "empty": "Añade primero imágenes. Después puedes elegir aquí cómo se muestran."
       }
+    },
+    "slideshow": {
+      "title": "Presentación",
+      "effect_label": "Transición",
+      "effect_none": "ninguna (deslizar)",
+      "effect_fade": "fundido",
+      "effect_slide": "desplazar",
+      "effect_zoom": "zoom",
+      "effect_kenburns": "Ken Burns (paneo lento)",
+      "autoplay_label": "avanzar sola",
+      "interval_label": "Segundos por imagen",
+      "interval_helper": "Cuánto tiempo se ve una imagen (de 1 a 30).",
+      "duration_label": "Segundos para la transición",
+      "duration_helper": "Cuánto dura el cambio (de 0.2 a 5)."
     }
   },
   "contract": {
@@ -1734,7 +1748,18 @@
       "label": "Presentación",
       "cover": "La imagen llena la tarjeta",
       "contain": "Mostrar toda la imagen (logo)"
-    }
+    },
+    "source_label": "Mosaicos de",
+    "source_inline": "introducidos a mano",
+    "source_groups": "los grupos",
+    "source_helper": "«los grupos»: una tarjeta por cada grupo cuya página de contenido está en la web, con el logo, el nombre, el subtítulo y el color del grupo.",
+    "layout_label": "Disposición",
+    "layout_grid": "cuadrícula",
+    "layout_list": "lista",
+    "groupLinkLabel_label": "Texto del enlace",
+    "groupLinkLabel_helper": "Aparece al pie de cada tarjeta, por ejemplo «más …». Vacío: sin texto, la tarjeta sigue enlazada.",
+    "tileColor_label": "Color del mosaico",
+    "tileColor_helper": "Como código de color, por ejemplo #59A3BF. Vacío: el mosaico normal."
   },
   "timeline": {
     "label": "Línea de tiempo",
@@ -2028,7 +2053,8 @@
       "text": "Texto",
       "link": "Enlace",
       "icon": "Icono",
-      "logo": "Logotipo"
+      "logo": "Logotipo",
+      "button": "Botón"
     },
     "itemLabel": {
       "title": "Título",
@@ -2036,7 +2062,8 @@
       "link": "Texto del enlace",
       "icon": "Leyenda",
       "logo": "Texto alternativo",
-      "logoHelper": "Describe el logotipo para las personas que no pueden verlo"
+      "logoHelper": "Describe el logotipo para las personas que no pueden verlo",
+      "button": "Texto del botón"
     },
     "url": {
       "label": "Enlace",
@@ -2057,6 +2084,24 @@
       "small": "Pequeño",
       "medium": "Mediano",
       "large": "Grande"
+    },
+    "background": {
+      "label": "Color de fondo",
+      "helper": "Como código de color tipo #3c163c. Sobre un fondo oscuro el texto se vuelve blanco. Vacío: el pie normal."
+    },
+    "social": {
+      "title": "Redes sociales",
+      "helper": "Una fila de enlaces a Instagram, Facebook, etc. encima de la última línea."
+    },
+    "bottomLinks": {
+      "title": "Enlaces de la última línea"
+    },
+    "link": {
+      "label": "Texto",
+      "url": "Destino",
+      "icon": "Icono (opcional)",
+      "add": "Añadir enlace",
+      "remove": "Quitar enlace"
     }
   },
   "emphasis": {

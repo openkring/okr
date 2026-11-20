@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { TileItem, TILES_CONFIG_SHAPE } from '@okr/shared-models';
-import { tilesColumns, validTiles, withTilesDefaults } from './tiles-config.util';
+import { groupTiles, tileColor, tilesColumns, validTiles, withTilesDefaults } from './tiles-config.util';
 
 describe('tilesColumns', () => {
   it('clamps to 1-4 and defaults to 3', () => {
@@ -40,5 +40,31 @@ describe('withTilesDefaults', () => {
 
   it('keeps given values', () => {
     expect(withTilesDefaults({ variant: 'stat', columns: 2, items: [{ title: 'K', tone: 'primary' }] })).toMatchObject({ variant: 'stat', columns: 2, items: [{ title: 'K' }] });
+  });
+});
+
+describe('groupTiles', () => {
+  const groups = [
+    { okey: 'oase', name: 'Oase Kirchbühl', subTitle: ' Und wo …? ', color: '#C5C664' },
+    { okey: 'kiss', name: 'KISS Stäfa', color: 'red' },
+    { okey: 'old', name: 'Alt', isArchived: true },
+    { okey: 'chat1', name: 'Chat', kind: 'chat' },
+    { okey: 'priv', name: 'Privat' },
+  ];
+  const publicKeys = new Set(['oase', 'kiss', 'old', 'chat1']);
+
+  it('makes sorted, linked logo cards of the public groups only', () => {
+    const tiles = groupTiles(groups, publicKeys, 'mehr …');
+    expect(tiles.map((t) => t.title)).toEqual(['KISS Stäfa', 'Oase Kirchbühl']);
+    expect(tiles[1]).toMatchObject({ text: 'Und wo …?', color: '#C5C664', url: '/private/oase_content', linkLabel: 'mehr …', avatarKey: 'group.oase', imageFit: 'contain' });
+    expect(tiles[0].color).toBe('');
+  });
+});
+
+describe('tileColor', () => {
+  it('passes hex colours only', () => {
+    expect(tileColor('#59A3BF')).toBe('#59A3BF');
+    expect(tileColor('url(x)')).toBe('');
+    expect(tileColor(undefined)).toBe('');
   });
 });

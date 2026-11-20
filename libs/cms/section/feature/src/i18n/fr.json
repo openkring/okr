@@ -138,6 +138,20 @@
         "choose": "Choisir la mise en page …",
         "empty": "Ajoute d'abord des images. Tu pourras ensuite choisir ici comment elles s'affichent."
       }
+    },
+    "slideshow": {
+      "title": "Diaporama",
+      "effect_label": "Transition",
+      "effect_none": "aucune (balayer)",
+      "effect_fade": "fondu",
+      "effect_slide": "glisser",
+      "effect_zoom": "zoom",
+      "effect_kenburns": "Ken Burns (panoramique lent)",
+      "autoplay_label": "avancer automatiquement",
+      "interval_label": "Secondes par image",
+      "interval_helper": "Combien de temps une image reste affichée (1 à 30).",
+      "duration_label": "Secondes pour la transition",
+      "duration_helper": "Durée du changement (0.2 à 5)."
     }
   },
   "contract": {
@@ -1734,7 +1748,18 @@
       "label": "Affichage",
       "cover": "L'image remplit la carte",
       "contain": "Montrer toute l'image (logo)"
-    }
+    },
+    "source_label": "Tuiles depuis",
+    "source_inline": "saisies à la main",
+    "source_groups": "les groupes",
+    "source_helper": "«les groupes» : une carte pour chaque groupe dont la page de contenu est sur le site, avec le logo, le nom, le sous-titre et la couleur du groupe.",
+    "layout_label": "Disposition",
+    "layout_grid": "grille",
+    "layout_list": "liste",
+    "groupLinkLabel_label": "Texte du lien",
+    "groupLinkLabel_helper": "Affiché en bas de chaque carte, par exemple «plus …». Vide : pas de texte, la carte reste liée.",
+    "tileColor_label": "Couleur de la tuile",
+    "tileColor_helper": "En code couleur, par exemple #59A3BF. Vide : la tuile normale."
   },
   "timeline": {
     "label": "Frise chronologique",
@@ -2028,7 +2053,8 @@
       "text": "Texte",
       "link": "Lien",
       "icon": "Icône",
-      "logo": "Logo"
+      "logo": "Logo",
+      "button": "Bouton"
     },
     "itemLabel": {
       "title": "Titre",
@@ -2036,7 +2062,8 @@
       "link": "Texte du lien",
       "icon": "Légende",
       "logo": "Texte alternatif",
-      "logoHelper": "Décrit le logo pour les personnes qui ne peuvent pas le voir"
+      "logoHelper": "Décrit le logo pour les personnes qui ne peuvent pas le voir",
+      "button": "Texte du bouton"
     },
     "url": {
       "label": "Lien",
@@ -2057,6 +2084,24 @@
       "small": "Petit",
       "medium": "Moyen",
       "large": "Grand"
+    },
+    "background": {
+      "label": "Couleur de fond",
+      "helper": "En code couleur comme #3c163c. Sur un fond foncé, le texte devient blanc. Vide : le pied de page normal."
+    },
+    "social": {
+      "title": "Réseaux sociaux",
+      "helper": "Une ligne de liens vers Instagram, Facebook, etc. au-dessus de la dernière ligne."
+    },
+    "bottomLinks": {
+      "title": "Liens de la dernière ligne"
+    },
+    "link": {
+      "label": "Texte",
+      "url": "Cible",
+      "icon": "Icône (facultative)",
+      "add": "Ajouter un lien",
+      "remove": "Retirer le lien"
     }
   },
   "emphasis": {

@@ -10,7 +10,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 import {
-  SectionI18n, TILE_IMAGE_URL_LENGTH, TILE_LINK_LABEL_LENGTH, TILE_TEXT_LENGTH, TILE_TITLE_LENGTH, TILE_URL_LENGTH, TILE_VALUE_LENGTH, tileValidations
+  SectionI18n, TILE_COLOR_LENGTH, TILE_IMAGE_URL_LENGTH, TILE_LINK_LABEL_LENGTH, TILE_TEXT_LENGTH, TILE_TITLE_LENGTH, TILE_URL_LENGTH, TILE_VALUE_LENGTH, tileValidations
 } from '@okr/cms-section-util';
 
 /**
@@ -146,6 +146,11 @@ import {
               <ion-grid>
                 <ion-row>
                   <ion-col size="12" size-md="6">
+                    <okr-text-input [i18n]="colorI18n()" [value]="color()" (valueChange)="onFieldChange('color', $event)"
+                                    [maxLength]="colorLength" [readOnly]="isReadOnly()" [showHelper]="true" />
+                    <okr-error-note [errors]="colorErrors()" />
+                  </ion-col>
+                  <ion-col size="12" size-md="6">
                     <okr-text-input [i18n]="linkLabelI18n()" [value]="linkLabel()" (valueChange)="onFieldChange('linkLabel', $event)"
                                     [maxLength]="linkLabelLength" [readOnly]="isReadOnly()" [showHelper]="true" />
                     <okr-error-note [errors]="linkLabelErrors()" />
@@ -193,6 +198,7 @@ export class TileForm {
   protected readonly titleLength = TILE_TITLE_LENGTH;
   protected readonly textLength = TILE_TEXT_LENGTH;
   protected readonly linkLabelLength = TILE_LINK_LABEL_LENGTH;
+  protected readonly colorLength = TILE_COLOR_LENGTH;
   protected readonly urlLength = TILE_URL_LENGTH;
   protected readonly imageUrlLength = TILE_IMAGE_URL_LENGTH;
   protected readonly tones = TILE_TONES;
@@ -206,6 +212,7 @@ export class TileForm {
   protected readonly icon = computed(() => this.formData()?.icon ?? '');
   protected readonly tone = computed<TileTone>(() => this.formData()?.tone ?? 'primary');
   protected readonly linkLabel = computed(() => this.formData()?.linkLabel ?? '');
+  protected readonly color = computed(() => this.formData()?.color ?? '');
   protected readonly url = computed(() => this.formData()?.url ?? '');
   protected readonly imageUrl = computed(() => this.formData()?.imageUrl ?? '');
   protected readonly imageFit = computed<TileImageFit>(() => this.formData()?.imageFit ?? 'cover');
@@ -216,6 +223,7 @@ export class TileForm {
   protected readonly textErrors = computed(() => this.validationResult().getErrors('text'));
   protected readonly toneErrors = computed(() => this.validationResult().getErrors('tone'));
   protected readonly linkLabelErrors = computed(() => this.validationResult().getErrors('linkLabel'));
+  protected readonly colorErrors = computed(() => this.validationResult().getErrors('color'));
   protected readonly urlErrors = computed(() => this.validationResult().getErrors('url'));
   protected readonly imageUrlErrors = computed(() => this.validationResult().getErrors('imageUrl'));
 
@@ -233,6 +241,7 @@ export class TileForm {
   protected readonly textI18n = computed(() => this.textI18nOf('text', 'tiles_text_label', 'tiles_text_placeholder'));
   protected readonly iconI18n = computed(() => this.textI18nOf('icon', 'tiles_icon_label', 'tiles_icon_placeholder', 'tiles_icon_helper'));
   protected readonly linkLabelI18n = computed(() => this.textI18nOf('linkLabel', 'tiles_linkLabel_label', 'tiles_linkLabel_placeholder', 'tiles_linkLabel_helper'));
+  protected readonly colorI18n = computed(() => this.textI18nOf('color', 'tiles_tileColor_label', 'tiles_tileColor_label', 'tiles_tileColor_helper'));
   protected readonly urlI18n = computed(() => this.textI18nOf('url', 'tiles_url_label', 'tiles_url_placeholder', 'tiles_url_helper'));
 
   private textI18nOf(name: string, label: keyof SectionI18n, placeholder: keyof SectionI18n, helper?: keyof SectionI18n): TextInputI18n {

@@ -178,6 +178,12 @@ export type TileImageFit = (typeof TILE_IMAGE_FITS)[number];
 export type TileVariant = (typeof TILE_VARIANTS)[number];
 export const TILE_TONES = ['primary', 'secondary'] as const;
 export type TileTone = (typeof TILE_TONES)[number];
+/** Where the tiles come from: typed into the section, or built from the tenant's public groups. */
+export const TILE_SOURCES = ['inline', 'groups'] as const;
+export type TileSource = (typeof TILE_SOURCES)[number];
+/** 'grid' = cards in columns; 'list' = one row per tile, picture left and text right. */
+export const TILE_LAYOUTS = ['grid', 'list'] as const;
+export type TileLayout = (typeof TILE_LAYOUTS)[number];
 
 export interface TilesSection extends BaseSection {
   type: 'tiles';
@@ -201,6 +207,8 @@ export interface TileItem {
   imageUrl?: string;
   /** variant 'image' only; absent = 'cover' */
   imageFit?: TileImageFit;
+  /** background of the tile as a css hex value; absent or '' = the default tile background */
+  color?: string;
 }
 
 export interface TilesConfig {
@@ -208,6 +216,16 @@ export interface TilesConfig {
   /** Columns from md up. Default 3. */
   columns: number;
   items: TileItem[];
+  /**
+   * Absent = 'inline' (the items above). 'groups' builds one image tile per group whose content
+   * page is on the website (`<groupKey>_content`, `showOnWebsite`): the group avatar as picture,
+   * name, `subTitle`, `color`, linked to the content page; `items` is then ignored.
+   */
+  source?: TileSource;
+  /** Absent = 'grid'. */
+  layout?: TileLayout;
+  /** source 'groups': the label of the link line, e.g. «mehr …»; '' = no link line (the tile still links) */
+  linkLabel?: string;
 }
 
 // --------------------------------------- TIMELINE ----------------------------------------
@@ -422,6 +440,22 @@ export interface ArticleConfig {
   cta?: SectionCta;         // optional call-to-action button
   /** 'banner' renders the article as a full-width emphasised band. Default 'none'. */
   emphasis?: 'none' | 'banner';
+  /** How the carousel of 2+ images (imageLayout 'slider') moves; absent = swipe only, as before. */
+  slideshow?: ArticleSlideshow;
+}
+
+/** Transition between two images of an article carousel. 'none' = swipe/arrows only. */
+export const SLIDESHOW_EFFECTS = ['none', 'fade', 'slide', 'zoom', 'kenburns'] as const;
+export type SlideshowEffect = (typeof SLIDESHOW_EFFECTS)[number];
+
+export interface ArticleSlideshow {
+  effect: SlideshowEffect;
+  /** advance by itself */
+  autoplay: boolean;
+  /** how long one image stays, in seconds (la21staefa.ch: 3) */
+  interval: number;
+  /** how long the transition takes, in seconds (la21staefa.ch: 1) */
+  duration: number;
 }
 
 // --------------------------------------- BUTTON ----------------------------------------
@@ -1125,7 +1159,8 @@ export interface FooterSection extends BaseSection {
 }
 
 export const FOOTER_MAX_COLUMNS = 3;
-export const FOOTER_ITEM_TYPES = ['title', 'text', 'link', 'icon', 'logo'] as const;
+/** 'button' = a link drawn as a button (e.g. «Mitglied werden», «Newsletter abonnieren»). */
+export const FOOTER_ITEM_TYPES = ['title', 'text', 'link', 'icon', 'logo', 'button'] as const;
 export type FooterItemType = (typeof FOOTER_ITEM_TYPES)[number];
 export const FOOTER_LOGO_HEIGHTS = ['small', 'medium', 'large'] as const;
 export type FooterLogoHeight = (typeof FOOTER_LOGO_HEIGHTS)[number];
@@ -1137,6 +1172,19 @@ export interface FooterConfig {
   showBottomLine: boolean;
   /** e.g. «© 2026 Seeclub Stäfa»; may be empty */
   bottomLine: string;
+  /** background of the footer as a css hex value; absent or '' = the theme's footer colour */
+  background?: string;
+  /** links in the bottom line after the text, e.g. Impressum, Datenschutz */
+  bottomLinks?: FooterLink[];
+  /** the social row (Instagram, Facebook, …), shown above the bottom line; absent = none */
+  social?: FooterLink[];
+}
+
+/** A plain link of the footer: a bottom-line link or a social link (its `icon` from the `icons` set). */
+export interface FooterLink {
+  label: string;
+  url: string;
+  icon?: string;
 }
 
 export interface FooterColumn {
@@ -1147,7 +1195,7 @@ export interface FooterItem {
   type: FooterItemType;
   /** the text of a title/text/link, the caption of an icon, the alt text of a logo */
   label: string;
-  /** target: required for a link, optional for an icon or a logo, unused otherwise */
+  /** target: required for a link or a button, optional for an icon or a logo, unused otherwise */
   url: string;
   /** icon name in the `icons` set (type 'icon') */
   icon: string;

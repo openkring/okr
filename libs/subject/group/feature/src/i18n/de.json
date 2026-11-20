@@ -157,6 +157,15 @@
     "placeholder": "sssssssss",
     "helper": "Ein lesbarer Name für die Gruppe, so dass sie in Listen einfacher gefunden werden kann."
   },
+  "subTitle": {
+    "label": "Untertitel",
+    "placeholder": "z.B. Und wohin bringst du deine defekten Lieblingssachen?",
+    "helper": "Eine Zeile unter dem Namen, auf der Karte der Gruppe auf der Website."
+  },
+  "color": {
+    "label": "Farbe",
+    "helper": "Hintergrund der Karte auf der Website, als Farbcode wie #59A3BF. Leer: die normale Karte."
+  },
   "icon": {
     "label": "Icon",
     "placeholder": "Name",

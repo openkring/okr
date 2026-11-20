@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
 
-import { ColorIonic, ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, FooterConfig, FooterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FormSectionConfig, AlbumConfig, AlbumSection, SectionFeedback, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, CourseConfig, CourseSection, EventsConfig, EventsSection, HeroConfig, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, InvitationsConfig, InvitationsSection, JournalTrackConfig, JournalTrackSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TilesConfig, TilesSection, NewsConfig, NewsSection, SectionCta, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
+import { ColorIonic, ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, FooterConfig, FooterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FormSectionConfig, AlbumConfig, AlbumSection, SectionFeedback, ArticleSection, ArticleSlideshow, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, CourseConfig, CourseSection, EventsConfig, EventsSection, HeroConfig, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, InvitationsConfig, InvitationsSection, JournalTrackConfig, JournalTrackSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TilesConfig, TilesSection, NewsConfig, NewsSection, SectionCta, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
 import { Chips, ErrorNote, NotesInput, NotesInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
@@ -251,6 +251,7 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
                 [imageStyle]="imageStyle" (imageStyleChange)="onImageStyleChange($event)"
                 [imageLayout]="imageLayout()" (imageLayoutChange)="onImageLayoutChange($event)"
                 [content]="content" (contentChange)="onContentChange($event)"
+                [slideshow]="slideshow()" (slideshowChange)="onSlideshowChange($event)"
                 [showAdvanced]="showAdvanced()"
                 [storagePath]="storagePath()"
                 [currentUser]="currentUser()"
@@ -808,6 +809,11 @@ export class SectionForm {
     const section = this.formData();
     return section.type === 'article' ? section.properties?.imageLayout : undefined;
   });
+  /** the article's slideshow; undefined = swipe carousel */
+  protected slideshow = computed(() => {
+    const section = this.formData();
+    return section.type === 'article' ? section.properties?.slideshow : undefined;
+  });
   protected buttonActionConfig = computed(() => this.getButtonActionConfig());
   protected buttonStyle = computed(() => this.getButtonStyle());
   protected iconConfig = computed(() => this.getIconConfig());
@@ -1239,6 +1245,14 @@ export class SectionForm {
         this.formData.set({...section, properties: { ...section.properties, imageStyle }} as SliderSection);
         break;
     }
+  }
+
+  /** undefined deletes the key (absent = swipe carousel) */
+  protected onSlideshowChange(slideshow: ArticleSlideshow | undefined): void {
+    const section = this.formData();
+    if (section.type !== 'article') return;
+    const { slideshow: _removed, ...properties } = section.properties ?? {};   // eslint-disable-line @typescript-eslint/no-unused-vars
+    this.formData.set({ ...section, properties: slideshow ? { ...properties, slideshow } : properties } as ArticleSection);
   }
 
   /** clearing the layout deletes the key (absent = slider); the article suite refuses null and '' */

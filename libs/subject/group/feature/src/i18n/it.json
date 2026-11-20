@@ -116,6 +116,15 @@
     "placeholder": "sssssssss",
     "helper": "Un nome leggibile per il gruppo, in modo che possa essere trovato più facilmente negli elenchi."
   },
+  "subTitle": {
+    "label": "Sottotitolo",
+    "placeholder": "p. es. E dove porti i tuoi oggetti preferiti rotti?",
+    "helper": "Una riga sotto il nome, sulla scheda del gruppo sul sito."
+  },
+  "color": {
+    "label": "Colore",
+    "helper": "Sfondo della scheda sul sito, come codice colore tipo #59A3BF. Vuoto: la scheda normale."
+  },
   "icon": {
     "label": "Icona",
     "placeholder": "Nome",

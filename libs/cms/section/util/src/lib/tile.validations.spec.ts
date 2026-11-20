@@ -37,3 +37,11 @@ describe('tileValidations', () => {
     expect(tileValidations({ title: 'a' } as TileItem, 'card').hasErrors('tone')).toBe(false);
   });
 });
+
+describe('tileValidations color', () => {
+  it('accepts an empty or hex colour and flags anything else', () => {
+    expect(tileValidations({ title: 'A', tone: 'primary', color: '' }, 'card').hasErrors('color')).toBe(false);
+    expect(tileValidations({ title: 'A', tone: 'primary', color: '#59A3BF' }, 'card').hasErrors('color')).toBe(false);
+    expect(tileValidations({ title: 'A', tone: 'primary', color: 'blue' }, 'card').hasErrors('color')).toBe(true);
+  });
+});

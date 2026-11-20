@@ -30,6 +30,17 @@ export class GroupModel implements OkrModel, NamedModel, SearchableModel, Tagged
   public tags = DEFAULT_TAGS;
   public icon = 'group';
 
+  /**
+   * One teaser line shown under the name on a group card (TilesSection with source 'groups').
+   * Absent on legacy docs — read as `subTitle ?? ''`.
+   */
+  public subTitle = '';
+  /**
+   * The group's own colour as a css hex value (`#59A3BF`), the background of its card. '' = the
+   * section's default. Absent on legacy docs — read as `color ?? ''`.
+   */
+  public color = '';
+
   public hasContent = true; // page id = id
   public hasChat = true; // chat id = id
   public hasCalendar = true; // calendar id = id

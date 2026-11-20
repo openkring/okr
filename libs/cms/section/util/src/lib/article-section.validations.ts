@@ -1,11 +1,12 @@
 import { each, enforce, omitWhen, staticSuite, test } from 'vest';
 
-import { ArticleSection } from '@okr/shared-models';
+import { ArticleSection, SLIDESHOW_EFFECTS } from '@okr/shared-models';
 
 import { baseSectionValidations } from './base-section.validations';
 import { isSectionCtaUrl } from './section-cta.util';
 import { imageConfigValidations, imageStyleValidations } from './image.validations';
 import { isImageLayoutId } from './image-layout.util';
+import { SLIDESHOW_DURATION_MAX, SLIDESHOW_DURATION_MIN, SLIDESHOW_INTERVAL_MAX, SLIDESHOW_INTERVAL_MIN } from './slideshow.util';
 
 export const articleSectionValidations = staticSuite((model: ArticleSection) => {
   baseSectionValidations(model);
@@ -32,6 +33,20 @@ export const articleSectionValidations = staticSuite((model: ArticleSection) => 
   omitWhen(imageLayout === undefined || (model.properties?.images?.length ?? 0) < 2, () => {
     test('imageLayout', 'invalidValue', () => {
       enforce(isImageLayoutId(imageLayout)).isTruthy();
+    });
+  });
+
+  // slideshow: a known effect and times inside the ranges the editor offers; absent = swipe only
+  const slideshow = model.properties?.slideshow;
+  omitWhen(!slideshow, () => {
+    test('slideshow.effect', 'invalidValue', () => {
+      enforce((SLIDESHOW_EFFECTS as readonly string[]).includes(slideshow?.effect ?? '')).isTruthy();
+    });
+    test('slideshow.interval', 'invalidValue', () => {
+      enforce(slideshow?.interval).isNumber().greaterThanOrEquals(SLIDESHOW_INTERVAL_MIN).lessThanOrEquals(SLIDESHOW_INTERVAL_MAX);
+    });
+    test('slideshow.duration', 'invalidValue', () => {
+      enforce(slideshow?.duration).isNumber().greaterThanOrEquals(SLIDESHOW_DURATION_MIN).lessThanOrEquals(SLIDESHOW_DURATION_MAX);
     });
   });
 

@@ -79,3 +79,20 @@ describe('articleSectionValidations imageLayout', () => {
     expect(articleSectionValidations(withLayout('xyz', 3)).hasErrors('imageLayout')).toBe(true);
   });
 });
+
+describe('articleSectionValidations slideshow', () => {
+  const withShow = (slideshow: unknown) =>
+    ({ ...ARTICLE_SECTION_SHAPE, properties: { ...ARTICLE_SECTION_SHAPE.properties, slideshow } }) as unknown as ArticleSection;
+
+  it('accepts no slideshow and the la21staefa setting', () => {
+    expect(articleSectionValidations(withShow(undefined)).hasErrors()).toBe(false);
+    expect(articleSectionValidations(withShow({ effect: 'fade', autoplay: true, interval: 3, duration: 1 })).hasErrors()).toBe(false);
+  });
+
+  it('flags an unknown effect and times outside the ranges', () => {
+    const result = articleSectionValidations(withShow({ effect: 'swirl', autoplay: true, interval: 0, duration: 9 }));
+    expect(result.hasErrors('slideshow.effect')).toBe(true);
+    expect(result.hasErrors('slideshow.interval')).toBe(true);
+    expect(result.hasErrors('slideshow.duration')).toBe(true);
+  });
+});

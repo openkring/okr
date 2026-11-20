@@ -138,6 +138,20 @@
         "choose": "Layout wählen …",
         "empty": "Füge zuerst Bilder hinzu. Dann kannst du hier festlegen, wie sie angezeigt werden."
       }
+    },
+    "slideshow": {
+      "title": "Diashow",
+      "effect_label": "Übergang",
+      "effect_none": "keiner (wischen)",
+      "effect_fade": "überblenden",
+      "effect_slide": "schieben",
+      "effect_zoom": "zoomen",
+      "effect_kenburns": "Ken Burns (langsamer Schwenk)",
+      "autoplay_label": "von selbst weiterschalten",
+      "interval_label": "Sekunden pro Bild",
+      "interval_helper": "Wie lange ein Bild stehen bleibt (1 bis 30).",
+      "duration_label": "Sekunden für den Übergang",
+      "duration_helper": "Wie lange der Wechsel dauert (0.2 bis 5)."
     }
   },
   "contract": {
@@ -1734,7 +1748,18 @@
       "label": "Darstellung",
       "cover": "Bild füllt die Karte",
       "contain": "Ganzes Bild zeigen (Logo)"
-    }
+    },
+    "source_label": "Kacheln aus",
+    "source_inline": "von Hand erfasst",
+    "source_groups": "aus den Gruppen",
+    "source_helper": "«aus den Gruppen»: eine Karte für jede Gruppe, deren Inhaltsseite auf der Website steht, mit Logo, Name, Untertitel und Farbe der Gruppe.",
+    "layout_label": "Anordnung",
+    "layout_grid": "Raster",
+    "layout_list": "Liste",
+    "groupLinkLabel_label": "Text des Links",
+    "groupLinkLabel_helper": "Steht unten auf jeder Karte, zum Beispiel «mehr …». Leer: kein Text, die Karte ist trotzdem verlinkt.",
+    "tileColor_label": "Farbe der Kachel",
+    "tileColor_helper": "Als Farbcode, zum Beispiel #59A3BF. Leer: die normale Kachel."
   },
   "timeline": {
     "label": "Zeitstrahl",
@@ -2028,7 +2053,8 @@
       "text": "Text",
       "link": "Link",
       "icon": "Icon",
-      "logo": "Logo"
+      "logo": "Logo",
+      "button": "Knopf"
     },
     "itemLabel": {
       "title": "Titel",
@@ -2036,7 +2062,8 @@
       "link": "Linktext",
       "icon": "Beschriftung",
       "logo": "Alternativtext",
-      "logoHelper": "Beschreibt das Logo für Menschen, die es nicht sehen können"
+      "logoHelper": "Beschreibt das Logo für Menschen, die es nicht sehen können",
+      "button": "Text des Knopfs"
     },
     "url": {
       "label": "Link",
@@ -2057,6 +2084,24 @@
       "small": "Klein",
       "medium": "Mittel",
       "large": "Gross"
+    },
+    "background": {
+      "label": "Hintergrundfarbe",
+      "helper": "Als Farbcode wie #3c163c. Auf dunklem Grund wird die Schrift weiss. Leer: die normale Fusszeile."
+    },
+    "social": {
+      "title": "Social Media",
+      "helper": "Eine Reihe mit Links zu Instagram, Facebook usw. über der Schlusszeile."
+    },
+    "bottomLinks": {
+      "title": "Links in der Schlusszeile"
+    },
+    "link": {
+      "label": "Text",
+      "url": "Ziel",
+      "icon": "Symbol (optional)",
+      "add": "Link hinzufügen",
+      "remove": "Link entfernen"
     }
   },
   "emphasis": {

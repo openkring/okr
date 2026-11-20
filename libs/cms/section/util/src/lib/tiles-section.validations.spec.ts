@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { TILES_SECTION_SHAPE, TilesSection } from '@okr/shared-models';
-import { tilesSectionValidations } from './tiles-section.validations';
+import { tilesItemField, tilesSectionValidations } from './tiles-section.validations';
 
 const model = (props: Partial<TilesSection['properties']>): TilesSection =>
   ({ ...TILES_SECTION_SHAPE, properties: { ...TILES_SECTION_SHAPE.properties, ...props } }) as TilesSection;
@@ -47,5 +47,20 @@ describe('tilesSectionValidations', () => {
 
   it('does not require a title on a stat tile', () => {
     expect(tilesSectionValidations(model({ variant: 'stat', items: [{ tone: 'primary', value: '1917' }] })).hasErrors('tiles.i0.title')).toBe(false);
+  });
+});
+
+describe('tilesSectionValidations groups source', () => {
+  const base = (properties: Record<string, unknown>) => ({ ...TILES_SECTION_SHAPE, properties: { ...TILES_SECTION_SHAPE.properties, ...properties } }) as unknown as TilesSection;
+
+  it('ignores the stored items of a groups section', () => {
+    expect(tilesSectionValidations(base({ source: 'groups', items: [{ tone: 'primary' }] })).hasErrors()).toBe(false);
+  });
+
+  it('flags an unknown source or layout and a bad tile colour', () => {
+    const result = tilesSectionValidations(base({ source: 'x', layout: 'y', variant: 'card', items: [{ title: 'A', tone: 'primary', color: 'red' }] }));
+    expect(result.hasErrors('tiles.source')).toBe(true);
+    expect(result.hasErrors('tiles.layout')).toBe(true);
+    expect(result.hasErrors(tilesItemField(0, 'color'))).toBe(true);
   });
 });

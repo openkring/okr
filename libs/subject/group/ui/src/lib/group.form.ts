@@ -8,8 +8,8 @@ import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
 import { Avatars } from '@okr/avatar-ui';
-import { getGroupKeyFromName, groupValidations, GroupI18n } from '@okr/subject-group-util';
-import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
+import { getGroupKeyFromName, GROUP_COLOR_LENGTH, groupValidations, GroupI18n } from '@okr/subject-group-util';
+import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
 @Component({
   selector: 'okr-group-form',
@@ -74,6 +74,17 @@ import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
                   [showHelper]="true"
                 />
                 <okr-error-note [errors]="nameErrors()" />
+              </ion-col>
+              <!-- the group card on the website (TilesSection source 'groups'): teaser line and card colour -->
+              <ion-col size="12" size-md="6">
+                <okr-text-input [i18n]="subTitleI18n()" [value]="subTitle()" (valueChange)="onFieldChange('subTitle', $event)"
+                  [maxLength]="longNameLength" [readOnly]="isReadOnly()" [showHelper]="true" />
+                <okr-error-note [errors]="subTitleErrors()" />
+              </ion-col>
+              <ion-col size="12" size-md="6">
+                <okr-text-input [i18n]="colorI18n()" [value]="color()" (valueChange)="onFieldChange('color', $event)"
+                  [maxLength]="colorLength" [readOnly]="isReadOnly()" [showHelper]="true" />
+                <okr-error-note [errors]="colorErrors()" />
               </ion-col>
               @if(enhancedMode()) {
                 <ion-col size="12" size-md="6">
@@ -226,12 +237,16 @@ import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 export class GroupForm {
   /** kept in step with the cap the Vest suite enforces on this field */
   protected readonly shortNameLength = SHORT_NAME_LENGTH;
+  protected readonly longNameLength = LONG_NAME_LENGTH;
+  protected readonly colorLength = GROUP_COLOR_LENGTH;
   /** kept in step with the cap the Vest suite enforces on this field */
   protected readonly descriptionLength = DESCRIPTION_LENGTH;
   protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf() } as ButtonCopyI18n));
   protected okeyI18n      = computed(() => ({ name: 'okey',       label: this.i18n().okey_label(),       placeholder: this.i18n().okey_placeholder(),       helper: this.i18n().okey_helper()       } as TextInputI18n));
   protected groupIdI18n   = computed(() => ({ name: 'groupId',    label: this.i18n().id_label(),    placeholder: this.i18n().id_placeholder(),    helper: this.i18n().id_helper()    } as TextInputI18n));
   protected nameI18n      = computed(() => ({ name: 'groupName',  label: this.i18n().name_label(),       placeholder: this.i18n().name_placeholder(),       helper: this.i18n().name_helper()       } as TextInputI18n));
+  protected subTitleI18n  = computed(() => ({ name: 'subTitle', label: this.i18n().subTitle_label(), placeholder: this.i18n().subTitle_placeholder(), helper: this.i18n().subTitle_helper() } as TextInputI18n));
+  protected colorI18n     = computed(() => ({ name: 'groupColor', label: this.i18n().color_label(), placeholder: '#59A3BF', helper: this.i18n().color_helper() } as TextInputI18n));
   protected iconI18n      = computed(() => ({ name: 'icon',       label: this.i18n().icon_label(),       placeholder: this.i18n().icon_placeholder(),       helper: this.i18n().icon_helper()       } as TextInputI18n));
   protected visibilityI18n = computed(() => ({ name: 'visibility', label: this.i18n().visibility_label(), placeholder: this.i18n().visibility_placeholder(), helper: this.i18n().visibility_helper() } as TextInputI18n));
   protected notesI18n      = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
@@ -285,10 +300,14 @@ export class GroupForm {
   protected hasTasksErrors = computed(() => this.validationResult().getErrors('hasTasks'));
   protected notesErrors = computed(() => this.validationResult().getErrors('notes'));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
+  protected subTitleErrors = computed(() => this.validationResult().getErrors('subTitle'));
+  protected colorErrors = computed(() => this.validationResult().getErrors('color'));
   protected okeyErrors = computed(() => this.validationResult().getErrors('okey'));
 
   // fields
   protected readonly name = computed(() => this.formData().name ?? '');
+  protected readonly subTitle = computed(() => this.formData().subTitle ?? '');
+  protected readonly color = computed(() => this.formData().color ?? '');
   protected readonly okey = computed(() => this.formData().okey ?? '');
   // Live read-only preview of the key that will be derived from the name on save.
   protected groupIdPreview = computed(() => getGroupKeyFromName(this.name(), this.tenantId()));

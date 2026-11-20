@@ -6,10 +6,10 @@ import {
 } from '@ionic/angular';
 
 import { ColorsIonic } from '@okr/shared-categories';
-import { ColorIonic, TILE_VARIANTS, TileItem, TileVariant, TilesConfig } from '@okr/shared-models';
-import { CategoryOld, CategoryOldI18n, ErrorNote } from '@okr/shared-ui';
+import { ColorIonic, TILE_LAYOUTS, TILE_SOURCES, TILE_VARIANTS, TileItem, TileVariant, TilesConfig } from '@okr/shared-models';
+import { CategoryOld, CategoryOldI18n, ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { getFieldErrors, SECTION_ICON_PICKER, SectionErrors, SectionI18n, tilesItemField, withTilesDefaults } from '@okr/cms-section-util';
+import { getFieldErrors, SECTION_ICON_PICKER, TILES_LINK_LABEL_LENGTH, SectionErrors, SectionI18n, tilesItemField, withTilesDefaults } from '@okr/cms-section-util';
 
 import { TileEditModal } from './tile-edit.modal';
 
@@ -22,7 +22,7 @@ import { TileEditModal } from './tile-edit.modal';
   selector: 'okr-tiles-config',
   standalone: true,
   imports: [
-    CategoryOld, ErrorNote, SvgIconPipe,
+    CategoryOld, ErrorNote, TextInput, SvgIconPipe,
     IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonGrid, IonRow, IonCol,
     IonSelect, IonSelectOption, IonList, IonItem, IonLabel, IonNote, IonButtons, IonButton, IonIcon,
     IonReorderGroup, IonReorder
@@ -43,6 +43,36 @@ import { TileEditModal } from './tile-edit.modal';
       <ion-card-content>
         <ion-grid>
           <ion-row>
+            <!-- source 'groups': one card per public group, built at render time (la21staefa Projektgruppen) -->
+            <ion-col size="12" size-md="6">
+              <ion-select [label]="i18n().tiles_source_label()" labelPlacement="stacked"
+                          [value]="config().source ?? 'inline'" [disabled]="readOnly()"
+                          (ionChange)="patch({ source: $event.detail.value })">
+                @for (v of sources; track v) {
+                  <ion-select-option [value]="v">{{ v === 'groups' ? i18n().tiles_source_groups() : i18n().tiles_source_inline() }}</ion-select-option>
+                }
+              </ion-select>
+              <ion-note>{{ i18n().tiles_source_helper() }}</ion-note>
+              <okr-error-note [errors]="errorsFor('tiles.source')" />
+            </ion-col>
+            <ion-col size="12" size-md="6">
+              <ion-select [label]="i18n().tiles_layout_label()" labelPlacement="stacked"
+                          [value]="config().layout ?? 'grid'" [disabled]="readOnly()"
+                          (ionChange)="patch({ layout: $event.detail.value })">
+                @for (v of layouts; track v) {
+                  <ion-select-option [value]="v">{{ v === 'list' ? i18n().tiles_layout_list() : i18n().tiles_layout_grid() }}</ion-select-option>
+                }
+              </ion-select>
+              <okr-error-note [errors]="errorsFor('tiles.layout')" />
+            </ion-col>
+            @if (fromGroups()) {
+              <ion-col size="12" size-md="6">
+                <okr-text-input [i18n]="linkLabelI18n()" [value]="config().linkLabel ?? ''" (valueChange)="patch({ linkLabel: $event })"
+                  [maxLength]="linkLabelLength" [showHelper]="true" [readOnly]="readOnly()" />
+                <okr-error-note [errors]="errorsFor('tiles.linkLabel')" />
+              </ion-col>
+            }
+            @if (!fromGroups()) {
             <ion-col size="12" size-md="6">
               <ion-select [label]="i18n().tiles_variant_label()" labelPlacement="stacked"
                           [value]="config().variant" [disabled]="readOnly()"
@@ -52,6 +82,7 @@ import { TileEditModal } from './tile-edit.modal';
                 }
               </ion-select>
             </ion-col>
+            }
             <ion-col size="12" size-md="6">
               <ion-select [label]="i18n().tiles_columns_label()" labelPlacement="stacked"
                           [value]="config().columns" [disabled]="readOnly()"
@@ -72,6 +103,7 @@ import { TileEditModal } from './tile-edit.modal';
       </ion-card-content>
     </ion-card>
 
+    @if (!fromGroups()) {
     <ion-card>
       <ion-card-header>
         <div class="list-header">
@@ -119,6 +151,7 @@ import { TileEditModal } from './tile-edit.modal';
         </ion-list>
       </ion-card-content>
     </ion-card>
+    }
   `
 })
 export class TilesConfiguration {
@@ -135,6 +168,14 @@ export class TilesConfiguration {
   public readonly errors = input<SectionErrors>({});
 
   protected readonly variants = TILE_VARIANTS;
+  protected readonly sources = TILE_SOURCES;
+  protected readonly layouts = TILE_LAYOUTS;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly linkLabelLength = TILES_LINK_LABEL_LENGTH;
+  protected readonly fromGroups = computed(() => this.config().source === 'groups');
+  protected readonly linkLabelI18n = computed((): TextInputI18n => ({
+    name: 'linkLabel', label: this.i18n().tiles_groupLinkLabel_label(), placeholder: '', helper: this.i18n().tiles_groupLinkLabel_helper(),
+  }));
   protected readonly columnNumbers = [1, 2, 3, 4];
   protected readonly colors = ColorsIonic;
 

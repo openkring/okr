@@ -1,4 +1,4 @@
-import { APPLICATION_KIND_VALUES, type ImageStyle } from '@okr/shared-models';
+import { APPLICATION_KIND_VALUES, SLIDESHOW_EFFECTS, type ImageStyle } from '@okr/shared-models';
 import { imageCaption } from './image-caption';
 import type { PublicPerson } from './group-people';
 import { peopleExcludedKeys, peopleSourceKey, peopleSourceOf } from './people-source';
@@ -143,6 +143,8 @@ export interface PublicTile {
   tone: 'primary' | 'secondary';
   /** variant 'image': the picture on imgix ('' without one) and how it fits the card */
   imageSrc: string; imageFit: 'cover' | 'contain';
+  /** checked css hex background of the card ('' = the default card); its text is then drawn white */
+  color: string;
 }
 
 export type PublicTileVariant = 'stat' | 'card' | 'image';
@@ -185,9 +187,16 @@ export function mapTiles(items: unknown, variant: PublicTileVariant, lang: strin
       tone: raw['tone'] === 'secondary' ? 'secondary' : 'primary',
       imageSrc: variant === 'image' ? tileImageSrc(raw['imageUrl'], imageFit) : '',
       imageFit,
+      color: variant === 'stat' ? '' : tileColor(raw['color']),
     });
   }
   return out;
+}
+
+const TILE_HEX = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+/** A tile background that may go into a style attribute; '' for anything else. */
+function tileColor(value: unknown): string {
+  return typeof value === 'string' && TILE_HEX.test(value.trim()) ? value.trim() : '';
 }
 
 /** ColorIonic (shared-models) by index; the website templates colour primary and secondary, the rest stays neutral. */
@@ -320,6 +329,54 @@ export function articleImageLayout(
   return { imagePosition: VIEW_POSITIONS[position ?? 0] ?? 'none', imageColSize: size };
 }
 
+export interface WebSlideshow {
+  effect: 'fade' | 'slide' | 'zoom' | 'kenburns';
+  autoplay: boolean;
+  /** seconds per image */
+  interval: number;
+  /** seconds per transition */
+  duration: number;
+  /** wide, cropped picture urls (2.67 : 1), one per image */
+  slides: { url: string; alt: string }[];
+}
+
+const clampNum = (v: unknown, min: number, max: number, fallback: number): number =>
+  Math.min(max, Math.max(min, typeof v === 'number' && Number.isFinite(v) ? v : fallback));
+
+/**
+ * The article's self-running slideshow for the website (mirrors `resolveSlideshow` + `slideshowImageUrl` in
+ * `@okr/cms-section-util`): only with two or more images, the carousel layout ('slider' or none) and an effect
+ * other than 'none'. `undefined` keeps the swipe slider.
+ */
+export function mapSlideshow(raw: unknown, imageLayout: unknown, images: unknown): WebSlideshow | undefined {
+  const cfg = (raw ?? {}) as Record<string, unknown>;
+  const list = Array.isArray(images) ? images as Record<string, unknown>[] : [];
+  if (!raw || list.length < 2) return undefined;
+  if (imageLayout !== undefined && imageLayout !== 'slider') return undefined;
+  const effect = cfg['effect'];
+  if (typeof effect !== 'string' || effect === 'none' || !(SLIDESHOW_EFFECTS as readonly string[]).includes(effect)) return undefined;
+  const slides = list
+    .map((img) => ({ url: slideshowSrc(img['url']), alt: str(img['altText']).slice(0, 200) }))
+    .filter((slide) => slide.url !== '');
+  if (slides.length < 2) return undefined;
+  return {
+    effect: effect as WebSlideshow['effect'],
+    autoplay: cfg['autoplay'] !== false,
+    interval: clampNum(cfg['interval'], 1, 30, 3),
+    duration: clampNum(cfg['duration'], 0.2, 5, 1),
+    slides,
+  };
+}
+
+function slideshowSrc(raw: unknown): string {
+  const path = str(raw).trim();
+  if (!path) return '';
+  const params = 'w=1600&h=600&fit=crop&auto=format,compress';
+  if (/^https:\/\//.test(path)) return `${path}${path.includes('?') ? '&' : '?'}${params}`;
+  if (!/^[A-Za-z0-9][A-Za-z0-9/_. -]*$/.test(path) || path.includes('..')) return '';
+  return `${IMGIX_BASE}/${path.split('/').map(encodeURIComponent).join('/')}?${params}`;
+}
+
 /**
  * The fixed image height of an article in px, from `imageStyle.height` (e.g. '300px'), or 0 when the
  * image keeps its natural height ('auto', '%', missing or out of range). The website then draws the
@@ -339,7 +396,7 @@ const FOOTER_MAX_COLUMNS = 3;
 const FOOTER_LOGO_HEIGHTS: Record<string, number> = { small: 32, medium: 48, large: 72 };
 
 export interface PublicFooterItem {
-  type: 'title' | 'text' | 'link' | 'icon' | 'logo';
+  type: 'title' | 'text' | 'link' | 'icon' | 'logo' | 'button';
   label: string;
   /** '' when the item has no (safe) target */
   url: string;
@@ -365,6 +422,9 @@ function mapFooterItem(raw: Record<string, unknown>): PublicFooterItem | undefin
     case 'link':
       // a link without a safe target still shows its words, as plain text
       return label ? { type: 'link', label, url, src: '', height: 0 } : undefined;
+    case 'button':
+      // a button without a safe target would lead nowhere: dropped
+      return label && url ? { type: 'button', label, url, src: '', height: 0 } : undefined;
     case 'icon': {
       const icon = typeof raw['icon'] === 'string' ? raw['icon'] : '';
       if (!ICON_NAME.test(icon)) return undefined;
@@ -386,7 +446,45 @@ function mapFooterItem(raw: Record<string, unknown>): PublicFooterItem | undefin
 }
 
 /** The public form of a footer section's properties (only the visible columns). */
-export function mapFooter(props: Record<string, unknown>): { columnCount: number; columns: { items: PublicFooterItem[] }[]; bottomLine: string } {
+export interface PublicFooterLink { label: string; url: string; external: boolean; /** svg url of the icon, '' = none */ src: string }
+
+export interface PublicFooter {
+  columnCount: number;
+  columns: { items: PublicFooterItem[] }[];
+  bottomLine: string;
+  /** checked hex background, '' = the template's */
+  background: string;
+  /** the background is dark: white text */
+  dark: boolean;
+  social: PublicFooterLink[];
+  bottomLinks: PublicFooterLink[];
+}
+
+const FOOTER_HEX = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+
+/** relative luminance below 0.5 (same rule as isDarkColor in cms-section-util) */
+function isDarkHex(hex: string): boolean {
+  const h = hex.replace('#', '');
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16) / 255);
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b < 0.5;
+}
+
+function mapFooterLinks(raw: unknown): PublicFooterLink[] {
+  if (!Array.isArray(raw)) return [];
+  const out: PublicFooterLink[] = [];
+  for (const l of raw as Record<string, unknown>[]) {
+    const url = safeFooterUrl(l?.['url']);
+    if (!url) continue;
+    const label = typeof l['label'] === 'string' ? l['label'].trim().slice(0, 100) : '';
+    const icon = typeof l['icon'] === 'string' && ICON_NAME.test(l['icon']) ? l['icon'] : '';
+    if (!label && !icon) continue;
+    out.push({ label, url, external: /^https:\/\//i.test(url), src: icon ? `${IMGIX_BASE}/logo/icons/${icon}.svg` : '' });
+  }
+  return out;
+}
+
+export function mapFooter(props: Record<string, unknown>): PublicFooter {
   const rawCount = props['columnCount'];
   const columnCount = Number.isInteger(rawCount) ? Math.min(Math.max(rawCount as number, 1), FOOTER_MAX_COLUMNS) : FOOTER_MAX_COLUMNS;
   const rawColumns = Array.isArray(props['columns']) ? props['columns'] as { items?: unknown }[] : [];
@@ -396,7 +494,12 @@ export function mapFooter(props: Record<string, unknown>): { columnCount: number
   });
   const showBottomLine = props['showBottomLine'] !== false;
   const bottomLine = showBottomLine && typeof props['bottomLine'] === 'string' ? props['bottomLine'] : '';
-  return { columnCount, columns, bottomLine };
+  const rawBg = typeof props['background'] === 'string' ? props['background'].trim() : '';
+  const background = FOOTER_HEX.test(rawBg) ? rawBg : '';
+  return {
+    columnCount, columns, bottomLine, background, dark: !!background && isDarkHex(background),
+    social: mapFooterLinks(props['social']), bottomLinks: mapFooterLinks(props['bottomLinks']),
+  };
 }
 
 /**
@@ -444,6 +547,8 @@ export function mapHeroGradient(value: unknown): { from: string; to: string } | 
 export function mapSection(
   id: string, s: SectionDoc, nestedSections: Map<string, SectionDoc>, sanitize: SanitizeFn, lang = 'de',
   people?: ReadonlyMap<string, PublicPerson[]>,
+  /** the cards of the public groups (`groupTileItems`), for a tiles section with source 'groups' */
+  groupTiles: PublicTile[] = [],
 ): unknown {
   const type = s.type ?? 'article';
   const props = (s.properties ?? {}) as Record<string, unknown>;
@@ -581,14 +686,20 @@ export function mapSection(
       return { name, ...mapFormSection(id, title, props) };
 
     case 'tiles': {
-      const variant = mapTileVariant(props['variant']);
-      const items = mapTiles(props['items'], variant, lang);
+      // source 'groups': one image card per public group, the section's link label on every card
+      const fromGroups = props['source'] === 'groups';
+      const variant = fromGroups ? 'image' : mapTileVariant(props['variant']);
+      const groupLinkLabel = str(props['linkLabel']).trim().slice(0, 40);
+      const items = fromGroups
+        ? groupTiles.map((t) => ({ ...t, linkLabel: groupLinkLabel }))
+        : mapTiles(props['items'], variant, lang);
       // the subtitle is drawn as the line above the title, in the section colour (`accent`)
       return {
         type: 'tiles', name, title, subTitle, kicker, intro,
         accent: mapAccent(s.color),
         variant,
         columns: mapTilesColumns(props['columns']),
+        layout: props['layout'] === 'list' ? 'list' : 'grid',
         items,
         // once one card has an icon every card keeps the icon slot, so the titles of a row line up
         hasIcons: variant === 'card' && items.some(i => !!i.iconSrc),
@@ -622,6 +733,8 @@ export function mapSection(
         images: layout.imagePosition === 'none' ? [] : images,
         ...layout,
         imageHeight: articleImageHeight(imageStyle),
+        // a slideshow replaces the swipe slider and carries title and subtitle on its images (la21staefa header)
+        slideshow: layout.imagePosition === 'none' ? undefined : mapSlideshow(props['slideshow'], props['imageLayout'], props['images']),
       };
     }
   }

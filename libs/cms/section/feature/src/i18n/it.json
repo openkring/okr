@@ -138,6 +138,20 @@
         "choose": "Scegli il layout …",
         "empty": "Aggiungi prima delle immagini. Poi qui puoi scegliere come vengono mostrate."
       }
+    },
+    "slideshow": {
+      "title": "Presentazione",
+      "effect_label": "Transizione",
+      "effect_none": "nessuna (scorrere)",
+      "effect_fade": "dissolvenza",
+      "effect_slide": "scorrimento",
+      "effect_zoom": "zoom",
+      "effect_kenburns": "Ken Burns (panoramica lenta)",
+      "autoplay_label": "avanzare da sola",
+      "interval_label": "Secondi per immagine",
+      "interval_helper": "Quanto resta visibile un'immagine (da 1 a 30).",
+      "duration_label": "Secondi per la transizione",
+      "duration_helper": "Quanto dura il cambio (da 0.2 a 5)."
     }
   },
   "contract": {
@@ -1734,7 +1748,18 @@
       "label": "Visualizzazione",
       "cover": "L'immagine riempie la scheda",
       "contain": "Mostra tutta l'immagine (logo)"
-    }
+    },
+    "source_label": "Riquadri da",
+    "source_inline": "inseriti a mano",
+    "source_groups": "i gruppi",
+    "source_helper": "«i gruppi»: una scheda per ogni gruppo la cui pagina dei contenuti è sul sito, con logo, nome, sottotitolo e colore del gruppo.",
+    "layout_label": "Disposizione",
+    "layout_grid": "griglia",
+    "layout_list": "elenco",
+    "groupLinkLabel_label": "Testo del link",
+    "groupLinkLabel_helper": "In fondo a ogni scheda, per esempio «altro …». Vuoto: nessun testo, la scheda resta collegata.",
+    "tileColor_label": "Colore del riquadro",
+    "tileColor_helper": "Come codice colore, per esempio #59A3BF. Vuoto: il riquadro normale."
   },
   "timeline": {
     "label": "Cronologia",
@@ -2028,7 +2053,8 @@
       "text": "Testo",
       "link": "Link",
       "icon": "Icona",
-      "logo": "Logo"
+      "logo": "Logo",
+      "button": "Pulsante"
     },
     "itemLabel": {
       "title": "Titolo",
@@ -2036,7 +2062,8 @@
       "link": "Testo del link",
       "icon": "Didascalia",
       "logo": "Testo alternativo",
-      "logoHelper": "Descrive il logo per chi non può vederlo"
+      "logoHelper": "Descrive il logo per chi non può vederlo",
+      "button": "Testo del pulsante"
     },
     "url": {
       "label": "Link",
@@ -2057,6 +2084,24 @@
       "small": "Piccolo",
       "medium": "Medio",
       "large": "Grande"
+    },
+    "background": {
+      "label": "Colore di sfondo",
+      "helper": "Come codice colore tipo #3c163c. Su uno sfondo scuro il testo diventa bianco. Vuoto: il piè di pagina normale."
+    },
+    "social": {
+      "title": "Social media",
+      "helper": "Una riga di link a Instagram, Facebook ecc. sopra l'ultima riga."
+    },
+    "bottomLinks": {
+      "title": "Link dell'ultima riga"
+    },
+    "link": {
+      "label": "Testo",
+      "url": "Destinazione",
+      "icon": "Icona (facoltativa)",
+      "add": "Aggiungi link",
+      "remove": "Rimuovi link"
     }
   },
   "emphasis": {

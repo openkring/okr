@@ -7,7 +7,7 @@ import { ENV } from '@okr/shared-config';
 import { FooterItem, FooterLogoHeight, FooterSection } from '@okr/shared-models';
 import { ImgDirective, OptionalCardHeader } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { footerBlocks, footerColumnCount, footerVisibleColumns, isExternalFooterUrl, isFooterUrl, normalizeFooterConfig } from '@okr/cms-section-util';
+import { footerBackground, footerBlocks, footerColumnCount, footerVisibleColumns, isDarkColor, isExternalFooterUrl, isFooterUrl, normalizeFooterConfig } from '@okr/cms-section-util';
 
 import { SectionStore } from './section.store';
 
@@ -48,6 +48,17 @@ const LOGO_HEIGHTS: Record<FooterLogoHeight, number> = { small: 32, medium: 48, 
     .logos { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px 20px; }
     .logos img { width: auto; max-width: 100%; object-fit: contain; }
 
+    /* a button item (la21staefa: «Mitglied werden», «Newsletter abonnieren») */
+    .button { display: inline-block; padding: 10px 18px; border-radius: 8px; font-weight: 600; text-decoration: none;
+      background: var(--ion-color-primary); color: var(--ion-color-primary-contrast); }
+    .button:hover, .button:focus-visible { filter: brightness(1.08); text-decoration: none; color: var(--ion-color-primary-contrast); }
+    .social { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 20px; margin-top: 24px; }
+    .bottom-links a { margin-inline-start: 12px; }
+    /* a dark background (FooterConfig.background): white text throughout */
+    footer.dark, footer.dark .title, footer.dark .text, footer.dark a, footer.dark .icon, footer.dark .bottom { color: #fff; }
+    footer.dark .button { background: #fff; color: #222; }
+    footer[style] { border-top: 0px; }
+
     .bottom { margin-top: 24px; padding-top: 12px; border-top: 1px solid var(--ion-color-light);
       font-size: 0.8rem; color: var(--ion-color-medium); text-align: center; }
 
@@ -70,7 +81,7 @@ const LOGO_HEIGHTS: Record<FooterLogoHeight, number> = { small: 32, medium: 48, 
       <ion-card>
         <okr-optional-card-header [intro]="section.intro" [introPosition]="section.introPosition" [title]="section.title" [subTitle]="section.subTitle" />
         <ion-card-content>
-          <footer [attr.aria-label]="section.title || store.i18n.footer_region()">
+          <footer [attr.aria-label]="section.title || store.i18n.footer_region()" [style.background]="background() || null" [class.dark]="isDark()">
             <div class="grid" [class]="'cols-' + columnCount()">
               @for (blocks of columnBlocks(); track $index) {
                 <div class="col">
@@ -89,6 +100,11 @@ const LOGO_HEIGHTS: Record<FooterLogoHeight, number> = { small: 32, medium: 48, 
                             <ng-container *ngTemplateOutlet="target; context: { $implicit: block.item, body: labelTpl, cssClass: 'link' }" />
                           } @else { <p class="text">{{ block.item.label }}</p> }
                         }
+                        @case ('button') {
+                          @if (hasTarget(block.item)) {
+                            <div><ng-container *ngTemplateOutlet="target; context: { $implicit: block.item, body: labelTpl, cssClass: 'button' }" /></div>
+                          }
+                        }
                         @case ('icon') {
                           <div><ng-container *ngTemplateOutlet="target; context: { $implicit: block.item, body: iconTpl }" /></div>
                         }
@@ -99,8 +115,22 @@ const LOGO_HEIGHTS: Record<FooterLogoHeight, number> = { small: 32, medium: 48, 
                 </div>
               }
             </div>
-            @if (config().showBottomLine && config().bottomLine) {
-              <div class="bottom">{{ config().bottomLine }}</div>
+            @if (social().length > 0) {
+              <div class="social">
+                @for (link of social(); track $index) {
+                  <ng-container *ngTemplateOutlet="target; context: { $implicit: link, body: link.icon ? iconTpl : labelTpl }" />
+                }
+              </div>
+            }
+            @if ((config().showBottomLine && config().bottomLine) || bottomLinks().length > 0) {
+              <div class="bottom">
+                @if (config().showBottomLine) { {{ config().bottomLine }} }
+                <span class="bottom-links">
+                  @for (link of bottomLinks(); track $index) {
+                    <ng-container *ngTemplateOutlet="target; context: { $implicit: link, body: labelTpl }" />
+                  }
+                </span>
+              </div>
             }
           </footer>
         </ion-card-content>
@@ -145,18 +175,23 @@ export class FooterSectionComponent {
   /** Legacy or hand-edited documents may lack fields; normalizing fills them in. */
   protected readonly config = computed(() => normalizeFooterConfig(this.section()?.properties));
   protected readonly columnCount = computed(() => footerColumnCount(this.config()));
+  protected readonly background = computed(() => footerBackground(this.config().background));
+  protected readonly isDark = computed(() => !!this.background() && isDarkColor(this.background()));
+  /** links with an unsafe or missing target are dropped, not rendered as plain text */
+  protected readonly social = computed(() => (this.config().social ?? []).filter((l) => this.hasTarget(l)));
+  protected readonly bottomLinks = computed(() => (this.config().bottomLinks ?? []).filter((l) => this.hasTarget(l)));
   protected readonly columnBlocks = computed(() => footerVisibleColumns(this.config()).map(column => footerBlocks(column.items)));
 
   /** an unsafe url (only possible in a hand-edited document) renders as no link at all */
-  protected hasTarget(item: FooterItem): boolean {
+  protected hasTarget(item: Pick<FooterItem, 'url'>): boolean {
     return !!item.url && isFooterUrl(item.url);
   }
 
-  protected isInternal(item: FooterItem): boolean {
+  protected isInternal(item: Pick<FooterItem, 'url'>): boolean {
     return item.url.startsWith('/');
   }
 
-  protected isExternal(item: FooterItem): boolean {
+  protected isExternal(item: Pick<FooterItem, 'url'>): boolean {
     return isExternalFooterUrl(item.url);
   }
 

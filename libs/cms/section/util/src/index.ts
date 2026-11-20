@@ -59,3 +59,4 @@ export * from './lib/section-track-picker';
 export * from './lib/journal-track-section.validations';
 export * from './lib/news-tag.util';
 export * from './lib/tile-image.util';
+export * from './lib/slideshow.util';

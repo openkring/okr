@@ -1,6 +1,6 @@
 import {
   FOOTER_CONFIG_SHAPE, FOOTER_ITEM_SHAPE, FOOTER_ITEM_TYPES, FOOTER_LOGO_HEIGHTS, FOOTER_MAX_COLUMNS,
-  FooterColumn, FooterConfig, FooterItem, FooterItemType
+  FooterColumn, FooterConfig, FooterItem, FooterItemType, FooterLink
 } from '@okr/shared-models';
 
 /**
@@ -13,7 +13,36 @@ export function normalizeFooterConfig(config: Partial<FooterConfig> | undefined)
   const columns = Array.from({ length: FOOTER_MAX_COLUMNS }, (_, i): FooterColumn => ({
     items: (merged.columns?.[i]?.items ?? []).map(item => ({ ...FOOTER_ITEM_SHAPE, ...item })),
   }));
-  return { ...merged, columns };
+  const links = (list: FooterLink[] | undefined): FooterLink[] =>
+    (Array.isArray(list) ? list : []).map((l) => ({ label: l?.label ?? '', url: l?.url ?? '', icon: l?.icon ?? '' }));
+  return { ...merged, columns, background: merged.background ?? '', social: links(merged.social), bottomLinks: links(merged.bottomLinks) };
+}
+
+/** a new, empty social or bottom-line link */
+export function newFooterLink(): FooterLink {
+  return { label: '', url: '', icon: '' };
+}
+
+/** the field name of one social / bottom-line link field (footer.social.i0.url) */
+export function footerLinkField(list: 'social' | 'bottomLinks', index: number, field: keyof FooterLink): string {
+  return `footer.${list}.i${index}.${field}`;
+}
+
+const FOOTER_HEX = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+
+/** a footer background that may go into a style binding; '' = the theme's footer colour */
+export function footerBackground(value: string | undefined): string {
+  const v = value?.trim() ?? '';
+  return FOOTER_HEX.test(v) ? v : '';
+}
+
+/** dark backgrounds get white text: relative luminance below 0.5 */
+export function isDarkColor(hex: string): boolean {
+  const h = hex.replace('#', '');
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  if (!/^[0-9a-f]{6}$/i.test(full)) return false;
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16) / 255);
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b < 0.5;
 }
 
 /** the column count clamped to 1…FOOTER_MAX_COLUMNS; a broken value falls back to the maximum */

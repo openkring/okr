@@ -68,6 +68,17 @@
         "apps/sc7-website"
       ],
       "port": 4307
+    },
+    {
+      "name": "la21staefa-website-preview",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "scripts/website-preview.mjs",
+        "la21staefa",
+        "--live",
+        "--port=4310"
+      ],
+      "port": 4310
     }
   ]
 }
