@@ -706,10 +706,19 @@ service cloud.firestore {
     }
     // Own tenants only: an agreement's tenants become its entries' tenants, so a treasurer may not
     // widen one to a foreign tenant (self-detach stays possible).
+    // The person must belong to the caller's tenants (a treasurer may not bind a foreign person); checked on
+    // create and whenever an update changes personKey.
+    function trainerPersonInCallerTenants(pk) {
+      return pk is string && pk != ''
+             && get(/databases/$(database)/documents/persons/$(pk)).data.tenants.hasAny(callerTenants());
+    }
     match /trainer-agreements/{id} {
       allow read: if trainerBillingRead();
-      allow create: if isTreasurerOrAdmin() && tenantCreateOwnOnly();
-      allow update: if isTreasurerOrAdmin() && tenantUpdateNoForeignAdd();
+      allow create: if isTreasurerOrAdmin() && tenantCreateOwnOnly()
+                    && trainerPersonInCallerTenants(request.resource.data.get('personKey', ''));
+      allow update: if isTreasurerOrAdmin() && tenantUpdateNoForeignAdd()
+                    && (request.resource.data.get('personKey', '') == resource.data.get('personKey', '')
+                        || trainerPersonInCallerTenants(request.resource.data.get('personKey', '')));
       allow delete: if false;
     }
     // Doc id = personKey: one profile per person across all clubs; `tenants` (the clubs with an

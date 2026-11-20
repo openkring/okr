@@ -333,6 +333,7 @@ def tr_agreement(person="pTr", **extra):
          "services": [tr_service("training"), tr_service("old", archived=True), tr_service("regatta")]}
     d.update(extra)
     return d
+seed("persons/pTr", {"tenants": ["t1"], "isArchived": False, "lastName": "Tr"})
 seed("trainer-agreements/taA",        tr_agreement())
 seed("trainer-agreements/taEnded",    tr_agreement(validTo="20260331"))
 seed("trainer-agreements/taInactive", tr_agreement(selfEmployedConfirmed=False))
@@ -1303,6 +1304,9 @@ single_cases = [
     ("treasurer T CREATE trainer-agreements tenants=[t2] -> DENY", False, POST, "trainer-agreements?documentId=taNew3", T, body(tr_agreement(tenants=["t2"])), None),
     ("treasurer T PATCH trainer-agreements/taA tenants=[t1,t2] -> DENY (foreign tenant added)", False, PATCH, "trainer-agreements/taA", T, body({"tenants": ["t1", "t2"]}), ["tenants"]),
     ("treasurer T CREATE trainer-agreements tenants=[t1,t2] -> DENY (foreign tenant)", False, POST, "trainer-agreements?documentId=taNew4", T, body(tr_agreement(tenants=["t1", "t2"])), None),
+    ("treasurer T CREATE trainer-agreements for a t2 person -> DENY", False, POST, "trainer-agreements?documentId=taNew5", T, body(tr_agreement(person="pB")), None),
+    ("treasurer T CREATE trainer-agreements for a t1 person -> ALLOW", True, POST, "trainer-agreements?documentId=taNew6", T, body(tr_agreement(person="pA")), None),
+    ("treasurer T PATCH trainer-agreements/taA personKey to a t2 person -> DENY", False, PATCH, "trainer-agreements/taA", T, body({"personKey": "pB"}), ["personKey"]),
     ("treasurer T DELETE trainer-agreements/taA -> DENY (archive)", False, DELETE, "trainer-agreements/taA", T, None, None),
     # work entries: read like agreements
     ("trainer GET work-entries/weOpen -> ALLOW", True, GET, "work-entries/weOpen", TR, None, None),

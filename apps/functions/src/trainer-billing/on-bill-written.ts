@@ -11,13 +11,20 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { BillCollection, TrainerInvoiceCollection, TrainerInvoiceState } from '@okr/shared-models';
 import { trainerInvoiceStateForBill } from '@okr/finance-trainer-billing-util';
 
-type BillLike = { trainerInvoiceKey?: string; state?: string } | undefined;
+type BillLike = { trainerInvoiceKey?: string; state?: string; accountingTenantId?: string } | undefined;
 
 /** Pure: the invoice state the written bill implies, or `undefined` (no trainer bill, bill deleted, no mapped state). */
 export function mirrorUpdate(before: BillLike, after: BillLike): TrainerInvoiceState | undefined {
   void before;
   if (!after || !after.trainerInvoiceKey) return undefined;
   return trainerInvoiceStateForBill(after.state as never);
+}
+
+/** Pure: the invoice is the one this bill belongs to (key link both ways) and sits in the same books. */
+export function invoiceMatchesBill(
+  invoice: { billKey?: unknown; accountingTenantId?: unknown } | undefined, billId: string, bill: { accountingTenantId?: unknown } | undefined,
+): boolean {
+  return !!invoice && !!bill && invoice.billKey === billId && !!bill.accountingTenantId && invoice.accountingTenantId === bill.accountingTenantId;
 }
 
 export const onBillWrittenTrainerMirror = onDocumentWritten({ document: `${BillCollection}/{id}`, region: 'europe-west6' }, async (event) => {
@@ -32,6 +39,7 @@ export const onBillWrittenTrainerMirror = onDocumentWritten({ document: `${BillC
   await db.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
     if (!snap.exists) return;
+    if (!invoiceMatchesBill(snap.data(), event.params.id, after)) return;
     const stored = snap.get('state');
     if (stored === 'rejected' || stored === target) return;
     tx.update(ref, { state: target });

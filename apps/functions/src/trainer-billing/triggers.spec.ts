@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { mirrorUpdate } from './on-bill-written';
+import { invoiceMatchesBill, mirrorUpdate } from './on-bill-written';
 import { profileTenants } from './on-trainer-agreement-written';
 
 describe('profileTenants', () => {
@@ -28,5 +28,14 @@ describe('mirrorUpdate', () => {
   it('undefined without trainerInvoiceKey or when deleted', () => {
     expect(mirrorUpdate({ state: 'draft' }, { state: 'todo' })).toBeUndefined();
     expect(mirrorUpdate({ trainerInvoiceKey: 'i1', state: 'draft' }, undefined)).toBeUndefined();
+  });
+});
+
+describe('invoiceMatchesBill', () => {
+  it('needs billKey and books to match', () => {
+    expect(invoiceMatchesBill({ billKey: 'b1', accountingTenantId: 'scs' }, 'b1', { accountingTenantId: 'scs' })).toBe(true);
+    expect(invoiceMatchesBill({ billKey: 'b2', accountingTenantId: 'scs' }, 'b1', { accountingTenantId: 'scs' })).toBe(false);
+    expect(invoiceMatchesBill({ billKey: 'b1', accountingTenantId: 'gss' }, 'b1', { accountingTenantId: 'scs' })).toBe(false);
+    expect(invoiceMatchesBill(undefined, 'b1', { accountingTenantId: 'scs' })).toBe(false);
   });
 });
