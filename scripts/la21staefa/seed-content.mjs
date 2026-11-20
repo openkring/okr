@@ -98,7 +98,7 @@ export function sdgSection() {
 }
 
 const IMAGE = { actionUrl: '', altText: '', credit: '', documentKey: '', label: '', overlay: '', type: 0, url: '' };
-const IMAGE_STYLE = { imgIxParams: '', width: '100%', height: 'auto', sizes: '(max-width: 786px) 50vw, 100vw', border: '', borderRadius: '', fill: true, hasPriority: false, action: 0, zoomFactor: 2 };
+const IMAGE_STYLE = { imgIxParams: '', width: '100%', height: 'auto', sizes: '(max-width: 786px) 50vw, 100vw', border: '', borderRadius: '', fill: true, hasPriority: false, action: 0, zoomFactor: 2, isThumbnail: false, slot: 'none' };
 
 const section = (key, type, title, properties = {}, extra = {}) => ({
   name: key, type, state: 'published', roleNeeded: 'none', colSize: '12', color: 0, title, subTitle: '',

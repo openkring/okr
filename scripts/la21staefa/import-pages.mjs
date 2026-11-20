@@ -97,7 +97,7 @@ export function imageLayoutOf(n) {
 }
 
 const IMAGE = { actionUrl: '', altText: '', credit: '', documentKey: '', label: '', overlay: '', type: 0, url: '' };
-const IMAGE_STYLE = { imgIxParams: '', width: '100%', height: 'auto', sizes: '(max-width: 786px) 50vw, 100vw', border: '', borderRadius: '', fill: true, hasPriority: false, action: 0, zoomFactor: 2 };
+const IMAGE_STYLE = { imgIxParams: '', width: '100%', height: 'auto', sizes: '(max-width: 786px) 50vw, 100vw', border: '', borderRadius: '', fill: true, hasPriority: false, action: 0, zoomFactor: 2, isThumbnail: false, slot: 'none' };
 
 /** an article section from one extracted block; `paths` maps image url → storage path */
 export function articleOf(key, block, paths) {
