@@ -312,6 +312,8 @@ export interface SectionDoc {
   intro?: string;
   introPosition?: 'above' | 'below';
   color?: number;
+  /** width on the page per screen size, columns of 12: '12' or '12,6,4' (phone, tablet, large) — see section-row.ts */
+  colSize?: string;
   content?: { htmlContent?: string; position?: number; colSize?: number };
   properties?: Record<string, unknown> & {
     titleI18n?: I18nString;

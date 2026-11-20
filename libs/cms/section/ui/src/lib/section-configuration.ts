@@ -5,7 +5,7 @@ import { ArticleConfig, CategoryListModel, RoleName, SECTION_INTRO_POSITIONS, Se
 import { ButtonCopy, ButtonCopyI18n, CategorySelect, ErrorNote, TextareaInput, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { COMMENT_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
-import { getFieldErrors, SectionErrors, SectionI18n } from '@okr/cms-section-util';
+import { getFieldErrors, parseSectionWidths, SECTION_SCREENS, SectionErrors, SectionI18n, SectionScreen, sectionWidthChoices, setSectionWidth } from '@okr/cms-section-util';
 
 export const PFX = '@cms/section/feature.';
 
@@ -62,6 +62,23 @@ const EMPHASES: ArticleEmphasis[] = ['none', 'banner'];
               </ion-col>
               <ion-col size="6">
                 <okr-cat-select [category]="states()!" [selectedItemName]="state()" (selectedItemNameChange)="onFieldChange('state', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+              </ion-col>
+            </ion-row>
+            <!-- how wide the section is on the page, per screen size (colSize); narrower neighbours stand side by side -->
+            <ion-row>
+              @for (screen of screens; track screen) {
+                <ion-col size="12" size-md="4">
+                  <ion-select [label]="widthLabels()[screen]" labelPlacement="stacked" interface="popover"
+                              [value]="widths()[screen]" [disabled]="isReadOnly()"
+                              (ionChange)="onWidthChange(screen, $event.detail.value)">
+                    @for (w of widthChoices()[screen]; track w) {
+                      <ion-select-option [value]="w">{{ widthLabel(w) }}</ion-select-option>
+                    }
+                  </ion-select>
+                </ion-col>
+              }
+              <ion-col size="12">
+                <ion-note>{{ i18n().section_config_width_helper() }}</ion-note>
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -129,12 +146,6 @@ const EMPHASES: ArticleEmphasis[] = ['none', 'banner'];
                 <ion-note>{{ i18n().emphasis_helper() }}</ion-note>
               </ion-col>
             }
-            <!-- the column size of the heading only matters once there is a heading -->
-            @if(showAdvanced() && hasHeading()) {
-              <ion-col size="12">
-                <okr-text-input [i18n]="colSizeI18n()" [value]="colSize()" (valueChange)="onFieldChange('colSize', $event)" [readOnly]="isReadOnly()" [showHelper]="true" />
-              </ion-col>
-            }
           }
         </ion-row>
         </ion-grid>
@@ -166,8 +177,6 @@ export class SectionConfiguration {
   protected subTitle = linkedSignal(() => this.formData().subTitle ?? '');
   protected intro = linkedSignal(() => this.formData().intro ?? '');
   protected hasIntro = computed(() => this.intro().trim().length > 0);
-  /** title, subtitle or intro: something the column size applies to */
-  protected hasHeading = computed(() => this.hasIntro() || this.title().trim().length > 0 || this.subTitle().trim().length > 0);
   protected introPosition = computed<SectionIntroPosition>(() => this.formData().introPosition ?? 'below');
   protected isArticle = computed(() => this.formData().type === 'article');
   protected emphasis = computed<ArticleEmphasis>(() => {
@@ -177,7 +186,11 @@ export class SectionConfiguration {
   protected type = computed(() => this.formData().type);
   protected state = computed(() => this.formData().state);
   protected roleNeeded = linkedSignal(() => this.formData().roleNeeded ?? 'registered');
-  protected colSize = linkedSignal(() => this.formData().colSize ?? '12');
+  protected widths = computed(() => parseSectionWidths(this.formData().colSize));
+  protected widthChoices = computed<Record<SectionScreen, number[]>>(() => {
+    const w = this.widths();
+    return { sm: sectionWidthChoices(w.sm), md: sectionWidthChoices(w.md), lg: sectionWidthChoices(w.lg) };
+  });
   protected headerTitle2 = computed(() => this.headerTitle() ?? this.i18n().form_title);
 
   // both caps must stay in sync with baseSectionValidations, otherwise the character
@@ -227,12 +240,30 @@ export class SectionConfiguration {
     banner: this.i18n().emphasis_banner(),
   }));
 
-  protected colSizeI18n = computed(() => ({
-    name: 'colSize',
-    label: this.i18n().section_config_colSize_label(),
-    placeholder: this.i18n().section_config_colSize_placeholder(),
-    helper: this.i18n().section_config_colSize_helper(),
-  } as TextInputI18n));
+  protected readonly screens = SECTION_SCREENS;
+  protected widthLabels = computed<Record<SectionScreen, string>>(() => ({
+    sm: this.i18n().section_config_width_sm(),
+    md: this.i18n().section_config_width_md(),
+    lg: this.i18n().section_config_width_lg(),
+  }));
+  private widthNames = computed<Record<number, string>>(() => ({
+    12: this.i18n().section_config_width_w12(),
+    8: this.i18n().section_config_width_w8(),
+    6: this.i18n().section_config_width_w6(),
+    4: this.i18n().section_config_width_w4(),
+    3: this.i18n().section_config_width_w3(),
+  }));
+
+  /** the name of a width; an odd stored one (e.g. 5) shows as «5/12» */
+  protected widthLabel(width: number): string {
+    return this.widthNames()[width] ?? `${width}/12`;
+  }
+
+  protected onWidthChange(screen: SectionScreen, width: unknown): void {
+    const n = Number(width);
+    if (!Number.isInteger(n) || n < 1 || n > 12) return;
+    this.formData.update(vm => ({ ...vm, colSize: setSectionWidth(vm.colSize, screen, n) }));
+  }
 
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | RoleName | SectionIntroPosition): void {
     this.formData.update(vm => ({ ...vm, [fieldName]: fieldValue }));

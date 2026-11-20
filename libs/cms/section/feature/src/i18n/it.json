@@ -1160,11 +1160,16 @@
         "placeholder": "testo",
         "helper": "Il sottotitolo è spesso la data di creazione dell'articolo"
       },
-      "colSize": {
-        "label": "Dimensione della colonna",
-        "placeholder": "0..12",
-        "helper": "La larghezza in numero di colonne di una griglia di max 12 colonne, ad es. 1, 2, 3 ecc.",
-        "error": "La dimensione della colonna deve essere un numero intero composto solo da cifre, tra 0 e 12."
+      "width": {
+        "sm": "Larghezza sul telefono",
+        "md": "Larghezza sul tablet",
+        "lg": "Larghezza sugli schermi grandi",
+        "helper": "Le sezioni più strette stanno una accanto all’altra finché insieme entrano in una riga – sul sito web e nell’app.",
+        "w12": "Larghezza intera",
+        "w8": "Due terzi",
+        "w6": "Metà",
+        "w4": "Un terzo",
+        "w3": "Un quarto"
       },
       "intro": {
         "label": "Intro",

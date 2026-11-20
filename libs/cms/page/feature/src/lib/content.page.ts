@@ -9,6 +9,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, error, getColSizes } from '@okr/shared-util-angular';
 import { hasRole, contextMenuId } from '@okr/shared-util-core';
 import { fragmentScrollTop } from '@okr/cms-page-util';
+import { parseSectionWidths } from '@okr/cms-section-util';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { SectionDispatcher, SectionStore } from '@okr/cms-section-feature';
@@ -63,6 +64,19 @@ import { PageStore } from './page.store';
   ion-item.edit-mode {
     --padding-start: 0;
     --inner-padding-end: 0;
+  }
+
+  /* reader view: each section spans its colSize of 12 columns (phone / md / lg, as the editor's ion-col
+     size / size-md / size-lg); narrower neighbours stand side by side. Print keeps the stacked block layout. */
+  @media screen {
+    .print-content { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); align-items: start; }
+    .section-cell { grid-column: span var(--w-sm, 12); min-width: 0; }
+  }
+  @media screen and (min-width: 768px) {
+    .section-cell { grid-column: span var(--w-md, 12); }
+  }
+  @media screen and (min-width: 992px) {
+    .section-cell { grid-column: span var(--w-lg, 12); }
   }
 
 @media (width <= 600px) {
@@ -202,7 +216,7 @@ import { PageStore } from './page.store';
         } @else {
           <div class="print-content" #printContent>
             @for(section of visibleSections(); track section.okey) {
-              <div [id]="section.okey">
+              <div [id]="section.okey" class="section-cell" [style]="widthStyle(section)">
                 <okr-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" [pageLocationKey]="page()?.locationKey ?? ''" />
               </div>
             }
@@ -498,6 +512,12 @@ export class ContentPage {
    * Parses a col size config string (e.g. "6,4,3") and returns an object for attribute binding.
    * { size: 6, sizeMd: 4, sizeLg: 3 }
    */
+  /** the section's width per screen size as css variables of its grid cell (reader view) */
+  protected widthStyle(section: SectionModel): Record<string, string> {
+    const w = parseSectionWidths(section.colSize);
+    return { '--w-sm': `${w.sm}`, '--w-md': `${w.md}`, '--w-lg': `${w.lg}` };
+  }
+
   protected getColSizes(colSizeConfig: string): { size?: number, sizeMd?: number, sizeLg?: number } {
     return getColSizes(colSizeConfig);
   }

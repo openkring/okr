@@ -115,6 +115,35 @@ describe('renderSite', () => {
     expect(de).not.toContain('<h2>Organisation</h2>');
   });
 
+  it('puts consecutive narrow sections into one row (partials/section-row.hbs), rendered inColumn', () => {
+    const base = input();
+    const templates = fixtureTemplates();
+    templates.partials['section-row'] = '<div class="row">{{#each cols}}<div class="col" data-w="{{sm}}/{{md}}/{{lg}}">{{{html}}}</div>{{/each}}</div>';
+    templates.sections['article'] = '{{#if inColumn}}<p class="in">{{title}}</p>{{else}}<section>{{title}}</section>{{/if}}';
+    const pages = new Map(base.pages);
+    pages.set('scsw_vorstand', pg(['a-full', 'a-left', 'a-right', 'a-after'], { title: 'Vorstand' }));
+    const sections = new Map(base.sections);
+    const art = (title: string, colSize?: string): SectionDoc => ({ type: 'article', state: 'published', tenants: ['scs'], title, colSize });
+    sections.set('a-full', art('Voll', '12'));
+    sections.set('a-left', art('Links', '12,6'));
+    sections.set('a-right', art('Rechts', '12,6,4'));
+    sections.set('a-after', art('Danach'));
+    const de = fileOf(renderSite({ ...base, pages, sections, templates }).files, 'vorstand.html') ?? '';
+    expect(de).toMatch(/<section>Voll<\/section>\s*<div class="row">/);
+    expect(de).toContain('<div class="col" data-w="12/6/6"><p class="in">Links</p></div>');
+    expect(de).toContain('<div class="col" data-w="12/6/4"><p class="in">Rechts</p></div></div>');
+    expect(de).toMatch(/<\/div><\/div>\s*<section>Danach<\/section>/);
+  });
+
+  it('renders narrow sections as before without partials/section-row.hbs', () => {
+    const base = input();
+    const sections = new Map(base.sections);
+    sections.set('s-plain', { ...(sections.get('s-plain') as SectionDoc), colSize: '12,6' });
+    const de = fileOf(renderSite({ ...base, sections }).files, 'vorstand.html') ?? '';
+    expect(de).toContain('Nur Deutsch');
+    expect(de).not.toContain('class="row"');
+  });
+
   it('skips archived nodes and draft sections', () => {
     const { files } = renderSite(input());
     expect(files.some((f) => f.path.includes('alt.html'))).toBe(false);

@@ -19,6 +19,7 @@ export * from './lib/section-validation-registry';
 export * from './lib/album-section.validations';
 export * from './lib/article-section.validations';
 export * from './lib/image-layout.util';
+export * from './lib/section-width.util';
 export * from './lib/button-section.validations';
 export * from './lib/button.util';
 export * from './lib/calendar-section.validations';

@@ -59,6 +59,7 @@ import {
 } from './render-context';
 import { compileTemplate, createTemplateEnv, escapeXml, langPath, type RenderData, type RenderFn } from './render-helpers';
 import { columnPairStarts, homeRowPlan, type HomeRow } from './home-layout';
+import { sectionColumnWidths, sectionRows, type SectionColumnWidths } from './section-row';
 import { mapFooter, mapSection, pickText, type PublicFooter, type SanitizeFn, type SectionDoc } from './section-mapper';
 import { groupPagesInTree } from './website-tree-read.util';
 import type { PublicPerson } from './group-people';
@@ -123,6 +124,8 @@ interface Compiled {
   pages: Map<string, RenderFn>;
   /** partials/section-pair.hbs ({ name, left, right }): the two-column row of a text article + form */
   pair?: RenderFn;
+  /** partials/section-row.hbs ({ cols: [{ html, sm, md, lg }] }): consecutive sections narrower than the page, side by side */
+  row?: RenderFn;
 }
 
 function activePageNodes(nodes: WebsiteNode[], out: WebsiteNode[] = []): WebsiteNode[] {
@@ -198,6 +201,7 @@ function compileAll(templates: TemplateSet): Compiled {
     sections: compileEach('sections', templates.sections),
     pages: compileEach('pages', templates.pages),
     pair: templates.partials['section-pair'] === undefined ? undefined : compileTemplate(hbs, 'partials/section-pair.hbs', templates.partials['section-pair']),
+    row: templates.partials['section-row'] === undefined ? undefined : compileTemplate(hbs, 'partials/section-row.hbs', templates.partials['section-row']),
   };
 }
 
@@ -411,22 +415,42 @@ export function renderSite(input: RenderInput): RenderResult {
       }
       // a text article followed by a form becomes one two-column row (partials/section-pair.hbs);
       // both are rendered with `inColumn: true`, which drops their own section wrapper
-      const pairStarts = compiled.pair ? columnPairStarts(contexts.map((c, i) => (failed.has(i) ? {} : c))) : new Set<number>();
+      // consecutive sections narrower than the page (colSize) share one row (partials/section-row.hbs), each
+      // rendered with `inColumn: true`; they never take part in a pair
+      const rowOf = new Map<number, number[]>();
+      if (compiled.row) {
+        const runs = sectionRows(published.map(({ section }, i) => (failed.has(i) ? null
+          : { type: contexts[i]['type'] ?? section.type, colSize: section.colSize, slideshow: contexts[i]['slideshow'] })));
+        for (const run of runs) for (const i of run) rowOf.set(i, run);
+      }
+      const pairStarts = compiled.pair ? columnPairStarts(contexts.map((c, i) => (failed.has(i) || rowOf.has(i) ? {} : c))) : new Set<number>();
       const blocks: string[] = [];
       let pending: { name: string; left: string } | undefined;
+      let rowRun: number[] | undefined;
+      let rowCols: (SectionColumnWidths & { html: string })[] = [];
+      const flushRow = (): void => {
+        if (rowCols.length) blocks.push((compiled.row as RenderFn)({ cols: rowCols }, data));
+        rowCols = [];
+        rowRun = undefined;
+      };
       published.forEach(({ raw, sectionKey, section }, i) => {
         if (failed.has(i)) return;
+        const run = rowOf.get(i);
+        if (run !== rowRun) flushRow();
         const type = section.type ?? 'article';
         const template = compiled.sections.get(type);
         if (!template) {
           problems.push({ code: 'templateMissing', pageKey: entry.key, sectionKey: raw, detail: type });
           return;
         }
-        const inColumn = pairStarts.has(i) || pairStarts.has(i - 1);
+        const inColumn = pairStarts.has(i) || pairStarts.has(i - 1) || run !== undefined;
         try {
           const html = template(inColumn ? { ...contexts[i], inColumn: true } : contexts[i], data);
           rendered.push({ type, key: sectionKey, html });
-          if (pairStarts.has(i)) {
+          if (run) {
+            rowRun = run;
+            rowCols.push({ html, ...sectionColumnWidths(section.colSize) });
+          } else if (pairStarts.has(i)) {
             pending = { name: String(contexts[i]['name'] ?? ''), left: html };
           } else if (pending && pairStarts.has(i - 1)) {
             blocks.push((compiled.pair as RenderFn)({ name: pending.name, left: pending.left, right: html }, data));
@@ -438,6 +462,7 @@ export function renderSite(input: RenderInput): RenderResult {
           problems.push({ code: 'renderFailed', pageKey: entry.key, sectionKey: raw, detail: message(e) });
         }
       });
+      flushRow();
       if (pending) blocks.push(pending.left); // the form failed: the article stands alone
       const label = entry.node ? pickText(entry.node.label, entry.node.labelI18n, lang) : '';
       const slug = entry.file === 'index' ? '' : entry.file;

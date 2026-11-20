@@ -1160,11 +1160,16 @@
         "placeholder": "texto",
         "helper": "El subtítulo suele ser la fecha de creación del artículo"
       },
-      "colSize": {
-        "label": "Tamaño de columna",
-        "placeholder": "0..12",
-        "helper": "La anchura en número de columnas de una cuadrícula de máx. 12 columnas, p. ej. 1, 2, 3 etc.",
-        "error": "El tamaño de columna debe ser un número entero compuesto únicamente de cifras, entre 0 y 12."
+      "width": {
+        "sm": "Ancho en el móvil",
+        "md": "Ancho en la tableta",
+        "lg": "Ancho en pantallas grandes",
+        "helper": "Las secciones más estrechas se colocan una al lado de otra mientras quepan juntas en una fila – en el sitio web y en la app.",
+        "w12": "Ancho completo",
+        "w8": "Dos tercios",
+        "w6": "Mitad",
+        "w4": "Un tercio",
+        "w3": "Un cuarto"
       },
       "intro": {
         "label": "Intro",

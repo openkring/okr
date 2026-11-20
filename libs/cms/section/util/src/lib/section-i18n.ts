@@ -1131,9 +1131,15 @@ export const SECTION_I18N_KEYS = {
   section_config_introPosition_above:       PFX + 'section.config.introPosition.above',
   section_config_introPosition_below:       PFX + 'section.config.introPosition.below',
   section_config_introPosition_helper:      PFX + 'section.config.introPosition.helper',
-  section_config_colSize_label:             PFX + 'section.config.colSize.label',
-  section_config_colSize_placeholder:       PFX + 'section.config.colSize.placeholder',
-  section_config_colSize_helper:            PFX + 'section.config.colSize.helper',
+  section_config_width_sm:                  PFX + 'section.config.width.sm',
+  section_config_width_md:                  PFX + 'section.config.width.md',
+  section_config_width_lg:                  PFX + 'section.config.width.lg',
+  section_config_width_helper:              PFX + 'section.config.width.helper',
+  section_config_width_w12:                 PFX + 'section.config.width.w12',
+  section_config_width_w8:                  PFX + 'section.config.width.w8',
+  section_config_width_w6:                  PFX + 'section.config.width.w6',
+  section_config_width_w4:                  PFX + 'section.config.width.w4',
+  section_config_width_w3:                  PFX + 'section.config.width.w3',
 
   // table
   table_label:                              PFX + 'table.label',

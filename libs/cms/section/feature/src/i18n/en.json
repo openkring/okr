@@ -1160,11 +1160,16 @@
         "placeholder": "text",
         "helper": "The subtitle is often the creation date of the article"
       },
-      "colSize": {
-        "label": "Column size",
-        "placeholder": "0..12",
-        "helper": "The width in number of columns from a grid of max 12 columns, e.g. 1, 2, 3 etc.",
-        "error": "The column size must be a whole number of digits, between 0 and 12."
+      "width": {
+        "sm": "Width on phones",
+        "md": "Width on tablets",
+        "lg": "Width on large screens",
+        "helper": "Narrower sections stand side by side as long as they fit into one row together – on the website and in the app.",
+        "w12": "Full width",
+        "w8": "Two thirds",
+        "w6": "Half",
+        "w4": "One third",
+        "w3": "One quarter"
       },
       "intro": {
         "label": "Intro",

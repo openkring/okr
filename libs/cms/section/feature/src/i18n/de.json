@@ -1160,11 +1160,16 @@
         "placeholder": "text",
         "helper": "Untertitel ist oft das Erstellungs-Datum des Artikels"
       },
-      "colSize": {
-        "label": "Spaltengrösse",
-        "placeholder": "0..12",
-        "helper": "Die Breite in Anzahl Spalten aus einem Grid von max 12 Spalten, z.B. 1, 2, 3 etc.",
-        "error": "Die Spaltengrösse muss eine Ganzzahl aus lauter Ziffern sein, zwischen 0 und 12."
+      "width": {
+        "sm": "Breite auf dem Handy",
+        "md": "Breite auf dem Tablet",
+        "lg": "Breite auf grossen Bildschirmen",
+        "helper": "Schmalere Sektionen stehen nebeneinander, solange sie zusammen in eine Zeile passen – auf der Website und in der App.",
+        "w12": "Ganze Breite",
+        "w8": "Zwei Drittel",
+        "w6": "Hälfte",
+        "w4": "Ein Drittel",
+        "w3": "Ein Viertel"
       },
       "intro": {
         "label": "Intro",
