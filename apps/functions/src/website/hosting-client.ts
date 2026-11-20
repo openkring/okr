@@ -146,3 +146,16 @@ export async function listReleases(site: string, pageSize: number): Promise<Rele
   });
   return (data.releases ?? []).map((r) => ({ name: r.name, version: r.version?.name ?? '', createTime: r.releaseTime ?? '' }));
 }
+
+/** One domain connected to a Hosting site, as `sites/<site>/domains` lists it (custom domains only). */
+export interface SiteDomainInfo {
+  domainName: string;
+  status?: string;
+  domainRedirect?: { domainName?: string };
+}
+
+/** The custom domains connected to a Hosting site; the default `<site>.web.app` hosts are not listed. */
+export async function listSiteDomains(site: string): Promise<SiteDomainInfo[]> {
+  const data = await call<{ domains?: SiteDomainInfo[] }>('GET', `${BASE}/sites/${site}/domains`);
+  return data.domains ?? [];
+}

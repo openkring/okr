@@ -11,7 +11,7 @@ import { createActionSheetButton, createActionSheetDivider, createActionSheetOpt
 import { fill } from '@okr/shared-util-core';
 import { WebsiteTreeItem } from '@okr/cms-website-ui';
 import { WebsiteI18n, WebsiteWarningCode, websiteUrl } from '@okr/cms-website-util';
-import { MenuGraph, MenuGraphStore, SitemapView } from '@okr/cms-page-feature';
+import { HostingDomains, MenuGraph, MenuGraphStore, SitemapView } from '@okr/cms-page-feature';
 
 import { WebsiteSitemapStore } from './website-sitemap.store';
 
@@ -32,7 +32,7 @@ const WARNING_KEYS: Partial<Record<WebsiteWarningCode, keyof WebsiteI18n>> = {
   imports: [
     NgTemplateOutlet, Header, Spinner, EmptyList, WebsiteTreeItem,
     IonContent, IonList, IonReorderGroup, IonItem, IonLabel, IonNote, IonButton, IonSegment, IonSegmentButton,
-    MenuGraph,
+    MenuGraph, HostingDomains,
   ],
   providers: [WebsiteSitemapStore, MenuGraphStore],
   template: `
@@ -50,6 +50,7 @@ const WARNING_KEYS: Partial<Record<WebsiteWarningCode, keyof WebsiteI18n>> = {
           </div>
         }
       } @else {
+        <okr-hosting-domains kind="website" [siteId]="siteId()" />
         <ion-segment [value]="view()" (ionChange)="onViewChange($event.detail.value)">
           <ion-segment-button value="website">
             <ion-label>{{ store.i18n.sitemap_view_website() }}</ion-label>

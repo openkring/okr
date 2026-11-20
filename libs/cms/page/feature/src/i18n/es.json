@@ -109,6 +109,12 @@
       "view": {
         "website": "Sitio web",
         "system": "Sistema"
+      },
+      "domains": {
+        "label": "Dominios",
+        "internal": "interno",
+        "inactive": "inactivo",
+        "redirect": "redirige a"
       }
     },
     "blog": {

@@ -10,6 +10,7 @@ import { Menu, MenuStore, MenuItemsStore } from '@okr/cms-menu-feature';
 import { MenuGraph } from './menu-graph';
 import { MenuGraphStore } from './menu-graph.store';
 import { MenuTree } from './menu-tree';
+import { HostingDomains } from './hosting-domains';
 import { PageStore } from './page.store';
 
 /** The two views of a sitemap: the navigation as a visitor walks it, or the full dependency graph. */
@@ -28,7 +29,7 @@ export type SitemapView = 'website' | 'system';
   selector: 'okr-graph-page',
   standalone: true,
   imports: [
-    SvgIconPipe, MenuGraph, MenuTree, Menu,
+    SvgIconPipe, MenuGraph, MenuTree, Menu, HostingDomains,
     IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonContent, IonLabel,
     IonButton, IonIcon, IonPopover, IonSegment, IonSegmentButton
   ],
@@ -64,6 +65,11 @@ export type SitemapView = 'website' | 'system';
             </ion-buttons>
           }
         </ion-toolbar>
+        @if(hasRole('contentAdmin')) {
+          <ion-toolbar>
+            <okr-hosting-domains kind="app" />
+          </ion-toolbar>
+        }
         <ion-toolbar>
           <ion-segment [value]="view()" (ionChange)="onViewChange($event.detail.value)">
             <ion-segment-button value="website">

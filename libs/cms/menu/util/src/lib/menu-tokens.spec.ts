@@ -134,6 +134,10 @@ describe('@APP_DOMAIN@ / @WEB_DOMAIN@ — the two sitemap rows', () => {
     expect(getWebDomain('')).toBe('');
     expect(getWebDomain(undefined)).toBe('');
   });
+  it('getWebDomain: an app on its built-in Firebase host maps to the website site, never to www.<app host>', () => {
+    expect(getWebDomain('la21staefa-app-54aef.web.app')).toBe('la21staefa-website-54aef.web.app');
+    expect(getWebDomain('la21staefa-app-54aef.firebaseapp.com')).toBe('la21staefa-website-54aef.web.app');
+  });
   it('expands to an empty host when the app has no domain', () => {
     expect(expandMenuTokens('Sitemap @WEB_DOMAIN@', ctx).trim()).toBe('Sitemap');
   });

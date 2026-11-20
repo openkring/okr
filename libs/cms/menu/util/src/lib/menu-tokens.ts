@@ -35,14 +35,21 @@ export interface MenuTokenContext {
   appDomain?: string;
 }
 
+/** an app served only on its built-in Firebase host: `<tenant>-app-<suffix>.web.app` / `.firebaseapp.com` */
+const FIREBASE_APP_HOST = /^([a-z0-9-]+)-app-([a-z0-9]+)\.(web\.app|firebaseapp\.com)$/;
+
 /**
  * The public website host of a tenant, derived from its app host: 'app.seeclub.org' →
  * 'www.seeclub.org'. Apex and `www` belong to the website, `app.<domain>` to the app (dns skill).
- * '' when the app has no domain configured.
+ * An app without a custom domain (`la21staefa-app-54aef.web.app`) has its website on the sibling
+ * Hosting site (`la21staefa-website-54aef.web.app`): prefixing `www.` to a web.app host named a host
+ * that does not exist. '' when the app has no domain configured.
  */
 export function getWebDomain(appDomain?: string): string {
   const host = (appDomain ?? '').trim().toLowerCase();
   if (!host) return '';
+  const firebase = FIREBASE_APP_HOST.exec(host);
+  if (firebase) return `${firebase[1]}-website-${firebase[2]}.web.app`;
   const apex = host.replace(/^(app|www)\./, '');
   return 'www.' + apex;
 }

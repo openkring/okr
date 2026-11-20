@@ -29,6 +29,10 @@ describe('withImageStyleDefaults', () => {
     expect(withImageStyleDefaults(s)).toBe(s);
   });
 
+  it('passes undefined through', () => {
+    expect(withImageStyleDefaults(undefined)).toBeUndefined();
+  });
+
   it('does not mutate its input', () => {
     const s = section({ width: '100%' });
     withImageStyleDefaults(s);

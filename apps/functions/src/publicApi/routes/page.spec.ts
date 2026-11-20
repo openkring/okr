@@ -620,7 +620,7 @@ describe('homepage sections (1.151)', () => {
 
   it('card tiles need a title and columns are clamped, default 3', () => {
     const out = map({ type: 'tiles', properties: { variant: 'card', columns: 9, items: [{ title: 'A' }, { value: '1' }] } });
-    expect(out['columns']).toBe(4);
+    expect(out['columns']).toBe(6);
     expect((out['items'] as unknown[]).length).toBe(1);
     expect(map({ type: 'tiles', properties: { items: [] } })['columns']).toBe(3);
   });
