@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { mapArticleColors, mapCalendarKey, mapSection, type SectionDoc, mapSlideshow, toImgixUrl } from './section-mapper';
+import { isColorBand, mapArticleColors, mapCalendarKey, mapSection, type SectionDoc, mapSlideshow, toImgixUrl } from './section-mapper';
 
 const sanitize = (html: string) => html;
 const map = (s: SectionDoc) => mapSection('sec1', s, new Map(), sanitize) as Record<string, unknown>;
@@ -152,6 +152,16 @@ describe('mapSection video embeds without cookies (spec 1.165 §12)', () => {
   });
 });
 
+describe('isColorBand', () => {
+  it('is an article with emphasis banner and its own background', () => {
+    expect(isColorBand({ type: 'article', emphasis: 'banner', background: '#7B85BE' })).toBe(true);
+    expect(isColorBand({ type: 'article', emphasis: 'none', background: '#7B85BE' })).toBe(false);
+    expect(isColorBand({ type: 'article', emphasis: 'banner', background: '' })).toBe(false);
+    expect(isColorBand({ type: 'hero', emphasis: 'banner', background: '#7B85BE' })).toBe(false);
+    expect(isColorBand(undefined)).toBe(false);
+  });
+});
+
 describe('mapSlideshow', () => {
   const imgs = [{ url: 'tenant/la21staefa/hero/a.jpg', altText: 'A' }, { url: 'tenant/la21staefa/hero/b.jpg' }];
 
@@ -161,11 +171,15 @@ describe('mapSlideshow', () => {
     expect(show?.slides[0]).toEqual({ url: 'https://bkaiser.imgix.net/tenant/la21staefa/hero/a.jpg?w=1600&h=600&fit=crop&auto=format,compress', alt: 'A' });
   });
 
-  it('keeps the swipe slider for none, a grid layout or a single image', () => {
+  it('keeps the swipe slider for none, a grid layout or no image', () => {
     expect(mapSlideshow({ effect: 'none' }, undefined, imgs)).toBeUndefined();
     expect(mapSlideshow({ effect: 'fade' }, 'mosaic', imgs)).toBeUndefined();
-    expect(mapSlideshow({ effect: 'fade' }, undefined, imgs.slice(0, 1))).toBeUndefined();
+    expect(mapSlideshow({ effect: 'fade' }, undefined, [])).toBeUndefined();
     expect(mapSlideshow(undefined, undefined, imgs)).toBeUndefined();
+  });
+
+  it('makes a single image a still header picture (one slide)', () => {
+    expect(mapSlideshow({ effect: 'fade' }, 'slider', imgs.slice(0, 1))?.slides).toHaveLength(1);
   });
 
   it('clamps times and drops unsafe image paths', () => {

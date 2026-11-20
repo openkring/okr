@@ -60,7 +60,7 @@ import {
 import { compileTemplate, createTemplateEnv, escapeXml, langPath, type RenderData, type RenderFn } from './render-helpers';
 import { columnPairStarts, homeRowPlan, type HomeRow } from './home-layout';
 import { sectionColumnWidths, sectionRows, type SectionColumnWidths } from './section-row';
-import { mapFooter, mapSection, pickText, type PublicFooter, type SanitizeFn, type SectionDoc } from './section-mapper';
+import { isColorBand, mapFooter, mapSection, pickText, type PublicFooter, type SanitizeFn, type SectionDoc } from './section-mapper';
 import { groupPagesInTree } from './website-tree-read.util';
 import type { PublicPerson } from './group-people';
 import { groupTileItems, safeHexColor, type PublicGroup } from './group-tiles';
@@ -399,10 +399,12 @@ export function renderSite(input: RenderInput): RenderResult {
       }
       // The title band — the page banner (partials/page-banner.hbs, drawn when no section is a hero) or a
       // leading hero section — already shows the title: the next section with the same title would repeat
-      // it right below — drop that heading.
+      // it right below — drop that heading. A leading colour band (isColorBand: the header banner of a
+      // la21staefa project page) is the page's banner, too: the layout then leaves page-banner.hbs out.
       const shown = contexts.map((_, i) => i).filter((i) => !failed.has(i));
       const hasHero = contexts.some((c) => c['type'] === 'hero');
-      const leadHero = hasHero && contexts[shown[0]]?.['type'] === 'hero';
+      const leadBand = !hasHero && isColorBand(contexts[shown[0]]);
+      const leadHero = (hasHero && contexts[shown[0]]?.['type'] === 'hero') || leadBand;
       const nextShown = leadHero ? shown[1] : hasHero ? undefined : shown[0];
       if (nextShown !== undefined) {
         const next = contexts[nextShown];
@@ -471,6 +473,7 @@ export function renderSite(input: RenderInput): RenderResult {
         page: pageContext(entry.key, slug, entry.path, page, label, lang, imageUrl),
         sections: rendered,
         main: blocks.join('\n'),
+        ownBanner: leadBand,
       };
       renderLayout(entry.file, lang, context, data, entry.key);
     }

@@ -381,20 +381,21 @@ const clampNum = (v: unknown, min: number, max: number, fallback: number): numbe
 
 /**
  * The article's self-running slideshow for the website (mirrors `resolveSlideshow` + `slideshowImageUrl` in
- * `@okr/cms-section-util`): only with two or more images, the carousel layout ('slider' or none) and an effect
- * other than 'none'. `undefined` keeps the swipe slider.
+ * `@okr/cms-section-util`): only with the carousel layout ('slider' or none) and an effect other than 'none'.
+ * Unlike the app, one image is enough: it becomes a still full-width header picture without arrows and dots (the
+ * la21staefa project pages whose header on la21staefa.ch has a single photo). `undefined` keeps the swipe slider.
  */
 export function mapSlideshow(raw: unknown, imageLayout: unknown, images: unknown): WebSlideshow | undefined {
   const cfg = (raw ?? {}) as Record<string, unknown>;
   const list = Array.isArray(images) ? images as Record<string, unknown>[] : [];
-  if (!raw || list.length < 2) return undefined;
+  if (!raw || list.length < 1) return undefined;
   if (imageLayout !== undefined && imageLayout !== 'slider') return undefined;
   const effect = cfg['effect'];
   if (typeof effect !== 'string' || effect === 'none' || !(SLIDESHOW_EFFECTS as readonly string[]).includes(effect)) return undefined;
   const slides = list
     .map((img) => ({ url: slideshowSrc(img['url']), alt: str(img['altText']).slice(0, 200) }))
     .filter((slide) => slide.url !== '');
-  if (slides.length < 2) return undefined;
+  if (slides.length < 1) return undefined;
   return {
     effect: effect as WebSlideshow['effect'],
     autoplay: cfg['autoplay'] !== false,
@@ -566,6 +567,15 @@ export function isPlainEmail(value: unknown): value is string {
  *   (`resolveGroupPeople`, §13) or the holders of the roles (`resolveRolePeople`, §13.1) of a people
  *   section of type 'group' / 'responsibility'; a source missing from the map renders no one.
  */
+/**
+ * A full-width colour band: an article with `emphasis: 'banner'` and its own `background` (the header banner of a
+ * la21staefa project page — logo, title, subtitle on the group's colour). Leading a page, it takes the place of the
+ * page's title band (partials/page-banner.hbs), like a leading hero.
+ */
+export function isColorBand(ctx: Record<string, unknown> | undefined): boolean {
+  return !!ctx && ctx['type'] === 'article' && ctx['emphasis'] === 'banner' && typeof ctx['background'] === 'string' && ctx['background'] !== '';
+}
+
 /**
  * The own background of an article (ArticleConfig.background, a checked hex value; '' = none) and whether its text is
  * white: textColor 'light' / 'dark' wins, otherwise ('auto' or absent) the brightness decides (twin of
