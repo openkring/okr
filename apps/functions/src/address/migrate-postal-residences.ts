@@ -37,6 +37,8 @@ export const MIGRATION_TASK_TAG = 'umzug';
 export const MIGRATION_TASK_NAME = 'Adressen ersetzt (Migration)';
 const NOTE_PREFIX = 'Migration 1.164: ersetzt durch';
 const PROGRESS_EVERY = 100;
+/** Two rows of one group written this close together are a tie, not «the newer one wins» (a script run takes about a minute). */
+export const TIE_WINDOW_MS = 120_000;
 /** Firestore allows 500 writes per batch; a parent's writes are never split across batches. */
 const BATCH_LIMIT = 400;
 
@@ -71,8 +73,13 @@ function newestFirst(a: MigrationRow, b: MigrationRow): number {
  * points at a different location (a conflict) or at the same one (a duplicate from another tenant).
  * Rows without a location (ambiguous or no swisstopo hit) and dated rows (a recorded move) take no
  * part: neither winner nor loser.
+ *
+ * A tie: a row at a different location written within `TIE_WINDOW_MS` of the newest one (a bulk
+ * import writes a person's rows within seconds, so «most recent» is only the import order). Such
+ * a group stays untouched — no winner, no loser — and every other row of it is listed in `ties` for a
+ * human to decide.
  */
-export function resolveConflicts(rows: MigrationRow[], locationOf: (okey: string) => string | undefined): { winners: MigrationRow[]; losers: ConflictPair[] } {
+export function resolveConflicts(rows: MigrationRow[], locationOf: (okey: string) => string | undefined): { winners: MigrationRow[]; losers: ConflictPair[]; ties: ConflictPair[] } {
   const groups = new Map<string, MigrationRow[]>();
   for (const r of rows) {
     if (!locationOf(r.okey) || !isUndated(r)) continue;
@@ -83,12 +90,16 @@ export function resolveConflicts(rows: MigrationRow[], locationOf: (okey: string
   }
   const winners: MigrationRow[] = [];
   const losers: ConflictPair[] = [];
+  const ties: ConflictPair[] = [];
   for (const group of groups.values()) {
     const [winner, ...rest] = [...group].sort(newestFirst);
+    const pairs = rest.map((loser) => ({ loser, winner }));
+    const tied = rest.some((r) => locationOf(r.okey) !== locationOf(winner.okey) && Date.parse(winner.updateTime) - Date.parse(r.updateTime) <= TIE_WINDOW_MS);
+    if (tied) { ties.push(...pairs); continue; }
     winners.push(winner);
-    for (const loser of rest) losers.push({ loser, winner });
+    losers.push(...pairs);
   }
-  return { winners, losers };
+  return { winners, losers, ties };
 }
 
 /** «Seestrasse 12, 8712 Stäfa» — empty parts are left out. */
@@ -179,6 +190,8 @@ export interface MigrationReport {
   ambiguous: (RowRef & { suggestions: string[] })[];
   foreignTenants: (RowRef & { rowTenants: string[]; parentTenants: string[]; reason: string })[];
   conflicts: { parentKey: string; addressUsage: string; kind: 'different-location' | 'same-location'; winner: RowRef & { tenants: string[]; updateTime: string }; loser: RowRef & { tenants: string[]; updateTime: string } }[];
+  /** Groups left untouched: rows written within TIE_WINDOW_MS of each other at different locations. */
+  ties: { parentKey: string; addressUsage: string; kind: 'different-location' | 'same-location'; winner: RowRef & { tenants: string[]; updateTime: string }; loser: RowRef & { tenants: string[]; updateTime: string } }[];
   favorites: { okey: string; parentKey: string; isFavorite: boolean }[];
   tasks: { tenantId: string; lines: string[]; assignees: string[] }[];
   failed: { parentKey: string; error: string }[];
@@ -214,7 +227,7 @@ export async function runPostalResidenceMigration(db: Firestore, opts: Migration
   const counts: Record<string, number> = {};
   const count = (key: string, n = 1): void => { counts[key] = (counts[key] ?? 0) + n; };
   const report: MigrationReport = {
-    mode: opts.write ? 'write' : 'dry-run', counts, misses: [], ambiguous: [], foreignTenants: [], conflicts: [], favorites: [], tasks: [], failed: [],
+    mode: opts.write ? 'write' : 'dry-run', counts, misses: [], ambiguous: [], foreignTenants: [], conflicts: [], ties: [], favorites: [], tasks: [], failed: [],
   };
 
   // 1. read every postal row (archived ones are history and stay untouched)
@@ -317,7 +330,7 @@ export async function runPostalResidenceMigration(db: Firestore, opts: Migration
   }
 
   // 4. conflicts, favorites, summary lines
-  const { winners, losers } = resolveConflicts(rows, (okey) => location.get(okey));
+  const { winners, losers, ties } = resolveConflicts(rows, (okey) => location.get(okey));
   const asLinked = (r: MigrationRow): MigrationRow => {
     const s = snapshots.get(r.okey);
     return s ? { ...r, row: { ...r.row, ...s } } : r;
@@ -327,6 +340,12 @@ export async function runPostalResidenceMigration(db: Firestore, opts: Migration
     count(sameLocation ? 'duplicates archived (same location)' : 'conflicts archived (different location)');
     const side = (m: MigrationRow) => ({ ...ref(m), tenants: m.row.tenants ?? [], updateTime: m.updateTime });
     report.conflicts.push({ parentKey: str(winner.row.parentKey), addressUsage: usageOf(winner), kind: sameLocation ? 'same-location' : 'different-location', winner: side(winner), loser: side(loser) });
+  }
+  for (const { loser, winner } of ties) {
+    count('ties left untouched (rows)');
+    const side = (m: MigrationRow) => ({ ...ref(m), tenants: m.row.tenants ?? [], updateTime: m.updateTime });
+    const sameLocation = location.get(loser.okey) === location.get(winner.okey);
+    report.ties.push({ parentKey: str(winner.row.parentKey), addressUsage: usageOf(winner), kind: sameLocation ? 'same-location' : 'different-location', winner: side(winner), loser: side(loser) });
   }
   // favorites: only undated rows of the parent's own tenants are candidates; dated rows belong to
   // the move switch, foreign rows are never patched

@@ -66,6 +66,39 @@ describe('resolveConflicts', () => {
     expect(winners.map((w) => w.okey)).toEqual(['legacy']);
   });
 
+  it('two locations written within 2 min (a bulk import): a tie — nobody wins, nobody loses', () => {
+    const a = postal('a', {}, '2026-11-15T10:00:00.000Z');
+    const b = postal('b', {}, '2026-11-15T10:01:59.999Z');
+    const loc = { a: 'L1', b: 'L2' } as Record<string, string>;
+    const { winners, losers, ties } = resolveConflicts([a, b], (k) => loc[k]);
+    expect(winners).toEqual([]);
+    expect(losers).toEqual([]);
+    expect(ties.map((p) => [p.loser.okey, p.winner.okey])).toEqual([['a', 'b']]);
+  });
+
+  it('a tie poisons the whole group: its same-location duplicate is not archived either', () => {
+    const a = postal('a', {}, '2026-11-15T10:00:01.000Z');
+    const b = postal('b', {}, '2026-11-15T10:00:00.000Z');
+    const dup = postal('dup', {}, '2026-08-01T00:00:00.000Z');
+    const loc = { a: 'L1', b: 'L2', dup: 'L1' } as Record<string, string>;
+    const { winners, losers, ties } = resolveConflicts([a, b, dup], (k) => loc[k]);
+    expect(winners).toEqual([]);
+    expect(losers).toEqual([]);
+    expect(ties.map((p) => p.loser.okey).sort()).toEqual(['b', 'dup']);
+  });
+
+  it('more than 2 min apart is no tie; the same location within 2 min is a plain duplicate', () => {
+    const older = postal('older', {}, '2026-11-15T10:00:00.000Z');
+    const newer = postal('newer', {}, '2026-11-15T10:02:00.001Z');
+    const loc = { older: 'L1', newer: 'L2' } as Record<string, string>;
+    expect(resolveConflicts([older, newer], (k) => loc[k]).ties).toEqual([]);
+    const s1 = postal('s1', {}, '2026-11-15T10:00:00.000Z');
+    const s2 = postal('s2', {}, '2026-11-15T10:00:00.500Z');
+    const same = resolveConflicts([s1, s2], () => 'L1');
+    expect(same.ties).toEqual([]);
+    expect(same.losers.map((p) => p.loser.okey)).toEqual(['s1']);
+  });
+
   it('a legacy row without addressUsage counts as home', () => {
     const legacy = postal('legacy', { addressUsage: undefined as unknown as string }, at(1));
     const home = postal('home', {}, at(2));

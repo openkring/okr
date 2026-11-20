@@ -26,7 +26,7 @@
  * ═══════════════════════════════════════════════════════════════════════════════════════
  *   1. Deploy the server side of 1.164: rules, the onAddressChange heal, the residence tenants
  *      sync, the daily switch job, the location callables.
- *   2. Dry run, read the report (misses, ambiguous, conflicts, foreignTenants).
+ *   2. Dry run, read the report (misses, ambiguous, conflicts, ties, foreignTenants).
  *   3. Run with --write.
  *   4. Release the UI.
  *
@@ -67,7 +67,7 @@ async function main(): Promise<void> {
 
   console.log(`${write ? 'WRITE' : 'DRY RUN'}:`);
   for (const [k, v] of Object.entries(report.counts).sort()) console.log(`  ${k}: ${v}`);
-  console.log(`  misses: ${report.misses.length}, ambiguous: ${report.ambiguous.length}, foreign/empty tenants: ${report.foreignTenants.length}, conflicts: ${report.conflicts.length}, failed: ${report.failed.length}`);
+  console.log(`  misses: ${report.misses.length}, ambiguous: ${report.ambiguous.length}, foreign/empty tenants: ${report.foreignTenants.length}, conflicts: ${report.conflicts.length}, ties: ${report.ties.length}, failed: ${report.failed.length}`);
   console.log(`Report: ${reportPath}`);
   if (!write) console.log('Nothing written. Re-run with --write to apply.');
 }
