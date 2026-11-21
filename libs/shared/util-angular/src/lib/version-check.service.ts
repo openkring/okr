@@ -5,7 +5,7 @@ import { SwUpdate } from '@angular/service-worker';
 import { doc, onSnapshot } from 'firebase/firestore';
 
 import { ENV, FIRESTORE } from '@okr/shared-config';
-import { I18nService } from '@okr/shared-i18n';
+import { I18nService, setI18nSkewCheck } from '@okr/shared-i18n';
 import { convertDateFormatToString, DateFormat, fill } from '@okr/shared-util-core';
 
 // The one place that reads the monorepo version; everything else imports CURRENT_APP_VERSION.
@@ -63,6 +63,9 @@ export const UNRECOVERABLE_RELOAD_KEY = 'okr-unrecoverable-reload-at';
 /** Never auto-reload twice within this window — guards against a reload loop. */
 const UNRECOVERABLE_RELOAD_MIN_INTERVAL_MS = 60 * 1000; // 1 minute
 
+/** A burst of missing i18n keys asks the server for its version at most once in this window. */
+const I18N_SKEW_CHECK_INTERVAL_MS = 60 * 1000; // 1 minute
+
 @Injectable({ providedIn: 'root' })
 export class VersionCheckService {
   private readonly alertController = inject(AlertController);
@@ -83,6 +86,8 @@ export class VersionCheckService {
   private versionConfig: AppVersionConfig | undefined;
   private alertShown = false;
   private lastCheckAt = 0;
+  /** The last i18n skew check, shared by every missing key within I18N_SKEW_CHECK_INTERVAL_MS. */
+  private skewCheck: { at: number; result: Promise<boolean> } | undefined;
 
   private readonly _updateState = signal<AppUpdateState>('idle');
   public readonly updateState = this._updateState.asReadonly();
@@ -138,6 +143,66 @@ export class VersionCheckService {
 
     this.listenToVersionConfig();
     this.listenForServiceWorkerUpdates();
+    setI18nSkewCheck(() => this.recoverFromI18nSkew());
+  }
+
+  /**
+   * Called before a missing i18n key is reported. The translation files sit at fixed URLs and
+   * Hosting serves only the current deploy, so an old build left open across a release loads
+   * the NEW strings — renamed or removed keys then come back missing (SCS-JP/JQ/JR). A version
+   * query string cannot help: the old file is gone from the server. So when the live deploy is
+   * a different build, move this client onto it instead of reporting the key.
+   *
+   * @returns true when skew was found and a reload started; false to report the key as usual.
+   */
+  public recoverFromI18nSkew(): Promise<boolean> {
+    const now = Date.now();
+    if (this.skewCheck && now - this.skewCheck.at < I18N_SKEW_CHECK_INTERVAL_MS) return this.skewCheck.result;
+    const result = this.detectAndRecoverI18nSkew();
+    this.skewCheck = { at: now, result };
+    return result;
+  }
+
+  private async detectAndRecoverI18nSkew(): Promise<boolean> {
+    const liveVersion = await this.fetchLiveVersion();
+    if (!liveVersion || liveVersion === this.currentVersion) return false;
+    // a reload a moment ago did not cure it: the miss is real (or the update failed) — report it
+    if (!this.claimReloadSlot()) return false;
+    console.warn(`VersionCheckService: i18n files come from ${liveVersion}, this build is ${this.currentVersion}; updating`);
+    await this.updateAndReload();
+    return true;
+  }
+
+  /**
+   * The version of the deploy Hosting serves right now, from its ngsw.json (set-env.js stamps
+   * `appData.version`). `ngsw-bypass` keeps the service worker out of the way, the timestamp
+   * the CDN. Undefined where there is no manifest (dev server, native shell) or when offline.
+   */
+  private async fetchLiveVersion(): Promise<string | undefined> {
+    try {
+      const response = await fetch(`/ngsw.json?ngsw-bypass=true&t=${Date.now()}`, { cache: 'no-store' });
+      if (!response.ok) return undefined;
+      const manifest = await response.json() as { appData?: { version?: unknown } };
+      const version = manifest.appData?.version;
+      return typeof version === 'string' && version ? version : undefined;
+    } catch {
+      return undefined; // offline, or the SPA fallback answered with index.html
+    }
+  }
+
+  /**
+   * Download and activate the new version before reloading: a plain reload would let the
+   * service worker serve the cached old build again.
+   */
+  private async updateAndReload(): Promise<void> {
+    if (this.swUpdate.isEnabled) {
+      try {
+        if (await this.swUpdate.checkForUpdate()) await this.swUpdate.activateUpdate();
+      } catch (error) {
+        console.error('VersionCheckService: failed to update before reloading:', error);
+      }
+    }
+    this.reloadPage();
   }
 
   /** Keep the latest force-update policy / display version from Firestore. */
@@ -237,10 +302,19 @@ export class VersionCheckService {
    */
   private handleUnrecoverableState(reason: string): void {
     console.error(`VersionCheckService: service worker state is unrecoverable (${reason}); reloading to fetch the current version`);
-    const lastReloadAt = Number(sessionStorage.getItem(UNRECOVERABLE_RELOAD_KEY) ?? 0);
-    if (Date.now() - lastReloadAt < UNRECOVERABLE_RELOAD_MIN_INTERVAL_MS) return;
-    sessionStorage.setItem(UNRECOVERABLE_RELOAD_KEY, String(Date.now()));
+    if (!this.claimReloadSlot()) return;
     this.reloadPage();
+  }
+
+  /**
+   * Record an automatic reload, unless one happened within the loop-guard interval.
+   * A sessionStorage timestamp, so the guard survives the reload it protects.
+   */
+  private claimReloadSlot(): boolean {
+    const lastReloadAt = Number(sessionStorage.getItem(UNRECOVERABLE_RELOAD_KEY) ?? 0);
+    if (Date.now() - lastReloadAt < UNRECOVERABLE_RELOAD_MIN_INTERVAL_MS) return false;
+    sessionStorage.setItem(UNRECOVERABLE_RELOAD_KEY, String(Date.now()));
+    return true;
   }
 
   /** Wrapper around location.reload so tests can intercept the reload. */

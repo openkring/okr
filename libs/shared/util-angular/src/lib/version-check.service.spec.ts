@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { Subject } from 'rxjs';
 import type { UnrecoverableStateEvent, VersionEvent } from '@angular/service-worker';
 
@@ -245,6 +245,60 @@ describe('VersionCheckService unrecoverable-state handling', () => {
       await service.installUpdate();
       expect(mockSwUpdate.activateUpdate).toHaveBeenCalledTimes(1);
       expect(reloadSpy).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  // An old build left open across a release loads the new i18n files from their fixed URLs;
+  // a removed key then comes back missing (SCS-JP/JQ/JR). The check moves the client instead.
+  describe('recoverFromI18nSkew', () => {
+    const serveManifest = (body: unknown, ok = true) =>
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok, json: () => Promise.resolve(body) } as Response);
+
+    afterEach(() => vi.restoreAllMocks());
+
+    it('updates and reloads when the live deploy is a different build', async () => {
+      const fetchSpy = serveManifest({ appData: { version: '999.0.0' } });
+      mockSwUpdate.checkForUpdate.mockResolvedValue(true);
+      const { service, reloadSpy } = makeService();
+      await expect(service.recoverFromI18nSkew()).resolves.toBe(true);
+      expect(String(fetchSpy.mock.calls[0][0])).toContain('/ngsw.json?ngsw-bypass=true');
+      expect(mockSwUpdate.activateUpdate).toHaveBeenCalledTimes(1);
+      expect(reloadSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('reports (returns false) when the live deploy is this build', async () => {
+      serveManifest({ appData: { version: CURRENT_APP_VERSION } });
+      const { service, reloadSpy } = makeService();
+      await expect(service.recoverFromI18nSkew()).resolves.toBe(false);
+      expect(reloadSpy).not.toHaveBeenCalled();
+    });
+
+    it('reports when there is no manifest (dev server, native shell)', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: () => Promise.reject(new SyntaxError('html')) } as unknown as Response);
+      const { service, reloadSpy } = makeService();
+      await expect(service.recoverFromI18nSkew()).resolves.toBe(false);
+      expect(reloadSpy).not.toHaveBeenCalled();
+    });
+
+    it('reports when offline', async () => {
+      vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
+      const { service } = makeService();
+      await expect(service.recoverFromI18nSkew()).resolves.toBe(false);
+    });
+
+    it('asks the server once for a burst of missing keys', async () => {
+      const fetchSpy = serveManifest({ appData: { version: CURRENT_APP_VERSION } });
+      const { service } = makeService();
+      await Promise.all([service.recoverFromI18nSkew(), service.recoverFromI18nSkew(), service.recoverFromI18nSkew()]);
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('reports instead of reloading again right after an automatic reload', async () => {
+      serveManifest({ appData: { version: '999.0.0' } });
+      sessionStorage.setItem(UNRECOVERABLE_RELOAD_KEY, String(Date.now()));
+      const { service, reloadSpy } = makeService();
+      await expect(service.recoverFromI18nSkew()).resolves.toBe(false);
+      expect(reloadSpy).not.toHaveBeenCalled();
     });
   });
 });
