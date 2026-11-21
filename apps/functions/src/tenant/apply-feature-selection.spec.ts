@@ -126,10 +126,11 @@ describe('planRootMenuOp (root menu attachment — task-8 review round 2)', () =
     const op = planRootMenuOp('p13', existing, ['aoc-menu']);
 
     expect(op?.key).toBe('main_p13');
-    // every original entry survives, in the SAME order, with the new key appended LAST —
-    // not reordered, not alphabetised, not inserted anywhere else.
+    // every original entry survives, in the SAME order, with the new key appended after
+    // them — not alphabetised, not inserted anywhere else. The one exception is the release
+    // row `version` (ROOT_MENU_TAIL_KEYS), which always stays the last row of the main menu.
     expect(op?.fields.menuItems).toEqual([
-      'home', 'profile', 'logout', 'login', 'misc-menu', 'cms', 'version', 'aoc-menu',
+      'home', 'profile', 'logout', 'login', 'misc-menu', 'cms', 'aoc-menu', 'version',
     ]);
   });
 
@@ -145,7 +146,7 @@ describe('planRootMenuOp (root menu attachment — task-8 review round 2)', () =
     const existing = new Map<string, MenuItemModel>([['main_p13', rootDoc()]]);
     const firstRun = planRootMenuOp('p13', existing, ['aoc-menu']);
     expect(firstRun?.fields.menuItems).toEqual([
-      'home', 'profile', 'logout', 'login', 'misc-menu', 'cms', 'version', 'aoc-menu',
+      'home', 'profile', 'logout', 'login', 'misc-menu', 'cms', 'aoc-menu', 'version',
     ]);
 
     // Simulate the write having landed, then re-run against the now-updated doc — the

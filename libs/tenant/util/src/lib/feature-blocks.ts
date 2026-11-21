@@ -149,6 +149,24 @@ function financeMenuParent(children: MenuSpec[]): MenuSpec {
   };
 }
 
+/**
+ * «Termine und Aufgaben» (owner ruling 2026-11-21, first on la21staefa): one main-menu accordion
+ * for the calendar and to-do rows instead of four flat rows. A SHARED parent, same pattern as
+ * `cmsMenuParent`: its children belong to three independently switchable blocks — `task`
+ * (`task-all`, `task-my`), `relationship` (`invitation-all`) and `calevent` (`calevent-all`) —
+ * and each redeclares this node field-identically with only its own slice. `rootNavKeys`
+ * attaches only the parent; `nestedMenuKeys` then stops a picker save from appending the four
+ * rows to the root again. `MenuStore.isVisible` hides the accordion when none of its children
+ * is visible. On a fresh seed the children land in `FEATURE_BLOCKS` order (calevent, task,
+ * relationship); a tenant reorders them in the menu editor.
+ */
+function calendarTasksMenuParent(children: MenuSpec[]): MenuSpec {
+  return {
+    key: 'calendar-tasks-menu', name: 'calendar-tasks-menu', url: '', action: 'sub',
+    roleNeeded: 'registered', icon: 'calendar', label: '@item.calendar-tasks-menu', children,
+  };
+}
+
 function accountingMenuParent(children: MenuSpec[]): MenuSpec {
   return {
     key: 'accounting-menu', name: 'accounting-menu', url: '', action: 'sub',
@@ -199,16 +217,19 @@ const calevent: FeatureBlock = {
   // in this codebase made via an exact-match query for the wrong string — worth an
   // independent recheck wherever it matters, not assumed safe by precedent.
   menu: [
-    {
-      key: 'calevent-all', name: 'calevent-all', url: '/calevent/all/c-calevents',
-      // Fix round 1: label corrected to the live value. Was '@main.calevent.all' (an i18n
-      // key format that IS genuinely used elsewhere, e.g. `aoc-admin`'s live label really is
-      // `@main.aoc.admin` — so this was an outlier on THIS doc, not evidence the format
-      // itself is wrong). `label` is not a `STRUCTURAL_FIELD` (menu-seed.util.ts), so no
-      // live doc was ever at risk — but a newly seeded tenant would have gotten the raw,
-      // untranslated key as its menu label instead of live tenants' actual "Alle Termine".
-      action: 'navigate', roleNeeded: 'eventAdmin', icon: 'calendar', label: '@item.calevent-all',
-    },
+    // Nested under «Termine und Aufgaben» since 2026-11-21 — see `calendarTasksMenuParent`.
+    calendarTasksMenuParent([
+      {
+        key: 'calevent-all', name: 'calevent-all', url: '/calevent/all/c-calevents',
+        // Fix round 1: label corrected to the live value. Was '@main.calevent.all' (an i18n
+        // key format that IS genuinely used elsewhere, e.g. `aoc-admin`'s live label really is
+        // `@main.aoc.admin` — so this was an outlier on THIS doc, not evidence the format
+        // itself is wrong). `label` is not a `STRUCTURAL_FIELD` (menu-seed.util.ts), so no
+        // live doc was ever at risk — but a newly seeded tenant would have gotten the raw,
+        // untranslated key as its menu label instead of live tenants' actual "Alle Termine".
+        action: 'navigate', roleNeeded: 'eventAdmin', icon: 'calendar', label: '@item.calevent-all',
+      },
+    ]),
     // The top-level entry for `/yearlyevents`, which had no `navigate` doc at all — the route
     // and its `c-yearlyevents` context wrapper both existed, so the screen was reachable only by
     // typing the URL. `roleNeeded: privileged` is the catalogue default for the ROW only: since
@@ -1139,7 +1160,10 @@ const relationship: FeatureBlock = {
     // `geo` block above. Ruled (same precedent): stays a top-level entry here, the intended
     // model for a fresh tenant; `scs`'s current nesting under its own bespoke event menu is
     // pre-existing tenant curation, not evidence against cataloguing it as this block's own.
-    { key: 'invitation-all', name: 'invitation-all', url: '/invitation/all/c-invitation', action: 'navigate', roleNeeded: 'eventAdmin', icon: 'login', label: '@item.invitation-all' },
+    // Nested under «Termine und Aufgaben» since 2026-11-21 — see `calendarTasksMenuParent`.
+    calendarTasksMenuParent([
+      { key: 'invitation-all', name: 'invitation-all', url: '/invitation/all/c-invitation', action: 'navigate', roleNeeded: 'eventAdmin', icon: 'login', label: '@item.invitation-all' },
+    ]),
     // `contextMenuName` wrapper for the `membership` route (`view: 'mcat'`, the full
     // membership admin list). `c-groupmembers` (below) is the SEPARATE wrapper for the
     // `contact` route (`view: 'contact'`) — app.routes.ts gives MembershipList two distinct
@@ -2491,8 +2515,11 @@ const task: FeatureBlock = {
   menu: [
     // Both verbatim off the live docs. `task-all` is `tenants: ['test','scs']`, `task-my`
     // `['scs']` — so most tenants have neither row today.
-    { key: 'task-all', name: 'task-all', url: '/task/all/c-tasks', action: 'navigate', roleNeeded: 'privileged', icon: 'todo', label: '@item.task-all' },
-    { key: 'task-my', name: 'task-my', url: '/task/my/c-tasks', action: 'navigate', roleNeeded: 'registered', icon: 'todo', label: '@item.task-my' },
+    // Nested under «Termine und Aufgaben» since 2026-11-21 — see `calendarTasksMenuParent`.
+    calendarTasksMenuParent([
+      { key: 'task-all', name: 'task-all', url: '/task/all/c-tasks', action: 'navigate', roleNeeded: 'privileged', icon: 'todo', label: '@item.task-all' },
+      { key: 'task-my', name: 'task-my', url: '/task/my/c-tasks', action: 'navigate', roleNeeded: 'registered', icon: 'todo', label: '@item.task-my' },
+    ]),
     // spec 3.14 — the project list (staff only, like `task-all`) and its context menu.
     // Live, `project-all` hangs in «Finanzen» (`finance-menu*`, 2026-10-10, scripts/migrate-books-token.mjs) for
     // every tenant whose root reaches finance-menu; a picker save finds it reachable there and does not

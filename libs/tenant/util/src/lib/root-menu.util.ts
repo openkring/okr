@@ -65,6 +65,25 @@ export function nestedMenuKeys(rootKey: string, existing: Map<string, MenuItemMo
   return nested;
 }
 
+/**
+ * Rows that always close the main menu, in this order. The release-notes row (`version`,
+ * label `Release @VERSION@`) is the only one: every tenant shows the running version as its
+ * last main-menu row (owner ruling 2026-11-21). It is a `browse` row, which `rootNavKeys`
+ * would otherwise never attach, so it is listed here explicitly.
+ *
+ * This is the ONE place `planRootMenuOp` reorders: a tail key already in the root array is
+ * moved behind every other row, because rows a later save appends would otherwise land below
+ * it. Nothing else in the root array changes position.
+ */
+export const ROOT_MENU_TAIL_KEYS: readonly string[] = ['version'];
+
+/** `keys` with every `ROOT_MENU_TAIL_KEYS` entry moved to the end, in tail order. */
+export function withTailKeysLast(keys: string[]): string[] {
+  const body = keys.filter(k => !ROOT_MENU_TAIL_KEYS.includes(k));
+  const tail = ROOT_MENU_TAIL_KEYS.filter(k => keys.includes(k));
+  return [...body, ...tail];
+}
+
 export function planRootMenuOp(
   tenantId: string,
   existing: Map<string, MenuItemModel>,
@@ -94,7 +113,7 @@ export function planRootMenuOp(
         okey: key, name: key, action: 'main', url: '', label: 'main', icon: '',
         description: '', tags: '', data: [], isArchived: false,
         index: `n:${key} a:main k:${key}`,
-        roleNeeded: 'none', tenants: [tenantId], menuItems: wantedAdds,
+        roleNeeded: 'none', tenants: [tenantId], menuItems: withTailKeysLast(wantedAdds),
       },
     };
   }
@@ -118,15 +137,16 @@ export function planRootMenuOp(
   const nested = nestedMenuKeys(key, existing);
   const missing = wantedAdds.filter(k => !current.includes(k) && !nested.has(k));
 
-  if (missing.length === 0) return undefined; // nothing to write
+  const next = withTailKeysLast([...current, ...missing]);
+  if (next.length === current.length && next.every((k, i) => k === current[i])) return undefined; // nothing to write
 
-  const fields: Partial<MenuItemModel> = { menuItems: [...current, ...missing] };
+  const fields: Partial<MenuItemModel> = { menuItems: next };
   return { key, docId: key, op: 'update-structure', fields };
 }
 
 // ────────────────────────────────────────────────────────────────────────────────────
 export function rootNavKeys(blocks: FeatureBlock[]): string[] {
   return blocks.flatMap(b => b.menu
-    .filter(s => s.action === 'navigate' || s.action === 'sub')
+    .filter(s => s.action === 'navigate' || s.action === 'sub' || ROOT_MENU_TAIL_KEYS.includes(s.key))
     .map(s => s.key));
 }
