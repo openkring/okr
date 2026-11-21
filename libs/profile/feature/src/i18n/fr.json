@@ -323,5 +323,22 @@
   "emergencyOnDeparture": {
     "label": "Afficher la page d'urgence lors d'une sortie",
     "helper": "Quand tu es inscrit·e dans le journal de bord pour une sortie, tu reçois une notification avec le bouton d'urgence. Pendant la sortie, l'app s'ouvre sur la page d'urgence."
+  },
+  "household": {
+    "title": "Mon foyer",
+    "members": "Personnes",
+    "memberUnknown": "Membre",
+    "payer": "Facture à",
+    "payerNone": "Chaque personne séparément",
+    "contact": "Courrier à",
+    "bundle": "Envoyé ensemble",
+    "bundlePost": "Lettres",
+    "bundleEmail": "E-mails",
+    "bundleInApp": "Messages dans l'app",
+    "bundleNone": "Rien",
+    "edit": "Modifier",
+    "leave": "Quitter le foyer",
+    "leaveHint": "Si tu quittes le foyer et qu'une seule personne reste, le foyer est dissous.",
+    "leaveMessage": "Veux-tu vraiment quitter le foyer ? S'il ne reste qu'une personne, le foyer est dissous. Tu recevras alors de nouveau tes factures et ton courrier à part."
   }
 }

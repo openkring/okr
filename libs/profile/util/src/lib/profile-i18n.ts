@@ -214,6 +214,23 @@ export const PROFILE_I18N_KEYS = {
   maint_reset:                PFX + 'maintenance.reset',
   maint_confirm_header:       PFX + 'maintenance.confirm.header',
   maint_confirm_message:      PFX + 'maintenance.confirm.message',
+
+  // household block (spec 1.168 §7/§8)
+  household_title:            PFX + 'household.title',
+  household_members:          PFX + 'household.members',
+  household_member_unknown:   PFX + 'household.memberUnknown',
+  household_payer:            PFX + 'household.payer',
+  household_payer_none:       PFX + 'household.payerNone',
+  household_contact:          PFX + 'household.contact',
+  household_bundle:           PFX + 'household.bundle',
+  household_bundle_post:      PFX + 'household.bundlePost',
+  household_bundle_email:     PFX + 'household.bundleEmail',
+  household_bundle_inApp:     PFX + 'household.bundleInApp',
+  household_bundle_none:      PFX + 'household.bundleNone',
+  household_edit:             PFX + 'household.edit',
+  household_leave:            PFX + 'household.leave',
+  household_leave_hint:       PFX + 'household.leaveHint',
+  household_leave_message:    PFX + 'household.leaveMessage',
 } satisfies Record<string, string>;
 
 export type ProfileI18n = { [K in keyof typeof PROFILE_I18N_KEYS]: Signal<string> };

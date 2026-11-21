@@ -323,5 +323,22 @@
   "emergencyOnDeparture": {
     "label": "Show the emergency page when I go out",
     "helper": "When you are entered in the logbook for an outing, you get a notification with the emergency button. During the outing the app opens on the emergency page."
+  },
+  "household": {
+    "title": "My household",
+    "members": "People",
+    "memberUnknown": "Member",
+    "payer": "Invoice to",
+    "payerNone": "Each person separately",
+    "contact": "Mail to",
+    "bundle": "Sent together",
+    "bundlePost": "Letters",
+    "bundleEmail": "Emails",
+    "bundleInApp": "Messages in the app",
+    "bundleNone": "Nothing",
+    "edit": "Edit",
+    "leave": "Leave household",
+    "leaveHint": "If you leave and only one person remains, the household is dissolved.",
+    "leaveMessage": "Do you really want to leave the household? If only one person remains, the household is dissolved. You will then receive invoices and mail on your own again."
   }
 }

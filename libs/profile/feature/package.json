@@ -27,6 +27,9 @@
     "@okr/shared-data-access": "*",
     "@okr/profile-util": "*",
     "@okr/content-diary-data-access": "*",
-    "@okr/tenant-feature": "*"
+    "@okr/tenant-feature": "*",
+    "@okr/relationship-household-data-access": "*",
+    "@okr/relationship-household-feature": "*",
+    "@okr/relationship-household-util": "*"
   }
 }

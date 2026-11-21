@@ -323,5 +323,22 @@
   "emergencyOnDeparture": {
     "label": "Mostra la pagina di emergenza quando esco",
     "helper": "Quando vieni registrato nel giornale di bordo per un'uscita, ricevi una notifica con il pulsante di emergenza. Durante l'uscita, l'app si apre sulla pagina di emergenza."
+  },
+  "household": {
+    "title": "La mia famiglia",
+    "members": "Persone",
+    "memberUnknown": "Membro",
+    "payer": "Fattura a",
+    "payerNone": "Ogni persona separatamente",
+    "contact": "Posta a",
+    "bundle": "Inviato insieme",
+    "bundlePost": "Lettere",
+    "bundleEmail": "E-mail",
+    "bundleInApp": "Messaggi nell'app",
+    "bundleNone": "Niente",
+    "edit": "Modifica",
+    "leave": "Lascia la famiglia",
+    "leaveHint": "Se lasci la famiglia e rimane una sola persona, la famiglia viene sciolta.",
+    "leaveMessage": "Vuoi davvero lasciare la famiglia? Se rimane una sola persona, la famiglia viene sciolta. Fatture e posta li riceverai di nuovo singolarmente."
   }
 }

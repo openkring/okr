@@ -17,6 +17,7 @@ import { EmailSignatureAccordion } from './email-signature.accordion';
 import { DataRightsAccordion } from './data-rights.accordion';
 import { PasskeysAccordion } from '@okr/auth-feature';
 import { MaintenanceAccordion } from './maintenance.accordion';
+import { HouseholdAccordion } from './household.accordion';
 
 @Component({
   selector: 'okr-profile-edit-page',
@@ -25,7 +26,7 @@ import { MaintenanceAccordion } from './maintenance.accordion';
     AsyncPipe,
     AvatarToolbar, Header, AddressesAccordion, ProfileDataAccordion,
     ChangeConfirmation, ProfileSettingsAccordion, ProfilePrivacyAccordion, EmailSignatureAccordion,
-    DataRightsAccordion, MaintenanceAccordion, PasskeysAccordion, ProfileDiarySourcesAccordion, ProfileDiaryRequestsAccordion,
+    DataRightsAccordion, MaintenanceAccordion, HouseholdAccordion, PasskeysAccordion, ProfileDiarySourcesAccordion, ProfileDiaryRequestsAccordion,
     IonContent, IonItem, IonAccordionGroup, IonLabel, IonCard, IonCardContent
   ],
   providers: [ProfileStore],
@@ -68,6 +69,8 @@ import { MaintenanceAccordion } from './maintenance.accordion';
               }
             }
             <okr-addresses-accordion [parentKey]="parentKey()" description="@profile.addresses.description" [priv]="priv()" [readOnly]="false" />
+            <!-- spec 1.168: renders only while the member belongs to a household -->
+            <okr-household-accordion [i18n]="store.i18n" />
             @if(userFormData(); as userFormData) {
               <okr-profile-settings-accordion
                 [formData]="userFormData"

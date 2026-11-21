@@ -323,5 +323,22 @@
   "emergencyOnDeparture": {
     "label": "Mostrar la página de emergencia al salir",
     "helper": "Cuando te registran en el cuaderno de bitácora para una salida, recibes una notificación con el botón de emergencia. Durante la salida, la app se abre en la página de emergencia."
+  },
+  "household": {
+    "title": "Mi hogar",
+    "members": "Personas",
+    "memberUnknown": "Miembro",
+    "payer": "Factura a",
+    "payerNone": "Cada persona por separado",
+    "contact": "Correo a",
+    "bundle": "Enviado en conjunto",
+    "bundlePost": "Cartas",
+    "bundleEmail": "Correos electrónicos",
+    "bundleInApp": "Mensajes en la app",
+    "bundleNone": "Nada",
+    "edit": "Editar",
+    "leave": "Salir del hogar",
+    "leaveHint": "Si sales del hogar y solo queda una persona, el hogar se disuelve.",
+    "leaveMessage": "¿Seguro que quieres salir del hogar? Si solo queda una persona, el hogar se disuelve. Después recibirás de nuevo tus facturas y tu correo por separado."
   }
 }

@@ -323,5 +323,22 @@
   "emergencyOnDeparture": {
     "label": "Notfall-Seite bei Ausfahrt anzeigen",
     "helper": "Wenn du im Logbuch für eine Ausfahrt eingetragen wirst, bekommst du eine Mitteilung mit dem Notfall-Knopf. Während der Ausfahrt öffnet sich die App auf der Notfall-Seite."
+  },
+  "household": {
+    "title": "Mein Haushalt",
+    "members": "Personen",
+    "memberUnknown": "Mitglied",
+    "payer": "Rechnung an",
+    "payerNone": "Jede Person einzeln",
+    "contact": "Post an",
+    "bundle": "Gemeinsam verschickt",
+    "bundlePost": "Briefe",
+    "bundleEmail": "E-Mails",
+    "bundleInApp": "Mitteilungen in der App",
+    "bundleNone": "Nichts",
+    "edit": "Bearbeiten",
+    "leave": "Haushalt verlassen",
+    "leaveHint": "Verlässt du den Haushalt und bleibt nur eine Person übrig, wird der Haushalt aufgelöst.",
+    "leaveMessage": "Möchtest du den Haushalt wirklich verlassen? Bleibt danach nur eine Person übrig, wird der Haushalt aufgelöst. Rechnungen und Post bekommst du dann wieder einzeln."
   }
 }
