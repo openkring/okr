@@ -195,3 +195,35 @@ describe('quoteWithCaller', () => {
     await expect(quoteWithCaller(env().e, bad, ADMIN)).rejects.toMatchObject({ code: 'invalid-argument' });
   });
 });
+
+describe('quoteWithCaller for a newsletter (spec 1.169)', () => {
+  const data = { tenantId: 'scs', subject: 'S', body: 'B', postKeys: ['p0'], groupKey: 'nl1' };
+  // the unsubscribe block pushes the letter onto a second page
+  const renderPages = vi.fn(async (a: { unsubscribeUrl?: string }) => (a.unsubscribeUrl ? 2 : 1));
+  const env = (isNewsletterGroup?: (t: string, g: string) => Promise<boolean>): QuoteCallableEnv => ({
+    getPort: () => setup(['CH']).deps.port, secret: 'k', now: 5000, hasCreditAccount: async () => true,
+    readCountryCodes: async () => ['CH'], answerEventsOf: async () => [], renderPages, ...(isNewsletterGroup ? { isNewsletterGroup } : {}),
+  });
+
+  it('counts the letter with the unsubscribe block when the server recognises the newsletter', async () => {
+    renderPages.mockClear();
+    const isNewsletterGroup = vi.fn(async () => true);
+    const q = await quoteWithCaller(env(isNewsletterGroup), data, ADMIN);
+    expect(isNewsletterGroup).toHaveBeenCalledWith('scs', 'nl1');
+    if (!q.pingenAvailable) throw new Error('expected a quote');
+    expect([q.pagesPerLetter, q.pages]).toEqual([2, 2]);
+    const url = (renderPages.mock.calls[0] as unknown as [{ unsubscribeUrl: string }])[0].unsubscribeUrl;
+    expect(new URL(url).searchParams.get('g')).toBe('nl1');
+  });
+
+  it('counts without the block for an ordinary group, and the draft hash tells the two apart', async () => {
+    renderPages.mockClear();
+    const q = await quoteWithCaller(env(async () => false), data, ADMIN);
+    if (!q.pingenAvailable) throw new Error('expected a quote');
+    expect(q.pagesPerLetter).toBe(1);
+    expect(renderPages.mock.calls[0][0]).not.toHaveProperty('unsubscribeUrl');
+    const base = { subject: 'S', body: 'B', letterQrCodes: false, caleventKeys: [], attachments: [] };
+    expect(draftHashOf(base)).not.toBe(draftHashOf({ ...base, newsletterGroupKey: 'nl1' }));
+    expect(draftHashOf(base)).toBe(draftHashOf({ ...base, newsletterGroupKey: '' }));
+  });
+});

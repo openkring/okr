@@ -515,7 +515,7 @@ export const sendMailing = onCall(
       await withPostOrder(postEnv(), {
         // subject and QR flag exactly as the quote saw them (the token hashes the request, not the stored doc)
         post: postRequest, tenantId, subject: data.subject, body: data.body, attachments: resolved, letterQrCodes: data.letterQrCodes === true,
-        caleventKeys, postKeys: keysFor(deliveries, DeliveryChannel.Post), mailingKey: ref.id, mailingExists: async () => (await ref.get()).exists, lock: postLockOf(db, ref.id, tenantId), actor: uid,
+        caleventKeys, postKeys: keysFor(deliveries, DeliveryChannel.Post), ...(newsletterGroupKey ? { newsletterGroupKey } : {}), mailingKey: ref.id, mailingExists: async () => (await ref.get()).exists, lock: postLockOf(db, ref.id, tenantId), actor: uid,
         caller: caller as { roles?: unknown; tenants?: string[] }, nowIso: getTodayStr(DateFormat.StoreDateTime),
       }, build);
     } else {

@@ -36,6 +36,16 @@ export function verifyNewsletterUnsubscribe(personKey: string, groupKey: string,
   return verify(personKey, groupKey, UNSUBSCRIBE, sig, secret);
 }
 
+/**
+ * An unsubscribe link of the longest length a real one gets, for counting a letter's pages before the send (the
+ * Pingen quote): a project id of the GCP maximum (30), a person key longer than a Firestore auto id, the real group
+ * key and a signature of the real length. Its text wraps at least as far as any real link, so the count is never
+ * an underestimate; the QR code has a fixed size.
+ */
+export function sampleUnsubscribeUrl(groupKey: string): string {
+  return newsletterUnsubscribeUrl(newsletterFunctionUrl('x'.repeat(30), 'newsletterUnsubscribe'), 'x'.repeat(28), groupKey, 'sample');
+}
+
 /** The function's own URL — deliberately not an app-domain rewrite, like the invitation links. */
 export function newsletterFunctionUrl(projectId: string, fn: 'newsletterConfirm' | 'newsletterUnsubscribe'): string {
   return `https://europe-west6-${projectId}.cloudfunctions.net/${fn}`;

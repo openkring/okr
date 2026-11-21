@@ -4,6 +4,7 @@ import {
   newsletterConfirmUrl,
   newsletterFunctionUrl,
   newsletterUnsubscribeUrl,
+  sampleUnsubscribeUrl,
   verifyNewsletterConfirm,
   verifyNewsletterUnsubscribe,
 } from './newsletter-link';
@@ -56,5 +57,15 @@ describe('newsletter links', () => {
 
   it('builds the function url', () => {
     expect(newsletterFunctionUrl('proj', 'newsletterConfirm')).toBe('https://europe-west6-proj.cloudfunctions.net/newsletterConfirm');
+  });
+});
+
+describe('sampleUnsubscribeUrl', () => {
+  it('is at least as long as a real link and names the group', () => {
+    const real = newsletterUnsubscribeUrl(newsletterFunctionUrl('seeclub-app-12345', 'newsletterUnsubscribe'), 'AbCdEfGhIjKlMnOpQrSt', 'nl1', SECRET);
+    const sample = sampleUnsubscribeUrl('nl1');
+    expect(sample.length).toBeGreaterThan(real.length);
+    expect(new URL(sample).searchParams.get('g')).toBe('nl1');
+    expect(new URL(sample).searchParams.get('h')?.length).toBe(new URL(real).searchParams.get('h')?.length);
   });
 });

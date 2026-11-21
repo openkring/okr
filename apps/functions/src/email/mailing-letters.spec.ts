@@ -9,6 +9,8 @@ const state = vi.hoisted(() => ({
   saved: [] as Buffer[],
   /** the html of every rendered letter page */
   htmls: [] as string[],
+  /** a marker that, when the rendered html contains it, makes the letter one page longer (a block that overflows) */
+  overflowWith: '',
 }));
 
 vi.mock('firebase-admin/firestore', () => ({
@@ -42,7 +44,9 @@ vi.mock('../pdf/browser-pool', () => ({
       setContent: async (html: string) => { state.htmls.push(html); },
       pdf: async () => {
         const d = await PDFDocument.create();
-        for (let i = 0; i < state.letterPages; i++) d.addPage();
+        const html = state.htmls.at(-1) ?? '';
+        const pages = state.letterPages + (state.overflowWith && html.includes(state.overflowWith) ? 1 : 0);
+        for (let i = 0; i < pages; i++) d.addPage();
         return d.save();
       },
       close: async () => undefined,
@@ -418,5 +422,34 @@ describe('newsletter letters (spec 1.169 §5.4)', () => {
   it('prints no unsubscribe block on an ordinary Versand', async () => {
     await buildMailingLetters({ tenantId: 'scs', mailingKey: 'm1', subject: 'S', body: '<p>B</p>', attachments: [], personKeys: ['anna'] });
     expect(state.htmls[0]).not.toContain('okr-letter-unsubscribe');
+  });
+});
+
+describe('the page count of a newsletter letter (Pingen quote)', () => {
+  beforeEach(() => {
+    state.letterPages = 1;
+    state.attachment = undefined;
+    state.saved = [];
+    state.htmls = [];
+    state.overflowWith = 'okr-letter-unsubscribe';     // the unsubscribe block pushes the letter onto a second page
+    state.addresses = [{
+      parentKey: 'person.anna', addressChannel: 'postal', tenants: ['scs'], isFavorite: true,
+      streetName: 'Dorfweg', streetNumber: '2', zipCode: '8000', city: 'Zürich', countryCode: '',
+    }];
+  });
+
+  it('counts the page the unsubscribe block adds, exactly as the sent letter has it', async () => {
+    const url = 'https://u/newsletterUnsubscribe?p=anna&g=nl1&h=x';
+    const plain = await countLetterPages({ tenantId: 'scs', subject: 'S', body: '<p>B</p>', withQrBlock: false });
+    const counted = await countLetterPages({ tenantId: 'scs', subject: 'S', body: '<p>B</p>', withQrBlock: false, unsubscribeUrl: url });
+    expect(plain).toBe(1);
+    expect(counted).toBe(2);
+    expect(state.htmls.at(-1)).toContain(escapeHtml(url));
+    const got: RenderedLetter[] = [];
+    await buildMailingLetters({
+      tenantId: 'scs', mailingKey: 'm1', subject: 'S', body: '<p>B</p>', attachments: [], personKeys: ['anna'],
+      unsubscribeUrl: () => url, onLetter: async (l) => { got.push(l); },
+    });
+    expect(got[0].pages).toBe(counted);
   });
 });

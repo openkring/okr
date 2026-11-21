@@ -21,6 +21,7 @@ import { addressParentKeyOf, loadHouseholdRecipients } from '../email/household-
 import type { ResolvedAttachment } from '../email/mailing';
 import { isElevated } from '../email/mailing-recipients';
 import { sanitizeEmailBody } from '../pdf/sanitize';
+import { sampleUnsubscribeUrl } from '../newsletter/newsletter-link';
 import type { CreditPort } from './credit-port';
 
 const ADDRESS_READ_CHUNK = 20;
@@ -51,6 +52,11 @@ export interface QuoteInput {
   caleventKeys: string[];
   postKeys: string[];
   options: PostOptions;
+  /**
+   * A newsletter send (spec 1.169): the newsletter group, set only by the server after `checkNewsletterGroup`. Each
+   * letter then ends with an unsubscribe block, so the pages are counted with it and the draft hash names it.
+   */
+  newsletterGroupKey?: string;
 }
 
 /** JSON with sorted object keys, so equal payloads sign equally. */
@@ -80,10 +86,12 @@ export function verifyQuote(token: string, payload: QuotePayload, secret: string
 }
 
 /** SHA-256 over what the letters are made of: subject, body, each attachment (name, content type, SHA-256 of its bytes), QR flag, calevent keys. */
-export function draftHashOf(i: Pick<QuoteInput, 'subject' | 'body' | 'attachments' | 'letterQrCodes' | 'caleventKeys'>): string {
+export function draftHashOf(i: Pick<QuoteInput, 'subject' | 'body' | 'attachments' | 'letterQrCodes' | 'caleventKeys' | 'newsletterGroupKey'>): string {
   return createHash('sha256').update(canonicalJson({
     subject: i.subject, body: i.body, attachments: i.attachments.map((a) => ({ filename: a.filename, contentType: a.contentType, sha256: createHash('sha256').update(a.content).digest('hex') })),
     letterQrCodes: i.letterQrCodes, caleventKeys: [...i.caleventKeys].sort(),
+    // only when set, so the hash of every other draft stays as it was; a newsletter quoted without it never verifies
+    ...(i.newsletterGroupKey ? { newsletterGroupKey: i.newsletterGroupKey } : {}),
   })).digest('hex');
 }
 
@@ -103,7 +111,7 @@ export interface QuoteDeps {
   /** ms epoch; the token's `iat` */
   now: number;
   /** Page count of one letter of the draft (letter + PDF attachments, with the QR block when asked). */
-  countLetterPages(args: { tenantId: string; subject: string; body: string; attachments: ResolvedAttachment[]; withQrBlock: boolean }): Promise<number>;
+  countLetterPages(args: { tenantId: string; subject: string; body: string; attachments: ResolvedAttachment[]; withQrBlock: boolean; newsletterGroupKey?: string }): Promise<number>;
   /** Per recipient key (same order): the country code of its postal address, or undefined when it has none. */
   readCountryCodes(tenantId: string, keys: string[]): Promise<(string | undefined)[]>;
 }
@@ -157,6 +165,7 @@ export async function computeQuote(deps: Omit<QuoteDeps, 'secret'>, input: Quote
   const pagesPerLetter = letters === 0 ? 0 : await deps.countLetterPages({
     tenantId: input.tenantId, subject: input.subject, body: input.body, attachments: input.attachments,
     withQrBlock: input.letterQrCodes && input.caleventKeys.length > 0,
+    ...(input.newsletterGroupKey ? { newsletterGroupKey: input.newsletterGroupKey } : {}),
   });
   const pages = letters * pagesPerLetter;
   const priced = letters === 0 ? { total: 0, perUnit: 0, perPage: 0 } : deps.port.quote(letters, pages);
@@ -212,7 +221,11 @@ export async function quoteDepsOf(env: QuoteEnv, port: CreditPort, input: QuoteI
   return {
     port, secret: env.secret, now, readCountryCodes: env.readCountryCodes,
     // count the pages of exactly the HTML that will be printed: the fan-out renders the sanitized body
-    countLetterPages: async (a) => env.renderPages({ ...a, body: await sanitizeEmailBody(a.body), attachmentBytes: a.attachments, attachments: [], answerEvents }),
+    // and with the newsletter's unsubscribe block, of the longest length a real link gets
+    countLetterPages: async ({ newsletterGroupKey, ...a }) => env.renderPages({
+      ...a, body: await sanitizeEmailBody(a.body), attachmentBytes: a.attachments, attachments: [], answerEvents,
+      ...(newsletterGroupKey ? { unsubscribeUrl: sampleUnsubscribeUrl(newsletterGroupKey) } : {}),
+    }),
   };
 }
 
@@ -250,6 +263,8 @@ export interface PostOrderArgs {
   letterQrCodes: boolean;
   caleventKeys: string[];
   postKeys: string[];
+  /** a newsletter send: as `sendMailing` decided it (never the client) */
+  newsletterGroupKey?: string;
   mailingKey: string;
   /** whether the mailing doc already exists (a replay of the same quote, or a write that committed) */
   mailingExists(): Promise<boolean>;
@@ -325,6 +340,7 @@ export async function withPostOrder<T>(env: QuoteEnv, args: PostOrderArgs, work:
   const input: QuoteInput = {
     tenantId: args.tenantId, subject: args.subject, body: args.body, attachments: args.attachments,
     letterQrCodes: args.letterQrCodes, caleventKeys: args.caleventKeys, postKeys: args.postKeys, options: args.post.options,
+    ...(args.newsletterGroupKey ? { newsletterGroupKey: args.newsletterGroupKey } : {}),
   };
   const computed = await computeQuote(await quoteDepsOf(env, port, input, args.post.issuedAt), input);
   if (!verifyQuote(args.post.token, computed.payload, env.secret, env.now)) throw new HttpsError('failed-precondition', 'price-changed');

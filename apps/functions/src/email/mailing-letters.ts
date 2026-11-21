@@ -533,7 +533,8 @@ export const SAMPLE_LETTER_RECIPIENT: LetterRecipient = {
 
 /**
  * Pages of one letter of this draft: one sample letter (see SAMPLE_LETTER_RECIPIENT) rendered through the same
- * path as the real letters, plus the PDF attachment pages. With `withQrBlock` the letter carries the events block
+ * path as the real letters, plus the PDF attachment pages. With `unsubscribeUrl` it ends with the newsletter's
+ * unsubscribe block. With `withQrBlock` the letter carries the events block
  * with its QR code (answer link of a placeholder length).
  */
 export async function countLetterPages(args: {
@@ -545,11 +546,16 @@ export async function countLetterPages(args: {
   attachmentBytes?: { filename: string; contentType: string; content: Buffer }[];
   withQrBlock: boolean;
   answerEvents?: LetterEvent[];
+  /** a newsletter send: the letter ends with this unsubscribe link and its QR code, as each real letter does */
+  unsubscribeUrl?: string;
 }): Promise<number> {
   const ctx = await prepareLetterContext(getFirestore(), args.tenantId, { ...args, attachments: args.attachments ?? [] });
-  const eventsHtml = args.withQrBlock && args.answerEvents?.length
+  const answerHtml = args.withQrBlock && args.answerEvents?.length
     ? eventsBlockHtml(args.answerEvents, await qrSvgOf(`https://app.example.org/answer/${'x'.repeat(60)}`))
     : '';
+  // the same blocks in the same order as buildMailingLetters
+  const unsubscribeHtml = args.unsubscribeUrl ? unsubscribeLetterBlockHtml(args.unsubscribeUrl, await qrSvgOf(args.unsubscribeUrl)) : '';
+  const eventsHtml = answerHtml + unsubscribeHtml;
   const r = SAMPLE_LETTER_RECIPIENT;
   const { pages } = await renderLetter(ctx, { name: r.name, firstName: r.firstName, lastName: r.lastName, address: r, eventsHtml });
   return pages;

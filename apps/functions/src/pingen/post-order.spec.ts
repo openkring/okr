@@ -253,3 +253,31 @@ describe('quoteDepsOf', () => {
     expect(body).toContain('Hallo');
   });
 });
+
+describe('withPostOrder for a newsletter (spec 1.169)', () => {
+  function newsletterSetup() {
+    const s = setup(['CH', 'CH']);
+    const env: QuoteCallableEnv = {
+      ...s.env, isNewsletterGroup: async () => true,
+      // the unsubscribe block pushes each letter onto a third page
+      renderPages: async (a) => (a.unsubscribeUrl ? 3 : 2),
+    };
+    return { ...s, env };
+  }
+
+  it('charges the pages the unsubscribe block adds when the quote knew the newsletter', async () => {
+    const { env, request, deductCredit } = newsletterSetup();
+    const args = await accepted(env, { ...request, groupKey: 'nl1' }, { newsletterGroupKey: 'nl1' });
+    const work = vi.fn(async () => 'ok');
+    await withPostOrder(env, args, work);
+    expect(deductCredit).toHaveBeenCalledWith('scs', expect.objectContaining({ units: 2, pages: 6 }));
+    expect(work).toHaveBeenCalledWith(expect.objectContaining({ letters: 2, pages: 6 }));
+  });
+
+  it('refuses a newsletter send whose quote was made without the newsletter (price-changed)', async () => {
+    const { env, request, deductCredit } = newsletterSetup();
+    const args = await accepted(env, request, { newsletterGroupKey: 'nl1' });   // quoted without groupKey
+    await expect(withPostOrder(env, args, vi.fn())).rejects.toMatchObject({ code: 'failed-precondition', message: 'price-changed' });
+    expect(deductCredit).not.toHaveBeenCalled();
+  });
+});

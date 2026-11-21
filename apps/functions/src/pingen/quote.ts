@@ -14,6 +14,7 @@ import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functi
 import { countLetterPages } from '../email/mailing-letters';
 import { resolveAttachmentBytes, type MailingAttachmentFields } from '../email/mailing';
 import { parseCaleventKeys } from '../email/personal-mail.logic';
+import { checkNewsletterGroup } from '../newsletter/signup';
 import { getCreditPort } from './credit-port';
 import {
   answerEventsOf, assertMayPost, computeQuote, mayPost, parseOptions, quoteDepsOf, quoteTokenSecret, readCountryCodes, signQuote,
@@ -62,6 +63,11 @@ const UNAVAILABLE: PingenUnavailable = { pingenAvailable: false };
 export interface QuoteCallableEnv extends QuoteEnv {
   /** whether `credit-accounts/{tenantId}` exists: without it the tenant has no prepaid credit for letters */
   hasCreditAccount(tenantId: string): Promise<boolean>;
+  /**
+   * Whether `groupKey` names a live newsletter group of the tenant (spec 1.169): its letters then end with the
+   * unsubscribe block. Absent = no newsletter is recognised; a newsletter send then refuses the quote (price-changed).
+   */
+  isNewsletterGroup?(tenantId: string, groupKey: string): Promise<boolean>;
 }
 
 export async function quoteMailingLettersCore(deps: QuoteDeps, input: QuoteInput, caller: QuoteCaller): Promise<PostQuote> {
@@ -104,7 +110,13 @@ export async function quoteWithCaller(env: QuoteCallableEnv, data: unknown, call
   if (!mayPost(caller, parsed.tenantId)) return UNAVAILABLE;
   if (!(await env.hasCreditAccount(parsed.tenantId))) return UNAVAILABLE;
   const port = env.getPort();
-  const input: QuoteInput = { ...parsed, attachments: await resolveAttachmentBytes(data as MailingAttachmentFields, parsed.tenantId, env.readDocument) };
+  // the server decides that the draft is a newsletter, as `sendMailing` does; a client flag is never read
+  const groupKey = (data as { groupKey?: unknown }).groupKey;
+  const newsletterGroupKey = typeof groupKey === 'string' && groupKey && (await env.isNewsletterGroup?.(parsed.tenantId, groupKey)) ? groupKey : undefined;
+  const input: QuoteInput = {
+    ...parsed, ...(newsletterGroupKey ? { newsletterGroupKey } : {}),
+    attachments: await resolveAttachmentBytes(data as MailingAttachmentFields, parsed.tenantId, env.readDocument),
+  };
   return quoteMailingLettersCore(await quoteDepsOf(env, port, input, env.now), input, caller);
 }
 
@@ -121,6 +133,7 @@ export const quoteMailingLetters = onCall(
       getPort: getCreditPort, secret: quoteTokenSecret.value(), now: Date.now(),
       readCountryCodes, answerEventsOf, renderPages: countLetterPages,
       hasCreditAccount: async (tenantId) => (await db.collection(CreditAccountCollection).doc(tenantId).get()).exists,
+      isNewsletterGroup: async (tenantId, groupKey) => (await checkNewsletterGroup(db, tenantId, groupKey)).ok,
     }, request.data, caller);
   },
 );
