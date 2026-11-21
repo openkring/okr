@@ -1,6 +1,8 @@
 // libs/content/pdf-template/util/src/lib/versand.util.ts
-import { CalEventModel, DeliveryChannel } from '@okr/shared-models';
-import { addDuration, convertDateFormatToString, DateFormat, MAILING_CHANNELS, MailingRecipientChannels } from '@okr/shared-util-core';
+import { CalEventModel, DeliveryChannel, HouseholdBundle } from '@okr/shared-models';
+import {
+  addDuration, convertDateFormatToString, DateFormat, householdRecipientKey, MAILING_CHANNELS, MailingHousehold, MailingRecipientChannels,
+} from '@okr/shared-util-core';
 
 /**
  * The delivery types a Versand sends (spec 1.145): E-Mail, In-App (P2), and Post as a letter PDF the
@@ -43,12 +45,75 @@ export function versandDeliveries(rows: VersandRow[], deliveries: VersandDeliver
     .filter((d) => d.channels.length > 0);
 }
 
-/** One row of the Zustellung table: who, their email (empty when none), and what is possible. */
+/**
+ * One row of the Zustellung table: who, their email (empty when none), and what is possible. A household
+ * row (spec 1.168 §6.2) has `personKey` `household.<okey>`, the household name, the contact's name and
+ * the members it stands for.
+ */
 export interface VersandRow {
   personKey: string;
   name: string;
   email: string;
   possible: DeliveryChannel[];
+  /** set only on a household row: the contact who receives it */
+  contactName?: string;
+  /** set only on a household row: the members it is delivered for */
+  members?: { personKey: string; name: string }[];
+}
+
+/** The Versand channel of each household bundle switch. */
+export const HOUSEHOLD_BUNDLE_CHANNELS: Record<keyof HouseholdBundle, DeliveryChannel> = {
+  post: DeliveryChannel.Post,
+  email: DeliveryChannel.Email,
+  inApp: DeliveryChannel.Chat,
+};
+
+/**
+ * Combines household members into one household row (spec 1.168 §6.1). Per household not in `split` and per
+ * bundled channel: the members ticked on that channel lose it and the household row gets it — but only if the
+ * contact can be reached on it; otherwise that channel stays per member. The household row comes before its
+ * first member; members left without any tick stay listed (they are covered by the household row). The
+ * household row can only carry the channels it took over.
+ */
+export function applyHouseholds(
+  rows: VersandRow[],
+  deliveries: VersandDeliveries,
+  households: MailingHousehold[],
+  split: ReadonlySet<string>,
+): { rows: VersandRow[]; deliveries: VersandDeliveries } {
+  let outRows = rows;
+  let out = deliveries;
+  for (const household of households) {
+    if (split.has(household.okey)) continue;
+    const members = new Set(household.memberKeys);
+    const memberRows = outRows.filter((row) => members.has(row.personKey));
+    if (memberRows.length === 0) continue;
+    const combined: DeliveryChannel[] = [];
+    const next: VersandDeliveries = { ...out };
+    for (const [bundleKey, channel] of Object.entries(HOUSEHOLD_BUNDLE_CHANNELS) as [keyof HouseholdBundle, DeliveryChannel][]) {
+      if (!household.bundle[bundleKey] || !household.contact.possible.includes(channel)) continue;
+      const ticked = memberRows.filter((row) => (next[row.personKey] ?? []).includes(channel));
+      if (ticked.length === 0) continue;
+      for (const row of ticked) next[row.personKey] = next[row.personKey].filter((c) => c !== channel);
+      combined.push(channel);
+    }
+    if (combined.length === 0) continue;
+    const key = householdRecipientKey(household.okey);
+    const channels = MAILING_CHANNELS.filter((c) => combined.includes(c));
+    next[key] = channels;
+    const householdRow: VersandRow = {
+      personKey: key,
+      name: household.name,
+      email: rows.find((row) => row.personKey === household.contactKey)?.email ?? '',
+      possible: channels,
+      contactName: household.contactName,
+      members: memberRows.map((row) => ({ personKey: row.personKey, name: row.name })),
+    };
+    const at = outRows.indexOf(memberRows[0]);
+    outRows = [...outRows.slice(0, at), householdRow, ...outRows.slice(at)];
+    out = next;
+  }
+  return { rows: outRows, deliveries: out };
 }
 
 /** personKey → the delivery types ticked for this Versand. */
@@ -99,9 +164,15 @@ export function deliveryTotals(deliveries: VersandDeliveries): Record<DeliveryCh
   return totals;
 }
 
-/** Persons this Versand does not reach: no tick at all. */
+/**
+ * Persons this Versand does not reach: no tick at all. A household row is never counted, and a member counts
+ * only when the household row standing for it has no tick either.
+ */
 export function unreachableCount(rows: VersandRow[], deliveries: VersandDeliveries): number {
-  return rows.filter((row) => (deliveries[row.personKey] ?? []).length === 0).length;
+  const covered = new Set(rows
+    .filter((row) => row.members && (deliveries[row.personKey] ?? []).length > 0)
+    .flatMap((row) => (row.members ?? []).map((m) => m.personKey)));
+  return rows.filter((row) => !row.members && !covered.has(row.personKey) && (deliveries[row.personKey] ?? []).length === 0).length;
 }
 
 /** The Bcc of the email part: every address ticked under E-Mail, each once, in row order. */
