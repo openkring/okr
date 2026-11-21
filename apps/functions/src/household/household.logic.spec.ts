@@ -1,5 +1,5 @@
 import { HouseholdModel } from '@okr/shared-models';
-import { decideArchive, householdAfterErasure, prepareHouseholdWrite } from './household.logic';
+import { coerceBundle, decideArchive, householdAfterErasure, prepareHouseholdWrite } from './household.logic';
 
 function household(members: string[], over: Partial<HouseholdModel> = {}): HouseholdModel {
   const h = new HouseholdModel('t1');
@@ -80,5 +80,20 @@ describe('householdAfterErasure', () => {
   });
   it('keeps an empty payer empty', () => {
     expect(householdAfterErasure({ memberKeys: ['a', 'b'], payerKey: '', contactKey: '' })).toEqual({ payerKey: '', contactKey: '' });
+  });
+});
+
+describe('coerceBundle', () => {
+  it('drops extra keys', () => {
+    expect(coerceBundle({ post: false, email: true, inApp: true, admin: true })).toEqual({ post: false, email: true, inApp: true });
+  });
+  it('takes the default for a non-boolean value', () => {
+    expect(coerceBundle({ post: 'false', email: 'true', inApp: 1 })).toEqual({ post: true, email: false, inApp: false });
+  });
+  it('takes the default for a missing key', () => {
+    expect(coerceBundle({ email: true })).toEqual({ post: true, email: true, inApp: false });
+  });
+  it('takes all defaults for null, an array or a primitive', () => {
+    for (const v of [null, undefined, [], [true], 'x', 5]) expect(coerceBundle(v)).toEqual({ post: true, email: false, inApp: false });
   });
 });

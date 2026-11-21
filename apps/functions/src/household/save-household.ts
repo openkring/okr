@@ -12,7 +12,7 @@ import { HouseholdCollection, HouseholdModel } from '@okr/shared-models';
 import { addIndexElement, householdShapeError, householdWriteRefusal } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
-import { decideArchive, prepareHouseholdWrite } from './household.logic';
+import { coerceBundle, decideArchive, prepareHouseholdWrite } from './household.logic';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'saveHousehold';
@@ -63,8 +63,7 @@ export function readIncoming(raw: unknown, tenantId: string): HouseholdModel | u
   h.memberKeys = asStringArray(r['memberKeys']);
   h.payerKey = typeof r['payerKey'] === 'string' ? r['payerKey'] : '';
   h.contactKey = typeof r['contactKey'] === 'string' ? r['contactKey'] : '';
-  if (r['bundle'] !== null && typeof r['bundle'] === 'object') h.bundle = r['bundle'] as HouseholdModel['bundle'];
-  else delete (h as Partial<HouseholdModel>).bundle;
+  h.bundle = coerceBundle(r['bundle']);
   return h;
 }
 
