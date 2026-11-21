@@ -183,6 +183,7 @@ export async function sendPersonal(
       await send(provider, {
         from, to: [entry.to], ...(job.to[0] ? { replyTo: job.to[0] } : {}), subject: job.subject, html, ...(text !== undefined ? { text } : {}), attachments,
         ...(job.category ? { category: job.category } : {}),
+        ...(entry.headers ? { headers: entry.headers } : {}),
       });
       progress.sent++;
     } catch (error) {

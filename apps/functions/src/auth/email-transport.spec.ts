@@ -19,6 +19,13 @@ describe('effectiveProvider', () => {
 });
 
 describe('mailtrapBody', () => {
+  it('passes custom headers through as a top-level headers map, and omits it without', () => {
+    const headers = { 'List-Unsubscribe': '<https://x>', 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' };
+    expect(mailtrapBody({ ...base, headers })['headers']).toEqual(headers);
+    expect(mailtrapBody(base)).not.toHaveProperty('headers');
+    expect(mailtrapBody({ ...base, headers: {} })).not.toHaveProperty('headers');
+  });
+
   it('passes a category on, capped at 255 characters, and never next to a template', () => {
     expect(mailtrapBody({ ...base, category: 'mailing.abc' })['category']).toBe('mailing.abc');
     expect(mailtrapBody(base)).not.toHaveProperty('category');

@@ -134,6 +134,16 @@ describe('sendPersonal', () => {
     expect(updates.at(-1)).toEqual({ blocksSent: 3, state: 'sent' });
   });
 
+  it('hands an entry\'s headers to send, and none when the entry has none', async () => {
+    const snap = { ref: { update: async () => undefined } };
+    const send = vi.fn(async (_provider: string, _options: { headers?: Record<string, string> }) => undefined);
+    const headers = { 'List-Unsubscribe': '<https://x/u>' };
+    const job = { ...personalJob(2), personal: [{ to: 'a@scs.ch', answerUrl: 'https://x/?p=a', headers }, { to: 'b@scs.ch', answerUrl: 'https://x/?p=b' }] };
+    await sendPersonal(snap, job, 'scs', 'app@scs.ch', 'mailtrap_api', [], { sent: 0 }, { now: () => 0, send, compose, pauseMs: 0 });
+    expect(send.mock.calls[0][1].headers).toEqual(headers);
+    expect(send.mock.calls[1][1]).not.toHaveProperty('headers');
+  });
+
   it('puts the job\'s category on every personal mail, and none without one', async () => {
     const snap = { ref: { update: async () => undefined } };
     const send = vi.fn(async (_provider: string, _options: { category?: string }) => undefined);

@@ -47,6 +47,8 @@ export interface EmailOptions {
    * a template, and caps it at 255 characters.
    */
   category?: string;
+  /** Extra mail headers (e.g. RFC 8058 `List-Unsubscribe`), sent by SMTP and the Mailtrap API alike. */
+  headers?: Record<string, string>;
 }
 
 // ─── SMTP configs ────────────────────────────────────────────────────────────
@@ -107,6 +109,7 @@ async function sendViaSMTP(config: object, options: EmailOptions): Promise<void>
     subject: options.subject,
     html: options.html,
     ...(options.text ? { text: options.text } : {}),
+    ...(options.headers && Object.keys(options.headers).length ? { headers: options.headers } : {}),
     ...(options.attachments?.length ? {
       attachments: options.attachments.map(a => ({
         filename: a.filename,
@@ -139,6 +142,8 @@ export function mailtrapBody(options: EmailOptions): Record<string, unknown> {
     if (options.text) body['text'] = options.text;
     if (typeof options.category === 'string' && options.category) body['category'] = options.category.slice(0, 255);
   }
+
+  if (options.headers && Object.keys(options.headers).length) body['headers'] = options.headers;
 
   if (options.attachments?.length) {
     body['attachments'] = options.attachments.map(a => ({

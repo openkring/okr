@@ -34,6 +34,8 @@ export function deadlineOutcome(sent: number, total: number): { state: 'failed';
 export interface PersonalEntry {
   to: string;
   answerUrl: string;
+  /** Extra mail headers for this recipient's mail (e.g. a personal `List-Unsubscribe`). */
+  headers?: Record<string, string>;
 }
 
 export interface AnswerEventLine {
