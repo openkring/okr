@@ -1,5 +1,5 @@
 import { HouseholdModel } from '@okr/shared-models';
-import { prepareHouseholdWrite } from './household.logic';
+import { decideArchive, householdAfterErasure, prepareHouseholdWrite } from './household.logic';
 
 function household(members: string[], over: Partial<HouseholdModel> = {}): HouseholdModel {
   const h = new HouseholdModel('t1');
@@ -46,5 +46,39 @@ describe('prepareHouseholdWrite', () => {
   it('strips okey from the stored doc', () => {
     const { doc } = prepareHouseholdWrite(undefined, household(['a', 'b']));
     expect('okey' in doc).toBe(false);
+  });
+});
+
+describe('decideArchive', () => {
+  const archived = household(['a', 'b'], { isArchived: true });
+  it('refuses a member on an archived household', () => {
+    expect(decideArchive({ isAdmin: false }, archived, false, undefined)).toBeUndefined();
+  });
+  it('keeps an archived household archived for an admin without flag', () => {
+    expect(decideArchive({ isAdmin: true }, archived, false, undefined)).toBe(true);
+  });
+  it('un-archives with archive:false for an admin', () => {
+    expect(decideArchive({ isAdmin: true }, archived, false, false)).toBe(false);
+  });
+  it('archives on admin request', () => {
+    expect(decideArchive({ isAdmin: true }, household(['a', 'b']), false, true)).toBe(true);
+  });
+  it('archives when a member leaves (fewer than 2)', () => {
+    expect(decideArchive({ isAdmin: false }, household(['a', 'b']), true, undefined)).toBe(true);
+  });
+  it('ignores the archive flag of a member', () => {
+    expect(decideArchive({ isAdmin: false }, household(['a', 'b']), false, true)).toBe(false);
+  });
+});
+
+describe('householdAfterErasure', () => {
+  it('moves payer and contact to the first remaining member and archives below 2', () => {
+    expect(householdAfterErasure({ memberKeys: ['a'], payerKey: 'x', contactKey: 'x' })).toEqual({ payerKey: 'a', contactKey: 'a', isArchived: true });
+  });
+  it('keeps valid payer/contact and an active household of 2+', () => {
+    expect(householdAfterErasure({ memberKeys: ['a', 'b', 'c'], payerKey: 'b', contactKey: 'x' })).toEqual({ payerKey: 'b', contactKey: 'a' });
+  });
+  it('keeps an empty payer empty', () => {
+    expect(householdAfterErasure({ memberKeys: ['a', 'b'], payerKey: '', contactKey: '' })).toEqual({ payerKey: '', contactKey: '' });
   });
 });

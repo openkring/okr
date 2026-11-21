@@ -5,6 +5,7 @@ import { ContractModel, CourseFinanceSubcollection, CourseModel, HouseholdCollec
 import type { AvatarInfo } from '@okr/shared-models';
 import { getContractIndex } from '@okr/business-contract-util';
 import { getCourseIndex } from '@okr/calendar-course-util';
+import { householdAfterErasure } from '../household/household.logic';
 import type { Blocker, SubjectCtx, SubjectDataEntry } from './types';
 
 /**
@@ -1128,6 +1129,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     onExport: 'full',
     onErasure: 'anonymize',
     anonymizeFields: ['memberKeys'],
+    // payer/contact still naming the erased key would make the household unsaveable: re-point them, archive below 2 members (spec §8)
+    recomputeDerived: (d) => householdAfterErasure(d),
     retention: CLUB_RECORD,
   },
   {

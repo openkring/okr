@@ -746,7 +746,10 @@ service cloud.firestore {
     // Haushalte (spec 1.168): a member reads their own household, memberAdmin/privileged read the tenant's.
     // The only write path is the saveHousehold callable (Admin SDK).
     match /households/{id} {
-      allow read: if tenantRead() && (callerPersonKey() in resource.data.memberKeys || hasRole('memberAdmin') || isPrivileged());
+      // The member's own query is `memberKeys array-contains <personKey>`; it cannot prove tenantRead() (one array-contains
+      // per query), so the member branch has no tenant check and the client drops other tenants' documents (notices form).
+      allow read: if (callerPersonKey() != '' && callerPersonKey() in resource.data.get('memberKeys', []))
+                     || ((isPrivileged() || hasRole('memberAdmin')) && tenantRead());
       allow write: if false;
     }
     // Activities are the audit log. Authenticated tenant members write normal activities.

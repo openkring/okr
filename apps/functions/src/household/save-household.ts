@@ -12,7 +12,7 @@ import { HouseholdCollection, HouseholdModel } from '@okr/shared-models';
 import { addIndexElement, householdShapeError, householdWriteRefusal } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
-import { prepareHouseholdWrite } from './household.logic';
+import { decideArchive, prepareHouseholdWrite } from './household.logic';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'saveHousehold';
@@ -95,6 +95,7 @@ export async function runSaveHousehold(db: Firestore, uid: string, req: SaveHous
   const incoming = readIncoming(req.household, tenantId);
   if (!incoming) throw new HttpsError('invalid-argument', 'household is required');
   if (!isOnlyTenant(incoming.tenants, tenantId)) refuse('tenants-changed');
+  if (incoming.memberKeys.some((k) => k === '')) throw new HttpsError('invalid-argument', 'empty-member');
   const col = db.collection(HouseholdCollection);
 
   return db.runTransaction(async (tx) => {
@@ -113,7 +114,8 @@ export async function runSaveHousehold(db: Firestore, uid: string, req: SaveHous
 
     const prepared = prepareHouseholdWrite(before, incoming);
     const doc = prepared.doc;
-    const archive = prepared.archive || (caller.isAdmin && req.archive === true);
+    const archive = decideArchive(caller, before, prepared.archive, req.archive);
+    if (archive === undefined) refuse('not-allowed');
 
     // the tenant's other active households of the incoming members
     const others = new Map<string, HouseholdModel>();

@@ -16,3 +16,29 @@ export function prepareHouseholdWrite(before: HouseholdModel | undefined, after:
   void _okey;
   return { doc: rest as HouseholdModel, archive };
 }
+
+/**
+ * Whether the stored doc is archived. A member never writes an archived household (refused: `undefined` result);
+ * an admin keeps the stored state unless the request says otherwise (`archive: false` un-archives); fewer than two
+ * members always archive.
+ */
+export function decideArchive(
+  caller: { isAdmin: boolean },
+  before: HouseholdModel | undefined,
+  preparedArchive: boolean,
+  requested: boolean | undefined,
+): boolean | undefined {
+  if (before?.isArchived === true && !caller.isAdmin) return undefined;
+  const wanted = caller.isAdmin ? (requested ?? before?.isArchived ?? false) : false;
+  return preparedArchive || wanted;
+}
+
+/** After an erasure removed a member: payer/contact no longer in `memberKeys` move to the first remaining member; fewer than 2 members archive. */
+export function householdAfterErasure(d: Record<string, unknown>): Record<string, unknown> {
+  const memberKeys = Array.isArray(d['memberKeys']) ? (d['memberKeys'] as string[]) : [];
+  const fallback = memberKeys[0] ?? '';
+  const fix = (v: unknown): string => (typeof v === 'string' && v !== '' && !memberKeys.includes(v) ? fallback : (v as string) ?? '');
+  const out: Record<string, unknown> = { payerKey: fix(d['payerKey']), contactKey: fix(d['contactKey']) };
+  if (memberKeys.length < 2) out['isArchived'] = true;
+  return out;
+}
