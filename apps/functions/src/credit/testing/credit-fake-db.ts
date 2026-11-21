@@ -1,5 +1,5 @@
 // A small in-memory Firestore for the credit, billing and newsletter specs: doc get/set/create/update, simple collection
-// queries (where ==, ranges, array-contains; dotted field paths), set with merge, FieldValue.arrayUnion/arrayRemove, and transactions with optimistic
+// queries (where ==, ranges, array-contains; dotted field paths), delete, batched writes, set with merge, FieldValue.arrayUnion/arrayRemove, and transactions with optimistic
 // concurrency like Firestore (versions per document, recorded on get, checked at commit, retried on conflict).
 // Test-only: imported by *.spec.ts, never by production code.
 import type { Firestore } from 'firebase-admin/firestore';
@@ -39,6 +39,7 @@ export function fakeDb(store: Store): Firestore {
       store[path] = merged(store[path], d);
       bump(path);
     },
+    delete: async () => { delete store[path]; bump(path); },
     collection: (name: string) => colRef(`${path}/${name}`),
   });
   let autoId = 0;
@@ -78,6 +79,14 @@ export function fakeDb(store: Store): Firestore {
   const pathOf = (r: unknown) => (r as { path: string }).path;
   return {
     collection: (name: string) => colRef(name),
+    batch: () => {
+      const ops: (() => void)[] = [];
+      const batch = {
+        delete: (r: unknown) => { ops.push(() => { delete store[pathOf(r)]; bump(pathOf(r)); }); return batch; },
+        commit: async () => { ops.forEach((op) => op()); },
+      };
+      return batch;
+    },
     runTransaction: async <T>(fn: (tx: unknown) => Promise<T>): Promise<T> => {
       for (let attempt = 0; attempt < 5; attempt++) {
         const reads = new Map<string, number>();

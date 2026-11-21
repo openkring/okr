@@ -12,8 +12,8 @@ import { pingenClientId, pingenClientSecret, pingenOrganisationId } from '../pin
 const names = (jobs: { name: string }[]) => jobs.map((j) => j.name);
 
 describe('time-slot schedulers', () => {
-  it('nightly runs its thirteen jobs in order', () => {
-    expect(names(NIGHTLY_JOBS)).toEqual(['tripStatsReconcile', 'crewTrackCleanup', 'trackerExpiry', 'departureCleanup', 'roomPostPolicySweep', 'expiredMembershipSweep', 'pinboardSweep', 'billScanReap', 'privacyExportReap', 'mailingLettersReap', 'courseEndTasks', 'energyFiguresFetch', 'webhookStuckCheck', 'residenceSwitch', 'contactsDavRebuild', 'postVersandReconcile']);
+  it('nightly runs its fourteen jobs in order', () => {
+    expect(names(NIGHTLY_JOBS)).toEqual(['tripStatsReconcile', 'crewTrackCleanup', 'trackerExpiry', 'departureCleanup', 'roomPostPolicySweep', 'expiredMembershipSweep', 'pinboardSweep', 'billScanReap', 'privacyExportReap', 'mailingLettersReap', 'newsletterSignupReap', 'courseEndTasks', 'energyFiguresFetch', 'webhookStuckCheck', 'residenceSwitch', 'contactsDavRebuild', 'postVersandReconcile']);
   });
 
   it('morning runs its eight jobs in order; monthlyBilling only on the 1st in Zurich, billingDaily every day', () => {
