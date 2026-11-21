@@ -225,6 +225,16 @@ describe('runSaveHousehold', () => {
       .toEqual({ code: 'invalid-argument', message: 'member-not-in-tenant' });
   });
 
+  it('re-checks every member when an admin un-archives a household', async () => {
+    const data = seed();
+    data['households']['h1'] = { ...data['households']['h1'], isArchived: true, memberKeys: ['a', 'b', 'z'] };
+    const fake = fakeDb(data);
+    const household = { ...data['households']['h1'], okey: 'h1' };
+    expect(await refusal(runSaveHousehold(fake.db, 'admin', { tenantId: 'scs', household: household as never, archive: false })))
+      .toEqual({ code: 'invalid-argument', message: 'member-not-in-tenant' });
+    expect(fake.data['households']['h1']['isArchived']).toBe(true);
+  });
+
   it('accepts a person shared with another tenant when it lists this tenant', async () => {
     const data = seed();
     data['persons']['c'] = person(['gvs', 'scs']);

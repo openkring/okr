@@ -144,8 +144,10 @@ export async function runSaveHousehold(db: Firestore, uid: string, req: SaveHous
 
     // every member this write ADDS must be a live person of this tenant. Members already stored were checked when
     // they were added; re-checking them would trap the others (no leave, no rename) once one person is archived.
-    const added = addedMemberKeys(before, doc);
-    if (added.some((k) => k.includes('/'))) throw new HttpsError('invalid-argument', 'member-not-in-tenant');
+    // Un-archiving (admin only) re-checks everyone: the stored members may have changed while it was archived.
+    const restoring = before?.isArchived === true && !archive;
+    const added = restoring ? [...new Set(doc.memberKeys)] : addedMemberKeys(before, doc);
+    if (doc.memberKeys.some((k) => k.includes('/'))) throw new HttpsError('invalid-argument', 'member-not-in-tenant');
     const persons = db.collection(PersonCollection);
     for (let i = 0; i < added.length; i += GET_ALL_CHUNK) {
       const snaps = await tx.getAll(...added.slice(i, i + GET_ALL_CHUNK).map((k) => persons.doc(k)));
