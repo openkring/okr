@@ -69,9 +69,27 @@ export function groupFeesByHousehold(
 const round2 = (n: number): number => Math.round(n * 100) / 100;
 
 /**
+ * The sum of the existing rebates that lower the counted sum of the cap (spec 1.168 §5.1). With
+ * `onlyMembershipFee === false` every rebate counts. Otherwise (true or missing) only a rebate that
+ * reduces the yearly membership fee counts: rebate positions carry usage 'other', but `rebatePosition`
+ * books a rebate on the account of the position it reduces, so a rebate counts when its `accountKey`
+ * equals the account of a `membershipFee` position in the same set (a `support` rebate on the
+ * boat-rental account does not).
+ */
+export function countedRebates(positions: MemberFeePosition[], onlyMembershipFee: boolean | undefined): number {
+  const onlyFee = onlyMembershipFee !== false;
+  const feeAccounts = new Set(positions
+    .filter(p => p.type !== 'rebate' && p.usage === DEFAULT_INVOICE_POSITION_USAGE && (p.accountKey ?? '').length > 0)
+    .map(p => p.accountKey));
+  return positions
+    .filter(p => p.type === 'rebate' && (!onlyFee || feeAccounts.has(p.accountKey ?? '')))
+    .reduce((s, p) => s + Math.abs(Number(p.amount) || 0), 0);
+}
+
+/**
  * The «Familienrabatt» of a merged household invoice, or undefined when the cap does not apply.
  * Counted sum = Σ counted non-rebate positions (only `usage === 'membershipFee'` unless
- * `onlyMembershipFee === false`; missing = true) − Σ existing rebate positions. Above `feeCap`
+ * `onlyMembershipFee === false`; missing = true) − the existing rebates that count (`countedRebates`). Above `feeCap`
  * (a fixed CHF amount; 0 or missing = no cap) the difference becomes one rebate position, stored
  * positive like every fee-row rebate (`billedPositions` turns it negative on the invoice).
  */
@@ -82,7 +100,7 @@ export function applyHouseholdFeeCap(
   if (cap <= 0) return undefined;
   const onlyFee = onlyMembershipFee !== false;
   const counted = positions.filter(p => p.type !== 'rebate' && (!onlyFee || p.usage === DEFAULT_INVOICE_POSITION_USAGE));
-  const rebates = positions.filter(p => p.type === 'rebate').reduce((s, p) => s + Math.abs(Number(p.amount) || 0), 0);
+  const rebates = countedRebates(positions, onlyMembershipFee);
   const sum = counted.reduce((s, p) => s + (Number(p.amount) || 0), 0) - rebates;
   if (sum <= cap) return undefined;
   const rebate = rebatePosition(round2(sum - cap), 'family', counted);

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { AvatarInfo, HouseholdModel, MemberFeeModel, MemberFeePosition } from '@okr/shared-models';
 
 import {
-  ADDRESS_MISMATCH_NOTE, applyHouseholdFeeCap, groupFeesByHousehold, householdInvoiceDraft, sameAddress, withReviewNote,
+  ADDRESS_MISMATCH_NOTE, applyHouseholdFeeCap, countedRebates, groupFeesByHousehold, householdInvoiceDraft, sameAddress, withReviewNote,
 } from './household-fees.logic';
 
 const position = (overrides: Partial<MemberFeePosition> = {}): MemberFeePosition => ({
@@ -61,9 +61,50 @@ describe('applyHouseholdFeeCap (cap CHF 600)', () => {
     expect(applyHouseholdFeeCap(positions, 600, true)?.amount).toBe(100);
   });
 
+  const boat = position({ key: 'bpr', usage: 'boatPlaceRental', label: 'Bootsplatz', amount: 200, accountKey: 'acc2' });
+  const support = position({ key: 'rebate', usage: 'other', type: 'rebate', label: 'Skiff für Leistungssport', amount: 200, accountKey: 'acc2' });
+  const edu = position({ key: 'rebate', usage: 'other', type: 'rebate', label: 'Ausbildungsrabatt', amount: 50, accountKey: 'acc1' });
+
+  it('ignores a support rebate on the boat-rental account when only the membership fee counts', () => {
+    expect(applyHouseholdFeeCap([...fees(400, 400, 150), boat, support], 600, true)?.amount).toBe(350);
+    expect(applyHouseholdFeeCap([...fees(400, 400, 150), boat, support], 600, undefined)?.amount).toBe(350);
+  });
+
+  it('lets an edu rebate on the membership account lower the counted sum (membership total ends at 600)', () => {
+    const positions = [...fees(400, 400, 150), edu];
+    const rebate = applyHouseholdFeeCap(positions, 600, true);
+    expect(rebate?.amount).toBe(300);
+    expect(400 + 400 + 150 - 50 - (rebate?.amount ?? 0)).toBe(600);
+  });
+
+  it('subtracts every rebate when onlyMembershipFee is false', () => {
+    // 400 + 400 + 150 + 200 − 50 − 200 = 900 → 300
+    expect(applyHouseholdFeeCap([...fees(400, 400, 150), boat, edu, support], 600, false)?.amount).toBe(300);
+    // 400 + 400 + 150 + 200 − 200 = 950 → 350
+    expect(applyHouseholdFeeCap([...fees(400, 400, 150), boat, support], 600, false)?.amount).toBe(350);
+  });
+
   it('has no cap when feeCap is 0 or missing', () => {
     expect(applyHouseholdFeeCap(fees(400, 400, 150), 0, true)).toBeUndefined();
     expect(applyHouseholdFeeCap(fees(400, 400, 150), undefined, true)).toBeUndefined();
+  });
+});
+
+describe('countedRebates', () => {
+  const rebate = (amount: number, accountKey: string) => position({ key: 'rebate', usage: 'other', type: 'rebate', amount, accountKey });
+
+  it('counts only rebates on a membership-fee account when onlyMembershipFee is true', () => {
+    const positions = [position(), position({ usage: 'boatPlaceRental', accountKey: 'acc2' }), rebate(50, 'acc1'), rebate(200, 'acc2')];
+    expect(countedRebates(positions, true)).toBe(50);
+    expect(countedRebates(positions, undefined)).toBe(50);
+  });
+
+  it('counts every rebate when onlyMembershipFee is false', () => {
+    expect(countedRebates([position(), rebate(50, 'acc1'), rebate(200, 'acc2')], false)).toBe(250);
+  });
+
+  it('counts no rebate without an account when only the membership fee counts', () => {
+    expect(countedRebates([position(), rebate(50, '')], true)).toBe(0);
   });
 });
 
