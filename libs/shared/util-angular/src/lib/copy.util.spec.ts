@@ -49,7 +49,7 @@ describe('copy.util', () => {
     // Vitest 4: restoreAllMocks no longer resets vi.fn() implementations, so a
     // mockRejectedValue in one test would leak into the next — re-arm the defaults.
     mockClipboard.write.mockReset().mockResolvedValue(undefined);
-    mockClipboard.read.mockReset().mockResolvedValue({ value: 'clipboard content' });
+    mockClipboard.read.mockReset().mockResolvedValue({ value: 'clipboard content', type: 'text/plain' });
     mockShowToast.mockReset().mockResolvedValue(undefined);
     // Default to the native pasteboard path; the web-path block overrides this.
     vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true);

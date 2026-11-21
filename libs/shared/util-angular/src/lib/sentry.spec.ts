@@ -158,6 +158,7 @@ describe('beforeSend', () => {
     // runs, and Sentry calls beforeSend asynchronously anyway, so the flag alone dropped it —
     // in two incidents not a single "auto-reloading" event ever reached Sentry.
     const report = {
+      type: undefined,
       environment: 'production',
       message: 'Firestore AsyncQueue failed — auto-reloading',
       tags: { [FIRESTORE_QUEUE_FAILURE_TAG]: 'true' },
