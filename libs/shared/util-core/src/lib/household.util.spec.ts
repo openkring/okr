@@ -101,6 +101,24 @@ describe('household.util', () => {
     it('member changes tenants', () => {
       expect(householdWriteRefusal(member, make(), make({ tenants: ['kring'] }))).toBe('tenants-changed');
     });
+    it('member sets isArchived', () => {
+      expect(householdWriteRefusal(member, make(), make({ isArchived: true }))).toBe('field-not-allowed');
+    });
+    it('member changes type', () => {
+      expect(householdWriteRefusal(member, make(), make({ type: 'wg' }))).toBe('field-not-allowed');
+    });
+    it('member changes okey', () => {
+      expect(householdWriteRefusal(member, make(), make({ okey: 'other' }))).toBe('field-not-allowed');
+    });
+    it('member removes self and adds another', () => {
+      expect(householdWriteRefusal(member, make(), make({ memberKeys: ['b', 'c', 'd'] }))).toBe('members-changed');
+    });
+    it('non-member changing tenants -> not-allowed first', () => {
+      expect(householdWriteRefusal({ personKey: 'z', isAdmin: false }, make(), make({ tenants: ['kring'] }))).toBe('not-allowed');
+    });
+    it('admin changes type and isArchived', () => {
+      expect(householdWriteRefusal(admin, make(), make({ type: 'wg', isArchived: true }))).toBeUndefined();
+    });
     it('admin may change members', () => {
       expect(householdWriteRefusal(admin, make(), make({ memberKeys: ['a'] }))).toBeUndefined();
     });

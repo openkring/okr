@@ -1,7 +1,7 @@
 import { DEFAULT_HOUSEHOLD_BUNDLE, HOUSEHOLD_RECIPIENT_PREFIX, HouseholdBundle, HouseholdModel } from '@okr/shared-models';
 
 export type HouseholdError = 'no-name' | 'payer-not-member' | 'contact-not-member' | 'duplicate-member' | 'already-in-household' | 'bad-tenants';
-export type HouseholdRefusal = 'not-allowed' | 'members-changed' | 'tenants-changed';
+export type HouseholdRefusal = 'not-allowed' | 'members-changed' | 'tenants-changed' | 'field-not-allowed';
 
 /** The bundle of a raw (possibly legacy) household doc; missing fields fall back to the defaults. */
 export function readBundle(h: Partial<HouseholdModel>): HouseholdBundle {
@@ -47,7 +47,10 @@ export function householdShapeError(h: HouseholdModel, others: HouseholdModel[])
   return undefined;
 }
 
-/** Who may write what: admins anything but tenants; a member only non-membership fields, or remove themself. */
+/**
+ * Who may write what: admins anything but tenants; a member only name, payerKey, contactKey, bundle, or remove
+ * themself. Payer/contact membership is NOT checked here: the caller must also run `householdShapeError`.
+ */
 export function householdWriteRefusal(
   caller: { personKey: string; isAdmin: boolean },
   before: HouseholdModel | undefined,
@@ -60,6 +63,11 @@ export function householdWriteRefusal(
     const expected = before.memberKeys.filter((k) => k === caller.personKey ? after.memberKeys.includes(k) : true);
     const same = expected.length === after.memberKeys.length && expected.every((k) => after.memberKeys.includes(k));
     if (!same) return 'members-changed';
+    const d = new HouseholdModel('');
+    const fields = ['okey', 'isArchived', 'type', 'index', 'tags', 'notes'] as const;
+    for (const f of fields) {
+      if (JSON.stringify(before[f] ?? d[f]) !== JSON.stringify(after[f] ?? d[f])) return 'field-not-allowed';
+    }
   }
   return undefined;
 }
