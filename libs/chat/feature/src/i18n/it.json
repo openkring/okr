@@ -436,7 +436,12 @@
     "header": "Notifiche",
     "message": "Vuoi ricevere notifiche per i nuovi messaggi in chat, le attività e gli eventi? Puoi cambiarlo in qualsiasi momento nel tuo profilo.",
     "allow": "Consenti",
-    "later": "Più tardi"
+    "later": "Più tardi",
+    "blockedHeader": "Le notifiche sono disattivate",
+    "blockedIos": "Il tuo iPhone non consente le notifiche per questa app. Puoi attivarle nelle impostazioni dell’iPhone, in «Notifiche», per questa app.",
+    "blockedAndroid": "Il tuo dispositivo non consente le notifiche per questa app. Puoi attivarle nelle impostazioni del dispositivo, in «App», per questa app.",
+    "blockedOther": "Il tuo browser non consente le notifiche per questa app. Puoi attivarle nelle impostazioni del browser per questo sito.",
+    "ok": "OK"
   },
   "exempt": {
     "banner": "La chat è bloccata per tutti gli altri. La stai provando in questo momento."

@@ -35,6 +35,17 @@ export function shouldSnoozePushPrompt(answeredAllow: boolean, system: PushPermi
   return !answeredAllow || system !== 'granted';
 }
 
+/**
+ * Whether to tell the member where to turn push on, after «Erlauben» did not end in `granted`.
+ * `denied` covers both a refusal in the system dialog and an instant refusal without one (iOS,
+ * notifications for the app turned off in the iPhone settings — SCS-JJ); `prompt` means the
+ * dialog was dismissed. Neither the in-app prompt nor the profile button can get past that —
+ * only the device or browser settings can.
+ */
+export function shouldShowPushSettingsHint(answeredAllow: boolean, system: PushPermissionState): boolean {
+  return answeredAllow && (system === 'denied' || system === 'prompt');
+}
+
 /** A long-lived session refreshes its push registration once this much time has passed. */
 export const PUSH_REGISTRATION_REFRESH_MS = 24 * 60 * 60 * 1000;
 

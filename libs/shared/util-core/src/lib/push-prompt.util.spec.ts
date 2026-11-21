@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isRegistrationStale, PUSH_PROMPT_SNOOZE_MS, PUSH_REGISTRATION_REFRESH_MS, shouldAskForPush, shouldSnoozePushPrompt } from './push-prompt.util';
+import { isRegistrationStale, PUSH_PROMPT_SNOOZE_MS, PUSH_REGISTRATION_REFRESH_MS, shouldAskForPush, shouldShowPushSettingsHint, shouldSnoozePushPrompt } from './push-prompt.util';
 
 const NOW = Date.parse('2026-10-17T12:00:00Z');
 const base = { state: 'prompt' as const, isNative: true, isStandalone: false, now: NOW };
@@ -50,6 +50,19 @@ describe('shouldSnoozePushPrompt', () => {
     expect(shouldSnoozePushPrompt(true, 'denied')).toBe(true);
     expect(shouldSnoozePushPrompt(true, 'prompt')).toBe(true);
     expect(shouldSnoozePushPrompt(true, 'unsupported')).toBe(true);
+  });
+});
+
+describe('shouldShowPushSettingsHint', () => {
+  it('points to the settings when «Erlauben» was refused or the dialog dismissed', () => {
+    expect(shouldShowPushSettingsHint(true, 'denied')).toBe(true);
+    expect(shouldShowPushSettingsHint(true, 'prompt')).toBe(true);
+  });
+
+  it('stays quiet when push was granted, is unsupported, or «Später» was chosen', () => {
+    expect(shouldShowPushSettingsHint(true, 'granted')).toBe(false);
+    expect(shouldShowPushSettingsHint(true, 'unsupported')).toBe(false);
+    expect(shouldShowPushSettingsHint(false, 'prompt')).toBe(false);
   });
 });
 

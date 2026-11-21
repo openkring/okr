@@ -12,9 +12,10 @@ import { AppStore } from '@okr/shared-feature';
 import { MatrixChatService } from '@okr/chat-data-access';
 import { ChatStatusService, FcmService, FirestoreService, writeBadgeLedgerFromPage, writeServerBadgeLedger } from '@okr/shared-data-access';
 import { BADGE_COUNTS_DOC_ID, BadgeCollection, ChatBlockedError, UserCollection } from '@okr/shared-models';
-import { allPartsReady, BadgeParts, BadgePartsReady, chatBlockedAlertMessage, correctionAllowed, countedDeliveredNotifications, LEDGER_CORRECTION_WINDOW_MS, ledgerPartsToWrite, nextCorrectionAt, ServerBadgeLedger, isKioskOnly, isRegistrationStale, PUSH_PROMPT_SNOOZE_MS, PushPermissionState, readyBadgeParts, shouldAskForPush, shouldSnoozePushPrompt } from '@okr/shared-util-core';
+import { allPartsReady, BadgeParts, BadgePartsReady, chatBlockedAlertMessage, correctionAllowed, countedDeliveredNotifications, LEDGER_CORRECTION_WINDOW_MS, ledgerPartsToWrite, nextCorrectionAt, ServerBadgeLedger, isKioskOnly, isRegistrationStale, PUSH_PROMPT_SNOOZE_MS, PushPermissionState, readyBadgeParts, shouldAskForPush, shouldShowPushSettingsHint, shouldSnoozePushPrompt } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
-import { CHAT_BLOCKED_ALERT_I18N_KEYS, ChatBlockedAlertI18n, PUSH_PROMPT_I18N_KEYS } from '@okr/chat-util';
+import { CHAT_BLOCKED_ALERT_I18N_KEYS, ChatBlockedAlertI18n, PUSH_BLOCKED_HINT_I18N_KEYS, PUSH_PROMPT_I18N_KEYS } from '@okr/chat-util';
+import { isAndroid, isIOS } from '@okr/shared-util-angular';
 import { AlertController } from '@ionic/angular';
 
 import { KioskCallWindow } from './kiosk-call-window';
@@ -170,6 +171,29 @@ export class MatrixInitializationService {
       try { localStorage.setItem(snoozeKey, String(Date.now() + PUSH_PROMPT_SNOOZE_MS)); } catch { /* best effort */ }
     }
     this.reportPushPromptOutcome(role, isStandalone, system, token, answeredAllow && allowTappedAt ? Date.now() - allowTappedAt : undefined);
+    if (shouldShowPushSettingsHint(answeredAllow, system === 'not-asked' ? 'prompt' : system)) {
+      await this.showPushSettingsHint();
+    }
+  }
+
+  /**
+   * After a refused «Erlauben»: say where push can still be turned on. iOS may refuse without
+   * showing its dialog when notifications for the app are off in the iPhone settings (SCS-JJ) —
+   * neither this prompt nor the profile button gets past that, only the device settings do.
+   */
+  private async showPushSettingsHint(): Promise<void> {
+    try {
+      const platform = Capacitor.isNativePlatform() ? Capacitor.getPlatform() : isIOS() ? 'ios' : isAndroid() ? 'android' : 'other';
+      const messageKey = platform === 'ios' ? PUSH_BLOCKED_HINT_I18N_KEYS.ios
+        : platform === 'android' ? PUSH_BLOCKED_HINT_I18N_KEYS.android
+        : PUSH_BLOCKED_HINT_I18N_KEYS.other;
+      const [header, message, ok] = await Promise.all(
+        [PUSH_BLOCKED_HINT_I18N_KEYS.header, messageKey, PUSH_BLOCKED_HINT_I18N_KEYS.ok].map(key => this.i18nService.translateOnce(key)),
+      );
+      if (!header || !message) return;
+      const alert = await this.alertController.create({ header, message, buttons: [{ text: ok || 'OK', role: 'cancel' }] });
+      await alert.present();
+    } catch { /* a hint only */ }
   }
 
   /**

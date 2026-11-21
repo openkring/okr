@@ -411,6 +411,15 @@ export const PUSH_PROMPT_I18N_KEYS = {
 
 export type PushPromptI18n = { [K in keyof typeof PUSH_PROMPT_I18N_KEYS]: Signal<string> };
 
+/** Shown after «Erlauben» when the device refuses push (e.g. turned off in the iPhone settings). */
+export const PUSH_BLOCKED_HINT_I18N_KEYS = {
+  header:  PFX + 'pushPrompt.blockedHeader',
+  ios:     PFX + 'pushPrompt.blockedIos',
+  android: PFX + 'pushPrompt.blockedAndroid',
+  other:   PFX + 'pushPrompt.blockedOther',
+  ok:      PFX + 'pushPrompt.ok',
+} satisfies Record<string, string>;
+
 /** 1.107: alert shown when an admin blocks the chat while the user is in a call. */
 export const CHAT_BLOCKED_ALERT_I18N_KEYS = {
   title:     PFX + 'blocked.title',

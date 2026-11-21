@@ -436,7 +436,12 @@
     "header": "Benachrichtigungen",
     "message": "Möchtest du über neue Chat-Nachrichten, Aufgaben und Anlässe informiert werden? Du kannst das jederzeit in deinem Profil ändern.",
     "allow": "Erlauben",
-    "later": "Später"
+    "later": "Später",
+    "blockedHeader": "Benachrichtigungen sind ausgeschaltet",
+    "blockedIos": "Dein iPhone lässt für diese App keine Benachrichtigungen zu. Du kannst sie in den iPhone-Einstellungen unter «Mitteilungen» bei dieser App einschalten.",
+    "blockedAndroid": "Dein Gerät lässt für diese App keine Benachrichtigungen zu. Du kannst sie in den Einstellungen deines Geräts unter «Apps» bei dieser App einschalten.",
+    "blockedOther": "Dein Browser lässt für diese App keine Benachrichtigungen zu. Du kannst sie in den Einstellungen deines Browsers für diese Seite einschalten.",
+    "ok": "OK"
   },
   "exempt": {
     "banner": "Der Chat ist für alle anderen gesperrt. Du testest ihn gerade."

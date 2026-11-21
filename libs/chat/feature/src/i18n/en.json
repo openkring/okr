@@ -436,7 +436,12 @@
     "header": "Notifications",
     "message": "Would you like to be notified about new chat messages, tasks and events? You can change this any time in your profile.",
     "allow": "Allow",
-    "later": "Later"
+    "later": "Later",
+    "blockedHeader": "Notifications are turned off",
+    "blockedIos": "Your iPhone does not allow notifications for this app. You can turn them on in the iPhone settings under “Notifications” for this app.",
+    "blockedAndroid": "Your device does not allow notifications for this app. You can turn them on in your device settings under “Apps” for this app.",
+    "blockedOther": "Your browser does not allow notifications for this app. You can turn them on in your browser settings for this site.",
+    "ok": "OK"
   },
   "exempt": {
     "banner": "The chat is blocked for everyone else. You are testing it right now."
