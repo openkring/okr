@@ -1,4 +1,4 @@
-// A small in-memory Firestore for the credit and billing specs: doc get/set/create/update, simple collection
+// A small in-memory Firestore for the credit, billing and newsletter specs: doc get/set/create/update, simple collection
 // queries (where ==, ranges, array-contains; dotted field paths), set with merge, FieldValue.arrayUnion/arrayRemove, and transactions with optimistic
 // concurrency like Firestore (versions per document, recorded on get, checked at commit, retried on conflict).
 // Test-only: imported by *.spec.ts, never by production code.
@@ -92,6 +92,11 @@ export function fakeDb(store: Store): Firestore {
           },
           set: (r: unknown, d: Doc, opts?: { merge?: boolean }) => writes.push(() => { store[pathOf(r)] = opts?.merge ? merged(store[pathOf(r)], d) : d; bump(pathOf(r)); }),
           update: (r: unknown, d: Doc) => writes.push(() => { store[pathOf(r)] = merged(store[pathOf(r)], d); bump(pathOf(r)); }),
+          create: (r: unknown, d: Doc) => writes.push(() => {
+            if (store[pathOf(r)] !== undefined) throw Object.assign(new Error(`document ${pathOf(r)} already exists`), { code: 6 });
+            store[pathOf(r)] = d;
+            bump(pathOf(r));
+          }),
         });
         if ([...reads].every(([p, v]) => ver(p) === v)) { writes.forEach(w => w()); return result; }
       }
