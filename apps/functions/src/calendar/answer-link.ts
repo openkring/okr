@@ -38,11 +38,11 @@ export function verifyAnswer(invitationKey: string, inviteeKey: string, answer: 
 /** What the respond signature binds instead of an answer — never a valid AnswerChoice. */
 const RESPOND = 'respond';
 
-function sign(invitationKey: string, inviteeKey: string, scope: string, secret: string): string {
+export function sign(invitationKey: string, inviteeKey: string, scope: string, secret: string): string {
   return createHmac('sha256', secret).update(`${invitationKey}|${inviteeKey}|${scope}`).digest('base64url');
 }
 
-function verify(invitationKey: string, inviteeKey: string, scope: string, signature: string, secret: string): boolean {
+export function verify(invitationKey: string, inviteeKey: string, scope: string, signature: string, secret: string): boolean {
   if (!secret || !signature) return false;
   const expected = Buffer.from(sign(invitationKey, inviteeKey, scope, secret), 'base64url');
   const given = Buffer.from(signature, 'base64url');
