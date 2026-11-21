@@ -9,8 +9,6 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { AddressCollection, UserCollection } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication, getCallerTenantId } from '@okr/shared-util-functions';
 import * as logger from 'firebase-functions/logger';
-import PDFDocument from 'pdfkit';
-import { SwissQRBill } from 'swissqrbill/pdf';
 import type { Data } from 'swissqrbill/types';
 
 export type { Data as QrBillData };
@@ -145,6 +143,8 @@ export const generateQrBill = onCall<GenerateQrBillRequest, Promise<GenerateQrBi
     logger.info('generateQrBill: generating PDF', { tenantId, addressOkey, fileName });
 
     try {
+      // lazy: loading it at module init costs every function instance memory (see init.ts)
+      const [{ default: PDFDocument }, { SwissQRBill }] = await Promise.all([import('pdfkit'), import('swissqrbill/pdf')]);
       await new Promise<void>((resolve, reject) => {
         const doc = new PDFDocument({ autoFirstPage: false });
         const stream = createWriteStream(tempPath);

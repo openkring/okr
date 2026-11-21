@@ -1,6 +1,5 @@
 // apps/functions/src/pdf/qr-slip.ts
 import type { Firestore } from 'firebase-admin/firestore';
-import { SwissQRBill } from 'swissqrbill/svg';
 import type { Data } from 'swissqrbill/types';
 
 import { AppConfigCollection, OrgCollection, AddressCollection, AddressModel } from '@okr/shared-models';
@@ -102,7 +101,8 @@ export async function resolvePersonPayee(
 }
 
 /** Render the QR-bill payment slip as an SVG string. */
-export function renderQrSlipSvg(data: QrSlipData): string {
+export async function renderQrSlipSvg(data: QrSlipData): Promise<string> {
+  const { SwissQRBill } = await import('swissqrbill/svg'); // lazy: loading it at module init costs every function instance memory (see init.ts)
   return new SwissQRBill(data as unknown as Data, { language: 'DE' }).toString();
 }
 

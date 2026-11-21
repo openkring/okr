@@ -142,7 +142,7 @@ async function writeExport(db: Firestore, caller: JournalCaller, req: BookExport
   };
 
   // the book
-  const doc = createBookDoc();
+  const doc = await createBookDoc();
   const layout: BookLayout = layoutBook({ state, journalKey: caller.journalKey, book: layoutInput, labels: req.labels, authorName, paginate: pdfkitPaginate(doc) });
   if (iccFogra) applyPdfX4(doc, { title: layout.title, iccFogra, trim: { w: 297, h: 210 }, bleedMm });
   const bookPath = bookObjectPath(caller.tenantId, caller.journalKey, req.kind, nowMs);
@@ -158,7 +158,7 @@ async function writeExport(db: Firestore, caller: JournalCaller, req: BookExport
     let coverPath: string | undefined;
     const cover = print ? coverLayout(book, layout.title, layout.period, layout.coverImageKey, layout.coverLabel) : undefined;
     if (cover) {
-      const cdoc = createBookDoc();
+      const cdoc = await createBookDoc();
       applyPdfX4(cdoc, { title: layout.title, iccFogra: iccFogra as Buffer, trim: { w: cover.width - 2 * bleedMm, h: cover.height - 2 * bleedMm }, bleedMm });
       coverPath = bookObjectPath(caller.tenantId, caller.journalKey, 'cover', nowMs);
       written.push(coverPath);

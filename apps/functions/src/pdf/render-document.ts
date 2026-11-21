@@ -200,7 +200,7 @@ export async function renderDocument(
           { reason: code === 'no-iban' ? 'no-payee-iban' : 'qr-iban-needs-reference' });
       }
       const slipData = buildQrSlipData(payee, payload, !!tmpl.qrSlipWithAmount, selected);
-      htmlToRender += buildQrSlipPageHtml(renderQrSlipSvg(slipData));
+      htmlToRender += buildQrSlipPageHtml(await renderQrSlipSvg(slipData));
     }
   } else {
     // — Raw HTML mode —

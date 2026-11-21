@@ -1,6 +1,5 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
-import convert from 'heic-convert';
 
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
@@ -38,6 +37,7 @@ export const convertChatHeic = onCall(
 
     let jpeg: Uint8Array;
     try {
+      const { default: convert } = await import('heic-convert'); // lazy: loading it at module init costs every function instance memory (see init.ts)
       jpeg = await convert({ buffer: req.bytes, format: 'JPEG', quality: CHAT_JPEG_QUALITY });
     } catch (error) {
       logger.warn(`${CF_NAME}: libheif could not decode the image`, { size: req.bytes.length, error: String(error) });

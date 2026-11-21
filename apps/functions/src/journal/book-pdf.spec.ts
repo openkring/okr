@@ -30,7 +30,7 @@ const PAGES: BookPage[] = [
 ];
 
 async function render(x4: boolean): Promise<{ pdf: string; missing: string[] }> {
-  const doc = createBookDoc();
+  const doc = await createBookDoc();
   const chunks: Buffer[] = [];
   doc.on('data', (c: Buffer) => chunks.push(c));
   const ended = new Promise((resolve) => doc.on('end', resolve));
@@ -93,8 +93,8 @@ describe('book pdf', () => {
     ]);
   });
 
-  it('the print fonts carry ♥ (Inter Tight) for the like line, and ↔ / ☀ that stripEmoji keeps', () => {
-    const doc = createBookDoc();
+  it('the print fonts carry ♥ (Inter Tight) for the like line, and ↔ / ☀ that stripEmoji keeps', async () => {
+    const doc = await createBookDoc();
     const has = (font: string, cp: number) => {
       doc.font(font);
       return (doc as unknown as { _font: { font: { hasGlyphForCodePoint(cp: number): boolean } } })._font.font.hasGlyphForCodePoint(cp);
@@ -106,7 +106,7 @@ describe('book pdf', () => {
   });
 
   it('every text frame is clipped to its box, as the preview clips it', async () => {
-    const doc = createBookDoc();
+    const doc = await createBookDoc();
     doc.on('data', () => undefined);
     const calls: string[] = [];
     const rect = doc.rect.bind(doc);
@@ -123,8 +123,8 @@ describe('book pdf', () => {
     expect(calls[calls.indexOf(box) + 1]).toBe('clip');
   });
 
-  it('pdfkitPaginate splits a long text into chunks that keep every word, in order', () => {
-    const doc = createBookDoc();
+  it('pdfkitPaginate splits a long text into chunks that keep every word, in order', async () => {
+    const doc = await createBookDoc();
     const words = Array.from({ length: 900 }, (_, i) => `Wort${i}`);
     const html = `<h3>Der Tag</h3><p>${words.slice(0, 450).join(' ')}</p><ul><li>${words.slice(450, 500).join(' ')}</li></ul><p>${words.slice(500).join(' ')}</p>`;
     const first = { x: 12, y: 96, w: 132, h: 102 };

@@ -3,7 +3,6 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Readable } from 'node:stream';
 
-import PDFDocument from 'pdfkit';
 
 import { BOOK_FONT_FILES, BOOK_GREY, BOOK_HEADING_SCALE, BOOK_LIST_INDENT_EM, BOOK_SMALL_SCALE, BOOK_TEXT_STYLES, playSymbolOf } from '@okr/travel-journal-util';
 import type { BookFont, BookFrame, BookPage, BookTextStyle, Box, PaginateText, TextStyle } from '@okr/travel-journal-util';
@@ -43,7 +42,8 @@ export function bookAsset(name: string): Buffer {
 }
 
 /** A book document: PDF 1.6, no automatic page, the four book fonts registered (embedded as subsets on end). */
-export function createBookDoc(): PDFKit.PDFDocument {
+export async function createBookDoc(): Promise<PDFKit.PDFDocument> {
+  const { default: PDFDocument } = await import('pdfkit'); // lazy: loading it at module init costs every function instance memory (see init.ts)
   const doc = new PDFDocument({ pdfVersion: '1.6', autoFirstPage: false, info: { Producer: 'PDFKit', Creator: 'PDFKit' } });
   const dir = assetDir();
   for (const [key, file] of Object.entries(FONT_FILES)) doc.registerFont(key, join(dir, file));
