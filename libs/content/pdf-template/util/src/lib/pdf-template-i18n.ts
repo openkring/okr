@@ -196,6 +196,7 @@ export const EMAIL_COMPOSER_I18N_KEYS = {
   delivery_empty:       PFX + 'composer.delivery.empty',
   delivery_error:       PFX + 'composer.delivery.error',
   delivery_split:       PFX + 'composer.delivery.split',
+  delivery_households_answers: PFX + 'composer.delivery.households_answers',
   delivery_email_only:  PFX + 'composer.delivery.email_only',
   delivery_dashboard:   PFX + 'composer.delivery.dashboard',
   delivery_qr_codes:    PFX + 'composer.delivery.qr_codes',

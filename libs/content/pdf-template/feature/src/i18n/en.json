@@ -165,7 +165,8 @@
       "email_only": "Send by email only",
       "dashboard": "Show on the dashboard",
       "qr_codes": "Show QR code for the link",
-      "split": "deliver individually"
+      "split": "deliver individually",
+      "households_answers": "For events with registration, every person gets their own letter."
     },
     "info": {
       "title": "How a mailing works",

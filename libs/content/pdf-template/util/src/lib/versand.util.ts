@@ -74,13 +74,19 @@ export const HOUSEHOLD_BUNDLE_CHANNELS: Record<keyof HouseholdBundle, DeliveryCh
  * contact can be reached on it; otherwise that channel stays per member. The household row comes before its
  * first member; members left without any tick stay listed (they are covered by the household row). The
  * household row can only carry the channels it took over.
+ *
+ * `hasAnswers`: the Versand carries events with answer links (or QR codes on the letters). An answer through a
+ * household is recorded for its contact only, so until that is decided nothing is combined and every member gets
+ * their own letter / mail (controller ruling 15); the rows and ticks come back unchanged.
  */
 export function applyHouseholds(
   rows: VersandRow[],
   deliveries: VersandDeliveries,
   households: MailingHousehold[],
   split: ReadonlySet<string>,
+  opts: { hasAnswers?: boolean } = {},
 ): { rows: VersandRow[]; deliveries: VersandDeliveries } {
+  if (opts.hasAnswers === true) return { rows, deliveries };
   let outRows = rows;
   let out = deliveries;
   for (const household of households) {

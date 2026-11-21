@@ -165,7 +165,8 @@
       "email_only": "Versand nur via E-Mail",
       "dashboard": "Anzeige im Dashboard",
       "qr_codes": "QR-Code für Link anzeigen",
-      "split": "einzeln zustellen"
+      "split": "einzeln zustellen",
+      "households_answers": "Bei Anlässen mit Anmeldung bekommt jede Person ihren eigenen Brief."
     },
     "info": {
       "title": "So funktioniert der Versand",

@@ -46,7 +46,7 @@ import { chunk, isElevated } from './mailing-recipients';
 import { MAX_PERSONAL_RECIPIENTS, parseCaleventKeys, personalEntries, refusedEventMessage, sendableEventRefusal } from './personal-mail.logic';
 import { asLayoutChoice } from './render-email.logic';
 import { buildMailingLetters, countLetterPages, LetterEvent } from './mailing-letters';
-import { addressParentKeyOf, contactKeysFor, dropHouseholdKeys, householdFieldsOf, type HouseholdRecipient, loadHouseholdRecipients, postKeysFor } from './household-recipient.logic';
+import { addressParentKeyOf, contactKeysFor, dropHouseholdKeys, householdFieldsOf, householdsDroppedForAnswers, householdWithAnswers, type HouseholdRecipient, loadHouseholdRecipients, postKeysFor } from './household-recipient.logic';
 import { mailingCategory } from './mailing-deliveries.logic';
 import { noticeSenderOf } from './notice-sender.logic';
 import { lettersResult, makePostFanOut, postFanOutDeps } from './mailing-sendings';
@@ -339,6 +339,12 @@ export const sendMailing = onCall(
       if (deliveries.some((d) => isOrgRecipient(d.personKey))) {
         throw new HttpsError('invalid-argument', 'Answer links go to persons only.');
       }
+      // an answer through a household would count for its contact only (ruling 15): the composer combines nothing
+      // when events are chosen, so a household key here comes from an old or crafted client
+      if (householdWithAnswers(deliveries, caleventKeys)) {
+        logger.warn(`${CF_NAME}: Versand with events addresses a household (tenant ${tenantId}) — refused`);
+        throw new HttpsError('invalid-argument', 'household-with-answers');
+      }
       if (keysFor(deliveries, DeliveryChannel.Email).length > MAX_PERSONAL_RECIPIENTS) {
         throw new HttpsError('invalid-argument', `At most ${MAX_PERSONAL_RECIPIENTS} email recipients with events.`);
       }
@@ -482,6 +488,8 @@ export const onMailing = onDocumentCreated(
     const snap = event.data;
     if (!snap) return;
     const mailing = snap.data() as MailingDoc;
+    // with events, households are never combined (ruling 15; sendMailing refuses it): drop any household key
+    mailing.deliveries = householdsDroppedForAnswers(mailing.deliveries ?? [], mailing.caleventKeys, `mailing ${snap.id}`);
     const tenantId = mailing.tenants?.length === 1 ? mailing.tenants[0] : '';
     if (!tenantId) {
       await snap.ref.update({ state: 'failed', error: 'A Versand must name exactly one tenant.' });

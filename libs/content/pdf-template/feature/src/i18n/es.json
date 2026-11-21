@@ -165,7 +165,8 @@
       "email_only": "Envío solo por correo electrónico",
       "dashboard": "Mostrar en el panel",
       "qr_codes": "Mostrar el código QR del enlace",
-      "split": "enviar por separado"
+      "split": "enviar por separado",
+      "households_answers": "En los eventos con inscripción, cada persona recibe su propia carta."
     },
     "info": {
       "title": "Cómo funciona un envío",

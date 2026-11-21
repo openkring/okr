@@ -227,6 +227,19 @@ describe('applyHouseholds', () => {
     expect(out.map((r) => r.personKey)).toEqual(['household.h1', 'k1', 'k2']);
   });
 
+  it('combines nothing when the Versand carries answers (events or answer links): each member answers for themself', () => {
+    const rows = [kid1, kid2];
+    const deliveries = { k1: [P], k2: [P] };
+    const out = applyHouseholds(rows, deliveries, [household({ bundle: { post: true, email: true, inApp: true } })], new Set(), { hasAnswers: true });
+    expect(out.rows).toBe(rows);
+    expect(out.deliveries).toBe(deliveries);
+  });
+
+  it('combines as before when hasAnswers is false', () => {
+    const { deliveries } = applyHouseholds([kid1, kid2], { k1: [P], k2: [P] }, [household()], new Set(), { hasAnswers: false });
+    expect(deliveries['household.h1']).toEqual([P]);
+  });
+
   it('leaves Email untouched per member when only Post is bundled', () => {
     const { rows: out, deliveries } = applyHouseholds([kid2, mom], { k2: [E], m: [E] }, [household()], new Set());
     expect(out.map((r) => r.personKey)).toEqual(['k2', 'm']);

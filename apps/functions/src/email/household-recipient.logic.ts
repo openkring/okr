@@ -133,3 +133,25 @@ export function dropHouseholdKeys<T extends Delivery>(deliveries: T[], context: 
     return false;
   });
 }
+
+/**
+ * Whether a Versand with events (answer links, QR codes on letters) addresses a household. An answer through a
+ * household is recorded for its contact only, so the invited members would stay open: until the owner decides,
+ * such a Versand addresses every member on their own (controller ruling 15) and `sendMailing` refuses this.
+ */
+export function householdWithAnswers(deliveries: Delivery[], caleventKeys: string[]): boolean {
+  return caleventKeys.length > 0 && deliveries.some((d) => isHouseholdRecipient(d.personKey));
+}
+
+/**
+ * `onMailing`'s guard for the same rule (a mailing doc written past `sendMailing`): with events, every household key
+ * is dropped and logged; without, the deliveries come back unchanged.
+ */
+export function householdsDroppedForAnswers<T extends Delivery>(deliveries: T[], caleventKeys: string[] | undefined, context: string): T[] {
+  if (!caleventKeys?.length) return deliveries;
+  return deliveries.filter((d) => {
+    if (!isHouseholdRecipient(d.personKey)) return true;
+    console.warn(`household recipient dropped (${context}): a Versand with answer links addresses every member on their own`, { context, householdKey: d.personKey });
+    return false;
+  });
+}

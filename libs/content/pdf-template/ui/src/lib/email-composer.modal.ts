@@ -310,6 +310,9 @@ interface AddressField {
                   @if (showQrOption()) {
                     <okr-checkbox [i18n]="qrCodesI18n()" [checked]="letterQrCodes()" (checkedChange)="onQrCodesChange($event)" [readOnly]="false" />
                   }
+                  @if (hasHouseholds() && hasEvents()) {
+                    <ion-note class="note">{{ i18n.delivery_households_answers() }}</ion-note>
+                  }
                   <okr-versand-delivery-table [rows]="versandRows()" [deliveries]="deliveries()" [i18n]="i18n"
                     [active]="activeChannels()" (toggled)="onDeliveryToggle($event.row, $event.channel)" (split)="onSplitHousehold($event)" />
                   @if (postSkipped().length > 0) {
@@ -494,6 +497,14 @@ export class EmailComposerModal {
   private households: MailingHousehold[] = [];
   /** The households the sender split for this Versand («einzeln zustellen»): delivered per member. */
   protected readonly split = signal<ReadonlySet<string>>(new Set());
+  /** Whether any household touches this Versand (for the «own letter with events» hint). */
+  protected readonly hasHouseholds = signal(false);
+  /**
+   * Whether the rows were last combined for a Versand with answers (events): then no household is combined, every
+   * member answers for themself (ruling 15). `initialAnswers` is the state of the rows loaded first.
+   */
+  private appliedAnswers = false;
+  private initialAnswers = false;
   protected readonly versandLoaded = signal(false);
   /**
    * «Versand nur via E-Mail»: Post and In-App cannot be ticked. A group admin never has Post: the letters
@@ -800,6 +811,13 @@ export class EmailComposerModal {
         }
       });
     });
+    // Events with answer links: households are not combined (each member answers for themself, ruling 15).
+    effect(() => {
+      const hasAnswers = this.hasEvents();
+      untracked(() => {
+        if (this.versandLoaded() && hasAnswers !== this.appliedAnswers) this.reapplyHouseholds(hasAnswers);
+      });
+    });
     // The Zustellung table: asked once per opened Versand. The request runs untracked.
     effect(() => {
       const persons = this.versandRecipients();
@@ -823,7 +841,9 @@ export class EmailComposerModal {
     this.baseRows = base.rows;
     this.baseDeliveries = base.deliveries;
     this.households = households;
-    const { rows, deliveries } = applyHouseholds(base.rows, base.deliveries, households, this.split());
+    this.hasHouseholds.set(households.length > 0);
+    this.appliedAnswers = this.initialAnswers = this.hasEvents();
+    const { rows, deliveries } = applyHouseholds(base.rows, base.deliveries, households, this.split(), { hasAnswers: this.appliedAnswers });
     this.versandRows.set(rows);
     this.initialRows = rows;
     this.initialDeliveries = deliveries;
@@ -950,7 +970,7 @@ export class EmailComposerModal {
     this.split.set(split);
     const household = this.households.find((h) => h.okey === householdKey);
     const members = new Set(household?.memberKeys ?? []);
-    const { rows, deliveries } = applyHouseholds(this.baseRows, this.baseDeliveries, this.households, split);
+    const { rows, deliveries } = applyHouseholds(this.baseRows, this.baseDeliveries, this.households, split, { hasAnswers: this.appliedAnswers });
     const current = this.deliveries();
     let next: VersandDeliveries = {};
     for (const row of rows) {
@@ -966,6 +986,33 @@ export class EmailComposerModal {
       this.ticksBeforeEmailOnly = before;
     }
     this.isDirty.set(true);
+    this.versandRows.set(rows);
+    this.applyDeliveries(next);
+  }
+
+  /**
+   * Events chosen or removed: the households are combined again (no events) or taken apart (events). The rows and
+   * ticks of household members and household rows come from the server's answer again; every other row keeps the
+   * ticks the sender set.
+   */
+  private reapplyHouseholds(hasAnswers: boolean): void {
+    this.appliedAnswers = hasAnswers;
+    if (this.households.length === 0) return;
+    const { rows, deliveries } = applyHouseholds(this.baseRows, this.baseDeliveries, this.households, this.split(), { hasAnswers });
+    const touched = new Set(this.households.flatMap((h) => [...h.memberKeys, householdRecipientKey(h.okey)]));
+    const current = this.deliveries();
+    let next: VersandDeliveries = {};
+    for (const row of rows) {
+      const key = row.personKey;
+      next[key] = touched.has(key) || !(key in current) ? deliveries[key] ?? [] : current[key];
+    }
+    if (this.emailOnly()) {
+      next = emailOnlyDeliveries(next, true);
+      const before: VersandDeliveries = { ...this.ticksBeforeEmailOnly };
+      for (const key of touched) delete before[key];
+      for (const key of touched) if (key in deliveries) before[key] = deliveries[key];
+      this.ticksBeforeEmailOnly = before;
+    }
     this.versandRows.set(rows);
     this.applyDeliveries(next);
   }
@@ -1166,6 +1213,8 @@ export class EmailComposerModal {
       this.split.set(new Set());
       this.versandRows.set(this.initialRows);
       this.applyDeliveries(this.initialDeliveries);
+      this.appliedAnswers = this.initialAnswers;
+      if (this.hasEvents() !== this.initialAnswers) this.reapplyHouseholds(this.hasEvents());
     }
     this.showForm.set(false);          // toggle to clear stale Vest state
     setTimeout(() => this.showForm.set(true), 0);

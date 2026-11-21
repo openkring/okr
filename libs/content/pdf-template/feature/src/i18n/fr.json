@@ -165,7 +165,8 @@
       "email_only": "Envoi uniquement par e-mail",
       "dashboard": "Afficher dans le tableau de bord",
       "qr_codes": "Afficher le code QR du lien",
-      "split": "envoyer séparément"
+      "split": "envoyer séparément",
+      "households_answers": "Pour les événements avec inscription, chaque personne reçoit sa propre lettre."
     },
     "info": {
       "title": "Comment fonctionne un envoi",

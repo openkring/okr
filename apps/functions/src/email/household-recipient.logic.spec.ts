@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { HouseholdModel } from '@okr/shared-models';
 
 import {
-  addressParentKeyOf, answerKeyOf, contactKeysFor, householdFieldsOf, householdIdOf, dropHouseholdKeys, type HouseholdRecipient, loadHouseholdRecipients, postKeysFor, resolveHouseholdRecipient,
+  addressParentKeyOf, answerKeyOf, contactKeysFor, householdFieldsOf, householdIdOf, householdWithAnswers, dropHouseholdKeys, householdsDroppedForAnswers, type HouseholdRecipient, loadHouseholdRecipients, postKeysFor, resolveHouseholdRecipient,
 } from './household-recipient.logic';
 
 const household = (over: Partial<HouseholdModel> = {}): HouseholdModel => ({
@@ -147,5 +147,28 @@ describe('householdFieldsOf (written by onMailing before anything is sent)', () 
   it('names the contact and the household per key, and nothing without households', () => {
     expect(householdFieldsOf(H)).toEqual({ householdContacts: { 'household.h1': 'p1' }, householdNames: { 'household.h1': 'Familie Muster' } });
     expect(householdFieldsOf(new Map())).toEqual({});
+  });
+});
+
+describe('householdWithAnswers (ruling 15: a Versand with answer links combines no household)', () => {
+  const deliveries = [{ personKey: 'p1', channels: ['email'] }, { personKey: 'household.h1', channels: ['post'] }];
+  it('is true only with events AND a household key', () => {
+    expect(householdWithAnswers(deliveries, ['e1'])).toBe(true);
+    expect(householdWithAnswers(deliveries, [])).toBe(false);
+    expect(householdWithAnswers([{ personKey: 'p1', channels: ['post'] }], ['e1'])).toBe(false);
+  });
+});
+
+describe('householdsDroppedForAnswers (onMailing guard)', () => {
+  const deliveries = [{ personKey: 'p1', channels: ['email'] }, { personKey: 'household.h1', channels: ['post'] }];
+  it('drops the household keys of a Versand with events and logs them', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    expect(householdsDroppedForAnswers(deliveries, ['e1'], 'm1').map((d) => d.personKey)).toEqual(['p1']);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('m1'), expect.objectContaining({ householdKey: 'household.h1' }));
+    warn.mockRestore();
+  });
+  it('keeps every key without events', () => {
+    expect(householdsDroppedForAnswers(deliveries, undefined, 'm1')).toBe(deliveries);
+    expect(householdsDroppedForAnswers(deliveries, [], 'm1')).toBe(deliveries);
   });
 });

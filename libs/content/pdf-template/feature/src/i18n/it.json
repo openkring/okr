@@ -165,7 +165,8 @@
       "email_only": "Invio solo via e-mail",
       "dashboard": "Mostra nella dashboard",
       "qr_codes": "Mostra il codice QR del link",
-      "split": "inviare singolarmente"
+      "split": "inviare singolarmente",
+      "households_answers": "Per gli eventi con iscrizione, ogni persona riceve la propria lettera."
     },
     "info": {
       "title": "Come funziona un invio",
