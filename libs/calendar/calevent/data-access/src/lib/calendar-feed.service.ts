@@ -24,6 +24,8 @@ type Device = 'ios' | 'android' | 'desktop';
  */
 @Injectable({ providedIn: 'root' })
 export class CalendarFeedService {
+  private pending: Promise<void> | undefined;
+
   /**
    * Fetches (or, with `regenerate`, rotates) the caller's feed token. Errors are not caught
    * here — this is a user-initiated action; the caller (the sync modal) decides how to surface
@@ -64,18 +66,31 @@ export class CalendarFeedService {
    * @param authenticated with a user, the event is fetched through the token-authenticated feed
    *   (members-only events work too); without one, only events in open calendars are exportable.
    */
-  public async addEventToCalendar(calevent: CalEventModel, authenticated: boolean): Promise<void> {
-    const device = this.device();
-    if (device === 'android') {
-      const google = buildGoogleCalendarUrl(calevent);
-      if (google) return this.open(google, true);
-    }
-    return this.open(await this.icsUrl(`e:${calevent.okey}`, device, authenticated), false);
+  public addEventToCalendar(calevent: CalEventModel, authenticated: boolean): Promise<void> {
+    return this.once(async () => {
+      const device = this.device();
+      if (device === 'android') {
+        const google = buildGoogleCalendarUrl(calevent);
+        if (google) return this.open(google, true);
+      }
+      return this.open(await this.icsUrl(`e:${calevent.okey}`, device, authenticated), false);
+    });
   }
 
   /** Same as addEventToCalendar, for a whole calendar (a one-off import, not a subscription). */
-  public async addCalendarToCalendar(calendarKey: string, authenticated: boolean): Promise<void> {
-    return this.open(await this.icsUrl(calendarKey, this.device(), authenticated), false);
+  public addCalendarToCalendar(calendarKey: string, authenticated: boolean): Promise<void> {
+    return this.once(async () => this.open(await this.icsUrl(calendarKey, this.device(), authenticated), false));
+  }
+
+  /**
+   * One add-to-calendar at a time. The token callable can stall for seconds (App Check on a
+   * resumed iOS WebView), so a user taps the action again; both calls then finish together and
+   * the second `Browser.open` is rejected because the first Safari view is already up (SCS-E9).
+   * A tap while one is running joins it instead of starting another.
+   */
+  private once(run: () => Promise<void>): Promise<void> {
+    this.pending ??= run().finally(() => { this.pending = undefined; });
+    return this.pending;
   }
 
   private async icsUrl(calendarParam: string, device: Device, authenticated: boolean): Promise<string> {
@@ -97,7 +112,13 @@ export class CalendarFeedService {
 
   private async open(url: string, newTab: boolean): Promise<void> {
     if (Capacitor.isNativePlatform()) {
-      await Browser.open({ url });
+      try {
+        await Browser.open({ url });
+      } catch (err) {
+        // iOS rejects with "Unable to display URL" when a Safari view is already showing (our urls
+        // are always https, so that is the only cause here). The user already sees the calendar.
+        console.warn('CalendarFeedService.open: in-app browser already open', err);
+      }
       return;
     }
     // A new tab only for a web page (Google Calendar); fall back to the same tab if it was blocked.
