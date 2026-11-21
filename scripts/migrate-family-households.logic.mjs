@@ -103,6 +103,16 @@ export function validateRows(rows) {
     if (!byName.has(r.household)) byName.set(r.household, []);
     byName.get(r.household).push(r);
   }
+  // a person listed under two households: refuse both (all clashing lines are reported)
+  const owners = new Map();
+  for (const [name, group] of byName) {
+    for (const g of group) {
+      if (!owners.has(g.personKey)) owners.set(g.personKey, new Set());
+      owners.get(g.personKey).add(name);
+    }
+  }
+  const clashing = new Set();
+  for (const names of owners.values()) if (names.size > 1) names.forEach((n) => clashing.add(n));
   const households = [];
   for (const [name, group] of byName) {
     const lines = group.map((g) => g.line);
@@ -110,6 +120,12 @@ export function validateRows(rows) {
     const payers = group.filter((g) => isMark(g.payer));
     const contacts = group.filter((g) => isMark(g.contact));
     let reason;
+    if (clashing.has(name)) {
+      const shared = memberKeys.filter((k) => owners.get(k).size > 1);
+      const clashLines = group.filter((g) => shared.includes(g.personKey)).map((g) => g.line);
+      refused.push({ household: name, lines: clashLines, reason: 'person in more than one household' });
+      continue;
+    }
     if (new Set(memberKeys).size !== memberKeys.length) reason = 'duplicate person';
     else if (memberKeys.length < 2) reason = 'fewer than two members';
     else if (contacts.length === 0) reason = 'no contact';
@@ -126,4 +142,21 @@ export function chunk(arr, n) {
   const out = [];
   for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n));
   return out;
+}
+
+/**
+ * Why a member is not acceptable: a missing `persons/{key}` doc, an archived one, or one of another tenant.
+ * `person` = undefined when the doc does not exist, else `{ isArchived, tenants }`. Returns undefined when fine.
+ */
+export function personRefusal(person, tenantId) {
+  if (!person) return 'person not found';
+  if (person.isArchived === true) return 'person archived';
+  if (!Array.isArray(person.tenants) || !person.tenants.includes(tenantId)) return 'person not in tenant';
+  return undefined;
+}
+
+/** True when the path lies inside the directory (both absolute). */
+export function isInside(dir, path) {
+  const d = dir.endsWith('/') ? dir : `${dir}/`;
+  return path === dir || path.startsWith(d);
 }

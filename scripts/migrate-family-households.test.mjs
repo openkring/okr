@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { addressKey, chunk, groupByAddress, parseCsv, toCsv, validateRows } from './migrate-family-households.logic.mjs';
+import { addressKey, chunk, groupByAddress, isInside, parseCsv, personRefusal, toCsv, validateRows } from './migrate-family-households.logic.mjs';
 
 const HEAD = 'household,personKey,firstName,lastName,payer,contact\n';
 
@@ -55,4 +55,21 @@ test('validateRows keeps valid households next to refused ones', () => {
 });
 test('chunk splits by n', () => {
   assert.deepEqual(chunk([1, 2, 3, 4, 5], 2), [[1, 2], [3, 4], [5]]);
+});
+
+test('validateRows refuses both households when a person is in two, and reports the clashing lines', () => {
+  const { households, refused } = validateRows(parseCsv(`${HEAD}A,p1,a,b,,x\nA,p2,c,d,,\nB,p2,c,d,,x\nB,p3,e,f,,\nC,p4,a,b,,x\nC,p5,c,d,,\n`));
+  assert.deepEqual(households.map((h) => h.name), ['C']);
+  assert.deepEqual(refused.map((r) => [r.household, r.lines, r.reason]), [['A', [3], 'person in more than one household'], ['B', [4], 'person in more than one household']]);
+});
+test('personRefusal: missing, archived, other tenant, fine', () => {
+  assert.equal(personRefusal(undefined, 'scs'), 'person not found');
+  assert.equal(personRefusal({ isArchived: true, tenants: ['scs'] }, 'scs'), 'person archived');
+  assert.equal(personRefusal({ isArchived: false, tenants: ['kring'] }, 'scs'), 'person not in tenant');
+  assert.equal(personRefusal({ tenants: undefined }, 'scs'), 'person not in tenant');
+  assert.equal(personRefusal({ isArchived: false, tenants: ['scs', 'kring'] }, 'scs'), undefined);
+});
+test('isInside', () => {
+  assert.equal(isInside('/repo', '/repo/x.csv'), true);
+  assert.equal(isInside('/repo', '/repo2/x.csv'), false);
 });

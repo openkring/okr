@@ -17,7 +17,8 @@
  * already in another active household of the tenant.
  *
  * PERSONAL DATA: the CSV never goes into the repo. The script writes nothing to disk unless `--out <file>`
- * is given. Printed refusals name households and line numbers, never addresses.
+ * is given. Propose prints names (and personKeys), never addresses; apply refusals name households and line numbers only.
+ * `--out` files are written 0600 and may not lie inside the repo.
  *
  * Usage (bundled first: the repo runs .ts scripts as ESM, where extension-less imports fail; dist/ is git-ignored):
  *   pnpm exec esbuild scripts/migrate-family-households.ts --bundle --platform=node --packages=external \
@@ -30,6 +31,7 @@
  * Run the owner steps (confirm the CSV, set the cap with seed-household-type-category.mjs) per the plan, Task 10.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { argv, exit } from 'node:process';
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -45,7 +47,7 @@ import {
   pickCurrentFavoritePostal,
 } from '@okr/shared-util-core';
 
-import { addressKey, chunk, groupByAddress, parseCsv, toCsv, validateRows } from './migrate-family-households.logic.mjs';
+import { addressKey, chunk, groupByAddress, isInside, parseCsv, personRefusal, toCsv, validateRows } from './migrate-family-households.logic.mjs';
 
 const PROJECT_ID = 'bkaiser-org';
 const IN_CHUNK = 30; // Firestore: at most 30 values in array-contains-any
@@ -102,7 +104,7 @@ async function propose(tenantId: string, out: string | undefined): Promise<void>
     g.forEach((r, i) => csvRows.push({ household: name, personKey: r.personKey, firstName: r.firstName, lastName: r.lastName, payer: i === 0 ? 'x' : '', contact: i === 0 ? 'x' : '' }));
   }
   const csv = toCsv(csvRows);
-  if (out) writeFileSync(out, csv);
+  if (out) writeFileSync(out, csv, { mode: 0o600 });
   else process.stdout.write(csv);
   console.error(`${used.size} proposed households, ${single} persons alone at their address, ${unplaced.length} without postal address (not proposed). Payer and contact are a guess (first line): the treasurer must check them.`);
 }
@@ -112,8 +114,24 @@ async function apply(tenantId: string, csvPath: string, dry: boolean): Promise<v
   const { households, refused } = validateRows(parseCsv(readFileSync(csvPath, 'utf8')));
   const col = db.collection(HouseholdCollection);
   const created: HouseholdModel[] = [];
+  let stopped = '';
 
+  // every member must be a real, active person of the tenant (read-only; also under --dry)
+  const keys = [...new Set(households.flatMap((h) => h.memberKeys))];
+  const persons = new Map<string, { isArchived?: boolean; tenants?: unknown } | undefined>();
+  for (const part of chunk(keys, 300)) {
+    const docs = await db.getAll(...part.map((k) => db.collection('persons').doc(k)));
+    docs.forEach((d, i) => persons.set(part[i], d.exists ? (d.data() as { isArchived?: boolean; tenants?: unknown }) : undefined));
+  }
+  const accepted = new Set<string>(); // members of households accepted so far in this run
+
+  try {
   for (const h of households) {
+    const personProblem = h.memberKeys.map((k) => personRefusal(persons.get(k) as never, tenantId)).find((r) => r !== undefined);
+    if (personProblem) {
+      refused.push({ household: h.name, lines: h.lines, reason: personProblem });
+      continue;
+    }
     // the tenant's other active households of these members
     const others = new Map<string, HouseholdModel>();
     for (const part of chunk(h.memberKeys, IN_CHUNK)) {
@@ -137,23 +155,38 @@ async function apply(tenantId: string, csvPath: string, dry: boolean): Promise<v
     doc.bundle = { ...DEFAULT_HOUSEHOLD_BUNDLE };
     doc.isArchived = false;
     doc.index = addIndexElement('', 'n', doc.name.trim());
-    const err = householdShapeError(doc, [...others.values()]);
+    const running = new HouseholdModel(tenantId);
+    running.okey = '__run';
+    running.memberKeys = [...accepted];
+    const err = householdShapeError(doc, [...others.values(), running]);
     if (err) {
       refused.push({ household: h.name, lines: h.lines, reason: err });
       continue;
     }
     created.push(doc);
+    h.memberKeys.forEach((k) => accepted.add(k));
   }
 
-  if (!dry) {
-    for (const doc of created) {
-      const { okey: _okey, ...stored } = doc;
-      void _okey;
-      await col.add(stored);
+  } catch (e) {
+    stopped = e instanceof Error ? e.message : String(e);
+  }
+  const written: string[] = [];
+  if (!dry && !stopped) {
+    try {
+      for (const doc of created) {
+        const { okey: _okey, ...stored } = doc;
+        void _okey;
+        await col.add(stored);
+        written.push(doc.name);
+      }
+    } catch (e) {
+      stopped = e instanceof Error ? e.message : String(e);
     }
   }
   for (const r of refused) console.error(`refused: "${r.household}" lines ${r.lines.join(',')}: ${r.reason}`);
-  console.log(`${dry ? '(dry run, nothing written) ' : ''}${created.length} households${dry ? ' would be created' : ' created'}, ${refused.length} refused`);
+  const n = dry ? created.length : written.length;
+  console.log(`${dry ? '(dry run, nothing written) ' : ''}${n} ${dry ? 'would be created' : 'created'}, ${refused.length} refused${stopped ? `, run stopped early: ${stopped}` : ''}`);
+  if (stopped) exit(1);
 }
 
 async function main(): Promise<void> {
@@ -169,9 +202,12 @@ async function main(): Promise<void> {
   if (csvPath !== undefined && csvPath.startsWith('--')) fail('--apply needs a CSV path');
   const out = arg('--out');
   if (out !== undefined && (out.startsWith('--') || !isPropose)) fail('--out <file> works with --propose only');
+  if (out !== undefined && isInside(process.cwd(), resolve(out))) fail('--out must lie outside the repository (the CSV holds personal data)');
   if (argv.includes('--dry') && isPropose) fail('--dry works with --apply only');
 
   if (!getApps().length) initializeApp({ projectId: PROJECT_ID });
+  // the tenant must exist (read-only; also under --dry)
+  if (!(await getFirestore().collection('app-config').doc(tenantId).get()).exists) fail(`unknown tenant "${tenantId}" (no app-config/${tenantId})`);
   if (isPropose) await propose(tenantId, out);
   else await apply(tenantId, csvPath as string, argv.includes('--dry'));
 }
