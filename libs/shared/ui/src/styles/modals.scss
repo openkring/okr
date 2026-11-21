@@ -39,9 +39,16 @@ ion-modal {
  * ion-content's inner scroll part out of absolute positioning. --max-height caps the
  * growth; beyond that the body scrolls exactly as before.
  */
+/*
+ * Heights use `dvh`, with `vh` as the fallback for browsers without it. On iOS Safari `vh` is the
+ * viewport with the browser bars HIDDEN: a box of 7.5vh + 85vh then ends behind Safari's bottom
+ * toolbar, and the sticky change-confirmation bar at its bottom is covered until you scroll.
+ * `dvh` follows the visible viewport, so the box (and its bar) ends above the toolbar.
+ */
 ion-modal:not(.modal-fixed-height, .modal-fullscreen) {
   --height: auto;
   --max-height: 85vh;
+  --max-height: 85dvh;
 
   &::part(content) {
     position: relative;
@@ -53,6 +60,7 @@ ion-modal:not(.modal-fixed-height, .modal-fullscreen) {
     position: relative;
     contain: content;
     max-height: 85vh;
+    max-height: 85dvh;
     overflow: auto;
   }
 
@@ -132,6 +140,7 @@ ion-modal.modal-default:not(.modal-fullscreen) {
 
   &::part(content) {
     margin-top: 7.5vh;
+    margin-top: 7.5dvh;
   }
 
   .ion-page > okr-change-confirmation {
@@ -143,6 +152,7 @@ ion-modal.modal-default:not(.modal-fullscreen) {
 // maps, canvases and image zooms have no height of their own to size the box from.
 ion-modal.modal-fixed-height {
   --height: min(85vh, 760px);
+  --height: min(85dvh, 760px);
 }
 
 ion-modal.modal-fullscreen {
