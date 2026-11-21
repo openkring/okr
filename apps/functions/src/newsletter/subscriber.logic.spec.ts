@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  ambiguousTaskNotes, AMBIGUOUS_TASK_NAME, decideMatch, NAME_DIFFERS_TASK_NAME, nameDiffersTaskNotes, normalizeEmail,
-  sameName, subscriberTaskId,
+  decideMatch, DUPLICATES_TASK_NAME, duplicatesTaskNotes, NAME_DIFFERS_TASK_NAME, nameDiffersTaskNotes, normalizeEmail,
+  sameName, SHARED_EMAIL_TASK_NAME, sharedEmailTaskNotes, subscriberTaskId,
 } from './subscriber.logic';
 
 const anna = { personKey: 'p1', isFavorite: false, firstName: 'Anna', lastName: 'Muster' };
@@ -35,20 +35,34 @@ describe('decideMatch', () => {
       .toEqual({ kind: 'existing', personKey: 'p1', nameDiffers: true });
   });
 
-  it('two persons, one where the email is the favourite → that one', () => {
+  it('several persons, exactly one with the typed name → that one, even when another has the favourite', () => {
     const bea = { personKey: 'p2', isFavorite: true, firstName: 'Bea', lastName: 'Muster' };
-    expect(decideMatch([anna, bea], typed)).toEqual({ kind: 'existing', personKey: 'p2', nameDiffers: true });
+    expect(decideMatch([anna, bea], typed)).toEqual({ kind: 'existing', personKey: 'p1', nameDiffers: false });
+    expect(decideMatch([bea, anna], { firstName: ' anna', lastName: 'MUSTER ' }))
+      .toEqual({ kind: 'existing', personKey: 'p1', nameDiffers: false });
   });
 
-  it('two persons without a favourite → ambiguous', () => {
+  it('several persons, none with the typed name → create (shared mailbox), naming the others', () => {
+    const bea = { personKey: 'p2', isFavorite: true, firstName: 'Bea', lastName: 'Muster' };
+    const carl = { personKey: 'p0', isFavorite: false, firstName: 'Carl', lastName: 'Muster' };
+    expect(decideMatch([bea, carl], typed)).toEqual({ kind: 'create', sharedWith: ['p0', 'p2'] });
+  });
+
+  it('several persons with the typed name → the favourite one, possible duplicates', () => {
+    const a3 = { ...anna, personKey: 'p3', isFavorite: true };
     const bea = { personKey: 'p2', isFavorite: false, firstName: 'Bea', lastName: 'Muster' };
-    expect(decideMatch([anna, bea], typed)).toEqual({ kind: 'ambiguous', personKeys: ['p1', 'p2'] });
+    expect(decideMatch([anna, a3, bea], typed))
+      .toEqual({ kind: 'existing', personKey: 'p3', nameDiffers: false, duplicateKeys: ['p1', 'p3'] });
   });
 
-  it('two persons both with the email as favourite → ambiguous', () => {
-    const a = { ...anna, isFavorite: true };
-    const bea = { personKey: 'p2', isFavorite: true, firstName: 'Bea', lastName: 'Muster' };
-    expect(decideMatch([a, bea], typed)).toEqual({ kind: 'ambiguous', personKeys: ['p1', 'p2'] });
+  it('several persons with the typed name and no single favourite → the lowest person key', () => {
+    const a3 = { ...anna, personKey: 'p3' };
+    const a0 = { ...anna, personKey: 'p0' };
+    expect(decideMatch([a3, anna, a0], typed))
+      .toEqual({ kind: 'existing', personKey: 'p0', nameDiffers: false, duplicateKeys: ['p0', 'p1', 'p3'] });
+    const fav = (x: typeof anna) => ({ ...x, isFavorite: true });
+    expect(decideMatch([fav(a3), fav(anna)], typed))
+      .toEqual({ kind: 'existing', personKey: 'p1', nameDiffers: false, duplicateKeys: ['p1', 'p3'] });
   });
 
   it('two addresses of one person count once', () => {
@@ -58,10 +72,10 @@ describe('decideMatch', () => {
       .toEqual({ kind: 'existing', personKey: 'p1', nameDiffers: true });
   });
 
-  it('a person with two addresses (one favourite) still wins against a person without a favourite', () => {
-    const bea = { personKey: 'p2', isFavorite: false, firstName: 'Bea', lastName: 'Muster' };
-    expect(decideMatch([anna, bea, { ...anna, isFavorite: true }], typed))
-      .toEqual({ kind: 'existing', personKey: 'p1', nameDiffers: false });
+  it('a person with two addresses (one favourite) wins against a namesake without a favourite', () => {
+    const a2 = { ...anna, personKey: 'p0' };
+    expect(decideMatch([anna, a2, { ...anna, isFavorite: true }], typed))
+      .toEqual({ kind: 'existing', personKey: 'p1', nameDiffers: false, duplicateKeys: ['p0', 'p1'] });
   });
 });
 
@@ -82,12 +96,21 @@ describe('task texts', () => {
     );
   });
 
-  it('ambiguous task: fixed title, the candidates by name only', () => {
-    expect(AMBIGUOUS_TASK_NAME).toBe('Newsletter-Anmeldung zuordnen');
-    expect(ambiguousTaskNotes('Anna Muster', ['Anna Muster', 'Bea Muster'], 'Dorfnews')).toBe(
+  it('shared-email task: fixed title, the other persons by name only', () => {
+    expect(SHARED_EMAIL_TASK_NAME).toBe('Newsletter-Anmeldung: geteilte E-Mail-Adresse');
+    expect(sharedEmailTaskNotes('Anna Muster', ['Bea Muster', 'Carl Muster'], 'Dorfnews')).toBe(
       'Bei der Anmeldung zum Newsletter Dorfnews wurde der Name «Anna Muster» eingegeben.\n'
-      + 'Mehrere Personen haben diese E-Mail-Adresse: Anna Muster, Bea Muster.\n'
-      + 'Ordne die Anmeldung von Hand der richtigen Person zu.',
+      + 'Diese E-Mail-Adresse gehört bereits mehreren Personen: Bea Muster, Carl Muster. Keine davon heisst so.\n'
+      + 'Darum wurde «Anna Muster» als neue Person erfasst und angemeldet. Prüfe, ob das stimmt.',
+    );
+  });
+
+  it('duplicates task: fixed title, the candidates by name only', () => {
+    expect(DUPLICATES_TASK_NAME).toBe('Newsletter-Anmeldung: mögliche Duplikate');
+    expect(duplicatesTaskNotes('Anna Muster', ['Anna Muster', 'Anna  Muster'], 'Dorfnews')).toBe(
+      'Bei der Anmeldung zum Newsletter Dorfnews wurde der Name «Anna Muster» eingegeben.\n'
+      + 'Mehrere Personen mit diesem Namen haben diese E-Mail-Adresse: Anna Muster, Anna  Muster.\n'
+      + 'Die Anmeldung gilt für eine davon. Prüfe, ob es sich um Duplikate handelt, und führe sie zusammen.',
     );
   });
 });
@@ -103,12 +126,13 @@ describe('subscriberTaskId', () => {
 
   it('differs per kind, admin, group, tenant and email', () => {
     const others = [
-      subscriberTaskId({ tenantId: 't', groupKey: 'g', email: 'anna@example.ch', kind: 'ambiguous', adminKey: 'a1' }),
+      subscriberTaskId({ tenantId: 't', groupKey: 'g', email: 'anna@example.ch', kind: 'duplicates', adminKey: 'a1' }),
+      subscriberTaskId({ tenantId: 't', groupKey: 'g', email: 'anna@example.ch', kind: 'sharedEmail', adminKey: 'a1' }),
       subscriberTaskId({ tenantId: 't', groupKey: 'g', email: 'anna@example.ch', kind: 'nameDiffers', adminKey: 'a2' }),
       subscriberTaskId({ tenantId: 't', groupKey: 'h', email: 'anna@example.ch', kind: 'nameDiffers', adminKey: 'a1' }),
       subscriberTaskId({ tenantId: 'u', groupKey: 'g', email: 'anna@example.ch', kind: 'nameDiffers', adminKey: 'a1' }),
       subscriberTaskId({ tenantId: 't', groupKey: 'g', email: 'bea@example.ch', kind: 'nameDiffers', adminKey: 'a1' }),
     ];
-    expect(new Set([id, ...others]).size).toBe(6);
+    expect(new Set([id, ...others]).size).toBe(7);
   });
 });

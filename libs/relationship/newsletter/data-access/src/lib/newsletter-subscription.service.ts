@@ -14,6 +14,7 @@ export interface ImportSummary {
   imported: number;
   alreadySubscribed: number;
   matchedExisting: number;
+  /** subscribed to one of several persons with the same email and name; the member admins got a duplicates task */
   ambiguous: number;
   invalid: number;
 }

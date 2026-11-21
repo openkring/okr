@@ -15,7 +15,6 @@
   "not_allowed": "Seuls la gestion des membres, le comité et les responsables de cette newsletter voient ses abonnés.",
   "not_found": "Cette newsletter n'existe pas.",
   "my_title": "Newsletter",
-  "my_empty": "Tu n'es abonné à aucune newsletter.",
   "leave": "Se désabonner",
   "leave_notice": "Se désabonner de la newsletter",
   "leave_confirm": "Veux-tu te désabonner de la newsletter {name} ?",
@@ -34,6 +33,6 @@
   "import_imported": "Nouvellement importés",
   "import_already": "Déjà abonnés",
   "import_matched": "Reliés à une personne existante",
-  "import_ambiguous": "Pas clair (une tâche pour la gestion des membres a été créée)",
+  "import_ambiguous": "Doublons possibles (abonnés, une tâche pour la gestion des membres a été créée)",
   "import_invalid": "Adresse e-mail invalide"
 }

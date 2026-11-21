@@ -88,7 +88,7 @@ import { MyNewsletters } from '@okr/relationship-newsletter-feature';
                 (dirty)="formDirty.set($event)"
               />
             }
-            <!-- spec 1.169 §5.9: the user's newsletters; hidden without a person -->
+            <!-- spec 1.169 §5.9: the user's newsletters; hidden until there is an active subscription -->
             <okr-my-newsletters />
             <!-- spec 1.77 §12.4: only in a diary app, with something to collect -->
             @if (sourcesFormData(); as sourcesData) {

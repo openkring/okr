@@ -2,9 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('firebase-functions/v2', () => ({ logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() } }));
 
+import { PersonModel, PrivacyUsage } from '@okr/shared-models';
+
 import { fakeDb, Store } from '../credit/testing/credit-fake-db';
 import { SubscribeInput, subscribePerson } from './subscriber';
-import { AMBIGUOUS_TASK_NAME, NAME_DIFFERS_TASK_NAME } from './subscriber.logic';
+import { DUPLICATES_TASK_NAME, NAME_DIFFERS_TASK_NAME, SHARED_EMAIL_TASK_NAME } from './subscriber.logic';
 
 const T = 'la21';
 const input: SubscribeInput = {
@@ -31,13 +33,16 @@ beforeEach(() => {
 
 describe('subscribePerson', () => {
   it('no match: creates person, favourite email, city-only postal address and the subscription', async () => {
-    expect(await subscribePerson(fakeDb(store), input)).toEqual({ outcome: 'subscribed', matchedExisting: false });
+    expect(await subscribePerson(fakeDb(store), input)).toEqual({ outcome: 'subscribed', matchedExisting: false, possibleDuplicates: false });
 
     const persons = docsIn(store, 'persons').filter((p) => p.id !== 'adm');
     expect(persons).toHaveLength(1);
     const person = persons[0];
     expect(person).toMatchObject({ firstName: 'Anna', lastName: 'Muster', tenants: [T], index: 'n:Muster fn:Anna' });
     expect(person).not.toHaveProperty('okey');
+    // R21: a person known only from the sign-up hides its contact data; the name keeps the default
+    expect(person).toMatchObject({ usageEmail: PrivacyUsage.Protected, usagePostalAddress: PrivacyUsage.Protected, usagePhone: PrivacyUsage.Protected });
+    expect(person['usageName']).toBe(new PersonModel(T).usageName);
 
     const addresses = docsIn(store, 'addresses');
     expect(addresses).toHaveLength(2);
@@ -71,8 +76,9 @@ describe('subscribePerson', () => {
     store['addresses/a1'] = email('p1', 'anna@example.ch', { isFavorite: true });
     const before = JSON.stringify([store['persons/p1'], store['addresses/a1']]);
 
-    expect(await subscribePerson(fakeDb(store), input)).toEqual({ outcome: 'subscribed', matchedExisting: true });
+    expect(await subscribePerson(fakeDb(store), input)).toEqual({ outcome: 'subscribed', matchedExisting: true, possibleDuplicates: false });
     expect(JSON.stringify([store['persons/p1'], store['addresses/a1']])).toBe(before);
+    expect(store['persons/p1']).not.toHaveProperty('usageEmail');   // R21 applies only to a created person
     expect(docsIn(store, 'persons')).toHaveLength(2);
     expect(docsIn(store, 'addresses')).toHaveLength(1);
     expect(docsIn(store, 'newsletterSubscriptions')[0]).toMatchObject({ personKey: 'p1' });
@@ -83,7 +89,7 @@ describe('subscribePerson', () => {
     store['persons/p1'] = { firstName: 'Anne', lastName: 'Muster-Meier', tenants: [T] };
     store['addresses/a1'] = email('p1', 'anna@example.ch');
 
-    expect(await subscribePerson(fakeDb(store), input)).toEqual({ outcome: 'subscribed', matchedExisting: true });
+    expect(await subscribePerson(fakeDb(store), input)).toEqual({ outcome: 'subscribed', matchedExisting: true, possibleDuplicates: false });
     expect(store['persons/p1']).toEqual({ firstName: 'Anne', lastName: 'Muster-Meier', tenants: [T] });
     const tasks = docsIn(store, 'tasks');
     expect(tasks).toHaveLength(1);
@@ -96,7 +102,7 @@ describe('subscribePerson', () => {
     expect(JSON.stringify(tasks[0])).not.toContain('example.ch');
 
     // the same sign-up again: already subscribed, no further task
-    expect(await subscribePerson(fakeDb(store), input)).toEqual({ outcome: 'alreadySubscribed', matchedExisting: true });
+    expect(await subscribePerson(fakeDb(store), input)).toEqual({ outcome: 'alreadySubscribed', matchedExisting: true, possibleDuplicates: false });
     expect(docsIn(store, 'tasks')).toHaveLength(1);
     expect(docsIn(store, 'newsletterSubscriptions')).toHaveLength(1);
   });
@@ -105,7 +111,7 @@ describe('subscribePerson', () => {
     store['persons/p1'] = { firstName: 'Anne', lastName: 'Muster-Meier', tenants: [T] };
     store['addresses/a1'] = email('p1', 'anna@example.ch');
     store['newsletterSubscriptions/s1'] = { tenants: [T], personKey: 'p1', groupKey: 'nl1', dateOfExit: '', isArchived: false };
-    expect(await subscribePerson(fakeDb(store), input)).toEqual({ outcome: 'alreadySubscribed', matchedExisting: true });
+    expect(await subscribePerson(fakeDb(store), input)).toEqual({ outcome: 'alreadySubscribed', matchedExisting: true, possibleDuplicates: false });
     expect(docsIn(store, 'tasks')).toHaveLength(0);
   });
 
@@ -113,7 +119,7 @@ describe('subscribePerson', () => {
     store['persons/p1'] = { firstName: 'Anna', lastName: 'Muster', tenants: [T] };
     store['addresses/a1'] = email('p1', 'Anna@Example.ch');
     expect(await subscribePerson(fakeDb(store), { ...input, email: 'Anna@Example.ch ' }))
-      .toEqual({ outcome: 'subscribed', matchedExisting: true });
+      .toEqual({ outcome: 'subscribed', matchedExisting: true, possibleDuplicates: false });
     expect(docsIn(store, 'persons')).toHaveLength(2);
     expect(docsIn(store, 'newsletterSubscriptions')[0]).toMatchObject({ personKey: 'p1' });
   });
@@ -136,7 +142,7 @@ describe('subscribePerson', () => {
     store['newsletterSignups/sg1'] = { tenants: [T], state: 'confirmed' };
     const db = fakeDb(store);
     expect(await subscribePerson(db, { ...input, claimRef: db.collection('newsletterSignups').doc('sg1') }))
-      .toEqual({ outcome: 'alreadySubscribed', matchedExisting: false });
+      .toEqual({ outcome: 'alreadySubscribed', matchedExisting: false, possibleDuplicates: false });
     expect(docsIn(store, 'persons')).toHaveLength(1);
     expect(docsIn(store, 'newsletterSubscriptions')).toHaveLength(0);
   });
@@ -145,7 +151,7 @@ describe('subscribePerson', () => {
     store['persons/p1'] = { firstName: 'Anna', lastName: 'Muster', tenants: [T] };
     store['addresses/a1'] = email('p1', 'anna@example.ch');
     store['newsletterSubscriptions/s1'] = { tenants: [T], personKey: 'p1', groupKey: 'nl1', dateOfExit: '', isArchived: false };
-    expect(await subscribePerson(fakeDb(store), input)).toEqual({ outcome: 'alreadySubscribed', matchedExisting: true });
+    expect(await subscribePerson(fakeDb(store), input)).toEqual({ outcome: 'alreadySubscribed', matchedExisting: true, possibleDuplicates: false });
     expect(docsIn(store, 'newsletterSubscriptions')).toHaveLength(1);
   });
 
@@ -153,7 +159,7 @@ describe('subscribePerson', () => {
     store['persons/p1'] = { firstName: 'Anna', lastName: 'Muster', tenants: [T] };
     store['addresses/a1'] = email('p1', 'anna@example.ch');
     store['newsletterSubscriptions/s1'] = { tenants: [T], personKey: 'p1', groupKey: 'nl1', dateOfExit: '20260101', isArchived: false };
-    expect(await subscribePerson(fakeDb(store), input)).toEqual({ outcome: 'subscribed', matchedExisting: true });
+    expect(await subscribePerson(fakeDb(store), input)).toEqual({ outcome: 'subscribed', matchedExisting: true, possibleDuplicates: false });
     expect(docsIn(store, 'newsletterSubscriptions')).toHaveLength(2);
   });
 
@@ -163,7 +169,7 @@ describe('subscribePerson', () => {
     store['persons/p2'] = { firstName: 'Anna', lastName: 'Muster', tenants: [T] };
     store['addresses/a2'] = email('p2', 'anna@example.ch', { isArchived: true });
 
-    expect(await subscribePerson(fakeDb(store), input)).toEqual({ outcome: 'subscribed', matchedExisting: false });
+    expect(await subscribePerson(fakeDb(store), input)).toEqual({ outcome: 'subscribed', matchedExisting: false, possibleDuplicates: false });
     const sub = docsIn(store, 'newsletterSubscriptions')[0];
     expect(['p1', 'p2']).not.toContain(sub['personKey']);
     expect(store['addresses/a1']).toMatchObject({ tenants: ['scs'] });
@@ -174,25 +180,71 @@ describe('subscribePerson', () => {
     store['persons/p2'] = { firstName: 'Bea', lastName: 'Muster', tenants: [T] };
     store['addresses/a1'] = email('p1', 'anna@example.ch', { isFavorite: true });
     store['addresses/a2'] = email('p2', 'anna@example.ch');
-    expect(await subscribePerson(fakeDb(store), input)).toEqual({ outcome: 'subscribed', matchedExisting: true });
+    expect(await subscribePerson(fakeDb(store), input)).toEqual({ outcome: 'subscribed', matchedExisting: true, possibleDuplicates: false });
     expect(docsIn(store, 'newsletterSubscriptions')[0]).toMatchObject({ personKey: 'p1' });
   });
 
-  it('ambiguous: writes no person, address or subscription and gives the memberAdmins a task naming the candidates', async () => {
-    store['persons/p1'] = { firstName: 'Anna', lastName: 'Muster', tenants: [T] };
-    store['persons/p2'] = { firstName: 'Bea', lastName: 'Muster', tenants: [T] };
+  it('several persons, exactly one with the typed name: that one, nothing else changes, no task', async () => {
+    store['persons/p1'] = { firstName: 'Bea', lastName: 'Muster', tenants: [T] };
+    store['persons/p2'] = { firstName: 'anna', lastName: 'MUSTER', tenants: [T] };
+    store['addresses/a1'] = email('p1', 'anna@example.ch', { isFavorite: true });
+    store['addresses/a2'] = email('p2', 'anna@example.ch');
+    const before = JSON.stringify([store['persons/p1'], store['persons/p2']]);
+
+    expect(await subscribePerson(fakeDb(store), input)).toEqual({ outcome: 'subscribed', matchedExisting: true, possibleDuplicates: false });
+    expect(docsIn(store, 'newsletterSubscriptions')[0]).toMatchObject({ personKey: 'p2' });
+    expect(JSON.stringify([store['persons/p1'], store['persons/p2']])).toBe(before);
+    expect(docsIn(store, 'persons')).toHaveLength(3);
+    expect(docsIn(store, 'tasks')).toHaveLength(0);
+  });
+
+  it('several persons, none with the typed name: a new person (shared mailbox) and an informational task, names only', async () => {
+    store['persons/p1'] = { firstName: 'Bea', lastName: 'Muster', tenants: [T] };
+    store['persons/p2'] = { firstName: 'Carl', lastName: 'Muster', tenants: [T] };
     store['addresses/a1'] = email('p1', 'anna@example.ch');
     store['addresses/a2'] = email('p2', 'anna@example.ch');
 
-    expect(await subscribePerson(fakeDb(store), input)).toEqual({ outcome: 'ambiguous', matchedExisting: false });
-    expect(docsIn(store, 'persons')).toHaveLength(3);
-    expect(docsIn(store, 'addresses')).toHaveLength(2);
-    expect(docsIn(store, 'newsletterSubscriptions')).toHaveLength(0);
+    expect(await subscribePerson(fakeDb(store), input)).toEqual({ outcome: 'subscribed', matchedExisting: false, possibleDuplicates: false });
+    const created = docsIn(store, 'persons').filter((p) => !['adm', 'p1', 'p2'].includes(p.id));
+    expect(created).toHaveLength(1);
+    expect(created[0]).toMatchObject({ firstName: 'Anna', lastName: 'Muster', usageEmail: PrivacyUsage.Protected });
+    expect(docsIn(store, 'newsletterSubscriptions')[0]).toMatchObject({ personKey: created[0].id });
     const tasks = docsIn(store, 'tasks');
     expect(tasks).toHaveLength(1);
-    expect(tasks[0]).toMatchObject({ name: AMBIGUOUS_TASK_NAME, relatedModelType: 'group', relatedKey: 'group.nl1' });
-    expect(tasks[0]['notes']).toContain('Anna Muster, Bea Muster');
+    expect(tasks[0]).toMatchObject({ name: SHARED_EMAIL_TASK_NAME, relatedModelType: 'person', relatedKey: `person.${created[0].id}` });
+    expect(tasks[0]['notes']).toContain('Bea Muster, Carl Muster');
     expect(JSON.stringify(tasks[0])).not.toContain('example.ch');
+
+    // the same sign-up again: the new person now matches by name, no second person, no second task
+    expect(await subscribePerson(fakeDb(store), input)).toEqual({ outcome: 'alreadySubscribed', matchedExisting: true, possibleDuplicates: false });
+    expect(docsIn(store, 'persons')).toHaveLength(4);
+    expect(docsIn(store, 'tasks')).toHaveLength(1);
+  });
+
+  it('several persons with the typed name: the favourite one, and a duplicates task naming the candidates', async () => {
+    store['persons/p1'] = { firstName: 'Anna', lastName: 'Muster', tenants: [T] };
+    store['persons/p2'] = { firstName: 'Anna', lastName: 'Muster', tenants: [T] };
+    store['addresses/a1'] = email('p1', 'anna@example.ch');
+    store['addresses/a2'] = email('p2', 'anna@example.ch', { isFavorite: true });
+
+    expect(await subscribePerson(fakeDb(store), input)).toEqual({ outcome: 'subscribed', matchedExisting: true, possibleDuplicates: true });
+    expect(docsIn(store, 'persons')).toHaveLength(3);
+    expect(docsIn(store, 'addresses')).toHaveLength(2);
+    expect(docsIn(store, 'newsletterSubscriptions')[0]).toMatchObject({ personKey: 'p2' });
+    const tasks = docsIn(store, 'tasks');
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0]).toMatchObject({ name: DUPLICATES_TASK_NAME, relatedModelType: 'person', relatedKey: 'person.p2' });
+    expect(tasks[0]['notes']).toContain('Anna Muster, Anna Muster');
+    expect(JSON.stringify(tasks[0])).not.toContain('example.ch');
+  });
+
+  it('several persons with the typed name and no favourite: the lowest person key', async () => {
+    store['persons/p9'] = { firstName: 'Anna', lastName: 'Muster', tenants: [T] };
+    store['persons/p3'] = { firstName: 'Anna', lastName: 'Muster', tenants: [T] };
+    store['addresses/a1'] = email('p9', 'anna@example.ch');
+    store['addresses/a2'] = email('p3', 'anna@example.ch');
+    expect(await subscribePerson(fakeDb(store), input)).toEqual({ outcome: 'subscribed', matchedExisting: true, possibleDuplicates: true });
+    expect(docsIn(store, 'newsletterSubscriptions')[0]).toMatchObject({ personKey: 'p3' });
   });
 
   it('import: stores the Mailchimp timestamps and source', async () => {
@@ -200,7 +252,7 @@ describe('subscribePerson', () => {
       tenantId: T, groupKey: 'nl1', groupName: 'Dorfnews', firstName: 'Anna', lastName: 'Muster', email: 'anna@example.ch',
       city: '', source: 'import', importOptinAt: '2024-01-02 10:00:00', importConfirmAt: '2024-01-02 10:05:00', dateOfEntry: '20240102',
     };
-    expect(await subscribePerson(fakeDb(store), row)).toEqual({ outcome: 'subscribed', matchedExisting: false });
+    expect(await subscribePerson(fakeDb(store), row)).toEqual({ outcome: 'subscribed', matchedExisting: false, possibleDuplicates: false });
     expect(docsIn(store, 'newsletterSubscriptions')[0]).toMatchObject({
       source: 'import', formKey: '', confirmedAt: '', importOptinAt: '2024-01-02 10:00:00', importConfirmAt: '2024-01-02 10:05:00',
     });

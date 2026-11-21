@@ -15,7 +15,6 @@
   "not_allowed": "Solo la gestión de miembros, la junta y los responsables de este boletín ven sus suscriptores.",
   "not_found": "Este boletín no existe.",
   "my_title": "Newsletter",
-  "my_empty": "No estás suscrito a ningún boletín.",
   "leave": "Cancelar suscripción",
   "leave_notice": "Cancelar la suscripción al boletín",
   "leave_confirm": "¿Quieres cancelar tu suscripción al boletín {name}?",
@@ -34,6 +33,6 @@
   "import_imported": "Importados ahora",
   "import_already": "Ya estaban suscritos",
   "import_matched": "Vinculados a una persona existente",
-  "import_ambiguous": "No claro (se creó una tarea para la administración de socios)",
+  "import_ambiguous": "Posibles duplicados (suscritos, se creó una tarea para la administración de socios)",
   "import_invalid": "Dirección de correo no válida"
 }

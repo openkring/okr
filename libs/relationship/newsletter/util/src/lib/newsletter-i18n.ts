@@ -18,7 +18,6 @@ export const NEWSLETTER_I18N_KEYS = {
   not_allowed:         PFX + 'not_allowed',
   not_found:           PFX + 'not_found',
   my_title:            PFX + 'my_title',
-  my_empty:            PFX + 'my_empty',
   leave:               PFX + 'leave',
   leave_notice:        PFX + 'leave_notice',
   // single braces `{name}`, filled with `fill()`

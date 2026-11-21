@@ -15,7 +15,6 @@
   "not_allowed": "Only the member administration, the board and the people in charge of this newsletter see its subscribers.",
   "not_found": "This newsletter does not exist.",
   "my_title": "Newsletter",
-  "my_empty": "You have not subscribed to any newsletter.",
   "leave": "Unsubscribe",
   "leave_notice": "Unsubscribe from newsletter",
   "leave_confirm": "Do you want to unsubscribe from the newsletter {name}?",
@@ -34,6 +33,6 @@
   "import_imported": "Newly imported",
   "import_already": "Were already subscribed",
   "import_matched": "Linked to an existing person",
-  "import_ambiguous": "Not clear (a task for the member administration was created)",
+  "import_ambiguous": "Possible duplicates (subscribed, a task for the member administration was created)",
   "import_invalid": "Invalid email address"
 }

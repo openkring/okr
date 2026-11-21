@@ -36,10 +36,10 @@ describe('entryDate', () => {
 describe('countResult', () => {
   it('maps the outcomes to the summary', () => {
     const s = emptySummary();
-    countResult(s, { outcome: 'subscribed', matchedExisting: true });
-    countResult(s, { outcome: 'subscribed', matchedExisting: false });
-    countResult(s, { outcome: 'alreadySubscribed', matchedExisting: true });
-    countResult(s, { outcome: 'ambiguous', matchedExisting: false });
+    countResult(s, { outcome: 'subscribed', matchedExisting: true, possibleDuplicates: false });
+    countResult(s, { outcome: 'subscribed', matchedExisting: false, possibleDuplicates: false });
+    countResult(s, { outcome: 'alreadySubscribed', matchedExisting: true, possibleDuplicates: false });
+    countResult(s, { outcome: 'subscribed', matchedExisting: true, possibleDuplicates: true });
     expect(s).toEqual({ imported: 1, alreadySubscribed: 1, matchedExisting: 1, ambiguous: 1, invalid: 0 });
   });
 });
@@ -50,7 +50,7 @@ describe('runImport', () => {
 
   it('imports with source import and the Mailchimp dates, counts invalid rows, echoes no address', async () => {
     const calls: SubscribeInput[] = [];
-    const subscribe = vi.fn(async (_db: Firestore, input: SubscribeInput): Promise<SubscribeResult> => { calls.push(input); return { outcome: 'subscribed', matchedExisting: false }; });
+    const subscribe = vi.fn(async (_db: Firestore, input: SubscribeInput): Promise<SubscribeResult> => { calls.push(input); return { outcome: 'subscribed', matchedExisting: false, possibleDuplicates: false }; });
     const rows = [
       { email: 'a@b.ch', firstName: 'A', lastName: 'B', optinAt: '2020-03-14 15:00:00', confirmAt: '2020-03-14 15:09:26' },
       { email: 'a@b.ch', firstName: 'C', lastName: 'D', optinAt: '', confirmAt: '' },
@@ -65,7 +65,7 @@ describe('runImport', () => {
   });
 
   it('a second import of the same row is alreadySubscribed', async () => {
-    const subscribe = vi.fn(async (): Promise<SubscribeResult> => ({ outcome: 'alreadySubscribed', matchedExisting: true }));
+    const subscribe = vi.fn(async (): Promise<SubscribeResult> => ({ outcome: 'alreadySubscribed', matchedExisting: true, possibleDuplicates: false }));
     const summary = await runImport(db, { ...base, rows: [{ email: 'a@b.ch' }] }, subscribe);
     expect(summary.alreadySubscribed).toBe(1);
     expect(summary.imported).toBe(0);
@@ -73,7 +73,7 @@ describe('runImport', () => {
 
   it('a throwing row is counted invalid and does not stop the rest', async () => {
     let n = 0;
-    const subscribe = vi.fn(async (): Promise<SubscribeResult> => { if (n++ === 0) throw new Error('boom a@b.ch'); return { outcome: 'ambiguous', matchedExisting: false }; });
+    const subscribe = vi.fn(async (): Promise<SubscribeResult> => { if (n++ === 0) throw new Error('boom a@b.ch'); return { outcome: 'subscribed', matchedExisting: true, possibleDuplicates: true }; });
     const summary = await runImport(db, { ...base, rows: [{ email: 'a@b.ch' }, { email: 'c@d.ch' }] }, subscribe);
     expect(summary.invalid).toBe(1);
     expect(summary.ambiguous).toBe(1);

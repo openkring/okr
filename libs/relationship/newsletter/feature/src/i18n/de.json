@@ -15,7 +15,6 @@
   "not_allowed": "Die Abonnenten dieses Newsletters sehen nur die Mitgliederverwaltung, der Vorstand und die Verantwortlichen des Newsletters.",
   "not_found": "Diesen Newsletter gibt es nicht.",
   "my_title": "Newsletter",
-  "my_empty": "Du hast keinen Newsletter abonniert.",
   "leave": "Abbestellen",
   "leave_notice": "Newsletter abbestellen",
   "leave_confirm": "Möchtest du den Newsletter {name} abbestellen?",
@@ -34,6 +33,6 @@
   "import_imported": "Neu importiert",
   "import_already": "Waren schon angemeldet",
   "import_matched": "Mit bestehender Person verknüpft",
-  "import_ambiguous": "Nicht eindeutig (eine Aufgabe für die Mitgliederverwaltung wurde angelegt)",
+  "import_ambiguous": "Mögliche Duplikate (angemeldet, eine Aufgabe für die Mitgliederverwaltung wurde angelegt)",
   "import_invalid": "Ungültige E-Mail-Adresse"
 }

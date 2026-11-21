@@ -15,7 +15,6 @@
   "not_allowed": "Solo la gestione dei membri, il comitato e i responsabili di questa newsletter vedono i suoi iscritti.",
   "not_found": "Questa newsletter non esiste.",
   "my_title": "Newsletter",
-  "my_empty": "Non sei iscritto a nessuna newsletter.",
   "leave": "Annulla l'iscrizione",
   "leave_notice": "Annulla l'iscrizione alla newsletter",
   "leave_confirm": "Vuoi annullare l'iscrizione alla newsletter {name}?",
@@ -34,6 +33,6 @@
   "import_imported": "Importati ora",
   "import_already": "Già iscritti",
   "import_matched": "Collegati a una persona esistente",
-  "import_ambiguous": "Non chiaro (è stato creato un compito per l'amministrazione dei soci)",
+  "import_ambiguous": "Possibili duplicati (iscritti, è stato creato un compito per l'amministrazione dei soci)",
   "import_invalid": "Indirizzo e-mail non valido"
 }

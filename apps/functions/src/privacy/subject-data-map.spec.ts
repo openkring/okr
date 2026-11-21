@@ -265,6 +265,12 @@ describe('SUBJECT_DATA_MAP — tiers and tenant-exit disposition', () => {
     expect(SUBJECT_DATA_MAP.filter((e) => e.tier === 'T2').map((e) => e.collection)).toEqual(['avatars', 'newsletterSubscriptions', 'newsletterSignups', 'prospects', 'trips/tracker', 'diaries', 'diaryAlbums', 'diarySources', 'diaryImports', 'hearingQuizResults', 'chatReminders', 'ratings', 'news-subscriptions', 'carddavTokens']);
   });
 
+  it('names consent, not the membership, as the basis of a newsletter subscription', () => {
+    const entry = SUBJECT_DATA_MAP.find((e) => e.collection === 'newsletterSubscriptions');
+    expect(entry?.retention.legalBasis).toMatch(/^Einwilligung \(Newsletter\), bis zum Widerruf/);
+    expect(entry?.retention.legalBasis).not.toContain('Mitgliedschaft');
+  });
+
   // Regression guard on the strictest-tier rule. `addresses` holds both the favorite
   // e-mail the membership contract needs (T1) and the dob / second phone the member
   // gave voluntarily (T2). Flipping the row to T2 would make the preview promise to

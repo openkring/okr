@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { IonAccordion, IonButton, IonItem, IonLabel, IonList, IonNote } from '@ionic/angular';
+import { IonAccordion, IonButton, IonItem, IonLabel, IonList } from '@ionic/angular';
 import { catchError, of } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
@@ -13,38 +13,35 @@ import { activeSubscribers, NEWSLETTER_I18N_KEYS, NewsletterI18n } from '@okr/re
 
 /**
  * The profile accordion «Newsletter» (spec 1.169 §5.9): the newsletters the current user is subscribed
- * to, each with its since-date and an «Abbestellen» button. Hidden when the user has no person.
+ * to, each with its since-date and an «Abbestellen» button. Hidden entirely (no empty state) until the user holds
+ * at least one active subscription, so a member who never subscribed sees no newsletter section at all.
  */
 @Component({
   selector: 'okr-my-newsletters',
   standalone: true,
-  imports: [PrettyDatePipe, IonAccordion, IonItem, IonLabel, IonList, IonNote, IonButton],
+  imports: [PrettyDatePipe, IonAccordion, IonItem, IonLabel, IonList, IonButton],
   template: `
-    @if (personKey()) {
+    @if (subscriptions().length > 0) {
       <ion-accordion value="newsletters">
         <ion-item slot="header" color="light">
           <ion-label>{{ i18n.my_title() }}</ion-label>
         </ion-item>
         <div slot="content">
-          @if (subscriptions().length === 0) {
-            <ion-item lines="none"><ion-note>{{ i18n.my_empty() }}</ion-note></ion-item>
-          } @else {
-            <ion-list lines="inset">
-              @for (subscription of subscriptions(); track subscription.okey) {
-                <ion-item>
-                  <ion-label>
-                    <h2>{{ subscription.groupName }}</h2>
-                    @if (subscription.dateOfEntry) {
-                      <p>{{ i18n.since() }} {{ subscription.dateOfEntry | prettyDate }}</p>
-                    }
-                  </ion-label>
-                  <ion-button slot="end" fill="outline" size="small" [disabled]="busy()" (click)="leave(subscription)">
-                    {{ i18n.leave() }}
-                  </ion-button>
-                </ion-item>
-              }
-            </ion-list>
-          }
+          <ion-list lines="inset">
+            @for (subscription of subscriptions(); track subscription.okey) {
+              <ion-item>
+                <ion-label>
+                  <h2>{{ subscription.groupName }}</h2>
+                  @if (subscription.dateOfEntry) {
+                    <p>{{ i18n.since() }} {{ subscription.dateOfEntry | prettyDate }}</p>
+                  }
+                </ion-label>
+                <ion-button slot="end" fill="outline" size="small" [disabled]="busy()" (click)="leave(subscription)">
+                  {{ i18n.leave() }}
+                </ion-button>
+              </ion-item>
+            }
+          </ion-list>
         </div>
       </ion-accordion>
     }

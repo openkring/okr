@@ -69,6 +69,11 @@ const KEEP_WHILE_MEMBER = { months: 'indefinite', legalBasis: 'Vertragserfüllun
 const CLUB_RECORD = { months: 'indefinite', legalBasis: 'Vereinsdokumentation (berechtigtes Interesse)' } as const;
 const APPLICATION_RECORD = { months: 24, legalBasis: 'Nachweis über das Aufnahmeverfahren — 2 Jahre' } as const;
 const SIGNUP_PENDING = { months: 1, legalBasis: 'Bestätigung der Newsletter-Anmeldung — unbestätigte Anmeldungen verfallen nach kurzer Frist' } as const;
+/** A newsletter subscription (spec 1.169) rests on double-opt-in consent, not on a membership. */
+const CONSENT_UNTIL_WITHDRAWN = {
+  months: 'indefinite',
+  legalBasis: 'Einwilligung (Newsletter), bis zum Widerruf; danach als Nachweis der Einwilligung aufbewahrt',
+} as const;
 const LOG_12M = { months: 12, legalBasis: 'Betriebssicherheit und Missbrauchserkennung — 12 Monate' } as const;
 const LOG_24M = { months: 24, legalBasis: 'Nachvollziehbarkeit von Datenänderungen — 24 Monate' } as const;
 /**
@@ -689,7 +694,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     tenantScope: 'tenantsArray',
     onExport: 'full',
     onErasure: 'delete',
-    retention: KEEP_WHILE_MEMBER,
+    retention: CONSENT_UNTIL_WITHDRAWN,
   },
   {
     collection: 'newsletterSignups',

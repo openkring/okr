@@ -2,14 +2,16 @@
  * Match-or-create for newsletter subscribers (spec 1.169 §5.3, §5.7 import): turns a confirmed sign-up or
  * an import row into a person + subscription. Matching is by email inside the tenant only (D-L1): an
  * address counts only when its own `tenants[]` contains the tenant. An existing person and its addresses
- * are never changed. Member admins get a task when the typed name differs or when the email is ambiguous.
+ * are never changed; a person created here hides its email, postal address and phone (`Protected`, R21). Member
+ * admins get a task when the typed name differs, when the email is shared by several other persons (a new person
+ * was created), or when several persons share email and name (possible duplicates, R22). A sign-up is never dropped.
  */
 import { logger } from 'firebase-functions/v2';
 import type { DocumentData, DocumentReference, Firestore, Transaction } from 'firebase-admin/firestore';
 
 import {
   AddressCollection, AddressModel, AvatarInfo, NewsletterSource, NewsletterSubscriptionCollection,
-  NewsletterSubscriptionModel, PersonCollection, PersonModel, TaskCollection, TaskModel,
+  NewsletterSubscriptionModel, PersonCollection, PersonModel, PrivacyUsage, TaskCollection, TaskModel,
 } from '@okr/shared-models';
 import { addIndexElement, getFullName } from '@okr/shared-util-core';
 import { getTaskIndex } from '@okr/project-task-util';
@@ -17,8 +19,8 @@ import { getMemberAdminPersons } from '@okr/shared-util-functions';
 
 import { SYSTEM_AUTHOR } from '../workflow/activity';
 import {
-  AMBIGUOUS_TASK_NAME, ambiguousTaskNotes, decideMatch, MatchCandidate, NAME_DIFFERS_TASK_NAME, nameDiffersTaskNotes,
-  NEWSLETTER_TASK_TAG, normalizeEmail, SubscriberTaskKind, subscriberTaskId,
+  decideMatch, DUPLICATES_TASK_NAME, duplicatesTaskNotes, MatchCandidate, NAME_DIFFERS_TASK_NAME, nameDiffersTaskNotes,
+  NEWSLETTER_TASK_TAG, normalizeEmail, SHARED_EMAIL_TASK_NAME, sharedEmailTaskNotes, SubscriberTaskKind, subscriberTaskId,
 } from './subscriber.logic';
 
 export interface SubscribeInput {
@@ -49,15 +51,23 @@ export interface SubscribeInput {
 }
 
 export interface SubscribeResult {
-  outcome: 'subscribed' | 'alreadySubscribed' | 'ambiguous';
-  /** true when an existing person was used; false when one was created, the email was ambiguous, or the claim was taken */
+  outcome: 'subscribed' | 'alreadySubscribed';
+  /** true when an existing person was used; false when one was created or the claim was taken */
   matchedExisting: boolean;
+  /** true when a new subscription went to one of several persons sharing email and name (a duplicates task was written) */
+  possibleDuplicates: boolean;
 }
 
 /** What the transaction found out; the tasks are written after it. Names only, never an address. */
-type Outcome =
-  | { outcome: 'subscribed' | 'alreadySubscribed'; matchedExisting: boolean; nameDiffers?: { personKey: string; personName: string } }
-  | { outcome: 'ambiguous'; matchedExisting: false; candidateNames: string[] };
+interface Outcome {
+  outcome: 'subscribed' | 'alreadySubscribed';
+  matchedExisting: boolean;
+  nameDiffers?: { personKey: string; personName: string };
+  /** a new person was created next to these persons with the same email (none with the typed name) */
+  sharedEmail?: { personKey: string; otherNames: string[] };
+  /** the subscription went to `personKey`, one of several persons with this email and name */
+  duplicates?: { personKey: string; candidateNames: string[] };
+}
 
 const PERSON_PREFIX = 'person.';
 
@@ -145,7 +155,7 @@ function subscriptionDoc(input: SubscribeInput, personKey: string, personName: s
  * Subscribes the person with this email to the newsletter `groupKey` of `tenantId`, in one transaction
  * (all reads before the writes): match by email inside the tenant, else create the person with a
  * favourite email and (if given) a postal address with only the city; then the subscription unless an
- * active one exists. Ambiguous → nothing is written, the member admins get a task.
+ * active one exists. Several persons with the email → see `decideMatch`; the member admins get a task.
  */
 export async function subscribePerson(db: Firestore, input: SubscribeInput): Promise<SubscribeResult> {
   const email = normalizeEmail(input.email);
@@ -162,17 +172,12 @@ export async function subscribePerson(db: Firestore, input: SubscribeInput): Pro
     }
     const candidates = await readCandidates(db, tx, input.tenantId, spellings);
     const decision = decideMatch(candidates, typed);
+    const nameOf = (personKey: string): string => {
+      const c = candidates.find((x) => x.personKey === personKey);
+      return getFullName(c?.firstName, c?.lastName);
+    };
     // every read is done; the claim is the first write
     const markClaimed = (): void => { if (claimRef) tx.update(claimRef, { state: 'confirmed' }); };
-
-    if (decision.kind === 'ambiguous') {
-      const names = decision.personKeys.map((k) => {
-        const c = candidates.find((x) => x.personKey === k);
-        return getFullName(c?.firstName, c?.lastName);
-      });
-      markClaimed();
-      return { outcome: 'ambiguous', matchedExisting: false, candidateNames: names };
-    }
 
     if (decision.kind === 'existing') {
       const c = candidates.find((x) => x.personKey === decision.personKey);
@@ -180,12 +185,15 @@ export async function subscribePerson(db: Firestore, input: SubscribeInput): Pro
       const nameDiffers = decision.nameDiffers ? { personKey: decision.personKey, personName } : undefined;
       if (await hasActiveSubscription(db, tx, input.tenantId, decision.personKey, input.groupKey)) {
         markClaimed();
-        // nothing changed for an existing subscriber, so no name task either
+        // nothing changed for an existing subscriber, so no name or duplicates task either
         return { outcome: 'alreadySubscribed', matchedExisting: true };
       }
       markClaimed();
       tx.create(db.collection(NewsletterSubscriptionCollection).doc(), subscriptionDoc(input, decision.personKey, personName));
-      return { outcome: 'subscribed', matchedExisting: true, nameDiffers };
+      const duplicates = decision.duplicateKeys
+        ? { personKey: decision.personKey, candidateNames: decision.duplicateKeys.map(nameOf) }
+        : undefined;
+      return { outcome: 'subscribed', matchedExisting: true, nameDiffers, duplicates };
     }
 
     // create: a new person of this tenant only, with its favourite email (and city)
@@ -195,6 +203,11 @@ export async function subscribePerson(db: Firestore, input: SubscribeInput): Pro
     person.firstName = typed.firstName;
     person.lastName = typed.lastName;
     person.tenants = [input.tenantId];
+    // a person known only from a newsletter sign-up shares no contact data with the club (R21); a matched
+    // existing person keeps its own settings
+    person.usageEmail = PrivacyUsage.Protected;
+    person.usagePostalAddress = PrivacyUsage.Protected;
+    person.usagePhone = PrivacyUsage.Protected;
     person.index = personIndex(person);
     const personName = getFullName(person.firstName, person.lastName);
     const parentKey = `${PERSON_PREFIX}${personRef.id}`;
@@ -207,18 +220,30 @@ export async function subscribePerson(db: Firestore, input: SubscribeInput): Pro
       tx.create(db.collection(AddressCollection).doc(), newAddress(input.tenantId, parentKey, personName, { addressChannel: 'postal', city }));
     }
     tx.create(db.collection(NewsletterSubscriptionCollection).doc(), subscriptionDoc(input, personRef.id, personName));
-    return { outcome: 'subscribed', matchedExisting: false };
+    const sharedEmail = decision.sharedWith
+      ? { personKey: personRef.id, otherNames: decision.sharedWith.map(nameOf) }
+      : undefined;
+    return { outcome: 'subscribed', matchedExisting: false, sharedEmail };
   });
 
   const typedName = getFullName(typed.firstName, typed.lastName);
-  if (outcome.outcome === 'ambiguous') {
-    await notifyMemberAdmins(db, input, email, 'ambiguous', {
-      name: AMBIGUOUS_TASK_NAME,
-      notes: ambiguousTaskNotes(typedName, outcome.candidateNames, input.groupName),
-      relatedModelType: 'group',
-      relatedKey: `group.${input.groupKey}`,
+  if (outcome.sharedEmail) {
+    await notifyMemberAdmins(db, input, email, 'sharedEmail', {
+      name: SHARED_EMAIL_TASK_NAME,
+      notes: sharedEmailTaskNotes(typedName, outcome.sharedEmail.otherNames, input.groupName),
+      relatedModelType: 'person',
+      relatedKey: `${PERSON_PREFIX}${outcome.sharedEmail.personKey}`,
     });
-  } else if (outcome.nameDiffers) {
+  }
+  if (outcome.duplicates) {
+    await notifyMemberAdmins(db, input, email, 'duplicates', {
+      name: DUPLICATES_TASK_NAME,
+      notes: duplicatesTaskNotes(typedName, outcome.duplicates.candidateNames, input.groupName),
+      relatedModelType: 'person',
+      relatedKey: `${PERSON_PREFIX}${outcome.duplicates.personKey}`,
+    });
+  }
+  if (outcome.nameDiffers) {
     await notifyMemberAdmins(db, input, email, 'nameDiffers', {
       name: NAME_DIFFERS_TASK_NAME,
       notes: nameDiffersTaskNotes(typedName, outcome.nameDiffers.personName, input.groupName),
@@ -228,7 +253,7 @@ export async function subscribePerson(db: Firestore, input: SubscribeInput): Pro
   }
   // no email and no name in the log (PII)
   logger.info(`newsletter subscriber: ${outcome.outcome} in ${input.tenantId}/${input.groupKey}`);
-  return { outcome: outcome.outcome, matchedExisting: outcome.matchedExisting };
+  return { outcome: outcome.outcome, matchedExisting: outcome.matchedExisting, possibleDuplicates: !!outcome.duplicates };
 }
 
 interface TaskText {

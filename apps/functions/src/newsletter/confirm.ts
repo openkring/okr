@@ -69,7 +69,7 @@ export const newsletterConfirm = onRequest(
       if (outcome === 'alreadyConfirmed') { show(thanks); return; }
 
       // subscribePerson sets the sign-up to 'confirmed' in its own transaction (claimRef). Every result
-      // shows the thank-you page; 'ambiguous' becomes a task for the board.
+      // shows the thank-you page; a shared email or possible duplicates become a task for the member admins.
       const result = await subscribePerson(db, {
         tenantId, groupKey: signup.groupKey, groupName: group.name,
         firstName: signup.firstName, lastName: signup.lastName, email: signup.email, city: signup.city,

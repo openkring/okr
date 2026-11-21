@@ -3,6 +3,7 @@
  * summary. The Firestore side lives in `import.ts`. Nothing here ever returns or logs an address.
  */
 import { normalizeEmail } from './subscriber.logic';
+import type { SubscribeResult } from './subscriber';
 
 /** At most this many rows per call. */
 export const MAX_IMPORT_ROWS = 2000;
@@ -24,6 +25,7 @@ export interface ImportSummary {
   imported: number;
   alreadySubscribed: number;
   matchedExisting: number;
+  /** subscribed to one of several persons with the same email and name: a duplicates task was written */
   ambiguous: number;
   invalid: number;
 }
@@ -62,11 +64,13 @@ export function entryDate(confirmAt: string, today: string): string {
   return valid ? `${y}${m}${d}` : today;
 }
 
-/** Adds one `subscribePerson` result to the summary. */
-export function countResult(summary: ImportSummary, result: { outcome: 'subscribed' | 'alreadySubscribed' | 'ambiguous'; matchedExisting: boolean }): void {
-  if (result.outcome === 'subscribed') {
-    if (result.matchedExisting) summary.matchedExisting++;
-    else summary.imported++;
-  } else if (result.outcome === 'alreadySubscribed') summary.alreadySubscribed++;
-  else summary.ambiguous++;
+/**
+ * Adds one `subscribePerson` result to the summary. `ambiguous` counts the rows subscribed to one of several
+ * persons sharing email and name (R22): the member admins got a task to check the duplicates.
+ */
+export function countResult(summary: ImportSummary, result: SubscribeResult): void {
+  if (result.outcome === 'alreadySubscribed') summary.alreadySubscribed++;
+  else if (result.possibleDuplicates) summary.ambiguous++;
+  else if (result.matchedExisting) summary.matchedExisting++;
+  else summary.imported++;
 }

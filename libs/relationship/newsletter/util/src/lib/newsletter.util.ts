@@ -84,7 +84,7 @@ function csvRecords(text: string): string[][] {
  * are ignored. A UTF-8 BOM, CRLF and LF are accepted. Rows without an email address are skipped.
  */
 export function parseMailchimpCsv(text: string): ImportRow[] {
-  const records = csvRecords(text.replace(/^﻿/, ''));
+  const records = csvRecords(text.replace(/^\uFEFF/, ''));
   if (records.length === 0) return [];
   const header = records[0].map((h) => h.trim().toLowerCase());
   const col = (name: string): number => header.indexOf(name);
