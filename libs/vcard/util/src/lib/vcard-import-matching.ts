@@ -127,8 +127,8 @@ function firstToken(firstName: string | undefined): string {
 
 /**
  * Two first names that cannot be the same person (spec 1.159 §4.1, 2026-11-21): both are given
- * and neither first given name is a prefix of the other. `Lars`/`Barbara` conflict; `Lars`/`L.`,
- * `Lars`/`Lars Peter`, `Chris`/`Christoph` and an empty first name do not.
+ * and neither first given name is a prefix of the other. `Beat`/`Anna` conflict; `Beat`/`B.`,
+ * `Beat`/`Beat Peter`, `Chris`/`Christoph` and an empty first name do not.
  */
 export function firstNamesConflict(a: string | undefined, b: string | undefined): boolean {
   const ta = firstToken(a);
@@ -144,7 +144,7 @@ function findDuplicates(draft: VcardImportDraft, persons: ExistingPerson[], phon
   if (draft.kind === 'org') return [];
   // An email or a phone identifies a household as often as a person (a family address, the
   // home landline only one member is recorded with yet). It never overrides a clearly
-  // different first name — that is how Lars's card was merged into Barbara on 2026-11-15.
+  // different first name — that is how one family member's card was merged into another on 2026-11-15.
   const sameFirstName = (p: ExistingPerson) => !firstNamesConflict(p.firstName, draft.person?.firstName);
   const emails = draftEmails(draft);
   if (emails.length > 0) {

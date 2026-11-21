@@ -3,10 +3,10 @@
  * Audits the persons of one tenant for vCard-import MERGES: another person's card folded into
  * them. READ-ONLY — there is no write path; which rows belong to whom is a human decision.
  *
- * WHY: on 2026-11-15 a bka vCard import merged Lars Kaiser's card into Barbara Kaiser, because
- * she was the only person yet holding the home landline (spec 1.159 §4.1 phone rule). His
- * emails, phones, links and six postal rows landed on her and replicated into her other
- * tenants. The matcher has a first-name guard since 2026-11-21; this script finds the others.
+ * WHY: on 2026-11-15 a bka vCard import merged one family member's card into another, because
+ * the other was the only person yet holding the home landline (spec 1.159 §4.1 phone rule). The
+ * merged card's emails, phones, links and postal rows landed on that person and replicated into
+ * their other tenants. The matcher has a first-name guard since 2026-11-21; this script finds the others.
  *
  * Signals, per person, over the address rows created on --day (Firestore createTime,
  * Europe/Zurich):
