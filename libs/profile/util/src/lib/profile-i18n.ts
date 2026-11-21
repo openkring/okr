@@ -201,6 +201,8 @@ export const PROFILE_I18N_KEYS = {
   push_title:                 PFX + 'push.title',
   push_active:                PFX + 'push.active',
   push_blocked:               PFX + 'push.blocked',
+  push_blocked_ios:           PFX + 'push.blockedIos',
+  push_blocked_android:       PFX + 'push.blockedAndroid',
   push_hint:                  PFX + 'push.hint',
   push_renew:                 PFX + 'push.renew',
   push_enable:                PFX + 'push.enable',

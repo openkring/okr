@@ -263,10 +263,12 @@
   "push": {
     "title": "Notifiche push",
     "active": "Attivo",
-    "blocked": "Bloccato – aprire le impostazioni di sistema → notifiche",
+    "blocked": "Bloccate – puoi attivarle nelle impostazioni del browser per questo sito.",
     "hint": "Attivare per ricevere notifiche anche fuori dall’app.",
     "renew": "Rinnovare",
-    "enable": "Attivare"
+    "enable": "Attivare",
+    "blockedIos": "Bloccate – puoi attivarle nelle impostazioni dell’iPhone, in «Notifiche», per questa app.",
+    "blockedAndroid": "Bloccate – puoi attivarle nelle impostazioni del dispositivo, in «App», per questa app."
   },
   "maintenance": {
     "title": "Manutenzione",

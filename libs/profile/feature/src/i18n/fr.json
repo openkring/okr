@@ -263,10 +263,12 @@
   "push": {
     "title": "Notifications push",
     "active": "Actif",
-    "blocked": "Bloqué – ouvrez les réglages système → notifications",
+    "blocked": "Bloquées – tu peux les activer dans les paramètres de ton navigateur pour ce site.",
     "hint": "Activez pour être notifié également en dehors de l’application.",
     "renew": "Renouveler",
-    "enable": "Activer"
+    "enable": "Activer",
+    "blockedIos": "Bloquées – tu peux les activer dans les réglages de l’iPhone, sous « Notifications », pour cette app.",
+    "blockedAndroid": "Bloquées – tu peux les activer dans les paramètres de ton appareil, sous « Applications », pour cette app."
   },
   "maintenance": {
     "title": "Maintenance",

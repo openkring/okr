@@ -6,7 +6,7 @@ import { AvatarUsages, CalendarSmallScreenViews, LanguageCategory, Languages, Na
 import { AvatarUsage, CalendarSmallScreenView, DefaultLanguage, StartPage, NameDisplay, PersonSortCriteria, RoleName, UserModel } from "@okr/shared-models";
 import { FcmService } from "@okr/shared-data-access";
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, DeliveryChannelsControl, DeliveryChannelsI18n, ErrorNote, TextInput, TextInputI18n } from "@okr/shared-ui";
-import { validateVestTree, vestErrors } from "@okr/shared-util-angular";
+import { isAndroid, isIOS, validateVestTree, vestErrors } from "@okr/shared-util-angular";
 import { coerceBoolean, hasRole, toEditableChannels } from "@okr/shared-util-core";
 
 import { userValidations } from "@okr/user-util";
@@ -117,7 +117,7 @@ const EDITED_FIELDS = [
                       @if (notificationPermission() === 'granted') {
                         <p style="color: var(--ion-color-success)">{{ i18n().push_active() }}</p>
                       } @else if (notificationPermission() === 'denied') {
-                        <p style="color: var(--ion-color-danger)">{{ i18n().push_blocked() }}</p>
+                        <p style="color: var(--ion-color-danger)">{{ pushBlockedText() }}</p>
                       } @else {
                         <p>{{ i18n().push_hint() }}</p>
                       }
@@ -143,6 +143,10 @@ export class ProfileSettingsAccordion {
   protected readonly shortNameLength = SHORT_NAME_LENGTH;
   protected readonly modalController = inject(ModalController);
   protected readonly fcmService = inject(FcmService);
+  // iOS can refuse without a dialog when the app's notifications are off in the iPhone settings
+  // (SCS-JJ) — this button cannot get past that, so name the setting for this device.
+  protected readonly pushBlockedText = computed(() =>
+    isIOS() ? this.i18n().push_blocked_ios() : isAndroid() ? this.i18n().push_blocked_android() : this.i18n().push_blocked());
   protected gravatarEmailI18n = computed(() => ({
     name: 'gravatarEmail',
     label: this.i18n().gravatar_label(),

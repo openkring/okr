@@ -263,10 +263,12 @@
   "push": {
     "title": "Push-Benachrichtigungen",
     "active": "Aktiv",
-    "blocked": "Blockiert – Systemeinstellungen → Mitteilungen öffnen",
+    "blocked": "Blockiert – du kannst sie in den Einstellungen deines Browsers für diese Seite einschalten.",
     "hint": "Aktivieren, um auch ausserhalb der App benachrichtigt zu werden.",
     "renew": "Erneuern",
-    "enable": "Aktivieren"
+    "enable": "Aktivieren",
+    "blockedIos": "Blockiert – du kannst sie in den iPhone-Einstellungen unter «Mitteilungen» bei dieser App einschalten.",
+    "blockedAndroid": "Blockiert – du kannst sie in den Einstellungen deines Geräts unter «Apps» bei dieser App einschalten."
   },
   "maintenance": {
     "title": "Wartung",

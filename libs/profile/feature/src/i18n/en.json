@@ -263,10 +263,12 @@
   "push": {
     "title": "Push notifications",
     "active": "Active",
-    "blocked": "Blocked – open system settings → notifications",
+    "blocked": "Blocked – you can turn them on in your browser settings for this site.",
     "hint": "Enable to be notified outside the app as well.",
     "renew": "Renew",
-    "enable": "Enable"
+    "enable": "Enable",
+    "blockedIos": "Blocked – you can turn them on in the iPhone settings under “Notifications” for this app.",
+    "blockedAndroid": "Blocked – you can turn them on in your device settings under “Apps” for this app."
   },
   "maintenance": {
     "title": "Maintenance",
