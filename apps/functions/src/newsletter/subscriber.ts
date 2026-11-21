@@ -5,7 +5,7 @@
  * are never changed. Member admins get a task when the typed name differs or when the email is ambiguous.
  */
 import { logger } from 'firebase-functions/v2';
-import type { DocumentData, Firestore, Transaction } from 'firebase-admin/firestore';
+import type { DocumentData, DocumentReference, Firestore, Transaction } from 'firebase-admin/firestore';
 
 import {
   AddressCollection, AddressModel, AvatarInfo, NewsletterSource, NewsletterSubscriptionCollection,
@@ -39,14 +39,25 @@ export interface SubscribeInput {
   importConfirmAt?: string;
   /** StoreDate */
   dateOfEntry: string;
+  /**
+   * The sign-up being confirmed (`newsletterSignups/{key}`). Read first in the transaction: when its
+   * `state` is already 'confirmed' nothing is written; otherwise it is set to 'confirmed' in the same
+   * transaction. Serialises a double click on the confirm link — the second transaction retries and
+   * sees the claim.
+   */
+  claimRef?: DocumentReference;
 }
 
-export type SubscribeResult = 'subscribed' | 'alreadySubscribed' | 'ambiguous';
+export interface SubscribeResult {
+  outcome: 'subscribed' | 'alreadySubscribed' | 'ambiguous';
+  /** true when an existing person was used; false when one was created, the email was ambiguous, or the claim was taken */
+  matchedExisting: boolean;
+}
 
 /** What the transaction found out; the tasks are written after it. Names only, never an address. */
 type Outcome =
-  | { result: 'subscribed' | 'alreadySubscribed'; nameDiffers?: { personKey: string; personName: string } }
-  | { result: 'ambiguous'; candidateNames: string[] };
+  | { outcome: 'subscribed' | 'alreadySubscribed'; matchedExisting: boolean; nameDiffers?: { personKey: string; personName: string } }
+  | { outcome: 'ambiguous'; matchedExisting: false; candidateNames: string[] };
 
 const PERSON_PREFIX = 'person.';
 
@@ -81,9 +92,13 @@ function newAddress(tenantId: string, parentKey: string, ownerName: string, patc
   return toDoc(a);
 }
 
-/** The person's addresses of the tenant with this email, with the person's name; archived or foreign rows skipped. */
-async function readCandidates(db: Firestore, tx: Transaction, tenantId: string, email: string): Promise<MatchCandidate[]> {
-  const snap = await tx.get(db.collection(AddressCollection).where('addressChannel', '==', 'email').where('email', '==', email));
+/**
+ * The person's addresses of the tenant with this email, with the person's name; archived or foreign rows
+ * skipped. `emails` are the spellings to look for (normalised and as typed): a vault row stored in mixed
+ * case is found when it was typed the same way.
+ */
+async function readCandidates(db: Firestore, tx: Transaction, tenantId: string, emails: string[]): Promise<MatchCandidate[]> {
+  const snap = await tx.get(db.collection(AddressCollection).where('addressChannel', '==', 'email').where('email', 'in', emails));
   const hits = snap.docs.map((d) => d.data())
     .filter((a) => a['isArchived'] !== true && Array.isArray(a['tenants']) && (a['tenants'] as string[]).includes(tenantId))
     .filter((a) => typeof a['parentKey'] === 'string' && (a['parentKey'] as string).startsWith(PERSON_PREFIX));
@@ -135,19 +150,28 @@ function subscriptionDoc(input: SubscribeInput, personKey: string, personName: s
 export async function subscribePerson(db: Firestore, input: SubscribeInput): Promise<SubscribeResult> {
   const email = normalizeEmail(input.email);
   if (!email || !input.tenantId || !input.groupKey) throw new Error('subscribePerson: tenantId, groupKey and email are required');
+  const spellings = [...new Set([email, input.email.trim()])];
   const typed = { firstName: input.firstName.trim(), lastName: input.lastName.trim() };
   const city = input.city.trim();
 
   const outcome = await db.runTransaction<Outcome>(async (tx) => {
-    const candidates = await readCandidates(db, tx, input.tenantId, email);
+    const claimRef = input.claimRef;
+    if (claimRef) {
+      const claim = await tx.get(claimRef);
+      if (claim.data()?.['state'] === 'confirmed') return { outcome: 'alreadySubscribed', matchedExisting: false };
+    }
+    const candidates = await readCandidates(db, tx, input.tenantId, spellings);
     const decision = decideMatch(candidates, typed);
+    // every read is done; the claim is the first write
+    const markClaimed = (): void => { if (claimRef) tx.update(claimRef, { state: 'confirmed' }); };
 
     if (decision.kind === 'ambiguous') {
       const names = decision.personKeys.map((k) => {
         const c = candidates.find((x) => x.personKey === k);
         return getFullName(c?.firstName, c?.lastName);
       });
-      return { result: 'ambiguous', candidateNames: names };
+      markClaimed();
+      return { outcome: 'ambiguous', matchedExisting: false, candidateNames: names };
     }
 
     if (decision.kind === 'existing') {
@@ -155,13 +179,17 @@ export async function subscribePerson(db: Firestore, input: SubscribeInput): Pro
       const personName = getFullName(c?.firstName, c?.lastName);
       const nameDiffers = decision.nameDiffers ? { personKey: decision.personKey, personName } : undefined;
       if (await hasActiveSubscription(db, tx, input.tenantId, decision.personKey, input.groupKey)) {
-        return { result: 'alreadySubscribed', nameDiffers };
+        markClaimed();
+        // nothing changed for an existing subscriber, so no name task either
+        return { outcome: 'alreadySubscribed', matchedExisting: true };
       }
+      markClaimed();
       tx.create(db.collection(NewsletterSubscriptionCollection).doc(), subscriptionDoc(input, decision.personKey, personName));
-      return { result: 'subscribed', nameDiffers };
+      return { outcome: 'subscribed', matchedExisting: true, nameDiffers };
     }
 
     // create: a new person of this tenant only, with its favourite email (and city)
+    markClaimed();
     const personRef = db.collection(PersonCollection).doc();
     const person = new PersonModel(input.tenantId);
     person.firstName = typed.firstName;
@@ -173,15 +201,17 @@ export async function subscribePerson(db: Firestore, input: SubscribeInput): Pro
     tx.create(personRef, toDoc(person));
     tx.create(db.collection(AddressCollection).doc(), newAddress(input.tenantId, parentKey, personName, { addressChannel: 'email', email }));
     if (city) {
-      // a new person has no other postal address, so this one is the favourite
+      // a new person has no other postal address, so this one is the favourite. Harmless for the 1.164
+      // residence model: onAddressChange tries to link it, a city alone is never an exact swisstopo hit,
+      // so it stays unlinked; move notices come only from the residence callables, never from a write.
       tx.create(db.collection(AddressCollection).doc(), newAddress(input.tenantId, parentKey, personName, { addressChannel: 'postal', city }));
     }
     tx.create(db.collection(NewsletterSubscriptionCollection).doc(), subscriptionDoc(input, personRef.id, personName));
-    return { result: 'subscribed' };
+    return { outcome: 'subscribed', matchedExisting: false };
   });
 
   const typedName = getFullName(typed.firstName, typed.lastName);
-  if (outcome.result === 'ambiguous') {
+  if (outcome.outcome === 'ambiguous') {
     await notifyMemberAdmins(db, input, email, 'ambiguous', {
       name: AMBIGUOUS_TASK_NAME,
       notes: ambiguousTaskNotes(typedName, outcome.candidateNames, input.groupName),
@@ -197,8 +227,8 @@ export async function subscribePerson(db: Firestore, input: SubscribeInput): Pro
     });
   }
   // no email and no name in the log (PII)
-  logger.info(`newsletter subscriber: ${outcome.result} in ${input.tenantId}/${input.groupKey}`);
-  return outcome.result;
+  logger.info(`newsletter subscriber: ${outcome.outcome} in ${input.tenantId}/${input.groupKey}`);
+  return { outcome: outcome.outcome, matchedExisting: outcome.matchedExisting };
 }
 
 interface TaskText {
