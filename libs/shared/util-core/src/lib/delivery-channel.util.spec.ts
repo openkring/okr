@@ -101,4 +101,8 @@ describe('recipient keys', () => {
     expect(isOrgRecipient('org.o1')).toBe(true);
     expect(recipientParentKey('org.o1')).toBe('org.o1');
   });
+
+  it('keeps a household key as it is: a household has no address of its own (spec 1.168)', () => {
+    expect(recipientParentKey('household.h1')).toBe('household.h1');
+  });
 });

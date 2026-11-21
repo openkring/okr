@@ -1,4 +1,4 @@
-import { DEFAULT_DELIVERY_CHANNELS, DeliveryChannel, HouseholdBundle } from '@okr/shared-models';
+import { DEFAULT_DELIVERY_CHANNELS, DeliveryChannel, HOUSEHOLD_RECIPIENT_PREFIX, HouseholdBundle } from '@okr/shared-models';
 
 /**
  * The legacy numeric `DeliveryType` values, in their original order.
@@ -75,9 +75,13 @@ export function isOrgRecipient(key: string): boolean {
   return key.startsWith(ORG_RECIPIENT_PREFIX);
 }
 
-/** The address `parentKey` of a recipient: `org.<okey>` as it is, a bare person okey as `person.<okey>`. */
+/**
+ * The address `parentKey` of a recipient: `org.<okey>` as it is, a bare person okey as `person.<okey>`. A
+ * `household.<okey>` stays as it is: a household has no address of its own (spec 1.168 Q2), its letter uses the
+ * contact's, so the key is never mistaken for a person's.
+ */
 export function recipientParentKey(key: string): string {
-  return isOrgRecipient(key) ? key : `person.${key}`;
+  return isOrgRecipient(key) || key.startsWith(HOUSEHOLD_RECIPIENT_PREFIX) ? key : `person.${key}`;
 }
 
 /** What the server knows about one Versand recipient — never an address value (privacy-model skill). */
