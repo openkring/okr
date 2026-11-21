@@ -1,12 +1,13 @@
 import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
-import { DocumentData, getFirestore } from 'firebase-admin/firestore';
+import { DocumentData, DocumentReference, Firestore, getFirestore, WriteBatch } from 'firebase-admin/firestore';
 
 import {
-  AccountingConfigCollection, AccountingConfigModel,
+  AccountingConfigCollection, AccountingConfigModel, AvatarInfo,
+  CategoryCollection, CategoryItemModel, HouseholdCollection, HouseholdModel, HouseholdTypeCategoryName,
   InvoiceCollection, InvoiceModel,
   InvoicePositionCollection, InvoicePositionModel,
-  MemberFeeCollection, MemberFeeModel, MemberFeePosition,
+  MemberFeeCollection, MemberFeeModel, MemberFeePosition, PersonCollection,
 } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId } from '@okr/shared-util-functions';
 import { addDuration, DateFormat, generateRandomString, getTodayStr, getYear, removeKeyFromOkrModel } from '@okr/shared-util-core';
@@ -14,6 +15,10 @@ import { getFeeTotal } from '@okr/relationship-membership-util';
 import { getInvoiceIndex } from '@okr/finance-invoice-util';
 
 import { withoutUndefined } from '../invoice/invoice.logic';
+import { postalOf } from '../email/mailing-letters';
+import {
+  billedPositions, groupFeesByHousehold, householdInvoiceDraft, sameAddress, withReviewNote,
+} from './household-fees.logic';
 
 const REGION = 'europe-west6';
 
@@ -31,18 +36,8 @@ export function unbookablePositions(fee: Pick<MemberFeeModel, 'positions'>): str
     .map(p => p.label || p.key || p.usage);
 }
 
-/**
- * The fee positions that become invoice positions, with the sign the invoice needs. A zero amount
- * is left out (an `E` Eintrittsgebühr kept at 0 for everyone, a rebate that only records a reason):
- * `issueInvoice` refuses any zero position (`invalid-amount`), so one would block the whole draft.
- * A rebate is stored positive on the fee row (`getFeeTotal` subtracts it) but must be NEGATIVE on
- * the invoice — `issueInvoice` sums and books signed amounts and does not look at the type.
- */
-export function billedPositions(fee: Pick<MemberFeeModel, 'positions'>): MemberFeePosition[] {
-  return (fee.positions ?? [])
-    .filter(p => Number(p.amount) !== 0)
-    .map(p => p.type === 'rebate' ? { ...p, amount: -Math.abs(p.amount) } : p);
-}
+// Moved to household-fees.logic (shared with the household draft); re-exported for existing callers.
+export { billedPositions };
 
 /**
  * Why the books may not be posted for the caller's tenant (spec 1.108, D5), or undefined when they
@@ -106,6 +101,11 @@ export function memberFeeDraft(
  * uploadToBexio/createBexioInvoice: `AccountingConfigModel.accountingBackend` decides which path
  * a tenant's UI calls, and this callable also refuses to run for a 'bexio' tenant — defense in
  * depth in case something ever calls it directly instead of going through the store's routing.
+ *
+ * Households (spec 1.168 §5/§5.1): the rows whose members share a live household with a payer are
+ * posted as ONE invoice to the payer (one batch: invoice, all positions, every row), capped by the
+ * `household_type` item's `feeCap` («Familienrabatt»). When the members (with a row) and the payer
+ * do not share one favourite postal address, those rows go to `review` with a note instead.
  */
 export const postMemberFees = onCall(
   { region: REGION, enforceAppCheck: true, timeoutSeconds: 540 },
@@ -174,53 +174,143 @@ export const postMemberFees = onCall(
     const dueDate = addDuration(invoiceDate, { days: 30 });
 
     let invoiced = 0;
+    let review = 0;
     const failed: { member: string; positions: string[] }[] = [];
-    for (const feeDoc of feeDocs) {
-      const fee = feeDoc.data() as MemberFeeModel;
+    const rowRef = new Map<MemberFeeModel, DocumentReference>();
+    const rows = feeDocs.map(d => {
+      const fee = { ...(d.data() as MemberFeeModel), okey: d.id };
+      rowRef.set(fee, d.ref);
+      return fee;
+    });
+    const refOf = (fee: MemberFeeModel): DocumentReference => rowRef.get(fee) as DocumentReference;
+    const memberOf = (fee: MemberFeeModel): string => fee.member?.label || fee.member?.key || fee.okey;
 
+    // Spec 1.168 §5: the rows of a household with a payer become ONE invoice to the payer.
+    const households = await loadHouseholds(db, tenantId);
+    const householdTypes = await loadHouseholdTypes(db, tenantId);
+    const { groups, singles } = groupFeesByHousehold(rows, households);
+
+    for (const group of groups) {
+      const unbookableRows = group.rows.map(fee => ({ fee, unbookable: unbookablePositions(fee) })).filter(x => x.unbookable.length > 0);
+      if (unbookableRows.length > 0) {
+        // The whole household waits: posting the rest would cap an incomplete invoice.
+        for (const { fee, unbookable } of unbookableRows) {
+          logger.error(`${CF_NAME}: ${memberOf(fee)} has position(s) without a revenue account: ${unbookable.join(', ')} — household ${group.household.okey} skipped`);
+          failed.push({ member: memberOf(fee), positions: unbookable });
+        }
+        continue;
+      }
+
+      const payer = await payerOf(db, group.household.payerKey);
+      if (!payer) {
+        logger.warn(`${CF_NAME}: payer of household ${group.household.okey} not found — its ${group.rows.length} row(s) are posted one by one`);
+        singles.push(...group.rows);
+        continue;
+      }
+
+      // Same address: members with a row plus the payer. Only the yes/no is used, never an address value.
+      const personKeys = [...new Set([...group.rows.map(r => r.member?.key ?? ''), group.household.payerKey])];
+      const postals = await Promise.all(personKeys.map(key => key ? postalOf(db, `person.${key}`, tenantId) : Promise.resolve(undefined)));
+      if (!sameAddress(postals)) {
+        const batch = db.batch();
+        for (const fee of group.rows) batch.update(refOf(fee), { state: 'review', notes: withReviewNote(fee.notes) });
+        await batch.commit();
+        review += group.rows.length;
+        logger.warn(`${CF_NAME}: household ${group.household.okey} does not share one address — ${group.rows.length} row(s) set to review`);
+        continue;
+      }
+
+      const type = householdTypes.find(t => t.name === group.household.type);
+      const { invoice, positions } = householdInvoiceDraft(group, payer, {
+        tenantId, accountingTenantId, year: scheduleYear, invoiceDate, dueDate,
+        feeCap: type?.feeCap, feeCapOnlyMembershipFee: type?.feeCapOnlyMembershipFee,
+      });
+      // One batch per household: invoice, every position and every row — never half-posted.
+      const batch = db.batch();
+      const invoiceKey = writeInvoice(db, batch, tenantId, scheduleYear, invoice, positions);
+      for (const fee of group.rows) batch.update(refOf(fee), { invoiceKey, state: 'invoiced' });
+      await batch.commit();
+      invoiced += group.rows.length;
+    }
+
+    for (const fee of singles) {
       const unbookable = unbookablePositions(fee);
       if (unbookable.length > 0) {
-        const member = fee.member?.label || fee.member?.key || feeDoc.id;
+        const member = memberOf(fee);
         logger.error(`${CF_NAME}: ${member} has position(s) without a revenue account: ${unbookable.join(', ')} — skipped`);
         failed.push({ member, positions: unbookable });
         continue;
       }
 
       const invoice = memberFeeDraft(fee, { tenantId, accountingTenantId, year: scheduleYear, invoiceDate, dueDate });
-
-      const invoiceKey = generateRandomString(20);
-      const invoiceRef = db.collection(InvoiceCollection).doc(invoiceKey);
-
       const batch = db.batch();
-      batch.set(invoiceRef, withoutUndefined(removeKeyFromOkrModel(invoice)));
-
-      for (const [index, p] of billedPositions(fee).entries()) {
-        const position = new InvoicePositionModel(tenantId);
-        position.sortOrder = index; // spec 1.84 K3
-        position.invoiceKey = invoiceKey;
-        position.name = p.label;
-        position.amount = p.amount;
-        position.invoicePositionUsage = p.usage;
-        position.invoicePositionType = p.type;
-        position.accountKey = p.accountKey;
-        position.vatCodeKey = p.vatCodeKey;
-        position.description = p.description ?? '';
-        position.personKey = fee.member?.key ?? '';
-        position.firstName = fee.member?.name1 ?? '';
-        position.lastName = fee.member?.name2 ?? '';
-        position.year = scheduleYear;
-
-        const positionKey = generateRandomString(20);
-        batch.set(db.collection(InvoicePositionCollection).doc(positionKey), removeKeyFromOkrModel(position));
-      }
-
-      batch.update(feeDoc.ref, { invoiceKey, state: 'invoiced' });
+      const invoiceKey = writeInvoice(db, batch, tenantId, scheduleYear, invoice,
+        billedPositions(fee).map(p => ({ ...p, member: fee.member })));
+      batch.update(refOf(fee), { invoiceKey, state: 'invoiced' });
 
       await batch.commit();
       invoiced++;
     }
 
-    logger.info(`${CF_NAME}: posted ${invoiced} of ${feeDocs.length} 'ready' member-fee(s) for tenant ${tenantId} (accountingTenantId ${accountingTenantId}), ${failed.length} skipped`);
-    return { processed: feeDocs.length, invoiced, failed };
+    logger.info(`${CF_NAME}: posted ${invoiced} of ${feeDocs.length} 'ready' member-fee(s) for tenant ${tenantId} (accountingTenantId ${accountingTenantId}), ${failed.length} skipped, ${review} set to review`);
+    // `invoiced` still counts fee ROWS posted (a household invoice counts each of its rows);
+    // `review` (spec 1.168) counts rows held back because their household no longer shares one address.
+    return { processed: feeDocs.length, invoiced, failed, review };
   },
 );
+
+/**
+ * Adds an invoice and its positions to `batch`; returns the new invoice key. Every position keeps
+ * the person it is billed for (the row's member; the household rebate carries the payer).
+ */
+function writeInvoice(
+  db: Firestore, batch: WriteBatch, tenantId: string, year: number,
+  invoice: InvoiceModel, positions: (MemberFeePosition & { member: AvatarInfo | undefined })[],
+): string {
+  const invoiceKey = generateRandomString(20);
+  batch.set(db.collection(InvoiceCollection).doc(invoiceKey), withoutUndefined(removeKeyFromOkrModel(invoice)));
+  for (const [index, p] of positions.entries()) {
+    const position = new InvoicePositionModel(tenantId);
+    position.sortOrder = index; // spec 1.84 K3
+    position.invoiceKey = invoiceKey;
+    position.name = p.label;
+    position.amount = p.amount;
+    position.invoicePositionUsage = p.usage;
+    position.invoicePositionType = p.type;
+    position.accountKey = p.accountKey;
+    position.vatCodeKey = p.vatCodeKey;
+    position.description = p.description ?? '';
+    position.personKey = p.member?.key ?? '';
+    position.firstName = p.member?.name1 ?? '';
+    position.lastName = p.member?.name2 ?? '';
+    position.year = year;
+    batch.set(db.collection(InvoicePositionCollection).doc(generateRandomString(20)), removeKeyFromOkrModel(position));
+  }
+  return invoiceKey;
+}
+
+/** The tenant's live households (spec 1.168); archived ones are filtered in memory. */
+async function loadHouseholds(db: Firestore, tenantId: string): Promise<HouseholdModel[]> {
+  const snap = await db.collection(HouseholdCollection).where('tenants', 'array-contains', tenantId).get();
+  return snap.docs.map(d => ({ ...(d.data() as HouseholdModel), okey: d.id })).filter(h => h.isArchived !== true);
+}
+
+/** The items of the tenant's `household_type` category list (they carry `feeCap`). */
+async function loadHouseholdTypes(db: Firestore, tenantId: string): Promise<CategoryItemModel[]> {
+  const snap = await db.collection(CategoryCollection)
+    .where('name', '==', HouseholdTypeCategoryName)
+    .where('tenants', 'array-contains', tenantId)
+    .get();
+  return snap.docs.flatMap(d => (d.data()['items'] as CategoryItemModel[] | undefined) ?? []);
+}
+
+/** The payer as an AvatarInfo, read from `persons/{payerKey}`; undefined when the person is missing. */
+async function payerOf(db: Firestore, payerKey: string): Promise<AvatarInfo | undefined> {
+  if (!payerKey || payerKey.includes('/')) return undefined;
+  const snap = await db.collection(PersonCollection).doc(payerKey).get();
+  if (!snap.exists) return undefined;
+  const p = snap.data() ?? {};
+  const name1 = String(p['firstName'] ?? '');
+  const name2 = String(p['lastName'] ?? '');
+  return { key: payerKey, name1, name2, modelType: 'person', type: '', subType: '', label: `${name1} ${name2}`.trim() };
+}

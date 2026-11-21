@@ -1,6 +1,19 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { billedPositions, booksOfTenantRefusal, isPostableRow, memberFeeDraft, unbookablePositions } from './post-member-fees';
+vi.mock('firebase-functions/v2', () => ({ logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() } }));
+vi.mock('firebase-functions/v2/https', () => ({
+  onCall: (_o: unknown, h: unknown) => h,
+  HttpsError: class HttpsError extends Error { constructor(public code: string, m: string) { super(m); } },
+}));
+vi.mock('firebase-admin/firestore', async (importOriginal) => ({ ...(await importOriginal<object>()), getFirestore: vi.fn() }));
+vi.mock('@okr/shared-util-functions', () => ({
+  checkAppCheckToken: vi.fn(), checkAuthentication: vi.fn(), checkRoles: vi.fn(), getCallerTenantId: vi.fn(async () => 'scs'),
+}));
+vi.mock('../email/mailing-letters', () => ({ postalOf: vi.fn() }));
+
+import { getFirestore } from 'firebase-admin/firestore';
+import { postalOf } from '../email/mailing-letters';
+import { billedPositions, booksOfTenantRefusal, isPostableRow, memberFeeDraft, postMemberFees, unbookablePositions } from './post-member-fees';
 import { issueBlockers, issueHeaderBlockers } from '../invoice/invoice.logic';
 import type { MemberFeePosition } from '@okr/shared-models';
 
@@ -131,5 +144,119 @@ describe('booksOfTenantRefusal (spec 1.108, D5)', () => {
   });
   it('refuses archived books', () => {
     expect(booksOfTenantRefusal({ tenants: ['scs'], isArchived: true }, 'scs')).toBe('archived');
+  });
+});
+
+// ---- callable: households (spec 1.168 §5) ------------------------------------------------------------
+
+type Doc = Record<string, unknown>;
+interface Write { op: 'set' | 'update'; path: string; data: Doc }
+
+/** A tiny in-memory Firestore: `where` (== / array-contains), `count`, `doc().get()` and batches. */
+function fakeDb(data: Record<string, Record<string, Doc>>) {
+  const writes: Write[] = [];
+  let commits = 0;
+  const docRef = (col: string, id: string) => ({
+    id, path: `${col}/${id}`,
+    get: async () => ({ id, exists: data[col]?.[id] !== undefined, data: () => data[col]?.[id] }),
+  });
+  const query = (col: string, filters: [string, string, unknown][]) => {
+    const docs = () => Object.entries(data[col] ?? {})
+      .filter(([, d]) => filters.every(([f, op, v]) => op === 'array-contains'
+        ? Array.isArray(d[f]) && (d[f] as unknown[]).includes(v) : d[f] === v))
+      .map(([id, d]) => ({ id, ref: docRef(col, id), data: () => d }));
+    return {
+      where: (f: string, op: string, v: unknown) => query(col, [...filters, [f, op, v]]),
+      get: async () => ({ docs: docs() }),
+      count: () => ({ get: async () => ({ data: () => ({ count: docs().length }) }) }),
+      doc: (id: string) => docRef(col, id),
+    };
+  };
+  const db = {
+    collection: (col: string) => query(col, []),
+    batch: () => {
+      const pending: Write[] = [];
+      return {
+        set: (ref: { path: string }, d: Doc) => { pending.push({ op: 'set', path: ref.path, data: d }); },
+        update: (ref: { path: string }, d: Doc) => { pending.push({ op: 'update', path: ref.path, data: d }); },
+        commit: async () => { writes.push(...pending); commits++; },
+      };
+    },
+  };
+  return { db, writes, commits: () => commits };
+}
+
+describe('postMemberFees — households (spec 1.168)', () => {
+  const avatar = (key: string, name1: string) => ({ key, name1, name2: 'Muster', modelType: 'person', type: '', subType: '', label: `${name1} Muster` });
+  const feeRow = (personKey: string, name1: string, amount: number) => ({
+    tenants: ['scs'], accountingTenantId: 'scs', isArchived: false, state: 'ready', notes: '',
+    member: avatar(personKey, name1), positions: [position({ amount })],
+  });
+  const seed = () => ({
+    'accounting-configs': { scs: { tenants: ['scs'], isArchived: false, accountingBackend: 'native' } },
+    'member-fees': {
+      f1: feeRow('anna', 'Anna', 400), f2: feeRow('ben', 'Ben', 400), f3: feeRow('cleo', 'Cleo', 150),
+      f4: feeRow('dora', 'Dora', 320),
+    },
+    households: {
+      h1: { tenants: ['scs'], isArchived: false, name: 'Familie Muster', type: 'family', memberKeys: ['anna', 'ben', 'cleo'], payerKey: 'anna', contactKey: 'anna' },
+    },
+    categories: { c1: { name: 'household_type', tenants: ['scs'], items: [{ name: 'family', feeCap: 600 }] } },
+    persons: { anna: { firstName: 'Anna', lastName: 'Muster' } },
+  });
+  const postal = { street: 'Seestrasse 4', zipCity: '8712 Stäfa', streetName: 'Seestrasse', streetNumber: '4', zipCode: '8712', city: 'Stäfa', countryCode: 'CH' };
+  const call = () => (postMemberFees as unknown as (r: unknown) => Promise<Record<string, unknown>>)({ data: { accountingTenantId: 'scs' } });
+
+  beforeEach(() => vi.mocked(postalOf).mockReset());
+
+  it('posts one capped invoice for the household and gives every row the same invoiceKey', async () => {
+    const fake = fakeDb(seed());
+    vi.mocked(getFirestore).mockReturnValue(fake.db as never);
+    vi.mocked(postalOf).mockResolvedValue(postal);
+
+    const result = await call();
+
+    const invoices = fake.writes.filter(w => w.op === 'set' && w.path.startsWith('invoices/'));
+    expect(invoices).toHaveLength(2); // the household + Dora alone
+    const household = invoices.find(w => (w.data['receiver'] as { key: string }).key === 'anna');
+    expect(household?.data['totalAmount']).toMatchObject({ amount: 60000 });
+    const key = household?.path.split('/')[1];
+    const rowUpdates = fake.writes.filter(w => w.op === 'update' && ['member-fees/f1', 'member-fees/f2', 'member-fees/f3'].includes(w.path));
+    expect(rowUpdates.map(w => w.data)).toEqual([
+      { invoiceKey: key, state: 'invoiced' }, { invoiceKey: key, state: 'invoiced' }, { invoiceKey: key, state: 'invoiced' },
+    ]);
+    const positions = fake.writes.filter(w => w.path.startsWith('invoice-positions/') && w.data['invoiceKey'] === key);
+    expect(positions.map(w => [w.data['personKey'], w.data['amount']])).toEqual([['anna', 400], ['ben', 400], ['cleo', 150], ['anna', -350]]);
+    expect(positions[3].data['name']).toBe('Familienrabatt');
+    expect(result).toMatchObject({ processed: 4, invoiced: 4, failed: [], review: 0 });
+    expect(fake.commits()).toBe(2); // one batch per household, one per single
+  });
+
+  it('sets the household rows to review instead of posting them when the addresses differ', async () => {
+    const fake = fakeDb(seed());
+    vi.mocked(getFirestore).mockReturnValue(fake.db as never);
+    vi.mocked(postalOf).mockImplementation(async (_db, parentKey) => parentKey === 'person.ben' ? { ...postal, zipCode: '8001' } : postal);
+
+    const result = await call();
+
+    const invoices = fake.writes.filter(w => w.op === 'set' && w.path.startsWith('invoices/'));
+    expect(invoices).toHaveLength(1); // only Dora
+    const reviewed = fake.writes.filter(w => w.op === 'update' && w.data['state'] === 'review');
+    expect(reviewed.map(w => w.path)).toEqual(['member-fees/f1', 'member-fees/f2', 'member-fees/f3']);
+    expect(reviewed[0].data['notes']).toBe('Wohnen nicht mehr an derselben Adresse');
+    expect(result).toMatchObject({ processed: 4, invoiced: 1, review: 3 });
+  });
+
+  it('posts the household rows one by one when the payer person is missing', async () => {
+    const data = seed();
+    data.persons = {} as never;
+    const fake = fakeDb(data);
+    vi.mocked(getFirestore).mockReturnValue(fake.db as never);
+    vi.mocked(postalOf).mockResolvedValue(postal);
+
+    const result = await call();
+
+    expect(fake.writes.filter(w => w.op === 'set' && w.path.startsWith('invoices/'))).toHaveLength(4);
+    expect(result).toMatchObject({ invoiced: 4, review: 0 });
   });
 });
