@@ -309,6 +309,53 @@ describe('beforeSend and Edge-iOS injected rejections (SCS-B2)', () => {
   });
 });
 
+describe('beforeSend and Google-app injected inline script (SCS-JM)', () => {
+  const GSA_UA =
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 26_6_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) GSA/447.9.1016606130 Mobile/15E148 Safari/604.1';
+  const SAFARI_UA =
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 26_6_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Mobile/15E148 Safari/604.1';
+  const PAGE = 'https://app.seeclub.org/private/dashboard/c-contentpage';
+
+  const rejection = (absPaths: string[]): ErrorEvent =>
+    ({
+      environment: 'production',
+      exception: {
+        values: [{
+          type: 'Error',
+          value: 'Na',
+          mechanism: { type: 'auto.browser.global_handlers.onunhandledrejection', handled: false },
+          stacktrace: { frames: absPaths.map((abs_path, i) => ({ abs_path, filename: new URL(abs_path).pathname, function: i === 1 ? 'zi' : undefined, lineno: 202 + i })) },
+        }],
+      },
+    }) as unknown as ErrorEvent;
+
+  const withUserAgent = (ua: string): void => { vi.stubGlobal('navigator', { userAgent: ua }); };
+
+  beforeEach(() => vi.stubGlobal('location', new URL(PAGE)));
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('drops an error whose every frame is in the page document in the Google app', () => {
+    withUserAgent(GSA_UA);
+    expect(beforeSend(rejection([PAGE, PAGE, PAGE]), {})).toBeNull();
+  });
+
+  it('keeps it when one frame is in one of our script chunks', () => {
+    withUserAgent(GSA_UA);
+    expect(beforeSend(rejection([PAGE, 'https://app.seeclub.org/chunk-CdBxgH90.js']), {})).not.toBeNull();
+  });
+
+  it('keeps the same inline-only error in any other browser', () => {
+    withUserAgent(SAFARI_UA);
+    expect(beforeSend(rejection([PAGE, PAGE]), {})).not.toBeNull();
+  });
+
+  it('keeps an error without frames in the Google app', () => {
+    withUserAgent(GSA_UA);
+    const event = { environment: 'production', exception: { values: [{ type: 'Error', value: 'Na' }] } } as unknown as ErrorEvent;
+    expect(beforeSend(event, {})).not.toBeNull();
+  });
+});
+
 describe('file-transfer token scrubbing (spec 1.115)', () => {
   const TOKEN = 'AbC-123_xyzAbC-123_xyzAbC-123_xyzAbC-123_x';
 

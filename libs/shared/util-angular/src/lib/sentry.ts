@@ -146,6 +146,13 @@ export function beforeSend(event: ErrorEvent, _hint: EventHint): ErrorEvent | nu
   );
   if (fromInjectedScanner) return null;
 
+  // The same Google iOS app injects more inline script than the DOM walker above (SCS-JM:
+  // "Error: Na" from a minified `zi`, thrown as the network dropped, frames at lines 202–521
+  // of a 110-line index.html). Function names are minified and change per app version, so
+  // match the shape instead: in the Google app, an event whose every frame sits in the page
+  // document rather than a script file came from injected code. Ours always ships as .js chunks.
+  if (isGoogleAppIos() && isFromInlinePageScriptOnly(event)) return null;
+
   // Edge on iOS injects its own scripts (translator, Copilot, read-aloud …) that reject with a
   // bare `{ status: 504, message: 'Gateway Timeout', details: {} }` when their Microsoft backend
   // times out (SCS-B2, and in hindsight SCS-A8: 15 of 15 events Edge iOS, no other browser).
@@ -176,6 +183,25 @@ const EDGE_IOS_QUIET_MS = 60_000;
 /** Microsoft Edge on iOS identifies itself with an `EdgiOS/<version>` user-agent token. */
 function isEdgeIos(): boolean {
   return /\bEdgiOS\//.test(globalThis.navigator?.userAgent ?? '');
+}
+
+/** The Google iOS app (its in-app browser) identifies itself with a `GSA/<version>` user-agent token. */
+function isGoogleAppIos(): boolean {
+  return /\bGSA\//.test(globalThis.navigator?.userAgent ?? '');
+}
+
+/**
+ * True when the event has frames and every one of them points at the page document itself
+ * (`/private/…`, `https://host/…`) instead of a `.js`/`.mjs` script file — i.e. inline script.
+ */
+function isFromInlinePageScriptOnly(event: ErrorEvent): boolean {
+  const frames = event.exception?.values?.flatMap((v) => v.stacktrace?.frames ?? []) ?? [];
+  if (frames.length === 0) return false;
+  return frames.every((f) => {
+    const file = (f.abs_path ?? f.filename ?? '').split(/[?#]/)[0];
+    if (!file || !/^(\/|https?:\/\/)/.test(file)) return false;
+    return !/\.m?js$/i.test(file);
+  });
 }
 
 /** The `{ status, message, details }`-style payload Sentry serialises for object rejections. */
