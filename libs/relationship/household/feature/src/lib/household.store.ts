@@ -72,13 +72,17 @@ export const HouseholdStore = signalStore(
     /**
      * Opens the person's household in the edit modal — or, for an admin, a new one containing the person — and saves
      * it on confirm. A member without a household gets a hint instead.
+     *
+     * Returns the household as saved (the callable's okey plus the edited data), or `undefined` when nothing was
+     * saved (cancelled, refused, no household). Callers show this instead of re-reading: a cached query stream can
+     * still hold the household as it was before the edit.
      */
-    async edit(personKey: string, mode: HouseholdEditMode): Promise<void> {
-      if (!personKey) return;
+    async edit(personKey: string, mode: HouseholdEditMode): Promise<HouseholdModel | undefined> {
+      if (!personKey) return undefined;
       const existing = await store.findForPerson(personKey, mode);
       if (!existing && mode !== 'admin') {
         await showToast(store.toastController, HOUSEHOLD_I18N_KEYS.no_household);
-        return;
+        return undefined;
       }
       const household = existing ?? store.newHousehold(personKey);
       const { HouseholdEditModal } = await import('./household-edit.modal');
@@ -92,9 +96,9 @@ export const HouseholdStore = signalStore(
       });
       await modal.present();
       const { data, role } = await modal.onWillDismiss<HouseholdModel>();
-      if (role === 'confirm' && data) {
-        await store.save(data);
-      }
+      if (role !== 'confirm' || !data) return undefined;
+      const okey = await store.save(data);
+      return okey ? { ...data, okey } : undefined;
     },
   })),
 );

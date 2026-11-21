@@ -10,6 +10,11 @@ import { ProfileI18n } from '@okr/profile-util';
 import { confirm, showToast } from '@okr/shared-util-angular';
 import { getFullName, getItemLabel, readBundle, removeHouseholdMember } from '@okr/shared-util-core';
 
+/** Whether the saved household still shows in «Mein Haushalt»: the person is a member and it was not dissolved. */
+function stillMyHousehold(h: HouseholdModel, personKey: string): boolean {
+  return h.memberKeys.includes(personKey) && h.memberKeys.length >= 2;
+}
+
 /**
  * «Mein Haushalt» (spec 1.168 §7/§8): shown in the profile only while the member belongs to a household. The member
  * may change name, payer, contact and bundle (the edit modal in member mode) or leave the household. A household that
@@ -130,8 +135,9 @@ export class HouseholdAccordion {
     this.busy.set(true);
     try {
       const { HouseholdStore } = await import('@okr/relationship-household-feature');
-      await this.injector.get(HouseholdStore).edit(this.personKey(), 'member');
-      await this.load();
+      // the saved household as returned by the save, not re-read: the cached query stream may still hold the old one
+      const saved = await this.injector.get(HouseholdStore).edit(this.personKey(), 'member');
+      if (saved) this.household.set(stillMyHousehold(saved, this.personKey()) ? saved : undefined);
     } finally {
       this.busy.set(false);
     }
