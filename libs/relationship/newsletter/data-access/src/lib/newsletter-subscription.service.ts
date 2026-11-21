@@ -7,7 +7,16 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { FirestoreService } from '@okr/shared-data-access';
 import { confirm, showToast } from '@okr/shared-util-angular';
 import { DbQuery, NewsletterSubscriptionCollection, NewsletterSubscriptionModel } from '@okr/shared-models';
-import { isActiveSubscription } from '@okr/relationship-newsletter-util';
+import { ImportRow, isActiveSubscription } from '@okr/relationship-newsletter-util';
+
+/** The outcome of an import: how many rows ended where. */
+export interface ImportSummary {
+  imported: number;
+  alreadySubscribed: number;
+  matchedExisting: number;
+  ambiguous: number;
+  invalid: number;
+}
 
 /** The texts of the subscriber's «abbestellen» dialog and its toasts, already translated. */
 export interface LeaveTexts {
@@ -68,6 +77,12 @@ export class NewsletterSubscriptionService {
   public async leave(tenantId: string, subscriptionKey: string): Promise<void> {
     const fn = httpsCallable<{ tenantId: string; subscriptionKey: string }, { ok: true }>(this.functions, 'leaveNewsletter');
     await fn({ tenantId, subscriptionKey });
+  }
+
+  /** Imports parsed Mailchimp rows into a newsletter (`importNewsletterSubscribers`); answers five counts, never an address. */
+  public async importRows(tenantId: string, groupKey: string, rows: ImportRow[]): Promise<ImportSummary> {
+    const fn = httpsCallable<{ tenantId: string; groupKey: string; rows: ImportRow[] }, ImportSummary>(this.functions, 'importNewsletterSubscribers');
+    return (await fn({ tenantId, groupKey, rows })).data;
   }
 
   /**

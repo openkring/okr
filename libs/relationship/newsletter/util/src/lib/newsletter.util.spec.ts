@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { AVATAR_INFO_SHAPE, AvatarInfo, GroupModel, NewsletterSubscriptionModel, UserModel } from '@okr/shared-models';
 
-import { activeSubscribers, canSeeSubscribers, isActiveSubscription, mayPostNewsletter, newsletterGroups } from './newsletter.util';
+import { activeSubscribers, canSeeSubscribers, isActiveSubscription, mayPostNewsletter, newsletterGroups, parseMailchimpCsv } from './newsletter.util';
 
 function sub(fields: Partial<NewsletterSubscriptionModel> = {}): NewsletterSubscriptionModel {
   return { ...new NewsletterSubscriptionModel('scs'), okey: 's1', personKey: 'p1', personName: 'Anna Muster', groupKey: 'n1', dateOfEntry: '20260101', ...fields };
@@ -81,5 +81,32 @@ describe('mayPostNewsletter', () => {
   it('keeps a newsletter admin without such a role from sending letters', () => {
     expect(mayPostNewsletter(user({ registered: true }))).toBe(false);
     expect(mayPostNewsletter(undefined)).toBe(false);
+  });
+});
+
+describe('parseMailchimpCsv', () => {
+  const HEAD = 'Email Address,First Name,Last Name,MEMBER_RATING,OPTIN_TIME,CONFIRM_TIME';
+  it('reads the five columns and ignores the others', () => {
+    const rows = parseMailchimpCsv(`${HEAD}\nanna@x.ch,Anna,Muster,2,2020-03-14 15:00:00,2020-03-14 15:09:26`);
+    expect(rows).toEqual([{ email: 'anna@x.ch', firstName: 'Anna', lastName: 'Muster', optinAt: '2020-03-14 15:00:00', confirmAt: '2020-03-14 15:09:26' }]);
+  });
+  it('handles a BOM, CRLF and a trailing newline', () => {
+    const rows = parseMailchimpCsv(`\uFEFF${HEAD}\r\na@x.ch,A,B,1,,\r\nc@x.ch,C,D,1,,\r\n`);
+    expect(rows.map((r) => r.email)).toEqual(['a@x.ch', 'c@x.ch']);
+  });
+  it('handles quoted commas, escaped quotes and line breaks in a field', () => {
+    const rows = parseMailchimpCsv(`${HEAD}\n"a@x.ch","Müller, Anna","O""Neil",1,,\n"b@x.ch","Li\nsa",K,1,,`);
+    expect(rows[0].firstName).toBe('Müller, Anna');
+    expect(rows[0].lastName).toBe('O"Neil');
+    expect(rows[1].firstName).toBe('Li\nsa');
+  });
+  it('matches headers case-insensitively and in any order', () => {
+    const rows = parseMailchimpCsv('confirm_time,LAST NAME,email address\n2021-01-02 00:00:00,B,a@x.ch');
+    expect(rows).toEqual([{ email: 'a@x.ch', firstName: '', lastName: 'B', optinAt: '', confirmAt: '2021-01-02 00:00:00' }]);
+  });
+  it('skips rows without an email and returns nothing without an email column', () => {
+    expect(parseMailchimpCsv(`${HEAD}\n,A,B,1,,\nc@x.ch,C,D,1,,`).map((r) => r.email)).toEqual(['c@x.ch']);
+    expect(parseMailchimpCsv('Name\nAnna')).toEqual([]);
+    expect(parseMailchimpCsv('')).toEqual([]);
   });
 });

@@ -20,5 +20,20 @@
   "leave_notice": "Cancelar la suscripción al boletín",
   "leave_confirm": "¿Quieres cancelar tu suscripción al boletín {name}?",
   "leave_done": "Has cancelado tu suscripción.",
-  "leave_error": "No se pudo cancelar la suscripción. Inténtalo de nuevo más tarde."
+  "leave_error": "No se pudo cancelar la suscripción. Inténtalo de nuevo más tarde.",
+  "import": "Importar suscriptores de Mailchimp",
+  "import_title": "Importar suscriptores",
+  "import_hint": "Elige el archivo CSV que exportaste de Mailchimp (solo contactos con el estado «subscribed»). El archivo se lee solo en tu navegador y no se guarda en ningún sitio. Los suscriptores conservan el consentimiento que ya dieron y no reciben un nuevo correo de confirmación.",
+  "import_file": "Archivo CSV",
+  "import_run": "Importar",
+  "import_running": "Importando …",
+  "import_error": "La importación no ha funcionado. Revisa el archivo e inténtalo de nuevo.",
+  "import_no_rows": "No hemos encontrado suscriptores en el archivo. ¿Contiene la columna «Email Address»?",
+  "import_too_many": "El archivo es demasiado grande. Divídelo en archivos con un máximo de {max} suscriptores.",
+  "import_result": "Resultado",
+  "import_imported": "Importados ahora",
+  "import_already": "Ya estaban suscritos",
+  "import_matched": "Vinculados a una persona existente",
+  "import_ambiguous": "No claro (se creó una tarea para la administración de socios)",
+  "import_invalid": "Dirección de correo no válida"
 }

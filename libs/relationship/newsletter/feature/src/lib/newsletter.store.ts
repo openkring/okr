@@ -9,7 +9,7 @@ import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { NewsletterSubscriptionModel } from '@okr/shared-models';
 import { AlertService, showToast } from '@okr/shared-util-angular';
-import { fill, nameMatches } from '@okr/shared-util-core';
+import { fill, hasRole, nameMatches } from '@okr/shared-util-core';
 
 import type { VersandRecipient } from '@okr/content-pdf-template-feature';
 import { NewsletterSubscriptionService } from '@okr/relationship-newsletter-data-access';
@@ -56,6 +56,11 @@ export const NewsletterStore = signalStore(
   withComputed((store) => ({
     /** Mirrors the read rule: without it the query would only be refused. */
     canSee: computed(() => canSeeSubscribers(store.group(), store.currentUser())),
+    /** The import is for member admins and admins only (a newsletter's own admins may not). */
+    canImport: computed(() => {
+      const user = store.currentUser();
+      return !!store.group() && !!user && (hasRole('memberAdmin', user));
+    }),
   })),
   withProps((store) => ({
     subscriptionsResource: rxResource({
@@ -108,6 +113,23 @@ export const NewsletterStore = signalStore(
         appStore: store.appStore,
         tenantId: store.tenantId(),
       }, recipients, undefined, undefined, group.okey, { newsletter: true });
+    },
+
+    /**
+     * Opens the Mailchimp import for this newsletter (member admins and admins only — the callable checks
+     * it again). The modal is loaded on demand.
+     */
+    async openImport(): Promise<void> {
+      const group = store.group();
+      if (!group || !store.canImport()) return;
+      const { NewsletterImportModal } = await import('./newsletter-import.modal');
+      const modal = await store.modalController.create({
+        component: NewsletterImportModal,
+        cssClass: 'modal-narrow',
+        componentProps: { tenantId: store.tenantId(), groupKey: group.okey },
+      });
+      await modal.present();
+      await modal.onWillDismiss();
     },
 
     /** Ends one subscription after a confirmation; the server sets `dateOfExit` (and may release the person). */

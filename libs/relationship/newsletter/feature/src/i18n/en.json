@@ -20,5 +20,20 @@
   "leave_notice": "Unsubscribe from newsletter",
   "leave_confirm": "Do you want to unsubscribe from the newsletter {name}?",
   "leave_done": "You are unsubscribed.",
-  "leave_error": "Unsubscribing did not work. Please try again later."
+  "leave_error": "Unsubscribing did not work. Please try again later.",
+  "import": "Import Mailchimp subscribers",
+  "import_title": "Import subscribers",
+  "import_hint": "Choose the CSV file you exported from Mailchimp (only contacts with the status «subscribed»). The file is read in your browser only and is not stored anywhere. The subscribers keep the consent they already gave and get no new confirmation mail.",
+  "import_file": "CSV file",
+  "import_run": "Import",
+  "import_running": "Importing …",
+  "import_error": "The import did not work. Please check the file and try again.",
+  "import_no_rows": "We found no subscribers in the file. Does it contain the column «Email Address»?",
+  "import_too_many": "The file is too large. Please split it into files with at most {max} subscribers.",
+  "import_result": "Result",
+  "import_imported": "Newly imported",
+  "import_already": "Were already subscribed",
+  "import_matched": "Linked to an existing person",
+  "import_ambiguous": "Not clear (a task for the member administration was created)",
+  "import_invalid": "Invalid email address"
 }

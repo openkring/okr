@@ -20,5 +20,20 @@
   "leave_notice": "Se désabonner de la newsletter",
   "leave_confirm": "Veux-tu te désabonner de la newsletter {name} ?",
   "leave_done": "Tu es désabonné.",
-  "leave_error": "Le désabonnement n'a pas fonctionné. Réessaie plus tard, s'il te plaît."
+  "leave_error": "Le désabonnement n'a pas fonctionné. Réessaie plus tard, s'il te plaît.",
+  "import": "Importer les abonnés Mailchimp",
+  "import_title": "Importer des abonnés",
+  "import_hint": "Choisis le fichier CSV que tu as exporté de Mailchimp (uniquement les contacts avec le statut «subscribed»). Le fichier est lu uniquement dans ton navigateur et n'est enregistré nulle part. Les abonnés gardent leur consentement et ne reçoivent pas de nouvel e-mail de confirmation.",
+  "import_file": "Fichier CSV",
+  "import_run": "Importer",
+  "import_running": "Importation en cours …",
+  "import_error": "L'importation n'a pas fonctionné. Vérifie le fichier et réessaie.",
+  "import_no_rows": "Nous n'avons trouvé aucun abonné dans le fichier. Contient-il la colonne «Email Address» ?",
+  "import_too_many": "Le fichier est trop volumineux. Divise-le en fichiers de {max} abonnés au maximum.",
+  "import_result": "Résultat",
+  "import_imported": "Nouvellement importés",
+  "import_already": "Déjà abonnés",
+  "import_matched": "Reliés à une personne existante",
+  "import_ambiguous": "Pas clair (une tâche pour la gestion des membres a été créée)",
+  "import_invalid": "Adresse e-mail invalide"
 }

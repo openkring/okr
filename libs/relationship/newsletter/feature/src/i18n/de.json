@@ -20,5 +20,20 @@
   "leave_notice": "Newsletter abbestellen",
   "leave_confirm": "Möchtest du den Newsletter {name} abbestellen?",
   "leave_done": "Du bist abgemeldet.",
-  "leave_error": "Das Abbestellen hat nicht geklappt. Versuche es bitte später nochmals."
+  "leave_error": "Das Abbestellen hat nicht geklappt. Versuche es bitte später nochmals.",
+  "import": "Mailchimp-Abonnenten importieren",
+  "import_title": "Abonnenten importieren",
+  "import_hint": "Wähle die CSV-Datei, die du aus Mailchimp exportiert hast (nur Kontakte mit dem Status «subscribed»). Die Datei wird nur in deinem Browser gelesen und nirgends gespeichert. Die Abonnenten behalten ihre bisherige Einwilligung und bekommen keine neue Bestätigungsmail.",
+  "import_file": "CSV-Datei",
+  "import_run": "Importieren",
+  "import_running": "Importiere …",
+  "import_error": "Der Import hat nicht geklappt. Bitte prüfe die Datei und versuche es noch einmal.",
+  "import_no_rows": "In der Datei haben wir keine Abonnenten gefunden. Enthält sie die Spalte «Email Address»?",
+  "import_too_many": "Die Datei ist zu gross. Bitte teile sie in Dateien mit höchstens {max} Abonnenten auf.",
+  "import_result": "Ergebnis",
+  "import_imported": "Neu importiert",
+  "import_already": "Waren schon angemeldet",
+  "import_matched": "Mit bestehender Person verknüpft",
+  "import_ambiguous": "Nicht eindeutig (eine Aufgabe für die Mitgliederverwaltung wurde angelegt)",
+  "import_invalid": "Ungültige E-Mail-Adresse"
 }

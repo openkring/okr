@@ -20,5 +20,20 @@
   "leave_notice": "Annulla l'iscrizione alla newsletter",
   "leave_confirm": "Vuoi annullare l'iscrizione alla newsletter {name}?",
   "leave_done": "Hai annullato l'iscrizione.",
-  "leave_error": "L'annullamento non è riuscito. Riprova più tardi."
+  "leave_error": "L'annullamento non è riuscito. Riprova più tardi.",
+  "import": "Importa gli iscritti di Mailchimp",
+  "import_title": "Importa iscritti",
+  "import_hint": "Scegli il file CSV che hai esportato da Mailchimp (solo i contatti con lo stato «subscribed»). Il file viene letto solo nel tuo browser e non viene salvato da nessuna parte. Gli iscritti mantengono il consenso già dato e non ricevono una nuova e-mail di conferma.",
+  "import_file": "File CSV",
+  "import_run": "Importa",
+  "import_running": "Importazione in corso …",
+  "import_error": "L'importazione non è riuscita. Controlla il file e riprova.",
+  "import_no_rows": "Nel file non abbiamo trovato iscritti. Contiene la colonna «Email Address»?",
+  "import_too_many": "Il file è troppo grande. Dividilo in file con al massimo {max} iscritti.",
+  "import_result": "Risultato",
+  "import_imported": "Importati ora",
+  "import_already": "Già iscritti",
+  "import_matched": "Collegati a una persona esistente",
+  "import_ambiguous": "Non chiaro (è stato creato un compito per l'amministrazione dei soci)",
+  "import_invalid": "Indirizzo e-mail non valido"
 }

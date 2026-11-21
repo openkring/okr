@@ -636,3 +636,4 @@ export { newsCenter } from './news';
 export { onNewsletterSignupCreated } from './newsletter/signup';   // double-opt-in mail for a fresh sign-up
 export { newsletterConfirm } from './newsletter/confirm';   // the link of the double-opt-in mail
 export { newsletterUnsubscribe, leaveNewsletter } from './newsletter/unsubscribe';   // the unsubscribe link of every issue; the in-app leave action
+export { importNewsletterSubscribers } from './newsletter/import';   // admin-only Mailchimp import, consent already given

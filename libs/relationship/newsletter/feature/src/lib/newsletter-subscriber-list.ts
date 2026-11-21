@@ -33,11 +33,18 @@ import { NewsletterStore } from './newsletter.store';
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ filteredCount() }}/{{ count() }} {{ store.i18n.subscribers() }} {{ groupName() }}</ion-title>
-        @if (canSendVersand()) {
+        @if (canSendVersand() || store.canImport()) {
           <ion-buttons slot="end">
-            <ion-button (click)="store.openVersand()" [title]="store.i18n.versand()">
-              <ion-icon slot="icon-only" src="{{ 'send' | svgIcon }}" />
-            </ion-button>
+            @if (store.canImport()) {
+              <ion-button (click)="store.openImport()" [title]="store.i18n.import()">
+                <ion-icon slot="icon-only" src="{{ 'upload' | svgIcon }}" />
+              </ion-button>
+            }
+            @if (canSendVersand()) {
+              <ion-button (click)="store.openVersand()" [title]="store.i18n.versand()">
+                <ion-icon slot="icon-only" src="{{ 'send' | svgIcon }}" />
+              </ion-button>
+            }
           </ion-buttons>
         }
       </ion-toolbar>

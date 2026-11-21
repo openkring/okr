@@ -42,3 +42,62 @@ export function canSeeSubscribers(group: GroupModel | undefined, user: UserModel
 export function mayPostNewsletter(user: UserModel | undefined): boolean {
   return hasRole('memberAdmin', user) || hasRole('privileged', user);
 }
+
+/** One subscriber of a Mailchimp audience export. */
+export interface ImportRow {
+  email: string;
+  firstName: string;
+  lastName: string;
+  /** Mailchimp `OPTIN_TIME`, as given */
+  optinAt: string;
+  /** Mailchimp `CONFIRM_TIME`, as given */
+  confirmAt: string;
+}
+
+/** Splits CSV text into records: quoted fields may hold commas, line breaks and `""` for a quote. */
+function csvRecords(text: string): string[][] {
+  const records: string[][] = [];
+  let record: string[] = [];
+  let field = '';
+  let quoted = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (quoted) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; } else quoted = false;
+      } else field += c;
+    } else if (c === '"') quoted = true;
+    else if (c === ',') { record.push(field); field = ''; }
+    else if (c === '\n' || c === '\r') {
+      if (c === '\r' && text[i + 1] === '\n') i++;
+      record.push(field); field = '';
+      records.push(record); record = [];
+    } else field += c;
+  }
+  if (field !== '' || record.length > 0) { record.push(field); records.push(record); }
+  return records;
+}
+
+/**
+ * Reads a Mailchimp audience export (CSV) into import rows. Columns are found by header name,
+ * case-insensitively (`Email Address`, `First Name`, `Last Name`, `OPTIN_TIME`, `CONFIRM_TIME`); all others
+ * are ignored. A UTF-8 BOM, CRLF and LF are accepted. Rows without an email address are skipped.
+ */
+export function parseMailchimpCsv(text: string): ImportRow[] {
+  const records = csvRecords(text.replace(/^﻿/, ''));
+  if (records.length === 0) return [];
+  const header = records[0].map((h) => h.trim().toLowerCase());
+  const col = (name: string): number => header.indexOf(name);
+  const idx = {
+    email: col('email address'), firstName: col('first name'), lastName: col('last name'),
+    optinAt: col('optin_time'), confirmAt: col('confirm_time'),
+  };
+  if (idx.email < 0) return [];
+  const cell = (r: string[], i: number): string => (i >= 0 ? (r[i] ?? '').trim() : '');
+  return records.slice(1)
+    .map((r) => ({
+      email: cell(r, idx.email), firstName: cell(r, idx.firstName), lastName: cell(r, idx.lastName),
+      optinAt: cell(r, idx.optinAt), confirmAt: cell(r, idx.confirmAt),
+    }))
+    .filter((r) => r.email !== '');
+}
