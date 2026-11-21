@@ -167,6 +167,8 @@ export const requestCourseCompensation = Course.requestCourseCompensation;
 // writes the trainer invoice + draft bill (native books) and tasks the treasurer; downloadTrainerInvoice serves the sent PDF;
 // rejectTrainerInvoice sends it back (treasurer), markTrainerInvoicePaid closes it in bexio books
 export { previewTrainerInvoice, sendTrainerInvoice, downloadTrainerInvoice, rejectTrainerInvoice, markTrainerInvoicePaid, onBillWrittenTrainerMirror, onTrainerAgreementWritten } from './trainer-billing';
+// Haushalte (spec 1.168): saveHousehold is the only write path of `households` (members change name/payer/contact/bundle or leave; admins do the rest)
+export { saveHousehold } from './household';
 // courseAnswer: the page behind the personal course invitation link — an invited applicant answers without login (spec 1.152 §8.3)
 export const courseAnswer = Course.courseAnswer;
 // listCourseApplicants: the applicants a course manager may invite, filtered by D7 (name, type, age, course, state only) (spec 1.152 §8.1, §11)

@@ -116,6 +116,7 @@ export const COLLECTION_LABELS: Record<string, string> = {
   'trainer-profiles': 'Rechnungsprofil als Trainer', // spec 1.167
   'work-entries': 'Trainer-Einsätze', // spec 1.167
   'trainer-invoices': 'Trainerrechnungen', // spec 1.167
+  households: 'Haushalte', // spec 1.168: the household a person belongs to
   expenses: 'Spesen',
   'payment-orders': 'Zahlungsaufträge',
   paymentOrders: 'Zahlungsaufträge',

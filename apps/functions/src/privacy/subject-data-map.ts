@@ -1,7 +1,7 @@
 import { FieldPath, Filter, getFirestore } from 'firebase-admin/firestore';
 import type { DocumentSnapshot, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import { ADDRESS_REGISTER_TENANT } from '@okr/shared-constants';
-import { ContractModel, CourseFinanceSubcollection, CourseModel, LegacyMemberFeeCollection, MemberFeeCollection, PROSPECT_PARENT_PREFIX } from '@okr/shared-models';
+import { ContractModel, CourseFinanceSubcollection, CourseModel, HouseholdCollection, LegacyMemberFeeCollection, MemberFeeCollection, PROSPECT_PARENT_PREFIX } from '@okr/shared-models';
 import type { AvatarInfo } from '@okr/shared-models';
 import { getContractIndex } from '@okr/business-contract-util';
 import { getCourseIndex } from '@okr/calendar-course-util';
@@ -1110,6 +1110,24 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     indexFields: { title: 'subject', date: 'sentAt', route: '/notice' },
     onErasure: 'anonymize',
     anonymizeFields: ['recipients'],
+    retention: CLUB_RECORD,
+  },
+  {
+    // Haushalt (spec 1.168): the subject is one of `memberKeys`. The household stays with the tenant; on erasure
+    // or tenant exit only the subject's key leaves `memberKeys` (an array of plain keys, so the plain
+    // `anonymizeFields` array form removes exactly that element, like `notices.recipients`). The household's
+    // `name` ('Familie Muster') is the club's label and stays. `payerKey`/`contactKey` are not cleared here:
+    // `saveHousehold` re-points them when a member leaves; a household left with fewer than 2 members is
+    // archived by the same callable.
+    collection: HouseholdCollection,
+    dataClass: 'membership',
+    tier: 'T4',
+    onTenantExit: 'anonymize',
+    find: (c: SubjectCtx) => db().collection(HouseholdCollection).where('memberKeys', 'array-contains', c.personKey),
+    tenantScope: 'tenantsArray',
+    onExport: 'full',
+    onErasure: 'anonymize',
+    anonymizeFields: ['memberKeys'],
     retention: CLUB_RECORD,
   },
   {

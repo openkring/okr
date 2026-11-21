@@ -77,7 +77,9 @@ export function isCategoryItem(cat: unknown): cat is CategoryItemModel {
 export function getCategoryAttribute(cat: CategoryListModel, catName: string, attributeName: keyof CategoryItemModel): string | number {
   const _item = cat.items.find(i => i.name === catName);
   if (!_item) return '';
-  return _item[attributeName] ?? '';
+  const value = _item[attributeName];
+  // boolean attributes (feeCapOnlyMembershipFee, spec 1.168) are returned as 'true'/'false'
+  return typeof value === 'boolean' ? String(value) : (value ?? '');
 }
 
 export function getCatAbbreviation(cat: CategoryListModel | undefined, catName: string): string {

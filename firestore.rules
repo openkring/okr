@@ -743,6 +743,12 @@ service cloud.firestore {
       allow read: if trainerBillingRead();
       allow write: if false;
     }
+    // Haushalte (spec 1.168): a member reads their own household, memberAdmin/privileged read the tenant's.
+    // The only write path is the saveHousehold callable (Admin SDK).
+    match /households/{id} {
+      allow read: if tenantRead() && (callerPersonKey() in resource.data.memberKeys || hasRole('memberAdmin') || isPrivileged());
+      allow write: if false;
+    }
     // Activities are the audit log. Authenticated tenant members write normal activities.
     // Auth-scope events (login/logout) are logged by ActivityService.logAuth pre-auth or
     // during the post-signIn token-propagation race, i.e. with request.auth == null. Allow
