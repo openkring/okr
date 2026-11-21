@@ -55,7 +55,8 @@
     "duplicateMember": "A person is listed twice in the household.",
     "alreadyInHousehold": "One of the people already belongs to another household.",
     "badTenants": "A household can only belong to one club.",
-    "emptyMember": "One of the people is missing. Please remove them and add them again."
+    "emptyMember": "One of the people is missing. Please remove them and add them again.",
+    "memberNotInTenant": "One of the people does not (or no longer) belong to the club. Please remove them from the household."
   },
   "validation": {
     "two_members": "A household needs at least two people.",

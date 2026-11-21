@@ -8,6 +8,7 @@ type HouseholdI18nKey = keyof typeof HOUSEHOLD_I18N_KEYS;
 /** The messages the `saveHousehold` callable refuses with (permission-denied / invalid-argument). */
 const REFUSAL_KEYS: Record<string, HouseholdI18nKey> = {
   'not-allowed':          'error_not_allowed',
+  'tenant-not-allowed':   'error_not_allowed',
   'tenants-changed':      'error_tenants_changed',
   'members-changed':      'error_members_changed',
   'field-not-allowed':    'error_field_not_allowed',
@@ -18,6 +19,7 @@ const REFUSAL_KEYS: Record<string, HouseholdI18nKey> = {
   'already-in-household': 'error_already_in_household',
   'bad-tenants':          'error_bad_tenants',
   'empty-member':         'error_empty_member',
+  'member-not-in-tenant': 'error_member_not_in_tenant',
 };
 
 /**

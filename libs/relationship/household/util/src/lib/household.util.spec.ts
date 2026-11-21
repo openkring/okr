@@ -9,6 +9,14 @@ describe('householdErrorKey', () => {
     expect(householdErrorKey({ message: 'empty-member' })).toBe('error_empty_member');
   });
 
+  it('maps a member person outside the club to its own message', () => {
+    expect(householdErrorKey({ code: 'functions/invalid-argument', message: 'member-not-in-tenant' })).toBe('error_member_not_in_tenant');
+  });
+
+  it('maps a request for another club to the not-allowed message', () => {
+    expect(householdErrorKey({ code: 'functions/permission-denied', message: 'tenant-not-allowed' })).toBe('error_not_allowed');
+  });
+
   it('falls back to the generic error', () => {
     expect(householdErrorKey(new Error('network down'))).toBe('save_error');
     expect(householdErrorKey(undefined)).toBe('save_error');

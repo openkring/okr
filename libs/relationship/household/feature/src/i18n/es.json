@@ -55,7 +55,8 @@
     "duplicateMember": "Una persona aparece dos veces en el hogar.",
     "alreadyInHousehold": "Una de las personas ya pertenece a otro hogar.",
     "badTenants": "Un hogar solo puede pertenecer a un club.",
-    "emptyMember": "Falta una de las personas. Quítala y vuelve a añadirla."
+    "emptyMember": "Falta una de las personas. Quítala y vuelve a añadirla.",
+    "memberNotInTenant": "Una de las personas no pertenece (o ya no pertenece) al club. Quítala del hogar."
   },
   "validation": {
     "two_members": "Un hogar necesita al menos dos personas.",

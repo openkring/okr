@@ -8,7 +8,7 @@ vi.mock('firebase-admin/firestore', () => ({ getFirestore: vi.fn() }));
 vi.mock('@okr/shared-util-functions', () => ({ checkAppCheckToken: vi.fn(), checkAuthentication: vi.fn() }));
 
 import type { Firestore } from 'firebase-admin/firestore';
-import { callerInTenant, isHouseholdAdmin, isOnlyTenant, readIncoming, runSaveHousehold } from './save-household';
+import { callerInTenant, isHouseholdAdmin, isMemberOfTenant, isOnlyTenant, readIncoming, runSaveHousehold } from './save-household';
 
 describe('callerInTenant', () => {
   it('accepts a tenant the caller belongs to', () => {
@@ -187,5 +187,47 @@ describe('runSaveHousehold', () => {
     const household = { ...seed()['households']['h1'], okey: 'h1', name: 'Familie Muster-Neu' };
     expect(await runSaveHousehold(fake.db, 'member', { tenantId: 'scs', household: household as never })).toEqual({ okey: 'h1' });
     expect(fake.data['households']['h1']['name']).toBe('Familie Muster-Neu');
+  });
+
+  it.each([
+    ['of another tenant', 'x'],
+    ['archived', 'z'],
+    ['missing', 'nobody'],
+    ['not a document id', 'a/b'],
+  ])('refuses a member person that is %s', async (_why, key) => {
+    const fake = fakeDb(seed());
+    expect(await refusal(runSaveHousehold(fake.db, 'admin', { tenantId: 'scs', household: newHousehold({ memberKeys: ['c', key] }) as never })))
+      .toEqual({ code: 'invalid-argument', message: 'member-not-in-tenant' });
+    expect(Object.keys(fake.data['households'])).toEqual(['h1', 'hForeign']);
+  });
+
+  it('accepts a person shared with another tenant when it lists this tenant', async () => {
+    const data = seed();
+    data['persons']['c'] = person(['gvs', 'scs']);
+    const fake = fakeDb(data);
+    await expect(runSaveHousehold(fake.db, 'admin', { tenantId: 'scs', household: newHousehold() as never })).resolves.toHaveProperty('okey');
+  });
+});
+
+describe('isMemberOfTenant', () => {
+  it('accepts a live person listing the tenant', () => {
+    expect(isMemberOfTenant({ tenants: ['gvs', 'scs'] }, 'scs')).toBe(true);
+  });
+  it('refuses a missing, archived or foreign person', () => {
+    expect(isMemberOfTenant(undefined, 'scs')).toBe(false);
+    expect(isMemberOfTenant({ tenants: ['scs'], isArchived: true }, 'scs')).toBe(false);
+    expect(isMemberOfTenant({ tenants: ['gvs'] }, 'scs')).toBe(false);
+    expect(isMemberOfTenant({}, 'scs')).toBe(false);
+  });
+});
+
+describe('runSaveHousehold — dissolving', () => {
+  it('lets an admin archive a household whose member person is archived', async () => {
+    const data = seed();
+    (data['persons']['b'] as Doc)['isArchived'] = true;
+    const fake = fakeDb(data);
+    const household = { ...data['households']['h1'], okey: 'h1' };
+    await runSaveHousehold(fake.db, 'admin', { tenantId: 'scs', household: household as never, archive: true });
+    expect(fake.data['households']['h1']['isArchived']).toBe(true);
   });
 });

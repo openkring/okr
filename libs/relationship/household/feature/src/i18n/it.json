@@ -55,7 +55,8 @@
     "duplicateMember": "Una persona compare due volte nel nucleo.",
     "alreadyInHousehold": "Una delle persone appartiene già a un altro nucleo familiare.",
     "badTenants": "Un nucleo familiare può appartenere a un solo club.",
-    "emptyMember": "Manca una delle persone. Rimuovila e aggiungila di nuovo."
+    "emptyMember": "Manca una delle persone. Rimuovila e aggiungila di nuovo.",
+    "memberNotInTenant": "Una delle persone non fa (più) parte del club. Rimuovila dal nucleo familiare."
   },
   "validation": {
     "two_members": "Un nucleo familiare ha bisogno di almeno due persone.",

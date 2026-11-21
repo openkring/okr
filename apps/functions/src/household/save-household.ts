@@ -1,14 +1,14 @@
 /**
  * Callable `saveHousehold({ tenantId, household, archive? })` (spec 1.168 §4.2, §7–§9): the ONLY write path of
  * `households` (rules: no client writes). Order: caller from `users/{uid}` (roles are never minted as claims) →
- * tenant binding → ONE transaction that reads the stored doc and the tenant's active households of the incoming
- * members, runs the refusal and shape checks and writes.
+ * tenant binding → ONE transaction that reads the stored doc, the tenant's active households of the incoming
+ * members and the member persons (live, of this tenant), runs the refusal and shape checks and writes.
  */
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore } from 'firebase-admin/firestore';
 import type { Firestore } from 'firebase-admin/firestore';
 
-import { HouseholdCollection, HouseholdModel } from '@okr/shared-models';
+import { HouseholdCollection, HouseholdModel, PersonCollection } from '@okr/shared-models';
 import { addIndexElement, householdShapeError, householdWriteRefusal } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
@@ -17,6 +17,7 @@ import { coerceBundle, decideArchive, prepareHouseholdWrite } from './household.
 const REGION = 'europe-west6';
 const CF_NAME = 'saveHousehold';
 const IN_CHUNK = 30; // Firestore: at most 30 values in array-contains-any
+const GET_ALL_CHUNK = 300; // persons read per getAll
 
 export interface SaveHouseholdRequest {
   tenantId: string;
@@ -42,6 +43,11 @@ export function isHouseholdAdmin(roles: Record<string, unknown>): boolean {
 /** Pure: a tenants array that is exactly [tenantId]. */
 export function isOnlyTenant(tenants: unknown, tenantId: string): boolean {
   return Array.isArray(tenants) && tenants.length === 1 && tenants[0] === tenantId;
+}
+
+/** Pure: a member person may be linked: it exists, is live and lists the tenant. */
+export function isMemberOfTenant(person: Record<string, unknown> | undefined, tenantId: string): boolean {
+  return !!person && person['isArchived'] !== true && Array.isArray(person['tenants']) && person['tenants'].includes(tenantId);
 }
 
 function asStringArray(v: unknown): string[] {
@@ -129,6 +135,19 @@ export async function runSaveHousehold(db: Firestore, uid: string, req: SaveHous
     }
     const shape = archive ? undefined : householdShapeError({ ...doc, okey: key }, [...others.values()]);
     if (shape) throw new HttpsError('invalid-argument', shape);
+
+    // every member must be a live person of this tenant (an archived household is not checked: it has no effect,
+    // and an admin must be able to dissolve a household whose member left)
+    if (!archive) {
+      if (doc.memberKeys.some((k) => k.includes('/'))) throw new HttpsError('invalid-argument', 'member-not-in-tenant');
+      const persons = db.collection(PersonCollection);
+      for (let i = 0; i < doc.memberKeys.length; i += GET_ALL_CHUNK) {
+        const snaps = await tx.getAll(...doc.memberKeys.slice(i, i + GET_ALL_CHUNK).map((k) => persons.doc(k)));
+        if (snaps.some((p) => !isMemberOfTenant(p.exists ? p.data() : undefined, tenantId))) {
+          throw new HttpsError('invalid-argument', 'member-not-in-tenant');
+        }
+      }
+    }
 
     const stored: Record<string, unknown> = { ...doc, tenants: [tenantId], isArchived: archive, index: addIndexElement('', 'n', doc.name.trim()) };
     const ref = key ? col.doc(key) : col.doc();

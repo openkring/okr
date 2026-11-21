@@ -55,7 +55,8 @@
     "duplicateMember": "Une personne figure deux fois dans le foyer.",
     "alreadyInHousehold": "Une des personnes fait déjà partie d'un autre foyer.",
     "badTenants": "Un foyer ne peut appartenir qu'à un seul club.",
-    "emptyMember": "Une des personnes manque. Retire-la et ajoute-la à nouveau."
+    "emptyMember": "Une des personnes manque. Retire-la et ajoute-la à nouveau.",
+    "memberNotInTenant": "Une des personnes ne fait pas (ou plus) partie du club. Retire-la du foyer."
   },
   "validation": {
     "two_members": "Un foyer a besoin d'au moins deux personnes.",

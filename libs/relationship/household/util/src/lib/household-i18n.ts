@@ -45,6 +45,7 @@ export const HOUSEHOLD_I18N_KEYS = {
   error_already_in_household: PFX + 'error.alreadyInHousehold',
   error_bad_tenants:        PFX + 'error.badTenants',
   error_empty_member:       PFX + 'error.emptyMember',
+  error_member_not_in_tenant: PFX + 'error.memberNotInTenant',
 } satisfies Record<string, string>;
 
 export type HouseholdI18n = { [K in keyof typeof HOUSEHOLD_I18N_KEYS]: Signal<string> };

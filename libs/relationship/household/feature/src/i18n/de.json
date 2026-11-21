@@ -55,7 +55,8 @@
     "duplicateMember": "Eine Person ist doppelt im Haushalt.",
     "alreadyInHousehold": "Eine der Personen gehört schon zu einem anderen Haushalt.",
     "badTenants": "Der Haushalt kann nur einem Verein gehören.",
-    "emptyMember": "Eine der Personen fehlt. Bitte entferne sie und füge sie nochmals hinzu."
+    "emptyMember": "Eine der Personen fehlt. Bitte entferne sie und füge sie nochmals hinzu.",
+    "memberNotInTenant": "Eine der Personen gehört nicht (mehr) zum Verein. Bitte entferne sie aus dem Haushalt."
   },
   "validation": {
     "two_members": "Ein Haushalt braucht mindestens zwei Personen.",
