@@ -1,4 +1,4 @@
-import { DEFAULT_DELIVERY_CHANNELS, DeliveryChannel } from '@okr/shared-models';
+import { DEFAULT_DELIVERY_CHANNELS, DeliveryChannel, HouseholdBundle } from '@okr/shared-models';
 
 /**
  * The legacy numeric `DeliveryType` values, in their original order.
@@ -96,6 +96,22 @@ export interface MailingRecipientChannels {
   personKey: string;
   possible: DeliveryChannel[];
   initial: DeliveryChannel[];
+}
+
+/**
+ * A household that touches a Versand (spec 1.168 §6.1), as `getMailingRecipients` returns it: active, of
+ * the sending tenant only, with at least one requested member and a contact among its members. `contact`
+ * holds the contact's delivery types even when the contact was not requested; `contactName` is the
+ * contact's first and last name. Never an address value (privacy-model skill).
+ */
+export interface MailingHousehold {
+  okey: string;
+  name: string;
+  contactKey: string;
+  contactName: string;
+  memberKeys: string[];
+  bundle: HouseholdBundle;
+  contact: MailingRecipientChannels;
 }
 
 /**
