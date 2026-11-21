@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { DeliveryChannel } from '@okr/shared-models';
-import { admissibleKeys, buildMailingHouseholds, chunk, contactKeysToRead, householdLookupKeys, isElevated, touchingHouseholds } from './mailing-recipients';
+import { admissibleKeys, buildMailingHouseholds, chunk, contactKeysToRead, householdLookupKeys, householdsForCaller, isElevated, touchingHouseholds } from './mailing-recipients';
 
 describe('isElevated', () => {
   it('accepts memberAdmin, privileged and admin', () => {
@@ -76,5 +76,32 @@ describe('households of a Versand', () => {
 
   it('leaves org keys out of the household lookup', () => {
     expect(householdLookupKeys(['org.x', 'kid'])).toEqual(['kid']);
+  });
+});
+
+describe('householdsForCaller', () => {
+  // kid is in the group; sibling and mom (the contact) are not
+  const household = {
+    okey: 'h1', name: 'Familie Muster', contactKey: 'mom', contactName: 'Mia Muster', memberKeys: ['mom', 'kid', 'sibling'],
+    bundle: { post: true, email: false, inApp: false },
+    contact: { personKey: 'mom', possible: [DeliveryChannel.Email, DeliveryChannel.Post], initial: [DeliveryChannel.Email] },
+  };
+
+  it('returns no households to a group admin and never reads them, nor the contact facts or names', async () => {
+    const read = vi.fn(async () => [household]);
+    await expect(householdsForCaller(['kid'], ['kid'], read)).resolves.toEqual([]);
+    expect(read).not.toHaveBeenCalled();
+  });
+
+  it('still returns the household to an elevated caller', async () => {
+    const read = vi.fn(async () => [household]);
+    await expect(householdsForCaller(undefined, ['kid'], read)).resolves.toEqual([household]);
+    expect(read).toHaveBeenCalledWith(['kid']);
+  });
+
+  it('reads nothing without admitted keys', async () => {
+    const read = vi.fn(async () => [household]);
+    await expect(householdsForCaller(undefined, [], read)).resolves.toEqual([]);
+    expect(read).not.toHaveBeenCalled();
   });
 });

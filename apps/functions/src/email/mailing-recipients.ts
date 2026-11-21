@@ -167,6 +167,20 @@ export function buildMailingHouseholds(
   return out;
 }
 
+/**
+ * The households a caller gets. Only an elevated caller (`members` undefined) does: a group admin would learn
+ * about siblings, parents and contacts outside the group, which the rules hide from them — and a group admin
+ * cannot send Post, so combining would give them nothing. For a group admin nothing is read at all.
+ */
+export async function householdsForCaller(
+  members: string[] | undefined,
+  keys: string[],
+  read: (keys: string[]) => Promise<MailingHousehold[]>,
+): Promise<MailingHousehold[]> {
+  if (members !== undefined || keys.length === 0) return [];
+  return read(keys);
+}
+
 /** Reads the households touching the keys, and their contacts' delivery types and names. */
 async function readHouseholds(db: Firestore, tenantId: string, keys: string[], facts: MailingRecipientFacts[]): Promise<MailingHousehold[]> {
   const lookup = householdLookupKeys(keys);
@@ -219,8 +233,8 @@ export const getMailingRecipients = onCall(
     const keys = admissibleKeys(personKeys, members);
     const facts = keys.length === 0 ? [] : await readFacts(db, tenantId, keys);
     const recipients = facts.map(mailingChannels);
-    // households (spec 1.168 §6.1): only for the admitted keys, so a group admin learns about the group's members only
-    const households = keys.length === 0 ? [] : await readHouseholds(db, tenantId, keys, facts);
+    // households (spec 1.168 §6.1): elevated callers only, never a group admin
+    const households = await householdsForCaller(members, keys, (k) => readHouseholds(db, tenantId, k, facts));
     logger.info(`${CF_NAME}: ${recipients.length} recipient(s), ${households.length} household(s) resolved (tenant ${tenantId})`);
     return { recipients, households };
   },
