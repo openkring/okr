@@ -34,6 +34,8 @@ export class NoticeModel implements OkrModel {
   public mailingKey = '';
   /** FK -> calevents: the events the Versand asks about; the notice page links to them. Absent on notices sent before 2026-11-08. */
   public caleventKeys: string[] = [];
+  /** FK -> groups (kind 'newsletter'): set when the Versand was a newsletter send, so the notice page offers «Newsletter abbestellen». '' = none; absent on older notices. */
+  public newsletterGroupKey = '';
   /** StoreDateTime (yyyyMMddHHmmss) */
   public sentAt = '';
 

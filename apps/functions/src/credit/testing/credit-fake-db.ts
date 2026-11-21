@@ -1,5 +1,5 @@
-// A small in-memory Firestore for the credit, billing and newsletter specs: doc get/set/create/update, simple collection
-// queries (where ==, ranges, array-contains; dotted field paths), delete, batched writes, set with merge, FieldValue.arrayUnion/arrayRemove, and transactions with optimistic
+// A small in-memory Firestore for the credit, billing, newsletter and mailing specs: doc get/set/create/update, getAll,
+// collection add, simple collection queries (where ==, ranges, array-contains; dotted field paths), delete, batched writes, set with merge, FieldValue.arrayUnion/arrayRemove, and transactions with optimistic
 // concurrency like Firestore (versions per document, recorded on get, checked at commit, retried on conflict).
 // Test-only: imported by *.spec.ts, never by production code.
 import type { Firestore } from 'firebase-admin/firestore';
@@ -75,10 +75,16 @@ export function fakeDb(store: Store): Firestore {
     doc: (id?: string) => docRef(`${path}/${id ?? `auto${++autoId}`}`),
     where: (field: string, op: string, value: unknown) => query(path, [{ field, op, value }]),
     get: async () => (query(path, []) as { get(): Promise<unknown> }).get(),
+    add: async (d: Doc) => {
+      const ref = docRef(`${path}/auto${++autoId}`) as { set(d: Doc): Promise<void> };
+      await ref.set(d);
+      return ref;
+    },
   });
   const pathOf = (r: unknown) => (r as { path: string }).path;
   return {
     collection: (name: string) => colRef(name),
+    getAll: async (...refs: unknown[]) => Promise.all(refs.map((r) => (r as { get(): Promise<unknown> }).get())),
     batch: () => {
       const ops: (() => void)[] = [];
       const batch = {

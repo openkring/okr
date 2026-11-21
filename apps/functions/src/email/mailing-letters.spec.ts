@@ -7,6 +7,8 @@ const state = vi.hoisted(() => ({
   letterPages: 1,
   attachment: undefined as Uint8Array | undefined,
   saved: [] as Buffer[],
+  /** the html of every rendered letter page */
+  htmls: [] as string[],
 }));
 
 vi.mock('firebase-admin/firestore', () => ({
@@ -37,7 +39,7 @@ vi.mock('../pdf/browser-pool', () => ({
       setJavaScriptEnabled: async () => undefined,
       setRequestInterception: async () => undefined,
       on: () => undefined,
-      setContent: async () => undefined,
+      setContent: async (html: string) => { state.htmls.push(html); },
       pdf: async () => {
         const d = await PDFDocument.create();
         for (let i = 0; i < state.letterPages; i++) d.addPage();
@@ -51,7 +53,7 @@ vi.mock('../pdf/qr-slip', () => ({ resolvePayee: async () => ({}) }));
 
 import {
   buildLetterHtml, buildMailingLetters, countLetterPages, type RenderedLetter, eventsBlockHtml, LETTER_QR_INTRO, LETTER_TEMPLATE_ORIGINS, qrSvgOf, withEventsBlock, escapeHtml, isAllowedLetterRequest, isPdfAttachment, isReapableLetters, isReapableSendingLetter, isUsableLetterTemplate,
-  letterDate, letterPayload, letterTemplateKey, lettersPath, mayGetLetters, placeAndDate,
+  letterDate, letterPayload, letterTemplateKey, lettersPath, mayGetLetters, placeAndDate, LETTER_UNSUBSCRIBE_INTRO, unsubscribeLetterBlockHtml,
 } from './mailing-letters';
 
 describe('buildLetterHtml', () => {
@@ -354,5 +356,67 @@ describe('letters rendered one by one (spec 1.150)', () => {
     const events = [{ name: 'GV', when: '01.12.2026, 19:30', location: 'Stäfa' }];
     const n = await countLetterPages({ tenantId: 'scs', subject: 'S', body: '<p>B</p>', attachments: [], withQrBlock: true, answerEvents: events });
     expect(n).toBe(2);
+  });
+});
+
+describe('unsubscribeLetterBlockHtml', () => {
+  it('prints the link as escaped text with its QR code, and is empty without either', () => {
+    const html = unsubscribeLetterBlockHtml('https://u/?p=1&g=2', '<svg viewBox="0 0 1 1"></svg>');
+    expect(html).toContain('https://u/?p=1&amp;g=2');
+    expect(html).toContain('<svg width="100%" height="100%" viewBox');
+    expect(html).toContain(escapeHtml(LETTER_UNSUBSCRIBE_INTRO));
+    expect(html).toContain('page-break-inside:avoid');
+    expect(unsubscribeLetterBlockHtml('', '<svg></svg>')).toBe('');
+    expect(unsubscribeLetterBlockHtml('https://u', '')).toBe('');
+  });
+});
+
+describe('newsletter letters (spec 1.169 §5.4)', () => {
+  const addr = (parentKey: string): Record<string, unknown> => ({
+    parentKey, addressChannel: 'postal', tenants: ['scs'], isFavorite: true,
+    streetName: 'Dorfweg', streetNumber: '2', zipCode: '8000', city: 'Zürich', countryCode: '',
+  });
+
+  beforeEach(() => {
+    state.letterPages = 1;
+    state.attachment = undefined;
+    state.saved = [];
+    state.htmls = [];
+    state.addresses = [addr('person.anna'), addr('person.beat'), addr('org.club')];
+  });
+
+  it('prints each person\'s own unsubscribe link as text and a QR code below the text', async () => {
+    const urlOf = (k: string) => `https://u/newsletterUnsubscribe?p=${k}&g=nl`;
+    await buildMailingLetters({
+      tenantId: 'scs', mailingKey: 'm1', subject: 'S', body: '<p>B</p>', attachments: [],
+      personKeys: ['anna', 'beat', 'org.club'], unsubscribeUrl: urlOf,
+    });
+    expect(state.htmls).toHaveLength(3);
+    const [anna, beat, club] = state.htmls;
+    expect(anna).toContain(escapeHtml(urlOf('anna')));
+    expect(anna).not.toContain('p=beat');
+    expect(beat).toContain(escapeHtml(urlOf('beat')));
+    for (const html of [anna, beat]) {
+      expect(html.indexOf('okr-letter-unsubscribe')).toBeGreaterThan(html.indexOf('<p>B</p>'));
+      expect(html.match(/<svg\b/g)).toHaveLength(1);
+    }
+    // an org is no subscriber: no link, no QR code
+    expect(club).not.toContain('okr-letter-unsubscribe');
+  });
+
+  it('puts the unsubscribe block after the events block when the letter has both', async () => {
+    await buildMailingLetters({
+      tenantId: 'scs', mailingKey: 'm1', subject: 'S', body: '<p>B</p>', attachments: [], personKeys: ['anna'],
+      answerEvents: [{ name: 'GV', when: '01.12.2026', location: 'Stäfa' }], answerUrl: (k) => `https://a/?p=${k}`,
+      unsubscribeUrl: (k) => `https://u/?p=${k}`,
+    });
+    const [html] = state.htmls;
+    expect(html.indexOf('okr-letter-unsubscribe')).toBeGreaterThan(html.indexOf('okr-letter-events'));
+    expect(html.match(/<svg\b/g)).toHaveLength(2);
+  });
+
+  it('prints no unsubscribe block on an ordinary Versand', async () => {
+    await buildMailingLetters({ tenantId: 'scs', mailingKey: 'm1', subject: 'S', body: '<p>B</p>', attachments: [], personKeys: ['anna'] });
+    expect(state.htmls[0]).not.toContain('okr-letter-unsubscribe');
   });
 });

@@ -155,3 +155,26 @@ export function householdsDroppedForAnswers<T extends Delivery>(deliveries: T[],
     return false;
   });
 }
+
+/**
+ * A newsletter send (spec 1.169 §5.6, §6.4) is never combined per household: every subscriber consented on their
+ * own and gets their own mail, notice or letter with their own unsubscribe link. True when such a send addresses a
+ * household — `sendMailing` refuses it (the composer combines nothing for a newsletter, so the key comes from an
+ * old or crafted client).
+ */
+export function householdInNewsletter(deliveries: Delivery[], newsletterGroupKey: string | undefined): boolean {
+  return !!newsletterGroupKey && deliveries.some((d) => isHouseholdRecipient(d.personKey));
+}
+
+/**
+ * `onMailing`'s guard for the same rule (a mailing doc written past `sendMailing`): on a newsletter send every
+ * household key is dropped and logged; any other Versand comes back unchanged.
+ */
+export function householdsDroppedForNewsletter<T extends Delivery>(deliveries: T[], newsletterGroupKey: string | undefined, context: string): T[] {
+  if (!newsletterGroupKey) return deliveries;
+  return deliveries.filter((d) => {
+    if (!isHouseholdRecipient(d.personKey)) return true;
+    console.warn(`household recipient dropped (${context}): a newsletter send addresses every subscriber on their own`, { context, householdKey: d.personKey });
+    return false;
+  });
+}

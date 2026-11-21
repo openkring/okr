@@ -9,7 +9,7 @@ vi.mock('firebase-functions/v2', () => ({ logger: { info: vi.fn(), error: vi.fn(
 import { sanitizeEmailBody } from '../pdf/sanitize';
 import { mailingAnswerUrl } from '../calendar/answer-link';
 import { composeBody, TemplateReader } from './render-email';
-import { ANSWER_URL_PLACEHOLDER, answerBlockHtml, fillAnswerUrl, hasAnswerPlaceholder } from './personal-mail.logic';
+import { ANSWER_URL_PLACEHOLDER, answerBlockHtml, fillAnswerUrl, fillUrl, hasAnswerPlaceholder, hasPlaceholder, UNSUBSCRIBE_URL_PLACEHOLDER, unsubscribeBlockHtml } from './personal-mail.logic';
 
 const events = [{ name: 'GV', when: '01.12.2026, 19:00' }];
 const url = mailingAnswerUrl('https://europe-west6-p.cloudfunctions.net/mailingAnswer', 'm1', 'p1', 'secret');
@@ -40,6 +40,30 @@ describe('the answer link through composeBody', () => {
     expect(out.html).toContain(url.replace(/&/g, '&amp;'));
     expect(out.text).toContain(url);
     expect(hasAnswerPlaceholder(out)).toBe(false);
+  });
+});
+
+describe('the unsubscribe link through the real sanitiser and composeBody', () => {
+  const read: TemplateReader = async (okey) => okey.startsWith('email-layout')
+    ? {
+      doc: { kind: 'emailLayout', tenants: ['system'], currentVersion: 1 },
+      version: { status: 'published', html: '<div>{{{content}}}</div>', text: '{{{content}}}' } as never,
+    }
+    : {};
+
+  it('keeps the placeholder, the link text and the centring', async () => {
+    const clean = await sanitizeEmailBody('<p>Hallo</p>' + unsubscribeBlockHtml(UNSUBSCRIBE_URL_PLACEHOLDER));
+    expect(clean).toContain(UNSUBSCRIBE_URL_PLACEHOLDER);
+    expect(clean).toContain('Newsletter abbestellen');
+    expect(clean).toContain('text-align:center');
+  });
+
+  it('keeps the placeholder in html and text, and both halves take the url', async () => {
+    const composed = await composeBody('scs', { body: '<p>Hallo</p>' + unsubscribeBlockHtml(UNSUBSCRIBE_URL_PLACEHOLDER) }, read);
+    expect(hasPlaceholder(composed, UNSUBSCRIBE_URL_PLACEHOLDER)).toBe(true);
+    const out = fillUrl(composed, UNSUBSCRIBE_URL_PLACEHOLDER, 'https://u/?p=1&g=2');
+    expect(out.html).toContain('https://u/?p=1&amp;g=2');
+    expect(out.text).toContain('https://u/?p=1&g=2');
   });
 });
 

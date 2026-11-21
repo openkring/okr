@@ -31,9 +31,15 @@ export function deadlineOutcome(sent: number, total: number): { state: 'failed';
   return { state: 'failed', error: `${sent} von ${total} Mails gesendet – die Zeit hat nicht gereicht.` };
 }
 
+/** A block appended below the body of every personal mail; each has its own placeholder and per-entry url. */
+export type PersonalBlock = 'answer' | 'unsubscribe';
+
 export interface PersonalEntry {
   to: string;
-  answerUrl: string;
+  /** the signed answer link (block `answer`); absent on a newsletter send without events */
+  answerUrl?: string;
+  /** the signed unsubscribe link (block `unsubscribe`), set on a newsletter send only */
+  unsubscribeUrl?: string;
   /** Extra mail headers for this recipient's mail (e.g. a personal `List-Unsubscribe`). */
   headers?: Record<string, string>;
 }
@@ -56,15 +62,43 @@ export function parseCaleventKeys(raw: unknown): string[] {
 
 /**
  * One entry per person with an address, in order. Never deduped by address: two persons sharing one
- * (a couple, a family) each get their own mail with their own link.
+ * (a couple, a family) each get their own mail with their own link. `urlFor` gives the answer link (none
+ * without events); `unsubscribeUrlFor` (a newsletter send) adds the person's unsubscribe link and its headers.
  */
-export function personalEntries(personKeys: string[], emailByKey: Map<string, string>, urlFor: (personKey: string) => string): PersonalEntry[] {
+export function personalEntries(
+  personKeys: string[], emailByKey: Map<string, string>, urlFor: ((personKey: string) => string) | undefined,
+  unsubscribeUrlFor?: (personKey: string) => string,
+): PersonalEntry[] {
   const out: PersonalEntry[] = [];
   for (const key of personKeys) {
     const to = emailByKey.get(key);
-    if (to) out.push({ to, answerUrl: urlFor(key) });
+    if (!to) continue;
+    const unsubscribeUrl = unsubscribeUrlFor?.(key);
+    out.push({
+      to,
+      ...(urlFor ? { answerUrl: urlFor(key) } : {}),
+      ...(unsubscribeUrl ? { unsubscribeUrl, headers: unsubscribeHeaders(unsubscribeUrl) } : {}),
+    });
   }
   return out;
+}
+
+/** The entries split into mail jobs of at most `size`: one `onMailJob` run sends at most MAX_PERSONAL_RECIPIENTS. */
+export function chunkPersonal<T>(entries: T[], size = MAX_PERSONAL_RECIPIENTS): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < entries.length; i += size) out.push(entries.slice(i, i + size));
+  return out;
+}
+
+/** The newsletter footer line under the mail body: the person's own link to sign off. */
+export function unsubscribeBlockHtml(url: string): string {
+  return `<p style="text-align:center;font-size:12px;color:#6e7781;">`
+    + `<a href="${escapeHtml(url)}" style="color:#6e7781;">Newsletter abbestellen</a></p>`;
+}
+
+/** The one-click unsubscribe headers (RFC 8058) of a newsletter mail. */
+export function unsubscribeHeaders(url: string): Record<string, string> {
+  return { 'List-Unsubscribe': `<${url}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' };
 }
 
 /** The block under the mail body: the events and the button to the personal answer page. */
@@ -85,12 +119,23 @@ export function personalOutcome(sent: number, failed: number): { state: 'sent' |
 /** The answer block's url while the mail is composed once for everybody; cannot occur in user text. */
 export const ANSWER_URL_PLACEHOLDER = 'https://answer.invalid/__OKR_ANSWER_URL__';
 
-/** One person's mail out of the shared composition: the placeholder becomes the url (escaped in html, raw in text). */
-export function fillAnswerUrl(rendered: { html: string; text?: string }, url: string): { html: string; text?: string } {
+/** The unsubscribe block's url while the mail is composed once for everybody; cannot occur in user text. */
+export const UNSUBSCRIBE_URL_PLACEHOLDER = 'https://unsubscribe.invalid/__OKR_UNSUBSCRIBE_URL__';
+
+/** The placeholder each block's url takes while the mail is composed once. */
+export const BLOCK_PLACEHOLDER: Record<PersonalBlock, string> = { answer: ANSWER_URL_PLACEHOLDER, unsubscribe: UNSUBSCRIBE_URL_PLACEHOLDER };
+
+/** One person's mail out of the shared composition: `placeholder` becomes the url (escaped in html, raw in text). */
+export function fillUrl(rendered: { html: string; text?: string }, placeholder: string, url: string): { html: string; text?: string } {
   return {
-    html: rendered.html.split(ANSWER_URL_PLACEHOLDER).join(escapeHtml(url)),
-    ...(rendered.text !== undefined ? { text: rendered.text.split(ANSWER_URL_PLACEHOLDER).join(url) } : {}),
+    html: rendered.html.split(placeholder).join(escapeHtml(url)),
+    ...(rendered.text !== undefined ? { text: rendered.text.split(placeholder).join(url) } : {}),
   };
+}
+
+/** One person's mail out of the shared composition: the answer placeholder becomes the url. */
+export function fillAnswerUrl(rendered: { html: string; text?: string }, url: string): { html: string; text?: string } {
+  return fillUrl(rendered, ANSWER_URL_PLACEHOLDER, url);
 }
 
 /**
@@ -120,7 +165,12 @@ export function sendErrorCode(error: unknown): string {
   return [name, detail ?? mailtrap].filter((v) => v !== undefined).join(' ').slice(0, 60);
 }
 
-/** Whether the composed mail still carries the placeholder in every half it has: without it no personal link can be set. */
+/** Whether the composed mail still carries `placeholder` in every half it has: without it no personal link can be set. */
+export function hasPlaceholder(rendered: { html: string; text?: string }, placeholder: string): boolean {
+  return rendered.html.includes(placeholder) && (rendered.text === undefined || rendered.text.includes(placeholder));
+}
+
+/** Whether the composed mail still carries the answer placeholder in every half it has. */
 export function hasAnswerPlaceholder(rendered: { html: string; text?: string }): boolean {
-  return rendered.html.includes(ANSWER_URL_PLACEHOLDER) && (rendered.text === undefined || rendered.text.includes(ANSWER_URL_PLACEHOLDER));
+  return hasPlaceholder(rendered, ANSWER_URL_PLACEHOLDER);
 }

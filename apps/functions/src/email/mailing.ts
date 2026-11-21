@@ -18,13 +18,17 @@
 //
 // Who may send: memberAdmin / privileged / admin of the tenant, or an admin of `groupKey`, who then reaches
 // only the group's current members and the tenant's own addresses (the boundary of sendGroupEmail).
+//
+// A newsletter send (spec 1.169 §5.6): `groupKey` names a newsletter group. The server decides that, for every
+// caller: it stamps `newsletterGroupKey` and refuses any recipient without an active subscription, so a send to
+// a newsletter can never reach a non-subscriber nor go out without the personal unsubscribe link (§5.4).
 
 import { CallableRequest, HttpsError, onCall } from 'firebase-functions/v2/https';
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
-import { DeliveryChannel, type EmailLayoutChoice, NoticeAttachment, NoticeCollection, type NoticeModel, type PostOptions } from '@okr/shared-models';
+import { DeliveryChannel, type EmailLayoutChoice, NewsletterSubscriptionCollection, NoticeAttachment, NoticeCollection, type NoticeModel, type PostOptions } from '@okr/shared-models';
 import { DateFormat, getEventLocationName, getTodayStr, isOrgRecipient, recipientParentKey } from '@okr/shared-util-core';
 import { projectID } from 'firebase-functions/params';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
@@ -43,10 +47,13 @@ import { htmlToText } from './html-to-text';
 import { MailJobCollection, MailJobDoc } from './mail-job';
 import { lastEventDate } from './mailing-answer.logic';
 import { chunk, isElevated } from './mailing-recipients';
-import { MAX_PERSONAL_RECIPIENTS, parseCaleventKeys, personalEntries, refusedEventMessage, sendableEventRefusal } from './personal-mail.logic';
+import { chunkPersonal, MAX_PERSONAL_RECIPIENTS, parseCaleventKeys, PersonalBlock, personalEntries, refusedEventMessage, sendableEventRefusal } from './personal-mail.logic';
+import { checkNewsletterGroup } from '../newsletter/signup';
+import { newsletterFunctionUrl, newsletterUnsubscribeUrl } from '../newsletter/newsletter-link';
+import { isActiveSubscription } from '../newsletter/tenant-link.logic';
 import { asLayoutChoice } from './render-email.logic';
 import { buildMailingLetters, countLetterPages, LetterEvent } from './mailing-letters';
-import { addressParentKeyOf, contactKeysFor, dropHouseholdKeys, householdFieldsOf, householdsDroppedForAnswers, householdWithAnswers, type HouseholdRecipient, loadHouseholdRecipients, postKeysFor } from './household-recipient.logic';
+import { addressParentKeyOf, contactKeysFor, dropHouseholdKeys, householdFieldsOf, householdInNewsletter, householdsDroppedForAnswers, householdsDroppedForNewsletter, householdWithAnswers, type HouseholdRecipient, loadHouseholdRecipients, postKeysFor } from './household-recipient.logic';
 import { mailingCategory } from './mailing-deliveries.logic';
 import { noticeSenderOf } from './notice-sender.logic';
 import { lettersResult, makePostFanOut, postFanOutDeps } from './mailing-sendings';
@@ -121,6 +128,8 @@ export interface MailingDoc {
   notices?: number;
   pushes?: number;
   mailJobKey?: string;
+  /** A newsletter send splits its mails into jobs of at most MAX_PERSONAL_RECIPIENTS: all of them (`mailJobKey` is the first). */
+  mailJobKeys?: string[];
   noticeKey?: string;
   /** the Post part (P3): built by `onMailing`, downloaded through `getMailingLetters` */
   letters?: { state: 'none' | 'pending' | 'ready' | 'failed'; storagePath?: string; count?: number; missing?: number; error?: string };
@@ -142,6 +151,8 @@ export interface MailingDoc {
   householdContacts?: Record<string, string>;
   /** Written by `onMailing`: each resolved `household.<okey>` delivery and its name, for the Versand overview. */
   householdNames?: Record<string, string>;
+  /** A newsletter send (spec 1.169 §5.6): the newsletter group. Set only by `sendMailing`, never taken from the client. */
+  newsletterGroupKey?: string;
 }
 
 /**
@@ -304,6 +315,57 @@ async function removeStoredAttachments(ref: FirebaseFirestore.DocumentReference,
   }
 }
 
+/** The personKeys with an active subscription to the newsletter group `groupKey` in the tenant. */
+export async function activeSubscriberKeys(db: Firestore, tenantId: string, groupKey: string): Promise<Set<string>> {
+  const snap = await db.collection(NewsletterSubscriptionCollection)
+    .where('tenants', 'array-contains', tenantId)
+    .where('groupKey', '==', groupKey)
+    .get();
+  return new Set(snap.docs.map((d) => d.data()).filter((sub) => isActiveSubscription(sub)).map((sub) => String(sub['personKey'] ?? '')).filter(Boolean));
+}
+
+/**
+ * The newsletter rules of a Versand (spec 1.169 §5.6). Undefined when `groupKey` names no live newsletter group of
+ * the tenant (the ordinary rules apply). Otherwise every recipient must hold an active subscription, also for an
+ * elevated caller; any other caller must be an admin of the newsletter group (no memberships: a newsletter has
+ * none) and is held to the group-admin limits (no tenant document, no Post, no answer links, To/Cc only the
+ * subscribers' or the club's addresses). Returns the group key the server stamps on the `mailings` doc.
+ */
+export async function newsletterSendCheck(db: Firestore, args: {
+  uid: string; tenantId: string; groupKey: unknown; elevated: boolean; deliveries: MailingDelivery[];
+  to: string[]; cc: string[]; hasStoragePath: boolean; hasEvents: boolean;
+}): Promise<string | undefined> {
+  const { uid, tenantId, groupKey, elevated, deliveries } = args;
+  if (typeof groupKey !== 'string' || !groupKey) return undefined;
+  if (!(await checkNewsletterGroup(db, tenantId, groupKey)).ok) return undefined;
+  if (!elevated) {
+    await assertCallerIsGroupAdmin(db, uid, tenantId, groupKey, 'Only an admin of the newsletter may send to its subscribers.');
+    if (args.hasStoragePath) throw new HttpsError('permission-denied', 'A group admin may only attach files from the device.');
+    // the letters carry postal addresses, which the address vault keeps from a group admin
+    if (keysFor(deliveries, DeliveryChannel.Post).length > 0) throw new HttpsError('permission-denied', 'A group admin cannot send by post.');
+    if (args.hasEvents) throw new HttpsError('permission-denied', 'A group admin cannot send answer links.');
+  }
+  // never combined per household (§6.4): every subscriber gets their own mail with their own unsubscribe link
+  if (householdInNewsletter(deliveries, groupKey)) {
+    logger.warn(`sendMailing: newsletter send addresses a household (tenant ${tenantId}, group ${groupKey}) — refused`);
+    throw new HttpsError('invalid-argument', 'newsletter-household');
+  }
+  const subscribers = await activeSubscriberKeys(db, tenantId, groupKey);
+  if (deliveries.some((d) => !subscribers.has(d.personKey))) {
+    throw new HttpsError('permission-denied', 'Every recipient must be a subscriber of the newsletter.');
+  }
+  if (!elevated) {
+    const allowed = [
+      ...await directoryEmails(db, tenantId, [...subscribers].map((key) => `person.${key}`)),
+      ...await directoryEmails(db, tenantId, [`org.${tenantId}`]),
+    ];
+    if (unknownRecipients([...args.to, ...args.cc], allowed).length > 0) {
+      throw new HttpsError('permission-denied', 'To and Cc must be addresses of the club or of the newsletter.');
+    }
+  }
+  return groupKey;
+}
+
 /** The pricing environment of a Pingen send: the same functions the quote uses. */
 function postEnv(): QuoteEnv {
   return { getPort: getCreditPort, secret: quoteTokenSecret.value(), now: Date.now(), readCountryCodes, answerEventsOf, renderPages: countLetterPages };
@@ -332,9 +394,6 @@ export const sendMailing = onCall(
     }
 
     if (caleventKeys.length > 0) {
-      if (typeof groupKey === 'string' && groupKey) {
-        throw new HttpsError('permission-denied', 'A group admin cannot send answer links.');
-      }
       // an answer records a person's attendance: an org cannot answer
       if (deliveries.some((d) => isOrgRecipient(d.personKey))) {
         throw new HttpsError('invalid-argument', 'Answer links go to persons only.');
@@ -344,9 +403,6 @@ export const sendMailing = onCall(
       if (householdWithAnswers(deliveries, caleventKeys)) {
         logger.warn(`${CF_NAME}: Versand with events addresses a household (tenant ${tenantId}) — refused`);
         throw new HttpsError('invalid-argument', 'household-with-answers');
-      }
-      if (keysFor(deliveries, DeliveryChannel.Email).length > MAX_PERSONAL_RECIPIENTS) {
-        throw new HttpsError('invalid-argument', `At most ${MAX_PERSONAL_RECIPIENTS} email recipients with events.`);
       }
     }
 
@@ -359,6 +415,23 @@ export const sendMailing = onCall(
       // a group admin addresses no household (householdsForCaller gives them none): drop, never send
       deliveries = dropHouseholdKeys(deliveries, `sendMailing, tenant ${tenantId}, group ${String(groupKey ?? '')}`);
       if (deliveries.length === 0) throw new HttpsError('invalid-argument', 'Nobody receives this Versand.');
+    }
+    // decided here for every caller; whatever the client sent as `newsletterGroupKey` is never read
+    const newsletterGroupKey = await newsletterSendCheck(db, {
+      uid, tenantId, groupKey, elevated, deliveries, to, cc, hasStoragePath: !!data.storagePath, hasEvents: caleventKeys.length > 0,
+    });
+    // a newsletter send splits its personal mails into several jobs, so it has no cap of MAX_PERSONAL_RECIPIENTS
+    if (caleventKeys.length > 0 && !newsletterGroupKey) {
+      if (typeof groupKey === 'string' && groupKey) {
+        throw new HttpsError('permission-denied', 'A group admin cannot send answer links.');
+      }
+      if (keysFor(deliveries, DeliveryChannel.Email).length > MAX_PERSONAL_RECIPIENTS) {
+        throw new HttpsError('invalid-argument', `At most ${MAX_PERSONAL_RECIPIENTS} email recipients with events.`);
+      }
+    }
+    if (newsletterGroupKey) {
+      if (!elevated) from = '';                    // a group admin's Versand leaves under the tenant's sender
+    } else if (!elevated) {
       if (typeof groupKey !== 'string' || !groupKey) {
         throw new HttpsError('permission-denied', 'This operation requires the memberAdmin or privileged role.');
       }
@@ -429,6 +502,7 @@ export const sendMailing = onCall(
           ...(data.dashboard === true ? { dashboard: true } : {}),
           ...(letterQrCodes ? { letterQrCodes: true } : {}),
           ...(post ? { post } : {}),
+          ...(newsletterGroupKey ? { newsletterGroupKey } : {}),
         };
         await ref.create(doc);
       } catch (error) {
@@ -469,6 +543,28 @@ export function privateRefs(attachments: NoticeAttachment[]): MailJobDoc['attach
   return attachments.map((a) => ({ privatePath: a.storagePath, filename: a.filename, contentType: a.contentType }));
 }
 
+/** The events of a Versand as its mails list them above the answer button. */
+async function mailAnswerEvents(db: Firestore, caleventKeys: string[]): Promise<{ name: string; when: string }[]> {
+  const eventSnaps = await db.getAll(...caleventKeys.map((key) => db.collection('calevents').doc(key)));
+  return eventSnaps.map((s2) => s2.data() as { name?: string; startDate?: string; startTime?: string } | undefined)
+    .filter((e) => !!e).map((e) => ({ name: String(e?.name ?? ''), when: eventWhen(e?.startDate, e?.startTime) }));
+}
+
+/** The signed answer link of one recipient of a Versand. */
+function mailAnswerUrlOf(mailingKey: string): (personKey: string) => string {
+  const secret = invitationLinkSecret.value();
+  const answerBase = mailingAnswerFunctionUrl(projectID.value());
+  return (personKey) => mailingAnswerUrl(answerBase, mailingKey, personKey, secret);
+}
+
+/** The signed unsubscribe link of one subscriber of a newsletter send; undefined while the link secret is missing. */
+function newsletterUnsubscribeUrlOf(groupKey: string): ((personKey: string) => string) | undefined {
+  const secret = invitationLinkSecret.value();
+  if (!secret) return undefined;
+  const base = newsletterFunctionUrl(projectID.value(), 'newsletterUnsubscribe');
+  return (personKey) => newsletterUnsubscribeUrl(base, personKey, groupKey, secret);
+}
+
 /** The personKeys among `keys` that have an account in the tenant: only they can open a notice. */
 async function keysWithAccount(db: Firestore, tenantId: string, keys: string[]): Promise<string[]> {
   const found = new Set<string>();
@@ -490,6 +586,8 @@ export const onMailing = onDocumentCreated(
     const mailing = snap.data() as MailingDoc;
     // with events, households are never combined (ruling 15; sendMailing refuses it): drop any household key
     mailing.deliveries = householdsDroppedForAnswers(mailing.deliveries ?? [], mailing.caleventKeys, `mailing ${snap.id}`);
+    // a newsletter send is never combined per household (spec 1.169 §6.4; sendMailing refuses it): drop any household key
+    mailing.deliveries = householdsDroppedForNewsletter(mailing.deliveries, mailing.newsletterGroupKey, `mailing ${snap.id}`);
     const tenantId = mailing.tenants?.length === 1 ? mailing.tenants[0] : '';
     if (!tenantId) {
       await snap.ref.update({ state: 'failed', error: 'A Versand must name exactly one tenant.' });
@@ -497,6 +595,14 @@ export const onMailing = onDocumentCreated(
     }
     const db = getFirestore();
     const result: Partial<MailingDoc> = { emails: 0, notices: 0, pushes: 0 };
+    const newsletterGroupKey = typeof mailing.newsletterGroupKey === 'string' ? mailing.newsletterGroupKey : '';
+    // a newsletter send never goes out without its unsubscribe links: no secret, nothing sent on any channel
+    const unsubscribeUrl = newsletterGroupKey ? newsletterUnsubscribeUrlOf(newsletterGroupKey) : undefined;
+    if (newsletterGroupKey && !unsubscribeUrl) {
+      logger.error(`${CF_NAME}: Versand ${snap.id} is a newsletter send, but the link secret is missing; nothing sent`);
+      await snap.ref.update({ ...result, state: 'failed', error: 'The unsubscribe links cannot be signed.' });
+      return;
+    }
     try {
       // every household key is resolved here (live, this tenant, contact a member); the others are dropped and logged
       const households = await loadHouseholdRecipients(db, tenantId, mailing.deliveries.map((d) => d.personKey), `mailing ${snap.id}`);
@@ -524,16 +630,34 @@ export const onMailing = onDocumentCreated(
           category: mailingCategory(snap.id),
         });
         const attachmentName = mailing.attachmentName ? { attachmentName: mailing.attachmentName } : {};
-        if (mailing.caleventKeys?.length) {
+        if (unsubscribeUrl) {
+          // a newsletter: one mail per subscriber with their own unsubscribe link and headers (and answer link with
+          // events), in jobs of at most MAX_PERSONAL_RECIPIENTS
+          const emailByKey = await directoryEmailsByKey(db, tenantId, emailKeys);
+          const events = mailing.caleventKeys?.length ? await mailAnswerEvents(db, mailing.caleventKeys) : undefined;
+          const answerUrl = events ? mailAnswerUrlOf(snap.id) : undefined;
+          const personal = personalEntries(emailKeys, emailByKey, answerUrl, unsubscribeUrl);
+          const blocks: PersonalBlock[] = events ? ['answer', 'unsubscribe'] : ['unsubscribe'];
+          const keys: string[] = [];
+          const parts = chunkPersonal(personal);
+          const shared = parts.length > 0 ? await base() : undefined;
+          for (const part of parts) {
+            const job: MailJobDoc = { ...(shared as MailJobDoc), ...attachmentName, personal: part, blocks, ...(events ? { answerEvents: events } : {}) };
+            keys.push((await db.collection(MailJobCollection).add(job)).id);
+          }
+          if (keys.length > 0) {
+            result.mailJobKey = keys[0];
+            result.mailJobKeys = keys;
+            result.emails = personal.length;
+          }
+        } else if (mailing.caleventKeys?.length) {
           // one mail per person, each with that person's own signed link; no Bcc, no dedupe by address
           const emailByKey = await directoryEmailsByKey(db, tenantId, emailKeys);
           const secret = invitationLinkSecret.value();
           const answerBase = mailingAnswerFunctionUrl(projectID.value());
           const personal = personalEntries(emailKeys, emailByKey, (personKey) => mailingAnswerUrl(answerBase, snap.id, personKey, secret));
           if (personal.length > 0) {
-            const eventSnaps = await db.getAll(...mailing.caleventKeys.map((key) => db.collection('calevents').doc(key)));
-            const answerEvents = eventSnaps.map((s2) => s2.data() as { name?: string; startDate?: string; startTime?: string } | undefined)
-              .filter((e) => !!e).map((e) => ({ name: String(e?.name ?? ''), when: eventWhen(e?.startDate, e?.startTime) }));
+            const answerEvents = await mailAnswerEvents(db, mailing.caleventKeys);
             const job: MailJobDoc = { ...(await base()), ...attachmentName, personal, answerEvents };
             result.mailJobKey = (await db.collection(MailJobCollection).add(job)).id;
             result.emails = personal.length;
@@ -570,6 +694,7 @@ export const onMailing = onDocumentCreated(
           senderName: noticeSenderOf(effectiveSender(mailing.from, await getAppEmailConfig(tenantId))),
           mailingKey: snap.id,
           caleventKeys: mailing.caleventKeys ?? [],
+          newsletterGroupKey,
           sentAt: getTodayStr(DateFormat.StoreDateTime),
         };
         await noticeRef.set(notice);
@@ -601,6 +726,7 @@ export const onMailing = onDocumentCreated(
             tenantId, mailingKey: snap.id, personKeys: postKeys, households,
             subject: mailing.subject, body: await sanitizeEmailBody(mailing.body), attachments: mailing.attachments,
             ...(mailing.letterQrCodes && mailing.caleventKeys?.length ? await letterAnswers(db, snap.id, mailing.caleventKeys) : {}),
+            ...(unsubscribeUrl ? { unsubscribeUrl } : {}),
             ...(fanOut ? { onLetter: fanOut.onLetter, only: fanOut.only } : {}),
           });
           await fanOut?.finish();

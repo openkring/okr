@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { mailJobBlocks, MailJobDoc, mailJobTenant, resolveJobContent, sendPersonal, trustedCategory } from './mail-job';
-import { ANSWER_URL_PLACEHOLDER } from './personal-mail.logic';
+import { mailJobBlocks, MailJobDoc, mailJobTenant, personalBlocks, resolveJobContent, sendPersonal, trustedCategory } from './mail-job';
+import { ANSWER_URL_PLACEHOLDER, answerBlockHtml, UNSUBSCRIBE_URL_PLACEHOLDER, unsubscribeBlockHtml } from './personal-mail.logic';
 
 const job = (bcc: string[]): MailJobDoc => ({
   tenants: ['scs'],
@@ -183,5 +183,91 @@ describe('trustedCategory', () => {
       expect(await trustedCategory({ category } as never, 'scs', spy)).toBeUndefined();
     }
     expect(spy).not.toHaveBeenCalled();
+  });
+});
+
+describe('sendPersonal blocks (newsletter, spec 1.169 §5.4)', () => {
+  const snap = { ref: { update: async () => undefined } };
+  const deps = (compose: ReturnType<typeof vi.fn>, send: ReturnType<typeof vi.fn>) => ({ now: () => 0, send, compose, pauseMs: 0 } as never);
+  // the composition as a layout would keep it: the whole body in html and text
+  const echo = () => vi.fn(async (_t: string, req: { body: string }) => ({ subject: '', html: req.body, text: req.body }));
+  const sent = () => vi.fn(async (_p: string, _o: { html: string; text?: string; headers?: Record<string, string> }) => undefined);
+  const newsletterJob = (over: Partial<MailJobDoc> = {}): MailJobDoc => ({
+    tenants: ['scs'], to: ['info@scs.ch'], subject: 's', body: '<p>Hallo</p>', blocks: ['unsubscribe'],
+    personal: [
+      { to: 'a@scs.ch', unsubscribeUrl: 'https://u/?p=a&g=nl', headers: { 'List-Unsubscribe': '<https://u/?p=a&g=nl>' } },
+      { to: 'b@scs.ch', unsubscribeUrl: 'https://u/?p=b&g=nl', headers: { 'List-Unsubscribe': '<https://u/?p=b&g=nl>' } },
+    ],
+    ...over,
+  });
+
+  it('keeps an event-only job as it was: the answer block alone, composed with the same body', async () => {
+    const compose = vi.fn(async () => ({ subject: '', html: `<a href="${ANSWER_URL_PLACEHOLDER}">x</a>`, text: ANSWER_URL_PLACEHOLDER }));
+    const job: MailJobDoc = {
+      tenants: ['scs'], to: ['info@scs.ch'], subject: 's', body: '<p>Hallo</p>',
+      personal: [{ to: 'a@scs.ch', answerUrl: 'https://x/?p=a' }], answerEvents: [{ name: 'GV', when: '01.12.2026, 19:30' }],
+    };
+    const send = sent();
+    await sendPersonal(snap, job, 'scs', 'app@scs.ch', 'mailtrap_api', [], { sent: 0 }, deps(compose, send));
+    expect((compose.mock.calls[0] as unknown[])[1]).toMatchObject({ body: '<p>Hallo</p>' + answerBlockHtml(ANSWER_URL_PLACEHOLDER, job.answerEvents ?? []) });
+    expect(send.mock.calls[0][1].html).toBe('<a href="https://x/?p=a">x</a>');
+  });
+
+  it('puts each person\'s own unsubscribe link and headers into their mail', async () => {
+    const compose = echo();
+    const send = sent();
+    await sendPersonal(snap, newsletterJob(), 'scs', 'app@scs.ch', 'mailtrap_api', [], { sent: 0 }, deps(compose, send));
+    expect((compose.mock.calls[0] as unknown[])[1]).toMatchObject({ body: '<p>Hallo</p>' + unsubscribeBlockHtml(UNSUBSCRIBE_URL_PLACEHOLDER) });
+    expect(send).toHaveBeenCalledTimes(2);
+    expect(send.mock.calls[0][1].html).toContain('href="https://u/?p=a&amp;g=nl"');
+    expect(send.mock.calls[0][1].text).toContain('https://u/?p=a&g=nl');
+    expect(send.mock.calls[1][1].html).toContain('href="https://u/?p=b&amp;g=nl"');
+    expect(send.mock.calls[1][1].html).not.toContain('p=a');
+    expect(send.mock.calls[0][1].headers).toEqual({ 'List-Unsubscribe': '<https://u/?p=a&g=nl>' });
+    expect(send.mock.calls.every((c) => !c[1].html.includes(UNSUBSCRIBE_URL_PLACEHOLDER))).toBe(true);
+  });
+
+  it('appends both blocks, answer first, and fills both links', async () => {
+    const send = sent();
+    const job = newsletterJob({
+      blocks: ['answer', 'unsubscribe'], answerEvents: [{ name: 'GV', when: '01.12.2026' }],
+      personal: [{ to: 'a@scs.ch', answerUrl: 'https://x/?p=a', unsubscribeUrl: 'https://u/?p=a' }],
+    });
+    await sendPersonal(snap, job, 'scs', 'app@scs.ch', 'mailtrap_api', [], { sent: 0 }, deps(echo(), send));
+    const html = send.mock.calls[0][1].html;
+    expect(html.indexOf('https://x/?p=a')).toBeGreaterThan(-1);
+    expect(html.indexOf('https://u/?p=a')).toBeGreaterThan(html.indexOf('https://x/?p=a'));
+    expect(html).not.toContain(ANSWER_URL_PLACEHOLDER);
+    expect(html).not.toContain(UNSUBSCRIBE_URL_PLACEHOLDER);
+  });
+
+  it('fails closed when the composition lost the unsubscribe placeholder', async () => {
+    const compose = vi.fn(async () => ({ subject: '', html: '<p>Hallo</p>', text: 'Hallo' }));
+    const send = sent();
+    await expect(sendPersonal(snap, newsletterJob(), 'scs', 'app@scs.ch', 'mailtrap_api', [], { sent: 0 }, deps(compose, send)))
+      .rejects.toThrow('The unsubscribe link is missing from the composed mail.');
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it('never sends an entry without its unsubscribe link', async () => {
+    const updates: object[] = [];
+    const send = sent();
+    const job = newsletterJob({ personal: [{ to: 'a@scs.ch' }, { to: 'b@scs.ch', unsubscribeUrl: 'https://u/?p=b' }] });
+    await sendPersonal({ ref: { update: async (d: object) => { updates.push(d); } } }, job, 'scs', 'app@scs.ch', 'mailtrap_api', [], { sent: 0 }, deps(echo(), send));
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send.mock.calls[0][1].html).toContain('https://u/?p=b');
+    expect(updates.at(-1)).toMatchObject({ blocksSent: 1, state: 'sent', error: '1 von 2 Mails konnten nicht gesendet werden.' });
+  });
+});
+
+describe('personalBlocks', () => {
+  it('reads an absent list as the answer block, and dedupes', () => {
+    expect(personalBlocks({})).toEqual(['answer']);
+    expect(personalBlocks({ blocks: ['unsubscribe', 'unsubscribe'] })).toEqual(['unsubscribe']);
+  });
+
+  it('refuses an empty list or an unknown block', () => {
+    expect(() => personalBlocks({ blocks: [] })).toThrow();
+    expect(() => personalBlocks({ blocks: ['footer'] as never })).toThrow();
   });
 });

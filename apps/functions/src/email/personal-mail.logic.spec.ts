@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
-  ANSWER_URL_PLACEHOLDER, answerBlockHtml, deadlineOutcome, deadlineReached, fillAnswerUrl, parseCaleventKeys, PERSONAL_DEADLINE_MS, personalEntries,
-  personalOutcome, refusedEventMessage, sendableEventRefusal, sendErrorCode,
+  ANSWER_URL_PLACEHOLDER, answerBlockHtml, chunkPersonal, deadlineOutcome, deadlineReached, fillAnswerUrl, fillUrl, hasPlaceholder, MAX_PERSONAL_RECIPIENTS,
+  parseCaleventKeys, PERSONAL_DEADLINE_MS, personalEntries, personalOutcome, refusedEventMessage, sendableEventRefusal, sendErrorCode,
+  UNSUBSCRIBE_URL_PLACEHOLDER, unsubscribeBlockHtml, unsubscribeHeaders,
 } from './personal-mail.logic';
 
 describe('personalEntries', () => {
@@ -118,5 +119,66 @@ describe('deadlineReached', () => {
 describe('deadlineOutcome', () => {
   it('fails the job and says how many mails went out', () => {
     expect(deadlineOutcome(312, 800)).toEqual({ state: 'failed', error: '312 von 800 Mails gesendet – die Zeit hat nicht gereicht.' });
+  });
+});
+
+describe('personalEntries for a newsletter', () => {
+  const unsub = (key: string) => `https://u/?p=${key}&g=nl`;
+
+  it('gives each person their own unsubscribe link and headers, and no answer link without events', () => {
+    const emails = new Map([['p1', 'a@x.ch'], ['p2', 'a@x.ch']]);
+    expect(personalEntries(['p1', 'p2', 'p3'], emails, undefined, unsub)).toEqual([
+      { to: 'a@x.ch', unsubscribeUrl: 'https://u/?p=p1&g=nl', headers: unsubscribeHeaders('https://u/?p=p1&g=nl') },
+      { to: 'a@x.ch', unsubscribeUrl: 'https://u/?p=p2&g=nl', headers: unsubscribeHeaders('https://u/?p=p2&g=nl') },
+    ]);
+  });
+
+  it('carries both links when the newsletter asks about events', () => {
+    const [entry] = personalEntries(['p1'], new Map([['p1', 'a@x.ch']]), (k) => `https://a/?p=${k}`, unsub);
+    expect(entry).toMatchObject({ answerUrl: 'https://a/?p=p1', unsubscribeUrl: 'https://u/?p=p1&g=nl' });
+  });
+});
+
+describe('chunkPersonal', () => {
+  it('splits into parts of at most MAX_PERSONAL_RECIPIENTS', () => {
+    const parts = chunkPersonal(Array.from({ length: 1700 }, (_, i) => i));
+    expect(parts.map((p) => p.length)).toEqual([800, 800, 100]);
+    expect(parts.flat()).toHaveLength(1700);
+    expect(MAX_PERSONAL_RECIPIENTS).toBe(800);
+  });
+
+  it('keeps an empty list empty and takes another size', () => {
+    expect(chunkPersonal([])).toEqual([]);
+    expect(chunkPersonal([1, 2, 3], 2)).toEqual([[1, 2], [3]]);
+  });
+});
+
+describe('unsubscribeBlockHtml', () => {
+  it('is one small centred line «Newsletter abbestellen» with the escaped url', () => {
+    const html = unsubscribeBlockHtml('https://u/?p=1&g=2"x');
+    expect(html).toContain('href="https://u/?p=1&amp;g=2&quot;x"');
+    expect(html).toContain('>Newsletter abbestellen</a>');
+    expect(html).toContain('text-align:center');
+    expect(html).toContain('font-size:12px');
+    expect(html.match(/<p\b/g)).toHaveLength(1);
+  });
+});
+
+describe('unsubscribeHeaders', () => {
+  it('names the url and the one-click POST (RFC 8058)', () => {
+    expect(unsubscribeHeaders('https://u/?p=1')).toEqual({
+      'List-Unsubscribe': '<https://u/?p=1>', 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+    });
+  });
+});
+
+describe('fillUrl and hasPlaceholder', () => {
+  it('fill only their own placeholder', () => {
+    const rendered = { html: `${ANSWER_URL_PLACEHOLDER} ${UNSUBSCRIBE_URL_PLACEHOLDER}`, text: `${ANSWER_URL_PLACEHOLDER} ${UNSUBSCRIBE_URL_PLACEHOLDER}` };
+    const out = fillUrl(rendered, UNSUBSCRIBE_URL_PLACEHOLDER, 'https://u/?a=1&b=2');
+    expect(out.html).toBe(`${ANSWER_URL_PLACEHOLDER} https://u/?a=1&amp;b=2`);
+    expect(out.text).toBe(`${ANSWER_URL_PLACEHOLDER} https://u/?a=1&b=2`);
+    expect(hasPlaceholder(out, UNSUBSCRIBE_URL_PLACEHOLDER)).toBe(false);
+    expect(hasPlaceholder(out, ANSWER_URL_PLACEHOLDER)).toBe(true);
   });
 });

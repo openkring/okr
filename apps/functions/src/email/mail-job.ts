@@ -23,8 +23,8 @@ import { sendEmailViaProvider } from '../auth/email-transport';
 import { AttachmentRef, resolveAttachments } from '../auth';
 import { composeBody } from './render-email';
 import {
-  ANSWER_URL_PLACEHOLDER, answerBlockHtml, AnswerEventLine, deadlineOutcome, deadlineReached, fillAnswerUrl, hasAnswerPlaceholder,
-  PER_MAIL_PAUSE_MS, personalOutcome, PersonalEntry, sendErrorCode,
+  answerBlockHtml, AnswerEventLine, BLOCK_PLACEHOLDER, deadlineOutcome, deadlineReached, fillUrl, hasPlaceholder,
+  PER_MAIL_PAUSE_MS, PersonalBlock, personalOutcome, PersonalEntry, sendErrorCode, unsubscribeBlockHtml,
 } from './personal-mail.logic';
 import { asLayoutChoice } from './render-email.logic';
 
@@ -58,6 +58,11 @@ export interface MailJobDoc {
   /** A Versand with answer links: one mail per entry (no Bcc), each with its own link. */
   personal?: PersonalEntry[];
   answerEvents?: AnswerEventLine[];
+  /**
+   * The blocks appended below the body of each personal mail, in this order; every entry needs each block's url.
+   * Absent = `['answer']` (a Versand with events, the only personal send before the newsletter).
+   */
+  blocks?: PersonalBlock[];
   state?: 'pending' | 'sending' | 'sent' | 'failed';
   blocksSent?: number;
   blocksTotal?: number;
@@ -141,12 +146,27 @@ export function mailJobBlocks(job: MailJobDoc, from: string): { to: string[]; cc
 /** Updates the progress counter this often during a personal send. */
 const PERSONAL_PROGRESS_EVERY = 10;
 
+/** The blocks of a personal job: absent = the answer block only; anything else than a known block refuses the job. */
+export function personalBlocks(job: Pick<MailJobDoc, 'blocks'>): PersonalBlock[] {
+  if (job.blocks === undefined) return ['answer'];
+  const known = Object.keys(BLOCK_PLACEHOLDER);
+  if (!Array.isArray(job.blocks) || job.blocks.length === 0 || job.blocks.some((b) => !known.includes(b))) {
+    throw new Error('The mail job names no valid personal block.');
+  }
+  return [...new Set(job.blocks)];
+}
+
+/** One entry's url for a block: the answer link or the unsubscribe link. */
+function entryUrl(entry: PersonalEntry, block: PersonalBlock): string | undefined {
+  return block === 'answer' ? entry.answerUrl : entry.unsubscribeUrl;
+}
+
 /**
- * The personal path: one mail per entry, the body plus that person's answer block in the layout. A failed
- * mail is counted and the others still go out; the job fails only when nothing was sent. Past the
- * deadline no further mail is started and the job ends `failed` with the count. `progress.sent` is
- * shared with the caller, so a failure mid-loop still reports how many mails went out. `now` is
- * injectable for the test.
+ * The personal path: one mail per entry, the body plus that person's blocks (answer link, unsubscribe link) in
+ * the layout. A failed mail is counted and the others still go out; the job fails only when nothing was sent.
+ * An entry without the url of a block is not sent (counted as failed). Past the deadline no further mail is
+ * started and the job ends `failed` with the count. `progress.sent` is shared with the caller, so a failure
+ * mid-loop still reports how many mails went out. `now` is injectable for the test.
  */
 export async function sendPersonal(
   snap: { ref: { update(data: object): Promise<unknown> } },
@@ -161,13 +181,21 @@ export async function sendPersonal(
   const personal = job.personal ?? [];
   const events = job.answerEvents ?? [];
   if (typeof job.body !== 'string' || !job.body.trim()) throw new Error('The mail job has an empty body.');
+  const blocks = personalBlocks(job);
   await snap.ref.update({ state: 'sending', blocksTotal: personal.length, blocksSent: 0 });
-  // composed once for everybody (sanitise, layout, template reads); each mail only swaps in its own link
+  const blockHtml = (block: PersonalBlock): string => block === 'answer'
+    ? answerBlockHtml(BLOCK_PLACEHOLDER.answer, events)
+    : unsubscribeBlockHtml(BLOCK_PLACEHOLDER.unsubscribe);
+  // composed once for everybody (sanitise, layout, template reads); each mail only swaps in its own links
   const composed = await (deps.compose ?? composeBody)(tenantId, {
-    body: job.body + answerBlockHtml(ANSWER_URL_PLACEHOLDER, events), layout: asLayoutChoice(job.layout), attachmentName: job.attachmentName,
+    body: job.body + blocks.map(blockHtml).join(''), layout: asLayoutChoice(job.layout), attachmentName: job.attachmentName,
   });
-  // fail closed: a layout or sanitiser that rewrote the placeholder would send everybody a dummy link
-  if (!hasAnswerPlaceholder(composed)) throw new Error('The answer link is missing from the composed mail.');
+  // fail closed: a layout or sanitiser that rewrote a placeholder would send everybody a dummy link
+  for (const block of blocks) {
+    if (!hasPlaceholder(composed, BLOCK_PLACEHOLDER[block])) {
+      throw new Error(block === 'answer' ? 'The answer link is missing from the composed mail.' : 'The unsubscribe link is missing from the composed mail.');
+    }
+  }
   let failed = 0;
   let errorCode: string | undefined;
   for (const [i, entry] of personal.entries()) {
@@ -178,8 +206,14 @@ export async function sendPersonal(
     }
     if (i > 0 && pauseMs > 0) await new Promise((resolve) => setTimeout(resolve, pauseMs));
     try {
-      const { html, text } = fillAnswerUrl(composed, entry.answerUrl);
-      if (html.includes(ANSWER_URL_PLACEHOLDER) || text?.includes(ANSWER_URL_PLACEHOLDER)) throw new Error('placeholder left');
+      let mail: { html: string; text?: string } = composed;
+      for (const block of blocks) {
+        const url = entryUrl(entry, block);
+        if (!url) throw new Error(`no ${block} url`);
+        mail = fillUrl(mail, BLOCK_PLACEHOLDER[block], url);
+      }
+      const { html, text } = mail;
+      if (blocks.some((b) => html.includes(BLOCK_PLACEHOLDER[b]) || text?.includes(BLOCK_PLACEHOLDER[b]))) throw new Error('placeholder left');
       await send(provider, {
         from, to: [entry.to], ...(job.to[0] ? { replyTo: job.to[0] } : {}), subject: job.subject, html, ...(text !== undefined ? { text } : {}), attachments,
         ...(job.category ? { category: job.category } : {}),

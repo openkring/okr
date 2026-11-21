@@ -91,6 +91,24 @@ export function eventsBlockHtml(events: LetterEvent[], qrSvg: string): string {
     + `<table style="border-collapse:collapse;width:100%;">${rows}</table></div>`;
 }
 
+/** Above the unsubscribe link of a newsletter letter. */
+export const LETTER_UNSUBSCRIBE_INTRO = 'Newsletter abbestellen: Scanne den QR-Code oder öffne diesen Link.';
+
+/**
+ * The newsletter footer of one letter (spec 1.169 §5.4): the recipient's unsubscribe link as text and as a QR code
+ * (`qrSvg`). Inline styles only, like the events block, and kept on one page.
+ */
+export function unsubscribeLetterBlockHtml(url: string, qrSvg: string): string {
+  if (!url || !qrSvg) return '';
+  const svg = qrSvg.replace(/<svg\b/, '<svg width="100%" height="100%"');
+  const avoid = 'break-inside:avoid;page-break-inside:avoid;';
+  return `<div class="okr-letter-unsubscribe" style="${avoid}margin-top:8mm;">`
+    + `<table style="border-collapse:collapse;width:100%;"><tr style="${avoid}">`
+    + `<td style="width:24mm;padding:0 4mm 0 0;vertical-align:top;"><div style="width:20mm;height:20mm;">${svg}</div></td>`
+    + `<td style="vertical-align:top;font-size:8pt;line-height:1.35;">${escapeHtml(LETTER_UNSUBSCRIBE_INTRO)}<br>`
+    + `<span style="word-break:break-all;">${escapeHtml(url)}</span></td></tr></table></div>`;
+}
+
 /** Puts the events block at the end of a letter page: before its last </body>, else at the very end. */
 export function withEventsBlock(html: string, block: string): string {
   if (!block) return html;
@@ -432,6 +450,8 @@ export async function buildMailingLetters(args: {
   /** «QR-Code für Link anzeigen»: the events below each person's letter, with a QR code of `answerUrl(personKey)` */
   answerEvents?: LetterEvent[];
   answerUrl?: (personKey: string) => string;
+  /** a newsletter send: each person's letter ends with their unsubscribe link as text and QR code */
+  unsubscribeUrl?: (personKey: string) => string;
   /** called with every rendered letter, before it is merged into the combined PDF */
   onLetter?: (l: RenderedLetter) => Promise<void>;
   /** which letters go into the combined PDF; absent = all */
@@ -475,9 +495,14 @@ export async function buildMailingLetters(args: {
       answerKey = isOrg ? undefined : personKey;
     }
     if (!address) { missing++; continue; }
-    const eventsHtml = answerKey && args.answerUrl && args.answerEvents?.length
+    // an org cannot answer (an answer records a person's attendance): its letter has no events block
+    const answerHtml = answerKey && args.answerUrl && args.answerEvents?.length
       ? eventsBlockHtml(args.answerEvents, await qrSvgOf(args.answerUrl(answerKey)))
       : '';
+    // a person's own unsubscribe link; a newsletter send combines no household (spec 1.169 §6.4), an org has none
+    const unsubscribeUrl = !isHouseholdRecipient(personKey) && !isOrgRecipient(personKey) ? args.unsubscribeUrl?.(personKey) : undefined;
+    const unsubscribeHtml = unsubscribeUrl ? unsubscribeLetterBlockHtml(unsubscribeUrl, await qrSvgOf(unsubscribeUrl)) : '';
+    const eventsHtml = answerHtml + unsubscribeHtml;
     const { pdf, pages } = await renderLetter(ctx, { name, firstName, lastName, address, eventsHtml });
     const rendered: RenderedLetter = { recipientKey: personKey, recipientName: name, countryCode: address.countryCode, pdf, pages };
     if (args.onLetter) await args.onLetter(rendered);
