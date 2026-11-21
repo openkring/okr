@@ -349,7 +349,8 @@
     "deliveries": {
       "title": "Delivery",
       "empty": "Nobody on this channel.",
-      "unknown_person": "Unknown person"
+      "unknown_person": "Unknown person",
+      "household": "Household"
     },
     "events": {
       "title": "Answers",

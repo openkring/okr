@@ -5,6 +5,7 @@ import { ContractModel, CourseFinanceSubcollection, CourseModel, HouseholdCollec
 import type { AvatarInfo } from '@okr/shared-models';
 import { getContractIndex } from '@okr/business-contract-util';
 import { getCourseIndex } from '@okr/calendar-course-util';
+import { householdRecipientKey } from '@okr/shared-util-core';
 import { householdAfterErasure } from '../household/household.logic';
 import type { Blocker, SubjectCtx, SubjectDataEntry } from './types';
 
@@ -231,6 +232,17 @@ async function prospectParentKeys(ctx: SubjectCtx): Promise<string[]> {
   return [...new Set(snap.docs
     .map((d) => (d.get('parentKey') as string | undefined) ?? '')
     .filter((k) => k.startsWith(prefix)))];
+}
+
+/** The `household.<okey>` recipient keys of these household okeys, each once (spec 1.168). */
+export function householdRecipientKeysOf(okeys: string[]): string[] {
+  return [...new Set(okeys.filter((okey) => okey !== ''))].map(householdRecipientKey);
+}
+
+/** The documents, each id once, in first-seen order. */
+export function dedupeById<T extends { id: string }>(docs: T[]): T[] {
+  const seen = new Set<string>();
+  return docs.filter((doc) => (seen.has(doc.id) ? false : (seen.add(doc.id), true)));
 }
 
 async function docsByIds(collection: string, ids: string[]): Promise<QueryDocumentSnapshot[]> {
@@ -1147,6 +1159,18 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     tier: 'T4',
     onTenantExit: 'anonymize',
     find: (c: SubjectCtx) => db().collection('sendings').where('recipientKey', '==', c.parentKey),
+    // Spec 1.168 §6.3: a household letter (`recipientKey` = `household.<okey>`) goes to the contact's postal
+    // address, so the subject's own records AND those of every household (current or archived) that still
+    // lists them in `memberKeys` are theirs to export and erase. Known limit: a household the subject has
+    // already left (removed from `memberKeys`) is not found; its letters stay under the household's key.
+    resolve: async (c: SubjectCtx) => {
+      const own = await db().collection('sendings').where('recipientKey', '==', c.parentKey).get();
+      const households = await db().collection(HouseholdCollection).where('memberKeys', 'array-contains', c.personKey).get();
+      const keys = householdRecipientKeysOf(households.docs.map((d) => d.id));
+      if (keys.length === 0) return own.docs;
+      const snaps = await Promise.all(chunk(keys).map((part) => db().collection('sendings').where('recipientKey', 'in', part).get()));
+      return dedupeById([...own.docs, ...snaps.flatMap((snap) => snap.docs)]);
+    },
     tenantScope: 'tenantsArray',
     onExport: 'index',
     indexFields: { title: 'recipientName', date: 'updatedAt', route: '/sending' },

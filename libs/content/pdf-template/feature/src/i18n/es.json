@@ -349,7 +349,8 @@
     "deliveries": {
       "title": "Entrega",
       "empty": "Nadie por este canal.",
-      "unknown_person": "Persona desconocida"
+      "unknown_person": "Persona desconocida",
+      "household": "Hogar"
     },
     "events": {
       "title": "Respuestas",

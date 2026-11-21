@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Attendee } from '@okr/shared-models';
 import {
+  recipientPersonKey,
   deliveryByPerson, deliveryStatusColor, deliveryStatusCounts, hasDeliveryReports,
   mailingAnswerColor, mailingAnswerCounts, mailingAnswerOf, mailingChannelCounts, mailingRecipientsFor, mailingStateColor,
   mailJobProgress, sortMailingsNewestFirst, mailLogEventColor, mailLogEventOf, noticeReadCount } from './mailing.util';
@@ -109,5 +110,15 @@ describe('send log helpers', () => {
 
   it('counts the In-App recipients who opened the notice', () => {
     expect(noticeReadCount(['a', 'b', 'c'], new Map([['a', '20261115120000'], ['x', '1']]))).toBe(1);
+  });
+});
+
+describe('recipientPersonKey (spec 1.168)', () => {
+  it('is the contact for a household row, undefined without one, and the key itself otherwise', () => {
+    expect(recipientPersonKey('household.h1', { 'household.h1': 'p1' })).toBe('p1');
+    expect(recipientPersonKey('household.h1', undefined)).toBeUndefined();
+    expect(recipientPersonKey('household.h1', { 'household.h1': '' })).toBeUndefined();
+    expect(recipientPersonKey('p2', undefined)).toBe('p2');
+    expect(recipientPersonKey('org.o1', {})).toBe('org.o1');
   });
 });

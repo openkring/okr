@@ -233,9 +233,13 @@ const LETTERS_URL_TTL_MS = 9 * 60 * 1000;
               <ion-list lines="inset">
                 @for (row of channelRows(); track row.personKey) {
                   <ion-item [button]="true" [detail]="false" (click)="showActions(row)">
-                    <ion-avatar slot="start">
-                      <img okrImg src="{{ avatarKey(row) | avatar }}" alt="" />
-                    </ion-avatar>
+                    @if (row.household) {
+                      <ion-icon slot="start" src="{{ 'people' | svgIcon }}" />
+                    } @else {
+                      <ion-avatar slot="start">
+                        <img okrImg src="{{ avatarKey(row) | avatar }}" alt="" />
+                      </ion-avatar>
+                    }
                     <ion-label>
                       {{ row.name }}
                       @if (showStatus && hasReports()) {
@@ -244,8 +248,8 @@ const LETTERS_URL_TTL_MS = 9 * 60 * 1000;
                           <p>{{ isoTime(d.at) }}@if (d.reason) { · {{ d.reason }} }</p>
                         }
                       }
-                      @if (showRead) {
-                        @let readAt = store.noticeReads().get(row.personKey);
+                      @if (showRead && row.readKey) {
+                        @let readAt = store.noticeReads().get(row.readKey);
                         @if (readAt) { <p>{{ dateTime(readAt) }}</p> }
                       }
                     </ion-label>
@@ -254,8 +258,13 @@ const LETTERS_URL_TTL_MS = 9 * 60 * 1000;
                       <ion-badge slot="end" [color]="statusColor(s)">{{ statusLabel(s) }}</ion-badge>
                     }
                     @if (showRead) {
-                      @let read = store.noticeReads().has(row.personKey);
-                      <ion-badge slot="end" [color]="read ? 'success' : 'medium'">{{ read ? store.i18n.read_read() : store.i18n.read_unread() }}</ion-badge>
+                      @if (row.readKey) {
+                        @let read = store.noticeReads().has(row.readKey);
+                        <ion-badge slot="end" [color]="read ? 'success' : 'medium'">{{ read ? store.i18n.read_read() : store.i18n.read_unread() }}</ion-badge>
+                      } @else {
+                        <!-- a household whose contact the Versand did not record: no read state to show -->
+                        <ion-badge slot="end" color="medium">–</ion-badge>
+                      }
                     }
                   </ion-item>
                 }
@@ -336,8 +345,10 @@ export class MailingPage {
   protected readonly statusCounts = computed(() =>
     deliveryStatusCounts(mailingRecipientsFor(this.mailing()?.deliveries, 'email'), this.store.deliveryByPerson()));
   protected readonly readCountLabel = computed(() => {
-    const keys = mailingRecipientsFor(this.mailing()?.deliveries, 'chat');
-    return fill(this.store.i18n.read_count(), { count: noticeReadCount(keys, this.store.noticeReads()), total: keys.length });
+    const rows = this.store.channels().find((c) => c.channel === 'chat')?.rows ?? [];
+    // a household row counts as read when its contact opened the Mitteilung (spec 1.168)
+    const readKeys = rows.map((row) => row.readKey).filter((key): key is string => !!key);
+    return fill(this.store.i18n.read_count(), { count: noticeReadCount(readKeys, this.store.noticeReads()), total: rows.length });
   });
   protected readonly unmatchedNote = computed(() =>
     fill(this.store.i18n.status_unmatched(), { count: this.store.deliveries()?.unmatched ?? 0 }));
@@ -460,10 +471,11 @@ export class MailingPage {
   protected async showActions(row: MailingRecipientRow): Promise<void> {
     const i18n = this.store.i18n;
     const isOrg = isOrgRecipient(row.personKey);
-    const entry = this.store.appStore.getDirectoryEntry(this.avatarKey(row));
+    // a household has no directory entry and no person page (spec 1.168): only the send log is offered
+    const entry = row.household ? undefined : this.store.appStore.getDirectoryEntry(this.avatarKey(row));
     const delivery = this.store.deliveryByPerson().get(row.personKey);
     const options = createActionSheetOptions(row.name);
-    if (!isOrg) options.buttons.push(createActionSheetButton('person.view', i18n.action_person(), this.imgixBaseUrl, 'person'));
+    if (!isOrg && !row.household) options.buttons.push(createActionSheetButton('person.view', i18n.action_person(), this.imgixBaseUrl, 'person'));
     if (entry?.favPhone) options.buttons.push(createActionSheetButton('person.call', i18n.action_call(), this.imgixBaseUrl, 'tel'));
     if (entry?.favEmail) options.buttons.push(createActionSheetButton('person.email', i18n.action_email(), this.imgixBaseUrl, 'email'));
     if (this.channel() === 'email' && !!this.mailing()?.mailJobKey) {

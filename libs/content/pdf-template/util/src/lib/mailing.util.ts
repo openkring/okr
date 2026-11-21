@@ -1,5 +1,6 @@
 // libs/content/pdf-template/util/src/lib/mailing.util.ts
 import { Attendee, DeliveryChannel } from '@okr/shared-models';
+import { isHouseholdRecipient } from '@okr/shared-util-core';
 
 /**
  * A sent Versand as the overview reads it: the `mailings/{key}` doc (`MailingDoc` in
@@ -35,6 +36,18 @@ export interface MailingView {
   post?: { via?: string };
   /** StoreDate: the answer links stop working after it */
   validUntil?: string;
+  /** `household.<okey>` → the contact the send reached (spec 1.168); written by onMailing */
+  householdContacts?: Record<string, string>;
+  /** `household.<okey>` → the household name at send time */
+  householdNames?: Record<string, string>;
+}
+
+/**
+ * The person whose answer and In-App read state stand for a recipient row: a household's contact (undefined
+ * when the Versand did not record one), else the key itself (spec 1.168).
+ */
+export function recipientPersonKey(key: string, householdContacts: Record<string, string> | undefined): string | undefined {
+  return isHouseholdRecipient(key) ? (householdContacts?.[key] || undefined) : key;
 }
 
 export type MailingState = 'pending' | 'sent' | 'failed';

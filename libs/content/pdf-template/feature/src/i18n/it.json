@@ -349,7 +349,8 @@
     "deliveries": {
       "title": "Consegna",
       "empty": "Nessuno su questo canale.",
-      "unknown_person": "Persona sconosciuta"
+      "unknown_person": "Persona sconosciuta",
+      "household": "Nucleo familiare"
     },
     "events": {
       "title": "Risposte",

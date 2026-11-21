@@ -10,14 +10,18 @@ import { CalEventModel, NameDisplay } from '@okr/shared-models';
 import { DocEmailService, MailingLetters, MailingService, SendingService } from '@okr/content-pdf-template-data-access';
 import {
   deliveryByPerson, MAILING_I18N_KEYS, MAILING_VIEW_CHANNELS, MailingAnswer, mailingAnswerCounts, mailingAnswerOf, MailingDeliveries,
-  MailingI18n, mailingRecipientsFor, MailingView, SENDING_I18N_KEYS, SendingI18n, summarizeSendings,
+  MailingI18n, mailingRecipientsFor, MailingView, recipientPersonKey, SENDING_I18N_KEYS, SendingI18n, summarizeSendings,
 } from '@okr/content-pdf-template-util';
-import { getFullName, isOrgRecipient, nameMatches } from '@okr/shared-util-core';
+import { getFullName, isHouseholdRecipient, isOrgRecipient, nameMatches } from '@okr/shared-util-core';
 
 /** One recipient row of the detail view: a name, never an address (privacy-model skill). */
 export interface MailingRecipientRow {
   personKey: string;
   name: string;
+  /** a `household.<okey>` row (spec 1.168): no avatar, no person page */
+  household?: boolean;
+  /** the person whose answer and In-App read state the row shows (a household's contact); undefined = unknown */
+  readKey?: string;
 }
 
 /** One event of a Versand with answer links, with every recipient's answer. */
@@ -122,10 +126,15 @@ export const MailingStore = signalStore(
       for (const o of store.appStore.allOrgs()) map.set(`org.${o.okey}`, o.name);
       return map;
     });
-    const rowOf = (personKey: string): MailingRecipientRow => ({
-      personKey,
-      name: names().get(personKey) ?? (isOrgRecipient(personKey) ? personKey : store.i18n.unknown_person()),
-    });
+    /** a household row's name: as the send recorded it, else from its letter's record, else «Haushalt» */
+    const householdName = (key: string): string => store.mailingResource.value()?.householdNames?.[key]
+      || (store.sendingsResource.value() ?? []).find((s) => s.recipientKey === key)?.recipientName
+      || store.i18n.household();
+    const rowOf = (personKey: string): MailingRecipientRow => {
+      const readKey = recipientPersonKey(personKey, store.mailingResource.value()?.householdContacts);
+      if (isHouseholdRecipient(personKey)) return { personKey, name: householdName(personKey), household: true, ...(readKey ? { readKey } : {}) };
+      return { personKey, readKey: personKey, name: names().get(personKey) ?? (isOrgRecipient(personKey) ? personKey : store.i18n.unknown_person()) };
+    };
     return {
       mailings: computed(() => store.mailingsResource.value() ?? []),
       isLoading: computed(() => store.mailingsResource.isLoading()),
@@ -152,7 +161,8 @@ export const MailingStore = signalStore(
         const recipients = (mailing?.deliveries ?? []).map((d) => rowOf(d.personKey)).sort((a, b) => a.name.localeCompare(b.name));
         return keys.map((key, i) => {
           const event = loaded[i];
-          const answers = recipients.map((r) => ({ ...r, answer: mailingAnswerOf(event?.attendees, event?.maxAttendees, r.personKey) }));
+          // a household answers through its contact (spec 1.168); an unknown contact stays open
+          const answers = recipients.map((r) => ({ ...r, answer: mailingAnswerOf(event?.attendees, event?.maxAttendees, r.readKey ?? '') }));
           return { key, event, answers, counts: mailingAnswerCounts(answers.map((a) => a.answer)) };
         });
       }),

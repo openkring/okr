@@ -349,7 +349,8 @@
     "deliveries": {
       "title": "Distribution",
       "empty": "Personne par ce canal.",
-      "unknown_person": "Personne inconnue"
+      "unknown_person": "Personne inconnue",
+      "household": "Foyer"
     },
     "events": {
       "title": "Réponses",

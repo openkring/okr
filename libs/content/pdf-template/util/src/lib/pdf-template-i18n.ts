@@ -346,6 +346,7 @@ export const MAILING_I18N_KEYS = {
   delivery_chat:     PFX + 'composer.delivery.chat',
   delivery_post:     PFX + 'composer.delivery.post',
   unknown_person:    PFX + 'mailing.deliveries.unknown_person',
+  household:         PFX + 'mailing.deliveries.household',
   // the mail server's reports per E-Mail recipient (getMailingDeliveries)
   status_delivered:  PFX + 'mailing.status.delivered',
   status_deferred:   PFX + 'mailing.status.deferred',

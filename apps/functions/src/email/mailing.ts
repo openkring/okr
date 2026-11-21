@@ -140,6 +140,8 @@ export interface MailingDoc {
    * The contact answers the events through the household's link (mayAnswer).
    */
   householdContacts?: Record<string, string>;
+  /** Written by `onMailing`: each resolved `household.<okey>` delivery and its name, for the Versand overview. */
+  householdNames?: Record<string, string>;
 }
 
 /**
@@ -490,7 +492,10 @@ export const onMailing = onDocumentCreated(
     try {
       // every household key is resolved here (live, this tenant, contact a member); the others are dropped and logged
       const households = await loadHouseholdRecipients(db, tenantId, mailing.deliveries.map((d) => d.personKey), `mailing ${snap.id}`);
-      if (households.size > 0) result.householdContacts = Object.fromEntries([...households].map(([key, h]) => [key, h.contactKey]));
+      if (households.size > 0) {
+        result.householdContacts = Object.fromEntries([...households].map(([key, h]) => [key, h.contactKey]));
+        result.householdNames = Object.fromEntries([...households].map(([key, h]) => [key, h.name]));
+      }
       // E-Mail and In-App reach a household's contact as a person, each person once
       const emailKeys = contactKeysFor(mailing.deliveries, DeliveryChannel.Email, households);
       if (emailKeys.length > 0) {
