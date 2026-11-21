@@ -1,0 +1,79 @@
+{
+  "household": "Hogar",
+  "action": {
+    "edit": "Editar hogar"
+  },
+  "title": {
+    "new": "Nuevo hogar",
+    "edit": "Editar hogar"
+  },
+  "cancel": "Cancelar",
+  "save": "Guardar",
+  "name": {
+    "label": "Nombre",
+    "placeholder": "p. ej. Familia García",
+    "helper": "Así aparece el hogar encima de la dirección en las cartas comunes."
+  },
+  "type": {
+    "label": "Tipo"
+  },
+  "members": {
+    "label": "Personas",
+    "empty": "Todavía no hay personas.",
+    "add": "Añadir persona",
+    "remove": "Quitar persona"
+  },
+  "payer": {
+    "label": "Factura a",
+    "helper": "Esta persona recibe la factura común."
+  },
+  "contact": {
+    "label": "Correo a",
+    "helper": "Esta persona recibe el correo que se envía una sola vez para todos."
+  },
+  "bundle": {
+    "title": "Agrupar",
+    "post": "Cartas",
+    "email": "Correos electrónicos",
+    "inApp": "Mensajes en la app",
+    "helper": "Lo que actives aquí se envía una sola vez a la persona de contacto en lugar de a cada persona."
+  },
+  "saveResult": {
+    "conf": "El hogar se ha guardado.",
+    "error": "No se pudo guardar el hogar. Inténtalo de nuevo más tarde."
+  },
+  "noHousehold": "No perteneces a ningún hogar.",
+  "error": {
+    "notAllowed": "No puedes modificar este hogar.",
+    "tenantsChanged": "Este hogar pertenece a otro club y no se puede modificar aquí.",
+    "membersChanged": "Solo la gestión de socios puede añadir o quitar personas. Tú solo puedes quitarte a ti mismo.",
+    "fieldNotAllowed": "Solo la gestión de socios puede cambiar este dato.",
+    "noName": "Ponle un nombre al hogar.",
+    "payerNotMember": "La factura solo puede ir a una persona del hogar.",
+    "contactNotMember": "El correo solo puede ir a una persona del hogar.",
+    "duplicateMember": "Una persona aparece dos veces en el hogar.",
+    "alreadyInHousehold": "Una de las personas ya pertenece a otro hogar.",
+    "badTenants": "Un hogar solo puede pertenecer a un club.",
+    "emptyMember": "Falta una de las personas. Quítala y vuelve a añadirla."
+  },
+  "validation": {
+    "two_members": "Un hogar necesita al menos dos personas.",
+    "duplicate_member": "Una persona aparece dos veces en el hogar.",
+    "payer_required": "Elige quién recibe la factura.",
+    "payer_not_member": "La factura solo puede ir a una persona del hogar.",
+    "contact_required": "Elige quién recibe el correo.",
+    "contact_not_member": "El correo solo puede ir a una persona del hogar."
+  },
+  "household_type": {
+    "family": {
+      "label": "Familia"
+    },
+    "pair": {
+      "label": "Pareja"
+    },
+    "wg": {
+      "label": "Piso compartido"
+    },
+    "helper": "Cómo llama tu club a este hogar."
+  }
+}

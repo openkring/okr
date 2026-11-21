@@ -1,0 +1,79 @@
+{
+  "household": "Household",
+  "action": {
+    "edit": "Edit household"
+  },
+  "title": {
+    "new": "New household",
+    "edit": "Edit household"
+  },
+  "cancel": "Cancel",
+  "save": "Save",
+  "name": {
+    "label": "Name",
+    "placeholder": "e.g. Smith family",
+    "helper": "This is how the household appears above the address on shared letters."
+  },
+  "type": {
+    "label": "Type"
+  },
+  "members": {
+    "label": "People",
+    "empty": "No people yet.",
+    "add": "Add person",
+    "remove": "Remove person"
+  },
+  "payer": {
+    "label": "Invoice to",
+    "helper": "This person receives the shared invoice."
+  },
+  "contact": {
+    "label": "Mail to",
+    "helper": "This person receives mail that is sent once for everyone."
+  },
+  "bundle": {
+    "title": "Combine",
+    "post": "Letters",
+    "email": "Emails",
+    "inApp": "In-app messages",
+    "helper": "Whatever is switched on here is sent only once to the contact person instead of to each person."
+  },
+  "saveResult": {
+    "conf": "The household has been saved.",
+    "error": "The household could not be saved. Please try again later."
+  },
+  "noHousehold": "You do not belong to a household.",
+  "error": {
+    "notAllowed": "You may not change this household.",
+    "tenantsChanged": "This household belongs to another club and cannot be changed here.",
+    "membersChanged": "Only the membership administration can add or remove people. You can only remove yourself.",
+    "fieldNotAllowed": "Only the membership administration can change this.",
+    "noName": "Please give the household a name.",
+    "payerNotMember": "The invoice can only go to a person in the household.",
+    "contactNotMember": "Mail can only go to a person in the household.",
+    "duplicateMember": "A person is listed twice in the household.",
+    "alreadyInHousehold": "One of the people already belongs to another household.",
+    "badTenants": "A household can only belong to one club.",
+    "emptyMember": "One of the people is missing. Please remove them and add them again."
+  },
+  "validation": {
+    "two_members": "A household needs at least two people.",
+    "duplicate_member": "A person is listed twice in the household.",
+    "payer_required": "Please choose who receives the invoice.",
+    "payer_not_member": "The invoice can only go to a person in the household.",
+    "contact_required": "Please choose who receives the mail.",
+    "contact_not_member": "Mail can only go to a person in the household."
+  },
+  "household_type": {
+    "family": {
+      "label": "Family"
+    },
+    "pair": {
+      "label": "Couple"
+    },
+    "wg": {
+      "label": "Shared flat"
+    },
+    "helper": "What your club calls this household."
+  }
+}

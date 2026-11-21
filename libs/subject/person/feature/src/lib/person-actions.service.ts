@@ -1,4 +1,4 @@
-import { computed, inject, Injectable } from '@angular/core';
+import { computed, inject, Injectable, Injector } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions } from '@ionic/angular';
 
 import { PersonModel, RoleName } from '@okr/shared-models';
@@ -6,6 +6,7 @@ import { createActionSheetButton, createActionSheetDivider, createActionSheetOpt
 import { hasRole } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { resolveVcardCapability, VCARD_I18N_KEYS, VcardI18n } from '@okr/vcard-util';
+import { HOUSEHOLD_I18N_KEYS } from '@okr/relationship-household-util';
 
 import { PersonStore } from './person.store';
 
@@ -27,7 +28,9 @@ export type PersonActionSet = 'full' | 'contact';
 export class PersonActionsService {
   private readonly store = inject(PersonStore);
   private readonly actionSheetController = inject(ActionSheetController);
+  private readonly injector = inject(Injector);
   private readonly vcardI18n = inject(I18nService).translateAll(VCARD_I18N_KEYS) as VcardI18n;
+  private readonly householdI18n = inject(I18nService).translateAll({ action_edit: HOUSEHOLD_I18N_KEYS.action_edit });
   private readonly imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
   private readonly currentUser = computed(() => this.store.appStore.currentUser());
   /** only a memberAdmin edits; everybody else views */
@@ -72,6 +75,10 @@ export class PersonActionsService {
         options.buttons.push(isUser
           ? createActionSheetButton('person.closeAccount', this.store.i18n.close_account(), this.imgixBaseUrl, 'lock-closed')
           : createActionSheetButton('person.openAccount', this.store.i18n.open_account(), this.imgixBaseUrl, 'person-add'));
+      }
+      // Haushalte (spec 1.168 §7): create or edit the person's household
+      if (this.hasRole('memberAdmin') || this.hasRole('privileged')) {
+        options.buttons.push(createActionSheetButton('person.household', this.householdI18n.action_edit(), this.imgixBaseUrl, 'people'));
       }
     }
     if (this.favEmail(person)) {
@@ -137,7 +144,16 @@ export class PersonActionsService {
       case 'person.closeAccount':
         await this.store.closeUserAccount(person);
         break;
+      case 'person.household':
+        await this.editHousehold(person);
+        break;
     }
+  }
+
+  /** The household store is loaded on demand: a static import would pull the household modal into the person chunk. */
+  private async editHousehold(person: PersonModel): Promise<void> {
+    const { HouseholdStore } = await import('@okr/relationship-household-feature');
+    await this.injector.get(HouseholdStore).edit(person.okey, 'admin');
   }
 
   private hasRole(role: RoleName): boolean {

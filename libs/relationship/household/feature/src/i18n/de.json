@@ -1,0 +1,79 @@
+{
+  "household": "Haushalt",
+  "action": {
+    "edit": "Haushalt bearbeiten"
+  },
+  "title": {
+    "new": "Neuer Haushalt",
+    "edit": "Haushalt bearbeiten"
+  },
+  "cancel": "Abbrechen",
+  "save": "Speichern",
+  "name": {
+    "label": "Name",
+    "placeholder": "z.B. Familie Muster",
+    "helper": "So steht der Haushalt über der Adresse auf gemeinsamen Briefen."
+  },
+  "type": {
+    "label": "Art"
+  },
+  "members": {
+    "label": "Personen",
+    "empty": "Noch keine Personen.",
+    "add": "Person hinzufügen",
+    "remove": "Person entfernen"
+  },
+  "payer": {
+    "label": "Rechnung an",
+    "helper": "Diese Person erhält die gemeinsame Rechnung."
+  },
+  "contact": {
+    "label": "Post an",
+    "helper": "Diese Person erhält Post, die für alle zusammen verschickt wird."
+  },
+  "bundle": {
+    "title": "Zusammenfassen",
+    "post": "Briefe",
+    "email": "E-Mails",
+    "inApp": "Mitteilungen in der App",
+    "helper": "Was hier eingeschaltet ist, geht nur einmal an die Kontaktperson statt an jede Person."
+  },
+  "saveResult": {
+    "conf": "Der Haushalt ist gespeichert.",
+    "error": "Der Haushalt konnte nicht gespeichert werden. Bitte versuche es später nochmals."
+  },
+  "noHousehold": "Du gehörst zu keinem Haushalt.",
+  "error": {
+    "notAllowed": "Du darfst diesen Haushalt nicht ändern.",
+    "tenantsChanged": "Der Haushalt gehört zu einem anderen Verein und kann hier nicht geändert werden.",
+    "membersChanged": "Personen hinzufügen oder entfernen kann nur die Mitgliederverwaltung. Du kannst nur dich selbst entfernen.",
+    "fieldNotAllowed": "Diese Angabe kann nur die Mitgliederverwaltung ändern.",
+    "noName": "Bitte gib dem Haushalt einen Namen.",
+    "payerNotMember": "Die Rechnung kann nur an eine Person aus dem Haushalt gehen.",
+    "contactNotMember": "Die Post kann nur an eine Person aus dem Haushalt gehen.",
+    "duplicateMember": "Eine Person ist doppelt im Haushalt.",
+    "alreadyInHousehold": "Eine der Personen gehört schon zu einem anderen Haushalt.",
+    "badTenants": "Der Haushalt kann nur einem Verein gehören.",
+    "emptyMember": "Eine der Personen fehlt. Bitte entferne sie und füge sie nochmals hinzu."
+  },
+  "validation": {
+    "two_members": "Ein Haushalt braucht mindestens zwei Personen.",
+    "duplicate_member": "Eine Person ist doppelt im Haushalt.",
+    "payer_required": "Bitte wähle, wer die Rechnung erhält.",
+    "payer_not_member": "Die Rechnung kann nur an eine Person aus dem Haushalt gehen.",
+    "contact_required": "Bitte wähle, wer die Post erhält.",
+    "contact_not_member": "Die Post kann nur an eine Person aus dem Haushalt gehen."
+  },
+  "household_type": {
+    "family": {
+      "label": "Familie"
+    },
+    "pair": {
+      "label": "Paar"
+    },
+    "wg": {
+      "label": "Wohngemeinschaft"
+    },
+    "helper": "Wie dein Verein diesen Haushalt nennt."
+  }
+}

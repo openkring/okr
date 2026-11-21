@@ -712,6 +712,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/relationship/household/feature/src/i18n",
+            "output": "./assets/i18n/relationship/household/feature"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/relationship/invitation/data-access/src/i18n",
             "output": "./assets/i18n/relationship/invitation/data-access"
           },

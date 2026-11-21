@@ -29,6 +29,8 @@
     { "path": "../../../content/pdf-template/feature/tsconfig.lib.json" },
     { "path": "../../../finance/bill/feature/tsconfig.lib.json" },
     { "path": "../../../finance/invoice/feature/tsconfig.lib.json" },
+    { "path": "../../../relationship/household/feature/tsconfig.lib.json" },
+    { "path": "../../../relationship/household/util/tsconfig.lib.json" },
     { "path": "../../../relationship/membership/data-access/tsconfig.lib.json" },
     { "path": "../../../relationship/membership/feature/tsconfig.lib.json" },
     { "path": "../../../relationship/ownership/feature/tsconfig.lib.json" },

@@ -44,6 +44,8 @@
     "@okr/subject-org-data-access": "*",
     "@okr/tenant-feature": "*",
     "@okr/finance-invoice-feature": "*",
-    "@okr/finance-bill-feature": "*"
+    "@okr/finance-bill-feature": "*",
+    "@okr/relationship-household-util": "*",
+    "@okr/relationship-household-feature": "*"
   }
 }

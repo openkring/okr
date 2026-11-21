@@ -1,0 +1,79 @@
+{
+  "household": "Nucleo familiare",
+  "action": {
+    "edit": "Modifica nucleo familiare"
+  },
+  "title": {
+    "new": "Nuovo nucleo familiare",
+    "edit": "Modifica nucleo familiare"
+  },
+  "cancel": "Annulla",
+  "save": "Salva",
+  "name": {
+    "label": "Nome",
+    "placeholder": "p. es. Famiglia Rossi",
+    "helper": "Così appare il nucleo sopra l'indirizzo nelle lettere comuni."
+  },
+  "type": {
+    "label": "Tipo"
+  },
+  "members": {
+    "label": "Persone",
+    "empty": "Ancora nessuna persona.",
+    "add": "Aggiungi persona",
+    "remove": "Rimuovi persona"
+  },
+  "payer": {
+    "label": "Fattura a",
+    "helper": "Questa persona riceve la fattura comune."
+  },
+  "contact": {
+    "label": "Posta a",
+    "helper": "Questa persona riceve la posta inviata una sola volta per tutti."
+  },
+  "bundle": {
+    "title": "Raggruppa",
+    "post": "Lettere",
+    "email": "E-mail",
+    "inApp": "Messaggi nell'app",
+    "helper": "Ciò che attivi qui viene inviato una sola volta alla persona di contatto invece che a ogni persona."
+  },
+  "saveResult": {
+    "conf": "Il nucleo familiare è stato salvato.",
+    "error": "Non è stato possibile salvare il nucleo familiare. Riprova più tardi."
+  },
+  "noHousehold": "Non appartieni a nessun nucleo familiare.",
+  "error": {
+    "notAllowed": "Non puoi modificare questo nucleo familiare.",
+    "tenantsChanged": "Questo nucleo familiare appartiene a un altro club e qui non può essere modificato.",
+    "membersChanged": "Solo la gestione dei soci può aggiungere o rimuovere persone. Tu puoi rimuovere solo te stesso.",
+    "fieldNotAllowed": "Solo la gestione dei soci può modificare questo dato.",
+    "noName": "Dai un nome al nucleo familiare.",
+    "payerNotMember": "La fattura può andare solo a una persona del nucleo.",
+    "contactNotMember": "La posta può andare solo a una persona del nucleo.",
+    "duplicateMember": "Una persona compare due volte nel nucleo.",
+    "alreadyInHousehold": "Una delle persone appartiene già a un altro nucleo familiare.",
+    "badTenants": "Un nucleo familiare può appartenere a un solo club.",
+    "emptyMember": "Manca una delle persone. Rimuovila e aggiungila di nuovo."
+  },
+  "validation": {
+    "two_members": "Un nucleo familiare ha bisogno di almeno due persone.",
+    "duplicate_member": "Una persona compare due volte nel nucleo.",
+    "payer_required": "Scegli chi riceve la fattura.",
+    "payer_not_member": "La fattura può andare solo a una persona del nucleo.",
+    "contact_required": "Scegli chi riceve la posta.",
+    "contact_not_member": "La posta può andare solo a una persona del nucleo."
+  },
+  "household_type": {
+    "family": {
+      "label": "Famiglia"
+    },
+    "pair": {
+      "label": "Coppia"
+    },
+    "wg": {
+      "label": "Coinquilini"
+    },
+    "helper": "Come il tuo club chiama questo nucleo familiare."
+  }
+}

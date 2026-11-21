@@ -1,0 +1,79 @@
+{
+  "household": "Foyer",
+  "action": {
+    "edit": "Modifier le foyer"
+  },
+  "title": {
+    "new": "Nouveau foyer",
+    "edit": "Modifier le foyer"
+  },
+  "cancel": "Annuler",
+  "save": "Enregistrer",
+  "name": {
+    "label": "Nom",
+    "placeholder": "p. ex. Famille Dupont",
+    "helper": "C'est ainsi que le foyer apparaît au-dessus de l'adresse sur les lettres communes."
+  },
+  "type": {
+    "label": "Type"
+  },
+  "members": {
+    "label": "Personnes",
+    "empty": "Pas encore de personnes.",
+    "add": "Ajouter une personne",
+    "remove": "Retirer la personne"
+  },
+  "payer": {
+    "label": "Facture à",
+    "helper": "Cette personne reçoit la facture commune."
+  },
+  "contact": {
+    "label": "Courrier à",
+    "helper": "Cette personne reçoit le courrier envoyé une seule fois pour tous."
+  },
+  "bundle": {
+    "title": "Regrouper",
+    "post": "Lettres",
+    "email": "E-mails",
+    "inApp": "Messages dans l'app",
+    "helper": "Ce qui est activé ici est envoyé une seule fois à la personne de contact au lieu de chaque personne."
+  },
+  "saveResult": {
+    "conf": "Le foyer est enregistré.",
+    "error": "Le foyer n'a pas pu être enregistré. Réessaie plus tard."
+  },
+  "noHousehold": "Tu ne fais partie d'aucun foyer.",
+  "error": {
+    "notAllowed": "Tu ne peux pas modifier ce foyer.",
+    "tenantsChanged": "Ce foyer appartient à un autre club et ne peut pas être modifié ici.",
+    "membersChanged": "Seule la gestion des membres peut ajouter ou retirer des personnes. Tu peux seulement te retirer toi-même.",
+    "fieldNotAllowed": "Seule la gestion des membres peut modifier cette information.",
+    "noName": "Donne un nom au foyer.",
+    "payerNotMember": "La facture ne peut aller qu'à une personne du foyer.",
+    "contactNotMember": "Le courrier ne peut aller qu'à une personne du foyer.",
+    "duplicateMember": "Une personne figure deux fois dans le foyer.",
+    "alreadyInHousehold": "Une des personnes fait déjà partie d'un autre foyer.",
+    "badTenants": "Un foyer ne peut appartenir qu'à un seul club.",
+    "emptyMember": "Une des personnes manque. Retire-la et ajoute-la à nouveau."
+  },
+  "validation": {
+    "two_members": "Un foyer a besoin d'au moins deux personnes.",
+    "duplicate_member": "Une personne figure deux fois dans le foyer.",
+    "payer_required": "Choisis qui reçoit la facture.",
+    "payer_not_member": "La facture ne peut aller qu'à une personne du foyer.",
+    "contact_required": "Choisis qui reçoit le courrier.",
+    "contact_not_member": "Le courrier ne peut aller qu'à une personne du foyer."
+  },
+  "household_type": {
+    "family": {
+      "label": "Famille"
+    },
+    "pair": {
+      "label": "Couple"
+    },
+    "wg": {
+      "label": "Colocation"
+    },
+    "helper": "Comment ton club appelle ce foyer."
+  }
+}
