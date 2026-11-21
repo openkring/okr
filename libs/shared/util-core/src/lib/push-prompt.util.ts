@@ -24,6 +24,17 @@ export function shouldAskForPush(input: {
   return !(input.snoozedUntil !== undefined && input.now < input.snoozedUntil);
 }
 
+/**
+ * Whether to snooze the in-app push question after it was answered. Everything except an
+ * «Erlauben» that actually ended in `granted` snoozes: «Später», a backdrop tap, and also an
+ * «Erlauben» after which the system permission is not granted. iOS can refuse instantly without
+ * showing its dialog (and without storing a denial, so the permission stays `prompt`) — without
+ * the snooze that device was asked again at every login (SCS-JJ).
+ */
+export function shouldSnoozePushPrompt(answeredAllow: boolean, system: PushPermissionState): boolean {
+  return !answeredAllow || system !== 'granted';
+}
+
 /** A long-lived session refreshes its push registration once this much time has passed. */
 export const PUSH_REGISTRATION_REFRESH_MS = 24 * 60 * 60 * 1000;
 

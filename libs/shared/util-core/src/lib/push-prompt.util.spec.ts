@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isRegistrationStale, PUSH_PROMPT_SNOOZE_MS, PUSH_REGISTRATION_REFRESH_MS, shouldAskForPush } from './push-prompt.util';
+import { isRegistrationStale, PUSH_PROMPT_SNOOZE_MS, PUSH_REGISTRATION_REFRESH_MS, shouldAskForPush, shouldSnoozePushPrompt } from './push-prompt.util';
 
 const NOW = Date.parse('2026-10-17T12:00:00Z');
 const base = { state: 'prompt' as const, isNative: true, isStandalone: false, now: NOW };
@@ -32,6 +32,24 @@ describe('shouldAskForPush', () => {
 
   it('snoozes for 30 days', () => {
     expect(PUSH_PROMPT_SNOOZE_MS).toBe(30 * 24 * 60 * 60 * 1000);
+  });
+});
+
+describe('shouldSnoozePushPrompt', () => {
+  it('does not snooze when «Erlauben» ended in granted', () => {
+    expect(shouldSnoozePushPrompt(true, 'granted')).toBe(false);
+  });
+
+  it('snoozes «Später» and a backdrop tap', () => {
+    expect(shouldSnoozePushPrompt(false, 'prompt')).toBe(true);
+  });
+
+  // iOS refused without a dialog and without storing a denial: the permission stays 'prompt'
+  // (or reads 'denied' only for this call) — without a snooze the next login asks again.
+  it('snoozes «Erlauben» when the system did not grant', () => {
+    expect(shouldSnoozePushPrompt(true, 'denied')).toBe(true);
+    expect(shouldSnoozePushPrompt(true, 'prompt')).toBe(true);
+    expect(shouldSnoozePushPrompt(true, 'unsupported')).toBe(true);
   });
 });
 

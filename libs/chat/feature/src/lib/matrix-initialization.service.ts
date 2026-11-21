@@ -12,7 +12,7 @@ import { AppStore } from '@okr/shared-feature';
 import { MatrixChatService } from '@okr/chat-data-access';
 import { ChatStatusService, FcmService, FirestoreService, writeBadgeLedgerFromPage, writeServerBadgeLedger } from '@okr/shared-data-access';
 import { BADGE_COUNTS_DOC_ID, BadgeCollection, ChatBlockedError, UserCollection } from '@okr/shared-models';
-import { allPartsReady, BadgeParts, BadgePartsReady, chatBlockedAlertMessage, correctionAllowed, countedDeliveredNotifications, LEDGER_CORRECTION_WINDOW_MS, ledgerPartsToWrite, nextCorrectionAt, ServerBadgeLedger, isKioskOnly, isRegistrationStale, PUSH_PROMPT_SNOOZE_MS, readyBadgeParts, shouldAskForPush } from '@okr/shared-util-core';
+import { allPartsReady, BadgeParts, BadgePartsReady, chatBlockedAlertMessage, correctionAllowed, countedDeliveredNotifications, LEDGER_CORRECTION_WINDOW_MS, ledgerPartsToWrite, nextCorrectionAt, ServerBadgeLedger, isKioskOnly, isRegistrationStale, PUSH_PROMPT_SNOOZE_MS, PushPermissionState, readyBadgeParts, shouldAskForPush, shouldSnoozePushPrompt } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { CHAT_BLOCKED_ALERT_I18N_KEYS, ChatBlockedAlertI18n, PUSH_PROMPT_I18N_KEYS } from '@okr/chat-util';
 import { AlertController } from '@ionic/angular';
@@ -119,7 +119,8 @@ export class MatrixInitializationService {
    * before the system prompt — iOS shows that one only once. «Erlauben» is the user gesture the
    * system prompt needs, so its handler starts the registration synchronously — the
    * permission request must run inside the tap, not after the alert's dismiss animation.
-   * «Später» (and a backdrop tap) snoozes for PUSH_PROMPT_SNOOZE_MS on this device.
+   * «Später», a backdrop tap, and an «Erlauben» that did not end in `granted` snooze for
+   * PUSH_PROMPT_SNOOZE_MS on this device (shouldSnoozePushPrompt).
    */
   private async askForPushIfUndecided(uid: string): Promise<void> {
     const snoozeKey = 'okr.pushPrompt.snoozedUntil';
@@ -160,10 +161,15 @@ export class MatrixInitializationService {
     });
     await alert.present();
     const { role } = await alert.onWillDismiss();
-    if (role !== 'confirm') {
+    const answeredAllow = role === 'confirm';
+    const token = registration ? await registration : null;
+    const system: PushPermissionState | 'not-asked' = answeredAllow
+      ? await this.fcmService.getPermissionState().catch((): PushPermissionState => 'prompt')
+      : 'not-asked';
+    if (shouldSnoozePushPrompt(answeredAllow, system === 'not-asked' ? 'prompt' : system)) {
       try { localStorage.setItem(snoozeKey, String(Date.now() + PUSH_PROMPT_SNOOZE_MS)); } catch { /* best effort */ }
     }
-    await this.reportPushPromptOutcome(role, isStandalone, registration, allowTappedAt);
+    this.reportPushPromptOutcome(role, isStandalone, system, token, answeredAllow && allowTappedAt ? Date.now() - allowTappedAt : undefined);
   }
 
   /**
@@ -173,17 +179,15 @@ export class MatrixInitializationService {
    * (the system dialog did not appear or was dismissed). `systemMs` is the time from the tap to
    * the result — a denial within a few hundred ms means no dialog was shown.
    */
-  private async reportPushPromptOutcome(
+  private reportPushPromptOutcome(
     role: string | undefined,
     isStandalone: boolean,
-    registration: Promise<string | null> | undefined,
-    allowTappedAt: number,
-  ): Promise<void> {
+    system: PushPermissionState | 'not-asked',
+    token: string | null,
+    systemMs: number | undefined,
+  ): void {
     try {
       const answer = role === 'confirm' ? 'allow' : role === 'cancel' ? 'later' : (role ?? 'none');
-      const token = registration ? await registration : null;
-      const system = answer === 'allow' ? await this.fcmService.getPermissionState() : 'not-asked';
-      const systemMs = answer === 'allow' && allowTappedAt ? Date.now() - allowTappedAt : undefined;
       const platform = Capacitor.isNativePlatform() ? Capacitor.getPlatform() : isStandalone ? 'pwa' : 'web';
       captureMessage(`Push prompt: ${answer} → ${system}`, {
         level: 'info',
