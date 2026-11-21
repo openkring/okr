@@ -201,6 +201,26 @@ describe('sendMailing to a newsletter group', () => {
     expect(mailings()).toHaveLength(1);
   });
 
+  it('refuses a Cc on a newsletter send instead of dropping it, also for an elevated caller', async () => {
+    for (const uid of ['admin', 'nladmin']) {
+      await expect(callSend(request(uid, { groupKey: NL, deliveries: email('p1'), cc: ['p2@x.ch'] })))
+        .rejects.toMatchObject({ code: 'invalid-argument' });
+    }
+    expect(mailings()).toHaveLength(0);
+    await callSend(request('admin', { groupKey: NL, deliveries: email('p1'), cc: [] }));
+    expect(mailings()[0]).toMatchObject({ newsletterGroupKey: NL, cc: [] });
+  });
+
+  it('refuses an archived newsletter or another tenant\'s instead of sending it the ordinary way', async () => {
+    store[`groups/${NL}`] = { ...store[`groups/${NL}`], isArchived: true };
+    await expect(callSend(request('admin', { groupKey: NL, deliveries: email('p1') })))
+      .rejects.toMatchObject({ code: 'failed-precondition' });
+    store[`groups/${NL}`] = { ...store[`groups/${NL}`], isArchived: false, tenants: ['other'] };
+    await expect(callSend(request('admin', { groupKey: NL, deliveries: email('p1') })))
+      .rejects.toMatchObject({ code: 'failed-precondition' });
+    expect(mailings()).toHaveLength(0);
+  });
+
   it('leaves an ordinary group as it was: the admin needs members there', async () => {
     await expect(callSend(request('nladmin', { groupKey: 'g1', deliveries: email('p1') })))
       .rejects.toMatchObject({ code: 'permission-denied', message: 'Every recipient must be a member of the group.' });
@@ -241,6 +261,7 @@ describe('onMailing for a newsletter send', () => {
     const [job] = jobs();
     expect(job.blocks).toEqual(['unsubscribe']);
     expect(job).not.toHaveProperty('bcc');
+    expect(job).not.toHaveProperty('cc');
     expect(job.personal?.map((e) => e.to)).toEqual(['p1@x.ch', 'p2@x.ch']);
     for (const [i, entry] of (job.personal ?? []).entries()) {
       const link = unsubscribeOf(entry.unsubscribeUrl);

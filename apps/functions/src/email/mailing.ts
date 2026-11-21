@@ -28,7 +28,7 @@ import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
-import { DeliveryChannel, type EmailLayoutChoice, NoticeAttachment, NoticeCollection, type NoticeModel, type PostOptions } from '@okr/shared-models';
+import { DeliveryChannel, type EmailLayoutChoice, GroupCollection, NoticeAttachment, NoticeCollection, type NoticeModel, type PostOptions } from '@okr/shared-models';
 import { DateFormat, getEventLocationName, getTodayStr, isOrgRecipient, recipientParentKey } from '@okr/shared-util-core';
 import { projectID } from 'firebase-functions/params';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
@@ -316,11 +316,13 @@ async function removeStoredAttachments(ref: FirebaseFirestore.DocumentReference,
 }
 
 /**
- * The newsletter rules of a Versand (spec 1.169 §5.6). Undefined when `groupKey` names no live newsletter group of
- * the tenant (the ordinary rules apply). Otherwise every recipient must hold an active subscription, also for an
- * elevated caller; any other caller must be an admin of the newsletter group (no memberships: a newsletter has
- * none) and is held to the group-admin limits (no tenant document, no Post, no answer links, To/Cc only the
- * subscribers' or the club's addresses). Returns the group key the server stamps on the `mailings` doc.
+ * The newsletter rules of a Versand (spec 1.169 §5.6). Undefined when `groupKey` names no newsletter group (the
+ * ordinary rules apply); a newsletter group that is archived or another tenant's is refused (`failed-precondition`),
+ * never sent the ordinary way. Otherwise every subscriber gets their own mail, so a Cc is refused
+ * (`invalid-argument`), every recipient must hold an active subscription, also for an elevated caller; any other
+ * caller must be an admin of the newsletter group (no memberships: a newsletter has none) and is held to the
+ * group-admin limits (no tenant document, no Post, no answer links, To only the subscribers' or the club's
+ * addresses). Returns the group key the server stamps on the `mailings` doc.
  */
 export async function newsletterSendCheck(db: Firestore, args: {
   uid: string; tenantId: string; groupKey: unknown; elevated: boolean; deliveries: MailingDelivery[];
@@ -328,7 +330,13 @@ export async function newsletterSendCheck(db: Firestore, args: {
 }): Promise<string | undefined> {
   const { uid, tenantId, groupKey, elevated, deliveries } = args;
   if (typeof groupKey !== 'string' || !groupKey) return undefined;
-  if (!(await checkNewsletterGroup(db, tenantId, groupKey)).ok) return undefined;
+  if (!(await checkNewsletterGroup(db, tenantId, groupKey)).ok) {
+    const group = (await db.collection(GroupCollection).doc(groupKey).get()).data();
+    if (group?.['kind'] === 'newsletter') throw new HttpsError('failed-precondition', 'This newsletter is archived or belongs to another tenant.');
+    return undefined;
+  }
+  // one mail per subscriber (with their own unsubscribe link): a Cc would be dropped, so it is refused
+  if (args.cc.length > 0) throw new HttpsError('invalid-argument', 'A newsletter send has no Cc: every subscriber gets their own mail.');
   if (!elevated) {
     await assertCallerIsGroupAdmin(db, uid, tenantId, groupKey, 'Only an admin of the newsletter may send to its subscribers.');
     if (args.hasStoragePath) throw new HttpsError('permission-denied', 'A group admin may only attach files from the device.');
@@ -350,8 +358,8 @@ export async function newsletterSendCheck(db: Firestore, args: {
       ...await directoryEmails(db, tenantId, [...subscribers].map((key) => `person.${key}`)),
       ...await directoryEmails(db, tenantId, [`org.${tenantId}`]),
     ];
-    if (unknownRecipients([...args.to, ...args.cc], allowed).length > 0) {
-      throw new HttpsError('permission-denied', 'To and Cc must be addresses of the club or of the newsletter.');
+    if (unknownRecipients(args.to, allowed).length > 0) {
+      throw new HttpsError('permission-denied', 'To must be an address of the club or of the newsletter.');
     }
   }
   return groupKey;

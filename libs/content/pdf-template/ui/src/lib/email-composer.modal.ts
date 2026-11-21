@@ -346,7 +346,7 @@ interface AddressField {
                 @if (isVersand()) {
                   <ion-note class="note">{{ i18n.list_email_only() }}</ion-note>
                 }
-                @if (hasEvents()) {
+                @if (personalMails()) {
                   <ion-note class="note">{{ i18n.list_personal() }}</ion-note>
                 }
                 @if (recipientCount() === 0) {
@@ -476,10 +476,15 @@ export class EmailComposerModal {
     return this.versandEvents().filter((event) => keys.has(event.caleventKey));
   });
   protected readonly hasEvents = computed(() => this.chosenEvents().length > 0);
+  /**
+   * Every recipient gets their own mail: with chosen events (answer link) and on every newsletter send (unsubscribe
+   * link). There is no Cc then, and the address in «An» is the reply address; the server refuses a Cc on a newsletter.
+   */
+  protected readonly personalMails = computed(() => this.hasEvents() || this.newsletter());
 
-  // an attachment gives the mail content without a body, and chosen events hide the Cc: validateVestTree cannot pass either to the suite
+  // an attachment gives the mail content without a body, and personal mails hide the Cc: validateVestTree cannot pass either to the suite
   private readonly suiteWithContext = (model: EmailComposerFormModel) =>
-    emailComposerValidations(model, this.attachmentName().length > 0, this.hasEvents());
+    emailComposerValidations(model, this.attachmentName().length > 0, this.personalMails());
   protected readonly composerForm = form(this.formData, (path) =>
     validateVestTree(path, this.suiteWithContext as any));
   private readonly validationResult = vestErrors(this.composerForm);
@@ -633,7 +638,7 @@ export class EmailComposerModal {
   private readonly thumbnailsRequested = new Set<string>();
 
   /**
-   * The Verteiler accordions: To, CC (hidden while events are chosen: every person gets their own mail) and BCC,
+   * The Verteiler accordions: To, CC (hidden for personal mails: events or a newsletter) and BCC,
    * each address on its own line. A Versand derives the BCC from the Zustellung, so it is read-only there.
    */
   protected readonly addressFields = computed<AddressField[]>(() => {
@@ -641,7 +646,7 @@ export class EmailComposerModal {
     const fields: AddressField[] = [
       { key: 'to', label: 'To:', addresses: parseEmails(fd.to), editable: true, removable: true, placeholder: this.i18n.to_placeholder(), errors: this.toErrors() },
     ];
-    if (!this.hasEvents()) {
+    if (!this.personalMails()) {
       fields.push({ key: 'cc', label: 'Cc:', addresses: parseEmails(fd.cc), editable: true, removable: true, placeholder: this.i18n.to_placeholder(), errors: this.ccErrors() });
     }
     fields.push({ key: 'bcc', label: 'Bcc:', addresses: parseEmails(fd.bcc), editable: !this.isVersand(), removable: true, placeholder: this.i18n.to_placeholder(), errors: this.bccErrors() });
@@ -1312,8 +1317,8 @@ export class EmailComposerModal {
           tenantId: this.appStore.tenantId(),
           ...(this.groupKey() ? { groupKey: this.groupKey() } : {}),
           to: request.to, from: request.from,
-          // with events every person gets their own mail: no Cc, the address in «An» is the reply address
-          cc: this.hasEvents() ? [] : request.cc,
+          // with events or to a newsletter every person gets their own mail: no Cc, the address in «An» is the reply address
+          cc: this.personalMails() ? [] : request.cc,
           subject: request.subject, body: request.body, layout: request.layout,
           ...(request.storagePath ? { storagePath: request.storagePath, filename: request.filename } : {}),
           extraAttachments: request.extraAttachments,
