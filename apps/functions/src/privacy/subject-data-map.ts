@@ -1126,26 +1126,10 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     retention: CLUB_RECORD,
   },
   {
-    // Haushalt (spec 1.168): the subject is one of `memberKeys`. The household stays with the tenant; on erasure
-    // or tenant exit only the subject's key leaves `memberKeys` (an array of plain keys, so the plain
-    // `anonymizeFields` array form removes exactly that element, like `notices.recipients`). The household's
-    // `name` ('Familie Muster') is the club's label and stays. `payerKey`/`contactKey` are not cleared here:
-    // `saveHousehold` re-points them when a member leaves; a household left with fewer than 2 members is
-    // archived by the same callable.
-    collection: HouseholdCollection,
-    dataClass: 'membership',
-    tier: 'T4',
-    onTenantExit: 'anonymize',
-    find: (c: SubjectCtx) => db().collection(HouseholdCollection).where('memberKeys', 'array-contains', c.personKey),
-    tenantScope: 'tenantsArray',
-    onExport: 'full',
-    onErasure: 'anonymize',
-    anonymizeFields: ['memberKeys'],
-    // payer/contact still naming the erased key would make the household unsaveable: re-point them, archive below 2 members (spec §8)
-    recomputeDerived: (d) => householdAfterErasure(d),
-    retention: CLUB_RECORD,
-  },
-  {
+    // ORDER MATTERS: this row must stay ABOVE the households row. The executors run the anonymize rows in map
+    // order and `resolve` reads live; once the households row has removed the subject from `memberKeys`, the
+    // household lookup below finds nothing and the household letters would be left untouched
+    // (erasure-execute.spec.ts guards this order).
     // Postversand (spec 1.150): one record per letter sent by post. The subject is the recipient
     // (`recipientKey` = `person.<okey>` or `org.<okey>`; only a person is found here); the record holds the key
     // and name and points at a letter PDF with the postal address in the private bucket. The provider cost
@@ -1176,6 +1160,26 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     indexFields: { title: 'recipientName', date: 'updatedAt', route: '/sending' },
     onErasure: 'anonymize',
     anonymizeFields: ['recipientKey', 'recipientName', 'storagePath'],
+    retention: CLUB_RECORD,
+  },
+  {
+    // Haushalt (spec 1.168): the subject is one of `memberKeys`. The household stays with the tenant; on erasure
+    // or tenant exit only the subject's key leaves `memberKeys` (an array of plain keys, so the plain
+    // `anonymizeFields` array form removes exactly that element, like `notices.recipients`). The household's
+    // `name` ('Familie Muster') is the club's label and stays. `payerKey`/`contactKey` are not cleared here:
+    // `saveHousehold` re-points them when a member leaves; a household left with fewer than 2 members is
+    // archived by the same callable.
+    collection: HouseholdCollection,
+    dataClass: 'membership',
+    tier: 'T4',
+    onTenantExit: 'anonymize',
+    find: (c: SubjectCtx) => db().collection(HouseholdCollection).where('memberKeys', 'array-contains', c.personKey),
+    tenantScope: 'tenantsArray',
+    onExport: 'full',
+    onErasure: 'anonymize',
+    anonymizeFields: ['memberKeys'],
+    // payer/contact still naming the erased key would make the household unsaveable: re-point them, archive below 2 members (spec §8)
+    recomputeDerived: (d) => householdAfterErasure(d),
     retention: CLUB_RECORD,
   },
   {

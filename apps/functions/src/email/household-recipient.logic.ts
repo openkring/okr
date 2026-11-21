@@ -9,7 +9,7 @@
 // the household key, so the letter and its `sendings` record carry the household name.
 
 import type { Firestore } from 'firebase-admin/firestore';
-import { HouseholdCollection, type HouseholdModel } from '@okr/shared-models';
+import { HOUSEHOLD_RECIPIENT_PREFIX, HouseholdCollection, type HouseholdModel } from '@okr/shared-models';
 import { isHouseholdRecipient, recipientParentKey } from '@okr/shared-util-core';
 
 /** What a Versand needs of a household: who receives it, and the name it is addressed to. No address. */
@@ -40,15 +40,40 @@ export function resolveHouseholdRecipient(doc: Partial<HouseholdModel> | undefin
   return { contactKey, name };
 }
 
+/** The household okey of a `household.<okey>` key; undefined when it is empty or contains '/' (not one document id). */
+export function householdIdOf(key: string): string | undefined {
+  if (!isHouseholdRecipient(key)) return undefined;
+  const id = key.slice(HOUSEHOLD_RECIPIENT_PREFIX.length);
+  return id !== '' && !id.includes('/') ? id : undefined;
+}
+
+/**
+ * What `onMailing` stores on the mailing doc for the resolved households, BEFORE anything is sent: the contact per
+ * household key (mayAnswer lets the contact answer through it) and the household name (Versand overview). Empty
+ * without households.
+ */
+export function householdFieldsOf(households: Map<string, HouseholdRecipient>): { householdContacts?: Record<string, string>; householdNames?: Record<string, string> } {
+  if (households.size === 0) return {};
+  return {
+    householdContacts: Object.fromEntries([...households].map(([key, h]) => [key, h.contactKey])),
+    householdNames: Object.fromEntries([...households].map(([key, h]) => [key, h.name])),
+  };
+}
+
 /**
  * Loads and resolves every household key among `keys` (other keys are ignored). A key that does not resolve is
  * missing from the map and logged with `context` (the mailing key); callers drop it.
  */
 export async function loadHouseholdRecipients(db: Firestore, tenantId: string, keys: string[], context: string): Promise<Map<string, HouseholdRecipient>> {
   const out = new Map<string, HouseholdRecipient>();
-  const householdKeys = [...new Set(keys.filter(isHouseholdRecipient))];
+  const householdKeys = [...new Set(keys.filter(isHouseholdRecipient))].filter((key) => {
+    // `household.` or `household.a/b` would make doc() throw (or name another path) and fail the whole Versand
+    if (householdIdOf(key) !== undefined) return true;
+    console.warn(`household recipient dropped (${context}): not a valid household key`, { context, householdKey: key });
+    return false;
+  });
   if (householdKeys.length === 0) return out;
-  const refs = householdKeys.map((key) => db.collection(HouseholdCollection).doc(key.slice(key.indexOf('.') + 1)));
+  const refs = householdKeys.map((key) => db.collection(HouseholdCollection).doc(householdIdOf(key) ?? ''));
   const snaps = await db.getAll(...refs);
   snaps.forEach((snap, i) => {
     const resolved = resolveHouseholdRecipient(snap.data() as Partial<HouseholdModel> | undefined, tenantId);

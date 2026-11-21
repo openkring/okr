@@ -596,6 +596,39 @@ describe('executeErasure', () => {
     expect(result.counts['file-transfers']).toBe(1);
   });
 
+  // Spec 1.168: a household letter (`recipientKey` household.<okey>) is found through the households that still list
+  // the subject. The households row removes the subject from `memberKeys`, and `resolve` reads live, so the sendings
+  // row must run first. Uses the real map rows in map order: a reshuffle of SUBJECT_DATA_MAP fails this test.
+  it('anonymizes the household letter of an erased member before the household drops them', async () => {
+    const household = snap('h1', { memberKeys: ['p1', 'p2'], contactKey: 'p1', payerKey: 'p1', tenants: ['scs'] });
+    const ownLetter = snap('m1_person.p1', { recipientKey: 'person.p1', recipientName: 'Ann Müller', storagePath: 'a.pdf', tenants: ['scs'] });
+    const householdLetter = snap('m2_household.h1', { recipientKey: 'household.h1', recipientName: 'Familie Muster', storagePath: 'b.pdf', tenants: ['scs'] });
+    const lists = (h: DocumentSnapshot) => ((h.get('memberKeys') as string[]) ?? []).includes(ctx.personKey);
+    const entries = SUBJECT_DATA_MAP.filter((e) => e.collection === 'households' || e.collection === 'sendings');
+    const { ops, patched } = fakeOps({
+      resolve: async (entry) => {
+        if (entry.collection === 'households') return lists(household) ? [household] : [];
+        if (entry.collection === 'sendings') return lists(household) ? [ownLetter, householdLetter] : [ownLetter];
+        return [];
+      },
+    });
+    const patchAll = ops.patchAll;
+    ops.patchAll = async (patches) => {
+      // the live effect of the households patch: the subject leaves memberKeys
+      for (const p of patches) {
+        if (p.doc.id === 'h1') (p.doc.data() as Record<string, unknown>)['memberKeys'] = ['p2'];
+      }
+      return patchAll(patches);
+    };
+    await executeErasure(ctx, cleanPreview, entries, ops, { salt: SALT });
+    const ids = patched.map((p) => p.id);
+    expect(ids).toContain('m2_household.h1');
+    expect(ids).toContain('m1_person.p1');
+    expect(ids.indexOf('m2_household.h1')).toBeLessThan(ids.indexOf('h1'));
+    const letterPatch = patched.find((p) => p.id === 'm2_household.h1')?.patch ?? {};
+    expect(Object.keys(letterPatch)).toEqual(expect.arrayContaining(['recipientKey', 'recipientName', 'storagePath']));
+  });
+
   describe('D-L2 — the detach reaches the address documents', () => {
     const addresses = () => [
       snap('addr-shared', { parentKey: 'person.p1', tenants: ['scs', 'p13'], addressChannel: 'ssn' }),

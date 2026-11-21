@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { HouseholdModel } from '@okr/shared-models';
 
 import {
-  addressParentKeyOf, answerKeyOf, contactKeysFor, dropHouseholdKeys, type HouseholdRecipient, loadHouseholdRecipients, postKeysFor, resolveHouseholdRecipient,
+  addressParentKeyOf, answerKeyOf, contactKeysFor, householdFieldsOf, householdIdOf, dropHouseholdKeys, type HouseholdRecipient, loadHouseholdRecipients, postKeysFor, resolveHouseholdRecipient,
 } from './household-recipient.logic';
 
 const household = (over: Partial<HouseholdModel> = {}): HouseholdModel => ({
@@ -114,10 +114,38 @@ describe('loadHouseholdRecipients', () => {
     warn.mockRestore();
   });
 
+  it('drops an empty id or one with a slash without calling doc(), and warns with the key only', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const doc = vi.fn(() => { throw new Error('doc() must not be called'); });
+    const getAll = vi.fn();
+    const got = await loadHouseholdRecipients({ collection: () => ({ doc }), getAll } as never, 'scs', ['household.', 'household.a/b'], 'm1');
+    expect(got.size).toBe(0);
+    expect(doc).not.toHaveBeenCalled();
+    expect(getAll).not.toHaveBeenCalled();
+    expect(warn.mock.calls.map((c) => (c[1] as { householdKey: string }).householdKey)).toEqual(['household.', 'household.a/b']);
+    warn.mockRestore();
+  });
+
   it('reads nothing without a household key', async () => {
     const getAll = vi.fn();
     const got = await loadHouseholdRecipients({ collection: () => ({ doc: () => ({}) }), getAll } as never, 'scs', ['p1', 'org.o1'], 'm1');
     expect(got.size).toBe(0);
     expect(getAll).not.toHaveBeenCalled();
+  });
+});
+
+describe('householdIdOf', () => {
+  it('is the okey of a valid key, undefined for an empty id, a slash or another key', () => {
+    expect(householdIdOf('household.h1')).toBe('h1');
+    expect(householdIdOf('household.')).toBeUndefined();
+    expect(householdIdOf('household.a/b')).toBeUndefined();
+    expect(householdIdOf('p1')).toBeUndefined();
+  });
+});
+
+describe('householdFieldsOf (written by onMailing before anything is sent)', () => {
+  it('names the contact and the household per key, and nothing without households', () => {
+    expect(householdFieldsOf(H)).toEqual({ householdContacts: { 'household.h1': 'p1' }, householdNames: { 'household.h1': 'Familie Muster' } });
+    expect(householdFieldsOf(new Map())).toEqual({});
   });
 });

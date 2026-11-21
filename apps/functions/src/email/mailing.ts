@@ -46,7 +46,7 @@ import { chunk, isElevated } from './mailing-recipients';
 import { MAX_PERSONAL_RECIPIENTS, parseCaleventKeys, personalEntries, refusedEventMessage, sendableEventRefusal } from './personal-mail.logic';
 import { asLayoutChoice } from './render-email.logic';
 import { buildMailingLetters, countLetterPages, LetterEvent } from './mailing-letters';
-import { addressParentKeyOf, contactKeysFor, dropHouseholdKeys, type HouseholdRecipient, loadHouseholdRecipients, postKeysFor } from './household-recipient.logic';
+import { addressParentKeyOf, contactKeysFor, dropHouseholdKeys, householdFieldsOf, type HouseholdRecipient, loadHouseholdRecipients, postKeysFor } from './household-recipient.logic';
 import { mailingCategory } from './mailing-deliveries.logic';
 import { noticeSenderOf } from './notice-sender.logic';
 import { lettersResult, makePostFanOut, postFanOutDeps } from './mailing-sendings';
@@ -492,9 +492,12 @@ export const onMailing = onDocumentCreated(
     try {
       // every household key is resolved here (live, this tenant, contact a member); the others are dropped and logged
       const households = await loadHouseholdRecipients(db, tenantId, mailing.deliveries.map((d) => d.personKey), `mailing ${snap.id}`);
+      // written at once, before any mail or notice exists: an answer link clicked early (or a run that times out
+      // in the Post part) must still find the contact (mayAnswer); kept in `result` for the final update too
+      const householdFields = householdFieldsOf(households);
       if (households.size > 0) {
-        result.householdContacts = Object.fromEntries([...households].map(([key, h]) => [key, h.contactKey]));
-        result.householdNames = Object.fromEntries([...households].map(([key, h]) => [key, h.name]));
+        await snap.ref.update(householdFields);
+        Object.assign(result, householdFields);
       }
       // E-Mail and In-App reach a household's contact as a person, each person once
       const emailKeys = contactKeysFor(mailing.deliveries, DeliveryChannel.Email, households);
