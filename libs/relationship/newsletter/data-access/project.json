@@ -1,0 +1,24 @@
+{
+  "name": "relationship-newsletter-data-access",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/relationship/newsletter/data-access/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:data-access", "scope:newsletter", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/relationship/newsletter/data-access",
+        "main": "libs/relationship/newsletter/data-access/src/index.ts",
+        "tsConfig": "libs/relationship/newsletter/data-access/tsconfig.lib.json",
+        "assets": ["libs/relationship/newsletter/data-access/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

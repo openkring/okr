@@ -1,0 +1,17 @@
+{
+  "subscribers": "Abonnenten",
+  "empty": "Dieser Newsletter hat noch keine Abonnenten.",
+  "since": "seit",
+  "source": {
+    "form": "Anmeldeformular",
+    "import": "Import",
+    "app": "App"
+  },
+  "versand": "Versand erstellen",
+  "unsubscribe": "Abmelden",
+  "unsubscribe_confirm": "Möchtest du {name} vom Newsletter abmelden?",
+  "unsubscribe_conf": "{name} ist abgemeldet.",
+  "unsubscribe_error": "Die Abmeldung hat nicht geklappt. Versuche es bitte später nochmals.",
+  "not_allowed": "Die Abonnenten dieses Newsletters sehen nur die Mitgliederverwaltung, der Vorstand und die Verantwortlichen des Newsletters.",
+  "not_found": "Diesen Newsletter gibt es nicht."
+}

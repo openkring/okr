@@ -1,0 +1,24 @@
+import { Signal } from '@angular/core';
+
+const PFX = '@relationship/newsletter/feature.';
+
+export const NEWSLETTER_I18N_KEYS = {
+  subscribers:         PFX + 'subscribers',
+  empty:               PFX + 'empty',
+  since:               PFX + 'since',
+  source_form:         PFX + 'source.form',
+  source_import:       PFX + 'source.import',
+  source_app:          PFX + 'source.app',
+  versand:             PFX + 'versand',
+  unsubscribe:         PFX + 'unsubscribe',
+  // single braces `{name}`, filled with `fill()`
+  unsubscribe_confirm: PFX + 'unsubscribe_confirm',
+  unsubscribe_conf:    PFX + 'unsubscribe_conf',
+  unsubscribe_error:   PFX + 'unsubscribe_error',
+  not_allowed:         PFX + 'not_allowed',
+  not_found:           PFX + 'not_found',
+  as_title:            '@actionsheet.title',
+  cancel:              '@cancel',
+} satisfies Record<string, string>;
+
+export type NewsletterI18n = { [K in keyof typeof NEWSLETTER_I18N_KEYS]: Signal<string> };

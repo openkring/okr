@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { AVATAR_INFO_SHAPE, AvatarInfo, GroupModel, UserModel } from '@okr/shared-models';
-import { canAccessGroup, canOpenGroupChat, filterAccessibleGroups, findConflictingGroups, findDuplicateGroups, findGroupKeyIssues, getGroupKeyFromName, getMainContact, getUniqueGroupKey, getVisibilityRoles, getVisibleGroupKeys, groupChatRoomParam, shouldNotifyUser, stripAdminKeys, userMatchesGroupVisibility, withCreatorAsAdmin } from './group.util';
+import { asNewsletterGroup, canAccessGroup, canOpenGroupChat, filterAccessibleGroups, findConflictingGroups, findDuplicateGroups, findGroupKeyIssues, getGroupKeyFromName, getMainContact, getUniqueGroupKey, getVisibilityRoles, getVisibleGroupKeys, groupChatRoomParam, isNewsletterGroup, shouldNotifyUser, stripAdminKeys, userMatchesGroupVisibility, withCreatorAsAdmin } from './group.util';
 
 describe('Group Utils', () => {
   const tenantId = 'tenant-1';
@@ -392,5 +392,48 @@ describe('groupChatRoomParam', () => {
 
   it('falls back to the group key', () => {
     expect(groupChatRoomParam({ ...new GroupModel('scs'), okey: 'g1', matrixRoomId: '' })).toBe('g1');
+  });
+});
+
+describe('isNewsletterGroup', () => {
+  it('is true only for kind newsletter', () => {
+    expect(isNewsletterGroup({ ...new GroupModel('scs'), kind: 'newsletter' })).toBe(true);
+    expect(isNewsletterGroup({ ...new GroupModel('scs'), kind: 'group' })).toBe(false);
+    expect(isNewsletterGroup({ ...new GroupModel('scs'), kind: 'pinboard' })).toBe(false);
+  });
+
+  it('reads a legacy doc without kind as a normal group', () => {
+    expect(isNewsletterGroup({ ...new GroupModel('scs'), kind: undefined as unknown as GroupModel['kind'] })).toBe(false);
+    expect(isNewsletterGroup(undefined)).toBe(false);
+  });
+});
+
+describe('asNewsletterGroup', () => {
+  it('switches every segment off and keeps name, description and admins', () => {
+    const admin = { ...AVATAR_INFO_SHAPE, key: 'p1', modelType: 'person' } as AvatarInfo;
+    const g = { ...new GroupModel('scs'), name: 'News', subTitle: 'Monatlich', admins: [admin], visibility: 'registered', filesFolder: 'f_x' };
+    const n = asNewsletterGroup(g);
+    expect(n.kind).toBe('newsletter');
+    expect([n.hasChat, n.hasCalendar, n.hasTasks, n.hasFiles, n.hasContent, n.hasMembers]).toEqual([false, false, false, false, false, false]);
+    expect(n.visibility).toBe('');
+    expect(n.filesFolder).toBe('');
+    expect(n.name).toBe('News');
+    expect(n.subTitle).toBe('Monatlich');
+    expect(n.admins).toEqual([admin]);
+  });
+
+  it('does not change the input', () => {
+    const g = new GroupModel('scs');
+    asNewsletterGroup(g);
+    expect(g.hasChat).toBe(true);
+  });
+});
+
+describe('getVisibleGroupKeys and newsletters', () => {
+  it('never offers a newsletter group through its visibility', () => {
+    const u = { roles: { registered: true } } as unknown as UserModel;
+    const news = { ...new GroupModel('scs'), okey: 'n1', kind: 'newsletter' as const, visibility: 'registered' };
+    const club = { ...new GroupModel('scs'), okey: 'g1', visibility: 'registered' };
+    expect(getVisibleGroupKeys([news, club], new Set(), u)).toEqual(['g1']);
   });
 });

@@ -263,5 +263,13 @@
       "sdg": "Objetivos de sostenibilidad",
       "news": "Noticias"
     }
-  }
+  },
+  "kind": {
+    "label": "Tipo",
+    "helper": "Un boletín envía mensajes a sus suscriptores. No tiene chat, ni calendario, ni miembros.",
+    "group": "Grupo",
+    "newsletter": "Boletín",
+    "all": "Todos"
+  },
+  "subscribers": "Suscriptores"
 }

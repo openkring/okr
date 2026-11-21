@@ -229,7 +229,8 @@
       "unavailable": "L’invio di lettere con Pingen non è disponibile per te qui. Puoi scaricare le lettere in PDF.",
       "none": "Nessuno ha un indirizzo postale, non viene creata alcuna lettera.",
       "needs_subject": "Inserisci prima un oggetto nell’editor. Il prezzo verrà calcolato dopo.",
-      "pending": "Controlla sotto «Invio postale» il prezzo delle lettere e confermalo prima di inviare."
+      "pending": "Controlla sotto «Invio postale» il prezzo delle lettere e confermalo prima di inviare.",
+      "newsletter_locked": "Solo chi gestisce i membri può inviare lettere agli iscritti."
     },
     "confirm": {
       "header": "Conferma l'invio",

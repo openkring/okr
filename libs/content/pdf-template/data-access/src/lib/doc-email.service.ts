@@ -78,7 +78,7 @@ export interface SendMailingRequest {
 }
 
 /** The Versand as the quote needs it: the content the letters are made of, and who gets one. */
-export type QuoteMailingRequest = Pick<SendMailingRequest, 'tenantId' | 'subject' | 'body' | 'storagePath' | 'filename' | 'extraAttachments' | 'caleventKeys' | 'letterQrCodes'> & {
+export type QuoteMailingRequest = Pick<SendMailingRequest, 'tenantId' | 'groupKey' | 'subject' | 'body' | 'storagePath' | 'filename' | 'extraAttachments' | 'caleventKeys' | 'letterQrCodes'> & {
   /** the personKeys ticked for Post */
   postKeys: string[];
   options: PostOptions;

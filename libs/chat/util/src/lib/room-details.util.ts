@@ -1,3 +1,5 @@
+import type { GroupKind } from '@okr/shared-models';
+
 /**
  * What the Chat-Details page offers per room kind (spec 1.109 §8). Pure: tiles, members mode
  * and the bottom actions follow from the room kind, the caller's roles and the pin count.
@@ -98,8 +100,11 @@ export function getRoomDetailsSections(ctx: RoomDetailsCtx): RoomDetailsSections
   };
 }
 
-/** Room kind: notes beat everything, then support, then direct, then the group kind (`chat` is an ad-hoc chat). */
-export function roomKindOf(p: { isDirect: boolean; isNotes: boolean; isSupport: boolean; groupKind?: 'group' | 'chat' | 'pinboard' }): RoomKind {
+/**
+ * Room kind: notes beat everything, then support, then direct, then the group kind (`chat` is an ad-hoc chat).
+ * A newsletter group (spec 1.169) has no room; should one ever be matched, it is 'other'.
+ */
+export function roomKindOf(p: { isDirect: boolean; isNotes: boolean; isSupport: boolean; groupKind?: GroupKind }): RoomKind {
   if (p.isNotes) return 'notes';
   if (p.isSupport) return 'support';
   if (p.isDirect) return 'dm';

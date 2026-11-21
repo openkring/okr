@@ -1,0 +1,17 @@
+{
+  "subscribers": "Suscriptores",
+  "empty": "Este boletín aún no tiene suscriptores.",
+  "since": "desde",
+  "source": {
+    "form": "Formulario de inscripción",
+    "import": "Importación",
+    "app": "App"
+  },
+  "versand": "Crear envío",
+  "unsubscribe": "Dar de baja",
+  "unsubscribe_confirm": "¿Quieres dar de baja a {name} del boletín?",
+  "unsubscribe_conf": "{name} se ha dado de baja.",
+  "unsubscribe_error": "No se pudo dar de baja. Vuelve a intentarlo más tarde.",
+  "not_allowed": "Solo la gestión de miembros, la junta y los responsables de este boletín ven sus suscriptores.",
+  "not_found": "Este boletín no existe."
+}

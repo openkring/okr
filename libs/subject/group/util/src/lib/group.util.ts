@@ -134,8 +134,35 @@ export function getVisibleGroupKeys(
   user: UserModel,
 ): string[] {
   return allGroups
-    .filter(g => !memberKeys.has(g.okey) && userMatchesGroupVisibility(g, user))
+    // a newsletter has no calendar or chat a visibility could open (spec 1.169 §5.7)
+    .filter(g => !isNewsletterGroup(g) && !memberKeys.has(g.okey) && userMatchesGroupVisibility(g, user))
     .map(g => g.okey);
+}
+
+/*-------------------------- newsletter groups (spec 1.169) --------------------------------*/
+
+/**
+ * Whether the group is a newsletter (spec 1.169 §5.1). Read as `kind ?? 'group'`: legacy group
+ * documents carry no `kind` and are ordinary groups.
+ */
+export function isNewsletterGroup(group: Pick<GroupModel, 'kind'> | undefined): boolean {
+  return (group?.kind ?? 'group') === 'newsletter';
+}
+
+/**
+ * The group as a newsletter: it carries name, description (`subTitle`) and admins only — no chat
+ * (and with it no Matrix room), no calendar, tasks, files, content page or members, and no
+ * visibility that could open any of those (spec 1.169 §5.1). Returns a copy.
+ */
+export function asNewsletterGroup(group: GroupModel): GroupModel {
+  return {
+    ...group,
+    kind: 'newsletter',
+    hasChat: false, hasCalendar: false, hasTasks: false, hasFiles: false, hasContent: false, hasMembers: false,
+    filesFolder: '',
+    visibility: '',
+    notifyType: 'memberOnly',
+  };
 }
 
 /**

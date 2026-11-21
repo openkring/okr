@@ -1,0 +1,23 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "../../../../dist/libs/relationship/newsletter/util",
+    "declaration": true,
+    "composite": true,
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "target": "es2020",
+    "types": [],
+    "tsBuildInfoFile": "../../../../dist/out-tsc/relationship-newsletter-util.tsbuildinfo",
+    "ignoreDeprecations": "6.0",
+    "rootDir": "."
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/test-setup.ts", "vite.config.ts"],
+  "references": [
+    { "path": "../../../shared/models/tsconfig.lib.json" },
+    { "path": "../../../shared/util-core/tsconfig.lib.json" },
+    { "path": "../../../subject/group/util/tsconfig.lib.json" }
+  ]
+}

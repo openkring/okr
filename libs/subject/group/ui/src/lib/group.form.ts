@@ -8,7 +8,7 @@ import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
 import { Avatars } from '@okr/avatar-ui';
-import { getGroupKeyFromName, GROUP_COLOR_LENGTH, groupValidations, GroupI18n } from '@okr/subject-group-util';
+import { asNewsletterGroup, getGroupKeyFromName, GROUP_COLOR_LENGTH, groupValidations, GroupI18n, isNewsletterGroup } from '@okr/subject-group-util';
 import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
 @Component({
@@ -66,6 +66,16 @@ import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/sh
                   }
                 </ion-col>
               }
+              @if(isNew()) {
+                <!-- spec 1.169: a new group or a newsletter; the kind is set once, at creation -->
+                <ion-col size="12" size-md="6">
+                  <okr-string-select [i18n]="kindI18n()"
+                    [selectedString]="kind()" (selectedStringChange)="onKindChange($event)"
+                    [stringList]="kindOptions" [labels]="kindLabels()"
+                    [readOnly]="isReadOnly()"
+                  />
+                </ion-col>
+              }
               <ion-col size="12" size-md="6">
                 <okr-text-input
                   [i18n]="nameI18n()"
@@ -111,69 +121,72 @@ import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/sh
         />
       }
 
-      <ion-card>
-        <ion-card-header>
-          <ion-card-title>{{ i18n().display() }}</ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          <ion-grid>
-            <ion-row> 
-              <ion-col size="12" size-md="6">
-                <okr-checkbox [i18n]="hasContentI18n()"
-                  [checked]="hasContent()" (checkedChange)="onFieldChange('hasContent', $event)"
-                  [showHelper]="true"
-                  [readOnly]="isReadOnly()"
-                />
-                <okr-error-note [errors]="hasContentErrors()" />
-              </ion-col>
-              <ion-col size="12" size-md="6">
-                <okr-checkbox [i18n]="hasChatI18n()"
-                  [checked]="hasChat()" (checkedChange)="onFieldChange('hasChat', $event)"
-                  [showHelper]="true"
-                  [readOnly]="isReadOnly()"
-                />
-                <okr-error-note [errors]="hasChatErrors()" />
-              </ion-col>
-              <ion-col size="12" size-md="6">
-                <okr-checkbox [i18n]="hasCalendarI18n()"
-                  [checked]="hasCalendar()" (checkedChange)="onFieldChange('hasCalendar', $event)"
-                  [showHelper]="true"
-                  [readOnly]="isReadOnly()"
-                />
-                <okr-error-note [errors]="hasCalendarErrors()" />
-              </ion-col>
-              <ion-col size="12" size-md="6">
-                <okr-checkbox [i18n]="hasTasksI18n()"
-                  [checked]="hasTasks()" (checkedChange)="onFieldChange('hasTasks', $event)"
-                  [showHelper]="true"
-                  [readOnly]="isReadOnly()"
-                />
-                <okr-error-note [errors]="hasTasksErrors()" />
-              </ion-col>
-              <ion-col size="12" size-md="6">
-                <okr-checkbox [i18n]="hasFilesI18n()"
-                  [checked]="hasFiles()" (checkedChange)="onFieldChange('hasFiles', $event)"
-                  [showHelper]="true"
-                  [readOnly]="isReadOnly()"
-                />
-                <okr-error-note [errors]="hasFilesErrors()" />
-              </ion-col>
-              <ion-col size="12" size-md="6">
-                <okr-checkbox [i18n]="hasMembersI18n()"
-                  [checked]="hasMembers()" (checkedChange)="onFieldChange('hasMembers', $event)"
-                  [showHelper]="true"
-                  [readOnly]="isReadOnly()"
-                />
-                <okr-error-note [errors]="hasMembersErrors()" />
-              </ion-col>
-            </ion-row>
-          </ion-grid>
-        </ion-card-content>
-      </ion-card>
+      <!-- a newsletter has none of these segments (spec 1.169 §5.1) -->
+      @if(!isNewsletter()) {
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>{{ i18n().display() }}</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-grid>
+              <ion-row> 
+                <ion-col size="12" size-md="6">
+                  <okr-checkbox [i18n]="hasContentI18n()"
+                    [checked]="hasContent()" (checkedChange)="onFieldChange('hasContent', $event)"
+                    [showHelper]="true"
+                    [readOnly]="isReadOnly()"
+                  />
+                  <okr-error-note [errors]="hasContentErrors()" />
+                </ion-col>
+                <ion-col size="12" size-md="6">
+                  <okr-checkbox [i18n]="hasChatI18n()"
+                    [checked]="hasChat()" (checkedChange)="onFieldChange('hasChat', $event)"
+                    [showHelper]="true"
+                    [readOnly]="isReadOnly()"
+                  />
+                  <okr-error-note [errors]="hasChatErrors()" />
+                </ion-col>
+                <ion-col size="12" size-md="6">
+                  <okr-checkbox [i18n]="hasCalendarI18n()"
+                    [checked]="hasCalendar()" (checkedChange)="onFieldChange('hasCalendar', $event)"
+                    [showHelper]="true"
+                    [readOnly]="isReadOnly()"
+                  />
+                  <okr-error-note [errors]="hasCalendarErrors()" />
+                </ion-col>
+                <ion-col size="12" size-md="6">
+                  <okr-checkbox [i18n]="hasTasksI18n()"
+                    [checked]="hasTasks()" (checkedChange)="onFieldChange('hasTasks', $event)"
+                    [showHelper]="true"
+                    [readOnly]="isReadOnly()"
+                  />
+                  <okr-error-note [errors]="hasTasksErrors()" />
+                </ion-col>
+                <ion-col size="12" size-md="6">
+                  <okr-checkbox [i18n]="hasFilesI18n()"
+                    [checked]="hasFiles()" (checkedChange)="onFieldChange('hasFiles', $event)"
+                    [showHelper]="true"
+                    [readOnly]="isReadOnly()"
+                  />
+                  <okr-error-note [errors]="hasFilesErrors()" />
+                </ion-col>
+                <ion-col size="12" size-md="6">
+                  <okr-checkbox [i18n]="hasMembersI18n()"
+                    [checked]="hasMembers()" (checkedChange)="onFieldChange('hasMembers', $event)"
+                    [showHelper]="true"
+                    [readOnly]="isReadOnly()"
+                  />
+                  <okr-error-note [errors]="hasMembersErrors()" />
+                </ion-col>
+              </ion-row>
+            </ion-grid>
+          </ion-card-content>
+        </ion-card>
+      }
 
       <!-- tbd: group hierarchy: select an org or group, fill in parentKey, parentName, parentModelType -->
 
-      @if(enhancedMode() && (hasRole('privileged') || hasRole('memberAdmin'))) {
+      @if(enhancedMode() && !isNewsletter() && (hasRole('privileged') || hasRole('memberAdmin'))) {
         <ion-card>
           <ion-card-header>
             <ion-card-title>{{ i18n().access() }}</ion-card-title>
@@ -259,6 +272,9 @@ export class GroupForm {
   protected hasTasksI18n    = computed(() => ({ name: 'hasTasks',     label: this.i18n().hasTasks_label(),     helper: this.i18n().hasTasks_helper()     } as CheckboxI18n));
   protected hasFilesI18n    = computed(() => ({ name: 'hasFiles',     label: this.i18n().hasFiles_label(),     helper: this.i18n().hasFiles_helper()     } as CheckboxI18n));
   protected hasMembersI18n  = computed(() => ({ name: 'hasMembers',   label: this.i18n().hasMembers_label(),   helper: this.i18n().hasMembers_helper()   } as CheckboxI18n));
+  protected kindI18n        = computed(() => ({ name: 'kind',         label: this.i18n().kind_label(),         helper: this.i18n().kind_helper()         } as StringSelectI18n));
+  protected readonly kindOptions = ['group', 'newsletter'];
+  protected readonly kindLabels = computed(() => [this.i18n().kind_group(), this.i18n().kind_newsletter()]);
 
   // inputs
   public readonly i18n = input.required<GroupI18n>();
@@ -305,6 +321,8 @@ export class GroupForm {
   protected okeyErrors = computed(() => this.validationResult().getErrors('okey'));
 
   // fields
+  protected readonly kind = computed(() => isNewsletterGroup(this.formData()) ? 'newsletter' : 'group');
+  protected readonly isNewsletter = computed(() => this.kind() === 'newsletter');
   protected readonly name = computed(() => this.formData().name ?? '');
   protected readonly subTitle = computed(() => this.formData().subTitle ?? '');
   protected readonly color = computed(() => this.formData().color ?? '');
@@ -339,6 +357,18 @@ export class GroupForm {
     }
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+  }
+
+  /**
+   * A newsletter switches every segment off (no chat, so no Matrix room either); back to a group,
+   * the segments a new group starts with come back (see `GroupStore.add`).
+   */
+  protected onKindChange(kind: string): void {
+    if (kind === this.kind()) return;
+    this.dirty.emit(true);
+    this.formData.update((vm) => kind === 'newsletter'
+      ? asNewsletterGroup(vm)
+      : { ...vm, kind: 'group', hasChat: true, hasCalendar: true, hasMembers: true });
   }
 
   protected hasRole(role: RoleName): boolean {

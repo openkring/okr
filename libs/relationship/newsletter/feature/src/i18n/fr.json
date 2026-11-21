@@ -1,0 +1,17 @@
+{
+  "subscribers": "Abonnés",
+  "empty": "Cette newsletter n'a pas encore d'abonnés.",
+  "since": "depuis",
+  "source": {
+    "form": "Formulaire d'inscription",
+    "import": "Import",
+    "app": "App"
+  },
+  "versand": "Créer un envoi",
+  "unsubscribe": "Désabonner",
+  "unsubscribe_confirm": "Veux-tu désabonner {name} de la newsletter ?",
+  "unsubscribe_conf": "{name} est désabonné·e.",
+  "unsubscribe_error": "Le désabonnement n'a pas fonctionné. Réessaie plus tard.",
+  "not_allowed": "Seuls la gestion des membres, le comité et les responsables de cette newsletter voient ses abonnés.",
+  "not_found": "Cette newsletter n'existe pas."
+}

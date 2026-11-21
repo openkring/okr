@@ -134,6 +134,13 @@ export const GROUP_I18N_KEYS = {
   hasFiles_helper:                 PFX + 'hasFiles.helper',
   hasMembers_label:                PFX + 'hasMembers.label',
   hasMembers_helper:               PFX + 'hasMembers.helper',
+  // newsletter groups (spec 1.169)
+  kind_label:                      PFX + 'kind.label',
+  kind_helper:                     PFX + 'kind.helper',
+  kind_group:                      PFX + 'kind.group',
+  kind_newsletter:                 PFX + 'kind.newsletter',
+  kind_all:                        PFX + 'kind.all',
+  subscribers:                     PFX + 'subscribers',
 
   admins_title:                    PFX + 'admins.title',
   admins_description:              PFX + 'admins.description',

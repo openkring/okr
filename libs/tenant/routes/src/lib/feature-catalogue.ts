@@ -616,6 +616,10 @@ const subject: BlockRoutes = {
       path: 'group',
       canActivate: [isAuthenticatedGuard],
       children: [
+        // A newsletter's subscribers (spec 1.169 §5.8). Before `:listId/:contextMenuName`, which would
+        // swallow `<groupKey>/subscribers`. Authenticated only: the `newsletterSubscriptions` read rule
+        // decides (member admin / privileged / the newsletter's admins), and the list says so when it refuses.
+        { path: ':groupKey/subscribers', loadComponent: () => import('@okr/relationship-newsletter-feature').then(m => m.NewsletterSubscriberList) },
         { path: ':listId/:contextMenuName', loadComponent: () => import('@okr/subject-group-feature').then(m => m.GroupList) },
         { path: ':groupKey', loadComponent: () => import('@okr/subject-group-feature').then(m => m.GroupViewPage) },
       ],

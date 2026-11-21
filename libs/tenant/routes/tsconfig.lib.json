@@ -95,6 +95,7 @@
     { "path": "../../project/task/feature/tsconfig.lib.json" },
     { "path": "../../relationship/invitation/feature/tsconfig.lib.json" },
     { "path": "../../relationship/membership/feature/tsconfig.lib.json" },
+    { "path": "../../relationship/newsletter/feature/tsconfig.lib.json" },
     { "path": "../../relationship/ownership/feature/tsconfig.lib.json" },
     { "path": "../../relationship/personal-rel/feature/tsconfig.lib.json" },
     { "path": "../../relationship/reservation/feature/tsconfig.lib.json" },

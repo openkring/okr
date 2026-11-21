@@ -8,7 +8,7 @@ import { DEFAULT_KEY } from '@okr/shared-constants';
 import { GroupModel, GroupModelName } from '@okr/shared-models';
 import { confirm } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
-import { of } from 'rxjs';
+import { map, of } from 'rxjs';
 
 import { GroupService } from '@okr/subject-group-data-access';
 import { GROUP_EDIT_MODAL } from '@okr/subject-group-ui';
@@ -77,7 +77,8 @@ export const OrgchartStore = signalStore(
       params: () => ({ currentUser: store.appStore.currentUser() }),
       stream: ({ params }) => {
         if (!params.currentUser) return of([]);
-        return store.groupService.list();
+        // a newsletter is a mailing list, not part of the organisation (spec 1.169 §5.7)
+        return store.groupService.list().pipe(map((groups) => groups.filter((g) => (g.kind ?? 'group') !== 'newsletter')));
       },
     }),
   })),

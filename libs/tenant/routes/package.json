@@ -96,6 +96,7 @@
     "@okr/content-learning-feature": "*",
     "@okr/content-notice-feature": "*",
     "@okr/social-news-center-feature": "*",
-    "@okr/finance-collection-feature": "*"
+    "@okr/finance-collection-feature": "*",
+    "@okr/relationship-newsletter-feature": "*"
   }
 }

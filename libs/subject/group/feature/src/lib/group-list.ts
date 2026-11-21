@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
+import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular';
 
 import { GroupModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -11,7 +11,7 @@ import { fill, hasRole, contextMenuId } from '@okr/shared-util-core';
 import { AvatarPipe, AvatarDisplay } from '@okr/avatar-ui';
 import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { MemberAvatarsPipe } from '@okr/relationship-membership-feature';
-import { isAdminMember } from '@okr/subject-group-util';
+import { isAdminMember, isNewsletterGroup } from '@okr/subject-group-util';
 
 import { GroupChatSyncStore } from './group-chat-sync.store';
 import { GroupStore } from './group.store';
@@ -23,7 +23,7 @@ import { GroupStore } from './group.store';
     ImgDirective, AsyncPipe, SvgIconPipe, AvatarPipe, MemberAvatarsPipe,
     Spinner, EmptyList, Menu, ListFilter, AvatarDisplay,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
-    IonLabel, IonContent, IonItem, IonPopover, IonAvatar, IonList,
+    IonLabel, IonContent, IonItem, IonPopover, IonAvatar, IonList, IonChip,
 ],
   providers: [GroupStore, GroupChatSyncStore],
   styles: [`
@@ -61,7 +61,10 @@ import { GroupStore } from './group.store';
 
     <!-- search and filters -->
     <!-- search only: groups are few and untagged in practice, the tag filter was dead weight -->
-    <okr-list-filter (searchTermChanged)="onSearchtermChange($event)" [mdSize]="6" />
+    <!-- the kind filter only appears once there is a newsletter the user may see (spec 1.169) -->
+    <okr-list-filter (searchTermChanged)="onSearchtermChange($event)" [mdSize]="6"
+      [strings]="kindFilter()" [stringLabels]="kindFilterLabels()" stringsName="kind" [stringsLabel]="store.i18n.kind_label()"
+      [selectedString]="store.selectedKind()" (stringsChanged)="store.setSelectedKind($event)" />
   </ion-header>
 
   <!-- list data -->
@@ -79,7 +82,12 @@ import { GroupStore } from './group.store';
                 <img okrImg src="{{ 'group.' + group.okey | avatar:group.icon }}" alt="Group Avatar Logo" />
               </ion-avatar>
               <ion-label>{{group.name}}</ion-label>
-              <okr-avatar-display [avatars]="(group | memberAvatars | async) ?? []" [showName]="false" />
+              @if (isNewsletter(group)) {
+                <!-- a newsletter has subscribers, not members -->
+                <ion-chip slot="end" color="medium">{{ store.i18n.kind_newsletter() }}</ion-chip>
+              } @else {
+                <okr-avatar-display [avatars]="(group | memberAvatars | async) ?? []" [showName]="false" />
+              }
             </ion-item>
           }
         </ion-list>
@@ -113,6 +121,8 @@ export class GroupList {
   private currentUser = computed(() => this.store.currentUser());
   protected readOnly = computed(() => !this.canChange());
   protected readonly popupId = contextMenuId('c_groups');
+  protected readonly kindFilter = computed(() => this.store.hasNewsletters() ? ['all', 'group', 'newsletter'] : []);
+  protected readonly kindFilterLabels = computed(() => [this.store.i18n.kind_all(), this.store.i18n.kind_group(), this.store.i18n.kind_newsletter()]);
 
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
@@ -157,6 +167,10 @@ export class GroupList {
    * @param group 
    */
   private async addActionSheetButtons(actionSheetOptions: ActionSheetOptions, group: GroupModel): Promise<void> {
+    if (isNewsletterGroup(group)) {
+      this.addNewsletterButtons(actionSheetOptions, group);
+      return;
+    }
     actionSheetOptions.buttons.push(createActionSheetButton('as_show', this.store.i18n.show(), this.imgixBaseUrl, 'eye-on'));
     actionSheetOptions.buttons.push(createActionSheetButton('as_edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
     const isAdmin = hasRole('admin', this.store.appStore.currentUser());
@@ -172,6 +186,20 @@ export class GroupList {
           ? createActionSheetButton('as_hideWebsite', this.store.i18n.website_hide(), this.imgixBaseUrl, 'eye-off')
           : createActionSheetButton('as_showWebsite', this.store.i18n.website_show(), this.imgixBaseUrl, 'globe'));
       }
+      actionSheetOptions.buttons.push(createActionSheetButton('as_delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
+    }
+    actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
+  }
+
+  /**
+   * A newsletter (spec 1.169): no group page, no content page, no members — its subscribers instead.
+   * Only listed for member admins, privileged users and its own admins (`canSeeSubscribers`).
+   */
+  private addNewsletterButtons(actionSheetOptions: ActionSheetOptions, group: GroupModel): void {
+    actionSheetOptions.buttons.push(createActionSheetButton('as_subscribers', this.store.i18n.subscribers(), this.imgixBaseUrl, 'persons'));
+    actionSheetOptions.buttons.push(createActionSheetButton('as_edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
+    if (hasRole('admin', this.store.appStore.currentUser()) || this.isGroupAdmin(group)) {
+      actionSheetOptions.buttons.push(createActionSheetDivider());
       actionSheetOptions.buttons.push(createActionSheetButton('as_delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
@@ -211,11 +239,18 @@ export class GroupList {
         case 'as_show':
           await this.store.view(group, readOnly);
           break;
+        case 'as_subscribers':
+          await this.store.showSubscribers(group);
+          break;
       }
     }
   }
 
   /******************************** helpers ******************************************* */
+  protected isNewsletter(group: GroupModel): boolean {
+    return isNewsletterGroup(group);
+  }
+
   protected hasRole(role?: RoleName): boolean {
     return hasRole(role, this.store.currentUser());
   }

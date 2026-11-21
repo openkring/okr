@@ -263,5 +263,13 @@
       "sdg": "Obiettivi di sostenibilità",
       "news": "Notizie"
     }
-  }
+  },
+  "kind": {
+    "label": "Tipo",
+    "helper": "Una newsletter invia messaggi ai suoi iscritti. Non ha chat, calendario né membri.",
+    "group": "Gruppo",
+    "newsletter": "Newsletter",
+    "all": "Tutti"
+  },
+  "subscribers": "Iscritti"
 }

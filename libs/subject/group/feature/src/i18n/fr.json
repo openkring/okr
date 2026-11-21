@@ -263,5 +263,13 @@
       "sdg": "Objectifs de durabilité",
       "news": "Nouvelles"
     }
-  }
+  },
+  "kind": {
+    "label": "Type",
+    "helper": "Une newsletter envoie des messages à ses abonnés. Elle n'a ni chat, ni calendrier, ni membres.",
+    "group": "Groupe",
+    "newsletter": "Newsletter",
+    "all": "Tous"
+  },
+  "subscribers": "Abonnés"
 }

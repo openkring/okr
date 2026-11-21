@@ -36,6 +36,7 @@
     "@okr/project-task-feature": "*",
     "@okr/content-learning-util": "*",
     "@okr/cms-page-data-access": "*",
-    "@okr/cms-section-util": "*"
+    "@okr/cms-section-util": "*",
+    "@okr/relationship-newsletter-util": "*"
   }
 }

@@ -218,6 +218,8 @@ export const EMAIL_COMPOSER_I18N_KEYS = {
   letters_failed:       PFX + 'composer.letters.failed',
   letters_missing:      PFX + 'composer.letters.missing',
   post_skipped:         PFX + 'composer.letters.skipped',
+  // a newsletter admin without a member-admin role: the Post column stays locked (spec 1.169 §5.6)
+  post_newsletter_locked: PFX + 'composer.post.newsletter_locked',
   // Postversand via Pingen (spec 1.150): the Post step. `post_cost_*`, `post_abroad`, `post_missing` use single braces `{count}`/`{price}`, filled with `fill()`
   post_title: PFX + 'composer.post.title',
   post_mode_pingen: PFX + 'composer.post.mode_pingen',

@@ -263,5 +263,13 @@
       "sdg": "Nachhaltigkeitsziele",
       "news": "Neuigkeiten"
     }
-  }
+  },
+  "kind": {
+    "label": "Art",
+    "helper": "Ein Newsletter verschickt Nachrichten an seine Abonnenten. Er hat keinen Chat, keinen Kalender und keine Mitglieder.",
+    "group": "Gruppe",
+    "newsletter": "Newsletter",
+    "all": "Alle"
+  },
+  "subscribers": "Abonnenten"
 }

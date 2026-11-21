@@ -737,6 +737,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/relationship/newsletter/feature/src/i18n",
+            "output": "./assets/i18n/relationship/newsletter/feature"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/relationship/ownership/data-access/src/i18n",
             "output": "./assets/i18n/relationship/ownership/data-access"
           },

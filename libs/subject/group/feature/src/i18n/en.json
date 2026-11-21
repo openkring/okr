@@ -263,5 +263,13 @@
       "sdg": "Sustainability goals",
       "news": "News"
     }
-  }
+  },
+  "kind": {
+    "label": "Type",
+    "helper": "A newsletter sends messages to its subscribers. It has no chat, no calendar and no members.",
+    "group": "Group",
+    "newsletter": "Newsletter",
+    "all": "All"
+  },
+  "subscribers": "Subscribers"
 }

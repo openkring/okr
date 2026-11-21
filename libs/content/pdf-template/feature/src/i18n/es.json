@@ -229,7 +229,8 @@
       "unavailable": "El envío de cartas con Pingen no está disponible para ti aquí. Puedes descargar las cartas en PDF.",
       "none": "Nadie tiene dirección postal, no se crea ninguna carta.",
       "needs_subject": "Introduce primero un asunto en el editor. Después se calculará el precio.",
-      "pending": "Comprueba en «Envío postal» el precio de las cartas y confírmalo antes de enviar."
+      "pending": "Comprueba en «Envío postal» el precio de las cartas y confírmalo antes de enviar.",
+      "newsletter_locked": "Solo quien gestiona a los miembros puede enviar cartas a los suscriptores."
     },
     "confirm": {
       "header": "Confirmar el envío",

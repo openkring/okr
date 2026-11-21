@@ -318,6 +318,9 @@ interface AddressField {
                   @if (postSkipped().length > 0) {
                     <ion-note color="warning" class="note">{{ i18n.post_skipped() }} {{ postSkipped().join(', ') }}</ion-note>
                   }
+                  @if (newsletterPostLocked()) {
+                    <ion-note class="note">{{ i18n.post_newsletter_locked() }}</ion-note>
+                  }
                 }
               </ion-card-content>
             </ion-card>
@@ -445,6 +448,11 @@ export class EmailComposerModal {
   public readonly versandRecipients = input<VersandRecipient[] | undefined>(undefined);
   /** A group admin's Versand: the server only answers for the group's members. */
   public readonly groupKey       = input<string>('');
+  /**
+   * `groupKey` names a newsletter (spec 1.169 §5.6): the recipients are its subscribers. A member admin or
+   * privileged user keeps Post; the newsletter's own admins get the group-admin channels, like a group admin.
+   */
+  public readonly newsletter     = input<boolean>(false);
   /** The events a Versand may attach with answer links (empty on a group admin's path: field hidden). */
   public readonly versandEvents  = input<VersandEvent[]>([]);
   /** groupKey → personKeys of its members, for the «not in the group» note. */
@@ -519,8 +527,14 @@ export class EmailComposerModal {
   private ticksBeforeEmailOnly: VersandDeliveries = {};
   protected readonly activeChannels = computed(() => {
     if (this.emailOnly()) return EMAIL_ONLY_MAILING_CHANNELS;
-    return this.groupKey() ? GROUP_ADMIN_MAILING_CHANNELS : ACTIVE_MAILING_CHANNELS;
+    if (!this.groupKey()) return ACTIVE_MAILING_CHANNELS;
+    return this.newsletter() && this.mayPostNewsletter() ? ACTIVE_MAILING_CHANNELS : GROUP_ADMIN_MAILING_CHANNELS;
   });
+  /** The server's elevated roles: they may send a newsletter by post (`newsletterSendCheck`). */
+  private readonly mayPostNewsletter = computed(() =>
+    hasRole('memberAdmin', this.appStore.currentUser()) || hasRole('privileged', this.appStore.currentUser()));
+  /** A newsletter admin's Versand: the Post column stays locked, and a note says why. */
+  protected readonly newsletterPostLocked = computed(() => this.newsletter() && !this.mayPostNewsletter() && !this.emailOnly());
   protected readonly anyPost = computed(() => hasPostDelivery(this.deliveries()));
   /** The QR option only makes sense with letters to print and events to answer. */
   protected readonly showQrOption = computed(() => this.anyPost() && this.hasEvents());
@@ -867,6 +881,8 @@ export class EmailComposerModal {
       const fd = this.formData();
       const quote = await this.docEmailService.quoteMailingLetters({
         tenantId: this.appStore.tenantId(),
+        // a newsletter's letters end with the unsubscribe block: the server counts its pages only with the group
+        ...(this.groupKey() ? { groupKey: this.groupKey() } : {}),
         subject: fd.subject, body: fd.body,
         ...(this.storagePath() ? { storagePath: this.storagePath(), filename: this.filename() } : {}),
         extraAttachments: this.extraAttachments(),

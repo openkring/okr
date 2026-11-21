@@ -87,7 +87,7 @@ import { StringSelect } from './string-select';
           }
           @if(showStrings()) {
             <ion-col size="6" [attr.size-md]="compact() ? null : (mdSize() ?? '3')" class="ion-no-padding">
-              <okr-string-select [i18n]="{ name: stringsName(), label: stringsLabel() }" [selectedString]="selectedString()" (selectedStringChange)="stringsChanged.emit($event)" [stringList]="strings()" [readOnly]="false" />
+              <okr-string-select [i18n]="{ name: stringsName(), label: stringsLabel() }" [selectedString]="selectedString()" (selectedStringChange)="stringsChanged.emit($event)" [stringList]="strings()" [labels]="stringLabels()" [readOnly]="false" />
             </ion-col>
           }
         </ion-row>
@@ -124,6 +124,8 @@ export class ListFilter {
   public strings = input<string[]>([]);
   public stringsName = input<string>('iconSet');
   public stringsLabel = input<string>('');
+  /** optional translated labels, parallel to `strings`; a missing one shows the raw value */
+  public stringLabels = input<string[]>([]);
 
   public selectedTag = input<string>('');
   public selectedType = input<string>('');

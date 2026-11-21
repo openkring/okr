@@ -1,0 +1,31 @@
+{
+  "name": "relationship-newsletter-util",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/relationship/newsletter/util/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:util", "scope:newsletter", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/relationship/newsletter/util",
+        "main": "libs/relationship/newsletter/util/src/index.ts",
+        "tsConfig": "libs/relationship/newsletter/util/tsconfig.lib.json",
+        "assets": ["libs/relationship/newsletter/util/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "configFile": "libs/relationship/newsletter/util/vite.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

@@ -229,7 +229,8 @@
       "unavailable": "Der Briefversand über Pingen steht dir hier nicht zur Verfügung. Du kannst die Briefe als PDF herunterladen.",
       "none": "Niemand hat eine Postadresse, es entsteht kein Brief.",
       "needs_subject": "Gib im Editor zuerst einen Betreff ein. Danach wird der Preis berechnet.",
-      "pending": "Bitte prüfe unter «Postversand» den Preis für die Briefe und bestätige ihn, bevor du sendest."
+      "pending": "Bitte prüfe unter «Postversand» den Preis für die Briefe und bestätige ihn, bevor du sendest.",
+      "newsletter_locked": "Briefe an die Abonnenten kann nur verschicken, wer die Mitglieder verwaltet."
     },
     "confirm": {
       "header": "Versand bestätigen",

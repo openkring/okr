@@ -1,0 +1,17 @@
+{
+  "subscribers": "Iscritti",
+  "empty": "Questa newsletter non ha ancora iscritti.",
+  "since": "dal",
+  "source": {
+    "form": "Modulo di iscrizione",
+    "import": "Importazione",
+    "app": "App"
+  },
+  "versand": "Crea invio",
+  "unsubscribe": "Disiscrivi",
+  "unsubscribe_confirm": "Vuoi disiscrivere {name} dalla newsletter?",
+  "unsubscribe_conf": "{name} è disiscritto/a.",
+  "unsubscribe_error": "La disiscrizione non è riuscita. Riprova più tardi.",
+  "not_allowed": "Solo la gestione dei membri, il comitato e i responsabili di questa newsletter vedono i suoi iscritti.",
+  "not_found": "Questa newsletter non esiste."
+}

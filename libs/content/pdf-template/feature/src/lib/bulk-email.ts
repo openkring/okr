@@ -7,7 +7,7 @@ import {
   AddressCollection, AddressModel, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel,
   MembershipCollection, MembershipModel, OrgModel, PersonModel,
 } from '@okr/shared-models';
-import { addDuration, getFullName, getSystemQuery, getTodayStr, isActiveMembership, isOrgRecipient, orgRecipientKey } from '@okr/shared-util-core';
+import { addDuration, getFullName, getSystemQuery, getTodayStr, hasRole, isActiveMembership, isOrgRecipient, orgRecipientKey } from '@okr/shared-util-core';
 import { type VersandEvent, VERSAND_EVENT_MONTHS, versandEventsOf } from '@okr/content-pdf-template-util';
 import { type ComposedEmail, EmailComposerModal, type VersandRecipient } from '@okr/content-pdf-template-ui';
 
@@ -53,7 +53,9 @@ export function toOrgVersandRecipients(orgs: OrgModel[], getEmail: (org: OrgMode
  * @param attachment an already stored file (storage path + filename) to attach, e.g. a minutes PDF
  * @param sendHandler sends instead of the `mailJobs` queue, for a caller the queue's rule keeps out
  *        (a group admin); the server then decides the sender, so the composer locks that field
- * @param groupKey a group admin's Versand: the server only reports on the group's members
+ * @param groupKey a group admin's Versand: the server only reports on the group's members. For a newsletter
+ *        (`options.newsletter`) it is always set, for every caller: the server then only admits subscribers
+ * @param options `newsletter`: `groupKey` names a newsletter group (spec 1.169 §5.6)
  */
 export async function openBulkEmailFlow(
   ctx: BulkEmailContext,
@@ -61,8 +63,13 @@ export async function openBulkEmailFlow(
   attachment?: { storagePath: string; filename: string },
   sendHandler?: (mail: ComposedEmail) => Promise<void>,
   groupKey?: string,
+  options: { newsletter?: boolean } = {},
 ): Promise<void> {
   const { favOrgEmail } = await loadOrgEmails(ctx);
+  const newsletter = !!groupKey && options.newsletter === true;
+  // a newsletter admin without an elevated role: the server clears the sender, so the field is shown locked
+  const user = ctx.appStore.currentUser();
+  const newsletterAdminOnly = newsletter && !hasRole('memberAdmin', user) && !hasRole('privileged', user);
   // The tenant's configured Versand address (`mailFrom`, e.g. kommunikation@seeclub.org) wins over the org's favourite.
   const to = (ctx.appStore.appConfig().mailFrom ?? '').trim() || favOrgEmail;
   // A group admin's Versand never carries answer links (the server refuses them), and neither does one
@@ -75,12 +82,13 @@ export async function openBulkEmailFlow(
       to,
       versandRecipients: recipients,
       groupKey: groupKey ?? '',
+      newsletter,
       versandEvents: events,
       membersByGroup,
       storagePath: attachment?.storagePath ?? '',
       filename: attachment?.filename ?? '',
       sendHandler,
-      fromLocked: !!sendHandler,
+      fromLocked: !!sendHandler || newsletterAdminOnly,
     },
     cssClass: 'modal-wide',
   });

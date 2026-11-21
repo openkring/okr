@@ -18,7 +18,8 @@ import { GroupService } from '@okr/subject-group-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import { createGroupMembership } from '@okr/relationship-membership-util';
-import { filterAccessibleGroups, findConflictingGroups, getUniqueGroupKey, groupChatRoomParam, groupHygieneFindings, getVisibleGroupKeys, GROUP_I18N_KEYS, groupWebsiteStarterSections, hasOnlyDefaultSection, withCreatorAsAdmin } from '@okr/subject-group-util';
+import { asNewsletterGroup, canAccessGroup, findConflictingGroups, getUniqueGroupKey, groupChatRoomParam, groupHygieneFindings, getVisibleGroupKeys, GROUP_I18N_KEYS, groupWebsiteStarterSections, hasOnlyDefaultSection, isNewsletterGroup, withCreatorAsAdmin } from '@okr/subject-group-util';
+import { canSeeSubscribers } from '@okr/relationship-newsletter-util';
 import { createSection } from '@okr/cms-section-util';
 
 import { GroupEditModal } from './group-edit.modal';
@@ -31,13 +32,16 @@ export type GroupState = {
   selectedTag: string;
   groupKey: string | undefined;
   selectedSegment: string | undefined;
+  /** the kind filter of the group list: 'all' | 'group' | 'newsletter' */
+  selectedKind: string;
 };
 export const initialState: GroupState = {
   searchTerm: '',
   selectedTag: '',
   groupKey: undefined,
   // undefined until the user picks a segment; the group view falls back to the first enabled segment by priority.
-  selectedSegment: undefined
+  selectedSegment: undefined,
+  selectedKind: 'all',
 };
 
 export const GroupStore = signalStore(
@@ -70,8 +74,10 @@ export const GroupStore = signalStore(
         // keine Gruppenoberflaeche: ihr Gruppendokument traegt weder CMS-Seite noch
         // Sections, also endet die Chat-Segment des group-view bei `pageNotFound`.
         // Gleiche Regel wie `AppStore.allGroups()`; `kind ?? 'group'` fuer Altdokumente.
+        // Newsletter (spec 1.169 §5.7) stehen in der Gruppenliste, mit Abonnenten statt Mitgliedern —
+        // nur hier: alle anderen Gruppenoberflaechen lesen `AppStore.allGroups()` und sehen sie nicht.
         return store.firestoreService.searchData<GroupModel>(GroupCollection, getSystemQuery(params.tenantId), 'name', 'asc')
-          .pipe(map((groups) => groups.filter((g) => (g.kind ?? 'group') === 'group')));
+          .pipe(map((groups) => groups.filter((g) => (g.kind ?? 'group') === 'group' || isNewsletterGroup(g))));
       }
     }),
     groupResource: rxResource({
@@ -111,13 +117,25 @@ export const GroupStore = signalStore(
     groupsCount: computed(() => state.groupsResource.value()?.length ?? 0),
     // Only the groups the user may see (`canAccessGroup`): a members-only group
     // (`visibility: ''`) stays out of a non-member's list, admins see every group.
+    // A newsletter has no members: it is listed for whoever may see its subscribers (spec 1.169 §5.8).
     filteredGroups: computed(() => {
       const memberKeys = new Set(state.currentUserMembershipsResource.value()?.map(m => m.orgKey) ?? []);
-      return filterAccessibleGroups(state.groupsResource.value() ?? [], memberKeys, state.appStore.currentUser())
+      const user = state.appStore.currentUser();
+      const kind = state.selectedKind();
+      return (state.groupsResource.value() ?? [])
+        .filter((group: GroupModel) => isNewsletterGroup(group)
+          ? canSeeSubscribers(group, user)
+          : canAccessGroup(group, memberKeys.has(group.okey), user))
         .filter((group: GroupModel) =>
+          (kind === 'all' || !kind || (isNewsletterGroup(group) ? 'newsletter' : 'group') === kind) &&
           nameMatches(group.index, state.searchTerm()) &&
           chipMatches(group.tags, state.selectedTag())
         );
+    }),
+    /** Whether the list holds a newsletter the user may see: only then is the kind filter offered. */
+    hasNewsletters: computed(() => {
+      const user = state.appStore.currentUser();
+      return (state.groupsResource.value() ?? []).some((g) => isNewsletterGroup(g) && canSeeSubscribers(g, user));
     }),
     // group
     group: computed(() => state.groupResource.value()),
@@ -182,6 +200,9 @@ export const GroupStore = signalStore(
     },
     setSelectedTag(selectedTag: string) {
       patchState(store, { selectedTag });
+    },
+    setSelectedKind(selectedKind: string) {
+      patchState(store, { selectedKind });
     },
     setGroupKey(groupKey: string): void {
       patchState(store, { groupKey });
@@ -259,9 +280,14 @@ export const GroupStore = signalStore(
         }
       });
       modal.present();
-      const { data, role } = await modal.onDidDismiss();
+      const { data: dismissed, role } = await modal.onDidDismiss();
+      let data = dismissed;
       if (role === 'confirm' && data && !readOnly) {
         if (isGroup(data, store.tenantId())) {
+          // A newsletter carries name, description and admins only: no chat (and no Matrix room), calendar,
+          // content page, files, tasks or members (spec 1.169 §5.1). Normalised here, whatever the form sent.
+          const isNewsletter = isNewsletterGroup(data);
+          if (isNewsletter) data = asNewsletterGroup(data);
           if (isNew) {
             // Duplicate guard. A group that "disappeared" (see withCreatorAsAdmin below) or one
             // somebody else already opened is otherwise recreated silently, and the copy takes its
@@ -300,7 +326,8 @@ export const GroupStore = signalStore(
             data.filesFolder = data.hasFiles ? `f_${data.okey}` : '';
             await store.groupService.create(data, store.currentUser());
             this.setGroupKey(data.okey);
-            await this.ensureAllAdminsAreMember(data);
+            // a newsletter has no memberships: its admins send it, the subscribers receive it
+            if (!isNewsletter) await this.ensureAllAdminsAreMember(data);
 
             // create default calendar segment
             if (data.hasCalendar) await this.createGroupCalendar(data);
@@ -322,7 +349,7 @@ export const GroupStore = signalStore(
             }
           } else {
             await store.groupService.update(data, store.currentUser());
-            await this.ensureAllAdminsAreMember(data);
+            if (!isNewsletter) await this.ensureAllAdminsAreMember(data);
           }
           this.reload();
         }
@@ -331,8 +358,17 @@ export const GroupStore = signalStore(
 
     async view(group?: GroupModel, readOnly = true): Promise<void> {
       if (!group?.okey || group.okey.length === 0) return;
+      // a newsletter has no group page: its view is the subscriber list
+      if (isNewsletterGroup(group)) return this.showSubscribers(group);
       store.appNavigationService.pushLink('/group/all/c-test-groups');
       await navigateByUrl(store.router, `/group-view/${group.okey}`, { readOnly });
+    },
+
+    /** The subscriber list of a newsletter group (spec 1.169 §5.8). */
+    async showSubscribers(group: GroupModel): Promise<void> {
+      if (!isNewsletterGroup(group)) return;
+      store.appNavigationService.pushLink('/group/all/c-groups');
+      await navigateByUrl(store.router, `/group/${group.okey}/subscribers`);
     },
 
     async delete(group?: GroupModel, readOnly = true): Promise<void> {
