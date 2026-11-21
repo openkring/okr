@@ -7,7 +7,7 @@ import { Observable } from 'rxjs';
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import type { EmailLayoutChoice, PostOptions } from '@okr/shared-models';
-import type { MailingRecipientChannels } from '@okr/shared-util-core';
+import type { MailingHousehold, MailingRecipientChannels } from '@okr/shared-util-core';
 import type { MailingDeliveries } from '@okr/content-pdf-template-util';
 
 /** A user-picked file attached inline (base64) to the email. */
@@ -231,11 +231,12 @@ export class DocEmailService {
    * The Zustellung table of a Versand (spec 1.145 §5): per person, the possible delivery types and the
    * profile's choice. A group admin passes `groupKey` and only learns about the group's members.
    */
-  public async getMailingRecipients(tenantId: string, personKeys: string[], groupKey?: string): Promise<MailingRecipientChannels[]> {
-    const callable = httpsCallable<{ tenantId: string; personKeys: string[]; groupKey?: string }, { recipients: MailingRecipientChannels[] }>(
+  public async getMailingRecipients(tenantId: string, personKeys: string[], groupKey?: string): Promise<{ recipients: MailingRecipientChannels[]; households: MailingHousehold[] }> {
+    const callable = httpsCallable<{ tenantId: string; personKeys: string[]; groupKey?: string }, { recipients: MailingRecipientChannels[]; households?: MailingHousehold[] }>(
       this.functions, 'getMailingRecipients');
     const { data } = await callable({ tenantId, personKeys, ...(groupKey ? { groupKey } : {}) });
-    return data.recipients;
+    // an older function answers without households: nothing is combined
+    return { recipients: data.recipients, households: data.households ?? [] };
   }
 
   /**

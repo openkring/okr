@@ -164,7 +164,8 @@
       "error": "Les modes de distribution n’ont pas pu être chargés. L’envoi part à toutes les personnes avec une adresse e-mail.",
       "email_only": "Envoi uniquement par e-mail",
       "dashboard": "Afficher dans le tableau de bord",
-      "qr_codes": "Afficher le code QR du lien"
+      "qr_codes": "Afficher le code QR du lien",
+      "split": "envoyer séparément"
     },
     "info": {
       "title": "Comment fonctionne un envoi",

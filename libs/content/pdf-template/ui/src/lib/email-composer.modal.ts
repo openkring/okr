@@ -20,11 +20,11 @@ import {
 } from '@okr/shared-ui';
 import type { OkrEditor } from '@okr/shared-ui-editor';
 import { DEFAULT_POST_OPTIONS, DeliveryChannel, EmailLayoutChoice, LAYOUT_CHOICES, PostOptions } from '@okr/shared-models';
-import { fill, hasRole, needsEmailNormalization } from '@okr/shared-util-core';
+import { fill, hasRole, householdRecipientKey, MailingHousehold, needsEmailNormalization } from '@okr/shared-util-core';
 import { dismissOverlay, isBrowser, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 import {
-  ACTIVE_MAILING_CHANNELS, buildVersandRows, EMAIL_ONLY_MAILING_CHANNELS, emailBodyHasContent, emailLayoutOptions, emailOnlyDeliveries,
+  ACTIVE_MAILING_CHANNELS, applyHouseholds, buildVersandRows, EMAIL_ONLY_MAILING_CHANNELS, emailBodyHasContent, emailLayoutOptions, emailOnlyDeliveries,
   GROUP_ADMIN_MAILING_CHANNELS, groupReachWarnings, hasPostDelivery, isSenderDomainAllowed,
   nonPdfAttachmentNames, parseEmails, sharedEmailCount, untickEmailAddress, withLinksInNewTab, toggleDelivery, versandBcc, versandDeliveries,
   EmailComposerFormModel, emailComposerValidations, VersandDeliveries, VersandEvent, VersandRow,
@@ -311,7 +311,7 @@ interface AddressField {
                     <okr-checkbox [i18n]="qrCodesI18n()" [checked]="letterQrCodes()" (checkedChange)="onQrCodesChange($event)" [readOnly]="false" />
                   }
                   <okr-versand-delivery-table [rows]="versandRows()" [deliveries]="deliveries()" [i18n]="i18n"
-                    [active]="activeChannels()" (toggled)="onDeliveryToggle($event.row, $event.channel)" />
+                    [active]="activeChannels()" (toggled)="onDeliveryToggle($event.row, $event.channel)" (split)="onSplitHousehold($event)" />
                   @if (postSkipped().length > 0) {
                     <ion-note color="warning" class="note">{{ i18n.post_skipped() }} {{ postSkipped().join(', ') }}</ion-note>
                   }
@@ -486,6 +486,14 @@ export class EmailComposerModal {
   protected readonly versandRows = signal<VersandRow[]>([]);
   protected readonly deliveries = signal<VersandDeliveries>({});
   private initialDeliveries: VersandDeliveries = {};
+  private initialRows: VersandRow[] = [];
+  /** The rows and ticks per person, before households are combined (spec 1.168 §6.1). */
+  private baseRows: VersandRow[] = [];
+  private baseDeliveries: VersandDeliveries = {};
+  /** The households touching this Versand, as the server answered. */
+  private households: MailingHousehold[] = [];
+  /** The households the sender split for this Versand («einzeln zustellen»): delivered per member. */
+  protected readonly split = signal<ReadonlySet<string>>(new Set());
   protected readonly versandLoaded = signal(false);
   /**
    * «Versand nur via E-Mail»: Post and In-App cannot be ticked. A group admin never has Post: the letters
@@ -803,15 +811,21 @@ export class EmailComposerModal {
 
   private async loadVersand(persons: VersandRecipient[], groupKey: string): Promise<void> {
     let channels;
+    let households: MailingHousehold[] = [];
     try {
-      channels = await this.docEmailService.getMailingRecipients(
-        this.appStore.tenantId(), persons.map((p) => p.personKey), groupKey || undefined);
+      ({ recipients: channels, households } = await this.docEmailService.getMailingRecipients(
+        this.appStore.tenantId(), persons.map((p) => p.personKey), groupKey || undefined));
     } catch (err) {
       console.error('EmailComposerModal.loadVersand: getMailingRecipients failed', err);
       this.versandFailed.set(true);
     }
-    const { rows, deliveries } = buildVersandRows(persons, channels, this.activeChannels());
+    const base = buildVersandRows(persons, channels, this.activeChannels());
+    this.baseRows = base.rows;
+    this.baseDeliveries = base.deliveries;
+    this.households = households;
+    const { rows, deliveries } = applyHouseholds(base.rows, base.deliveries, households, this.split());
     this.versandRows.set(rows);
+    this.initialRows = rows;
     this.initialDeliveries = deliveries;
     this.applyDeliveries(deliveries);
     this.versandLoaded.set(true);
@@ -923,6 +937,36 @@ export class EmailComposerModal {
     const next = toggleDelivery(this.deliveries(), row, channel, this.activeChannels());
     if (next === this.deliveries()) return;
     this.isDirty.set(true);
+    this.applyDeliveries(next);
+  }
+
+  /**
+   * «einzeln zustellen» (spec 1.168 §6.2): the household row goes, its members get their own ticks back; every
+   * other row keeps the ticks the sender set. The household itself stays as it is.
+   */
+  protected onSplitHousehold(householdKey: string): void {
+    if (this.split().has(householdKey)) return;
+    const split = new Set(this.split()).add(householdKey);
+    this.split.set(split);
+    const household = this.households.find((h) => h.okey === householdKey);
+    const members = new Set(household?.memberKeys ?? []);
+    const { rows, deliveries } = applyHouseholds(this.baseRows, this.baseDeliveries, this.households, split);
+    const current = this.deliveries();
+    let next: VersandDeliveries = {};
+    for (const row of rows) {
+      const key = row.personKey;
+      next[key] = members.has(key) || !(key in current) ? deliveries[key] ?? [] : current[key];
+    }
+    if (this.emailOnly()) {
+      next = emailOnlyDeliveries(next, true);
+      // the ticks that come back when «Versand nur via E-Mail» is switched off: per member, no household row
+      const before: VersandDeliveries = { ...this.ticksBeforeEmailOnly };
+      delete before[householdRecipientKey(householdKey)];
+      for (const key of members) if (key in deliveries) before[key] = deliveries[key];
+      this.ticksBeforeEmailOnly = before;
+    }
+    this.isDirty.set(true);
+    this.versandRows.set(rows);
     this.applyDeliveries(next);
   }
 
@@ -1118,7 +1162,11 @@ export class EmailComposerModal {
     this.showOnDashboard.set(true);
     this.letterQrCodes.set(false);
     this.ticksBeforeEmailOnly = {};
-    if (this.isVersand()) this.applyDeliveries(this.initialDeliveries);
+    if (this.isVersand()) {
+      this.split.set(new Set());
+      this.versandRows.set(this.initialRows);
+      this.applyDeliveries(this.initialDeliveries);
+    }
     this.showForm.set(false);          // toggle to clear stale Vest state
     setTimeout(() => this.showForm.set(true), 0);
   }

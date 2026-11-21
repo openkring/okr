@@ -164,7 +164,8 @@
       "error": "The delivery choices could not be loaded. The mailing goes to everyone with an email address.",
       "email_only": "Send by email only",
       "dashboard": "Show on the dashboard",
-      "qr_codes": "Show QR code for the link"
+      "qr_codes": "Show QR code for the link",
+      "split": "deliver individually"
     },
     "info": {
       "title": "How a mailing works",

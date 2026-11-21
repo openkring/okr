@@ -164,7 +164,8 @@
       "error": "Non è stato possibile caricare i modi di consegna. L’invio va a tutti con un indirizzo e-mail.",
       "email_only": "Invio solo via e-mail",
       "dashboard": "Mostra nella dashboard",
-      "qr_codes": "Mostra il codice QR del link"
+      "qr_codes": "Mostra il codice QR del link",
+      "split": "inviare singolarmente"
     },
     "info": {
       "title": "Come funziona un invio",

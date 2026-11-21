@@ -164,7 +164,8 @@
       "error": "No se pudieron cargar las formas de entrega. El envío va a todas las personas con correo.",
       "email_only": "Envío solo por correo electrónico",
       "dashboard": "Mostrar en el panel",
-      "qr_codes": "Mostrar el código QR del enlace"
+      "qr_codes": "Mostrar el código QR del enlace",
+      "split": "enviar por separado"
     },
     "info": {
       "title": "Cómo funciona un envío",

@@ -1,8 +1,8 @@
 // libs/content/pdf-template/ui/src/lib/versand-delivery-table.ts
 import { Component, computed, input, output } from '@angular/core';
-import { IonCheckbox, IonNote } from '@ionic/angular';
+import { IonButton, IonCheckbox, IonNote } from '@ionic/angular';
 
-import { DeliveryChannel } from '@okr/shared-models';
+import { DeliveryChannel, HOUSEHOLD_RECIPIENT_PREFIX } from '@okr/shared-models';
 import { MAILING_CHANNELS } from '@okr/shared-util-core';
 import {
   ACTIVE_MAILING_CHANNELS, deliveryTotals, EmailComposerI18n, isDeliveryEditable,
@@ -12,12 +12,13 @@ import {
 /**
  * The Zustellung segment of a Versand (spec 1.144 §4.3): one row per recipient, one column per
  * delivery type, totals on top. A cell that is not possible for that person — or not allowed for this
- * sender — is disabled; every other cell can be ticked for this Versand only.
+ * sender — is disabled; every other cell can be ticked for this Versand only. A household row (spec 1.168
+ * §6.2) reads «Familie Muster → Anna Muster» with the members under it, and can be split for this Versand.
  */
 @Component({
   selector: 'okr-versand-delivery-table',
   standalone: true,
-  imports: [IonCheckbox, IonNote],
+  imports: [IonButton, IonCheckbox, IonNote],
   styles: [`
     .scroll { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
@@ -28,6 +29,7 @@ import {
     tr.total td { font-weight: 500; }
     td small { display: block; color: var(--ion-color-medium); }
     .note { display: block; padding: 8px 12px; }
+    td ion-button { margin: 4px 0 0; }
   `],
   template: `
     <ion-note class="note">{{ i18n().delivery_hint() }}</ion-note>
@@ -52,8 +54,14 @@ import {
           @for (row of rows(); track row.personKey) {
             <tr>
               <td>
-                {{ row.name }}
-                @if (row.email) { <small>{{ row.email }}</small> }
+                @if (row.members) {
+                  {{ row.name }} → {{ row.contactName }}
+                  <small>{{ memberNames(row) }}</small>
+                  <ion-button size="small" fill="outline" (click)="split.emit(householdKey(row))">{{ i18n().delivery_split() }}</ion-button>
+                } @else {
+                  {{ row.name }}
+                  @if (row.email) { <small>{{ row.email }}</small> }
+                }
               </td>
               @for (channel of channels; track channel) {
                 <td>
@@ -85,6 +93,8 @@ export class VersandDeliveryTable {
 
   // outputs
   public readonly toggled = output<{ row: VersandRow; channel: DeliveryChannel }>();
+  /** «einzeln zustellen»: the okey of the household to deliver per member in this Versand */
+  public readonly split = output<string>();
 
   protected readonly channels = MAILING_CHANNELS;
   protected readonly totals = computed(() => deliveryTotals(this.deliveries()));
@@ -96,6 +106,14 @@ export class VersandDeliveryTable {
       case DeliveryChannel.Post: return this.i18n().delivery_post();
       default: return this.i18n().delivery_email();
     }
+  }
+
+  protected memberNames(row: VersandRow): string {
+    return (row.members ?? []).map((m) => m.name).join(', ');
+  }
+
+  protected householdKey(row: VersandRow): string {
+    return row.personKey.slice(HOUSEHOLD_RECIPIENT_PREFIX.length);
   }
 
   protected isActive(channel: DeliveryChannel): boolean {

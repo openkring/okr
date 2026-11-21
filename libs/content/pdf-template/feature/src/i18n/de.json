@@ -164,7 +164,8 @@
       "error": "Die Zustellwege konnten nicht geladen werden. Der Versand geht an alle mit E-Mail-Adresse.",
       "email_only": "Versand nur via E-Mail",
       "dashboard": "Anzeige im Dashboard",
-      "qr_codes": "QR-Code für Link anzeigen"
+      "qr_codes": "QR-Code für Link anzeigen",
+      "split": "einzeln zustellen"
     },
     "info": {
       "title": "So funktioniert der Versand",
