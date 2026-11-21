@@ -120,19 +120,40 @@ function buildPhoneIndex(persons: ExistingPerson[]): PhoneIndex {
   return index;
 }
 
+/** The first given name, folded and without the dot of an initial: `Hans-Peter` → `hans`, `L.` → `l`. */
+function firstToken(firstName: string | undefined): string {
+  return normalizeName(firstName).replace(/\./g, ' ').split(/[\s-]+/).find((t) => !!t) ?? '';
+}
+
+/**
+ * Two first names that cannot be the same person (spec 1.159 §4.1, 2026-11-21): both are given
+ * and neither first given name is a prefix of the other. `Lars`/`Barbara` conflict; `Lars`/`L.`,
+ * `Lars`/`Lars Peter`, `Chris`/`Christoph` and an empty first name do not.
+ */
+export function firstNamesConflict(a: string | undefined, b: string | undefined): boolean {
+  const ta = firstToken(a);
+  const tb = firstToken(b);
+  if (!ta || !tb) return false;
+  return !ta.startsWith(tb) && !tb.startsWith(ta);
+}
+
 function findDuplicates(draft: VcardImportDraft, persons: ExistingPerson[], phoneIndex: PhoneIndex): ExistingPerson[] {
   // An org card is never a duplicate OF A PERSON. Without this an org sharing a generic
   // address (info@acme.ch) with one of its people would match on email and be handed the
   // person merge path, which writes `person.<okey>` addresses and a dob vault doc for it.
   if (draft.kind === 'org') return [];
+  // An email or a phone identifies a household as often as a person (a family address, the
+  // home landline only one member is recorded with yet). It never overrides a clearly
+  // different first name — that is how Lars's card was merged into Barbara on 2026-11-15.
+  const sameFirstName = (p: ExistingPerson) => !firstNamesConflict(p.firstName, draft.person?.firstName);
   const emails = draftEmails(draft);
   if (emails.length > 0) {
-    const byEmail = persons.filter((p) => p.emails.some((e) => emails.includes(e.toLowerCase().trim())));
+    const byEmail = persons.filter((p) => sameFirstName(p) && p.emails.some((e) => emails.includes(e.toLowerCase().trim())));
     if (byEmail.length > 0) return byEmail;
   }
   // phone rule (spec 1.159 §4.1): between email and name — a caller-lookup list holds many
   // cards with a phone and no email.
-  const byPhone = [...new Set(draftPhoneKeys(draft).flatMap((k) => phoneIndex.get(k) ?? []))];
+  const byPhone = [...new Set(draftPhoneKeys(draft).flatMap((k) => phoneIndex.get(k) ?? []))].filter(sameFirstName);
   if (byPhone.length > 0) return byPhone;
   const draftName = normalizeName(`${draft.person?.firstName ?? ''} ${draft.person?.lastName ?? ''}`);
   return persons.filter((p) => normalizeName(`${p.firstName} ${p.lastName}`) === draftName);

@@ -80,7 +80,7 @@ describe('buildDecisions', () => {
 
   it('lets an email match win over a name match', () => {
     const withEmail = draft({ addresses: [{ addressChannel: 'email', email: 'Anna@Example.CH' } as never] });
-    const [d] = buildDecisions([withEmail], [person('p2', 'Andere', 'Person', ['anna@example.ch']), person('p1', 'Anna', 'Muster')], []);
+    const [d] = buildDecisions([withEmail], [person('p2', 'Anna', 'Neuname', ['anna@example.ch']), person('p1', 'Anna', 'Muster')], []);
     expect(d.duplicates[0].okey).toBe('p2');
   });
 
@@ -147,8 +147,8 @@ describe('buildDecisions — phone rule (1.159 §4.1)', () => {
   it('lets an email match win over a phone match', () => {
     const card = draft({ addresses: [mail('anna@x.ch'), tel('079 123 45 67')] });
     const [d] = buildDecisions([card], [
-      person('byPhone', 'Other', 'One', [], ['079 123 45 67']),
-      person('byMail', 'Third', 'Person', ['anna@x.ch']),
+      person('byPhone', 'Anna', 'One', [], ['079 123 45 67']),
+      person('byMail', 'Anna', 'Person', ['anna@x.ch']),
     ], []);
     expect(d.duplicates.map((p) => p.okey)).toEqual(['byMail']);
   });
@@ -161,7 +161,7 @@ describe('buildDecisions — phone rule (1.159 §4.1)', () => {
 
   it('offers two cards of one file sharing a mobile as duplicates', () => {
     const a = draft({ displayName: 'Anna Muster', addresses: [tel('079 123 45 67')] });
-    const b = draft({ displayName: 'Anni', person: { firstName: 'Anni', lastName: '' } as never, addresses: [tel('+41 79 123 45 67')] });
+    const b = draft({ displayName: 'Anna', person: { firstName: 'Anna', lastName: '' } as never, addresses: [tel('+41 79 123 45 67')] });
     const [, d] = buildDecisions([a, b], [], []);
     expect(d.action).toBe('merge');
     expect(d.duplicates[0].okey).toBe('');
@@ -172,7 +172,7 @@ describe('buildDecisions — intra-batch target (1.159 §4.1)', () => {
   it('an intra-batch duplicate names the index of the earlier card', () => {
     const a = draft({ displayName: 'Anna Muster', addresses: [tel('079 123 45 67')] });
     const other = draft({ displayName: 'Bea Beispiel', person: { firstName: 'Bea', lastName: 'Beispiel' } as never });
-    const b = draft({ displayName: 'Anni', person: { firstName: 'Anni', lastName: '' } as never, addresses: [tel('+41 79 123 45 67')] });
+    const b = draft({ displayName: 'Anna', person: { firstName: 'Anna', lastName: '' } as never, addresses: [tel('+41 79 123 45 67')] });
     const [, , d] = buildDecisions([a, other, b], [], []);
     expect(d.duplicates[0].batchIndex).toBe(0);
   });
@@ -204,7 +204,7 @@ describe('buildDecisions — shared lines (final review)', () => {
   });
 
   it('matches 4000 cards against 4000 persons within a second', () => {
-    const persons = Array.from({ length: 4000 }, (_, i) => person(`p${i}`, `F${i}`, `L${i}`, [], [`079 ${String(1000000 + i)}`]));
+    const persons = Array.from({ length: 4000 }, (_, i) => person(`p${i}`, `X${i}`, `L${i}`, [], [`079 ${String(1000000 + i)}`]));
     const drafts = Array.from({ length: 4000 }, (_, i) => draft({ displayName: `X${i}`, person: { firstName: `X${i}`, lastName: 'Y' } as never, addresses: [tel(`+41 79 ${String(1000000 + i)}`)] }));
     const t0 = Date.now();
     const decisions = buildDecisions(drafts, persons, []);
@@ -221,6 +221,42 @@ describe('buildDecisions — a shared line stays shared', () => {
       person('p1', 'Anna', 'Beispiel', [], ['044 123 45 00']),
       person('p2', 'Bea', 'Beispiel', [], ['044 123 45 00']),
     ], []);
+    expect(d.duplicates).toEqual([]);
+  });
+});
+
+describe('buildDecisions — household identifiers (2026-11-15 bka merge)', () => {
+  const lars = (addresses: never[]) => draft({ displayName: 'Lars Kaiser', person: { firstName: 'Lars', lastName: 'Kaiser' } as never, addresses });
+
+  it('never merges a family member into the one person who already holds the home landline', () => {
+    const [d] = buildDecisions([lars([tel('044 926 12 34')])], [person('barbara', 'Barbara', 'Kaiser', [], ['+41449261234'])], []);
+    expect(d.duplicates).toEqual([]);
+    expect(d.action).toBe('import');
+  });
+
+  it('falls through to the name rule, so the right family member is still found', () => {
+    const [d] = buildDecisions([lars([tel('044 926 12 34')])], [
+      person('barbara', 'Barbara', 'Kaiser', [], ['+41449261234']),
+      person('lars', 'Lars', 'Kaiser'),
+    ], []);
+    expect(d.duplicates.map((p) => p.okey)).toEqual(['lars']);
+  });
+
+  it('never merges on a shared family email either', () => {
+    const [d] = buildDecisions([lars([mail('familie@kaiser.ch')])], [person('barbara', 'Barbara', 'Kaiser', ['familie@kaiser.ch'])], []);
+    expect(d.duplicates).toEqual([]);
+  });
+
+  it('still merges when the first names agree, are an initial, or one is missing', () => {
+    for (const first of ['Lars', 'L.', 'Lars Peter', '']) {
+      const [d] = buildDecisions([lars([tel('044 926 12 34')])], [person('p', first, 'Kaiser', [], ['+41449261234'])], []);
+      expect(d.duplicates.map((p) => p.okey), first).toEqual(['p']);
+    }
+  });
+
+  it('never links two family members of one file on their landline', () => {
+    const barbara = draft({ displayName: 'Barbara Kaiser', person: { firstName: 'Barbara', lastName: 'Kaiser' } as never, addresses: [tel('044 926 12 34')] });
+    const [, d] = buildDecisions([barbara, lars([tel('044 926 12 34')])], [], []);
     expect(d.duplicates).toEqual([]);
   });
 });
