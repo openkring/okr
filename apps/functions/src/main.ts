@@ -631,3 +631,6 @@ export { webhookSelftestScheduled, runWebhookSelftestNow } from './_webhooks/run
 
 // newsCenter: NewsCenter relay — feed text of a configured channel, relayed webcam stills, admin link resolver (design 2026-11-08 §7)
 export { newsCenter } from './news';
+
+// Newsletter (spec 1.169)
+export { onNewsletterSignupCreated } from './newsletter/signup';   // double-opt-in mail for a fresh sign-up

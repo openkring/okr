@@ -21,6 +21,7 @@ import { getAppEmailConfig } from '../auth/email-templates';
 import { createProspect } from '../business/prospect';
 import { todayStoreDate } from '../calendar/recipients';
 import { createBoathouseReservation } from './reservation-target';
+import { createNewsletterSignup } from '../newsletter/signup';
 import { emitEvent } from '../workflow/emit';
 import { buildSubmissionTaskNotes, prepareSubmission, type SubmissionRow, type ValueNames } from './submission-pipeline';
 import { categoryNamesOfFields, projectPublicCategories, projectPublicFormDefinition, type PublicCategoryList } from './public-definition';
@@ -184,6 +185,17 @@ export const FORM_MAPPINGS: FormMapping[] = [
     modelType: 'ProspectModel',
     collectionName: 'prospects',
     defaults: { source: 'kring.ch' },
+  },
+  {
+    // 1.169 §5.2 — the newsletter sign-up. NOT written by the generic collection path: `submitForm`
+    // dispatches it to `createNewsletterSignup`, which stores a pending double-opt-in doc (no person yet).
+    // Its `groupKey` is a section-only implicit field. Mirrored in the inlined whitelist in
+    // `apps/functions/src/forms/index.ts` — edit BOTH copies.
+    mappingKey: 'newsletterSignups.default',
+    label: 'Newsletter',
+    modelType: 'NewsletterSignup',
+    collectionName: 'newsletterSignups',
+    defaults: {},
   },
   {
     // §6b / O1 — the boathouse reservation. NOT written by the generic collection path below:
@@ -810,6 +822,17 @@ export const submitForm = onCall(
             uid: request.auth?.uid,
             values: shareableValues,
             defaults: mapping.defaults,
+          });
+        }
+        if (mapping.collectionName === 'newsletterSignups') {
+          // 1.169 §5.2 — a pending double-opt-in doc, mailed by `onNewsletterSignupCreated`. Spam is never
+          // stored and so never mailed: a stranger's address must not receive a confirmation request.
+          if (isSpam) return crypto.randomUUID();
+          return createNewsletterSignup(db, {
+            tenantId: payload.tenantId,
+            formKey: payload.formKey,
+            values: shareableValues,
+            now: new Date(),
           });
         }
         if (mapping.collectionName === 'prospects') {

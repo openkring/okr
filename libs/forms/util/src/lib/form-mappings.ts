@@ -41,6 +41,17 @@ export const FORM_MAPPINGS: FormMapping[] = [
     defaults: { source: 'kring.ch' },
   },
   {
+    // 1.169 §5.2 — the newsletter sign-up. NOT written by the generic collection path: `submitForm`
+    // dispatches it to `createNewsletterSignup`, which stores a pending double-opt-in doc (no person yet).
+    // Its `groupKey` is a section-only implicit field. Mirrored in the inlined whitelist in
+    // `apps/functions/src/forms/index.ts` — edit BOTH copies.
+    mappingKey: 'newsletterSignups.default',
+    label: 'Newsletter',
+    modelType: 'NewsletterSignup',
+    collectionName: 'newsletterSignups',
+    defaults: {},
+  },
+  {
     // §6b / O1 — the boathouse reservation, converted from ReservationApplyModal. Like
     // `prospects.default` this is NOT written by the generic collection path: a reservation
     // carries typed avatars (reserver, resource) and a built search index, so `submitForm`
