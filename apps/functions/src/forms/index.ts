@@ -21,7 +21,7 @@ import { getAppEmailConfig } from '../auth/email-templates';
 import { createProspect } from '../business/prospect';
 import { todayStoreDate } from '../calendar/recipients';
 import { createBoathouseReservation } from './reservation-target';
-import { createNewsletterSignup } from '../newsletter/signup';
+import { submitNewsletterSignup } from '../newsletter/signup';
 import { emitEvent } from '../workflow/emit';
 import { buildSubmissionTaskNotes, prepareSubmission, type SubmissionRow, type ValueNames } from './submission-pipeline';
 import { categoryNamesOfFields, projectPublicCategories, projectPublicFormDefinition, type PublicCategoryList } from './public-definition';
@@ -827,8 +827,9 @@ export const submitForm = onCall(
         if (mapping.collectionName === 'newsletterSignups') {
           // 1.169 §5.2 — a pending double-opt-in doc, mailed by `onNewsletterSignupCreated`. Spam is never
           // stored and so never mailed: a stranger's address must not receive a confirmation request.
-          if (isSpam) return crypto.randomUUID();
-          return createNewsletterSignup(db, {
+          return submitNewsletterSignup(db, {
+            isSpam,
+            fields: formDef.fields,
             tenantId: payload.tenantId,
             formKey: payload.formKey,
             values: shareableValues,

@@ -29,7 +29,7 @@ vi.mock('../email/render-email', () => ({
 vi.mock('../publicApi/rateLimit', () => ({ checkRateLimit: h.limit }));
 
 import { fakeDb, Store } from '../credit/testing/credit-fake-db';
-import { checkNewsletterGroup, createNewsletterSignup, sendSignupConfirmation } from './signup';
+import { checkNewsletterGroup, createNewsletterSignup, mailboxKey, sendSignupConfirmation, submitNewsletterSignup } from './signup';
 import type { NewsletterSignupDoc } from './types';
 
 const T = 'la21';
@@ -67,6 +67,48 @@ describe('createNewsletterSignup', () => {
       tenants: [T], groupKey: 'nl1', formKey: 'f1', firstName: 'Anna', lastName: 'Muster', email: 'anna@example.ch',
       city: 'Stäfa', createdAt: '20261121110000', expiresAt: '20261128110000', state: 'pending',
     });
+  });
+});
+
+describe('createNewsletterSignup email shape', () => {
+  it.each(['', 'nope', 'a@b', 'a b@c.ch'])('refuses %j', async (email) => {
+    await expect(createNewsletterSignup(fakeDb(store), { tenantId: T, formKey: 'f1', now: NOW, values: { groupKey: 'nl1', email } }))
+      .rejects.toMatchObject({ code: 'invalid-argument' });
+  });
+});
+
+describe('submitNewsletterSignup', () => {
+  const implicit = { id: 'g', key: 'groupKey', type: 'implicit', order: 1 };
+  const base = (fields: unknown, values: Record<string, unknown>, isSpam = false) => ({
+    db: fakeDb(store),
+    input: { isSpam, fields: fields as never, tenantId: T, formKey: 'f1', values, now: NOW },
+  });
+  const signups = () => Object.keys(store).filter((p) => p.startsWith('newsletterSignups/'));
+  const ok = { groupKey: 'nl1', email: 'a@b.ch' };
+
+  it('stores the signup with formKey and groupKey for a section-only implicit field', async () => {
+    const { db, input } = base([implicit], ok);
+    const key = await submitNewsletterSignup(db, input);
+    expect(store[`newsletterSignups/${key}`]).toMatchObject({ formKey: 'f1', groupKey: 'nl1', state: 'pending' });
+  });
+  it('spam stores nothing and returns a random id', async () => {
+    const { db, input } = base([implicit], ok, true);
+    expect(await submitNewsletterSignup(db, input)).toMatch(/^[0-9a-f-]{36}$/);
+    expect(signups()).toHaveLength(0);
+  });
+  it.each([
+    ['no groupKey field', [{ id: 'x', key: 'email', type: 'email' }]],
+    ['groupKey is an ordinary field', [{ id: 'g', key: 'groupKey', type: 'text' }]],
+    ['implicit with a default value', [{ ...implicit, defaultValue: 'nl1' }]],
+  ])('refuses %s as form-closed', async (_n, fields) => {
+    const { db, input } = base(fields, ok);
+    await expect(submitNewsletterSignup(db, input)).rejects.toMatchObject({ code: 'failed-precondition', message: 'form-closed' });
+    expect(signups()).toHaveLength(0);
+  });
+  it('refuses an empty resolved groupKey', async () => {
+    const { db, input } = base([implicit], { groupKey: '', email: 'a@b.ch' });
+    await expect(submitNewsletterSignup(db, input)).rejects.toMatchObject({ code: 'failed-precondition' });
+    expect(signups()).toHaveLength(0);
   });
 });
 

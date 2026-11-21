@@ -19,6 +19,10 @@ export interface NewsletterSignupDoc {
   /** StoreDateTime (yyyyMMddHHmmss) after which the confirmation link is dead */
   expiresAt: string;
   state: 'pending' | 'confirmed';
+  /** canonical mailbox (no +tag, gmail dots) — set when the confirmation mail went out */
+  mailboxKey?: string;
+  /** StoreDateTime the confirmation mail went out */
+  mailedAt?: string;
 }
 
 export const NewsletterSignupCollection = 'newsletterSignups';

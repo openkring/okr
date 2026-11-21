@@ -11,7 +11,10 @@ import { defineSecret, projectID } from 'firebase-functions/params';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 
-import { GroupCollection } from '@okr/shared-models';
+import { HttpsError } from 'firebase-functions/v2/https';
+
+import { GroupCollection, type Field } from '@okr/shared-models';
+import { isSectionOnlyImplicit } from '@okr/shared-util-core';
 
 import { getAppEmailConfig } from '../auth/email-templates';
 import { sendEmailViaProvider } from '../auth/email-transport';
@@ -33,6 +36,8 @@ export const SIGNUP_VALID_DAYS = 7;
 /** At most this many confirmation mails to one address per tenant per day. */
 export const SIGNUP_MAIL_PER_ADDRESS = { limit: 3, windowMs: DAY_MS, failClosed: true as const };
 
+const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const text = (v: unknown): string => (typeof v === 'string' ? v.trim() : '');
 
 export interface CreateNewsletterSignupInput {
@@ -46,13 +51,15 @@ export interface CreateNewsletterSignupInput {
 /** Stores the pending sign-up and returns its key (the signed confirm link carries it). */
 export async function createNewsletterSignup(db: Firestore, input: CreateNewsletterSignupInput): Promise<string> {
   const { tenantId, formKey, values, now } = input;
+  const email = normalizeEmail(text(values['email']));
+  if (!EMAIL_SHAPE.test(email)) throw new HttpsError('invalid-argument', 'Invalid values for fields: email');
   const doc: NewsletterSignupDoc = {
     tenants: [tenantId],
     groupKey: text(values['groupKey']),
     formKey,
     firstName: text(values['firstName']),
     lastName: text(values['lastName']),
-    email: normalizeEmail(text(values['email'])),
+    email,
     city: text(values['city']),
     createdAt: toStoreDateTime(now),
     expiresAt: toStoreDateTime(new Date(now.getTime() + SIGNUP_VALID_DAYS * DAY_MS)),
@@ -61,6 +68,28 @@ export async function createNewsletterSignup(db: Firestore, input: CreateNewslet
   const ref = db.collection(NewsletterSignupCollection).doc();
   await ref.set(doc);
   return ref.id;
+}
+
+export interface NewsletterBranchInput extends CreateNewsletterSignupInput {
+  isSpam: boolean;
+  /** the form definition's fields */
+  fields: Field[] | undefined;
+}
+
+/**
+ * The `submitForm` branch of the `newsletterSignups` mapping. The group may only come from a verified page
+ * section: the form must carry a section-only implicit `groupKey` field and the section must have resolved a
+ * value for it, else the form is closed (nothing stored, the filler sees it). Spam stores nothing and gets a
+ * random id.
+ */
+export async function submitNewsletterSignup(db: Firestore, input: NewsletterBranchInput): Promise<string> {
+  const field = (Array.isArray(input.fields) ? input.fields : []).find((f) => f?.key === 'groupKey');
+  if (!field || field.type !== 'implicit' || !isSectionOnlyImplicit(field) || text(input.values['groupKey']) === '') {
+    logger.warn(`newsletter signup: form ${input.formKey} has no section-only groupKey — refused tenant=${input.tenantId}`);
+    throw new HttpsError('failed-precondition', 'form-closed');
+  }
+  if (input.isSpam) return crypto.randomUUID();
+  return createNewsletterSignup(db, input);
 }
 
 export type NewsletterGroupCheck = { ok: true; name: string; subTitle: string } | { ok: false };
@@ -76,9 +105,40 @@ export async function checkNewsletterGroup(db: Firestore, tenantId: string, grou
   return { ok: true, name: text(g['name']), subTitle: text(g['subTitle']) };
 }
 
+/**
+ * The canonical mailbox of an address: lowercase, no `+tag`, and for gmail.com / googlemail.com no dots in the
+ * local part and googlemail.com mapped to gmail.com. Variants of one mailbox share one limit; never stored as
+ * the address (the mail goes to the address as typed).
+ */
+export function mailboxKey(email: string): string {
+  const lower = normalizeEmail(email);
+  const at = lower.lastIndexOf('@');
+  if (at <= 0) return lower;
+  let local = lower.slice(0, at).split('+')[0];
+  let domain = lower.slice(at + 1);
+  if (domain === 'googlemail.com') domain = 'gmail.com';
+  if (domain === 'gmail.com') local = local.replace(/\./g, '');
+  return `${local}@${domain}`;
+}
+
 /** The per-address limit key: the address is never in clear in the counter. */
 function addressLimitKey(tenantId: string, email: string): string {
-  return createHash('sha256').update(`${tenantId}|${normalizeEmail(email)}`).digest('hex');
+  return createHash('sha256').update(`${tenantId}|${mailboxKey(email)}`).digest('hex');
+}
+
+/** True when another live signup of this mailbox for this group already got a mail in the last 24 h. */
+async function alreadyMailedRecently(db: Firestore, tenantId: string, signupKey: string, signup: NewsletterSignupDoc, now: Date): Promise<boolean> {
+  const snap = await db.collection(NewsletterSignupCollection)
+    .where('mailboxKey', '==', mailboxKey(signup.email))
+    .where('groupKey', '==', signup.groupKey)
+    .where('tenants', 'array-contains', tenantId)
+    .get();
+  const since = toStoreDateTime(new Date(now.getTime() - DAY_MS));
+  const current = toStoreDateTime(now);
+  return snap.docs.some((d) => {
+    const o = d.data() as Partial<NewsletterSignupDoc>;
+    return d.id !== signupKey && o.state === 'pending' && (o.mailedAt ?? '') >= since && (o.expiresAt ?? '') > current;
+  });
 }
 
 function confirmationBody(name: string, subTitle: string, confirmUrl: string): string {
@@ -93,6 +153,8 @@ function confirmationBody(name: string, subTitle: string, confirmUrl: string): s
 export interface SignupMailContext {
   secret: string;
   projectId: string;
+  /** for tests; defaults to the current time */
+  now?: Date;
 }
 
 /**
@@ -116,6 +178,10 @@ export async function sendSignupConfirmation(db: Firestore, signupKey: string, s
     logger.warn(`${CF_NAME}: no live newsletter group — no mail tenant=${tenantId}`);
     return;
   }
+  if (await alreadyMailedRecently(db, tenantId, signupKey, signup, ctx.now ?? new Date())) {
+    logger.warn(`${CF_NAME}: a confirmation for this mailbox and group was mailed in the last 24 h — no mail tenant=${tenantId}`);
+    return;
+  }
   const limit = await checkBucketLimit('newsletterSignupMail', addressLimitKey(tenantId, signup.email), SIGNUP_MAIL_PER_ADDRESS);
   if (!limit.allowed) {
     logger.warn(`${CF_NAME}: ${limit.unavailable ? 'limit unavailable' : 'address limit reached'} — no mail tenant=${tenantId}`);
@@ -131,6 +197,10 @@ export async function sendSignupConfirmation(db: Firestore, signupKey: string, s
       to: [signup.email],
       subject: `Bitte bestätige deine Anmeldung zum Newsletter ${group.name}`,
       html,
+    });
+    await db.collection(NewsletterSignupCollection).doc(signupKey).update({
+      mailboxKey: mailboxKey(signup.email),
+      mailedAt: toStoreDateTime(ctx.now ?? new Date()),
     });
     logger.info(`${CF_NAME}: confirmation sent tenant=${tenantId}`);
   } catch (e) {
