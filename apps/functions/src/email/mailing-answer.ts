@@ -48,7 +48,7 @@ function eventOf(data: unknown, tenants: string[]): EventData | undefined {
  * that led here. Without a usable standard layout the page keeps its built-in banner. The layout is
  * tenant-editable, so the page is served with ANSWER_PAGE_CSP (no script runs).
  */
-async function pageFrame(tenantId: string): Promise<string | undefined> {
+export async function pageFrame(tenantId: string): Promise<string | undefined> {
   try {
     const { html } = await renderEmail({ tenantId, layout: 'standard', body: PAGE_CONTENT_SLOT, noPlainFallback: true });
     return html.includes(PAGE_CONTENT_SLOT) ? neutralizeMeta(html) : undefined;

@@ -634,3 +634,4 @@ export { newsCenter } from './news';
 
 // Newsletter (spec 1.169)
 export { onNewsletterSignupCreated } from './newsletter/signup';   // double-opt-in mail for a fresh sign-up
+export { newsletterConfirm } from './newsletter/confirm';   // the link of the double-opt-in mail
