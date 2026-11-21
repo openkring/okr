@@ -3,21 +3,19 @@ import { hasRole } from '@okr/shared-util-core';
 import { isAdminMember, isNewsletterGroup } from '@okr/subject-group-util';
 
 /**
- * Whether the subscription is active on `today` (StoreDate): not archived, and either no exit date
- * or one still ahead. The server ends a subscription by setting `dateOfExit` to the day it ends.
- * @param subscription the subscription to check
- * @param today StoreDate (yyyyMMdd)
+ * Whether the subscription is active: not archived and without an exit date. The same rule as the server
+ * (`isActiveSubscription` in functions/newsletter/tenant-link.logic.ts), which sets `dateOfExit` to the day
+ * it ends a subscription — any exit date means ended, so the list never shows whom a send would refuse.
  */
-export function isActiveSubscription(subscription: NewsletterSubscriptionModel, today: string): boolean {
+export function isActiveSubscription(subscription: NewsletterSubscriptionModel): boolean {
   if (subscription.isArchived) return false;
-  const exit = subscription.dateOfExit ?? '';
-  return exit.length === 0 || exit > today;
+  return (subscription.dateOfExit ?? '') === '';
 }
 
-/** The active subscriptions of `subscriptions` on `today`, sorted by the subscriber's name. */
-export function activeSubscribers(subscriptions: NewsletterSubscriptionModel[], today: string): NewsletterSubscriptionModel[] {
+/** The active subscriptions, sorted by the subscriber's name. */
+export function activeSubscribers(subscriptions: NewsletterSubscriptionModel[]): NewsletterSubscriptionModel[] {
   return subscriptions
-    .filter((s) => isActiveSubscription(s, today))
+    .filter((s) => isActiveSubscription(s))
     .sort((a, b) => (a.personName ?? '').localeCompare(b.personName ?? ''));
 }
 

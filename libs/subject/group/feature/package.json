@@ -37,6 +37,7 @@
     "@okr/content-learning-util": "*",
     "@okr/cms-page-data-access": "*",
     "@okr/cms-section-util": "*",
-    "@okr/relationship-newsletter-util": "*"
+    "@okr/relationship-newsletter-util": "*",
+    "@okr/relationship-newsletter-data-access": "*"
   }
 }

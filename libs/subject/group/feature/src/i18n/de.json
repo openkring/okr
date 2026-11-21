@@ -271,5 +271,6 @@
     "newsletter": "Newsletter",
     "all": "Alle"
   },
-  "subscribers": "Abonnenten"
+  "subscribers": "Abonnenten",
+  "newsletterDeleteBlocked": "Löschen kannst du diesen Newsletter erst, wenn er keine Abonnenten mehr hat."
 }

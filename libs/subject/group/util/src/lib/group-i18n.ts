@@ -141,6 +141,7 @@ export const GROUP_I18N_KEYS = {
   kind_newsletter:                 PFX + 'kind.newsletter',
   kind_all:                        PFX + 'kind.all',
   subscribers:                     PFX + 'subscribers',
+  newsletter_delete_blocked:       PFX + 'newsletterDeleteBlocked',
 
   admins_title:                    PFX + 'admins.title',
   admins_description:              PFX + 'admins.description',

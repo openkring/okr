@@ -35,6 +35,7 @@
     { "path": "../../../relationship/membership/data-access/tsconfig.lib.json" },
     { "path": "../../../relationship/membership/feature/tsconfig.lib.json" },
     { "path": "../../../relationship/membership/util/tsconfig.lib.json" },
+    { "path": "../../../relationship/newsletter/data-access/tsconfig.lib.json" },
     { "path": "../../../relationship/newsletter/util/tsconfig.lib.json" },
     { "path": "../../../shared/constants/tsconfig.lib.json" },
     { "path": "../../../shared/data-access/tsconfig.lib.json" },

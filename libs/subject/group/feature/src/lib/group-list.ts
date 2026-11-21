@@ -168,7 +168,7 @@ export class GroupList {
    */
   private async addActionSheetButtons(actionSheetOptions: ActionSheetOptions, group: GroupModel): Promise<void> {
     if (isNewsletterGroup(group)) {
-      this.addNewsletterButtons(actionSheetOptions, group);
+      await this.addNewsletterButtons(actionSheetOptions, group);
       return;
     }
     actionSheetOptions.buttons.push(createActionSheetButton('as_show', this.store.i18n.show(), this.imgixBaseUrl, 'eye-on'));
@@ -195,12 +195,17 @@ export class GroupList {
    * A newsletter (spec 1.169): no group page, no content page, no members — its subscribers instead.
    * Only listed for member admins, privileged users and its own admins (`canSeeSubscribers`).
    */
-  private addNewsletterButtons(actionSheetOptions: ActionSheetOptions, group: GroupModel): void {
+  private async addNewsletterButtons(actionSheetOptions: ActionSheetOptions, group: GroupModel): Promise<void> {
     actionSheetOptions.buttons.push(createActionSheetButton('as_subscribers', this.store.i18n.subscribers(), this.imgixBaseUrl, 'persons'));
     actionSheetOptions.buttons.push(createActionSheetButton('as_edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
     if (hasRole('admin', this.store.appStore.currentUser()) || this.isGroupAdmin(group)) {
-      actionSheetOptions.buttons.push(createActionSheetDivider());
-      actionSheetOptions.buttons.push(createActionSheetButton('as_delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
+      // a newsletter with subscribers is not deleted: the server alone writes their subscriptions
+      if (await this.store.canDeleteNewsletter(group)) {
+        actionSheetOptions.buttons.push(createActionSheetDivider());
+        actionSheetOptions.buttons.push(createActionSheetButton('as_delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
+      } else {
+        actionSheetOptions.subHeader = this.store.i18n.newsletter_delete_blocked();
+      }
     }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
   }

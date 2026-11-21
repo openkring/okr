@@ -22,9 +22,8 @@ import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functi
 import { assertCallerIsGroupAdmin } from '../content/group-content.util';
 import { selectUserDocs } from '../srv/push';
 import { activeMemberKeys, MembershipDoc } from './group-mail';
-import { NewsletterSubscriptionCollection } from '@okr/shared-models';
 import { checkNewsletterGroup } from '../newsletter/signup';
-import { isActiveSubscription } from '../newsletter/tenant-link.logic';
+import { activeSubscriberKeys } from '../newsletter/subscribers';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'getMailingRecipients';
@@ -228,11 +227,8 @@ export const getMailingRecipients = onCall(
     } else if (typeof groupKey === 'string' && groupKey) {
       await assertCallerIsGroupAdmin(db, uid, tenantId, groupKey, 'Only an admin of the group may prepare a Versand to its members.');
       if ((await checkNewsletterGroup(db, tenantId, groupKey)).ok) {
-        // the same query and test as sendMailing's subscriber check, so the table offers exactly whom the send admits
-        const subscriptions = await db.collection(NewsletterSubscriptionCollection)
-          .where('tenants', 'array-contains', tenantId).where('groupKey', '==', groupKey).get();
-        members = subscriptions.docs.map((doc) => doc.data()).filter((sub) => isActiveSubscription(sub))
-          .map((sub) => String(sub['personKey'] ?? '')).filter(Boolean);
+        // the same set as sendMailing's subscriber check, so the table offers exactly whom the send admits
+        members = [...await activeSubscriberKeys(db, tenantId, groupKey)];
       } else {
         const memberships = await db.collection('memberships')
           .where('orgKey', '==', groupKey).where('orgModelType', '==', 'group').get();

@@ -5,6 +5,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { DbQuery, NewsletterSubscriptionCollection, NewsletterSubscriptionModel } from '@okr/shared-models';
+import { isActiveSubscription } from '@okr/relationship-newsletter-util';
 
 /**
  * Reads newsletter subscriptions (spec 1.169 §5.8). The client never writes one: subscribe, confirm,
@@ -30,6 +31,21 @@ export class NewsletterSubscriptionService {
   public listMine(tenantId: string, personKey: string): Observable<NewsletterSubscriptionModel[]> {
     return this.firestoreService.searchData<NewsletterSubscriptionModel>(
       NewsletterSubscriptionCollection, this.query(tenantId, 'personKey', personKey), 'none');
+  }
+
+  /**
+   * Whether the newsletter still has an active subscriber, read once from the server. A failed read answers
+   * true: the caller uses it to decide whether the group may be deleted, and doubt keeps the group.
+   */
+  public async hasActiveSubscribers(tenantId: string, groupKey: string): Promise<boolean> {
+    try {
+      const subscriptions = await this.firestoreService.getDataOnceStrict<NewsletterSubscriptionModel>(
+        NewsletterSubscriptionCollection, this.query(tenantId, 'groupKey', groupKey), 'none');
+      return subscriptions.some((s) => isActiveSubscription(s));
+    } catch (err) {
+      console.warn('NewsletterSubscriptionService.hasActiveSubscribers: read failed', err);
+      return true;
+    }
   }
 
   /**

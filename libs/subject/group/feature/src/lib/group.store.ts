@@ -20,6 +20,7 @@ import { MembershipService } from '@okr/relationship-membership-data-access';
 import { createGroupMembership } from '@okr/relationship-membership-util';
 import { asNewsletterGroup, canAccessGroup, findConflictingGroups, getUniqueGroupKey, groupChatRoomParam, groupHygieneFindings, getVisibleGroupKeys, GROUP_I18N_KEYS, groupWebsiteStarterSections, hasOnlyDefaultSection, isNewsletterGroup, withCreatorAsAdmin } from '@okr/subject-group-util';
 import { canSeeSubscribers } from '@okr/relationship-newsletter-util';
+import { NewsletterSubscriptionService } from '@okr/relationship-newsletter-data-access';
 import { createSection } from '@okr/cms-section-util';
 
 import { GroupEditModal } from './group-edit.modal';
@@ -52,6 +53,7 @@ export const GroupStore = signalStore(
     router: inject(Router),
     appStore: inject(AppStore),
     membershipService: inject(MembershipService),
+    newsletterSubscriptionService: inject(NewsletterSubscriptionService),
     avatarService: inject(AvatarService),
     firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),
@@ -360,8 +362,17 @@ export const GroupStore = signalStore(
       if (!group?.okey || group.okey.length === 0) return;
       // a newsletter has no group page: its view is the subscriber list
       if (isNewsletterGroup(group)) return this.showSubscribers(group);
-      store.appNavigationService.pushLink('/group/all/c-test-groups');
+      store.appNavigationService.pushLink('/group/all/c-groups');
       await navigateByUrl(store.router, `/group-view/${group.okey}`, { readOnly });
+    },
+
+    /**
+     * Whether a newsletter group may be deleted: only without active subscribers. Their subscriptions are
+     * written by the server alone, so deleting the group would leave them pointing at nothing.
+     */
+    async canDeleteNewsletter(group: GroupModel): Promise<boolean> {
+      if (!isNewsletterGroup(group)) return true;
+      return !(await store.newsletterSubscriptionService.hasActiveSubscribers(store.tenantId(), group.okey));
     },
 
     /** The subscriber list of a newsletter group (spec 1.169 §5.8). */
@@ -373,6 +384,7 @@ export const GroupStore = signalStore(
 
     async delete(group?: GroupModel, readOnly = true): Promise<void> {
       if (!group || readOnly) return;
+      if (!await this.canDeleteNewsletter(group)) return;
       const result = await store.alertService.confirm(store.i18n.delete_confirm(), true);
       if (result === true) {
         await store.groupService.delete(group, store.currentUser());

@@ -3,8 +3,6 @@ import { AVATAR_INFO_SHAPE, AvatarInfo, GroupModel, NewsletterSubscriptionModel,
 
 import { activeSubscribers, canSeeSubscribers, isActiveSubscription, mayPostNewsletter, newsletterGroups } from './newsletter.util';
 
-const TODAY = '20261121';
-
 function sub(fields: Partial<NewsletterSubscriptionModel> = {}): NewsletterSubscriptionModel {
   return { ...new NewsletterSubscriptionModel('scs'), okey: 's1', personKey: 'p1', personName: 'Anna Muster', groupKey: 'n1', dateOfEntry: '20260101', ...fields };
 }
@@ -18,20 +16,17 @@ const adminAvatar = (key: string): AvatarInfo => ({ ...AVATAR_INFO_SHAPE, key, m
 
 describe('isActiveSubscription', () => {
   it('is active while dateOfExit is empty', () => {
-    expect(isActiveSubscription(sub(), TODAY)).toBe(true);
+    expect(isActiveSubscription(sub())).toBe(true);
   });
-  it('ends on the day of exit', () => {
-    expect(isActiveSubscription(sub({ dateOfExit: TODAY }), TODAY)).toBe(false);
-    expect(isActiveSubscription(sub({ dateOfExit: '20261001' }), TODAY)).toBe(false);
-  });
-  it('is still active before a future exit', () => {
-    expect(isActiveSubscription(sub({ dateOfExit: '20261231' }), TODAY)).toBe(true);
+  it('is ended by any exit date, past or future (like the server)', () => {
+    expect(isActiveSubscription(sub({ dateOfExit: '20261001' }))).toBe(false);
+    expect(isActiveSubscription(sub({ dateOfExit: '20991231' }))).toBe(false);
   });
   it('is never active when archived', () => {
-    expect(isActiveSubscription(sub({ isArchived: true }), TODAY)).toBe(false);
+    expect(isActiveSubscription(sub({ isArchived: true }))).toBe(false);
   });
   it('reads a missing dateOfExit as still subscribed', () => {
-    expect(isActiveSubscription(sub({ dateOfExit: undefined as unknown as string }), TODAY)).toBe(true);
+    expect(isActiveSubscription(sub({ dateOfExit: undefined as unknown as string }))).toBe(true);
   });
 });
 
@@ -42,7 +37,7 @@ describe('activeSubscribers', () => {
       sub({ okey: 'b', personName: 'Anna Alt', dateOfExit: '20260301' }),
       sub({ okey: 'c', personName: 'Beat Berg' }),
     ];
-    expect(activeSubscribers(list, TODAY).map(s => s.okey)).toEqual(['c', 'a']);
+    expect(activeSubscribers(list).map(s => s.okey)).toEqual(['c', 'a']);
   });
 });
 

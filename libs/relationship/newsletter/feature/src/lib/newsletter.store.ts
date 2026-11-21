@@ -9,7 +9,7 @@ import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { NewsletterSubscriptionModel } from '@okr/shared-models';
 import { AlertService, showToast } from '@okr/shared-util-angular';
-import { fill, getTodayStr, nameMatches } from '@okr/shared-util-core';
+import { fill, nameMatches } from '@okr/shared-util-core';
 
 import { openBulkEmailFlow, type VersandRecipient } from '@okr/content-pdf-template-feature';
 import { NewsletterSubscriptionService } from '@okr/relationship-newsletter-data-access';
@@ -72,7 +72,7 @@ export const NewsletterStore = signalStore(
   })),
   withComputed((store) => ({
     /** The active subscriptions, sorted by name. */
-    subscribers: computed(() => activeSubscribers(store.subscriptionsResource.value() ?? [], getTodayStr())),
+    subscribers: computed(() => activeSubscribers(store.subscriptionsResource.value() ?? [])),
     isLoading: computed(() => store.subscriptionsResource.isLoading() || store.appStore.isReferenceDataLoading()),
   })),
   withComputed((store) => ({

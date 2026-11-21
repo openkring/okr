@@ -28,7 +28,7 @@ import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
-import { DeliveryChannel, type EmailLayoutChoice, NewsletterSubscriptionCollection, NoticeAttachment, NoticeCollection, type NoticeModel, type PostOptions } from '@okr/shared-models';
+import { DeliveryChannel, type EmailLayoutChoice, NoticeAttachment, NoticeCollection, type NoticeModel, type PostOptions } from '@okr/shared-models';
 import { DateFormat, getEventLocationName, getTodayStr, isOrgRecipient, recipientParentKey } from '@okr/shared-util-core';
 import { projectID } from 'firebase-functions/params';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
@@ -50,7 +50,7 @@ import { chunk, isElevated } from './mailing-recipients';
 import { chunkPersonal, MAX_PERSONAL_RECIPIENTS, parseCaleventKeys, PersonalBlock, personalEntries, refusedEventMessage, sendableEventRefusal } from './personal-mail.logic';
 import { checkNewsletterGroup } from '../newsletter/signup';
 import { newsletterFunctionUrl, newsletterUnsubscribeUrl } from '../newsletter/newsletter-link';
-import { isActiveSubscription } from '../newsletter/tenant-link.logic';
+import { activeSubscriberKeys } from '../newsletter/subscribers';
 import { asLayoutChoice } from './render-email.logic';
 import { buildMailingLetters, countLetterPages, LetterEvent } from './mailing-letters';
 import { addressParentKeyOf, contactKeysFor, dropHouseholdKeys, householdFieldsOf, householdInNewsletter, householdsDroppedForAnswers, householdsDroppedForNewsletter, householdWithAnswers, type HouseholdRecipient, loadHouseholdRecipients, postKeysFor } from './household-recipient.logic';
@@ -313,15 +313,6 @@ async function removeStoredAttachments(ref: FirebaseFirestore.DocumentReference,
   } catch (error) {
     logger.warn(`sendMailing: could not remove the files of the failed Versand ${ref.id}`, { error: String((error as Error)?.message ?? error) });
   }
-}
-
-/** The personKeys with an active subscription to the newsletter group `groupKey` in the tenant. */
-export async function activeSubscriberKeys(db: Firestore, tenantId: string, groupKey: string): Promise<Set<string>> {
-  const snap = await db.collection(NewsletterSubscriptionCollection)
-    .where('tenants', 'array-contains', tenantId)
-    .where('groupKey', '==', groupKey)
-    .get();
-  return new Set(snap.docs.map((d) => d.data()).filter((sub) => isActiveSubscription(sub)).map((sub) => String(sub['personKey'] ?? '')).filter(Boolean));
 }
 
 /**
