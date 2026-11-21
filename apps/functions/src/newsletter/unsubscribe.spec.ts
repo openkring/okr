@@ -23,7 +23,7 @@ vi.mock('../email/mailing-answer', () => ({ pageFrame: vi.fn(async () => undefin
 
 import { fakeDb, Store } from '../credit/testing/credit-fake-db';
 import { sign } from '../calendar/answer-link';
-import { hasOtherTenantLink, releasePersonIfUnlinked } from './tenant-link';
+import { hasOtherTenantLink, releasePersonIfUnlinked, TENANT_LINK_SOURCES, TenantLinkSource } from './tenant-link';
 import { endSubscription, leaveNewsletter, newsletterUnsubscribe } from './unsubscribe';
 
 const T = 'la21';
@@ -185,15 +185,46 @@ describe('hasOtherTenantLink', () => {
     expect(await linked()).toBe(true);
   });
 
-  it.each([
-    ['users/u1', { personKey: P, tenants: [T] }],
-    ['applications/x', { personKey: P, tenants: [T] }],
-    ['invoices/x', { receiver: { key: P, modelType: 'person' }, tenants: [T] }],
-    ['bookings/x', { counterparty: { key: P, modelType: 'person' }, tenants: [T] }],
-    ['contracts/x', { partyPersonKeys: [P], tenants: [T] }],
-  ])('counts %s', async (path, doc) => {
+  /** A document that names P in the tenant, built from the source itself, so a typo in the list fails here. */
+  function fixture(source: TenantLinkSource): [string, Record<string, unknown>] {
+    const doc: Record<string, unknown> = { tenants: [T], dateOfExit: '', isArchived: false };
+    const put = (path: string, value: unknown): void => {
+      const keys = path.split('.');
+      let o = doc;
+      for (const k of keys.slice(0, -1)) o = (o[k] ??= {}) as Record<string, unknown>;
+      o[keys[keys.length - 1]] = value;
+    };
+    switch (source.kind) {
+      case 'docId': return [`${source.collection}/${P}`, doc];
+      case 'scan':
+        if (source.bound) put(source.bound.field, source.bound.value);
+        put(source.arrays[0], [{ key: P, modelType: 'person' }]);
+        return [`${source.collection}/fx`, doc];
+      case 'field':
+        put(source.field, source.op === 'array-contains' ? [P] : P);
+        if (source.extra) put(source.extra.field, source.extra.value);
+        return [`${source.collection}/fx`, doc];
+    }
+  }
+
+  it.each(TENANT_LINK_SOURCES.map((source, i) => [i, source.collection, source] as const))(
+    'source %i (%s) counts as a link, and not in another tenant',
+    async (_i, _c, source) => {
+      store['newsletterSubscriptions/s1']['dateOfExit'] = TODAY;
+      const [path, doc] = fixture(source);
+      store[path] = doc;
+      expect(await linked()).toBe(true);
+      store[path] = { ...doc, tenants: ['t2'] };
+      expect(await linked()).toBe(false);
+    },
+  );
+
+  it('counts every array of a scan source (course trainers and responsible persons, transfer subjects and objects)', async () => {
     store['newsletterSubscriptions/s1']['dateOfExit'] = TODAY;
-    store[path] = doc;
+    store['courses/c1'] = { tenants: [T], trainers: [], responsiblePersons: [{ key: P, modelType: 'person' }] };
+    expect(await linked()).toBe(true);
+    store['courses/c1'] = { tenants: [T], trainers: [{ key: P, modelType: 'org' }] };
+    store['transfers/x'] = { tenants: [T], subjects: [], objects: [{ key: P }] };
     expect(await linked()).toBe(true);
   });
 
@@ -213,6 +244,9 @@ describe('leaveNewsletter', () => {
     store['users/u1'] = { personKey: P, tenants: [T], roles: {} };
     await expect(leave('u1', { tenantId: T, subscriptionKey: 's1' })).resolves.toEqual({ ok: true });
     expect(store['newsletterSubscriptions/s1']['dateOfExit']).toMatch(/^\d{8}$/);
+    // the subscriber's own login is a link to the tenant: the person and the addresses are kept
+    expect(store['persons/p1']['isArchived']).toBe(false);
+    expect(store['addresses/a1']['isArchived']).toBe(false);
   });
 
   it('lets a memberAdmin of the tenant and an admin of the newsletter end it', async () => {

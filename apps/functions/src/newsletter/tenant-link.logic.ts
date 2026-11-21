@@ -48,5 +48,20 @@ export function isActiveMembership(doc: { dateOfExit?: unknown; isArchived?: unk
 
 /** A newsletter subscription is active while it is not archived and has no exit date. */
 export function isActiveSubscription(doc: { dateOfExit?: unknown; isArchived?: unknown }): boolean {
-  return doc.isArchived !== true && (doc.dateOfExit ?? '') === '';
+  if (doc.isArchived === true) return false;
+  const exit = typeof doc.dateOfExit === 'string' ? doc.dateOfExit : '';
+  return exit === '';
+}
+
+/**
+ * Whether the (possibly dotted) AvatarInfo array at `path` names the person. A missing modelType is read as
+ * 'person', like the subject-data map's avatarArrayHolds: dropping such a link would archive too early.
+ */
+export function avatarListHolds(doc: Record<string, unknown>, path: string, personKey: string): boolean {
+  if (!personKey) return false;
+  const list = path.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown> | undefined)?.[k], doc);
+  return Array.isArray(list) && list.some((a) => {
+    const avatar = a as { key?: unknown; modelType?: unknown } | null;
+    return avatar?.key === personKey && (avatar.modelType ?? 'person') === 'person';
+  });
 }

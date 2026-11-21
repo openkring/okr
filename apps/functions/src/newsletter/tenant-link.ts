@@ -12,87 +12,146 @@ import type { DocumentData, Firestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 
 import {
-  AddressCollection, ApplicationCollection, BillCollection, BookingCollection, CompetitionLevelCollection, ContractCollection, InvoiceCollection,
+  AddressCollection, ApplicationCollection, AssetCollection, BillCollection, BookingCollection, CompetitionLevelCollection,
+  ContractCollection, ContractDocumentCollection, CourseCollection, GroupCollection, InvoiceCollection,
   InvoicePositionCollection, LegacyMemberFeeCollection, MemberFeeCollection, MembershipCollection,
-  NewsletterSubscriptionCollection, OwnershipCollection, PersonalRelCollection, PersonCollection, ResponsibilityCollection,
-  TrainerAgreementCollection, TrainerInvoiceCollection, UserCollection, WorkEntryCollection, WorkrelCollection,
+  NewsletterSubscriptionCollection, OwnershipCollection, PersonalRelCollection, PersonCollection, ReservationCollection,
+  ResponsibilityCollection, SectionCollection, TrainerAgreementCollection, TrainerInvoiceCollection,
+  TrainerProfileCollection, TransferCollection, UserCollection, WorkEntryCollection, WorkrelCollection,
 } from '@okr/shared-models';
 
 import { toStoreDate } from '../srv/zurich-time';
-import { addressReleasePatch, isActiveMembership, isActiveSubscription, releaseAction, ReleaseAction } from './tenant-link.logic';
-
-export interface TenantLinkSource {
-  collection: string;
-  /** The field that names the person by raw personKey (dotted for an embedded AvatarInfo). */
-  field: string;
-  /** '==' by default; 'array-contains' for a list of person keys. */
-  op?: '==' | 'array-contains';
-  /** A second equality the query adds — the modelType of a polymorphic key, so an org with the same key never counts. */
-  extra?: { field: string; value: string };
-  /** Whether a found document of the tenant still links the person; every document counts when absent. */
-  isLink?: (doc: DocumentData, today: string) => boolean;
-}
-
-const asPerson = (field: string): { field: string; value: string } => ({ field, value: 'person' });
+import { addressReleasePatch, avatarListHolds, isActiveMembership, isActiveSubscription, releaseAction, ReleaseAction } from './tenant-link.logic';
 
 /**
- * Every record that ties a person to a tenant. A document counts only when its `tenants` contains the
- * tenant. Considered and left out on purpose (see the task-7 report):
- * - `addresses`, `address-directory`, `avatars`: the person's own contact data, released together with the person.
+ * One kind of record that ties a person to a tenant. A found document counts only when its `tenants`
+ * contains the tenant (and `isLink`, when given, agrees).
+ * - `field`: queried by the field that names the person by raw personKey (dotted for an embedded AvatarInfo),
+ *   '==' or 'array-contains'; `extra` adds the modelType equality of a polymorphic key, so an org with the
+ *   same key never counts.
+ * - `scan`: the person sits inside embedded AvatarInfo arrays (`arrays`, not queryable), so the tenant's
+ *   documents are read — or, with `bound`, the documents of that equality — and matched in memory.
+ * - `docId`: the document id is the personKey.
+ */
+export type TenantLinkSource =
+  | {
+    kind: 'field'; collection: string; field: string; op?: '==' | 'array-contains';
+    extra?: { field: string; value: string };
+    isLink?: (doc: DocumentData, today: string) => boolean;
+  }
+  | { kind: 'scan'; collection: string; arrays: string[]; bound?: { field: string; value: string } }
+  | { kind: 'docId'; collection: string };
+
+type FieldSource = Extract<TenantLinkSource, { kind: 'field' }>;
+const byField = (collection: string, field: string, more: Omit<FieldSource, 'kind' | 'collection' | 'field'> = {}): TenantLinkSource =>
+  ({ kind: 'field', collection, field, ...more });
+const byPerson = (collection: string, avatar: string): TenantLinkSource =>
+  byField(collection, `${avatar}.key`, { extra: { field: `${avatar}.modelType`, value: 'person' } });
+
+/**
+ * Every record that ties a person to a tenant, checked against every row of the subject-data map
+ * (../privacy/subject-data-map.ts, 2026-11-21). Rows left out on purpose, with the reason:
+ * - `persons`, `addresses`, `address-directory`, `avatars`, `contactsDavBooks/cards`: the person's own data
+ *   (or a copy of it), released together with the person.
  * - `sendings`, `notices`: every newsletter issue writes them, so they would keep every subscriber forever.
- * - `tasks`, `comments`, `invitations`, `calevents`, `trips`, `docs`, `meetings`, `approvals`, `projects`:
- *   activity around a person, not a relationship with the tenant; the subscriber tasks of this feature are tasks too.
- * - `newsletterSignups`: consent not given yet, no person key.
- * - `expenses`, `passkeys`: reached by uid; a person with a login is already linked by `users`.
+ * - `tasks`, `comments`, `invitations`, `calevents`, `trips`, `trips/tracker`, `stats_members`, `meetings`,
+ *   `approvals`, `projects`: activity around a person, not a relationship with the tenant (the subscriber
+ *   tasks of this feature are tasks too).
+ * - `docs`, `whiteboards`, `instruments`, `folders`, `websites`, `websites/publishes`, `file-transfers`,
+ *   `file-transfer-events`, `ratings`: content a member wrote or sent in the app — the author has a login,
+ *   which `users` already counts.
+ * - uid-keyed rows (`users/fcmTokens`, `seen`, `badge`, `passkeys`, `expenses`, `diaries`, `diaryAlbums`,
+ *   `diarySources`, `diaryImports`, `hearingQuizResults`, `sessions`, `aliasEvents`, `docGenerations`,
+ *   `payment-orders`, `esignList`, `esignAudit`, `featureEvents`, `news-subscriptions`,
+ *   `news-channel-requests`, `carddavTokens`): only a person with a login has them, and `users` counts that.
+ * - `chatReminders`, `aliases`: personal notes and short links (diary targets) — personal use, not a tie.
+ * - `activities`: operational log.
+ * - `newsletterSignups`, `prospects`, `locations`: no person key (e-mail or address register only).
+ * - `courses/finance`: the eligible trainers are the course's trainers (counted on `courses`), and what was
+ *   paid is a `bookings` counterparty (counted).
+ * - `tenant-allocation-log`: evidence of a past disclosure, kept as a log, not a relationship.
+ * - `feature-rollout`, `tickets`: global platform tables, no tenant.
  * - `booking-lines`: carry no person; their booking (`bookings.counterparty`) does.
  */
 export const TENANT_LINK_SOURCES: readonly TenantLinkSource[] = [
-  // relationships
-  { collection: MembershipCollection, field: 'memberKey', extra: asPerson('memberModelType'), isLink: isActiveMembership },
-  { collection: NewsletterSubscriptionCollection, field: 'personKey', isLink: (doc) => isActiveSubscription(doc) },
-  { collection: UserCollection, field: 'personKey' },
-  { collection: ApplicationCollection, field: 'personKey' },
-  { collection: OwnershipCollection, field: 'ownerKey', extra: asPerson('ownerModelType') },
-  { collection: WorkrelCollection, field: 'subjectKey', extra: asPerson('subjectModelType') },
-  { collection: PersonalRelCollection, field: 'subjectKey' },
-  { collection: PersonalRelCollection, field: 'objectKey' },
-  { collection: ResponsibilityCollection, field: 'responsibleAvatar.key', extra: asPerson('responsibleAvatar.modelType') },
-  { collection: ResponsibilityCollection, field: 'delegateAvatar.key', extra: asPerson('delegateAvatar.modelType') },
-  { collection: CompetitionLevelCollection, field: 'personKey' },
+  // relationships and roles
+  byField(MembershipCollection, 'memberKey', { extra: { field: 'memberModelType', value: 'person' }, isLink: isActiveMembership }),
+  byField(NewsletterSubscriptionCollection, 'personKey', { isLink: (doc) => isActiveSubscription(doc) }),
+  byField(UserCollection, 'personKey'),
+  byField(ApplicationCollection, 'personKey'),
+  byField(OwnershipCollection, 'ownerKey', { extra: { field: 'ownerModelType', value: 'person' } }),
+  byField(WorkrelCollection, 'subjectKey', { extra: { field: 'subjectModelType', value: 'person' } }),
+  byField(PersonalRelCollection, 'subjectKey'),
+  byField(PersonalRelCollection, 'objectKey'),
+  byPerson(ResponsibilityCollection, 'responsibleAvatar'),
+  byPerson(ResponsibilityCollection, 'delegateAvatar'),
+  { kind: 'scan', collection: GroupCollection, arrays: ['admins'] },
+  // the AvatarInfo arrays, not the `trainerKeys` mirror: it lags the trigger and is empty on a legacy course
+  { kind: 'scan', collection: CourseCollection, arrays: ['trainers', 'responsiblePersons'] },
+  { kind: 'scan', collection: SectionCollection, arrays: ['properties.persons'], bound: { field: 'type', value: 'people' } },
+  byField(CompetitionLevelCollection, 'personKey'),
+  { kind: 'docId', collection: TrainerProfileCollection },
+  // resources: every reservation counts, past ones too (a reservation history is the club's record of use)
+  byPerson(ReservationCollection, 'reserver'),
+  { kind: 'scan', collection: TransferCollection, arrays: ['subjects', 'objects'] },
   // invoices and accounting records (kept 10 years)
-  { collection: InvoiceCollection, field: 'receiver.key', extra: asPerson('receiver.modelType') },
-  { collection: InvoicePositionCollection, field: 'personKey' },
-  { collection: BookingCollection, field: 'counterparty.key', extra: asPerson('counterparty.modelType') },
-  { collection: MemberFeeCollection, field: 'member.key', extra: asPerson('member.modelType') },
-  { collection: LegacyMemberFeeCollection, field: 'member.key', extra: asPerson('member.modelType') },
-  { collection: BillCollection, field: 'vendor.key', extra: asPerson('vendor.modelType') },
-  { collection: ContractCollection, field: 'partyPersonKeys', op: 'array-contains' },
-  { collection: ContractCollection, field: 'responsible.key', extra: asPerson('responsible.modelType') },
-  { collection: TrainerAgreementCollection, field: 'personKey' },
-  { collection: WorkEntryCollection, field: 'personKey' },
-  { collection: TrainerInvoiceCollection, field: 'personKey' },
+  byPerson(InvoiceCollection, 'receiver'),
+  byField(InvoicePositionCollection, 'personKey'),
+  byPerson(BookingCollection, 'counterparty'),
+  byPerson(MemberFeeCollection, 'member'),
+  byPerson(LegacyMemberFeeCollection, 'member'),
+  byPerson(BillCollection, 'vendor'),
+  byField(ContractCollection, 'partyPersonKeys', { op: 'array-contains' }),
+  byPerson(ContractCollection, 'responsible'),
+  byField(ContractDocumentCollection, 'partyPersonKeys', { op: 'array-contains' }),
+  byField(AssetCollection, 'responsiblePersonKey'),
+  byField(TrainerAgreementCollection, 'personKey'),
+  byField(WorkEntryCollection, 'personKey'),
+  byField(TrainerInvoiceCollection, 'personKey'),
+  byPerson(TrainerInvoiceCollection, 'rejectedBy'),
 ];
 
 function inTenant(doc: DocumentData, tenantId: string): boolean {
   return Array.isArray(doc['tenants']) && (doc['tenants'] as string[]).includes(tenantId);
 }
 
+/** Whether one source holds a record of the tenant that names the person. */
+async function sourceLinks(db: Firestore, source: TenantLinkSource, tenantId: string, personKey: string, today: string): Promise<boolean> {
+  switch (source.kind) {
+    case 'docId': {
+      const snap = await db.collection(source.collection).doc(personKey).get();
+      return snap.exists && inTenant(snap.data() ?? {}, tenantId);
+    }
+    case 'scan': {
+      const col = db.collection(source.collection);
+      const snap = await (source.bound
+        ? col.where(source.bound.field, '==', source.bound.value)
+        : col.where('tenants', 'array-contains', tenantId)).get();
+      return snap.docs.some((d) => {
+        const doc = d.data();
+        return inTenant(doc, tenantId) && source.arrays.some((path) => avatarListHolds(doc, path, personKey));
+      });
+    }
+    case 'field': {
+      let query = db.collection(source.collection).where(source.field, source.op ?? '==', personKey);
+      if (source.extra) query = query.where(source.extra.field, '==', source.extra.value);
+      const snap = await query.get();
+      return snap.docs.some((d) => {
+        const doc = d.data();
+        return inTenant(doc, tenantId) && (source.isLink ? source.isLink(doc, today) : true);
+      });
+    }
+  }
+}
+
 /**
- * Whether the person still has any link to the tenant (TENANT_LINK_SOURCES). Queries by the person field
- * only and filters the tenant in memory, like the subject-data map's `tenantsArray` scope — no composite
- * index needed. `today` (StoreDate, default: today in Zurich) decides whether a membership has ended.
+ * Whether the person still has any link to the tenant (TENANT_LINK_SOURCES). A `field` source queries by the
+ * person field and filters the tenant in memory, like the subject-data map's `tenantsArray` scope — no
+ * composite index needed. `today` (StoreDate, default: today in Zurich) decides whether a membership has ended.
  */
 export async function hasOtherTenantLink(db: Firestore, tenantId: string, personKey: string, today = toStoreDate(new Date())): Promise<boolean> {
   if (!tenantId || !personKey) throw new Error('hasOtherTenantLink: tenantId and personKey are required');
-  const found = await Promise.all(TENANT_LINK_SOURCES.map(async (source) => {
-    let query = db.collection(source.collection).where(source.field, source.op ?? '==', personKey);
-    if (source.extra) query = query.where(source.extra.field, '==', source.extra.value);
-    const snap = await query.get();
-    return snap.docs.some((d) => {
-      const doc = d.data();
-      return inTenant(doc, tenantId) && (source.isLink ? source.isLink(doc, today) : true);
-    });
-  }));
+  const found = await Promise.all(TENANT_LINK_SOURCES.map((source) => sourceLinks(db, source, tenantId, personKey, today)));
   return found.some((hit) => hit);
 }
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { addressReleasePatch, isActiveMembership, isActiveSubscription, releaseAction } from './tenant-link.logic';
+import { addressReleasePatch, avatarListHolds, isActiveMembership, isActiveSubscription, releaseAction } from './tenant-link.logic';
 
 describe('releaseAction', () => {
   it('archives a person of this tenant only', () => {
@@ -63,5 +63,21 @@ describe('isActiveSubscription', () => {
     expect(isActiveSubscription({ dateOfExit: '' })).toBe(true);
     expect(isActiveSubscription({ dateOfExit: '20261121' })).toBe(false);
     expect(isActiveSubscription({ dateOfExit: '', isArchived: true })).toBe(false);
+    expect(isActiveSubscription({})).toBe(true);
+    expect(isActiveSubscription({ dateOfExit: null })).toBe(true);
+  });
+});
+
+describe('avatarListHolds', () => {
+  it('finds the person in a (dotted) AvatarInfo array, a missing modelType read as person', () => {
+    expect(avatarListHolds({ admins: [{ key: 'p1', modelType: 'person' }] }, 'admins', 'p1')).toBe(true);
+    expect(avatarListHolds({ properties: { persons: [{ key: 'p1' }] } }, 'properties.persons', 'p1')).toBe(true);
+  });
+
+  it('ignores an org with the same key, other persons, a missing array and an empty key', () => {
+    expect(avatarListHolds({ admins: [{ key: 'p1', modelType: 'org' }] }, 'admins', 'p1')).toBe(false);
+    expect(avatarListHolds({ admins: [{ key: 'p2' }, null] }, 'admins', 'p1')).toBe(false);
+    expect(avatarListHolds({}, 'properties.persons', 'p1')).toBe(false);
+    expect(avatarListHolds({ admins: [{ key: '' }] }, 'admins', '')).toBe(false);
   });
 });
