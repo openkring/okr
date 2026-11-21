@@ -8,7 +8,7 @@ vi.mock('firebase-admin/firestore', () => ({ getFirestore: vi.fn() }));
 vi.mock('@okr/shared-util-functions', () => ({ checkAppCheckToken: vi.fn(), checkAuthentication: vi.fn() }));
 
 import type { Firestore } from 'firebase-admin/firestore';
-import { callerInTenant, isHouseholdAdmin, isMemberOfTenant, isOnlyTenant, readIncoming, runSaveHousehold } from './save-household';
+import { addedMemberKeys, callerInTenant, isHouseholdAdmin, isMemberOfTenant, isOnlyTenant, readIncoming, runSaveHousehold } from './save-household';
 
 describe('callerInTenant', () => {
   it('accepts a tenant the caller belongs to', () => {
@@ -201,11 +201,47 @@ describe('runSaveHousehold', () => {
     expect(Object.keys(fake.data['households'])).toEqual(['h1', 'hForeign']);
   });
 
+  it('lets a member leave although another member\'s person is archived', async () => {
+    const data = seed();
+    data['households']['h1']['memberKeys'] = ['a', 'b', 'z'];
+    const fake = fakeDb(data);
+    const household = { ...data['households']['h1'], okey: 'h1', memberKeys: ['b', 'z'], payerKey: 'b', contactKey: 'b' };
+    expect(await runSaveHousehold(fake.db, 'member', { tenantId: 'scs', household: household as never })).toEqual({ okey: 'h1' });
+    expect(fake.data['households']['h1']['memberKeys']).toEqual(['b', 'z']);
+  });
+
+  it('lets a member rename a household that holds an archived person', async () => {
+    const data = seed();
+    data['households']['h1']['memberKeys'] = ['a', 'b', 'z'];
+    const fake = fakeDb(data);
+    const household = { ...data['households']['h1'], okey: 'h1', name: 'Familie Muster-Neu' };
+    expect(await runSaveHousehold(fake.db, 'member', { tenantId: 'scs', household: household as never })).toEqual({ okey: 'h1' });
+  });
+
+  it('still refuses an admin adding a person of another tenant to an existing household', async () => {
+    const fake = fakeDb(seed());
+    const household = { ...seed()['households']['h1'], okey: 'h1', memberKeys: ['a', 'b', 'x'] };
+    expect(await refusal(runSaveHousehold(fake.db, 'admin', { tenantId: 'scs', household: household as never })))
+      .toEqual({ code: 'invalid-argument', message: 'member-not-in-tenant' });
+  });
+
   it('accepts a person shared with another tenant when it lists this tenant', async () => {
     const data = seed();
     data['persons']['c'] = person(['gvs', 'scs']);
     const fake = fakeDb(data);
     await expect(runSaveHousehold(fake.db, 'admin', { tenantId: 'scs', household: newHousehold() as never })).resolves.toHaveProperty('okey');
+  });
+});
+
+describe('addedMemberKeys', () => {
+  it('returns every key for a new household', () => {
+    expect(addedMemberKeys(undefined, { memberKeys: ['a', 'b'] })).toEqual(['a', 'b']);
+  });
+  it('returns only the keys a write adds, deduplicated', () => {
+    expect(addedMemberKeys({ memberKeys: ['a', 'b'] }, { memberKeys: ['b', 'c', 'c'] })).toEqual(['c']);
+  });
+  it('returns nothing when members only leave', () => {
+    expect(addedMemberKeys({ memberKeys: ['a', 'b', 'z'] }, { memberKeys: ['b', 'z'] })).toEqual([]);
   });
 });
 

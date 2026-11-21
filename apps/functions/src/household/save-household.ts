@@ -45,6 +45,12 @@ export function isOnlyTenant(tenants: unknown, tenantId: string): boolean {
   return Array.isArray(tenants) && tenants.length === 1 && tenants[0] === tenantId;
 }
 
+/** Pure: the member keys `after` holds that `before` (the stored doc, if any) did not — the ones a write adds. */
+export function addedMemberKeys(before: Pick<HouseholdModel, 'memberKeys'> | undefined, after: Pick<HouseholdModel, 'memberKeys'>): string[] {
+  const stored = new Set(before?.memberKeys ?? []);
+  return [...new Set(after.memberKeys)].filter((k) => !stored.has(k));
+}
+
 /** Pure: a member person may be linked: it exists, is live and lists the tenant. */
 export function isMemberOfTenant(person: Record<string, unknown> | undefined, tenantId: string): boolean {
   return !!person && person['isArchived'] !== true && Array.isArray(person['tenants']) && person['tenants'].includes(tenantId);
@@ -136,16 +142,15 @@ export async function runSaveHousehold(db: Firestore, uid: string, req: SaveHous
     const shape = archive ? undefined : householdShapeError({ ...doc, okey: key }, [...others.values()]);
     if (shape) throw new HttpsError('invalid-argument', shape);
 
-    // every member must be a live person of this tenant (an archived household is not checked: it has no effect,
-    // and an admin must be able to dissolve a household whose member left)
-    if (!archive) {
-      if (doc.memberKeys.some((k) => k.includes('/'))) throw new HttpsError('invalid-argument', 'member-not-in-tenant');
-      const persons = db.collection(PersonCollection);
-      for (let i = 0; i < doc.memberKeys.length; i += GET_ALL_CHUNK) {
-        const snaps = await tx.getAll(...doc.memberKeys.slice(i, i + GET_ALL_CHUNK).map((k) => persons.doc(k)));
-        if (snaps.some((p) => !isMemberOfTenant(p.exists ? p.data() : undefined, tenantId))) {
-          throw new HttpsError('invalid-argument', 'member-not-in-tenant');
-        }
+    // every member this write ADDS must be a live person of this tenant. Members already stored were checked when
+    // they were added; re-checking them would trap the others (no leave, no rename) once one person is archived.
+    const added = addedMemberKeys(before, doc);
+    if (added.some((k) => k.includes('/'))) throw new HttpsError('invalid-argument', 'member-not-in-tenant');
+    const persons = db.collection(PersonCollection);
+    for (let i = 0; i < added.length; i += GET_ALL_CHUNK) {
+      const snaps = await tx.getAll(...added.slice(i, i + GET_ALL_CHUNK).map((k) => persons.doc(k)));
+      if (snaps.some((p) => !isMemberOfTenant(p.exists ? p.data() : undefined, tenantId))) {
+        throw new HttpsError('invalid-argument', 'member-not-in-tenant');
       }
     }
 
