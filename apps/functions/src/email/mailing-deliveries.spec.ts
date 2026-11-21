@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   deliveriesByAddress, deliveryOf, eventLogOf, eventLogsByAddress, joinDeliveries, withEventLogs, mailingCategory, redactReason, type EmailEventRow, type MailDelivery,
 } from './mailing-deliveries.logic';
-import { mayReadMailingDeliveries } from './mailing-deliveries';
+import { householdsOf, mayReadMailingDeliveries } from './mailing-deliveries';
 
 const ev = (event: string, timestamp: number, extra: Partial<EmailEventRow> = {}): EmailEventRow => ({ event, email: 'anna@x.ch', timestamp, ...extra });
 
@@ -106,5 +106,12 @@ describe('send log', () => {
     const logs = eventLogsByAddress([{ event: 'open', email: 'Anna@x.ch', timestamp: 5 }]);
     const out = withEventLogs([{ personKey: 'a' }, { personKey: 'b' }], new Map([['a', 'anna@x.ch'], ['b', 'bob@x.ch']]), logs);
     expect(out).toEqual([{ personKey: 'a', log: [{ event: 'open', at: new Date(5000).toISOString() }] }, { personKey: 'b' }]);
+  });
+});
+
+describe('householdsOf (spec 1.168)', () => {
+  it('maps each household key to the contact the send reached and skips empty ones', () => {
+    expect([...householdsOf({ householdContacts: { 'household.h1': 'p1', 'household.h2': '' } })]).toEqual([['household.h1', { contactKey: 'p1', name: '' }]]);
+    expect(householdsOf({}).size).toBe(0);
   });
 });

@@ -23,6 +23,12 @@ describe('mayAnswer', () => {
     expect(mayAnswer({ ...post, letterQrCodes: true }, 'p3', '20261101')).toBe(true);
     expect(mayAnswer({ ...post, letterQrCodes: true }, 'p2', '20261101')).toBe(false);
   });
+  it('lets the contact of a household answer through the household key (spec 1.168)', () => {
+    const h = { ...doc, deliveries: [{ personKey: 'household.h1', channels: ['email'] }], householdContacts: { 'household.h1': 'p7' } };
+    expect(mayAnswer(h, 'p7', '20261101')).toBe(true);
+    expect(mayAnswer(h, 'household.h1', '20261101')).toBe(false);
+    expect(mayAnswer({ ...h, householdContacts: undefined }, 'p7', '20261101')).toBe(false);
+  });
 });
 
 describe('lastEventDate', () => {

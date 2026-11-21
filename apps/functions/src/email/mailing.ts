@@ -12,6 +12,10 @@
 //   chat  → one `notices` doc for the recipients with an account in the tenant, and a push that opens it.
 //   post  → one PDF with a letter per recipient, for the sender to download (mailing-letters.ts, P3).
 //
+// A `household.<okey>` delivery (spec 1.168 §6.3) is resolved here, never taken from the client: E-Mail and
+// In-App reach the household's contact as a person, Post sends one letter named after the household to the
+// contact's address. A group admin's household keys are dropped (household-recipient.logic.ts).
+//
 // Who may send: memberAdmin / privileged / admin of the tenant, or an admin of `groupKey`, who then reaches
 // only the group's current members and the tenant's own addresses (the boundary of sendGroupEmail).
 
@@ -42,6 +46,7 @@ import { chunk, isElevated } from './mailing-recipients';
 import { MAX_PERSONAL_RECIPIENTS, parseCaleventKeys, personalEntries, refusedEventMessage, sendableEventRefusal } from './personal-mail.logic';
 import { asLayoutChoice } from './render-email.logic';
 import { buildMailingLetters, countLetterPages, LetterEvent } from './mailing-letters';
+import { addressParentKeyOf, contactKeysFor, dropHouseholdKeys, type HouseholdRecipient, loadHouseholdRecipients, postKeysFor } from './household-recipient.logic';
 import { mailingCategory } from './mailing-deliveries.logic';
 import { noticeSenderOf } from './notice-sender.logic';
 import { lettersResult, makePostFanOut, postFanOutDeps } from './mailing-sendings';
@@ -66,6 +71,7 @@ export function isTenantDocumentPath(path: string, tenantId: string): boolean {
 const SENDABLE: string[] = [DeliveryChannel.Email, DeliveryChannel.Chat, DeliveryChannel.Post];
 
 export interface MailingDelivery {
+  /** a bare person okey, `org.<okey>` or `household.<okey>` (resolved by onMailing, spec 1.168) */
   personKey: string;
   channels: string[];
 }
@@ -129,6 +135,11 @@ export interface MailingDoc {
   letterQrCodes?: boolean;
   /** An accepted Pingen order (credit deducted); absent = the Post part is the download. */
   post?: MailingPost;
+  /**
+   * Written by `onMailing`: each `household.<okey>` delivery and the contact it went to (a personKey, no address).
+   * The contact answers the events through the household's link (mayAnswer).
+   */
+  householdContacts?: Record<string, string>;
 }
 
 /**
@@ -176,11 +187,18 @@ function stringList(value: unknown, field: string): string[] {
   return value as string[];
 }
 
-/** The favorite email per recipient (its `person.<key>` / `org.<key>` directory doc), keyed by the recipient key. */
-export async function directoryEmailsByKey(db: Firestore, tenantId: string, personKeys: string[]): Promise<Map<string, string>> {
+/**
+ * The favorite email per recipient (its `person.<key>` / `org.<key>` directory doc), keyed by the recipient key.
+ * A `household.<okey>` key reads its contact's doc when `households` resolves it, and is left out otherwise.
+ */
+export async function directoryEmailsByKey(
+  db: Firestore, tenantId: string, keys: string[], households: Map<string, HouseholdRecipient> = new Map(),
+): Promise<Map<string, string>> {
   const out = new Map<string, string>();
+  const parentOf = (key: string): string | undefined => addressParentKeyOf(key, households);
+  const personKeys = keys.filter((key) => parentOf(key) !== undefined);
   if (personKeys.length === 0) return out;
-  const snaps = await db.getAll(...personKeys.map((key) => db.collection('address-directory').doc(`${tenantId}_${recipientParentKey(key)}`)));
+  const snaps = await db.getAll(...personKeys.map((key) => db.collection('address-directory').doc(`${tenantId}_${parentOf(key)}`)));
   snaps.forEach((snap, i) => {
     const email = String(snap.data()?.['favEmail'] ?? '');
     if (email) out.set(personKeys[i], email);
@@ -302,7 +320,7 @@ export const sendMailing = onCall(
     if (typeof data.body !== 'string') throw new HttpsError('invalid-argument', 'body is required.');
     const to = stringList(data.to, 'to');
     const cc = stringList(data.cc, 'cc');
-    const deliveries = parseDeliveries(data.deliveries);
+    let deliveries = parseDeliveries(data.deliveries);
     const postRequest = parsePostRequest(data.post);
     const caleventKeys = parseCaleventKeys(data.caleventKeys);
     if (deliveries.length === 0) throw new HttpsError('invalid-argument', 'Nobody receives this Versand.');
@@ -330,6 +348,9 @@ export const sendMailing = onCall(
     const elevated = isElevated(caller['roles']) && ((caller['tenants'] ?? []) as string[]).includes(tenantId);
     let from = typeof data.from === 'string' ? data.from : '';
     if (!elevated) {
+      // a group admin addresses no household (householdsForCaller gives them none): drop, never send
+      deliveries = dropHouseholdKeys(deliveries, `sendMailing, tenant ${tenantId}, group ${String(groupKey ?? '')}`);
+      if (deliveries.length === 0) throw new HttpsError('invalid-argument', 'Nobody receives this Versand.');
       if (typeof groupKey !== 'string' || !groupKey) {
         throw new HttpsError('permission-denied', 'This operation requires the memberAdmin or privileged role.');
       }
@@ -467,7 +488,11 @@ export const onMailing = onDocumentCreated(
     const db = getFirestore();
     const result: Partial<MailingDoc> = { emails: 0, notices: 0, pushes: 0 };
     try {
-      const emailKeys = keysFor(mailing.deliveries, DeliveryChannel.Email);
+      // every household key is resolved here (live, this tenant, contact a member); the others are dropped and logged
+      const households = await loadHouseholdRecipients(db, tenantId, mailing.deliveries.map((d) => d.personKey), `mailing ${snap.id}`);
+      if (households.size > 0) result.householdContacts = Object.fromEntries([...households].map(([key, h]) => [key, h.contactKey]));
+      // E-Mail and In-App reach a household's contact as a person, each person once
+      const emailKeys = contactKeysFor(mailing.deliveries, DeliveryChannel.Email, households);
       if (emailKeys.length > 0) {
         // read only when a job is written: the tenant's sender config is not needed for an empty list
         const base = async (): Promise<MailJobDoc> => ({
@@ -508,7 +533,7 @@ export const onMailing = onDocumentCreated(
       }
 
       // an org has no account: In-App is for persons only
-      const chatKeys = await keysWithAccount(db, tenantId, keysFor(mailing.deliveries, DeliveryChannel.Chat).filter((key) => !isOrgRecipient(key)));
+      const chatKeys = await keysWithAccount(db, tenantId, contactKeysFor(mailing.deliveries, DeliveryChannel.Chat, households).filter((key) => !isOrgRecipient(key)));
       // «Anzeige im Dashboard»: the E-Mail recipients with an account get the notice too, but no push (the mail reached them)
       const dashboardKeys = mailing.dashboard
         ? (await keysWithAccount(db, tenantId, emailKeys.filter((key) => !isOrgRecipient(key)))).filter((key) => !chatKeys.includes(key))
@@ -548,7 +573,8 @@ export const onMailing = onDocumentCreated(
         }
       }
       // Post last: the slowest part, and its failure must not undo the mails and notices already out
-      const postKeys = keysFor(mailing.deliveries, DeliveryChannel.Post);
+      // a household keeps its key: one letter named after it, to the contact's address
+      const postKeys = postKeysFor(mailing.deliveries, households);
       if (postKeys.length > 0) {
         // a Pingen send (spec 1.150): the charged Swiss letters become `sendings` records, the download holds the abroad ones
         const fanOut = mailing.post?.via === 'pingen'
@@ -556,7 +582,7 @@ export const onMailing = onDocumentCreated(
           : undefined;
         try {
           const built = await buildMailingLetters({
-            tenantId, mailingKey: snap.id, personKeys: postKeys,
+            tenantId, mailingKey: snap.id, personKeys: postKeys, households,
             subject: mailing.subject, body: await sanitizeEmailBody(mailing.body), attachments: mailing.attachments,
             ...(mailing.letterQrCodes && mailing.caleventKeys?.length ? await letterAnswers(db, snap.id, mailing.caleventKeys) : {}),
             ...(fanOut ? { onLetter: fanOut.onLetter, only: fanOut.only } : {}),

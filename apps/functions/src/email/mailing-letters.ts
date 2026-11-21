@@ -22,7 +22,7 @@ import QRCode from 'qrcode';
 import { AddressModel, TemplateCollection, TemplateVersionSubcollection, type NoticeAttachment, type TemplateAssetRef } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 import { SENDING_FINAL } from '@okr/content-pdf-template-util';
-import { isOrgRecipient, ORG_RECIPIENT_PREFIX, pickCurrentFavoritePostal, recipientParentKey, zurichStoreDate } from '@okr/shared-util-core';
+import { isHouseholdRecipient, isOrgRecipient, ORG_RECIPIENT_PREFIX, pickCurrentFavoritePostal, recipientParentKey, zurichStoreDate } from '@okr/shared-util-core';
 
 import { privateBucket } from '../_storage/private-bucket';
 import { formatPostalAddress } from '../contract/contract-request.util';
@@ -30,6 +30,7 @@ import { getBrowser } from '../pdf/browser-pool';
 import { registerHelpers } from '../pdf/handlebars-helpers';
 import { resolvePayee } from '../pdf/qr-slip';
 import { compileTemplate } from '../pdf/template-cache';
+import type { HouseholdRecipient } from './household-recipient.logic';
 import { isElevated } from './mailing-recipients';
 
 const REGION = 'europe-west6';
@@ -327,7 +328,7 @@ async function renderOne(html: string, origins: ReadonlySet<string> = new Set())
 
 /** One recipient's finished letter. */
 export interface RenderedLetter {
-  /** the delivery key exactly as passed in `personKeys`: a bare person okey or `org.<okey>` (callers convert it) */
+  /** the delivery key exactly as passed in `personKeys`: a bare person okey, `org.<okey>` or `household.<okey>` (callers convert it) */
   recipientKey: string;
   recipientName: string;
   /** ISO country of the postal address; the address model stores '' for Switzerland, read here as 'CH' */
@@ -423,6 +424,11 @@ export async function buildMailingLetters(args: {
   subject: string;
   body: string;
   attachments: NoticeAttachment[];
+  /**
+   * The resolved households (loadHouseholdRecipients) of the `household.<okey>` keys in `personKeys`: the letter
+   * names the household and goes to the contact's address (spec 1.168 §6.3). A household key missing here gets no letter.
+   */
+  households?: Map<string, HouseholdRecipient>;
   /** «QR-Code für Link anzeigen»: the events below each person's letter, with a QR code of `answerUrl(personKey)` */
   answerEvents?: LetterEvent[];
   answerUrl?: (personKey: string) => string;
@@ -439,21 +445,38 @@ export async function buildMailingLetters(args: {
   const out = await PDFDocument.create();
   let letters = 0;
   let missing = 0;
-  // a recipient key is a bare person okey or `org.<okey>` (the comm center reaches both)
+  // a recipient key is a bare person okey, `org.<okey>` (the comm center reaches both) or `household.<okey>`
   for (const personKey of personKeys) {
-    const isOrg = isOrgRecipient(personKey);
-    const subjectRef = isOrg
-      ? db.collection('orgs').doc(personKey.slice(ORG_RECIPIENT_PREFIX.length))
-      : db.collection('persons').doc(personKey);
-    const [subjectSnap, address] = await Promise.all([subjectRef.get(), postalOf(db, recipientParentKey(personKey), tenantId)]);
+    let name: string;
+    let firstName = '';
+    let lastName = '';
+    let address: PostalFields | undefined;
+    // who answers the events of this letter: the person, a household's contact; an org cannot answer
+    let answerKey: string | undefined;
+    if (isHouseholdRecipient(personKey)) {
+      const household = args.households?.get(personKey);
+      if (!household) { missing++; continue; }
+      // the household name above the contact's favourite postal address; a template's {{lastName}} names it too
+      address = await postalOf(db, `person.${household.contactKey}`, tenantId);
+      name = household.name;
+      lastName = household.name;
+      answerKey = household.contactKey;
+    } else {
+      const isOrg = isOrgRecipient(personKey);
+      const subjectRef = isOrg
+        ? db.collection('orgs').doc(personKey.slice(ORG_RECIPIENT_PREFIX.length))
+        : db.collection('persons').doc(personKey);
+      const [subjectSnap, postal] = await Promise.all([subjectRef.get(), postalOf(db, recipientParentKey(personKey), tenantId)]);
+      address = postal;
+      const p = subjectSnap.data() ?? {};
+      firstName = isOrg ? '' : String(p['firstName'] ?? '').trim();
+      lastName = isOrg ? '' : String(p['lastName'] ?? '').trim();
+      name = isOrg ? String(p['name'] ?? '').trim() : `${firstName} ${lastName}`.trim();
+      answerKey = isOrg ? undefined : personKey;
+    }
     if (!address) { missing++; continue; }
-    const p = subjectSnap.data() ?? {};
-    const firstName = isOrg ? '' : String(p['firstName'] ?? '').trim();
-    const lastName = isOrg ? '' : String(p['lastName'] ?? '').trim();
-    const name = isOrg ? String(p['name'] ?? '').trim() : `${firstName} ${lastName}`.trim();
-    // an org cannot answer (an answer records a person's attendance): its letter has no events block
-    const eventsHtml = !isOrg && args.answerUrl && args.answerEvents?.length
-      ? eventsBlockHtml(args.answerEvents, await qrSvgOf(args.answerUrl(personKey)))
+    const eventsHtml = answerKey && args.answerUrl && args.answerEvents?.length
+      ? eventsBlockHtml(args.answerEvents, await qrSvgOf(args.answerUrl(answerKey)))
       : '';
     const { pdf, pages } = await renderLetter(ctx, { name, firstName, lastName, address, eventsHtml });
     const rendered: RenderedLetter = { recipientKey: personKey, recipientName: name, countryCode: address.countryCode, pdf, pages };

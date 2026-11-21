@@ -291,6 +291,21 @@ describe('letters rendered one by one (spec 1.150)', () => {
     }
   });
 
+  it('a household key gets the household name and the contact\'s address, and keeps its key', async () => {
+    const got: RenderedLetter[] = [];
+    const urls: string[] = [];
+    const res = await buildMailingLetters({
+      ...base, personKeys: ['household.h1', 'household.gone'],
+      households: new Map([['household.h1', { contactKey: 'beat', name: 'Familie Muster' }]]),
+      answerEvents: [{ name: 'GV', when: '01.12.2026', location: 'Stäfa' }], answerUrl: (k) => { urls.push(k); return `https://x/${k}`; },
+      onLetter: async (l) => { got.push(l); },
+    });
+    expect(res).toMatchObject({ letters: 1, missing: 1 });
+    expect(got.map((l) => [l.recipientKey, l.recipientName, l.countryCode])).toEqual([['household.h1', 'Familie Muster', 'DE']]);
+    // the answer link of a household letter is the contact's own
+    expect(urls).toEqual(['beat']);
+  });
+
   it('only filters which letters go into the combined PDF, onLetter still sees all', async () => {
     const got: string[] = [];
     const res = await buildMailingLetters({

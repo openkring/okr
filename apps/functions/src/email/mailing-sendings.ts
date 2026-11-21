@@ -6,6 +6,9 @@
 // Idempotent by construction: the record id is `<mailingKey>_<recipientParentKey>` and is written with `create()`,
 // so a re-run of the trigger creates only the missing ones. A charged recipient that ends without a record
 // (address gone since the quote, now abroad, a failed build) gets its share of the deduction reversed.
+//
+// A household letter (spec 1.168 §6.3) keeps its key: `recipientParentKey('household.<okey>')` is the key itself, so
+// the record is `<mailingKey>_household.<okey>` with `recipientKey` `household.<okey>` and the household name.
 
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';

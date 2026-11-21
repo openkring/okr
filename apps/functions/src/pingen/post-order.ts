@@ -13,10 +13,11 @@ import { defineSecret } from 'firebase-functions/params';
 import { getFirestore } from 'firebase-admin/firestore';
 import { DEFAULT_POST_OPTIONS, type PostOptions } from '@okr/shared-models';
 import { isSwissAddress } from '@okr/content-pdf-template-util';
-import { getEventLocationName, recipientParentKey } from '@okr/shared-util-core';
+import { getEventLocationName } from '@okr/shared-util-core';
 
 import { eventWhen } from '../calendar/mail';
 import { countLetterPages, postalOf, type LetterEvent } from '../email/mailing-letters';
+import { addressParentKeyOf, loadHouseholdRecipients } from '../email/household-recipient.logic';
 import type { ResolvedAttachment } from '../email/mailing';
 import { isElevated } from '../email/mailing-recipients';
 import { sanitizeEmailBody } from '../pdf/sanitize';
@@ -168,10 +169,14 @@ export async function computeQuote(deps: Omit<QuoteDeps, 'secret'>, input: Quote
 
 export async function readCountryCodes(tenantId: string, keys: string[]): Promise<(string | undefined)[]> {
   const db = getFirestore();
+  // a household letter goes to its contact's address; an unresolved household has none (not priced, never sent)
+  const households = await loadHouseholdRecipients(db, tenantId, keys, `post quote, tenant ${tenantId}`);
   const out: (string | undefined)[] = [];
   for (let i = 0; i < keys.length; i += ADDRESS_READ_CHUNK) {
     const part = await Promise.all(keys.slice(i, i + ADDRESS_READ_CHUNK).map(async (key) => {
-      const address = await postalOf(db, recipientParentKey(key), tenantId);
+      const parentKey = addressParentKeyOf(key, households);
+      if (!parentKey) return undefined;
+      const address = await postalOf(db, parentKey, tenantId);
       return address?.countryCode;   // only the country leaves this function
     }));
     out.push(...part);

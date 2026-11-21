@@ -5,19 +5,26 @@
 
 import { Attendee, DeliveryChannel } from '@okr/shared-models';
 import { splitAttendees } from '@okr/calendar-calevent-util';
-import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, isHouseholdRecipient } from '@okr/shared-util-core';
 
 import { AnswerableEvent } from '../calendar/invitation';
 import { AnswerRefusal, eventRefusalOf } from '../calendar/refusal';
 import { keysFor, MailingDoc } from './mailing';
 
-/** Whether `personKey` may still answer: ticked for email, the Versand asks about events, and the last one is not over. */
-export function mayAnswer(doc: Pick<MailingDoc, 'deliveries' | 'caleventKeys' | 'validUntil' | 'letterQrCodes'>, personKey: string, today: string): boolean {
+/**
+ * Whether `personKey` may still answer: ticked for email, the Versand asks about events, and the last one is not over.
+ * A household key counts as its contact, as `onMailing` resolved it (`householdContacts`); the key itself never answers.
+ */
+export function mayAnswer(doc: Pick<MailingDoc, 'deliveries' | 'caleventKeys' | 'validUntil' | 'letterQrCodes' | 'householdContacts'>, personKey: string, today: string): boolean {
   if (!doc.caleventKeys?.length || !doc.validUntil) return false;
   if (today > doc.validUntil) return false;
+  if (isHouseholdRecipient(personKey)) return false;
+  const contacts = doc.householdContacts ?? {};
+  const answerers = (channel: string): string[] => keysFor(doc.deliveries, channel)
+    .map((key) => (isHouseholdRecipient(key) ? contacts[key] : key)).filter((key): key is string => !!key);
   // a letter with QR codes carries the same link as the mail
-  return keysFor(doc.deliveries, DeliveryChannel.Email).includes(personKey)
-    || (doc.letterQrCodes === true && keysFor(doc.deliveries, DeliveryChannel.Post).includes(personKey));
+  return answerers(DeliveryChannel.Email).includes(personKey)
+    || (doc.letterQrCodes === true && answerers(DeliveryChannel.Post).includes(personKey));
 }
 
 /** The last day any of the events takes place (StoreDate); undefined without events. */

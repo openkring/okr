@@ -141,6 +141,27 @@ describe('makePostFanOut', () => {
   });
 });
 
+describe('a household recipient (spec 1.168 §6.3)', () => {
+  it('keeps household.<okey> as recipientKey and the household name, never person.household.…', async () => {
+    const saved: string[] = [];
+    const records = new Map<string, Record<string, unknown>>();
+    const deps: PostFanOutDeps = {
+      savePdf: async (path) => { saved.push(path); },
+      exists: async (id) => records.has(id),
+      create: async (id, doc) => { records.set(id, doc as unknown as Record<string, unknown>); return true; },
+      reverseShare: vi.fn(async () => ({ amount: 0, duplicate: false })),
+    };
+    const post = { ...POST, recipients: ['household.h1'], letters: 1, pages: 2, total: 180 };
+    const fan = makePostFanOut({ tenantId: 'scs', mailingKey: 'm1', post, nowIso: '2026-11-09T10:00:00.000Z', deps });
+    await fan.onLetter(letter('household.h1', { recipientName: 'Familie Muster' }));
+    await fan.finish();
+    expect([...records.keys()]).toEqual(['m1_household.h1']);
+    expect(records.get('m1_household.h1')).toMatchObject({ recipientKey: 'household.h1', recipientName: 'Familie Muster', state: 'queued' });
+    expect(saved).toEqual(['mailing-letters/scs/m1/household.h1.pdf']);
+    expect(deps.reverseShare).not.toHaveBeenCalled();
+  });
+});
+
 describe('tombstone and isolation', () => {
   it('a reversed recipient never gets a record on a re-run', async () => {
     const { fan, records, reverseShare } = setup();

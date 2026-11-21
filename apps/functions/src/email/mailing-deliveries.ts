@@ -16,6 +16,7 @@ import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functi
 
 import { bareAddress } from '../auth/email-templates';
 import { MailJobCollection } from './mail-job';
+import type { HouseholdRecipient } from './household-recipient.logic';
 import { directoryEmailsByKey, keysFor, MailingCollection, type MailingDelivery } from './mailing';
 import { deliveriesByAddress, eventLogsByAddress, joinDeliveries, mailingCategory, withEventLogs, type EmailEventRow, type MailingDeliveriesResult } from './mailing-deliveries.logic';
 import { isElevated } from './mailing-recipients';
@@ -32,6 +33,15 @@ interface MailingDeliveriesDoc {
   cc?: string[];
   from?: string;
   mailJobKey?: string;
+  /** `household.<okey>` → the contact the send reached (onMailing) */
+  householdContacts?: Record<string, string>;
+}
+
+/** The contacts the send resolved the household keys to, as the map directoryEmailsByKey reads (no name needed). */
+export function householdsOf(mailing: Pick<MailingDeliveriesDoc, 'householdContacts'>): Map<string, HouseholdRecipient> {
+  return new Map(Object.entries(mailing.householdContacts ?? {})
+    .filter(([, contactKey]) => typeof contactKey === 'string' && contactKey.length > 0)
+    .map(([key, contactKey]) => [key, { contactKey, name: '' }]));
 }
 
 /** Whether the caller may follow this Versand: memberAdmin / privileged / admin of its tenant (the `mailings` read rule). */
@@ -67,7 +77,8 @@ export const getMailingDeliveries = onCall(
       db.collection('emailEvents').where('category', '==', mailingCategory(mailingKey))
         .select('event', 'email', 'timestamp', 'reason', 'bounce_category', 'response').limit(MAX_EVENTS).get(),
       mailing.mailJobKey ? db.collection(MailJobCollection).doc(mailing.mailJobKey).get() : Promise.resolve(undefined),
-      directoryEmailsByKey(db, tenantId, emailKeys),
+      // a household row is matched on the address of the contact the send reached; an unresolved one stays pending
+      directoryEmailsByKey(db, tenantId, emailKeys, householdsOf(mailing)),
     ]);
     const job = jobSnap?.data() as { from?: string; to?: string[]; cc?: string[] } | undefined;
     // the addresses the caller already sees on the mailings / mailJobs docs: To, Cc, and the sender,
