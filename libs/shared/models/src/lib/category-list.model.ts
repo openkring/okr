@@ -41,6 +41,9 @@ export class CategoryItemModel {
   price? = DEFAULT_PRICE;
   currency? = DEFAULT_CURRENCY;
   periodicity? = DEFAULT_PERIODICITY;
+  // household_type only (spec 1.168 §5.1): fixed fee cap in CHF; unset = no cap
+  feeCap?: number;
+  feeCapOnlyMembershipFee?: boolean; // default on: cap limited to the yearly membership fee; off = whole invoice total
 
   constructor(name: string, icon: string, abbreviation?: string, state?: string, price?: number, currency?: string, periodicity?: string) {
     this.name = name;
