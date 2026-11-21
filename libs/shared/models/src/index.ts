@@ -118,6 +118,7 @@ export * from './lib/swisscities.model';
 export * from './lib/city.model';
 export * from './lib/tag.model';
 export * from './lib/task.model';
+export * from './lib/newsletter-subscription.model';
 export * from './lib/notice.model';
 export * from './lib/sending.model';
 export * from './lib/project.model';

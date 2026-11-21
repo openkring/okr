@@ -260,8 +260,9 @@ describe('SUBJECT_DATA_MAP — tiers and tenant-exit disposition', () => {
     // copies made for them — owned via `track.personKey`, voluntary, not the club's Logbuch record.
     // `diarySources` joined 2026-11-04 (1.77 §12): one owner's pull settings, the same owner-locked shape as `diaries`.
     // `news-subscriptions` joined 2026-11-08 (NewsCenter): a member's own channel picks, doc id = uid — owner-locked and voluntary.
+    // `newsletterSubscriptions` / `newsletterSignups` joined 2026-11-21 (1.169): a newsletter subscription rests on double-opt-in consent alone and is withdrawable at any time; a pending sign-up is not even confirmed.
     // `carddavTokens` joined 2026-11-15 (1.159): an admin's own app password for the CardDAV mirror — voluntary, revocable at any time.
-    expect(SUBJECT_DATA_MAP.filter((e) => e.tier === 'T2').map((e) => e.collection)).toEqual(['avatars', 'prospects', 'trips/tracker', 'diaries', 'diaryAlbums', 'diarySources', 'diaryImports', 'hearingQuizResults', 'chatReminders', 'ratings', 'news-subscriptions', 'carddavTokens']);
+    expect(SUBJECT_DATA_MAP.filter((e) => e.tier === 'T2').map((e) => e.collection)).toEqual(['avatars', 'newsletterSubscriptions', 'newsletterSignups', 'prospects', 'trips/tracker', 'diaries', 'diaryAlbums', 'diarySources', 'diaryImports', 'hearingQuizResults', 'chatReminders', 'ratings', 'news-subscriptions', 'carddavTokens']);
   });
 
   // Regression guard on the strictest-tier rule. `addresses` holds both the favorite
@@ -730,6 +731,7 @@ describe('subject-data-map — collection names are constants, not literals', ()
     'websites/publishes', // websites/{siteId}/publishes, the publish log subcollection (no model, Admin SDK only)
     'carddavTokens', // contacts mirror app passwords (spec 1.159), Admin SDK only, no model class
     'contactsDavBooks/cards', // contactsDavBooks/{tenantId}/cards/{uid}, the rendered CardDAV book (spec 1.159), no model class
+    'newsletterSignups', // pending double-opt-in sign-ups (spec 1.169), Admin SDK only; its type lives in functions, not shared-models
   ]);
 
   it('every entry resolves to an exported collection constant', () => {

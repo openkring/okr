@@ -2704,5 +2704,59 @@ for label, expect, run in tenant_add_cases:
     passed += ok; failed += not ok
     print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
 
+# --------------------------------------------------- newsletter (1.169) ---
+# newsletterSubscriptions: readable by privileged, memberAdmin, the admin of the newsletter group
+# (groupKey) and the subscriber (personKey); LIST queries must be provable from the filters.
+# newsletterSignups (pending double-opt-in): no client access at all. All writes are Admin SDK.
+seed("groups/nl1", {"tenants": ["t1"], "name": "Newsletter", "kind": "newsletter",
+                    "admins": [{"key": "pA"}], "adminKeys": ["pA"]})
+seed("newsletterSubscriptions/nsE", {"tenants": ["t1"], "isArchived": False, "personKey": "pE",
+                                     "groupKey": "nl1", "dateOfEntry": "20261101", "dateOfExit": ""})
+seed("newsletterSubscriptions/nsC", {"tenants": ["t1"], "isArchived": False, "personKey": "pC",
+                                     "groupKey": "nl1", "dateOfEntry": "20261102", "dateOfExit": ""})
+seed("newsletterSignups/nsg1", {"tenants": ["t1"], "groupKey": "nl1", "email": "x@y.ch", "state": "pending"})
+NS_T = ("tenants", "ARRAY_CONTAINS", "t1")
+NS_GRP = [NS_T, ("groupKey", "EQUAL", "nl1")]
+newsletter_cases = [
+    ("newsletter: plain member LIST groupKey==nl1 -> DENY", False,
+     lambda: field_query("newsletterSubscriptions", NS_GRP, token=E)),
+    ("newsletter: memberAdmin LIST groupKey==nl1 -> ALLOW", True,
+     lambda: field_query("newsletterSubscriptions", NS_GRP, token=M)),
+    ("newsletter: privileged LIST groupKey==nl1 -> ALLOW", True,
+     lambda: field_query("newsletterSubscriptions", NS_GRP, token=P)),
+    ("newsletter: admin of nl1 LIST groupKey==nl1 -> ALLOW", True,
+     lambda: field_query("newsletterSubscriptions", NS_GRP, token=A)),
+    ("newsletter: subscriber LIST personKey==own -> ALLOW", True,
+     lambda: field_query("newsletterSubscriptions", [NS_T, ("personKey", "EQUAL", "pE")], token=E)),
+    ("newsletter: subscriber LIST personKey==someone else -> DENY", False,
+     lambda: field_query("newsletterSubscriptions", [NS_T, ("personKey", "EQUAL", "pC")], token=E)),
+    ("newsletter: subscriber GET own subscription -> ALLOW", True,
+     lambda: req("GET", "newsletterSubscriptions/nsE", token=E)),
+    ("newsletter: plain member GET foreign subscription -> DENY", False,
+     lambda: req("GET", "newsletterSubscriptions/nsC", token=E)),
+    ("newsletter: other-tenant admin GET subscription -> DENY", False,
+     lambda: req("GET", "newsletterSubscriptions/nsE", token=B)),
+    ("newsletter: privileged CREATE subscription -> DENY", False,
+     lambda: req("POST", "newsletterSubscriptions?documentId=nsNew", token=P,
+                 data=body({"tenants": ["t1"], "isArchived": False, "personKey": "pE", "groupKey": "nl1"}))),
+    ("newsletter: subscriber UPDATE own subscription -> DENY", False,
+     lambda: req("PATCH", "newsletterSubscriptions/nsE", token=E, data=body({"dateOfExit": "20261201"}), mask=["dateOfExit"])),
+    ("newsletter: admin of nl1 DELETE subscription -> DENY", False,
+     lambda: req("DELETE", "newsletterSubscriptions/nsE", token=A)),
+    ("newsletter: privileged GET signup -> DENY", False,
+     lambda: req("GET", "newsletterSignups/nsg1", token=P)),
+    ("newsletter: admin GET signup -> DENY", False,
+     lambda: req("GET", "newsletterSignups/nsg1", token=D)),
+    ("newsletter: privileged CREATE signup -> DENY", False,
+     lambda: req("POST", "newsletterSignups?documentId=nsg2", token=P, data=body({"tenants": ["t1"], "state": "pending"}))),
+    ("newsletter: anonymous CREATE signup -> DENY", False,
+     lambda: req("POST", "newsletterSignups?documentId=nsg3", data=body({"tenants": ["t1"], "state": "pending"}))),
+]
+for label, expect, run in newsletter_cases:
+    code = run()
+    ok = (code in (200, 201)) == expect
+    passed += ok; failed += not ok
+    print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
+
 print(f"\n{passed} passed, {failed} failed")
 raise SystemExit(1 if failed else 0)

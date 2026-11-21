@@ -68,6 +68,7 @@ const RETAIN_10Y = { months: 120, legalBasis: 'GebüV / OR Art. 958f — 10 Jahr
 const KEEP_WHILE_MEMBER = { months: 'indefinite', legalBasis: 'Vertragserfüllung (Mitgliedschaft)' } as const;
 const CLUB_RECORD = { months: 'indefinite', legalBasis: 'Vereinsdokumentation (berechtigtes Interesse)' } as const;
 const APPLICATION_RECORD = { months: 24, legalBasis: 'Nachweis über das Aufnahmeverfahren — 2 Jahre' } as const;
+const SIGNUP_PENDING = { months: 1, legalBasis: 'Bestätigung der Newsletter-Anmeldung — unbestätigte Anmeldungen verfallen nach kurzer Frist' } as const;
 const LOG_12M = { months: 12, legalBasis: 'Betriebssicherheit und Missbrauchserkennung — 12 Monate' } as const;
 const LOG_24M = { months: 24, legalBasis: 'Nachvollziehbarkeit von Datenänderungen — 24 Monate' } as const;
 /**
@@ -677,6 +678,33 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     onExport: 'full',
     onErasure: 'delete',
     retention: APPLICATION_RECORD,
+  },
+  {
+    collection: 'newsletterSubscriptions',
+    dataClass: 'identity',
+    tier: 'T2',   // consent (double opt-in) is the legal basis — withdrawable at any time (spec 1.169)
+    onTenantExit: 'delete',
+    // personName / groupName are denormalised copies; confirmedAt / importOptinAt are the consent evidence.
+    find: (c: SubjectCtx) => db().collection('newsletterSubscriptions').where('personKey', '==', c.personKey),
+    tenantScope: 'tenantsArray',
+    onExport: 'full',
+    onErasure: 'delete',
+    retention: KEEP_WHILE_MEMBER,
+  },
+  {
+    collection: 'newsletterSignups',
+    dataClass: 'identity',
+    tier: 'T2',   // an unconfirmed sign-up: consent not yet given, so nothing justifies keeping it
+    onTenantExit: 'delete',
+    // A pending sign-up has no person yet — like `applications` it is reachable by e-mail ALONE.
+    // `NewsletterSignupDoc.email` is stored lowercased, but a tenant scan keeps this robust if a
+    // second writer ever forgets to; the collection is tiny (entries expire).
+    find: (c: SubjectCtx) => db().collection('newsletterSignups').where('tenants', 'array-contains', c.tenantId),
+    tenantScope: 'inQuery',
+    matches: (doc, c) => !!c.email && String(doc.get('email') ?? '').toLowerCase() === c.email.toLowerCase(),
+    onExport: 'full',
+    onErasure: 'delete',
+    retention: SIGNUP_PENDING,
   },
   {
     collection: 'prospects',

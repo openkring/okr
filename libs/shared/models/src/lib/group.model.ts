@@ -19,6 +19,8 @@ export class GroupModel implements OkrModel, NamedModel, SearchableModel, Tagged
    *   erscheint ausschliesslich in der Chatliste und in keiner Gruppenoberflaeche.
    * - 'pinboard': eine Pinnwand (spec 2026-10-11-chat-pinnwand-spec.md) — alle schreiben an
    *   alle, Antworten gehen privat an den Absender. Mitglieder kommen aus `sourceGroupKeys`.
+   * - 'newsletter': ein Newsletter-Verteiler (spec 1.169). Die Abonnenten stehen in
+   *   `newsletterSubscriptions`, nicht in `memberships`; die Gruppe traegt nur Name und Admins.
    *
    * ACHTUNG beim Lesen: Firestore liefert rohe Dokumente, dieser Initialisierer laeuft dabei
    * NICHT. Jede bestehende Gruppe traegt `undefined`. Immer als `kind ?? 'group'` lesen —
@@ -149,7 +151,7 @@ export class GroupModel implements OkrModel, NamedModel, SearchableModel, Tagged
   }
 }
 
-export type GroupKind = 'group' | 'chat' | 'pinboard';
+export type GroupKind = 'group' | 'chat' | 'pinboard' | 'newsletter';
 export type PinboardJoinMode = 'optOut' | 'optIn';
 
 export const GroupCollection = 'groups';

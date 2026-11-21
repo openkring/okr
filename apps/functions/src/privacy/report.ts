@@ -96,6 +96,8 @@ export const COLLECTION_LABELS: Record<string, string> = {
   // themselves, in the informal du of the house register, and it has to say plainly that we
   // recorded their interest and passed it to a partner.
   prospects: 'Interessenten',
+  newsletterSubscriptions: 'Newsletter-Abonnements',
+  newsletterSignups: 'Offene Newsletter-Anmeldungen',
 
   // — financial (10-year retention) —
   bookings: 'Buchungen', // libs/finance/booking/feature/src/i18n/de.json: list.title

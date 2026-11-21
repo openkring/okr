@@ -2023,6 +2023,23 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Newsletter (spec 1.169). A subscription is one person's membership of one newsletter group
+    // (`groups.kind == 'newsletter'`); readable by the tenant's privileged / memberAdmin, by the
+    // admin of that group (the `groupKey` filter of the query proves it) and by the subscriber
+    // (the `personKey` filter). Every write is the Admin SDK's: subscribe / confirm / unsubscribe
+    // go through callables, which also own the double-opt-in evidence (`confirmedAt`).
+    match /newsletterSubscriptions/{subId} {
+      allow read:  if tenantRead() && (isPrivileged() || hasRole('memberAdmin')
+                      || isAdminOfGroup(resource.data.groupKey)
+                      || resource.data.personKey == callerPersonKey());
+      allow write: if false;
+    }
+    // Pending double-opt-in sign-ups: an unconfirmed e-mail address from the public form. No client
+    // ever reads or writes it; only the Cloud Functions (create, confirm, expire).
+    match /newsletterSignups/{signupId} {
+      allow read, write: if false;
+    }
+
     // The 3LS escalation queue (spec 1.29 / C4). Same shape as `prospects` above, and the
     // argument is not re-derived: "my tickets, never another partner's" is a predicate over
     // document CONTENT, which Firestore cannot evaluate for a list query, so a partner reads
