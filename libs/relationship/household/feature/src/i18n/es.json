@@ -25,7 +25,8 @@
   },
   "payer": {
     "label": "Factura a",
-    "helper": "Esta persona recibe la factura común."
+    "helper": "Esta persona recibe la factura común. Sin pagador, cada persona recibe su propia factura.",
+    "none": "Sin pagador (una factura por persona)"
   },
   "contact": {
     "label": "Correo a",
@@ -59,7 +60,6 @@
   "validation": {
     "two_members": "Un hogar necesita al menos dos personas.",
     "duplicate_member": "Una persona aparece dos veces en el hogar.",
-    "payer_required": "Elige quién recibe la factura.",
     "payer_not_member": "La factura solo puede ir a una persona del hogar.",
     "contact_required": "Elige quién recibe el correo.",
     "contact_not_member": "El correo solo puede ir a una persona del hogar."

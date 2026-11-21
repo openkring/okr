@@ -25,7 +25,8 @@
   },
   "payer": {
     "label": "Facture à",
-    "helper": "Cette personne reçoit la facture commune."
+    "helper": "Cette personne reçoit la facture commune. Sans payeur, chaque personne reçoit sa propre facture.",
+    "none": "Pas de payeur (une facture par personne)"
   },
   "contact": {
     "label": "Courrier à",
@@ -59,7 +60,6 @@
   "validation": {
     "two_members": "Un foyer a besoin d'au moins deux personnes.",
     "duplicate_member": "Une personne figure deux fois dans le foyer.",
-    "payer_required": "Choisis qui reçoit la facture.",
     "payer_not_member": "La facture ne peut aller qu'à une personne du foyer.",
     "contact_required": "Choisis qui reçoit le courrier.",
     "contact_not_member": "Le courrier ne peut aller qu'à une personne du foyer."

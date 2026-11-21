@@ -21,6 +21,7 @@ export const HOUSEHOLD_I18N_KEYS = {
   member_remove:            PFX + 'members.remove',
   payer_label:              PFX + 'payer.label',
   payer_helper:             PFX + 'payer.helper',
+  payer_none:               PFX + 'payer.none',
   contact_label:            PFX + 'contact.label',
   contact_helper:           PFX + 'contact.helper',
   bundle_title:             PFX + 'bundle.title',
@@ -52,7 +53,6 @@ export type HouseholdI18n = { [K in keyof typeof HOUSEHOLD_I18N_KEYS]: Signal<st
 export const HOUSEHOLD_VALIDATION_KEYS = {
   two_members:        PFX + 'validation.two_members',
   duplicate_member:   PFX + 'validation.duplicate_member',
-  payer_required:     PFX + 'validation.payer_required',
   payer_not_member:   PFX + 'validation.payer_not_member',
   contact_required:   PFX + 'validation.contact_required',
   contact_not_member: PFX + 'validation.contact_not_member',

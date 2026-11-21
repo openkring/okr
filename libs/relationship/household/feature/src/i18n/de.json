@@ -25,7 +25,8 @@
   },
   "payer": {
     "label": "Rechnung an",
-    "helper": "Diese Person erhält die gemeinsame Rechnung."
+    "helper": "Diese Person erhält die gemeinsame Rechnung. Ohne Zahler bekommt jede Person ihre eigene Rechnung.",
+    "none": "Kein Zahler (Rechnung pro Person)"
   },
   "contact": {
     "label": "Post an",
@@ -59,7 +60,6 @@
   "validation": {
     "two_members": "Ein Haushalt braucht mindestens zwei Personen.",
     "duplicate_member": "Eine Person ist doppelt im Haushalt.",
-    "payer_required": "Bitte wähle, wer die Rechnung erhält.",
     "payer_not_member": "Die Rechnung kann nur an eine Person aus dem Haushalt gehen.",
     "contact_required": "Bitte wähle, wer die Post erhält.",
     "contact_not_member": "Die Post kann nur an eine Person aus dem Haushalt gehen."

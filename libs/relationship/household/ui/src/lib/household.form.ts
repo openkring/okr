@@ -82,7 +82,7 @@ import { HouseholdEditMode, HouseholdI18n, householdValidations, memberOptions }
               <ion-grid>
                 <ion-row>
                   <ion-col size="12" size-md="6">
-                    <okr-string-select [i18n]="payerI18n()" [stringList]="members().keys" [labels]="members().labels"
+                    <okr-string-select [i18n]="payerI18n()" [stringList]="payerOptions().keys" [labels]="payerOptions().labels"
                       [selectedString]="payerKey()" (selectedStringChange)="onFieldChange('payerKey', $event)" [readOnly]="isReadOnly()" />
                     <okr-error-note [errors]="payerKeyErrors()" />
                   </ion-col>
@@ -161,6 +161,11 @@ export class HouseholdForm {
   protected readonly contactKey = computed(() => this.formData()?.contactKey ?? '');
   protected readonly bundle = computed(() => readBundle(this.formData() ?? {}));
   protected readonly members = computed(() => memberOptions(this.memberKeys(), this.personNames()));
+  /** '' first: no payer, one invoice per person (spec 1.168 §4.2) */
+  protected readonly payerOptions = computed(() => ({
+    keys: ['', ...this.members().keys],
+    labels: [this.i18n().payer_none(), ...this.members().labels],
+  }));
 
   // i18n for the shared/ui primitives
   protected readonly nameI18n = computed(() => ({

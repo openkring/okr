@@ -25,7 +25,8 @@
   },
   "payer": {
     "label": "Invoice to",
-    "helper": "This person receives the shared invoice."
+    "helper": "This person receives the shared invoice. Without a payer, each person gets their own invoice.",
+    "none": "No payer (one invoice per person)"
   },
   "contact": {
     "label": "Mail to",
@@ -59,7 +60,6 @@
   "validation": {
     "two_members": "A household needs at least two people.",
     "duplicate_member": "A person is listed twice in the household.",
-    "payer_required": "Please choose who receives the invoice.",
     "payer_not_member": "The invoice can only go to a person in the household.",
     "contact_required": "Please choose who receives the mail.",
     "contact_not_member": "Mail can only go to a person in the household."

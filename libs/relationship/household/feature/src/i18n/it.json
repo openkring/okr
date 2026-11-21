@@ -25,7 +25,8 @@
   },
   "payer": {
     "label": "Fattura a",
-    "helper": "Questa persona riceve la fattura comune."
+    "helper": "Questa persona riceve la fattura comune. Senza pagatore, ogni persona riceve la propria fattura.",
+    "none": "Nessun pagatore (una fattura per persona)"
   },
   "contact": {
     "label": "Posta a",
@@ -59,7 +60,6 @@
   "validation": {
     "two_members": "Un nucleo familiare ha bisogno di almeno due persone.",
     "duplicate_member": "Una persona compare due volte nel nucleo.",
-    "payer_required": "Scegli chi riceve la fattura.",
     "payer_not_member": "La fattura può andare solo a una persona del nucleo.",
     "contact_required": "Scegli chi riceve la posta.",
     "contact_not_member": "La posta può andare solo a una persona del nucleo."

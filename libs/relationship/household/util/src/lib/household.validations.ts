@@ -13,7 +13,8 @@ import { HOUSEHOLD_VALIDATION_KEYS as V } from './household-i18n';
  * - name is mandatory;
  * - a NEW household needs two persons (the server archives anything smaller); an existing one may shrink — that is
  *   how an admin dissolves it;
- * - from two persons on, payer and contact are mandatory and must be among the persons.
+ * - from two persons on, the contact is mandatory; payer and contact must be among the persons. An empty payer means
+ *   one invoice per person (spec §4.2).
  */
 export const householdValidations = staticSuite((model: HouseholdModel) => {
   const members = model.memberKeys ?? [];
@@ -30,9 +31,6 @@ export const householdValidations = staticSuite((model: HouseholdModel) => {
   });
 
   omitWhen(members.length < 2, () => {
-    test('payerKey', V.payer_required, () => {
-      enforce(model.payerKey ?? '').isNotBlank();
-    });
     omitWhen(!model.payerKey, () => {
       test('payerKey', V.payer_not_member, () => {
         enforce(members.includes(model.payerKey)).isTruthy();

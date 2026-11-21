@@ -28,10 +28,15 @@ describe('householdValidations', () => {
     expect(result.hasErrors('contactKey')).toBe(true);
   });
 
-  it('requires payer and contact once there are two members', () => {
-    const result = householdValidations(household({ payerKey: '', contactKey: '' }));
-    expect(result.hasErrors('payerKey')).toBe(true);
+  it('accepts an empty payer with two members (one invoice per person)', () => {
+    const result = householdValidations(household({ payerKey: '' }));
+    expect(result.isValid()).toBe(true);
+  });
+
+  it('requires a contact once there are two members', () => {
+    const result = householdValidations(household({ contactKey: '' }));
     expect(result.hasErrors('contactKey')).toBe(true);
+    expect(result.hasErrors('payerKey')).toBe(false);
   });
 
   it('requires two members for a new household', () => {
