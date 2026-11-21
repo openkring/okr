@@ -1,4 +1,5 @@
 import * as nodemailer from 'nodemailer';
+import { logger } from 'firebase-functions';
 
 export type EmailProvider = 'mailgun_smtp' | 'mailtrap_api' | 'netzone_smtp' | 'mailtrap_test';
 
@@ -51,6 +52,32 @@ export interface EmailOptions {
   headers?: Record<string, string>;
 }
 
+// ─── Custom headers ──────────────────────────────────────────────────────────
+
+const MAX_HEADER_VALUE = 512;
+const UNSUBSCRIBE_URL_RE = /^<https:\/\/[^<>\s]+>$/;
+
+/**
+ * The custom headers a mail may carry. Mail jobs are client-writable, so headers are untrusted: only
+ * `List-Unsubscribe` (an https URL in angle brackets) and `List-Unsubscribe-Post` (`List-Unsubscribe=One-Click`)
+ * pass, in canonical casing; everything else is dropped (names logged, never values). `undefined` when
+ * nothing survives.
+ */
+export function safeMailHeaders(raw: unknown): Record<string, string> | undefined {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
+  const out: Record<string, string> = {};
+  const dropped: string[] = [];
+  for (const [name, value] of Object.entries(raw as Record<string, unknown>)) {
+    const lower = name.toLowerCase();
+    const valid = typeof value === 'string' && value.length <= MAX_HEADER_VALUE && !/[\r\n]/.test(value);
+    if (valid && lower === 'list-unsubscribe' && UNSUBSCRIBE_URL_RE.test(value)) out['List-Unsubscribe'] = value;
+    else if (valid && lower === 'list-unsubscribe-post' && value === 'List-Unsubscribe=One-Click') out['List-Unsubscribe-Post'] = value;
+    else dropped.push(name.replace(/[^\x20-\x7e]/g, '?').slice(0, 64));
+  }
+  if (dropped.length) logger.warn(`email-transport: dropped mail header(s): ${dropped.join(', ')}`);
+  return Object.keys(out).length ? out : undefined;
+}
+
 // ─── SMTP configs ────────────────────────────────────────────────────────────
 
 function mailgunSmtpConfig() {
@@ -100,6 +127,7 @@ function resolveTemplateUuid(template?: string): string | undefined {
 
 async function sendViaSMTP(config: object, options: EmailOptions): Promise<void> {
   const transporter = nodemailer.createTransport(config);
+  const headers = safeMailHeaders(options.headers);
   await transporter.sendMail({
     from: options.from,
     replyTo: options.replyTo ?? options.from,
@@ -109,7 +137,7 @@ async function sendViaSMTP(config: object, options: EmailOptions): Promise<void>
     subject: options.subject,
     html: options.html,
     ...(options.text ? { text: options.text } : {}),
-    ...(options.headers && Object.keys(options.headers).length ? { headers: options.headers } : {}),
+    ...(headers ? { headers } : {}),
     ...(options.attachments?.length ? {
       attachments: options.attachments.map(a => ({
         filename: a.filename,
@@ -143,7 +171,8 @@ export function mailtrapBody(options: EmailOptions): Record<string, unknown> {
     if (typeof options.category === 'string' && options.category) body['category'] = options.category.slice(0, 255);
   }
 
-  if (options.headers && Object.keys(options.headers).length) body['headers'] = options.headers;
+  const headers = safeMailHeaders(options.headers);
+  if (headers) body['headers'] = headers;
 
   if (options.attachments?.length) {
     body['attachments'] = options.attachments.map(a => ({

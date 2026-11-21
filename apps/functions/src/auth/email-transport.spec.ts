@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { effectiveProvider, mailtrapBody, type EmailOptions } from './email-transport';
+import { effectiveProvider, mailtrapBody, safeMailHeaders, type EmailOptions } from './email-transport';
 
 const base: EmailOptions = {
   from: 'Verein <app@example.ch>',
@@ -70,5 +70,29 @@ describe('mailtrapBody', () => {
     expect(body['attachments']).toEqual([
       { filename: 'a.pdf', content: Buffer.from('hi').toString('base64'), type: 'application/pdf', disposition: 'attachment' },
     ]);
+  });
+});
+
+describe('safeMailHeaders', () => {
+  const ok = { 'List-Unsubscribe': '<https://x/u>', 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' };
+
+  it('passes the allowed pair, in canonical casing', () => {
+    expect(safeMailHeaders(ok)).toEqual(ok);
+    expect(safeMailHeaders({ 'list-unsubscribe': '<https://x/u>' })).toEqual({ 'List-Unsubscribe': '<https://x/u>' });
+  });
+
+  it('drops everything else', () => {
+    expect(safeMailHeaders({ From: 'a@b.ch', Bcc: 'a@b.ch' })).toBeUndefined();
+    expect(safeMailHeaders({ 'List-Unsubscribe': '<https://x/u>\r\nBcc: a@b.ch' })).toBeUndefined();
+    expect(safeMailHeaders({ 'List-Unsubscribe': '<http://x/u>' })).toBeUndefined();
+    expect(safeMailHeaders({ 'List-Unsubscribe': 5 })).toBeUndefined();
+    expect(safeMailHeaders({ 'List-Unsubscribe-Post': 'other' })).toBeUndefined();
+    expect(safeMailHeaders({ 'List-Unsubscribe': `<https://x/${'a'.repeat(520)}>` })).toBeUndefined();
+    expect(safeMailHeaders(undefined)).toBeUndefined();
+    expect(safeMailHeaders({ ...ok, From: 'a@b.ch' })).toEqual(ok);
+  });
+
+  it('mailtrapBody gets no headers key when all are dropped', () => {
+    expect(mailtrapBody({ ...base, headers: { From: 'a@b.ch' } })).not.toHaveProperty('headers');
   });
 });
