@@ -268,6 +268,11 @@ interface DashboardItem { section: SectionModel; order: number; }
           <ion-title>{{ store.page()?.name }}</ion-title>
           @if(hasRole('contentAdmin')) {
             <ion-buttons slot="end">
+              @if(editMode()) {
+                <ion-button (click)="store.showCmsHelp()" [attr.aria-label]="store.i18n.cms_help_button()" [title]="store.i18n.cms_help_button()">
+                  <ion-icon slot="icon-only" src="{{'info-circle' | svgIcon }}" />
+                </ion-button>
+              }
               @if(contextMenuName(); as contextMenuName) {
                 @if (menuItemsStore.canOpen(contextMenuName)) {
                   <ion-button id="{{ popupId }}">

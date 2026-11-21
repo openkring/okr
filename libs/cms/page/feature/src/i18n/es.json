@@ -355,5 +355,117 @@
     "okey": {
       "label": "Clave de la página"
     }
+  },
+  "cmsHelp": {
+    "button": "Ayuda para editar",
+    "title": "Cómo funciona el CMS",
+    "intro": "Con el CMS creas tú mismo el contenido de la app. Todo está organizado en tres niveles: los menús llevan a páginas, y las páginas se componen de secciones.",
+    "structure": {
+      "title": "Menú, página y sección",
+      "menu": {
+        "label": "Menú",
+        "text": "El menú es el camino hacia el contenido. Una entrada de menú lleva a una página, abre una dirección o ejecuta una acción. El rol de una entrada decide quién la ve."
+      },
+      "page": {
+        "label": "Página",
+        "text": "Una página es el marco del contenido. Tiene un nombre, un tipo y una lista ordenada de secciones."
+      },
+      "section": {
+        "label": "Sección",
+        "text": "Una sección es un bloque de contenido, por ejemplo un artículo, una galería de imágenes o un calendario. La misma sección puede aparecer en varias páginas."
+      }
+    },
+    "menuTypes": {
+      "title": "Tipos de menú"
+    },
+    "pageTypes": {
+      "title": "Tipos de página",
+      "content": {
+        "label": "Contenido",
+        "text": "La página general. Muestra cualquier sección en una cuadrícula, una al lado de otra y una debajo de otra."
+      },
+      "dashboard": {
+        "label": "Panel",
+        "text": "Un resumen personal con noticias, citas, tareas y mensajes."
+      },
+      "blog": {
+        "label": "Blog",
+        "text": "Muestra las secciones como entradas, en uno de seis diseños (por ejemplo cuadrícula, revista o flujo)."
+      },
+      "landing": {
+        "label": "Página de inicio",
+        "text": "La página de inicio, a menudo con una gran imagen de título."
+      },
+      "other": {
+        "label": "Otras",
+        "text": "Chat, archivos, álbum y mapa del sitio son páginas especializadas con un diseño fijo."
+      }
+    },
+    "sectionTypes": {
+      "title": "Tipos de sección",
+      "text": {
+        "label": "Texto",
+        "text": "Artículo, acordeón, índice, botón y título hero."
+      },
+      "media": {
+        "label": "Imágenes y medios",
+        "text": "Imágenes, álbum, carrusel, vídeo y contenido incrustado."
+      },
+      "events": {
+        "label": "Citas y noticias",
+        "text": "Calendario, citas, cursos, noticias y avisos."
+      },
+      "people": {
+        "label": "Personas",
+        "text": "Personas, organigrama, responsabilidades y estadísticas de socios."
+      },
+      "interaction": {
+        "label": "Participar",
+        "text": "Formularios, chat, tareas, invitaciones y seguimientos."
+      },
+      "maps": {
+        "label": "Mapas",
+        "text": "Mapas, cuaderno de bitácora y recorridos."
+      }
+    },
+    "states": {
+      "title": "Qué significan los colores",
+      "intro": "En el modo de edición cada sección tiene un marco de color. El color muestra su estado. Lo cambias al editar la sección, en el campo «Estado».",
+      "draft": {
+        "label": "Borrador",
+        "text": "La sección está en preparación. Solo la ven los administradores de contenido."
+      },
+      "inReview": {
+        "label": "Revisión",
+        "text": "La sección está terminada y espera una revisión. Solo la ven los administradores de contenido."
+      },
+      "published": {
+        "label": "Publicado",
+        "text": "La sección es visible para todas las personas que pueden ver la página."
+      },
+      "inactive": {
+        "label": "Obsoleto o archivado",
+        "text": "La sección ya no se muestra, pero se conserva y puede activarse de nuevo."
+      }
+    },
+    "editing": {
+      "title": "Editar",
+      "toggle": "Activas y desactivas el modo de edición en el menú de arriba a la derecha.",
+      "click": "En el modo de edición, toca una sección para editarla, subir una imagen o un archivo, o quitarla de la página.",
+      "menu": "En el menú de arriba a la derecha añades secciones nuevas o existentes, las ordenas y configuras la página."
+    },
+    "internal": {
+      "title": "Publicar internamente (en la app)",
+      "step1": "Pon el estado de la sección en «Publicado». El marco se vuelve verde.",
+      "step2": "Para que se encuentre la página necesita una entrada de menú. El rol de la entrada decide quién ve la página, por ejemplo solo los socios con sesión iniciada.",
+      "step3": "Los cambios en una sección publicada son visibles para todos de inmediato."
+    },
+    "external": {
+      "title": "Publicar externamente (en el sitio web)",
+      "step1": "Abre el mapa del sitio web en el menú «CMS - Website».",
+      "step2": "Añade allí la página a la estructura del sitio web. La página debe ser pública.",
+      "step3": "Solo las secciones con el estado «Publicado» llegan al sitio web.",
+      "step4": "Toca «Publicar». Solo entonces aparecen los cambios en el sitio web. Después de cada cambio vuelves a publicar. Se puede restaurar una versión anterior."
+    }
   }
 }

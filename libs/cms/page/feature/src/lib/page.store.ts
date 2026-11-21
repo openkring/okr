@@ -263,6 +263,13 @@ export const _PageStore = signalStore(
         }
       },
 
+      /** Opens the CMS help (structure, types, section colours, publishing) — the (i) button in edit mode. */
+      async showCmsHelp(): Promise<void> {
+        const { CmsHelpModal } = await import('./cms-help.modal');
+        const modal = await store.modalController.create({ component: CmsHelpModal });
+        await modal.present();
+      },
+
       /**
        * Edit a page by opening the edit modal. If the page has no key, it will be created after saving the modal. Otherwise, the existing page will be updated.
        * @param page 

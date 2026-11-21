@@ -355,5 +355,117 @@
     "okey": {
       "label": "Clé de la page"
     }
+  },
+  "cmsHelp": {
+    "button": "Aide à l'édition",
+    "title": "Comment fonctionne le CMS",
+    "intro": "Avec le CMS, tu crées toi-même le contenu de l'app. Tout est organisé en trois niveaux : les menus mènent aux pages, et les pages se composent de sections.",
+    "structure": {
+      "title": "Menu, page et section",
+      "menu": {
+        "label": "Menu",
+        "text": "Le menu est le chemin vers le contenu. Une entrée de menu mène à une page, ouvre une adresse ou déclenche une action. Le rôle d'une entrée détermine qui la voit."
+      },
+      "page": {
+        "label": "Page",
+        "text": "Une page est le cadre du contenu. Elle a un nom, un type et une liste ordonnée de sections."
+      },
+      "section": {
+        "label": "Section",
+        "text": "Une section est un bloc de contenu, par exemple un article, une galerie d'images ou un calendrier. La même section peut figurer sur plusieurs pages."
+      }
+    },
+    "menuTypes": {
+      "title": "Types de menu"
+    },
+    "pageTypes": {
+      "title": "Types de page",
+      "content": {
+        "label": "Contenu",
+        "text": "La page générale. Elle affiche des sections quelconques dans une grille, côte à côte et les unes sous les autres."
+      },
+      "dashboard": {
+        "label": "Tableau de bord",
+        "text": "Un aperçu personnel avec actualités, rendez-vous, tâches et messages."
+      },
+      "blog": {
+        "label": "Blog",
+        "text": "Affiche les sections comme des articles, dans l'une de six mises en page (par exemple grille, magazine ou flux)."
+      },
+      "landing": {
+        "label": "Page d'accueil",
+        "text": "La page de départ, souvent avec une grande image de titre."
+      },
+      "other": {
+        "label": "Autres",
+        "text": "Chat, fichiers, album et plan du site sont des pages spécialisées à l'affichage fixe."
+      }
+    },
+    "sectionTypes": {
+      "title": "Types de section",
+      "text": {
+        "label": "Texte",
+        "text": "Article, accordéon, table des matières, bouton et titre hero."
+      },
+      "media": {
+        "label": "Images et médias",
+        "text": "Images, album, diaporama, vidéo et contenus intégrés."
+      },
+      "events": {
+        "label": "Rendez-vous et actualités",
+        "text": "Calendrier, rendez-vous, cours, actualités et communications."
+      },
+      "people": {
+        "label": "Personnes",
+        "text": "Personnes, organigramme, responsabilités et statistiques des membres."
+      },
+      "interaction": {
+        "label": "Participer",
+        "text": "Formulaires, chat, tâches, invitations et suivis."
+      },
+      "maps": {
+        "label": "Cartes",
+        "text": "Cartes, journal de bord et parcours."
+      }
+    },
+    "states": {
+      "title": "Ce que signifient les couleurs",
+      "intro": "En mode édition, chaque section a un cadre coloré. La couleur indique son statut. Tu le modifies en éditant la section, dans le champ «Statut».",
+      "draft": {
+        "label": "Brouillon",
+        "text": "La section est en cours. Seuls les admins de contenu la voient."
+      },
+      "inReview": {
+        "label": "Relecture",
+        "text": "La section est terminée et attend une relecture. Seuls les admins de contenu la voient."
+      },
+      "published": {
+        "label": "Publié",
+        "text": "La section est visible par toutes les personnes qui peuvent voir la page."
+      },
+      "inactive": {
+        "label": "Obsolète ou archivé",
+        "text": "La section n'est plus affichée, mais elle est conservée et peut être réactivée."
+      }
+    },
+    "editing": {
+      "title": "Éditer",
+      "toggle": "Tu actives et désactives le mode édition dans le menu en haut à droite.",
+      "click": "En mode édition, touche une section pour l'éditer, téléverser une image ou un fichier, ou la retirer de la page.",
+      "menu": "Dans le menu en haut à droite, tu ajoutes des sections nouvelles ou existantes, tu les tries et tu configures la page."
+    },
+    "internal": {
+      "title": "Publier en interne (dans l'app)",
+      "step1": "Mets le statut de la section sur «Publié». Le cadre devient vert.",
+      "step2": "Pour que la page soit trouvée, elle a besoin d'une entrée de menu. Le rôle de l'entrée détermine qui voit la page, par exemple seulement les membres connectés.",
+      "step3": "Les modifications d'une section publiée sont immédiatement visibles pour tous."
+    },
+    "external": {
+      "title": "Publier en externe (sur le site web)",
+      "step1": "Ouvre le plan du site web dans le menu «CMS - Website».",
+      "step2": "Ajoute la page à la structure du site web. La page doit être publique.",
+      "step3": "Seules les sections au statut «Publié» vont sur le site web.",
+      "step4": "Touche «Publier». Ce n'est qu'alors que les modifications apparaissent sur le site web. Après chaque nouvelle modification, tu publies à nouveau. Une version antérieure peut être restaurée."
+    }
   }
 }

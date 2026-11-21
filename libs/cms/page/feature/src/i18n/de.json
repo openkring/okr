@@ -355,5 +355,117 @@
     "okey": {
       "label": "Seitenschlüssel"
     }
+  },
+  "cmsHelp": {
+    "button": "Hilfe zum Bearbeiten",
+    "title": "So funktioniert das CMS",
+    "intro": "Mit dem CMS gestaltest du die Inhalte der App selbst. Alles ist in drei Ebenen aufgebaut: Menüs führen zu Seiten, und Seiten bestehen aus Sektionen.",
+    "structure": {
+      "title": "Menü, Seite und Sektion",
+      "menu": {
+        "label": "Menü",
+        "text": "Das Menü ist der Weg zu den Inhalten. Ein Menüeintrag zeigt auf eine Seite, öffnet eine Adresse oder löst eine Aktion aus. Die Rolle eines Eintrags bestimmt, wer ihn sieht."
+      },
+      "page": {
+        "label": "Seite",
+        "text": "Eine Seite ist der Rahmen für Inhalte. Sie hat einen Namen, einen Typ und eine geordnete Liste von Sektionen."
+      },
+      "section": {
+        "label": "Sektion",
+        "text": "Eine Sektion ist ein einzelner Inhaltsblock, zum Beispiel ein Artikel, eine Bildergalerie oder ein Kalender. Dieselbe Sektion kann auf mehreren Seiten vorkommen."
+      }
+    },
+    "menuTypes": {
+      "title": "Menü-Typen"
+    },
+    "pageTypes": {
+      "title": "Seiten-Typen",
+      "content": {
+        "label": "Content",
+        "text": "Die allgemeine Seite. Sie zeigt beliebige Sektionen in einem Raster nebeneinander und untereinander."
+      },
+      "dashboard": {
+        "label": "Dashboard",
+        "text": "Eine persönliche Übersicht mit Neuigkeiten, Terminen, Aufgaben und Nachrichten."
+      },
+      "blog": {
+        "label": "Blog",
+        "text": "Zeigt die Sektionen als Beiträge, in einem von sechs Layouts (zum Beispiel Raster, Magazin oder Stream)."
+      },
+      "landing": {
+        "label": "Homepage",
+        "text": "Die Startseite, oft mit einem grossen Titelbild."
+      },
+      "other": {
+        "label": "Weitere",
+        "text": "Chat, Dateien, Album und Sitemap sind spezialisierte Seiten mit fester Darstellung."
+      }
+    },
+    "sectionTypes": {
+      "title": "Sektions-Typen",
+      "text": {
+        "label": "Text",
+        "text": "Artikel, Akkordeon, Inhaltsverzeichnis, Button und Hero-Titel."
+      },
+      "media": {
+        "label": "Bilder und Medien",
+        "text": "Bilder, Album, Slider, Video und eingebettete Inhalte."
+      },
+      "events": {
+        "label": "Termine und News",
+        "text": "Kalender, Termine, Kurse, News und Mitteilungen."
+      },
+      "people": {
+        "label": "Personen",
+        "text": "Personen, Organigramm, Zuständigkeiten und Mitgliederstatistiken."
+      },
+      "interaction": {
+        "label": "Mitmachen",
+        "text": "Formulare, Chat, Aufgaben, Einladungen und Tracker."
+      },
+      "maps": {
+        "label": "Karten",
+        "text": "Karten, Fahrtenbuch und Strecken."
+      }
+    },
+    "states": {
+      "title": "Was die Farben bedeuten",
+      "intro": "Im Edit-Modus hat jede Sektion einen farbigen Rahmen. Die Farbe zeigt ihren Status. Du änderst ihn beim Bearbeiten der Sektion im Feld «Status».",
+      "draft": {
+        "label": "Entwurf",
+        "text": "Die Sektion ist in Arbeit. Nur Content-Admins sehen sie."
+      },
+      "inReview": {
+        "label": "Review",
+        "text": "Die Sektion ist fertig und wartet auf eine Durchsicht. Nur Content-Admins sehen sie."
+      },
+      "published": {
+        "label": "Veröffentlicht",
+        "text": "Die Sektion ist für alle sichtbar, die die Seite sehen dürfen."
+      },
+      "inactive": {
+        "label": "Veraltet oder archiviert",
+        "text": "Die Sektion wird nicht mehr angezeigt, bleibt aber erhalten und lässt sich wieder aktivieren."
+      }
+    },
+    "editing": {
+      "title": "Bearbeiten",
+      "toggle": "Den Edit-Modus schaltest du im Menü oben rechts ein und aus.",
+      "click": "Tippe im Edit-Modus auf eine Sektion, um sie zu bearbeiten, ein Bild oder eine Datei hochzuladen oder sie von der Seite zu entfernen.",
+      "menu": "Im Menü oben rechts fügst du neue oder bestehende Sektionen hinzu, sortierst sie und konfigurierst die Seite."
+    },
+    "internal": {
+      "title": "Intern veröffentlichen (in der App)",
+      "step1": "Setze den Status der Sektion auf «Veröffentlicht». Der Rahmen wird grün.",
+      "step2": "Damit die Seite gefunden wird, braucht sie einen Menüeintrag. Die Rolle des Eintrags bestimmt, wer die Seite sieht, zum Beispiel nur angemeldete Mitglieder.",
+      "step3": "Änderungen an einer veröffentlichten Sektion sind sofort für alle sichtbar."
+    },
+    "external": {
+      "title": "Extern veröffentlichen (auf der Website)",
+      "step1": "Öffne im Menü «CMS - Website» die Sitemap der Website.",
+      "step2": "Füge die Seite dort in die Struktur der Website ein. Die Seite muss öffentlich sein.",
+      "step3": "Auf die Website kommen nur Sektionen mit dem Status «Veröffentlicht».",
+      "step4": "Tippe auf «Veröffentlichen». Erst dann erscheinen die Änderungen auf der Website. Nach jeder weiteren Änderung veröffentlichst du erneut. Eine frühere Version lässt sich wiederherstellen."
+    }
   }
 }

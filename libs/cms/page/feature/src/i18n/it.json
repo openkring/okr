@@ -355,5 +355,117 @@
     "okey": {
       "label": "Chiave della pagina"
     }
+  },
+  "cmsHelp": {
+    "button": "Aiuto per la modifica",
+    "title": "Come funziona il CMS",
+    "intro": "Con il CMS crei tu stesso i contenuti dell'app. Tutto è organizzato su tre livelli: i menu portano alle pagine, e le pagine sono composte da sezioni.",
+    "structure": {
+      "title": "Menu, pagina e sezione",
+      "menu": {
+        "label": "Menu",
+        "text": "Il menu è la strada verso i contenuti. Una voce di menu porta a una pagina, apre un indirizzo o avvia un'azione. Il ruolo di una voce decide chi la vede."
+      },
+      "page": {
+        "label": "Pagina",
+        "text": "Una pagina è la cornice dei contenuti. Ha un nome, un tipo e un elenco ordinato di sezioni."
+      },
+      "section": {
+        "label": "Sezione",
+        "text": "Una sezione è un singolo blocco di contenuto, per esempio un articolo, una galleria di immagini o un calendario. La stessa sezione può comparire su più pagine."
+      }
+    },
+    "menuTypes": {
+      "title": "Tipi di menu"
+    },
+    "pageTypes": {
+      "title": "Tipi di pagina",
+      "content": {
+        "label": "Contenuto",
+        "text": "La pagina generica. Mostra sezioni qualsiasi in una griglia, affiancate e una sotto l'altra."
+      },
+      "dashboard": {
+        "label": "Dashboard",
+        "text": "Una panoramica personale con notizie, appuntamenti, compiti e messaggi."
+      },
+      "blog": {
+        "label": "Blog",
+        "text": "Mostra le sezioni come articoli, in uno di sei layout (per esempio griglia, rivista o flusso)."
+      },
+      "landing": {
+        "label": "Homepage",
+        "text": "La pagina iniziale, spesso con una grande immagine di titolo."
+      },
+      "other": {
+        "label": "Altre",
+        "text": "Chat, file, album e mappa del sito sono pagine specializzate con una presentazione fissa."
+      }
+    },
+    "sectionTypes": {
+      "title": "Tipi di sezione",
+      "text": {
+        "label": "Testo",
+        "text": "Articolo, fisarmonica, indice, pulsante e titolo hero."
+      },
+      "media": {
+        "label": "Immagini e media",
+        "text": "Immagini, album, slider, video e contenuti incorporati."
+      },
+      "events": {
+        "label": "Appuntamenti e notizie",
+        "text": "Calendario, appuntamenti, corsi, notizie e comunicazioni."
+      },
+      "people": {
+        "label": "Persone",
+        "text": "Persone, organigramma, responsabilità e statistiche dei soci."
+      },
+      "interaction": {
+        "label": "Partecipare",
+        "text": "Moduli, chat, compiti, inviti e tracker."
+      },
+      "maps": {
+        "label": "Mappe",
+        "text": "Mappe, giornale di bordo e percorsi."
+      }
+    },
+    "states": {
+      "title": "Cosa significano i colori",
+      "intro": "In modalità modifica ogni sezione ha una cornice colorata. Il colore mostra il suo stato. Lo cambi modificando la sezione, nel campo «Stato».",
+      "draft": {
+        "label": "Bozza",
+        "text": "La sezione è in lavorazione. La vedono solo gli amministratori dei contenuti."
+      },
+      "inReview": {
+        "label": "Revisione",
+        "text": "La sezione è pronta e attende una revisione. La vedono solo gli amministratori dei contenuti."
+      },
+      "published": {
+        "label": "Pubblicato",
+        "text": "La sezione è visibile a tutte le persone che possono vedere la pagina."
+      },
+      "inactive": {
+        "label": "Obsoleto o archiviato",
+        "text": "La sezione non viene più mostrata, ma resta conservata e può essere riattivata."
+      }
+    },
+    "editing": {
+      "title": "Modificare",
+      "toggle": "Attivi e disattivi la modalità modifica nel menu in alto a destra.",
+      "click": "In modalità modifica tocca una sezione per modificarla, caricare un'immagine o un file, o toglierla dalla pagina.",
+      "menu": "Nel menu in alto a destra aggiungi sezioni nuove o esistenti, le ordini e configuri la pagina."
+    },
+    "internal": {
+      "title": "Pubblicare internamente (nell'app)",
+      "step1": "Imposta lo stato della sezione su «Pubblicato». La cornice diventa verde.",
+      "step2": "Perché la pagina sia trovata le serve una voce di menu. Il ruolo della voce decide chi vede la pagina, per esempio solo i soci che hanno effettuato l'accesso.",
+      "step3": "Le modifiche a una sezione pubblicata sono subito visibili a tutti."
+    },
+    "external": {
+      "title": "Pubblicare esternamente (sul sito web)",
+      "step1": "Apri la mappa del sito web nel menu «CMS - Website».",
+      "step2": "Aggiungi lì la pagina alla struttura del sito web. La pagina deve essere pubblica.",
+      "step3": "Sul sito web arrivano solo le sezioni con lo stato «Pubblicato».",
+      "step4": "Tocca «Pubblica». Solo allora le modifiche appaiono sul sito web. Dopo ogni ulteriore modifica pubblichi di nuovo. Si può ripristinare una versione precedente."
+    }
   }
 }

@@ -355,5 +355,117 @@
     "okey": {
       "label": "Page key"
     }
+  },
+  "cmsHelp": {
+    "button": "Editing help",
+    "title": "How the CMS works",
+    "intro": "With the CMS you shape the app's content yourself. Everything is built in three levels: menus lead to pages, and pages consist of sections.",
+    "structure": {
+      "title": "Menu, page and section",
+      "menu": {
+        "label": "Menu",
+        "text": "The menu is the way to the content. A menu entry points to a page, opens an address or triggers an action. The role of an entry decides who sees it."
+      },
+      "page": {
+        "label": "Page",
+        "text": "A page is the frame for content. It has a name, a type and an ordered list of sections."
+      },
+      "section": {
+        "label": "Section",
+        "text": "A section is a single block of content, for example an article, an image gallery or a calendar. The same section can appear on several pages."
+      }
+    },
+    "menuTypes": {
+      "title": "Menu types"
+    },
+    "pageTypes": {
+      "title": "Page types",
+      "content": {
+        "label": "Content",
+        "text": "The general page. It shows any sections in a grid, side by side and one below the other."
+      },
+      "dashboard": {
+        "label": "Dashboard",
+        "text": "A personal overview with news, events, tasks and messages."
+      },
+      "blog": {
+        "label": "Blog",
+        "text": "Shows the sections as posts, in one of six layouts (for example grid, magazine or stream)."
+      },
+      "landing": {
+        "label": "Homepage",
+        "text": "The start page, often with a large title image."
+      },
+      "other": {
+        "label": "Others",
+        "text": "Chat, files, album and sitemap are specialised pages with a fixed layout."
+      }
+    },
+    "sectionTypes": {
+      "title": "Section types",
+      "text": {
+        "label": "Text",
+        "text": "Article, accordion, table of contents, button and hero title."
+      },
+      "media": {
+        "label": "Images and media",
+        "text": "Images, album, slider, video and embedded content."
+      },
+      "events": {
+        "label": "Events and news",
+        "text": "Calendar, events, courses, news and notices."
+      },
+      "people": {
+        "label": "People",
+        "text": "People, org chart, responsibilities and member statistics."
+      },
+      "interaction": {
+        "label": "Taking part",
+        "text": "Forms, chat, tasks, invitations and trackers."
+      },
+      "maps": {
+        "label": "Maps",
+        "text": "Maps, logbook and tracks."
+      }
+    },
+    "states": {
+      "title": "What the colours mean",
+      "intro": "In edit mode every section has a coloured frame. The colour shows its status. You change it when editing the section, in the field «Status».",
+      "draft": {
+        "label": "Draft",
+        "text": "The section is work in progress. Only content admins see it."
+      },
+      "inReview": {
+        "label": "Review",
+        "text": "The section is finished and waits for a review. Only content admins see it."
+      },
+      "published": {
+        "label": "Published",
+        "text": "The section is visible to everyone who may see the page."
+      },
+      "inactive": {
+        "label": "Outdated or archived",
+        "text": "The section is no longer shown, but it is kept and can be activated again."
+      }
+    },
+    "editing": {
+      "title": "Editing",
+      "toggle": "You switch edit mode on and off in the menu at the top right.",
+      "click": "In edit mode, tap a section to edit it, upload an image or a file, or remove it from the page.",
+      "menu": "In the menu at the top right you add new or existing sections, sort them and configure the page."
+    },
+    "internal": {
+      "title": "Publish internally (in the app)",
+      "step1": "Set the status of the section to «Published». The frame turns green.",
+      "step2": "For the page to be found it needs a menu entry. The role of the entry decides who sees the page, for example only logged-in members.",
+      "step3": "Changes to a published section are visible to everyone right away."
+    },
+    "external": {
+      "title": "Publish externally (on the website)",
+      "step1": "Open the website sitemap in the menu «CMS - Website».",
+      "step2": "Add the page to the structure of the website there. The page must be public.",
+      "step3": "Only sections with the status «Published» go to the website.",
+      "step4": "Tap «Publish». Only then do the changes appear on the website. After every further change you publish again. An earlier version can be restored."
+    }
   }
 }
