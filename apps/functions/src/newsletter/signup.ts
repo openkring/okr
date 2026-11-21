@@ -198,14 +198,20 @@ export async function sendSignupConfirmation(db: Firestore, signupKey: string, s
       subject: `Bitte bestätige deine Anmeldung zum Newsletter ${group.name}`,
       html,
     });
+  } catch (e) {
+    // a short code only: the provider's response can echo the address
+    logger.error(`${CF_NAME}: failed to send confirmation tenant=${tenantId} code=${mailErrorCode(e)}`);
+    return;
+  }
+  logger.info(`${CF_NAME}: confirmation sent tenant=${tenantId}`);
+  try {
     await db.collection(NewsletterSignupCollection).doc(signupKey).update({
       mailboxKey: mailboxKey(signup.email),
       mailedAt: toStoreDateTime(ctx.now ?? new Date()),
     });
-    logger.info(`${CF_NAME}: confirmation sent tenant=${tenantId}`);
-  } catch (e) {
-    // a short code only: the provider's response can echo the address
-    logger.error(`${CF_NAME}: failed to send confirmation tenant=${tenantId} code=${mailErrorCode(e)}`);
+  } catch {
+    // the mail is out; only the 24 h dedupe marker is missing
+    logger.error(`${CF_NAME}: marker write failed after a successful send tenant=${tenantId}`);
   }
 }
 

@@ -112,6 +112,59 @@ describe('submitNewsletterSignup', () => {
   });
 });
 
+describe('mailboxKey', () => {
+  it('folds gmail variants to one mailbox', () => {
+    expect(mailboxKey('a.b+x@GMail.com')).toBe(mailboxKey('ab@googlemail.com'));
+    expect(mailboxKey('ab@googlemail.com')).toBe('ab@gmail.com');
+  });
+  it('strips a +tag and keeps dots on other domains', () => {
+    expect(mailboxKey('a+x@example.ch')).toBe('a@example.ch');
+    expect(mailboxKey('a.b@example.ch')).toBe('a.b@example.ch');
+  });
+});
+
+describe('sendSignupConfirmation dedupe', () => {
+  const at = { ...ctx, now: NOW };
+  const run = async (key: string) => sendSignupConfirmation(fakeDb(store), key, store[`newsletterSignups/${key}`] as never, at);
+
+  it('marks the signup mailed, and skips a variant of the same mailbox mailed < 24 h ago', async () => {
+    store['newsletterSignups/s1'] = signup({ email: 'a.b@gmail.com' });
+    store['newsletterSignups/s2'] = signup({ email: 'ab+x@googlemail.com' });
+    await run('s1');
+    expect(store['newsletterSignups/s1']).toMatchObject({ mailboxKey: 'ab@gmail.com', mailedAt: '20261121110000' });
+    await run('s2');
+    expect(h.send).toHaveBeenCalledTimes(1);
+  });
+  it('sends when the earlier mail was >= 24 h ago', async () => {
+    store['newsletterSignups/s1'] = signup({ mailboxKey: 'anna@example.ch', mailedAt: '20261120100000' });
+    store['newsletterSignups/s2'] = signup();
+    await run('s2');
+    expect(h.send).toHaveBeenCalledTimes(1);
+  });
+  it('sends for a different group of the same mailbox', async () => {
+    store['newsletterSignups/s1'] = signup({ mailboxKey: 'anna@example.ch', mailedAt: '20261121100000', groupKey: 'other' });
+    store['newsletterSignups/s2'] = signup();
+    await run('s2');
+    expect(h.send).toHaveBeenCalledTimes(1);
+  });
+  it('sends when the earlier signup has expired', async () => {
+    store['newsletterSignups/s1'] = signup({ mailboxKey: 'anna@example.ch', mailedAt: '20261121100000', expiresAt: '20261121105959' });
+    store['newsletterSignups/s2'] = signup();
+    await run('s2');
+    expect(h.send).toHaveBeenCalledTimes(1);
+  });
+  it('a failing marker write is logged as such and the mail still counts as sent', async () => {
+    store['newsletterSignups/s1'] = signup();
+    const db = fakeDb(store);
+    const failing = { collection: (n: string) => ({ ...(db.collection(n) as object), doc: (id: string) => ({ ...(db.collection(n).doc(id) as object), update: async () => { throw new Error('x'); } }), where: (db.collection(n) as never as { where: unknown }).where }) } as never;
+    await sendSignupConfirmation(failing, 's1', store['newsletterSignups/s1'] as never, at);
+    expect(h.send).toHaveBeenCalledTimes(1);
+    const logs = h.logs.join('\n');
+    expect(logs).toContain('marker write failed');
+    expect(logs).not.toContain('failed to send');
+  });
+});
+
 describe('checkNewsletterGroup', () => {
   it('accepts a live newsletter of the tenant and returns its name and subTitle', async () => {
     expect(await checkNewsletterGroup(fakeDb(store), T, 'nl1')).toEqual({ ok: true, name: 'Dorfnews', subTitle: 'Neues aus dem Dorf' });
