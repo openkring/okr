@@ -11,7 +11,7 @@ import { NewsletterSubscriptionModel } from '@okr/shared-models';
 import { AlertService, showToast } from '@okr/shared-util-angular';
 import { fill, nameMatches } from '@okr/shared-util-core';
 
-import { openBulkEmailFlow, type VersandRecipient } from '@okr/content-pdf-template-feature';
+import type { VersandRecipient } from '@okr/content-pdf-template-feature';
 import { NewsletterSubscriptionService } from '@okr/relationship-newsletter-data-access';
 import { activeSubscribers, canSeeSubscribers, NEWSLETTER_I18N_KEYS } from '@okr/relationship-newsletter-util';
 import { isNewsletterGroup } from '@okr/subject-group-util';
@@ -100,6 +100,8 @@ export const NewsletterStore = signalStore(
         name: s.personName,
         email: store.appStore.getDirectoryEntry(`person.${s.personKey}`)?.favEmail ?? '',
       }));
+      // loaded on demand: the Versand flow is heavy and this lib is also imported by the profile page
+      const { openBulkEmailFlow } = await import('@okr/content-pdf-template-feature');
       await openBulkEmailFlow({
         modalController: store.modalController,
         firestoreService: store.firestoreService,
