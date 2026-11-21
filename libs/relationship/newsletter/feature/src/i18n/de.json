@@ -13,5 +13,12 @@
   "unsubscribe_conf": "{name} ist abgemeldet.",
   "unsubscribe_error": "Die Abmeldung hat nicht geklappt. Versuche es bitte später nochmals.",
   "not_allowed": "Die Abonnenten dieses Newsletters sehen nur die Mitgliederverwaltung, der Vorstand und die Verantwortlichen des Newsletters.",
-  "not_found": "Diesen Newsletter gibt es nicht."
+  "not_found": "Diesen Newsletter gibt es nicht.",
+  "my_title": "Newsletter",
+  "my_empty": "Du hast keinen Newsletter abonniert.",
+  "leave": "Abbestellen",
+  "leave_notice": "Newsletter abbestellen",
+  "leave_confirm": "Möchtest du den Newsletter {name} abbestellen?",
+  "leave_done": "Du bist abgemeldet.",
+  "leave_error": "Das Abbestellen hat nicht geklappt. Versuche es bitte später nochmals."
 }

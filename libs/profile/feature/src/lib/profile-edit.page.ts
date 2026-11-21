@@ -18,6 +18,7 @@ import { DataRightsAccordion } from './data-rights.accordion';
 import { PasskeysAccordion } from '@okr/auth-feature';
 import { MaintenanceAccordion } from './maintenance.accordion';
 import { HouseholdAccordion } from './household.accordion';
+import { MyNewsletters } from '@okr/relationship-newsletter-feature';
 
 @Component({
   selector: 'okr-profile-edit-page',
@@ -26,7 +27,7 @@ import { HouseholdAccordion } from './household.accordion';
     AsyncPipe,
     AvatarToolbar, Header, AddressesAccordion, ProfileDataAccordion,
     ChangeConfirmation, ProfileSettingsAccordion, ProfilePrivacyAccordion, EmailSignatureAccordion,
-    DataRightsAccordion, MaintenanceAccordion, HouseholdAccordion, PasskeysAccordion, ProfileDiarySourcesAccordion, ProfileDiaryRequestsAccordion,
+    DataRightsAccordion, MaintenanceAccordion, HouseholdAccordion, MyNewsletters, PasskeysAccordion, ProfileDiarySourcesAccordion, ProfileDiaryRequestsAccordion,
     IonContent, IonItem, IonAccordionGroup, IonLabel, IonCard, IonCardContent
   ],
   providers: [ProfileStore],
@@ -87,6 +88,8 @@ import { HouseholdAccordion } from './household.accordion';
                 (dirty)="formDirty.set($event)"
               />
             }
+            <!-- spec 1.169 §5.9: the user's newsletters; hidden without a person -->
+            <okr-my-newsletters />
             <!-- spec 1.77 §12.4: only in a diary app, with something to collect -->
             @if (sourcesFormData(); as sourcesData) {
               <okr-profile-diary-sources-accordion

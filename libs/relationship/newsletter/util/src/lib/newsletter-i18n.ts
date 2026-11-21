@@ -17,6 +17,14 @@ export const NEWSLETTER_I18N_KEYS = {
   unsubscribe_error:   PFX + 'unsubscribe_error',
   not_allowed:         PFX + 'not_allowed',
   not_found:           PFX + 'not_found',
+  my_title:            PFX + 'my_title',
+  my_empty:            PFX + 'my_empty',
+  leave:               PFX + 'leave',
+  leave_notice:        PFX + 'leave_notice',
+  // single braces `{name}`, filled with `fill()`
+  leave_confirm:       PFX + 'leave_confirm',
+  leave_done:          PFX + 'leave_done',
+  leave_error:         PFX + 'leave_error',
   as_title:            '@actionsheet.title',
   cancel:              '@cancel',
 } satisfies Record<string, string>;

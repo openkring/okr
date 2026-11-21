@@ -13,5 +13,12 @@
   "unsubscribe_conf": "{name} est désabonné·e.",
   "unsubscribe_error": "Le désabonnement n'a pas fonctionné. Réessaie plus tard.",
   "not_allowed": "Seuls la gestion des membres, le comité et les responsables de cette newsletter voient ses abonnés.",
-  "not_found": "Cette newsletter n'existe pas."
+  "not_found": "Cette newsletter n'existe pas.",
+  "my_title": "Newsletter",
+  "my_empty": "Tu n'es abonné à aucune newsletter.",
+  "leave": "Se désabonner",
+  "leave_notice": "Se désabonner de la newsletter",
+  "leave_confirm": "Veux-tu te désabonner de la newsletter {name} ?",
+  "leave_done": "Tu es désabonné.",
+  "leave_error": "Le désabonnement n'a pas fonctionné. Réessaie plus tard, s'il te plaît."
 }

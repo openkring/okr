@@ -18,6 +18,8 @@
     "@okr/shared-feature": "*",
     "@okr/shared-util-angular": "*",
     "@okr/calendar-calevent-data-access": "*",
-    "@okr/calendar-calevent-feature": "*"
+    "@okr/calendar-calevent-feature": "*",
+    "@okr/relationship-newsletter-data-access": "*",
+    "@okr/relationship-newsletter-util": "*"
   }
 }

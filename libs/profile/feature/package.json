@@ -30,6 +30,7 @@
     "@okr/tenant-feature": "*",
     "@okr/relationship-household-data-access": "*",
     "@okr/relationship-household-feature": "*",
-    "@okr/relationship-household-util": "*"
+    "@okr/relationship-household-util": "*",
+    "@okr/relationship-newsletter-feature": "*"
   }
 }

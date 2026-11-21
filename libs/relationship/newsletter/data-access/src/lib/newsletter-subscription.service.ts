@@ -1,11 +1,22 @@
 import { inject, Injectable } from '@angular/core';
+import { AlertController, ToastController } from '@ionic/angular';
 import { Observable } from 'rxjs';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { FirestoreService } from '@okr/shared-data-access';
+import { confirm, showToast } from '@okr/shared-util-angular';
 import { DbQuery, NewsletterSubscriptionCollection, NewsletterSubscriptionModel } from '@okr/shared-models';
 import { isActiveSubscription } from '@okr/relationship-newsletter-util';
+
+/** The texts of the subscriber's «abbestellen» dialog and its toasts, already translated. */
+export interface LeaveTexts {
+  confirm: string;
+  ok: string;
+  cancel: string;
+  done: string;
+  error: string;
+}
 
 /**
  * Reads newsletter subscriptions (spec 1.169 §5.8). The client never writes one: subscribe, confirm,
@@ -19,6 +30,8 @@ import { isActiveSubscription } from '@okr/relationship-newsletter-util';
 @Injectable({ providedIn: 'root' })
 export class NewsletterSubscriptionService {
   private readonly firestoreService = inject(FirestoreService);
+  private readonly alertController = inject(AlertController);
+  private readonly toastController = inject(ToastController);
   private readonly functions = getFunctions(getApp(), 'europe-west6');
 
   /** All subscriptions of a newsletter, ended and archived ones included (filter with `isActiveSubscription`). */
@@ -55,6 +68,24 @@ export class NewsletterSubscriptionService {
   public async leave(tenantId: string, subscriptionKey: string): Promise<void> {
     const fn = httpsCallable<{ tenantId: string; subscriptionKey: string }, { ok: true }>(this.functions, 'leaveNewsletter');
     await fn({ tenantId, subscriptionKey });
+  }
+
+  /**
+   * The subscriber's own «abbestellen»: asks first (Abbestellen / Abbrechen), ends the subscription through
+   * `leave`, and answers with a toast. Resolves true only when the subscription ended.
+   */
+  public async leaveWithConfirm(tenantId: string, subscriptionKey: string, texts: LeaveTexts): Promise<boolean> {
+    const confirmed = await confirm(this.alertController, texts.confirm, texts.ok, texts.cancel, true);
+    if (!confirmed) return false;
+    try {
+      await this.leave(tenantId, subscriptionKey);
+      await showToast(this.toastController, texts.done);
+      return true;
+    } catch (err) {
+      console.error('NewsletterSubscriptionService.leaveWithConfirm: leaveNewsletter failed', err);
+      await showToast(this.toastController, texts.error);
+      return false;
+    }
   }
 
   private query(tenantId: string, key: 'groupKey' | 'personKey', value: string): DbQuery[] {

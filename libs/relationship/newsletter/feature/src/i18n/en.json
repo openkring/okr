@@ -13,5 +13,12 @@
   "unsubscribe_conf": "{name} is unsubscribed.",
   "unsubscribe_error": "Unsubscribing did not work. Please try again later.",
   "not_allowed": "Only the member administration, the board and the people in charge of this newsletter see its subscribers.",
-  "not_found": "This newsletter does not exist."
+  "not_found": "This newsletter does not exist.",
+  "my_title": "Newsletter",
+  "my_empty": "You have not subscribed to any newsletter.",
+  "leave": "Unsubscribe",
+  "leave_notice": "Unsubscribe from newsletter",
+  "leave_confirm": "Do you want to unsubscribe from the newsletter {name}?",
+  "leave_done": "You are unsubscribed.",
+  "leave_error": "Unsubscribing did not work. Please try again later."
 }

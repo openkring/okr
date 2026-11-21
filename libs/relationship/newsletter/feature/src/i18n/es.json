@@ -13,5 +13,12 @@
   "unsubscribe_conf": "{name} se ha dado de baja.",
   "unsubscribe_error": "No se pudo dar de baja. Vuelve a intentarlo más tarde.",
   "not_allowed": "Solo la gestión de miembros, la junta y los responsables de este boletín ven sus suscriptores.",
-  "not_found": "Este boletín no existe."
+  "not_found": "Este boletín no existe.",
+  "my_title": "Newsletter",
+  "my_empty": "No estás suscrito a ningún boletín.",
+  "leave": "Cancelar suscripción",
+  "leave_notice": "Cancelar la suscripción al boletín",
+  "leave_confirm": "¿Quieres cancelar tu suscripción al boletín {name}?",
+  "leave_done": "Has cancelado tu suscripción.",
+  "leave_error": "No se pudo cancelar la suscripción. Inténtalo de nuevo más tarde."
 }

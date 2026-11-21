@@ -19,6 +19,7 @@
   "references": [
     { "path": "../util/tsconfig.lib.json" },
     { "path": "../../../shared/data-access/tsconfig.lib.json" },
-    { "path": "../../../shared/models/tsconfig.lib.json" }
+    { "path": "../../../shared/models/tsconfig.lib.json" },
+    { "path": "../../../shared/util-angular/tsconfig.lib.json" }
   ]
 }

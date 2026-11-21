@@ -13,5 +13,12 @@
   "unsubscribe_conf": "{name} è disiscritto/a.",
   "unsubscribe_error": "La disiscrizione non è riuscita. Riprova più tardi.",
   "not_allowed": "Solo la gestione dei membri, il comitato e i responsabili di questa newsletter vedono i suoi iscritti.",
-  "not_found": "Questa newsletter non esiste."
+  "not_found": "Questa newsletter non esiste.",
+  "my_title": "Newsletter",
+  "my_empty": "Non sei iscritto a nessuna newsletter.",
+  "leave": "Annulla l'iscrizione",
+  "leave_notice": "Annulla l'iscrizione alla newsletter",
+  "leave_confirm": "Vuoi annullare l'iscrizione alla newsletter {name}?",
+  "leave_done": "Hai annullato l'iscrizione.",
+  "leave_error": "L'annullamento non è riuscito. Riprova più tardi."
 }

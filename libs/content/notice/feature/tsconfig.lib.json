@@ -21,6 +21,8 @@
     { "path": "../../../calendar/calevent/feature/tsconfig.lib.json" },
     { "path": "../data-access/tsconfig.lib.json" },
     { "path": "../util/tsconfig.lib.json" },
+    { "path": "../../../relationship/newsletter/data-access/tsconfig.lib.json" },
+    { "path": "../../../relationship/newsletter/util/tsconfig.lib.json" },
     { "path": "../../../shared/config/tsconfig.lib.json" },
     { "path": "../../../shared/feature/tsconfig.lib.json" },
     { "path": "../../../shared/i18n/tsconfig.lib.json" },

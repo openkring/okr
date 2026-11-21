@@ -2,21 +2,23 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import {
-  IonBackButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle,
+  IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle,
   IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonNote, IonTitle, IonToolbar, ModalController,
 } from '@ionic/angular';
 import { catchError, combineLatest, map, Observable, of } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
 import { I18nService } from '@okr/shared-i18n';
-import { CalEventModel, NoticeAttachment, NoticeModel } from '@okr/shared-models';
+import { CalEventModel, NewsletterSubscriptionModel, NoticeAttachment, NoticeModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Spinner } from '@okr/shared-ui';
-import { convertDateFormatToString, DateFormat, prettyFormatDateTime } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, fill, prettyFormatDateTime } from '@okr/shared-util-core';
 import { AppStore } from '@okr/shared-feature';
 import { CalEventService } from '@okr/calendar-calevent-data-access';
 import { NoticeService } from '@okr/content-notice-data-access';
 import { NOTICE_I18N_KEYS, NoticeI18n } from '@okr/content-notice-util';
+import { NewsletterSubscriptionService } from '@okr/relationship-newsletter-data-access';
+import { isActiveSubscription, NEWSLETTER_I18N_KEYS, NewsletterI18n } from '@okr/relationship-newsletter-util';
 
 /**
  * One Mitteilung (spec 1.145 §10), opened from the dashboard section or from its push
@@ -28,7 +30,7 @@ import { NOTICE_I18N_KEYS, NoticeI18n } from '@okr/content-notice-util';
   standalone: true,
   imports: [
     SvgIconPipe, EmptyList, Spinner,
-    IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent,
+    IonHeader, IonToolbar, IonButton, IonButtons, IonBackButton, IonTitle, IonContent,
     IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent,
     IonList, IonListHeader, IonItem, IonLabel, IonIcon, IonNote,
   ],
@@ -58,6 +60,11 @@ import { NOTICE_I18N_KEYS, NoticeI18n } from '@okr/content-notice-util';
           </ion-card-header>
           <ion-card-content>
             <div class="body" [innerHTML]="notice.body"></div>
+            @if (newsletterSubscription(); as subscription) {
+              <ion-button fill="outline" size="small" class="ion-margin-top" [disabled]="leaving()" (click)="leaveNewsletter(subscription)">
+                {{ newsletterI18n.leave_notice() }}
+              </ion-button>
+            }
           </ion-card-content>
         </ion-card>
         @if (events().length > 0) {
@@ -109,6 +116,9 @@ export class NoticePage {
   private readonly modalController = inject(ModalController);
   protected readonly i18n = inject(I18nService).translateAll(NOTICE_I18N_KEYS) as NoticeI18n;
 
+  private readonly subscriptionService = inject(NewsletterSubscriptionService);
+  protected readonly newsletterI18n = inject(I18nService).translateAll(NEWSLETTER_I18N_KEYS) as NewsletterI18n;
+
   private readonly noticeResource = rxResource<NoticeModel | undefined, string>({
     params: () => this.noticeKey(),
     // a rules denial must not leave the resource in error state (value() would throw)
@@ -133,6 +143,21 @@ export class NoticePage {
   protected readonly events = computed(() => this.eventsResource.hasValue() ? this.eventsResource.value() : []);
   protected readonly sentAt = computed(() => prettyFormatDateTime(this.notice()?.sentAt));
   protected readonly attachmentFailed = signal(false);
+  /** The reader's own subscriptions, read only for a newsletter notice and a reader with a person. */
+  private readonly subscriptionsResource = rxResource<NewsletterSubscriptionModel[], { groupKey: string; personKey: string }>({
+    params: () => ({ groupKey: this.notice()?.newsletterGroupKey ?? '', personKey: this.appStore.currentUser()?.personKey ?? '' }),
+    stream: ({ params }) => params.groupKey === '' || params.personKey === ''
+      ? of([])
+      : this.subscriptionService.listMine(this.env.tenantId, params.personKey).pipe(catchError(() => of([]))),
+  });
+  /** The reader's active subscription to the notice's newsletter; undefined hides the «Newsletter abbestellen» button. */
+  protected readonly newsletterSubscription = computed(() => {
+    const groupKey = this.notice()?.newsletterGroupKey ?? '';
+    if (groupKey === '' || !this.subscriptionsResource.hasValue() || this.left()) return undefined;
+    return this.subscriptionsResource.value().find((s) => s.groupKey === groupKey && isActiveSubscription(s));
+  });
+  protected readonly leaving = signal(false);
+  private readonly left = signal(false);
   /** the notice already marked as read in this view */
   private markedRead = '';
 
@@ -148,6 +173,22 @@ export class NoticePage {
         void this.noticeService.markRead(notice, personKey);
       });
     });
+  }
+
+  protected async leaveNewsletter(subscription: NewsletterSubscriptionModel): Promise<void> {
+    this.leaving.set(true);
+    try {
+      const done = await this.subscriptionService.leaveWithConfirm(this.env.tenantId, subscription.okey, {
+        confirm: fill(this.newsletterI18n.leave_confirm(), { name: subscription.groupName }),
+        ok: this.newsletterI18n.leave(),
+        cancel: this.newsletterI18n.cancel(),
+        done: this.newsletterI18n.leave_done(),
+        error: this.newsletterI18n.leave_error(),
+      });
+      if (done) this.left.set(true);
+    } finally {
+      this.leaving.set(false);
+    }
   }
 
   protected eventWhen(event: CalEventModel): string {

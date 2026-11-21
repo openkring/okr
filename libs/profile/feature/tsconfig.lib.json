@@ -27,6 +27,7 @@
     { "path": "../../relationship/household/data-access/tsconfig.lib.json" },
     { "path": "../../relationship/household/feature/tsconfig.lib.json" },
     { "path": "../../relationship/household/util/tsconfig.lib.json" },
+    { "path": "../../relationship/newsletter/feature/tsconfig.lib.json" },
     { "path": "../../shared/categories/tsconfig.lib.json" },
     { "path": "../../shared/data-access/tsconfig.lib.json" },
     { "path": "../../shared/feature/tsconfig.lib.json" },
