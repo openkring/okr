@@ -228,6 +228,14 @@ describe('hasOtherTenantLink', () => {
     expect(await linked()).toBe(true);
   });
 
+  it('counts a live household of the tenant, not an archived one (spec 1.168)', async () => {
+    store['newsletterSubscriptions/s1']['dateOfExit'] = TODAY;
+    store['households/h1'] = { tenants: [T], memberKeys: ['other', P], isArchived: true };
+    expect(await linked()).toBe(false);
+    store['households/h1'] = { tenants: [T], memberKeys: ['other', P], isArchived: false };
+    expect(await linked()).toBe(true);
+  });
+
   it('ignores records of another tenant and an org with the same key', async () => {
     store['newsletterSubscriptions/s1']['dateOfExit'] = TODAY;
     store['users/u1'] = { personKey: P, tenants: ['t2'] };

@@ -99,6 +99,13 @@ describe('householdsForCaller', () => {
     expect(read).toHaveBeenCalledWith(['kid']);
   });
 
+  it('returns no households on a newsletter send, also to an elevated caller, and reads nothing', async () => {
+    const read = vi.fn(async () => [household]);
+    await expect(householdsForCaller(undefined, ['kid'], read, true)).resolves.toEqual([]);
+    await expect(householdsForCaller(['kid'], ['kid'], read, true)).resolves.toEqual([]);
+    expect(read).not.toHaveBeenCalled();
+  });
+
   it('reads nothing without admitted keys', async () => {
     const read = vi.fn(async () => [household]);
     await expect(householdsForCaller(undefined, [], read)).resolves.toEqual([]);

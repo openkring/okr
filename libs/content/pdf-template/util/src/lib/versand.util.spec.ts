@@ -235,6 +235,19 @@ describe('applyHouseholds', () => {
     expect(out.deliveries).toBe(deliveries);
   });
 
+  it('combines nothing on a newsletter send: every subscriber gets their own mail with their own unsubscribe link', () => {
+    const rows = [kid1, kid2];
+    const deliveries = { k1: [P, E], k2: [P, E] };
+    const out = applyHouseholds(rows, deliveries, [household({ bundle: { post: true, email: true, inApp: true } })], new Set(), { newsletter: true });
+    expect(out.rows).toBe(rows);
+    expect(out.deliveries).toBe(deliveries);
+  });
+
+  it('combines as before when newsletter is false', () => {
+    const { deliveries } = applyHouseholds([kid1, kid2], { k1: [P], k2: [P] }, [household()], new Set(), { newsletter: false });
+    expect(deliveries['household.h1']).toEqual([P]);
+  });
+
   it('combines as before when hasAnswers is false', () => {
     const { deliveries } = applyHouseholds([kid1, kid2], { k1: [P], k2: [P] }, [household()], new Set(), { hasAnswers: false });
     expect(deliveries['household.h1']).toEqual([P]);

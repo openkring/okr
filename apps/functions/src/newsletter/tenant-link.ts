@@ -13,7 +13,7 @@ import { logger } from 'firebase-functions/v2';
 
 import {
   AddressCollection, ApplicationCollection, AssetCollection, BillCollection, BookingCollection, CompetitionLevelCollection,
-  ContractCollection, ContractDocumentCollection, CourseCollection, GroupCollection, InvoiceCollection,
+  ContractCollection, ContractDocumentCollection, CourseCollection, GroupCollection, HouseholdCollection, InvoiceCollection,
   InvoicePositionCollection, LegacyMemberFeeCollection, MemberFeeCollection, MembershipCollection,
   NewsletterSubscriptionCollection, OwnershipCollection, PersonalRelCollection, PersonCollection, ReservationCollection,
   ResponsibilityCollection, SectionCollection, TrainerAgreementCollection, TrainerInvoiceCollection,
@@ -50,7 +50,7 @@ const byPerson = (collection: string, avatar: string): TenantLinkSource =>
 
 /**
  * Every record that ties a person to a tenant, checked against every row of the subject-data map
- * (../privacy/subject-data-map.ts, 2026-11-21). Rows left out on purpose, with the reason:
+ * (../privacy/subject-data-map.ts, 2026-11-21, `households` of spec 1.168 included). Rows left out on purpose, with the reason:
  * - `persons`, `addresses`, `address-directory`, `avatars`, `contactsDavBooks/cards`: the person's own data
  *   (or a copy of it), released together with the person.
  * - `sendings`, `notices`: every newsletter issue writes them, so they would keep every subscriber forever.
@@ -83,6 +83,8 @@ export const TENANT_LINK_SOURCES: readonly TenantLinkSource[] = [
   byField(WorkrelCollection, 'subjectKey', { extra: { field: 'subjectModelType', value: 'person' } }),
   byField(PersonalRelCollection, 'subjectKey'),
   byField(PersonalRelCollection, 'objectKey'),
+  // a live household of the tenant (spec 1.168): its members are combined for Versand and invoices
+  byField(HouseholdCollection, 'memberKeys', { op: 'array-contains', isLink: (doc) => doc['isArchived'] !== true }),
   byPerson(ResponsibilityCollection, 'responsibleAvatar'),
   byPerson(ResponsibilityCollection, 'delegateAvatar'),
   { kind: 'scan', collection: GroupCollection, arrays: ['admins'] },

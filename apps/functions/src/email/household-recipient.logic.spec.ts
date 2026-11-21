@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { HouseholdModel } from '@okr/shared-models';
 
 import {
-  addressParentKeyOf, answerKeyOf, contactKeysFor, householdFieldsOf, householdIdOf, householdWithAnswers, dropHouseholdKeys, householdsDroppedForAnswers, type HouseholdRecipient, loadHouseholdRecipients, postKeysFor, resolveHouseholdRecipient,
+  addressParentKeyOf, answerKeyOf, contactKeysFor, householdFieldsOf, householdIdOf, householdWithAnswers, dropHouseholdKeys, householdInNewsletter, householdsDroppedForAnswers, householdsDroppedForNewsletter, type HouseholdRecipient, loadHouseholdRecipients, postKeysFor, resolveHouseholdRecipient,
 } from './household-recipient.logic';
 
 const household = (over: Partial<HouseholdModel> = {}): HouseholdModel => ({
@@ -170,5 +170,29 @@ describe('householdsDroppedForAnswers (onMailing guard)', () => {
   it('keeps every key without events', () => {
     expect(householdsDroppedForAnswers(deliveries, undefined, 'm1')).toBe(deliveries);
     expect(householdsDroppedForAnswers(deliveries, [], 'm1')).toBe(deliveries);
+  });
+});
+
+describe('householdInNewsletter (spec 1.169 §6.4: a newsletter send combines no household)', () => {
+  const deliveries = [{ personKey: 'p1', channels: ['email'] }, { personKey: 'household.h1', channels: ['post'] }];
+  it('is true only on a newsletter send that addresses a household', () => {
+    expect(householdInNewsletter(deliveries, 'nl1')).toBe(true);
+    expect(householdInNewsletter(deliveries, undefined)).toBe(false);
+    expect(householdInNewsletter(deliveries, '')).toBe(false);
+    expect(householdInNewsletter([{ personKey: 'p1', channels: ['post'] }], 'nl1')).toBe(false);
+  });
+});
+
+describe('householdsDroppedForNewsletter (onMailing guard)', () => {
+  const deliveries = [{ personKey: 'p1', channels: ['email'] }, { personKey: 'household.h1', channels: ['post'] }];
+  it('drops the household keys of a newsletter send and logs them', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    expect(householdsDroppedForNewsletter(deliveries, 'nl1', 'm1').map((d) => d.personKey)).toEqual(['p1']);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('m1'), expect.objectContaining({ householdKey: 'household.h1' }));
+    warn.mockRestore();
+  });
+  it('leaves any other Versand unchanged', () => {
+    expect(householdsDroppedForNewsletter(deliveries, undefined, 'm1')).toBe(deliveries);
+    expect(householdsDroppedForNewsletter(deliveries, '', 'm1')).toBe(deliveries);
   });
 });

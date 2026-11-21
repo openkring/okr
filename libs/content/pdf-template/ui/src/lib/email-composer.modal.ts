@@ -859,10 +859,11 @@ export class EmailComposerModal {
     const base = buildVersandRows(persons, channels, this.activeChannels());
     this.baseRows = base.rows;
     this.baseDeliveries = base.deliveries;
-    this.households = households;
-    this.hasHouseholds.set(households.length > 0);
+    // a newsletter send is never combined per household (spec 1.169 §6.4): every subscriber gets their own mail
+    this.households = this.newsletter() ? [] : households;
+    this.hasHouseholds.set(this.households.length > 0);
     this.appliedAnswers = this.initialAnswers = this.hasEvents();
-    const { rows, deliveries } = applyHouseholds(base.rows, base.deliveries, households, this.split(), { hasAnswers: this.appliedAnswers });
+    const { rows, deliveries } = applyHouseholds(base.rows, base.deliveries, households, this.split(), { hasAnswers: this.appliedAnswers, newsletter: this.newsletter() });
     this.versandRows.set(rows);
     this.initialRows = rows;
     this.initialDeliveries = deliveries;
@@ -991,7 +992,7 @@ export class EmailComposerModal {
     this.split.set(split);
     const household = this.households.find((h) => h.okey === householdKey);
     const members = new Set(household?.memberKeys ?? []);
-    const { rows, deliveries } = applyHouseholds(this.baseRows, this.baseDeliveries, this.households, split, { hasAnswers: this.appliedAnswers });
+    const { rows, deliveries } = applyHouseholds(this.baseRows, this.baseDeliveries, this.households, split, { hasAnswers: this.appliedAnswers, newsletter: this.newsletter() });
     const current = this.deliveries();
     let next: VersandDeliveries = {};
     for (const row of rows) {
@@ -1019,7 +1020,7 @@ export class EmailComposerModal {
   private reapplyHouseholds(hasAnswers: boolean): void {
     this.appliedAnswers = hasAnswers;
     if (this.households.length === 0) return;
-    const { rows, deliveries } = applyHouseholds(this.baseRows, this.baseDeliveries, this.households, this.split(), { hasAnswers });
+    const { rows, deliveries } = applyHouseholds(this.baseRows, this.baseDeliveries, this.households, this.split(), { hasAnswers, newsletter: this.newsletter() });
     const touched = new Set(this.households.flatMap((h) => [...h.memberKeys, householdRecipientKey(h.okey)]));
     const current = this.deliveries();
     let next: VersandDeliveries = {};

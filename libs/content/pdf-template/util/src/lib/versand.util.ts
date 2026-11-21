@@ -78,15 +78,18 @@ export const HOUSEHOLD_BUNDLE_CHANNELS: Record<keyof HouseholdBundle, DeliveryCh
  * `hasAnswers`: the Versand carries events with answer links (or QR codes on the letters). An answer through a
  * household is recorded for its contact only, so until that is decided nothing is combined and every member gets
  * their own letter / mail (controller ruling 15); the rows and ticks come back unchanged.
+ *
+ * `newsletter`: a newsletter send (spec 1.169 §6.4) is never combined either: every subscriber consented on their own
+ * and gets their own mail / letter with their own unsubscribe link; the rows and ticks come back unchanged.
  */
 export function applyHouseholds(
   rows: VersandRow[],
   deliveries: VersandDeliveries,
   households: MailingHousehold[],
   split: ReadonlySet<string>,
-  opts: { hasAnswers?: boolean } = {},
+  opts: { hasAnswers?: boolean; newsletter?: boolean } = {},
 ): { rows: VersandRow[]; deliveries: VersandDeliveries } {
-  if (opts.hasAnswers === true) return { rows, deliveries };
+  if (opts.hasAnswers === true || opts.newsletter === true) return { rows, deliveries };
   let outRows = rows;
   let out = deliveries;
   for (const household of households) {

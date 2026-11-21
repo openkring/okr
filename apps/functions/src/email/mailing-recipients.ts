@@ -174,13 +174,16 @@ export function buildMailingHouseholds(
  * The households a caller gets. Only an elevated caller (`members` undefined) does: a group admin would learn
  * about siblings, parents and contacts outside the group, which the rules hide from them — and a group admin
  * cannot send Post, so combining would give them nothing. For a group admin nothing is read at all.
+ * A newsletter send (spec 1.169 §6.4) gets none either, also for an elevated caller: every subscriber consented on
+ * their own and gets their own mail / letter with their own unsubscribe link.
  */
 export async function householdsForCaller(
   members: string[] | undefined,
   keys: string[],
   read: (keys: string[]) => Promise<MailingHousehold[]>,
+  newsletter = false,
 ): Promise<MailingHousehold[]> {
-  if (members !== undefined || keys.length === 0) return [];
+  if (newsletter || members !== undefined || keys.length === 0) return [];
   return read(keys);
 }
 
@@ -222,11 +225,15 @@ export const getMailingRecipients = onCall(
     const uid = request.auth?.uid ?? '';
     const caller = (await db.collection('users').doc(uid).get()).data();
     let members: string[] | undefined;
+    // a newsletter Versand combines no household (spec 1.169 §6.4), for every caller
+    let newsletter = false;
     if (isElevated(caller?.['roles']) && ((caller?.['tenants'] ?? []) as string[]).includes(tenantId)) {
       members = undefined;
+      newsletter = typeof groupKey === 'string' && !!groupKey && (await checkNewsletterGroup(db, tenantId, groupKey)).ok;
     } else if (typeof groupKey === 'string' && groupKey) {
       await assertCallerIsGroupAdmin(db, uid, tenantId, groupKey, 'Only an admin of the group may prepare a Versand to its members.');
-      if ((await checkNewsletterGroup(db, tenantId, groupKey)).ok) {
+      newsletter = (await checkNewsletterGroup(db, tenantId, groupKey)).ok;
+      if (newsletter) {
         // the same set as sendMailing's subscriber check, so the table offers exactly whom the send admits
         members = [...await activeSubscriberKeys(db, tenantId, groupKey)];
       } else {
@@ -241,8 +248,8 @@ export const getMailingRecipients = onCall(
     const keys = admissibleKeys(personKeys, members);
     const facts = keys.length === 0 ? [] : await readFacts(db, tenantId, keys);
     const recipients = facts.map(mailingChannels);
-    // households (spec 1.168 §6.1): elevated callers only, never a group admin
-    const households = await householdsForCaller(members, keys, (k) => readHouseholds(db, tenantId, k, facts));
+    // households (spec 1.168 §6.1): elevated callers only, never a group admin, never on a newsletter send
+    const households = await householdsForCaller(members, keys, (k) => readHouseholds(db, tenantId, k, facts), newsletter);
     logger.info(`${CF_NAME}: ${recipients.length} recipient(s), ${households.length} household(s) resolved (tenant ${tenantId})`);
     return { recipients, households };
   },
