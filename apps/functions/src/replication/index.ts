@@ -120,13 +120,35 @@ async function fetchRelations<T>(label: string, sourceId: string, fetch: () => P
  * Both parents are processed when a write moves an address to a different parentKey,
  * so the old parent does not keep a stale zip code and directory entry.
  */
+/** Retries of an onAddressChange event stop after this age (Eventarc would otherwise retry for 24 h). */
+const MAX_ADDRESS_EVENT_AGE_MS = 60 * 60 * 1000;
+
 export const onAddressChange = onDocumentWritten(
   {
     document: `${AddressCollection}/{addressId}`,
-    region: 'europe-west6'
+    region: 'europe-west6',
+    // Sizing (2026-11-21): loading the functions bundle alone takes ~215 MiB RSS, so at the
+    // 256 MiB default a burst of ~10 address writes — one instance takes them all at the
+    // default concurrency of 80 — OOM-killed the instance (vCard fix in bka, 6 + 11 writes).
+    // 512 MiB leaves real headroom; concurrency 10 bounds the per-instance load and lets a
+    // bigger burst scale out instead (maxInstances 5 from setGlobalOptions).
+    memory: '512MiB',
+    concurrency: 10,
+    // retry: an instance crash (OOM, timeout) or a transient Firestore error left the
+    // address-directory and the person replicas stale with no signal. A replay is safe:
+    // every write below is derived from the parent's LIVE addresses and read-compared
+    // (owner name, favorites, zip code, birth year) or idempotently overwritten
+    // (writeAddressDirectory), so a retried event only catches up, never double-applies.
+    retry: true,
   },
   async (event) => {
     const addressId = event.params.addressId;
+    // bound the retries: a deterministic failure must not retry for Eventarc's full day
+    const ageMs = Date.now() - Date.parse(event.time);
+    if (ageMs > MAX_ADDRESS_EVENT_AGE_MS) {
+      logger.error(`address ${addressId}: giving up on an event from ${event.time} after retries — replicas may be stale, run writeAddressDirectory for its parent`);
+      return;
+    }
     logger.info(`address ${addressId} has changed`);
     try {
       const before = event.data?.before.data() as AddressModel | undefined;
@@ -192,6 +214,7 @@ export const onAddressChange = onDocumentWritten(
     }
     catch (error) {
       logger.error(`Error updating address ${addressId}:`, { error });
+      throw error; // retried (retry: true above); a replay re-derives everything from live state
     }
   }
 );
