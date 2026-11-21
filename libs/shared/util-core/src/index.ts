@@ -69,3 +69,4 @@ export * from './lib/public-course.util';
 export * from './lib/editor-link.util';
 export * from './lib/start-page.util';
 export * from './lib/concurrency.util';
+export * from './lib/household.util';
