@@ -10,7 +10,7 @@ import {
   MemberFeeCollection, MemberFeeModel, MemberFeePosition, PersonCollection,
 } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId } from '@okr/shared-util-functions';
-import { addDuration, DateFormat, generateRandomString, getTodayStr, getYear, removeKeyFromOkrModel } from '@okr/shared-util-core';
+import { addDuration, DateFormat, generateRandomString, getTodayStr, getYear, isOwnedBy, pickForTenant, removeKeyFromOkrModel } from '@okr/shared-util-core';
 import { getFeeTotal } from '@okr/relationship-membership-util';
 import { getInvoiceIndex } from '@okr/finance-invoice-util';
 
@@ -104,8 +104,9 @@ export function memberFeeDraft(
  *
  * Households (spec 1.168 §5/§5.1): the rows whose members share a live household with a payer are
  * posted as ONE invoice to the payer (one batch: invoice, all positions, every row), capped by the
- * `household_type` item's `feeCap` («Familienrabatt»). When the members (with a row) and the payer
- * do not share one favourite postal address, those rows go to `review` with a note instead.
+ * `household_type` item's `feeCap` («Familienrabatt»). When a cap applies and the members (with a row) and
+ * the payer do not share one favourite postal address, those rows go to `review` with a note instead;
+ * without a cap the address is not checked (§5.1).
  */
 export const postMemberFees = onCall(
   { region: REGION, enforceAppCheck: true, timeoutSeconds: 540 },
@@ -208,19 +209,22 @@ export const postMemberFees = onCall(
         continue;
       }
 
-      // Same address: members with a row plus the payer. Only the yes/no is used, never an address value.
-      const personKeys = [...new Set([...group.rows.map(r => r.member?.key ?? ''), group.household.payerKey])];
-      const postals = await Promise.all(personKeys.map(key => key ? postalOf(db, `person.${key}`, tenantId) : Promise.resolve(undefined)));
-      if (!sameAddress(postals)) {
-        const batch = db.batch();
-        for (const fee of group.rows) batch.update(refOf(fee), { state: 'review', notes: withReviewNote(fee.notes) });
-        await batch.commit();
-        review += group.rows.length;
-        logger.warn(`${CF_NAME}: household ${group.household.okey} does not share one address — ${group.rows.length} row(s) set to review`);
-        continue;
+      const type = householdTypes.find(t => t.name === group.household.type);
+      // Spec §5.1: the address condition belongs to the cap — without a cap the household is always one invoice.
+      if (Number(type?.feeCap) > 0) {
+        // Same address: members with a row plus the payer. Only the yes/no is used, never an address value.
+        const personKeys = [...new Set([...group.rows.map(r => r.member?.key ?? ''), group.household.payerKey])];
+        const postals = await Promise.all(personKeys.map(key => key ? postalOf(db, `person.${key}`, tenantId) : Promise.resolve(undefined)));
+        if (!sameAddress(postals)) {
+          const batch = db.batch();
+          for (const fee of group.rows) batch.update(refOf(fee), { state: 'review', notes: withReviewNote(fee.notes) });
+          await batch.commit();
+          review += group.rows.length;
+          logger.warn(`${CF_NAME}: household ${group.household.okey} does not share one address — ${group.rows.length} row(s) set to review`);
+          continue;
+        }
       }
 
-      const type = householdTypes.find(t => t.name === group.household.type);
       const { invoice, positions } = householdInvoiceDraft(group, payer, {
         tenantId, accountingTenantId, year: scheduleYear, invoiceDate, dueDate,
         feeCap: type?.feeCap, feeCapOnlyMembershipFee: type?.feeCapOnlyMembershipFee,
@@ -295,13 +299,24 @@ async function loadHouseholds(db: Firestore, tenantId: string): Promise<Househol
   return snap.docs.map(d => ({ ...(d.data() as HouseholdModel), okey: d.id })).filter(h => h.isArchived !== true);
 }
 
-/** The items of the tenant's `household_type` category list (they carry `feeCap`). */
+/**
+ * The items of the ONE `household_type` list the tenant uses (they carry `feeCap`): archived lists are ignored, the
+ * tenant's own list (`tenants` exactly `[tenantId]`) beats a shared one, as the client's `pickForTenant` does.
+ */
+export function householdTypeItems(
+  lists: { tenants?: string[]; isArchived?: boolean; items?: CategoryItemModel[] }[], tenantId: string,
+): CategoryItemModel[] {
+  const live = lists.filter(l => l.isArchived !== true);
+  const list = live.find(l => isOwnedBy(l, tenantId)) ?? pickForTenant(live, tenantId);
+  return Array.isArray(list?.items) ? list.items : [];
+}
+
 async function loadHouseholdTypes(db: Firestore, tenantId: string): Promise<CategoryItemModel[]> {
   const snap = await db.collection(CategoryCollection)
     .where('name', '==', HouseholdTypeCategoryName)
     .where('tenants', 'array-contains', tenantId)
     .get();
-  return snap.docs.flatMap(d => (d.data()['items'] as CategoryItemModel[] | undefined) ?? []);
+  return householdTypeItems(snap.docs.map(d => d.data() as { tenants?: string[]; isArchived?: boolean; items?: CategoryItemModel[] }), tenantId);
 }
 
 /** The payer as an AvatarInfo, read from `persons/{payerKey}`; undefined when the person is missing. */

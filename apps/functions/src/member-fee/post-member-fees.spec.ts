@@ -13,7 +13,7 @@ vi.mock('../email/mailing-letters', () => ({ postalOf: vi.fn() }));
 
 import { getFirestore } from 'firebase-admin/firestore';
 import { postalOf } from '../email/mailing-letters';
-import { billedPositions, booksOfTenantRefusal, isPostableRow, memberFeeDraft, postMemberFees, unbookablePositions } from './post-member-fees';
+import { billedPositions, booksOfTenantRefusal, householdTypeItems, isPostableRow, memberFeeDraft, postMemberFees, unbookablePositions } from './post-member-fees';
 import { issueBlockers, issueHeaderBlockers } from '../invoice/invoice.logic';
 import type { MemberFeePosition } from '@okr/shared-models';
 
@@ -247,6 +247,41 @@ describe('postMemberFees — households (spec 1.168)', () => {
     expect(result).toMatchObject({ processed: 4, invoiced: 1, review: 3 });
   });
 
+  it('posts the merged invoice without an address check when the household type has no cap (§5.1)', async () => {
+    const data = seed();
+    data.categories = { c1: { name: 'household_type', tenants: ['scs'], items: [{ name: 'family' }] } } as never;
+    const fake = fakeDb(data);
+    vi.mocked(getFirestore).mockReturnValue(fake.db as never);
+    vi.mocked(postalOf).mockImplementation(async (_db, parentKey) => parentKey === 'person.ben' ? { ...postal, zipCode: '8001' } : postal);
+
+    const result = await call();
+
+    const invoices = fake.writes.filter(w => w.op === 'set' && w.path.startsWith('invoices/'));
+    expect(invoices).toHaveLength(2); // the household (uncapped) + Dora alone
+    const household = invoices.find(w => (w.data['receiver'] as { key: string }).key === 'anna');
+    expect(household?.data['totalAmount']).toMatchObject({ amount: 95000 });
+    expect(fake.writes.filter(w => w.data['state'] === 'review')).toEqual([]);
+    expect(vi.mocked(postalOf)).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ processed: 4, invoiced: 4, review: 0 });
+  });
+
+  it('uses the tenant\'s own household_type list over a shared one and ignores archived lists', async () => {
+    const data = seed();
+    data.categories = {
+      c0: { name: 'household_type', tenants: ['scs', 'system'], isArchived: false, items: [{ name: 'family', feeCap: 100 }] },
+      c1: { name: 'household_type', tenants: ['scs'], isArchived: true, items: [{ name: 'family', feeCap: 200 }] },
+      c2: { name: 'household_type', tenants: ['scs'], isArchived: false, items: [{ name: 'family', feeCap: 600 }] },
+    } as never;
+    const fake = fakeDb(data);
+    vi.mocked(getFirestore).mockReturnValue(fake.db as never);
+    vi.mocked(postalOf).mockResolvedValue(postal);
+
+    await call();
+
+    const household = fake.writes.find(w => w.op === 'set' && w.path.startsWith('invoices/') && (w.data['receiver'] as { key: string }).key === 'anna');
+    expect(household?.data['totalAmount']).toMatchObject({ amount: 60000 });
+  });
+
   it('posts the household rows one by one when the payer person is missing', async () => {
     const data = seed();
     data.persons = {} as never;
@@ -258,5 +293,24 @@ describe('postMemberFees — households (spec 1.168)', () => {
 
     expect(fake.writes.filter(w => w.op === 'set' && w.path.startsWith('invoices/'))).toHaveLength(4);
     expect(result).toMatchObject({ invoiced: 4, review: 0 });
+  });
+});
+
+describe('householdTypeItems (spec 1.168, own before shared)', () => {
+  const list = (tenants: string[], cap: number, isArchived = false) => ({ tenants, isArchived, items: [{ name: 'family', feeCap: cap }] as never[] });
+
+  it('prefers the list owned by the tenant alone', () => {
+    expect(householdTypeItems([list(['scs', 'system'], 1), list(['scs'], 2)], 'scs')).toEqual([{ name: 'family', feeCap: 2 }]);
+  });
+  it('falls back to a shared list', () => {
+    expect(householdTypeItems([list(['scs', 'system'], 1)], 'scs')).toEqual([{ name: 'family', feeCap: 1 }]);
+  });
+  it('ignores archived lists', () => {
+    expect(householdTypeItems([list(['scs'], 2, true), list(['scs', 'system'], 1)], 'scs')).toEqual([{ name: 'family', feeCap: 1 }]);
+    expect(householdTypeItems([list(['scs'], 2, true)], 'scs')).toEqual([]);
+  });
+  it('is empty without lists or items', () => {
+    expect(householdTypeItems([], 'scs')).toEqual([]);
+    expect(householdTypeItems([{ tenants: ['scs'] }], 'scs')).toEqual([]);
   });
 });
