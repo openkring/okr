@@ -835,6 +835,10 @@ export interface PeopleConfig {
   responsibilityId?: string;
 }
 
+/** The website width of a people section (AvatarConfig.width). */
+export type PeopleWidth = 'full' | 'article';
+export const PEOPLE_WIDTHS: PeopleWidth[] = ['full', 'article'];
+
 /** How the persons of a people section are laid out. */
 export type PeopleView = 'card' | 'grid' | 'slider';
 export const PEOPLE_VIEWS: PeopleView[] = ['card', 'grid', 'slider'];
@@ -880,6 +884,11 @@ export interface AvatarConfig {
   view: PeopleView; // default: card
   perRow: number; // slider: persons visible per slide (3-10)
   sliderRows: number; // slider: number of slider lines (1-4)
+  /**
+   * Width of the section on the published website: 'full' = the wide content column (max-w-6xl, as before),
+   * 'article' = aligned with the text column of the articles (max-w-3xl). Absent = 'full'.
+   */
+  width?: PeopleWidth;
 
   // image
   imgWidth: number; // px

@@ -40,6 +40,8 @@ export interface GroupMembershipDoc {
   isArchived?: boolean;
   /** StoreDate yyyyMMdd; '' or missing = open */
   dateOfExit?: string;
+  /** manual position within the group (dragging the group's member list); missing = after the sorted ones */
+  sortOrder?: number;
 }
 
 /** The fields of a `persons` document the resolver reads. */
@@ -68,7 +70,7 @@ function hasEnded(dateOfExit: unknown, today: string): boolean {
  * - active person memberships of `groupId` (orgModelType 'group', not archived, not ended, of a site tenant),
  * - whose person is of a site tenant, not archived and has `usageName === Public` — everyone else is
  *   left out silently,
- * - in the app's order (memberName2 ascending, as `MembershipService.list()`), one entry per person,
+ * - in the app's order (the group's manual sortOrder, then memberName2 ascending), one entry per person,
  * - with the app's names and label (the membership's memberName1/2; membership avatars carry no label),
  * - `showImage` only when `usageImages` is Public (missing = the model default, Public).
  * No email, ever: personal email has the `registered` floor.
@@ -91,10 +93,16 @@ export function resolveGroupPeople(
     && m.isArchived !== true
     && sharesTenant(m.tenants, siteTenants)
     && !hasEnded(m.dateOfExit, today));
-  // stable: equal memberName2 keep the query order. Code-point order, as Firestore's orderBy.
+  // The group's manual order first (sortOrder ascending, mirrors sortMembersBySortOrder of
+  // @okr/relationship-membership-util), then the members without one by memberName2 — stable: equal names keep
+  // the query order. Code-point order, as Firestore's orderBy.
+  const rank = (m: GroupMembershipDoc) =>
+    typeof m.sortOrder === 'number' && Number.isFinite(m.sortOrder) ? m.sortOrder : Number.POSITIVE_INFINITY;
   const ordered = active
     .map((m, i) => ({ m, i }))
     .sort((a, b) => {
+      const ra = rank(a.m), rb = rank(b.m);
+      if (ra !== rb) return ra < rb ? -1 : 1;
       const x = a.m.memberName2 ?? '';
       const y = b.m.memberName2 ?? '';
       return x < y ? -1 : x > y ? 1 : a.i - b.i;

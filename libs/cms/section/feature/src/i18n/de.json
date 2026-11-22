@@ -1108,6 +1108,10 @@
       "below": "Unter dem Bild",
       "left": "Links vom Bild",
       "right": "Rechts vom Bild"
+    },
+    "width": {
+      "label": "Breite wie die Artikel",
+      "helper": "Auf der Website steht die Personenliste dann genau so breit wie der Text der Artikel. Ohne Häkchen nutzt sie die ganze Seitenbreite."
     }
   },
   "rag": {

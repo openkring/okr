@@ -35,6 +35,7 @@
     "@okr/activity-data-access": "*",
     "@okr/activity-feature": "*",
     "@okr/relationship-membership-data-access": "*",
+    "@okr/relationship-membership-util": "*",
     "@okr/relationship-responsibility-data-access": "*",
     "@okr/trip-data-access": "*",
     "@okr/forms-util": "*",

@@ -630,3 +630,31 @@ export function getGroupsOfMember(memberships: MembershipModel[], memberKey?: st
   return groups;
 }
 
+
+/*-------------------------- manual order of group members --------------------------------*/
+
+/**
+ * The members of a group in their manual order (MembershipModel.sortOrder, ascending). Members without a
+ * sortOrder (legacy docs, members added after the last drag) follow the sorted ones in the order they
+ * came in (by memberName2, as the lists load) — the sort is stable. Returns a new array.
+ * The website resolver (`resolveGroupPeople`, @okr/cms-website-render) mirrors this rule.
+ */
+export function sortMembersBySortOrder<T extends { sortOrder?: number }>(members: readonly T[]): T[] {
+  const rank = (m: T) => (typeof m.sortOrder === 'number' && Number.isFinite(m.sortOrder) ? m.sortOrder : Number.POSITIVE_INFINITY);
+  return [...members].sort((a, b) => {
+    const ra = rank(a), rb = rank(b);
+    if (ra === rb) return 0;
+    return ra < rb ? -1 : 1;
+  });
+}
+
+/**
+ * The sortOrder writes after a member list was reordered: every member gets its 1-based position;
+ * only the members whose stored sortOrder differs are returned.
+ */
+export function getSortOrderChanges<T extends { okey: string; sortOrder?: number }>(ordered: readonly T[]): { okey: string; sortOrder: number }[] {
+  return ordered
+    .map((m, i) => ({ okey: m.okey, sortOrder: i + 1, current: m.sortOrder }))
+    .filter((c) => c.current !== c.sortOrder)
+    .map(({ okey, sortOrder }) => ({ okey, sortOrder }));
+}
