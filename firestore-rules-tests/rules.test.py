@@ -2773,6 +2773,10 @@ seed("mailPages/mpA", mail_page("uidM"))
 seed("mailPages/mpSent", mail_page("uidM", mailingKey="m1"))
 seed("mailPages/mpDel", mail_page("uidM"))
 seed("mailPages/mpGrp", mail_page("uidE", groupKey="gMail"))
+# own draft + section for the discard batch (sections and page deleted in one commit, spec §7.2)
+seed("mailPages/mpDiscard", mail_page("uidM"))
+seed("mailPages/mpDiscard/sections/s1", {"tenants": ["t1"], "type": "article", "content": {"htmlContent": "d"}})
+seed("mailPages/mpDiscard/sections/s2", {"tenants": ["t1"], "type": "article", "content": {"htmlContent": "e"}})
 seed("mailPages/mpA/sections/s1", {"tenants": ["t1"], "type": "article", "content": {"htmlContent": "a"}})
 seed("mailPages/mpSent/sections/s1", {"tenants": ["t1"], "type": "article", "content": {"htmlContent": "s"}})
 seed("mailingWeb/w1", {"tenants": ["t1"], "mailingKey": "m1", "html": "<p>x</p>", "createdAt": "20261122"})
@@ -2789,6 +2793,8 @@ mailpage_cases = [
      lambda: req("POST", "mailPages?documentId=mpNew4", token=M, data=body(mail_page("uidM", tenants=["t1", "t2"])))),
     ("mailPages: memberAdmin CREATE with mailingKey -> DENY", False,
      lambda: req("POST", "mailPages?documentId=mpNew5", token=M, data=body(mail_page("uidM", mailingKey="m9")))),
+    ("mailPages: memberAdmin CREATE with empty mailingKey -> DENY", False,
+     lambda: req("POST", "mailPages?documentId=mpNew13", token=M, data=body(mail_page("uidM", mailingKey="")))),
     ("mailPages: plain member CREATE own draft -> DENY", False,
      lambda: req("POST", "mailPages?documentId=mpNew6", token=A, data=body(mail_page("uidA")))),
     ("mailPages: group admin of gMail CREATE without groupKey -> DENY", False,
@@ -2808,6 +2814,8 @@ mailpage_cases = [
      lambda: req("PATCH", "mailPages/mpA", token=M, data=body({"title": "Neu"}), mask=["title"])),
     ("mailPages: sender UPDATE sets mailingKey -> DENY", False,
      lambda: req("PATCH", "mailPages/mpA", token=M, data=body({"mailingKey": "m9"}), mask=["mailingKey"])),
+    ("mailPages: sender UPDATE adds empty mailingKey -> DENY", False,
+     lambda: req("PATCH", "mailPages/mpA", token=M, data=body({"mailingKey": ""}), mask=["mailingKey"])),
     ("mailPages: sender UPDATE hands senderUid to another -> DENY", False,
      lambda: req("PATCH", "mailPages/mpA", token=M, data=body({"senderUid": "uidP"}), mask=["senderUid"])),
     ("mailPages: sender UPDATE moves tenant to t2 -> DENY", False,
@@ -2847,6 +2855,9 @@ mailpage_cases = [
      lambda: req("POST", "mailPages/mpNone/sections?documentId=s1", token=M, data=body(MP_SEC))),
     ("mailPages: sender CREATE page + first section in ONE batch -> ALLOW", True,
      lambda: commit_batch([("mailPages/mpBatch", mail_page("uidM")), ("mailPages/mpBatch/sections/s1", MP_SEC)], M)),
+    ("mailPages: sender discards draft = DELETE sections + page in ONE batch -> ALLOW", True,
+     lambda: commit_batch([("mailPages/mpDiscard/sections/s1", None), ("mailPages/mpDiscard/sections/s2", None),
+                           ("mailPages/mpDiscard", None)], M)),
     ("mailPages: sender DELETE draft section -> ALLOW", True,
      lambda: req("DELETE", "mailPages/mpA/sections/s2", token=M)),
     # read

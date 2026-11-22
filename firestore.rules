@@ -1711,11 +1711,15 @@ service cloud.firestore {
     match /mailPages/{pk} {
       // resource == null: a get() of a missing draft answers not-found instead of a permission error.
       allow read:   if signedIn() && (resource == null || canReadMailPage(resource.data));
-      allow create: if signedIn() && isOwnMailDraft(request.resource.data, callerTenants());
-      // Same sender, same tenants, unsent before and after (the tenant check runs on the new data).
+      // mailingKey is server-only: not even an empty one may come from a client.
+      allow create: if signedIn() && !('mailingKey' in request.resource.data)
+                       && isOwnMailDraft(request.resource.data, callerTenants());
+      // Same sender, same tenants, unsent before and after, mailingKey untouched (the tenant check runs on
+      // the new data).
       allow update: if signedIn()
                        && resource.data.senderUid == request.auth.uid && !isMailPageSent(resource.data)
                        && request.resource.data.tenants == resource.data.tenants
+                       && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['mailingKey'])
                        && isOwnMailDraft(request.resource.data, callerTenants());
       allow delete: if signedIn() && isOwnMailDraft(resource.data, callerTenants());
       // sections delegate to the parent page, one fetch per rule. getAfter on create/update: the composer
