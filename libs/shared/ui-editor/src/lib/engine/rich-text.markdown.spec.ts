@@ -82,5 +82,8 @@ describe('rich-text markdown round trip', () => {
     // marked strikes a single ~ pair, markdown-it does not
     expect(editsFaithfully('von ~3~ Uhr')).toBe(false);
     expect(editsFaithfully('ca. ~3 bis ~5 km')).toBe(true);
+    // a trailing space at the end of a paragraph shows nothing, even though the editor drops it
+    expect(editsFaithfully('eins \n\nzwei. \n\n')).toBe(true);
+    expect(editsFaithfully('**fett** *kursiv*')).toBe(true);
   });
 });

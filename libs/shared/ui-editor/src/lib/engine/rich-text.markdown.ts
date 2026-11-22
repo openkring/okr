@@ -132,15 +132,22 @@ export function docToMarkdown(doc: PMNode): string {
 }
 
 const HTML_COMMENT = /<!--[\s\S]*?-->/g;
+const BLOCK_TAG = '(?:p|li|h[1-6]|blockquote|pre|ul|ol|hr)';
+// whitespace at the start or end of a block shows nothing (marked keeps a trailing space, the editor drops it)
+const SPACE_AT_BLOCK_EDGE = new RegExp(`\\s+(</${BLOCK_TAG}>)|(<${BLOCK_TAG}[^>]*>)\\s+`, 'g');
 /** What the read views show (marked, comments stripped), with insignificant whitespace folded. */
 function rendered(markdown: string): string {
-  return (marked.parse(markdown.replace(HTML_COMMENT, ''), { async: false }) as string).replace(/\s+/g, ' ').replace(/> </g, '><').trim();
+  return (marked.parse(markdown.replace(HTML_COMMENT, ''), { async: false }) as string)
+    .replace(/\s+/g, ' ')
+    .replace(SPACE_AT_BLOCK_EDGE, (_, close?: string, open?: string) => close ?? open ?? '')
+    .replace(/> </g, '><')
+    .trim();
 }
 
 /**
  * True when the editor can show `markdown` without changing what the read views display. The editor parses
  * with markdown-it, the views render with marked, and the two disagree on a few inputs (a single `~` is
- * strikethrough only in marked; some list indents are lists only in marked) — 33 of 7'487 diary texts
+ * strikethrough only in marked; some list indents are lists only in marked) — 28 of 7'487 diary texts
  * (2026-11-22). Such a text is edited as source instead, so opening it never rewrites it.
  */
 export function editsFaithfully(markdown: string | undefined | null): boolean {
