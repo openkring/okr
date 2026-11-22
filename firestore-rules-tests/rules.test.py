@@ -2758,5 +2758,125 @@ for label, expect, run in newsletter_cases:
     passed += ok; failed += not ok
     print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
 
+# ------------------------------------------- mailPages (spec 1.171 §7.7) ---
+# Versand mails as pages of sections. The composer writes drafts directly: create / update / delete by a
+# Versand sender (memberAdmin, privileged, or an admin of the draft's own groupKey) of exactly their own
+# tenant, senderUid == caller, only while mailingKey is absent (server-only). Read: the sender, or —
+# once sent — privileged / memberAdmin of the tenant. mailingWeb/{token} is Admin SDK only.
+def mail_page(sender, **extra):
+    d = {"tenants": ["t1"], "senderUid": sender, "type": "mail", "sections": []}
+    d.update(extra)
+    return d
+# own group: gAdm is deleted by an earlier groups case. E (no role) is admin of gMail only.
+seed("groups/gMail", {"tenants": ["t1"], "name": "Versand", "admins": [{"key": "pE"}], "adminKeys": ["pE"]})
+seed("mailPages/mpA", mail_page("uidM"))
+seed("mailPages/mpSent", mail_page("uidM", mailingKey="m1"))
+seed("mailPages/mpDel", mail_page("uidM"))
+seed("mailPages/mpGrp", mail_page("uidE", groupKey="gMail"))
+seed("mailPages/mpA/sections/s1", {"tenants": ["t1"], "type": "article", "content": {"htmlContent": "a"}})
+seed("mailPages/mpSent/sections/s1", {"tenants": ["t1"], "type": "article", "content": {"htmlContent": "s"}})
+seed("mailingWeb/w1", {"tenants": ["t1"], "mailingKey": "m1", "html": "<p>x</p>", "createdAt": "20261122"})
+MP_SEC = {"tenants": ["t1"], "type": "article", "content": {"htmlContent": "b"}}
+mailpage_cases = [
+    # create
+    ("mailPages: memberAdmin CREATE own draft -> ALLOW", True,
+     lambda: req("POST", "mailPages?documentId=mpNew", token=M, data=body(mail_page("uidM")))),
+    ("mailPages: memberAdmin CREATE with foreign senderUid -> DENY", False,
+     lambda: req("POST", "mailPages?documentId=mpNew2", token=M, data=body(mail_page("uidA")))),
+    ("mailPages: memberAdmin CREATE in tenant t2 -> DENY", False,
+     lambda: req("POST", "mailPages?documentId=mpNew3", token=M, data=body(mail_page("uidM", tenants=["t2"])))),
+    ("mailPages: memberAdmin CREATE in [t1,t2] -> DENY", False,
+     lambda: req("POST", "mailPages?documentId=mpNew4", token=M, data=body(mail_page("uidM", tenants=["t1", "t2"])))),
+    ("mailPages: memberAdmin CREATE with mailingKey -> DENY", False,
+     lambda: req("POST", "mailPages?documentId=mpNew5", token=M, data=body(mail_page("uidM", mailingKey="m9")))),
+    ("mailPages: plain member CREATE own draft -> DENY", False,
+     lambda: req("POST", "mailPages?documentId=mpNew6", token=A, data=body(mail_page("uidA")))),
+    ("mailPages: group admin of gMail CREATE without groupKey -> DENY", False,
+     lambda: req("POST", "mailPages?documentId=mpNew7", token=E, data=body(mail_page("uidE")))),
+    ("mailPages: group admin of gMail CREATE groupKey gMail -> ALLOW", True,
+     lambda: req("POST", "mailPages?documentId=mpNew8", token=E, data=body(mail_page("uidE", groupKey="gMail")))),
+    ("mailPages: group admin of gMail CREATE groupKey gOther -> DENY", False,
+     lambda: req("POST", "mailPages?documentId=mpNew9", token=E, data=body(mail_page("uidE", groupKey="gOther")))),
+    ("mailPages: privileged CREATE own draft -> ALLOW", True,
+     lambda: req("POST", "mailPages?documentId=mpNew10", token=P, data=body(mail_page("uidP")))),
+    ("mailPages: admin t2 CREATE t1 draft -> DENY", False,
+     lambda: req("POST", "mailPages?documentId=mpNew11", token=B, data=body(mail_page("uidB")))),
+    ("mailPages: anon CREATE -> DENY", False,
+     lambda: req("POST", "mailPages?documentId=mpNew12", data=body(mail_page("")))),
+    # update / delete
+    ("mailPages: sender UPDATE own draft -> ALLOW", True,
+     lambda: req("PATCH", "mailPages/mpA", token=M, data=body({"title": "Neu"}), mask=["title"])),
+    ("mailPages: sender UPDATE sets mailingKey -> DENY", False,
+     lambda: req("PATCH", "mailPages/mpA", token=M, data=body({"mailingKey": "m9"}), mask=["mailingKey"])),
+    ("mailPages: sender UPDATE hands senderUid to another -> DENY", False,
+     lambda: req("PATCH", "mailPages/mpA", token=M, data=body({"senderUid": "uidP"}), mask=["senderUid"])),
+    ("mailPages: sender UPDATE moves tenant to t2 -> DENY", False,
+     lambda: req("PATCH", "mailPages/mpA", token=M, data=body({"tenants": ["t2"]}), mask=["tenants"])),
+    ("mailPages: sender UPDATE sent page -> DENY", False,
+     lambda: req("PATCH", "mailPages/mpSent", token=M, data=body({"title": "Neu"}), mask=["title"])),
+    ("mailPages: sender UPDATE clears mailingKey of sent page -> DENY", False,
+     lambda: req("PATCH", "mailPages/mpSent", token=M, data=body({}), mask=["mailingKey"])),
+    ("mailPages: privileged (not sender) UPDATE draft -> DENY", False,
+     lambda: req("PATCH", "mailPages/mpA", token=P, data=body({"title": "X"}), mask=["title"])),
+    ("mailPages: group admin UPDATE own draft -> ALLOW", True,
+     lambda: req("PATCH", "mailPages/mpGrp", token=E, data=body({"title": "G"}), mask=["title"])),
+    ("mailPages: group admin moves own draft to gOther -> DENY", False,
+     lambda: req("PATCH", "mailPages/mpGrp", token=E, data=body({"groupKey": "gOther"}), mask=["groupKey"])),
+    ("mailPages: group admin drops groupKey of own draft -> DENY", False,
+     lambda: req("PATCH", "mailPages/mpGrp", token=E, data=body({}), mask=["groupKey"])),
+    ("mailPages: sender DELETE sent page -> DENY", False,
+     lambda: req("DELETE", "mailPages/mpSent", token=M)),
+    ("mailPages: privileged (not sender) DELETE draft -> DENY", False,
+     lambda: req("DELETE", "mailPages/mpDel", token=P)),
+    ("mailPages: sender DELETE own draft -> ALLOW", True,
+     lambda: req("DELETE", "mailPages/mpDel", token=M)),
+    # sections subcollection — delegates to the parent page
+    ("mailPages: sender CREATE section on draft -> ALLOW", True,
+     lambda: req("POST", "mailPages/mpA/sections?documentId=s2", token=M, data=body(MP_SEC))),
+    ("mailPages: sender UPDATE section on draft -> ALLOW", True,
+     lambda: req("PATCH", "mailPages/mpA/sections/s1", token=M, data=body({"name": "x"}), mask=["name"])),
+    ("mailPages: sender CREATE section on sent page -> DENY", False,
+     lambda: req("POST", "mailPages/mpSent/sections?documentId=s2", token=M, data=body(MP_SEC))),
+    ("mailPages: sender UPDATE section on sent page -> DENY", False,
+     lambda: req("PATCH", "mailPages/mpSent/sections/s1", token=M, data=body({"name": "x"}), mask=["name"])),
+    ("mailPages: sender DELETE section on sent page -> DENY", False,
+     lambda: req("DELETE", "mailPages/mpSent/sections/s1", token=M)),
+    ("mailPages: privileged (not sender) UPDATE section on draft -> DENY", False,
+     lambda: req("PATCH", "mailPages/mpA/sections/s1", token=P, data=body({"name": "x"}), mask=["name"])),
+    ("mailPages: section on a missing page -> DENY", False,
+     lambda: req("POST", "mailPages/mpNone/sections?documentId=s1", token=M, data=body(MP_SEC))),
+    ("mailPages: sender CREATE page + first section in ONE batch -> ALLOW", True,
+     lambda: commit_batch([("mailPages/mpBatch", mail_page("uidM")), ("mailPages/mpBatch/sections/s1", MP_SEC)], M)),
+    ("mailPages: sender DELETE draft section -> ALLOW", True,
+     lambda: req("DELETE", "mailPages/mpA/sections/s2", token=M)),
+    # read
+    ("mailPages: sender GET own draft -> ALLOW", True, lambda: req("GET", "mailPages/mpA", token=M)),
+    ("mailPages: privileged (not sender) GET draft -> DENY", False, lambda: req("GET", "mailPages/mpA", token=P)),
+    ("mailPages: privileged GET sent page -> ALLOW", True, lambda: req("GET", "mailPages/mpSent", token=P)),
+    ("mailPages: plain member GET sent page -> DENY", False, lambda: req("GET", "mailPages/mpSent", token=A)),
+    ("mailPages: admin t2 GET sent t1 page -> DENY", False, lambda: req("GET", "mailPages/mpSent", token=B)),
+    ("mailPages: anon GET draft -> DENY", False, lambda: req("GET", "mailPages/mpA")),
+    ("mailPages: anon GET sent page -> DENY", False, lambda: req("GET", "mailPages/mpSent")),
+    ("mailPages: sender GET draft section -> ALLOW", True, lambda: req("GET", "mailPages/mpA/sections/s1", token=M)),
+    ("mailPages: privileged GET draft section -> DENY", False, lambda: req("GET", "mailPages/mpA/sections/s1", token=P)),
+    ("mailPages: privileged GET sent section -> ALLOW", True, lambda: req("GET", "mailPages/mpSent/sections/s1", token=P)),
+    ("mailPages: anon GET sent section -> DENY", False, lambda: req("GET", "mailPages/mpSent/sections/s1")),
+    ("mailPages: sender LIST own drafts (senderUid==uid) -> ALLOW", True,
+     lambda: field_query("mailPages", [("senderUid", "EQUAL", "uidM")], token=M)),
+    # mailingWeb: server-only snapshot
+    ("mailingWeb: anon GET -> DENY", False, lambda: req("GET", "mailingWeb/w1")),
+    ("mailingWeb: admin GET -> DENY", False, lambda: req("GET", "mailingWeb/w1", token=D)),
+    ("mailingWeb: admin CREATE -> DENY", False,
+     lambda: req("POST", "mailingWeb?documentId=w2", token=D, data=body({"tenants": ["t1"], "html": "x"}))),
+    ("mailingWeb: anon CREATE -> DENY", False,
+     lambda: req("POST", "mailingWeb?documentId=w3", data=body({"tenants": ["t1"], "html": "x"}))),
+    ("mailingWeb: admin DELETE -> DENY", False, lambda: req("DELETE", "mailingWeb/w1", token=D)),
+]
+for label, expect, run in mailpage_cases:
+    code = run()
+    ok = (code in (200, 201)) == expect
+    passed += ok; failed += not ok
+    print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
+
 print(f"\n{passed} passed, {failed} failed")
 raise SystemExit(1 if failed else 0)

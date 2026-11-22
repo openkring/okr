@@ -1684,6 +1684,61 @@ service cloud.firestore {
       allow read:   if (isPrivileged() || hasRole('memberAdmin')) && tenantRead();
       allow write:  if false;
     }
+    // mailPages (spec 1.171 §7.7): a Versand mail as a page of sections. The composer writes the draft
+    // directly, so these rules are its only access control. Writes: the Versand sender of `sendMailing`
+    // (privileged — admin included —, memberAdmin, or an admin of the draft's OWN, non-empty groupKey) of
+    // exactly one own tenant, senderUid == caller, and only while `mailingKey` is absent: sendMailing
+    // (Admin SDK) sets it, after which the page is frozen. Read: the sender, or — once sent — privileged /
+    // memberAdmin of the tenant (the mailings list). Rules are not filters: a draft list query must carry
+    // `senderUid == uid`. No public read: the web version is the server-only mailingWeb snapshot.
+    // `d` is the page data, `ts` = callerTenants() bound once (1000-expression limit).
+    function isVersandSenderFor(d, ts) {
+      return d.tenants.size() == 1 && d.tenants.hasAny(ts)
+             && (isPrivileged() || hasRole('memberAdmin')
+                 || (d.get('groupKey', '') != '' && isAdminOfGroup(d.groupKey)));
+    }
+    function isMailPageSent(d) {
+      return d.get('mailingKey', '') != '';
+    }
+    // The caller's own unsent draft, and they are (still) a Versand sender for it.
+    function isOwnMailDraft(d, ts) {
+      return d.senderUid == request.auth.uid && !isMailPageSent(d) && isVersandSenderFor(d, ts);
+    }
+    function canReadMailPage(d) {
+      return d.senderUid == request.auth.uid
+             || (isMailPageSent(d) && (isPrivileged() || hasRole('memberAdmin')) && belongsToTenant(d));
+    }
+    match /mailPages/{pk} {
+      // resource == null: a get() of a missing draft answers not-found instead of a permission error.
+      allow read:   if signedIn() && (resource == null || canReadMailPage(resource.data));
+      allow create: if signedIn() && isOwnMailDraft(request.resource.data, callerTenants());
+      // Same sender, same tenants, unsent before and after (the tenant check runs on the new data).
+      allow update: if signedIn()
+                       && resource.data.senderUid == request.auth.uid && !isMailPageSent(resource.data)
+                       && request.resource.data.tenants == resource.data.tenants
+                       && isOwnMailDraft(request.resource.data, callerTenants());
+      allow delete: if signedIn() && isOwnMailDraft(resource.data, callerTenants());
+      // sections delegate to the parent page, one fetch per rule. getAfter on create/update: the composer
+      // creates the page and its first section in one batch. get() on delete: a discard deletes the
+      // sections and the page in one batch, so the page is gone after it.
+      match /sections/{sk} {
+        allow read:   if signedIn() && mailSectionReadOk(get(/databases/$(database)/documents/mailPages/$(pk)));
+        allow create, update: if signedIn()
+                                 && mailSectionWriteOk(getAfter(/databases/$(database)/documents/mailPages/$(pk)));
+        allow delete: if signedIn() && mailSectionWriteOk(get(/databases/$(database)/documents/mailPages/$(pk)));
+      }
+      function mailSectionReadOk(p) {
+        return p != null && canReadMailPage(p.data);
+      }
+      function mailSectionWriteOk(p) {
+        return p != null && isOwnMailDraft(p.data, callerTenants());
+      }
+    }
+    // mailingWeb/{token} (spec 1.171): the server-rendered web version of a sent mail, written and served by
+    // Cloud Functions (Admin SDK) only. The token is the capability; no client reads or writes it.
+    match /mailingWeb/{token}      {
+      allow read, write: if false;
+    }
     // sendings (spec 1.150): one doc per letter sent by post through Pingen, written only by Cloud Functions
     // (Admin SDK). memberAdmin / privileged of the tenant may follow them; no client write. `private/cost` holds
     // what the provider charges bkaiser (SendingCost): never readable by a client.
