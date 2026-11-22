@@ -38,6 +38,7 @@ export const NON_PERSONAL_COLLECTIONS: ReadonlySet<string> = new Set([
   'i18nDefault',
   'i18nTenantOverride',
   'icons',
+  'mailingWeb',
   'menuItems',
   'news-channels',
   'ocr-rules',

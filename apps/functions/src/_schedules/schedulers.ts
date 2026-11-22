@@ -27,6 +27,7 @@ import { SRV_SECRETS } from '../_gateway/adapters/srv';
 import { runCourseEndTasks } from '../course/course-end-tasks';
 import { runWebhookStuckCheck } from '../_webhooks/stuck-check';
 import { runMailingLettersReap } from '../email/mailing-letters';
+import { runMailPageDraftReap } from '../email/mail-page/mail-page';
 import { runNewsletterSignupReap } from '../newsletter/reap-signups';
 import { isFirstOfMonthInZurich, runMonthlyBillingRequests } from '../billing/billing-run';
 import { runBillingDailyJob } from '../billing/billing-daily';
@@ -50,6 +51,7 @@ export const NIGHTLY_JOBS: NamedJob[] = [
   { name: 'billScanReap', run: runBillScanReap },
   { name: 'privacyExportReap', run: runPrivacyExportReap },
   { name: 'mailingLettersReap', run: runMailingLettersReap },
+  { name: 'mailPageDraftReap', run: runMailPageDraftReap }, // spec 1.171: unsent Versand page drafts after 7 days
   { name: 'newsletterSignupReap', run: runNewsletterSignupReap }, // spec 1.169: expired and confirmed sign-up docs
   { name: 'courseEndTasks', run: runCourseEndTasks },
   { name: 'energyFiguresFetch', run: runEnergyFiguresFetch },
