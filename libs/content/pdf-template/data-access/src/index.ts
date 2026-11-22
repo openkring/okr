@@ -4,3 +4,4 @@ export * from './lib/doc-generation.service';
 export * from './lib/doc-email.service';
 export * from './lib/mailing.service';
 export * from './lib/sending.service';
+export * from './lib/mail-page.service';

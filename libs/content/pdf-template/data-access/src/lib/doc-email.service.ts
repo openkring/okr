@@ -75,6 +75,10 @@ export interface SendMailingRequest {
   letterQrCodes?: boolean;
   /** «Per Pingen senden»: the quote the sender saw (`quoteMailingLetters`); the server recomputes and verifies it */
   post?: { via: 'pingen'; options: PostOptions; token: string; issuedAt: number };
+  /** the mail page (`mailPages/{pageKey}`) the content is rendered from, instead of `body` */
+  pageKey?: string;
+  /** a mail page Versand also publishes a web version of the mail */
+  webVersion?: boolean;
 }
 
 /** The Versand as the quote needs it: the content the letters are made of, and who gets one. */
