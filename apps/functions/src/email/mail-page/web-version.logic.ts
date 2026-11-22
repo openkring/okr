@@ -9,6 +9,15 @@ export function webVersionOn(requested: boolean | undefined, isNewsletter: boole
   return typeof requested === 'boolean' ? requested : isNewsletter;
 }
 
+/**
+ * Whether a send stores a web version (snapshot + token). Only the E-Mails carry its link, so a send without any
+ * E-Mail delivery gets none, even when it was asked for: nobody would get the link, yet the Versand would show
+ * «Webversion an».
+ */
+export function createsWebVersion(requested: boolean | undefined, isNewsletter: boolean, emailRecipients: number): boolean {
+  return emailRecipients > 0 && webVersionOn(requested, isNewsletter);
+}
+
 /** 128 random bits as 22 base64url characters: the id of `mailingWeb/{token}` and the last segment of the link. */
 export function newWebToken(): string {
   return randomBytes(16).toString('base64url');

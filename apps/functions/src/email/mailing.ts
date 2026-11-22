@@ -55,7 +55,7 @@ import { asLayoutChoice } from './render-email.logic';
 import { EmailTemplateError, renderEmail } from './render-email';
 import { renderMailPage } from './mail-page/mail-page';
 import { MailPageError } from './mail-page/render-mail-page.logic';
-import { mailingWebFunctionUrl, newWebToken, webVersionOn, webVersionUrl, withWebLink } from './mail-page/web-version.logic';
+import { createsWebVersion, mailingWebFunctionUrl, newWebToken, webVersionUrl, withWebLink } from './mail-page/web-version.logic';
 import { buildMailingLetters, countLetterPages, LetterEvent } from './mailing-letters';
 import { addressParentKeyOf, contactKeysFor, dropHouseholdKeys, householdFieldsOf, householdInNewsletter, householdsDroppedForAnswers, householdsDroppedForNewsletter, householdWithAnswers, type HouseholdRecipient, loadHouseholdRecipients, postKeysFor } from './household-recipient.logic';
 import { mailingCategory } from './mailing-deliveries.logic';
@@ -553,9 +553,10 @@ export const sendMailing = onCall(
       }
       // rendered after every other check and before any money moves or file is stored
       body = await mailPageBody(tenantId, pageKey, uid);
-      // newsletter or not is the server's decision above (newsletterGroupKey), never the client's
+      // newsletter or not is the server's decision above (newsletterGroupKey), never the client's; only the
+      // E-Mails carry the link, so a send without any E-Mail delivery stores no web version
       const requested = typeof data.webVersion === 'boolean' ? data.webVersion : undefined;
-      if (webVersionOn(requested, !!newsletterGroupKey)) {
+      if (createsWebVersion(requested, !!newsletterGroupKey, keysFor(deliveries, DeliveryChannel.Email).length)) {
         web = { token: newWebToken(), html: await webSnapshotHtml(tenantId, layout, body) };
       }
     }

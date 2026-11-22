@@ -4,7 +4,7 @@
 // the caller reads the page and its sections, loads the event lines and passes Handlebars and the sanitizer.
 // The result goes into the layout's `{{{content}}}` slot exactly like a typed `body`.
 import type { MailSectionType } from '@okr/shared-models';
-import { MAIL_SECTION_TYPES } from '@okr/shared-models';
+import { EVENTS_CONFIG_SHAPE, MAIL_SECTION_TYPES } from '@okr/shared-models';
 import { IMGIX_BASE, safeSiteUrl, toImgixUrl, type SectionDoc } from '@okr/cms-website-render';
 
 import { MAIL_SECTION_TEMPLATES } from './mail-section-templates';
@@ -31,8 +31,22 @@ export interface MailRenderContext {
   hb: HandlebarsEnv;
   /** `sanitizeEmailBody` in production — the same policy `composeBody` applies to the whole body. */
   sanitize: (html: string) => Promise<string>;
-  /** the event lines per events section, keyed by the section's calendar (`section.name`) */
+  /** the upcoming event lines per calendar (`section.name`), at least MAX_MAIL_EVENTS when there are; each section takes its `mailEventLimit` */
   events: Record<string, MailEventLine[]>;
+}
+
+/** The most events one events section lists in a mail, whatever its `maxEvents` says. */
+export const MAX_MAIL_EVENTS = 10;
+
+/**
+ * How many events an events section lists in a mail: its `properties.maxEvents` when that is a number of 1 or
+ * more (rounded down), else the model default (`EVENTS_CONFIG_SHAPE.maxEvents`); never more than MAX_MAIL_EVENTS.
+ * On the website an unset or 0 `maxEvents` means «all»; a mail has no «all», so it falls back to the default.
+ */
+export function mailEventLimit(properties: unknown): number {
+  const raw = rec(properties)['maxEvents'];
+  const wanted = typeof raw === 'number' && Number.isFinite(raw) && raw >= 1 ? Math.floor(raw) : EVENTS_CONFIG_SHAPE.maxEvents;
+  return Math.min(wanted, MAX_MAIL_EVENTS);
 }
 
 /** The width the layout gives the content; article images are fetched at this width. */
@@ -100,7 +114,7 @@ function renderButton(s: MailSection, tpl: HandlebarsTemplate): RenderedPart {
 }
 
 function renderEvents(s: MailSection, ctx: MailRenderContext, tpl: HandlebarsTemplate): RenderedPart {
-  const lines = ctx.events[str(s.name)] ?? [];
+  const lines = (ctx.events[str(s.name)] ?? []).slice(0, mailEventLimit(s.properties));
   if (lines.length === 0) return { html: '', hasContent: false };
   return { html: tpl({ title: str(s.title), lines }), hasContent: true };
 }

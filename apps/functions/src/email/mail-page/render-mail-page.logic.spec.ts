@@ -4,7 +4,7 @@ import { MAIL_SECTION_TYPES } from '@okr/shared-models';
 
 import { sanitizeEmailBody } from '../../pdf/sanitize';
 import { MAIL_SECTION_TEMPLATES } from './mail-section-templates';
-import { MailEventLine, MailPageError, MailSection, renderMailPageContent } from './render-mail-page.logic';
+import { MAX_MAIL_EVENTS, mailEventLimit, MailEventLine, MailPageError, MailSection, renderMailPageContent } from './render-mail-page.logic';
 
 async function render(order: string[], sections: MailSection[], events: Record<string, MailEventLine[]> = {}): Promise<string> {
   const { default: hb } = await import('handlebars');
@@ -124,5 +124,40 @@ describe('renderMailPageContent', () => {
     expect(again.match(/<table/g)?.length).toBe(html.match(/<table/g)?.length);
     expect(again).toContain('href="mailto:info@example.org"');
     expect(again).toContain('cellpadding="0"');
+  });
+});
+
+describe('mailEventLimit', () => {
+  it('takes the section\'s maxEvents', () => expect(mailEventLimit({ maxEvents: 3 })).toBe(3));
+  it('rounds a fraction down', () => expect(mailEventLimit({ maxEvents: 3.7 })).toBe(3));
+  it('caps at MAX_MAIL_EVENTS', () => expect(mailEventLimit({ maxEvents: 50 })).toBe(MAX_MAIL_EVENTS));
+  it('falls back to the model default (5) without a usable value', () => {
+    expect(mailEventLimit(undefined)).toBe(5);
+    expect(mailEventLimit({})).toBe(5);
+    expect(mailEventLimit({ maxEvents: 0 })).toBe(5);
+    expect(mailEventLimit({ maxEvents: -2 })).toBe(5);
+    expect(mailEventLimit({ maxEvents: '7' })).toBe(5);
+    expect(mailEventLimit({ maxEvents: Number.NaN })).toBe(5);
+  });
+});
+
+describe('renderMailPageContent with maxEvents', () => {
+  const lines: MailEventLine[] = Array.from({ length: 10 }, (_, i) => ({ date: `0${i}.01.2027`, time: '', title: `Termin-${i}-x`, place: '' }));
+
+  it('lists only the section\'s maxEvents of its calendar\'s lines', async () => {
+    const html = await render(['e'], [{ okey: 'e', type: 'events', name: 'club', properties: { maxEvents: 2 } }], { club: lines });
+    expect(html).toContain('Termin-0-x');
+    expect(html).toContain('Termin-1-x');
+    expect(html).not.toContain('Termin-2-x');
+  });
+
+  it('gives two sections of the same calendar their own limits', async () => {
+    const html = await render(['a', 'b'], [
+      { okey: 'a', type: 'events', name: 'club', properties: { maxEvents: 1 } },
+      { okey: 'b', type: 'events', name: 'club', properties: { maxEvents: 3 } },
+    ], { club: lines });
+    expect(html.match(/Termin-0-x/g)?.length).toBe(2);
+    expect(html.match(/Termin-2-x/g)?.length).toBe(1);
+    expect(html).not.toContain('Termin-3-x');
   });
 });

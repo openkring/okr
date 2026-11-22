@@ -5,6 +5,8 @@ const h = vi.hoisted(() => ({
   secret: 'secret',
   letters: [] as Record<string, unknown>[],
   pushes: [] as string[][],
+  /** when set, `renderMailPage` (mail-page/mail-page.ts) runs this instead of reading Firestore */
+  renderMailPage: undefined as undefined | (() => Promise<{ html: string }>),
 }));
 
 vi.mock('firebase-functions/v2', () => ({ logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() } }));
@@ -44,11 +46,56 @@ vi.mock('./mailing-letters', async () => {
   };
 });
 
+vi.mock('./mail-page/mail-page', async () => {
+  const actual = await vi.importActual<typeof import('./mail-page/mail-page')>('./mail-page/mail-page');
+  return {
+    ...actual,
+    renderMailPage: (...args: Parameters<typeof actual.renderMailPage>) => h.renderMailPage ? h.renderMailPage() : actual.renderMailPage(...args),
+  };
+});
+
+import { HttpsError } from 'firebase-functions/v2/https';
 import { fakeDb, type Store } from '../credit/testing/credit-fake-db';
+import { MailPageError } from './mail-page/render-mail-page.logic';
 import { verifyNewsletterUnsubscribe } from '../newsletter/newsletter-link';
 import type { MailJobDoc } from './mail-job';
-import { isTenantDocumentPath, keysFor, type MailingDoc, noticeExcerpt, onMailing, parseDeliveries, privateRefs, safeFilename, sendMailing } from './mailing';
+import { isTenantDocumentPath, keysFor, mailPageBody, type MailingDoc, noticeExcerpt, onMailing, parseDeliveries, privateRefs, safeFilename, sendMailing } from './mailing';
 import { unsubscribeHeaders } from './personal-mail.logic';
+
+describe('mailPageBody', () => {
+  async function refusal(): Promise<unknown> {
+    try {
+      await mailPageBody('t1', 'pk1', 'uid1');
+      return undefined;
+    } catch (e) {
+      return e;
+    }
+  }
+
+  it('returns the rendered page', async () => {
+    h.renderMailPage = async () => ({ html: '<p>Hallo</p>' });
+    expect(await mailPageBody('t1', 'pk1', 'uid1')).toBe('<p>Hallo</p>');
+    h.renderMailPage = undefined;
+  });
+
+  it('turns a MailPageError into failed-precondition with its code', async () => {
+    h.renderMailPage = async () => { throw new MailPageError('leer', 'no-content'); };
+    const err = await refusal();
+    h.renderMailPage = undefined;
+    expect(err).toBeInstanceOf(HttpsError);
+    expect((err as HttpsError).code).toBe('failed-precondition');
+    expect((err as HttpsError).message).toBe('no-content');
+  });
+
+  it('turns any other error into internal, without its message', async () => {
+    h.renderMailPage = async () => { throw new Error('Firestore exploded at mailPages/pk1'); };
+    const err = await refusal();
+    h.renderMailPage = undefined;
+    expect(err).toBeInstanceOf(HttpsError);
+    expect((err as HttpsError).code).toBe('internal');
+    expect((err as HttpsError).message).not.toContain('Firestore');
+  });
+});
 
 describe('parseDeliveries', () => {
   it('keeps each person once with the sendable channels in a fixed order', () => {

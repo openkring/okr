@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  errorCodeOf, mailingWebFunctionUrl, newWebToken, WEB_VERSION_CSP, WEB_VERSION_HEADERS, webTokenFromRequest, webVersionOn, webVersionUrl, withWebLink,
+  createsWebVersion, errorCodeOf, mailingWebFunctionUrl, newWebToken, WEB_VERSION_CSP, WEB_VERSION_HEADERS, webTokenFromRequest, webVersionOn, webVersionUrl, withWebLink,
 } from './web-version.logic';
 
 describe('webVersionOn', () => {
@@ -9,6 +9,19 @@ describe('webVersionOn', () => {
   it('defaults to off otherwise', () => expect(webVersionOn(undefined, false)).toBe(false));
   it('follows an explicit off on a newsletter', () => expect(webVersionOn(false, true)).toBe(false));
   it('follows an explicit on elsewhere', () => expect(webVersionOn(true, false)).toBe(true));
+});
+
+describe('createsWebVersion', () => {
+  it('is off without an E-Mail recipient, even when asked for', () => expect(createsWebVersion(true, false, 0)).toBe(false));
+  it('is off for a newsletter without an E-Mail recipient', () => expect(createsWebVersion(undefined, true, 0)).toBe(false));
+  it('follows the choice with E-Mail recipients', () => {
+    expect(createsWebVersion(true, false, 3)).toBe(true);
+    expect(createsWebVersion(false, true, 3)).toBe(false);
+  });
+  it('defaults like webVersionOn with E-Mail recipients', () => {
+    expect(createsWebVersion(undefined, true, 1)).toBe(true);
+    expect(createsWebVersion(undefined, false, 1)).toBe(false);
+  });
 });
 
 describe('newWebToken', () => {

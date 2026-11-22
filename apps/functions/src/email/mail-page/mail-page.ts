@@ -11,10 +11,7 @@ import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
 import { sanitizeEmailBody } from '../../pdf/sanitize';
 import { isReapableDraft, mailPageRefusal, upcomingEventLines } from './mail-page.logic';
-import { MailPageError, renderMailPageContent, type MailEventLine, type MailSection } from './render-mail-page.logic';
-
-/** How many upcoming events an events section lists. */
-const MAX_EVENTS = 10;
+import { MAX_MAIL_EVENTS, MailPageError, renderMailPageContent, type MailEventLine, type MailSection } from './render-mail-page.logic';
 
 const REFUSAL_TEXT = {
   'not-found': 'Die Mailseite existiert nicht.',
@@ -49,7 +46,8 @@ export async function renderMailPage(
     const rows = evSnap.docs
       .map((d) => ({ ...d.data(), okey: d.id }) as CalEventModel)
       .filter((e) => e.tenants?.includes(tenantId));
-    events[s.name] = upcomingEventLines(rows, today, MAX_EVENTS);
+    // loaded once per calendar at the cap; each section lists its own maxEvents of them (mailEventLimit)
+    events[s.name] = upcomingEventLines(rows, today, MAX_MAIL_EVENTS);
   }
 
   const { default: hb } = await import('handlebars');
