@@ -16,14 +16,34 @@ export function toStyleString(styles: Record<string, string | null>): string {
     .join(';');
 }
 
+// every text-align keyword; pasted texts carry 'start' (79 stored blocks, 2026-11-22)
+const ALIGNS = new Set(['left', 'center', 'right', 'justify', 'start', 'end', 'match-parent', 'justify-all']);
+/**
+ * Values that end up inside a style attribute are checked on the way in and on the way out: a stored
+ * `align="center;background:url(…)"` or `color:red;position:fixed` must not ride along into the DOM.
+ */
+export function safeAlign(value: unknown): string | null {
+  const align = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  return ALIGNS.has(align) ? align : null;
+}
+const COLOR = /^(#[0-9a-f]{3,8}|(rgb|hsl)a?\(\s*[\d.]+%?\s*,\s*[\d.]+%?\s*,\s*[\d.]+%?\s*(,\s*[\d.]+%?\s*)?\)|[a-z]{3,20})$/i;
+export function safeColor(value: unknown): string | null {
+  const color = typeof value === 'string' ? value.trim() : '';
+  return COLOR.test(color) ? color : null;
+}
+function safeIndent(value: unknown): number | null {
+  const indent = typeof value === 'number' ? value : parseInt(String(value ?? ''), 10);
+  return Number.isInteger(indent) && indent > 0 && indent <= 20 ? indent : null;
+}
+
 function blockAttrs(dom: HTMLElement): { align: string | null; indent: number | null } {
-  const align = dom.getAttribute('align') || dom.style.textAlign || null;
-  const indent = dom.getAttribute('data-indent');
-  return { align, indent: parseInt(indent ?? '', 10) || null };
+  const align = safeAlign(dom.getAttribute('align') || dom.style.textAlign);
+  return { align, indent: safeIndent(dom.getAttribute('data-indent')) };
 }
 
 function blockDOM(tag: string, node: PMNode): DOMOutputSpec {
-  const { align, indent } = node.attrs as { align: string | null; indent: number | null };
+  const align = safeAlign(node.attrs['align']);
+  const indent = safeIndent(node.attrs['indent']);
   const style = toStyleString({
     textAlign: align !== 'left' ? align : null,
     marginLeft: indent !== null ? `${indent * 40}px` : null,
@@ -78,14 +98,20 @@ const s: MarkSpec = {
 
 const textColor: MarkSpec = {
   attrs: { color: { default: null } },
-  parseDOM: [{ style: 'color', getAttrs: (value) => ({ color: value }) }],
-  toDOM: (mark) => ['span', { style: `color:${mark.attrs['color']};` }, 0],
+  parseDOM: [{ style: 'color', getAttrs: (value) => { const color = safeColor(value); return color ? { color } : false; } }],
+  toDOM: (mark) => { const color = safeColor(mark.attrs['color']); return ['span', color ? { style: `color:${color};` } : {}, 0]; },
 };
 
 const textBackgroundColor: MarkSpec = {
   attrs: { backgroundColor: { default: null } },
-  parseDOM: [{ style: 'background-color', getAttrs: (value) => ({ backgroundColor: value }) }],
-  toDOM: (mark) => ['span', { style: `background-color:${mark.attrs['backgroundColor']};` }, 0],
+  parseDOM: [{
+    style: 'background-color',
+    getAttrs: (value) => { const backgroundColor = safeColor(value); return backgroundColor ? { backgroundColor } : false; },
+  }],
+  toDOM: (mark) => {
+    const backgroundColor = safeColor(mark.attrs['backgroundColor']);
+    return ['span', backgroundColor ? { style: `background-color:${backgroundColor};` } : {}, 0];
+  },
 };
 
 const sup: MarkSpec = {
@@ -115,7 +141,7 @@ const blockquote: NodeSpec = {
   attrs: { indent: { default: null } },
   parseDOM: [{ tag: 'blockquote', getAttrs: (dom) => ({ indent: blockAttrs(dom).indent }) }],
   toDOM: (node) => {
-    const indent = node.attrs['indent'] as number | null;
+    const indent = safeIndent(node.attrs['indent']);
     const style = toStyleString({ marginLeft: indent !== null ? `${indent * 40}px` : null }) || null;
     return ['blockquote', { style, 'data-indent': indent ?? null }, 0];
   },

@@ -4,10 +4,15 @@ const NAMED_ENTITIES: Record<string, string> = {
   eacute: 'é', egrave: 'è', agrave: 'à', ccedil: 'ç', laquo: '«', raquo: '»', ndash: '–', mdash: '—', hellip: '…',
 };
 
+/** A numeric entity outside the Unicode range would make String.fromCodePoint throw; it counts as '?'. */
+function fromCodePoint(codePoint: number): string {
+  return Number.isInteger(codePoint) && codePoint > 0 && codePoint <= 0x10ffff ? String.fromCodePoint(codePoint) : '?';
+}
+
 /** An unknown named entity still counts as one character, which is what the author sees. */
 function decodeEntity(entity: string): string {
-  if (entity.startsWith('#x') || entity.startsWith('#X')) return String.fromCodePoint(parseInt(entity.slice(2), 16) || 0x3f);
-  if (entity.startsWith('#')) return String.fromCodePoint(parseInt(entity.slice(1), 10) || 0x3f);
+  if (entity.startsWith('#x') || entity.startsWith('#X')) return fromCodePoint(parseInt(entity.slice(2), 16));
+  if (entity.startsWith('#')) return fromCodePoint(parseInt(entity.slice(1), 10));
   return NAMED_ENTITIES[entity] ?? '?';
 }
 

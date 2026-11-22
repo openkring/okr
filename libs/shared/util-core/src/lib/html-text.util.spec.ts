@@ -33,6 +33,10 @@ describe('htmlTextLength', () => {
     expect(htmlTextLength('<p>A &amp; B</p>')).toBe(5);
   });
 
+  it('does not throw on a numeric entity outside the Unicode range', () => {
+    expect(htmlTextLength('<p>&#99999999;&#x110000;&#0;</p>')).toBe(3);
+  });
+
   it('counts an emoji as one character', () => {
     expect(htmlTextLength('<p>🚣</p>')).toBe(1);
   });

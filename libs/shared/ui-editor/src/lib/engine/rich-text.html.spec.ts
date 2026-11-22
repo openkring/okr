@@ -69,6 +69,21 @@ describe('rich-text HTML round trip', () => {
     expect(roundTrip('<p><strong><em>x</em></strong></p>')).toBe('<p><em><strong>x</strong></em></p>');
   });
 
+  it('drops style values that would carry more than an alignment, colour or indent', () => {
+    expect(roundTrip('<p align="center;background:url(https://x.test/a)">a</p>')).toBe('<p>a</p>');
+    const indented = roundTrip('<p data-indent="2;position:fixed">a</p>');
+    expect(indented).toContain('data-indent="2"');
+    expect(indented).not.toContain('position');
+    expect(roundTrip('<p data-indent="999">a</p>')).toBe('<p>a</p>');
+    expect(roundTrip('<p style="text-align:start">a</p>')).toContain('text-align');   // pasted texts carry it
+    // one span with both colours becomes two nested marks; neither colour is lost
+    const twoColours = normaliseStyles(roundTrip('<p><span style="background-color:#ffffff;color:#737373;">a</span></p>'));
+    expect(twoColours).toContain('background-color');
+    expect(twoColours).toMatch(/[^-]color: rgb\(115, 115, 115\)/);
+    expect(roundTrip('<p><span style="color:expression(alert(1))">a</span></p>')).toBe('<p>a</p>');
+    expect(roundTrip('<p><span style="background-color:url(https://x.test/a)">a</span></p>')).toBe('<p>a</p>');
+  });
+
   it('drops scripts and event handlers', () => {
     expect(roundTrip('<p>ok</p><script>alert(1)</script>')).toBe('<p>ok</p>');
     expect(roundTrip('<p><img src="x.png" onerror="alert(1)"></p>')).toBe('<p><img src="x.png"></p>');
