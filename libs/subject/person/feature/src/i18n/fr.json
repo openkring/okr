@@ -24,6 +24,11 @@
     "placeholder": "Saisir un surnom",
     "helper": "Facultatif. Sert uniquement à retrouver la personne sous ce nom dans la recherche."
   },
+  "title": {
+    "label": "Titre",
+    "placeholder": "Saisir un titre, p. ex. Dr",
+    "helper": "Facultatif. Un titre académique comme « Dr » ou « Prof. », séparé du prénom."
+  },
   "maidenName": {
     "label": "Nom de jeune fille",
     "placeholder": "Saisir le nom de jeune fille",

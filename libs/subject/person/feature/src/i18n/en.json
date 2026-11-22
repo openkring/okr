@@ -24,6 +24,11 @@
     "placeholder": "Enter a nickname",
     "helper": "Optional. Only used so that a search also finds the person by this name."
   },
+  "title": {
+    "label": "Title",
+    "placeholder": "Enter a title, e.g. Dr.",
+    "helper": "Optional. An academic title such as “Dr.” or “Prof.”, kept apart from the first name."
+  },
   "maidenName": {
     "label": "Maiden name",
     "placeholder": "Enter the maiden name",

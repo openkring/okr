@@ -24,6 +24,11 @@
     "placeholder": "Introduce un apodo",
     "helper": "Opcional. Solo sirve para que la búsqueda encuentre también a la persona por este nombre."
   },
+  "title": {
+    "label": "Título",
+    "placeholder": "Introduce un título, p. ej. Dr.",
+    "helper": "Opcional. Un título académico como «Dr.» o «Prof.», separado del nombre."
+  },
   "maidenName": {
     "label": "Apellido de soltera",
     "placeholder": "Introduce el apellido de soltera",

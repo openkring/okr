@@ -24,6 +24,11 @@
     "placeholder": "Inserisci un soprannome",
     "helper": "Facoltativo. Serve solo a trovare la persona anche con questo nome nella ricerca."
   },
+  "title": {
+    "label": "Titolo",
+    "placeholder": "Inserisci un titolo, ad es. Dr.",
+    "helper": "Facoltativo. Un titolo accademico come «Dr.» o «Prof.», separato dal nome."
+  },
   "maidenName": {
     "label": "Cognome da nubile",
     "placeholder": "Inserisci il cognome da nubile",

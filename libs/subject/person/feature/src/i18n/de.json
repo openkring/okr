@@ -24,6 +24,11 @@
     "placeholder": "Übername eingeben",
     "helper": "Optional. Wird nur verwendet, um die Person in der Suche auch unter diesem Namen zu finden."
   },
+  "title": {
+    "label": "Titel",
+    "placeholder": "Titel eingeben, z. B. Dr.",
+    "helper": "Optional. Ein akademischer Titel wie «Dr.» oder «Prof.», getrennt vom Vornamen."
+  },
   "maidenName": {
     "label": "Ledigname",
     "placeholder": "Ledigname eingeben",

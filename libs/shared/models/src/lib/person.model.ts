@@ -25,6 +25,12 @@ export class PersonModel implements OkrModel, AddressableModel, SearchableModel,
    * Optional on read: every person written before this field existed lacks it — always `?? ''`.
    */
   public maidenName?: string;
+  /**
+   * Optional academic or honorary title («Dr.», «Prof.»), kept out of `firstName`. Edited in the
+   * person form only; not part of getFullName and not indexed.
+   * Optional on read: every person written before this field existed lacks it — always `?? ''`.
+   */
+  public title?: string;
   // ssnId/dateOfBirth/dateOfDeath/favEmail/favPhone were stripped in privacy 1.19 Phase 4:
   // ssn + dob + dod live only in the addresses vault; contact data is served by the
   // address-directory projection.

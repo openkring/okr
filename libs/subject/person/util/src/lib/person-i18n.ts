@@ -26,6 +26,10 @@ export const PERSON_I18N_KEYS = {
     nickname_placeholder:       PFX + 'nickname.placeholder',
     nickname_helper:            PFX + 'nickname.helper',
 
+    title_label:                PFX + 'title.label',
+    title_placeholder:          PFX + 'title.placeholder',
+    title_helper:               PFX + 'title.helper',
+
     maidenName_label:           PFX + 'maidenName.label',
     maidenName_placeholder:     PFX + 'maidenName.placeholder',
     maidenName_helper:          PFX + 'maidenName.helper',
