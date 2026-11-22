@@ -3,7 +3,7 @@ import { form } from '@angular/forms/signals';
 import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular';
 
 import { AvatarInfo, CategoryItemModel, CategoryListModel, LocationModel, ResourceModel, RoleName, TripModel, UserModel } from '@okr/shared-models';
-import { Checkbox, CheckboxI18n, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TimeInput, TimeInputI18n } from '@okr/shared-ui';
+import { Checkbox, CheckboxI18n, DateInput, DateInputI18n, ErrorNote, TextareaInput, TextareaInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TimeInput, TimeInputI18n } from '@okr/shared-ui';
 import { debugFormModel, getDurationLabel, hasRole } from '@okr/shared-util-core';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { DEFAULT_NOTES } from '@okr/shared-constants';
@@ -19,7 +19,7 @@ import { formatTripTime, isTrainingCrewBoat, MAX_TRIP_DISTANCE_KM, TripI18n, tri
   imports: [
     SvgIconPipe,
     IonItem, IonLabel, IonNote, IonGrid, IonRow, IonCol, IonIcon, IonCard, IonCardContent, IonButton,
-    NotesInput, Avatars, NumberInput, DateInput, TimeInput, ErrorNote, Checkbox, StringSelect
+    TextareaInput, Avatars, NumberInput, DateInput, TimeInput, ErrorNote, Checkbox, StringSelect
   ],
   styles: [`
     ion-thumbnail { width: 30px; height: 30px; }
@@ -189,7 +189,7 @@ import { formatTripTime, isTrainingCrewBoat, MAX_TRIP_DISTANCE_KM, TripI18n, tri
       }
 
     @if(hasRole('admin')) {
-      <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="false" />
+      <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="false" />
     }
   `,
 })
@@ -294,7 +294,7 @@ export class TripEditForm {
   });
   protected selectedLocationKey = computed(() => this.formData().locations?.[0] ?? '');
   protected notes = computed(() => this.formData().notes ?? DEFAULT_NOTES);
-  protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
+  protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as TextareaInputI18n));
   protected participants = computed(() => this.formData()?.participants ?? []);
   // no `?? 0` fallback: a cleared field must stay empty instead of snapping back to a value
   protected distance = computed(() => this.formData().distance);

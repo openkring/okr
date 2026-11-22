@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 
 import { DEFAULT_NOTES } from '@okr/shared-constants';
 import { AccountModel, BankFormat, BankProfileModel, RoleName, UserModel } from '@okr/shared-models';
-import { ErrorNote, IbanInput, IbanInputI18n, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { ErrorNote, IbanInput, IbanInputI18n, TextareaInput, TextareaInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { validateVestTree } from '@okr/shared-util-angular';
 
@@ -17,7 +17,7 @@ const CURRENCIES = ['CHF', 'EUR', 'USD', 'GBP'];
 @Component({
   selector: 'okr-bank-profile-form',
   standalone: true,
-  imports: [TextInput, IbanInput, NotesInput, StringSelect, AccountSelect, ErrorNote, IonGrid, IonRow, IonCol, IonCard, IonCardContent],
+  imports: [TextInput, IbanInput, TextareaInput, StringSelect, AccountSelect, ErrorNote, IonGrid, IonRow, IonCol, IonCard, IonCardContent],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     @if (showForm()) {
@@ -65,7 +65,7 @@ const CURRENCIES = ['CHF', 'EUR', 'USD', 'GBP'];
           </ion-card-content>
         </ion-card>
         @if (hasRole('treasurer') || hasRole('admin')) {
-          <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+          <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
         }
       </form>
     }
@@ -117,7 +117,7 @@ export class BankProfileForm {
   protected readonly currencyI18n = computed(() => ({ name: 'currency', label: this.i18n().currency_label(), helper: this.i18n().currency_helper() } as StringSelectI18n));
   protected readonly accountI18n = computed(() => ({ name: 'accountKey', label: this.i18n().account_label(), helper: this.i18n().account_helper() } as AccountSelectI18n));
   protected readonly feeAccountI18n = computed(() => ({ name: 'feeAccountKey', label: this.i18n().feeAccount_label(), helper: this.i18n().feeAccount_helper() } as AccountSelectI18n));
-  protected readonly notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
+  protected readonly notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as TextareaInputI18n));
 
   protected normalizeIban(value: string): string {
     return (value ?? '').replace(/\s+/g, '').toUpperCase();

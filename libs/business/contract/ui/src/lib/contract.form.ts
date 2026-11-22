@@ -5,10 +5,7 @@ import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol
 import { DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { AvatarInfo, CONTRACT_STATES, CONTRACT_TYPES, ContractModel, ContractParty, LoanTerms, MoneyModel, NoticePeriod, NoticeTerms, RoleName, UserModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import {
-  AmountInput, AmountInputI18n, Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n,
-  NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextareaInput, TextInput, TextInputI18n,
-} from '@okr/shared-ui';
+import { AmountInput, AmountInputI18n, Chips, DateInput, DateInputI18n, ErrorNote, TextareaInput, TextareaInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
@@ -30,7 +27,7 @@ export type ContractSelectTarget = 'responsible' | 'partyPerson' | 'partyOrg';
   selector: 'okr-contract-form',
   standalone: true,
   imports: [
-    ErrorNote, TextInput, TextareaInput, NumberInput, AmountInput, DateInput, StringSelect, NotesInput, Chips,
+    ErrorNote, TextInput, TextareaInput, NumberInput, AmountInput, DateInput, StringSelect, Chips,
     AvatarSelect, AvatarLabel, SvgIconPipe,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonButton, IonIcon, IonItem, IonNote, IonSpinner,
   ],
@@ -325,7 +322,7 @@ export type ContractSelectTarget = 'responsible' | 'partyPerson' | 'partyOrg';
           <okr-error-note [errors]="tagsErrors()" />
         }
         @if (isWriter()) {
-          <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
+          <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
             [maxLength]="descriptionLength" [errors]="notesErrors()" [readOnly]="isReadOnly()" />
         }
       </form>
@@ -491,7 +488,7 @@ export class ContractForm {
 
   protected notesI18n = computed(() => ({
     name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder(),
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   private text(name: string, label: string, placeholder = '', helper = ''): TextInputI18n {
     return { name, label, placeholder, helper };

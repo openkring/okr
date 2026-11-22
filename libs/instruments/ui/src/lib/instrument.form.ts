@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 
 import { DEFAULT_NOTES, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { InstrumentModel } from '@okr/shared-models';
-import { ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { ErrorNote, TextareaInput, TextareaInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean } from '@okr/shared-util-core';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
@@ -19,7 +19,7 @@ import { InstrumentI18n, instrumentValidations } from '@okr/instruments-util';
   selector: 'okr-instrument-form',
   standalone: true,
   imports: [
-    ErrorNote,TextInput, NotesInput, IonGrid, IonRow, IonCol, IonCard, IonCardContent],
+    ErrorNote,TextInput, TextareaInput, IonGrid, IonRow, IonCol, IonCard, IonCardContent],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
   template: `
     @if (showForm()) {
@@ -34,7 +34,7 @@ import { InstrumentI18n, instrumentValidations } from '@okr/instruments-util';
                   <okr-error-note [errors]="nameErrors()" />
                 </ion-col>
                 <ion-col size="12">
-                  <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)"
+                  <okr-textarea-input variant="card" [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)"
                     [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="descriptionErrors()" />
                 </ion-col>
               </ion-row>
@@ -91,7 +91,7 @@ export class InstrumentForm {
     name: 'description',
     label: this.i18n().description_label(),
     placeholder: this.i18n().description_placeholder(),
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   protected onFieldChange(fieldName: 'name' | 'description', fieldValue: string): void {
     this.dirty.emit(true);

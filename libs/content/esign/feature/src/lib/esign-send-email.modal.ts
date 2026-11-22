@@ -7,7 +7,7 @@ import {
 } from '@ionic/angular';
 
 import {
-  ChangeConfirmation, Checkbox, CheckboxI18n, Header, NotesInput, NotesInputI18n, TextInput, TextInputI18n,
+  ChangeConfirmation, Checkbox, CheckboxI18n, Header, TextareaInput, TextareaInputI18n, TextInput, TextInputI18n,
 } from '@okr/shared-ui';
 import { EsignRecord } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';
@@ -22,7 +22,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    Header, ChangeConfirmation, TextInput, NotesInput, Checkbox,
+    Header, ChangeConfirmation, TextInput, TextareaInput, Checkbox,
     IonContent, IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonSpinner,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
@@ -65,7 +65,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
               </ion-col>
 
               <ion-col size="12">
-                <okr-notes-input [i18n]="bodyI18n()" [value]="body()"
+                <okr-textarea-input variant="card" [i18n]="bodyI18n()" [value]="body()"
                   (valueChange)="body.set($event)" [readOnly]="false" />
               </ion-col>
             </ion-row>
@@ -120,7 +120,7 @@ export class EsignSendEmailModal implements OnInit {
   } as TextInputI18n));
   protected readonly bodyI18n = computed(() => ({
     name: 'body', label: this.i18n.body_label(), placeholder: this.i18n.body_placeholder(),
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
   protected readonly includePdfI18n = computed(() => ({
     name: 'includeSignedPdf', label: this.i18n.include_pdf_label(), helper: '',
   } as CheckboxI18n));

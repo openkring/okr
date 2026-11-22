@@ -5,7 +5,7 @@ import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, 
 import { DEFAULT_NOTES, DEFAULT_TAGS, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { AccountModel, BillLine, BillModel, CostCenterModel, ProjectModel, UserModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { DateInput, DateInputI18n, ErrorNote, TextareaInput, TextareaInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, getFullName } from '@okr/shared-util-core';
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
@@ -24,7 +24,7 @@ import { BillLinesForm } from './bill-lines.form';
   selector: 'okr-bill-edit-form',
   standalone: true,
   imports: [
-    SvgIconPipe, ErrorNote, TextInput, DateInput, NotesInput, BillLinesForm, AccountSelect,
+    SvgIconPipe, ErrorNote, TextInput, DateInput, TextareaInput, BillLinesForm, AccountSelect,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonNote, IonButton, IonIcon,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -99,7 +99,7 @@ import { BillLinesForm } from './bill-lines.form';
           [defaultAccountKey]="defaultAccountKey()" [costCenters]="costCenters()" [costCentersEnabled]="costCentersEnabled()"
           [bookDefaultCostCenterKey]="bookDefaultCostCenterKey()" [projects]="projects()" [readOnly]="isReadOnly()" [mode]="mode()" (dirty)="dirty.emit($event)" (valid)="linesValid.set($event)" />
 
-        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       </form>
     }
   `
@@ -206,7 +206,7 @@ export class BillEditForm {
   } as AccountSelectI18n));
   protected notesI18n = computed(() => ({
     name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder()
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
   protected billDateI18n = computed(() => ({ name: 'billDate', label: this.i18n().bill_date_label(), placeholder: this.i18n().bill_date_placeholder(), helper: this.i18n().bill_date_helper() } as DateInputI18n));
   protected dueDateI18n = computed(() => ({ name: 'dueDate', label: this.i18n().due_date_label(), placeholder: this.i18n().due_date_placeholder(), helper: this.i18n().due_date_helper() } as DateInputI18n));
 

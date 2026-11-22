@@ -5,7 +5,7 @@ import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, 
 import { DEFAULT_NOTES, DEFAULT_TAGS, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { AccountModel, InvoiceModel, UserModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { DateInput, DateInputI18n, ErrorNote, TextareaInput, TextareaInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 
@@ -24,7 +24,7 @@ import { InvoicePositionsForm } from './invoice-positions.form';
   standalone: true,
   imports: [
     SvgIconPipe,
-    ErrorNote, TextInput, DateInput, NotesInput, InvoicePositionsForm,
+    ErrorNote, TextInput, DateInput, TextareaInput, InvoicePositionsForm,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonNote, IonButton, IonIcon,
   ],
   styles: [`
@@ -115,7 +115,7 @@ import { InvoicePositionsForm } from './invoice-positions.form';
           (positionAdd)="positionAdd.emit()"
         />
 
-        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
+        <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
           [maxLength]="notesLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
       </form>
     }
@@ -157,7 +157,7 @@ export class InvoiceEditForm {
 
   protected notesI18n = computed(() => ({
     name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder()
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   protected invoiceDateI18n = computed(() => ({ name: 'invoiceDate', label: this.i18n().invoice_date_label(), placeholder: this.i18n().invoice_date_placeholder(), helper: this.i18n().invoice_date_helper() } as DateInputI18n));
   protected dueDateI18n = computed(() => ({ name: 'dueDate', label: this.i18n().due_date_label(), placeholder: this.i18n().due_date_placeholder(), helper: this.i18n().due_date_helper() } as DateInputI18n));

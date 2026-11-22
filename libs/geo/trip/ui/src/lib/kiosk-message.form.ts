@@ -2,7 +2,7 @@ import { Component, computed, effect, input, model, output } from '@angular/core
 import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
-import { Checkbox, CheckboxI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n } from '@okr/shared-ui';
+import { Checkbox, CheckboxI18n, TextareaInput, TextareaInputI18n, NumberInput, NumberInputI18n } from '@okr/shared-ui';
 import { coerceBoolean } from '@okr/shared-util-core';
 import { validateVestTree } from '@okr/shared-util-angular';
 
@@ -16,7 +16,7 @@ import { KIOSK_COUNTDOWN_MAX, KIOSK_COUNTDOWN_MIN, KioskMessageFormData, kioskMe
   selector: 'okr-kiosk-message-form',
   standalone: true,
   imports: [
-    NotesInput, Checkbox, NumberInput,
+    TextareaInput, Checkbox, NumberInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -28,7 +28,7 @@ import { KIOSK_COUNTDOWN_MAX, KIOSK_COUNTDOWN_MIN, KioskMessageFormData, kioskMe
             <ion-grid>
               <ion-row>
                 <ion-col size="12">
-                  <okr-notes-input [i18n]="messageI18n()" [value]="message()"
+                  <okr-textarea-input variant="card" [i18n]="messageI18n()" [value]="message()"
                     (valueChange)="onFieldChange('message', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
@@ -82,7 +82,7 @@ export class KioskMessageForm {
 
   protected messageI18n = computed(() => ({
     name: 'message', label: this.i18n().kiosk_message_label(), placeholder: this.i18n().kiosk_message_placeholder()
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   protected countdownEnabledI18n = computed(() => ({
     name: 'withCountdown', label: this.i18n().kiosk_countdown_label(), helper: ''

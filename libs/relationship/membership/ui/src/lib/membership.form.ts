@@ -7,7 +7,7 @@ import { BexioIdMask, ENV } from '@okr/shared-config';
 import { ABBREVIATION_LENGTH, BEXIO_ID_LENGTH, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_MSTATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_TAGS, END_FUTURE_DATE_STR, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { CategoryListModel, MembershipModel, PrivacySettings, RoleName, UserModel, REBATE_REASON_VALUES } from '@okr/shared-models';
 import { TranslatePipe } from '@okr/shared-i18n';
-import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n , ErrorNote, ImgDirective } from '@okr/shared-ui';
+import { CategorySelect, Chips, DateInput, DateInputI18n, TextareaInput, TextareaInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n , ErrorNote, ImgDirective } from '@okr/shared-ui';
 import { MODEL_SELECTOR, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { areTagsVisible, coerceBoolean, getFullName, getItemLabel, hasRole } from '@okr/shared-util-core';
 
@@ -22,7 +22,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
     AsyncPipe, TranslatePipe,
     AvatarPipe,
     TextInput, DateInput,
-    Chips, NotesInput, CategorySelect, NumberInput, StringSelect,
+    Chips, TextareaInput, CategorySelect, NumberInput, StringSelect,
     IonGrid, IonRow, IonCol, IonItem, IonLabel, IonNote, IonCard, IonCardContent, IonAvatar, IonButton
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -199,7 +199,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
           }
 
           @if(hasRole('admin')) {
-            <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+            <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
           }
         </form>
       }
@@ -223,7 +223,7 @@ export class MembershipForm {
   protected memberNickNameI18n = computed(() => ({ name: 'memberNickName', label: this.i18n().nickName_label(), placeholder: this.i18n().nickName_placeholder(), helper: this.i18n().nickName_helper() }) as TextInputI18n);
   protected orgFunctionI18n = computed(() => ({ name: 'orgFunction', label: this.i18n().org_function_label(), placeholder: this.i18n().org_function_placeholder(), helper: this.i18n().org_function_helper() }) as TextInputI18n);
   protected rebateI18n = computed(() => ({ name: 'rebate', label: this.i18n().rebate_label(), placeholder: this.i18n().rebate_placeholder(), helper: this.i18n().rebate_helper() } as NumberInputI18n));
-  protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
+  protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as TextareaInputI18n));
   protected dateOfEntryI18n = computed(() => ({ name: 'dateOfEntry', label: this.i18n().dateOfEntry_label(), placeholder: this.i18n().dateOfEntry_placeholder(), helper: this.i18n().dateOfEntry_helper() } as DateInputI18n));
   protected dateOfExitI18n   = computed(() => ({ name: 'dateOfExit',   label: this.i18n().dateOfExit_label(),   placeholder: this.i18n().dateOfExit_placeholder(),   helper: this.i18n().dateOfExit_helper()   } as DateInputI18n));
   protected rebateReasonI18n = computed(() => ({ name: 'rebateReason', label: this.i18n().rebate_reason() } as StringSelectI18n));

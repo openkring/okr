@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, 
 
 import { DEFAULT_DATETIME, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
 import { AvatarInfo, RoleName, InvitationModel, UserModel, DEFAULT_INVITATION_STATE, DEFAULT_INVITATION_ROLE } from '@okr/shared-models';
-import { Chips, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { Chips, TextareaInput, TextareaInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, DateFormat, getTodayStr, hasRole } from '@okr/shared-util-core';
 import { PrettyDatePipe, PrettyDateTimePipe } from '@okr/shared-pipes';
@@ -16,7 +16,7 @@ import { invitationValidations, createPersonAvatar, InvitationI18n, isOwnInvitat
   standalone: true,
   imports: [
     PrettyDatePipe, PrettyDateTimePipe,
-    Chips, AvatarDisplay, AvatarInput, NotesInput, StringSelect, TextInput,
+    Chips, AvatarDisplay, AvatarInput, TextareaInput, StringSelect, TextInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonLabel
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -106,7 +106,7 @@ import { invitationValidations, createPersonAvatar, InvitationI18n, isOwnInvitat
         
         <!-- the notes hold the inviter's message, so the invitee reads them too -->
         @if(hasRole('admin') || showMessage()) {
-          <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly() || !hasRole('admin')" [errors]="notesErrors()" />
+          <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly() || !hasRole('admin')" [errors]="notesErrors()" />
         }
       </form>
     }
@@ -117,7 +117,7 @@ export class InvitationForm {
   protected readonly descriptionLength = DESCRIPTION_LENGTH;
   public readonly i18n = input.required<InvitationI18n>();
   protected okeyI18n = computed(() => ({ name: 'okey', label: this.i18n().okey_label(), placeholder: this.i18n().okey_placeholder(), helper: this.i18n().okey_helper() } as TextInputI18n));
-  protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
+  protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as TextareaInputI18n));
   protected sentAtI18n = computed(() => ({ name: 'sentAt', label: this.i18n().sentAt_label(), placeholder: this.i18n().sentAt_placeholder(), helper: this.i18n().sentAt_helper() } as TextInputI18n));
   protected respondedAtI18n = computed(() => ({ name: 'respondedAt', label: this.i18n().respondedAt_label(), placeholder: this.i18n().respondedAt_placeholder(), helper: this.i18n().respondedAt_helper() } as TextInputI18n));
   protected stateI18n       = computed(() => ({ name: 'state', label: this.i18n().state() } as StringSelectI18n));

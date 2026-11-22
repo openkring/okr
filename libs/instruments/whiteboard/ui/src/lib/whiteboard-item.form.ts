@@ -4,7 +4,7 @@ import { IonChip, IonLabel } from '@ionic/angular';
 
 import { WhiteboardItem } from '@okr/shared-models';
 import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
-import { Color, ErrorNote, NotesInput, NotesInputI18n } from '@okr/shared-ui';
+import { Color, ErrorNote, TextareaInput, TextareaInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 
@@ -19,14 +19,14 @@ import { WhiteboardI18n, whiteboardItemValidations } from '@okr/instruments-whit
 @Component({
   selector: 'okr-whiteboard-item-form',
   standalone: true,
-  imports: [NotesInput, Color, ErrorNote, IonChip, IonLabel],
+  imports: [TextareaInput, Color, ErrorNote, IonChip, IonLabel],
   styles: [`.kind { margin: 8px; }`],
   template: `
     <ion-chip class="kind" color="medium">
       <ion-label>{{ item().kind === 'label' ? 'Label' : 'Sticker' }}</ion-label>
     </ion-chip>
 
-    <okr-notes-input [i18n]="textI18n()" [value]="text()" (valueChange)="onTextChange($event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="textErrors()" />
+    <okr-textarea-input variant="card" [i18n]="textI18n()" [value]="text()" (valueChange)="onTextChange($event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="textErrors()" />
 
     @if (item().kind === 'sticker') {
       <okr-color [label]="i18n().itemColor_label()" [hexColor]="colorHex()" (hexColorChange)="onColorChange($event)" [readOnly]="isReadOnly()" />
@@ -69,7 +69,7 @@ export class WhiteboardItemForm {
     name: 'text',
     label: this.i18n().itemText_label(),
     placeholder: this.i18n().itemText_placeholder(),
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   protected onTextChange(value: string): void {
     this.dirty.emit(true);

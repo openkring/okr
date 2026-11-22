@@ -3,7 +3,7 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonRow, IonSelect, IonSelectOption } from '@ionic/angular';
 
 import { InstrumentTopic } from '@okr/shared-models';
-import { ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { ErrorNote, TextareaInput, TextareaInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean } from '@okr/shared-util-core';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
@@ -20,7 +20,7 @@ import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/sh
   standalone: true,
   imports: [
     ErrorNote,
-    TextInput, NotesInput,
+    TextInput, TextareaInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonSelect, IonSelectOption,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
@@ -37,7 +37,7 @@ import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/sh
                   <okr-error-note [errors]="labelErrors()" />
                 </ion-col>
                 <ion-col size="12">
-                  <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)"
+                  <okr-textarea-input variant="card" [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)"
                     [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="descriptionErrors()" />
                 </ion-col>
                 @if (showScore()) {
@@ -119,7 +119,7 @@ export class TopicForm {
     name: 'description',
     label: this.i18n().topicDescription_label(),
     placeholder: this.i18n().topicDescription_placeholder(),
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   protected onFieldChange(fieldName: 'label' | 'description', fieldValue: string): void {
     this.dirty.emit(true);

@@ -3,9 +3,9 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonNote, IonRow } from '@ionic/angular';
 
 import { ChFutureDate, LowercaseWordMask } from '@okr/shared-config';
-import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TIME, DEFAULT_URL, MAX_DATES_PER_SERIES, NAME_LENGTH } from '@okr/shared-constants';
+import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TIME, DEFAULT_URL, MAX_DATES_PER_SERIES, NAME_LENGTH, DESCRIPTION_LENGTH } from '@okr/shared-constants';
 import { AvatarInfo, CalEventModel, CategoryListModel, COMMENT_NOTIFY_VALUES, LocationModel, RoleName, UserModel } from '@okr/shared-models';
-import { AddChip, CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringList, StringSelect, StringSelectI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n, UrlInput, UrlInputI18n } from '@okr/shared-ui';
+import { AddChip, CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, ErrorNote, TextareaInput, TextareaInputI18n, NumberInput, NumberInputI18n, StringList, StringSelect, StringSelectI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n, UrlInput, UrlInputI18n } from '@okr/shared-ui';
 import { MODEL_SELECTOR, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, convertDateFormatToString, DateFormat, fill, freeTextLocationAvatar, getEventLocationName, hasRole, locationToAvatar } from '@okr/shared-util-core';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -21,7 +21,7 @@ const DEFAULT_RECURRING_PERIODICITY = 'weekly';
   selector: 'okr-calevent-form',
   standalone: true,
   imports: [
-    CategorySelect, Chips, NotesInput, DateInput, TimeInput, NumberInput,
+    CategorySelect, Chips, TextareaInput, DateInput, TimeInput, NumberInput,
     TextInput, ErrorNote, StringList, StringSelect, Avatars, Checkbox, UrlInput, AddChip,
     SvgIconPipe,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonList, IonItem, IonLabel, IonNote, IonIcon
@@ -100,7 +100,7 @@ const DEFAULT_RECURRING_PERIODICITY = 'weekly';
             <ion-row>
               <ion-col size="12">
                 <!-- the description is part of what the event IS: same card, no card of its own -->
-                <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [embedded]="true" [fieldStyle]="true" [rows]="3" [readOnly]="isReadOnly()" />
+                <okr-textarea-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [rows]="3" [maxLength]="descriptionLength" [clearable]="true" [copyable]="true" [encryptable]="true" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
           }
@@ -550,6 +550,7 @@ export class CalEventForm {
   protected chFutureDate = ChFutureDate;
   protected calendarMask = LowercaseWordMask;
   protected nameLength = NAME_LENGTH;
+  protected readonly descriptionLength = DESCRIPTION_LENGTH;
 
   protected okeyI18n = computed(() => ({
     name: 'okey',
@@ -603,7 +604,7 @@ export class CalEventForm {
 
   protected descriptionI18n = computed(() => ({
     name: 'description', label: this.i18n().description(), placeholder: this.i18n().description_placeholder()
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   protected startDateI18n = computed(() => ({
     name: 'startDate',

@@ -3,7 +3,7 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH } from '@okr/shared-constants';
-import { Checkbox, CheckboxI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { Checkbox, CheckboxI18n, ErrorNote, TextareaInput, TextareaInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 import { I18nEntryFormModel, I18nEntryI18n, i18nEntryValidations } from '@okr/i18n-util';
@@ -16,7 +16,7 @@ import { I18nEntryFormModel, I18nEntryI18n, i18nEntryValidations } from '@okr/i1
 @Component({
   selector: 'okr-i18n-entry-form',
   standalone: true,
-  imports: [TextInput, NotesInput, Checkbox, ErrorNote, IonGrid, IonRow, IonCol, IonCard, IonCardContent],
+  imports: [TextInput, TextareaInput, Checkbox, ErrorNote, IonGrid, IonRow, IonCol, IonCard, IonCardContent],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     @if (showForm()) {
@@ -40,27 +40,27 @@ import { I18nEntryFormModel, I18nEntryI18n, i18nEntryValidations } from '@okr/i1
               </ion-row>
               <ion-row>
                 <ion-col size="12">
-                  <okr-notes-input [i18n]="deI18n()" [value]="de()"
+                  <okr-textarea-input variant="card" [i18n]="deI18n()" [value]="de()"
                     (valueChange)="onFieldChange('de', $event)"
                     [maxLength]="descriptionLength" [errors]="deErrors()" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12">
-                  <okr-notes-input [i18n]="enI18n()" [value]="en()"
+                  <okr-textarea-input variant="card" [i18n]="enI18n()" [value]="en()"
                     (valueChange)="onFieldChange('en', $event)"
                     [maxLength]="descriptionLength" [errors]="enErrors()" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12">
-                  <okr-notes-input [i18n]="frI18n()" [value]="fr()"
+                  <okr-textarea-input variant="card" [i18n]="frI18n()" [value]="fr()"
                     (valueChange)="onFieldChange('fr', $event)"
                     [maxLength]="descriptionLength" [errors]="frErrors()" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12">
-                  <okr-notes-input [i18n]="esI18n()" [value]="es()"
+                  <okr-textarea-input variant="card" [i18n]="esI18n()" [value]="es()"
                     (valueChange)="onFieldChange('es', $event)"
                     [maxLength]="descriptionLength" [errors]="esErrors()" [readOnly]="isReadOnly()" />
                 </ion-col>
                 <ion-col size="12">
-                  <okr-notes-input [i18n]="itI18n()" [value]="it()"
+                  <okr-textarea-input variant="card" [i18n]="itI18n()" [value]="it()"
                     (valueChange)="onFieldChange('it', $event)"
                     [maxLength]="descriptionLength" [errors]="itErrors()" [readOnly]="isReadOnly()" />
                 </ion-col>
@@ -147,7 +147,7 @@ export class I18nEntryForm {
     helper: this.i18n().is_html_helper(),
   } as CheckboxI18n));
 
-  private textI18n(name: string, label: string): NotesInputI18n {
+  private textI18n(name: string, label: string): TextareaInputI18n {
     return { name, label, placeholder: this.i18n().text_placeholder() };
   }
 

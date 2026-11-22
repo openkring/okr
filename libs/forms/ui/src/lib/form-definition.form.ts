@@ -7,7 +7,7 @@ import {
 import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, URL_LENGTH } from '@okr/shared-constants';
 import { ApplicationCollection, CategoryListModel, ConfirmationVariant, DerivedValue, FormDefinitionModel, FormMapping, SubmissionTarget } from '@okr/shared-models';
 import {
-  Checkbox, CheckboxI18n, ErrorNote, NotesInput, NotesInputI18n, RadioGroup, RadioGroupI18n,
+  Checkbox, CheckboxI18n, ErrorNote, TextareaInput, TextareaInputI18n, RadioGroup, RadioGroupI18n,
   StringSelect, StringSelectI18n, TextInput, TextInputI18n,
 } from '@okr/shared-ui';
 import { coerceBoolean, fill } from '@okr/shared-util-core';
@@ -32,7 +32,7 @@ const TARGET_KINDS: SubmissionTarget['kind'][] = ['collection', 'url', 'mail'];
   selector: 'okr-form-definition-form',
   standalone: true,
   imports: [
-    Checkbox, ErrorNote, TextInput, NotesInput, RadioGroup, StringSelect, DerivedValuesInput, ConfirmationSettingsInput, AcceptanceSettingsInput,
+    Checkbox, ErrorNote, TextInput, TextareaInput, RadioGroup, StringSelect, DerivedValuesInput, ConfirmationSettingsInput, AcceptanceSettingsInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCardSubtitle, IonList, IonItem, IonLabel, IonNote,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -65,7 +65,7 @@ const TARGET_KINDS: SubmissionTarget['kind'][] = ['collection', 'url', 'mail'];
               </ion-row>
               <ion-row>
                 <ion-col size="12">
-                  <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)"
+                  <okr-textarea-input variant="card" [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)"
                     [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="descriptionErrors()" />
                 </ion-col>
               </ion-row>
@@ -96,7 +96,7 @@ const TARGET_KINDS: SubmissionTarget['kind'][] = ['collection', 'url', 'mail'];
               </ion-row>
               <ion-row>
                 <ion-col size="12">
-                  <okr-notes-input [i18n]="fillerHelpTextI18n()" [value]="fillerHelpText()" (valueChange)="onFieldChange('fillerHelpText', $event)"
+                  <okr-textarea-input variant="card" [i18n]="fillerHelpTextI18n()" [value]="fillerHelpText()" (valueChange)="onFieldChange('fillerHelpText', $event)"
                     [maxLength]="descriptionLength" [encryptable]="false" [readOnly]="isReadOnly()" [errors]="fillerHelpTextErrors()" />
                 </ion-col>
               </ion-row>
@@ -281,7 +281,7 @@ export class FormDefinitionForm {
   protected readonly formKeyI18n = computed<TextInputI18n>(() => ({
     name: 'formKey', label: this.i18n().form_key(), placeholder: '', helper: '',
   }));
-  protected readonly descriptionI18n = computed<NotesInputI18n>(() => ({
+  protected readonly descriptionI18n = computed<TextareaInputI18n>(() => ({
     name: 'description', label: this.i18n().description(), placeholder: '',
   }));
   protected readonly targetKindI18n = computed<RadioGroupI18n>(() => ({
@@ -299,7 +299,7 @@ export class FormDefinitionForm {
   protected readonly pdfTemplateI18n = computed<TextInputI18n>(() => ({
     name: 'pdfTemplateId', label: this.i18n().def_pdf_template(), placeholder: this.i18n().def_pdf_template_ph(), helper: '',
   }));
-  protected readonly fillerHelpTextI18n = computed<NotesInputI18n>(() => ({
+  protected readonly fillerHelpTextI18n = computed<TextareaInputI18n>(() => ({
     name: 'fillerHelpText', label: this.i18n().def_filler_help(), placeholder: this.i18n().def_filler_help_ph(),
   }));
   protected readonly captchaI18n = computed<CheckboxI18n>(() => ({

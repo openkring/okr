@@ -3,7 +3,7 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { CategoryListModel, AccountModel, CostCenterModel, RoleName, UserModel } from '@okr/shared-models';
-import { CategorySelect, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { CategorySelect, ErrorNote, TextareaInput, TextareaInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, fill, hasRole, isActiveLeafCostCenter, isProfitAndLossAccountId } from '@okr/shared-util-core';
@@ -28,7 +28,7 @@ const RENDERED_FIELDS = ['id', 'name', 'type', 'parentKey', 'notes'];
   selector: 'okr-account-form',
   standalone: true,
   imports: [
-    CategorySelect, TextInput, NotesInput, ErrorNote, AccountSelect, CostCenterSelect,
+    CategorySelect, TextInput, TextareaInput, ErrorNote, AccountSelect, CostCenterSelect,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
@@ -90,7 +90,7 @@ const RENDERED_FIELDS = ['id', 'name', 'type', 'parentKey', 'notes'];
         </ion-card>
 
         @if(hasRole('admin')) {
-          <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
+          <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
         }
       </form>
     }
@@ -159,7 +159,7 @@ export class AccountForm {
 
   protected notesI18n = computed(() => ({
     name: 'notes', label: this.i18n().notes(), placeholder: this.i18n().notes_placeholder()
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   public dirty = output<boolean>();
   public valid = output<boolean>();

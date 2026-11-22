@@ -6,7 +6,7 @@ import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol
 import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
 import { CrosswordEntry, CrosswordTopicModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { ErrorNote, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { ErrorNote, TextareaInput, TextareaInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, fill } from '@okr/shared-util-core';
 
@@ -33,7 +33,7 @@ const CROSSWORD_LANGUAGES = ['de', 'en', 'es', 'fr', 'it'];
   imports: [
     SvgIconPipe,
     FormsModule,
-    TextInput, NotesInput, StringSelect, ErrorNote,
+    TextInput, TextareaInput, StringSelect, ErrorNote,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton, IonIcon, IonItem, IonNote, IonTextarea,
   ],
   styles: [`
@@ -60,7 +60,7 @@ const CROSSWORD_LANGUAGES = ['de', 'en', 'es', 'fr', 'it'];
                 </ion-col>
               </ion-row>
             </ion-grid>
-            <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)"
+            <okr-textarea-input variant="card" [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)"
               [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="descriptionErrors()" />
           </ion-card-content>
         </ion-card>
@@ -194,7 +194,7 @@ export class CrosswordTopicForm {
   } as TextInputI18n));
   protected descriptionI18n = computed(() => ({
     name: 'description', label: this.i18n().form_description(), placeholder: this.i18n().form_description(),
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
   protected languageI18n = computed(() => ({ name: 'language', label: this.i18n().form_language() } as StringSelectI18n));
   protected answerI18n = computed(() => ({
     name: 'answer', label: this.i18n().form_answer(), placeholder: this.i18n().form_answer(), helper: '',

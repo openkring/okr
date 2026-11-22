@@ -6,12 +6,12 @@ import {
 
 import { AvatarInfo, DiaryAlbumModel, DiaryModel, DiaryScope, DiaryStatus, RoleName, TripModel, UserModel } from '@okr/shared-models';
 import {
-  Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n,
+  Chips, DateInput, DateInputI18n, ErrorNote, TextareaInput, TextareaInputI18n, NumberInput, NumberInputI18n,
   TextInput, TextInputI18n,
 } from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
-import { DEFAULT_TAGS, LONG_NAME_LENGTH } from '@okr/shared-constants';
+import { DEFAULT_TAGS, DESCRIPTION_LENGTH, LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { Avatars } from '@okr/avatar-ui';
 
 import {
@@ -22,7 +22,7 @@ import {
   selector: 'okr-diary-form',
   standalone: true,
   imports: [
-    TextInput, NotesInput, DateInput, NumberInput, Chips, ErrorNote, Avatars,
+    TextInput, TextareaInput, DateInput, NumberInput, Chips, ErrorNote, Avatars,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonSelect, IonSelectOption,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
@@ -84,8 +84,8 @@ import {
               <!-- notes: plain multi-line text, clear + copy, no encryption -->
               <ion-row>
                 <ion-col size="12">
-                  <okr-notes-input [i18n]="textI18n()" [value]="text()" (valueChange)="onFieldChange('text', $event)"
-                    [embedded]="true" [fieldStyle]="true" [encryptable]="false"
+                  <okr-textarea-input [i18n]="textI18n()" [value]="text()" (valueChange)="onFieldChange('text', $event)"
+                    [rows]="5" [maxLength]="textLength" [clearable]="true" [copyable]="true"
                     [readOnly]="isReadOnly()" [errors]="textErrors()" />
                 </ion-col>
               </ion-row>
@@ -93,8 +93,8 @@ import {
               <!-- done: one line per item -->
               <ion-row>
                 <ion-col size="12">
-                  <okr-notes-input [i18n]="doneI18n()" [value]="done()" (valueChange)="onFieldChange('done', linesToList($event))"
-                    [embedded]="true" [fieldStyle]="true" [encryptable]="false" [readOnly]="isReadOnly()" />
+                  <okr-textarea-input [i18n]="doneI18n()" [value]="done()" (valueChange)="onFieldChange('done', linesToList($event))"
+                    [rows]="5" [maxLength]="descriptionLength" [clearable]="true" [copyable]="true" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
 
@@ -155,6 +155,9 @@ import {
 export class DiaryForm {
   /** kept in step with the cap the Vest suite enforces on this field */
   protected readonly longNameLength = LONG_NAME_LENGTH;
+  /** kept in step with the cap diaryValidations enforces on text */
+  protected readonly textLength = DESCRIPTION_LENGTH * 10;
+  protected readonly descriptionLength = DESCRIPTION_LENGTH;
   public readonly i18n = input.required<DiaryI18n>();
   public formData = model.required<DiaryModel>();
   public readonly currentUser = input<UserModel | undefined>();
@@ -222,8 +225,8 @@ export class DiaryForm {
 
   protected readonly linesToList = linesToList;
 
-  protected textI18n = computed(() => ({ name: 'text', label: this.i18n().form_text_label(), placeholder: this.i18n().form_text_placeholder() } as NotesInputI18n));
-  protected doneI18n = computed(() => ({ name: 'done', label: this.i18n().form_done_label(), placeholder: this.i18n().form_done_placeholder() } as NotesInputI18n));
+  protected textI18n = computed(() => ({ name: 'text', label: this.i18n().form_text_label(), placeholder: this.i18n().form_text_placeholder() } as TextareaInputI18n));
+  protected doneI18n = computed(() => ({ name: 'done', label: this.i18n().form_done_label(), placeholder: this.i18n().form_done_placeholder() } as TextareaInputI18n));
   protected titleI18n = computed(() => ({ name: 'title', label: this.i18n().form_title_label(), placeholder: this.i18n().form_title_placeholder(), helper: '' } as TextInputI18n));
   protected dateI18n = computed(() => ({ name: 'date', label: this.i18n().form_date_label(), placeholder: '' } as DateInputI18n));
   protected yearI18n = computed(() => ({ name: 'year', label: this.i18n().form_year_label(), placeholder: '', helper: '' } as NumberInputI18n));

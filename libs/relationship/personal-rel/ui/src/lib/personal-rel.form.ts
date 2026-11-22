@@ -3,7 +3,7 @@ import { form } from '@angular/forms/signals';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular';
 import { CategoryListModel, PersonalRelModel, RoleName, UserModel } from '@okr/shared-models';
 import { FullNamePipe } from '@okr/shared-pipes';
-import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n , ErrorNote, ImgDirective } from '@okr/shared-ui';
+import { CategorySelect, Chips, DateInput, DateInputI18n, TextareaInput, TextareaInputI18n, TextInput, TextInputI18n , ErrorNote, ImgDirective } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERSONAL_REL, DEFAULT_TAGS, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
@@ -17,7 +17,7 @@ import { personalRelValidations, PersonalRelI18n } from '@okr/relationship-perso
   imports: [
     ImgDirective, ErrorNote,
     AvatarPipe, FullNamePipe,
-    DateInput, Chips, NotesInput, CategorySelect,
+    DateInput, Chips, TextareaInput, CategorySelect,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonAvatar, IonLabel, IonButton,
     TextInput
   ],
@@ -110,7 +110,7 @@ import { personalRelValidations, PersonalRelI18n } from '@okr/relationship-perso
       }
 
       @if(hasRole('admin')) {
-        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
+        <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
       }
     </form>
   }
@@ -123,7 +123,7 @@ export class PersonalRelForm {
   protected readonly descriptionLength = DESCRIPTION_LENGTH;
   protected okeyI18n = computed(() => ({ name: 'okey', label: this.i18n().okey_label(), placeholder: this.i18n().okey_placeholder(), helper: this.i18n().okey_helper() } as TextInputI18n));
   protected labelI18n = computed(() => ({ name: 'label', label: this.i18n().label_label(), placeholder: this.i18n().label_placeholder(), helper: this.i18n().label_helper() } as TextInputI18n));
-  protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
+  protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as TextareaInputI18n));
   protected validFromI18n = computed(() => ({ name: 'validFrom', label: this.i18n().validFrom_label(), placeholder: this.i18n().validFrom_placeholder(), helper: this.i18n().validFrom_helper() } as DateInputI18n));
   protected validToI18n = computed(() => ({ name: 'validTo', label: this.i18n().validTo_label(), placeholder: this.i18n().validTo_placeholder(), helper: this.i18n().validTo_helper() } as DateInputI18n));
 

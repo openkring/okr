@@ -5,7 +5,7 @@ import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol
 import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
 import { HearingQuizAnswer, HearingQuizNodeModel, HearingQuizNodeType } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { Checkbox, CheckboxI18n, ErrorNote, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { Checkbox, CheckboxI18n, ErrorNote, TextareaInput, TextareaInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 
@@ -40,7 +40,7 @@ export interface HearingQuizFolderOption {
   standalone: true,
   imports: [
     SvgIconPipe,
-    TextInput, NotesInput, StringSelect, Checkbox, ErrorNote,
+    TextInput, TextareaInput, StringSelect, Checkbox, ErrorNote,
     HearingQuizAudioInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonButton, IonIcon, IonItem, IonLabel, IonNote,
   ],
@@ -174,10 +174,10 @@ export interface HearingQuizFolderOption {
             </ion-card-content>
           </ion-card>
 
-          <okr-notes-input [i18n]="hintI18n()" [value]="hint()" (valueChange)="onFieldChange('hint', $event)"
+          <okr-textarea-input variant="card" [i18n]="hintI18n()" [value]="hint()" (valueChange)="onFieldChange('hint', $event)"
             [maxLength]="hintLength" [readOnly]="isReadOnly()" [errors]="hintErrors()" />
         } @else {
-          <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)"
+          <okr-textarea-input variant="card" [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)"
             [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="descriptionErrors()" />
         }
       </form>
@@ -278,10 +278,10 @@ export class HearingQuizNodeForm {
   protected correctI18n = computed(() => ({ name: 'correctAnswer', label: this.i18n().answer_correct(), helper: '' } as CheckboxI18n));
   protected hintI18n = computed(() => ({
     name: 'hint', label: this.i18n().hint_label(), placeholder: this.i18n().hint_placeholder(),
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
   protected descriptionI18n = computed(() => ({
     name: 'description', label: this.i18n().description_label(), placeholder: this.i18n().description_placeholder(),
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   /*-------------------------- changes --------------------------------*/
   protected onFieldChange(fieldName: keyof HearingQuizNodeModel, fieldValue: string | boolean): void {

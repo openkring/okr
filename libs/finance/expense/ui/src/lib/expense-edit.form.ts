@@ -6,7 +6,7 @@ import {
 } from '@ionic/angular';
 
 import { AccountModel, CategoryListModel, CostCenterModel, ExpenseModel, PersonModelName, ProjectModel } from '@okr/shared-models';
-import { ButtonCopy, CategorySelect, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n, ImgDirective } from '@okr/shared-ui';
+import { ButtonCopy, CategorySelect, ErrorNote, TextareaInput, TextareaInputI18n, TextInput, TextInputI18n, ImgDirective } from '@okr/shared-ui';
 import { formatIban, IbanFormat, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, convertDateFormatToString, DateFormat, getThumbnailUrl } from '@okr/shared-util-core';
 
@@ -63,7 +63,7 @@ export interface ExpenseEditFormI18n {
   selector: 'okr-expense-edit-form',
   standalone: true,
   imports: [
-    ImgDirective, TextInput, NotesInput, ErrorNote, CategorySelect, ButtonCopy, AccountSelect, CostCenterSelect, ProjectSelect, AvatarPipe,
+    ImgDirective, TextInput, TextareaInput, ErrorNote, CategorySelect, ButtonCopy, AccountSelect, CostCenterSelect, ProjectSelect, AvatarPipe,
     IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonNote,
     IonSelect, IonSelectOption, IonAvatar, ],
   styles: [`
@@ -307,7 +307,7 @@ export interface ExpenseEditFormI18n {
         }
 
         @if (!isReadOnly() || note()) {
-          <okr-notes-input [i18n]="noteI18n()" [value]="note()"
+          <okr-textarea-input variant="card" [i18n]="noteI18n()" [value]="note()"
             (valueChange)="onFieldChange('note', $event)" [readOnly]="isReadOnly()" />
         }
       </form>
@@ -464,7 +464,7 @@ export class ExpenseEditForm {
 
   protected readonly noteI18n = computed(() => ({
     name: 'note', label: this.i18n().note_label(), placeholder: '',
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   /** imgix renders images and the first page of a pdf; any other file type gets its file-type icon. */
   protected thumbnail(receipt: ExpenseReceipt): string {

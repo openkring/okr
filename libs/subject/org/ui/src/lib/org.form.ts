@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 
 import { BexioIdMask, ChVatMask } from '@okr/shared-config';
 import { CategoryListModel, OrgModel, RoleName, UserModel } from '@okr/shared-models';
-import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
+import { CategorySelect, Chips, DateInput, DateInputI18n, TextareaInput, TextareaInputI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
@@ -19,7 +19,7 @@ import { ZefixLookup } from './zefix-lookup';
   standalone: true,
   imports: [
     ErrorNote,
-    CategorySelect, DateInput, TextInput, Chips, NotesInput, ZefixLookup,
+    CategorySelect, DateInput, TextInput, Chips, TextareaInput, ZefixLookup,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
    styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -88,7 +88,7 @@ import { ZefixLookup } from './zefix-lookup';
       }
 
       @if(hasRole('admin')) { 
-        <okr-notes-input [i18n]="notesI18n()" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [errors]="notesErrors()" />
+        <okr-textarea-input variant="card" [i18n]="notesI18n()" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [errors]="notesErrors()" />
       }
     </form>
   }
@@ -106,7 +106,7 @@ export class OrgForm {
   protected nameI18n   = computed(() => ({ name: 'name',   label: this.i18n().name_label(),   placeholder: this.i18n().name_placeholder(),   helper: this.i18n().name_helper()   } as TextInputI18n));
   protected taxIdI18n  = computed(() => ({ name: 'taxId',  label: this.i18n().taxId_label(),  placeholder: this.i18n().taxId_placeholder(),  helper: this.i18n().taxId_helper()  } as TextInputI18n));
   protected bexioIdI18n = computed(() => ({ name: 'bexioId', label: this.i18n().bexioId_label(), placeholder: this.i18n().bexioId_placeholder(), helper: this.i18n().bexioId_helper() } as TextInputI18n));
-  protected notesI18n   = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
+  protected notesI18n   = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as TextareaInputI18n));
   protected dateOfFoundationI18n  = computed(() => ({ name: 'dateOfFoundation',  label: this.i18n().dateOfFoundation_label(),  placeholder: this.i18n().dateOfFoundation_placeholder(),  helper: this.i18n().dateOfFoundation_helper()  } as DateInputI18n));
   protected dateOfLiquidationI18n = computed(() => ({ name: 'dateOfLiquidation', label: this.i18n().dateOfLiquidation_label(), placeholder: this.i18n().dateOfLiquidation_placeholder(), helper: this.i18n().dateOfLiquidation_helper() } as DateInputI18n));
 

@@ -4,7 +4,7 @@ import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon
 
 import { AccountModel, AvatarInfo, CostCenterModel, ProjectModel, RoleName, UserModel, VatCodeModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { AmountInput, AmountInputI18n, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n, ImgDirective } from '@okr/shared-ui';
+import { AmountInput, AmountInputI18n, DateInput, DateInputI18n, ErrorNote, TextareaInput, TextareaInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n, ImgDirective } from '@okr/shared-ui';
 import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole, isProfitAndLossAccountId } from '@okr/shared-util-core';
 
@@ -26,7 +26,7 @@ import { accountDefaultCostCenterKey, addBookingPart, BOOKING_LINE_TEXT_LENGTH, 
   selector: 'okr-booking-form',
   standalone: true,
   imports: [
-    ImgDirective, SvgIconPipe, DateInput, TextInput, AmountInput, StringSelect, NotesInput, ErrorNote, AccountSelect, CostCenterSelect, ProjectSelect,
+    ImgDirective, SvgIconPipe, DateInput, TextInput, AmountInput, StringSelect, TextareaInput, ErrorNote, AccountSelect, CostCenterSelect, ProjectSelect,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonButton, IonIcon, IonItem, IonLabel, IonNote, IonAvatar, AvatarPipe,
   ],
   styles: [`
@@ -212,7 +212,7 @@ import { accountDefaultCostCenterKey, addBookingPart, BOOKING_LINE_TEXT_LENGTH, 
         </ion-grid>
 
         @if (hasRole('treasurer')) {
-          <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+          <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
         }
       </form>
     }
@@ -283,7 +283,7 @@ export class BookingForm {
   protected readonly lineTextI18n = computed(() => ({ name: 'description', label: this.i18n().form_line_text_label(), placeholder: '', helper: '' } as TextInputI18n));
   protected readonly costCenterI18n = computed(() => ({ name: 'costCenterKey', label: this.i18n().form_cost_center_label() } as CostCenterSelectI18n));
   protected readonly vatI18n = computed(() => ({ name: 'vatCodeKey', label: this.i18n().form_vat_label(), helper: '' } as StringSelectI18n));
-  protected readonly notesI18n = computed(() => ({ name: 'notes', label: this.i18n().form_notes_label(), placeholder: this.i18n().form_notes_placeholder() } as NotesInputI18n));
+  protected readonly notesI18n = computed(() => ({ name: 'notes', label: this.i18n().form_notes_label(), placeholder: this.i18n().form_notes_placeholder() } as TextareaInputI18n));
 
   /** kept in step with the cap writeBooking applies to a line text */
   protected readonly lineTextLength = BOOKING_LINE_TEXT_LENGTH;

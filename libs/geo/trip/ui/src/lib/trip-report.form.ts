@@ -2,7 +2,7 @@ import { Component, computed, effect, input, model, output } from '@angular/core
 import { form } from '@angular/forms/signals';
 import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow } from '@ionic/angular';
 
-import { Checkbox, CheckboxI18n, ErrorNote, NotesInput, NotesInputI18n } from '@okr/shared-ui';
+import { Checkbox, CheckboxI18n, ErrorNote, TextareaInput, TextareaInputI18n } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, getFullName } from '@okr/shared-util-core';
@@ -18,7 +18,7 @@ import { TripI18n, TripReport, tripReportValidations } from '@okr/trip-util';
   selector: 'okr-trip-report-form',
   standalone: true,
   imports: [
-    SvgIconPipe, NotesInput, ErrorNote, Checkbox,
+    SvgIconPipe, TextareaInput, ErrorNote, Checkbox,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonLabel, IonIcon, IonButton
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -89,7 +89,7 @@ import { TripI18n, TripReport, tripReportValidations } from '@okr/trip-util';
           </ion-card-content>
         </ion-card>
 
-        <okr-notes-input [i18n]="messageI18n()" [value]="message()"
+        <okr-textarea-input variant="card" [i18n]="messageI18n()" [value]="message()"
           (valueChange)="onMessageChange($event)" [readOnly]="isReadOnly()" [errors]="messageErrors()" />
 
         @if (canLockBoat()) {
@@ -142,7 +142,7 @@ export class TripReportForm {
     name: 'message',
     label: this.i18n().report_message_label(),
     placeholder: this.reportType() === 'damage' ? this.i18n().report_damage_prompt() : this.i18n().report_bug_prompt()
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   /** only a damage report on a known boat can lock it — a bug report has nothing to lock */
   protected readonly canLockBoat = computed(() => this.reportType() === 'damage' && !!this.formData()?.boat);

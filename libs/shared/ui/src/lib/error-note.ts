@@ -18,7 +18,7 @@ import { coerceBoolean, fill } from '@okr/shared-util-core';
   template: `
     @if(hasErrors()) {
       @if (isInline()) {
-        <!-- bare note: the caller supplies the layout (e.g. the notes-input footer row) -->
+        <!-- bare note: the caller supplies the layout (e.g. the textarea-input footer row) -->
         <ion-note [color]="colorName()">{{error()}}</ion-note>
       } @else {
         <ion-item lines="none">

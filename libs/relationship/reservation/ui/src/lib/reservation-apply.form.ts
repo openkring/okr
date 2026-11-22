@@ -3,7 +3,7 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonRow } from '@ionic/angular';
 import { DEFAULT_DATE, DEFAULT_KEY, DEFAULT_RES_REASON, DEFAULT_TIME, DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { CategoryListModel, ReservationApplyModel, RoleName, UserModel } from '@okr/shared-models';
-import { CategorySelect, Checkbox, CheckboxI18n, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n , ErrorNote} from '@okr/shared-ui';
+import { CategorySelect, Checkbox, CheckboxI18n, DateInput, DateInputI18n, TextareaInput, TextareaInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n , ErrorNote} from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { getAvatarName, hasRole } from '@okr/shared-util-core';
 
@@ -15,7 +15,7 @@ import { reservationApplyValidations, ReservationI18n } from '@okr/relationship-
   imports: [
     ErrorNote,
     TextInput,
-    NumberInput, NotesInput, CategorySelect, DateInput, Checkbox, TimeInput,
+    NumberInput, TextareaInput, CategorySelect, DateInput, Checkbox, TimeInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem
   ],
   styles: [`
@@ -96,7 +96,7 @@ import { reservationApplyValidations, ReservationI18n } from '@okr/relationship-
           </ion-grid>
         </ion-card-content>
       </ion-card>
-      <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [maxLength]="descriptionLength" [readOnly]="false" [errors]="descriptionErrors()" />
+      <okr-textarea-input variant="card" [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [maxLength]="descriptionLength" [readOnly]="false" [errors]="descriptionErrors()" />
 
       <ion-card>
         <ion-card-header>
@@ -206,7 +206,7 @@ export class ReservationApplyForm {
   protected participantsI18n = computed(() => ({ name: 'participants', label: this.i18n().participants_label(), placeholder: this.i18n().participants_placeholder(), helper: this.i18n().participants_helper() } as TextInputI18n));
   protected areaI18n = computed(() => ({ name: 'area', label: this.i18n().area_label(), placeholder: this.i18n().area_placeholder(), helper: this.i18n().area_helper() } as TextInputI18n));
   protected durationMinutesI18n = computed(() => ({ name: 'durationMinutes', label: this.i18n().durationMinutes_label(), placeholder: this.i18n().durationMinutes_placeholder(), helper: this.i18n().durationMinutes_helper() } as NumberInputI18n));
-  protected descriptionI18n = computed(() => ({ name: 'description', label: this.i18n().description_label(), placeholder: this.i18n().description_placeholder() } as NotesInputI18n));
+  protected descriptionI18n = computed(() => ({ name: 'description', label: this.i18n().description_label(), placeholder: this.i18n().description_placeholder() } as TextareaInputI18n));
   protected startDateI18n = computed(() => ({ name: 'startDate', label: this.i18n().startDate_label(), placeholder: this.i18n().startDate_placeholder(), helper: this.i18n().startDate_helper() } as DateInputI18n));
   protected endDateI18n = computed(() => ({ name: 'endDate', label: this.i18n().endDate_label(), placeholder: this.i18n().endDate_placeholder(), helper: this.i18n().endDate_helper() } as DateInputI18n));
   protected startTimeI18n  = computed(() => ({ name: 'startTime',    label: this.i18n().startTime_label(),    placeholder: this.i18n().startTime_placeholder()                                              } as TimeInputI18n));

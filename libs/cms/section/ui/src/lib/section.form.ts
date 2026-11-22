@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, input, model, output, signal } fro
 import { form } from '@angular/forms/signals';
 
 import { AccordionConfig, AccordionSection, ColorIonic, ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, ContactConfig, ContactSection, FooterConfig, FooterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FormSectionConfig, AlbumConfig, AlbumSection, SectionFeedback, ArticleSection, ArticleSlideshow, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, CourseConfig, CourseSection, EventsConfig, EventsSection, HeroConfig, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, InvitationsConfig, InvitationsSection, JournalTrackConfig, JournalTrackSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TilesConfig, TilesSection, NewsConfig, NewsSection, SectionCta, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
-import { Chips, ErrorNote, NotesInput, NotesInputI18n } from '@okr/shared-ui';
+import { Chips, ErrorNote, TextareaInput, TextareaInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
 import { MODEL_SELECTOR, validateVestTree, vestErrors } from '@okr/shared-util-angular';
@@ -65,7 +65,7 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
   standalone: true,
   imports: [
     IonItem, IonToggle,
-    Chips, NotesInput, ErrorNote,
+    Chips, TextareaInput, ErrorNote,
     SectionConfiguration, EditorConfiguration, ImageStyleConfiguration, ArticleImagesConfiguration, AlbumConfiguration,
     IframeConfiguration, WeatherConfiguration, ConnectionsConfiguration, DeparturesConfiguration, EnergyConfiguration, CounterConfiguration, ContactConfiguration, FooterConfiguration, PeopleConfiguration, ResponsibilityConfiguration, VideoConfiguration,
     ButtonConfiguration, ChatConfiguration,
@@ -736,7 +736,7 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
           <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [readOnly]="isReadOnly()" [allChips]="allTags()" />
         }
         @if(hasRole('admin')) {
-          <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+          <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
         }
       }
     }
@@ -771,7 +771,7 @@ export class SectionForm {
 
   // i18n
   public readonly i18n = input.required<SectionI18n>();
-  protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
+  protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as TextareaInputI18n));
 
   // inputs
   public formData = model.required<SectionModel>();

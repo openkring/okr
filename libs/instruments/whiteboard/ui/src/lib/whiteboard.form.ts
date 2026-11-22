@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow, Io
 
 import { DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { RoleName, UserModel, WhiteboardModel } from '@okr/shared-models';
-import { Chips, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { Chips, ErrorNote, TextareaInput, TextareaInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
@@ -23,7 +23,7 @@ export interface WhiteboardTemplateOption { key: string; label: string; }
   standalone: true,
   imports: [
     ErrorNote,
-    TextInput, NotesInput, Chips,
+    TextInput, TextareaInput, Chips,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonLabel, IonSelect, IonSelectOption,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
@@ -59,7 +59,7 @@ export interface WhiteboardTemplateOption { key: string; label: string; }
           <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
         }
         @if (hasRole('contentAdmin')) {
-          <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="descriptionErrors()" />
+          <okr-textarea-input variant="card" [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="descriptionErrors()" />
         }
       </form>
     }
@@ -116,7 +116,7 @@ export class WhiteboardForm {
     name: 'description',
     label: this.i18n().description_label(),
     placeholder: this.i18n().description_placeholder(),
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   protected onFieldChange(fieldName: string, fieldValue: string | string[]): void {
     this.dirty.emit(true);

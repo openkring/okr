@@ -5,8 +5,8 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 import { DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 import { AliasModel, RoleName, UserModel } from '@okr/shared-models';
 import {
-  CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, ErrorNote, NotesInput,
-  NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n,
+  CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, ErrorNote, TextareaInput,
+  TextareaInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n,
 } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
@@ -30,7 +30,7 @@ import {
   selector: 'okr-alias-form',
   standalone: true,
   imports: [
-    TextInput, NotesInput, NumberInput, DateInput, Checkbox, Chips, CategorySelect, ErrorNote,
+    TextInput, TextareaInput, NumberInput, DateInput, Checkbox, Chips, CategorySelect, ErrorNote,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -114,7 +114,7 @@ import {
             [allChips]="allTags()" [readOnly]="isReadOnly()" />
         }
         @if (hasRole('privileged')) {
-          <okr-notes-input [i18n]="notesI18n()" [value]="notes()"
+          <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()"
             (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
         }
       </form>
@@ -227,7 +227,7 @@ export class AliasForm {
     label: this.i18n().field_notes_label(),
     placeholder: '',
     helper: this.i18n().field_notes_helper(),
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   private readonly validationResult = vestErrors(this.aliasForm);
   protected notesErrors = computed(() => this.validationResult().getErrors('notes'));

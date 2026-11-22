@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonNote, IonRow } fr
 import { LONG_NAME_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
 import { BaseType, CategoryListModel, Field, FormMapping, PropertyType, VisibilityRule } from '@okr/shared-models';
 import {
-  Checkbox, CheckboxI18n, ErrorNote, NotesInput, NotesInputI18n,
+  Checkbox, CheckboxI18n, ErrorNote, TextareaInput, TextareaInputI18n,
   StringSelect, StringSelectI18n, TextInput, TextInputI18n,
 } from '@okr/shared-ui';
 import { coerceBoolean, fill, isPrefillable, isSsnField, propertyTypeOf } from '@okr/shared-util-core';
@@ -31,7 +31,7 @@ const VALUE_TYPES: PropertyType[] = ['boolean', 'number', 'text'];
   selector: 'okr-field-config-form',
   standalone: true,
   imports: [
-    ErrorNote, TextInput, NotesInput, StringSelect, Checkbox, VisibilityRuleInput,
+    ErrorNote, TextInput, TextareaInput, StringSelect, Checkbox, VisibilityRuleInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonNote,
   ],
   styles: [`
@@ -47,7 +47,7 @@ const VALUE_TYPES: PropertyType[] = ['boolean', 'number', 'text'];
               @if (isTextElement()) {
                 <ion-row>
                   <ion-col size="12">
-                    <okr-notes-input [i18n]="textI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)"
+                    <okr-textarea-input variant="card" [i18n]="textI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)"
                       [maxLength]="labelLength()" [readOnly]="isReadOnly()" [errors]="labelErrors()" />
                   </ion-col>
                 </ion-row>
@@ -384,7 +384,7 @@ export class FieldConfigForm {
     return fd.type === 'category' ? fd.categoryName ?? '' : '';
   });
 
-  protected readonly textI18n = computed<NotesInputI18n>(() => ({
+  protected readonly textI18n = computed<TextareaInputI18n>(() => ({
     name: 'label', label: this.i18n().field_text(), placeholder: '',
   }));
   protected readonly labelI18n = computed<TextInputI18n>(() => ({

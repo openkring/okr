@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 
 import { BexioIdMask, ChSsnMask } from '@okr/shared-config';
 import { BaseProperty, CategoryListModel, PrivacyAccessor, PrivacySettings, RoleName, UserModel } from '@okr/shared-models';
-import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, PropertyList, PropertyListI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
+import { CategorySelect, Chips, DateInput, DateInputI18n, TextareaInput, TextareaInputI18n, PropertyList, PropertyListI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
 import { areNotesVisible, areTagsVisible, coerceBoolean, hasRole, isVaultFieldVisible, isVisibleToUser } from '@okr/shared-util-core';
 import { externalIdKeyOptions, fromProperties, PersonFormModel, personValidations, PersonI18n, toProperties } from '@okr/subject-person-util';
 import { BEXIO_ID_LENGTH, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
@@ -15,7 +15,7 @@ import { AhvFormat, formatAhv, validateVestTree, vestErrors } from '@okr/shared-
   standalone: true,
   imports: [
     ErrorNote,
-    TextInput, DateInput, CategorySelect, Chips, NotesInput, PropertyList,
+    TextInput, DateInput, CategorySelect, Chips, TextareaInput, PropertyList,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -116,7 +116,7 @@ import { AhvFormat, formatAhv, validateVestTree, vestErrors } from '@okr/shared-
       }
       
       @if(hasRole('admin')) {
-        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
+        <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
       }
     </form>
   }
@@ -137,7 +137,7 @@ export class PersonForm {
   protected maidenNameI18n = computed(() => ({ name: 'maidenName', label: this.i18n().maidenName_label(), placeholder: this.i18n().maidenName_placeholder(), helper: this.i18n().maidenName_helper() } as TextInputI18n));
   protected ssnIdI18n = computed(() => ({ name: 'ssnId', label: this.i18n().ssnId_label(), placeholder: this.i18n().ssnId_placeholder(), helper: this.i18n().ssnId_helper() } as TextInputI18n));
   protected bexioIdI18n = computed(() => ({ name: 'bexioId', label: this.i18n().bexioId_label(), placeholder: this.i18n().bexioId_placeholder(), helper: this.i18n().bexioId_helper() } as TextInputI18n));
-  protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
+  protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as TextareaInputI18n));
   protected dateOfBirthI18n = computed(() => ({ name: 'dateOfBirth', label: this.i18n().dateOfBirth_label(), placeholder: this.i18n().dateOfBirth_placeholder(), helper: this.i18n().dateOfBirth_helper() } as DateInputI18n));
   protected dateOfDeathI18n = computed(() => ({ name: 'dateOfDeath', label: this.i18n().dateOfDeath_label(), placeholder: this.i18n().dateOfDeath_placeholder(), helper: this.i18n().dateOfDeath_helper() } as DateInputI18n));
 

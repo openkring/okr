@@ -3,7 +3,7 @@ import { form } from '@angular/forms/signals';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular';
 import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_PERIODICITY, DEFAULT_RES_REASON, DEFAULT_RES_STATE, DEFAULT_TIME, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { CategoryListModel, MoneyModel, ReservationModel, RoleName, UserModel } from '@okr/shared-models';
-import { CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n , ErrorNote, ImgDirective } from '@okr/shared-ui';
+import { CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, TextareaInput, TextareaInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n , ErrorNote, ImgDirective } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, getAvatarName, hasRole } from '@okr/shared-util-core';
 
@@ -16,7 +16,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
   imports: [
     ImgDirective, ErrorNote,
     AvatarPipe,
-    TextInput, NumberInput, Chips, NotesInput, CategorySelect, DateInput, Checkbox, TimeInput,
+    TextInput, NumberInput, Chips, TextareaInput, CategorySelect, DateInput, Checkbox, TimeInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonAvatar, IonLabel, IonButton
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -174,7 +174,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
         </ion-card-content>
       </ion-card>
 
-      <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="descriptionErrors()" />
+      <okr-textarea-input variant="card" [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="descriptionErrors()" />
 
       @if(hasRole('privileged') || hasRole('eventAdmin')) {
         <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
@@ -182,7 +182,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
 
       <!-- internal notes (Schadensliste: who caused it, repair, cost, insurance) — staff only -->
       @if(hasRole('privileged') || hasRole('resourceAdmin')) {
-        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
   }
@@ -222,8 +222,8 @@ export class ReservationForm {
   protected resrefI18n = computed(() => ({ name: 'resref', label: this.i18n().ref_label(), placeholder: this.i18n().ref_placeholder(), helper: this.i18n().ref_helper() } as TextInputI18n));
   protected durationMinutesI18n = computed(() => ({ name: 'durationMinutes', label: this.i18n().durationMinutes_label(), placeholder: this.i18n().durationMinutes_placeholder(), helper: this.i18n().durationMinutes_helper() } as NumberInputI18n));
   protected priceI18n = computed(() => ({ name: 'price', label: this.i18n().price_label(), placeholder: this.i18n().price_placeholder(), helper: this.i18n().price_helper() } as NumberInputI18n));
-  protected descriptionI18n = computed(() => ({ name: 'description', label: this.i18n().description_label(), placeholder: this.i18n().description_placeholder() } as NotesInputI18n));
-  protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
+  protected descriptionI18n = computed(() => ({ name: 'description', label: this.i18n().description_label(), placeholder: this.i18n().description_placeholder() } as TextareaInputI18n));
+  protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as TextareaInputI18n));
   protected startDateI18n = computed(() => ({ name: 'startDate', label: this.i18n().startDate_label(), placeholder: this.i18n().startDate_placeholder(), helper: this.i18n().startDate_helper() } as DateInputI18n));
   protected endDateI18n = computed(() => ({ name: 'endDate', label: this.i18n().endDate_label(), placeholder: this.i18n().endDate_placeholder(), helper: this.i18n().endDate_helper() } as DateInputI18n));
   protected startTimeI18n = computed(() => ({ name: 'startTime', label: this.i18n().startTime_label(), placeholder: this.i18n().startTime_placeholder() } as TimeInputI18n));

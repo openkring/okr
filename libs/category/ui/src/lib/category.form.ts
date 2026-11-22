@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 
 import { CategoryI18n, categoryListValidations } from '@okr/category-util';
 import { CategoryItemModel, CategoryListModel, RoleName, UserModel } from '@okr/shared-models';
-import { CategoryItems, Checkbox, CheckboxI18n, Chips, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { CategoryItems, Checkbox, CheckboxI18n, Chips, ErrorNote, TextareaInput, TextareaInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, debugFormModel, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
@@ -13,7 +13,7 @@ import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, NAME_LEN
   selector: 'okr-category-list-form',
   standalone: true,
   imports: [
-    Chips, NotesInput, TextInput, ErrorNote, CategoryItems, Checkbox,
+    Chips, TextareaInput, TextInput, ErrorNote, CategoryItems, Checkbox,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -61,7 +61,7 @@ import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, NAME_LEN
       }
 
       @if(hasRole('admin')) {
-        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
+        <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
       }
     </form>
   }
@@ -144,7 +144,7 @@ export class CategoryListForm {
     name: 'notes',
     label: this.i18n().notes_label(),
     placeholder: this.i18n().notes_placeholder()
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   protected translateItemsI18n = computed(() => ({
     name: 'translateItems',

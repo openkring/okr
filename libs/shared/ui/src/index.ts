@@ -61,7 +61,6 @@ export * from './lib/map-marker-detail';
 export * from './lib/map-view.modal';
 export * from './lib/meta-tag-list';
 export * from './lib/more-button';
-export * from './lib/notes-input';
 export * from './lib/amount-input';
 export * from './lib/number-input';
 export * from './lib/optional-card-header';

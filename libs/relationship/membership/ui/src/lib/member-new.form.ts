@@ -4,7 +4,7 @@ import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTi
 
 import { BexioIdMask, ChSsnMask } from '@okr/shared-config';
 import { CategoryListModel, City, RoleName, UserModel } from '@okr/shared-models';
-import { CategorySelect, Chips, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n, ImgDirective } from '@okr/shared-ui';
+import { CategorySelect, Chips, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote, TextareaInput, TextareaInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n, ImgDirective } from '@okr/shared-ui';
 import { coerceBoolean, getTodayStr, hasRole } from '@okr/shared-util-core';
 import { CITY_LENGTH, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL, DESCRIPTION_LENGTH, EMAIL_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@okr/shared-constants';
 import { AhvFormat, formatAhv, validateVestTree, vestErrors } from '@okr/shared-util-angular';
@@ -18,7 +18,7 @@ import { MembershipI18n, MemberNewFormModel, memberNewFormValidations } from '@o
   standalone: true,
   imports: [
     ImgDirective, AvatarPipe,
-    TextInput, DateInput, CategorySelect, Chips, NotesInput,
+    TextInput, DateInput, CategorySelect, Chips, TextareaInput,
     ErrorNote, PhoneInput, EmailInput,
     CitySearch,
     IonGrid, IonRow, IonCol, IonItem, IonAvatar, IonButton, IonLabel, IonCard, IonCardHeader, IonCardTitle, IonCardContent
@@ -185,7 +185,7 @@ import { MembershipI18n, MemberNewFormModel, memberNewFormValidations } from '@o
     
       <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
       @if(hasRole('admin')) {
-        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
+        <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
       }
     </form>
   `
@@ -288,7 +288,7 @@ export class MemberNewForm {
   protected webI18n = computed(() => ({ name: 'web', label: this.i18n().web_label(), placeholder: this.i18n().web_placeholder(), helper: this.i18n().web_helper() }) as TextInputI18n);
   protected ssnIdI18n = computed(() => ({ name: 'ssnId', label: this.i18n().ssnId_label(), placeholder: this.i18n().ssnId_placeholder(), helper: this.i18n().ssnId_helper() }) as TextInputI18n);
   protected bexioIdI18n = computed(() => ({ name: 'bexioId', label: this.i18n().bexioId_label(), placeholder: this.i18n().bexioId_placeholder(), helper: this.i18n().bexioId_helper() }) as TextInputI18n);
-  protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
+  protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as TextareaInputI18n));
   protected emailI18n = computed(() => ({ name: 'email', label: this.i18n().email_label(), placeholder: this.i18n().email_placeholder() } as EmailInputI18n));
   protected phoneI18n = computed(() => ({ name: 'phone', label: this.i18n().phone_label(), placeholder: this.i18n().phone_placeholder() } as PhoneInputI18n));
   protected dateOfBirthI18n = computed(() => ({ name: 'dateOfBirth', label: this.i18n().dateOfBirth_label(), placeholder: this.i18n().dateOfBirth_placeholder(), helper: this.i18n().dateOfBirth_helper() } as DateInputI18n));

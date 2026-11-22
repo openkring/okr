@@ -45,10 +45,10 @@ const isGenerated = (f) => GENERATED.has(f) || f.endsWith('Key');
 /** prose fields — a 30-character description is always a mistake */
 const LONG_TEXT = new Set(['description', 'notes', 'abstract']);
 
-const HAS_MAXLENGTH = new Set(['text-input', 'number-input', 'notes-input', 'email', 'phone',
+const HAS_MAXLENGTH = new Set(['text-input', 'number-input', 'textarea-input', 'email', 'phone',
   'iban', 'url', 'password-input']);
 
-const PRIMITIVE = String.raw`<okr-(text-input|number-input|notes-input|email|phone|iban|url|password-input|cat-select|category-select|date-input|time-input|checkbox|color|amount-input|country-select)\b`;
+const PRIMITIVE = String.raw`<okr-(text-input|number-input|textarea-input|email|phone|iban|url|password-input|cat-select|category-select|date-input|time-input|checkbox|color|amount-input|country-select)\b`;
 
 const findings = [];
 const report = (file, line, msg) => findings.push(`${file}:${line}  ${msg}`);
@@ -126,9 +126,9 @@ for (const path of [...files('*.form.ts'), ...files('*-edit.modal.ts')]) {
     // rule 3 — a validated field must show its errors
     if (fields.has(field)) {
       const near = lines.slice(j, j + 2).join('\n');
-      const shown = prim === 'notes-input'
-        ? chunk.includes(`${field}Errors()`)
-        : (near.includes('okr-error-note') || chunk.includes('okr-error-note'));
+      // okr-textarea-input renders the note itself in its footer row ([errors]); a sibling note also counts
+      const shown = (prim === 'textarea-input' && chunk.includes('[errors]='))
+        || near.includes('okr-error-note') || chunk.includes('okr-error-note');
       if (!shown) report(path, i + 1, `rule 3: '${field}' is validated but renders no okr-error-note`);
     }
     // rule 2 — the template cap must be the suite's cap, bound as a member.

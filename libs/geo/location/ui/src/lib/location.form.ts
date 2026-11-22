@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 
 import { CaseInsensitiveWordMask, LatitudeMask, LongitudeMask, What3WordMask } from '@okr/shared-config';
 import { BaseProperty, CategoryListModel, LocationModel, RoleName, UserModel } from '@okr/shared-models';
-import { CategorySelect, Chips, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, PropertyKeyOption, PropertyList, PropertyListI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { CategorySelect, Chips, ErrorNote, TextareaInput, TextareaInputI18n, NumberInput, NumberInputI18n, PropertyKeyOption, PropertyList, PropertyListI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, hasRole, LOCATION_PROPERTY_BFS_NR, LOCATION_PROPERTY_BFS_STATUS } from '@okr/shared-util-core';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
@@ -57,7 +57,7 @@ export interface LocationFormI18n {
   selector: 'okr-location-form',
   standalone: true,
   imports: [
-    CategorySelect, TextInput, NumberInput, Chips, NotesInput, ErrorNote, PropertyList,
+    CategorySelect, TextInput, NumberInput, Chips, TextareaInput, ErrorNote, PropertyList,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -140,7 +140,7 @@ export interface LocationFormI18n {
         }
 
         @if(hasRole('admin')) {
-          <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
+          <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
         }
       </form>
     }
@@ -287,7 +287,7 @@ export class LocationForm {
     name: 'notes',
     label: this.i18n().notes_label(),
     placeholder: this.i18n().notes_placeholder()
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   protected propertiesI18n = computed(() => ({
     title: this.i18n().properties_title(),

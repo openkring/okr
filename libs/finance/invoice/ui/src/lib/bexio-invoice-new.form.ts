@@ -2,7 +2,7 @@ import { Component, computed, effect, input, model, output, signal } from '@angu
 import { form } from '@angular/forms/signals';
 import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonList, IonRow } from '@ionic/angular';
 
-import { DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
+import { DateInput, DateInputI18n, TextareaInput, TextareaInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -16,7 +16,7 @@ import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
   imports: [
     ErrorNote,
     SvgIconPipe,
-    TextInput, DateInput, NumberInput, NotesInput, StringSelect,
+    TextInput, DateInput, NumberInput, TextareaInput, StringSelect,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol,
     IonList, IonItem, IonButton, IonIcon,
   ],
@@ -67,17 +67,17 @@ import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
               </ion-row>
               <ion-row>
                 <ion-col size="12">
-                  <okr-notes-input [i18n]="headerI18n()" [value]="header()"
+                  <okr-textarea-input variant="card" [i18n]="headerI18n()" [value]="header()"
                     (valueChange)="onFieldChange('header', $event)"
-                    [title]="i18n().header_title()" [showTitle]="true"
+                    [title]="i18n().header_title()"
                     [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
               <ion-row>
                 <ion-col size="12">
-                  <okr-notes-input [i18n]="footerI18n()" [value]="footer()"
+                  <okr-textarea-input variant="card" [i18n]="footerI18n()" [value]="footer()"
                     (valueChange)="onFieldChange('footer', $event)"
-                    [title]="i18n().footer_title()" [showTitle]="true"
+                    [title]="i18n().footer_title()"
                     [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
@@ -184,11 +184,11 @@ export class BexioInvoiceNewForm {
 
   protected headerI18n = computed(() => ({
     name: 'header', label: this.i18n().header_label(), placeholder: this.i18n().header_placeholder()
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   protected footerI18n = computed(() => ({
     name: 'footer', label: this.i18n().footer_label(), placeholder: this.i18n().footer_placeholder()
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   protected validFromI18n = computed(() => ({ name: 'validFrom', label: this.i18n().validFrom_label(), placeholder: this.i18n().validFrom_placeholder(), helper: this.i18n().validFrom_helper() } as DateInputI18n));
   protected validToI18n = computed(() => ({ name: 'validTo', label: this.i18n().validTo_label(), placeholder: this.i18n().validTo_placeholder(), helper: this.i18n().validTo_helper() } as DateInputI18n));

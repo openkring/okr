@@ -3,7 +3,7 @@ import { form } from "@angular/forms/signals";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular";
 
 import { RoleName, UserModel } from "@okr/shared-models";
-import { EmailInput, EmailInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from "@okr/shared-ui";
+import { EmailInput, EmailInputI18n, ErrorNote, TextareaInput, TextareaInputI18n, TextInput, TextInputI18n } from "@okr/shared-ui";
 import { validateVestTree, vestErrors } from "@okr/shared-util-angular";
 import { coerceBoolean, hasRole } from "@okr/shared-util-core";
 
@@ -15,7 +15,7 @@ import { DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-
   standalone: true,
   imports: [
     ErrorNote,
-    EmailInput, NotesInput, TextInput,
+    EmailInput, TextareaInput, TextInput,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonGrid, IonRow, IonCol, IonCardSubtitle
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -64,7 +64,7 @@ import { DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-
         </ion-card-content>
       </ion-card>
       @if(hasRole('admin')) {
-        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
+        <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
       }
     </form>
   `
@@ -107,7 +107,7 @@ export class UserModelForm {
     name: 'notes',
     label: this.i18n().notes_label(),
     placeholder: this.i18n().notes_placeholder()
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   protected loginEmailI18n = computed(() => ({ name: 'loginEmail', label: this.i18n().loginEmail_label(), placeholder: this.i18n().loginEmail_placeholder() } as EmailInputI18n));
   protected loginIdI18n = computed(() => ({

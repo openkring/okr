@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } f
 
 import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
 import { BudgetKind, BudgetVersionModel, RoleName, UserModel } from '@okr/shared-models';
-import { ErrorNote, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { ErrorNote, TextareaInput, TextareaInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
@@ -22,7 +22,7 @@ const BUDGET_KINDS: BudgetKind[] = ['budget', 'forecast'];
 @Component({
   selector: 'okr-budget-version-form',
   standalone: true,
-  imports: [TextInput, StringSelect, NotesInput, ErrorNote, IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonLabel],
+  imports: [TextInput, StringSelect, TextareaInput, ErrorNote, IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonLabel],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
   template: `
     @if (showForm()) {
@@ -64,7 +64,7 @@ const BUDGET_KINDS: BudgetKind[] = ['budget', 'forecast'];
         </ion-card>
 
         @if (hasRole('treasurer')) {
-          <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
+          <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
             [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
         }
       </form>
@@ -128,7 +128,7 @@ export class BudgetVersionForm {
   } as StringSelectI18n));
   protected notesI18n = computed(() => ({
     name: 'notes', label: this.i18n().notes(), placeholder: this.i18n().notes_placeholder()
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   constructor() {
     effect(() => this.valid.emit(this.budgetForm().valid()));
