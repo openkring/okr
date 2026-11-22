@@ -237,6 +237,29 @@
       "message": "Este envío va a {count} destinatarios.",
       "addresses": "{count} direcciones",
       "cancel": "Cancelar"
+    },
+    "page": {
+      "add": "Añadir sección",
+      "add_header": "¿Qué quieres añadir?",
+      "edit": "Editar",
+      "edit_title": "Editar sección",
+      "apply": "Aplicar",
+      "revert": "Restablecer",
+      "cancel": "Cancelar",
+      "up": "Subir",
+      "down": "Bajar",
+      "delete": "Quitar sección",
+      "empty": "Todavía vacío",
+      "type_article": "Texto",
+      "type_button": "Botón con enlace",
+      "type_events": "Eventos de un calendario",
+      "no_content": "Escribe un texto o añade una sección, luego podrás enviar.",
+      "draft_error": "No se pudo crear el borrador. Cierra la ventana e inténtalo de nuevo.",
+      "save_error": "No se pudo guardar el cambio."
+    },
+    "web_version": {
+      "label": "Ofrecer versión web",
+      "helper": "Con el enlace cualquier persona puede leer este correo en el navegador, incluso sin iniciar sesión."
     }
   },
   "category": {

@@ -48,6 +48,12 @@
     },
     {
       "path": "../util/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../cms/section/ui/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../cms/section/util/tsconfig.lib.json"
     }
   ]
 }

@@ -261,6 +261,27 @@ export const EMAIL_COMPOSER_I18N_KEYS = {
   send_queue_error: PFX + 'composer.send.queue_error',
   revert:           PFX + 'composer.revert.label',
   copy_conf:        '@copy.conf',
+
+  // Versand as a page of sections (spec 1.171 §7.2)
+  web_version_label:  PFX + 'composer.web_version.label',
+  web_version_helper: PFX + 'composer.web_version.helper',
+  page_add:           PFX + 'composer.page.add',
+  page_add_header:    PFX + 'composer.page.add_header',
+  page_edit:          PFX + 'composer.page.edit',
+  page_edit_title:    PFX + 'composer.page.edit_title',
+  page_apply:         PFX + 'composer.page.apply',
+  page_revert:        PFX + 'composer.page.revert',
+  page_cancel:        PFX + 'composer.page.cancel',
+  page_up:            PFX + 'composer.page.up',
+  page_down:          PFX + 'composer.page.down',
+  page_delete:        PFX + 'composer.page.delete',
+  page_empty:         PFX + 'composer.page.empty',
+  page_type_article:  PFX + 'composer.page.type_article',
+  page_type_button:   PFX + 'composer.page.type_button',
+  page_type_events:   PFX + 'composer.page.type_events',
+  page_no_content:    PFX + 'composer.page.no_content',
+  page_draft_error:   PFX + 'composer.page.draft_error',
+  page_save_error:    PFX + 'composer.page.save_error',
 } satisfies Record<string, string>;
 
 export type EmailComposerI18n = { [K in keyof typeof EMAIL_COMPOSER_I18N_KEYS]: Signal<string> };

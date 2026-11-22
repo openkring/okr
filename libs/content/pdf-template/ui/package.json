@@ -18,6 +18,8 @@
     "@okr/shared-util-angular": "*",
     "@okr/shared-i18n": "*",
     "@okr/content-pdf-template-data-access": "*",
-    "@okr/content-pdf-template-util": "*"
+    "@okr/content-pdf-template-util": "*",
+    "@okr/cms-section-ui": "*",
+    "@okr/cms-section-util": "*"
   }
 }

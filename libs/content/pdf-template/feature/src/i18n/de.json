@@ -237,6 +237,29 @@
       "message": "Dieser Versand geht an {count} Empfänger.",
       "addresses": "{count} Adressen",
       "cancel": "Abbrechen"
+    },
+    "page": {
+      "add": "Abschnitt hinzufügen",
+      "add_header": "Was möchtest du hinzufügen?",
+      "edit": "Bearbeiten",
+      "edit_title": "Abschnitt bearbeiten",
+      "apply": "Übernehmen",
+      "revert": "Zurücksetzen",
+      "cancel": "Abbrechen",
+      "up": "Nach oben",
+      "down": "Nach unten",
+      "delete": "Abschnitt entfernen",
+      "empty": "Noch leer",
+      "type_article": "Text",
+      "type_button": "Knopf mit Link",
+      "type_events": "Anlässe eines Kalenders",
+      "no_content": "Schreib einen Text oder füge einen Abschnitt hinzu, dann kannst du senden.",
+      "draft_error": "Der Entwurf konnte nicht angelegt werden. Schliesse das Fenster und versuche es nochmals.",
+      "save_error": "Die Änderung konnte nicht gespeichert werden."
+    },
+    "web_version": {
+      "label": "Webversion anbieten",
+      "helper": "Mit dem Link kann jede Person diese E-Mail im Browser lesen, auch ohne Anmeldung."
     }
   },
   "category": {

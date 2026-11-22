@@ -237,6 +237,29 @@
       "message": "This mailing goes to {count} recipients.",
       "addresses": "{count} addresses",
       "cancel": "Cancel"
+    },
+    "page": {
+      "add": "Add section",
+      "add_header": "What would you like to add?",
+      "edit": "Edit",
+      "edit_title": "Edit section",
+      "apply": "Apply",
+      "revert": "Reset",
+      "cancel": "Cancel",
+      "up": "Move up",
+      "down": "Move down",
+      "delete": "Remove section",
+      "empty": "Still empty",
+      "type_article": "Text",
+      "type_button": "Button with link",
+      "type_events": "Events of a calendar",
+      "no_content": "Write a text or add a section, then you can send.",
+      "draft_error": "The draft could not be created. Close the window and try again.",
+      "save_error": "The change could not be saved."
+    },
+    "web_version": {
+      "label": "Offer a web version",
+      "helper": "With the link anyone can read this email in the browser, even without signing in."
     }
   },
   "category": {

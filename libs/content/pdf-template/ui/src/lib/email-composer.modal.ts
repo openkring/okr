@@ -39,6 +39,9 @@ import { VersandEventsSelect } from './versand-events-select';
 import { PostMode, PostversandStep } from './postversand-step';
 import { VersandInfoModal } from './versand-info.modal';
 import { APP_STORE_MIN } from '@okr/shared-data-access';
+import { MailPageService } from '@okr/content-pdf-template-data-access';
+import { MailPageDraft } from './mail-page-draft';
+import { MailPageEditor } from './mail-page-editor';
 
 /** Debounce of the price request while the sender changes options or the draft. */
 const QUOTE_DEBOUNCE_MS = 400;
@@ -114,8 +117,10 @@ interface AddressField {
     IonContent, IonButton,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonIcon, IonChip, IonLabel, IonNote,
     IonSegment, IonSegmentButton, IonItem, IonAccordionGroup, IonAccordion,
-    VersandAddressList, EmailLayoutPicker,
+    VersandAddressList, EmailLayoutPicker, MailPageEditor,
   ],
+  // the Versand's draft page, shared with the page editor (which is destroyed whenever the Editor segment closes)
+  providers: [MailPageDraft],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px; } }
     .segment { padding: 8px 12px 0; }
@@ -142,6 +147,14 @@ interface AddressField {
       <okr-change-confirmation [i18n]="changeConfirmationI18n()" (saveClicked)="send()" (cancelClicked)="revert()" />
     }
     @if (showSendHints()) {
+      @if (isVersand() && draft.loaded() && !draft.hasContent()) {
+        <div class="reach-warnings" role="status">
+          <div class="reach-warning">
+            <ion-icon src="{{ 'warning' | svgIcon }}" />
+            <span>{{ i18n.page_no_content() }}</span>
+          </div>
+        </div>
+      }
       @if (anyPost() && !postAllowsSend()) {
         <div class="reach-warnings" role="status">
           <div class="reach-warning">
@@ -220,6 +233,21 @@ interface AddressField {
                         [thumbnails]="layoutThumbnails()" [selected]="layout()" (selectedChange)="onLayoutChange($event)" />
                     </ion-col>
                   </ion-row>
+                  <!-- Versand (spec 1.171 §7.2): the web version switch, then the mail as a page of sections -->
+                  @if (isVersand()) {
+                    <ion-row>
+                      <ion-col size="12">
+                        <okr-checkbox [i18n]="webVersionI18n()" [checked]="webVersion()" (checkedChange)="onWebVersionChange($event)"
+                          [toggle]="true" [readOnly]="false" />
+                        <ion-note class="note">{{ i18n.web_version_helper() }}</ion-note>
+                      </ion-col>
+                    </ion-row>
+                    <ion-row>
+                      <ion-col size="12">
+                        <okr-mail-page-editor [i18n]="i18n" />
+                      </ion-col>
+                    </ion-row>
+                  }
                   @if (showEvents()) {
                     <ion-row>
                       <ion-col size="12">
@@ -229,12 +257,14 @@ interface AddressField {
                       </ion-col>
                     </ion-row>
                   }
-                  <ion-row>
-                    <ion-col size="12">
-                      <okr-rich-text-input [i18n]="bodyI18n" [value]="body()" (valueChange)="onFieldChange('body', $event)"
-                        [readOnly]="false" [copyable]="true" [errors]="bodyErrors()" />
-                    </ion-col>
-                  </ion-row>
+                  @if (!isVersand()) {
+                    <ion-row>
+                      <ion-col size="12">
+                        <okr-rich-text-input [i18n]="bodyI18n" [value]="body()" (valueChange)="onFieldChange('body', $event)"
+                          [readOnly]="false" [copyable]="true" [errors]="bodyErrors()" />
+                      </ion-col>
+                    </ion-row>
+                  }
                   <ion-row>
                     <ion-col size="12">
                       <div class="attachments">
@@ -401,6 +431,9 @@ export class EmailComposerModal {
   private readonly router = inject(Router);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly mailPageService = inject(MailPageService);
+  /** A Versand's content: the draft page `mailPages/{pk}` (spec 1.171), created when the composer opens. */
+  protected readonly draft = inject(MailPageDraft);
   protected readonly i18n = this.i18nService.translateAll(EMAIL_COMPOSER_I18N_KEYS) as EmailComposerI18n;
 
   /** the body has no label of its own; the subject above introduces it */
@@ -471,8 +504,9 @@ export class EmailComposerModal {
   protected readonly personalMails = computed(() => this.hasEvents() || this.newsletter());
 
   // an attachment gives the mail content without a body, and personal mails hide the Cc: validateVestTree cannot pass either to the suite
+  // A Versand's content is its page, not the body: the body rule must not block it (canSend asks the page instead).
   private readonly suiteWithContext = (model: EmailComposerFormModel) =>
-    emailComposerValidations(model, this.attachmentName().length > 0, this.personalMails());
+    emailComposerValidations(model, this.attachmentName().length > 0 || this.isVersand(), this.personalMails());
   protected readonly composerForm = form(this.formData, (path) =>
     validateVestTree(path, this.suiteWithContext as any));
   private readonly validationResult = vestErrors(this.composerForm);
@@ -593,7 +627,7 @@ export class EmailComposerModal {
   /** A valid form; a Versand also needs its Zustellung loaded and at least one ticked recipient. */
   protected readonly canSend = computed(() =>
     this.composerForm().valid()
-    && (!this.isVersand() || (this.versandLoaded() && versandDeliveries(this.versandRows(), this.deliveries()).length > 0))
+    && (!this.isVersand() || (this.versandLoaded() && versandDeliveries(this.versandRows(), this.deliveries()).length > 0 && this.draft.hasContent()))
     && this.postAllowsSend());
   /** Post by download is free; by Pingen the sender needs a sufficient, accepted price. */
   private readonly postAllowsSend = computed(() => {
@@ -666,7 +700,31 @@ export class EmailComposerModal {
   });
 
   protected readonly hasContent = computed(() =>
-    this.attachmentName().length > 0 || emailBodyHasContent(this.formData().body ?? ''));
+    this.attachmentName().length > 0
+    || (this.isVersand() ? this.draft.hasContent() : emailBodyHasContent(this.formData().body ?? '')));
+
+  /**
+   * The page's content as one value: a change of any section changes it, a stored copy of what was typed does not
+   * (the overlay and the stored version compare equal), so the preview and the price are not asked for twice.
+   */
+  private readonly pageVersion = computed(() => JSON.stringify(this.draft.sections()));
+  /** `pageVersion` when the draft was loaded: a later difference means the sender changed the page. */
+  private pageBaseline: string | undefined;
+  /** Resolves once the draft page exists (or failed); a dismiss waits for it before discarding the draft. */
+  private draftReady: Promise<void> | undefined;
+  /** «Zurücksetzen» is replacing the draft: the old page vanishing is not a change of the sender's. */
+  private draftResetting = false;
+  /** Set as soon as `sendMailing` accepted the Versand: the page is then the mailing's and must stay. */
+  private sent = false;
+
+  /** «Webversion anbieten» (spec 1.171 R4): on for a newsletter, else off, until the sender switches it. */
+  private readonly webVersionChoice = signal<boolean | undefined>(undefined);
+  private readonly groupIsNewsletter = computed(() => {
+    if (this.newsletter()) return true;
+    const groupKey = this.groupKey();
+    return !!groupKey && this.appStore.allGroupsAndChats().some((g) => g.okey === groupKey && g.kind === 'newsletter');
+  });
+  protected readonly webVersion = computed(() => this.webVersionChoice() ?? this.groupIsNewsletter());
 
   /**
    * The outgoing message as the server renders it (`renderEmailPreview`, the renderer that sends).
@@ -692,6 +750,10 @@ export class EmailComposerModal {
   } as CheckboxI18n));
   protected readonly dashboardI18n = computed(() => ({
     name: 'showOnDashboard', label: this.i18n.delivery_dashboard(), helper: '',
+  } as CheckboxI18n));
+  protected readonly webVersionI18n = computed(() => ({
+    // the helper is shown below the switch at all times (not only with «Hilfetexte anzeigen»): it says who can read it
+    name: 'webVersion', label: this.i18n.web_version_label(), helper: '',
   } as CheckboxI18n));
   protected readonly qrCodesI18n = computed(() => ({
     name: 'letterQrCodes', label: this.i18n.delivery_qr_codes(), helper: '',
@@ -725,6 +787,7 @@ export class EmailComposerModal {
       const layout = this.layout();
       const attachmentName = this.attachmentName();
       const events = this.chosenEvents();
+      this.pageVersion();
       untracked(() => {
         if (open && this.hasContent()) {
           void this.loadPreview(body, layout, attachmentName, events);
@@ -738,6 +801,27 @@ export class EmailComposerModal {
     this.destroyRef.onDestroy(() => {
       this.destroyed = true;
       clearTimeout(this.quoteTimer);
+      // Closed without sending (close icon, back button, swipe, «Guthaben aufladen»): the draft page goes too.
+      // A sent page belongs to its mailing (the rules forbid deleting it). The draft may still be being created.
+      if (this.isVersand() && !this.sent) {
+        void (this.draftReady ?? Promise.resolve()).then(() => this.sent ? undefined : this.draft.discard())
+          .catch((err) => console.warn('EmailComposerModal: could not discard the draft page', err));
+      }
+    });
+    // A Versand composes a page (spec 1.171): its draft is created once, with the prefilled body as its first article.
+    effect(() => {
+      if (!this.isVersand() || this.draftReady) return;
+      untracked(() => { this.draftReady = this.createDraft(); });
+    });
+    // Any change of the page makes the composer dirty, like a change of the body (the send bar appears).
+    effect(() => {
+      const version = this.pageVersion();
+      if (!this.draft.loaded()) return;
+      untracked(() => {
+        if (this.draftResetting) return;
+        if (this.pageBaseline === undefined) this.pageBaseline = version;
+        else if (version !== this.pageBaseline) this.isDirty.set(true);
+      });
     });
     // The price of the letters: asked when Post is ticked and again (debounced) whenever what it depends on changes.
     // Any change of the options or the draft also withdraws the consent to the price shown before.
@@ -746,7 +830,7 @@ export class EmailComposerModal {
       const keys = this.postKeys();
       const options = this.postOptions();
       const needsSubject = this.postNeedsSubject();
-      this.subject(); this.body(); this.caleventKeys(); this.letterQrCodes();
+      this.subject(); this.body(); this.pageVersion(); this.caleventKeys(); this.letterQrCodes();
       this.filename(); this.storagePath(); this.extraAttachments();
       untracked(() => {
         clearTimeout(this.quoteTimer);
@@ -829,12 +913,16 @@ export class EmailComposerModal {
   private async loadQuote(postKeys: string[], options: PostOptions): Promise<void> {
     const request = this.quoteRequest;
     try {
+      // the server prices the page as stored: the last typed characters first
+      if (this.isVersand()) await this.draft.flush();
+      if (request !== this.quoteRequest) return;
       const fd = this.formData();
       const quote = await this.docEmailService.quoteMailingLetters({
         tenantId: this.appStore.tenantId(),
         // a newsletter's letters end with the unsubscribe block: the server counts its pages only with the group
         ...(this.groupKey() ? { groupKey: this.groupKey() } : {}),
-        subject: fd.subject, body: fd.body,
+        subject: fd.subject,
+        ...(this.isVersand() ? { pageKey: this.draft.pageKey() } : { body: fd.body }),
         ...(this.storagePath() ? { storagePath: this.storagePath(), filename: this.filename() } : {}),
         extraAttachments: this.extraAttachments(),
         ...(this.hasEvents() ? { caleventKeys: this.chosenEvents().map((e) => e.caleventKey) } : {}),
@@ -1068,8 +1156,11 @@ export class EmailComposerModal {
     this.previewLoading.set(true);
     this.previewFailed.set(false);
     try {
+      // a Versand's page is rendered from Firestore: the last typed characters first
+      if (this.isVersand()) await this.draft.flush();
+      if (request !== this.previewRequest) return;
       const rendered = await this.docEmailService.renderPreview({
-        body, layout, attachmentName,
+        ...(this.isVersand() ? { pageKey: this.draft.pageKey() } : { body }), layout, attachmentName,
         ...(events.length > 0 ? { answerEvents: events.map((e) => ({ name: e.name, when: e.when })) } : {}),
       });
       if (request !== this.previewRequest) return;
@@ -1164,6 +1255,30 @@ export class EmailComposerModal {
     this.isDirty.set(true);
   }
 
+  protected onWebVersionChange(on: boolean): void {
+    if (on === this.webVersion()) return;
+    this.isDirty.set(true);
+    this.webVersionChoice.set(on);
+  }
+
+  /** Creates the draft page with the prefilled body (if any) as its first article; a failure is shown in the editor. */
+  private async createDraft(): Promise<void> {
+    if (!isBrowser(this.platformId) || this.destroyed) return;
+    const uid = this.appStore.fbUser()?.uid ?? '';
+    try {
+      const { pageKey } = await this.mailPageService.createDraft(
+        this.appStore.tenantId(), uid, this.groupKey() || undefined, this.bodyDefault() || undefined);
+      this.pageBaseline = undefined;       // the first version of the new draft is its baseline
+      this.draft.start(pageKey);
+      this.draft.createFailed.set(false);
+    } catch (err) {
+      console.error('EmailComposerModal.createDraft: creating the draft page failed', err);
+      this.draft.createFailed.set(true);
+    } finally {
+      this.draftResetting = false;
+    }
+  }
+
   protected revert(): void {
     this.isDirty.set(false);
     this.extraAttachments.set([]);
@@ -1173,6 +1288,11 @@ export class EmailComposerModal {
     this.letterQrCodes.set(false);
     this.ticksBeforeEmailOnly = {};
     if (this.isVersand()) {
+      this.webVersionChoice.set(undefined);
+      this.draftResetting = true;
+      // the page starts over too: a fresh draft with the prefilled body, the changed one is thrown away
+      this.draftReady = (this.draftReady ?? Promise.resolve()).then(() => this.draft.discard()).catch((err) =>
+        console.warn('EmailComposerModal: could not discard the draft page', err)).then(() => this.createDraft());
       this.split.set(new Set());
       this.versandRows.set(this.initialRows);
       this.applyDeliveries(this.initialDeliveries);
@@ -1255,13 +1375,17 @@ export class EmailComposerModal {
       // server-side (spec 1.145 §10): the Bcc is resolved there, so the client's list is not sent.
       if (this.isVersand()) {
         const deliveries = versandDeliveries(this.versandRows(), this.deliveries());
+        // the server renders the page as stored: the last typed characters first
+        await this.draft.flush();
         const mailingKey = await this.docEmailService.sendMailing({
           tenantId: this.appStore.tenantId(),
           ...(this.groupKey() ? { groupKey: this.groupKey() } : {}),
           to: request.to, from: request.from,
           // with events or to a newsletter every person gets their own mail: no Cc, the address in «An» is the reply address
           cc: this.personalMails() ? [] : request.cc,
-          subject: request.subject, body: request.body, layout: request.layout,
+          // the content is the page; `body` is ignored with a pageKey
+          subject: request.subject, body: '', layout: request.layout,
+          pageKey: this.draft.pageKey(), webVersion: this.webVersion(),
           ...(request.storagePath ? { storagePath: request.storagePath, filename: request.filename } : {}),
           extraAttachments: request.extraAttachments,
           deliveries,
@@ -1270,6 +1394,7 @@ export class EmailComposerModal {
           ...(this.showQrOption() && this.letterQrCodes() ? { letterQrCodes: true } : {}),
           ...this.postPayload(),
         });
+        this.sent = true;
         await this.showParamToast(EMAIL_COMPOSER_MSG_KEYS.send_mailing, {
           emails: deliveries.filter((d) => d.channels.includes(DeliveryChannel.Email)).length,
           notices: deliveries.filter((d) => d.channels.includes(DeliveryChannel.Chat)).length,
