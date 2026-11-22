@@ -157,6 +157,20 @@ export function publicAppOrigin(appDomain: string | undefined | null, tenantId: 
 }
 
 /**
+ * The tenant's public website origin (no trailing slash), derived from `AppConfig.appDomain` by the
+ * DNS rule (see the `dns` skill): the app lives on `app.<apex>`, the website on the apex itself. A
+ * tenant still on its Firebase Hosting default (`<tenant>-app-<suffix>.web.app`) has its website on
+ * the sibling site `<tenant>-website-<suffix>.web.app`; so has a tenant without any domain.
+ */
+export function publicWebsiteOrigin(appDomain: string | undefined | null, tenantId: string): string {
+  const host = String(appDomain ?? '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/[/?#].*$/, '');
+  if (!host) return `https://${tenantId}-website-${HOSTING_SUFFIX}.web.app`;
+  const hostingDefault = host.match(new RegExp(`^(.+)-app-${HOSTING_SUFFIX}\\.web\\.app$`));
+  if (hostingDefault) return `https://${hostingDefault[1]}-website-${HOSTING_SUFFIX}.web.app`;
+  return `https://${host.startsWith('app.') ? host.slice(4) : host}`;
+}
+
+/**
  * Whether `origin` is a real web origin other people can open. Native builds are served from
  * `capacitor://localhost` (iOS) and `https://localhost` without a port (Android); a link built on
  * those is useless to everyone else. `http://localhost:4200` (dev serve) counts as web.

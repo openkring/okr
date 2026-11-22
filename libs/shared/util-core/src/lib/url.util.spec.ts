@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { appLinkOrigins, getDeepLinkPath, getSafeEmbedUrl, getSafeLinkUrl, getSafeReturnUrl, isWebOrigin, publicAppOrigin, resolveAppOrigin } from './url.util';
+import { appLinkOrigins, getDeepLinkPath, getSafeEmbedUrl, getSafeLinkUrl, getSafeReturnUrl, isWebOrigin, publicAppOrigin, publicWebsiteOrigin, resolveAppOrigin } from './url.util';
 
 describe('url.util', () => {
   describe('getSafeLinkUrl', () => {
@@ -171,5 +171,23 @@ describe('app origin (spec 1.82: links from native builds)', () => {
     expect(appLinkOrigins('https://app.seeclub.org', 'https://app.seeclub.org')).toEqual(['https://app.seeclub.org']);
     expect(appLinkOrigins('https://app.seeclub.org', 'http://localhost:4200')).toEqual(['http://localhost:4200', 'https://app.seeclub.org']);
     expect(appLinkOrigins('https://app.seeclub.org', 'capacitor://localhost')).toEqual(['https://app.seeclub.org', 'capacitor://localhost']);
+  });
+});
+
+describe('publicWebsiteOrigin', () => {
+  it('serves the website on the apex of app.<apex>', () => {
+    expect(publicWebsiteOrigin('app.seeclub.org', 'scs')).toBe('https://seeclub.org');
+    expect(publicWebsiteOrigin('app.elab.glp-staefa.ch', 'elab')).toBe('https://elab.glp-staefa.ch');
+  });
+  it('accepts the apex form, a scheme and a trailing path', () => {
+    expect(publicWebsiteOrigin('kring.ch', 'kring')).toBe('https://kring.ch');
+    expect(publicWebsiteOrigin(' https://APP.p13.ch/ ', 'p13')).toBe('https://p13.ch');
+  });
+  it('maps the Hosting default app site to its website sibling', () => {
+    expect(publicWebsiteOrigin('la21staefa-app-54aef.web.app', 'la21staefa')).toBe('https://la21staefa-website-54aef.web.app');
+  });
+  it('falls back to the tenant website site without a domain', () => {
+    expect(publicWebsiteOrigin('', 'kwa')).toBe('https://kwa-website-54aef.web.app');
+    expect(publicWebsiteOrigin(undefined, 'kwa')).toBe('https://kwa-website-54aef.web.app');
   });
 });

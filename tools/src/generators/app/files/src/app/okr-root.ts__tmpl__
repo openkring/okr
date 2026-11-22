@@ -9,7 +9,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { AppStore } from '@okr/shared-feature';
 import { RoleName } from '@okr/shared-models';
 import { BootError, Spinner, ConnectionStatusButton, AvatarUser } from '@okr/shared-ui';
-import { coerceBoolean, getImgixUrlWithAutoParams, hasRole } from '@okr/shared-util-core';
+import { coerceBoolean, getImgixUrlWithAutoParams, hasRole, publicWebsiteOrigin } from '@okr/shared-util-core';
 
 import { AuthInfo } from '@okr/auth-ui';
 import { Menu, MENU_WIDE_QUERY, MenuBar, MenuLayout, MenuStatic } from '@okr/cms-menu-feature';
@@ -126,7 +126,8 @@ import { ConsentService } from '@okr/consent-data-access';
               <ion-buttons slot="start">
                 <okr-connection-status-button />
               </ion-buttons>
-              <ion-item lines="none" color="secondary">
+              <!-- the app name opens the tenant website's landing page in a new tab -->
+              <ion-item lines="none" color="secondary" [href]="websiteUrl()" target="_blank" rel="noopener" detail="false">
                 <ion-label>{{ appStore.appConfig().appName }}</ion-label>
               </ion-item>
               <!-- Tenant switcher: the host stays empty until a person who belongs to more than one
@@ -349,6 +350,8 @@ export class OkrRoot {
 
   protected showDebugInfo = computed(() => this.appStore.showDebugInfo());
   protected mainMenuName = computed(() => `main_${this.appStore.tenantId()}`);
+  /** Landing page of the tenant's public website, opened from the app name in the menu header. */
+  protected websiteUrl = computed(() => publicWebsiteOrigin(this.appStore.appConfig().appDomain, this.appStore.tenantId()));
   protected logoUrl = computed(() => `${this.appStore.services.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.appStore.appConfig().logoUrl)}`);
 
   // Single source of truth lives on the AppStore (also consumed by isAppReadyGuard).
