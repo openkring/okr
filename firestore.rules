@@ -1711,8 +1711,11 @@ service cloud.firestore {
     match /mailPages/{pk} {
       // resource == null: a get() of a missing draft answers not-found instead of a permission error.
       allow read:   if signedIn() && (resource == null || canReadMailPage(resource.data));
-      // mailingKey is server-only: not even an empty one may come from a client.
+      // mailingKey is server-only: not even an empty one may come from a client. createdAt is required: the
+      // nightly reap of unsent drafts queries `createdAt < cutoff`, so a draft without it would never be deleted.
       allow create: if signedIn() && !('mailingKey' in request.resource.data)
+                       && request.resource.data.get('createdAt', null) is string
+                       && request.resource.data.createdAt != ''
                        && isOwnMailDraft(request.resource.data, callerTenants());
       // Same sender, same tenants, unsent before and after, mailingKey untouched (the tenant check runs on
       // the new data).

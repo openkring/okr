@@ -2764,8 +2764,12 @@ for label, expect, run in newsletter_cases:
 # tenant, senderUid == caller, only while mailingKey is absent (server-only). Read: the sender, or —
 # once sent — privileged / memberAdmin of the tenant. mailingWeb/{token} is Admin SDK only.
 def mail_page(sender, **extra):
-    d = {"tenants": ["t1"], "senderUid": sender, "type": "mail", "sections": []}
+    d = {"tenants": ["t1"], "senderUid": sender, "type": "mail", "sections": [], "createdAt": "2026-11-22T10:00:00.000Z"}
     d.update(extra)
+    return d
+def mail_page_without_created_at(sender):
+    d = mail_page(sender)
+    del d["createdAt"]
     return d
 # own group: gAdm is deleted by an earlier groups case. E (no role) is admin of gMail only.
 seed("groups/gMail", {"tenants": ["t1"], "name": "Versand", "admins": [{"key": "pE"}], "adminKeys": ["pE"]})
@@ -2795,6 +2799,12 @@ mailpage_cases = [
      lambda: req("POST", "mailPages?documentId=mpNew5", token=M, data=body(mail_page("uidM", mailingKey="m9")))),
     ("mailPages: memberAdmin CREATE with empty mailingKey -> DENY", False,
      lambda: req("POST", "mailPages?documentId=mpNew13", token=M, data=body(mail_page("uidM", mailingKey="")))),
+    ("mailPages: memberAdmin CREATE without createdAt -> DENY", False,
+     lambda: req("POST", "mailPages?documentId=mpNew14", token=M, data=body(mail_page_without_created_at("uidM")))),
+    ("mailPages: memberAdmin CREATE with empty createdAt -> DENY", False,
+     lambda: req("POST", "mailPages?documentId=mpNew15", token=M, data=body(mail_page("uidM", createdAt="")))),
+    ("mailPages: memberAdmin CREATE with numeric createdAt -> DENY", False,
+     lambda: req("POST", "mailPages?documentId=mpNew16", token=M, data=body(mail_page("uidM", createdAt=1)))),
     ("mailPages: plain member CREATE own draft -> DENY", False,
      lambda: req("POST", "mailPages?documentId=mpNew6", token=A, data=body(mail_page("uidA")))),
     ("mailPages: group admin of gMail CREATE without groupKey -> DENY", False,
