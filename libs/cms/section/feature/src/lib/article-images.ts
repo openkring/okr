@@ -17,6 +17,9 @@ import { badgeFor, Img } from '@okr/shared-ui';
  *
  * `side-by-side` is no grid: the whole images (not cropped, natural aspect) stand next to each other in a centred
  * row, each with its caption below, centred (e.g. the TWINT and PostFinance QR codes of a donation article).
+ *
+ * `stacked` («Untereinander») is no grid either: the whole images (not cropped, natural aspect) one below the other,
+ * each at the full width of the article, with the article's own caption style.
  */
 @Component({
   selector: 'okr-article-images',
@@ -43,6 +46,8 @@ import { badgeFor, Img } from '@okr/shared-ui';
       }
       .grid:not(.filmstrip) .tile { grid-column: auto !important; grid-row: auto !important; }
     }
+    .stacked { display: flex; flex-direction: column; gap: 1rem; }
+    .stacked okr-img { display: block; }
     .side-by-side { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.5rem 2rem; }
     .side-by-side .item { flex: 1 1 0; min-width: 120px; max-width: 260px; }
     @media (max-width: 359.98px) {
@@ -60,6 +65,12 @@ import { badgeFor, Img } from '@okr/shared-ui';
           <div class="item">
             <okr-img [image]="image" [imageStyle]="sideBySideStyle()" [editMode]="editMode()" [gallery]="images()" [captionFallbacks]="[]" [zoomTitle]="zoomTitle()" [badge]="badgeOf(image.label)" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
           </div>
+        }
+      </div>
+      } @else if (layout() === 'stacked') {
+      <div class="stacked">
+        @for (image of images(); track $index) {
+          <okr-img [image]="image" [imageStyle]="stackedStyle()" [editMode]="editMode()" [gallery]="images()" [captionFallbacks]="captionFallbacks()" [zoomTitle]="zoomTitle()" [badge]="badgeOf(image.label)" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
         }
       </div>
       } @else {
@@ -99,6 +110,14 @@ export class ArticleImages {
     width: '100%',
     height: '100%',
     fill: true,
+  }));
+
+  // stacked: the whole image at its natural aspect over the full width; caption and border from the article's style
+  protected stackedStyle = computed((): ImageStyle => ({
+    ...this.imageStyle(),
+    width: '100%',
+    height: 'auto',
+    fill: false,
   }));
 
   // side-by-side: the whole image at its natural aspect, the caption always below and centred

@@ -2211,8 +2211,8 @@
       "description": "One large and one small image side by side."
     },
     "stacked": {
-      "label": "Stacked",
-      "description": "The images sit one below the other, each at full width."
+      "label": "One below the other",
+      "description": "The whole images one below the other at full width, nothing cropped."
     },
     "big-left": {
       "label": "Large left",

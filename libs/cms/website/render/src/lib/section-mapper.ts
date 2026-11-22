@@ -46,13 +46,22 @@ export function peoplePhotoBg(config: PeoplePhotoConfig, index: number): string 
 }
 
 /**
+ * The display size of a portrait in CSS px (twin of the app's imgWidth / imgHeight, default 120 × 120, 40–1200).
+ * The website draws the photo at exactly this size; imgix delivers it at 2x (see peoplePhotoParams).
+ */
+export function peoplePhotoSize(config: PeoplePhotoConfig): { width: number; height: number } {
+  const size = (v: unknown, d: number): number => (typeof v === 'number' && v >= 40 && v <= 1200 ? Math.round(v) : d);
+  return { width: size(config.imgWidth, 120), height: size(config.imgHeight, 120) };
+}
+
+/**
  * The imgix query of one portrait (twin of getPeopleImgixParams, @okr/cms-section-util): size at 2x,
  * face crop, optional black and white, optional background removal. The fill is never baked in: the
  * cut-out is transparent and the template paints `bg` behind it (so a grey portrait keeps a coloured fill).
  */
 export function peoplePhotoParams(config: PeoplePhotoConfig): string {
-  const size = (v: unknown, d: number): number => (typeof v === 'number' && v >= 40 && v <= 1200 ? Math.round(v) : d);
-  const params = [`w=${size(config.imgWidth, 120)}`, `h=${size(config.imgHeight, 120)}`, 'dpr=2', 'auto=format,compress'];
+  const { width, height } = peoplePhotoSize(config);
+  const params = [`w=${width}`, `h=${height}`, 'dpr=2', 'auto=format,compress'];
   const pad = typeof config.facePad === 'number' ? config.facePad : 0;
   if (pad > 0) params.push('fit=facearea', `facepad=${pad}`);
   else params.push('fit=crop', 'crop=faces');
@@ -310,6 +319,8 @@ export interface SectionDoc {
   type?: string;
   state?: string;
   tenants?: string[];
+  /** who may see the section (RoleName); a website publishes only 'public' or the legacy 'none' (see isPublicRole) */
+  roleNeeded?: string;
   title?: string;
   subTitle?: string;
   intro?: string;
@@ -332,8 +343,9 @@ export type ArticleImagePosition = 'none' | 'top' | 'bottom' | 'left' | 'right';
 
 // Mirrors ViewPosition (shared-models) and the app's ArticleSectionComponent only for articles without
 // `imageLayout` (spec 1.154 §5): several images render on top, a single one at content.position, and left/right use
-// content.colSize (of 12, default 6) as the image column width. Of the `imageLayout`s only `side-by-side` is rendered
-// on the published website (see articleSideBySide); the grid layouts are not yet.
+// content.colSize (of 12, default 6) as the image column width. Of the `imageLayout`s only `side-by-side` (see
+// articleSideBySide) and `stacked` (see articleStacked) are rendered on the published website; the grid layouts are
+// not yet (they fall back to the slider).
 const VIEW_POSITIONS: ArticleImagePosition[] = ['none', 'top', 'bottom', 'left', 'right'];
 
 export function articleImageLayout(
@@ -362,6 +374,23 @@ export function articleSideBySide(
   const rowStyle: StoredImageStyle = { ...(style ?? { height: 'auto' }), captionPosition: 'bottom', captionAlign: 'center' };
   const images = mapImages(rawImages, rowStyle, []);
   if (images.length === 0) return undefined;
+  return { images, imagePosition: position === 2 ? 'bottom' : 'top' };
+}
+
+/** Mirrors STACKED_LAYOUT of `@okr/cms-section-util`. */
+export const STACKED = 'stacked';
+
+/**
+ * An article in the `stacked` layout («Untereinander», mirrors the app's ArticleImages): two or more whole images
+ * (not cropped) one below the other at full width, on top of the text — or below it when position is Bottom (2).
+ * Captions follow the article's image style, like a single image.
+ */
+export function articleStacked(
+  rawImages: unknown, imageLayout: unknown, position: number | undefined, style: StoredImageStyle | undefined, fallbacks: (string | undefined)[],
+): { images: PublicImage[]; imagePosition: ArticleImagePosition } | undefined {
+  if (imageLayout !== STACKED) return undefined;
+  const images = mapImages(rawImages, style, fallbacks);
+  if (images.length < 2) return undefined;
   return { images, imagePosition: position === 2 ? 'bottom' : 'top' };
 }
 
@@ -714,7 +743,13 @@ export function mapSection(
         });
         // photo cards as soon as one person has a photo (the others get an initials tile)
         const withPhotos = persons.some((p) => !!p.image);
-        return { type: 'people', name, title, subTitle, persons, ...(withPhotos ? { withPhotos: true } : {}), ...(emailLink ? { emailLink: true } : {}) };
+        // the template draws every portrait (and the initials tile) at the configured size, not stretched to the card
+        const photoSize = peoplePhotoSize(avatarCfg);
+        return {
+          type: 'people', name, title, subTitle, persons,
+          ...(withPhotos ? { withPhotos: true, photoWidth: photoSize.width, photoHeight: photoSize.height } : {}),
+          ...(emailLink ? { emailLink: true } : {}),
+        };
       }
       const persons = ((props['persons'] as { key?: string; name1?: string; name2?: string; label?: string }[] | undefined) ?? [])
         .map(p => ({
@@ -806,6 +841,16 @@ export function mapSection(
           ...mapArticleColors(props),
           // a fixed px height (imageStyle.height, e.g. the 150 px QR codes) draws each picture as a square of that size
           ...sideBySide, imageColSize: 6, imageHeight: articleImageHeight(imageStyle), imageRow: true,
+        };
+      }
+      const stacked = articleStacked(props['images'], props['imageLayout'], content?.position, imageStyle, [subTitle, title]);
+      if (stacked) {
+        return {
+          type: 'article', name, title, subTitle, kicker, intro, content: articleHtml,
+          cta: mapCta(props['cta'], lang),
+          emphasis: props['emphasis'] === 'banner' ? 'banner' : 'none',
+          ...mapArticleColors(props),
+          ...stacked, imageColSize: 6, imageHeight: 0, imageColumn: true,
         };
       }
       const layout = articleImageLayout(images.length, content?.position, content?.colSize);

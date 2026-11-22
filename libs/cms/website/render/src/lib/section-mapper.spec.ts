@@ -240,6 +240,36 @@ describe('article layout side-by-side (whole images in a row, caption below)', (
   });
 });
 
+describe('article layout stacked (Untereinander: whole images one below the other)', () => {
+  const pic = (n: string) => ({ url: `tenant/scs/section/s/${n}.jpg`, altText: n, overlay: `Bild ${n}`, label: '' });
+  const article = (images: unknown[], position = 1, extra: Record<string, unknown> = {}): SectionDoc => ({
+    type: 'article', title: 'Regatta', content: { htmlContent: '<p>x</p>', position },
+    properties: { images, imageLayout: 'stacked', ...extra },
+  });
+
+  it('renders every image in a column above the text, no slider, no slideshow', () => {
+    const out = map(article([pic('a'), pic('b'), pic('c')], 1, { slideshow: { effect: 'fade' } }));
+    expect(out['imageColumn']).toBe(true);
+    expect(out['imageRow']).toBeUndefined();
+    expect(out['imagePosition']).toBe('top');
+    expect(out['imageHeight']).toBe(0);
+    expect((out['images'] as unknown[]).length).toBe(3);
+    expect(out['slideshow']).toBeUndefined();
+    expect(out['title']).toBe('Regatta');
+  });
+
+  it('puts the column below the text when position is bottom, and top for left/right', () => {
+    expect(map(article([pic('a'), pic('b')], 2))['imagePosition']).toBe('bottom');
+    expect(map(article([pic('a'), pic('b')], 4))['imagePosition']).toBe('top');
+  });
+
+  it('a single image keeps its own position (stacked needs two or more)', () => {
+    const out = map(article([pic('a')], 4));
+    expect(out['imageColumn']).toBeUndefined();
+    expect(out['imagePosition']).toBe('right');
+  });
+});
+
 describe('toImgixUrl', () => {
   it('keeps transparency for png/webp/gif/avif sources', () => {
     expect(toImgixUrl('a/logo.webp')).toBe('https://bkaiser.imgix.net/a/logo.webp?auto=format,compress');

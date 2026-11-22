@@ -2211,8 +2211,8 @@
       "description": "Un’immagine grande e una piccola affiancate."
     },
     "stacked": {
-      "label": "Sovrapposte",
-      "description": "Le immagini stanno una sotto l’altra, ciascuna a tutta larghezza."
+      "label": "Una sotto l’altra",
+      "description": "Le immagini intere una sotto l’altra, a tutta larghezza, senza ritagli."
     },
     "big-left": {
       "label": "Grande a sinistra",

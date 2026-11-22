@@ -29,9 +29,9 @@ function expectValidTiling(columns: number, tiles: ImageTile[], count: number): 
 describe('image layout groups', () => {
   it('lists the layouts per image count; the first is the default, every group ends with the slider', () => {
     expect(IMAGE_LAYOUT_GROUPS[2]).toEqual(['pair', 'big-small', 'stacked', 'side-by-side', 'slider']);
-    expect(IMAGE_LAYOUT_GROUPS[3]).toEqual(['big-left', 'big-top', 'big-right', 'row', 'side-by-side', 'slider']);
-    expect(IMAGE_LAYOUT_GROUPS[4]).toEqual(['grid', 'big-left', 'big-top', 'filmstrip', 'side-by-side', 'slider']);
-    expect(IMAGE_LAYOUT_GROUPS[5]).toEqual(['mosaic', 'big-grid', 'grid', 'slider']);
+    expect(IMAGE_LAYOUT_GROUPS[3]).toEqual(['big-left', 'big-top', 'big-right', 'row', 'stacked', 'side-by-side', 'slider']);
+    expect(IMAGE_LAYOUT_GROUPS[4]).toEqual(['grid', 'big-left', 'big-top', 'filmstrip', 'stacked', 'side-by-side', 'slider']);
+    expect(IMAGE_LAYOUT_GROUPS[5]).toEqual(['mosaic', 'big-grid', 'grid', 'stacked', 'slider']);
   });
 
   it('IMAGE_LAYOUT_IDS holds every id of every group once', () => {
@@ -235,6 +235,32 @@ describe('side-by-side', () => {
     for (const count of [1, 2, 3, 4, 7]) {
       const { columns, tiles } = imageLayoutTiles('side-by-side', count);
       expectValidTiling(columns, tiles, count);
+    }
+  });
+});
+
+describe('stacked (Untereinander)', () => {
+  it('is offered for every count of two or more images, before the slider', () => {
+    for (const count of [2, 3, 4, 5, 9]) {
+      const ids = imageLayoutsFor(count);
+      expect(ids).toContain('stacked');
+      expect(ids.indexOf('stacked')).toBeLessThan(ids.indexOf('slider'));
+    }
+    expect(resolveImageLayout('stacked', 3)).toBe('stacked');
+    expect(resolveImageLayout('stacked', 7)).toBe('stacked');
+    expect(resolveImageLayout('stacked', 1)).toBeUndefined();
+  });
+
+  it('preview tiles: one full-width tile per image, one below the other', () => {
+    for (const count of [2, 3, 4, 6]) {
+      const { tiles } = imageLayoutTiles('stacked', count);
+      expect(tiles).toHaveLength(count);
+      tiles.forEach((tile, i) => {
+        expect(tile.index).toBe(i);
+        expect(tile.column).toBe(1);
+        expect(tile.colSpan).toBe(IMAGE_LAYOUT_COLUMNS);
+        if (i > 0) expect(tile.row).toBeGreaterThan(tiles[i - 1].row);
+      });
     }
   });
 });

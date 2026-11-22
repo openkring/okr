@@ -24,12 +24,19 @@ export type ImageLayoutGroup = 2 | 3 | 4 | 5;
  */
 export const SIDE_BY_SIDE_LAYOUT: ImageLayoutId = 'side-by-side';
 
+/**
+ * `stacked` («Untereinander»): the whole images (not cropped, natural aspect) one below the other, each at the full
+ * width of the article, for any number of images. Like `side-by-side` it is drawn as a plain column, not as grid tiles
+ * (the tiles below are only read by the picker's schematic preview).
+ */
+export const STACKED_LAYOUT: ImageLayoutId = 'stacked';
+
 /** The layouts offered per image count (group 5 = five or more); the first id of a group is its default. */
 export const IMAGE_LAYOUT_GROUPS: Record<ImageLayoutGroup, ImageLayoutId[]> = {
   2: ['pair', 'big-small', 'stacked', 'side-by-side', 'slider'],
-  3: ['big-left', 'big-top', 'big-right', 'row', 'side-by-side', 'slider'],
-  4: ['grid', 'big-left', 'big-top', 'filmstrip', 'side-by-side', 'slider'],
-  5: ['mosaic', 'big-grid', 'grid', 'slider'],
+  3: ['big-left', 'big-top', 'big-right', 'row', 'stacked', 'side-by-side', 'slider'],
+  4: ['grid', 'big-left', 'big-top', 'filmstrip', 'stacked', 'side-by-side', 'slider'],
+  5: ['mosaic', 'big-grid', 'grid', 'stacked', 'slider'],
 };
 
 export function isImageLayoutId(value: unknown): value is ImageLayoutId {
@@ -153,6 +160,10 @@ class TileWriter {
 
 /** The layouts of five or more images: generated for any count. */
 function generated(layout: ImageLayoutId, count: number, w: TileWriter): void {
+  if (layout === 'stacked') {
+    w.rows(count, [1]); // one full-width image per row
+    return;
+  }
   if (layout === 'mosaic') {
     w.rows(count, [2, 3]); // decision 4: rows alternate two and three equal tiles
     return;

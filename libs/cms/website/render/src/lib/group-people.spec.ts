@@ -100,7 +100,7 @@ describe('resolveGroupPeople', () => {
 
 describe('mapSection people', () => {
   const sanitize = (h: string) => h;
-  const people = (properties: Record<string, unknown>): SectionDoc => ({ type: 'people', state: 'published', tenants: ['scs'], title: 'Vorstand', properties });
+  const people = (properties: Record<string, unknown>): SectionDoc => ({ type: 'people', state: 'published', roleNeeded: 'public', tenants: ['scs'], title: 'Vorstand', properties });
   const anna: PublicPerson = { key: 'p1', firstName: 'Anna', lastName: 'Muster', label: '', showImage: false };
 
   it('a group section shows the resolved members of its group, never the stored list', () => {
@@ -142,6 +142,14 @@ describe('mapSection people', () => {
     const out = mapSection('s1', people({ type: 'group', groupId: 'vorstand' }), new Map(), sanitize, 'de', new Map([['group.vorstand', [ben]]])) as { persons: PublicPerson[]; withPhotos?: boolean };
     expect(out.persons[0].image).toBe('https://bkaiser.imgix.net/tenant/scs/person/p2/avatar/ben.jpg?w=120&h=120&dpr=2&auto=format,compress&fit=crop&crop=faces');
     expect(out.withPhotos).toBe(true);
+    expect(out).toMatchObject({ photoWidth: 120, photoHeight: 120 });
+  });
+
+  it('passes the configured portrait size to the template, clamped like the imgix size', () => {
+    const ben: PublicPerson = { key: 'p2', firstName: 'Ben', lastName: 'Bauer', label: '', showImage: true, image: 'a/ben.jpg' };
+    const run = (avatar: Record<string, unknown>) => mapSection('s1', people({ type: 'group', groupId: 'vorstand', avatar }), new Map(), sanitize, 'de', new Map([['group.vorstand', [ben]]]));
+    expect(run({ imgWidth: 160, imgHeight: 200 })).toMatchObject({ photoWidth: 160, photoHeight: 200 });
+    expect(run({ imgWidth: 5, imgHeight: 'x' })).toMatchObject({ photoWidth: 120, photoHeight: 120 });
   });
 
   it('styles the portraits as the section config says: size, face pad, grayscale, cut-out on alternating club colours', () => {
@@ -181,7 +189,7 @@ describe('renderSite group people', () => {
   const input = (people?: RenderInput['people']): RenderInput => ({
     site: { okey: 'fixture', tenants: ['scs'], name: 'F', domain: 'https://example.org', languages: ['de'], nav: [], footer: [], homePageKey: 'home' } as never,
     pages: new Map([['home', { okey: 'home', tenants: ['scs'], sections: ['s1'], title: 'Start', isPrivate: false } as unknown as PageModel]]),
-    sections: new Map([['s1', { type: 'people', state: 'published', tenants: ['scs'], properties: { type: 'group', groupId: 'vorstand' } }]]),
+    sections: new Map([['s1', { type: 'people', state: 'published', roleNeeded: 'public', tenants: ['scs'], properties: { type: 'group', groupId: 'vorstand' } }]]),
     templates,
     imageUrl: (p) => p,
     sanitize: (h) => h,

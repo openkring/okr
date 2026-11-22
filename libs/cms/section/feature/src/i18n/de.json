@@ -2211,8 +2211,8 @@
       "description": "Ein grosses und ein kleines Bild nebeneinander."
     },
     "stacked": {
-      "label": "Übereinander",
-      "description": "Die Bilder stehen untereinander, jedes in voller Breite."
+      "label": "Untereinander",
+      "description": "Die Bilder ganz und in voller Breite untereinander, nichts wird abgeschnitten."
     },
     "big-left": {
       "label": "Gross links",

@@ -2211,8 +2211,8 @@
       "description": "Une grande et une petite image côte à côte."
     },
     "stacked": {
-      "label": "Superposées",
-      "description": "Les images sont l’une sous l’autre, chacune en pleine largeur."
+      "label": "L’une sous l’autre",
+      "description": "Les images entières l’une sous l’autre, en pleine largeur, sans recadrage."
     },
     "big-left": {
       "label": "Grande à gauche",
