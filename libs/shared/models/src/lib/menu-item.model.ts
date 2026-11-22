@@ -1,7 +1,12 @@
 import { DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_MENU_ACTION, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_URL } from '@okr/shared-constants';
 import { BaseProperty, OkrModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
 
-export type RoleName = 'none' | 'anonymous' | 'registered' | 'privileged' | 'contentAdmin' | 'resourceAdmin' | 'memberAdmin' | 'eventAdmin' | 'treasurer' | 'admin' | 'public' | 'groupAdmin' | 'kiosk' | 'tripAdmin' | 'auditor' | 'tester';
+/**
+ * The role a user needs to see something. 'public' = everyone, logged in or not; 'anonymous' = only someone who
+ * is NOT logged in. The former 'none' meant the same as 'public' and was merged into it on 2026-11-22 (all
+ * sections and menu items migrated); readers still treat a stray legacy 'none' as 'public' (see hasRole).
+ */
+export type RoleName = 'anonymous' | 'registered' | 'privileged' | 'contentAdmin' | 'resourceAdmin' | 'memberAdmin' | 'eventAdmin' | 'treasurer' | 'admin' | 'public' | 'groupAdmin' | 'kiosk' | 'tripAdmin' | 'auditor' | 'tester';
 
 /** How a tenant's main menu is laid out; absent on the root document means 'left'. */
 export type MenuType = 'left' | 'right' | 'top' | 'segmented' | 'static';

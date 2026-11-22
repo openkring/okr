@@ -205,7 +205,7 @@ describe('loadSiteContent', () => {
   } as unknown as WebsiteModel;
 
   it('loads the tree pages of the site tenants, their sections (@TID@ resolved) and accordion items, in batches', async () => {
-    const pub = { tenants: ['scs'], state: 'published' };
+    const pub = { tenants: ['scs'], state: 'published', roleNeeded: 'public' };
     const { db, reads } = fakeDb({
       'pages/home': { tenants: ['scs'], sections: ['@TID@_hero'] },
       'pages/verein': { tenants: ['scs'], sections: ['acc'] },
@@ -225,7 +225,7 @@ describe('loadSiteContent', () => {
   });
 
   it('resolves the members of the groups its published people sections show (1.153 §13)', async () => {
-    const pub = { tenants: ['scs'], state: 'published' };
+    const pub = { tenants: ['scs'], state: 'published', roleNeeded: 'public' };
     const data: Record<string, Record<string, unknown>> = {
       'pages/home': { tenants: ['scs'], sections: ['board', 'draftBoard'] },
       'sections/board': { ...pub, type: 'people', properties: { type: 'group', groupId: 'vorstand' } },
@@ -257,7 +257,7 @@ describe('loadSiteContent', () => {
   });
 
   it('resolves the holders of the roles its published people sections show (1.153 §13.1)', async () => {
-    const pub = { tenants: ['scs'], state: 'published' };
+    const pub = { tenants: ['scs'], state: 'published', roleNeeded: 'public' };
     const anna = { key: 'p1', name1: 'Anna', name2: 'Muster', modelType: 'person' };
     const { db, reads } = fakeDb({
       'pages/home': { tenants: ['scs'], sections: ['contact', 'legacy'] },

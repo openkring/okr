@@ -7,6 +7,7 @@ import type { I18nString } from '@okr/shared-models';
 
 type SanitizeFn = (html: string) => string;
 import { shortenText } from '@okr/shared-util-core';
+import { isPublicRole } from '@okr/cms-website-render';
 
 const IMGIX_BASE = 'https://bkaiser.imgix.net';
 
@@ -31,6 +32,8 @@ interface ArticleSectionDoc {
   isArchived: boolean;
   type: string;
   state?: string;
+  /** who may see the article (RoleName); served only when public (isPublicRole: 'public', legacy 'none') */
+  roleNeeded?: string;
   content: { htmlContent: string };
   properties?: {
     images?: StoredImage[];
@@ -140,7 +143,8 @@ export async function newsRouter(req: Request, res: Response): Promise<void> {
         }
       }
 
-      if (!doc || !isPublishedSection(doc)) {
+      // a members-only article (roleNeeded not public) is as absent as an unpublished one
+      if (!doc || !isPublishedSection(doc) || !isPublicRole(doc.roleNeeded)) {
         res.status(404).json({ error: { code: 'not_found', message: 'Article not found', details: { slug } } });
         return;
       }
@@ -188,7 +192,7 @@ export async function newsRouter(req: Request, res: Response): Promise<void> {
       // `tenants` is checked here too: these are reads BY KEY, so the array-contains
       // filter that guards every query does not apply.
       .filter(d => d.type === 'article' && !d.isArchived && (d.tenants ?? []).includes(tenantId)
-        && isPublishedSection(d));
+        && isPublishedSection(d) && isPublicRole(d.roleNeeded));
 
     if (tag) {
       docs = docs.filter(d => parseTags(d.tags).includes(tag));

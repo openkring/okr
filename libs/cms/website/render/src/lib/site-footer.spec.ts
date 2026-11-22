@@ -29,7 +29,7 @@ describe('mapFooter (la21staefa footer)', () => {
 });
 
 describe('siteFooterSection', () => {
-  const section = { type: 'footer', state: 'published', tenants: ['la21staefa'], properties: props } as unknown as SectionDoc;
+  const section = { type: 'footer', state: 'published', roleNeeded: 'public', tenants: ['la21staefa'], properties: props } as unknown as SectionDoc;
   const site = (footerSectionKey?: string) => ({ footerSectionKey } as WebsiteModel);
 
   it('maps the named footer section of the tenant', () => {

@@ -125,7 +125,7 @@ describe('planMenuOps', () => {
 describe('planMenuOps is additive only', () => {
   const spec: MenuSpec = {
     key: 'calevent-all', name: 'calevent-all', url: '/calevent/all',
-    action: 'navigate', roleNeeded: 'none', icon: 'calendar', label: '@item.calevent-all',
+    action: 'navigate', roleNeeded: 'public', icon: 'calendar', label: '@item.calevent-all',
   };
 
   it('never writes a structural field on an existing document', () => {
@@ -140,7 +140,7 @@ describe('planMenuOps is additive only', () => {
   it('adds the tenant and clears isArchived when the document was archived', () => {
     const existing = new Map([['calevent-all', {
       okey: 'calevent-all', name: 'calevent-all', url: '/calevent/all', action: 'navigate',
-      roleNeeded: 'none', tenants: ['p13'], isArchived: true,
+      roleNeeded: 'public', tenants: ['p13'], isArchived: true,
     } as unknown as MenuItemModel]]);
 
     const ops = planMenuOps([spec], 'scs', existing);
@@ -153,7 +153,7 @@ describe('planMenuOps is additive only', () => {
   it('reactivates an archived document the tenant already inherits', () => {
     const existing = new Map([['calevent-all', {
       okey: 'calevent-all', name: 'calevent-all', url: '/calevent/all', action: 'navigate',
-      roleNeeded: 'none', tenants: ['scs'], isArchived: true,
+      roleNeeded: 'public', tenants: ['scs'], isArchived: true,
     } as unknown as MenuItemModel]]);
 
     const ops = planMenuOps([spec], 'scs', existing);
@@ -166,7 +166,7 @@ describe('findStructuralDrift reports pins', () => {
   it('marks a pinned field as pinned and still reports both values', () => {
     const spec: MenuSpec = {
       key: 'logbuch', name: 'logbuch', url: '/trip/all', action: 'navigate',
-      roleNeeded: 'none', icon: 'boat', label: '@item.logbuch',
+      roleNeeded: 'public', icon: 'boat', label: '@item.logbuch',
     };
     const existing = new Map([['logbuch', {
       okey: 'logbuch', name: 'logbuch', url: '/trip/all', action: 'navigate',
@@ -176,7 +176,7 @@ describe('findStructuralDrift reports pins', () => {
     const [drift] = findStructuralDrift([spec], existing);
     expect(drift.pinned).toEqual(['roleNeeded']);
     expect(drift.live).toEqual({ roleNeeded: 'member' });
-    expect(drift.fields).toEqual({ roleNeeded: 'none' });
+    expect(drift.fields).toEqual({ roleNeeded: 'public' });
   });
 });
 

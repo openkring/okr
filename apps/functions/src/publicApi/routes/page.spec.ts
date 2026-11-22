@@ -298,7 +298,7 @@ describe('learning section wiring', () => {
   type Call = string;
   function makeDb(o: { page?: Record<string, unknown>; folder?: Record<string, unknown>; docs?: { id: string; data: Record<string, unknown> }[] }) {
     const calls: Call[] = [];
-    const learning = { type: 'learning', state: 'published', title: 'Raum', tenants: ['scs'], properties: { folder: 'f1', topics: 'T' } };
+    const learning = { type: 'learning', state: 'published', roleNeeded: 'public', title: 'Raum', tenants: ['scs'], properties: { folder: 'f1', topics: 'T' } };
     const snap = (id: string, data: Record<string, unknown> | undefined) => ({ id, exists: data !== undefined, data: () => data });
     const db = {
       collection: (name: string) => ({
@@ -409,17 +409,17 @@ describe('mapFormSection', () => {
 describe('unpublished sections', () => {
   const page = { tenants: ['scs'], type: 'content', sections: ['live', 'draft', 'legacy', 'box'] };
   const sections: Record<string, Record<string, unknown>> = {
-    live: { type: 'article', state: 'published', tenants: ['scs'], title: 'Live' },
-    antrag: { type: 'form', state: 'published', tenants: ['scs'], title: 'Antrag', properties: { formKey: 'f1', emailAddresses: ['a@b.ch'] } },
+    live: { type: 'article', state: 'published', roleNeeded: 'public', tenants: ['scs'], title: 'Live' },
+    antrag: { type: 'form', state: 'published', roleNeeded: 'public', tenants: ['scs'], title: 'Antrag', properties: { formKey: 'f1', emailAddresses: ['a@b.ch'] } },
     draft: { type: 'article', state: 'draft', tenants: ['scs'], title: 'Entwurf' },
     legacy: { type: 'article', tenants: ['scs'], title: 'Ohne Status' },
     box: {
-      type: 'accordion', state: 'published', tenants: ['scs'], title: 'Box',
+      type: 'accordion', state: 'published', roleNeeded: 'public', tenants: ['scs'], title: 'Box',
       properties: { items: [{ key: 'nestedLive', label: 'A' }, { key: 'nestedDraft', label: 'B' }, { key: 'nestedArchived', label: 'C' }] },
     },
-    nestedLive: { type: 'article', state: 'published', tenants: ['scs'], content: { htmlContent: '<p>offen</p>' } },
+    nestedLive: { type: 'article', state: 'published', roleNeeded: 'public', tenants: ['scs'], content: { htmlContent: '<p>offen</p>' } },
     nestedDraft: { type: 'article', state: 'draft', tenants: ['scs'], content: { htmlContent: '<p>Entwurfstext</p>' } },
-    nestedArchived: { type: 'article', state: 'published', isArchived: true, tenants: ['scs'], content: { htmlContent: '<p>archiviert</p>' } },
+    nestedArchived: { type: 'article', state: 'published', roleNeeded: 'public', isArchived: true, tenants: ['scs'], content: { htmlContent: '<p>archiviert</p>' } },
   };
   const snap = (id: string, data: Record<string, unknown> | undefined) => ({ id, exists: data !== undefined, data: () => data });
 
@@ -699,10 +699,10 @@ describe('people sections from a group (1.153 §13)', () => {
   const snap = (id: string, data: Record<string, unknown> | undefined) => ({ id, exists: data !== undefined, data: () => data });
   const sections: Record<string, Record<string, unknown>> = {
     board: {
-      type: 'people', state: 'published', tenants: ['scs'], title: 'Vorstand',
+      type: 'people', state: 'published', roleNeeded: 'public', tenants: ['scs'], title: 'Vorstand',
       properties: { type: 'group', groupId: 'vorstand', avatar: { info: ['function', 'email'] }, persons: [{ key: 'old', name1: 'Alt' }] },
     },
-    list: { type: 'people', state: 'published', tenants: ['scs'], title: 'Liste', properties: { type: 'persons', persons: [{ key: 'p9', name1: 'Eva', name2: 'Liste', label: 'Kassierin' }] } },
+    list: { type: 'people', state: 'published', roleNeeded: 'public', tenants: ['scs'], title: 'Liste', properties: { type: 'persons', persons: [{ key: 'p9', name1: 'Eva', name2: 'Liste', label: 'Kassierin' }] } },
   };
   const memberships = [
     { orgKey: 'vorstand', orgModelType: 'group', memberKey: 'p1', memberModelType: 'person', memberName1: 'Anna', memberName2: 'Muster', tenants: ['scs'], isArchived: false, dateOfExit: '99991231' },
@@ -770,11 +770,11 @@ describe('people sections from roles (1.153 §13.1)', () => {
   const avatar = (key: string, name1: string, name2: string) => ({ key, name1, name2, modelType: 'person' });
   const docs: Record<string, Record<string, unknown>> = {
     'sections/contact': {
-      type: 'people', state: 'published', tenants: ['scs'], title: 'Kontakt',
+      type: 'people', state: 'published', roleNeeded: 'public', tenants: ['scs'], title: 'Kontakt',
       properties: { type: 'responsibility', responsibilityIds: ['praesident', 'kassier'], avatar: { info: ['function', 'email'] } },
     },
     'sections/legacy': {
-      type: 'people', state: 'published', tenants: ['scs'], title: 'Alt',
+      type: 'people', state: 'published', roleNeeded: 'public', tenants: ['scs'], title: 'Alt',
       properties: { type: 'responsibility', responsibilityId: 'kassier' },
     },
     'responsibilities/praesident': { name: 'Präsident', email: 'praesident@seeclub.org', tenants: ['scs'], responsibleAvatar: avatar('p1', 'Anna', 'Muster'), delegateAvatar: avatar('p2', 'Beat', 'Privat') },

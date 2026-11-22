@@ -1,6 +1,6 @@
 import type { PageModel, WebsiteModel, WebsiteNode } from '@okr/shared-models';
 
-import { validateForPublish, type TemplateManifest } from './publish-validation';
+import { isPublicRole, isServableSection, validateForPublish, type TemplateManifest } from './publish-validation';
 import type { SectionDoc } from './section-mapper';
 
 const manifest: TemplateManifest = { siteId: 's', version: '1', sectionTypes: ['article', 'hero'], fixedPages: [] };
@@ -12,7 +12,7 @@ const pg = (sections: string[] = [], extra: Partial<PageModel> = {}): PageModel 
 describe('validateForPublish', () => {
   it('is clean for a valid site', () => {
     const pages = new Map([['p-a', pg(['s1'])]]);
-    const sections = new Map<string, SectionDoc>([['s1', { type: 'article', state: 'published', tenants: ['scs'] }]]);
+    const sections = new Map<string, SectionDoc>([['s1', { type: 'article', state: 'published', roleNeeded: 'public', tenants: ['scs'] }]]);
     expect(validateForPublish(site([page('a', 'a')]), pages, sections, manifest)).toEqual([]);
   });
   it('reuses the tree codes', () => {
@@ -31,14 +31,14 @@ describe('validateForPublish', () => {
   });
   it('flags a published section of an unknown type', () => {
     const pages = new Map([['p-a', pg(['s1'])]]);
-    const sections = new Map<string, SectionDoc>([['s1', { type: 'weird', state: 'published', tenants: ['scs'] }]]);
+    const sections = new Map<string, SectionDoc>([['s1', { type: 'weird', state: 'published', roleNeeded: 'public', tenants: ['scs'] }]]);
     expect(validateForPublish(site([page('a', 'a')]), pages, sections, manifest)).toEqual([
       { code: 'templateMissing', pageKey: 'p-a', sectionKey: 's1', detail: 'weird' },
     ]);
   });
   it('names the page and the section of a missing template in words (spec 1.165 §7.5)', () => {
     const pages = new Map([['p-a', pg(['s1'], { name: 'Reparatur Café' })]]);
-    const sections = new Map<string, SectionDoc>([['s1', { type: 'tasks', title: 'Unsere Aufgaben', state: 'published', tenants: ['scs'] }]]);
+    const sections = new Map<string, SectionDoc>([['s1', { type: 'tasks', title: 'Unsere Aufgaben', state: 'published', roleNeeded: 'public', tenants: ['scs'] }]]);
     expect(validateForPublish(site([page('a', 'a')]), pages, sections, manifest)).toEqual([
       { code: 'templateMissing', pageKey: 'p-a', sectionKey: 's1', detail: 'tasks', pageTitle: 'Reparatur Café', sectionTitle: 'Unsere Aufgaben' },
     ]);
@@ -50,7 +50,7 @@ describe('validateForPublish', () => {
   });
   it('counts the home page though it is not in the nav', () => {
     const pages = new Map([['p-h', pg(['s1'])]]);
-    const sections = new Map<string, SectionDoc>([['s1', { type: 'weird', state: 'published', tenants: ['scs'] }]]);
+    const sections = new Map<string, SectionDoc>([['s1', { type: 'weird', state: 'published', roleNeeded: 'public', tenants: ['scs'] }]]);
     const p = validateForPublish(site([], 'p-h'), pages, sections, manifest);
     expect(p.map((x) => x.code)).toEqual(['templateMissing']);
   });
@@ -60,7 +60,7 @@ describe('validateForPublish', () => {
   });
   it('resolves @TID@ in section keys', () => {
     const pages = new Map([['p-a', pg(['x-@TID@'])]]);
-    const sections = new Map<string, SectionDoc>([['x-scs', { type: 'weird', state: 'published', tenants: ['scs'] }]]);
+    const sections = new Map<string, SectionDoc>([['x-scs', { type: 'weird', state: 'published', roleNeeded: 'public', tenants: ['scs'] }]]);
     expect(validateForPublish(site([page('a', 'a')]), pages, sections, manifest).map((x) => x.code)).toEqual(['templateMissing']);
   });
   it('flags an archived home page outside the tree', () => {
@@ -94,16 +94,36 @@ describe('validateForPublish', () => {
   });
   it('ignores an archived section of an unknown type', () => {
     const pages = new Map([['p-a', pg(['s1'])]]);
-    const sections = new Map<string, SectionDoc>([['s1', { type: 'weird', state: 'published', tenants: ['scs'], isArchived: true }]]);
+    const sections = new Map<string, SectionDoc>([['s1', { type: 'weird', state: 'published', roleNeeded: 'public', tenants: ['scs'], isArchived: true }]]);
     expect(validateForPublish(site([page('a', 'a')]), pages, sections, manifest)).toEqual([]);
   });
   it('ignores a section of another tenant', () => {
     const pages = new Map([['p-a', pg(['s1'])]]);
-    const sections = new Map<string, SectionDoc>([['s1', { type: 'weird', state: 'published', tenants: ['other'] }]]);
+    const sections = new Map<string, SectionDoc>([['s1', { type: 'weird', state: 'published', roleNeeded: 'public', tenants: ['other'] }]]);
     expect(validateForPublish(site([page('a', 'a')]), pages, sections, manifest)).toEqual([]);
   });
   it('flags a missing domain', () => {
     const s = { ...site([page('a', 'a')]), domain: ' ' } as WebsiteModel;
     expect(validateForPublish(s, new Map([['p-a', pg()]]), new Map(), manifest)).toEqual([{ code: 'domainMissing' }]);
+  });
+});
+
+describe('isServableSection: roleNeeded', () => {
+  const base: SectionDoc = { type: 'article', state: 'published', tenants: ['scs'], roleNeeded: 'public' };
+
+  it('publishes a public section (roleNeeded public, or the legacy none)', () => {
+    expect(isServableSection(base, ['scs'])).toBe(true);
+    expect(isServableSection({ ...base, roleNeeded: 'none' }, ['scs'])).toBe(true);
+  });
+
+  it('isPublicRole: only public and the legacy none', () => {
+    expect(['none', 'public'].every(isPublicRole)).toBe(true);
+    expect([undefined, null, '', 'registered', 'anonymous', 'contentAdmin', 'admin', 'NONE'].some(isPublicRole)).toBe(false);
+  });
+
+  it('never publishes a section for members or editors, nor one without roleNeeded', () => {
+    for (const roleNeeded of ['registered', 'privileged', 'contentAdmin', 'admin', 'anonymous', '', undefined]) {
+      expect(isServableSection({ ...base, roleNeeded }, ['scs'])).toBe(false);
+    }
   });
 });

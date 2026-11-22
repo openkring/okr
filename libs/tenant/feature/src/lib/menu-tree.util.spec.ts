@@ -6,7 +6,7 @@ import type { MenuTreeRow } from './menu-tree.util';
 
 const doc = (okey: string, menuItems: string[] = []): MenuItemModel => ({
   okey, name: okey, tenants: ['scs'], menuItems, isArchived: false,
-  url: '', action: 'navigate', roleNeeded: 'none', label: '', icon: '',
+  url: '', action: 'navigate', roleNeeded: 'public', label: '', icon: '',
   index: '', description: '', tags: '',
 } as unknown as MenuItemModel);
 
@@ -14,13 +14,13 @@ const CALEVENT: FeatureBlock = {
   id: 'calevent', bundle: 'events', label: 'Anlässe', icon: 'calendar',
   defaultAvailability: 'ga', dependsOn: [], collections: [],
   menu: [{
-    key: 'event-menu', name: 'event-menu', url: '', action: 'sub', roleNeeded: 'none',
+    key: 'event-menu', name: 'event-menu', url: '', action: 'sub', roleNeeded: 'public',
     icon: 'calendar', label: '@item.event-menu',
     children: [
       { key: 'calevent-all', name: 'calevent-all', url: '/calevent/all', action: 'navigate',
-        roleNeeded: 'none', icon: 'calendar', label: '@item.calevent-all' },
+        roleNeeded: 'public', icon: 'calendar', label: '@item.calevent-all' },
       { key: 'calevent-my', name: 'calevent-my', url: '/calevent/my', action: 'navigate',
-        roleNeeded: 'none', icon: 'calendar', label: '@item.calevent-my' },
+        roleNeeded: 'public', icon: 'calendar', label: '@item.calevent-my' },
     ],
   }],
 };
@@ -30,11 +30,11 @@ const FINANCE: FeatureBlock = {
   id: 'finance', bundle: 'finance', label: 'Finanzen', icon: 'cash',
   defaultAvailability: 'ga', dependsOn: [], collections: [],
   menu: [{
-    key: 'finance-menu', name: 'finance-menu', url: '', action: 'sub', roleNeeded: 'none',
+    key: 'finance-menu', name: 'finance-menu', url: '', action: 'sub', roleNeeded: 'public',
     icon: 'cash', label: '@item.finance-menu',
     children: [
       { key: 'finance-invoices', name: 'finance-invoices', url: '/finance/invoices',
-        action: 'navigate', roleNeeded: 'none', icon: 'cash', label: '@item.finance-invoices' },
+        action: 'navigate', roleNeeded: 'public', icon: 'cash', label: '@item.finance-invoices' },
     ],
   }],
 };
@@ -65,11 +65,11 @@ describe('buildMenuTree', () => {
     ]);
     const drift: MenuStructureDrift[] = [{
       name: 'calevent-all', docId: 'calevent-all', forked: false, pinned: [],
-      fields: { roleNeeded: 'none' }, live: { roleNeeded: 'registered' },
+      fields: { roleNeeded: 'public' }, live: { roleNeeded: 'registered' },
     }];
     const row = base(existing, drift).find(r => r.name === 'calevent-all');
     expect(row).toMatchObject({
-      state: 'drifted', roleNeededLive: 'registered', roleNeededCatalogue: 'none',
+      state: 'drifted', roleNeededLive: 'registered', roleNeededCatalogue: 'public',
       blockId: 'calevent', otherDrift: [],
     });
   });
@@ -83,7 +83,7 @@ describe('buildMenuTree', () => {
     ]);
     const drift: MenuStructureDrift[] = [{
       name: 'calevent-all', docId: 'calevent-all', forked: false, pinned: ['roleNeeded'],
-      fields: { roleNeeded: 'none' }, live: { roleNeeded: 'registered' },
+      fields: { roleNeeded: 'public' }, live: { roleNeeded: 'registered' },
     }];
     expect(base(existing, drift).find(r => r.name === 'calevent-all')?.state).toBe('pinned');
   });
@@ -130,7 +130,7 @@ describe('buildMenuTree', () => {
     const row = base(existing, drift).find(r => r.name === 'calevent-all');
     expect(row).toMatchObject({
       state: 'drifted', otherDrift: ['url'],
-      roleNeededLive: 'none', roleNeededCatalogue: 'none',
+      roleNeededLive: 'public', roleNeededCatalogue: 'public',
     });
   });
 
@@ -148,7 +148,7 @@ describe('buildMenuTree', () => {
     ]);
     const drift: MenuStructureDrift[] = [{
       name: 'calevent-all', docId: 'calevent-all', forked: false, pinned: ['roleNeeded'],
-      fields: { roleNeeded: 'none', url: '/calevent/all' },
+      fields: { roleNeeded: 'public', url: '/calevent/all' },
       live: { roleNeeded: 'registered', url: '/calevent/all-changed' },
     }];
     const row = base(existing, drift).find(r => r.name === 'calevent-all');
@@ -192,10 +192,10 @@ const TASK: FeatureBlock = {
   defaultAvailability: 'ga', dependsOn: [], collections: [],
   menu: [
     { key: 'task-all', name: 'task-all', url: '/task/all/c-tasks', action: 'navigate',
-      roleNeeded: 'none', icon: 'task', label: '@item.task-all' },
-    { key: 'c-tasks', name: 'c-tasks', url: '', action: 'context', roleNeeded: 'none',
+      roleNeeded: 'public', icon: 'task', label: '@item.task-all' },
+    { key: 'c-tasks', name: 'c-tasks', url: '', action: 'context', roleNeeded: 'public',
       icon: 'help-circle', label: '', children: [
-        { key: 'task-add', name: 'task-add', url: 'add', action: 'call', roleNeeded: 'none',
+        { key: 'task-add', name: 'task-add', url: 'add', action: 'call', roleNeeded: 'public',
           icon: 'add-circle', label: '@item.task-add' },
       ] },
   ],

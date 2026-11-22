@@ -62,7 +62,7 @@ export function newsArticleOf(entry) {
   const subTitle = [germanDate(entry.date), entry.tags.join(', '), entry.subTitle].filter(Boolean).join(' · ');
   const position = images.length === 0 ? 0 : images.length === 1 ? 4 : 1; // none · right · top (ViewPosition)
   return {
-    name: entry.slug, type: 'article', state: 'published', roleNeeded: 'none', colSize: '12', color: 0,
+    name: entry.slug, type: 'article', state: 'published', roleNeeded: 'public', colSize: '12', color: 0,
     title: entry.title, subTitle: subTitle.length > 100 ? subTitle.slice(0, subTitle.lastIndexOf(' · ')) : subTitle,
     notes: 'aus dem LA21 Newsletter übernommen (1.165)', tags: entry.tags.join(', '), isArchived: false, tenants: [T],
     content: { htmlContent: entry.html, colSize: 4, position },

@@ -22,7 +22,7 @@ const HOME = `${T}_home`;
 const IMAGE = { actionUrl: '', altText: '', credit: '', documentKey: '', label: '', overlay: '', type: 0, url: '' };
 
 const section = (key, type, title, properties = {}, extra = {}) => ({
-  name: key, type, state: 'published', roleNeeded: 'none', colSize: '12', color: 0, title, subTitle: '',
+  name: key, type, state: 'published', roleNeeded: 'public', colSize: '12', color: 0, title, subTitle: '',
   notes: 'LA21 Website-Grundgerüst (1.165)', content: { htmlContent: '', colSize: 3, position: 1 },
   properties, tags: '', isArchived: false, tenants: [T], index: `n:${key} a:${type} k:${key}`, ...extra,
 });

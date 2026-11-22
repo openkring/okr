@@ -132,7 +132,7 @@ function base(id, type, name, title, subTitle, index, properties, content = '<p>
   return {
     type, state: 'published', name, title, subTitle,
     index: `n:${name} a:${type} k:${id}`,
-    color: 0 /* ColorIonic.Primary */, colSize: '12', roleNeeded: 'none', isArchived: false,
+    color: 0 /* ColorIonic.Primary */, colSize: '12', roleNeeded: 'public', isArchived: false,
     content: { htmlContent: content, colSize: 3, position: contentPosition },
     notes: '', tags: '', tenants: [TENANT],
     properties,

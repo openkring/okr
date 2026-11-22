@@ -35,9 +35,10 @@ export function checkAuthorization(allowedRoles: RoleName[], currentUser?: UserM
  */
 export function hasRole(role: RoleName | undefined, currentUser?: UserModel): boolean {
   if (!role) return true;
+  // legacy: 'none' was merged into 'public' (2026-11-22); an old app version may still write it
+  if ((role as string) === 'none') return true;
   let roles: RoleName[] = [];
   switch(role) {  // add additional roles that also have access
-    case 'none': return true;
     case 'anonymous': return !currentUser; // visible only to unauthenticated users
     case 'public': return true; // visible to everyone, authenticated or not
     // 'kiosk' counts as registered: it is a real logged-in account, and a kiosk-only user is

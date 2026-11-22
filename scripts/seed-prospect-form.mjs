@@ -108,7 +108,7 @@ const section = {
   index: `n:${DOC_ID} t:form`,
   color: 0,
   colSize: '12',
-  roleNeeded: 'none',   // public page — no login
+  roleNeeded: 'public',   // public page — no login
   content: { htmlContent: '<p></p>', colSize: 4, position: 0 },
   properties: {
     formKey: FORM_KEY,

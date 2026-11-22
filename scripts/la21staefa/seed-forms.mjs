@@ -119,7 +119,7 @@ export const FORMS = {
 };
 
 const formSection = (key, title, formKey, notes) => ({
-  name: key, type: 'form', state: 'published', roleNeeded: 'none', colSize: '12', color: 0, title, subTitle: '',
+  name: key, type: 'form', state: 'published', roleNeeded: 'public', colSize: '12', color: 0, title, subTitle: '',
   notes, content: { htmlContent: '<p></p>', colSize: 3, position: 0 },
   properties: { formKey, implicitValues: {}, emailAddresses: BOARD_MAIL, rateLimit: RATE_LIMIT, showCaptcha: false, encryptFileUpload: false },
   tags: '', isArchived: false, tenants: [T], index: `n:${key} t:form tt:${formKey} st:`,

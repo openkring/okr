@@ -112,7 +112,7 @@ export function articleOf(key, block, paths) {
   if (title.length > 100) { html = `<h3>${esc(title)}</h3>${html}`; title = ''; }
   const position = images.length === 0 ? 0 : images.length === 1 ? 4 : 1; // none · right · top (ViewPosition)
   return {
-    name: key, type: 'article', state: 'published', roleNeeded: 'none', colSize: '12', color: 0,
+    name: key, type: 'article', state: 'published', roleNeeded: 'public', colSize: '12', color: 0,
     title, subTitle,
     notes: 'von www.la21staefa.ch übernommen (1.165)', tags: '', isArchived: false, tenants: [T],
     content: { htmlContent: html || '<p></p>', colSize: 4, position },

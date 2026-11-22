@@ -6,7 +6,7 @@ import { defineSecret } from 'firebase-functions/params';
 
 import type { DocumentLink } from '@okr/shared-models';
 import { DocumentCollection, FolderCollection } from '@okr/shared-models';
-import { IMGIX_BASE, mapSection, normalizeLang, pickText, slugName, str, toImgixUrl, type I18nString, type PublicPerson, type SanitizeFn, type SectionDoc } from '@okr/cms-website-render';
+import { IMGIX_BASE, isPublicRole, mapSection, normalizeLang, pickText, slugName, str, toImgixUrl, type I18nString, type PublicPerson, type SanitizeFn, type SectionDoc } from '@okr/cms-website-render';
 import { learningTabOf, parseTopics, type LearningTab, type PublicLearningItem, type PublicLearningSection } from '@okr/content-learning-util';
 
 import { isPublishedSection, setCacheHeaders } from '../utils';
@@ -207,12 +207,14 @@ export async function loadLearningSection(
 /**
  * The one gate for a section read by key, top-level or nested: such a read never passes a query's
  * filters. The `tenants` check is not redundant with the page's: a page shared across tenants can
- * list section keys that resolve to another tenant's documents.
+ * list section keys that resolve to another tenant's documents. Only a public section (isPublicRole:
+ * roleNeeded 'public', or the legacy 'none') is served — the same rule as publishWebsite (@okr/cms-website-render).
  */
 function isServableSection(section: SectionDoc | undefined, tenantId: string): boolean {
   return !!section && section.isArchived !== true
     && (section.tenants ?? []).includes(tenantId)
-    && isPublishedSection(section);
+    && isPublishedSection(section)
+    && isPublicRole(section.roleNeeded);
 }
 
 /**

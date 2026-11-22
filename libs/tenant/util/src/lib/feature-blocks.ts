@@ -520,7 +520,7 @@ const cms: FeatureBlock = {
     // or the section to `<okey>_<tenantId>` (`PageService.update` / `SectionService.update`),
     // which is the id both `read()`s prefer.
     { key: 'dashboard', name: 'dashboard', url: '/private/dashboard/c-contentpage', action: 'navigate', roleNeeded: 'registered', icon: 'home', label: '@main.dashboard' },
-    { key: 'help', name: 'help', url: '/public/help/c-contentpage', action: 'navigate', roleNeeded: 'none', icon: 'help-circle', label: '@main.misc.help' },
+    { key: 'help', name: 'help', url: '/public/help/c-contentpage', action: 'navigate', roleNeeded: 'public', icon: 'help-circle', label: '@main.misc.help' },
     // The RELEASE NOTES row — `action: 'browse'`, i.e. the system browser rather than a route,
     // with `@VERSION@` in the label and the repo url expanded by `MenuStore`. Not a CMS page,
     // so it is the odd one out in this block; it lives here because `cms` is `core: true` (the
@@ -528,7 +528,7 @@ const cms: FeatureBlock = {
     // is `bundle: 'special'`) and because it is the same MAIN-MENU INFO class as `help`
     // directly above it: something every member may open about the app itself.
     // Mirrored verbatim off `menuItems/version`, `icon: 'golf'` included.
-    { key: 'version', name: 'version', url: 'https://github.com/openkring/okr/commits/main/', action: 'browse', roleNeeded: 'none', icon: 'golf', label: 'Release @VERSION@' },
+    { key: 'version', name: 'version', url: 'https://github.com/openkring/okr/commits/main/', action: 'browse', roleNeeded: 'public', icon: 'golf', label: 'Release @VERSION@' },
     // The album's url carries `@TID@`, not a page id: it renders a per-tenant STORAGE folder
     // (`<tid>-album`), so there is no shared document behind it and nothing to migrate. `p13`
     // holds a fork of the row itself (`album_p13`), which is exactly what `forkedFrom` is for.
@@ -537,10 +537,10 @@ const cms: FeatureBlock = {
     // impressum]`, `roleNeeded: none`, empty icon — mirrored verbatim, including the order).
     // Unlike `cms-menu`/`aoc-menu` this parent has exactly ONE owning block, so it is declared
     // inline rather than through a shared-parent helper.
-    { key: 'misc-menu', name: 'misc-menu', url: '', action: 'sub', roleNeeded: 'none', icon: '', label: '@item.misc-menu', children: [
-      { key: 'terms', name: 'terms', url: '/public/terms/c-contentpage', action: 'navigate', roleNeeded: 'none', icon: 'legal', label: '@item.terms' },
-      { key: 'privacy', name: 'privacy', url: '/public/privacy/c-contentpage', action: 'navigate', roleNeeded: 'none', icon: 'eye-off', label: '@main.misc.privacy' },
-      { key: 'impressum', name: 'impressum', url: '/public/impressum/c-contentpage', action: 'navigate', roleNeeded: 'none', icon: 'info-circle', label: '@main.misc.impressum' },
+    { key: 'misc-menu', name: 'misc-menu', url: '', action: 'sub', roleNeeded: 'public', icon: '', label: '@item.misc-menu', children: [
+      { key: 'terms', name: 'terms', url: '/public/terms/c-contentpage', action: 'navigate', roleNeeded: 'public', icon: 'legal', label: '@item.terms' },
+      { key: 'privacy', name: 'privacy', url: '/public/privacy/c-contentpage', action: 'navigate', roleNeeded: 'public', icon: 'eye-off', label: '@main.misc.privacy' },
+      { key: 'impressum', name: 'impressum', url: '/public/impressum/c-contentpage', action: 'navigate', roleNeeded: 'public', icon: 'info-circle', label: '@main.misc.impressum' },
     ] },
     cmsMenuParent([
       // The section SHOWCASE page — a tenant-independent demo of every section type, and the

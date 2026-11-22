@@ -113,7 +113,7 @@ export function planRootMenuOp(
         okey: key, name: key, action: 'main', url: '', label: 'main', icon: '',
         description: '', tags: '', data: [], isArchived: false,
         index: `n:${key} a:main k:${key}`,
-        roleNeeded: 'none', tenants: [tenantId], menuItems: withTailKeysLast(wantedAdds),
+        roleNeeded: 'public', tenants: [tenantId], menuItems: withTailKeysLast(wantedAdds),
       },
     };
   }

@@ -158,7 +158,7 @@ describe('roleIdsUnderParent', () => {
 
 describe('mapSection people from roles', () => {
   const sanitize = (h: string) => h;
-  const section = (properties: Record<string, unknown>): SectionDoc => ({ type: 'people', state: 'published', tenants: ['scs'], title: 'Kontakt', properties });
+  const section = (properties: Record<string, unknown>): SectionDoc => ({ type: 'people', state: 'published', roleNeeded: 'public', tenants: ['scs'], title: 'Kontakt', properties });
   const anna: PublicPerson = { key: 'p1', firstName: 'Anna', lastName: 'Muster', label: 'Präsidentin', showImage: true, email: 'praesident@seeclub.org' };
   const map = new Map([['responsibility.praesident', [anna]]]);
   const persons = (s: SectionDoc, m: ReadonlyMap<string, PublicPerson[]> | undefined = map) =>
@@ -227,7 +227,7 @@ describe('renderSite role people', () => {
     site: { okey: 'fixture', tenants: ['scs'], name: 'F', domain: 'https://example.org', languages: ['de'], nav: [], footer: [], homePageKey: 'home' } as never,
     pages: new Map([['home', { okey: 'home', tenants: ['scs'], sections: ['s1'], title: 'Start', isPrivate: false } as unknown as PageModel]]),
     sections: new Map([['s1', {
-      type: 'people', state: 'published', tenants: ['scs'],
+      type: 'people', state: 'published', roleNeeded: 'public', tenants: ['scs'],
       properties: { type: 'responsibility', responsibilityIds: ['praesident'], avatar: { info: ['function', 'email'] } },
     }]]),
     templates,

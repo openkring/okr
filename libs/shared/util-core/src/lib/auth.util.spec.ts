@@ -90,10 +90,14 @@ describe('auth.util', () => {
       expect(result).toBe(true);
     });
 
-    it('should return true for "none" role', () => {
-      const user = createUserWithRoles({});
-      const result = hasRole('none', user);
-      expect(result).toBe(true);
+    it('should return true for "public" role, logged in or not', () => {
+      expect(hasRole('public', createUserWithRoles({}))).toBe(true);
+      expect(hasRole('public', undefined)).toBe(true);
+    });
+
+    it('should treat the legacy "none" role as public', () => {
+      expect(hasRole('none' as RoleName, createUserWithRoles({}))).toBe(true);
+      expect(hasRole('none' as RoleName, undefined)).toBe(true);
     });
 
     it('should return true when user has registered role and checks for registered', () => {

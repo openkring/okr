@@ -172,7 +172,7 @@ describe('planRootMenuOp (root menu attachment — task-8 review round 2)', () =
       okey: 'main_p13', name: 'main_p13', action: 'main', url: '', label: 'main', icon: '',
       description: '', tags: '', data: [], isArchived: false,
       index: 'n:main_p13 a:main k:main_p13',
-      roleNeeded: 'none', tenants: ['p13'], menuItems: ['calevent-all', 'aoc-menu'],
+      roleNeeded: 'public', tenants: ['p13'], menuItems: ['calevent-all', 'aoc-menu'],
     });
   });
 

@@ -81,7 +81,7 @@ const LOGO_STYLE = {
 const image = (url, altText) => ({ actionUrl: '', altText, credit: '', documentKey: '', label: '', overlay: '', type: 0, url });
 
 const base = (name, title, subTitle, notes) => ({
-  name, type: 'article', state: 'published', roleNeeded: 'none', colSize: '12', color: 0, title, subTitle, notes,
+  name, type: 'article', state: 'published', roleNeeded: 'public', colSize: '12', color: 0, title, subTitle, notes,
   tags: '', isArchived: false, tenants: [T], index: `n:${name} a:article k:${name}`,
 });
 

@@ -40,7 +40,7 @@ export function accordionSection(items) {
     name: ACCORDION,
     type: 'accordion',
     state: 'published',
-    roleNeeded: 'none',
+    roleNeeded: 'public',
     colSize: '12',
     color: 0,
     title: '',

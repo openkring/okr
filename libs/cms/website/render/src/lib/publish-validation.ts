@@ -42,14 +42,26 @@ export interface TemplateManifest {
 }
 
 /**
+ * Whether a `roleNeeded` lets everybody see a section: 'public' («everyone, logged in or not» in hasRole).
+ * The legacy 'none' (merged into 'public' on 2026-11-22; an old app version may still write it) counts too.
+ * A website and publicApi have no login, so anything else — a role for members or editors (registered,
+ * privileged, contentAdmin …), 'anonymous', or no `roleNeeded` at all — is never served.
+ * The one rule for website sections (isServableSection here and in publicApi's page route) and news articles.
+ */
+export function isPublicRole(roleNeeded: unknown): boolean {
+  return roleNeeded === 'none' || roleNeeded === 'public';
+}
+
+/**
  * The same gate as publicApi's isServableSection (functions cannot be imported here): not archived,
- * owned by one of the site's tenants, published. A page can list keys that resolve to another
- * tenant's documents, so the tenant check is not redundant.
+ * owned by one of the site's tenants, published, and public (isPublicRole). A page can list keys that
+ * resolve to another tenant's documents, so the tenant check is not redundant.
  */
 export function isServableSection(section: SectionDoc | undefined, tenants: string[]): section is SectionDoc {
   return !!section && section.isArchived !== true
     && (section.tenants ?? []).some((t) => tenants.includes(t))
-    && section.state === 'published';
+    && section.state === 'published'
+    && isPublicRole(section.roleNeeded);
 }
 
 /** A section key as listed (may contain `@TID@`), resolved to the first servable sections/{key}. */

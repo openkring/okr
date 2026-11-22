@@ -57,9 +57,9 @@ function input(overrides: Partial<RenderInput> = {}, siteExtra: Partial<WebsiteM
     ['scsw_alt', pg([])],
   ]);
   const sections = new Map<string, SectionDoc>([
-    ['s-hero', { type: 'hero', state: 'published', tenants: ['scs'], title: 'Willkommen', properties: { titleI18n: { en: 'Welcome' } } }],
-    ['s-board-scs', { type: 'article', state: 'published', tenants: ['scs'], title: 'Unser Vorstand', properties: { titleI18n: { en: 'Our board' } } }],
-    ['s-plain', { type: 'article', state: 'published', tenants: ['scs'], title: 'Nur Deutsch', content: { htmlContent: '<p onclick="x">a</p><script>1</script>' } }],
+    ['s-hero', { type: 'hero', state: 'published', roleNeeded: 'public', tenants: ['scs'], title: 'Willkommen', properties: { titleI18n: { en: 'Welcome' } } }],
+    ['s-board-scs', { type: 'article', state: 'published', roleNeeded: 'public', tenants: ['scs'], title: 'Unser Vorstand', properties: { titleI18n: { en: 'Our board' } } }],
+    ['s-plain', { type: 'article', state: 'published', roleNeeded: 'public', tenants: ['scs'], title: 'Nur Deutsch', content: { htmlContent: '<p onclick="x">a</p><script>1</script>' } }],
     ['s-draft', { type: 'article', state: 'draft', tenants: ['scs'], title: 'Entwurf geheim' }],
   ]);
   return { site, pages, sections, templates: fixtureTemplates(), imageUrl: (p) => `https://img.example/${p}`, sanitize, ...overrides };
@@ -108,8 +108,8 @@ describe('renderSite', () => {
     const pages = new Map(base.pages);
     pages.set('scsw_vorstand', pg(['s-lead', 's-same'], { title: 'Vorstand' }));
     const sections = new Map(base.sections);
-    sections.set('s-lead', { type: 'hero', state: 'published', tenants: ['scs'], title: 'Organisation' });
-    sections.set('s-same', { type: 'article', state: 'published', tenants: ['scs'], title: 'Organisation' });
+    sections.set('s-lead', { type: 'hero', state: 'published', roleNeeded: 'public', tenants: ['scs'], title: 'Organisation' });
+    sections.set('s-same', { type: 'article', state: 'published', roleNeeded: 'public', tenants: ['scs'], title: 'Organisation' });
     const de = fileOf(renderSite({ ...base, pages, sections }).files, 'vorstand.html') ?? '';
     expect(de).toContain('<h1>Organisation</h1>');
     expect(de).not.toContain('<h2>Organisation</h2>');
@@ -123,7 +123,7 @@ describe('renderSite', () => {
     const pages = new Map(base.pages);
     pages.set('scsw_vorstand', pg(['a-full', 'a-left', 'a-right', 'a-after'], { title: 'Vorstand' }));
     const sections = new Map(base.sections);
-    const art = (title: string, colSize?: string): SectionDoc => ({ type: 'article', state: 'published', tenants: ['scs'], title, colSize });
+    const art = (title: string, colSize?: string): SectionDoc => ({ type: 'article', state: 'published', roleNeeded: 'public', tenants: ['scs'], title, colSize });
     sections.set('a-full', art('Voll', '12'));
     sections.set('a-left', art('Links', '12,6'));
     sections.set('a-right', art('Rechts', '12,6,4'));
@@ -270,8 +270,8 @@ describe('renderSite', () => {
   it('skips archived and foreign-tenant sections without templateMissing', () => {
     const i = input();
     (i.pages.get('scsw_vorstand') as PageModel).sections.push('s-arch', 's-foreign');
-    i.sections.set('s-arch', { type: 'weird', state: 'published', tenants: ['scs'], isArchived: true, title: 'Archiviert geheim' });
-    i.sections.set('s-foreign', { type: 'article', state: 'published', tenants: ['other'], title: 'Fremd geheim' });
+    i.sections.set('s-arch', { type: 'weird', state: 'published', roleNeeded: 'public', tenants: ['scs'], isArchived: true, title: 'Archiviert geheim' });
+    i.sections.set('s-foreign', { type: 'article', state: 'published', roleNeeded: 'public', tenants: ['other'], title: 'Fremd geheim' });
     const { files, problems } = renderSite(i);
     expect(problems).toEqual([]);
     expect(files.some((f) => f.content.includes('Archiviert geheim') || f.content.includes('Fremd geheim'))).toBe(false);
@@ -282,13 +282,13 @@ describe('renderSite', () => {
     i.templates.manifest.sectionTypes.push('accordion');
     i.templates.sections['accordion'] = '{{#each items}}<div>{{label}}:{{{content}}}</div>{{/each}}';
     (i.pages.get('scsw_vorstand') as PageModel).sections.push('s-acc');
-    i.sections.set('s-acc', { type: 'accordion', state: 'published', tenants: ['scs'], properties: { items: [
+    i.sections.set('s-acc', { type: 'accordion', state: 'published', roleNeeded: 'public', tenants: ['scs'], properties: { items: [
       { key: 'n-ok-@TID@', label: 'ok' }, { key: 'n-draft', label: 'draft' }, { key: 'n-arch', label: 'arch' }, { key: 'n-foreign', label: 'foreign' },
     ] } });
-    i.sections.set('n-ok-scs', { state: 'published', tenants: ['scs'], content: { htmlContent: '<p>Sichtbar</p>' } });
+    i.sections.set('n-ok-scs', { state: 'published', roleNeeded: 'public', tenants: ['scs'], content: { htmlContent: '<p>Sichtbar</p>' } });
     i.sections.set('n-draft', { state: 'draft', tenants: ['scs'], content: { htmlContent: '<p>Entwurf geheim</p>' } });
-    i.sections.set('n-arch', { state: 'published', tenants: ['scs'], isArchived: true, content: { htmlContent: '<p>Archiv geheim</p>' } });
-    i.sections.set('n-foreign', { state: 'published', tenants: ['other'], content: { htmlContent: '<p>Fremd geheim</p>' } });
+    i.sections.set('n-arch', { state: 'published', roleNeeded: 'public', tenants: ['scs'], isArchived: true, content: { htmlContent: '<p>Archiv geheim</p>' } });
+    i.sections.set('n-foreign', { state: 'published', roleNeeded: 'public', tenants: ['other'], content: { htmlContent: '<p>Fremd geheim</p>' } });
     const de = fileOf(renderSite(i).files, 'vorstand.html') ?? '';
     expect(de).toContain('<div>ok:<p>Sichtbar</p></div>');
     expect(de).toContain('<div>draft:</div>');
@@ -337,7 +337,7 @@ describe('sectionContexts', () => {
 
 
 describe('renderSite with a home layout (manifest.homeLayout)', () => {
-  const pub = (type: string, extra: Partial<SectionDoc> = {}): SectionDoc => ({ type, state: 'published', tenants: ['scs'], ...extra });
+  const pub = (type: string, extra: Partial<SectionDoc> = {}): SectionDoc => ({ type, state: 'published', roleNeeded: 'public', tenants: ['scs'], ...extra });
 
   function homeInput(): RenderInput {
     const i = input();

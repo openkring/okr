@@ -28,14 +28,18 @@ describe('articleSlug', () => {
 });
 
 describe('unpublished articles', () => {
-  const article = (state: string | undefined, name: string) => ({
-    type: 'article', state, name, title: name, tags: '', tenants: ['scs'], isArchived: false,
+  const article = (state: string | undefined, name: string, roleNeeded: string | undefined = 'public') => ({
+    type: 'article', state, name, title: name, tags: '', tenants: ['scs'], isArchived: false, roleNeeded,
     content: { htmlContent: '<p>Text</p>' }, properties: {},
   });
   const sections: Record<string, Record<string, unknown>> = {
     live: article('published', 'live'),
+    open: article('published', 'offen', 'public'),
     draft: article('draft', 'entwurf'),
     legacy: article(undefined, 'ohne-status'),
+    members: article('published', 'mitglieder', 'registered'),
+    editors: article('published', 'redaktion', 'contentAdmin'),
+    norole: (({ roleNeeded: _drop, ...rest }) => rest)(article('published', 'ohne-rolle')),   // eslint-disable-line @typescript-eslint/no-unused-vars
   };
   const snap = (id: string, data: Record<string, unknown> | undefined) => ({ id, exists: data !== undefined, data: () => data });
 
@@ -77,13 +81,20 @@ describe('unpublished articles', () => {
     return { status, body };
   }
 
-  it('lists published articles only', async () => {
+  it('lists published public articles only (roleNeeded none or public)', async () => {
     const { body } = await get();
-    expect((body as { slug: string }[]).map(n => n.slug)).toEqual(['live']);
+    expect((body as { slug: string }[]).map(n => n.slug)).toEqual(['live', 'offen']);
   });
 
   it('serves a published article by slug', async () => {
     expect((await get('live')).status).toBe(200);
+    expect((await get('offen')).status).toBe(200);
+  });
+
+  it('answers 404 for a members-only article, by name and by document id', async () => {
+    for (const slug of ['mitglieder', 'redaktion', 'ohne-rolle', 'members', 'editors', 'norole']) {
+      expect((await get(slug)).status).toBe(404);
+    }
   });
 
   it('answers 404 for an unpublished article reached by its name', async () => {

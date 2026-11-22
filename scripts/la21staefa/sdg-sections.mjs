@@ -81,7 +81,7 @@ export function sdgSection(pageKey, goals) {
     name,
     type: 'tiles',
     state: 'published',
-    roleNeeded: 'none',
+    roleNeeded: 'public',
     colSize: '12',
     color: 0,
     title: TITLE,
