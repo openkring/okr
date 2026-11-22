@@ -1,0 +1,46 @@
+import { Signal } from '@angular/core';
+
+const PFX = '@shared/ui-editor.';
+
+/** Toolbar, prompt and editor strings of the rich-text editor (scope `@shared/ui-editor`). */
+export const RICH_TEXT_I18N_KEYS = {
+  undo: PFX + 'toolbar.undo',
+  redo: PFX + 'toolbar.redo',
+  block: PFX + 'toolbar.block',
+  paragraph: PFX + 'toolbar.paragraph',
+  heading: PFX + 'toolbar.heading',
+  bold: PFX + 'toolbar.bold',
+  italic: PFX + 'toolbar.italic',
+  underline: PFX + 'toolbar.underline',
+  strike: PFX + 'toolbar.strike',
+  superscript: PFX + 'toolbar.superscript',
+  subscript: PFX + 'toolbar.subscript',
+  textColor: PFX + 'toolbar.textColor',
+  backgroundColor: PFX + 'toolbar.backgroundColor',
+  noColor: PFX + 'toolbar.noColor',
+  bulletList: PFX + 'toolbar.bulletList',
+  orderedList: PFX + 'toolbar.orderedList',
+  align: PFX + 'toolbar.align',
+  alignLeft: PFX + 'toolbar.alignLeft',
+  alignCenter: PFX + 'toolbar.alignCenter',
+  alignRight: PFX + 'toolbar.alignRight',
+  alignJustify: PFX + 'toolbar.alignJustify',
+  code: PFX + 'toolbar.code',
+  blockquote: PFX + 'toolbar.blockquote',
+  indent: PFX + 'toolbar.indent',
+  outdent: PFX + 'toolbar.outdent',
+  link: PFX + 'toolbar.link',
+  image: PFX + 'toolbar.image',
+  placeholder: PFX + 'editor.placeholder',
+  loading: PFX + 'editor.loading',
+  clear: PFX + 'editor.clear',
+  linkHeader: PFX + 'prompt.linkHeader',
+  linkPlaceholder: PFX + 'prompt.linkPlaceholder',
+  linkInvalid: PFX + 'prompt.linkInvalid',
+  imageHeader: PFX + 'prompt.imageHeader',
+  imagePlaceholder: PFX + 'prompt.imagePlaceholder',
+  ok: PFX + 'prompt.ok',
+  cancel: PFX + 'prompt.cancel',
+} satisfies Record<string, string>;
+
+export type RichTextI18n = { [K in keyof typeof RICH_TEXT_I18N_KEYS]: Signal<string> };

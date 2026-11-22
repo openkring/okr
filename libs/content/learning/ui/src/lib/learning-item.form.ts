@@ -1,16 +1,16 @@
-import { Component, ComponentRef, computed, DestroyRef, effect, inject, input, model, output, signal, untracked, viewChild, ViewContainerRef } from '@angular/core';
+import { Component, computed, effect, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular';
 
 import { DocumentLink } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { Chips, ErrorNote, TextInput, TextInputI18n, UrlInput, UrlInputI18n } from '@okr/shared-ui';
+import { Chips, ErrorNote, TextareaInputI18n, TextInput, TextInputI18n, UrlInput, UrlInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 import {
-  LEARNING_LINK_TITLE_MAX, LEARNING_LINKS_MAX, LEARNING_TITLE_MAX, LearningI18n, LearningItemFormData, learningItemValidations, parseTopics,
+  LEARNING_LINK_TITLE_MAX, LEARNING_LINKS_MAX, LEARNING_NOTES_MAX, LEARNING_TITLE_MAX, LearningI18n, LearningItemFormData, learningItemValidations, parseTopics,
 } from '@okr/content-learning-util';
-import type { OkrEditor } from '@okr/shared-ui-editor';
+import { RichTextInput } from '@okr/shared-ui-editor';
 
 /** The title of an attached document, for display; the form data holds only its okey. */
 export interface LearningAttachmentInfo {
@@ -32,14 +32,13 @@ function normalizeNotes(html: string | undefined): string {
  * picks or uploads the document and writes its key into `formData`.
  *
  * Tags outside `curatableTopics` (other topics, non-room tags) are never shown and always kept.
- * The notes editor (ngx-editor) is created lazily — a static import would put ProseMirror into
- * every bundle that reaches this form (lazy-loading skill, Pattern A).
+ * The notes are rich text (okr-rich-text-input loads its ProseMirror engine on demand, spec 1.170).
  */
 @Component({
   selector: 'okr-learning-item-form',
   standalone: true,
   imports: [
-    SvgIconPipe, TextInput, UrlInput, Chips, ErrorNote,
+    SvgIconPipe, TextInput, UrlInput, Chips, ErrorNote, RichTextInput,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonNote, IonButton, IonIcon,
   ],
   styles: [`
@@ -50,7 +49,6 @@ function normalizeNotes(html: string | undefined): string {
   `],
   template: `
     @if (showForm()) {
-      <!-- ngx-editor's toolbar buttons carry no type="button": Enter would submit and reload. -->
       <form novalidate (submit)="$event.preventDefault()">
         <ion-card>
           <ion-card-content class="ion-no-padding">
@@ -67,8 +65,8 @@ function normalizeNotes(html: string | undefined): string {
                   <ion-item lines="none">
                     <ion-label>{{ i18n().itemForm_notes_label() }}<p>{{ i18n().itemForm_notes_helper() }}</p></ion-label>
                   </ion-item>
-                  <div #notesEditorHost></div>
-                  <okr-error-note [errors]="notesErrors()" />
+                  <okr-rich-text-input [i18n]="notesI18n" [value]="notes()" (valueChange)="onNotesChange($event)"
+                    [readOnly]="isReadOnly()" [errors]="notesErrors()" [maxLength]="notesMax" />
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -171,7 +169,6 @@ function normalizeNotes(html: string | undefined): string {
   `,
 })
 export class LearningItemForm {
-  private readonly destroyRef = inject(DestroyRef);
 
   // inputs
   public readonly i18n = input.required<LearningI18n>();
@@ -237,49 +234,13 @@ export class LearningItemForm {
   } as UrlInputI18n));
 
   // lazy notes editor (Pattern A): the type-only import above carries no runtime edge
-  private readonly notesEditorHost = viewChild('notesEditorHost', { read: ViewContainerRef });
-  protected readonly notesEditorRef = signal<ComponentRef<OkrEditor> | undefined>(undefined);
-  /** Guards against a second mount while the chunk is still in flight. */
-  private creatingNotesEditor = false;
+  /** the label row above names the field; the editor carries none of its own */
+  protected readonly notesI18n: TextareaInputI18n = { name: 'notes', label: '', placeholder: '' };
+  /** kept in step with the cap learningItemValidations enforces on notes (visible characters) */
+  protected readonly notesMax = LEARNING_NOTES_MAX;
 
   constructor() {
     effect(() => this.valid.emit(this.itemForm().valid()));
-    effect(() => {
-      const host = this.notesEditorHost();
-      // showForm toggles (cancel) destroy the host and the editor in it — drop the stale ref
-      if (!host) {
-        if (untracked(() => this.notesEditorRef())) this.notesEditorRef.set(undefined);
-        return;
-      }
-      if (untracked(() => this.notesEditorRef()) || this.creatingNotesEditor) return;
-      this.creatingNotesEditor = true;
-      void (async () => {
-        try {
-          const { OkrEditor } = await import('@okr/shared-ui-editor');
-          const componentRef = host.createComponent(OkrEditor);
-          // required inputs before its first check; the effect below keeps them in step
-          componentRef.setInput('content', untracked(() => this.notes()));
-          componentRef.setInput('readOnly', untracked(() => this.isReadOnly()));
-          componentRef.setInput('copyable', false);
-          componentRef.setInput('buttonCopyI18n', {});
-          // `content` is a model() — it doubles as the OkrEditor -> here change channel
-          componentRef.instance.content.subscribe((html: string) => this.onNotesChange(html));
-          componentRef.changeDetectorRef.detectChanges();
-          this.notesEditorRef.set(componentRef);
-        } finally {
-          this.creatingNotesEditor = false;
-        }
-      })();
-    });
-    effect(() => {
-      const notes = this.notes();
-      const readOnly = this.isReadOnly();
-      const componentRef = this.notesEditorRef();
-      if (!componentRef) return;
-      componentRef.setInput('content', notes);
-      componentRef.setInput('readOnly', readOnly);
-    });
-    this.destroyRef.onDestroy(() => this.notesEditorRef()?.destroy());
   }
 
   /******************************* actions *************************************** */

@@ -1,4 +1,4 @@
-import { Component, ComponentRef, DestroyRef, PLATFORM_ID, computed, effect, inject, input, linkedSignal, resource, signal, untracked, viewChild, ViewContainerRef } from '@angular/core';
+import { Component, computed, effect, inject, input, linkedSignal, resource, signal, untracked } from '@angular/core';
 import {
   IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle,
   IonContent, IonHeader, IonIcon, IonNote, IonTitle, IonToolbar,
@@ -9,9 +9,9 @@ import { diaryListUrl, encodeDiaryFilter, formatDiaryDate, mainLocation, tripMap
 import { LocationService } from '@okr/location-data-access';
 import { TripModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { ChangeConfirmation, LeafletMap, MapMarker, Spinner } from '@okr/shared-ui';
-import type { OkrEditor } from '@okr/shared-ui-editor';
-import { isBrowser, resourceParams } from '@okr/shared-util-angular';
+import { ChangeConfirmation, LeafletMap, MapMarker, Spinner, TextareaInputI18n } from '@okr/shared-ui';
+import { RichTextInput } from '@okr/shared-ui-editor';
+import { resourceParams } from '@okr/shared-util-angular';
 
 import { DiaryStore } from './diary.store';
 
@@ -27,14 +27,14 @@ interface Coordinates { lat: number; lng: number }
 /**
  * A travel trip of the diary (spec 1.114 §6): header with span and day count, an inline route map of
  * the trip's located entries (date order) plus its own locations, and the trip notes.
- * Route: `diary/trip/:tripKey`. Leaflet loads inside `okr-leaflet-map`, ngx-editor through a dynamic
+ * Route: `diary/trip/:tripKey`. Leaflet loads inside `okr-leaflet-map`, the rich-text engine through a dynamic
  * import (Pattern A, `lazy-loading` skill) — neither reaches the eager bundle.
  */
 @Component({
   selector: 'okr-diary-trip-page',
   standalone: true,
   imports: [
-    SvgIconPipe, Spinner, LeafletMap, ChangeConfirmation,
+    SvgIconPipe, Spinner, LeafletMap, ChangeConfirmation, RichTextInput,
     IonHeader, IonToolbar, IonButtons, IonBackButton, IonButton, IonIcon, IonTitle, IonContent,
     IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonNote,
   ],
@@ -92,7 +92,8 @@ interface Coordinates { lat: number; lng: number }
         <ion-card>
           <ion-card-header><ion-card-title>{{ store.i18n.trip_notes() }}</ion-card-title></ion-card-header>
           <ion-card-content>
-            <div #editorHost></div>
+            <okr-rich-text-input [i18n]="notesI18n" [value]="notes()" (valueChange)="notes.set($event)"
+              [readOnly]="false" [copyable]="true" />
           </ion-card-content>
         </ion-card>
       } @else {
@@ -104,7 +105,6 @@ interface Coordinates { lat: number; lng: number }
 export class DiaryTripPage {
   protected readonly store = inject(DiaryStore);
   private readonly locationService = inject(LocationService);
-  private readonly platformId = inject(PLATFORM_ID);
 
   // route input — withComponentInputBinding writes undefined when the param is missing
   public readonly tripKey = input<string | undefined>('');
@@ -182,10 +182,8 @@ export class DiaryTripPage {
   private seededTripKey = '';
   protected readonly notesDirty = computed(() => normaliseNotes(this.notes()) !== normaliseNotes(this.savedNotes()));
 
-  private readonly editorHost = viewChild('editorHost', { read: ViewContainerRef });
-  private readonly editorRef = signal<ComponentRef<OkrEditor> | undefined>(undefined);
-  private creatingEditor = false;
-  private destroyed = false;
+  /** the card title names the notes; the editor carries no label of its own */
+  protected readonly notesI18n: TextareaInputI18n = { name: 'notes', label: '', placeholder: '' };
 
   constructor() {
     // the store filters by this trip (its list is not shown here, only its entries are used)
@@ -203,42 +201,6 @@ export class DiaryTripPage {
         this.savedNotes.set(trip.notes ?? '');
         this.notes.set(trip.notes ?? '');
       });
-    });
-
-    // Pattern A (lazy-loading skill): ngx-editor must not be statically reachable.
-    effect(() => {
-      const host = this.editorHost();
-      if (!host) {
-        if (untracked(() => this.editorRef())) this.editorRef.set(undefined);
-        return;
-      }
-      if (untracked(() => this.editorRef()) || this.creatingEditor || !isBrowser(this.platformId)) return;
-      this.creatingEditor = true;
-      void (async () => {
-        try {
-          const { OkrEditor } = await import('@okr/shared-ui-editor');
-          // the host may have been torn down (trip gone, page left) while the chunk was loading
-          if (this.destroyed || this.editorHost() !== host || untracked(() => this.editorRef())) return;
-          const ref = host.createComponent(OkrEditor);
-          ref.instance.content.subscribe((value: string) => this.notes.set(value));
-          this.editorRef.set(ref);
-        } finally {
-          this.creatingEditor = false;
-        }
-      })();
-    });
-    effect(() => {
-      const ref = this.editorRef();
-      const content = this.notes() || EMPTY_EDITOR;
-      const copyConf = this.store.i18n.copy_conf();
-      if (!ref) return;
-      ref.setInput('content', content);
-      ref.setInput('readOnly', false);
-      ref.setInput('buttonCopyI18n', { copy_conf: copyConf });
-    });
-    inject(DestroyRef).onDestroy(() => {
-      this.destroyed = true;
-      this.editorRef()?.destroy();
     });
   }
 

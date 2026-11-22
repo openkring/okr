@@ -847,6 +847,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/shared/ui-editor/src/i18n",
+            "output": "./assets/i18n/shared/ui-editor"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/social/news-center/util/src/i18n",
             "output": "./assets/i18n/social/news-center/util"
           },

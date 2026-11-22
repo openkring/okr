@@ -1,0 +1,45 @@
+{
+  "toolbar": {
+    "undo": "Undo",
+    "redo": "Redo",
+    "block": "Paragraph style",
+    "paragraph": "Text",
+    "heading": "Heading",
+    "bold": "Bold",
+    "italic": "Italic",
+    "underline": "Underline",
+    "strike": "Strikethrough",
+    "superscript": "Superscript",
+    "subscript": "Subscript",
+    "textColor": "Text colour",
+    "backgroundColor": "Background colour",
+    "noColor": "No colour",
+    "bulletList": "Bulleted list",
+    "orderedList": "Numbered list",
+    "align": "Alignment",
+    "alignLeft": "Align left",
+    "alignCenter": "Centre",
+    "alignRight": "Align right",
+    "alignJustify": "Justify",
+    "code": "Code",
+    "blockquote": "Quote",
+    "indent": "Indent",
+    "outdent": "Outdent",
+    "link": "Link",
+    "image": "Image"
+  },
+  "editor": {
+    "placeholder": "Text…",
+    "loading": "Loading the editor…",
+    "clear": "Clear text"
+  },
+  "prompt": {
+    "linkHeader": "Insert link",
+    "linkPlaceholder": "https://… – leave empty to remove the link",
+    "linkInvalid": "This address is not valid.",
+    "imageHeader": "Insert image",
+    "imagePlaceholder": "Image address (https://…)",
+    "ok": "OK",
+    "cancel": "Cancel"
+  }
+}

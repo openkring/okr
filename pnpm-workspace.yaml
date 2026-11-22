@@ -16,6 +16,9 @@ overrides:
   # node-fetch@2 loads whatwg-url@5 -> tr46@0.0.3, which require()s the deprecated
   # node:punycode builtin (DEP0040). node-fetch only uses it as a fallback for url.URL.
   'whatwg-url@5.0.0': ^14.2.0
+  # ProseMirror compares node and mark types by identity: two copies of prosemirror-model break
+  # every command ("looks like multiple versions of prosemirror-model were loaded"). Spec 1.170.
+  'prosemirror-model': ^1.25.13
 
 allowBuilds:
   '@firebase/util': true

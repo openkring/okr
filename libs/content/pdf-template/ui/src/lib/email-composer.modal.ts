@@ -1,5 +1,5 @@
 // libs/content/pdf-template/ui/src/lib/email-composer.modal.ts
-import { ChangeDetectionStrategy, Component, ComponentRef, computed, DestroyRef, effect, inject, input, linkedSignal, PLATFORM_ID, signal, untracked, ViewContainerRef, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, input, linkedSignal, PLATFORM_ID, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { form } from '@angular/forms/signals';
@@ -15,10 +15,10 @@ import {
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import {
-  ButtonCopy, ButtonCopyI18n, ChangeConfirmation, ChangeConfirmationI18n, Checkbox, CheckboxI18n,
-  EmailInput, EmailInputI18n, ErrorNote, Header, Spinner, TextInput, TextInputI18n,
+  ChangeConfirmation, ChangeConfirmationI18n, Checkbox, CheckboxI18n,
+  EmailInput, EmailInputI18n, ErrorNote, Header, Spinner, TextareaInputI18n, TextInput, TextInputI18n,
 } from '@okr/shared-ui';
-import type { OkrEditor } from '@okr/shared-ui-editor';
+import { RichTextInput } from '@okr/shared-ui-editor';
 import { DEFAULT_POST_OPTIONS, DeliveryChannel, EmailLayoutChoice, LAYOUT_CHOICES, PostOptions } from '@okr/shared-models';
 import { fill, hasRole, householdRecipientKey, MailingHousehold, needsEmailNormalization } from '@okr/shared-util-core';
 import { dismissOverlay, isBrowser, validateVestTree, vestErrors } from '@okr/shared-util-angular';
@@ -109,7 +109,7 @@ interface AddressField {
   imports: [
     FormsModule,
     SvgIconPipe,
-    Header, Spinner, ButtonCopy, ChangeConfirmation, Checkbox, EmailInput, ErrorNote, TextInput,
+    Header, Spinner, RichTextInput, ChangeConfirmation, Checkbox, EmailInput, ErrorNote, TextInput,
     VersandDeliveryTable, VersandEventsSelect, PostversandStep,
     IonContent, IonButton,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonIcon, IonChip, IonLabel, IonNote,
@@ -119,7 +119,6 @@ interface AddressField {
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px; } }
     .segment { padding: 8px 12px 0; }
-    .editor-actions { display: flex; justify-content: flex-end; align-items: center; gap: 4px; padding: 4px 12px; }
     .note { display: block; padding: 0 12px 8px; }
     .reach-warnings { background: var(--ion-background-color, #ffffff); border-left: 4px solid var(--ion-color-warning); padding: 8px 12px; }
     .reach-warning { display: flex; align-items: flex-start; gap: 8px; color: var(--ion-text-color); font-size: 0.9rem; line-height: 1.4; }
@@ -232,15 +231,8 @@ interface AddressField {
                   }
                   <ion-row>
                     <ion-col size="12">
-                      @if (!editorRef()) {
-                        <okr-spinner />
-                      }
-                      <div #editorHost></div>
-                      <div class="editor-actions">
-                        <okr-button-copy [i18n]="buttonCopyI18n()" [value]="body()" />
-                        <ion-icon src="{{ 'cancel' | svgIcon }}" (click)="clearBody()" tabindex="-1" />
-                      </div>
-                      <okr-error-note [errors]="bodyErrors()" />
+                      <okr-rich-text-input [i18n]="bodyI18n" [value]="body()" (valueChange)="onFieldChange('body', $event)"
+                        [readOnly]="false" [copyable]="true" [errors]="bodyErrors()" />
                     </ion-col>
                   </ion-row>
                   <ion-row>
@@ -411,12 +403,8 @@ export class EmailComposerModal {
   private readonly destroyRef = inject(DestroyRef);
   protected readonly i18n = this.i18nService.translateAll(EMAIL_COMPOSER_I18N_KEYS) as EmailComposerI18n;
 
-  // Lazy: a static import of @okr/shared-ui-editor drags ngx-editor/ProseMirror into every page
-  // that reaches this modal (spec 1.49, F1) — same shape as editor-configuration.ts.
-  private editorHost = viewChild('editorHost', { read: ViewContainerRef });
-  protected readonly editorRef = signal<ComponentRef<OkrEditor> | undefined>(undefined);
-  /** Guards against a second mount while the chunk is still in flight. */
-  private creatingEditor = false;
+  /** the body has no label of its own; the subject above introduces it */
+  protected readonly bodyI18n: TextareaInputI18n = { name: 'body', label: '', placeholder: '' };
   /** Set when the modal closes: stops waiting for the letters. */
   private destroyed = false;
 
@@ -699,7 +687,6 @@ export class EmailComposerModal {
   protected readonly subjectI18n = computed(() => ({
     name: 'subject', label: this.i18n.subject_label(), placeholder: '', helper: '',
   } as TextInputI18n));
-  protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.i18n.copy_conf() } as ButtonCopyI18n));
   protected readonly emailOnlyI18n = computed(() => ({
     name: 'emailOnly', label: this.i18n.delivery_email_only(), helper: '',
   } as CheckboxI18n));
@@ -748,51 +735,9 @@ export class EmailComposerModal {
         }
       });
     });
-    // Pattern A (lazy-loading skill): the effect body stays synchronous and starts the async work
-    // itself. `effect(async …)` would hand Angular a promise it ignores, and every signal read
-    // after the first await lands outside the tracking context.
-    effect(() => {
-      const host = this.editorHost();
-      // revert() briefly toggles showForm() off/on to clear stale Vest state, which tears down
-      // #editorHost (and, with it, the OkrEditor Angular already destroyed as part of that view) —
-      // drop the stale ref so the next mount recreates the component instead of staying empty.
-      if (!host) {
-        if (untracked(() => this.editorRef())) this.editorRef.set(undefined);
-        return;
-      }
-      // `creating` closes the window the ref guard alone leaves open: between starting the import
-      // and setting the ref, a second run would pass the guard and mount a second component.
-      if (untracked(() => this.editorRef()) || this.creatingEditor || !isBrowser(this.platformId)) return;
-      this.creatingEditor = true;
-      void (async () => {
-        try {
-          const { OkrEditor } = await import('@okr/shared-ui-editor');
-          const ref = host.createComponent(OkrEditor);
-          ref.setInput('content', untracked(() => this.body()));
-          ref.setInput('readOnly', false);
-          ref.setInput('clearable', false);
-          ref.setInput('copyable', false);
-          ref.setInput('buttonCopyI18n', untracked(() => this.buttonCopyI18n()));
-          // `content` is a model() — it doubles as the OkrEditor -> here change channel.
-          ref.instance.content.subscribe((value: string) => this.onFieldChange('body', value));
-          this.editorRef.set(ref);
-        } finally {
-          this.creatingEditor = false;
-        }
-      })();
-    });
-    effect(() => {
-      const ref = this.editorRef();
-      const content = this.body();
-      const buttonCopyI18n = this.buttonCopyI18n();
-      if (!ref) return;
-      ref.setInput('content', content);
-      ref.setInput('buttonCopyI18n', buttonCopyI18n);
-    });
     this.destroyRef.onDestroy(() => {
       this.destroyed = true;
       clearTimeout(this.quoteTimer);
-      this.editorRef()?.destroy();
     });
     // The price of the letters: asked when Post is ticked and again (debounced) whenever what it depends on changes.
     // Any change of the options or the draft also withdraws the consent to the price shown before.
@@ -1186,10 +1131,6 @@ export class EmailComposerModal {
 
   protected reachWarningText(warning: { eventName: string; count: number }): string {
     return fill(this.i18n.events_reach_warning(), { count: warning.count, eventName: warning.eventName });
-  }
-
-  protected clearBody(): void {
-    this.onFieldChange('body', '<p></p>');
   }
 
   /** Read a user-picked file from the device and attach it inline (base64). */

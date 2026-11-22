@@ -1,10 +1,9 @@
-import { Component, ComponentRef, computed, DestroyRef, effect, inject, input, linkedSignal, model, PLATFORM_ID, Signal, signal, untracked, viewChild, ViewContainerRef } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, Signal, signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonLabel, IonNote, IonRow, IonSegment, IonSegmentButton, IonSelect, IonSelectOption } from '@ionic/angular';
 
 import { EditorConfig, ViewPosition } from '@okr/shared-models';
-import { ButtonCopyI18n, NumberInput, NumberInputI18n } from '@okr/shared-ui';
-import { isBrowser } from '@okr/shared-util-angular';
-import type { OkrEditor } from '@okr/shared-ui-editor';
+import { NumberInput, NumberInputI18n, TextareaInputI18n } from '@okr/shared-ui';
+import { RichTextInput } from '@okr/shared-ui-editor';
 
 interface EditorConfigI18n {
   editor_title:               Signal<string>;
@@ -29,7 +28,7 @@ interface EditorConfigI18n {
   imports: [
     IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonNote, IonLabel,
     IonSegment, IonSegmentButton, IonSelect, IonSelectOption,
-    NumberInput
+    NumberInput, RichTextInput
   ],
   template: `
     <ion-card>
@@ -57,7 +56,8 @@ interface EditorConfigI18n {
           <ion-row>
             @if (segment() === 'editor' || !hasLayout()) {
               <ion-col size="12">
-                <div #editorHost></div>
+                <okr-rich-text-input [i18n]="editorI18n" [value]="htmlContent()" (valueChange)="onFieldChange('htmlContent', $event)"
+                  [readOnly]="readOnly()" [copyable]="true" />
               </ion-col>
             } @else {
               <ion-col size="12">
@@ -84,9 +84,6 @@ interface EditorConfigI18n {
   `
 })
 export class EditorConfiguration {
-  private readonly platformId = inject(PLATFORM_ID);
-  private readonly destroyRef = inject(DestroyRef);
-
   // inputs
   public formData = model.required<EditorConfig>();
   public intro = input<string>();
@@ -97,7 +94,8 @@ export class EditorConfiguration {
   public readonly i18n = input.required<EditorConfigI18n>();
 
   // derived
-  protected buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf() } as ButtonCopyI18n));
+  /** the card title names the text; the editor itself carries no extra label */
+  protected readonly editorI18n: TextareaInputI18n = { name: 'htmlContent', label: '', placeholder: '' };
   protected colSizeI18n = computed(() => ({ name: 'colSize', label: this.i18n().editor_colSize_label(), placeholder: this.i18n().editor_colSize_placeholder(), helper: this.i18n().editor_colSize_helper() } as NumberInputI18n));
   /** where the button stands relative to the text (button-section.ts renders exactly these five) */
   protected positionLabels = computed<Record<ViewPosition, string>>(() => ({
@@ -118,56 +116,6 @@ export class EditorConfiguration {
   // passing constants to template
   protected readonly positions = [ViewPosition.None, ViewPosition.Top, ViewPosition.Bottom, ViewPosition.Left, ViewPosition.Right];
   protected readonly VP = ViewPosition;
-
-  // Lazy: a static import of @okr/shared-ui-editor drags ngx-editor/ProseMirror into every
-  // page that reaches this component (spec 1.49, F1) — the same shape as calendar-section.ts's
-  // dynamic FullCalendar creation.
-  private editorHost = viewChild('editorHost', { read: ViewContainerRef });
-  protected readonly ref = signal<ComponentRef<OkrEditor> | undefined>(undefined);
-  /** Guards against a second mount while the chunk is still in flight. */
-  private creatingEditor = false;
-
-  constructor() {
-    // Pattern A (lazy-loading skill): the effect body stays synchronous and starts the async work
-    // itself. `effect(async …)` would hand Angular a promise it ignores, and every signal read
-    // after the first await lands outside the tracking context.
-    effect(() => {
-      const host = this.editorHost();
-      // The host view can be torn down and remounted (Angular destroys the OkrEditor with it) —
-      // drop the stale ref so the next mount recreates the component instead of staying empty.
-      // Same branch as email-composer.modal.ts, which needs it for revert().
-      if (!host) {
-        if (untracked(() => this.ref())) this.ref.set(undefined);
-        return;
-      }
-      // `creating` closes the window the ref guard alone leaves open: between starting the import
-      // and setting the ref, a second run would pass the guard and mount a second component.
-      if (untracked(() => this.ref()) || this.creatingEditor || !isBrowser(this.platformId)) return;
-      this.creatingEditor = true;
-      void (async () => {
-        try {
-          const { OkrEditor } = await import('@okr/shared-ui-editor');
-          const componentRef = host.createComponent(OkrEditor);
-          this.ref.set(componentRef);
-          // `content` is a model() — it doubles as the OkrEditor -> here change channel.
-          componentRef.instance.content.subscribe((value: string) => this.onFieldChange('htmlContent', value));
-        } finally {
-          this.creatingEditor = false;
-        }
-      })();
-    });
-    effect(() => {
-      const componentRef = this.ref();
-      const content = this.htmlContent();
-      const readOnly = this.readOnly();
-      const buttonCopyI18n = this.buttonCopyI18n();
-      if (!componentRef) return;
-      componentRef.setInput('content', content);
-      componentRef.setInput('readOnly', readOnly);
-      componentRef.setInput('buttonCopyI18n', buttonCopyI18n);
-    });
-    this.destroyRef.onDestroy(() => this.ref()?.destroy());
-  }
 
     /******************************* actions *************************************** */
   protected onSegmentChange(value: unknown): void {

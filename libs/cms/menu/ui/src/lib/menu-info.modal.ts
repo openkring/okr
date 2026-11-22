@@ -8,8 +8,8 @@ import { Header } from '@okr/shared-ui';
  * info-circle (`MenuInfo`). Read-only: a header with the close button and the HTML.
  *
  * Rendered through `[innerHTML]`, which Angular sanitises (scripts, event handlers and
- * `javascript:` URLs are stripped). Deliberately NOT `okr-editor` in read-only mode: that pulls
- * ngx-editor in, and this modal hangs off the main menu, which every app loads at boot.
+ * `javascript:` URLs are stripped). Deliberately not the rich-text editor in read-only mode: this
+ * modal hangs off the main menu, which every app loads at boot.
  */
 @Component({
   selector: 'okr-menu-info-modal',

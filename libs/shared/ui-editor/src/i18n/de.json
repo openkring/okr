@@ -1,0 +1,45 @@
+{
+  "toolbar": {
+    "undo": "Rückgängig",
+    "redo": "Wiederholen",
+    "block": "Absatzformat",
+    "paragraph": "Text",
+    "heading": "Überschrift",
+    "bold": "Fett",
+    "italic": "Kursiv",
+    "underline": "Unterstrichen",
+    "strike": "Durchgestrichen",
+    "superscript": "Hochgestellt",
+    "subscript": "Tiefgestellt",
+    "textColor": "Textfarbe",
+    "backgroundColor": "Hintergrundfarbe",
+    "noColor": "Keine Farbe",
+    "bulletList": "Aufzählung",
+    "orderedList": "Nummerierte Liste",
+    "align": "Ausrichtung",
+    "alignLeft": "Linksbündig",
+    "alignCenter": "Zentriert",
+    "alignRight": "Rechtsbündig",
+    "alignJustify": "Blocksatz",
+    "code": "Code",
+    "blockquote": "Zitat",
+    "indent": "Einrücken",
+    "outdent": "Ausrücken",
+    "link": "Link",
+    "image": "Bild"
+  },
+  "editor": {
+    "placeholder": "Text…",
+    "loading": "Der Editor wird geladen…",
+    "clear": "Text löschen"
+  },
+  "prompt": {
+    "linkHeader": "Link einfügen",
+    "linkPlaceholder": "https://… – leer lassen entfernt den Link",
+    "linkInvalid": "Diese Adresse ist nicht gültig.",
+    "imageHeader": "Bild einfügen",
+    "imagePlaceholder": "Adresse des Bildes (https://…)",
+    "ok": "OK",
+    "cancel": "Abbrechen"
+  }
+}

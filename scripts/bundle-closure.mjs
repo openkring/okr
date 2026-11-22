@@ -1,7 +1,7 @@
 // scripts/bundle-closure.mjs — which libraries does the dashboard load EAGERLY?
 //
 //   node scripts/bundle-closure.mjs dist/apps/<app>/browser [--json] [probe …]
-//   e.g. node scripts/bundle-closure.mjs dist/apps/scs-app/browser echarts @fullcalendar ngx-editor matrix-js-sdk
+//   e.g. node scripts/bundle-closure.mjs dist/apps/scs-app/browser echarts @fullcalendar prosemirror matrix-js-sdk
 //
 // Walks the STATIC import graph from main-*.js and dashboard.page-*.js. esbuild emits three
 // static forms — `from"./x.js"`, side-effect `import"./x.js"`, and `export*from"./x.js"` —

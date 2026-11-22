@@ -1,6 +1,7 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
 import type { DocumentLink, LearningCurators } from '@okr/shared-models';
+import { htmlTextLength } from '@okr/shared-util-core';
 
 import type { LearningTab } from './learning-classify';
 
@@ -19,7 +20,7 @@ export interface LearningItemFormData {
   title: string;
   /** comma-separated tags; the form only touches the topics the actor may curate */
   tags: string;
-  /** rich text (HTML) from okr-editor */
+  /** rich text (HTML) from okr-rich-text-input */
   notes: string;
   links: DocumentLink[];
   /** okeys of the attached DocumentModels */
@@ -53,7 +54,8 @@ export const learningItemValidations = staticSuite((model: LearningItemFormData,
   test('title', K.validation_titleRequired, () => { enforce(title.length).greaterThan(0); });
   test('title', K.validation_titleTooLong, () => { enforce(title.length).lessThanOrEquals(LEARNING_TITLE_MAX); });
   test('notes', K.validation_notesTooLong, () => {
-    enforce((model.notes ?? '').length).lessThanOrEquals(LEARNING_NOTES_MAX);
+    // visible characters, not markup (spec 1.170 D3)
+    enforce(htmlTextLength(model.notes)).lessThanOrEquals(LEARNING_NOTES_MAX);
   });
   const links = model.links ?? [];
   test('links', K.validation_tooManyLinks, () => { enforce(links.length).lessThanOrEquals(LEARNING_LINKS_MAX); });

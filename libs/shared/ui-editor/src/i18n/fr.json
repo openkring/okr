@@ -1,0 +1,45 @@
+{
+  "toolbar": {
+    "undo": "Annuler",
+    "redo": "Rétablir",
+    "block": "Style de paragraphe",
+    "paragraph": "Texte",
+    "heading": "Titre",
+    "bold": "Gras",
+    "italic": "Italique",
+    "underline": "Souligné",
+    "strike": "Barré",
+    "superscript": "Exposant",
+    "subscript": "Indice",
+    "textColor": "Couleur du texte",
+    "backgroundColor": "Couleur de fond",
+    "noColor": "Aucune couleur",
+    "bulletList": "Liste à puces",
+    "orderedList": "Liste numérotée",
+    "align": "Alignement",
+    "alignLeft": "Aligner à gauche",
+    "alignCenter": "Centrer",
+    "alignRight": "Aligner à droite",
+    "alignJustify": "Justifier",
+    "code": "Code",
+    "blockquote": "Citation",
+    "indent": "Augmenter le retrait",
+    "outdent": "Diminuer le retrait",
+    "link": "Lien",
+    "image": "Image"
+  },
+  "editor": {
+    "placeholder": "Texte…",
+    "loading": "Chargement de l'éditeur…",
+    "clear": "Effacer le texte"
+  },
+  "prompt": {
+    "linkHeader": "Insérer un lien",
+    "linkPlaceholder": "https://… – laisse vide pour supprimer le lien",
+    "linkInvalid": "Cette adresse n'est pas valide.",
+    "imageHeader": "Insérer une image",
+    "imagePlaceholder": "Adresse de l'image (https://…)",
+    "ok": "OK",
+    "cancel": "Annuler"
+  }
+}

@@ -1,4 +1,4 @@
-import { Component, ComponentRef, computed, DestroyRef, effect, inject, input, model, output, signal, untracked, viewChild, ViewContainerRef } from '@angular/core';
+import { Component, computed, effect, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular';
 
@@ -9,7 +9,7 @@ import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
 import { isStaticBulletColor, MenuI18n, menuItemValidations, normalizeMenuInfo, resolveStaticMenu, STATIC_MENU_COLORS, staticBulletColorCss } from '@okr/cms-menu-util';
-import type { OkrEditor } from '@okr/shared-ui-editor';
+import { RichTextInput } from '@okr/shared-ui-editor';
 
 @Component({
   selector: 'okr-menu-item-form',
@@ -17,7 +17,7 @@ import type { OkrEditor } from '@okr/shared-ui-editor';
   imports: [
     TextInput, UrlInput, CategorySelect, Chips, TextareaInput, NumberInput, StringList, ErrorNote,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonLabel,
-    IconInput, StringSelect, Color
+    IconInput, StringSelect, Color, RichTextInput
 ],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px;} }
@@ -34,8 +34,6 @@ import type { OkrEditor } from '@okr/shared-ui-editor';
   `],
   template: `
   @if (showForm()) {
-    <!-- ngx-editor's toolbar buttons carry no type="button", so Enter in any input (e.g. «Untermenü
-         hinzufügen») natively submits this form and reloads the page. Saving runs via change-confirmation. -->
     <form novalidate (submit)="$event.preventDefault()">
 
       <ion-card>
@@ -88,8 +86,8 @@ import type { OkrEditor } from '@okr/shared-ui-editor';
                   <ion-item lines="none" class="info-label">
                     <ion-label>{{ i18n().info_label() }}<p>{{ i18n().info_helper() }}</p></ion-label>
                   </ion-item>
-                  <div #infoEditorHost></div>
-                  <okr-error-note [errors]="infoErrors()" />
+                  <okr-rich-text-input [i18n]="infoI18n" [value]="info()" (valueChange)="onInfoChange($event)"
+                    [readOnly]="isReadOnly()" [errors]="infoErrors()" [maxLength]="descriptionLength" />
                 </ion-col>
               </ion-row>
             }
@@ -106,8 +104,8 @@ import type { OkrEditor } from '@okr/shared-ui-editor';
                   <ion-item lines="none" class="info-label">
                     <ion-label>{{ i18n().info_label() }}<p>{{ i18n().info_helper() }}</p></ion-label>
                   </ion-item>
-                  <div #infoEditorHost></div>
-                  <okr-error-note [errors]="infoErrors()" />
+                  <okr-rich-text-input [i18n]="infoI18n" [value]="info()" (valueChange)="onInfoChange($event)"
+                    [readOnly]="isReadOnly()" [errors]="infoErrors()" [maxLength]="descriptionLength" />
                 </ion-col>
               </ion-row>
             }
@@ -317,54 +315,11 @@ export class MenuForm {
   protected staticBulletColorErrors = computed(() => this.validationResult().getErrors('staticMenu.bulletColor'));
   protected staticBulletSizeErrors = computed(() => this.validationResult().getErrors('staticMenu.bulletSize'));
 
-  // Lazy: a static import of @okr/shared-ui-editor drags ngx-editor/ProseMirror into the dashboard's
-  // eager bundle (this form is reachable from the menu) — same pattern as editor-configuration.ts.
-  // The host sits in the 'navigate…' or the 'sub' block; only one exists at a time.
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly infoEditorHost = viewChild('infoEditorHost', { read: ViewContainerRef });
-  protected readonly infoEditorRef = signal<ComponentRef<OkrEditor> | undefined>(undefined);
-  /** Guards against a second mount while the chunk is still in flight. */
-  private creatingInfoEditor = false;
+  /** the label row above names the field; the editor carries none of its own */
+  protected readonly infoI18n: TextareaInputI18n = { name: 'info', label: '', placeholder: '' };
 
   constructor() {
     effect(() => this.valid.emit(this.menuForm().valid()));
-    // Pattern A (lazy-loading skill): synchronous effect body, async work started inside it.
-    effect(() => {
-      const host = this.infoEditorHost();
-      // Switching between the two blocks destroys the host (and the editor in it) — drop the stale
-      // ref so the next host gets a fresh editor instead of staying empty.
-      if (!host) {
-        if (untracked(() => this.infoEditorRef())) this.infoEditorRef.set(undefined);
-        return;
-      }
-      if (untracked(() => this.infoEditorRef()) || this.creatingInfoEditor) return;
-      this.creatingInfoEditor = true;
-      void (async () => {
-        try {
-          const { OkrEditor } = await import('@okr/shared-ui-editor');
-          const componentRef = host.createComponent(OkrEditor);
-          // required inputs before its first check; the effect below keeps them in step
-          componentRef.setInput('content', untracked(() => this.info()));
-          componentRef.setInput('readOnly', untracked(() => this.isReadOnly()));
-          componentRef.setInput('copyable', false);
-          componentRef.setInput('buttonCopyI18n', {});
-          // `content` is a model() — it doubles as the OkrEditor -> here change channel.
-          componentRef.instance.content.subscribe((html: string) => this.onInfoChange(html));
-          this.infoEditorRef.set(componentRef);
-        } finally {
-          this.creatingInfoEditor = false;
-        }
-      })();
-    });
-    effect(() => {
-      const componentRef = this.infoEditorRef();
-      const info = this.info();
-      const readOnly = this.isReadOnly();
-      if (!componentRef) return;
-      componentRef.setInput('content', info);
-      componentRef.setInput('readOnly', readOnly);
-    });
-    this.destroyRef.onDestroy(() => this.infoEditorRef()?.destroy());
   }
 
   // fields
