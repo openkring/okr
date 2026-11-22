@@ -26,12 +26,16 @@
     "indent": "Augmenter le retrait",
     "outdent": "Diminuer le retrait",
     "link": "Lien",
-    "image": "Image"
+    "image": "Image",
+    "taskList": "Liste de tâches"
   },
   "editor": {
     "placeholder": "Texte…",
     "loading": "Chargement de l'éditeur…",
-    "clear": "Effacer le texte"
+    "clear": "Effacer le texte",
+    "sourceMode": "Modifier la source",
+    "richMode": "Modifier avec mise en forme",
+    "sourceOnly": "Ce texte contient une mise en forme que l’éditeur ne peut pas afficher sans la modifier. Tu le modifies donc en source."
   },
   "prompt": {
     "linkHeader": "Insérer un lien",

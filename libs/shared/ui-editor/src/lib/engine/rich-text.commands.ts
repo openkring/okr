@@ -1,8 +1,8 @@
 import { lift, setBlockType, toggleMark, wrapIn } from 'prosemirror-commands';
 import { redo, undo } from 'prosemirror-history';
 import { MarkType, Node as PMNode, NodeType } from 'prosemirror-model';
-import { liftListItem, sinkListItem, wrapInList } from 'prosemirror-schema-list';
-import { Command, EditorState, TextSelection } from 'prosemirror-state';
+import { liftListItem, sinkListItem, splitListItem, wrapInList } from 'prosemirror-schema-list';
+import { Command, EditorState, TextSelection, Transaction } from 'prosemirror-state';
 
 import { richTextSchema as schema } from './rich-text.schema';
 
@@ -209,6 +209,68 @@ function markRange(state: EditorState, type: MarkType): { from: number; to: numb
   while (sameMark(first - 1)) first--;
   while (sameMark(last + 1)) last++;
   return { from: $from.start() + children[first].from, to: $from.start() + children[last].to };
+}
+
+// ---------------------------------------------------------------- task items (markdown `- [x]`)
+
+/** Is the cursor in a task item? */
+export function inTaskItem(state: EditorState): boolean {
+  const { $from } = state.selection;
+  for (let depth = $from.depth; depth > 0; depth--) {
+    const node = $from.node(depth);
+    if (node.type === schema.nodes['list_item']) return node.attrs['checked'] !== null;
+  }
+  return false;
+}
+
+/**
+ * Turns the list items of the selection into task items (unchecked), or back into ordinary items when the
+ * first one already is a task. Outside a list, the paragraph becomes a one-item bullet list first.
+ */
+export function toggleTaskItem(): Command {
+  return (state, dispatch) => {
+    const item = schema.nodes['list_item'];
+    const markItems = (tr: Transaction, checked: (node: PMNode) => boolean | null): Transaction => {
+      const { from, to } = tr.selection;
+      tr.doc.nodesBetween(from, to, (node, pos) => {
+        if (node.type === item) tr.setNodeMarkup(pos, undefined, { ...node.attrs, checked: checked(node) });
+        return true;
+      });
+      return tr;
+    };
+    if (!isInside(state, item)) {
+      // one transaction (one undo step): wrap into a bullet list, then make its item a task
+      return wrapInList(schema.nodes['bullet_list'])(state, dispatch && ((tr) => dispatch(markItems(tr, () => false))));
+    }
+    const makeTask = !inTaskItem(state);
+    if (dispatch) dispatch(markItems(state.tr, (node) => (makeTask ? ((node.attrs['checked'] as boolean | null) ?? false) : null)));
+    return true;
+  };
+}
+
+/** Ticks or unticks the task item at `pos` (the item's own position). */
+export function toggleChecked(pos: number): Command {
+  return (state, dispatch) => {
+    const node = state.doc.nodeAt(pos);
+    if (!node || node.type !== schema.nodes['list_item'] || node.attrs['checked'] === null) return false;
+    if (dispatch) dispatch(state.tr.setNodeMarkup(pos, undefined, { ...node.attrs, checked: !node.attrs['checked'] }));
+    return true;
+  };
+}
+
+/** Enter in a list: the new item of a task list starts unchecked instead of copying the tick. */
+export function splitItem(): Command {
+  return (state, dispatch) => splitListItem(schema.nodes['list_item'])(state, dispatch && ((tr) => {
+    const { $from } = tr.selection;
+    for (let depth = $from.depth; depth > 0; depth--) {
+      const node = $from.node(depth);
+      if (node.type === schema.nodes['list_item']) {
+        if (node.attrs['checked'] === true) tr.setNodeMarkup($from.before(depth), undefined, { ...node.attrs, checked: false });
+        break;
+      }
+    }
+    dispatch(tr);
+  }));
 }
 
 export function insertImage(src: string): Command {

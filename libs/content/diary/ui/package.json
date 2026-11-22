@@ -17,6 +17,7 @@
     "@okr/shared-util-core": "*",
     "@okr/weather-util": "*",
     "@okr/mobility-tracker-ui": "*",
-    "@okr/mobility-tracker-util": "*"
+    "@okr/mobility-tracker-util": "*",
+    "@okr/shared-ui-editor": "*"
   }
 }

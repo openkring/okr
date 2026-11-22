@@ -6,7 +6,7 @@ import { AlertController, IonButton, IonIcon, IonPopover, IonSelect, IonSelectOp
 import { baseKeymap, toggleMark } from 'prosemirror-commands';
 import { history } from 'prosemirror-history';
 import { keymap } from 'prosemirror-keymap';
-import { liftListItem, sinkListItem, splitListItem } from 'prosemirror-schema-list';
+import { liftListItem, sinkListItem } from 'prosemirror-schema-list';
 import { Command, EditorState, Plugin } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
@@ -14,12 +14,15 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { EDITOR_LINK_PATTERN } from '@okr/shared-util-core';
 import { showToast } from '@okr/shared-util-angular';
 
+import { RichTextFormat } from '../rich-text-format';
 import { RichTextI18n } from '../rich-text-i18n';
 import {
-  activeAlign, activeBlockLevel, activeColor, activeLink, Align, BlockLevel, ColorMarkName, indent, insertImage, isInside, isMarkActive,
-  MarkName, redo, setAlign, setBlockLevel, setColor, setLink, toggleBlockquote, toggleList, toggleMarkCommand, undo,
+  activeAlign, activeBlockLevel, activeColor, activeLink, Align, BlockLevel, ColorMarkName, indent, insertImage, inTaskItem, isInside,
+  isMarkActive, MarkName, redo, setAlign, setBlockLevel, setColor, setLink, splitItem, toggleBlockquote, toggleChecked, toggleList,
+  toggleMarkCommand, toggleTaskItem, undo,
 } from './rich-text.commands';
 import { docToHtml, EMPTY_HTML, htmlToDoc } from './rich-text.html';
+import { docToMarkdown, EMPTY_MARKDOWN, markdownToDoc } from './rich-text.markdown';
 import { richTextSchema as schema } from './rich-text.schema';
 
 /** Colour swatches of the colour popovers. */
@@ -32,6 +35,8 @@ const PALETTE = [
 const LINK_REGEX = new RegExp(`^${EDITOR_LINK_PATTERN}$`, 'i');
 
 interface MarkButton { mark: MarkName; icon: string; label: keyof RichTextI18n; }
+/** The marks markdown can express (spec 1.170 §4.4). */
+const MARKDOWN_MARKS: MarkName[] = ['strong', 'em', 's', 'code'];
 type PopoverKind = 'text_color' | 'text_background_color' | 'align';
 
 function placeholderPlugin(text: () => string): Plugin {
@@ -41,6 +46,28 @@ function placeholderPlugin(text: () => string): Plugin {
         const doc = state.doc;
         const empty = doc.childCount === 1 && doc.firstChild?.isTextblock === true && doc.firstChild.content.size === 0;
         return empty ? { class: 'is-empty', 'data-placeholder': text() } : {};
+      },
+    },
+  });
+}
+
+/** A click on a task item's box (drawn left of the item's text) ticks or unticks it. */
+function taskCheckboxPlugin(): Plugin {
+  return new Plugin({
+    props: {
+      handleDOMEvents: {
+        mousedown: (view, event) => {
+          const li = (event.target as HTMLElement | null)?.closest?.('li[data-checked]');
+          if (!li || !view.editable || event.clientX >= li.getBoundingClientRect().left) return false;
+          const $pos = view.state.doc.resolve(view.posAtDOM(li, 0));
+          for (let depth = $pos.depth; depth > 0; depth--) {
+            if ($pos.node(depth).type === schema.nodes['list_item']) {
+              event.preventDefault();
+              return toggleChecked($pos.before(depth))(view.state, view.dispatch);
+            }
+          }
+          return false;
+        },
       },
     },
   });
@@ -80,6 +107,18 @@ function placeholderPlugin(text: () => string): Plugin {
     okr-rich-text-engine .ProseMirror img { max-width: 100%; }
     okr-rich-text-engine .ProseMirror blockquote { margin-left: 0; padding-left: 12px; border-left: 3px solid var(--ion-color-step-300, #b3b3b3); }
     okr-rich-text-engine .ProseMirror-hideselection *::selection { background: transparent; }
+    okr-rich-text-engine .ProseMirror li.rte-task { list-style: none; }
+    okr-rich-text-engine .ProseMirror li.rte-task::before {
+      content: '☐'; position: absolute; left: -1.4em; top: 0; width: 1.2em; text-align: center; cursor: pointer; color: var(--ion-color-medium);
+    }
+    okr-rich-text-engine .ProseMirror li.rte-task[data-checked="true"]::before { content: '☑'; color: var(--ion-color-primary); }
+    okr-rich-text-engine .ProseMirror li.rte-task[data-checked="true"] > p { color: var(--ion-color-medium); }
+    okr-rich-text-engine .ProseMirror .rte-raw {
+      font-size: 12px; color: var(--ion-color-medium); background: var(--ion-color-step-100, #f0f0f0); border-radius: 4px; padding: 1px 4px;
+      white-space: pre-wrap;
+    }
+    okr-rich-text-engine .ProseMirror pre.rte-raw { margin: 4px 0; padding: 4px 8px; }
+    okr-rich-text-engine .ProseMirror .rte-raw.ProseMirror-selectednode { outline: 2px solid var(--ion-color-primary); }
     okr-rich-text-engine .ProseMirror.is-empty::before {
       content: attr(data-placeholder); position: absolute; pointer-events: none; color: var(--ion-color-medium);
     }
@@ -110,7 +149,7 @@ function placeholderPlugin(text: () => string): Plugin {
         </ion-select>
         <span class="rte-sep"></span>
 
-        @for (b of markButtons; track b.mark) {
+        @for (b of visibleMarkButtons(); track b.mark) {
           <ion-button type="button" fill="clear" size="small" [class.active]="activeMarks()[b.mark]" (click)="run(toggle(b.mark))"
             [attr.aria-label]="i18n()[b.label]()" [attr.aria-pressed]="activeMarks()[b.mark]" [title]="i18n()[b.label]()">
             <ion-icon slot="icon-only" src="{{ b.icon | svgIcon }}" />
@@ -118,15 +157,17 @@ function placeholderPlugin(text: () => string): Plugin {
         }
         <span class="rte-sep"></span>
 
-        <ion-button type="button" fill="clear" size="small" [class.active]="!!textColor()" (click)="openPopover($event, 'text_color')"
-          [attr.aria-label]="i18n().textColor()" [title]="i18n().textColor()">
-          <ion-icon slot="icon-only" src="{{ 'format-text-color' | svgIcon }}" />
-        </ion-button>
-        <ion-button type="button" fill="clear" size="small" [class.active]="!!backgroundColor()" (click)="openPopover($event, 'text_background_color')"
-          [attr.aria-label]="i18n().backgroundColor()" [title]="i18n().backgroundColor()">
-          <ion-icon slot="icon-only" src="{{ 'format-fill-color' | svgIcon }}" />
-        </ion-button>
-        <span class="rte-sep"></span>
+        @if (!isMarkdown()) {
+          <ion-button type="button" fill="clear" size="small" [class.active]="!!textColor()" (click)="openPopover($event, 'text_color')"
+            [attr.aria-label]="i18n().textColor()" [title]="i18n().textColor()">
+            <ion-icon slot="icon-only" src="{{ 'format-text-color' | svgIcon }}" />
+          </ion-button>
+          <ion-button type="button" fill="clear" size="small" [class.active]="!!backgroundColor()" (click)="openPopover($event, 'text_background_color')"
+            [attr.aria-label]="i18n().backgroundColor()" [title]="i18n().backgroundColor()">
+            <ion-icon slot="icon-only" src="{{ 'format-fill-color' | svgIcon }}" />
+          </ion-button>
+          <span class="rte-sep"></span>
+        }
 
         <ion-button type="button" fill="clear" size="small" [class.active]="inBulletList()" (click)="run(bulletList)"
           [attr.aria-label]="i18n().bulletList()" [title]="i18n().bulletList()">
@@ -136,29 +177,41 @@ function placeholderPlugin(text: () => string): Plugin {
           [attr.aria-label]="i18n().orderedList()" [title]="i18n().orderedList()">
           <ion-icon slot="icon-only" src="{{ 'list-numbered' | svgIcon }}" />
         </ion-button>
-        <ion-button type="button" fill="clear" size="small" (click)="openPopover($event, 'align')"
-          [attr.aria-label]="i18n().align()" [title]="i18n().align()">
-          <ion-icon slot="icon-only" src="{{ alignIcon() | svgIcon }}" />
-        </ion-button>
+        @if (isMarkdown()) {
+          <ion-button type="button" fill="clear" size="small" [class.active]="inTask()" (click)="run(taskItem)"
+            [attr.aria-label]="i18n().taskList()" [title]="i18n().taskList()">
+            <ion-icon slot="icon-only" src="{{ 'checkbox' | svgIcon }}" />
+          </ion-button>
+        } @else {
+          <ion-button type="button" fill="clear" size="small" (click)="openPopover($event, 'align')"
+            [attr.aria-label]="i18n().align()" [title]="i18n().align()">
+            <ion-icon slot="icon-only" src="{{ alignIcon() | svgIcon }}" />
+          </ion-button>
+        }
         <ion-button type="button" fill="clear" size="small" [class.active]="inBlockquote()" (click)="run(blockquote)"
           [attr.aria-label]="i18n().blockquote()" [title]="i18n().blockquote()">
           <ion-icon slot="icon-only" src="{{ 'format-quote' | svgIcon }}" />
         </ion-button>
-        <ion-button type="button" fill="clear" size="small" (click)="run(outdentCmd)" [attr.aria-label]="i18n().outdent()" [title]="i18n().outdent()">
-          <ion-icon slot="icon-only" src="{{ 'indent-decrease' | svgIcon }}" />
-        </ion-button>
-        <ion-button type="button" fill="clear" size="small" (click)="run(indentCmd)" [attr.aria-label]="i18n().indent()" [title]="i18n().indent()">
-          <ion-icon slot="icon-only" src="{{ 'indent-increase' | svgIcon }}" />
-        </ion-button>
+        <!-- markdown cannot indent a paragraph; a list item still nests with Mod-] / Mod-[ -->
+        @if (!isMarkdown()) {
+          <ion-button type="button" fill="clear" size="small" (click)="run(outdentCmd)" [attr.aria-label]="i18n().outdent()" [title]="i18n().outdent()">
+            <ion-icon slot="icon-only" src="{{ 'indent-decrease' | svgIcon }}" />
+          </ion-button>
+          <ion-button type="button" fill="clear" size="small" (click)="run(indentCmd)" [attr.aria-label]="i18n().indent()" [title]="i18n().indent()">
+            <ion-icon slot="icon-only" src="{{ 'indent-increase' | svgIcon }}" />
+          </ion-button>
+        }
         <span class="rte-sep"></span>
 
         <ion-button type="button" fill="clear" size="small" [class.active]="!!linkHref()" (click)="editLink()"
           [attr.aria-label]="i18n().link()" [title]="i18n().link()">
           <ion-icon slot="icon-only" src="{{ 'link' | svgIcon }}" />
         </ion-button>
-        <ion-button type="button" fill="clear" size="small" (click)="addImage()" [attr.aria-label]="i18n().image()" [title]="i18n().image()">
-          <ion-icon slot="icon-only" src="{{ 'image' | svgIcon }}" />
-        </ion-button>
+        @if (!isMarkdown()) {
+          <ion-button type="button" fill="clear" size="small" (click)="addImage()" [attr.aria-label]="i18n().image()" [title]="i18n().image()">
+            <ion-icon slot="icon-only" src="{{ 'image' | svgIcon }}" />
+          </ion-button>
+        }
       </div>
 
       <ion-popover [isOpen]="popover() !== null" [event]="popoverEvent()" (didDismiss)="popover.set(null)" [dismissOnSelect]="true">
@@ -195,10 +248,12 @@ export class RichTextEngine implements AfterViewInit {
 
   // inputs / outputs
   public readonly value = input<string>(EMPTY_HTML);
+  /** Read when the view is created; a field never changes its format. */
+  public readonly format = input<RichTextFormat>('html');
   public readonly readOnly = input(false);
   public readonly placeholder = input('');
   public readonly i18n = input.required<RichTextI18n>();
-  /** The stored HTML after every change the author makes; never echoes a value pushed in through `value`. */
+  /** The stored text after every change the author makes; never echoes a value pushed in through `value`. */
   public readonly valueChange = output<string>();
 
   private readonly mount = viewChild.required<ElementRef<HTMLDivElement>>('pm');
@@ -234,6 +289,11 @@ export class RichTextEngine implements AfterViewInit {
   protected readonly blockquote = toggleBlockquote();
   protected readonly indentCmd = indent(1);
   protected readonly outdentCmd = indent(-1);
+  protected readonly taskItem = toggleTaskItem();
+
+  protected readonly isMarkdown = computed(() => this.format() === 'markdown');
+  protected readonly visibleMarkButtons = computed(() =>
+    this.isMarkdown() ? this.markButtons.filter((b) => MARKDOWN_MARKS.includes(b.mark)) : this.markButtons);
 
   // toolbar state
   protected readonly can = computed(() => {
@@ -255,6 +315,7 @@ export class RichTextEngine implements AfterViewInit {
   protected readonly inBulletList = computed(() => { const s = this.state(); return !!s && isInside(s, schema.nodes['bullet_list']); });
   protected readonly inOrderedList = computed(() => { const s = this.state(); return !!s && isInside(s, schema.nodes['ordered_list']); });
   protected readonly inBlockquote = computed(() => { const s = this.state(); return !!s && isInside(s, schema.nodes['blockquote']); });
+  protected readonly inTask = computed(() => { const s = this.state(); return !!s && inTaskItem(s); });
 
   protected readonly popover = signal<PopoverKind | null>(null);
   protected readonly popoverEvent = signal<Event | undefined>(undefined);
@@ -267,7 +328,7 @@ export class RichTextEngine implements AfterViewInit {
   constructor() {
     // a value set from outside (load, revert, clear) replaces the document; the author's own edits do not
     effect(() => {
-      const html = this.value() || EMPTY_HTML;
+      const html = this.value() || this.empty();
       if (!this.view || html === untracked(() => this.currentHtml)) return;
       this.loadDocument(html);
     });
@@ -293,7 +354,7 @@ export class RichTextEngine implements AfterViewInit {
       keymap({
         'Mod-z': undo, 'Shift-Mod-z': redo, 'Mod-y': redo,
         'Mod-b': toggleMark(schema.marks['strong']), 'Mod-i': toggleMark(schema.marks['em']), 'Mod-u': toggleMark(schema.marks['u']),
-        'Enter': splitListItem(item), 'Mod-[': liftListItem(item), 'Mod-]': sinkListItem(item),
+        'Enter': splitItem(), 'Mod-[': liftListItem(item), 'Mod-]': sinkListItem(item),
         'Shift-Enter': (state, dispatch) => {
           if (dispatch) dispatch(state.tr.replaceSelectionWith(schema.nodes['hard_break'].create()).scrollIntoView());
           return true;
@@ -301,13 +362,19 @@ export class RichTextEngine implements AfterViewInit {
       }),
       keymap(baseKeymap),
       placeholderPlugin(() => this.placeholder()),
+      taskCheckboxPlugin(),
     ];
   }
 
+  private isMarkdownNow(): boolean { return untracked(() => this.format()) === 'markdown'; }
+  private empty(): string { return this.isMarkdownNow() ? EMPTY_MARKDOWN : EMPTY_HTML; }
+  private toDoc(text: string): EditorState['doc'] { return this.isMarkdownNow() ? markdownToDoc(text) : htmlToDoc(text); }
+  private fromDoc(doc: EditorState['doc']): string { return this.isMarkdownNow() ? docToMarkdown(doc) : docToHtml(doc); }
+
   private createView(): void {
-    const html = untracked(() => this.value()) || EMPTY_HTML;
+    const html = untracked(() => this.value()) || this.empty();
     this.currentHtml = html;
-    const state = EditorState.create({ schema, doc: htmlToDoc(html), plugins: this.plugins() });
+    const state = EditorState.create({ schema, doc: this.toDoc(html), plugins: this.plugins() });
     this.view = new EditorView(this.mount().nativeElement, {
       state,
       editable: () => !untracked(() => this.readOnly()),
@@ -317,7 +384,7 @@ export class RichTextEngine implements AfterViewInit {
         this.view.updateState(next);
         this.state.set(next);
         if (tr.docChanged) {
-          const out = docToHtml(next.doc);
+          const out = this.fromDoc(next.doc);
           this.currentHtml = out;
           this.valueChange.emit(out);
         }
@@ -330,7 +397,7 @@ export class RichTextEngine implements AfterViewInit {
   private loadDocument(html: string): void {
     if (!this.view) return;
     this.currentHtml = html;
-    const state = EditorState.create({ schema, doc: htmlToDoc(html), plugins: this.view.state.plugins });
+    const state = EditorState.create({ schema, doc: this.toDoc(html), plugins: this.view.state.plugins });
     this.view.updateState(state);
     this.state.set(state);
   }

@@ -26,12 +26,16 @@
     "indent": "Einrücken",
     "outdent": "Ausrücken",
     "link": "Link",
-    "image": "Bild"
+    "image": "Bild",
+    "taskList": "Aufgabenliste"
   },
   "editor": {
     "placeholder": "Text…",
     "loading": "Der Editor wird geladen…",
-    "clear": "Text löschen"
+    "clear": "Text löschen",
+    "sourceMode": "Als Quelltext bearbeiten",
+    "richMode": "Formatiert bearbeiten",
+    "sourceOnly": "Dieser Text enthält Formatierungen, die der Editor nicht unverändert anzeigen kann. Du bearbeitest ihn deshalb als Quelltext."
   },
   "prompt": {
     "linkHeader": "Link einfügen",

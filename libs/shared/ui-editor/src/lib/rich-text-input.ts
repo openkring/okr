@@ -3,7 +3,7 @@ import {
   ViewContainerRef,
 } from '@angular/core';
 import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonItem, IonNote, IonSpinner } from '@ionic/angular';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonItem, IonNote, IonSpinner, IonTextarea } from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -12,11 +12,9 @@ import { coerceBoolean, htmlTextLength } from '@okr/shared-util-core';
 import { HelperVisibility } from '@okr/shared-util-angular';
 
 import type { RichTextEngine } from './engine/rich-text-engine';
+import { EMPTY_RICH_TEXT, RichTextFormat } from './rich-text-format';
 import { RICH_TEXT_I18N_KEYS, RichTextI18n } from './rich-text-i18n';
 import { RichTextView } from './rich-text-view';
-
-/** What an empty editor stores. Duplicated from the engine on purpose: importing it would make the engine eager. */
-const EMPTY_HTML = '<p></p>';
 
 /**
  * The rich-text field (spec 1.170 §6): our frame, label and footer around a ProseMirror engine that is
@@ -25,13 +23,17 @@ const EMPTY_HTML = '<p></p>';
  *
  * Same frame and footer as okr-textarea-input: `variant="field"` (label above, no card) or `"card"`;
  * footer = clear · copy · the Vest error · a counter of visible characters (D3).
+ *
+ * `format="markdown"` (§4.4) stores markdown and adds a «Quelltext» toggle. A text the editor cannot show
+ * without changing it (`editsFaithfully`) opens as source and stays there, so opening it never rewrites it.
+ * Its counter counts the stored markdown, which is what the Vest suites of markdown fields cap.
  */
 @Component({
   selector: 'okr-rich-text-input',
   standalone: true,
   imports: [
     NgTemplateOutlet, SvgIconPipe,
-    IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonNote, IonIcon, IonSpinner,
+    IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonNote, IonIcon, IonSpinner, IonTextarea,
     ButtonCopy, ErrorNote, RichTextView,
   ],
   styles: [`
@@ -46,6 +48,8 @@ const EMPTY_HTML = '<p></p>';
     .frame:focus-within { border-color: var(--ion-color-primary); }
     .loading { display: flex; align-items: center; gap: 8px; min-height: 120px; padding: 12px; color: var(--ion-color-medium); }
     .read-only { padding: 4px 16px 8px; }
+    .source { --padding-start: 12px; --padding-end: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px; }
+    .source-only { display: block; padding: 4px 16px 6px; font-size: 12px; color: var(--ion-color-medium); }
     ion-item.helper { --min-height: 0; }
 
     .footer { display: flex; align-items: center; gap: 8px; min-height: 28px; padding: 2px 16px 6px 12px; }
@@ -77,13 +81,21 @@ const EMPTY_HTML = '<p></p>';
         <span class="label">{{ i18n().label }}</span>
       }
       @if (isReadOnly()) {
-        <div class="read-only"><okr-rich-text-view [value]="value()" /></div>
+        <div class="read-only"><okr-rich-text-view [value]="value()" [format]="format()" /></div>
       } @else {
+        @if (sourceOnly()) {
+          <ion-note class="source-only">{{ texts.sourceOnly() }}</ion-note>
+        }
         <div class="frame" [attr.aria-label]="i18n().label">
-          @if (!engine()) {
-            <div class="loading"><ion-spinner name="dots" /> {{ texts.loading() }}</div>
+          @if (sourceMode()) {
+            <ion-textarea class="source" [value]="value()" (ionInput)="value.set($event.detail.value ?? '')"
+              [autoGrow]="true" [rows]="8" [placeholder]="i18n().placeholder || texts.placeholder()" [attr.aria-label]="i18n().label" />
+          } @else {
+            @if (!engine()) {
+              <div class="loading"><ion-spinner name="dots" /> {{ texts.loading() }}</div>
+            }
+            <ng-container #engineHost />
           }
-          <ng-container #engineHost />
         </div>
         <div class="footer">
           <div class="actions">
@@ -92,6 +104,11 @@ const EMPTY_HTML = '<p></p>';
             }
             @if (isCopyable()) {
               <okr-button-copy [i18n]="buttonCopyI18n()" [value]="value()" tabindex="-1" />
+            }
+            @if (isMarkdown() && !sourceOnly()) {
+              <ion-icon src="{{ (sourceMode() ? 'format-bold' : 'code') | svgIcon }}" (click)="sourceMode.set(!sourceMode())"
+                [attr.aria-label]="sourceMode() ? texts.richMode() : texts.sourceMode()" [title]="sourceMode() ? texts.richMode() : texts.sourceMode()"
+                tabindex="-1" />
             }
           </div>
           <div class="message"><okr-error-note [errors]="errors()" [inline]="true" /></div>
@@ -109,12 +126,12 @@ export class RichTextInput {
   private readonly helperVisibility = inject(HelperVisibility);
 
   // inputs
-  /** Stored HTML, two-way bound. */
+  /** Stored text (HTML or markdown, see `format`), two-way bound. */
   public readonly value = model.required<string>();
   public readonly i18n = input.required<TextareaInputI18n>();
   public readonly readOnly = input.required<boolean>();
-  /** Reserved for phase 3 (markdown, spec 1.170 §4.4); only `html` is implemented. */
-  public readonly format = input<'html'>('html');
+  /** How the field stores its text (spec 1.170 §4.1) — fixed per field. */
+  public readonly format = input<RichTextFormat>('html');
   public readonly variant = input<TextareaVariant>('field');
   public readonly title = input('');
   public readonly errors = input<string[]>([]);
@@ -129,12 +146,18 @@ export class RichTextInput {
 
   // derived
   protected readonly isCard = computed(() => this.variant() === 'card');
+  protected readonly isMarkdown = computed(() => this.format() === 'markdown');
+  private readonly emptyValue = computed(() => EMPTY_RICH_TEXT[this.format()]);
+  /** markdown only: the author edits the raw text */
+  protected readonly sourceMode = signal(false);
+  /** markdown only: the text cannot be shown formatted without changing it — source mode is forced */
+  protected readonly sourceOnly = signal(false);
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected readonly isClearable = computed(() => coerceBoolean(this.clearable()));
   protected readonly isCopyable = computed(() => coerceBoolean(this.copyable()));
   protected readonly shouldShowHelper = computed(() =>
     this.helperVisibility.showHelpers() && coerceBoolean(this.showHelper()) && !!this.i18n().helper);
-  protected readonly charCount = computed(() => htmlTextLength(this.value()));
+  protected readonly charCount = computed(() => (this.isMarkdown() ? (this.value() ?? '').length : htmlTextLength(this.value())));
   protected readonly isNearLimit = computed(() => { const max = this.maxLength(); return max !== undefined && this.charCount() >= max * 0.9; });
   protected readonly isAtLimit = computed(() => { const max = this.maxLength(); return max !== undefined && this.charCount() > max; });
 
@@ -155,9 +178,19 @@ export class RichTextInput {
       this.creating = true;
       void (async () => {
         try {
+          const format = untracked(() => this.format());
+          if (format === 'markdown') {
+            const { editsFaithfully } = await import('./engine/rich-text.markdown');
+            if (!editsFaithfully(untracked(() => this.value()))) {
+              this.sourceOnly.set(true);
+              this.sourceMode.set(true);
+              return;
+            }
+          }
           const { RichTextEngine } = await import('./engine/rich-text-engine');
           const ref = host.createComponent(RichTextEngine);
-          ref.setInput('value', untracked(() => this.value()) || EMPTY_HTML);
+          ref.setInput('format', format);
+          ref.setInput('value', untracked(() => this.value()) || EMPTY_RICH_TEXT[format]);
           ref.setInput('placeholder', untracked(() => this.i18n().placeholder) || this.texts.placeholder());
           ref.setInput('i18n', this.texts);
           ref.instance.valueChange.subscribe((html: string) => this.value.set(html));
@@ -171,7 +204,7 @@ export class RichTextInput {
     // keep the engine's inputs current — read every signal before the early return
     effect(() => {
       const ref = this.engine();
-      const value = this.value() || EMPTY_HTML;
+      const value = this.value() || this.emptyValue();
       const placeholder = this.i18n().placeholder || this.texts.placeholder();
       if (!ref) return;
       ref.setInput('value', value);
@@ -181,6 +214,6 @@ export class RichTextInput {
   }
 
   protected clear(): void {
-    this.value.set(EMPTY_HTML);
+    this.value.set(this.emptyValue());
   }
 }

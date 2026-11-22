@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { Command, EditorState, TextSelection } from 'prosemirror-state';
 
 import {
-  activeAlign, activeBlockLevel, activeColor, indent, isMarkActive, setAlign, setBlockLevel, setColor, setLink, toggleBlockquote,
-  toggleList, toggleMarkCommand,
+  activeAlign, activeBlockLevel, activeColor, indent, inTaskItem, isMarkActive, setAlign, setBlockLevel, setColor, setLink, splitItem,
+  toggleBlockquote, toggleChecked, toggleList, toggleMarkCommand, toggleTaskItem,
 } from './rich-text.commands';
+import { docToMarkdown, markdownToDoc } from './rich-text.markdown';
 import { docToHtml, htmlToDoc } from './rich-text.html';
 import { richTextSchema as schema } from './rich-text.schema';
 
@@ -83,5 +84,31 @@ describe('rich-text commands', () => {
     const quoted = run(stateOf('<p>a</p>', 1), toggleBlockquote());
     expect(html(quoted)).toBe('<blockquote><p>a</p></blockquote>');
     expect(html(run(quoted, toggleBlockquote()))).toBe('<p>a</p>');
+  });
+
+  describe('task items', () => {
+    const md = (markdown: string, from: number) => {
+      const state = EditorState.create({ schema, doc: markdownToDoc(markdown) });
+      return state.apply(state.tr.setSelection(TextSelection.create(state.doc, from)));
+    };
+    const out = (state: EditorState) => docToMarkdown(state.doc);
+
+    it('turns a paragraph into an unchecked task, and back into a plain item', () => {
+      const task = run(md('einkaufen', 2), toggleTaskItem());
+      expect(out(task)).toBe('- [ ] einkaufen');
+      expect(inTaskItem(task)).toBe(true);
+      expect(out(run(task, toggleTaskItem()))).toBe('- einkaufen');
+    });
+
+    it('ticks and unticks an item by its position', () => {
+      const state = md('- [ ] a\n- [x] b', 3);
+      expect(out(run(state, toggleChecked(1)))).toBe('- [x] a\n- [x] b');
+      expect(run(state, toggleChecked(0))).toBe(state);   // not a list item: nothing happens
+    });
+
+    it('starts a new item after a ticked one unchecked', () => {
+      // '- [x] erledigt': the item's text ends at 11
+      expect(out(run(md('- [x] erledigt', 11), splitItem()))).toBe('- [x] erledigt\n- [ ] ');
+    });
   });
 });

@@ -13,6 +13,7 @@ import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { DEFAULT_TAGS, DESCRIPTION_LENGTH, LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { Avatars } from '@okr/avatar-ui';
+import { RichTextInput } from '@okr/shared-ui-editor';
 
 import {
   DIARY_TEXT_LOCATION_ICON, DiaryI18n, composeDiaryDate, parseJassDiaryLine, diaryValidations, linesToList, listToLines, splitDiaryDate,
@@ -22,7 +23,7 @@ import {
   selector: 'okr-diary-form',
   standalone: true,
   imports: [
-    TextInput, TextareaInput, DateInput, NumberInput, Chips, ErrorNote, Avatars,
+    TextInput, TextareaInput, RichTextInput, DateInput, NumberInput, Chips, ErrorNote, Avatars,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonSelect, IonSelectOption,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
@@ -81,11 +82,11 @@ import {
               </ion-row>
               <okr-error-note [errors]="dateErrors()" />
 
-              <!-- notes: plain multi-line text, clear + copy, no encryption -->
+              <!-- the entry's body: markdown, as in the diary files (spec 1.170 §4.4) -->
               <ion-row>
                 <ion-col size="12">
-                  <okr-textarea-input [i18n]="textI18n()" [value]="text()" (valueChange)="onFieldChange('text', $event)"
-                    [rows]="5" [maxLength]="textLength" [clearable]="true" [copyable]="true"
+                  <okr-rich-text-input format="markdown" [i18n]="textI18n()" [value]="text()" (valueChange)="onFieldChange('text', $event)"
+                    [maxLength]="textLength" [clearable]="true" [copyable]="true"
                     [readOnly]="isReadOnly()" [errors]="textErrors()" />
                 </ion-col>
               </ion-row>

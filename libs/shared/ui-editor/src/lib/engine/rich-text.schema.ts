@@ -186,6 +186,51 @@ const image: NodeSpec = {
   },
 };
 
+// ---------------------------------------------------------------- lists (also read and written as markdown)
+
+/**
+ * `tight` and `bullet` only matter for markdown (spec 1.170 §4.4): a tight list is written without blank lines
+ * between items, `bullet` keeps the author's marker (`-`, `*`, `+`). HTML ignores both.
+ */
+const bulletList: NodeSpec = {
+  ...slBulletList, content: 'list_item+', group: 'block',
+  attrs: { tight: { default: true }, bullet: { default: null } },
+};
+const orderedList: NodeSpec = {
+  ...slOrderedList, content: 'list_item+', group: 'block',
+  attrs: { ...(slOrderedList.attrs ?? {}), tight: { default: true } },
+};
+/** `checked` = a markdown task item (`- [x] …`): true / false; null = an ordinary item. */
+const listItem: NodeSpec = {
+  ...slListItem, content: 'paragraph block*',
+  attrs: { checked: { default: null } },
+  parseDOM: [{
+    tag: 'li',
+    getAttrs: (dom) => ({ checked: dom.hasAttribute('data-checked') ? dom.getAttribute('data-checked') === 'true' : null }),
+  }],
+  toDOM: (node) => node.attrs['checked'] === null
+    ? ['li', 0]
+    : ['li', { class: 'rte-task', 'data-checked': String(node.attrs['checked']) }, 0],
+};
+
+/**
+ * Markup the editor cannot express but must not lose (markdown only: HTML comments, `<img>` tags): kept verbatim,
+ * shown as a grey chip, written back unchanged. Never created from stored HTML (their data attribute is ours) —
+ * and even then the text is shown as text, never as markup.
+ */
+const rawHtml: NodeSpec = {
+  inline: true, group: 'inline', atom: true, selectable: true,
+  attrs: { html: { default: '' } },
+  parseDOM: [{ tag: 'code[data-raw-html]', priority: 60, getAttrs: (dom) => ({ html: dom.textContent ?? '' }) }],
+  toDOM: (node) => ['code', { class: 'rte-raw', 'data-raw-html': '' }, String(node.attrs['html'])],
+};
+const htmlBlock: NodeSpec = {
+  group: 'block', atom: true, selectable: true,
+  attrs: { html: { default: '' } },
+  parseDOM: [{ tag: 'pre[data-raw-html]', priority: 60, getAttrs: (dom) => ({ html: dom.textContent ?? '' }) }],
+  toDOM: (node) => ['pre', { class: 'rte-raw', 'data-raw-html': '' }, String(node.attrs['html'])],
+};
+
 export const richTextSchema = new Schema({
   nodes: {
     doc: { content: 'block+' },
@@ -197,9 +242,11 @@ export const richTextSchema = new Schema({
     hard_break: { inline: true, group: 'inline', selectable: false, parseDOM: [{ tag: 'br' }], toDOM: () => ['br'] },
     code_block: codeBlock,
     image,
-    list_item: { ...slListItem, content: 'paragraph block*' },
-    ordered_list: { ...slOrderedList, content: 'list_item+', group: 'block' },
-    bullet_list: { ...slBulletList, content: 'list_item+', group: 'block' },
+    list_item: listItem,
+    ordered_list: orderedList,
+    bullet_list: bulletList,
+    raw_html: rawHtml,
+    html_block: htmlBlock,
   },
   marks: {
     link,

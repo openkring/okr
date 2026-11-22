@@ -26,12 +26,16 @@
     "indent": "Aumentar sangría",
     "outdent": "Reducir sangría",
     "link": "Enlace",
-    "image": "Imagen"
+    "image": "Imagen",
+    "taskList": "Lista de tareas"
   },
   "editor": {
     "placeholder": "Texto…",
     "loading": "Cargando el editor…",
-    "clear": "Borrar el texto"
+    "clear": "Borrar el texto",
+    "sourceMode": "Editar como código fuente",
+    "richMode": "Editar con formato",
+    "sourceOnly": "Este texto contiene formato que el editor no puede mostrar sin cambiarlo. Por eso lo editas como código fuente."
   },
   "prompt": {
     "linkHeader": "Insertar enlace",

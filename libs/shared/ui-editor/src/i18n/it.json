@@ -26,12 +26,16 @@
     "indent": "Aumenta rientro",
     "outdent": "Riduci rientro",
     "link": "Link",
-    "image": "Immagine"
+    "image": "Immagine",
+    "taskList": "Elenco di attività"
   },
   "editor": {
     "placeholder": "Testo…",
     "loading": "Caricamento dell'editor…",
-    "clear": "Cancella il testo"
+    "clear": "Cancella il testo",
+    "sourceMode": "Modifica come sorgente",
+    "richMode": "Modifica formattato",
+    "sourceOnly": "Questo testo contiene formattazioni che l’editor non può mostrare senza modificarle. Per questo lo modifichi come sorgente."
   },
   "prompt": {
     "linkHeader": "Inserisci link",

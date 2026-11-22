@@ -26,12 +26,16 @@
     "indent": "Indent",
     "outdent": "Outdent",
     "link": "Link",
-    "image": "Image"
+    "image": "Image",
+    "taskList": "Task list"
   },
   "editor": {
     "placeholder": "Text…",
     "loading": "Loading the editor…",
-    "clear": "Clear text"
+    "clear": "Clear text",
+    "sourceMode": "Edit as source",
+    "richMode": "Edit formatted",
+    "sourceOnly": "This text contains formatting the editor cannot show without changing it, so you edit it as source."
   },
   "prompt": {
     "linkHeader": "Insert link",
