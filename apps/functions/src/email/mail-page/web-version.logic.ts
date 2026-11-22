@@ -49,6 +49,25 @@ export function webTokenFromRequest(path: string, query: Record<string, unknown>
  */
 export const WEB_VERSION_CSP = "default-src 'none'; img-src https: data:; style-src 'unsafe-inline'; form-action 'none'; base-uri 'none'; frame-ancestors 'none'";
 
+/**
+ * Every answer of the web version carries these. X-Robots-Tag: the page is for the mail's recipients, even when a
+ * forwarded or posted link reaches a crawler.
+ */
+export const WEB_VERSION_HEADERS: Readonly<Record<string, string>> = {
+  'Content-Type': 'text/html; charset=utf-8',
+  'Cache-Control': 'no-store',
+  'Referrer-Policy': 'no-referrer',
+  'Content-Security-Policy': WEB_VERSION_CSP,
+  'X-Content-Type-Options': 'nosniff',
+  'X-Robots-Tag': 'noindex, nofollow, noarchive',
+};
+
+/** What may be logged of an error: its code (a gRPC number or a string), never its message, which can name a doc path. */
+export function errorCodeOf(err: unknown): string {
+  const code = (err as { code?: unknown } | null)?.code;
+  return typeof code === 'string' || typeof code === 'number' ? String(code) : 'unknown';
+}
+
 /** The page for an unknown or turned-off token: neutral, no tenant frame (no tenant is known), no detail. */
 export const WEB_VERSION_NOT_FOUND_PAGE = '<!doctype html><html lang="de"><head><meta charset="utf-8">'
   + '<meta name="viewport" content="width=device-width,initial-scale=1"><title>Nicht gefunden</title></head>'

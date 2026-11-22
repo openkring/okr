@@ -20,7 +20,7 @@ import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functi
 
 import { neutralizeMeta } from '../mailing-answer.logic';
 import { isElevated } from '../mailing-recipients';
-import { WEB_VERSION_CSP, WEB_VERSION_NOT_FOUND_PAGE, webTokenFromRequest } from './web-version.logic';
+import { errorCodeOf, WEB_VERSION_HEADERS, WEB_VERSION_NOT_FOUND_PAGE, webTokenFromRequest } from './web-version.logic';
 
 const REGION = 'europe-west6';
 /** `MailingCollection` of mailing.ts, not imported from there: that module loads the whole send pipeline. */
@@ -30,11 +30,8 @@ export const mailingWeb = onRequest(
   { region: REGION, cors: false, maxInstances: 10 },
   async (req, res) => {
     const CF_NAME = 'mailingWeb';
-    res.set('Content-Type', 'text/html; charset=utf-8');
-    res.set('Cache-Control', 'no-store');
-    res.set('Referrer-Policy', 'no-referrer');
-    res.set('Content-Security-Policy', WEB_VERSION_CSP);
-    res.set('X-Content-Type-Options', 'nosniff');
+    // set before any branch: the 200, 404, 405 and 500 answers all carry them
+    for (const [name, value] of Object.entries(WEB_VERSION_HEADERS)) res.set(name, value);
     if (req.method !== 'GET') { res.set('Allow', 'GET'); res.status(405).send(''); return; }
 
     try {
@@ -45,8 +42,8 @@ export const mailingWeb = onRequest(
       // The layout is tenant-editable: a meta refresh would navigate away despite the CSP, so every meta goes.
       res.status(200).send(neutralizeMeta(html));
     } catch (err) {
-      // Never log the token: it is the capability.
-      logger.error(`${CF_NAME}: failed`, err);
+      // Never log the token: it is the capability, and a Firestore error can carry the doc path.
+      logger.error(`${CF_NAME}: failed`, { code: errorCodeOf(err) });
       if (!res.headersSent) res.status(500).send(WEB_VERSION_NOT_FOUND_PAGE);
     }
   },

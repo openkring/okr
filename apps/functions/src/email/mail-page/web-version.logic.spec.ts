@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  mailingWebFunctionUrl, newWebToken, WEB_VERSION_CSP, webTokenFromRequest, webVersionOn, webVersionUrl, withWebLink,
+  errorCodeOf, mailingWebFunctionUrl, newWebToken, WEB_VERSION_CSP, WEB_VERSION_HEADERS, webTokenFromRequest, webVersionOn, webVersionUrl, withWebLink,
 } from './web-version.logic';
 
 describe('webVersionOn', () => {
@@ -70,4 +70,21 @@ describe('withWebLink', () => {
     expect(html).toContain('a&quot;onmouseover=&quot;x');
     expect(html).toContain('&lt;b&gt;');
   });
+});
+
+describe('WEB_VERSION_HEADERS', () => {
+  it('keeps the page out of search engines', () => expect(WEB_VERSION_HEADERS['X-Robots-Tag']).toBe('noindex, nofollow, noarchive'));
+  it('is not cached, sends no referrer and carries the CSP', () => {
+    expect(WEB_VERSION_HEADERS['Cache-Control']).toBe('no-store');
+    expect(WEB_VERSION_HEADERS['Referrer-Policy']).toBe('no-referrer');
+    expect(WEB_VERSION_HEADERS['Content-Security-Policy']).toBe(WEB_VERSION_CSP);
+    expect(WEB_VERSION_HEADERS['Content-Type']).toBe('text/html; charset=utf-8');
+  });
+});
+
+describe('errorCodeOf', () => {
+  it('takes a numeric code', () => expect(errorCodeOf({ code: 9, message: 'mailingWeb/secret' })).toBe('9'));
+  it('takes a string code', () => expect(errorCodeOf({ code: 'unavailable' })).toBe('unavailable'));
+  it('never the message', () => expect(errorCodeOf(new Error('mailingWeb/AbCdEfGhIjKlMnOpQr_-12'))).toBe('unknown'));
+  it('copes with null', () => expect(errorCodeOf(null)).toBe('unknown'));
 });
