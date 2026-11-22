@@ -97,7 +97,7 @@ const TARGET_KINDS: SubmissionTarget['kind'][] = ['collection', 'url', 'mail'];
               <ion-row>
                 <ion-col size="12">
                   <okr-textarea-input variant="card" [i18n]="fillerHelpTextI18n()" [value]="fillerHelpText()" (valueChange)="onFieldChange('fillerHelpText', $event)"
-                    [maxLength]="descriptionLength" [encryptable]="false" [readOnly]="isReadOnly()" [errors]="fillerHelpTextErrors()" />
+                    [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="fillerHelpTextErrors()" />
                 </ion-col>
               </ion-row>
               <ion-row>

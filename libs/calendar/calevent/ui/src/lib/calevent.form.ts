@@ -100,7 +100,7 @@ const DEFAULT_RECURRING_PERIODICITY = 'weekly';
             <ion-row>
               <ion-col size="12">
                 <!-- the description is part of what the event IS: same card, no card of its own -->
-                <okr-textarea-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [rows]="3" [maxLength]="descriptionLength" [clearable]="true" [copyable]="true" [encryptable]="true" [readOnly]="isReadOnly()" />
+                <okr-textarea-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [rows]="3" [maxLength]="descriptionLength" [clearable]="true" [copyable]="true" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
           }

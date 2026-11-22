@@ -34,7 +34,8 @@ const ENCRYPTED_PREFIX = '**';
  *
  * Both variants share one footer row: actions (clear, copy, encrypt) · the Vest error · the counter.
  * The variant also picks the defaults: a card is the old notes field (5 rows, DESCRIPTION_LENGTH,
- * clear/copy/encrypt on), a field is the plain free text (3 rows, COMMENT_LENGTH, no actions).
+ * clear/copy on), a field is the plain free text (3 rows, COMMENT_LENGTH, no actions).
+ * Encryption is opt-in for both ([encryptable]="true"); an already encrypted value can always be decrypted.
  * An explicitly bound input always wins over the variant's default.
  */
 @Component({
@@ -205,7 +206,7 @@ export class TextareaInput {
   public rows = input<number | undefined>(undefined);
   public clearable = input<boolean | undefined>(undefined);
   public copyable = input<boolean | undefined>(undefined);
-  public encryptable = input<boolean | undefined>(undefined);
+  public encryptable = input<boolean | undefined>(undefined); // opt-in: undefined = off
 
   // coerced inputs and variant defaults
   protected isCard = computed(() => this.variant() === 'card');
@@ -213,7 +214,8 @@ export class TextareaInput {
   protected isAutoGrow = computed(() => coerceBoolean(this.autoGrow()));
   protected isClearable = computed(() => coerceBoolean(this.clearable() ?? this.isCard()));
   protected isCopyable = computed(() => coerceBoolean(this.copyable() ?? this.isCard()));
-  protected isEncryptable = computed(() => coerceBoolean(this.encryptable() ?? this.isCard()));
+  /** Opt-in for both variants (spec 1.170 D5); showEncrypt still offers decrypting an encrypted value. */
+  protected isEncryptable = computed(() => coerceBoolean(this.encryptable() ?? false));
   protected effectiveMaxLength = computed(() => this.maxLength() ?? (this.isCard() ? DESCRIPTION_LENGTH : COMMENT_LENGTH));
   protected effectiveRows = computed(() => this.rows() ?? (this.isCard() ? 5 : 3));
   protected shouldShowHelper = computed(() =>

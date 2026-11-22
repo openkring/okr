@@ -20,7 +20,7 @@ import { BillI18n, BillQrScanFormModel, billQrScanValidations } from '@okr/finan
         <ion-card>
           <ion-card-content class="ion-no-padding">
             <okr-textarea-input [i18n]="qrContentI18n()" [value]="qrContent()"
-              (valueChange)="onFieldChange('qrContent', $event)" [rows]="10" [autoGrow]="false" [clearable]="true" [copyable]="true" [encryptable]="true"
+              (valueChange)="onFieldChange('qrContent', $event)" [rows]="10" [autoGrow]="false" [clearable]="true" [copyable]="true"
               [maxLength]="descriptionLength" [errors]="qrContentErrors()" [readOnly]="isReadOnly()" />
           </ion-card-content>
         </ion-card>
