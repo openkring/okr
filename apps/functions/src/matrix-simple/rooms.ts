@@ -429,33 +429,42 @@ async function addDerivedNames(rooms: AdminRoom[], adminToken: string): Promise<
   const unnamed = rooms.filter(r => !r.name).slice(0, 120);
   if (!unnamed.length) return;
   try {
-    const personsSnap = await getFirestore().collection('persons').get();
+    // Project to the two name fields: a full read of `persons` (every tenant, every field)
+    // was what pushed matrixAdmin past its 256 MiB limit on the unfiltered list (SCS-K1).
+    const personsSnap = await getFirestore().collection('persons').select('firstName', 'lastName').get();
     const nameByKey = new Map<string, string>();
     for (const doc of personsSnap.docs) {
-      const full = [doc.data()['firstName'], doc.data()['lastName']].filter(Boolean).join(' ').trim();
+      const full = [doc.get('firstName'), doc.get('lastName')].filter(Boolean).join(' ').trim();
       if (full) nameByKey.set(doc.id.toLowerCase(), full);
     }
 
     // Matrix profile lookups for members that are not okr persons (bridge puppets), cached
-    // per localpart because the same contact recurs across rooms.
-    const profileCache = new Map<string, string>();
-    const resolveProfile = async (localpart: string): Promise<string> => {
-      const cached = profileCache.get(localpart);
-      if (cached !== undefined) return cached;
-      let label = localpart;
-      try {
-        const userId = `@${localpart}:${serverHostname()}`;
-        const resp = await fetch(
-          `${MATRIX_HOMESERVER}/_matrix/client/v3/profile/${encodeURIComponent(userId)}/displayname`,
-          { headers: { Authorization: `Bearer ${adminToken}` } }
-        );
-        if (resp.ok) label = (await resp.json() as { displayname?: string }).displayname || localpart;
-      } catch { /* keep the localpart */ }
-      profileCache.set(localpart, label);
-      return label;
+    // per localpart because the same contact recurs across rooms. The promise is cached, not
+    // the value, so rooms resolving in parallel share one request per contact.
+    const profileCache = new Map<string, Promise<string>>();
+    const resolveProfile = (localpart: string): Promise<string> => {
+      let pending = profileCache.get(localpart);
+      if (!pending) {
+        pending = (async () => {
+          try {
+            const userId = `@${localpart}:${serverHostname()}`;
+            const resp = await fetch(
+              `${MATRIX_HOMESERVER}/_matrix/client/v3/profile/${encodeURIComponent(userId)}/displayname`,
+              { headers: { Authorization: `Bearer ${adminToken}` } }
+            );
+            if (resp.ok) return (await resp.json() as { displayname?: string }).displayname || localpart;
+          } catch { /* keep the localpart */ }
+          return localpart;
+        })();
+        profileCache.set(localpart, pending);
+      }
+      return pending;
     };
 
-    await Promise.all(unnamed.map(async room => {
+    // Bounded fan-out (like getRoomTenantsBatch): 120 rooms at once, each with its own
+    // member list and profile lookups in flight, was the other half of the OOM (SCS-K1).
+    const queue = [...unnamed];
+    const labelRoom = async (room: AdminRoom): Promise<void> => {
       const resp = await fetch(
         `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(room.roomId)}/members`,
         { headers: { Authorization: `Bearer ${adminToken}` } }
@@ -472,6 +481,11 @@ async function addDerivedNames(rooms: AdminRoom[], adminToken: string): Promise<
       room.derivedName = labels.length <= 2
         ? `DM: ${labels.join(' ↔ ')}`
         : `Raum: ${labels.slice(0, 3).join(', ')}${labels.length > 3 ? ` (+${labels.length - 3})` : ''}`;
+    };
+    await Promise.all(Array.from({ length: Math.min(8, queue.length) }, async () => {
+      for (let room = queue.shift(); room !== undefined; room = queue.shift()) {
+        await labelRoom(room).catch(() => undefined);
+      }
     }));
   } catch (err) {
     console.warn('addDerivedNames: could not derive room labels:', err);

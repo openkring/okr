@@ -302,10 +302,13 @@ export const ChatMaintenanceStore = signalStore(
     imgixBaseUrl: computed(() => state.appStore.services.imgixBaseUrl()),
     isLoadingRooms: computed(() => state.roomsResource.isLoading()),
     isLoadingMembers: computed(() => state.membersResource.isLoading()),
-    rooms: computed(() => state.roomsResource.value() ?? []),
-    members: computed(() => state.membersResource.value() ?? []),
-    roomDetails: computed(() => state.roomDetailsResource.value()),
-    memberDetails: computed(() => state.memberDetailsResource.value()),
+    // hasValue() guards: reading value() of a resource in error throws during change detection,
+    // so one failed matrixAdmin call crashed the whole page instead of showing an empty list (SCS-K1).
+    rooms: computed(() => (state.roomsResource.hasValue() ? state.roomsResource.value() : undefined) ?? []),
+    roomsError: computed(() => state.roomsResource.error()),
+    members: computed(() => (state.membersResource.hasValue() ? state.membersResource.value() : undefined) ?? []),
+    roomDetails: computed(() => state.roomDetailsResource.hasValue() ? state.roomDetailsResource.value() : undefined),
+    memberDetails: computed(() => state.memberDetailsResource.hasValue() ? state.memberDetailsResource.value() : undefined),
     /**
      * roomId → number of room members without a membership, from the last guest scan.
      * Empty until `previewGuests()` has run — the room list then flags the drifted rooms
@@ -381,10 +384,10 @@ export const ChatMaintenanceStore = signalStore(
     }),
   })),
   withComputed(state => ({
-    memberAvatarUrl: computed(() => state.memberAvatarResource.value()),
-    roomAvatarUrl: computed(() => state.roomAvatarResource.value()),
+    memberAvatarUrl: computed(() => state.memberAvatarResource.hasValue() ? state.memberAvatarResource.value() : undefined),
+    roomAvatarUrl: computed(() => state.roomAvatarResource.hasValue() ? state.roomAvatarResource.value() : undefined),
     // Falls back to the raw members while resolution is in flight (icons, never broken).
-    resolvedMembers: computed(() => state.membersResolvedResource.value() ?? state.members()),
+    resolvedMembers: computed(() => (state.membersResolvedResource.hasValue() ? state.membersResolvedResource.value() : undefined) ?? state.members()),
   })),
 
   // ─── methods ────────────────────────────────────────────────────────────────

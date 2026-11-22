@@ -486,7 +486,9 @@ import { ChatMaintenanceStore, AdminRoom, RoomMemberInfo, RoomAssignmentEntry } 
             (ionInput)="onRoomFilterChange($event)"
           />
           <div class="column-scroll">
-            @if (filteredRooms().length === 0 && !isLoadingRooms()) {
+            @if (store.roomsError(); as err) {
+              <div class="empty-state">{{ store.i18n.error() }}: {{ err.message }}</div>
+            } @else if (filteredRooms().length === 0 && !isLoadingRooms()) {
               <div class="empty-state">{{ store.i18n.chat_no_rooms() }}</div>
             }
             <ion-list lines="inset">
