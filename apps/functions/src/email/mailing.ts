@@ -29,7 +29,7 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { DeliveryChannel, type EmailLayoutChoice, GroupCollection, MailingWebCollection, MailPageCollection, NoticeAttachment, NoticeCollection, type NoticeModel, type PostOptions } from '@okr/shared-models';
-import { DateFormat, getEventLocationName, getTodayStr, isOrgRecipient, publicAppOrigin, recipientParentKey } from '@okr/shared-util-core';
+import { DateFormat, getEventLocationName, getTodayStr, isOrgRecipient, recipientParentKey } from '@okr/shared-util-core';
 import { projectID } from 'firebase-functions/params';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
@@ -55,7 +55,7 @@ import { asLayoutChoice } from './render-email.logic';
 import { EmailTemplateError, renderEmail } from './render-email';
 import { renderMailPage } from './mail-page/mail-page';
 import { MailPageError } from './mail-page/render-mail-page.logic';
-import { newWebToken, webVersionOn, webVersionUrl, withWebLink } from './mail-page/web-version.logic';
+import { mailingWebFunctionUrl, newWebToken, webVersionOn, webVersionUrl, withWebLink } from './mail-page/web-version.logic';
 import { buildMailingLetters, countLetterPages, LetterEvent } from './mailing-letters';
 import { addressParentKeyOf, contactKeysFor, dropHouseholdKeys, householdFieldsOf, householdInNewsletter, householdsDroppedForAnswers, householdsDroppedForNewsletter, householdWithAnswers, type HouseholdRecipient, loadHouseholdRecipients, postKeysFor } from './household-recipient.logic';
 import { mailingCategory } from './mailing-deliveries.logic';
@@ -664,10 +664,9 @@ async function keysWithAccount(db: Firestore, tenantId: string, keys: string[]):
   return keys.filter((key) => found.has(key));
 }
 
-/** The public link of a Versand's web version, on the tenant's app origin. */
-async function webLinkOf(db: Firestore, tenantId: string, token: string): Promise<string> {
-  const cfg = (await db.collection('app-config').doc(tenantId).get()).data();
-  return webVersionUrl(publicAppOrigin(cfg?.['appDomain'] as string | undefined, tenantId), token);
+/** The public link of a Versand's web version: the mailingWeb function's own URL with the token. */
+function webLinkOf(token: string): string {
+  return webVersionUrl(mailingWebFunctionUrl(projectID.value()), token);
 }
 
 export const onMailing = onDocumentCreated(
@@ -717,7 +716,7 @@ export const onMailing = onDocumentCreated(
           to: mailing.to,
           from: mailing.from || (await getAppEmailConfig(tenantId)).from,
           subject: mailing.subject,
-          body: mailing.webToken ? withWebLink(mailing.body, await webLinkOf(db, tenantId, mailing.webToken), WEB_LINK_LABEL) : mailing.body,
+          body: mailing.webToken ? withWebLink(mailing.body, webLinkOf(mailing.webToken), WEB_LINK_LABEL) : mailing.body,
           layout: mailing.layout,
           attachments: privateRefs(mailing.attachments),
           state: 'pending',
