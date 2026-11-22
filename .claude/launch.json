@@ -79,6 +79,17 @@
         "--port=4310"
       ],
       "port": 4310
+    },
+    {
+      "name": "bka-app",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "exec",
+        "nx",
+        "serve",
+        "bka-app"
+      ],
+      "port": 4203
     }
   ]
 }
