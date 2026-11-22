@@ -138,6 +138,18 @@ export const ARTICLE_IMAGES_SEGMENT_FIELDS: SegmentErrorFields<'select' | 'layou
   styles: IMAGE_STYLE_FIELDS.filter((field) => field !== 'action' && field !== 'zoomFactor'),
 };
 
+/**
+ * The two tabs of the article form (spec 1.171): «Inhalt» (what the editor writes) and «Darstellung» (how it
+ * looks and who sees it). A tab whose fields hold an error gets a marker, so a blocked save is never unexplained.
+ */
+export const ARTICLE_TAB_FIELDS: SegmentErrorFields<'content' | 'appearance'> = {
+  content: ['title', 'subTitle', 'intro', IMAGES_PREFIX, 'cta.label', 'cta.url'],
+  appearance: [
+    'name', 'roleNeeded', 'state', 'colSize', 'introPosition', 'emphasis', 'background', 'textColor', 'tags', 'notes',
+    ...ARTICLE_IMAGES_SEGMENT_FIELDS.layout, ...ARTICLE_IMAGES_SEGMENT_FIELDS.styles,
+  ],
+};
+
 /** The button card (no advanced toggle): its Button, Icon and Aktion segments. */
 export const BUTTON_SEGMENT_FIELDS: SegmentErrorFields<'button' | 'icon' | 'action'> = {
   button: ['style.label', 'style.shape', 'style.fill', 'style.width', 'style.height', 'style.color'],

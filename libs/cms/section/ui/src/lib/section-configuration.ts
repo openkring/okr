@@ -1,13 +1,22 @@
-import { Component, computed, input, linkedSignal, model } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow, IonSelect, IonSelectOption } from '@ionic/angular';
 
 import { ARTICLE_TEXT_COLORS, ArticleConfig, ArticleTextColor, CategoryListModel, RoleName, SECTION_INTRO_POSITIONS, SectionIntroPosition, SectionModel, UserModel } from '@okr/shared-models';
 import { ButtonCopy, ButtonCopyI18n, CategorySelect, ErrorNote, TextareaInput, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { COMMENT_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
+import { SectionAddChip, SectionAddChips } from './section-add-chips';
 import { getFieldErrors, parseSectionWidths, SECTION_SCREENS, SectionErrors, SectionI18n, SectionScreen, sectionWidthChoices, setSectionWidth } from '@okr/cms-section-util';
 
 export const PFX = '@cms/section/feature.';
+
+/**
+ * Which part of the base settings to render (spec 1.171): 'all' for every section type but the article;
+ * the article form splits them into its «Inhalt» tab (title, subtitle, intro) and its «Darstellung» tab
+ * (visibility, width, name, emphasis, background, intro position).
+ */
+export type SectionConfigPart = 'all' | 'content' | 'appearance';
 
 export type ArticleEmphasis = NonNullable<ArticleConfig['emphasis']>;
 const EMPHASES: ArticleEmphasis[] = ['none', 'banner'];
@@ -17,12 +26,12 @@ const EMPHASES: ArticleEmphasis[] = ['none', 'banner'];
   standalone: true,
   imports: [
     IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonLabel, IonItem, IonSelect, IonSelectOption, IonNote,
-    TextInput, TextareaInput, CategorySelect, ButtonCopy,
-    ErrorNote
+    TextInput, TextareaInput, CategorySelect, ButtonCopy, NgTemplateOutlet,
+    ErrorNote, SectionAddChips
   ],
   template: `
-    <!-- what the section is and who sees it: at the top, apart from its content -->
-    @if (!journalMode()) {
+    <!-- what the section is and who sees it: at the top, apart from its content (the article: in «Darstellung») -->
+    @if (!journalMode() && part() !== 'content') {
       <ion-card>
         <ion-card-header>
           <ion-card-title>{{ headerTitle() }}</ion-card-title>
@@ -81,11 +90,21 @@ const EMPHASES: ArticleEmphasis[] = ['none', 'banner'];
                 <ion-note>{{ i18n().section_config_width_helper() }}</ion-note>
               </ion-col>
             </ion-row>
+            <!-- the article: its technical name sits with the other settings of «Darstellung» (spec 1.171) -->
+            @if (part() === 'appearance') {
+              <ion-row>
+                <ion-col size="12">
+                  <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]="nameMaxLength" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="errorsFor('name')" />
+                </ion-col>
+              </ion-row>
+            }
           </ion-grid>
         </ion-card-content>
       </ion-card>
     }
 
+    @if (part() !== 'appearance') {
     <ion-card>
       <ion-card-header>
         <ion-card-title>{{ i18n().section_config_titleCard() }}</ion-card-title>
@@ -93,7 +112,7 @@ const EMPHASES: ArticleEmphasis[] = ['none', 'banner'];
       <ion-card-content>
         <ion-grid>
         <ion-row>
-          @if(showAdvanced() && !journalMode()) {
+          @if(showAdvanced() && !journalMode() && part() === 'all') {
             <ion-col size="12">
               <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]="nameMaxLength" [readOnly]="isReadOnly()" />
               <okr-error-note [errors]="errorsFor('name')" />
@@ -105,18 +124,20 @@ const EMPHASES: ArticleEmphasis[] = ['none', 'banner'];
           </ion-col>
           <!-- journal mode: the change record carries the title only -->
           @if (!journalMode()) {
+            @if (showSubTitle()) {
             <ion-col size="12">
               <okr-text-input [i18n]="subTitleI18n()" [value]="subTitle()" (valueChange)="onFieldChange('subTitle', $event)" [maxLength]="maxLength" [readOnly]="isReadOnly()" />
               <okr-error-note [errors]="errorsFor('subTitle')" />
             </ion-col>
+            }
             <!-- the intro: above the title (the former «Überzeile») or below title and subtitle -->
-            @if(showAdvanced()) {
+            @if(showAdvanced() && showIntro()) {
               <ion-col size="12">
                 <okr-textarea-input [i18n]="introI18n()" [value]="intro()" (valueChange)="onFieldChange('intro', $event)" [maxLength]="introMaxLength" [readOnly]="isReadOnly()" [showHelper]="true" />
                 <okr-error-note [errors]="errorsFor('intro')" />
               </ion-col>
-              <!-- how the intro is shown only matters once there is an intro -->
-              @if (hasIntro()) {
+              <!-- how the intro is shown only matters once there is an intro (the article: in «Darstellung») -->
+              @if (hasIntro() && part() === 'all') {
                 <ion-col size="12" [sizeMd]="isArticle() ? '6' : '12'">
                   <ion-select [label]="i18n().section_config_introPosition_label()" labelPlacement="stacked"
                               [value]="introPosition()" [disabled]="isReadOnly()"
@@ -129,13 +150,64 @@ const EMPHASES: ArticleEmphasis[] = ['none', 'banner'];
                 </ion-col>
               }
               <!-- kept outside the condition: a stored value that fails must still show its error -->
+              @if (part() === 'all') {
+                <ion-col size="12">
+                  <okr-error-note [errors]="errorsFor('introPosition')" />
+                </ion-col>
+              }
+            }
+            <!-- an article: a normal block or a full-width coloured band -->
+            @if(isArticle() && part() === 'all') {
+              <ng-container [ngTemplateOutlet]="look" />
+            }
+          }
+        </ion-row>
+        </ion-grid>
+        <!-- «Inhalt» of an article: the optional texts still empty, as «+» chips (spec 1.171 §4.2) -->
+        @if (part() === 'content') {
+          <okr-section-add-chips [chips]="addChips()" [label]="i18n().article_add_label()" [readOnly]="isReadOnly()" (add)="onAdd($event)" />
+        }
+      </ion-card-content>
+    </ion-card>
+    }
+
+    <!-- «Darstellung» of an article: emphasis, background, text colour and where the intro stands (spec 1.171 §4.3) -->
+    @if (part() === 'appearance' && isArticle()) {
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>{{ i18n().article_look_title() }}</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-grid>
+            <ion-row>
+              <ng-container [ngTemplateOutlet]="look" />
+              @if (hasIntro()) {
+                <ion-col size="12" size-md="6">
+                  <ion-select [label]="i18n().section_config_introPosition_label()" labelPlacement="stacked"
+                              [value]="introPosition()" [disabled]="isReadOnly()"
+                              (ionChange)="onFieldChange('introPosition', $event.detail.value)">
+                    @for (p of introPositions; track p) {
+                      <ion-select-option [value]="p">{{ introPositionLabels()[p] }}</ion-select-option>
+                    }
+                  </ion-select>
+                  <ion-note>{{ i18n().section_config_introPosition_helper() }}</ion-note>
+                </ion-col>
+              }
               <ion-col size="12">
                 <okr-error-note [errors]="errorsFor('introPosition')" />
               </ion-col>
-            }
-            <!-- an article: a normal block or a full-width coloured band -->
-            @if(isArticle()) {
-              <ion-col size="12" [sizeMd]="showAdvanced() && hasIntro() ? '6' : '12'">
+            </ion-row>
+          </ion-grid>
+          @if (!showBackground()) {
+            <okr-section-add-chips [chips]="backgroundChip()" [label]="i18n().article_add_label()" [readOnly]="isReadOnly()" (add)="onAdd($event)" />
+          }
+        </ion-card-content>
+      </ion-card>
+    }
+
+    <!-- the look of an article: in the title card ('all') or in the «Darstellung» card ('appearance') -->
+    <ng-template #look>
+              <ion-col size="12" [sizeMd]="showAdvanced() && hasIntro() && part() === 'all' ? '6' : '12'">
                 <ion-select [label]="i18n().emphasis_label()" labelPlacement="stacked"
                             [value]="emphasis()" [disabled]="isReadOnly()"
                             (ionChange)="onEmphasisChange($event.detail.value)">
@@ -145,12 +217,15 @@ const EMPHASES: ArticleEmphasis[] = ['none', 'banner'];
                 </ion-select>
                 <ion-note>{{ i18n().emphasis_helper() }}</ion-note>
               </ion-col>
-              <!-- an own background colour (e.g. the KISS band of la21staefa) and the text colour on it -->
-              <ion-col size="12" [sizeMd]="hasBackground() ? '6' : '12'">
-                <okr-text-input [i18n]="backgroundI18n()" [value]="background()" (valueChange)="onArticleChange({ background: $event.trim() })"
-                                [maxLength]="backgroundLength" [readOnly]="isReadOnly()" [showHelper]="true" />
-                <okr-error-note [errors]="errorsFor('background')" />
-              </ion-col>
+              <!-- an own background colour (e.g. the KISS band of la21staefa) and the text colour on it;
+                   in «Darstellung» offered as a «+» chip until used -->
+              @if (showBackground()) {
+                <ion-col size="12" [sizeMd]="hasBackground() ? '6' : '12'">
+                  <okr-text-input [i18n]="backgroundI18n()" [value]="background()" (valueChange)="onArticleChange({ background: $event.trim() })"
+                                  [maxLength]="backgroundLength" [readOnly]="isReadOnly()" [showHelper]="true" />
+                  <okr-error-note [errors]="errorsFor('background')" />
+                </ion-col>
+              }
               @if (hasBackground()) {
                 <ion-col size="12" size-md="6">
                   <ion-select [label]="i18n().emphasis_textColor_label()" labelPlacement="stacked"
@@ -167,12 +242,7 @@ const EMPHASES: ArticleEmphasis[] = ['none', 'banner'];
               <ion-col size="12">
                 <okr-error-note [errors]="errorsFor('textColor')" />
               </ion-col>
-            }
-          }
-        </ion-row>
-        </ion-grid>
-      </ion-card-content>
-    </ion-card>
+    </ng-template>
   `
 })
 export class SectionConfiguration {
@@ -190,6 +260,8 @@ export class SectionConfiguration {
   public readonly showAdvanced = input(false);
   /** travel journal (spec 1.154): only the title, the one base field its change record carries */
   public readonly journalMode = input(false);
+  /** which part to render; the article form renders 'content' and 'appearance' in its two tabs (spec 1.171) */
+  public readonly part = input<SectionConfigPart>('all');
   public readonly i18n = input.required<SectionI18n>();
 
   // fields
@@ -215,6 +287,19 @@ export class SectionConfiguration {
     return section.type === 'article' ? section.properties?.textColor ?? 'auto' : 'auto';
   });
   protected type = computed(() => this.formData().type);
+
+  // «add, don't show» (spec 1.171 §4.2): in the article's tabs an empty optional field waits behind a «+» chip;
+  // a click opens it for this form, a stored value always shows it
+  private readonly opened = signal<ReadonlySet<string>>(new Set());
+  private readonly isOpen = (id: string): boolean => this.part() === 'all' || this.opened().has(id);
+  protected showSubTitle = computed(() => this.subTitle().trim().length > 0 || this.isOpen('subTitle'));
+  protected showIntro = computed(() => this.hasIntro() || this.isOpen('intro'));
+  protected showBackground = computed(() => this.hasBackground() || this.isOpen('background'));
+  protected addChips = computed((): SectionAddChip[] => [
+    ...(this.showSubTitle() ? [] : [{ id: 'subTitle', label: this.i18n().article_add_subTitle() }]),
+    ...(this.showIntro() ? [] : [{ id: 'intro', label: this.i18n().article_add_intro() }]),
+  ]);
+  protected backgroundChip = computed((): SectionAddChip[] => [{ id: 'background', label: this.i18n().article_add_background() }]);
   protected state = computed(() => this.formData().state);
   protected roleNeeded = linkedSignal(() => this.formData().roleNeeded ?? 'registered');
   protected widths = computed(() => parseSectionWidths(this.formData().colSize));
@@ -323,6 +408,10 @@ export class SectionConfiguration {
     this.formData.update(vm => vm.type === 'article' ? ({ ...vm, properties: { ...vm.properties, ...patch } } as SectionModel) : vm);
   }
 
+
+  protected onAdd(id: string): void {
+    this.opened.update(open => new Set([...open, id]));
+  }
 
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.currentUser());

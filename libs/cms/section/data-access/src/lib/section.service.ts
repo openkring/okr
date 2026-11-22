@@ -7,7 +7,7 @@ import { I18nService } from "@okr/shared-i18n";
 import { DbQuery, SectionCollection, SectionModel, UserModel } from "@okr/shared-models";
 import { addSystemQueries, forkKeyFor, getSystemQuery, isOwnedBy } from "@okr/shared-util-core";
 
-import { getSectionIndex } from "@okr/cms-section-util";
+import { compactSectionForSave, getSectionIndex } from "@okr/cms-section-util";
 import { PFX } from "./scope";
 
 @Injectable({
@@ -33,6 +33,7 @@ export class SectionService {
    * @returns the key of the newly created SectionModel
    */
   public async create(section: SectionModel, currentUser?: UserModel): Promise<string | undefined> {
+    section = compactSectionForSave(section);   // an article stores only its non-default image style (1.171)
     section.index = getSectionIndex(section);
     return await this.firestoreService.createModel<SectionModel>(SectionCollection, section, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
   }
@@ -69,6 +70,7 @@ export class SectionService {
    * @param section the SectionModel with the new values
    */
   public async update(section: SectionModel, currentUser?: UserModel): Promise<string | undefined> {
+    section = compactSectionForSave(section);   // an article stores only its non-default image style (1.171)
     section.index = getSectionIndex(section);
     if (isOwnedBy(section, this.env.tenantId)) {
       return await this.firestoreService.updateModel<SectionModel>(SectionCollection, section, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);

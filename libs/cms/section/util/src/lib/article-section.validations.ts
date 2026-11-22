@@ -1,6 +1,7 @@
 import { each, enforce, omitWhen, staticSuite, test } from 'vest';
 
 import { ARTICLE_TEXT_COLORS, ArticleSection, SLIDESHOW_EFFECTS } from '@okr/shared-models';
+import { resolveImageStyle } from '@okr/shared-util-core';
 
 import { baseSectionValidations } from './base-section.validations';
 import { isSectionCtaUrl } from './section-cta.util';
@@ -20,10 +21,11 @@ export const articleSectionValidations = staticSuite((model: ArticleSection) => 
     });
   });
 
-  // imageStyle: ImageStyle
+  // imageStyle: Partial<ImageStyle> — an article stores only what differs from the defaults (spec 1.171 D1b),
+  // so the stored fields are checked on top of the defaults; a missing field is a default, not an error.
   // note: omitWhen always runs its callback, so guard every access with `?.`.
   omitWhen(!model.properties?.imageStyle, () => {
-    imageStyleValidations(model.properties?.imageStyle);
+    imageStyleValidations(resolveImageStyle(model.properties?.imageStyle));
   });
 
   // imageLayout: a known layout id (spec 1.154 §5); absent = the slider. Which ids suit the image count is resolved

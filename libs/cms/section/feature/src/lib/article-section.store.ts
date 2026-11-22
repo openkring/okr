@@ -9,6 +9,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { ARTICLE_CONFIG_SHAPE, ArticleConfig, ImageConfig } from '@okr/shared-models';
 
 import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
+import { resolveImageStyle } from '@okr/shared-util-core';
 
 export interface ArticleState {
   config: ArticleConfig;
@@ -32,7 +33,7 @@ export const ArticleStore = signalStore(
     return {
       imgixBaseUrl: computed(() => store.appStore.services.imgixBaseUrl()),
       currentUser: computed(() => store.appStore.currentUser()),
-      imageStyle: computed(() => store.config().imageStyle),
+      imageStyle: computed(() => resolveImageStyle(store.config()?.imageStyle)),   // stored partial over the defaults (1.171)
 
       images: computed((): ImageConfig[] => store.config()?.images ?? [])
     };

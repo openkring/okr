@@ -1,4 +1,5 @@
 import { Component, computed, inject, input, model, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import {
   IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonLabel, IonNote, IonRow,
   IonSegment, IonSegmentButton, ModalController
@@ -7,7 +8,7 @@ import {
 import { ViewPositions } from '@okr/shared-categories';
 import { ArticleSlideshow, EDITOR_CONFIG_SHAPE, EditorConfig, ImageConfig, ImageStyle, SLIDESHOW_EFFECTS, SlideshowEffect, UserModel, ViewPosition } from '@okr/shared-models';
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, ErrorNote, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n } from '@okr/shared-ui';
-import { coerceBoolean } from '@okr/shared-util-core';
+import { coerceBoolean, compactImageStyle } from '@okr/shared-util-core';
 import { ARTICLE_IMAGES_SEGMENT_FIELDS, DEFAULT_SLIDESHOW, SLIDESHOW_DURATION_MAX, SLIDESHOW_INTERVAL_MAX, articleImagePosition, getErrorSegments, getFieldErrors, ImageLayoutId, resolveImageLayout, SectionErrors, SectionI18n } from '@okr/cms-section-util';
 
 import { ImagesConfiguration } from './images-configuration';
@@ -16,6 +17,13 @@ import { ImageLayoutPreview } from './image-layout-preview';
 import { ImageLayoutSelectModal } from './image-layout-select.modal';
 
 type Segment = 'select' | 'layout' | 'styles';
+
+/**
+ * 'all': the card with its three segments (journal mode and other callers). The article form splits it over its two
+ * tabs (spec 1.171): 'select' = the image list in «Inhalt», 'appearance' = layout, position, caption, action and the
+ * image style in «Darstellung», without segments.
+ */
+export type ArticleImagesMode = 'all' | 'select' | 'appearance';
 
 /** Mosaic and big-grid read well with six pictures; the picker caps its thumbnails the same way. */
 const MAX_PREVIEW_COUNT = 6;
@@ -42,21 +50,41 @@ const MULTI_IMAGE_POSITIONS = ViewPositions.filter((p) => p.id === ViewPosition.
   imports: [
     CategoryOld, Checkbox, StringSelect, ErrorNote, NumberInput, ImagesConfiguration, ImageStyleConfiguration, ImageLayoutPreview,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, IonLabel, IonNote, IonButton,
-    IonSegment, IonSegmentButton
+    IonSegment, IonSegmentButton, NgTemplateOutlet
   ],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px; } }
     .layout-current { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
     .layout-preview { width: 160px; max-width: 100%; }
     .layout-name { font-weight: 600; margin-bottom: 4px; }
+    .style-default { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px 0; }
     .error-dot { display: inline-block; width: 8px; height: 8px; margin-inline-start: 6px; border-radius: 50%; background: var(--ion-color-danger); vertical-align: middle; }
   `],
   template: `
     <ion-card>
       <ion-card-header>
-        <ion-card-title>{{ i18n().article_images_title() }}</ion-card-title>
+        <ion-card-title>{{ mode() === 'appearance' ? i18n().article_images_appearanceTitle() : i18n().article_images_title() }}</ion-card-title>
       </ion-card-header>
       <ion-card-content>
+        @if (mode() === 'select') {
+          <ng-container [ngTemplateOutlet]="selectPart" />
+        } @else if (mode() === 'appearance') {
+          <ng-container [ngTemplateOutlet]="layoutPart" />
+          <!-- the rest of the image style: «Standard» until it differs from the defaults or holds an error (spec 1.171 §4.3) -->
+          @if (showStyles()) {
+            <ng-container [ngTemplateOutlet]="stylesPart" />
+          } @else if (count() > 0) {
+            <div class="style-default">
+              <div>
+                <div class="layout-name">{{ i18n().article_images_style_default() }}</div>
+                <ion-note>{{ i18n().article_images_style_defaultHelper() }}</ion-note>
+              </div>
+              <ion-button fill="outline" size="small" [disabled]="isReadOnly()" (click)="stylesOpened.set(true)">
+                {{ i18n().article_images_style_customize() }}
+              </ion-button>
+            </div>
+          }
+        } @else {
         <ion-segment [value]="segment()" (ionChange)="onSegmentChange($event.detail.value)">
           <ion-segment-button value="select">
             <ion-label>{{ i18n().article_images_segment_select() }}@if (hasErrors('select')) {<span class="error-dot" role="img" [attr.aria-label]="i18n().segment_errors()"></span>}</ion-label>
@@ -72,7 +100,15 @@ const MULTI_IMAGE_POSITIONS = ViewPositions.filter((p) => p.id === ViewPosition.
         </ion-segment>
 
         @switch (segment()) {
-          @case ('select') {
+          @case ('select') { <ng-container [ngTemplateOutlet]="selectPart" /> }
+          @case ('layout') { <ng-container [ngTemplateOutlet]="layoutPart" /> }
+          @case ('styles') { <ng-container [ngTemplateOutlet]="stylesPart" /> }
+        }
+        }
+      </ion-card-content>
+    </ion-card>
+
+    <ng-template #selectPart>
             <okr-images-config
               [images]="images()" (imagesChange)="images.set($event)"
               [embedded]="true"
@@ -84,13 +120,14 @@ const MULTI_IMAGE_POSITIONS = ViewPositions.filter((p) => p.id === ViewPosition.
               [i18n]="i18n()"
               [errors]="errors()"
             />
-          }
-          @case ('layout') {
+    </ng-template>
+
+    <ng-template #layoutPart>
             <ion-grid>
               <ion-row>
                 @if (count() === 0) {
                   <ion-col size="12">
-                    <ion-note>{{ i18n().article_images_layout_empty() }}</ion-note>
+                    <ion-note>{{ mode() === 'appearance' ? i18n().article_images_noImages() : i18n().article_images_layout_empty() }}</ion-note>
                   </ion-col>
                 }
                 @if (layout(); as layout) {
@@ -98,10 +135,19 @@ const MULTI_IMAGE_POSITIONS = ViewPositions.filter((p) => p.id === ViewPosition.
                     <div class="layout-current">
                       <okr-image-layout-preview class="layout-preview" [layout]="layout" [count]="previewCount()" [label]="layoutName()" aria-hidden="true" />
                       <div>
-                        <div class="layout-name">{{ layoutName() }}</div>
+                        <div class="layout-name">{{ layoutName() }}@if (isAutoLayout()) { · {{ i18n().article_images_layout_auto() }}}</div>
+                        @if (isAutoLayout()) {
+                          <ion-note>{{ i18n().article_images_layout_autoHelper() }}</ion-note><br />
+                        }
                         <ion-button fill="outline" size="small" [disabled]="isReadOnly()" (click)="chooseLayout()">
                           {{ i18n().article_images_layout_choose() }}
                         </ion-button>
+                        <!-- a chosen layout can go back to «Automatisch» (absent = follows the image count, spec 1.171 §5.2) -->
+                        @if (mode() === 'appearance' && !isAutoLayout()) {
+                          <ion-button fill="clear" size="small" [disabled]="isReadOnly()" (click)="imageLayout.set(undefined)">
+                            {{ i18n().article_images_layout_reset() }}
+                          </ion-button>
+                        }
                       </div>
                     </div>
                   </ion-col>
@@ -164,8 +210,9 @@ const MULTI_IMAGE_POSITIONS = ViewPositions.filter((p) => p.id === ViewPosition.
               <okr-error-note [errors]="errorsFor('action')" />
               <okr-error-note [errors]="errorsFor('zoomFactor')" />
             }
-          }
-          @case ('styles') {
+    </ng-template>
+
+    <ng-template #stylesPart>
             <okr-image-style
               [formData]="imageStyle()" (formDataChange)="imageStyle.set($event)"
               [embedded]="true"
@@ -176,10 +223,7 @@ const MULTI_IMAGE_POSITIONS = ViewPositions.filter((p) => p.id === ViewPosition.
               [i18n]="i18n()"
               [errors]="errors()"
             />
-          }
-        }
-      </ion-card-content>
-    </ion-card>
+    </ng-template>
   `
 })
 export class ArticleImagesConfiguration {
@@ -202,6 +246,8 @@ export class ArticleImagesConfiguration {
   /** travel journal (spec 1.154): photos from the journal's picker; no position, column size, action or Styles */
   public readonly journalMode = input(false);
   public readonly emptyText = input('');
+  /** the whole card, or the part one of the article form's tabs shows (spec 1.171) */
+  public readonly mode = input<ArticleImagesMode>('all');
   public readonly i18n = input.required<SectionI18n>();
   /** vest field name -> messages of the running section suite (see section.form.ts) */
   public readonly errors = input<SectionErrors>({});
@@ -213,7 +259,8 @@ export class ArticleImagesConfiguration {
   // value is never hidden behind a closed segment); a chosen segment that is no longer offered (Styles after the
   // advanced toggle went off) falls back the same way
   private readonly chosenSegment = signal<Segment | undefined>(undefined);
-  private readonly offeredSegments = computed<Segment[]>(() => this.stylesAvailable() ? ['select', 'layout', 'styles'] : ['select', 'layout']);
+  private readonly offeredSegments = computed<Segment[]>(() =>
+    this.stylesAvailable() || this.mode() === 'appearance' ? ['select', 'layout', 'styles'] : ['select', 'layout']);
   protected readonly errorSegments = computed(() => getErrorSegments(this.errors(), ARTICLE_IMAGES_SEGMENT_FIELDS, this.offeredSegments()));
   protected readonly segment = computed<Segment>(() => {
     const chosen = this.chosenSegment();
@@ -221,8 +268,19 @@ export class ArticleImagesConfiguration {
     return this.errorSegments()[0] ?? 'select';
   });
 
+  // «Darstellung» (spec 1.171): the image style shows as «Standard» until a styles field differs from the default,
+  // holds an error, or the user asks to customise it
+  protected readonly stylesOpened = signal(false);
+  private readonly styleDiffers = computed(() => {
+    const differing = Object.keys(compactImageStyle(this.imageStyle()) ?? {});
+    return differing.some((field) => ARTICLE_IMAGES_SEGMENT_FIELDS.styles.includes(field));
+  });
+  protected readonly showStyles = computed(() => this.stylesOpened() || this.styleDiffers() || this.hasErrors('styles'));
+
   // layout
   protected readonly count = computed(() => this.images().length);
+  /** no stored layout: it follows the image count («Automatisch», spec 1.171 §5.2) */
+  protected readonly isAutoLayout = computed(() => !this.imageLayout());
   /** the layout that renders for the current count; undefined with fewer than two images */
   protected readonly layout = computed(() => resolveImageLayout(this.imageLayout(), this.count()));
   protected readonly previewCount = computed(() => Math.min(this.count(), MAX_PREVIEW_COUNT));

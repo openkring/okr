@@ -10,7 +10,7 @@ import { Geolocation, Position } from '@capacitor/geolocation';
 import { catchError, firstValueFrom, of } from 'rxjs';
 
 import { AppStore, withErrorState } from '@okr/shared-feature';
-import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, EmailLayoutChoice, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageActionType, ImageConfig, SectionModel, SectionType, WebsiteCollection, WebsiteModel } from '@okr/shared-models';
+import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, EmailLayoutChoice, IMAGE_CONFIG_SHAPE, ImageActionType, ImageConfig, SectionModel, SectionType, WebsiteCollection, WebsiteModel } from '@okr/shared-models';
 import { getSystemQuery, chipMatches, debugData, debugItemLoaded, debugMessage, fill, nameMatches, sanitizeFileName, chatBlockedAlertMessage, isChatBlockedError, EMERGENCY_GROUP_KEY } from '@okr/shared-util-core';
 import { DEFAULT_MIMETYPES, IMAGE_MIMETYPES } from '@okr/shared-constants';
 import { confirm, downloadTextFile, exportCsv, getExportFileName, lazyService, showToast, resourceParams, notify } from '@okr/shared-util-angular';
@@ -308,10 +308,8 @@ export const _SectionStore = signalStore(
           section.properties.images = [];
         }
         section.properties.images = [...section.properties.images, newImage];
-        if (!section.properties.imageStyle) {
-          section.properties.imageStyle = IMAGE_STYLE_SHAPE;
-        }
-        section.properties.imageStyle.action = ImageActionType.Download;
+        // a new object: the stored style may be absent (spec 1.171 D1b) and IMAGE_STYLE_SHAPE must never be mutated
+        section.properties.imageStyle = { ...section.properties.imageStyle, action: ImageActionType.Download };
         store.clearError();
         try {
           await store.sectionService.update(section, store.currentUser());

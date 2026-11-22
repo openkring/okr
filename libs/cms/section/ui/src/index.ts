@@ -47,3 +47,4 @@ export * from './lib/image-layout-preview';
 export * from './lib/image-layout-select.modal';
 export * from './lib/article-images-configuration';
 export * from './lib/contact-message.form';
+export * from './lib/section-add-chips';

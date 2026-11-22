@@ -136,7 +136,17 @@
       },
       "layout": {
         "choose": "Layout wählen …",
-        "empty": "Füge zuerst Bilder hinzu. Dann kannst du hier festlegen, wie sie angezeigt werden."
+        "empty": "Füge zuerst Bilder hinzu. Dann kannst du hier festlegen, wie sie angezeigt werden.",
+        "auto": "Automatisch",
+        "autoHelper": "Das Layout richtet sich nach der Anzahl Bilder.",
+        "reset": "Automatisch wählen"
+      },
+      "appearanceTitle": "Bilder: Anordnung und Stil",
+      "noImages": "Füge unter «Inhalt» Bilder hinzu. Dann kannst du hier festlegen, wie sie angezeigt werden.",
+      "style": {
+        "default": "Standard",
+        "defaultHelper": "Die Bilder werden mit den üblichen Einstellungen angezeigt.",
+        "customize": "Anpassen"
       }
     },
     "slideshow": {
@@ -152,6 +162,21 @@
       "interval_helper": "Wie lange ein Bild stehen bleibt (1 bis 30).",
       "duration_label": "Sekunden für den Übergang",
       "duration_helper": "Wie lange der Wechsel dauert (0.2 bis 5)."
+    },
+    "tab": {
+      "content": "Inhalt",
+      "appearance": "Darstellung"
+    },
+    "add": {
+      "label": "Hinzufügen:",
+      "button": "Button",
+      "subTitle": "Untertitel",
+      "intro": "Einleitung",
+      "background": "Hintergrundfarbe",
+      "remove": "Entfernen"
+    },
+    "look": {
+      "title": "Hervorhebung"
     }
   },
   "contract": {

@@ -3,14 +3,15 @@ import { form } from '@angular/forms/signals';
 
 import { AccordionConfig, AccordionSection, ColorIonic, ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, ContactConfig, ContactSection, FooterConfig, FooterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FormSectionConfig, AlbumConfig, AlbumSection, SectionFeedback, ArticleSection, ArticleSlideshow, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, CourseConfig, CourseSection, EventsConfig, EventsSection, HeroConfig, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, InvitationsConfig, InvitationsSection, JournalTrackConfig, JournalTrackSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TilesConfig, TilesSection, NewsConfig, NewsSection, SectionCta, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
 import { Chips, ErrorNote, TextareaInput, TextareaInputI18n } from '@okr/shared-ui';
-import { coerceBoolean, debugFormModel, hasRole } from '@okr/shared-util-core';
+import { coerceBoolean, debugFormModel, hasRole, resolveImageStyle } from '@okr/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
 import { MODEL_SELECTOR, validateVestTree, vestErrors } from '@okr/shared-util-angular';
-import { IonItem, IonToggle } from '@ionic/angular';
-import { ChartOption, ContactDetails, getPeopleResponsibilityIds, getInlineErrorFields, getJournalInlineErrorFields, getRemainingErrors, isJournalModeField, JOURNAL_VIDEO_CLIPS_MAX, SectionErrors, SectionI18n, validateSection } from '@okr/cms-section-util';
+import { IonItem, IonLabel, IonSegment, IonSegmentButton, IonToggle } from '@ionic/angular';
+import { ARTICLE_TAB_FIELDS, ChartOption, ContactDetails, getErrorSegments, getPeopleResponsibilityIds, getInlineErrorFields, getJournalInlineErrorFields, getRemainingErrors, isJournalModeField, JOURNAL_VIDEO_CLIPS_MAX, SectionErrors, SectionI18n, validateSection } from '@okr/cms-section-util';
 import { FormI18n } from '@okr/forms-util';
 
-import { SectionConfiguration } from './section-configuration';
+import { SectionConfigPart, SectionConfiguration } from './section-configuration';
+import { SectionAddChip, SectionAddChips } from './section-add-chips';
 import { EditorConfiguration } from './editor-configuration';
 import { ImageStyleConfiguration } from './image-style-configuration';
 import { ArticleImagesConfiguration } from './article-images-configuration';
@@ -64,7 +65,7 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
   selector: 'okr-section-form',
   standalone: true,
   imports: [
-    IonItem, IonToggle,
+    IonItem, IonToggle, IonSegment, IonSegmentButton, IonLabel, SectionAddChips,
     Chips, TextareaInput, ErrorNote,
     SectionConfiguration, EditorConfiguration, ImageStyleConfiguration, ArticleImagesConfiguration, AlbumConfiguration,
     IframeConfiguration, WeatherConfiguration, ConnectionsConfiguration, DeparturesConfiguration, EnergyConfiguration, CounterConfiguration, ContactConfiguration, FooterConfiguration, PeopleConfiguration, ResponsibilityConfiguration, VideoConfiguration,
@@ -74,11 +75,25 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
     MemberConfiguration, RagConfiguration, FormSectionConfiguration, SankeyConfiguration, SpiderConfiguration, TocConfiguration, TestimonialConfiguration, TimelineConfiguration, AdventConfiguration,
     AccordionConfiguration, TilesConfiguration, NewsConfiguration, CtaConfiguration, HeroConfiguration, HeroLogoConfiguration, FeedbackConfiguration, JournalMapConfiguration, JournalTrackConfiguration
 ],
-  styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
+  styles: [`
+    @media (width <= 600px) { ion-card { margin: 5px;} }
+    .article-tabs { padding: 8px 16px 0; }
+    .error-dot { display: inline-block; width: 8px; height: 8px; margin-inline-start: 6px; border-radius: 50%; background: var(--ion-color-danger); vertical-align: middle; }
+  `],
   template: `
     @if (showForm()) {
-      <!-- a button section has no advanced toggle: all its settings are always shown -->
-      @if (!journalMode() && formData().type !== 'button') {
+      <!-- a button section has no advanced toggle: all its settings are always shown;
+           an article has two tabs instead (spec 1.171): «Inhalt» and «Darstellung» -->
+      @if (articleTabs()) {
+        <ion-segment class="article-tabs" [value]="articleTab()" (ionChange)="onArticleTabChange($event.detail.value)">
+          <ion-segment-button value="content">
+            <ion-label>{{ i18n().article_tab_content() }}@if (tabHasErrors('content')) {<span class="error-dot" role="img" [attr.aria-label]="i18n().segment_errors()"></span>}</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="appearance">
+            <ion-label>{{ i18n().article_tab_appearance() }}@if (tabHasErrors('appearance')) {<span class="error-dot" role="img" [attr.aria-label]="i18n().segment_errors()"></span>}</ion-label>
+          </ion-segment-button>
+        </ion-segment>
+      } @else if (!journalMode() && formData().type !== 'button') {
         <ion-item lines="none">
           <ion-toggle [checked]="advancedToggle()" (ionChange)="advancedToggle.set($event.detail.checked)" [disabled]="isReadOnly()">
             {{ i18n().form_advanced_label() }}
@@ -97,6 +112,7 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
           [i18n]="i18n()"
           [showAdvanced]="showAdvanced()"
           [journalMode]="journalMode()"
+          [part]="sectionConfigPart()"
           [errors]="errors()"
         />
       }
@@ -238,17 +254,20 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
         }
 
         @case('article') {
+          <!-- two tabs (spec 1.171): «Inhalt» = text, images and button; «Darstellung» = layout and image style -->
           @if(content(); as content) {
-            <!-- position and column size live in the «Bilder» card's Layout segment (spec 1.154 §5) -->
-            <okr-editor-config
-              [formData]="content" (formDataChange)="onContentChange($event)"
-              [readOnly]="isReadOnly()"
-              [i18n]="i18n()"
-              [showAdvanced]="showAdvanced()"
-              [showLayout]="false"
-            />
+            @if (articleTab() === 'content') {
+              <okr-editor-config
+                [formData]="content" (formDataChange)="onContentChange($event)"
+                [readOnly]="isReadOnly()"
+                [i18n]="i18n()"
+                [showAdvanced]="showAdvanced()"
+                [showLayout]="false"
+              />
+            }
             @if(imageStyle(); as imageStyle) {
               <okr-article-images-config
+                [mode]="articleTab() === 'content' ? 'select' : 'appearance'"
                 [images]="images()" (imagesChange)="onImagesChange($event)"
                 [imageStyle]="imageStyle" (imageStyleChange)="onImageStyleChange($event)"
                 [imageLayout]="imageLayout()" (imageLayoutChange)="onImageLayoutChange($event)"
@@ -263,14 +282,21 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
               />
             }
           }
-          <okr-cta-config
-            [formData]="articleCtas()" (formDataChange)="onArticleCtasChange($event)"
-            [max]="1"
-            errorKey="cta"
-            [readOnly]="isReadOnly()"
-            [i18n]="i18n()"
-            [errors]="errors()"
-          />
+          @if (articleTab() === 'content') {
+            <!-- the button: a «+» chip until the article has one (3 of 209 articles use it, spec 1.171 §2) -->
+            @if (showArticleCta()) {
+              <okr-cta-config
+                [formData]="articleCtas()" (formDataChange)="onArticleCtasChange($event)"
+                [max]="1"
+                errorKey="cta"
+                [readOnly]="isReadOnly()"
+                [i18n]="i18n()"
+                [errors]="errors()"
+              />
+            } @else {
+              <okr-section-add-chips [chips]="articleCtaChip()" [label]="i18n().article_add_label()" [readOnly]="isReadOnly()" (add)="articleCtaOpened.set(true)" />
+            }
+          }
         }
 
         @case('button') {
@@ -731,7 +757,7 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
         }
       }
 
-      @if(showAdvanced() && !journalMode()) {
+      @if(showAdvanced() && !journalMode() && (!articleTabs() || articleTab() === 'appearance')) {
         @if(hasRole('privileged')) {
           <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [readOnly]="isReadOnly()" [allChips]="allTags()" />
         }
@@ -923,8 +949,33 @@ export class SectionForm {
   protected notes = computed(() => this.formData().notes ?? DEFAULT_NOTES);
   /** the user's advanced toggle */
   protected advancedToggle = signal(false);
-  /** a button section has no toggle: its name (e.g. emergency-button), intro, tags and notes are always offered */
-  protected showAdvanced = computed(() => this.advancedToggle() || this.formData().type === 'button');
+  /**
+   * a button section has no toggle: its name (e.g. emergency-button), intro, tags and notes are always offered;
+   * an article neither: its two tabs together offer every setting (spec 1.171)
+   */
+  protected showAdvanced = computed(() => this.advancedToggle() || this.formData().type === 'button' || this.articleTabs());
+
+  // the article's two tabs (spec 1.171): it always opens on «Inhalt» (D4); journal mode keeps its own reduced form
+  protected readonly articleTabs = computed(() => !this.journalMode() && this.formData().type === 'article');
+  protected readonly articleTab = signal<'content' | 'appearance'>('content');
+  protected readonly sectionConfigPart = computed<SectionConfigPart>(() => this.articleTabs() ? this.articleTab() : 'all');
+  private readonly articleTabErrors = computed(() => getErrorSegments(this.errors(), ARTICLE_TAB_FIELDS, ['content', 'appearance'] as const));
+  /** the article's button card: shown once it has a button, or after a click on its «+» chip */
+  protected readonly articleCtaOpened = signal(false);
+  protected readonly showArticleCta = computed(() => this.articleCtas().length > 0 || this.articleCtaOpened() || this.hasCtaErrors());
+  protected readonly articleCtaChip = computed((): SectionAddChip[] => [{ id: 'cta', label: this.i18n().article_add_button() }]);
+
+  protected onArticleTabChange(value: string | number | undefined): void {
+    if (value === 'content' || value === 'appearance') this.articleTab.set(value);
+  }
+
+  protected tabHasErrors(tab: 'content' | 'appearance'): boolean {
+    return this.articleTabErrors().includes(tab);
+  }
+
+  private hasCtaErrors(): boolean {
+    return Object.keys(this.errors() ?? {}).some((key) => key === 'cta' || key.startsWith('cta.'));
+  }
 
   /************************************** actions *********************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean | AvatarInfo[]): void {
@@ -976,7 +1027,7 @@ export class SectionForm {
 
   private getImageStyle(): ImageStyle | undefined {
     switch (this.formData().type) {
-      case 'article': return (this.formData() as ArticleSection).properties.imageStyle || IMAGE_STYLE_SHAPE;
+      case 'article': return resolveImageStyle((this.formData() as ArticleSection).properties.imageStyle);
       case 'hero': return (this.formData() as HeroSection).properties.imageStyle || IMAGE_STYLE_SHAPE;
       case 'slider': return (this.formData() as SliderSection).properties.imageStyle || IMAGE_STYLE_SHAPE;
       default: return undefined;

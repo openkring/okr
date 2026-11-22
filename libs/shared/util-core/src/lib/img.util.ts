@@ -5,7 +5,7 @@
    Firebase storage is linked as a source to imgix CDN and the images can be served from there.
 */
 import { THUMBNAIL_SIZE } from "@okr/shared-constants";
-import { BackgroundStyle, ImageConfig, ImageStyle, ImageType } from "@okr/shared-models";
+import { BackgroundStyle, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType } from "@okr/shared-models";
 import { fileExtension, fileLogo, isAudio, isDocument, isImage, isPdf, isStreamingVideo, isVideo } from './file.util';
 import { die, warn } from './log.util';
 
@@ -560,4 +560,34 @@ export function collageTiles(count: number): CollageTile[] {
   if (count - i === 1) tiles.push({ index: i, colSpan: 3, rowSpan: 1 });
   if (count - i === 2) tiles.push({ index: i, colSpan: 2, rowSpan: 1 }, { index: i + 1, colSpan: 1, rowSpan: 1 });
   return tiles;
+}
+
+/**
+ * The complete image style of a stored partial (spec 1.171 D1b): every field the partial lacks, or holds
+ * as `undefined`, takes its value from IMAGE_STYLE_SHAPE. A missing style resolves to the defaults.
+ * Returns a new object; neither the partial nor the shape is changed.
+ */
+export function resolveImageStyle(style: Partial<ImageStyle> | undefined): ImageStyle {
+  const resolved: ImageStyle = { ...IMAGE_STYLE_SHAPE };
+  if (!style) return resolved;
+  for (const [key, value] of Object.entries(style)) {
+    if (value !== undefined) (resolved as unknown as Record<string, unknown>)[key] = value;
+  }
+  return resolved;
+}
+
+/**
+ * The part of an image style that differs from IMAGE_STYLE_SHAPE (spec 1.171 D1b) — what an article
+ * stores. Fields equal to their default and `undefined` fields are left out; fields the shape does not
+ * know are kept. Returns undefined when nothing differs, so the caller can drop the style altogether.
+ */
+export function compactImageStyle(style: Partial<ImageStyle> | undefined): Partial<ImageStyle> | undefined {
+  if (!style) return undefined;
+  const defaults = IMAGE_STYLE_SHAPE as unknown as Record<string, unknown>;
+  const compact: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(style)) {
+    if (value === undefined || value === defaults[key]) continue;
+    compact[key] = value;
+  }
+  return Object.keys(compact).length > 0 ? compact as Partial<ImageStyle> : undefined;
 }

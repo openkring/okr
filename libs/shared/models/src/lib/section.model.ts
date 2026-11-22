@@ -485,7 +485,12 @@ export interface ArticleSection extends BaseSection {
 
 export interface ArticleConfig {
   images: ImageConfig[];
-  imageStyle: ImageStyle;
+  /**
+   * Only the fields that differ from IMAGE_STYLE_SHAPE (spec 1.171 D1b); absent = all defaults.
+   * Readers resolve it with `resolveImageStyle` (`@okr/shared-util-core`); saves compact it.
+   * Articles saved before 1.171 still carry a full style, which is a valid partial.
+   */
+  imageStyle?: Partial<ImageStyle>;
   /** How 2+ images are laid out (spec 1.154 §5): an id of `IMAGE_LAYOUT_IDS` in `@okr/cms-section-util`. Absent = 'slider' (today's carousel). */
   imageLayout?: string;
   titleI18n?: I18nString;

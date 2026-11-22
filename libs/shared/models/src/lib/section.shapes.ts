@@ -68,9 +68,9 @@ export const ALBUM_CONFIG_SHAPE = {
 } as AlbumConfig;
 
 // --------------------------------------- ARTICLE ----------------------------------------
+/** no imageStyle: an article stores only what differs from IMAGE_STYLE_SHAPE (spec 1.171 D1b) */
 export const ARTICLE_CONFIG_SHAPE = {
     images: [],
-    imageStyle: IMAGE_STYLE_SHAPE,
 } as ArticleConfig;
 
 // --------------------------------------- BUTTON ----------------------------------------

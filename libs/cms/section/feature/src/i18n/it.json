@@ -136,7 +136,17 @@
       },
       "layout": {
         "choose": "Scegli il layout …",
-        "empty": "Aggiungi prima delle immagini. Poi qui puoi scegliere come vengono mostrate."
+        "empty": "Aggiungi prima delle immagini. Poi qui puoi scegliere come vengono mostrate.",
+        "auto": "Automatico",
+        "autoHelper": "La disposizione dipende dal numero di immagini.",
+        "reset": "Scegli automaticamente"
+      },
+      "appearanceTitle": "Immagini: disposizione e stile",
+      "noImages": "Aggiungi immagini in «Contenuto». Poi potrai scegliere qui come vengono mostrate.",
+      "style": {
+        "default": "Standard",
+        "defaultHelper": "Le immagini vengono mostrate con le impostazioni consuete.",
+        "customize": "Personalizza"
       }
     },
     "slideshow": {
@@ -152,6 +162,21 @@
       "interval_helper": "Quanto resta visibile un'immagine (da 1 a 30).",
       "duration_label": "Secondi per la transizione",
       "duration_helper": "Quanto dura il cambio (da 0.2 a 5)."
+    },
+    "tab": {
+      "content": "Contenuto",
+      "appearance": "Presentazione"
+    },
+    "add": {
+      "label": "Aggiungi:",
+      "button": "Pulsante",
+      "subTitle": "Sottotitolo",
+      "intro": "Introduzione",
+      "background": "Colore di sfondo",
+      "remove": "Rimuovi"
+    },
+    "look": {
+      "title": "Evidenza"
     }
   },
   "contract": {

@@ -3,7 +3,8 @@ import { CUSTOM_ELEMENTS_SCHEMA, Component, DestroyRef, ElementRef, afterRenderE
 import { Router } from '@angular/router';
 import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonRow } from '@ionic/angular';
 
-import { ArticleSection, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ViewPosition } from '@okr/shared-models';
+import { ArticleSection, ImageConfig, ImageStyle, ViewPosition } from '@okr/shared-models';
+import { resolveImageStyle } from '@okr/shared-util-core';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ImageLayoutId, articleBackground, articleHasLightText, articleImagePosition, resolveImageLayout, resolveSlideshow, validCtas, getSectionIntro } from '@okr/cms-section-util';
 import { badgeFor, Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
@@ -292,7 +293,8 @@ export class ArticleSectionComponent {
   protected slideshow = computed(() =>
     this.imageGridLayout() ? undefined : resolveSlideshow(this.section()?.properties.slideshow, this.images().length));
 
-  protected imageStyle = computed(() => this.section()?.properties.imageStyle ?? IMAGE_STYLE_SHAPE);
+  /** the stored partial over the defaults (spec 1.171 D1b) */
+  protected imageStyle = computed(() => resolveImageStyle(this.section()?.properties.imageStyle));
   // the carousel: one fixed box for all slides; the image is shown whole at its own proportions
   // (no fill/crop, no pixel ar= crop), letterboxed inside the box. No border: it would frame the
   // letterbox rather than the image.

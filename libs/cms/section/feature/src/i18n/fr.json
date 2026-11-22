@@ -136,7 +136,17 @@
       },
       "layout": {
         "choose": "Choisir la mise en page …",
-        "empty": "Ajoute d'abord des images. Tu pourras ensuite choisir ici comment elles s'affichent."
+        "empty": "Ajoute d'abord des images. Tu pourras ensuite choisir ici comment elles s'affichent.",
+        "auto": "Automatique",
+        "autoHelper": "La disposition dépend du nombre d'images.",
+        "reset": "Choisir automatiquement"
+      },
+      "appearanceTitle": "Images : disposition et style",
+      "noImages": "Ajoute des images sous «Contenu». Tu pourras ensuite choisir ici comment elles s'affichent.",
+      "style": {
+        "default": "Standard",
+        "defaultHelper": "Les images s’affichent avec les réglages habituels.",
+        "customize": "Personnaliser"
       }
     },
     "slideshow": {
@@ -152,6 +162,21 @@
       "interval_helper": "Combien de temps une image reste affichée (1 à 30).",
       "duration_label": "Secondes pour la transition",
       "duration_helper": "Durée du changement (0.2 à 5)."
+    },
+    "tab": {
+      "content": "Contenu",
+      "appearance": "Présentation"
+    },
+    "add": {
+      "label": "Ajouter :",
+      "button": "Bouton",
+      "subTitle": "Sous-titre",
+      "intro": "Introduction",
+      "background": "Couleur de fond",
+      "remove": "Retirer"
+    },
+    "look": {
+      "title": "Mise en avant"
     }
   },
   "contract": {

@@ -1,8 +1,10 @@
 import { THUMBNAIL_SIZE } from '@okr/shared-constants';
-import { ImageConfig, ImageStyle, ImageType } from '@okr/shared-models';
+import { IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType } from '@okr/shared-models';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as fileUtil from './file.util';
 import {
+    compactImageStyle,
+    resolveImageStyle,
     addImgixParams,
     getDefaultIconUrl,
     getImgFallbackSrc,
@@ -901,5 +903,34 @@ describe('collageTiles', () => {
       expect(toStoragePath('https://example.org/a.png')).toBeUndefined();
       expect(toStoragePath('https://bkaiser.imgix.net/')).toBeUndefined();
     });
+  });
+});
+
+describe('resolveImageStyle / compactImageStyle (spec 1.171 D1b)', () => {
+  it('resolves a missing style to the defaults', () => {
+    expect(resolveImageStyle(undefined)).toEqual(IMAGE_STYLE_SHAPE);
+    expect(resolveImageStyle(undefined)).not.toBe(IMAGE_STYLE_SHAPE);
+  });
+
+  it('keeps stored values and fills the rest, ignoring undefined', () => {
+    const resolved = resolveImageStyle({ height: '300px', captionPosition: undefined });
+    expect(resolved.height).toBe('300px');
+    expect(resolved.captionPosition).toBe('none');
+    expect(resolved.width).toBe('100%');
+  });
+
+  it('compacts a full default style to undefined', () => {
+    expect(compactImageStyle({ ...IMAGE_STYLE_SHAPE })).toBeUndefined();
+    expect(compactImageStyle(undefined)).toBeUndefined();
+  });
+
+  it('keeps only the differing fields and unknown fields', () => {
+    const style = { ...IMAGE_STYLE_SHAPE, height: '150px', zoomFactor: 3, legacy: 'x' } as unknown as ImageStyle;
+    expect(compactImageStyle(style)).toEqual({ height: '150px', zoomFactor: 3, legacy: 'x' });
+  });
+
+  it('round-trips: resolving the compact form gives the full style back', () => {
+    const style = { ...IMAGE_STYLE_SHAPE, border: '2px solid #ccc', fill: true };
+    expect(resolveImageStyle(compactImageStyle(style))).toEqual(style);
   });
 });

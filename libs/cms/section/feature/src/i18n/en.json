@@ -136,7 +136,17 @@
       },
       "layout": {
         "choose": "Choose layout …",
-        "empty": "Add images first. Then you can choose here how they are shown."
+        "empty": "Add images first. Then you can choose here how they are shown.",
+        "auto": "Automatic",
+        "autoHelper": "The layout follows the number of images.",
+        "reset": "Choose automatically"
+      },
+      "appearanceTitle": "Images: arrangement and style",
+      "noImages": "Add images under «Content». Then you can choose here how they are shown.",
+      "style": {
+        "default": "Default",
+        "defaultHelper": "The images are shown with the usual settings.",
+        "customize": "Customise"
       }
     },
     "slideshow": {
@@ -152,6 +162,21 @@
       "interval_helper": "How long one image stays (1 to 30).",
       "duration_label": "Seconds for the transition",
       "duration_helper": "How long the change takes (0.2 to 5)."
+    },
+    "tab": {
+      "content": "Content",
+      "appearance": "Appearance"
+    },
+    "add": {
+      "label": "Add:",
+      "button": "Button",
+      "subTitle": "Subtitle",
+      "intro": "Intro",
+      "background": "Background colour",
+      "remove": "Remove"
+    },
+    "look": {
+      "title": "Emphasis"
     }
   },
   "contract": {

@@ -136,7 +136,17 @@
       },
       "layout": {
         "choose": "Elegir diseño …",
-        "empty": "Añade primero imágenes. Después puedes elegir aquí cómo se muestran."
+        "empty": "Añade primero imágenes. Después puedes elegir aquí cómo se muestran.",
+        "auto": "Automático",
+        "autoHelper": "La disposición depende del número de imágenes.",
+        "reset": "Elegir automáticamente"
+      },
+      "appearanceTitle": "Imágenes: disposición y estilo",
+      "noImages": "Añade imágenes en «Contenido». Después podrás elegir aquí cómo se muestran.",
+      "style": {
+        "default": "Estándar",
+        "defaultHelper": "Las imágenes se muestran con los ajustes habituales.",
+        "customize": "Personalizar"
       }
     },
     "slideshow": {
@@ -152,6 +162,21 @@
       "interval_helper": "Cuánto tiempo se ve una imagen (de 1 a 30).",
       "duration_label": "Segundos para la transición",
       "duration_helper": "Cuánto dura el cambio (de 0.2 a 5)."
+    },
+    "tab": {
+      "content": "Contenido",
+      "appearance": "Presentación"
+    },
+    "add": {
+      "label": "Añadir:",
+      "button": "Botón",
+      "subTitle": "Subtítulo",
+      "intro": "Introducción",
+      "background": "Color de fondo",
+      "remove": "Quitar"
+    },
+    "look": {
+      "title": "Énfasis"
     }
   },
   "contract": {

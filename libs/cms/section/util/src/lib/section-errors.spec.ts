@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { ARTICLE_IMAGES_SEGMENT_FIELDS, getErrorSegments, getFieldErrors, HERO_SEGMENT_FIELDS, LOGO_SEGMENT_FIELDS, getImageErrors, getInlineErrorFields, getJournalInlineErrorFields, getRemainingErrors, getUnrenderedFixedKeys, isInlineErrorField } from './section-errors';
+import { ARTICLE_IMAGES_SEGMENT_FIELDS, ARTICLE_TAB_FIELDS, getErrorSegments, getFieldErrors, HERO_SEGMENT_FIELDS, LOGO_SEGMENT_FIELDS, getImageErrors, getInlineErrorFields, getJournalInlineErrorFields, getRemainingErrors, getUnrenderedFixedKeys, isInlineErrorField } from './section-errors';
 
 describe('getInlineErrorFields', () => {
   it('always offers the base fields of section-configuration', () => {
@@ -213,5 +213,17 @@ describe('getErrorSegments (segmented cards, 1.154)', () => {
 
   it('maps the hero logo fields', () => {
     expect(getErrorSegments({ 'logo.url': ['x'], borderRadius: ['y'] }, LOGO_SEGMENT_FIELDS, ['image', 'style'])).toEqual(['image', 'style']);
+  });
+});
+
+describe('ARTICLE_TAB_FIELDS (spec 1.171)', () => {
+  const tabs = ['content', 'appearance'] as const;
+  it('files the written fields under «Inhalt»', () => {
+    expect(getErrorSegments({ title: ['tooLong'], 'images[0].url': ['required'], 'cta.url': ['invalid'] }, ARTICLE_TAB_FIELDS, tabs)).toEqual(['content']);
+  });
+
+  it('files the look and the image style under «Darstellung»', () => {
+    expect(getErrorSegments({ background: ['invalid'] }, ARTICLE_TAB_FIELDS, tabs)).toEqual(['appearance']);
+    expect(getErrorSegments({ width: ['notString'], 'slideshow.interval': ['tooBig'] }, ARTICLE_TAB_FIELDS, tabs)).toEqual(['appearance']);
   });
 });
