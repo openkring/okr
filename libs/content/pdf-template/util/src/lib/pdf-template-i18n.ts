@@ -321,6 +321,13 @@ export const MAILING_I18N_KEYS = {
   error:             PFX + 'mailing.error',
   attachments:       PFX + 'mailing.attachments',
   valid_until:       PFX + 'mailing.valid_until',
+  web_version:       PFX + 'mailing.web.label',
+  web_on:            PFX + 'mailing.web.on',
+  web_off:           PFX + 'mailing.web.off',
+  web_turn_off:      PFX + 'mailing.web.turn_off',
+  web_confirm:       PFX + 'mailing.web.confirm',
+  web_done:          PFX + 'mailing.web.done',
+  web_error:         PFX + 'mailing.web.error',
   // mail job
   // Zustellung: what «Ausstehend» means, the In-App read status, the person actions and the send log
   status_hint:       PFX + 'mailing.status.hint',

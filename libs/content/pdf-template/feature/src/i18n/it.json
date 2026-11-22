@@ -356,6 +356,15 @@
     "error": "Errore",
     "attachments": "Allegati",
     "valid_until": "Risposte possibili fino al",
+    "web": {
+      "label": "Versione web",
+      "on": "attiva",
+      "off": "disattivata",
+      "turn_off": "Disattiva la versione web",
+      "confirm": "La versione web di questa e-mail verrà eliminata. Il link nel browser non funzionerà più.",
+      "done": "La versione web è disattivata.",
+      "error": "Non è stato possibile disattivare la versione web."
+    },
     "job": {
       "title": "Consegna e-mail",
       "pending": "In attesa di avvio",

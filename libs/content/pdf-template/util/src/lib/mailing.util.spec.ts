@@ -4,9 +4,18 @@ import {
   recipientPersonKey,
   deliveryByPerson, deliveryStatusColor, deliveryStatusCounts, hasDeliveryReports,
   mailingAnswerColor, mailingAnswerCounts, mailingAnswerOf, mailingChannelCounts, mailingRecipientsFor, mailingStateColor,
-  mailJobProgress, sortMailingsNewestFirst, mailLogEventColor, mailLogEventOf, noticeReadCount } from './mailing.util';
+  mailJobProgress, sortMailingsNewestFirst, mailLogEventColor, mailLogEventOf, noticeReadCount, mailingWebVersionOn } from './mailing.util';
 
 const att = (key: string, state: Attendee['state']): Attendee => ({ person: { key, name1: '', name2: '', modelType: 'person', label: '' }, state } as Attendee);
+
+describe('mailingWebVersionOn', () => {
+  it('is on only while a webToken is set', () => {
+    expect(mailingWebVersionOn({ webToken: 'abc' })).toBe(true);
+    expect(mailingWebVersionOn({})).toBe(false);
+    expect(mailingWebVersionOn({ webToken: '' })).toBe(false);
+    expect(mailingWebVersionOn(undefined)).toBe(false);
+  });
+});
 
 describe('sortMailingsNewestFirst', () => {
   it('puts the newest first and an undated one last, without touching the input', () => {

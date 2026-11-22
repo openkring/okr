@@ -356,6 +356,15 @@
     "error": "Error",
     "attachments": "Adjuntos",
     "valid_until": "Respuestas posibles hasta",
+    "web": {
+      "label": "Versión web",
+      "on": "activada",
+      "off": "desactivada",
+      "turn_off": "Desactivar la versión web",
+      "confirm": "La versión web de este correo se eliminará. El enlace en el navegador dejará de funcionar.",
+      "done": "La versión web está desactivada.",
+      "error": "No se pudo desactivar la versión web."
+    },
     "job": {
       "title": "Entrega de correos",
       "pending": "Esperando el inicio",

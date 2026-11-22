@@ -356,6 +356,15 @@
     "error": "Erreur",
     "attachments": "Pièces jointes",
     "valid_until": "Réponses possibles jusqu'au",
+    "web": {
+      "label": "Version web",
+      "on": "activée",
+      "off": "désactivée",
+      "turn_off": "Désactiver la version web",
+      "confirm": "La version web de cet e-mail sera supprimée. Le lien dans le navigateur ne fonctionnera plus ensuite.",
+      "done": "La version web est désactivée.",
+      "error": "La version web n'a pas pu être désactivée."
+    },
     "job": {
       "title": "Distribution des e-mails",
       "pending": "En attente",

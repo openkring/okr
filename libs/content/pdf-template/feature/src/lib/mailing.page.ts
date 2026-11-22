@@ -11,15 +11,15 @@ import { EmptyList, ImgDirective, Spinner } from '@okr/shared-ui';
 import { AvatarPipe } from '@okr/avatar-ui';
 import { browseUrl } from '@okr/subject-address-util';
 import {
-  AppNavigationService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, navigateByUrl,
+  AlertService, AppNavigationService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, navigateByUrl,
 } from '@okr/shared-util-angular';
 import {
   deliveryStatusColor, deliveryStatusCounts, hasDeliveryReports, MailDeliveryStatus, MailingAnswer, mailingAnswerColor,
-  mailingRecipientsFor, mailingStateColor, mailJobProgress, formatChf, lastSendingAt, sendingDateLabel, sendingHasTask,
+  mailingRecipientsFor, mailingStateColor, mailingWebVersionOn, mailJobProgress, formatChf, lastSendingAt, sendingDateLabel, sendingHasTask,
   sendingStatusColor, sendingStatusLabelKey, sendingStatusOf, SendingStatus, summaryParts, noticeReadCount,
 } from '@okr/content-pdf-template-util';
 import { SendingModel } from '@okr/shared-models';
-import { fill, isOrgRecipient, prettyFormatDate, prettyFormatDateTime } from '@okr/shared-util-core';
+import { fill, hasRole, isOrgRecipient, prettyFormatDate, prettyFormatDateTime } from '@okr/shared-util-core';
 
 import { MailingRecipientRow, MailingStore } from './mailing.store';
 
@@ -82,6 +82,18 @@ const LETTERS_URL_TTL_MS = 9 * 60 * 1000;
                 <ion-item>
                   <ion-label>{{ store.i18n.attachments() }}</ion-label>
                   <ion-note slot="end">{{ attachmentNames() }}</ion-note>
+                </ion-item>
+              }
+              <ion-item>
+                <ion-label>{{ store.i18n.web_version() }}</ion-label>
+                <ion-note slot="end">{{ webOn() ? store.i18n.web_on() : store.i18n.web_off() }}</ion-note>
+              </ion-item>
+              @if (canTurnOffWeb()) {
+                <ion-item lines="none">
+                  <ion-button slot="end" fill="clear" size="small" [disabled]="webBusy()" (click)="turnOffWeb(m.okey)">
+                    <ion-icon slot="start" src="{{ 'eye-off' | svgIcon }}" />
+                    {{ store.i18n.web_turn_off() }}
+                  </ion-button>
                 </ion-item>
               }
               @if (m.validUntil) {
@@ -332,6 +344,31 @@ export class MailingPage {
 
   /** route param `:mailingKey` */
   public readonly mailingKey = input.required<string>();
+
+  private readonly alertService = inject(AlertService);
+  protected readonly webBusy = signal(false);
+  /** the public web version is on while the mailing still has its `webToken` */
+  protected readonly webOn = computed(() => mailingWebVersionOn(this.mailing()));
+  /** only privileged / memberAdmin may turn it off, as the callable checks too */
+  protected readonly canTurnOffWeb = computed(() => {
+    const user = this.store.appStore.currentUser();
+    return this.webOn() && (hasRole('privileged', user) || hasRole('memberAdmin', user));
+  });
+
+  protected async turnOffWeb(mailingKey: string): Promise<void> {
+    const tenantId = this.store.appStore.tenantId();
+    if (!tenantId || this.webBusy()) return;
+    if (!(await this.alertService.confirm(this.store.i18n.web_confirm(), true))) return;
+    this.webBusy.set(true);
+    try {
+      await this.store.docEmailService.setMailingWebVersion(tenantId, mailingKey);
+      await this.alertService.showToast(this.store.i18n.web_done());
+    } catch {
+      await this.alertService.showToast(this.store.i18n.web_error());
+    } finally {
+      this.webBusy.set(false);
+    }
+  }
 
   protected readonly answerKinds: MailingAnswer[] = ['accepted', 'waiting', 'declined', 'open'];
   protected readonly statusKinds: (MailDeliveryStatus | 'pending')[] = ['delivered', 'deferred', 'spam', 'rejected', 'pending'];

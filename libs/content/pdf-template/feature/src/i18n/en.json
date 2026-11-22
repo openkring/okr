@@ -356,6 +356,15 @@
     "error": "Error",
     "attachments": "Attachments",
     "valid_until": "Answers possible until",
+    "web": {
+      "label": "Web version",
+      "on": "on",
+      "off": "off",
+      "turn_off": "Turn off web version",
+      "confirm": "The web version of this email will be deleted. The link in the browser will no longer work afterwards.",
+      "done": "The web version is turned off.",
+      "error": "The web version could not be turned off."
+    },
     "job": {
       "title": "Email delivery",
       "pending": "Waiting to start",

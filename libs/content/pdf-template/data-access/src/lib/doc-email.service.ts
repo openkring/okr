@@ -239,6 +239,13 @@ export class DocEmailService {
     return data;
   }
 
+  /** Turns the public web version of a sent Versand off: the server deletes the snapshot and the token. */
+  public async setMailingWebVersion(tenantId: string, mailingKey: string): Promise<void> {
+    const callable = httpsCallable<{ tenantId: string; mailingKey: string; on: boolean }, unknown>(
+      this.functions, 'setMailingWebVersion');
+    await callable({ tenantId, mailingKey, on: false });
+  }
+
   /**
    * The Zustellung table of a Versand (spec 1.145 §5): per person, the possible delivery types and the
    * profile's choice. A group admin passes `groupKey` and only learns about the group's members.

@@ -36,6 +36,8 @@ export interface MailingView {
   post?: { via?: string };
   /** StoreDate: the answer links stop working after it */
   validUntil?: string;
+  /** the public web version is on while this token is set; turning it off deletes it (webVersion itself stays true) */
+  webToken?: string;
   /** `household.<okey>` → the contact the send reached (spec 1.168); written by onMailing */
   householdContacts?: Record<string, string>;
   /** `household.<okey>` → the household name at send time */
@@ -48,6 +50,11 @@ export interface MailingView {
  */
 export function recipientPersonKey(key: string, householdContacts: Record<string, string> | undefined): string | undefined {
   return isHouseholdRecipient(key) ? (householdContacts?.[key] || undefined) : key;
+}
+
+/** The web version of a Versand is on while its `webToken` is set (a turn-off deletes the token, not `webVersion`). */
+export function mailingWebVersionOn(mailing: Pick<MailingView, 'webToken'> | undefined): boolean {
+  return !!mailing?.webToken;
 }
 
 export type MailingState = 'pending' | 'sent' | 'failed';

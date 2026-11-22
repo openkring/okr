@@ -356,6 +356,15 @@
     "error": "Fehler",
     "attachments": "Anhänge",
     "valid_until": "Antworten möglich bis",
+    "web": {
+      "label": "Webversion",
+      "on": "an",
+      "off": "aus",
+      "turn_off": "Webversion ausschalten",
+      "confirm": "Die Webversion dieser E-Mail wird gelöscht. Der Link im Browser funktioniert danach nicht mehr.",
+      "done": "Die Webversion ist ausgeschaltet.",
+      "error": "Die Webversion konnte nicht ausgeschaltet werden."
+    },
     "job": {
       "title": "E-Mail-Zustellung",
       "pending": "Wartet auf den Start",
