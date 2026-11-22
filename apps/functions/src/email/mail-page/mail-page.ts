@@ -61,19 +61,25 @@ export async function renderMailPage(
 export async function runMailPageDraftReap(): Promise<void> {
   const db = getFirestore();
   const nowIso = new Date().toISOString();
-  const all = await db.collection(MailPageCollection).get();
+  // single-field range, no composite index; the 7-day rule and the mailingKey check stay in isReapableDraft
+  const cutoffIso = new Date(Date.parse(nowIso) - 7 * 86_400_000).toISOString();
+  const old = await db.collection(MailPageCollection).where('createdAt', '<', cutoffIso).get();
   let deleted = 0;
-  for (const d of all.docs) {
+  for (const d of old.docs) {
     const page = d.data() as MailPageModel;
     if (!isReapableDraft(page, nowIso)) continue;
-    const sections = await d.ref.collection(MailPageSectionCollection).listDocuments();
-    for (let i = 0; i < sections.length; i += 500) {
-      const batch = db.batch();
-      for (const ref of sections.slice(i, i + 500)) batch.delete(ref);
-      await batch.commit();
+    try {
+      const sections = await d.ref.collection(MailPageSectionCollection).listDocuments();
+      for (let i = 0; i < sections.length; i += 500) {
+        const batch = db.batch();
+        for (const ref of sections.slice(i, i + 500)) batch.delete(ref);
+        await batch.commit();
+      }
+      await d.ref.delete();
+      deleted++;
+    } catch (e) {
+      logger.warn(`mailPageDraftReap: draft ${d.id} not deleted`, e);
     }
-    await d.ref.delete();
-    deleted++;
   }
   logger.info(`mailPageDraftReap: deleted ${deleted} draft page(s)`);
 }

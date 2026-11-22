@@ -2207,5 +2207,6 @@ export async function resolveArrayItemDocs(entry: SubjectDataEntry, ctx: Subject
 //   draft that never sent is reaped after 7 days by `mailPageDraftReap`; a sent one keeps only the
 //   `mailingKey` link. The sender link is a uid on a subcollection-owning doc, so a `find` here would be
 //   a guess; follows the mailings content until an erasure row reads by senderUid.
-// not personal data: mailingWeb — the server-only snapshot of a sent Versand (spec 1.171), linked by
-//   `mailingKey`. Built without personal values: no name greeting, no answer or unsubscribe links.
+// gap: mailingWeb — the server-only snapshot of a sent Versand (spec 1.171), keyed by `mailingKey`. Built
+//   without personal values (no name greeting, no answer or unsubscribe links), but it holds the mail's free
+//   text, which may name people. No subject link of its own; follows the mailings content.
