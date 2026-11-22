@@ -3,7 +3,7 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { FolderModel, RoleName, UserModel } from '@okr/shared-models';
-import { Checkbox, CheckboxI18n, Chips, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { Checkbox, CheckboxI18n, Chips, ErrorNote, TextareaInput, TextareaInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
@@ -15,7 +15,7 @@ import { FolderI18n, folderValidations, hasPublicFolderTag, isPublicFolderKey, s
   standalone: true,
   imports: [
     ErrorNote,
-    TextInput, NotesInput, Chips, Checkbox,
+    TextInput, TextareaInput, Chips, Checkbox,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -67,7 +67,7 @@ import { FolderI18n, folderValidations, hasPublicFolderTag, isPublicFolderKey, s
           <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
         }
         @if (hasRole('contentAdmin')) {
-          <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="descriptionErrors()" />
+          <okr-textarea-input variant="card" [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="descriptionErrors()" />
         }
       </form>
     }
@@ -149,7 +149,7 @@ export class FolderForm {
     name: 'description',
     label: this.i18n().description_label(),
     placeholder: this.i18n().description_placeholder()
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   protected membersMayUploadI18n = computed(() => ({
     name: 'membersMayUpload',

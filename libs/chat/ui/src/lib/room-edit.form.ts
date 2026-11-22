@@ -3,7 +3,7 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { MatrixRoom, UserModel } from '@okr/shared-models';
-import { Checkbox, CheckboxI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, UrlInput, UrlInputI18n } from '@okr/shared-ui';
+import { Checkbox, CheckboxI18n, ErrorNote, TextareaInput, TextareaInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n, UrlInput, UrlInputI18n } from '@okr/shared-ui';
 import { DEFAULT_NAME, DEFAULT_URL, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
@@ -41,7 +41,7 @@ export interface RoomEditFormI18n {
   selector: 'okr-room-edit-form',
   standalone: true,
   imports: [
-    TextInput, ErrorNote, NotesInput, Checkbox, UrlInput, NumberInput,
+    TextInput, ErrorNote, TextareaInput, Checkbox, UrlInput, NumberInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -76,7 +76,7 @@ export interface RoomEditFormI18n {
           </ion-grid>
         </ion-card-content>
       </ion-card>
-      <okr-notes-input [i18n]="topicI18n()" [value]="topic()" (valueChange)="onFieldChange('topic', $event)" [maxLength]="descriptionLength" [readOnly]="false" [errors]="topicErrors()" />
+      <okr-textarea-input variant="card" [i18n]="topicI18n()" [value]="topic()" (valueChange)="onFieldChange('topic', $event)" [maxLength]="descriptionLength" [readOnly]="false" [errors]="topicErrors()" />
     </form>
   `
 })
@@ -152,7 +152,7 @@ export class RoomEditForm {
     name: 'topic',
     label: this.i18n().topic_label(),
     placeholder: this.i18n().topic_placeholder()
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   protected avatarI18n = computed(() => ({
     name: 'avatar',

@@ -3,7 +3,7 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent } from '@ionic/angular';
 
 import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
-import { NotesInput, NotesInputI18n } from '@okr/shared-ui';
+import { TextareaInput, TextareaInputI18n } from '@okr/shared-ui';
 import { coerceBoolean } from '@okr/shared-util-core';
 import { validateVestTree } from '@okr/shared-util-angular';
 import { BillI18n, BillQrScanFormModel, billQrScanValidations } from '@okr/finance-bill-util';
@@ -12,15 +12,15 @@ import { BillI18n, BillQrScanFormModel, billQrScanValidations } from '@okr/finan
 @Component({
   selector: 'okr-bill-qr-scan-form',
   standalone: true,
-  imports: [NotesInput, IonCard, IonCardContent],
+  imports: [TextareaInput, IonCard, IonCardContent],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     @if (showForm()) {
       <form novalidate>
         <ion-card>
           <ion-card-content class="ion-no-padding">
-            <okr-notes-input [i18n]="qrContentI18n()" [value]="qrContent()"
-              (valueChange)="onFieldChange('qrContent', $event)" [rows]="10" [autoGrow]="false" [embedded]="true" [fieldStyle]="true"
+            <okr-textarea-input [i18n]="qrContentI18n()" [value]="qrContent()"
+              (valueChange)="onFieldChange('qrContent', $event)" [rows]="10" [autoGrow]="false" [clearable]="true" [copyable]="true" [encryptable]="true"
               [maxLength]="descriptionLength" [errors]="qrContentErrors()" [readOnly]="isReadOnly()" />
           </ion-card-content>
         </ion-card>
@@ -61,7 +61,7 @@ export class BillQrScanForm {
     name: 'qrContent',
     label: this.i18n().qr_content_label(),
     placeholder: this.i18n().qr_content_placeholder(),
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   protected onFieldChange(fieldName: keyof BillQrScanFormModel, fieldValue: string): void {
     this.dirty.emit(true);

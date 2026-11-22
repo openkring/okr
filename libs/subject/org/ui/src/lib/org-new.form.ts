@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 
 import { BexioIdMask, ChVatMask } from '@okr/shared-config';
 import { CategoryListModel, City, RoleName, UserModel } from '@okr/shared-models';
-import { CategorySelect, Chips, CountrySelect, CountrySelectI18n, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { CategorySelect, Chips, CountrySelect, CountrySelectI18n, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote, TextareaInput, TextareaInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { CITY_LENGTH, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL, DESCRIPTION_LENGTH, EMAIL_LENGTH, NAME_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@okr/shared-constants';
@@ -19,7 +19,7 @@ import { ZefixLookup } from './zefix-lookup';
   selector: 'okr-org-new-form',
   standalone: true,
   imports: [
-    DateInput, TextInput, Chips, NotesInput, ErrorNote, EmailInput, PhoneInput,
+    DateInput, TextInput, Chips, TextareaInput, ErrorNote, EmailInput, PhoneInput,
     CitySearch, CategorySelect, ZefixLookup, CountrySelect,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
@@ -138,7 +138,7 @@ import { ZefixLookup } from './zefix-lookup';
       }
 
       @if(hasRole('admin')) { 
-        <okr-notes-input [i18n]="notesI18n()" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [errors]="notesErrors()" />
+        <okr-textarea-input variant="card" [i18n]="notesI18n()" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [errors]="notesErrors()" />
       }
     </form>
   }
@@ -171,7 +171,7 @@ export class OrgNewForm {
   protected urlI18n         = computed(() => ({ name: 'url',         label: this.i18n().url_label(),         placeholder: this.i18n().url_placeholder(),         helper: this.i18n().url_helper()         } as TextInputI18n));
   protected taxIdI18n       = computed(() => ({ name: 'taxId',       label: this.i18n().taxId_label(),       placeholder: this.i18n().taxId_placeholder(),       helper: this.i18n().taxId_helper()       } as TextInputI18n));
   protected bexioIdI18n     = computed(() => ({ name: 'bexioId',     label: this.i18n().bexioId_label(),     placeholder: this.i18n().bexioId_placeholder(),     helper: this.i18n().bexioId_helper()     } as TextInputI18n));
-  protected notesI18n       = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
+  protected notesI18n       = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as TextareaInputI18n));
   protected emailI18n       = computed(() => ({ name: 'email', label: this.i18n().email_label(), placeholder: this.i18n().email_placeholder() } as EmailInputI18n));
   protected phoneI18n       = computed(() => ({ name: 'phone', label: this.i18n().phone_label(), placeholder: this.i18n().phone_placeholder() } as PhoneInputI18n));
   protected dateOfFoundationI18n  = computed(() => ({ name: 'dateOfFoundation',  label: this.i18n().dateOfFoundation_label(),  placeholder: this.i18n().dateOfFoundation_placeholder(),  helper: this.i18n().dateOfFoundation_helper()  } as DateInputI18n));

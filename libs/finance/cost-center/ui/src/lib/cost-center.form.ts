@@ -5,7 +5,7 @@ import { IonButton, IonButtons, IonCard, IonCardContent, IonCol, IonGrid, IonIco
 import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
 import { CostCenterModel, CostCenterType, ResponsibilityModel, RoleName, UserModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { ErrorNote, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { ErrorNote, TextareaInput, TextareaInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
@@ -29,7 +29,7 @@ const COST_CENTER_TYPES: CostCenterType[] = ['root', 'group', 'leaf'];
   standalone: true,
   imports: [
     SvgIconPipe,
-    TextInput, StringSelect, NotesInput, ErrorNote,
+    TextInput, StringSelect, TextareaInput, ErrorNote,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonLabel, IonNote, IonButtons, IonButton, IonIcon
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
@@ -95,7 +95,7 @@ const COST_CENTER_TYPES: CostCenterType[] = ['root', 'group', 'leaf'];
         </ion-card>
 
         @if (hasRole('treasurer')) {
-          <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
+          <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
             [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
         }
       </form>
@@ -190,7 +190,7 @@ export class CostCenterForm {
   } as StringSelectI18n));
   protected notesI18n = computed(() => ({
     name: 'notes', label: this.i18n().notes(), placeholder: this.i18n().notes_placeholder()
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   constructor() {
     effect(() => this.valid.emit(this.costCenterForm().valid()));

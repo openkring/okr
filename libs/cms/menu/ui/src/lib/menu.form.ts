@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } f
 
 import { DEFAULT_MENU_ACTION, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ROLE, DEFAULT_SUBMENU_OFFSET, DEFAULT_TAGS, DEFAULT_URL, DESCRIPTION_LENGTH, LONG_NAME_LENGTH, MAX_STATIC_BULLET_SIZE, MAX_SUBMENU_OFFSET, MIN_STATIC_BULLET_SIZE, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { BaseProperty, CategoryListModel, MenuItemModel, RoleName, StaticMenuConfig, UserModel } from '@okr/shared-models';
-import { CategorySelect, Chips, ErrorNote, Color, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringList, StringSelect, StringSelectI18n, TextInput, TextInputI18n, UrlInput, UrlInputI18n, IconInput } from '@okr/shared-ui';
+import { CategorySelect, Chips, ErrorNote, Color, TextareaInput, TextareaInputI18n, NumberInput, NumberInputI18n, StringList, StringSelect, StringSelectI18n, TextInput, TextInputI18n, UrlInput, UrlInputI18n, IconInput } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
@@ -15,7 +15,7 @@ import type { OkrEditor } from '@okr/shared-ui-editor';
   selector: 'okr-menu-item-form',
   standalone: true,
   imports: [
-    TextInput, UrlInput, CategorySelect, Chips, NotesInput, NumberInput, StringList, ErrorNote,
+    TextInput, UrlInput, CategorySelect, Chips, TextareaInput, NumberInput, StringList, ErrorNote,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonLabel,
     IconInput, StringSelect, Color
 ],
@@ -212,7 +212,7 @@ import type { OkrEditor } from '@okr/shared-ui-editor';
       }
 
       @if(hasRole('contentAdmin')) {
-        <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="descriptionErrors()" />
+        <okr-textarea-input variant="card" [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="descriptionErrors()" />
       }
     </form>
   }
@@ -277,7 +277,7 @@ export class MenuForm {
 
   protected descriptionI18n = computed(() => ({
     name: 'description', label: this.i18n().description_label(), placeholder: this.i18n().description_placeholder()
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   protected urlI18n = computed(() => ({
     name: 'url',

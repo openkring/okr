@@ -3,7 +3,7 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular';
 
 import { CategoryListModel, INVOICE_STATE_VALUES, MemberFeeModel, MemberFeePosition, UserModel } from '@okr/shared-models';
-import { NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n , ErrorNote} from '@okr/shared-ui';
+import { TextareaInput, TextareaInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n , ErrorNote} from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { getAgeFromBirthYear } from '@okr/shared-util-core';
 
@@ -27,7 +27,7 @@ interface PositionRow {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ErrorNote,
-    NumberInput, StringSelect, NotesInput,
+    NumberInput, StringSelect, TextareaInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonLabel, IonNote,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
@@ -92,14 +92,14 @@ interface PositionRow {
             </ion-grid>
           </ion-card-content>
         </ion-card>
-        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="false" />
+        <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="false" />
       </form>
     }
   `
 })
 export class MemberFeeEditForm {
   // i18n — all translations come from the i18n input
-  protected notesI18n        = computed(() => ({ name: 'notes',        label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
+  protected notesI18n        = computed(() => ({ name: 'notes',        label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as TextareaInputI18n));
   protected proRataMonthsI18n = computed(() => ({ name: 'proRataMonths', label: this.i18n().memberFee_proRata_months_label(), helper: this.i18n().memberFee_proRata_months_helper() } as NumberInputI18n));
   protected invoiceStateI18n = computed(() => ({ name: 'invoiceState', label: this.i18n().invoice_state()                                           } as StringSelectI18n));
 

@@ -3,7 +3,7 @@ import { form } from '@angular/forms/signals';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonInput, IonItem, IonRow } from '@ionic/angular';
 import { DEFAULT_CURRENCY, DEFAULT_LABEL, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_TRANSFER_STATE, DEFAULT_TRANSFER_TYPE, DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { AvatarInfo, CategoryListModel, RoleName, TransferModel, UserModel } from '@okr/shared-models';
-import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
+import { CategorySelect, Chips, DateInput, DateInputI18n, TextareaInput, TextareaInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, getTodayStr, hasRole } from '@okr/shared-util-core';
 
@@ -15,7 +15,7 @@ import { transferValidations, TransferI18n } from '@okr/relationship-transfer-ut
   standalone: true,
   imports: [
     ErrorNote,
-    DateInput, TextInput, NotesInput, NumberInput, Avatars, CategorySelect, Chips,
+    DateInput, TextInput, TextareaInput, NumberInput, Avatars, CategorySelect, Chips,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonInput, IonButton
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -126,7 +126,7 @@ import { transferValidations, TransferI18n } from '@okr/relationship-transfer-ut
           } 
           
           @if(hasRole('admin')) {
-            <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
+            <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
           }
         }
       </form>
@@ -228,7 +228,7 @@ export class TransferForm {
     name:        'notes',
     label:       this.i18n().notes_label(),
     placeholder: this.i18n().notes_placeholder(),
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   protected dateOfTransferI18n = computed(() => ({
     name:        'dateOfTransfer',

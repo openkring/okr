@@ -3,7 +3,7 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonLabel, IonRow } from '@ionic/angular';
 
 import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
-import { NotesInput, NotesInputI18n } from '@okr/shared-ui';
+import { TextareaInput, TextareaInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 import {
@@ -18,7 +18,7 @@ import {
   selector: 'okr-member-fee-upload-form',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NotesInput, IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonLabel],
+  imports: [TextareaInput, IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonLabel],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px;} }
     .amount { text-align: right; font-variant-numeric: tabular-nums; }
@@ -51,10 +51,10 @@ import {
 
         <ion-card>
           <ion-card-content class="ion-no-padding">
-            <okr-notes-input [i18n]="headerI18n()" [value]="header()"
+            <okr-textarea-input variant="card" [i18n]="headerI18n()" [value]="header()"
               (valueChange)="onFieldChange('header', $event)" [rows]="3"
               [maxLength]="descriptionLength" [errors]="headerErrors()" [readOnly]="isReadOnly()" />
-            <okr-notes-input [i18n]="footerI18n()" [value]="footer()"
+            <okr-textarea-input variant="card" [i18n]="footerI18n()" [value]="footer()"
               (valueChange)="onFieldChange('footer', $event)" [rows]="5"
               [maxLength]="descriptionLength" [errors]="footerErrors()" [readOnly]="isReadOnly()" />
           </ion-card-content>
@@ -100,12 +100,12 @@ export class MemberFeeUploadForm {
     name: 'header',
     label: this.i18n().memberFee_upload_header_label(),
     placeholder: this.i18n().memberFee_upload_header_placeholder(),
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
   protected readonly footerI18n = computed(() => ({
     name: 'footer',
     label: this.i18n().memberFee_upload_footer_label(),
     placeholder: this.i18n().memberFee_upload_footer_placeholder(),
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   protected account(id: number): string {
     return getAccountDescription(id);

@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonNote, I
 import { AvatarSelect } from '@okr/avatar-ui';
 import { DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH } from '@okr/shared-constants';
 import { AvatarInfo, CategoryListModel, MoneyModel, ProjectModel, RoleName, UserModel } from '@okr/shared-models';
-import { AmountInput, AmountInputI18n, CategorySelect, Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { AmountInput, AmountInputI18n, CategorySelect, Chips, DateInput, DateInputI18n, ErrorNote, TextareaInput, TextareaInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { MODEL_SELECTOR, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole, newAvatarInfo } from '@okr/shared-util-core';
 import { PROJECT_NAME_LENGTH, ProjectI18n, projectValidations } from '@okr/project-project-util';
@@ -14,7 +14,7 @@ import { PROJECT_NAME_LENGTH, ProjectI18n, projectValidations } from '@okr/proje
   selector: 'okr-project-form',
   standalone: true,
   imports: [
-    ErrorNote, TextInput, NotesInput, DateInput, CategorySelect, Chips, AvatarSelect, AmountInput,
+    ErrorNote, TextInput, TextareaInput, DateInput, CategorySelect, Chips, AvatarSelect, AmountInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonLabel, IonNote
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -34,7 +34,7 @@ import { PROJECT_NAME_LENGTH, ProjectI18n, projectValidations } from '@okr/proje
               </ion-row>
               <ion-row>
                 <ion-col size="12">
-                  <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)"
+                  <okr-textarea-input variant="card" [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)"
                     [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="descriptionErrors()" />
                 </ion-col>
               </ion-row>
@@ -85,7 +85,7 @@ import { PROJECT_NAME_LENGTH, ProjectI18n, projectValidations } from '@okr/proje
           <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
         }
         @if (hasRole('privileged')) {
-          <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
+          <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
             [maxLength]="descriptionLength" [readOnly]="isReadOnly()" />
         }
       </form>
@@ -158,7 +158,7 @@ export class ProjectForm {
     name: 'description',
     label: this.i18n().description(),
     placeholder: this.i18n().description_placeholder()
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   protected readonly startDateI18n = computed(() => ({
     name: 'startDate',
@@ -176,7 +176,7 @@ export class ProjectForm {
     name: 'notes',
     label: this.i18n().notes(),
     placeholder: this.i18n().notes_placeholder()
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   /** a budget is typed in francs and held in Rappen (`MoneyModel.amount`) — the AmountInput converts */
   protected onBudgetChange(fieldName: 'budgetedRevenue' | 'budgetedExpenses', minor: number): void {

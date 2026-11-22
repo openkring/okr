@@ -6,7 +6,7 @@ import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, 
 import { TranslatePipe } from '@okr/shared-i18n';
 import { CategoryListModel, RoleName, UserModel, WorkflowActionStep, WorkflowRuleModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { CategorySelect, Chips, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { CategorySelect, Chips, ErrorNote, TextareaInput, TextareaInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, getItemLabel, hasRole } from '@okr/shared-util-core';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { DEFAULT_NOTES, DEFAULT_TAGS, LONG_NAME_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
@@ -33,7 +33,7 @@ import { ResponsibilityOption, WRITE_BACK_OPTIONS, WorkflowI18n, actionNeedsArg,
   imports: [
     ErrorNote,
     AsyncPipe, TranslatePipe, SvgIconPipe,
-    TextInput, NumberInput, NotesInput, Chips, CategorySelect,
+    TextInput, NumberInput, TextareaInput, Chips, CategorySelect,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonLabel, IonNote, IonSelect, IonSelectOption,
     IonButton, IonIcon, IonReorder, IonReorderGroup
   ],
@@ -237,7 +237,7 @@ import { ResponsibilityOption, WRITE_BACK_OPTIONS, WorkflowI18n, actionNeedsArg,
             [allChips]="allTags()" [readOnly]="isReadOnly()" />
         }
         @if (hasRole('admin')) {
-          <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
+          <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
             [readOnly]="isReadOnly()" />
         }
       </form>
@@ -433,7 +433,7 @@ export class WorkflowRuleForm {
     name: 'notes',
     label: this.i18n().notes_label(),
     placeholder: this.i18n().notes_placeholder()
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.currentUser());

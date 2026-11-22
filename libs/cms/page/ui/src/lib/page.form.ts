@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, 
 
 import { CaseInsensitiveWordMask } from '@okr/shared-config';
 import { CategoryListModel, PageModel, RoleName, UserModel } from '@okr/shared-models';
-import { ButtonCopy, ButtonCopyI18n, CategorySelect, Chips, ErrorNote, ImageUrlInput, ImageUrlInputI18n, NotesInput, NotesInputI18n, StringList, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { ButtonCopy, ButtonCopyI18n, CategorySelect, Chips, ErrorNote, ImageUrlInput, ImageUrlInputI18n, TextareaInput, TextareaInputI18n, StringList, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_BLOG_TYPE, DEFAULT_CONTENT_STATE, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PAGE_TYPE, DEFAULT_TAGS, DEFAULT_TITLE, DESCRIPTION_LENGTH, NAME_LENGTH, URL_LENGTH } from '@okr/shared-constants';
@@ -15,7 +15,7 @@ import { PAGE_ABSTRACT_LENGTH, PageI18n, pageValidations } from '@okr/cms-page-u
   selector: 'okr-page-form',
   standalone: true,
   imports: [
-    Chips, NotesInput, TextInput, ImageUrlInput, StringList, ButtonCopy, ErrorNote, CategorySelect, StringSelect,
+    Chips, TextareaInput, TextInput, ImageUrlInput, StringList, ButtonCopy, ErrorNote, CategorySelect, StringSelect,
     IonLabel, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonGrid, IonRow, IonCol
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -108,7 +108,7 @@ import { PAGE_ABSTRACT_LENGTH, PageI18n, pageValidations } from '@okr/cms-page-u
         <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [readOnly]="isReadOnly()" [allChips]="allTags()" />
       }
       @if(hasRole('admin')) {
-        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
+        <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
       }
     </form>
     }
@@ -209,7 +209,7 @@ export class PageForm {
 
   protected notesI18n = computed(() => ({
     name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder()
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
   protected blogTypeI18n = computed(() => ({ name: 'blogType', label: this.i18n().blog_type_label() } as StringSelectI18n));
 
   /************************************** actions *********************************************** */

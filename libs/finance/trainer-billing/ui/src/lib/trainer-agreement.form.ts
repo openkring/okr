@@ -13,10 +13,7 @@ import {
   AccountModel, CostCenterModel, MoneyModel, RoleName, TrainerAgreementModel, TrainerRate, TrainerService, TrainerServiceUnit, UserModel, VatCodeModel
 } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import {
-  AmountInput, AmountInputI18n, Checkbox, CheckboxI18n, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n,
-  TextareaInput, TextInput, TextInputI18n
-} from '@okr/shared-ui';
+import { AmountInput, AmountInputI18n, Checkbox, CheckboxI18n, DateInput, DateInputI18n, ErrorNote, TextareaInput, TextareaInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { MODEL_SELECTOR, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, convertDateFormatToString, DateFormat, fill, getAvatarName, getTodayStr, hasRole } from '@okr/shared-util-core';
 
@@ -36,7 +33,7 @@ const RATE_CURRENCY = 'CHF';
   selector: 'okr-trainer-agreement-form',
   standalone: true,
   imports: [
-    TextInput, TextareaInput, DateInput, Checkbox, StringSelect, AmountInput, NotesInput, ErrorNote, AccountSelect, CostCenterSelect,
+    TextInput, TextareaInput, DateInput, Checkbox, StringSelect, AmountInput, ErrorNote, AccountSelect, CostCenterSelect,
     SvgIconPipe, DecimalPipe, IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonItem, IonLabel, IonNote, IonButton, IonIcon
   ],
   styles: [`
@@ -195,7 +192,7 @@ const RATE_CURRENCY = 'CHF';
         </ion-card>
 
         @if (hasRole('treasurer')) {
-          <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
+          <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
             [maxLength]="descriptionLength" [errors]="notesErrors()" [readOnly]="isReadOnly()" />
         }
       </form>
@@ -279,7 +276,7 @@ export class TrainerAgreementForm {
   } as TextInputI18n));
   protected readonly notesI18n = computed(() => ({
     name: 'notes', label: this.i18n().agreement_notes_label(), placeholder: this.i18n().agreement_notes_placeholder(),
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
   protected readonly serviceNameI18n = computed(() => ({
     name: 'serviceName', label: this.i18n().service_name_label(), placeholder: this.i18n().service_name_placeholder(), helper: this.i18n().service_name_helper(),
   } as TextInputI18n));

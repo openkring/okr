@@ -1,11 +1,7 @@
 import { Component, computed, effect, input, signal, untracked } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { IonItem, IonLabel, IonList } from '@ionic/angular';
-import {
-  CategorySelect, Checkbox, CheckboxGroup, CheckboxGroupI18n, CheckboxI18n, FileInput, FileInputI18n, RadioGroup, RadioGroupI18n, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote,
-  IbanInput, IbanInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, PasswordInput, PasswordInputI18n,
-  PhoneInput, PhoneInputI18n, StringSelect, StringSelectI18n, TextareaInput, TextInput, TextInputI18n, TimeInput, TimeInputI18n,
-} from '@okr/shared-ui';
+import { CategorySelect, Checkbox, CheckboxGroup, CheckboxGroupI18n, CheckboxI18n, FileInput, FileInputI18n, RadioGroup, RadioGroupI18n, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote, IbanInput, IbanInputI18n, TextareaInput, TextareaInputI18n, NumberInput, NumberInputI18n, PasswordInput, PasswordInputI18n, PhoneInput, PhoneInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n } from '@okr/shared-ui';
 import { ChSsnMask } from '@okr/shared-config';
 import { COMMENT_LENGTH, SSN_LENGTH } from '@okr/shared-constants';
 import { CategoryListModel, Field, OTHER_OPTION_VALUE } from '@okr/shared-models';
@@ -79,7 +75,7 @@ const SSN_PLACEHOLDER = '756.1234.5678.97';
   standalone: true,
   imports: [
     IonItem, IonLabel, IonList,
-    TextInput, TextareaInput, NotesInput, EmailInput, PhoneInput, IbanInput, PasswordInput, NumberInput,
+    TextInput, TextareaInput, EmailInput, PhoneInput, IbanInput, PasswordInput, NumberInput,
     DateInput, TimeInput, Checkbox, CheckboxGroup, RadioGroup, FileInput, StringSelect, CategorySelect, ErrorNote,
   ],
   styles: [`
@@ -112,7 +108,7 @@ const SSN_PLACEHOLDER = '756.1234.5678.97';
     @switch (field().type) {
       @case ('text') {
         @if ($any(field()).multiline) {
-          <okr-notes-input [i18n]="notesI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="readOnly()" />
+          <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="readOnly()" />
         } @else if ($any(field()).autoGrow !== false) {
           <!-- auto-growing (default): starts as one line, grows with the text -->
           <okr-textarea-input [i18n]="textI18n()" [value]="strValue()" (valueChange)="setValue($event)" [readOnly]="readOnly()"
@@ -301,7 +297,7 @@ export class FieldRenderer {
   protected readonly textI18n = computed<TextInputI18n>(() => ({
     name: this.field().key, label: this.fieldLabel(), placeholder: this.field().placeholder ?? '', helper: '',
   }));
-  protected readonly notesI18n = computed<NotesInputI18n>(() => ({
+  protected readonly notesI18n = computed<TextareaInputI18n>(() => ({
     name: this.field().key, label: this.fieldLabel(), placeholder: this.field().placeholder ?? '',
   }));
   protected readonly emailI18n = computed<EmailInputI18n>(() => ({

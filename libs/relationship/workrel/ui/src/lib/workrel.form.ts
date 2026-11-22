@@ -2,7 +2,7 @@ import { Component, computed, effect, input, model, output } from '@angular/core
 import { form } from '@angular/forms/signals';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular';
 import { CategoryListModel, RoleName, UserModel, WorkrelModel } from '@okr/shared-models';
-import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n , ErrorNote, ImgDirective } from '@okr/shared-ui';
+import { CategorySelect, Chips, DateInput, DateInputI18n, TextareaInput, TextareaInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n , ErrorNote, ImgDirective } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_CURRENCY, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORDER, DEFAULT_ORG_TYPE, DEFAULT_PRICE, DEFAULT_TAGS, DEFAULT_WORKREL_STATE, DEFAULT_WORKREL_TYPE, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
@@ -16,7 +16,7 @@ import { workrelValidations, WorkrelI18n } from '@okr/relationship-workrel-util'
   imports: [
     ImgDirective, ErrorNote,
     AvatarPipe, FullNamePipe,
-    DateInput, Chips, NotesInput, CategorySelect, NumberInput,
+    DateInput, Chips, TextareaInput, CategorySelect, NumberInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonAvatar, IonLabel, IonButton,
     TextInput
   ],
@@ -141,7 +141,7 @@ import { workrelValidations, WorkrelI18n } from '@okr/relationship-workrel-util'
       }
 
       @if(hasRole('admin')) {
-        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
+        <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
       }
     </form>
   }
@@ -177,7 +177,7 @@ export class WorkrelForm {
   protected currencyI18n = computed(() => ({ name: 'currency', label: this.i18n().currency_label(), placeholder: this.i18n().currency_placeholder(), helper: this.i18n().currency_helper() } as TextInputI18n));
   protected orderI18n = computed(() => ({ name: 'order', label: this.i18n().order_label(), placeholder: this.i18n().order_placeholder(), helper: this.i18n().order_helper() } as NumberInputI18n));
   protected priceI18n = computed(() => ({ name: 'price', label: this.i18n().price_label(), placeholder: this.i18n().price_placeholder(), helper: this.i18n().price_helper() } as NumberInputI18n));
-  protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
+  protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as TextareaInputI18n));
   protected validFromI18n = computed(() => ({ name: 'validFrom', label: this.i18n().validFrom_label(), placeholder: this.i18n().validFrom_placeholder(), helper: this.i18n().validFrom_helper() } as DateInputI18n));
   protected validToI18n = computed(() => ({ name: 'validTo', label: this.i18n().validTo_label(), placeholder: this.i18n().validTo_placeholder(), helper: this.i18n().validTo_helper() } as DateInputI18n));
 

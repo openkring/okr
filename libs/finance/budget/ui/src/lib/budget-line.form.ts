@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonNote, IonRow } from '@ioni
 
 import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
 import { AccountModel, BudgetLineModel, CostCenterModel, MoneyModel, RoleName, UserModel } from '@okr/shared-models';
-import { AmountInput, AmountInputI18n, ErrorNote, NotesInput, NotesInputI18n } from '@okr/shared-ui';
+import { AmountInput, AmountInputI18n, ErrorNote, TextareaInput, TextareaInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
@@ -20,7 +20,7 @@ import { leafCostCenters } from '@okr/finance-cost-center-util';
 @Component({
   selector: 'okr-budget-line-form',
   standalone: true,
-  imports: [CostCenterSelect, AccountSelect, AmountInput, NotesInput, ErrorNote, IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonNote],
+  imports: [CostCenterSelect, AccountSelect, AmountInput, TextareaInput, ErrorNote, IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonNote],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
   template: `
     @if (showForm()) {
@@ -52,7 +52,7 @@ import { leafCostCenters } from '@okr/finance-cost-center-util';
         </ion-card>
 
         @if (hasRole('treasurer')) {
-          <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
+          <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
             [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
         }
       </form>
@@ -120,7 +120,7 @@ export class BudgetLineForm {
   protected amountI18n = computed(() => ({ name: 'amount', label: this.i18n().amount() } as AmountInputI18n));
   protected notesI18n = computed(() => ({
     name: 'notes', label: this.i18n().notes(), placeholder: this.i18n().notes_placeholder()
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   constructor() {
     effect(() => this.valid.emit(this.lineForm().valid()));

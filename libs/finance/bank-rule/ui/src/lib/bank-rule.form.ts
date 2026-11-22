@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonNote, IonRow } fr
 
 import { DEFAULT_NOTES } from '@okr/shared-constants';
 import { AccountModel, BankRuleCondition, BankRuleModel, CostCenterModel, RoleName, UserModel, VatCodeModel } from '@okr/shared-models';
-import { Checkbox, CheckboxI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { Checkbox, CheckboxI18n, ErrorNote, TextareaInput, TextareaInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, hasRole, isProfitAndLossAccountId } from '@okr/shared-util-core';
 import { validateVestTree } from '@okr/shared-util-angular';
 
@@ -17,7 +17,7 @@ const CONDITIONS: BankRuleCondition[] = ['contains', 'startsWith', 'endsWith', '
 @Component({
   selector: 'okr-bank-rule-form',
   standalone: true,
-  imports: [TextInput, NumberInput, NotesInput, Checkbox, StringSelect, AccountSelect, CostCenterSelect, ErrorNote, IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonNote],
+  imports: [TextInput, NumberInput, TextareaInput, Checkbox, StringSelect, AccountSelect, CostCenterSelect, ErrorNote, IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonNote],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     @if (showForm()) {
@@ -79,7 +79,7 @@ const CONDITIONS: BankRuleCondition[] = ['contains', 'startsWith', 'endsWith', '
           </ion-card-content>
         </ion-card>
         @if (hasRole('treasurer') || hasRole('admin')) {
-          <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+          <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
         }
       </form>
     }
@@ -144,7 +144,7 @@ export class BankRuleForm {
   protected readonly vatCodeI18n = computed(() => ({ name: 'vatCodeKey', label: this.i18n().vat_label(), helper: this.i18n().vat_helper() } as StringSelectI18n));
   protected readonly priorityI18n = computed(() => ({ name: 'priority', label: this.i18n().priority_label(), placeholder: '', helper: this.i18n().priority_helper() } as NumberInputI18n));
   protected readonly activeI18n = computed(() => ({ name: 'active', label: this.i18n().active_label(), helper: this.i18n().active_helper() } as CheckboxI18n));
-  protected readonly notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
+  protected readonly notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as TextareaInputI18n));
 
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
     this.dirty.emit(true);

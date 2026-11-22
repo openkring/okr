@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 
 import { CurrencyCode, MoneyModel, OwnershipModel, RoleName, UserModel } from '@okr/shared-models';
 import { DEFAULT_CURRENCY } from '@okr/shared-constants';
-import { Chips, DateInput, ErrorNote, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { Chips, DateInput, ErrorNote, DateInputI18n, TextareaInput, TextareaInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
@@ -40,7 +40,7 @@ export interface OwnershipFormI18n {
   selector: 'okr-ownership-form',
   standalone: true,
   imports: [
-    Chips, NotesInput, DateInput, TextInput, NumberInput, ErrorNote,
+    Chips, TextareaInput, DateInput, TextInput, NumberInput, ErrorNote,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -109,7 +109,7 @@ export interface OwnershipFormI18n {
         }
     
         @if(hasRole('resourceAdmin')) {
-          <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+          <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
         }
       </form>
     }
@@ -124,7 +124,7 @@ export class OwnershipForm {
   protected validToI18n       = computed(() => ({ name: 'validTo',       label: this.i18n().validTo_label(),       placeholder: this.i18n().validTo_placeholder()} as DateInputI18n));
   protected priceI18n         = computed(() => ({ name: 'price',         label: this.i18n().price_label(),         placeholder: this.i18n().price_placeholder()} as NumberInputI18n));
   protected currencyI18n      = computed(() => ({ name: 'currency',      label: this.i18n().currency_label(),      placeholder: this.i18n().currency_placeholder()} as TextInputI18n));
-  protected notesI18n         = computed(() => ({ name: 'notes',         label: this.i18n().notes_label(),         placeholder: this.i18n().notes_placeholder()} as NotesInputI18n));
+  protected notesI18n         = computed(() => ({ name: 'notes',         label: this.i18n().notes_label(),         placeholder: this.i18n().notes_placeholder()} as TextareaInputI18n));
 
   // inputs
   public readonly i18n = input.required<OwnershipFormI18n>();

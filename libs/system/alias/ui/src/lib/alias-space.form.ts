@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 import { DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 import { AliasSpaceModel, RoleName, UserModel } from '@okr/shared-models';
 import {
-  CategorySelect, Checkbox, CheckboxI18n, ErrorNote, NotesInput, NotesInputI18n,
+  CategorySelect, Checkbox, CheckboxI18n, ErrorNote, TextareaInput, TextareaInputI18n,
   NumberInput, NumberInputI18n, TextInput, TextInputI18n,
 } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
@@ -30,7 +30,7 @@ import {
   selector: 'okr-alias-space-form',
   standalone: true,
   imports: [
-    TextInput, NotesInput, NumberInput, Checkbox, CategorySelect, ErrorNote,
+    TextInput, TextareaInput, NumberInput, Checkbox, CategorySelect, ErrorNote,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -114,7 +114,7 @@ import {
              Konfiguration, keine Kampagne - Kampagnen werden ueber die Notiz eines Alias
              unterschieden, nicht ueber einen eigenen Space und nicht ueber Tags. -->
         @if (hasRole('admin')) {
-          <okr-notes-input [i18n]="notesI18n()" [value]="notes()"
+          <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()"
             (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
         }
       </form>
@@ -228,7 +228,7 @@ export class AliasSpaceForm {
     label: this.i18n().field_notes_label(),
     placeholder: '',
     helper: '',
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   private readonly validationResult = vestErrors(this.spaceForm);
   protected labelErrors = computed(() => this.validationResult().getErrors('label'));

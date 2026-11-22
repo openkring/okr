@@ -2,7 +2,7 @@ import { Component, computed, input, output, signal } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular';
 
 import { ApprovalModel, MAX_DECISION_NOTE_LENGTH } from '@okr/shared-models';
-import { NotesInput, NotesInputI18n } from '@okr/shared-ui';
+import { TextareaInput, TextareaInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, prettyFormatDateTime } from '@okr/shared-util-core';
 
 import { WorkflowI18n, approvalStateColor, deciderName } from '@okr/system-workflow-util';
@@ -21,7 +21,7 @@ import { WorkflowI18n, approvalStateColor, deciderName } from '@okr/system-workf
 @Component({
   selector: 'okr-approval-decision-card',
   standalone: true,
-  imports: [NotesInput, IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonNote, IonButton],
+  imports: [TextareaInput, IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonNote, IonButton],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px; } }
     .decisions { display: flex; gap: 8px; padding: 8px 16px 16px; }
@@ -97,7 +97,7 @@ import { WorkflowI18n, approvalStateColor, deciderName } from '@okr/system-workf
     </ion-card>
 
     @if (isDecidable()) {
-      <okr-notes-input [i18n]="noteI18n()" [value]="note()" (valueChange)="note.set($event)" [readOnly]="false" />
+      <okr-textarea-input variant="card" [i18n]="noteI18n()" [value]="note()" (valueChange)="note.set($event)" [readOnly]="false" />
       <div class="decisions">
         <ion-button color="success" (click)="decide('approve')">{{ i18n().approval_approve() }}</ion-button>
         <!-- reject needs a reason: an approval refused without one cannot be explained later -->
@@ -146,7 +146,7 @@ export class ApprovalDecisionCard {
     placeholder: this.i18n().approval_note_placeholder(),
     helper: this.i18n().approval_note_helper(),
     maxLength: MAX_DECISION_NOTE_LENGTH,
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   /******************************* actions *************************************** */
   protected decide(decision: 'approve' | 'reject' | 'withdraw'): void {

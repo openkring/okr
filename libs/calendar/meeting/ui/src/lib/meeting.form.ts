@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 
 import { DEFAULT_NOTES, DEFAULT_TAGS, LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { AgendaItem, AvatarInfo, MeetingModel, RoleName, UserModel } from '@okr/shared-models';
-import { Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n } from '@okr/shared-ui';
+import { Chips, DateInput, DateInputI18n, ErrorNote, TextareaInput, TextareaInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, freeTextLocationAvatar, getEventLocationName, hasRole } from '@okr/shared-util-core';
 
@@ -17,7 +17,7 @@ import { AttendeeList } from './attendee-list';
   standalone: true,
   imports: [
     ErrorNote,
-    TextInput, DateInput, TimeInput, NotesInput, Chips,
+    TextInput, DateInput, TimeInput, TextareaInput, Chips,
     AgendaList, AttendeeList,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
@@ -69,7 +69,7 @@ import { AttendeeList } from './attendee-list';
             [allChips]="allTags()" [readOnly]="isReadOnly()" />
         }
         @if (hasRole('privileged')) {
-          <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
+          <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
             [readOnly]="isReadOnly()" />
         }
       </form>
@@ -155,7 +155,7 @@ export class MeetingForm {
     name: 'notes',
     label: this.i18n().notes_label(),
     placeholder: this.i18n().notes_placeholder()
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   protected onLocationInput(value: string): void {
     this.onFieldChange('locations', value ? [freeTextLocationAvatar(value)] : []);

@@ -3,7 +3,7 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonRow, ToastController } from '@ionic/angular';
 
 import { CategoryListModel, DocumentModel, RoleName, UserModel } from '@okr/shared-models';
-import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
+import { CategorySelect, Chips, DateInput, DateInputI18n, TextareaInput, TextareaInputI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_DATE, DEFAULT_NOTES, DEFAULT_TAGS, LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { FileLogoPipe, SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
@@ -18,7 +18,7 @@ import { DocumentI18n, documentValidations } from '@okr/content-document-util';
   imports: [
     ErrorNote,
     SvgIconPipe, ThumbnailUrlPipe, FileLogoPipe,
-    TextInput, DateInput, CategorySelect, Chips, NotesInput,
+    TextInput, DateInput, CategorySelect, Chips, TextareaInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonIcon, IonItem
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -143,7 +143,7 @@ import { DocumentI18n, documentValidations } from '@okr/content-document-util';
         <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
       }
       @if(hasRole('admin')) {
-        <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
+        <okr-textarea-input variant="card" [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
   }
@@ -312,7 +312,7 @@ export class DocumentForm {
 
   protected descriptionI18n = computed(() => ({
     name: 'description', label: this.i18n().description_label(), placeholder: this.i18n().description_placeholder()
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   protected dateOfDocCreationI18n = computed(() => ({ name: 'dateOfDocCreation', label: this.i18n().dateOfDocCreation_label(), placeholder: this.i18n().dateOfDocCreation_placeholder(), helper: this.i18n().dateOfDocCreation_helper() } as DateInputI18n));
   protected dateOfDocLastUpdateI18n = computed(() => ({ name: 'dateOfDocLastUpdate', label: this.i18n().dateOfDocLastUpdate_label(), placeholder: this.i18n().dateOfDocLastUpdate_placeholder(), helper: this.i18n().dateOfDocLastUpdate_helper() } as DateInputI18n));

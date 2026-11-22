@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } f
 
 import { iconValidations } from '@okr/cms-icon-util';
 import { IconModel, RoleName, UserModel } from '@okr/shared-models';
-import { Chips, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { Chips, ErrorNote, TextareaInput, TextareaInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_NOTES, DEFAULT_TAGS, LONG_NAME_LENGTH } from '@okr/shared-constants';
@@ -35,7 +35,7 @@ export interface IconEditFormI18n {
   standalone: true,
   imports: [
     DecimalPipe,
-    TextInput, NotesInput, Chips, ErrorNote,
+    TextInput, TextareaInput, Chips, ErrorNote,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonLabel
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -94,7 +94,7 @@ export interface IconEditFormI18n {
       }
 
       @if(hasRole('admin')) {
-        <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+        <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
   }
@@ -182,7 +182,7 @@ export class IconEditForm {
     name: 'notes',
     label: this.i18n().notes_label(),
     placeholder: this.i18n().notes_placeholder()
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean): void {

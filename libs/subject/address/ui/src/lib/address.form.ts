@@ -3,7 +3,7 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { AddressModel, CategoryListModel, City, RoleName, UserModel } from '@okr/shared-models';
-import { CategorySelect, Checkbox, CheckboxI18n, Chips, CountrySelect, CountrySelectI18n, EmailInput, EmailInputI18n, ErrorNote, IbanInput, IbanInputI18n, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { CategorySelect, Checkbox, CheckboxI18n, Chips, CountrySelect, CountrySelectI18n, EmailInput, EmailInputI18n, ErrorNote, IbanInput, IbanInputI18n, TextareaInput, TextareaInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { CITY_LENGTH, DEFAULT_ADDRESS_CHANNEL, DEFAULT_COUNTRY, DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, EMAIL_LENGTH, NAME_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
@@ -15,7 +15,7 @@ import { addressValidations, AddressesI18n } from '@okr/subject-address-util';
   selector: 'okr-address-form',
   standalone: true,
   imports: [
-    CategorySelect, TextInput, CitySearch, NotesInput, Checkbox, CountrySelect,
+    CategorySelect, TextInput, CitySearch, TextareaInput, Checkbox, CountrySelect,
     EmailInput, PhoneInput, IbanInput, ErrorNote, Chips,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
@@ -173,7 +173,7 @@ import { addressValidations, AddressesI18n } from '@okr/subject-address-util';
     }
     
     @if(hasRole('admin')) {
-      <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
+      <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
     }
   </form>
   }
@@ -205,7 +205,7 @@ export class AddressForm {
   protected cityI18n              = computed(() => ({ name: 'city',              label: this.i18n().city_label(),              placeholder: this.i18n().city_placeholder(),              helper: this.i18n().city_helper()              } as TextInputI18n));
   protected urlI18n               = computed(() => ({ name: 'url',               label: this.i18n().url_label(),               placeholder: this.i18n().url_placeholder(),               helper: this.i18n().url_helper()               } as TextInputI18n));
   protected ibanI18n              = computed(() => ({ name: 'iban',              label: this.i18n().iban_label(),              placeholder: this.i18n().iban_placeholder(),              helper: this.i18n().iban_helper()              } as IbanInputI18n));
-  protected notesI18n             = computed(() => ({ name: 'notes',  label: this.i18n().notes_label(),     placeholder: this.i18n().notes_placeholder()     } as NotesInputI18n));
+  protected notesI18n             = computed(() => ({ name: 'notes',  label: this.i18n().notes_label(),     placeholder: this.i18n().notes_placeholder()     } as TextareaInputI18n));
   protected emailI18n             = computed(() => ({ name: 'email',  label: this.i18n().email_label(),     placeholder: this.i18n().email_placeholder()     } as EmailInputI18n));
   protected phoneI18n             = computed(() => ({ name: 'phone',  label: this.i18n().phone_label(),     placeholder: this.i18n().phone_placeholder()     } as PhoneInputI18n));
   protected isFavoriteI18n        = computed(() => ({ name: 'isFavorite', label: this.i18n().isFavorite_label(), helper: this.i18n().isFavorite_helper() } as CheckboxI18n));

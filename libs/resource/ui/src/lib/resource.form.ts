@@ -3,7 +3,7 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { BaseProperty, CategoryListModel, ResourceModel, RoleName, UserModel } from '@okr/shared-models';
-import { Checkbox, CheckboxI18n, CategorySelect, Chips, Color, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, PropertyList, TextareaInput, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { Checkbox, CheckboxI18n, CategorySelect, Chips, Color, ErrorNote, TextareaInput, TextareaInputI18n, NumberInput, NumberInputI18n, PropertyList, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, getYear, hasRole } from '@okr/shared-util-core';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { DEFAULT_CAR_TYPE, DEFAULT_GENDER, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PET_TYPE, DEFAULT_PRICE, DEFAULT_RBOAT_TYPE, DEFAULT_RBOAT_USAGE, DEFAULT_TAGS, COMMENT_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
@@ -14,7 +14,7 @@ import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLocker
   selector: 'okr-resource-form',
   standalone: true,
   imports: [
-    Checkbox, Chips, NotesInput, PropertyList, TextInput, TextareaInput, NumberInput, ErrorNote, CategorySelect, Color,
+    Checkbox, Chips, TextareaInput, PropertyList, TextInput, NumberInput, ErrorNote, CategorySelect, Color,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -345,7 +345,7 @@ import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLocker
         }
 
         @if(hasRole('resourceAdmin')) {
-          <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="descriptionErrors()" />
+          <okr-textarea-input variant="card" [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="descriptionErrors()" />
         }
     </form>
   }
@@ -478,7 +478,7 @@ export class ResourceForm {
 
   protected descriptionI18n = computed(() => ({
     name: 'description', label: this.i18n().description_label(), placeholder: this.i18n().description_placeholder()
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
   protected tripAlertI18n = computed(() => ({
     name: 'tripAlert',
     label: this.i18n().tripAlert_label(),

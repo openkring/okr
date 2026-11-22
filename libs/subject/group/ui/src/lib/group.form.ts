@@ -3,7 +3,7 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow, IonToggle } from '@ionic/angular';
 
 import { AvatarInfo, GroupModel, RoleName, UserModel } from '@okr/shared-models';
-import { ButtonCopy, ButtonCopyI18n, Checkbox, CheckboxI18n, Chips, IconInput, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
+import { ButtonCopy, ButtonCopyI18n, Checkbox, CheckboxI18n, Chips, IconInput, TextareaInput, TextareaInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
@@ -16,7 +16,7 @@ import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/sh
   standalone: true,
   imports: [
     ErrorNote,
-    TextInput, Chips, NotesInput, Checkbox, ButtonCopy, StringSelect, Avatars, IconInput,
+    TextInput, Chips, TextareaInput, Checkbox, ButtonCopy, StringSelect, Avatars, IconInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonLabel, IonItem, IonToggle
   ],
    styles: [`
@@ -238,7 +238,7 @@ import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/sh
       }
 
       @if(enhancedMode() && hasRole('admin')) {
-        <okr-notes-input [i18n]="notesI18n()"
+        <okr-textarea-input variant="card" [i18n]="notesI18n()"
           [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
           [maxLength]="descriptionLength" [readOnly]="isReadOnly()"
         [errors]="notesErrors()" />
@@ -262,7 +262,7 @@ export class GroupForm {
   protected colorI18n     = computed(() => ({ name: 'groupColor', label: this.i18n().color_label(), placeholder: '#59A3BF', helper: this.i18n().color_helper() } as TextInputI18n));
   protected iconI18n      = computed(() => ({ name: 'icon',       label: this.i18n().icon_label(),       placeholder: this.i18n().icon_placeholder(),       helper: this.i18n().icon_helper()       } as TextInputI18n));
   protected visibilityI18n = computed(() => ({ name: 'visibility', label: this.i18n().visibility_label(), placeholder: this.i18n().visibility_placeholder(), helper: this.i18n().visibility_helper() } as TextInputI18n));
-  protected notesI18n      = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
+  protected notesI18n      = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as TextareaInputI18n));
   protected notifyTypeI18n  = computed(() => ({ name: 'notifyType',   label: this.i18n().notifyType_label()  } as StringSelectI18n));
   protected chatModeI18n    = computed(() => ({ name: 'chatMode',     label: this.i18n().chatMode_label(),     helper: this.i18n().chatMode_helper()     } as StringSelectI18n));
   protected postPolicyI18n  = computed(() => ({ name: 'postPolicy',   label: this.i18n().postPolicy_label(),   helper: this.i18n().postPolicy_helper()   } as StringSelectI18n));

@@ -3,7 +3,7 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { TicketModel, UserModel } from '@okr/shared-models';
-import { CategorySelect, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { CategorySelect, ErrorNote, TextareaInput, TextareaInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean } from '@okr/shared-util-core';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
@@ -36,7 +36,7 @@ import {
   standalone: true,
   imports: [
     ErrorNote,
-    TextInput, NotesInput, CategorySelect,
+    TextInput, TextareaInput, CategorySelect,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -74,12 +74,12 @@ import {
               </ion-row>
               <ion-row>
                 <ion-col size="12">
-                  <okr-notes-input [i18n]="reproI18n()" [value]="reproSteps()" [readOnly]="true" />
+                  <okr-textarea-input variant="card" [i18n]="reproI18n()" [value]="reproSteps()" [readOnly]="true" />
                 </ion-col>
               </ion-row>
               <ion-row>
                 <ion-col size="12">
-                  <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" [readOnly]="true" />
+                  <okr-textarea-input variant="card" [i18n]="descriptionI18n()" [value]="description()" [readOnly]="true" />
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -109,7 +109,7 @@ import {
               </ion-row>
               <ion-row>
                 <ion-col size="12">
-                  <okr-notes-input [i18n]="reasonI18n()" [value]="classificationReason()"
+                  <okr-textarea-input variant="card" [i18n]="reasonI18n()" [value]="classificationReason()"
                     (valueChange)="onFieldChange('classificationReason', $event)" [readOnly]="isReadOnly()" [errors]="classificationReasonErrors()" />
                 </ion-col>
               </ion-row>
@@ -198,17 +198,17 @@ export class TicketForm {
     name: 'reproSteps',
     label: this.i18n().reproSteps_label(),
     placeholder: this.i18n().reproSteps_placeholder(),
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
   protected descriptionI18n = computed(() => ({
     name: 'description',
     label: this.i18n().description_label(),
     placeholder: this.i18n().description_placeholder(),
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
   protected reasonI18n = computed(() => ({
     name: 'classificationReason',
     label: this.i18n().classificationReason_label(),
     placeholder: this.i18n().classificationReason_placeholder(),
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   private text(name: string, label: string, placeholder: string, helper: string): TextInputI18n {
     return { name, label, placeholder, helper } as TextInputI18n;

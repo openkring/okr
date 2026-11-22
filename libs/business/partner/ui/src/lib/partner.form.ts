@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 
 import { DEFAULT_NOTES, DEFAULT_TAGS, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { PartnerModel, RoleName, UserModel } from '@okr/shared-models';
-import { CategorySelect, Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { CategorySelect, Chips, DateInput, DateInputI18n, ErrorNote, TextareaInput, TextareaInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
@@ -22,7 +22,7 @@ import { PartnerI18n, partnerStatusCategory, partnerValidations } from '@okr/bus
   standalone: true,
   imports: [
     ErrorNote,
-    TextInput, NotesInput, DateInput, Chips, CategorySelect,
+    TextInput, TextareaInput, DateInput, Chips, CategorySelect,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -78,7 +78,7 @@ import { PartnerI18n, partnerStatusCategory, partnerValidations } from '@okr/bus
             [allChips]="allTags()" [readOnly]="isReadOnly()" />
         }
         @if (hasRole('admin')) {
-          <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
+          <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
             [readOnly]="isReadOnly()" />
         }
       </form>
@@ -172,7 +172,7 @@ export class PartnerForm {
     name: 'notes',
     label: this.i18n().notes_label(),
     placeholder: this.i18n().notes_placeholder(),
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   protected onFieldChange(fieldName: string, fieldValue: string | string[]): void {
     this.dirty.emit(true);

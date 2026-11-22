@@ -7,7 +7,7 @@ import {
   ModalController, ToastController,
 } from '@ionic/angular';
 
-import { ChangeConfirmation, Header, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { ChangeConfirmation, Header, TextareaInput, TextareaInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { I18nService } from '@okr/shared-i18n';
 import { dismissOverlay, validateVestTree } from '@okr/shared-util-angular';
 import { ESIGN_I18N_KEYS, EsignI18n, EsignSendFormModel, esignSendValidations } from '@okr/content-esign-util';
@@ -20,7 +20,7 @@ type SendStatus = 'uploading' | 'scanning' | 'ready' | 'no-fields' | 'sending' |
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    Header, ChangeConfirmation, TextInput, NotesInput,
+    Header, ChangeConfirmation, TextInput, TextareaInput,
     IonButton, IonContent,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonLabel,
     IonSelect, IonSelectOption, IonSpinner,
@@ -123,7 +123,7 @@ type SendStatus = 'uploading' | 'scanning' | 'ready' | 'no-fields' | 'sending' |
                   </ion-item>
                 </ion-col>
                 <ion-col size="12">
-                  <okr-notes-input [i18n]="commentI18n()" [value]="formData().comment"
+                  <okr-textarea-input variant="card" [i18n]="commentI18n()" [value]="formData().comment"
                     (valueChange)="onFieldChange('comment', $event)" [readOnly]="false" />
                 </ion-col>
               </ion-row>
@@ -185,7 +185,7 @@ export class EsignSendDocumentModal implements OnInit {
   } as TextInputI18n));
   protected readonly commentI18n = computed(() => ({
     name: 'comment', label: this.i18n.comment_label(), placeholder: this.i18n.comment_placeholder(),
-  } as NotesInputI18n));
+  } as TextareaInputI18n));
 
   public ngOnInit(): void {
     void this.prepare();

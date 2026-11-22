@@ -5,7 +5,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
 import { CostAllocationModel, CostAllocationScope, CostCenterModel, MoneyModel, ProjectModel, RoleName, UserModel } from '@okr/shared-models';
 import {
-  AmountInput, AmountInputI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n
+  AmountInput, AmountInputI18n, ErrorNote, TextareaInput, TextareaInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n
 } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
@@ -22,7 +22,7 @@ import { leafCostCenters } from '@okr/finance-cost-center-util';
 @Component({
   selector: 'okr-cost-allocation-form',
   standalone: true,
-  imports: [TextInput, StringSelect, CostCenterSelect, ProjectSelect, NumberInput, AmountInput, NotesInput, ErrorNote, IonGrid, IonRow, IonCol, IonCard, IonCardContent],
+  imports: [TextInput, StringSelect, CostCenterSelect, ProjectSelect, NumberInput, AmountInput, TextareaInput, ErrorNote, IonGrid, IonRow, IonCol, IonCard, IonCardContent],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px; } }`],
   template: `
     @if (showForm()) {
@@ -95,7 +95,7 @@ import { leafCostCenters } from '@okr/finance-cost-center-util';
         </ion-card>
 
         @if (hasRole('treasurer')) {
-          <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
+          <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
             [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
         }
       </form>
@@ -176,7 +176,7 @@ export class CostAllocationForm {
   protected modeLabels = computed(() => [this.i18n().alloc_mode_percent(), this.i18n().alloc_mode_amount()]);
   protected percentI18n = computed(() => ({ name: 'percent', label: this.i18n().alloc_percent(), helper: this.i18n().alloc_percent_helper() } as NumberInputI18n));
   protected amountI18n = computed(() => ({ name: 'amount', label: this.i18n().alloc_amount() } as AmountInputI18n));
-  protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
+  protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes(), placeholder: this.i18n().notes_placeholder() } as TextareaInputI18n));
 
   constructor() {
     effect(() => this.valid.emit(this.allocationForm().valid()));
