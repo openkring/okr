@@ -28,8 +28,8 @@ import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
-import { DeliveryChannel, type EmailLayoutChoice, GroupCollection, NoticeAttachment, NoticeCollection, type NoticeModel, type PostOptions } from '@okr/shared-models';
-import { DateFormat, getEventLocationName, getTodayStr, isOrgRecipient, recipientParentKey } from '@okr/shared-util-core';
+import { DeliveryChannel, type EmailLayoutChoice, GroupCollection, MailingWebCollection, MailPageCollection, NoticeAttachment, NoticeCollection, type NoticeModel, type PostOptions } from '@okr/shared-models';
+import { DateFormat, getEventLocationName, getTodayStr, isOrgRecipient, publicAppOrigin, recipientParentKey } from '@okr/shared-util-core';
 import { projectID } from 'firebase-functions/params';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
@@ -52,6 +52,10 @@ import { checkNewsletterGroup } from '../newsletter/signup';
 import { newsletterFunctionUrl, newsletterUnsubscribeUrl } from '../newsletter/newsletter-link';
 import { activeSubscriberKeys } from '../newsletter/subscribers';
 import { asLayoutChoice } from './render-email.logic';
+import { EmailTemplateError, renderEmail } from './render-email';
+import { renderMailPage } from './mail-page/mail-page';
+import { MailPageError } from './mail-page/render-mail-page.logic';
+import { newWebToken, webVersionOn, webVersionUrl, withWebLink } from './mail-page/web-version.logic';
 import { buildMailingLetters, countLetterPages, LetterEvent } from './mailing-letters';
 import { addressParentKeyOf, contactKeysFor, dropHouseholdKeys, householdFieldsOf, householdInNewsletter, householdsDroppedForAnswers, householdsDroppedForNewsletter, householdWithAnswers, type HouseholdRecipient, loadHouseholdRecipients, postKeysFor } from './household-recipient.logic';
 import { mailingCategory } from './mailing-deliveries.logic';
@@ -76,6 +80,8 @@ export function isTenantDocumentPath(path: string, tenantId: string): boolean {
 }
 /** The channels a Versand sends: E-Mail, In-App, and Post as a letter PDF for the sender (P3). */
 const SENDABLE: string[] = [DeliveryChannel.Email, DeliveryChannel.Chat, DeliveryChannel.Post];
+/** The line above the body of every E-Mail of a Versand with a web version (spec 1.171 §7.5). */
+const WEB_LINK_LABEL = 'Im Browser ansehen';
 
 export interface MailingDelivery {
   /** a bare person okey, `org.<okey>` or `household.<okey>` (resolved by onMailing, spec 1.168) */
@@ -87,7 +93,12 @@ export interface MailingRequest {
   tenantId: string;
   groupKey?: string;
   subject: string;
-  body: string;
+  /** The content HTML of an old client; ignored when `pageKey` is given (the server renders the page). */
+  body?: string;
+  /** The mail page (spec 1.171) whose sections are the content; absent = the `body` path of old clients. */
+  pageKey?: string;
+  /** «Webversion»: absent = on for a newsletter, off otherwise (`webVersionOn`). Only with `pageKey`. */
+  webVersion?: boolean;
   layout?: EmailLayoutChoice;
   from?: string;
   to: string[];
@@ -153,6 +164,12 @@ export interface MailingDoc {
   householdNames?: Record<string, string>;
   /** A newsletter send (spec 1.169 §5.6): the newsletter group. Set only by `sendMailing`, never taken from the client. */
   newsletterGroupKey?: string;
+  /** The mail page whose rendered sections are `body` (spec 1.171); absent on old sends. */
+  pageKey?: string;
+  /** Whether this send has a web version; set with `pageKey` only. */
+  webVersion?: boolean;
+  /** The id of its `mailingWeb` snapshot; only the E-Mails link to it. Deleted when the web version is turned off. */
+  webToken?: string;
 }
 
 /**
@@ -370,6 +387,56 @@ function postEnv(): QuoteEnv {
   return { getPort: getCreditPort, secret: quoteTokenSecret.value(), now: Date.now(), readCountryCodes, answerEventsOf, renderPages: countLetterPages };
 }
 
+/** A page key as the server accepts it: absent, or one document id. */
+export function parsePageKey(raw: unknown): string | undefined {
+  if (raw === undefined || raw === null || raw === '') return undefined;
+  if (typeof raw !== 'string' || raw.includes('/')) throw new HttpsError('invalid-argument', 'pageKey must be a document id.');
+  return raw;
+}
+
+/** The content HTML of the caller's unsent mail page; a page that cannot be sent is a clear refusal, never a raw 500. */
+async function mailPageBody(tenantId: string, pageKey: string, uid: string): Promise<string> {
+  try {
+    return (await renderMailPage(tenantId, pageKey, uid)).html;
+  } catch (error) {
+    if (error instanceof MailPageError) throw new HttpsError('failed-precondition', error.code);
+    logger.error(`sendMailing: mail page ${pageKey} could not be rendered (tenant ${tenantId})`, { error: String((error as Error)?.message ?? error) });
+    throw new HttpsError('internal', 'The mail page could not be rendered.');
+  }
+}
+
+/** The web version's HTML: the body in the chosen layout, with no personal values (no variables, no answer or unsubscribe link). */
+async function webSnapshotHtml(tenantId: string, layout: EmailLayoutChoice, body: string): Promise<string> {
+  try {
+    return (await renderEmail({ tenantId, layout, body, includeContact: true })).html;
+  } catch (error) {
+    if (error instanceof EmailTemplateError) throw new HttpsError('failed-precondition', error.code);
+    logger.error(`sendMailing: web version could not be rendered (tenant ${tenantId})`, { error: String((error as Error)?.message ?? error) });
+    throw new HttpsError('internal', 'The web version could not be rendered.');
+  }
+}
+
+/**
+ * The writes of a page send, all or nothing: the `mailings` doc, its `mailingWeb` snapshot and the page's
+ * `mailingKey` stamp. A page already sent (a second click, a second tab) refuses the whole send, so one page
+ * never becomes two Versände, and no snapshot ever points to a mailing that was not stored.
+ */
+async function createPageMailing(
+  db: Firestore, ref: FirebaseFirestore.DocumentReference, doc: MailingDoc, pageKey: string, web: { token: string; html: string } | undefined,
+): Promise<void> {
+  const pageRef = db.collection(MailPageCollection).doc(pageKey);
+  await db.runTransaction(async (tx) => {
+    const page = await tx.get(pageRef);
+    if (!page.exists) throw new HttpsError('failed-precondition', 'not-found');
+    if (page.get('mailingKey')) throw new HttpsError('failed-precondition', 'sent');
+    tx.create(ref, doc);
+    if (web) {
+      tx.create(db.collection(MailingWebCollection).doc(web.token), { tenants: doc.tenants, mailingKey: ref.id, html: web.html, createdAt: doc.createdAt });
+    }
+    tx.update(pageRef, { mailingKey: ref.id });
+  });
+}
+
 export const sendMailing = onCall(
   { region: REGION, enforceAppCheck: true, cors: true, memory: '2GiB', timeoutSeconds: 120, secrets: [quoteTokenSecret] },
   async (request: CallableRequest<MailingRequest>): Promise<{ mailingKey: string }> => {
@@ -380,7 +447,9 @@ export const sendMailing = onCall(
     const { tenantId, groupKey } = data;
     if (typeof tenantId !== 'string' || !tenantId) throw new HttpsError('invalid-argument', 'tenantId is required.');
     if (typeof data.subject !== 'string' || !data.subject.trim()) throw new HttpsError('invalid-argument', 'subject is required.');
-    if (typeof data.body !== 'string') throw new HttpsError('invalid-argument', 'body is required.');
+    // with a page the server renders the content (spec 1.171); without one, the body of an old client as today
+    const pageKey = parsePageKey(data.pageKey);
+    if (!pageKey && typeof data.body !== 'string') throw new HttpsError('invalid-argument', 'body is required.');
     const to = stringList(data.to, 'to');
     const cc = stringList(data.cc, 'cc');
     let deliveries = parseDeliveries(data.deliveries);
@@ -474,6 +543,22 @@ export const sendMailing = onCall(
     const letterQrCodes = data.letterQrCodes === true && caleventKeys.length > 0 && keysFor(deliveries, DeliveryChannel.Post).length > 0;
     // a Pingen send is idempotent: the quote token names the Versand, so a replay finds it instead of charging again
     const ref = postRequest ? db.collection(MailingCollection).doc(postMailingKey(tenantId, postRequest.token)) : db.collection(MailingCollection).doc();
+    const layout = asLayoutChoice(data.layout);
+    let body = typeof data.body === 'string' ? data.body : '';
+    let web: { token: string; html: string } | undefined;
+    if (pageKey) {
+      // a Pingen replay of a page that this very Versand already sent: the duplicate it is, never a refusal
+      if (postRequest && (await db.collection(MailPageCollection).doc(pageKey).get()).get('mailingKey') === ref.id) {
+        return { mailingKey: ref.id };
+      }
+      // rendered after every other check and before any money moves or file is stored
+      body = await mailPageBody(tenantId, pageKey, uid);
+      // newsletter or not is the server's decision above (newsletterGroupKey), never the client's
+      const requested = typeof data.webVersion === 'boolean' ? data.webVersion : undefined;
+      if (webVersionOn(requested, !!newsletterGroupKey)) {
+        web = { token: newWebToken(), html: await webSnapshotHtml(tenantId, layout, body) };
+      }
+    }
     const resolved = await resolveAttachmentBytes(data, tenantId);
     const senderKey = String(caller['personKey'] ?? '');
     const build = async (post: MailingPost | undefined): Promise<void> => {
@@ -486,8 +571,8 @@ export const sendMailing = onCall(
           senderKey,
           senderName: String(caller['displayName'] ?? caller['loginEmail'] ?? ''),
           subject: data.subject.trim(),
-          body: data.body,
-          layout: asLayoutChoice(data.layout),
+          body,
+          layout,
           from,
           to,
           cc,
@@ -502,8 +587,11 @@ export const sendMailing = onCall(
           ...(letterQrCodes ? { letterQrCodes: true } : {}),
           ...(post ? { post } : {}),
           ...(newsletterGroupKey ? { newsletterGroupKey } : {}),
+          ...(pageKey ? { pageKey, webVersion: !!web } : {}),
+          ...(web ? { webToken: web.token } : {}),
         };
-        await ref.create(doc);
+        if (pageKey) await createPageMailing(db, ref, doc, pageKey, web);
+        else await ref.create(doc);
       } catch (error) {
         await removeStoredAttachments(ref, tenantId);
         throw error;
@@ -513,7 +601,8 @@ export const sendMailing = onCall(
       // the actor of the credit entry is the caller's uid
       await withPostOrder(postEnv(), {
         // subject and QR flag exactly as the quote saw them (the token hashes the request, not the stored doc)
-        post: postRequest, tenantId, subject: data.subject, body: data.body, attachments: resolved, letterQrCodes: data.letterQrCodes === true,
+        // a page send prices the rendered page: the HTML the letters print
+        post: postRequest, tenantId, subject: data.subject, body, attachments: resolved, letterQrCodes: data.letterQrCodes === true,
         caleventKeys, postKeys: keysFor(deliveries, DeliveryChannel.Post), ...(newsletterGroupKey ? { newsletterGroupKey } : {}), mailingKey: ref.id, mailingExists: async () => (await ref.get()).exists, lock: postLockOf(db, ref.id, tenantId), actor: uid,
         caller: caller as { roles?: unknown; tenants?: string[] }, nowIso: getTodayStr(DateFormat.StoreDateTime),
       }, build);
@@ -575,6 +664,12 @@ async function keysWithAccount(db: Firestore, tenantId: string, keys: string[]):
   return keys.filter((key) => found.has(key));
 }
 
+/** The public link of a Versand's web version, on the tenant's app origin. */
+async function webLinkOf(db: Firestore, tenantId: string, token: string): Promise<string> {
+  const cfg = (await db.collection('app-config').doc(tenantId).get()).data();
+  return webVersionUrl(publicAppOrigin(cfg?.['appDomain'] as string | undefined, tenantId), token);
+}
+
 export const onMailing = onDocumentCreated(
   // 2GiB, 540 s: the Post part renders one letter per recipient in Chromium (as generateDocument does)
   { document: `${MailingCollection}/{mailingKey}`, region: REGION, memory: '2GiB', timeoutSeconds: 540, secrets: [invitationLinkSecret] },
@@ -616,12 +711,13 @@ export const onMailing = onDocumentCreated(
       const emailKeys = contactKeysFor(mailing.deliveries, DeliveryChannel.Email, households);
       if (emailKeys.length > 0) {
         // read only when a job is written: the tenant's sender config is not needed for an empty list
+        // «Im Browser ansehen» goes into the E-Mails only: the notice and the letters keep `mailing.body`
         const base = async (): Promise<MailJobDoc> => ({
           tenants: [tenantId],
           to: mailing.to,
           from: mailing.from || (await getAppEmailConfig(tenantId)).from,
           subject: mailing.subject,
-          body: mailing.body,
+          body: mailing.webToken ? withWebLink(mailing.body, await webLinkOf(db, tenantId, mailing.webToken), WEB_LINK_LABEL) : mailing.body,
           layout: mailing.layout,
           attachments: privateRefs(mailing.attachments),
           state: 'pending',
