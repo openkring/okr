@@ -52,5 +52,25 @@ export type TransportMode = 'plane' | 'ship' | 'bus' | 'train' | 'car' | 'bike' 
 export const TRANSPORT_MODES: TransportMode[] = ['plane', 'ship', 'bus', 'train', 'car', 'bike', 'foot', 'row', 'ski', 'motorbike'];
 export const FOOTPRINT_PAGE_TYPE = 'footprint';
 
+// Versand als Seite (spec 1.171): a mail built from CMS-style sections, stored apart from the website pages.
+export const MAIL_PAGE_TYPE = 'mail';
+export const MailPageCollection = 'mailPages';
+export const MailPageSectionCollection = 'sections'; // subcollection mailPages/{key}/sections
+export const MailingWebCollection = 'mailingWeb'; // public web version of a sent Versand
+export const MAIL_SECTION_TYPES = ['article', 'button', 'events'] as const;
+export type MailSectionType = (typeof MAIL_SECTION_TYPES)[number];
+
+export class MailPageModel extends PageModel {
+  public senderUid = ''; // FK -> users; the author of the Versand
+  public groupKey?: string; // FK -> groups; the newsletter group, if any
+  public mailingKey?: string; // FK -> mailings; set once the Versand was sent
+  public createdAt = ''; // ISO timestamp
+
+  constructor(tenantId: string) {
+    super(tenantId);
+    this.type = MAIL_PAGE_TYPE;
+  }
+}
+
 export const PageCollection = 'pages';
 export const PageModelName = 'page';
