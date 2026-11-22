@@ -38,13 +38,11 @@ import { TemplateListKind, TemplateStore } from './template.store';
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ store.filteredTemplates().length }} {{ store.i18n.list_title() }}</ion-title>
-        @if(store.listKind() === 'pdf') {
-          <ion-buttons slot="end">
-            <ion-button fill="clear" (click)="create()">
-              <ion-icon src="{{ 'add-circle' | svgIcon }}" slot="icon-only" />
-            </ion-button>
-          </ion-buttons>
-        }
+        <ion-buttons slot="end">
+          <ion-button fill="clear" (click)="create()">
+            <ion-icon src="{{ 'add-circle' | svgIcon }}" slot="icon-only" />
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
       <ion-toolbar>
         <ion-segment [value]="store.listKind()" (ionChange)="onKindChange($event)">
@@ -115,7 +113,10 @@ export class TemplateList {
   }
 
   protected async create(): Promise<void> {
-    const key = await this.store.createTemplate();
+    // the email tab adds a layout; a new email text would never be sent (see createEmailLayout)
+    const key = this.store.listKind() === 'email'
+      ? await this.store.createEmailLayout()
+      : await this.store.createTemplate();
     if (key) {
       // `new=1` marks the document as provisional: leaving the editor without saving
       // discards it again (TemplateEditPage.ngOnDestroy).

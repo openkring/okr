@@ -12,7 +12,7 @@ import {
 } from '@okr/content-pdf-template-data-access';
 import { EmailComposerModal } from '@okr/content-pdf-template-ui';
 import {
-  emailCopyKey, emailPublishProblem, EmailPublishProblem, newTemplate, newTemplateVersion, TEMPLATE_I18N_KEYS, TemplateI18n,
+  emailCopyKey, emailPublishProblem, EmailPublishProblem, newEmailLayout, newEmailLayoutKey, newTemplate, newTemplateVersion, TEMPLATE_I18N_KEYS, TemplateI18n,
 } from '@okr/content-pdf-template-util';
 export type { TemplateI18n };
 
@@ -117,6 +117,16 @@ export const TemplateStore = signalStore(
     async createTemplate(): Promise<string | undefined> {
       const tmpl = newTemplate(store.appStore.tenantId());
       return store.templateService.create(tmpl, store.currentUser(), true);
+    },
+
+    /**
+     * Create the provisional document behind 'add template' on the email tab: a new layout of this
+     * tenant (spec 1.145 offers every published layout as a Vorlage). A new email text is not offered:
+     * the server only reads texts under fixed ids, so a text with a free id would never be sent.
+     */
+    async createEmailLayout(): Promise<string | undefined> {
+      const tenantId = store.appStore.tenantId();
+      return store.templateService.create(newEmailLayout(tenantId, newEmailLayoutKey(tenantId)), store.currentUser(), true);
     },
 
     /** Discard a provisional template the user left without saving. */

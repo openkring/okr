@@ -19,7 +19,7 @@ import { TemplateAddressWindow, TemplateModel, TemplateVersionModel } from '@okr
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ChangeConfirmation, ChangeConfirmationI18n } from '@okr/shared-ui';
 import { safeStructuredClone } from '@okr/shared-util-core';
-import { emailPublishProblem, isEmailTemplate, newTemplateVersion, prettifyJson } from '@okr/content-pdf-template-util';
+import { emailPublishProblem, isEmailTemplate, newTemplateVersion, prettifyJson, starterEmailLayoutVersion } from '@okr/content-pdf-template-util';
 import { TemplateService } from '@okr/content-pdf-template-data-access';
 
 import { TemplateStore } from './template.store';
@@ -329,6 +329,8 @@ export class TemplateEditPage implements OnDestroy {
       (max: number, v: TemplateVersionModel) => Math.max(max, v.version),
       tmpl.currentVersion ?? 0
     );
+    // a layout without any version yet starts from a frame that already holds the content slot
+    if (!tmpl.currentVersion && versions.length === 0 && tmpl.kind === 'emailLayout') return starterEmailLayoutVersion(maxVersion + 1);
     const next = newTemplateVersion(maxVersion + 1);
     const current = versions.find((v: TemplateVersionModel) => v.version === tmpl.currentVersion);
     if (current) {

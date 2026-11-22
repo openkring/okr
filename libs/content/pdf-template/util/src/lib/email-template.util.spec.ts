@@ -2,7 +2,8 @@ import '@angular/compiler';
 import { describe, it, expect } from 'vitest';
 import { TemplateModel } from '@okr/shared-models';
 import {
-  canDeleteEmailTemplate, emailCopyKey, emailCopyPlan, emailLayoutOptions, emailPublishProblem, isEmailTemplate, templateKindOf, withLinksInNewTab,
+  canDeleteEmailTemplate, emailCopyKey, emailCopyPlan, emailLayoutOptions, emailPublishProblem, isEmailTemplate, newEmailLayout, newEmailLayoutKey,
+  starterEmailLayoutVersion, templateKindOf, withLinksInNewTab,
 } from './email-template.util';
 
 describe('templateKindOf', () => {
@@ -140,5 +141,36 @@ describe('withLinksInNewTab', () => {
 
   it('prepends it to a fragment without a head', () => {
     expect(withLinksInNewTab('<p><a href="https://x.ch">x</a></p>')).toBe('<base target="_blank"><p><a href="https://x.ch">x</a></p>');
+  });
+});
+
+describe('newEmailLayoutKey', () => {
+  it('is an own key of the tenant, outside the standard and plain families', () => {
+    const key = newEmailLayoutKey('scs');
+    expect(key).toMatch(/^email-layout-[a-z0-9]{8}_scs$/);
+    expect(key.startsWith('email-layout_')).toBe(false);
+    expect(canDeleteEmailTemplate(key)).toBe(true);
+  });
+
+  it('differs between calls', () => {
+    expect(newEmailLayoutKey('scs')).not.toBe(newEmailLayoutKey('scs'));
+  });
+});
+
+describe('newEmailLayout', () => {
+  it('is an emailLayout for the one tenant under the given key', () => {
+    const t = newEmailLayout('scs', 'email-layout-abcdefgh_scs');
+    expect(t.kind).toBe('emailLayout');
+    expect(t.tenants).toEqual(['scs']);
+    expect(t.okey).toBe('email-layout-abcdefgh_scs');
+    expect(t.defaultOutputFormat).toBe('html');
+  });
+});
+
+describe('starterEmailLayoutVersion', () => {
+  it('can be published as it is: the content slot is in both halves', () => {
+    const v = starterEmailLayoutVersion(1);
+    expect(v.version).toBe(1);
+    expect(emailPublishProblem({ okey: 'email-layout-x_scs', kind: 'emailLayout' }, v)).toBeUndefined();
   });
 });

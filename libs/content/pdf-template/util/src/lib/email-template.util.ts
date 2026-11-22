@@ -1,4 +1,5 @@
 import { forkKeyFor } from '@okr/shared-util-core';
+import { newTemplateVersion } from './pdf-template.util';
 import {
   EmailLayoutChoice, EmailLayoutKey, EmailPlainLayoutKey, EmailTextPasswordResetKey, TemplateKind, TemplateModel, TemplateVersionModel,
 } from '@okr/shared-models';
@@ -118,4 +119,38 @@ export function withLinksInNewTab(html: string): string {
   const head = /<head[^>]*>/i.exec(html);
   if (head) return html.slice(0, head.index + head[0].length) + base + html.slice(head.index + head[0].length);
   return base + html;
+}
+
+/**
+ * The document id of a layout a tenant adds itself (spec 1.145: any published layout of the tenant can be
+ * chosen as a Vorlage). The `_<tenant>` suffix is what the rules require of an email kind and what the server
+ * reads as the tenant's own doc. `email-layout-…` keeps it out of the standard (`email-layout_…`) family.
+ */
+export function newEmailLayoutKey(tenantId: string): string {
+  let id = '';
+  while (id.length < 8) id += Math.random().toString(36).slice(2).replace(/[^a-z0-9]/g, '');
+  return `email-layout-${id.slice(0, 8)}_${tenantId}`;
+}
+
+/** A new email layout of one tenant under the given key. */
+export function newEmailLayout(tenantId: string, key: string): TemplateModel {
+  const t = new TemplateModel(tenantId);
+  t.okey = key;
+  t.kind = 'emailLayout';
+  t.defaultOutputFormat = 'html';
+  return t;
+}
+
+/** The first draft of a new layout: a plain frame around the content slot, so it can be published as it is. */
+export function starterEmailLayoutVersion(version: number): TemplateVersionModel {
+  const v = newTemplateVersion(version);
+  v.html = [
+    '<!doctype html>',
+    '<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>',
+    '<body style="margin:0;padding:24px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#222">',
+    '  <div style="max-width:600px;margin:0 auto">{{{content}}}</div>',
+    '</body></html>',
+  ].join('\n');
+  v.text = '{{{content}}}';
+  return v;
 }
