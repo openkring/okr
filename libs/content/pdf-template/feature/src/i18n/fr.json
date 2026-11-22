@@ -255,7 +255,11 @@
       "type_events": "Événements d'un calendrier",
       "no_content": "Écris un texte ou ajoute une section, puis tu pourras envoyer.",
       "draft_error": "Le brouillon n'a pas pu être créé. Ferme la fenêtre et réessaie.",
-      "save_error": "La modification n'a pas pu être enregistrée."
+      "save_error": "La modification n'a pas pu être enregistrée.",
+      "refused_no_content": "L'e-mail n'a pas encore de contenu.",
+      "refused_sent": "Cet e-mail a déjà été envoyé.",
+      "refused_gone": "Le brouillon n'existe plus. Ferme la fenêtre et recommence.",
+      "refused_section": "L'e-mail contient une section qui ne peut pas être envoyée."
     },
     "web_version": {
       "label": "Proposer une version web",

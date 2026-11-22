@@ -282,6 +282,10 @@ export const EMAIL_COMPOSER_I18N_KEYS = {
   page_no_content:    PFX + 'composer.page.no_content',
   page_draft_error:   PFX + 'composer.page.draft_error',
   page_save_error:    PFX + 'composer.page.save_error',
+  page_refused_no_content: PFX + 'composer.page.refused_no_content',
+  page_refused_sent:  PFX + 'composer.page.refused_sent',
+  page_refused_gone:  PFX + 'composer.page.refused_gone',
+  page_refused_section: PFX + 'composer.page.refused_section',
 } satisfies Record<string, string>;
 
 export type EmailComposerI18n = { [K in keyof typeof EMAIL_COMPOSER_I18N_KEYS]: Signal<string> };

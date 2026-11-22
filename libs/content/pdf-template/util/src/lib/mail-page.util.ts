@@ -40,6 +40,16 @@ function isSafeMailUrl(raw: unknown): boolean {
   return /^(https:\/\/|mailto:|tel:)/.test(u);
 }
 
+/**
+ * Whether an article image path becomes an image in the mail, as the server's `mailImageUrl` resolves it: an
+ * https URL is kept, any other non-empty path is a Storage path served through imgix, and an `http://` URL is
+ * dropped (`toImgixUrl` keeps it as is, and the mail takes https only).
+ */
+function isMailImagePath(raw: unknown): boolean {
+  const path = str(raw);
+  return path.length > 0 && !path.startsWith('http://');
+}
+
 function sectionHasContent(s: SectionModel): boolean {
   const props = rec(s.properties);
   switch (s.type) {
@@ -47,26 +57,54 @@ function sectionHasContent(s: SectionModel): boolean {
       const html = s.content?.htmlContent ?? '';
       const images = props['images'];
       const first = Array.isArray(images) ? rec(images[0]) : undefined;
-      const hasImage = !!first && !!(str(first['url']) || str(first['altText']) || str(first['label']));
+      // the server shows the first image when its path resolves, else its alt text (altText, else label)
+      const hasImage = !!first && (isMailImagePath(first['url']) || !!(str(first['altText']) || str(first['label'])));
       return /<img\b/i.test(html) || visibleText(html).length > 0 || hasImage || !!str(s.title) || !!str(s.subTitle);
     }
     case 'button':
       return isSafeMailUrl(rec(props['action'])['url']) && !!(str(rec(props['style'])['label']) || str(rec(props['action'])['altText']));
-    case 'events':
-      return !!str(s.name);
     default:
+      // an events section is not counted (see mailPageHasContent); any other type has no email template
       return false;
   }
 }
 
 /**
  * Whether the page shows anything, by the rule of the server's `no-content` (`renderMailPageContent`): an article
- * with visible text or an image, a button with a safe (https/mailto/tel) URL and a label, an events section.
- * Archived sections do not count. The server counts an events section only when its calendar yields event
- * lines, which it loads; the client cannot know that, so an events section with a calendar name is enough here.
+ * with visible text, a title, or an image (a path the server resolves, or an alt text), or a button with a safe
+ * (https/mailto/tel) URL and a label. Archived sections do not count.
+ *
+ * An events section never makes a page sendable here: the server counts it only when its calendar has upcoming
+ * events, which the client does not load. So a page needs an article or a button; events alone are refused
+ * before the send. Where the two still differ (an events section next to an empty article, a calendar that is
+ * empty after all), the server's `no-content` is the backstop and the composer shows it as a readable message.
  */
 export function mailPageHasContent(sections: SectionModel[]): boolean {
   return sections.some(s => !s.isArchived && sectionHasContent(s));
+}
+
+/** The i18n key (EMAIL_COMPOSER_I18N_KEYS) of a refusal of the server's mail page rendering. */
+export type MailPageRefusalKey = 'page_refused_no_content' | 'page_refused_sent' | 'page_refused_gone' | 'page_refused_section';
+
+const MAIL_PAGE_REFUSALS: Readonly<Record<string, MailPageRefusalKey>> = {
+  'no-content': 'page_refused_no_content',
+  sent: 'page_refused_sent',
+  'not-found': 'page_refused_gone',
+  foreign: 'page_refused_gone',
+  'unknown-section-type': 'page_refused_section',
+};
+
+/**
+ * The message key for a callable error that refuses a mail page (`sendMailing`, `renderEmailPreview`,
+ * `quoteMailingLetters`): the server throws `failed-precondition` with the page's code as message
+ * (`no-content`, `sent`, `not-found`, `foreign`, `unknown-section-type`). Anything else is undefined: the caller
+ * keeps its own error handling.
+ */
+export function mailPageRefusalKey(err: unknown): MailPageRefusalKey | undefined {
+  const e = err as { code?: unknown; message?: unknown } | null | undefined;
+  const code = typeof e?.code === 'string' ? e.code.replace(/^functions\//, '') : '';
+  if (code !== 'failed-precondition' || typeof e?.message !== 'string') return undefined;
+  return Object.prototype.hasOwnProperty.call(MAIL_PAGE_REFUSALS, e.message) ? MAIL_PAGE_REFUSALS[e.message] : undefined;
 }
 
 /** One line for the section list: an article's first 60 visible characters, a button's label, an events calendar. */

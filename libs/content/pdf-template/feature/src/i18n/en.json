@@ -255,7 +255,11 @@
       "type_events": "Events of a calendar",
       "no_content": "Write a text or add a section, then you can send.",
       "draft_error": "The draft could not be created. Close the window and try again.",
-      "save_error": "The change could not be saved."
+      "save_error": "The change could not be saved.",
+      "refused_no_content": "The email has no content yet.",
+      "refused_sent": "This email has already been sent.",
+      "refused_gone": "The draft no longer exists. Close the window and start again.",
+      "refused_section": "The email contains a section that cannot be sent."
     },
     "web_version": {
       "label": "Offer a web version",

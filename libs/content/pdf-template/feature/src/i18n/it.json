@@ -255,7 +255,11 @@
       "type_events": "Eventi di un calendario",
       "no_content": "Scrivi un testo o aggiungi una sezione, poi potrai inviare.",
       "draft_error": "Non è stato possibile creare la bozza. Chiudi la finestra e riprova.",
-      "save_error": "Non è stato possibile salvare la modifica."
+      "save_error": "Non è stato possibile salvare la modifica.",
+      "refused_no_content": "L'e-mail non ha ancora contenuto.",
+      "refused_sent": "Questa e-mail è già stata inviata.",
+      "refused_gone": "La bozza non esiste più. Chiudi la finestra e ricomincia.",
+      "refused_section": "L'e-mail contiene una sezione che non può essere inviata."
     },
     "web_version": {
       "label": "Offri una versione web",

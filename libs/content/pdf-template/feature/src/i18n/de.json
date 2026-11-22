@@ -255,7 +255,11 @@
       "type_events": "Anlässe eines Kalenders",
       "no_content": "Schreib einen Text oder füge einen Abschnitt hinzu, dann kannst du senden.",
       "draft_error": "Der Entwurf konnte nicht angelegt werden. Schliesse das Fenster und versuche es nochmals.",
-      "save_error": "Die Änderung konnte nicht gespeichert werden."
+      "save_error": "Die Änderung konnte nicht gespeichert werden.",
+      "refused_no_content": "Die E-Mail hat noch keinen Inhalt.",
+      "refused_sent": "Diese E-Mail wurde bereits versendet.",
+      "refused_gone": "Der Entwurf ist nicht mehr vorhanden. Schliesse das Fenster und beginne neu.",
+      "refused_section": "Die E-Mail enthält einen Abschnitt, der nicht versendet werden kann."
     },
     "web_version": {
       "label": "Webversion anbieten",

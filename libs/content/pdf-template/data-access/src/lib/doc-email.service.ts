@@ -58,7 +58,11 @@ export interface SendMailingRequest {
   /** a group admin's Versand: the server checks the recipients against this group */
   groupKey?: string;
   subject: string;
-  body: string;
+  /**
+   * The content HTML, unless `pageKey` is given. A page send leaves it out entirely: a server released before
+   * 1.171 then refuses with «body is required» instead of mass-sending an empty mail (it ignores `pageKey`).
+   */
+  body?: string;
   layout: EmailLayoutChoice;
   from?: string;
   to: string[];

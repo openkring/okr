@@ -28,7 +28,7 @@ import {
   GROUP_ADMIN_MAILING_CHANNELS, groupReachWarnings, hasPostDelivery, isSenderDomainAllowed,
   nonPdfAttachmentNames, parseEmails, sharedEmailCount, untickEmailAddress, withLinksInNewTab, toggleDelivery, versandBcc, versandDeliveries,
   EmailComposerFormModel, emailComposerValidations, VersandDeliveries, VersandEvent, VersandRow,
-  EMAIL_COMPOSER_I18N_KEYS, EMAIL_COMPOSER_MSG_KEYS, EmailComposerI18n,
+  EMAIL_COMPOSER_I18N_KEYS, EMAIL_COMPOSER_MSG_KEYS, EmailComposerI18n, mailPageRefusalKey,
 } from '@okr/content-pdf-template-util';
 import { DocEmailService, InlineAttachment, MailingLetters, PostQuote, SendMailingRequest, TemplateService } from '@okr/content-pdf-template-data-access';
 
@@ -305,7 +305,7 @@ interface AddressField {
                 } @else if (previewLoading()) {
                   <okr-spinner />
                 } @else if (previewFailed()) {
-                  <ion-note color="danger" class="note">{{ i18n.preview_error() }}</ion-note>
+                  <ion-note color="danger" class="note">{{ previewRefusal() ?? i18n.preview_error() }}</ion-note>
                 } @else {
                   <!-- no scripts; links open in a new tab (allow-popups) outside the sandbox, so they can be tried out -->
                   <iframe class="preview-frame" [title]="i18n.preview_frame()" sandbox="allow-popups allow-popups-to-escape-sandbox" [srcdoc]="previewHtml()"></iframe>
@@ -742,6 +742,8 @@ export class EmailComposerModal {
   protected readonly previewLoading = signal(false);
   /** The preview could not be fetched; sending stays possible. */
   protected readonly previewFailed = signal(false);
+  /** Why the server refused to render the mail page (no content, sent, gone, …); undefined = a generic failure. */
+  protected readonly previewRefusal = signal<string | undefined>(undefined);
   /** Number of the latest preview request: a response with an older number is dropped. */
   private previewRequest = 0;
 
@@ -965,8 +967,10 @@ export class EmailComposerModal {
         this.postMode.set('download');
         this.postError.set(undefined);
       } else {
-        console.error('EmailComposerModal.loadQuote: quoteMailingLetters failed', err);
-        this.postError.set(this.i18n.post_error());
+        // a refused mail page (no content, already sent, gone) is said in words; anything else is a generic failure
+        const refusal = mailPageRefusalKey(err);
+        if (!refusal) console.error('EmailComposerModal.loadQuote: quoteMailingLetters failed', err);
+        this.postError.set(refusal ? this.i18n[refusal]() : this.i18n.post_error());
       }
     } finally {
       if (request === this.quoteRequest) this.postLoading.set(false);
@@ -1172,6 +1176,7 @@ export class EmailComposerModal {
     const request = ++this.previewRequest;
     this.previewLoading.set(true);
     this.previewFailed.set(false);
+    this.previewRefusal.set(undefined);
     try {
       // a Versand's page is rendered from Firestore: the last typed characters first, and none may be missing
       if (this.isVersand() && !(await this.draft.flush())) {
@@ -1190,7 +1195,10 @@ export class EmailComposerModal {
       this.previewHtml.set(this.sanitizer.bypassSecurityTrustHtml(withLinksInNewTab(rendered.html)));
     } catch (err) {
       if (request !== this.previewRequest) return;
-      console.error('EmailComposerModal.loadPreview: renderEmailPreview failed', err);
+      // a refused mail page (no content, already sent, gone) is said in words; anything else is a generic failure
+      const refusal = mailPageRefusalKey(err);
+      if (!refusal) console.error('EmailComposerModal.loadPreview: renderEmailPreview failed', err);
+      this.previewRefusal.set(refusal ? this.i18n[refusal]() : undefined);
       this.previewHtml.set('');
       this.previewFailed.set(true);
     } finally {
@@ -1404,8 +1412,9 @@ export class EmailComposerModal {
           to: request.to, from: request.from,
           // with events or to a newsletter every person gets their own mail: no Cc, the address in «An» is the reply address
           cc: this.personalMails() ? [] : request.cc,
-          // the content is the page; `body` is ignored with a pageKey
-          subject: request.subject, body: '', layout: request.layout,
+          // the content is the page: no `body` at all, so a server older than 1.171 (which ignores pageKey)
+          // refuses the send («body is required») instead of sending an empty mail
+          subject: request.subject, layout: request.layout,
           pageKey: this.draft.pageKey(), webVersion: this.webVersion(),
           ...(request.storagePath ? { storagePath: request.storagePath, filename: request.filename } : {}),
           extraAttachments: request.extraAttachments,
@@ -1457,6 +1466,13 @@ export class EmailComposerModal {
       await dismissOverlay(this.modalController, { sent: true }, 'confirm');
     } catch (err) {
       if (this.handlePostRefusal(err)) {
+        this.isSending.set(false);
+        return;
+      }
+      // a refused mail page (no content, already sent, gone, a section without a mail form) in words, no raw code
+      const refusal = mailPageRefusalKey(err);
+      if (refusal) {
+        await this.showToast(this.i18n[refusal](), 'danger');
         this.isSending.set(false);
         return;
       }
