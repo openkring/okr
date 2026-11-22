@@ -10,6 +10,7 @@ import type { EmailLayoutChoice } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication, checkRoles } from '@okr/shared-util-functions';
 
 import { callerMaySendFor } from '../auth';
+import { mailPageBody, parsePageKey } from './mailing';
 import { composeBody, EmailTemplateError, firestoreTemplateReader, RenderedEmail, renderEmail } from './render-email';
 import { answerBlockHtml, AnswerEventLine } from './personal-mail.logic';
 import { asLayoutChoice, StoredTemplate } from './render-email.logic';
@@ -23,6 +24,8 @@ export interface RenderPreviewRequest {
   appId: string;
   layout?: EmailLayoutChoice;
   body?: string;
+  /** A mail page of the caller (1.171): the server renders it and previews that; wins over `body`. */
+  pageKey?: string;
   attachmentName?: string;
   /** The events of a Versand with answer links: the preview shows the answer block under the body. */
   answerEvents?: AnswerEventLine[];
@@ -109,6 +112,11 @@ export const renderEmailPreview = onCall(
     const tenantId = await previewTenant(request);
     const data = request.data;
     try {
+      const pageKey = parsePageKey(data.pageKey);
+      if (pageKey) {
+        const body = await mailPageBody(tenantId, pageKey, request.auth?.uid ?? '');
+        return await composeBody(tenantId, { body, layout: asLayoutChoice(data.layout), attachmentName: data.attachmentName });
+      }
       if (data.body !== undefined) {
         if (typeof data.body !== 'string') throw new HttpsError('invalid-argument', 'body must be a string.');
         const events = (Array.isArray(data.answerEvents) ? data.answerEvents : []).filter((e) => e && typeof e === 'object')

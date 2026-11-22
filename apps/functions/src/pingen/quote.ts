@@ -12,7 +12,7 @@ import { CreditAccountCollection } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
 import { countLetterPages } from '../email/mailing-letters';
-import { resolveAttachmentBytes, type MailingAttachmentFields } from '../email/mailing';
+import { mailPageBody, parsePageKey, resolveAttachmentBytes, type MailingAttachmentFields } from '../email/mailing';
 import { parseCaleventKeys } from '../email/personal-mail.logic';
 import { checkNewsletterGroup } from '../newsletter/signup';
 import { getCreditPort } from './credit-port';
@@ -68,6 +68,8 @@ export interface QuoteCallableEnv extends QuoteEnv {
    * unsubscribe block. Absent = no newsletter is recognised; a newsletter send then refuses the quote (price-changed).
    */
   isNewsletterGroup?(tenantId: string, groupKey: string): Promise<boolean>;
+  /** The rendered HTML of the caller's mail page (1.171): what `sendMailing` prices for the same `pageKey`. */
+  renderPage?(tenantId: string, pageKey: string, uid: string): Promise<string>;
 }
 
 export async function quoteMailingLettersCore(deps: QuoteDeps, input: QuoteInput, caller: QuoteCaller): Promise<PostQuote> {
@@ -81,7 +83,7 @@ export async function quoteMailingLettersCore(deps: QuoteDeps, input: QuoteInput
 }
 
 /** The request's own fields; the attachments are resolved to bytes afterwards. */
-export function parseInput(raw: unknown): Omit<QuoteInput, 'attachments'> {
+export function parseInput(raw: unknown): Omit<QuoteInput, 'attachments'> & { pageKey?: string } {
   const d = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
   const text = (v: unknown): boolean => v === undefined || typeof v === 'string';
   if (!text(d['storagePath']) || !text(d['filename'])) throw new HttpsError('invalid-argument', 'Invalid attachment.');
@@ -89,13 +91,15 @@ export function parseInput(raw: unknown): Omit<QuoteInput, 'attachments'> {
   if (typeof d['tenantId'] !== 'string' || !d['tenantId']) throw new HttpsError('invalid-argument', 'tenantId is required.');
   const tenantId = d['tenantId'];
   if (typeof d['subject'] !== 'string' || !d['subject'].trim()) throw new HttpsError('invalid-argument', 'subject is required.');
-  if (typeof d['body'] !== 'string') throw new HttpsError('invalid-argument', 'body is required.');
+  // a mail page (1.171) is priced from its rendered HTML, so `body` is only required without one
+  const pageKey = parsePageKey(d['pageKey']);
+  if (!pageKey && typeof d['body'] !== 'string') throw new HttpsError('invalid-argument', 'body or pageKey is required.');
   const postKeys = d['postKeys'];
   if (!Array.isArray(postKeys) || postKeys.some((k) => typeof k !== 'string' || !k)) throw new HttpsError('invalid-argument', 'postKeys must be a list of strings.');
   if (postKeys.length > MAX_POST_RECIPIENTS) throw new HttpsError('invalid-argument', `At most ${MAX_POST_RECIPIENTS} recipients.`);
   const options = parseOptions(d['options']);
   return {
-    tenantId, subject: d['subject'], body: d['body'], options,
+    tenantId, subject: d['subject'], body: typeof d['body'] === 'string' ? d['body'] : '', options, ...(pageKey ? { pageKey } : {}),
     letterQrCodes: d['letterQrCodes'] === true, caleventKeys: parseCaleventKeys(d['caleventKeys']), postKeys: postKeys as string[],
   };
 }
@@ -105,14 +109,16 @@ export function parseInput(raw: unknown): Omit<QuoteInput, 'attachments'> {
  * tenant's credit account (`pingenAvailable: false` before anything else is learned or read), then the credit port,
  * then attachment reads and renders.
  */
-export async function quoteWithCaller(env: QuoteCallableEnv, data: unknown, caller: QuoteCaller): Promise<PostQuoteResult> {
-  const parsed = parseInput(data);
+export async function quoteWithCaller(env: QuoteCallableEnv, data: unknown, caller: QuoteCaller, uid = ''): Promise<PostQuoteResult> {
+  const { pageKey, ...parsed } = parseInput(data);
   if (!mayPost(caller, parsed.tenantId)) return UNAVAILABLE;
   if (!(await env.hasCreditAccount(parsed.tenantId))) return UNAVAILABLE;
   const port = env.getPort();
   // the server decides that the draft is a newsletter, as `sendMailing` does; a client flag is never read
   const groupKey = (data as { groupKey?: unknown }).groupKey;
   const newsletterGroupKey = typeof groupKey === 'string' && groupKey && (await env.isNewsletterGroup?.(parsed.tenantId, groupKey)) ? groupKey : undefined;
+  // the page's HTML is what `sendMailing` prices too (the same `mailPageBody`), so the token verifies
+  if (pageKey) parsed.body = await (env.renderPage ?? mailPageBody)(parsed.tenantId, pageKey, uid);
   const input: QuoteInput = {
     ...parsed, ...(newsletterGroupKey ? { newsletterGroupKey } : {}),
     attachments: await resolveAttachmentBytes(data as MailingAttachmentFields, parsed.tenantId, env.readDocument),
@@ -134,6 +140,6 @@ export const quoteMailingLetters = onCall(
       readCountryCodes, answerEventsOf, renderPages: countLetterPages,
       hasCreditAccount: async (tenantId) => (await db.collection(CreditAccountCollection).doc(tenantId).get()).exists,
       isNewsletterGroup: async (tenantId, groupKey) => (await checkNewsletterGroup(db, tenantId, groupKey)).ok,
-    }, request.data, caller);
+    }, request.data, caller, request.auth?.uid ?? '');
   },
 );

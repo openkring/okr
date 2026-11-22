@@ -395,12 +395,12 @@ export function parsePageKey(raw: unknown): string | undefined {
 }
 
 /** The content HTML of the caller's unsent mail page; a page that cannot be sent is a clear refusal, never a raw 500. */
-async function mailPageBody(tenantId: string, pageKey: string, uid: string): Promise<string> {
+export async function mailPageBody(tenantId: string, pageKey: string, uid: string): Promise<string> {
   try {
     return (await renderMailPage(tenantId, pageKey, uid)).html;
   } catch (error) {
     if (error instanceof MailPageError) throw new HttpsError('failed-precondition', error.code);
-    logger.error(`sendMailing: mail page ${pageKey} could not be rendered (tenant ${tenantId})`, { error: String((error as Error)?.message ?? error) });
+    logger.error(`mail page ${pageKey} could not be rendered (tenant ${tenantId})`, { error: String((error as Error)?.message ?? error) });
     throw new HttpsError('internal', 'The mail page could not be rendered.');
   }
 }

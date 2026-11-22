@@ -196,6 +196,47 @@ describe('quoteWithCaller', () => {
   });
 });
 
+describe('quoteWithCaller for a mail page (1.171)', () => {
+  const page = { tenantId: 'scs', subject: 'S', pageKey: 'pg1', postKeys: ['p0'] };
+  function env(renderPage = vi.fn(async () => '<p>PAGE</p>')) {
+    const renderPages = vi.fn(async () => 1);
+    const e: QuoteCallableEnv = {
+      getPort: () => setup(['CH']).deps.port, secret: 'k', now: 5000, hasCreditAccount: async () => true,
+      readCountryCodes: async () => ['CH'], answerEventsOf: async () => [], renderPages, renderPage,
+    };
+    return { e, renderPage, renderPages };
+  }
+
+  it('prices the rendered page, not a body, and needs no body', async () => {
+    const { e, renderPage, renderPages } = env();
+    const q = await quoteWithCaller(e, page, ADMIN, 'u1');
+    expect(q.pingenAvailable).toBe(true);
+    expect(renderPage).toHaveBeenCalledWith('scs', 'pg1', 'u1');
+    expect(renderPages).toHaveBeenCalledWith(expect.objectContaining({ body: expect.stringContaining('PAGE') }));
+  });
+
+  it('the page wins over a body the client also sends', async () => {
+    const { e, renderPages } = env();
+    await quoteWithCaller(e, { ...page, body: 'OLD' }, ADMIN, 'u1');
+    expect(renderPages).toHaveBeenCalledWith(expect.objectContaining({ body: expect.stringContaining('PAGE') }));
+  });
+
+  it('a request with neither body nor pageKey is invalid', async () => {
+    const { e } = env();
+    await expect(quoteWithCaller(e, { tenantId: 'scs', subject: 'S', postKeys: ['p0'] }, ADMIN, 'u1')).rejects.toMatchObject({ code: 'invalid-argument' });
+  });
+
+  it('a pageKey that is a path is invalid', async () => {
+    const { e } = env();
+    await expect(quoteWithCaller(e, { ...page, pageKey: 'a/b' }, ADMIN, 'u1')).rejects.toMatchObject({ code: 'invalid-argument' });
+  });
+
+  it('a page that cannot be sent is a refusal', async () => {
+    const { e } = env(vi.fn(async () => { throw new HttpsError('failed-precondition', 'sent'); }));
+    await expect(quoteWithCaller(e, page, ADMIN, 'u1')).rejects.toMatchObject({ code: 'failed-precondition' });
+  });
+});
+
 describe('quoteWithCaller for a newsletter (spec 1.169)', () => {
   const data = { tenantId: 'scs', subject: 'S', body: 'B', postKeys: ['p0'], groupKey: 'nl1' };
   // the unsubscribe block pushes the letter onto a second page

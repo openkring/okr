@@ -78,10 +78,14 @@ export interface SendMailingRequest {
 }
 
 /** The Versand as the quote needs it: the content the letters are made of, and who gets one. */
-export type QuoteMailingRequest = Pick<SendMailingRequest, 'tenantId' | 'groupKey' | 'subject' | 'body' | 'storagePath' | 'filename' | 'extraAttachments' | 'caleventKeys' | 'letterQrCodes'> & {
+export type QuoteMailingRequest = Pick<SendMailingRequest, 'tenantId' | 'groupKey' | 'subject' | 'storagePath' | 'filename' | 'extraAttachments' | 'caleventKeys' | 'letterQrCodes'> & {
   /** the personKeys ticked for Post */
   postKeys: string[];
   options: PostOptions;
+  /** the content HTML, unless `pageKey` is given */
+  body?: string;
+  /** a mail page (1.171): the server prices its rendered HTML, so the quote matches what the send charges */
+  pageKey?: string;
 };
 
 /** The price of a Versand by post, as `quoteMailingLetters` answers it (all amounts in Rappen). */
@@ -124,7 +128,10 @@ export interface MailingLetters {
 
 /** What the `renderEmailPreview` callable gets for a composer body. */
 export interface RenderPreviewRequest {
-  body: string;
+  /** the content HTML, unless `pageKey` is given */
+  body?: string;
+  /** a mail page (1.171): the server renders it; wins over `body` */
+  pageKey?: string;
   layout: EmailLayoutChoice;
   attachmentName?: string;
   /** the events of a Versand with answer links, to show the link block in the preview */
@@ -207,7 +214,8 @@ export class DocEmailService {
       this.functions, 'renderEmailPreview');
     const { data } = await callable({
       appId: this.env.appId,
-      body: req.body,
+      ...(req.pageKey ? { pageKey: req.pageKey } : {}),
+      ...(req.body !== undefined ? { body: req.body } : {}),
       layout: req.layout,
       ...(req.attachmentName ? { attachmentName: req.attachmentName } : {}),
       ...(req.answerEvents?.length ? { answerEvents: req.answerEvents } : {}),
