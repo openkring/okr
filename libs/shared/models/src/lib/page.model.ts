@@ -56,7 +56,7 @@ export const FOOTPRINT_PAGE_TYPE = 'footprint';
 export const MAIL_PAGE_TYPE = 'mail';
 export const MailPageCollection = 'mailPages';
 export const MailPageSectionCollection = 'sections'; // subcollection mailPages/{key}/sections
-export const MailingWebCollection = 'mailingWeb'; // public web version of a sent Versand
+export const MailingWebCollection = 'mailingWeb'; // server-only snapshot of a sent Versand, served by a function by token
 export const MAIL_SECTION_TYPES = ['article', 'button', 'events'] as const;
 export type MailSectionType = (typeof MAIL_SECTION_TYPES)[number];
 
