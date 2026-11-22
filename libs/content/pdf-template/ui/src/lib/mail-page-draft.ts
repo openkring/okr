@@ -54,6 +54,8 @@ export class MailPageDraft {
 
   private readonly timers = new Map<string, ReturnType<typeof setTimeout>>();
   private readonly inFlight = new Set<Promise<unknown>>();
+  /** Sections whose last write failed: their edit is still pending and is tried again by `flush()`. */
+  private readonly failedKeys = new Set<string>();
   private discarded = false;
 
   /** Works on the draft `pageKey` from now on (a fresh one after the composer's «Zurücksetzen»). */
@@ -61,6 +63,7 @@ export class MailPageDraft {
     for (const timer of this.timers.values()) clearTimeout(timer);
     this.timers.clear();
     this.pending.set({});
+    this.failedKeys.clear();
     this.saveFailed.set(false);
     this.discarded = false;
     this.pageKey.set(pageKey);
@@ -85,9 +88,9 @@ export class MailPageDraft {
     }
     return this.track(this.mailPageService.saveSection(this.pageKey(), section).then((key) => {
       this.dropPending(key, section);
-      this.saveFailed.set(false);
+      this.markWritten(key);
       return key;
-    }));
+    }), section.okey || undefined);
   }
 
   public async delete(sectionKey: string): Promise<void> {
@@ -96,6 +99,7 @@ export class MailPageDraft {
     this.timers.delete(sectionKey);
     await this.flush();
     this.dropPending(sectionKey);
+    this.failedKeys.delete(sectionKey);
     await this.track(this.mailPageService.deleteSection(this.pageKey(), sectionKey));
   }
 
@@ -105,15 +109,22 @@ export class MailPageDraft {
   }
 
   /**
-   * Writes every edit still waiting for its typing pause and waits for all writes under way. The composer calls
-   * this before it asks the server to render, price or send the page.
+   * Writes every edit still waiting for its typing pause, tries a failed write once more, and waits for all writes
+   * under way. The composer calls this before it asks the server to render, price or send the page, which reads
+   * the page from Firestore. Resolves to false when an edit could not be stored: the server would miss it.
    */
-  public async flush(): Promise<void> {
+  public async flush(): Promise<boolean> {
     for (const [key, timer] of [...this.timers]) {
       clearTimeout(timer);
       this.writePending(key);
     }
     await Promise.allSettled([...this.inFlight]);
+    const retry = [...this.failedKeys].filter((key) => key in this.pending() && !this.timers.has(key));
+    if (retry.length > 0) {
+      for (const key of retry) this.writePending(key);
+      await Promise.allSettled([...this.inFlight]);
+    }
+    return this.failedKeys.size === 0;
   }
 
   /**
@@ -136,8 +147,8 @@ export class MailPageDraft {
     if (!section || !this.pageKey()) return;
     void this.track(this.mailPageService.saveSection(this.pageKey(), section).then(() => {
       this.dropPending(key, section);
-      this.saveFailed.set(false);
-    })).catch(() => undefined);
+      this.markWritten(key);
+    }), key).catch(() => undefined);
   }
 
   /** Forgets a pending edit once it is stored, unless a newer one arrived meanwhile. */
@@ -150,9 +161,16 @@ export class MailPageDraft {
     });
   }
 
-  private track<T>(promise: Promise<T>): Promise<T> {
+  private markWritten(key: string): void {
+    this.failedKeys.delete(key);
+    this.saveFailed.set(this.failedKeys.size > 0);
+  }
+
+  /** `sectionKey`: the section a failed write leaves unsaved (a new section or a move/delete has none). */
+  private track<T>(promise: Promise<T>, sectionKey?: string): Promise<T> {
     const tracked = promise.catch((err) => {
       console.error('MailPageDraft: writing the page failed', err);
+      if (sectionKey) this.failedKeys.add(sectionKey);
       this.saveFailed.set(true);
       throw err;
     });

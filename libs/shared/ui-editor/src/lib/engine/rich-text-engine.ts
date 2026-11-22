@@ -347,6 +347,11 @@ export class RichTextEngine implements AfterViewInit {
     this.createView();
   }
 
+  /** Puts the cursor into the text (the host's `autofocus`). */
+  public focus(): void {
+    this.view?.focus();
+  }
+
   private plugins(): Plugin[] {
     const item = schema.nodes['list_item'];
     return [

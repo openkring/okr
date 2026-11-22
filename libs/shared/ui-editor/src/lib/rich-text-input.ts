@@ -140,6 +140,8 @@ export class RichTextInput {
   public readonly clearable = input(true);
   public readonly copyable = input(false);
   public readonly showHelper = input(false);
+  /** if true, the text is focused once the editor has loaded (as okr-text-input's `autofocus`) */
+  public readonly autofocus = input(false);
 
   protected readonly texts = inject(I18nService).translateAll(RICH_TEXT_I18N_KEYS) as RichTextI18n;
   protected readonly buttonCopyI18n = computed(() => ({} as ButtonCopyI18n));
@@ -196,6 +198,8 @@ export class RichTextInput {
           ref.instance.valueChange.subscribe((html: string) => this.value.set(html));
           ref.changeDetectorRef.detectChanges();
           this.engine.set(ref);
+          // same delay as okr-text-input: a modal's enter animation would otherwise take the focus back
+          if (untracked(() => this.autofocus())) setTimeout(() => { if (!ref.hostView.destroyed) ref.instance.focus(); }, 500);
         } finally {
           this.creating = false;
         }

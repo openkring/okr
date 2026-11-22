@@ -43,7 +43,7 @@ const TYPE_ICONS: Record<string, string> = { article: 'document', button: 'link'
         <ion-card>
           @if (section.okey === openKey() && section.type === 'article') {
             <okr-rich-text-input [i18n]="articleI18n" [value]="openHtml()" (valueChange)="onArticleChange(section, $event)"
-              [readOnly]="false" [copyable]="true" />
+              [readOnly]="false" [copyable]="true" [autofocus]="autofocus() || chosenKey() === section.okey" />
           } @else {
             <ion-item lines="none" [button]="section.type === 'article'" [detail]="false" (click)="open(section)">
               <ion-icon slot="start" src="{{ typeIcon(section.type) | svgIcon }}" />
@@ -96,6 +96,8 @@ export class MailPageEditor {
 
   // inputs
   public readonly i18n = input.required<EmailComposerI18n>();
+  /** The open article takes the focus when it loads (the composer's subject is already filled in). */
+  public readonly autofocus = input(false);
 
   // outputs
   /** Whether the page shows anything (`mailPageHasContent`): the composer only offers «Senden» then. */
@@ -106,7 +108,8 @@ export class MailPageEditor {
 
   protected readonly sections = this.draft.sections;
   /** The article typed into directly; by default the first article of the page. */
-  private readonly chosenKey = signal<string | undefined>(undefined);
+  /** An article the sender opened by tapping it: it takes the focus. */
+  protected readonly chosenKey = signal<string | undefined>(undefined);
   protected readonly openKey = computed(() => {
     const sections = this.sections();
     const chosen = this.chosenKey();

@@ -223,7 +223,7 @@ interface AddressField {
                     <ion-col size="12">
                       <okr-text-input [i18n]="subjectI18n()" [value]="subject()"
                         (valueChange)="onFieldChange('subject', $event)"
-                        [autofocus]="true" [maxLength]="subjectLength" [readOnly]="false" />
+                        [autofocus]="!focusPage()" [maxLength]="subjectLength" [readOnly]="false" />
                       <okr-error-note [errors]="subjectErrors()" />
                     </ion-col>
                   </ion-row>
@@ -244,7 +244,7 @@ interface AddressField {
                     </ion-row>
                     <ion-row>
                       <ion-col size="12">
-                        <okr-mail-page-editor [i18n]="i18n" />
+                        <okr-mail-page-editor [i18n]="i18n" [autofocus]="focusPage()" />
                       </ion-col>
                     </ion-row>
                   }
@@ -716,6 +716,14 @@ export class EmailComposerModal {
   private draftResetting = false;
   /** Set as soon as `sendMailing` accepted the Versand: the page is then the mailing's and must stay. */
   private sent = false;
+  /** A Versand send under way (flush + `sendMailing`); settles, never rejects, and marks `sent` on success. */
+  private sendInFlight: Promise<void> | undefined;
+
+  /**
+   * Where the cursor starts (spec 1.171 §7.2, R13): a mail needs a subject first, so an empty subject keeps the
+   * focus; with a prefilled subject a Versand starts in the text of its first article.
+   */
+  protected readonly focusPage = computed(() => this.isVersand() && this.subjectDefault().trim().length > 0);
 
   /** «Webversion anbieten» (spec 1.171 R4): on for a newsletter, else off, until the sender switches it. */
   private readonly webVersionChoice = signal<boolean | undefined>(undefined);
@@ -803,8 +811,11 @@ export class EmailComposerModal {
       clearTimeout(this.quoteTimer);
       // Closed without sending (close icon, back button, swipe, «Guthaben aufladen»): the draft page goes too.
       // A sent page belongs to its mailing (the rules forbid deleting it). The draft may still be being created.
+      // A send under way is awaited first (the header close stays active while sending): only a page that ended
+      // unsent is discarded, so a sent mail never loses its page and a failed one leaves no draft behind.
       if (this.isVersand() && !this.sent) {
-        void (this.draftReady ?? Promise.resolve()).then(() => this.sent ? undefined : this.draft.discard())
+        void (this.draftReady ?? Promise.resolve()).then(() => this.sendInFlight)
+          .then(() => this.sent ? undefined : this.draft.discard())
           .catch((err) => console.warn('EmailComposerModal: could not discard the draft page', err));
       }
     });
@@ -913,8 +924,14 @@ export class EmailComposerModal {
   private async loadQuote(postKeys: string[], options: PostOptions): Promise<void> {
     const request = this.quoteRequest;
     try {
-      // the server prices the page as stored: the last typed characters first
-      if (this.isVersand()) await this.draft.flush();
+      // the server prices the page as stored: the last typed characters first, and none may be missing
+      if (this.isVersand() && !(await this.draft.flush())) {
+        if (request !== this.quoteRequest) return;
+        this.postQuote.set(undefined);
+        this.postError.set(this.i18n.page_save_error());
+        await this.showToast(this.i18n.page_save_error(), 'danger');
+        return;
+      }
       if (request !== this.quoteRequest) return;
       const fd = this.formData();
       const quote = await this.docEmailService.quoteMailingLetters({
@@ -1156,8 +1173,14 @@ export class EmailComposerModal {
     this.previewLoading.set(true);
     this.previewFailed.set(false);
     try {
-      // a Versand's page is rendered from Firestore: the last typed characters first
-      if (this.isVersand()) await this.draft.flush();
+      // a Versand's page is rendered from Firestore: the last typed characters first, and none may be missing
+      if (this.isVersand() && !(await this.draft.flush())) {
+        if (request !== this.previewRequest) return;
+        this.previewHtml.set('');
+        this.previewFailed.set(true);
+        await this.showToast(this.i18n.page_save_error(), 'danger');
+        return;
+      }
       if (request !== this.previewRequest) return;
       const rendered = await this.docEmailService.renderPreview({
         ...(this.isVersand() ? { pageKey: this.draft.pageKey() } : { body }), layout, attachmentName,
@@ -1375,9 +1398,7 @@ export class EmailComposerModal {
       // server-side (spec 1.145 §10): the Bcc is resolved there, so the client's list is not sent.
       if (this.isVersand()) {
         const deliveries = versandDeliveries(this.versandRows(), this.deliveries());
-        // the server renders the page as stored: the last typed characters first
-        await this.draft.flush();
-        const mailingKey = await this.docEmailService.sendMailing({
+        const mailing: SendMailingRequest = {
           tenantId: this.appStore.tenantId(),
           ...(this.groupKey() ? { groupKey: this.groupKey() } : {}),
           to: request.to, from: request.from,
@@ -1393,7 +1414,19 @@ export class EmailComposerModal {
           ...(this.emailOnly() && this.showOnDashboard() ? { dashboard: true } : {}),
           ...(this.showQrOption() && this.letterQrCodes() ? { letterQrCodes: true } : {}),
           ...this.postPayload(),
-        });
+        };
+        // The server renders the page as stored: the last typed characters first. An edit that could not be
+        // stored stops the send (undefined), the server would send the page without it.
+        const sending = (async (): Promise<string | undefined> =>
+          (await this.draft.flush()) ? this.docEmailService.sendMailing(mailing) : undefined)();
+        // A close while this runs (onDestroy) waits for it: a sent page stays, an unsent draft is discarded.
+        this.sendInFlight = sending.then((key) => { if (key) this.sent = true; }, () => undefined);
+        const mailingKey = await sending;
+        if (!mailingKey) {
+          await this.showToast(this.i18n.page_save_error(), 'danger');
+          this.isSending.set(false);
+          return;
+        }
         this.sent = true;
         await this.showParamToast(EMAIL_COMPOSER_MSG_KEYS.send_mailing, {
           emails: deliveries.filter((d) => d.channels.includes(DeliveryChannel.Email)).length,
