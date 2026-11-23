@@ -20,10 +20,13 @@
  *   - the marker within 6 lines is trusted: it cannot tell that the wrapped value is the one read;
  *   - an allowlisted file is not looked at again — keep the entries few and name the reason.
  *
- * Usage: node scripts/check-article-readers.mjs   (exit 1 on any finding — CI friendly)
+ * Usage: node scripts/check-article-readers.mjs   (from any directory; exit 1 on any finding — CI friendly)
  */
 import { readFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+
+process.chdir(fileURLToPath(new URL('..', import.meta.url)));
 
 /** [path prefix or exact file, reason] */
 const ALLOWLIST = [
@@ -53,7 +56,7 @@ const READ = [
   /\{[^}]*\bhtmlContent\b[^}]*\}\s*=\s*[\w.?]*content\b/,
 ];
 const MARKER = /withClassicFields|\/\/ not an article/;
-const WINDOW = 6;
+const WINDOW = 6; // the two reads in publicApi/routes/news.ts are 5 lines below their withClassicFields
 const HINT = 'wrap the section in withClassicFields(section) first (@okr/shared-models), or add `// not an article` / an allowlist entry with a reason';
 
 const files = execSync(
