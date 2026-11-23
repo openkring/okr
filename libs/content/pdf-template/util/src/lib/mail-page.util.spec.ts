@@ -37,7 +37,9 @@ describe('mailPageHasContent', () => {
   it('counts a button only with a safe url', () => {
     expect(mailPageHasContent([button('https://a.ch')])).toBe(true);
     expect(mailPageHasContent([button('mailto:a@b.ch')])).toBe(true);
-    expect(mailPageHasContent([button('/relative')])).toBe(false);
+    expect(mailPageHasContent([button('/club')])).toBe(true); // the server makes an app path absolute
+    expect(mailPageHasContent([button('//evil.org')])).toBe(false);
+    expect(mailPageHasContent([button('club.html')])).toBe(false);
     expect(mailPageHasContent([button('javascript:alert(1)')])).toBe(false);
   });
   it('counts an article image only when the server resolves it, or by its alt text', () => {
@@ -47,6 +49,16 @@ describe('mailPageHasContent', () => {
     expect(mailPageHasContent([imageArticle({ url: '   ' })])).toBe(false);
     expect(mailPageHasContent([imageArticle({ url: 'http://example.org/pic.jpg', altText: 'Boot' })])).toBe(true);
     expect(mailPageHasContent([imageArticle({ url: '', label: 'Boot' })])).toBe(true);
+  });
+  it('counts the intro and the button of an article', () => {
+    const cta = (url: string, label = 'Los'): SectionModel =>
+      ({ type: 'article', content: { htmlContent: '' }, properties: { images: [], cta: { label, url, style: 'primary' } } } as unknown as SectionModel);
+    expect(mailPageHasContent([{ ...article(''), intro: 'Hallo' } as SectionModel])).toBe(true);
+    expect(mailPageHasContent([{ ...article(''), intro: '  ' } as SectionModel])).toBe(false);
+    expect(mailPageHasContent([cta('https://a.ch')])).toBe(true);
+    expect(mailPageHasContent([cta('/club')])).toBe(true);
+    expect(mailPageHasContent([cta('https://a.ch', '')])).toBe(false);
+    expect(mailPageHasContent([cta('#top')])).toBe(false);
   });
   it('never counts an events section: the server needs upcoming events, which the client does not load', () => {
     expect(mailPageHasContent([events('cal1')])).toBe(false);
@@ -63,6 +75,10 @@ describe('sectionSummary', () => {
   it('strips tags and truncates an article at 60 chars', () => {
     const s = sectionSummary(article('<p><b>' + 'a'.repeat(100) + '</b></p>'));
     expect(s).toBe('a'.repeat(60));
+  });
+  it('falls back to the intro, then the button label of an article without text', () => {
+    expect(sectionSummary({ ...article(''), intro: 'Hallo' } as SectionModel)).toBe('Hallo');
+    expect(sectionSummary({ type: 'article', content: { htmlContent: '' }, properties: { cta: { label: 'Los', url: '/x' } } } as unknown as SectionModel)).toBe('Los');
   });
   it('gives the button label and the calendar name', () => {
     expect(sectionSummary(button('https://a.ch', 'Anmelden'))).toBe('Anmelden');

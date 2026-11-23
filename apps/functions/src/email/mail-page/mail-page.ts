@@ -7,7 +7,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 
 import { CalEventCollection, MailPageCollection, MailPageSectionCollection } from '@okr/shared-models';
 import type { CalEventModel, MailPageModel } from '@okr/shared-models';
-import { DateFormat, getTodayStr } from '@okr/shared-util-core';
+import { DateFormat, getTodayStr, publicAppOrigin } from '@okr/shared-util-core';
 
 import { sanitizeEmailBody } from '../../pdf/sanitize';
 import { isReapableDraft, mailPageRefusal, upcomingEventLines } from './mail-page.logic';
@@ -50,8 +50,11 @@ export async function renderMailPage(
     events[s.name] = upcomingEventLines(rows, today, MAX_MAIL_EVENTS);
   }
 
+  const appConfig = (await db.collection('app-config').doc(tenantId).get()).data();
+  const appOrigin = publicAppOrigin(appConfig?.['appDomain'] as string | undefined, tenantId);
+
   const { default: hb } = await import('handlebars');
-  const html = await renderMailPageContent(page.sections ?? [], sections, { hb, sanitize: sanitizeEmailBody, events });
+  const html = await renderMailPageContent(page.sections ?? [], sections, { hb, sanitize: sanitizeEmailBody, events, appOrigin });
   return { html, page };
 }
 

@@ -13,11 +13,23 @@ import type { MailSectionType } from '@okr/shared-models';
 
 const TEXT_STYLE = 'font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#222222;';
 
+// An article's button (`cta`), left-aligned below its text: filled, or an outline for style 'secondary'. Cell
+// colour and border as in BUTTON; `margin` keeps it apart from the text.
+const CTA = `{{#if cta}}<table cellpadding="0" cellspacing="0" border="0" style="margin:16px 0 0 0;"><tr><td align="center" style="border-radius:4px;border:1px solid #222222;{{#unless cta.secondary}}background-color:#222222;{{/unless}}">
+<a href="{{cta.url}}" target="_blank" style="display:inline-block;padding:11px 27px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:bold;line-height:1.2;color:{{#if cta.secondary}}#222222{{else}}#ffffff{{/if}};text-decoration:none;border-radius:4px;">{{cta.label}}</a>
+</td></tr></table>{{/if}}`;
+
+// The intro (one line per entry): a small line above the title, or a paragraph below title and subtitle.
+const INTRO_TEXT = '{{#each introLines}}{{#unless @first}}<br />{{/unless}}{{this}}{{/each}}';
+
 const ARTICLE = `<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0 0 24px 0;${TEXT_STYLE}">
 {{#if image}}{{#if image.src}}<img src="{{image.src}}" alt="{{image.alt}}" width="600" style="display:block;width:100%;max-width:100%;height:auto;border:0;margin:0 0 16px 0;" />{{else}}<div style="margin:0 0 16px 0;font-style:italic;color:#666666;">{{image.alt}}</div>{{/if}}{{/if}}
+{{#if introAbove}}<div style="margin:0 0 4px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:bold;line-height:1.4;color:#555555;">${INTRO_TEXT}</div>{{/if}}
 {{#if title}}<h2 style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:22px;line-height:1.3;color:#222222;">{{title}}</h2>{{/if}}
 {{#if subTitle}}<h3 style="margin:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:1.4;color:#555555;font-weight:normal;">{{subTitle}}</h3>{{/if}}
+{{#if introBelow}}<div style="margin:0 0 12px 0;color:#555555;">${INTRO_TEXT}</div>{{/if}}
 {{#if html}}<div>{{{html}}}</div>{{/if}}
+${CTA}
 </td></tr></table>`;
 
 // A bulletproof button: the coloured cell carries the background, so the button shows in Outlook too.
