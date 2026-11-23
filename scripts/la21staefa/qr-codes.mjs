@@ -8,11 +8,13 @@
  * Every article on a project page (`*_content`, nested accordion sections included) whose pictures are QR codes
  * gets `imageStyle.width/height = '150px'`; the website draws each picture of the side-by-side row as a square of
  * that size (section-mapper: imageHeight on an `imageRow`). A section counts when all of its pictures are QR
- * codes (file name, alt text or caption naming «QR» or «TWINT»). Idempotent.
+ * codes (file name, alt text or caption naming «QR» or «TWINT»). Idempotent. Stops, also in the dry run, when one of the
+ * sections to change is an article with blocks.
  */
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { assertNoBlocks } from '../lib/block-article-guard.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const rootRequire = createRequire(join(ROOT, 'package.json'));
@@ -54,6 +56,7 @@ async function main() {
     const done = style.width === QR_SIZE && style.height === QR_SIZE;
     console.log(`${key}: ${s.properties.images.length} QR${done ? ' · already 150 px' : ''}`);
     if (done) continue;
+    assertNoBlocks(key, s); // the style of an article with blocks is in its blocks
     batch.update(db.doc(`sections/${key}`), { 'properties.imageStyle': { ...style, width: QR_SIZE, height: QR_SIZE } });
     n++;
   }

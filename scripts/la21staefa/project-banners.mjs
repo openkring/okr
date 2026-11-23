@@ -19,10 +19,13 @@
  *   Where that block holds more than the header (`KEEP`), it stays on the page without its title/logo.
  * - Idempotent: a rerun rewrites the two sections with the banner's current texts, trims nothing again and leaves
  *   the page order as it is.
+ * - Stops before the first upload and write, also in the dry run, when one of the sections it would replace or trim is an
+ *   article with blocks.
  */
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { assertNoBlocksIn } from '../lib/block-article-guard.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const rootRequire = createRequire(join(ROOT, 'package.json'));
@@ -128,6 +131,14 @@ export function questionFirst(title, subTitle) {
 /** a storage file name from a picture path: the last segment, safe characters only */
 export const fileName = (path) => path.split('/').pop().replace(/[^A-Za-z0-9._-]/g, '_');
 
+/** every section the run replaces (banner, slider) or trims (the header blocks of `KEEP`) */
+export function writtenKeys() {
+  return Object.entries(HEADER_PHOTOS).flatMap(([project, photos]) => {
+    const pageKey = `${T}_${project}_content`;
+    return [`${pageKey}_banner`, ...(photos.length ? [`${pageKey}_slider`] : []), ...(KEEP[project] ? [`${pageKey}_${HEADER[project][0]}`] : [])];
+  });
+}
+
 async function main() {
   const write = process.argv.includes('--write');
   const { getApps, initializeApp } = rootRequire('firebase-admin/app');
@@ -136,6 +147,8 @@ async function main() {
   if (!getApps().length) initializeApp({ projectId: 'bkaiser-org', storageBucket: BUCKET });
   const db = getFirestore();
   const bucket = getStorage().bucket(BUCKET);
+
+  await assertNoBlocksIn(db, writtenKeys());
 
   const batch = db.batch();
   for (const [project, photos] of Object.entries(HEADER_PHOTOS)) {

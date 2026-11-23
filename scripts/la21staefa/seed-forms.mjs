@@ -23,6 +23,7 @@
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { assertNoBlocks } from '../lib/block-article-guard.mjs';
 import { FORM_PAGES } from './import-pages.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -177,6 +178,7 @@ async function main() {
   const introRef = db.doc(`sections/${T}_anmeldung_s01`);
   const intro = (await introRef.get()).data();
   if (intro?.content?.htmlContent === FORM_PAGES.la21staefa_anmeldung) {
+    assertNoBlocks(introRef.id, intro); // the old field is kept beside the blocks, where nobody would see the new text
     console.log(`${verb('replacing    ', 'would replace')} the placeholder text of sections/${T}_anmeldung_s01`);
     if (write) await introRef.update({ 'content.htmlContent': ANMELDUNG_INTRO, title: 'Anmeldung als Mitglied der Lokalen Agenda 21 Stäfa' });
   } else console.log(`kept          sections/${T}_anmeldung_s01 (edited since the import)`);

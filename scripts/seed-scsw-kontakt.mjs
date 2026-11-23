@@ -13,6 +13,7 @@
  *   5. pages/scsw_kontakt          — sections = [hero, info, form, map]; isPrivate: false
  *   6. sections/scsw_kt1, scsw_kt2 (the WordPress import, doc ids below) — archived (isArchived: true),
  *      not deleted: they are no longer on the page.
+ * Stops before the first write, also in the dry run, when one of these sections is an article with blocks.
  *
  * The page node itself (`p-kontakt`, slug `kontakt`, under «Kontakt») comes from the site tree:
  * apps/scs-website/tests/fixtures/site.json → `node scripts/seed-website-scs.mjs --update --apply`.
@@ -32,6 +33,7 @@ import { initializeApp, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { argv, exit } from 'node:process';
 import { fileURLToPath } from 'node:url';
+import { assertNoBlocksIn } from './lib/block-article-guard.mjs';
 
 const PROJECT_ID = 'bkaiser-org';
 const TENANT = 'scs';
@@ -111,6 +113,7 @@ async function main() {
   for (const [id, name] of Object.entries(OLD_SECTIONS)) console.log(`\n── update sections/${id} (${name}): isArchived: true`);
 
   const store = db();
+  await assertNoBlocksIn(store, [...Object.keys(NEW_SECTIONS), 'scsw_kontakt_form', ...Object.keys(OLD_SECTIONS)]);
   const page = await store.collection('pages').doc(PAGE_KEY).get();
   if (!page.exists || !(page.get('tenants') ?? []).includes(TENANT)) throw new Error(`pages/${PAGE_KEY} missing or not in tenant ${TENANT}`);
   console.log(`\ncurrent pages/${PAGE_KEY}.sections: ${JSON.stringify(page.get('sections'))}`);

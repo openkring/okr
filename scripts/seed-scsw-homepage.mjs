@@ -15,7 +15,8 @@
  *   node scripts/seed-scsw-homepage.mjs            dry-run (reads prod, prints every write)
  *   node scripts/seed-scsw-homepage.mjs --apply    performs the writes (existing sections/page are skipped);
  *                                                  refuses unless the LIVE publicApi already maps section names (R10 gate)
- *   ... --apply --force                            also overwrites existing sections/page
+ *   ... --apply --force                            also overwrites existing sections/page; stops (also dry) when one of
+ *                                                  the sections is an article with blocks
  *   node scripts/seed-scsw-homepage.mjs --retire   dry-run: lists the homepage websiteContent docs to archive (no seeding)
  *   ... --retire --apply                           sets isArchived: true on them; refuses unless pages/scsw_homepage has sections
  *
@@ -28,6 +29,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
+import { assertNoBlocksIn } from './lib/block-article-guard.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const APPLY = process.argv.includes('--apply');
@@ -314,6 +316,7 @@ async function main() {
   }
   await loadLive();
   const secs = sections();
+  if (FORCE) await assertNoBlocksIn(db, Object.keys(secs)); // without --force existing sections are left untouched
 
   await upload('apps/scs-website/assets/hero-sunset.jpg', 'tenant/scs/web/hero-sunset.jpg', 'image/jpeg');
   await upload('apps/scs-website/assets/bootshaus-neubau.png', 'tenant/scs/web/bootshaus-neubau.png', 'image/png');

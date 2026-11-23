@@ -34,6 +34,8 @@
     "@okr/content-file-transfer-data-access": "*",
     "@okr/content-file-transfer-util": "*",
     "@okr/content-file-transfer-feature": "*",
-    "@okr/tenant-feature": "*"
+    "@okr/tenant-feature": "*",
+    "@okr/cms-section-util": "*",
+    "@okr/cms-section-data-access": "*"
   }
 }

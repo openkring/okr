@@ -107,6 +107,12 @@
       "path": "../../../cms/page/data-access/tsconfig.lib.json"
     },
     {
+      "path": "../../../cms/section/util/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../cms/section/data-access/tsconfig.lib.json"
+    },
+    {
       "path": "../../../content/learning/util/tsconfig.lib.json"
     }
   ]

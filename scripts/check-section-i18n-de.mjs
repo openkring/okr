@@ -2,6 +2,7 @@
  * READ-ONLY check: lists scs sections where the plain German field (title,
  * subTitle, content.htmlContent) differs from a seeded properties.*I18n.de value.
  * Feature 1.151 makes the plain field win for German in the public API.
+ * An article with blocks (1.173) has its texts in them: its content is reported as skipped, title and subtitle are checked.
  *
  * Run with:  node scripts/check-section-i18n-de.mjs
  * Requires:  gcloud auth application-default login  (or GOOGLE_APPLICATION_CREDENTIALS)
@@ -9,6 +10,7 @@
 
 import { initializeApp, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import { hasBlocks } from './lib/block-article-guard.mjs';
 
 if (!getApps().length) {
   initializeApp({ projectId: 'bkaiser-org' });
@@ -40,10 +42,17 @@ for (const p of pagesSnap.docs) {
 
 const secSnap = await db.collection('sections').where('tenants', 'array-contains', TENANT).get();
 let hits = 0;
+let skipped = 0;
 for (const doc of secSnap.docs) {
   const s = doc.data();
   if (s.isArchived === true) continue;
+  const blockArticle = hasBlocks(s);
+  if (blockArticle) {
+    skipped++;
+    console.log(`${doc.id} | pages: ${(pagesBySection.get(doc.id) ?? []).join(',') || '-'} | content | skipped: article with blocks`);
+  }
   for (const f of FIELDS) {
+    if (blockArticle && f.name === 'content') continue;
     const de = norm(f.de(s));
     if (!de) continue;
     const plain = norm(f.plain(s));
@@ -53,5 +62,5 @@ for (const doc of secSnap.docs) {
     console.log(`${doc.id} | pages: ${pages} | ${f.name} | plain: ${cut(plain)} | de: ${cut(de)}`);
   }
 }
-console.log(`\n${hits} conflict(s) in ${secSnap.size} scs section doc(s).`);
+console.log(`\n${hits} conflict(s) in ${secSnap.size} scs section doc(s); content of ${skipped} article(s) with blocks skipped.`);
 process.exit(0);

@@ -16,6 +16,8 @@ import { chatBlockedSince, fill, getFullName, hasRole, OPERATOR_TENANT_ID } from
 import { auditGroupRooms } from '@okr/subject-group-data-access';
 import { stripAdminKeys, type GroupRoomDrift } from '@okr/subject-group-util';
 import { CHAT_MAINTENANCE_I18N_KEYS, findGroupOfRoom, getMatrixLogLevel, groupKeyForRoom, setMatrixLogLevel, MatrixLogLevel } from '@okr/chat-util';
+import { ArticleBlocksGate } from '@okr/cms-section-data-access';
+import { articlesToWrite } from '@okr/cms-section-util';
 import type { MatrixMediaService } from '@okr/chat-data-access';
 
 // ─── types mirroring the cloud-function interfaces ───────────────────────────
@@ -224,6 +226,7 @@ export const ChatMaintenanceStore = signalStore(
       toastController: inject(ToastController),
       i18nService: inject(I18nService),
       firestoreService: inject(FirestoreService),
+      articleBlocksGate: inject(ArticleBlocksGate),
       chatStatusService: inject(ChatStatusService),
       modelSelectService: inject(ModelSelectService),
       // Shaped like the service so the call sites read unchanged. Every caller is already
@@ -733,7 +736,8 @@ export const ChatMaintenanceStore = signalStore(
         tags: '',
         tenants: [tenantId],
       } as ArticleSection;
-      await store.firestoreService.createModel<ArticleSection>(SectionCollection, section, undefined, undefined, user);
+      const [written] = await articlesToWrite([section], () => store.articleBlocksGate.loadMayWrite());
+      await store.firestoreService.createModel<ArticleSection>(SectionCollection, written, undefined, undefined, user);
       return key;
     },
 

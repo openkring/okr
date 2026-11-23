@@ -14,10 +14,12 @@
  *   in the list; an imported SDG article further up the page (btvz, smart, stafnet) is taken off the page too.
  *   The old article documents stay untouched (not shown anymore).
  * - Idempotent: a page that already lists its `_sdg` section is left alone (the section document is rewritten).
+ * - Stops, also in the dry run, when a `_sdg` section to rewrite is an article with blocks.
  */
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { assertNoBlocksIn } from '../lib/block-article-guard.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const rootRequire = createRequire(join(ROOT, 'package.json'));
@@ -119,6 +121,8 @@ async function main() {
   const { getFirestore } = rootRequire('firebase-admin/firestore');
   if (!getApps().length) initializeApp({ projectId: 'bkaiser-org' });
   const db = getFirestore();
+
+  await assertNoBlocksIn(db, Object.keys(PROJECTS).map((pageKey) => `${pageKey}_sdg`));
 
   const batch = db.batch();
   for (const [pageKey, goals] of Object.entries(PROJECTS)) {

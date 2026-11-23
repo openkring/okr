@@ -8,13 +8,15 @@
  * Writes:  websites/<site.okey>, pages/<key>, sections/<id>   (okey is the doc id, stripped from the data),
  *          images → gs://<default bucket>/<image.path> from content/<image.file>.
  * Refuses to touch an existing site, or an existing page/section id, unless --replace (which overwrites
- * those docs with set(); documents not in the seed are left alone).
+ * those docs with set(); documents not in the seed are left alone). --replace never overwrites an article with blocks: the
+ * run then stops before its first write, also with --dry-run.
  * --dry-run prints the planned writes and writes nothing; the existence check is skipped with a note when
  * no credentials are available. PRODUCTION DATA: review the dry run first.
  */
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve, sep } from 'node:path';
 
+import { assertNoBlocks } from './lib/block-article-guard.mjs';
 import { classifyObjects, validateSeed } from './lib/website-seed.mjs';
 import { getDb, loadLocalTemplates, parseArgs, PROJECT_ID, requireTenant } from './lib/website-tooling.mjs';
 
@@ -63,11 +65,13 @@ export async function run(seedFile, contentDir, { dryRun, replace, tenant }) {
   }
 
   let existing = [];
+  let sections = [];
   try {
     const db = await getDb();
     const docs = writes.filter((w) => w.kind === 'doc');
     const snaps = await db.getAll(...docs.map((w) => db.collection(w.collection).doc(w.id)));
     existing = snaps.filter((s) => s.exists).map((s) => s.ref.path);
+    sections = snaps.filter((s) => s.ref.parent.id === 'sections');
   } catch (e) {
     if (!dryRun) throw e;
     console.log(`\nNote: existing documents could not be checked offline (${e.code ?? e.message}). Skipped for the dry run.`);
@@ -88,6 +92,7 @@ export async function run(seedFile, contentDir, { dryRun, replace, tenant }) {
   }
   if (objects.overwrite.length && !replace) fail(`\nRefusing: Storage objects already exist: ${objects.overwrite.join(', ')}. Use --replace to overwrite them.`);
   if (existing.length && !replace) fail(`\nRefusing: already exist: ${existing.join(', ')}. Use --replace to overwrite them.`);
+  for (const s of sections) assertNoBlocks(s.id, s.data());
   if (existing.length) console.log(`\nWould overwrite: ${existing.join(', ')}`);
   if (dryRun) {
     console.log('\nNothing written.');

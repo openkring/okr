@@ -21,7 +21,8 @@ import { createGroupMembership } from '@okr/relationship-membership-util';
 import { asNewsletterGroup, canAccessGroup, findConflictingGroups, getUniqueGroupKey, groupChatRoomParam, groupHygieneFindings, getVisibleGroupKeys, GROUP_I18N_KEYS, groupWebsiteStarterSections, hasOnlyDefaultSection, isNewsletterGroup, withCreatorAsAdmin } from '@okr/subject-group-util';
 import { canSeeSubscribers } from '@okr/relationship-newsletter-util';
 import { NewsletterSubscriptionService } from '@okr/relationship-newsletter-data-access';
-import { createSection } from '@okr/cms-section-util';
+import { articlesToWrite, createSection } from '@okr/cms-section-util';
+import { ArticleBlocksGate } from '@okr/cms-section-data-access';
 
 import { GroupEditModal } from './group-edit.modal';
 
@@ -56,6 +57,7 @@ export const GroupStore = signalStore(
     newsletterSubscriptionService: inject(NewsletterSubscriptionService),
     avatarService: inject(AvatarService),
     firestoreService: inject(FirestoreService),
+    articleBlocksGate: inject(ArticleBlocksGate),
     modalController: inject(ModalController),
     alertService: inject(AlertService),
     toastController: inject(ToastController),
@@ -484,7 +486,8 @@ export const GroupStore = signalStore(
             properties: { ...(base.properties ?? {}), ...spec.properties },
           } as SectionModel;
         });
-        if (!await store.firestoreService.createModels<SectionModel>(SectionCollection, sections, store.i18n.website_error())) return;
+        const written = await articlesToWrite(sections, () => store.articleBlocksGate.loadMayWrite());
+        if (!await store.firestoreService.createModels<SectionModel>(SectionCollection, written, store.i18n.website_error())) return;
         added.push(...sections.map((s) => s.okey));
       }
       await store.firestoreService.updateModel<PageModel>(PageCollection,
@@ -585,7 +588,8 @@ export const GroupStore = signalStore(
         tags: '',
         tenants: [store.tenantId()],
       } as ArticleSection;
-      return await store.firestoreService.createModel<ArticleSection>(SectionCollection, section, 
+      const [written] = await articlesToWrite([section], () => store.articleBlocksGate.loadMayWrite());
+      return await store.firestoreService.createModel<ArticleSection>(SectionCollection, written, 
         store.i18n.article_create_conf(), store.i18n.article_create_error(), store.currentUser())
     },
 

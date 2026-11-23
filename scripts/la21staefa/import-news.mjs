@@ -15,7 +15,8 @@
  *    (tags/la21staefa_section, seeded by seed-content.mjs). An unknown tag stops the run.
  *  - The subtitle line carries the date and the group, so the app's article shows the category too.
  *  - Pictures are copied to Storage (tenant/la21staefa/section/<key>/<file>) and shown via imgix.
- *  - Create-only: an existing section is reported and left alone. Dry run without --write.
+ *  - Create-only: an existing section is reported and left alone, so articles with blocks (1.173) need no guard here; new
+ *    articles are written with the old fields, which every app reads. Dry run without --write.
  */
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';

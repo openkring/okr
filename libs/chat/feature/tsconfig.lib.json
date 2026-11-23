@@ -24,6 +24,8 @@
     { "path": "../ui/tsconfig.lib.json" },
     { "path": "../util/tsconfig.lib.json" },
     { "path": "../../cms/menu/data-access/tsconfig.lib.json" },
+    { "path": "../../cms/section/data-access/tsconfig.lib.json" },
+    { "path": "../../cms/section/util/tsconfig.lib.json" },
     { "path": "../../content/document/data-access/tsconfig.lib.json" },
     { "path": "../../content/document/util/tsconfig.lib.json" },
     { "path": "../../content/file-transfer/data-access/tsconfig.lib.json" },

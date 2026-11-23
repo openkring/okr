@@ -12,11 +12,12 @@
  * - Sets the page's section list to [s01, accordion, s13, s14] — only while it still is the imported s01…s14
  *   list; an edited page is reported and left alone.
  * - Repairs the address block s13 (the import lost the line breaks between street, place and e-mail) and sets it
- *   in two columns: address | Postkonto.
+ *   in two columns: address | Postkonto. Stops, also in the dry run, when s13 is an article with blocks.
  */
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { assertNoBlocksIn } from '../lib/block-article-guard.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const rootRequire = createRequire(join(ROOT, 'package.json'));
@@ -74,6 +75,8 @@ async function main() {
   const { getFirestore } = rootRequire('firebase-admin/firestore');
   if (!getApps().length) initializeApp({ projectId: 'bkaiser-org' });
   const db = getFirestore();
+
+  await assertNoBlocksIn(db, [ACCORDION, sid(13)]);
 
   const page = (await db.doc(`pages/${PAGE}`).get()).data();
   if (!page) throw new Error(`pages/${PAGE} missing`);

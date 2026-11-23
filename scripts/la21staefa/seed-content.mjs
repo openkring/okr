@@ -13,13 +13,15 @@
  *
  * Dry run by default; --write applies it. Create-only: an existing document is never overwritten, except two
  * guarded updates — the home page's section list and the website's nav/footerSectionKey — which change only
- * while they still hold exactly what seed-website.mjs wrote (nobody has edited them yet).
+ * while they still hold exactly what seed-website.mjs wrote (nobody has edited them yet) — and the first version of the
+ * SDG section (a picture article), which is replaced. The run stops, also dry, when that one is an article with blocks.
  *
  *   node scripts/la21staefa/seed-content.mjs [--write]
  */
 import { createRequire } from 'node:module';
 import { dirname, extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { assertNoBlocksIn } from '../lib/block-article-guard.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const rootRequire = createRequire(join(ROOT, 'package.json'));
@@ -246,6 +248,8 @@ async function main() {
   const db = getFirestore();
   const bucket = getStorage().bucket(BUCKET);
   const { docs, uploads } = plan();
+  // the one existing section this run may replace
+  await assertNoBlocksIn(db, [`${HOME}_sdg`]);
 
   // a picture the old site no longer has (its own page links to it, but the server answers 404) is skipped:
   // the group then shows its default icon until an admin uploads the logo in the app

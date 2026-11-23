@@ -41,6 +41,10 @@
  *   node dist/scripts/migrate-article-blocks.cjs --out=<dir>
  *   node dist/scripts/migrate-article-blocks.cjs --apply --tenant=<id> --plan=<dir>/plan.json
  *   node dist/scripts/migrate-article-blocks.cjs --undo --tenant=<id> --plan=<dir>/plan.json
+ * OTHER WRITERS (spec 1.175 §12): new articles get blocks from the group and chat stores and the editor once the gate is open
+ * (ArticleBlocksGate.mayWrite). Scripts that write the old fields stop at an article with blocks
+ * (scripts/lib/block-article-guard.mjs); a new script that writes them must call that guard too.
+ *
  * Tests: libs/shared/models (article-migration.util.spec.ts) and scripts/migrate-article-blocks.logic.test.ts
  * (logic and the guard of the directory).
  *

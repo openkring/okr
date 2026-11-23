@@ -19,6 +19,7 @@
 import { initializeApp, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
+import { assertNoBlocks } from './lib/block-article-guard.mjs';
 
 if (!getApps().length) {
   initializeApp({ projectId: 'bkaiser-org', storageBucket: 'bkaiser-org.appspot.com' });
@@ -264,6 +265,15 @@ async function findSectionByName(name) {
   return snap.docs[0];
 }
 
+/** Stops before the first write when a chapter to replace was edited as an article with blocks. */
+async function assertNoBlockChapters() {
+  for (const ch of Object.values(PAGES).flat()) {
+    if (ch.ref) continue;
+    const existing = await findSectionByName(ch.name);
+    if (existing) assertNoBlocks(existing.id, existing.data());
+  }
+}
+
 async function upsertChapter(ch) {
   const existing = await findSectionByName(ch.name);
   const key = existing?.id ?? newKey();
@@ -286,6 +296,7 @@ async function upsertChapter(ch) {
 }
 
 async function main() {
+  await assertNoBlockChapters();
   const keysByName = {};
   for (const [pageKey, chapters] of Object.entries(PAGES)) {
     console.log(`pages/${pageKey}`);

@@ -17,6 +17,8 @@
  *    rebuilt (form fields, maps, videos, widgets) is listed in the run's report instead of being published.
  *  - Create-only. A page's section list is written only while it still holds what an earlier seed put there
  *    (the empty group intro); a page someone has edited since is reported and left alone.
+ *  - The articles are written with the old fields (readable by every app, 1.173); an existing section is never changed, so
+ *    articles with blocks need no guard here.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
