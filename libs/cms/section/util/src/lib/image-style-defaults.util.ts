@@ -1,4 +1,4 @@
-import { IMAGE_STYLE_SHAPE, SectionModel } from '@okr/shared-models';
+import { IMAGE_STYLE_SHAPE, SectionModel, articleBlocksOf } from '@okr/shared-models';
 import { compactImageStyle } from '@okr/shared-util-core';
 
 /**
@@ -11,6 +11,7 @@ import { compactImageStyle } from '@okr/shared-util-core';
  */
 export function withImageStyleDefaults<T extends SectionModel | undefined>(section: T): T {
   if (!section) return section;
+  if (articleBlocksOf(section)) return section;   // blocks (spec 1.173): the old imageStyle is not edited and must stay as stored
   const props = section.properties as { imageStyle?: Record<string, unknown> } | undefined;
   const stored = props?.imageStyle;
   const style = section.type === 'article' && (!stored || typeof stored !== 'object') ? {} : stored;
@@ -31,6 +32,7 @@ export function withImageStyleDefaults<T extends SectionModel | undefined>(secti
  */
 export function compactSectionForSave<T extends SectionModel>(section: T): T {
   if (section.type !== 'article' || !section.properties) return section;
+  if (articleBlocksOf(section)) return section;   // blocks (spec 1.173): the stored old imageStyle stays byte-identical
   const { imageStyle, ...properties } = section.properties;
   const compact = compactImageStyle(imageStyle);
   return { ...section, properties: compact ? { ...properties, imageStyle: compact } : properties } as T;

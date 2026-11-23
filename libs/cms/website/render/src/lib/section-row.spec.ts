@@ -27,5 +27,13 @@ describe('sectionRows', () => {
     expect(sectionRows([s('12,6'), s('12,6', 'hero'), s('12,6')])).toEqual([[0], [2]]);
     expect(sectionRows([s('12,6'), { type: 'article', colSize: '12,6', slideshow: {} }])).toEqual([[0]]);
   });
+  it('a free article whose first block is a slideshow gallery is full width, too', () => {
+    const slide = { type: 'gallery', layout: 'slideshow' };
+    const free = (blocks: unknown[]) => ({ type: 'article', colSize: '12,6', hasBlocks: true, blocks });
+    expect(sectionRows([s('12,6'), free([slide, { type: 'text' }])])).toEqual([[0]]);
+    expect(sectionRows([free([{ type: 'text' }, slide])])).toEqual([[0]]);
+    expect(sectionRows([free([{ type: 'gallery', layout: 'row' }])])).toEqual([[0]]);
+    expect(sectionRows([{ type: 'article', colSize: '12,6', blocks: [slide] }])).toEqual([[0]]);
+  });
   it('none when every section is full width', () => expect(sectionRows([s('12'), s('')])).toEqual([]));
 });

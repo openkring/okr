@@ -95,6 +95,16 @@ describe('compactSectionForSave (1.171 D1b)', () => {
       expect(compactSectionForSave(withImageStyleDefaults(structuredClone(s)))).toEqual(s);
     });
 
+    it('keeps a stored old imageStyle byte-identical, with the old fields still stored', () => {
+      const s = blockArticle({ images: [image], imageStyle: { ...IMAGE_STYLE_SHAPE, height: '300px' } });
+      // withImageStyleDefaults would otherwise fill and compactSectionForSave drop fields
+      const clone = structuredClone(s);
+      const opened = withImageStyleDefaults(clone);
+      expect(opened).toBe(clone);
+      expect(compactSectionForSave(opened)).toBe(clone);
+      expect(JSON.stringify(compactSectionForSave(opened))).toBe(JSON.stringify(s));
+    });
+
     it('is saved as it was opened with the old fields still stored', () => {
       const s = blockArticle({ images: [image], imageStyle: { height: '300px' }, cta: { label: 'Alt', url: '/y' } });
       expect(compactSectionForSave(withImageStyleDefaults(structuredClone(s)))).toEqual(s);

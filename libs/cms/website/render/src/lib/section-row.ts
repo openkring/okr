@@ -31,16 +31,23 @@ export function isNarrowSection(w: SectionColumnWidths): boolean {
 /** Section types that always span the page (a hero banner, the self-running slideshow header). */
 const ALWAYS_FULL = new Set(['hero']);
 
+/** A free article (hasBlocks) whose first block is a gallery drawn as a slideshow: the classic slideshow's full width. */
+function startsWithSlideshow(s: { hasBlocks?: unknown; blocks?: unknown }): boolean {
+  if (s.hasBlocks !== true || !Array.isArray(s.blocks)) return false;
+  const first = s.blocks[0] as { type?: unknown; layout?: unknown } | undefined;
+  return first?.type === 'gallery' && first.layout === 'slideshow';
+}
+
 /**
  * The runs of consecutive narrow sections, as lists of indices (`null` = a section that is not rendered, which
  * neither joins nor breaks a run). A full-width section, or one of ALWAYS_FULL, ends a run.
  */
-export function sectionRows(sections: ({ type?: unknown; colSize?: unknown; slideshow?: unknown } | null)[]): number[][] {
+export function sectionRows(sections: ({ type?: unknown; colSize?: unknown; slideshow?: unknown; hasBlocks?: unknown; blocks?: unknown } | null)[]): number[][] {
   const rows: number[][] = [];
   let run: number[] = [];
   sections.forEach((s, i) => {
     if (s === null) return;
-    const narrow = !ALWAYS_FULL.has(String(s.type ?? '')) && !s.slideshow && isNarrowSection(sectionColumnWidths(s.colSize));
+    const narrow = !ALWAYS_FULL.has(String(s.type ?? '')) && !s.slideshow && !startsWithSlideshow(s) && isNarrowSection(sectionColumnWidths(s.colSize));
     if (narrow) run.push(i);
     else if (run.length) { rows.push(run); run = []; }
   });

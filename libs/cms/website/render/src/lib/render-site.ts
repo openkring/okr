@@ -424,7 +424,8 @@ export function renderSite(input: RenderInput): RenderResult {
       const rowOf = new Map<number, number[]>();
       if (compiled.row) {
         const runs = sectionRows(published.map(({ section }, i) => (failed.has(i) ? null
-          : { type: contexts[i]['type'] ?? section.type, colSize: section.colSize, slideshow: contexts[i]['slideshow'] })));
+          : { type: contexts[i]['type'] ?? section.type, colSize: section.colSize, slideshow: contexts[i]['slideshow'],
+              hasBlocks: contexts[i]['hasBlocks'], blocks: contexts[i]['blocks'] })));
         for (const run of runs) for (const i of run) rowOf.set(i, run);
       }
       const pairStarts = compiled.pair ? columnPairStarts(contexts.map((c, i) => (failed.has(i) || rowOf.has(i) ? {} : c))) : new Set<number>();
