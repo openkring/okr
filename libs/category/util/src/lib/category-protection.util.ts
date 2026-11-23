@@ -20,9 +20,14 @@ export function protectedItems(listName: string, isEnabled: (block: string) => b
   return listName === 'resource_type' && isEnabled('trip') ? [...names, 'rboat'] : names;
 }
 
-export function missingProtectedItems(list: Pick<CategoryListModel, 'name' | 'items'>, isEnabled: (block: string) => boolean): string[] {
+/**
+ * @param loaded the list the edit started from; a stored one must keep only the protected items it held,
+ * so a list that already lacked one stays saveable
+ */
+export function missingProtectedItems(list: Pick<CategoryListModel, 'name' | 'items'>, isEnabled: (block: string) => boolean, loaded?: Pick<CategoryListModel, 'okey' | 'items'>): string[] {
   const present = new Set((list.items ?? []).map(item => item.name));
-  return protectedItems(list.name, isEnabled).filter(name => !present.has(name));
+  const held = loaded?.okey ? new Set((loaded.items ?? []).map(item => item.name)) : undefined;
+  return protectedItems(list.name, isEnabled).filter(name => !present.has(name) && (!held || held.has(name)));
 }
 
 export function removalWarning(listName: string, itemName: string, isEnabled: (block: string) => boolean): 'postal' | 'bankaccount' | undefined {

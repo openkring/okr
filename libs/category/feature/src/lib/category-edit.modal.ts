@@ -98,7 +98,7 @@ export class CategoryEditModal {
   protected readonly protectedNames = computed(() => protectedItems(this.formData()?.name ?? '', this.featureStore.isEnabled()));
   protected readonly missingProtected = computed(() => {
     const list = this.formData();
-    return list ? missingProtectedItems(list, this.featureStore.isEnabled()) : [];
+    return list ? missingProtectedItems(list, this.featureStore.isEnabled(), this.category()) : [];
   });
   /** warned items present in the loaded list and gone from the edited one */
   protected readonly removalWarnings = computed(() => {

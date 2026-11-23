@@ -100,7 +100,7 @@ export class CategoryListForm {
   public readOnly = input(true);
   /** items that code looks up by name: no remove icon */
   public protectedNames = input<readonly string[]>([]);
-  /** protected items the list lacks; the form is not valid until they are added back */
+  /** protected items removed in this edit, or lacking in a new list; the form is not valid until they are added back */
   public missingProtected = input<readonly string[]>([]);
   /** removed items that a switched-on block still offers (warning only, never blocks) */
   public removalWarnings = input<readonly string[]>([]);

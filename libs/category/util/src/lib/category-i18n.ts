@@ -57,12 +57,10 @@ export const CATEGORY_I18N_KEYS = {
   items_label:              PFX + 'items.label',
   items_description:        PFX + 'items.description',
   items_empty:              PFX + 'items.empty',
-  items_missing:            PFX + 'items.missing',
-  items_warning_postal:     PFX + 'items.warning.postal',
-  items_warning_bankaccount: PFX + 'items.warning.bankaccount',
 
   item_label_title:         PFX + 'itemLabel.title',
   item_label_helper:        PFX + 'itemLabel.helper',
+  item_label_error:         PFX + 'itemLabel.error',
 
   priority:                 PFX + 'priority.label',
   priority_label:           PFX + 'priority.label',

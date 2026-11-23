@@ -61,15 +61,19 @@
     "placeholder": "Notas"
   },
   "items": {
-      "label": "Elementos",
-      "description": "Los distintos elementos de una categoría. Cada elemento se muestra en su propia línea.",
-      "empty": "Aún no se han definido elementos en esta categoría.",
+    "label": "Elementos",
+    "description": "Los distintos elementos de una categoría. Cada elemento se muestra en su propia línea.",
+    "empty": "Aún no se han definido elementos en esta categoría.",
     "missing": "La aplicación necesita estas entradas y no pueden faltar: {name}. Vuelve a añadirlas.",
-    "warning": { "postal": "Sin dirección postal, las facturas no se pueden enviar por correo.", "bankaccount": "Sin cuenta bancaria, no se pueden registrar pagos." }
+    "warning": {
+      "postal": "Sin dirección postal, las facturas no se pueden enviar por correo.",
+      "bankaccount": "Sin cuenta bancaria, no se pueden registrar pagos."
+    }
   },
   "itemLabel": {
     "title": "Denominación de «{name}»",
-    "helper": "Lo que dejas vacío toma la primera denominación introducida. Sin denominación se muestra el nombre."
+    "helper": "Lo que dejas vacío toma la primera denominación introducida. Sin denominación se muestra el nombre.",
+    "error": "La categoría se ha guardado, pero la denominación de la nueva entrada no."
   },
 
   "priority": {

@@ -137,7 +137,7 @@ export const CategoryStore = signalStore(
         for (const { key, labels } of newItemLabels(result.list, loaded, shared, result.itemLabels)) {
           const ref = toI18nRef(key);
           if (!ref || !await store.tenantLabelService.lacksLabel(key, tenantId)) continue;
-          await store.tenantLabelService.saveOverride(ref.module, ref.key, tenantId, labels, undefined, undefined, store.i18n.update_error());
+          await store.tenantLabelService.saveOverride(ref.module, ref.key, tenantId, labels, undefined, undefined, store.i18n.item_label_error());
         }
       },
 
