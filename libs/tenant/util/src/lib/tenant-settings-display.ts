@@ -12,6 +12,8 @@ export interface SettingsDisplayContext {
   pageName: (key: string) => string;
   locationName: (key: string) => string;
   resourceName: (key: string) => string;
+  /** the label of a start page, by its url */
+  startName: (url: string) => string;
   orgName: (key: string) => string;
 }
 
@@ -32,7 +34,7 @@ export interface SettingsPageOption { key: string; label: string; }
 const ENUM_FIELDS: ReadonlySet<string> = new Set(['avatarUsage', 'nameDisplay', 'personSortCriteria']);
 /** Fields that another value stands in for while they are empty, as their helper says. Every other empty field means: nothing. */
 const FALLBACK_FIELDS: ReadonlySet<string> = new Set([
-  'brandColor', 'notfoundBannerUrl', 'mailFrom', 'dpoEmail',
+  'brandColor', 'notfoundBannerUrl', 'rootUrl', 'mailFrom', 'dpoEmail',
   'emailDomain', 'emailProvider', 'mailtrapPasswordResetTemplate', 'loginUrl', 'passwordResetUrl',
 ]);
 const COLOR = /^#[0-9a-fA-F]{6}$/;
@@ -63,6 +65,7 @@ export function settingsDisplayValue(field: string, value: unknown, ctx: Setting
   if (field.startsWith('show')) return ctx.text(settingsAudienceKey(text)) || text;
   switch (field) {
     case 'locale': return ctx.text(settingsLocaleKey(text)) || text;
+    case 'rootUrl': return nameOr(text, ctx.startName);
     case 'opCountryCode': return nameOr(text, ctx.countryName);
     case 'privacyPolicyPageKey': return nameOr(text, ctx.pageName);
     case 'ownerLocationId': return nameOr(text, ctx.locationName);
@@ -93,14 +96,15 @@ export function settingsPageName(key: string, pages: readonly PageModel[], tenan
 }
 
 /**
- * The pages a tenant can pick, by name: no travel footprints, and no shared page the tenant has its own copy of.
+ * The pages a tenant can pick for a link everyone follows, by name: only pages that are visible without signing in, no
+ * travel footprints, and no shared page the tenant has its own copy of.
  * The stored key is always among them (its own copy is then not listed a second time), under the name of the page it opens, or as it is when no page is known.
  */
 export function settingsPageOptions(pages: readonly PageModel[], tenantId: string, stored: string): SettingsPageOption[] {
   const keys = new Set(pages.map((p) => p.okey));
   const own = stored ? forkKeyFor(stored, tenantId) : '';
   const options = pages
-    .filter((p) => p.type !== FOOTPRINT_PAGE_TYPE && p.okey !== stored && p.okey !== own && !keys.has(forkKeyFor(p.okey, tenantId)))
+    .filter((p) => !p.isPrivate && p.type !== FOOTPRINT_PAGE_TYPE && p.okey !== stored && p.okey !== own && !keys.has(forkKeyFor(p.okey, tenantId)))
     .map((p) => ({ key: p.okey, label: settingsPageName(p.okey, pages, tenantId) }))
     .sort((a, b) => a.label.localeCompare(b.label));
   return stored ? [{ key: stored, label: settingsPageName(stored, pages, tenantId) || stored }, ...options] : options;

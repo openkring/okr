@@ -13,11 +13,12 @@ const CTX: SettingsDisplayContext = {
   pageName: (key) => (key === 'privacy' ? 'Datenschutz' : ''),
   locationName: (key) => (key === 'loc' ? 'Hafen' : ''),
   resourceName: () => '',
+  startName: (url) => (url === '/diary' ? 'Tagebuch' : ''),
   orgName: () => '',
 };
 
 function page(okey: string, name: string, patch: Partial<PageModel> = {}): PageModel {
-  return Object.assign(new PageModel('scs'), { okey, name, ...patch });
+  return Object.assign(new PageModel('scs'), { okey, name, isPrivate: false, ...patch });
 }
 
 describe('settingsDisplayValue', () => {
@@ -40,6 +41,8 @@ describe('settingsDisplayValue', () => {
     expect(settingsDisplayValue('privacyPolicyPageKey', 'gone', CTX)).toBe('gone');
     expect(settingsDisplayValue('ownerLocationId', 'loc', CTX)).toBe('Hafen');
     expect(settingsDisplayValue('defaultResourceId', 'r1', CTX)).toBe('r1');
+    expect(settingsDisplayValue('rootUrl', '/diary', CTX)).toBe('Tagebuch');
+    expect(settingsDisplayValue('rootUrl', '/person/all?filters=search', CTX)).toBe('/person/all?filters=search');
     expect(settingsDisplayValue('locale', 'rm', CTX)).toBe('rm');
     expect(settingsDisplayValue('showEmail', 'nobody', CTX)).toBe('nobody');
   });
@@ -70,11 +73,12 @@ describe('settingsRows', () => {
 });
 
 describe('settingsRows, empty fields', () => {
-  const emptyText = (group: 'app' | 'privacy' | 'mail', field: string) => settingsRows(group, {}, CTX).find((r) => r.field === field)?.emptyText;
+  const emptyText = (group: 'app' | 'privacy' | 'mail' | 'start', field: string) => settingsRows(group, {}, CTX).find((r) => r.field === field)?.emptyText;
   it('says default only where another value applies', () => {
     expect(emptyText('app', 'brandColor')).toBe('fallback');
     expect(emptyText('mail', 'mailFrom')).toBe('fallback');
     expect(emptyText('privacy', 'dpoEmail')).toBe('fallback');
+    expect(emptyText('start', 'rootUrl')).toBe('fallback');
     expect(emptyText('app', 'appTitle')).toBe('empty');
     expect(emptyText('privacy', 'privacyPolicyPageKey')).toBe('empty');
   });
@@ -110,6 +114,11 @@ describe('settings pages', () => {
     expect(settingsPageOptions(pages, 'scs', '')).toEqual([
       { key: 'privacy_scs', label: 'Datenschutz' }, { key: 'untitled', label: 'Titel' }, { key: 'about', label: 'Über uns' },
     ]);
+  });
+  it('offers only pages visible without signing in, and keeps the stored one', () => {
+    const mixed = [page('a', 'A'), page('b', 'B', { isPrivate: true }), page('c', 'C'), page('c_scs', 'C eigen', { isPrivate: true })];
+    expect(settingsPageOptions(mixed, 'scs', '').map((o) => o.key)).toEqual(['a']);
+    expect(settingsPageOptions(mixed, 'scs', 'b')).toEqual([{ key: 'b', label: 'B' }, { key: 'a', label: 'A' }]);
   });
   it('keeps the stored key first, under the name of the page it opens', () => {
     // neither the stored shared page nor the tenant's own copy of it is listed a second time

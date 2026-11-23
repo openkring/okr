@@ -25,3 +25,4 @@ export * from './lib/tenant-settings.validations';
 export * from './lib/tenant-settings-confirm';
 export * from './lib/tenant-settings-i18n';
 export * from './lib/tenant-settings-display';
+export * from './lib/start-targets.util';

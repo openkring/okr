@@ -600,7 +600,7 @@
       },
       "rootUrl": {
         "label": "Pagina iniziale",
-        "helper": "Questa pagina si apre all'avvio dell'app e dopo l'accesso. Chi ha scelto una propria pagina iniziale nel profilo arriva lì."
+        "helper": "Questa pagina si apre all'avvio dell'app e dopo l'accesso. Chi ha scelto una propria pagina iniziale nel profilo arriva lì. Senza pagina iniziale, o se la sua funzione è disattivata, si apre la pagina di benvenuto."
       },
       "opName": {
         "label": "Nome",
@@ -648,7 +648,7 @@
       },
       "privacyPolicyPageKey": {
         "label": "Pagina della politica sulla privacy",
-        "helper": "L'avviso sui cookie e la richiesta di conferma nel profilo rimandano a questa pagina. La pagina deve essere visibile senza accesso. Nessuna pagina: il link manca."
+        "helper": "L'avviso sui cookie e la richiesta di conferma nel profilo rimandano a questa pagina. Puoi scegliere tra le pagine visibili senza accesso. Nessuna pagina: il link manca."
       },
       "privacyPolicyVersion": {
         "label": "Versione della politica sulla privacy",

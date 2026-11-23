@@ -4,6 +4,7 @@ import { Router, type CanActivateFn } from '@angular/router';
 import { race, timer } from 'rxjs';
 import { filter, map, take } from 'rxjs/operators';
 import { AppStore, READINESS_TIMEOUT_MS } from '@okr/shared-feature';
+import { featureOffUrl } from '@okr/shared-util-core';
 import { FeatureStore } from './feature.store';
 
 /**
@@ -11,6 +12,8 @@ import { FeatureStore } from './feature.store';
  *
  * Redirects silently to the tenant's rootUrl — deliberately NOT a 404-vs-403
  * distinction, which would leak which features exist to a tenant that may not have them.
+ * A rootUrl whose own block is off redirected to itself for ever: `featureOffUrl` opens the welcome
+ * page instead, and the «page not found» screen when the block behind the welcome page is off too.
  *
  * WHY THIS WAITS. `FeatureStore.effective()` is derived from two asynchronous sources
  * (`app-config`'s `enabledFeatures` and the `feature-rollout` stream) and answers even before
@@ -46,7 +49,7 @@ import { FeatureStore } from './feature.store';
  * `effective()` holds whatever is known then rather than the value it had at subscription time.
  */
 export function isFeatureEnabledGuard(blockId: string): CanActivateFn {
-  return () => {
+  return (_route, state) => {
     const featureStore = inject(FeatureStore);
     const appStore = inject(AppStore);
     const router = inject(Router);
@@ -58,7 +61,7 @@ export function isFeatureEnabledGuard(blockId: string): CanActivateFn {
       take(1),
       map(() => featureStore.effective().has(blockId)
         ? true
-        : router.parseUrl(appStore.appConfig()?.rootUrl ?? '/public/welcome')),
+        : router.parseUrl(featureOffUrl(appStore.appConfig()?.rootUrl, state.url))),
     );
   };
 }

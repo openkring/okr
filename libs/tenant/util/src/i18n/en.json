@@ -600,7 +600,7 @@
       },
       "rootUrl": {
         "label": "Start page",
-        "helper": "This page opens when the app starts and after signing in. Whoever chose an own start page in the profile gets there."
+        "helper": "This page opens when the app starts and after signing in. Whoever chose an own start page in the profile gets there. Without a start page, or when its feature is switched off, the welcome page opens."
       },
       "opName": {
         "label": "Name",
@@ -648,7 +648,7 @@
       },
       "privacyPolicyPageKey": {
         "label": "Page of the privacy policy",
-        "helper": "The cookie notice and the request for confirmation in the profile link to this page. The page must be visible without signing in. No page: the link is missing."
+        "helper": "The cookie notice and the request for confirmation in the profile link to this page. You can choose from the pages that are visible without signing in. No page: the link is missing."
       },
       "privacyPolicyVersion": {
         "label": "Version of the privacy policy",

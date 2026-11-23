@@ -12,9 +12,10 @@ import { SettingsAppForm } from './settings-app.form';
 import { SettingsLanguageForm } from './settings-language.form';
 import { SettingsOperatorForm } from './settings-operator.form';
 import { SettingsPrivacyForm } from './settings-privacy.form';
+import { SettingsStartForm } from './settings-start.form';
 
 /** The groups this modal has a form for; the page offers «Bearbeiten» on exactly these cards. One entry per `@case` below. */
-export const SETTINGS_FORM_GROUPS: readonly SettingsGroupId[] = ['app', 'language', 'operator', 'privacy'];
+export const SETTINGS_FORM_GROUPS: readonly SettingsGroupId[] = ['app', 'language', 'start', 'operator', 'privacy'];
 
 /**
  * Edits one group of `/tenant/settings` (spec 1.174 §9.2). It writes nothing itself: `onSave` (from the page) does, and
@@ -25,7 +26,7 @@ export const SETTINGS_FORM_GROUPS: readonly SettingsGroupId[] = ['app', 'languag
   selector: 'okr-settings-edit-modal',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Header, ChangeConfirmation, SettingsAppForm, SettingsLanguageForm, SettingsOperatorForm, SettingsPrivacyForm, IonContent],
+  imports: [Header, ChangeConfirmation, SettingsAppForm, SettingsLanguageForm, SettingsOperatorForm, SettingsPrivacyForm, SettingsStartForm, IonContent],
   template: `
     <okr-header [i18n]="{ title: title() }" [isModal]="true" />
     @if (showConfirmation()) {
@@ -41,6 +42,11 @@ export const SETTINGS_FORM_GROUPS: readonly SettingsGroupId[] = ['app', 'languag
         @case ('language') {
           <okr-settings-language-form [formData]="formData()" (formDataChange)="formData.set($event)"
             [i18n]="i18n()" [context]="context()" [readOnly]="isSaving()" [showForm]="showForm()"
+            (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" />
+        }
+        @case ('start') {
+          <okr-settings-start-form [formData]="formData()" (formDataChange)="formData.set($event)"
+            [i18n]="i18n()" [context]="context()" [startOptions]="startOptions()()" [readOnly]="isSaving()" [showForm]="showForm()"
             (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" />
         }
         @case ('operator') {
@@ -69,6 +75,8 @@ export class SettingsEditModal {
   public readonly appDomain = input('');
   /** A signal, because the list of pages may arrive after the modal has opened. */
   public readonly pageOptions = input<Signal<SettingsPageOption[]>>(signal<SettingsPageOption[]>([]));
+  /** A signal for the same reason: menus, pages and their translated labels. */
+  public readonly startOptions = input<Signal<SettingsPageOption[]>>(signal<SettingsPageOption[]>([]));
   /** Saves the values; true closes the modal. */
   public readonly onSave = input.required<(after: TenantSettings) => Promise<boolean>>();
 

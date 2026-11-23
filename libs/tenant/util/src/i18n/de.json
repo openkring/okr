@@ -600,7 +600,7 @@
       },
       "rootUrl": {
         "label": "Startseite",
-        "helper": "Diese Seite öffnet sich beim Start der App und nach der Anmeldung. Wer im Profil eine eigene Startseite gewählt hat, kommt dorthin."
+        "helper": "Diese Seite öffnet sich beim Start der App und nach der Anmeldung. Wer im Profil eine eigene Startseite gewählt hat, kommt dorthin. Ohne Startseite, oder wenn ihre Funktion ausgeschaltet ist, öffnet sich die Willkommensseite."
       },
       "opName": {
         "label": "Name",
@@ -648,7 +648,7 @@
       },
       "privacyPolicyPageKey": {
         "label": "Seite der Datenschutzerklärung",
-        "helper": "Der Cookie-Hinweis und die Bitte um Bestätigung im Profil verlinken auf diese Seite. Die Seite muss ohne Anmeldung sichtbar sein. Keine Seite: Der Link fehlt."
+        "helper": "Der Cookie-Hinweis und die Bitte um Bestätigung im Profil verlinken auf diese Seite. Zur Auswahl stehen die Seiten, die ohne Anmeldung sichtbar sind. Keine Seite: Der Link fehlt."
       },
       "privacyPolicyVersion": {
         "label": "Fassung der Datenschutzerklärung",

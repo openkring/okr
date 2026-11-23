@@ -3,9 +3,11 @@ import { rxResource, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonNote, IonRow, ModalController } from '@ionic/angular';
 
-import { of } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+import { combineLatest, of } from 'rxjs';
+import { catchError, map, startWith, switchMap } from 'rxjs/operators';
 
+import { MenuService } from '@okr/cms-menu-data-access';
+import { expandMenuTokens, resolveMenuLabelKey } from '@okr/cms-menu-util';
 import { PageService } from '@okr/cms-page-data-access';
 import { LocationService } from '@okr/location-data-access';
 import { AppStore } from '@okr/shared-feature';
@@ -15,7 +17,9 @@ import { Spinner } from '@okr/shared-ui';
 import { resourceParams } from '@okr/shared-util-angular';
 import { getCountryName } from '@okr/shared-util-core';
 import { SETTINGS_FORM_GROUPS, SettingsEditModal } from '@okr/tenant-ui';
-import { SETTINGS_GROUP_IDS, SETTINGS_I18N_KEYS, settingsGroupKey, settingsPageName, settingsPageOptions, settingsRows } from '@okr/tenant-util';
+import {
+  FEATURE_BLOCKS, SETTINGS_GROUP_IDS, SETTINGS_I18N_KEYS, settingsGroupKey, settingsPageName, settingsPageOptions, settingsRows, startOptions, startTargets,
+} from '@okr/tenant-util';
 import type { SettingsDisplayContext, SettingsGroupId, TenantSettings } from '@okr/tenant-util';
 
 import { FeatureStore } from './feature.store';
@@ -137,6 +141,7 @@ export class TenantSettingsContent {
   private readonly i18nService = inject(I18nService);
   private readonly pageService = inject(PageService);
   private readonly locationService = inject(LocationService);
+  private readonly menuService = inject(MenuService);
   private readonly modalController = inject(ModalController);
   private readonly router = inject(Router);
 
@@ -151,6 +156,30 @@ export class TenantSettingsContent {
   });
   private readonly pages = computed(() => (this.pagesResource.hasValue() ? this.pagesResource.value() : []));
 
+  /** the query the menu already listens to; FirestoreService shares it */
+  private readonly menuDocs = toSignal(this.menuService.list().pipe(catchError(() => of([]))), { initialValue: [] });
+
+  /** nothing from the menus until it is known which blocks are on */
+  private readonly rawStartTargets = computed(() => startTargets({
+    menuDocs: this.featureStore.settled() ? this.menuDocs() : [],
+    pages: this.pages(),
+    blocks: FEATURE_BLOCKS,
+    isEnabled: this.featureStore.isEnabled(),
+    hiddenKeys: this.featureStore.hiddenMenuKeys(),
+    tenantId: this.appStore.tenantId(),
+  }));
+
+  /** The same with the labels the menu shows. `startWith`: a text that loads slowly holds back its own label only. */
+  private readonly startTargets = toSignal(toObservable(this.rawStartTargets).pipe(
+    switchMap((targets) => (targets.length === 0 ? of([]) : combineLatest(targets.map(({ url, label }) => {
+      const tokens = { version: '', tenantId: this.appStore.tenantId(), appDomain: this.appStore.appConfig().appDomain ?? '' };
+      return this.i18nService.translate(resolveMenuLabelKey(label ?? '', tokens)).pipe(
+        startWith(''),
+        map((text) => ({ url, label: expandMenuTokens(text, tokens) })),
+      );
+    })))),
+  ), { initialValue: [] });
+
   private readonly locationId = computed(() => (this.store.isLoaded() ? String(this.store.settings('defaults').ownerLocationId ?? '') : ''));
   private readonly location = toSignal(toObservable(this.locationId).pipe(
     switchMap((key) => (key ? this.locationService.read(key).pipe(catchError(() => of(undefined))) : of(undefined))),
@@ -159,12 +188,14 @@ export class TenantSettingsContent {
   private readonly display = computed((): SettingsDisplayContext => {
     const pages = this.pages();
     const location = this.location();
+    const starts = this.startTargets();
     return {
       text: (name) => this.text(name),
       countryName: (code) => getCountryName(code, this.i18nService.getActiveLang()), // not a signal: read on every call, after a language switch
       pageName: (key) => settingsPageName(key, pages, this.appStore.tenantId()),
       locationName: (key) => (location?.okey === key ? location.name : ''),
       resourceName: (key) => this.appStore.getResource(key)?.name ?? '',
+      startName: (url) => starts.find((target) => target.url === url)?.label ?? '',
       orgName: (key) => this.appStore.getOrg(key)?.name ?? '',
     };
   });
@@ -206,6 +237,7 @@ export class TenantSettingsContent {
       const before = this.store.settings(group);
       const platform = this.store.settings('platform');
       const storedPage = String(this.store.settings('privacy').privacyPolicyPageKey ?? '');
+      const storedStart = String(this.store.settings('start').rootUrl ?? '');
       const modal = await this.modalController.create({
         component: SettingsEditModal,
         componentProps: {
@@ -215,6 +247,7 @@ export class TenantSettingsContent {
           emailDomain: platform.emailDomain ?? '',
           appDomain: platform.appDomain ?? '',
           pageOptions: computed(() => settingsPageOptions(this.pages(), this.appStore.tenantId(), storedPage)),
+          startOptions: computed(() => startOptions(this.startTargets(), storedStart)),
           onSave: (after: TenantSettings) => this.save(group, before, after),
         },
       });

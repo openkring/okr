@@ -3,7 +3,10 @@ import type { ActivatedRouteSnapshot, CanActivateFn, RouterStateSnapshot } from 
 import { describe, expect, it } from 'vitest';
 
 import { AppStore } from '@okr/shared-feature';
+import { UNKNOWN_PAGE_URL } from '@okr/shared-util-core';
+import { composeFeatureRoutes, urlResolves } from '@okr/tenant-util';
 
+import { FEATURE_ROUTES } from './feature-catalogue';
 import { UNGATED_ROUTES } from './ungated-routes';
 
 /** Does every guard of the route admit a user with these roles? (Roles is a flag map.) */
@@ -33,5 +36,12 @@ describe('UNGATED_ROUTES guards', () => {
   it('billing stays admin-only', () => {
     expect(admits('billing', { admin: true })).toBe(true);
     expect(admits('billing', { treasurer: true })).toBe(false);
+  });
+});
+
+describe('UNKNOWN_PAGE_URL', () => {
+  // The feature guard's last resort: only the '**' route of an app may serve it, which no block gates.
+  it('is served by no block route and no ungated route', () => {
+    expect(urlResolves([...composeFeatureRoutes(FEATURE_ROUTES), ...UNGATED_ROUTES], UNKNOWN_PAGE_URL)).toBe(false);
   });
 });

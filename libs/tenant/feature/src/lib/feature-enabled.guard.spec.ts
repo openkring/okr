@@ -51,13 +51,14 @@ function appStoreMock(over: {
   appConfigSettled?: boolean;
   readinessTimedOut?: boolean;
   enabledFeatures?: string[];
+  rootUrl?: string;
 } = {}) {
   return {
     fbUser: signal<unknown>('fbUser' in over ? over.fbUser : { uid: 'u1' }),
     isAppConfigSettled: signal(over.appConfigSettled ?? false),
     readinessTimedOut: signal(over.readinessTimedOut ?? false),
     tenantId: signal(TENANT),
-    appConfig: signal({ rootUrl: ROOT_URL, enabledFeatures: over.enabledFeatures }),
+    appConfig: signal({ rootUrl: over.rootUrl ?? ROOT_URL, enabledFeatures: over.enabledFeatures }),
   };
 }
 
@@ -84,12 +85,12 @@ function featureStoreStub(settled: boolean, effective: string[]) {
  * emits but never completes — or never emits at all — hangs navigation app-wide rather than
  * failing one screen.
  */
-function runGuard(blockId: string, appRef: ApplicationRef) {
+function runGuard(blockId: string, appRef: ApplicationRef, url = '/somewhere') {
   const seen: (true | UrlTree)[] = [];
   let completed = false;
 
   const result = runInInjectionContext(appRef.injector, () =>
-    isFeatureEnabledGuard(blockId)({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot));
+    isFeatureEnabledGuard(blockId)({} as ActivatedRouteSnapshot, { url } as RouterStateSnapshot));
   expect(isObservable(result), 'guard must return an Observable so it can wait').toBe(true);
   (result as Observable<true | UrlTree>).subscribe({
     next: v => seen.push(v),
@@ -105,14 +106,14 @@ function runGuard(blockId: string, appRef: ApplicationRef) {
 }
 
 /** Runs the guard against a stubbed `FeatureStore` whose `settled`/`effective` the test drives. */
-async function runGuardWithStub(blockId: string, stub: ReturnType<typeof featureStoreStub>) {
+async function runGuardWithStub(blockId: string, stub: ReturnType<typeof featureStoreStub>, over: { url?: string; rootUrl?: string } = {}) {
   const appRef = await makeApp([
     { provide: FeatureStore, useValue: stub },
     // The guard reads `appConfig().rootUrl` for the redirect target; the real `AppStore` would
     // drag in `FirestoreService` and its ENV/FIRESTORE tokens.
-    { provide: AppStore, useValue: appStoreMock() },
+    { provide: AppStore, useValue: appStoreMock({ rootUrl: over.rootUrl }) },
   ]);
-  return runGuard(blockId, appRef);
+  return runGuard(blockId, appRef, over.url);
 }
 
 describe('FeatureStore.settled', () => {
@@ -302,5 +303,20 @@ describe('isFeatureEnabledGuard', () => {
     expect(run.emissions).toBe(1);
     expect(run.verdict).toBe(true);
     expect(run.completed, 'anonymous navigation would hang forever').toBe(true);
+  });
+
+  /** A start page whose own block was switched off redirected to itself, for ever (spec 1.174 §7.4). */
+  it.each([
+    ['another page', '/quiz', '/diary/all/c-diary', '/diary/all/c-diary'],
+    ['another page, with its query', '/quiz', '/person/all/c-persons?filters=search', '/person/all/c-persons?filters=search'],
+    ['the page itself', '/quiz', '/quiz', '/public/welcome'],
+    ['the page itself with a query', '/quiz?level=1', '/quiz', '/public/welcome'],
+    ['the welcome page while that one is off', '/public/welcome', '/quiz', '/notfound'],
+  ])('a block that is off, root url is %s', async (_name, url, rootUrl, expected) => {
+    const run = await runGuardWithStub('games', featureStoreStub(true, []), { url, rootUrl });
+    run.flush();
+
+    expect(String(run.verdict)).toBe(expected);
+    expect(run.completed).toBe(true);
   });
 });

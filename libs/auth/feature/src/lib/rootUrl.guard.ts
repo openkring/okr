@@ -5,10 +5,7 @@ import { combineLatest, race, timer } from 'rxjs';
 import { filter, map, take } from 'rxjs/operators';
 
 import { AppStore, READINESS_TIMEOUT_MS } from '@okr/shared-feature';
-import { resolveUserStartUrl } from '@okr/shared-util-core';
-
-/** Used when the configured rootUrl is missing or points back at '/' (which would loop). */
-const FALLBACK_ROOT_URL = '/public/welcome';
+import { resolveUserStartUrl, safeRootUrl } from '@okr/shared-util-core';
 
 /**
  * Sends the bare app URL ('/') to the tenant's configured `app-config.rootUrl`.
@@ -22,6 +19,7 @@ const FALLBACK_ROOT_URL = '/public/welcome';
  * wins. A start page whose feature the tenant switched off later lands on `rootUrl` through that
  * route's own feature guard. While the user is crew of an open Logbuch trip and opted in
  * («Notfall-Seite bei Ausfahrt anzeigen», spec 1.158), the Notfall page wins over both.
+ * A missing or unusable target, or one that leads back here, opens the welcome page (`safeRootUrl`).
  *
  * WHY A GUARD AND NOT `redirectTo: () => …`: the first navigation runs at bootstrap, before
  * `app-config` has loaded, and `appConfig()` then returns the AppConfig class default. The guard
@@ -31,7 +29,7 @@ const FALLBACK_ROOT_URL = '/public/welcome';
  *
  * Use on a componentless route: `{ path: '', pathMatch: 'full', canActivate: [rootUrlGuard], children: [] }`.
  */
-export const rootUrlGuard: CanActivateFn = () => {
+export const rootUrlGuard: CanActivateFn = (_route, state) => {
   const appStore = inject(AppStore);
   const router = inject(Router);
 
@@ -43,10 +41,6 @@ export const rootUrlGuard: CanActivateFn = () => {
     timer(READINESS_TIMEOUT_MS),
   ).pipe(
     take(1),
-    map(() => {
-      const rootUrl = resolveUserStartUrl(appStore.currentUser(), appStore.appConfig().rootUrl?.trim() ?? '');
-      const isRoot = rootUrl.replace(/^\/+|\/+$/g, '') === '';
-      return router.parseUrl(isRoot ? FALLBACK_ROOT_URL : rootUrl);
-    }),
+    map(() => router.parseUrl(safeRootUrl(resolveUserStartUrl(appStore.currentUser(), appStore.appConfig().rootUrl), state.url))),
   );
 };
