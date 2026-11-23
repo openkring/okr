@@ -1,18 +1,27 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { IonButton, IonIcon, IonItem, IonItemDivider, IonItemGroup, IonLabel, IonList, IonNote } from '@ionic/angular';
 
+import { combineLatest, of } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
+
+import { PageService } from '@okr/cms-page-data-access';
+import { SectionService } from '@okr/cms-section-data-access';
 import { AppConfigService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Checkbox } from '@okr/shared-ui';
 import type { CheckboxI18n } from '@okr/shared-ui';
-import { AlertService } from '@okr/shared-util-angular';
-import { MODEL_FIELDS, hiddenFieldsOf, withFieldVisibility, withoutModel } from '@okr/shared-util-core';
+import { AlertService, resourceParams } from '@okr/shared-util-angular';
+import { MODEL_FIELDS, belongsToTenant, fill, hiddenFieldsOf, withFieldVisibility, withoutModel } from '@okr/shared-util-core';
 import type { ModelFieldMap } from '@okr/shared-util-core';
-import { CUSTOMIZE_I18N_KEYS, customizeFieldKey, customizeGroupKey } from '@okr/tenant-util';
+import { CUSTOMIZE_I18N_KEYS, FEATURE_BLOCKS, customizeFieldKey, customizeGroupKey, withWidgetVisibility } from '@okr/tenant-util';
 
+import { buildWidgetRows } from './dashboard-widget-rows.util';
+import type { WidgetEntry } from './dashboard-widget-rows.util';
+import { FeatureStore } from './feature.store';
 import { createSerialQueue } from './serial-queue.util';
 
 interface CustomizeLink { labelKey: string; url: string; }
@@ -87,6 +96,47 @@ const GROUP_MODELS = ['person'];
         </ion-item-group>
       </ion-list>
     }
+
+    @if (widgets().length > 0) {
+      <ion-list>
+        <ion-item-group>
+          <ion-item-divider>
+            <ion-icon slot="start" src="{{ 'home' | svgIcon }}" />
+            <ion-label>{{ text('group_dashboard') }}</ion-label>
+          </ion-item-divider>
+          <ion-item lines="none">
+            <ion-note class="ion-text-wrap">{{ text('dashboard_intro') }}</ion-note>
+          </ion-item>
+          @for (widget of widgets(); track widget.key + '/' + epoch()) {
+            @if (widget.blockOn) {
+              <okr-checkbox
+                [i18n]="widget.i18n"
+                [checked]="widget.visible"
+                [readOnly]="false"
+                (checkedChange)="onToggleWidget(widget.key, $event)" />
+              @if (widget.onlyHere) {
+                <ion-item lines="none">
+                  <ion-note class="ion-text-wrap">{{ text('widget_only_here') }}</ion-note>
+                </ion-item>
+              }
+            } @else {
+              <ion-item lines="none">
+                <ion-label class="ion-text-wrap">
+                  <h3>{{ widget.title }}</h3>
+                  <p>{{ widget.offText }}</p>
+                </ion-label>
+                <ion-button slot="end" fill="clear" size="small" (click)="showBlocks.emit()">
+                  {{ text('widget_off_button') }}
+                </ion-button>
+              </ion-item>
+            }
+          }
+          <ion-item lines="none">
+            <ion-note class="ion-text-wrap">{{ text('dashboard_badges') }}</ion-note>
+          </ion-item>
+        </ion-item-group>
+      </ion-list>
+    }
   `,
 })
 export class CustomizeTab {
@@ -95,6 +145,12 @@ export class CustomizeTab {
   private readonly alertService = inject(AlertService);
   private readonly i18nService = inject(I18nService);
   private readonly router = inject(Router);
+  private readonly pageService = inject(PageService);
+  private readonly sectionService = inject(SectionService);
+  private readonly featureStore = inject(FeatureStore);
+
+  /** The user wants to switch the picker to its segment of blocks. */
+  public readonly showBlocks = output<void>();
 
   protected readonly i18n = this.i18nService.translateAll(CUSTOMIZE_I18N_KEYS);
 
@@ -121,6 +177,62 @@ export class CustomizeTab {
       };
     });
   });
+
+  /** The tenant's dashboard page and its sections, in page order; live, like the page itself. */
+  private readonly dashboard = rxResource({
+    params: resourceParams(() => ({ tenantId: this.appStore.tenantId() })),
+    stream: ({ params }) => {
+      const tenantId = params.tenantId;
+      if (!tenantId) return of([] as WidgetEntry[]);
+      return this.pageService.read('dashboard').pipe(
+        switchMap((page) => {
+          if (!page || !belongsToTenant(page, tenantId) || !page.sections?.length) return of([] as WidgetEntry[]);
+          return combineLatest(page.sections.map((pageKey) =>
+            this.sectionService.read(pageKey.replace('@TID@', tenantId)).pipe(
+              map((section): WidgetEntry | undefined => (section && belongsToTenant(section, tenantId) ? { pageKey, section } : undefined)),
+            ))).pipe(map((entries) => entries.filter((e): e is WidgetEntry => !!e)));
+        }),
+        catchError(() => of([] as WidgetEntry[])),
+      );
+    },
+  });
+
+  protected readonly widgets = computed(() => {
+    const tenantId = this.appStore.tenantId();
+    const entries = this.dashboard.hasValue() ? this.dashboard.value() : [];
+    const isEnabled = this.featureStore.settled() ? this.featureStore.isEnabled() : () => true;
+    return buildWidgetRows(entries, tenantId, this.appStore.appConfig()?.hiddenWidgets, isEnabled).map((row) => {
+      const typeLabel = this.text(`type_${row.type}`) || row.type;
+      const title = row.title || typeLabel;
+      const block = FEATURE_BLOCKS.find((b) => b.id === row.block);
+      const blockName = block ? this.blockLabels[block.id]?.() || block.id : (row.block ?? '');
+      return {
+        ...row,
+        title,
+        offText: fill(this.text('widget_off'), { block: blockName }),
+        i18n: { name: `dashboard-${row.key}`, label: title, helper: row.isDraft ? this.text('widget_draft') : '' } as CheckboxI18n,
+      };
+    });
+  });
+
+  private readonly blockLabels = this.i18nService.translateAll(
+    Object.fromEntries(FEATURE_BLOCKS.map((block) => [block.id, block.label])));
+
+  protected onToggleWidget(key: string, visible: boolean): void {
+    void this.enqueue(async () => {
+      let saved = false;
+      try {
+        const tenantId = this.appStore.tenantId();
+        if (!tenantId) return;
+        const next = withWidgetVisibility(this.appStore.appConfig()?.hiddenWidgets, key, visible, tenantId);
+        saved = !!await this.appConfigService.setHiddenWidgets(tenantId, next);
+      } catch (error) {
+        this.alertService.error(`CustomizeTab.onToggleWidget(${key}): ${error}`);
+      } finally {
+        if (!saved) this.epoch.update((n) => n + 1);
+      }
+    });
+  }
 
   protected text(name: string): string {
     return this.i18n[name]?.() ?? '';

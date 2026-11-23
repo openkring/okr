@@ -37,3 +37,21 @@ export function isWidgetVisible(
   const key = widgetKeyOf(section.okey, tenantId);
   return !(hidden ?? []).some(h => widgetKeyOf(h, tenantId) === key);
 }
+
+/**
+ * The next `hiddenWidgets` list after showing or hiding one widget. Keys of other widgets stay —
+ * they may belong to another dashboard page — and a key is never listed twice. With a tenant id,
+ * an entry that still carries the `_<tenantId>` suffix counts as the same widget.
+ */
+export function withWidgetVisibility(
+  hidden: readonly string[] | null | undefined,
+  key: string,
+  visible: boolean,
+  tenantId = '',
+): string[] {
+  const current = hidden ?? [];
+  const wanted = widgetKeyOf(key, tenantId);
+  const isListed = (h: string): boolean => widgetKeyOf(h, tenantId) === wanted;
+  if (visible) return current.filter(h => !isListed(h));
+  return current.some(isListed) ? [...current] : [...current, key];
+}

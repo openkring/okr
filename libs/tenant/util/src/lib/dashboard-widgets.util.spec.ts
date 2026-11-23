@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { FEATURE_BLOCKS } from './feature-blocks';
-import { isWidgetVisible, WIDGET_BLOCKS, widgetBlockOf, widgetKeyOf } from './dashboard-widgets.util';
+import { isWidgetVisible, WIDGET_BLOCKS, widgetBlockOf, widgetKeyOf, withWidgetVisibility } from './dashboard-widgets.util';
 
 const allOn = () => true;
 const allOff = () => false;
@@ -103,5 +103,42 @@ describe('isWidgetVisible', () => {
     for (const hidden of [undefined, null, []]) {
       expect(isWidgetVisible(news, 'scs', hidden, allOn)).toBe(true);
     }
+  });
+});
+
+describe('withWidgetVisibility', () => {
+  it('hides a widget by appending its key', () => {
+    expect(withWidgetVisibility(['news'], 'tasks', false)).toEqual(['news', 'tasks']);
+  });
+
+  it('does not add a key twice', () => {
+    expect(withWidgetVisibility(['tasks'], 'tasks', false)).toEqual(['tasks']);
+  });
+
+  it('shows a widget by removing its key and keeps the others, also those of another page', () => {
+    expect(withWidgetVisibility(['news', 'tasks', 'other-page-widget'], 'tasks', true)).toEqual(['news', 'other-page-widget']);
+  });
+
+  it('showing a widget that is not hidden changes nothing', () => {
+    expect(withWidgetVisibility(['news'], 'tasks', true)).toEqual(['news']);
+  });
+
+  it('tolerates undefined and null', () => {
+    expect(withWidgetVisibility(undefined, 'tasks', false)).toEqual(['tasks']);
+    expect(withWidgetVisibility(null, 'tasks', false)).toEqual(['tasks']);
+    expect(withWidgetVisibility(undefined, 'tasks', true)).toEqual([]);
+    expect(withWidgetVisibility(null, 'tasks', true)).toEqual([]);
+  });
+
+  it('does not change its input', () => {
+    const hidden = ['news'];
+    withWidgetVisibility(hidden, 'tasks', false);
+    withWidgetVisibility(hidden, 'news', true);
+    expect(hidden).toEqual(['news']);
+  });
+
+  it('with a tenant id, matches an entry that carries the tenant suffix', () => {
+    expect(withWidgetVisibility(['tasks_scs'], 'tasks', true, 'scs')).toEqual([]);
+    expect(withWidgetVisibility(['tasks_scs'], 'tasks', false, 'scs')).toEqual(['tasks_scs']);
   });
 });

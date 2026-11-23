@@ -339,7 +339,9 @@ type PickerSegment = 'blocks' | 'rows' | 'customize';
           </ion-grid>
         }
       } @else {
-        <okr-customize-tab />
+        @defer {
+          <okr-customize-tab (showBlocks)="segment.set('blocks')" />
+        }
       }
     </ion-content>
   `,
