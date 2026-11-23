@@ -111,3 +111,49 @@ describe('platform', () => {
     }
   });
 });
+
+describe('unchanged stored values', () => {
+  // one bad stored value per group; the user edits another field of the same card
+  const cases: { group: keyof typeof settingsValidations; bad: Record<string, unknown>; other: Record<string, unknown>; badField: string; worse: unknown }[] = [
+    { group: 'app', bad: { appName: 'a"b', brandColor: 'red' }, other: { appTitle: 'neu' }, badField: 'appName', worse: 'a<b' },
+    { group: 'language', bad: { enabledLanguages: ['de', 'xx'] }, other: { locale: 'de-ch' }, badField: 'enabledLanguages', worse: ['yy'] },
+    { group: 'operator', bad: { opWebUrl: 'http://x.ch', opCountryCode: 'Schweiz', opEmail: 'x' }, other: { opName: 'neu' }, badField: 'opWebUrl', worse: 'ftp://y.ch' },
+    { group: 'privacy', bad: { showEmail: 'everybody', dpoEmail: 'x' }, other: { dpoName: 'neu' }, badField: 'showEmail', worse: 'nobody' },
+    { group: 'defaults', bad: { newsDelivery: ['email', 'email'], avatarUsage: -1 }, other: { nameDisplay: 1 }, badField: 'avatarUsage', worse: -2 },
+    { group: 'platform', bad: { appDomain: 'https://x.ch', weatherIntervalHours: 0 }, other: { emailDomain: 'k.ch' }, badField: 'appDomain', worse: 'http://y.ch' },
+    { group: 'mail', bad: { mailFrom: 'x@old.ch' }, other: {}, badField: 'mailFrom', worse: 'y@old.ch' },
+  ];
+  for (const c of cases) {
+    it(`${c.group}: a bad value the user did not touch passes, another bad value fails`, () => {
+      const before = loose(c.bad);
+      const run = (model: object) => settingsValidations[c.group](loose(model), { ...CTX, before }).hasErrors(c.badField);
+      expect(settingsValidations[c.group](loose(c.bad), { ...CTX, before: {} }).hasErrors(c.badField)).toBe(true);
+      expect(run({ ...c.bad, ...c.other })).toBe(false);
+      expect(run({ ...c.bad, [c.badField]: c.worse })).toBe(true);
+    });
+  }
+
+  it('compares lists by value', () => {
+    const before = loose({ newsDelivery: ['email', 'email'] });
+    expect(settingsValidations.defaults(loose({ newsDelivery: ['email', 'email'] }), { ...CTX, before }).hasErrors('newsDelivery')).toBe(false);
+  });
+});
+
+describe('raw values', () => {
+  it('refuses surrounding whitespace in a sender, an e-mail, a url and a domain', () => {
+    expect(settingsValidations.mail({ mailFrom: 'a@kring.ch\r\n' }, CTX).hasErrors('mailFrom')).toBe(true);
+    expect(settingsValidations.mail({ mailFrom: ' a@kring.ch' }, CTX).hasErrors('mailFrom')).toBe(true);
+    const op = { opName: 'A', opEmail: 'a@b.ch ', opStreet: '', opZipCode: '', opCity: '', opCountryCode: 'CH', opWebUrl: 'https://b.ch ', issueUrl: '' };
+    const r = settingsValidations.operator(op, CTX);
+    expect(r.hasErrors('opEmail')).toBe(true);
+    expect(r.hasErrors('opWebUrl')).toBe(true);
+    const platform = { appDomain: 'app.kring.ch ', emailDomain: '', weatherIntervalHours: 4, personLookupEnabled: false, isArchived: false, showDebugInfo: false };
+    expect(settingsValidations.platform(platform, CTX).hasErrors('appDomain')).toBe(true);
+  });
+
+  it('refuses control characters in appName', () => {
+    for (const appName of ['a\u0000b', 'a\tb', 'a\u0085b', 'a b', 'a\u007fb']) {
+      expect(settingsValidations.app({ appName, appTitle: '', appSubtitle: '', description: '', brandColor: '' }, CTX).hasErrors('appName'), JSON.stringify(appName)).toBe(true);
+    }
+  });
+});

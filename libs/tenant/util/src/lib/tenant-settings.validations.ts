@@ -1,9 +1,9 @@
 import { CITY_LENGTH, COUNTRY_LENGTH, DESCRIPTION_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH, STREET_LENGTH, URL_LENGTH } from '@okr/shared-constants';
 import { AvailableLanguages } from '@okr/shared-models';
 import { bareHostname, booleanValidations, deliveryChannelsValidations, numberValidations, stringsValidations, stringValidations } from '@okr/shared-util-core';
-import { enforce, staticSuite, test } from 'vest';
+import { enforce, skip, staticSuite, test } from 'vest';
 
-import { SETTINGS_AUDIENCES, SETTINGS_GROUPS, type SettingsGroupId, type TenantSettings } from './tenant-settings';
+import { sameValue, SETTINGS_AUDIENCES, SETTINGS_GROUPS, type SettingsGroupId, type TenantSettings } from './tenant-settings';
 
 // Vest messages are i18n keys: okr-error-note resolves any message starting with '@'.
 const MSG = '@tenant/util.settings.validation.';
@@ -17,14 +17,19 @@ export interface SettingsContext {
 
 const COLOR = /^#[0-9a-fA-F]{6}$/;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const APP_NAME_FORBIDDEN = /["<>\n\r]/;
+// quotes and angle brackets, and every control character (C0, DEL, C1, line and paragraph separator)
+// eslint-disable-next-line no-control-regex
+const APP_NAME_FORBIDDEN = /["<>\u0000-\u001f\u007f-\u009f\u2028\u2029]/;
+/** Longest e-mail address a settings field takes. */
+const SETTINGS_EMAIL_LENGTH = 100;
+const HAS_SPACE = /\s/;
 
 function text(value: unknown): string {
   return typeof value === 'string' ? value : '';
 }
 
 function emailOrEmpty(field: string, value: unknown): void {
-  stringValidations(field, value, 100);
+  stringValidations(field, value, SETTINGS_EMAIL_LENGTH);
   test(field, `${MSG}email`, () => {
     enforce(text(value) === '' || EMAIL.test(text(value))).isTruthy();
   });
@@ -33,14 +38,14 @@ function emailOrEmpty(field: string, value: unknown): void {
 function httpsOrEmpty(field: string, value: unknown): void {
   stringValidations(field, value, URL_LENGTH);
   test(field, `${MSG}https`, () => {
-    enforce(text(value) === '' || text(value).startsWith('https://')).isTruthy();
+    enforce(text(value) === '' || (text(value).startsWith('https://') && !HAS_SPACE.test(text(value)))).isTruthy();
   });
 }
 
 /** The host of a sender address, lower-case; '' when there is no `@`. */
 function senderHost(address: string): string {
   const at = address.lastIndexOf('@');
-  return at < 0 ? '' : address.slice(at + 1).trim().toLowerCase();
+  return at < 0 ? '' : address.slice(at + 1).toLowerCase();
 }
 
 /** Domains a tenant may send from: the mail domain, the app domain, and the app domain without its `app.`. An empty domain matches nothing. */
@@ -50,7 +55,19 @@ export function allowedSenderDomains(context: Pick<SettingsContext, 'emailDomain
   return [email, app, app.startsWith('app.') ? app.slice(4) : ''].filter((d) => d !== '');
 }
 
-const appSuite = staticSuite((m: TenantSettings) => {
+/**
+ * Stored legacy data may break any rule below. A field whose value equals the loaded one passes every rule of its
+ * group, so a bad stored value never makes the card unsaveable; changing it to another bad value still fails.
+ */
+function skipUnchanged(group: SettingsGroupId, m: TenantSettings, context: SettingsContext): void {
+  const before = (context?.before ?? {}) as Record<string, unknown>;
+  const now = m as Record<string, unknown>;
+  const same = SETTINGS_GROUPS[group].filter((f) => before[f] !== undefined && sameValue(before[f], now[f])) as string[];
+  if (same.length > 0) skip(same);
+}
+
+const appSuite = staticSuite((m: TenantSettings, context: SettingsContext) => {
+  skipUnchanged('app', m, context);
   stringValidations('appName', m.appName, NAME_LENGTH, 1, true);
   test('appName', `${MSG}appNameChars`, () => {
     enforce(APP_NAME_FORBIDDEN.test(text(m.appName))).isFalsy();
@@ -64,12 +81,14 @@ const appSuite = staticSuite((m: TenantSettings) => {
 });
 
 // banner urls are produced by the upload, never typed: no length cap
-const imagesSuite = staticSuite((m: TenantSettings) => {
+const imagesSuite = staticSuite((m: TenantSettings, context: SettingsContext) => {
+  skipUnchanged('images', m, context);
   stringValidations('welcomeBannerUrl', m.welcomeBannerUrl);
   stringValidations('notfoundBannerUrl', m.notfoundBannerUrl);
 });
 
-const languageSuite = staticSuite((m: TenantSettings) => {
+const languageSuite = staticSuite((m: TenantSettings, context: SettingsContext) => {
+  skipUnchanged('language', m, context);
   stringValidations('locale', m.locale, undefined, 1, true);
   test('enabledLanguages', `${MSG}languagesNone`, () => {
     enforce(Array.isArray(m.enabledLanguages) && m.enabledLanguages.length > 0).isTruthy();
@@ -80,11 +99,13 @@ const languageSuite = staticSuite((m: TenantSettings) => {
 });
 
 // rootUrl is picked, never typed: no length cap
-const startSuite = staticSuite((m: TenantSettings) => {
+const startSuite = staticSuite((m: TenantSettings, context: SettingsContext) => {
+  skipUnchanged('start', m, context);
   stringValidations('rootUrl', m.rootUrl, undefined, 1, true);
 });
 
-const operatorSuite = staticSuite((m: TenantSettings) => {
+const operatorSuite = staticSuite((m: TenantSettings, context: SettingsContext) => {
+  skipUnchanged('operator', m, context);
   stringValidations('opName', m.opName, LONG_NAME_LENGTH);
   emailOrEmpty('opEmail', m.opEmail);
   stringValidations('opStreet', m.opStreet, STREET_LENGTH);
@@ -96,17 +117,20 @@ const operatorSuite = staticSuite((m: TenantSettings) => {
 });
 
 const mailSuite = staticSuite((m: TenantSettings, context: SettingsContext) => {
-  stringValidations('mailFrom', m.mailFrom, 100);
-  const from = text(m.mailFrom).trim();
+  skipUnchanged('mail', m, context);
+  stringValidations('mailFrom', m.mailFrom, SETTINGS_EMAIL_LENGTH);
+  // the raw value: what is validated is what settingsDiff writes
+  const from = text(m.mailFrom);
   test('mailFrom', `${MSG}email`, () => {
-    enforce(from === '' || from === text(context.before?.mailFrom) || EMAIL.test(from)).isTruthy();
+    enforce(from === '' || EMAIL.test(from)).isTruthy();
   });
   test('mailFrom', `${MSG}mailFromDomain`, () => {
-    enforce(from === '' || from === text(context.before?.mailFrom) || allowedSenderDomains(context).includes(senderHost(from))).isTruthy();
+    enforce(from === '' || allowedSenderDomains(context).includes(senderHost(from))).isTruthy();
   });
 });
 
-const privacySuite = staticSuite((m: TenantSettings) => {
+const privacySuite = staticSuite((m: TenantSettings, context: SettingsContext) => {
+  skipUnchanged('privacy', m, context);
   stringValidations('dpoName', m.dpoName, NAME_LENGTH);
   emailOrEmpty('dpoEmail', m.dpoEmail);
   stringValidations('privacyPolicyPageKey', m.privacyPolicyPageKey); // picked, no cap
@@ -116,7 +140,8 @@ const privacySuite = staticSuite((m: TenantSettings) => {
   }
 });
 
-const defaultsSuite = staticSuite((m: TenantSettings) => {
+const defaultsSuite = staticSuite((m: TenantSettings, context: SettingsContext) => {
+  skipUnchanged('defaults', m, context);
   // ids are picked from lists, never typed: no length cap
   stringValidations('ownerLocationId', m.ownerLocationId);
   stringValidations('defaultResourceId', m.defaultResourceId);
@@ -129,11 +154,12 @@ const defaultsSuite = staticSuite((m: TenantSettings) => {
 
 function domainOrEmpty(field: string, value: unknown): void {
   test(field, `${MSG}domain`, () => {
-    enforce(typeof value === 'string' && (value === '' || bareHostname(value) !== undefined)).isTruthy();
+    enforce(typeof value === 'string' && (value === '' || (value === value.trim() && bareHostname(value) !== undefined))).isTruthy();
   });
 }
 
-const platformSuite = staticSuite((m: TenantSettings) => {
+const platformSuite = staticSuite((m: TenantSettings, context: SettingsContext) => {
+  skipUnchanged('platform', m, context);
   domainOrEmpty('appDomain', m.appDomain);
   domainOrEmpty('emailDomain', m.emailDomain);
   test('weatherIntervalHours', `${MSG}positive`, () => {
@@ -146,13 +172,13 @@ const platformSuite = staticSuite((m: TenantSettings) => {
 
 /** One suite per settings card. The context carries the domains the mail rule needs and the values as loaded. */
 export const settingsValidations: Record<SettingsGroupId, (model: TenantSettings, context: SettingsContext) => ReturnType<typeof appSuite>> = {
-  app: (m) => appSuite(m),
-  images: (m) => imagesSuite(m),
-  language: (m) => languageSuite(m),
-  start: (m) => startSuite(m),
-  operator: (m) => operatorSuite(m),
+  app: (m, c) => appSuite(m, c),
+  images: (m, c) => imagesSuite(m, c),
+  language: (m, c) => languageSuite(m, c),
+  start: (m, c) => startSuite(m, c),
+  operator: (m, c) => operatorSuite(m, c),
   mail: (m, c) => mailSuite(m, c),
-  privacy: (m) => privacySuite(m),
-  defaults: (m) => defaultsSuite(m),
-  platform: (m) => platformSuite(m),
+  privacy: (m, c) => privacySuite(m, c),
+  defaults: (m, c) => defaultsSuite(m, c),
+  platform: (m, c) => platformSuite(m, c),
 };
