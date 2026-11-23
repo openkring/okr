@@ -732,5 +732,9 @@
   },
   "proposal": {
     "note": "Proposta dalla domanda: {category} — controllala, per favore"
+  },
+  "reorder": {
+    "hint": "Trascina le maniglie a destra per cambiare l'ordine. I membri compaiono in quest'ordine anche sul sito web e nelle sezioni delle persone.",
+    "error": "Non è stato possibile salvare il nuovo ordine. Riprova, per favore."
   }
 }

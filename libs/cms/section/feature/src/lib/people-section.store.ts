@@ -8,6 +8,7 @@ import { AppStore } from '@okr/shared-feature';
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import { ResponsibilityService } from '@okr/relationship-responsibility-data-access';
 import { getResponsibilityPortraitKey } from '@okr/relationship-responsibility-util';
+import { sortMembersBySortOrder } from '@okr/relationship-membership-util';
 import { AvatarService } from '@okr/avatar-data-access';
 import { I18nService } from '@okr/shared-i18n';
 
@@ -83,7 +84,8 @@ export const PeopleSectionStore = signalStore(
       const type = state.section()?.properties.type ?? 'persons';
       switch (type) {
         case 'group': {
-          const memberships = state.groupMembersResource.value() ?? [];
+          // in the group's manual order (sortOrder, set by dragging the group's member list)
+          const memberships = sortMembersBySortOrder(state.groupMembersResource.value() ?? []);
           // members the section hides (excludedPersons) are left out here, so emails / images follow
           const excluded = new Set(getPeopleExcludedKeys(state.section()?.properties));
           return state.membershipService.getMemberAvatars(memberships).filter(p => !excluded.has(p.key));

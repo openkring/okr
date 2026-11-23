@@ -732,5 +732,9 @@
   },
   "proposal": {
     "note": "Propuesta de la solicitud: {category} — revísala, por favor"
+  },
+  "reorder": {
+    "hint": "Arrastra los asideros de la derecha para cambiar el orden. Los miembros aparecen en este orden también en el sitio web y en las secciones de personas.",
+    "error": "No se pudo guardar el nuevo orden. Inténtalo de nuevo, por favor."
   }
 }

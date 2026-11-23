@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar, IonBackdrop, IonNote } from '@ionic/angular';
+import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar, IonBackdrop, IonNote, IonReorder, IonReorderGroup, ItemReorderEventDetail } from '@ionic/angular';
 
 import { TranslatePipe } from '@okr/shared-i18n';
 import { GroupModel, MembershipModel, NameDisplay, PersonModelName, RoleName, UserModel } from '@okr/shared-models';
@@ -36,10 +36,11 @@ const DEFAULT_LIST_ID = 'memberships';
     ImgDirective, TranslatePipe, AsyncPipe, SvgIconPipe, RellogPipe, AvatarPipe, FullNamePipe,
     Spinner, ListFilter, EmptyList, Menu,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
-    IonLabel, IonContent, IonItem, IonAvatar, IonList, IonPopover, IonNote
+    IonLabel, IonContent, IonItem, IonAvatar, IonList, IonPopover, IonNote, IonReorderGroup, IonReorder
   ],
   styles: [`
     ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
+    .reorder-hint { display: block; padding: 8px 16px 0; font-size: 0.85rem; }
   `],
   template: `
     <ion-header>
@@ -117,8 +118,13 @@ const DEFAULT_LIST_ID = 'memberships';
       @if(filteredMemberships().length === 0) {
         <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
+        @if(canReorder()) {
+          <ion-note class="reorder-hint">{{ store.i18n.reorder_hint() }}</ion-note>
+        }
         <ion-list lines="inset">
-          @for(membership of filteredMemberships(); track membership.okey) {
+          <!-- group view: admins and group admins drag the members into the order of the group's people sections -->
+          <ion-reorder-group [disabled]="!canReorder()" (ionItemReorder)="onReorder($any($event))">
+          @for(membership of shownMemberships(); track membership.okey) {
             <ion-item (click)="showActions(membership)">
               <ion-avatar slot="start">
                 <img okrImg src="{{ membership.memberModelType + '.' + membership.memberKey | avatar:membership.memberModelType }}" alt="Avatar Logo" />
@@ -143,8 +149,12 @@ const DEFAULT_LIST_ID = 'memberships';
                 <ion-label>{{ getPhone(membership) }}</ion-label>
                 <ion-label class="ion-hide-md-down">{{ getEmail(membership) }}</ion-label>
               }
+              @if(canReorder()) {
+                <ion-reorder slot="end" (click)="$event.stopPropagation()" />
+              }
             </ion-item>
           }
+          </ion-reorder-group>
         </ion-list>
       }
     }
@@ -239,6 +249,18 @@ export class MembershipList {
       default: return '';
     }
   });
+  /** the shown list: the store's, or — right after a drag, until the stored order arrives — the dropped order */
+  protected shownMemberships = linkedSignal(() => this.filteredMemberships());
+  /**
+   * Drag handles: only in a group's member list, only for admins and the group's admins, and only on the
+   * complete list — a filtered list has gaps, so its positions would not be the group's order.
+   */
+  protected canReorder = computed(() => {
+    if (this.view() !== 'group' || this.listId() !== 'persons') return false;
+    if (this.filteredMemberships().length !== this.membershipsCount()) return false;
+    const user = this.currentUser();
+    return hasRole('admin', user) || isAdminMember(this.group(), user?.personKey);
+  });
   protected selectedMembershipsCount = computed(() => this.filteredMemberships().length);
   protected isLoading = computed(() => this.store.isLoading());
 
@@ -284,6 +306,13 @@ export class MembershipList {
 
   protected onYearSelected(year: number): void {
     this.store.setSelectedYear(year);
+  }
+
+  /******************************* reorder *************************************** */
+  protected async onReorder(ev: CustomEvent<ItemReorderEventDetail>): Promise<void> {
+    const ordered = ev.detail.complete([...this.shownMemberships()]) as MembershipModel[];
+    this.shownMemberships.set(ordered);
+    await this.store.saveGroupMemberOrder(ordered);
   }
 
   /******************************* getters *************************************** */

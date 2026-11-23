@@ -844,6 +844,8 @@ export const SECTION_I18N_KEYS = {
   people_bgColors_color:                    PFX + 'people.bgColors.color',
   people_grayscale_label:                   PFX + 'people.grayscale.label',
   people_grayscale_helper:                  PFX + 'people.grayscale.helper',
+  people_width_label:                       PFX + 'people.width.label',
+  people_width_helper:                      PFX + 'people.width.helper',
   people_info_label:                        PFX + 'people.info.label',
   people_info_helper:                       PFX + 'people.info.helper',
   people_info_function:                     PFX + 'people.info.function',

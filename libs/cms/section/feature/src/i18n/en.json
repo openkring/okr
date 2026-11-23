@@ -1108,6 +1108,10 @@
       "below": "Below the picture",
       "left": "Left of the picture",
       "right": "Right of the picture"
+    },
+    "width": {
+      "label": "Same width as the articles",
+      "helper": "On the website, the list of people is then exactly as wide as the text of the articles. Unticked, it uses the full page width."
     }
   },
   "rag": {

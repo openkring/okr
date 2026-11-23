@@ -732,5 +732,9 @@
   },
   "proposal": {
     "note": "Vorschlag aus dem Antrag: {category} — bitte prüfen"
+  },
+  "reorder": {
+    "hint": "Ziehe die Griffe rechts, um die Reihenfolge zu ändern. So erscheinen die Mitglieder auch auf der Website und in den Personen-Abschnitten.",
+    "error": "Die neue Reihenfolge konnte nicht gespeichert werden. Bitte versuche es noch einmal."
   }
 }

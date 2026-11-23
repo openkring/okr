@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { firstValueFrom, of } from 'rxjs';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { doc } from 'firebase/firestore';
 
 import { ExportFormats, memberTypeMatches, yearMatches } from '@okr/shared-categories';
 import { FirestoreService, ChatStatusService } from '@okr/shared-data-access';
@@ -20,7 +21,7 @@ import { type ComposedEmail, openBulkEmailFlow, toVersandRecipients } from '@okr
 
 import { OwnershipService } from '@okr/relationship-ownership-data-access';
 import { MembershipService } from '@okr/relationship-membership-data-access';
-import { convertFormToNewPerson, convertMemberAndOrgToMembership, convertNewMemberFormToEmailAddress, convertNewMemberFormToMembership, convertNewMemberFormToPhoneAddress, convertNewMemberFormToPostalAddress, convertNewMemberFormToWebAddress, convertToAddressDataRow, convertToClubdeskImportRow, categoryChangeFindings, convertToSrvDataRow, exitYears, getGroupsOfMember, oldJuniorFindings, getRelLogEntry, matchCategoryItem, MemberContact, MemberNewFormModel, MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
+import { convertFormToNewPerson, convertMemberAndOrgToMembership, convertNewMemberFormToEmailAddress, convertNewMemberFormToMembership, convertNewMemberFormToPhoneAddress, convertNewMemberFormToPostalAddress, convertNewMemberFormToWebAddress, convertToAddressDataRow, convertToClubdeskImportRow, categoryChangeFindings, convertToSrvDataRow, exitYears, getGroupsOfMember, oldJuniorFindings, getRelLogEntry, matchCategoryItem, getSortOrderChanges, sortMembersBySortOrder, MemberContact, MemberNewFormModel, MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
 import { AddressService } from '@okr/subject-address-data-access';
 import { PersonService } from '@okr/subject-person-data-access';
 import { PERSON_EDIT_MODAL } from '@okr/subject-person-ui';
@@ -170,11 +171,13 @@ export const _MembershipStore = signalStore(
   withComputed((state) => {
     return {
       // members of a given org or group (if orgId is set), otherwise []
+      // a group's members in their manual order (sortOrder, set by dragging the group's member list); orgs by name
       members: computed(() => { 
-        return state.allMemberships()?.filter((membership: MembershipModel) => 
+        const members = state.allMemberships()?.filter((membership: MembershipModel) => 
           membership.orgKey === state.orgId() &&
           membership.orgModelType === state.orgType()
-        ) ?? []
+        ) ?? [];
+        return state.orgType() === 'group' ? sortMembersBySortOrder(members) : members;
       }),
 
       // memberships of the current member — without ad-hoc chats and pinboards (spec 1.95), they are chat rooms, not memberships
@@ -989,6 +992,27 @@ export const _MembershipStore = signalStore(
           }
         }
         return dobByKey;
+      },
+
+      /**
+       * Stores the manual order of a group's members after a drag in the group's member list: every member
+       * gets its 1-based position as sortOrder; only the changed ones are written, in one batch.
+       * The list is live, so the new order arrives through allMembershipsResource.
+       */
+      async saveGroupMemberOrder(ordered: MembershipModel[]): Promise<void> {
+        if (store.orgType() !== 'group') return;
+        const changes = getSortOrderChanges(ordered.filter(m => m.orgKey === store.orgId() && !!m.okey));
+        if (changes.length === 0) return;
+        try {
+          await store.firestoreService.commitBatch('saveGroupMemberOrder', (batch) => {
+            for (const { okey, sortOrder } of changes) {
+              batch.update(doc(store.firestoreService.firestore, MembershipCollection, okey), { sortOrder });
+            }
+          });
+        } catch (ex) {
+          warn(`MembershipStore.saveGroupMemberOrder: ${ex}`);
+          await showToast(store.toastController, store.i18n.reorder_error());
+        }
       },
 
       async delete(membership?: MembershipModel, readOnly = true): Promise<void> {

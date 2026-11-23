@@ -732,5 +732,9 @@
   },
   "proposal": {
     "note": "Suggested by the application: {category} — please check"
+  },
+  "reorder": {
+    "hint": "Drag the handles on the right to change the order. Members appear in this order on the website and in the people sections, too.",
+    "error": "The new order could not be saved. Please try again."
   }
 }

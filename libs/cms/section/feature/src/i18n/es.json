@@ -1108,6 +1108,10 @@
       "below": "Debajo de la imagen",
       "left": "A la izquierda de la imagen",
       "right": "A la derecha de la imagen"
+    },
+    "width": {
+      "label": "Mismo ancho que los artículos",
+      "helper": "En el sitio web, la lista de personas tiene entonces exactamente el ancho del texto de los artículos. Sin marcar, usa todo el ancho de la página."
     }
   },
   "rag": {

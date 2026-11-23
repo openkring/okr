@@ -1108,6 +1108,10 @@
       "below": "Sotto l’immagine",
       "left": "A sinistra dell’immagine",
       "right": "A destra dell’immagine"
+    },
+    "width": {
+      "label": "Stessa larghezza degli articoli",
+      "helper": "Sul sito web l'elenco delle persone è allora largo esattamente quanto il testo degli articoli. Senza spunta usa tutta la larghezza della pagina."
     }
   },
   "rag": {
