@@ -1,14 +1,16 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { CUSTOM_ELEMENTS_SCHEMA, Component, DestroyRef, ElementRef, afterRenderEffect, computed, effect, inject, input, output, viewChild } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, effect, inject, input, output } from '@angular/core';
 import { Router } from '@angular/router';
-import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonRow } from '@ionic/angular';
+import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonRow } from '@ionic/angular';
 
-import { ArticleSection, ImageConfig, ImageStyle, ViewPosition } from '@okr/shared-models';
+import { ArticleSection, ImageConfig, ViewPosition, articleBlocksOf, isFreeArticle, withClassicFields } from '@okr/shared-models';
 import { resolveImageStyle } from '@okr/shared-util-core';
-import { SvgIconPipe } from '@okr/shared-pipes';
-import { ImageLayoutId, articleBackground, articleHasLightText, articleImagePosition, resolveImageLayout, resolveSlideshow, validCtas, getSectionIntro } from '@okr/cms-section-util';
+import { ImageLayoutId, articleBackground, articleHasLightText, articleHeaderPlace, articleImagePosition, resolveImageLayout, resolveSlideshow, validCtas, getSectionIntro } from '@okr/cms-section-util';
 import { badgeFor, Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
 
+// lazy: only ever used inside @defer below. Any other use of it here would make it eager
+import { ArticleBlocks } from './article-blocks';
+import { ArticleCarousel } from './article-carousel';
 import { ArticleImages } from './article-images';
 import { ArticleSlideshowComponent } from './article-slideshow';
 import { ArticleStore } from './article-section.store';
@@ -18,8 +20,8 @@ import { openSectionLink } from './section-link';
   selector: 'okr-article-section',
   standalone: true,
   imports: [
-    Spinner, Img, ArticleImages, ArticleSlideshowComponent, NgTemplateOutlet, OptionalCardHeader, SvgIconPipe,
-    IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonButton, IonIcon
+    Spinner, Img, ArticleBlocks, ArticleCarousel, ArticleImages, ArticleSlideshowComponent, NgTemplateOutlet, OptionalCardHeader,
+    IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonButton
   ],
   schemas: [
     CUSTOM_ELEMENTS_SCHEMA
@@ -33,73 +35,10 @@ import { openSectionLink } from './section-link';
     ion-card.colored ::ng-deep ion-item { --background: transparent; --color: inherit; color: inherit; }
     ion-card.colored ::ng-deep a { color: inherit; }
     ion-card.colored ion-row { align-items: center; }
+    ion-card.colored { --article-columns-align: center; }
     .header-col okr-optional-card-header ::ng-deep ion-card-subtitle { font-size: 1.25rem; font-weight: 600; text-transform: none; }
     .cta { padding: 8px 5px 0px 5px; }
     ion-card { padding: 0px; margin: 0px; border: 0px; box-shadow: none !important; }
-
-    .carousel-container { position: relative; margin: 0.5rem 0; }
-    .carousel {
-      display: flex;
-      gap: 1rem;
-      overflow-x: auto;
-      scroll-snap-type: x mandatory;
-      scroll-behavior: smooth;
-      border-radius: 12px;
-      scrollbar-width: none;
-      scroll-marker-group: after;
-    }
-    .carousel::scroll-marker-group {
-      display: flex;
-      justify-content: center;
-      gap: 0.5rem;
-      padding-top: 1rem;
-      position: absolute;
-      bottom: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-    }
-    /* every slide is the same box (full width, at most half the viewport high); portrait and landscape
-       images are fitted into it whole, at their own proportions (object-fit: contain, never cropped) */
-    .carousel-slide {
-      flex: 0 0 100%;
-      height: 50dvh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      scroll-snap-align: center;
-      container-type: scroll-state;
-      container-name: slide;
-    }
-    .carousel-slide okr-img { display: block; width: 100%; }
-    .carousel-slide::scroll-marker {
-      content: "";
-      width: 12px; height: 12px;
-      background: #d1d5db;
-      border: 1px solid #9ca3af;
-      border-radius: 50%;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    /* the two loop copies (last image before the first, first image after the last) get no dot */
-    .carousel-slide.clone::scroll-marker { content: none; }
-    .carousel-slide::scroll-marker:hover { background: #9ca3af; }
-    .carousel-slide::scroll-marker:target-current { background: #3b82f6; transform: scale(1.3); border: 1px solid black; }
-    /* prev / next: real buttons (the native ::scroll-button stops at both ends and is Chrome-only);
-       the carousel loops endlessly in the direction of travel (see step / settleLoop) */
-    .carousel-nav {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      z-index: 10;
-      --border-radius: 50%;
-      --padding-start: 0;
-      --padding-end: 0;
-      width: 40px;
-      height: 40px;
-    }
-    .carousel-nav.prev { left: 0.75rem; }
-    .carousel-nav.next { right: 0.75rem; }
   `],
   providers: [ArticleStore],
   template: `
@@ -108,31 +47,22 @@ import { openSectionLink } from './section-link';
         @if (slideshow(); as settings) {
           <okr-article-slideshow [images]="images()" [settings]="settings" [title]="title()" [subTitle]="subTitle()" />
         } @else {
-        <div class="carousel-container">
-          <div class="carousel" #carousel (scroll)="onCarouselScroll()">
-            @for(slide of loopSlides(); track $index) {
-              <div class="carousel-slide" [class.clone]="slide.clone" [attr.aria-hidden]="slide.clone ? 'true' : null">
-                <okr-img [captionFallbacks]="captionFallbacks()" [image]="slide.image" [imageStyle]="carouselImageStyle()" [editMode]="editMode()" [gallery]="images()" [zoomTitle]="store.i18n.article_zoomed()" [badge]="badgeOf(slide.image.label)" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
-              </div>
-            }
-          </div>
-          <ion-button class="carousel-nav prev" fill="solid" color="light" (click)="step(-1)" aria-label="Previous image">
-            <ion-icon slot="icon-only" src="{{ 'chevron-back' | svgIcon }}" />
-          </ion-button>
-          <ion-button class="carousel-nav next" fill="solid" color="light" (click)="step(1)" aria-label="Next image">
-            <ion-icon slot="icon-only" src="{{ 'chevron-forward' | svgIcon }}" />
-          </ion-button>
-        </div>
+        <okr-article-carousel [images]="images()" [imageStyle]="imageStyle()" [captionFallbacks]="captionFallbacks()" [editMode]="editMode()" [imageBadges]="imageBadges()" [emitImageClicks]="emitImageClicks()" [zoomTitle]="store.i18n.article_zoomed()" (imageSelected)="imageSelected.emit($event)" />
         }
       </ng-template>
       <ion-card [class.banner]="isBanner() && !background()" [class.colored]="!!background()"
                 [style.--article-bg]="background() || null" [style.--article-fg]="background() ? (lightText() ? '#ffffff' : '#1e293b') : null">
         <!-- a slideshow carries the title and subtitle on its images, like the header of la21staefa.ch -->
         @if (!headerInColumn()) {
-          <okr-optional-card-header [intro]="sectionIntro().text" [introPosition]="sectionIntro().position" [title]="slideshow() ? '' : title()" [subTitle]="slideshow() ? '' : subTitle()" />
+          <okr-optional-card-header [intro]="sectionIntro().text" [introPosition]="sectionIntro().position" [title]="titleOnImages() ? '' : title()" [subTitle]="titleOnImages() ? '' : subTitle()" />
         }
         <ion-card-content>
-          @if (images().length > 0 || (content() && content()!.length > 7)) {
+          @if (freeBlocks(); as blocks) {
+            <!-- a free article (spec 1.173): its blocks carry everything, the button included -->
+            @defer (on immediate) {
+              <okr-article-blocks [blocks]="blocks" [title]="title()" [subTitle]="subTitle()" [intro]="sectionIntro()" [headerPlace]="headerPlace()" [editMode]="editMode()" [imageBadges]="imageBadges()" [emitImageClicks]="emitImageClicks()" (imageSelected)="imageSelected.emit($event)" />
+            }
+          } @else if (images().length > 0 || (content() && content()!.length > 7)) {
             @switch(position()) {
               @case(VP.Left) {
                 <ion-grid>
@@ -264,7 +194,9 @@ export class ArticleSectionComponent {
   private readonly router = inject(Router);
 
   // inputs
-  public section = input<ArticleSection>();
+  // the stored section; everything below reads section(), its classic form
+  // eslint-disable-next-line @angular-eslint/no-input-rename
+  public rawSection = input<ArticleSection>(undefined, { alias: 'section' });
   public editMode = input<boolean>(false);
   /** small text per image, keyed by ImageConfig.label (travel journal: «❤ 2 · 💬 1») */
   public imageBadges = input<Record<string, string>>({});
@@ -273,6 +205,10 @@ export class ArticleSectionComponent {
   public imageSelected = output<ImageConfig>();
 
   // computed
+  /** the section with its old fields filled from its blocks; the same object for an article without blocks (spec 1.173) */
+  protected section = computed(() => withClassicFields(this.rawSection()));
+  /** the blocks of a free article, which the old fields cannot express; undefined = classic, drawn by the template below */
+  protected freeBlocks = computed(() => isFreeArticle(this.rawSection()) ? articleBlocksOf(this.rawSection()) : undefined);
   protected badgeOf(label: string): string | undefined { return badgeFor(this.imageBadges(), label); }
   protected images = computed((): ImageConfig[] => this.store.images());
   // Single image (only when exactly 1 image is configured)
@@ -295,17 +231,6 @@ export class ArticleSectionComponent {
 
   /** the stored partial over the defaults (spec 1.171 D1b) */
   protected imageStyle = computed(() => resolveImageStyle(this.section()?.properties.imageStyle));
-  // the carousel: one fixed box for all slides; the image is shown whole at its own proportions
-  // (no fill/crop, no pixel ar= crop), letterboxed inside the box. No border: it would frame the
-  // letterbox rather than the image.
-  protected carouselImageStyle = computed((): ImageStyle => ({
-    ...this.imageStyle(),
-    width: '100%',
-    height: '50dvh',
-    fill: false,
-    border: '',
-    borderRadius: '',
-  }));
   // Shared texts (e.g. the privacy statement, one set of sections for every tenant) name the
   // tenant through placeholders such as @APPNAME@ and @DOMAIN@, like the title does.
   protected content = computed(() => this.store.appStore.replacePlaceholders(this.section()?.content?.htmlContent ?? '<p></p>'));
@@ -318,9 +243,14 @@ export class ArticleSectionComponent {
   protected background = computed(() => articleBackground(this.section()?.properties));
   protected lightText = computed(() => articleHasLightText(this.section()?.properties));
   /** a coloured article with one image beside the text carries its heading in the text column (the KISS block) */
-  protected headerInColumn = computed(() => !!this.background() && this.images().length === 1
+  protected headerInColumn = computed(() => this.freeBlocks() ? this.headerPlace() === 'column' : !!this.background() && this.images().length === 1
     && (this.position() === ViewPosition.Left || this.position() === ViewPosition.Right));
+  /** a free article: where its header is drawn */
+  protected headerPlace = computed(() => articleHeaderPlace(this.freeBlocks(), !!this.background()));
+  /** a slideshow carries title and subtitle on its images */
+  protected titleOnImages = computed(() => this.freeBlocks() ? this.headerPlace() === 'slideshow' : !!this.slideshow());
   protected cta = computed(() => {
+    if (this.freeBlocks()) return undefined;   // its buttons are blocks
     const c = this.section()?.properties.cta;
     return c ? validCtas([c], 1)[0] : undefined;
   });
@@ -333,73 +263,6 @@ export class ArticleSectionComponent {
 
   public VP = ViewPosition;
 
-  // Endless carousel: a copy of the last image sits before the first, a copy of the first after the
-  // last. Going forward from the last image scrolls on to the copy of the first (always the same
-  // direction); once the scroll settles, the carousel jumps without animation to the real first image,
-  // which looks identical. The same happens backwards, and when swiping.
-  protected loopSlides = computed((): { image: ImageConfig; clone: boolean }[] => {
-    const images = this.images();
-    if (images.length < 2) return images.map(image => ({ image, clone: false }));
-    return [
-      { image: images[images.length - 1], clone: true },
-      ...images.map(image => ({ image, clone: false })),
-      { image: images[0], clone: true },
-    ];
-  });
-
-  private carousel = viewChild<ElementRef<HTMLElement>>('carousel');
-  private settleTimer: ReturnType<typeof setTimeout> | undefined;
-
-  /** scrolls the carousel one slide back (-1) or forward (1), endlessly in that direction */
-  protected step(direction: -1 | 1): void {
-    const el = this.carousel()?.nativeElement;
-    if (!el) return;
-    const count = el.children.length;
-    if (count < 3) return;
-    let current = this.currentSlide(el);
-    // standing on a copy (e.g. a quick second click): first move to the real image it shows
-    if (current === count - 1) current = this.jumpTo(el, 1);
-    else if (current === 0) current = this.jumpTo(el, count - 2);
-    this.scrollToSlide(el, current + direction, 'smooth');
-  }
-
-  /** after every scroll (button or swipe) has come to rest, leave a copy for the real image */
-  protected onCarouselScroll(): void {
-    clearTimeout(this.settleTimer);
-    this.settleTimer = setTimeout(() => this.settleLoop(), 150);
-  }
-
-  private settleLoop(): void {
-    const el = this.carousel()?.nativeElement;
-    if (!el) return;
-    const count = el.children.length;
-    if (count < 3) return;
-    const current = this.currentSlide(el);
-    if (current === count - 1) this.jumpTo(el, 1);
-    else if (current === 0) this.jumpTo(el, count - 2);
-  }
-
-  /** the slide whose left edge is nearest to the scroll position */
-  private currentSlide(el: HTMLElement): number {
-    const slides = Array.from(el.children) as HTMLElement[];
-    return slides.reduce((best, slide, i) =>
-      Math.abs(this.slideLeft(el, i) - el.scrollLeft) < Math.abs(this.slideLeft(el, best) - el.scrollLeft) ? i : best, 0);
-  }
-
-  private jumpTo(el: HTMLElement, index: number): number {
-    this.scrollToSlide(el, index, 'instant');
-    return index;
-  }
-
-  private scrollToSlide(el: HTMLElement, index: number, behavior: ScrollBehavior): void {
-    el.scrollTo({ left: this.slideLeft(el, index), behavior });
-  }
-
-  private slideLeft(el: HTMLElement, index: number): number {
-    const slide = el.children[index] as HTMLElement | undefined;
-    return slide ? slide.offsetLeft - el.offsetLeft : 0;
-  }
-
   protected open(url: string): void {
     openSectionLink(this.router, url);
   }
@@ -408,11 +271,5 @@ export class ArticleSectionComponent {
     effect(() => {
       this.store.setConfig(this.section()?.properties);
     });
-    // start on the real first image (slide 1), not on the copy of the last one before it
-    afterRenderEffect(() => {
-      const el = this.carousel()?.nativeElement;
-      if (el && this.loopSlides().length >= 3) this.jumpTo(el, 1);
-    });
-    inject(DestroyRef).onDestroy(() => clearTimeout(this.settleTimer));
   }
 }
