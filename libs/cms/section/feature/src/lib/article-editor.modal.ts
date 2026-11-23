@@ -14,7 +14,7 @@ import { AppStore } from '@okr/shared-feature';
 import type { ArticleBlock, ArticleBlockType, ArticleSection, CategoryListModel, SectionModel, UserModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ChangeConfirmation, Header } from '@okr/shared-ui';
-import { confirm, showToast } from '@okr/shared-util-angular';
+import { showToast } from '@okr/shared-util-angular';
 
 import { ArticleCanvas, type CanvasCaret, type CanvasChange } from './article-canvas';
 import { dropChange } from './article-canvas.util';
@@ -156,7 +156,7 @@ export class ArticleEditorModal {
   // the article
   /** once: the inputs of the modal do not change */
   private readonly opened = computed(() => untracked(() => {
-    const section = withFieldDefaults(this.section());
+    const section = withFieldDefaults(this.section(), this.isNew());
     const { section: article, notice } = openArticle(this.isNew() ? newArticleForEditor(section, section.okey, newId) : section, newId);
     const ids = blocksInOrder(article.properties.blocks ?? []).map((block) => block.id);
     const state: EditorState = { section: article, copiedFrom: {} };
@@ -217,13 +217,14 @@ export class ArticleEditorModal {
 
   // saving
   protected readonly saving = signal(false);
-  /** what is written next: the document, who owns it, and what it is compared with; after a save what was written */
-  private target: { key: string; tenants?: string[]; isNew: boolean; loaded: SectionModel } | undefined;
+  /** what is written next: the document, whether it is new, and what it is compared with; after a save what was written */
+  private target: { key: string; isNew: boolean; loaded: SectionModel } | undefined;
   /** saved, closes by itself */
   private done = false;
   private leaving = false;
-  /** the question is being asked, or was answered just now */
+  /** a question or a message stands above the editor, or was answered just now: no save, and it does not close */
   private asking = false;
+  private askingOver: ReturnType<typeof setTimeout> | undefined;
 
   constructor() {
     this.overlay.canDismiss = () => this.mayClose();
@@ -341,15 +342,14 @@ export class ArticleEditorModal {
 
   /** A second press while a save runs is ignored; what is changed meanwhile stays and can be saved next. */
   protected async save(force = false): Promise<void> {
-    if (this.saving() || this.done || !this.valid() || !this.changed()) return;
+    if (this.saving() || this.asking || this.done || this.leaving || !this.valid() || !this.changed()) return;
     this.saving.set(true);
     const state = this.history().present;
     const target = this.target ?? { key: this.section().okey, isNew: this.isNew(), loaded: this.section() };
-    let sent: ArticleSection;
     let result: ArticleSaveResult;
     try {
       const prepared = await prepareArticleForSave(this.opened().state.section, state.section, state.copiedFrom, new Date().toISOString());
-      sent = { ...prepared, okey: target.key, ...(target.tenants ? { tenants: target.tenants } : {}) };
+      const sent = { ...prepared, okey: target.key, tenants: target.loaded.tenants };
       result = await this.saveService.save(sent, target.loaded, { isNew: target.isNew, force, currentUser: this.currentUser() });
     } catch (error) {
       // before anything was sent: the service never rejects
@@ -360,9 +360,12 @@ export class ArticleEditorModal {
       this.saving.set(false);
     }
     switch (result.status) {
-      case 'saved': return this.afterSave(result, state, sent, target.key);
+      case 'saved': return this.afterSave(result, state);
       case 'conflict':
-        if (await this.ask(this.i18n.article_editor_save_conflict(), this.i18n.article_editor_save_force(), this.i18n.article_editor_save_back())) return this.save(true);
+        if (await this.ask(this.i18n.article_editor_save_conflict(), this.i18n.article_editor_save_force(), this.i18n.article_editor_save_back())) {
+          this.asking = false;
+          return this.save(true);
+        }
         return;
       case 'gone': return this.tell(this.i18n.article_editor_save_gone());
       case 'offline': return this.tell(this.i18n.article_editor_save_offline());
@@ -371,34 +374,38 @@ export class ArticleEditorModal {
     }
   }
 
-  private async afterSave(result: Extract<ArticleSaveResult, { status: 'saved' }>, state: EditorState, sent: ArticleSection, key: string): Promise<void> {
+  private async afterSave(result: Extract<ArticleSaveResult, { status: 'saved' }>, state: EditorState): Promise<void> {
     if (result.trial) {
       void showToast(this.toastController, this.i18n.article_editor_save_trial());
       if (this.article() === state.section && this.isOnTop()) await this.close();
       return;
     }
-    const forked = result.key !== key;
-    if (forked) void showToast(this.toastController, this.saved.message());
-    this.target = {
-      key: result.key, isNew: false, loaded: { ...sent, okey: result.key },
-      ...(forked ? { tenants: [this.appStore.tenantId()] } : { tenants: this.target?.tenants }),
-    };
+    if (result.forked) void showToast(this.toastController, this.saved.message());
+    this.target = { key: result.key, isNew: false, loaded: result.written };
     this.onSaved()(result.key);
     this.baseline.set(state);
     // changed meanwhile, or at work in a picker: stays open, with the banner if there is something to save
     if (!this.changed() && this.isOnTop()) await this.close(result.key);
   }
 
-  /** Answered when the question is gone: until then it is an overlay above the editor. */
-  private async ask(message: string, yes: string, no: string): Promise<boolean> {
-    const alert = await this.alertController.create({ message, buttons: [{ text: no, role: 'cancel' }, { text: yes, role: 'confirm' }] });
-    await alert.present();
-    const { role } = await alert.onDidDismiss();
-    return role === 'confirm';
+  /** Answered when the question is gone: until then it is an overlay above the editor. `no` empty: a message with one button. */
+  private async ask(message: string, yes: string, no = ''): Promise<boolean> {
+    // before anything is awaited: the press that follows at once finds it set
+    clearTimeout(this.askingOver);
+    this.asking = true;
+    try {
+      const buttons = [...(no ? [{ text: no, role: 'cancel' }] : []), { text: yes, role: 'confirm' }];
+      const alert = await this.alertController.create({ message, buttons });
+      await alert.present();
+      return (await alert.onDidDismiss()).role === 'confirm';
+    } finally {
+      // a press on the close icon may have waited in Ionic for this answer
+      this.askingOver = setTimeout(() => { this.asking = false; }, CLOSE_AGAIN_MS);
+    }
   }
 
   private async tell(message: string): Promise<void> {
-    await confirm(this.alertController, message, this.i18n.ok(), '');
+    await this.ask(message, this.i18n.ok());
   }
 
   // ------------------------------------------------------- closing -------------------------------------------------------
@@ -410,20 +417,13 @@ export class ArticleEditorModal {
 
   /** Close icon, Escape, hardware back and everything else that closes a modal. */
   private async mayClose(): Promise<boolean> {
+    if (this.asking && !this.done) return false;
     switch (closeDecision({ done: this.done, saving: this.saving(), changed: this.changed() })) {
       case 'allow': return true;
       case 'refuse':
         void showToast(this.toastController, this.i18n.article_editor_save_running());
         return false;
-      case 'ask': {
-        if (this.asking) return false;
-        this.asking = true;
-        try {
-          return await this.ask(this.i18n.article_editor_discard_message(), this.i18n.article_editor_discard_confirm(), this.i18n.article_editor_discard_keep());
-        } finally {
-          setTimeout(() => { this.asking = false; }, CLOSE_AGAIN_MS);
-        }
-      }
+      case 'ask': return this.ask(this.i18n.article_editor_discard_message(), this.i18n.article_editor_discard_confirm(), this.i18n.article_editor_discard_keep());
     }
   }
 

@@ -4,7 +4,7 @@ import { articleSectionValidations, createHistory, findBlock, record, undo, type
 import type { ArticleBlock, ArticleSection, ColumnsBlock } from '@okr/shared-models';
 
 import {
-  changeSection, closeDecision, columnOfBlock, deviceFor, historyKey, isTypedInto, restore, selectIn, stateAfterChange, stepBack, stepForward, withColumnSize, withFieldDefaults, withUploadDetails,
+  affectedBlocks, changeSection, closeDecision, columnOfBlock, deviceFor, historyKey, isTypedInto, restore, selectIn, stateAfterChange, stepBack, stepForward, withColumnSize, withFieldDefaults, withUploadDetails,
   type EditorState,
 } from './article-editor-modal.util';
 
@@ -34,6 +34,11 @@ describe('withFieldDefaults', () => {
     const bare = section([]);
     expect(withFieldDefaults(bare).roleNeeded).toBe('');
     expect('roleNeeded' in bare).toBe(false);
+  });
+
+  it.each([undefined, null, ''])('does not open a new article with the role %j', (roleNeeded) => {
+    expect(withFieldDefaults(section([], { roleNeeded }), true).roleNeeded).toBe('contentAdmin');
+    expect(withFieldDefaults(section([], { roleNeeded: 'registered' }), true).roleNeeded).toBe('registered');
   });
 
   it('the same object when nothing is missing', () => {
@@ -180,6 +185,79 @@ describe('stepBack and stepForward', () => {
   it('the state of a step is the very one that was recorded when its selection is valid', () => {
     const h = changeSection(createHistory(state([text('a')], { selectedId: 'a' })), section([text('a', 'x')]));
     expect(stepBack(h).present).toBe(undo(h).present);
+  });
+});
+
+describe('affectedBlocks', () => {
+  const of = (before: ArticleBlock[], after: ArticleBlock[]): string[] => affectedBlocks(before, after);
+
+  it.each<[string, ArticleBlock[], ArticleBlock[], string[]]>([
+    ['nothing', [text('a')], [text('a')], []],
+    ['a changed text', [text('a'), text('b', 'x')], [text('a'), text('b', 'y')], ['b']],
+    ['a block that came', [text('a')], [text('a'), text('b')], ['b']],
+    ['a block that is gone', [text('a'), text('b')], [text('a')], []],
+    ['two texts that were one', [text('a', 'ab')], [text('a', 'a'), text('b', 'b')], ['a', 'b']],
+    ['an inner block changed, not its columns', [columns('c', [text('x', '1')], [])], [columns('c', [text('x', '2')], [])], ['x']],
+    ['an inner block that came', [columns('c', [], [])], [columns('c', [text('x')], [])], ['x']],
+    ['columns and their blocks that came', [], [columns('c', [text('x')], [])], ['c', 'x']],
+    ['a column less', [columns('c', [], [], [])], [columns('c', [], [])], ['c']],
+    ['moved to the end', [text('a'), text('b'), text('c')], [text('b'), text('c'), text('a')], ['a']],
+    ['moved up', [text('a'), text('b'), text('c')], [text('c'), text('a'), text('b')], ['c']],
+    ['neighbours changed places: either', [text('a'), text('b')], [text('b'), text('a')], ['b', 'a']],
+    ['moved into a column', [text('x'), columns('c', [], [])], [columns('c', [text('x')], [])], ['x']],
+    ['moved out of a column', [columns('c', [text('x')], [])], [text('x'), columns('c', [], [])], ['x']],
+    ['moved to the other column', [columns('c', [text('x')], [])], [columns('c', [], [text('x')])], ['x']],
+    ['moved and another inner one stays', [columns('c', [text('x'), text('y')], [])], [columns('c', [text('y'), text('x')], [])], ['y', 'x']],
+  ])('%s', (_name, before, after, expected) => expect(of(before, after)).toEqual(expected));
+
+  it('malformed blocks do not throw', () => {
+    const bad = [null, 3, { id: 'c', type: 'columns', columns: 'x' }, { id: 'd', type: 'columns', columns: [null, { blocks: 'x' }, { blocks: [null] }] }] as unknown as ArticleBlock[];
+    expect(of(bad, structuredClone(bad))).toEqual([]);
+    expect(of([], bad)).toEqual(['c', 'd']);
+  });
+});
+
+describe('undo and redo select what changes (§7.7)', () => {
+  it('undo of a change made while another block was selected', () => {
+    const start = createHistory(state([image('i', ''), text('b')], { selectedId: 'b' }));
+    const uploaded = changeSection(start, section([image('i', 'u.jpg'), text('b')]));
+    expect(uploaded.present.selectedId).toBe('b');
+    expect(stepBack(uploaded).present.selectedId).toBe('i');
+    expect(stepForward(stepBack(uploaded)).present.selectedId).toBe('i');
+  });
+
+  it('redo does not go to what was selected at the undo', () => {
+    const typed = changeSection(createHistory(state([text('a', '1'), text('b')], { selectedId: 'a' })), section([text('a', '2'), text('b')]));
+    const undone = stepBack(selectIn(typed, 'b'));
+    expect(undone.present.selectedId).toBe('a');
+    expect(stepForward(selectIn(undone, 'b')).present.selectedId).toBe('a');
+  });
+
+  it('of several, the one selected then', () => {
+    const two = [text('a', 'a'), text('b', 'b')];
+    const joined = record(createHistory(state(two, { selectedId: 'b' })), state([text('a', 'ab')], { selectedId: 'a' }));
+    expect(stepBack(joined).present.selectedId).toBe('b');
+  });
+
+  it('undo of an added block goes back to what was selected, redo selects the block', () => {
+    const start = createHistory(state([text('a')], { selectedId: 'a' }));
+    const added = record(start, state([text('a'), text('b')], { selectedId: 'b' }));
+    expect(stepBack(added).present.selectedId).toBe('a');
+    expect(stepForward(stepBack(added)).present.selectedId).toBe('b');
+  });
+
+  it('redo of a deletion selects nothing', () => {
+    const start = createHistory(state([text('a'), text('b')], { selectedId: 'b' }));
+    const removed = selectIn(record(start, state([text('a')])), 'a');
+    expect(stepForward(stepBack(removed)).present.selectedId).toBeUndefined();
+  });
+
+  it('a change of the article itself shows the article', () => {
+    const start = createHistory(state([text('a')]));
+    const titled = selectIn(changeSection(start, section([text('a')], { title: 'U' })), 'a');
+    const undone = stepBack(titled);
+    expect(undone.present.selectedId).toBeUndefined();
+    expect(stepForward(selectIn(undone, 'a')).present.selectedId).toBeUndefined();
   });
 });
 

@@ -179,8 +179,7 @@
       "title": "Hervorhebung"
     },
     "blocks": {
-      "readonly": "Dieser Artikel besteht aus Blöcken. Text, Bilder und Buttons kannst du erst in einer neueren Version der App bearbeiten.",
-      "notLinked": "Dieser Artikel besteht aus Blöcken. Bitte füge das Bild im Artikel ein."
+      "readonly": "Dieser Artikel besteht aus Blöcken. Text, Bilder und Buttons kannst du erst in einer neueren Version der App bearbeiten."
     },
     "editor": {
       "block": {

@@ -8,6 +8,8 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { ColorIonic, IMAGE_STYLE_SHAPE, type ArticleSection, type SectionModel, type UserModel } from '@okr/shared-models';
 
+import { changedMeanwhile } from '@okr/cms-section-util';
+
 import { ArticleBlocksGate } from './article-blocks-gate.service';
 import { ArticleSaveService } from './article-save.service';
 import { SectionService } from './section.service';
@@ -184,7 +186,7 @@ describe('ArticleSaveService', () => {
 
   describe('a new article', () => {
     it('is created with its okey, toast and comment', async () => {
-      await expect(save({ isNew: true })).resolves.toEqual({ status: 'saved', key: 'a1' });
+      await expect(save({ isNew: true })).resolves.toMatchObject({ status: 'saved', key: 'a1' });
       expect(server.state.writes).toHaveLength(1);
       expect(docOf(A1)).toMatchObject({ title: 'Neuer Titel', tenants: [tenantId] });
       expect(docOf(A1)).not.toHaveProperty('okey');
@@ -218,20 +220,20 @@ describe('ArticleSaveService', () => {
 
     it('is saved when the answer of the commit was lost', async () => {
       server.state.commits = [{ lost: true }];
-      await expect(save({ isNew: true })).resolves.toEqual({ status: 'saved', key: 'a1' });
+      await expect(save({ isNew: true })).resolves.toMatchObject({ status: 'saved', key: 'a1' });
       expect(server.state.writes).toHaveLength(1);
       expect(server.state.strictReads).toEqual([A1]);
     });
 
     it('is saved when the comment fails', async () => {
       other.setDoc.mockRejectedValue(server.fault('permission-denied'));
-      await expect(save({ isNew: true })).resolves.toEqual({ status: 'saved', key: 'a1' });
+      await expect(save({ isNew: true })).resolves.toMatchObject({ status: 'saved', key: 'a1' });
     });
 
     describe('saved again', () => {
       it('is updated when nobody changed it', async () => {
         await save({ isNew: true });
-        await expect(save({ isNew: true, section: edited({ title: 'Zweiter' }) })).resolves.toEqual({ status: 'saved', key: 'a1' });
+        await expect(save({ isNew: true, section: edited({ title: 'Zweiter' }) })).resolves.toMatchObject({ status: 'saved', key: 'a1' });
         expect(docOf(A1)['title']).toBe('Zweiter');
         expect(server.state.writes.map((w) => w.kind)).toEqual(['set', 'update']);
         await expect(save({ isNew: true, section: edited({ title: 'Dritter' }) })).resolves.toMatchObject({ status: 'saved' });
@@ -270,7 +272,7 @@ describe('ArticleSaveService', () => {
       it('is created when the first save did not reach the server', async () => {
         server.state.commits = Array.from({ length: 5 }, () => 'unavailable');
         await expect(save({ isNew: true })).resolves.toEqual({ status: 'failed' });
-        await expect(save({ isNew: true })).resolves.toEqual({ status: 'saved', key: 'a1' });
+        await expect(save({ isNew: true })).resolves.toMatchObject({ status: 'saved', key: 'a1' });
         expect(server.state.writes.map((w) => w.kind)).toEqual(['set']);
       });
     });
@@ -280,7 +282,7 @@ describe('ArticleSaveService', () => {
     beforeEach(() => { server.state.docs[A1] = stored(); });
 
     it('is updated when nothing changed meanwhile, with toast and comment', async () => {
-      await expect(save()).resolves.toEqual({ status: 'saved', key: 'a1' });
+      await expect(save()).resolves.toMatchObject({ status: 'saved', key: 'a1' });
       expect(server.state.writes).toMatchObject([{ kind: 'update', path: A1, data: { title: 'Neuer Titel', tenants: [tenantId] } }]);
       expect(server.state.reads).toEqual([A1]);
       expect(server.state.strictReads).toEqual([]);
@@ -298,7 +300,7 @@ describe('ArticleSaveService', () => {
       await expect(save()).resolves.toEqual({ status: 'conflict' });
       expectNoWrite();
       expect(toasts()).toEqual([]);
-      await expect(save({ force: true })).resolves.toEqual({ status: 'saved', key: 'a1' });
+      await expect(save({ force: true })).resolves.toMatchObject({ status: 'saved', key: 'a1' });
       expect(docOf(A1)['title']).toBe('Neuer Titel');
     });
 
@@ -335,7 +337,7 @@ describe('ArticleSaveService', () => {
 
     it('is saved when the answer of the commit was lost: its own change is no conflict', async () => {
       server.state.commits = [{ lost: true }];
-      await expect(save()).resolves.toEqual({ status: 'saved', key: 'a1' });
+      await expect(save()).resolves.toMatchObject({ status: 'saved', key: 'a1' });
       expect(server.state.writes).toHaveLength(1);
       expect(toasts()).toEqual(['update_conf']);
     });
@@ -372,7 +374,7 @@ describe('ArticleSaveService', () => {
     it('is decided by the tenants of the server, not by those at opening', async () => {
       // it got a second tenant meanwhile: a fork, never `tenants: [own]` on the shared document
       server.state.docs[A1] = stored(SHARED);
-      await expect(save()).resolves.toEqual({ status: 'saved', key: FORK_KEY });
+      await expect(save()).resolves.toMatchObject({ status: 'saved', key: FORK_KEY });
       expect(docOf(A1)).toEqual(stored({ tenants: ['scs'] }));
       expect(docOf(FORK)).toMatchObject({ title: 'Neuer Titel', tenants: [tenantId] });
     });
@@ -434,7 +436,7 @@ describe('ArticleSaveService', () => {
       server.state.docs[FORK] = stored({ notes: 'Notiz' });
       await expect(save({ section: edited(SHARED), loaded: loadedOf(SHARED) })).resolves.toEqual({ status: 'conflict' });
       expectNoWrite();
-      await expect(save({ force: true, section: edited(SHARED), loaded: loadedOf(SHARED) })).resolves.toEqual({ status: 'saved', key: FORK_KEY });
+      await expect(save({ force: true, section: edited(SHARED), loaded: loadedOf(SHARED) })).resolves.toMatchObject({ status: 'saved', key: FORK_KEY });
       expect(docOf(FORK)).toMatchObject({ tenants: [tenantId], title: 'Neuer Titel', notes: '' });
       expect(docOf(FORK)).not.toHaveProperty('okey');
       expect(docOf(A1)).toEqual(document);
@@ -453,7 +455,7 @@ describe('ArticleSaveService', () => {
     beforeEach(() => { server.state.docs[A1] = stored(tenants); });
 
     it('is forked when there is no fork and nothing changed: copy and detach in one transaction', async () => {
-      await expect(saveShared()).resolves.toEqual({ status: 'saved', key: FORK_KEY });
+      await expect(saveShared()).resolves.toMatchObject({ status: 'saved', key: FORK_KEY });
       expect(server.state.writes.map(({ kind, path }) => [kind, path])).toEqual([['set', FORK], ['update', A1]]);
       expect(docOf(FORK)).toMatchObject({ title: 'Neuer Titel', tenants: [tenantId] });
       expect(docOf(A1)).toEqual(stored({ tenants: rest }));
@@ -473,7 +475,7 @@ describe('ArticleSaveService', () => {
       foreign();
       await expect(saveShared()).resolves.toEqual({ status: 'conflict' });
       expectNoWrite();
-      await expect(saveShared(true)).resolves.toEqual({ status: 'saved', key: FORK_KEY });
+      await expect(saveShared(true)).resolves.toMatchObject({ status: 'saved', key: FORK_KEY });
       expect(docOf(A1)['title']).toBe('Von jemand anderem');
     });
 
@@ -481,7 +483,7 @@ describe('ArticleSaveService', () => {
       server.state.docs[FORK] = stored();
       await expect(saveShared()).resolves.toEqual({ status: 'conflict' });
       expectNoWrite();
-      await expect(saveShared(true)).resolves.toEqual({ status: 'saved', key: FORK_KEY });
+      await expect(saveShared(true)).resolves.toMatchObject({ status: 'saved', key: FORK_KEY });
       expect(server.state.writes.map(({ kind, path }) => [kind, path])).toEqual([['update', FORK]]);
     });
 
@@ -493,7 +495,7 @@ describe('ArticleSaveService', () => {
 
     it('is saved when the answer of the fork was lost', async () => {
       server.state.commits = [{ lost: true }];
-      await expect(saveShared()).resolves.toEqual({ status: 'saved', key: FORK_KEY });
+      await expect(saveShared()).resolves.toMatchObject({ status: 'saved', key: FORK_KEY });
       expect(server.state.strictReads).toEqual([FORK]);
     });
 
@@ -562,7 +564,7 @@ describe('ArticleSaveService', () => {
       await expect(within(save({ section }))).resolves.toEqual({ status: 'offline' });
       expectNoWrite();
       server.state.noToken = false;
-      await expect(within(save({ section }))).resolves.toEqual({ status: 'saved', key: 'a1' });
+      await expect(within(save({ section }))).resolves.toMatchObject({ status: 'saved', key: 'a1' });
     });
 
     it('a waiting second save with other content runs', async () => {
@@ -572,7 +574,7 @@ describe('ArticleSaveService', () => {
       const first = save();
       const second = save({ section: edited({ title: 'Zweiter' }) });
       await expect(within(first)).resolves.toEqual({ status: 'offline' });
-      await expect(within(second)).resolves.toEqual({ status: 'saved', key: 'a1' });
+      await expect(within(second)).resolves.toMatchObject({ status: 'saved', key: 'a1' });
       expect(docOf(A1)['title']).toBe('Zweiter');
     });
 
@@ -581,7 +583,7 @@ describe('ArticleSaveService', () => {
       server.state.noToken = true;
       await expect(within(save({ isNew: true }))).resolves.toEqual({ status: 'offline' });
       server.state.noToken = false;
-      await expect(within(save({ isNew: true }))).resolves.toEqual({ status: 'saved', key: 'a1' });
+      await expect(within(save({ isNew: true }))).resolves.toMatchObject({ status: 'saved', key: 'a1' });
       expect(server.state.writes.map((w) => w.kind)).toEqual(['set']);
     });
 
@@ -599,7 +601,7 @@ describe('ArticleSaveService', () => {
     it('with the same section and options write once and return one result', async () => {
       const section = edited();
       const [first, second] = await Promise.all([save({ section }), save({ section })]);
-      expect(first).toEqual({ status: 'saved', key: 'a1' });
+      expect(first).toMatchObject({ status: 'saved', key: 'a1' });
       expect(second).toEqual(first);
       expect(server.state.writes).toHaveLength(1);
       expect(server.state.reads).toHaveLength(1);
@@ -607,21 +609,21 @@ describe('ArticleSaveService', () => {
 
     it('with other content: the second is never reported as saved without being written', async () => {
       const [first, second] = await Promise.all([save(), save({ section: edited({ title: 'Zweiter' }) })]);
-      expect(first).toEqual({ status: 'saved', key: 'a1' });
+      expect(first).toMatchObject({ status: 'saved', key: 'a1' });
       expect(second).toEqual({ status: 'conflict' });      // its `loaded` is older than the first save
       expect(docOf(A1)['title']).toBe('Neuer Titel');
     });
 
     it('with other content and force: both are written, in turn', async () => {
       const [first, second] = await Promise.all([save(), save({ section: edited({ title: 'Zweiter' }), force: true })]);
-      expect([first, second]).toEqual([{ status: 'saved', key: 'a1' }, { status: 'saved', key: 'a1' }]);
+      expect([first, second]).toMatchObject([{ status: 'saved', key: 'a1' }, { status: 'saved', key: 'a1' }]);
       expect(server.state.writes.map((w) => w.data['title'])).toEqual(['Neuer Titel', 'Zweiter']);
     });
 
     it('with the same section and other options: the second runs itself', async () => {
       foreign();
       const section = edited();
-      await expect(Promise.all([save({ section }), save({ section, force: true })])).resolves.toEqual([{ status: 'conflict' }, { status: 'saved', key: 'a1' }]);
+      await expect(Promise.all([save({ section }), save({ section, force: true })])).resolves.toMatchObject([{ status: 'conflict' }, { status: 'saved', key: 'a1' }]);
     });
 
     it('a second call never overwrites a change that came after the first save', async () => {
@@ -645,14 +647,14 @@ describe('ArticleSaveService', () => {
     it('of a new article: both contents are written, in turn', async () => {
       server.state.docs = {};
       const results = await Promise.all([save({ isNew: true }), save({ isNew: true, section: edited({ title: 'Zweiter' }) })]);
-      expect(results).toEqual([{ status: 'saved', key: 'a1' }, { status: 'saved', key: 'a1' }]);
+      expect(results).toMatchObject([{ status: 'saved', key: 'a1' }, { status: 'saved', key: 'a1' }]);
       expect(docOf(A1)['title']).toBe('Zweiter');
     });
 
     it('the second runs after a failed first', async () => {
       server.state.commits = ['permission-denied', 'permission-denied'];
       const results = await Promise.all([save(), save({ section: edited({ title: 'Zweiter' }) })]);
-      expect(results).toEqual([{ status: 'failed' }, { status: 'saved', key: 'a1' }]);
+      expect(results).toMatchObject([{ status: 'failed' }, { status: 'saved', key: 'a1' }]);
     });
 
     it('the next call after a result starts again, also with the same section', async () => {
@@ -666,7 +668,7 @@ describe('ArticleSaveService', () => {
     it('of two different articles do not wait for each other', async () => {
       server.state.docs['sections/a2'] = stored();
       const results = await Promise.all([save(), save({ section: edited({ okey: 'a2' }) })]);
-      expect(results).toEqual([{ status: 'saved', key: 'a1' }, { status: 'saved', key: 'a2' }]);
+      expect(results).toMatchObject([{ status: 'saved', key: 'a1' }, { status: 'saved', key: 'a2' }]);
     });
   });
 });
@@ -708,6 +710,59 @@ describe('what is written equals SectionService', () => {
     expect(server.state.writes.map(({ path, data }) => [path, data])).toEqual([
       [batch.set.mock.calls[0][0].path, batch.set.mock.calls[0][1]], [batch.update.mock.calls[0][0].path, batch.update.mock.calls[0][1]],
     ]);
+  });
+});
+
+describe('what ArticleSaveService says was written', () => {
+  beforeEach(() => configure());
+  const save = (force: boolean, section = edited(), loaded = loadedOf(), isNew = false) => service.save(section, loaded, { isNew, force, currentUser: user });
+  /** what is compared at the next save: it must not differ from the document on the server */
+  const expectAsStored = (result: Awaited<ReturnType<typeof save>>, path: string) => {
+    if (result.status !== 'saved' || result.trial) throw new Error('not saved');
+    expect(result.written.okey).toBe(result.key);
+    expect(changedMeanwhile(result.written, docOf(path))).toBe(false);
+    return result;
+  };
+
+  it('a new article', async () => {
+    expect(expectAsStored(await save(false, edited(), loadedOf(), true), A1).forked).toBe(false);
+  });
+
+  it('an own article', async () => {
+    server.state.docs[A1] = stored();
+    const result = expectAsStored(await save(false), A1);
+    expect(result.forked).toBe(false);
+    expect(result.written.tenants).toEqual([tenantId]);
+  });
+
+  it('with force: also what only the other person had set', async () => {
+    server.state.docs[A1] = stored({ intro: 'von jemand anderem', subTitle: 'auch', notes: 'und das' });
+    expectAsStored(await save(true), A1);
+    // and the next save, with that as loaded, is no conflict
+    const next = await save(true);
+    if (next.status !== 'saved' || next.trial) throw new Error('not saved');
+    await expect(save(false, edited({ title: 'Dritter' }), next.written)).resolves.toMatchObject({ status: 'saved' });
+  });
+
+  it('a fork: the copy, with its key and tenant', async () => {
+    server.state.docs[A1] = stored(SHARED);
+    const result = expectAsStored(await save(false, edited(SHARED), loadedOf(SHARED)), FORK);
+    expect(result).toMatchObject({ key: FORK_KEY, forked: true });
+    expect(result.written.tenants).toEqual([tenantId]);
+  });
+
+  it('with force onto a copy that exists: no fork, so that only the message of the update is shown', async () => {
+    server.state.docs[A1] = stored(SHARED);
+    server.state.docs[FORK] = stored({ intro: 'der Kopie' });
+    const result = expectAsStored(await save(true, edited(SHARED), loadedOf(SHARED)), FORK);
+    expect(result).toMatchObject({ key: FORK_KEY, forked: false });
+    expect(toasts()).toEqual(['update_conf']);
+  });
+
+  it('the answer of a fork was lost', async () => {
+    server.state.docs[A1] = stored(SHARED);
+    server.state.commits = [{ lost: true }];
+    expect(expectAsStored(await save(false, edited(SHARED), loadedOf(SHARED)), FORK).forked).toBe(true);
   });
 });
 

@@ -179,8 +179,7 @@
       "title": "Emphasis"
     },
     "blocks": {
-      "readonly": "This article is made of blocks. You can edit its text, images and buttons in a newer version of the app.",
-      "notLinked": "This article is made of blocks. Please add the image in the article."
+      "readonly": "This article is made of blocks. You can edit its text, images and buttons in a newer version of the app."
     },
     "editor": {
       "block": {

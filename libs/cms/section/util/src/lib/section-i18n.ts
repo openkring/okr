@@ -1402,7 +1402,7 @@ export const SECTION_I18N_KEYS = {
   article_images_style_customize:           PFX + 'article.images.style.customize',
   // an article with blocks (spec 1.173)
   article_blocks_readonly:                  PFX + 'article.blocks.readonly',
-  article_blocks_not_linked:                PFX + 'article.blocks.notLinked',
+  article_not_linked:                       PFX + 'article.editor.notLinked',
 
   error_save:                               PFX + 'error.save',
   error_load:                               PFX + 'error.load',

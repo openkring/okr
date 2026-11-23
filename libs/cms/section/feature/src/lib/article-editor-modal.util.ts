@@ -1,8 +1,8 @@
 import {
-  findBlock, record, redo, replaceBlock, replacePresent, resizeColumn, setColumnSizes, undo, withUpload, withValidSelection,
+  blocksInOrder, findBlock, record, redo, replaceBlock, replacePresent, resizeColumn, setColumnSizes, undo, withUpload, withValidSelection,
   type ArticleEditorState, type ArticlePreviewDevice, type ArticleUpload, type EditorHistory,
 } from '@okr/cms-section-util';
-import { ARTICLE_SECTION_SHAPE, type ArticleBlock, type ArticleSection, type ColumnsBlock } from '@okr/shared-models';
+import { ARTICLE_SECTION_SHAPE, isSameValue, type ArticleBlock, type ArticleSection, type ColumnsBlock } from '@okr/shared-models';
 
 import type { CanvasChange } from './article-canvas.util';
 
@@ -19,8 +19,12 @@ const FIELD_DEFAULTS = {
   name: '', title: '', subTitle: '', index: '', notes: '', roleNeeded: '', isArchived: false, color: ARTICLE_SECTION_SHAPE.color,
 } as const;
 
-/** Reads apply no model defaults: without these, a stored article that lacks such a field could never be saved. */
-export function withFieldDefaults(section: ArticleSection): ArticleSection {
+/**
+ * Reads apply no model defaults: without these, a stored article that lacks such a field could never be saved. A new article has no
+ * readers yet: without a role it gets the one of `createSection`, never none.
+ */
+export function withFieldDefaults(section: ArticleSection, isNew = false): ArticleSection {
+  if (isNew && !section.roleNeeded) return withFieldDefaults({ ...section, roleNeeded: ARTICLE_SECTION_SHAPE.roleNeeded });
   const stored = section as unknown as Record<string, unknown>;
   const missing = Object.entries(FIELD_DEFAULTS).filter(([key]) => stored[key] === undefined || stored[key] === null);
   return missing.length === 0 ? section : { ...section, ...Object.fromEntries(missing) } as ArticleSection;
@@ -68,18 +72,78 @@ export function selectIn(history: History, id: string | undefined): History {
   return next === history.present ? history : replacePresent(history, next);
 }
 
-/** Undo. What was selected before the step is selected again, if it is there. */
+/** Undo. Selects the block that changes by it (§7.7). When one only goes away, what was selected before the step is selected again. */
 export function stepBack(history: History): History {
-  return validated(undo(history));
+  return stepped(history, undo(history), true);
 }
 
+/** Redo. Selects the block that changes by it; nothing when one only goes away. */
 export function stepForward(history: History): History {
-  return validated(redo(history));
+  return stepped(history, redo(history), false);
 }
 
-function validated(history: History): History {
-  const present = withSelection(history.present, history.present.selectedId);
-  return present === history.present ? history : replacePresent(history, present);
+function stepped(from: History, to: History, backToRecorded: boolean): History {
+  if (to === from) return from;
+  const [before, after] = [blocksOf(from.present), blocksOf(to.present)];
+  const affected = affectedBlocks(before, after);
+  const recorded = to.present.selectedId;
+  let selected: string | undefined;
+  if (recorded !== undefined && affected.includes(recorded)) selected = recorded;
+  else if (affected.length > 0) selected = affected[0];
+  else if (backToRecorded && isGone(before, after)) selected = recorded;
+  const present = withSelection(to.present, selected);
+  return present === to.present ? to : replacePresent(to, present);
+}
+
+const blocksOf = (state: EditorState): ArticleBlock[] => state.section.properties.blocks ?? [];
+const isGone = (before: ArticleBlock[], after: ArticleBlock[]): boolean => {
+  const left = new Set(blocksInOrder(after).map((block) => block.id));
+  return blocksInOrder(before).some((block) => !left.has(block.id));
+};
+
+/** A block without its inner blocks, and where it stands. */
+interface Placed { list: string; own: unknown }
+
+function placed(blocks: ArticleBlock[]): { byId: Map<string, Placed>; lists: Map<string, string[]> } {
+  const byId = new Map<string, Placed>();
+  const lists = new Map<string, string[]>();
+  for (const block of blocksInOrder(blocks)) {
+    const place = findBlock(blocks, block.id)?.place;
+    const list = place?.columnsId === undefined ? '' : `${place.column}/${place.columnsId}`;
+    byId.set(block.id, { list, own: withoutInner(block) });
+    lists.set(list, [...(lists.get(list) ?? []), block.id]);
+  }
+  return { byId, lists };
+}
+
+function withoutInner(block: ArticleBlock): unknown {
+  if (block.type !== 'columns' || !Array.isArray(block.columns)) return block;
+  return { ...block, columns: block.columns.map((column) => (typeof column === 'object' && column !== null ? { ...column, blocks: [] } : column)) };
+}
+
+/** The blocks of `after` that are new, changed or moved since `before`, in reading order; a columns block only for what is its own. */
+export function affectedBlocks(before: ArticleBlock[], after: ArticleBlock[]): string[] {
+  if (before === after) return [];
+  const [was, is] = [placed(before), placed(after)];
+  const affected = new Set<string>();
+  for (const [id, now] of is.byId) {
+    const old = was.byId.get(id);
+    if (!old || old.list !== now.list || (old.own !== now.own && !isSameValue(old.own, now.own))) affected.add(id);
+  }
+  for (const [list, ids] of is.lists) {
+    const stayed = (id: string): boolean => was.byId.get(id)?.list === list && is.byId.get(id)?.list === list;
+    for (const id of movedIn((was.lists.get(list) ?? []).filter(stayed), ids.filter(stayed))) affected.add(id);
+  }
+  return [...is.byId.keys()].filter((id) => affected.has(id));
+}
+
+/** Two orders of the same ids: the one that was moved (either, when neighbours changed places), else every id at another place. */
+function movedIn(before: string[], after: string[]): string[] {
+  const same = (a: string[], b: string[]): boolean => a.length === b.length && a.every((id, i) => id === b[i]);
+  if (same(before, after)) return [];
+  const without = (ids: string[], id: string): string[] => ids.filter((other) => other !== id);
+  const single = after.filter((id) => same(without(before, id), without(after, id)));
+  return single.length > 0 ? single : after.filter((id, i) => id !== before[i]);
 }
 
 /** Document and attribution of an uploaded picture, found out later: in every state, or an undo would lose them. No step. */

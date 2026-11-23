@@ -67,13 +67,13 @@ export type CheckedDecision<T extends OkrModel, R> = CheckedWrite<T> | { kind: '
 
 /**
  * `sent` is the document as it was sent (without `okey`).
- * - `written`  it is on the server
+ * - `written`  it is on the server; `kind` is the write that was sent
  * - `refused`  the callback refused
  * - `offline`  the server could not be read, or the sign-in could not be refreshed. With `sent`: it is not known whether that was written
  * - `failed`   not written (error toast shown); also when the session has ended. With `sent`: it was not there when read afterwards, but it was sent
  */
 export type CheckedWriteResult<T extends OkrModel, R> =
-  | { status: 'written'; key: string; sent: T }
+  | { status: 'written'; key: string; sent: T; kind: CheckedWrite<T>['kind'] }
   | { status: 'refused'; reason: R }
   | { status: 'offline'; sent?: T }
   | { status: 'failed'; sent?: T };
@@ -1467,10 +1467,10 @@ export class FirestoreService {
 
   private checkedWritten<T extends OkrModel>(
     collectionName: string, sent: { write: CheckedWrite<T>; data: T }, messages: CheckedWriteMessages, currentUser?: UserModel,
-  ): { status: 'written'; key: string; sent: T } {
+  ): Extract<CheckedWriteResult<T, never>, { status: 'written' }> {
     const { kind, key } = sent.write;
     this.noteCheckedWrite(collectionName, kind, key, messages, currentUser);
-    return { status: 'written', key, sent: sent.data };
+    return { status: 'written', key, sent: sent.data, kind };
   }
 
   /** Toast and history comment of a checked write. Neither is waited for nor can fail the save: the document is written already. */

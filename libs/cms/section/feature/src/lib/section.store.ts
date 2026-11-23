@@ -19,7 +19,7 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { UploadService } from '@okr/avatar-data-access';
 import { ArticleBlocksGate, SectionService } from '@okr/cms-section-data-access';
-import { createSection, narrowSection, SECTION_I18N_KEYS, usesArticleEditor } from '@okr/cms-section-util';
+import { createSection, narrowSection, newArticleFrom, SECTION_I18N_KEYS, usesArticleEditor } from '@okr/cms-section-util';
 import { allowedSectionTypesForPage } from '@okr/cms-website-render';
 
 import { openArticleEditor } from './article-editor.loader';
@@ -133,6 +133,8 @@ export const _SectionStore = signalStore(
   }),
 
   withMethods((store) => {
+    /** a section is being opened: a second press meanwhile is ignored */
+    let opening = false;
     return {
       reset() {
         patchState(store, initialState);
@@ -225,33 +227,38 @@ export const _SectionStore = signalStore(
       },
 
       async edit(section?: SectionModel, readOnly = true): Promise<string | undefined> {
-        if (!section) return;
+        if (!section || opening) return;
         const roles = this.getRoles();
         const states = store.appStore.getCategory('content_state');
-        // the article editor saves by itself (spec 1.175 §7.1)
-        if (section.type === 'article' && !readOnly) await store.articleBlocksGate.load();
-        if (usesArticleEditor(section, readOnly, store.articleBlocksGate.open())) {
-          const isNew = !section.okey;
-          // a new article gets its key now, so that its uploads have a folder
-          const article = (isNew ? { ...section, okey: generateRandomString(20) } : section) as ArticleSection;
-          const sectionId = await openArticleEditor(store.modalController, article, { isNew, currentUser: store.currentUser(), roles, states, tagModel: 'section' });
-          if (sectionId) this.reload();
-          return sectionId;
-        }
-        const { SectionEditModal } = await import('./section-edit.modal');
-        const modal = await store.modalController.create({
-          component: SectionEditModal,
-          cssClass: 'modal-fullscreen',
-          componentProps: {
-            section,
-            currentUser: store.currentUser(),
-            tagModel: 'section',
-            roles,
-            states,
-            readOnly
+        opening = true;
+        let modal: HTMLIonModalElement;
+        try {
+          if (section.type === 'article' && !readOnly) await store.articleBlocksGate.load();
+          // the article editor saves by itself (spec 1.175 §7.1)
+          if (usesArticleEditor(section, readOnly, store.articleBlocksGate.open())) {
+            const isNew = !section.okey;
+            const article = isNew ? newArticleFrom(section, store.tenantId(), generateRandomString(20)) : section as ArticleSection;
+            const sectionId = await openArticleEditor(store.modalController, article, { isNew, currentUser: store.currentUser(), roles, states, tagModel: 'section' });
+            if (sectionId) this.reload();
+            return sectionId;
           }
-        });
-        modal.present();
+          const { SectionEditModal } = await import('./section-edit.modal');
+          modal = await store.modalController.create({
+            component: SectionEditModal,
+            cssClass: 'modal-fullscreen',
+            componentProps: {
+              section,
+              currentUser: store.currentUser(),
+              tagModel: 'section',
+              roles,
+              states,
+              readOnly
+            }
+          });
+          modal.present();
+        } finally {
+          opening = false;
+        }
         const { data, role } = await modal.onWillDismiss();
         if (role === 'confirm' && data && !readOnly) {
           const section = narrowSection(data);
@@ -301,7 +308,7 @@ export const _SectionStore = signalStore(
         if (!section) return;
         // an article with blocks (spec 1.173) has its images in the blocks: never write the old `images`
         if (articleBlocksOf(section)) {
-          await showToast(store.toastController, store.i18n.article_blocks_not_linked());
+          await showToast(store.toastController, fill(store.i18n.article_not_linked(), { name: section.name || section.title || section.okey }));
           return;
         }
         // 1) pick an image file

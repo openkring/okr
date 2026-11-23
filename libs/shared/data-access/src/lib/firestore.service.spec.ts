@@ -1059,7 +1059,7 @@ describe('FirestoreService.writeChecked', () => {
   it('updates: merges without okey and undefined values, toast and comment', async () => {
     const result = await service.writeChecked<Doc, string>('sections', async () => ({ kind: 'update', key: 'a1', model: { ...MODEL, title: undefined } }), isSame, MESSAGES, user);
     await settled();
-    expect(result).toEqual({ status: 'written', key: 'a1', sent: { tenants: ['scs'], isArchived: false } });
+    expect(result).toEqual({ status: 'written', key: 'a1', kind: 'update', sent: { tenants: ['scs'], isArchived: false } });
     expect(transactionUpdate.mock.calls).toEqual([[{ path: 'sections/a1' }, { tenants: ['scs'], isArchived: false }]]);
     expect(set).not.toHaveBeenCalled();
     expect(toast).toHaveBeenCalledWith(expect.objectContaining({ message: 'updated' }));
@@ -1072,7 +1072,7 @@ describe('FirestoreService.writeChecked', () => {
   it('creates with the tenant of the app', async () => {
     const result = await service.writeChecked<Doc, string>('sections', async () => ({ kind: 'create', key: 'a1', model: { ...MODEL, tenants: [] } }), isSame, MESSAGES);
     await settled();
-    expect(result).toMatchObject({ status: 'written', key: 'a1' });
+    expect(result).toMatchObject({ status: 'written', key: 'a1', kind: 'create' });
     expect(set.mock.calls).toEqual([[{ path: 'sections/a1' }, STORED]]);
     expect(toast).toHaveBeenCalledWith(expect.objectContaining({ message: 'created' }));
     expect(setDocMock).not.toHaveBeenCalled();     // no user, no comment
@@ -1089,7 +1089,7 @@ describe('FirestoreService.writeChecked', () => {
   it('forks: replaces the copy and detaches the tenant, no toast and no comment', async () => {
     const result = await service.writeChecked<Doc, string>('sections', async () => ({ kind: 'fork', key: 'a1_scs', model: { ...MODEL, tenants: ['scs', 'p13'] }, original: 'a1' }), isSame, MESSAGES, user);
     await settled();
-    expect(result).toMatchObject({ status: 'written', key: 'a1_scs' });
+    expect(result).toMatchObject({ status: 'written', key: 'a1_scs', kind: 'fork' });
     expect(set.mock.calls).toEqual([[{ path: 'sections/a1_scs' }, STORED]]);
     expect(transactionUpdate.mock.calls).toEqual([[{ path: 'sections/a1' }, { tenants: { arrayRemove: 'scs' } }]]);
     expect(toast).not.toHaveBeenCalled();
@@ -1158,7 +1158,7 @@ describe('FirestoreService.writeChecked', () => {
 
     it('is written when the document holds what was sent', async () => {
       getDocFromServerMock.mockResolvedValue({ exists: () => true, data: () => STORED });
-      await expect(service.writeChecked<Doc, string>('sections', update, isSame, MESSAGES, user)).resolves.toMatchObject({ status: 'written', key: 'a1' });
+      await expect(service.writeChecked<Doc, string>('sections', update, isSame, MESSAGES, user)).resolves.toMatchObject({ status: 'written', key: 'a1', kind: 'update' });
       await settled();
       expect(getDocFromServerMock).toHaveBeenCalledTimes(1);
       expect(getDocFromServerMock).toHaveBeenCalledWith({ path: 'sections/a1' });

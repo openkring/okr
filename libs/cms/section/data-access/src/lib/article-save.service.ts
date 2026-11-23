@@ -10,15 +10,17 @@ import { ArticleBlocksGate } from './article-blocks-gate.service';
 import { SectionService } from './section.service';
 
 /**
- * - `saved`     written; `key` is the document written, for a shared article the key of the tenant's own copy. With `trial`
- *               (trial mode) nothing was written and there may be no such document: never store that key anywhere
+ * - `saved`     written; `key` is the document written, for a shared article the key of the tenant's own copy. `written` is what was
+ *               sent: the `loaded` of the next save. `forked`: the copy was made by this save, which shows no message of its own. With
+ *               `trial` (trial mode) nothing was written and there may be no such document: never store that key anywhere
  * - `conflict`  somebody changed the article meanwhile: ask, then save with `force`
  * - `gone`      deleted, archived or no longer of this tenant: cannot be saved, also not with `force`
  * - `offline`   the server could not be read. Nothing was written, or (an answer was lost) it is not known; saving again is safe
  * - `failed`    not written; an error toast was shown
  */
 export type ArticleSaveResult =
-  | { status: 'saved'; key: string; trial?: true }
+  | { status: 'saved'; key: string; written: SectionModel; forked: boolean; trial?: undefined }
+  | { status: 'saved'; key: string; trial: true }
   | { status: 'conflict' } | { status: 'gone' } | { status: 'offline' } | { status: 'failed' };
 
 export interface ArticleSaveOptions { isNew: boolean; force: boolean; currentUser?: UserModel }
@@ -100,7 +102,7 @@ export class ArticleSaveService {
       this.sent.set(section.okey, result.sent);
     }
     switch (result.status) {
-      case 'written': return { status: 'saved', key: result.key };
+      case 'written': return { status: 'saved', key: result.key, written: { ...result.sent, okey: result.key } as SectionModel, forked: result.kind === 'fork' };
       case 'refused': return { status: result.reason };
       default: return { status: result.status };
     }

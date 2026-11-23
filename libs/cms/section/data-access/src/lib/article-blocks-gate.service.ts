@@ -6,6 +6,9 @@ import { AppVersionCollection, compareAppVersions } from '@okr/shared-util-angul
 /** The first version in which every app can read blocks (1.173). undefined = not released yet, the gate is closed. Set by the owner's release step (design §11). */
 export const ARTICLE_BLOCKS_MIN_VERSION: string | undefined = undefined;
 
+/** How long `load()` keeps somebody waiting who wants to open an article. */
+export const ARTICLE_GATE_TIMEOUT_MS = 3000;
+
 /** localStorage key and value of the trial mode (development builds only). */
 const TRIAL_KEY = 'okr.articleEditor';
 const TRIAL_VALUE = 'trial';
@@ -59,13 +62,22 @@ export class ArticleBlocksGate {
 
   /**
    * Whether the editor may be opened. Reads `app-version` once per session while the gate is open, and again when it was closed
-   * or unreadable. Never rejects.
+   * or unreadable. Never rejects. Somebody waits for it: after ARTICLE_GATE_TIMEOUT_MS it answers with what is known; a later answer
+   * counts for the next call.
    */
-  public load(): Promise<boolean> {
-    return this.trial ? Promise.resolve(true) : this.loadReleased();
+  public async load(): Promise<boolean> {
+    if (this.trial) return true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const late = new Promise<void>((resolve) => { timer = setTimeout(resolve, ARTICLE_GATE_TIMEOUT_MS); });
+    try {
+      await Promise.race([this.loadReleased(), late]);
+    } finally {
+      clearTimeout(timer);
+    }
+    return this.open();
   }
 
-  /** Whether blocks may be stored; the same reads as `load()`. Never rejects. */
+  /** Whether blocks may be stored; the same reads as `load()`. Never rejects, and waits as long as the read takes. */
   public loadMayWrite(): Promise<boolean> {
     return this.trial ? Promise.resolve(false) : this.loadReleased();
   }

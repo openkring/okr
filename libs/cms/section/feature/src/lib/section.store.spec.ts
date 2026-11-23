@@ -20,8 +20,6 @@ import { SectionStore } from './section.store';
 vi.mock('./article-editor.loader', () => ({ openArticleEditor: vi.fn() }));
 vi.mock('./section-edit.modal', () => ({ SectionEditModal: class SectionEditModal {} }));
 
-const i18nProxy = new Proxy({}, { get: () => () => 'x' });
-
 function appStoreMock() {
   return {
     tenantId: signal('p13'),
@@ -90,7 +88,7 @@ function makeStore(sectionService = sectionServiceMock(), deps: StoreDeps = {}):
       { provide: AlertController, useValue: deps.alertController ?? {} },
       { provide: ToastController, useValue: deps.toastController ?? {} },
       { provide: FirestoreService, useValue: {} },
-      { provide: I18nService, useValue: { translateAll: () => i18nProxy } }
+      { provide: I18nService, useValue: { translateAll: () => new Proxy({}, { get: (target, key) => (target as Record<PropertyKey, unknown>)[key] ?? (() => 'x') }) } }
     ]
   });
   return TestBed.inject(SectionStore);
@@ -256,6 +254,49 @@ describe('SectionStore.edit of an article (1.175)', () => {
     expect(options.isNew).toBe(true);
     expect(passed.okey).toMatch(/^[a-z0-9]{20}$/);
     expect(section.okey).toBe('');
+    expect(passed.roleNeeded).toBe('contentAdmin');
+    expect(passed.properties.datePublished).toMatch(/^\d{8}$/);
+    expect(passed.tenants).toEqual(['p13']);
+  });
+
+  it('a second press while the first is opening is ignored; afterwards it opens again', async () => {
+    const { store, gate, modalController } = setup(true);
+    let answer: (open: boolean) => void = () => undefined;
+    gate.load.mockReturnValueOnce(new Promise<boolean>((resolve) => { answer = resolve; }));
+    const first = store.edit(article(), false);
+    expect(await store.edit(article(), false)).toBeUndefined();
+    expect(await store.edit(article({ type: 'button' }), false)).toBeUndefined();
+    answer(true);
+    await first;
+    expect(openArticleEditor).toHaveBeenCalledTimes(1);
+    expect(modalController.create).not.toHaveBeenCalled();
+    await store.edit(article(), false);
+    expect(openArticleEditor).toHaveBeenCalledTimes(2);
+  });
+
+  it('a failed opening does not block the next one', async () => {
+    const { store } = setup(true);
+    vi.mocked(openArticleEditor).mockRejectedValueOnce(new Error('chunk'));
+    await expect(store.edit(article(), false)).rejects.toThrow('chunk');
+    await store.edit(article(), false);
+    expect(openArticleEditor).toHaveBeenCalledTimes(2);
+  });
+
+  it('a save of the form that never ends does not block the next opening', async () => {
+    const { store, sectionService, modalController } = setup(false, article());
+    sectionService.update.mockReturnValue(new Promise(() => undefined));
+    void store.edit(article(), false);
+    await vi.waitFor(() => expect(sectionService.update).toHaveBeenCalledTimes(1));
+    void store.edit(article(), false);
+    await vi.waitFor(() => expect(modalController.create).toHaveBeenCalledTimes(2));
+  });
+
+  it('uploading into an article with blocks is refused, naming the article', async () => {
+    const toastController = { create: vi.fn().mockResolvedValue({ present: vi.fn() }) };
+    const store = makeStore(sectionServiceMock(), { toastController });
+    Object.assign(store.i18n, { article_not_linked: () => 'Der Artikel «{name}» …' });
+    await store.uploadImage(article({ name: 'Regatta', properties: { blocks: [] } }) as never);
+    expect(toastController.create).toHaveBeenCalledWith(expect.objectContaining({ message: 'Der Artikel «Regatta» …' }));
   });
 
   it('gate open, nothing saved (closed, or the trial mode): no key, no reload', async () => {

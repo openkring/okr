@@ -132,7 +132,6 @@ export const ARTICLE_EDITOR_I18N_KEYS = {
   article_editor_discard_confirm:               PFX + 'article.editor.discard.confirm',
   article_editor_discard_keep:                  PFX + 'article.editor.discard.keep',
   article_editor_openFailed:                    PFX + 'article.editor.openFailed',
-  article_editor_notLinked:                     PFX + 'article.editor.notLinked',
 } satisfies Record<string, string>;
 
 /** What panel, canvas and modal are given: the texts of the editor and those of the section forms whose parts they reuse. */

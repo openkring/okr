@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { FirestoreService } from '@okr/shared-data-access';
 
-import { ArticleBlocksGate, isGateOpen } from './article-blocks-gate.service';
+import { ARTICLE_GATE_TIMEOUT_MS, ArticleBlocksGate, isGateOpen } from './article-blocks-gate.service';
 
 vi.mock('@angular/core', async (importOriginal) => ({ ...(await importOriginal<typeof import('@angular/core')>()), isDevMode: vi.fn(() => true) }));
 
@@ -139,6 +139,44 @@ describe('ArticleBlocksGate', () => {
     const service = gate(ReleasedGate);
     await expect(Promise.all([service.load(), service.load()])).resolves.toEqual([true, true]);
     expect(readObjectStrict).toHaveBeenCalledTimes(1);
+  });
+
+  describe('load() does not wait without end', () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+
+    it('answers with what is known; the late answer counts for the next call', async () => {
+      let answer: (document: unknown) => void = () => undefined;
+      readObjectStrict.mockReturnValue(new Promise((resolve) => { answer = resolve; }));
+      const service = gate(ReleasedGate);
+      const loading = service.load();
+      await vi.advanceTimersByTimeAsync(ARTICLE_GATE_TIMEOUT_MS - 1);
+      let settled = false;
+      void loading.then(() => { settled = true; });
+      await vi.advanceTimersByTimeAsync(0);
+      expect(settled).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      await expect(loading).resolves.toBe(false);
+      answer({ minVersion: '7.70.0' });
+      await vi.advanceTimersByTimeAsync(0);
+      expect(service.open()).toBe(true);
+      await expect(service.load()).resolves.toBe(true);
+      expect(readObjectStrict).toHaveBeenCalledTimes(1);
+    });
+
+    it('leaves no timer when the answer came', async () => {
+      readObjectStrict.mockResolvedValue({ minVersion: '7.70.0' });
+      await gate(ReleasedGate).load();
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it('loadMayWrite() is not cut short: its callers have their own bound', async () => {
+      readObjectStrict.mockReturnValue(new Promise(() => undefined));
+      let settled = false;
+      void gate(ReleasedGate).loadMayWrite().then(() => { settled = true; });
+      await vi.advanceTimersByTimeAsync(60_000);
+      expect(settled).toBe(false);
+    });
   });
 
   describe('trial', () => {

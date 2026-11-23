@@ -179,8 +179,7 @@
       "title": "Evidenza"
     },
     "blocks": {
-      "readonly": "Questo articolo è composto da blocchi. Potrai modificare testo, immagini e pulsanti in una versione più recente dell’app.",
-      "notLinked": "Questo articolo è composto da blocchi. Aggiungi l’immagine nell’articolo, per favore."
+      "readonly": "Questo articolo è composto da blocchi. Potrai modificare testo, immagini e pulsanti in una versione più recente dell’app."
     },
     "editor": {
       "block": {
