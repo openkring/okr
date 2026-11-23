@@ -493,5 +493,13 @@
     "field_resource_key_data": "Eigenschaften",
     "field_resource_key_tags": "Tags",
     "field_resource_key_description": "Beschreibung"
+  },
+  "settings": {
+    "confirm": {
+      "widen": "Mit dieser Änderung können mehr Personen diese Angaben sehen.",
+      "rebuild": "Die Adressliste wird danach neu aufgebaut. Das kann einige Minuten dauern.",
+      "policy": "Alle, die diese App nutzen, werden danach gebeten, die Datenschutzerklärung erneut zu bestätigen.",
+      "ask": "Möchtest du speichern?"
+    }
   }
 }

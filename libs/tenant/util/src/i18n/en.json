@@ -493,5 +493,13 @@
     "field_resource_key_data": "Properties",
     "field_resource_key_tags": "Tags",
     "field_resource_key_description": "Description"
+  },
+  "settings": {
+    "confirm": {
+      "widen": "With this change, more people can see this information.",
+      "rebuild": "The address list will be rebuilt afterwards. This can take a few minutes.",
+      "policy": "Everyone who uses this app will afterwards be asked to accept the privacy policy again.",
+      "ask": "Do you want to save?"
+    }
   }
 }

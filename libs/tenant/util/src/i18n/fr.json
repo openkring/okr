@@ -493,5 +493,13 @@
     "field_resource_key_data": "Propriétés",
     "field_resource_key_tags": "Tags",
     "field_resource_key_description": "Description"
+  },
+  "settings": {
+    "confirm": {
+      "widen": "Avec cette modification, davantage de personnes pourront voir ces informations.",
+      "rebuild": "La liste d'adresses sera ensuite reconstruite. Cela peut prendre quelques minutes.",
+      "policy": "Toutes les personnes qui utilisent cette application devront ensuite accepter à nouveau la politique de confidentialité.",
+      "ask": "Veux-tu enregistrer ?"
+    }
   }
 }

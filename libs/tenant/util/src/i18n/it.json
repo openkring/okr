@@ -493,5 +493,13 @@
     "field_resource_key_data": "Proprietà",
     "field_resource_key_tags": "Tag",
     "field_resource_key_description": "Descrizione"
+  },
+  "settings": {
+    "confirm": {
+      "widen": "Con questa modifica più persone potranno vedere queste informazioni.",
+      "rebuild": "L'elenco degli indirizzi verrà poi ricostruito. Può richiedere alcuni minuti.",
+      "policy": "Tutte le persone che usano questa app dovranno poi accettare di nuovo l'informativa sulla privacy.",
+      "ask": "Vuoi salvare?"
+    }
   }
 }

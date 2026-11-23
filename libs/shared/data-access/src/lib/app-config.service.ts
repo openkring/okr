@@ -54,6 +54,30 @@ export class AppConfigService {
   }
 
   /**
+   * Write only the given fields of `app-config/{tenantId}` (a merge, never the whole document), for the
+   * tenant settings page (spec 1.174 §7). The caller passes the CHANGED fields only: building the patch from
+   * a whole hydrated `AppConfig` would push whatever else that snapshot carries back into the document.
+   *
+   * `enabledFeatures` is dropped here, whatever the caller passes: it is the billing boundary and only a
+   * callable may change it (`firestore.rules` refuses a client write to it). Fields that are `undefined` are
+   * dropped too, because Firestore rejects them. Nothing left to write means no database call at all.
+   *
+   * `FirestoreService.updateObject` shows the one confirmation toast on success and the one error toast on
+   * failure, so the caller adds none.
+   *
+   * @param tenantId the tenant whose config to patch — the doc id IS the tenantId
+   * @param changes the changed fields and their new values
+   * @returns the tenant id when written, or undefined when nothing was written or the write failed
+   */
+  public async patch(tenantId: string, changes: Partial<AppConfig>): Promise<string | undefined> {
+    const fields = Object.fromEntries(
+      Object.entries(changes).filter(([name, value]) => name !== 'enabledFeatures' && value !== undefined)) as Partial<AppConfig>;
+    if (Object.keys(fields).length === 0) return undefined;
+    return await this.firestoreService.updateObject<Partial<AppConfig>>(
+      AppConfigCollection, tenantId, fields, false, this.i18n.update_conf());
+  }
+
+  /**
    * Write ONLY `hiddenMenuKeys` — the per-row menu opt-out (the fourth visibility gate).
    *
    * Deliberately a single-field `updateDoc` rather than {@link update}, which writes the whole
