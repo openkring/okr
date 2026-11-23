@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hiddenFieldsOf, isFieldShown, MODEL_FIELDS, resourceFieldKey, withFieldVisibility } from './model-fields.util';
+import { hiddenFieldsOf, isFieldShown, MODEL_FIELDS, resourceFieldKey, withFieldVisibility, withoutModel } from './model-fields.util';
 
 describe('model-fields.util', () => {
   describe('MODEL_FIELDS', () => {
@@ -111,6 +111,26 @@ describe('model-fields.util', () => {
     });
     it('shows a field that is not hidden', () => {
       expect(isFieldShown('b', new Set(['a']), [])).toBe(true);
+    });
+  });
+
+  describe('withoutModel', () => {
+    it('removes only the entry of that model', () => {
+      const stored = { person: { nickname: false }, org: { taxId: false } };
+      expect(withoutModel(stored, 'person')).toEqual({ org: { taxId: false } });
+    });
+    it('does not change the input', () => {
+      const stored = { person: { nickname: false } };
+      withoutModel(stored, 'person');
+      expect(stored).toEqual({ person: { nickname: false } });
+    });
+    it('returns an empty map for null, undefined and unknown models', () => {
+      expect(withoutModel(null, 'person')).toEqual({});
+      expect(withoutModel(undefined, 'person')).toEqual({});
+      expect(withoutModel({ org: { taxId: false } }, 'person')).toEqual({ org: { taxId: false } });
+    });
+    it('copes with prototype-named keys', () => {
+      expect(withoutModel({ person: { nickname: false } }, '__proto__')).toEqual({ person: { nickname: false } });
     });
   });
 });

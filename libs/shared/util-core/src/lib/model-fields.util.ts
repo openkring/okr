@@ -82,6 +82,20 @@ export function withFieldVisibility(stored: ModelFieldMap | null | undefined, mo
   return next;
 }
 
+/** Returns a new map without the entry of one model, i.e. that model back at its catalogue defaults. */
+export function withoutModel(stored: ModelFieldMap | null | undefined, modelKey: string): ModelFieldMap {
+  const next: ModelFieldMap = {};
+  if (!isObject(stored)) return next;
+  for (const key of Object.keys(stored)) {
+    const value: unknown = stored[key];
+    if (key === modelKey || !isObject(value)) continue;
+    const copy: Record<string, boolean> = {};
+    for (const f of Object.keys(value)) setOwn(copy, f, (value as Record<string, boolean>)[f]);
+    setOwn(next, key, copy);
+  }
+  return next;
+}
+
 /** `resource.<type>` for a resource type that has its own field list, otherwise `resource.other`. */
 export function resourceFieldKey(type: string | undefined): string {
   const key = `resource.${type ?? ''}`;
