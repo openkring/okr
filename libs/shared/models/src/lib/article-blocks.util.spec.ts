@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
-  ArticleLike, articleBlocksOf, articleCover, blockHtml, blockImages, blocksFromClassic, isFreeArticle, isSlideshowActive, withClassicFields,
+  ArticleLike, articleBlocksOf, articleCover, blockHtml, blockImages, blocksFromClassic, convertsExactly, drawnArticle, isFreeArticle, isSlideshowActive,
+  withClassicFields,
 } from './article-blocks.util';
-import { SIDE_BY_SIDE_LAYOUT, articleImagePosition } from './article-layout.util';
 import { ViewPosition } from './enums/view-position.enum';
 import { ImageType } from './enums/image-type.enum';
 import { ImageConfig } from './image.model';
@@ -39,20 +39,6 @@ const columns = (sizes: number[], contents: ColumnsBlock['columns'][number]['blo
   id: 'cols', type: 'columns', columns: contents.map((blocks, i) => ({ size: sizes[i], blocks })), ...more,
 });
 
-/** what decides how an article is drawn (design §11 step 1) */
-function drawn(s: ArticleLike) {
-  const p = (s.properties ?? {}) as ArticleConfig;
-  const n = p.images?.length ?? 0;
-  const position = articleImagePosition(s.content?.position, n, p.imageLayout);
-  const shown = position !== ViewPosition.None;                    // a full imageStyle is stored even without images
-  const side = n === 1 && (position === ViewPosition.Left || position === ViewPosition.Right);
-  return {
-    html: s.content?.htmlContent ?? '', i18n: p.contentI18n, images: p.images ?? [], imageStyle: shown ? p.imageStyle : undefined,
-    layout: n > 1 || (n === 1 && p.imageLayout === SIDE_BY_SIDE_LAYOUT) ? p.imageLayout : undefined,
-    slideshow: shown && isSlideshowActive(p.slideshow, p.imageLayout) ? p.slideshow : undefined,
-    position, colSize: side ? (s.content?.colSize ?? 6) : undefined, cta: p.cta,
-  };
-}
 const roundTrip = (s: ArticleLike) => {
   const { blocks, cover } = blocksFromClassic(s);
   return withClassicFields({ ...s, content: undefined, properties: { blocks, ...(cover ? { cover } : {}) } });
@@ -72,7 +58,6 @@ const CONVERTIBLE: Case[] = [
   ['one image None', { position: VP.None }, { images: [img('a')] }],
   ['one image, position absent', {}, { images: [img('a')] }],
   ['one image Left, colSize absent', { position: VP.Left }, { images: [img('a')] }],
-  ['one image without a url (travel journal)', { position: VP.Top }, { images: [{ ...img(''), label: 'x' }] }],
   ['one image Top, a layout for several images', { position: VP.Top }, { images: [img('a')], imageLayout: 'big-left' }],
   ['one image Left, a layout that stops the slideshow', { position: VP.Left, colSize: 5 }, { images: [img('a')], imageLayout: 'mosaic', slideshow: show }],
   ['2 images without layout, Bottom', { position: VP.Bottom }, { images: [img('a'), img('b')] }],
@@ -111,8 +96,9 @@ const ROUND_TRIPS = CONVERTIBLE.flatMap(([name, content, properties]) =>
 describe('the classic shapes', () => {
   it.each(ROUND_TRIPS)('there and back: %s', (_name, content, properties) => {
     const a = art(content, properties);
-    expect(drawn(roundTrip(a))).toEqual(drawn(a));
+    expect(drawnArticle(roundTrip(a))).toEqual(drawnArticle(a));
     expect(isFreeArticle({ ...a, properties: blocksFromClassic(a) })).toBe(false);
+    expect(convertsExactly(a)).toBe(true);
   });
 
   it.each<Case>([
@@ -123,8 +109,39 @@ describe('the classic shapes', () => {
     ['one image Left with colSize 4.5', { position: VP.Left, colSize: 4.5 }, { images: [img('a')] }],
   ])('not convertible: %s', (_name, content, properties) => {
     const a = art({ htmlContent: '<p>Hi</p>', ...content }, properties);
-    expect(drawn(roundTrip(a))).not.toEqual(drawn(a));
+    expect(drawnArticle(roundTrip(a))).not.toEqual(drawnArticle(a));
+    expect(convertsExactly(a)).toBe(false);
     expect(blocksFromClassic(a).blocks[0].type).toBe('columns');
+  });
+
+  // the website counts only the images with a url: 'a' and '' are one image there (drawn left), two in the app
+  it.each([['None', VP.None], ['Top', VP.Top], ['Left', VP.Left], ['Right', VP.Right], ['Bottom', VP.Bottom]])(
+    'not convertible: two images, one without a url, %s', (_name, position) => {
+      for (const url of ['', ' ', undefined]) {
+        const images = [img('a'), { ...img('b'), url }];
+        expect(convertsExactly(art({ htmlContent: 'T', position }, { images }))).toBe(false);
+        expect(convertsExactly(art({ htmlContent: 'T', position }, { images: images.slice(1) }))).toBe(false);
+        expect(convertsExactly(art({ htmlContent: 'T', position }, { images: images.slice(0, 1) }))).toBe(true);
+      }
+    });
+
+  it('not convertible: malformed fields, an article with blocks, another section', () => {
+    for (const properties of [{ images: 'x' }, { images: [null] }, { contentI18n: 'x' }, { contentI18n: { en: 3 } }, { cta: 'x' }, { blocks: [text('A')] }]) {
+      expect(convertsExactly(art({ htmlContent: 'T' }, properties))).toBe(false);
+    }
+    expect(convertsExactly({ type: 'hero', content: { htmlContent: 'T' } })).toBe(false);
+    expect(convertsExactly({})).toBe(true);
+  });
+
+  it('drawnArticle: what decides how an article is drawn', () => {
+    const properties = { images: [img('a')], imageStyle: { width: '50%' }, imageLayout: 'slider', slideshow: show, contentI18n: { en: 'x' }, cta };
+    expect(drawnArticle(art({ htmlContent: 'T', position: VP.Left, colSize: 4 }, properties))).toEqual({
+      html: 'T', i18n: { en: 'x' }, images: [img('a')], imageStyle: { width: '50%' }, layout: undefined, slideshow: show,
+      position: VP.Left, colSize: 4, cta,
+    });
+    expect(drawnArticle(art({ position: VP.Left, colSize: 4 }, { ...properties, images: [img('a'), img('b')] })))
+      .toMatchObject({ position: VP.Top, layout: 'slider', colSize: undefined });
+    expect(drawnArticle(art({ position: VP.None }, properties))).toMatchObject({ imageStyle: undefined, slideshow: undefined });
   });
 
   it('a size outside 1-11 becomes 6', () => {
@@ -237,10 +254,14 @@ describe('isFreeArticle', () => {
     expect(isFreeArticle(free(blocks))).toBe(true);
   });
 
-  it('true: a cover next to an image of the article', () => {
+  it('a cover does not make an article free: it is never drawn in the article', () => {
     for (const blocks of [[image('a'), text('A')], [gallery(['a', 'b']), text('A')], [columns([4, 8], [[image('a')], [text('A')]])]]) {
-      expect(isFreeArticle(free(blocks, { cover: img('c') }))).toBe(true);
-      expect(isFreeArticle(free(blocks))).toBe(false);
+      const s = free(blocks, { cover: img('c') });
+      const f = withClassicFields(s);
+      expect(isFreeArticle(s)).toBe(false);
+      expect(propsOf(f).images).toEqual(blockImages(blocks));
+      expect(f.content).toEqual(withClassicFields(free(blocks)).content);
+      expect([articleCover(s)?.url, articleCover(f)?.url]).toEqual(['c', 'c']);
     }
   });
 
@@ -285,12 +306,31 @@ describe('withClassicFields', () => {
     expect(propsOf(f).cta).toEqual(b2);
   });
 
-  it('fallback: per language, blocks without it contribute German', () => {
+  it('fallback: per language, blocks without it contribute German; German comes along', () => {
     const f = withClassicFields(free([text('A', { htmlI18n: { en: 'a' } }), text('B')]));
-    expect(propsOf(f).contentI18n).toEqual({ en: 'aB' });
+    expect(propsOf(f).contentI18n).toEqual({ de: 'AB', en: 'aB' });
     expect(propsOf(f).contentI18n).not.toHaveProperty('fr');
     const g = withClassicFields(free([text('A', { htmlI18n: { en: 'a' } }), callout('B', { htmlI18n: { fr: 'b' } }), columns([6, 6], [[text('C', { htmlI18n: { en: 'c' } })], []])]));
-    expect(propsOf(g).contentI18n).toEqual({ en: 'aBc', fr: 'AbC' });
+    expect(propsOf(g).contentI18n).toEqual({ de: 'ABC', en: 'aBc', fr: 'AbC' });
+  });
+
+  it('fallback: an empty translation is none', () => {
+    for (const en of ['', ' \n']) {
+      expect(propsOf(withClassicFields(free([text('A', { htmlI18n: { en: 'a' } }), text('B', { htmlI18n: { en } })]))).contentI18n).toEqual({ de: 'AB', en: 'aB' });
+      expect(propsOf(withClassicFields(free([text('A', { htmlI18n: { en } }), text('B')])))).not.toHaveProperty('contentI18n');
+    }
+  });
+
+  it('fallback: html wins over a stored htmlI18n.de, which alone is no translation', () => {
+    expect(propsOf(withClassicFields(free([text('A', { htmlI18n: { de: 'x', en: 'a' } }), text('B')]))).contentI18n).toEqual({ de: 'AB', en: 'aB' });
+    expect(propsOf(withClassicFields(free([text('A', { htmlI18n: { de: 'x' } }), text('B')])))).not.toHaveProperty('contentI18n');
+  });
+
+  it('classic: translations verbatim, malformed ones left out', () => {
+    const i18nOf = (htmlI18n: unknown): unknown => propsOf(withClassicFields(free([{ ...text('A'), htmlI18n }]))).contentI18n;
+    expect(i18nOf({ de: 'x', en: '', fr: ' ' })).toEqual({ de: 'x', en: '', fr: ' ' });
+    expect(i18nOf({ en: 'a', fr: 3, it: null })).toEqual({ en: 'a' });
+    for (const bad of ['x', 3, null, ['x']]) expect(i18nOf(bad)).toBeUndefined();
   });
 
   it('keeps the header and the frame, the blocks and the cover', () => {
@@ -385,7 +425,7 @@ describe('malformed blocks', () => {
   });
 
   it('never throws on malformed old fields', () => {
-    for (const properties of [undefined, { images: 'x' }, { images: [null, 3] }, { images: null, cta: null, slideshow: null }]) {
+    for (const properties of [undefined, { images: 'x' }, { images: [null, 3] }, { images: null, cta: null, slideshow: null }, { cta: 'x' }, { cta: 3 }]) {
       expect(blocksFromClassic({ properties }).blocks).toEqual([{ id: 'classic-text', type: 'text', html: '' }]);
     }
   });

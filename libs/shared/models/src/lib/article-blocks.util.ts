@@ -51,6 +51,11 @@ function coverOf(s: ArticleLike | undefined): ImageConfig | undefined {
   return isObject(cover) ? cover : undefined;
 }
 
+/** The string values of a stored translation; `undefined` when it is no object. */
+function validI18n(value: unknown): I18nString | undefined {
+  return isObject(value) ? Object.fromEntries(Object.entries(value).filter(([, text]) => typeof text === 'string')) : undefined;
+}
+
 function columnsOf(block: ColumnsBlock): { size: number; blocks: ArticleBlock[] }[] {
   return Array.isArray(block.columns) ? block.columns.filter(isObject).map((c) => ({ size: c.size, blocks: validBlocks(c.blocks) })) : [];
 }
@@ -68,7 +73,7 @@ function flatten(blocks: ArticleBlock[]): ArticleBlock[] {
 /** The text and callout blocks, i.e. everything with HTML. */
 function htmlBlocks(blocks: ArticleBlock[]): { html: string; htmlI18n: I18nString }[] {
   return flatten(blocks).flatMap((b) => b.type === 'text' || b.type === 'callout'
-    ? [{ html: typeof b.html === 'string' ? b.html : '', htmlI18n: isObject(b.htmlI18n) ? b.htmlI18n : {} }]
+    ? [{ html: typeof b.html === 'string' ? b.html : '', htmlI18n: validI18n(b.htmlI18n) ?? {} }]
     : []);
 }
 
@@ -95,13 +100,19 @@ export function blockHtml(blocks: ArticleBlock[]): string {
   return htmlBlocks(blocks).map((b) => b.html).join('');
 }
 
-/** Per language; a language appears if at least one block has it, blocks without it contribute German. */
+/**
+ * The HTML per language: a language appears if at least one block is translated, blocks without it (an empty text is no
+ * translation) contribute German. German itself comes along, from `html`. `undefined` without any translation.
+ */
 function blockHtmlI18n(blocks: ArticleBlock[]): I18nString | undefined {
-  const texts = htmlBlocks(blocks);
-  const has = (text: { htmlI18n: I18nString }, lang: string): boolean => typeof text.htmlI18n[lang] === 'string';
-  const langs = [...new Set(texts.flatMap((t) => Object.keys(t.htmlI18n).filter((lang) => has(t, lang))))];
-  if (langs.length === 0) return undefined;
-  return Object.fromEntries(langs.map((lang) => [lang, texts.map((t) => has(t, lang) ? t.htmlI18n[lang] : t.html).join('')]));
+  const texts = htmlBlocks(blocks).map(({ html, htmlI18n }) => ({
+    html, translated: new Map(Object.entries(htmlI18n).filter(([lang, text]) => lang !== 'de' && text.trim() !== '')),
+  }));
+  const langs = new Set(texts.flatMap((t) => [...t.translated.keys()]));
+  if (langs.size === 0) return undefined;
+  const result: I18nString = { de: blockHtml(blocks) };
+  for (const lang of langs) result[lang] = texts.map((t) => t.translated.get(lang) ?? t.html).join('');
+  return result;
 }
 
 /**
@@ -124,8 +135,10 @@ export function articleCover(s: ArticleLike | undefined): ImageConfig | undefine
 
 /**
  * The blocks of an article without `blocks` (spec 1.173 §8.1). What is not drawn is dropped (an image style without
- * images, the layout of a single image …). An article that does not convert there and back exactly (one image beside
- * the text with a slideshow, a column size outside 1–11) must not be migrated: compare with `withClassicFields`.
+ * images, the layout of a single image …). These articles do not convert exactly and must not be migrated, see
+ * `convertsExactly`: one image beside the text with an active slideshow; a column size outside 1–11; an image without a
+ * url (the website counts only the images with one, so with `['a.jpg', '']` it draws a single image left of the text
+ * where the app draws two on top — a shape that no blocks have).
  */
 export function blocksFromClassic(s: ArticleLike): { blocks: ArticleBlock[]; cover?: ImageConfig } {
   const p = configOf(s);
@@ -133,7 +146,7 @@ export function blocksFromClassic(s: ArticleLike): { blocks: ArticleBlock[]; cov
   const html = s.content?.htmlContent;
   const text: TextBlock = defined({ id: 'classic-text', type: 'text', html: typeof html === 'string' ? html : '', htmlI18n: p.contentI18n });
   const position = articleImagePosition(s.content?.position, images.length, p.imageLayout);
-  const button: ButtonBlock[] = p.cta ? [{ id: 'classic-button', type: 'button', cta: p.cta }] : [];
+  const button: ButtonBlock[] = isObject(p.cta) ? [{ id: 'classic-button', type: 'button', cta: p.cta }] : [];
 
   if (isGallery(images.length, p.imageLayout, p.slideshow, position)) {
     const gallery: GalleryBlock = defined({
@@ -180,7 +193,7 @@ export function isFreeArticle(s: ArticleLike | undefined): boolean {
 }
 
 /**
- * The section with its old fields filled. Without blocks (or not an article): the same object. Classic: converted
+ * The section with its old fields filled, for reading only (never save it). Without blocks (or not an article): the same object. Classic: converted
  * exactly. Free: all text, all images and the first button, for readers that only want those; it does not draw like the
  * article. Stored old fields next to `blocks` are ignored; `blocks` and `cover` stay.
  */
@@ -225,13 +238,15 @@ function matchClassic(blocks: ArticleBlock[], cover: ImageConfig | undefined): C
   return cta && !isAligned(last) ? matchBody(blocks.slice(0, -1), cover, cta) : undefined;
 }
 
-/** The article without its button: text alone, columns, or images above or below the text. */
+/**
+ * The article without its button: text alone, columns, or images above or below the text. A cover is never drawn in the
+ * article, so next to images it changes nothing here (`articleCover` returns it); with text alone it is the old hidden image.
+ */
 function matchBody(body: ArticleBlock[], cover: ImageConfig | undefined, cta: SectionCta | undefined): ClassicFields | undefined {
   const [first, second] = body;
   if (body.length === 1 && first.type === 'text') {
     return matchText(first, (html, contentI18n) => classicFields(html, ViewPosition.None, { images: cover ? [cover] : [], cta, contentI18n }));
   }
-  if (cover) return undefined;      // today's fields know no cover next to the images of the article
   if (body.length === 1 && first.type === 'columns') return matchColumns(first, cta);
   if (body.length !== 2) return undefined;
   if (second.type === 'text') return matchImages(first, second, ViewPosition.Top, cta);
@@ -239,7 +254,7 @@ function matchBody(body: ArticleBlock[], cover: ImageConfig | undefined, cta: Se
 }
 
 function matchText(text: TextBlock, build: (html: string, i18n: I18nString | undefined) => ClassicFields | undefined): ClassicFields | undefined {
-  return isAligned(text) ? undefined : build(typeof text.html === 'string' ? text.html : '', text.htmlI18n);
+  return isAligned(text) ? undefined : build(typeof text.html === 'string' ? text.html : '', validI18n(text.htmlI18n));
 }
 
 function matchImages(block: ArticleBlock, text: TextBlock, position: ViewPosition.Top | ViewPosition.Bottom, cta: SectionCta | undefined): ClassicFields | undefined {
@@ -272,4 +287,58 @@ function matchBeside(image: ImageBlock, text: TextBlock, position: ViewPosition,
   if (!isObject(image.image)) return undefined;
   return matchText(text, (html, contentI18n) =>
     classicFields(html, position, { images: [image.image], imageStyle: image.imageStyle, cta, contentI18n }, colSize));
+}
+
+// ------------------------------------------------- is it exact? ------------------------------------------------
+
+/** What decides how an article without `blocks` is drawn (spec 1.173 §11 step 1): two articles with equal values look the same. */
+export interface DrawnArticle {
+  html: string;
+  i18n?: I18nString;
+  images: ImageConfig[];
+  imageStyle?: ArticleConfig['imageStyle'];
+  layout?: string;
+  slideshow?: ArticleSlideshow;
+  position: ViewPosition;
+  colSize?: number;
+  cta?: SectionCta;
+}
+
+export function drawnArticle(s: ArticleLike): DrawnArticle {
+  const p = configOf(s);
+  const n = p.images?.length ?? 0;
+  const position = articleImagePosition(s.content?.position, n, p.imageLayout);
+  const shown = position !== ViewPosition.None;                    // a full imageStyle is stored even without images
+  const side = n === 1 && (position === ViewPosition.Left || position === ViewPosition.Right);
+  return {
+    html: s.content?.htmlContent ?? '', i18n: p.contentI18n, images: p.images ?? [], imageStyle: shown ? p.imageStyle : undefined,
+    layout: n > 1 || (n === 1 && p.imageLayout === SIDE_BY_SIDE_LAYOUT) ? p.imageLayout : undefined,
+    slideshow: shown && isSlideshowActive(p.slideshow, p.imageLayout) ? p.slideshow : undefined,
+    position, colSize: side ? (s.content?.colSize ?? DEFAULT_COL_SIZE) : undefined, cta: p.cta,
+  };
+}
+
+/** Equal stored values; a property that is undefined equals one that is absent. */
+function isEqual(a: unknown, b: unknown): boolean {
+  if (Array.isArray(a) && Array.isArray(b)) return a.length === b.length && a.every((value, i) => isEqual(value, b[i]));
+  if (!isObject(a) || !isObject(b)) return Object.is(a, b);
+  const [left, right] = [a as Record<string, unknown>, b as Record<string, unknown>];
+  return [...new Set([...Object.keys(left), ...Object.keys(right)])].every((key) => isEqual(left[key], right[key]));
+}
+
+/**
+ * Whether an article without `blocks` may be converted with `blocksFromClassic`: converted there and back it is drawn the
+ * same, it stays classic, and all its images have a url (see `blocksFromClassic`). Otherwise it stays an old article.
+ * False for an article that has blocks, and for any other section.
+ */
+export function convertsExactly(s: ArticleLike): boolean {
+  if ((s.type && s.type !== 'article') || articleBlocksOf(s)) return false;
+  const stored: unknown = configOf(s).images ?? [];
+  if (!Array.isArray(stored) || !stored.every((i) => isObject(i) && hasUrl(i))) return false;
+  const converted: ArticleLike = { ...s, content: undefined, properties: blocksFromClassic(s) };
+  return !isFreeArticle(converted) && isEqual(drawnArticle(withClassicFields(converted)), drawnArticle(s));
+}
+
+function hasUrl(image: { url?: unknown }): boolean {
+  return typeof image.url === 'string' && image.url.trim() !== '';
 }
