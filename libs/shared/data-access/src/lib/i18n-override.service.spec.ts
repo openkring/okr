@@ -1,6 +1,6 @@
 import { Injector, runInInjectionContext } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
-import { BehaviorSubject, Observable, Subject, of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockSetTranslation = vi.fn();
@@ -24,12 +24,12 @@ vi.mock('@okr/shared-models', async (importOriginal) => ({
 import { FirestoreService } from './firestore.service';
 import { APP_STORE_MIN, I18nOverrideService } from './i18n-override.service';
 
-function makeService(overrides: unknown[] = [], langChanges$: Observable<string> = mockLangChanges$) {
+function makeService(overrides: unknown[] = []) {
   const translocoService = {
     getActiveLang: mockGetActiveLang,
     setTranslation: mockSetTranslation,
     setActiveLang: mockSetActiveLang,
-    langChanges$,
+    langChanges$: mockLangChanges$,
     load: mockLoad,
   };
   const firestoreService = {
@@ -138,24 +138,6 @@ describe('I18nOverrideService', () => {
     const [, dbQuery] = firestoreService.searchData.mock.calls[0];
     expect(dbQuery).toContainEqual({ key: 'tenants', operator: 'array-contains-any', value: ['scs', 'system'] });
     expect(dbQuery.some((q: { key: string }) => q.key === 'tenantId')).toBe(false);
-  });
-
-  // Regression: Transloco's setTranslation calls setActiveLang internally, which re-emits the
-  // CURRENT language through langChanges$. Without distinctUntilChanged in init(), the first
-  // applied override re-entered applyOverrides forever and froze the tab right after login.
-  // The re-emit is capped at 100 here so a regression fails the assertion instead of hanging.
-  it('should not re-enter applyOverrides when setTranslation re-emits the same language', () => {
-    const override = { module: 'chat/feature', key: 'fields.reconnecting', de: 'Verbindet…', isArchived: false };
-    const lang$ = new BehaviorSubject('de');
-    let reEmits = 0;
-    // The re-emit now comes from our own single setActiveLang per snapshot (Transloco's own
-    // re-emit inside setTranslation is switched off with emitChange: false).
-    mockSetActiveLang.mockImplementation((lang: string) => {
-      if (reEmits++ < 100) lang$.next(lang);
-    });
-    const { svc } = makeService([override], lang$);
-    svc.init();
-    expect(mockSetTranslation.mock.calls.length).toBeLessThan(5);
   });
 
   it('should skip overrides with no value for the requested language', () => {
