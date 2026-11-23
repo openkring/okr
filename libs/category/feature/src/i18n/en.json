@@ -67,6 +67,10 @@
     "missing": "The app needs these entries and they must not be missing: {name}. Add them back.",
     "warning": { "postal": "Without a postal address, invoices cannot be addressed by post.", "bankaccount": "Without a bank account, no payments can be recorded." }
   },
+  "itemLabel": {
+    "title": "Label for «{name}»",
+    "helper": "What you leave empty takes the first label entered. Without a label the name is shown."
+  },
 
   "priority": {
     "label": "Priority",

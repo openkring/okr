@@ -4,7 +4,7 @@ import { CategoryListModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
-import { hasRole, contextMenuId } from '@okr/shared-util-core';
+import { contextMenuId, fill, hasRole, listCopyTextKey } from '@okr/shared-util-core';
 import { AppStore } from '@okr/shared-feature';
 
 import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
@@ -83,7 +83,7 @@ type CategorySortField = 'name' | 'i18nBase' | 'nrItems';
         <ion-list lines="inset">
           @for(cat of filteredCategories(); track cat.okey) {
             <ion-item (click)="showActions(cat)">
-              <ion-label>{{cat.name}}</ion-label>      
+              <ion-label class="ion-text-wrap">{{cat.name}}<p>{{ copyText(cat) }}</p></ion-label>
               <ion-label class="ion-hide-lg-down">{{cat.i18n}}</ion-label>      
               <ion-label>{{ cat.items.length }}</ion-label>
             </ion-item>
@@ -182,6 +182,9 @@ export class CategoryList {
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, cat: CategoryListModel): void {
     actionSheetOptions.buttons.push(createActionSheetButton('category.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
     if (hasRole('admin', this.currentUser())) {
+      if (this.store.copyStatus(cat).kind === 'copy') {
+        actionSheetOptions.buttons.push(createActionSheetButton('category.restore', this.store.copyI18n.restore(), this.imgixBaseUrl, 'refresh'));
+      }
       actionSheetOptions.buttons.push(createActionSheetButton('category.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
@@ -202,6 +205,9 @@ export class CategoryList {
         case 'category.delete':
           await this.store.delete(cat, this.readOnly());
           break;
+        case 'category.restore':
+          await this.store.backToShared(cat, this.readOnly());
+          break;
         case 'category.edit':
           await this.store.edit(cat, this.readOnly());
           break;
@@ -210,6 +216,11 @@ export class CategoryList {
   }
 
   /******************************* helpers *************************************** */
+  protected copyText(cat: CategoryListModel): string {
+    const status = this.store.copyStatus(cat);
+    return fill(this.store.copyI18n[listCopyTextKey(status)](), { n: status.missing.length });
+  }
+
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.store.currentUser());
   }

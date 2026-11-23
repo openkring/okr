@@ -31,6 +31,17 @@
     "add": "Add",
     "price": "Price"
   },
+  "listCopy": {
+    "shared": "shared list",
+    "own": "own list",
+    "copy_one": "own list, 1 more entry in the shared one",
+    "copy_many": "own list, {n} more entries in the shared one",
+    "add": "Take over",
+    "restore": "Back to the shared list",
+    "restore_confirm": "You give up your own list and see the shared one again. Entries that are only in your list can no longer be chosen. What is already saved keeps its value.",
+    "restore_conf": "You are using the shared list again.",
+    "restore_error": "The shared list could not be restored."
+  },
   "color": {
     "select": "Color selection",
     "label": "Color"

@@ -1,16 +1,16 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular';
 
-import { AppStore } from '@okr/shared-feature';
+import { AppStore, TenantLabelService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { CategoryListModel, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
-import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
+import { coerceBoolean, completeLabels, getItemLabel, LIST_COPY_I18N_KEYS, safeStructuredClone, toI18nRef } from '@okr/shared-util-core';
 
-import { CategoryListForm } from '@okr/category-ui';
-import { CATEGORY_I18N_KEYS, CategoryI18n, isLockedList, missingProtectedItems, protectedItems, removalWarning } from '@okr/category-util';
+import { CategoryItemLabelModal, CategoryListForm } from '@okr/category-ui';
+import { CATEGORY_I18N_KEYS, categoryCopyStatus, CategoryI18n, CategoryItemLabel, missingProtectedItems, newCategoryItemLabel, protectedItems, removalWarning } from '@okr/category-util';
 import { FeatureStore } from '@okr/tenant-feature';
-import { dismissOverlay } from '@okr/shared-util-angular';
+import { AlertService, dismissOverlay } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-category-edit-modal',
@@ -39,6 +39,9 @@ import { dismissOverlay } from '@okr/shared-util-angular';
             [missingProtected]="missingProtected()"
             [removalWarnings]="removalWarnings()"
             [lockedIdentity]="lockedIdentity()"
+            [copyStatus]="category().okey ? copyStatus() : undefined"
+            (itemAdded)="onItemAdded($event)"
+            (restoreClicked)="restore()"
             [i18n]="i18n"
             (dirty)="formDirty.set($event)"
             (valid)="formValid.set($event)"
@@ -50,7 +53,11 @@ import { dismissOverlay } from '@okr/shared-util-angular';
 })
 export class CategoryEditModal {
   private readonly modalController = inject(ModalController);
-  protected readonly i18n = inject(I18nService).translateAll(CATEGORY_I18N_KEYS) as CategoryI18n;
+  private readonly i18nService = inject(I18nService);
+  private readonly alertService = inject(AlertService);
+  private readonly tenantLabelService = inject(TenantLabelService);
+  protected readonly i18n = this.i18nService.translateAll(CATEGORY_I18N_KEYS) as CategoryI18n;
+  private readonly copyI18n = this.i18nService.translateAll(LIST_COPY_I18N_KEYS);
   protected readonly appStore = inject(AppStore);
   private readonly featureStore = inject(FeatureStore);
 
@@ -92,17 +99,23 @@ export class CategoryEditModal {
       .map(item => item.name)
       .filter(name => !kept.has(name) && removalWarning(this.category().name, name, this.featureStore.isEnabled()));
   });
-  /** judged on the loaded list: typing «gender» into a new list must not lock the field */
-  protected readonly lockedIdentity = computed(() => isLockedList(this.category(), this.tenantId(), this.appStore.allCategories()));
+  protected readonly copyStatus = computed(() =>
+    categoryCopyStatus(this.category(), this.appStore.allCategories(), this.tenantId(), this.formData()?.items));
+  protected readonly lockedIdentity = computed(() => this.copyStatus().kind !== 'own');
+  /** labels entered for items added in this session of the modal, stored with the list */
+  private readonly itemLabels = new Map<string, CategoryItemLabel>();
   protected readonly changeConfirmationI18n = computed(() => ({cancel: this.i18n.cancel(), save: this.i18n.save()} as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await dismissOverlay(this.modalController, this.formData(), 'confirm');
+    const list = this.formData();
+    await dismissOverlay(this.modalController, list, 'confirm');
+    if (list && !this.isReadOnly()) await this.saveItemLabels(list);
   }
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
+    this.itemLabels.clear();
     this.formData.set(safeStructuredClone(this.category()));  // reset the form
     // re-mount the form so its field state (touched, error notes) starts fresh
     this.showForm.set(false);
@@ -111,5 +124,43 @@ export class CategoryEditModal {
 
   protected onFormDataChange(formData: CategoryListModel): void {
     this.formData.set(formData);
+  }
+
+  /** Gives up the tenant's copy; the store archives it. Unsaved changes go with it. */
+  protected async restore(): Promise<void> {
+    if (await this.alertService.confirm(this.copyI18n.restore_confirm(), true)) {
+      await dismissOverlay(this.modalController, undefined, 'restore');
+    }
+  }
+
+  protected async onItemAdded(name: string): Promise<void> {
+    const list = this.formData();
+    if (!list || this.isReadOnly() || !await this.needsLabel(list, name)) return;
+    const modal = await this.modalController.create({
+      component: CategoryItemLabelModal,
+      componentProps: { label: this.itemLabels.get(name) ?? newCategoryItemLabel(), itemName: name, i18n: this.i18n },
+    });
+    await modal.present();
+    const { data, role } = await modal.onWillDismiss<CategoryItemLabel>();
+    if (role === 'confirm' && data) this.itemLabels.set(name, data);
+  }
+
+  /** An item of a translated list that neither a bundle nor an override names; its raw key would show. */
+  private async needsLabel(list: CategoryListModel, name: string): Promise<boolean> {
+    const label = getItemLabel(list, name);
+    const ref = toI18nRef(label);
+    if (!ref || this.copyStatus().shared?.items?.some(item => item.name === name)) return false;
+    if (!await this.i18nService.lacksTranslation(label)) return false;
+    return !await this.tenantLabelService.findOverride(ref.module, ref.key, this.tenantId());
+  }
+
+  private async saveItemLabels(list: CategoryListModel): Promise<void> {
+    const loaded = new Set((this.category().items ?? []).map(item => item.name));
+    for (const { name } of list.items ?? []) {
+      const ref = toI18nRef(getItemLabel(list, name));
+      if (!ref || loaded.has(name) || !await this.needsLabel(list, name)) continue;
+      const labels = completeLabels({ ...(this.itemLabels.get(name) ?? newCategoryItemLabel()) }, name);
+      await this.tenantLabelService.saveOverride(ref.module, ref.key, this.tenantId(), labels, undefined, undefined, this.i18n.update_error());
+    }
   }
 }

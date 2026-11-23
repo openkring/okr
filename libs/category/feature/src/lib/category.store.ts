@@ -6,10 +6,11 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { CategoryListModel } from '@okr/shared-models';
-import { chipMatches, debugListLoaded, isCategoryList, nameMatches } from '@okr/shared-util-core';
+import { AlertService } from '@okr/shared-util-angular';
+import { chipMatches, debugListLoaded, isCategoryList, isOwnedBy, LIST_COPY_I18N_KEYS, ListCopyStatus, nameMatches } from '@okr/shared-util-core';
 
 import { CategoryService } from '@okr/category-data-access';
-import { CATEGORY_I18N_KEYS, CategoryI18n } from '@okr/category-util';
+import { CATEGORY_I18N_KEYS, categoryCopyStatus, CategoryI18n } from '@okr/category-util';
 
 import { CategoryEditModal } from './category-edit.modal';
 
@@ -32,9 +33,11 @@ export const CategoryStore = signalStore(
     appStore: inject(AppStore),
     modalController: inject(ModalController),
     i18nService: inject(I18nService),
+    alertService: inject(AlertService),
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll(CATEGORY_I18N_KEYS),
+    copyI18n: store.i18nService.translateAll(LIST_COPY_I18N_KEYS),
   })),
   withProps((store) => ({
     categoriesResource: rxResource({
@@ -85,6 +88,10 @@ export const CategoryStore = signalStore(
         return store.appStore.getTags('category');
       },
 
+      copyStatus(category: CategoryListModel): ListCopyStatus<CategoryListModel> {
+        return categoryCopyStatus(category, store.appStore.allCategories(), store.appStore.tenantId());
+      },
+
       /******************************** actions ******************************************* */
       async add(readOnly = true): Promise<void> {
         if (readOnly) { console.log('CategoryStore.add: readOnly mode.'); return; }
@@ -92,7 +99,7 @@ export const CategoryStore = signalStore(
           await this.edit(cat, readOnly);
       },
 
-      /** Opens the editor; resolves to the saved list, or undefined when nothing was saved. */
+      /** Opens the editor; resolves to the list now in use, or undefined when nothing changed. */
       async edit(category: CategoryListModel, readOnly = true): Promise<CategoryListModel | undefined> {
         const modal = await store.modalController.create({
           component: CategoryEditModal,
@@ -118,8 +125,30 @@ export const CategoryStore = signalStore(
             return data;
           }
         }
+        if (role === 'restore' && !readOnly) return await this.archiveCopy(category);
         store.categoriesResource.reload();
         return undefined;
+      },
+
+      async backToShared(category: CategoryListModel, readOnly = true): Promise<void> {
+        if (readOnly || !await store.alertService.confirm(store.copyI18n.restore_confirm(), true)) return;
+        await this.archiveCopy(category);
+      },
+
+      /** @returns the shared list that is in use from now on */
+      async archiveCopy(category: CategoryListModel): Promise<CategoryListModel | undefined> {
+        const status = this.copyStatus(category);
+        if (status.kind !== 'copy') return undefined;
+        // a caller may still hold the shared original it opened before the tenant got its copy
+        const tenantId = store.appStore.tenantId();
+        const copy = isOwnedBy(category, tenantId) ? category
+          : store.appStore.allCategories().find(cat => cat.name === category.name && isOwnedBy(cat, tenantId));
+        if (!copy) return undefined;
+        const key = await store.categoryService.archiveCopy(copy, store.currentUser(), store.copyI18n.restore_conf(), store.copyI18n.restore_error());
+        store.categoriesResource.reload();
+        if (!key) return undefined;
+        store.appStore.reloadCategories();
+        return status.shared;
       },
 
       async delete(cat: CategoryListModel, readOnly = true): Promise<void> {

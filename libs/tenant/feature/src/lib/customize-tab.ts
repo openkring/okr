@@ -15,7 +15,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { Checkbox } from '@okr/shared-ui';
 import type { CheckboxI18n } from '@okr/shared-ui';
 import { AlertService, resourceParams } from '@okr/shared-util-angular';
-import { MODEL_FIELDS, belongsToTenant, fill, hiddenFieldsOf, resourceFieldKey, withFieldVisibility, withoutModel } from '@okr/shared-util-core';
+import { LIST_COPY_I18N_KEYS, MODEL_FIELDS, belongsToTenant, copyStatus, fill, hiddenFieldsOf, listCopyTextKey, resourceFieldKey, string2stringArray, withFieldVisibility, withoutModel } from '@okr/shared-util-core';
 import type { ModelFieldMap } from '@okr/shared-util-core';
 import { CUSTOMIZE_I18N_KEYS, FEATURE_BLOCKS, customizeFieldKey, customizeGroupKey, withWidgetVisibility } from '@okr/tenant-util';
 
@@ -26,19 +26,30 @@ import { createSerialQueue } from './serial-queue.util';
 
 interface CustomizeLink { labelKey: string; url: string; }
 
+/** One row under «Listen»: a category by its name, or the tag definitions a predicate picks. */
+interface CustomizeList { labelKey: string; category?: string; tags?: (tagModel: string) => boolean; }
+
 /** Per model: the lists whose values are not edited here, and where they are edited. */
-interface CustomizeListInfo { listKeys: string[]; links: CustomizeLink[]; }
+interface CustomizeListInfo { lists: CustomizeList[]; links: CustomizeLink[]; }
 
 const LIST_INFO: Record<string, CustomizeListInfo> = {
   person: {
-    listKeys: ['list_gender', 'list_address_channel', 'list_address_usage', 'list_tags_person'],
+    lists: [
+      { labelKey: 'list_gender', category: 'gender' },
+      { labelKey: 'list_address_channel', category: 'address_channel' },
+      { labelKey: 'list_address_usage', category: 'address_usage' },
+      { labelKey: 'list_tags_person', tags: (tagModel) => tagModel === 'person' },
+    ],
     links: [
       { labelKey: 'link_categories', url: '/category/all/c-category' },
       { labelKey: 'link_tags', url: '/aoc/tag' },
     ],
   },
   org: {
-    listKeys: ['list_org_type', 'list_tags_org'],
+    lists: [
+      { labelKey: 'list_org_type', category: 'org_type' },
+      { labelKey: 'list_tags_org', tags: (tagModel) => tagModel === 'org' },
+    ],
     links: [
       { labelKey: 'link_categories', url: '/category/all/c-category' },
       { labelKey: 'link_tags', url: '/aoc/tag' },
@@ -48,7 +59,10 @@ const LIST_INFO: Record<string, CustomizeListInfo> = {
 
 /** The lists shared by all resource types; shown once, under the first resource group. */
 const RESOURCE_LIST_INFO: CustomizeListInfo = {
-  listKeys: ['list_resource_type', 'list_tags_resource'],
+  lists: [
+    { labelKey: 'list_resource_type', category: 'resource_type' },
+    { labelKey: 'list_tags_resource', tags: (tagModel) => tagModel === 'resource' || tagModel.startsWith('resource.') },
+  ],
   links: [
     { labelKey: 'link_categories', url: '/category/all/c-category' },
     { labelKey: 'link_tags', url: '/aoc/tag' },
@@ -105,8 +119,15 @@ const FIXED_GROUP_MODELS = ['person', 'org'];
             <ion-item lines="none">
               <ion-note class="ion-text-wrap">{{ text('lists_note') }}</ion-note>
             </ion-item>
-            @for (list of group.lists; track list) {
-              <ion-item lines="none"><ion-label class="ion-text-wrap">{{ list }}</ion-label></ion-item>
+            @for (list of group.lists; track list.key) {
+              <ion-item lines="none">
+                <ion-label class="ion-text-wrap">
+                  <h3>{{ list.label }}</h3>
+                  @if (list.state) {
+                    <p>{{ list.state }}</p>
+                  }
+                </ion-label>
+              </ion-item>
             }
             @for (link of group.links; track link.url) {
               <ion-item button [detail]="true" (click)="onNavigate(link.url)">
@@ -175,6 +196,8 @@ export class CustomizeTab {
 
   protected readonly i18n = this.i18nService.translateAll(CUSTOMIZE_I18N_KEYS);
 
+  private readonly copyI18n = this.i18nService.translateAll(LIST_COPY_I18N_KEYS);
+
   private readonly enqueue = createSerialQueue();
 
   /** Bumped after a failed write: the checkboxes are drawn anew from the stored state. */
@@ -186,7 +209,7 @@ export class CustomizeTab {
     const models = [...FIXED_GROUP_MODELS, ...resourceKeys];
     return models.map((modelKey, index) => {
       const hidden = hiddenFieldsOf(modelKey, stored);
-      const info = LIST_INFO[modelKey] ?? (index === FIXED_GROUP_MODELS.length ? RESOURCE_LIST_INFO : { listKeys: [], links: [] });
+      const info = LIST_INFO[modelKey] ?? (index === FIXED_GROUP_MODELS.length ? RESOURCE_LIST_INFO : { lists: [], links: [] });
       return {
         modelKey,
         note: modelKey === 'resource.other' ? this.text('resource_other_note') : '',
@@ -196,7 +219,7 @@ export class CustomizeTab {
           visible: !hidden.has(spec.field),
           i18n: { name: `${modelKey}-${spec.field}`, label: this.text(customizeFieldKey(modelKey, spec.field)), helper: '' } as CheckboxI18n,
         })),
-        lists: info.listKeys.map((key) => this.text(key)),
+        lists: info.lists.map((list) => ({ key: list.labelKey, label: this.text(list.labelKey), state: this.listState(list) })),
         links: info.links.map((link) => ({ url: link.url, label: this.text(link.labelKey) })),
       };
     });
@@ -258,6 +281,23 @@ export class CustomizeTab {
         if (!saved) this.epoch.update((n) => n + 1);
       }
     });
+  }
+
+  /** «gemeinsame Liste», «eigene Liste» …; empty when the lists behind one row differ (tags per resource type). */
+  private listState(list: CustomizeList): string {
+    const tenantId = this.appStore.tenantId();
+    const stateOf = <T extends { tenants?: string[] }>(docs: T[], namesOf: (doc: T) => string[]): string => {
+      const status = copyStatus(docs, tenantId, namesOf);
+      return fill(this.copyI18n[listCopyTextKey(status)](), { n: status.missing.length });
+    };
+    if (list.category) {
+      const docs = this.appStore.allCategories().filter((cat) => cat.name === list.category);
+      return docs.length === 0 ? '' : stateOf(docs, (cat) => (cat.items ?? []).map((item) => item.name));
+    }
+    const tags = this.appStore.allTags().filter((tag) => list.tags?.(tag.tagModel));
+    const states = new Set([...new Set(tags.map((tag) => tag.tagModel))].map((tagModel) =>
+      stateOf(tags.filter((tag) => tag.tagModel === tagModel), (tag) => string2stringArray(tag.tags ?? ''))));
+    return states.size === 1 ? [...states][0] : '';
   }
 
   protected text(name: string): string {

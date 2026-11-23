@@ -83,6 +83,16 @@ export class CategoryService {
     await this.firestoreService.deleteModel<CategoryListModel>(CategoryCollection, category, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
   }
 
+  /**
+   * Archive the tenant's own copy of a shared list, so that `pickForTenant` finds the shared one again.
+   * @param copy the copy AS STORED (never the edited form data); refused unless the tenant owns it alone
+   * @returns the key of the archived copy, undefined when nothing was archived
+   */
+  public async archiveCopy(copy: CategoryListModel, currentUser?: UserModel, confirmMessage?: string, errorMessage?: string): Promise<string | undefined> {
+    if (!isOwnedBy(copy, this.env.tenantId)) return undefined;
+    return await this.firestoreService.deleteModel<CategoryListModel>(CategoryCollection, { ...copy }, confirmMessage, errorMessage, currentUser);
+  }
+
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/
   
   /**

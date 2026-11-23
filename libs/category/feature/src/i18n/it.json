@@ -67,6 +67,10 @@
     "missing": "L'app ha bisogno di queste voci e non possono mancare: {name}. Aggiungile di nuovo.",
     "warning": { "postal": "Senza indirizzo postale, le fatture non possono essere spedite per posta.", "bankaccount": "Senza conto bancario non si possono registrare pagamenti." }
   },
+  "itemLabel": {
+    "title": "Denominazione di «{name}»",
+    "helper": "Ciò che lasci vuoto riprende la prima denominazione inserita. Senza denominazione viene mostrato il nome."
+  },
 
   "priority": {
     "label": "Priorità",

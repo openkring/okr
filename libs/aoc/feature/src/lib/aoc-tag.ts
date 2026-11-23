@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActionSheetController, ActionSheetOptions, IonBadge, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonNote, IonRow, IonSearchbar, IonToolbar } from '@ionic/angular';
 
 import { TranslatePipe } from '@okr/shared-i18n';
-import { Header } from '@okr/shared-ui';
+import { Header, ListCopy } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
 import { SvgIconPipe } from '@okr/shared-pipes';
 
@@ -15,7 +15,7 @@ import { AocTagStore, TagItem } from './aoc-tag.store';
   standalone: true,
   imports: [
     TranslatePipe, AsyncPipe, SvgIconPipe, FormsModule,
-    Header,
+    Header, ListCopy,
     IonContent, IonToolbar, IonSearchbar, IonButtons, IonButton, IonIcon,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
     IonList, IonItem, IonLabel, IonNote, IonBadge,
@@ -91,6 +91,10 @@ import { AocTagStore, TagItem } from './aoc-tag.store';
                 </ion-card-title>
               </ion-card-header>
               <ion-card-content>
+                @if(copyStatus(); as status) {
+                  <okr-list-copy [status]="status" [labels]="missingLabels()" [canRestore]="true"
+                    (add)="addMissing($event)" (restore)="backToShared()" />
+                }
                 @if(selectedTag()) {
                   <ion-list lines="inset">
                     <ion-item lines="none" (click)="addTagString(selectedTag()!)" button>
@@ -131,6 +135,9 @@ export class AocTag {
   protected readonly selectedTag = computed(() => this.aocTagStore.selectedTag());
   protected readonly selectedTagKey = computed(() => this.aocTagStore.selectedTagKey());
   protected readonly tagStrings = computed(() => this.aocTagStore.tagStrings());
+  protected readonly copyStatus = computed(() => this.aocTagStore.copyStatus());
+  /** a tag is its own i18n key */
+  protected readonly missingLabels = computed(() => Object.fromEntries((this.copyStatus()?.missing ?? []).map(tag => [tag, tag])));
 
   protected tagCount(tag: TagItem): string {
     if (!tag.tags) return '0';
@@ -149,6 +156,15 @@ export class AocTag {
 
   protected async addTagString(tag: TagItem): Promise<void> {
     await this.aocTagStore.addTagString(tag);
+  }
+
+  protected async addMissing(tagStr: string): Promise<void> {
+    const tag = this.selectedTag();
+    if (tag) await this.aocTagStore.addMissingTag(tag, tagStr);
+  }
+
+  protected async backToShared(): Promise<void> {
+    await this.aocTagStore.backToShared();
   }
 
   protected async showTagActions(tag: TagItem): Promise<void> {

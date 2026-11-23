@@ -31,6 +31,17 @@
     "add": "Añadir",
     "price": "Precio"
   },
+  "listCopy": {
+    "shared": "lista común",
+    "own": "lista propia",
+    "copy_one": "lista propia, 1 entrada más en la común",
+    "copy_many": "lista propia, {n} entradas más en la común",
+    "add": "Incorporar",
+    "restore": "Volver a la lista común",
+    "restore_confirm": "Renuncias a tu propia lista y vuelves a ver la común. Las entradas que solo están en tu lista ya no se podrán elegir. Lo que ya está guardado conserva su valor.",
+    "restore_conf": "Vuelves a usar la lista común.",
+    "restore_error": "No se ha podido restablecer la lista común."
+  },
   "color": {
     "select": "Selección de color",
     "label": "Color"

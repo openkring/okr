@@ -9,6 +9,7 @@ export * from './lib/count-pill';
 export * from './lib/button';
 export * from './lib/category-old';
 export * from './lib/category-items';
+export * from './lib/list-copy';
 export * from './lib/category-select';
 export * from './lib/change-confirmation';
 export * from './lib/checkbox';

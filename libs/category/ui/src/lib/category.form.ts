@@ -2,18 +2,18 @@ import { Component, computed, effect, input, model, output, Signal } from '@angu
 import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
-import { CategoryI18n, categoryListValidations } from '@okr/category-util';
+import { CategoryI18n, categoryListValidations, withSharedItem } from '@okr/category-util';
 import { CategoryItemModel, CategoryListModel, ColorIonic, RoleName, UserModel } from '@okr/shared-models';
-import { CategoryItems, Checkbox, CheckboxI18n, Chips, ErrorNote, TextareaInput, TextareaInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { CategoryItems, Checkbox, CheckboxI18n, Chips, ErrorNote, ListCopy, TextareaInput, TextareaInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
-import { coerceBoolean, debugFormModel, hasRole } from '@okr/shared-util-core';
+import { coerceBoolean, debugFormModel, getItemLabel, hasRole, ListCopyStatus } from '@okr/shared-util-core';
 import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
 @Component({
   selector: 'okr-category-list-form',
   standalone: true,
   imports: [
-    Chips, TextareaInput, TextInput, ErrorNote, CategoryItems, Checkbox,
+    Chips, TextareaInput, TextInput, ErrorNote, CategoryItems, ListCopy, Checkbox,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -49,12 +49,22 @@ import { DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, NAME_LEN
         </ion-card-content>
       </ion-card>
 
+      @if (copyStatus(); as status) {
+        <ion-card>
+          <ion-card-content class="ion-no-padding">
+            <okr-list-copy [status]="status" [labels]="missingLabels()" [canRestore]="hasRole('admin')" [readOnly]="isReadOnly()"
+              (add)="onAddMissing($event)" (restore)="restoreClicked.emit()" />
+          </ion-card-content>
+        </ion-card>
+      }
+
       <okr-category-items
         [items]="items()"
         [hasAbbreviation]="hasAbbreviation()"
         [hasPrice]="hasPrice()"
         [protectedNames]="protectedNames()"
         (changed)="onFieldChange('items', $event)"
+        (added)="itemAdded.emit($event)"
       />
       <okr-error-note [errors]="itemsErrors()" [params]="{ name: missingProtected().join(', ') }" />
       @for (warning of removalWarnings(); track warning) {
@@ -96,12 +106,16 @@ export class CategoryListForm {
   public removalWarnings = input<readonly string[]>([]);
   /** shared lists and copies of system lists: name, i18n scope and translateItems stay as they are */
   public lockedIdentity = input(false);
+  /** how the tenant holds this list; undefined for a list that is not stored yet */
+  public copyStatus = input<ListCopyStatus<CategoryListModel> | undefined>();
   protected readonly warningColor = ColorIonic.Warning;
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
  // signals
   public dirty = output<boolean>();
   public valid = output<boolean>();
+  public itemAdded = output<string>();
+  public restoreClicked = output<void>();
 
   // The suite needs tenants and tags, which validateVestTree does not pass — so the bridge
   // calls it through a closure that adds them.
@@ -138,6 +152,12 @@ export class CategoryListForm {
   protected okey = computed(() => this.formData().okey ?? '');
   /** membership categories are price lists (the fee schedule reads them); any list that already carries a price stays editable */
   protected hasPrice = computed(() => this.name().startsWith('mcat') || this.items().some(item => (item.price ?? 0) > 0));
+
+  protected readonly missingLabels = computed(() => {
+    const status = this.copyStatus();
+    if (!status?.shared?.translateItems) return {};
+    return Object.fromEntries(status.missing.map(name => [name, getItemLabel(status.shared, name)]));
+  });
 
   protected okeyI18n = computed(() => ({
     name: 'okey',
@@ -177,6 +197,10 @@ export class CategoryListForm {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
     debugFormModel('CategoryListForm.onFieldChange', this.formData(), this.currentUser());
+  }
+
+  protected onAddMissing(name: string): void {
+    this.onFieldChange('items', withSharedItem(this.items(), this.copyStatus()?.shared, name));
   }
 
   protected hasRole(role: RoleName): boolean {

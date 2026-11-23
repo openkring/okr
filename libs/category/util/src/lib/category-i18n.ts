@@ -61,6 +61,9 @@ export const CATEGORY_I18N_KEYS = {
   items_warning_postal:     PFX + 'items.warning.postal',
   items_warning_bankaccount: PFX + 'items.warning.bankaccount',
 
+  item_label_title:         PFX + 'itemLabel.title',
+  item_label_helper:        PFX + 'itemLabel.helper',
+
   priority:                 PFX + 'priority.label',
   priority_label:           PFX + 'priority.label',
   priority_helper:          PFX + 'priority.helper',

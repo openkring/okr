@@ -67,6 +67,10 @@
     "missing": "L'application a besoin de ces entrées, elles ne doivent pas manquer : {name}. Ajoute-les à nouveau.",
     "warning": { "postal": "Sans adresse postale, les factures ne peuvent pas être adressées par courrier.", "bankaccount": "Sans compte bancaire, aucun paiement ne peut être enregistré." }
   },
+  "itemLabel": {
+    "title": "Désignation de «{name}»",
+    "helper": "Ce que tu laisses vide reprend la première désignation saisie. Sans désignation, le nom est affiché."
+  },
 
   "priority": {
     "label": "Priorité",

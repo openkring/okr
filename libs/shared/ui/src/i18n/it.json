@@ -31,6 +31,17 @@
     "add": "Aggiungere",
     "price": "Prezzo"
   },
+  "listCopy": {
+    "shared": "elenco comune",
+    "own": "elenco proprio",
+    "copy_one": "elenco proprio, 1 altra voce in quello comune",
+    "copy_many": "elenco proprio, {n} altre voci in quello comune",
+    "add": "Riprendi",
+    "restore": "Torna all’elenco comune",
+    "restore_confirm": "Rinunci al tuo elenco e vedi di nuovo quello comune. Le voci presenti solo nel tuo elenco non si potranno più scegliere. Ciò che è già salvato mantiene il suo valore.",
+    "restore_conf": "Usi di nuovo l’elenco comune.",
+    "restore_error": "Non è stato possibile ripristinare l’elenco comune."
+  },
   "color": {
     "select": "Selezione del colore",
     "label": "Colore"

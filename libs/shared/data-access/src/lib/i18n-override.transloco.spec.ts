@@ -4,6 +4,9 @@ import { provideTransloco, TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom, of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { CategoryListModel } from '@okr/shared-models';
+import { getItemLabel, toI18nRef } from '@okr/shared-util-core';
+
 import { FirestoreService } from './firestore.service';
 import { APP_STORE_MIN, I18nOverrideService } from './i18n-override.service';
 
@@ -42,7 +45,9 @@ describe('I18nOverrideService with the real Transloco', () => {
     TestBed.resetTestingModule();
   });
 
-  const pager = { module: SCOPE, key: 'address_channel.pager.label', de: 'Pager' };
+  // the row the category editor writes for a new item
+  const list = Object.assign(new CategoryListModel('scs'), { name: 'address_channel', i18n: '@' + SCOPE, translateItems: true });
+  const pager = { ...(toI18nRef(getItemLabel(list, 'pager')) ?? { module: '', key: '' }), de: 'Pager' };
 
   it('shows a new key of a path scope when the scope loads after the rows', async () => {
     const { service, read } = setup([pager]);

@@ -158,6 +158,27 @@ export class I18nService {
   }
 
   /**
+   * Whether the active language has no text for the key. Unlike translating, it reports nothing to
+   * Sentry. False when the scope cannot be loaded: then nothing is known about the key.
+   */
+  public async lacksTranslation(key: string): Promise<boolean> {
+    if (!key.startsWith('@')) return false;
+    const translationKey = key.substring(1);
+    const dotIndex = translationKey.indexOf('.');
+    const prefix = dotIndex === -1 ? translationKey : translationKey.substring(0, dotIndex);
+    const lang = this.translocoService.getActiveLang();
+    const [path, pathKey] = prefix.includes('/')
+      ? [`${prefix}/${lang}`, translationKey.substring(prefix.length + 1)]
+      : [lang, translationKey];
+    try {
+      await firstValueFrom(this.translocoService.load(path));
+    } catch {
+      return false;
+    }
+    return !this.translocoService.getTranslation(path)[pathKey];
+  }
+
+  /**
    * Resolve every item label of a category once and return a synchronous lookup.
    *
    * Category item labels are stored as i18n *keys* (see `getItemLabel`), so a cell in an

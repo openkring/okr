@@ -136,6 +136,8 @@ export class CategoryItems {
   /** items that code looks up by name: they can be reordered and get another icon, but not be removed */
   public protectedNames = input<readonly string[]>([]);
   public changed = output<CategoryItemModel[]>();
+  /** the name of an item the user has just added (after `changed`) */
+  public added = output<string>();
   
   protected newItem = new CategoryItemModel('', '');
 
@@ -176,15 +178,14 @@ export class CategoryItems {
   }
 
   protected add(): void {
-    this.items().push(this.newItem);
+    const item = this.newItem;
     this.newItem = new CategoryItemModel('', '');
-    this.changed.emit(this.items());
+    this.update([...this.items(), item]);
+    this.added.emit(item.name);
   }
 
   protected setPrice(index: number, event: CustomEvent): void {
-    const items = this.items().map((item, i) => i === index ? { ...item, price: this.parsePrice(event.detail.value) } : item);
-    this.items.set(items);
-    this.changed.emit(items);
+    this.update(this.items().map((item, i) => i === index ? { ...item, price: this.parsePrice(event.detail.value) } : item));
   }
 
   /** an empty or invalid entry becomes undefined (the validation skips it) rather than NaN */
@@ -194,8 +195,13 @@ export class CategoryItems {
   }
 
   protected remove(name: string): void {
-    this.items().splice(this.getIndexOfItem(this.items(), name), 1);
-    this.changed.emit(this.items());
+    const index = this.items().findIndex(item => item.name === name);
+    this.update(this.items().filter((_, i) => i !== index));
+  }
+
+  private update(items: CategoryItemModel[]): void {
+    this.items.set(items);
+    this.changed.emit(items);
   }
 
 /**
@@ -203,21 +209,7 @@ export class CategoryItems {
  * @param ev the custom dom event with the reordered items
  */
   protected reorder(ev: CustomEvent<ItemReorderEventDetail>) {
-    this.items.set(ev.detail.complete(this.items()));
-    this.changed.emit(this.items());
-  }
-
-  /**
-   * Returns the index of the first occurrence of a name in a CategoryItemModel array, or -1 if it is not present.
-   * @param items the CategoryItemModel array to search in
-   * @param name the name to search for
-   * @returns the index of the given name, or -1 if it is not present
-   */
-  private getIndexOfItem(items: CategoryItemModel[], name: string): number {
-    for (let i = 0; i < items.length; i++) {
-      if (items[i].name === name) return i;
-    }
-    return -1;
+    this.update(ev.detail.complete(this.items()));
   }
 
   readonly maskPredicate: MaskitoElementPredicate = async (el) => (el as unknown as HTMLIonInputElement).getInputElement();

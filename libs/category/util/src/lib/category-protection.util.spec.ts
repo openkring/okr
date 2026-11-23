@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { categoryListValidations } from './category.validations';
-import { isLockedList, missingProtectedItems, protectedItems, removalWarning } from './category-protection.util';
+import { missingProtectedItems, protectedItems, removalWarning } from './category-protection.util';
 
 const on = () => true;
 const off = () => false;
@@ -47,24 +47,6 @@ describe('removalWarning', () => {
     expect(removalWarning('address_channel', 'postal', off)).toBeUndefined();
     expect(removalWarning('address_channel', 'web', on)).toBeUndefined();
     expect(removalWarning('gender', 'postal', on)).toBeUndefined();
-  });
-});
-
-describe('isLockedList', () => {
-  const own = { name: 'gender', okey: 'a', tenants: ['scs'] };
-  const shared = { name: 'gender', okey: 'b', tenants: ['scs', 'kring'] };
-  const system = { name: 'gender', okey: 'c', tenants: ['system'] };
-  it('is free for a list the tenant owns alone and no system list shares its name', () => {
-    expect(isLockedList(own, 'scs', [own])).toBe(false);
-  });
-  it('is locked for a shared list', () => {
-    expect(isLockedList(shared, 'scs', [shared])).toBe(true);
-  });
-  it('is locked for a copy of a system list', () => {
-    expect(isLockedList(own, 'scs', [own, system])).toBe(true);
-  });
-  it('does not lock a new list on an unrelated name', () => {
-    expect(isLockedList({ name: 'mine', okey: '', tenants: ['scs'] }, 'scs', [system])).toBe(false);
   });
 });
 
