@@ -66,10 +66,24 @@ def put_obj(path, token=None, ctype="image/png"):
     try: return urllib.request.urlopen(r).status
     except urllib.error.HTTPError as e: return e.code
 
+def del_obj(path, token=None):
+    enc = urllib.parse.quote(path, safe="")
+    hdr = {"Authorization": f"Bearer {token}"} if token else {}
+    r = urllib.request.Request(f"http://{ST}/v0/b/{BUCKET}/o/{enc}", headers=hdr, method="DELETE")
+    try: return urllib.request.urlopen(r).status
+    except urllib.error.HTTPError as e: return e.code
+
 
 seed_user("uidA", {"tenants": ["t1"], "roles": {}})
 seed_user("uidB", {"tenants": ["t2"], "roles": {"admin": True}})
-A, B = jwt("uidA"), jwt("uidB")
+# tenant settings images (tenant/<id>/app/): written by an admin of the tenant only
+seed_user("uidC", {"tenants": ["t1"], "roles": {"privileged": True}})
+seed_user("uidD", {"tenants": ["t1"], "roles": {"admin": True}})
+A, B, C, D = jwt("uidA"), jwt("uidB"), jwt("uidC"), jwt("uidD")
+APP_OBJ = "tenant/t1/app/welcome-20261124101500.png"
+for name in (APP_OBJ, "tenant/t1/app/old-1.png", "tenant/t1/app/old-2.png", "tenant/t1/app/old-3.png", "tenant/t1/section/old.png"):
+    if put_obj(name, "owner") != 200:
+        raise SystemExit(f"could not seed {name}")
 
 # privacy 1.19 Phase 5B (D-P5-1): a real export artifact in the CF-only prefix. Seeded
 # with the emulator's owner token (rules-bypassing, like the Admin SDK the CF uses), so
@@ -90,6 +104,8 @@ read_cases = [
     ("uidA GET t2/p/k/documents -> DENY",     False, "t2/person/k/documents/x.pdf", A),
     ("anon GET logo (public) -> ALLOW",       True,  "logo/icons/x.svg", None),
     ("uidA GET unknown prefix -> DENY",       False, "random/x", A),
+    ("uidA(member) GET t1 app/ image -> ALLOW", True, "tenant/t1/app/missing.png", A),
+    ("uidB(admin t2) GET t1 app/ image -> DENY", False, "tenant/t1/app/missing.png", B),
     ("uidA GET generated-docs/t1 -> ALLOW",   True,  "generated-docs/t1/u/x.pdf", A),
     # privacy 1.19 Phase 5B (D-P5-1): the export ZIPs hold AHV, dob and IBAN in plaintext.
     # No client may read them — not the owner of the export, not a tenant admin. They are
@@ -117,6 +133,25 @@ write_cases = [
     ("uidA PUT into private/ -> DENY",      False, "tenant/t1/private/exports/uidA/x.zip", A),
     ("uidA PUT private/ (any depth) -> DENY", False, "tenant/t1/private/x.zip", A),
     ("uidB(admin) PUT website template -> DENY", False, "websites/scs/templates/v1/layout.hbs", B),
+    # tenant settings images: create and overwrite (update) need admin of that tenant
+    ("uidA(member) PUT new app/ image -> DENY",       False, "tenant/t1/app/welcome-new.png", A),
+    ("uidA(member) overwrite app/ image -> DENY",     False, APP_OBJ, A),
+    ("uidC(privileged) PUT app/ image -> DENY",       False, "tenant/t1/app/welcome-new.png", C),
+    ("uidC(privileged) overwrite app/ image -> DENY", False, APP_OBJ, C),
+    ("anon PUT app/ image -> DENY",                   False, "tenant/t1/app/welcome-new.png", None),
+    ("uidB(admin t2) PUT t1 app/ image -> DENY",      False, "tenant/t1/app/welcome-new.png", B),
+    ("uidD(admin t1) PUT new app/ image -> ALLOW",    True,  "tenant/t1/app/welcome-new.png", D),
+    ("uidD(admin t1) overwrite app/ image -> ALLOW",  True,  APP_OBJ, D),
+    ("uidA(member) PUT another sub (section) -> ALLOW", True, "tenant/t1/section/a.png", A),
+]
+# delete: allowed -> 204 ; denied -> 403
+delete_cases = [
+    ("uidA(member) DELETE app/ image -> DENY",        False, APP_OBJ, A),
+    ("uidC(privileged) DELETE app/ image -> DENY",    False, APP_OBJ, C),
+    ("uidB(admin t2) DELETE t1 app/ image -> DENY",   False, APP_OBJ, B),
+    ("anon DELETE app/ image -> DENY",                False, APP_OBJ, None),
+    ("uidD(admin t1) DELETE app/ image -> ALLOW",     True,  "tenant/t1/app/old-1.png", D),
+    ("uidA(member) DELETE another sub (section) -> ALLOW", True, "tenant/t1/section/old.png", A),
 ]
 
 passed = failed = 0
@@ -126,6 +161,10 @@ for label, expect, path, tok in read_cases:
     print(f"{'PASS' if ok else 'FAIL'} [{c}] {label}")
 for label, expect, path, tok in write_cases:
     c = put_obj(path, tok); ok = (c == 200) == expect
+    passed += ok; failed += not ok
+    print(f"{'PASS' if ok else 'FAIL'} [{c}] {label}")
+for label, expect, path, tok in delete_cases:
+    c = del_obj(path, tok); ok = (c in (200, 204)) == expect
     passed += ok; failed += not ok
     print(f"{'PASS' if ok else 'FAIL'} [{c}] {label}")
 
