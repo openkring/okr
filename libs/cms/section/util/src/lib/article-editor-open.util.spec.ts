@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { ArticleBlock, ArticleSection, SectionModel, ViewPosition, drawnArticle, withClassicFields } from '@okr/shared-models';
 
+import { joinWithAbove } from './article-editor.util';
 import {
   articleWithBlocks, changedMeanwhile, germanHash, isArticleChanged, newArticleForEditor, openArticle, outdatedPaths, prepareArticleForSave,
 } from './article-editor-open.util';
@@ -49,6 +50,11 @@ describe('openArticle', () => {
     ['gallery on top', { images: [img('a.jpg'), img('b.jpg')], imageLayout: 'row' }, { position: ViewPosition.Top }],
     ['image with button', { images: [img('a.jpg')], cta: { label: 'Go', url: '/x', style: 'primary' } }, { position: ViewPosition.Top }],
     ['hidden image', { images: [img('a.jpg')] }, { position: ViewPosition.None }],
+    ['gallery at the bottom', { images: [img('a.jpg'), img('b.jpg')], imageLayout: 'row' }, { position: ViewPosition.Bottom }],
+    ['single side-by-side image', { images: [img('a.jpg')], imageLayout: 'big-left' }, { position: ViewPosition.Top }],
+    ['single image with slideshow on top', { images: [img('a.jpg')], slideshow: { effect: 'fade', autoplay: true, interval: 3, duration: 1 } }, { position: ViewPosition.Top }],
+    ['gallery with slideshow', { images: [img('a.jpg'), img('b.jpg')], slideshow: { effect: 'fade', autoplay: true, interval: 3, duration: 1 } }, { position: ViewPosition.Top }],
+    ['text with button', { cta: { label: 'Go', url: '/x', style: 'primary' } }, {}],
     ['translated text', { contentI18n: { en: '<p>hi</p>' } }, {}],
   ])('draws the opened article like the old one: %s', (_name, properties, content) => {
     const s = base(properties, content);
@@ -105,6 +111,35 @@ describe('openArticle', () => {
     expect(a.htmlI18n).not.toHaveProperty('de');
     expect(b.html).toBe('<p>own</p>');
     expect(b.htmlI18n).toBeUndefined();
+  });
+
+  it('gives a block with id "" a new id', () => {
+    const ids = blocksOf(openArticle(withBlocks([text('', '<p>a</p>'), text('b', '<p>b</p>')]), counter()).section).map((b) => b.id);
+    expect(ids[0]).not.toBe('');
+    expect(ids[1]).toBe('b');
+  });
+
+  it('survives columns: null and a column without blocks', () => {
+    const s = withBlocks([{ id: 'c1', type: 'columns', columns: null }, { id: 'c2', type: 'columns', columns: [{ size: 6 }, { size: 6, blocks: [text('x', '')] }] }]);
+    const opened = openArticle(s, counter()).section;
+    const [c1, c2] = blocksOf(opened) as unknown as [{ columns: unknown }, { columns: { blocks?: unknown[] }[] }];
+    expect(c1.columns).toBeNull();
+    expect(c2.columns[0]).toEqual({ size: 6 });
+    expect(c2.columns[1].blocks).toHaveLength(1);
+  });
+
+  it('turns the German of a classic contentI18n into nothing and keeps the others', () => {
+    const opened = openArticle(base({ contentI18n: { de: '<p>hello</p>', en: '<p>hi</p>' } }), counter()).section;
+    expect(blocksOf(opened)[0]).toMatchObject({ html: '<p>hello</p>', htmlI18n: { en: '<p>hi</p>' } });
+    expect((blocksOf(opened)[0] as unknown as { htmlI18n: object }).htmlI18n).not.toHaveProperty('de');
+  });
+
+  it('handles htmlI18n.de inside a column', () => {
+    const cols = { id: 'c', type: 'columns', columns: [{ size: 6, blocks: [text('i', '', { de: '<p>de</p>', en: 'e' })] }, { size: 6, blocks: [] }] };
+    const opened = openArticle(withBlocks([cols]), counter()).section;
+    const inner = (blocksOf(opened)[0] as unknown as { columns: { blocks: object[] }[] }).columns[0].blocks[0];
+    expect(inner).toMatchObject({ html: '<p>de</p>', htmlI18n: { en: 'e' } });
+    expect(inner).not.toHaveProperty('htmlI18n.de');
   });
 
   it('fills missing properties and content with empty shapes', () => {
@@ -311,6 +346,31 @@ describe('prepareArticleForSave', () => {
     const joined = edit(opened, [text('up', '<p>A</p><p>B</p>', { en: '<p>a</p><p>B</p>' })]);
     const m = metaOf(await prep(opened, joined));
     expect(m?.['blocks.up.htmlI18n']['en']).toMatchObject({ origin: 'manual', srcHash: await H('<p>A</p>') });
+  });
+
+  it('keeps the meta inside unknown blocks and drops only known blocks that are gone', async () => {
+    const existing = { 'blocks.in.htmlI18n': { en: meta('1') }, 'blocks.gone.htmlI18n': { en: meta('2') } };
+    const grid = { id: 'g', type: 'grid', cells: [{ id: 'in' }] } as unknown as ArticleBlock;
+    const opened = withBlocks([grid, text('gone', '<p>g</p>', { en: 'e' })], { i18nMeta: existing });
+    const m = metaOf(await prep(opened, edit(opened, [grid])));
+    expect(Object.keys(m ?? {})).toEqual(['blocks.in.htmlI18n']);
+  });
+
+  it('keeps the meta of the lower text when it is joined into a new empty upper text', async () => {
+    const opened = withBlocks([text('lo', '<p>B</p>', { en: '<p>b</p>' })], { i18nMeta: { 'blocks.lo.htmlI18n': { en: meta('h1') } } });
+    const start = edit(opened, [text('up', ''), text('lo', '<p>B</p>', { en: '<p>b</p>' })]);
+    const joined = joinWithAbove(start.properties.blocks as ArticleBlock[], 'lo');
+    expect(joined?.joined).toBe(true);
+    const m = metaOf(await prep(opened, edit(opened, joined?.blocks ?? []), { up: 'lo' }));
+    expect(m).toEqual({ 'blocks.up.htmlI18n': { en: meta('h1') } });
+  });
+
+  it('marks a new upper text joined with a translated lower text against the German of the lower', async () => {
+    const opened = withBlocks([text('lo', '<p>B</p>', { en: '<p>b</p>' })]);
+    const start = edit(opened, [text('up', '<p>A</p>'), text('lo', '<p>B</p>', { en: '<p>b</p>' })]);
+    const joined = joinWithAbove(start.properties.blocks as ArticleBlock[], 'lo');
+    const m = metaOf(await prep(opened, edit(opened, joined?.blocks ?? []), { up: 'lo' }));
+    expect(m).toEqual({ 'blocks.up.htmlI18n': { en: { origin: 'manual', srcHash: await H('<p>B</p>'), at: NOW } } });
   });
 
   it('does not mutate its input', async () => {

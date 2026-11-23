@@ -206,7 +206,9 @@ function sourceBlockOf(id: string, openedIds: Set<string>, copiedFrom: Record<st
 
 /**
  * The article for saving: `properties.i18nMeta` brought up to date (§10). `copiedFrom` maps the id of a block copied in the
- * editor to the id it was copied from (the inverse of the `copies` of `duplicateBlock`); copies of copies resolve.
+ * editor to the id it was copied from (the inverse of the `copies` of `duplicateBlock`); copies of copies resolve. It may also hold
+ * the upper text of a join that did not exist at opening and is no copy, mapped to the id of the joined lower text: the
+ * upper then takes over the lower's meta and is marked against the lower's German.
  * A translation whose German changed since opening and that has no meta gets `{ manual, hash of the German as opened }`; existing
  * meta is never changed. A copy takes the meta of its source; meta of blocks that are gone is dropped.
  */
@@ -222,8 +224,9 @@ export async function prepareArticleForSave(
   const result: I18nMeta = {};
   // meta of blocks that still exist (and of everything that is no block path)
   for (const [path, byLang] of Object.entries(base ?? {})) {
-    const isBlockPath = path.startsWith('blocks.');
-    if (!isBlockPath || [...currentIds].some((id) => path.startsWith(`blocks.${id}.`))) result[path] = { ...byLang };
+    // only a known block of the opened article that is gone now loses its meta; what lies inside unknown blocks stays
+    const gone = [...openedIds].some((id) => !currentIds.has(id) && path.startsWith(`blocks.${id}.`));
+    if (!gone) result[path] = { ...byLang };
   }
   // a copy takes the meta of its source
   for (const id of currentIds) {
