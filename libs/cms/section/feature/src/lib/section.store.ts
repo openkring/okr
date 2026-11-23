@@ -11,16 +11,18 @@ import { catchError, firstValueFrom, of } from 'rxjs';
 
 import { AppStore, withErrorState } from '@okr/shared-feature';
 import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, EmailLayoutChoice, IMAGE_CONFIG_SHAPE, ImageActionType, ImageConfig, SectionModel, SectionType, WebsiteCollection, WebsiteModel, articleBlocksOf, withClassicFields } from '@okr/shared-models';
-import { getSystemQuery, chipMatches, debugData, debugItemLoaded, debugMessage, fill, nameMatches, sanitizeFileName, chatBlockedAlertMessage, isChatBlockedError, EMERGENCY_GROUP_KEY } from '@okr/shared-util-core';
+import { getSystemQuery, chipMatches, generateRandomString, debugData, debugItemLoaded, debugMessage, fill, nameMatches, sanitizeFileName, chatBlockedAlertMessage, isChatBlockedError, EMERGENCY_GROUP_KEY } from '@okr/shared-util-core';
 import { DEFAULT_MIMETYPES, IMAGE_MIMETYPES } from '@okr/shared-constants';
 import { confirm, downloadTextFile, exportCsv, getExportFileName, lazyService, showToast, resourceParams, notify } from '@okr/shared-util-angular';
 import { FirestoreService, ChatStatusService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 
 import { UploadService } from '@okr/avatar-data-access';
-import { SectionService } from '@okr/cms-section-data-access';
-import { createSection, narrowSection, SECTION_I18N_KEYS } from '@okr/cms-section-util';
+import { ArticleBlocksGate, SectionService } from '@okr/cms-section-data-access';
+import { createSection, narrowSection, SECTION_I18N_KEYS, usesArticleEditor } from '@okr/cms-section-util';
 import { allowedSectionTypesForPage } from '@okr/cms-website-render';
+
+import { openArticleEditor } from './article-editor.loader';
 
 export type Coordinates = {
   latitude: number;
@@ -52,6 +54,7 @@ export const _SectionStore = signalStore(
   withErrorState(),
   withProps(() => ({
     sectionService: inject(SectionService),
+    articleBlocksGate: inject(ArticleBlocksGate),
     uploadService: inject(UploadService),
     // Lazy: a static import here would drag matrix-js-sdk before the LCP (spec 1.49, F1).
     chatService: lazyService(inject(Injector), () =>
@@ -225,6 +228,16 @@ export const _SectionStore = signalStore(
         if (!section) return;
         const roles = this.getRoles();
         const states = store.appStore.getCategory('content_state');
+        // the article editor saves by itself (spec 1.175 §7.1)
+        if (section.type === 'article' && !readOnly) await store.articleBlocksGate.load();
+        if (usesArticleEditor(section, readOnly, store.articleBlocksGate.open())) {
+          const isNew = !section.okey;
+          // a new article gets its key now, so that its uploads have a folder
+          const article = (isNew ? { ...section, okey: generateRandomString(20) } : section) as ArticleSection;
+          const sectionId = await openArticleEditor(store.modalController, article, { isNew, currentUser: store.currentUser(), roles, states, tagModel: 'section' });
+          if (sectionId) this.reload();
+          return sectionId;
+        }
         const { SectionEditModal } = await import('./section-edit.modal');
         const modal = await store.modalController.create({
           component: SectionEditModal,

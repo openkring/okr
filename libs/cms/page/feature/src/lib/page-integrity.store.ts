@@ -11,7 +11,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { AccordionSection, ArticleSection, OkrModel, DocumentCollection, DocumentModel, ImageConfig, ImageType, LogInfo, MembershipCollection, MembershipModel, MenuItemModel, OrgCollection, OrgModel, PageCollection, PageModel, PeopleSection, PersonCollection, PersonModel, SectionModel, SliderSection, UserModel, articleBlocksOf } from '@okr/shared-models';
 import { confirm, downloadToBrowser, navigateByUrl, showToast } from '@okr/shared-util-angular';
-import { DateFormat, convertDateFormatToString, getFullName, getSystemQuery, getTodayStr, replaceSubstring, safeStructuredClone } from '@okr/shared-util-core';
+import { DateFormat, convertDateFormatToString, fill, generateRandomString, getFullName, getSystemQuery, getTodayStr, replaceSubstring, safeStructuredClone } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { ImageDetailModal } from '@okr/shared-ui';
 
@@ -20,9 +20,9 @@ import { extractDateFromFileName, extractTagsFromStoragePath, extractTitleFromFi
 import { MenuService } from '@okr/cms-menu-data-access';
 import { MenuModal } from '@okr/cms-menu-feature';
 import { PageService } from '@okr/cms-page-data-access';
-import { SectionService } from '@okr/cms-section-data-access';
-import { loadSectionEditModal } from '@okr/cms-section-feature';
-import { SECTION_I18N_KEYS, isImageLinked } from '@okr/cms-section-util';
+import { ArticleBlocksGate, SectionService } from '@okr/cms-section-data-access';
+import { loadSectionEditModal, openArticleEditor } from '@okr/cms-section-feature';
+import { isImageLinked, usesArticleEditor } from '@okr/cms-section-util';
 
 import { PAGE_I18N_KEYS } from '@okr/cms-page-util';
 
@@ -93,6 +93,7 @@ export const PageIntegrityStore = signalStore(
     storage: inject(STORAGE),
     firestoreService: inject(FirestoreService),
     sectionService: inject(SectionService),
+    articleBlocksGate: inject(ArticleBlocksGate),
     documentService: inject(DocumentService),
     menuService: inject(MenuService),
     pageService: inject(PageService),
@@ -103,7 +104,8 @@ export const PageIntegrityStore = signalStore(
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll(PAGE_I18N_KEYS),
-    sectionI18n: store.i18nService.translateAll({ article_blocks_not_linked: SECTION_I18N_KEYS.article_blocks_not_linked }),
+    // by name: the keys of the article editor are in no chunk that readers load, and this store is in the one of the pages
+    sectionI18n: store.i18nService.translateAll({ article_not_linked: '@cms/section/feature.article.editor.notLinked' }),
 
     dataResource: rxResource({
       params: () => ({
@@ -190,6 +192,13 @@ export const PageIntegrityStore = signalStore(
         const currentUser: UserModel | undefined = store.currentUser();
         const roles = store.appStore.getCategory('roles');
         const states = store.appStore.getCategory('content_state');
+        // the article editor saves by itself (spec 1.175 §7.1)
+        if (section.type === 'article') await store.articleBlocksGate.load();
+        if (usesArticleEditor(section, false, store.articleBlocksGate.open())) {
+          const options = { isNew: false, currentUser, roles, states, tagModel: 'section_default' };
+          if (await openArticleEditor(store.modalController, section as ArticleSection, options)) this.findOrphanedSections();
+          return;
+        }
         const modal = await store.modalController.create({
           component: await loadSectionEditModal(),
           cssClass: 'modal-fullscreen',
@@ -328,6 +337,17 @@ export const PageIntegrityStore = signalStore(
         const roles = store.appStore.getCategory('roles');
         const states = store.appStore.getCategory('content_state');
         const newSection = { okey: '', type: 'article', state: 'active', name: ref.resolvedKey, title: '', tenants: [store.appStore.env.tenantId] } as unknown as SectionModel;
+        await store.articleBlocksGate.load();
+        if (usesArticleEditor(newSection, false, store.articleBlocksGate.open())) {
+          // a new article gets its key now, so that its uploads have a folder
+          const article = { ...newSection, okey: generateRandomString(20) } as ArticleSection;
+          const savedKey = await openArticleEditor(store.modalController, article, { isNew: true, currentUser, roles, states, tagModel: 'section_default' });
+          if (savedKey) {
+            await this.replaceSectionKey(ref, savedKey);
+            this.findMissingSections();
+          }
+          return;
+        }
         const modal = await store.modalController.create({
           component: await loadSectionEditModal(),
           cssClass: 'modal-fullscreen',
@@ -337,12 +357,14 @@ export const PageIntegrityStore = signalStore(
         const { data, role } = await modal.onWillDismiss();
         if (role !== 'confirm' || !data) return;
         const newKey = await store.sectionService.create(data as SectionModel, currentUser);
-        if (newKey) {
-          // Update the page: replace the broken raw key with the newly created section key
-          const updatedSections = (ref.page.sections ?? []).map(k => k === ref.rawKey ? newKey : k);
-          await store.pageService.update({ ...ref.page, sections: updatedSections }, currentUser);
-        }
+        if (newKey) await this.replaceSectionKey(ref, newKey);
         this.findMissingSections();
+      },
+
+      /** Update the page: replace the broken raw key with the newly created section key */
+      async replaceSectionKey(ref: MissingSectionRef, newKey: string): Promise<void> {
+        const updatedSections = (ref.page.sections ?? []).map(k => k === ref.rawKey ? newKey : k);
+        await store.pageService.update({ ...ref.page, sections: updatedSections }, store.currentUser());
       },
 
       async removeSectionRefFromPage(ref: MissingSectionRef): Promise<void> {
@@ -495,7 +517,7 @@ export const PageIntegrityStore = signalStore(
 
         if (isImageLinked(fresh, image.fullPath)) return; // already linked
         if (articleBlocksOf(fresh)) {
-          await showToast(store.toastController, store.sectionI18n.article_blocks_not_linked());
+          await showToast(store.toastController, fill(store.sectionI18n.article_not_linked(), { name: fresh.name || fresh.title || key }));
           return;
         }
 

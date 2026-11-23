@@ -8,7 +8,9 @@ import { createActionSheetButton, createActionSheetOptions, error, getColSizes }
 import { hasRole, replaceSubstring, contextMenuId } from '@okr/shared-util-core';
 
 import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
+import { ArticleBlocksGate } from '@okr/cms-section-data-access';
 import { SectionDispatcher, SectionStore } from '@okr/cms-section-feature';
+import { offersImageUpload } from '@okr/cms-section-util';
 
 import { PageStore } from './page.store';
 
@@ -343,6 +345,7 @@ export class DashboardPage {
   protected readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly store = inject(PageStore);
   private readonly sectionStore = inject(SectionStore);
+  private readonly articleBlocksGate = inject(ArticleBlocksGate);
   private readonly meta = inject(Meta);
   private readonly actionSheetController = inject(ActionSheetController);
 
@@ -384,11 +387,17 @@ export class DashboardPage {
   }
 
   /******************************* actions *************************************** */
+  /** Switches edit mode. The gate decides whether «Bild hochladen» is offered (spec 1.175 §7.6). */
+  protected toggleEditMode(): void {
+    this.editMode.update(value => !value);
+    if (this.editMode()) void this.articleBlocksGate.load();
+  }
+
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     if (!selectedMethod) return; // dismissed without choosing an item (backdrop/escape) — not an error
     switch(selectedMethod) {
-      case 'toggleEditMode':  this.editMode.update(value => !value); break;
+      case 'toggleEditMode':  this.toggleEditMode(); break;
       case 'editPage': {
         const page = this.store.page();
         if (page) {
@@ -437,7 +446,7 @@ export class DashboardPage {
     if (hasRole('contentAdmin', this.store.appStore.currentUser())) {
 
       actionSheetOptions.buttons.push(createActionSheetButton('section.edit', this.store.i18n.section_edit(), this.store.imgixBaseUrl(), 'edit'));
-      if (this.sectionStore.section()?.type === 'article') {
+      if (offersImageUpload(this.sectionStore.section(), this.articleBlocksGate.open())) {
         actionSheetOptions.buttons.push(createActionSheetButton('section.image.upload', this.store.i18n.upload_image(), this.store.imgixBaseUrl(), 'upload'));
       }
       if (this.sectionStore.section()?.type === 'button') {

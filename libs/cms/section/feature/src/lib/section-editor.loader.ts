@@ -11,3 +11,4 @@
 export const loadSectionEditModal = () => import('./section-edit.modal').then(m => m.SectionEditModal);
 export const loadCardSelectModal = () => import('./card-select.modal').then(m => m.CardSelectModal);
 export const loadSectionAllList = () => import('./section-list').then(m => m.SectionAllList);
+export { openArticleEditor, type ArticleEditorOptions } from './article-editor.loader';

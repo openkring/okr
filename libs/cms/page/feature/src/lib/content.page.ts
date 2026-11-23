@@ -8,7 +8,8 @@ import { DEFAULT_ACCEPT_ATTRIBUTE } from '@okr/shared-constants';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, error, getColSizes } from '@okr/shared-util-angular';
 import { hasRole, contextMenuId } from '@okr/shared-util-core';
-import { parseSectionWidths } from '@okr/cms-section-util';
+import { ArticleBlocksGate } from '@okr/cms-section-data-access';
+import { offersImageUpload, parseSectionWidths } from '@okr/cms-section-util';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { SectionDispatcher, SectionStore } from '@okr/cms-section-feature';
@@ -234,6 +235,7 @@ import { scrollToFragment } from './fragment-scroll';
 export class ContentPage {
   protected store = inject(PageStore);
   private sectionStore = inject(SectionStore);
+  private readonly articleBlocksGate = inject(ArticleBlocksGate);
   private readonly meta = inject(Meta);
   private actionSheetController = inject(ActionSheetController);
   private route = inject(ActivatedRoute);
@@ -369,8 +371,10 @@ export class ContentPage {
   }
 
   /******************************* actions *************************************** */
+  /** Switches edit mode. The gate decides whether «Bild hochladen» is offered (spec 1.175 §7.6). */
   protected toggleEditMode(): void {
     this.editMode.update(value => !value);
+    if (this.editMode()) void this.articleBlocksGate.load();
   }
 
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
@@ -429,7 +433,7 @@ export class ContentPage {
   protected async showActions(section: SectionModel): Promise<void> {
     if (this.editMode()) {
       const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
-      this.addActionSheetButtons(actionSheetOptions, section.type);
+      this.addActionSheetButtons(actionSheetOptions, section);
       await this.executeActions(actionSheetOptions, section);
     }
   }
@@ -437,14 +441,16 @@ export class ContentPage {
   /**
    * Fills the ActionSheet with all possible actions, considering the user permissions.
    */
-  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, sectionType: string): void {
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, section: SectionModel): void {
     if (this.isEditable()) {
       actionSheetOptions.buttons.push(createActionSheetButton('section.edit', this.store.i18n.section_edit(), this.store.imgixBaseUrl(), 'edit'));
-      if (sectionType === 'article') {
+      if (offersImageUpload(section, this.articleBlocksGate.open())) {
         actionSheetOptions.buttons.push(createActionSheetButton('section.image.upload', this.store.i18n.upload_image(), this.store.imgixBaseUrl(), 'upload'));
+      }
+      if (section.type === 'article') {
         actionSheetOptions.buttons.push(createActionSheetButton('section.send', this.store.i18n.section_send(), this.store.imgixBaseUrl(), 'send'));
       }
-      if (sectionType === 'button') {
+      if (section.type === 'button') {
         actionSheetOptions.buttons.push(createActionSheetButton('section.file.upload', this.store.i18n.upload_file(), this.store.imgixBaseUrl(), 'upload'));
       }
       actionSheetOptions.buttons.push(createActionSheetButton('page.removesection', this.store.i18n.section_remove(), this.store.imgixBaseUrl(), 'trash'));

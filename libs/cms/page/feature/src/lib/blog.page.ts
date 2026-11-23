@@ -11,7 +11,9 @@ import { createActionSheetButton, createActionSheetOptions, error } from '@okr/s
 import { hasRole, replaceSubstring, contextMenuId } from '@okr/shared-util-core';
 
 import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
+import { ArticleBlocksGate } from '@okr/cms-section-data-access';
 import { SectionStore } from '@okr/cms-section-feature';
+import { offersImageUpload } from '@okr/cms-section-util';
 
 import { PageStore } from './page.store';
 import { scrollToFragment } from './fragment-scroll';
@@ -155,6 +157,7 @@ export class BlogPage {
   protected readonly menuItemsStore = inject(MenuItemsStore);
   protected store = inject(PageStore);
   private sectionStore = inject(SectionStore);
+  private readonly articleBlocksGate = inject(ArticleBlocksGate);
   private readonly meta = inject(Meta);
   private actionSheetController = inject(ActionSheetController);
   private route = inject(ActivatedRoute);
@@ -211,10 +214,16 @@ export class BlogPage {
     inject(DestroyRef).onDestroy(() => this.cancelFragmentScroll?.());
   }
 
+  /** Switches edit mode. The gate decides whether «Bild hochladen» is offered (spec 1.175 §7.6). */
+  protected toggleEditMode(): void {
+    this.editMode.update(value => !value);
+    if (this.editMode()) void this.articleBlocksGate.load();
+  }
+
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     if (!$event.detail.data) return; // dismissed without choosing an item (backdrop/escape) — not an error
     switch ($event.detail.data) {
-      case 'toggleEditMode':  this.editMode.update(v => !v); break;
+      case 'toggleEditMode':  this.toggleEditMode(); break;
       case 'editPage': {
         const page = this.store.page();
         if (page) await this.store.edit(page, false);
@@ -249,8 +258,10 @@ export class BlogPage {
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, section: SectionModel): void {
     if (hasRole('contentAdmin', this.store.appStore.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('section.edit', this.store.i18n.section_edit(), this.store.imgixBaseUrl(), 'edit'));
-      if (section.type === 'article') {
+      if (offersImageUpload(section, this.articleBlocksGate.open())) {
         actionSheetOptions.buttons.push(createActionSheetButton('section.image.upload', this.store.i18n.upload_image(), this.store.imgixBaseUrl(), 'upload'));
+      }
+      if (section.type === 'article') {
         actionSheetOptions.buttons.push(createActionSheetButton('section.send', this.store.i18n.section_send(), this.store.imgixBaseUrl(), 'send'));
       }
       if (section.type === 'button') {

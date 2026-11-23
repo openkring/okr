@@ -74,5 +74,6 @@ export * from './lib/article-block-view.util';
 export * from './lib/article-editor.util';
 export * from './lib/article-editor-history.util';
 export * from './lib/article-editor-open.util';
+export * from './lib/article-editor-entry.util';
 export * from './lib/article-panel.util';
 export * from './lib/article-editor-i18n';

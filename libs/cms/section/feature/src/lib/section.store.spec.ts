@@ -11,9 +11,14 @@ import { ChatBlockedError } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';
 import { UploadService } from '@okr/avatar-data-access';
 import { MatrixChatService } from '@okr/chat-data-access';
-import { SectionService } from '@okr/cms-section-data-access';
+import { ArticleBlocksGate, SectionService } from '@okr/cms-section-data-access';
+import type { SectionModel } from '@okr/shared-models';
 
+import { openArticleEditor } from './article-editor.loader';
 import { SectionStore } from './section.store';
+
+vi.mock('./article-editor.loader', () => ({ openArticleEditor: vi.fn() }));
+vi.mock('./section-edit.modal', () => ({ SectionEditModal: class SectionEditModal {} }));
 
 const i18nProxy = new Proxy({}, { get: () => () => 'x' });
 
@@ -60,6 +65,12 @@ interface StoreDeps {
   alertController?: ReturnType<typeof alertControllerMock>;
   toastController?: { create: ReturnType<typeof vi.fn> };
   currentUser?: unknown;
+  gate?: ReturnType<typeof gateMock>;
+  modalController?: { create: ReturnType<typeof vi.fn> };
+}
+
+function gateMock(open: boolean) {
+  return { open: signal(open), load: vi.fn().mockResolvedValue(open) };
 }
 
 function makeStore(sectionService = sectionServiceMock(), deps: StoreDeps = {}): SectionStore {
@@ -74,7 +85,8 @@ function makeStore(sectionService = sectionServiceMock(), deps: StoreDeps = {}):
       { provide: UploadService, useValue: {} },
       { provide: MatrixChatService, useValue: deps.chat ?? { isInitialized: false } },
       { provide: ChatStatusService, useValue: deps.chatStatus ?? chatStatusMock() },
-      { provide: ModalController, useValue: {} },
+      { provide: ModalController, useValue: deps.modalController ?? {} },
+      { provide: ArticleBlocksGate, useValue: deps.gate ?? gateMock(false) },
       { provide: AlertController, useValue: deps.alertController ?? {} },
       { provide: ToastController, useValue: deps.toastController ?? {} },
       { provide: FirestoreService, useValue: {} },
@@ -177,5 +189,107 @@ describe('SectionStore.sendEmergencyMessage while the chat is blocked (1.107)', 
     await store.sendEmergencyMessage();
     expect(alertController.create).toHaveBeenCalledTimes(1);
     expect(toastController.create).not.toHaveBeenCalled();
+  });
+});
+
+describe('SectionStore.edit of an article (1.175)', () => {
+  const article = (o: object = {}): SectionModel => ({ okey: 'a1', type: 'article', title: 'T', properties: { images: [] }, ...o }) as unknown as SectionModel;
+  const user = { okey: 'u1' };
+
+  /** the form of today, dismissed with `data` */
+  function formController(data?: unknown) {
+    return { create: vi.fn().mockResolvedValue({ present: vi.fn(), onWillDismiss: vi.fn().mockResolvedValue(data ? { data, role: 'confirm' } : {}) }) };
+  }
+
+  function setup(gateOpen: boolean, data?: unknown) {
+    const sectionService = sectionServiceMock();
+    const gate = gateMock(gateOpen);
+    const modalController = formController(data);
+    const store = makeStore(sectionService, { gate, modalController, currentUser: user });
+    const reload = vi.spyOn(store, 'reload').mockImplementation(() => undefined);
+    return { store, gate, modalController, sectionService, reload };
+  }
+
+  beforeEach(() => vi.mocked(openArticleEditor).mockReset().mockResolvedValue(undefined));
+
+  it('gate closed: the form of today opens and the store saves', async () => {
+    const { store, gate, modalController, sectionService, reload } = setup(false, article({ title: 'U' }));
+    expect(await store.edit(article(), false)).toBe('updated-id');
+    expect(gate.load).toHaveBeenCalledTimes(1);
+    expect(openArticleEditor).not.toHaveBeenCalled();
+    expect(modalController.create).toHaveBeenCalledWith(expect.objectContaining({
+      cssClass: 'modal-fullscreen',
+      componentProps: expect.objectContaining({ section: article(), currentUser: user, tagModel: 'section', readOnly: false }),
+    }));
+    expect(sectionService.update).toHaveBeenCalledTimes(1);
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('gate closed, new: the form of today gets the section without a key and the store creates', async () => {
+    const { store, modalController, sectionService } = setup(false, article({ okey: '' }));
+    expect(await store.edit(article({ okey: '' }), false)).toBe('new-id');
+    expect(modalController.create.mock.calls[0][0].componentProps.section.okey).toBe('');
+    expect(sectionService.create).toHaveBeenCalledTimes(1);
+  });
+
+  it('gate open: the article editor opens, its key is passed on, the store reloads once and writes nothing', async () => {
+    const { store, modalController, sectionService, reload } = setup(true);
+    vi.mocked(openArticleEditor).mockResolvedValue('a1_p13');
+    const section = article();
+    expect(await store.edit(section, false)).toBe('a1_p13');
+    expect(openArticleEditor).toHaveBeenCalledTimes(1);
+    const [controller, passed, options] = vi.mocked(openArticleEditor).mock.calls[0];
+    expect(controller).toBe(modalController);
+    expect(passed).toBe(section);   // raw, as read
+    expect(options).toEqual(expect.objectContaining({ isNew: false, currentUser: user, tagModel: 'section' }));
+    expect(reload).toHaveBeenCalledTimes(1);
+    expect(modalController.create).not.toHaveBeenCalled();
+    expect(sectionService.create).not.toHaveBeenCalled();
+    expect(sectionService.update).not.toHaveBeenCalled();
+  });
+
+  it('gate open, new: the article gets its key when the editor opens', async () => {
+    const { store } = setup(true);
+    const section = article({ okey: '' });
+    await store.edit(section, false);
+    const [, passed, options] = vi.mocked(openArticleEditor).mock.calls[0];
+    expect(options.isNew).toBe(true);
+    expect(passed.okey).toMatch(/^[a-z0-9]{20}$/);
+    expect(section.okey).toBe('');
+  });
+
+  it('gate open, nothing saved (closed, or the trial mode): no key, no reload', async () => {
+    const { store, reload } = setup(true);
+    expect(await store.edit(article(), false)).toBeUndefined();
+    expect(reload).not.toHaveBeenCalled();
+  });
+
+  it('gate closed, an article with blocks: the article editor opens', async () => {
+    const { store } = setup(false);
+    await store.edit(article({ properties: { blocks: [] } }), false);
+    expect(openArticleEditor).toHaveBeenCalledTimes(1);
+  });
+
+  it('read-only: the form of today, and the gate is not asked', async () => {
+    const { store, gate, modalController } = setup(true);
+    await store.edit(article(), true);
+    expect(gate.load).not.toHaveBeenCalled();
+    expect(openArticleEditor).not.toHaveBeenCalled();
+    expect(modalController.create).toHaveBeenCalledTimes(1);
+  });
+
+  it('another type: the form of today, and the gate is not asked', async () => {
+    const { store, gate, modalController } = setup(true);
+    await store.edit(article({ type: 'button' }), false);
+    expect(gate.load).not.toHaveBeenCalled();
+    expect(openArticleEditor).not.toHaveBeenCalled();
+    expect(modalController.create).toHaveBeenCalledTimes(1);
+  });
+
+  it('a travel journal: the form of today', async () => {
+    const { store, modalController } = setup(true);
+    await store.edit(article({ journalKey: 'j' }), false);
+    expect(openArticleEditor).not.toHaveBeenCalled();
+    expect(modalController.create).toHaveBeenCalledTimes(1);
   });
 });
