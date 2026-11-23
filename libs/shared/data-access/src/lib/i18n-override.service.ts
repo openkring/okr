@@ -90,21 +90,12 @@ export class I18nOverrideService {
         if (!value) continue;
         applied++;
 
-        const isScoped = override.module.includes('/');
-        if (isScoped) {
-          // The options cast is intentional — `scope` is a runtime extension point.
-          this.translocoService.setTranslation(
-            { [override.key]: value },
-            lang,
-            { merge: true, emitChange: false, scope: override.module } as any,
-          );
-        } else {
-          this.translocoService.setTranslation(
-            { [`${override.module}.${override.key}`]: value },
-            lang,
-            { merge: true, emitChange: false },
-          );
-        }
+        // A path scope is addressed through the language ('subject/address/feature/de').
+        // Limit: a row for a key of a bundle that loads later loses against that bundle; keys the bundle lacks stay.
+        const [row, path] = override.module.includes('/')
+          ? [{ [override.key]: value }, `${override.module}/${lang}`]
+          : [{ [`${override.module}.${override.key}`]: value }, lang];
+        this.translocoService.setTranslation(row, path, { merge: true, emitChange: false });
       }
       // What Transloco would have done after each call — once, and only if something changed.
       if (applied > 0) this.translocoService.setActiveLang(this.translocoService.getActiveLang());

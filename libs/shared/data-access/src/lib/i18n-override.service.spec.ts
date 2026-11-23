@@ -69,8 +69,8 @@ describe('I18nOverrideService', () => {
     svc.applyOverrides('de');
     expect(mockSetTranslation).toHaveBeenCalledWith(
       { 'fields.reconnecting': 'Verbindet…' },
-      'de',
-      { merge: true, emitChange: false, scope: 'chat/feature' },
+      'chat/feature/de',
+      { merge: true, emitChange: false },
     );
   });
 
