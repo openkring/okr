@@ -54,17 +54,18 @@ export const FeatureStore = signalStore(
      * allow-lists. `isFeatureEnabledGuard` waits for this signal rather than acting on that.
      *
      * ANONYMOUS IS SETTLED BY DEFINITION — the first clause, and load-bearing.
-     * `AppStore.appConfigResource` returns `of(undefined)` when there is no `fbUser`, and
      * `firestore.rules` allows reading `feature-rollout` only `if signedIn()`, so a signed-out
      * visitor's rollout read is denied; it reaches this store as `[]` only because
      * `FirestoreService.searchData` swallows stream errors — i.e. after a failed round trip,
-     * or never if the device is offline. Waiting on those sources would hang every PUBLIC
+     * or never if the device is offline. Waiting on that source would hang every PUBLIC
      * route (this guard is prepended to every block's fragments, including `core: true` ones).
      * This clause therefore converts today's ACCIDENTAL anonymous fail-open into a DOCUMENTED
-     * decision: an anonymous visitor is gated on catalogue defaults alone, and rollout
-     * documents have no effect on public routes. Changing that would mean relaxing
+     * decision: rollout documents have no effect on public routes. Changing that would mean relaxing
      * `firestore.rules`' `feature-rollout` read to allow anonymous reads, which would make the
      * operator-authored `reason` prose world-readable — an owner decision, not this store's.
+     * App-config is not waited for here either, although `AppStore.appConfigResource` loads it
+     * for anonymous visitors too (it is world-readable): a caller that needs it also checks
+     * `AppStore.isAppConfigSettled`, as the dashboard page does.
      *
      * `fbUser()` is tri-state: `undefined` while auth is still restoring (NOT settled — a
      * returning user's session is about to resolve), `null` signed out, a `User` signed in.

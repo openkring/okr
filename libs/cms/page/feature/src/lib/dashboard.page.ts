@@ -376,21 +376,24 @@ export class DashboardPage {
   protected readonly popupId = contextMenuId('c_contentpage');
   protected editMode = signal(false);
   protected page = computed(() => this.store.page());
-  // Which widgets the tenant shows is known once FeatureStore has settled. If that never happens
-  // (a listener that does not answer), render on the defaults, like isFeatureEnabledGuard does.
+  // Which widgets the tenant shows is known once FeatureStore and app-config have settled (FeatureStore
+  // alone does not wait for app-config when nobody is signed in). If that never happens (a listener
+  // that does not answer), render on the defaults, like isFeatureEnabledGuard does.
   private readonly waitedLongEnough = signal(false);
-  protected isReady = computed(() => this.featureStore.settled() || this.waitedLongEnough());
+  protected isReady = computed(() =>
+    (this.featureStore.settled() && this.store.appStore.isAppConfigSettled()) || this.waitedLongEnough());
   // Accordion sections are not supported in Dashboard pages. Makes the implementation easier.
   // Like the content page: readers get published sections only, a contentAdmin sees all of them.
-  protected sections = computed(() => {
+  // Hidden widgets are listed in edit mode only.
+  private items = computed((): DashboardItem[] => {
     if (!this.isReady()) return [];
     const sections = this.store.pageSections();
     const readable = this.hasRole('contentAdmin') ? sections : sections.filter(s => s.state === 'published');
-    return this.editMode() ? readable : readable.filter(s => this.isShown(s));
+    return readable
+      .map((section, order) => ({ section, order, hidden: !this.isShown(section) }))
+      .filter(item => this.editMode() || !item.hidden);
   });
-  protected isEmptyPage = computed(() => this.sections().length === 0);
-  private items = computed((): DashboardItem[] => this.sections().map((section, order) =>
-    ({ section, order, hidden: !this.isShown(section) })));
+  protected isEmptyPage = computed(() => this.items().length === 0);
   /** The non-empty columns, left to right: every other section first, then one per COLUMN_SECTION_TYPES entry. */
   protected columns = computed((): DashboardItem[][] => {
     const items = this.items();
