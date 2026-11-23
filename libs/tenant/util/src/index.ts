@@ -20,3 +20,5 @@ export * from './lib/tenant-scope.util';
 export * from './lib/core-bootstrap.util';
 export * from './lib/books-setup.util';
 export * from './lib/books-setup.validations';
+export * from './lib/tenant-settings';
+export * from './lib/tenant-settings.validations';
