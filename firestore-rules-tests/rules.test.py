@@ -259,6 +259,7 @@ seed("tickets/tk1", {"tenants": ["t1"], "isArchived": False, "partnerKey": "p1",
                      "status": "submitted", "classification": "unclassified", "classifiedBy": ""})
 
 seed("app-config/t1", {"tenantId": "t1", "gitOrg": "openkring",
+                       "appDomain": "app.t1.ch", "appTitle": "T1",
                        "enabledFeatures": ["calevent", "task"]})
 
 # app-status/chat (spec 1.107): global chat switch, signed-in read, any admin writes
@@ -559,8 +560,20 @@ single_cases = [
     ("userD(admin t1) GET webhook-events/we1 -> DENY (Admin SDK only)", False, GET, "webhook-events/we1", D, None, None),
     # 1.32 §8.5: enabledFeatures is a billing boundary. Everything else in app-config
     # stays tenant-admin territory; only the paid-add-on subset is server-side.
-    ("userD(admin t1) PATCH app-config/t1 gitOrg -> ALLOW", True, PATCH, "app-config/t1", D,
+    ("userD(admin t1) PATCH app-config/t1 gitOrg -> DENY (operator only)", False, PATCH, "app-config/t1", D,
      body({"gitOrg": "bkaiser-org"}), ["gitOrg"]),
+    ("userD(admin t1) PATCH app-config/t1 appTitle -> ALLOW", True, PATCH, "app-config/t1", D, body({"appTitle": "Neu"}), ["appTitle"]),
+    ("userD(admin t1) PATCH app-config/t1 modelFields -> ALLOW", True, PATCH, "app-config/t1", D, body({"modelFields": {"person": {"title": True}}}), ["modelFields"]),
+    ("userD(admin t1) PATCH app-config/t1 hiddenWidgets -> ALLOW", True, PATCH, "app-config/t1", D, body({"hiddenWidgets": ["d-news"]}), ["hiddenWidgets"]),
+    ("userP(privileged t1) PATCH app-config/t1 appTitle -> DENY (admin only)", False, PATCH, "app-config/t1", P, body({"appTitle": "x"}), ["appTitle"]),
+    ("userO(operator) PATCH app-config/t1 appDomain -> ALLOW", True, PATCH, "app-config/t1", O, body({"appDomain": "app.t1.org"}), ["appDomain"]),
+    ("userO(operator) PATCH app-config/t1 enabledFeatures -> DENY (server only)", False, PATCH, "app-config/t1", O, body({"enabledFeatures": ["finance"]}), ["enabledFeatures"]),
+    *[(f"userD(admin t1) PATCH app-config/t1 {f} -> DENY (operator only)", False, PATCH, "app-config/t1", D, body({f: v}), [f])
+      for f, v in [("appDomain", "evil.ch"), ("emailDomain", "evil.ch"), ("emailProvider", "x"), ("mailtrapPasswordResetTemplate", "x"),
+                   ("loginUrl", "/x"), ("passwordResetUrl", "/x"), ("logoUrl", "x"), ("ownerOrgId", "x"), ("ownerUserId", "x"),
+                   ("defaultAccountingTenantId", "x"), ("integrations", {"x": True}), ("additionalProcessors", ["x"]),
+                   ("personLookupEnabled", True), ("weatherIntervalHours", 1), ("gitRepo", "x"), ("gitOrg", "x"),
+                   ("isArchived", True), ("showDebugInfo", True)]],
     ("userD(admin t1) PATCH app-config/t1 enabledFeatures -> DENY (billing boundary)", False,
      PATCH, "app-config/t1", D, body({"enabledFeatures": ["calevent", "task", "finance"]}),
      ["enabledFeatures"]),
@@ -570,7 +583,7 @@ single_cases = [
      PATCH, "app-config/t1", D, body({"enabledFeatures": ["calevent", "task"]}),
      ["enabledFeatures"]),
     ("userB(admin t2) PATCH app-config/t1 -> DENY (cross-tenant)", False, PATCH,
-     "app-config/t1", B, body({"gitOrg": "evil"}), ["gitOrg"]),
+     "app-config/t1", B, body({"appTitle": "evil"}), ["appTitle"]),
     # C4 / 1.29: the escalation queue is admin-read, client-write-never
     ("anon GET tickets/tk1 -> DENY", False, GET, "tickets/tk1", None, None, None),
     ("userA(no role) GET tickets/tk1 -> DENY", False, GET, "tickets/tk1", A, None, None),
