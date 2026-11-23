@@ -198,7 +198,7 @@
       "titleRel": "in"
     },
     "memberships": {
-      "title": "Adesioni (persone e organizzazioni)"
+      "title": "Adesioni"
     },
     "persons": {
       "title": "Membri"
@@ -522,6 +522,33 @@
     "passive": {
       "label": "Passivo",
       "description": "Membro passivo"
+    }
+  },
+  "mcat_la21staefa": {
+    "label": "Categoria di membro",
+    "helper": "Categoria di membro",
+    "all": {
+      "label": "Tutte le categorie"
+    },
+    "active": {
+      "label": "Membro singolo",
+      "description": "Una persona con la propria quota annuale."
+    },
+    "junior": {
+      "label": "In formazione",
+      "description": "Scolari, studenti e apprendisti."
+    },
+    "family": {
+      "label": "Famiglia",
+      "description": "La persona paga la quota per la coppia o la famiglia."
+    },
+    "family-member": {
+      "label": "Membro della famiglia",
+      "description": "La persona fa parte di una coppia o di una famiglia e non paga una quota propria."
+    },
+    "organisation": {
+      "label": "Organizzazione",
+      "description": "Associazione, azienda o altra persona giuridica."
     }
   },
   "mcat_p13": {

@@ -212,7 +212,7 @@ const KNOWN_WEAKER_THAN_MENU: readonly string[] = [
   // The screen gates its own actions; `calevents` is readable by every member anyway.
   'org-all', 'task-all', 'yearlyevent-all',
   // memberAdmin
-  'group-all', 'personal-rel-all', 'workrel-all',
+  'group-all', 'membership-all', 'personal-rel-all', 'workrel-all',
   // resourceAdmin
   'reservation-all', 'transfer-all', 'resource-all', 'rboat-all',
   'lockers-all', 'keys-all', 'boats-private',

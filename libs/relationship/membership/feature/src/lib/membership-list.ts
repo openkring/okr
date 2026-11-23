@@ -54,7 +54,7 @@ const DEFAULT_LIST_ID = 'memberships';
           <ion-title class="ion-hide-sm-down">{{ selectedMembershipsCount()}} {{ title() | translate | async }} {{ store.i18n.title_rel() }} {{ orgName() }}</ion-title>
           <ion-title class="ion-hide-sm-up">{{ selectedMembershipsCount()}} {{ title() | translate | async }}</ion-title>
         } @else {
-          <ion-title class="ion-hide-sm-down">{{ selectedMembershipsCount()}}/{{membershipsCount()}} {{ title() | translate | async }} {{ store.i18n.title_rel() }} {{ orgName() }}</ion-title>
+          <ion-title class="ion-hide-sm-down">{{ selectedMembershipsCount()}}/{{membershipsCount()}} {{ title() | translate | async }}@if (showOrgName()) { {{ store.i18n.title_rel() }} {{ orgName() }}}</ion-title>
           <ion-title class="ion-hide-sm-up">{{ selectedMembershipsCount()}} {{ title() | translate | async }}</ion-title>
         }
         @if(canChange()) {
@@ -237,10 +237,11 @@ export class MembershipList {
       default: return this.store.membersCount() ?? [];
     }
   });
-  protected title = computed(() => {
-    const listId = this.listId();
-    return `${PFX}list.${TITLED_LIST_IDS.has(listId) ? listId : DEFAULT_LIST_ID}.title`;
-  });
+  /** the listId whose title is shown; an unknown route param falls back to the memberships list */
+  private titledListId = computed(() => TITLED_LIST_IDS.has(this.listId()) ? this.listId() : DEFAULT_LIST_ID);
+  protected title = computed(() => `${PFX}list.${this.titledListId()}.title`);
+  /** «Aktive in Seeclub Stäfa», but just «Mitgliedschaften» */
+  protected showOrgName = computed(() => this.titledListId() !== DEFAULT_LIST_ID);
   
   protected yearLabel = computed(() => {
     switch (this.listId()) {

@@ -1142,6 +1142,12 @@ const relationship: FeatureBlock = {
   collections: ['memberships', 'reservations', 'ownerships', 'invitations', 'transfers', 'personal-rels', 'responsibilities', 'workrels'],
   menu: [
     subjectsMenuParent([
+      // The member list of the tenant's own org (2026-11-23, missing on la21staefa). The
+      // exclusion above holds for rows with a literal org key in url and label; `@TID@` names the
+      // default org (`orgs/{tenantId}`), so one shared row serves every tenant. `memberAdmin`
+      // matches `c-membership`; scs keeps its own curated rows next to it. The label is the
+      // existing 'Mitgliedschaften' string, so the row needs no release to be seeded.
+      { key: 'membership-all', name: 'membership-all', url: '/membership/memberships/@TID@/c-membership', action: 'navigate', roleNeeded: 'memberAdmin', icon: 'people', label: '@item.membership-menu' },
       { key: 'personal-rel-all', name: 'personal-rel-all', url: '/personalrel/all/c-prel', action: 'navigate', roleNeeded: 'memberAdmin', icon: 'heart-outline', label: '@item.personal-rel-all' },
       { key: 'workrel-all', name: 'workrel-all', url: '/workrel/all/c-wrel', action: 'navigate', roleNeeded: 'memberAdmin', icon: 'work', label: '@item.workrel-all' },
       { key: 'responsibility-all', name: 'responsibility-all', url: '/responsibility/all/c-responsibility', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'target', label: '@item.responsibility-all' },

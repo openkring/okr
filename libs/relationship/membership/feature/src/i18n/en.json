@@ -198,7 +198,7 @@
       "titleRel": "in"
     },
     "memberships": {
-      "title": "Memberships (persons and organizations)"
+      "title": "Memberships"
     },
     "persons": {
       "title": "Members"
@@ -522,6 +522,33 @@
     "passive": {
       "label": "Passive",
       "description": "Passive member"
+    }
+  },
+  "mcat_la21staefa": {
+    "label": "Member category",
+    "helper": "Member category",
+    "all": {
+      "label": "All categories"
+    },
+    "active": {
+      "label": "Single member",
+      "description": "A person with their own yearly fee."
+    },
+    "junior": {
+      "label": "In education",
+      "description": "Pupils, students and apprentices."
+    },
+    "family": {
+      "label": "Family",
+      "description": "The person pays the fee for the couple or family."
+    },
+    "family-member": {
+      "label": "Family member",
+      "description": "The person belongs to a couple or family and pays no fee of their own."
+    },
+    "organisation": {
+      "label": "Organisation",
+      "description": "Club, company or other legal entity."
     }
   },
   "mcat_p13": {

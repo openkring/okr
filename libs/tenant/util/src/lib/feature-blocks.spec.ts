@@ -240,3 +240,27 @@ describe('aoc is a core block (1.101 phase 5)', () => {
     }
   });
 });
+
+/**
+ * The member list of the tenant's own org (2026-11-23). The `membership` route had no catalogued row
+ * at all: only scs reached it, through hand-made rows with `scs` in their url. A new tenant with
+ * `relationship` on could not open its member list, and the picker had nothing to offer.
+ */
+describe('membership-all row', () => {
+  const relationship = FEATURE_BLOCKS.find(b => b.id === 'relationship');
+  const row = relationship?.menu.find(m => m.name === 'subjects-menu')?.children?.find(c => c.name === 'membership-all');
+
+  it('sits under subjects-menu and opens the member list of the tenant org', () => {
+    expect(row).toMatchObject({
+      key: 'membership-all', action: 'navigate', url: '/membership/memberships/@TID@/c-membership', roleNeeded: 'memberAdmin',
+    });
+  });
+
+  it('uses the role of the context menu it opens', () => {
+    expect(row?.roleNeeded).toBe(relationship?.menu.find(m => m.name === 'c-membership')?.roleNeeded);
+  });
+
+  it('is owned by relationship alone', () => {
+    expect(blockOwnersOfMenuKey(FEATURE_BLOCKS, 'membership-all')).toEqual(['relationship']);
+  });
+});

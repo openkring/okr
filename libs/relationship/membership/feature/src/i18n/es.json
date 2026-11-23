@@ -198,7 +198,7 @@
       "titleRel": "en"
     },
     "memberships": {
-      "title": "Afiliaciones (personas y organizaciones)"
+      "title": "Afiliaciones"
     },
     "persons": {
       "title": "Miembros"
@@ -522,6 +522,33 @@
     "passive": {
       "label": "Pasivo",
       "description": "Miembro pasivo"
+    }
+  },
+  "mcat_la21staefa": {
+    "label": "Categoría de miembro",
+    "helper": "Categoría de miembro",
+    "all": {
+      "label": "Todas las categorías"
+    },
+    "active": {
+      "label": "Miembro individual",
+      "description": "Una persona con su propia cuota anual."
+    },
+    "junior": {
+      "label": "En formación",
+      "description": "Alumnos, estudiantes y aprendices."
+    },
+    "family": {
+      "label": "Familia",
+      "description": "La persona paga la cuota de la pareja o la familia."
+    },
+    "family-member": {
+      "label": "Miembro de la familia",
+      "description": "La persona pertenece a una pareja o familia y no paga cuota propia."
+    },
+    "organisation": {
+      "label": "Organización",
+      "description": "Asociación, empresa u otra persona jurídica."
     }
   },
   "mcat_p13": {
