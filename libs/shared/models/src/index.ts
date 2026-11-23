@@ -108,6 +108,8 @@ export * from './lib/responsibility.model';
 export * from './lib/resource.model';
 export * from './lib/roles';
 export * from './lib/section.model';
+export * from './lib/article-layout.util';
+export * from './lib/article-blocks.util';
 export * from './lib/weather.model';
 export * from './lib/weather-radar.model';
 export * from './lib/energy-figures.model';

@@ -484,6 +484,10 @@ export interface ArticleSection extends BaseSection {
 }
 
 export interface ArticleConfig {
+  /** The content as free blocks (spec 1.173). Absent = the article uses the fields below; readers go through `withClassicFields()`. */
+  blocks?: ArticleBlock[];
+  /** Only with `blocks`: the picture of teasers and lists that is not shown in the article. Absent = the first image of the blocks. */
+  cover?: ImageConfig;
   images: ImageConfig[];
   /**
    * Only the fields that differ from IMAGE_STYLE_SHAPE (spec 1.171 D1b); absent = all defaults.
@@ -528,6 +532,38 @@ export interface ArticleSlideshow {
   /** how long the transition takes, in seconds (la21staefa.ch: 1) */
   duration: number;
 }
+
+// the free blocks of an article (spec 1.173)
+export const ARTICLE_BLOCK_TYPES = [
+  'text', 'image', 'gallery', 'button', 'columns', 'callout', 'divider', 'space',
+] as const;
+export type ArticleBlockType = (typeof ARTICLE_BLOCK_TYPES)[number];
+export type BlockAlign = 'left' | 'center' | 'right';
+export type CalloutTone = 'primary' | 'secondary' | 'tertiary' | 'neutral';
+export type SpaceSize = 'small' | 'medium' | 'large';
+
+interface BaseArticleBlock { id: string; type: ArticleBlockType }   // id: unique within the article
+
+/** `html` is the German text, `htmlI18n` holds the other languages. */
+export interface TextBlock    extends BaseArticleBlock { type: 'text'; html: string; htmlI18n?: I18nString; align?: BlockAlign }
+export interface ImageBlock   extends BaseArticleBlock { type: 'image'; image: ImageConfig; imageStyle?: Partial<ImageStyle> }
+/** May hold a single image: with layout `side-by-side`, or with a slideshow (the website's still header). */
+export interface GalleryBlock extends BaseArticleBlock { type: 'gallery'; images: ImageConfig[]; imageStyle?: Partial<ImageStyle>; layout?: string; slideshow?: ArticleSlideshow }
+export interface ButtonBlock  extends BaseArticleBlock { type: 'button'; cta: SectionCta; align?: BlockAlign }
+export interface CalloutBlock extends BaseArticleBlock { type: 'callout'; html: string; htmlI18n?: I18nString; tone: CalloutTone }
+export interface DividerBlock extends BaseArticleBlock { type: 'divider' }
+export interface SpaceBlock   extends BaseArticleBlock { type: 'space'; size: SpaceSize }
+
+/** What a column may hold: no columns inside columns. */
+export type ColumnContentBlock = TextBlock | ImageBlock | ButtonBlock;
+export interface ArticleColumn { size: number; blocks: ColumnContentBlock[] }   // size of 12
+export interface ColumnsBlock extends BaseArticleBlock {
+  type: 'columns';
+  columns: ArticleColumn[];      // 2 or 3; sizes sum to 12
+  stackReverse?: boolean;        // stacked on the phone: last column first. Absent = first column first
+}
+
+export type ArticleBlock = TextBlock | ImageBlock | GalleryBlock | ButtonBlock | ColumnsBlock | CalloutBlock | DividerBlock | SpaceBlock;
 
 // --------------------------------------- BUTTON ----------------------------------------
 export interface ButtonSection extends BaseSection {
