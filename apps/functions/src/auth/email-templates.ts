@@ -1,6 +1,9 @@
 import { getFirestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 
+import { bareHostname } from '@okr/shared-util-core';
+
+import { reportToSentry } from '../srv/sentry';
 import { DEFAULT_EMAIL_PROVIDER, effectiveProvider, type EmailProvider } from './email-transport';
 
 export interface AppEmailConfig {
@@ -22,6 +25,11 @@ const FALLBACK_DOMAIN = 'bkaiser.ch';
 const FALLBACK_APP_NAME = 'bkaiser';
 const FALLBACK_LOGIN_PATH = '/auth/login';
 
+/** A path on our own host: one leading `/`, never `//` or `/\\`, which a URL reads as another host. */
+function isPlainPath(value: string): boolean {
+  return /^\/(?![/\\])[^\s\\@]*$/.test(value);
+}
+
 /**
  * Resolve the per-tenant email config from the `app-config/{appId}` Firestore document.
  *
@@ -36,20 +44,44 @@ export async function getAppEmailConfig(appId: string): Promise<AppEmailConfig> 
   let emailDomain = '';
   let passwordResetTemplate = '';
   let mailFrom = '';
+  const refused: string[] = [];
 
   try {
     const snap = await getFirestore().collection('app-config').doc(appId).get();
     const cfg = snap.data();
     if (cfg) {
       appName = String(cfg['appName'] ?? appName);
-      appDomain = String(cfg['appDomain'] ?? appDomain) || FALLBACK_DOMAIN;
-      loginPath = String(cfg['loginUrl'] ?? loginPath) || FALLBACK_LOGIN_PATH;
-      emailDomain = String(cfg['emailDomain'] ?? '');
+      const rawDomain = String(cfg['appDomain'] ?? '').trim();
+      const host = bareHostname(rawDomain);
+      if (host) appDomain = host;
+      else if (rawDomain) refused.push('appDomain');
+
+      const rawLogin = String(cfg['loginUrl'] ?? '').trim();
+      if (isPlainPath(rawLogin)) loginPath = rawLogin;
+      else if (rawLogin) refused.push('loginUrl');
+
+      const rawEmailDomain = String(cfg['emailDomain'] ?? '').trim();
+      emailDomain = bareHostname(rawEmailDomain) ?? '';
+      if (!emailDomain && rawEmailDomain) refused.push('emailDomain');
       passwordResetTemplate = String(cfg['mailtrapPasswordResetTemplate'] ?? '');
       mailFrom = String(cfg['mailFrom'] ?? '').trim();
     }
   } catch {
     // fall through to fallback values
+  }
+
+  // Reported without the value; a failed report never rejects (see reportToSentry).
+  for (const field of refused) {
+    logger.warn(`getAppEmailConfig: app-config/${appId} has an unusable ${field} — using the fallback`);
+    try {
+      await reportToSentry({
+        message: 'app-config: a mail host or path is not usable',
+        tags: { appId, field },
+        fingerprint: ['app-config-host', field],
+      });
+    } catch {
+      // reporting must never break the config
+    }
   }
 
   // The app is served from app.<domain> but mail is sent from the apex — the provider verifies
