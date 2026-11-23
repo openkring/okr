@@ -71,3 +71,4 @@ export * from './lib/tile-image.util';
 export * from './lib/slideshow.util';
 export * from './lib/article-blocks.validations';
 export * from './lib/article-block-view.util';
+export * from './lib/article-editor.util';
