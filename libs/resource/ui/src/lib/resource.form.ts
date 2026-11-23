@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, 
 
 import { BaseProperty, CategoryListModel, ResourceModel, RoleName, UserModel } from '@okr/shared-models';
 import { Checkbox, CheckboxI18n, CategorySelect, Chips, Color, ErrorNote, TextareaInput, TextareaInputI18n, NumberInput, NumberInputI18n, PropertyList, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { coerceBoolean, getYear, hasRole } from '@okr/shared-util-core';
+import { coerceBoolean, getYear, hasRole, isFieldShown, NO_HIDDEN_FIELDS } from '@okr/shared-util-core';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { DEFAULT_CAR_TYPE, DEFAULT_GENDER, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PET_TYPE, DEFAULT_PRICE, DEFAULT_RBOAT_TYPE, DEFAULT_RBOAT_USAGE, DEFAULT_TAGS, COMMENT_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
@@ -52,23 +52,31 @@ import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLocker
                       <okr-cat-select [category]="usages()!" [selectedItemName]="usage()" (selectedItemNameChange)="onUsageChange($event)" [withAll]="false" [readOnly]="isReadOnly()" />
                       <okr-error-note [errors]="usageErrors()" />
                     </ion-col>
-                    <ion-col size="12" size-md="6">
-                      <okr-text-input [i18n]="loadI18n()" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
-                      <okr-error-note [errors]="loadErrors()" />
-                    </ion-col>
-                    <ion-col size="12" size-md="6">
-                      <okr-number-input [i18n]="currentValueI18n()" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />
-                      <okr-error-note [errors]="currentValueErrors()" />
-                    </ion-col>
-                    <ion-col size="12" size-md="6">
-                      <okr-color [label]="colorLabel()" [hexColor]="hexColor()" (hexColorChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" />
-                      <okr-error-note [errors]="hexColorErrors()" />
-                    </ion-col>
-                    <ion-col size="12">
-                      <!-- shown as a warning banner in the trip edit modal whenever this boat is selected -->
-                      <okr-textarea-input [i18n]="tripAlertI18n()" [value]="tripAlert()" (valueChange)="onFieldChange('tripAlert', $event)" [maxLength]="commentLength" [rows]="2" [showHelper]="true" [clearable]="true" [readOnly]="isReadOnly()" />
-                      <okr-error-note [errors]="tripAlertErrors()" />
-                    </ion-col>
+                    @if(isShown('load')) {
+                      <ion-col size="12" size-md="6">
+                        <okr-text-input [i18n]="loadI18n()" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                        <okr-error-note [errors]="loadErrors()" />
+                      </ion-col>
+                    }
+                    @if(isShown('currentValue')) {
+                      <ion-col size="12" size-md="6">
+                        <okr-number-input [i18n]="currentValueI18n()" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />
+                        <okr-error-note [errors]="currentValueErrors()" />
+                      </ion-col>
+                    }
+                    @if(isShown('color')) {
+                      <ion-col size="12" size-md="6">
+                        <okr-color [label]="colorLabel()" [hexColor]="hexColor()" (hexColorChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" />
+                        <okr-error-note [errors]="hexColorErrors()" />
+                      </ion-col>
+                    }
+                    @if(isShown('tripAlert')) {
+                      <ion-col size="12">
+                        <!-- shown as a warning banner in the trip edit modal whenever this boat is selected -->
+                        <okr-textarea-input [i18n]="tripAlertI18n()" [value]="tripAlert()" (valueChange)="onFieldChange('tripAlert', $event)" [maxLength]="commentLength" [rows]="2" [showHelper]="true" [clearable]="true" [readOnly]="isReadOnly()" />
+                        <okr-error-note [errors]="tripAlertErrors()" />
+                      </ion-col>
+                    }
                     @if(showLock()) {
                       <ion-col size="12">
                         <!-- an open-ended lock reservation; the Logbuch notice above is shown as its reason -->
@@ -106,18 +114,24 @@ import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLocker
                       <okr-cat-select [category]="subTypes()!" [selectedItemName]="subType()" (selectedItemNameChange)="onFieldChange('subType', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
                       <okr-error-note [errors]="subTypeErrors()" />
                     </ion-col> -->
-                    <ion-col size="12" size-md="6">
-                      <okr-text-input [i18n]="loadI18n()" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
-                      <okr-error-note [errors]="loadErrors()" />
-                    </ion-col>
-                    <ion-col size="12" size-md="6">
-                      <okr-number-input [i18n]="currentValueI18n()" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />
-                      <okr-error-note [errors]="currentValueErrors()" />
-                    </ion-col>
-                    <ion-col size="12" size-md="6">
-                      <okr-color [label]="colorLabel()" [hexColor]="hexColor()" (hexColorChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" />
-                      <okr-error-note [errors]="hexColorErrors()" />
-                    </ion-col>
+                    @if(isShown('load')) {
+                      <ion-col size="12" size-md="6">
+                        <okr-text-input [i18n]="loadI18n()" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                        <okr-error-note [errors]="loadErrors()" />
+                      </ion-col>
+                    }
+                    @if(isShown('currentValue')) {
+                      <ion-col size="12" size-md="6">
+                        <okr-number-input [i18n]="currentValueI18n()" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />
+                        <okr-error-note [errors]="currentValueErrors()" />
+                      </ion-col>
+                    }
+                    @if(isShown('color')) {
+                      <ion-col size="12" size-md="6">
+                        <okr-color [label]="colorLabel()" [hexColor]="hexColor()" (hexColorChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" />
+                        <okr-error-note [errors]="hexColorErrors()" />
+                      </ion-col>
+                    }
                   </ion-row>
                 </ion-grid>
               </ion-card-content>
@@ -148,18 +162,24 @@ import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLocker
                       <okr-cat-select [category]="subTypes()!" [selectedItemName]="subType()" (selectedItemNameChange)="onFieldChange('subType', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
                       <okr-error-note [errors]="subTypeErrors()" />
                     </ion-col>
-                    <ion-col size="12" size-md="6">
-                      <okr-text-input [i18n]="loadI18n()" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
-                      <okr-error-note [errors]="loadErrors()" />
-                    </ion-col>
-                    <ion-col size="12" size-md="6">
-                      <okr-number-input [i18n]="currentValueI18n()" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />
-                      <okr-error-note [errors]="currentValueErrors()" />
-                    </ion-col>
-                    <ion-col size="12" size-md="6">
-                      <okr-color [label]="colorLabel()" [hexColor]="hexColor()" (hexColorChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" />
-                      <okr-error-note [errors]="hexColorErrors()" />
-                    </ion-col>
+                    @if(isShown('load')) {
+                      <ion-col size="12" size-md="6">
+                        <okr-text-input [i18n]="loadI18n()" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                        <okr-error-note [errors]="loadErrors()" />
+                      </ion-col>
+                    }
+                    @if(isShown('currentValue')) {
+                      <ion-col size="12" size-md="6">
+                        <okr-number-input [i18n]="currentValueI18n()" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />
+                        <okr-error-note [errors]="currentValueErrors()" />
+                      </ion-col>
+                    }
+                    @if(isShown('color')) {
+                      <ion-col size="12" size-md="6">
+                        <okr-color [label]="colorLabel()" [hexColor]="hexColor()" (hexColorChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" />
+                        <okr-error-note [errors]="hexColorErrors()" />
+                      </ion-col>
+                    }
                   </ion-row>
                 </ion-grid>
               </ion-card-content>
@@ -251,10 +271,12 @@ import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLocker
                       <okr-cat-select [category]="subTypes()!" [selectedItemName]="subType()" (selectedItemNameChange)="onFieldChange('subType', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
                       <okr-error-note [errors]="subTypeErrors()" />
                     </ion-col>
-                    <ion-col size="12" size-md="6">
-                      <okr-color [label]="colorLabel()" [hexColor]="hexColor()" (hexColorChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" />
-                      <okr-error-note [errors]="hexColorErrors()" />
-                    </ion-col>
+                    @if(isShown('color')) {
+                      <ion-col size="12" size-md="6">
+                        <okr-color [label]="colorLabel()" [hexColor]="hexColor()" (hexColorChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" />
+                        <okr-error-note [errors]="hexColorErrors()" />
+                      </ion-col>
+                    }
                   </ion-row>
                 </ion-grid>
               </ion-card-content>
@@ -281,10 +303,12 @@ import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLocker
                       <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
                       <okr-error-note [errors]="nameErrors()" />
                     </ion-col>
-                    <ion-col size="12" size-md="6">
-                      <okr-number-input [i18n]="currentValueI18n()" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />
-                      <okr-error-note [errors]="currentValueErrors()" />
-                    </ion-col>
+                    @if(isShown('currentValue')) {
+                      <ion-col size="12" size-md="6">
+                        <okr-number-input [i18n]="currentValueI18n()" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />
+                        <okr-error-note [errors]="currentValueErrors()" />
+                      </ion-col>
+                    }
                   </ion-row>
                 </ion-grid>
               </ion-card-content>
@@ -312,19 +336,25 @@ import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLocker
                       <okr-error-note [errors]="nameErrors()" />
                     </ion-col>
 
-                    <ion-col size="12" size-md="6">
-                      <okr-text-input [i18n]="loadI18n()" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
-                      <okr-error-note [errors]="loadErrors()" />
-                    </ion-col>
+                    @if(isShown('load')) {
+                      <ion-col size="12" size-md="6">
+                        <okr-text-input [i18n]="loadI18n()" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                        <okr-error-note [errors]="loadErrors()" />
+                      </ion-col>
+                    }
 
-                    <ion-col size="12" size-md="6">
-                      <okr-number-input [i18n]="currentValueI18n()" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />
-                      <okr-error-note [errors]="currentValueErrors()" />
-                    </ion-col>
-                    <ion-col size="12" size-md="6">
-                      <okr-color [label]="colorLabel()" [hexColor]="hexColor()" (hexColorChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" />
-                      <okr-error-note [errors]="hexColorErrors()" />
-                    </ion-col>
+                    @if(isShown('currentValue')) {
+                      <ion-col size="12" size-md="6">
+                        <okr-number-input [i18n]="currentValueI18n()" [value]="currentValue()" (valueChange)="onFieldChange('currentValue', $event)" [maxLength]=10 [showHelper]=true [readOnly]="isReadOnly()" />
+                        <okr-error-note [errors]="currentValueErrors()" />
+                      </ion-col>
+                    }
+                    @if(isShown('color')) {
+                      <ion-col size="12" size-md="6">
+                        <okr-color [label]="colorLabel()" [hexColor]="hexColor()" (hexColorChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" />
+                        <okr-error-note [errors]="hexColorErrors()" />
+                      </ion-col>
+                    }
                   </ion-row>
                 </ion-grid>
               </ion-card-content>
@@ -335,16 +365,18 @@ import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLocker
         <!-- one-way + explicit write-back: a two-way binding onto a local copy of 'data'
              never reached formData and never marked the form dirty, so adding or removing a
              property silently did nothing. -->
-        <okr-property-list [properties]="data()" (propertiesChange)="onFieldChange('data', $event)" />
+        @if(isShown('data')) {
+          <okr-property-list [properties]="data()" (propertiesChange)="onFieldChange('data', $event)" />
+        }
 
-        @if(hasRole('privileged') || hasRole('resourceAdmin')) {
+        @if(isShown('tags') && (hasRole('privileged') || hasRole('resourceAdmin'))) {
           <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
           <!-- A tag error (e.g. too long) invalidates the WHOLE form, which silently hides the
                change-confirmation banner. Without this note there is nothing on screen to explain why. -->
           <okr-error-note [errors]="tagErrors()" />
         }
 
-        @if(hasRole('resourceAdmin')) {
+        @if(isShown('description') && hasRole('resourceAdmin')) {
           <okr-textarea-input variant="card" [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="descriptionErrors()" />
         }
     </form>
@@ -367,6 +399,7 @@ export class ResourceForm {
   public readonly tenantId = input.required<string>();
   public readonly subTypes = input<CategoryListModel | undefined>();
   public readonly usages = input<CategoryListModel | undefined>();
+  public readonly hiddenFields = input<ReadonlySet<string>>(NO_HIDDEN_FIELDS);
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   /** «Boot sperren» — not a model field: the lock is a reservation, the parent stores it on save */
@@ -405,6 +438,17 @@ export class ResourceForm {
   protected tagErrors = computed(() => Object.entries(this.validationResult().getErrors())
     .filter(([field]) => field === 'tags' || field.startsWith('tags['))
     .flatMap(([, messages]) => messages));
+
+  private readonly dataErrors = computed(() => this.validationResult().getErrors('data'));
+
+  /** A hidden field with an error stays on screen, so the user can fix what blocks the save. */
+  protected isShown(field: string): boolean {
+    const errors = field === 'tags' ? this.tagErrors()
+      : field === 'color' ? this.hexColorErrors()
+      : field === 'data' ? this.dataErrors()
+      : this.validationResult().getErrors(field);
+    return isFieldShown(field, this.hiddenFields(), errors);
+  }
 
   // fields
   protected readonly name = computed(() => this.formData()?.name ?? DEFAULT_NAME);

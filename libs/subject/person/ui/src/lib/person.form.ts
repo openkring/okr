@@ -5,12 +5,10 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 import { BexioIdMask, ChSsnMask } from '@okr/shared-config';
 import { BaseProperty, CategoryListModel, PrivacyAccessor, PrivacySettings, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, TextareaInput, TextareaInputI18n, PropertyList, PropertyListI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
-import { areNotesVisible, areTagsVisible, coerceBoolean, hasRole, isFieldShown, isVaultFieldVisible, isVisibleToUser } from '@okr/shared-util-core';
+import { areNotesVisible, areTagsVisible, coerceBoolean, hasRole, isFieldShown, isVaultFieldVisible, isVisibleToUser, NO_HIDDEN_FIELDS } from '@okr/shared-util-core';
 import { externalIdKeyOptions, fromProperties, PersonFormModel, personValidations, PersonI18n, toProperties } from '@okr/subject-person-util';
 import { BEXIO_ID_LENGTH, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { AhvFormat, formatAhv, validateVestTree, vestErrors } from '@okr/shared-util-angular';
-
-const NO_HIDDEN_FIELDS: ReadonlySet<string> = new Set<string>();
 
 @Component({
   selector: 'okr-person-form',

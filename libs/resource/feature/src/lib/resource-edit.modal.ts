@@ -4,7 +4,7 @@ import { IonAccordionGroup, IonCol, IonContent, IonGrid, IonRow, ModalController
 
 import { CategoryListModel, ResourceModel, ResourceModelName, RoleName } from '@okr/shared-models';
 import { CategorySelect, ChangeConfirmation, ChangeConfirmationI18n, Header, IconToolbar } from '@okr/shared-ui';
-import { coerceBoolean, getAvatarInfo, hasRole, safeStructuredClone } from '@okr/shared-util-core';
+import { coerceBoolean, getAvatarInfo, hasRole, resourceFieldKey, safeStructuredClone } from '@okr/shared-util-core';
 import { DEFAULT_RESOURCE_TYPE } from '@okr/shared-constants';
 
 import { CommentsAccordion } from '@okr/comment-feature';
@@ -55,6 +55,7 @@ import { ResourceStore } from './resource.store';
           [subTypes]="subTypes()"
           [usages]="usages()"
           [allTags]="tags()"
+          [hiddenFields]="hiddenFields()"
           [tenantId]="tenantId()"
           [readOnly]="isReadOnly()"
           [showForm]="showForm()"
@@ -108,6 +109,7 @@ export class ResourceEditModal {
   protected subTypes = computed(() => this.getSubtypes());
   protected usages = computed(() => this.getUsages());
   protected tags = computed(() => this.store.getTags(this.type()));
+  protected hiddenFields = computed(() => this.store.appStore.hiddenFields(resourceFieldKey(this.type())));
   protected tenantId = computed(() => this.store.tenantId());
   protected type = linkedSignal(() => this.formData()?.type ?? DEFAULT_RESOURCE_TYPE);
   protected resourceKey = computed(() => this.resource()?.okey ?? '');

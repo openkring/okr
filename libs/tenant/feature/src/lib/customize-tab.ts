@@ -15,7 +15,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { Checkbox } from '@okr/shared-ui';
 import type { CheckboxI18n } from '@okr/shared-ui';
 import { AlertService, resourceParams } from '@okr/shared-util-angular';
-import { MODEL_FIELDS, belongsToTenant, fill, hiddenFieldsOf, withFieldVisibility, withoutModel } from '@okr/shared-util-core';
+import { MODEL_FIELDS, belongsToTenant, fill, hiddenFieldsOf, resourceFieldKey, withFieldVisibility, withoutModel } from '@okr/shared-util-core';
 import type { ModelFieldMap } from '@okr/shared-util-core';
 import { CUSTOMIZE_I18N_KEYS, FEATURE_BLOCKS, customizeFieldKey, customizeGroupKey, withWidgetVisibility } from '@okr/tenant-util';
 
@@ -37,10 +37,26 @@ const LIST_INFO: Record<string, CustomizeListInfo> = {
       { labelKey: 'link_tags', url: '/aoc/tag' },
     ],
   },
+  org: {
+    listKeys: ['list_org_type', 'list_tags_org'],
+    links: [
+      { labelKey: 'link_categories', url: '/category/all/c-category' },
+      { labelKey: 'link_tags', url: '/aoc/tag' },
+    ],
+  },
 };
 
-/** The models shown as groups, in order. Later tasks add organization and the resource types. */
-const GROUP_MODELS = ['person'];
+/** The lists shared by all resource types; shown once, under the first resource group. */
+const RESOURCE_LIST_INFO: CustomizeListInfo = {
+  listKeys: ['list_resource_type', 'list_tags_resource'],
+  links: [
+    { labelKey: 'link_categories', url: '/category/all/c-category' },
+    { labelKey: 'link_tags', url: '/aoc/tag' },
+  ],
+};
+
+/** The fixed groups, in order; one group per resource field list of the tenant's types follows. */
+const FIXED_GROUP_MODELS = ['person', 'org'];
 
 /**
  * Third tab of `/tenant/features`: which optional model fields the forms of this tenant show.
@@ -70,6 +86,11 @@ const GROUP_MODELS = ['person'];
               {{ text('reset') }}
             </ion-button>
           </ion-item-divider>
+          @if (group.note) {
+            <ion-item lines="none">
+              <ion-note class="ion-text-wrap">{{ group.note }}</ion-note>
+            </ion-item>
+          }
           @for (field of group.fields; track field.field + '/' + epoch()) {
             <okr-checkbox
               [i18n]="field.i18n"
@@ -97,7 +118,7 @@ const GROUP_MODELS = ['person'];
       </ion-list>
     }
 
-    @if (widgets().length > 0) {
+    @if (featureStore.settled() && widgets().length > 0) {
       <ion-list>
         <ion-item-group>
           <ion-item-divider>
@@ -147,7 +168,7 @@ export class CustomizeTab {
   private readonly router = inject(Router);
   private readonly pageService = inject(PageService);
   private readonly sectionService = inject(SectionService);
-  private readonly featureStore = inject(FeatureStore);
+  protected readonly featureStore = inject(FeatureStore);
 
   /** The user wants to switch the picker to its segment of blocks. */
   public readonly showBlocks = output<void>();
@@ -161,11 +182,14 @@ export class CustomizeTab {
 
   protected readonly groups = computed(() => {
     const stored = this.appStore.appConfig()?.modelFields;
-    return GROUP_MODELS.map((modelKey) => {
+    const resourceKeys = [...new Set(this.appStore.getCategory('resource_type').items.map((item) => resourceFieldKey(item.name)))];
+    const models = [...FIXED_GROUP_MODELS, ...resourceKeys];
+    return models.map((modelKey, index) => {
       const hidden = hiddenFieldsOf(modelKey, stored);
-      const info = LIST_INFO[modelKey] ?? { listKeys: [], links: [] };
+      const info = LIST_INFO[modelKey] ?? (index === FIXED_GROUP_MODELS.length ? RESOURCE_LIST_INFO : { listKeys: [], links: [] });
       return {
         modelKey,
+        note: modelKey === 'resource.other' ? this.text('resource_other_note') : '',
         title: this.text(customizeGroupKey(modelKey)),
         fields: (MODEL_FIELDS[modelKey] ?? []).map((spec) => ({
           field: spec.field,
@@ -190,6 +214,8 @@ export class CustomizeTab {
           return combineLatest(page.sections.map((pageKey) =>
             this.sectionService.read(pageKey.replace('@TID@', tenantId)).pipe(
               map((section): WidgetEntry | undefined => (section && belongsToTenant(section, tenantId) ? { pageKey, section } : undefined)),
+              // one section that cannot be read must not hide the others
+              catchError(() => of(undefined)),
             ))).pipe(map((entries) => entries.filter((e): e is WidgetEntry => !!e)));
         }),
         catchError(() => of([] as WidgetEntry[])),

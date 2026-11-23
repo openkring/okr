@@ -10,7 +10,7 @@ import { AppConfigService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { ListFilter } from '@okr/shared-ui';
+import { ListFilter, Spinner } from '@okr/shared-ui';
 import { AlertService, copyToClipboard } from '@okr/shared-util-angular';
 import { fill } from '@okr/shared-util-core';
 import type { CategoryListModel, FeatureRolloutModel, MenuItemModel } from '@okr/shared-models';
@@ -74,7 +74,7 @@ type PickerSegment = 'blocks' | 'rows' | 'customize';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    SvgIconPipe, ListFilter, CustomizeTab,
+    SvgIconPipe, ListFilter, Spinner, CustomizeTab,
     IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonButton, IonIcon,
     IonContent, IonList, IonItemGroup, IonItemDivider, IonItem, IonLabel, IonNote,
     IonSegment, IonSegmentButton, IonGrid, IonRow, IonCol, IonAccordionGroup, IonAccordion,
@@ -339,8 +339,10 @@ type PickerSegment = 'blocks' | 'rows' | 'customize';
           </ion-grid>
         }
       } @else {
-        @defer {
+        @defer (on immediate) {
           <okr-customize-tab (showBlocks)="segment.set('blocks')" />
+        } @placeholder {
+          <okr-spinner />
         }
       }
     </ion-content>

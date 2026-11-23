@@ -156,7 +156,7 @@ export class OrgList {
   protected orgsCount = computed(() => this.store.orgsCount());
   protected selectedOrgsCount = computed(() => this.filteredOrgs().length);
   protected isLoading = computed(() => this.store.isLoading());
-  protected tags = computed(() => this.store.tags());
+  protected tags = computed(() => this.store.appStore.hiddenFields('org').has('tags') ? '' : this.store.tags());
   protected types = computed(() => this.store.types());
   protected currentUser = computed(() => this.store.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));

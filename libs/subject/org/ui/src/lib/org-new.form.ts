@@ -6,7 +6,7 @@ import { BexioIdMask, ChVatMask } from '@okr/shared-config';
 import { CategoryListModel, City, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Chips, CountrySelect, CountrySelectI18n, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote, TextareaInput, TextareaInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
-import { coerceBoolean, hasRole } from '@okr/shared-util-core';
+import { coerceBoolean, hasRole, isFieldShown, NO_HIDDEN_FIELDS } from '@okr/shared-util-core';
 import { CITY_LENGTH, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL, DESCRIPTION_LENGTH, EMAIL_LENGTH, NAME_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@okr/shared-constants';
 
 import { CitySearch } from '@okr/subject-swisscities-ui';
@@ -55,17 +55,22 @@ import { ZefixLookup } from './zefix-lookup';
               }
             </ion-row>
 
-            <ion-row>
-              <ion-col size="12" size-md="6">
-                <okr-date-input [i18n]="dateOfFoundationI18n()" [storeDate]="dateOfFoundation()" (storeDateChange)="onFieldChange('dateOfFoundation', $event)" [readOnly]="isReadOnly()" />
-                <okr-error-note [errors]="dateOfFoundationErrors()" />
-              </ion-col>
-
-              <ion-col size="12" size-md="6">
-                <okr-date-input [i18n]="dateOfLiquidationI18n()" [storeDate]="dateOfLiquidation()" (storeDateChange)="onFieldChange('dateOfLiquidation', $event)" [readOnly]="isReadOnly()" />
-                <okr-error-note [errors]="dateOfLiquidationErrors()" />
-              </ion-col>
-            </ion-row>
+            @if (isShown('dateOfFoundation') || isShown('dateOfLiquidation')) {
+              <ion-row>
+                @if (isShown('dateOfFoundation')) {
+                  <ion-col size="12" size-md="6">
+                    <okr-date-input [i18n]="dateOfFoundationI18n()" [storeDate]="dateOfFoundation()" (storeDateChange)="onFieldChange('dateOfFoundation', $event)" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="dateOfFoundationErrors()" />
+                  </ion-col>
+                }
+                @if (isShown('dateOfLiquidation')) {
+                  <ion-col size="12" size-md="6">
+                    <okr-date-input [i18n]="dateOfLiquidationI18n()" [storeDate]="dateOfLiquidation()" (storeDateChange)="onFieldChange('dateOfLiquidation', $event)" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="dateOfLiquidationErrors()" />
+                  </ion-col>
+                }
+              </ion-row>
+            }
 
             <!---------------------------------------------------
             ADDRESSES  
@@ -115,13 +120,15 @@ import { ZefixLookup } from './zefix-lookup';
 
 
             
-            <ion-row>
-              <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="taxIdI18n()" [value]="taxId()" (valueChange)="onFieldChange('taxId', $event)" [mask]="vatMask" [showHelper]=true [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
-                <okr-error-note [errors]="taxIdErrors()" />
-              </ion-col>
-            </ion-row>
-            @if(hasRole('admin')) {
+            @if (isShown('taxId')) {
+              <ion-row>
+                <ion-col size="12" size-md="6">
+                  <okr-text-input [i18n]="taxIdI18n()" [value]="taxId()" (valueChange)="onFieldChange('taxId', $event)" [mask]="vatMask" [showHelper]=true [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="taxIdErrors()" />
+                </ion-col>
+              </ion-row>
+            }
+            @if(isShown('bexioId') && hasRole('admin')) {
               <ion-row>
                 <ion-col size="12">
                   <okr-text-input [i18n]="bexioIdI18n()" [value]="bexioId()" (valueChange)="onFieldChange('bexioId', $event)" [maxLength]="shortNameLength" [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" />
@@ -133,11 +140,11 @@ import { ZefixLookup } from './zefix-lookup';
         </ion-card-content>
       </ion-card>
 
-      @if(hasRole('privileged') || hasRole('memberAdmin')) {
+      @if(isShown('tags') && (hasRole('privileged') || hasRole('memberAdmin'))) {
         <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
       }
 
-      @if(hasRole('admin')) { 
+      @if(isShown('notes') && hasRole('admin')) {
         <okr-textarea-input variant="card" [i18n]="notesI18n()" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [errors]="notesErrors()" />
       }
     </form>
@@ -181,6 +188,7 @@ export class OrgNewForm {
   public formData = model.required<OrgNewFormModel>();
   public currentUser = input.required<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
+  public readonly hiddenFields = input<ReadonlySet<string>>(NO_HIDDEN_FIELDS);
   public isOrgTypeReadOnly = input(false);
   public isOrgTypeVisible = input(true);
   public readonly allTags = input.required<string>();
@@ -214,6 +222,11 @@ export class OrgNewForm {
   protected phoneErrors = computed(() => this.validationResult().getErrors('phone'));
   protected emailErrors = computed(() => this.validationResult().getErrors('email'));
   protected urlErrors = computed(() => this.validationResult().getErrors('url'));
+
+  /** A hidden field with an error stays on screen, so the user can fix what blocks the save. */
+  protected isShown(field: string): boolean {
+    return isFieldShown(field, this.hiddenFields(), this.validationResult().getErrors(field));
+  }
 
   // fields
   protected readonly type = computed(() => this.formData().type ?? DEFAULT_ORG_TYPE);

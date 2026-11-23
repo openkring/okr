@@ -5,7 +5,7 @@ import { IonAccordion, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic
 import { ChSsnMask } from "@okr/shared-config";
 import { CategoryListModel, UserModel } from "@okr/shared-models";
 import { CategorySelect, DateInput, DateInputI18n, ErrorNote, TextInput, TextInputI18n } from "@okr/shared-ui";
-import { coerceBoolean, isFieldShown } from "@okr/shared-util-core";
+import { coerceBoolean, isFieldShown, NO_HIDDEN_FIELDS } from "@okr/shared-util-core";
 import { DEFAULT_GENDER } from "@okr/shared-constants";
 import { AhvFormat, formatAhv, validateVestTree, vestErrors } from "@okr/shared-util-angular";
 
@@ -15,7 +15,6 @@ import { ProfileI18n } from '@okr/profile-util';
 /** The fields this accordion renders as editable — the ones its `valid` output may gate on. */
 const EDITED_FIELDS = ['ssnId'];
 
-const NO_HIDDEN_FIELDS: ReadonlySet<string> = new Set<string>();
 
 @Component({
   selector: 'okr-profile-data-accordion',

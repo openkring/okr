@@ -103,7 +103,7 @@ export class KeyList {
   protected keysCount = computed(() => this.store.keysCount());
   protected selectedKeysCount = computed(() => this.filteredKeys().length);
   protected isLoading = computed(() => this.store.isLoading());
-  protected tags = computed(() => this.store.getTags('key') ?? DEFAULT_TAGS);
+  protected tags = computed(() => this.store.appStore.hiddenFields('resource.key').has('tags') ? '' : this.store.getTags('key') ?? DEFAULT_TAGS);
   protected currentUser = computed(() => this.store.currentUser());
   protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));
 

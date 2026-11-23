@@ -6,6 +6,11 @@ const allOn = () => true;
 const entry = (pageKey: string, type: string, title = '', state = 'published') => ({ pageKey, section: { type, title, state } });
 
 describe('buildWidgetRows', () => {
+  it('trims the title of a section', () => {
+    const rows = buildWidgetRows([entry('news', 'news', '  Neuigkeiten \n')], 'scs', [], allOn);
+    expect(rows[0].title).toBe('Neuigkeiten');
+  });
+
   it('keeps the page order and resolves @TID@ in the key', () => {
     const rows = buildWidgetRows([entry('news', 'news'), entry('tasks_@TID@', 'tasks')], 'scs', [], allOn);
     expect(rows.map(r => r.key)).toEqual(['news', 'tasks']);

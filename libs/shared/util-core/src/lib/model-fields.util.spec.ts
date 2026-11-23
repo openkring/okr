@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hiddenFieldsOf, isFieldShown, MODEL_FIELDS, resourceFieldKey, withFieldVisibility, withoutModel } from './model-fields.util';
+import { hiddenFieldsOf, isFieldHiddenForTypes, isFieldShown, MODEL_FIELDS, resourceFieldKey, withFieldVisibility, withoutModel } from './model-fields.util';
 
 describe('model-fields.util', () => {
   describe('MODEL_FIELDS', () => {
@@ -131,6 +131,22 @@ describe('model-fields.util', () => {
     });
     it('copes with prototype-named keys', () => {
       expect(withoutModel({ person: { nickname: false } }, '__proto__')).toEqual({ person: { nickname: false } });
+    });
+  });
+
+  describe('isFieldHiddenForTypes', () => {
+    const stored = { 'resource.rboat': { tags: false }, 'resource.other': { tags: false } };
+    it('is true when every type resolves to a model that hides the field', () => {
+      expect(isFieldHiddenForTypes('tags', ['rboat', 'unknown'], stored)).toBe(true);
+    });
+    it('is false when one type still shows it', () => {
+      expect(isFieldHiddenForTypes('tags', ['rboat', 'car'], stored)).toBe(false);
+    });
+    it('is false for an empty list of types', () => {
+      expect(isFieldHiddenForTypes('tags', [], stored)).toBe(false);
+    });
+    it('is false when nothing is stored', () => {
+      expect(isFieldHiddenForTypes('tags', ['rboat'], undefined)).toBe(false);
     });
   });
 });

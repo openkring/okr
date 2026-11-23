@@ -33,7 +33,7 @@ export function buildWidgetRows(
     return {
       key,
       type: section.type,
-      title: section.title ?? '',
+      title: (section.title ?? '').trim(),
       visible: isWidgetVisible({ okey: key, type: section.type }, tenantId, hidden, () => true),
       isDraft: section.state === 'draft',
       block,

@@ -102,6 +102,14 @@ export function resourceFieldKey(type: string | undefined): string {
   return type && has(MODEL_FIELDS, key) ? key : 'resource.other';
 }
 
+/** True when the field is hidden for every given resource type; an empty list of types hides nothing. */
+export function isFieldHiddenForTypes(field: string, types: readonly string[], stored: ModelFieldMap | null | undefined): boolean {
+  return types.length > 0 && types.every((type) => hiddenFieldsOf(resourceFieldKey(type), stored).has(field));
+}
+
+/** Default for a form's `hiddenFields` input: nothing hidden. */
+export const NO_HIDDEN_FIELDS: ReadonlySet<string> = new Set<string>();
+
 /** A hidden field is still shown while it has validation errors, so the user can fix it. */
 export function isFieldShown(field: string, hidden: ReadonlySet<string>, errors: readonly unknown[]): boolean {
   return !hidden.has(field) || errors.length > 0;

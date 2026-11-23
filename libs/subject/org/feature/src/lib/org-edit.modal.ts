@@ -60,6 +60,7 @@ import { AppStore } from '@okr/shared-feature';
           [i18n]="store.i18n"
           [currentUser]="currentUser()"
           [types]="types()"
+          [hiddenFields]="hiddenFields()"
           [showForm]="showForm()"
           [allTags]="allTags()"
           [tenantId]="tenantId()"
@@ -117,6 +118,7 @@ export class OrgEditModal {
   /** When set, the tag vocabulary is read live, so a value added via «Werte bearbeiten» validates at once. */
   public tagModel = input<string>('');
   private readonly appStore = inject(AppStore);
+  protected readonly hiddenFields = computed(() => this.appStore.hiddenFields('org'));
   protected readonly allTags = computed(() => this.tagModel() ? this.appStore.getTags(this.tagModel()) : this.tags());
   public tenantId = input.required<string>();
   public types = input.required<CategoryListModel>();

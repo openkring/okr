@@ -31,6 +31,7 @@ import { AppStore } from '@okr/shared-feature';
           [currentUser]="currentUser"
           [allTags]="allTags()"
           [types]="types()"
+          [hiddenFields]="hiddenFields()"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
         />
@@ -50,6 +51,7 @@ export class OrgNewModal {
   private readonly appStore = inject(AppStore);
   protected readonly allTags = computed(() => this.tagModel() ? this.appStore.getTags(this.tagModel()) : this.tags());
   public types = input.required<CategoryListModel>();
+  protected readonly hiddenFields = computed(() => this.appStore.hiddenFields('org'));
 
   // signals
   protected formDirty = signal(false);
