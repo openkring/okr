@@ -255,6 +255,20 @@ describe('block errors of the article editor', () => {
   });
 
   it('keeps what is not a block\'s', () => {
-    expect(articleOwnErrors(errors)).toEqual({ title: ['t'], blocks: ['count'] });
+    expect(articleOwnErrors(errors, blocks)).toEqual({ title: ['t'], blocks: ['count'] });
+  });
+
+  it('keeps the errors of ids that are prefixes of each other apart', () => {
+    const two = [{ id: 'a', type: 'text', html: '' }, { id: 'a.b', type: 'text', html: '' }] as never;
+    const e = { 'blocks.a.align': ['x'], 'blocks.a.b.align': ['y'], 'blocks.a.b.html': ['z'] };
+    expect(blockErrors(e, 'a', two)).toEqual({ align: ['x'] });
+    expect(blockErrors(e, 'a.b', two)).toEqual({ align: ['y'], html: ['z'] });
+    expect(articleOwnErrors(e, two)).toEqual({});
+  });
+
+  it('lists a blocks key without an owning block as the article\'s own error', () => {
+    const e = { 'blocks.[1].type': ['x'], 'blocks.a.html': ['h'] };
+    expect(articleOwnErrors(e, blocks)).toEqual({ 'blocks.[1].type': ['x'] });
+    expect(blockIdsWithErrors(e, blocks)).toEqual(['a']);
   });
 });

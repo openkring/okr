@@ -279,11 +279,11 @@ function ownerOf(key: string, ids: string[]): { id: string; field: string } | un
 
 /**
  * The errors of one block under its field names: `blocks.<id>.x` becomes `x`. The flat names the existing parts
- * look for are added: `imageStyle.width` also as `width`, `image.url` also as `images[0].url`. Pass `blocks` so an id
- * that is a prefix of another (`a` and `a.b`) does not take the other's errors.
+ * look for are added: `imageStyle.width` also as `width`, `image.url` also as `images[0].url`. `blocks` is needed so an
+ * id that is a prefix of another (`a` and `a.b`) does not take the other's errors.
  */
-export function blockErrors(errors: SectionErrors | undefined, id: string, blocks?: ArticleBlock[]): SectionErrors {
-  const ids = blocks ? [...new Set([...blockIdsInOrder(blocks), id])] : [id];
+export function blockErrors(errors: SectionErrors | undefined, id: string, blocks: ArticleBlock[]): SectionErrors {
+  const ids = [...new Set([...blockIdsInOrder(blocks), id])];
   const out: SectionErrors = {};
   for (const [key, messages] of Object.entries(errors ?? {})) {
     if (!messages?.length) continue;
@@ -308,7 +308,11 @@ export function blockIdsWithErrors(errors: SectionErrors | undefined, blocks: Ar
   return ids.filter((id) => withErrors.has(id));
 }
 
-/** Everything that is not a block's: the article's own fields and the `blocks` count / id errors. */
-export function articleOwnErrors(errors: SectionErrors | undefined): SectionErrors {
-  return Object.fromEntries(Object.entries(errors ?? {}).filter(([key]) => !key.startsWith(BLOCKS_PREFIX)));
+/**
+ * Everything that is not a known block's: the article's own fields, the `blocks` count / id errors, and a `blocks.*`
+ * key that no block owns (an empty id in stored data), so such an error is never invisible.
+ */
+export function articleOwnErrors(errors: SectionErrors | undefined, blocks: ArticleBlock[]): SectionErrors {
+  const ids = blockIdsInOrder(blocks);
+  return Object.fromEntries(Object.entries(errors ?? {}).filter(([key]) => !ownerOf(key, ids)));
 }
