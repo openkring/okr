@@ -29,6 +29,14 @@ export const TenantSettingsStore = signalStore(
     _texts: inject(I18nService).translateAll(SETTINGS_CONFIRM_I18N_KEYS),
   })),
   withComputed((store) => ({
+    /**
+     * True only when the real `app-config` document of the own tenant is here. `appConfig()` never is nullish: before
+     * the read finishes, after a failed read and for a missing document it holds class defaults, and a snapshot of
+     * those is wrong (misleading values, wrong widening dialog). `isAppConfigSettled` alone is not enough, it is also
+     * true after an error, hence the value check (same guard as `CustomizeTab`).
+     * Task 3's page must not open an editor, nor take its `before` snapshot, before this is true.
+     */
+    isLoaded: computed(() => store._appStore.isAppConfigSettled() && store._appStore.appConfigResource.hasValue()),
     /** Admin of this tenant. */
     isAdmin: computed(() => hasRole('admin', store._appStore.currentUser())),
     /** The operator: an admin whose own tenant is the operator tenant. The rules decide for real. */
@@ -58,6 +66,10 @@ export const TenantSettingsStore = signalStore(
       const own = store._appStore.tenantId();
       const target = tenantId || own;
       if (!target || !store.isAdmin()) return false;
+      // another tenant's settings: only the operator, and only the platform fields
+      if (target !== own && !(store.isOperator() && group === 'platform')) return false;
+      // a snapshot taken from class defaults is wrong; see isLoaded
+      if (target === own && !store.isLoaded()) return false;
       if (group === 'platform' && !store.isOperator()) return false;
 
       const diff = settingsDiff(before, after) as Record<string, unknown>;
@@ -76,12 +88,10 @@ export const TenantSettingsStore = signalStore(
 
       if (!await store._appConfigService.patch(target, changes)) return false;
 
-      try {
-        const list = names.join(', ');
-        await store._activityService.log('tenant', 'settings', store._appStore.currentUser(), target === own ? list : `${target}: ${list}`);
-      } catch (error) {
-        console.warn('TenantSettingsStore.save: the activity could not be logged', error);
-      }
+      // not awaited: a hanging audit write must not delay a save that already succeeded
+      const list = names.join(', ');
+      void store._activityService.log('tenant', 'settings', store._appStore.currentUser(), target === own ? list : `${target}: ${list}`)
+        .catch((error: unknown) => console.warn('TenantSettingsStore.save: the activity could not be logged', error));
       return true;
     },
   })),
