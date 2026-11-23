@@ -18,9 +18,9 @@ export const articleSectionValidations = staticSuite((model: ArticleSection) => 
   const hasBlocks = Array.isArray(model.properties?.blocks);
   omitWhen(hasBlocks, () => {
     // images: ImageConfig[]
-    // note: omitWhen always runs its callback (it only omits the tests inside), so the
-    // iterated value must be null-safe — older stored sections may lack `images`.
-    omitWhen(hasBlocks || !model.properties?.images?.length, () => {
+    // note: omitWhen always runs its callback (it only omits the tests inside), so the iterated value must be
+    // null-safe — older sections may lack `images`, and with `blocks` the stored ones are not looked at at all.
+    omitWhen(!model.properties?.images?.length, () => {
       each(hasBlocks ? [] : model.properties?.images ?? [], (image, index) => {
         imageConfigValidations(`images[${index}]`, image);
       });
@@ -56,7 +56,6 @@ export const articleSectionValidations = staticSuite((model: ArticleSection) => 
         enforce(slideshow?.duration).isNumber().greaterThanOrEquals(SLIDESHOW_DURATION_MIN).lessThanOrEquals(SLIDESHOW_DURATION_MAX);
       });
     });
-
   });
 
   articleBlocksValidations(model.properties);

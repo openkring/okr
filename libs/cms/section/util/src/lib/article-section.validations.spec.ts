@@ -134,3 +134,12 @@ describe('articleSectionValidations with blocks', () => {
     expect(articleSectionValidations(model).hasErrors()).toBe(false);
   });
 });
+
+describe('articleSectionValidations image style names', () => {
+  it('keeps the flat field names for the article image style', () => {
+    const model = { ...ARTICLE_SECTION_SHAPE, properties: { ...ARTICLE_SECTION_SHAPE.properties, imageStyle: { zoomFactor: 99 } } } as unknown as ArticleSection;
+    const r = articleSectionValidations(model);
+    expect(r.hasErrors('zoomFactor')).toBe(true);
+    expect(r.hasErrors('imageStyle.zoomFactor')).toBe(false);
+  });
+});

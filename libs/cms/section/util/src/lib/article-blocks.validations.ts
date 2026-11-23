@@ -1,8 +1,9 @@
 import { enforce, test } from 'vest';
 
 import { ARTICLE_BLOCK_TYPES, ArticleConfig, ImageConfig, SECTION_CTA_STYLES, SLIDESHOW_EFFECTS } from '@okr/shared-models';
+import { resolveImageStyle } from '@okr/shared-util-core';
 
-import { imageConfigValidations } from './image.validations';
+import { imageConfigValidations, imageStyleValidations } from './image.validations';
 import { isImageLayoutId } from './image-layout.util';
 import { isSectionCtaUrl } from './section-cta.util';
 import { SLIDESHOW_DURATION_MAX, SLIDESHOW_DURATION_MIN, SLIDESHOW_INTERVAL_MAX, SLIDESHOW_INTERVAL_MIN } from './slideshow.util';
@@ -36,6 +37,13 @@ function checkOneOf(field: string, value: unknown, allowed: readonly string[]): 
 function checkImage(field: string, image: unknown): void {
   if (isObject(image)) imageConfigValidations(field, image as unknown as ImageConfig);
   else check(`${field}.url`, false);
+}
+
+/** An optional partial image style: a non-object is an error, an object is checked on top of the defaults. */
+function checkImageStyle(field: string, style: unknown): void {
+  if (style === undefined) return;
+  if (!isObject(style)) check(field, false);
+  else imageStyleValidations(resolveImageStyle(style), `${field}.`);
 }
 
 function checkSlideshow(field: string, slideshow: unknown): void {
@@ -91,6 +99,7 @@ function checkBlock(block: unknown, index: number, inColumn: boolean): void {
       break;
     case 'image':
       checkImage(f('image'), block['image']);
+      checkImageStyle(f('imageStyle'), block['imageStyle']);
       break;
     case 'gallery': {
       const images = block['images'];
@@ -98,6 +107,7 @@ function checkBlock(block: unknown, index: number, inColumn: boolean): void {
       else images.forEach((image, i) => checkImage(f(`images[${i}]`), image));
       const layout = block['layout'];
       check(f('layout'), layout === undefined || isImageLayoutId(layout));
+      checkImageStyle(f('imageStyle'), block['imageStyle']);
       checkSlideshow(f('slideshow'), block['slideshow']);
       break;
     }

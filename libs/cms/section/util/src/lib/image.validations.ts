@@ -19,21 +19,22 @@ export function imageConfigValidations(prefix: string, image: ImageConfig): void
 
 /**
  * Validates the shared ImageStyle block of the article, hero and slider sections.
+ * `prefix` (default none) is put before every field name, e.g. `blocks.b1.imageStyle.`.
  * Callers wrap this in their own omitWhen: older stored sections may lack `imageStyle`.
  */
-export function imageStyleValidations(imageStyle: ImageStyle | undefined): void {
-  stringValidations('imgIxParams', imageStyle?.imgIxParams);
-  stringValidations('width', imageStyle?.width);
-  stringValidations('height', imageStyle?.height);
-  stringValidations('sizes', imageStyle?.sizes);
-  stringValidations('border', imageStyle?.border);
-  stringValidations('borderRadius', imageStyle?.borderRadius);
-  booleanValidations('isThumbnail', imageStyle?.isThumbnail);
-  stringValidations('slot', imageStyle?.slot);   // tbd: validate against Slot enum
-  booleanValidations('fill', imageStyle?.fill);
-  booleanValidations('hasPriority', imageStyle?.hasPriority);
-  categoryValidations('action', imageStyle?.action, ImageActionType);
-  numberValidations('zoomFactor', imageStyle?.zoomFactor, true, 0, 10);
+export function imageStyleValidations(imageStyle: ImageStyle | undefined, prefix = ''): void {
+  stringValidations(`${prefix}imgIxParams`, imageStyle?.imgIxParams);
+  stringValidations(`${prefix}width`, imageStyle?.width);
+  stringValidations(`${prefix}height`, imageStyle?.height);
+  stringValidations(`${prefix}sizes`, imageStyle?.sizes);
+  stringValidations(`${prefix}border`, imageStyle?.border);
+  stringValidations(`${prefix}borderRadius`, imageStyle?.borderRadius);
+  booleanValidations(`${prefix}isThumbnail`, imageStyle?.isThumbnail);
+  stringValidations(`${prefix}slot`, imageStyle?.slot);   // tbd: validate against Slot enum
+  booleanValidations(`${prefix}fill`, imageStyle?.fill);
+  booleanValidations(`${prefix}hasPriority`, imageStyle?.hasPriority);
+  categoryValidations(`${prefix}action`, imageStyle?.action, ImageActionType);
+  numberValidations(`${prefix}zoomFactor`, imageStyle?.zoomFactor, true, 0, 10);
 }
 
 /**
