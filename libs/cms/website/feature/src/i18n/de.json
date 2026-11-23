@@ -46,6 +46,7 @@
     "count": "{count} Einträge",
     "empty": "Noch keine Menüs — füge das erste Menü hinzu",
     "noSite": "Für diese App gibt es noch keine Website.",
+    "unavailable": "Die Website kann gerade nicht geladen werden. Warte einen Moment oder lade die Seite neu.",
     "createSite": "Website anlegen",
     "addTop": "Hinzufügen",
     "view": {

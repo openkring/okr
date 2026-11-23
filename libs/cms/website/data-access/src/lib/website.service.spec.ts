@@ -16,6 +16,7 @@ import { WebsiteService } from './website.service';
 function createFirestoreMock() {
   return {
     readModel: vi.fn().mockReturnValue(of(undefined)),
+    readObjectStrict: vi.fn().mockResolvedValue(null),
     createModel: vi.fn().mockResolvedValue('scs'),
     updateModel: vi.fn().mockResolvedValue('scs')
   };
@@ -42,6 +43,15 @@ describe('WebsiteService', () => {
       ]
     });
     service = TestBed.inject(WebsiteService);
+  });
+
+  it('isMissing() asks the server and rejects when it cannot be read', async () => {
+    expect(await service.isMissing('scs')).toBe(true);
+    expect(firestore.readObjectStrict).toHaveBeenCalledWith('websites/scs');
+    firestore.readObjectStrict.mockResolvedValue({ name: 'x' });
+    expect(await service.isMissing('scs')).toBe(false);
+    firestore.readObjectStrict.mockRejectedValue(new Error('permission-denied'));
+    await expect(service.isMissing('scs')).rejects.toThrow();
   });
 
   it('read() reads websites/{siteId}', async () => {

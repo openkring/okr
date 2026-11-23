@@ -42,6 +42,8 @@ const WARNING_KEYS: Partial<Record<WebsiteWarningCode, keyof WebsiteI18n>> = {
     <ion-content>
       @if (store.isLoading()) {
         <okr-spinner />
+      } @else if (!store.website() && !store.isMissing()) {
+        <okr-empty-list [message]="store.i18n.sitemap_unavailable()" />
       } @else if (!store.website()) {
         <okr-empty-list [message]="store.i18n.sitemap_no_site()" />
         @if (store.canEdit()) {

@@ -45,6 +45,14 @@ export class WebsiteService {
   }
 
   /**
+   * Whether `websites/{siteId}` does not exist. `read()` emits undefined for a missing document AND for one that
+   * could not be read (a denied listener, offline); this asks the server and rejects in the second case.
+   */
+  public async isMissing(siteId: string): Promise<boolean> {
+    return (await this.firestoreService.readObjectStrict<WebsiteModel>(`${WebsiteCollection}/${siteId}`)) === null;
+  }
+
+  /**
    * Create a website document. The document id is the model's `okey` (the siteId).
    * @returns the document id, or undefined when the write failed (the error is toasted)
    */
