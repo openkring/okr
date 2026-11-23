@@ -149,6 +149,7 @@ export const PAGE_I18N_KEYS = {
   section_send:                 PFX + 'section.send',
   section_remove:               PFX + 'section.remove',
   section_label:                PFX + 'section.label',
+  widget_hidden:                PFX + 'widget.hidden',
 
   welcome_title:                PFX + 'welcome.title',
   welcome_subTitle:             PFX + 'welcome.subTitle',

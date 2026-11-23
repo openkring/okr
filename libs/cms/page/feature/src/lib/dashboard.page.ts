@@ -1,7 +1,8 @@
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, input, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { Meta } from '@angular/platform-browser';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular';
+import { READINESS_TIMEOUT_MS } from '@okr/shared-feature';
 import { ArticleSection, ButtonSection, RoleName, SectionModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, error, getColSizes } from '@okr/shared-util-angular';
@@ -9,6 +10,8 @@ import { hasRole, replaceSubstring, contextMenuId } from '@okr/shared-util-core'
 
 import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { SectionDispatcher, SectionStore } from '@okr/cms-section-feature';
+import { FeatureStore } from '@okr/tenant-feature';
+import { isWidgetVisible } from '@okr/tenant-util';
 
 import { PageStore } from './page.store';
 
@@ -19,8 +22,11 @@ import { PageStore } from './page.store';
 const COLUMN_SECTION_TYPES: string[][] = [['notices'], ['news']];
 const OWN_COLUMN_TYPES = COLUMN_SECTION_TYPES.flat();
 
-/** A section plus its position in the page, so the one-column layout keeps the page order. */
-interface DashboardItem { section: SectionModel; order: number; }
+/**
+ * A section plus its position in the page, so the one-column layout keeps the page order.
+ * `hidden`: the tenant does not show it; only edit mode lists such a section.
+ */
+interface DashboardItem { section: SectionModel; order: number; hidden: boolean; }
 
 @Component({
   selector: 'okr-dashboard-page',
@@ -136,6 +142,14 @@ interface DashboardItem { section: SectionModel; order: number; }
     .section-wrapper.editable {
       border: 3px solid;
       cursor: pointer;
+    }
+
+    .hidden-widget okr-section-dispatcher {
+      opacity: 0.5;
+    }
+
+    .hidden-widget > ion-label {
+      padding: 8px 24px;
     }
 
     .section-wrapper.state-draft {
@@ -293,8 +307,10 @@ interface DashboardItem { section: SectionModel; order: number; }
       </ion-header>
     }
     <ion-content class="ion-no-padding">
-      @if(isEmptyPage()) {
-        @if(hasRole('contentAdmin')) {
+      @if(!isReady()) {
+        <!-- nothing yet: a widget must not appear and then vanish, nor the empty text -->
+      } @else if(isEmptyPage()) {
+        @if(hasRole('contentAdmin') && store.pageSections().length === 0) {
           <div class="empty-state">
             <ion-icon src="{{'grid' | svgIcon }}"></ion-icon>
             <ion-label class="ion-text-wrap">{{ store.i18n.empty() }}</ion-label>
@@ -303,7 +319,7 @@ interface DashboardItem { section: SectionModel; order: number; }
               {{ store.i18n.add_label() }}
             </ion-button>
           </div>
-        } @else { <!-- not contentAdmin; also: not logged-in for public content -->
+        } @else { <!-- not contentAdmin; also: not logged-in for public content, or every section is hidden -->
           <div class="empty-state">
             <ion-icon src="{{'document' | svgIcon }}"></ion-icon>
             <ion-label class="ion-text-wrap">{{ store.i18n.empty_readonly() }}</ion-label>
@@ -331,7 +347,10 @@ interface DashboardItem { section: SectionModel; order: number; }
           [class.edit-mode]="editMode()" [style.order]="item.order"
           [attr.size-md]="colSizes.sizeMd" [attr.size-lg]="isSplit() ? 12 : colSizes.sizeLg"
         >
-          <div class="section-wrapper state-{{ item.section.state }}" [class.editable]="editMode()">
+          <div class="section-wrapper state-{{ item.section.state }}" [class.editable]="editMode()" [class.hidden-widget]="item.hidden">
+            @if(item.hidden) {
+              <ion-label color="medium">{{ store.i18n.widget_hidden() }}</ion-label>
+            }
             <okr-section-dispatcher [section]="item.section" [currentUser]="store.currentUser()" [editMode]="editMode()" [pageLocationKey]="page()?.locationKey ?? ''" />
           </div>
         </ion-col>
@@ -343,6 +362,7 @@ export class DashboardPage {
   protected readonly menuItemsStore = inject(MenuItemsStore);
   protected readonly store = inject(PageStore);
   private readonly sectionStore = inject(SectionStore);
+  private readonly featureStore = inject(FeatureStore);
   private readonly meta = inject(Meta);
   private readonly actionSheetController = inject(ActionSheetController);
 
@@ -356,14 +376,21 @@ export class DashboardPage {
   protected readonly popupId = contextMenuId('c_contentpage');
   protected editMode = signal(false);
   protected page = computed(() => this.store.page());
+  // Which widgets the tenant shows is known once FeatureStore has settled. If that never happens
+  // (a listener that does not answer), render on the defaults, like isFeatureEnabledGuard does.
+  private readonly waitedLongEnough = signal(false);
+  protected isReady = computed(() => this.featureStore.settled() || this.waitedLongEnough());
   // Accordion sections are not supported in Dashboard pages. Makes the implementation easier.
   // Like the content page: readers get published sections only, a contentAdmin sees all of them.
   protected sections = computed(() => {
+    if (!this.isReady()) return [];
     const sections = this.store.pageSections();
-    return this.hasRole('contentAdmin') ? sections : sections.filter(s => s.state === 'published');
+    const readable = this.hasRole('contentAdmin') ? sections : sections.filter(s => s.state === 'published');
+    return this.editMode() ? readable : readable.filter(s => this.isShown(s));
   });
   protected isEmptyPage = computed(() => this.sections().length === 0);
-  private items = computed((): DashboardItem[] => this.sections().map((section, order) => ({ section, order })));
+  private items = computed((): DashboardItem[] => this.sections().map((section, order) =>
+    ({ section, order, hidden: !this.isShown(section) })));
   /** The non-empty columns, left to right: every other section first, then one per COLUMN_SECTION_TYPES entry. */
   protected columns = computed((): DashboardItem[][] => {
     const items = this.items();
@@ -381,6 +408,15 @@ export class DashboardPage {
         this.meta.addTags(meta);
       }
     });
+
+    // Counted from app start, not from here: the route guard has already waited for the same signal.
+    const timer = setTimeout(() => this.waitedLongEnough.set(true), Math.max(0, READINESS_TIMEOUT_MS - performance.now()));
+    inject(DestroyRef).onDestroy(() => clearTimeout(timer));
+  }
+
+  /** Not hidden by the tenant, and the section's feature block is on. */
+  private isShown(section: SectionModel): boolean {
+    return isWidgetVisible(section, this.tenantId(), this.store.getConfigAttribute('hiddenWidgets'), this.featureStore.isEnabled());
   }
 
   /******************************* actions *************************************** */

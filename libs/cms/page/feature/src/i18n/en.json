@@ -467,5 +467,8 @@
       "step3": "Only sections with the status «Published» go to the website.",
       "step4": "Tap «Publish». Only then do the changes appear on the website. After every further change you publish again. An earlier version can be restored."
     }
+  },
+  "widget": {
+    "hidden": "hidden"
   }
 }

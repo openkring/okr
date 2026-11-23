@@ -9,6 +9,7 @@ export * from './lib/customize-i18n';
 export * from './lib/feature-profiles';
 export * from './lib/feature-rollout.util';
 export * from './lib/feature-routes.util';
+export * from './lib/dashboard-widgets.util';
 export * from './lib/hidden-menu.util';
 export * from './lib/menu-outline.util';
 export * from './lib/plan-summary.util';

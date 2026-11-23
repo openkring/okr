@@ -467,5 +467,8 @@
       "step3": "Solo las secciones con el estado «Publicado» llegan al sitio web.",
       "step4": "Toca «Publicar». Solo entonces aparecen los cambios en el sitio web. Después de cada cambio vuelves a publicar. Se puede restaurar una versión anterior."
     }
+  },
+  "widget": {
+    "hidden": "oculto"
   }
 }
