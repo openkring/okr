@@ -68,7 +68,7 @@ export interface QuoteCallableEnv extends QuoteEnv {
    * unsubscribe block. Absent = no newsletter is recognised; a newsletter send then refuses the quote (price-changed).
    */
   isNewsletterGroup?(tenantId: string, groupKey: string): Promise<boolean>;
-  /** The rendered HTML of the caller's mail page (1.171): what `sendMailing` prices for the same `pageKey`. */
+  /** The rendered HTML of the caller's mail page (1.172): what `sendMailing` prices for the same `pageKey`. */
   renderPage?(tenantId: string, pageKey: string, uid: string): Promise<string>;
 }
 
@@ -91,7 +91,7 @@ export function parseInput(raw: unknown): Omit<QuoteInput, 'attachments'> & { pa
   if (typeof d['tenantId'] !== 'string' || !d['tenantId']) throw new HttpsError('invalid-argument', 'tenantId is required.');
   const tenantId = d['tenantId'];
   if (typeof d['subject'] !== 'string' || !d['subject'].trim()) throw new HttpsError('invalid-argument', 'subject is required.');
-  // a mail page (1.171) is priced from its rendered HTML, so `body` is only required without one
+  // a mail page (1.172) is priced from its rendered HTML, so `body` is only required without one
   const pageKey = parsePageKey(d['pageKey']);
   if (!pageKey && typeof d['body'] !== 'string') throw new HttpsError('invalid-argument', 'body or pageKey is required.');
   const postKeys = d['postKeys'];

@@ -1,6 +1,6 @@
 // apps/functions/src/email/mail-page/mail-page.ts
 //
-// Firestore I/O around a Versand mail page (spec 1.171): load page + sections + event lines and render, and the
+// Firestore I/O around a Versand mail page (spec 1.172): load page + sections + event lines and render, and the
 // nightly reap of unsent drafts. The rules themselves are pure, in mail-page.logic.ts.
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';

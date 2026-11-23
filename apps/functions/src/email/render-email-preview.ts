@@ -24,7 +24,7 @@ export interface RenderPreviewRequest {
   appId: string;
   layout?: EmailLayoutChoice;
   body?: string;
-  /** A mail page of the caller (1.171): the server renders it and previews that; wins over `body`. */
+  /** A mail page of the caller (1.172): the server renders it and previews that; wins over `body`. */
   pageKey?: string;
   attachmentName?: string;
   /** The events of a Versand with answer links: the preview shows the answer block under the body. */

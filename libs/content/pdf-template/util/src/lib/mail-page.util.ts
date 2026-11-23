@@ -1,6 +1,6 @@
 // libs/content/pdf-template/util/src/lib/mail-page.util.ts
 //
-// Pure helpers for the mail page of a Versand (spec 1.171): the draft page, the "does it show anything" check
+// Pure helpers for the mail page of a Versand (spec 1.172): the draft page, the "does it show anything" check
 // the composer needs before sending, a one-line summary per section, and the picker of addable section types.
 import { CategoryItemModel, CategoryListModel, MAIL_SECTION_TYPES, MailPageModel, SectionModel } from '@okr/shared-models';
 

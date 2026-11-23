@@ -52,7 +52,7 @@ export type TransportMode = 'plane' | 'ship' | 'bus' | 'train' | 'car' | 'bike' 
 export const TRANSPORT_MODES: TransportMode[] = ['plane', 'ship', 'bus', 'train', 'car', 'bike', 'foot', 'row', 'ski', 'motorbike'];
 export const FOOTPRINT_PAGE_TYPE = 'footprint';
 
-// Versand als Seite (spec 1.171): a mail built from CMS-style sections, stored apart from the website pages.
+// Versand als Seite (spec 1.172): a mail built from CMS-style sections, stored apart from the website pages.
 export const MAIL_PAGE_TYPE = 'mail';
 export const MailPageCollection = 'mailPages';
 export const MailPageSectionCollection = 'sections'; // subcollection mailPages/{key}/sections

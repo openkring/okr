@@ -1,6 +1,6 @@
 // libs/content/pdf-template/ui/src/lib/mail-page-editor.ts
 //
-// «Seite» of a Versand (spec 1.171 §7.2): the mail as a list of sections, Mailchimp-style. The open article is
+// «Seite» of a Versand (spec 1.172 §7.2): the mail as a list of sections, Mailchimp-style. The open article is
 // typed into directly (the everyday case: two lines, send); every other section is a card with its summary,
 // up/down/remove and «Bearbeiten». «Abschnitt hinzufügen» offers the mail section types.
 //

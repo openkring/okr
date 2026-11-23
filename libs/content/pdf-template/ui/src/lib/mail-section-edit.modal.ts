@@ -1,6 +1,6 @@
 // libs/content/pdf-template/ui/src/lib/mail-section-edit.modal.ts
 //
-// Edits one section of a Versand page (spec 1.171 §7.2): an article's title and images, a button, an events
+// Edits one section of a Versand page (spec 1.172 §7.2): an article's title and images, a button, an events
 // section. It wraps the CMS section form (`okr-section-form` from cms-section-ui) and only dismisses with the
 // edited section; the page editor writes it.
 //

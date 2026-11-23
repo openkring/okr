@@ -233,7 +233,7 @@ interface AddressField {
                         [thumbnails]="layoutThumbnails()" [selected]="layout()" (selectedChange)="onLayoutChange($event)" />
                     </ion-col>
                   </ion-row>
-                  <!-- Versand (spec 1.171 §7.2): the web version switch, then the mail as a page of sections -->
+                  <!-- Versand (spec 1.172 §7.2): the web version switch, then the mail as a page of sections -->
                   @if (isVersand()) {
                     <ion-row>
                       <ion-col size="12">
@@ -432,7 +432,7 @@ export class EmailComposerModal {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly destroyRef = inject(DestroyRef);
   private readonly mailPageService = inject(MailPageService);
-  /** A Versand's content: the draft page `mailPages/{pk}` (spec 1.171), created when the composer opens. */
+  /** A Versand's content: the draft page `mailPages/{pk}` (spec 1.172), created when the composer opens. */
   protected readonly draft = inject(MailPageDraft);
   protected readonly i18n = this.i18nService.translateAll(EMAIL_COMPOSER_I18N_KEYS) as EmailComposerI18n;
 
@@ -720,12 +720,12 @@ export class EmailComposerModal {
   private sendInFlight: Promise<void> | undefined;
 
   /**
-   * Where the cursor starts (spec 1.171 §7.2, R13): a mail needs a subject first, so an empty subject keeps the
+   * Where the cursor starts (spec 1.172 §7.2, R13): a mail needs a subject first, so an empty subject keeps the
    * focus; with a prefilled subject a Versand starts in the text of its first article.
    */
   protected readonly focusPage = computed(() => this.isVersand() && this.subjectDefault().trim().length > 0);
 
-  /** «Webversion anbieten» (spec 1.171 R4): on for a newsletter, else off, until the sender switches it. */
+  /** «Webversion anbieten» (spec 1.172 R4): on for a newsletter, else off, until the sender switches it. */
   private readonly webVersionChoice = signal<boolean | undefined>(undefined);
   private readonly groupIsNewsletter = computed(() => {
     if (this.newsletter()) return true;
@@ -821,7 +821,7 @@ export class EmailComposerModal {
           .catch((err) => console.warn('EmailComposerModal: could not discard the draft page', err));
       }
     });
-    // A Versand composes a page (spec 1.171): its draft is created once, with the prefilled body as its first article.
+    // A Versand composes a page (spec 1.172): its draft is created once, with the prefilled body as its first article.
     effect(() => {
       if (!this.isVersand() || this.draftReady) return;
       untracked(() => { this.draftReady = this.createDraft(); });
@@ -1412,7 +1412,7 @@ export class EmailComposerModal {
           to: request.to, from: request.from,
           // with events or to a newsletter every person gets their own mail: no Cc, the address in «An» is the reply address
           cc: this.personalMails() ? [] : request.cc,
-          // the content is the page: no `body` at all, so a server older than 1.171 (which ignores pageKey)
+          // the content is the page: no `body` at all, so a server older than 1.172 (which ignores pageKey)
           // refuses the send («body is required») instead of sending an empty mail
           subject: request.subject, layout: request.layout,
           pageKey: this.draft.pageKey(), webVersion: this.webVersion(),

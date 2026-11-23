@@ -2202,11 +2202,11 @@ export async function resolveArrayItemDocs(entry: SubjectDataEntry, ctx: Subject
 //   (person key), the chosen guest commentKeys, export paths. The exported PDFs (exportJournalBook) in the
 //   private bucket under tenant/<t>/journal/<jk>/book/ print the authors' names and, when picked, guest
 //   comments with display names (design §9). Authors only; follows the journals row (plan 6).
-// gap: mailPages — a Versand mail page draft (spec 1.171), with its `sections` subcollection: the mail's
+// gap: mailPages — a Versand mail page draft (spec 1.172), with its `sections` subcollection: the mail's
 //   content, which may name people, and `senderUid` (the Auth uid, not the personKey) of the sender. A
 //   draft that never sent is reaped after 7 days by `mailPageDraftReap`; a sent one keeps only the
 //   `mailingKey` link. The sender link is a uid on a subcollection-owning doc, so a `find` here would be
 //   a guess; follows the mailings content until an erasure row reads by senderUid.
-// gap: mailingWeb — the server-only snapshot of a sent Versand (spec 1.171), keyed by `mailingKey`. Built
+// gap: mailingWeb — the server-only snapshot of a sent Versand (spec 1.172), keyed by `mailingKey`. Built
 //   without personal values (no name greeting, no answer or unsubscribe links), but it holds the mail's free
 //   text, which may name people. No subject link of its own; follows the mailings content.

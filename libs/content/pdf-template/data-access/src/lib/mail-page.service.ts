@@ -1,6 +1,6 @@
 // libs/content/pdf-template/data-access/src/lib/mail-page.service.ts
 //
-// The draft page of a Versand (spec 1.171): `mailPages/{pk}` with its sections in `mailPages/{pk}/sections`.
+// The draft page of a Versand (spec 1.172): `mailPages/{pk}` with its sections in `mailPages/{pk}/sections`.
 // The client writes these directly under the Firestore rules; every write here is shaped for them:
 //  - the page is created with exactly one tenant, `senderUid` = the caller, `createdAt`, and no `mailingKey`
 //    at all (the server sets it on send); `groupKey` only when given (the rules check the group admin);

@@ -1,6 +1,6 @@
 // apps/functions/src/email/mail-page/mailing-web.ts
 //
-// The web version of a Versand (spec 1.171 §7.5).
+// The web version of a Versand (spec 1.172 §7.5).
 //
 // `mailingWeb` (public, no login): serves the server-rendered snapshot `mailingWeb/{token}` behind the mail's
 // «Im Browser ansehen» link. The link is this function's own URL with the token as `t` (as the answer links,

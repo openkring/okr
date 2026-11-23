@@ -1,6 +1,6 @@
 // apps/functions/src/email/mail-page/mail-page.logic.ts
 //
-// Pure rules around a Versand mail page (spec 1.171): who may render it, which events an events section lists,
+// Pure rules around a Versand mail page (spec 1.172): who may render it, which events an events section lists,
 // and when an unsent draft is reaped.
 import type { CalEventModel, MailPageModel } from '@okr/shared-models';
 import { convertDateFormatToString, DateFormat, formatExportTime } from '@okr/shared-util-core';

@@ -60,7 +60,7 @@ export interface SendMailingRequest {
   subject: string;
   /**
    * The content HTML, unless `pageKey` is given. A page send leaves it out entirely: a server released before
-   * 1.171 then refuses with «body is required» instead of mass-sending an empty mail (it ignores `pageKey`).
+   * 1.172 then refuses with «body is required» instead of mass-sending an empty mail (it ignores `pageKey`).
    */
   body?: string;
   layout: EmailLayoutChoice;
@@ -92,7 +92,7 @@ export type QuoteMailingRequest = Pick<SendMailingRequest, 'tenantId' | 'groupKe
   options: PostOptions;
   /** the content HTML, unless `pageKey` is given */
   body?: string;
-  /** a mail page (1.171): the server prices its rendered HTML, so the quote matches what the send charges */
+  /** a mail page (1.172): the server prices its rendered HTML, so the quote matches what the send charges */
   pageKey?: string;
 };
 
@@ -138,7 +138,7 @@ export interface MailingLetters {
 export interface RenderPreviewRequest {
   /** the content HTML, unless `pageKey` is given */
   body?: string;
-  /** a mail page (1.171): the server renders it; wins over `body` */
+  /** a mail page (1.172): the server renders it; wins over `body` */
   pageKey?: string;
   layout: EmailLayoutChoice;
   attachmentName?: string;

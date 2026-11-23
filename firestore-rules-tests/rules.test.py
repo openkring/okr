@@ -2758,7 +2758,7 @@ for label, expect, run in newsletter_cases:
     passed += ok; failed += not ok
     print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
 
-# ------------------------------------------- mailPages (spec 1.171 §7.7) ---
+# ------------------------------------------- mailPages (spec 1.172 §7.7) ---
 # Versand mails as pages of sections. The composer writes drafts directly: create / update / delete by a
 # Versand sender (memberAdmin, privileged, or an admin of the draft's own groupKey) of exactly their own
 # tenant, senderUid == caller, only while mailingKey is absent (server-only). Read: the sender, or —

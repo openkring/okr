@@ -262,7 +262,7 @@ export const EMAIL_COMPOSER_I18N_KEYS = {
   revert:           PFX + 'composer.revert.label',
   copy_conf:        '@copy.conf',
 
-  // Versand as a page of sections (spec 1.171 §7.2)
+  // Versand as a page of sections (spec 1.172 §7.2)
   web_version_label:  PFX + 'composer.web_version.label',
   web_version_helper: PFX + 'composer.web_version.helper',
   page_add:           PFX + 'composer.page.add',

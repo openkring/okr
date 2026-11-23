@@ -196,7 +196,7 @@ describe('quoteWithCaller', () => {
   });
 });
 
-describe('quoteWithCaller for a mail page (1.171)', () => {
+describe('quoteWithCaller for a mail page (1.172)', () => {
   const page = { tenantId: 'scs', subject: 'S', pageKey: 'pg1', postKeys: ['p0'] };
   function env(renderPage = vi.fn(async () => '<p>PAGE</p>')) {
     const renderPages = vi.fn(async () => 1);

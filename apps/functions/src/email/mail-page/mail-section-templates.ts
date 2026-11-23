@@ -1,6 +1,6 @@
 // apps/functions/src/email/mail-page/mail-section-templates.ts
 //
-// One Handlebars template per mail section type (spec 1.171 §7.3). Each renders one full-width table row
+// One Handlebars template per mail section type (spec 1.172 §7.3). Each renders one full-width table row
 // for the `{{{content}}}` slot of the tenant's email layout, which sets the 600 px width.
 //
 // Mail clients (Outlook above all) read tables and inline styles, nothing else: no flex, no grid, no

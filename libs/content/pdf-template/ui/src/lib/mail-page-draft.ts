@@ -1,6 +1,6 @@
 // libs/content/pdf-template/ui/src/lib/mail-page-draft.ts
 //
-// The draft page of one opened Versand composer (spec 1.171 §7.2), shared by the composer and its
+// The draft page of one opened Versand composer (spec 1.172 §7.2), shared by the composer and its
 // `okr-mail-page-editor` (provided on the composer, so both see the same instance).
 //
 // Why a shared object rather than state inside the editor: the editor lives in the composer's «Editor» segment

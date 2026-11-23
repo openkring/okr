@@ -80,7 +80,7 @@ export function isTenantDocumentPath(path: string, tenantId: string): boolean {
 }
 /** The channels a Versand sends: E-Mail, In-App, and Post as a letter PDF for the sender (P3). */
 const SENDABLE: string[] = [DeliveryChannel.Email, DeliveryChannel.Chat, DeliveryChannel.Post];
-/** The line above the body of every E-Mail of a Versand with a web version (spec 1.171 §7.5). */
+/** The line above the body of every E-Mail of a Versand with a web version (spec 1.172 §7.5). */
 const WEB_LINK_LABEL = 'Im Browser ansehen';
 
 export interface MailingDelivery {
@@ -95,7 +95,7 @@ export interface MailingRequest {
   subject: string;
   /** The content HTML of an old client; ignored when `pageKey` is given (the server renders the page). */
   body?: string;
-  /** The mail page (spec 1.171) whose sections are the content; absent = the `body` path of old clients. */
+  /** The mail page (spec 1.172) whose sections are the content; absent = the `body` path of old clients. */
   pageKey?: string;
   /** «Webversion»: absent = on for a newsletter, off otherwise (`webVersionOn`). Only with `pageKey`. */
   webVersion?: boolean;
@@ -164,7 +164,7 @@ export interface MailingDoc {
   householdNames?: Record<string, string>;
   /** A newsletter send (spec 1.169 §5.6): the newsletter group. Set only by `sendMailing`, never taken from the client. */
   newsletterGroupKey?: string;
-  /** The mail page whose rendered sections are `body` (spec 1.171); absent on old sends. */
+  /** The mail page whose rendered sections are `body` (spec 1.172); absent on old sends. */
   pageKey?: string;
   /** Whether this send has a web version; set with `pageKey` only. */
   webVersion?: boolean;
@@ -447,7 +447,7 @@ export const sendMailing = onCall(
     const { tenantId, groupKey } = data;
     if (typeof tenantId !== 'string' || !tenantId) throw new HttpsError('invalid-argument', 'tenantId is required.');
     if (typeof data.subject !== 'string' || !data.subject.trim()) throw new HttpsError('invalid-argument', 'subject is required.');
-    // with a page the server renders the content (spec 1.171); without one, the body of an old client as today
+    // with a page the server renders the content (spec 1.172); without one, the body of an old client as today
     const pageKey = parsePageKey(data.pageKey);
     if (!pageKey && typeof data.body !== 'string') throw new HttpsError('invalid-argument', 'body is required.');
     const to = stringList(data.to, 'to');

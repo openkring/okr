@@ -1,6 +1,6 @@
 // apps/functions/src/email/mail-page/render-mail-page.logic.ts
 //
-// Renders the sections of a mail page into the content HTML of a Versand mail (spec 1.171 §7.4). Pure:
+// Renders the sections of a mail page into the content HTML of a Versand mail (spec 1.172 §7.4). Pure:
 // the caller reads the page and its sections, loads the event lines and passes Handlebars and the sanitizer.
 // The result goes into the layout's `{{{content}}}` slot exactly like a typed `body`.
 import type { MailSectionType } from '@okr/shared-models';

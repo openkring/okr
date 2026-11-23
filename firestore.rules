@@ -1684,7 +1684,7 @@ service cloud.firestore {
       allow read:   if (isPrivileged() || hasRole('memberAdmin')) && tenantRead();
       allow write:  if false;
     }
-    // mailPages (spec 1.171 §7.7): a Versand mail as a page of sections. The composer writes the draft
+    // mailPages (spec 1.172 §7.7): a Versand mail as a page of sections. The composer writes the draft
     // directly, so these rules are its only access control. Writes: the Versand sender of `sendMailing`
     // (privileged — admin included —, memberAdmin, or an admin of the draft's OWN, non-empty groupKey) of
     // exactly one own tenant, senderUid == caller, and only while `mailingKey` is absent: sendMailing
@@ -1741,7 +1741,7 @@ service cloud.firestore {
         return p != null && isOwnMailDraft(p.data, callerTenants());
       }
     }
-    // mailingWeb/{token} (spec 1.171): the server-rendered web version of a sent mail, written and served by
+    // mailingWeb/{token} (spec 1.172): the server-rendered web version of a sent mail, written and served by
     // Cloud Functions (Admin SDK) only. The token is the capability; no client reads or writes it.
     match /mailingWeb/{token}      {
       allow read, write: if false;

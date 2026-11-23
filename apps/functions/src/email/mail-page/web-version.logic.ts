@@ -1,6 +1,6 @@
 // apps/functions/src/email/mail-page/web-version.logic.ts
 //
-// The web version of a Versand (spec 1.171 §7.5): pure helpers. The server decides whether a send gets one,
+// The web version of a Versand (spec 1.172 §7.5): pure helpers. The server decides whether a send gets one,
 // creates its unguessable token and adds the «Im Browser ansehen» line to the E-Mail channel only.
 import { randomBytes } from 'node:crypto';
 
