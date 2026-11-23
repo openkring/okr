@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { blocksFromClassic, convertsExactly } from '@okr/shared-models';
+
 import { isColorBand, mapArticleColors, mapCalendarKey, mapSection, type SectionDoc, mapSlideshow, toImgixUrl } from './section-mapper';
 
 const sanitize = (html: string) => html;
@@ -305,5 +307,57 @@ describe('mapArticleColors', () => {
   it('reaches the public article', () => {
     const doc = { type: 'article', name: 'kiss', title: 'T', properties: { background: '#59A4BF', textColor: 'light', images: [] } } as unknown as SectionDoc;
     expect(map(doc)).toMatchObject({ type: 'article', background: '#59A4BF', lightText: true });
+  });
+});
+
+describe('a migrated article maps like the original (spec 1.173 §8.1)', () => {
+  const pic = (n: string, extra: Record<string, unknown> = {}) => ({ url: `tenant/scs/section/s/${n}.jpg`, altText: n, overlay: `Bild ${n}`, label: '', ...extra });
+  const show = { effect: 'fade', autoplay: true, interval: 3, duration: 1 };
+  const cta = { label: 'Los', labelI18n: { en: 'Go' }, url: '/los.html' };
+  const captions = { captionPosition: 'bottom', height: '300px' };
+  const article = (n: number, position: number | undefined, properties: Record<string, unknown> = {}, colSize?: number): SectionDoc => ({
+    type: 'article', name: 'A', title: 'Titel', subTitle: 'Untertitel', content: { htmlContent: '<p>x</p>', position, colSize },
+    properties: { images: ['a', 'b', 'c'].slice(0, n).map((name) => pic(name)), ...properties },
+  });
+  // the article fixtures of this file, and every shape of §8.1
+  const fixtures: [string, SectionDoc][] = [
+    ...[0, 1, 2, 3, 4].flatMap((position): [string, SectionDoc][] => [0, 1, 2, 3].flatMap((n): [string, SectionDoc][] => [
+      [`${n} images at ${position}`, article(n, position)],
+      [`${n} images at ${position}, styled`, article(n, position, { imageStyle: captions, cta, contentI18n: { en: '<p>y</p>' } })],
+      ...['slider', 'stacked', 'side-by-side', 'pair', 'mosaic'].map((imageLayout): [string, SectionDoc] =>
+        [`${n} images at ${position}, ${imageLayout}`, article(n, position, { imageLayout, imageStyle: captions })]),
+      [`${n} images at ${position}, stacked with a slideshow`, article(n, position, { imageLayout: 'stacked', slideshow: show })],
+      ...(n === 1 && position > 2 ? [] : [[`${n} images at ${position}, slideshow`, article(n, position, { slideshow: show })] as [string, SectionDoc]]),
+    ])),
+    ...[1, 4, 6, 11].flatMap((colSize): [string, SectionDoc][] => [[`left ${colSize}`, article(1, 3, {}, colSize)], [`right ${colSize}`, article(1, 4, {}, colSize)]]),
+    ['no position', article(1, undefined)],
+    ['the twint codes', article(2, 1, { imageLayout: 'side-by-side', imageStyle: { width: '150px', height: '150px' } })],
+    ['a coloured band', article(1, 3, { emphasis: 'banner', background: '#3c163c', textColor: 'light', titleI18n: { en: 'Title' }, introI18n: { en: 'x' } })],
+    ['no type, no content', { title: 'T', properties: { background: '#59A4BF', images: [] } }],
+    ['nothing', {}],
+  ];
+  const drawn = (doc: SectionDoc, lang: string): Record<string, unknown> => {
+    const out = { ...(mapSection('sec1', doc, new Map(), sanitize, lang) as Record<string, unknown>) };
+    // the templates read neither of them then
+    if (out['imagePosition'] !== 'left' && out['imagePosition'] !== 'right') delete out['imageColSize'];
+    if ((out['images'] as unknown[]).length === 0) delete out['imageHeight'];
+    return out;
+  };
+
+  it.each(fixtures)('%s', (_name, original) => {
+    expect(convertsExactly(original)).toBe(true);
+    const converted = blocksFromClassic(original);
+    const { images: _i, imageStyle: _s, imageLayout: _l, slideshow: _w, cta: _c, contentI18n: _t, ...kept } = original.properties ?? {};
+    const migrated: SectionDoc = { ...original, content: undefined, properties: { ...kept, ...converted } };
+    // the old fields may stay next to the blocks; they are ignored
+    const both: SectionDoc = { ...original, content: { htmlContent: 'alt', position: 2 }, properties: { ...original.properties, ...converted } };
+    for (const lang of ['de', 'en']) {
+      expect(drawn(migrated, lang)).toEqual(drawn(original, lang));
+      expect(drawn(both, lang)).toEqual(drawn(original, lang));
+    }
+  });
+
+  it('an article with an image without url is not convertible', () => {
+    expect(convertsExactly(article(0, 1, { images: [pic('a'), { url: '' }] }))).toBe(false);
   });
 });

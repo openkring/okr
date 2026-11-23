@@ -21,6 +21,10 @@ describe('homeRowPlan', () => {
     expect(homeRowPlan([stat, text]).map((r) => r.kind)).toEqual(['single', 'single']);
   });
 
+  it('does not pair a free article, even without images (spec 1.173)', () => {
+    expect(homeRowPlan([{ ...text, hasBlocks: true, blocks: [] }, stat]).map((r) => r.kind)).toEqual(['single', 'single']);
+  });
+
   it('treats every hero as a hero row, wherever it stands', () => {
     expect(homeRowPlan([text, hero, hero]).map((r) => r.kind)).toEqual(['single', 'hero', 'hero']);
   });
@@ -50,6 +54,10 @@ describe('columnPairStarts', () => {
     expect([...columnPairStarts([banner, form])]).toEqual([]);
     expect([...columnPairStarts([text, events, form])]).toEqual([]);
     expect([...columnPairStarts([form, text])]).toEqual([]);
+  });
+
+  it('does not pair a free article, even without images (spec 1.173)', () => {
+    expect([...columnPairStarts([{ ...text, hasBlocks: true, blocks: [] }, form])]).toEqual([]);
   });
 
   it('starts a new pair only after the previous one', () => {

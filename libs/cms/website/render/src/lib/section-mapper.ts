@@ -1,4 +1,5 @@
-import { APPLICATION_KIND_VALUES, SLIDESHOW_EFFECTS, type ImageStyle } from '@okr/shared-models';
+import { APPLICATION_KIND_VALUES, SLIDESHOW_EFFECTS, isFreeArticle, withClassicFields, type ImageStyle } from '@okr/shared-models';
+import { mapBlocks } from './article-blocks-mapper';
 import { imageCaption } from './image-caption';
 import { mapAccordionFormat } from './accordion-format';
 import type { PublicPerson } from './group-people';
@@ -278,7 +279,7 @@ const DEFAULT_CAPTION_SIZE = '0.8rem';
  * editor and ends up in a style attribute, so only a plain length (e.g. 1rem, 14px, 90%) passes.
  */
 export function captionCss(style: StoredImageStyle | undefined): PublicCaptionCss {
-  const size = style?.captionSize?.trim() ?? '';
+  const size = str(style?.captionSize).trim();
   const captionStyle = style?.captionStyle ?? 'italic';
   const align = style?.captionAlign;
   return {
@@ -299,11 +300,12 @@ export function captionCss(style: StoredImageStyle | undefined): PublicCaptionCs
 export function mapImage(img: StoredImage | undefined, style?: StoredImageStyle, fallbacks: (string | undefined)[] = []): PublicImage | undefined {
   if (!img?.url) return undefined;
   const shown = (style?.captionPosition ?? 'none') !== 'none';
-  const parts = shown ? imageCaption(img, fallbacks) : undefined;
+  // stored texts of the wrong type count as absent: a publish must not fail because of an image
+  const parts = shown ? imageCaption({ overlay: str(img.overlay), credit: str(img.credit) }, fallbacks) : undefined;
   const caption = parts?.text ? [parts.text, parts.source].filter(t => t.length > 0).join('\n') : '';
   const position = CAPTION_POSITIONS.find(p => p === style?.captionPosition) ?? '';
   return {
-    url: toImgixUrl(img.url), alt: img.altText ?? img.label ?? '', caption,
+    url: toImgixUrl(img.url), alt: str(img.altText ?? img.label), caption,
     captionPosition: caption ? position : '', captionCss: captionCss(style),
   };
 }
@@ -644,6 +646,9 @@ export function mapSection(
   /** the cards of the public groups (`groupTileItems`), for a tiles section with source 'groups' */
   groupTiles: PublicTile[] = [],
 ): unknown {
+  // blocks beyond the fixed fields (spec 1.173 §9.3); any other article goes the way of the fixed fields
+  const isFree = isFreeArticle(s);
+  s = withClassicFields(s);
   const type = s.type ?? 'article';
   const props = (s.properties ?? {}) as Record<string, unknown>;
   const name = slugName(s.name);
@@ -772,12 +777,15 @@ export function mapSection(
     case 'accordion': {
       const items = ((props['items'] as { key?: string; label?: string }[] | undefined) ?? [])
         .map(it => {
-          const nested = it.key ? nestedSections.get(it.key) : undefined;
+          const stored = it.key ? nestedSections.get(it.key) : undefined;
+          const nested = withClassicFields(stored);
           const nestedProps = (nested?.properties ?? {}) as { contentI18n?: I18nString };
           const content = nested
             ? sanitize(pickText(nested.content?.htmlContent, nestedProps.contentI18n, lang))
             : '';
-          return { label: it.label ?? '', content };
+          // the old keys stay for a template that does not know blocks
+          const free = stored && isFreeArticle(stored) ? { hasBlocks: true, blocks: mapBlocks(stored, sanitize, lang, it.key).blocks } : {};
+          return { label: it.label ?? '', content, ...free };
         });
       // view 'cards' and the formatting fields (title, icons, text) of the app's accordion
       return { type: 'accordion', name, title, subTitle, items, ...mapAccordionFormat(props, items) };
@@ -838,7 +846,9 @@ export function mapSection(
 
     case 'article':
     default: {
-      const images = mapImages(props['images'], imageStyle, [subTitle, title]);
+      // a free article: its images are the album of its blocks, its other keys the fallback for a template without blocks
+      const free = isFree ? mapBlocks(s, sanitize, lang, id) : undefined;
+      const images = free?.images ?? mapImages(props['images'], imageStyle, [subTitle, title]);
       const content = s.content as { position?: number; colSize?: number } | undefined;
       const sideBySide = articleSideBySide(props['images'], props['imageLayout'], content?.position, imageStyle);
       if (sideBySide) {
@@ -873,6 +883,7 @@ export function mapSection(
         imageHeight: articleImageHeight(imageStyle),
         // a slideshow replaces the swipe slider and carries title and subtitle on its images (la21staefa header)
         slideshow: layout.imagePosition === 'none' ? undefined : mapSlideshow(props['slideshow'], props['imageLayout'], props['images']),
+        ...(free ? { hasBlocks: true, blocks: free.blocks } : {}),
       };
     }
   }

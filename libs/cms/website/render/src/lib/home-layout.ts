@@ -23,9 +23,10 @@ export interface HomeRowPlan {
 
 const nameOf = (s: Record<string, unknown> | undefined): string => (typeof s?.['name'] === 'string' ? s['name'] : '');
 
+/** An article of text only; a free article (`hasBlocks`, spec 1.173 §9.3) never is one. */
 function isTextArticle(s: Record<string, unknown>): boolean {
   const images = s['images'];
-  return s['type'] === 'article' && (!Array.isArray(images) || images.length === 0);
+  return s['type'] === 'article' && !s['hasBlocks'] && (!Array.isArray(images) || images.length === 0);
 }
 
 const isStatTiles = (s: Record<string, unknown> | undefined): boolean => !!s && s['type'] === 'tiles' && s['variant'] === 'stat';
