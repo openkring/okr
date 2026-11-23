@@ -47,7 +47,7 @@ describe('createBlock', () => {
     expect(createBlock('image', n)).toEqual({ id: 'n3', type: 'image', image: { ...IMAGE_CONFIG_SHAPE, url: '' } });
     expect(createBlock('gallery', n)).toEqual({ id: 'n4', type: 'gallery', images: [] });
     const button = createBlock('button', n);
-    expect(button).toEqual({ id: 'n5', type: 'button', cta: { label: '', url: '' } });
+    expect(button).toEqual({ id: 'n5', type: 'button', cta: { label: '', url: '', style: 'primary' } });
     expect('align' in button).toBe(false);
     expect(createBlock('divider', n)).toEqual({ id: 'n6', type: 'divider' });
     expect(createBlock('space', n)).toEqual({ id: 'n7', type: 'space', size: 'medium' });
@@ -155,6 +155,25 @@ describe('moveBlock', () => {
     expect(ids(moveBlock([u, text('a')], 'u', { index: 1 }))).toEqual(['a', 'u']);
     const l = [u, c];
     expect(moveBlock(l, 'u', { columnsId: 'c', column: 0, index: 0 })).toBe(l);
+  });
+});
+
+describe('moveBlock cap and malformed lists', () => {
+  const full = (extra: ArticleBlock) => [extra, ...Array.from({ length: ARTICLE_BLOCKS_MAX - 1 }, (_, i) => text(`t${i}`))];
+  it('refuses a move from a column to a full top level, but allows a move inside the top level', () => {
+    const l = full(columns('c', [[text('p')], []]));
+    expect(l).toHaveLength(ARTICLE_BLOCKS_MAX);
+    expect(moveBlock(l, 'p', { index: 0 })).toBe(l);
+    expect(moveBlock(l, 't0', { index: 0 })).not.toBe(l);
+    expect(moveBlock(l, 'p', { columnsId: 'c', column: 1, index: 0 })).not.toBe(l);
+  });
+  it('is not shifted by a null entry before the block', () => {
+    const l = [null, text('a'), text('b')] as unknown as ArticleBlock[];
+    expect(moveBlock(l, 'a', { index: 2 })).toEqual([null, text('b'), text('a')]);
+    expect(removeBlock(l, 'b')).toEqual([null, text('a')]);
+    const c = [columns('c', [[null as unknown as ArticleBlock, text('p'), text('q')], []])];
+    expect(inner(removeBlock(c, 'q')[0], 0)).toEqual([null, text('p')]);
+    expect(moveBlockBy(l, 'a', 1).map((b) => b?.id)).toEqual([undefined, 'b', 'a']);
   });
 });
 

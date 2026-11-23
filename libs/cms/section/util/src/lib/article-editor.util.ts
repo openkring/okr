@@ -1,5 +1,5 @@
 import {
-  ARTICLE_BLOCK_TYPES, IMAGE_CONFIG_SHAPE, type ArticleBlock, type ArticleBlockType, type ArticleColumn, type ColumnsBlock, type I18nString, type SectionCta,
+  ARTICLE_BLOCK_TYPES, IMAGE_CONFIG_SHAPE, type ArticleBlock, type ArticleBlockType, type ArticleColumn, type ColumnsBlock, type I18nString, type TextBlock,
 } from '@okr/shared-models';
 import { stripHtml } from '@okr/shared-util-core';
 
@@ -27,15 +27,24 @@ const isKnownType = (type: unknown): type is ArticleBlockType => (ARTICLE_BLOCK_
 const fitsColumn = (block: ArticleBlock): boolean => COLUMN_BLOCK_TYPES.includes(block.type);
 const sameList = (a: BlockPlace, b: BlockPlace): boolean => a.columnsId === b.columnsId && a.column === b.column;
 
+/** The raw stored list at `place` (indexes of a place always refer to it), or undefined when it does not exist. */
+function listAt(blocks: ArticleBlock[], place: Pick<BlockPlace, 'columnsId' | 'column'>): ArticleBlock[] | undefined {
+  if (place.columnsId === undefined) return blocks;
+  const host = blocks.find((b) => isObject(b) && b.id === place.columnsId && b.type === 'columns') as ColumnsBlock | undefined;
+  const col = Array.isArray(host?.columns) ? host.columns[place.column ?? -1] : undefined;
+  return isObject(col) && Array.isArray(col.blocks) ? col.blocks : undefined;
+}
+
 export function findBlock(blocks: ArticleBlock[], id: string): { block: ArticleBlock; place: BlockPlace } | undefined {
-  const top = asBlocks(blocks);
-  for (let index = 0; index < top.length; index++) {
-    const block = top[index];
+  // indexes are taken on the raw lists, so that entries that are no objects do not shift them
+  for (let index = 0; index < blocks.length; index++) {
+    const block = blocks[index];
+    if (!isObject(block)) continue;
     if (block.id === id) return { block, place: { index } };
-    const cols = columnsOf(block);
+    const cols = Array.isArray((block as ColumnsBlock).columns) ? (block as ColumnsBlock).columns : [];
     for (let column = 0; column < cols.length; column++) {
-      const list = asBlocks(cols[column].blocks);
-      const i = list.findIndex((b) => b.id === id);
+      const list = isObject(cols[column]) && Array.isArray(cols[column].blocks) ? cols[column].blocks : [];
+      const i = list.findIndex((b) => isObject(b) && b.id === id);
       if (i >= 0) return { block: list[i], place: { columnsId: block.id, column, index: i } };
     }
   }
@@ -59,8 +68,7 @@ export function createBlock(type: ArticleBlockType, newId: NewId): ArticleBlock 
     case 'callout': return { id, type, html: '', tone: 'primary' };
     case 'image': return { id, type, image: { ...IMAGE_CONFIG_SHAPE, url: '' } };
     case 'gallery': return { id, type, images: [] };
-    // `style` is left out on purpose (the brief): a stored cta without one draws with the default style
-    case 'button': return { id, type, cta: { label: '', url: '' } as SectionCta };
+    case 'button': return { id, type, cta: { label: '', url: '', style: 'primary' } };
     case 'columns': return { id, type, columns: [{ size: 6, blocks: [{ id: newId(), type: 'text', html: '' }] }, { size: 6, blocks: [{ id: newId(), type: 'text', html: '' }] }] };
     case 'divider': return { id, type };
     case 'space': return { id, type, size: 'medium' };
@@ -119,8 +127,9 @@ export function moveBlock(blocks: ArticleBlock[], id: string, place: BlockPlace)
   const { block } = found;
   if (place.columnsId !== undefined && (!fitsColumn(block) || place.columnsId === id)) return blocks;
   if (sameList(found.place, place) && found.place.index === place.index) return blocks;
+  // a block that leaves a column for the top level adds to the top-level count
+  if (place.columnsId === undefined && found.place.columnsId !== undefined && !canAddBlock(blocks)) return blocks;
   const without = removeBlock(blocks, id);
-  // moving within the list never changes the top-level count, so the cap applies only to a move that adds to the top level
   const moved = updateList(without, place, (list) => insertInto(list, block, place.index));
   return moved === without ? blocks : moved;
 }
@@ -128,9 +137,7 @@ export function moveBlock(blocks: ArticleBlock[], id: string, place: BlockPlace)
 export function moveBlockBy(blocks: ArticleBlock[], id: string, delta: -1 | 1): ArticleBlock[] {
   const found = findBlock(blocks, id);
   if (!found) return blocks;
-  const length = found.place.columnsId === undefined
-    ? blocks.length
-    : asBlocks(columnsOf(blocks.find((b) => b?.id === found.place.columnsId) as ArticleBlock)[found.place.column ?? 0]?.blocks).length;
+  const length = listAt(blocks, found.place)?.length ?? 0;
   const index = found.place.index + delta;
   if (index < 0 || index >= length) return blocks;
   return moveBlock(blocks, id, { ...found.place, index });
@@ -198,11 +205,9 @@ export function joinWithAbove(blocks: ArticleBlock[], id: string): { blocks: Art
   const found = findBlock(blocks, id);
   if (!found || found.block.type !== 'text' || found.place.index === 0) return undefined;
   const lower = found.block;
-  const list = found.place.columnsId === undefined
-    ? asBlocks(blocks)
-    : asBlocks(columnsOf(blocks.find((b) => b?.id === found.place.columnsId) as ArticleBlock)[found.place.column ?? 0]?.blocks);
+  const list = listAt(blocks, found.place) ?? [];
   const above = list[found.place.index - 1];
-  if (!above) return undefined;
+  if (!isObject(above)) return undefined;
   if (above.type === 'text') {
     const upperHtml = typeof above.html === 'string' ? above.html : '';
     const html = upperHtml + (typeof lower.html === 'string' ? lower.html : '');
@@ -213,7 +218,7 @@ export function joinWithAbove(blocks: ArticleBlock[], id: string): { blocks: Art
     return { blocks: next, id: above.id, upperHtml, joined: true };
   }
   if (!isEmptyText(lower)) return undefined;
-  const target = list.slice(0, found.place.index).reverse().find((b) => b.type === 'text');
+  const target = list.slice(0, found.place.index).reverse().find((b): b is TextBlock => isObject(b) && b.type === 'text');
   if (!target) return undefined;
   return { blocks: removeBlock(blocks, id), id: target.id, upperHtml: typeof target.html === 'string' ? target.html : '', joined: false };
 }
