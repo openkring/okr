@@ -5,5 +5,10 @@
         "title": "Subir imagen del avatar"
       }
     }
+  },
+  "choice": {
+    "confirm": "¿Quieres usar esta imagen como foto de perfil?",
+    "label": "Tus imágenes subidas",
+    "select": "Usar esta imagen"
   }
 }

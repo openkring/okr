@@ -35,6 +35,7 @@ Presentational toolbar that shows a circular avatar image, an optional title, an
 |---|---|---|
 | `key` | string (required) | Composite key `<modelType>.<modelKey>`, e.g. `person.abc123` |
 | `modelType` | `'person' \| 'org' \| 'group'` (required) | Determines the default fallback icon |
+| `showChoices` | boolean | Offers the pictures uploaded earlier in the zoom view of the title (only when `readOnly` is false); set by the profile |
 | `readOnly` | boolean | If false, a camera icon overlay is shown and clicking triggers photo upload |
 | `alt` | string | Alt text for the image |
 | `title` | string? | Displayed below the avatar |
@@ -51,6 +52,7 @@ NgRx Signal Store (provided at component level). Key behaviours:
 - `urlResource` — `rxResource` that calls `AvatarService.getRelStorageUrl(key)` reactively; falls back to `getDefaultIcon(modelType)` when the storage URL is empty.
 - `url` (computed) — calls `AvatarService.getAvatarUrl(key, defaultIcon)` to build the full imgix URL.
 - `showZoomedImage()` — Opens the shared zoom view for the avatar's storage path. The view sizes the image itself, so no dimensions are read; the shared `IMAGE_STYLE_SHAPE` is passed unchanged and must never be written to.
+- `showZoomedImage(title, true)` — additionally lists this tenant's uploads of the subject (`AvatarService.listAvatarChoices`) as a thumbnail strip; a tap asks for confirmation, then `AvatarService.selectAvatar` points the avatar at that picture. Nothing is uploaded or deleted.
 - `uploadPhoto()` — Delegates to `UploadService.takePhoto()` (Capacitor Camera).
 
 ## Related Libraries

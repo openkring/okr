@@ -6,6 +6,7 @@ vi.mock('@okr/shared-categories', () => ({
 }));
 vi.mock('@okr/shared-util-core', () => ({
   getPartsOfTupel: vi.fn(fileName => fileName.split('.')),
+  isImage: vi.fn((path: string) => /\.(png|jpe?g)$/.test(path)),
   blobToFile: vi.fn((blob, name) => ({ blob, name })),
   die: vi.fn(msg => {
     throw new Error(msg);
@@ -25,6 +26,36 @@ describe('newAvatarModel', () => {
     expect(result.tenants).toEqual(['tenant1', 'tenant2']);
     expect(result.storagePath).toContain('tenant/tenant1/person/abc123/');
     expect(result.isArchived).toBe(false);
+  });
+});
+
+describe('avatarStorageDir', () => {
+  it('should build the tenant directory from the subject key', async () => {
+    const { avatarStorageDir } = await import('./avatar.util');
+    expect(avatarStorageDir('scs', 'person.abc123')).toBe('tenant/scs/person/abc123/avatar');
+  });
+});
+
+describe('getAvatarChoices', () => {
+  const dir = 'tenant/scs/person/abc123/avatar';
+
+  it('should sort the newest upload first', async () => {
+    const { getAvatarChoices } = await import('./avatar.util');
+    expect(getAvatarChoices([`${dir}/1770416542221.png`, `${dir}/1787068978704.jpeg`]))
+      .toEqual([`${dir}/1787068978704.jpeg`, `${dir}/1770416542221.png`]);
+  });
+
+  it('should add the current picture once, also from another directory', async () => {
+    const { getAvatarChoices } = await import('./avatar.util');
+    const other = 'tenant/p13/person/abc123/avatar/1.png';
+    expect(getAvatarChoices([`${dir}/2.png`], `${dir}/2.png`)).toEqual([`${dir}/2.png`]);
+    expect(getAvatarChoices([`${dir}/2.png`], other)).toEqual([`${dir}/2.png`, other]);
+  });
+
+  it('should ignore files that are not images and an empty current path', async () => {
+    const { getAvatarChoices } = await import('./avatar.util');
+    expect(getAvatarChoices([`${dir}/1.pdf`, `${dir}/2.png`], '')).toEqual([`${dir}/2.png`]);
+    expect(getAvatarChoices([])).toEqual([]);
   });
 });
 

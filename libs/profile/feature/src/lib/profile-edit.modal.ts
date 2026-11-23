@@ -39,6 +39,7 @@ import { EmailSignatureAccordion } from './email-signature.accordion';
             modelType="person"
             subTitle="{{ loginIdSubtitle() }}"
             [readOnly]="false"
+            [showChoices]="true"
             (imageSelected)="onImageSelected($event)"
         />
       <ion-item lines="none">

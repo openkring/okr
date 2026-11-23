@@ -3,7 +3,7 @@ import { Filesystem } from '@capacitor/filesystem';
 import { Platform } from '@ionic/angular/lazy';
 
 import { AvatarDirectory, AvatarModel, OrgModelName, PersonModelName } from '@okr/shared-models';
-import { blobToFile, die, getPartsOfTupel } from '@okr/shared-util-core';
+import { blobToFile, die, getPartsOfTupel, isImage } from '@okr/shared-util-core';
 
 /**
  * Builds the avatar doc id. It is tenant-scoped (`p13.person.kaiser`) because persons are
@@ -18,12 +18,32 @@ export function avatarDocId(tenantId: string, key: string): string {
   return `${tenantId}.${key}`;
 }
 
+/**
+ * The Storage directory that holds every avatar picture this tenant has uploaded for a subject.
+ * @param key the subject key in the form `<modelType>.<okey>`, e.g. person.kaiser
+ */
+export function avatarStorageDir(tenantId: string, key: string): string {
+  return `tenant/${tenantId}/${key.replace('.', '/')}/${AvatarDirectory}`;
+}
+
+/**
+ * The pictures a subject can choose its avatar from: images only, the newest first (the file name is
+ * the upload time in ms). The current picture is always part of it, also when it lives elsewhere
+ * (the shared default may have been uploaded by another tenant).
+ */
+export function getAvatarChoices(paths: string[], currentPath = ''): string[] {
+  const fileName = (path: string) => path.split('/').pop() ?? '';
+  return [...new Set([...paths, currentPath])]
+    .filter(path => path.length > 0 && isImage(path))
+    .sort((a, b) => fileName(b).localeCompare(fileName(a), undefined, { numeric: true }));
+}
+
 export function newAvatarModel(tenantIds: string[], modelType: string, key: string, fileName: string): AvatarModel {
   const [fn, ext] = getPartsOfTupel(fileName);
   return {
     okey: avatarDocId(tenantIds[0], `${modelType}.${key}`),
     tenants: tenantIds,
-    storagePath: `tenant/${tenantIds[0]}/${modelType}/${key}/${AvatarDirectory}/${fn}.${ext}`,
+    storagePath: `${avatarStorageDir(tenantIds[0], `${modelType}.${key}`)}/${fn}.${ext}`,
     isArchived: false,
   };
 }
