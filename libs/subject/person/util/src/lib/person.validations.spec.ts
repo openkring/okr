@@ -60,17 +60,23 @@ describe('personValidations: ssnId', () => {
   });
 
   // The profile page refused to save with the ssn cleared, and NOT because of the ssn: the person
-  // carried legacy tags ('important' predates the '@tag.' prefix) that are no longer in the
-  // tenant's configured list, so the model-wide suite was invalid on a field the profile form does
-  // not even render. The accordion now gates on the fields it edits (see isValidForFields).
-  it('lets the profile form save although unrendered fields (legacy tags) are invalid', () => {
-    const person = formModel({ ssnId: '', tags: 'important,@tag.sponsor' });
-    const configuredTags = '@tag.advertiser, @tag.bexio, @tag.important, @tag.sponsor';
-    const result = personValidations(person, tenantId, configuredTags);
+  // carried an invalid value on a field the profile form does not even render (a tag string over
+  // the length cap). The accordion gates on the fields it edits (see isValidForFields).
+  it('lets the profile form save although unrendered fields (an over-long tag) are invalid', () => {
+    const person = formModel({ ssnId: '', tags: '@tag.' + 'x'.repeat(100) });
+    const result = personValidations(person, tenantId, tags);
 
-    expect(result.getErrors('tags[0]')).toContain('invalidValue');   // the legacy tag still reports
+    expect(result.hasErrors('tags')).toBe(true);                     // the bad tag still reports
     expect(result.isValid()).toBe(false);                            // ...so the full suite is invalid
     expect(isValidForFields(result, ['ssnId'])).toBe(true);          // ...but the ssn form may save
+  });
+
+  it('does not reject a tag that is not in the configured list', () => {
+    const person = formModel({ ssnId: '', tags: 'important,@tag.removed' });
+    const result = personValidations(person, tenantId, '@tag.advertiser');
+
+    expect(result.hasErrors('tags[0]')).toBe(false);
+    expect(result.hasErrors('tags[1]')).toBe(false);
   });
 
   // ChSsnMask opens with the literals '7','5','6','.', so deleting the field's content leaves

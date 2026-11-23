@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { create, staticSuite } from 'vest';
 
+import { LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { DeliveryChannel } from '@okr/shared-models';
 
 import { deliveryChannelsValidations, imageUrlValidations, partialDateValidations, stringValidations, tagValidations, urlValidations } from './vest.util';
@@ -46,10 +47,20 @@ describe('tagValidations', () => {
     expect(suite().isValid()).toBe(true);
   });
 
-  it('still rejects a tag that is not configured', () => {
+  it('accepts a tag that is not configured (a tag removed from the list must not lock the record)', () => {
     const result = runTags('@tag.bexio,@tag.doesnotexist', CONFIGURED);
-    expect(result.getErrors()).toHaveProperty('tags[1]');
+    expect(result.getErrors()).toEqual({});
+    expect(result.isValid()).toBe(true);
+  });
+
+  it('still rejects a tag string over LONG_NAME_LENGTH', () => {
+    const result = runTags('@tag.' + 'x'.repeat(LONG_NAME_LENGTH), CONFIGURED);
     expect(result.isValid()).toBe(false);
+  });
+
+  it('rejects a non-string', () => {
+    const suite = create(() => tagValidations('tags', 42, CONFIGURED));
+    expect(suite().isValid()).toBe(false);
   });
 });
 

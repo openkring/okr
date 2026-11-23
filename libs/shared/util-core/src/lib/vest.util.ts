@@ -374,27 +374,16 @@ export function isValidForFields(result: { hasErrors: (fieldName?: string) => bo
   return !fieldNames.some(fieldName => result.hasErrors(fieldName));
 }
 
-export function tagValidations(fieldName: string, tags: unknown, givenTags?: string) {
+/**
+ * Tags are only ever picked from chips, never typed, so checking them against the tenant's list
+ * cannot catch a user's mistake. It could only lock a record whose tag was later removed from the
+ * list: one unknown tag made the whole edit form invalid and unsaveable. So only the string and
+ * its length are checked. `_givenTags` stays in the signature for the existing callers; drift
+ * against the list is found by scripts/fix-tag-drift.mjs.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function tagValidations(fieldName: string, tags: unknown, _givenTags?: string) {
   stringValidations(fieldName, tags, LONG_NAME_LENGTH);
-  // No configured list to compare against. The Signal Forms bridge (validateVestTree) calls a
-  // suite with the MODEL ONLY unless the form wraps it in a context closure, so a
-  // `(model, tenants, tags)` suite can reach this with `givenTags === undefined` — which used to throw inside splitTags and take the whole modal
-  // down with it (blank modal, bare toolbar). Checking against an empty list is not the fallback
-  // either: that would invalidate every tagged model on a field most forms never render.
-  if (!givenTags) return;
-  // Both sides are trimmed: the configured lists in the `tags` collection are authored with
-  // ", " separators ("@tag.advertiser, @tag.bexio, …") while a model's own tags field is written
-  // without them, and stringArrayValidations matches exactly. Splitting untrimmed left every
-  // configured tag but the first with a leading space, so it could never match — which silently
-  // invalidated the ENTIRE form of any tagged person/org/document, on a field most forms don't
-  // even render (the profile page showed no error, it just refused to save).
-  const tagsArray = splitTags(typeof tags === 'string' ? tags : '');
-  stringArrayValidations(fieldName, tagsArray, splitTags(givenTags));
-}
-
-/** Splits a comma-separated tag string into trimmed, non-empty tags. */
-function splitTags(tags: string): string[] {
-  return tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
 }
 
 export function urlValidations(fieldName: string, url: unknown) {

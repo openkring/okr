@@ -339,7 +339,7 @@ import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLocker
 
         @if(hasRole('privileged') || hasRole('resourceAdmin')) {
           <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
-          <!-- A tag that is not in the configured list invalidates the WHOLE form, which silently hides the
+          <!-- A tag error (e.g. too long) invalidates the WHOLE form, which silently hides the
                change-confirmation banner. Without this note there is nothing on screen to explain why. -->
           <okr-error-note [errors]="tagErrors()" />
         }
