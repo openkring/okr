@@ -7,12 +7,12 @@ import { ActionSheetController, IonIcon, IonNote } from '@ionic/angular';
 
 import {
   ARTICLE_BLOCK_ICONS, ARTICLE_BLOCKS_MAX, type ArticleEditorI18n, type ArticlePreviewDevice, BlockViewCache, type BlockPlace, allowedTypesAt,
-  articleBackground, articleColumnsForm, articleHeaderPlace, blockTypeLabel, blocksInOrder, canAddBlock, columnsTemplate, createBlock, duplicateBlock, findBlock,
+  articleBackground, articleColumnsForm, articleHeaderPlace, blockTypeLabel, canAddBlock, columnsTemplate, createBlock, duplicateBlock, findBlock,
   getSectionIntro, insertBlock, joinWithAbove, moveBlockBy, removeBlock, replaceBlock,
 } from '@okr/cms-section-util';
 import { ENV } from '@okr/shared-config';
 import { AppStore } from '@okr/shared-feature';
-import { ARTICLE_BLOCK_TYPES, type ArticleBlock, type ArticleBlockType, type ArticleSection, articleBlocksOf, isFreeArticle } from '@okr/shared-models';
+import { ARTICLE_BLOCK_TYPES, type ArticleBlock, type ArticleBlockType, type ArticleSection, isFreeArticle } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { OptionalCardHeader } from '@okr/shared-ui';
 import type { RichTextCaret } from '@okr/shared-ui-editor';
@@ -21,7 +21,7 @@ import { fill } from '@okr/shared-util-core';
 
 import { ARTICLE_COLUMNS_STYLES, ARTICLE_LIST_PADDING } from './article-block';
 import { ArticleCanvasBlock, ArticleCanvasContext, type CanvasCaret, type CanvasItem, type FrameAction } from './article-canvas-block';
-import { canDropAt, dropChange, parentId, type CanvasChange } from './article-canvas.util';
+import { classicButtonId, dragPoint, dropChange, isClassicText, isTextual, kindOf, mayEnterList, neighbourId, parentId, type CanvasChange } from './article-canvas.util';
 import { ARTICLE_FRAME_STYLES, ArticleFrame } from './article-frame';
 
 export type { CanvasCaret } from './article-canvas-block';
@@ -117,8 +117,8 @@ let canvases = 0;
                             <okr-article-canvas-block cdkDrag [class.tools-end]="column.index > 0" [item]="inner" [inColumn]="true" [afterHeader]="withHeader && firstInner"
                               [cdkDragData]="dragData(inner, true)" [cdkDragDisabled]="!mayDrag(inner)" [cdkDragConstrainPosition]="dragPoint" (cdkDragStarted)="onDragStart()" />
                           } @empty {
-                            <div class="add" data-canvas-tool>
-                              <button type="button" [title]="t.article_editor_add_inColumn()" [attr.aria-label]="t.article_editor_add_inColumn()" (click)="addToColumn(column.place)">
+                            <div class="add">
+                              <button type="button" data-canvas-tool [title]="t.article_editor_add_inColumn()" [attr.aria-label]="t.article_editor_add_inColumn()" (click)="addToColumn(column.place)">
                                 <ion-icon src="{{ 'add' | svgIcon }}" aria-hidden="true" />
                               </button>
                             </div>
@@ -134,11 +134,11 @@ let canvases = 0;
             </div>
           </okr-article-frame>
         </div>
-        <div class="add" data-canvas-tool>
-          <button type="button" data-add-end [disabled]="full()" [title]="t.article_editor_add_atEnd()" [attr.aria-label]="t.article_editor_add_atEnd()" (click)="add({ index: blocks().length })">
+        <div class="add">
+          <button type="button" data-canvas-tool data-add-end [disabled]="full()" [title]="t.article_editor_add_atEnd()" [attr.aria-label]="t.article_editor_add_atEnd()" (click)="add({ index: blocks().length })">
             <ion-icon src="{{ 'add' | svgIcon }}" aria-hidden="true" />
           </button>
-          @if (full()) { <ion-note>{{ fullNote() }}</ion-note> }
+          @if (full()) { <ion-note data-canvas-tool>{{ fullNote() }}</ion-note> }
         </div>
       </div>
     </div>
@@ -172,7 +172,12 @@ export class ArticleCanvas extends ArticleCanvasContext {
   public readonly change = output<CanvasChange>();
 
   // computed
-  public readonly blocks = computed((): ArticleBlock[] => articleBlocksOf(this.section()) ?? []);
+  /** as `openArticle` keeps them: also what readers skip, so that a change does not drop it; the same array when there is nothing to leave out */
+  public readonly blocks = computed((): ArticleBlock[] => {
+    const stored: unknown = this.section().properties?.blocks;
+    if (!Array.isArray(stored)) return [];
+    return stored.every(isObject) ? stored as unknown as ArticleBlock[] : objects<ArticleBlock>(stored);
+  });
   public readonly title = computed(() => this.appStore.replacePlaceholders(this.section().title ?? ''));
   public readonly subTitle = computed(() => this.appStore.replacePlaceholders(this.section().subTitle ?? ''));
   public readonly captionFallbacks = computed(() => [this.subTitle(), this.title()]);
@@ -180,31 +185,24 @@ export class ArticleCanvas extends ArticleCanvasContext {
     const intro = getSectionIntro(this.section());
     return { ...intro, text: this.appStore.replacePlaceholders(intro.text) };
   });
-  protected readonly items = computed(() => objects<ArticleBlock>(this.blocks()).map((block) => this.topItem(block)));
+  protected readonly items = computed(() => this.blocks().map((block) => this.topItem(block)));
   protected readonly headerPlace = computed(() => articleHeaderPlace(this.blocks(), !!articleBackground(this.section().properties)));
   /** the first block that readers see; it may carry the header */
   protected readonly firstDrawnId = computed(() => this.items().find((item) => item.view)?.block.id);
   protected readonly columnsForm = computed(() => articleColumnsForm(this.device()));
   protected readonly full = computed(() => !canAddBlock(this.blocks()));
   protected readonly fullNote = computed(() => fill(this.i18n().article_editor_library_full(), { max: ARTICLE_BLOCKS_MAX }));
-  /** drawn by readers as a classic article of only a text, also with a button under it (design §8) */
-  protected readonly classicText = computed(() => {
-    const [first, second, third] = this.blocks();
-    if (first?.type !== 'text' || (first.align ?? 'left') !== 'left') return false;
-    return second === undefined || (second.type === 'button' && third === undefined && !isFreeArticle(this.section()));
-  });
-  /** the button of a classic article */
-  protected readonly classicButtonId = computed(() => {
-    const last = this.blocks().at(-1);
-    return last?.type === 'button' && !isFreeArticle(this.section()) ? last.id : undefined;
-  });
+  private readonly free = computed(() => isFreeArticle(this.section()));
+  protected readonly classicText = computed(() => isClassicText(this.blocks(), this.free()));
+  protected readonly classicButtonId = computed(() => classicButtonId(this.blocks(), this.free()));
   /** the drop lists, the inner ones first: the CDK takes the first one under the pointer. For the library of the host */
   public readonly dropLists = computed(() => [
     ...this.items().flatMap((item) => item.columns.map((column) => this.listId(item.block.id, column.index))), this.topListId,
   ]);
 
-  private readonly clickCaret = signal<CanvasCaret | undefined>(undefined);
-  public readonly textCaret = computed(() => this.clickCaret() ?? this.caret());
+  /** the cursor of a text that was opened here (clicked, Enter, dropped elsewhere); the one of the host belongs to an earlier opening */
+  private readonly opened = signal<CanvasCaret | undefined>(undefined);
+  public readonly textCaret = computed(() => this.opened() ?? this.caret());
   /** a text whose frame is selected, not its content (Esc) */
   private readonly framed = linkedSignal<string | undefined, boolean>({
     source: this.selectedId, computation: (id) => id !== undefined && id === this.frameOnly,
@@ -233,6 +231,8 @@ export class ArticleCanvas extends ArticleCanvasContext {
   /** of a drag: where it began, and the point that counts now */
   private pickedUp: Point | undefined;
   private pointer: Point | undefined;
+  /** the types are being offered */
+  private adding = false;
   private destroyed = false;
 
   constructor() {
@@ -249,6 +249,7 @@ export class ArticleCanvas extends ArticleCanvasContext {
       this.frameOnly = undefined;
       if (id === this.knownSelection) return;
       this.knownSelection = id;
+      this.opened.set(undefined);
       if (id !== undefined) afterNextRender(() => this.frameOf(id)?.scrollIntoView({ block: 'nearest' }), { injector: this.injector });
     });
     inject(DestroyRef).onDestroy(() => {
@@ -260,7 +261,7 @@ export class ArticleCanvas extends ArticleCanvasContext {
 
   /** Puts the focus into the selected text, or onto the frame of the selected block (after undo, redo and buttons outside). */
   public focusSelected(): void {
-    this.clickCaret.set(undefined);
+    this.opened.set(undefined);
     afterNextRender(() => {
       const id = this.selectedId();
       if (id !== undefined) this.focusNow(id);
@@ -379,11 +380,13 @@ export class ArticleCanvas extends ArticleCanvasContext {
     this.focusFrame(parent ?? selected);
   }
 
-  /** Selects the block; a text is edited, with the cursor where it was clicked. */
+  /** Selects the block; a text is edited, with the cursor where it was clicked, else at its end. */
   private open(id: string, at?: RichTextCaret): void {
-    if (id === this.selectedNow()) this.framed.set(false);
-    else this.select(id);
-    this.clickCaret.set(at && { id, at });
+    if (id !== this.selectedNow()) this.select(id);
+    // beside the text that is being edited: the cursor stays
+    else if (this.editingId() === id) return this.frameOf(id)?.querySelector<HTMLElement>(EDITED_TEXT)?.focus({ preventScroll: true });
+    else this.framed.set(false);
+    this.opened.set({ id, at: at ?? 'end' });
     const found = findBlock(this.blocksNow(), id);
     // what was clicked is in sight
     if (found && !isTextual(found.block)) afterNextRender(() => this.frameOf(id)?.focus({ preventScroll: true }), { injector: this.injector });
@@ -393,6 +396,18 @@ export class ArticleCanvas extends ArticleCanvasContext {
 
   /** Asks for the type and adds a block. */
   protected async add(place: BlockPlace): Promise<void> {
+    // a double click
+    if (this.adding) return;
+    this.adding = true;
+    const type = await this.askType(place).finally(() => { this.adding = false; });
+    if (!type || this.destroyed) return;
+    const change = dropChange(this.blocksNow(), { newType: type }, place, newId);
+    if (!change?.selectedId) return;
+    this.emit(change);
+    this.focusFrame(change.selectedId);
+  }
+
+  private async askType(place: BlockPlace): Promise<ArticleBlockType | undefined> {
     const i18n = this.i18n();
     const options = createActionSheetOptions(i18n.article_editor_add_title());
     for (const type of allowedTypesAt(place)) {
@@ -403,12 +418,7 @@ export class ArticleCanvas extends ArticleCanvasContext {
     await sheet.present();
     // not before: Ionic gives the focus back to the button, and the new text takes it
     const { data } = await sheet.onDidDismiss<{ action?: string }>();
-    const type = ARTICLE_BLOCK_TYPES.find((known) => known === data?.action);
-    if (!type || this.destroyed) return;
-    const change = dropChange(this.blocksNow(), { newType: type }, place, newId);
-    if (!change?.selectedId) return;
-    this.emit(change);
-    this.focusFrame(change.selectedId);
+    return ARTICLE_BLOCK_TYPES.find((known) => known === data?.action);
   }
 
   protected addToColumn(place: ListPlace): void { void this.add({ ...place, index: 0 }); }
@@ -427,18 +437,10 @@ export class ArticleCanvas extends ArticleCanvasContext {
     const blocks = this.blocksNow();
     const next = removeBlock(blocks, id);
     if (next === blocks) return;
-    const neighbour = this.neighbourOf(blocks, id);
+    const neighbour = neighbourId(blocks, id);
     this.emit({ blocks: next });
     if (neighbour !== undefined) this.focusFrame(neighbour);
     else afterNextRender(() => this.element.querySelector<HTMLElement>('[data-add-end]')?.focus(), { injector: this.injector });
-  }
-
-  /** the block that gets the focus when this one is gone */
-  private neighbourOf(blocks: ArticleBlock[], id: string): string | undefined {
-    const place = findBlock(blocks, id)?.place;
-    const list = blocksInOrder(blocks).filter((b) => parentId(blocks, b.id) === place?.columnsId && findBlock(blocks, b.id)?.place.column === place?.column);
-    const at = list.findIndex((b) => b.id === id);
-    return (list[at + 1] ?? list[at - 1])?.id ?? place?.columnsId;
   }
 
   // ------------------------------------------------------- dragging ------------------------------------------------------
@@ -450,18 +452,12 @@ export class ArticleCanvas extends ArticleCanvasContext {
 
   protected readonly mayEnter = (drag: CdkDrag<DragData>, list: CdkDropList<ListPlace>): boolean => {
     const { newType, type, isColumnsChild } = drag.data;
-    const dragged = newType ?? type;
-    if (!dragged || !canDropAt({ type: dragged, isNew: newType !== undefined, isColumnsChild }, list.data, this.full())) return false;
-    return list.data.columnsId !== undefined || !this.isOverOwnColumn(drag);
+    const dragged = { type: newType ?? type, isNew: newType !== undefined, isColumnsChild };
+    return mayEnterList(dragged, list.data, { full: this.full(), switching: this.switching, isOverOwnColumn: () => this.isOverListOf(drag) });
   };
 
-  /**
-   * The CDK does not count the list a block comes from among its candidates, so the top level around it would take the block while
-   * it is still over its own column.
-   */
-  private isOverOwnColumn(drag: CdkDrag<DragData>): boolean {
-    if (!drag.data.isColumnsChild || this.switching || !this.pointer) return false;
-    const over = document.elementFromPoint(this.pointer.x, this.pointer.y);
+  private isOverListOf(drag: CdkDrag<DragData>): boolean {
+    const over = this.pointer && document.elementFromPoint(this.pointer.x, this.pointer.y);
     return !!over && drag.dropContainer.element.nativeElement.contains(over);
   }
 
@@ -471,15 +467,9 @@ export class ArticleCanvas extends ArticleCanvasContext {
     this.pointer = undefined;
   }
 
-  /**
-   * The handle stands above its block, over the one before: without this, a block that is hardly moved would already change places
-   * with that one. So the point that counts starts inside the block and comes to the pointer while that moves away.
-   */
   protected readonly dragPoint = (point: Point, _drag: DragRef, block: DOMRect): Point => {
     this.pickedUp ??= point;
-    const above = Math.max(0, block.top + Math.min(block.height / 2, 30) - this.pickedUp.y);
-    const moved = Math.hypot(point.x - this.pickedUp.x, point.y - this.pickedUp.y);
-    this.pointer = { x: point.x, y: point.y + above * Math.min(1, Math.max(0, 1 - (moved - 24) / 72)) };
+    this.pointer = dragPoint(this.pickedUp, point, block);
     return this.pointer;
   };
 
@@ -492,6 +482,8 @@ export class ArticleCanvas extends ArticleCanvasContext {
     const change = dropChange(this.blocksNow(), event.item.data, { ...event.container.data, index: event.currentIndex }, newId);
     if (!change?.selectedId) return this.focusDragged(event.item.data);
     this.emit(change, event.item.data.id !== undefined && editing !== event.item.data.id);
+    // in another list the text is drawn, and opened, anew
+    if (event.container !== event.previousContainer) this.opened.set({ id: change.selectedId, at: 'end' });
     this.focusFrame(change.selectedId);
   }
 
@@ -534,7 +526,7 @@ export class ArticleCanvas extends ArticleCanvasContext {
     if (id === this.selectedNow()) return;
     this.remember({ blocks: this.blocksNow(), selectedId: id });
     this.frameOnly = undefined;
-    this.clickCaret.set(undefined);
+    this.opened.set(undefined);
     this.selectBlock.emit(id);
   }
 
@@ -542,7 +534,7 @@ export class ArticleCanvas extends ArticleCanvasContext {
   private emit(change: CanvasChange, asFrame = false): void {
     this.remember(change);
     this.frameOnly = asFrame ? change.selectedId : undefined;
-    if (change.caret) this.clickCaret.set(undefined);
+    if (change.caret) this.opened.set(undefined);
     this.change.emit(change);
   }
 
@@ -594,13 +586,3 @@ function clickedCaret(event: MouseEvent): RichTextCaret | undefined {
 }
 
 function newId(): string { return crypto.randomUUID(); }
-
-function isTextual(block: ArticleBlock): block is Extract<ArticleBlock, { html: string }> {
-  return block.type === 'text' || block.type === 'callout';
-}
-
-/** 'unknown': not of this app, or not in a column; readers do not see it. */
-function kindOf(block: ArticleBlock, inColumn: boolean): CanvasItem['kind'] {
-  if (!allowedTypesAt(inColumn ? { columnsId: '' } : {}).includes(block.type)) return 'unknown';
-  return block.type === 'columns' ? 'columns' : 'block';
-}

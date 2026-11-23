@@ -12,10 +12,11 @@ import { RichTextInline, type RichTextCaret, type RichTextFeature } from '@okr/s
 import { fill } from '@okr/shared-util-core';
 
 import { ArticleBlockComponent } from './article-block';
+import type { CanvasItemKind } from './article-canvas.util';
 
 /** A block as the canvas shows it. `view`: what readers see of it, undefined when they see nothing. */
 export interface CanvasItem {
-  kind: 'block' | 'columns' | 'unknown';
+  kind: CanvasItemKind;
   block: ArticleBlock;
   view?: ArticleBlockView;
   /** malformed columns: there is nothing to draw a frame around */

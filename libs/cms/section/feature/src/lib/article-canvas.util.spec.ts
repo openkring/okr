@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { ArticleBlock, ArticleBlockType } from '@okr/shared-models';
 
-import { canDropAt, dropChange, parentId } from './article-canvas.util';
+import { canDropAt, classicButtonId, dragPoint, dropChange, isClassicText, isTextual, kindOf, mayEnterList, neighbourId, parentId } from './article-canvas.util';
 
 const text = (id: string, html = `<p>${id}</p>`): ArticleBlock => ({ id, type: 'text', html });
 const gallery = (id: string): ArticleBlock => ({ id, type: 'gallery', images: [] });
@@ -102,5 +102,130 @@ describe('canDropAt', () => {
     expect(canDropAt({ type: 'text', isColumnsChild: true }, {}, true)).toBe(false);
     expect(canDropAt({ type: 'text', isNew: true }, {}, true)).toBe(false);
     expect(canDropAt({ type: 'text', isNew: true }, column, true)).toBe(true);
+  });
+});
+
+describe('mayEnterList', () => {
+  const inner = { type: 'text' as ArticleBlockType, isColumnsChild: true };
+  const state = { full: false, switching: false, isOverOwnColumn: () => true };
+  // the CDK does not count the list a block comes from among its candidates: the top level around it would always take it
+  it('keeps a block of a column in it while the pointer is over that column', () => {
+    expect(mayEnterList(inner, {}, state)).toBe(false);
+    expect(mayEnterList(inner, {}, { ...state, isOverOwnColumn: () => false })).toBe(true);
+  });
+  // between leaving one list and entering the next the CDK asks whether a list can receive at all (it measures only those)
+  it('says yes while lists are being switched', () => {
+    expect(mayEnterList(inner, {}, { ...state, switching: true })).toBe(true);
+  });
+  it('lets it into another column, wherever the pointer is', () => {
+    expect(mayEnterList(inner, { columnsId: 'c' }, state)).toBe(true);
+  });
+  it('asks for the pointer only where it matters', () => {
+    const never = (): boolean => { throw new Error('asked'); };
+    expect(mayEnterList({ type: 'text' }, {}, { ...state, isOverOwnColumn: never })).toBe(true);
+    expect(mayEnterList({ type: 'text', isNew: true }, {}, { ...state, isOverOwnColumn: never })).toBe(true);
+    expect(mayEnterList(inner, {}, { ...state, switching: true, isOverOwnColumn: never })).toBe(true);
+    expect(mayEnterList(inner, { columnsId: 'c' }, { ...state, isOverOwnColumn: never })).toBe(true);
+  });
+  it('refuses what does not fit, also while lists are being switched', () => {
+    expect(mayEnterList({ type: 'gallery' }, { columnsId: 'c' }, { ...state, switching: true })).toBe(false);
+    expect(mayEnterList(inner, {}, { ...state, full: true, switching: true })).toBe(false);
+    expect(mayEnterList({}, {}, state)).toBe(false);
+  });
+});
+
+describe('dragPoint', () => {
+  const block = { top: 100, height: 58 };
+  const start = { x: 50, y: 85 };  // on the handle, above the block
+  it('begins inside the block, not on the one before it', () => {
+    expect(dragPoint(start, start, block)).toEqual({ x: 50, y: 129 });
+  });
+  it('does not leave the block for a small movement in any direction', () => {
+    for (const [dx, dy] of [[0, -24], [0, 24], [24, 0], [-24, 0], [-15, -15], [15, 15]]) {
+      const { y } = dragPoint(start, { x: start.x + dx, y: start.y + dy }, block);
+      expect(y).toBeGreaterThanOrEqual(block.top);
+      expect(y).toBeLessThanOrEqual(block.top + block.height);
+    }
+  });
+  it('is the pointer once that has moved away', () => {
+    for (const [dx, dy] of [[0, 96], [0, -96], [100, 0], [400, 300]]) {
+      const point = { x: start.x + dx, y: start.y + dy };
+      expect(dragPoint(start, point, block)).toEqual(point);
+    }
+  });
+  it('always goes the way the pointer goes', () => {
+    let last = -Infinity;
+    for (let y = start.y - 120; y <= start.y + 120; y++) {
+      const point = dragPoint(start, { x: start.x, y }, block).y;
+      expect(point).toBeGreaterThan(last);
+      last = point;
+    }
+  });
+  it('is the pointer from the start when the handle is inside the block (a long one, scrolled)', () => {
+    const point = { x: 50, y: 400 };
+    expect(dragPoint(point, point, { top: -200, height: 900 })).toEqual(point);
+  });
+  it('begins in the middle of a low block', () => {
+    expect(dragPoint(start, start, { top: 100, height: 8 })).toEqual({ x: 50, y: 104 });
+  });
+});
+
+describe('neighbourId', () => {
+  const all = (): ArticleBlock[] => [text('a'), columns('c', [text('x'), text('y')], [text('z')]), gallery('g')];
+  it('is the next block of the same list, else the one before', () => {
+    expect(neighbourId(all(), 'a')).toBe('c');
+    expect(neighbourId(all(), 'c')).toBe('g');
+    expect(neighbourId(all(), 'g')).toBe('c');
+    expect(neighbourId(all(), 'x')).toBe('y');
+    expect(neighbourId(all(), 'y')).toBe('x');
+  });
+  it('is the columns block when the column gets empty', () => {
+    expect(neighbourId(all(), 'z')).toBe('c');
+  });
+  it('is undefined for the only block and for one that is gone', () => {
+    expect(neighbourId([text('a')], 'a')).toBeUndefined();
+    expect(neighbourId(all(), 'gone')).toBeUndefined();
+  });
+});
+
+describe('isClassicText and classicButtonId', () => {
+  const button = (id: string): ArticleBlock => ({ id, type: 'button', cta: { label: 'l', url: '/x', style: 'primary' } });
+  it('is a lone text, also an empty one, but not an aligned one', () => {
+    expect(isClassicText([text('a')], false)).toBe(true);
+    expect(isClassicText([text('a', '')], false)).toBe(true);
+    expect(isClassicText([{ ...text('a'), align: 'left' } as ArticleBlock], false)).toBe(true);
+    expect(isClassicText([{ ...text('a'), align: 'center' } as ArticleBlock], true)).toBe(false);
+    expect(isClassicText([gallery('g')], false)).toBe(false);
+    expect(isClassicText([], false)).toBe(false);
+  });
+  it('is a text with a button under it, as long as the article is classic', () => {
+    expect(isClassicText([text('a'), button('b')], false)).toBe(true);
+    expect(isClassicText([text('a'), button('b')], true)).toBe(false);
+    expect(isClassicText([text('a'), text('b')], true)).toBe(false);
+    expect(isClassicText([text('a'), button('b'), text('c')], true)).toBe(false);
+  });
+  it('is the last block of a classic article when that is a button', () => {
+    expect(classicButtonId([gallery('g'), text('a'), button('b')], false)).toBe('b');
+    expect(classicButtonId([text('a'), button('b')], true)).toBeUndefined();
+    expect(classicButtonId([button('b'), text('a')], false)).toBeUndefined();
+    expect(classicButtonId([], false)).toBeUndefined();
+  });
+});
+
+describe('kindOf and isTextual', () => {
+  const ofType = (type: unknown): ArticleBlock => ({ id: 'a', type }) as unknown as ArticleBlock;
+  it('knows columns, the blocks of the app, and those it does not know', () => {
+    expect(kindOf(columns('c', [], []), false)).toBe('columns');
+    expect(kindOf(gallery('g'), false)).toBe('block');
+    for (const type of ['video', 'constructor', undefined, 5]) expect(kindOf(ofType(type), false)).toBe('unknown');
+  });
+  it('does not know in a column what readers do not see there', () => {
+    expect(['text', 'image', 'button'].map((type) => kindOf(ofType(type), true))).toEqual(['block', 'block', 'block']);
+    expect(['gallery', 'columns', 'callout', undefined].map((type) => kindOf(ofType(type), true))).toEqual(['unknown', 'unknown', 'unknown', 'unknown']);
+  });
+  it('texts and callouts are edited', () => {
+    expect(isTextual(text('a'))).toBe(true);
+    expect(isTextual(ofType('callout'))).toBe(true);
+    expect(isTextual(ofType('button'))).toBe(false);
   });
 });
