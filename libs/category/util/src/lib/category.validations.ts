@@ -2,10 +2,14 @@ import { ABBREVIATION_LENGTH, DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH
 import { CategoryItemModel, CategoryListModel } from '@okr/shared-models';
 import { baseValidations, booleanValidations, numberValidations, stringValidations } from '@okr/shared-util-core';
 
-import { omitWhen, staticSuite } from 'vest';
+import { enforce, omitWhen, staticSuite, test } from 'vest';
 
-export const categoryListValidations = staticSuite((model: CategoryListModel, tenants: string, tags: string) => {
+export const categoryListValidations = staticSuite((model: CategoryListModel, tenants: string, tags: string, missingProtected: readonly string[] = []) => {
   baseValidations(model, tenants, tags);
+  // code compares these items by name; the form names the missing ones next to the list
+  test('items', '@category/feature.items.missing', () => {
+    enforce(missingProtected.length).equals(0);
+  });
   stringValidations('i18n', model.i18n, NAME_LENGTH);
   stringValidations('notes', model.notes, DESCRIPTION_LENGTH);
   booleanValidations('translateItems', model.translateItems);

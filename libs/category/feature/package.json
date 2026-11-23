@@ -17,6 +17,7 @@
     "@okr/category-ui": "*",
     "@okr/category-util": "*",
     "@okr/category-data-access": "*",
-    "@okr/cms-menu-feature": "*"
+    "@okr/cms-menu-feature": "*",
+    "@okr/tenant-feature": "*"
   }
 }

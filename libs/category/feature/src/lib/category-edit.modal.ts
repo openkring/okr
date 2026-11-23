@@ -8,7 +8,8 @@ import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-
 import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 
 import { CategoryListForm } from '@okr/category-ui';
-import { CATEGORY_I18N_KEYS, CategoryI18n } from '@okr/category-util';
+import { CATEGORY_I18N_KEYS, CategoryI18n, isLockedList, missingProtectedItems, protectedItems, removalWarning } from '@okr/category-util';
+import { FeatureStore } from '@okr/tenant-feature';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
 @Component({
@@ -34,6 +35,10 @@ import { dismissOverlay } from '@okr/shared-util-angular';
             [tenants]="tenantId()"
             [hasAbbreviation]="hasAbbreviation()"
             [readOnly]="isReadOnly()"
+            [protectedNames]="protectedNames()"
+            [missingProtected]="missingProtected()"
+            [removalWarnings]="removalWarnings()"
+            [lockedIdentity]="lockedIdentity()"
             [i18n]="i18n"
             (dirty)="formDirty.set($event)"
             (valid)="formValid.set($event)"
@@ -47,6 +52,7 @@ export class CategoryEditModal {
   private readonly modalController = inject(ModalController);
   protected readonly i18n = inject(I18nService).translateAll(CATEGORY_I18N_KEYS) as CategoryI18n;
   protected readonly appStore = inject(AppStore);
+  private readonly featureStore = inject(FeatureStore);
 
   // inputs
   public category = input.required<CategoryListModel>();
@@ -72,6 +78,22 @@ export class CategoryEditModal {
     return this.category()?.okey ? this.i18n.update() : this.i18n.create();
   });
   protected tenantId = computed(() => this.appStore.tenantId());
+
+  // protection of the items code compares by name (see category-protection.util)
+  protected readonly protectedNames = computed(() => protectedItems(this.formData()?.name ?? '', this.featureStore.isEnabled()));
+  protected readonly missingProtected = computed(() => {
+    const list = this.formData();
+    return list ? missingProtectedItems(list, this.featureStore.isEnabled()) : [];
+  });
+  /** warned items present in the loaded list and gone from the edited one */
+  protected readonly removalWarnings = computed(() => {
+    const kept = new Set((this.formData()?.items ?? []).map(item => item.name));
+    return (this.category().items ?? [])
+      .map(item => item.name)
+      .filter(name => !kept.has(name) && removalWarning(this.category().name, name, this.featureStore.isEnabled()));
+  });
+  /** judged on the loaded list: typing «gender» into a new list must not lock the field */
+  protected readonly lockedIdentity = computed(() => isLockedList(this.category(), this.tenantId(), this.appStore.allCategories()));
   protected readonly changeConfirmationI18n = computed(() => ({cancel: this.i18n.cancel(), save: this.i18n.save()} as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */

@@ -99,7 +99,9 @@ export interface CategoryItemsI18n {
                       <ion-input class="item-price" [value]="item.price ?? 0" (ionChange)="setPrice($index, $event)"
                         [attr.aria-label]="labels().price" inputMode="decimal" type="number" [min]="0" />
                     }
-                    <ion-icon src="{{'cancel' | svgIcon }}" (click)="remove(item.name)" slot="end" />
+                    @if (!isProtected(item.name)) {
+                      <ion-icon src="{{'cancel' | svgIcon }}" (click)="remove(item.name)" slot="end" />
+                    }
                   </ion-item>
                 }
               </ion-reorder-group>
@@ -131,6 +133,8 @@ export class CategoryItems {
   public hasAbbreviation = input<boolean>(false);
   /** shows a price per item — for price lists such as the membership categories (`mcat*`) */
   public hasPrice = input<boolean>(false);
+  /** items that code looks up by name: they can be reordered and get another icon, but not be removed */
+  public protectedNames = input<readonly string[]>([]);
   public changed = output<CategoryItemModel[]>();
   
   protected newItem = new CategoryItemModel('', '');
@@ -163,6 +167,10 @@ export class CategoryItems {
     }
   }
   
+  protected isProtected(name: string): boolean {
+    return this.protectedNames().includes(name);
+  }
+
   protected isDisabled() {
     return this.newItem['name'] === '' || this.newItem['abbreviation'] === ''|| this.newItem['icon'] === '';
   }

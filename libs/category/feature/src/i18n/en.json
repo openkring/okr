@@ -63,7 +63,9 @@
   "items": {
       "label": "Items",
       "description": "The individual items of a category. Each item is displayed on its own line.",
-      "empty": "No items have been defined in this category yet."
+      "empty": "No items have been defined in this category yet.",
+    "missing": "The app needs these entries and they must not be missing: {name}. Add them back.",
+    "warning": { "postal": "Without a postal address, invoices cannot be addressed by post.", "bankaccount": "Without a bank account, no payments can be recorded." }
   },
 
   "priority": {
