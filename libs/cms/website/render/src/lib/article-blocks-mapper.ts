@@ -24,6 +24,26 @@ export type PublicBlock =
   | { type: 'divider' }
   | { type: 'space'; size: SpaceSize };
 
+/**
+ * A block as the news API serves it (spec 1.173 §9.2): the route has no language, so the texts carry all of them, each
+ * sanitized (`I18nString` per language; an empty translation is German). No `albumOffset`: the API has no album.
+ */
+export type PublicBlockI18n =
+  | { type: 'text'; html: I18nString; align: BlockAlign }
+  | { type: 'callout'; html: I18nString; tone: CalloutTone }
+  | { type: 'image'; image: PublicImage; imageHeight: number }
+  | { type: 'gallery'; layout: 'slider' | 'row' | 'column' | 'slideshow'; images: PublicImage[]; imageHeight: number; slideshow?: WebSlideshow }
+  | { type: 'button'; cta: Omit<PublicCta, 'label'> & { label: I18nString }; align: BlockAlign }
+  | { type: 'columns'; columns: { size: number; blocks: PublicBlockI18n[] }[]; stackReverse: boolean; cols: string }
+  | { type: 'divider' }
+  | { type: 'space'; size: SpaceSize };
+
+/** What the mapper builds for every language at once; `PublicBlock` and `PublicBlockI18n` are projections of it. */
+type MappedBlock =
+  | Extract<PublicBlockI18n, { type: 'text' | 'callout' | 'button' | 'divider' | 'space' }>
+  | (Extract<PublicBlockI18n, { type: 'image' | 'gallery' }> & { albumOffset: number })
+  | { type: 'columns'; columns: { size: number; blocks: MappedBlock[] }[]; stackReverse: boolean; cols: string };
+
 type Loose = Record<string, unknown>;
 
 const ALIGNS: readonly BlockAlign[] = ['left', 'center', 'right'];
@@ -42,7 +62,7 @@ function oneOf<T extends string>(value: unknown, allowed: readonly T[], fallback
 
 /** Neither text nor a picture. */
 function isEmptyHtml(html: string): boolean {
-  return !/<img\b/i.test(html) && html.replace(/<[^>]*>|&nbsp;|\s/g, '') === '';
+  return !/<(img|hr|table)\b/i.test(html) && html.replace(/<[^>]*>|&nbsp;|\s/g, '') === '';
 }
 
 /** Whether a stored image has a url, has none yet, or is no image. */
@@ -65,20 +85,21 @@ function columnSizes(sizes: unknown[]): number[] {
 class BlockMapper {
   public readonly images: PublicImage[] = [];
 
+  /** `langs[0]` is the language of the images' captions; the texts come in every one of them */
   constructor(
     private readonly sanitize: SanitizeFn,
-    private readonly lang: string,
+    private readonly langs: string[],
     private readonly captions: string[],
     private readonly sectionId: string,
   ) {}
 
-  public blocks(value: unknown, inColumn = false): PublicBlock[] {
+  public blocks(value: unknown, inColumn = false): MappedBlock[] {
     return (Array.isArray(value) ? value : [])
       .map((block: unknown, index) => this.safeBlock(block, index, inColumn))
-      .filter((b): b is PublicBlock => b !== undefined);
+      .filter((b): b is MappedBlock => b !== undefined);
   }
 
-  private safeBlock(block: unknown, index: number, inColumn: boolean): PublicBlock | undefined {
+  private safeBlock(block: unknown, index: number, inColumn: boolean): MappedBlock | undefined {
     const albumLength = this.images.length;
     const leftOut = (reason: string): undefined => {
       // stored values: quoted, so that they cannot break out of the log line
@@ -94,12 +115,12 @@ class BlockMapper {
       return mapped === 'malformed' ? leftOut(`malformed or unknown ${JSON.stringify(type)}`) : mapped;
     } catch (e) {
       this.images.length = albumLength;
-      return leftOut(e instanceof Error ? e.message : String(e));
+      return leftOut(JSON.stringify(e instanceof Error ? e.message : String(e)));
     }
   }
 
   /** undefined: nothing to draw; 'malformed': worth a warning */
-  private block(type: string, block: Loose): PublicBlock | 'malformed' | undefined {
+  private block(type: string, block: Loose): MappedBlock | 'malformed' | undefined {
     switch (type) {
       case 'text': {
         const html = this.html(block);
@@ -119,18 +140,18 @@ class BlockMapper {
     }
   }
 
-  private html(block: Loose): { html: string } | 'malformed' | undefined {
+  private html(block: Loose): { html: I18nString } | 'malformed' | undefined {
     const plain = typeof block['html'] === 'string' ? block['html'] : undefined;
     // an empty translation is none
     const translations = isObject(block['htmlI18n']) ? block['htmlI18n'] : {};
     const i18n = Object.fromEntries(Object.entries(translations).filter(([, text]) => str(text).trim() !== '')) as I18nString;
-    const text = pickText(plain, i18n, this.lang);
-    if (plain === undefined && !text) return 'malformed';
-    const html = this.sanitize(text);
-    return isEmptyHtml(html) ? undefined : { html };
+    const texts = this.langs.map((lang) => pickText(plain, i18n, lang));
+    if (plain === undefined && texts.every((text) => !text)) return 'malformed';
+    const html = Object.fromEntries(this.langs.map((lang, i) => [lang, this.sanitize(texts[i])])) as I18nString;
+    return Object.values(html).every(isEmptyHtml) ? undefined : { html };
   }
 
-  private image(block: Loose): PublicBlock | 'malformed' | undefined {
+  private image(block: Loose): MappedBlock | 'malformed' | undefined {
     const state = imageState(block['image']);
     if (state !== 'ok') return state === 'malformed' ? state : undefined;
     const style = this.imageStyle(block);
@@ -138,7 +159,7 @@ class BlockMapper {
     return image && { type: 'image', image, imageHeight: articleImageHeight(style), albumOffset: this.addToAlbum([image]) };
   }
 
-  private gallery(block: Loose): PublicBlock | 'malformed' | undefined {
+  private gallery(block: Loose): MappedBlock | 'malformed' | undefined {
     if (!Array.isArray(block['images'])) return 'malformed';
     const stored: unknown[] = block['images'];
     const raw = stored.filter((image) => imageState(image) === 'ok') as StoredImage[];
@@ -160,16 +181,20 @@ class BlockMapper {
     };
   }
 
-  private button(block: Loose): PublicBlock | 'malformed' | undefined {
+  private button(block: Loose): MappedBlock | 'malformed' | undefined {
     const stored = block['cta'];
     if (!isObject(stored)) return 'malformed';
-    const cta = mapCta(stored, this.lang);
-    if (cta) return { type: 'button', cta, align: oneOf(block['align'], ALIGNS, 'left') };
+    const ctas = this.langs.map((lang) => mapCta(stored, lang));
+    const base = ctas.find((cta) => cta !== undefined);
+    if (base) {
+      const label = Object.fromEntries(this.langs.map((lang, i) => [lang, (ctas[i] ?? base).label])) as I18nString;
+      return { type: 'button', cta: { ...base, label }, align: oneOf(block['align'], ALIGNS, 'left') };
+    }
     // half filled in is not malformed, an unusable url is
     return str(stored['label']).trim() === '' || str(stored['url']).trim() === '' ? undefined : 'malformed';
   }
 
-  private columns(block: Loose): PublicBlock | 'malformed' | undefined {
+  private columns(block: Loose): MappedBlock | 'malformed' | undefined {
     const stored = Array.isArray(block['columns']) ? block['columns'].filter(isObject) : [];
     if (stored.length === 0) return 'malformed';
     const sizes = columnSizes(stored.map((column) => column['size']));
@@ -190,6 +215,52 @@ class BlockMapper {
   }
 }
 
+/** The `lang` of a block (the stored text may lack it: German then). */
+function projected(block: MappedBlock, lang: string): PublicBlock {
+  const pick = (text: I18nString): string => text[lang] ?? text['de'] ?? '';
+  switch (block.type) {
+    case 'text': case 'callout': return { ...block, html: pick(block.html) };
+    case 'button': return { ...block, cta: { ...block.cta, label: pick(block.cta.label) } };
+    case 'columns': return { ...block, columns: block.columns.map((c) => ({ ...c, blocks: c.blocks.map((b) => projected(b, lang)) })) };
+    default: return block;
+  }
+}
+
+/** Without the place in the album. */
+function withoutAlbum(block: MappedBlock): PublicBlockI18n {
+  switch (block.type) {
+    case 'image': case 'gallery': {
+      const { albumOffset: _offset, ...rest } = block; // eslint-disable-line @typescript-eslint/no-unused-vars
+      return rest;
+    }
+    case 'columns': return { ...block, columns: block.columns.map((c) => ({ ...c, blocks: c.blocks.map(withoutAlbum) })) };
+    default: return block;
+  }
+}
+
+/** German, and every language a text or a button label of the stored blocks carries (an empty one is German). */
+function languagesOf(value: unknown): string[] {
+  const langs = new Set<string>(['de']);
+  const walk = (blocks: unknown): void => {
+    for (const block of Array.isArray(blocks) ? blocks : []) {
+      if (!isObject(block)) continue;
+      const translated = (texts: unknown): void => {
+        for (const [lang, text] of Object.entries(isObject(texts) ? texts : {})) if (str(text).trim() !== '') langs.add(lang);
+      };
+      translated(block['htmlI18n']);
+      if (isObject(block['cta'])) translated(block['cta']['labelI18n']);
+      if (Array.isArray(block['columns'])) for (const column of block['columns']) if (isObject(column)) walk(column['blocks']);
+    }
+  };
+  walk(value);
+  return [...langs];
+}
+
+/** The stored list, not articleBlocksOf(): the entries that are no blocks are worth a warning, too. */
+function storedBlocks(s: SectionDoc): unknown {
+  return articleBlocksOf(s) ? (s.properties ?? {})['blocks'] : undefined;
+}
+
 /**
  * The blocks of an article and its album: every image that the blocks draw, in reading order. The `cover` is not drawn,
  * so it is not in the album. `id` names the section in a warning.
@@ -198,8 +269,18 @@ export function mapBlocks(s: SectionDoc, sanitize: SanitizeFn, lang: string, id?
   const props = s.properties ?? {};
   const title = pickText(s.title, props.titleI18n, lang);
   const subTitle = pickText(s.subTitle, props.subTitleI18n, lang);
-  const mapper = new BlockMapper(sanitize, lang, [subTitle, title], id ?? str(s.name));
-  // the stored list, not articleBlocksOf(): the entries that are no blocks are worth a warning, too
-  const blocks = mapper.blocks(articleBlocksOf(s) ? props['blocks'] : undefined);
+  const mapper = new BlockMapper(sanitize, [lang], [subTitle, title], id ?? str(s.name));
+  const blocks = mapper.blocks(storedBlocks(s)).map((b) => projected(b, lang));
   return { blocks, images: mapper.images };
+}
+
+/**
+ * The same blocks for the news API, which has no language: the texts in German and in every language a block carries,
+ * all sanitized (the route is public output).
+ */
+export function mapBlocksI18n(s: SectionDoc, sanitize: SanitizeFn): PublicBlockI18n[] {
+  const props = s.properties ?? {};
+  const stored = storedBlocks(s);
+  const captions = [pickText(s.subTitle, props.subTitleI18n, 'de'), pickText(s.title, props.titleI18n, 'de')];
+  return new BlockMapper(sanitize, languagesOf(stored), captions, str(s.name)).blocks(stored).map(withoutAlbum);
 }

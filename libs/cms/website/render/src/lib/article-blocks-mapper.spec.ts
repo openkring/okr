@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
 
-import { mapBlocks, type PublicBlock } from './article-blocks-mapper';
+import { mapBlocks, mapBlocksI18n, type PublicBlock } from './article-blocks-mapper';
 import { mapSection, type PublicImage, type SectionDoc } from './section-mapper';
 
 /** Drops script elements, as the real sanitizer does. */
@@ -352,5 +352,59 @@ describe('mapSection: accordion', () => {
     const s = { ...accordion, properties: { ...accordion.properties, viewType: 'cards' } };
     const out = mapSection('acc', s, new Map([['n', free([text('A'), divider])]]), sanitize) as { layouts: { columns: { items: unknown[] }[] }[] };
     expect(out.layouts[0].columns[0].items[0]).toMatchObject({ hasBlocks: true });
+  });
+});
+
+describe('review findings of Task 5', () => {
+  it('html with only a rule or a table is not empty', () => {
+    expect(typesOf([text('<hr>'), text('<table><tr><td></td></tr></table>'), text('<p>&nbsp;</p>')])).toEqual(['text', 'text']);
+  });
+
+  it('an image whose url is no string is no image', () => {
+    expect(run([{ id: 'i', type: 'image', image: { url: 5 } }]).blocks).toEqual([]);
+    expect(mapSection('s', { type: 'album', properties: { images: [{ url: 5 }, img('a')] } } as SectionDoc, new Map(), keep, 'de')).toMatchObject({ images: [{ alt: 'a' }] });
+  });
+
+  it('the message of an error is quoted in the warning', () => {
+    const failing = (): string => { throw new Error('x"\ny'); };
+    mapBlocks(free([text('A')]), failing, 'de', 'sec1');
+    expect(String(warn.mock.calls[0][0])).toContain('"x\\"\\ny"');
+  });
+});
+
+describe('mapBlocksI18n', () => {
+  const sec = (blocks: unknown, extra: Partial<SectionDoc> = {}): SectionDoc => free(blocks, { name: 'sec1', ...extra });
+
+  it('carries German and every language a block has, each sanitized; an empty translation is German', () => {
+    const out = mapBlocksI18n(sec([
+      text('A<script>x</script>', { htmlI18n: { en: 'a<script>y</script>', fr: '  ' } }),
+      { id: 'c', type: 'callout', html: 'N', htmlI18n: { it: 'n' } },
+      button({ cta: { label: 'Los', url: '/los', labelI18n: { es: 'Ir' } } }),
+    ]), sanitize);
+    expect(out).toEqual([
+      { type: 'text', html: { de: 'A', en: 'a', it: 'A', es: 'A' }, align: 'left' },
+      { type: 'callout', html: { de: 'N', en: 'N', it: 'n', es: 'N' }, tone: 'neutral' },
+      { type: 'button', cta: { label: { de: 'Los', en: 'Los', it: 'Los', es: 'Ir' }, url: '/los', style: 'primary' }, align: 'left' },
+    ]);
+  });
+
+  it('sees the languages inside columns, and drops the album offsets', () => {
+    const out = mapBlocksI18n(sec([columns([6, 6], [[text('A', { htmlI18n: { en: 'a' } })], [image('p')]]), gallery(['q', 'r']), image('z')]), keep);
+    expect(JSON.stringify(out)).not.toContain('albumOffset');
+    expect(out[0]).toMatchObject({ type: 'columns', columns: [{ blocks: [{ html: { de: 'A', en: 'a' } }] }, { blocks: [{ type: 'image' }] }] });
+    expect(out.slice(1).map((b) => b.type)).toEqual(['gallery', 'image']);
+  });
+
+  it('the same blocks as mapBlocks, in German', () => {
+    const blocks = [text('A'), image('p'), button(), divider, { id: 's', type: 'space', size: 'large' }, columns([4, 8], [[text('B')], [image('q')]])];
+    const strip = (b: unknown): unknown => JSON.parse(JSON.stringify(b, (k, v) => (k === 'albumOffset' ? undefined : v)));
+    const de = (b: unknown): unknown => JSON.parse(JSON.stringify(b, (k, v) => (k === 'html' && typeof v === 'object' ? v['de'] : k === 'label' && typeof v === 'object' ? v['de'] : v)));
+    expect(de(mapBlocksI18n(sec(blocks), keep))).toEqual(strip(mapBlocks(sec(blocks), keep, 'de').blocks));
+  });
+
+  it('a block that is empty in every language is left out; a translation alone keeps it', () => {
+    expect(mapBlocksI18n(sec([text('<p></p>'), text('', { htmlI18n: { en: 'only' } })]), keep)).toEqual([
+      { type: 'text', html: { de: 'only', en: 'only' }, align: 'left' },
+    ]);
   });
 });

@@ -4,6 +4,8 @@
  * `withAccordionDefaults` (@okr/cms-section-util); this copy stays here because the render lib must stay Node-safe.
  */
 
+import type { PublicBlock } from './article-blocks-mapper';
+
 export type PublicAccordionView = 'list' | 'cards';
 type ScreenSize = 'sm' | 'md' | 'lg';
 const SCREEN_SIZES: ScreenSize[] = ['sm', 'md', 'lg'];
@@ -12,7 +14,7 @@ const MAX_COLUMNS = 4;
 /** = IMGIX_BASE of section-mapper (not imported: section-mapper imports this file) */
 const ICON_BASE = 'https://bkaiser.imgix.net/logo';
 
-export interface PublicAccordionItem { label: string; content: string }
+export interface PublicAccordionItem { label: string; content: string; hasBlocks?: boolean; blocks?: PublicBlock[] }
 
 /** One arrangement of the cards; `cls` names the screen sizes it shows on (acc-sm / acc-md / acc-lg). */
 export interface PublicAccordionLayout {

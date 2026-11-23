@@ -298,14 +298,14 @@ export function captionCss(style: StoredImageStyle | undefined): PublicCaptionCs
  * second line. The website places it by captionPosition and styles it with captionCss.
  */
 export function mapImage(img: StoredImage | undefined, style?: StoredImageStyle, fallbacks: (string | undefined)[] = []): PublicImage | undefined {
-  if (!img?.url) return undefined;
+  if (!img || !str(img.url)) return undefined;
   const shown = (style?.captionPosition ?? 'none') !== 'none';
   // stored texts of the wrong type count as absent: a publish must not fail because of an image
   const parts = shown ? imageCaption({ overlay: str(img.overlay), credit: str(img.credit) }, fallbacks) : undefined;
   const caption = parts?.text ? [parts.text, parts.source].filter(t => t.length > 0).join('\n') : '';
   const position = CAPTION_POSITIONS.find(p => p === style?.captionPosition) ?? '';
   return {
-    url: toImgixUrl(img.url), alt: str(img.altText ?? img.label), caption,
+    url: toImgixUrl(str(img.url)), alt: str(img.altText ?? img.label), caption,
     captionPosition: caption ? position : '', captionCss: captionCss(style),
   };
 }

@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 const fakeDb = vi.hoisted(() => ({ current: undefined as unknown }));
 vi.mock('firebase-admin/firestore', () => ({ getFirestore: () => fakeDb.current }));
 
+import { blocksFromClassic } from '@okr/shared-models';
 import { articleSlug, newsRouter } from './news';
 
 describe('articleSlug', () => {
@@ -104,5 +105,191 @@ describe('unpublished articles', () => {
 
   it('answers 404 for an unpublished article reached by its document id', async () => {
     expect((await get('draft')).status).toBe(404);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Spec 1.173: articles with blocks. An article without blocks is served exactly as before.
+// ---------------------------------------------------------------------------------------------------------------------
+describe('news articles with blocks (1.173)', () => {
+  const img = (n: string): Record<string, unknown> => ({ url: `a/${n}.jpg`, altText: n });
+  const base = (properties: Record<string, unknown>, htmlContent = '<p>Hallo <b>Welt</b></p>', position = 1): Record<string, unknown> => ({
+    type: 'article', state: 'published', name: 'art', title: 'Titel', subTitle: 'Unter', tags: 'a, b', tenants: ['scs'], isArchived: false,
+    roleNeeded: 'public', content: { htmlContent, position, colSize: 6 }, properties,
+  });
+
+  async function call(data: Record<string, unknown>, slug?: string): Promise<{ status: number; body: any }> { // eslint-disable-line @typescript-eslint/no-explicit-any
+    const snap = (id: string, d: Record<string, unknown> | undefined) => ({ id, exists: d !== undefined, data: () => d });
+    const query = {
+      where: () => query, limit: () => query,
+      get: async () => ({ empty: false, docs: [{ id: 'x1', data: () => data }] }),
+    };
+    fakeDb.current = {
+      collection: (collection: string) => ({
+        where: query.where,
+        doc: (id: string) => ({ __id: id, get: async () => snap(id, collection === 'pages' ? { tenants: ['scs'], sections: ['x1'] } : data) }),
+      }),
+      getAll: async (...refs: { __id: string }[]) => refs.map(r => snap(r.__id, data)),
+    };
+    let status = 200;
+    let body: unknown;
+    const res = { set: () => res, status: (code: number) => { status = code; return res; }, json: (b: unknown) => { body = b; return res; } };
+    await newsRouter({ query: { tenantId: 'scs' }, params: slug ? { slug } : {} } as never, res as never);
+    return { status, body };
+  }
+
+  const old = base({
+    images: [img('a'), img('b')], titleI18n: { en: 'Title' }, datePublished: '20260101',
+    contentI18n: { de: '<p>Hallo</p>', en: '<p>Hello <script>x</script></p>' },
+  });
+
+  it('an article without blocks is served as before', async () => {
+    const detail = (await call(old, 'art')).body;
+    const list = (await call(old)).body;
+    expect(detail).not.toHaveProperty('blocks');
+    expect(list[0]).not.toHaveProperty('blocks');
+    expect(detail).toMatchInlineSnapshot(`
+      {
+        "content": {
+          "de": "<p>Hallo</p>",
+          "en": "<p>Hello </p>",
+        },
+        "coverImage": {
+          "alt": {
+            "de": "a",
+          },
+          "url": "https://bkaiser.imgix.net/a/a.jpg?auto=compress,format=jpg",
+        },
+        "date": "2026-01-01",
+        "excerpt": {
+          "de": "Hallo",
+          "en": "Hello x",
+        },
+        "images": [
+          {
+            "alt": {
+              "de": "a",
+            },
+            "url": "https://bkaiser.imgix.net/a/a.jpg?auto=compress,format=jpg",
+          },
+          {
+            "alt": {
+              "de": "b",
+            },
+            "url": "https://bkaiser.imgix.net/a/b.jpg?auto=compress,format=jpg",
+          },
+        ],
+        "slug": "art",
+        "subTitle": {
+          "de": "Unter",
+        },
+        "tags": [
+          "a",
+          "b",
+        ],
+        "title": {
+          "en": "Title",
+        },
+      }
+    `);
+    expect(list).toMatchInlineSnapshot(`
+      [
+        {
+          "coverImage": {
+            "alt": {
+              "de": "a",
+            },
+            "url": "https://bkaiser.imgix.net/a/a.jpg?auto=compress,format=jpg",
+          },
+          "date": "2026-01-01",
+          "excerpt": {
+            "de": "Hallo",
+            "en": "Hello x",
+          },
+          "slug": "art",
+          "subTitle": {
+            "de": "Unter",
+          },
+          "tags": [
+            "a",
+            "b",
+          ],
+          "title": {
+            "en": "Title",
+          },
+        },
+      ]
+    `);
+  });
+
+  it('a migrated article is served like the old one', async () => {
+    const cases: Record<string, Record<string, unknown>> = {
+      'text only': base({ datePublished: '20260101' }, '<p>Nur Text</p>', 0),
+      'image on top': base({ images: [img('a')], contentI18n: { de: '<p>Hallo</p>', en: '<p>Hello</p>' } }, '<p>Hallo</p>', 1),
+      'image at the bottom, with a button': base({ images: [img('a')], cta: { label: 'Los', url: '/los' } }, '<p>T</p>', 2),
+      'image left': base({ images: [img('a')] }, '<p>T</p>', 3),
+      'two images': base({ images: [img('a'), img('b')] }, '<p>T</p>', 1),
+      'the hidden image': base({ images: [img('a')], titleI18n: { en: 'Title' } }, '<p>T</p>', 0),
+    };
+    for (const [name, doc] of Object.entries(cases)) {
+      const classic = { ...doc, properties: doc['properties'] as Record<string, unknown> };
+      const { blocks, cover } = blocksFromClassic(classic as never);
+      const { images: _images, contentI18n: _i18n, cta: _cta, ...kept } = classic.properties as Record<string, unknown>; // eslint-disable-line @typescript-eslint/no-unused-vars
+      const migrated = { ...doc, content: { position: 1 }, properties: { ...kept, blocks, ...(cover ? { cover } : {}) } };
+      const [oldDetail, newDetail] = [(await call(classic, 'art')).body, (await call(migrated, 'art')).body];
+      expect(newDetail, name).toEqual(oldDetail);
+      expect(newDetail, name).not.toHaveProperty('blocks');
+      expect((await call(migrated)).body, name).toEqual((await call(classic)).body);
+    }
+  });
+
+  describe('a free article', () => {
+    const blocks = [
+      { id: 't', type: 'text', html: '<p>Hallo</p><script>x()</script>', htmlI18n: { en: '<p>Hello</p><img src=x onerror=alert(1)>', fr: '' } },
+      { id: 'c', type: 'callout', html: '<p>Achtung</p>', tone: 'primary', htmlI18n: { it: '<p>Attenzione</p><script>y()</script>' } },
+      { id: 'i', type: 'image', image: img('pic') },
+      { id: 'b', type: 'button', cta: { label: 'Los', url: '/los.html', labelI18n: { en: 'Go', es: '' } } },
+      { id: 'd', type: 'divider' },
+    ];
+    const doc = base({ blocks, cover: img('cover'), images: [img('stale')], datePublished: '20260101' }, '<p>stale</p>');
+
+    it('carries its blocks in every language, sanitized', async () => {
+      const body = (await call(doc, 'art')).body;
+      expect(body.blocks).toEqual([
+        { type: 'text', html: { de: '<p>Hallo</p>', en: '<p>Hello</p><img src="x" />', it: '<p>Hallo</p>' }, align: 'left' },
+        { type: 'callout', html: { de: '<p>Achtung</p>', en: '<p>Achtung</p>', it: '<p>Attenzione</p>' }, tone: 'primary' },
+        expect.objectContaining({ type: 'image', image: expect.objectContaining({ url: expect.stringContaining('a/pic.jpg') }) }),
+        { type: 'button', cta: { label: { de: 'Los', en: 'Go', it: 'Los' }, url: '/los.html', style: 'primary' }, align: 'left' },
+        { type: 'divider' },
+      ]);
+      expect(JSON.stringify(body)).not.toMatch(/script|onerror/);
+      expect(body.blocks[2]).not.toHaveProperty('albumOffset');
+    });
+
+    it('content, excerpt and images come from the fallback, the cover from articleCover', async () => {
+      const body = (await call(doc, 'art')).body;
+      expect(body.content.de).toBe('<p>Hallo</p><p>Achtung</p>');
+      expect(body.content.it).toBe('<p>Hallo</p><p>Attenzione</p>');
+      expect(body.excerpt.de).toMatch(/^Hallo/);
+      expect(body.images.map((i: { url: string }) => /\/(\w+)\.jpg/.exec(i.url)?.[1])).toEqual(['cover', 'pic']);
+      expect(body.coverImage.url).toContain('a/cover.jpg');
+    });
+
+    it('the list carries no blocks, but the cover', async () => {
+      const [item] = (await call(doc)).body;
+      expect(item).not.toHaveProperty('blocks');
+      expect(item.coverImage.url).toContain('a/cover.jpg');
+    });
+
+    it('without a cover the first block image is the cover', async () => {
+      const { cover: _cover, ...props } = doc['properties'] as Record<string, unknown>; // eslint-disable-line @typescript-eslint/no-unused-vars
+      const [item] = (await call({ ...doc, properties: props })).body;
+      expect(item.coverImage.url).toContain('a/pic.jpg');
+    });
+
+    it('serves german only when no block is translated', async () => {
+      const body = (await call(base({ blocks: [{ id: 'a', type: 'text', html: '<p>A</p>' }, { id: 'd', type: 'divider' }] }), 'art')).body;
+      expect(body.blocks[0]).toEqual({ type: 'text', html: { de: '<p>A</p>' }, align: 'left' });
+    });
   });
 });

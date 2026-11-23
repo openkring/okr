@@ -3,11 +3,11 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 import { isPublishedSection, setCacheHeaders, parseTags, storeDateToIso, titleToI18n } from '../utils';
 import { getHtmlSanitizer, sanitizeI18n } from '../sanitize';
-import type { I18nString } from '@okr/shared-models';
+import { articleCover, isFreeArticle, withClassicFields, type I18nString } from '@okr/shared-models';
 
 type SanitizeFn = (html: string) => string;
 import { shortenText } from '@okr/shared-util-core';
-import { isPublicRole } from '@okr/cms-website-render';
+import { isPublicRole, mapBlocksI18n, type SectionDoc } from '@okr/cms-website-render';
 
 const IMGIX_BASE = 'https://bkaiser.imgix.net';
 
@@ -77,9 +77,16 @@ function mapImage(img: StoredImage) {
   return { url: toImgixUrl(img.url), alt: { de: img.altText ?? '' } };
 }
 
-function sectionToNewsSummary(doc: ArticleSectionDoc, sanitize: SanitizeFn) {
+/** The picture of teasers and lists: the cover, else the first image (spec 1.173 §9.2). */
+function coverOf(original: ArticleSectionDoc): StoredImage | undefined {
+  const cover = articleCover(original as never);
+  return cover?.url ? { url: cover.url, altText: cover.altText } : undefined;
+}
+
+export function sectionToNewsSummary(original: ArticleSectionDoc, sanitize: SanitizeFn) {
+  const doc = withClassicFields(original as never) as ArticleSectionDoc;
   const props = doc.properties ?? {};
-  const img = props.images?.[0];
+  const img = coverOf(original);
   const excerpt = hasContent(props.excerptI18n)
     ? props.excerptI18n!
     : excerptFromContent(props.contentI18n, doc.content?.htmlContent ?? '');
@@ -94,13 +101,16 @@ function sectionToNewsSummary(doc: ArticleSectionDoc, sanitize: SanitizeFn) {
   };
 }
 
-function sectionToNewsDetail(doc: ArticleSectionDoc, sanitize: SanitizeFn) {
+/** A free article carries its blocks in all languages too, since the route has no language (spec 1.173 §9.2). */
+export function sectionToNewsDetail(original: ArticleSectionDoc, sanitize: SanitizeFn) {
+  const doc = withClassicFields(original as never) as ArticleSectionDoc;
   const props = doc.properties ?? {};
   const images = (props.images ?? []).map(mapImage);
   return {
-    ...sectionToNewsSummary(doc, sanitize),
+    ...sectionToNewsSummary(original, sanitize),
     content: sanitizeI18n(props.contentI18n ?? { de: doc.content?.htmlContent ?? '' }, sanitize),
     images,
+    ...(isFreeArticle(original as never) ? { blocks: mapBlocksI18n(original as unknown as SectionDoc, sanitize) } : {}),
   };
 }
 
