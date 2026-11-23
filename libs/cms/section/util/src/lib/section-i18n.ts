@@ -1400,6 +1400,9 @@ export const SECTION_I18N_KEYS = {
   article_images_style_default:             PFX + 'article.images.style.default',
   article_images_style_defaultHelper:       PFX + 'article.images.style.defaultHelper',
   article_images_style_customize:           PFX + 'article.images.style.customize',
+  // an article with blocks (spec 1.173)
+  article_blocks_readonly:                  PFX + 'article.blocks.readonly',
+  article_blocks_not_linked:                PFX + 'article.blocks.notLinked',
 
   error_save:                               PFX + 'error.save',
   error_load:                               PFX + 'error.load',

@@ -2,6 +2,7 @@ export * from './lib/album.util';
 export * from './lib/section.util';
 export * from './lib/article-background.util';
 export * from './lib/article-image-migration.util';
+export * from './lib/article-image-link.util';
 export * from './lib/chart-config.util';
 export * from './lib/sankey-config.util';
 export * from './lib/spider-config.util';

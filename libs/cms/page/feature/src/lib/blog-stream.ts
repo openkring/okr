@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { IonInfiniteScroll, IonInfiniteScrollContent, IonSearchbar, IonToolbar } from '@ionic/angular';
 
-import { SectionModel, UserModel } from '@okr/shared-models';
+import { SectionModel, UserModel, withClassicFields } from '@okr/shared-models';
 
 import { SectionDispatcher } from '@okr/cms-section-feature';
 import { PageStore } from './page.store';
@@ -85,7 +85,7 @@ export class BlogStream {
       result = result.filter(s =>
         s.name.toLowerCase().includes(term) ||
         s.title?.toLowerCase().includes(term) ||
-        s.content?.htmlContent?.toLowerCase().includes(term)
+        withClassicFields(s).content?.htmlContent?.toLowerCase().includes(term)
       );
     }
     return result;

@@ -14,6 +14,11 @@ describe('getSectionImageSlots', () => {
     expect(getSectionImageSlots(section('slider', { images: [] }))).toEqual([{ field: 'images', multi: true }]);
   });
 
+  it('returns no slot for an article with blocks: its images are in the blocks (1.173)', () => {
+    expect(getSectionImageSlots(section('article', { blocks: [] }))).toEqual([]);
+    expect(sectionSupportsImages(section('article', { blocks: [{ id: 't', type: 'text', html: '' }] }))).toBe(false);
+  });
+
   it('returns two single-slots for hero', () => {
     expect(getSectionImageSlots(section('hero', {}))).toEqual([
       { field: 'logo', multi: false },

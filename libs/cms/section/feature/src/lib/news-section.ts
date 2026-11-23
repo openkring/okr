@@ -6,7 +6,7 @@ import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, Ion
 import { EmptyList, MoreButton, OptionalCardHeader, Spinner } from '@okr/shared-ui';
 import { debugMessage, hasRole, shortenText } from '@okr/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions, isBrowser } from '@okr/shared-util-angular';
-import { ArticleSection, IMAGE_STYLE_SHAPE, NewsConfig, SectionModel } from '@okr/shared-models';
+import { ArticleSection, IMAGE_STYLE_SHAPE, ImageConfig, NewsConfig, SectionModel, articleCover, withClassicFields } from '@okr/shared-models';
 import { ThumbnailUrlPipe } from '@okr/shared-pipes';
 import { getSectionIntro } from '@okr/cms-section-util';
 
@@ -41,10 +41,11 @@ import { isAppMoreUrl, openMoreLink } from './section-link';
             <ion-list lines="none">
               @for (article of news(); track article.okey) {
                 <ion-item (click)="navigateToArticle(article)">
-                  @if (article.properties.images.length > 0 && article.properties.images[0].url) {
+                  @let cover = articleImage(article);
+                  @if (cover?.url) {
                     <ion-thumbnail slot="start">
-                      <img [src]="article.properties.images[0].url | thumbnailUrl"
-                           [alt]="article.properties.images[0].altText || article.title" />
+                      <img [src]="cover.url | thumbnailUrl"
+                           [alt]="cover.altText || article.title" />
                     </ion-thumbnail>
                   }
                   <ion-label>
@@ -111,8 +112,13 @@ export class NewsSectionComponent implements OnInit {
     }
   }
 
+  /** the picture of the teaser: the cover of an article with blocks (spec 1.173), else its first image */
+  protected articleImage(article: ArticleSection): ImageConfig | undefined {
+    return articleCover(article);
+  }
+
   protected articleExcerpt(article: ArticleSection): string {
-    return shortenText(article.content?.htmlContent ?? '', 30, true);
+    return shortenText(withClassicFields(article).content?.htmlContent ?? '', 30, true);
   }
 
   protected async showActions(article: ArticleSection): Promise<void> {

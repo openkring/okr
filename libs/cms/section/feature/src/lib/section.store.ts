@@ -10,7 +10,7 @@ import { Geolocation, Position } from '@capacitor/geolocation';
 import { catchError, firstValueFrom, of } from 'rxjs';
 
 import { AppStore, withErrorState } from '@okr/shared-feature';
-import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, EmailLayoutChoice, IMAGE_CONFIG_SHAPE, ImageActionType, ImageConfig, SectionModel, SectionType, WebsiteCollection, WebsiteModel } from '@okr/shared-models';
+import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, EmailLayoutChoice, IMAGE_CONFIG_SHAPE, ImageActionType, ImageConfig, SectionModel, SectionType, WebsiteCollection, WebsiteModel, articleBlocksOf, withClassicFields } from '@okr/shared-models';
 import { getSystemQuery, chipMatches, debugData, debugItemLoaded, debugMessage, fill, nameMatches, sanitizeFileName, chatBlockedAlertMessage, isChatBlockedError, EMERGENCY_GROUP_KEY } from '@okr/shared-util-core';
 import { DEFAULT_MIMETYPES, IMAGE_MIMETYPES } from '@okr/shared-constants';
 import { confirm, downloadTextFile, exportCsv, getExportFileName, lazyService, showToast, resourceParams, notify } from '@okr/shared-util-angular';
@@ -286,6 +286,11 @@ export const _SectionStore = signalStore(
 
       async uploadImage(section?: ArticleSection): Promise<void> {
         if (!section) return;
+        // an article with blocks (spec 1.173) has its images in the blocks: never write the old `images`
+        if (articleBlocksOf(section)) {
+          await showToast(store.toastController, store.i18n.article_blocks_not_linked());
+          return;
+        }
         // 1) pick an image file
         const file = await store.uploadService.pickFile(IMAGE_MIMETYPES);
         if (!file) return;
@@ -406,14 +411,15 @@ export const _SectionStore = signalStore(
       },
 
       buildEmailHtml(section: SectionModel): string {
-        const props = section.properties as any;
+        const classic = withClassicFields(section);   // the text and images of an article with blocks (spec 1.173)
+        const props = classic.properties as any;
         const images: ImageConfig[] = Array.isArray(props?.images) && props.images.length > 0
           ? props.images
           : props?.image ? [props.image] : [];
         const imgHtml = images
           .map(img => `<p><img src="${img.url}" alt="${img.altText ?? ''}" style="max-width:100%;height:auto;" /></p>`)
           .join('');
-        const content = (section as ArticleSection).content?.htmlContent ?? '';
+        const content = (classic as ArticleSection).content?.htmlContent ?? '';
         return imgHtml + content;
       },
 

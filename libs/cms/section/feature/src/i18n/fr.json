@@ -177,6 +177,10 @@
     },
     "look": {
       "title": "Mise en avant"
+    },
+    "blocks": {
+      "readonly": "Cet article est composé de blocs. Tu pourras modifier le texte, les images et les boutons dans une version plus récente de l’app.",
+      "notLinked": "Cet article est composé de blocs. Merci d’ajouter l’image dans l’article."
     }
   },
   "contract": {

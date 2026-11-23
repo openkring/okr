@@ -70,4 +70,34 @@ describe('compactSectionForSave (1.171 D1b)', () => {
     const full = withImageStyleDefaults(section({ height: '300px' }));
     expect(withImageStyleDefaults(compactSectionForSave(full))).toEqual(full);
   });
+
+  // spec 1.173: the form opens an article with withImageStyleDefaults and saves it with compactSectionForSave
+  describe('an article with blocks and a cover', () => {
+    const image = { label: 'a', type: 'image', url: 'a.jpg', actionUrl: '', altText: 'a', overlay: '' };
+    const blockArticle = (extra: object = {}) => ({
+      type: 'article',
+      title: 'T',
+      properties: {
+        blocks: [
+          { id: 't', type: 'text', html: '<p>x</p>', htmlI18n: { en: '<p>y</p>' } },
+          { id: 'c', type: 'columns', columns: [
+            { size: 6, blocks: [{ id: 'i', type: 'image', image, imageStyle: { height: '150px' } }] },
+            { size: 6, blocks: [{ id: 'b', type: 'button', cta: { label: 'Los', url: '/x' } }] },
+          ] },
+        ],
+        cover: image,
+        ...extra,
+      },
+    }) as unknown as SectionModel;
+
+    it('is saved as it was opened', () => {
+      const s = blockArticle();
+      expect(compactSectionForSave(withImageStyleDefaults(structuredClone(s)))).toEqual(s);
+    });
+
+    it('is saved as it was opened with the old fields still stored', () => {
+      const s = blockArticle({ images: [image], imageStyle: { height: '300px' }, cta: { label: 'Alt', url: '/y' } });
+      expect(compactSectionForSave(withImageStyleDefaults(structuredClone(s)))).toEqual(s);
+    });
+  });
 });

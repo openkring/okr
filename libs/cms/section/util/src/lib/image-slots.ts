@@ -1,4 +1,4 @@
-import { ImageConfig, SectionModel } from '@okr/shared-models';
+import { ImageConfig, SectionModel, articleBlocksOf } from '@okr/shared-models';
 
 /** An image "slot" on a section: either the multi `images[]` array or a named single image. */
 export interface ImageSlot {
@@ -6,10 +6,14 @@ export interface ImageSlot {
   multi: boolean;
 }
 
-/** Enumerate the image slots a section type supports. Empty array = no image upload. */
+/**
+ * Enumerate the image slots a section type supports. Empty array = no image upload. An article with blocks has none:
+ * its images are in the blocks, an upload must not write the old `images` (spec 1.173).
+ */
 export function getSectionImageSlots(section: SectionModel): ImageSlot[] {
   switch (section.type) {
     case 'article':
+      return articleBlocksOf(section) ? [] : [{ field: 'images', multi: true }];
     case 'slider':
       return [{ field: 'images', multi: true }];
     case 'hero':

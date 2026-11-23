@@ -9,8 +9,8 @@ import { StorageReference, deleteObject, getDownloadURL, getMetadata, listAll, r
 import { STORAGE } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
-import { AccordionSection, ArticleSection, OkrModel, DocumentCollection, DocumentModel, ImageConfig, ImageType, LogInfo, MembershipCollection, MembershipModel, MenuItemModel, OrgCollection, OrgModel, PageCollection, PageModel, PeopleSection, PersonCollection, PersonModel, SectionModel, SliderSection, UserModel } from '@okr/shared-models';
-import { confirm, downloadToBrowser, navigateByUrl } from '@okr/shared-util-angular';
+import { AccordionSection, ArticleSection, OkrModel, DocumentCollection, DocumentModel, ImageConfig, ImageType, LogInfo, MembershipCollection, MembershipModel, MenuItemModel, OrgCollection, OrgModel, PageCollection, PageModel, PeopleSection, PersonCollection, PersonModel, SectionModel, SliderSection, UserModel, articleBlocksOf } from '@okr/shared-models';
+import { confirm, downloadToBrowser, navigateByUrl, showToast } from '@okr/shared-util-angular';
 import { DateFormat, convertDateFormatToString, getFullName, getSystemQuery, getTodayStr, replaceSubstring, safeStructuredClone } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { ImageDetailModal } from '@okr/shared-ui';
@@ -22,6 +22,7 @@ import { MenuModal } from '@okr/cms-menu-feature';
 import { PageService } from '@okr/cms-page-data-access';
 import { SectionService } from '@okr/cms-section-data-access';
 import { loadSectionEditModal } from '@okr/cms-section-feature';
+import { SECTION_I18N_KEYS, isImageLinked } from '@okr/cms-section-util';
 
 import { PAGE_I18N_KEYS } from '@okr/cms-page-util';
 
@@ -102,6 +103,7 @@ export const PageIntegrityStore = signalStore(
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll(PAGE_I18N_KEYS),
+    sectionI18n: store.i18nService.translateAll({ article_blocks_not_linked: SECTION_I18N_KEYS.article_blocks_not_linked }),
 
     dataResource: rxResource({
       params: () => ({
@@ -483,16 +485,22 @@ export const PageIntegrityStore = signalStore(
 
       // Append an ImageConfig (pointing at the storage file) to the section's images
       // array so it shows up in the section detail list and the rendered slider.
-      // Only article and slider sections expose a properties.images list.
+      // Only article and slider sections expose a properties.images list. An article with blocks (spec 1.173) is
+      // never written: the image belongs into one of its blocks, which is up to the editor.
       async linkImageToSection(image: SectionImageRef, label: string): Promise<void> {
         const key = image.section.okey;
         if (!key) return;
         const fresh = await firstValueFrom(store.sectionService.read(key));
         if (!fresh || (fresh.type !== 'article' && fresh.type !== 'slider')) return;
 
+        if (isImageLinked(fresh, image.fullPath)) return; // already linked
+        if (articleBlocksOf(fresh)) {
+          await showToast(store.toastController, store.sectionI18n.article_blocks_not_linked());
+          return;
+        }
+
         const section = fresh as ArticleSection | SliderSection;
         const images = section.properties.images ?? [];
-        if (images.some(img => img.url === image.fullPath)) return; // already linked
 
         const newImage: ImageConfig = {
           label,
