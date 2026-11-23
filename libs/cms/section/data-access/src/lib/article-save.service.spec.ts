@@ -26,6 +26,8 @@ const server = vi.hoisted(() => {
     /** What the commits do in turn: fail with a code; run a change of somebody else first; or be applied, with the answer lost (`then` runs after it). */
     commits: [] as (string | (() => void) | { lost: true; then?: () => void })[],
     offline: false,
+    /** The ID token has expired and cannot be refreshed. */
+    noToken: false,
     reads: [] as string[],
     strictReads: [] as string[],
     /** A gate for the commits, to keep a save running. */
@@ -35,6 +37,7 @@ const server = vi.hoisted(() => {
   const read = (path: string) => {
     const value = state.docs[path];
     if (state.offline) throw fault('unavailable');
+    if (state.noToken) throw fault('auth/network-request-failed');
     if (value instanceof Error) throw value;
     return { exists: () => value !== undefined && value !== null, data: () => structuredClone(value) };
   };
@@ -80,6 +83,8 @@ const server = vi.hoisted(() => {
         return;
       } catch (ex) {
         const code = (ex as { code?: string }).code ?? '';
+        // the SDK itself fails on a code it does not know, and the transaction never settles
+        if (code.startsWith('auth/') && (ex as Error).name === 'FirebaseError') return new Promise(() => undefined);
         if (attempt >= 5 || !['unavailable', 'aborted'].includes(code)) throw ex;
       }
     }
@@ -131,6 +136,7 @@ const SYSTEM = { tenants: ['system'] };
 const gate = { trial: false, mayWrite: () => mayWrite };
 let mayWrite: boolean;
 const toast = vi.fn();
+let currentUser: { uid: string; getIdToken: () => Promise<string> } | null;
 let service: ArticleSaveService;
 
 const configure = (providers: unknown[] = []) => {
@@ -140,7 +146,7 @@ const configure = (providers: unknown[] = []) => {
       { provide: PLATFORM_ID, useValue: 'browser' },
       { provide: ENV, useValue: { tenantId, services: {} } },
       { provide: FIRESTORE, useValue: {} },
-      { provide: AUTH, useValue: { currentUser: { uid: 'u1' } } },
+      { provide: AUTH, useValue: { get currentUser() { return currentUser; } } },
       { provide: ToastController, useValue: { create: toast } },
       { provide: I18nService, useValue: { translateAll: () => new Proxy({}, { get: (_target, key) => () => String(key) }) } },
       { provide: ArticleBlocksGate, useValue: gate },
@@ -152,8 +158,9 @@ const configure = (providers: unknown[] = []) => {
 const toasts = () => toast.mock.calls.map(([options]) => options.message);
 
 beforeEach(() => {
-  Object.assign(server.state, { docs: {}, writes: [], commits: [], reads: [], strictReads: [], hold: undefined, offline: false });
+  Object.assign(server.state, { docs: {}, writes: [], commits: [], reads: [], strictReads: [], hold: undefined, offline: false, noToken: false });
   mayWrite = true;
+  currentUser = { uid: 'u1', getIdToken: async () => { if (server.state.noToken) throw server.fault('auth/network-request-failed'); return 'token'; } };
   gate.trial = false;
   toast.mockReset().mockResolvedValue({ present: vi.fn() });
   for (const spy of Object.values(other)) spy.mockReset().mockResolvedValue(undefined);
@@ -542,6 +549,47 @@ describe('ArticleSaveService', () => {
       mayWrite = true;
       server.state.docs[A1] = stored(classic);
       await expect(save({ loaded: loadedOf(classic) })).resolves.toMatchObject({ status: 'saved' });
+    });
+  });
+
+  describe('without a usable sign-in', () => {
+    const within = <R>(result: Promise<R>) => Promise.race([result, new Promise<string>((resolve) => { setTimeout(() => resolve('hangs'), 200); })]);
+    beforeEach(() => { server.state.docs[A1] = stored(); });
+
+    it('is offline, and the next save works', async () => {
+      server.state.noToken = true;
+      const section = edited();
+      await expect(within(save({ section }))).resolves.toEqual({ status: 'offline' });
+      expectNoWrite();
+      server.state.noToken = false;
+      await expect(within(save({ section }))).resolves.toEqual({ status: 'saved', key: 'a1' });
+    });
+
+    it('a waiting second save with other content runs', async () => {
+      // the network is back right after the first save has failed
+      const getIdToken = vi.fn().mockResolvedValue('token').mockRejectedValueOnce(server.fault('auth/network-request-failed'));
+      currentUser = { uid: 'u1', getIdToken };
+      const first = save();
+      const second = save({ section: edited({ title: 'Zweiter' }) });
+      await expect(within(first)).resolves.toEqual({ status: 'offline' });
+      await expect(within(second)).resolves.toEqual({ status: 'saved', key: 'a1' });
+      expect(docOf(A1)['title']).toBe('Zweiter');
+    });
+
+    it('a new article can be created afterwards', async () => {
+      server.state.docs = {};
+      server.state.noToken = true;
+      await expect(within(save({ isNew: true }))).resolves.toEqual({ status: 'offline' });
+      server.state.noToken = false;
+      await expect(within(save({ isNew: true }))).resolves.toEqual({ status: 'saved', key: 'a1' });
+      expect(server.state.writes.map((w) => w.kind)).toEqual(['set']);
+    });
+
+    it('fails when nobody is signed in: the rules refuse', async () => {
+      currentUser = null;
+      server.state.commits = ['permission-denied', 'permission-denied'];
+      await expect(within(save())).resolves.toEqual({ status: 'failed' });
+      expectNoWrite();
     });
   });
 

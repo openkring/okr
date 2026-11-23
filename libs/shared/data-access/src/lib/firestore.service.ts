@@ -69,8 +69,8 @@ export type CheckedDecision<T extends OkrModel, R> = CheckedWrite<T> | { kind: '
  * `sent` is the document as it was sent (without `okey`).
  * - `written`  it is on the server
  * - `refused`  the callback refused
- * - `offline`  the server could not be read. With `sent`: it is not known whether that was written
- * - `failed`   not written (error toast shown). With `sent`: it was not there when read afterwards, but it was sent
+ * - `offline`  the server could not be read, or the sign-in could not be refreshed. With `sent`: it is not known whether that was written
+ * - `failed`   not written (error toast shown); also when the session has ended. With `sent`: it was not there when read afterwards, but it was sent
  */
 export type CheckedWriteResult<T extends OkrModel, R> =
   | { status: 'written'; key: string; sent: T }
@@ -87,6 +87,24 @@ class CheckedWriteRefusal extends Error {
     super('refused');
     this.name = 'CheckedWriteRefusal';
   }
+}
+
+/**
+ * The ID token cannot be had (see {@link FirestoreService.writeChecked}). On purpose not a `FirebaseError`: the transaction runner
+ * throws on an `auth/…` code inside its own error handler, and the transaction then never settles.
+ */
+class SignInError extends Error {
+  constructor(public readonly ended: boolean, cause: unknown) {
+    super('the ID token cannot be refreshed', { cause });
+    this.name = 'SignInError';
+  }
+}
+
+/** The session has ended (Firebase Auth signs the user out): saving again does not help. Any other failure may be transient. */
+const SESSION_ENDED = ['auth/user-token-expired', 'auth/user-disabled', 'auth/user-not-found', 'auth/invalid-user-token'];
+
+function signInError(cause: unknown): SignInError {
+  return new SignInError(SESSION_ENDED.includes((cause as { code?: string } | null)?.code ?? ''), cause);
 }
 
 /** A commit that failed with one of these was not applied. */
@@ -1382,7 +1400,7 @@ export class FirestoreService {
     }
     const run: { write?: CheckedWrite<T>; sent?: { write: CheckedWrite<T>; data: T }; sends: number; readError?: unknown } = { sends: 0 };
     try {
-      await this.writeWithTokenDenialRetry(`writeChecked(${collectionName})`, () => runTransaction(this.firestore, async (transaction) => {
+      await this.writeWithTokenDenialRetry(`writeChecked(${collectionName})`, () => this.runSignedInTransaction(async (transaction) => {
         const known = new Map<string, T | null>();
         const read = async (key: string): Promise<T | null> => {
           const stored = known.get(key);
@@ -1393,8 +1411,9 @@ export class FirestoreService {
             known.set(key, data);
             return data;
           } catch (ex) {
-            run.readError = ex;
-            throw ex;
+            const error = ((ex as { code?: string } | null)?.code ?? '').startsWith('auth/') ? signInError(ex) : ex;
+            run.readError = error;
+            throw error;
           }
         };
 
@@ -1422,6 +1441,20 @@ export class FirestoreService {
     }
     // the transaction cannot succeed without having sent
     return run.sent ? this.checkedWritten(collectionName, run.sent, messages, currentUser) : { status: 'failed' };
+  }
+
+  /**
+   * A transaction that fails when there is no usable sign-in, instead of never settling. The SDK's transaction hangs forever with an ID
+   * token that has expired and cannot be refreshed (a device that wakes up before its network, or was offline for long), so the
+   * token is fetched first: a cached one costs nothing. Nobody signed in is no failure here: the rules decide.
+   */
+  private async runSignedInTransaction(update: (transaction: Transaction) => Promise<void>): Promise<void> {
+    try {
+      await this.auth.currentUser?.getIdToken();
+    } catch (ex) {
+      throw signInError(ex);
+    }
+    await runTransaction(this.firestore, update);
   }
 
   /** What is stored for a checked write: as in `createModel`, `updateModel` and `forkModel`. */
@@ -1467,7 +1500,8 @@ export class FirestoreService {
     currentUser?: UserModel,
   ): Promise<CheckedWriteResult<T, R>> {
     const code = (ex as { code?: string } | null)?.code ?? '';
-    const atRead = run.readError !== undefined && ex === run.readError;
+    const signIn = ex instanceof SignInError ? ex : undefined;
+    const atRead = !!signIn || (run.readError !== undefined && ex === run.readError);
     const refusal = ex instanceof CheckedWriteRefusal ? ex : undefined;
     const sent = run.sent;
 
@@ -1485,7 +1519,7 @@ export class FirestoreService {
     }
     if (refusal) return { status: 'refused', reason: refusal.reason as R };
     const maybe = sent && unclear ? { sent: sent.data } : {};
-    if (atRead || (!readable && !NOT_APPLIED.includes(code))) {
+    if ((atRead && !signIn?.ended) || (!readable && !NOT_APPLIED.includes(code))) {
       console.warn(`FirestoreService.writeChecked(${collectionName}): the server cannot be read:`, ex);
       return { status: 'offline', ...maybe };
     }

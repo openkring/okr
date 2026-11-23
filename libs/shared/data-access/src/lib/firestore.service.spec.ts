@@ -1017,6 +1017,10 @@ describe('FirestoreService.writeChecked', () => {
   /** What the commits answer, in turn; undefined = committed. A read that fails ends its attempt. */
   let commits: unknown[];
   let service: FirestoreService;
+  const getIdToken = vi.fn();
+  const authError = (code: string) => Object.assign(new Error(code), { code, name: 'FirebaseError' });
+  /** A save that hangs must fail the test, not time it out. */
+  const within = <R>(result: Promise<R>) => Promise.race([result, new Promise<string>(resolve => setTimeout(() => resolve('hangs'), 200))]);
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -1037,11 +1041,14 @@ describe('FirestoreService.writeChecked', () => {
           if (answer) throw answer;
           return;
         } catch (ex) {
+          // the SDK itself fails on a code it does not know, and the transaction never settles
+          if ((ex as Error).name === 'FirebaseError' && ((ex as { code?: string }).code ?? '').startsWith('auth/')) return new Promise(() => undefined);
           if (attempt >= 5 || !['unavailable', 'aborted'].includes((ex as { code?: string }).code ?? '')) throw ex;
         }
       }
     }) as never);
-    service = makeService();
+    getIdToken.mockReset().mockResolvedValue('token');
+    service = makeService({ uid: 'u1', getIdToken });
     Object.assign(TestBed.inject(ToastController), { create: toast });
     Object.assign(service['i18n'], { comment_initial_conf: () => 'created', comment_update_conf: () => 'updated' });
     for (const level of ['debug', 'warn', 'error'] as const) vi.spyOn(console, level).mockImplementation(() => undefined);
@@ -1235,5 +1242,68 @@ describe('FirestoreService.writeChecked', () => {
     setDocMock.mockReturnValue(new Promise(() => undefined));
     await expect(service.writeChecked<Doc, string>('sections', update, isSame, MESSAGES, user)).resolves.toMatchObject({ status: 'written' });
     await settled();
+  });
+
+  describe('the sign-in', () => {
+    const decide = async (read: (key: string) => Promise<Doc | null>) => { await read('a1'); return update(); };
+    /** A token that cannot be refreshed: whatever needs it fails, in the transaction too. */
+    const withoutToken = (code: string) => {
+      getIdToken.mockRejectedValue(authError(code));
+      get.mockImplementation(async () => { throw authError(code); });
+    };
+
+    it('is checked before each transaction', async () => {
+      await expect(service.writeChecked<Doc, string>('sections', update, isSame, MESSAGES)).resolves.toMatchObject({ status: 'written' });
+      expect(getIdToken).toHaveBeenCalledTimes(1);
+      commits = [error('permission-denied')];
+      await service.writeChecked<Doc, string>('sections', update, isSame, MESSAGES);
+      expect(getIdToken).toHaveBeenCalledTimes(3);      // the App Check retry is a second transaction
+    });
+
+    it.each(['auth/network-request-failed', 'auth/timeout', 'auth/internal-error'])('is offline when the token cannot be refreshed (%s), nothing is sent', async (code) => {
+      withoutToken(code);
+      await expect(within(service.writeChecked<Doc, string>('sections', decide, isSame, MESSAGES))).resolves.toEqual({ status: 'offline' });
+      expect(runTransactionMock).not.toHaveBeenCalled();
+      expect(getDocFromServerMock).not.toHaveBeenCalled();
+      expect(attestAppCheckMock).not.toHaveBeenCalled();
+      expect(toast).not.toHaveBeenCalled();
+    });
+
+    it.each(['auth/user-token-expired', 'auth/user-disabled', 'auth/invalid-user-token', 'auth/user-not-found'])('is failed when the session has ended (%s)', async (code) => {
+      withoutToken(code);
+      await expect(within(service.writeChecked<Doc, string>('sections', decide, isSame, MESSAGES))).resolves.toEqual({ status: 'failed' });
+      expect(runTransactionMock).not.toHaveBeenCalled();
+      expect(toast).toHaveBeenCalledWith(expect.objectContaining({ message: 'not updated' }));
+    });
+
+    it('is offline when the rejection is no Firebase error', async () => {
+      getIdToken.mockRejectedValue(undefined);
+      await expect(within(service.writeChecked<Doc, string>('sections', decide, isSame, MESSAGES))).resolves.toEqual({ status: 'offline' });
+    });
+
+    it.each([['auth/network-request-failed', 'offline'], ['auth/user-disabled', 'failed']])('that ends during the transaction (%s) is %s, and settles', async (code, status) => {
+      get.mockImplementation(async () => { throw authError(code); });
+      await expect(within(service.writeChecked<Doc, string>('sections', decide, isSame, MESSAGES))).resolves.toEqual({ status });
+    });
+
+    it('that ends after a commit was sent is cleared up by reading', async () => {
+      commits = [error('unavailable')];
+      get.mockResolvedValueOnce({ exists: () => true, data: () => STORED }).mockImplementation(async () => { throw authError('auth/network-request-failed'); });
+      getDocFromServerMock.mockResolvedValueOnce({ exists: () => true, data: () => STORED }).mockRejectedValue(error('unavailable'));
+      await expect(within(service.writeChecked<Doc, string>('sections', decide, isSame, MESSAGES))).resolves.toMatchObject({ status: 'written' });
+      commits = [error('unavailable')];
+      get.mockReset().mockResolvedValueOnce({ exists: () => true, data: () => STORED }).mockImplementation(async () => { throw authError('auth/network-request-failed'); });
+      await expect(within(service.writeChecked<Doc, string>('sections', decide, isSame, MESSAGES))).resolves.toEqual({ status: 'offline', sent: STORED });
+    });
+
+    it('is not needed to settle: with nobody signed in the rules decide', async () => {
+      TestBed.resetTestingModule();
+      const signedOut = makeService(null);
+      Object.assign(TestBed.inject(ToastController), { create: toast });
+      await expect(signedOut.writeChecked<Doc, string>('sections', update, isSame, MESSAGES)).resolves.toMatchObject({ status: 'written' });
+      commits = [error('permission-denied'), error('permission-denied')];
+      getDocFromServerMock.mockRejectedValue(error('permission-denied'));
+      await expect(signedOut.writeChecked<Doc, string>('sections', update, isSame, MESSAGES)).resolves.toMatchObject({ status: 'failed' });
+    });
   });
 });
