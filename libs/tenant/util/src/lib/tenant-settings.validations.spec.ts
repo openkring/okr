@@ -96,7 +96,12 @@ describe('defaults', () => {
 });
 
 describe('platform', () => {
-  const ok = { appDomain: 'app.kring.ch', emailDomain: 'kring.ch', weatherIntervalHours: 4, personLookupEnabled: false, isArchived: false, showDebugInfo: false };
+  const ok = {
+    appDomain: 'app.kring.ch', emailDomain: 'kring.ch', emailProvider: 'mailtrap_api', mailtrapPasswordResetTemplate: '',
+    loginUrl: '/auth/login', passwordResetUrl: '', logoUrl: 'tenant/kring/logo/logo.svg', ownerOrgId: 'kring', ownerUserId: '',
+    defaultAccountingTenantId: '', gitRepo: 'okr', gitOrg: 'openkring',
+    weatherIntervalHours: 4, personLookupEnabled: false, isArchived: false, showDebugInfo: false,
+  };
   it('accepts a normal set and empty domains', () => {
     expect(settingsValidations.platform(ok, CTX).isValid()).toBe(true);
     expect(settingsValidations.platform({ ...ok, appDomain: '', emailDomain: '' }, CTX).isValid()).toBe(true);
@@ -104,6 +109,26 @@ describe('platform', () => {
   it.each(['https://kring.ch', 'kring.ch/x', 'kring', 'a b.ch', 'user@kring.ch'])('refuses %j as a domain', (appDomain) => {
     expect(settingsValidations.platform({ ...ok, appDomain }, CTX).hasErrors('appDomain')).toBe(true);
     expect(settingsValidations.platform({ ...ok, emailDomain: appDomain }, CTX).hasErrors('emailDomain')).toBe(true);
+  });
+  it.each(['', 'mailtrap', 'mailtrap_api ', 3])('refuses %j as a mail service', (emailProvider) => {
+    expect(settingsValidations.platform(loose({ ...ok, emailProvider }), CTX).hasErrors('emailProvider')).toBe(true);
+  });
+  it('lets a stored empty mail service pass while it is not changed', () => {
+    expect(settingsValidations.platform(loose({ ...ok, emailProvider: '', gitOrg: 'x' }), { ...CTX, before: loose({ ...ok, emailProvider: '' }) }).hasErrors()).toBe(false);
+  });
+  it.each(['https://evil.ch', '//evil.ch', '/\\evil.ch', 'auth/login', '/auth login', '/a@b'])('refuses %j as a path', (url) => {
+    expect(settingsValidations.platform({ ...ok, loginUrl: url }, CTX).hasErrors('loginUrl')).toBe(true);
+    expect(settingsValidations.platform({ ...ok, passwordResetUrl: url }, CTX).hasErrors('passwordResetUrl')).toBe(true);
+  });
+  it('needs a login path, not a path for the password reset', () => {
+    expect(settingsValidations.platform({ ...ok, loginUrl: '' }, CTX).hasErrors('loginUrl')).toBe(true);
+    expect(settingsValidations.platform({ ...ok, passwordResetUrl: '' }, CTX).hasErrors('passwordResetUrl')).toBe(false);
+  });
+  it('caps the texts', () => {
+    for (const field of ['mailtrapPasswordResetTemplate', 'ownerOrgId', 'ownerUserId', 'defaultAccountingTenantId', 'gitRepo', 'gitOrg']) {
+      expect(settingsValidations.platform(loose({ ...ok, [field]: 'x'.repeat(101) }), CTX).hasErrors(field), field).toBe(true);
+      expect(settingsValidations.platform(loose({ ...ok, [field]: 'x'.repeat(100) }), CTX).hasErrors(field), field).toBe(false);
+    }
   });
   it('wants a positive weather interval', () => {
     for (const weatherIntervalHours of [0, -1, Number.NaN]) {

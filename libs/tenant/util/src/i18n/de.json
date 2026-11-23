@@ -732,7 +732,7 @@
       },
       "emailProvider": {
         "label": "Mail-Dienst",
-        "helper": "Über diesen Dienst werden E-Mails verschickt. Leer: der Standarddienst."
+        "helper": "Über diesen Dienst werden E-Mails verschickt. Ohne Angabe gilt mailtrap_api. Die Mail-Domain muss bei diesem Dienst freigegeben sein."
       },
       "mailtrapPasswordResetTemplate": {
         "label": "Vorlage für das Zurücksetzen des Passworts",
@@ -740,15 +740,15 @@
       },
       "loginUrl": {
         "label": "Seite der Anmeldung",
-        "helper": "Leer: die mitgelieferte Seite der App."
+        "helper": "Pfad der Anmeldeseite in der App, üblich ist /auth/login. Ein falscher Pfad verhindert die Anmeldung."
       },
       "passwordResetUrl": {
         "label": "Seite zum Zurücksetzen des Passworts",
-        "helper": "Leer: die mitgelieferte Seite der App."
+        "helper": "Wird zurzeit nicht verwendet: Die App öffnet immer ihre eigene Seite."
       },
       "logoUrl": {
         "label": "Logo",
-        "helper": "Das Logo der App und die Grundlage ihres Symbols."
+        "helper": "Das Logo der App und die Grundlage ihres Symbols. Nach einer Änderung müssen die Bilder neu erzeugt werden."
       },
       "ownerOrgId": {
         "label": "Organisation",
@@ -756,7 +756,7 @@
       },
       "ownerUserId": {
         "label": "Verantwortliches Konto",
-        "helper": "Das Konto, das für diese App verantwortlich ist."
+        "helper": "Das Konto, das für diese App verantwortlich ist. Nur eine Angabe, sie hat keine Wirkung."
       },
       "defaultAccountingTenantId": {
         "label": "Buchhaltung",
@@ -776,7 +776,7 @@
       },
       "weatherIntervalHours": {
         "label": "Wetter: Abstand in Stunden",
-        "helper": "So viele Stunden vergehen, bis die Wetterdaten erneuert werden."
+        "helper": "So viele Stunden vergehen, bis die Wetterdaten erneuert werden. Der kürzeste Abstand gilt für alle Apps."
       },
       "gitRepo": {
         "label": "Programmcode: Ablage",
@@ -788,7 +788,7 @@
       },
       "isArchived": {
         "label": "Archiviert",
-        "helper": "Ja bedeutet: Die App ist nicht mehr in Gebrauch."
+        "helper": "Nur eine Markierung für den Betreiber: Die App läuft weiter, und alle können sich weiterhin anmelden."
       },
       "showDebugInfo": {
         "label": "Angaben zur Fehlersuche",
@@ -804,7 +804,9 @@
       "languagesUnknown": "Eine der gewählten Sprachen gibt es in der App nicht.",
       "mailFromDomain": "Die Adresse muss zur Mail-Domain oder zur Adresse der App gehören.",
       "domain": "Das ist keine gültige Domain.",
-      "positive": "Die Zahl muss grösser als 0 sein."
+      "positive": "Die Zahl muss grösser als 0 sein.",
+      "path": "Das muss ein Pfad in der App sein, zum Beispiel /auth/login.",
+      "emailProvider": "Wähle einen der angebotenen Mail-Dienste."
     },
     "fallback": "Standard",
     "country_remove": "Land entfernen",
@@ -823,6 +825,17 @@
     "location_remove": "Standort entfernen",
     "resource_pick": "Ressource wählen",
     "resource_change": "Andere Ressource wählen",
-    "resource_remove": "Ressource entfernen"
+    "resource_remove": "Ressource entfernen",
+    "operator_page": {
+      "title": "Einstellungen der Apps",
+      "refused": "Diese Seite ist dem Betreiber vorbehalten.",
+      "intro": "Du siehst alle Einstellungen der gewählten App. Ändern kannst du hier nur «Plattform». Alles andere ändert die Administration der App.",
+      "tenant": "App",
+      "choose": "Wähle eine App.",
+      "none": "Es wurden keine Apps gefunden. Vielleicht fehlt die Verbindung zum Internet. Versuche es später noch einmal.",
+      "archived": "archiviert"
+    },
+    "integration_unknown": "Dieser Dienst steht nicht zur Wahl. Der gespeicherte Wert bleibt erhalten.",
+    "processors_note": "Diese Einträge kannst du hier nicht ändern."
   }
 }

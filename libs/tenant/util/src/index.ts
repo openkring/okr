@@ -27,3 +27,4 @@ export * from './lib/tenant-settings-i18n';
 export * from './lib/tenant-settings-display';
 export * from './lib/start-targets.util';
 export * from './lib/tenant-settings-image';
+export * from './lib/tenant-settings-operator';

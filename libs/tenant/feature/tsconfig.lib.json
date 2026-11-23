@@ -23,6 +23,7 @@
     { "path": "../../cms/page/data-access/tsconfig.lib.json" },
     { "path": "../../cms/section/data-access/tsconfig.lib.json" },
     { "path": "../../geo/location/data-access/tsconfig.lib.json" },
+    { "path": "../../security/processing/util/tsconfig.lib.json" },
     { "path": "../../shared/data-access/tsconfig.lib.json" },
     { "path": "../../shared/feature/tsconfig.lib.json" },
     { "path": "../../shared/i18n/tsconfig.lib.json" },

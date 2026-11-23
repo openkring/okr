@@ -6,7 +6,7 @@ import type { ChangeConfirmationI18n } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { safeStructuredClone } from '@okr/shared-util-core';
 import { settingsDiff, settingsGroupKey } from '@okr/tenant-util';
-import type { SettingsChoice, SettingsContext, SettingsGroupId, SettingsI18n, SettingsPageOption, TenantSettings } from '@okr/tenant-util';
+import type { IntegrationOption, SettingsChoice, SettingsContext, SettingsGroupId, SettingsI18n, SettingsPageOption, TenantSettings } from '@okr/tenant-util';
 
 import { SettingsAppForm } from './settings-app.form';
 import { SettingsDefaultsForm } from './settings-defaults.form';
@@ -14,22 +14,27 @@ import { SettingsImagesForm } from './settings-images.form';
 import { SettingsLanguageForm } from './settings-language.form';
 import { SettingsMailForm } from './settings-mail.form';
 import { SettingsOperatorForm } from './settings-operator.form';
+import { SettingsPlatformForm } from './settings-platform.form';
 import { SettingsPrivacyForm } from './settings-privacy.form';
 import { SettingsStartForm } from './settings-start.form';
 
-/** The groups this modal has a form for; the page offers «Bearbeiten» on exactly these cards. One entry per `@case` below. */
-export const SETTINGS_FORM_GROUPS: readonly SettingsGroupId[] = ['app', 'images', 'language', 'start', 'operator', 'mail', 'privacy', 'defaults'];
+/** The groups this modal has a form for. One entry per `@case` below. */
+export const SETTINGS_FORM_GROUPS: readonly SettingsGroupId[] = ['app', 'images', 'language', 'start', 'operator', 'mail', 'privacy', 'defaults', 'platform'];
+/** What `/operator/settings` offers to edit; everything else belongs to the tenant. */
+export const OPERATOR_FORM_GROUPS: readonly SettingsGroupId[] = SETTINGS_FORM_GROUPS.filter((group) => group === 'platform');
+/** What `/tenant/settings` offers to edit: never the platform group, not even to the operator, who has a page for it. */
+export const TENANT_FORM_GROUPS: readonly SettingsGroupId[] = SETTINGS_FORM_GROUPS.filter((group) => group !== 'platform');
 
 /**
- * Edits one group of `/tenant/settings` (spec 1.174 §9.2). It writes nothing itself: `onSave` (from the page) does, and
- * the modal closes only when that answers true. After a cancelled confirmation or a failed write it stays open with its
- * values.
+ * Edits one group of `/tenant/settings`, or of a chosen tenant on `/operator/settings` (spec 1.174 §9.2). It writes nothing
+ * itself: `onSave` (from the page) does, and the modal closes only when that answers true. After a cancelled confirmation
+ * or a failed write it stays open with its values.
  */
 @Component({
   selector: 'okr-settings-edit-modal',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Header, ChangeConfirmation, SettingsAppForm, SettingsDefaultsForm, SettingsImagesForm, SettingsLanguageForm, SettingsMailForm, SettingsOperatorForm, SettingsPrivacyForm, SettingsStartForm, IonContent],
+  imports: [Header, ChangeConfirmation, SettingsAppForm, SettingsDefaultsForm, SettingsImagesForm, SettingsLanguageForm, SettingsMailForm, SettingsOperatorForm, SettingsPlatformForm, SettingsPrivacyForm, SettingsStartForm, IonContent],
   template: `
     <okr-header [i18n]="{ title: title() }" [isModal]="true" />
     @if (showConfirmation()) {
@@ -73,6 +78,11 @@ export const SETTINGS_FORM_GROUPS: readonly SettingsGroupId[] = ['app', 'images'
             [readOnly]="isSaving()" [showForm]="showForm()"
             (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" (busy)="formBusy.set($event)" />
         }
+        @case ('platform') {
+          <okr-settings-platform-form [formData]="formData()" (formDataChange)="formData.set($event)"
+            [i18n]="i18n()" [context]="context()" [integrationOptions]="integrationOptions()" [readOnly]="isSaving()" [showForm]="showForm()"
+            (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" (busy)="formBusy.set($event)" />
+        }
         @case ('privacy') {
           <okr-settings-privacy-form [formData]="formData()" (formDataChange)="formData.set($event)"
             [i18n]="i18n()" [context]="context()" [pageOptions]="pageOptions()()" [readOnly]="isSaving()" [showForm]="showForm()"
@@ -90,6 +100,8 @@ export class SettingsEditModal {
   public readonly i18n = input.required<SettingsI18n>();
   /** the values of the group when the modal opened (a copy; never changed here) */
   public readonly before = input.required<TenantSettings>();
+  /** which app is edited, when it is not this one: shown in the title */
+  public readonly subject = input('');
   public readonly emailDomain = input('');
   public readonly appDomain = input('');
   /** A signal, because the list of pages may arrive after the modal has opened. */
@@ -103,6 +115,8 @@ export class SettingsEditModal {
   public readonly onPickResource = input<() => Promise<SettingsChoice | undefined>>(() => Promise.resolve(undefined));
   /** The name of a stored location or resource id, '' when unknown. */
   public readonly nameOf = input<(field: string, id: string) => string>(() => '');
+  /** The services the platform group can switch on. */
+  public readonly integrationOptions = input<readonly IntegrationOption[]>([]);
   /** Saves the values; true closes the modal. */
   public readonly onSave = input.required<(after: TenantSettings) => Promise<boolean>>();
 
@@ -114,7 +128,10 @@ export class SettingsEditModal {
   protected readonly showForm = signal(true);
   protected readonly isSaving = signal(false);
 
-  protected readonly title = computed(() => this.i18n()[settingsGroupKey(this.group())]?.() ?? '');
+  protected readonly title = computed(() => {
+    const name = this.i18n()[settingsGroupKey(this.group())]?.() ?? '';
+    return this.subject() ? `${name}: ${this.subject()}` : name;
+  });
   protected readonly context = computed((): SettingsContext => ({
     before: this.before(), emailDomain: this.emailDomain(), appDomain: this.appDomain(),
   }));

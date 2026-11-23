@@ -299,6 +299,14 @@
         "label": "Features",
         "effect": "Turns features on or off for this app."
       },
+      "settings": {
+        "label": "Settings",
+        "effect": "Changes name, images, languages, start page, contact and data protection of this app."
+      },
+      "operatorSettings": {
+        "label": "Settings of the apps (operator)",
+        "effect": "Shows the settings of every app and changes the platform details."
+      },
       "workflow": {
         "label": "Workflow rules",
         "effect": "Defines what happens automatically when something specific occurs."

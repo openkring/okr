@@ -542,3 +542,12 @@ export const PROCESSOR_CATALOGUE: readonly CatalogueEntry[] = [
 export const INTEGRATION_KEYS: readonly string[] = PROCESSOR_CATALOGUE
   .filter((p) => !p.alwaysOn)
   .map((p) => p.key);
+
+/**
+ * The services a tenant is connected to through `AppConfig.integrations`: their key and name. Not the same list as
+ * {@link INTEGRATION_KEYS}: an entry that belongs to a feature block ignores the key, so a switch for it would promise
+ * something it does not do. Asked of the predicates themselves, so a new entry joins automatically.
+ */
+export const INTEGRATION_SWITCHES: readonly { readonly key: string; readonly name: string }[] = PROCESSOR_CATALOGUE
+  .filter((p) => !p.alwaysOn && p.enabledWhen?.({ integrations: { [p.key]: true }, enabledFeatures: [] as string[] } as unknown as AppConfig) === true)
+  .map(({ key, name }) => ({ key, name }));

@@ -45,6 +45,13 @@ export const SETTINGS_DEFAULT_NUMBERS: Readonly<Record<'avatarUsage' | 'nameDisp
   personSortCriteria: [PersonSortCriteria.Firstname, PersonSortCriteria.Lastname, PersonSortCriteria.Fullname, PersonSortCriteria.DateOfBirth, PersonSortCriteria.Key],
 };
 
+/**
+ * The mail services `app-config.emailProvider` can name: `VALID_PROVIDERS` in `apps/functions/src/auth/email-transport.ts`,
+ * whose spec compares the two. The empty value is not among them: several functions read '' as an unknown service and then
+ * send nothing.
+ */
+export const SETTINGS_EMAIL_PROVIDERS: readonly string[] = ['mailgun_smtp', 'mailtrap_api', 'netzone_smtp', 'mailtrap_test'];
+
 /** The fields only the operator (`isOperator()`, admin of exactly `bka`) may change; mirrors `firestore.rules`. */
 export const OPERATOR_SETTINGS: readonly (keyof AppConfig)[] = SETTINGS_GROUPS.platform;
 

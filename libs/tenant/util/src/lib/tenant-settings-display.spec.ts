@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { settingsOf } from './tenant-settings';
 import {
-  settingsDisplayValue, settingsPageName, settingsPageOptions, settingsRows, withLanguage, withStored, type SettingsDisplayContext,
+  settingsCards, settingsDisplayValue, settingsPageName, settingsPageOptions, settingsRows, withLanguage, withStored, type SettingsDisplayContext,
 } from './tenant-settings-display';
 import { SETTINGS_GROUP_IDS, SETTINGS_I18N_KEYS } from './tenant-settings-i18n';
 
@@ -71,6 +71,17 @@ describe('settingsRows', () => {
     expect(color('#12abEF')).toBe('#12abEF');
     expect(color('red')).toBe('');
     expect(color('')).toBe('');
+  });
+});
+
+describe('settingsCards', () => {
+  it('has one card per group, with title, note, edit flag and the rows of that group', () => {
+    const config = Object.assign(new AppConfig('scs'), { appName: 'Seeclub' });
+    const cards = settingsCards((g) => settingsOf(config, g), CTX, (g) => g === 'platform', (g) => (g === 'app' ? 'note' : ''));
+    expect(cards.map((c) => c.group)).toEqual(SETTINGS_GROUP_IDS);
+    expect(cards.filter((c) => c.canEdit).map((c) => c.group)).toEqual(['platform']);
+    expect(cards[0]).toMatchObject({ group: 'app', title: 't:group_app', note: 'note' });
+    expect(cards[0].rows).toEqual(settingsRows('app', settingsOf(config, 'app'), CTX));
   });
 });
 

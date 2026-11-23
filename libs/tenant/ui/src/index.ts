@@ -4,4 +4,5 @@ export * from './lib/menu-compare.modal';
 export * from './lib/picker-help.modal';
 export * from './lib/books-setup.form';
 export * from './lib/books-setup.modal';
+export * from './lib/settings-cards';
 export * from './lib/settings-edit.modal';

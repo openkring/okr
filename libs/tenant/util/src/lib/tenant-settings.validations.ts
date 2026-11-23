@@ -3,7 +3,7 @@ import { AvailableLanguages } from '@okr/shared-models';
 import { bareHostname, booleanValidations, deliveryChannelsValidations, numberValidations, stringsValidations, stringValidations } from '@okr/shared-util-core';
 import { enforce, skip, staticSuite, test } from 'vest';
 
-import { sameValue, SETTINGS_AUDIENCES, SETTINGS_GROUPS, type SettingsGroupId, type TenantSettings } from './tenant-settings';
+import { sameValue, SETTINGS_AUDIENCES, SETTINGS_EMAIL_PROVIDERS, SETTINGS_GROUPS, type SettingsGroupId, type TenantSettings } from './tenant-settings';
 
 // Vest messages are i18n keys, written out literally so that check-i18n can resolve them: okr-error-note
 // resolves any message starting with '@'.
@@ -23,6 +23,10 @@ const APP_NAME_FORBIDDEN = /["<>\u0000-\u001f\u007f-\u009f\u2028\u2029]/;
 /** Longest e-mail address a settings field takes; the forms bind it as [maxLength]. */
 export const SETTINGS_EMAIL_LENGTH = 100;
 const HAS_SPACE = /\s/;
+/** A path inside the app, never another host; the same rule as `isPlainPath` in apps/functions/src/auth/email-templates.ts. */
+const PLAIN_PATH = /^\/(?![/\\])[^\s\\@]*$/;
+/** Longest host name; `bareHostname` refuses a longer one. */
+export const SETTINGS_DOMAIN_LENGTH = 253;
 
 function text(value: unknown): string {
   return typeof value === 'string' ? value : '';
@@ -158,10 +162,31 @@ function domainOrEmpty(field: string, value: unknown): void {
   });
 }
 
+function path(field: string, value: unknown, isMandatory: boolean): void {
+  stringValidations(field, value, URL_LENGTH);
+  test(field, '@tenant/util.settings.validation.path', () => {
+    enforce((!isMandatory && text(value) === '') || PLAIN_PATH.test(text(value))).isTruthy();
+  });
+}
+
 const platformSuite = staticSuite((m: TenantSettings, context: SettingsContext) => {
   skipUnchanged('platform', m, context);
   domainOrEmpty('appDomain', m.appDomain);
   domainOrEmpty('emailDomain', m.emailDomain);
+  test('emailProvider', '@tenant/util.settings.validation.emailProvider', () => {
+    enforce(SETTINGS_EMAIL_PROVIDERS.includes(text(m.emailProvider))).isTruthy();
+  });
+  stringValidations('mailtrapPasswordResetTemplate', m.mailtrapPasswordResetTemplate, LONG_NAME_LENGTH);
+  // a wrong login path locks everybody out
+  path('loginUrl', m.loginUrl, true);
+  path('passwordResetUrl', m.passwordResetUrl, false);
+  stringValidations('logoUrl', m.logoUrl, URL_LENGTH);
+  // ids, but typed here: the pickers of another tenant cannot be reached
+  stringValidations('ownerOrgId', m.ownerOrgId, LONG_NAME_LENGTH);
+  stringValidations('ownerUserId', m.ownerUserId, LONG_NAME_LENGTH);
+  stringValidations('defaultAccountingTenantId', m.defaultAccountingTenantId, LONG_NAME_LENGTH);
+  stringValidations('gitRepo', m.gitRepo, LONG_NAME_LENGTH);
+  stringValidations('gitOrg', m.gitOrg, LONG_NAME_LENGTH);
   test('weatherIntervalHours', '@tenant/util.settings.validation.positive', () => {
     enforce(typeof m.weatherIntervalHours === 'number' && Number.isFinite(m.weatherIntervalHours) && m.weatherIntervalHours > 0).isTruthy();
   });

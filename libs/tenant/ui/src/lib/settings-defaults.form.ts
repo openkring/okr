@@ -111,7 +111,11 @@ export class SettingsDefaultsForm extends SettingsFormBase {
     const value = typeof raw === 'number' ? String(raw) : '';
     // a stored number the list does not offer stays the first choice, also after another one was picked
     const options = withStored(SETTINGS_DEFAULT_NUMBERS[field].map(String), typeof (this.context().before as Record<string, unknown>)[field] === 'number' ? String((this.context().before as Record<string, unknown>)[field]) : '');
-    return { field, value, options, labels: options.map((option) => this.text(`${field}_${option}`)) };
+    return {
+      field, value, options,
+      // a number without a label of its own is shown as it is
+      labels: options.map((option) => this.text(`${field}_${option}`) || option),
+    };
   }));
 
   protected readonly channelFields = computed(() => (['newsDelivery', 'invoiceDelivery'] as const).map((field: ChannelField) => {

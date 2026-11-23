@@ -732,7 +732,7 @@
       },
       "emailProvider": {
         "label": "Mail service",
-        "helper": "E-mails are sent through this service. Empty: the default service."
+        "helper": "E-mails are sent through this service. Without an entry, mailtrap_api applies. The mail domain must be approved by this service."
       },
       "mailtrapPasswordResetTemplate": {
         "label": "Template for resetting the password",
@@ -740,15 +740,15 @@
       },
       "loginUrl": {
         "label": "Sign-in page",
-        "helper": "Empty: the built-in page of the app."
+        "helper": "Path of the sign-in page in the app, usually /auth/login. A wrong path prevents signing in."
       },
       "passwordResetUrl": {
         "label": "Page for resetting the password",
-        "helper": "Empty: the built-in page of the app."
+        "helper": "Not used at present: the app always opens its own page."
       },
       "logoUrl": {
         "label": "Logo",
-        "helper": "The logo of the app and the basis of its icon."
+        "helper": "The logo of the app and the basis of its icon. After a change the images have to be generated again."
       },
       "ownerOrgId": {
         "label": "Organisation",
@@ -756,7 +756,7 @@
       },
       "ownerUserId": {
         "label": "Responsible account",
-        "helper": "The account that is responsible for this app."
+        "helper": "The account that is responsible for this app. For information only, it has no effect."
       },
       "defaultAccountingTenantId": {
         "label": "Accounting",
@@ -776,7 +776,7 @@
       },
       "weatherIntervalHours": {
         "label": "Weather: interval in hours",
-        "helper": "The number of hours until the weather data is renewed."
+        "helper": "The number of hours until the weather data is renewed. The shortest interval applies to all apps."
       },
       "gitRepo": {
         "label": "Program code: repository",
@@ -788,7 +788,7 @@
       },
       "isArchived": {
         "label": "Archived",
-        "helper": "Yes means: the app is no longer in use."
+        "helper": "Only a mark for the operator: the app keeps running and everybody can still sign in."
       },
       "showDebugInfo": {
         "label": "Troubleshooting details",
@@ -804,7 +804,9 @@
       "languagesUnknown": "One of the chosen languages does not exist in the app.",
       "mailFromDomain": "The address must belong to the mail domain or to the address of the app.",
       "domain": "This is not a valid domain.",
-      "positive": "The number must be greater than 0."
+      "positive": "The number must be greater than 0.",
+      "path": "This must be a path in the app, for example /auth/login.",
+      "emailProvider": "Choose one of the offered mail services."
     },
     "fallback": "Default",
     "country_remove": "Remove country",
@@ -823,6 +825,17 @@
     "location_remove": "Remove location",
     "resource_pick": "Choose resource",
     "resource_change": "Choose another resource",
-    "resource_remove": "Remove resource"
+    "resource_remove": "Remove resource",
+    "operator_page": {
+      "title": "Settings of the apps",
+      "refused": "This page is reserved for the operator.",
+      "intro": "You see all settings of the chosen app. Here you can only change «Platform». Everything else is changed by the administration of the app.",
+      "tenant": "App",
+      "choose": "Choose an app.",
+      "none": "No apps were found. The internet connection may be missing. Try again later.",
+      "archived": "archived"
+    },
+    "integration_unknown": "This service is not available for selection. The stored value is kept.",
+    "processors_note": "You cannot change these entries here."
   }
 }

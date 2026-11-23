@@ -60,6 +60,8 @@ describe('one owning block per menu url', () => {
     [...new Set(collectMenuUrls(FEATURE_BLOCKS))].forEach(url => {
       const all = [...new Set(FEATURE_ROUTES.flatMap(b => owners(b.routes(), seg(url), b.id)))];
       if (all.length === 1) return;
+      // a control-plane screen (`tenant/settings`) belongs to no block on purpose, see UNGATED_ROUTES
+      if (all.length === 0 && urlResolves(UNGATED_ROUTES, url)) return;
       const first = FEATURE_ROUTES.map(b => owners(b.routes(), seg(url), b.id)[0]).find(Boolean);
       if (all.length > 1 && FIRST_MATCH_WINS[url] === first) return;
       defects.push(`${url}: ${all.join(', ') || 'no block'}`);

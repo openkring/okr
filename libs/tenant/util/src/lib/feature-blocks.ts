@@ -418,6 +418,9 @@ const aoc: FeatureBlock = {
       { key: 'aoc-access',     name: 'aoc-access',     url: '/aoc/access',     action: 'navigate', roleNeeded: 'admin', icon: 'shield',   label: '@item.aoc-access' },
       { key: 'aoc-ops',        name: 'aoc-ops',        url: '/aoc/ops',        action: 'navigate', roleNeeded: 'admin', icon: 'history',  label: '@item.aoc-ops' },
       { key: 'aoc-config',     name: 'aoc-config',     url: '/aoc/config',     action: 'navigate', roleNeeded: 'admin', icon: 'settings', label: '@item.aoc-config' },
+      // The app settings (spec 1.174 §9.2) have a row of their own next to the hub that also links them as a card. A tenant
+      // gets it with the next save of the picker; for an existing `aoc-menu` doc it is appended at the end.
+      { key: 'tenant-settings', name: 'tenant-settings', url: '/tenant/settings', action: 'navigate', roleNeeded: 'admin', icon: 'settings', label: '@item.tenant-settings' },
       { key: 'aoc-data',       name: 'aoc-data',       url: '/aoc/data',       action: 'navigate', roleNeeded: 'admin', icon: 'database', label: '@item.aoc-data' },
       // `aoc-kiosk` LEFT the catalogue with spec 1.101 phase 2: the kiosk page is `trip-kiosk` in `c-trips`.
       // `aoc-chat` LEFT the catalogue with spec 1.101 phase 4: Chat-Wartung is `chat-maintenance` in `contextMenuChat`.

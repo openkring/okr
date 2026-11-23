@@ -299,6 +299,14 @@
         "label": "Fonctionnalités",
         "effect": "Active ou désactive des fonctions pour cette app."
       },
+      "settings": {
+        "label": "Réglages",
+        "effect": "Modifie le nom, les images, les langues, la page d'accueil, le contact et la protection des données de cette app."
+      },
+      "operatorSettings": {
+        "label": "Réglages des apps (exploitant)",
+        "effect": "Montre les réglages de chaque app et modifie les indications sur la plateforme."
+      },
       "workflow": {
         "label": "Règles de workflow",
         "effect": "Définit ce qui se passe automatiquement quand un événement précis survient."

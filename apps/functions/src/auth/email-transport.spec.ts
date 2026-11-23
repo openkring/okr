@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { effectiveProvider, mailtrapBody, safeMailHeaders, type EmailOptions } from './email-transport';
+import { SETTINGS_EMAIL_PROVIDERS } from '@okr/tenant-util';
+
+import { effectiveProvider, mailtrapBody, safeMailHeaders, VALID_PROVIDERS, type EmailOptions } from './email-transport';
 
 const base: EmailOptions = {
   from: 'Verein <app@example.ch>',
@@ -15,6 +17,12 @@ describe('effectiveProvider', () => {
     expect(effectiveProvider('nonsense')).toBe('mailtrap_api');
     expect(effectiveProvider(42)).toBe('mailtrap_api');
     expect(effectiveProvider('netzone_smtp')).toBe('netzone_smtp');
+  });
+});
+
+describe('VALID_PROVIDERS', () => {
+  it('is what the settings form of the operator offers', () => {
+    expect([...SETTINGS_EMAIL_PROVIDERS].sort()).toEqual([...VALID_PROVIDERS].sort());
   });
 });
 

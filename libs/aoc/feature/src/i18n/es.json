@@ -299,6 +299,14 @@
         "label": "Funciones",
         "effect": "Activa o desactiva funciones de esta app."
       },
+      "settings": {
+        "label": "Ajustes",
+        "effect": "Cambia el nombre, las imágenes, los idiomas, la página de inicio, el contacto y la protección de datos de esta app."
+      },
+      "operatorSettings": {
+        "label": "Ajustes de las apps (operador)",
+        "effect": "Muestra los ajustes de cada app y cambia los datos de la plataforma."
+      },
       "workflow": {
         "label": "Reglas de flujo de trabajo",
         "effect": "Define qué ocurre automáticamente cuando sucede algo concreto."

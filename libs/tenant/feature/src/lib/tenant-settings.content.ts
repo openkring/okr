@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { rxResource, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonNote, IonRow, ModalController } from '@ionic/angular';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonIcon, IonItem, IonLabel, IonList, ModalController } from '@ionic/angular';
 
 import { combineLatest, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
@@ -17,10 +17,10 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { Spinner } from '@okr/shared-ui';
 import { AlertService, resourceParams } from '@okr/shared-util-angular';
 import { DateFormat, getCountryName, getTodayStr, resolveMimeType } from '@okr/shared-util-core';
-import { SETTINGS_FORM_GROUPS, SettingsEditModal } from '@okr/tenant-ui';
+import { SettingsCards, SettingsEditModal, TENANT_FORM_GROUPS } from '@okr/tenant-ui';
 import {
-  FEATURE_BLOCKS, SETTINGS_GROUP_IDS, SETTINGS_I18N_KEYS, SETTINGS_IMAGE_MIMETYPES, settingsGroupKey, settingsImageExtension, settingsImagePath, settingsImageTooBig,
-  settingsPageName, settingsPageOptions, settingsRows, startOptions, startTargets,
+  FEATURE_BLOCKS, SETTINGS_I18N_KEYS, SETTINGS_IMAGE_MIMETYPES, settingsCards, settingsImageExtension, settingsImagePath, settingsImageTooBig,
+  settingsPageName, settingsPageOptions, startOptions, startTargets,
 } from '@okr/tenant-util';
 import type { SettingsChoice, SettingsDisplayContext, SettingsGroupId, TenantSettings } from '@okr/tenant-util';
 
@@ -49,84 +49,37 @@ const OTHER_EDITORS: readonly { id: string; url?: string; icon: string; blocks: 
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    Spinner, SvgIconPipe,
-    IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonNote, IonRow,
+    SettingsCards, Spinner, SvgIconPipe,
+    IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonIcon, IonItem, IonLabel, IonList,
   ],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px; } }
     ion-card-header { display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; }
-    .label { font-size: 0.85rem; opacity: 0.7; }
-    .value { display: flex; align-items: center; gap: 8px; }
-    .value span.text {
-      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden;
-      overflow-wrap: anywhere; white-space: pre-line;
-    }
-    .value.empty { opacity: 0.6; font-style: italic; }
-    .swatch { flex: 0 0 auto; width: 20px; height: 20px; border-radius: 4px; border: 1px solid var(--ion-color-medium); }
   `],
   template: `
     @if (store.isLoaded()) {
-      <ion-grid>
-        <ion-row>
-          @for (card of cards(); track card.group) {
-            <ion-col size="12" size-md="6">
-              <ion-card>
-                <ion-card-header>
-                  <ion-card-title>{{ card.title }}</ion-card-title>
-                  @if (card.canEdit) {
-                    <ion-button fill="clear" size="small" [attr.aria-label]="text('edit') + ': ' + card.title" (click)="onEdit(card.group)">
-                      <ion-icon slot="start" src="{{ 'edit' | svgIcon }}" aria-hidden="true" />
-                      {{ text('edit') }}
-                    </ion-button>
-                  }
-                </ion-card-header>
-                <ion-card-content class="ion-no-padding">
-                  @if (card.note) {
-                    <ion-item lines="none">
-                      <ion-note class="ion-text-wrap">{{ card.note }}</ion-note>
-                    </ion-item>
-                  }
-                  <ion-list lines="none">
-                    @for (row of card.rows; track row.field) {
-                      <ion-item>
-                        <ion-label>
-                          <div class="label ion-text-wrap">{{ row.label }}</div>
-                          <div class="value" [class.empty]="!row.value">
-                            @if (row.color) {
-                              <span class="swatch" [style.background-color]="row.color"></span>
-                            }
-                            <span class="text">{{ row.value || text(row.emptyText) }}</span>
-                          </div>
-                        </ion-label>
-                      </ion-item>
-                    }
-                  </ion-list>
-                </ion-card-content>
-              </ion-card>
-            </ion-col>
-          }
-          <ion-col size="12" size-md="6">
-            <ion-card>
-              <ion-card-header>
-                <ion-card-title>{{ text('more_title') }}</ion-card-title>
-              </ion-card-header>
-              <ion-card-content class="ion-no-padding">
-                <ion-list lines="none">
-                  @for (link of links(); track link.id) {
-                    <ion-item [button]="!!link.url" [detail]="!!link.url" (click)="onNavigate(link.url)">
-                      <ion-icon slot="start" src="{{ link.icon | svgIcon }}" aria-hidden="true" />
-                      <ion-label class="ion-text-wrap">
-                        <h3>{{ link.label }}</h3>
-                        <p>{{ link.helper }}</p>
-                      </ion-label>
-                    </ion-item>
-                  }
-                </ion-list>
-              </ion-card-content>
-            </ion-card>
-          </ion-col>
-        </ion-row>
-      </ion-grid>
+      <okr-settings-cards [cards]="cards()" [i18n]="i18n" (edit)="onEdit($event)">
+        <ion-col size="12" size-md="6">
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>{{ text('more_title') }}</ion-card-title>
+            </ion-card-header>
+            <ion-card-content class="ion-no-padding">
+              <ion-list lines="none">
+                @for (link of links(); track link.id) {
+                  <ion-item [button]="!!link.url" [detail]="!!link.url" (click)="onNavigate(link.url)">
+                    <ion-icon slot="start" src="{{ link.icon | svgIcon }}" aria-hidden="true" />
+                    <ion-label class="ion-text-wrap">
+                      <h3>{{ link.label }}</h3>
+                      <p>{{ link.helper }}</p>
+                    </ion-label>
+                  </ion-item>
+                }
+              </ion-list>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </okr-settings-cards>
     } @else if (isMissing()) {
       <ion-item lines="none">
         <ion-label class="ion-text-wrap">{{ text('missing') }}</ion-label>
@@ -150,7 +103,7 @@ export class TenantSettingsContent {
   private readonly uploadService = inject(UploadService);
   private readonly alertService = inject(AlertService);
 
-  private readonly i18n = this.i18nService.translateAll(SETTINGS_I18N_KEYS);
+  protected readonly i18n = this.i18nService.translateAll(SETTINGS_I18N_KEYS);
 
   /** The config answered, but not with a document: a failed read or no document at all. */
   protected readonly isMissing = computed(() => this.appStore.isAppConfigSettled() && !this.store.isLoaded());
@@ -204,16 +157,10 @@ export class TenantSettingsContent {
     };
   });
 
-  protected readonly cards = computed(() => {
-    const display = this.display();
-    return SETTINGS_GROUP_IDS.map((group) => ({
-      group,
-      title: this.text(settingsGroupKey(group)),
-      note: group === 'platform' ? this.text('operator_only') : '',
-      canEdit: this.canEdit(group),
-      rows: settingsRows(group, this.store.settings(group), display),
-    }));
-  });
+  protected readonly cards = computed(() => settingsCards(
+    (group) => this.store.settings(group), this.display(), (group) => this.canEdit(group),
+    (group) => (group === 'platform' ? this.text('operator_only') : ''),
+  ));
 
   protected readonly links = computed(() => {
     const isEnabled = this.featureStore.settled() ? this.featureStore.isEnabled() : () => false;
@@ -230,7 +177,7 @@ export class TenantSettingsContent {
   }
 
   private canEdit(group: SettingsGroupId): boolean {
-    return this.store.isLoaded() && this.store.isAdmin() && SETTINGS_FORM_GROUPS.includes(group);
+    return this.store.isLoaded() && this.store.isAdmin() && TENANT_FORM_GROUPS.includes(group);
   }
 
   protected async onEdit(group: SettingsGroupId): Promise<void> {

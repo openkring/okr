@@ -299,6 +299,14 @@
         "label": "Features",
         "effect": "Schaltet Funktionen für diese App ein oder aus."
       },
+      "settings": {
+        "label": "Einstellungen",
+        "effect": "Ändert Name, Bilder, Sprachen, Startseite, Kontakt und Datenschutz dieser App."
+      },
+      "operatorSettings": {
+        "label": "Einstellungen der Apps (Betreiber)",
+        "effect": "Zeigt die Einstellungen jeder App und ändert die Angaben zur Plattform."
+      },
       "workflow": {
         "label": "Workflow-Regeln",
         "effect": "Legt fest, was automatisch passiert, wenn etwas Bestimmtes eintrifft."

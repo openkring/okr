@@ -2,7 +2,7 @@ import { AvailableLanguages, FOOTPRINT_PAGE_TYPE, type PageModel } from '@okr/sh
 import { forkKeyFor } from '@okr/shared-util-core';
 
 import { SETTINGS_GROUPS, type SettingsGroupId, type TenantSettings } from './tenant-settings';
-import { settingsAudienceKey, settingsFieldKey, settingsLocaleKey } from './tenant-settings-i18n';
+import { SETTINGS_GROUP_IDS, settingsAudienceKey, settingsFieldKey, settingsGroupKey, settingsLocaleKey } from './tenant-settings-i18n';
 import { settingsImageName } from './tenant-settings-image';
 
 /** What the settings page needs to show a stored value as a person would say it. A lookup answers '' for an unknown key. */
@@ -92,6 +92,19 @@ export function settingsRows(group: SettingsGroupId, settings: TenantSettings, c
       color: field === 'brandColor' && COLOR.test(value) ? value : '',
     };
   });
+}
+
+/** One card of a settings page: the group, its title, an optional note, whether «Bearbeiten» is offered, and its lines. */
+export interface SettingsCard { group: SettingsGroupId; title: string; note: string; canEdit: boolean; rows: SettingsRow[]; }
+
+/** One card per settings group. `read` answers the values of a group; `note` '' shows no note. */
+export function settingsCards(
+  read: (group: SettingsGroupId) => TenantSettings, ctx: SettingsDisplayContext,
+  canEdit: (group: SettingsGroupId) => boolean, note: (group: SettingsGroupId) => string,
+): SettingsCard[] {
+  return SETTINGS_GROUP_IDS.map((group) => ({
+    group, title: ctx.text(settingsGroupKey(group)), note: note(group), canEdit: canEdit(group), rows: settingsRows(group, read(group), ctx),
+  }));
 }
 
 /** The name of the page a stored key opens: the tenant's own copy `<key>_<tenant>` first, as `PageService.read` does; '' when unknown. */

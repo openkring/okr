@@ -26,6 +26,7 @@
     "@okr/location-data-access": "*",
     "@okr/shared-util-core": "*",
     "@okr/activity-data-access": "*",
-    "@okr/avatar-data-access": "*"
+    "@okr/avatar-data-access": "*",
+    "@okr/security-processing-util": "*"
   }
 }
