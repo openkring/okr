@@ -5,7 +5,7 @@ import { IMAGE_CONFIG_SHAPE, ImageActionType, type ArticleBlock, type ArticleCon
 
 import { articleBlocksValidations } from './article-blocks.validations';
 import {
-  articleImageChoices, coverErrors, drawableImages, galleryErrors, isPictureMissing, outdatedLanguagesOf, resizeColumn, restErrors, shownArticleFields, shownBlockFields, typingPath, uniqueFileName, withUpload,
+  articleImageChoices, articleUses, coverErrors, drawableImages, galleryErrors, isPictureMissing, outdatedLanguagesOf, pickErrors, resizeColumn, restErrors, shownArticleFields, shownBlockFields, typingPath, uniqueFileName, withUpload,
 } from './article-panel.util';
 import { blockErrors, type SectionErrors } from './section-errors';
 
@@ -266,12 +266,43 @@ describe('what the panel shows', () => {
   });
 
   it('the fields of the article depend on who sees them and on what is in use', () => {
-    const all = { title: 'T', subTitle: 'S', intro: 'I', properties: { images: [], background: '#fff' } } as unknown as ArticleSection;
-    const none = { title: '', properties: { images: [] } } as unknown as ArticleSection;
+    const all = { type: 'article', title: 'T', subTitle: 'S', intro: 'I', properties: { images: [], background: '#fff' } } as unknown as ArticleSection;
+    const none = { type: 'article', title: '', properties: { images: [] } } as unknown as ArticleSection;
     expect(shownArticleFields(all, { admin: true, privileged: true })).toEqual(expect.arrayContaining(['title', 'subTitle', 'intro', 'introPosition', 'name', 'background', 'textColor', 'cover.', 'tags', 'notes']));
     expect(shownArticleFields(all, { admin: false, privileged: true })).not.toContain('notes');
     expect(shownArticleFields(all, { admin: false, privileged: false })).not.toContain('tags');
-    for (const field of ['subTitle', 'intro', 'background']) expect(shownArticleFields(none, { admin: true, privileged: true })).not.toContain(field);
+    expect(shownArticleFields(none, { admin: true, privileged: true })).toEqual(['title', 'name', 'cover.', 'tags', 'notes']);
+    expect(shownArticleFields(none, { admin: false, privileged: false })).toEqual(['title', 'name', 'cover.']);
+  });
+
+  it.each([
+    ['intro', { intro: 'I' }, ['intro', 'introPosition']],
+    ['subtitle', { subTitle: 'S' }, ['subTitle']],
+    ['background', { properties: { images: [], background: '#fff' } }, ['background', 'textColor']],
+    ['blank texts', { intro: ' ', subTitle: '\n', properties: { images: [], background: '  ' } }, []],
+    ['malformed texts', { intro: 5, subTitle: null, properties: { images: [], background: {} } }, []],
+    ['no properties', { properties: undefined }, []],
+  ])('the fields of the article with only: %s', (_name, more, expected) => {
+    const section = { type: 'article', title: '', properties: { images: [] }, ...more } as unknown as ArticleSection;
+    expect(shownArticleFields(section, { admin: false, privileged: false }).filter((f) => !['title', 'name', 'cover.'].includes(f))).toEqual(expected);
+  });
+
+  it('a stored text colour or intro position whose select is not drawn is left for the list', () => {
+    const errors: SectionErrors = { textColor: ['invalidValue'], introPosition: ['invalidValue'] };
+    const rest = (more: object) => restErrors(errors, shownArticleFields({ type: 'article', title: '', properties: { images: [] }, ...more } as unknown as ArticleSection, { admin: true, privileged: true })).map((e) => e.field);
+    expect(rest({})).toEqual(['textColor', 'introPosition']);
+    expect(rest({ intro: 'I' })).toEqual(['textColor']);
+    expect(rest({ properties: { images: [], background: '#fff' } })).toEqual(['introPosition']);
+  });
+
+  it('articleUses: only an article has a background', () => {
+    expect(articleUses({ type: 'hero', subTitle: 'S', intro: 'I', properties: { background: '#fff' } } as unknown as ArticleSection)).toEqual({ subTitle: true, intro: true, background: false });
+  });
+
+  it('pickErrors: exactly the errors that restErrors leaves out', () => {
+    const errors: SectionErrors = { title: ['a'], 'cover.url': ['b'], textColor: ['c'], empty: [] };
+    expect(pickErrors(errors, ['title', 'cover.'])).toEqual({ title: ['a'], 'cover.url': ['b'] });
+    expect(pickErrors(undefined, ['title'])).toEqual({});
   });
 
   it('drawableImages: leaves out what is no picture', () => {

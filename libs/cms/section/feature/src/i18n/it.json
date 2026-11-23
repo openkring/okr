@@ -332,7 +332,7 @@
         "conflict": "Nel frattempo qualcuno ha modificato questo articolo.",
         "force": "Salva comunque",
         "back": "Indietro",
-        "gone": "Questo articolo qui non esiste più. Nel frattempo è stato eliminato, archiviato o non vi appartiene più. Perciò non può essere salvato.",
+        "gone": "Questo articolo non è più qui. Nel frattempo è stato eliminato, archiviato o rimosso da qui. Perciò non puoi più salvarlo.",
         "offline": "Non è certo che l’articolo sia stato salvato. Le tue modifiche sono ancora qui. Salvalo di nuovo appena sei connesso.",
         "failed": "Non è stato possibile salvare l’articolo. Le tue modifiche sono ancora qui.",
         "trial": "Vista di prova: l’articolo non è stato salvato."

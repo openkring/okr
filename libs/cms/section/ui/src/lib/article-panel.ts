@@ -4,7 +4,7 @@ import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIte
 import { ArticleConfig, ArticleSection, CategoryListModel, ImageConfig, isSameValue, RoleName, SectionModel, UserModel } from '@okr/shared-models';
 import { Chips, DateInput, DateInputI18n, ErrorNote, TextareaInput, TextareaInputI18n } from '@okr/shared-ui';
 import { fill, hasRole } from '@okr/shared-util-core';
-import { ArticleEditorI18n, ArticleUpload, coverErrors, drawableImages, getFieldErrors, ImageUploadTarget, restErrors, SectionErrors, shownArticleFields } from '@okr/cms-section-util';
+import { ArticleEditorI18n, ArticleUpload, coverErrors, drawableImages, getFieldErrors, ImageUploadTarget, pickErrors, restErrors, SectionErrors, shownArticleFields } from '@okr/cms-section-util';
 
 import { pickArticleImage } from './article-image-pick.modal';
 import { ARTICLE_PANEL_STYLES } from './article-panel.styles';
@@ -46,7 +46,7 @@ import { SectionConfiguration } from './section-configuration';
     <div class="panel-head"><h2>{{ i18n().article_editor_article_title() }}</h2></div>
     @for (note of outdatedNotes(); track note) { <ion-note class="note outdated">{{ note }}</ion-note> }
     <okr-section-config part="content" [formData]="section()" (formDataChange)="set($event)" [currentUser]="currentUser()"
-      [roles]="roles()" [states]="states()" [showAdvanced]="true" [readOnly]="false" [i18n]="i18n()" [errors]="errors()" />
+      [roles]="roles()" [states]="states()" [showAdvanced]="true" [readOnly]="false" [i18n]="i18n()" [errors]="fieldErrors()" />
 
     <ion-card>
       <ion-card-header><ion-card-title>{{ i18n().article_editor_article_cover_title() }}</ion-card-title></ion-card-header>
@@ -71,7 +71,7 @@ import { SectionConfiguration } from './section-configuration';
     </ion-card>
 
     <okr-section-config part="appearance" [headerTitle]="i18n().article_editor_article_settings()" [formData]="section()" (formDataChange)="set($event)"
-      [currentUser]="currentUser()" [roles]="roles()" [states]="states()" [showAdvanced]="true" [readOnly]="false" [i18n]="i18n()" [errors]="errors()" />
+      [currentUser]="currentUser()" [roles]="roles()" [states]="states()" [showAdvanced]="true" [readOnly]="false" [i18n]="i18n()" [errors]="fieldErrors()" />
 
     @if (hasRole('privileged')) {
       <okr-chips chipName="tag" [storedChips]="section().tags ?? ''" (storedChipsChange)="setField('tags', $event)" [allChips]="allTags()" [readOnly]="false" />
@@ -127,7 +127,10 @@ export class ArticlePanel {
   }));
 
   protected readonly notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as TextareaInputI18n));
-  protected readonly rest = computed(() => restErrors(this.errors(), shownArticleFields(this.section(), { admin: this.hasRole('admin'), privileged: this.hasRole('privileged') })));
+  private readonly shown = computed(() => shownArticleFields(this.section(), { admin: this.hasRole('admin'), privileged: this.hasRole('privileged') }));
+  /** for the fields; what is not among them is in `rest`, so that every error stands in exactly one place */
+  protected readonly fieldErrors = computed(() => pickErrors(this.errors(), this.shown()));
+  protected readonly rest = computed(() => restErrors(this.errors(), this.shown()));
   protected readonly outdatedNotes = computed(() => {
     const i18n = this.i18n();
     const fields: [string, string][] = [
@@ -177,6 +180,6 @@ export class ArticlePanel {
 
   /** messages of a single field, for the inline <okr-error-note> */
   protected errorsFor(field: string): string[] {
-    return getFieldErrors(this.errors(), field);
+    return getFieldErrors(this.fieldErrors(), field);
   }
 }

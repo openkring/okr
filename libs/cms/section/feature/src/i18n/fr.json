@@ -332,7 +332,7 @@
         "conflict": "Quelqu’un a modifié cet article entre-temps.",
         "force": "Enregistrer quand même",
         "back": "Retour",
-        "gone": "Cet article n’existe plus ici. Entre-temps, il a été supprimé, archivé ou ne vous appartient plus. Il ne peut donc pas être enregistré.",
+        "gone": "Cet article n’existe plus ici. Entre-temps, il a été supprimé, archivé ou retiré d’ici. Tu ne peux donc plus l’enregistrer.",
         "offline": "Il n’est pas sûr que l’article ait été enregistré. Tes modifications sont toujours là. Enregistre-le à nouveau dès que tu es connecté.",
         "failed": "L’article n’a pas pu être enregistré. Tes modifications sont toujours là.",
         "trial": "Vue de test : l’article n’a pas été enregistré."

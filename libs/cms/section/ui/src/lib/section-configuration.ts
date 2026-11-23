@@ -7,7 +7,7 @@ import { ButtonCopy, ButtonCopyI18n, CategorySelect, ErrorNote, TextareaInput, T
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { COMMENT_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
 import { SectionAddChip, SectionAddChips } from './section-add-chips';
-import { getFieldErrors, parseSectionWidths, SECTION_SCREENS, SectionErrors, SectionI18n, SectionScreen, sectionWidthChoices, setSectionWidth } from '@okr/cms-section-util';
+import { articleUses, getFieldErrors, parseSectionWidths, SECTION_SCREENS, SectionErrors, SectionI18n, SectionScreen, sectionWidthChoices, setSectionWidth } from '@okr/cms-section-util';
 
 export const PFX = '@cms/section/feature.';
 
@@ -270,7 +270,9 @@ export class SectionConfiguration {
   protected title = linkedSignal(() => this.formData().title ?? '');
   protected subTitle = linkedSignal(() => this.formData().subTitle ?? '');
   protected intro = linkedSignal(() => this.formData().intro ?? '');
-  protected hasIntro = computed(() => this.intro().trim().length > 0);
+  /** which optional parts are in use; shared with the panel of the article editor, so that both draw by the same rule */
+  private readonly uses = computed(() => articleUses(this.formData()));
+  protected hasIntro = computed(() => this.uses().intro);
   protected introPosition = computed<SectionIntroPosition>(() => this.formData().introPosition ?? 'below');
   protected isArticle = computed(() => this.formData().type === 'article');
   protected emphasis = computed<ArticleEmphasis>(() => {
@@ -281,7 +283,7 @@ export class SectionConfiguration {
     const section = this.formData();
     return section.type === 'article' ? section.properties?.background ?? '' : '';
   });
-  protected hasBackground = computed(() => this.background().trim().length > 0);
+  protected hasBackground = computed(() => this.uses().background);
   protected textColor = computed<ArticleTextColor>(() => {
     const section = this.formData();
     return section.type === 'article' ? section.properties?.textColor ?? 'auto' : 'auto';
@@ -292,7 +294,7 @@ export class SectionConfiguration {
   // a click opens it for this form, a stored value always shows it
   private readonly opened = signal<ReadonlySet<string>>(new Set());
   private readonly isOpen = (id: string): boolean => this.part() === 'all' || this.opened().has(id);
-  protected showSubTitle = computed(() => this.subTitle().trim().length > 0 || this.isOpen('subTitle'));
+  protected showSubTitle = computed(() => this.uses().subTitle || this.isOpen('subTitle'));
   protected showIntro = computed(() => this.hasIntro() || this.isOpen('intro'));
   protected showBackground = computed(() => this.hasBackground() || this.isOpen('background'));
   protected addChips = computed((): SectionAddChip[] => [

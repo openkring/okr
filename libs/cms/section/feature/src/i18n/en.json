@@ -332,7 +332,7 @@
         "conflict": "Someone has changed this article in the meantime.",
         "force": "Save anyway",
         "back": "Back",
-        "gone": "This article no longer exists here. In the meantime it was deleted, archived or no longer belongs to you. It can therefore not be saved.",
+        "gone": "This article is no longer here. In the meantime it was deleted, archived or removed from here. You can therefore no longer save it.",
         "offline": "It is not certain whether the article was saved. Your changes are still here. Save it again as soon as you are connected.",
         "failed": "The article could not be saved. Your changes are still here.",
         "trial": "Test view: the article was not saved."

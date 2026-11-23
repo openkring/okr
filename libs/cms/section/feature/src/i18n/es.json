@@ -332,7 +332,7 @@
         "conflict": "Alguien ha modificado este artículo mientras tanto.",
         "force": "Guardar de todos modos",
         "back": "Volver",
-        "gone": "Este artículo ya no existe aquí. Mientras tanto se ha eliminado, archivado o ya no os pertenece. Por eso no se puede guardar.",
+        "gone": "Este artículo ya no está aquí. Mientras tanto se ha eliminado, archivado o retirado de aquí. Por eso ya no puedes guardarlo.",
         "offline": "No es seguro que el artículo se haya guardado. Tus cambios siguen aquí. Guárdalo de nuevo en cuanto tengas conexión.",
         "failed": "No se ha podido guardar el artículo. Tus cambios siguen aquí.",
         "trial": "Vista de prueba: el artículo no se ha guardado."

@@ -1,4 +1,4 @@
-import { ImageActionType, SLIDESHOW_EFFECTS, articleBlocksOf, blockImages, type ArticleBlock, type ArticleBlockType, type ArticleColumn, type ArticleSection, type ImageConfig } from '@okr/shared-models';
+import { ImageActionType, SLIDESHOW_EFFECTS, articleBlocksOf, blockImages, type ArticleBlock, type ArticleBlockType, type ArticleColumn, type ArticleSection, type ImageConfig, type SectionModel } from '@okr/shared-models';
 import { resolveImageStyle, sanitizeFileName, suffixFileName } from '@okr/shared-util-core';
 
 import { hasImageUrl, isObject, type Loose } from './article-block.util';
@@ -209,14 +209,35 @@ function shownStyleFields(stored: unknown): string[] {
   return fields.flatMap((field) => [field, `imageStyle.${field}`]);
 }
 
-/** The error names that the panel of the article shows at a field: an unused optional text and what a role does not see are not drawn. */
+const filled = (value: unknown): boolean => typeof value === 'string' && value.trim() !== '';
+
+/**
+ * Which optional parts of a section are in use. `okr-section-config` draws by it: subtitle, intro (with the choice of its place) and an
+ * article's background (with its text colour). The panel decides by it which errors stand at a field.
+ */
+export function articleUses(section: SectionModel): { subTitle: boolean; intro: boolean; background: boolean } {
+  return {
+    subTitle: filled(section.subTitle), intro: filled(section.intro),
+    background: section.type === 'article' && filled(section.properties?.background),
+  };
+}
+
+/** The error names that the panel of the article shows at a field: an unused optional part and what a role does not see are not drawn. */
 export function shownArticleFields(section: ArticleSection, may: { admin: boolean; privileged: boolean }): string[] {
-  const used = (value: unknown): boolean => typeof value === 'string' && value.trim() !== '';
+  const uses = articleUses(section);
   return [
-    'title', 'introPosition', 'name', 'textColor', 'cover.',
-    ...(used(section.subTitle) ? ['subTitle'] : []), ...(used(section.intro) ? ['intro'] : []), ...(used(section.properties?.background) ? ['background'] : []),
+    'title', 'name', 'cover.',
+    ...(uses.subTitle ? ['subTitle'] : []), ...(uses.intro ? ['intro', 'introPosition'] : []), ...(uses.background ? ['background', 'textColor'] : []),
     ...(may.privileged ? ['tags'] : []), ...(may.admin ? ['notes'] : []),
   ];
+}
+
+const isShown = (field: string, shown: readonly string[]): boolean =>
+  shown.some((s) => (s.endsWith('[') || s.endsWith('.') ? field.startsWith(s) : s === field));
+
+/** The errors of these fields, named as for `restErrors`. Fields given only these never repeat what is in the list of the others. */
+export function pickErrors(errors: SectionErrors | undefined, shown: readonly string[]): SectionErrors {
+  return Object.fromEntries(Object.entries(errors ?? {}).filter(([field, messages]) => messages?.length > 0 && isShown(field, shown)));
 }
 
 /**
@@ -225,8 +246,7 @@ export function shownArticleFields(section: ArticleSection, may: { admin: boolea
  */
 export function restErrors(errors: SectionErrors | undefined, shown: readonly string[]): SectionErrorEntry[] {
   const isAlias = (field: string) => field.startsWith('imageStyle.') && (errors?.[field.slice('imageStyle.'.length)]?.length ?? 0) > 0;
-  const isShown = (field: string) => shown.some((s) => (s.endsWith('[') || s.endsWith('.') ? field.startsWith(s) : s === field));
-  return Object.entries(errors ?? {}).filter(([field, messages]) => messages?.length > 0 && !isShown(field) && !isAlias(field)).map(([field, messages]) => ({ field, messages }));
+  return Object.entries(errors ?? {}).filter(([field, messages]) => messages?.length > 0 && !isShown(field, shown) && !isAlias(field)).map(([field, messages]) => ({ field, messages }));
 }
 
 /** The errors of the teaser picture (`cover.url`) as an image list names them (`images[0].url`). */

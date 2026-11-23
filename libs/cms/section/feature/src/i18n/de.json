@@ -332,7 +332,7 @@
         "conflict": "Jemand hat diesen Artikel inzwischen geändert.",
         "force": "Trotzdem speichern",
         "back": "Zurück",
-        "gone": "Diesen Artikel gibt es hier nicht mehr. Er wurde inzwischen gelöscht, archiviert oder gehört nicht mehr zu euch. Deshalb kann er nicht gespeichert werden.",
+        "gone": "Diesen Artikel gibt es hier nicht mehr. Er wurde inzwischen gelöscht, archiviert oder von hier entfernt. Deshalb kannst du ihn nicht mehr speichern.",
         "offline": "Es ist nicht sicher, ob der Artikel gespeichert wurde. Deine Änderungen sind noch da. Speichere ihn noch einmal, sobald du verbunden bist.",
         "failed": "Der Artikel konnte nicht gespeichert werden. Deine Änderungen sind noch da.",
         "trial": "Testansicht: Der Artikel wurde nicht gespeichert."
