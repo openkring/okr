@@ -505,7 +505,7 @@
     "missing": "Non è stato possibile caricare le impostazioni di questa app. Riprova più tardi o rivolgiti al gestore.",
     "public_note": "Questi dati sono leggibili pubblicamente.",
     "operator_only": "Questo lo modifica il gestore.",
-    "empty": "Predefinito",
+    "empty": "Non impostato",
     "edit": "Modifica",
     "yes": "Sì",
     "no": "No",
@@ -554,7 +554,7 @@
       },
       "post": {
         "label": "Valori predefiniti per l'invio postale",
-        "helper": "Li salvi quando invii una lettera, nel passaggio «Invio postale»."
+        "helper": "Nell'elenco «Tutte le persone» scegli la voce di menu «Comunicazione», poi nel passaggio «Invio postale» «Salva come predefinito»."
       },
       "menu_rows": {
         "label": "Righe di menu nascoste",
@@ -576,7 +576,7 @@
       },
       "description": {
         "label": "Descrizione",
-        "helper": "Una nota su questa app. Appare solo in questa pagina e presso il gestore. Vuoto: non appare nulla."
+        "helper": "Una nota su questa app. Nell'app la vedono solo l'amministrazione e il gestore. Vuoto: nessuna nota."
       },
       "brandColor": {
         "label": "Colore del marchio",
@@ -584,7 +584,7 @@
       },
       "welcomeBannerUrl": {
         "label": "Immagine della pagina di accesso",
-        "helper": "Senza un'immagine propria viene mostrata l'immagine predefinita dell'app."
+        "helper": "Sfondo dell'accesso. Vuoto: nessuna immagine."
       },
       "notfoundBannerUrl": {
         "label": "Immagine della pagina «Non trovato»",
@@ -600,47 +600,47 @@
       },
       "rootUrl": {
         "label": "Pagina iniziale",
-        "helper": "Questa pagina si apre all'avvio dell'app e dopo l'accesso. Chi ha scelto una propria pagina iniziale nel profilo vede quella."
+        "helper": "Questa pagina si apre all'avvio dell'app e dopo l'accesso. Chi ha scelto una propria pagina iniziale nel profilo arriva lì."
       },
       "opName": {
         "label": "Nome",
-        "helper": "Appare nell'esportazione dei dati come responsabile. Vuoto: la riga manca. Se tutti i dati sono vuoti, appare il nome dell'app."
+        "helper": "Chi è responsabile di questa app. Appare nel file con i propri dati. Vuoto: il dato vi manca."
       },
       "opEmail": {
         "label": "E-mail",
-        "helper": "Contatto nel profilo e nell'esportazione dei dati. Vuoto: la riga manca nell'esportazione e il contatto nel profilo resta senza indirizzo."
+        "helper": "Indirizzo di contatto nel profilo e quando si scaricano i propri dati. Vale anche per la protezione dei dati se lì non c'è alcuna e-mail. Vuoto: non viene mostrato alcun indirizzo."
       },
       "opStreet": {
         "label": "Via e numero",
-        "helper": "Appare nell'esportazione dei dati. Vuoto: la riga manca."
+        "helper": "Appare nel file che le persone scaricano con i propri dati. Vuoto: il dato vi manca."
       },
       "opZipCode": {
         "label": "NPA",
-        "helper": "Appare nell'esportazione dei dati. Vuoto: la riga manca."
+        "helper": "Appare nel file che le persone scaricano con i propri dati. Vuoto: il dato vi manca."
       },
       "opCity": {
         "label": "Località",
-        "helper": "Appare nell'esportazione dei dati. Vuoto: la riga manca."
+        "helper": "Appare nel file che le persone scaricano con i propri dati. Vuoto: il dato vi manca."
       },
       "opCountryCode": {
         "label": "Paese",
-        "helper": "Appare nell'esportazione dei dati. Vuoto: la riga manca."
+        "helper": "Appare nel file che le persone scaricano con i propri dati. Vuoto: il dato vi manca."
       },
       "opWebUrl": {
         "label": "Sito web",
-        "helper": "Appare nell'esportazione dei dati. Vuoto: la riga manca."
+        "helper": "Appare nel file che le persone scaricano con i propri dati. Vuoto: il dato vi manca."
       },
       "issueUrl": {
-        "label": "Indirizzo per segnalare errori",
-        "helper": "Destinazione della voce di menu per segnalare un errore. Vuoto: nessuna destinazione è definita."
+        "label": "Pagina per segnalare errori",
+        "helper": "Questa pagina si apre con la voce di menu per segnalare errori. Vuoto: la voce non appare."
       },
       "mailFrom": {
         "label": "Indirizzo del mittente",
-        "helper": "Mittente proposto quando scrivi un'e-mail. Vuoto: app@ con il dominio e-mail dell'app."
+        "helper": "Mittente proposto quando scrivi un'e-mail. Vuoto: app@ e il dominio da cui l'app invia le e-mail."
       },
       "dpoName": {
         "label": "Contatto protezione dei dati: nome",
-        "helper": "Appare accanto all'e-mail del contatto. Vuoto: non appare alcun nome."
+        "helper": "Persona di contatto per la protezione dei dati, mostrata insieme alla sua e-mail. Vuoto: non appare alcun nome."
       },
       "dpoEmail": {
         "label": "Contatto protezione dei dati: e-mail",
@@ -648,46 +648,46 @@
       },
       "privacyPolicyPageKey": {
         "label": "Pagina della politica sulla privacy",
-        "helper": "Un link nel profilo porta a questa pagina. Nessuna pagina: il link manca."
+        "helper": "L'avviso sui cookie e la richiesta di conferma nel profilo rimandano a questa pagina. La pagina deve essere visibile senza accesso. Nessuna pagina: il link manca."
       },
       "privacyPolicyVersion": {
         "label": "Versione della politica sulla privacy",
-        "helper": "Per esempio 2026-07. Dopo una modifica viene chiesta a tutti una nuova conferma. Vuoto: non viene chiesto a nessuno."
+        "helper": "Per esempio 2026-07. Dopo una modifica viene chiesta a tutti una nuova conferma. Vuoto: non viene chiesta alcuna conferma."
       },
       "showDateOfBirth": {
         "label": "Data di nascita",
-        "helper": "Se una persona ha scelto per sé un'impostazione più restrittiva, vale la sua scelta. Senza accesso la data non è mai visibile."
+        "helper": "Chi può vedere questo dato. Se una persona ha scelto per sé un'impostazione più restrittiva, vale la sua scelta. Senza accesso la data non è mai visibile."
       },
       "showDateOfDeath": {
         "label": "Data di decesso",
-        "helper": "Questo dato non viene mai mostrato oltre le persone con diritti estesi."
+        "helper": "Chi può vedere questo dato. Anche con una scelta più aperta, al massimo le persone con diritti estesi vedono questo dato."
       },
       "showEmail": {
         "label": "E-mail",
-        "helper": "Se una persona ha scelto per sé un'impostazione più restrittiva, vale la sua scelta."
+        "helper": "Chi può vedere questo dato. Se una persona ha scelto per sé un'impostazione più restrittiva, vale la sua scelta."
       },
       "showPhone": {
         "label": "Telefono",
-        "helper": "Se una persona ha scelto per sé un'impostazione più restrittiva, vale la sua scelta."
+        "helper": "Chi può vedere questo dato. Se una persona ha scelto per sé un'impostazione più restrittiva, vale la sua scelta."
       },
       "showPostalAddress": {
         "label": "Indirizzo postale",
-        "helper": "Se una persona ha scelto per sé un'impostazione più restrittiva, vale la sua scelta."
+        "helper": "Chi può vedere questo dato. Se una persona ha scelto per sé un'impostazione più restrittiva, vale la sua scelta."
       },
       "showIban": {
         "label": "IBAN",
-        "helper": "Questo dato non viene mai mostrato oltre le persone con diritti estesi."
+        "helper": "Chi può vedere questo dato. Anche con una scelta più aperta, al massimo le persone con diritti estesi vedono questo dato."
       },
       "showTaxId": {
         "label": "Numero AVS",
-        "helper": "Questo dato non viene mai mostrato oltre le persone con diritti estesi."
+        "helper": "Chi può vedere questo dato. Anche con una scelta più aperta, al massimo le persone con diritti estesi vedono questo dato."
       },
       "showGender": {
         "label": "Genere",
         "helper": "Stabilisce chi vede questo dato nella pagina di una persona."
       },
       "showBexioId": {
-        "label": "ID Bexio",
+        "label": "Numero Bexio",
         "helper": "Stabilisce chi vede questo dato nella pagina di una persona."
       },
       "showTags": {
@@ -696,11 +696,11 @@
       },
       "ownerLocationId": {
         "label": "Ubicazione",
-        "helper": "Luogo del tabellone delle partenze. Vuoto: nessun luogo è definito."
+        "helper": "Per questo luogo il tabellone delle partenze nel diario di bordo mostra le prossime coincidenze. Vuoto: il tabellone non ne mostra."
       },
       "defaultResourceId": {
         "label": "Risorsa predefinita",
-        "helper": "Vale per le prenotazioni in cui non si sceglie altro. Vuoto: nessun valore predefinito."
+        "helper": "Questa risorsa viene prenotata con il modulo di prenotazione. Vuoto: il modulo non accetta prenotazioni."
       },
       "avatarUsage": {
         "label": "Immagine del profilo",
@@ -805,6 +805,8 @@
       "mailFromDomain": "L'indirizzo deve appartenere al dominio e-mail o all'indirizzo dell'app.",
       "domain": "Questo non è un dominio valido.",
       "positive": "Il numero deve essere maggiore di 0."
-    }
+    },
+    "fallback": "Predefinito",
+    "country_remove": "Rimuovi il paese"
   }
 }

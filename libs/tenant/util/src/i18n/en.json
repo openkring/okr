@@ -505,7 +505,7 @@
     "missing": "The settings of this app could not be loaded. Try again later or contact the operator.",
     "public_note": "This information can be read by anyone.",
     "operator_only": "This is changed by the operator.",
-    "empty": "Default",
+    "empty": "Not set",
     "edit": "Edit",
     "yes": "Yes",
     "no": "No",
@@ -554,7 +554,7 @@
       },
       "post": {
         "label": "Defaults for sending by post",
-        "helper": "You save them while sending a letter, in the step «Postal mail»."
+        "helper": "In the list «All persons» choose the menu entry «Communication», then in the step «Postal mail» choose «Save as default»."
       },
       "menu_rows": {
         "label": "Hidden menu rows",
@@ -576,7 +576,7 @@
       },
       "description": {
         "label": "Description",
-        "helper": "A note about this app. It appears only on this page and at the operator. Empty: nothing appears."
+        "helper": "A note about this app. In the app only the administration and the operator see it. Empty: no note."
       },
       "brandColor": {
         "label": "Brand colour",
@@ -584,7 +584,7 @@
       },
       "welcomeBannerUrl": {
         "label": "Image of the sign-in page",
-        "helper": "Without an own image the default image of the app is shown."
+        "helper": "Background of the sign-in page. Empty: no image."
       },
       "notfoundBannerUrl": {
         "label": "Image of the page «Not found»",
@@ -600,47 +600,47 @@
       },
       "rootUrl": {
         "label": "Start page",
-        "helper": "This page opens when the app starts and after signing in. Whoever chose an own start page in the profile sees that one."
+        "helper": "This page opens when the app starts and after signing in. Whoever chose an own start page in the profile gets there."
       },
       "opName": {
         "label": "Name",
-        "helper": "Shown in the data export as the responsible party. Empty: the line is missing. If all details are empty, the name of the app is shown."
+        "helper": "Who is responsible for this app. Shown in the file with the own data. Empty: the detail is missing there."
       },
       "opEmail": {
         "label": "E-mail",
-        "helper": "Contact in the profile and in the data export. Empty: the line is missing in the data export, and the contact in the profile has no address."
+        "helper": "Contact address in the profile and when downloading the own data. It also applies to privacy if no e-mail is set there. Empty: no address is shown."
       },
       "opStreet": {
         "label": "Street and number",
-        "helper": "Shown in the data export. Empty: the line is missing."
+        "helper": "Shown in the file that people download with their own data. Empty: the detail is missing there."
       },
       "opZipCode": {
         "label": "Postal code",
-        "helper": "Shown in the data export. Empty: the line is missing."
+        "helper": "Shown in the file that people download with their own data. Empty: the detail is missing there."
       },
       "opCity": {
         "label": "City",
-        "helper": "Shown in the data export. Empty: the line is missing."
+        "helper": "Shown in the file that people download with their own data. Empty: the detail is missing there."
       },
       "opCountryCode": {
         "label": "Country",
-        "helper": "Shown in the data export. Empty: the line is missing."
+        "helper": "Shown in the file that people download with their own data. Empty: the detail is missing there."
       },
       "opWebUrl": {
         "label": "Website",
-        "helper": "Shown in the data export. Empty: the line is missing."
+        "helper": "Shown in the file that people download with their own data. Empty: the detail is missing there."
       },
       "issueUrl": {
-        "label": "Address for reporting errors",
-        "helper": "Target of the menu entry for reporting an error. Empty: no target is set."
+        "label": "Page for reporting errors",
+        "helper": "This page opens through the menu entry for reporting errors. Empty: the entry does not appear."
       },
       "mailFrom": {
         "label": "Sender address",
-        "helper": "Suggested sender when writing an e-mail. Empty: app@ with the mail domain of the app."
+        "helper": "Suggested sender when writing an e-mail. Empty: app@ and the domain from which the app sends e-mails."
       },
       "dpoName": {
         "label": "Privacy contact: name",
-        "helper": "Shown next to the e-mail of the privacy contact. Empty: no name appears."
+        "helper": "Contact person for privacy, shown together with their e-mail. Empty: no name appears."
       },
       "dpoEmail": {
         "label": "Privacy contact: e-mail",
@@ -648,46 +648,46 @@
       },
       "privacyPolicyPageKey": {
         "label": "Page of the privacy policy",
-        "helper": "A link in the profile leads to this page. No page: the link is missing."
+        "helper": "The cookie notice and the request for confirmation in the profile link to this page. The page must be visible without signing in. No page: the link is missing."
       },
       "privacyPolicyVersion": {
         "label": "Version of the privacy policy",
-        "helper": "For example 2026-07. After a change everyone is asked to confirm again. Empty: nobody is asked."
+        "helper": "For example 2026-07. After a change everyone is asked to confirm again. Empty: no confirmation is required."
       },
       "showDateOfBirth": {
         "label": "Date of birth",
-        "helper": "If a person chose a stricter setting for themselves, their choice applies. Without signing in the date is never visible."
+        "helper": "Who may see this detail. If a person chose a stricter setting for themselves, their choice applies. Without signing in the date is never visible."
       },
       "showDateOfDeath": {
         "label": "Date of death",
-        "helper": "This detail is never shown beyond people with extended rights."
+        "helper": "Who may see this detail. Even with a more open choice, at most people with extended rights see this detail."
       },
       "showEmail": {
         "label": "E-mail",
-        "helper": "If a person chose a stricter setting for themselves, their choice applies."
+        "helper": "Who may see this detail. If a person chose a stricter setting for themselves, their choice applies."
       },
       "showPhone": {
         "label": "Phone",
-        "helper": "If a person chose a stricter setting for themselves, their choice applies."
+        "helper": "Who may see this detail. If a person chose a stricter setting for themselves, their choice applies."
       },
       "showPostalAddress": {
         "label": "Postal address",
-        "helper": "If a person chose a stricter setting for themselves, their choice applies."
+        "helper": "Who may see this detail. If a person chose a stricter setting for themselves, their choice applies."
       },
       "showIban": {
         "label": "IBAN",
-        "helper": "This detail is never shown beyond people with extended rights."
+        "helper": "Who may see this detail. Even with a more open choice, at most people with extended rights see this detail."
       },
       "showTaxId": {
         "label": "AHV number",
-        "helper": "This detail is never shown beyond people with extended rights."
+        "helper": "Who may see this detail. Even with a more open choice, at most people with extended rights see this detail."
       },
       "showGender": {
         "label": "Gender",
         "helper": "Decides who sees this detail on the page of a person."
       },
       "showBexioId": {
-        "label": "Bexio ID",
+        "label": "Bexio number",
         "helper": "Decides who sees this detail on the page of a person."
       },
       "showTags": {
@@ -696,11 +696,11 @@
       },
       "ownerLocationId": {
         "label": "Location",
-        "helper": "Place of the departure board. Empty: no place is set."
+        "helper": "For this place the departure board in the logbook shows the next connections. Empty: the board shows no connections."
       },
       "defaultResourceId": {
         "label": "Default resource",
-        "helper": "Applies to reservations where nothing else is chosen. Empty: no default."
+        "helper": "This resource is booked through the reservation form. Empty: the form accepts no reservations."
       },
       "avatarUsage": {
         "label": "Profile picture",
@@ -805,6 +805,8 @@
       "mailFromDomain": "The address must belong to the mail domain or to the address of the app.",
       "domain": "This is not a valid domain.",
       "positive": "The number must be greater than 0."
-    }
+    },
+    "fallback": "Default",
+    "country_remove": "Remove country"
   }
 }

@@ -505,7 +505,7 @@
     "missing": "Die Einstellungen dieser App konnten nicht geladen werden. Versuche es später noch einmal oder wende dich an den Betreiber.",
     "public_note": "Diese Angaben sind öffentlich lesbar.",
     "operator_only": "Das ändert der Betreiber.",
-    "empty": "Standard",
+    "empty": "Nicht gesetzt",
     "edit": "Bearbeiten",
     "yes": "Ja",
     "no": "Nein",
@@ -554,7 +554,7 @@
       },
       "post": {
         "label": "Vorgaben für den Postversand",
-        "helper": "Du speicherst sie beim Versenden eines Briefes, im Schritt «Postversand»."
+        "helper": "Wähle in der Liste «Alle Personen» den Menüeintrag «Kommunikation», dann im Schritt «Postversand» «Als Vorgabe speichern»."
       },
       "menu_rows": {
         "label": "Ausgeblendete Menüzeilen",
@@ -576,7 +576,7 @@
       },
       "description": {
         "label": "Beschreibung",
-        "helper": "Eine Notiz zu dieser App. Sie erscheint nur auf dieser Seite und beim Betreiber. Leer: Es erscheint nichts."
+        "helper": "Eine Notiz zu dieser App. In der App sehen sie nur die Administration und der Betreiber. Leer: keine Notiz."
       },
       "brandColor": {
         "label": "Markenfarbe",
@@ -584,7 +584,7 @@
       },
       "welcomeBannerUrl": {
         "label": "Bild der Anmeldeseite",
-        "helper": "Ohne eigenes Bild wird das Standardbild der App gezeigt."
+        "helper": "Hintergrund der Anmeldung. Leer: kein Bild."
       },
       "notfoundBannerUrl": {
         "label": "Bild der Seite «Nicht gefunden»",
@@ -600,47 +600,47 @@
       },
       "rootUrl": {
         "label": "Startseite",
-        "helper": "Diese Seite öffnet sich beim Start der App und nach der Anmeldung. Wer im Profil eine eigene Startseite gewählt hat, sieht jene."
+        "helper": "Diese Seite öffnet sich beim Start der App und nach der Anmeldung. Wer im Profil eine eigene Startseite gewählt hat, kommt dorthin."
       },
       "opName": {
         "label": "Name",
-        "helper": "Steht im Datenexport als verantwortliche Stelle. Leer: Die Zeile fehlt. Sind alle Angaben leer, steht dort der Name der App."
+        "helper": "Wer für diese App verantwortlich ist. Steht in der Datei mit den eigenen Daten. Leer: Die Angabe fehlt dort."
       },
       "opEmail": {
         "label": "E-Mail",
-        "helper": "Kontakt im Profil und im Datenexport. Leer: Im Datenexport fehlt die Zeile, im Profil bleibt der Kontakt ohne Adresse."
+        "helper": "Kontaktadresse im Profil und beim Herunterladen der eigenen Daten. Sie gilt auch für den Datenschutz, wenn dort keine E-Mail steht. Leer: Es wird keine Adresse angezeigt."
       },
       "opStreet": {
         "label": "Strasse und Hausnummer",
-        "helper": "Steht im Datenexport. Leer: Die Zeile fehlt."
+        "helper": "Steht in der Datei, die Personen mit ihren eigenen Daten herunterladen. Leer: Die Angabe fehlt dort."
       },
       "opZipCode": {
         "label": "PLZ",
-        "helper": "Steht im Datenexport. Leer: Die Zeile fehlt."
+        "helper": "Steht in der Datei, die Personen mit ihren eigenen Daten herunterladen. Leer: Die Angabe fehlt dort."
       },
       "opCity": {
         "label": "Ort",
-        "helper": "Steht im Datenexport. Leer: Die Zeile fehlt."
+        "helper": "Steht in der Datei, die Personen mit ihren eigenen Daten herunterladen. Leer: Die Angabe fehlt dort."
       },
       "opCountryCode": {
         "label": "Land",
-        "helper": "Steht im Datenexport. Leer: Die Zeile fehlt."
+        "helper": "Steht in der Datei, die Personen mit ihren eigenen Daten herunterladen. Leer: Die Angabe fehlt dort."
       },
       "opWebUrl": {
         "label": "Website",
-        "helper": "Steht im Datenexport. Leer: Die Zeile fehlt."
+        "helper": "Steht in der Datei, die Personen mit ihren eigenen Daten herunterladen. Leer: Die Angabe fehlt dort."
       },
       "issueUrl": {
-        "label": "Adresse für Fehlermeldungen",
-        "helper": "Ziel des Menüeintrags, über den man einen Fehler meldet. Leer: Es ist kein Ziel hinterlegt."
+        "label": "Seite für Fehlermeldungen",
+        "helper": "Diese Seite öffnet sich über den Menüeintrag für Fehlermeldungen. Leer: Der Eintrag erscheint nicht."
       },
       "mailFrom": {
         "label": "Absenderadresse",
-        "helper": "Vorschlag für den Absender beim Schreiben einer E-Mail. Leer: app@ mit der Mail-Domain der App."
+        "helper": "Vorschlag für den Absender beim Schreiben einer E-Mail. Leer: app@ und die Domain, von der die App E-Mails verschickt."
       },
       "dpoName": {
         "label": "Datenschutzkontakt: Name",
-        "helper": "Steht neben der E-Mail des Datenschutzkontakts. Leer: Es erscheint kein Name."
+        "helper": "Ansprechperson für den Datenschutz, zusammen mit ihrer E-Mail angezeigt. Leer: Es erscheint kein Name."
       },
       "dpoEmail": {
         "label": "Datenschutzkontakt: E-Mail",
@@ -648,46 +648,46 @@
       },
       "privacyPolicyPageKey": {
         "label": "Seite der Datenschutzerklärung",
-        "helper": "Ein Link im Profil führt auf diese Seite. Keine Seite: Der Link fehlt."
+        "helper": "Der Cookie-Hinweis und die Bitte um Bestätigung im Profil verlinken auf diese Seite. Die Seite muss ohne Anmeldung sichtbar sein. Keine Seite: Der Link fehlt."
       },
       "privacyPolicyVersion": {
         "label": "Fassung der Datenschutzerklärung",
-        "helper": "Zum Beispiel 2026-07. Nach einer Änderung werden alle um eine neue Bestätigung gebeten. Leer: Niemand wird gefragt."
+        "helper": "Zum Beispiel 2026-07. Nach einer Änderung werden alle um eine neue Bestätigung gebeten. Leer: Es wird keine Bestätigung verlangt."
       },
       "showDateOfBirth": {
         "label": "Geburtsdatum",
-        "helper": "Hat eine Person für sich selbst strenger gewählt, gilt ihre Wahl. Ohne Anmeldung ist das Datum nie sichtbar."
+        "helper": "Wer diese Angabe sehen darf. Hat eine Person für sich strenger gewählt, gilt ihre Wahl. Ohne Anmeldung ist das Datum nie sichtbar."
       },
       "showDateOfDeath": {
         "label": "Todesdatum",
-        "helper": "Weiter als bis zu Personen mit erweiterten Rechten wird diese Angabe nie gezeigt."
+        "helper": "Wer diese Angabe sehen darf. Auch bei einer offeneren Wahl sehen höchstens Personen mit erweiterten Rechten diese Angabe."
       },
       "showEmail": {
         "label": "E-Mail",
-        "helper": "Hat eine Person für sich selbst strenger gewählt, gilt ihre Wahl."
+        "helper": "Wer diese Angabe sehen darf. Hat eine Person für sich strenger gewählt, gilt ihre Wahl."
       },
       "showPhone": {
         "label": "Telefon",
-        "helper": "Hat eine Person für sich selbst strenger gewählt, gilt ihre Wahl."
+        "helper": "Wer diese Angabe sehen darf. Hat eine Person für sich strenger gewählt, gilt ihre Wahl."
       },
       "showPostalAddress": {
         "label": "Postadresse",
-        "helper": "Hat eine Person für sich selbst strenger gewählt, gilt ihre Wahl."
+        "helper": "Wer diese Angabe sehen darf. Hat eine Person für sich strenger gewählt, gilt ihre Wahl."
       },
       "showIban": {
         "label": "IBAN",
-        "helper": "Weiter als bis zu Personen mit erweiterten Rechten wird diese Angabe nie gezeigt."
+        "helper": "Wer diese Angabe sehen darf. Auch bei einer offeneren Wahl sehen höchstens Personen mit erweiterten Rechten diese Angabe."
       },
       "showTaxId": {
         "label": "AHV-Nummer",
-        "helper": "Weiter als bis zu Personen mit erweiterten Rechten wird diese Angabe nie gezeigt."
+        "helper": "Wer diese Angabe sehen darf. Auch bei einer offeneren Wahl sehen höchstens Personen mit erweiterten Rechten diese Angabe."
       },
       "showGender": {
         "label": "Geschlecht",
         "helper": "Legt fest, wer diese Angabe auf der Seite einer Person sieht."
       },
       "showBexioId": {
-        "label": "Bexio ID",
+        "label": "Bexio-Nummer",
         "helper": "Legt fest, wer diese Angabe auf der Seite einer Person sieht."
       },
       "showTags": {
@@ -696,11 +696,11 @@
       },
       "ownerLocationId": {
         "label": "Standort",
-        "helper": "Ort der Abfahrtstafel. Leer: Es ist kein Ort hinterlegt."
+        "helper": "Für diesen Ort zeigt die Abfahrtstafel im Logbuch die nächsten Verbindungen. Leer: Die Tafel zeigt keine Verbindungen."
       },
       "defaultResourceId": {
         "label": "Standardressource",
-        "helper": "Gilt für Reservationen, bei denen nichts anderes gewählt ist. Leer: keine Vorgabe."
+        "helper": "Diese Ressource wird über das Reservationsformular gebucht. Leer: Das Formular nimmt keine Reservationen an."
       },
       "avatarUsage": {
         "label": "Profilbild",
@@ -805,6 +805,8 @@
       "mailFromDomain": "Die Adresse muss zur Mail-Domain oder zur Adresse der App gehören.",
       "domain": "Das ist keine gültige Domain.",
       "positive": "Die Zahl muss grösser als 0 sein."
-    }
+    },
+    "fallback": "Standard",
+    "country_remove": "Land entfernen"
   }
 }

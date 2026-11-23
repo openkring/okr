@@ -1,5 +1,5 @@
 import { Component, computed } from '@angular/core';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular';
+import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { CITY_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH, STREET_LENGTH, URL_LENGTH } from '@okr/shared-constants';
 import { CountrySelect, EmailInput, ErrorNote, TextInput, UrlInput } from '@okr/shared-ui';
@@ -15,7 +15,7 @@ import { SettingsPublicNote } from './settings-public-note';
   standalone: true,
   imports: [
     CountrySelect, EmailInput, ErrorNote, SettingsPublicNote, TextInput, UrlInput,
-    IonCard, IonCardContent, IonCol, IonGrid, IonRow,
+    IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonRow,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -60,6 +60,9 @@ import { SettingsPublicNote } from './settings-public-note';
                   <okr-country-select [i18n]="countryI18n()" [value]="values()['opCountryCode']"
                     (valueChange)="onFieldChange('opCountryCode', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="errors()['opCountryCode']" />
+                  @if (values()['opCountryCode'] && !isReadOnly()) {
+                    <ion-button fill="clear" size="small" (click)="onFieldChange('opCountryCode', '')">{{ text('country_remove') }}</ion-button>
+                  }
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-url [i18n]="fields()['opWebUrl']" [value]="values()['opWebUrl']"

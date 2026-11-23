@@ -505,7 +505,7 @@
     "missing": "Les réglages de cette app n'ont pas pu être chargés. Réessaie plus tard ou adresse-toi à l'exploitant.",
     "public_note": "Ces informations sont lisibles publiquement.",
     "operator_only": "C'est l'exploitant qui modifie cela.",
-    "empty": "Par défaut",
+    "empty": "Non défini",
     "edit": "Modifier",
     "yes": "Oui",
     "no": "Non",
@@ -554,7 +554,7 @@
       },
       "post": {
         "label": "Valeurs par défaut pour l'envoi postal",
-        "helper": "Tu les enregistres lors de l'envoi d'une lettre, à l'étape « Courrier postal »."
+        "helper": "Dans la liste « Toutes les personnes », choisis l'entrée de menu « Communication », puis à l'étape « Courrier postal » « Enregistrer par défaut »."
       },
       "menu_rows": {
         "label": "Lignes de menu masquées",
@@ -576,7 +576,7 @@
       },
       "description": {
         "label": "Description",
-        "helper": "Une note sur cette app. Elle n'apparaît que sur cette page et chez l'exploitant. Vide : rien n'apparaît."
+        "helper": "Une note sur cette app. Dans l'app, seuls l'administration et l'exploitant la voient. Vide : aucune note."
       },
       "brandColor": {
         "label": "Couleur de marque",
@@ -584,7 +584,7 @@
       },
       "welcomeBannerUrl": {
         "label": "Image de la page de connexion",
-        "helper": "Sans image propre, l'image par défaut de l'app s'affiche."
+        "helper": "Arrière-plan de la connexion. Vide : aucune image."
       },
       "notfoundBannerUrl": {
         "label": "Image de la page « Introuvable »",
@@ -600,47 +600,47 @@
       },
       "rootUrl": {
         "label": "Page d'accueil",
-        "helper": "Cette page s'ouvre au démarrage de l'app et après la connexion. Qui a choisi sa propre page d'accueil dans le profil voit celle-ci."
+        "helper": "Cette page s'ouvre au démarrage de l'app et après la connexion. Qui a choisi sa propre page d'accueil dans le profil y arrive."
       },
       "opName": {
         "label": "Nom",
-        "helper": "Figure dans l'export des données comme responsable. Vide : la ligne manque. Si toutes les indications sont vides, le nom de l'app y figure."
+        "helper": "Qui est responsable de cette app. Figure dans le fichier avec les propres données. Vide : l'indication y manque."
       },
       "opEmail": {
         "label": "E-mail",
-        "helper": "Contact dans le profil et dans l'export des données. Vide : la ligne manque dans l'export, et le contact du profil reste sans adresse."
+        "helper": "Adresse de contact dans le profil et lors du téléchargement des propres données. Elle vaut aussi pour la protection des données si aucun e-mail n'y est indiqué. Vide : aucune adresse ne s'affiche."
       },
       "opStreet": {
         "label": "Rue et numéro",
-        "helper": "Figure dans l'export des données. Vide : la ligne manque."
+        "helper": "Figure dans le fichier que les personnes téléchargent avec leurs propres données. Vide : l'indication y manque."
       },
       "opZipCode": {
         "label": "NPA",
-        "helper": "Figure dans l'export des données. Vide : la ligne manque."
+        "helper": "Figure dans le fichier que les personnes téléchargent avec leurs propres données. Vide : l'indication y manque."
       },
       "opCity": {
         "label": "Localité",
-        "helper": "Figure dans l'export des données. Vide : la ligne manque."
+        "helper": "Figure dans le fichier que les personnes téléchargent avec leurs propres données. Vide : l'indication y manque."
       },
       "opCountryCode": {
         "label": "Pays",
-        "helper": "Figure dans l'export des données. Vide : la ligne manque."
+        "helper": "Figure dans le fichier que les personnes téléchargent avec leurs propres données. Vide : l'indication y manque."
       },
       "opWebUrl": {
         "label": "Site web",
-        "helper": "Figure dans l'export des données. Vide : la ligne manque."
+        "helper": "Figure dans le fichier que les personnes téléchargent avec leurs propres données. Vide : l'indication y manque."
       },
       "issueUrl": {
-        "label": "Adresse pour signaler des erreurs",
-        "helper": "Cible de l'entrée de menu pour signaler une erreur. Vide : aucune cible n'est définie."
+        "label": "Page pour signaler des erreurs",
+        "helper": "Cette page s'ouvre par l'entrée de menu pour signaler des erreurs. Vide : l'entrée n'apparaît pas."
       },
       "mailFrom": {
         "label": "Adresse d'expédition",
-        "helper": "Expéditeur proposé lors de la rédaction d'un e-mail. Vide : app@ avec le domaine e-mail de l'app."
+        "helper": "Expéditeur proposé lors de la rédaction d'un e-mail. Vide : app@ et le domaine depuis lequel l'app envoie des e-mails."
       },
       "dpoName": {
         "label": "Contact protection des données : nom",
-        "helper": "Figure à côté de l'e-mail du contact. Vide : aucun nom n'apparaît."
+        "helper": "Personne de contact pour la protection des données, affichée avec son e-mail. Vide : aucun nom n'apparaît."
       },
       "dpoEmail": {
         "label": "Contact protection des données : e-mail",
@@ -648,46 +648,46 @@
       },
       "privacyPolicyPageKey": {
         "label": "Page de la politique de confidentialité",
-        "helper": "Un lien dans le profil mène à cette page. Aucune page : le lien manque."
+        "helper": "L'avis sur les cookies et la demande de confirmation dans le profil renvoient à cette page. La page doit être visible sans connexion. Aucune page : le lien manque."
       },
       "privacyPolicyVersion": {
         "label": "Version de la politique de confidentialité",
-        "helper": "Par exemple 2026-07. Après une modification, tout le monde doit confirmer à nouveau. Vide : personne n'est interrogé."
+        "helper": "Par exemple 2026-07. Après une modification, tout le monde est prié de confirmer à nouveau. Vide : aucune confirmation n'est demandée."
       },
       "showDateOfBirth": {
         "label": "Date de naissance",
-        "helper": "Si une personne a choisi un réglage plus strict pour elle-même, son choix compte. Sans connexion, la date n'est jamais visible."
+        "helper": "Qui peut voir cette indication. Si une personne a choisi un réglage plus strict pour elle-même, son choix compte. Sans connexion, la date n'est jamais visible."
       },
       "showDateOfDeath": {
         "label": "Date de décès",
-        "helper": "Cette indication n'est jamais montrée au-delà des personnes avec des droits étendus."
+        "helper": "Qui peut voir cette indication. Même avec un choix plus ouvert, seules les personnes avec des droits étendus voient cette indication."
       },
       "showEmail": {
         "label": "E-mail",
-        "helper": "Si une personne a choisi un réglage plus strict pour elle-même, son choix compte."
+        "helper": "Qui peut voir cette indication. Si une personne a choisi un réglage plus strict pour elle-même, son choix compte."
       },
       "showPhone": {
         "label": "Téléphone",
-        "helper": "Si une personne a choisi un réglage plus strict pour elle-même, son choix compte."
+        "helper": "Qui peut voir cette indication. Si une personne a choisi un réglage plus strict pour elle-même, son choix compte."
       },
       "showPostalAddress": {
         "label": "Adresse postale",
-        "helper": "Si une personne a choisi un réglage plus strict pour elle-même, son choix compte."
+        "helper": "Qui peut voir cette indication. Si une personne a choisi un réglage plus strict pour elle-même, son choix compte."
       },
       "showIban": {
         "label": "IBAN",
-        "helper": "Cette indication n'est jamais montrée au-delà des personnes avec des droits étendus."
+        "helper": "Qui peut voir cette indication. Même avec un choix plus ouvert, seules les personnes avec des droits étendus voient cette indication."
       },
       "showTaxId": {
         "label": "Numéro AVS",
-        "helper": "Cette indication n'est jamais montrée au-delà des personnes avec des droits étendus."
+        "helper": "Qui peut voir cette indication. Même avec un choix plus ouvert, seules les personnes avec des droits étendus voient cette indication."
       },
       "showGender": {
         "label": "Sexe",
         "helper": "Détermine qui voit cette indication sur la page d'une personne."
       },
       "showBexioId": {
-        "label": "ID Bexio",
+        "label": "Numéro Bexio",
         "helper": "Détermine qui voit cette indication sur la page d'une personne."
       },
       "showTags": {
@@ -696,11 +696,11 @@
       },
       "ownerLocationId": {
         "label": "Emplacement",
-        "helper": "Lieu du tableau des départs. Vide : aucun lieu n'est défini."
+        "helper": "Pour ce lieu, le tableau des départs du journal de bord affiche les prochaines correspondances. Vide : le tableau n'en affiche aucune."
       },
       "defaultResourceId": {
         "label": "Ressource par défaut",
-        "helper": "Vaut pour les réservations sans autre choix. Vide : aucune valeur par défaut."
+        "helper": "Cette ressource est réservée par le formulaire de réservation. Vide : le formulaire n'accepte aucune réservation."
       },
       "avatarUsage": {
         "label": "Image de profil",
@@ -805,6 +805,8 @@
       "mailFromDomain": "L'adresse doit appartenir au domaine e-mail ou à l'adresse de l'app.",
       "domain": "Ce n'est pas un domaine valable.",
       "positive": "Le nombre doit être supérieur à 0."
-    }
+    },
+    "fallback": "Par défaut",
+    "country_remove": "Supprimer le pays"
   }
 }

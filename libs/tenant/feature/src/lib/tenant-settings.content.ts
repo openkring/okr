@@ -21,15 +21,18 @@ import type { SettingsDisplayContext, SettingsGroupId, TenantSettings } from '@o
 import { FeatureStore } from './feature.store';
 import { TenantSettingsStore } from './tenant-settings.store';
 
-/** Settings that have their own editor elsewhere: linked here, not rebuilt. Shown while every named block is on. */
-const OTHER_EDITORS: readonly { id: string; url: string; icon: string; blocks: readonly string[] }[] = [
+/**
+ * Settings that have their own editor elsewhere: linked here, not rebuilt. Shown while every named block is on. Without
+ * a url the row only says where the editor is.
+ */
+const OTHER_EDITORS: readonly { id: string; url?: string; icon: string; blocks: readonly string[] }[] = [
   // the cookie notice is an operation of the AOC area «Zugang & Datenschutz»
   { id: 'cookie', url: '/aoc/access', icon: 'shield', blocks: ['aoc', 'consent'] },
   // the context menu of the task list, entry «Einstellungen»
   { id: 'task_archive', url: '/task/all/c-tasks', icon: 'todo', blocks: ['task'] },
   { id: 'file_transfer', url: '/private/file-transfer-monitor', icon: 'send', blocks: ['file-transfer'] },
-  // «Als Vorgabe speichern» in the Versand dialog, which the person list opens; there is no screen of its own
-  { id: 'post', url: '/person/all/c-persons', icon: 'mail', blocks: ['subject'] },
+  // «Als Vorgabe speichern» in the communication dialog of the person list; there is no screen of its own
+  { id: 'post', icon: 'mail', blocks: ['subject'] },
   // the feature picker, segment «Menüzeilen»; it belongs to no block
   { id: 'menu_rows', url: '/tenant/features', icon: 'menu', blocks: [] },
 ];
@@ -86,7 +89,7 @@ const OTHER_EDITORS: readonly { id: string; url: string; icon: string; blocks: r
                             @if (row.color) {
                               <span class="swatch" [style.background-color]="row.color"></span>
                             }
-                            <span class="text">{{ row.value || text('empty') }}</span>
+                            <span class="text">{{ row.value || text(row.emptyText) }}</span>
                           </div>
                         </ion-label>
                       </ion-item>
@@ -104,7 +107,7 @@ const OTHER_EDITORS: readonly { id: string; url: string; icon: string; blocks: r
               <ion-card-content class="ion-no-padding">
                 <ion-list lines="none">
                   @for (link of links(); track link.id) {
-                    <ion-item button [detail]="true" (click)="onNavigate(link.url)">
+                    <ion-item [button]="!!link.url" [detail]="!!link.url" (click)="onNavigate(link.url)">
                       <ion-icon slot="start" src="{{ link.icon | svgIcon }}" aria-hidden="true" />
                       <ion-label class="ion-text-wrap">
                         <h3>{{ link.label }}</h3>
@@ -156,10 +159,9 @@ export class TenantSettingsContent {
   private readonly display = computed((): SettingsDisplayContext => {
     const pages = this.pages();
     const location = this.location();
-    const lang = this.i18nService.getActiveLang();
     return {
       text: (name) => this.text(name),
-      countryName: (code) => getCountryName(code, lang),
+      countryName: (code) => getCountryName(code, this.i18nService.getActiveLang()), // not a signal: read on every call, after a language switch
       pageName: (key) => settingsPageName(key, pages, this.appStore.tenantId()),
       locationName: (key) => (location?.okey === key ? location.name : ''),
       resourceName: (key) => this.appStore.getResource(key)?.name ?? '',
@@ -232,7 +234,7 @@ export class TenantSettingsContent {
     }
   }
 
-  protected onNavigate(url: string): void {
-    void this.router.navigateByUrl(url);
+  protected onNavigate(url: string | undefined): void {
+    if (url) void this.router.navigateByUrl(url);
   }
 }

@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonNote, I
 import { AvailableLanguages } from '@okr/shared-models';
 import { Checkbox, ErrorNote, StringSelect } from '@okr/shared-ui';
 import type { CheckboxI18n } from '@okr/shared-ui';
-import { SETTINGS_LOCALES, settingsLocaleKey, withStored } from '@okr/tenant-util';
+import { SETTINGS_LOCALES, settingsLocaleKey, withLanguage, withStored } from '@okr/tenant-util';
 
 import { SettingsFormBase } from './settings-form.base';
 import { SettingsPublicNote } from './settings-public-note';
@@ -36,10 +36,12 @@ import { SettingsPublicNote } from './settings-public-note';
                   <ion-item lines="none" [button]="false">
                     <ion-label>{{ fields()['enabledLanguages'].label }}</ion-label>
                   </ion-item>
-                  @for (language of languages(); track language.code) {
-                    <okr-checkbox [i18n]="language.i18n" [checked]="language.enabled"
-                      (checkedChange)="onLanguageChange(language.code, $event)" [readOnly]="isReadOnly()" />
-                  }
+                  <div role="group" [attr.aria-label]="fields()['enabledLanguages'].label">
+                    @for (language of languages(); track language.code) {
+                      <okr-checkbox [i18n]="language.i18n" [checked]="language.enabled"
+                        (checkedChange)="onLanguageChange(language.code, $event)" [readOnly]="isReadOnly()" />
+                    }
+                  </div>
                   <okr-error-note [errors]="errors()['enabledLanguages']" />
                   @if (helperVisibility.showHelpers()) {
                     <ion-item lines="none" [button]="false">
@@ -69,9 +71,7 @@ export class SettingsLanguageForm extends SettingsFormBase {
 
   protected get group(): 'language' { return 'language'; }
 
-  /** Always in the order of AvailableLanguages; a code the app does not know is dropped with the first change. */
   protected onLanguageChange(code: string, enabled: boolean): void {
-    const current = this.enabled();
-    this.onFieldChange('enabledLanguages', AvailableLanguages.filter((c) => (c === code ? enabled : current.includes(c))));
+    this.onFieldChange('enabledLanguages', withLanguage(this.enabled(), code, enabled));
   }
 }

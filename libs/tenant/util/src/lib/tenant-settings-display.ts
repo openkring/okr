@@ -1,4 +1,4 @@
-import { FOOTPRINT_PAGE_TYPE, type PageModel } from '@okr/shared-models';
+import { AvailableLanguages, FOOTPRINT_PAGE_TYPE, type PageModel } from '@okr/shared-models';
 import { forkKeyFor } from '@okr/shared-util-core';
 
 import { SETTINGS_GROUPS, type SettingsGroupId, type TenantSettings } from './tenant-settings';
@@ -15,11 +15,13 @@ export interface SettingsDisplayContext {
   orgName: (key: string) => string;
 }
 
-/** One line of a settings card. `value` is '' when nothing is set; the card shows «Standard» then. */
+/** One line of a settings card. `value` is '' when nothing is set; the card shows the text named `emptyText` then. */
 export interface SettingsRow {
   field: string;
   label: string;
   value: string;
+  /** «Standard» where another value applies instead, «Nicht gesetzt» where nothing does */
+  emptyText: 'fallback' | 'empty';
   /** '#rrggbb' for the brand colour: the card shows a swatch next to it */
   color: string;
 }
@@ -28,6 +30,11 @@ export interface SettingsPageOption { key: string; label: string; }
 
 /** Fields that hold the number of an enum; their labels are named `<field>_<number>`. */
 const ENUM_FIELDS: ReadonlySet<string> = new Set(['avatarUsage', 'nameDisplay', 'personSortCriteria']);
+/** Fields that another value stands in for while they are empty, as their helper says. Every other empty field means: nothing. */
+const FALLBACK_FIELDS: ReadonlySet<string> = new Set([
+  'brandColor', 'notfoundBannerUrl', 'mailFrom', 'dpoEmail',
+  'emailDomain', 'emailProvider', 'mailtrapPasswordResetTemplate', 'loginUrl', 'passwordResetUrl',
+]);
 const COLOR = /^#[0-9a-fA-F]{6}$/;
 
 /** The name behind a key, and the key itself when nothing is found: a stored value is never hidden. */
@@ -70,7 +77,11 @@ export function settingsRows(group: SettingsGroupId, settings: TenantSettings, c
   const values = settings as Record<string, unknown>;
   return SETTINGS_GROUPS[group].map((field) => {
     const value = settingsDisplayValue(field, values[field], ctx);
-    return { field, label: ctx.text(settingsFieldKey(field)), value, color: field === 'brandColor' && COLOR.test(value) ? value : '' };
+    return {
+      field, label: ctx.text(settingsFieldKey(field)), value,
+      emptyText: FALLBACK_FIELDS.has(field) ? 'fallback' : 'empty',
+      color: field === 'brandColor' && COLOR.test(value) ? value : '',
+    };
   });
 }
 
@@ -83,12 +94,13 @@ export function settingsPageName(key: string, pages: readonly PageModel[], tenan
 
 /**
  * The pages a tenant can pick, by name: no travel footprints, and no shared page the tenant has its own copy of.
- * The stored key is always among them, under the name of the page it opens, or as it is when no page is known.
+ * The stored key is always among them (its own copy is then not listed a second time), under the name of the page it opens, or as it is when no page is known.
  */
 export function settingsPageOptions(pages: readonly PageModel[], tenantId: string, stored: string): SettingsPageOption[] {
   const keys = new Set(pages.map((p) => p.okey));
+  const own = stored ? forkKeyFor(stored, tenantId) : '';
   const options = pages
-    .filter((p) => p.type !== FOOTPRINT_PAGE_TYPE && p.okey !== stored && !keys.has(forkKeyFor(p.okey, tenantId)))
+    .filter((p) => p.type !== FOOTPRINT_PAGE_TYPE && p.okey !== stored && p.okey !== own && !keys.has(forkKeyFor(p.okey, tenantId)))
     .map((p) => ({ key: p.okey, label: settingsPageName(p.okey, pages, tenantId) }))
     .sort((a, b) => a.label.localeCompare(b.label));
   return stored ? [{ key: stored, label: settingsPageName(stored, pages, tenantId) || stored }, ...options] : options;
@@ -97,4 +109,13 @@ export function settingsPageOptions(pages: readonly PageModel[], tenantId: strin
 /** The offered values with the stored one first when it is not among them: a value the list does not know is kept. */
 export function withStored(offered: readonly string[], stored: unknown): string[] {
   return typeof stored === 'string' && stored !== '' && !offered.includes(stored) ? [stored, ...offered] : [...offered];
+}
+
+/**
+ * The enabled languages after one was switched: the stored order stays (without `de` the first entry is the language of
+ * the sign-in page), a language switched on is added at the end. Codes the app does not know are dropped.
+ */
+export function withLanguage(current: readonly string[], code: string, enabled: boolean): string[] {
+  const known = current.filter((c) => AvailableLanguages.includes(c) && (enabled || c !== code));
+  return enabled && !known.includes(code) && AvailableLanguages.includes(code) ? [...known, code] : known;
 }

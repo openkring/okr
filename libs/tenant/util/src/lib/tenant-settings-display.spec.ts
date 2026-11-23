@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { settingsOf } from './tenant-settings';
 import {
-  settingsDisplayValue, settingsPageName, settingsPageOptions, settingsRows, withStored, type SettingsDisplayContext,
+  settingsDisplayValue, settingsPageName, settingsPageOptions, settingsRows, withLanguage, withStored, type SettingsDisplayContext,
 } from './tenant-settings-display';
 import { SETTINGS_GROUP_IDS, SETTINGS_I18N_KEYS } from './tenant-settings-i18n';
 
@@ -69,6 +69,38 @@ describe('settingsRows', () => {
   });
 });
 
+describe('settingsRows, empty fields', () => {
+  const emptyText = (group: 'app' | 'privacy' | 'mail', field: string) => settingsRows(group, {}, CTX).find((r) => r.field === field)?.emptyText;
+  it('says default only where another value applies', () => {
+    expect(emptyText('app', 'brandColor')).toBe('fallback');
+    expect(emptyText('mail', 'mailFrom')).toBe('fallback');
+    expect(emptyText('privacy', 'dpoEmail')).toBe('fallback');
+    expect(emptyText('app', 'appTitle')).toBe('empty');
+    expect(emptyText('privacy', 'privacyPolicyPageKey')).toBe('empty');
+  });
+});
+
+describe('withLanguage', () => {
+  it('keeps the stored order and adds at the end', () => {
+    expect(withLanguage(['fr', 'en'], 'de', true)).toEqual(['fr', 'en', 'de']);
+    expect(withLanguage(['fr', 'en', 'it'], 'en', false)).toEqual(['fr', 'it']);
+  });
+  it('changes nothing that is already so', () => {
+    expect(withLanguage(['fr', 'en'], 'fr', true)).toEqual(['fr', 'en']);
+    expect(withLanguage(['fr', 'en'], 'de', false)).toEqual(['fr', 'en']);
+  });
+  it('can empty the list, and drops and never adds an unknown code', () => {
+    expect(withLanguage(['de'], 'de', false)).toEqual([]);
+    expect(withLanguage(['xx', 'de'], 'en', true)).toEqual(['de', 'en']);
+    expect(withLanguage(['de'], 'xx', true)).toEqual(['de']);
+  });
+  it('does not change its input', () => {
+    const current = ['fr', 'en'];
+    withLanguage(current, 'de', true);
+    expect(current).toEqual(['fr', 'en']);
+  });
+});
+
 describe('settings pages', () => {
   const pages = [
     page('privacy', 'Datenschutz (gemeinsam)'), page('privacy_scs', 'Datenschutz'), page('about', 'Über uns'),
@@ -80,7 +112,10 @@ describe('settings pages', () => {
     ]);
   });
   it('keeps the stored key first, under the name of the page it opens', () => {
+    // neither the stored shared page nor the tenant's own copy of it is listed a second time
+    expect(settingsPageOptions(pages, 'scs', 'privacy').map((o) => o.key)).toEqual(['privacy', 'untitled', 'about']);
     expect(settingsPageOptions(pages, 'scs', 'privacy')[0]).toEqual({ key: 'privacy', label: 'Datenschutz' });
+    expect(settingsPageOptions(pages, 'scs', 'privacy_scs').map((o) => o.key)).toEqual(['privacy_scs', 'untitled', 'about']);
     expect(settingsPageOptions(pages, 'scs', 'about').map((o) => o.key)).toEqual(['about', 'privacy_scs', 'untitled']);
     expect(settingsPageOptions([], 'scs', 'gone')).toEqual([{ key: 'gone', label: 'gone' }]);
   });
