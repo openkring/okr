@@ -36,7 +36,7 @@ import { AvatarToolbarStore } from './avatar-toolbar.store';
 
       @if(title()) {
         <ion-item lines="none" color="{{colorName()}}">
-          <ion-title (click)="avatarToolbarStore.showZoomedImage()">{{ title() }}</ion-title>
+          <ion-title (click)="avatarToolbarStore.showZoomedImage(undefined, canChoose())">{{ title() }}</ion-title>
         </ion-item>
       }
       @if(subTitle(); as subTitle) {
@@ -59,6 +59,12 @@ export class AvatarToolbar {
   // inputs
   public key = input.required<string>(); // = ModelType.ModelKey e.g. person.1asdfölj
   public readOnly = input(true);
+  /**
+   * Offer the pictures uploaded earlier in the zoom view of the title. Opt-in, because `key` must be
+   * the subject the caller edits: a caller that shows another subject's picture as a fallback
+   * (responsibility portrait -> person) would change that subject's avatar.
+   */
+  public showChoices = input(false);
   public alt = input('Avatar');
   public color = input<ColorIonic>(ColorIonic.Primary);
   public title = input<string | undefined>();
@@ -71,6 +77,7 @@ export class AvatarToolbar {
   public imageSelected = output<Photo>();
 
   // computed
+  protected canChoose = computed(() => this.showChoices() && !this.readOnly());
   protected colorName = computed(() => getCategoryStringField(ColorsIonic, this.color(), 'name') );
 
   // constants

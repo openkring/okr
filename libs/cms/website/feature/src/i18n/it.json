@@ -46,6 +46,7 @@
     "count": "{count} voci",
     "empty": "Ancora nessun menu — aggiungi il primo menu",
     "noSite": "Per questa app non c'è ancora un sito web.",
+    "unavailable": "Il sito web non può essere caricato al momento. Aspetta un momento o ricarica la pagina.",
     "createSite": "Crea sito web",
     "addTop": "Aggiungi",
     "view": {

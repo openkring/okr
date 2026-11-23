@@ -5,5 +5,10 @@
         "title": "Carica immagine avatar"
       }
     }
+  },
+  "choice": {
+    "confirm": "Vuoi usare questa immagine come foto del profilo?",
+    "label": "Le tue immagini caricate",
+    "select": "Usa questa immagine"
   }
 }

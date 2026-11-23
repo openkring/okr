@@ -23,7 +23,9 @@ const page = (tenant, key, fields) => ({
   isArchived: false, tenants: [tenant], index: `n:${key} k:${key} tt:${(fields.title ?? '').toLowerCase()}`, ...fields,
 });
 
-/** Today's headings of the templates, per site. scs: a hero per page (with English); la21staefa: the page's own fields. */
+/** Today's headings of the templates, per site. scs: a hero per page (with English); la21staefa: the page's own fields.
+ * The texts must fit the app's forms, else the page cannot be saved there: page title 50, page abstract 500 (page.validations.ts;
+ * the page's subTitle takes 50 only), section title and subTitle 100 (base-section.validations.ts). */
 export const LIST_PAGES = {
   scs: [
     {
@@ -44,8 +46,8 @@ export const LIST_PAGES = {
     },
   ],
   la21staefa: [
-    { slug: 'news', pageKey: 'la21staefa_news', title: 'News & Erfolge', subTitle: 'Neuigkeiten aus dem Verein und unseren Projektgruppen.' },
-    { slug: 'termine', pageKey: 'la21staefa_termine', title: 'Termine', subTitle: 'Veranstaltungen des Vereins und der Projektgruppen im Überblick.' },
+    { slug: 'news', pageKey: 'la21staefa_news', title: 'News & Erfolge', abstract: 'Neuigkeiten aus dem Verein und unseren Projektgruppen.' },
+    { slug: 'termine', pageKey: 'la21staefa_termine', title: 'Termine', abstract: 'Veranstaltungen des Vereins und der Projektgruppen im Überblick.' },
   ],
 };
 
@@ -89,7 +91,7 @@ export function planListPages(siteId, site) {
     const heroKey = `${spec.pageKey}_hero`;
     if (spec.hero) sections[heroKey] = section(tenant, heroKey, spec.hero);
     pages[spec.pageKey] = page(tenant, spec.pageKey, {
-      title: spec.title, subTitle: spec.subTitle ?? '', sections: spec.hero ? [heroKey] : [],
+      title: spec.title, abstract: spec.abstract ?? '', sections: spec.hero ? [heroKey] : [],
     });
     lines.push(`/${spec.slug}: link «${link.label}» (${link.id}) becomes a page entry of ${spec.pageKey}`);
   }

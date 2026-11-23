@@ -1,23 +1,33 @@
 import { provideImgixLoader } from '@angular/common';
 import { Component, HostListener, computed, inject, input, linkedSignal } from '@angular/core';
-import { IonButton, IonContent, IonIcon, ModalController, ToastController } from '@ionic/angular';
+import { IonButton, IonContent, IonFooter, IonIcon, ModalController, ToastController } from '@ionic/angular';
 
 import { IMAGE_CONFIG_SHAPE, ImageConfig, ImageStyle } from '@okr/shared-models';
 import { ENV } from '@okr/shared-config';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { buildOverlayText, getImgixUrl } from '@okr/shared-util-core';
+import { addImgixParams, buildOverlayText, getImgixUrl } from '@okr/shared-util-core';
 import { downloadToBrowser } from '@okr/shared-util-angular';
 
 import { Header } from './header';
+import { ImgDirective } from './img.directive';
 import { PinchZoom } from './pinch-zoom';
 import { ImageDetailModal } from './image-detail.modal';
+
+/** A strip of pictures under the zoomed image; tapping one offers it to `select`. */
+export interface ImageChoices {
+  paths: string[];       // storage paths, including the one that is currently shown
+  label: string;         // aria-label of the strip
+  selectLabel: string;   // aria-label of a thumbnail
+  /** Resolves to true when the picture was taken over; the viewer then shows it. */
+  select: (path: string) => Promise<boolean>;
+}
 
 @Component({
   selector: 'okr-image-view-modal',
   standalone: true,
   imports: [
-    Header, SvgIconPipe, PinchZoom,
-    IonContent, IonButton, IonIcon
+    Header, SvgIconPipe, PinchZoom, ImgDirective,
+    IonContent, IonFooter, IonButton, IonIcon
   ],
   providers: [
     provideImgixLoader('https://bkaiser.imgix.net')
@@ -50,7 +60,7 @@ import { ImageDetailModal } from './image-detail.modal';
       width: auto;
       height: auto;
       max-width: 100%;
-      max-height: 85dvh;
+      max-height: min(85dvh, 100%);
       object-fit: contain;
       user-select: none;
       -webkit-user-drag: none;
@@ -93,6 +103,28 @@ import { ImageDetailModal } from './image-detail.modal';
       background: linear-gradient(to top, rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0));
       pointer-events: none;
     }
+    .choices {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 8px 16px calc(8px + env(safe-area-inset-bottom));
+      background: #000;
+    }
+    .choices button {
+      flex: 0 0 auto;
+      width: 64px;
+      height: 64px;
+      padding: 0;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      overflow: hidden;
+      background: none;
+      opacity: 0.7;
+      cursor: pointer;
+    }
+    .choices button.current { border-color: #fff; opacity: 1; cursor: default; }
+    .choices button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+    .choices img { width: 100%; height: 100%; object-fit: cover; }
     .counter {
       position: absolute;
       bottom: 0.5rem;
@@ -137,6 +169,20 @@ import { ImageDetailModal } from './image-detail.modal';
             }
           </div>
       </ion-content>
+      @if (choices(); as choices) {
+        @if (choices.paths.length > 1) {
+          <ion-footer class="ion-no-border">
+            <div class="choices" role="group" [attr.aria-label]="choices.label">
+              @for (path of choices.paths; track path) {
+                <button type="button" [class.current]="path === currentUrl()" [attr.aria-label]="choices.selectLabel"
+                  [attr.aria-current]="path === currentUrl() ? 'true' : null" (click)="choose(path)">
+                  <img okrImg [src]="thumbnailUrl(path)" alt="" />
+                </button>
+              }
+            </div>
+          </ion-footer>
+        }
+      }
   `
 })
 export class ImageViewModal {
@@ -154,15 +200,21 @@ export class ImageViewModal {
   // (buttons + ArrowLeft/ArrowRight) pages through the list, wrapping at both ends.
   public images = input<ImageConfig[]>([]);
   public startIndex = input(0);
+  // Picker entry point (single image only): a strip of pictures the shown one can be replaced with.
+  public choices = input<ImageChoices | undefined>();
 
   // passing constants to the template
   protected imgixBaseUrl = this.env.services.imgixBaseUrl;
+
+  /** The single image: the `url` input until a picture of the strip is taken over. */
+  private readonly shownUrl = linkedSignal(() => this.url());
+  private choosing = false;
 
   // The effective list to page through: the gallery when provided, otherwise the single image.
   protected gallery = computed<ImageConfig[]>(() => {
     const images = this.images();
     if (images.length > 0) return images;
-    return [{ ...IMAGE_CONFIG_SHAPE, url: this.url(), altText: this.altText(), label: this.title() }];
+    return [{ ...IMAGE_CONFIG_SHAPE, url: this.shownUrl(), altText: this.altText(), label: this.title() }];
   });
   protected hasMultiple = computed(() => this.gallery().length > 1);
   protected hasInfo = computed(() => !this.currentUrl().startsWith('http'));
@@ -200,6 +252,22 @@ export class ImageViewModal {
     });
     await modal.present();
     await modal.onWillDismiss();
+  }
+
+  protected thumbnailUrl(path: string): string {
+    return `${this.imgixBaseUrl}/${addImgixParams(path, 128)}`;
+  }
+
+  /** `select` asks for confirmation: a second tap before its alert is up must not open another one. */
+  protected async choose(path: string): Promise<void> {
+    const choices = this.choices();
+    if (!choices || this.choosing || path === this.currentUrl()) return;
+    this.choosing = true;
+    try {
+      if (await choices.select(path)) this.shownUrl.set(path);
+    } finally {
+      this.choosing = false;
+    }
   }
 
   protected next(): void {

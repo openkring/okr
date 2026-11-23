@@ -2,7 +2,7 @@ import { computed, inject, Injectable } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { catchError, of } from 'rxjs';
+import { catchError, from, Observable, of, startWith, switchMap } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
@@ -89,6 +89,18 @@ export const _WebsiteSitemapStore = signalStore(
       params: resourceParams(() => ({ siteId: store.siteId() })),
       stream: ({ params }) => store.websiteService.read(params.siteId).pipe(catchError(() => of(undefined))),
     }),
+    // undefined = not asked, or no answer yet; true only when the server says that there is no such document
+    siteMissingResource: rxResource({
+      params: resourceParams(() => ({ siteId: store.siteId() })),
+      stream: ({ params }) => store.websiteService.read(params.siteId).pipe(
+        switchMap((site): Observable<boolean | undefined> => {
+          if (!params.siteId) return of(undefined);
+          if (site) return of(false);
+          return from(store.websiteService.isMissing(params.siteId)).pipe(startWith(undefined), catchError(() => of(false)));
+        }),
+        catchError(() => of(false)),
+      ),
+    }),
     pagesResource: rxResource({
       params: resourceParams(() => ({ userKey: store.currentUser()?.okey ?? '' })),
       stream: () => store.pageService.list().pipe(catchError(() => of([] as PageModel[]))),
@@ -111,7 +123,9 @@ export const _WebsiteSitemapStore = signalStore(
       nav,
       pagesByKey,
       homeNode,
-      isLoading: computed(() => store.websiteResource.isLoading()),
+      isLoading: computed(() => store.websiteResource.isLoading() || (!website() && store.siteMissingResource.value() === undefined)),
+      /** there is really no website document; without a website and not missing, it could not be read */
+      isMissing: computed(() => !website() && store.siteMissingResource.value() === true),
       siteName: computed(() => website()?.name ?? ''),
       nodeCount: computed(() => flatten(nav()).filter((n) => !n.isArchived).length),
       canEdit: computed(() => hasRole('contentAdmin', store.currentUser())),
@@ -306,7 +320,7 @@ export const _WebsiteSitemapStore = signalStore(
       /** Creates `websites/{siteId}` with the app name and an empty tree. */
       async createSite(): Promise<void> {
         const siteId = store.siteId();
-        if (!siteId || latest()) return;
+        if (!siteId || latest() || !store.isMissing()) return;
         const site = new WebsiteModel(store.tenantId());
         site.okey = siteId;
         site.name = store.appStore.appConfig().appName;

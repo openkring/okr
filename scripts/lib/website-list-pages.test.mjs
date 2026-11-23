@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { planListPages } from './website-list-pages.mjs';
+import { LIST_PAGES, planListPages } from './website-list-pages.mjs';
 
 const site = () => ({
   tenants: ['scs'],
@@ -36,4 +36,15 @@ test('without a link there is nothing to convert', () => {
   const { pages, lines } = planListPages('scs', { ...site(), nav: [] });
   assert.deepEqual(pages, {});
   assert.match(lines[0], /skipped/);
+});
+
+test('every text fits the form of the app', () => {
+  for (const spec of Object.values(LIST_PAGES).flat()) {
+    assert.ok(spec.title.length <= 50, `${spec.pageKey} title`);
+    assert.ok((spec.abstract ?? '').length <= 500, `${spec.pageKey} abstract`);
+    for (const texts of spec.hero ? [spec.hero, spec.hero.en] : []) {
+      assert.ok(texts.title.length <= 100, `${spec.pageKey} hero title`);
+      assert.ok(texts.subTitle.length <= 100, `${spec.pageKey} hero subTitle`);
+    }
+  }
 });

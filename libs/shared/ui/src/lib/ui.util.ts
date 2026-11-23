@@ -6,7 +6,7 @@ import { Dimensions, ImageConfig, ImageStyle, UserModel } from "@okr/shared-mode
 import { DateFormat, debugMessage, getTodayStr, warn } from "@okr/shared-util-core";
 
 import { DateSelectModal } from "./date-select.modal";
-import { ImageViewModal } from "./image-view.modal";
+import { ImageChoices, ImageViewModal } from "./image-view.modal";
 import { ImageSliderModal } from "./image-slider.modal";
 import { VideoViewModal } from "./video-view.modal";
 
@@ -55,7 +55,8 @@ export async function openImageGallery(modalController: ModalController, gallery
 // show a zoomed version of the image in a modal.
 // When `gallery` holds more than one image, the modal shows prev/next buttons (and ArrowLeft/ArrowRight
 // keyboard support) to page through the list, starting at `startIndex`.
-export async function showZoomedImage(modalController: ModalController, url: string, title: string, style: ImageStyle, altText = '', cssClass = 'modal-fixed-height', gallery: ImageConfig[] = [], startIndex = 0): Promise<void> {
+// `choices` adds a strip of pictures the shown one can be replaced with (single image only).
+export async function showZoomedImage(modalController: ModalController, url: string, title: string, style: ImageStyle, altText = '', cssClass = 'modal-fixed-height', gallery: ImageConfig[] = [], startIndex = 0, choices?: ImageChoices): Promise<void> {
   const modal = await modalController.create({
     component: ImageViewModal,
     cssClass,
@@ -65,7 +66,8 @@ export async function showZoomedImage(modalController: ModalController, url: str
       url,
       style,
       images: gallery,
-      startIndex
+      startIndex,
+      choices
     }
   });
   modal.present();

@@ -3,14 +3,15 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { map, Observable, of, switchMap, take } from 'rxjs';
 import { Platform } from '@ionic/angular';
 import { Photo } from '@capacitor/camera';
+import { listAll, ref } from 'firebase/storage';
 
-import { ENV } from '@okr/shared-config';
+import { ENV, STORAGE } from '@okr/shared-config';
 import { THUMBNAIL_SIZE } from '@okr/shared-constants';
 import { APP_STORE_MIN, FirestoreService } from '@okr/shared-data-access';
 import { AvatarCollection, AvatarModel } from '@okr/shared-models';
-import { addImgixParams, getImgixUrl, isImage } from '@okr/shared-util-core';
+import { addImgixParams, getImgixUrl, isImage, warn } from '@okr/shared-util-core';
 
-import { avatarDocId, newAvatarModel, readAsFile } from '@okr/avatar-util';
+import { avatarDocId, avatarStorageDir, getAvatarChoices, newAvatarModel, readAsFile } from '@okr/avatar-util';
 import { UploadService } from './upload.service';
 
 export interface UserPhoto {
@@ -33,6 +34,7 @@ export class AvatarService {
   private readonly firestoreService = inject(FirestoreService);
   private readonly uploadService = inject(UploadService);
   private readonly env = inject(ENV);
+  private readonly storage = inject(STORAGE);
   private readonly appStore = inject(APP_STORE_MIN);
   // Kept explicit: toSignal/toObservable below are called from the constructor and are handed
   // this injector rather than relying on an ambient injection context.
@@ -119,6 +121,37 @@ export class AvatarService {
       // Cache automatically updates via searchData subscription
     }
     return downloadUrl;
+  }
+
+  /**
+   * List the pictures a subject can choose its avatar from: everything this tenant uploaded for it,
+   * the newest first. A failed listing (offline, no access) leaves only the current picture.
+   * @param key the key of the avatar in the format ModelType.ModelKey e.g. person.1123123asdf
+   */
+  public async listAvatarChoices(key: string): Promise<string[]> {
+    let paths: string[] = [];
+    try {
+      const result = await listAll(ref(this.storage, avatarStorageDir(this.env.tenantId, key)));
+      paths = result.items.map(item => item.fullPath);
+    } catch (ex) {
+      warn(`AvatarService.listAvatarChoices -> cannot list the pictures of ${key}: ${ex}`);
+    }
+    return getAvatarChoices(paths, this.getCachedStoragePath(key) ?? '');
+  }
+
+  /**
+   * Make an already uploaded picture this tenant's avatar of the subject.
+   * An existing avatar document only gets the new path, so its tenants stay as they are.
+   * @param key the key of the avatar in the format ModelType.ModelKey e.g. person.1123123asdf
+   * @param storagePath the storage path of the picture
+   * @returns true if the avatar was changed
+   */
+  public async selectAvatar(key: string, storagePath: string): Promise<boolean> {
+    const okey = avatarDocId(this.env.tenantId, key);
+    const saved = this.storagePathCache().has(okey)
+      ? await this.firestoreService.updateFields(AvatarCollection, okey, { storagePath })
+      : await this.updateOrCreate({ okey, tenants: [this.env.tenantId], storagePath, isArchived: false });
+    return saved !== undefined;
   }
 
   /**

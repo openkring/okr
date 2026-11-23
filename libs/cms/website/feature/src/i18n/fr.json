@@ -46,6 +46,7 @@
     "count": "{count} entrées",
     "empty": "Pas encore de menus — ajoute le premier menu",
     "noSite": "Il n'y a pas encore de site web pour cette app.",
+    "unavailable": "Le site web ne peut pas être chargé pour le moment. Attends un instant ou recharge la page.",
     "createSite": "Créer le site web",
     "addTop": "Ajouter",
     "view": {

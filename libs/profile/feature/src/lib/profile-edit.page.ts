@@ -44,6 +44,7 @@ import { MyNewsletters } from '@okr/relationship-newsletter-feature';
         modelType="person"
         subTitle="{{ loginIdSubtitle() }}"
         [readOnly]="false"
+        [showChoices]="true"
         (imageSelected)="onImageSelected($event)"
       />
       <ion-item lines="none">
