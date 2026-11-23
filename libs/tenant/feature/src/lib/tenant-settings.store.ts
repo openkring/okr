@@ -6,7 +6,7 @@ import { AppConfigService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AlertService } from '@okr/shared-util-angular';
-import { OPERATOR_TENANT_ID, hasRole } from '@okr/shared-util-core';
+import { hasRole, isOperator } from '@okr/shared-util-core';
 import {
   SETTINGS_CONFIRM_I18N_KEYS, SETTINGS_GROUPS, confirmationMessage, settingsConfirmations, settingsDiff, settingsOf,
 } from '@okr/tenant-util';
@@ -39,8 +39,8 @@ export const TenantSettingsStore = signalStore(
     isLoaded: computed(() => store._appStore.isAppConfigSettled() && store._appStore.appConfigResource.hasValue()),
     /** Admin of this tenant. */
     isAdmin: computed(() => hasRole('admin', store._appStore.currentUser())),
-    /** The operator: an admin whose own tenant is the operator tenant. The rules decide for real. */
-    isOperator: computed(() => store._appStore.tenantId() === OPERATOR_TENANT_ID && hasRole('admin', store._appStore.currentUser())),
+    /** The operator: `isOperator(user)` of util-core, which mirrors `firestore.rules` (admin of exactly `bka`). */
+    isOperator: computed(() => isOperator(store._appStore.currentUser())),
   })),
   withMethods((store) => ({
     /**

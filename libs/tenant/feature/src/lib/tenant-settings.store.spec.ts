@@ -12,6 +12,7 @@ import { AlertService } from '@okr/shared-util-angular';
 import { TenantSettingsStore } from './tenant-settings.store';
 
 const ADMIN = { roles: { admin: true } };
+const OPERATOR = { roles: { admin: true }, tenants: ['bka'] };
 const REGISTERED = { roles: { registered: true } };
 
 /** `createApplication`, not `TestBed`: the barrels pulled in here make TestBed die with «reading 'ngModule'» (see feature-enabled.guard.spec.ts). */
@@ -66,18 +67,21 @@ describe('TenantSettingsStore.save', () => {
     const a = await setup();
     expect(await a.store.save('platform', t({ gitOrg: 'a' }), t({ gitOrg: 'b' }))).toBe(false);
     expect(a.patch).not.toHaveBeenCalled();
-    const b = await setup({ tenantId: 'bka' });
+    // an admin of bka AND another tenant is not the operator
+    const c = await setup({ tenantId: 'bka', user: { roles: { admin: true }, tenants: ['bka', 'scs'] } });
+    expect(await c.store.save('platform', t({ gitOrg: 'a' }), t({ gitOrg: 'b' }))).toBe(false);
+    const b = await setup({ tenantId: 'bka', user: OPERATOR });
     expect(await b.store.save('platform', t({ gitOrg: 'a' }), t({ gitOrg: 'b' }))).toBe(true);
   });
 
   it('refuses a foreign tenant unless operator and platform', async () => {
     const a = await setup();
     expect(await a.store.save('app', t({ appName: 'A' }), t({ appName: 'B' }), 'kwa')).toBe(false);
-    const b = await setup({ tenantId: 'bka' });
+    const b = await setup({ tenantId: 'bka', user: OPERATOR });
     expect(await b.store.save('app', t({ appName: 'A' }), t({ appName: 'B' }), 'kwa')).toBe(false);
     expect(await b.store.save('platform', t({ gitOrg: 'a' }), t({ gitOrg: 'b' }), 'kwa')).toBe(true);
     expect(b.patch).toHaveBeenCalledWith('kwa', { gitOrg: 'b' });
-    expect(b.log).toHaveBeenCalledWith('tenant', 'settings', ADMIN, 'kwa: gitOrg');
+    expect(b.log).toHaveBeenCalledWith('tenant', 'settings', OPERATOR, 'kwa: gitOrg');
   });
 
   it('asks once and saves nothing when cancelled', async () => {
