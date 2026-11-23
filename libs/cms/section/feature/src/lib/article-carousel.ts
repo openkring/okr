@@ -14,6 +14,7 @@ import { badgeFor, Img } from '@okr/shared-ui';
   schemas: [
     CUSTOM_ELEMENTS_SCHEMA
   ],
+  host: { '[class.inert]': 'inert()' },
   styles: [`
     :host { display: block; }
     .carousel-container { position: relative; margin: 0.5rem 0; }
@@ -62,6 +63,7 @@ import { badgeFor, Img } from '@okr/shared-ui';
     }
     /* the two loop copies (last image before the first, first image after the last) get no dot */
     .carousel-slide.clone::scroll-marker { content: none; }
+    :host(.inert) .carousel-slide::scroll-marker { pointer-events: none; }
     .carousel-slide::scroll-marker:hover { background: #9ca3af; }
     .carousel-slide::scroll-marker:target-current { background: #3b82f6; transform: scale(1.3); border: 1px solid black; }
     /* prev / next: real buttons (the native ::scroll-button stops at both ends and is Chrome-only);
@@ -85,7 +87,7 @@ import { badgeFor, Img } from '@okr/shared-ui';
       <div class="carousel" #carousel (scroll)="onCarouselScroll()">
         @for(slide of loopSlides(); track $index) {
           <div class="carousel-slide" [class.clone]="slide.clone" [style.height]="previewHeight()" [attr.aria-hidden]="slide.clone ? 'true' : null">
-            <okr-img [captionFallbacks]="captionFallbacks()" [image]="slide.image" [imageStyle]="carouselImageStyle()" [editMode]="editMode()" [gallery]="images()" [zoomTitle]="zoomTitle()" [badge]="badgeOf(slide.image.label)" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
+            <okr-img [captionFallbacks]="captionFallbacks()" [image]="slide.image" [imageStyle]="carouselImageStyle()" [editMode]="editMode() || inert()" [gallery]="images()" [zoomTitle]="zoomTitle()" [badge]="badgeOf(slide.image.label)" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
           </div>
         }
       </div>
@@ -111,7 +113,7 @@ export class ArticleCarousel {
   public zoomTitle = input<string>('Zoom');
   public imageSelected = output<ImageConfig>();
   public previewDevice = input<ArticlePreviewDevice>('auto');
-  /** the arrows do nothing */
+  /** the arrows, the dots and a click on an image do nothing */
   public inert = input(false);
 
   protected badgeOf(label: string): string | undefined { return badgeFor(this.imageBadges(), label); }

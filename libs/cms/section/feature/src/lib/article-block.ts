@@ -1,4 +1,5 @@
-import { Component, computed, inject, input, output } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { Component, TemplateRef, computed, inject, input, output } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonButton, IonItem } from '@ionic/angular';
 
@@ -11,6 +12,9 @@ import { ArticleCarousel } from './article-carousel';
 import { ArticleImages } from './article-images';
 import { ArticleSlideshowComponent } from './article-slideshow';
 import { openSectionLink } from './section-link';
+
+/** The padding of a list of blocks (the one of the ion-grid of a classic article), for the reader list and the canvas. */
+export const ARTICLE_LIST_PADDING = '5px';
 
 /**
  * The grid of the columns and the header in one of them, for whoever draws the columns around `okr-article-block`s: the
@@ -42,7 +46,7 @@ export const ARTICLE_COLUMNS_STYLES = `
 @Component({
   selector: 'okr-article-block',
   standalone: true,
-  imports: [Img, ArticleCarousel, ArticleImages, ArticleSlideshowComponent, IonButton, IonItem],
+  imports: [Img, ArticleCarousel, ArticleImages, ArticleSlideshowComponent, NgTemplateOutlet, IonButton, IonItem],
   host: {
     '[class.classic-text]': 'classic()',
     '(click)': 'onLink($event)',
@@ -79,7 +83,11 @@ export const ARTICLE_COLUMNS_STYLES = `
       @case ('text') {
         <div class="block text">
           <ion-item lines="none" [class.ion-no-padding]="!classic()">
-            <div class="html" [style.text-align]="block.align === 'left' ? null : block.align" [innerHTML]="block.html"></div>
+            @if (textEditor(); as editor) {
+              <div class="html" [style.text-align]="block.align === 'left' ? null : block.align"><ng-container [ngTemplateOutlet]="editor" /></div>
+            } @else {
+              <div class="html" [style.text-align]="block.align === 'left' ? null : block.align" [innerHTML]="block.html"></div>
+            }
           </ion-item>
         </div>
       }
@@ -100,7 +108,7 @@ export const ARTICLE_COLUMNS_STYLES = `
       }
       @case ('carousel') {
         <div class="block">
-          <okr-article-carousel [images]="block.images" [imageStyle]="block.imageStyle" [captionFallbacks]="captionFallbacks()" [editMode]="editMode() || inert()" [imageBadges]="imageBadges()" [emitImageClicks]="emitImageClicks()" [zoomTitle]="i18n.zoomed()" [previewDevice]="previewDevice()" [inert]="inert()" (imageSelected)="imageSelected.emit($event)" />
+          <okr-article-carousel [images]="block.images" [imageStyle]="block.imageStyle" [captionFallbacks]="captionFallbacks()" [editMode]="editMode()" [imageBadges]="imageBadges()" [emitImageClicks]="emitImageClicks()" [zoomTitle]="i18n.zoomed()" [previewDevice]="previewDevice()" [inert]="inert()" (imageSelected)="imageSelected.emit($event)" />
         </div>
       }
       @case ('slideshow') {
@@ -112,7 +120,11 @@ export const ARTICLE_COLUMNS_STYLES = `
         <div class="block callout">
           <div class="tint" [class]="block.tone">
             <ion-item lines="none" class="ion-no-padding">
-              <div class="html" [innerHTML]="block.html"></div>
+              @if (textEditor(); as editor) {
+                <div class="html"><ng-container [ngTemplateOutlet]="editor" /></div>
+              } @else {
+                <div class="html" [innerHTML]="block.html"></div>
+              }
             </ion-item>
           </div>
         </div>
@@ -126,7 +138,7 @@ export const ARTICLE_COLUMNS_STYLES = `
     }
   `,
 })
-export class ArticleBlock {
+export class ArticleBlockComponent {
   private readonly router = inject(Router);
   protected readonly i18n = inject(I18nService).translateAll({ zoomed: SECTION_I18N_KEYS.article_zoomed });
 
@@ -150,6 +162,8 @@ export class ArticleBlock {
   public inert = input(false);
   /** a text with the spacing of an article of only a text; not an aligned one, which readers see as a block */
   public classicText = input(false);
+  /** the editor of a text or callout, drawn in place of its html (the canvas of the editor) */
+  public textEditor = input<TemplateRef<unknown>>();
 
   // computed
   protected classic = computed(() => {
