@@ -11,7 +11,7 @@ import { badgeFor, DeferError, Img, OptionalCardHeader, Spinner } from '@okr/sha
 // lazy: only ever used inside @defer below. Any other use of it here would make it eager
 import { ArticleBlocks } from './article-blocks';
 import { ArticleCarousel } from './article-carousel';
-import { ArticleFrame } from './article-frame';
+import { ARTICLE_FRAME_STYLES, ArticleFrame } from './article-frame';
 import { ArticleImages } from './article-images';
 import { ArticleSlideshowComponent } from './article-slideshow';
 import { ArticleStore } from './article-section.store';
@@ -27,7 +27,7 @@ import { openSectionLink } from './section-link';
   schemas: [
     CUSTOM_ELEMENTS_SCHEMA
   ],
-  styles: [`
+  styles: [ARTICLE_FRAME_STYLES, `
     /* an own background colour: image and text centred on each other */
     :host(.colored-article) ion-row { align-items: center; }
     .header-col okr-optional-card-header ::ng-deep ion-card-subtitle { font-size: 1.25rem; font-weight: 600; text-transform: none; }
