@@ -42,6 +42,8 @@ describe('settingsDisplayValue', () => {
     expect(settingsDisplayValue('ownerLocationId', 'loc', CTX)).toBe('Hafen');
     expect(settingsDisplayValue('defaultResourceId', 'r1', CTX)).toBe('r1');
     expect(settingsDisplayValue('rootUrl', '/diary', CTX)).toBe('Tagebuch');
+    expect(settingsDisplayValue('welcomeBannerUrl', 'tenant/scs/app/welcome.jpg', CTX)).toBe('welcome.jpg');
+    expect(settingsDisplayValue('notfoundBannerUrl', '', CTX)).toBe('');
     expect(settingsDisplayValue('rootUrl', '/person/all?filters=search', CTX)).toBe('/person/all?filters=search');
     expect(settingsDisplayValue('locale', 'rm', CTX)).toBe('rm');
     expect(settingsDisplayValue('showEmail', 'nobody', CTX)).toBe('nobody');

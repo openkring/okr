@@ -584,11 +584,11 @@
       },
       "welcomeBannerUrl": {
         "label": "Imagen de la página de inicio de sesión",
-        "helper": "Fondo del inicio de sesión. Vacío: ninguna imagen."
+        "helper": "Fondo de la página de inicio de sesión y de las páginas para restablecer la contraseña. Formato JPG o PNG. Vacío: ninguna imagen."
       },
       "notfoundBannerUrl": {
         "label": "Imagen de la página «No encontrado»",
-        "helper": "Sin imagen propia se muestra la imagen predeterminada de la app."
+        "helper": "Se muestra en la página «No encontrado». Formato JPG o PNG. Sin imagen propia se muestra la imagen predeterminada de la app."
       },
       "locale": {
         "label": "Formato de fecha y hora",
@@ -636,7 +636,7 @@
       },
       "mailFrom": {
         "label": "Dirección del remitente",
-        "helper": "Remitente propuesto al escribir un correo. Vacío: app@ y el dominio desde el que la app envía correos."
+        "helper": "Al escribir un correo, la app usa esta dirección como remitente, como destinatario al enviar a varias personas, y la indica como contacto al pie del correo. Vacío: app@ y el dominio desde el que la app envía correos."
       },
       "dpoName": {
         "label": "Contacto de protección de datos: nombre",
@@ -807,6 +807,15 @@
       "positive": "El número debe ser mayor que 0."
     },
     "fallback": "Predeterminado",
-    "country_remove": "Quitar el país"
+    "country_remove": "Quitar el país",
+    "image_upload": "Subir imagen",
+    "image_replace": "Subir otra imagen",
+    "image_remove": "Quitar imagen",
+    "image_none": "Ninguna imagen definida",
+    "image_uploading": "La imagen se está subiendo.",
+    "image_type_error": "Elige una imagen en formato JPG o PNG.",
+    "image_failed": "No se pudo subir la imagen. Inténtalo de nuevo.",
+    "mail_domains": "Se permiten direcciones que terminen en:",
+    "mail_domains_none": "Primero, el operador tiene que definir el dominio para los correos. Solo entonces podrás introducir aquí una dirección."
   }
 }

@@ -9,13 +9,15 @@ import { settingsDiff, settingsGroupKey } from '@okr/tenant-util';
 import type { SettingsContext, SettingsGroupId, SettingsI18n, SettingsPageOption, TenantSettings } from '@okr/tenant-util';
 
 import { SettingsAppForm } from './settings-app.form';
+import { SettingsImagesForm } from './settings-images.form';
 import { SettingsLanguageForm } from './settings-language.form';
+import { SettingsMailForm } from './settings-mail.form';
 import { SettingsOperatorForm } from './settings-operator.form';
 import { SettingsPrivacyForm } from './settings-privacy.form';
 import { SettingsStartForm } from './settings-start.form';
 
 /** The groups this modal has a form for; the page offers «Bearbeiten» on exactly these cards. One entry per `@case` below. */
-export const SETTINGS_FORM_GROUPS: readonly SettingsGroupId[] = ['app', 'language', 'start', 'operator', 'privacy'];
+export const SETTINGS_FORM_GROUPS: readonly SettingsGroupId[] = ['app', 'images', 'language', 'start', 'operator', 'mail', 'privacy'];
 
 /**
  * Edits one group of `/tenant/settings` (spec 1.174 §9.2). It writes nothing itself: `onSave` (from the page) does, and
@@ -26,7 +28,7 @@ export const SETTINGS_FORM_GROUPS: readonly SettingsGroupId[] = ['app', 'languag
   selector: 'okr-settings-edit-modal',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Header, ChangeConfirmation, SettingsAppForm, SettingsLanguageForm, SettingsOperatorForm, SettingsPrivacyForm, SettingsStartForm, IonContent],
+  imports: [Header, ChangeConfirmation, SettingsAppForm, SettingsImagesForm, SettingsLanguageForm, SettingsMailForm, SettingsOperatorForm, SettingsPrivacyForm, SettingsStartForm, IonContent],
   template: `
     <okr-header [i18n]="{ title: title() }" [isModal]="true" />
     @if (showConfirmation()) {
@@ -37,6 +39,11 @@ export const SETTINGS_FORM_GROUPS: readonly SettingsGroupId[] = ['app', 'languag
         @case ('app') {
           <okr-settings-app-form [formData]="formData()" (formDataChange)="formData.set($event)"
             [i18n]="i18n()" [context]="context()" [readOnly]="isSaving()" [showForm]="showForm()"
+            (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" />
+        }
+        @case ('images') {
+          <okr-settings-images-form [formData]="formData()" (formDataChange)="formData.set($event)"
+            [i18n]="i18n()" [context]="context()" [onUpload]="onUpload()" [readOnly]="isSaving()" [showForm]="showForm()"
             (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" />
         }
         @case ('language') {
@@ -51,6 +58,11 @@ export const SETTINGS_FORM_GROUPS: readonly SettingsGroupId[] = ['app', 'languag
         }
         @case ('operator') {
           <okr-settings-operator-form [formData]="formData()" (formDataChange)="formData.set($event)"
+            [i18n]="i18n()" [context]="context()" [readOnly]="isSaving()" [showForm]="showForm()"
+            (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" />
+        }
+        @case ('mail') {
+          <okr-settings-mail-form [formData]="formData()" (formDataChange)="formData.set($event)"
             [i18n]="i18n()" [context]="context()" [readOnly]="isSaving()" [showForm]="showForm()"
             (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" />
         }
@@ -77,6 +89,8 @@ export class SettingsEditModal {
   public readonly pageOptions = input<Signal<SettingsPageOption[]>>(signal<SettingsPageOption[]>([]));
   /** A signal for the same reason: menus, pages and their translated labels. */
   public readonly startOptions = input<Signal<SettingsPageOption[]>>(signal<SettingsPageOption[]>([]));
+  /** Picks and uploads an image for a field of the images group; answers its storage path, undefined when cancelled or failed. */
+  public readonly onUpload = input<(field: string) => Promise<string | undefined>>(() => Promise.resolve(undefined));
   /** Saves the values; true closes the modal. */
   public readonly onSave = input.required<(after: TenantSettings) => Promise<boolean>>();
 

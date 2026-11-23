@@ -584,11 +584,11 @@
       },
       "welcomeBannerUrl": {
         "label": "Immagine della pagina di accesso",
-        "helper": "Sfondo dell'accesso. Vuoto: nessuna immagine."
+        "helper": "Sfondo della pagina di accesso e delle pagine per reimpostare la password. Formato JPG o PNG. Vuoto: nessuna immagine."
       },
       "notfoundBannerUrl": {
         "label": "Immagine della pagina «Non trovato»",
-        "helper": "Senza un'immagine propria viene mostrata l'immagine predefinita dell'app."
+        "helper": "Mostrata nella pagina «Non trovato». Formato JPG o PNG. Senza un'immagine propria viene mostrata l'immagine predefinita dell'app."
       },
       "locale": {
         "label": "Formato di data e ora",
@@ -636,7 +636,7 @@
       },
       "mailFrom": {
         "label": "Indirizzo del mittente",
-        "helper": "Mittente proposto quando scrivi un'e-mail. Vuoto: app@ e il dominio da cui l'app invia le e-mail."
+        "helper": "Quando scrivi un'e-mail, l'app usa questo indirizzo come mittente, come destinatario per l'invio a più persone, e lo indica come contatto in fondo al messaggio. Vuoto: app@ e il dominio da cui l'app invia le e-mail."
       },
       "dpoName": {
         "label": "Contatto protezione dei dati: nome",
@@ -807,6 +807,15 @@
       "positive": "Il numero deve essere maggiore di 0."
     },
     "fallback": "Predefinito",
-    "country_remove": "Rimuovi il paese"
+    "country_remove": "Rimuovi il paese",
+    "image_upload": "Carica immagine",
+    "image_replace": "Carica un'altra immagine",
+    "image_remove": "Rimuovi immagine",
+    "image_none": "Nessuna immagine impostata",
+    "image_uploading": "L'immagine è in caricamento.",
+    "image_type_error": "Scegli un'immagine in formato JPG o PNG.",
+    "image_failed": "Non è stato possibile caricare l'immagine. Riprova.",
+    "mail_domains": "Sono consentiti indirizzi che terminano con:",
+    "mail_domains_none": "Prima l'operatore deve impostare il dominio per le e-mail. Solo dopo potrai inserire qui un indirizzo."
   }
 }

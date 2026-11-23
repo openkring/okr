@@ -584,11 +584,11 @@
       },
       "welcomeBannerUrl": {
         "label": "Bild der Anmeldeseite",
-        "helper": "Hintergrund der Anmeldung. Leer: kein Bild."
+        "helper": "Hintergrund der Anmeldeseite und der Seiten zum Zurücksetzen des Passworts. Format JPG oder PNG. Leer: kein Bild."
       },
       "notfoundBannerUrl": {
         "label": "Bild der Seite «Nicht gefunden»",
-        "helper": "Ohne eigenes Bild wird das Standardbild der App gezeigt."
+        "helper": "Wird auf der Seite «Nicht gefunden» gezeigt. Format JPG oder PNG. Ohne eigenes Bild wird das Standardbild der App gezeigt."
       },
       "locale": {
         "label": "Darstellung von Datum und Uhrzeit",
@@ -636,7 +636,7 @@
       },
       "mailFrom": {
         "label": "Absenderadresse",
-        "helper": "Vorschlag für den Absender beim Schreiben einer E-Mail. Leer: app@ und die Domain, von der die App E-Mails verschickt."
+        "helper": "Die App setzt diese Adresse beim Schreiben einer E-Mail als Absender ein, beim Versand an mehrere Personen auch als Empfänger, und nennt sie unten in der Mail als Kontakt. Leer: app@ und die Domain, von der die App E-Mails verschickt."
       },
       "dpoName": {
         "label": "Datenschutzkontakt: Name",
@@ -807,6 +807,15 @@
       "positive": "Die Zahl muss grösser als 0 sein."
     },
     "fallback": "Standard",
-    "country_remove": "Land entfernen"
+    "country_remove": "Land entfernen",
+    "image_upload": "Bild hochladen",
+    "image_replace": "Anderes Bild hochladen",
+    "image_remove": "Bild entfernen",
+    "image_none": "Kein Bild gesetzt",
+    "image_uploading": "Das Bild wird hochgeladen.",
+    "image_type_error": "Wähle ein Bild im Format JPG oder PNG.",
+    "image_failed": "Das Bild konnte nicht hochgeladen werden. Versuche es noch einmal.",
+    "mail_domains": "Erlaubt sind Adressen mit der Endung:",
+    "mail_domains_none": "Zuerst muss der Betreiber die Domain für E-Mails festlegen. Erst danach kannst du hier eine Adresse eintragen."
   }
 }

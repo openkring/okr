@@ -6,6 +6,7 @@ import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol
 import { combineLatest, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
+import { UploadService } from '@okr/avatar-data-access';
 import { MenuService } from '@okr/cms-menu-data-access';
 import { expandMenuTokens, resolveMenuLabelKey } from '@okr/cms-menu-util';
 import { PageService } from '@okr/cms-page-data-access';
@@ -14,11 +15,12 @@ import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Spinner } from '@okr/shared-ui';
-import { resourceParams } from '@okr/shared-util-angular';
-import { getCountryName } from '@okr/shared-util-core';
+import { AlertService, resourceParams } from '@okr/shared-util-angular';
+import { DateFormat, getCountryName, getTodayStr, resolveMimeType } from '@okr/shared-util-core';
 import { SETTINGS_FORM_GROUPS, SettingsEditModal } from '@okr/tenant-ui';
 import {
-  FEATURE_BLOCKS, SETTINGS_GROUP_IDS, SETTINGS_I18N_KEYS, settingsGroupKey, settingsPageName, settingsPageOptions, settingsRows, startOptions, startTargets,
+  FEATURE_BLOCKS, SETTINGS_GROUP_IDS, SETTINGS_I18N_KEYS, SETTINGS_IMAGE_MIMETYPES, settingsGroupKey, settingsImageExtension, settingsImagePath,
+  settingsPageName, settingsPageOptions, settingsRows, startOptions, startTargets,
 } from '@okr/tenant-util';
 import type { SettingsDisplayContext, SettingsGroupId, TenantSettings } from '@okr/tenant-util';
 
@@ -144,6 +146,8 @@ export class TenantSettingsContent {
   private readonly menuService = inject(MenuService);
   private readonly modalController = inject(ModalController);
   private readonly router = inject(Router);
+  private readonly uploadService = inject(UploadService);
+  private readonly alertService = inject(AlertService);
 
   private readonly i18n = this.i18nService.translateAll(SETTINGS_I18N_KEYS);
 
@@ -247,6 +251,7 @@ export class TenantSettingsContent {
           appDomain: platform.appDomain ?? '',
           pageOptions: computed(() => settingsPageOptions(this.pages(), this.appStore.tenantId(), storedPage)),
           startOptions: computed(() => startOptions(this.startTargets(), storedStart)),
+          onUpload: (field: string) => this.uploadImage(field),
           onSave: (after: TenantSettings) => this.save(group, before, after),
         },
       });
@@ -254,6 +259,32 @@ export class TenantSettingsContent {
     } finally {
       this.isOpening = false;
     }
+  }
+
+  /**
+   * Picks a JPG or PNG, uploads it under a new name (the imgix cache survives a re-upload of the same one) and answers its
+   * storage path; undefined when the picker was cancelled, the file is no JPG or PNG, or the upload failed.
+   * Nothing is saved here: the path becomes the form value, and the change confirmation saves it. Leaving without saving
+   * leaves the uploaded file unused in storage.
+   * `pickFile` stays the first call: Safari opens the file dialog only inside the tap that asked for it.
+   */
+  private async uploadImage(field: string): Promise<string | undefined> {
+    const file = await this.uploadService.pickFile([...SETTINGS_IMAGE_MIMETYPES]);
+    if (!file) return undefined;
+    // the accept list of a file dialog is advisory: check the picked file again, by the type the images skill resolves
+    const extension = settingsImageExtension(resolveMimeType(file.name, file.type));
+    if (!extension) {
+      await this.alertService.showToast(this.text('image_type_error'));
+      return undefined;
+    }
+    const path = settingsImagePath(this.appStore.tenantId(), field, getTodayStr(DateFormat.StoreDateTime), extension);
+    try {
+      if (path && await this.uploadService.uploadFile(file, path, this.text('image_upload'))) return path;
+    } catch (error) {
+      console.warn('TenantSettingsContent.uploadImage: the upload failed', error);
+    }
+    await this.alertService.showToast(this.text('image_failed'));
+    return undefined;
   }
 
   /** `store.save` answers false without throwing for a cancelled confirmation and a failed write; anything thrown counts as not saved. */

@@ -584,11 +584,11 @@
       },
       "welcomeBannerUrl": {
         "label": "Image of the sign-in page",
-        "helper": "Background of the sign-in page. Empty: no image."
+        "helper": "Background of the sign-in page and of the pages for resetting the password. JPG or PNG format. Empty: no image."
       },
       "notfoundBannerUrl": {
         "label": "Image of the page «Not found»",
-        "helper": "Without an own image the default image of the app is shown."
+        "helper": "Shown on the page «Not found». JPG or PNG format. Without an own image the default image of the app is shown."
       },
       "locale": {
         "label": "Format of date and time",
@@ -636,7 +636,7 @@
       },
       "mailFrom": {
         "label": "Sender address",
-        "helper": "Suggested sender when writing an e-mail. Empty: app@ and the domain from which the app sends e-mails."
+        "helper": "When you write an e-mail, the app uses this address as the sender, as the recipient when sending to several people, and names it as the contact at the bottom of the mail. Empty: app@ and the domain from which the app sends e-mails."
       },
       "dpoName": {
         "label": "Privacy contact: name",
@@ -807,6 +807,15 @@
       "positive": "The number must be greater than 0."
     },
     "fallback": "Default",
-    "country_remove": "Remove country"
+    "country_remove": "Remove country",
+    "image_upload": "Upload image",
+    "image_replace": "Upload another image",
+    "image_remove": "Remove image",
+    "image_none": "No image set",
+    "image_uploading": "The image is being uploaded.",
+    "image_type_error": "Choose an image in JPG or PNG format.",
+    "image_failed": "The image could not be uploaded. Please try again.",
+    "mail_domains": "Allowed are addresses ending in:",
+    "mail_domains_none": "The operator has to set the domain for e-mails first. Only then can you enter an address here."
   }
 }

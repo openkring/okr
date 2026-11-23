@@ -25,6 +25,7 @@
     "@okr/cms-section-data-access": "*",
     "@okr/location-data-access": "*",
     "@okr/shared-util-core": "*",
-    "@okr/activity-data-access": "*"
+    "@okr/activity-data-access": "*",
+    "@okr/avatar-data-access": "*"
   }
 }

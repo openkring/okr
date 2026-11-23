@@ -3,6 +3,7 @@ import { forkKeyFor } from '@okr/shared-util-core';
 
 import { SETTINGS_GROUPS, type SettingsGroupId, type TenantSettings } from './tenant-settings';
 import { settingsAudienceKey, settingsFieldKey, settingsLocaleKey } from './tenant-settings-i18n';
+import { settingsImageName } from './tenant-settings-image';
 
 /** What the settings page needs to show a stored value as a person would say it. A lookup answers '' for an unknown key. */
 export interface SettingsDisplayContext {
@@ -65,6 +66,8 @@ export function settingsDisplayValue(field: string, value: unknown, ctx: Setting
   if (field.startsWith('show')) return ctx.text(settingsAudienceKey(text)) || text;
   switch (field) {
     case 'locale': return ctx.text(settingsLocaleKey(text)) || text;
+    case 'welcomeBannerUrl':
+    case 'notfoundBannerUrl': return settingsImageName(text);
     case 'rootUrl': return nameOr(text, ctx.startName);
     case 'opCountryCode': return nameOr(text, ctx.countryName);
     case 'privacyPolicyPageKey': return nameOr(text, ctx.pageName);

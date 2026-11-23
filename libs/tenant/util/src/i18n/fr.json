@@ -584,11 +584,11 @@
       },
       "welcomeBannerUrl": {
         "label": "Image de la page de connexion",
-        "helper": "Arrière-plan de la connexion. Vide : aucune image."
+        "helper": "Arrière-plan de la page de connexion et des pages de réinitialisation du mot de passe. Format JPG ou PNG. Vide : aucune image."
       },
       "notfoundBannerUrl": {
         "label": "Image de la page « Introuvable »",
-        "helper": "Sans image propre, l'image par défaut de l'app s'affiche."
+        "helper": "Affichée sur la page « Introuvable ». Format JPG ou PNG. Sans image propre, l'image par défaut de l'app s'affiche."
       },
       "locale": {
         "label": "Affichage de la date et de l'heure",
@@ -636,7 +636,7 @@
       },
       "mailFrom": {
         "label": "Adresse d'expédition",
-        "helper": "Expéditeur proposé lors de la rédaction d'un e-mail. Vide : app@ et le domaine depuis lequel l'app envoie des e-mails."
+        "helper": "Quand tu écris un e-mail, l'app utilise cette adresse comme expéditeur, comme destinataire pour un envoi à plusieurs personnes, et la mentionne comme contact en bas du message. Vide : app@ et le domaine depuis lequel l'app envoie des e-mails."
       },
       "dpoName": {
         "label": "Contact protection des données : nom",
@@ -807,6 +807,15 @@
       "positive": "Le nombre doit être supérieur à 0."
     },
     "fallback": "Par défaut",
-    "country_remove": "Supprimer le pays"
+    "country_remove": "Supprimer le pays",
+    "image_upload": "Téléverser une image",
+    "image_replace": "Téléverser une autre image",
+    "image_remove": "Supprimer l'image",
+    "image_none": "Aucune image définie",
+    "image_uploading": "L'image est en cours de téléversement.",
+    "image_type_error": "Choisis une image au format JPG ou PNG.",
+    "image_failed": "L'image n'a pas pu être téléversée. Réessaie.",
+    "mail_domains": "Les adresses autorisées se terminent par :",
+    "mail_domains_none": "L'exploitant doit d'abord définir le domaine pour les e-mails. Ensuite seulement, tu pourras saisir une adresse ici."
   }
 }
