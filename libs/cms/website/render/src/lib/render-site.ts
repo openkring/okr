@@ -8,8 +8,10 @@
  *   partials/<name>.hbs     `{{> nav}}`, `{{> footer}}`, … available in every template
  *   sections/<type>.hbs     one per manifest.sectionTypes entry; gets mapSection()'s output plus
  *                           its place on the page (sectionContexts: sectionIndex, albumIndex, typeIndex)
- *   pages/<name>.hbs        one per manifest.fixedPages entry ({ name, slug, title?, description?, standalone? }, rendered to <slug>.html); gets a TemplateContext (sections: []);
+ *   pages/<name>.hbs        one per manifest.fixedPages entry ({ name, slug, title?, description?, standalone?, editable? }, rendered to <slug>.html); gets a TemplateContext (sections: []);
  *                           `standalone`: the output is the whole document, layout.hbs is skipped
+ *                           `editable`: a page entry of the tree with the same slug fills the page: the
+ *                           template gets `cmsPage: true`, that page, its `sections` and their html (`content`)
  *   sections/home/<type>.hbs optional homepage look of a section type (only with manifest.homeLayout)
  *
  * Home layout (manifest.homeLayout = 'pages/<name>'): the home page's `main` is pages/<name>.hbs,
@@ -46,7 +48,7 @@
  */
 import type { PageModel, WebsiteModel, WebsiteNode } from '@okr/shared-models';
 
-import { publishedPageSections, resolveServableSection, validateForPublish, type PublishProblem, type TemplateManifest } from './publish-validation';
+import { editableFixedPage, publishedPageSections, resolveServableSection, validateForPublish, type PublishProblem, type TemplateManifest } from './publish-validation';
 import {
   alternates,
   navItems,
@@ -324,6 +326,11 @@ export function renderSite(input: RenderInput): RenderResult {
     alternates: alternates(path, languages, siteOrigin(site)),
   });
 
+  // the group's card colour rides along (the Termine page colours an event's group label with it)
+  const fixedGroups = groupPagesInTree(site.nav ?? []).map((g) => ({ ...g, color: safeHexColor(input.groups?.get(g.key)?.color) }));
+  // editable fixed pages a tree page fills: rendered with that page, not a second time from the manifest
+  const filled = new Set(entries.flatMap((e) => (e.file === 'index' ? [] : [editableFixedPage(fixedPages, e.file)?.name ?? ''])));
+
   const renderLayout = (file: string, lang: string, context: TemplateContext, data: RenderData, pageKey: string): void => {
     try {
       files.push({ path: filePath(lang, file), content: compiled.layout(context, data) });
@@ -471,6 +478,21 @@ export function renderSite(input: RenderInput): RenderResult {
       if (pending) blocks.push(pending.left); // the form failed: the article stands alone
       const label = entry.node ? pickText(entry.node.label, entry.node.labelI18n, lang) : '';
       const slug = entry.file === 'index' ? '' : entry.file;
+      const fixed = editableFixedPage(fixedPages, slug);
+      if (fixed) {
+        // the menu label of such an entry is often «Alle»: the manifest's title and description come first.
+        // page.key stays the fixed page's name, by which the layout loads the page script.
+        const fixedPage = pageContext(fixed.name, slug, entry.path, page, fixed.title || label, lang, imageUrl);
+        fixedPage.metaDescription = fixedPage.metaDescription || (fixed.description ?? '');
+        const base: TemplateContext = { ...layoutContext(lang, entry.key, entry.path), page: fixedPage, sections: [], main: '', ownBanner: leadBand, groups: fixedGroups };
+        try {
+          const main = (compiled.pages.get(fixed.name) as RenderFn)({ ...base, sections: rendered, cmsPage: true, content: blocks.join('\n') }, data);
+          renderLayout(entry.file, lang, { ...base, main }, data, entry.key);
+        } catch (e) {
+          problems.push({ code: 'renderFailed', pageKey: entry.key, detail: message(e) });
+        }
+        continue;
+      }
       const context: TemplateContext = {
         ...layoutContext(lang, entry.key, entry.path),
         page: pageContext(entry.key, slug, entry.path, page, label, lang, imageUrl),
@@ -482,6 +504,7 @@ export function renderSite(input: RenderInput): RenderResult {
       renderLayout(entry.file, lang, context, data, entry.key);
     }
     for (const { name, slug, title, description, standalone } of fixedPages) {
+      if (filled.has(name)) continue;
       const path = `/${slug}`;
       const page = pageContext(name, slug, path, undefined, title ?? '', lang, imageUrl);
       page.metaDescription = description ?? '';
@@ -490,8 +513,7 @@ export function renderSite(input: RenderInput): RenderResult {
         page,
         sections: [],
         main: '',
-        // the group's card colour rides along (the Termine page colours an event's group label with it)
-        groups: groupPagesInTree(site.nav ?? []).map((g) => ({ ...g, color: safeHexColor(input.groups?.get(g.key)?.color) })),
+        groups: fixedGroups,
       };
       try {
         const main = (compiled.pages.get(name) as RenderFn)(base, data);
