@@ -6,7 +6,7 @@ import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-
 import { fill, getAvatarName, hasRole } from '@okr/shared-util-core';
 
 import { CalEventEditModal } from '@okr/calendar-calevent-feature';
-import { isCalEvent } from '@okr/calendar-calevent-util';
+import { isCalEvent, newCalEvent } from '@okr/calendar-calevent-util';
 
 import { ReservationApplyForm } from '@okr/relationship-reservation-ui';
 import { RelationshipToolbar } from '@okr/avatar-ui';
@@ -143,7 +143,7 @@ export class ReservationApplyModal {
       component: CalEventEditModal,
       cssClass: 'modal-wide',
       componentProps: {
-            calevent: this.calevent() ?? new CalEventModel(this.tenantId()),
+            calevent: this.calevent() ?? newCalEvent(this.tenantId(), this.store.appStore.getCategory('calevent_type')),
             currentUser: this.currentUser(),
             types: this.store.appStore.getCategory('calevent_type'),
             periodicities: this.periodicities(),

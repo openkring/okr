@@ -1,7 +1,9 @@
-import { ResourceModel } from '@okr/shared-models';
-import { addIndexElement, extractFirstPartOfOptionalTupel, extractSecondPartOfOptionalTupel } from '@okr/shared-util-core';
+import { CategoryListModel, ResourceModel } from '@okr/shared-models';
+import { addIndexElement, defaultItemName, extractFirstPartOfOptionalTupel, extractSecondPartOfOptionalTupel } from '@okr/shared-util-core';
 
-import { DEFAULT_CAR_TYPE, DEFAULT_GENDER, DEFAULT_PET_TYPE, DEFAULT_RBOAT_TYPE } from '@okr/shared-constants';
+import { DEFAULT_CAR_TYPE, DEFAULT_GENDER, DEFAULT_PET_TYPE, DEFAULT_RBOAT_TYPE, DEFAULT_RBOAT_USAGE } from '@okr/shared-constants';
+
+import { getUsageForYear } from './boat-usage.util';
 
   // locker:  name = lockerNr/keyNr, subType = GenderType
   // key:     name = keyNr
@@ -35,6 +37,31 @@ export function getDefaultForResourceType(resourceType?: string): string {
     case 'other': // no subType
     default: return '';
   }
+}
+
+/**
+ * A copy of `resource` with `type`, whose subType and usage are items the tenant offers for that
+ * type — so a subType left over from the previous type (a car with 'b1x') or a default the tenant
+ * does not offer is replaced. Unchanged where the new type has no list or the list is still empty.
+ * Only for a record being created: an existing record keeps its values.
+ *
+ * @param categoryFor the category list by name (`appStore.tryGetCategory`); only asked for the type's own lists
+ * @param year the season whose usage entry is checked
+ */
+export function applyResourceType(resource: ResourceModel, type: string, categoryFor: (name: string) => CategoryListModel | undefined, year: number): ResourceModel {
+  const result = { ...resource, type } as ResourceModel;
+  const subTypeList = getCategoryNameForResourceType(type);
+  const subTypes = subTypeList ? categoryFor(subTypeList) : undefined;
+  if (subTypes && subTypes.items.length > 0 && !subTypes.items.some(item => item.name === result.subType)) {
+    result.subType = defaultItemName(subTypes, getDefaultForResourceType(type));
+  }
+  const usageList = getUsageNameForResourceType(type);
+  const usages = usageList ? categoryFor(usageList) : undefined;
+  const current = getUsageForYear(result.usage, year) ?? '';
+  if (usages && usages.items.length > 0 && !usages.items.some(item => item.name === current)) {
+    result.usage = defaultItemName(usages, DEFAULT_RBOAT_USAGE);
+  }
+  return result;
 }
 
 export function getCategoryNameForResourceType(resourceType?: string): string | undefined {

@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, linkedSignal, signal, untracked } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular';
 
 import { CategoryListModel, OrgModel } from '@okr/shared-models';
@@ -58,7 +58,7 @@ export class PersonNewModal {
   // signals
   protected formDirty = signal(false);
   protected formValid = signal(false);
-  public formData = linkedSignal(() => createNewPersonFormModel(this.org()));
+  public formData = linkedSignal(() => createNewPersonFormModel(this.org(), untracked(this.genders)));
 
   // derived 
   protected currentUser = computed(() => this.store.currentUser());
@@ -87,7 +87,7 @@ export class PersonNewModal {
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(createNewPersonFormModel(this.org()));  // reset the form
+    this.formData.set(createNewPersonFormModel(this.org(), this.genders()));  // reset the form
   }
 
   protected onFormDataChange(formData: PersonNewFormModel): void {

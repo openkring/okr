@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { CategoryItemModel, CategoryListModel, GroupModel, MembershipModel, PersonModel } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
-import { addPersonInfoToMembership, convertToClubdeskImportRow, createGroupMembership, getMembershipIndex, getMembershipIndexInfo, getSortOrderChanges, matchCategoryItem, newMembershipForPerson, sortMembersBySortOrder } from './membership.util';
+import { addPersonInfoToMembership, createNewMemberFormModel, convertToClubdeskImportRow, createGroupMembership, getMembershipIndex, getMembershipIndexInfo, getSortOrderChanges, matchCategoryItem, newMembershipForPerson, sortMembersBySortOrder } from './membership.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -137,4 +137,20 @@ describe('convertToClubdeskImportRow gender columns', () => {
   it('male → männlich / Herr', () => expect(row('male').slice(2, 4)).toEqual(['männlich', 'Herr']));
   it('female → weiblich / Frau', () => expect(row('female').slice(2, 4)).toEqual(['weiblich', 'Frau']));
   it('other → both empty', () => expect(row('other').slice(2, 4)).toEqual(['', '']));
+});
+
+describe('createNewMemberFormModel gender', () => {
+  const genders = (...names: string[]) => ({ items: names.map(n => new CategoryItemModel(n, '')) }) as CategoryListModel;
+
+  it('keeps female when the tenant offers it', () => {
+    expect(createNewMemberFormModel(undefined, genders('male', 'female')).gender).toBe('female');
+  });
+
+  it('starts with the first offered gender when female is not offered', () => {
+    expect(createNewMemberFormModel(undefined, genders('male', 'diverse')).gender).toBe('male');
+  });
+
+  it('keeps female without a list', () => {
+    expect(createNewMemberFormModel().gender).toBe('female');
+  });
 });

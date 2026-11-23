@@ -27,7 +27,7 @@ import { LocationService } from '@okr/location-data-access';
 import { CalEventService } from '@okr/calendar-calevent-data-access';
 import { AliasMintService } from '@okr/system-alias-data-access';
 import { SeenService } from '@okr/user-data-access';
-import { addInvitedAttendee, applyInvitationAnswer, canAttendCalevent, isCaleventAttendee, mayJoinOpenCalevent, courseKeyChanged, courseKeysOf, lockedCoursesOf, seriesPlanCourseKeys, toAttendeeState, CALEVENT_I18N_KEYS, resetActivity, resetAttendance, confirmedOccurrences, seenKeyFor, toSeenCounts, unseenActivityFor, findConflictingCalEvents, duplicateEventFindings, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventGroupKey, getCaleventIndex, isAttendanceClosed, getSeriesUpdateFields, isCalEvent, isCaleventFull, isCaleventInView, isPersonalCalendarName, mergeAttendee, planSeriesReconcile, resolveCalendars, SchedulePollFormData, SchedulePollRow } from '@okr/calendar-calevent-util';
+import { addInvitedAttendee, applyInvitationAnswer, canAttendCalevent, isCaleventAttendee, mayJoinOpenCalevent, courseKeyChanged, courseKeysOf, lockedCoursesOf, seriesPlanCourseKeys, toAttendeeState, CALEVENT_I18N_KEYS, resetActivity, resetAttendance, confirmedOccurrences, seenKeyFor, toSeenCounts, unseenActivityFor, findConflictingCalEvents, duplicateEventFindings, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventGroupKey, getCaleventIndex, isAttendanceClosed, getSeriesUpdateFields, isCalEvent, newCalEvent, isCaleventFull, isCaleventInView, isPersonalCalendarName, mergeAttendee, planSeriesReconcile, resolveCalendars, SchedulePollFormData, SchedulePollRow } from '@okr/calendar-calevent-util';
 import { RegressionSelectionModal, showCalEventInfo } from '@okr/calendar-calevent-ui';
 import { createComment } from '@okr/comment-util';
 import { openReport } from '@okr/shared-ui';
@@ -528,7 +528,7 @@ export const CalEventStore = signalStore(
           await confirm(store.alertController, store.i18n.create_no_permission(), store.i18n.ok(), '');
           return undefined;
         }
-        const newCalevent = new CalEventModel(store.tenantId());
+        const newCalevent = newCalEvent(store.tenantId(), store.appStore.getCategory('calevent_type'));
         newCalevent.startDate = startDate ?? getTodayStr();
         newCalevent.startTime = startTime ?? '09:00';
         // the creator is always the initial organiser (plain registered users cannot change it, see calevent.form)
@@ -616,6 +616,7 @@ export const CalEventStore = signalStore(
         if (!currentUser || !groupId) throw new Error('CalEventStore.createSchedulePoll: no current user or no group calendar');
 
         const seriesId = generateRandomString(18);
+        const pollTypes = store.appStore.getCategory('calevent_type');
         const myResponses = data.rows[0]?.responses ?? {};
         const myComment = data.rows[0]?.comment ?? '';
         const myAvatar = getAvatarInfoForCurrentUser(currentUser);
@@ -623,7 +624,7 @@ export const CalEventStore = signalStore(
         await store.firestoreService.commitBatch('createSchedulePoll', (batch) => {
           let eventIndex = 0;
           for (const column of data.columns) {
-            const calevent = new CalEventModel(store.tenantId());
+            const calevent = newCalEvent(store.tenantId(), pollTypes);
             calevent.okey = seriesId + pad(eventIndex, 2);
             calevent.seriesId = seriesId;
             calevent.name = data.name;

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { PersonModel } from '@okr/shared-models';
+import { CategoryItemModel, CategoryListModel, PersonModel } from '@okr/shared-models';
 
 // person.util imports formatAhv from @okr/shared-util-angular, which transitively pulls in
 // @ionic/angular. Mock it so these pure-function tests don't load Ionic ES modules.
@@ -11,7 +11,7 @@ vi.mock('@okr/shared-util-angular', () => ({
   },
 }));
 
-import { getPersonIndex, getPersonIndexInfo } from './person.util';
+import { createNewPersonFormModel, getPersonIndex, getPersonIndexInfo } from './person.util';
 
 describe('Person Utils', () => {
   const tenantId = 'tenant-1';
@@ -57,5 +57,21 @@ describe('Person Utils', () => {
     it('describes the index structure', () => {
       expect(getPersonIndexInfo()).toBe('n:name z:zipCode fn:firstName bx:bexioId nn:nickName mn:maidenName');
     });
+  });
+});
+
+describe('createNewPersonFormModel gender', () => {
+  const genders = (...names: string[]) => ({ items: names.map(n => new CategoryItemModel(n, '')) }) as CategoryListModel;
+
+  it('keeps male when the tenant offers it', () => {
+    expect(createNewPersonFormModel(undefined, genders('female', 'male')).gender).toBe('male');
+  });
+
+  it('starts with the first offered gender when male is not offered', () => {
+    expect(createNewPersonFormModel(undefined, genders('female', 'diverse')).gender).toBe('female');
+  });
+
+  it('keeps male without a list', () => {
+    expect(createNewPersonFormModel().gender).toBe('male');
   });
 });

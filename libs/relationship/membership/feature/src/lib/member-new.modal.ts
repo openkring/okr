@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, signal, untracked } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular';
 
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
@@ -77,7 +77,7 @@ export class MemberNewModal {
 
   public formData = linkedSignal(() => {
     const org = this.org();
-    return createNewMemberFormModel(org);
+    return createNewMemberFormModel(org, untracked(this.genders));
   });
 
   /******************************* actions *************************************** */
@@ -87,7 +87,7 @@ export class MemberNewModal {
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(createNewMemberFormModel(this.org()));  // reset the form
+    this.formData.set(createNewMemberFormModel(this.org(), this.genders()));  // reset the form
   }
 
   protected onFormDataChange(formData: MemberNewFormModel): void {

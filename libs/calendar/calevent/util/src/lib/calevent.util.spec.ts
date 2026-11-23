@@ -1,7 +1,7 @@
-import { AttendanceEntry, Attendee, AvatarInfo, CalEventModel, InvitationState } from '@okr/shared-models';
+import { AttendanceEntry, Attendee, AvatarInfo, CalEventModel, CategoryItemModel, CategoryListModel, InvitationState } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ATTENDANCE_FIELDS, isTripCalevent, confirmedOccurrences, resetAttendance, withoutAttendance, withoutCourseFields, addInvitedAttendee, removeInvitedAttendee, bestScheduleColumn, buildCalEventLink, canAttendCalevent, isCaleventAttendee, buildSchedulePollLink, convertCalEventToFullCalendar, formatDurationLabel, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getCaleventGroupKey, getCaleventIndex, getPublicCaleventIndex, getSeriesUpdateFields, isCaleventInView, isCalEvent, isFullDayEvent, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isCaleventFull, isSchedulePoll, resolveCalendars, mayJoinOpenCalevent, mergeAttendee, nextInvitationState, planSeriesReconcile, splitAttendees, toInvitationState } from './calevent.util';
+import { ATTENDANCE_FIELDS, newCalEvent, isTripCalevent, confirmedOccurrences, resetAttendance, withoutAttendance, withoutCourseFields, addInvitedAttendee, removeInvitedAttendee, bestScheduleColumn, buildCalEventLink, canAttendCalevent, isCaleventAttendee, buildSchedulePollLink, convertCalEventToFullCalendar, formatDurationLabel, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getCaleventGroupKey, getCaleventIndex, getPublicCaleventIndex, getSeriesUpdateFields, isCaleventInView, isCalEvent, isFullDayEvent, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isCaleventFull, isSchedulePoll, resolveCalendars, mayJoinOpenCalevent, mergeAttendee, nextInvitationState, planSeriesReconcile, splitAttendees, toInvitationState } from './calevent.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -807,5 +807,22 @@ describe('getPublicCaleventIndex', () => {
     expect(getCaleventIndex(event)).toContain('Trainerli');
     expect(getPublicCaleventIndex(event)).not.toContain('Trainerli');
     expect(getPublicCaleventIndex(event)).not.toContain('p:');
+  });
+});
+
+describe('newCalEvent', () => {
+  const types = (...names: string[]) => ({ items: names.map(n => new CategoryItemModel(n, '')) }) as CategoryListModel;
+
+  it('keeps the default type when the tenant offers it', () => {
+    expect(newCalEvent('t', types('meeting', 'training')).type).toBe('training');
+  });
+
+  it('starts with the first offered type when the default is not offered', () => {
+    expect(newCalEvent('t', types('meeting', 'party')).type).toBe('meeting');
+  });
+
+  it('keeps the default type while the list is not loaded', () => {
+    expect(newCalEvent('t', undefined).type).toBe('training');
+    expect(newCalEvent('t', types()).type).toBe('training');
   });
 });

@@ -6,13 +6,14 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { BOAT_SLOT_NO_COLOR, BoatSlotLabel, BoatTargetCollection, BoatTargetModel, DEFAULT_BOAT_SLOT_COLOR, CategoryListModel, ResourceCollection, ResourceModel, ResourceModelName } from '@okr/shared-models';
-import { buildExportTable, chipMatches, debugItemLoaded, getSystemQuery, isResource, nameMatches } from '@okr/shared-util-core';
+import { buildExportTable, chipMatches, debugItemLoaded, defaultItemName, getYear, getSystemQuery, isResource, nameMatches } from '@okr/shared-util-core';
 import { exportCsv, getExportFileName, showToast } from '@okr/shared-util-angular';
 import { FirestoreService } from '@okr/shared-data-access';
 
 import { ResourceService } from '@okr/resource-data-access';
 import { BoatSlotEditModal } from '@okr/resource-ui';
-import { BoatLabelRef, boatLabelKey, boatLabelRefIn, boatTargetKey, isEmptyBoatSlot, PLANNING_WINDOW, getResourceExportColumns, getResourceExportFileName, RESOURCE_I18N_KEYS, ResourceExportList, setUsageFromYear } from '@okr/resource-util';
+import { DEFAULT_RESOURCE_TYPE } from '@okr/shared-constants';
+import { applyResourceType, BoatLabelRef, boatLabelKey, boatLabelRefIn, boatTargetKey, isEmptyBoatSlot, PLANNING_WINDOW, getResourceExportColumns, getResourceExportFileName, RESOURCE_I18N_KEYS, ResourceExportList, setUsageFromYear } from '@okr/resource-util';
 
 export type ResourceState = {
   searchTerm: string;
@@ -190,7 +191,10 @@ export const ResourceStore = signalStore(
       /******************************** actions ******************************************* */
       async add(isTypeEditable = false, readOnly = true): Promise<void> {
         if (readOnly) return;
-        const resource = new ResourceModel(store.tenantId());
+        const blank = new ResourceModel(store.tenantId());
+        // the type is the user's choice only when it is editable; either way subType and usage must be offered ones
+        const type = isTypeEditable ? defaultItemName(this.getResourceTypes(), DEFAULT_RESOURCE_TYPE) : blank.type;
+        const resource = applyResourceType(blank, type, name => store.appStore.tryGetCategory(name), getYear());
         await this.edit(resource, isTypeEditable, readOnly);
         this.reload();
       },

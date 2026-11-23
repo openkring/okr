@@ -1,6 +1,6 @@
 import { DEFAULT_ADDRESS_USAGE, DEFAULT_CITY, DEFAULT_COUNTRY, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_MCAT, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_PHONE, DEFAULT_STREETNAME, DEFAULT_STREETNUMBER, DEFAULT_TAGS, DEFAULT_URL, DEFAULT_ZIP, END_FUTURE_DATE_STR } from '@okr/shared-constants';
 import { AddressModel, AvatarInfo, CategoryItemModel, CategoryListModel, GroupModel, GroupModelName, MembershipModel, MoneyModel, OrgModel, OrgModelName, PersonModel, PersonModelName } from '@okr/shared-models';
-import { addIndexElement, convertDateFormatToString, DateFormat, die, getBirthYear, getStoreDateYear, getTodayStr } from '@okr/shared-util-core';
+import { addIndexElement, convertDateFormatToString, DateFormat, defaultItemName, die, getBirthYear, getStoreDateYear, getTodayStr } from '@okr/shared-util-core';
 import { AhvFormat, formatAhv } from '@okr/shared-util-angular';
 
 import { createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoritePostalAddress, createFavoriteWebAddress } from '@okr/subject-address-util';
@@ -529,8 +529,10 @@ export function getMembershipIndexInfo(): string {
 }
 
 // new member
-export function createNewMemberFormModel(org?: OrgModel): MemberNewFormModel {
+/** `genders`: the tenant's list; the new member starts with `female` if offered, else the first item. */
+export function createNewMemberFormModel(org?: OrgModel, genders?: CategoryListModel): MemberNewFormModel {
   const model = { ...MEMBER_NEW_FORM_SHAPE };
+  model.gender = defaultItemName(genders, model.gender);
   console.log('createNewMemberFormModel, org:', org);
   console.log('createNewMemberFormModel, model before setting org:', model);
   model.orgKey = org?.okey ?? DEFAULT_KEY;
