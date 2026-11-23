@@ -1245,7 +1245,10 @@ export class FirestoreService {
    * When the current tenant edits a document whose `tenants[]` also lists other tenants, the
    * shared document must NOT be mutated. Instead, atomically:
    *   a) create a NEW document with the edits and `tenants: [currentTenant]`, and
-   *   b) remove the current tenant from the source document's `tenants[]`.
+   *   b) remove the current tenant from the source document's `tenants[]` — only when it is
+   *      listed there. A tenant that reads the source through the `system` sentinel is not, the
+   *      rules refuse that write, and it would fail the whole batch; `pickForTenant` already lets
+   *      the copy win over the shared original.
    * Both halves in one batch — a partial apply would leave the tenant in two definitions or in
    * none, and nothing in the app would report it (see the `tag-model` skill).
    *
@@ -1286,7 +1289,9 @@ export class FirestoreService {
     try {
       const batch = this.getBatch();
       batch.set(doc(this.firestore, `${collectionName}/${forkKey}`), forked);
-      batch.update(doc(this.firestore, `${collectionName}/${source.okey}`), { tenants: arrayRemove(tenantId) });
+      if ((source.tenants ?? []).includes(tenantId)) {
+        batch.update(doc(this.firestore, `${collectionName}/${source.okey}`), { tenants: arrayRemove(tenantId) });
+      }
       await batch.commit();
       return forkKey;
     }

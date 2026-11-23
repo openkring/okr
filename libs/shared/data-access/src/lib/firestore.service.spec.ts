@@ -39,6 +39,7 @@ vi.mock('firebase/firestore', () => ({
   updateDoc: vi.fn(),
   deleteDoc: vi.fn(),
   writeBatch: vi.fn(),
+  arrayRemove: vi.fn((...values: unknown[]) => ({ arrayRemove: values })),
   // createModel takes this branch whenever the caller named the document id. `transaction.set` is
   // routed to the same setDoc mock the other tests assert on, so the retry/denial cases keep
   // working through the guarded path exactly as they did through the bare setDoc.
@@ -994,5 +995,41 @@ describe('FirestoreService.readObjectStrict', () => {
     await expect(svc.readObjectStrict('courses/c1/finance/settings')).rejects.toThrow('offline');
     getDocFromServerMock.mockRejectedValue(permissionDenied());
     await expect(svc.readObjectStrict('courses/c1/finance/settings')).rejects.toBeDefined();
+  });
+});
+
+// A tenant that reads a shared document only through the `system` sentinel is not in its
+// `tenants[]`: the rules refuse the detach write, which would fail the whole batch.
+describe('FirestoreService.forkModel', () => {
+  const writeBatchMock = vi.mocked(writeBatch);
+  let batch: { set: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn>; commit: ReturnType<typeof vi.fn> };
+
+  beforeEach(() => {
+    TestBed.resetTestingModule();
+    vi.clearAllMocks();
+    batch = { set: vi.fn(), update: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
+    writeBatchMock.mockReturnValue(batch as never);
+  });
+
+  it('creates only the copy when the tenant reads the source through system', async () => {
+    const key = await makeService().forkModel('categories', { okey: 'c1', name: 'N', tenants: ['system', 'bka'] } as never, {});
+    expect(batch.set).toHaveBeenCalledTimes(1);
+    expect(batch.set.mock.calls[0][1]).toMatchObject({ tenants: ['scs'] });
+    expect(batch.update).not.toHaveBeenCalled();
+    expect(batch.commit).toHaveBeenCalledTimes(1);
+    expect(key).toHaveLength(20);
+  });
+
+  it.each([[['system', 'scs']], [['scs', 'bka']]])('also detaches the tenant from a source listing it (%j)', async (tenants) => {
+    const key = await makeService().forkModel('categories', { okey: 'c1', name: 'N', tenants } as never, {});
+    expect(batch.set).toHaveBeenCalledTimes(1);
+    expect(batch.update).toHaveBeenCalledTimes(1);
+    expect(key).toHaveLength(20);
+  });
+
+  it('uses the given newKey as the id of the copy', async () => {
+    const key = await makeService().forkModel('pages', { okey: 'p1', tenants: ['scs', 'bka'] } as never, {}, undefined, 'p1_scs');
+    expect(key).toBe('p1_scs');
+    expect(docMock).toHaveBeenCalledWith(expect.anything(), 'pages/p1_scs');
   });
 });

@@ -61,8 +61,8 @@ export class CategoryService {
    *
    * This mirrors `AocTagStore.saveTags`, which has done the same for `tags` since the fork
    * helper existed; categories were the collection still missing it, which is why they could
-   * not move to the sentinel. The `arrayRemove` half is a no-op when the source is a
-   * `'system'` document — nothing to remove — so both documents then match this tenant's
+   * not move to the sentinel. The `arrayRemove` half is skipped when the source is a
+   * `'system'` document — the tenant is not listed there — so both documents then match this tenant's
    * query and `pickForTenant` (own beats shared) is what resolves them on read.
    *
    * @param category the CategoryListModel with the new values. Its key must be valid (in order to find it in the database)

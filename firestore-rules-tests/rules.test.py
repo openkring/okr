@@ -176,6 +176,7 @@ seed("sections/secA",{"tenants": ["t1"], "isArchived": False, "type": "article"}
 seed("websites/wsA", {"tenants": ["t1"], "isArchived": False, "name": "Site A", "nav": [], "hostingSite": "scs-website-54aef", "domain": "https://seeclub.org", "templateVersion": "v1", "lastPublishedVersion": "sites/scs-website-54aef/versions/v1"})
 seed("websites/wsA/publishes/pub1", {"tenants": ["t1"], "state": "done", "startedBy": "pC", "startedAt": "2026-11-10T10:00:00.000Z"})
 # fork-on-edit (D-BB-8): shared catalogue-owned menu docs a tenant may detach itself from.
+seed("categories/sysCat", {"tenants": ["system"], "isArchived": False, "name": "SysCat"})
 seed("menuItems/shared1", {"tenants": ["t1", "t2"], "isArchived": False, "name": "shared1", "label": "L"})
 seed("menuItems/shared2", {"tenants": ["t1", "t2"], "isArchived": False, "name": "shared2", "label": "L"})
 seed("menuItems/shared3", {"tenants": ["t1", "t2"], "isArchived": False, "name": "shared3", "label": "L"})
@@ -652,6 +653,12 @@ single_cases = [
      "menuItems/shared3", C, body({"tenants": ["t2"], "label": "Renamed"}), ["tenants", "label"]),
     ("userA(no content role) detaches own tenant -> DENY", False, PATCH,
      "menuItems/shared3", A, body({"tenants": ["t2"]}), ["tenants"]),
+    # forkModel for a tenant that reads a category only through `system`: the copy is created,
+    # the shared original is not touched (the detach is skipped by the client).
+    ("userD(admin t1) create own category (fork of a system one) -> ALLOW", True, POST,
+     "categories?documentId=forkCat", D, body({"tenants": ["t1"], "name": "SysCat"}), None),
+    ("userD(admin t1) PATCH system category tenants -> DENY", False, PATCH,
+     "categories/sysCat", D, body({"tenants": []}), ["tenants"]),
     # websites (spec 1.153): tenant read; contentAdmin (only) writes; nobody deletes.
     ("userA(member) GET websites/wsA -> ALLOW", True, GET, "websites/wsA", A, None, None),
     ("userB(other tenant) GET websites/wsA -> DENY", False, GET, "websites/wsA", B, None, None),
