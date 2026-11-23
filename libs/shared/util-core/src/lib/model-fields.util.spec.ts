@@ -1,0 +1,89 @@
+import { describe, expect, it } from 'vitest';
+import { hiddenFieldsOf, isFieldShown, MODEL_FIELDS, resourceFieldKey, withFieldVisibility } from './model-fields.util';
+
+describe('model-fields.util', () => {
+  describe('MODEL_FIELDS', () => {
+    it('hides only person.title by default', () => {
+      const hidden = Object.entries(MODEL_FIELDS).flatMap(([model, specs]) =>
+        specs.filter((s) => !s.defaultVisible).map((s) => `${model}.${s.field}`));
+      expect(hidden).toEqual(['person.title']);
+    });
+  });
+
+  describe('hiddenFieldsOf', () => {
+    it('returns the catalogue default when nothing is stored', () => {
+      expect([...hiddenFieldsOf('person', undefined)]).toEqual(['title']);
+      expect([...hiddenFieldsOf('person', null)]).toEqual(['title']);
+    });
+    it('shows a field the tenant switched on', () => {
+      expect(hiddenFieldsOf('person', { person: { title: true } }).size).toBe(0);
+    });
+    it('hides a field the tenant switched off', () => {
+      expect([...hiddenFieldsOf('person', { person: { nickname: false } })].sort()).toEqual(['nickname', 'title']);
+    });
+    it('ignores fields that are not hideable', () => {
+      expect([...hiddenFieldsOf('person', { person: { firstName: false, gender: false } })]).toEqual(['title']);
+    });
+    it('returns an empty set for an unknown model key', () => {
+      expect(hiddenFieldsOf('nope', { nope: { a: false } }).size).toBe(0);
+    });
+    it('falls back to the default for a non-boolean value', () => {
+      const stored = { person: { title: 'yes', nickname: 0 } } as unknown as Record<string, Record<string, boolean>>;
+      expect([...hiddenFieldsOf('person', stored)]).toEqual(['title']);
+    });
+    it('does not throw on a malformed model entry', () => {
+      const stored = { person: null } as unknown as Record<string, Record<string, boolean>>;
+      expect([...hiddenFieldsOf('person', stored)]).toEqual(['title']);
+    });
+  });
+
+  describe('withFieldVisibility', () => {
+    it('stores a value that differs from the default', () => {
+      expect(withFieldVisibility(undefined, 'person', 'nickname', false)).toEqual({ person: { nickname: false } });
+    });
+    it('removes the entry when set back to the default', () => {
+      expect(withFieldVisibility({ person: { nickname: false, notes: false } }, 'person', 'nickname', true))
+        .toEqual({ person: { notes: false } });
+    });
+    it('removes an empty model entry', () => {
+      expect(withFieldVisibility({ person: { nickname: false } }, 'person', 'nickname', true)).toEqual({});
+    });
+    it('uses the catalogue default of the field', () => {
+      expect(withFieldVisibility(undefined, 'person', 'title', false)).toEqual({});
+      expect(withFieldVisibility(undefined, 'person', 'title', true)).toEqual({ person: { title: true } });
+    });
+    it('does not mutate the input', () => {
+      const stored = { person: { nickname: false } };
+      const copy = JSON.parse(JSON.stringify(stored));
+      withFieldVisibility(stored, 'person', 'nickname', true);
+      withFieldVisibility(stored, 'org', 'taxId', false);
+      expect(stored).toEqual(copy);
+    });
+    it('keeps other models', () => {
+      expect(withFieldVisibility({ org: { taxId: false } }, 'person', 'nickname', false))
+        .toEqual({ org: { taxId: false }, person: { nickname: false } });
+    });
+  });
+
+  describe('resourceFieldKey', () => {
+    it('maps a type with its own form', () => {
+      expect(resourceFieldKey('rboat')).toBe('resource.rboat');
+    });
+    it('maps a type without own form to other', () => {
+      expect(resourceFieldKey('legaldoc')).toBe('resource.other');
+      expect(resourceFieldKey(undefined)).toBe('resource.other');
+    });
+  });
+
+  describe('isFieldShown', () => {
+    it('hides a hidden field without errors', () => {
+      expect(isFieldShown('a', new Set(['a']), [])).toBe(false);
+    });
+    it('shows a hidden field that has errors', () => {
+      expect(isFieldShown('a', new Set(['a']), ['required'])).toBe(true);
+    });
+    it('shows a field that is not hidden', () => {
+      expect(isFieldShown('b', new Set(['a']), [])).toBe(true);
+    });
+  });
+});

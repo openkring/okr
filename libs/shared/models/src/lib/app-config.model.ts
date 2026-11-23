@@ -199,6 +199,25 @@ export class AppConfig {
   public hiddenMenuKeys?: string[];
 
   /**
+   * Per tenant, which optional model fields are hidden in forms: `{ [modelKey]: { [field]: visible } }`,
+   * e.g. `{ person: { nickname: false } }`. Only values that differ from the catalogue default
+   * (`MODEL_FIELDS` in `@okr/shared-util-core`) are stored, and model keys contain dots, so it is
+   * always written as one whole field, never by field path. Typed inline because this lib must not
+   * import `shared-util-core`.
+   *
+   * No initializer, for the same reason as `hiddenMenuKeys`: absent on existing documents and read as
+   * "catalogue defaults". Values come from Firestore — read them through `hiddenFieldsOf`, which
+   * tolerates null, unknown keys and non-boolean values.
+   */
+  public modelFields?: Record<string, Record<string, boolean>>;
+
+  /**
+   * Dashboard widgets the tenant has switched off, by widget key. Absent = nothing hidden;
+   * no initializer, as for `hiddenMenuKeys`.
+   */
+  public hiddenWidgets?: string[];
+
+  /**
    * Hours between two weather fetches per location (default 4). The scheduled function runs
    * hourly and skips any location whose `fetchedAt` is younger than this, so the interval is
    * changeable without a functions deploy — a cron expression would not be.

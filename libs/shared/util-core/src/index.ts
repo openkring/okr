@@ -26,6 +26,7 @@ export * from './lib/form-model-select.util';
 export * from './lib/form-prefill.util';
 export * from './lib/form-values.util';
 export * from './lib/form-visibility.util';
+export * from './lib/model-fields.util';
 export * from './lib/icon.util';
 export * from './lib/img.util';
 export * from './lib/zoom.util';
