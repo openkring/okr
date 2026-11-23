@@ -1,30 +1,29 @@
-import { InputSignal } from '@angular/core';
+import { InputSignal, signal } from '@angular/core';
 import { SIGNAL } from '@angular/core/primitives/signals';
 import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { ArticleBlockView } from '@okr/cms-section-util';
 import { AppStore } from '@okr/shared-feature';
-import { I18nService } from '@okr/shared-i18n';
 import { ArticleBlock } from '@okr/shared-models';
 
 import { ArticleBlocks } from './article-blocks';
 
+const appName = signal('Kring');
+
 /** The component without its template (a lib test does not compile one): its own computed over its own input. */
-function viewsOf(blocks: unknown[]): ArticleBlockView[] {
+function viewsComputedOf(blocks: unknown[]): () => ArticleBlockView[] {
   TestBed.configureTestingModule({
     providers: [
-      { provide: AppStore, useValue: { replacePlaceholders: (text: string) => text.replaceAll('@APPNAME@', 'Kring') } },
-      { provide: Router, useValue: { navigateByUrl: vi.fn() } },
-      { provide: I18nService, useValue: { translateAll: () => ({ zoomed: () => '' }) } },
+      { provide: AppStore, useValue: { replacePlaceholders: (text: string) => text.replaceAll('@APPNAME@', appName()) } },
     ],
   });
   const component = TestBed.runInInjectionContext(() => new ArticleBlocks());
   const node = (component.blocks as InputSignal<ArticleBlock[]>)[SIGNAL];
   node.applyValueToInputSignal(node, blocks as ArticleBlock[]);
-  return (component as unknown as { views(): ArticleBlockView[] }).views();
+  return (component as unknown as { views: () => ArticleBlockView[] }).views;
 }
+const viewsOf = (blocks: unknown[]): ArticleBlockView[] => viewsComputedOf(blocks)();
 
 describe('ArticleBlocks', () => {
   it('replaces the placeholders in texts and callouts, also in columns', () => {
@@ -34,5 +33,16 @@ describe('ArticleBlocks', () => {
       { type: 'callout', html: 'Kring' },
       { type: 'columns', columns: [{ blocks: [{ html: '<p>Kring und Kring</p>' }] }, { blocks: [{ html: '<p>Kring und Kring</p>' }] }] },
     ]);
+  });
+
+  it('follows a placeholder that changes later (app config arriving late), and keeps the view of a text without one', () => {
+    const views = viewsComputedOf([{ id: 'a', type: 'text', html: '<p>@APPNAME@</p>' }, { id: 'b', type: 'text', html: '<p>fest</p>' }]);
+    const before = views();
+    appName.set('SCS');
+    const after = views();
+    expect(after[0]).toMatchObject({ html: '<p>SCS</p>' });
+    expect(after[1]).toBe(before[1]);
+    appName.set('Kring');
+    expect(views()[0]).toMatchObject({ html: '<p>Kring</p>' });
   });
 });

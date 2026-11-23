@@ -1,6 +1,7 @@
 import { CUSTOM_ELEMENTS_SCHEMA, Component, DestroyRef, ElementRef, afterRenderEffect, computed, inject, input, output, viewChild } from '@angular/core';
 import { IonButton, IonIcon } from '@ionic/angular';
 
+import { ArticlePreviewDevice, previewViewport } from '@okr/cms-section-util';
 import { ImageConfig, ImageStyle } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { badgeFor, Img } from '@okr/shared-ui';
@@ -83,7 +84,7 @@ import { badgeFor, Img } from '@okr/shared-ui';
     <div class="carousel-container">
       <div class="carousel" #carousel (scroll)="onCarouselScroll()">
         @for(slide of loopSlides(); track $index) {
-          <div class="carousel-slide" [class.clone]="slide.clone" [attr.aria-hidden]="slide.clone ? 'true' : null">
+          <div class="carousel-slide" [class.clone]="slide.clone" [style.height]="previewHeight()" [attr.aria-hidden]="slide.clone ? 'true' : null">
             <okr-img [captionFallbacks]="captionFallbacks()" [image]="slide.image" [imageStyle]="carouselImageStyle()" [editMode]="editMode()" [gallery]="images()" [zoomTitle]="zoomTitle()" [badge]="badgeOf(slide.image.label)" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
           </div>
         }
@@ -109,8 +110,17 @@ export class ArticleCarousel {
   public emitImageClicks = input(false);
   public zoomTitle = input<string>('Zoom');
   public imageSelected = output<ImageConfig>();
+  public previewDevice = input<ArticlePreviewDevice>('auto');
+  /** the arrows do nothing */
+  public inert = input(false);
 
   protected badgeOf(label: string): string | undefined { return badgeFor(this.imageBadges(), label); }
+
+  /** half the height of the previewed device; undefined = half the viewport */
+  protected previewHeight = computed(() => {
+    const viewport = previewViewport(this.previewDevice());
+    return viewport && `${viewport.height / 2}px`;
+  });
 
   // the carousel: one fixed box for all slides; the image is shown whole at its own proportions
   // (no fill/crop, no pixel ar= crop), letterboxed inside the box. No border: it would frame the
@@ -118,7 +128,7 @@ export class ArticleCarousel {
   protected carouselImageStyle = computed((): ImageStyle => ({
     ...this.imageStyle(),
     width: '100%',
-    height: '50dvh',
+    height: this.previewHeight() ?? '50dvh',
     fill: false,
     border: '',
     borderRadius: '',
@@ -143,6 +153,7 @@ export class ArticleCarousel {
 
   /** scrolls the carousel one slide back (-1) or forward (1), endlessly in that direction */
   protected step(direction: -1 | 1): void {
+    if (this.inert()) return;
     const el = this.carousel()?.nativeElement;
     if (!el) return;
     const count = el.children.length;

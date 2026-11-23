@@ -45,6 +45,9 @@ export type ArticleBlockView =
  */
 export type ArticleHeaderPlace = 'card' | 'column' | 'slideshow';
 
+/** For which device an article is drawn; 'auto' = the real viewport (readers), else as in the editor's canvas (spec 1.175 §7.2). */
+export type ArticlePreviewDevice = 'auto' | 'mobile' | 'tablet' | 'desktop';
+
 function objects(value: unknown): Loose[] {
   return Array.isArray(value) ? value.filter(isObject) : [];
 }
@@ -119,10 +122,13 @@ function headerColumnOf(stored: Loose[][], drawn: ColumnContentView[][]): number
   return [0, 1].find((i) => isText(i) && is(1 - i, 'image'));
 }
 
+/** The view to use for a block, given the one just built. */
+type ReuseView = <V extends ArticleBlockView>(block: Loose, built: V) => V;
+
 /** Turns blocks into views with unique keys. What is drawn does not depend on the replacement. */
 class ViewBuilder {
   private readonly keys = new Set<string>();
-  constructor(private readonly replace: ReplaceText) {}
+  constructor(private readonly replace: ReplaceText, private readonly reuse: ReuseView = (_block, built) => built) {}
 
   public views(value: unknown): ArticleBlockView[] {
     return blocksOf(value).map((block) => this.view(block)).filter((view) => view !== undefined);
@@ -137,10 +143,14 @@ class ViewBuilder {
   }
 
   private view(block: Loose): ArticleBlockView | undefined {
+    if (COLUMN_BLOCK_TYPES.includes(block['type'] as string)) return this.contentView(block);
+    const built = this.buildView(block);
+    return built && this.reuse(block, built);
+  }
+
+  /** what only stands on the top level */
+  private buildView(block: Loose): ArticleBlockView | undefined {
     switch (block['type']) {
-      case 'text':
-      case 'image':
-      case 'button': return this.contentView(block);
       case 'gallery': return galleryView(block, this.key(block));
       case 'columns': return this.columnsView(block);
       case 'callout': {
@@ -155,6 +165,11 @@ class ViewBuilder {
 
   /** what a column may hold */
   private contentView(block: Loose): ColumnContentView | undefined {
+    const built = this.buildContentView(block);
+    return built && this.reuse(block, built);
+  }
+
+  private buildContentView(block: Loose): ColumnContentView | undefined {
     const align = oneOf(block['align'], BLOCK_ALIGNS, 'left');
     switch (block['type']) {
       case 'text': {
@@ -193,9 +208,64 @@ class ViewBuilder {
   }
 }
 
+/** Two views of the same block object: whatever else they show comes from that object. */
+function isSameView(a: ArticleBlockView, b: ArticleBlockView): boolean {
+  if (a.key !== b.key) return false;
+  if ('html' in a && 'html' in b) return a.html === b.html;
+  if (a.type !== 'columns' || b.type !== 'columns') return true;
+  const inner = (view: ColumnsBlockView): ColumnContentView[] => view.columns.flatMap((column) => column.blocks);
+  const drawn = inner(b);
+  return inner(a).length === drawn.length && inner(a).every((view, i) => view === drawn[i]);
+}
+
+/**
+ * Reuses the view of a block whose object and replaced html are unchanged, so that a carousel or a slideshow is not restarted
+ * when another block changes. A block is never changed in place. `replace` (placeholders such as @APPNAME@) runs for every html
+ * on every call, so the signals it reads stay tracked.
+ */
+export class BlockViewCache {
+  private readonly known = new WeakMap<Loose, ArticleBlockView>();
+  constructor(private readonly replace: ReplaceText = (html) => html) {}
+
+  /** The blocks as they are drawn, in order. */
+  public views(blocks: ArticleBlock[] | undefined): ArticleBlockView[] {
+    return this.builder().views(blocks);
+  }
+
+  /** One block on its own, also one of a column; its key is its id. */
+  public view(block: ArticleBlock): ArticleBlockView | undefined {
+    return this.builder().firstView([block]);
+  }
+
+  private builder(): ViewBuilder {
+    return new ViewBuilder(this.replace, (block, built) => {
+      const known = this.known.get(block) as typeof built | undefined;
+      if (known && isSameView(known, built)) return known;
+      this.known.set(block, built);
+      return built;
+    });
+  }
+}
+
 /** The blocks as they are drawn, in order; `replace` is applied to every html (placeholders such as @APPNAME@). */
-export function articleBlockViews(blocks: ArticleBlock[] | undefined, replace: ReplaceText = (html) => html): ArticleBlockView[] {
-  return new ViewBuilder(replace).views(blocks);
+export function articleBlockViews(blocks: ArticleBlock[] | undefined, replace?: ReplaceText): ArticleBlockView[] {
+  return new BlockViewCache(replace).views(blocks);
+}
+
+/** Which form the columns take: 'auto' follows the viewport. */
+export function articleColumnsForm(device: ArticlePreviewDevice): 'auto' | 'stacked' | 'wide' {
+  if (device === 'auto') return 'auto';
+  return device === 'mobile' ? 'stacked' : 'wide';
+}
+
+/** The viewport of a device in pixels, for what depends on it (slideshow, carousel); undefined = the real one. */
+export function previewViewport(device: ArticlePreviewDevice): { width: number; height: number } | undefined {
+  switch (device) {
+    case 'mobile': return { width: 390, height: 844 };
+    case 'tablet': return { width: 768, height: 1024 };
+    case 'desktop': return { width: 1100, height: 800 };
+    default: return undefined;
+  }
 }
 
 /** The images that the blocks draw, in reading order, without their layout (the fallback of a free article; never the cover). */

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { ArticleBlock, IMAGE_STYLE_SHAPE } from '@okr/shared-models';
 
-import { ArticleBlockView, articleBlockViews, articleHeaderPlace, columnsTemplate, drawnBlockImages, undrawnBlockTypes } from './article-block-view.util';
+import { ArticleBlockView, ArticlePreviewDevice, BlockViewCache, ColumnsBlockView, articleBlockViews, articleColumnsForm, articleHeaderPlace, columnsTemplate, drawnBlockImages, previewViewport, undrawnBlockTypes } from './article-block-view.util';
 
 const img = (url: string) => ({ url, label: url, type: 0, actionUrl: '', altText: '', overlay: '' });
 const cta = { label: 'Mehr', url: '/public/welcome' };
@@ -290,5 +290,146 @@ describe('columnsTemplate', () => {
     [[NaN, Infinity, undefined], 'minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)'],
   ])('%j', (sizes, template) => {
     expect(columnsTemplate(sizes)).toBe(template);
+  });
+});
+
+describe('BlockViewCache', () => {
+  const blocks = (...b: unknown[]): ArticleBlock[] => b as ArticleBlock[];
+  const a = text('<p>A</p>', { id: 'a' });
+  const b = image('b', { id: 'b' });
+  const g = gallery(['a', 'b'], { id: 'g', slideshow: show });
+  const c = columns([{ size: 6, blocks: [text('<p>C</p>', { id: 'c1' }), text('<p>@APP@</p>', { id: 'c2' })] }, { size: 6, blocks: [image('c', { id: 'c3' })] }]);
+  const n = { id: 'n', type: 'callout', html: '<p>@APP@</p>', tone: 'primary' };
+  const all = blocks(a, b, g, c, n, { id: 'd', type: 'divider' }, { id: 's', type: 'space', size: 'small' }, { id: 'u', type: 'button', cta });
+
+  /** the same views, object by object */
+  function expectSame(before: unknown[], after: unknown[], except: number[] = []): void {
+    expect(after).toHaveLength(before.length);
+    after.forEach((view, i) => (except.includes(i) ? expect(view).not.toBe(before[i]) : expect(view).toBe(before[i])));
+  }
+  const columnsOf = (view: ArticleBlockView): ColumnsBlockView => view as ColumnsBlockView;
+
+  it('the same blocks: the same views, also in another array and another order', () => {
+    const cache = new BlockViewCache();
+    const before = cache.views(all);
+    expectSame(before, cache.views(all));
+    expectSame(before, cache.views([...all]));
+    expectSame([...before].reverse(), cache.views([...all].reverse()));
+    expectSame(before.slice(2), cache.views(all.slice(2)));
+  });
+
+  it('one changed block: only its view is new', () => {
+    const cache = new BlockViewCache();
+    const before = cache.views(all);
+    const after = cache.views(blocks({ ...a, html: '<p>A!</p>' }, ...all.slice(1)));
+    expectSame(before, after, [0]);
+    expect(after[0]).toMatchObject({ key: 'a', html: '<p>A!</p>' });
+  });
+
+  it('a new object with the same content is a new view', () => {
+    const cache = new BlockViewCache();
+    expect(cache.views(blocks({ ...a }))[0]).not.toBe(cache.views(blocks({ ...a }))[0]);
+  });
+
+  it('a changed replacement: a new view of every text that shows it, in columns too', () => {
+    let name = 'Kring';
+    const cache = new BlockViewCache((html) => html.replace('@APP@', name));
+    const before = cache.views(all);
+    expectSame(before, cache.views(all));
+    name = 'SCS';
+    const after = cache.views(all);
+    expectSame(before, after, [3, 4]);
+    expect(after[4]).toMatchObject({ html: '<p>SCS</p>' });
+    expect(columnsOf(after[3]).columns[0].blocks[0]).toBe(columnsOf(before[3]).columns[0].blocks[0]);
+    expect(columnsOf(after[3]).columns[0].blocks[1]).toMatchObject({ html: '<p>SCS</p>' });
+    expect(columnsOf(after[3]).columns[1].blocks[0]).toBe(columnsOf(before[3]).columns[1].blocks[0]);
+  });
+
+  it('the replacement runs on every call, for every text', () => {
+    let calls = 0;
+    const cache = new BlockViewCache((html) => { calls++; return html; });
+    cache.views(all);
+    expect(calls).toBe(4);
+    cache.views(all);
+    expect(calls).toBe(8);
+  });
+
+  it('an inner block changed: the view of the columns is new, the other inner views are the same', () => {
+    const cache = new BlockViewCache();
+    const [before] = cache.views(blocks(c));
+    const [left, right] = c['columns'] as { size: number; blocks: object[] }[];
+    const changed = { ...c, columns: [{ ...left, blocks: [{ ...left.blocks[0], html: '<p>neu</p>' }, left.blocks[1]] }, right] };
+    const [after] = cache.views(blocks(changed));
+    expect(after).not.toBe(before);
+    expect(columnsOf(after).columns[0].blocks[0]).toMatchObject({ key: 'c1', html: '<p>neu</p>' });
+    expect(columnsOf(after).columns[0].blocks[1]).toBe(columnsOf(before).columns[0].blocks[1]);
+    expect(columnsOf(after).columns[1].blocks[0]).toBe(columnsOf(before).columns[1].blocks[0]);
+  });
+
+  it('duplicate ids: unique keys, and stable views', () => {
+    const cache = new BlockViewCache();
+    const twice = blocks(a, { ...a }, { type: 'divider' }, { type: 'divider' });
+    const before = cache.views(twice);
+    expect(new Set(before.map((v) => v.key)).size).toBe(4);
+    expectSame(before, cache.views(twice));
+    // without the first one the second gets its key: a new view, never two with one key
+    const after = cache.views(twice.slice(1));
+    expect(after[0].key).toBe('a');
+    expect(new Set(after.map((v) => v.key)).size).toBe(3);
+  });
+
+  it('the same object twice: two keys', () => {
+    const cache = new BlockViewCache();
+    expect(cache.views(blocks(a, a)).map((v) => v.key)).toEqual(['a', 'a#1']);
+    expect(cache.views(blocks(a, a)).map((v) => v.key)).toEqual(['a', 'a#1']);
+  });
+
+  it('a block that becomes empty, and back', () => {
+    const cache = new BlockViewCache();
+    const [before] = cache.views(blocks(a));
+    expect(cache.views(blocks({ ...a, html: '' }))).toEqual([]);
+    expect(cache.views(blocks(a))[0]).toBe(before);
+  });
+
+  it('view: one block, the same object as in views', () => {
+    const cache = new BlockViewCache((html) => html.replace('@APP@', 'Kring'));
+    const before = cache.views(all);
+    expectSame(before, all.map((block) => cache.view(block)));
+    const inner = (c['columns'] as { blocks: ArticleBlock[] }[])[0].blocks[1];
+    expect(cache.view(inner)).toBe(columnsOf(before[3]).columns[0].blocks[1]);
+    expect(cache.view(inner)).toMatchObject({ html: '<p>Kring</p>' });
+  });
+
+  it('view: nothing for what is not drawn', () => {
+    const cache = new BlockViewCache();
+    for (const bad of [undefined, null, 'x', 3, {}, { id: 'v', type: 'video' }, text(''), gallery([]), columns([])]) expect(cache.view(bad as unknown as ArticleBlock)).toBeUndefined();
+  });
+
+  it('what views returns equals articleBlockViews, whatever the blocks are and however often', () => {
+    const replace = (html: string) => html.replace('@APP@', 'Kring');
+    const cache = new BlockViewCache(replace);
+    const inputs: unknown[] = [
+      undefined, null, 'x', 3, {}, [], all, [null, 3, 'x', {}, { type: 7 }, { id: 'v', type: 'video' }, { type: 'toString' }, { type: 'constructor' }],
+      [text(), text(), { type: 'text', html: 'A' }, { id: 7, type: 'text', html: 'A' }, { id: 'x', type: 'text', html: 'A' }],
+      [text(''), text('x'), text('<p><img src="https://example.org/a.png"></p>'), text('A', { align: 'x' }), text('A', { align: 'center' }), { id: 'b', type: 'button', cta, align: 'right' }, { id: 'b', type: 'button', cta: { label: 'x', url: 'javascript:alert(1)' } }],
+      [image('a', { imageStyle: { width: '50%' } }), image(''), { ...image(), image: { url: 'a', overlay: 7, credit: {}, label: null }, imageStyle: { height: 5, border: null, width: '40%' } }, image('a', { imageStyle: 'x' })],
+      [gallery(['a', 'b']), gallery(['a', 'b'], { layout: 'slider' }), gallery(['a', 'b'], { layout: 'pair' }), gallery(['a', 'b'], { layout: 4 }), gallery(['a', 'b'], { slideshow: show, layout: 'pair' }), gallery(['a', 'b'], { slideshow: 'x' }), gallery(['a']), gallery(['a'], { layout: 'side-by-side' }), gallery(['a', ''])],
+      [columns([{ size: 4, blocks: [image()] }, { size: 8, blocks: [text(), { id: 'b', type: 'button', cta }] }], { stackReverse: true }), columns([{ size: 6, blocks: [image()] }, { size: 6, blocks: [text('')] }]), columns([{ size: 12, blocks: [gallery(['a', 'b']), columns([]), n, text()] }]), columns('x'), columns([{ size: 6 }, { size: 'x', blocks: [null, 3, {}] }, { blocks: 'x' }, { blocks: [text()] }])],
+    ];
+    for (const input of [...inputs, ...inputs]) {
+      expect(cache.views(input as ArticleBlock[])).toEqual(articleBlockViews(input as ArticleBlock[], replace));
+    }
+  });
+});
+
+describe('previewDevice', () => {
+  it.each<[ArticlePreviewDevice, string, object | undefined]>([
+    ['auto', 'auto', undefined],
+    ['mobile', 'stacked', { width: 390, height: 844 }],
+    ['tablet', 'wide', { width: 768, height: 1024 }],
+    ['desktop', 'wide', { width: 1100, height: 800 }],
+  ])('%s', (device, form, viewport) => {
+    expect(articleColumnsForm(device)).toBe(form);
+    expect(previewViewport(device)).toEqual(viewport);
   });
 });

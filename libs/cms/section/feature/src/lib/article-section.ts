@@ -1,16 +1,17 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, effect, inject, input, output } from '@angular/core';
 import { Router } from '@angular/router';
-import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonRow } from '@ionic/angular';
+import { IonButton, IonCol, IonGrid, IonItem, IonRow } from '@ionic/angular';
 
 import { ArticleSection, ImageConfig, ViewPosition, articleBlocksOf, isFreeArticle, withClassicFields } from '@okr/shared-models';
 import { resolveImageStyle } from '@okr/shared-util-core';
-import { ImageLayoutId, articleBackground, articleHasLightText, articleHeaderPlace, articleImagePosition, drawnBlockImages, resolveImageLayout, resolveSlideshow, validCtas, getSectionIntro } from '@okr/cms-section-util';
+import { ImageLayoutId, articleBackground, articleHeaderPlace, articleImagePosition, drawnBlockImages, resolveImageLayout, resolveSlideshow, validCtas, getSectionIntro } from '@okr/cms-section-util';
 import { badgeFor, DeferError, Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
 
 // lazy: only ever used inside @defer below. Any other use of it here would make it eager
 import { ArticleBlocks } from './article-blocks';
 import { ArticleCarousel } from './article-carousel';
+import { ArticleFrame } from './article-frame';
 import { ArticleImages } from './article-images';
 import { ArticleSlideshowComponent } from './article-slideshow';
 import { ArticleStore } from './article-section.store';
@@ -20,27 +21,20 @@ import { openSectionLink } from './section-link';
   selector: 'okr-article-section',
   standalone: true,
   imports: [
-    Spinner, DeferError, Img, ArticleBlocks, ArticleCarousel, ArticleImages, ArticleSlideshowComponent, NgTemplateOutlet, OptionalCardHeader,
-    IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonButton
+    Spinner, DeferError, Img, ArticleBlocks, ArticleCarousel, ArticleFrame, ArticleImages, ArticleSlideshowComponent, NgTemplateOutlet, OptionalCardHeader,
+    IonGrid, IonRow, IonCol, IonItem, IonButton
   ],
   schemas: [
     CUSTOM_ELEMENTS_SCHEMA
   ],
   styles: [`
-    ion-card-content { padding: 5px; }
-    ion-card.banner { background: color-mix(in srgb, var(--ion-color-secondary) 12%, transparent); border-radius: 8px; padding: 12px; }
-    /* an own background colour (ArticleConfig.background): a solid band; text inherits the chosen colour */
-    ion-card.colored { --background: var(--article-bg); background: var(--article-bg); --color: var(--article-fg); color: var(--article-fg); border-radius: 8px; padding: 12px; }
-    ion-card.colored ::ng-deep ion-card-title, ion-card.colored ::ng-deep ion-card-subtitle { --color: inherit; color: inherit; }
-    ion-card.colored ::ng-deep ion-item { --background: transparent; --color: inherit; color: inherit; }
-    ion-card.colored ::ng-deep a { color: inherit; }
-    ion-card.colored ion-row { align-items: center; }
-    ion-card.colored { --article-columns-align: center; }
+    /* an own background colour: image and text centred on each other */
+    :host(.colored-article) ion-row { align-items: center; }
     .header-col okr-optional-card-header ::ng-deep ion-card-subtitle { font-size: 1.25rem; font-weight: 600; text-transform: none; }
     .cta { padding: 8px 5px 0px 5px; }
-    ion-card { padding: 0px; margin: 0px; border: 0px; box-shadow: none !important; }
   `],
   providers: [ArticleStore],
+  host: { '[class.colored-article]': '!!background()' },
   template: `
     @if(section()) {
       <ng-template #carouselTpl>
@@ -90,145 +84,138 @@ import { openSectionLink } from './section-link';
           </div>
         }
       </ng-template>
-      <ion-card [class.banner]="isBanner() && !background()" [class.colored]="!!background()"
-                [style.--article-bg]="background() || null" [style.--article-fg]="background() ? (lightText() ? '#ffffff' : '#1e293b') : null">
-        <!-- a slideshow carries the title and subtitle on its images, like the header of la21staefa.ch -->
-        @if (!headerInColumn()) {
-          <okr-optional-card-header [intro]="sectionIntro().text" [introPosition]="sectionIntro().position" [title]="titleOnImages() ? '' : title()" [subTitle]="titleOnImages() ? '' : subTitle()" />
+      <okr-article-frame [section]="section()" [headerPlace]="headerPlace()" [titleOnImages]="titleOnImages()" [headerInColumn]="headerInColumn()">
+        @if (freeBlocks(); as blocks) {
+          <!-- a free article (spec 1.173): its blocks carry everything, the button included -->
+          @defer (on immediate) {
+            <okr-article-blocks [blocks]="blocks" [title]="title()" [subTitle]="subTitle()" [intro]="sectionIntro()" [headerPlace]="headerPlace()" [editMode]="editMode()" [imageBadges]="imageBadges()" [emitImageClicks]="emitImageClicks()" (imageSelected)="imageSelected.emit($event)" />
+          } @placeholder {
+            <ng-container [ngTemplateOutlet]="fallbackTpl" />
+          } @error {
+            <ng-container [ngTemplateOutlet]="fallbackTpl" />
+            <okr-defer-error />
+          }
+        } @else if (images().length > 0 || (content() && content()!.length > 7)) {
+          @switch(position()) {
+            @case(VP.Left) {
+              <ion-grid>
+                <ion-row>
+                  @if(image(); as image) {
+                    <ion-col size="12" [sizeMd]="colSizeImage()">
+                      <okr-img [captionFallbacks]="captionFallbacks()" [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" [zoomTitle]="store.i18n.article_zoomed()" [badge]="badgeOf(image.label)" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
+                    </ion-col>
+                  }
+                  <ion-col size="12" [sizeMd]="colSizeText()" [class.header-col]="headerInColumn()">
+                    @if (headerInColumn()) {
+                      <okr-optional-card-header [intro]="sectionIntro().text" [introPosition]="sectionIntro().position" [title]="title()" [subTitle]="subTitle()" />
+                    }
+                    <ion-item lines="none" class="ion-no-padding">
+                      <div [innerHTML]="content()"></div>
+                    </ion-item>
+                  </ion-col>
+                </ion-row>
+              </ion-grid>
+            }
+            @case(VP.Right) {
+              <ion-grid>
+                <ion-row>
+                  <ion-col size="12" [sizeMd]="colSizeText()" [class.header-col]="headerInColumn()">
+                    @if (headerInColumn()) {
+                      <okr-optional-card-header [intro]="sectionIntro().text" [introPosition]="sectionIntro().position" [title]="title()" [subTitle]="subTitle()" />
+                    }
+                    <ion-item lines="none" class="ion-no-padding">
+                      <div [innerHTML]="content()"></div>
+                    </ion-item>
+                  </ion-col>
+                  @if(image(); as image) {
+                    <ion-col size="12" [sizeMd]="colSizeImage()">
+                      <okr-img [captionFallbacks]="captionFallbacks()" [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" [badge]="badgeOf(image.label)" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
+                    </ion-col>
+                  }
+                </ion-row>
+              </ion-grid>
+            }
+            @case(VP.Top) {
+              <ion-grid>
+                @if(imageGridLayout(); as layout) {
+                  <ion-row>
+                    <ion-col size="12">
+                      <okr-article-images [images]="images()" [imageStyle]="imageStyle()" [layout]="layout" [editMode]="editMode()" [captionFallbacks]="captionFallbacks()" [zoomTitle]="store.i18n.article_zoomed()" [imageBadges]="imageBadges()" [emitImageClicks]="emitImageClicks()" (imageSelected)="imageSelected.emit($event)" />
+                    </ion-col>
+                  </ion-row>
+                } @else if(images().length > 1) {
+                  <ion-row>
+                    <ion-col size="12">
+                      <ng-container [ngTemplateOutlet]="carouselTpl" />
+                    </ion-col>
+                  </ion-row>
+                } @else if(image(); as image) {
+                  <ion-row>
+                    <ion-col size="12">
+                      <okr-img [captionFallbacks]="captionFallbacks()" [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" [badge]="badgeOf(image.label)" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
+                    </ion-col>
+                  </ion-row>
+                }
+                @if (content(); as content) {
+                  @if(content.length > 7) {
+                    <ion-row>
+                      <ion-col size="12">
+                        <ion-item lines="none" class="ion-no-padding">
+                          <div [innerHTML]="content"></div>
+                        </ion-item>
+                      </ion-col>
+                    </ion-row>
+                  }
+                }
+              </ion-grid>
+            }
+            @case(VP.Bottom) {
+              <ion-grid>
+                @if (content(); as content) {
+                  @if(content.length > 7) {
+                    <ion-row>
+                      <ion-col size="12">
+                        <ion-item lines="none" class="ion-no-padding">
+                          <div [innerHTML]="content"></div>
+                        </ion-item>
+                      </ion-col>
+                    </ion-row>
+                  }
+                }
+                @if(imageGridLayout(); as layout) {
+                  <ion-row>
+                    <ion-col size="12">
+                      <okr-article-images [images]="images()" [imageStyle]="imageStyle()" [layout]="layout" [editMode]="editMode()" [captionFallbacks]="captionFallbacks()" [zoomTitle]="store.i18n.article_zoomed()" [imageBadges]="imageBadges()" [emitImageClicks]="emitImageClicks()" (imageSelected)="imageSelected.emit($event)" />
+                    </ion-col>
+                  </ion-row>
+                } @else if(images().length > 1) {
+                  <ion-row>
+                    <ion-col size="12">
+                      <ng-container [ngTemplateOutlet]="carouselTpl" />
+                    </ion-col>
+                  </ion-row>
+                } @else if(image(); as image) {
+                  <ion-row>
+                    <ion-col size="12">
+                      <okr-img [captionFallbacks]="captionFallbacks()" [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" [badge]="badgeOf(image.label)" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
+                    </ion-col>
+                  </ion-row>
+                }
+              </ion-grid>
+            }
+            @default {  <!-- VP.None: no image, content only -->
+              <ion-item lines="none">
+                <div [innerHTML]="content()"></div>
+              </ion-item>
+            }
+          }
         }
-        <ion-card-content>
-          @if (freeBlocks(); as blocks) {
-            <!-- a free article (spec 1.173): its blocks carry everything, the button included -->
-            @defer (on immediate) {
-              <okr-article-blocks [blocks]="blocks" [title]="title()" [subTitle]="subTitle()" [intro]="sectionIntro()" [headerPlace]="headerPlace()" [editMode]="editMode()" [imageBadges]="imageBadges()" [emitImageClicks]="emitImageClicks()" (imageSelected)="imageSelected.emit($event)" />
-            } @placeholder {
-              <ng-container [ngTemplateOutlet]="fallbackTpl" />
-            } @error {
-              <ng-container [ngTemplateOutlet]="fallbackTpl" />
-              <okr-defer-error />
-            }
-          } @else if (images().length > 0 || (content() && content()!.length > 7)) {
-            @switch(position()) {
-              @case(VP.Left) {
-                <ion-grid>
-                  <ion-row>
-                    @if(image(); as image) {
-                      <ion-col size="12" [sizeMd]="colSizeImage()">
-                        <okr-img [captionFallbacks]="captionFallbacks()" [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" [zoomTitle]="store.i18n.article_zoomed()" [badge]="badgeOf(image.label)" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
-                      </ion-col>
-                    }
-                    <ion-col size="12" [sizeMd]="colSizeText()" [class.header-col]="headerInColumn()">
-                      @if (headerInColumn()) {
-                        <okr-optional-card-header [intro]="sectionIntro().text" [introPosition]="sectionIntro().position" [title]="title()" [subTitle]="subTitle()" />
-                      }
-                      <ion-item lines="none" class="ion-no-padding">
-                        <div [innerHTML]="content()"></div>
-                      </ion-item>
-                    </ion-col>
-                  </ion-row>
-                </ion-grid>
-              }
-              @case(VP.Right) {
-                <ion-grid>
-                  <ion-row>
-                    <ion-col size="12" [sizeMd]="colSizeText()" [class.header-col]="headerInColumn()">
-                      @if (headerInColumn()) {
-                        <okr-optional-card-header [intro]="sectionIntro().text" [introPosition]="sectionIntro().position" [title]="title()" [subTitle]="subTitle()" />
-                      }
-                      <ion-item lines="none" class="ion-no-padding">
-                        <div [innerHTML]="content()"></div>
-                      </ion-item>
-                    </ion-col>
-                    @if(image(); as image) {
-                      <ion-col size="12" [sizeMd]="colSizeImage()">
-                        <okr-img [captionFallbacks]="captionFallbacks()" [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" [badge]="badgeOf(image.label)" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
-                      </ion-col>
-                    }
-                  </ion-row>
-                </ion-grid>
-              }
-              @case(VP.Top) {
-                <ion-grid>
-                  @if(imageGridLayout(); as layout) {
-                    <ion-row>
-                      <ion-col size="12">
-                        <okr-article-images [images]="images()" [imageStyle]="imageStyle()" [layout]="layout" [editMode]="editMode()" [captionFallbacks]="captionFallbacks()" [zoomTitle]="store.i18n.article_zoomed()" [imageBadges]="imageBadges()" [emitImageClicks]="emitImageClicks()" (imageSelected)="imageSelected.emit($event)" />
-                      </ion-col>
-                    </ion-row>
-                  } @else if(images().length > 1) {
-                    <ion-row>
-                      <ion-col size="12">
-                        <ng-container [ngTemplateOutlet]="carouselTpl" />
-                      </ion-col>
-                    </ion-row>
-                  } @else if(image(); as image) {
-                    <ion-row>
-                      <ion-col size="12">
-                        <okr-img [captionFallbacks]="captionFallbacks()" [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" [badge]="badgeOf(image.label)" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
-                      </ion-col>
-                    </ion-row>
-                  }
-                  @if (content(); as content) {
-                    @if(content.length > 7) {
-                      <ion-row>
-                        <ion-col size="12">
-                          <ion-item lines="none" class="ion-no-padding">
-                            <div [innerHTML]="content"></div>
-                          </ion-item>
-                        </ion-col>
-                      </ion-row>
-                    }
-                  }
-                </ion-grid>
-              }
-              @case(VP.Bottom) {
-                <ion-grid>
-                  @if (content(); as content) {
-                    @if(content.length > 7) {
-                      <ion-row>
-                        <ion-col size="12">
-                          <ion-item lines="none" class="ion-no-padding">
-                            <div [innerHTML]="content"></div>
-                          </ion-item>
-                        </ion-col>
-                      </ion-row>
-                    }
-                  }
-                  @if(imageGridLayout(); as layout) {
-                    <ion-row>
-                      <ion-col size="12">
-                        <okr-article-images [images]="images()" [imageStyle]="imageStyle()" [layout]="layout" [editMode]="editMode()" [captionFallbacks]="captionFallbacks()" [zoomTitle]="store.i18n.article_zoomed()" [imageBadges]="imageBadges()" [emitImageClicks]="emitImageClicks()" (imageSelected)="imageSelected.emit($event)" />
-                      </ion-col>
-                    </ion-row>
-                  } @else if(images().length > 1) {
-                    <ion-row>
-                      <ion-col size="12">
-                        <ng-container [ngTemplateOutlet]="carouselTpl" />
-                      </ion-col>
-                    </ion-row>
-                  } @else if(image(); as image) {
-                    <ion-row>
-                      <ion-col size="12">
-                        <okr-img [captionFallbacks]="captionFallbacks()" [image]="image" [imageStyle]="imageStyle()" [editMode]="editMode()" [badge]="badgeOf(image.label)" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
-                      </ion-col>
-                    </ion-row>
-                  }
-                </ion-grid>
-              }
-              @default {  <!-- VP.None: no image, content only -->
-                <ion-item lines="none">
-                  <div [innerHTML]="content()"></div>
-                </ion-item>
-              }
-            }
-          }
-          @if (cta(); as cta) {
-            <div class="cta">
-              <ion-button [color]="cta.style === 'secondary' ? 'secondary' : 'primary'" [fill]="cta.style === 'secondary' ? 'outline' : 'solid'" (click)="open(cta.url)">{{ cta.label }}</ion-button>
-            </div>
-          }
-        </ion-card-content>
-      </ion-card>
+        @if (cta(); as cta) {
+          <div class="cta">
+            <ion-button [color]="cta.style === 'secondary' ? 'secondary' : 'primary'" [fill]="cta.style === 'secondary' ? 'outline' : 'solid'" (click)="open(cta.url)">{{ cta.label }}</ion-button>
+          </div>
+        }
+      </okr-article-frame>
     } @else {
       <okr-spinner />
     }
@@ -283,10 +270,8 @@ export class ArticleSectionComponent {
     const intro = getSectionIntro(this.section());
     return { ...intro, text: this.store.appStore.replacePlaceholders(intro.text) };
   });
-  protected isBanner = computed(() => this.section()?.properties.emphasis === 'banner');
-  /** the article's own background colour ('' = none) and whether its text is white */
+  /** the article's own background colour ('' = none) */
   protected background = computed(() => articleBackground(this.section()?.properties));
-  protected lightText = computed(() => articleHasLightText(this.section()?.properties));
   /** a coloured article with one image beside the text carries its heading in the text column (the KISS block) */
   protected headerInColumn = computed(() => this.freeBlocks() ? this.headerPlace() === 'column' : !!this.background() && this.images().length === 1
     && (this.position() === ViewPosition.Left || this.position() === ViewPosition.Right));

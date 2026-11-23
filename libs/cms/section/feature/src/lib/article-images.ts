@@ -1,7 +1,7 @@
 import { Component, computed, input, output } from '@angular/core';
 
 import { ImageConfig, ImageStyle } from '@okr/shared-models';
-import { ImageLayoutId, imageLayoutTiles } from '@okr/cms-section-util';
+import { ArticlePreviewDevice, ImageLayoutId, imageLayoutTiles } from '@okr/cms-section-util';
 import { badgeFor, Img } from '@okr/shared-ui';
 
 /**
@@ -13,7 +13,8 @@ import { badgeFor, Img } from '@okr/shared-ui';
  * border, radius and caption. A click runs the image style's action with all images as the gallery.
  *
  * Narrow screens (below 576 px): every layout except the filmstrip becomes two columns of equal tiles,
- * below 360 px one column.
+ * below 360 px one column. With a `previewDevice` (the canvas of the editor) the device decides instead of the viewport:
+ * two columns on a mobile, never one.
  *
  * `side-by-side` is no grid: the whole images (not cropped, natural aspect) stand next to each other in a centred
  * row, each with its caption below, centred (e.g. the TWINT and PostFinance QR codes of a donation article).
@@ -40,18 +41,24 @@ import { badgeFor, Img } from '@okr/shared-ui';
     .tile { position: relative; min-width: 0; min-height: 0; }
     .tile okr-img { display: block; height: 100%; }
     @media (max-width: 575.98px) {
-      .grid:not(.filmstrip) {
+      .grid:not(.filmstrip):not(.preview) {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         grid-auto-rows: calc((100cqw - var(--gap)) / 2);
       }
-      .grid:not(.filmstrip) .tile { grid-column: auto !important; grid-row: auto !important; }
+      .grid:not(.filmstrip):not(.preview) .tile { grid-column: auto !important; grid-row: auto !important; }
     }
+    /* the rules above, for a previewed mobile */
+    .grid.mobile:not(.filmstrip) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-auto-rows: calc((100cqw - var(--gap)) / 2);
+    }
+    .grid.mobile:not(.filmstrip) .tile { grid-column: auto !important; grid-row: auto !important; }
     .stacked { display: flex; flex-direction: column; gap: 1rem; }
     .stacked okr-img { display: block; }
     .side-by-side { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.5rem 2rem; }
     .side-by-side .item { flex: 1 1 0; min-width: 120px; max-width: 260px; }
     @media (max-width: 359.98px) {
-      .grid:not(.filmstrip) {
+      .grid:not(.filmstrip):not(.preview) {
         grid-template-columns: minmax(0, 1fr);
         grid-auto-rows: calc(100cqw * 0.75);
       }
@@ -74,7 +81,7 @@ import { badgeFor, Img } from '@okr/shared-ui';
         }
       </div>
       } @else {
-      <div class="grid" [class.filmstrip]="layout() === 'filmstrip'">
+      <div class="grid" [class.filmstrip]="layout() === 'filmstrip'" [class.preview]="previewDevice() !== 'auto'" [class.mobile]="previewDevice() === 'mobile'">
         @for (tile of tiles(); track tile.index) {
           <div class="tile" [style.grid-column]="tile.column + ' / span ' + tile.colSpan" [style.grid-row]="tile.row + ' / span ' + tile.rowSpan">
             <okr-img [image]="images()[tile.index]" [imageStyle]="tileStyle()" [editMode]="editMode()" [gallery]="images()" [captionFallbacks]="captionFallbacks()" [zoomTitle]="zoomTitle()" [badge]="badgeOf(images()[tile.index].label)" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
@@ -100,6 +107,7 @@ export class ArticleImages {
   /** hand a tap on an image to the host (imageSelected) instead of running the image style's action */
   public emitImageClicks = input(false);
   public imageSelected = output<ImageConfig>();
+  public previewDevice = input<ArticlePreviewDevice>('auto');
 
   protected tiles = computed(() => imageLayoutTiles(this.layout(), this.images().length).tiles);
 
