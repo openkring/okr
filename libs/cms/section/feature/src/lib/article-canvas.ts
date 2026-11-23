@@ -79,10 +79,9 @@ let canvases = 0;
 
     .list { padding: ${ARTICLE_LIST_PADDING}; }
     .list.classic-text { padding: 0; }
-    /* the button of a classic article stands under its grid, not in it, and without the padding of a button block */
+    /* the button of a classic article stands under its grid, not in it, and with nothing below it */
     .list:not(.classic-text) ::ng-deep okr-article-block.classic-button { margin: 5px -5px -5px; }
     .list ::ng-deep okr-article-block.classic-button .block { padding-bottom: 0; }
-    .list ::ng-deep okr-article-block.classic-button ion-button { padding: 0; }
     .empty { padding: 16px; text-align: center; }
     .column.empty-column { display: flex; flex-direction: column; justify-content: center; min-height: 64px; margin: 5px; border: 1px dashed currentColor; border-radius: 8px; }
     .add { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px; }

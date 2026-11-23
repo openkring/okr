@@ -57,7 +57,8 @@ export const ARTICLE_COLUMNS_STYLES = `
     .block { padding: 5px; }
     .html { width: 100%; min-width: 0; overflow-wrap: anywhere; }
     .image okr-img { display: block; }
-    .button { padding: 8px 5px; }
+    /* not .button alone: Ionic gives its ion-button that class too */
+    div.button { padding: 8px 5px; }
     :host(.after-header) .block { padding-top: 0; }
     :host(.classic-text) .block { padding: 0; }
     :host(.classic-text) .html { width: auto; }
