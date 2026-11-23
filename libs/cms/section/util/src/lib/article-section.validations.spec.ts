@@ -117,3 +117,20 @@ describe('articleSectionValidations background', () => {
     expect(articleSectionValidations(withProps({ textColor: 'pink' })).hasErrors('textColor')).toBe(true);
   });
 });
+
+describe('articleSectionValidations with blocks', () => {
+  it('ignores broken replaced fields (images, cta, imageLayout, slideshow) once blocks exist', () => {
+    const model = {
+      ...ARTICLE_SECTION_SHAPE,
+      properties: {
+        ...ARTICLE_SECTION_SHAPE.properties,
+        blocks: [],
+        images: [{ url: '/bad', label: 1 }, null],
+        cta: { label: 'x', url: '' },
+        imageLayout: 'nope',
+        slideshow: { effect: 'nope', interval: 99, duration: 99 },
+      },
+    } as unknown as ArticleSection;
+    expect(articleSectionValidations(model).hasErrors()).toBe(false);
+  });
+});
