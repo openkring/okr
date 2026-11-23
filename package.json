@@ -25,6 +25,7 @@
     "catalogue:check": "node scripts/check-feature-catalogue.mjs",
     "catalogue:doc": "node scripts/check-feature-catalogue.mjs --write-doc",
     "check-forms": "node scripts/check-forms.mjs",
+    "check-article-readers": "node scripts/check-article-readers.mjs",
     "check-context-menus": "node scripts/check-context-menus.mjs",
     "check-i18n": "node scripts/check-i18n.mjs",
     "check-i18n-assets": "node scripts/sync-i18n-assets.mjs --check",

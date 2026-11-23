@@ -419,6 +419,7 @@ export const _SectionStore = signalStore(
         const imgHtml = images
           .map(img => `<p><img src="${img.url}" alt="${img.altText ?? ''}" style="max-width:100%;height:auto;" /></p>`)
           .join('');
+        // classic = withClassicFields(section), above
         const content = (classic as ArticleSection).content?.htmlContent ?? '';
         return imgHtml + content;
       },
