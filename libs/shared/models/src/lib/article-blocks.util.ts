@@ -319,11 +319,11 @@ export function drawnArticle(s: ArticleLike): DrawnArticle {
 }
 
 /** Equal stored values; a property that is undefined equals one that is absent. */
-function isEqual(a: unknown, b: unknown): boolean {
-  if (Array.isArray(a) && Array.isArray(b)) return a.length === b.length && a.every((value, i) => isEqual(value, b[i]));
+export function isSameValue(a: unknown, b: unknown): boolean {
+  if (Array.isArray(a) && Array.isArray(b)) return a.length === b.length && a.every((value, i) => isSameValue(value, b[i]));
   if (!isObject(a) || !isObject(b)) return Object.is(a, b);
   const [left, right] = [a as Record<string, unknown>, b as Record<string, unknown>];
-  return [...new Set([...Object.keys(left), ...Object.keys(right)])].every((key) => isEqual(left[key], right[key]));
+  return [...new Set([...Object.keys(left), ...Object.keys(right)])].every((key) => isSameValue(left[key], right[key]));
 }
 
 /**
@@ -336,7 +336,7 @@ export function convertsExactly(s: ArticleLike): boolean {
   const stored: unknown = configOf(s).images ?? [];
   if (!Array.isArray(stored) || !stored.every((i) => isObject(i) && hasUrl(i))) return false;
   const converted: ArticleLike = { ...s, content: undefined, properties: blocksFromClassic(s) };
-  return !isFreeArticle(converted) && isEqual(drawnArticle(withClassicFields(converted)), drawnArticle(s));
+  return !isFreeArticle(converted) && isSameValue(drawnArticle(withClassicFields(converted)), drawnArticle(s));
 }
 
 function hasUrl(image: { url?: unknown }): boolean {
