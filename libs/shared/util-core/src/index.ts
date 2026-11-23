@@ -71,3 +71,4 @@ export * from './lib/html-text.util';
 export * from './lib/start-page.util';
 export * from './lib/concurrency.util';
 export * from './lib/household.util';
+export * from './lib/hostname.util';

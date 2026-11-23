@@ -6,7 +6,55 @@ vi.mock('firebase-admin/firestore', () => ({
 }));
 vi.mock('firebase-functions/v2', () => ({ logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() } }));
 
-import { bareAddress, effectiveSender, getEmailProvider } from './email-templates';
+const reported = vi.hoisted(() => [] as Record<string, unknown>[]);
+vi.mock('../srv/sentry', () => ({ reportToSentry: async (e: Record<string, unknown>) => { reported.push(e); } }));
+
+import { bareAddress, effectiveSender, getAppEmailConfig, getEmailProvider } from './email-templates';
+
+describe('getAppEmailConfig', () => {
+  const cfg = (data: Record<string, unknown>) => { read = async () => ({ data: () => data }); reported.length = 0; };
+
+  it('keeps a valid config unchanged', async () => {
+    cfg({ appDomain: 'app.kring.ch', emailDomain: 'kring.ch', loginUrl: '/login' });
+    const c = await getAppEmailConfig('t');
+    expect(c.appDomain).toBe('app.kring.ch');
+    expect(c.senderDomain).toBe('kring.ch');
+    expect(c.continueUrl).toBe('https://app.kring.ch/login');
+    expect(reported).toEqual([]);
+  });
+
+  it('falls back for an appDomain that is not a bare host and reports it without the value', async () => {
+    cfg({ appDomain: 'evil.ch:80@own.ch' });
+    const c = await getAppEmailConfig('t');
+    expect(c.appDomain).toBe('bkaiser.ch');
+    expect(c.continueUrl).toBe('https://bkaiser.ch/auth/login');
+    expect(reported).toHaveLength(1);
+    expect(reported[0]['fingerprint']).toEqual(['app-config-host', 'appDomain']);
+    expect(reported[0]['tags']).toEqual({ appId: 't', field: 'appDomain' });
+    expect(JSON.stringify(reported[0])).not.toContain('evil');
+  });
+
+  it('falls back silently for an empty or missing appDomain', async () => {
+    cfg({ appDomain: '' });
+    expect((await getAppEmailConfig('t')).appDomain).toBe('bkaiser.ch');
+    cfg({});
+    expect((await getAppEmailConfig('t')).appDomain).toBe('bkaiser.ch');
+    expect(reported).toEqual([]);
+  });
+
+  it('falls back to the app domain for a bad emailDomain', async () => {
+    cfg({ appDomain: 'app.kring.ch', emailDomain: 'x@y' });
+    expect((await getAppEmailConfig('t')).senderDomain).toBe('app.kring.ch');
+    expect(reported).toHaveLength(1);
+    expect(reported[0]['tags']).toEqual({ appId: 't', field: 'emailDomain' });
+  });
+
+  it.each(['@evil.ch', '//evil.ch', '/\\evil.ch', 'login'])('falls back to the default login path for %s', async (loginUrl) => {
+    cfg({ appDomain: 'app.kring.ch', loginUrl });
+    expect((await getAppEmailConfig('t')).continueUrl).toBe('https://app.kring.ch/auth/login');
+    expect(reported).toHaveLength(1);
+  });
+});
 
 describe('getEmailProvider', () => {
   it('returns the stored provider of the tenant', async () => {
