@@ -341,8 +341,9 @@ export type SanitizeFn = (html: string) => string;
 
 export type ArticleImagePosition = 'none' | 'top' | 'bottom' | 'left' | 'right';
 
-// Mirrors ViewPosition (shared-models) and the app's ArticleSectionComponent only for articles without
-// `imageLayout` (spec 1.154 §5): several images render on top, a single one at content.position, and left/right use
+// Mirrors ViewPosition (shared-models) and the app's `articleImagePosition` (@okr/cms-section-util, spec 1.154 §5):
+// several images render on top — or at the bottom when a layout is set and the stored position is Bottom (2), as in
+// the app —, a single one at content.position, and left/right use
 // content.colSize (of 12, default 6) as the image column width. Of the `imageLayout`s only `side-by-side` (see
 // articleSideBySide) and `stacked` (see articleStacked) are rendered on the published website; the grid layouts are
 // not yet (they fall back to the slider).
@@ -352,10 +353,14 @@ export function articleImageLayout(
   imageCount: number,
   position: number | undefined,
   colSize: number | undefined,
+  imageLayout?: unknown,
 ): { imagePosition: ArticleImagePosition; imageColSize: number } {
   const size = typeof colSize === 'number' && colSize >= 1 && colSize <= 11 ? colSize : 6;
   if (imageCount === 0) return { imagePosition: 'none', imageColSize: size };
-  if (imageCount > 1) return { imagePosition: 'top', imageColSize: size };
+  if (imageCount > 1) {
+    const bottom = typeof imageLayout === 'string' && imageLayout !== '' && position === 2;
+    return { imagePosition: bottom ? 'bottom' : 'top', imageColSize: size };
+  }
   return { imagePosition: VIEW_POSITIONS[position ?? 0] ?? 'none', imageColSize: size };
 }
 
@@ -714,6 +719,8 @@ export function mapSection(
     }
 
     case 'people': {
+      // AvatarConfig.width 'article': the section stands in the articles' text column (max-w-3xl), not the wide one
+      const narrow = (props['avatar'] as { width?: unknown } | undefined)?.width === 'article' ? { narrow: true } : {};
       // group / responsibility: the persons resolved at read time (spec 1.153 §13, §13.1), never the
       // stored list. Personal email never: it has the `registered` floor. The only address ever emitted
       // is a role's public alias (resolveRolePeople), and only when the section's info shows email.
@@ -749,6 +756,7 @@ export function mapSection(
           type: 'people', name, title, subTitle, persons,
           ...(withPhotos ? { withPhotos: true, photoWidth: photoSize.width, photoHeight: photoSize.height } : {}),
           ...(emailLink ? { emailLink: true } : {}),
+          ...narrow,
         };
       }
       const persons = ((props['persons'] as { key?: string; name1?: string; name2?: string; label?: string }[] | undefined) ?? [])
@@ -758,7 +766,7 @@ export function mapSection(
           lastName: p.name2 ?? '',
           label: p.label ?? '',
         }));
-      return { type: 'people', name, title, subTitle, persons };
+      return { type: 'people', name, title, subTitle, persons, ...narrow };
     }
 
     case 'accordion': {
@@ -853,7 +861,7 @@ export function mapSection(
           ...stacked, imageColSize: 6, imageHeight: 0, imageColumn: true,
         };
       }
-      const layout = articleImageLayout(images.length, content?.position, content?.colSize);
+      const layout = articleImageLayout(images.length, content?.position, content?.colSize, props['imageLayout']);
       // A position of 'none' hides the images in the app as well.
       return {
         type: 'article', name, title, subTitle, kicker, intro, content: articleHtml,

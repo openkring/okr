@@ -58,6 +58,7 @@
     { "path": "../../../project/task/util/tsconfig.lib.json" },
     { "path": "../../../relationship/invitation/data-access/tsconfig.lib.json" },
     { "path": "../../../relationship/membership/data-access/tsconfig.lib.json" },
+    { "path": "../../../relationship/membership/util/tsconfig.lib.json" },
     { "path": "../../../relationship/personal-rel/data-access/tsconfig.lib.json" },
     { "path": "../../../relationship/reservation/data-access/tsconfig.lib.json" },
     { "path": "../../../relationship/reservation/feature/tsconfig.lib.json" },

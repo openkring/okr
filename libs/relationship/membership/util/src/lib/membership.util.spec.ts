@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { CategoryItemModel, CategoryListModel, GroupModel, MembershipModel, PersonModel } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
-import { addPersonInfoToMembership, createGroupMembership, getMembershipIndex, getMembershipIndexInfo, matchCategoryItem, newMembershipForPerson } from './membership.util';
+import { addPersonInfoToMembership, createGroupMembership, getMembershipIndex, getMembershipIndexInfo, getSortOrderChanges, matchCategoryItem, newMembershipForPerson, sortMembersBySortOrder } from './membership.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -100,5 +100,32 @@ describe('person nickname copied into a new membership', () => {
     expect(newMembershipForPerson(person, 'scs', 'Seeclub', category).memberNickName).toBe('Anni');
     const group = Object.assign(new GroupModel('scs'), { okey: 'g1', name: 'Vorstand' });
     expect(createGroupMembership(group, person, 'scs').memberNickName).toBe('Anni');
+  });
+});
+
+describe('sortMembersBySortOrder', () => {
+  it('puts members with a sortOrder first, ascending, and keeps the incoming order of the rest', () => {
+    const list = [
+      { okey: 'a' }, { okey: 'b', sortOrder: 2 }, { okey: 'c' }, { okey: 'd', sortOrder: 1 },
+    ];
+    expect(sortMembersBySortOrder(list).map(m => m.okey)).toEqual(['d', 'b', 'a', 'c']);
+  });
+
+  it('leaves the input untouched and keeps the order when nobody is sorted yet', () => {
+    const list = [{ okey: 'x' }, { okey: 'y' }];
+    const sorted = sortMembersBySortOrder(list);
+    expect(sorted).not.toBe(list);
+    expect(sorted.map(m => m.okey)).toEqual(['x', 'y']);
+  });
+});
+
+describe('getSortOrderChanges', () => {
+  it('returns the 1-based position of every member whose stored sortOrder differs', () => {
+    const ordered = [{ okey: 'a', sortOrder: 1 }, { okey: 'c' }, { okey: 'b', sortOrder: 2 }];
+    expect(getSortOrderChanges(ordered)).toEqual([{ okey: 'c', sortOrder: 2 }, { okey: 'b', sortOrder: 3 }]);
+  });
+
+  it('returns nothing when the order is already stored', () => {
+    expect(getSortOrderChanges([{ okey: 'a', sortOrder: 1 }, { okey: 'b', sortOrder: 2 }])).toEqual([]);
   });
 });

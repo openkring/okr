@@ -91,6 +91,14 @@ describe('resolveGroupPeople', () => {
     expect(out.map((p) => `${p.firstName} ${p.lastName}`)).toEqual(['Anna Bauer', 'Zoe Meier', 'Beat Meier']);
   });
 
+  it('follows the group\'s manual order (sortOrder) first, then the unsorted members by last name', () => {
+    const out = resolve(
+      [ms('p1', 'Zoe', 'Meier'), ms('p2', 'Anna', 'Bauer'), ms('p3', 'Beat', 'Meier', { sortOrder: 2 }), ms('p4', 'Carl', 'Zingg', { sortOrder: 1 })],
+      { p1: pub(), p2: pub(), p3: pub(), p4: pub() },
+    );
+    expect(out.map((p) => p.firstName)).toEqual(['Carl', 'Beat', 'Anna', 'Zoe']);
+  });
+
   it('is empty without a group, without memberships or when no member qualifies', () => {
     expect(resolveGroupPeople('', [ms('p1', 'A', 'A')], new Map([['p1', pub()]]), TENANTS, TODAY)).toEqual([]);
     expect(resolve([], {})).toEqual([]);
@@ -122,6 +130,16 @@ describe('mapSection people', () => {
     const s = people({ type: 'responsibility', responsibilityIds: ['r1'], excludedPersons: [{ key: 'p1' }] });
     const out = mapSection('s1', s, new Map(), sanitize, 'de', new Map([['responsibility.r1', [anna]]])) as { persons: PublicPerson[] };
     expect(out.persons).toEqual([anna]);
+  });
+
+  it('marks the section narrow when its width is aligned with the articles, for every people source', () => {
+    const groups = new Map([['group.vorstand', [anna]]]);
+    const narrow = (avatar: Record<string, unknown>, type = 'group') =>
+      (mapSection('s1', people({ type, groupId: 'vorstand', persons: [], avatar }), new Map(), sanitize, 'de', groups) as { narrow?: boolean }).narrow;
+    expect(narrow({ width: 'article' })).toBe(true);
+    expect(narrow({ width: 'article' }, 'persons')).toBe(true);
+    expect(narrow({ width: 'full' })).toBeUndefined();
+    expect(narrow({})).toBeUndefined();
   });
 
   it('a group section without resolved members renders no one', () => {

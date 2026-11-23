@@ -6,6 +6,8 @@ export const MEMBERSHIP_I18N_KEYS = {
   memberships:                    PFX + 'memberships',
   members:                        PFX + 'members',
   admin_marker:                   PFX + 'adminMarker',
+  reorder_hint:                   PFX + 'reorder.hint',
+  reorder_error:                  PFX + 'reorder.error',
   reldesc1:                       PFX + 'reldesc1',
   reldesc2:                       PFX + 'reldesc2',
   new_desc:                       PFX + 'newDesc',

@@ -56,6 +56,13 @@ export class MembershipModel implements OkrModel, SearchableModel, TaggedModel {
   public relLog = ''; // log of changes e.g.  20200715:K->A->P
   public relIsLast = true; // is this the last membership of the same kind ? (building a linked list of memberships, ordered by priority)
 
+  /**
+   * Manual position of the member within its group (group memberships only), set by dragging the group's member list
+   * (group admins and admins). Ascending; absent on legacy docs = after the sorted ones, by memberName2 as before.
+   * Drives the order of the group's people sections in the app and on the website. Lesen als `sortOrder ?? undefined`.
+   */
+  public sortOrder?: number;
+
   public rebate = 0;
   public rebateReason: REBATE_REASON = 'none';
 

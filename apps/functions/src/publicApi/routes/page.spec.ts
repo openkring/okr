@@ -28,9 +28,16 @@ describe('articleImageLayout', () => {
     expect(articleImageLayout(1, 9, 6).imagePosition).toBe('none');
   });
 
-  it('always puts several images on top, whatever the position', () => {
+  it('puts several images without a layout on top, whatever the position', () => {
     expect(articleImageLayout(3, 3, 4).imagePosition).toBe('top');
     expect(articleImageLayout(2, 0, 4).imagePosition).toBe('top');
+  });
+
+  it('puts several images below the text when a layout is set and the position is Bottom (mirrors the app)', () => {
+    expect(articleImageLayout(3, 2, 3, 'slider').imagePosition).toBe('bottom');
+    expect(articleImageLayout(3, 2, 3).imagePosition).toBe('top');
+    expect(articleImageLayout(3, 2, 3, '').imagePosition).toBe('top');
+    expect(articleImageLayout(3, 1, 3, 'slider').imagePosition).toBe('top');
   });
 
   it('has no image position without images', () => {

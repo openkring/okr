@@ -1108,6 +1108,10 @@
       "below": "Sous l’image",
       "left": "À gauche de l’image",
       "right": "À droite de l’image"
+    },
+    "width": {
+      "label": "Même largeur que les articles",
+      "helper": "Sur le site web, la liste des personnes a alors exactement la largeur du texte des articles. Sans coche, elle utilise toute la largeur de la page."
     }
   },
   "rag": {

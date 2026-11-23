@@ -1,6 +1,6 @@
 import { enforce, staticSuite, test } from 'vest';
 
-import { NameDisplay, PEOPLE_BACKGROUNDS, PEOPLE_INFO_POSITIONS, PEOPLE_INFOS, PEOPLE_ORG_COLORS, PEOPLE_VIEWS, PeopleSection } from '@okr/shared-models';
+import { NameDisplay, PEOPLE_BACKGROUNDS, PEOPLE_INFO_POSITIONS, PEOPLE_WIDTHS, PEOPLE_INFOS, PEOPLE_ORG_COLORS, PEOPLE_VIEWS, PeopleSection } from '@okr/shared-models';
 import { categoryValidations, numberValidations, stringArrayValidations, stringsValidations } from '@okr/shared-util-core';
 
 import { baseSectionValidations } from './base-section.validations';
@@ -69,6 +69,9 @@ export const peopleSectionValidations = staticSuite((model: PeopleSection) => {
   }
   if (avatar.info !== undefined) {
     stringArrayValidations(peopleField('info'), avatar.info, PEOPLE_INFOS);
+  }
+  if (avatar.width !== undefined) {
+    stringsValidations(peopleField('width'), avatar.width, PEOPLE_WIDTHS);
   }
   if (avatar.infoPosition !== undefined) {
     stringsValidations(peopleField('infoPosition'), avatar.infoPosition, PEOPLE_INFO_POSITIONS);

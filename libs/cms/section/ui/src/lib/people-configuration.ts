@@ -24,7 +24,7 @@ const PEOPLE_SEGMENTS: PeopleSegment[] = ['content', 'view', 'image', 'info'];
 /** Which segment renders which `avatar.*` field — an error in a hidden segment badges its button. */
 const SEGMENT_FIELDS: Record<PeopleSegment, (keyof AvatarConfig)[]> = {
   content: ['title', 'linkedSection'],
-  view: ['view', 'perRow', 'sliderRows', 'color'],
+  view: ['view', 'perRow', 'sliderRows', 'color', 'width'],
   image: ['imgWidth', 'imgHeight', 'imgRadius', 'facePad', 'background', 'bgOrgColor', 'bgColors', 'grayscale', 'altText'],
   info: ['nameDisplay', 'info', 'infoPosition'],
 };
@@ -207,6 +207,10 @@ const SEGMENT_FIELDS: Record<PeopleSegment, (keyof AvatarConfig)[]> = {
                   <ion-col size="12" size-md="6">
                     <okr-category-old [i18n]="colorI18n()" [value]="config().color" (valueChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" [categories]="colors" />
                     <okr-error-note [errors]="errorsFor('color')" />
+                  </ion-col>
+                  <ion-col size="12">
+                    <okr-checkbox [i18n]="widthI18n()" [checked]="config().width === 'article'" (checkedChange)="onFieldChange('width', $event ? 'article' : 'full')" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="errorsFor('width')" />
                   </ion-col>
                   @if(config().view === 'slider') {
                     <ion-col size="12" size-md="6">
@@ -420,6 +424,7 @@ export class PeopleConfiguration {
   } as TextInputI18n));
   protected readonly backgroundI18n = computed(() => ({ name: 'background', label: this.i18n().people_background_label(), helper: this.i18n().people_background_helper() } as StringSelectI18n));
   protected readonly bgOrgColorI18n = computed(() => ({ name: 'bgOrgColor', label: this.i18n().people_bgOrgColor_label(), helper: this.i18n().people_bgOrgColor_helper() } as StringSelectI18n));
+  protected readonly widthI18n = computed(() => ({ name: 'width', label: this.i18n().people_width_label(), helper: this.i18n().people_width_helper() } as CheckboxI18n));
   protected readonly grayscaleI18n = computed(() => ({ name: 'grayscale', label: this.i18n().people_grayscale_label(), helper: this.i18n().people_grayscale_helper() } as CheckboxI18n));
   protected readonly altTextI18n = computed(() => ({
     name: 'altText', label: this.i18n().people_altText_label(), placeholder: this.i18n().people_altText_placeholder(), helper: this.i18n().people_altText_helper(),
