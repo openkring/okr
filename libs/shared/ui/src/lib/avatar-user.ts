@@ -2,7 +2,9 @@ import { Component, computed, inject, input, output } from "@angular/core";
 import { IonAvatar, IonLabel } from "@ionic/angular";
 import { ImgDirective } from './img.directive';
 import { rxResource } from "@angular/core/rxjs-interop";
+import { of, switchMap } from 'rxjs';
 
+import { avatarDocId } from '@okr/avatar-util';
 import { AvatarCollection, AvatarModel, PersonModelName, UserModel } from "@okr/shared-models";
 import { coerceBoolean, getFullName } from "@okr/shared-util-core";
 import { FirestoreService } from '@okr/shared-data-access';
@@ -46,11 +48,16 @@ export class AvatarUser {
   protected avatarKey = computed(() => `${PersonModelName}.${this.currentUser()?.personKey}`);
   protected userName = computed(() => getFullName(this.currentUser()?.firstName, this.currentUser()?.lastName, this.currentUser()?.nameDisplay));
 
+  // Same rule as AvatarService.read: this tenant's own avatar wins, the shared default (bare doc
+  // id) is the fallback. AvatarService itself is out of reach here, because the avatar ui and
+  // feature libs already depend on shared/ui.
   private readonly avatarRef = rxResource({
     params: () => ({
       key: this.avatarKey()
     }),
-    stream: ({ params }) => this.firestoreService.readModel<AvatarModel>(AvatarCollection, params.key)
+    stream: ({ params }) => this.firestoreService.readModel<AvatarModel>(AvatarCollection, avatarDocId(this.env.tenantId, params.key)).pipe(
+      switchMap(avatar => avatar ? of(avatar) : this.firestoreService.readModel<AvatarModel>(AvatarCollection, params.key))
+    )
   });
   private avatar = computed(() => this.avatarRef.value());
   public avatarUrl = computed(() => {
