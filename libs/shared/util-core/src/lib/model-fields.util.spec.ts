@@ -65,6 +65,33 @@ describe('model-fields.util', () => {
     });
   });
 
+  describe('prototype-named keys', () => {
+    const names = ['constructor', '__proto__', 'toString'];
+    it.each(names)('hiddenFieldsOf returns an empty set for model key %s', (name) => {
+      expect(hiddenFieldsOf(name, undefined).size).toBe(0);
+      expect(hiddenFieldsOf(name, { person: { nickname: false } }).size).toBe(0);
+    });
+    it.each(names)('withFieldVisibility does not throw or mutate for model key %s', (name) => {
+      const stored = { person: { nickname: false } };
+      const copy = JSON.parse(JSON.stringify(stored));
+      expect(() => withFieldVisibility(stored, name, 'x', false)).not.toThrow();
+      expect(stored).toEqual(copy);
+      expect(({} as Record<string, unknown>)['x']).toBeUndefined();
+      expect(Object.getPrototypeOf(withFieldVisibility(stored, name, 'x', false))).toBe(Object.prototype);
+    });
+    it('treats constructor as an ordinary unknown field inside person', () => {
+      expect([...hiddenFieldsOf('person', { person: { constructor: false } as unknown as Record<string, boolean> })]).toEqual(['title']);
+      expect(() => withFieldVisibility({ person: {} }, 'person', 'constructor', false)).not.toThrow();
+    });
+    it('does not let a stored __proto__ key set a prototype', () => {
+      const stored = JSON.parse('{"__proto__":{"polluted":false},"person":{"nickname":false}}');
+      const next = withFieldVisibility(stored, 'org', 'taxId', false);
+      expect(Object.getPrototypeOf(next)).toBe(Object.prototype);
+      expect((next as Record<string, unknown>)['polluted']).toBeUndefined();
+      expect(next['person']).toEqual({ nickname: false });
+    });
+  });
+
   describe('resourceFieldKey', () => {
     it('maps a type with its own form', () => {
       expect(resourceFieldKey('rboat')).toBe('resource.rboat');

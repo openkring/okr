@@ -24,17 +24,34 @@ export const MODEL_FIELDS: Record<string, readonly ModelFieldSpec[]> = {
   'resource.key': on('data', 'tags', 'description'),
 };
 
+const has = (obj: object, key: string): boolean => Object.prototype.hasOwnProperty.call(obj, key);
+
+/** Own-property lookup only: 'constructor', '__proto__' and 'toString' are not model keys. */
+function specsFor(modelKey: string): readonly ModelFieldSpec[] {
+  return has(MODEL_FIELDS, modelKey) ? MODEL_FIELDS[modelKey] : [];
+}
+
+/** Defines an own data property, so a '__proto__' key never reaches the prototype. */
+function setOwn<T>(target: Record<string, T>, key: string, value: T): void {
+  Object.defineProperty(target, key, { value, enumerable: true, writable: true, configurable: true });
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object';
+}
+
 function storedFor(stored: ModelFieldMap | null | undefined, modelKey: string): Record<string, unknown> {
-  const entry: unknown = stored?.[modelKey];
-  return entry !== null && typeof entry === 'object' ? (entry as Record<string, unknown>) : {};
+  if (!isObject(stored) || !has(stored, modelKey)) return {};
+  const entry: unknown = stored[modelKey];
+  return isObject(entry) ? entry : {};
 }
 
 /** The fields of a model that are currently hidden; stored values that are not booleans count as the default. */
 export function hiddenFieldsOf(modelKey: string, stored: ModelFieldMap | null | undefined): ReadonlySet<string> {
   const entry = storedFor(stored, modelKey);
   const hidden = new Set<string>();
-  for (const spec of MODEL_FIELDS[modelKey] ?? []) {
-    const value = entry[spec.field];
+  for (const spec of specsFor(modelKey)) {
+    const value = has(entry, spec.field) ? entry[spec.field] : undefined;
     const visible = typeof value === 'boolean' ? value : spec.defaultVisible;
     if (!visible) hidden.add(spec.field);
   }
@@ -44,22 +61,31 @@ export function hiddenFieldsOf(modelKey: string, stored: ModelFieldMap | null | 
 /** Returns a new map with one field set; a value equal to the catalogue default is not stored. */
 export function withFieldVisibility(stored: ModelFieldMap | null | undefined, modelKey: string, field: string, visible: boolean): ModelFieldMap {
   const next: ModelFieldMap = {};
-  for (const [key, value] of Object.entries(stored ?? {})) {
-    if (value !== null && typeof value === 'object') next[key] = { ...value };
+  if (isObject(stored)) {
+    for (const key of Object.keys(stored)) {
+      const value: unknown = stored[key];
+      if (isObject(value)) {
+        const copy: Record<string, boolean> = {};
+        for (const f of Object.keys(value)) setOwn(copy, f, (value as Record<string, boolean>)[f]);
+        setOwn(next, key, copy);
+      }
+    }
   }
-  const entry = { ...(next[modelKey] ?? {}) };
-  const spec = MODEL_FIELDS[modelKey]?.find((s) => s.field === field);
+  const entry: Record<string, boolean> = {};
+  const current = has(next, modelKey) ? next[modelKey] : {};
+  for (const f of Object.keys(current)) setOwn(entry, f, current[f]);
+  const spec = specsFor(modelKey).find((s) => s.field === field);
   if (spec && spec.defaultVisible === visible) delete entry[field];
-  else entry[field] = visible;
+  else setOwn(entry, field, visible);
   if (Object.keys(entry).length === 0) delete next[modelKey];
-  else next[modelKey] = entry;
+  else setOwn(next, modelKey, entry);
   return next;
 }
 
 /** `resource.<type>` for a resource type that has its own field list, otherwise `resource.other`. */
 export function resourceFieldKey(type: string | undefined): string {
   const key = `resource.${type ?? ''}`;
-  return type && Object.prototype.hasOwnProperty.call(MODEL_FIELDS, key) ? key : 'resource.other';
+  return type && has(MODEL_FIELDS, key) ? key : 'resource.other';
 }
 
 /** A hidden field is still shown while it has validation errors, so the user can fix it. */
