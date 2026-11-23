@@ -2,6 +2,7 @@ import { FOOTPRINT_PAGE_TYPE, type MenuItemModel, type PageModel } from '@okr/sh
 import { forkKeyFor, getSafeReturnUrl } from '@okr/shared-util-core';
 
 import type { FeatureBlock } from './feature-catalogue.types';
+import { resolveAvailability } from './feature-rollout.util';
 import { blockOwnersOfMenuKey } from './feature-routes.util';
 import type { SettingsPageOption } from './tenant-settings-display';
 
@@ -37,19 +38,32 @@ function targetUrl(raw: string | undefined, tenantId: string): string {
   return pathSegments(url)[0] === 'auth' ? '' : url;
 }
 
-/**
- * Is the block behind the url on? Asked of the blocks whose menu holds this very path, else of those that share its first
- * segment (`/calevent/…`); a url no block knows is an own page. It catches a row the tenant made itself.
- */
-function isUrlBlockOn(url: string, input: StartTargetsInput): boolean {
-  const segments = pathSegments(url);
+interface DeclaredPaths { id: string; paths: string[][]; }
+
+/** The paths of the menu rows each block declares. */
+function declaredPaths(input: StartTargetsInput): DeclaredPaths[] {
   const navigateUrls = (specs: FeatureBlock['menu']): string[] => specs.flatMap((spec) => [
     ...(spec.action === 'navigate' && spec.url ? [spec.url.split('@TID@').join(input.tenantId)] : []), ...navigateUrls(spec.children ?? []),
   ]);
-  const declared = input.blocks.map((block) => ({ id: block.id, paths: navigateUrls(block.menu).map(pathSegments) }));
+  return input.blocks.map((block) => ({ id: block.id, paths: navigateUrls(block.menu).map(pathSegments) }));
+}
+
+/**
+ * The blocks behind the url: those whose menu holds this very path, else those that share its first segment
+ * (`/calevent/…`). A url no block knows is an own page.
+ */
+function blocksOfUrl(url: string, declared: readonly DeclaredPaths[]): string[] {
+  const segments = pathSegments(url);
   const exact = declared.filter((block) => block.paths.some((path) => path.join('/') === segments.join('/')));
   const owners = exact.length > 0 ? exact : declared.filter((block) => block.paths.some((path) => path[0] === segments[0]));
-  return owners.length === 0 || owners.some((block) => input.isEnabled(block.id));
+  return owners.map((block) => block.id);
+}
+
+/** The blocks that are on here AND for visitors who are not signed in: those cannot read the rollouts, for them the catalogue default counts. */
+function blocksOpenToAll(input: StartTargetsInput): Set<string> {
+  return new Set(input.blocks
+    .filter((block) => input.isEnabled(block.id) && resolveAvailability(block, undefined, input.tenantId).offered)
+    .map((block) => block.id));
 }
 
 /** Can every signed-in person see the row: its own role, hidden key and block, and at least one way down to it? */
@@ -58,7 +72,7 @@ function isRowOpen(row: MenuItemModel, input: StartTargetsInput, visiting: Reado
   if (row.isArchived || input.hiddenKeys.has(row.name) || !OPEN_ROLES.has(row.roleNeeded ?? '')) return false;
   const owners = blockOwnersOfMenuKey(input.blocks, row.name);
   if (owners.length > 0 && !owners.some((id) => input.isEnabled(id))) return false;
-  const parents = input.menuDocs.filter((doc) => !doc.isArchived && (doc.menuItems ?? []).includes(row.name));
+  const parents = input.menuDocs.filter((doc) => (doc.menuItems ?? []).includes(row.name));
   const next = new Set(visiting).add(row.name);
   return parents.length === 0 || parents.some((parent) => isRowOpen(parent, input, next));
 }
@@ -66,13 +80,18 @@ function isRowOpen(row: MenuItemModel, input: StartTargetsInput, visiting: Reado
 /**
  * The pages a tenant can start with (spec 1.174 §7.4): the rows of its menus that every signed-in person can open, and
  * its pages that are visible without signing in. A row is judged by its own role and by the menus it hangs under: one
- * of them must be open all the way up; a row in no menu is judged by itself. Each url is listed once, rows first.
+ * of them must be open all the way up; a row in no menu is judged by itself. The blocks that declare the row, and those
+ * behind its url (which catches a row the tenant made itself), must be open to visitors too: a `beta` or `internal` block is
+ * closed to them, they would get the welcome page. Each url is listed once, rows first.
  */
 export function startTargets(input: StartTargetsInput): StartTarget[] {
+  const open = blocksOpenToAll(input);
+  const declared = declaredPaths(input);
+  const isAnyOpen = (ids: string[]): boolean => ids.length === 0 || ids.some((id) => open.has(id));
   const rows = input.menuDocs
-    .filter((row) => row.action === 'navigate' && isRowOpen(row, input))
+    .filter((row) => row.action === 'navigate' && isAnyOpen(blockOwnersOfMenuKey(input.blocks, row.name)) && isRowOpen(row, input))
     .map((row) => ({ url: targetUrl(row.url, input.tenantId), label: row.label }))
-    .filter((target) => target.url !== '' && isUrlBlockOn(target.url, input));
+    .filter((target) => target.url !== '' && isAnyOpen(blocksOfUrl(target.url, declared)));
   const pageKeys = new Set(input.pages.map((p) => p.okey));
   const pages = input.pages
     .filter((p) => !p.isPrivate && !p.isArchived && p.type !== FOOTPRINT_PAGE_TYPE && p.type !== 'error')

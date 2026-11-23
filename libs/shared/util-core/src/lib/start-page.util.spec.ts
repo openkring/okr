@@ -107,6 +107,11 @@ describe('safeRootUrl', () => {
       expect(safeRootUrl(url)).toBe(WELCOME_URL);
     }
   });
+  // the router opens '/' for a url it cannot parse, and '/' asks for the root url again
+  it('opens the welcome page for a url that cannot be decoded, wherever the fault is', () => {
+    for (const url of ['/a/%', '/a?b=%', '/a#%', '/a?b=%zz']) expect(safeRootUrl(url, '/'), url).toBe(WELCOME_URL);
+    expect(safeRootUrl('/a?b=100%25', '/')).toBe('/a?b=100%25');
+  });
   it('keeps a good url, with its query', () => {
     expect(safeRootUrl('/private/dashboard/c-contentpage')).toBe('/private/dashboard/c-contentpage');
     expect(safeRootUrl(' /person/all/c-persons?filters=search ', '/')).toBe('/person/all/c-persons?filters=search');

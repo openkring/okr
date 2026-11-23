@@ -4,6 +4,7 @@ import { Router, type CanActivateFn } from '@angular/router';
 import { race, timer } from 'rxjs';
 import { filter, map, take } from 'rxjs/operators';
 import { AppStore, READINESS_TIMEOUT_MS } from '@okr/shared-feature';
+import { normalizedRootUrl } from '@okr/shared-util-angular';
 import { featureOffUrl } from '@okr/shared-util-core';
 import { FeatureStore } from './feature.store';
 
@@ -61,7 +62,7 @@ export function isFeatureEnabledGuard(blockId: string): CanActivateFn {
       take(1),
       map(() => featureStore.effective().has(blockId)
         ? true
-        : router.parseUrl(featureOffUrl(appStore.appConfig()?.rootUrl, state.url))),
+        : router.parseUrl(featureOffUrl(normalizedRootUrl(router, appStore.appConfig()?.rootUrl), state.url))),
     );
   };
 }

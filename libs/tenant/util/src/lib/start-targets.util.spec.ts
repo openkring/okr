@@ -2,7 +2,7 @@ import { FOOTPRINT_PAGE_TYPE, MenuItemModel, PageModel, type RoleName } from '@o
 import { describe, expect, it } from 'vitest';
 
 import { FEATURE_BLOCKS } from './feature-blocks';
-import type { FeatureBlock, MenuSpec } from './feature-catalogue.types';
+import type { Availability, FeatureBlock, MenuSpec } from './feature-catalogue.types';
 import { startOptions, startTargets, type StartTargetsInput } from './start-targets.util';
 
 function row(name: string, url: string, patch: Partial<MenuItemModel> = {}): MenuItemModel {
@@ -13,8 +13,8 @@ function page(okey: string, patch: Partial<PageModel> = {}): PageModel {
   return Object.assign(new PageModel('scs'), { okey, name: `n:${okey}`, isPrivate: false, ...patch });
 }
 
-function block(id: string, menu: Partial<MenuSpec>[]): FeatureBlock {
-  return { id, menu: menu.map((m) => ({ key: m.name, action: 'navigate', roleNeeded: 'registered', icon: '', label: '', ...m })) } as unknown as FeatureBlock;
+function block(id: string, menu: Partial<MenuSpec>[], defaultAvailability: Availability = 'ga'): FeatureBlock {
+  return { id, defaultAvailability, menu: menu.map((m) => ({ key: m.name, action: 'navigate', roleNeeded: 'registered', icon: '', label: '', ...m })) } as unknown as FeatureBlock;
 }
 
 const BLOCKS = [
@@ -71,6 +71,9 @@ describe('startTargets, menu rows', () => {
     expect(urls([row('x', '/x')], { hiddenKeys: new Set(['x']) })).toEqual([]);
     expect(urls([row('x', '/x'), parent], { hiddenKeys: new Set(['p']) })).toEqual([]);
     expect(urls([row('x', '/x', { isArchived: true })])).toEqual([]);
+    const archived = row('old', '', { action: 'sub', isArchived: true, menuItems: ['x'] });
+    expect(urls([row('x', '/x'), archived])).toEqual([]);
+    expect(urls([row('x', '/x'), archived, parent])).toEqual(['/x']);
   });
   it('asks whether a block that declares the row is on', () => {
     const only = (id: string) => ({ isEnabled: (b: string) => b === id });
@@ -88,6 +91,15 @@ describe('startTargets, menu rows', () => {
     expect(urls([row('mine', '/private/about/c-contentpage')], only('cms'))).toEqual(['/private/about/c-contentpage']);
     expect(urls([row('mine', '/elsewhere')], only('cms'))).toEqual(['/elsewhere']);
   });
+  // signed-out visitors cannot read the rollouts: for them such a block is off, and the start page would be the welcome page
+  it('offers no row of a block that is not open to everyone, though it is on here', () => {
+    for (const availability of ['beta', 'internal', 'disabled'] as const) {
+      const blocks = [...BLOCKS, block('staged', [{ name: 'staged', url: '/staged/all' }], availability)];
+      expect(urls([row('staged', '/staged/all'), row('mine', '/staged/mine')], { blocks }), availability).toEqual([]);
+    }
+    const alsoOpen = [...BLOCKS, block('staged', [{ name: 'quiz', url: '/quiz' }], 'beta')];
+    expect(urls([row('quiz', '/quiz')], { blocks: alsoOpen })).toEqual(['/quiz']);
+  });
   it('resolves the tenant, and offers no url that needs more than that', () => {
     expect(urls([row('x', '/album/@TID@-album/c-album')])).toEqual(['/album/scs-album/c-album']);
     for (const url of ['/my-cost-centers/@BOOKS@', '/x/@UNKNOWN@', '/x/:key', '', '/', '//host/x', 'https://host/x', '/web/x']) {
@@ -103,11 +115,11 @@ describe('startTargets, menu rows', () => {
   it('lists a url once', () => {
     expect(urls([row('x', '/x'), row('x2', 'x')])).toEqual(['/x']);
   });
-  it('offers the live kinds of start pages from the real catalogue', () => {
+  it('offers the live kinds of start pages from the real catalogue, the diary (not ga) excepted', () => {
     expect(urls([
       row('diary', '/diary/all/c-diary'), row('dashboard', '/private/dashboard/c-contentpage'), row('person-contacts', '/person/all/c-persons'),
       row('logout', '/auth/logout'),
-    ], { blocks: FEATURE_BLOCKS })).toEqual(['/diary/all/c-diary', '/private/dashboard/c-contentpage', '/person/all/c-persons']);
+    ], { blocks: FEATURE_BLOCKS })).toEqual(['/private/dashboard/c-contentpage', '/person/all/c-persons']);
   });
 });
 

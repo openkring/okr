@@ -22,9 +22,12 @@ import { SettingsPublicNote } from './settings-public-note';
             <ion-grid>
               <ion-row>
                 <ion-col size="12">
-                  <okr-string-select [i18n]="fields()['rootUrl']" [selectedString]="values()['rootUrl']"
-                    (selectedStringChange)="onFieldChange('rootUrl', $event)"
-                    [stringList]="urls()" [labels]="labels()" [readOnly]="isReadOnly()" />
+                  <!-- a new list is a new select: ion-select does not notice a changed option text -->
+                  @for (version of [listVersion()]; track version) {
+                    <okr-string-select [i18n]="fields()['rootUrl']" [selectedString]="values()['rootUrl']"
+                      (selectedStringChange)="onFieldChange('rootUrl', $event)"
+                      [stringList]="urls()" [labels]="labels()" [readOnly]="isReadOnly()" />
+                  }
                   <okr-error-note [errors]="errors()['rootUrl']" />
                 </ion-col>
               </ion-row>
@@ -41,6 +44,9 @@ export class SettingsStartForm extends SettingsFormBase {
 
   protected readonly urls = computed(() => this.startOptions().map((option) => option.key));
   protected readonly labels = computed(() => this.startOptions().map((option) => option.label));
+
+  /** changes when the list or one of its labels does, not when another page is selected */
+  protected readonly listVersion = computed(() => JSON.stringify(this.startOptions()));
 
   protected get group(): 'start' { return 'start'; }
 }

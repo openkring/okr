@@ -5,6 +5,7 @@ import { combineLatest, race, timer } from 'rxjs';
 import { filter, map, take } from 'rxjs/operators';
 
 import { AppStore, READINESS_TIMEOUT_MS } from '@okr/shared-feature';
+import { normalizedRootUrl } from '@okr/shared-util-angular';
 import { resolveUserStartUrl, safeRootUrl } from '@okr/shared-util-core';
 
 /**
@@ -41,6 +42,9 @@ export const rootUrlGuard: CanActivateFn = (_route, state) => {
     timer(READINESS_TIMEOUT_MS),
   ).pipe(
     take(1),
-    map(() => router.parseUrl(safeRootUrl(resolveUserStartUrl(appStore.currentUser(), appStore.appConfig().rootUrl), state.url))),
+    map(() => {
+      const startUrl = resolveUserStartUrl(appStore.currentUser(), appStore.appConfig().rootUrl);
+      return router.parseUrl(safeRootUrl(normalizedRootUrl(router, startUrl), state.url));
+    }),
   );
 };

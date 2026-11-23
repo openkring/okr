@@ -1,5 +1,5 @@
 import { Params, Router } from '@angular/router';
-import { die } from '@okr/shared-util-core';
+import { die, safeRootUrl } from '@okr/shared-util-core';
 import { Subscription } from 'rxjs';
 
 /************************************** routing helpers ********************************** */
@@ -42,6 +42,15 @@ export async function navigateByUrl(router: Router, url: string | undefined, que
         // Pass url/queryParams as arguments, not interpolated into the format string (CodeQL js/tainted-format-string).
         console.error('route.util.navigateByUrl() -> FAILED', url, queryParams, ex);
     }
+}
+
+/**
+ * The tenant's `rootUrl` as the router reads it, for a guard to check and redirect to. `parseUrl` never throws: a url it
+ * cannot parse ('/a/(b') becomes '/', which would ask for the root url again, and a part it skips ('/a//b' is '/a') would
+ * hide that the url is the current one. Pass the result to `safeRootUrl` or `featureOffUrl` with the current url.
+ */
+export function normalizedRootUrl(router: Pick<Router, 'parseUrl'>, rootUrl: string | undefined | null): string {
+  return router.parseUrl(safeRootUrl(rootUrl)).toString();
 }
 
 /**

@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonNote, IonRow, ModalController } from '@ionic/angular';
 
 import { combineLatest, of } from 'rxjs';
-import { catchError, map, startWith, switchMap } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 
 import { MenuService } from '@okr/cms-menu-data-access';
 import { expandMenuTokens, resolveMenuLabelKey } from '@okr/cms-menu-util';
@@ -169,13 +169,12 @@ export class TenantSettingsContent {
     tenantId: this.appStore.tenantId(),
   }));
 
-  /** The same with the labels the menu shows. `startWith`: a text that loads slowly holds back its own label only. */
+  /** The same with the labels the menu shows, once all of them are there (`translate` answers '' for a scope that fails). */
   private readonly startTargets = toSignal(toObservable(this.rawStartTargets).pipe(
     switchMap((targets) => (targets.length === 0 ? of([]) : combineLatest(targets.map(({ url, label }) => {
       const tokens = { version: '', tenantId: this.appStore.tenantId(), appDomain: this.appStore.appConfig().appDomain ?? '' };
       return this.i18nService.translate(resolveMenuLabelKey(label ?? '', tokens)).pipe(
-        startWith(''),
-        map((text) => ({ url, label: expandMenuTokens(text, tokens) })),
+        map((text) => ({ url, label: expandMenuTokens(text, tokens).trim() })),
       );
     })))),
   ), { initialValue: [] });

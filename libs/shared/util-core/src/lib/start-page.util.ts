@@ -130,14 +130,24 @@ function pathOf(url: string | undefined | null): string {
   }
 }
 
+function isDecodable(url: string): boolean {
+  try {
+    decodeURIComponent(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * The tenant's `rootUrl` as a target a guard can redirect to: `WELCOME_URL` when it is missing, names no page, is no
- * in-app url, or is the page being opened right now (`currentUrl`), which would redirect to itself for ever.
+ * in-app url, cannot be decoded (the router opens '/' for a url it cannot parse), or is the page being opened right now
+ * (`currentUrl`), which would redirect to itself for ever. A guard passes the url through `normalizedRootUrl` first.
  */
 export function safeRootUrl(rootUrl: string | undefined | null, currentUrl?: string | null): string {
   const url = (rootUrl ?? '').trim();
   const path = pathOf(url);
-  if (path === '' || !/^\/(?![/\\])/.test(url)) return WELCOME_URL;
+  if (path === '' || !isDecodable(url) || !/^\/(?![/\\])/.test(url)) return WELCOME_URL;
   return path === pathOf(currentUrl) ? WELCOME_URL : url;
 }
 

@@ -32,7 +32,8 @@ async function makeApp(providers: (Provider | EnvironmentProviders)[]): Promise<
   return createApplication({
     providers: [
       provideZonelessChangeDetection(),
-      { provide: Router, useValue: { parseUrl: (url: string): UrlTree => serializer.parse(url) } },
+      // like the real one: a url that cannot be parsed becomes '/'
+      { provide: Router, useValue: { parseUrl: (url: string): UrlTree => { try { return serializer.parse(url); } catch { return serializer.parse('/'); } } } },
       ...providers,
     ],
   });
@@ -311,6 +312,9 @@ describe('isFeatureEnabledGuard', () => {
     ['another page, with its query', '/quiz', '/person/all/c-persons?filters=search', '/person/all/c-persons?filters=search'],
     ['the page itself', '/quiz', '/quiz', '/public/welcome'],
     ['the page itself with a query', '/quiz?level=1', '/quiz', '/public/welcome'],
+    ['a url the router cannot parse', '/quiz', '/a/(b', '/public/welcome'],
+    ['a url that cannot be decoded', '/quiz', '/a?b=%', '/public/welcome'],
+    ['the page itself once the router has read it', '/quiz', '/quiz//x', '/public/welcome'],
     ['the welcome page while that one is off', '/public/welcome', '/quiz', '/notfound'],
   ])('a block that is off, root url is %s', async (_name, url, rootUrl, expected) => {
     const run = await runGuardWithStub('games', featureStoreStub(true, []), { url, rootUrl });
