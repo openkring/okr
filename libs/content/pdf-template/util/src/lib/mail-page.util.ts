@@ -32,12 +32,12 @@ function visibleText(html: string): string {
   return html.replace(/<[^>]*>/g, '').replace(/&nbsp;|&#160;|&#xa0;/gi, ' ').trim();
 }
 
-/** A button target a mail client can open: https, mailto or tel (the server's `mailButtonUrl` rule). */
+/** A button target a mail client can open: https, mailto, tel or an app path (the server's `mailButtonUrl` rule). */
 function isSafeMailUrl(raw: unknown): boolean {
   const u = str(raw);
   // eslint-disable-next-line no-control-regex -- rejecting control characters is the point
   if (/[\\\u0000-\u001f\u007f]/.test(u)) return false;
-  return /^(https:\/\/|mailto:|tel:)/.test(u);
+  return /^(https:\/\/|mailto:|tel:|\/(?!\/))/.test(u);
 }
 
 /**
@@ -59,7 +59,10 @@ function sectionHasContent(s: SectionModel): boolean {
       const first = Array.isArray(images) ? rec(images[0]) : undefined;
       // the server shows the first image when its path resolves, else its alt text (altText, else label)
       const hasImage = !!first && (isMailImagePath(first['url']) || !!(str(first['altText']) || str(first['label'])));
-      return /<img\b/i.test(html) || visibleText(html).length > 0 || hasImage || !!str(s.title) || !!str(s.subTitle);
+      const cta = rec(props['cta']);
+      const hasButton = !!str(cta['label']) && isSafeMailUrl(cta['url']);
+      return /<img\b/i.test(html) || visibleText(html).length > 0 || hasImage || hasButton
+        || !!str(s.title) || !!str(s.subTitle) || !!str(s.intro);
     }
     case 'button':
       return isSafeMailUrl(rec(props['action'])['url']) && !!(str(rec(props['style'])['label']) || str(rec(props['action'])['altText']));
@@ -71,8 +74,8 @@ function sectionHasContent(s: SectionModel): boolean {
 
 /**
  * Whether the page shows anything, by the rule of the server's `no-content` (`renderMailPageContent`): an article
- * with visible text, a title, or an image (a path the server resolves, or an alt text), or a button with a safe
- * (https/mailto/tel) URL and a label. Archived sections do not count.
+ * with visible text, a title, an intro, an image (a path the server resolves, or an alt text) or a button, or a
+ * button section; a button counts with a label and a URL a mail can open (https, mailto, tel or an app path). Archived sections do not count.
  *
  * An events section never makes a page sendable here: the server counts it only when its calendar has upcoming
  * events, which the client does not load. So a page needs an article or a button; events alone are refused
@@ -107,12 +110,12 @@ export function mailPageRefusalKey(err: unknown): MailPageRefusalKey | undefined
   return Object.prototype.hasOwnProperty.call(MAIL_PAGE_REFUSALS, e.message) ? MAIL_PAGE_REFUSALS[e.message] : undefined;
 }
 
-/** One line for the section list: an article's first 60 visible characters, a button's label, an events calendar. */
+/** One line for the section list: an article's first 60 visible characters (else its intro or button label), a button's label, an events calendar. */
 export function sectionSummary(section: SectionModel): string {
   const props = rec(section.properties);
   switch (section.type) {
     case 'article': {
-      const text = visibleText(section.content?.htmlContent ?? '').replace(/\s+/g, ' ');
+      const text = (visibleText(section.content?.htmlContent ?? '') || str(section.intro) || str(rec(props['cta'])['label'])).replace(/\s+/g, ' ');
       return text.length > SUMMARY_LENGTH ? text.slice(0, SUMMARY_LENGTH) : text;
     }
     case 'button':

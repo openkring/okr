@@ -33,6 +33,8 @@ export interface MailRenderContext {
   sanitize: (html: string) => Promise<string>;
   /** the upcoming event lines per calendar (`section.name`), at least MAX_MAIL_EVENTS when there are; each section takes its `mailEventLimit` */
   events: Record<string, MailEventLine[]>;
+  /** the tenant app's public origin (`publicAppOrigin`), without a trailing slash: it makes an app path in a button absolute */
+  appOrigin: string;
 }
 
 /** The most events one events section lists in a mail, whatever its `maxEvents` says. */
@@ -81,13 +83,25 @@ export function mailImageUrl(path: string): string {
   return url.startsWith('https://') ? url : '';
 }
 
-/** A button target a mail client can open: https, mailto or tel. Relative site paths mean nothing in a mail. */
-export function mailButtonUrl(raw: unknown): string {
+/**
+ * A button target a mail client can open: https, mailto or tel, and an app path («/club»), made absolute with the
+ * tenant app's origin. A website page («club.html») or an in-page anchor means nothing in a mail and gives `''`.
+ */
+export function mailButtonUrl(raw: unknown, appOrigin: string): string {
   const url = safeSiteUrl(raw);
+  if (url.startsWith('/')) return `${appOrigin}${url}`;
   return /^(https:\/\/|mailto:|tel:)/.test(url) ? url : '';
 }
 
 interface RenderedPart { html: string; hasContent: boolean }
+
+/** An article's button; undefined without a label or a target a mail client can open. */
+function articleCta(s: MailSection, appOrigin: string): { label: string; url: string; secondary: boolean } | undefined {
+  const cta = rec(rec(s.properties)['cta']);
+  const label = str(cta['label']);
+  const url = mailButtonUrl(cta['url'], appOrigin);
+  return label && url ? { label, url, secondary: cta['style'] === 'secondary' } : undefined;
+}
 
 async function renderArticle(s: MailSection, ctx: MailRenderContext, tpl: HandlebarsTemplate): Promise<RenderedPart> {
   const html = await ctx.sanitize(s.content?.htmlContent ?? '');
@@ -101,13 +115,23 @@ async function renderArticle(s: MailSection, ctx: MailRenderContext, tpl: Handle
   const shownImage = image && (image.src || image.alt) ? image : undefined;
   const title = str(s.title);
   const subTitle = str(s.subTitle);
-  const hasContent = !!(shownHtml || shownImage || title || subTitle);
-  return { html: hasContent ? tpl({ title, subTitle, html: shownHtml, image: shownImage }) : '', hasContent };
+  // the intro's own line breaks are kept, as the section cards show it (white-space: pre-line)
+  const intro = str(s.intro);
+  const introLines = intro ? intro.split(/\r?\n/) : [];
+  const introAbove = !!intro && s.introPosition === 'above';
+  const cta = articleCta(s, ctx.appOrigin);
+  const hasContent = !!(shownHtml || shownImage || title || subTitle || intro || cta);
+  return {
+    html: hasContent
+      ? tpl({ title, subTitle, html: shownHtml, image: shownImage, introLines, introAbove, introBelow: !!intro && !introAbove, cta })
+      : '',
+    hasContent,
+  };
 }
 
-function renderButton(s: MailSection, tpl: HandlebarsTemplate): RenderedPart {
+function renderButton(s: MailSection, ctx: MailRenderContext, tpl: HandlebarsTemplate): RenderedPart {
   const props = rec(s.properties);
-  const url = mailButtonUrl(rec(props['action'])['url']);
+  const url = mailButtonUrl(rec(props['action'])['url'], ctx.appOrigin);
   const label = str(rec(props['style'])['label']) || str(rec(props['action'])['altText']);
   if (!url || !label) return { html: '', hasContent: false };
   return { html: tpl({ url, label }), hasContent: true };
@@ -151,7 +175,7 @@ export async function renderMailPageContent(order: string[], sections: MailSecti
   for (const s of ordered) {
     const type = s.type as MailSectionType;
     if (type === 'article') parts.push(await renderArticle(s, ctx, templateOf(type)));
-    else if (type === 'button') parts.push(renderButton(s, templateOf(type)));
+    else if (type === 'button') parts.push(renderButton(s, ctx, templateOf(type)));
     else parts.push(renderEvents(s, ctx, templateOf(type)));
   }
 

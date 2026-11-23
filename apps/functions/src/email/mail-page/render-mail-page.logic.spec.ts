@@ -4,11 +4,11 @@ import { MAIL_SECTION_TYPES } from '@okr/shared-models';
 
 import { sanitizeEmailBody } from '../../pdf/sanitize';
 import { MAIL_SECTION_TEMPLATES } from './mail-section-templates';
-import { MAX_MAIL_EVENTS, mailEventLimit, MailEventLine, MailPageError, MailSection, renderMailPageContent } from './render-mail-page.logic';
+import { MAX_MAIL_EVENTS, mailButtonUrl, mailEventLimit, MailEventLine, MailPageError, MailSection, renderMailPageContent } from './render-mail-page.logic';
 
 async function render(order: string[], sections: MailSection[], events: Record<string, MailEventLine[]> = {}): Promise<string> {
   const { default: hb } = await import('handlebars');
-  return renderMailPageContent(order, sections, { hb, sanitize: sanitizeEmailBody, events });
+  return renderMailPageContent(order, sections, { hb, sanitize: sanitizeEmailBody, events, appOrigin: 'https://app.example.org' });
 }
 
 function article(okey: string, htmlContent: string, extra: Partial<MailSection> = {}): MailSection {
@@ -124,6 +124,69 @@ describe('renderMailPageContent', () => {
     expect(again.match(/<table/g)?.length).toBe(html.match(/<table/g)?.length);
     expect(again).toContain('href="mailto:info@example.org"');
     expect(again).toContain('cellpadding="0"');
+  });
+});
+
+describe('mailButtonUrl', () => {
+  it('keeps https, mailto and tel', () => {
+    expect(mailButtonUrl('https://a.ch/x', 'https://app.a.ch')).toBe('https://a.ch/x');
+    expect(mailButtonUrl('mailto:a@b.ch', 'https://app.a.ch')).toBe('mailto:a@b.ch');
+    expect(mailButtonUrl('tel:+41', 'https://app.a.ch')).toBe('tel:+41');
+  });
+  it('makes an app path absolute', () => expect(mailButtonUrl(' /private/events ', 'https://app.a.ch')).toBe('https://app.a.ch/private/events'));
+  it('drops what a mail client cannot open', () => {
+    for (const u of ['', '#top', 'club.html', '//evil.org', '/\\evil.org', 'http://a.ch', 'javascript:alert(1)', undefined]) {
+      expect(mailButtonUrl(u, 'https://app.a.ch')).toBe('');
+    }
+  });
+});
+
+describe('renderMailPageContent: intro and button of an article', () => {
+  const withCta = (cta: unknown, html = '<p>Text</p>') => article('a', html, { properties: { images: [], cta } });
+
+  it('shows the intro below the title by default, with its line breaks', async () => {
+    const html = await render(['a'], [article('a', '<p>Text</p>', { title: 'Titel', intro: 'Eins\nZwei' })]);
+    expect(html).toMatch(/Eins<br \/>\s*Zwei/);
+    expect(html.indexOf('Eins')).toBeGreaterThan(html.indexOf('Titel'));
+    expect(html.indexOf('Eins')).toBeLessThan(html.indexOf('Text'));
+    expect(html.match(/Eins/g)?.length).toBe(1);
+  });
+  it('shows the intro above the title when set so', async () => {
+    const html = await render(['a'], [article('a', '<p>Text</p>', { title: 'Titel', intro: 'Vorab', introPosition: 'above' })]);
+    expect(html.indexOf('Vorab')).toBeGreaterThanOrEqual(0);
+    expect(html.indexOf('Vorab')).toBeLessThan(html.indexOf('Titel'));
+  });
+  it('escapes the intro', async () => {
+    const html = await render(['a'], [article('a', '', { intro: '<b>x</b>' })]);
+    expect(html).toContain('&lt;b&gt;x&lt;/b&gt;');
+  });
+  it('counts an intro alone as content', async () => {
+    expect(await render(['a'], [article('a', '', { intro: 'Nur das' })])).toContain('Nur das');
+  });
+  it('renders the button below the text', async () => {
+    const html = await render(['a'], [withCta({ label: 'Jetzt <los>', url: 'https://example.org/x?a=1&b=2', style: 'primary' })]);
+    expect(html).toContain('href="https://example.org/x?a=1&amp;b=2"');
+    expect(html).toContain('Jetzt &lt;los&gt;');
+    expect(html.indexOf('Jetzt')).toBeGreaterThan(html.indexOf('Text'));
+    expect(html).toContain('background-color:#222222');
+  });
+  it('draws a secondary button as an outline', async () => {
+    const html = await render(['a'], [withCta({ label: 'Mehr', url: 'https://example.org', style: 'secondary' })]);
+    expect(html).toContain('border:1px solid #222222');
+    expect(html).not.toContain('background-color:#222222');
+  });
+  it('resolves an app path', async () => {
+    expect(await render(['a'], [withCta({ label: 'Mehr', url: '/club', style: 'primary' })])).toContain('href="https://app.example.org/club"');
+    expect(await render(['b'], [button('b', '/club')])).toContain('href="https://app.example.org/club"');
+  });
+  it('leaves out a button without label or with an unusable url', async () => {
+    expect(await render(['a'], [withCta({ label: '', url: 'https://example.org', style: 'primary' })])).not.toContain('<a ');
+    expect(await render(['a'], [withCta({ label: 'X', url: 'javascript:alert(1)', style: 'primary' })])).not.toContain('<a ');
+    expect(await codeOf(render(['a'], [withCta({ label: 'X', url: '#top', style: 'primary' }, '')]))).toBe('no-content');
+  });
+  it('survives a second sanitize pass', async () => {
+    const html = await render(['a'], [article('a', '', { intro: 'Vorab', introPosition: 'above', properties: { images: [], cta: { label: 'Mehr', url: '/club', style: 'secondary' } } })]);
+    expect(await sanitizeEmailBody(html)).toBe(html);
   });
 });
 
