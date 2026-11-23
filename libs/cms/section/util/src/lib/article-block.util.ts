@@ -16,6 +16,11 @@ export function isObject(value: unknown): value is Loose {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+/** True when a stored image has a path: a picture is chosen. */
+export function hasImageUrl(image: unknown): boolean {
+  return isObject(image) && typeof image['url'] === 'string' && image['url'].trim() !== '';
+}
+
 /** True when a stored html string shows text to a reader (tags and blanks do not count). */
 export function hasVisibleText(html: unknown): boolean {
   return typeof html === 'string' && stripHtml(html).trim() !== '';

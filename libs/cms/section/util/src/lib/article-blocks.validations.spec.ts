@@ -78,6 +78,28 @@ describe('article blocks validations', () => {
     expect(run([{ id: 'g', type: 'gallery', images: [] }]).hasErrors('blocks.g.images')).toBe(true);
   });
 
+  it('flags an image block and a gallery without a picture, in columns too', () => {
+    const empty = { ...image, url: '' };
+    for (const url of ['', '  ', undefined, null, 5]) expect(run([{ id: 'i', type: 'image', image: { ...image, url } }]).hasErrors('blocks.i.image.url')).toBe(true);
+    expect(run([columns([col(6, [{ id: 'ci', type: 'image', image: empty }]), col(6)])]).hasErrors('blocks.ci.image.url')).toBe(true);
+    expect(run([{ id: 'g', type: 'gallery', images: [empty] }]).hasErrors('blocks.g.images')).toBe(true);
+    expect(run([{ id: 'g', type: 'gallery', images: [empty, image] }]).hasErrors('blocks.g.images')).toBe(false);
+    expect(run([text('t')], { cover: empty }).getErrors()).toEqual({});   // a cover may be empty: the first picture is taken
+  });
+
+  it('flags an image link that is not a safe target, in galleries, columns and the cover too', () => {
+    const linked = (actionUrl: unknown) => ({ ...image, actionUrl });
+    for (const bad of ['javascript:alert(1)', ' java\nscript:alert(1)', 'data:text/html,x', '/\\\\evil.example', 5]) {
+      expect(run([{ id: 'i', type: 'image', image: linked(bad) }]).hasErrors('blocks.i.image.actionUrl')).toBe(true);
+      expect(run([{ id: 'g', type: 'gallery', images: [image, linked(bad)] }]).hasErrors('blocks.g.images[1].actionUrl')).toBe(true);
+      expect(run([columns([col(6, [{ id: 'ci', type: 'image', image: linked(bad) }]), col(6)])]).hasErrors('blocks.ci.image.actionUrl')).toBe(true);
+      expect(run([text('t')], { cover: linked(bad) }).hasErrors('cover.actionUrl')).toBe(true);
+    }
+    for (const good of ['', undefined, null, 'https://example.org', 'http://example.org', 'mailto:a@b.ch', 'tel:044', '/seite', 'seite.html', 'www.example.org']) {
+      expect(run([{ id: 'i', type: 'image', image: linked(good) }, { id: 'g', type: 'gallery', images: [linked(good)] }]).getErrors()).toEqual({});
+    }
+  });
+
   it('works for ids with dots', () => {
     expect(run([text('a.b', { align: 'x' })]).hasErrors('blocks.a.b.align')).toBe(true);
   });

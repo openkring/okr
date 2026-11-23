@@ -1,13 +1,13 @@
 import { create } from 'vest';
 import { describe, expect, it } from 'vitest';
 
-import { IMAGE_CONFIG_SHAPE, type ArticleBlock, type ArticleConfig, type ArticleSection, type ImageConfig } from '@okr/shared-models';
+import { IMAGE_CONFIG_SHAPE, ImageActionType, type ArticleBlock, type ArticleConfig, type ArticleSection, type ImageConfig } from '@okr/shared-models';
 
 import { articleBlocksValidations } from './article-blocks.validations';
 import {
-  articleImageChoices, coverErrors, galleryErrors, isPictureMissing, outdatedLanguagesOf, resizeColumn, restErrors, typingPath, uniqueFileName, withUpload,
+  articleImageChoices, coverErrors, drawableImages, galleryErrors, isPictureMissing, outdatedLanguagesOf, resizeColumn, restErrors, shownArticleFields, shownBlockFields, typingPath, uniqueFileName, withUpload,
 } from './article-panel.util';
-import type { SectionErrors } from './section-errors';
+import { blockErrors, type SectionErrors } from './section-errors';
 
 const image = (url: string, more: Partial<ImageConfig> = {}): ImageConfig => ({ ...IMAGE_CONFIG_SHAPE, url, ...more });
 const article = (properties: Partial<ArticleConfig>): ArticleSection => ({ okey: 's', type: 'article', title: 'T', properties: { images: [], ...properties } } as unknown as ArticleSection);
@@ -221,6 +221,62 @@ describe('errors of the panel', () => {
   it('galleryErrors: a slideshow that is no object stays as it is', () => {
     const block = { id: 'g', type: 'gallery', images: [image('tenant/t/1.jpg')], slideshow: 'x' } as unknown as ArticleBlock;
     expect(Object.keys(galleryErrors(reported(block), block))).toEqual(['slideshow']);
+  });
+});
+
+describe('what the panel shows', () => {
+  /** what is left at the end of the panel for these blocks, with the keys the suite really reports */
+  const suite = create((blocks: ArticleBlock[]) => articleBlocksValidations({ images: [], blocks }));
+  const rest = (block: unknown): string[] => {
+    const blocks = [block] as ArticleBlock[];
+    const errors = blockErrors(suite(blocks).getErrors() as SectionErrors, blocks[0].id, blocks);
+    return restErrors(galleryErrors(errors, blocks[0]), shownBlockFields(blocks[0])).map((e) => e.field);
+  };
+  const ok = image('tenant/t/1.jpg');
+  const pic = (imageStyle: object, img = ok) => ({ id: 'b', type: 'image', image: img, imageStyle });
+  const gal = (more: object) => ({ id: 'b', type: 'gallery', images: [ok, ok], ...more });
+
+  it.each([
+    ['zoom factor, its field is drawn', pic({ action: ImageActionType.Zoom, zoomFactor: 99 }), []],
+    ['zoom factor under another action', pic({ action: ImageActionType.None, zoomFactor: 99 }), ['zoomFactor']],
+    ['cleared zoom factor', pic({ zoomFactor: null }), ['zoomFactor']],
+    ['slot, its field is drawn', pic({ isThumbnail: true, slot: 5 }), []],
+    ['slot without thumbnail', pic({ slot: 5 }), ['slot']],
+    ['width', pic({ width: 5 }), []],
+    ['width without a picture, once', pic({ width: 5 }, image('')), ['width']],
+    ['style that is no object', pic('x' as unknown as object), ['imageStyle']],
+    ['alt text and link', pic({}, { ...ok, altText: 5, actionUrl: 'javascript:x' } as unknown as ImageConfig), []],
+    ['no picture', pic({}, image('')), []],
+    ['no image at all', { id: 'b', type: 'image' }, []],
+    ['gallery: zoom factor under another action', gal({ imageStyle: { zoomFactor: 99 } }), ['zoomFactor']],
+    ['gallery: style without pictures', gal({ images: [], imageStyle: { width: 5 } }), ['width']],
+    ['gallery: slideshow drawn', gal({ slideshow: { effect: 'fade', autoplay: true, interval: 99, duration: 1 } }), []],
+    ['gallery: slideshow of another layout', gal({ layout: 'pair', slideshow: { effect: 'fade', autoplay: true, interval: 99, duration: 1 } }), ['slideshow.interval']],
+    ['gallery: slideshow of one picture', gal({ images: [ok], slideshow: { effect: 'fade', autoplay: true, interval: 99, duration: 1 } }), ['slideshow.interval']],
+    ['gallery: slideshow that is no object', gal({ slideshow: 'x' }), ['slideshow']],
+    ['gallery: layout', gal({ layout: 'x' }), []],
+    ['gallery: layout without pictures', gal({ images: [], layout: 'x' }), ['imageLayout']],
+    ['button', { id: 'b', type: 'button', align: 'x', cta: { label: '', url: '' , style: 'x' } }, ['cta.style']],
+    ['columns', { id: 'b', type: 'columns', columns: [] }, []],
+    ['callout', { id: 'b', type: 'callout', tone: 'x', html: '', htmlI18n: { en: 'x' } }, []],
+    ['space', { id: 'b', type: 'space', size: 'x' }, []],
+    ['text', { id: 'b', type: 'text', align: 'x', html: '', htmlI18n: { en: 'x' } }, []],
+  ])('%s', (_name, block, expected) => {
+    expect(rest(block)).toEqual(expected);
+  });
+
+  it('the fields of the article depend on who sees them and on what is in use', () => {
+    const all = { title: 'T', subTitle: 'S', intro: 'I', properties: { images: [], background: '#fff' } } as unknown as ArticleSection;
+    const none = { title: '', properties: { images: [] } } as unknown as ArticleSection;
+    expect(shownArticleFields(all, { admin: true, privileged: true })).toEqual(expect.arrayContaining(['title', 'subTitle', 'intro', 'introPosition', 'name', 'background', 'textColor', 'cover.', 'tags', 'notes']));
+    expect(shownArticleFields(all, { admin: false, privileged: true })).not.toContain('notes');
+    expect(shownArticleFields(all, { admin: false, privileged: false })).not.toContain('tags');
+    for (const field of ['subTitle', 'intro', 'background']) expect(shownArticleFields(none, { admin: true, privileged: true })).not.toContain(field);
+  });
+
+  it('drawableImages: leaves out what is no picture', () => {
+    expect(drawableImages([null, 3, ok, { url: 5 }, {}] as unknown as ImageConfig[])).toEqual([ok, {}]);
+    expect(drawableImages('x')).toEqual([]);
   });
 });
 

@@ -224,10 +224,10 @@
         "captionHidden": "La légende est masquée. Sous « Apparence », tu choisis où elle apparaît.",
         "link": {
           "label": "Lien",
-          "placeholder": "https://… ou /page",
+          "placeholder": "https://…",
           "helper": "Ce qui s’ouvre quand on clique sur l’image."
         },
-        "linkInactive": "Le lien ne fonctionne que si tu choisis de suivre le lien comme action sous « Apparence ».",
+        "linkInactive": "Le lien ne fonctionne que si tu choisis l’action « {action} » sous « Apparence ».",
         "linkMissing": "Pour cette action, l’image a besoin d’un lien.",
         "noUpload": "Dans la vue de test, tu ne peux pas téléverser d’images.",
         "columnWidth": "Largeur de la colonne"
@@ -332,8 +332,8 @@
         "conflict": "Quelqu’un a modifié cet article entre-temps.",
         "force": "Enregistrer quand même",
         "back": "Retour",
-        "gone": "Cet article a été supprimé ou archivé entre-temps. Il ne peut plus être enregistré.",
-        "offline": "Tu n’es pas connecté pour le moment. L’article n’a pas été enregistré. Tes modifications sont toujours là.",
+        "gone": "Cet article n’existe plus ici. Entre-temps, il a été supprimé, archivé ou ne vous appartient plus. Il ne peut donc pas être enregistré.",
+        "offline": "Il n’est pas sûr que l’article ait été enregistré. Tes modifications sont toujours là. Enregistre-le à nouveau dès que tu es connecté.",
         "failed": "L’article n’a pas pu être enregistré. Tes modifications sont toujours là.",
         "trial": "Vue de test : l’article n’a pas été enregistré."
       },
@@ -2068,7 +2068,8 @@
     "formImplicitSsn": "Le numéro AVS ne peut pas être prédéfini.",
     "zoomRange": "Saisis un niveau de zoom entre 1 et 19.",
     "layerUnknown": "Choisis l'un des fonds de carte proposés.",
-    "trackRequired": "Choisis un parcours."
+    "trackRequired": "Choisis un parcours.",
+    "imageLink": "Ce lien n’est pas possible. Utilise une adresse avec https://, mailto: ou tel:."
   },
   "advent": {
     "label": "Calendrier de l'Avent",

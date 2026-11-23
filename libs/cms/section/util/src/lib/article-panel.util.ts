@@ -1,9 +1,10 @@
-import { SLIDESHOW_EFFECTS, articleBlocksOf, blockImages, type ArticleBlock, type ArticleBlockType, type ArticleColumn, type ArticleSection, type ImageConfig } from '@okr/shared-models';
-import { sanitizeFileName, suffixFileName } from '@okr/shared-util-core';
+import { ImageActionType, SLIDESHOW_EFFECTS, articleBlocksOf, blockImages, type ArticleBlock, type ArticleBlockType, type ArticleColumn, type ArticleSection, type ImageConfig } from '@okr/shared-models';
+import { resolveImageStyle, sanitizeFileName, suffixFileName } from '@okr/shared-util-core';
 
-import { isObject, type Loose } from './article-block.util';
+import { hasImageUrl, isObject, type Loose } from './article-block.util';
 import { findBlock, replaceBlock } from './article-editor.util';
-import type { SectionErrorEntry, SectionErrors } from './section-errors';
+import { resolveImageLayout } from './image-layout.util';
+import { ARTICLE_IMAGES_SEGMENT_FIELDS, type SectionErrorEntry, type SectionErrors } from './section-errors';
 import { SLIDESHOW_DURATION_MAX, SLIDESHOW_DURATION_MIN, SLIDESHOW_INTERVAL_MAX, SLIDESHOW_INTERVAL_MIN } from './slideshow.util';
 
 export { BLOCK_ALIGNS, CALLOUT_TONES, SPACE_SIZES } from './article-block.util';
@@ -39,12 +40,15 @@ export function articleImageChoices(section: ArticleSection): ImageConfig[] {
   });
 }
 
-const hasUrl = (image: unknown): boolean => isObject(image) && typeof image['url'] === 'string' && image['url'].trim() !== '';
-
 /** An image or gallery block without a picture: readers see nothing of it. */
 export function isPictureMissing(block: ArticleBlock): boolean {
-  if (block.type === 'image') return !hasUrl(block.image);
-  return block.type === 'gallery' && !(Array.isArray(block.images) && block.images.some(hasUrl));
+  if (block.type === 'image') return !hasImageUrl(block.image);
+  return block.type === 'gallery' && !(Array.isArray(block.images) && block.images.some(hasImageUrl));
+}
+
+/** The entries of a stored picture list that can be drawn and edited; anything else is no picture. */
+export function drawableImages(images: unknown): ImageConfig[] {
+  return (Array.isArray(images) ? images : []).filter((image) => isObject(image) && (image['url'] === undefined || image['url'] === null || typeof image['url'] === 'string')) as ImageConfig[];
 }
 
 /** What is found out about an uploaded picture after it was added: its document and the attribution in the file. */
@@ -76,7 +80,7 @@ export function withUpload(section: ArticleSection, upload: ArticleUpload): Arti
     const actionUrl = isObject(block.image) ? block.image.actionUrl : '';
     next = { ...block, image: { ...images[0], actionUrl: actionUrl || images[0].actionUrl } };
   } else if (block?.type === 'gallery') {
-    next = { ...block, images: [...(Array.isArray(block.images) ? block.images : []), ...images] };
+    next = { ...block, images: [...drawableImages(block.images), ...images] };
   } else return section;
   return { ...section, properties: { ...section.properties, blocks: replaceBlock(blocks, next) } };
 }
@@ -173,10 +177,56 @@ export function typingPath(before: unknown, after: unknown): string | undefined 
 
 // ------------------------------------------------------- errors and translations -------------------------------------------------------
 
-/** The errors that no field of the panel shows. `shown`: field names; a name that ends in `[` or `.` stands for all that start with it. */
+/**
+ * The error names that the panel of this block shows at a field **as it is drawn now** (see `restErrors`): okr-image-style draws the zoom
+ * factor only for that action and the slot only for a thumbnail, the look card needs a picture, the times of a slideshow need a
+ * running one. Names as `blockErrors` and `galleryErrors` give them.
+ */
+export function shownBlockFields(block: ArticleBlock): string[] {
+  switch (block.type) {
+    case 'text': return ['align', 'html'];
+    case 'callout': return ['tone', 'html'];
+    case 'button': return ['align', 'cta.label', 'cta.url'];
+    case 'columns': return ['columns'];
+    case 'space': return ['size'];
+    // whatever concerns the picture stands under the list of one, at its field or in the note that there is none
+    case 'image': return ['images[', 'image.', ...(isPictureMissing(block) ? [] : shownStyleFields(block.imageStyle))];
+    case 'gallery': {
+      const images = drawableImages(block.images);
+      if (images.length === 0) return ['images', 'images['];
+      const slider = resolveImageLayout(block.layout, images.length) === 'slider';
+      const slideshow = !slider ? [] : isObject(block.slideshow) ? ['slideshow.'] : ['slideshow.effect'];
+      return ['images', 'images[', 'imageLayout', ...slideshow, ...shownStyleFields(block.imageStyle)];
+    }
+    default: return [];
+  }
+}
+
+function shownStyleFields(stored: unknown): string[] {
+  const style = resolveImageStyle(isObject(stored) ? stored : undefined);
+  const fields = ['action', ...ARTICLE_IMAGES_SEGMENT_FIELDS.styles.filter((field) => field !== 'slot' || style.isThumbnail),
+    ...(style.action === ImageActionType.Zoom ? ['zoomFactor'] : [])];
+  return fields.flatMap((field) => [field, `imageStyle.${field}`]);
+}
+
+/** The error names that the panel of the article shows at a field: an unused optional text and what a role does not see are not drawn. */
+export function shownArticleFields(section: ArticleSection, may: { admin: boolean; privileged: boolean }): string[] {
+  const used = (value: unknown): boolean => typeof value === 'string' && value.trim() !== '';
+  return [
+    'title', 'introPosition', 'name', 'textColor', 'cover.',
+    ...(used(section.subTitle) ? ['subTitle'] : []), ...(used(section.intro) ? ['intro'] : []), ...(used(section.properties?.background) ? ['background'] : []),
+    ...(may.privileged ? ['tags'] : []), ...(may.admin ? ['notes'] : []),
+  ];
+}
+
+/**
+ * The errors that no field of the panel shows. `shown`: field names; a name that ends in `[` or `.` stands for all that start with it.
+ * An error of an image style is there under two names (`blockErrors`) and is listed once.
+ */
 export function restErrors(errors: SectionErrors | undefined, shown: readonly string[]): SectionErrorEntry[] {
+  const isAlias = (field: string) => field.startsWith('imageStyle.') && (errors?.[field.slice('imageStyle.'.length)]?.length ?? 0) > 0;
   const isShown = (field: string) => shown.some((s) => (s.endsWith('[') || s.endsWith('.') ? field.startsWith(s) : s === field));
-  return Object.entries(errors ?? {}).filter(([field, messages]) => messages?.length > 0 && !isShown(field)).map(([field, messages]) => ({ field, messages }));
+  return Object.entries(errors ?? {}).filter(([field, messages]) => messages?.length > 0 && !isShown(field) && !isAlias(field)).map(([field, messages]) => ({ field, messages }));
 }
 
 /** The errors of the teaser picture (`cover.url`) as an image list names them (`images[0].url`). */

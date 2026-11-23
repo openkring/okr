@@ -224,10 +224,10 @@
         "captionHidden": "Der Untertitel ist ausgeblendet. Unter «Aussehen» legst du fest, wo er erscheint.",
         "link": {
           "label": "Link",
-          "placeholder": "https://… oder /seite",
+          "placeholder": "https://…",
           "helper": "Was sich beim Klick auf das Bild öffnet."
         },
-        "linkInactive": "Der Link wirkt erst, wenn du unter «Aussehen» als Aktion das Folgen des Links wählst.",
+        "linkInactive": "Der Link wirkt erst, wenn du unter «Aussehen» die Aktion «{action}» wählst.",
         "linkMissing": "Für diese Aktion braucht das Bild einen Link.",
         "noUpload": "In der Testansicht kannst du keine Bilder hochladen.",
         "columnWidth": "Breite der Spalte"
@@ -332,8 +332,8 @@
         "conflict": "Jemand hat diesen Artikel inzwischen geändert.",
         "force": "Trotzdem speichern",
         "back": "Zurück",
-        "gone": "Dieser Artikel wurde inzwischen gelöscht oder archiviert. Er kann nicht mehr gespeichert werden.",
-        "offline": "Du bist gerade nicht verbunden. Der Artikel wurde nicht gespeichert. Deine Änderungen sind noch da.",
+        "gone": "Diesen Artikel gibt es hier nicht mehr. Er wurde inzwischen gelöscht, archiviert oder gehört nicht mehr zu euch. Deshalb kann er nicht gespeichert werden.",
+        "offline": "Es ist nicht sicher, ob der Artikel gespeichert wurde. Deine Änderungen sind noch da. Speichere ihn noch einmal, sobald du verbunden bist.",
         "failed": "Der Artikel konnte nicht gespeichert werden. Deine Änderungen sind noch da.",
         "trial": "Testansicht: Der Artikel wurde nicht gespeichert."
       },
@@ -2068,7 +2068,8 @@
     "formImplicitSsn": "Die AHV-Nummer kann nicht fest vorgegeben werden.",
     "zoomRange": "Gib einen Zoom-Faktor zwischen 1 und 19 ein.",
     "layerUnknown": "Wähle eine der angebotenen Kartenebenen.",
-    "trackRequired": "Wähle eine Strecke aus."
+    "trackRequired": "Wähle eine Strecke aus.",
+    "imageLink": "Dieser Link ist nicht möglich. Verwende eine Adresse mit https://, mailto: oder tel:."
   },
   "advent": {
     "label": "Adventskalender",

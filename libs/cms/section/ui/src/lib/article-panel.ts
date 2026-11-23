@@ -1,18 +1,15 @@
-import { Component, computed, inject, input, model, output } from '@angular/core';
+import { Component, computed, DestroyRef, inject, input, model, output } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonItem, IonLabel, IonList, IonNote, ModalController } from '@ionic/angular';
 
 import { ArticleConfig, ArticleSection, CategoryListModel, ImageConfig, isSameValue, RoleName, SectionModel, UserModel } from '@okr/shared-models';
 import { Chips, DateInput, DateInputI18n, ErrorNote, TextareaInput, TextareaInputI18n } from '@okr/shared-ui';
 import { fill, hasRole } from '@okr/shared-util-core';
-import { ArticleEditorI18n, ArticleUpload, coverErrors, getFieldErrors, ImageUploadTarget, restErrors, SectionErrors } from '@okr/cms-section-util';
+import { ArticleEditorI18n, ArticleUpload, coverErrors, drawableImages, getFieldErrors, ImageUploadTarget, restErrors, SectionErrors, shownArticleFields } from '@okr/cms-section-util';
 
 import { pickArticleImage } from './article-image-pick.modal';
 import { ARTICLE_PANEL_STYLES } from './article-panel.styles';
 import { ImagesConfiguration } from './images-configuration';
 import { SectionConfiguration } from './section-configuration';
-
-/** the errors that a field of this panel shows */
-const SHOWN_FIELDS = ['title', 'subTitle', 'intro', 'introPosition', 'name', 'background', 'textColor', 'cover.', 'tags', 'notes'];
 
 /**
  * The settings of the article itself (spec 1.175 §7.3), shown while no block is selected: title, subtitle and intro, who sees it, its
@@ -87,6 +84,7 @@ const SHOWN_FIELDS = ['title', 'subTitle', 'intro', 'introPosition', 'name', 'ba
 })
 export class ArticlePanel {
   private readonly modalController = inject(ModalController);
+  private readonly destroyRef = inject(DestroyRef);
 
   // inputs
   public readonly section = model.required<ArticleSection>();
@@ -113,10 +111,7 @@ export class ArticlePanel {
   public readonly selectBlock = output<string>();
 
   // teaser picture
-  protected readonly covers = computed<ImageConfig[]>(() => {
-    const cover = this.section().properties?.cover;
-    return cover && typeof cover === 'object' ? [cover] : [];
-  });
+  protected readonly covers = computed<ImageConfig[]>(() => drawableImages([this.section().properties?.cover]));
   protected readonly choices = computed(() => this.articleImages().filter((image) => image.url !== this.covers()[0]?.url));
   protected readonly coverErrors = computed(() => coverErrors(this.errors()));
   protected readonly uploadTarget = computed<ImageUploadTarget>(() => {
@@ -132,7 +127,7 @@ export class ArticlePanel {
   }));
 
   protected readonly notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as TextareaInputI18n));
-  protected readonly rest = computed(() => restErrors(this.errors(), SHOWN_FIELDS));
+  protected readonly rest = computed(() => restErrors(this.errors(), shownArticleFields(this.section(), { admin: this.hasRole('admin'), privileged: this.hasRole('privileged') })));
   protected readonly outdatedNotes = computed(() => {
     const i18n = this.i18n();
     const fields: [string, string][] = [
@@ -169,7 +164,7 @@ export class ArticlePanel {
 
   protected async pick(): Promise<void> {
     const image = await pickArticleImage(this.modalController, this.choices(), this.i18n());
-    if (image) this.setCover(image);
+    if (image && !this.destroyRef.destroyed) this.setCover(image);
   }
 
   protected selectLabel(block: string): string {

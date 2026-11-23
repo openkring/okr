@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output } from '@angular/core';
+import { Component, computed, DestroyRef, inject, input, output } from '@angular/core';
 import {
   IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonNote,
   IonRadio, IonRadioGroup, IonRange, IonRow, IonSegment, IonSegmentButton, ModalController
@@ -9,13 +9,14 @@ import {
   SectionCta, SpaceSize, UserModel
 } from '@okr/shared-models';
 import { URL_LENGTH } from '@okr/shared-constants';
+import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Checkbox, CheckboxI18n, ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { compactImageStyle, fill, resolveImageStyle } from '@okr/shared-util-core';
 import {
-  ARTICLE_BLOCK_ICONS, ARTICLE_IMAGES_SEGMENT_FIELDS, ArticleEditorI18n, ArticleUpload, BLOCK_ALIGNS, blockTypeLabel, CALLOUT_TONES, COLUMN_PRESETS,
-  galleryErrors, getFieldErrors, IMAGE_CAPTION_LENGTH, ImageUploadTarget, isPictureMissing, resizeColumn, resolveImageLayout, restErrors, SectionErrors,
-  setColumnCount, setColumnSizes, SPACE_SIZES
+  ARTICLE_BLOCK_ICONS, ArticleEditorI18n, ArticleUpload, BLOCK_ALIGNS, blockTypeLabel, CALLOUT_TONES, COLUMN_PRESETS,
+  drawableImages, galleryErrors, getFieldErrors, IMAGE_CAPTION_LENGTH, ImageUploadTarget, isPictureMissing, resizeColumn, restErrors, SectionErrors,
+  setColumnCount, setColumnSizes, shownBlockFields, SPACE_SIZES
 } from '@okr/cms-section-util';
 
 import { pickArticleImage } from './article-image-pick.modal';
@@ -24,8 +25,7 @@ import { ARTICLE_PANEL_STYLES } from './article-panel.styles';
 import { CtaConfiguration } from './cta-configuration';
 import { ImagesConfiguration } from './images-configuration';
 
-/** the names under which `okr-article-images-config` (appearance) shows the errors of an image style */
-const STYLE_FIELDS = [...ARTICLE_IMAGES_SEGMENT_FIELDS.styles, 'action', 'zoomFactor'];
+const filled = (value: unknown): boolean => typeof value === 'string' && value.trim() !== '';
 
 /**
  * The settings of the selected block (spec 1.175 §7.3) and nothing else. Every change emits exactly one new block object; nothing is
@@ -249,6 +249,8 @@ const STYLE_FIELDS = [...ARTICLE_IMAGES_SEGMENT_FIELDS.styles, 'action', 'zoomFa
 })
 export class ArticleBlockPanel {
   private readonly modalController = inject(ModalController);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly actionI18n = inject(I18nService).translateAll({ followLink: '@shared/categories.imageAction.followlink.label' });
 
   // inputs
   public readonly block = input.required<ArticleBlock>();
@@ -306,7 +308,7 @@ export class ArticleBlockPanel {
   protected readonly images = computed<ImageConfig[]>(() => {
     const block = this.block();
     if (block.type === 'image') return this.pictureMissing() ? [] : [block.image];
-    return block.type === 'gallery' && Array.isArray(block.images) ? block.images : [];
+    return block.type === 'gallery' ? drawableImages(block.images) : [];
   });
   protected readonly pictureMissing = computed(() => isPictureMissing(this.block()));
   /** the pictures of the article that this block does not show yet */
@@ -319,12 +321,12 @@ export class ArticleBlockPanel {
     const style = block.type === 'image' || block.type === 'gallery' ? block.imageStyle : undefined;
     return resolveImageStyle(style && typeof style === 'object' ? style : undefined);
   });
-  protected readonly captionHidden = computed(() => !!this.image().overlay?.trim() && (this.imageStyle().captionPosition ?? 'none') === 'none');
+  protected readonly captionHidden = computed(() => filled(this.image().overlay) && (this.imageStyle().captionPosition ?? 'none') === 'none');
   protected readonly linkNote = computed(() => {
     const follows = this.imageStyle().action === ImageActionType.FollowLink;
-    const link = !!this.image().actionUrl?.trim();
+    const link = filled(this.image().actionUrl);
     if (link === follows) return '';
-    return link ? this.i18n().article_editor_image_linkInactive() : this.i18n().article_editor_image_linkMissing();
+    return link ? fill(this.i18n().article_editor_image_linkInactive(), { action: this.actionI18n.followLink() }) : this.i18n().article_editor_image_linkMissing();
   });
   protected readonly layout = computed(() => { const block = this.block(); return block.type === 'gallery' ? block.layout : undefined; });
   protected readonly slideshow = computed(() => { const block = this.block(); return block.type === 'gallery' ? block.slideshow : undefined; });
@@ -379,28 +381,14 @@ export class ArticleBlockPanel {
   }));
 
   // errors
-  /** the alt text has a field of its own, its error is not repeated under the list */
-  protected readonly imageListErrors = computed<SectionErrors>(() =>
-    Object.fromEntries(Object.entries(this.errors()).filter(([field]) => field !== 'images[0].altText')));
+  /** under the list stands what has no field of its own: a missing picture has a note, alt text and link have fields once there is one */
+  protected readonly imageListErrors = computed<SectionErrors>(() => {
+    const own = this.pictureMissing() ? ['images[0].url'] : ['images[0].altText', 'images[0].actionUrl'];
+    return Object.fromEntries(Object.entries(this.errors()).filter(([field]) => !own.includes(field)));
+  });
   /** the errors of a gallery under the names of its look card */
   protected readonly lookErrors = computed(() => galleryErrors(this.errors(), this.block()));
-  protected readonly rest = computed(() => {
-    const block = this.block();
-    switch (block.type) {
-      case 'text': return restErrors(this.errors(), ['align', 'html']);
-      case 'callout': return restErrors(this.errors(), ['tone', 'html']);
-      case 'image': return restErrors(this.errors(), ['images[', 'image.', ...(this.pictureMissing() ? [] : ['imageStyle.', ...STYLE_FIELDS])]);
-      case 'gallery': {
-        const running = resolveImageLayout(this.layout(), this.images().length) === 'slider' && !!this.slideshow();
-        return restErrors(this.lookErrors(), ['images', 'images[', ...(this.images().length === 0 ? []
-          : ['imageStyle.', ...STYLE_FIELDS, 'imageLayout', ...(running ? ['slideshow.'] : [])])]);
-      }
-      case 'button': return restErrors(this.errors(), ['align', 'cta.label', 'cta.url']);
-      case 'columns': return restErrors(this.errors(), ['columns']);
-      case 'space': return restErrors(this.errors(), ['size']);
-      default: return restErrors(this.errors(), []);
-    }
-  });
+  protected readonly rest = computed(() => restErrors(this.lookErrors(), shownBlockFields(this.block())));
 
   /************************************** changes *********************************************** */
   /** Emits the block with these fields; a field that is undefined is left out. Nothing is emitted if that is no change. */
@@ -443,8 +431,9 @@ export class ArticleBlockPanel {
   protected async pick(): Promise<void> {
     const { id } = this.block();
     const image = await pickArticleImage(this.modalController, this.choices(), this.i18n());
+    // the panel may be gone or show another block by now
     const block = this.block();
-    if (!image || block.id !== id) return;
+    if (!image || this.destroyRef.destroyed || block.id !== id) return;
     if (block.type === 'image') this.patch({ image });
     else if (block.type === 'gallery') this.patch({ images: [...this.images(), image] });
   }

@@ -224,10 +224,10 @@
         "captionHidden": "The caption is hidden. Under «Look» you choose where it appears.",
         "link": {
           "label": "Link",
-          "placeholder": "https://… or /page",
+          "placeholder": "https://…",
           "helper": "What opens when the image is clicked."
         },
-        "linkInactive": "The link only works once you choose following the link as the action under «Look».",
+        "linkInactive": "The link only works once you choose the action «{action}» under «Look».",
         "linkMissing": "The image needs a link for this action.",
         "noUpload": "You cannot upload images in the test view.",
         "columnWidth": "Width of the column"
@@ -332,8 +332,8 @@
         "conflict": "Someone has changed this article in the meantime.",
         "force": "Save anyway",
         "back": "Back",
-        "gone": "This article has been deleted or archived in the meantime. It can no longer be saved.",
-        "offline": "You are not connected right now. The article was not saved. Your changes are still here.",
+        "gone": "This article no longer exists here. In the meantime it was deleted, archived or no longer belongs to you. It can therefore not be saved.",
+        "offline": "It is not certain whether the article was saved. Your changes are still here. Save it again as soon as you are connected.",
         "failed": "The article could not be saved. Your changes are still here.",
         "trial": "Test view: the article was not saved."
       },
@@ -2068,7 +2068,8 @@
     "formImplicitSsn": "The AHV number cannot be preset.",
     "zoomRange": "Enter a zoom level between 1 and 19.",
     "layerUnknown": "Choose one of the offered map layers.",
-    "trackRequired": "Choose a track."
+    "trackRequired": "Choose a track.",
+    "imageLink": "This link is not possible. Use an address with https://, mailto: or tel:."
   },
   "advent": {
     "label": "Advent calendar",

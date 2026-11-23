@@ -1,9 +1,9 @@
 import { enforce, test } from 'vest';
 
 import { ARTICLE_BLOCK_TYPES, ArticleConfig, ImageConfig, SECTION_CTA_STYLES, SLIDESHOW_EFFECTS } from '@okr/shared-models';
-import { resolveImageStyle } from '@okr/shared-util-core';
+import { isSafeLinkTarget, resolveImageStyle } from '@okr/shared-util-core';
 
-import { BLOCK_ALIGNS, CALLOUT_TONES, COLUMN_BLOCK_TYPES, SPACE_SIZES, hasVisibleText, isObject } from './article-block.util';
+import { BLOCK_ALIGNS, CALLOUT_TONES, COLUMN_BLOCK_TYPES, SPACE_SIZES, hasImageUrl, hasVisibleText, isObject } from './article-block.util';
 import { imageConfigValidations, imageStyleValidations } from './image.validations';
 import { isImageLayoutId } from './image-layout.util';
 import { isSectionCtaUrl } from './section-cta.util';
@@ -23,9 +23,16 @@ function checkOneOf(field: string, value: unknown, allowed: readonly string[]): 
   check(field, value === undefined || (typeof value === 'string' && allowed.includes(value)));
 }
 
+/** Its link opens without a check of its own in older apps, so only safe targets are stored (no `javascript:`). */
 function checkImage(field: string, image: unknown): void {
-  if (isObject(image)) imageConfigValidations(field, image as unknown as ImageConfig);
-  else check(`${field}.url`, false);
+  if (!isObject(image)) {
+    check(`${field}.url`, false);
+    return;
+  }
+  imageConfigValidations(field, image as unknown as ImageConfig);
+  test(`${field}.actionUrl`, '@cms/section/feature.validation.imageLink', () => {
+    enforce(isSafeLinkTarget(image['actionUrl'])).isTruthy();
+  });
 }
 
 /** An optional partial image style: a non-object is an error, an object is checked on top of the defaults. */
@@ -101,12 +108,18 @@ function checkBlock(block: unknown, index: number, inColumn: boolean): void {
       break;
     case 'image':
       checkImage(f('image'), block['image']);
+      // without a picture readers see nothing: the block is incomplete (spec 1.175 §7.6)
+      test(f('image.url'), 'required', () => {
+        enforce(hasImageUrl(block['image'])).isTruthy();
+      });
       checkImageStyle(f('imageStyle'), block['imageStyle']);
       break;
     case 'gallery': {
       const images = block['images'];
-      if (!Array.isArray(images) || images.length === 0) check(f('images'), false);
-      else images.forEach((image, i) => checkImage(f(`images[${i}]`), image));
+      test(f('images'), 'required', () => {
+        enforce(Array.isArray(images) && images.some(hasImageUrl)).isTruthy();
+      });
+      if (Array.isArray(images)) images.forEach((image, i) => checkImage(f(`images[${i}]`), image));
       const layout = block['layout'];
       check(f('layout'), layout === undefined || isImageLayoutId(layout));
       checkImageStyle(f('imageStyle'), block['imageStyle']);

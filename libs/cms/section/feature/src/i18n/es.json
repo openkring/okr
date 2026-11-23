@@ -224,10 +224,10 @@
         "captionHidden": "El pie de foto está oculto. En «Aspecto» eliges dónde aparece.",
         "link": {
           "label": "Enlace",
-          "placeholder": "https://… o /pagina",
+          "placeholder": "https://…",
           "helper": "Lo que se abre al hacer clic en la imagen."
         },
-        "linkInactive": "El enlace solo funciona si en «Aspecto» eliges seguir el enlace como acción.",
+        "linkInactive": "El enlace solo funciona si en «Aspecto» eliges la acción «{action}».",
         "linkMissing": "Para esta acción, la imagen necesita un enlace.",
         "noUpload": "En la vista de prueba no puedes subir imágenes.",
         "columnWidth": "Ancho de la columna"
@@ -332,8 +332,8 @@
         "conflict": "Alguien ha modificado este artículo mientras tanto.",
         "force": "Guardar de todos modos",
         "back": "Volver",
-        "gone": "Este artículo se ha eliminado o archivado mientras tanto. Ya no se puede guardar.",
-        "offline": "Ahora mismo no tienes conexión. El artículo no se ha guardado. Tus cambios siguen aquí.",
+        "gone": "Este artículo ya no existe aquí. Mientras tanto se ha eliminado, archivado o ya no os pertenece. Por eso no se puede guardar.",
+        "offline": "No es seguro que el artículo se haya guardado. Tus cambios siguen aquí. Guárdalo de nuevo en cuanto tengas conexión.",
         "failed": "No se ha podido guardar el artículo. Tus cambios siguen aquí.",
         "trial": "Vista de prueba: el artículo no se ha guardado."
       },
@@ -2068,7 +2068,8 @@
     "formImplicitSsn": "El número AVS no se puede fijar de antemano.",
     "zoomRange": "Introduce un nivel de zoom entre 1 y 19.",
     "layerUnknown": "Elige una de las capas de mapa ofrecidas.",
-    "trackRequired": "Elige un recorrido."
+    "trackRequired": "Elige un recorrido.",
+    "imageLink": "Este enlace no es posible. Usa una dirección con https://, mailto: o tel:."
   },
   "advent": {
     "label": "Calendario de Adviento",
