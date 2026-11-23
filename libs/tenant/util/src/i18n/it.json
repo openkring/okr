@@ -817,6 +817,12 @@
     "image_failed": "Non è stato possibile caricare l'immagine. Riprova.",
     "mail_domains": "Sono consentiti indirizzi che terminano con:",
     "mail_domains_none": "Prima l'operatore deve impostare il dominio per le e-mail. Solo dopo potrai inserire qui un indirizzo.",
-    "image_too_big": "L'immagine è troppo grande. Deve essere inferiore a 25 MB."
+    "image_too_big": "L'immagine è troppo grande. Deve essere inferiore a 25 MB.",
+    "location_pick": "Scegli la ubicazione",
+    "location_change": "Scegli un'altra ubicazione",
+    "location_remove": "Rimuovi la ubicazione",
+    "resource_pick": "Scegli la risorsa",
+    "resource_change": "Scegli un'altra risorsa",
+    "resource_remove": "Rimuovi la risorsa"
   }
 }

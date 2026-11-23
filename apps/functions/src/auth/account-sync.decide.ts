@@ -5,6 +5,7 @@
 // No Firestore, no clock, no I/O — tenantId and today are parameters so this
 // stays trivially testable.
 
+import { AvatarUsage, DeliveryChannel, NameDisplay, PersonSortCriteria, type UserModel } from '@okr/shared-models';
 import { isActiveMembership } from '@okr/shared-util-core';
 
 /** Inlined subset of MembershipModel — same pattern as membership-sync.ts. */
@@ -92,4 +93,43 @@ export function shiftDaysBack(storeDate: string, days: number): string {
   const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
   const dd = String(date.getUTCDate()).padStart(2, '0');
   return `${date.getUTCFullYear()}${mm}${dd}`;
+}
+
+/** The settings of a new user that the tenant's `app-config` may preset. Never a privacy flag (`usage*`). */
+export type UserDefaults = Partial<Pick<UserModel, 'avatarUsage' | 'nameDisplay' | 'personSortCriteria' | 'newsDelivery' | 'invoiceDelivery'>>;
+
+/** The values a tenant may preset, per field: what a user's own settings offer. `NameDisplay.None` is for the people section only. */
+const DEFAULT_NUMBERS: Readonly<Record<'avatarUsage' | 'nameDisplay' | 'personSortCriteria', readonly number[]>> = {
+  avatarUsage: [AvatarUsage.None, AvatarUsage.GravatarFirst, AvatarUsage.NoGravatar, AvatarUsage.PhotoFirst],
+  nameDisplay: [NameDisplay.FirstLast, NameDisplay.LastFirst, NameDisplay.FirstOnly, NameDisplay.LastOnly],
+  personSortCriteria: [PersonSortCriteria.Firstname, PersonSortCriteria.Lastname, PersonSortCriteria.Fullname, PersonSortCriteria.DateOfBirth, PersonSortCriteria.Key],
+};
+
+const KNOWN_CHANNELS: readonly string[] = Object.values(DeliveryChannel);
+
+/** A non-empty list of known channels, each once; anything else (the old numeric enum of eight live tenants included) is no default. */
+function channelsOf(value: unknown): DeliveryChannel[] | undefined {
+  if (!Array.isArray(value) || value.length === 0) return undefined;
+  if (!value.every((entry) => typeof entry === 'string' && KNOWN_CHANNELS.includes(entry))) return undefined;
+  return [...new Set(value as DeliveryChannel[])];
+}
+
+/**
+ * What a tenant presets for the accounts it opens (spec 1.174 §7.2): the five delivery and display choices of
+ * `app-config`, each only when it is usable, so a stale or odd value leaves the class default in place. Pure: the caller
+ * reads the document and hands over its data, and `Object.assign`s the result onto the new `UserModel`.
+ * Everything else in the config is ignored.
+ */
+export function userDefaultsFrom(config: Record<string, unknown> | undefined): UserDefaults {
+  const out: UserDefaults = {};
+  if (!config) return out;
+  for (const field of ['avatarUsage', 'nameDisplay', 'personSortCriteria'] as const) {
+    const value = config[field];
+    if (typeof value === 'number' && DEFAULT_NUMBERS[field].includes(value)) out[field] = value;
+  }
+  for (const field of ['newsDelivery', 'invoiceDelivery'] as const) {
+    const channels = channelsOf(config[field]);
+    if (channels) out[field] = channels;
+  }
+  return out;
 }

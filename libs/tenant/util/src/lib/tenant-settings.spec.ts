@@ -4,7 +4,8 @@ import { resolve } from 'node:path';
 import { AppConfig, DEFAULT_DELIVERY_CHANNELS } from '@okr/shared-models';
 import { describe, expect, it } from 'vitest';
 
-import { OPERATOR_SETTINGS, SETTINGS_GROUPS, settingsDiff, settingsOf, type SettingsGroupId } from './tenant-settings';
+import { SETTINGS_I18N_KEYS } from './tenant-settings-i18n';
+import { OPERATOR_SETTINGS, SETTINGS_DEFAULT_NUMBERS, SETTINGS_GROUPS, settingsDiff, settingsOf, type SettingsGroupId } from './tenant-settings';
 
 const NOT_OFFERED = [
   'osiLogoUrl', 'minYear', 'maxYear', 'showImages', 'showArchivedData', 'showName', 'showMemberships',
@@ -127,5 +128,19 @@ describe('settingsDiff', () => {
 
   it('ignores a key the new value does not carry', () => {
     expect(settingsDiff({ appName: 'A', appTitle: 'T' }, { appName: 'A' })).toEqual({});
+  });
+});
+
+describe('SETTINGS_DEFAULT_NUMBERS', () => {
+  it('offers the values of the enums, «no name at all» never', () => {
+    expect(SETTINGS_DEFAULT_NUMBERS.avatarUsage).toEqual([0, 1, 2, 3]);
+    expect(SETTINGS_DEFAULT_NUMBERS.nameDisplay).toEqual([0, 1, 2, 3]);
+    expect(SETTINGS_DEFAULT_NUMBERS.personSortCriteria).toEqual([0, 1, 2, 3, 4]);
+  });
+
+  it('has a label for every offered number', () => {
+    for (const [field, numbers] of Object.entries(SETTINGS_DEFAULT_NUMBERS)) {
+      for (const n of numbers) expect(SETTINGS_I18N_KEYS[`${field}_${n}`], `${field}_${n}`).toBeTruthy();
+    }
   });
 });

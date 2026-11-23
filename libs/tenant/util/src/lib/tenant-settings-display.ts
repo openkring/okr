@@ -31,6 +31,9 @@ export interface SettingsRow {
 
 export interface SettingsPageOption { key: string; label: string; }
 
+/** A location or resource the user picked: its id as `app-config` stores it (the okey, no prefix) and its name. */
+export interface SettingsChoice { id: string; name: string; }
+
 /** Fields that hold the number of an enum; their labels are named `<field>_<number>`. */
 const ENUM_FIELDS: ReadonlySet<string> = new Set(['avatarUsage', 'nameDisplay', 'personSortCriteria']);
 /** Fields that another value stands in for while they are empty, as their helper says. Every other empty field means: nothing. */

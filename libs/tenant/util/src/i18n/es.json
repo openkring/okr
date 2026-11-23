@@ -817,6 +817,12 @@
     "image_failed": "No se pudo subir la imagen. Inténtalo de nuevo.",
     "mail_domains": "Se permiten direcciones que terminen en:",
     "mail_domains_none": "Primero, el operador tiene que definir el dominio para los correos. Solo entonces podrás introducir aquí una dirección.",
-    "image_too_big": "La imagen es demasiado grande. Debe ocupar menos de 25 MB."
+    "image_too_big": "La imagen es demasiado grande. Debe ocupar menos de 25 MB.",
+    "location_pick": "Elegir ubicación",
+    "location_change": "Elegir otra ubicación",
+    "location_remove": "Quitar la ubicación",
+    "resource_pick": "Elegir recurso",
+    "resource_change": "Elegir otro recurso",
+    "resource_remove": "Quitar el recurso"
   }
 }

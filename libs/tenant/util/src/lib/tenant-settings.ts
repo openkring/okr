@@ -1,4 +1,4 @@
-import { AppConfig, DEFAULT_DELIVERY_CHANNELS, DeliveryChannel } from '@okr/shared-models';
+import { AppConfig, AvatarUsage, DEFAULT_DELIVERY_CHANNELS, DeliveryChannel, NameDisplay, PersonSortCriteria } from '@okr/shared-models';
 
 export type SettingsGroupId = 'app' | 'images' | 'language' | 'start' | 'operator' | 'mail' | 'privacy' | 'defaults' | 'platform';
 
@@ -33,6 +33,16 @@ export const SETTINGS_GROUPS: Record<SettingsGroupId, readonly (keyof AppConfig)
     'personLookupEnabled', 'weatherIntervalHours',
     'gitRepo', 'gitOrg', 'isArchived', 'showDebugInfo',
   ],
+};
+
+/**
+ * The numbers the «Vorgaben» selects offer, per field: the values of the enum a user's own settings offer. «Keine Namen»
+ * (`NameDisplay.None`) is for the people section only and never a default. `userDefaultsFrom` (functions) keeps the same set.
+ */
+export const SETTINGS_DEFAULT_NUMBERS: Readonly<Record<'avatarUsage' | 'nameDisplay' | 'personSortCriteria', readonly number[]>> = {
+  avatarUsage: [AvatarUsage.None, AvatarUsage.GravatarFirst, AvatarUsage.NoGravatar, AvatarUsage.PhotoFirst],
+  nameDisplay: [NameDisplay.FirstLast, NameDisplay.LastFirst, NameDisplay.FirstOnly, NameDisplay.LastOnly],
+  personSortCriteria: [PersonSortCriteria.Firstname, PersonSortCriteria.Lastname, PersonSortCriteria.Fullname, PersonSortCriteria.DateOfBirth, PersonSortCriteria.Key],
 };
 
 /** The fields only the operator (`isOperator()`, admin of exactly `bka`) may change; mirrors `firestore.rules`. */

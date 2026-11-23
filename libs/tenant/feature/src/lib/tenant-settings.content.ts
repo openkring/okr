@@ -11,7 +11,7 @@ import { MenuService } from '@okr/cms-menu-data-access';
 import { expandMenuTokens, resolveMenuLabelKey } from '@okr/cms-menu-util';
 import { PageService } from '@okr/cms-page-data-access';
 import { LocationService } from '@okr/location-data-access';
-import { AppStore } from '@okr/shared-feature';
+import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Spinner } from '@okr/shared-ui';
@@ -22,7 +22,7 @@ import {
   FEATURE_BLOCKS, SETTINGS_GROUP_IDS, SETTINGS_I18N_KEYS, SETTINGS_IMAGE_MIMETYPES, settingsGroupKey, settingsImageExtension, settingsImagePath, settingsImageTooBig,
   settingsPageName, settingsPageOptions, settingsRows, startOptions, startTargets,
 } from '@okr/tenant-util';
-import type { SettingsDisplayContext, SettingsGroupId, TenantSettings } from '@okr/tenant-util';
+import type { SettingsChoice, SettingsDisplayContext, SettingsGroupId, TenantSettings } from '@okr/tenant-util';
 
 import { FeatureStore } from './feature.store';
 import { TenantSettingsStore } from './tenant-settings.store';
@@ -145,6 +145,7 @@ export class TenantSettingsContent {
   private readonly locationService = inject(LocationService);
   private readonly menuService = inject(MenuService);
   private readonly modalController = inject(ModalController);
+  private readonly modelSelect = inject(ModelSelectService);
   private readonly router = inject(Router);
   private readonly uploadService = inject(UploadService);
   private readonly alertService = inject(AlertService);
@@ -252,6 +253,9 @@ export class TenantSettingsContent {
           pageOptions: computed(() => settingsPageOptions(this.pages(), this.appStore.tenantId(), storedPage)),
           startOptions: computed(() => startOptions(this.startTargets(), storedStart)),
           onUpload: (field: string) => this.uploadImage(field),
+          onPickLocation: () => this.pickLocation(),
+          onPickResource: () => this.pickResource(),
+          nameOf: (field: string, id: string) => this.choiceName(field, id),
           onSave: (after: TenantSettings) => this.save(group, before, after),
         },
       });
@@ -290,6 +294,27 @@ export class TenantSettingsContent {
     }
     await this.alertService.showToast(this.text('image_failed'));
     return undefined;
+  }
+
+  /** The id `app-config` stores for a location is its okey, no prefix (the departure board reads it with `LocationService.read`). */
+  private async pickLocation(): Promise<SettingsChoice | undefined> {
+    const result = await this.modelSelect.selectLocation('', true, false, false);
+    return result?.kind === 'predefined' ? { id: result.location.okey, name: result.location.name } : undefined;
+  }
+
+  /** The id `app-config` stores for a resource is its okey, as `AppStore.defaultResource` and the reservation function read it. */
+  private async pickResource(): Promise<SettingsChoice | undefined> {
+    const resource = await this.modelSelect.selectResource();
+    return resource ? { id: resource.okey, name: resource.name } : undefined;
+  }
+
+  /** The name of a stored id; '' when it cannot be told (the form then shows the id). Reads signals: the form re-reads it when they change. */
+  private choiceName(field: string, id: string): string {
+    if (field === 'ownerLocationId') {
+      const location = this.location();
+      return location?.okey === id ? location.name : '';
+    }
+    return field === 'defaultResourceId' ? this.appStore.getResource(id)?.name ?? '' : '';
   }
 
   /** `store.save` answers false without throwing for a cancelled confirmation and a failed write; anything thrown counts as not saved. */

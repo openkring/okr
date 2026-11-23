@@ -6,9 +6,10 @@ import type { ChangeConfirmationI18n } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { safeStructuredClone } from '@okr/shared-util-core';
 import { settingsDiff, settingsGroupKey } from '@okr/tenant-util';
-import type { SettingsContext, SettingsGroupId, SettingsI18n, SettingsPageOption, TenantSettings } from '@okr/tenant-util';
+import type { SettingsChoice, SettingsContext, SettingsGroupId, SettingsI18n, SettingsPageOption, TenantSettings } from '@okr/tenant-util';
 
 import { SettingsAppForm } from './settings-app.form';
+import { SettingsDefaultsForm } from './settings-defaults.form';
 import { SettingsImagesForm } from './settings-images.form';
 import { SettingsLanguageForm } from './settings-language.form';
 import { SettingsMailForm } from './settings-mail.form';
@@ -17,7 +18,7 @@ import { SettingsPrivacyForm } from './settings-privacy.form';
 import { SettingsStartForm } from './settings-start.form';
 
 /** The groups this modal has a form for; the page offers «Bearbeiten» on exactly these cards. One entry per `@case` below. */
-export const SETTINGS_FORM_GROUPS: readonly SettingsGroupId[] = ['app', 'images', 'language', 'start', 'operator', 'mail', 'privacy'];
+export const SETTINGS_FORM_GROUPS: readonly SettingsGroupId[] = ['app', 'images', 'language', 'start', 'operator', 'mail', 'privacy', 'defaults'];
 
 /**
  * Edits one group of `/tenant/settings` (spec 1.174 §9.2). It writes nothing itself: `onSave` (from the page) does, and
@@ -28,7 +29,7 @@ export const SETTINGS_FORM_GROUPS: readonly SettingsGroupId[] = ['app', 'images'
   selector: 'okr-settings-edit-modal',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Header, ChangeConfirmation, SettingsAppForm, SettingsImagesForm, SettingsLanguageForm, SettingsMailForm, SettingsOperatorForm, SettingsPrivacyForm, SettingsStartForm, IonContent],
+  imports: [Header, ChangeConfirmation, SettingsAppForm, SettingsDefaultsForm, SettingsImagesForm, SettingsLanguageForm, SettingsMailForm, SettingsOperatorForm, SettingsPrivacyForm, SettingsStartForm, IonContent],
   template: `
     <okr-header [i18n]="{ title: title() }" [isModal]="true" />
     @if (showConfirmation()) {
@@ -66,6 +67,12 @@ export const SETTINGS_FORM_GROUPS: readonly SettingsGroupId[] = ['app', 'images'
             [i18n]="i18n()" [context]="context()" [readOnly]="isSaving()" [showForm]="showForm()"
             (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" (busy)="formBusy.set($event)" />
         }
+        @case ('defaults') {
+          <okr-settings-defaults-form [formData]="formData()" (formDataChange)="formData.set($event)"
+            [i18n]="i18n()" [context]="context()" [onPickLocation]="onPickLocation()" [onPickResource]="onPickResource()" [nameOf]="nameOf()"
+            [readOnly]="isSaving()" [showForm]="showForm()"
+            (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" (busy)="formBusy.set($event)" />
+        }
         @case ('privacy') {
           <okr-settings-privacy-form [formData]="formData()" (formDataChange)="formData.set($event)"
             [i18n]="i18n()" [context]="context()" [pageOptions]="pageOptions()()" [readOnly]="isSaving()" [showForm]="showForm()"
@@ -91,6 +98,11 @@ export class SettingsEditModal {
   public readonly startOptions = input<Signal<SettingsPageOption[]>>(signal<SettingsPageOption[]>([]));
   /** Picks and uploads an image for a field of the images group; answers its storage path, undefined when cancelled or failed. */
   public readonly onUpload = input<(field: string) => Promise<string | undefined>>(() => Promise.resolve(undefined));
+  /** Open the location and the resource picker of the defaults group; answer the pick, undefined when cancelled. */
+  public readonly onPickLocation = input<() => Promise<SettingsChoice | undefined>>(() => Promise.resolve(undefined));
+  public readonly onPickResource = input<() => Promise<SettingsChoice | undefined>>(() => Promise.resolve(undefined));
+  /** The name of a stored location or resource id, '' when unknown. */
+  public readonly nameOf = input<(field: string, id: string) => string>(() => '');
   /** Saves the values; true closes the modal. */
   public readonly onSave = input.required<(after: TenantSettings) => Promise<boolean>>();
 

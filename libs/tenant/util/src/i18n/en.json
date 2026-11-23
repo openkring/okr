@@ -817,6 +817,12 @@
     "image_failed": "The image could not be uploaded. Please try again.",
     "mail_domains": "Allowed are addresses ending in:",
     "mail_domains_none": "The operator has to set the domain for e-mails first. Only then can you enter an address here.",
-    "image_too_big": "The image is too large. It must be smaller than 25 MB."
+    "image_too_big": "The image is too large. It must be smaller than 25 MB.",
+    "location_pick": "Choose location",
+    "location_change": "Choose another location",
+    "location_remove": "Remove location",
+    "resource_pick": "Choose resource",
+    "resource_change": "Choose another resource",
+    "resource_remove": "Remove resource"
   }
 }

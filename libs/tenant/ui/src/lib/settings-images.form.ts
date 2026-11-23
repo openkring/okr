@@ -1,4 +1,4 @@
-import { Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonNote, IonRow } from '@ionic/angular';
 
 import { ENV } from '@okr/shared-config';
@@ -83,9 +83,9 @@ export class SettingsImagesForm extends SettingsFormBase {
 
   protected readonly imageFields = ['welcomeBannerUrl', 'notfoundBannerUrl'] as const;
 
-  /** the field being uploaded: a second upload, at the same time or for the other image, would race the file picker */
-  protected readonly uploadingField = signal('');
-  protected readonly isBusy = computed(() => this.uploadingField() !== '' || this.isReadOnly());
+  /** the field being uploaded (`working`): a second upload, at the same time or for the other image, would race the file picker */
+  protected readonly uploadingField = this.working;
+  protected readonly isBusy = computed(() => this.working() !== '' || this.isReadOnly());
 
   protected readonly previews = computed(() => {
     const base = this.env.services.imgixBaseUrl;
@@ -93,30 +93,8 @@ export class SettingsImagesForm extends SettingsFormBase {
   });
   protected readonly names = computed(() => Object.fromEntries(this.imageFields.map((field) => [field, settingsImageName(this.values()[field])])));
 
-  /** Counts the resets and the end of the form: a result that arrives for an older one belongs to nothing any more. */
-  private generation = 0;
-
-  constructor() {
-    super();
-    inject(DestroyRef).onDestroy(() => { this.generation = -1; });
-    // the modal's cancel switches the form off and on again, with the values as loaded
-    effect(() => { if (!this.showForm()) untracked(() => { this.generation++; this.uploadingField.set(''); this.busy.emit(false); }); });
-  }
-
   protected async upload(field: string): Promise<void> {
-    if (this.isBusy()) return;
-    const generation = this.generation;
-    this.uploadingField.set(field);
-    this.busy.emit(true);
-    let path: string | undefined;
-    try {
-      path = await this.onUpload()(field);
-    } catch {
-      path = undefined; // the page has told the user; the value stays
-    }
-    if (this.generation !== generation) return; // destroyed or reset meanwhile: emitting an output now would throw (NG0953)
-    this.uploadingField.set('');
-    this.busy.emit(false);
+    const path = await this.runExclusive(field, () => this.onUpload()(field));
     if (path) this.onFieldChange(field, path);
   }
 

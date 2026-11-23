@@ -1,4 +1,4 @@
-import { Directive, computed, effect, inject, input, model, output } from '@angular/core';
+import { DestroyRef, Directive, computed, effect, inject, input, model, output, signal, untracked } from '@angular/core';
 import { form } from '@angular/forms/signals';
 
 import { HelperVisibility, validateVestTree, vestErrors } from '@okr/shared-util-angular';
@@ -41,8 +41,38 @@ export abstract class SettingsFormBase {
   protected readonly settingsForm = form(this.formData, (path) => validateVestTree(path, this.suiteWithContext as any));
   private readonly validationResult = vestErrors(this.settingsForm);
 
+  /** the key of the action running now (an upload, a picker), '' when none: only one at a time, the buttons read it */
+  protected readonly working = signal('');
+  /** Counts the resets and the end of the form: a result that arrives for an older one belongs to nothing any more. */
+  private generation = 0;
+
   constructor() {
     effect(() => this.valid.emit(this.settingsForm().valid()));
+    inject(DestroyRef).onDestroy(() => { this.generation = -1; });
+    // the modal's cancel switches the form off and on again, with the values as loaded
+    effect(() => { if (!this.showForm()) untracked(() => { this.generation++; this.working.set(''); this.busy.emit(false); }); });
+  }
+
+  /**
+   * Runs an action the user must not interrupt or double (an upload, a picker): the form is busy meanwhile. Answers what
+   * `call` answered, or undefined when it threw, when another action runs or the form is read-only, and when the form
+   * was destroyed or reset meanwhile — emitting an output after that would throw (NG0953), so the caller never writes then.
+   */
+  protected async runExclusive<T>(key: string, call: () => Promise<T | undefined>): Promise<T | undefined> {
+    if (this.working() !== '' || this.isReadOnly()) return undefined;
+    const generation = this.generation;
+    this.working.set(key);
+    this.busy.emit(true);
+    let result: T | undefined;
+    try {
+      result = await call();
+    } catch {
+      result = undefined; // the caller has told the user; the value stays
+    }
+    if (this.generation !== generation) return undefined;
+    this.working.set('');
+    this.busy.emit(false);
+    return result;
   }
 
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));

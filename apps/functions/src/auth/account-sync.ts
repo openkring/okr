@@ -28,7 +28,7 @@ import { getUserIndex, isSyntheticLoginEmail, syntheticLoginEmail } from '@okr/u
 import { runWorkflow } from '../workflow';
 import type { MembershipWrittenEvent } from '../membership/membership-written-event';
 
-import { decideAccountAction, MembershipDoc, relLogAbbrs, shiftDaysBack } from './account-sync.decide';
+import { decideAccountAction, MembershipDoc, relLogAbbrs, shiftDaysBack, UserDefaults, userDefaultsFrom } from './account-sync.decide';
 import { allocateLoginId, stampPersonKey, syntheticAddressFree, SyntheticCandidateStatus, syntheticCandidateStatus, tenantAppDomain } from './login-id';
 import { decideLoginIdentity, decideOwnAccount, PERSON_KEY_CLAIM } from './login-id.decide';
 
@@ -83,6 +83,20 @@ async function resolveDefaultOrgTenant(m: MembershipDoc | undefined): Promise<st
   if (m?.orgModelType !== 'org' || !m.orgKey) return '';
   const snap = await getFirestore().collection('app-config').doc(m.orgKey).get();
   return snap.exists ? m.orgKey : '';
+}
+
+/**
+ * The tenant's presets for new accounts, from `app-config/{tenantId}`. Best effort: an unreadable or missing
+ * document gives no presets, and never fails the account creation.
+ */
+async function tenantUserDefaults(tenantId: string): Promise<UserDefaults> {
+  try {
+    const snap = await getFirestore().collection('app-config').doc(tenantId).get();
+    return userDefaultsFrom(snap.data());
+  } catch (error) {
+    logger.warn(`${CF_NAME}: could not read the account defaults of ${tenantId} — the class defaults apply`, error);
+    return {};
+  }
 }
 
 /**
@@ -240,6 +254,8 @@ export async function openAccount(personKey: string, tenantId: string, loginEmai
   //    user would have undefined privacy flags instead of PrivacyUsage.Restricted.
   const userRef = db.collection('users').doc(uid);
   const user = new UserModel(tenantId);
+  // what the tenant presets for new accounts (settings page «Vorgaben»); existing users are never touched
+  Object.assign(user, await tenantUserDefaults(tenantId));
   user.okey = uid;
   user.loginEmail = authEmail;
   user.personKey = personKey;

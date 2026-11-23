@@ -817,6 +817,12 @@
     "image_failed": "Das Bild konnte nicht hochgeladen werden. Versuche es noch einmal.",
     "mail_domains": "Erlaubt sind Adressen mit der Endung:",
     "mail_domains_none": "Zuerst muss der Betreiber die Domain für E-Mails festlegen. Erst danach kannst du hier eine Adresse eintragen.",
-    "image_too_big": "Das Bild ist zu gross. Es darf weniger als 25 MB haben."
+    "image_too_big": "Das Bild ist zu gross. Es darf weniger als 25 MB haben.",
+    "location_pick": "Standort wählen",
+    "location_change": "Anderen Standort wählen",
+    "location_remove": "Standort entfernen",
+    "resource_pick": "Ressource wählen",
+    "resource_change": "Andere Ressource wählen",
+    "resource_remove": "Ressource entfernen"
   }
 }
