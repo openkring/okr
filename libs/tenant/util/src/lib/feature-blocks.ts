@@ -256,14 +256,14 @@ const calevent: FeatureBlock = {
       // Live-data quirk: TWO `menuItems` docs share `name: 'filter-toggle'` — an
       // `isArchived: true` one (`action: call`, `url: toggleFilter`, `roleNeeded:
       // registered`, icon `search`) and a live, non-archived one (autoid doc, `action:
-      // toggle`, `url: toggleFilter`, `roleNeeded: contentAdmin`, icon `eye-on`) — same
+      // toggle`, `url: toggleFilter`, `roleNeeded: registered`, icon `eye-on`) — same
       // ambiguous-duplicate-name shape as `resource-menu`/`resource-menu-scs` (see the
       // `resource` block). Rule 10 forbids cataloguing an `isArchived: true` doc (would
       // resurrect a retired menu), so this mirrors the ACTIVE, non-archived doc's fields,
       // not the archived one `c-calevents.menuItems` happens to also list by the same name.
       // Same class of generic reusable leaf as `divider_empty` (noted on the `aoc` block) —
       // kept here only because `c-calevents` itself references it.
-      { key: 'filter-toggle', name: 'filter-toggle', url: 'toggleFilter', action: 'toggle', roleNeeded: 'contentAdmin', icon: 'eye-on', label: '@item.filter-toggle' },
+      { key: 'filter-toggle', name: 'filter-toggle', url: 'toggleFilter', action: 'toggle', roleNeeded: 'registered', icon: 'eye-on', label: '@item.filter-toggle' },
       // Admin-only view switch that pulls archived events into the list. Archiving is this app's
       // delete, so an archived event is debris — three abandoned '4X-Dienstag' series sat
       // invisible for three months because nothing could show them. `admin`, not `contentAdmin`:
@@ -2039,7 +2039,7 @@ const documentBlock: FeatureBlock = {
       // declares — field-identical here on purpose (two live docs share this name; the
       // `isArchived: true` one must not be catalogued, rule 10). See the long note on
       // `c-calevents` above.
-      { key: 'filter-toggle', name: 'filter-toggle', url: 'toggleFilter', action: 'toggle', roleNeeded: 'contentAdmin', icon: 'eye-on', label: '@item.filter-toggle' },
+      { key: 'filter-toggle', name: 'filter-toggle', url: 'toggleFilter', action: 'toggle', roleNeeded: 'registered', icon: 'eye-on', label: '@item.filter-toggle' },
       { key: 'maint-divider', name: 'maint-divider', url: '', action: 'divider', roleNeeded: 'admin', icon: 'help-circle', label: '@item.maint-divider' },
       { key: 'document-orphans', name: 'document-orphans', url: '/document/orphans', action: 'navigate', roleNeeded: 'admin', icon: 'document', label: '@item.document-orphans' },
     ] },
@@ -2070,7 +2070,7 @@ const documentBlock: FeatureBlock = {
       { key: 'editmode-toggle', name: 'editmode-toggle', url: 'toggleEditMode', action: 'toggle', roleNeeded: 'registered', icon: 'edit', label: '@item.editmode-toggle' },
       { key: 'folder-add', name: 'folder-add', url: 'addFolder', action: 'call', roleNeeded: 'registered', icon: 'folder', label: '@item.folder-add' },
       { key: 'files-add', name: 'files-add', url: 'addFiles', action: 'call', roleNeeded: 'registered', icon: 'upload', label: '@item.files-add' },
-      { key: 'filter-toggle', name: 'filter-toggle', url: 'toggleFilter', action: 'toggle', roleNeeded: 'contentAdmin', icon: 'eye-on', label: '@item.filter-toggle' },
+      { key: 'filter-toggle', name: 'filter-toggle', url: 'toggleFilter', action: 'toggle', roleNeeded: 'registered', icon: 'eye-on', label: '@item.filter-toggle' },
     ] },
   ],
 };
@@ -2559,8 +2559,8 @@ const task: FeatureBlock = {
       // `isArchived: true` one must not be catalogued, rule 10). See the long note on
       // `c-calevents`. `TaskList` binds it through `[toggleStates]="{ toggleFilter: showFilter() }"`
       // (`task-list.ts:72`), so the `toggle` action and the `toggleFilter` url are both load-bearing.
-      { key: 'filter-toggle', name: 'filter-toggle', url: 'toggleFilter', action: 'toggle', roleNeeded: 'contentAdmin', icon: 'eye-on', label: '@item.filter-toggle' },
-      // spec §10 — the archived-tasks toggle. `registered` (not `contentAdmin` like
+      { key: 'filter-toggle', name: 'filter-toggle', url: 'toggleFilter', action: 'toggle', roleNeeded: 'registered', icon: 'eye-on', label: '@item.filter-toggle' },
+      // spec §10 — the archived-tasks toggle. `registered` (like
       // `filter-toggle`): any member may show/hide their own archived todos, same reach as
       // `task-add`/`task-export` above. `TaskList` binds it through
       // `[toggleStates]="{ toggleFilter: showFilter(), toggleArchived: store.showArchived() }"`.
