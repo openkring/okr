@@ -7,7 +7,7 @@ import { switchMap } from 'rxjs/operators';
 import { I18nService, TranslatePipe } from '@okr/shared-i18n';
 import { CategoryItemModel, CategoryListModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { coerceBoolean, getItemLabel, contextMenuId } from '@okr/shared-util-core';
+import { coerceBoolean, getItemLabel, contextMenuId, selectedCategoryItem } from '@okr/shared-util-core';
 import { HelperVisibility } from '@okr/shared-util-angular';
 
 
@@ -158,9 +158,9 @@ export class CategorySelect {
     ),
     { initialValue: '' }
   );
-  // a missing/unloaded category yields an empty item list — fall back to the stored name so the control renders instead of crashing
-  protected selectedItem = computed(() => this.items().find(item => item.name === this.selectedItemName())
-    ?? this.items()[0] ?? new CategoryItemModel(this.selectedItemName() ?? '', ''));
+  // a missing/unloaded category yields an empty item list — the stored name is shown as is;
+  // a name outside the list keeps its own label instead of showing the first item
+  protected selectedItem = computed(() => selectedCategoryItem(this.items(), this.selectedItemName()));
 
   /**
    * Compare two CategoryItemModels.

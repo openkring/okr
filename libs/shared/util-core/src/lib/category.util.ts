@@ -62,6 +62,23 @@ export function getDefaultCategoryName(cat?: CategoryListModel): string {
   return cat?.items[0]?.name ?? '';
 }
 
+/**
+ * The item a select shows for `name`. A name outside the list (a tenant may shorten a list while
+ * records still carry the old value) keeps its own label and no icon; only an empty name falls
+ * back to the first item.
+ */
+export function selectedCategoryItem(items: readonly CategoryItemModel[], name: string | undefined): CategoryItemModel {
+  if (name) return items.find(item => item.name === name) ?? new CategoryItemModel(name, '');
+  return items[0] ?? new CategoryItemModel('', '');
+}
+
+/** `preferred` if the list has it, else the list's first item; `preferred` when there is no list. */
+export function defaultItemName(category: CategoryListModel | undefined, preferred: string): string {
+  const items = category?.items ?? [];
+  if (items.length === 0 || items.some(item => item.name === preferred)) return preferred;
+  return items[0].name;
+}
+
 export function getDefaultCategoryAbbreviation(cat?: CategoryListModel): string {
   return cat?.items[0]?.abbreviation ?? '';
 }

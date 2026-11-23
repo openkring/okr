@@ -1,6 +1,6 @@
-import { CategoryListModel } from '@okr/shared-models';
+import { CategoryItemModel, CategoryListModel } from '@okr/shared-models';
 import { describe, expect, it } from 'vitest';
-import { getItemDescription, getItemLabel, getNextCategoryName } from './category.util';
+import { defaultItemName, getItemDescription, getItemLabel, getNextCategoryName, selectedCategoryItem } from './category.util';
 
 describe('category.util', () => {
   // Helper function to create test category models
@@ -260,6 +260,56 @@ describe('category.util', () => {
     it('should return an empty string for a missing or empty category', () => {
       expect(getNextCategoryName(undefined, 'initial')).toBe('');
       expect(getNextCategoryName(createCategoryModel('empty', '', false), 'initial')).toBe('');
+    });
+  });
+
+  describe('selectedCategoryItem', () => {
+    const male = new CategoryItemModel('male', 'man');
+    const female = new CategoryItemModel('female', 'woman');
+
+    it('returns the matching item', () => {
+      expect(selectedCategoryItem([male, female], 'female')).toBe(female);
+    });
+
+    it('keeps a stored value that is not in the list, without an icon', () => {
+      const item = selectedCategoryItem([male, female], 'other');
+      expect(item.name).toBe('other');
+      expect(item.icon).toBe('');
+    });
+
+    it('falls back to the first item for an empty or undefined name', () => {
+      expect(selectedCategoryItem([male, female], '')).toBe(male);
+      expect(selectedCategoryItem([male, female], undefined)).toBe(male);
+    });
+
+    it('builds an item from the name when the list is empty', () => {
+      expect(selectedCategoryItem([], 'x').name).toBe('x');
+      expect(selectedCategoryItem([], '').name).toBe('');
+    });
+
+    it('does not mutate the input array', () => {
+      const items = [male, female];
+      selectedCategoryItem(items, 'other');
+      expect(items).toEqual([male, female]);
+    });
+  });
+
+  describe('defaultItemName', () => {
+    const cat = createCategoryModel('gender', '@x/y', true, {
+      items: [new CategoryItemModel('male', ''), new CategoryItemModel('female', '')]
+    });
+
+    it('returns the preferred name when it is in the list', () => {
+      expect(defaultItemName(cat, 'female')).toBe('female');
+    });
+
+    it('returns the first item when the preferred name is not in the list', () => {
+      expect(defaultItemName(cat, 'other')).toBe('male');
+    });
+
+    it('returns the preferred name for an undefined or empty list', () => {
+      expect(defaultItemName(undefined, 'other')).toBe('other');
+      expect(defaultItemName(createCategoryModel('e', '', false, { items: [] }), 'other')).toBe('other');
     });
   });
 
