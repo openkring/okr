@@ -816,6 +816,7 @@
     "image_type_error": "Scegli un'immagine in formato JPG o PNG.",
     "image_failed": "Non è stato possibile caricare l'immagine. Riprova.",
     "mail_domains": "Sono consentiti indirizzi che terminano con:",
-    "mail_domains_none": "Prima l'operatore deve impostare il dominio per le e-mail. Solo dopo potrai inserire qui un indirizzo."
+    "mail_domains_none": "Prima l'operatore deve impostare il dominio per le e-mail. Solo dopo potrai inserire qui un indirizzo.",
+    "image_too_big": "L'immagine è troppo grande. Deve essere inferiore a 25 MB."
   }
 }

@@ -1,4 +1,4 @@
-import { getImgixUrl, isDirectImageUrl } from '@okr/shared-util-core';
+import { checkUrlType, getImgixUrl, isDirectImageUrl } from '@okr/shared-util-core';
 
 /** The two image formats a tenant can upload for its sign-in and «Not found» pages. */
 export const SETTINGS_IMAGE_MIMETYPES: readonly string[] = ['image/jpeg', 'image/png'];
@@ -49,7 +49,16 @@ export function settingsImageName(value: string): string {
 export function settingsImagePreviewUrl(value: string, imgixBaseUrl: string): string {
   const path = value.trim();
   if (path === '') return '';
+  if (isDirectImageUrl(path)) return getImgixUrl(path);
+  if (checkUrlType(path) !== 'storage') return ''; // a legacy `assets/...` value is no file imgix can serve
   const url = getImgixUrl(path, 'auto=compress,format&fit=max&w=640');
-  if (url === '' || isDirectImageUrl(url)) return url;
+  if (url === '') return '';
   return imgixBaseUrl === '' ? '' : `${imgixBaseUrl.replace(/\/+$/, '')}/${url.replace(/^\/+/, '')}`;
+}
+
+/** The upload cap of `storage.rules` (`sizeOk()`: below 25 MB). A bigger file is refused there with a bare `storage/unauthorized`, so it is checked before. */
+export const SETTINGS_IMAGE_MAX_BYTES = 25 * 1024 * 1024;
+
+export function settingsImageTooBig(bytes: number): boolean {
+  return bytes >= SETTINGS_IMAGE_MAX_BYTES;
 }

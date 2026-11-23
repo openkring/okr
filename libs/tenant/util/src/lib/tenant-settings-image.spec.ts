@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { settingsImageExtension, settingsImagePreviewUrl, settingsImageName, settingsImagePath, SETTINGS_IMAGE_MIMETYPES } from './tenant-settings-image';
+import { settingsImageExtension, settingsImageTooBig, SETTINGS_IMAGE_MAX_BYTES, settingsImagePreviewUrl, settingsImageName, settingsImagePath, SETTINGS_IMAGE_MIMETYPES } from './tenant-settings-image';
 
 describe('SETTINGS_IMAGE_MIMETYPES', () => {
   it('offers exactly JPG and PNG', () => {
@@ -71,5 +71,20 @@ describe('settingsImagePreviewUrl', () => {
     expect(settingsImagePreviewUrl('', BASE)).toBe('');
     expect(settingsImagePreviewUrl('   ', BASE)).toBe('');
     expect(settingsImagePreviewUrl('tenant/scs/app/a.png', '')).toBe('');
+  });
+});
+
+describe('settingsImageTooBig', () => {
+  it('follows the cap of storage.rules: below 25 MB passes, 25 MB and more does not', () => {
+    expect(SETTINGS_IMAGE_MAX_BYTES).toBe(25 * 1024 * 1024);
+    expect(settingsImageTooBig(SETTINGS_IMAGE_MAX_BYTES - 1)).toBe(false);
+    expect(settingsImageTooBig(SETTINGS_IMAGE_MAX_BYTES)).toBe(true);
+    expect(settingsImageTooBig(0)).toBe(false);
+  });
+});
+
+describe('settingsImagePreviewUrl, legacy values', () => {
+  it('makes no preview of an assets path (it is no storage path, imgix cannot serve it)', () => {
+    expect(settingsImagePreviewUrl('assets/banner.jpg', 'https://bkaiser.imgix.net')).toBe('');
   });
 });

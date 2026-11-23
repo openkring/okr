@@ -39,37 +39,37 @@ export const SETTINGS_FORM_GROUPS: readonly SettingsGroupId[] = ['app', 'images'
         @case ('app') {
           <okr-settings-app-form [formData]="formData()" (formDataChange)="formData.set($event)"
             [i18n]="i18n()" [context]="context()" [readOnly]="isSaving()" [showForm]="showForm()"
-            (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" />
+            (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" (busy)="formBusy.set($event)" />
         }
         @case ('images') {
           <okr-settings-images-form [formData]="formData()" (formDataChange)="formData.set($event)"
             [i18n]="i18n()" [context]="context()" [onUpload]="onUpload()" [readOnly]="isSaving()" [showForm]="showForm()"
-            (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" />
+            (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" (busy)="formBusy.set($event)" />
         }
         @case ('language') {
           <okr-settings-language-form [formData]="formData()" (formDataChange)="formData.set($event)"
             [i18n]="i18n()" [context]="context()" [readOnly]="isSaving()" [showForm]="showForm()"
-            (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" />
+            (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" (busy)="formBusy.set($event)" />
         }
         @case ('start') {
           <okr-settings-start-form [formData]="formData()" (formDataChange)="formData.set($event)"
             [i18n]="i18n()" [context]="context()" [startOptions]="startOptions()()" [readOnly]="isSaving()" [showForm]="showForm()"
-            (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" />
+            (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" (busy)="formBusy.set($event)" />
         }
         @case ('operator') {
           <okr-settings-operator-form [formData]="formData()" (formDataChange)="formData.set($event)"
             [i18n]="i18n()" [context]="context()" [readOnly]="isSaving()" [showForm]="showForm()"
-            (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" />
+            (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" (busy)="formBusy.set($event)" />
         }
         @case ('mail') {
           <okr-settings-mail-form [formData]="formData()" (formDataChange)="formData.set($event)"
             [i18n]="i18n()" [context]="context()" [readOnly]="isSaving()" [showForm]="showForm()"
-            (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" />
+            (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" (busy)="formBusy.set($event)" />
         }
         @case ('privacy') {
           <okr-settings-privacy-form [formData]="formData()" (formDataChange)="formData.set($event)"
             [i18n]="i18n()" [context]="context()" [pageOptions]="pageOptions()()" [readOnly]="isSaving()" [showForm]="showForm()"
-            (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" />
+            (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" (busy)="formBusy.set($event)" />
         }
       }
     </ion-content>
@@ -97,6 +97,8 @@ export class SettingsEditModal {
   protected readonly formData = linkedSignal<TenantSettings>(() => safeStructuredClone(this.before()) ?? {});
   protected readonly formDirty = signal(false);
   protected readonly formValid = signal(false);
+  /** a form is busy (an upload): saving or cancelling now would leave its result out */
+  protected readonly formBusy = signal(false);
   protected readonly showForm = signal(true);
   protected readonly isSaving = signal(false);
 
@@ -106,7 +108,7 @@ export class SettingsEditModal {
   }));
   /** a value typed and taken back is no change: there would be nothing to save */
   private readonly hasChanges = computed(() => Object.keys(settingsDiff(this.before(), this.formData())).length > 0);
-  protected readonly showConfirmation = computed(() => this.formValid() && this.formDirty() && this.hasChanges());
+  protected readonly showConfirmation = computed(() => this.formValid() && this.formDirty() && this.hasChanges() && !this.formBusy());
   protected readonly changeConfirmationI18n = computed((): ChangeConfirmationI18n => ({
     cancel: this.i18n()['cancel'](), save: this.i18n()['save'](),
   }));
@@ -119,7 +121,7 @@ export class SettingsEditModal {
   }
 
   public async save(): Promise<void> {
-    if (this.isSaving()) return;
+    if (this.isSaving() || this.formBusy()) return;
     this.isSaving.set(true);
     const after = safeStructuredClone(this.formData()) ?? {};
     try {
@@ -130,7 +132,7 @@ export class SettingsEditModal {
   }
 
   public cancel(): void {
-    if (this.isSaving()) return;
+    if (this.isSaving() || this.formBusy()) return;
     this.formDirty.set(false);
     this.formData.set(safeStructuredClone(this.before()) ?? {});
     this.showForm.set(false);

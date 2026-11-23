@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonNote, IonRow } from '@ionic/angular';
 
 import { ENV } from '@okr/shared-config';
@@ -40,6 +40,8 @@ import { SettingsPublicNote } from './settings-public-note';
                       <div class="preview">
                         <img okrImg [src]="previews()[field]" [alt]="fields()[field].label" />
                       </div>
+                    }
+                    @if (names()[field]) {
                       <div class="ion-padding-horizontal">
                         <ion-note>{{ names()[field] }}</ion-note>
                       </div>
@@ -91,15 +93,31 @@ export class SettingsImagesForm extends SettingsFormBase {
   });
   protected readonly names = computed(() => Object.fromEntries(this.imageFields.map((field) => [field, settingsImageName(this.values()[field])])));
 
+  /** Counts the resets and the end of the form: a result that arrives for an older one belongs to nothing any more. */
+  private generation = 0;
+
+  constructor() {
+    super();
+    inject(DestroyRef).onDestroy(() => { this.generation = -1; });
+    // the modal's cancel switches the form off and on again, with the values as loaded
+    effect(() => { if (!this.showForm()) untracked(() => { this.generation++; this.uploadingField.set(''); this.busy.emit(false); }); });
+  }
+
   protected async upload(field: string): Promise<void> {
     if (this.isBusy()) return;
+    const generation = this.generation;
     this.uploadingField.set(field);
+    this.busy.emit(true);
+    let path: string | undefined;
     try {
-      const path = await this.onUpload()(field);
-      if (path) this.onFieldChange(field, path);
-    } finally {
-      this.uploadingField.set('');
+      path = await this.onUpload()(field);
+    } catch {
+      path = undefined; // the page has told the user; the value stays
     }
+    if (this.generation !== generation) return; // destroyed or reset meanwhile: emitting an output now would throw (NG0953)
+    this.uploadingField.set('');
+    this.busy.emit(false);
+    if (path) this.onFieldChange(field, path);
   }
 
   protected get group(): 'images' { return 'images'; }

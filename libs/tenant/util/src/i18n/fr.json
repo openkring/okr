@@ -816,6 +816,7 @@
     "image_type_error": "Choisis une image au format JPG ou PNG.",
     "image_failed": "L'image n'a pas pu être téléversée. Réessaie.",
     "mail_domains": "Les adresses autorisées se terminent par :",
-    "mail_domains_none": "L'exploitant doit d'abord définir le domaine pour les e-mails. Ensuite seulement, tu pourras saisir une adresse ici."
+    "mail_domains_none": "L'exploitant doit d'abord définir le domaine pour les e-mails. Ensuite seulement, tu pourras saisir une adresse ici.",
+    "image_too_big": "L'image est trop grande. Elle doit faire moins de 25 Mo."
   }
 }

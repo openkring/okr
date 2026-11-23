@@ -816,6 +816,7 @@
     "image_type_error": "Wähle ein Bild im Format JPG oder PNG.",
     "image_failed": "Das Bild konnte nicht hochgeladen werden. Versuche es noch einmal.",
     "mail_domains": "Erlaubt sind Adressen mit der Endung:",
-    "mail_domains_none": "Zuerst muss der Betreiber die Domain für E-Mails festlegen. Erst danach kannst du hier eine Adresse eintragen."
+    "mail_domains_none": "Zuerst muss der Betreiber die Domain für E-Mails festlegen. Erst danach kannst du hier eine Adresse eintragen.",
+    "image_too_big": "Das Bild ist zu gross. Es darf weniger als 25 MB haben."
   }
 }

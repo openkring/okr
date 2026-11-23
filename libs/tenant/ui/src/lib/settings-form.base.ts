@@ -29,6 +29,8 @@ export abstract class SettingsFormBase {
   // outputs
   public readonly dirty = output<boolean>();
   public readonly valid = output<boolean>();
+  /** true while the form does something the user must not interrupt (an upload): the modal then hides the change confirmation */
+  public readonly busy = output<boolean>();
 
   /** The group the form edits. A getter, because it is read while the base class is being constructed. */
   protected abstract get group(): SettingsGroupId;

@@ -19,7 +19,7 @@ import { AlertService, resourceParams } from '@okr/shared-util-angular';
 import { DateFormat, getCountryName, getTodayStr, resolveMimeType } from '@okr/shared-util-core';
 import { SETTINGS_FORM_GROUPS, SettingsEditModal } from '@okr/tenant-ui';
 import {
-  FEATURE_BLOCKS, SETTINGS_GROUP_IDS, SETTINGS_I18N_KEYS, SETTINGS_IMAGE_MIMETYPES, settingsGroupKey, settingsImageExtension, settingsImagePath,
+  FEATURE_BLOCKS, SETTINGS_GROUP_IDS, SETTINGS_I18N_KEYS, SETTINGS_IMAGE_MIMETYPES, settingsGroupKey, settingsImageExtension, settingsImagePath, settingsImageTooBig,
   settingsPageName, settingsPageOptions, settingsRows, startOptions, startTargets,
 } from '@okr/tenant-util';
 import type { SettingsDisplayContext, SettingsGroupId, TenantSettings } from '@okr/tenant-util';
@@ -267,6 +267,7 @@ export class TenantSettingsContent {
    * Nothing is saved here: the path becomes the form value, and the change confirmation saves it. Leaving without saving
    * leaves the uploaded file unused in storage.
    * `pickFile` stays the first call: Safari opens the file dialog only inside the tap that asked for it.
+   * An old Safari never reports a cancelled dialog: the promise then stays pending, and the form stays busy until it is closed.
    */
   private async uploadImage(field: string): Promise<string | undefined> {
     const file = await this.uploadService.pickFile([...SETTINGS_IMAGE_MIMETYPES]);
@@ -275,6 +276,10 @@ export class TenantSettingsContent {
     const extension = settingsImageExtension(resolveMimeType(file.name, file.type));
     if (!extension) {
       await this.alertService.showToast(this.text('image_type_error'));
+      return undefined;
+    }
+    if (settingsImageTooBig(file.size)) {
+      await this.alertService.showToast(this.text('image_too_big'));
       return undefined;
     }
     const path = settingsImagePath(this.appStore.tenantId(), field, getTodayStr(DateFormat.StoreDateTime), extension);

@@ -39,6 +39,7 @@ const STATIC_KEYS = {
   image_uploading: PFX + 'image_uploading',
   image_type_error: PFX + 'image_type_error',
   image_failed: PFX + 'image_failed',
+  image_too_big: PFX + 'image_too_big',
   mail_domains: PFX + 'mail_domains',
   mail_domains_none: PFX + 'mail_domains_none',
   country_search: PFX + 'country_search',
