@@ -181,6 +181,169 @@
     "blocks": {
       "readonly": "This article is made of blocks. You can edit its text, images and buttons in a newer version of the app.",
       "notLinked": "This article is made of blocks. Please add the image in the article."
+    },
+    "editor": {
+      "block": {
+        "text": "Text",
+        "image": "Image",
+        "gallery": "Gallery",
+        "button": "Button",
+        "columns": "Columns",
+        "callout": "Note",
+        "divider": "Divider",
+        "space": "Space",
+        "unknown": "Unknown block"
+      },
+      "library": {
+        "title": "Blocks",
+        "add": "Add {block}",
+        "hint": "Click a block to add it at the end, or drag it into place.",
+        "hintTap": "Tap a block to add it at the end.",
+        "full": "An article can have at most {max} blocks."
+      },
+      "panel": {
+        "label": "Settings for: {block}",
+        "nothing": "There is nothing to set here.",
+        "unknown": "This block comes from a newer version of the app. You can move or delete it.",
+        "writeInArticle": "You write the text directly in the article.",
+        "look": "Look"
+      },
+      "align": {
+        "label": "Alignment",
+        "left": "Left",
+        "center": "Centre",
+        "right": "Right"
+      },
+      "image": {
+        "missing": "Choose an image. Until then this block is not visible in the article.",
+        "empty": "No image yet",
+        "fromArticle": "From this article",
+        "pickEmpty": "There are no other images in this article.",
+        "pickOne": "Choose {name}",
+        "unnamed": "Image {n}",
+        "captionHidden": "The caption is hidden. Under «Look» you choose where it appears.",
+        "link": {
+          "label": "Link",
+          "placeholder": "https://… or /page",
+          "helper": "What opens when the image is clicked."
+        },
+        "linkInactive": "The link only works once you choose following the link as the action under «Look».",
+        "linkMissing": "The image needs a link for this action.",
+        "noUpload": "You cannot upload images in the test view.",
+        "columnWidth": "Width of the column"
+      },
+      "gallery": {
+        "missing": "Add at least one image. Until then this block is not visible in the article."
+      },
+      "columns": {
+        "count": "Number of columns",
+        "widths": "Widths",
+        "preset": "Widths {sizes}",
+        "column": "Column {n}",
+        "size": "{size} of 12",
+        "stackReverse": {
+          "label": "On the phone, the last column first",
+          "helper": "On the phone the columns stand below each other."
+        },
+        "invalid": "The columns do not fit together. Choose their number or widths again."
+      },
+      "tone": {
+        "label": "Colour",
+        "primary": "First colour",
+        "secondary": "Second colour",
+        "tertiary": "Third colour",
+        "neutral": "Grey"
+      },
+      "space": {
+        "label": "Size",
+        "small": "Small",
+        "medium": "Medium",
+        "large": "Large"
+      },
+      "article": {
+        "title": "Article",
+        "settings": "Settings",
+        "cover": {
+          "title": "Teaser image",
+          "empty": "No teaser image yet",
+          "helper": "The teaser image appears in lists and previews, not in the article. Without one, the first image of the article is used."
+        },
+        "date": {
+          "label": "Date",
+          "placeholder": "DD.MM.YYYY",
+          "helper": "News are sorted by this date."
+        }
+      },
+      "error": {
+        "title": "Something is not right here yet",
+        "mark": "Something is not right in this block.",
+        "select": "Select {block}",
+        "noGerman": "There are translations of this text, but no German text."
+      },
+      "outdated": "Translation outdated ({languages})",
+      "outdatedField": "{field}: translation outdated ({languages})",
+      "canvas": {
+        "label": "The article",
+        "empty": "This article is still empty.",
+        "column": "Column {n}",
+        "textPlaceholder": "Write text",
+        "textFailed": "The text cannot be edited right now. Check your connection and try again.",
+        "imagePlaceholder": "No image chosen yet",
+        "galleryPlaceholder": "No images chosen yet",
+        "buttonPlaceholder": "Button without label or link",
+        "dropHere": "Drop here"
+      },
+      "frame": {
+        "toolbar": "Tools: {block}",
+        "drag": "Move",
+        "up": "Move up",
+        "down": "Move down",
+        "duplicate": "Duplicate",
+        "delete": "Delete"
+      },
+      "add": {
+        "label": "Insert a block",
+        "below": "Insert a block below",
+        "atEnd": "Insert a block at the end",
+        "inColumn": "Insert a block in this column",
+        "title": "What would you like to insert?"
+      },
+      "title": {
+        "edit": "Edit article",
+        "new": "New article"
+      },
+      "device": {
+        "label": "View",
+        "mobile": "Mobile",
+        "tablet": "Tablet",
+        "desktop": "Desktop"
+      },
+      "undo": "Undo",
+      "redo": "Redo",
+      "textTools": "Format text",
+      "notice": {
+        "noPicture": "Image places without an image were left out. Text beside one may become wider.",
+        "look": "The display may differ slightly.",
+        "trial": "Test view: nothing is saved.",
+        "close": "Close notice"
+      },
+      "save": {
+        "running": "The article is being saved …",
+        "conflict": "Someone has changed this article in the meantime.",
+        "force": "Save anyway",
+        "back": "Back",
+        "gone": "This article has been deleted or archived in the meantime. It can no longer be saved.",
+        "offline": "You are not connected right now. The article was not saved. Your changes are still here.",
+        "failed": "The article could not be saved. Your changes are still here.",
+        "trial": "Test view: the article was not saved."
+      },
+      "discard": {
+        "message": "Your changes have not been saved yet.",
+        "confirm": "Discard",
+        "keep": "Continue editing"
+      },
+      "openFailed": "The editor could not be opened. Check your connection and try again.",
+      "notLinked": "The article «{name}» is made of blocks. Please insert the image in the article."
     }
   },
   "contract": {

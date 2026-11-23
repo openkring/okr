@@ -181,6 +181,169 @@
     "blocks": {
       "readonly": "Dieser Artikel besteht aus Blöcken. Text, Bilder und Buttons kannst du erst in einer neueren Version der App bearbeiten.",
       "notLinked": "Dieser Artikel besteht aus Blöcken. Bitte füge das Bild im Artikel ein."
+    },
+    "editor": {
+      "block": {
+        "text": "Text",
+        "image": "Bild",
+        "gallery": "Galerie",
+        "button": "Button",
+        "columns": "Spalten",
+        "callout": "Hinweis",
+        "divider": "Trennlinie",
+        "space": "Abstand",
+        "unknown": "Unbekannter Block"
+      },
+      "library": {
+        "title": "Blöcke",
+        "add": "{block} hinzufügen",
+        "hint": "Klicke auf einen Block, um ihn am Ende einzufügen, oder ziehe ihn an seinen Platz.",
+        "hintTap": "Tippe auf einen Block, um ihn am Ende einzufügen.",
+        "full": "Ein Artikel kann höchstens {max} Blöcke haben."
+      },
+      "panel": {
+        "label": "Einstellungen zu: {block}",
+        "nothing": "Hier gibt es nichts einzustellen.",
+        "unknown": "Dieser Block stammt aus einer neueren Version der App. Du kannst ihn verschieben oder löschen.",
+        "writeInArticle": "Den Text schreibst du direkt im Artikel.",
+        "look": "Aussehen"
+      },
+      "align": {
+        "label": "Ausrichtung",
+        "left": "Links",
+        "center": "Mitte",
+        "right": "Rechts"
+      },
+      "image": {
+        "missing": "Wähle ein Bild. Vorher ist dieser Block im Artikel nicht sichtbar.",
+        "empty": "Noch kein Bild",
+        "fromArticle": "Aus diesem Artikel",
+        "pickEmpty": "In diesem Artikel gibt es keine weiteren Bilder.",
+        "pickOne": "{name} wählen",
+        "unnamed": "Bild {n}",
+        "captionHidden": "Der Untertitel ist ausgeblendet. Unter «Aussehen» legst du fest, wo er erscheint.",
+        "link": {
+          "label": "Link",
+          "placeholder": "https://… oder /seite",
+          "helper": "Was sich beim Klick auf das Bild öffnet."
+        },
+        "linkInactive": "Der Link wirkt erst, wenn du unter «Aussehen» als Aktion das Folgen des Links wählst.",
+        "linkMissing": "Für diese Aktion braucht das Bild einen Link.",
+        "noUpload": "In der Testansicht kannst du keine Bilder hochladen.",
+        "columnWidth": "Breite der Spalte"
+      },
+      "gallery": {
+        "missing": "Füge mindestens ein Bild hinzu. Vorher ist dieser Block im Artikel nicht sichtbar."
+      },
+      "columns": {
+        "count": "Anzahl Spalten",
+        "widths": "Breiten",
+        "preset": "Breiten {sizes}",
+        "column": "Spalte {n}",
+        "size": "{size} von 12",
+        "stackReverse": {
+          "label": "Auf dem Handy zuerst die letzte Spalte",
+          "helper": "Auf dem Handy stehen die Spalten untereinander."
+        },
+        "invalid": "Die Spalten passen nicht zusammen. Wähle Anzahl oder Breiten neu."
+      },
+      "tone": {
+        "label": "Farbe",
+        "primary": "Erste Farbe",
+        "secondary": "Zweite Farbe",
+        "tertiary": "Dritte Farbe",
+        "neutral": "Grau"
+      },
+      "space": {
+        "label": "Grösse",
+        "small": "Klein",
+        "medium": "Mittel",
+        "large": "Gross"
+      },
+      "article": {
+        "title": "Artikel",
+        "settings": "Einstellungen",
+        "cover": {
+          "title": "Teaserbild",
+          "empty": "Noch kein Teaserbild",
+          "helper": "Das Teaserbild erscheint in Listen und Vorschauen, nicht im Artikel. Ohne Teaserbild wird das erste Bild des Artikels genommen."
+        },
+        "date": {
+          "label": "Datum",
+          "placeholder": "TT.MM.JJJJ",
+          "helper": "Nach diesem Datum werden News sortiert."
+        }
+      },
+      "error": {
+        "title": "Hier stimmt noch etwas nicht",
+        "mark": "In diesem Block stimmt etwas nicht.",
+        "select": "{block} auswählen",
+        "noGerman": "Zu diesem Text gibt es Übersetzungen, aber keinen deutschen Text."
+      },
+      "outdated": "Übersetzung veraltet ({languages})",
+      "outdatedField": "{field}: Übersetzung veraltet ({languages})",
+      "canvas": {
+        "label": "Der Artikel",
+        "empty": "Dieser Artikel ist noch leer.",
+        "column": "Spalte {n}",
+        "textPlaceholder": "Text schreiben",
+        "textFailed": "Der Text kann gerade nicht bearbeitet werden. Prüfe deine Verbindung und versuche es noch einmal.",
+        "imagePlaceholder": "Noch kein Bild gewählt",
+        "galleryPlaceholder": "Noch keine Bilder gewählt",
+        "buttonPlaceholder": "Button ohne Beschriftung oder Link",
+        "dropHere": "Hier ablegen"
+      },
+      "frame": {
+        "toolbar": "Werkzeuge: {block}",
+        "drag": "Verschieben",
+        "up": "Nach oben",
+        "down": "Nach unten",
+        "duplicate": "Duplizieren",
+        "delete": "Löschen"
+      },
+      "add": {
+        "label": "Block einfügen",
+        "below": "Block darunter einfügen",
+        "atEnd": "Block am Ende einfügen",
+        "inColumn": "Block in diese Spalte einfügen",
+        "title": "Was möchtest du einfügen?"
+      },
+      "title": {
+        "edit": "Artikel bearbeiten",
+        "new": "Neuer Artikel"
+      },
+      "device": {
+        "label": "Ansicht",
+        "mobile": "Mobile",
+        "tablet": "Tablet",
+        "desktop": "Desktop"
+      },
+      "undo": "Rückgängig",
+      "redo": "Wiederholen",
+      "textTools": "Text gestalten",
+      "notice": {
+        "noPicture": "Bildplätze ohne Bild wurden weggelassen. Ein Text daneben kann dadurch breiter werden.",
+        "look": "Die Darstellung kann leicht abweichen.",
+        "trial": "Testansicht: Es wird nichts gespeichert.",
+        "close": "Hinweis schliessen"
+      },
+      "save": {
+        "running": "Der Artikel wird gespeichert …",
+        "conflict": "Jemand hat diesen Artikel inzwischen geändert.",
+        "force": "Trotzdem speichern",
+        "back": "Zurück",
+        "gone": "Dieser Artikel wurde inzwischen gelöscht oder archiviert. Er kann nicht mehr gespeichert werden.",
+        "offline": "Du bist gerade nicht verbunden. Der Artikel wurde nicht gespeichert. Deine Änderungen sind noch da.",
+        "failed": "Der Artikel konnte nicht gespeichert werden. Deine Änderungen sind noch da.",
+        "trial": "Testansicht: Der Artikel wurde nicht gespeichert."
+      },
+      "discard": {
+        "message": "Deine Änderungen sind noch nicht gespeichert.",
+        "confirm": "Verwerfen",
+        "keep": "Weiter bearbeiten"
+      },
+      "openFailed": "Der Editor konnte nicht geöffnet werden. Prüfe deine Verbindung und versuche es noch einmal.",
+      "notLinked": "Der Artikel «{name}» besteht aus Blöcken. Bitte füge das Bild im Artikel ein."
     }
   },
   "contract": {

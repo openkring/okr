@@ -48,3 +48,8 @@ export * from './lib/image-layout-select.modal';
 export * from './lib/article-images-configuration';
 export * from './lib/contact-message.form';
 export * from './lib/section-add-chips';
+// the side panel of the article editor (spec 1.175); only the lazily loaded editor uses it
+export * from './lib/article-block-panel';
+export * from './lib/article-panel';
+export * from './lib/article-block-library';
+export * from './lib/article-image-pick.modal';

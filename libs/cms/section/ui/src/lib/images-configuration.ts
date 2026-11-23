@@ -17,7 +17,7 @@ import { createActionSheetButton, createActionSheetOptions, downloadToBrowser } 
 import { IMGIX_THUMBNAIL_PARAMS, sanitizeFileName } from '@okr/shared-util-core';
 import { UploadService } from '@okr/avatar-data-access';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { getImageErrors, SECTION_IMAGE_PICKER, SectionErrors, SectionI18n, SectionImagePicker } from '@okr/cms-section-util';
+import { getImageErrors, ImageDetails, ImageUploadTarget, SECTION_IMAGE_PICKER, SectionErrors, SectionI18n, SectionImagePicker, uniqueFileName } from '@okr/cms-section-util';
 
 import { ImageEditModal } from './image-edit.modal';
 
@@ -143,10 +143,22 @@ export class ImagesConfiguration {
   public readonly max = input<number | undefined>();
   /** inside a host card (the article's «Bilder» card): no own card and title, only the add button and the list */
   public readonly embedded = input(false);
+  /**
+   * Article editor (spec 1.175 §7.6): every upload gets a storage name of its own. Otherwise a file with an equal name replaces
+   * the stored one, and a published article changes before it is saved.
+   */
+  public readonly uniqueNames = input(false);
+  /** false: nothing can be uploaded (the trial mode of the article editor); images can still be edited, sorted and removed */
+  public readonly uploads = input(true);
+  /**
+   * Article editor: takes the uploaded images and what is found out about them later, instead of `images`. Asked for when the
+   * upload starts, so it gets them even if this component shows another block or is gone by then.
+   */
+  public readonly uploadTarget = input<ImageUploadTarget | undefined>();
 
   // computed
   protected readonly imageErrors = computed(() => getImageErrors(this.errors()));
-  protected readonly canAdd = computed(() => !!this.picker || !this.requirePicker());
+  protected readonly canAdd = computed(() => !!this.picker || (!this.requirePicker() && this.uploads()));
   protected readonly atMax = computed(() => { const max = this.max(); return max !== undefined && this.images().length >= max; });
 
   // constants
@@ -165,7 +177,8 @@ export class ImagesConfiguration {
   }
 
   protected reorder(ev: CustomEvent<ItemReorderEventDetail>): void {
-    this.images.set(ev.detail.complete(this.images()));
+    // a copy: complete() also reorders the array it is given, which may belong to a step of the undo history
+    this.images.set(ev.detail.complete([...this.images()]));
   }
 
   protected async addImages(): Promise<void> {
@@ -178,6 +191,10 @@ export class ImagesConfiguration {
       console.error('ImagesConfiguration.addImages: SECTION_IMAGE_PICKER is required here but not provided; nothing is uploaded');
       return;
     }
+    if (!this.uploads()) return;
+    // what the host wants, as of now: it may show another block when the upload is done
+    const target = this.uploadTarget();
+    const uniqueNames = this.uniqueNames();
     // a single slot (the hero's cover or logo) takes one file, and that file replaces the image
     const files = this.multiple()
       ? await this.uploadService.pickMultipleFiles(IMAGE_MIMETYPES)
@@ -186,7 +203,9 @@ export class ImagesConfiguration {
 
     const basePath = this.storagePath();
     // the storage path must be sanitized (spaces/umlauts break the image url); labels keep the raw name
-    const pathOf = (f: File) => `${basePath}/${sanitizeFileName(f.name)}`;
+    const paths = new Map(files.map(f => [f,
+      `${basePath}/${uniqueNames ? uniqueFileName(f.name, crypto.randomUUID().slice(0, 8)) : sanitizeFileName(f.name)}`]));
+    const pathOf = (f: File) => paths.get(f) ?? '';
     const uploads: UploadEntry[] = files.map(f => ({ file: f, fullPath: pathOf(f) }));
 
     const urls = await this.uploadService.uploadFiles(uploads, this.i18n().image_upload() ?? '');
@@ -207,7 +226,8 @@ export class ImagesConfiguration {
 
     // Adding the images to the section is the primary result and must not be lost
     // if the secondary DocumentModel bookkeeping fails. Update the model first.
-    this.images.update(imgs => this.multiple() ? [...imgs, ...newImages] : newImages.slice(0, 1));
+    if (target) target.added(newImages);
+    else this.images.update(imgs => this.multiple() ? [...imgs, ...newImages] : newImages.slice(0, 1));
 
     // Best-effort: persist a DocumentModel record per uploaded file. A failure
     // here (permission, offline, …) is logged but never discards the images above.
@@ -232,7 +252,10 @@ export class ImagesConfiguration {
       if (credits[idx]) patch.credit = credits[idx];
       if (Object.keys(patch).length > 0) patchByUrl.set(pathOf(f), patch);
     });
-    if (patchByUrl.size > 0) {
+    if (target) {
+      const details = [...patchByUrl].map(([url, patch]): ImageDetails => ({ url, documentKey: patch.documentKey, credit: patch.credit }));
+      if (details.length > 0) target.details(details);
+    } else if (patchByUrl.size > 0) {
       this.images.update(imgs => imgs.map(img => {
         const patch = patchByUrl.get(img.url);
         if (!patch) return img;

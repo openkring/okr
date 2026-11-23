@@ -181,6 +181,169 @@
     "blocks": {
       "readonly": "Questo articolo è composto da blocchi. Potrai modificare testo, immagini e pulsanti in una versione più recente dell’app.",
       "notLinked": "Questo articolo è composto da blocchi. Aggiungi l’immagine nell’articolo, per favore."
+    },
+    "editor": {
+      "block": {
+        "text": "Testo",
+        "image": "Immagine",
+        "gallery": "Galleria",
+        "button": "Pulsante",
+        "columns": "Colonne",
+        "callout": "Nota",
+        "divider": "Linea divisoria",
+        "space": "Spazio",
+        "unknown": "Blocco sconosciuto"
+      },
+      "library": {
+        "title": "Blocchi",
+        "add": "Aggiungi: {block}",
+        "hint": "Fai clic su un blocco per aggiungerlo alla fine, oppure trascinalo al suo posto.",
+        "hintTap": "Tocca un blocco per aggiungerlo alla fine.",
+        "full": "Un articolo può avere al massimo {max} blocchi."
+      },
+      "panel": {
+        "label": "Impostazioni: {block}",
+        "nothing": "Qui non c’è nulla da impostare.",
+        "unknown": "Questo blocco proviene da una versione più recente dell’app. Puoi spostarlo o eliminarlo.",
+        "writeInArticle": "Scrivi il testo direttamente nell’articolo.",
+        "look": "Aspetto"
+      },
+      "align": {
+        "label": "Allineamento",
+        "left": "Sinistra",
+        "center": "Centro",
+        "right": "Destra"
+      },
+      "image": {
+        "missing": "Scegli un’immagine. Fino ad allora questo blocco non è visibile nell’articolo.",
+        "empty": "Ancora nessuna immagine",
+        "fromArticle": "Da questo articolo",
+        "pickEmpty": "In questo articolo non ci sono altre immagini.",
+        "pickOne": "Scegli {name}",
+        "unnamed": "Immagine {n}",
+        "captionHidden": "La didascalia è nascosta. In «Aspetto» scegli dove appare.",
+        "link": {
+          "label": "Link",
+          "placeholder": "https://… o /pagina",
+          "helper": "Cosa si apre facendo clic sull’immagine."
+        },
+        "linkInactive": "Il link funziona solo se in «Aspetto» scegli di seguire il link come azione.",
+        "linkMissing": "Per questa azione l’immagine ha bisogno di un link.",
+        "noUpload": "Nella vista di prova non puoi caricare immagini.",
+        "columnWidth": "Larghezza della colonna"
+      },
+      "gallery": {
+        "missing": "Aggiungi almeno un’immagine. Fino ad allora questo blocco non è visibile nell’articolo."
+      },
+      "columns": {
+        "count": "Numero di colonne",
+        "widths": "Larghezze",
+        "preset": "Larghezze {sizes}",
+        "column": "Colonna {n}",
+        "size": "{size} di 12",
+        "stackReverse": {
+          "label": "Sul telefono, prima l’ultima colonna",
+          "helper": "Sul telefono le colonne stanno una sotto l’altra."
+        },
+        "invalid": "Le colonne non vanno insieme. Scegli di nuovo il numero o le larghezze."
+      },
+      "tone": {
+        "label": "Colore",
+        "primary": "Primo colore",
+        "secondary": "Secondo colore",
+        "tertiary": "Terzo colore",
+        "neutral": "Grigio"
+      },
+      "space": {
+        "label": "Dimensione",
+        "small": "Piccolo",
+        "medium": "Medio",
+        "large": "Grande"
+      },
+      "article": {
+        "title": "Articolo",
+        "settings": "Impostazioni",
+        "cover": {
+          "title": "Immagine di anteprima",
+          "empty": "Ancora nessuna immagine di anteprima",
+          "helper": "L’immagine di anteprima appare negli elenchi e nelle anteprime, non nell’articolo. Senza, viene usata la prima immagine dell’articolo."
+        },
+        "date": {
+          "label": "Data",
+          "placeholder": "GG.MM.AAAA",
+          "helper": "Le notizie sono ordinate in base a questa data."
+        }
+      },
+      "error": {
+        "title": "Qui c’è ancora qualcosa da correggere",
+        "mark": "In questo blocco c’è qualcosa da correggere.",
+        "select": "Seleziona: {block}",
+        "noGerman": "Ci sono traduzioni di questo testo, ma manca il testo tedesco."
+      },
+      "outdated": "Traduzione non aggiornata ({languages})",
+      "outdatedField": "{field}: traduzione non aggiornata ({languages})",
+      "canvas": {
+        "label": "L’articolo",
+        "empty": "Questo articolo è ancora vuoto.",
+        "column": "Colonna {n}",
+        "textPlaceholder": "Scrivi testo",
+        "textFailed": "Il testo non può essere modificato al momento. Controlla la connessione e riprova.",
+        "imagePlaceholder": "Nessuna immagine scelta",
+        "galleryPlaceholder": "Nessuna immagine scelta",
+        "buttonPlaceholder": "Pulsante senza testo o senza link",
+        "dropHere": "Rilascia qui"
+      },
+      "frame": {
+        "toolbar": "Strumenti: {block}",
+        "drag": "Sposta",
+        "up": "Verso l’alto",
+        "down": "Verso il basso",
+        "duplicate": "Duplica",
+        "delete": "Elimina"
+      },
+      "add": {
+        "label": "Inserisci un blocco",
+        "below": "Inserisci un blocco sotto",
+        "atEnd": "Inserisci un blocco alla fine",
+        "inColumn": "Inserisci un blocco in questa colonna",
+        "title": "Cosa vuoi inserire?"
+      },
+      "title": {
+        "edit": "Modifica articolo",
+        "new": "Nuovo articolo"
+      },
+      "device": {
+        "label": "Vista",
+        "mobile": "Mobile",
+        "tablet": "Tablet",
+        "desktop": "Desktop"
+      },
+      "undo": "Annulla",
+      "redo": "Ripeti",
+      "textTools": "Formatta il testo",
+      "notice": {
+        "noPicture": "Gli spazi senza immagine sono stati tralasciati. Un testo accanto può diventare più largo.",
+        "look": "La visualizzazione può variare leggermente.",
+        "trial": "Vista di prova: non viene salvato nulla.",
+        "close": "Chiudi l’avviso"
+      },
+      "save": {
+        "running": "L’articolo viene salvato …",
+        "conflict": "Nel frattempo qualcuno ha modificato questo articolo.",
+        "force": "Salva comunque",
+        "back": "Indietro",
+        "gone": "Nel frattempo questo articolo è stato eliminato o archiviato. Non può più essere salvato.",
+        "offline": "Al momento non sei connesso. L’articolo non è stato salvato. Le tue modifiche sono ancora qui.",
+        "failed": "Non è stato possibile salvare l’articolo. Le tue modifiche sono ancora qui.",
+        "trial": "Vista di prova: l’articolo non è stato salvato."
+      },
+      "discard": {
+        "message": "Le tue modifiche non sono ancora state salvate.",
+        "confirm": "Scarta",
+        "keep": "Continua a modificare"
+      },
+      "openFailed": "Non è stato possibile aprire l’editor. Controlla la connessione e riprova.",
+      "notLinked": "L’articolo «{name}» è composto da blocchi. Inserisci l’immagine nell’articolo."
     }
   },
   "contract": {

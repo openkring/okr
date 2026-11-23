@@ -63,7 +63,7 @@ const MULTI_IMAGE_POSITIONS = ViewPositions.filter((p) => p.id === ViewPosition.
   template: `
     <ion-card>
       <ion-card-header>
-        <ion-card-title>{{ mode() === 'appearance' ? i18n().article_images_appearanceTitle() : i18n().article_images_title() }}</ion-card-title>
+        <ion-card-title>{{ title() ? title() : mode() === 'appearance' ? i18n().article_images_appearanceTitle() : i18n().article_images_title() }}</ion-card-title>
       </ion-card-header>
       <ion-card-content>
         @if (mode() === 'select') {
@@ -179,7 +179,7 @@ const MULTI_IMAGE_POSITIONS = ViewPositions.filter((p) => p.id === ViewPosition.
                 <ion-col size="12">
                   <okr-error-note [errors]="errorsFor('imageLayout')" />
                 </ion-col>
-                @if (!journalMode() && count() > 0) {
+                @if (!journalMode() && showPlacement() && count() > 0) {
                   <ion-col size="12" size-md="6">
                     <okr-category-old [i18n]="positionI18n()" [value]="position()" (valueChange)="onPositionChange($event)"
                                       [readOnly]="isReadOnly()" [categories]="positions()" />
@@ -248,6 +248,10 @@ export class ArticleImagesConfiguration {
   public readonly emptyText = input('');
   /** the whole card, or the part one of the article form's tabs shows (spec 1.171) */
   public readonly mode = input<ArticleImagesMode>('all');
+  /** false: no position and column size (a block of the article editor, spec 1.175: its place decides) */
+  public readonly showPlacement = input(true);
+  /** card title; the one of the mode when unset */
+  public readonly title = input('');
   public readonly i18n = input.required<SectionI18n>();
   /** vest field name -> messages of the running section suite (see section.form.ts) */
   public readonly errors = input<SectionErrors>({});

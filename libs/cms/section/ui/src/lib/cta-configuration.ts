@@ -51,23 +51,27 @@ interface CtaConfigI18n {
   `],
   template: `
     <ion-card>
-      <ion-card-header>
-        <ion-card-title>{{ i18n().cta_title() }}</ion-card-title>
-        <ion-card-subtitle>{{ i18n().cta_subtitle() }}</ion-card-subtitle>
-      </ion-card-header>
+      @if (showHeader()) {
+        <ion-card-header>
+          <ion-card-title>{{ i18n().cta_title() }}</ion-card-title>
+          <ion-card-subtitle>{{ i18n().cta_subtitle() }}</ion-card-subtitle>
+        </ion-card-header>
+      }
       <ion-card-content>
         <okr-error-note [errors]="errorsFor('ctas')" />
         <ion-grid>
           @for (cta of ctas(); track $index; let i = $index) {
             <ion-row>
-              <ion-col size="12" class="cta-head">
-                <h3>{{ buttonTitle(i) }}</h3>
-                @if (!readOnly()) {
-                  <ion-button fill="clear" color="danger" [attr.aria-label]="i18n().cta_remove()" (click)="remove(i)">
-                    <ion-icon slot="icon-only" src="{{ 'trash' | svgIcon }}" />
-                  </ion-button>
-                }
-              </ion-col>
+              @if (showHeader()) {
+                <ion-col size="12" class="cta-head">
+                  <h3>{{ buttonTitle(i) }}</h3>
+                  @if (!readOnly()) {
+                    <ion-button fill="clear" color="danger" [attr.aria-label]="i18n().cta_remove()" (click)="remove(i)">
+                      <ion-icon slot="icon-only" src="{{ 'trash' | svgIcon }}" />
+                    </ion-button>
+                  }
+                </ion-col>
+              }
               <ion-col size="12" size-md="6">
                 <okr-text-input [i18n]="labelI18n()" [value]="cta.label ?? ''" (valueChange)="patch(i, { label: $event })"
                                 [maxLength]="labelLength" [readOnly]="readOnly()" [showHelper]="true" />
@@ -108,6 +112,8 @@ export class CtaConfiguration {
   public readonly max = input<number>(1);
   /** vest naming scheme of the owner: 'ctas' → `ctas[i].label`, 'cta' → `cta.label` */
   public readonly errorKey = input<'ctas' | 'cta'>('ctas');
+  /** false: no card header and no head per button (the one button of a block, spec 1.175: it is removed with its block) */
+  public readonly showHeader = input(true);
   public readonly readOnly = input(true);
   public readonly i18n = input.required<CtaConfigI18n>();
   /** vest field name -> messages of the running section suite (see section.form.ts) */
