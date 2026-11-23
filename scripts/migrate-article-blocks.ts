@@ -8,7 +8,8 @@
  * Modes:
  *   --out=<dir>                           trial run (default, READ ONLY): writes plan.json, report-<tenant>.md and
  *                                         summary.md to <dir>. plan.json holds article contents: <dir> must be outside
- *                                         a repository or git-ignored. The reports hold section key, name and title only.
+ *                                         a repository or git-ignored (every file, checked before anything is
+ *                                         created or read). The reports hold section key, name and title only.
  *   --apply --tenant=<id> --plan=<file>   writes the planned articles of one tenant. An article of several tenants
  *                                         (`shared` in the plan and the reports) is written with any of them: one
  *                                         write serves all.
@@ -24,6 +25,15 @@
  * skipped and reported. Before the first write the full documents are saved next to the plan
  * (backup-<mode>-<tenant>-<time>.json; Timestamps become {_seconds, _nanoseconds}). 5 writes per second. The first
  * error stops the run; a second run skips what is done. Each write of a website section sets its «unpublished changes».
+ * Exit code: 0 = all done, 2 = articles were skipped (counted by reason at the end; a second run skips the ones that are
+ * done, has-blocks), 1 = an error.
+ *
+ * ORDER OF A RUN:
+ *   1. A fresh trial run right before --apply, with the same commit: an article that was saved since the trial run is
+ *      skipped (changed-since-trial), and a plan of an older commit may be planned differently now (patch-differs).
+ *   2. Undo with the commit that applied: undo plans the article again and compares (edited, old-fields-changed).
+ *   3. A section form that was opened before the migration and saved after it writes the old article back, without blocks.
+ *      So run the trial again afterwards: such articles are listed as articles to migrate; apply them with that new plan.
  *
  * Usage (bundled first: the repo runs .ts scripts as ESM, where extension-less imports fail):
  *   pnpm exec esbuild scripts/migrate-article-blocks.ts --bundle --platform=node --packages=external \
@@ -31,20 +41,22 @@
  *   node dist/scripts/migrate-article-blocks.cjs --out=<dir>
  *   node dist/scripts/migrate-article-blocks.cjs --apply --tenant=<id> --plan=<dir>/plan.json
  *   node dist/scripts/migrate-article-blocks.cjs --undo --tenant=<id> --plan=<dir>/plan.json
- * Tests: libs/shared/models (article-migration.util.spec.ts) and scripts/migrate-article-blocks.logic.test.ts.
+ * Tests: libs/shared/models (article-migration.util.spec.ts) and scripts/migrate-article-blocks.logic.test.ts
+ * (logic and the guard of the directory).
  *
  * Requires: gcloud auth application-default login (or GOOGLE_APPLICATION_CREDENTIALS).
  */
-import { spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { FieldPath, FieldValue, getFirestore, type DocumentSnapshot, type Firestore } from 'firebase-admin/firestore';
 import { articleApplySkip, articleUndoSkip } from '@okr/shared-models';
 import {
-  buildPlan, entriesOf, parseArgs, parsePlan, reportOf, summaryOf, tenantsOf, updateTimeOf, type MigrateEntry, type StoredSection,
+  backupName, buildPlan, entriesOf, exitCodeOf, parseArgs, parsePlan, privateNames, reportName, reportOf, skipSummary, summaryOf, tenantsOf, updateTimeOf,
+  type MigrateEntry, type StoredSection,
 } from './migrate-article-blocks.logic';
+import { assertPrivate } from './migrate-article-blocks.private';
 
 const PROJECT_ID = 'bkaiser-org';
 const COLLECTION = 'sections';
@@ -52,27 +64,21 @@ const PAUSE_MS = 200; // 5 writes per second
 const BLOCKS = new FieldPath('properties', 'blocks');
 const COVER = new FieldPath('properties', 'cover');
 
-/** Files with article contents never go into a repository. */
-function assertPrivate(dir: string): void {
-  const git = (...args: string[]): number | null => spawnSync('git', ['-C', dir, ...args], { stdio: 'ignore' }).status;
-  if (git('rev-parse', '--is-inside-work-tree') === 0 && git('check-ignore', '-q', join(dir, 'plan.json')) !== 0) {
-    throw new Error(`${dir} is part of a repository and not git-ignored`);
-  }
-}
-
 function write(path: string, content: string, flag: 'w' | 'wx' = 'w'): void {
+  // the names of the tenants are known only now
+  assertPrivate(dirname(path), [basename(path)]);
   writeFileSync(path, content, { mode: 0o600, flag });
   console.log(`wrote ${path}`);
 }
 
 async function trial(db: Firestore, out: string): Promise<void> {
   const dir = resolve(out);
+  assertPrivate(dir, privateNames());
   mkdirSync(dir, { recursive: true });
-  assertPrivate(dir);
   const snap = await db.collection(COLLECTION).where('type', '==', 'article').get();
   const plan = buildPlan(snap.docs.map((d) => [d.id, d.data() as StoredSection, d.updateTime]), new Date().toISOString(), PROJECT_ID);
   write(join(dir, 'plan.json'), JSON.stringify(plan, null, 1));
-  for (const tenant of tenantsOf(plan)) write(join(dir, `report-${tenant.replace(/[^\w-]/g, '')}.md`), reportOf(plan, tenant));
+  for (const tenant of tenantsOf(plan)) write(join(dir, reportName(tenant)), reportOf(plan, tenant));
   write(join(dir, 'summary.md'), summaryOf(plan));
   console.log(`\n${summaryOf(plan)}\nTrial run — nothing written to the database.`);
 }
@@ -99,7 +105,7 @@ async function writeOne(db: Firestore, mode: 'apply' | 'undo', entry: MigrateEnt
 
 async function run(db: Firestore, mode: 'apply' | 'undo', tenant: string, planFile: string): Promise<void> {
   const dir = dirname(resolve(planFile));
-  assertPrivate(dir);
+  assertPrivate(dir, [basename(planFile), ...privateNames(tenant)]);
   const entries = entriesOf(parsePlan(readFileSync(planFile, 'utf8'), PROJECT_ID), tenant);
   const snaps = entries.length > 0 ? await db.getAll(...entries.map((e) => db.collection(COLLECTION).doc(e.key))) : [];
   const skipped: [string, string][] = [];
@@ -115,8 +121,7 @@ async function run(db: Firestore, mode: 'apply' | 'undo', tenant: string, planFi
   try {
     if (todo.length > 0) {
       const backup = todo.map(({ snap }) => ({ key: snap.id, updateTime: snap.updateTime && updateTimeOf(snap.updateTime), data: snap.data() }));
-      const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-      write(join(dir, `backup-${mode}-${tenant.replace(/[^\w-]/g, '')}-${stamp}.json`), JSON.stringify(backup, null, 1), 'wx');
+      write(join(dir, backupName(mode, tenant, new Date().toISOString())), JSON.stringify(backup, null, 1), 'wx');
     }
     for (const { entry } of todo) {
       const skip = await writeOne(db, mode, entry, tenant);
@@ -128,7 +133,9 @@ async function run(db: Firestore, mode: 'apply' | 'undo', tenant: string, planFi
   } finally {
     for (const [key, reason] of skipped) console.log(`  SKIP ${key}: ${reason}`);
     console.log(`\n${mode === 'apply' ? 'Migrated' : 'Undone'}: ${written}, skipped: ${skipped.length}, of ${entries.length}`);
+    if (skipped.length > 0) console.log(skipSummary(skipped));
   }
+  process.exitCode = exitCodeOf(skipped);
 }
 
 async function main(): Promise<void> {

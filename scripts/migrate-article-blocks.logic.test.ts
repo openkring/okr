@@ -2,11 +2,17 @@
 //   --tsconfig=tsconfig.base.json --format=cjs --outfile=dist/scripts/migrate-article-blocks.logic.test.cjs
 // node --test dist/scripts/migrate-article-blocks.logic.test.cjs
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { test } from 'node:test';
+import { withMigrationPatch } from '@okr/shared-models';
 import {
-  PLAN_VERSION, buildPlan, entriesOf, parseArgs, parsePlan, planDocument, publicDifferences, reportOf, summaryOf, tenantsOf, updateTimeOf,
-  type MigrateEntry, type PlanEntry, type StoredSection,
+  PLAN_VERSION, backupName, buildPlan, entriesOf, exitCodeOf, parseArgs, parsePlan, planDocument, privateNames, publicDifferences, reportName, reportOf, skipSummary,
+  summaryOf, tenantsOf, updateTimeOf, type MigrateEntry, type PlanEntry, type StoredSection,
 } from './migrate-article-blocks.logic';
+import { assertPrivate } from './migrate-article-blocks.private';
 
 const img = (url: string, more: object = {}): object => ({ label: '', type: 0, url, actionUrl: '', altText: '', overlay: '', ...more });
 const doc = (position: number, properties: object, rest: object = {}): StoredSection =>
@@ -115,6 +121,22 @@ test('publicDifferences: names the place and the differing keys', () => {
   assert.ok(found.some((f) => f.startsWith('accordion en')), found.join());
 });
 
+test('publicDifferences: blocks that differ from the intact old fields', () => {
+  const shapes: [number, number][] = [[0, 0], [1, 1], [2, 1], [3, 1], [4, 1], [1, 2], [2, 2]];
+  for (const [position, n] of shapes) {
+    const s = doc(position, { images: ['a', 'b'].slice(0, n).map((x) => img(`tenant/${x}.jpg`)) });
+    const { patch } = plan('k', s) as MigrateEntry;
+    assert.deepEqual(publicDifferences('k', s, withMigrationPatch(s, patch)), []);
+    const mutated = structuredClone(patch);
+    const texts = mutated.blocks.flatMap((b) => (b.type === 'columns' ? b.columns.flatMap((c) => c.blocks) : [b])).filter((b) => b.type === 'text');
+    assert.equal(texts.length, 1);
+    texts[0].html = '<p>ANDERS</p>';
+    const found = publicDifferences('k', s, withMigrationPatch(s, mutated));
+    for (const place of ['website de: ', 'accordion de: ', 'news: ']) assert.ok(found.some((f) => f.startsWith(place)), `${position}/${n} ${place} ${found.join()}`);
+    assert.match(found.join('; '), /website de: content/);
+  }
+});
+
 test('publicDifferences: a text article that gets an image is another home row', () => {
   const found = publicDifferences('k', doc(0, {}), doc(1, { images: [img('tenant/a.jpg')] }));
   assert.ok(found.includes('home layout'), found.join());
@@ -145,6 +167,31 @@ test('buildPlan and parsePlan', () => {
   assert.throws(() => parsePlan(JSON.stringify(built), 'other'), /project/);
   assert.throws(() => parsePlan(JSON.stringify({ ...built, version: 0 }), 'proj'), /not a plan/);
   for (const bad of ['{}', 'null', '[]', 'x']) assert.throws(() => parsePlan(bad, 'proj'), /not a plan/);
+});
+
+test('parsePlan: refuses a plan with an invalid entry, and names it without its values', () => {
+  const valid = built.entries.find((e) => e.key === 'a') as MigrateEntry;
+  const parse = (entry: unknown): unknown => parsePlan(JSON.stringify({ ...built, entries: [valid, entry] }), 'proj');
+  const other = { ...valid, key: 'x2' };
+  assert.doesNotThrow(() => parse(other));
+  const cover = { ...other, patch: { blocks: valid.patch.blocks } };
+  assert.doesNotThrow(() => parse(cover));
+  const bad: [RegExp, unknown][] = [
+    [/no object/, null], [/no object/, 'x'], [/no object/, []],
+    [/action/, { ...other, action: 'delete' }], [/action/, { ...other, action: undefined }],
+    ...[undefined, '', 7, 'a/b', '/', '..', '.', '__x__'].map((key): [RegExp, unknown] => [/key/, { ...other, key }]),
+    [/key is given twice/, valid],
+    ...[undefined, 'scs', [7], [null], {}].map((tenants): [RegExp, unknown] => [/tenants/, { ...other, tenants }]),
+    ...[undefined, 10, '10', '10.5', '10.0000000051', '-1.000000005', 'x.000000005', '10.000000005\n'].map((updateTime): [RegExp, unknown] => [/updateTime/, { ...other, updateTime }]),
+    ...[undefined, null, 'x', []].map((patch): [RegExp, unknown] => [/patch/, { ...other, patch }]),
+    ...[undefined, null, {}, 'x', [], [null], ['x'], [{}], [{ type: 7 }]].map((blocks): [RegExp, unknown] => [/patch\.blocks/, { ...other, patch: { blocks } }]),
+    ...[null, 'x', 7, []].map((value): [RegExp, unknown] => [/patch\.cover/, { ...other, patch: { blocks: valid.patch.blocks, cover: value } }]),
+    [/patch/, { ...other, patch: { ...valid.patch, images: [] } }],
+    [/key/, { ...other, action: 'leave', key: 'a/b' }], [/tenants/, { ...other, action: 'leave', tenants: 'scs' }],
+  ];
+  for (const [message, entry] of bad) {
+    assert.throws(() => parse(entry), (e: Error) => /^entry 2 of the plan: /.test(e.message) && message.test(e.message) && !/GEHEIM|a\/b/.test(e.message), JSON.stringify(entry));
+  }
 });
 
 test('entriesOf: the migratable articles of a tenant, shared ones included', () => {
@@ -178,4 +225,70 @@ test('summaryOf: totals count a shared article once', () => {
   assert.match(s, /\| cover \| 1 \|/);
   assert.match(s, /\| journal \| 1 \|/);
   assert.match(s, /\| p13 \| 2 \| 1 \| 1 \| 1 \|/);
+});
+
+// ------------------------------------------------- skipped articles ------------------------------------------------
+
+test('exitCodeOf and skipSummary: skipped articles by reason', () => {
+  assert.equal(exitCodeOf([]), 0);
+  assert.equal(skipSummary([]), '');
+  const skipped: [string, string][] = [['a', 'has-blocks'], ['b', 'changed-since-trial'], ['c', 'has-blocks']];
+  assert.equal(exitCodeOf(skipped), 2);
+  assert.equal(skipSummary(skipped), 'Skipped: changed-since-trial 1, has-blocks 2');
+});
+
+// ------------------------------------------------- private directory ------------------------------------------------
+
+test('file names: nothing but letters of a tenant', () => {
+  assert.equal(reportName('(none)'), 'report-none.md');
+  assert.equal(reportName('../x'), 'report-x.md');
+  assert.equal(backupName('apply', 'scs/..', '2026-11-23T10:00:00.000Z'), 'backup-apply-scs-2026-11-23T10-00-00-000Z.json');
+});
+
+test('privateNames: the plan, the reports and the backups', () => {
+  assert.deepEqual(privateNames().map((n) => n.replace(/\d.*(?=\.json)/, 'TIME')), ['plan.json', 'summary.md', 'report-tenant.md', 'backup-apply-tenant-TIME.json', 'backup-undo-tenant-TIME.json']);
+});
+
+function inRepo(gitignore: string, check: (repo: string) => void): void {
+  const repo = mkdtempSync(join(tmpdir(), 'private-'));
+  try {
+    assert.equal(spawnSync('git', ['-C', repo, 'init', '-q']).status, 0);
+    writeFileSync(join(repo, '.gitignore'), gitignore);
+    check(repo);
+  } finally {
+    rmSync(repo, { recursive: true });
+  }
+}
+const refused = (dir: string): void => assert.throws(() => assertPrivate(dir, privateNames()), /not git-ignored/);
+const allowed = (dir: string): void => assert.doesNotThrow(() => assertPrivate(dir, privateNames()));
+
+test('assertPrivate: a directory outside a repository, also one that does not exist yet', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'private-'));
+  allowed(dir);
+  allowed(join(dir, 'a', 'b'));
+  assert.equal(existsSync(join(dir, 'a')), false);
+  rmSync(dir, { recursive: true });
+});
+
+test('assertPrivate: in a repository every file must be ignored', () => {
+  inRepo('', (repo) => { refused(repo); refused(join(repo, 'a', 'b')); assert.equal(existsSync(join(repo, 'a')), false); });
+  inRepo('plan.json\n', refused);
+  inRepo('*.json\n', refused);
+  inRepo('plan.json\n*.md\n', refused);
+  inRepo('plan.json\n*.md\nbackup-apply-*\n', refused);
+  inRepo('*.json\n*.md\n', allowed);
+  inRepo('out/\n', (repo) => { allowed(join(repo, 'out')); allowed(join(repo, 'out', 'deep')); refused(join(repo, 'other')); });
+});
+
+test('assertPrivate: a link into a repository, a broken repository', () => {
+  inRepo('', (repo) => {
+    const outside = mkdtempSync(join(tmpdir(), 'private-'));
+    symlinkSync(repo, join(outside, 'link'));
+    refused(join(outside, 'link', 'out'));
+    rmSync(outside, { recursive: true });
+  });
+  const broken = mkdtempSync(join(tmpdir(), 'private-'));
+  mkdirSync(join(broken, '.git'));
+  refused(broken);
+  rmSync(broken, { recursive: true });
 });

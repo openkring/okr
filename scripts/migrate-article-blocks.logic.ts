@@ -119,12 +119,67 @@ export function parsePlan(content: string, projectId: string): Plan {
   try { plan = JSON.parse(content) as Partial<Plan> | null; } catch { /* reported below */ }
   if (plan?.version !== PLAN_VERSION || !Array.isArray(plan.entries)) throw new Error('this is not a plan of this script');
   if (plan.projectId !== projectId) throw new Error(`the plan is of the project ${plan.projectId}, not ${projectId}`);
+  const keys = new Set<unknown>();
+  plan.entries.forEach((entry: unknown, i) => {
+    const problem = entryProblem(entry) ?? (keys.has((entry as PlanEntry).key) ? 'the key is given twice' : undefined);
+    if (problem) throw new Error(`entry ${i + 1} of the plan: ${problem}`);
+    keys.add((entry as PlanEntry).key);
+  });
   return plan as Plan;
+}
+
+/** What makes an entry unusable, without its values. */
+function entryProblem(e: unknown): string | undefined {
+  if (!isObject(e)) return 'no object';
+  const { action, key, tenants, updateTime, patch } = e;
+  if (action !== 'migrate' && action !== 'leave') return 'invalid action';
+  // a document id of Firestore
+  if (typeof key !== 'string' || key === '' || key.includes('/') || /^(\.\.?|__.*__)$/.test(key)) return 'invalid key';
+  if (!Array.isArray(tenants) || !tenants.every((t) => typeof t === 'string')) return 'invalid tenants';
+  if (action === 'leave') return undefined;
+  if (typeof updateTime !== 'string' || !/^\d+\.\d{9}$/.test(updateTime)) return 'invalid updateTime';
+  if (!isObject(patch) || Object.keys(patch).some((name) => name !== 'blocks' && name !== 'cover')) return 'invalid patch';
+  const { blocks, cover } = patch;
+  if (!Array.isArray(blocks) || blocks.length === 0 || !blocks.every((b) => isObject(b) && typeof b['type'] === 'string')) return 'invalid patch.blocks';
+  return cover === undefined || isObject(cover) ? undefined : 'invalid patch.cover';
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 /** The articles that a run for this tenant writes; a shared one belongs to each of its tenants. */
 export function entriesOf(plan: Plan, tenant: string): MigrateEntry[] {
   return plan.entries.filter((e): e is MigrateEntry => e.action === 'migrate' && e.tenants.includes(tenant));
+}
+
+// ------------------------------------------------- skipped articles ------------------------------------------------
+
+/** Not everything was written: 2 (an error is 1). */
+export function exitCodeOf(skipped: [key: string, reason: string][]): 0 | 2 {
+  return skipped.length > 0 ? 2 : 0;
+}
+
+/** How many articles were skipped for each reason; '' for none. */
+export function skipSummary(skipped: [key: string, reason: string][]): string {
+  return skipped.length > 0 ? `Skipped: ${count(skipped.map(([, reason]) => reason)).map(([reason, n]) => `${reason} ${n}`).join(', ')}` : '';
+}
+
+// ------------------------------------------------- file names ------------------------------------------------
+
+const fileSafe = (tenant: string): string => tenant.replace(/[^\w-]/g, '');
+
+export function reportName(tenant: string): string {
+  return `report-${fileSafe(tenant)}.md`;
+}
+
+export function backupName(mode: 'apply' | 'undo', tenant: string, time: string): string {
+  return `backup-${mode}-${fileSafe(tenant)}-${time.replace(/[:.]/g, '-')}.json`;
+}
+
+/** An example of every file the script writes next to a plan; they must all be private before anything is created. */
+export function privateNames(tenant = 'tenant', time = new Date().toISOString()): string[] {
+  return ['plan.json', 'summary.md', reportName(tenant), backupName('apply', tenant, time), backupName('undo', tenant, time)];
 }
 
 // ------------------------------------------------- comparison of the public output ------------------------------------------------
