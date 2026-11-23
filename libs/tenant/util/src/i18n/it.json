@@ -325,7 +325,7 @@
     "help_promise": "Questa pagina non elimina nulla e non modifica nessuna riga esistente senza il tuo consenso.",
     "enable_dialog_intro": "Qui scegli quali righe di menu vengono create. Ciò che non selezioni semplicemente non viene creato — non si perde nulla, e puoi aggiungerlo in seguito in qualsiasi momento dall'elenco delle righe di menu.",
     "segment_customize": "Personalizza",
-    "help_customize": "La scheda «Personalizza» mostra o nasconde campi nei moduli per tutte le persone della tua associazione. Nascondere non cancella alcun dato. «Ripristina predefiniti» riporta un gruppo al valore originale. I valori degli elenchi si modificano nell'editor collegato."
+    "help_customize": "La scheda «Personalizza» mostra o nasconde campi nei moduli, per tutte le persone che usano questa app. Nascondere non cancella alcun dato. «Ripristina predefiniti» riporta un gruppo al valore originale. I valori degli elenchi si modificano nell’editor collegato."
   },
   "plan": {
     "block_disabled": "verrà disattivata — le voci di menu restano e vengono solo nascoste, i dati restano invariati",
@@ -393,11 +393,9 @@
     }
   },
   "customize": {
-    "intro": "Qui decidi quali campi compaiono nei moduli della tua associazione. Nascondere non cancella nulla: i dati restano salvati e il campo ricompare appena lo mostri di nuovo. L'impostazione vale per tutte le persone di questa associazione.",
+    "intro": "Qui decidi quali campi compaiono nei moduli. Nascondere non cancella nulla: i dati restano salvati e il campo ricompare appena lo mostri di nuovo. L’impostazione vale per tutte le persone che usano questa app.",
     "reset": "Ripristina predefiniti",
     "reset_confirm": "Tutti i campi di questo gruppo vengono mostrati di nuovo come previsto dal catalogo. Non viene cancellato nulla. Vuoi continuare?",
-    "reset_toast": "I campi sono tornati ai valori predefiniti.",
-    "saved_toast": "L’impostazione è stata salvata.",
     "lists_title": "Elenchi",
     "lists_note": "Le voci di questi elenchi si modificano nel rispettivo editor, dove puoi rinominarle, aggiungerle o nasconderle.",
     "list_gender": "Genere",

@@ -325,7 +325,7 @@
     "help_promise": "Cette page ne supprime rien et ne modifie aucune ligne existante sans ton accord.",
     "enable_dialog_intro": "Ici, tu choisis quelles lignes de menu sont créées. Ce que tu ne coches pas n'est simplement pas créé — rien n'est perdu, et tu peux l'ajouter plus tard à tout moment depuis la liste des lignes de menu.",
     "segment_customize": "Personnaliser",
-    "help_customize": "L'onglet «Personnaliser» affiche ou masque des champs dans les formulaires pour tout le monde dans ton association. Masquer ne supprime aucune donnée. «Rétablir les valeurs par défaut» remet un groupe à la valeur d'origine. Tu modifies les valeurs des listes dans l'éditeur lié."
+    "help_customize": "L’onglet «Personnaliser» affiche ou masque des champs dans les formulaires, pour toutes les personnes qui utilisent cette application. Masquer ne supprime aucune donnée. «Rétablir les valeurs par défaut» remet un groupe à la valeur d’origine. Tu modifies les valeurs des listes dans l’éditeur lié."
   },
   "plan": {
     "block_disabled": "sera désactivé — les entrées de menu subsistent et sont seulement masquées, les données restent inchangées",
@@ -393,11 +393,9 @@
     }
   },
   "customize": {
-    "intro": "Ici, tu choisis quels champs apparaissent dans les formulaires de ton association. Masquer ne supprime rien : les données restent enregistrées et le champ revient dès que tu l'affiches à nouveau. Le réglage vaut pour tout le monde dans cette association.",
+    "intro": "Ici, tu choisis quels champs apparaissent dans les formulaires. Masquer ne supprime rien : les données restent enregistrées et le champ revient dès que tu l’affiches à nouveau. Le réglage vaut pour toutes les personnes qui utilisent cette application.",
     "reset": "Rétablir les valeurs par défaut",
     "reset_confirm": "Tous les champs de ce groupe sont de nouveau affichés comme le prévoit le catalogue. Rien n’est supprimé. Veux-tu continuer ?",
-    "reset_toast": "Les champs sont revenus aux valeurs par défaut.",
-    "saved_toast": "Le réglage a été enregistré.",
     "lists_title": "Listes",
     "lists_note": "Tu modifies les entrées de ces listes dans leur éditeur, où tu peux les renommer, les compléter ou les masquer.",
     "list_gender": "Genre",

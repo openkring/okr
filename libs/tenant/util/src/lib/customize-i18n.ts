@@ -13,8 +13,6 @@ const STATIC_KEYS = {
   intro: 'intro',
   reset: 'reset',
   reset_confirm: 'reset_confirm',
-  reset_toast: 'reset_toast',
-  saved_toast: 'saved_toast',
   lists_title: 'lists_title',
   lists_note: 'lists_note',
   list_gender: 'list_gender',

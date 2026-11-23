@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonButton, IonIcon, IonItem, IonItemDivider, IonItemGroup, IonLabel, IonList, IonNote } from '@ionic/angular';
 
@@ -12,6 +12,8 @@ import { AlertService } from '@okr/shared-util-angular';
 import { MODEL_FIELDS, hiddenFieldsOf, withFieldVisibility, withoutModel } from '@okr/shared-util-core';
 import type { ModelFieldMap } from '@okr/shared-util-core';
 import { CUSTOMIZE_I18N_KEYS, customizeFieldKey, customizeGroupKey } from '@okr/tenant-util';
+
+import { createSerialQueue } from './serial-queue.util';
 
 interface CustomizeLink { labelKey: string; url: string; }
 
@@ -59,7 +61,7 @@ const GROUP_MODELS = ['person'];
               {{ text('reset') }}
             </ion-button>
           </ion-item-divider>
-          @for (field of group.fields; track field.field) {
+          @for (field of group.fields; track field.field + '/' + epoch()) {
             <okr-checkbox
               [i18n]="field.i18n"
               [checked]="field.visible"
@@ -96,8 +98,10 @@ export class CustomizeTab {
 
   protected readonly i18n = this.i18nService.translateAll(CUSTOMIZE_I18N_KEYS);
 
-  /** The tail of the write queue. */
-  private queue: Promise<void> = Promise.resolve();
+  private readonly enqueue = createSerialQueue();
+
+  /** Bumped after a failed write: the checkboxes are drawn anew from the stored state. */
+  protected readonly epoch = signal(0);
 
   protected readonly groups = computed(() => {
     const stored = this.appStore.appConfig()?.modelFields;
@@ -123,27 +127,33 @@ export class CustomizeTab {
   }
 
   protected onToggle(modelKey: string, field: string, visible: boolean): void {
-    this.write((stored) => withFieldVisibility(stored, modelKey, field, visible), this.text('saved_toast'), `onToggle(${modelKey}.${field})`);
+    this.write((stored) => withFieldVisibility(stored, modelKey, field, visible), `onToggle(${modelKey}.${field})`);
   }
 
   protected async onReset(modelKey: string): Promise<void> {
     if (!await this.alertService.confirm(this.text('reset_confirm'), true)) return;
-    this.write((stored) => withoutModel(stored, modelKey), this.text('reset_toast'), `onReset(${modelKey})`);
+    this.write((stored) => withoutModel(stored, modelKey), `onReset(${modelKey})`);
   }
 
   protected onNavigate(url: string): void {
     void this.router.navigateByUrl(url);
   }
 
-  private write(next: (stored: ModelFieldMap | undefined) => ModelFieldMap, toast: string, where: string): void {
-    this.queue = this.queue.then(async () => {
-      const tenantId = this.appStore.tenantId();
-      if (!tenantId) return;
+  /**
+   * `updateObject` reports a failure by returning undefined (after showing its own error toast),
+   * and shows the one confirmation toast on success — so this adds no toast of its own.
+   */
+  private write(next: (stored: ModelFieldMap | undefined) => ModelFieldMap, where: string): void {
+    void this.enqueue(async () => {
+      let saved = false;
       try {
-        await this.appConfigService.setModelFields(tenantId, next(this.appStore.appConfig()?.modelFields));
-        await this.alertService.showToast(toast);
+        const tenantId = this.appStore.tenantId();
+        if (!tenantId) return;
+        saved = !!await this.appConfigService.setModelFields(tenantId, next(this.appStore.appConfig()?.modelFields));
       } catch (error) {
         this.alertService.error(`CustomizeTab.${where}: ${error}`);
+      } finally {
+        if (!saved) this.epoch.update((n) => n + 1);
       }
     });
   }

@@ -325,7 +325,7 @@
     "help_promise": "This page deletes nothing and never changes an existing row without your consent.",
     "enable_dialog_intro": "Here you choose which menu rows are created. Anything you leave unticked is simply not created — nothing is lost, and you can add it later at any time from the menu rows list.",
     "segment_customize": "Customize",
-    "help_customize": "The «Customize» tab shows or hides fields in the forms for everybody in your organization. Hiding does not delete any data. «Restore defaults» sets a group back to the default. You change the values of the lists in the linked editor."
+    "help_customize": "The «Customize» tab shows or hides fields in the forms, for everybody who uses this app. Hiding does not delete any data. «Restore defaults» sets a group back to the default. You change the values of the lists in the linked editor."
   },
   "plan": {
     "block_disabled": "will be switched off — the menu entries remain and are only hidden, the data stays unchanged",
@@ -393,11 +393,9 @@
     }
   },
   "customize": {
-    "intro": "Here you decide which fields appear in the forms of your organization. Hiding does not delete anything: the data stays saved and the field comes back as soon as you show it again. The setting applies to everybody in this organization.",
+    "intro": "Here you decide which fields appear in the forms. Hiding does not delete anything: the data stays saved and the field comes back as soon as you show it again. The setting applies to everybody who uses this app.",
     "reset": "Restore defaults",
     "reset_confirm": "All fields of this group are shown again as the catalogue defines them. Nothing is deleted. Do you want to continue?",
-    "reset_toast": "The fields are back at their defaults.",
-    "saved_toast": "The setting has been saved.",
     "lists_title": "Lists",
     "lists_note": "You change the entries of these lists in their own editor, where you can rename, add or hide them.",
     "list_gender": "Gender",

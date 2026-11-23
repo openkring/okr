@@ -325,7 +325,7 @@
     "help_promise": "Esta página no elimina nada y no cambia ninguna fila existente sin tu consentimiento.",
     "enable_dialog_intro": "Aquí eliges qué filas de menú se crean. Lo que no marques simplemente no se crea — no se pierde nada, y puedes añadirlo más tarde en cualquier momento desde la lista de filas de menú.",
     "segment_customize": "Personalizar",
-    "help_customize": "La pestaña «Personalizar» muestra u oculta campos en los formularios para todas las personas de tu asociación. Ocultar no borra ningún dato. «Restablecer valores predeterminados» devuelve un grupo a su valor original. Los valores de las listas se cambian en el editor enlazado."
+    "help_customize": "La pestaña «Personalizar» muestra u oculta campos en los formularios, para todas las personas que usan esta aplicación. Ocultar no borra ningún dato. «Restablecer valores predeterminados» devuelve un grupo a su valor original. Los valores de las listas se cambian en el editor enlazado."
   },
   "plan": {
     "block_disabled": "se desactivará — las entradas de menú se mantienen y solo se ocultan, los datos quedan sin cambios",
@@ -393,11 +393,9 @@
     }
   },
   "customize": {
-    "intro": "Aquí decides qué campos aparecen en los formularios de tu asociación. Ocultar no borra nada: los datos siguen guardados y el campo vuelve en cuanto lo muestres de nuevo. El ajuste vale para todas las personas de esta asociación.",
+    "intro": "Aquí decides qué campos aparecen en los formularios. Ocultar no borra nada: los datos siguen guardados y el campo vuelve en cuanto lo muestres de nuevo. El ajuste vale para todas las personas que usan esta aplicación.",
     "reset": "Restablecer valores predeterminados",
     "reset_confirm": "Todos los campos de este grupo se muestran de nuevo como prevé el catálogo. No se borra nada. ¿Quieres continuar?",
-    "reset_toast": "Los campos vuelven a los valores predeterminados.",
-    "saved_toast": "El ajuste se ha guardado.",
     "lists_title": "Listas",
     "lists_note": "Las entradas de estas listas se cambian en su propio editor, donde puedes renombrarlas, añadirlas u ocultarlas.",
     "list_gender": "Género",

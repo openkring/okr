@@ -325,7 +325,7 @@
     "help_promise": "Diese Seite löscht nichts und ändert keine bestehende Zeile ohne dein Einverständnis.",
     "enable_dialog_intro": "Hier wählst du, welche Menüzeilen angelegt werden. Was du nicht ankreuzt, wird einfach nicht angelegt — es geht nichts verloren, und du kannst es später jederzeit aus der Liste der Menüzeilen ergänzen.",
     "segment_customize": "Anpassen",
-    "help_customize": "Der Reiter «Anpassen» blendet Felder in den Formularen für alle in deinem Verein ein oder aus. Ausblenden löscht keine Angaben. «Standard wiederherstellen» setzt eine Gruppe auf die Vorgabe zurück. Die Werte der Listen änderst du im verlinkten Editor."
+    "help_customize": "Der Reiter «Anpassen» blendet Felder in den Formularen ein oder aus, für alle, die diese App benutzen. Ausblenden löscht keine Angaben. «Standard wiederherstellen» setzt eine Gruppe auf die Vorgabe zurück. Die Werte der Listen änderst du im verlinkten Editor."
   },
   "plan": {
     "block_disabled": "wird ausgeschaltet — die Menüzeilen bleiben bestehen und werden nur ausgeblendet, die Daten bleiben unverändert",
@@ -393,11 +393,9 @@
     }
   },
   "customize": {
-    "intro": "Hier legst du fest, welche Felder in den Formularen deines Vereins erscheinen. Ausblenden löscht nichts: Die Angaben bleiben gespeichert und das Feld erscheint wieder, sobald du es einblendest. Die Einstellung gilt für alle in diesem Verein.",
+    "intro": "Hier legst du fest, welche Felder in den Formularen erscheinen. Ausblenden löscht nichts: Die Angaben bleiben gespeichert und das Feld erscheint wieder, sobald du es einblendest. Die Einstellung gilt für alle, die diese App benutzen.",
     "reset": "Standard wiederherstellen",
     "reset_confirm": "Alle Felder dieser Gruppe werden wieder so angezeigt, wie es im Katalog vorgesehen ist. Es wird nichts gelöscht. Möchtest du fortfahren?",
-    "reset_toast": "Die Felder sind wieder auf den Standard gestellt.",
-    "saved_toast": "Die Einstellung wurde gespeichert.",
     "lists_title": "Listen",
     "lists_note": "Die Einträge dieser Listen änderst du im jeweiligen Editor. Dort kannst du sie umbenennen, ergänzen oder ausblenden.",
     "list_gender": "Geschlecht",
