@@ -10,7 +10,7 @@ import { RoleName } from './menu-item.model';
 import type { BaseType } from './base.model';
 import { AvatarInfo } from './avatar-info';
 import { ImageStyle, ImageConfig, Slot } from './image.model';
-import type { I18nString } from './i18n.model';
+import type { I18nMeta, I18nString } from './i18n.model';
 import type { ApplicationKind } from './application.model';
 
 export const SectionCollection = 'sections';
@@ -501,6 +501,8 @@ export interface ArticleConfig {
   subTitleI18n?: I18nString;
   excerptI18n?: I18nString;
   contentI18n?: I18nString;
+  /** Provenance of translations (1.161 §3, 1.175 §10): field path → language. Written by the article editor. */
+  i18nMeta?: I18nMeta;
   datePublished?: string;
   cta?: SectionCta;         // optional call-to-action button
   /** 'banner' renders the article as a full-width emphasised band. Default 'none'. */
