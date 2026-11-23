@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { ArticleBlock, IMAGE_STYLE_SHAPE } from '@okr/shared-models';
 
-import { ArticleBlockView, articleBlockViews, articleHeaderPlace, columnsTemplate, undrawnBlockTypes } from './article-block-view.util';
+import { ArticleBlockView, articleBlockViews, articleHeaderPlace, columnsTemplate, drawnBlockImages, undrawnBlockTypes } from './article-block-view.util';
 
 const img = (url: string) => ({ url, label: url, type: 0, actionUrl: '', altText: '', overlay: '' });
 const cta = { label: 'Mehr', url: '/public/welcome' };
@@ -138,6 +138,21 @@ describe('articleBlockViews', () => {
     expect(new Set(keys).size).toBe(5);
     expect(keys[0]).toBe('t');
     expect(keys[4]).toBe('x');
+  });
+});
+
+describe('drawnBlockImages', () => {
+  const images = (...blocks: unknown[]): unknown[] => drawnBlockImages(blocks as ArticleBlock[]);
+
+  it('the images in reading order, columns flattened', () => {
+    expect(images(gallery(['a', 'b']), text(), columns([{ size: 6, blocks: [image('c')] }, { size: 6, blocks: [text(), image('d')] }]), image('e')))
+      .toEqual(['a', 'b', 'c', 'd', 'e'].map(img));
+  });
+
+  it('leaves out images without a path and empties malformed texts', () => {
+    expect(images(gallery(['a', '']), { ...image(), image: { url: 'b', overlay: 7 } }, { ...image(), image: 'x' }, { id: 'g', type: 'gallery', images: 'x' }, null, 3, {}, columns('x')))
+      .toEqual([img('a'), { url: 'b', overlay: '' }]);
+    for (const bad of [undefined, null, 'x', {}]) expect(drawnBlockImages(bad as unknown as ArticleBlock[])).toEqual([]);
   });
 });
 

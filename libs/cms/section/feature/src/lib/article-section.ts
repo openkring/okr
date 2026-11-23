@@ -5,8 +5,8 @@ import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonRow } 
 
 import { ArticleSection, ImageConfig, ViewPosition, articleBlocksOf, isFreeArticle, withClassicFields } from '@okr/shared-models';
 import { resolveImageStyle } from '@okr/shared-util-core';
-import { ImageLayoutId, articleBackground, articleHasLightText, articleHeaderPlace, articleImagePosition, resolveImageLayout, resolveSlideshow, validCtas, getSectionIntro } from '@okr/cms-section-util';
-import { badgeFor, Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
+import { ImageLayoutId, articleBackground, articleHasLightText, articleHeaderPlace, articleImagePosition, drawnBlockImages, resolveImageLayout, resolveSlideshow, validCtas, getSectionIntro } from '@okr/cms-section-util';
+import { badgeFor, DeferError, Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
 
 // lazy: only ever used inside @defer below. Any other use of it here would make it eager
 import { ArticleBlocks } from './article-blocks';
@@ -20,7 +20,7 @@ import { openSectionLink } from './section-link';
   selector: 'okr-article-section',
   standalone: true,
   imports: [
-    Spinner, Img, ArticleBlocks, ArticleCarousel, ArticleImages, ArticleSlideshowComponent, NgTemplateOutlet, OptionalCardHeader,
+    Spinner, DeferError, Img, ArticleBlocks, ArticleCarousel, ArticleImages, ArticleSlideshowComponent, NgTemplateOutlet, OptionalCardHeader,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonButton
   ],
   schemas: [
@@ -50,6 +50,46 @@ import { openSectionLink } from './section-link';
         <okr-article-carousel [images]="images()" [imageStyle]="imageStyle()" [captionFallbacks]="captionFallbacks()" [editMode]="editMode()" [imageBadges]="imageBadges()" [emitImageClicks]="emitImageClicks()" [zoomTitle]="store.i18n.article_zoomed()" (imageSelected)="imageSelected.emit($event)" />
         }
       </ng-template>
+      <!-- a free article while its blocks load, or when they cannot be loaded (offline, stale chunk): header, text, images
+           and button of section(), without the layout of the blocks -->
+      <ng-template #fallbackTpl>
+        <ion-grid>
+          @if (headerPlace() !== 'card') {
+            <ion-row>
+              <ion-col size="12" [class.header-col]="headerPlace() === 'column'">
+                <!-- with a slideshow the card has already drawn the intro -->
+                <okr-optional-card-header [intro]="headerPlace() === 'column' ? sectionIntro().text : ''" [introPosition]="sectionIntro().position" [title]="title()" [subTitle]="subTitle()" />
+              </ion-col>
+            </ion-row>
+          }
+          @if (section()?.content?.htmlContent) {
+            <ion-row>
+              <ion-col size="12">
+                <ion-item lines="none" class="ion-no-padding">
+                  <div [innerHTML]="content()"></div>
+                </ion-item>
+              </ion-col>
+            </ion-row>
+          }
+          @let images = fallbackImages();
+          @if (images.length > 0) {
+            <ion-row>
+              <ion-col size="12">
+                @if (images.length > 1) {
+                  <okr-article-images [images]="images" [imageStyle]="imageStyle()" layout="stacked" [editMode]="editMode()" [captionFallbacks]="captionFallbacks()" [zoomTitle]="store.i18n.article_zoomed()" [imageBadges]="imageBadges()" [emitImageClicks]="emitImageClicks()" (imageSelected)="imageSelected.emit($event)" />
+                } @else {
+                  <okr-img [captionFallbacks]="captionFallbacks()" [image]="images[0]" [imageStyle]="imageStyle()" [editMode]="editMode()" [zoomTitle]="store.i18n.article_zoomed()" [badge]="badgeOf(images[0].label)" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
+                }
+              </ion-col>
+            </ion-row>
+          }
+        </ion-grid>
+        @if (sectionCta(); as cta) {
+          <div class="cta">
+            <ion-button [color]="cta.style === 'secondary' ? 'secondary' : 'primary'" [fill]="cta.style === 'secondary' ? 'outline' : 'solid'" (click)="open(cta.url)">{{ cta.label }}</ion-button>
+          </div>
+        }
+      </ng-template>
       <ion-card [class.banner]="isBanner() && !background()" [class.colored]="!!background()"
                 [style.--article-bg]="background() || null" [style.--article-fg]="background() ? (lightText() ? '#ffffff' : '#1e293b') : null">
         <!-- a slideshow carries the title and subtitle on its images, like the header of la21staefa.ch -->
@@ -61,6 +101,11 @@ import { openSectionLink } from './section-link';
             <!-- a free article (spec 1.173): its blocks carry everything, the button included -->
             @defer (on immediate) {
               <okr-article-blocks [blocks]="blocks" [title]="title()" [subTitle]="subTitle()" [intro]="sectionIntro()" [headerPlace]="headerPlace()" [editMode]="editMode()" [imageBadges]="imageBadges()" [emitImageClicks]="emitImageClicks()" (imageSelected)="imageSelected.emit($event)" />
+            } @placeholder {
+              <ng-container [ngTemplateOutlet]="fallbackTpl" />
+            } @error {
+              <ng-container [ngTemplateOutlet]="fallbackTpl" />
+              <okr-defer-error />
             }
           } @else if (images().length > 0 || (content() && content()!.length > 7)) {
             @switch(position()) {
@@ -249,11 +294,15 @@ export class ArticleSectionComponent {
   protected headerPlace = computed(() => articleHeaderPlace(this.freeBlocks(), !!this.background()));
   /** a slideshow carries title and subtitle on its images */
   protected titleOnImages = computed(() => this.freeBlocks() ? this.headerPlace() === 'slideshow' : !!this.slideshow());
-  protected cta = computed(() => {
-    if (this.freeBlocks()) return undefined;   // its buttons are blocks
+  /** the images of the fallback: the ones of the blocks, so without the cover, which is never shown in the article */
+  protected fallbackImages = computed(() => drawnBlockImages(this.freeBlocks()));
+  /** the button of the fields; of a free article its first one (only for the fallback) */
+  protected sectionCta = computed(() => {
     const c = this.section()?.properties.cta;
     return c ? validCtas([c], 1)[0] : undefined;
   });
+  /** the button under the content; the buttons of a free article are blocks */
+  protected cta = computed(() => this.freeBlocks() ? undefined : this.sectionCta());
   protected colSizeImage = computed(() => this.section()?.content?.colSize ?? 6);
   protected colSizeText = computed(() => 12 - this.colSizeImage());
   protected title = computed(() => this.store.appStore.replacePlaceholders(this.section()?.title ?? ''));

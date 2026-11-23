@@ -1,9 +1,10 @@
 import {
-  ARTICLE_BLOCK_TYPES, IMAGE_STYLE_SHAPE, type ArticleBlock, type ArticleSlideshow, type BlockAlign, type CalloutTone, type ImageConfig,
+  ARTICLE_BLOCK_TYPES, IMAGE_STYLE_SHAPE, blockImages, type ArticleBlock, type ArticleSlideshow, type BlockAlign, type CalloutTone, type ImageConfig,
   type ImageLayoutId, type ImageStyle, type SectionCta, type SpaceSize,
 } from '@okr/shared-models';
 import { resolveImageStyle, stripHtml } from '@okr/shared-util-core';
 
+import { BLOCK_ALIGNS, CALLOUT_TONES, COLUMN_BLOCK_TYPES, SPACE_SIZES, isObject, type Loose } from './article-block.util';
 import { resolveImageLayout } from './image-layout.util';
 import { validCtas } from './section-cta.util';
 import { resolveSlideshow } from './slideshow.util';
@@ -41,18 +42,6 @@ export type ArticleBlockView =
  * title and subtitle on the images of the first block.
  */
 export type ArticleHeaderPlace = 'card' | 'column' | 'slideshow';
-
-const ALIGNS: readonly BlockAlign[] = ['left', 'center', 'right'];
-const TONES: readonly CalloutTone[] = ['primary', 'secondary', 'tertiary', 'neutral'];
-const SIZES: readonly SpaceSize[] = ['small', 'medium', 'large'];
-/** What a column may hold. */
-const COLUMN_TYPES: readonly string[] = ['text', 'image', 'button'];
-
-type Loose = Record<string, unknown>;
-
-function isObject(value: unknown): value is Loose {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
 
 function objects(value: unknown): Loose[] {
   return Array.isArray(value) ? value.filter(isObject) : [];
@@ -135,17 +124,17 @@ class ViewBuilder {
       case 'columns': return this.columnsView(block);
       case 'callout': {
         const html = this.html(block);
-        return html ? { key: this.key(block), type: 'callout', html, tone: oneOf(block['tone'], TONES, 'neutral') } : undefined;
+        return html ? { key: this.key(block), type: 'callout', html, tone: oneOf(block['tone'], CALLOUT_TONES, 'neutral') } : undefined;
       }
       case 'divider': return { key: this.key(block), type: 'divider' };
-      case 'space': return { key: this.key(block), type: 'space', size: oneOf(block['size'], SIZES, 'medium') };
+      case 'space': return { key: this.key(block), type: 'space', size: oneOf(block['size'], SPACE_SIZES, 'medium') };
       default: return undefined;
     }
   }
 
   /** what a column may hold */
   private contentView(block: Loose): ColumnContentView | undefined {
-    const align = oneOf(block['align'], ALIGNS, 'left');
+    const align = oneOf(block['align'], BLOCK_ALIGNS, 'left');
     switch (block['type']) {
       case 'text': {
         const html = this.html(block);
@@ -194,12 +183,17 @@ export function articleBlockViews(blocks: ArticleBlock[] | undefined, replace: R
   return new ViewBuilder(replace).views(blocks);
 }
 
+/** The images that the blocks draw, in reading order, without their layout (the fallback of a free article; never the cover). */
+export function drawnBlockImages(blocks: ArticleBlock[] | undefined): ImageConfig[] {
+  return blockImages(blocksOf(blocks) as unknown as ArticleBlock[]).map(drawnImage).filter((image) => image !== undefined);
+}
+
 /** The types that are left out because this app does not know them, or not inside a column (for a warning in development). */
 export function undrawnBlockTypes(blocks: ArticleBlock[] | undefined): string[] {
   return blocksOf(blocks).flatMap((block) => {
     const type = block['type'] as string;
     if (type === 'columns') {
-      return objects(block['columns']).flatMap((c) => blocksOf(c['blocks'])).map((b) => b['type'] as string).filter((t) => !COLUMN_TYPES.includes(t));
+      return objects(block['columns']).flatMap((c) => blocksOf(c['blocks'])).map((b) => b['type'] as string).filter((t) => !COLUMN_BLOCK_TYPES.includes(t));
     }
     return (ARTICLE_BLOCK_TYPES as readonly string[]).includes(type) ? [] : [type];
   });

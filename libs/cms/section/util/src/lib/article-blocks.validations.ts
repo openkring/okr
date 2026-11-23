@@ -3,6 +3,7 @@ import { enforce, test } from 'vest';
 import { ARTICLE_BLOCK_TYPES, ArticleConfig, ImageConfig, SECTION_CTA_STYLES, SLIDESHOW_EFFECTS } from '@okr/shared-models';
 import { resolveImageStyle } from '@okr/shared-util-core';
 
+import { BLOCK_ALIGNS, CALLOUT_TONES, COLUMN_BLOCK_TYPES, SPACE_SIZES, isObject } from './article-block.util';
 import { imageConfigValidations, imageStyleValidations } from './image.validations';
 import { isImageLayoutId } from './image-layout.util';
 import { isSectionCtaUrl } from './section-cta.util';
@@ -10,18 +11,6 @@ import { SLIDESHOW_DURATION_MAX, SLIDESHOW_DURATION_MIN, SLIDESHOW_INTERVAL_MAX,
 
 /** At most this many top-level blocks per article (spec 1.173 §10). */
 export const ARTICLE_BLOCKS_MAX = 50;
-
-const ALIGNS = ['left', 'center', 'right'];
-const TONES = ['primary', 'secondary', 'tertiary', 'neutral'];
-const SIZES = ['small', 'medium', 'large'];
-/** What a column may hold. */
-const COLUMN_TYPES = ['text', 'image', 'button'];
-
-type Loose = Record<string, unknown>;
-
-function isObject(value: unknown): value is Loose {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
 
 function check(field: string, ok: boolean): void {
   test(field, 'invalidValue', () => {
@@ -88,14 +77,14 @@ function checkBlock(block: unknown, index: number, inColumn: boolean): void {
   const type = block['type'];
 
   check(f('type'), typeof type === 'string' && (ARTICLE_BLOCK_TYPES as readonly string[]).includes(type)
-    && (!inColumn || COLUMN_TYPES.includes(type)));
+    && (!inColumn || COLUMN_BLOCK_TYPES.includes(type)));
 
   switch (type) {
     case 'text':
-      checkOneOf(f('align'), block['align'], ALIGNS);
+      checkOneOf(f('align'), block['align'], BLOCK_ALIGNS);
       break;
     case 'callout':
-      check(f('tone'), typeof block['tone'] === 'string' && TONES.includes(block['tone']));
+      check(f('tone'), typeof block['tone'] === 'string' && (CALLOUT_TONES as readonly string[]).includes(block['tone']));
       break;
     case 'image':
       checkImage(f('image'), block['image']);
@@ -112,11 +101,11 @@ function checkBlock(block: unknown, index: number, inColumn: boolean): void {
       break;
     }
     case 'button':
-      checkOneOf(f('align'), block['align'], ALIGNS);
+      checkOneOf(f('align'), block['align'], BLOCK_ALIGNS);
       checkCta(f('cta'), block['cta']);
       break;
     case 'space':
-      check(f('size'), typeof block['size'] === 'string' && SIZES.includes(block['size']));
+      check(f('size'), typeof block['size'] === 'string' && (SPACE_SIZES as readonly string[]).includes(block['size']));
       break;
     case 'columns': {
       const columns = block['columns'];
