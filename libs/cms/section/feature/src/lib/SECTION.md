@@ -46,7 +46,7 @@ Collection name: `sections`
 | `accordion` | `AccordionConfig` | Collapsible accordion; items reference other section keys |
 | `activities` | `ActivitiesConfig` | List of latest system activity events |
 | `album` | `AlbumConfig` | Photo/video gallery from Firebase Storage directory |
-| `article` | `ArticleConfig` | Rich-text article with optional images |
+| `article` | `ArticleConfig` | Rich-text article with optional images, or a list of blocks (see Article Blocks) |
 | `button` | `ButtonConfig` | Styled action button (navigate, download, external link) |
 | `cal` | `CalendarOptions` | Full-calendar view (FullCalendar options) |
 | `chart` | `EChartsOption` | Apache ECharts chart |
@@ -74,6 +74,22 @@ Collection name: `sections`
 | `tracker` | `TrackerConfig` | GPS location tracker with configurable interval |
 | `video` | `VideoConfig` | Embedded video (YouTube or other iframe) |
 
+## Article Blocks
+
+Spec 1.173, `planning/specs/2026-11-23-article-blocks-design.md`. An article may hold its content as blocks:
+
+| Field | Type | Description |
+|---|---|---|
+| `properties.blocks` | `ArticleBlock[]` | The content in order: `text`, `image`, `gallery`, `button`, `columns`, `callout`, `divider`, `space`; `columns` hold only text, image and button. Absent = an old article |
+| `properties.cover` | ImageConfig | Teaser picture (news, lists); never drawn in the article itself |
+
+- **Old article** (no `blocks`): the text is in `content`, the images in `properties.images`.
+- **Classic article**: `blocks` in a shape the old fields can express (e.g. image above text). It is converted back and drawn by the template of `ArticleSectionComponent`, unchanged.
+- **Free article** (`isFreeArticle`): anything else. It is drawn by `okr-article-blocks` (`ArticleBlocks`), loaded with `@defer`; until then, or when it cannot be loaded, header, text, images and the first button are shown. What cannot be drawn (empty, malformed, unknown type) is left out by `articleBlockViews`.
+- The header stands above the blocks. Two exceptions, decided by the first block that is drawn (`articleHeaderPlace`): a slideshow carries title and subtitle on its images; with an own `background`, columns of one image and one text carry the header in the text column.
+
+**Reading an article:** with blocks, the old fields are empty or out of date. Every reader of the text or the images goes through `withClassicFields(section)` (the old fields filled from the blocks; the same object for an old article), or `articleCover` for the teaser picture — all in `@okr/shared-models`. `node scripts/check-article-readers.mjs` fails for a file that reads the text without it; its header names what it does not see.
+
 ## Section Dispatcher
 
 `SectionDispatcher` (`bk-section-dispatcher`) is a pure presentational switch-component. It receives:
@@ -98,7 +114,7 @@ Notable store actions:
 - `add()` — presents a card-select modal to choose a section type, then opens the edit modal
 - `edit()` — opens `SectionEditModalComponent`; creates or updates on confirm
 - `delete()` — confirmation-guarded deletion
-- `uploadImage(section)` — picks a file, uploads to Firebase Storage at `tenant/<tid>/section/<id>/image/<name>`, updates the section's `properties.images` array, and creates a `DocumentModel`
+- `uploadImage(section)` — picks a file, uploads to Firebase Storage at `tenant/<tid>/section/<id>/image/<name>`, updates the section's `properties.images` array (not for an article with blocks), and creates a `DocumentModel`
 - `uploadFile(section)` — same flow for button-section file downloads
 - `send(section)` — opens `MessageCenterModal` then calls the `sendEmail` Cloud Function (`europe-west6`)
 
@@ -111,6 +127,7 @@ Notable store actions:
 | `SectionSelectModalComponent` | (modal) | Select an existing section to add to a page |
 | `SectionEditModalComponent` | (modal, full) | Full-screen edit modal for any section type |
 | `ArticleSectionComponent` | `bk-article-section` | Rich-text + images |
+| `ArticleBlocks` | `okr-article-blocks` | The blocks of a free article (lazy, not exported) |
 | `AlbumSectionComponent` | `bk-album-section` | Photo/video gallery |
 | `CalendarSectionComponent` | `bk-calendar-section` | FullCalendar |
 | `OrgchartSectionComponent` | `bk-orgchart-section` | Organization chart |
