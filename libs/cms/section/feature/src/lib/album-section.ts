@@ -4,7 +4,7 @@ import { AlbumSection, ImageConfig, ImageType } from '@okr/shared-models';
 import { SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
 import { browse, CategorySelect, ImageGrid, Label, openImageGallery, showVideoView, Spinner } from '@okr/shared-ui';
 import { I18nService } from '@okr/shared-i18n';
-import { warn } from '@okr/shared-util-core';
+import { isSafeLinkTarget, warn } from '@okr/shared-util-core';
 import { downloadToBrowser, showToast } from '@okr/shared-util-angular';
 
 import { FolderBreadcrumb } from '@okr/content-folder-ui';
@@ -263,8 +263,9 @@ export class AlbumSectionComponent {
       return;
     }
     if (image.type !== ImageType.Image) {
-      if (image.actionUrl) await downloadToBrowser(this.store.toastController, image.actionUrl);
-      else browse(image.url);
+      if (image.actionUrl) {
+        if (isSafeLinkTarget(image.actionUrl)) await downloadToBrowser(this.store.toastController, image.actionUrl);
+      } else browse(image.url);
       return;
     }
     const gallery = this.images().filter((img) => img.type === ImageType.Image);

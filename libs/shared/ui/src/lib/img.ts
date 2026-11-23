@@ -5,7 +5,7 @@ import { Browser } from '@capacitor/browser';
 
 import { ENV } from '@okr/shared-config';
 import { ImageActionType, ImageConfig, ImageStyle } from '@okr/shared-models';
-import { appendImgixParams, buildImageCaption, getCaptionCss, getCaptionLuminanceUrl, getCaptionTone, getImageFrameCss, getImgixUrl, getSizedImgixParamsByExtension, getThumbnailUrl, isDirectImageUrl, toCssLength, toPixelNumber } from '@okr/shared-util-core';
+import { appendImgixParams, buildImageCaption, getCaptionCss, getCaptionLuminanceUrl, getCaptionTone, getImageFrameCss, getImgixUrl, getSizedImgixParamsByExtension, getThumbnailUrl, isDirectImageUrl, isSafeLinkTarget, toCssLength, toPixelNumber } from '@okr/shared-util-core';
 import { downloadToBrowser } from '@okr/shared-util-angular';
 
 import { ImageBadge } from './image-badge';
@@ -381,7 +381,8 @@ export class Img {
         break;
       }
       case ImageActionType.FollowLink:
-        await Browser.open({ url: this.actionUrl() });
+        // the link is written by an editor: a javascript: one would run in the app
+        if (isSafeLinkTarget(this.actionUrl())) await Browser.open({ url: this.actionUrl() });
         break;
       case ImageActionType.Download:
         await downloadToBrowser(this.toastController, this.toAbsoluteUrl(this.url()));

@@ -1,7 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { appLinkOrigins, getDeepLinkPath, getSafeEmbedUrl, getSafeLinkUrl, getSafeReturnUrl, isWebOrigin, publicAppOrigin, publicWebsiteOrigin, resolveAppOrigin } from './url.util';
+import { appLinkOrigins, getDeepLinkPath, getSafeEmbedUrl, getSafeLinkUrl, getSafeReturnUrl, isSafeLinkTarget, isWebOrigin, publicAppOrigin, publicWebsiteOrigin, resolveAppOrigin } from './url.util';
 
 describe('url.util', () => {
+  describe('isSafeLinkTarget', () => {
+    it.each([
+      'https://example.com/a?b=1#c', 'http://example.com', 'HTTPS://EXAMPLE.COM', 'mailto:a@b.ch', 'tel:+41441234567', '  https://example.com  ', 'https://example.com\n',
+      '', '   ', undefined, null, '/page', 'page.html', '#anchor', '?q=1', 'www.example.com/x', 'a/b:c', '//example.com', 'tenant/scs/a b.pdf', 'Bücher und ä',
+    ])('accepts %j', (url) => {
+      expect(isSafeLinkTarget(url)).toBe(true);
+    });
+
+    it.each([
+      'javascript:alert(1)', 'JavaScript:alert(1)', '  javascript:alert(1)', 'javascript://example.com/%0aalert(1)', 'javascript:1/alert(1)',
+      'java\nscript:alert(1)', 'java\tscript:alert(1)', '\u0000javascript:alert(1)', '\u0001javascript:alert(1)', 'javascript\r:alert(1)', '\u00a0javascript:alert(1)',
+      'data:text/html,<script>alert(1)</script>', 'vbscript:msgbox(1)', 'file:///etc/passwd', 'blob:https://example.com/x', 'capacitor://localhost/x', 'intent://x', 'ftp://example.com',
+      'https:\\\\example.com', '\\\\example.com', '/\\example.com', 'https://example.com/\u007f', 5, {}, ['javascript:alert(1)'], true,
+    ])('rejects %j', (url) => {
+      expect(isSafeLinkTarget(url)).toBe(false);
+    });
+  });
+
   describe('getSafeLinkUrl', () => {
     it('accepts http and https URLs', () => {
       expect(getSafeLinkUrl('https://example.com/a?b=1')).toBe('https://example.com/a?b=1');

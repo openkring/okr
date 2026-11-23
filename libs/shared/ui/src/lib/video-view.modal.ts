@@ -6,6 +6,7 @@ import { captureException } from '@sentry/angular';
 import { STORAGE } from '@okr/shared-config';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { copyToClipboardWithConfirmation, downloadToBrowser } from '@okr/shared-util-angular';
+import { isSafeLinkTarget } from '@okr/shared-util-core';
 
 /**
  * Full-screen playback of one album video.
@@ -119,7 +120,7 @@ export class VideoViewModal implements OnInit {
   }
 
   protected async download(): Promise<void> {
-    if (this.actionUrl()) await downloadToBrowser(this.toastController, this.actionUrl());
+    if (this.actionUrl() && isSafeLinkTarget(this.actionUrl())) await downloadToBrowser(this.toastController, this.actionUrl());
   }
 
   /**

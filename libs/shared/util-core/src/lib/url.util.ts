@@ -56,6 +56,24 @@ export function getSafeLinkUrl(url: string | undefined | null): string | null {
   return parsed.toString();
 }
 
+/** The schemes an editor-supplied link may open. */
+const SAFE_LINK_SCHEMES: readonly string[] = ['http', 'https', 'mailto', 'tel'];
+
+/**
+ * Whether an editor-supplied link (e.g. `ImageConfig.actionUrl`) may be handed to `Browser.open` / `window.open`: no scheme other than
+ * http, https, mailto and tel, so a stored `javascript:` or `data:` link never runs. Nothing is normalised: empty, bare and relative
+ * values are fine, as they cannot run anything. Control characters and backslashes are refused: browsers drop a tab or line break
+ * inside a scheme and read a backslash as a slash. A value that is neither a string nor missing is refused.
+ */
+export function isSafeLinkTarget(url: unknown): boolean {
+  if (url === undefined || url === null) return true;
+  if (typeof url !== 'string') return false;
+  // eslint-disable-next-line no-control-regex -- intentionally rejects control characters in URLs
+  if (/[\\\u0000-\u001f\u007f]/.test(url.trim())) return false;
+  const scheme = /^([a-z][a-z\d+.-]*):/i.exec(url.trim())?.[1];
+  return scheme === undefined || SAFE_LINK_SCHEMES.includes(scheme.toLowerCase());
+}
+
 /**
  * Path prefixes that must never be turned into an in-app route by a deep link.
  * `/web/*` is the embedded static marketing site and `/__/*` are the Firebase
