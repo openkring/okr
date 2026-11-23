@@ -8,10 +8,11 @@
  *   node scripts/la21staefa/page-accordions.mjs [page…] --write
  *
  * Without a page name every page in PAGES is handled.
- * - Creates `sections/<page>_accordion` (or the run's own key) once — an existing one is never overwritten; its items reference the existing articles of the run, which stay untouched
+ * - Creates `sections/<page>_accordion` (or the run's own key) — once the page lists it, it is never overwritten; its items reference the existing articles of the run, which stay untouched
  *   (an accordion renders its items' text).
  * - Replaces the run in the page's section list by the accordion — only while the run's sections still stand together
  *   in the list; a run edited since the import is reported and left alone. A page may have several runs.
+ * - Stops before the page is written, also in the dry run, when a section it would write as accordion is an article with blocks.
  *
  * Run: mitmachen, bauundenergie, kissstafa, begegnungintegration, btvz, gutwohnen, lokalfair, oasekirchbuhl, reparaturcafe, smart, stafnet and zukunftsburo on 2026-11-20.
  */
@@ -19,6 +20,7 @@ import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { assertNoBlocksIn } from '../lib/block-article-guard.mjs';
 import { accordionSection as vereinAccordion } from './verein-accordion.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -110,6 +112,7 @@ async function handle(db, entry, write) {
 
   const changed = JSON.stringify(sections) !== JSON.stringify(page.sections);
   console.log(changed ? `page ${entry.page}: sections → ${sections.join(', ')}` : `page ${entry.page}: section list unchanged`);
+  await assertNoBlocksIn(db, accordions.map((a) => a.name));
   if (!write || !accordions.length) return;
 
   const batch = db.batch();

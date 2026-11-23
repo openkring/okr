@@ -6,6 +6,8 @@
  * libs/cms/section/util/src/lib/article-image-migration.util.ts (migrateArticleImageProperties);
  * they are inlined here because a .mjs script cannot import the TS util without a build step.
  *
+ * An article with blocks (1.173) is skipped: its old fields are not read any more.
+ *
  * Run (dry run, default):  node scripts/migrate-article-images.mjs
  * Run (apply writes):      node scripts/migrate-article-images.mjs --apply
  * Requires:  gcloud auth application-default login  (or GOOGLE_APPLICATION_CREDENTIALS)
@@ -13,6 +15,7 @@
 
 import { initializeApp, getApps } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { hasBlocks } from './lib/block-article-guard.mjs';
 
 if (!getApps().length) {
   initializeApp({ projectId: 'bkaiser-org' });
@@ -25,7 +28,7 @@ async function main() {
   const snap = await db.collection('sections').where('type', '==', 'article').get();
   console.log(`Found ${snap.size} article sections.`);
 
-  let inspected = 0, migrated = 0, skipped = 0;
+  let inspected = 0, migrated = 0, skipped = 0, blockArticles = 0;
   let batch = db.batch();
   let pending = 0;
 
@@ -35,6 +38,7 @@ async function main() {
     const hasLegacy = props.image != null;
     const hasImages = Array.isArray(props.images) && props.images.length > 0;
     if (!hasLegacy) { skipped++; continue; }
+    if (hasBlocks(doc.data())) { blockArticles++; console.log(`SKIPPED  ${doc.id} (article with blocks)`); continue; }
 
     // NOTE: properties is a nested map; update nested fields with dotted paths so we
     // only touch the specific fields and do not overwrite the whole properties map.
@@ -53,7 +57,7 @@ async function main() {
   if (APPLY && pending > 0) await batch.commit();
 
   console.log('---');
-  console.log(`Inspected: ${inspected}  Migrated: ${migrated}  Skipped(no legacy): ${skipped}  ${APPLY ? '(applied)' : '(dry run — pass --apply to write)'}`);
+  console.log(`Inspected: ${inspected}  Migrated: ${migrated}  Skipped(no legacy): ${skipped}  Skipped(article with blocks): ${blockArticles}  ${APPLY ? '(applied)' : '(dry run — pass --apply to write)'}`);
 }
 
 main().then(() => process.exit(0)).catch(err => { console.error(err); process.exit(1); });

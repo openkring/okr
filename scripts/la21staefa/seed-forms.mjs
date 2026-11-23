@@ -17,6 +17,7 @@
  * application property (`propertyTypeOf` → undefined) and would land as an unschema'd top-level field.
  *
  * Dry run by default; --write creates documents that do not exist yet and never overwrites edits.
+ * Stops before the first write, also in the dry run, when the placeholder text to replace is in an article with blocks.
  *
  *   node scripts/la21staefa/seed-forms.mjs [--write]
  */
@@ -149,6 +150,12 @@ async function main() {
   const db = getFirestore();
   const verb = (w, d) => (write ? w : d);
 
+  const introRef = db.doc(`sections/${T}_anmeldung_s01`);
+  const intro = (await introRef.get()).data();
+  const replacesIntro = intro?.content?.htmlContent === FORM_PAGES.la21staefa_anmeldung;
+  // the old field is kept beside the blocks, where nobody would see the new text
+  if (replacesIntro) assertNoBlocks(introRef.id, intro);
+
   for (const [id, data] of Object.entries(FORMS)) {
     const ref = db.doc(`formDefinitions/${id}`);
     if ((await ref.get()).exists) { console.log(`exists        formDefinitions/${id}`); continue; }
@@ -175,10 +182,7 @@ async function main() {
     }
   }
 
-  const introRef = db.doc(`sections/${T}_anmeldung_s01`);
-  const intro = (await introRef.get()).data();
-  if (intro?.content?.htmlContent === FORM_PAGES.la21staefa_anmeldung) {
-    assertNoBlocks(introRef.id, intro); // the old field is kept beside the blocks, where nobody would see the new text
+  if (replacesIntro) {
     console.log(`${verb('replacing    ', 'would replace')} the placeholder text of sections/${T}_anmeldung_s01`);
     if (write) await introRef.update({ 'content.htmlContent': ANMELDUNG_INTRO, title: 'Anmeldung als Mitglied der Lokalen Agenda 21 Stäfa' });
   } else console.log(`kept          sections/${T}_anmeldung_s01 (edited since the import)`);

@@ -1,7 +1,7 @@
 import { convertsExactly, type ArticleSection, type SectionModel } from '@okr/shared-models';
 
-/** How long a writer waits to learn whether blocks may be stored. */
-const GATE_TIMEOUT_MS = 5000;
+/** How long a writer waits at most: for the answer of the gate and for loading the conversion together. */
+const TIMEOUT_MS = 5000;
 
 /**
  * The sections as a writer stores them (spec 1.175 §12): new articles with blocks when blocks may be written, else as today.
@@ -14,21 +14,26 @@ const GATE_TIMEOUT_MS = 5000;
 export async function articlesToWrite<T extends SectionModel>(sections: T[], mayWrite: () => Promise<boolean>): Promise<T[]> {
   if (!sections.some(convertsExactly)) return sections;
   try {
-    if (!await withinTime(mayWrite())) return sections;
-    const { articleWithBlocks } = await import('./article-editor-open.util');
-    return sections.map((s) => convertsExactly(s) ? articleWithBlocks(s as unknown as ArticleSection) as unknown as T : s);
+    return await withinTime(convert(sections, mayWrite)) ?? sections;
   } catch (error) {
     console.warn('articlesToWrite: the articles are written without blocks', error);
     return sections;
   }
 }
 
-/** The answer of the gate; false when it does not come in time. */
-async function withinTime(answer: Promise<boolean>): Promise<boolean> {
+/** The sections with their articles converted; undefined when blocks may not be written. */
+async function convert<T extends SectionModel>(sections: T[], mayWrite: () => Promise<boolean>): Promise<T[] | undefined> {
+  if (!await mayWrite()) return undefined;
+  const { articleWithBlocks } = await import('./article-editor-open.util');
+  return sections.map((s) => convertsExactly(s) ? articleWithBlocks(s as unknown as ArticleSection) as unknown as T : s);
+}
+
+/** The result; undefined when it does not come in time. */
+async function withinTime<T>(result: Promise<T>): Promise<T | undefined> {
   let timer: ReturnType<typeof setTimeout> | undefined;
-  const late = new Promise<boolean>((resolve) => { timer = setTimeout(() => resolve(false), GATE_TIMEOUT_MS); });
+  const late = new Promise<undefined>((resolve) => { timer = setTimeout(() => resolve(undefined), TIMEOUT_MS); });
   try {
-    return await Promise.race([answer, late]);
+    return await Promise.race([result, late]);
   } finally {
     clearTimeout(timer);
   }

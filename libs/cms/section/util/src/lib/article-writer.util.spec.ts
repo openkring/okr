@@ -70,6 +70,38 @@ describe('articlesToWrite', () => {
     expect((await written)[0]).toBe(section);
   });
 
+  it('has one time limit for the answer of the gate and the conversion', async () => {
+    vi.useFakeTimers();
+    vi.resetModules();
+    vi.doMock('./article-editor-open.util', () => new Promise(() => undefined));          // a chunk that never arrives
+    try {
+      const { articlesToWrite: fresh } = await import('./article-writer.util');
+      const section = groupIntro();
+      let written: ArticleSection[] | undefined;
+      void fresh([section], () => new Promise<boolean>((resolve) => setTimeout(() => resolve(true), 3000))).then((w) => { written = w; });
+      await vi.advanceTimersByTimeAsync(4999);
+      expect(written).toBeUndefined();
+      await vi.advanceTimersByTimeAsync(1);
+      expect(written?.[0]).toBe(section);
+    } finally {
+      vi.doUnmock('./article-editor-open.util');
+      vi.resetModules();
+    }
+  });
+
+  it('writes as today when the conversion cannot be loaded', async () => {
+    vi.resetModules();
+    vi.doMock('./article-editor-open.util', () => { throw new Error('offline'); });
+    try {
+      const { articlesToWrite: fresh } = await import('./article-writer.util');
+      const section = groupIntro();
+      expect((await fresh([section], open))[0]).toBe(section);
+    } finally {
+      vi.doUnmock('./article-editor-open.util');
+      vi.resetModules();
+    }
+  });
+
   it('asks the gate once, and leaves no timer behind', async () => {
     vi.useFakeTimers();
     const mayWrite = vi.fn(open);
